@@ -25,7 +25,7 @@ import time
 from pathlib import Path
 
 from ..epoch import (COMPLETED, FAILED, LOST, OBS_ENDED, OBS_LOST, OBS_RUNNING,
-                     EpochError, Observation, Receipt)
+                     EpochError, Observation, Receipt, echo)
 from ..convergence import GATE_CLASSES
 from ..git_state import file_pin, head, tree_id
 
@@ -202,7 +202,7 @@ class GateProvider:
             if rc != 0:
                 failures.append({"summary": f"gate {g['id']} exited {rc}: {observed}",
                                  "signature": f"gate-exit:{g['id']}:{rc}"})
-        return Receipt(spec["epoch_id"], self.name, spec["revision"],
+        return Receipt(spec["epoch_id"], self.name, spec["revision"], **echo(spec),
                        head_before=handle.get("head_before", ""), head_after=head(root),
                        tree_before=handle.get("tree_before", ""), tree_after=tree,
                        verdicts=verdicts, failures=failures,

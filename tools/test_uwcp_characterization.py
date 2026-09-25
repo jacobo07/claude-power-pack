@@ -57,16 +57,18 @@ def main() -> int:
     lg = gl.GoalLog(REPO, "g-char", base=base / "goals")
     s = gc.declare(lg, "characterize", ["it runs"], [], {"paths": ["src"]})
     key = ep.info_key(s.revision, [], "fake", "initial", "scope0")
+    def rcpt(e, rev, **kw):
+        """A receipt that echoes its epoch's identity, as every provider now does (A1)."""
+        return ep.Receipt(e.epoch_id, "fake", rev, **{**ep.echo({"identity": e.identity}), **kw})
+
     e1 = ep.begin(lg, gc.project(lg), "fake", {}, key, "initial", "t")
     ep.mark_running(lg, gc.project(lg), e1.epoch_id, {"h": 1}, "t")
-    rid_ok = ep.ingest_receipt(lg, gc.project(lg),
-                               ep.Receipt(e1.epoch_id, "fake", s.revision, narrative="a"), "t")
+    rid_ok = ep.ingest_receipt(lg, gc.project(lg), rcpt(e1, s.revision, narrative="a"), "t")
     check("V-UWCP-CHAR-RECEIPT-CONTROL", bool(rid_ok),
           "control: a receipt for a running epoch is ingested", "control receipt refused")
     ep.end(lg, gc.project(lg), e1.epoch_id, ep.LOST, "stall abort", "t")
     try:
-        ep.ingest_receipt(lg, gc.project(lg),
-                          ep.Receipt(e1.epoch_id, "fake", s.revision, narrative="late"), "t")
+        ep.ingest_receipt(lg, gc.project(lg), rcpt(e1, s.revision, narrative="late"), "t")
         late_ingested = True
     except ep.EpochError:
         late_ingested = False
@@ -76,30 +78,33 @@ def main() -> int:
           "a late receipt was banked into a closed epoch")
 
     # Fences are minted strictly increasing and a mismatched fence is refused.
+    # (One epoch at a time since S1-8b: e2 ends before e3 begins.)
     e2 = ep.begin(lg, gc.project(lg), "fake", {}, "k2", "initial", "t")
+    ep.mark_running(lg, gc.project(lg), e2.epoch_id, {"h": 2}, "t")
+    try:
+        ep.ingest_receipt(lg, gc.project(lg), rcpt(e2, s.revision, fence=e2.fence + 1), "t")
+        wrong_fence = False
+    except ep.EpochError:
+        wrong_fence = True
+    right = ep.ingest_receipt(lg, gc.project(lg), rcpt(e2, s.revision), "t")
+    check("V-UWCP-FENCE-MISMATCH-REFUSED", wrong_fence and bool(right),
+          "a receipt carrying another epoch's fence is refused; its own fence is accepted",
+          f"wrong_fence_refused={wrong_fence}")
+    ep.end(lg, gc.project(lg), e2.epoch_id, ep.COMPLETED, "done", "t")
     e3 = ep.begin(lg, gc.project(lg), "fake", {}, "k3", "initial", "t")
     check("V-UWCP-FENCE-MONOTONIC",
           e1.fence >= 1 and e2.fence == e1.fence + 1 and e3.fence == e2.fence + 1
           and e3.identity.get("fence") == e3.fence,
           f"fences {e1.fence}<{e2.fence}<{e3.fence}, carried in the pre-minted identity",
           f"fences {e1.fence},{e2.fence},{e3.fence}")
-    ep.mark_running(lg, gc.project(lg), e2.epoch_id, {"h": 2}, "t")
-    try:
-        ep.ingest_receipt(lg, gc.project(lg),
-                          ep.Receipt(e2.epoch_id, "fake", s.revision, fence=e3.fence), "t")
-        wrong_fence = False
-    except ep.EpochError:
-        wrong_fence = True
-    right = ep.ingest_receipt(lg, gc.project(lg),
-                              ep.Receipt(e2.epoch_id, "fake", s.revision, fence=e2.fence), "t")
-    check("V-UWCP-FENCE-MISMATCH-REFUSED", wrong_fence and bool(right),
-          "a receipt carrying another epoch's fence is refused; its own fence is accepted",
-          f"wrong_fence_refused={wrong_fence}")
     import hashlib as _h                                                   # noqa: PLC0415
     import json as _j                                                      # noqa: PLC0415
     from dataclasses import asdict as _asdict                              # noqa: PLC0415
     legacy = ep.Receipt("ep-x", "gate", "r1", commits=["abc"])
-    old_body = {k: v for k, v in _asdict(legacy).items() if k != "fence"}
+    # The pre-S1-8 schema had none of the echo fields (fence; goal_id and run_token
+    # since S1-8b), so the old id is the hash of the body without all three.
+    old_body = {k: v for k, v in _asdict(legacy).items()
+                if k not in ("fence", "goal_id", "run_token")}
     old_id = _h.sha256(_j.dumps(old_body, sort_keys=True, ensure_ascii=False,
                                 separators=(",", ":")).encode("utf-8")).hexdigest()[:24]
     check("V-UWCP-FENCE-LEGACY-ID-STABLE", legacy.receipt_id() == old_id,
@@ -350,38 +355,59 @@ def main() -> int:
         print("  FAIL V-UWCP-CHAR-GIT: git not found; C5 control and C7 could not run "
               "(HARNESS, not a finding)")
 
-    # --- C8 receipts echo only what they like; begin() stacks epochs (A1/S1-8b) --
+    # --- C8 receipts echo their whole identity; one epoch at a time (A1/S1-8b) --
+    # INVERTED in place by S1-8b: the three CHAR gates of 28d1224 are the A1 gates below.
     lg8 = gl.GoalLog(REPO, "g-char-a1", base=base / "goals")
     s8 = gc.declare(lg8, "characterize A1", ["it runs"], [], {"paths": ["src"]})
     e8 = ep.begin(lg8, gc.project(lg8), "fake", {}, "k8", "initial", "t")
     ep.mark_running(lg8, gc.project(lg8), e8.epoch_id, {"h": 8}, "t")
+
+    def refusal(r, state=None):
+        try:
+            ep.ingest_receipt(lg8, state or gc.project(lg8), r, "t")
+            return "<ingested>"
+        except ep.EpochError as exc:
+            return getattr(exc, "code", "<uncoded>")
+
+    # was V-UWCP-CHAR-UNECHOED-RECEIPT-INGESTED
+    unechoed = refusal(ep.Receipt(e8.epoch_id, "fake", s8.revision, narrative="no echo"))
+    check("V-UWCP-A1-UNECHOED-REFUSED", unechoed == ep.STALE_FENCE,
+          "a fenced epoch refuses a receipt that echoes no fence", f"got {unechoed}")
+    foreign = refusal(rcpt(e8, s8.revision, run_token="f" * 32, narrative="other run"))
+    check("V-UWCP-A1-FOREIGN-RUN-TOKEN-REFUSED", foreign == ep.EPOCH_MISMATCH,
+          "a receipt from another run of the same epoch is refused", f"got {foreign}")
+    other_goal = refusal(rcpt(e8, s8.revision, goal_id="g-someone-else", narrative="x"))
+    check("V-UWCP-A1-OTHER-GOAL-REFUSED", other_goal == ep.EPOCH_MISMATCH,
+          "a receipt naming another goal is refused", f"got {other_goal}")
+    # was V-UWCP-CHAR-REFUSAL-UNCODED
+    code = refusal(rcpt(e8, "not-the-revision"))
+    check("V-UWCP-A1-REFUSAL-CODED", code == ep.REVISION_MISMATCH,
+          "a refusal carries a machine-readable code", f"code={code!r}")
+    # was V-UWCP-CHAR-BEGIN-WHILE-OPEN
     try:
-        ep.ingest_receipt(lg8, gc.project(lg8),
-                          ep.Receipt(e8.epoch_id, "fake", s8.revision, narrative="no echo"), "t")
-        unechoed = True
-    except ep.EpochError:
-        unechoed = False
-    check("V-UWCP-CHAR-UNECHOED-RECEIPT-INGESTED", unechoed,
-          "CHARACTERIZATION: a fenced epoch banks a receipt that echoes no fence or run_token",
-          "already refused")
-    try:
-        e9 = ep.begin(lg8, gc.project(lg8), "fake", {}, "k9", "initial", "t")
+        ep.begin(lg8, gc.project(lg8), "fake", {}, "k9", "initial", "t")
         stacked = True
     except ep.EpochError:
         stacked = False
-    check("V-UWCP-CHAR-BEGIN-WHILE-OPEN", stacked,
-          "CHARACTERIZATION: begin() opens a second epoch while one is still running",
-          "already refused")
-    try:
-        ep.ingest_receipt(lg8, gc.project(lg8),
-                          ep.Receipt(e8.epoch_id, "fake", "not-the-revision",
-                                     fence=e8.fence), "t")
-        code = "<ingested>"
-    except ep.EpochError as exc:
-        code = getattr(exc, "code", "")
-    check("V-UWCP-CHAR-REFUSAL-UNCODED", code == "",
-          "CHARACTERIZATION: a refused receipt carries no machine-readable refusal code",
-          f"code={code!r}")
+    check("V-UWCP-A1-BEGIN-WHILE-OPEN-REFUSED", not stacked,
+          "begin() refuses a second epoch while one is open", "a second epoch was opened")
+    ok8 = refusal(rcpt(e8, s8.revision, narrative="echoed"))
+    check("V-UWCP-A1-ECHOED-CONTROL", ok8 == "<ingested>",
+          "control: a receipt echoing its identity is ingested", f"refused: {ok8}")
+    dup = refusal(rcpt(e8, s8.revision, narrative="echoed"))
+    check("V-UWCP-A1-DUPLICATE-CODED", dup == ep.DUPLICATE, "a replay is refused as duplicate",
+          f"got {dup}")
+    ep.end(lg8, gc.project(lg8), e8.epoch_id, ep.COMPLETED, "done", "t")
+    stale_view = gc.project(lg8)                      # taken before e10 exists
+    e10 = ep.begin(lg8, gc.project(lg8), "fake", {}, "k10", "initial", "t")
+    ep.mark_running(lg8, gc.project(lg8), e10.epoch_id, {"h": 10}, "t")
+    reload_ok = refusal(rcpt(e10, s8.revision, narrative="newer than the view"), stale_view)
+    check("V-UWCP-A1-RELOAD-ONCE", reload_ok == "<ingested>",
+          "a fence newer than the caller's projection reloads once and is judged on the log",
+          f"got {reload_ok}")
+    ended = refusal(rcpt(e8, s8.revision, narrative="late"))
+    check("V-UWCP-A1-ENDED-CODED", ended == ep.EPOCH_ENDED,
+          "a receipt for an ended epoch is refused as epoch_ended", f"got {ended}")
 
     total = len(passes) + len(fails)
     print(f"UWCP_CHAR_PASS={len(passes)}/{total}")

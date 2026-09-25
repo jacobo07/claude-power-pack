@@ -37,7 +37,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from .contract import GoalState
+from .contract import GoalState, project
 from .log import GoalLog, GoalLogCorrupt, GoalLogError
 
 DISPATCHING = "epoch.dispatching"
@@ -69,6 +69,19 @@ class EpochError(GoalLogError):
     pass
 
 
+# Why a receipt was refused (amendment A1). Callers branch on the code, never on
+# the sentence: a stale fence means "a successor owns this lineage", a revision
+# mismatch means "the goal changed underneath the executor" -- different reactions.
+STALE_FENCE, EPOCH_ENDED, EPOCH_MISMATCH, REVISION_MISMATCH, DUPLICATE = (
+    "stale_fence", "epoch_ended", "epoch_mismatch", "revision_mismatch", "duplicate")
+
+
+class ReceiptRefused(EpochError):
+    def __init__(self, code: str, message: str):
+        super().__init__(f"[{code}] {message}")
+        self.code = code
+
+
 @dataclass(frozen=True)
 class Observation:
     state: str                 # running | ended | lost | unknown
@@ -93,14 +106,19 @@ class Receipt:
     cost: dict = field(default_factory=dict)
     narrative: str = ""        # stored as INPUT only; never consulted as authority
     fence: int = 0             # UWCP S1-8: the fence the executor was given; 0 = legacy
+    # UWCP S1-8b (A1): the executor echoes the identity it was dispatched with,
+    # so ingest can compare ALL of it, not just the epoch id it names.
+    goal_id: str = ""
+    run_token: str = ""
 
     def receipt_id(self) -> str:
         body = asdict(self)
-        # An unset fence is left out so a receipt written before fencing hashes to
-        # the SAME id it always had -- otherwise a replay of an old receipt would
-        # slip past the duplicate check under a new id.
-        if not body.get("fence"):
-            body.pop("fence", None)
+        # Unset echo fields are left out so a receipt written before they existed
+        # hashes to the SAME id it always had -- otherwise a replay of an old
+        # receipt would slip past the duplicate check under a new id.
+        for k in ("fence", "goal_id", "run_token"):
+            if not body.get(k):
+                body.pop(k, None)
         raw = json.dumps(body, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:24]
 
@@ -120,6 +138,19 @@ class Provider(Protocol):
     def harvest(self, handle: dict, spec: dict) -> Receipt: ...
     def cancel(self, handle: dict) -> None: ...
     def probe(self, identity: dict) -> dict | None: ...          # adopt a pre-crash run
+
+
+def echo(spec: dict) -> dict:
+    """The identity fields a provider hands back in its Receipt (A1).
+
+    Read from the spec's pre-minted identity. A spec without one echoes nothing,
+    and ingest then refuses the receipt for a fenced epoch: an executor that
+    cannot say which dispatch it answers is not evidence about that dispatch.
+    """
+    ident = spec.get("identity") or {}
+    return {"goal_id": str(ident.get("goal_id") or ""),
+            "run_token": str(ident.get("run_token") or ""),
+            "fence": int(ident.get("fence") or 0)}
 
 
 def check_provider(p) -> None:
@@ -246,11 +277,19 @@ def begin(log: GoalLog, state: GoalState, provider: str, spec: dict, key: str,
                 "change the provider, the scope, the plan, or bring a new fact")
         if e.info_key == key and e.state != "ended":
             raise EpochError(f"epoch {e.epoch_id} is already attempting exactly this")
+    # UWCP S1-8b (A1): one epoch at a time per goal, enforced at the write
+    # authority -- not only by the reconciler, which is one caller among several.
+    # Two open epochs are two writers on one lineage, and the fence only orders them.
+    still_open = [e.epoch_id for e in project_epochs(state).values() if e.state != "ended"]
+    if still_open:
+        raise EpochError(f"epoch {still_open[0]} is still open; a goal runs one epoch at a "
+                         "time -- harvest or end it before beginning another")
     epoch_id = f"ep-{uuid.uuid4().hex[:12]}"
     # The fence is minted with the intent, from the log, so two dispatchers racing
     # on one stale state cannot both hold fence N: the loser's append is a LostRace.
     fence = max((e.fence for e in project_epochs(state).values()), default=0) + 1
-    identity = {"run_token": uuid.uuid4().hex, "epoch_id": epoch_id, "fence": fence}
+    identity = {"run_token": uuid.uuid4().hex, "epoch_id": epoch_id, "fence": fence,
+                "goal_id": state.goal_id}
     log.append(state.last_seq + 1, DISPATCHING,
                {"epoch_id": epoch_id, "revision": state.revision, "provider": provider,
                 "identity": identity, "info_key": key, "hypothesis": hypothesis,
@@ -281,29 +320,50 @@ def end(log: GoalLog, state: GoalState, epoch_id: str, outcome: str, detail: str
 
 
 def ingest_receipt(log: GoalLog, state: GoalState, receipt: Receipt, actor: str) -> str:
-    """Store a receipt once. A duplicate, a receipt for an unknown epoch, or one
-    about another revision is refused -- the last is also a finding, recorded by
-    the caller as a failure event, because a stale executor wrote it."""
+    """Store a receipt once, and only if it answers the dispatch it names.
+
+    UWCP S1-8b (A1): the receipt echoes {goal_id, epoch_id, run_token, fence,
+    revision} and ALL of it is compared; every refusal is a ReceiptRefused with
+    a code. A revision mismatch is also a finding, recorded by the caller as a
+    failure event, because a stale executor wrote it."""
     eps = project_epochs(state)
+    if receipt.fence > max((x.fence for x in eps.values()), default=0):
+        # A fence newer than anything this projection knows means the projection
+        # is stale, not that the receipt is forged: reload ONCE, then judge.
+        state = project(log)
+        eps = project_epochs(state)
     e = eps.get(receipt.epoch_id)
     if e is None:
-        raise EpochError(f"receipt for unknown epoch {receipt.epoch_id}")
+        raise ReceiptRefused(EPOCH_MISMATCH, f"receipt for unknown epoch {receipt.epoch_id}")
     rid = receipt.receipt_id()
     if any(rid in x.receipts for x in eps.values()):
-        raise EpochError(f"receipt {rid} was already ingested")
+        raise ReceiptRefused(DUPLICATE, f"receipt {rid} was already ingested")
     # UWCP S1-8 fence. The sweep ingests BEFORE it ends an epoch, so a receipt
     # for an ended epoch arrived after the goal stopped waiting for it -- a stall
     # abort, an operator cancel, an expiry -- and a successor may already own the
     # lineage. Banking it would put two writers' work into one history.
     if e.state == "ended":
-        raise EpochError(f"{e.epoch_id} already ended {e.outcome}; a receipt arriving "
-                         "after its epoch closed is refused (stale fence)")
-    if receipt.fence and receipt.fence != e.fence:
-        raise EpochError(f"receipt carries fence {receipt.fence}; epoch {e.epoch_id} was "
-                         f"dispatched with fence {e.fence}")
+        raise ReceiptRefused(EPOCH_ENDED, f"{e.epoch_id} already ended {e.outcome}; a receipt "
+                                          "arriving after its epoch closed is refused")
+    if e.fence and receipt.fence < e.fence:
+        # 0 included: a fenced epoch's executor that echoes no fence cannot show
+        # it holds this one.
+        raise ReceiptRefused(STALE_FENCE, f"receipt carries fence {receipt.fence or 'none'}; "
+                                          f"epoch {e.epoch_id} was dispatched with {e.fence}")
+    if receipt.fence != e.fence:
+        raise ReceiptRefused(EPOCH_MISMATCH, f"receipt carries fence {receipt.fence}; epoch "
+                                             f"{e.epoch_id} was dispatched with {e.fence}")
+    if e.fence and receipt.run_token != e.identity.get("run_token"):
+        raise ReceiptRefused(EPOCH_MISMATCH, f"receipt answers run "
+                                             f"{receipt.run_token[:8] or 'none'}, not the run "
+                                             f"epoch {e.epoch_id} dispatched")
+    if e.identity.get("goal_id") and receipt.goal_id != e.identity["goal_id"]:
+        raise ReceiptRefused(EPOCH_MISMATCH, f"receipt is for goal {receipt.goal_id or 'none'}, "
+                                             f"not {e.identity['goal_id']}")
     if receipt.revision != e.revision:
-        raise EpochError(f"receipt is about revision {receipt.revision}; epoch "
-                         f"{e.epoch_id} targeted {e.revision}")
+        raise ReceiptRefused(REVISION_MISMATCH, f"receipt is about revision "
+                                                f"{receipt.revision}; epoch {e.epoch_id} "
+                                                f"targeted {e.revision}")
     log.append(state.last_seq + 1, RECEIPT,
                {"epoch_id": receipt.epoch_id, "receipt_id": rid, "receipt": asdict(receipt)},
                actor)

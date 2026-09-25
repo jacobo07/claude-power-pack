@@ -42,7 +42,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ..epoch import COMPLETED, FAILED, OBS_ENDED, OBS_LOST, OBS_RUNNING, EpochError, \
-    Observation, Receipt
+    Observation, Receipt, echo
 from ..git_state import commits_between, head, tree_id
 
 # The other tiers' own names, reused so one account keeps one switch and one
@@ -298,7 +298,7 @@ class CodexProvider:
         self.release_lock(handle.get("epoch_id", ""))
         # NO verdicts: Codex writing code is work, and a gate epoch is what says
         # whether the work is right.
-        return Receipt(spec["epoch_id"], self.name, spec["revision"],
+        return Receipt(spec["epoch_id"], self.name, spec["revision"], **echo(spec),
                        head_before=before, head_after=after,
                        tree_before=handle.get("tree_before", ""),
                        tree_after=tree_id(root, spec.get("scope_paths")),

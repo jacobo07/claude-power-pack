@@ -171,7 +171,8 @@ def main() -> int:
     s5b = gc.project(lg5)
     s5b = gc.revise(lg5, s5b.last_seq + 1, s5b.intent, s5b.acceptance + ["and fast"],
                     s5b.constraints, s5b.scope)
-    stale = ep.Receipt(e5.epoch_id, "gate", s5b.revision)      # about the NEW revision
+    stale = ep.Receipt(e5.epoch_id, "gate", s5b.revision,      # about the NEW revision
+                       **ep.echo({"identity": e5.identity}))
     try:
         ep.ingest_receipt(lg5, gc.project(lg5), stale, "t")
         bad("V-CHAOS-5-REVISION-MOVED", "a receipt for another revision was ingested")
@@ -183,7 +184,8 @@ def main() -> int:
     lg6 = goal(base, "c-6", repo)
     s6 = gc.project(lg6)
     e6 = ep.begin(lg6, s6, "gate", {}, "k6", "initial", "t")
-    r6 = ep.Receipt(e6.epoch_id, "gate", s6.revision, commits=["abc"])
+    r6 = ep.Receipt(e6.epoch_id, "gate", s6.revision, commits=["abc"],
+                    **ep.echo({"identity": e6.identity}))
     ep.ingest_receipt(lg6, gc.project(lg6), r6, "t")
     try:
         ep.ingest_receipt(lg6, gc.project(lg6), r6, "t")

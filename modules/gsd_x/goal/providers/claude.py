@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ..epoch import (COMPLETED, EXPIRED, FAILED, OBS_ENDED, OBS_LOST, OBS_RUNNING,
-                     EpochError, Observation, Receipt)
+                     EpochError, Observation, Receipt, echo)
 from ..git_state import commits_between, head, tree_id
 
 BIN_ENV = "CLAUDE_BIN"
@@ -165,7 +165,8 @@ class HeadlessClaudeProvider:
         before, after = handle.get("head_before", ""), head(root)
         commits = commits_between(root, before, after)
         self.audit("harvested", f"rc={rc} commits={len(commits)}", spec.get("epoch_id", ""))
-        return Receipt(spec["epoch_id"], self.name, spec["revision"], head_before=before,
+        return Receipt(spec["epoch_id"], self.name, spec["revision"], **echo(spec),
+                       head_before=before,
                        head_after=after, tree_before=handle.get("tree_before", ""),
                        tree_after=tree_id(root, spec.get("scope_paths")), commits=commits,
                        failures=failures,
@@ -261,7 +262,8 @@ class InteractiveClaudeProvider:
                              "signature": "interactive-expired"})
         before, after = handle.get("head_before", ""), head(root)
         commits = commits_between(root, before, after)
-        return Receipt(spec["epoch_id"], self.name, spec["revision"], head_before=before,
+        return Receipt(spec["epoch_id"], self.name, spec["revision"], **echo(spec),
+                       head_before=before,
                        head_after=after, tree_before=handle.get("tree_before", ""),
                        tree_after=tree_id(root, spec.get("scope_paths")), commits=commits,
                        failures=failures, cost={"seconds": round(

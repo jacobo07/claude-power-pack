@@ -263,7 +263,11 @@ def run(tmp: Path) -> None:
         e = expect_raise(lambda: ws.hydrate(forged, tmp / "t_forged",
                                             capsule_id=hashlib.sha256(fraw).hexdigest()),
                          ws.HydrateError)
-        check("V-UWCP-WS-FETCH-FSCK-CATCHES-CREATION-CORRUPTION",
+        # Named for what it proves: FETCH refuses it. index-pack's inflate rejects a
+        # flipped compressed byte with or without transfer.fsckObjects (mutation M2
+        # survived, 2026-09-25), so fsck's own value -- malformed objects that still
+        # inflate -- is not proven by this gate.
+        check("V-UWCP-WS-FETCH-REFUSES-CREATION-CORRUPTION",
               isinstance(e, ws.HydrateError) and e.code == "fetch_failed", repr(e))
     finally:
         bpath.write_bytes(good)

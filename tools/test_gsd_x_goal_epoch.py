@@ -43,7 +43,7 @@ class FakeProvider:
         return ep.Observation(ep.OBS_RUNNING)
 
     def harvest(self, handle, spec):
-        return ep.Receipt(spec["epoch_id"], self.name, spec["revision"])
+        return ep.Receipt(spec["epoch_id"], self.name, spec["revision"], **ep.echo(spec))
 
     def cancel(self, handle):
         self.cancelled.append(handle)
@@ -152,8 +152,9 @@ def main() -> int:
 
     # --- receipts --------------------------------------------------------------
     st = gc.project(lg)
+    echo2 = ep.echo({"identity": e2.identity})       # UWCP S1-8b: receipts echo identity
     r = ep.Receipt(e2.epoch_id, "codex", st.revision, head_before="a", head_after="b",
-                   commits=["b"], narrative="I did it all myself")
+                   commits=["b"], narrative="I did it all myself", **echo2)
     rid = ep.ingest_receipt(lg, st, r, "t")
     check("V-EP-RECEIPT-INGESTED", rid in ep.project_epochs(gc.project(lg))[e2.epoch_id].receipts,
           f"receipt {rid} stored once", "receipt not recorded")
@@ -162,7 +163,7 @@ def main() -> int:
         bad("V-EP-RECEIPT-DUPLICATE", "the same receipt was ingested twice")
     except ep.EpochError:
         ok("V-EP-RECEIPT-DUPLICATE", "a duplicate receipt refused (content-addressed)")
-    stale = ep.Receipt(e2.epoch_id, "codex", "deadbeefdeadbeef")
+    stale = ep.Receipt(e2.epoch_id, "codex", "deadbeefdeadbeef", **echo2)
     try:
         ep.ingest_receipt(lg, gc.project(lg), stale, "t")
         bad("V-EP-RECEIPT-STALE-REVISION", "a receipt about another revision was ingested")

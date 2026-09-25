@@ -38,6 +38,10 @@ named gates must go red, SHA-256 restore; refuses ambiguous snippets as HARNESS-
 - Editing a module while a background suite exercises it produced a false 22/25 (NameError
   window). Never edit gsd_x/goal while tools/test_gsd_x_goal_mutation.py runs -- it mutates
   those files on disk and refuses a dirty tree (exit 2).
+- mutate.py restores in `finally`, which does NOT run when the harness is killed from outside
+  (Claude Code reaped the drill batch at low memory, 2026-09-25): mutant M8 stayed on disk in
+  workspace.py. After ANY killed drill, diff the target against HEAD before anything else;
+  restore with `git checkout -- <file>` and compare hash-object to HEAD's blob.
 - anti-thrash: a PARTIAL Read (offset/limit) did not reset the counter; a full Read did.
 - A one-line mutation snippet can occur twice (end() and ingest_receipt share a guard line).
 - V-CHAOS-7-REPLAY passed only via the duplicate check; fixed for real by the S1-8 fence.
@@ -52,8 +56,15 @@ claude -p: one account ledger, 4/day. One bounded queue job = one epoch. FP-028 
 Placement rule (Owner request): /cpp-gsd-long -> GEX44 when this host can't/shouldn't; lands S6c.
 
 ## Next 3 actions
-1. Delta slices S1-8b / S1-8c / S1-8d (amendments A1, A2, X0) -- characterize first, invert in
-   place, mutation-drill each.
+1. S1-8b (A1) SEALED: Receipt echoes goal_id/run_token/fence via epoch.echo(spec); ingest
+   compares all, ReceiptRefused codes; begin() refused while any epoch open. NEXT: S1-8c (A2) --
+   claude.py:144 and codex.py:262 return OBS_LOST for "no child handle in this process": make it
+   UNKNOWN; probe tri-state FOUND|ABSENT|UNKNOWN; decide() checks operator cancel/pause BEFORE any
+   UNKNOWN wait; UNKNOWN past deadline -> BLOCKED_ENVIRONMENT. Then S1-8d (X0 codex lock).
+   Workspace drills: M1/M3/M4 caught; M2 (fsck flags removed) SURVIVED -- a byte flip is refused
+   by index-pack inflate regardless, so fsck's value for malformed-but-inflatable objects is
+   undrilled (gate renamed to FETCH-REFUSES); M5-M8 re-run alone (first run starved by my own
+   concurrent suites -> INVALID, not verdicts).
 2. S3: goal/baseline.py fingerprint (runtime-manifest hash, hook-set hash, claude CLI version,
    model/GGUF/llama build, HR digest, permission mode) + the capsule's conversion_env as a
    correctness field (A6.5) + epoch pin + drift policy.

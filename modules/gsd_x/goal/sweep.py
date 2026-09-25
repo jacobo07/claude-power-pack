@@ -229,8 +229,10 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
     elif d.kind == rc.HARVEST:
         e = eps[d.epoch_id]
         if not dry_run:
+            # The pre-minted identity travels to harvest so the receipt can echo it
+            # and ingest can compare all of it (UWCP S1-8b, A1).
             spec = {"epoch_id": e.epoch_id, "revision": state.revision, "root": str(root),
-                    "scope_paths": paths,
+                    "identity": e.identity, "scope_paths": paths,
                     "gate": e.spec.get("gate") or {"id": e.spec.get("obligation", "gate"),
                                                    "command": [], "class": "unit",
                                                    "files": []}}

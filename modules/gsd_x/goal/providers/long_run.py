@@ -32,7 +32,7 @@ from pathlib import Path
 
 from ..epoch import (CANCELLED, COMPLETED, EXPIRED, LOST, OBS_ENDED, OBS_LOST,
                      OBS_RUNNING, OBS_UNKNOWN, STALE_REVISION, EpochError,
-                     Observation, Receipt)
+                     Observation, Receipt, echo)
 
 _TOOLS = Path(__file__).resolve().parents[4] / "tools"
 CANCEL_REASON = "goal cancelled by operator"
@@ -188,7 +188,7 @@ class LongRunProvider:
         # NO verdicts. A long run is work, not proof: whatever it produced is
         # evidenced by gate epochs against the tree it left behind. Emitting a
         # verdict here would let "the run ended" satisfy an obligation.
-        return Receipt(spec["epoch_id"], self.name, spec["revision"],
+        return Receipt(spec["epoch_id"], self.name, spec["revision"], **echo(spec),
                        head_before=spec.get("head_before", ""),
                        tree_before=spec.get("tree_before", ""),
                        failures=failures,
@@ -206,7 +206,7 @@ class LongRunProvider:
             failures.append({"summary": f"mission {rec.get('state')}: {why}"[:200],
                              "signature": f"mission-{str(rec.get('state')).lower()}:{mid}"})
         cwd = rec.get("cwd") or ""
-        return Receipt(spec["epoch_id"], self.name, spec["revision"],
+        return Receipt(spec["epoch_id"], self.name, spec["revision"], **echo(spec),
                        head_before=spec.get("head_before", ""),
                        head_after=head(Path(cwd)) if cwd else "",
                        tree_before=spec.get("tree_before", ""), failures=failures,
