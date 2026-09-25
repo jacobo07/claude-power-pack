@@ -70,9 +70,42 @@ def main() -> int:
         late_ingested = True
     except ep.EpochError:
         late_ingested = False
-    check("V-UWCP-CHAR-LATE-RECEIPT-INGESTED", late_ingested,
-          "TODAY: a receipt arriving after the epoch ended LOST is still ingested "
-          "(no fence) -- S1-8 inverts this", "already refused: invert this case in S1-8")
+    # INVERTED by S1-8: was V-UWCP-CHAR-LATE-RECEIPT-INGESTED.
+    check("V-UWCP-FENCE-LATE-RECEIPT-REFUSED", not late_ingested,
+          "a receipt arriving after its epoch ended LOST is refused (stale fence)",
+          "a late receipt was banked into a closed epoch")
+
+    # Fences are minted strictly increasing and a mismatched fence is refused.
+    e2 = ep.begin(lg, gc.project(lg), "fake", {}, "k2", "initial", "t")
+    e3 = ep.begin(lg, gc.project(lg), "fake", {}, "k3", "initial", "t")
+    check("V-UWCP-FENCE-MONOTONIC",
+          e1.fence >= 1 and e2.fence == e1.fence + 1 and e3.fence == e2.fence + 1
+          and e3.identity.get("fence") == e3.fence,
+          f"fences {e1.fence}<{e2.fence}<{e3.fence}, carried in the pre-minted identity",
+          f"fences {e1.fence},{e2.fence},{e3.fence}")
+    ep.mark_running(lg, gc.project(lg), e2.epoch_id, {"h": 2}, "t")
+    try:
+        ep.ingest_receipt(lg, gc.project(lg),
+                          ep.Receipt(e2.epoch_id, "fake", s.revision, fence=e3.fence), "t")
+        wrong_fence = False
+    except ep.EpochError:
+        wrong_fence = True
+    right = ep.ingest_receipt(lg, gc.project(lg),
+                              ep.Receipt(e2.epoch_id, "fake", s.revision, fence=e2.fence), "t")
+    check("V-UWCP-FENCE-MISMATCH-REFUSED", wrong_fence and bool(right),
+          "a receipt carrying another epoch's fence is refused; its own fence is accepted",
+          f"wrong_fence_refused={wrong_fence}")
+    import hashlib as _h                                                   # noqa: PLC0415
+    import json as _j                                                      # noqa: PLC0415
+    from dataclasses import asdict as _asdict                              # noqa: PLC0415
+    legacy = ep.Receipt("ep-x", "gate", "r1", commits=["abc"])
+    old_body = {k: v for k, v in _asdict(legacy).items() if k != "fence"}
+    old_id = _h.sha256(_j.dumps(old_body, sort_keys=True, ensure_ascii=False,
+                                separators=(",", ":")).encode("utf-8")).hexdigest()[:24]
+    check("V-UWCP-FENCE-LEGACY-ID-STABLE", legacy.receipt_id() == old_id,
+          "an unfenced receipt hashes to the id it had before fencing existed, so a "
+          "replay of an old receipt is still caught as a duplicate",
+          "legacy receipt ids moved")
 
     # --- C2 pins hash working-tree bytes: CRLF vs LF disagree (S1-9) ----------
     lf = base / "lf"

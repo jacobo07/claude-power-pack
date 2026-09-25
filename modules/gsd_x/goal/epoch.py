@@ -92,9 +92,16 @@ class Receipt:
     failures: list = field(default_factory=list)      # [{"summary", "signature"}]
     cost: dict = field(default_factory=dict)
     narrative: str = ""        # stored as INPUT only; never consulted as authority
+    fence: int = 0             # UWCP S1-8: the fence the executor was given; 0 = legacy
 
     def receipt_id(self) -> str:
-        raw = json.dumps(asdict(self), sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+        body = asdict(self)
+        # An unset fence is left out so a receipt written before fencing hashes to
+        # the SAME id it always had -- otherwise a replay of an old receipt would
+        # slip past the duplicate check under a new id.
+        if not body.get("fence"):
+            body.pop("fence", None)
+        raw = json.dumps(body, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:24]
 
 
@@ -180,6 +187,7 @@ class EpochRecord:
     handle: dict | None = None
     outcome: str = ""
     receipts: list = field(default_factory=list)
+    fence: int = 0             # UWCP S1-8: strictly increasing per goal; 0 = pre-fence epoch
 
 
 def project_epochs(state: GoalState) -> dict[str, EpochRecord]:
@@ -190,7 +198,7 @@ def project_epochs(state: GoalState) -> dict[str, EpochRecord]:
             if ev.type == DISPATCHING:
                 eps[d["epoch_id"]] = EpochRecord(d["epoch_id"], d["revision"], d["provider"],
                                                  d["identity"], d["info_key"], d["hypothesis"],
-                                                 d["spec"])
+                                                 d["spec"], fence=int(d.get("fence", 0)))
             elif ev.type == RUNNING:
                 e = eps[d["epoch_id"]]
                 e.state, e.handle = "running", d["handle"]
@@ -224,12 +232,16 @@ def begin(log: GoalLog, state: GoalState, provider: str, spec: dict, key: str,
         if e.info_key == key and e.state != "ended":
             raise EpochError(f"epoch {e.epoch_id} is already attempting exactly this")
     epoch_id = f"ep-{uuid.uuid4().hex[:12]}"
-    identity = {"run_token": uuid.uuid4().hex, "epoch_id": epoch_id}
+    # The fence is minted with the intent, from the log, so two dispatchers racing
+    # on one stale state cannot both hold fence N: the loser's append is a LostRace.
+    fence = max((e.fence for e in project_epochs(state).values()), default=0) + 1
+    identity = {"run_token": uuid.uuid4().hex, "epoch_id": epoch_id, "fence": fence}
     log.append(state.last_seq + 1, DISPATCHING,
                {"epoch_id": epoch_id, "revision": state.revision, "provider": provider,
                 "identity": identity, "info_key": key, "hypothesis": hypothesis,
-                "spec": dict(spec)}, actor)
-    return EpochRecord(epoch_id, state.revision, provider, identity, key, hypothesis, dict(spec))
+                "spec": dict(spec), "fence": fence}, actor)
+    return EpochRecord(epoch_id, state.revision, provider, identity, key, hypothesis, dict(spec),
+                       fence=fence)
 
 
 def mark_running(log: GoalLog, state: GoalState, epoch_id: str, handle: dict,
@@ -264,6 +276,16 @@ def ingest_receipt(log: GoalLog, state: GoalState, receipt: Receipt, actor: str)
     rid = receipt.receipt_id()
     if any(rid in x.receipts for x in eps.values()):
         raise EpochError(f"receipt {rid} was already ingested")
+    # UWCP S1-8 fence. The sweep ingests BEFORE it ends an epoch, so a receipt
+    # for an ended epoch arrived after the goal stopped waiting for it -- a stall
+    # abort, an operator cancel, an expiry -- and a successor may already own the
+    # lineage. Banking it would put two writers' work into one history.
+    if e.state == "ended":
+        raise EpochError(f"{e.epoch_id} already ended {e.outcome}; a receipt arriving "
+                         "after its epoch closed is refused (stale fence)")
+    if receipt.fence and receipt.fence != e.fence:
+        raise EpochError(f"receipt carries fence {receipt.fence}; epoch {e.epoch_id} was "
+                         f"dispatched with fence {e.fence}")
     if receipt.revision != e.revision:
         raise EpochError(f"receipt is about revision {receipt.revision}; epoch "
                          f"{e.epoch_id} targeted {e.revision}")
