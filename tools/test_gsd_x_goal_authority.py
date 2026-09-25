@@ -678,7 +678,10 @@ def main() -> int:
         else:
             set_env(anchor, witness=wit_m)
             ctl_named = corrupt_reason(lg_m)
-            os.chmod(mark_file, 0)
+            # Lock the DIRECTORY, not the file: the GEX44 failure was a reader that
+            # could not traverse the mark's directory, where even exists() raises.
+            # A file-only lock leaves exists() working and cannot tell the two apart.
+            os.chmod(mark_file.parent, 0)
             try:
                 try:
                     gc.project(lg_m)
@@ -686,7 +689,7 @@ def main() -> int:
                 except Exception as exc:                # the class is the point of the gate
                     why_ur = f"{exc.__class__.__name__}: {exc}"
             finally:
-                os.chmod(mark_file, au.WITNESS_FILE_MODE)
+                os.chmod(mark_file.parent, au.WITNESS_DIR_MODE)
             check("V-AUTH-WITNESS-UNREADABLE-NAMED",
                   why_ur.startswith("GoalLogCorrupt") and au.FOUNDER_WITNESS_UNREADABLE in why_ur
                   and ctl_named == "",
