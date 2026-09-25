@@ -659,20 +659,37 @@ def _git_toplevel_and_common(path: str) -> tuple[str, str] | None:
     return os.path.normcase(str(top)), os.path.normcase(str(common))
 
 
-def effective_workdir(session_id: str, base_cwd: str) -> str | None:
+def _mentions_workstream(line: str, workstream: str) -> bool:
+    """Did this transcript line act on `workstream`? Its directory (either separator, JSON-escaped
+    or not), its --ws flag, or its workstream.set call."""
+    return any(tok in line for tok in (
+        f"workstreams/{workstream}", f"workstreams\\\\{workstream}", f"workstreams\\{workstream}",
+        f"--ws {workstream}", f"workstream.set {workstream}"))
+
+
+def effective_workdir(session_id: str, base_cwd: str, workstream: str | None = None) -> str | None:
     """Where the predecessor was ACTUALLY working, from its own transcript's `cwd` field.
 
     Accepted only when it is the top of a git worktree of the SAME repository as the
     mission's cwd (same common git dir): a worker that wandered into a subdirectory, or into
     another repo, does not move the mission. None = the transcript could not tell us, which
-    is never read as "the base directory"."""
+    is never read as "the base directory".
+
+    For a WORKSTREAM mission a worktree is followed only if the predecessor acted on that
+    workstream there. Measured 2026-09-25 (m-1d270cd85220): two workers launched with a bare
+    /gsd-autonomous ran another track's root milestone inside `gsd-p0a-autonomous`; the
+    relay then briefed the next worker to ENTER that worktree and called the main checkout's
+    .planning stale -- an off-mission predecessor's directory is not the mission's."""
     path = lr.find_transcript(session_id)
     if not path:
         return None
     last = None
+    touched = False
     try:
         with open(path, encoding="utf-8", errors="replace") as fh:
             for line in fh:
+                if workstream and not touched and _mentions_workstream(line, workstream):
+                    touched = True
                 if '"cwd"' not in line:
                     continue
                 try:
@@ -691,6 +708,8 @@ def effective_workdir(session_id: str, base_cwd: str) -> str | None:
     if not here or not base:
         return base_cwd if base else None
     if here[1] == base[1] and here[0] == os.path.normcase(str(Path(last).resolve())):
+        if workstream and not touched:
+            return base_cwd
         return str(Path(last).resolve())
     return base_cwd
 
@@ -888,7 +907,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     # Judge (and brief) where the predecessor actually worked. Measured M6: the
                     # run lived in a git worktree while the mission's cwd kept a reset roadmap,
                     # so asking GSD there would read 1/8 for ever and never complete.
-                    work_dir = (effective_workdir(rec["owner"]["session_id"], rec["cwd"])
+                    work_dir = (effective_workdir(rec["owner"]["session_id"], rec["cwd"],
+                                                  rec.get("workstream"))
                                 or rec.get("work_dir"))
                     if work_dir:
                         row["work_dir"] = work_dir

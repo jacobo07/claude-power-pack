@@ -622,6 +622,20 @@ def main() -> int:
         check("V-MC-WORKDIR-SUBDIR-IGNORED", gm.effective_workdir("s-sub", str(repo)) == str(repo))
         check("V-MC-WORKDIR-OTHER-REPO-IGNORED", gm.effective_workdir("s-oth", str(repo)) == str(repo))
         check("V-MC-WORKDIR-NO-TRANSCRIPT-UNKNOWN", gm.effective_workdir("s-none", str(repo)) is None)
+        # A workstream mission follows a worktree only where the predecessor worked THAT
+        # workstream (2026-09-25: an off-mission worker's P0-A worktree was briefed as "the work").
+        transcript("s-ws-off", [str(repo), wt])
+        (tdir2 / "s-ws-on.jsonl").write_text(
+            json.dumps({"type": "user", "cwd": str(repo)}) + "\n"
+            + json.dumps({"type": "assistant", "input": {
+                "file_path": "C:\\r\\.planning\\workstreams\\lobby-ws\\STATE.md"}}) + "\n"
+            + json.dumps({"type": "user", "cwd": wt}) + "\n", encoding="utf-8")
+        check("V-MC-WORKDIR-WS-OFF-MISSION-NOT-FOLLOWED",
+              gm.effective_workdir("s-ws-off", str(repo), "lobby-ws") == str(repo),
+              repr(gm.effective_workdir("s-ws-off", str(repo), "lobby-ws")))
+        got_on = gm.effective_workdir("s-ws-on", str(repo), "lobby-ws")
+        check("V-MC-WORKDIR-WS-ON-MISSION-FOLLOWED",
+              got_on and os.path.normcase(got_on) == os.path.normcase(wt), repr(got_on))
 
         # supervise: GSD is asked in the worktree, the card names it, the launch stays at cwd
         for p in Path(TMP).glob("gsd-mission-*.json"):
