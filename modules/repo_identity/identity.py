@@ -131,6 +131,53 @@ def legacy_keys(path: str | os.PathLike | None = None) -> list[str]:
     return unique
 
 
+class PortableIdUnknown(ValueError):
+    """No portable identity can be established -- never a made-up one."""
+
+
+_GIT_CANDIDATES = (r"C:\Program Files\Git\cmd\git.exe", "git")
+
+
+def _git(root: Path, *args: str) -> tuple[int, str]:
+    import subprocess  # noqa: PLC0415 -- only the portable id needs a subprocess
+    for exe in _GIT_CANDIDATES:
+        try:
+            p = subprocess.run([exe, "-C", str(root), *args], capture_output=True,
+                               text=True, timeout=30, stdin=subprocess.DEVNULL)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        return p.returncode, (p.stdout or "").strip()
+    return 127, ""
+
+
+def portable_repo_id(path: str | os.PathLike) -> str:
+    """The repository's identity ACROSS HOSTS: its single root commit.
+
+    `repo_key` is a path slug, which is right for ledgers that live on one host
+    and wrong for anything another machine must find: the same repository is
+    `C--Users-...` on Windows and `-home-kobii-...` on a Linux node. A Workstream
+    whose log lives on one host and runs on another needs the id both agree on.
+
+    Refused rather than guessed:
+      * no commits / not a repository;
+      * more than one root commit (unrelated histories merged): no single id;
+      * a SHALLOW clone: `rev-list --max-parents=0` answers with the shallow
+        boundary, a commit that is not the root and differs per clone depth, so
+        two clones of one repository would get two ids.
+    """
+    root = Path(path)
+    rc, shallow = _git(root, "rev-parse", "--is-shallow-repository")
+    if rc == 0 and shallow == "true":
+        raise PortableIdUnknown(f"{root}: shallow clone; its boundary is not a root commit")
+    rc, out = _git(root, "rev-list", "--max-parents=0", "HEAD")
+    roots = [ln for ln in out.splitlines() if ln.strip()]
+    if rc != 0 or not roots:
+        raise PortableIdUnknown(f"{root}: not a git repository with commits (rc={rc})")
+    if len(roots) > 1:
+        raise PortableIdUnknown(f"{root}: {len(roots)} root commits; identity is ambiguous")
+    return roots[0]
+
+
 def ledger_paths(state_dir: str | os.PathLike, prefix: str,
                  path: str | os.PathLike | None = None) -> list[Path]:
     """Every file that may hold this repository's `prefix` ledger.

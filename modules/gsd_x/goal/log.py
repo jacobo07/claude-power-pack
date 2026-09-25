@@ -33,13 +33,11 @@ import hashlib
 import json
 import os
 import re
-import subprocess
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-GIT_CANDIDATES = (r"C:\Program Files\Git\cmd\git.exe", "git")
 EVENT_RE = re.compile(r"^(\d{6})\.json$")
 GOAL_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 ENV_ROOT = "GSDX_GOALS_ROOT"          # tests and alternate hosts only
@@ -65,30 +63,20 @@ class RepoIdUnknown(GoalLogError):
     """The repository identity could not be established."""
 
 
-def _git(root: Path, *args: str) -> tuple[int, str]:
-    for exe in GIT_CANDIDATES:
-        try:
-            p = subprocess.run([exe, "-C", str(root), *args], capture_output=True,
-                               text=True, timeout=30, stdin=subprocess.DEVNULL)
-        except (OSError, subprocess.SubprocessError):
-            continue
-        return p.returncode, (p.stdout or "").strip()
-    return 127, ""
-
-
 def repo_id(root: Path) -> str:
     """The repository's root commit hash.
 
     Stable across moves, renames and clones. A repository with more than one
     root commit has no single identity and is refused rather than guessed.
+
+    ONE implementation: `modules.repo_identity.identity.portable_repo_id` (UWCP
+    S1-3). This wrapper keeps the goal spine's own error type for its callers.
     """
-    rc, out = _git(Path(root), "rev-list", "--max-parents=0", "HEAD")
-    roots = [ln for ln in out.splitlines() if ln.strip()]
-    if rc != 0 or not roots:
-        raise RepoIdUnknown(f"{root}: not a git repository with commits (rc={rc})")
-    if len(roots) > 1:
-        raise RepoIdUnknown(f"{root}: {len(roots)} root commits; identity is ambiguous")
-    return roots[0]
+    from modules.repo_identity.identity import PortableIdUnknown, portable_repo_id
+    try:
+        return portable_repo_id(Path(root))
+    except PortableIdUnknown as exc:
+        raise RepoIdUnknown(str(exc)) from exc
 
 
 def goals_root() -> Path:

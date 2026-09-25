@@ -174,12 +174,34 @@ def main() -> int:
         check("V-UWCP-CHAR-REPOID-ROOT-CONTROL", gl.repo_id(a) == gl.repo_id(b),
               "control: the goal log's root-commit id is equal across two clones",
               "root-commit ids differ")
-        check("V-UWCP-CHAR-REPOKEY-HOSTLOCAL",
+        # INVERTED by S1-3: was V-UWCP-CHAR-REPOKEY-HOSTLOCAL ("no portable id").
+        check("V-UWCP-REPOID-PORTABLE",
               ri.repo_key(str(a)) != ri.repo_key(str(b))
-              and not hasattr(ri, "portable_repo_id"),
-              "TODAY: repo_identity keys the same repository by path (two keys) and "
-              "offers no portable id -- S1-3 adds portable_repo_id",
-              "portable id already present: invert in S1-3")
+              and ri.portable_repo_id(a) == ri.portable_repo_id(b) == gl.repo_id(a),
+              "the path key stays host-local by design, and portable_repo_id gives both "
+              "clones one id, the same one the goal log uses",
+              "portable id missing or disagrees with the goal log")
+        sh = base / "shallow"
+        (a / "g.txt").write_text("y\n", encoding="utf-8")
+        _git(a, "add", "g.txt")
+        _git(a, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "two")
+        subprocess.run([GIT, "clone", "-q", "--depth", "1", "file://" + a.as_posix(), str(sh)],
+                       capture_output=True, timeout=60)
+        try:
+            ri.portable_repo_id(sh)
+            shallow_refused = False
+        except ri.PortableIdUnknown:
+            shallow_refused = True
+        check("V-UWCP-REPOID-SHALLOW-REFUSED", shallow_refused and (sh / ".git").exists(),
+              "a shallow clone is refused: its boundary commit is not the root",
+              "shallow clone accepted, or the fixture clone did not happen")
+        try:
+            gl.repo_id(sh)
+            wrapper_refuses = False
+        except gl.RepoIdUnknown:
+            wrapper_refuses = True
+        check("V-UWCP-REPOID-WRAPPER-CONTRACT", wrapper_refuses,
+              "the goal log keeps raising its own RepoIdUnknown", "wrapper contract changed")
     else:
         fails.append("V-UWCP-CHAR-GIT")
         print("  FAIL V-UWCP-CHAR-GIT: git not found; C5 control and C7 could not run "
