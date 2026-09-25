@@ -759,6 +759,32 @@ def main() -> int:
           f"r1={r1.get('licence_seq')} r2={r2.get('licence_seq')} w={w_now} cur={why_cur!r} "
           f"old={why_old!r} cur3={why_cur3!r} unw={why_unw_l!r}")
 
+    # --- the licence suites never see production authority --------------------------
+    # GEX44 2026-09-26: record-gates as the judge passed GSDX_GOALS_ROOT, the anchor,
+    # the witness and the judge key path to every suite; chaos then ran against
+    # production authority. Stand-in suites record the GSDX_* names they received.
+    env_repo = make_repo()
+    (env_repo / "tools").mkdir(exist_ok=True)
+    dump = ("import json, os\n"
+            "open('suite_env_{name}.json', 'w').write(json.dumps(sorted(k for k in os.environ "
+            "if k.startswith('GSDX_'))))\n")
+    for suite in sw.REQUIRED_SUITES:
+        (env_repo / "tools" / suite).write_text(dump.format(name=suite), encoding="utf-8")
+    set_env(anchor, judge=jk, witness=tmp / "witness_env")
+    parent_had = sorted(k for k in os.environ if k.startswith("GSDX_"))
+    rec_env = sw.record_gates(env_repo)
+    seen = {s: json.loads((env_repo / f"suite_env_{s}.json").read_text(encoding="utf-8"))
+            for s in sw.REQUIRED_SUITES}
+    parent_after = sorted(k for k in os.environ if k.startswith("GSDX_"))
+    check("V-AUTH-LICENCE-SUITES-NO-GSDX-ENV",
+          all(v == [] for v in seen.values()) and rec_env.get("green") is True
+          and au.LICENCE_SIG_FIELD in rec_env and au.ENV_JUDGE_KEY in parent_had
+          and parent_after == parent_had,
+          f"the licence suites ran with no GSDX_* at all while the judge held {len(parent_had)} "
+          "(anchor, witness, judge key, store); control: the judge still signed, and its own "
+          "environment is unchanged",
+          f"seen={seen} parent={parent_had} after={parent_after} green={rec_env.get('green')}")
+
     set_env()
     total = len(passes) + len(fails)
     print(f"\nGSDX_GOAL_AUTHORITY_PASS={len(passes)}/{total}  threshold={total}/{total}"

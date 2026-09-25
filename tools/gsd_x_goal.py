@@ -7,7 +7,7 @@
                                         --not-applicable --reason "..."
     python tools/gsd_x_goal.py oblige   --goal <id> --root <repo> --id ob-1 --plane OUTCOME \
                                         --text "..." --gate "python tools/x.py" --gate-file tools/x.py
-    python tools/gsd_x_goal.py record-gates --goal <id> --root <repo>
+    python tools/gsd_x_goal.py record-gates     # the engine's licence suites, at this commit
     python tools/gsd_x_goal.py sweep    --goal <id> --root <repo> [--dry-run]
     python tools/gsd_x_goal.py retire   --goal <id> --root <repo> --id ob-1 \
                                         --disposition REJECTED --reason "..."
@@ -445,7 +445,9 @@ def main(argv: list[str] | None = None) -> int:
                         "must declare in_game or live; it is never inferred from the plane")
     o.set_defaults(fn=cmd_oblige)
 
-    common(sub.add_parser("record-gates")).set_defaults(fn=cmd_record_gates)
+    # record-gates judges the engine at ROOT, not a goal: it takes no --goal/--root
+    # (it used to require both and ignore them -- GEX44 2026-09-26).
+    sub.add_parser("record-gates").set_defaults(fn=cmd_record_gates)
 
     sw_p = common(sub.add_parser("sweep"))
     sw_p.add_argument("--dry-run", action="store_true")
