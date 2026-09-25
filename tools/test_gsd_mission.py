@@ -179,6 +179,16 @@ def main() -> int:
           and max(i for i, a in enumerate(argv) if a in ("--add-dir", "--allowedTools")) < len(argv) - 4,
           str(argv))
 
+    # 2026-09-25: an unattended worker parked on an EnterWorktree prompt. Both worktree tools
+    # are pre-approved on every launch, once, and nothing wider is added.
+    allowed = [argv[i + 1] for i, a in enumerate(argv) if a == "--allowedTools"]
+    check("V-MC-ARGV-WORKTREE-TOOLS-PREAPPROVED",
+          allowed == ["Read", "Edit", "EnterWorktree", "ExitWorktree"], str(allowed))
+    bare = gm.worker_argv({"mission_id": "m", "epoch": 1, "allowed_tools": ["EnterWorktree"]}, "/x")
+    bare_allowed = [bare[i + 1] for i, a in enumerate(bare) if a == "--allowedTools"]
+    check("V-MC-ARGV-WORKTREE-TOOLS-NO-DUPLICATE",
+          bare_allowed == ["EnterWorktree", "ExitWorktree"], str(bare_allowed))
+
     # --- workstream binding (2026-09-25: a bare /gsd-autonomous ran the ROOT milestone) ------
     rec = gm.create(TMP, "/gsd-autonomous", mission_id="m-ws", workstream="lobby-ws", now=NOW)
     check("V-MC-WS-BOUND-AT-CREATE", rec["resume_command"] == "/gsd-autonomous --ws lobby-ws",

@@ -448,7 +448,12 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
     launched successfully."""
     exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
     argv = [exe, "--bg", "-n", worker_name(rec)]
-    for tool in rec.get("allowed_tools") or []:
+    # Owner-approved 2026-09-25: two BLOCKED missions (m-2b4b7a36b2c8, m-2be47a186897) were
+    # both parked on an EnterWorktree permission prompt -- the card tells a worker to enter
+    # the work tree, and an unattended worker cannot answer the prompt that follows. Only the
+    # two worktree tools are pre-approved; everything else stays under the permission mode.
+    tools = list(dict.fromkeys([*(rec.get("allowed_tools") or []), "EnterWorktree", "ExitWorktree"]))
+    for tool in tools:
         argv += ["--allowedTools", tool]
     for d in rec.get("add_dirs") or []:
         argv += ["--add-dir", d]
