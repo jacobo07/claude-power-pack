@@ -12,3 +12,18 @@ vault/knowledge_base/governance_vaccines.md merge=union
 vault/audits/verdicts.jsonl               merge=union
 vendor/NOTICE.md                          merge=union
 SSOT.md                                   merge=union
+
+# 2026-09-25: these are DEPLOYED to Linux (GEX44) by tarring the working copy.
+# On a Windows checkout git would hand them back with CRLF, the tar would carry
+# the CRs, and bash would answer \$'\r': command not found -- which reads as a
+# logic bug in the script rather than as a checkout artifact. The shipping
+# payload was verified at 0 CR bytes before the first deploy; this is what keeps
+# that true on the next clone.
+modules/keos_qwen/units/*.sh       text eol=lf
+modules/keos_qwen/units/*.service  text eol=lf
+modules/keos_qwen/units/*.timer    text eol=lf
+modules/keos_qwen/units/*.env      text eol=lf
+modules/keos_qwen/goals/*.py       text eol=lf
+modules/keos_qwen/goals/*.exs      text eol=lf
+modules/keos_qwen/ledger/*.py      text eol=lf
+modules/keos_qwen/install/*.sh     text eol=lf
