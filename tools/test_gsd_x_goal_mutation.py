@@ -63,8 +63,10 @@ GOALCLI = ROOT / "tools" / "gsd_x_goal.py"
 # Suites that own gates but that no prefix ever named. `suite_for` searches this
 # set too, so a gate cannot go unowned merely because the prefix table is stale.
 EXTRA_SUITES = (ROOT / "tools" / "test_gsd_x_goal_cli.py",
-                ROOT / "tools" / "test_gsd_x_goal_authority.py")
+                ROOT / "tools" / "test_gsd_x_goal_authority.py",
+                ROOT / "tools" / "test_gsd_x_goal_relay.py")
 AUTH = GOAL / "authority.py"
+RELAY = GOAL / "relay.py"
 
 # name -> (file, old, new, property removed, gate that must go red)
 MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
@@ -339,6 +341,25 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "    if False:",
         "an older signed licence replayed over a newer witnessed one must be refused",
         "V-AUTH-LICENCE-REPLAY-REFUSED"),
+    # --- the founder-decision relay (GDD slice 2, spec section 10) ---
+    # NOT a mutant here: removing the relay's own head check (seq / prev_digest) in
+    # `relay.apply_envelope` is EQUIVALENT -- `append_presigned` repeats it on the
+    # read it publishes on and its LostRace is reported as the same STALE_ENVELOPE.
+    # The pair below removes the check that is load-bearing, in the layer that owns it.
+    "presigned-signature-unverified": (
+        LOG, "        if not ok:\n            raise au.AuthorityError(",
+        "        if False:\n            raise au.AuthorityError(",
+        "a pre-signed founder event must be refused by the store's writer itself when its "
+        "signature does not verify", "V-RELAY-PRESIGNED-SIG-VERIFIED"),
+    "presigned-prev-digest-unchecked": (
+        LOG, "        if prev_digest != current:", "        if False:",
+        "a validly signed event over another history must not be published onto this one",
+        "V-RELAY-PRESIGNED-PREV-CHECKED"),
+    "relay-signature-unchecked": (
+        RELAY, "    if not ok:\n        raise EnvelopeRefused(au.FOUNDER_SIGNATURE_INVALID",
+        "    if False:\n        raise EnvelopeRefused(au.FOUNDER_SIGNATURE_INVALID",
+        "a forged envelope must be named as forged by the relay, before the head is read",
+        "V-RELAY-TAMPER-DATA"),
 }
 
 

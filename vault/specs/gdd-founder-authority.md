@@ -1,5 +1,5 @@
 ---
-covers: [gdd-founder-authority, goal-founder-signature, goal-adopt, record-gates-signature, F2, F3-licence]
+covers: [gdd-founder-authority, goal-founder-signature, goal-adopt, record-gates-signature, F2, F3-licence, founder-relay, founder-sign, founder-apply, goal-head]
 status: APPROVED-BY-PLAN (kseip-p8-gdd-resident-20260924, audit fix F2)
 owner: LANE GDD (PP worktree factory/gdd)
 ---
@@ -89,6 +89,66 @@ is missing, authority mode is UNVERIFIABLE and the resident must refuse — neve
    carry no founder decision; (c) the witness directory's own subdirectories are created by the
    signer, and only the named witness directory is checked for writability.
 
+10. Relay (GDD slice 2): a founder decision signed on one host, appended and witnessed on another.
+   Production topology (measured 2026-09-24): the founder PRIVATE key lives only on the Windows
+   workstation; the goal store `/var/lib/kobii-factory/goals` is owned by `factory` (the resident);
+   the witness `/var/lib/kobii-factory/witness` is writable only by `factory-judge`; the anchor
+   `/etc/kobii-factory/founder_keys.json` is root 0444. No single process holds the key AND can write
+   the witness, so `GoalLog.append` cannot sign-and-witness a founder event anywhere. The relay splits
+   it into three verbs, in this order:
+   - **head** (GEX44, any reader of the store, writes nothing): `gsd_x_goal.py head --goal G
+     (--repo ID | --root PATH)` prints JSON `{kind, repo, goal, seq, digest}` — the last event's seq
+     and digest after `GoalLog.read()` has verified the whole chain (an empty log is `seq 0`, digest
+     GENESIS). It does NOT project, so it works on a log the resident refuses; the refusal is then
+     the apply's to make.
+   - **founder-sign** (workstation, holds `GSDX_FOUNDER_SIGNING_KEY` and a copy of the public anchor
+     in `GSDX_FOUNDER_KEYS`): `founder-sign --head FILE | (--repo --goal --seq --prev-digest)
+     --type T (--data JSON | --data-file F) [--actor A] --out ENVELOPE` writes, exclusively (never
+     overwrites), the envelope `{kind:"gsdx-founder-envelope/1", repo, goal, seq, prev_digest, type,
+     data, ts, actor, key_id, sig}` with `seq = head seq + 1` and `prev_digest = head digest`. `data`
+     excludes `_founder`; `key_id`/`sig` are exactly the block `authority.sign_event_data` makes, so
+     the signature is byte-identical to what `GoalLog.append` would have stored for the same
+     (repo, goal, seq, type, data, prev_digest, ts, actor) — Ed25519 is deterministic and the suite
+     re-signs to prove it. Refused at sign time, nothing written: a type outside FOUNDER_CLASS
+     (ENVELOPE_TYPE_NOT_FOUNDER); ABSENT or UNVERIFIABLE anchor; data that is not an object or carries
+     `_founder`; seq 1 that is not `goal.declared`, or `goal.declared` at any other seq; a
+     declared/revised payload whose `revision` is not `revision_of(semantic)` (a signed malformed
+     declaration could never be removed). The private key is never printed.
+   - **founder-apply** (GEX44, run as `factory-judge`): `founder-apply --envelope FILE`, in order:
+     (1) load the anchor — ABSENT or UNVERIFIABLE is refused; (2) verify the envelope's signature
+     against a FOUNDER-role anchor key over exactly (repo, goal, seq, type, data, ts, actor,
+     prev_digest) — BAD_SIGNATURE / WRONG_ROLE (a judge key) / UNKNOWN_KEY, all under
+     FOUNDER_SIGNATURE_INVALID; (3) the log's current last seq/digest must equal envelope seq-1 /
+     prev_digest, else STALE_ENVELOPE (the Founder re-runs head and re-signs); (4) the witness mark
+     (`check_witness`, rollback refused exactly as in `append`); (5) `GoalLog.append_presigned`, the
+     one narrow path for a pre-signed event: it re-reads the log, repeats the seq/prev_digest and
+     signature checks against what it read, and publishes through the SAME `publish` (tmp + fsync +
+     `os.link` compare-and-swap) and the same witness write as `append`; (6) the mark is raised.
+     Every refusal writes nothing. Replaying an applied envelope is STALE_ENVELOPE (the log has moved
+     past its seq) and writes nothing.
+   Concurrency: the goal log has no lock file; writers are serialised by `os.link` refusing an
+   existing sequence name. The resident (`factory`) and the relay (`factory-judge`) therefore append
+   safely side by side: whichever loses a sequence number gets LostRace and nothing it wrote is
+   visible (the relay reports it as STALE_ENVELOPE). This holds only if BOTH users can create files in
+   the goal directories — see the permission requirement below.
+   **Permission requirement (not applied by this slice; the coordinator does it on GEX44):** every
+   directory under `/var/lib/kobii-factory/goals` must be group `factory`, mode `2770` (group-writable,
+   setgid so new files and subdirectories inherit group `factory`), and BOTH `factory` and
+   `factory-judge` must run the goal tools with `umask 0007`, so a directory one of them creates (a new
+   goal's dir on `goal.declared`, the `runs/` dir) stays writable by the other and every event file is
+   group-readable. Without it, `founder-apply` as factory-judge fails at publish with a
+   PermissionError, reported as Inconclusive (nothing published), never as success.
+   What the relay does NOT protect, stated rather than implied: (a) `founder-apply`'s own checks run
+   as the witness writer, whose anchor mode is UNPROTECTED by design (WITNESS_WRITABLE), so they are
+   an early refusal, not the boundary — the boundary is the resident's projection, which re-verifies
+   every founder event under its own ENFORCED view; (b) an envelope is a bearer decision: whoever
+   holds the file can apply it (only once, and only on the head it was signed against) — it grants
+   nothing the Founder did not sign, but WHEN it lands is the carrier's choice until it goes stale;
+   (c) the envelope's `ts` is the workstation clock, signed as-is; nothing orders it against the
+   GEX44 clock; (d) a factory-judge that is itself compromised can write the witness and the store
+   (after the permission change) — it still cannot forge a founder signature, but it can truncate and
+   re-witness, which the witness cannot catch because it IS the witness writer.
+
 ## Adversarial cases the review (129ac4c, 2026-09-24) added, and where each is closed
 - tail truncation rolls back signed founder decisions → §9 FOUNDER_ROLLBACK.
 - licence replay / empty head → §6 LICENCE_STALE, LICENCE_UNWITNESSED, "unknown head".
@@ -124,6 +184,18 @@ is missing, authority mode is UNVERIFIABLE and the resident must refuse — neve
 - goal mutation drill gains entries: signature check skipped; adoption rule skipped; licence
   signature skipped; witness check skipped; licence_seq check skipped — each must be caught by its
   named gate.
+
+## Proof of the relay (tools/test_gsd_x_goal_relay.py, V-RELAY-*; each red branch with a control)
+- head → sign → apply appends, projects governed with the signed budget, and the stored data equals
+  what `sign_event_data` makes for the same fields (byte-identical signature).
+- tampered data / ts / actor / seq / prev_digest → refused, event count unchanged; wrong key (judge
+  signing a founder event, a key not in the anchor) → refused; non-founder type → refused at sign time;
+  stale envelope (log advanced after head) → STALE_ENVELOPE; replay → STALE_ENVELOPE, nothing written;
+  apply under ABSENT / UNVERIFIABLE → refused; the witness mark rises to the applied seq; a
+  pre-signed event with a bad signature is refused by `append_presigned` itself (not only by the relay).
+- the CLI verbs head / founder-sign / founder-apply drive the same path end to end.
+- mutation drill entries: relay skips the prev_digest check; `append_presigned` skips signature
+  verification — each caught by its named gate.
 
 ## Rollback
 Unset `GSDX_FOUNDER_KEYS` → ABSENT mode = today's behaviour. No stored data is rewritten.

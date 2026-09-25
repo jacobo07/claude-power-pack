@@ -20,6 +20,10 @@
     python tools/gsd_x_goal.py judge    --goal <id> --root <repo> --worktree <path>
     python tools/gsd_x_goal.py export   --goal <id> --root <repo> --to <file>
     python tools/gsd_x_goal.py restore  --goal <id> --root <repo> --from <file>
+    python tools/gsd_x_goal.py head     --goal <id> (--repo <id> | --root <repo>)
+    python tools/gsd_x_goal.py founder-sign --head <head.json> --type goal.budget_set \
+                                        --data '{"max_hours": 4}' --out <envelope.json>
+    python tools/gsd_x_goal.py founder-apply --envelope <envelope.json>
 
 Exit codes describe the ANSWER, not the process: 0 the command did what it says,
 1 the goal is not converged / the closure is blocked / the judge refused, 2 the
@@ -321,6 +325,55 @@ def cmd_adopt(args) -> int:
     return 0
 
 
+def _relay_log(args) -> gl.GoalLog:
+    """The log named by --repo (an id) or --root (a checkout). On the store's host
+    the relay user need not have the repository checked out, so the id is enough."""
+    if bool(args.repo) == bool(args.root):
+        raise ValueError("give exactly one of --repo ID or --root PATH")
+    return gl.GoalLog(args.repo or gl.repo_id(Path(args.root)), args.goal)
+
+
+def cmd_head(args) -> int:
+    """Read-only: the log's last seq and digest, the thing a founder envelope is
+    signed against (spec section 10). Writes nothing."""
+    from modules.gsd_x.goal import relay as rl
+    print(json.dumps(rl.head(_relay_log(args)), indent=2))
+    return 0
+
+
+def cmd_founder_sign(args) -> int:
+    """Workstation: sign exactly one founder-class event into an envelope file.
+    The private key named by GSDX_FOUNDER_SIGNING_KEY is never printed."""
+    from modules.gsd_x.goal import relay as rl
+    if args.head:
+        h = json.loads(Path(args.head).read_text(encoding="utf-8-sig"))
+        if not isinstance(h, dict) or h.get("kind") != rl.HEAD_KIND:
+            raise ValueError(f"{args.head} is not the output of `head`")
+        repo, goal, seq, digest = h["repo"], h["goal"], h["seq"], h["digest"]
+    else:
+        if not (args.repo and args.goal and args.seq is not None and args.prev_digest):
+            raise ValueError("give --head FILE, or all of --repo --goal --seq --prev-digest")
+        repo, goal, seq, digest = args.repo, args.goal, args.seq, args.prev_digest
+    if bool(args.data) == bool(args.data_file):
+        raise ValueError("give exactly one of --data JSON or --data-file FILE")
+    raw = args.data if args.data else Path(args.data_file).read_text(encoding="utf-8-sig")
+    env = rl.make_envelope(repo, goal, int(seq), digest, args.type, json.loads(raw), args.actor)
+    rl.write_envelope(Path(args.out), env)
+    print(f"signed {env['type']} for {goal} seq {env['seq']} with founder key {env['key_id']}")
+    print(f"envelope: {args.out} (apply on the store's host with founder-apply --envelope)")
+    return 0
+
+
+def cmd_founder_apply(args) -> int:
+    """Store's host, as the witness writer: verify an envelope and publish it."""
+    from modules.gsd_x.goal import authority as au
+    from modules.gsd_x.goal import relay as rl
+    ev = rl.apply_envelope(rl.read_envelope(Path(args.envelope)))
+    print(f"applied {ev.type} at seq {ev.seq} ({ev.digest[:16]}...): "
+          f"{au.describe(au.load_anchor())}")
+    return 0
+
+
 def cmd_export(args) -> int:
     """A checkpoint for cold birth: the events, as they are, labelled derived."""
     lg = _log(args)
@@ -460,10 +513,34 @@ def main(argv: list[str] | None = None) -> int:
                          "only prints what it would attest and exits 2")
     ad.set_defaults(fn=cmd_adopt)
 
+    # --- the founder-decision relay (spec section 10) ---
+    hd = sub.add_parser("head")
+    hd.add_argument("--goal", required=True)
+    hd.add_argument("--repo", default="", help="the repository id (root commit)")
+    hd.add_argument("--root", default="", help="a checkout, when the id is not known")
+    hd.set_defaults(fn=cmd_head)
+
+    fs = sub.add_parser("founder-sign")
+    fs.add_argument("--head", default="", help="the JSON printed by `head`")
+    fs.add_argument("--repo", default="")
+    fs.add_argument("--goal", default="")
+    fs.add_argument("--seq", type=int, default=None, help="the head's seq (the envelope is seq+1)")
+    fs.add_argument("--prev-digest", default="")
+    fs.add_argument("--type", required=True)
+    fs.add_argument("--data", default="")
+    fs.add_argument("--data-file", default="")
+    fs.add_argument("--actor", default="owner")
+    fs.add_argument("--out", required=True)
+    fs.set_defaults(fn=cmd_founder_sign)
+
+    fa = sub.add_parser("founder-apply")
+    fa.add_argument("--envelope", required=True)
+    fa.set_defaults(fn=cmd_founder_apply)
+
     args = ap.parse_args(argv)
     try:
         return args.fn(args)
-    except (gl.GoalLogError, FileNotFoundError, ValueError) as exc:
+    except (gl.GoalLogError, FileNotFoundError, FileExistsError, ValueError) as exc:
         # The COMMAND could not run. Distinct from a goal that is not converged,
         # which is exit 1 with a verdict.
         print(f"REFUSED: {exc.__class__.__name__}: {exc}")
