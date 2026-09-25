@@ -71,6 +71,71 @@ def main() -> int:
         real(lg.dir)
         check("V-UWCP-F-DIRSYNC-POSIX", True, "POSIX directory fsync ran without error", "")
 
+    # --- S1-5 negative knowledge ---------------------------------------------
+    from modules.gsd_x.goal import contract as gc   # noqa: PLC0415
+    from modules.gsd_x.goal import evidence as ev   # noqa: PLC0415
+
+    hl = gl.GoalLog(REPO, "g-hyp", base=base)
+    gc.declare(hl, "find the sequencer starter", ["starter proven"], [], {"paths": ["src"]})
+
+    def refused(fn):
+        try:
+            fn()
+            return False
+        except ev.HypothesisRefused:
+            return True
+
+    A = "the framework play pair is in the card vtable"
+    ev.record(hl, gc.project(hl), "H-A", A, ev.OPEN, "epoch-1")
+    check("V-UWCP-F-HYP-ESTABLISH-NEEDS-REF",
+          refused(lambda: ev.record(hl, gc.project(hl), "H-A", A, ev.ESTABLISHED, "e1")),
+          "established without a supporting ref is refused", "an opinion was recorded as fact")
+    check("V-UWCP-F-HYP-REJECT-NEEDS-REF",
+          refused(lambda: ev.record(hl, gc.project(hl), "H-A", A, ev.REJECTED, "e1")),
+          "rejected without a contradicting ref is refused", "a rejection without evidence")
+    ev.record(hl, gc.project(hl), "H-A", A, ev.REJECTED, "epoch-1",
+              contradicting=["evidence/FP028.md#s3", "vtable 0x806BF618 dump"])
+    check("V-UWCP-F-HYP-IMMUTABLE",
+          refused(lambda: ev.record(hl, gc.project(hl), "H-A", A + " maybe", ev.OPEN, "e2")),
+          "an id's statement cannot be reworded", "statement was rewritten in place")
+    check("V-UWCP-F-HYP-NO-RESURRECT-SAME-ID",
+          refused(lambda: ev.record(hl, gc.project(hl), "H-A", A, ev.OPEN, "epoch-2",
+                                    contradicting=["evidence/FP028.md#s3"])),
+          "reopening a rejected hypothesis with already-considered evidence is refused",
+          "a rejected hypothesis came back without new information")
+    check("V-UWCP-F-HYP-NO-RESURRECT-REWORDED-ID",
+          refused(lambda: ev.record(hl, gc.project(hl), "H-A2", "  The framework PLAY pair "
+                                    "is in the card vtable ", ev.OPEN, "epoch-2")),
+          "a new id restating a rejected claim is refused", "resurrection by a new id")
+    ev.record(hl, gc.project(hl), "H-A", A, ev.OPEN, "epoch-3",
+              supporting=["new dump of vt[0x74] after patch 3"])
+    check("V-UWCP-F-HYP-REOPEN-WITH-NEW-INFO",
+          ev.project_hypotheses(gc.project(hl))["H-A"].status == ev.OPEN,
+          "control: a genuinely new ref may reopen it", "new information was refused")
+    ev.record(hl, gc.project(hl), "H-A", A, ev.REJECTED, "epoch-3",
+              contradicting=["re-dump confirms absence"])
+    ev.record(hl, gc.project(hl), "H-B", "starter is 0x801F5E54", ev.ESTABLISHED, "epoch-3",
+              supporting=["static decode, commit 682f6dd"])
+    check("V-UWCP-F-HYP-SUPERSEDE-NEEDS-SUCCESSOR",
+          refused(lambda: ev.record(hl, gc.project(hl), "H-B", "starter is 0x801F5E54",
+                                    ev.SUPERSEDED, "e4", superseded_by="H-NOPE")),
+          "superseded must name an existing successor", "dangling supersession accepted")
+
+    # A successor that has ONLY the durable log (fresh object, fresh projection).
+    succ = gc.project(gl.GoalLog(REPO, "g-hyp", base=base))
+    rj = ev.rejected(succ)
+    check("V-UWCP-F-HYP-SURVIVES-SUCCESSOR",
+          [h.hyp_id for h in rj] == ["H-A"]
+          and "vtable 0x806BF618 dump" in rj[0].contradicting
+          and "re-dump confirms absence" in rj[0].contradicting
+          and ev.project_hypotheses(succ)["H-B"].status == ev.ESTABLISHED,
+          "a successor reading only the log sees A rejected with ALL its evidence and B "
+          "established (Golden 08, LOCAL_REALITY half)", f"successor saw {rj}")
+    check("V-UWCP-F-HYP-OLD-READER",
+          gc.project(gl.GoalLog(REPO, "g-hyp", base=base)).revision != "",
+          "contract.project still replays a log carrying hypothesis events",
+          "old reader broke on the new event type")
+
     total = len(passes) + len(fails)
     print(f"UWCP_FOUNDATION_PASS={len(passes)}/{total}")
     return 0 if not fails else 1
