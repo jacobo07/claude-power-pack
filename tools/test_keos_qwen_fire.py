@@ -19,6 +19,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import re
 import sys
 import tempfile
 from contextlib import redirect_stdout
@@ -299,6 +300,41 @@ check("V-KEOSQ-FIRE-BOUNDED-PER-FIRING",
       f"5 queued, {fired} fired, bound={fire.MAX_PER_FIRE}: a firing is bounded "
       "by count and says so",
       f"fired {fired} of 5 with bound {fire.MAX_PER_FIRE}")
+
+# STARVATION UNDER THE BOUND. This is the gate that would have caught a real
+# defect: with a plain lexical sort, the first MAX_PER_FIRE goals won every
+# firing while they still had attempts, and the tail of the queue never ran at
+# all. Every firing reported `fired=3 worst=OK`, so nothing was visibly wrong --
+# the corpus was simply deep on three families and empty on two.
+clear_queue()
+for n in range(5):
+    queue_goal(f"g-star-{n}", max_attempts=5)
+# Give the lexically-first goal a head start, exactly as a real firing would.
+first = fire.QUEUE / "g-star-0.json"
+body = json.loads(first.read_text(encoding="utf-8"))
+body["attempts"] = 3
+first.write_text(json.dumps(body), encoding="utf-8")
+
+rc, out = run_main(["--dry-run"])
+reached = re.findall(r"--- goal (\S+)", out)
+check("V-KEOSQ-FIRE-NO-STARVATION",
+      "g-star-0" not in reached and len(reached) == fire.MAX_PER_FIRE,
+      f"the goal with 3 attempts already banked yields to the untouched ones: "
+      f"reached {reached}. A per-firing bound plus a lexical sort starves the "
+      f"tail of the queue forever, and every firing still reports success",
+      f"reached {reached}; the head-start goal should not have been picked")
+
+# The admitted control: with all attempts equal, order is stable and by name, so
+# the fix did not trade starvation for nondeterminism.
+clear_queue()
+for n in range(5):
+    queue_goal(f"g-even-{n}")
+rc, out = run_main(["--dry-run"])
+reached = re.findall(r"--- goal (\S+)", out)
+check("V-KEOSQ-FIRE-ORDER-STABLE-WHEN-EQUAL",
+      reached == ["g-even-0", "g-even-1", "g-even-2"],
+      f"with equal attempts the order is deterministic by name: {reached}",
+      f"ordering became unstable: {reached}")
 
 # A goal we cannot read stops the batch rather than being skipped past.
 clear_queue()

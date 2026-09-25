@@ -168,6 +168,22 @@ def load_goal(path: Path) -> dict:
     return obj
 
 
+def _attempts_for_ordering(path: Path) -> int:
+    """A cheap peek used ONLY to order the queue. It never refuses.
+
+    Ordering and admission are different jobs. `load_goal` is the one entitled
+    to refuse a malformed goal, and it does so loudly; if this function refused
+    too, one unreadable file would decide the batch before any goal was even
+    considered. So an unreadable file sorts FIRST (-1) rather than being skipped:
+    it is reached immediately and refused by the authority that owns refusing,
+    instead of sitting at the back of a queue nobody gets to.
+    """
+    try:
+        return int(json.loads(path.read_text(encoding="utf-8")).get("attempts", 0))
+    except Exception:  # noqa: BLE001 - every failure shape means "look at me first"
+        return -1
+
+
 def parse_attempt_line(stdout: str, stderr: str) -> dict:
     """Find the ONE sentinel line among the harness's diagnostics.
 
@@ -296,7 +312,17 @@ def main(argv=None) -> int:
         "fire_py_sha256": sha256_file(Path(__file__)),
     }
 
-    pending = sorted(p for p in QUEUE.glob("*.json") if p.is_file())
+    # FEWEST ATTEMPTS FIRST, then by name. Measured 2026-09-26: with a plain
+    # lexical sort and a bound of 3, the same three goals won every firing while
+    # they still had attempts left, and the last two in the queue NEVER RAN. The
+    # corpus would have gone deep on three families and held nothing at all on
+    # two -- including the one whose correct answer is a refusal, which is the
+    # most valuable item in the set.
+    #
+    # Nothing would have reported this. Every firing said `fired=3 worst=OK`.
+    # Starvation under a per-firing bound is invisible from inside the firing.
+    pending = sorted((p for p in QUEUE.glob("*.json") if p.is_file()),
+                     key=lambda p: (_attempts_for_ordering(p), p.name))
     if not pending:
         say("nothing queued. This is a result, not a failure: an empty queue and a "
             "refused batch are different facts and only one of them is about the model.")
