@@ -23,6 +23,8 @@ Environment=PATH=/home/factory/.local/bin:/usr/local/bin:/usr/bin:/bin
 Environment=PYTHONIOENCODING=utf-8
 Environment=GSDX_GOALS_ROOT=/var/lib/kobii-factory/goals
 Environment=GSDX_FOUNDER_KEYS=/etc/kobii-factory/founder_keys.json
+# Without the witness the anchor reads UNPROTECTED (WITNESS_UNSET), never ENFORCED.
+Environment=GSDX_FOUNDER_WITNESS=/var/lib/kobii-factory/witness
 Environment=GSDX_QUOTA_DIR=/var/lib/kobii-factory/quota
 Environment=GSDX_RESIDENT_STATE=/home/factory/.local/state/gsd-x/resident
 ExecStart=/usr/bin/python3 -B /home/factory/pp/tools/gsd_x_resident.py run
@@ -31,6 +33,9 @@ ExecStart=/usr/bin/python3 -B /home/factory/pp/tools/gsd_x_resident.py run
 ExecStopPost=/usr/bin/python3 -B /home/factory/pp/tools/gsd_x_resident.py census
 Restart=always
 RestartSec=30
+# Exit 3 = `run` honoured STOP. Without this, Restart=always relaunches it every
+# 30 s until StartLimitBurst fails the unit (found in the wave F rehearsal).
+RestartPreventExitStatus=3
 # Every process the resident started dies with the unit's cgroup.
 KillMode=control-group
 TimeoutStopSec=120

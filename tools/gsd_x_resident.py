@@ -12,7 +12,8 @@ from repeated `--goal ID --root PATH` pairs. State lives under GSDX_RESIDENT_STA
 (default <goals_root>/../resident). Contract: vault/specs/gdd-resident-driver.md.
 
 Exit codes: 0 did what it says; 1 refused (lock held, authority, STOP) or the
-health is not HEALTHY/RUNNING/IDLE on `status`; 2 could not run.
+health is not HEALTHY/RUNNING/IDLE on `status`; 2 could not run; 3 `run` honoured
+STOP (the unit's RestartPreventExitStatus, so a STOP is not restarted).
 """
 from __future__ import annotations
 
@@ -31,6 +32,7 @@ from modules.gsd_x.goal.providers.gate import GateProvider      # noqa: E402
 from modules.gsd_x.goal.resident import control, cycle, health, missions, procs, store  # noqa: E402
 
 COULD_NOT_RUN = 2
+STOPPED_EXIT = 3          # `run` honoured STOP; systemd must not restart it
 OK_HEALTH = (health.HEALTHY, health.RUNNING, health.IDLE_NO_APPROVED_GOAL)
 
 
@@ -92,7 +94,10 @@ def cmd_run(args) -> int:
         print(f"resident exited: {why}")
     finally:
         r.close()
-    return 0
+    # A STOP must not look like a finished wake: under Restart=always an exit 0
+    # is restarted, sees STOP again and exits again until StartLimitBurst marks
+    # the unit failed. The unit lists STOPPED_EXIT in RestartPreventExitStatus.
+    return STOPPED_EXIT if why == "STOPPED" else 0
 
 
 def cmd_census(args) -> int:

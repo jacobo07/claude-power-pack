@@ -643,6 +643,13 @@ def main() -> int:
           and rc_status in (0, 1),
           "`stop` writes the STOP file and `status --json` reads the heartbeat",
           f"stop={rc_stop} status={rc_status}")
+    rc_run_stopped = cli.main(["run", "--state", str(st_dir)])           # STOP still pending
+    ctl_dir = new_state()
+    rc_run_bound = cli.main(["run", "--max-cycles", "0", "--state", str(ctl_dir)])
+    check("V-RES-RUN-STOP-EXIT", rc_run_stopped == cli.STOPPED_EXIT and rc_run_bound == 0,
+          f"`run` that honours STOP exits {cli.STOPPED_EXIT} (the unit's RestartPreventExitStatus); "
+          "control: a run that reaches its wake bound exits 0 and is restarted",
+          f"stopped={rc_run_stopped} bound={rc_run_bound}")
 
     total = len(passes) + len(fails)
     print(f"\nUNJUDGED ({len(unjudged)}): {unjudged}")
