@@ -197,7 +197,8 @@ class GateProvider:
             verdicts.append({"gate": g["id"], "exit_status": rc, "observed": observed,
                              "tree_hash": tree, "revision": spec["revision"],
                              "gate_class": g["class"],
-                             "gate_pin": [list(p) for p in file_pin(root, g["files"])]})
+                             "gate_pin": [list(p) for p in file_pin(
+                                 root, g["files"], g.get("pin_scheme", "sha256"))]})
             if rc != 0:
                 failures.append({"summary": f"gate {g['id']} exited {rc}: {observed}",
                                  "signature": f"gate-exit:{g['id']}:{rc}"})

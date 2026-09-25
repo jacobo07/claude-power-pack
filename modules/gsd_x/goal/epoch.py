@@ -137,7 +137,14 @@ def scope_hash(root: Path, paths: list[str]) -> str:
 
     Goal bookkeeping and unrelated commits elsewhere do not move it, so they
     cannot make a failed attempt look new.
+
+    UWCP S1-9: content is hashed as an eol-normalized git blob id, so the same
+    scope has one key on a CRLF (Windows) and an LF (Linux node) checkout; and
+    interpreter/tool debris a gate run leaves behind (`__pycache__`, `*.pyc`,
+    `.pytest_cache`, `node_modules`) is not scope -- running a gate must not by
+    itself make a failed attempt look like new information.
     """
+    from .git_state import blob_oid  # noqa: PLC0415 -- git_state imports nothing from here
     root = Path(root)
     h = hashlib.sha256()
     files: list[Path] = []
@@ -146,11 +153,19 @@ def scope_hash(root: Path, paths: list[str]) -> str:
         if p.is_file():
             files.append(p)
         elif p.is_dir():
-            files.extend(q for q in p.rglob("*") if q.is_file() and ".git" not in q.parts)
+            files.extend(q for q in p.rglob("*") if q.is_file() and not _debris(q))
     for f in sorted(set(files)):
         h.update(f.relative_to(root).as_posix().encode("utf-8") + b"\0")
-        h.update(hashlib.sha256(f.read_bytes()).digest())
+        h.update(blob_oid(f.read_bytes()).encode("ascii"))
     return h.hexdigest()[:24]
+
+
+_DEBRIS_DIRS = frozenset({".git", "__pycache__", ".pytest_cache", "node_modules",
+                          ".mypy_cache", ".ruff_cache"})
+
+
+def _debris(path: Path) -> bool:
+    return bool(_DEBRIS_DIRS.intersection(path.parts)) or path.suffix in (".pyc", ".pyo")
 
 
 def info_key(revision: str, open_gaps: list[str], provider: str, hypothesis: str,

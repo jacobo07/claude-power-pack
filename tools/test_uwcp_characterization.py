@@ -117,22 +117,55 @@ def main() -> int:
     pin_crlf = gs.file_pin(crlf, ["gate/t.py"])
     check("V-UWCP-CHAR-PIN-CONTROL", gs.file_pin(lf, ["gate/t.py"]) == pin_lf,
           "control: identical bytes pin identically", "pin not deterministic")
-    check("V-UWCP-CHAR-PIN-EOL-SPLIT", pin_lf != pin_crlf,
-          "TODAY: one committed file pins differently on a CRLF (Windows) and an LF "
-          "(GEX44) checkout -- S1-9 inverts this", "already eol-invariant: invert in S1-9")
-    check("V-UWCP-CHAR-SCOPE-EOL-SPLIT",
+    # The legacy sha256 scheme still splits BY DESIGN (stored pins keep verifying
+    # byte-exactly); it stays pinned here as the control for the inversion below.
+    check("V-UWCP-PIN-LEGACY-STILL-RAW", pin_lf != pin_crlf,
+          "control: legacy sha256 pins remain raw-byte (existing goals unaffected)",
+          "legacy scheme changed meaning under stored pins")
+    # INVERTED by S1-9: was V-UWCP-CHAR-PIN-EOL-SPLIT.
+    b_lf = gs.file_pin(lf, ["gate/t.py"], gs.BLOB)
+    b_crlf = gs.file_pin(crlf, ["gate/t.py"], gs.BLOB)
+    check("V-UWCP-PIN-BLOB-EOL-INVARIANT", b_lf == b_crlf and b_lf[0][1].startswith("blob:"),
+          "blob pins of one file agree on a CRLF and an LF checkout", f"{b_lf} != {b_crlf}")
+    # INVERTED by S1-9: was V-UWCP-CHAR-SCOPE-EOL-SPLIT.
+    check("V-UWCP-SCOPE-EOL-INVARIANT",
+          ep.scope_hash(lf, ["gate"]) == ep.scope_hash(crlf, ["gate"]),
+          "the retry key is the same on both hosts' checkouts", "scope hash splits on eol")
+    (lf / "gate" / "t.py").write_bytes(b"print(9)\n")
+    check("V-UWCP-SCOPE-SEES-CONTENT",
           ep.scope_hash(lf, ["gate"]) != ep.scope_hash(crlf, ["gate"]),
-          "TODAY: scope_hash (the retry key) differs across line endings, so a failed "
-          "attempt re-run on the other host passes as new information -- S1-9",
-          "already eol-invariant: invert in S1-9")
+          "control: a real content change still moves the key", "scope hash went blind")
+    (lf / "gate" / "t.py").write_bytes(b"print(1)\nprint(2)\n")
+    if GIT:
+        p = subprocess.run([GIT, "hash-object", str(lf / "gate" / "t.py")],
+                           capture_output=True, text=True, timeout=30)
+        check("V-UWCP-BLOB-MATCHES-GIT",
+              b_lf[0][1] == "blob:" + p.stdout.strip(),
+              "blob_oid equals `git hash-object` for the LF file (independent instrument)",
+              f"{b_lf[0][1]} vs git {p.stdout.strip()}")
+    try:
+        gs.pin_scheme((("a", "blob:1"), ("b", "ff")))
+        mixed_refused = False
+    except ValueError:
+        mixed_refused = True
+    check("V-UWCP-PIN-MIXED-REFUSED", mixed_refused and gs.pin_scheme(pin_lf) == gs.SHA256
+          and gs.pin_scheme(b_lf) == gs.BLOB,
+          "a pin mixing schemes is refused; each pure pin reports its scheme",
+          "mixed pin accepted or scheme misread")
+    check("V-UWCP-DIGEST-MATCHES-BOTH",
+          gs.digest_matches(lf / "gate" / "t.py", pin_lf[0][1])
+          and gs.digest_matches(crlf / "gate" / "t.py", b_lf[0][1])
+          and not gs.digest_matches(crlf / "gate" / "t.py", pin_lf[0][1]),
+          "the judge's check honours each scheme: legacy exact, blob eol-invariant",
+          "digest_matches misjudged a scheme")
 
-    # --- C3 scope_hash moves on untracked build debris (S1-9) -----------------
+    # --- C3 scope_hash ignores build debris (INVERTED by S1-9) ----------------
     before = ep.scope_hash(lf, ["gate"])
     (lf / "gate" / "__pycache__").mkdir()
     (lf / "gate" / "__pycache__" / "t.cpython-312.pyc").write_bytes(b"\x00junk")
-    check("V-UWCP-CHAR-SCOPE-DEBRIS", ep.scope_hash(lf, ["gate"]) != before,
-          "TODAY: running a gate (which writes __pycache__) moves the retry key -- S1-9",
-          "already ignores untracked debris: invert in S1-9")
+    check("V-UWCP-SCOPE-IGNORES-DEBRIS", ep.scope_hash(lf, ["gate"]) == before,
+          "running a gate (which writes __pycache__) no longer moves the retry key",
+          "debris moved the key")
 
     # --- C4 brief has no total bound (S1-6) -----------------------------------
     big = "x" * 200_000

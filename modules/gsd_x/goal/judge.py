@@ -26,7 +26,6 @@ checked and it is fine".
 """
 from __future__ import annotations
 
-import hashlib
 import os
 import shlex
 import subprocess
@@ -37,7 +36,7 @@ from pathlib import Path
 
 from .contract import GoalState
 from .convergence import SATISFIED, project_convergence
-from .git_state import tree_id
+from .git_state import digest_matches, tree_id
 
 PASS, REFUSED, UNJUDGEABLE = "PASS", "REFUSED", "UNJUDGEABLE"
 EPOCH_ENV = "GSDX_GOAL_EPOCH"
@@ -152,7 +151,7 @@ def judge(state: GoalState, tree_hash: str, worktree: Path,
             p = worktree / rel
             if not p.is_file():
                 moved.append(f"{rel} (missing)")
-            elif hashlib.sha256(p.read_bytes()).hexdigest() != digest:
+            elif not digest_matches(p, digest):     # in the scheme it was pinned in
                 moved.append(rel)
         if moved:
             results.append({"obligation": o.identifier, "gate": o.done_gate,

@@ -85,7 +85,9 @@ def cmd_plane(args) -> int:
 
 def cmd_oblige(args) -> int:
     lg = _log(args)
-    pin = gs.file_pin(Path(args.root), args.gate_file)
+    # New obligations pin eol-invariantly (UWCP S1-9): the judge may run on a
+    # Linux node against a checkout made on Windows.
+    pin = gs.file_pin(Path(args.root), args.gate_file, gs.BLOB)
     cv.accept_obligation(lg, gc.project(lg), args.id, args.plane, args.text, args.gate,
                          pin, args.actor, gate_class=args.gate_class)
     print(f"accepted {args.id} ({args.plane}); proven by {args.gate!r} "

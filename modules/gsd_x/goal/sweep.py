@@ -233,7 +233,10 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
         else:
             gate = {"id": o.identifier, "command": jd._argv(o.done_gate),
                     "class": o.gate_class or "unit",
-                    "files": [rel for rel, _ in o.gate_pin]}
+                    "files": [rel for rel, _ in o.gate_pin],
+                    # the verdict is pinned in its obligation's scheme, or the
+                    # exact pin comparison in convergence refuses it (UWCP S1-9)
+                    "pin_scheme": gs.pin_scheme(o.gate_pin)}
             # The gate spec is STORED on the epoch, never rebuilt at harvest.
             # Measured 2026-09-22 on the first real goal: harvest rebuilt it from
             # an epoch record that never carried it, so every gate RAN, produced

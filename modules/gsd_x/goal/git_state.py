@@ -55,12 +55,59 @@ def _dirty(root: Path, paths: list[str] | None) -> bool:
     return rc != 0 or bool(out.strip())
 
 
-def file_pin(root: Path, files: list[str]) -> tuple:
-    """((path, sha256), ...) for the gate's own files, sorted.
+SHA256, BLOB = "sha256", "blob"
+BLOB_PREFIX = "blob:"
+
+
+def blob_oid(data: bytes) -> str:
+    """git's blob id of `data` after line-ending normalization (UWCP S1-9).
+
+    One committed file is CRLF on a Windows checkout and LF on a Linux node; a
+    raw-byte hash gives it two identities, so a gate pinned on one host reads as
+    "changed" on the other, and a failed attempt re-run there looks like new
+    information. Text (no NUL in the first 8000 bytes -- git's own heuristic) is
+    normalized to LF, then hashed as git hashes a blob, so the id equals what
+    `git hash-object` reports for the normalized file on any host. Binary bytes
+    are hashed untouched.
+    """
+    if b"\0" not in data[:8000]:
+        data = data.replace(b"\r\n", b"\n")
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def file_digest(path: Path, scheme: str = SHA256) -> str:
+    data = Path(path).read_bytes()
+    if scheme == BLOB:
+        return BLOB_PREFIX + blob_oid(data)
+    if scheme == SHA256:
+        return hashlib.sha256(data).hexdigest()
+    raise ValueError(f"unknown pin scheme {scheme!r}")
+
+
+def pin_scheme(pin) -> str:
+    """The scheme a stored pin was taken in. Mixed pins are refused, not guessed."""
+    kinds = {BLOB if str(d).startswith(BLOB_PREFIX) else SHA256 for _, d in (pin or ())}
+    if len(kinds) > 1:
+        raise ValueError(f"pin mixes digest schemes: {sorted(kinds)}")
+    return kinds.pop() if kinds else SHA256
+
+
+def digest_matches(path: Path, digest: str) -> bool:
+    """Does the file still have `digest`, in whichever scheme it was taken?"""
+    scheme = BLOB if str(digest).startswith(BLOB_PREFIX) else SHA256
+    return file_digest(path, scheme) == digest
+
+
+def file_pin(root: Path, files: list[str], scheme: str = SHA256) -> tuple:
+    """((path, digest), ...) for the gate's own files, sorted.
 
     This is what an obligation pins at acceptance. A gate whose script or tests
     changed afterwards is a different gate, and an honest re-run of a rewritten
     gate proves nothing about the one that was accepted.
+
+    `scheme` defaults to the historical raw sha256 so every stored pin keeps
+    verifying; new obligations pin with BLOB (eol-invariant, portable across
+    hosts), and a verdict is pinned in its obligation's scheme.
     """
     root = Path(root)
     out = []
@@ -68,7 +115,7 @@ def file_pin(root: Path, files: list[str]) -> tuple:
         p = root / rel
         if not p.is_file():
             raise FileNotFoundError(f"gate file {rel} does not exist under {root}")
-        out.append((rel, hashlib.sha256(p.read_bytes()).hexdigest()))
+        out.append((rel, file_digest(p, scheme)))
     if not out:
         raise ValueError("a gate pin needs at least one file")
     return tuple(out)
