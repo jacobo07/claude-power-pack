@@ -252,9 +252,55 @@ def main() -> int:
     except ep.EpochError as exc:
         cannot = "cannot start" in str(exc)
         why6 = str(exc)[:90]
-    check("V-UWCP-CHAR-LONGRUN-CANNOT-START", cannot,
-          "TODAY: the goal spine cannot start a /cpp-gsd-long run although v3 `arm` "
-          "exists -- S1-11 inverts this", f"behaviour changed: {why6}")
+    check("V-UWCP-LONGRUN-NEEDS-SPEC", cannot and "mission spec" in why6,
+          "with neither a mission spec nor a bound session, nothing is started -- and the "
+          "refusal names both ways in", f"behaviour changed: {why6}")
+
+    # INVERTED by S1-11: was V-UWCP-CHAR-LONGRUN-CANNOT-START. The goal spine arms a
+    # v3 mission itself; launch=False so no worker is spawned in a test.
+    old_sd = os.environ.get("GSD_LONG_RUN_STATE_DIR")
+    os.environ["GSD_LONG_RUN_STATE_DIR"] = str(base / "mstate")
+    (base / "mstate").mkdir()
+    try:
+        from modules.gsd_x.goal.providers import long_run as lrp  # noqa: PLC0415
+        prov = lrp.LongRunProvider(base / "lr3")
+        tok = "abcdef0123456789" * 2
+        spec3 = {"epoch_id": "ep-m", "revision": "r1", "identity": {"run_token": tok},
+                 "mission": {"cwd": str(base), "command": "/gsd-autonomous", "launch": False,
+                             "max_cycles": 2, "max_hours": 1}}
+        h = prov.dispatch(spec3)
+        o = prov.observe(h)
+        check("V-UWCP-LONGRUN-ARMS-V3",
+              h.get("mission_id") == lrp.mission_id_for(tok)
+              and o.state == ep.OBS_RUNNING and "not started" in o.detail,
+              f"the spine arms a v3 mission ({h.get('mission_id')}) and reports it ARMED, not "
+              f"running: {o.detail}", f"handle={h} obs={o}")
+        try:
+            prov.dispatch(spec3)
+            dup = False
+        except ep.EpochError:
+            dup = True
+        check("V-UWCP-LONGRUN-NO-DOUBLE-ARM", dup,
+              "a second dispatch of the same epoch identity is refused (one mission per epoch)",
+              "the same epoch armed two missions")
+        (base / "lr3" / f"longrun-{tok}.json").unlink()
+        check("V-UWCP-LONGRUN-PROBE-ADOPTS",
+              (prov.probe({"run_token": tok}) or {}).get("mission_id") == h["mission_id"],
+              "a crash that lost the marker still finds the armed mission by its derived id",
+              "probe could not adopt the armed mission")
+        prov.cancel(h)
+        o2 = prov.observe(h)
+        r = prov.harvest(h, spec3)
+        check("V-UWCP-LONGRUN-CANCEL",
+              o2.state == ep.OBS_ENDED and o2.outcome == ep.CANCELLED and r.verdicts == []
+              and any("halted" in f["signature"] for f in r.failures),
+              "cancel halts the mission through its CAS; the epoch ends CANCELLED and the "
+              "receipt carries the halt, no verdict", f"obs={o2} receipt failures={r.failures}")
+    finally:
+        if old_sd is None:
+            os.environ.pop("GSD_LONG_RUN_STATE_DIR", None)
+        else:
+            os.environ["GSD_LONG_RUN_STATE_DIR"] = old_sd
 
     # --- C7 repo identity: path key is host-local, no portable id (S1-3) ------
     from modules.repo_identity import identity as ri  # noqa: PLC0415
