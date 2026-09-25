@@ -29,6 +29,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,6 +64,9 @@ GOALCLI = ROOT / "tools" / "gsd_x_goal.py"
 # Suites that own gates but that no prefix ever named. `suite_for` searches this
 # set too, so a gate cannot go unowned merely because the prefix table is stale.
 EXTRA_SUITES = (ROOT / "tools" / "test_gsd_x_goal_cli.py",)
+# Per-suite wall clock. 300 s suits an unloaded host; a starved one needs more, and a
+# timeout is reported as INVALID for that mutant rather than aborting the run.
+SUITE_TIMEOUT_S = int(os.environ.get("GSDX_MUTATION_SUITE_TIMEOUT_S") or 300)
 
 # name -> (file, old, new, property removed, gate that must go red)
 MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
@@ -402,6 +406,51 @@ def _interrupted(signum, _frame):
     raise KeyboardInterrupt(f"signal {signum}")
 
 
+def _kill_tree(pid: int) -> None:
+    """Kill the suite AND its descendants. subprocess.run's timeout kills only the
+    direct child; the suite's own children (gsd_x_goal.py, git) kept running and
+    held a target open, so the restore right after failed with EINVAL (2026-09-25)."""
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
+                           capture_output=True, timeout=60)
+        else:
+            os.killpg(os.getpgid(pid), signal.SIGKILL)
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f"  (tree kill of {pid} failed: {exc}; restore will retry)")
+
+
+def _run_suite(argv: list) -> tuple[int, str]:
+    p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                         cwd=str(ROOT), start_new_session=(os.name != "nt"),
+                         env={**os.environ, "PYTHONIOENCODING": "utf-8",
+                              "PYTHONDONTWRITEBYTECODE": "1"})
+    try:
+        out, _ = p.communicate(timeout=SUITE_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        _kill_tree(p.pid)
+        try:
+            p.communicate(timeout=60)
+        except subprocess.TimeoutExpired:
+            pass
+        raise
+    return p.returncode, out or ""
+
+
+def _restore(path: Path, data: bytes, attempts: int = 10) -> None:
+    """Write the original back, retrying a transient share/lock error (a dying
+    process tree or an AV scan). Raises after `attempts`: an unrestored target is
+    reported by the sha256 check, never assumed restored."""
+    for i in range(attempts):
+        try:
+            path.write_bytes(data)
+            return
+        except OSError:
+            if i == attempts - 1:
+                raise
+            time.sleep(0.5 * (i + 1))
+
+
 def main() -> int:
     for name in ("SIGTERM", "SIGINT", "SIGBREAK", "SIGHUP"):
         if hasattr(signal, name):
@@ -436,19 +485,23 @@ def main() -> int:
                 continue
             path.write_bytes(text.replace(old, new, 1).encode("utf-8"))
             try:
-                proc = subprocess.run([sys.executable, "-B", str(suite_for(gate))],
-                                      capture_output=True, text=True, cwd=str(ROOT),
-                                      timeout=300,
-                                      env={**os.environ, "PYTHONIOENCODING": "utf-8",
-                                           "PYTHONDONTWRITEBYTECODE": "1"})
+                rc, stdout = _run_suite([sys.executable, "-B", str(suite_for(gate))])
+            except subprocess.TimeoutExpired:
+                # A suite that could not finish judged nothing. Measured 2026-09-25
+                # (UWCP): the CLI suite takes ~8 min on a host at <1 GB free, and the
+                # uncaught TimeoutExpired aborted the WHOLE run. It is INVALID for this
+                # mutant -- never CAUGHT, never SURVIVED -- and the others still run.
+                outcomes[name] = (f"TIMED OUT after {SUITE_TIMEOUT_S}s -- the host could "
+                                  "not run the suite; not a verdict", prop, gate)
+                continue
             finally:
-                path.write_bytes(originals[path])
-            failed = [ln.strip() for ln in proc.stdout.splitlines()
+                _restore(path, originals[path])
+            failed = [ln.strip() for ln in stdout.splitlines()
                       if ln.strip().startswith("FAIL")]
-            outcomes[name] = ((proc.returncode, failed), prop, gate)
+            outcomes[name] = ((rc, failed), prop, gate)
     finally:
         for p, b in originals.items():
-            p.write_bytes(b)
+            _restore(p, b)
 
     restored = all(hashlib.sha256(p.read_bytes()).hexdigest() == digests[p] for p in targets)
     print(f"restored (sha256, {len(targets)} file(s)): {restored}\n")
