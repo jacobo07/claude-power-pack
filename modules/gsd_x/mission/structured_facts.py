@@ -47,8 +47,10 @@ adapter, and the caller is told which source it got (`source_of`).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .obligation import DECLARED, FACT_NAMES, FACT_STATES, UNKNOWN, Fact
@@ -286,3 +288,110 @@ def dump(facts: list[Fact], provenance: str) -> dict:
         "provenance": provenance,
         "facts": [{"name": f.name, "evidence": f.matched} for f in facts],
     }
+
+
+# --- freshness --------------------------------------------------------------
+# ONE owner, here, because this module owns the document and `depends_on` is a
+# field of that document. tools/gsd_x_fact_producer.py held the only copy and
+# now imports these: a second implementation plus a parity gate between them is
+# strictly worse than one implementation, and this wave is the wrong place to
+# leave two answers to "has this source moved".
+#
+# Freshness is DEPENDENCY-DRIVEN and there is no clock in the decision. A change
+# to an unrelated file invalidates nothing; a change to a source invalidates the
+# entry computed from it.
+
+FRESH = "FRESH"
+STALE = "STALE"
+INSTRUMENT = "INSTRUMENT"
+# UNKNOWN is imported from `obligation` -- the same constant the producer and
+# the loader use, so a source that vanished reads identically everywhere.
+
+
+def fingerprint(path: Path) -> dict:
+    """Identity of a source, by CONTENT and not only by timestamp.
+
+    mtime alone is a proxy: a file rewritten with identical bytes moves it, and
+    a restored file can move it backwards. The hash is what decides; mtime is
+    kept because it is what a human reads when asking 'when did this change'.
+    """
+    path = Path(path)
+    try:
+        data = path.read_bytes()
+    except OSError as exc:
+        return {"path": str(path), "readable": False, "why": str(exc)}
+    st = path.stat()
+    return {
+        "path": str(path),
+        "readable": True,
+        "bytes": len(data),
+        "mtime": datetime.fromtimestamp(st.st_mtime, timezone.utc).isoformat(
+            timespec="seconds"),
+        "sha256": hashlib.sha256(data).hexdigest(),
+    }
+
+
+def freshness_rows(doc: dict) -> list[dict]:
+    """Per-ENTRY freshness across all three buckets.
+
+    Per entry, never aggregated here. A caller deciding whether to block needs
+    to know WHICH fact moved -- an aggregate cannot say, and an aggregate is
+    also where an empty document becomes indistinguishable from a vanished
+    source (see `freshness_verdict`).
+    """
+    rows: list[dict] = []
+    for bucket in ("facts", "not_held", "unknown"):
+        for entry in list(doc.get(bucket, []) or []):
+            verdict, moved = FRESH, []
+            for dep in entry.get("depends_on", []) or []:
+                path = Path(dep.get("path", ""))
+                now = fingerprint(path)
+                if not now.get("readable") or not dep.get("readable"):
+                    # A source that can no longer be read is UNKNOWN, NOT
+                    # STALE: we cannot say the fact changed, only that we can
+                    # no longer check it. Reporting that as STALE would claim
+                    # knowledge of a change nobody observed.
+                    verdict = UNKNOWN
+                    moved.append({"path": str(path),
+                                  "why": "source no longer readable"})
+                    continue
+                if now.get("sha256") != dep.get("sha256"):
+                    if verdict != UNKNOWN:
+                        verdict = STALE
+                    moved.append({"path": str(path),
+                                  "was": dep.get("sha256", "")[:12],
+                                  "now": now.get("sha256", "")[:12]})
+            rows.append({"name": entry.get("name"), "bucket": bucket,
+                         "verdict": verdict, "moved": moved})
+    return rows
+
+
+def freshness_verdict(rows: list[dict]) -> str:
+    """The worst row, as one word.
+
+    DELIBERATE CONFLATION, NAMED: a document with no rows answers UNKNOWN,
+    which is also what a vanished source answers. That is wrong in principle --
+    an empty but well-formed document is not evidence of anything having moved
+    -- and it is preserved because `tools/gsd_x_fact_producer.py --reconcile`
+    maps this word to an exit code that callers already depend on.
+
+    A CALLER DECIDING WHETHER TO BLOCK MUST NOT USE THIS. Feed on
+    `freshness_rows()` instead, or an empty facts document holds a wave.
+    """
+    if not rows:
+        return UNKNOWN
+    if any(r["verdict"] == UNKNOWN for r in rows):
+        return UNKNOWN
+    if any(r["verdict"] == STALE for r in rows):
+        return STALE
+    return FRESH
+
+
+def reconcile_document(doc_path: Path) -> tuple[str, list[dict]]:
+    """Re-read every entry's declared sources. (aggregate, per-entry rows)."""
+    try:
+        doc = json.loads(Path(doc_path).read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+        return INSTRUMENT, [{"why": f"{doc_path}: {exc}"}]
+    rows = freshness_rows(doc)
+    return freshness_verdict(rows), rows

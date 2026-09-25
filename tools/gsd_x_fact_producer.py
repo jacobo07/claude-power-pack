@@ -43,19 +43,32 @@ Exit: 0 ok | 1 STALE or a refusal | 2 instrument failure
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-SCHEMA = "gsdx-facts/2"
+# The freshness primitive and the fact-state vocabulary have ONE owner, in the
+# module that owns the document. This bootstrap is what makes that import
+# reachable from a tool: without it `modules.` is not on the path, the import
+# raises, and this file's 15 gates become a crash rather than a red -- an
+# instrument failure wearing a regression's clothes.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-OBSERVED = "OBSERVED"
-DERIVED = "DERIVED"
-DECLARED = "DECLARED"
-UNKNOWN = "UNKNOWN"
+from modules.gsd_x.mission.obligation import (  # noqa: E402
+    DECLARED, DERIVED, OBSERVED, UNKNOWN)
+from modules.gsd_x.mission.structured_facts import (  # noqa: E402
+    SCHEMA_V2, fingerprint, reconcile_document)
+
+SCHEMA = SCHEMA_V2
+
+# Re-exported under the names this file's own gate already calls by name:
+# tools/test_gsd_x_fact_producer.py reads FP.SCHEMA, FP.UNKNOWN and
+# FP.reconcile. `fingerprint` is an EMIT-time dependency here, not only a
+# reconcile-time one -- it stamps every produced entry's `depends_on`.
+_fingerprint = fingerprint
+reconcile = reconcile_document
 
 DEFAULT_MEMORY_LOG = Path.home() / ".claude" / "logs" / "host-memory-floor.json"
 DEFAULT_STATE_DIR = Path.home() / ".claude" / "state"
@@ -63,26 +76,6 @@ DEFAULT_STATE_DIR = Path.home() / ".claude" / "state"
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
-
-
-def _fingerprint(path: Path) -> dict:
-    """Identity of a source, by CONTENT and not only by timestamp.
-
-    mtime alone is a proxy: a file rewritten with identical bytes moves it, and
-    a restored file can move it backwards. The hash is what decides; mtime is
-    kept because it is what a human reads when asking 'when did this change'."""
-    try:
-        data = path.read_bytes()
-    except OSError as exc:
-        return {"path": str(path), "readable": False, "why": str(exc)}
-    st = path.stat()
-    return {
-        "path": str(path),
-        "readable": True,
-        "bytes": len(data),
-        "mtime": datetime.fromtimestamp(st.st_mtime, timezone.utc).isoformat(timespec="seconds"),
-        "sha256": hashlib.sha256(data).hexdigest(),
-    }
 
 
 class Outcome:
@@ -259,44 +252,6 @@ def build_document(outcomes: list[Outcome], mission_root: Path) -> dict:
         "not_held": [o.as_note() for o in outcomes if o.holds is False],
         "unknown": [o.as_note() for o in outcomes if o.holds is None],
     }
-
-
-def reconcile(doc_path: Path) -> tuple[str, list[dict]]:
-    """Re-read each fact's declared sources. FRESH / STALE / UNKNOWN per fact.
-
-    STALE means a source this fact was computed from has changed content since.
-    UNKNOWN means a source can no longer be read at all -- which is NOT the same
-    as the fact having changed, and must not be reported as if it were."""
-    try:
-        doc = json.loads(doc_path.read_text(encoding="utf-8-sig"))
-    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
-        return "INSTRUMENT", [{"why": f"{doc_path}: {exc}"}]
-
-    rows = []
-    for entry in list(doc.get("facts", [])) + list(doc.get("not_held", [])) + list(doc.get("unknown", [])):
-        verdict = "FRESH"
-        moved = []
-        for dep in entry.get("depends_on", []) or []:
-            path = Path(dep.get("path", ""))
-            now = _fingerprint(path)
-            if not now.get("readable") or not dep.get("readable"):
-                verdict = "UNKNOWN"
-                moved.append({"path": str(path), "why": "source no longer readable"})
-                continue
-            if now.get("sha256") != dep.get("sha256"):
-                if verdict != "UNKNOWN":
-                    verdict = "STALE"
-                moved.append({"path": str(path), "was": dep.get("sha256", "")[:12],
-                              "now": now.get("sha256", "")[:12]})
-        rows.append({"name": entry.get("name"), "verdict": verdict, "moved": moved})
-
-    if not rows:
-        return "UNKNOWN", rows
-    if any(r["verdict"] == "UNKNOWN" for r in rows):
-        return "UNKNOWN", rows
-    if any(r["verdict"] == "STALE" for r in rows):
-        return "STALE", rows
-    return "FRESH", rows
 
 
 def main(argv=None) -> int:
