@@ -350,6 +350,39 @@ def main() -> int:
         print("  FAIL V-UWCP-CHAR-GIT: git not found; C5 control and C7 could not run "
               "(HARNESS, not a finding)")
 
+    # --- C8 receipts echo only what they like; begin() stacks epochs (A1/S1-8b) --
+    lg8 = gl.GoalLog(REPO, "g-char-a1", base=base / "goals")
+    s8 = gc.declare(lg8, "characterize A1", ["it runs"], [], {"paths": ["src"]})
+    e8 = ep.begin(lg8, gc.project(lg8), "fake", {}, "k8", "initial", "t")
+    ep.mark_running(lg8, gc.project(lg8), e8.epoch_id, {"h": 8}, "t")
+    try:
+        ep.ingest_receipt(lg8, gc.project(lg8),
+                          ep.Receipt(e8.epoch_id, "fake", s8.revision, narrative="no echo"), "t")
+        unechoed = True
+    except ep.EpochError:
+        unechoed = False
+    check("V-UWCP-CHAR-UNECHOED-RECEIPT-INGESTED", unechoed,
+          "CHARACTERIZATION: a fenced epoch banks a receipt that echoes no fence or run_token",
+          "already refused")
+    try:
+        e9 = ep.begin(lg8, gc.project(lg8), "fake", {}, "k9", "initial", "t")
+        stacked = True
+    except ep.EpochError:
+        stacked = False
+    check("V-UWCP-CHAR-BEGIN-WHILE-OPEN", stacked,
+          "CHARACTERIZATION: begin() opens a second epoch while one is still running",
+          "already refused")
+    try:
+        ep.ingest_receipt(lg8, gc.project(lg8),
+                          ep.Receipt(e8.epoch_id, "fake", "not-the-revision",
+                                     fence=e8.fence), "t")
+        code = "<ingested>"
+    except ep.EpochError as exc:
+        code = getattr(exc, "code", "")
+    check("V-UWCP-CHAR-REFUSAL-UNCODED", code == "",
+          "CHARACTERIZATION: a refused receipt carries no machine-readable refusal code",
+          f"code={code!r}")
+
     total = len(passes) + len(fails)
     print(f"UWCP_CHAR_PASS={len(passes)}/{total}")
     return 0 if not fails else 1
