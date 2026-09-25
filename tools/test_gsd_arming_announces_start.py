@@ -94,6 +94,9 @@ def drive_write(command: str, tmpdir: Path) -> tuple[int, str]:
     import gsd_long_run as lr
 
     saved = (marker.write_marker, mf.check, lr.arm_preflight, lr.ledger_append)
+    saved_dir = marker.STATE_DIR
+    # v2 arming is retired against the LIVE state dir (2026-09-25); arm into the temp dir.
+    marker.STATE_DIR = Path(tmpdir)
     marker.write_marker = fake_write_marker
     mf.check = lambda cwd, mission, workstream=None: _Verdict()
     lr.arm_preflight = lambda session, cwd, cmd, workstream=None: (True, "stubbed")
@@ -109,6 +112,7 @@ def drive_write(command: str, tmpdir: Path) -> tuple[int, str]:
         return code, buf.getvalue()
     finally:
         marker.write_marker, mf.check, lr.arm_preflight, lr.ledger_append = saved
+        marker.STATE_DIR = saved_dir
 
 
 def main() -> int:

@@ -505,6 +505,24 @@ def gates_config():
 
 # ------------------------------------------------------------------ marker CLI boundary
 def gates_cli():
+    # 2026-09-25: v2 arming is retired against the LIVE state dir, so these synthetic markers
+    # go to a private dir (the subprocess env and this process's reader must agree on it).
+    import tempfile
+    marker_dir = tempfile.mkdtemp(prefix="gsdlr-markers-")
+    saved_env, saved_dir = os.environ.get("GSD_AUTORUN_MARKER_DIR"), mk.STATE_DIR
+    os.environ["GSD_AUTORUN_MARKER_DIR"] = marker_dir
+    mk.STATE_DIR = Path(marker_dir)
+    try:
+        _gates_cli()
+    finally:
+        mk.STATE_DIR = saved_dir
+        if saved_env is None:
+            os.environ.pop("GSD_AUTORUN_MARKER_DIR", None)
+        else:
+            os.environ["GSD_AUTORUN_MARKER_DIR"] = saved_env
+
+
+def _gates_cli():
     good = project("angry birds rovio powerpc slingshot")
     s = sid()
     transcript(s, r"C:\p\SomewhereElse")

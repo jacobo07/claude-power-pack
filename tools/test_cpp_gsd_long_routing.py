@@ -64,17 +64,37 @@ def main() -> int:
                         "--cwd", TMP, "--mission", "alpha,beta,gamma", "--legacy-compact"])
     check("V-ROUTE-CLI-LEGACY-OPT-IN-PASSES-GATE", "Ralph mission" not in err, f"rc={rc} err={err[:160]!r}")
 
+    # 2026-09-25: Ralph is the ONLY live path. Against the live state dir the opt-in is refused
+    # too. Driven under a fake home, so a broken gate writes into TMP, never the real state.
+    fake_home = Path(TMP) / "home"
+    live_state = fake_home / ".claude" / "state"
+    live_state.mkdir(parents=True)
+    saved_home, saved_dir = os.environ.get("USERPROFILE"), mk.STATE_DIR
+    os.environ["USERPROFILE"] = os.environ["HOME"] = str(fake_home)
+    mk.STATE_DIR = live_state
+    try:
+        rc, out, err = cli(["--write", "--session", "route-test-0002", "--command", "/gsd-autonomous",
+                            "--cwd", TMP, "--mission", "alpha,beta,gamma", "--legacy-compact"])
+    finally:
+        mk.STATE_DIR = saved_dir
+        if saved_home is not None:
+            os.environ["USERPROFILE"] = saved_home
+    check("V-ROUTE-CLI-LEGACY-RETIRED-ON-LIVE-DIR",
+          rc == 2 and "retired" in err and "gsd_mission.py" in err
+          and not list(live_state.glob("gsd-autorun-*.json")), f"rc={rc} err={err[:160]!r}")
+
     # --- 2. the command text routes first -------------------------------------------------
     doc = (REPO / "commands" / "cpp-gsd-long.md").read_text(encoding="utf-8")
     front = doc.split("---", 2)[1] if doc.startswith("---") else ""
     desc = next((l for l in front.splitlines() if l.startswith("description:")), "")
     check("V-ROUTE-DESCRIPTION-SAYS-RALPH", "Ralph" in desc and "autocompact" in desc
           and "survives context compactions" not in desc, desc[:120])
-    i_route, i_ralph, i_legacy = (doc.find("## Routing"), doc.find("## Default: Ralph"),
-                                  doc.find("## Legacy (v2)"))
-    check("V-ROUTE-ROUTING-SECTION-FIRST", 0 <= i_route < i_ralph < i_legacy,
-          f"routing={i_route} ralph={i_ralph} legacy={i_legacy}")
-    check("V-ROUTE-LEGACY-NEEDS-OWNER-PHRASE", '"legacy compact"' in doc and "--legacy-compact" in doc)
+    i_route, i_ralph = doc.find("## Routing"), doc.find("## Default: Ralph")
+    check("V-ROUTE-ROUTING-SECTION-FIRST", 0 <= i_route < i_ralph, f"routing={i_route} ralph={i_ralph}")
+    # No live instruction may arm the retired path: no config --apply, no marker --write step.
+    check("V-ROUTE-NO-LIVE-V2-STEPS", "gsd_autorun_marker.py\" --write" not in doc
+          and "gsd_long_run_config.py\" --apply" not in doc and "## Legacy (v2)" not in doc
+          and "no phrase unlocks it" in doc)
 
     # --- 3. the live copy is the repo copy ------------------------------------------------
     live = Path.home() / ".claude" / "commands" / "cpp-gsd-long.md"

@@ -791,7 +791,8 @@ def _host_row(session_id: str, sessions: list[dict] | None) -> dict | None:
 
 
 def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pid_alive,
-               runner=None, wait_s: float | None = None) -> tuple[bool, str]:
+               runner=None, wait_s: float | None = None, cmdline=None,
+               killer=None) -> tuple[bool, str]:
     """Stop the predecessor and WAIT until its process is gone (W0: `claude stop` returns
     while the pid still lives). Only a background worker is stopped; an interactive pane
     is the Owner's and is left alone -- it simply no longer holds the lease."""
@@ -821,8 +822,53 @@ def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pi
             break
         time.sleep(1)
     if isinstance(pid, int):
+        # Measured 2026-09-25 (m-3aaa15177f2b): the host listed the worker `done` while its
+        # claude.exe idled on for 12 h, and every 5-minute pass waited 90 s and gave up, so
+        # the mission never relayed. The host's verdict says the turn is over; the lingering
+        # process is holding nothing. Terminate it -- but ONLY when the host already calls it
+        # finished AND the process provably is this worker (its argv carries our exact
+        # --session-id). Pid reuse or an unreadable argv keeps the old refusal.
+        if row.get("state") in ("stopped", "done", "exited", "failed"):
+            sid = owner.get("session_id") or ""
+            argv = (cmdline or _proc_cmdline)(pid)
+            if sid and argv and f"--session-id {sid}" in argv:
+                (killer or _kill_tree)(pid)
+                for _ in range(15):
+                    if pid_alive(pid) is False:
+                        return True, f"host {row.get('state')}; lingering pid {pid} terminated"
+                    time.sleep(1)
+                return False, f"pid {pid} survived termination"
+            return False, (f"pid {pid} still alive after {int(wait_s)} s; not terminated: "
+                           + ("argv unreadable" if not argv else "argv is not this worker"))
         return False, f"pid {pid} still alive after {int(wait_s)} s"
     return True, "stopped; no pid to wait on"
+
+
+def _proc_cmdline(pid: int) -> str | None:
+    """The process's command line, or None when it could not be read (never guessed)."""
+    import subprocess
+    if sys.platform != "win32":
+        try:
+            with open(f"/proc/{pid}/cmdline", "rb") as fh:
+                return fh.read().replace(b"\0", b" ").decode("utf-8", "replace")
+        except OSError:
+            return None
+    try:
+        r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command",
+                            f"(Get-CimInstance Win32_Process -Filter 'ProcessId={int(pid)}').CommandLine"],
+                           capture_output=True, text=True, timeout=30)
+        return (r.stdout or "").strip() or None
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def _kill_tree(pid: int) -> None:
+    import subprocess
+    if sys.platform == "win32":
+        subprocess.run(["taskkill", "/PID", str(int(pid)), "/T", "/F"],
+                       capture_output=True, text=True, timeout=30)
+    else:
+        os.kill(int(pid), 9)
 
 
 ORPHAN_LOOKBACK_S = 86400   # a terminal mission is re-checked for live workers this long

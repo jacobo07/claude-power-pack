@@ -233,7 +233,16 @@ def main(argv: list[str] | None = None) -> int:
                          "says 'legacy compact'; the default for /cpp-gsd-long is a Ralph mission")
     args = ap.parse_args(argv)
 
-    if args.write and not args.legacy_compact:
+    live_dir = (Path.home() / ".claude" / "state").resolve()
+    retired = args.write and args.legacy_compact and STATE_DIR.resolve() == live_dir
+    if retired:
+        # Owner decision 2026-09-25: Ralph is the ONLY live path. The v2 compact-and-resume
+        # machinery is kept for its own tests (they arm into a temp GSD_AUTORUN_MARKER_DIR),
+        # but it can no longer arm a real run -- a v2 marker left behind is exactly what made
+        # runs "never clear their context" (every /compact request refused, nothing relayed).
+        sys.stderr.write("REFUSED: the v2 compact path is retired for live runs (Owner decision "
+                         "2026-09-25). Use the Ralph mission below.\n")
+    if args.write and (not args.legacy_compact or retired):
         # Owner decision 2026-09-24: whatever the request says ("autocompact", "compact", ...),
         # a long run continues in a FRESH session (Ralph), never by compacting this one. This
         # CLI is the v2 arming point, so it is where a run would silently take the compaction
@@ -246,7 +255,7 @@ def main(argv: list[str] | None = None) -> int:
             f"Run instead:  python \"{pp / 'gsd_mission.py'}\" arm --cwd \"{cwd}\" "
             f"--command \"{args.command or '/gsd-autonomous'}\" --max-cycles 12 --max-hours 24\n"
             "and do NOT invoke the command in this session afterwards -- the mission's worker "
-            "runs it.\nThe v2 path needs --legacy-compact and the Owner's literal 'legacy compact'.\n")
+            "runs it.\nThe v2 compact path is retired for live runs (2026-09-25).\n")
         return 2
 
     if args.write:

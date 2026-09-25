@@ -367,6 +367,29 @@ def main() -> int:
                             runner=stop_run, wait_s=0)
     check("V-MC-STOP-WAITS-FOR-PID", ok is False and "still alive" in why, why)
 
+    # 2026-09-25 (m-3aaa15177f2b): host says `done`, the pid lingers for hours. Terminate it
+    # only when the argv proves it is THIS worker; every other shape keeps the refusal.
+    def linger(state, argv, dies=True):
+        row = {**fresh("m-linger")[0], "state": state, "pid": 4242}
+        row.pop("status", None)
+        killed, dead = [], []
+        alive_fn = lambda p: (False if (dead and dies) else True)
+        ok_, why_ = gm.stop_owner({**bg, "session_id": "s-linger"}, [{**row, "sessionId": "s-linger"}],
+                                  pid_alive=alive_fn, runner=stop_run, wait_s=0,
+                                  cmdline=lambda p: argv,
+                                  killer=lambda p: (killed.append(p), dead.append(p)))
+        return ok_, why_, killed
+    ok, why, killed = linger("done", "claude.exe --session-id s-linger -n m-x-e2")
+    check("V-MC-STOP-LINGER-TERMINATED", ok is True and killed == [4242] and "terminated" in why, why)
+    ok, why, killed = linger("done", "claude.exe --session-id someone-else")
+    check("V-MC-STOP-LINGER-REUSED-PID-SPARED", ok is False and killed == [], why)
+    ok, why, killed = linger("done", None)
+    check("V-MC-STOP-LINGER-UNREADABLE-SPARED", ok is False and killed == [] and "unreadable" in why, why)
+    ok, why, killed = linger("running", "claude.exe --session-id s-linger")
+    check("V-MC-STOP-LINGER-LIVE-VERDICT-SPARED", ok is False and killed == [], why)
+    ok, why, killed = linger("done", "claude.exe --session-id s-linger", dies=False)
+    check("V-MC-STOP-LINGER-SURVIVOR-REPORTED", ok is False and "survived" in why, why)
+
     # an idle estate never asks the host (the 5-minute sweep must cost nothing)
     for p in Path(TMP).glob("gsd-mission-*.json"):
         p.unlink()
