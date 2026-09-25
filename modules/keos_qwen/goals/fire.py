@@ -204,6 +204,12 @@ def run_attempt(goal: dict, env_identity: dict) -> dict:
         "started_utc": started,
         "prompt_sha256": sha256_text(goal["prompt"]),
         "prompt": goal["prompt"],
+        # The family and the scoring rubric travel WITH the attempt, not only in
+        # the queue file. An evidence record that needs a join to another file to
+        # be scorable is one a later reader will score from memory instead -- and
+        # the queue entry is deleted from the queue the moment the goal retires.
+        "family": goal.get("family"),
+        "scoring": goal.get("scoring"),
         "environment": env_identity,
     }
 
