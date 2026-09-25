@@ -1,0 +1,79 @@
+[Unit]
+# UNIT A -- the harness is serviceable, and this unit is the proof.
+#
+# It is a systemd USER unit, and that is a safety property rather than a
+# convenience: a user manager has no authority over system units, so this unit
+# cannot stop, restart or reconfigure keos-llm.service.
+#
+# That argument has a hole and the hole is named here rather than left for
+# somebody to find: kobii holds PASSWORDLESS SUDO, so a user unit could escalate
+# and reach every system unit after all. NoNewPrivileges=yes closes it, and it
+# was measured closing it on 2026-09-25 -- `sudo -n true` refused with
+# NoNewPrivs:1, against a successful escalation with NoNewPrivs:0 in the same
+# probe. The containment block in keos-qwen-goals.service carries the full
+# measurement, including the two directives that turned out to be INERT here.
+#
+# It is oneshot + RemainAfterExit rather than a resident BEAM. See the header of
+# serviceable.sh for the measurement that refuted residency: 1.63 s to start 39
+# applications, 2.41 s for a full call, against a permanent 92 MB VM on a host
+# with 5.9 GB free. Residency bought 1.6 s and cost a daemon.
+#
+# HONEST LIMIT, stated here so nobody reads more into `active` than it holds:
+# RemainAfterExit means "the proof succeeded once, at start". It is not a
+# continuous health check. If the endpoint dies an hour later this unit still
+# reads active. What that buys is a hard precondition on unit B's FIRST start
+# and a single place to re-run the proof (`systemctl --user restart`), which is
+# worth more than a liveness signal nobody consumes.
+Description=KEOS-Qwen harness serviceability (environment pinned, endpoint proven)
+Documentation=file:///home/kobii/keos/keos_qwen/units/serviceable.sh
+
+# After= ONLY. Deliberately not Wants= or Requires=: those would let this unit
+# start the inference service, and starting something is touching it. A user
+# unit cannot order against a system unit anyway, so this is documentation of
+# intent that costs nothing and misleads nobody.
+After=default.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+EnvironmentFile=/home/kobii/keos/keos_qwen/units/keos-qwen.env
+ExecStart=/home/kobii/keos/keos_qwen/units/serviceable.sh
+
+# Exit 2 is NOT_SERVICEABLE -- a precondition, not a crash. systemd would
+# otherwise report it identically to a failure, and those send an operator to
+# two different places. 0 and 2 are both "the unit did its job and told the
+# truth"; only a non-listed code is a failure.
+SuccessExitStatus=0 2
+
+TimeoutStartSec=180
+# No Restart=. A serviceability proof that retries itself turns one honest
+# NOT_SERVICEABLE into a loop that spends a metered call every few seconds.
+
+# ---- containment: it cannot reach production, and not because it promises ----
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/kobii/keos/ledger /home/kobii/keos/goals
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RemoveIPC=no
+LockPersonality=yes
+# INERT on this host: systemd 255 built -BPF_FRAMEWORK, and a non-root user
+# manager cannot install an IP firewall ("unit configures an IP firewall, but
+# not running as root"). Measured: egress to 1.1.1.1:443 succeeded from inside.
+# Kept as defence-in-depth, claimed as nothing.
+IPAddressAllow=localhost
+IPAddressDeny=any
+
+MemoryMax=1G
+Nice=10
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=keos-qwen-svc
+
+[Install]
+WantedBy=default.target

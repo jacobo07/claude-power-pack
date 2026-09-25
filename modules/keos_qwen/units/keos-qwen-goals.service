@@ -1,0 +1,144 @@
+[Unit]
+# UNIT B -- the one the K-ADOS charter forbade until 2026-09-25.
+#
+# This unit fires goals at the local model with nobody watching. That is a
+# daemon, and docs/kados/K-ADOS.md said K-ADOS "is NOT ... a daemon" from
+# 2026-06-05 until amendment A-01 narrowed the clause. The amendment was written
+# and committed BEFORE this file existed, because a prohibition amended after
+# the fact by the thing it prohibited is not governance, it is paperwork.
+#
+# The Owner authorised it on 2026-09-24 and named the contradiction in the same
+# sentence: "unidad systemd (seria el demonio que prohibe la carta K-ADOS) ...
+# porque lo necesito".
+#
+# A-01 admits an unattended unit only where six conditions hold. Five of them
+# are enforced HERE, in this file, rather than in the script's intentions:
+#
+#   1. cannot reach production  -> NoNewPrivileges=yes, MEASURED enforced. A
+#                                  user manager has no authority over a system
+#                                  unit, and kobii's passwordless sudo is the
+#                                  hole in that -- which NoNewPrivileges closes.
+#                                  The ReadWritePaths/ProtectHome half of this
+#                                  claim is NOT enforced on this kernel; see the
+#                                  containment block below, where the failed
+#                                  measurement is recorded rather than the
+#                                  intention.
+#   2. metered                  -> the executable consults the one ledger
+#                                  before every goal; the provider consults it
+#                                  again per call.
+#   3. two kill switches        -> KEOS_QWEN_DISABLED (before a firing) and the
+#                                  DISABLED flag file (during one).
+#   4. bounded per firing       -> MAX_PER_FIRE inside, TimeoutStartSec here.
+#   5. fails closed             -> SuccessExitStatus lists 2 as an honest
+#                                  refusal; anything unlisted is a failure.
+#   6. leaves evidence          -> one durable record per attempt.
+Description=KEOS-Qwen: fire a bounded batch of goals at the pinned local model
+Documentation=file:///home/kobii/keos/keos_qwen/goals/fire.py
+Documentation=https://github.com/none/kados#14-amendment-a-01
+
+# Requires, not Wants. If the harness could not be PROVEN serviceable, this unit
+# must not run at all -- a firing into an unproven environment spends metered
+# calls to produce evidence about nothing. Unit A exits 2 (NOT_SERVICEABLE)
+# without failing, so this dependency is what converts an honest "not today"
+# into "and therefore do not fire".
+Requires=keos-qwen-svc.service
+After=keos-qwen-svc.service
+
+[Service]
+Type=oneshot
+
+EnvironmentFile=/home/kobii/keos/keos_qwen/units/keos-qwen.env
+WorkingDirectory=/home/kobii/keos
+ExecStart=/usr/bin/python3 /home/kobii/keos/keos_qwen/goals/fire.py
+
+# 0 OK, 2 REFUSED. A refusal is the budget or a kill switch doing its job and
+# must not page anybody; only an unlisted code is a failure. Collapsing the two
+# would make an exhausted budget indistinguishable from a broken harness, and
+# those send an operator to opposite places.
+SuccessExitStatus=0 2
+
+# The outer bound. MAX_PER_FIRE=3 goals at ATTEMPT_TIMEOUT_S=300 each is 900 s
+# of model time; 1200 leaves room for boot and eviction without ever letting a
+# firing become open-ended.
+TimeoutStartSec=1200
+
+# No Restart=. A goal runner that retries itself converts one refused firing
+# into a loop against a shared endpoint, which is the exact contamination the
+# ledger exists to prevent. The timer is the only thing that starts this.
+
+# ---- containment: MEASURED 2026-09-25, not assumed --------------------------
+# Every directive below was DRIVEN on this host with both poles. Three results,
+# and two are NEGATIVE. They are recorded here rather than in a report nobody
+# opens, because a unit file that reads as fenced and is not is worse than one
+# that admits it.
+#
+#   NoNewPrivileges=yes  ENFORCED, and load-bearing. kobii holds passwordless
+#     sudo, so without this the loop could restart keos-llm.service, write any
+#     production path, become root. With it, `sudo -n true` is REFUSED and
+#     /proc/self/status reports NoNewPrivs:1 -- against NoNewPrivs:0 and a
+#     successful escalation in the same probe without the directive, with sudo
+#     confirmed working for kobii unsandboxed so the refusal is attributable to
+#     the directive and not to the sudoers file. THIS is what "cannot reach
+#     production" actually rests on.
+#
+#   ProtectHome= / ReadWritePaths=  NOT ENFORCED HERE. A unit carrying
+#     ProtectHome=read-only wrote /home/kobii/CONTAINMENT_BREACH.txt and
+#     succeeded. Cause: Ubuntu 24.04 sets
+#     kernel.apparmor_restrict_unprivileged_userns=1, so a non-root user manager
+#     cannot build the mount namespace -- and systemd DEGRADES instead of
+#     refusing. `systemctl show` still prints the configured value, which is how
+#     this nearly shipped as a claim: show reports CONFIGURATION, never
+#     ENFORCEMENT, and the installer's first version read exactly that field.
+#
+#   IPAddressAllow/Deny  NOT ENFORCED, twice over: this systemd is built
+#     -BPF_FRAMEWORK, and its own journal says "unit configures an IP firewall,
+#     but not running as root". Measured: a connection to 1.1.1.1:443 from
+#     inside the sandbox SUCCEEDED.
+#
+# The inert directives are KEPT rather than deleted. They cost nothing, they
+# take effect the day this runs as a system unit or on an unrestricted kernel,
+# and removing them would erase the record of what was attempted. What is
+# deleted is the CLAIM, not the line.
+#
+# What actually keeps a model answer from egressing is program structure, not a
+# fence: the provider's destination is a compiled constant, served_by/1 reads
+# the RESPONSE's own headers rather than what we meant to send, and attempt.exs
+# classifies a non-local answer as HARNESS_FAILED rather than OK -- so a remote
+# reply cannot enter the corpus even though the socket could be opened.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/kobii/keos/ledger /home/kobii/keos/goals
+ProtectKernelTunables=yes
+# ProtectKernelModules=yes is REMOVED, not forgotten. Measured 2026-09-25: it
+# alone makes this unit exit 218/CAPABILITIES ("Failed to drop capabilities:
+# Operation not permitted") under an unprivileged user manager, because it
+# implies CapabilityBoundingSet=~CAP_SYS_MODULE and dropping from the bounding
+# set needs CAP_SETPCAP. Bisected one directive at a time against a control:
+# every other directive in this file returned rc=0, this one returned 218 on
+# its own, and unit A's identical set minus this line starts fine.
+#
+# It cost nothing to have and everything to keep: the unit would not run AT ALL,
+# and the timer would have reported "armed" while firing into a 218 every hour.
+# An empty queue also exits 0, so "nothing happened" would have looked normal
+# from every angle except the journal.
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+# INERT on this host (see the measurement above). Kept as defence-in-depth for
+# the day this is a system unit or the kernel stops restricting user namespaces.
+IPAddressAllow=localhost
+IPAddressDeny=any
+
+MemoryMax=2G
+CPUWeight=20
+IOWeight=20
+# Lowest priority on a shared host. The inference service, the Paper server and
+# the KME drill were all here first.
+Nice=15
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=keos-qwen-goals

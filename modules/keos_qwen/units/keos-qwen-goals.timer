@@ -1,0 +1,40 @@
+[Unit]
+Description=KEOS-Qwen: hourly goal firing (bounded, metered, kill-switchable)
+Documentation=file:///home/kobii/keos/keos_qwen/units/keos-qwen-goals.service
+
+[Timer]
+# :23 past the hour, chosen to miss the six timers already on this user manager:
+# agora-mission-sweep (every 5 min), forja-harvest (:18 and :48), faro-k0
+# (08:41), faro-generative (09:42), agora-r3-audit, launchpadlib-cache-clean
+# (17:12). A cadence picked without reading the neighbours is a cadence that
+# collides with one.
+OnCalendar=*-*-* *:23:00
+
+# Three goals an hour is at most 72 metered calls a day against the Owner's
+# ceiling of 200, so the timer alone cannot exhaust the budget. The headroom is
+# deliberate: the budget must still have room for an interactive session, and a
+# schedule that consumed it all would make the ceiling a fiction.
+
+# PERSISTENT=FALSE, AND THIS IS THE LOAD-BEARING LINE.
+#
+# Persistent=true replays every window missed while the host was down. On a
+# machine that reboots after a day of maintenance that is 24 firings dispatched
+# back to back at a shared inference endpoint -- the exact saturation the ledger
+# was written to prevent, arriving as a burst that looks like a bug in the
+# ledger rather than a property of the timer.
+#
+# A missed hour is NOT a debt. There is nothing to catch up on: the goals are
+# still in the queue and the next ordinary firing takes them.
+Persistent=false
+
+# The host runs 15 production services, a Paper server and a KME drill. Landing
+# on the same second every hour as whatever else wakes up is avoidable.
+RandomizedDelaySec=180
+AccuracySec=1min
+
+# A firing is one-shot and bounded by the service's own TimeoutStartSec, so a
+# slow run cannot overlap the next: systemd will not start a second instance of
+# a oneshot service that is still running.
+
+[Install]
+WantedBy=timers.target
