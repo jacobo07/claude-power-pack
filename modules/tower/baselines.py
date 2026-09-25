@@ -13,9 +13,11 @@ built only from entries that verify.
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
+import tempfile
 import time
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -126,19 +128,41 @@ def active_entries(family: str, root: str | None = None) -> list:
 
 def write_generation(family: str, entries: list, reason: str,
                      root: str | None = None) -> str:
-    """Write B<n+1>. Refuses to overwrite: a generation is a record."""
+    """Write B<n+1>. Refuses to overwrite: a generation is a record.
+
+    Publication is create-if-absent in ONE step. The earlier shape checked that
+    B<n> did not exist, wrote a shared `B<n>.json.tmp`, then `os.replace`d it:
+    two writers that both passed the check both reported success and the later
+    one silently replaced the earlier (measured 2026-09-25, positioned race,
+    V-BGEN-RACE-ONE-WINNER). Each writer now owns a private temp file and
+    publishes with a hard link, which the OS refuses when the target exists, so
+    the loser gets FileExistsError and the winner's bytes are never touched.
+    """
     d = _family_dir(family, root)
     os.makedirs(d, exist_ok=True)
     gens = generations(family, root)
     n = gens[-1] + 1 if gens else 0
     path = os.path.join(d, "B%d.json" % n)
-    if os.path.exists(path):
-        raise FileExistsError(path)
     doc = {"family": family, "generation": n, "parent": gens[-1] if gens else None,
            "created_at": time.time(), "reason": reason, "entries": entries}
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
-        json.dump(doc, fh, indent=2, ensure_ascii=False)
-        fh.write("\n")
-    os.replace(tmp, path)
+    fd, tmp = tempfile.mkstemp(prefix=".B%d." % n, suffix=".tmp", dir=d)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump(doc, fh, indent=2, ensure_ascii=False)
+            fh.write("\n")
+        try:
+            os.link(tmp, path)
+        except FileExistsError:
+            raise
+        except OSError:
+            # A filesystem without hard links: fall back to an exclusive create.
+            # Still refuses an existing target; loses only atomicity of content.
+            with open(tmp, "rb") as src, \
+                    os.fdopen(os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY), "wb") as dst:
+                dst.write(src.read())
+    finally:
+        # Only "already gone" is benign; any other failure leaves residue that
+        # V-BGEN-RACE-ONE-WINNER reports, so it must stay loud.
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(tmp)
     return path
