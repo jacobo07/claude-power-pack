@@ -124,6 +124,47 @@ def cmd_contract(args) -> int:
     return 0
 
 
+def _blindness(root: Path) -> cl.Blindness:
+    """What the facts source could NOT say.
+
+    READ FROM THE DOCUMENT, NOT FROM THE OBLIGATION STORE, and that is the
+    whole point. `cmd_check` never derives: it loads `.gsd-x/obligations.json`,
+    so a root nobody ran `derive` on has an empty store and the gate passes.
+    (Measured 2026-09-25 on one root: exit 0 before `derive`, exit 1 after,
+    same facts.) A store-driven blindness would inherit that hole exactly --
+    absence of a derivation run would silently mean "nothing is unknown".
+
+    Raises StructuredFactsError, which every caller routes as a CHECK failure
+    rather than a mission verdict.
+    """
+    if sf.source_of(root) != sf.SOURCE:
+        # Prose has no channel for "I could not measure this". That is not the
+        # same as nothing being unknown: the question cannot be asked at all,
+        # and the receipt says so rather than reporting an empty measured set.
+        return cl.Blindness(source="prose")
+
+    path = sf.facts_path(root)
+    unknown = set(sf.load_document(path).unknown_names)
+
+    # Freshness from PER-ENTRY rows, never from the one-word aggregate: that
+    # aggregate answers UNKNOWN for a document with zero rows, so reading it
+    # here would let an empty but well-formed facts file hold every wave.
+    _, rows = sf.reconcile_document(path)
+    not_current = {r.get("name") for r in rows
+                   if r.get("verdict") in (sf.STALE, sf.UNKNOWN)} - unknown
+
+    g, e = ob.GATING_FACT_NAMES, ob.ENRICHING_FACT_NAMES
+    # A name in neither set is an orphan no operator reads. It cannot change a
+    # verdict, so it is deliberately dropped rather than blocked on.
+    return cl.Blindness(
+        source=sf.SOURCE,
+        gating_unknown=tuple(sorted(n for n in unknown if n in g)),
+        enriching_unknown=tuple(sorted(n for n in unknown if n in e)),
+        gating_stale=tuple(sorted(n for n in not_current if n in g)),
+        enriching_stale=tuple(sorted(n for n in not_current if n in e)),
+    )
+
+
 def _closure(root: Path, backlog_empty: bool, pr: str):
     # A root bound to a goal has its obligations in the goal log. A closure
     # computed from this per-root file would be a second, disagreeing answer.
@@ -131,7 +172,8 @@ def _closure(root: Path, backlog_empty: bool, pr: str):
     obs = st.load(root)
     contract = mc.project(root, intent=_read(root, INTENT_FILE).strip() or None,
                           obligations=obs)
-    return cl.project_closure(contract, obs, backlog_empty, pr), obs
+    return cl.project_closure(contract, obs, backlog_empty, pr,
+                              blindness=_blindness(root)), obs
 
 
 def cmd_closure(args) -> int:
@@ -139,6 +181,13 @@ def cmd_closure(args) -> int:
     try:
         receipt, _ = _closure(root, args.backlog_empty, args.production_reality)
     except st.GoalBound as exc:
+        print(f"REFUSED  : {exc}")
+        return 2
+    except sf.StructuredFactsError as exc:
+        # The closure path now reads FACTS.json, so a document it cannot trust
+        # reaches here. Refusing is the contract; letting it escape as a
+        # traceback would turn a refusal into a crash on a command that has
+        # always answered 0 or 1.
         print(f"REFUSED  : {exc}")
         return 2
     print(receipt.render())
@@ -234,13 +283,37 @@ def cmd_check(args) -> int:
     # answer, whichever seam is reading. `receipt.blocking` is still reported,
     # under its own key, because it is genuine information about the mission --
     # it is simply not what a WAVE gate decides on.
+    # BLINDNESS JOINS THE OPEN SET IN DECIDING, and it had to: a gating fact
+    # nobody could measure derives no obligation, so `open_obligations` is
+    # empty for exactly the mission whose requirements are unknown. Reporting
+    # that as a pass is the defect this wave closes.
+    #
+    # Only GATING names count. An enriching fact decides nothing -- it adds a
+    # sentence to an obligation that exists either way -- so an unknown one is
+    # DISCLOSED and never blocks. A gate that holds a wave over a missing
+    # clause is a gate somebody switches off, and then it protects nothing.
+    bl = receipt.blindness
+    blind_block = bl.blocks
+    reasons = ([f"{i} is open" for i in open_ids]
+               + [f"gating fact {n!r} is UNKNOWN" for n in bl.gating_unknown]
+               + [f"gating fact {n!r} is not current" for n in bl.gating_stale])
     payload = {
-        "block": bool(open_ids),
-        "message": ("; ".join(receipt.blocking) if open_ids
-                    else "no derived obligation is open"),
+        "block": bool(open_ids) or blind_block,
+        "message": ("; ".join(receipt.blocking) if (open_ids or blind_block)
+                    else "no derived obligation is open and no gating fact is "
+                         "unknown"),
         "capId": "gsd-x-mission-obligations",
         "open_obligations": open_ids,
         "closure_blocking": list(receipt.blocking),
+        # Reported separately from the open set because they are different
+        # facts about the mission and need different fixes: one is work to do,
+        # the other is a measurement to take.
+        "blindness_source": bl.source,
+        "unmeasured_facts": list(bl.gating_unknown),
+        "stale_facts": list(bl.gating_stale),
+        # Present, and deliberately NOT part of the decision.
+        "disclosures": bl.disclosures,
+        "block_reasons": reasons,
     }
     print(json.dumps(payload, ensure_ascii=False)
           if args.raw else json.dumps(payload, indent=2, ensure_ascii=False))
@@ -272,11 +345,20 @@ def cmd_check(args) -> int:
     # obligation is still open". The field that covers exactly that effect is
     # the open set, so that is what decides the exit code.
     #
-    # 1 = an obligation is open (the gate blocks on a real verdict).
+    # 1 = an obligation is open, OR a fact an operator GATES on could not be
+    #     measured / is no longer current (the gate blocks on a real verdict).
     # 2 = the check itself could not run (the gate also blocks, fail-closed,
     #     but the envelope carries "error" rather than "block" so a human can
     #     tell a refusal from a breakage).
-    return 1 if payload["open_obligations"] else 0
+    #
+    # The GREEN pole is unchanged and was re-measured before this widened:
+    # a prose mission, an empty phase dir and a goal-bound root all still exit
+    # 0, because none of them can produce a gating unknown. A prose root has no
+    # unknown channel at all; an empty one has no facts document; a bound root
+    # returns above, from the goal. Widening this predicate has burned this
+    # file twice (see the two paragraphs above), so the poles are pinned in
+    # tools/test_gsd_x_facts_v2.py rather than argued here.
+    return 1 if (payload["open_obligations"] or blind_block) else 0
 
 
 def main(argv: list[str] | None = None) -> int:

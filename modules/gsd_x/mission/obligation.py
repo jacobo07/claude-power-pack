@@ -397,11 +397,58 @@ OPERATORS = (
 )
 
 
+# --- what each operator reads, and in which of the two ways -----------------
+# GATING reads decide whether an obligation EXISTS. If one of them is unknown,
+# nothing downstream can tell whether the mission owes work -- that is real
+# blindness and a closure may not claim completeness over it.
+#
+# ENRICHING reads only EXTEND an obligation that already exists, usually by one
+# more sentence of consequence and one more citation. If one of them is unknown
+# the obligation is still derived, still blocking, and still correct; it is
+# merely less well explained. Holding a wave for that is ceremony tax, and a
+# gate that charges ceremony tax is a gate somebody switches off.
+#
+# The distinction is not cosmetic here. Of the two facts any producer on this
+# host can currently emit, `unattended_operation` is read by NO operator and
+# `bounded_local_capacity` is ENRICHING-only -- so treating every read alike
+# would mean the only producible unknown blocks a wave over a missing clause.
+#
+# This table is checked against the SOURCE by tools/test_gsd_x_facts_v2.py: it
+# walks each operator's AST and requires that a `_has` inside a guard that
+# returns None appears here as gating, and every other `_has` as enriching. Two
+# hand-maintained truths would drift; one of them being a comment would drift
+# silently.
+_READS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
+    "op_irreversibility_consequence":
+        (("destructive_act_commanded", "no_recovery_mechanism"), ()),
+    "op_absent_signal_consequence":
+        (("no_completion_signal",), ("consumer_assumes_complete",)),
+    "op_failure_consequence":
+        (("measured_failure_mode",), ("bounded_local_capacity",)),
+    "op_unfalsifiable_parity_consequence":
+        (("reconstruction_relation", "fidelity_requirement"),
+         ("reference_is_executable",)),
+}
+
+GATING_FACT_NAMES: frozenset[str] = frozenset(
+    n for g, _ in _READS.values() for n in g)
+ENRICHING_FACT_NAMES: frozenset[str] = frozenset(
+    n for _, e in _READS.values() for n in e)
+
+
 # The fact vocabulary the operators understand. A second fact source
 # (structured_facts.py, GSDX-M04) validates against this set, so a name the
 # operators cannot read is refused at load rather than silently dropping an
 # obligation. Derived from the prose table so the two can never disagree.
 FACT_NAMES: frozenset[str] = frozenset(name for name, _, _ in _FACT_PATTERNS)
+
+# Named here rather than left to be rediscovered: a fact in the vocabulary that
+# NO operator reads cannot change any verdict, so it must never hold a wave.
+# Today that set is exactly {"unattended_operation"} -- a name the Fact Producer
+# emits and nothing consumes. Computed, never hand-listed, so it stays true when
+# an operator starts or stops reading something.
+ORPHAN_FACT_NAMES: frozenset[str] = (
+    FACT_NAMES - GATING_FACT_NAMES - ENRICHING_FACT_NAMES)
 
 
 def derive_from_facts(facts: list[Fact], intent: str,

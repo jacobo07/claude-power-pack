@@ -113,6 +113,59 @@ def satisfy(ob: Obligation, verdict: Verdict | None,
     return ob, res
 
 
+# --- evidence blindness ------------------------------------------------------
+# What the fact source could NOT say. Until this existed, a fact that could not
+# be measured was simply absent from the list the operators read, `_has()`
+# returned False, no obligation was derived, and `project_closure` -- which can
+# only block on obligations that EXIST -- reported ALLOWED. So "we measured it
+# and it does not hold" and "we could not measure it" produced a byte-identical
+# receipt, which is the defect this whole wave exists to close.
+#
+# UNMEASURED is a distinct source, not an empty Blindness. A receipt built
+# without consulting any facts document and one built from a document with
+# nothing unknown are different claims about the world, and collapsing them
+# would commit, inside this module's own artifact, exactly the error it exists
+# to prevent.
+
+UNMEASURED = "unmeasured"
+
+
+@dataclass(frozen=True)
+class Blindness:
+    """Facts the source could not establish, split by whether they matter.
+
+    GATING names decide whether an obligation exists, so an unknown one means
+    nobody can say what the mission owes. ENRICHING names only extend an
+    obligation that already exists; an unknown one costs a sentence of
+    explanation, never a verdict, and must not hold a wave.
+    """
+    source: str = UNMEASURED
+    gating_unknown: tuple = ()
+    enriching_unknown: tuple = ()
+    gating_stale: tuple = ()
+    enriching_stale: tuple = ()
+
+    @property
+    def measured(self) -> bool:
+        return self.source != UNMEASURED
+
+    @property
+    def blocks(self) -> bool:
+        return bool(self.gating_unknown or self.gating_stale)
+
+    @property
+    def disclosures(self) -> list[str]:
+        """Everything worth SAYING that is not worth BLOCKING for."""
+        out = []
+        for n in self.enriching_unknown:
+            out.append(f"{n} could not be measured; it only enriches an "
+                       "obligation, so no verdict changed")
+        for n in self.enriching_stale:
+            out.append(f"{n} was computed from a source that has since changed; "
+                       "it only enriches an obligation, so no verdict changed")
+        return out
+
+
 # --- closure ----------------------------------------------------------------
 
 @dataclass
@@ -124,6 +177,7 @@ class Closure:
     derived_dispositioned: list[dict] = field(default_factory=list)
     residual_risk: list[str] = field(default_factory=list)
     production_reality: str = ""
+    blindness: Blindness = field(default_factory=Blindness)
 
     def render(self) -> str:
         out = [f"MISSION CLOSURE: {'ALLOWED' if self.may_close else 'DENIED'}", ""]
@@ -137,6 +191,23 @@ class Closure:
         out.append("DERIVED, DISPOSITIONED WITHOUT BECOMING WORK")
         out += [f"  - [{d['disposition']}] {d['id']}: {d['disposition_reason'][:76]}"
                 for d in self.derived_dispositioned] or ["  (none)"]
+        # Rendered ALWAYS, including when nothing is blind. A receipt that only
+        # mentions blindness when it exists cannot distinguish "the facts were
+        # read and nothing was unknown" from "no facts were ever consulted",
+        # and that is the same collapse this section exists to undo.
+        bl = self.blindness
+        out += ["", f"EVIDENCE BLINDNESS (source: {bl.source})"]
+        if not bl.measured:
+            out.append("  - no facts document was consulted; this receipt says "
+                       "nothing about what could not be measured")
+        else:
+            rows = ([f"  - UNKNOWN, gating: {n}" for n in bl.gating_unknown]
+                    + [f"  - STALE, gating: {n}" for n in bl.gating_stale]
+                    + [f"  - UNKNOWN, enriching only: {n}"
+                       for n in bl.enriching_unknown]
+                    + [f"  - STALE, enriching only: {n}"
+                       for n in bl.enriching_stale])
+            out += rows or ["  - nothing unknown, nothing stale"]
         if self.blocking:
             out += ["", "BLOCKING"] + [f"  - {b}" for b in self.blocking]
         if self.residual_risk:
@@ -147,7 +218,8 @@ class Closure:
 
 def project_closure(contract, obligations: list[Obligation],
                     explicit_backlog_empty: bool,
-                    production_reality: str = "UNPROVEN") -> Closure:
+                    production_reality: str = "UNPROVEN",
+                    blindness: Blindness | None = None) -> Closure:
     """Compile a closure receipt from what the owners already hold.
 
     This is a PROJECTION. It stores nothing and it is not consulted as truth by
@@ -179,6 +251,23 @@ def project_closure(contract, obligations: list[Obligation],
     for o in candidates:
         blocking.append(f"{o.identifier} is still CANDIDATE -- never judged")
 
+    # THE ABSENCE THAT USED TO BE SILENT. A gating fact nobody could measure
+    # derives no obligation, so without these two loops there is nothing in
+    # `blocking` to find and this projection reports ALLOWED -- over a mission
+    # whose requirements are simply unknown. Absence of evidence is not
+    # evidence that no obligation is owed.
+    bl = blindness if blindness is not None else Blindness()
+    for n in bl.gating_unknown:
+        blocking.append(
+            f"fact {n!r} could not be measured, and an operator gates on it -- "
+            "no obligation was derived from it, and that is not evidence that "
+            "none is required")
+    for n in bl.gating_stale:
+        blocking.append(
+            f"fact {n!r} was computed from a source that has since changed or "
+            "can no longer be read, and an operator gates on it -- it cannot "
+            "serve as current proof until it is reproduced")
+
     residual = [f"{o.identifier} deferred: {o.disposition_reason}"
                 + (f" (revisit when {o.revisit_when})" if o.revisit_when else "")
                 for o in obligations if o.disposition == DEFERRED]
@@ -201,4 +290,5 @@ def project_closure(contract, obligations: list[Obligation],
         derived_dispositioned=[o.to_dict() for o in closed_out],
         residual_risk=residual,
         production_reality=production_reality,
+        blindness=bl,
     )
