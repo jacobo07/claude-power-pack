@@ -29,6 +29,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .contract import GoalState
+from .intervention import blocking_reason
 from .convergence import (ACCEPTED, REALITY, SATISFIED, goal_closure,
                           project_convergence)
 from .epoch import (COMPLETED, FAILED, HYPOTHESES, OBS_ENDED, OBS_LOST, OBS_RUNNING,
@@ -147,6 +148,14 @@ def decide(ctx: Context) -> Decision:
             if obs.state == OBS_RUNNING:
                 return Decision(WAIT, f"{e.epoch_id} is running: {obs.detail or 'in flight'}",
                                 epoch_id=e.epoch_id)
+
+    # 2b. Operator intervention (UWCP S1-7). After recovery and harvest, so
+    #     nothing in flight goes unaccounted; before closure, judging and work,
+    #     so a paused or cancelled goal starts NOTHING new. BLOCKED because the
+    #     condition is external to the Factory: a person decided.
+    stop = blocking_reason(st)
+    if stop:
+        return Decision(BLOCKED, stop)
 
     # 3. Closure. Nothing blocking does NOT mean converged: the judge decides.
     closure = goal_closure(st, ctx.tree_hash)

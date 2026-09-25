@@ -295,6 +295,14 @@
       "class": "PLANNED",
       "note": "Future/Opportunity Discovery module (OWNERSHIP_OVERLAP_AUDIT.md Group I); built, not yet wired"
     },
+    "gsd_x/goal/evidence": {
+      "class": "PLANNED",
+      "note": "UWCP S1-5 (vault/specs/uwcp.md). Imported by gsd_x/goal/brief.py; the whole goal engine is ORPHAN because its only entrance is tools/gsd_x_goal.py (outside this scanner's aperture) and no command/hook reaches it yet. OWNER_QUEUE: UWCP S6 wires it (placement rule in /cpp-gsd-long + VPS sweep cron); re-classify then"
+    },
+    "gsd_x/goal/intervention": {
+      "class": "PLANNED",
+      "note": "UWCP S1-7. Imported by gsd_x/goal/reconcile.py -- see gsd_x/goal/evidence note; wired with the engine in UWCP S6"
+    },
     "hard_rules/residual": {
       "class": "PLANNED",
       "note": "sealed doctrine compiler (PR-PROHIBITIONS-DO-NOT-CONFLICT-001), extensively cited in CLAUDE.md prose but grep confirms zero code import anywhere in modules/hard_rules -- designed to run when a Hard Rule fires; that integration into hook-dispatcher.js's block path has not happened"

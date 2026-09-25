@@ -144,6 +144,76 @@ def main() -> int:
           "contract.project still replays a log carrying hypothesis events",
           "old reader broke on the new event type")
 
+    # --- S1-7 operator intervention ------------------------------------------
+    from modules.gsd_x.goal import epoch as ep            # noqa: PLC0415
+    from modules.gsd_x.goal import intervention as iv     # noqa: PLC0415
+    from modules.gsd_x.goal import reconcile as rc        # noqa: PLC0415
+
+    ol = gl.GoalLog(REPO, "g-op", base=base)
+    gc.declare(ol, "operator can steer", ["done"], [], {"paths": ["src"]})
+
+    def decide(state):
+        return rc.decide(rc.Context(state=state, tree_hash="git:t", scope_hash="s",
+                                    providers=("gate",)))
+
+    base_kind = decide(gc.project(ol)).kind
+    check("V-UWCP-F-OP-CONTROL", base_kind != rc.BLOCKED,
+          f"control: an untouched goal is not blocked ({base_kind})", "blocked with no operator")
+    iv.intervene(ol, gc.project(ol), iv.PAUSE, "owner@laptop", reason="review first")
+    d = decide(gc.project(ol))
+    check("V-UWCP-F-OP-PAUSE-BLOCKS", d.kind == rc.BLOCKED and "paused by operator" in d.reason,
+          f"a paused goal starts nothing new ({d.reason})", f"decided {d.kind}: {d.reason}")
+
+    def op_refused(fn):
+        try:
+            fn()
+            return False
+        except iv.OperatorRefused:
+            return True
+
+    check("V-UWCP-F-OP-NOOP-REFUSED",
+          op_refused(lambda: iv.intervene(ol, gc.project(ol), iv.PAUSE, "owner")),
+          "a second pause is refused, not silently logged", "no-op pause accepted")
+    stale = gc.project(ol)
+    iv.intervene(ol, stale, iv.RESUME, "owner@pc2")
+    try:
+        iv.intervene(ol, stale, iv.CANCEL, "owner@laptop")
+        cas = False
+    except gl.LostRace:
+        cas = True
+    check("V-UWCP-F-OP-CAS", cas,
+          "two control surfaces acting on the same stale state: the second loses the "
+          "log's CAS and must re-read", "stale intervention was appended")
+    check("V-UWCP-F-OP-RESUME-UNBLOCKS", decide(gc.project(ol)).kind != rc.BLOCKED,
+          "resume lets work continue", "still blocked after resume")
+
+    # A running epoch is still observed while paused: nothing in flight is orphaned.
+    key = ep.info_key(gc.project(ol).revision, [], "gate", "initial", "s")
+    e1 = ep.begin(ol, gc.project(ol), "gate", {}, key, "initial", "t")
+    ep.mark_running(ol, gc.project(ol), e1.epoch_id, {"h": 1}, "t")
+    iv.intervene(ol, gc.project(ol), iv.PAUSE, "owner")
+    d2 = rc.decide(rc.Context(state=gc.project(ol), tree_hash="git:t", scope_hash="s",
+                              providers=("gate",),
+                              observations={e1.epoch_id: ep.Observation(ep.OBS_RUNNING)}))
+    check("V-UWCP-F-OP-PAUSE-KEEPS-OBSERVING", d2.kind == rc.WAIT,
+          "paused with an epoch in flight: the reconciler still waits on it and will "
+          "harvest it", f"decided {d2.kind}: {d2.reason}")
+    ep.end(ol, gc.project(ol), e1.epoch_id, ep.CANCELLED, "operator", "t")
+
+    iv.intervene(ol, gc.project(ol), iv.CANCEL, "owner", reason="wrong target")
+    d3 = decide(gc.project(ol))
+    check("V-UWCP-F-OP-CANCEL-BLOCKS", d3.kind == rc.BLOCKED and "cancelled" in d3.reason,
+          "a cancelled goal starts nothing new", f"decided {d3.kind}: {d3.reason}")
+    check("V-UWCP-F-OP-CANCEL-TERMINAL",
+          op_refused(lambda: iv.intervene(ol, gc.project(ol), iv.RESUME, "owner"))
+          and op_refused(lambda: iv.intervene(ol, gc.project(ol), iv.PAUSE, "owner")),
+          "cancellation is terminal: resume and pause are refused after it",
+          "a cancelled goal was revived")
+    iv.intervene(ol, gc.project(ol), iv.NOTE, "owner", text="leave FP-028 static")
+    check("V-UWCP-F-OP-NOTE-AFTER-CANCEL",
+          iv.project_operator(gc.project(ol)).notes[-1][2] == "leave FP-028 static",
+          "notes are data and still recordable after a cancel", "note lost")
+
     total = len(passes) + len(fails)
     print(f"UWCP_FOUNDATION_PASS={len(passes)}/{total}")
     return 0 if not fails else 1
