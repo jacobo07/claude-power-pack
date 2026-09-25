@@ -321,13 +321,28 @@ def check_founder_chain(anchor: Anchor, repo: str, goal: str, events) -> int:
 
 # --- the witness ------------------------------------------------------------------
 
+# The witness writer (factory-judge) and its readers (factory, the resident) are
+# different users. Modes are set explicitly, never left to the writer's umask:
+# the relay runs under umask 0007 so it can append to the group-writable goal
+# store, and inheriting that here would make the witness group-WRITABLE -- i.e.
+# no boundary. Group ownership comes from the setgid witness root (root-owned
+# setup: group `factory`, 2750). Measured on GEX44 2026-09-25: without this the
+# resident could not read a mark the judge wrote.
+WITNESS_DIR_MODE = 0o2750
+WITNESS_FILE_MODE = 0o640
+
+
 def _write_json_atomic(path: Path, obj: dict) -> None:
+    missing = [p for p in reversed(path.parents) if not p.exists()]
     path.parent.mkdir(parents=True, exist_ok=True)
+    for d in missing:
+        os.chmod(d, WITNESS_DIR_MODE)
     tmp = path.parent / f".{path.name}.{uuid.uuid4().hex}.tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
         fh.write(json.dumps(obj, sort_keys=True))
         fh.flush()
         os.fsync(fh.fileno())
+    os.chmod(tmp, WITNESS_FILE_MODE)
     os.replace(tmp, path)
 
 
@@ -335,12 +350,13 @@ def _read_json(path: Path, what: str) -> dict | None:
     """The witnessed record, None when there is none; raise when it cannot be read.
 
     An unreadable witness is never "no witness": that would turn a damaged
-    high-water mark into permission to accept a truncated log.
+    high-water mark into permission to accept a truncated log. A permission
+    error is "unreadable", named, never an uncaught crash.
     """
-    if not path.exists():
-        return None
     try:
         doc = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None
     except (OSError, json.JSONDecodeError) as exc:
         raise GoalLogCorrupt(f"{FOUNDER_WITNESS_UNREADABLE}: {what} at {path} "
                              f"({exc.__class__.__name__})") from None

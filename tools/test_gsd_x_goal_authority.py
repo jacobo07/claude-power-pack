@@ -650,6 +650,49 @@ def main() -> int:
           "witnessed goal projects, and an ungoverned legacy goal needs no witness",
           f"why={why_unw!r} ctl={corrupt_reason(lg_rb_ctl)!r} leg={corrupt_reason(lg_leg)!r}")
 
+    # --- witness modes: the writer's umask must not decide who can write the mark ------
+    # GEX44 2026-09-25: the relay runs under umask 0007; the judge's mark was
+    # unreadable to the resident, and inheriting 0007 would make it group-writable.
+    if os.name == "nt":
+        unjudge("V-AUTH-WITNESS-MODES", "POSIX modes are not judged on Windows")
+        unjudge("V-AUTH-WITNESS-UNREADABLE-NAMED", "POSIX modes are not judged on Windows")
+    else:
+        wit_m = tmp / "witness-modes"
+        old_mask = os.umask(0o007)
+        try:
+            set_env(anchor, founder=fk, witness=wit_m)
+            lg_m = gl.GoalLog(REPO_ID, "g-witness-modes", base=base)
+            gc.declare(lg_m, "witness modes", ["x"], [], {"paths": ["."]})
+        finally:
+            os.umask(old_mask)
+        mark_file = wit_m / REPO_ID / "g-witness-modes.json"
+        f_mode = os.stat(mark_file).st_mode & 0o7777
+        d_mode = os.stat(mark_file.parent).st_mode & 0o7777
+        check("V-AUTH-WITNESS-MODES",
+              f_mode == au.WITNESS_FILE_MODE and d_mode == au.WITNESS_DIR_MODE,
+              f"under umask 0007 the mark is {oct(f_mode)} in a {oct(d_mode)} dir: readers in the "
+              "group read it, only the writer writes it",
+              f"file={oct(f_mode)} dir={oct(d_mode)}")
+        if hasattr(os, "geteuid") and os.geteuid() == 0:
+            unjudge("V-AUTH-WITNESS-UNREADABLE-NAMED", "root reads through mode 000")
+        else:
+            set_env(anchor, witness=wit_m)
+            ctl_named = corrupt_reason(lg_m)
+            os.chmod(mark_file, 0)
+            try:
+                try:
+                    gc.project(lg_m)
+                    why_ur = ""
+                except Exception as exc:                # the class is the point of the gate
+                    why_ur = f"{exc.__class__.__name__}: {exc}"
+            finally:
+                os.chmod(mark_file, au.WITNESS_FILE_MODE)
+            check("V-AUTH-WITNESS-UNREADABLE-NAMED",
+                  why_ur.startswith("GoalLogCorrupt") and au.FOUNDER_WITNESS_UNREADABLE in why_ur
+                  and ctl_named == "",
+                  f"an unreadable mark is a named refusal ({why_ur[:70]}), never a crash; "
+                  "control: the readable mark projects", f"why={why_ur!r} control={ctl_named!r}")
+
     # --- ts and actor are signed ------------------------------------------------------
     lg_ts_ctl = governed_goal("g-ts-control")
     lg_ts = governed_goal("g-ts-tamper")
