@@ -11,6 +11,50 @@
     "session_resilience/ui_state"
   ],
   "modules": {
+    "lease/__init__": {
+      "class": "PLANNED",
+      "note": "UWCP assimilation R2; consumer = UWCP S4-25 VPS lease store (A5), not yet built. Proven by tools/test_lease.py 21/21 + 14 mutants. Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    "lease/store": {
+      "class": "PLANNED",
+      "note": "UWCP assimilation R2 (see lease/__init__). Also imported by provider_routing/ledger (Exclusive, fsync_dir). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    "history_check/__init__": {
+      "class": "PLANNED",
+      "note": "UWCP assimilation R3; consumer = goal/history.py adapter (X3) in the UWCP pane, not yet built. tools/test_history_check.py 16/16 + 13 mutants. Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    "history_check/checkers": {
+      "class": "PLANNED",
+      "note": "UWCP assimilation R3 (see history_check/__init__). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    "trace_context/__init__": {
+      "class": "PLANNED",
+      "note": "UWCP assimilation R5; consumer = uwcp.control/1 + epoch spans (A8), not yet built. tools/test_trace_context.py 11/11 + 9 mutants. Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    "trace_context/context": {
+      "class": "PLANNED",
+      "note": "UWCP assimilation R5 (see trace_context/__init__). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    "provider_routing/__init__": {
+      "class": "PLANNED",
+      "note": "UWCP assimilation R4; consumer = goal/route.py (S6-37) + VPS account ledger (S6-38), not yet built. tools/test_provider_routing.py 33/33 + 17 mutants. Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    "provider_routing/router": {
+      "class": "PLANNED",
+      "note": "UWCP assimilation R4 (see provider_routing/__init__). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    "provider_routing/ledger": {
+      "class": "PLANNED",
+      "note": "UWCP assimilation R4 (see provider_routing/__init__). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    "inference_bench/__init__": {
+      "class": "PLANNED",
+      "note": "UWCP assimilation R6; consumer = UWCP S6a routing-prior benchmark on GEX44 via the dispatcher, not yet run. tools/test_inference_bench.py 13/13 + 9 mutants. Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    "inference_bench/bench": {
+      "class": "PLANNED",
+      "note": "UWCP assimilation R6 (see inference_bench/__init__). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
     "auto-testing/detectors": {
       "class": "LIBRARY",
       "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
