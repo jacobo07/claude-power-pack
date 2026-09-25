@@ -208,9 +208,9 @@ in the module docstring and X1. Not reconstructed: whole platforms (a Temporal/e
 clone is the framework shopping this plan forbids); a scheduler (below the §10 threshold).
 All R modules are pure libraries outside modules/gsd_x/goal, each with a V-* gate, red+green cases,
 and a SHA-256-restored mutation drill; Lane L wires them.
-R1 modules/cas/        <- REAPI + restic/Kopia: Digest{sha256,size}, canonical JSON manifest, verify
-                          tiers (STRUCTURAL | CONTENT | UNKNOWN), GC-safe retention planner
-                          (referenced-by-receipt UNION in-flight, age margin, two observations).
+R1 WITHDRAWN 2026-09-25: goal/workspace.py (Lane L, in progress) already owns digests, canonical
+                          manifest and capsule_id; a modules/cas/ would be a second capsule authority.
+                          The REAPI/restic invariants it lacks go in as A6 items inside workspace.py.
 R2 modules/lease/      <- etcd lessor + Temporal range_id: flock store, monotonic fence, TTL from
                           dispatch, min-TTL refusal, expiry bumps fence atomically, all-or-nothing,
                           persisted absolute deadlines, fs-type refusal, fsync-before-ack.
@@ -226,7 +226,7 @@ R5 modules/trace_context/ <- W3C Trace Context + OTel env carriers: mint/parse/v
                           child-env injection, span JSONL record with gen_ai.* names, never authoritative.
 R6 modules/inference_bench/ <- vLLM/SGLang bench_serving: TTFT, TPOT, ITL, E2E, throughput, goodput
                           against any OpenAI-compatible endpoint (llama-server); feeds routing priors.
-X2 (TLA+) is adopted, not reconstructed. Order: R1 (S2 is live now), R2, R3, R5, R4, R6.
+X2 (TLA+) is adopted, not reconstructed. Order: R2, R3, R5, R4, R6.
 
 ## 13. Done-gate
 uwcp.md §26 plus: test_uwcp_tla.py (base PASS with floors; pre_cf4d71b cfg finds the late-receipt

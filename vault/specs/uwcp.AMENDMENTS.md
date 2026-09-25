@@ -34,8 +34,11 @@ exit 1. Required:
 8. refuse: unmerged index, case-colliding paths onto a case-insensitive host, required filter/LFS absent.
 Falsification tests: byte-flip part -> NON_EQUIVALENT before git is asked; symlink/exec-bit seeded
 from base survive a Windows capture; retention N=0 during capture -> parts survive.
-Library: Lane R ships modules/cas/ (digest, canonical manifest, verify tiers, retention planner);
-import it rather than re-deriving.
+Already covered by workspace.py (read 14:45): per-part {sha256, bytes}, canonical manifest +
+capsule_id, hydrate re-hashes parts before git. Still owed there: items 2, 3, 5, 6, 7, 8, and in
+item 4 the `fetch` with transfer.fsckObjects (part digests catch transport corruption, not a pack
+corrupted at creation). workspace.py stays the ONE capsule owner; Lane R's planned modules/cas/ is
+cancelled to avoid a second authority (R1 withdrawn).
 
 ## Delta slices on sealed work
 A1 -> S1-8b: receipt echoes {goal_id, epoch_id, run_token, fence, revision}; ingest compares all;
