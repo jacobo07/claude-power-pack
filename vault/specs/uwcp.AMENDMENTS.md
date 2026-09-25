@@ -51,6 +51,15 @@ A2 -> S1-8c "UNKNOWN never licenses anything": observe returns UNKNOWN (not LOST
    BEFORE any UNKNOWN wait; WAIT on UNKNOWN past its deadline -> BLOCKED_ENVIRONMENT whose only
    exits are a positive observation or operator cancel that bumps the fence; no successor after
    UNKNOWN until A3 node fencing is live. Red tests: Lane R's TLA+ counterexamples replayed in Python.
+   MODEL-CHECKED (a486bf8, tools/test_uwcp_tla.py): with observe "no child handle" -> LOST, TLC
+   reaches two live executors via NodeUnreachable -> FalseLost -> Begin -> Launch
+   (vault/specs/tla/counterexamples/UWCP_current.txt). Replay it as a failing Python test first.
+   SECOND MECHANISM, same invariant (counterexamples/UWCP_nostopevidence.txt): the wall bound ends
+   an epoch while its process still runs, and a successor begins -> two live executors. Code
+   status UNVERIFIED: headless observe reports RUNNING "cancel it" past the bound and cancel()
+   calls proc.kill() on POSIX without waiting. Obligation A2f: a successor needs POSITIVE evidence
+   the previous executor stopped (observed exit or confirmed kill), never the home's own "ended".
+   Characterize today's behaviour before fixing it.
 X0 -> S1-8d codex account lock: take a stale lock by os.rename(lock -> lock.stale.<run_token>) (one
    winner), verify tombstone bytes == bytes judged stale, create with O_EXCL; unparseable lock older
    than the bound goes through the same path; barrier race test for both races.
