@@ -303,6 +303,10 @@
       "class": "PLANNED",
       "note": "UWCP S1-7. Imported by gsd_x/goal/reconcile.py -- see gsd_x/goal/evidence note; wired with the engine in UWCP S6"
     },
+    "gsd_x/goal/workspace": {
+      "class": "PLANNED",
+      "note": "UWCP S2 Workspace Capsule (A6 object model). Driven today only by tools/test_uwcp_workspace.py; OWNER_QUEUE: UWCP S5 (queue provider captures at dispatch, runner hydrates on the node) and S6 wire it; re-classify then"
+    },
     "hard_rules/residual": {
       "class": "PLANNED",
       "note": "sealed doctrine compiler (PR-PROHIBITIONS-DO-NOT-CONFLICT-001), extensively cited in CLAUDE.md prose but grep confirms zero code import anywhere in modules/hard_rules -- designed to run when a Hard Rule fires; that integration into hook-dispatcher.js's block path has not happened"
