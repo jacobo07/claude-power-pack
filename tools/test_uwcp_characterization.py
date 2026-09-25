@@ -208,9 +208,25 @@ def main() -> int:
         nongit = base / "nongit_runtime"
         nongit.mkdir()
         allowed, why = sw.autonomy_verdict(nongit)
-        check("V-UWCP-CHAR-AUTONOMY-NONGIT-PASSES", allowed,
-              "TODAY: a green record from ANY code licenses autonomy when the runtime is not "
-              f"a git tree ({why}) -- S1-10 inverts this", f"already refused: {why}")
+        # INVERTED by S1-10: was V-UWCP-CHAR-AUTONOMY-NONGIT-PASSES.
+        check("V-UWCP-AUTONOMY-NONGIT-REFUSED", not allowed and "no identity" in why,
+              "a non-git runtime with no RUNTIME_ID cannot use a green record from other code",
+              f"allowed: {why}")
+        (nongit / "RUNTIME_ID").write_text("uwcp-runtime:" + "b" * 64, encoding="utf-8")
+        allowed_m, why_m = sw.autonomy_verdict(nongit)
+        rec.write_text(json.dumps({"head": "uwcp-runtime:" + "b" * 64, "green": True,
+                                   "suites": {}}), encoding="utf-8")
+        allowed_ok, why_ok = sw.autonomy_verdict(nongit)
+        check("V-UWCP-AUTONOMY-RUNTIME-ID",
+              not allowed_m and allowed_ok,
+              "an installed runtime is identified by its RUNTIME_ID: a record for other code "
+              "is refused, a record for this runtime is honoured",
+              f"mismatch allowed={allowed_m} ({why_m}); match allowed={allowed_ok} ({why_ok})")
+        (nongit / "RUNTIME_ID").write_text("whatever", encoding="utf-8")
+        allowed_bad, _ = sw.autonomy_verdict(nongit)
+        check("V-UWCP-AUTONOMY-RUNTIME-ID-MALFORMED", not allowed_bad,
+              "a RUNTIME_ID without the installer's prefix is not an identity",
+              "a malformed RUNTIME_ID licensed autonomy")
         if GIT:
             gitrt = base / "gitrt"
             gitrt.mkdir()

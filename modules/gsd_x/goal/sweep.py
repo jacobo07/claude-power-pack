@@ -57,10 +57,34 @@ def record_path() -> Path:
     return state_dir() / AUTONOMY_RECORD
 
 
+RUNTIME_ID_FILE = "RUNTIME_ID"
+
+
+def runtime_identity(pp_root: Path) -> str:
+    """The identity of the code that would run (UWCP S1-10).
+
+    A git checkout answers with HEAD. A runtime installed WITHOUT git (a bundle
+    staged onto a remote node) answers with the sha its installer wrote to
+    RUNTIME_ID. Neither -> "" -- and "" means UNKNOWN, never "matches anything".
+    Measured 2026-09-25: the VPS carries a non-git CPP tree, where the old check
+    `if head and ...` skipped staleness entirely, so a green record from any code
+    would have licensed unattended action forever.
+    """
+    head = gs.head(pp_root)
+    if head:
+        return head
+    rid = Path(pp_root) / RUNTIME_ID_FILE
+    try:
+        text = rid.read_text(encoding="utf-8").strip() if rid.is_file() else ""
+    except OSError:
+        return ""
+    return text if text.startswith("uwcp-runtime:") else ""
+
+
 def record_gates(pp_root: Path, python: str | None = None) -> dict:
     """Run the required suites here, now, and record what they said."""
     python = python or sys.executable
-    head = gs.head(pp_root)
+    head = runtime_identity(pp_root)
     results = {}
     for suite in REQUIRED_SUITES:
         p = Path(pp_root) / "tools" / suite
@@ -95,10 +119,17 @@ def autonomy_verdict(pp_root: Path) -> tuple[bool, str]:
     if not rec.get("green"):
         bad = [s for s, r in (rec.get("suites") or {}).items() if not r.get("ok")]
         return False, f"the autonomy record is not green: {bad}"
-    head = gs.head(pp_root)
-    if head and rec.get("head") and rec["head"] != head:
-        return False, (f"the autonomy record is for {rec['head'][:8]}, this tree is "
-                       f"{head[:8]}: re-run `record-gates` on the code that would run")
+    head = runtime_identity(pp_root)
+    if not head:
+        # UNKNOWN is not a match (UWCP S1-10): a runtime nobody can identify
+        # cannot be the code the green record was earned on.
+        return False, (f"the runtime at {pp_root} has no identity (not a git tree, no valid "
+                       f"{RUNTIME_ID_FILE}); a green record cannot be matched to the code "
+                       "that would run")
+    if rec.get("head") != head:
+        return False, (f"the autonomy record is for {str(rec.get('head'))[:12] or 'nothing'}, "
+                       f"this runtime is {head[:12]}: re-run `record-gates` on the code that "
+                       "would run")
     return True, f"judge and chaos suites green at {str(rec.get('head'))[:8]}"
 
 
@@ -177,7 +208,9 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
     # The engine's own identity is part of the retry key: when the orchestrator
     # is what failed an attempt, retrying against fixed code is new information
     # rather than the same attempt again.
-    engine = gs.head(Path(__file__).resolve().parents[3])
+    # runtime_identity, not bare HEAD: on a non-git runtime HEAD is "" and the
+    # engine term silently dropped out of the key (audit gap 2, UWCP S1-10).
+    engine = runtime_identity(Path(__file__).resolve().parents[3])
     d = rc.decide(rc.Context(state=state, tree_hash=tree,
                              scope_hash=ep.scope_hash(root, paths),
                              observations=observations, now=time.time(),
