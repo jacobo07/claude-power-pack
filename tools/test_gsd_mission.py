@@ -180,14 +180,15 @@ def main() -> int:
           str(argv))
 
     # 2026-09-25: an unattended worker parked on an EnterWorktree prompt. Both worktree tools
-    # are pre-approved on every launch, once, and nothing wider is added.
+    # are pre-approved on every launch, once. 2026-09-26: a verifier subagent parked on writing
+    # its own .planning report, so edits under .planning/ are pre-approved too -- and nothing wider.
     allowed = [argv[i + 1] for i, a in enumerate(argv) if a == "--allowedTools"]
     check("V-MC-ARGV-WORKTREE-TOOLS-PREAPPROVED",
-          allowed == ["Read", "Edit", "EnterWorktree", "ExitWorktree"], str(allowed))
+          allowed == ["Read", "Edit", "EnterWorktree", "ExitWorktree", "Edit(.planning/**)"], str(allowed))
     bare = gm.worker_argv({"mission_id": "m", "epoch": 1, "allowed_tools": ["EnterWorktree"]}, "/x")
     bare_allowed = [bare[i + 1] for i, a in enumerate(bare) if a == "--allowedTools"]
     check("V-MC-ARGV-WORKTREE-TOOLS-NO-DUPLICATE",
-          bare_allowed == ["EnterWorktree", "ExitWorktree"], str(bare_allowed))
+          bare_allowed == ["EnterWorktree", "ExitWorktree", "Edit(.planning/**)"], str(bare_allowed))
 
     # 2026-09-25: a worker nobody watches must never park on a question.
     i_dis = argv.index("--disallowedTools") if "--disallowedTools" in argv else -1

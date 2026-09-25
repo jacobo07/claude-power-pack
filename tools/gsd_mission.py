@@ -452,7 +452,12 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
     # both parked on an EnterWorktree permission prompt -- the card tells a worker to enter
     # the work tree, and an unattended worker cannot answer the prompt that follows. Only the
     # two worktree tools are pre-approved; everything else stays under the permission mode.
-    tools = list(dict.fromkeys([*(rec.get("allowed_tools") or []), "EnterWorktree", "ExitWorktree"]))
+    # 2026-09-26 (m-0f1efe5e6174, Orca X P8 on GEX44): the worker's GSD verifier subagent parked
+    # at "Do you want to create 02-VERIFICATION.md?" for 45+ min in auto mode, BLOCKED with the
+    # phase's whole verdict computed and unwritten. GSD's own planning files are the mission's
+    # bookkeeping, so edits under `.planning/` (relative to the worker's cwd) are pre-approved too.
+    tools = list(dict.fromkeys([*(rec.get("allowed_tools") or []), "EnterWorktree", "ExitWorktree",
+                                "Edit(.planning/**)"]))
     for tool in tools:
         argv += ["--allowedTools", tool]
     for d in rec.get("add_dirs") or []:
