@@ -189,6 +189,41 @@ def main() -> int:
     check("V-MC-ARGV-WORKTREE-TOOLS-NO-DUPLICATE",
           bare_allowed == ["EnterWorktree", "ExitWorktree"], str(bare_allowed))
 
+    # 2026-09-25: a worker nobody watches must never park on a question.
+    i_dis = argv.index("--disallowedTools") if "--disallowedTools" in argv else -1
+    check("V-MC-ARGV-ASKUSER-DISALLOWED",
+          i_dis > 0 and argv[i_dis + 1] == "AskUserQuestion" and i_dis < argv.index("--autocompact"),
+          str(argv))
+    card_rec = {"mission_id": "m-card", "epoch": 2, "cwd": TMP, "resume_command": "/gsd-autonomous"}
+    plain = gm.render_card(card_rec)
+    check("V-MC-CARD-UNATTENDED-CLAUSE", "UNATTENDED:" in plain and "Never ask the Owner" in plain
+          and "OWNER DIRECTIVES" not in plain, plain[:200])
+    with_d = gm.render_card({**card_rec, "directives": ["run D-01 on GEX44", "props to Phase 8"]})
+    check("V-MC-CARD-RENDERS-DIRECTIVES", "OWNER DIRECTIVES" in with_d
+          and "  - run D-01 on GEX44" in with_d and "  - props to Phase 8" in with_d)
+    gm.create(TMP, "/gsd-autonomous", mission_id="m-dir", now=NOW)
+    blocked = gm.load("m-dir")
+    gm.transition("m-dir", expect_epoch=blocked["epoch"], expect_state=blocked["state"],
+                  event="test_block", now=NOW, state=gm.BLOCKED)
+    gm.add_directive("m-dir", "first", now=NOW)
+    after = gm.add_directive("m-dir", "second", now=NOW)
+    check("V-MC-DIRECTIVE-ON-BLOCKED-APPENDS",
+          after["directives"] == ["first", "second"] and after["state"] == gm.BLOCKED, str(after.get("directives")))
+    for label, fn in (("EMPTY", lambda: gm.add_directive("m-dir", "  ", now=NOW)),
+                      ("MISSING", lambda: gm.add_directive("m-nope", "x", now=NOW))):
+        try:
+            fn()
+            check(f"V-MC-DIRECTIVE-REFUSES-{label}", False, "no error")
+        except gm.MissionError as exc:
+            check(f"V-MC-DIRECTIVE-REFUSES-{label}", True, str(exc))
+    gm.transition("m-dir", expect_epoch=after["epoch"], expect_state=gm.BLOCKED,
+                  event="test_halt", now=NOW, state=gm.HALTED)
+    try:
+        gm.add_directive("m-dir", "late", now=NOW)
+        check("V-MC-DIRECTIVE-REFUSES-TERMINAL", False, "no error")
+    except gm.MissionError as exc:
+        check("V-MC-DIRECTIVE-REFUSES-TERMINAL", "HALTED" in str(exc), str(exc))
+
     # --- workstream binding (2026-09-25: a bare /gsd-autonomous ran the ROOT milestone) ------
     rec = gm.create(TMP, "/gsd-autonomous", mission_id="m-ws", workstream="lobby-ws", now=NOW)
     check("V-MC-WS-BOUND-AT-CREATE", rec["resume_command"] == "/gsd-autonomous --ws lobby-ws",
@@ -399,6 +434,49 @@ def main() -> int:
     check("V-MC-STOP-LINGER-LIVE-VERDICT-SPARED", ok is False and killed == [], why)
     ok, why, killed = linger("done", "claude.exe --session-id s-linger", dies=False)
     check("V-MC-STOP-LINGER-SURVIVOR-REPORTED", ok is False and "survived" in why, why)
+
+    # --- renewal on budget halt (spec gex44-mission-plane.md, A) ---------------------------
+    LATE = NOW + 25 * 3600   # past the default 24 h budget
+
+    def successors(of):
+        return [m for m in gm.all_missions() if m.get("renewed_from") == of]
+
+    hs = fresh("m-renew")
+    gm.add_directive("m-renew", "Owner: keep this decision", now=NOW)
+    rows = gm.supervise(now=LATE, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                        stop_runner=stop_run, pid_alive=gone)
+    succ = successors("m-renew")
+    check("V-MC-RENEW-BUDGET-HALT-RENEWS",
+          gm.load("m-renew")["state"] == gm.HALTED and len(succ) == 1
+          and succ[0]["state"] == gm.PREPARED and succ[0]["renewal"] == 1, str(rows))
+    check("V-MC-RENEW-CARRIES-DIRECTIVES",
+          bool(succ) and succ[0]["directives"] == ["Owner: keep this decision"]
+          and succ[0]["lineage_id"] == "m-renew", str(succ[0].get("directives") if succ else None))
+    hs = fresh("m-renew-unk")
+    gm.supervise(now=LATE, sessions=hs, gsd_status=gsd("UNAVAILABLE"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    check("V-MC-RENEW-GSD-UNAVAILABLE-NO-RENEW",
+          gm.load("m-renew-unk")["state"] == gm.HALTED and not successors("m-renew-unk"))
+    hs = fresh("m-renew-cap")
+    rec_cap = gm.load("m-renew-cap")
+    gm.transition("m-renew-cap", expect_epoch=rec_cap["epoch"], expect_state=gm.RUNNING,
+                  event="t", now=NOW, renewal=gm.MAX_RENEWALS, lineage_id="m-root")
+    rows = gm.supervise(now=LATE, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                        stop_runner=stop_run, pid_alive=gone)
+    cap_row = next((r for r in rows if r["mission_id"] == "m-renew-cap"), {})
+    check("V-MC-RENEW-CAP-HALTS-FOR-REAL",
+          not successors("m-renew-cap") and "renewal cap" in cap_row.get("renewal", ""), str(cap_row))
+    check("V-MC-RENEW-NOT-FOR-HAND-HALT",
+          gm.renewal_refusal({"mission_id": "m"}, "Owner: re-arm in a dedicated worktree", "OK")
+          is not None)
+    os.environ["CPP_MISSION_RENEW"] = "off"
+    try:
+        check("V-MC-RENEW-KILL-SWITCH",
+              "disabled" in (gm.renewal_refusal({"mission_id": "m"}, "budget: x", "OK") or ""))
+    finally:
+        os.environ.pop("CPP_MISSION_RENEW", None)
+    check("V-MC-RENEW-CONTROL-ALLOWED",
+          gm.renewal_refusal({"mission_id": "m", "renewal": 0}, "turn ended and budget: x", "OK") is None)
 
     # an idle estate never asks the host (the 5-minute sweep must cost nothing)
     for p in Path(TMP).glob("gsd-mission-*.json"):

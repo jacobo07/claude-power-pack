@@ -457,6 +457,8 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
         argv += ["--allowedTools", tool]
     for d in rec.get("add_dirs") or []:
         argv += ["--add-dir", d]
+    # A worker nobody watches must not be able to park on a question (Owner 2026-09-25).
+    argv += ["--disallowedTools", "AskUserQuestion"]
     mode = rec.get("permission_mode")
     if mode:
         argv += ["--permission-mode", mode]
@@ -605,6 +607,22 @@ def request_handoff(session_id: str, note: str, now: float | None = None) -> dic
                                "requested_at": now, "deadline": now + HANDOFF_DEADLINE_S})
 
 
+def add_directive(mission_id: str, text: str, now: float | None = None) -> dict:
+    """Record an Owner decision on the mission itself, so EVERY later card carries it -- a
+    handoff note reaches one successor only, and needs a RUNNING owner to write it."""
+    text = (text or "").strip()
+    if not text:
+        raise MissionError("empty directive")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is {rec['state']}; a directive cannot reach it")
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      event="directive_added", now=now,
+                      directives=[*(rec.get("directives") or []), text[:1000]])
+
+
 def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -> str:
     """The rehydration card for a fresh worker. Mechanical sources only (the mission
     record, git, GSD); the predecessor's note is labelled as a claim, not a fact.
@@ -620,6 +638,17 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
            f"--cwd .` (session-local pointer; gsd_run calls do not forward --ws). The repo's ROOT "
            f"milestone belongs to another track -- never plan or execute it."]
           if rec.get("workstream") else []),
+        "",
+        # Owner decision 2026-09-25 (settings.json autoMode.allow entry): four workers sat for
+        # hours on an AskUserQuestion / permission prompt nobody watching could answer.
+        "UNATTENDED: nobody reads this session and nobody will answer a question or a prompt.",
+        "  Never ask the Owner. When a choice is needed, take the option you would recommend",
+        "  (the safest one that keeps the mission moving), record it as a decision with its",
+        "  reason in the workstream STATE.md, and continue. If a step is genuinely impossible,",
+        "  record why, move to the next runnable phase, and keep going.",
+        *(["", "OWNER DIRECTIVES (binding; they override the note below):"]
+          + [f"  - {d}" for d in rec.get("directives") or []]
+          if rec.get("directives") else []),
         "",
         "RECONCILE BEFORE ACTING (run these first and say what you found):",
         "  git status --short ; git log --oneline -5 ; GSD progress for the active milestone",
@@ -921,6 +950,45 @@ def _needs_look(m: dict, now: float) -> bool:
     return m["state"] not in TERMINAL or now - float(m.get("updated_at") or 0) < ORPHAN_LOOKBACK_S
 
 
+MAX_RENEWALS = 3   # budget renewals per lineage (spec vault/specs/gex44-mission-plane.md, A)
+
+
+def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None) -> str | None:
+    """Why this budget-halted mission must NOT be renewed, or None when it may be.
+    Positive test: only a halt the supervisor made for budget, with GSD saying work remains."""
+    if os.environ.get("CPP_MISSION_RENEW", "").lower() == "off":
+        return "renewal disabled (CPP_MISSION_RENEW=off)"
+    if "budget:" not in (halt_reason or ""):
+        return f"halt was not for budget: {halt_reason}"
+    if gsd_outcome != "OK":
+        return f"GSD answered {gsd_outcome}, not work-remains"
+    if int(rec.get("renewal") or 0) >= MAX_RENEWALS:
+        return f"renewal cap {MAX_RENEWALS} reached for lineage {rec.get('lineage_id') or rec['mission_id']}"
+    return None
+
+
+def renew_mission(rec: dict, now: float | None = None) -> dict:
+    """A PREPARED successor of a budget-halted mission: same work, fresh budget, every Owner
+    directive carried. The normal launch path starts it on the next pass."""
+    now = time.time() if now is None else now
+    new = create(rec["cwd"], rec["resume_command"], workstream=rec.get("workstream"),
+                 max_cycles=rec.get("max_cycles"), max_hours=rec.get("max_hours"),
+                 now=now, permission_mode=rec.get("permission_mode"),
+                 allowed_tools=rec.get("allowed_tools"), add_dirs=rec.get("add_dirs"),
+                 wall=rec.get("wall"))
+    carried = {"renewed_from": rec["mission_id"],
+               "lineage_id": rec.get("lineage_id") or rec["mission_id"],
+               "renewal": int(rec.get("renewal") or 0) + 1,
+               "directives": list(rec.get("directives") or [])}
+    if rec.get("work_dir"):
+        carried["work_dir"] = rec["work_dir"]
+    new = transition(new["mission_id"], expect_epoch=new["epoch"], expect_state=PREPARED,
+                     event="mission_renewed", now=now, **carried)
+    lr.ledger_append(rec["mission_id"], "mission_renewed", mission_id=rec["mission_id"],
+                     successor=new["mission_id"], renewal=carried["renewal"])
+    return new
+
+
 def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
               gsd_status=None, runner=None, stop_runner=None, pid_alive=lr._pid_alive) -> list[dict]:
     """One out-of-band pass over every mission. Each action is ledgered by the
@@ -974,6 +1042,16 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                                     event="mission_halted", now=now, state=HALTED, pending=None,
                                     reason=plan["reason"])
                 reap(halted, row)  # a halt changes the record; stop the world to match it
+                if "budget:" in plan["reason"]:
+                    # Owner 2026-09-25: a budget halt must not end a mission that still has
+                    # work. Ask GSD where the work lives; only "work remains" renews.
+                    st = (gsd_status or _supervise_gsd_status)(
+                        rec.get("work_dir") or rec["cwd"], workstream=rec.get("workstream"))
+                    why_not = renewal_refusal(halted, plan["reason"], st.get("outcome"))
+                    if why_not:
+                        row["renewal"] = f"not renewed: {why_not}"
+                    else:
+                        row["renewed_as"] = renew_mission(halted, now=now)["mission_id"]
             elif act == "surface_blocked":
                 if rec["state"] != BLOCKED:
                     transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
@@ -1181,6 +1259,9 @@ def _cli(argv=None) -> int:
     h = sub.add_parser("handoff")
     h.add_argument("--session", required=True)
     h.add_argument("--note", default="")
+    d = sub.add_parser("directive")
+    d.add_argument("--mission", required=True)
+    d.add_argument("--text", required=True)
     v = sub.add_parser("supervise")
     v.add_argument("--dry-run", action="store_true")
     v.add_argument("--actions-only", action="store_true",
@@ -1206,6 +1287,10 @@ def _cli(argv=None) -> int:
     if args.cmd == "handoff":
         rec = request_handoff(args.session, args.note)
         print(f"HANDOFF RECORDED mission={rec['mission_id']} epoch={rec['epoch']} -- end your turn now")
+        return 0
+    if args.cmd == "directive":
+        rec = add_directive(args.mission, args.text)
+        print(f"DIRECTIVE RECORDED mission={rec['mission_id']} total={len(rec['directives'])}")
         return 0
     if args.cmd == "supervise":
         rows = supervise(dry_run=args.dry_run)
