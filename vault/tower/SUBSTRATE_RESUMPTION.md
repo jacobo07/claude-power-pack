@@ -42,9 +42,7 @@ no edits to `gsd_x/goal`, `kseip/goal-spine`, `fusion_*`, or any KobiiCraft file
   not the constitution; the done-gate judges every applicable entry.
 
 ## NEXT
-1. Owner decides the merge into `feature/knowledge-acquisition` (bracket the live
-   checkout's dirty-path set before and after; none of its 492 dirty paths touched
-   `modules/tower`, `tools/family_baseline.py` or `vault/tower` at 2026-09-25).
+1. DONE: merged as `a85a009` (bracketed: 491 dirty paths before and after, 0 moved).
 2. Relay `HANDOFF_W14_CONSTITUTIVE.md` to `kc-diffint-wt` before it starts W9/W12/W14.
 3. Owner confirms or rejects the 3 spec readings (HANDOFF §5).
 
