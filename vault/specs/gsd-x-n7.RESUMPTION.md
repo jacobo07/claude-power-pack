@@ -207,7 +207,15 @@ so the mechanism becomes reachable from the world rather than from a fixture.
   `depends_on` fingerprints `~/.claude/logs/host-memory-floor.json`, which
   changes every few minutes, so any committed document is STALE within minutes
   of landing and would make every gate reading it report STALE forever.
-- **Nothing pushed** (Owner answer 2a). The branch carries this wave's three
-  commits plus many foreign ones.
+- **I pushed nothing (Owner answer 2a) — and two of this wave's commits are on
+  origin anyway.** Measured at close: `7a7e419` and `41483b1` are on
+  `origin/feature/knowledge-acquisition`; `bc73a94` and `a82da97` are local
+  only. A concurrent pane pushed the shared branch and carried them.
+
+  **This is a limit of the instruction, not a breach of it, and the next wave
+  should know it:** on a branch other panes push, "do not push" cannot mean
+  "this work stays unpublished". It only means "I will not be the one to
+  publish". Anything that must genuinely not leave the machine needs a branch
+  no other pane pushes, not a decision not to push.
 - **Upstream report not drafted** — bounded out by Owner answer 5
   (stop-after-S5); still owed, unchanged from N6.
