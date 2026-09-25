@@ -192,6 +192,14 @@ class _Exclusive:
             self.fh.close()
 
 
+Exclusive = _Exclusive                  # public: other journals on one home reuse this lock
+
+
+def fsync_dir(path: Path) -> None:
+    """Persist a directory entry after a create/append (POSIX; NTFS journals it)."""
+    _fsync_dir(path)
+
+
 def _fsync_dir(path: Path) -> None:
     if os.name == "nt":
         return                          # NTFS journals the directory entry itself
