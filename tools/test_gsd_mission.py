@@ -212,6 +212,24 @@ def main() -> int:
           bool(ws_calls) and ws_calls[-1][-1] == "/gsd-autonomous --ws lobby-ws",
           str(ws_calls[-1][-1] if ws_calls else None))
 
+    # A launch with no note must not re-send an older epoch's card (2026-09-25, epoch 4 got 3's).
+    stale = gm.create(TMP, "/gsd-autonomous", mission_id="m-stale-card", workstream="lobby-ws",
+                      now=NOW)
+    stale["card"] = "OLD-CARD epoch 1 WORK TREE: enter C:/elsewhere"
+    gm._write(gm.mission_path("m-stale-card"), stale)
+    sc_calls = []
+
+    def runner_sc(argv, cwd):
+        sc_calls.append(argv)
+        return R("backgrounded · 9a8b7c6d · m-stale-card-e1\n")
+
+    gm.launch_worker("m-stale-card", expect_epoch=0, expect_state=gm.PREPARED, reason="t",
+                     runner=runner_sc, now=NOW)
+    sent = sc_calls[-1][sc_calls[-1].index("--append-system-prompt") + 1] if (
+        sc_calls and "--append-system-prompt" in sc_calls[-1]) else ""
+    check("V-MC-CARD-NEVER-STALE", "OLD-CARD" not in sent and "worker epoch 1 " in sent
+          and "--ws lobby-ws" in sent, sent[:160])
+
     wcard = gm.render_card({"epoch": 2, "mission_id": "m-ws", "cwd": "C:/p",
                             "resume_command": "/gsd-autonomous", "workstream": "lobby-ws"})
     check("V-MC-WS-CARD-PINS-POINTER",

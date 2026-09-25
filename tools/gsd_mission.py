@@ -490,12 +490,16 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     extra = {"note": note} if note is not None else {}
     if work_dir:
         extra["work_dir"] = work_dir
-    if note is not None:
+    if note is not None or rec.get("card"):
         # Pre-render the successor's card NOW: this runs out of band with no deadline, and
         # the git facts are exactly those of the hand-off moment the card claims to show --
         # read where the work IS, not where the worker was launched.
+        # Also when there is NO note but an older card exists: worker_argv passes rec["card"],
+        # so skipping the render re-sent the PREVIOUS epoch's card. Measured 2026-09-25
+        # (m-1d270cd85220): a replace from LAUNCHING (no owner -> no note) briefed epoch 4 as
+        # "epoch 3" with a WORK TREE line the record had since corrected; the worker entered it.
         wd = work_dir or rec.get("work_dir") or rec["cwd"]
-        extra["card"] = render_card({**rec, "epoch": expect_epoch + 1, "note": note,
+        extra["card"] = render_card({**rec, "epoch": expect_epoch + 1, "note": note or "",
                                      "work_dir": wd}, _git_facts(wd))
     rec = transition(mission_id, expect_epoch=expect_epoch, expect_state=expect_state,
                      event="launch_claimed", now=now, state=LAUNCHING, epoch=epoch,
