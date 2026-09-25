@@ -137,7 +137,13 @@ def _evaluate(kind: str, arg: str, root: str, registry: str | None) -> tuple:
     if kind == "glob":
         if _inside(root, arg.replace("*", "x").replace("?", "x")) is None:
             return (REFUSED_PATH, "pattern leaves the repo root: %s" % arg)
-        hits = _glob.glob(os.path.join(os.path.realpath(root), arg), recursive=True)
+        base = os.path.realpath(root)
+        # The pattern check above cannot see where a match RESOLVES: a symlink or
+        # junction inside the root can point outside it. Keep only hits whose
+        # real path is still under the root (code review 2026-09-25, LOW).
+        hits = [h for h in _glob.glob(os.path.join(base, arg), recursive=True)
+                if os.path.realpath(h) == base
+                or os.path.realpath(h).startswith(base + os.sep)]
         return (PASS, "%d match(es)" % len(hits)) if hits else (FAIL, "no match")
     # file / test
     full = _inside(root, arg)

@@ -85,6 +85,34 @@ def main() -> int:
         _check("V-TCHK-PATH-ABSOLUTE", r.outcome == ck.REFUSED_PATH,
                "an absolute path is refused", r)
 
+        # --- a glob may not PASS on a file that resolves outside the root ---
+        # Code review 2026-09-25 (LOW): the pattern was confined, its hits were
+        # not, so a junction inside the root reached a file outside it.
+        outside = tempfile.mkdtemp(prefix="tchk_out_")
+        try:
+            with open(os.path.join(outside, "secret.txt"), "w", encoding="utf-8") as fh:
+                fh.write("x\n")
+            link = os.path.join(root, "linkdir")
+            made = False
+            try:
+                if os.name == "nt":
+                    import _winapi
+                    _winapi.CreateJunction(outside, link)
+                else:
+                    os.symlink(outside, link, target_is_directory=True)
+                made = os.path.isfile(os.path.join(link, "secret.txt"))
+            except OSError as exc:
+                print("  harness could not create a link: %s" % exc)
+            r = _one("glob:link*/secret.txt", root)
+            _check("V-TCHK-GLOB-LINK-ESCAPE", made and r.outcome == ck.FAIL,
+                   "a match reached through a link to outside is not a PASS",
+                   "harness link made=%s result=%s" % (made, r))
+        finally:
+            link = os.path.join(root, "linkdir")
+            if os.path.lexists(link):
+                os.rmdir(link) if os.name == "nt" else os.unlink(link)
+            shutil.rmtree(outside, ignore_errors=True)
+
         # --- delegated kinds: resolved, NEVER a PASS ------------------------
         r = _one("registry:lobby-npc-gate", root, reg)
         _check("V-TCHK-REGISTRY-DELEGATED", r.outcome == ck.DELEGATED,
