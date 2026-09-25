@@ -34,6 +34,16 @@ goal regressions green (GOAL 26, CHAOS 15, EPOCH 19, RECONCILE 22, SWEEP 14, JUD
 GATE 18, CLAUDE_PROVIDERS 20, CLI 25). Mutation drills: scratchpad `mutate.py` (snippet swap,
 named gates must go red, SHA-256 restore; refuses ambiguous snippets as HARNESS-FAILED).
 
+## GEX44 test route (Owner chose "add a dispatcher job", 2026-09-25)
+VPS `gex44_dispatcher.py` now carries job type `uwcp-test` (JOB_COMMANDS + STAGE + COLLECT;
+sha 1b85dd57..., backup `gex44_dispatcher.py.bak_uwcp_20260925T170124Z`; smoke green, the
+dispatcher suite's 18 pre-existing failures identical before/after). INERT until
+`kobiiclaw.service` restarts: it imports the dispatcher once. The restart was refused by the
+auto-mode classifier (production deploy) -- the Owner runs it. Inputs are staged on the VPS at
+/home/kobicraft/uwcp_stage/{repo.tar (commit 5de14dd, md5 c45b29e3...), uwcp_gex44_testjob.py}.
+After the restart: `python3 gex44_cli.py queue add uwcp-test --tenant kobiicraft`; results land in
+/home/kobicraft/uwcp_return/<job_id>/ (verdict.json, results.json).
+
 ## Traps learned this run (for the vault at S10)
 - Editing a module while a background suite exercises it produced a false 22/25 (NameError
   window). Never edit gsd_x/goal while tools/test_gsd_x_goal_mutation.py runs -- it mutates
