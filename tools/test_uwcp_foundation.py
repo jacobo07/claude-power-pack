@@ -131,6 +131,14 @@ def main() -> int:
           and ev.project_hypotheses(succ)["H-B"].status == ev.ESTABLISHED,
           "a successor reading only the log sees A rejected with ALL its evidence and B "
           "established (Golden 08, LOCAL_REALITY half)", f"successor saw {rj}")
+    from modules.gsd_x.goal import brief as gb      # noqa: PLC0415
+    btext = gb.compile_brief(succ, [], "/w", "continue")
+    check("V-UWCP-F-BRIEF-RENDERS-REJECTED",
+          "do NOT retry" in btext and "[H-A]" in btext
+          and "re-dump confirms absence" in btext and "goal log seq" in btext
+          and "[H-B]" in btext.split("## Established")[1],
+          "the successor's brief lists A as disproven with its refutation and log seq, "
+          "and B as established", "brief omits negative knowledge")
     check("V-UWCP-F-HYP-OLD-READER",
           gc.project(gl.GoalLog(REPO, "g-hyp", base=base)).revision != "",
           "contract.project still replays a log carrying hypothesis events",

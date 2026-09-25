@@ -105,15 +105,30 @@ def main() -> int:
     big = "x" * 200_000
     lg2 = gl.GoalLog(REPO, "g-brief", base=base / "goals")
     s2 = gc.declare(lg2, big, ["ok"], [], {"paths": ["src"]})
-    text = gb.compile_brief(s2, [], "/w", "task")
+    try:
+        text = gb.compile_brief(s2, [], "/w", "task")
+    except gb.BriefTooLarge as exc:
+        text = ""
+        big_refused = str(exc)
+    else:
+        big_refused = ""
     small = gb.compile_brief(gc.declare(gl.GoalLog(REPO, "g-small", base=base / "goals"),
                                         "small", ["ok"], [], {"paths": ["src"]}), [], "/w", "t")
     check("V-UWCP-CHAR-BRIEF-CONTROL", 0 < len(small) < 4000,
           f"control: an ordinary brief compiles ({len(small)} chars)", "ordinary brief broke")
-    check("V-UWCP-CHAR-BRIEF-UNBOUNDED", len(text) > 200_000,
-          f"TODAY: a 200 KB intent yields a {len(text)}-char brief, no bound or refusal; "
-          "a 32k-context executor would be truncated silently -- S1-6",
-          "already bounded: invert in S1-6")
+    # INVERTED by S1-6: was V-UWCP-CHAR-BRIEF-UNBOUNDED (a 200 KB brief compiled).
+    check("V-UWCP-BRIEF-BOUNDED", bool(big_refused) and not text,
+          f"a 200 KB intent is refused, not cut to fit ({big_refused[:70]}...)",
+          f"compiled a {len(text)}-char brief")
+    try:
+        gb.compile_brief(gc.project(gl.GoalLog(REPO, "g-small", base=base / "goals")),
+                         [], "/w", "t", max_tokens=50)
+        tok_refused = False
+    except gb.BriefTooLarge:
+        tok_refused = True
+    check("V-UWCP-BRIEF-TOKEN-BOUND", tok_refused,
+          "an executor whose window cannot hold the brief is refused before dispatch",
+          "a brief over the executor's token bound compiled")
 
     # --- C5 autonomy passes off-git (UNKNOWN head -> PASS) (S1-10) ------------
     from modules.gsd_x.goal import sweep as sw  # noqa: PLC0415

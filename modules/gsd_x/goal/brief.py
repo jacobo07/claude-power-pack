@@ -23,13 +23,36 @@ from __future__ import annotations
 from .contract import GoalState
 from .convergence import Convergence, project_convergence
 from .epoch import project_epochs
+from .evidence import project_hypotheses, rejected
+from .log import GoalLogError
 
 MAX_RECEIPT_LINES = 12
+MAX_HYPOTHESIS_LINES = 8
+# A brief is refused, never cut to fit: dropping the Founder's words to squeeze a
+# window is deciding what the successor may ignore. Per-line elision of a long
+# hypothesis is different -- each line names the log seq holding the full record,
+# so nothing becomes unreachable, only deferred (progressive disclosure). 16 KB is
+# far above every brief measured (~0.7-3 KB) and below any executor window.
+BRIEF_MAX_BYTES = 16_000
+BYTES_PER_TOKEN_FLOOR = 3      # conservative: overestimates tokens for code/prose
+
+
+class BriefTooLarge(GoalLogError):
+    """The compiled brief exceeds the bound its executor can take."""
+
+
+def estimate_tokens(text: str) -> int:
+    return -(-len(text.encode("utf-8")) // BYTES_PER_TOKEN_FLOOR)
 
 
 def compile_brief(state: GoalState, closure_blocking: list[str], scope_root: str,
-                  task: str, authority: dict | None = None) -> str:
-    """The text an epoch is given. Deterministic: same state, same brief."""
+                  task: str, authority: dict | None = None,
+                  max_bytes: int = BRIEF_MAX_BYTES, max_tokens: int | None = None) -> str:
+    """The text an epoch is given. Deterministic: same state, same brief.
+
+    Bounded (UWCP S1-6): over `max_bytes`, or over `max_tokens` by a conservative
+    estimate when the executor's window is known, it raises BriefTooLarge.
+    """
     cv: Convergence = project_convergence(state)
     eps = project_epochs(state)
     auth = dict(authority or state.authority or {})
@@ -83,6 +106,24 @@ def compile_brief(state: GoalState, closure_blocking: list[str], scope_root: str
             a(f"- {e.epoch_id} [{e.provider}] ended {e.outcome}; "
               f"hypothesis={e.hypothesis}; receipts={len(e.receipts)}")
 
+    rej = rejected(state)
+    if rej:
+        a("")
+        a("## Already disproven -- do NOT retry without a NEW piece of evidence")
+        for h in rej[:MAX_HYPOTHESIS_LINES]:
+            a(f"- [{h.hyp_id}] {h.statement[:200]} -- refuted by: "
+              f"{'; '.join(h.contradicting)[:240]} (goal log seq {h.history[-1][0]})")
+        if len(rej) > MAX_HYPOTHESIS_LINES:
+            a(f"- (+{len(rej) - MAX_HYPOTHESIS_LINES} older rejected hypotheses in the goal "
+              "log, event type evidence.hypothesis)")
+    est = [h for h in project_hypotheses(state).values() if h.status == "established"]
+    if est:
+        a("")
+        a("## Established (with evidence)")
+        for h in est[-MAX_HYPOTHESIS_LINES:]:
+            a(f"- [{h.hyp_id}] {h.statement[:200]} -- {'; '.join(h.supporting)[:160]} "
+              f"(goal log seq {h.history[-1][0]})")
+
     undisposed = [f for f in cv.failures.values() if not f["disposition"]]
     if undisposed:
         a("")
@@ -98,4 +139,13 @@ def compile_brief(state: GoalState, closure_blocking: list[str], scope_root: str
     a("- If you are blocked by something outside this repository, say so and stop; "
       "a blocked goal names its external condition.")
     a("- Report what you changed. Your own account of success is not evidence.")
-    return "\n".join(lines)
+    text = "\n".join(lines)
+    size = len(text.encode("utf-8"))
+    if size > max_bytes:
+        raise BriefTooLarge(f"{state.goal_id}: brief is {size} bytes, bound {max_bytes}; "
+                            "shorten the goal's recorded text or split the goal -- a brief "
+                            "is refused, never cut to fit")
+    if max_tokens is not None and estimate_tokens(text) > max_tokens:
+        raise BriefTooLarge(f"{state.goal_id}: brief needs ~{estimate_tokens(text)} tokens, "
+                            f"the executor allows {max_tokens}; route to a larger window")
+    return text
