@@ -140,6 +140,11 @@ class StateDir:
     def runs(self) -> Path:
         return self.root / "runs"
 
+    @property
+    def worktrees(self) -> Path:
+        """Where the ISOLATED stage puts one git worktree per work mission."""
+        return self.root / "worktrees"
+
     def ensure(self) -> None:
         for d in (self.root, self.missions, self.leases, self.runs):
             d.mkdir(parents=True, exist_ok=True)

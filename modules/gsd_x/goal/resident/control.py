@@ -26,6 +26,7 @@ import subprocess
 import time
 
 from .. import epoch as ep
+from . import isolate
 from . import missions as ms
 from . import procs
 
@@ -110,6 +111,15 @@ def classify(mission: dict, provider, intents, info: procs.ProcInfo) -> tuple[st
         return INCOMPLETE, "proposed and never admitted: nothing was dispatched"
     if state in (ms.ADMITTED, ms.ISOLATED):
         if not intents.has(mission.get("attempt_id", "")):
+            if mission.get("isolated") and mission.get("worktree"):
+                # Nothing was dispatched, but a worktree may hold bytes someone
+                # wrote. Only an absent or pristine one is "no effect".
+                verdict, ev = isolate.inspect(mission["worktree"], mission.get("base_commit", ""))
+                if verdict in (isolate.DIRTY, isolate.ADVANCED):
+                    return UNCERTAIN, (f"NO_INTENT_BUT_WORKTREE_{verdict}: nothing was "
+                                       f"dispatched, yet {ev}; kept for a person")
+                return INCOMPLETE, (f"no intent was written, and dispatch only ever follows one; "
+                                    f"worktree {verdict.lower()} ({ev})")
             return INCOMPLETE, "no intent was written, and dispatch only ever follows one"
         return UNCERTAIN, ("intent recorded, no handle: the resident may have died inside "
                            "dispatch")
@@ -153,6 +163,12 @@ def census(store_: ms.MissionStore, providers: dict, intents, info: procs.ProcIn
         elif label == INCOMPLETE:
             store_.advance(m["id"], ms.LOST, lost_reason=why)
             row["action"] = "LOST; the engine resolves its epoch through its own recovery"
+        elif m["state"] in (ms.ADMITTED, ms.ISOLATED) and why.startswith("NO_INTENT_BUT_"):
+            # No intent means no provider ever saw it; asking one would prove
+            # nothing. Terminal UNCERTAIN: the worktree is never deleted.
+            store_.advance(m["id"], ms.UNCERTAIN, uncertain=list(m.get("uncertain") or [])
+                           + [why])
+            row["action"] = "UNCERTAIN (terminal): worktree holds work nobody dispatched; kept"
         elif m["state"] in (ms.ADMITTED, ms.ISOLATED):
             # Reconcile against the provider's own record of this attempt id.
             if prov is None:

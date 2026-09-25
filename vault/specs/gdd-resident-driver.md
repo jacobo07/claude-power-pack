@@ -1,5 +1,5 @@
 ---
-covers: [gex44-resident, goal-resident, resident-health, mission-record, recovery-census, cancel-by-handle, stagnation, F7, F8, F9, F10, F14]
+covers: [gex44-resident, goal-resident, resident-health, mission-record, recovery-census, cancel-by-handle, stagnation, F7, F8, F9, F10, F14, resident-isolated, work-dispatch, write-set]
 status: APPROVED-BY-PLAN (kseip-p8-gdd-resident-20260924 §§28-34, 51-53; fixes F7-F10, F14)
 owner: LANE RESIDENT (PP worktree factory/resident; NEW files only; never edits tools/gsd_x_goal.py
        or existing modules/gsd_x/goal/*.py — those belong to LANE GDD)
@@ -22,7 +22,8 @@ resident, bounded and recoverable.
   provider attempt id, worktree, base commit, declared write set, pgid, process start time, scope unit
   name / claude bg id when present, state, uncertainty flags, created/updated ts. States:
   PROPOSED, ADMITTED, ISOLATED, DISPATCHED, RUNNING, RETURNED, HARVESTED, JUDGED, RECONCILED; terminal
-  CANCELLED, EXPIRED, LOST, STALE_REVISION, UNCERTAIN. Illegal transitions raise.
+  CANCELLED, EXPIRED, LOST, STALE_REVISION, UNCERTAIN, REFUSED (isolation or write-set refusal,
+  evidence recorded on the mission). Illegal transitions raise.
 - `intents.jsonl` (append-only): intent + provider attempt id written BEFORE any dispatch (F9).
 - `gain.jsonl` (append-only): per goal per cycle, the information-gain verdict (F10).
 - `leases/<resource>.json`: holder, heartbeat ts, TTL; expired leases are reclaimable (F14).
@@ -57,6 +58,65 @@ swallowed.
 Gain = change in obligation state, verdict, or failure signature set for the goal between cycles.
 Commits, receipts and tree moves alone are NOT gain. K consecutive no-gain cycles ⇒ STALLED for that
 goal ⇒ escalation record in order: RCA mission, provider/method change, subgoal, decision packet.
+
+## ISOLATED stage — work epochs (codex, claude-headless, claude-interactive)
+Added 2026-09-25 (`modules/gsd_x/goal/resident/isolate.py`; proof `tools/test_gsd_x_resident_isolate.py`,
+V-ISO-*). The gate provider is unchanged: it reads the goal root and writes nothing.
+
+**Before anything is spent** (no epoch begun, no mission, no intent; reported, WAITING_FOR_PROVIDER
+or WAITING_FOR_AUTHORITY as named): the declared write set is the goal's `scope.paths` exactly as
+declared — the `["."]` default the gate path uses is NOT a write set.
+- `EMPTY_WRITE_SET` — no `scope.paths` declared.
+- `WRITE_SET_ESCAPES_REPO` — a path is absolute, contains `..`, names `.git`, or resolves outside
+  the repo root.
+- `NO_CLEAN_BASE` — the goal root has no HEAD, or its scope is dirty (`tree_id` is `work:`): the
+  state the engine judged is not a commit a worktree can start from.
+- `WORK_AWAITING_MERGE` — an earlier work mission for the same goal+obligation delivered commits
+  whose branch tip is not an ancestor of the goal root's HEAD. Re-running the same work against an
+  unchanged tree spends the provider for no new information (the reconciler cannot see an unmerged
+  branch); a person merges or discards the branch first.
+
+**Isolation** (after `epoch.begin`, BEFORE the intent): `git worktree add -b resident/<mission-id>
+<state>/worktrees/<mission-id> <base>` where base = goal root HEAD. The mission records `worktree`,
+`branch`, `base_commit`, `write_set`, `root` (goal repo), `root_head_at_isolation` and
+`root_ref_at_isolation`, and moves ADMITTED → ISOLATED by CAS. Refusals here end the epoch
+CANCELLED ("nothing ran") and make the mission REFUSED (terminal): `WORKTREE_PATH_EXISTS`,
+`WORKTREE_INSIDE_REPO` (a state dir inside the goal repo), `WORKTREE_ADD_FAILED` (git's own text).
+Then the intent is recorded and the provider is dispatched with `root` = the worktree and nothing
+else; codex receives `prompt` and claude `brief`, both from `brief.compile_brief` with the worktree
+as its "where you work".
+
+**Harvest = write-set enforcement, before ingestion.** Changed paths are the union of
+`git diff --name-only --no-renames <base> HEAD` and `git status --porcelain --no-renames
+--untracked-files=all` in the worktree. A path is in scope iff it equals or lies under a declared
+path. Refused with `WRITE_SET_VIOLATION` (nothing ingested; epoch ended FAILED so the reconciler
+never blind-retries it; mission REFUSED with the offending paths, head and reasons recorded) when
+any of: a path outside the write set; worktree HEAD no longer descends from base (history
+rewritten); the worktree left its branch; `MAIN_BRANCH_MOVED` — the goal root's HEAD moved since
+isolation in a way that implicates the epoch: non-fast-forward (the old head is no longer an
+ancestor), or the new root HEAD reaches any commit in base..worktree-HEAD. Worktrees share refs, so a
+provider CAN move main; the resident cannot undo it and records it. An ordinary fast-forward commit
+by a person on main is NOT a violation. Honest limit: a provider that commits directly in the goal
+root (`git -C <root> commit`) is indistinguishable from a person's commit by this check. Otherwise the provider's receipt is ingested through `epoch.ingest_receipt` and
+the mission records `deliverable_head`.
+
+**The resident NEVER merges into, pushes, or rewrites the goal's branch.** The deliverable is the
+branch `resident/<mission-id>`; its commits reach the goal tree only when a person merges it.
+
+**Cleanup** (terminal missions only, every cycle and at census): `git worktree remove <path>` WITHOUT
+`--force`, attempted only when `git status --porcelain` in it is empty (git re-checks and refuses a
+dirty tree itself). The branch is ALWAYS kept. A dirty worktree is never removed: the mission records
+`worktree_kept` with the reason, and it stays for a person.
+
+**Census of an ISOLATED mission.** With an intent: unchanged (probe the provider's record; adopt or
+LOST). Without an intent (crash between isolation and intent): the worktree is inspected —
+absent, or present and pristine (HEAD == base, clean) ⇒ INCOMPLETE ⇒ LOST, and the pristine worktree
+is removed by the cleanup rule (discarded, never reused: the epoch is resolved by the engine's own
+recovery, and a later decision begins a new epoch with a new worktree); present with commits or
+uncommitted bytes ⇒ UNCERTAIN (terminal, blocks its goal), nothing deleted.
+
+**Not built here:** a budget system (spend stays under provider caps + each provider's own
+per-day/wall bounds); running gates inside the worktree; merging.
 
 ## Entrance
 `tools/gsd_x_resident.py` with `run` (the loop, what systemd calls), `once` (one cycle), `status
