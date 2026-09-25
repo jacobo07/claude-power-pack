@@ -43,6 +43,11 @@ auto-mode classifier (production deploy) -- the Owner runs it. Inputs are staged
 /home/kobicraft/uwcp_stage/{repo.tar (commit 5de14dd, md5 c45b29e3...), uwcp_gex44_testjob.py}.
 After the restart: `python3 gex44_cli.py queue add uwcp-test --tenant kobiicraft`; results land in
 /home/kobicraft/uwcp_return/<job_id>/ (verdict.json, results.json).
+LIVE since the Owner restarted kobiiclaw.service 2026-09-25 17:11Z. Run 1 (uwc-20260925-171136,
+commit 5de14dd, GEX44 python 3.12.3 / git 2.43.0): claude-providers 20/20 x3 -> V-CLI-WAITS was
+host load, not a defect; workspace 36/37 in 3 s (vs ~10 min on the laptop): CASE-COLLISION red on
+ext4 -- fixture wrote only A.txt, so a.txt was a carried deletion; fixed in c109608 (both names
+written). Drills INVALID behind the red baseline, by design. Run 2 = uwc-20260925-172032.
 
 ## Traps learned this run (for the vault at S10)
 - Editing a module while a background suite exercises it produced a false 22/25 (NameError

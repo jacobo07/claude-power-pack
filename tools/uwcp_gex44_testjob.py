@@ -113,10 +113,16 @@ def main() -> int:
         target = repo / WS
         orig = target.read_bytes()
         sha = hashlib.sha256(orig).hexdigest()
+        # The archive must carry the commit's bytes. `git archive` under
+        # core.autocrlf=true renders CRLF, which ran every suite on bytes no commit
+        # holds and blinded the multi-line snippets (run uwc-20260925-172032).
+        res["artifact_crlf"] = b"\r\n" in orig
         drills = []
         for name, old, new, gate in DRILLS:
             d = {"drill": name, "gate": gate}
-            if base["rc"] != 0:
+            if res["artifact_crlf"]:
+                d["verdict"] = "HARNESS-FAILED: artifact has CRLF -- not the commit's bytes"
+            elif base["rc"] != 0:
                 d["verdict"] = "INVALID: baseline suite not green"
             elif orig.count(old.encode()) != 1:
                 d["verdict"] = f"HARNESS-FAILED: snippet occurs {orig.count(old.encode())} times"
@@ -132,6 +138,12 @@ def main() -> int:
                     d["verdict"] = "INVALID: suite timed out"
                 elif gate in r["fails"]:
                     d["verdict"] = "CAUGHT"
+                elif r["rc"] != 0 or not r["summary"]:
+                    # The suite died before judging: the mutant is detected, but not by
+                    # the gate named for it -- a different claim, never SURVIVED
+                    # (run uwc-20260925-172032 reported a KeyError crash as SURVIVED).
+                    d["verdict"] = "DETECTED-BY-CRASH: named gate never judged"
+                    d["tail"] = r["tail"][-400:]
                 else:
                     d["verdict"] = "SURVIVED"
                     d["fails_seen"] = r["fails"]
@@ -141,6 +153,7 @@ def main() -> int:
         verdict = {
             "job": "uwcp-test",
             "repo_commit": res["repo_commit"],
+            "artifact_crlf": res["artifact_crlf"],
             "claude_providers_runs": [r["summary"] for r in res["claude_providers"]],
             "claude_providers_all_green": all(rc == 0 for rc in cp_rcs),
             "workspace_baseline": base["summary"],

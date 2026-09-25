@@ -774,7 +774,7 @@ def retain(store, referenced, *, min_age_s: float, now: float | None = None) -> 
             (store / f"{cid}.retired").write_text(json.dumps(
                 {"retired_at": datetime.now(timezone.utc).isoformat(),
                  "reason": "unreferenced on two retention passes and older than the margin",
-                 "first_unreferenced": marked[cid]}), encoding="utf-8")
+                 "first_unreferenced": marked.get(cid)}), encoding="utf-8")
             shutil.rmtree(d)
             report["retired"].append(cid)
         else:
