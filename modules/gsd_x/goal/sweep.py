@@ -58,6 +58,21 @@ def record_path() -> Path:
     return state_dir() / AUTONOMY_RECORD
 
 
+def suite_env() -> dict:
+    """The environment the licence suites run in: the caller's, minus every GSDX_*.
+
+    record-gates runs as the judge, whose environment names the production goal
+    store, the anchor, the witness and the judge's signing key. The suites build
+    their own scratch state; inheriting those made them run against production
+    authority (measured on GEX44 2026-09-26: chaos crashed on the anchor, and the
+    judge key path was visible to every suite). Stripping is by prefix so a new
+    GSDX_ variable cannot leak by being forgotten from a list.
+    """
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GSDX_")}
+    env["PYTHONIOENCODING"] = "utf-8"
+    return env
+
+
 def record_gates(pp_root: Path, python: str | None = None) -> dict:
     """Run the required suites here, now, and record what they said."""
     python = python or sys.executable
@@ -84,8 +99,7 @@ def record_gates(pp_root: Path, python: str | None = None) -> dict:
             results[suite] = {"ok": False, "detail": "suite missing"}
             continue
         proc = subprocess.run([python, str(p)], cwd=str(pp_root), capture_output=True,
-                              text=True, timeout=3600,
-                              env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+                              text=True, timeout=3600, env=suite_env())
         tail = [ln for ln in (proc.stdout or "").splitlines() if "_PASS=" in ln]
         results[suite] = {"ok": proc.returncode == 0, "detail": tail[-1] if tail else
                           f"exit {proc.returncode}"}
