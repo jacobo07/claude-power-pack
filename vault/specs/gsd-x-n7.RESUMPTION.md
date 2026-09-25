@@ -94,6 +94,45 @@ keeps LF. Anchors written with `\n` matched 0x in `gsd_x_mission.py`
 the subject — while the regression line still quoted a mutation count. Both
 drills now translate anchors to each file's own convention.
 
+**F7 — THE S5 CUTOVER FOUND A HOLE THIS WAVE DOES NOT CLOSE. Read this before
+putting a FACTS.json anywhere.** Measured on two roots, same INTENT and README:
+
+    prose       -> DO-1 ACCEPTED, check exit 1
+    structured  -> derived 0,     check exit 0, unmeasured_facts []
+
+On a root WITH history the old obligation goes `STALE` and still blocks, so the
+transition is visible. On a FRESH root nothing catches it: **merely placing a
+FACTS.json in a mission root silently disables every obligation the prose
+adapter would have derived**, and the gate reports green while asserting that
+nothing is unknown.
+
+The blindness channel added by this wave **cannot see it**. The three buckets
+cover facts the producer TRIED to establish; `destructive_act_commanded` and
+`no_recovery_mechanism` have no producer at all, so they are in no bucket — not
+even `unknown[]`. That is the third world the producer's own docstring names,
+*"nobody ever asked"*, and it is still silent.
+
+Pinned as `V-FACTSV2-CHARACTERIZE-CUTOVER-LOSES-OBLIGATIONS`, which asserts the
+BROKEN behaviour on purpose. **Invert that gate in place when it is fixed** —
+the diff between its two versions is the evidence; a new gate beside a deleted
+one is not.
+
+**The fix, and why it was NOT taken here.** Emitting every unproduced GATING
+name as `UNKNOWN` closes it — and would make *every* structured mission block
+until real producers exist. That changes what "done" means, which is the same
+class of decision the Owner kept in Q4. **It is an Owner decision, with two
+options:**
+
+  (a) emit unproduced gating names as UNKNOWN — truthful; every structured
+      mission blocks until producers exist;
+  (b) emit them into a separate disclosed-but-non-blocking channel — keeps the
+      structured path usable; keeps the hole open by choice, visibly.
+
+Note the convergence: option (a) would ALSO close the
+`V-FACTSV2-PRODUCER-REACH` gap, because an unproduced gating name reported
+UNKNOWN is exactly a gating unknown reaching the decision from the real
+producer. One fix, both gaps.
+
 ## Owner decisions, recorded — do not re-litigate
 
 1. **Upstream report: draft locally, DO NOT FILE.** `open-gsd/gsd-core` is not
@@ -145,10 +184,30 @@ so the mechanism becomes reachable from the world rather than from a fixture.
 
 ## Next exact valid actions, in order
 
-1. **Produce a gating fact** (above). Until then the wave is proven but inert
-   against real input.
-2. **Close F5**: `cmd_check` must not pass a root nobody derived. This is the
-   third door into the mission's own thesis and it is still open.
+0. **OWNER DECISION FIRST: F7 option (a) or (b).** Nothing else in this list is
+   worth doing before it, because (a) also closes item 1 below. Do not put a
+   FACTS.json into any real mission root until it is answered — on a fresh root
+   it silently disables every prose-derived obligation.
+1. **Produce a gating fact.** Until then the blindness mechanism is proven and
+   inert against real input. Option (a) above achieves this as a side effect.
+2. **Close F5**: `cmd_check` must not pass a root nobody derived. Third door
+   into the mission's own thesis, still open.
 3. **Draft the upstream report** for D1/D2/D4 (do not send) — still owed from
    N6, unchanged.
 4. Trust / executable-surface (C) — N6's D4, deferred by Owner answer 5.
+
+## What was NOT done, and why
+
+- **S5 cutover into a production root: deliberately NOT performed.** The
+  cutover was measured on scratch roots and it found F7. Emitting a FACTS.json
+  into `vault/benchmarks/mission_spine` would have flipped `source_of()` under
+  the parity proof AND, per F7, dropped its derived obligations. Owner decision
+  3b already forbade the first; F7 is the second reason.
+- **No produced FACTS.json is committed anywhere in this repo.** Its
+  `depends_on` fingerprints `~/.claude/logs/host-memory-floor.json`, which
+  changes every few minutes, so any committed document is STALE within minutes
+  of landing and would make every gate reading it report STALE forever.
+- **Nothing pushed** (Owner answer 2a). The branch carries this wave's three
+  commits plus many foreign ones.
+- **Upstream report not drafted** — bounded out by Owner answer 5
+  (stop-after-S5); still owed, unchanged from N6.

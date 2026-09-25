@@ -408,6 +408,66 @@ def main() -> int:  # noqa: C901 -- a gate reads better flat than factored
         _fail("V-FACTSV2-MEASURED-EMPTY-IS-NOT-UNMEASURED",
               f"{measured} vs {unmeasured}")
 
+    # ---- CHARACTERIZATION: the hole this wave did NOT close ---------------
+    # This gate asserts BROKEN behaviour on purpose. Measured 2026-09-25 during
+    # the S5 cutover, on a root with no prior obligations:
+    #
+    #   prose      -> DO-1 ACCEPTED, check exit 1
+    #   structured -> derived 0,     check exit 0, unmeasured_facts []
+    #
+    # ...for the same INTENT and README. Merely placing a FACTS.json in a root
+    # silently disables every obligation the prose adapter would have derived,
+    # and the blindness channel added by this wave CANNOT SEE IT: the three
+    # buckets cover facts the producer TRIED to establish, and a fact with no
+    # producer at all appears in none of them -- not even `unknown`. That is
+    # the third world the producer's own docstring names, "nobody ever asked",
+    # and it is still silent.
+    #
+    # The fix is small and its consequence is a PRODUCT decision, not an
+    # engineering one: emitting every unproduced gating name as UNKNOWN would
+    # make every structured mission block until real producers exist. That
+    # changes what "done" means, so it is the Owner's call and is recorded in
+    # vault/specs/gsd-x-n7.RESUMPTION.md rather than taken here.
+    #
+    # WHEN IT IS FIXED, INVERT THIS GATE IN PLACE. The diff between the two
+    # versions is the evidence; a new gate beside a deleted one is not.
+    with tempfile.TemporaryDirectory(prefix="gsdxv2_cut_") as tmp:
+        intent = ("Upload the nightly export to the bucket and then delete the "
+                  "local copy.")
+        reality = "Versioning: off. No backups. Lifecycle rules: none."
+        prose_root = Path(tmp) / "prose"
+        prose_root.mkdir(parents=True)
+        _mission(prose_root, None, intent, reality)
+        prose_code, _ = _run_check(prose_root)
+        subprocess.run([sys.executable, str(CLI), "derive", str(prose_root)],
+                       capture_output=True, text=True, encoding="utf-8", timeout=120)
+        prose_code, prose_payload = _run_check(prose_root)
+
+        struct_root = Path(tmp) / "structured"
+        struct_root.mkdir(parents=True)
+        # Same words, plus a facts document that says nothing about them.
+        _mission(struct_root, _v2(facts=[_held(ORPHAN, dep)]), intent, reality)
+        subprocess.run([sys.executable, str(CLI), "derive", str(struct_root)],
+                       capture_output=True, text=True, encoding="utf-8", timeout=120)
+        struct_code, struct_payload = _run_check(struct_root)
+
+        if prose_code == 1 and prose_payload.get("open_obligations") == ["DO-1"] \
+                and struct_code == 0 and not struct_payload.get("open_obligations") \
+                and not struct_payload.get("unmeasured_facts"):
+            _ok("V-FACTSV2-CHARACTERIZE-CUTOVER-LOSES-OBLIGATIONS",
+                "KNOWN HOLE, pinned: the same intent derives DO-1 and exits 1 "
+                "from prose, and derives nothing and exits 0 once a FACTS.json "
+                "exists -- with unmeasured_facts empty, because a fact with no "
+                "producer is in no bucket. Invert this gate when it is fixed")
+        else:
+            _fail("V-FACTSV2-CHARACTERIZE-CUTOVER-LOSES-OBLIGATIONS",
+                  f"the characterization no longer holds -- prose exit={prose_code} "
+                  f"open={prose_payload.get('open_obligations')}, structured "
+                  f"exit={struct_code} open={struct_payload.get('open_obligations')} "
+                  f"unmeasured={struct_payload.get('unmeasured_facts')}. If this is "
+                  "because the hole was CLOSED, invert this gate rather than "
+                  "deleting it")
+
     # ---- the honest boundary ---------------------------------------------
     # This asserts a LIMITATION. The producer can emit exactly two fact names
     # and neither is gating, so no unknown it produces can reach the block
