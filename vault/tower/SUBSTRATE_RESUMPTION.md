@@ -29,9 +29,9 @@ no edits to `gsd_x/goal`, `kseip/goal-spine`, `fusion_*`, or any KobiiCraft file
 | `df524e0` | P5+P6 | `donegate.py` report-only S6: per-entry verdicts stamped `judged_under` + SHA-256, deferred entries still judged. Severing drill: finding vanishes and would_block flips True->False. 10/10, 4 drills. |
 | (this) | P7 | `vault/tower/HANDOFF_W14_CONSTITUTIVE.md`: substrate API, narrowed C1–C7, corrections, goal-spine contract, 3 spec readings for the Owner. |
 
-**STATUS: COMPLETE, UNMERGED.** Nothing reaches any session until this branch merges into
-the live Power Pack checkout (`feature/knowledge-acquisition`, shared by every repo).
-That merge is the Owner's call.
+**STATUS: COMPLETE, MERGED** as `a85a009` into `feature/knowledge-acquisition` on
+2026-09-25 (Owner-approved). Post-merge on the live checkout: 8 tower suites green
+(121 gates), 4 family chains OK, dirty-path set identical before/after (491, 0 moved).
 
 ## MEASURED FACTS
 - The prose checks are mostly repo-generic (placeholders, "grep for…"). A family entry
