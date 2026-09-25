@@ -654,6 +654,31 @@ def main() -> int:
         got_on = gm.effective_workdir("s-ws-on", str(repo), "lobby-ws")
         check("V-MC-WORKDIR-WS-ON-MISSION-FOLLOWED",
               got_on and os.path.normcase(got_on) == os.path.normcase(wt), repr(got_on))
+        # The launch arguments name the workstream in EVERY worker's transcript (user line):
+        # that alone is not evidence the worker worked it.
+        (tdir2 / "s-ws-args.jsonl").write_text(
+            json.dumps({"type": "user", "cwd": str(repo),
+                        "message": {"content": "<command-args>--ws lobby-ws</command-args>"}}) + "\n"
+            + json.dumps({"type": "user", "cwd": wt}) + "\n", encoding="utf-8")
+        check("V-MC-WORKDIR-WS-ARGS-ONLY-NOT-FOLLOWED",
+              gm.effective_workdir("s-ws-args", str(repo), "lobby-ws") == str(repo))
+        # A worktree that PREDATES the base's latest workstream commit would regress the roadmap,
+        # even when the (correctly bound) worker touched the workstream there.
+        wsd = repo / ".planning" / "workstreams" / "lobby-ws"
+        wsd.mkdir(parents=True, exist_ok=True)
+        (wsd / "ROADMAP.md").write_text("# newer roadmap\n", encoding="utf-8")
+        for args in (["-C", str(repo), "add", "-A"],
+                     ["-C", str(repo), "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm",
+                      "ws roadmap on base"]):
+            _sp.run([G, *args], capture_output=True, timeout=60)
+        check("V-MC-WORKDIR-WS-BEHIND-BASE-NOT-FOLLOWED",
+              gm.effective_workdir("s-ws-on", str(repo), "lobby-ws") == str(repo),
+              repr(gm.effective_workdir("s-ws-on", str(repo), "lobby-ws")))
+        _sp.run([G, "-C", wt, "merge", "-q", "--ff-only", "master"], capture_output=True, timeout=60)
+        _sp.run([G, "-C", wt, "merge", "-q", "--ff-only", "main"], capture_output=True, timeout=60)
+        got_ff = gm.effective_workdir("s-ws-on", str(repo), "lobby-ws")
+        check("V-MC-WORKDIR-WS-CONTAINS-BASE-FOLLOWED",
+              got_ff and os.path.normcase(got_ff) == os.path.normcase(wt), repr(got_ff))
 
         # supervise: GSD is asked in the worktree, the card names it, the launch stays at cwd
         for p in Path(TMP).glob("gsd-mission-*.json"):

@@ -664,11 +664,43 @@ def _git_toplevel_and_common(path: str) -> tuple[str, str] | None:
 
 
 def _mentions_workstream(line: str, workstream: str) -> bool:
-    """Did this transcript line act on `workstream`? Its directory (either separator, JSON-escaped
-    or not), its --ws flag, or its workstream.set call."""
+    """Did the WORKER act on `workstream` in this line? Only its own (assistant) lines count:
+    the launch arguments (`--ws <ws>`) and the card sit in every worker's transcript as user or
+    system text, so counting them would call every worker on-mission."""
+    if '"type":"assistant"' not in line and '"type": "assistant"' not in line:
+        return False
     return any(tok in line for tok in (
         f"workstreams/{workstream}", f"workstreams\\\\{workstream}", f"workstreams\\{workstream}",
         f"--ws {workstream}", f"workstream.set {workstream}"))
+
+
+def _worktree_carries_workstream(worktree: str, base_cwd: str, workstream: str) -> bool:
+    """A worktree may carry a workstream mission only if it CONTAINS the base checkout's latest
+    commit to `.planning/workstreams/<ws>`; otherwise following it regresses the roadmap.
+
+    Measured 2026-09-25: a correctly bound worker placed in another track's worktree mentioned
+    its workstream in its own tool calls (it ran workstream.set there), so a textual test alone
+    cannot tell a wrong worktree from a right one. Ancestry can: gsd-p0a-autonomous (1ea3dc97)
+    does not contain the Lobby roadmap commit 20561b15. Any git failure -> False (stay on the
+    mission cwd, where the mission was armed)."""
+    import subprocess
+    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+    if not Path(g).exists():
+        g = "git"
+    try:
+        r = subprocess.run([g, "-C", base_cwd, "log", "-1", "--format=%H", "--",
+                            f".planning/workstreams/{workstream}"],
+                           capture_output=True, text=True, timeout=30)
+        if r.returncode != 0:
+            return False
+        last = (r.stdout or "").strip()
+        if not last:
+            return True   # nothing committed for this workstream on the base: nothing to regress
+        a = subprocess.run([g, "-C", worktree, "merge-base", "--is-ancestor", last, "HEAD"],
+                           capture_output=True, text=True, timeout=30)
+        return a.returncode == 0
+    except Exception:
+        return False
 
 
 def effective_workdir(session_id: str, base_cwd: str, workstream: str | None = None) -> str | None:
@@ -712,7 +744,7 @@ def effective_workdir(session_id: str, base_cwd: str, workstream: str | None = N
     if not here or not base:
         return base_cwd if base else None
     if here[1] == base[1] and here[0] == os.path.normcase(str(Path(last).resolve())):
-        if workstream and not touched:
+        if workstream and not (touched and _worktree_carries_workstream(last, base_cwd, workstream)):
             return base_cwd
         return str(Path(last).resolve())
     return base_cwd
