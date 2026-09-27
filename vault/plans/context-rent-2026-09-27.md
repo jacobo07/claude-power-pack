@@ -67,6 +67,22 @@ epochs (shadow -> opt-in) · P4 Ralph G0/G2/G7 + preflight · P5 baseline (KV, U
   subscription quota -> Owner memory says defer model experiments until the limit resets);
   then P2 firewall aperture over rules/ + all always-on files; then P3.
 
+## P2 facts + D1 proposal (awaiting Owner yes per option)
+- ~/.claude/rules: 22 files, 259,068 chars, **0 carry `paths:`** -> all load on every call of
+  every project. `## Source` incident narratives = 57,027 chars (22 %, ~14 k tokens/call):
+  evidence, not rule text. Largest: guard-event-reachability 68 % Source (18.4 k chars).
+- Harness re-injected skill listings in incident history: 9 x ~5.5 k chars (~12 k tokens) --
+  small, same order as hook noise. (A first census over-captured agent listings to line end;
+  that figure was discarded.)
+- Option A (recommended): move each `## Source` section to
+  vault/knowledge_base/rules-evidence/<rule>.md, leave one line "Source: <path>" in the rule.
+  Rule text untouched, -14 k tokens on every call everywhere.
+- Option B (not recommended): `paths:`-scope or relocate project-born rules. Saves more but
+  defeats cross-project inheritance, the point of the Constitutive Baseline Ratchet.
+- Option C (later): condense rule text only with ablation / guard-test evidence.
+- Still unmeasured: ~100 k of the floor that is not files (system prompt, tool schemas,
+  listings). Measuring needs one headless probe on subscription quota -> deferred.
+
 ## Owner decisions (defaults apply on approval)
 D1 rules/ floor: propose per-file dispositions with evidence; apply each only on Owner yes.
 D2 interactive rollover: ship SHADOW + one real drill; active only by opt-in.
