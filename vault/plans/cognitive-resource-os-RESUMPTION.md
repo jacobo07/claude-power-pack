@@ -24,6 +24,21 @@ per session; first-call shared prefix 1.9% sdk-cli, 16.4% cli. Hypothesis (unmea
 Coherence anchor: `python tools/test_tis_observed.py` 25/25, `test_pricing_source.py` 5/5,
 `test_budget_monitor_observed.py` 7/7. test_tco V-BASELINE-INTACT INCONCLUSIVE (full pytest >180s, host ~630 MB free).
 
+- `5496a60` /knowledge repointed (TUA-X renamed TUAX_UGC_SYSTEM -> CW_UGC_SYSTEM); stale session_delta
+  PLANNED removed from the liveness registry (scanner: REACHABLE via hooks/session_delta_stop.js).
+- `0d712dc` model-routing.json -> opus-5-5 / sonnet-5 / haiku-4-5; savings per component (cache reads 1x
+  Opus->Sonnet); absent schema declared ABSENT; opus-4-7 fallbacks moved in 3 tools.
+
+## 2a. Who owns what NOW (peer panes are executing parts of this plan — do not duplicate)
+- Ralph H1 progress / no-progress halt / renewal-without-progress: CLOSED by peer `676370b` (measured: 18
+  renewed missions made 0 commits). Vestigial `last_progress_at` field remains. Ralph = peer-owned; leave it.
+- gsd-x mission closure / evidence classes / gating facts (P2 territory): peer-owned, active (bc73a94, cf34451,
+  302f58a, 99e96e1). Offer tis_observed/prefix_inventory as inputs; do not wire closure.py.
+- Transcript parsers: token_ground_truth + token_corpus_audit aligned to tis_observed dedupe by peer `8c39c27`;
+  tco_compact_gate reads transcripts itself (another peer). Consolidation to ONE owner = open, needs agreement.
+- Rules evidence relocation (knowledge_vault/rules-evidence/): done by a peer 2026-09-28.
+- THIS pane owns: observed usage + pricing + budget runway + prefix inventory + routing table + P3 protocol.
+
 ## 2b. Owner decisions pending
 - hooks/kobiiclaw-autoresearch.js (Stop, registered at dispatcher:174) has been INERT since TUA-X renamed
   TUAX_UGC_SYSTEM -> CW_UGC_SYSTEM: its fallback path is dead, so every turn skips silently. Fixing the path
@@ -42,11 +57,9 @@ Coherence anchor: `python tools/test_tis_observed.py` 25/25, `test_pricing_sourc
    back-to-back `claude -p` runs in one dir, identical prompt, then two with `--strict-mcp-config` + empty MCP
    config; compare first-call cache_read. Worker argv is in tools/gsd_mission.py (LIVE writer there).
    $ figures in this file are API-rate EQUIVALENTS of usage, not charges.
-2. BLOCKED (same-file collision): model-routing refresh touches tools/tco_compact_gate.py + tools/test_tco.py,
-   dirty in another pane that is writing a SECOND transcript reader (V-TCO-MEASURED-*). Messaged the
-   "Context rent architecture..." session to import tools/tis_observed.py instead. Resume once they commit.
-3. BLOCKED (same-file collision): P2 needs modules/gsd_x/mission/closure.py, dirty in another pane (+ untracked
-   coverage.py). Free alternative: CONNECT done_gate/artifact_done_gate (orphan, NOT a duplicate — plan corrected).
+2. Parser consolidation: propose (not impose) tis_observed as the single transcript-usage owner to the panes
+   holding tco_compact_gate / token_ground_truth; migrate only with their agreement, one caller per commit.
+3. Owner decision on hooks/kobiiclaw-autoresearch.js (section 2b), then P3 runs once quota returns.
 Owner clarified 2026-09-28: ONLY the paid experiment is off; free work continues. Model-calling runs
 (A/B, ablation) wait for subscription quota.
 - `6aa3bb6` modules/token-optimizer/prefix_inventory.py: unconditional prefix ~102k tok est. (rules 56.8k,
