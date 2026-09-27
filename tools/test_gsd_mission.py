@@ -20,6 +20,8 @@ TMP = tempfile.mkdtemp(prefix="gsd-mission-test-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP  # adopt/ack write markers: never in the real dir
+os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")      # host job files: never the real ones
+os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")  # transcripts: never the real ones
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_mission as gm  # noqa: E402
 
@@ -445,8 +447,15 @@ def main() -> int:
     busy_row = [{"sessionId": "b-1", "status": "busy", "state": "working", "kind": "background"}]
     check("V-MC-BG-TURN-ENDED-RELAY",
           gm.plan_next({**base, "owner": bg}, NOW, idle_row, alive)["action"] == "relay")
-    check("V-MC-BG-BLOCKED-NO-WAITING-RELAY",
-          gm.plan_next({**base, "owner": bg}, NOW, ended_row, alive)["action"] == "relay")
+    # Inverted 2026-09-28 (was V-MC-BG-BLOCKED-NO-WAITING-RELAY). A bare `state:"blocked"` is
+    # the host saying the session NEEDS something (login, an answer, a startup approval) -- a
+    # finished turn reads `done` or `status:"idle"`. Relaying it launched 48 workers that each
+    # sat on the same block (m-66ebaaa0324e lineage, zero transcripts).
+    check("V-MC-BG-BLOCKED-NO-WAITING-IS-BLOCKED",
+          gm.plan_next({**base, "owner": bg}, NOW, ended_row, alive)["action"] == "surface_blocked",
+          str(gm.plan_next({**base, "owner": bg}, NOW, ended_row, alive)))
+    check("V-MC-LIVE-BLOCKED-NO-WAITING-IS-BLOCKED", v(bg, ended_row) == gm.WAITING_HUMAN)
+    check("V-MC-BG-BLOCKED-NEVER-IDLE", gm.owner_idle(bg, ended_row) is False)
     check("V-MC-BG-BUSY-NO-RELAY",
           gm.plan_next({**base, "owner": bg}, NOW, busy_row, alive)["action"] == "none")
 
@@ -509,6 +518,38 @@ def main() -> int:
                  stop_runner=stop_run, pid_alive=gone)
     check("V-MC-SUP-GSD-UNAVAILABLE-HOLDS", gm.load("m-unk")["state"] == gm.RUNNING
           and len(launches) == 1 and len(stops) == 1)
+    # 2026-09-28 (m-66ebaaa0324e): the host lists the worker `state:"blocked"` with no status and
+    # no waitingFor. The mission parks BLOCKED with the host's own reason, nothing is stopped and
+    # nothing launched -- on this pass or the next.
+    hs = fresh("m-hblk")
+    hs[0].pop("status", None)
+    hs[0]["state"] = "blocked"
+    jdir = Path(os.environ["CPP_CLAUDE_JOBS_DIR"]) / "s-m-hblk"[:8]
+    jdir.mkdir(parents=True, exist_ok=True)
+    (jdir / "state.json").write_text(json.dumps({"state": "blocked",
+                                                 "needs": "login required — run /login"}),
+                                     encoding="utf-8")
+    n_l, n_s = len(launches), len(stops)
+    for _ in range(2):
+        rows = gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                            stop_runner=stop_run, pid_alive=gone)
+    hb = gm.load("m-hblk")
+    blk = [e for e in gm.lr.ledger_events("m-hblk") if e.get("event") == "mission_blocked"]
+    check("V-MC-SUP-HOST-BLOCKED-PARKS-NOT-REPLACED",
+          hb["state"] == gm.BLOCKED and hb["epoch"] == 1 and len(launches) == n_l
+          and len(stops) == n_s, f"{hb['state']} e{hb['epoch']} rows={rows}")
+    check("V-MC-SUP-HOST-BLOCKED-REASON-IS-HOSTS",
+          len(blk) == 1 and "login required" in (blk[0].get("reason") or ""), str(blk))
+    # control: a worker the host lists `stopped` is still replaced
+    hs = fresh("m-hstop")
+    hs[0].pop("status", None)
+    hs[0]["state"] = "stopped"
+    n_l = len(launches)
+    gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    check("V-MC-SUP-CONTROL-STOPPED-STILL-REPLACED",
+          len(launches) == n_l + 1 and gm.load("m-hstop")["epoch"] == 2, gm.load("m-hstop")["state"])
+
     hs = fresh("m-stuck")
     ok, why = gm.stop_owner({**bg, "session_id": "s-m-stuck"}, hs, pid_alive=alive,
                             runner=stop_run, wait_s=0)

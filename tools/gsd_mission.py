@@ -371,6 +371,13 @@ def liveness(owner: dict | None, sessions: list[dict] | None,
             return DEAD, f"host lists session {state}"
         if row.get("waitingFor"):
             return WAITING_HUMAN, f"host: waiting for {row.get('waitingFor')}"
+        if state == "blocked":
+            # Measured 2026-09-28 (`claude agents --json --all`, 569 rows): a bare
+            # `state:"blocked"` -- no status, no waitingFor, no pid -- is a job whose
+            # ~/.claude/jobs/<id>/state.json carries `needs` ("login required", a question, a
+            # startup approval). A finished turn reads `done` or `status:"idle"`. Reading this
+            # shape as "turn ended" relayed m-66ebaaa0324e 48 times into the same block.
+            return WAITING_HUMAN, "host lists session blocked (no waitingFor)"
         return LIVE, f"host lists session {row.get('status') or state or 'active'}"
     if owner.get("kind") == "background":
         return UNKNOWN, "background worker not listed by host (host owns its restarts)"
@@ -902,11 +909,30 @@ def owner_idle(owner: dict | None, sessions: list[dict] | None) -> bool:
     if not owner or sessions is None:
         return False
     row = next((s for s in sessions if s.get("sessionId") == owner.get("session_id")), None)
-    if not row or row.get("waitingFor"):
+    if not row or row.get("waitingFor") or row.get("state") == "blocked":
         return False
-    # W0: a background worker whose turn ended reads `status:"idle"` or, later,
-    # `state:"blocked"` with no `waitingFor` (awaiting a message nobody will send).
-    return row.get("status") == "idle" or (row.get("state") == "blocked" and not row.get("status"))
+    # A background worker whose turn ended reads `status:"idle"` (and later host `done`, which
+    # liveness calls DEAD). A bare `state:"blocked"` is NOT an ended turn: the host job needs
+    # something (see liveness); until 2026-09-28 it was read as idle and relayed.
+    return row.get("status") == "idle"
+
+
+def host_job_needs(session_id: str | None) -> str | None:
+    """What the host says a blocked job needs, from ~/.claude/jobs/<short id>/state.json
+    (`needs`, else `detail`). None when unreadable -- the caller's reason then stands alone.
+    Read BEFORE anything stops the worker: a stop overwrites the file with `stopped`, which is
+    how the m-66ebaaa0324e evidence was lost."""
+    if not session_id:
+        return None
+    root = Path(os.environ.get("CPP_CLAUDE_JOBS_DIR") or (lr.CLAUDE_HOME / "jobs"))
+    try:
+        d = json.loads((root / str(session_id)[:8] / "state.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(d, dict):
+        return None
+    text = d.get("needs") or (d.get("detail") if d.get("state") == "blocked" else None)
+    return " ".join(str(text).split())[:300] if text else None
 
 
 def _host_row(session_id: str, sessions: list[dict] | None) -> dict | None:
@@ -1165,9 +1191,12 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         row["renewed_as"] = renew_mission(halted, now=now)["mission_id"]
             elif act == "surface_blocked":
                 if rec["state"] != BLOCKED:
+                    needs = host_job_needs((rec.get("owner") or {}).get("session_id"))
+                    reason = f"{plan['reason']}; host needs: {needs}" if needs else plan["reason"]
+                    row["reason"] = reason
                     transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                event="mission_blocked", now=now, state=BLOCKED,
-                               reason=plan["reason"])
+                               reason=reason)
             elif act == "adopt":
                 adopt_launched(rec, launched_row(rec.get("pending"), sessions), now=now)
             elif act == "unblock":
