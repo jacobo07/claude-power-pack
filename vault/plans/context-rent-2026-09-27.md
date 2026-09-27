@@ -63,6 +63,13 @@ epochs (shadow -> opt-in) · P4 Ralph G0/G2/G7 + preflight · P5 baseline (KV, U
   Incident (API-list equivalent): $43.74 = read $26.48 / 1h-write $10.79 / output $6.47;
   floor re-read ~$12.57; 2 TTL-expiry rewrites 455 k tokens; fresh-epoch saving UPPER BOUND
   $14.18 (32%). Floor and rollover are levers of the same size.
+- P2/D1-A APPLIED 2026-09-28 (Owner "y"): tools/rules_evidence_split.py moved each rule's
+  `## Source` section (only up to the next `##`; guard-event-reachability keeps 9 k chars of
+  rule text after it) to ~/.claude/knowledge_vault/rules-evidence/<rule>.md; rules keep a
+  pointer line. 254,838 -> 210,800 chars (-47,979 moved, ~-11 k tokens per call, every
+  project). Backup ~/.claude/backups/rules-20260928-000739. Independent reconstruction check
+  20/20. Neither ~/.claude nor knowledge_vault is under git -- the backup is the rollback.
+  Earlier "57 k / 22 %" figure was wrong: it counted rule sections that follow Source.
 - NEXT: P1b floor attribution (which sources make the ~190 k floor; one headless probe costs
   subscription quota -> Owner memory says defer model experiments until the limit resets);
   then P2 firewall aperture over rules/ + all always-on files; then P3.
