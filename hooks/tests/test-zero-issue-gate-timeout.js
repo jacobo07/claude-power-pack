@@ -37,7 +37,8 @@ function drive(dir, sessionId, times) {
     const r = spawnSync(process.execPath, [HOOK], {
       input: JSON.stringify({ cwd: dir, session_id: sessionId }),
       encoding: 'utf8', timeout: 60000, windowsHide: true,
-      env: { ...process.env, ZERO_ISSUE_GATE_ENFORCE: '' },
+      // Floor off: this file judges timeouts, and a starved host must not turn its failures inconclusive.
+      env: { ...process.env, ZERO_ISSUE_GATE_ENFORCE: '', ZIG_MIN_FREE_MB: '1' },
     });
     if (r.error) throw new Error(`HARNESS-FAILED: hook did not run: ${r.error.message}`);
     stderr += r.stderr || '';

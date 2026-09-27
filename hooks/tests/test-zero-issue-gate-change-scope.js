@@ -35,6 +35,8 @@ const ok = (g, m) => { passes++; console.log(`[PASS] ${g}: ${m}`); };
 const bad = (g, m) => { fails++; console.log(`[FAIL] ${g}: ${m}`); };
 const stamp = `${process.pid}-${Date.now()}`;
 const made = [];
+// Leftovers from earlier runs (or other sessions) are not this run's to judge.
+const BASELINE_DIRS_BEFORE = new Set(fs.readdirSync(os.tmpdir()).filter(n => n.startsWith('zig-baseline-')));
 
 // Lives outside every fixture repository, so it is never part of the change under judgement.
 const TOOLS = fs.mkdtempSync(path.join(os.tmpdir(), `zig-tools-${process.pid}-`));
@@ -43,7 +45,7 @@ const ERRS = path.join(TOOLS, 'errs.js');
 fs.writeFileSync(ERRS, [
   "const fs = require('fs');",
   "if (fs.existsSync('slow.flag')) { const end = Date.now() + 40000; while (Date.now() < end) {} }",
-  "const t = fs.existsSync('errors.txt') ? fs.readFileSync('errors.txt', 'utf8').trim() : '';",
+  "const t = fs.existsSync('errors.json') ? fs.readFileSync('errors.json', 'utf8').trim() : '';",
   "if (t) { console.error(t); process.exit(1); }",
 ].join('\n'));
 const MARK = path.join(TOOLS, 'mark.js');
@@ -68,13 +70,13 @@ function repo(tag, files) {
   return dir;
 }
 
-function drive(dir, sessionId, times) {
+function drive(dir, sessionId, times, extraEnv = {}) {
   let stderr = '';
   for (let i = 0; i < times; i++) {
     const r = spawnSync(process.execPath, [HOOK], {
       input: JSON.stringify({ cwd: dir, session_id: sessionId }),
       encoding: 'utf8', timeout: 90000, windowsHide: true,
-      env: { ...process.env, ZERO_ISSUE_GATE_ENFORCE: '', CPP_GIT_EXE: GIT },
+      env: { ...process.env, ZERO_ISSUE_GATE_ENFORCE: '', CPP_GIT_EXE: GIT, ZIG_MIN_FREE_MB: '1', ...extraEnv },
     });
     if (r.error) throw new Error(`HARNESS-FAILED: hook did not run: ${r.error.message}`);
     stderr += r.stderr || '';
@@ -87,6 +89,7 @@ const blockBody = (dir) => (blocked(dir) ? fs.readFileSync(path.join(dir, 'BLOCK
 const BAD_LINE = 'const delay = Infinity;\n';
 const NO_COMPILE = JSON.stringify({ compile: null, test: null });
 const sid = (tag) => `zig-${tag}-${stamp}`;
+const touch = (dir) => fs.writeFileSync(path.join(dir, 'touched.js'), `module.exports = ${Date.now()};\n`);
 
 // --- scope: untouched pre-existing violation ---
 {
@@ -139,6 +142,7 @@ const sid = (tag) => `zig-${tag}-${stamp}`;
   const marker = path.join(TOOLS, `declared-${stamp}.txt`);
   const pkg = { name: 'zig', private: true, scripts: { typecheck: `node "${MARK.replace(/\\/g, '/')}" "${marker.replace(/\\/g, '/')}"` } };
   const dir = repo('declared', { 'package.json': JSON.stringify(pkg), 'tsconfig.json': '{ "compilerOptions": { "baseUrl": "." } }' });
+  touch(dir);
   // A run that timed out judged nothing (COMPILE INCONCLUSIVE, measured on a starved host): retry
   // once rather than report host load as a defect.
   let err = drive(dir, sid('declared'), 1);
@@ -157,6 +161,7 @@ const sid = (tag) => `zig-${tag}-${stamp}`;
   const call = `"${process.execPath}" "${MARK}" "${marker}"`;
   fs.writeFileSync(path.join(bin, 'zigtc.cmd'), `@echo off\r\n${call}\r\n`);
   fs.writeFileSync(path.join(bin, 'zigtc'), `#!/bin/sh\n${call}\n`, { mode: 0o755 });
+  touch(dir);
   let err = drive(dir, sid('projbin'), 1);
   if (/COMPILE INCONCLUSIVE/.test(err)) err = drive(dir, sid('projbin-retry'), 1);
   if (fs.existsSync(marker) && /ALL PASSED \([^)]*compile/.test(err)) ok('V-ZIG-DECLARED-PROJECT-BIN', 'a declared script finds node_modules/.bin binaries without going through npm');
@@ -167,7 +172,7 @@ const compileOverride = (extra = {}) => JSON.stringify({ compile: `${NODE} ${q(E
 
 // --- baseline red: same error before and after ---
 {
-  const dir = repo('baseline', { '.claude-quality-gate.json': compileOverride(), 'errors.txt': 'src/a.ts:3:1 - error TS2322: old debt\n', 'clean.js': '1;\n' });
+  const dir = repo('basered', { '.claude-quality-gate.json': compileOverride(), 'errors.json': 'src/a.ts:3:1 - error TS2322: old debt\n', 'clean.js': '1;\n' });
   const s = sid('baseline');
   drive(dir, s, 1);
   fs.writeFileSync(path.join(dir, 'clean.js'), '2;\n');
@@ -178,10 +183,10 @@ const compileOverride = (extra = {}) => JSON.stringify({ compile: `${NODE} ${q(E
 
 // --- new red ---
 {
-  const dir = repo('newred', { '.claude-quality-gate.json': compileOverride(), 'errors.txt': 'src/a.ts:3:1 - error TS2322: old debt\n' });
+  const dir = repo('newred', { '.claude-quality-gate.json': compileOverride(), 'errors.json': 'src/a.ts:3:1 - error TS2322: old debt\n' });
   const s = sid('newred');
   drive(dir, s, 1);
-  fs.writeFileSync(path.join(dir, 'errors.txt'), 'src/a.ts:9:1 - error TS2322: old debt\nsrc/b.ts:1:1 - error TS2304: brand new\n');
+  fs.writeFileSync(path.join(dir, 'errors.json'), 'src/a.ts:9:1 - error TS2322: old debt\nsrc/b.ts:1:1 - error TS2304: brand new\n');
   drive(dir, s, 3);
   const body = blockBody(dir);
   if (/Gate that failed: COMPILE/.test(body) && /brand new/.test(body)) ok('V-ZIG-NEW-RED', 'an error absent at the base counts and blocks (a shifted line number is not new)');
@@ -190,9 +195,10 @@ const compileOverride = (extra = {}) => JSON.stringify({ compile: `${NODE} ${q(E
 
 // --- baseline could not be computed -> strict ---
 {
-  const dir = repo('unknown', { '.claude-quality-gate.json': compileOverride({ compile_timeout_ms: 12000 }), 'errors.txt': 'src/a.ts:3:1 - error TS2322: old debt\n', 'slow.flag': 'x' });
+  const dir = repo('unknown', { '.claude-quality-gate.json': compileOverride({ compile_timeout_ms: 12000 }), 'errors.json': 'src/a.ts:3:1 - error TS2322: old debt\n', 'slow.flag': 'x' });
   const s = sid('unknown');
   fs.unlinkSync(path.join(dir, 'slow.flag')); // the base still carries it, so only the baseline run is slow
+  touch(dir);
   drive(dir, s, 3);
   if (/Gate that failed: COMPILE/.test(blockBody(dir))) ok('V-ZIG-BASELINE-UNKNOWN', 'no baseline in time -> the failure counts; the gate never passes on a guess');
   else bad('V-ZIG-BASELINE-UNKNOWN', `blocked=${blocked(dir)}`);
@@ -203,10 +209,11 @@ const compileOverride = (extra = {}) => JSON.stringify({ compile: `${NODE} ${q(E
   const dir = repo('consec', { '.claude-quality-gate.json': compileOverride(), 'clean.js': '1;\n' });
   const s = sid('consec');
   drive(dir, s, 1);
-  const errs = path.join(dir, 'errors.txt');
+  const errs = path.join(dir, 'errors.json');
   fs.writeFileSync(errs, 'src/b.ts:1:1 - error TS2304: new\n');
   drive(dir, s, 2);
   fs.unlinkSync(errs);
+  touch(dir);
   drive(dir, s, 1);
   fs.writeFileSync(errs, 'src/b.ts:1:1 - error TS2304: new\n');
   drive(dir, s, 2);
@@ -223,6 +230,7 @@ function writeBlock(dir, gate) {
 {
   const dir = repo('clear', { '.claude-quality-gate.json': compileOverride(), 'clean.js': '1;\n' });
   writeBlock(dir, 'compile');
+  touch(dir);
   const err = drive(dir, sid('clear'), 1);
   if (!blocked(dir) && /cleared/i.test(err)) ok('V-ZIG-SELF-CLEAR', 'the compile block is removed when the compile gate passes, and says so');
   else bad('V-ZIG-SELF-CLEAR', `blocked=${blocked(dir)} stderr=${JSON.stringify(err.slice(0, 300))}`);
@@ -230,9 +238,11 @@ function writeBlock(dir, gate) {
 {
   const a = repo('keep-test', { '.claude-quality-gate.json': compileOverride(), 'clean.js': '1;\n' });
   writeBlock(a, 'test'); // the test gate is opt-in and does not run here
+  touch(a); // compile must run and PASS, or this case is vacuous
   drive(a, sid('keep-test'), 1);
   const b = repo('keep-foreign', { '.claude-quality-gate.json': compileOverride(), 'clean.js': '1;\n' });
   fs.writeFileSync(path.join(b, 'BLOCKED_DELIVERY.md'), '# Blocked by a person\n\nGate that failed: COMPILE\n');
+  touch(b);
   drive(b, sid('keep-foreign'), 1);
   if (blocked(a) && blocked(b)) ok('V-ZIG-SELF-CLEAR-SCOPED', 'a block for a gate that did not run, and a file this gate did not write, both stay');
   else bad('V-ZIG-SELF-CLEAR-SCOPED', `test-block kept=${blocked(a)} foreign kept=${blocked(b)}`);
@@ -262,15 +272,73 @@ function writeBlock(dir, gate) {
 
 // --- a pre-existing compile red never clears a compile block ---
 {
-  const dir = repo('preclear', { '.claude-quality-gate.json': compileOverride(), 'errors.txt': 'src/a.ts:3:1 - error TS2322: old debt\n' });
+  const dir = repo('preclear', { '.claude-quality-gate.json': compileOverride(), 'errors.json': 'src/a.ts:3:1 - error TS2322: old debt\n' });
   const s = sid('preclear');
   drive(dir, s, 1);
   writeBlock(dir, 'compile');
+  touch(dir);
   const err = drive(dir, s, 1);
   if (blocked(dir) && /PRE-EXISTING/.test(err)) ok('V-ZIG-PREEXISTING-NO-CLEAR', 'only a real compile pass lifts a compile block; old debt at the base does not');
   else bad('V-ZIG-PREEXISTING-NO-CLEAR', `blocked=${blocked(dir)} stderr=${JSON.stringify(err.slice(0, 300))}`);
 }
 
+// --- compile runs only when the change touched source or build files ---
+{
+  const dir = repo('docsonly', { '.claude-quality-gate.json': compileOverride(), 'errors.json': 'src/a.ts:3:1 - error TS2322: old debt\n', 'README.md': 'x\n' });
+  const s = sid('docsonly');
+  drive(dir, s, 1);
+  fs.writeFileSync(path.join(dir, 'README.md'), 'y\n');
+  const skipped = drive(dir, s, 1);
+  touch(dir);
+  const ran = drive(dir, s, 1);
+  const docsSkip = /COMPILE skipped/.test(skipped) && !/COMPILE (FAILED|red is PRE-EXISTING)/.test(skipped);
+  if (docsSkip && /PRE-EXISTING/.test(ran)) ok('V-ZIG-COMPILE-SKIPS-DOCS-ONLY', 'a docs-only change skips compile; a source change runs it');
+  else bad('V-ZIG-COMPILE-SKIPS-DOCS-ONLY', `skipped=${JSON.stringify(skipped.slice(0, 200))} ran=${JSON.stringify(ran.slice(0, 200))}`);
+}
+
+// --- the gate never spends memory the host does not have ---
+{
+  const dir = repo('headroom', { '.claude-quality-gate.json': compileOverride(), 'clean.js': '1;\n' });
+  const s = sid('headroom');
+  drive(dir, s, 1);
+  fs.writeFileSync(path.join(dir, 'errors.json'), 'src/b.ts:1:1 - error TS2304: brand new\n');
+  const starved = drive(dir, s, 3, { ZIG_MIN_FREE_MB: '100000000' });
+  const keptOpen = !blocked(dir) && /below the 100000000 MB floor/.test(starved);
+  drive(dir, s, 3);
+  if (keptOpen && /Gate that failed: COMPILE/.test(blockBody(dir))) ok('V-ZIG-HEADROOM', 'below the floor: inconclusive, never a block; with headroom the same red blocks');
+  else bad('V-ZIG-HEADROOM', `keptOpen=${keptOpen} blockedAfter=${blocked(dir)}`);
+}
+
+// --- a block's CRITICAL lines survive its truncation ---
+{
+  const dir = repo('critfirst', { '.claude-quality-gate.json': NO_COMPILE, 'clean.js': '1;\n' });
+  const s = sid('critfirst');
+  drive(dir, s, 1);
+  fs.writeFileSync(path.join(dir, 'a.js'), Array.from({ length: 300 }, (_, i) => `// TODO item ${i}`).join('\n') + '\n');
+  fs.writeFileSync(path.join(dir, 'z.js'), BAD_LINE);
+  drive(dir, s, 3);
+  if (/\[CRITICAL\] z\.js:1 /.test(blockBody(dir))) ok('V-ZIG-CRITICAL-FIRST', 'the CRITICAL line is in the block even behind 13 KB of HIGH lines');
+  else bad('V-ZIG-CRITICAL-FIRST', `block=${JSON.stringify(blockBody(dir).slice(0, 200))}`);
+}
+
+// --- a legacy block that lists no CRITICAL line names nothing provable, so it stays ---
+{
+  const dir = repo('legacy', { '.claude-quality-gate.json': NO_COMPILE, 'clean.js': '1;\n', 'upstream.js': '// TODO upstream\n' });
+  fs.writeFileSync(path.join(dir, 'BLOCKED_DELIVERY.md'),
+    '# BLOCKED DELIVERY — x\n\n## Gate that failed: SCAFFOLD\n\n\`\`\`\n[HIGH] upstream.js:1 \u2014 TODO/FIXME placeholder found\n\`\`\`\n\n' +
+    'This file was created because 3 consecutive attempts to fix the scaffold gate failed.\n');
+  drive(dir, sid('legacy'), 1);
+  if (blocked(dir)) ok('V-ZIG-LEGACY-BLOCK-KEPT', 'a block listing only HIGH lines is not lifted by a scaffold pass');
+  else bad('V-ZIG-LEGACY-BLOCK-KEPT', 'a truncated legacy block was cleared on nothing');
+}
+
+// --- nothing the baseline creates outlives the run (Windows kept an empty dir per baseline) ---
+{
+  const left = fs.readdirSync(os.tmpdir()).filter(n => /^zig-baseline-[^-]+$/.test(n) && !BASELINE_DIRS_BEFORE.has(n));
+  if (left.length === 0) ok('V-ZIG-NO-TEMP-LEAK', 'every throwaway baseline worktree directory was removed');
+  else bad('V-ZIG-NO-TEMP-LEAK', `${left.length} left in ${os.tmpdir()}: ${left.slice(0, 3).join(', ')}`);
+}
+
 for (const d of made) { try { fs.rmSync(d, { recursive: true, force: true }); } catch (_) { /* tmp */ } }
-console.log(`ZIG_SCOPE_PASS=${passes}/${passes + fails}  threshold=14/14`);
+console.log(`ZIG_SCOPE_PASS=${passes}/${passes + fails}  threshold=19/19`);
 process.exit(fails === 0 ? 0 : 1);

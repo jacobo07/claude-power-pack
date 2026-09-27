@@ -40,6 +40,9 @@ const SCAFFOLD_PATTERNS = [
 ];
 
 const SCANNABLE = new Set(['.ex', '.exs', '.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.rs', '.go']);
+// Not scaffold-audited, but a change to one can break a compile, so it keeps the compile gate running.
+const BUILD_EXT = new Set(['.mjs', '.cjs', '.mts', '.cts', '.json', '.jsonc', '.toml', '.yaml', '.yml', '.lock',
+  '.mod', '.sum', '.gradle', '.kts', '.xml', '.cfg', '.ini', '.c', '.h', '.cpp', '.hpp', '.cc', '.cmake', '.heex', '.eex']);
 
 // --- JOBS-WOZ double-scoped cryptographic exemption (parity w/ jobs-woz-gatekeeper.js) ---
 // Owner-directed 2026-05-17. Narrows a Mistake #43 quine FP (allowlisted slop-token
@@ -272,7 +275,9 @@ function auditFile(cwd, full, violations) {
  * its own (scoped) pass is vacuous about that file and must not lift the block.
  */
 function scaffoldBlockStillFails(cwd, body) {
-  const named = [...new Set([...body.matchAll(/^\[\w+\] (.+?):\d+ \u2014 /gm)].map(m => m[1]))];
+  // Only the CRITICAL lines are the block's reason. A block written before CRITICAL-first ordering was
+  // truncated in scan order and may list none of them; it names nothing provable, so it stays.
+  const named = [...new Set([...body.matchAll(/^\[CRITICAL\] (.+?):\d+ \u2014 /gm)].map(m => m[1]))];
   if (named.length === 0) return true;
   const violations = [];
   for (const rel of named) {
@@ -368,7 +373,9 @@ function baselineErrors(cwd, base, command, timeout, withProjectBin = false) {
     return errors;
   } finally {
     git(top, ['worktree', 'remove', '--force', tmp], 60000);
-    try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* os tmp */ }
+    // Retries: on Windows a just-exited child or a scanner holds the empty directory for a moment,
+    // and a single attempt left one behind on every baseline (27 of 27 measured); Linux left none.
+    try { fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); } catch { /* os tmp */ }
     git(top, ['worktree', 'prune'], 30000);
   }
 }
@@ -494,7 +501,22 @@ function runGates(data) {
     const compileCommand = overridden ? domain.compile : (declared || (domain && domain.compile) || null);
     const projectBin = Boolean(declared) && compileCommand === declared;
     const compileTimeout = (domain && domain.compile_timeout_ms) || 30000;
-    if (compileCommand) {
+    const scope = changedFiles(sessionId, cwd, base);
+    // A real typecheck at every turn end is a real cost. Measured 2026-09-27: Orca's declared typecheck
+    // (three projects) plus its baseline checkout on a Windows host at 265-519 MB free. So compile runs
+    // only when the change touched source or build files, and never when the host lacks the headroom:
+    // an instrument must not consume the resource the whole machine is short of.
+    const compileRelevant = (f) => path.basename(f) !== 'BLOCKED_DELIVERY.md' &&
+      (SCANNABLE.has(path.extname(f).toLowerCase()) || BUILD_EXT.has(path.extname(f).toLowerCase()));
+    const noSourceChanged = scope !== null && !scope.some(compileRelevant);
+    const freeMb = Math.round(os.freemem() / 1048576);
+    const floorMb = Number(process.env.ZIG_MIN_FREE_MB) || 1536;
+    if (compileCommand && noSourceChanged) {
+      process.stderr.write('\nℹ️ ZERO-ISSUE GATE: COMPILE skipped -- the session changed no source or build file.\n');
+    } else if (compileCommand && freeMb < floorMb) {
+      reportInconclusive({ gate: 'compile', output: `INCONCLUSIVE: the host has ${freeMb} MB free, below the ` +
+        `${floorMb} MB floor (ZIG_MIN_FREE_MB); a typecheck now would starve it. Nothing was judged.` });
+    } else if (compileCommand) {
       const compileResult = runGate('compile', compileCommand, cwd, compileTimeout, projectBin);
       if (compileResult.inconclusive) reportInconclusive(compileResult);
       let newErrors = null;
@@ -538,7 +560,7 @@ function runGates(data) {
 
     // Gate 2: SCAFFOLD AUDIT
     if (registry.scaffold_audit_enabled !== false) {
-      const scaffoldResult = runScaffoldAudit(cwd, changedFiles(sessionId, cwd, base));
+      const scaffoldResult = runScaffoldAudit(cwd, scope);
       results.push(scaffoldResult);
       if (scaffoldResult.passed) {
         resetFailure(sessionId, 'scaffold');
@@ -554,7 +576,9 @@ function runGates(data) {
         msg += `${'─'.repeat(60)}\n`;
         msg += `Fix CRITICAL violations before claiming done. Failure ${count}/${maxFailures}.\n`;
         if (count >= maxFailures) {
-          const output = scaffoldResult.violations.map(v => `[${v.severity}] ${v.file}:${v.line} — ${v.desc}`).join('\n');
+          // CRITICAL first: the block is truncated, and its CRITICAL lines are what lifting it re-checks.
+          const ordered = [...scaffoldResult.violations].sort((a, b) => (b.severity === 'CRITICAL') - (a.severity === 'CRITICAL'));
+          const output = ordered.map(v => `[${v.severity}] ${v.file}:${v.line} — ${v.desc}`).join('\n');
           createBlockedDelivery(cwd, 'scaffold', output, count, getDirtyFiles(sessionId));
           msg += `\n🛑 BLOCKED: ${count} consecutive scaffold failures. BLOCKED_DELIVERY.md created.`;
           msg += ENFORCE_HARD_BLOCK ? ' STOPPING.\n' : ' (advisory — session continues)\n';
