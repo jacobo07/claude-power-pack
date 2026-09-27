@@ -40,8 +40,14 @@ Coherence anchor: `python tools/test_tis_observed.py` 25/25, `test_pricing_sourc
    "Context rent architecture..." session to import tools/tis_observed.py instead. Resume once they commit.
 3. BLOCKED (same-file collision): P2 needs modules/gsd_x/mission/closure.py, dirty in another pane (+ untracked
    coverage.py). Free alternative: CONNECT done_gate/artifact_done_gate (orphan, NOT a duplicate — plan corrected).
-Owner said "wait for the limit to come back" (2026-09-27): paused at this checkpoint pending clarification of
-whether that covers all work or only the paid experiment.
+Owner clarified 2026-09-28: ONLY the paid experiment is off; free work continues. Model-calling runs
+(A/B, ablation) wait for subscription quota.
+- `6aa3bb6` modules/token-optimizer/prefix_inventory.py: unconditional prefix ~102k tok est. (rules 56.8k,
+  CLAUDE.md 21.4k, agents 11.0k, skills 7.9k, MEMORY 4.0k); harness/tools/MCP/plugins declared NOT counted.
+- P3 protocol predeclared: vault/plans/cognitive-resource-os-P3-ablation-protocol.md (pre-flight P0 = run an
+  arm without rules and without touching global config/credentials; unresolved -> STOP, do not improvise).
+- A peer session moved every rule's incident evidence to knowledge_vault/rules-evidence/ (rules ~267->216 KB).
+  Three+ transcript parsers now agree on dedupe (peer 8c39c27); consolidating them to one owner is open debt.
 
 ## 5. Start instruction
 Run the coherence anchor. `git log --oneline -8` and confirm the three commits. Then action 1.
