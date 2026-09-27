@@ -53,6 +53,20 @@ Prior RCA `weekly-limit-burn-rca-2026-06-30.md` summed per-turn usage — re-mea
 P0 metrology · P1 session autopsy + floor attribution · P2 always-on floor · P3 interactive fresh
 epochs (shadow -> opt-in) · P4 Ralph G0/G2/G7 + preflight · P5 baseline (KV, UKDL, tower, liveness).
 
+## State (update after every sealed unit)
+- P0 SEALED 8c39c27: token_ground_truth + token_corpus_audit dedup (economics inherits);
+  tools/test_usage_dedup.py 8/8, red 1/8 before. token_autopsy.py is being fixed by ANOTHER live
+  pane (uncommitted, 22:51) -- do not touch; told it via cross-session msg that it prices all
+  writes at the 5m rate (1h = 1.6x). Rate card verified vs pricing page 2026-09-27 (Opus 5.5
+  cache read 0.05x = $0.20). June RCA used token_ground_truth -> absolutes ~2.5x high, ratios ok.
+- P1 SEALED (this commit): tools/session_autopsy.py + test 11/11, wired in /cost-autopsy.
+  Incident (API-list equivalent): $43.74 = read $26.48 / 1h-write $10.79 / output $6.47;
+  floor re-read ~$12.57; 2 TTL-expiry rewrites 455 k tokens; fresh-epoch saving UPPER BOUND
+  $14.18 (32%). Floor and rollover are levers of the same size.
+- NEXT: P1b floor attribution (which sources make the ~190 k floor; one headless probe costs
+  subscription quota -> Owner memory says defer model experiments until the limit resets);
+  then P2 firewall aperture over rules/ + all always-on files; then P3.
+
 ## Owner decisions (defaults apply on approval)
 D1 rules/ floor: propose per-file dispositions with evidence; apply each only on Owner yes.
 D2 interactive rollover: ship SHADOW + one real drill; active only by opt-in.

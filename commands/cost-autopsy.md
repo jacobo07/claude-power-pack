@@ -32,6 +32,9 @@ python "$PP/tools/tis_report.py" --summary           # per-session aggregate (es
 python "$PP/tools/tis_report.py" --by-skill --top 10 # top skills by cost
 python "$PP/tools/tis_report.py" --cache-ratio       # overall cache-hit %
 python "$PP/tools/tis_report.py" --cost-projection   # actual vs routed cost
+python "$PP/tools/session_autopsy.py" <session-id>   # context rent of ONE session: floor vs
+                                                     # growth, TTL rewrites, USD by category,
+                                                     # fresh-epoch saving UPPER BOUND
 ```
 
 Filter to a date range:
