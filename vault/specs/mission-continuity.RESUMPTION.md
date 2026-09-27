@@ -15,6 +15,22 @@ commit by pathspec, check diff hunk headers (UKDL is edited by others concurrent
    (Owner, 2026-09-24; `arm --permission-mode` default since `18c7299`).
 3. M6 runs NOW (Owner: "Sí, ahora").
 
+## UPDATE 2026-09-27 — Durable Substrate Completion (in flight, Owner-approved plan T1–T8)
+Approved inline plan (session 958a5394): v3 Ralph is the ONLY live path; the research handoff's
+v2 items (EBUSY, compaction witness, continuation jobs) target retired machinery — recorded, not
+reopened; F2 retraction preserved. Claim ledger: `.planning/mission-continuity/claim-ledger.json`.
+SEALED: `12bee64` T1 convergence outranks budget (ALL_COMPLETE at a budget halt → COMPLETED;
+also carries another pane's worker_mcp_verdict — attribution in 859be49's message) · `859be49`
+T2 fsync + unreadable records surfaced (never skipped) · `d730a23` T3 kernel byte-range lock
+(killed holder released instantly; live holder never stolen; L1 debt CLOSED).
+Gates: `tools/test_gsd_mission.py` 163/163; each fix mutation-killed, SHA-256 restores
+(drivers: scratchpad `mutate.py --spec`, `gcommit.py snap|commit` — guarded pathspec commit).
+NEXT: T4 history authority (monotonic `seq` on record + ledger rows; failed append counted on the
+record, shown by status) → T5 progress/livelock (measure 6 renewal-capped lineages FIRST; PLAN
+mode) → T6 code identity per decision → T7 sweep liveness (log writes only on action: idle/
+skipped/dead indistinguishable; LastTaskResult 0x41306) → T8 certification addendum + UKDL.
+Live estate: 43 missions, 3 non-terminal; sweep loads the REPO file, so every commit is live.
+
 ## UPDATE 2026-09-24 15:2x — M6 PROVEN, stopped by the Owner
 Two live relays, three workers committing in the run's git worktree, no phase redone, one
 writer at a time (W0-EVIDENCE E26–E34; CERTIFICATION §11 M6). Fixed live: `582db71`
