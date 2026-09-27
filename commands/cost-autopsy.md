@@ -12,11 +12,23 @@ running on a more expensive model than the router recommends. Composes
 `tools/tis_report.py` (the TIS Capa 2 analytics CLI) -- it does not
 re-implement pricing or aggregation.
 
+## Two sources -- never mix them
+
+| source | what it is | flag |
+|---|---|---|
+| **observed** | what the model API actually reported, read from the session transcripts (`tools/tis_observed.py`) | `--observed [--all-projects]` |
+| **estimate** | chars/4 of the JIT hook's injected context, logged by `tools/tis.py` -- NOT model usage | every other flag |
+
+Start with `--observed`. The estimate flags below measure hook injection size
+only; their cache% and USD are not what the session cost.
+
 ## Usage
 
 ```
 PP="$HOME/.claude/skills/claude-power-pack"
-python "$PP/tools/tis_report.py" --summary           # per-session aggregate
+python "$PP/tools/tis_report.py" --observed          # real usage, this project
+python "$PP/tools/tis_report.py" --observed --all-projects
+python "$PP/tools/tis_report.py" --summary           # per-session aggregate (estimate)
 python "$PP/tools/tis_report.py" --by-skill --top 10 # top skills by cost
 python "$PP/tools/tis_report.py" --cache-ratio       # overall cache-hit %
 python "$PP/tools/tis_report.py" --cost-projection   # actual vs routed cost

@@ -201,7 +201,9 @@ def cmd_cache_ratio(entries):
     total_cr = sum(e.get("cache_read_tokens", 0) for e in entries)
     denom = total_in + total_cr
     ratio = (total_cr / denom * 100) if denom else 0.0
-    print(f"cache_hit_ratio = {ratio:.2f}% "
+    # source=estimate: these entries are chars/4 of the JIT injection, not
+    # model usage. `--observed` reports what the API actually billed.
+    print(f"cache_hit_ratio = {ratio:.2f}% source=estimate "
           f"(cache_read={total_cr} / (input={total_in} + cache_read={total_cr}))")
     print(f"entries={len(entries)}")
     return 0
@@ -313,8 +315,15 @@ def main(argv=None):
                     help="TCO: actual vs routed cost + top-3 opportunities")
     ap.add_argument("--since", metavar="YYYY-MM-DD")
     ap.add_argument("--top", type=int, default=10)
+    ap.add_argument("--observed", action="store_true",
+                    help="real model usage from transcripts (tis_observed.py)")
+    ap.add_argument("--all-projects", action="store_true",
+                    help="with --observed: every project, not just this cwd")
     args = ap.parse_args(argv)
 
+    if args.observed:
+        import tis_observed
+        return tis_observed.main(["--all-projects"] if args.all_projects else [])
     if not any([args.summary, args.by_skill, args.cache_ratio,
                 args.cost_projection]):
         ap.print_help()

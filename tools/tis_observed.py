@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import statistics
 import sys
 from dataclasses import asdict, dataclass, field
@@ -195,13 +196,21 @@ def summarize(sessions: list[SessionUsage]) -> dict:
     }
 
 
+def project_key(path: Path) -> str:
+    """Claude Code's transcript dir name for a cwd: every non-alphanumeric
+    character becomes '-'. Replacing only ':' and separators leaves the '.'
+    of '.claude' in place -- and a directory with that wrong name exists on
+    this host holding zero transcripts, so the wrong key read as an empty,
+    successful measurement (2026-09-27)."""
+    return re.sub(r"[^A-Za-z0-9]", "-", str(path))
+
+
 def _project_dirs(args) -> list[Path]:
     if args.project_dir:
         return [Path(p) for p in args.project_dir]
     if args.all_projects:
         return sorted(p for p in PROJECTS_DIR.iterdir() if p.is_dir())
-    cwd_key = str(Path.cwd().resolve()).replace(":", "-").replace("\\", "-").replace("/", "-")
-    return [PROJECTS_DIR / cwd_key]
+    return [PROJECTS_DIR / project_key(Path.cwd().resolve())]
 
 
 def main(argv=None) -> int:
@@ -219,6 +228,11 @@ def main(argv=None) -> int:
                           "missing": missing}))
         return 2
     sessions = scan(dirs, include_subagents=not args.no_subagents)
+    if not sessions:
+        # A dir with no transcripts is a failed look, not a quiet project.
+        print(json.dumps({"state": "UNMEASURED", "reason": "no transcripts in dir",
+                          "project_dirs": [str(d) for d in dirs]}))
+        return 2
     out = {"summary": summarize(sessions),
            "project_dirs": [str(d) for d in dirs]}
     if args.sessions:

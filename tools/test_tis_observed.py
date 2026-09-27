@@ -133,6 +133,25 @@ def main() -> int:
               f"startup_prefix_share_estimate={share} (expected 0.995, "
               f"a once-per-session ratio would read 0.4975)")
 
+        # Wrong key once hit an existing EMPTY dir and exited 0 with 0 sessions.
+        check("V-TISOBS-PROJECT-KEY",
+              T.project_key(Path(r"C:\Users\User\.claude\skills\claude-power-pack"))
+              == "C--Users-User--claude-skills-claude-power-pack",
+              "the '.' of '.claude' becomes '-'")
+        empty = Path(td) / "empty"
+        empty.mkdir()
+        import contextlib, io
+        with contextlib.redirect_stdout(io.StringIO()) as buf_e:
+            rc_empty = T.main(["--project-dir", str(empty)])
+        check("V-TISOBS-EMPTY-DIR-REFUSES",
+              rc_empty == 2 and "UNMEASURED" in buf_e.getvalue(),
+              f"empty dir -> rc={rc_empty}")
+        with contextlib.redirect_stdout(io.StringIO()) as buf_p:
+            rc_proj = T.main(["--project-dir", str(proj)])
+        check("V-TISOBS-EMPTY-DIR-CONTROL",
+              rc_proj == 0 and '"sessions": 3' in buf_p.getvalue(),
+              f"populated dir -> rc={rc_proj}")
+
     print(f"TISOBS_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
