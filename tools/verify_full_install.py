@@ -58,7 +58,9 @@ from modules.execution_env import git_exe  # noqa: E402
 RTK_BIN = HOME / ".claude" / "bin" / "rtk.exe"
 USER_SETTINGS = HOME / ".claude" / "settings.json"
 BUDGET_FILE = HOME / ".claude" / "budget.json"
-PRICING_FILE = PP_ROOT / "vault" / "pricing" / "anthropic_2026-05.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pricing_source import pricing_path_or_missing  # noqa: E402
+PRICING_FILE = pricing_path_or_missing()
 TELEMETRY_DIR = PP_ROOT / "vault" / "telemetry"
 UPSTREAM_REF = PP_ROOT / "vendor" / "rtk" / "UPSTREAM_REF.md"
 LOADER = PP_ROOT / "tools" / "jit_skill_loader.py"

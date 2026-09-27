@@ -46,7 +46,9 @@ from pathlib import Path
 HOME = Path(os.path.expanduser("~"))
 PP_ROOT = Path(__file__).resolve().parents[1]
 BUDGET_FILE = HOME / ".claude" / "budget.json"
-PRICING_FILE = PP_ROOT / "vault" / "pricing" / "anthropic_2026-05.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pricing_source import pricing_path_or_missing  # noqa: E402
+PRICING_FILE = pricing_path_or_missing()
 TELEMETRY_DIR = PP_ROOT / "vault" / "telemetry"
 
 STALE_PRICING_DAYS = 30

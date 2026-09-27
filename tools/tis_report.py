@@ -27,7 +27,8 @@ ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
 import tis  # noqa: E402
 
-PRICING_JSON = ROOT / "vault" / "pricing" / "anthropic_2026-05.json"
+from pricing_source import pricing_path_or_missing  # noqa: E402
+PRICING_JSON = pricing_path_or_missing()
 ROUTING_JSON = ROOT / "vault" / "config" / "model-routing.json"
 
 
