@@ -143,9 +143,44 @@ def main() -> int:
               f"rc={r.returncode} note={got.get('note')!r} stderr={r.stderr[-200:]}")
         for stray in Path(TMP).glob("gsd-mission-m-a.json.*.tmp"):
             stray.unlink()  # the killed writer's tmp: never matched as a record; cleaned
-        # The killed writer died HOLDING the O_EXCL lock. T2 owns the record boundary only;
-        # what that orphaned lock costs the next writer is T3's subject (pinned there).
-        gm.mission_path("m-a").with_suffix(".lock").unlink(missing_ok=True)
+        # The killed writer died HOLDING the lock; since T3 the kernel releases it, so the next
+        # kill iteration needs no cleanup -- which is itself part of the proof.
+
+    # T3 (2026-09-27): the lock is a kernel byte-range lock, released when its holder dies.
+    # Before: an O_EXCL file reclaimed by mtime -- a hard-killed holder blocked every writer for
+    # 60 s, and a live holder whose file looked old could be unlinked under it (debt L1).
+    lock_src = (
+        "import os,sys,time;sys.path.insert(0,{tools!r});import gsd_mission as gm\n"
+        "lk=gm._Lock(gm.mission_path('m-a').with_suffix('.lock'));lk.__enter__()\n"
+        "print('HELD',flush=True)\n"
+        "{then}\n")
+    lpath = gm.mission_path("m-a").with_suffix(".lock")
+    p = _sp.Popen([sys.executable, "-c", lock_src.format(tools=tools_dir, then="os._exit(9)")],
+                  env={**os.environ}, stdout=_sp.PIPE, text=True)
+    held = p.stdout.readline().strip()
+    p.wait(timeout=60)
+    t0 = time.time()
+    try:
+        with gm._Lock(lpath, timeout_s=3.0):
+            waited = time.time() - t0
+        check("V-MC-LOCK-KILLED-HOLDER-RELEASED", held == "HELD" and waited < 2.0,
+              f"acquired {waited:.2f}s after the holder was killed")
+    except gm.MissionError as exc:
+        _fail("V-MC-LOCK-KILLED-HOLDER-RELEASED", f"held={held} {exc}")
+    p = _sp.Popen([sys.executable, "-c", lock_src.format(tools=tools_dir, then="time.sleep(6)")],
+                  env={**os.environ}, stdout=_sp.PIPE, text=True)
+    held = p.stdout.readline().strip()
+    old = time.time() - 7200
+    os.utime(lpath, (old, old))   # the file LOOKS stale; the holder is alive
+    try:
+        with gm._Lock(lpath, timeout_s=1.0):
+            _fail("V-MC-LOCK-LIVE-HOLDER-NEVER-STOLEN", f"held={held}: acquired under a live holder")
+    except gm.MissionError:
+        _ok("V-MC-LOCK-LIVE-HOLDER-NEVER-STOLEN", f"held={held}; old mtime is not a licence")
+    p.wait(timeout=60)
+    t0 = time.time()
+    with gm._Lock(lpath, timeout_s=3.0):
+        check("V-MC-LOCK-CONTROL-FREE-AFTER-CLEAN-EXIT", time.time() - t0 < 2.0)
 
     # --- liveness: DEAD only on positive evidence -----------------------------------------
     owner = {"session_id": "s-1", "pid": 4242, "proc_start": "111"}

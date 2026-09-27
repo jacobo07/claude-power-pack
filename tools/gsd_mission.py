@@ -111,32 +111,55 @@ def _write(path: Path, data: dict) -> None:
 
 
 class _Lock:
-    """O_EXCL lock file. A stale lock (holder gone for > stale_s) is reclaimed."""
+    """A kernel byte-range lock on a persistent file: the OS releases it when the holder's
+    handle closes, INCLUDING when the holder is hard-killed. Nothing is ever reclaimed by age.
 
-    def __init__(self, path: Path, timeout_s: float = 10.0, stale_s: float = 60.0):
-        self.path, self.timeout_s, self.stale_s = path, timeout_s, stale_s
+    Replaced 2026-09-27 (T3) an O_EXCL file reclaimed by mtime, measured both ways: a holder
+    killed mid-transition blocked every writer for 60 s ("lock busy"), and a LIVE holder whose
+    file merely looked old was unlinked under it -- two holders (debt L1). The file is never
+    deleted, so there is no create/unlink race left to lose.
+    """
+
+    def __init__(self, path: Path, timeout_s: float = 10.0, stale_s: float | None = None):
+        self.path, self.timeout_s = path, timeout_s   # stale_s: accepted, unused (no age rule)
+        self.fd: int | None = None
+
+    @staticmethod
+    def _try(fd: int) -> bool:
+        try:
+            if sys.platform == "win32":
+                import msvcrt
+                os.lseek(fd, 0, os.SEEK_SET)
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return True
+        except OSError:
+            return False
 
     def __enter__(self):
         deadline = time.time() + self.timeout_s
-        while True:
-            try:
-                fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-                os.write(fd, str(os.getpid()).encode())
+        fd = os.open(self.path, os.O_RDWR | os.O_CREAT)
+        while not self._try(fd):
+            if time.time() > deadline:
                 os.close(fd)
-                return self
-            except FileExistsError:
-                try:
-                    if time.time() - self.path.stat().st_mtime > self.stale_s:
-                        self.path.unlink(missing_ok=True)
-                        continue
-                except OSError:
-                    continue
-                if time.time() > deadline:
-                    raise MissionError(f"lock busy: {self.path.name}")
-                time.sleep(0.05)
+                raise MissionError(f"lock busy: {self.path.name}")
+            time.sleep(0.05)
+        self.fd = fd
+        return self
 
     def __exit__(self, *exc):
-        self.path.unlink(missing_ok=True)
+        fd, self.fd = self.fd, None
+        if fd is None:
+            return
+        try:
+            if sys.platform == "win32":
+                import msvcrt
+                os.lseek(fd, 0, os.SEEK_SET)
+                msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+        finally:
+            os.close(fd)   # closing releases the lock on every platform regardless
 
 
 _WS_FLAG = re.compile(r"(?:^|\s)--ws(?:=|\s+)(\S+)")
