@@ -7,6 +7,25 @@ mode: PLAN (not ULTRA) -- ownership is settled; one bounded design question (pro
 
 # Parent Context Epoch Rotation -- plan
 
+> **CORRECTION 2026-09-27 ~23:40 (supersedes the "in production" claims in sections 1 and 5).**
+> Measured across the whole mission ledger: **499 launches in 43 missions, and exactly ONE was
+> caused by the context wall** (`handoff_asked` = 1, the W8 synthetic `/mc-task` relay of
+> 2026-09-24). 444 relays were "owner's turn ended without completion" (268 idle, 176 blocked). The
+> `kme-reconstruction` lineage's 192 epochs were quota refusals: worker `60679bea` ended its only
+> turn with "You've hit your weekly limit", 0 tool calls; the supervisor relaunched every ~10 min
+> (fixed at HEAD by `30ccdeb`). So what production exercised is **iteration continuation**, not
+> **context rotation**. Honest status of wall-triggered fresh-context rotation: HOST VERIFIED on one
+> relay, NOT multi-epoch, NOT production-verified. The reset mechanism (fresh-session replacement,
+> card via `--append-system-prompt`) is unchanged; its proof is what was overstated.
+> Economics finding: every fresh epoch starts with a ~736 KB `instructions` attachment (worker
+> `60679bea`), the floor each rotation pays -- to be measured in tokens before any wall policy.
+>
+> **Ownership split agreed with pane `claude-power-pack-e9` (mission-continuity T1-T8):** theirs =
+> T4 history `seq`, T5 progress/livelock, T6 code identity, T7 remainder (lease + tree reap), T8
+> certification/UKDL. Mine = G3, G4 (built on their `seq` + `epoch`, no third counter), G6, the
+> rehydration identity check (S7), and the multi-epoch Production Reality proof (S10). Edits to
+> `tools/gsd_mission.py` are announced to them first.
+
 ## 1. Reality (measured 2026-09-27, read-only)
 
 HEAD `48bbbb7` on `feature/knowledge-acquisition`; ~20 foreign dirty files incl. `tools/gsd_mission.py`,
