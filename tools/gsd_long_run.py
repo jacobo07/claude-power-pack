@@ -970,6 +970,26 @@ def _markers() -> list[tuple[Path, dict]]:
     return _scan_markers()[0]
 
 
+# Mirrors gsd_mission.TERMINAL. Not imported: gsd_mission imports this module, and the
+# names are its record format, pinned by tools/test_sweep_ralph_markers.py.
+_MISSION_TERMINAL = frozenset({"COMPLETED", "HALTED", "ORPHANED"})
+_MISSION_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
+
+
+def _mission_state(mission_id) -> str:
+    """The state a mission record states, or UNKNOWN(<why>). Never guesses terminal."""
+    if not isinstance(mission_id, str) or not _MISSION_ID_RE.match(mission_id):
+        return "UNKNOWN(no mission id)"
+    try:
+        rec = json.loads((state_dir() / f"gsd-mission-{mission_id}.json").read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return "UNKNOWN(record absent)"
+    except (OSError, ValueError) as exc:
+        return f"UNKNOWN(record unreadable: {type(exc).__name__})"
+    st = rec.get("state") if isinstance(rec, dict) else None
+    return st if isinstance(st, str) else "UNKNOWN(no state)"
+
+
 def _already(session_id: str, event: str, key: str, value) -> bool:
     return any(e.get("event") == event and e.get(key) == value for e in ledger_events(session_id))
 
@@ -1094,6 +1114,24 @@ def sweep(now: float | None = None, dry_run: bool = False,
 
     for path, m in _markers():
         sid = m["session_id"]
+        if m.get("mode") == "ralph":
+            # A mission worker's marker. Its lifecycle belongs to gsd_mission.supervise, which
+            # runs after this stage; this v2 stage must never ask GSD about it (2026-09-27:
+            # 399 leaked markers of ended missions, one gsd-tools call each per pass, piled 7
+            # sweeps up and starved the supervisor). It only retires markers whose mission is
+            # provably terminal. An absent or unreadable record is UNKNOWN and keeps the marker.
+            mstate = _mission_state(m.get("mission_id"))
+            if mstate in _MISSION_TERMINAL:
+                why = f"mission {m.get('mission_id')} is {mstate}"
+                actions.append({"session_id": sid, "action": "retired", "reason": why})
+                if not dry_run:
+                    path.unlink(missing_ok=True)
+                    ledger_append(sid, "retired", mission_id=m.get("mission_id"), mission_state=mstate)
+            else:
+                kept.append({"session_id": sid, "clock": None, "liveness": None,
+                             "held_by": f"mission worker ({m.get('mission_id')}: {mstate}); "
+                                        "supervised by gsd_mission"})
+            continue
         cmd = m.get("resume_command") or ""
         cwd = m.get("cwd") or ""
         transcript = find_transcript(sid)
