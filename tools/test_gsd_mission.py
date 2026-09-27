@@ -412,6 +412,8 @@ def main() -> int:
           and rec["owner"]["session_id"] == "1a2b3c4d-aaaa-bbbb" and rec["iterations"] == 1)
     rec = gm.ack_session("1a2b3c4d-aaaa-bbbb", now=NOW + 60)
     check("V-MC-HEARTBEAT", rec["owner"]["heartbeat_at"] == NOW + 60 and rec["state"] == gm.RUNNING)
+    check("V-MC-PROGRESS-STAMPED-BY-WORKER-HOOK", rec.get("last_progress_at") == NOW + 60,
+          str(rec.get("last_progress_at")))
     try:
         gm.request_handoff("someone-else", "x", now=NOW)
         _fail("V-MC-HANDOFF-OWNER-ONLY", "non-owner requested a hand-off")
@@ -476,6 +478,18 @@ def main() -> int:
         gm.create(TMP, "/gsd-autonomous", mission_id=mid, now=NOW)
         gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
                       state=gm.RUNNING, epoch=1, owner={**bg, "session_id": f"s-{mid}"})
+        gm.ack_session(f"s-{mid}", now=NOW)   # the worker's own hook ran: it made progress
+        return [{"sessionId": f"s-{mid}", "status": "idle", "state": "working",
+                 "kind": "background", "id": f"s-{mid}"[:8], "pid": 999}]
+
+    def fresh_parked(mid):
+        """The m-66ebaaa0324e shape: adopted by the host's witness, its own hook never ran."""
+        for p in Path(TMP).glob("gsd-mission-*.json"):
+            p.unlink()
+        gm.create(TMP, "/gsd-autonomous", mission_id=mid, now=NOW)
+        gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="worker_adopted",
+                      now=NOW, state=gm.RUNNING, epoch=1, worker=f"s-{mid}",
+                      owner={**bg, "session_id": f"s-{mid}"})
         return [{"sessionId": f"s-{mid}", "status": "idle", "state": "working",
                  "kind": "background", "id": f"s-{mid}"[:8], "pid": 999}]
 
@@ -484,6 +498,7 @@ def main() -> int:
         gm.create(TMP, "/gsd-autonomous", mission_id=mid, now=NOW)
         gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
                       state=gm.RUNNING, epoch=1, owner={**bg, "session_id": f"s-{mid}"})
+        gm.ack_session(f"s-{mid}", now=NOW)
         return [{"sessionId": f"s-{mid}", "status": "idle", "state": "working",
                  "kind": "background", "id": f"s-{mid}"[:8], "pid": 999}]
 
@@ -619,7 +634,32 @@ def main() -> int:
     finally:
         os.environ.pop("CPP_MISSION_RENEW", None)
     check("V-MC-RENEW-CONTROL-ALLOWED",
-          gm.renewal_refusal({"mission_id": "m", "renewal": 0}, "turn ended and budget: x", "OK") is None)
+          gm.renewal_refusal({"mission_id": "m", "renewal": 0}, "turn ended and budget: x", "OK",
+                             progress="ledger worker_acked") is None)
+    check("V-MC-RENEW-UNIT-NO-PROGRESS-REFUSED",
+          "zero progress" in (gm.renewal_refusal({"mission_id": "m", "renewal": 0},
+                                                 "turn ended and budget: x", "OK", progress=None) or ""))
+
+    # 2026-09-28 (m-66ebaaa0324e -> 3 renewals, 48 workers, 0 transcripts): a mission none of
+    # whose workers ever ran halts terminally, saying so, and is never renewed.
+    hs = fresh_parked("m-zero")
+    rows = gm.supervise(now=LATE, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                        stop_runner=stop_run, pid_alive=gone)
+    zr = next((r for r in rows if r["mission_id"] == "m-zero"), {})
+    zrec = gm.load("m-zero")
+    check("V-MC-RENEW-ZERO-PROGRESS-NOT-RENEWED",
+          zrec["state"] == gm.HALTED and not successors("m-zero")
+          and "zero progress" in (zrec.get("reason") or "")
+          and "zero progress" in zr.get("renewal", ""), f"{zrec.get('reason')} | {zr}")
+    # control: the same parked shape, but its worker wrote a transcript -> it ran -> renews
+    hs = fresh_parked("m-tx")
+    tx = Path(os.environ["GSD_LONG_RUN_PROJECTS_DIR"]) / "C--proj"
+    tx.mkdir(parents=True, exist_ok=True)
+    (tx / "s-m-tx.jsonl").write_text('{"type":"user"}\n', encoding="utf-8")
+    gm.supervise(now=LATE, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    check("V-MC-RENEW-CONTROL-TRANSCRIPT-IS-PROGRESS", len(successors("m-tx")) == 1,
+          str(gm.load("m-tx").get("reason")))
 
     # T1 (2026-09-27): convergence outranks the budget. The worker whose turn finished the
     # milestone is, by construction, often the last one the budget allows; plan_next halts it

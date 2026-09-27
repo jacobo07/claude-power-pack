@@ -677,14 +677,17 @@ def ack_session(session_id: str, *, pid: int | None = None, proc_start: str | No
             return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=LAUNCHING,
                               event="worker_acked", now=now, state=RUNNING, pending=None,
                               failed_launches=0, iterations=rec.get("iterations", 0) + 1,
-                              worker=session_id,
+                              worker=session_id, last_progress_at=now,
                               owner={"session_id": session_id, "pid": pid,
                                      "proc_start": proc_start, "heartbeat_at": now,
                                      "epoch": rec["epoch"], "kind": "background"})
         owner = dict(rec.get("owner") or {})
         owner["heartbeat_at"] = now
+        # The worker's OWN hook ran: the one signal an adopted-but-parked worker cannot fake.
+        # Until 2026-09-28 nothing wrote last_progress_at after create (null on all 44 records).
         return transition(rec["mission_id"], expect_epoch=rec["epoch"],
-                          expect_state=rec["state"], event="heartbeat", now=now, owner=owner)
+                          expect_state=rec["state"], event="heartbeat", now=now, owner=owner,
+                          last_progress_at=now)
     except CasConflict:
         return None
 
@@ -1068,15 +1071,61 @@ def _needs_look(m: dict, now: float) -> bool:
 MAX_RENEWALS = 3   # budget renewals per lineage (spec vault/specs/gex44-mission-plane.md, A)
 
 
-def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None) -> str | None:
+_WORKER_OWN_EVENTS = {"worker_acked", "heartbeat", "handoff_requested", "handoff_asked",
+                      "handoff_already_asked"}
+ZERO_PROGRESS = ("zero progress: no worker of this mission ever acknowledged, heartbeated, "
+                 "handed off or wrote a transcript")
+
+
+def progress_evidence(rec: dict) -> str | None:
+    """Positive evidence that at least one worker of THIS mission actually ran, or None.
+
+    Every source is something only a running worker produces: its own SessionStart/heartbeat
+    (`last_progress_at`, `worker_acked`/`heartbeat`), its watchdog's hand-off request, or a
+    transcript under its session id. `worker_adopted` and `launched` are NOT evidence -- they are
+    the supervisor's and the host's words, and a worker parked before its first turn earns both
+    (m-66ebaaa0324e: 12 adoptions, 0 of the rest, on every mission of the lineage)."""
+    if rec.get("last_progress_at"):
+        return f"worker hook at {rec['last_progress_at']}"
+    mid = rec["mission_id"]
+    workers = {s for s in ((rec.get("owner") or {}).get("session_id"),
+                           (rec.get("previous_owner") or {}).get("session_id")) if s}
+    for e in lr.ledger_events():
+        if e.get("mission_id") != mid:
+            continue
+        if e.get("event") in _WORKER_OWN_EVENTS:
+            return f"ledger {e.get('event')} at {e.get('ts')}"
+        if e.get("worker"):
+            workers.add(e["worker"])
+    for sid in sorted(workers):
+        try:
+            if lr.find_transcript(sid):
+                return f"transcript of worker {sid}"
+        except Exception:  # noqa: BLE001 -- an unreadable projects dir is no evidence
+            continue
+    return None
+
+
+_ASK = object()
+
+
+def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None,
+                    progress=_ASK) -> str | None:
     """Why this budget-halted mission must NOT be renewed, or None when it may be.
-    Positive test: only a halt the supervisor made for budget, with GSD saying work remains."""
+    Positive test: only a halt the supervisor made for budget, with GSD saying work remains,
+    by a mission at least one of whose workers demonstrably ran (``progress``: the evidence
+    string, None for none; computed from the record when not supplied)."""
     if os.environ.get("CPP_MISSION_RENEW", "").lower() == "off":
         return "renewal disabled (CPP_MISSION_RENEW=off)"
     if "budget:" not in (halt_reason or ""):
         return f"halt was not for budget: {halt_reason}"
     if gsd_outcome != "OK":
         return f"GSD answered {gsd_outcome}, not work-remains"
+    if (progress_evidence(rec) if progress is _ASK else progress) is None:
+        # A mission whose workers never ran leaves the roadmap untouched, so GSD keeps saying
+        # "work remains" and a renewal meets the same wall with a fresh budget (2026-09-28:
+        # m-66ebaaa0324e renewed 3x, 48 workers, 0 transcripts).
+        return ZERO_PROGRESS
     if int(rec.get("renewal") or 0) >= MAX_RENEWALS:
         return f"renewal cap {MAX_RENEWALS} reached for lineage {rec.get('lineage_id') or rec['mission_id']}"
     return None
@@ -1179,12 +1228,21 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         reap(done, row)
                         row["action"] = "completed"
                         continue
+                halt_reason, progress = plan["reason"], None
+                if st is not None:
+                    # Judged before the halt is written, so the terminal record itself says why
+                    # it will not be renewed.
+                    progress = progress_evidence(rec)
+                    row["progress"] = progress
+                    if progress is None:
+                        halt_reason = f"{plan['reason']}; {ZERO_PROGRESS}"
                 halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                     event="mission_halted", now=now, state=HALTED, pending=None,
-                                    reason=plan["reason"])
+                                    reason=halt_reason)
                 reap(halted, row)  # a halt changes the record; stop the world to match it
                 if st is not None:
-                    why_not = renewal_refusal(halted, plan["reason"], st.get("outcome"))
+                    why_not = renewal_refusal(halted, plan["reason"], st.get("outcome"),
+                                              progress=progress)
                     if why_not:
                         row["renewal"] = f"not renewed: {why_not}"
                     else:

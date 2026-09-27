@@ -49,4 +49,17 @@ fix the first blocked worker parks the mission BLOCKED and the reason is read fr
   V-MC-BG-BLOCKED-NO-WAITING-RELAY inverted in place -> V-MC-BG-BLOCKED-NO-WAITING-IS-BLOCKED.
   RED pre-fix: 6 FAIL / MC_PASS=162/168 (5 new cases + control coupled to the red count, decoupled).
   GREEN post-fix: MC_PASS=168/168. Control V-MC-SUP-CONTROL-STOPPED-STILL-REPLACED green;
-  V-MC-BG-TURN-ENDED-RELAY (status idle) still relays.
+  V-MC-BG-TURN-ENDED-RELAY (status idle) still relays.- Commit defect 2: 1b27fbf.
+- DEFECT 3 fix: ack_session now stamps last_progress_at (ack + heartbeat); new progress_evidence()
+  = last_progress_at, or a ledger event only the worker itself emits (worker_acked, heartbeat,
+  handoff_requested/_asked/_already_asked), or a transcript of any worker the mission ever named
+  (owner, previous_owner, ledger `worker`). worker_adopted/launched are NOT evidence. A budget halt
+  with no evidence carries "; zero progress: ..." in its reason and renewal_refusal refuses it.
+  Real-data check of the predicate: every renewed-and-productive lineage in the live ledger has
+  worker_acked (e.g. m-5cfc29313ebd 47, m-dc815cfccbe3 24) or hand-off events (m-7f6d988e3c93);
+  the four io-ql missions and m-bba77d357eb4 have only worker_adopted and no transcript -> refused.
+  GREEN 172/172. RED by mutation (refusal line -> `if False`): 170/172, failing exactly
+  V-MC-RENEW-UNIT-NO-PROGRESS-REFUSED + V-MC-RENEW-ZERO-PROGRESS-NOT-RENEWED; restore sha256-verified.
+  Controls green: V-MC-RENEW-BUDGET-HALT-RENEWS, V-MC-RENEW-CONTROL-TRANSCRIPT-IS-PROGRESS.
+  Routing ROUTE_PASS=8/9, same pre-existing FAIL: live command (8F0382..) == main repo's dirty copy,
+  worktree HEAD copy differs (6CB5FF..) -- another session's uncommitted edit, not this branch.
