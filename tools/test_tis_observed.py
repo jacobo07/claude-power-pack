@@ -91,6 +91,9 @@ def main() -> int:
               f"bad_lines={sa.bad_lines}")
         check("V-TISOBS-FIRST-CALL", sa.first_call_context == 100002,
               f"first_call_context={sa.first_call_context}")
+        # m1 read 0 of its 100002-token prefix from cache; m2's read is not first.
+        check("V-TISOBS-FIRST-CALL-READ", sa.first_call_cache_read == 0,
+              f"first_call_cache_read={sa.first_call_cache_read} (m2's 100000 read must not leak in)")
         check("V-TISOBS-THINKING", sa.thinking_tokens == 4,
               f"thinking={sa.thinking_tokens} (dedupe must not multiply it)")
         check("V-TISOBS-SUBAGENT",
@@ -175,6 +178,17 @@ def main() -> int:
                   if c["session_id"] == "sessE"]
         check("V-TISOBS-ITER-MTIME-PRUNE", pruned == [],
               "file untouched for 30d is skipped under a 1d window")
+
+        shp = Path(td) / "shared"
+        shp.mkdir()
+        (shp / "s.jsonl").write_text("\n".join([
+            json.dumps({"type": "user", "entrypoint": "sdk-cli", "message": {"content": "x"}}),
+            line("f1", "q1", 0, 50, 50, 1),   # first call: 50 of 100 already cached
+            line("f2", "q2", 0, 0, 100, 1),
+        ]) + "\n", encoding="utf-8")
+        shared = T.summarize(T.scan([shp]))["startup_shared_share_median"]
+        check("V-TISOBS-SHARED-SHARE", shared == {"sdk-cli": 0.5},
+              f"{shared} (first call only, keyed by entrypoint)")
 
         prices = {"input": 4.0, "output": 20.0, "cache_write_5m": 5.0,
                   "cache_write_1h": 8.0, "cache_read": 0.2}

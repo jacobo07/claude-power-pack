@@ -52,6 +52,11 @@ class SessionUsage:
     # Context size of the first real call = startup payload, independent of
     # whether the cache was warm (input + cache_creation + cache_read).
     first_call_context: Optional[int] = None
+    # How much of that startup prefix was already cached by an EARLIER session.
+    # 2026-09-27 baseline: median 1.9% (sdk-cli) / 16.4% (cli) -- each session
+    # re-writes almost its whole prefix, and on sdk-cli that is 80% of spend.
+    first_call_cache_read: Optional[int] = None
+    entrypoint: Optional[str] = None
     max_call_context: int = 0
     models: dict = field(default_factory=dict)
     usage_lines: int = 0
@@ -195,6 +200,8 @@ def read_session(path: Path, include_subagents: bool = True) -> SessionUsage:
         ctx = _context_of(u)
         if s.first_call_context is None:
             s.first_call_context = ctx
+            s.first_call_cache_read = _int(u.get("cache_read_input_tokens"))
+            s.entrypoint = c.get("entrypoint")
         s.max_call_context = max(s.max_call_context, ctx)
         s.models[c["model"]] = s.models.get(c["model"], 0) + 1
     s.state = "MEASURED" if s.calls else "MEASURED_ZERO"
@@ -218,6 +225,15 @@ def scan(project_dirs: Iterable[Path], include_subagents: bool = True) -> list[S
     for d in project_dirs:
         for p in sorted(Path(d).glob("*.jsonl")):
             out.append(read_session(p, include_subagents))
+    return out
+
+
+def _shared_by_entrypoint(measured: list[SessionUsage]) -> dict:
+    out: dict = {}
+    for s in measured:
+        if s.first_call_context:
+            out.setdefault(s.entrypoint or "unknown", []).append(
+                (s.first_call_cache_read or 0) / s.first_call_context)
     return out
 
 
@@ -257,6 +273,12 @@ def summarize(sessions: list[SessionUsage]) -> dict:
             round(sum(s.first_call_context * s.calls for s in measured
                       if s.first_call_context) / main_ctx, 4)
             if main_ctx else None),
+        # Share of each session's startup prefix served by a cache an EARLIER
+        # session wrote, median per launch surface. Low = the prefix differs
+        # between sessions and is re-written every time.
+        "startup_shared_share_median": {
+            ep: round(statistics.median(v), 4)
+            for ep, v in _shared_by_entrypoint(measured).items()},
         "synthetic_skipped": sum(s.synthetic_skipped for s in sessions),
         "bad_lines": sum(s.bad_lines for s in sessions),
         "duplicate_usage_lines_collapsed": sum(
