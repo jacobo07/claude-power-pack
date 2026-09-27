@@ -70,11 +70,17 @@ def billable(agg: dict) -> int:
 
 
 def parse_session(fp: Path) -> dict | None:
-    """Sum message.usage across a transcript. None on unreadable file."""
+    """Sum message.usage across a transcript, one API call once. None on unreadable file.
+
+    The harness writes one line per content block and repeats the call's usage on
+    each; summing lines overcounted 2.5x (KobiiSports 04b41ed7, 2026-09-27: 814 lines,
+    332 M cache reads, for 326 calls and 132 M). A call is keyed (message.id,
+    requestId), last copy wins -- the tools/tis_observed.py contract, pinned by
+    tools/test_usage_dedup.py. `<synthetic>` harness notices are not API calls."""
     agg = _empty_agg()
-    turns = 0
     models: set[str] = set()
     last_ts = None
+    calls: dict = {}
     try:
         text = fp.read_text(encoding="utf-8", errors="replace")
     except OSError:
@@ -93,12 +99,17 @@ def parse_session(fp: Path) -> dict | None:
         msg = entry.get("message")
         if isinstance(msg, dict):
             usage = msg.get("usage")
-            if isinstance(usage, dict) and usage:
-                for k in USAGE_KEYS:
-                    agg[k] += usage.get(k, 0) or 0
-                turns += 1
+            if isinstance(usage, dict) and usage and msg.get("model") != "<synthetic>":
+                key = (msg.get("id"), entry.get("requestId"))
+                if key == (None, None):
+                    key = ("line", len(calls))  # no identity: count once as-is
+                calls[key] = usage
                 if msg.get("model"):
                     models.add(msg["model"])
+    for usage in calls.values():
+        for k in USAGE_KEYS:
+            agg[k] += usage.get(k, 0) or 0
+    turns = len(calls)
     try:
         mtime = fp.stat().st_mtime
     except OSError:

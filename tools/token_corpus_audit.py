@@ -93,6 +93,7 @@ def parse_turns(fp: Path) -> dict | None:
     turns: list[dict] = []
     read_counts: dict[str, int] = defaultdict(int)
     marker_hits = 0
+    by_call: dict = {}
     for line in text.split("\n"):
         line = line.strip()
         if not line:
@@ -128,16 +129,25 @@ def parse_turns(fp: Path) -> dict | None:
                 text_chars += len(content)
                 if _MARKER_RE.search(content):
                     marker_hits += 1
-        # usage turn
+        # usage turn -- one API call is written as one line PER CONTENT BLOCK, each
+        # repeating the call's usage. Usage is taken once per (message.id, requestId);
+        # content signals are accumulated across the call's lines, since a call's
+        # tool_use blocks sit on sibling lines. tools/test_usage_dedup.py pins this.
         if isinstance(msg, dict):
             usage = msg.get("usage")
-            if isinstance(usage, dict) and usage:
-                rec = {k: (usage.get(k, 0) or 0) for k in USAGE_KEYS}
+            if isinstance(usage, dict) and usage and msg.get("model") != "<synthetic>":
+                key = (msg.get("id"), entry.get("requestId"))
+                rec = by_call.get(key) if key != (None, None) else None
+                if rec is None:
+                    rec = {"text_chars": 0, "tool_names": []}
+                    turns.append(rec)
+                    if key != (None, None):
+                        by_call[key] = rec
+                rec.update({k: (usage.get(k, 0) or 0) for k in USAGE_KEYS})
                 rec["ts"] = _parse_ts(entry.get("timestamp"))
-                rec["text_chars"] = text_chars
-                rec["tool_names"] = tool_names
+                rec["text_chars"] += text_chars
+                rec["tool_names"].extend(tool_names)
                 rec["model"] = msg.get("model") or ""
-                turns.append(rec)
     if not turns:
         return None
     try:
