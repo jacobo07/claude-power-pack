@@ -174,6 +174,58 @@ def main():
                   f"expected pct in [80,90] & max_single=170000 & WARN, "
                   f"got state={state}")
 
+        # ---- V-TCO-MEASURED-*: transcript usage is the source when the session is known ----
+        # 2026-09-27: the TIS log held no model usage (JIT prompt-size estimates) under a
+        # never-rotated sidecar id. Driven under a synthetic home so the real transcript
+        # of whoever runs this suite is never read.
+        import json as _json, os as _os
+        fake_home = tmp / "home"
+        tsid = "0123abcd-0000-4000-8000-00000000abcd"
+        proj = fake_home / ".claude" / "projects" / "p"
+        proj.mkdir(parents=True)
+
+        def _asst(mid, ctx, out=10, ts="2026-09-27T10:00:00Z"):
+            return _json.dumps({"type": "assistant", "timestamp": ts, "message": {
+                "id": mid, "usage": {"input_tokens": 1, "cache_creation_input_tokens": 0,
+                                     "cache_read_input_tokens": ctx - 1, "output_tokens": out}}})
+        (proj / f"{tsid}.jsonl").write_text("\n".join([
+            _asst("m1", 189_000), _asst("m1", 189_000),  # same message twice: count once
+            _asst("m2", 250_000), _asst("m3", 300_000, ts="2026-09-27T10:05:00Z")]),
+            encoding="utf-8")
+        saved = {k: _os.environ.get(k) for k in ("USERPROFILE", "HOME", "CPP_CONTEXT_WINDOW")}
+        _os.environ["USERPROFILE"] = _os.environ["HOME"] = str(fake_home)
+        _os.environ.pop("CPP_CONTEXT_WINDOW", None)
+        try:
+            state = gate.check_compact_gate(tsid)
+            if (state.get("source", "").startswith("transcript") and state["session_calls"] == 3
+                    and state["context_first_call"] == 189_000 and state["context_last_call"] == 300_000):
+                _ok("V-TCO-MEASURED-SOURCE-DEDUP", f"calls=3 last={state['context_last_call']}")
+            else:
+                _fail("V-TCO-MEASURED-SOURCE-DEDUP", f"state={state}")
+            # no settings.json in the fake home: the 1 M window is inferred from a >200 k call
+            if state.get("context_window") == 1_000_000 and state["session_pct_estimate"] == 30:
+                _ok("V-TCO-MEASURED-WINDOW-FROM-EVIDENCE", "300k / 1M = 30%")
+            else:
+                _fail("V-TCO-MEASURED-WINDOW-FROM-EVIDENCE", f"state={state}")
+            _os.environ["CPP_CONTEXT_WINDOW"] = "400000"
+            state = gate.check_compact_gate(tsid)
+            if state["session_pct_estimate"] == 75 and state["should_compact"]:
+                _ok("V-TCO-MEASURED-OVERRIDE-WARNS", "300k / 400k = 75% -> WARN")
+            else:
+                _fail("V-TCO-MEASURED-OVERRIDE-WARNS", f"state={state}")
+            # an 8-char TIS sidecar id names no transcript: the proxy path answers, labelled
+            state = gate.check_compact_gate(sid)
+            if state.get("source", "").startswith("tis-proxy"):
+                _ok("V-TCO-SHORT-ID-FALLS-BACK-LABELLED", state["source"])
+            else:
+                _fail("V-TCO-SHORT-ID-FALLS-BACK-LABELLED", f"source={state.get('source')}")
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    _os.environ.pop(k, None)
+                else:
+                    _os.environ[k] = v
+
         # ---- V-ROUTE-SONNET: subagent_explore -> sonnet ----
         rec = gate.load_routing("subagent_explore")
         if "sonnet" in rec:
@@ -211,23 +263,33 @@ def main():
                   f"rc={proj.returncode} stdout-head={proj.stdout[:120]!r}")
 
         # ---- V-BASELINE-INTACT: pytest tests/ still passes ----
-        pyt = subprocess.run(
-            [sys.executable, "-m", "pytest", "tests/", "-q", "--tb=line"],
-            capture_output=True, text=True, cwd=str(ROOT), timeout=180,
-        )
-        last = pyt.stdout.strip().splitlines()[-1] if pyt.stdout.strip() else ""
-        if pyt.returncode == 0 and "passed" in last:
-            _ok("V-BASELINE-INTACT", f"rc=0 last='{last}'")
-        else:
+        # A timeout is the INSTRUMENT failing, not a verdict on the gate: measured 2026-09-27 the
+        # whole-suite run took 148.9 s once and overran 180 s twice on a loaded host, and the
+        # uncaught TimeoutExpired then hid every result above it. Still red, but named.
+        try:
+            pyt = subprocess.run(
+                [sys.executable, "-m", "pytest", "tests/", "-q", "--tb=line"],
+                capture_output=True, text=True, cwd=str(ROOT), timeout=180,
+            )
+        except subprocess.TimeoutExpired:
+            pyt = None
+        if pyt is None:
             _fail("V-BASELINE-INTACT",
-                  f"rc={pyt.returncode} last='{last}'")
+                  "UNJUDGED: pytest tests/ exceeded 180 s -- host load, not a verdict on TCO")
+        else:
+            last = pyt.stdout.strip().splitlines()[-1] if pyt.stdout.strip() else ""
+            if pyt.returncode == 0 and "passed" in last:
+                _ok("V-BASELINE-INTACT", f"rc=0 last='{last}'")
+            else:
+                _fail("V-BASELINE-INTACT",
+                      f"rc={pyt.returncode} last='{last}'")
 
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
     total = passes + fails
     print()
-    print(f"TCO_PASS={passes}/{total}  threshold=10/10")
+    print(f"TCO_PASS={passes}/{total}  threshold={total}/{total}")
     return 0 if fails == 0 else 1
 
 

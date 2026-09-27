@@ -151,6 +151,100 @@ def _read_session_entries(session_id: str | None = None) -> list[dict]:
         return []
 
 
+def _transcript_calls(session_id: str | None) -> list[dict]:
+    """MEASURED per-call usage from the session's own transcript, deduplicated by message id.
+
+    Measured 2026-09-27: the TIS log holds no model usage at all -- only the JIT hook's
+    chars/4 estimate of the prompt it saw -- and its session id is a sidecar never rotated,
+    so the TIS path reported 30 M "session" tokens over 124 days while this session's real
+    context was 552 k. The transcript carries the API's own usage for every call."""
+    import os
+    sid = session_id or os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+    if len(sid) < 32:          # a TIS sidecar id (8 chars) names no transcript
+        return []
+    hits = list((Path.home() / ".claude" / "projects").glob(f"*/{sid}.jsonl"))
+    if not hits:
+        return []
+    seen, calls = set(), []
+    try:
+        with open(hits[0], encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                try:
+                    rec = json.loads(line)
+                except ValueError:
+                    continue
+                msg = rec.get("message") or {}
+                u = msg.get("usage")
+                if rec.get("type") != "assistant" or not u or msg.get("id") in seen:
+                    continue
+                seen.add(msg.get("id"))
+                cr = int(u.get("cache_read_input_tokens") or 0)
+                cw = int(u.get("cache_creation_input_tokens") or 0)
+                inp = int(u.get("input_tokens") or 0)
+                calls.append({"ctx": cr + cw + inp, "cache_read": cr, "cache_write": cw,
+                              "input": inp, "output": int(u.get("output_tokens") or 0),
+                              "ts": rec.get("timestamp") or ""})
+    except OSError:
+        return []
+    return calls
+
+
+def _context_window(calls: list[dict]) -> int:
+    """The window the session runs in, from evidence: an explicit override, the configured
+    [1m] model, or an observed call larger than 200 k (which only a 1 M window admits)."""
+    import os
+    override = os.environ.get("CPP_CONTEXT_WINDOW", "")
+    if override.isdigit():
+        return int(override)
+    try:
+        model = json.loads((Path.home() / ".claude" / "settings.json").read_text(
+            encoding="utf-8-sig")).get("model", "")
+    except (OSError, ValueError):
+        model = ""
+    if "[1m]" in str(model) or any(c["ctx"] > MAX_CONTEXT_TOKENS for c in calls):
+        return 1_000_000
+    return MAX_CONTEXT_TOKENS
+
+
+def _measured_state(calls: list[dict]) -> dict:
+    window = _context_window(calls)
+    last = calls[-1]["ctx"]
+    pct = max(0, min(100, int(last * 100 / window)))
+    ts = []
+    for c in calls:
+        try:
+            ts.append(datetime.fromisoformat(str(c["ts"]).replace("Z", "+00:00")))
+        except ValueError:
+            continue
+    duration_s = int((max(ts) - min(ts)).total_seconds()) if len(ts) >= 2 else 0
+    totals = {k: sum(c[k] for c in calls) for k in ("cache_read", "cache_write", "input", "output")}
+    warns = []
+    if duration_s > SESSION_DURATION_WARN_S:
+        warns.append(f"session-duration {duration_s}s > {SESSION_DURATION_WARN_S}s "
+                     f"(loop hygiene -- /compact every 2h)")
+    if pct >= WARN_PCT:
+        rec, should = (f"WARN: contexto medido {pct}% >= {WARN_PCT}% -- ejecuta /compact antes "
+                       f"de spawnar subagents o continuar loops"), True
+    else:
+        rec, should = f"OK contexto medido {pct}% < {WARN_PCT}% -- continuar", False
+    return {
+        "source": "transcript-usage (measured)",
+        "session_pct_estimate": pct,
+        "context_window": window,
+        "context_last_call": last,
+        "context_first_call": calls[0]["ctx"],
+        "session_calls": len(calls),
+        "session_tokens_total": sum(totals.values()),
+        "token_mix": totals,
+        "session_duration_s": duration_s,
+        "recommendation": rec,
+        "should_compact": should,
+        "governor_warnings": warns,
+        "warn_threshold_pct": WARN_PCT,
+        "session_duration_warn_s": SESSION_DURATION_WARN_S,
+    }
+
+
 def _compute_context_proxy(entries: list[dict]) -> int:
     """Proxy for *current* context window size, not cumulative session
     history. Uses the maximum input_tokens of the last 3 calls, falling
@@ -218,6 +312,9 @@ def check_compact_gate(session_id: str | None = None) -> dict:
     """Return state dict: pct, recommendation, should_compact,
     governor warnings, raw token total, duration seconds. One log
     read shared across all three derived metrics."""
+    calls = _transcript_calls(session_id)
+    if calls:
+        return _measured_state(calls)
     entries = _read_session_entries(session_id)
     # total: cumulative session tokens (governor metric, NOT context)
     total = sum(int(e.get("input_tokens", 0) or 0) +
@@ -256,6 +353,7 @@ def check_compact_gate(session_id: str | None = None) -> dict:
     inputs_only = [int(e.get("input_tokens", 0) or 0) for e in entries]
     max_single_input = max(inputs_only) if inputs_only else 0
     return {
+        "source": "tis-proxy (JIT prompt-size estimate; NOT model context)",
         "session_pct_estimate": pct,
         "session_tokens_total": total,
         "session_calls": len(entries),
@@ -272,8 +370,15 @@ def check_compact_gate(session_id: str | None = None) -> dict:
 
 
 def _print_human(state: dict) -> None:
-    print(f"context-pct (estimate): {state['session_pct_estimate']}%  "
+    print(f"source:                 {state.get('source', 'unknown')}")
+    print(f"context-pct:            {state['session_pct_estimate']}%  "
           f"[warn>=70%]")
+    if "context_window" in state:
+        mix = state["token_mix"]
+        print(f"context:                last={state['context_last_call']:,} "
+              f"first={state['context_first_call']:,} window={state['context_window']:,}")
+        print(f"token mix:              cache_read={mix['cache_read']:,} "
+              f"cache_write={mix['cache_write']:,} input={mix['input']:,} output={mix['output']:,}")
     print(f"session-tokens:         {state['session_tokens_total']:,}")
     print(f"session-duration:       {state['session_duration_s']}s")
     print(f"recommendation:         {state['recommendation']}")

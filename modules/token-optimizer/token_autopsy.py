@@ -30,22 +30,36 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Pricing per million tokens (USD)
-PRICING = {
-    "claude-opus-4-6": {"input": 15.0, "output": 75.0},
-    "claude-sonnet-4-6": {"input": 3.0, "output": 15.0},
-    "claude-haiku-4-5": {"input": 0.80, "output": 4.0},
-    # Fallback for unknown models
-    "default": {"input": 3.0, "output": 15.0},
-}
+def _load_pricing() -> tuple[dict, str]:
+    """USD per million tokens from the estate's ONE pricing source (tools/pricing_source.py ->
+    newest vault/pricing/anthropic_*.json). Replaced 2026-09-27: a hardcoded table here priced
+    Opus 4.6 at $15/$75 (real $5/$25) and had no row for the models in use. Missing or
+    unreadable -> empty table, so every model reports as unpriced rather than guessed."""
+    tools_dir = Path(__file__).resolve().parents[2] / "tools"
+    try:
+        sys.path.insert(0, str(tools_dir))
+        import pricing_source
+        path = pricing_source.pricing_path_or_missing()
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+    except Exception as exc:  # reported, not swallowed: the report says it is unpriced
+        return {}, f"unpriced ({type(exc).__name__}: {exc})"
+    table = {m: {"input": p["input"], "output": p["output"],
+                 "cache_write": p["cache_write_5m"], "cache_read": p["cache_read"]}
+             for m, p in (data.get("models") or {}).items()}
+    return table, f"{path.name} (fetched {data.get('fetched_iso', '?')})"
 
 
-def get_pricing(model_id: str) -> dict:
-    """Get pricing for a model, falling back to default."""
-    for key in PRICING:
+PRICING, PRICING_SOURCE = _load_pricing()
+
+
+def get_pricing(model_id: str) -> dict | None:
+    """Prices for a model, or None when it is not in the table -- an unpriced model is
+    reported as unpriced, never billed at some other model's rate. Longest key first, so
+    `claude-opus-5-5` is not matched by `claude-opus-5`."""
+    for key in sorted(PRICING, key=len, reverse=True):
         if key in (model_id or ""):
             return PRICING[key]
-    return PRICING["default"]
+    return None
 
 
 def find_project_dir() -> Path | None:
@@ -76,8 +90,25 @@ def find_session_logs(project_dir: Path, session_filter: str = "latest") -> list
 
     # Sort by modification time, newest first
     all_jsonl.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    # One session per id. A session with extra working directories is recorded under each
+    # project folder (measured 2026-09-27: the same 5.8 MB transcript under two folders),
+    # and counting both doubled every figure.
+    unique, seen_stems = [], set()
+    for p in all_jsonl:
+        if p.stem not in seen_stems:
+            seen_stems.add(p.stem)
+            unique.append(p)
+    all_jsonl = unique
 
     if session_filter == "latest":
+        # "latest" means THIS session when it is known. Newest-by-mtime is whichever pane
+        # wrote last: measured 2026-09-27 it analysed another pane's transcript.
+        own = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
+        mine = [f for f in all_jsonl if own and f.stem == own]
+        if mine:
+            return mine
+        logger.warning("CLAUDE_CODE_SESSION_ID unset or unmatched; using the newest transcript "
+                       "on disk, which may belong to another session")
         return all_jsonl[:1]
     elif session_filter == "all":
         # All sessions from today
@@ -102,6 +133,7 @@ def parse_session(jsonl_path: Path) -> dict:
         "cache_read_input_tokens": 0,
     }
     models_used = set()
+    seen_ids: set = set()
     first_ts = None
     last_ts = None
 
@@ -131,7 +163,13 @@ def parse_session(jsonl_path: Path) -> dict:
         message = entry.get("message", {})
         if isinstance(message, dict):
             usage = message.get("usage", {})
-            if usage:
+            # One API response is written as several transcript lines (one per content
+            # block), each repeating the same usage. Count each message id once: without
+            # this the 2026-09-27 run reported 485 M cache reads for a session that had 80 M.
+            mid = message.get("id")
+            if usage and not (mid and mid in seen_ids):
+                if mid:
+                    seen_ids.add(mid)
                 for key in total_usage:
                     total_usage[key] += usage.get(key, 0)
             model = message.get("model", "")
@@ -250,26 +288,20 @@ def detect_waste(tool_calls: list, file_reads: dict) -> list[str]:
 
 
 def estimate_cost(usage: dict, model: str) -> dict:
-    """Calculate cost estimates for different model tiers."""
-    total_input = usage["input_tokens"] + usage["cache_creation_input_tokens"]
-    total_output = usage["output_tokens"]
-    cache_reads = usage["cache_read_input_tokens"]
-
-    costs = {}
-    for model_key, prices in PRICING.items():
-        if model_key == "default":
-            continue
-        input_cost = (total_input / 1_000_000) * prices["input"]
-        output_cost = (total_output / 1_000_000) * prices["output"]
-        # Cache reads are typically 90% cheaper
-        cache_savings = (cache_reads / 1_000_000) * prices["input"] * 0.9
-        costs[model_key] = {
-            "input": input_cost,
-            "output": output_cost,
-            "cache_savings": cache_savings,
-            "total": input_cost + output_cost - cache_savings,
-        }
-    return costs
+    """Cost of what was billed, at the session model's own rates: every token class is a
+    charge. The previous version SUBTRACTED 90% of cache reads priced at the input rate --
+    which produced -$746 on a real session, because cache reads dominate a long one."""
+    prices = get_pricing(model)
+    if prices is None:
+        return {}
+    per_m = lambda n, rate: (n / 1_000_000) * rate
+    parts = {
+        "input": per_m(usage["input_tokens"], prices["input"]),
+        "cache_write": per_m(usage["cache_creation_input_tokens"], prices["cache_write"]),
+        "cache_read": per_m(usage["cache_read_input_tokens"], prices["cache_read"]),
+        "output": per_m(usage["output_tokens"], prices["output"]),
+    }
+    return {model: {**parts, "total": sum(parts.values())}}
 
 
 def generate_report(sessions: list[dict], output_path: Path, top_n: int = 10) -> str:
@@ -298,11 +330,14 @@ def generate_report(sessions: list[dict], output_path: Path, top_n: int = 10) ->
             if last_ts is None or session["last_ts"] > last_ts:
                 last_ts = session["last_ts"]
 
-    total_tokens = total_usage["input_tokens"] + total_usage["output_tokens"]
+    # Every class the API billed. Input+output alone reported 124,927 on a session that re-read
+    # 56.8 M cached tokens: the dominant cost of a long session was invisible in the headline.
+    total_tokens = sum(total_usage.values())
     by_tool = aggregate_by_tool(all_tool_calls)
     file_reads = aggregate_by_file(all_tool_calls)
     waste_warnings = detect_waste(all_tool_calls, file_reads)
-    primary_model = next(iter(all_models), "unknown")
+    real_models = sorted(m for m in all_models if m and not m.startswith("<"))
+    primary_model = real_models[0] if real_models else "unknown"
     costs = estimate_cost(total_usage, primary_model)
 
     # Format timestamps
@@ -364,17 +399,15 @@ def generate_report(sessions: list[dict], output_path: Path, top_n: int = 10) ->
     # Cost estimate
     lines.append("## Cost Estimate")
     lines.append("")
-    lines.append("| Model | Input | Output | Cache Savings | Total |")
-    lines.append("|-------|-------|--------|--------------|-------|")
+    lines.append(f"Prices: {PRICING_SOURCE}. List price, first-party API; a subscription is not billed this way.")
+    lines.append("")
+    if not costs:
+        lines.append(f"**Unpriced:** no price for `{primary_model}` in the pricing source.")
     for model_name, cost_data in costs.items():
-        short_name = model_name.replace("claude-", "").replace("-", " ").title()
-        lines.append(
-            f"| {short_name} "
-            f"| ${cost_data['input']:.4f} "
-            f"| ${cost_data['output']:.4f} "
-            f"| -${cost_data['cache_savings']:.4f} "
-            f"| ${cost_data['total']:.4f} |"
-        )
+        lines.append(f"| {model_name} | USD |")
+        lines.append("|---|---|")
+        for part in ("cache_read", "cache_write", "input", "output", "total"):
+            lines.append(f"| {part} | ${cost_data[part]:.2f} |")
     lines.append("")
 
     # Recommendations
