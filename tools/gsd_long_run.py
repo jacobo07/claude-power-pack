@@ -257,8 +257,11 @@ def norm_dir(path) -> str:
 
 
 # --------------------------------------------------------------------------- ledger
-def ledger_append(session_id: str, event: str, **fields) -> None:
-    """Append one event. Never raises: a ledger write must not break the loop it records."""
+def ledger_append(session_id: str, event: str, **fields) -> bool:
+    """Append one event; True when written. Never raises: a ledger write must not break the
+    loop it records. It is not SILENT either (2026-09-27, T4): a failure says so on stderr --
+    the sweep captures its stderr into its log -- and mission transitions carry a `seq`, so a
+    row that never arrived is a detectable gap (gsd_mission.history_gaps), not an absence."""
     try:
         path = ledger_path()
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -266,8 +269,14 @@ def ledger_append(session_id: str, event: str, **fields) -> None:
         row.update(fields)
         with open(path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
-    except Exception:
-        pass
+        return True
+    except Exception as exc:  # noqa: BLE001 -- reported, never raised
+        try:
+            print(f"LEDGER_WRITE_FAILED event={event} session={session_id} "
+                  f"{type(exc).__name__}: {exc}", file=sys.stderr)
+        except Exception:  # noqa: BLE001 -- stderr itself gone: nothing left to tell
+            pass
+        return False
 
 
 def ledger_events(session_id: str | None = None) -> list[dict]:

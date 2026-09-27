@@ -182,6 +182,39 @@ def main() -> int:
     with gm._Lock(lpath, timeout_s=3.0):
         check("V-MC-LOCK-CONTROL-FREE-AFTER-CLEAN-EXIT", time.time() - t0 < 2.0)
 
+    # T4 (2026-09-27): history has no silent holes. ledger_append swallowed every failure, and
+    # the record is written before its ledger row, so a lost row was indistinguishable from an
+    # event that never happened.
+    import contextlib
+    import io
+    gm.create(TMP, "/gsd-autonomous", mission_id="m-hist", now=NOW)
+    for i in range(3):
+        r_ = gm.load("m-hist")
+        gm.transition("m-hist", expect_epoch=r_["epoch"], expect_state=r_["state"], event=f"h{i}",
+                      now=NOW)
+    h = gm.history_gaps(gm.load("m-hist"))
+    check("V-MC-HISTORY-CONTIGUOUS", h["judged"] and h["record_seq"] == 3 and h["missing"] == [], str(h))
+    real_lp = gm.lr.ledger_path
+    err = io.StringIO()
+    try:
+        gm.lr.ledger_path = lambda: Path(TMP)   # a directory: every append fails
+        with contextlib.redirect_stderr(err):
+            r_ = gm.load("m-hist")
+            after = gm.transition("m-hist", expect_epoch=r_["epoch"], expect_state=r_["state"],
+                                  event="lost", now=NOW)
+    finally:
+        gm.lr.ledger_path = real_lp
+    check("V-MC-HISTORY-FAILED-APPEND-REPORTED",
+          after["seq"] == 4 and "LEDGER_WRITE_FAILED event=lost" in err.getvalue(),
+          err.getvalue()[:160])
+    r_ = gm.load("m-hist")
+    gm.transition("m-hist", expect_epoch=r_["epoch"], expect_state=r_["state"], event="h5", now=NOW)
+    h = gm.history_gaps(gm.load("m-hist"))
+    check("V-MC-HISTORY-GAP-NAMED", h["missing"] == [4] and h["record_seq"] == 5, str(h))
+    check("V-MC-HISTORY-PRE-T4-UNJUDGED",
+          gm.history_gaps({"mission_id": "m-old", "state": gm.HALTED})["judged"] is False)
+    check("V-MC-LEDGER-APPEND-RETURNS-TRUE-CONTROL", gm.lr.ledger_append("m-hist", "ctl") is True)
+
     # --- liveness: DEAD only on positive evidence -----------------------------------------
     owner = {"session_id": "s-1", "pid": 4242, "proc_start": "111"}
     host_live = [{"sessionId": "s-1", "status": "busy", "state": "working"}]

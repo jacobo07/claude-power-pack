@@ -208,7 +208,7 @@ def create(cwd: str, resume_command: str, *, mission_id: str | None = None,
             "resume_command": resume_command, "workstream": workstream,
             "mission_terms": list(mission_terms or []),
             "max_cycles": max_cycles, "max_hours": max_hours,
-            "state": PREPARED, "epoch": 0, "owner": None, "pending": None,
+            "state": PREPARED, "epoch": 0, "seq": 0, "owner": None, "pending": None,
             "iterations": 0, "failed_launches": 0, "note": "",
             "created_at": now, "updated_at": now, "last_progress_at": None,
             # How each worker is launched. None -> the host's own defaults for that setting.
@@ -249,11 +249,30 @@ def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
             raise MissionError(f"unknown state {new_state!r}")
         rec.update(changes)
         rec["updated_at"] = now
+        # Every committed transition has a number, so the ledger's copy of the history can be
+        # checked for holes against the record (history_gaps). A record with no seq predates T4.
+        rec["seq"] = int(rec.get("seq") or 0) + 1
         _write(path, rec)
     extra = {k: v for k, v in (("reason", changes.get("reason")), ("worker", worker)) if v}
     lr.ledger_append(mission_id, event, mission_id=mission_id, epoch=rec["epoch"],
-                     state=rec["state"], **extra)
+                     state=rec["state"], seq=rec["seq"], **extra)
     return rec
+
+
+def history_gaps(rec: dict, events: list[dict] | None = None) -> dict:
+    """Does the ledger hold a row for every transition the record has committed?
+
+    Numbering starts at 1 with the first transition after T4, for new and older records alike;
+    an older record's earlier history carries no numbers and is unjudged, not missing."""
+    events = lr.ledger_events(rec["mission_id"]) if events is None else events
+    seen = sorted({int(e["seq"]) for e in events
+                   if e.get("mission_id") == rec["mission_id"] and isinstance(e.get("seq"), int)})
+    top = int(rec.get("seq") or 0)
+    if not top:
+        return {"judged": False, "reason": "no numbered transition yet (T4)", "missing": []}
+    missing = [s for s in range(1, top + 1) if s not in set(seen)]
+    return {"judged": True, "record_seq": top, "ledger_max_seq": seen[-1] if seen else None,
+            "missing": missing}
 
 
 def _scan() -> tuple[list[dict], list[dict]]:
@@ -1496,6 +1515,11 @@ def _cli(argv=None) -> int:
                      "iterations": m.get("iterations"), "owner": (m.get("owner") or {}).get("session_id"),
                      "liveness": v_, "evidence": why, "pending": m.get("pending"),
                      "plan": plan_next(m, time.time(), sessions)})
+    events = lr.ledger_events()   # once, not per mission (~1 MB on this host)
+    for row in rows:
+        m = next((x for x in missions if x["mission_id"] == row["mission_id"]), None)
+        if m is not None:
+            row["history"] = history_gaps(m, events)
     print(json.dumps(rows, indent=2))
     return 0
 
