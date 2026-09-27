@@ -52,7 +52,7 @@ as `claude --bg`. From then on nothing needs the pane that armed it:
 | wall (40 % used) | judged MID-TURN on every tool call (`hooks/mission_wall.js`, PostToolUse) and again at Stop: finish + commit the step, end with `HANDOFF NOTE:` | `mission-wall-<sid>-e<N>.flag`, ledger `handoff_asked` |
 | relay | sweep (every 5 min, out of band): GSD still has work → stop the worker, **wait for its pid**, launch the next | ledger `launch_claimed` / `launched` |
 | rehydration | the supervisor renders the card at relay time (≤ 8 KB: reconcile-first, HEAD, dirty paths, the predecessor's note labelled as a claim) and passes it with `--append-system-prompt` — no hook in between | mission record `card` |
-| end | GSD `ALL_COMPLETE` → `COMPLETED`; budget → `HALTED`; permission prompt → `BLOCKED` (surfaced, never replaced) | ledger |
+| end | GSD `ALL_COMPLETE` → `COMPLETED`, **also when it lands on the last budgeted turn** (GSD is asked before any budget halt); budget → `HALTED`; **3 consecutive epochs with no commit or work-tree change → `HALTED no_progress`, never renewed**; permission prompt → `BLOCKED` (surfaced, never replaced) | ledger |
 
 A crashed **busy** worker is restarted by the host itself (measured) and is never replaced
 by the mission — replacing it put two writers on the same work. The mission replaces only a
@@ -88,7 +88,14 @@ reason names what holds it.
 
 Task `PP-GsdLongRun-Sweep` (wscript + `tools/hidden_launch.vbs`, no window) runs
 `tools/gsd_long_run_sweep.ps1`, which supervises every mission. Execution limit: **15 minutes**,
-`MultipleInstances IgnoreNew`. One relay pass can spend ~90 s asking the host, up to 240 s
+`MultipleInstances IgnoreNew`. The task limit kills wscript, never the python it started, so the
+script enforces its own pass contract (2026-09-28): **one pass at a time** (a lease the OS drops
+if the pass dies; an overlapping pass records `skipped`), missions **first** then the retired v2
+marker stage, each stage **bounded** (600 s / 240 s) with its whole process tree killed on the
+deadline, and a heartbeat on **every** pass — `~/.claude/state/gsd-sweep-heartbeat.json`
+(`ran`/`skipped`/`running`, per-stage rc, seconds, timed_out). A heartbeat older than ~10 min
+means the sweep is not running; the log alone cannot tell you that, it records only passes that
+acted. Gate: `python tools/test_gsd_sweep_pass.py` (V-SWEEP-*). One relay pass can spend ~90 s asking the host, up to 240 s
 asking GSD (measured 67.5 s at 1.4 GB free; `SUPERVISE_GSD_TIMEOUT_S`), up to 90 s waiting for
 the predecessor's pid and up to 180 s launching. When (re)registering:
 `$t=Get-ScheduledTask -TaskName PP-GsdLongRun-Sweep; $t.Settings.ExecutionTimeLimit='PT15M'; Set-ScheduledTask -InputObject $t`.
