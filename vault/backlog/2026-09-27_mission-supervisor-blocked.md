@@ -62,4 +62,11 @@ fix the first blocked worker parks the mission BLOCKED and the reason is read fr
   V-MC-RENEW-UNIT-NO-PROGRESS-REFUSED + V-MC-RENEW-ZERO-PROGRESS-NOT-RENEWED; restore sha256-verified.
   Controls green: V-MC-RENEW-BUDGET-HALT-RENEWS, V-MC-RENEW-CONTROL-TRANSCRIPT-IS-PROGRESS.
   Routing ROUTE_PASS=8/9, same pre-existing FAIL: live command (8F0382..) == main repo's dirty copy,
-  worktree HEAD copy differs (6CB5FF..) -- another session's uncommitted edit, not this branch.
+  worktree HEAD copy differs (6CB5FF..) -- another session's uncommitted edit, not this branch.- Commit defect 3: 216e39e.
+- DEFECT 1 (re-scoped per F1-F3, orchestrator 2026-09-27 23:35): NO trust check. Instead the
+  adopt pass that first sees the launched worker already `blocked` (or with waitingFor) parks the
+  mission BLOCKED on that same pass, reason = host state + waitingFor + the job file's `needs`
+  (read while it still holds them). RED by mutation (`if False`): MC_PASS=171/173, failing
+  V-MC-ADOPT-BLOCKED-SURFACED-FIRST-PASS (+ V-MC-WORKDIR-FOLLOWS-WORKTREE, a git-timing flake
+  unrelated to the mutated line: it passed in every other run). GREEN 173/173. Control
+  V-MC-ADOPT-RUNNING (working row -> RUNNING) green.

@@ -824,6 +824,26 @@ def main() -> int:
     check("V-MC-ADOPT-LATE-ACK-HEARTBEATS", gm.load("m-ad")["iterations"] == before_iter
           and gm.load("m-ad")["state"] == gm.RUNNING)
 
+    # 2026-09-28 (m-66ebaaa0324e): the launched worker is listed but already blocked before its
+    # first turn. The FIRST pass that sees it parks the mission BLOCKED with the host's reason.
+    gm.create(TMP, "/gsd-autonomous", mission_id="m-adblk", now=NOW)
+    gm.transition("m-adblk", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                  state=gm.LAUNCHING, epoch=1,
+                  pending={"kind": "worker_start", "bg_id": "b10cb10c", "deadline": NOW + 300})
+    jb = Path(os.environ["CPP_CLAUDE_JOBS_DIR"]) / "b10cb10c"
+    jb.mkdir(parents=True, exist_ok=True)
+    (jb / "state.json").write_text(json.dumps({"state": "blocked", "needs": "approve MCP servers"}),
+                                   encoding="utf-8")
+    blocked_listed = [{"id": "b10cb10c", "sessionId": "b10cb10c-1111-2222", "kind": "background",
+                       "state": "blocked"}]
+    n_l = len(launches)
+    rows = gm.supervise(now=NOW, sessions=blocked_listed, gsd_status=gsd("OK"), runner=launch_run,
+                        stop_runner=stop_run, pid_alive=alive)
+    ab = gm.load("m-adblk")
+    check("V-MC-ADOPT-BLOCKED-SURFACED-FIRST-PASS",
+          ab["state"] == gm.BLOCKED and "approve MCP servers" in (ab.get("reason") or "")
+          and len(launches) == n_l, f"{ab['state']} {ab.get('reason')} {rows}")
+
     # --- orphans: the W8 contamination, replayed -------------------------------------------
     for p in Path(TMP).glob("gsd-mission-*.json"):
         p.unlink()

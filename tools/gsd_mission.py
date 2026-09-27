@@ -1256,7 +1256,20 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                                event="mission_blocked", now=now, state=BLOCKED,
                                reason=reason)
             elif act == "adopt":
-                adopt_launched(rec, launched_row(rec.get("pending"), sessions), now=now)
+                lrow = launched_row(rec.get("pending"), sessions)
+                new = adopt_launched(rec, lrow, now=now)
+                if lrow.get("state") == "blocked" or lrow.get("waitingFor"):
+                    # The worker exists and is already waiting on something before its first
+                    # turn (2026-09-28: every m-66ebaaa0324e worker, 0 transcripts). Surface it
+                    # on THIS pass, in the host's words, while its job file still holds them.
+                    needs = host_job_needs(lrow.get("sessionId") or lrow.get("id"))
+                    reason = (f"launched worker blocked before its first turn: host state "
+                              f"{lrow.get('state')}"
+                              + (f"; waiting for {lrow['waitingFor']}" if lrow.get("waitingFor") else "")
+                              + (f"; host needs: {needs}" if needs else ""))
+                    transition(mid, expect_epoch=new["epoch"], expect_state=RUNNING,
+                               event="mission_blocked", now=now, state=BLOCKED, reason=reason)
+                    row["action"], row["reason"] = "adopted_blocked", reason
             elif act == "unblock":
                 transition(mid, expect_epoch=rec["epoch"], expect_state=BLOCKED,
                            event="mission_unblocked", now=now, state=RUNNING,
