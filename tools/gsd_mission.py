@@ -582,7 +582,8 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
 
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
                   runner=None, now: float | None = None, note: str | None = None,
-                  stop_runner=None, work_dir: str | None = None) -> dict:
+                  stop_runner=None, work_dir: str | None = None,
+                  progress: dict | None = None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
@@ -605,6 +606,10 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     extra = {"note": note} if note is not None else {}
     if work_dir:
         extra["work_dir"] = work_dir
+    if progress is not None:
+        extra["progress"] = progress
+        if not rec.get("progress_origin") and progress.get("measured"):
+            extra["progress_origin"] = progress["fp"]   # the tree this mission started from
     if note is not None or rec.get("card"):
         # Pre-render the successor's card NOW: this runs out of band with no deadline, and
         # the git facts are exactly those of the hand-off moment the card claims to show --
@@ -1098,7 +1103,8 @@ def renew_mission(rec: dict, now: float | None = None) -> dict:
 
 
 def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
-              gsd_status=None, runner=None, stop_runner=None, pid_alive=lr._pid_alive) -> list[dict]:
+              gsd_status=None, runner=None, stop_runner=None, pid_alive=lr._pid_alive,
+              fingerprint=None) -> list[dict]:
     """One out-of-band pass over every mission. Each action is ledgered by the
     transition it makes; a pass that decides nothing still returns one row per
     mission, so an empty estate and an unjudged one never look alike."""
@@ -1178,6 +1184,15 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 reap(halted, row)  # a halt changes the record; stop the world to match it
                 if st is not None:
                     why_not = renewal_refusal(halted, plan["reason"], st.get("outcome"))
+                    origin = rec.get("progress_origin")
+                    if not why_not and origin:
+                        # T5: all 18 renewals of the 6 capped lineages produced 0 commits. A
+                        # mission whose tree never moved does not earn a fresh budget. A tree
+                        # that cannot be measured is not "unchanged": it still renews.
+                        fp_now = (fingerprint or progress_fingerprint)(
+                            rec.get("work_dir") or rec["cwd"])
+                        if fp_now is not None and fp_now == origin:
+                            why_not = "no progress in this mission (work tree unchanged since its first launch)"
                     if why_not:
                         row["renewal"] = f"not renewed: {why_not}"
                     else:
@@ -1231,6 +1246,21 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"],
                                          gsd=st.get("outcome"), reason=st.get("reason"))
                         continue
+                fp_fn = fingerprint or progress_fingerprint
+                progress = next_progress(rec, fp_fn(work_dir or rec.get("work_dir") or rec["cwd"]))
+                row["progress"] = progress
+                if act in ("relay", "replace") and progress["stalls"] >= NO_PROGRESS_EPOCHS:
+                    # T5: convergence was asked first (above); a mission whose tree has not moved
+                    # across NO_PROGRESS_EPOCHS epochs is not relayed again, and -- the reason
+                    # carrying no "budget:" -- renewal refuses it too. UNMEASURED never counts.
+                    halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                        event="mission_halted", now=now, state=HALTED, pending=None,
+                                        progress=progress,
+                                        reason=f"no_progress: {NO_PROGRESS_EPOCHS} consecutive epochs "
+                                               f"ended with no commit or work-tree change")
+                    reap(halted, row)
+                    row["action"] = "halt"
+                    continue
                 if act in ("relay", "replace") and rec.get("owner"):
                     # A replaced owner is DEAD by the host's word, and its pid can still outlive
                     # that word (W0 E13): wait for it too, or the successor overlaps it.
@@ -1251,7 +1281,7 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 row["launch"] = launch_worker(mid, expect_epoch=rec["epoch"],
                                               expect_state=rec["state"], reason=plan["reason"],
                                               runner=runner, now=now, note=note,
-                                              work_dir=work_dir)
+                                              work_dir=work_dir, progress=progress)
         except CasConflict as exc:
             row["cas"] = str(exc)  # another supervisor acted first: correct, not an error
         except Exception as exc:  # noqa: BLE001 -- one mission's failure must not blind the rest
@@ -1272,6 +1302,46 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, **kw) -> dict:
     res = launch_worker(rec["mission_id"], expect_epoch=0, expect_state=PREPARED,
                         reason="armed")
     return {"mission": load(rec["mission_id"]), "launch": res}
+
+
+NO_PROGRESS_EPOCHS = 3   # consecutive relays with an unchanged work tree before HALTED
+
+
+def progress_fingerprint(work_dir: str) -> str | None:
+    """A hash of what a worker can change in its work tree: HEAD, the dirty-path set, and the
+    size of the uncommitted diff. None when git cannot answer -- unmeasured, never "no change".
+
+    Why (T5, measured 2026-09-27): all 18 renewed missions across the 6 lineages that hit the
+    renewal cap produced 0 commits, while each lineage's first mission made 3-137; 444 of 499
+    relays were "turn ended without completion". Nothing compared one epoch's tree to the next,
+    so a lineage that had stopped progressing was relayed and renewed until its caps ran out.
+    A commit is the unit of work GSD and the hand-off card both ask a worker to leave behind."""
+    import hashlib
+    import subprocess
+    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+    if not Path(g).exists():
+        g = "git"
+    parts = []
+    try:
+        for args in (["rev-parse", "HEAD"], ["status", "--porcelain"], ["diff", "HEAD", "--shortstat"]):
+            r = subprocess.run([g, "-C", work_dir, *args], capture_output=True, text=True,
+                               encoding="utf-8", errors="replace", timeout=30)
+            if r.returncode != 0:
+                return None
+            parts.append(r.stdout)
+    except Exception:  # noqa: BLE001 -- unmeasured is its own answer
+        return None
+    return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def next_progress(rec: dict, fp: str | None) -> dict:
+    """The progress entry a relay records: stalls count up only on a MEASURED unchanged tree."""
+    prev = rec.get("progress") or {}
+    stalls = int(prev.get("stalls") or 0)
+    if fp is not None and prev.get("fp") is not None:
+        stalls = stalls + 1 if fp == prev["fp"] else 0
+    return {"fp": fp if fp is not None else prev.get("fp"), "stalls": stalls,
+            "measured": fp is not None}
 
 
 def _git_facts(cwd: str) -> dict:

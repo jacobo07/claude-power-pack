@@ -23,6 +23,10 @@ os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP  # adopt/ack write markers: never in 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_mission as gm  # noqa: E402
 
+# Hermetic: the default fingerprint would run git in TMP, which may resolve to an enclosing
+# real repository. Unmeasured (None) is the neutral answer; T5 cases inject their own.
+gm.progress_fingerprint = lambda work_dir: None
+
 passes = fails = 0
 
 
@@ -649,8 +653,61 @@ def main() -> int:
 
     gm.supervise(now=LATE, sessions=hs, gsd_status=gsd_raises,
                  runner=launch_run, stop_runner=stop_run, pid_alive=alive)
+    unk_state, unk_succ = gm.load("m-unk-budget")["state"], successors("m-unk-budget")
+    # T5 (2026-09-27): relaying and renewing require progress. Measured: all 18 renewed
+    # missions of the 6 capped lineages made 0 commits; nothing compared epoch to epoch.
+    def with_progress(mid, **fields):
+        hs_ = fresh(mid)
+        r_ = gm.load(mid)
+        gm.transition(mid, expect_epoch=r_["epoch"], expect_state=r_["state"], event="t", now=NOW,
+                      **fields)
+        return hs_
+
+    stall = {"fp": "A", "stalls": gm.NO_PROGRESS_EPOCHS - 1, "measured": True}
+    n0 = len(launches)
+    hs = with_progress("m-stall", progress=stall)
+    rows = gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                        stop_runner=stop_run, pid_alive=alive, fingerprint=lambda d: "A")
+    st_ = gm.load("m-stall")
+    check("V-MC-PROGRESS-STALL-HALTS",
+          st_["state"] == gm.HALTED and "no_progress" in st_.get("reason", "")
+          and len(launches) == n0 and not successors("m-stall"), f"{st_['state']} {st_.get('reason')}")
+    hs = with_progress("m-moving", progress=stall)
+    gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone, fingerprint=lambda d: "B")
+    mv = gm.load("m-moving")
+    check("V-MC-PROGRESS-CONTROL-MOVING-RELAYS",
+          mv["state"] == gm.LAUNCHING and mv["epoch"] == 2 and mv["progress"]["stalls"] == 0, str(mv.get("progress")))
+    hs = with_progress("m-unmeasured", progress=stall)
+    gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone, fingerprint=lambda d: None)
+    um = gm.load("m-unmeasured")
+    check("V-MC-PROGRESS-UNMEASURED-NEVER-STALLS",
+          um["state"] == gm.LAUNCHING and um["progress"]["stalls"] == stall["stalls"], str(um.get("progress")))
+    hs = with_progress("m-stall-done", progress={**stall, "stalls": 9})
+    gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("ALL_COMPLETE"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=alive, fingerprint=lambda d: "A")
+    check("V-MC-PROGRESS-CONVERGENCE-FIRST", gm.load("m-stall-done")["state"] == gm.COMPLETED)
+    hs = with_progress("m-noprog", progress_origin="A")
+    rows = gm.supervise(now=LATE, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                        stop_runner=stop_run, pid_alive=alive, fingerprint=lambda d: "A")
+    nrow = next((r for r in rows if r["mission_id"] == "m-noprog"), {})
+    check("V-MC-PROGRESS-NO-RENEWAL-WITHOUT-PROGRESS",
+          not successors("m-noprog") and "no progress" in nrow.get("renewal", ""), str(nrow))
+    hs = with_progress("m-prog", progress_origin="A")
+    gm.supervise(now=LATE, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=alive, fingerprint=lambda d: "B")
+    check("V-MC-PROGRESS-CONTROL-PROGRESS-RENEWS", len(successors("m-prog")) == 1)
+    for p_ in Path(TMP).glob("gsd-mission-*.json"):
+        p_.unlink()
+    gm.create(TMP, "/gsd-autonomous", mission_id="m-origin", now=NOW)
+    gm.supervise(now=NOW, sessions=[], gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=alive, fingerprint=lambda d: "O")
+    check("V-MC-PROGRESS-ORIGIN-AT-FIRST-LAUNCH", gm.load("m-origin").get("progress_origin") == "O",
+          str(gm.load("m-origin").get("progress_origin")))
+
     check("V-MC-CONVERGE-UNANSWERED-STILL-HALTS",
-          gm.load("m-unk-budget")["state"] == gm.HALTED and not successors("m-unk-budget"),
+          unk_state == gm.HALTED and not unk_succ,
           "an unanswerable GSD must not keep a spent mission running, nor renew it")
 
     # an idle estate never asks the host (the 5-minute sweep must cost nothing)
