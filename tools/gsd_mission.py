@@ -99,8 +99,14 @@ def load(mission_id: str) -> dict | None:
 
 
 def _write(path: Path, data: dict) -> None:
+    """Crash boundary: before the rename the old record is intact; after it the new one is
+    complete. The fsync is what makes "complete" true across a power loss or bugcheck -- this
+    host's shutdowns are BSODs -- and a rename of unflushed bytes can land a zero-length file."""
     tmp = path.with_suffix(f".json.{os.getpid()}.tmp")
-    tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    with open(tmp, "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(data, indent=2))
+        fh.flush()
+        os.fsync(fh.fileno())
     os.replace(tmp, path)
 
 
@@ -227,16 +233,52 @@ def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
     return rec
 
 
-def all_missions() -> list[dict]:
-    out = []
+def _scan() -> tuple[list[dict], list[dict]]:
+    """(readable records, unreadable ones). One enumeration, two answers, so nothing a
+    reader cannot parse can fall out of the population unseen."""
+    good, bad = [], []
     for p in sorted(lr.state_dir().glob(MISSION_TEMPLATE.format(mission_id="*"))):
         try:
             rec = json.loads(p.read_text(encoding="utf-8"))
-        except Exception:
-            continue
-        if isinstance(rec, dict) and rec.get("state") in STATES:
-            out.append(rec)
-    return out
+        except Exception as exc:  # noqa: BLE001 -- classified below, never dropped
+            rec, why = None, f"{type(exc).__name__}: {exc}"
+        else:
+            why = None if isinstance(rec, dict) and rec.get("state") in STATES else "not a mission record"
+        if why:
+            try:
+                st = p.stat()
+                ident = f"{st.st_size}:{int(st.st_mtime)}"
+            except OSError:
+                ident = "?"
+            bad.append({"mission_id": p.name[len("gsd-mission-"):-len(".json")], "path": str(p),
+                        "error": why[:200], "file_state": ident})
+        else:
+            good.append(rec)
+    return good, bad
+
+
+def all_missions() -> list[dict]:
+    return _scan()[0]
+
+
+def unreadable_missions() -> list[dict]:
+    """Records that exist and cannot be read. Measured 2026-09-27: all_missions skipped them
+    silently, so a torn record took its mission out of supervise AND status while the worker
+    ran on unsupervised. Never repaired automatically: nobody can know what state it held."""
+    return _scan()[1]
+
+
+def _unreadable_rows(bad: list[dict]) -> list[dict]:
+    rows = []
+    for b in bad:
+        rows.append({"mission_id": b["mission_id"], "state": "UNREADABLE", "epoch": None,
+                     "action": "surface_unreadable", "reason": b["error"], "path": b["path"]})
+        seen = [e for e in lr.ledger_events(b["mission_id"])
+                if e.get("event") == "record_unreadable" and e.get("file_state") == b["file_state"]]
+        if not seen:  # once per distinct file state, not every 5-minute pass
+            lr.ledger_append(b["mission_id"], "record_unreadable", mission_id=b["mission_id"],
+                             path=b["path"], error=b["error"], file_state=b["file_state"])
+    return rows
 
 
 # --------------------------------------------------------------------------- liveness
@@ -1020,12 +1062,17 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
     mission, so an empty estate and an unjudged one never look alike."""
     import subprocess
     now = time.time() if now is None else now
-    missions = all_missions()
+    missions, bad = _scan()
+    # First in every pass, before any early return: an unreadable record is a mission nobody
+    # can see, and "nothing to supervise" would otherwise be the answer for it.
+    unreadable = _unreadable_rows(bad) if not dry_run else [
+        {"mission_id": b["mission_id"], "state": "UNREADABLE", "action": "surface_unreadable",
+         "reason": b["error"], "path": b["path"]} for b in bad]
     if not any(_needs_look(m, now) for m in missions):
         # Nothing to supervise: do not ask the host (`claude agents --json` costs seconds,
         # measured > 60 s once under load) on every 5-minute pass of an idle estate.
-        return [{"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
-                 "action": "none", "reason": f"terminal {m['state']}"} for m in missions]
+        return unreadable + [{"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
+                              "action": "none", "reason": f"terminal {m['state']}"} for m in missions]
     if sessions is None:
         sessions = host_sessions()
     stop_run = stop_runner or (lambda a: subprocess.run(a, capture_output=True, text=True, timeout=120))
@@ -1173,7 +1220,7 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 lr.ledger_append(mid, "supervise_error", mission_id=mid, error=row["error"])
             except Exception:  # noqa: BLE001 -- the row still carries the error
                 pass
-    return out
+    return unreadable + out
 
 
 def arm(cwd: str, resume_command: str, *, launch: bool = True, **kw) -> dict:
@@ -1414,9 +1461,13 @@ def _cli(argv=None) -> int:
             rows = [r for r in rows if r.get("action") not in ("none", "await")]
         print(json.dumps(rows))
         return 0
-    rows = []
+    missions, bad = _scan()
+    rows = [{"mission_id": b["mission_id"], "state": "UNREADABLE", "error": b["error"],
+             "path": b["path"], "plan": {"action": "surface_unreadable",
+                                         "reason": "record cannot be read; inspect it by hand"}}
+            for b in bad]
     sessions = host_sessions()
-    for m in all_missions():
+    for m in missions:
         v_, why = liveness(m.get("owner"), sessions)
         rows.append({"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
                      "iterations": m.get("iterations"), "owner": (m.get("owner") or {}).get("session_id"),

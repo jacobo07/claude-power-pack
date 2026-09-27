@@ -101,6 +101,52 @@ def main() -> int:
         _ok("V-MC-MALFORMED-RAISES")
     check("V-MC-ABSENT-IS-NONE", gm.load("m-nope") is None)
 
+    # T2 (2026-09-27): an unreadable record is surfaced, never skipped. all_missions() used to
+    # `continue` past it, so a torn record took a live mission out of supervise AND status.
+    gm.mission_path("m-torn").write_text("", encoding="utf-8")   # zero-length: a torn write
+    bad_ids = {b["mission_id"] for b in gm.unreadable_missions()}
+    check("V-MC-UNREADABLE-LISTED", {"m-bad", "m-torn"} <= bad_ids
+          and not any(m["mission_id"] in ("m-bad", "m-torn") for m in gm.all_missions()), str(bad_ids))
+    # gsd_status injected: without it this pass ran the REAL gsd-tools against TMP (caught by
+    # the T2 mutation drill printing "No ROADMAP.md found").
+    no_gsd = lambda c, workstream=None: {"outcome": "UNAVAILABLE", "reason": "test"}  # noqa: E731
+    rows = gm.supervise(now=NOW, sessions=[], runner=lambda a, c: None, gsd_status=no_gsd)
+    sup_bad = {r["mission_id"] for r in rows if r.get("action") == "surface_unreadable"}
+    check("V-MC-UNREADABLE-SURFACED-BY-SUPERVISE", {"m-bad", "m-torn"} <= sup_bad, str(rows))
+    gm.supervise(now=NOW, sessions=[], runner=lambda a, c: None, gsd_status=no_gsd)
+    n_led = len([e for e in gm.lr.ledger_events("m-torn") if e.get("event") == "record_unreadable"])
+    check("V-MC-UNREADABLE-LEDGERED-ONCE-PER-FILE-STATE", n_led == 1, f"{n_led} rows for 2 passes")
+    check("V-MC-UNREADABLE-CONTROL-READABLE-NOT-FLAGGED", "m-a" not in sup_bad)
+    gm.mission_path("m-torn").unlink()
+
+    # Hard kill at the rename boundary, in a real separate process (no finally/cleanup runs).
+    import subprocess as _sp
+    kill_src = (
+        "import os,sys;sys.path.insert(0,{tools!r});import gsd_mission as gm\n"
+        "real=os.replace\n"
+        "def die(a,b):\n"
+        "    if {after}: real(a,b)\n"
+        "    os._exit(9)\n"
+        "gm.os.replace=die\n"
+        "rec=gm.load('m-a')\n"
+        "gm.transition('m-a',expect_epoch=rec['epoch'],expect_state=rec['state'],event='k',"
+        "note='AFTER-KILL')\n")
+    tools_dir = str(Path(__file__).resolve().parent)
+    for after, gate in ((False, "V-MC-KILL-BEFORE-RENAME-KEEPS-PRIOR"),
+                        (True, "V-MC-KILL-AFTER-RENAME-HAS-NEXT")):
+        before = gm.load("m-a")
+        r = _sp.run([sys.executable, "-c", kill_src.format(tools=tools_dir, after=after)],
+                    env={**os.environ}, capture_output=True, text=True, timeout=60)
+        got = gm.load("m-a")   # must parse either way: prior or next, never torn
+        want_note = "AFTER-KILL" if after else before.get("note")
+        check(gate, r.returncode == 9 and got["note"] == want_note and got["epoch"] == before["epoch"],
+              f"rc={r.returncode} note={got.get('note')!r} stderr={r.stderr[-200:]}")
+        for stray in Path(TMP).glob("gsd-mission-m-a.json.*.tmp"):
+            stray.unlink()  # the killed writer's tmp: never matched as a record; cleaned
+        # The killed writer died HOLDING the O_EXCL lock. T2 owns the record boundary only;
+        # what that orphaned lock costs the next writer is T3's subject (pinned there).
+        gm.mission_path("m-a").with_suffix(".lock").unlink(missing_ok=True)
+
     # --- liveness: DEAD only on positive evidence -----------------------------------------
     owner = {"session_id": "s-1", "pid": 4242, "proc_start": "111"}
     host_live = [{"sessionId": "s-1", "status": "busy", "state": "working"}]
