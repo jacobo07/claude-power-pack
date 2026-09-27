@@ -92,6 +92,26 @@ def _note(name: str, dep: dict, state: str = None) -> dict:
             "why": f"{name} could not be established in the test", "depends_on": [dep]}
 
 
+def _covered(dep: dict, held=(), not_held=(), unknown=()) -> dict:
+    """A document that dispositions EVERY gating fact, with named exceptions.
+
+    GSDX-M06 made an undispositioned gating fact block (F7), so a fixture that
+    mentions one name now blocks for TWO reasons: the thing it is testing, and
+    five gating names nobody asked about. Every case below wants exactly one
+    variable, so the baseline is full gating coverage and each case moves only
+    the names it is actually about.
+
+    Built from `ob.GATING_FACT_NAMES` rather than a literal list, so a new
+    operator changes the fixtures automatically instead of leaving them quietly
+    incomplete.
+    """
+    moved = {n for n in list(not_held) + list(unknown)} | {n for n in held}
+    baseline = [_held(n, dep) for n in sorted(ob.GATING_FACT_NAMES - moved)]
+    return _v2(facts=baseline + [_held(n, dep) for n in held],
+               not_held=[_note(n, dep, ob.OBSERVED) for n in not_held],
+               unknown=[_note(n, dep) for n in unknown])
+
+
 def _refused(doc, label: str, gate: str, expect_in: str = "") -> None:
     with tempfile.TemporaryDirectory(prefix="gsdxv2_") as tmp:
         p = Path(tmp) / sf.FACTS_FILE
@@ -202,6 +222,13 @@ def main() -> int:  # noqa: C901 -- a gate reads better flat than factored
         srcfile = Path(tmp) / "source.txt"
         srcfile.write_text("original", encoding="utf-8")
         dep = _dep(srcfile)
+        # A SECOND source that never moves. The staleness case below rewrites
+        # `srcfile`, and every entry sharing one dep would go stale together --
+        # so the gate would exit 1 naming all six and the case could no longer
+        # show that freshness is per-entry.
+        stable = Path(tmp) / "stable.txt"
+        stable.write_text("never rewritten", encoding="utf-8")
+        dep2 = _dep(stable)
 
         v1 = {"schema": sf.SCHEMA_V1, "provenance": "legacy",
               "facts": [{"name": GATING, "evidence": "declared the old way"}]}
@@ -279,27 +306,34 @@ def main() -> int:  # noqa: C901 -- a gate reads better flat than factored
                   "local copy.")
         reality = "Versioning: off. No backups. Lifecycle rules: none."
 
-        # (1) a GATING fact unknown -> blocks
+        # (1) a GATING fact unknown -> blocks.
+        #     Every OTHER gating fact is held, so the only thing this case can
+        #     block on is the unknown. Before GSDX-M06 the bare document also
+        #     left five names undispositioned, and the case would have passed
+        #     on a compound reason.
         with tempfile.TemporaryDirectory(prefix="gsdxv2_m1_") as t2:
-            root = _mission(Path(t2), _v2(unknown=[_note(GATING, dep)]),
+            root = _mission(Path(t2), _covered(dep, unknown=[GATING]),
                             intent, reality)
             code, payload = _run_check(root)
             if code == 1 and payload.get("unmeasured_facts") == [GATING] \
+                    and not payload.get("unproduced_facts") \
                     and payload.get("block") is True:
                 _ok("V-FACTSV2-UNKNOWN-GATING-BLOCKS",
                     f"exit 1 naming {GATING!r} with open_obligations="
-                    f"{payload.get('open_obligations')} -- the block comes from "
-                    "blindness, not from an obligation")
+                    f"{payload.get('open_obligations')} and unproduced=[] -- the "
+                    "block comes from blindness alone, not from an obligation "
+                    "and not from missing coverage")
             else:
                 _fail("V-FACTSV2-UNKNOWN-GATING-BLOCKS",
                       f"exit={code} payload={payload}")
 
         # (2) an ENRICHING fact unknown -> disclosed, never blocks
         with tempfile.TemporaryDirectory(prefix="gsdxv2_m2_") as t2:
-            root = _mission(Path(t2), _v2(unknown=[_note(ENRICHING, dep)]),
+            root = _mission(Path(t2), _covered(dep, unknown=[ENRICHING]),
                             intent, reality)
             code, payload = _run_check(root)
             if code == 0 and not payload.get("unmeasured_facts") \
+                    and not payload.get("unproduced_facts") \
                     and any(ENRICHING in d for d in payload.get("disclosures", [])):
                 _ok("V-FACTSV2-UNKNOWN-ENRICHING-DISCLOSED-NOT-BLOCKING",
                     f"exit 0 and {ENRICHING!r} is disclosed rather than blocked on")
@@ -309,14 +343,16 @@ def main() -> int:  # noqa: C901 -- a gate reads better flat than factored
 
         # (3) an ORPHAN unknown -> cannot change a verdict, so it does not block
         with tempfile.TemporaryDirectory(prefix="gsdxv2_m3_") as t2:
-            root = _mission(Path(t2), _v2(unknown=[_note(ORPHAN, dep)]),
+            root = _mission(Path(t2), _covered(dep, unknown=[ORPHAN]),
                             intent, reality)
             code, payload = _run_check(root)
             if code == 0 and not payload.get("unmeasured_facts") \
+                    and not payload.get("unproduced_facts") \
                     and not payload.get("disclosures"):
                 _ok("V-FACTSV2-ORPHAN-UNKNOWN-DOES-NOT-BLOCK",
                     f"{ORPHAN!r} is read by no operator, so its absence changes "
-                    "no verdict and holds no wave")
+                    "no verdict and holds no wave -- and it is never REQUIRED "
+                    "either, so coverage does not resurrect it as unproduced")
             else:
                 _fail("V-FACTSV2-ORPHAN-UNKNOWN-DOES-NOT-BLOCK",
                       f"exit={code} payload={payload}")
@@ -324,46 +360,108 @@ def main() -> int:  # noqa: C901 -- a gate reads better flat than factored
         # (4) a clean v2 document -> GREEN. Without this, a gate that blocked on
         #     every v2 document would pass every assertion above.
         with tempfile.TemporaryDirectory(prefix="gsdxv2_m4_") as t2:
-            root = _mission(Path(t2), _v2(facts=[_held(GATING, dep)]),
-                            intent, reality)
+            root = _mission(Path(t2), _covered(dep), intent, reality)
             code, payload = _run_check(root)
             if code == 0 and payload.get("block") is False:
                 _ok("V-FACTSV2-GREEN-CLEAN-V2",
-                    "a v2 document with nothing unknown still exits 0")
+                    "a v2 document that dispositions every gating fact and has "
+                    "nothing unknown still exits 0 -- the coverage requirement "
+                    "is SATISFIABLE, so the F7 block is not a gate that refuses "
+                    "every document")
             else:
                 _fail("V-FACTSV2-GREEN-CLEAN-V2", f"exit={code} payload={payload}")
 
-        # (4b) an EMPTY but well-formed v2 document -> GREEN. This is the pole
-        #      that protects against reading freshness from the one-word
-        #      aggregate: `freshness_verdict` answers UNKNOWN for zero rows,
-        #      the same word a vanished source gets, so a blindness fed from
-        #      the aggregate would make an empty facts file hold every wave.
+        # (4b) an EMPTY but well-formed v2 document -> BLOCKS, and the REASON is
+        #      what this pole is for.
+        #
+        #      INVERTED 2026-09-27 (GSDX-M06). It used to require exit 0, which
+        #      was the purest form of F7: a document answering nothing at all
+        #      passed. What it was really protecting is unchanged and still
+        #      asserted -- `freshness_verdict` answers UNKNOWN for zero rows,
+        #      the same word a vanished source gets, so a blindness fed from the
+        #      one-word aggregate would block here with `stale_facts` populated.
+        #      It must block with stale EMPTY and unproduced FULL: the wave is
+        #      held because nobody asked the questions, not because a freshness
+        #      aggregate was misread.
         with tempfile.TemporaryDirectory(prefix="gsdxv2_m4b_") as t2:
             root = _mission(Path(t2), _v2(), intent, reality)
             code, payload = _run_check(root)
-            if code == 0 and payload.get("block") is False:
-                _ok("V-FACTSV2-GREEN-EMPTY-DOCUMENT",
-                    "a v2 document with no entries at all exits 0; blindness "
-                    "reads per-entry rows, never the zero-row aggregate")
+            if code == 1 and payload.get("block") is True \
+                    and set(payload.get("unproduced_facts") or []) \
+                    == set(ob.GATING_FACT_NAMES) \
+                    and not payload.get("stale_facts") \
+                    and not payload.get("unmeasured_facts"):
+                _ok("V-FACTSV2-EMPTY-DOCUMENT-IS-NOT-COVERAGE",
+                    "a v2 document with no entries exits 1 naming all "
+                    f"{len(ob.GATING_FACT_NAMES)} gating facts UNPRODUCED, with "
+                    "stale and unmeasured both empty -- it is held for the "
+                    "absence of questions, not by the zero-row aggregate")
             else:
-                _fail("V-FACTSV2-GREEN-EMPTY-DOCUMENT",
+                _fail("V-FACTSV2-EMPTY-DOCUMENT-IS-NOT-COVERAGE",
                       f"exit={code} payload={payload}")
 
         # (5) STALE on a gating fact -> blocks. The source moves after the
         #     document was written, which is the whole freshness contract.
         with tempfile.TemporaryDirectory(prefix="gsdxv2_m5_") as t2:
-            root = _mission(Path(t2), _v2(facts=[_held(GATING, dep)]),
-                            intent, reality)
+            # Full gating coverage, but only GATING hangs off the file that
+            # moves; the rest depend on `stable`. Sharing one dep would staleize
+            # all six together, and the case could no longer show that freshness
+            # is decided per entry rather than per document.
+            staleable = _v2(
+                facts=[_held(GATING, dep)]
+                      + [_held(n, dep2)
+                         for n in sorted(ob.GATING_FACT_NAMES - {GATING})])
+            root = _mission(Path(t2), staleable, intent, reality)
             srcfile.write_text("CHANGED after the document was produced",
                                encoding="utf-8")
             code, payload = _run_check(root)
             srcfile.write_text("original", encoding="utf-8")
-            if code == 1 and payload.get("stale_facts") == [GATING]:
+            if code == 1 and payload.get("stale_facts") == [GATING] \
+                    and not payload.get("unproduced_facts"):
                 _ok("V-FACTSV2-STALE-GATING-BLOCKS",
                     f"a source change makes {GATING!r} not current and the gate "
                     "exits 1 naming it")
             else:
                 _fail("V-FACTSV2-STALE-GATING-BLOCKS",
+                      f"exit={code} payload={payload}")
+
+        # (6) a DEAD operator requires nothing further. `_has()` is `all(...)`,
+        #     so an operator with a gating fact measured FALSE can never fire --
+        #     demanding its remaining gating facts would be production nobody
+        #     can act on, which is the ceremony tax obligation.py:400-420 names
+        #     and the reason a gate gets switched off.
+        with tempfile.TemporaryDirectory(prefix="gsdxv2_m6_") as t2:
+            root = _mission(Path(t2), _covered(dep, not_held=[GATING]),
+                            intent, reality)
+            code, payload = _run_check(root)
+            if code == 0 and not payload.get("unproduced_facts") \
+                    and payload.get("block") is False:
+                _ok("V-FACTSV2-DEAD-OPERATOR-REQUIRES-NOTHING",
+                    f"{GATING!r} measured FALSE kills its operator, so coverage "
+                    "stops requiring that operator's other gating reads and the "
+                    "wave is not held for a fact that could not change a verdict")
+            else:
+                _fail("V-FACTSV2-DEAD-OPERATOR-REQUIRES-NOTHING",
+                      f"exit={code} payload={payload}")
+
+        # (7) an UNPRODUCED gating fact blocks, and says which one. The narrow
+        #     pole for F7 itself; the cutover comparison below is the wide one.
+        with tempfile.TemporaryDirectory(prefix="gsdxv2_m7_") as t2:
+            missing = sorted(ob.GATING_FACT_NAMES - {GATING})
+            root = _mission(Path(t2), _v2(facts=[_held(GATING, dep)]),
+                            intent, reality)
+            code, payload = _run_check(root)
+            if code == 1 and payload.get("block") is True \
+                    and payload.get("unproduced_facts") == missing \
+                    and not payload.get("unmeasured_facts") \
+                    and payload.get("message"):
+                _ok("V-FACTSV2-UNPRODUCED-GATING-BLOCKS",
+                    f"a document disposing 1 of {len(ob.GATING_FACT_NAMES)} "
+                    "gating facts exits 1 naming the other "
+                    f"{len(missing)} UNPRODUCED, with a non-empty message -- a "
+                    "block the caller can act on rather than retry blindly")
+            else:
+                _fail("V-FACTSV2-UNPRODUCED-GATING-BLOCKS",
                       f"exit={code} payload={payload}")
 
     # ---- the green poles the exit code has broken twice before -----------
@@ -408,29 +506,33 @@ def main() -> int:  # noqa: C901 -- a gate reads better flat than factored
         _fail("V-FACTSV2-MEASURED-EMPTY-IS-NOT-UNMEASURED",
               f"{measured} vs {unmeasured}")
 
-    # ---- CHARACTERIZATION: the hole this wave did NOT close ---------------
-    # This gate asserts BROKEN behaviour on purpose. Measured 2026-09-25 during
-    # the S5 cutover, on a root with no prior obligations:
+    # ---- INVERTED 2026-09-27 (GSDX-M06): the hole N7 pinned is CLOSED ------
+    # THIS GATE USED TO ASSERT THE DEFECT. Until GSDX-M06 it was named
+    # V-FACTSV2-CHARACTERIZE-CUTOVER-LOSES-OBLIGATIONS and required, on purpose,
+    # that the same INTENT and README produce:
     #
     #   prose      -> DO-1 ACCEPTED, check exit 1
     #   structured -> derived 0,     check exit 0, unmeasured_facts []
     #
-    # ...for the same INTENT and README. Merely placing a FACTS.json in a root
-    # silently disables every obligation the prose adapter would have derived,
-    # and the blindness channel added by this wave CANNOT SEE IT: the three
-    # buckets cover facts the producer TRIED to establish, and a fact with no
-    # producer at all appears in none of them -- not even `unknown`. That is
-    # the third world the producer's own docstring names, "nobody ever asked",
-    # and it is still silent.
+    # Merely placing a FACTS.json in a fresh root silently disabled every
+    # obligation the prose adapter would have derived, and GSDX-M05's blindness
+    # channel could not see it: the three buckets cover facts a producer TRIED
+    # to establish, and a fact with NO producer is in none of them -- not even
+    # `unknown`. That was the third world the producer's docstring names,
+    # "nobody ever asked".
     #
-    # The fix is small and its consequence is a PRODUCT decision, not an
-    # engineering one: emitting every unproduced gating name as UNKNOWN would
-    # make every structured mission block until real producers exist. That
-    # changes what "done" means, so it is the Owner's call and is recorded in
-    # vault/specs/gsd-x-n7.RESUMPTION.md rather than taken here.
+    # It is inverted IN PLACE, and renamed because a gate whose name asserts a
+    # defect that no longer exists is a worse lie than no gate. The diff between
+    # these two versions is the evidence; a new gate beside a deleted one would
+    # not have been.
     #
-    # WHEN IT IS FIXED, INVERT THIS GATE IN PLACE. The diff between the two
-    # versions is the evidence; a new gate beside a deleted one is not.
+    # What closed it: modules/gsd_x/mission/coverage.py requires the document to
+    # dispose of every GATING fact of every operator that can still fire, and
+    # reports the rest as UNPRODUCED -- a category kept distinct from UNKNOWN
+    # because a measurement that failed and a question nobody asked need
+    # different repairs. The scope is the gating set and nothing wider: the
+    # three enriching names and the one orphan are never required, or a ten-name
+    # vocabulary would have become a universal prerequisite list.
     with tempfile.TemporaryDirectory(prefix="gsdxv2_cut_") as tmp:
         intent = ("Upload the nightly export to the bucket and then delete the "
                   "local copy.")
@@ -451,22 +553,33 @@ def main() -> int:  # noqa: C901 -- a gate reads better flat than factored
                        capture_output=True, text=True, encoding="utf-8", timeout=120)
         struct_code, struct_payload = _run_check(struct_root)
 
+        # The structured root must block, and it must block FOR THE UNPRODUCED
+        # REASON. Asserting only `exit 1` would be satisfied by a gate that
+        # refuses every document, which is the failure mode the GREEN poles
+        # above exist to exclude -- so the discriminating claim is that the
+        # gating names the document never mentioned are named back.
+        unprod = set(struct_payload.get("unproduced_facts") or [])
+        expected = set(ob.GATING_FACT_NAMES)
         if prose_code == 1 and prose_payload.get("open_obligations") == ["DO-1"] \
-                and struct_code == 0 and not struct_payload.get("open_obligations") \
-                and not struct_payload.get("unmeasured_facts"):
-            _ok("V-FACTSV2-CHARACTERIZE-CUTOVER-LOSES-OBLIGATIONS",
-                "KNOWN HOLE, pinned: the same intent derives DO-1 and exits 1 "
-                "from prose, and derives nothing and exits 0 once a FACTS.json "
-                "exists -- with unmeasured_facts empty, because a fact with no "
-                "producer is in no bucket. Invert this gate when it is fixed")
+                and struct_code == 1 and unprod == expected \
+                and struct_payload.get("block") is True \
+                and any("UNPRODUCED" in r
+                        for r in (struct_payload.get("block_reasons") or [])):
+            _ok("V-FACTSV2-CUTOVER-CANNOT-LOSE-OBLIGATIONS",
+                "the same intent exits 1 from BOTH adapters: prose derives DO-1, "
+                f"and a FACTS.json that says nothing about the {len(expected)} "
+                "gating facts exits 1 naming every one of them UNPRODUCED. "
+                "Placing a facts document can no longer silently disable an "
+                "obligation the prose adapter would have derived")
         else:
-            _fail("V-FACTSV2-CHARACTERIZE-CUTOVER-LOSES-OBLIGATIONS",
-                  f"the characterization no longer holds -- prose exit={prose_code} "
-                  f"open={prose_payload.get('open_obligations')}, structured "
-                  f"exit={struct_code} open={struct_payload.get('open_obligations')} "
-                  f"unmeasured={struct_payload.get('unmeasured_facts')}. If this is "
-                  "because the hole was CLOSED, invert this gate rather than "
-                  "deleting it")
+            _fail("V-FACTSV2-CUTOVER-CANNOT-LOSE-OBLIGATIONS",
+                  f"prose exit={prose_code} open={prose_payload.get('open_obligations')}"
+                  f"; structured exit={struct_code} "
+                  f"block={struct_payload.get('block')} "
+                  f"unproduced={sorted(unprod)} expected={sorted(expected)} "
+                  f"reasons={struct_payload.get('block_reasons')}. If the "
+                  "structured root exits 0 again, F7 has REGRESSED: a facts "
+                  "document is once more able to delete obligations silently")
 
     # ---- the honest boundary ---------------------------------------------
     # This asserts a LIMITATION. The producer can emit exactly two fact names

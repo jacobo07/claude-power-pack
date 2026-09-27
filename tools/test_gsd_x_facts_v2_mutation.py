@@ -32,6 +32,7 @@ GATE = REPO / "tools" / "test_gsd_x_facts_v2.py"
 SF = REPO / "modules" / "gsd_x" / "mission" / "structured_facts.py"
 CL = REPO / "modules" / "gsd_x" / "mission" / "closure.py"
 CLI = REPO / "tools" / "gsd_x_mission.py"
+CV = REPO / "modules" / "gsd_x" / "mission" / "coverage.py"
 
 # (name, file, exact old text, replacement, gate that must go red)
 MUTANTS = [
@@ -95,9 +96,37 @@ MUTANTS = [
     # way this could be wrong without looking wrong.
     ("blindness-never-blocks", CL,
      "    @property\n    def blocks(self) -> bool:\n"
-     "        return bool(self.gating_unknown or self.gating_stale)",
+     "        return bool(self.gating_unknown or self.gating_stale "
+     "or self.unproduced)",
      "    @property\n    def blocks(self) -> bool:\n        return False",
      "V-FACTSV2-UNKNOWN-GATING-BLOCKS"),
+    # --- GSDX-M06 (F7): required-input closure ---------------------------
+    # Nothing is required, so a document that dispositions one gating name and
+    # ignores five is complete again. This is F7 itself, reintroduced at its
+    # source, and the inverted cutover gate is the thing that must notice.
+    ("coverage-requires-nothing", CV,
+     "    dead = dead_operators(not_held)\n"
+     "    return frozenset(\n",
+     "    dead = dead_operators(not_held)\n"
+     "    return frozenset() or frozenset(\n",
+     "V-FACTSV2-CUTOVER-CANNOT-LOSE-OBLIGATIONS"),
+    # The three buckets stop counting as dispositions, so every gating fact is
+    # UNPRODUCED on every document and the gate refuses everything. A drill that
+    # only ever loosens the subject cannot see a gate that has started blocking
+    # universally, and such a gate passes every refusal assertion in the suite
+    # it guards -- so this mutant makes the system STRICTER on purpose.
+    ("coverage-nothing-counts-as-disposed", CV,
+     "    disposed = frozenset(held) | frozenset(not_held) | frozenset(unknown)\n",
+     "    disposed = frozenset()\n",
+     "V-FACTSV2-GREEN-CLEAN-V2"),
+    # A dead operator starts requiring its siblings again: a gating fact
+    # measured FALSE can never let its operator fire, so demanding the rest is
+    # production nobody can act on -- the ceremony tax obligation.py:400-420
+    # names, and the reason a gate gets switched off.
+    ("coverage-ignores-dead-operators", CV,
+     "    dead = dead_operators(not_held)\n",
+     "    dead = frozenset()\n",
+     "V-FACTSV2-DEAD-OPERATOR-REQUIRES-NOTHING"),
 ]
 
 
@@ -114,7 +143,7 @@ def _run_gate() -> tuple[int, list[str]]:
 
 
 def main() -> int:
-    files = {SF, CL, CLI}
+    files = {SF, CL, CLI, CV}
     before = {p: _sha(p) for p in files}
 
     code, failed = _run_gate()

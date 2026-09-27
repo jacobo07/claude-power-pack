@@ -37,6 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from modules.gsd_x.mission import closure as cl          # noqa: E402
 from modules.gsd_x.mission import contract as mc         # noqa: E402
+from modules.gsd_x.mission import coverage as cov        # noqa: E402
 from modules.gsd_x.mission import obligation as ob       # noqa: E402
 from modules.gsd_x.mission import store as st            # noqa: E402
 from modules.gsd_x.mission import structured_facts as sf  # noqa: E402
@@ -101,6 +102,26 @@ def cmd_derive(args) -> int:
     print(f"\nderived  : {len(judged)}")
     for o in merged:
         print(f"  {o.identifier}  {o.operator:30} {o.disposition}")
+
+    # `derive` is the command whose job is to report what the mission owes, so
+    # it must not be the one blind to the category `check` will block on. Before
+    # this, an operator could run `derive` on an F7 root, read "derived: 0" as a
+    # clean bill, and then meet a gate refusing over facts `derive` never
+    # mentioned -- two surfaces disagreeing about one root.
+    try:
+        bl = _blindness(root)
+    except sf.StructuredFactsError as exc:
+        print(f"\ncoverage : REFUSED  {exc}")
+    else:
+        if bl.unproduced:
+            print(f"\ncoverage : {len(bl.unproduced)} required gating fact(s) "
+                  "UNPRODUCED -- no bucket dispositions them, and `check` will "
+                  "block until one does")
+            for n in bl.unproduced:
+                print(f"  {n}")
+        elif bl.measured:
+            print("\ncoverage : every required gating fact is dispositioned")
+
     print(f"\nstored   : {path}")
     return 0
 
@@ -144,7 +165,12 @@ def _blindness(root: Path) -> cl.Blindness:
         return cl.Blindness(source="prose")
 
     path = sf.facts_path(root)
-    unknown = set(sf.load_document(path).unknown_names)
+    # The WHOLE document, once. `load()` returns only the held facts, so the
+    # required-input closure below could not see which names the document
+    # dispositioned as measured-false or unmeasurable, and would report every
+    # one of them UNPRODUCED.
+    factset = sf.load_document(path)
+    unknown = set(factset.unknown_names)
 
     # Freshness from PER-ENTRY rows, never from the one-word aggregate: that
     # aggregate answers UNKNOWN for a document with zero rows, so reading it
@@ -162,6 +188,10 @@ def _blindness(root: Path) -> cl.Blindness:
         enriching_unknown=tuple(sorted(n for n in unknown if n in e)),
         gating_stale=tuple(sorted(n for n in not_current if n in g)),
         enriching_stale=tuple(sorted(n for n in not_current if n in e)),
+        # GSDX-M06 (F7): the third world the producer's docstring names --
+        # nobody ever asked. Computed from the document's own three buckets
+        # against the gating set, never inferred from an empty `unknown[]`.
+        unproduced=cov.unproduced_for(factset),
     )
 
 
@@ -295,6 +325,8 @@ def cmd_check(args) -> int:
     bl = receipt.blindness
     blind_block = bl.blocks
     reasons = ([f"{i} is open" for i in open_ids]
+               + [f"required gating fact {n!r} is UNPRODUCED -- no bucket of the "
+                  "facts document dispositions it" for n in bl.unproduced]
                + [f"gating fact {n!r} is UNKNOWN" for n in bl.gating_unknown]
                + [f"gating fact {n!r} is not current" for n in bl.gating_stale])
     payload = {
@@ -311,6 +343,10 @@ def cmd_check(args) -> int:
         "blindness_source": bl.source,
         "unmeasured_facts": list(bl.gating_unknown),
         "stale_facts": list(bl.gating_stale),
+        # Its own key, beside the other two rather than folded into them: a
+        # measurement that failed and a question nobody asked are repaired by
+        # different people doing different work.
+        "unproduced_facts": list(bl.unproduced),
         # Present, and deliberately NOT part of the decision.
         "disclosures": bl.disclosures,
         "block_reasons": reasons,

@@ -144,6 +144,12 @@ class Blindness:
     enriching_unknown: tuple = ()
     gating_stale: tuple = ()
     enriching_stale: tuple = ()
+    # GSDX-M06 (F7): required gating facts that appear in NO bucket of the
+    # document. Distinct from `gating_unknown` on purpose -- unknown means a
+    # producer tried and could not measure, unproduced means nobody asked, and
+    # they need different fixes. Only `modules/gsd_x/mission/coverage.py`
+    # computes this; it is never inferred from an empty bucket.
+    unproduced: tuple = ()
 
     @property
     def measured(self) -> bool:
@@ -151,7 +157,7 @@ class Blindness:
 
     @property
     def blocks(self) -> bool:
-        return bool(self.gating_unknown or self.gating_stale)
+        return bool(self.gating_unknown or self.gating_stale or self.unproduced)
 
     @property
     def disclosures(self) -> list[str]:
@@ -201,13 +207,16 @@ class Closure:
             out.append("  - no facts document was consulted; this receipt says "
                        "nothing about what could not be measured")
         else:
-            rows = ([f"  - UNKNOWN, gating: {n}" for n in bl.gating_unknown]
+            rows = ([f"  - UNPRODUCED, gating: {n} -- no bucket of this document "
+                     "dispositions it, and no producer established it"
+                     for n in bl.unproduced]
+                    + [f"  - UNKNOWN, gating: {n}" for n in bl.gating_unknown]
                     + [f"  - STALE, gating: {n}" for n in bl.gating_stale]
                     + [f"  - UNKNOWN, enriching only: {n}"
                        for n in bl.enriching_unknown]
                     + [f"  - STALE, enriching only: {n}"
                        for n in bl.enriching_stale])
-            out += rows or ["  - nothing unknown, nothing stale"]
+            out += rows or ["  - nothing unproduced, nothing unknown, nothing stale"]
         if self.blocking:
             out += ["", "BLOCKING"] + [f"  - {b}" for b in self.blocking]
         if self.residual_risk:
@@ -257,6 +266,19 @@ def project_closure(contract, obligations: list[Obligation],
     # whose requirements are simply unknown. Absence of evidence is not
     # evidence that no obligation is owed.
     bl = blindness if blindness is not None else Blindness()
+    # GSDX-M06 (F7). This loop has to be HERE and not only in the gate: without
+    # it `receipt.blocking` stays empty, `may_close` stays True, and the two
+    # surfaces answer one question two ways -- `cmd_closure` printing MISSION
+    # CLOSURE: ALLOWED while `cmd_check` exits 1 with an empty message, because
+    # that message is built by joining `receipt.blocking`. A gate that blocks
+    # and cannot say why leaves the caller nothing to do but retry blindly.
+    for n in bl.unproduced:
+        blocking.append(
+            f"required gating fact {n!r} is UNPRODUCED -- no bucket of the facts "
+            "document dispositions it and no producer established it, so nobody "
+            "can say whether this mission owes the obligation it decides. The "
+            "prose adapter evaluates every pattern on every run; a structured "
+            "document that omits this name has been asked one fewer question")
     for n in bl.gating_unknown:
         blocking.append(
             f"fact {n!r} could not be measured, and an operator gates on it -- "
