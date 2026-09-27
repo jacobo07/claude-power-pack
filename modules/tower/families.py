@@ -152,6 +152,21 @@ def repo_family_report(path: str, families: list | None = None) -> dict:
             if res.get("present"):
                 report["in"][f.id] = res["present"]
             continue
+        # A family that declares NO membership route -- no repo_markers and no
+        # delegate -- has not been judged OUT of this repo. It has not been
+        # judged at all, and the two must not look alike.
+        #
+        # Measured 2026-09-27 (GSD X N8): with empty `repo_markers`,
+        # `_marker_hits` returns ([], False), so neither branch below fired and
+        # the family fell through into NEITHER bucket. `repo_families()` returns
+        # only `report["in"]`, so such a family was silently OUT of every repo
+        # on the host -- and a constitutive baseline promoted under it would
+        # have reached nothing, with no UNJUDGED signal to say so. That is
+        # presence without reachability, inside the mechanism whose whole job is
+        # to make a promoted rule reach future work.
+        if not f.repo_markers:
+            report["unjudged"].append(f.id)
+            continue
         hits, truncated = _marker_hits(path, f.repo_markers)
         if hits:
             report["in"][f.id] = hits[:5]
