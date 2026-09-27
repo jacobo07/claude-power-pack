@@ -31,7 +31,7 @@ Verdict: 0 new mega-systems. CONNECT orphans, MERGE overlaps, EXTEND owners; NEW
 |---|---|---|
 | Resource ledger | EXTEND | tools/tis.py: add `observed` source from transcript usage; relabel chars/4 as `estimate` |
 | Model routing | MERGE 7→1 | modules/cost_collapse/router.py canonical; refresh ids; others delegate; shadow first |
-| Completion claim verifier | MERGE | output_contracts/validator (live) absorbs artifact_done_gate (PLANNED, delete) |
+| Completion claim verifier | CONNECT (corrected 2026-09-27) | artifact_done_gate answers "does the named artifact exist with its declared shape" — a different question from output_contracts' OQS "how good is it" (4 vault audits agree; scout A's duplicate reading was wrong). It is an ORPHAN, not a duplicate: connect it where HR-CONTEXT-001 needs it, never delete it |
 | PRG | CONNECT | strength_ladder/prg_assess → gsd_x/mission/closure replaces self-declared string |
 | Evidence freshness | EXTEND | receipts keyed to HEAD + dependency path hashes inside output_contracts |
 | Instruction economics | NEW harness inside rule_compiler (effect_harness/counterfactual exist) | ablation over frozen tasks |

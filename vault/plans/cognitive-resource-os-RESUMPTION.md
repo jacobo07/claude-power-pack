@@ -30,11 +30,18 @@ Coherence anchor: `python tools/test_tis_observed.py` 25/25, `test_pricing_sourc
 - Phase 4 (Ralph holes in tools/gsd_mission.py) goes LAST in P1-P4: the live writer edits that file.
 
 ## 4. Next three actions
-1. Diagnose the cross-session prefix miss (highest $ lever): an A/B of two back-to-back `claude -p` runs in one
-   dir, identical prompt, then with `--strict-mcp-config` + empty MCP config; compare first-call cache_read.
-   Worker argv is in tools/gsd_mission.py (LIVE writer there) — measure first, change later, coordinate.
-2. vault/config/model-routing.json: stale claude-*-4 ids; test_tco V-ROUTE pins claude-opus-4-7 — refresh with tests.
-3. P2: connect done_gate/strength_ladder + prg_assess to gsd_x/mission/closure (replace self-declared string).
+1. DEFERRED by Owner 2026-09-27 ("why spend? better wait for the limit to come back"): run it on subscription
+   quota after the usage limit resets, never as paid spend. Then: diagnose the cross-session prefix miss — two
+   back-to-back `claude -p` runs in one dir, identical prompt, then two with `--strict-mcp-config` + empty MCP
+   config; compare first-call cache_read. Worker argv is in tools/gsd_mission.py (LIVE writer there).
+   $ figures in this file are API-rate EQUIVALENTS of usage, not charges.
+2. BLOCKED (same-file collision): model-routing refresh touches tools/tco_compact_gate.py + tools/test_tco.py,
+   dirty in another pane that is writing a SECOND transcript reader (V-TCO-MEASURED-*). Messaged the
+   "Context rent architecture..." session to import tools/tis_observed.py instead. Resume once they commit.
+3. BLOCKED (same-file collision): P2 needs modules/gsd_x/mission/closure.py, dirty in another pane (+ untracked
+   coverage.py). Free alternative: CONNECT done_gate/artifact_done_gate (orphan, NOT a duplicate — plan corrected).
+Owner said "wait for the limit to come back" (2026-09-27): paused at this checkpoint pending clarification of
+whether that covers all work or only the paid experiment.
 
 ## 5. Start instruction
 Run the coherence anchor. `git log --oneline -8` and confirm the three commits. Then action 1.
