@@ -72,6 +72,10 @@ reconcile = reconcile_document
 
 DEFAULT_MEMORY_LOG = Path.home() / ".claude" / "logs" / "host-memory-floor.json"
 DEFAULT_STATE_DIR = Path.home() / ".claude" / "state"
+# CEPS is this estate's own recorded failure history. It is the authoritative
+# source for "has this environment MEASURED a failure mode", which is the
+# question `op_failure_consequence` gates on.
+DEFAULT_CEPS_LOG = Path(__file__).resolve().parents[1] / "vault" / "ceps" / "events.jsonl"
 
 
 def _now() -> str:
@@ -223,13 +227,102 @@ def produce_unattended_operation(state_dir: Path, mission_root: Path) -> Outcome
                    why="no run is in flight for this root")
 
 
-PRODUCERS = ("bounded_local_capacity", "unattended_operation")
+# ── producer: measured_failure_mode ──────────────────────────────────────────
+def produce_measured_failure_mode(ceps_log: Path) -> Outcome:
+    """OBSERVED from CEPS, this estate's own recorded failure history.
+
+    THE FIRST GATING FACT ANY PRODUCER ON THIS HOST EMITS. Until now
+    `V-FACTSV2-PRODUCER-REACH` measured, as a live fact, that no producible name
+    was gating -- so the blindness and coverage machinery was correct and
+    unreachable from the world, provable only against a constructed document.
+    This is what makes it reachable, and it is what makes an UNPRODUCED verdict
+    CLEARABLE rather than a deadlock.
+
+    WHAT THE FACT MEANS, AND WHY A COUNT IS THE RIGHT EVIDENCE. The operator's
+    own authority line is "the environment's own measurements", and the pattern
+    it was written against is a failure with a MEASURED FREQUENCY -- not a
+    hypothetical, and not a single incident. A `pattern_signature` seen twice or
+    more is exactly that: the same failure, recorded independently, with a count.
+
+    DELIBERATELY NOT MISSION-SCOPED, unlike `unattended_operation`. That fact
+    asserts something about THIS root, so a marker from another pane would have
+    been a cross-mission leak. This one asserts something about the ENVIRONMENT
+    the mission runs in, and the environment is shared. The evidence names the
+    window and the totals so a reader can disagree with that reading rather than
+    having to infer it.
+
+    An unparseable line is not evidence of absence: if nothing parsed, or if
+    nothing recurred while some lines could not be read, the answer is UNKNOWN.
+    """
+    name = "measured_failure_mode"
+    fp = _fingerprint(ceps_log)
+    if not fp.get("readable"):
+        return Outcome(name, None, UNKNOWN,
+                       f"CEPS event log unreadable: {fp.get('why')}", [fp],
+                       why="the authoritative source could not be read")
+
+    counts: dict[str, int] = {}
+    labels: dict[str, str] = {}
+    parsed = unparseable = 0
+    try:
+        text = ceps_log.read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeDecodeError) as exc:
+        return Outcome(name, None, UNKNOWN, f"CEPS event log unreadable: {exc}", [fp],
+                       why="the authoritative source could not be decoded")
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            unparseable += 1
+            continue
+        if not isinstance(row, dict):
+            unparseable += 1
+            continue
+        sig = row.get("pattern_signature")
+        if not isinstance(sig, str) or not sig:
+            continue
+        parsed += 1
+        counts[sig] = counts.get(sig, 0) + 1
+        labels.setdefault(sig, f"{row.get('category')}/{row.get('subsystem')}")
+
+    if not parsed:
+        return Outcome(name, None, UNKNOWN,
+                       f"CEPS log carries no parseable event ({unparseable} bad line(s))",
+                       [fp], why="the source exists but recorded nothing this can read")
+
+    recurring = sorted(((n, s) for s, n in counts.items() if n >= 2), reverse=True)
+    if not recurring:
+        if unparseable:
+            return Outcome(name, None, UNKNOWN,
+                           f"no signature recurs among {parsed} event(s), but "
+                           f"{unparseable} line(s) could not be read", [fp],
+                           why="absence of a recurring failure is not established "
+                               "while some events are unreadable")
+        return Outcome(name, False, OBSERVED,
+                       f"{parsed} CEPS event(s), no pattern_signature seen more than once",
+                       [fp], why="no failure mode in this environment has a measured "
+                                "frequency above one")
+
+    top = "; ".join(f"{labels.get(s, s)} x{n}" for n, s in recurring[:3])
+    ev = (f"{len(recurring)} recurring failure signature(s) across {parsed} CEPS "
+          f"event(s) estate-wide; most frequent: {top}")
+    return Outcome(name, True, OBSERVED, ev, [fp],
+                   why="this environment has measured at least one failure mode "
+                       "with a frequency above one")
 
 
-def produce_all(mission_root: Path, memory_log: Path, state_dir: Path) -> list[Outcome]:
+PRODUCERS = ("bounded_local_capacity", "unattended_operation",
+             "measured_failure_mode")
+
+
+def produce_all(mission_root: Path, memory_log: Path, state_dir: Path,
+                ceps_log: Path = DEFAULT_CEPS_LOG) -> list[Outcome]:
     out = []
     for fn in (lambda: produce_bounded_local_capacity(memory_log),
-               lambda: produce_unattended_operation(state_dir, mission_root)):
+               lambda: produce_unattended_operation(state_dir, mission_root),
+               lambda: produce_measured_failure_mode(ceps_log)):
         try:
             out.append(fn())
         except Exception as exc:  # one producer must not silence the others
@@ -261,6 +354,7 @@ def main(argv=None) -> int:
     ap.add_argument("--reconcile", metavar="ROOT")
     ap.add_argument("--memory-log", default=str(DEFAULT_MEMORY_LOG))
     ap.add_argument("--state-dir", default=str(DEFAULT_STATE_DIR))
+    ap.add_argument("--ceps-log", default=str(DEFAULT_CEPS_LOG))
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
 
@@ -283,7 +377,8 @@ def main(argv=None) -> int:
         print(f"INSTRUMENT: mission root is not a directory: {root_path}", file=sys.stderr)
         return 2
 
-    outcomes = produce_all(root_path, Path(args.memory_log), Path(args.state_dir))
+    outcomes = produce_all(root_path, Path(args.memory_log), Path(args.state_dir),
+                           Path(args.ceps_log))
     doc = build_document(outcomes, root_path)
 
     if args.emit:
