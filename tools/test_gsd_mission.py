@@ -190,6 +190,26 @@ def main() -> int:
     check("V-MC-ARGV-WORKTREE-TOOLS-NO-DUPLICATE",
           bare_allowed == ["EnterWorktree", "ExitWorktree", "Edit(.planning/**)"], str(bare_allowed))
 
+    # MCP stripping follows a MEASURED verdict only (spec gex44-mission-plane.md).
+    vfile = gm.lr.state_dir() / "worker-mcp-probe.json"
+    vrec = {"mission_id": "m", "epoch": 1}
+    try:
+        vfile.unlink(missing_ok=True)
+        check("V-MC-MCP-NO-VERDICT-NO-CHANGE", gm.worker_mcp_verdict() == "NONE"
+              and "--strict-mcp-config" not in gm.worker_argv(vrec, "/x"))
+        vfile.write_text(json.dumps({"verdict": "APPLY", "measured_at": time.time()}), encoding="utf-8")
+        va = gm.worker_argv(vrec, "/x")
+        check("V-MC-MCP-APPLY-STRIPS-BEFORE-PROMPT",
+              "--strict-mcp-config" in va and va[-1] == "/x"
+              and va.index("--mcp-config") < va.index("--autocompact"), str(va))
+        vfile.write_text(json.dumps({"verdict": "KEEP", "measured_at": time.time()}), encoding="utf-8")
+        check("V-MC-MCP-KEEP-NO-CHANGE", "--strict-mcp-config" not in gm.worker_argv(vrec, "/x"))
+        vfile.write_text(json.dumps({"verdict": "APPLY", "measured_at": time.time() - 31 * 86400}),
+                         encoding="utf-8")
+        check("V-MC-MCP-STALE-APPLY-IGNORED", gm.worker_mcp_verdict() == "NONE")
+    finally:
+        vfile.unlink(missing_ok=True)
+
     # 2026-09-25: a worker nobody watches must never park on a question.
     i_dis = argv.index("--disallowedTools") if "--disallowedTools" in argv else -1
     check("V-MC-ARGV-ASKUSER-DISALLOWED",
@@ -478,6 +498,46 @@ def main() -> int:
         os.environ.pop("CPP_MISSION_RENEW", None)
     check("V-MC-RENEW-CONTROL-ALLOWED",
           gm.renewal_refusal({"mission_id": "m", "renewal": 0}, "turn ended and budget: x", "OK") is None)
+
+    # T1 (2026-09-27): convergence outranks the budget. The worker whose turn finished the
+    # milestone is, by construction, often the last one the budget allows; plan_next halts it
+    # before GSD is asked, and renewal then refused on ALL_COMPLETE -- so a finished mission
+    # read HALTED. Measured on this host: 41 missions, 0 COMPLETED, 25 "turn ended and budget".
+    asked_gsd = []
+
+    def gsd_counted(outcome):
+        def ask(c, workstream=None):
+            asked_gsd.append(c)
+            return {"outcome": outcome, "reason": outcome.lower()}
+        return ask
+
+    hs = fresh("m-fin-budget")
+    n_before = len(launches)
+    gm.supervise(now=LATE, sessions=hs, gsd_status=gsd_counted("ALL_COMPLETE"),
+                 runner=launch_run, stop_runner=stop_run, pid_alive=alive)
+    fin = gm.load("m-fin-budget")
+    check("V-MC-CONVERGE-AT-BUDGET-COMPLETES",
+          fin["state"] == gm.COMPLETED and not successors("m-fin-budget")
+          and len(launches) == n_before, f"{fin['state']} reason={fin.get('reason')}")
+    check("V-MC-CONVERGE-GSD-ASKED-ONCE", len(asked_gsd) == 1, f"asked {len(asked_gsd)}x")
+    asked_gsd.clear()
+    hs = fresh("m-work-budget")
+    gm.supervise(now=LATE, sessions=hs, gsd_status=gsd_counted("OK"),
+                 runner=launch_run, stop_runner=stop_run, pid_alive=alive)
+    check("V-MC-CONVERGE-CONTROL-WORK-REMAINS-HALTS-AND-RENEWS",
+          gm.load("m-work-budget")["state"] == gm.HALTED and len(successors("m-work-budget")) == 1
+          and len(asked_gsd) == 1, f"{gm.load('m-work-budget')['state']} asked={len(asked_gsd)}")
+    asked_gsd.clear()
+    hs = fresh("m-unk-budget")
+
+    def gsd_raises(c, workstream=None):
+        raise RuntimeError("gsd-tools crashed")
+
+    gm.supervise(now=LATE, sessions=hs, gsd_status=gsd_raises,
+                 runner=launch_run, stop_runner=stop_run, pid_alive=alive)
+    check("V-MC-CONVERGE-UNANSWERED-STILL-HALTS",
+          gm.load("m-unk-budget")["state"] == gm.HALTED and not successors("m-unk-budget"),
+          "an unanswerable GSD must not keep a spent mission running, nor renew it")
 
     # an idle estate never asks the host (the 5-minute sweep must cost nothing)
     for p in Path(TMP).glob("gsd-mission-*.json"):

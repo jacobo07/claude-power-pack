@@ -437,6 +437,22 @@ def parse_launch(out: str, name: str) -> tuple[str | None, bool]:
     return (m.group(1) if m else None), IDLE_LAUNCH_MARK in text
 
 
+MCP_VERDICT_MAX_AGE_S = 30 * 86400
+
+
+def worker_mcp_verdict(now: float | None = None) -> str:
+    """APPLY / KEEP / UNJUDGED / NONE from this host's probe (bin/worker_mcp_probe.sh). A missing,
+    unreadable or stale verdict is NONE: absence of a measurement never strips a worker's tools."""
+    now = time.time() if now is None else now
+    try:
+        d = json.loads((lr.state_dir() / "worker-mcp-probe.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "NONE"
+    if not isinstance(d, dict) or now - float(d.get("measured_at") or 0) > MCP_VERDICT_MAX_AGE_S:
+        return "NONE"
+    return str(d.get("verdict") or "NONE")
+
+
 def worker_argv(rec: dict, prompt: str) -> list[str]:
     """The launch command. `--bg` manages the session id (W0 E4) and does not inherit the
     launcher's environment (E3), so identity comes back on stdout (E5), nowhere else.
@@ -464,6 +480,9 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
         argv += ["--add-dir", d]
     # A worker nobody watches must not be able to park on a question (Owner 2026-09-25).
     argv += ["--disallowedTools", "AskUserQuestion"]
+    if worker_mcp_verdict() == "APPLY":
+        # Measured, not assumed: only a fresh APPLY from tools/worker_mcp_probe.sh strips MCP.
+        argv += ["--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}']
     mode = rec.get("permission_mode")
     if mode:
         argv += ["--permission-mode", mode]
@@ -1043,15 +1062,32 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 continue
             act = plan["action"]
             if act == "halt":
+                st = None
+                if "budget:" in plan["reason"]:
+                    # Asked BEFORE the halt is written: the worker whose turn finished the
+                    # milestone is often the last one the budget allows, and a halt written
+                    # first recorded a finished mission as HALTED (T1 2026-09-27: 41 missions,
+                    # 0 COMPLETED). Owner 2026-09-25: only "work remains" renews.
+                    try:
+                        st = (gsd_status or _supervise_gsd_status)(
+                            rec.get("work_dir") or rec["cwd"], workstream=rec.get("workstream"))
+                    except Exception as exc:  # noqa: BLE001 -- unanswered, never "complete"
+                        st = {"outcome": "UNAVAILABLE", "reason": f"{type(exc).__name__}: {exc}"}
+                    row["gsd"] = st.get("outcome")
+                    if (st.get("outcome") == "ALL_COMPLETE"
+                            and rec["resume_command"].startswith("/gsd-autonomous")):
+                        done = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                          event="mission_completed", now=now, state=COMPLETED,
+                                          pending=None,
+                                          reason=f"gsd ALL_COMPLETE at budget ({plan['reason']})")
+                        reap(done, row)
+                        row["action"] = "completed"
+                        continue
                 halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                     event="mission_halted", now=now, state=HALTED, pending=None,
                                     reason=plan["reason"])
                 reap(halted, row)  # a halt changes the record; stop the world to match it
-                if "budget:" in plan["reason"]:
-                    # Owner 2026-09-25: a budget halt must not end a mission that still has
-                    # work. Ask GSD where the work lives; only "work remains" renews.
-                    st = (gsd_status or _supervise_gsd_status)(
-                        rec.get("work_dir") or rec["cwd"], workstream=rec.get("workstream"))
+                if st is not None:
                     why_not = renewal_refusal(halted, plan["reason"], st.get("outcome"))
                     if why_not:
                         row["renewal"] = f"not renewed: {why_not}"
