@@ -73,10 +73,16 @@ def _int(v) -> int:
 
 
 def _calls_in(path: Path) -> tuple[list[dict], int, int, int]:
-    """Return (ordered unique real calls, usage_lines, synthetic, bad)."""
+    """Return (ordered unique real calls, usage_lines, synthetic, bad).
+
+    Each call: {model, usage, ts (ISO str or None), entrypoint}. The
+    entrypoint is the session's launch surface -- 'cli' (interactive) or
+    'sdk-cli' (claude -p / SDK, the programmatic credit) -- one per file
+    across 400 transcripts measured 2026-09-27."""
     calls: dict = {}
     order: list = []
     usage_lines = synthetic = bad = 0
+    entrypoint = None
     with open(path, encoding="utf-8-sig") as fh:
         for raw in fh:
             raw = raw.strip()
@@ -87,6 +93,8 @@ def _calls_in(path: Path) -> tuple[list[dict], int, int, int]:
             except json.JSONDecodeError:
                 bad += 1
                 continue
+            if isinstance(obj, dict) and entrypoint is None and obj.get("entrypoint"):
+                entrypoint = obj["entrypoint"]
             msg = obj.get("message") if isinstance(obj, dict) else None
             if not isinstance(msg, dict) or not isinstance(msg.get("usage"), dict):
                 continue
@@ -99,8 +107,68 @@ def _calls_in(path: Path) -> tuple[list[dict], int, int, int]:
                 key = ("line", usage_lines)  # no identity: count once as-is
             if key not in calls:
                 order.append(key)
-            calls[key] = {"model": msg.get("model") or "", "usage": msg["usage"]}
-    return [calls[k] for k in order], usage_lines, synthetic, bad
+            calls[key] = {"model": msg.get("model") or "", "usage": msg["usage"],
+                          "ts": obj.get("timestamp")}
+    ordered = [calls[k] for k in order]
+    for c in ordered:
+        c["entrypoint"] = entrypoint
+    return ordered, usage_lines, synthetic, bad
+
+
+def iter_calls(project_dirs: Iterable[Path], include_subagents: bool = True,
+               modified_since: Optional[float] = None):
+    """Yield every deduplicated real call, subagent calls included, each with
+    `ts`, `model`, `usage`, `entrypoint` and `session_id`.
+
+    modified_since (epoch s) skips files whose mtime is older: a transcript not
+    written since then cannot hold a call from then. Callers still filter on
+    each call's own `ts` -- mtime only prunes, it never admits."""
+    for d in project_dirs:
+        for p in sorted(Path(d).glob("*.jsonl")):
+            paths = [p]
+            sub = p.parent / p.stem / "subagents"
+            if include_subagents and sub.is_dir():
+                paths += sorted(sub.glob("*.jsonl"))
+            for fp in paths:
+                if modified_since is not None:
+                    try:
+                        if fp.stat().st_mtime < modified_since:
+                            continue
+                    except OSError:
+                        continue
+                try:
+                    calls, _, _, _ = _calls_in(fp)
+                except OSError:
+                    continue
+                for c in calls:
+                    c["session_id"] = p.stem
+                    yield c
+
+
+def cost_usd(usage: dict, prices: Optional[dict]) -> tuple[Optional[float], bool]:
+    """Price one call from a per-MTok price row (vault/pricing schema).
+
+    Returns (usd, ttl_assumed). usd is None when the model has no price --
+    unpriced is not free. Cache writes use the 5m/1h breakdown when the usage
+    carries one; otherwise all writes are priced as 5m and ttl_assumed=True,
+    which UNDER-states cost if any were 1h writes (2x vs 1.25x)."""
+    if not prices:
+        return None, False
+    m = 1_000_000.0
+    cc_total = _int(usage.get("cache_creation_input_tokens"))
+    br = usage.get("cache_creation")
+    if isinstance(br, dict) and ("ephemeral_5m_input_tokens" in br
+                                 or "ephemeral_1h_input_tokens" in br):
+        w5 = _int(br.get("ephemeral_5m_input_tokens"))
+        w1 = _int(br.get("ephemeral_1h_input_tokens"))
+        assumed = False
+    else:
+        w5, w1, assumed = cc_total, 0, cc_total > 0
+    usd = (_int(usage.get("input_tokens")) * prices["input"]
+           + w5 * prices["cache_write_5m"] + w1 * prices["cache_write_1h"]
+           + _int(usage.get("cache_read_input_tokens")) * prices["cache_read"]
+           + _int(usage.get("output_tokens")) * prices["output"]) / m
+    return usd, assumed
 
 
 def _context_of(usage: dict) -> int:

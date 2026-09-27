@@ -152,6 +152,48 @@ def main() -> int:
               rc_proj == 0 and '"sessions": 3' in buf_p.getvalue(),
               f"populated dir -> rc={rc_proj}")
 
+        # iter_calls: entrypoint + ts carried per call, subagents included.
+        e = proj / "sessE.jsonl"
+        e.write_text("\n".join([
+            json.dumps({"type": "user", "entrypoint": "sdk-cli", "message": {"content": "x"}}),
+            json.dumps({"type": "assistant", "timestamp": "2026-09-27T10:00:00Z",
+                        "requestId": "rq", "message": {"id": "me", "model": "claude-opus-5-5",
+                        "usage": {"input_tokens": 1, "output_tokens": 1}}}),
+        ]) + "\n", encoding="utf-8")
+        calls = [c for c in T.iter_calls([proj]) if c["session_id"] == "sessE"]
+        check("V-TISOBS-ITER-ENTRYPOINT",
+              len(calls) == 1 and calls[0]["entrypoint"] == "sdk-cli"
+              and calls[0]["ts"] == "2026-09-27T10:00:00Z",
+              f"{[(c['entrypoint'], c['ts']) for c in calls]}")
+        n_sub = sum(1 for c in T.iter_calls([proj]) if c["session_id"] == "sessA")
+        check("V-TISOBS-ITER-SUBAGENTS", n_sub == 3,
+              f"sessA calls incl. subagent = {n_sub} (expected 2 + 1)")
+        import os, time
+        old = time.time() - 30 * 86400
+        os.utime(e, (old, old))
+        pruned = [c for c in T.iter_calls([proj], modified_since=time.time() - 86400)
+                  if c["session_id"] == "sessE"]
+        check("V-TISOBS-ITER-MTIME-PRUNE", pruned == [],
+              "file untouched for 30d is skipped under a 1d window")
+
+        prices = {"input": 4.0, "output": 20.0, "cache_write_5m": 5.0,
+                  "cache_write_1h": 8.0, "cache_read": 0.2}
+        split = {"input_tokens": 1_000_000, "output_tokens": 1_000_000,
+                 "cache_read_input_tokens": 1_000_000,
+                 "cache_creation_input_tokens": 2_000_000,
+                 "cache_creation": {"ephemeral_5m_input_tokens": 1_000_000,
+                                    "ephemeral_1h_input_tokens": 1_000_000}}
+        usd, assumed = T.cost_usd(split, prices)
+        check("V-TISOBS-COST-SPLIT", abs(usd - 37.2) < 1e-9 and assumed is False,
+              f"4 + 20 + 0.2 + 5 + 8 = 37.2 -> {usd} assumed={assumed}")
+        nosplit = {k: v for k, v in split.items() if k != "cache_creation"}
+        usd2, assumed2 = T.cost_usd(nosplit, prices)
+        check("V-TISOBS-COST-TTL-ASSUMED", abs(usd2 - 34.2) < 1e-9 and assumed2 is True,
+              f"no breakdown -> all writes at 5m: {usd2} assumed={assumed2}")
+        usd3, _ = T.cost_usd(split, None)
+        check("V-TISOBS-COST-UNPRICED-IS-NONE", usd3 is None,
+              "a model with no price returns None, never 0.0")
+
     print(f"TISOBS_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
