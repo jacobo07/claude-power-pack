@@ -1074,6 +1074,14 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 # completed the milestone must not be followed by another one.
                 work_dir = None
                 if act in ("relay", "replace") and rec.get("owner"):
+                    hold = quota_hold_from_transcript(rec["owner"]["session_id"], now)
+                    if hold:
+                        # The successor would meet the same refusal: hold, spending no epoch.
+                        row["held"] = f"provider quota until {int(hold['until'])}: {hold['reason']}"
+                        lr.ledger_append(mid, "quota_held", mission_id=mid, epoch=rec["epoch"],
+                                         until=hold["until"], reason=hold["reason"])
+                        continue
+                if act in ("relay", "replace") and rec.get("owner"):
                     # Judge (and brief) where the predecessor actually worked. Measured M6: the
                     # run lived in a git worktree while the mission's cwd kept a reset roadmap,
                     # so asking GSD there would read 1/8 for ever and never complete.
@@ -1236,6 +1244,73 @@ def handoff_note_from_transcript(session_id: str) -> str:
     if not text or NOTE_TAG not in text:
         return ""
     return text.rsplit(NOTE_TAG, 1)[1].strip()[:NOTE_MAX_CHARS]
+
+
+# A worker whose only reply is the provider refusing it did no work: relaunching burns an
+# iteration into the same refusal. Measured 2026-09-26, m-075bb211b830: 8 epochs, every
+# reply "You've hit your weekly limit · resets Sep 30, 7pm (Europe/Madrid)", budget spent,
+# zero work. A settled turn is not an answered turn.
+QUOTA_RE = re.compile(r"hit your (?:weekly |usage |session |daily )?limit"
+                      r"|usage limit (?:reached|exceeded)", re.I)
+RESETS_RE = re.compile(r"resets\s+(?:(?P<mon>[A-Z][a-z]{2})\s+(?P<day>\d{1,2}),?\s+)?"
+                       r"(?P<h>\d{1,2})(?::(?P<m>\d{2}))?\s*(?P<ap>am|pm)"
+                       r"(?:\s*\((?P<tz>[^)]+)\))?", re.I)
+QUOTA_UNPARSED_HOLD_S = 3600
+_MONTHS = {m: i for i, m in enumerate(
+    ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
+
+
+def quota_reset_at(text: str, now: float) -> float | None:
+    """Epoch seconds at which the refusal says the limit resets; None when unparseable."""
+    import datetime as _dt
+    m = RESETS_RE.search(text or "")
+    if not m:
+        return None
+    try:
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo(m.group("tz").strip()) if m.group("tz") else None
+    except Exception:  # noqa: BLE001 -- unknown zone: fall back to the host's local time
+        tz = None
+    base = _dt.datetime.fromtimestamp(now, tz)
+    hour = int(m.group("h")) % 12 + (12 if m.group("ap").lower() == "pm" else 0)
+    minute = int(m.group("m") or 0)
+    if m.group("mon"):
+        mon = _MONTHS.get(m.group("mon").lower())
+        if not mon:
+            return None
+        cand = base.replace(month=mon, day=int(m.group("day")), hour=hour, minute=minute,
+                            second=0, microsecond=0)
+        if cand.timestamp() < now - 180 * 86400:
+            cand = cand.replace(year=cand.year + 1)
+    else:
+        cand = base.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if cand.timestamp() <= now:
+            cand += _dt.timedelta(days=1)
+    return cand.timestamp()
+
+
+def quota_hold(text: str | None, replied_at: float | None, now: float) -> dict | None:
+    """{"until", "reason"} while the predecessor's last reply is a provider quota refusal and
+    its reset has not passed; None otherwise. Pure. An unparseable reset holds one hour from
+    the reply, so the supervisor probes at most hourly instead of every pass."""
+    if not text or not QUOTA_RE.search(text):
+        return None
+    until = quota_reset_at(text, now)
+    if until is None:
+        until = (replied_at or now) + QUOTA_UNPARSED_HOLD_S
+    if now >= until:
+        return None
+    return {"until": until, "reason": " ".join(text.split())[:200]}
+
+
+def quota_hold_from_transcript(session_id: str, now: float) -> dict | None:
+    try:
+        t = lr.find_transcript(session_id)
+        text = lr.last_assistant_text(t) if t else None
+        replied_at = os.path.getmtime(t) if t else None
+    except Exception:  # noqa: BLE001 -- no evidence of a refusal is not a refusal
+        return None
+    return quota_hold(text, replied_at, now)
 
 
 def _cli(argv=None) -> int:

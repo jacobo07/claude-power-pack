@@ -537,6 +537,44 @@ def main() -> int:
     finally:
         gm.lr.find_transcript = real_find
 
+    # --- quota hold: a provider refusal is not a finished epoch (m-075bb211b830, 2026-09-26) ----
+    REAL = "You've hit your weekly limit · resets Sep 30, 7pm (Europe/Madrid)"
+    at = gm.quota_reset_at(REAL, NOW)          # NOW = 2027-01-15; Sep 30 already passed this year
+    check("V-MC-QUOTA-RESET-PARSED", at is not None and at > NOW, str(at))
+    sep26 = 1790380800.0                       # 2026-09-26 00:00 UTC, the measured incident day
+    at26 = gm.quota_reset_at(REAL, sep26)
+    check("V-MC-QUOTA-RESET-EXACT", at26 == 1790787600.0, str(at26))  # 2026-09-30 17:00 UTC
+    at_t = gm.quota_reset_at("You've hit your limit · resets 8pm (Europe/Madrid)", sep26)
+    check("V-MC-QUOTA-RESET-TIME-ONLY", at_t is not None and sep26 < at_t <= sep26 + 86400, str(at_t))
+    check("V-MC-QUOTA-HOLD-BEFORE-RESET", gm.quota_hold(REAL, sep26, sep26) is not None)
+    check("V-MC-QUOTA-RELEASE-AFTER-RESET", gm.quota_hold(REAL, sep26, at26 + 1) is None)
+    check("V-MC-QUOTA-UNPARSED-HOLDS-AN-HOUR",
+          gm.quota_hold("usage limit reached", NOW, NOW + 60) is not None
+          and gm.quota_hold("usage limit reached", NOW, NOW + 3601) is None)
+    check("V-MC-QUOTA-CONTROL-NORMAL-REPLY", gm.quota_hold("Phase 3 done. HANDOFF NOTE: next 4",
+                                                           NOW, NOW) is None)
+    check("V-MC-QUOTA-CONTROL-NO-TEXT", gm.quota_hold(None, None, NOW) is None)
+    real_q = gm.quota_hold_from_transcript
+    try:
+        gm.quota_hold_from_transcript = lambda sid, now: (
+            {"until": now + 999, "reason": REAL} if sid == "s-m-q1" else None)
+        hs = fresh("m-q1")
+        n_before = len(launches)
+        rows = gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                            stop_runner=stop_run, pid_alive=gone)
+        rec = gm.load("m-q1")
+        row = next((r for r in rows if r["mission_id"] == "m-q1"), {})
+        check("V-MC-QUOTA-SUP-HOLDS-NO-LAUNCH",
+              len(launches) == n_before and rec["epoch"] == 1 and rec["iterations"] == 0
+              and "provider quota" in row.get("held", ""), str(row))
+        hs = fresh("m-q2")
+        gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                     stop_runner=stop_run, pid_alive=gone)
+        check("V-MC-QUOTA-SUP-CONTROL-RELAYS", len(launches) == n_before + 1
+              and gm.load("m-q2")["epoch"] == 2, "a normal ended turn still relays")
+    finally:
+        gm.quota_hold_from_transcript = real_q
+
     # --- adopt: the host's witness of THIS launch, when the worker's own ack raced ------------
     for p in Path(TMP).glob("gsd-mission-*.json"):
         p.unlink()
