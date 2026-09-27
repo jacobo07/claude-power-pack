@@ -54,7 +54,7 @@ SESSION_DURATION_WARN_S = 2 * 60 * 60
 def _load_routing() -> dict:
     if not ROUTING_PATH.is_file():
         return {
-            "default_model": "claude-opus-4-7",
+            "default_model": "claude-opus-5-5",
             "rules": [],
             "skill_to_task_type": {},
         }
@@ -62,7 +62,7 @@ def _load_routing() -> dict:
         return json.loads(ROUTING_PATH.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {
-            "default_model": "claude-opus-4-7",
+            "default_model": "claude-opus-5-5",
             "rules": [],
             "skill_to_task_type": {},
         }
@@ -71,7 +71,7 @@ def _load_routing() -> dict:
 def load_routing(task_type: str) -> str:
     """Return recommended model id for a task_type. Default = opus."""
     cfg = _load_routing()
-    default = cfg.get("default_model", "claude-opus-4-7")
+    default = cfg.get("default_model", "claude-opus-5-5")
     for r in cfg.get("rules", []):
         if r.get("task_type") == task_type:
             return r.get("recommended_model", default)
@@ -87,7 +87,7 @@ def route_skill(skill_name: str) -> tuple[str, str]:
     smap = cfg.get("skill_to_task_type", {})
     task_type = smap.get(skill_name)
     if task_type is None:
-        return cfg.get("default_model", "claude-opus-4-7"), "unmapped"
+        return cfg.get("default_model", "claude-opus-5-5"), "unmapped"
     return load_routing(task_type), task_type
 
 

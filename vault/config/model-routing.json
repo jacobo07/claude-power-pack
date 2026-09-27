@@ -1,70 +1,70 @@
 {
-  "routing_version": "1.0",
-  "schema": "vault/config/model-routing.schema",
-  "default_model": "claude-opus-4-7",
-  "rationale": "Default to Opus 4.7 for architectural work; route grunt to Sonnet 4.6; Haiku reserved for trivial lookups.",
-  "pricing_source": "vault/pricing/anthropic_2026-05.json",
+  "routing_version": "2.0",
+  "schema_status": "ABSENT -- the previously declared vault/config/model-routing.schema never existed and nothing validated this document (checked 2026-09-28)",
+  "default_model": "claude-opus-5-5",
+  "rationale": "Default to Opus 5.5 for architectural work; route well-specified grunt work to Sonnet 5; Haiku 4.5 for trivial lookups. Savings are per cost component, because they differ: Opus 5.5 and Sonnet 5 read cache at the same $0.20/MTok, and cache reads are ~98.5% of context on this estate (tools/tis_observed.py, 2026-09-27) -- so a cache-heavy route saves little by moving to Sonnet. Refreshed 2026-09-28 from the claude-*-4 ids.",
+  "pricing_source": "tools/pricing_source.py (newest vault/pricing/anthropic_YYYY-MM.json)",
   "models": {
-    "opus": "claude-opus-4-7",
-    "sonnet": "claude-sonnet-4-6",
+    "opus": "claude-opus-5-5",
+    "sonnet": "claude-sonnet-5",
     "haiku": "claude-haiku-4-5"
   },
   "rules": [
     {
       "task_type": "subagent_explore",
       "description": "Subagents de exploracion, grep, cat, ls, locate-X-in-repo",
-      "recommended_model": "claude-sonnet-4-6",
+      "recommended_model": "claude-sonnet-5",
       "rationale": "Read-only navegacion; no requiere razonamiento arquitectural.",
-      "estimated_savings_vs_opus": "5x"
+      "estimated_savings_vs_opus": {"input": "2x", "output": "2x", "cache_write": "2x", "cache_read": "1x"}
     },
     {
       "task_type": "test_runner",
       "description": "Ejecutar tests, leer output, classify pass/fail",
-      "recommended_model": "claude-sonnet-4-6",
+      "recommended_model": "claude-sonnet-5",
       "rationale": "Output determinista; no decision making.",
-      "estimated_savings_vs_opus": "5x"
+      "estimated_savings_vs_opus": {"input": "2x", "output": "2x", "cache_write": "2x", "cache_read": "1x"}
     },
     {
       "task_type": "commit_push_pr",
       "description": "Git commits, push, PRs, merge, status diffs",
-      "recommended_model": "claude-sonnet-4-6",
+      "recommended_model": "claude-sonnet-5",
       "rationale": "Operacion mecanica bien definida.",
-      "estimated_savings_vs_opus": "5x"
+      "estimated_savings_vs_opus": {"input": "2x", "output": "2x", "cache_write": "2x", "cache_read": "1x"}
     },
     {
       "task_type": "doc_generation",
       "description": "Generar MDs, changelogs, vault entries, README",
-      "recommended_model": "claude-sonnet-4-6",
+      "recommended_model": "claude-sonnet-5",
       "rationale": "Templates conocidos; no arquitectura.",
-      "estimated_savings_vs_opus": "5x"
+      "estimated_savings_vs_opus": {"input": "2x", "output": "2x", "cache_write": "2x", "cache_read": "1x"}
     },
     {
       "task_type": "single_file_lookup",
       "description": "Trivial single-file grep o lookup factual",
       "recommended_model": "claude-haiku-4-5",
-      "rationale": "Trivial; Haiku es 15x mas barato que Opus.",
-      "estimated_savings_vs_opus": "15x"
+      "rationale": "Trivial; Haiku 4.5 is 4x cheaper than Opus 5.5 on input and output, 2x on cache reads.",
+      "estimated_savings_vs_opus": {"input": "4x", "output": "4x", "cache_write": "4x", "cache_read": "2x"}
     },
     {
       "task_type": "arch_decision",
       "description": "ULTRA-PLAN Q&A, design decisions, schema choices",
-      "recommended_model": "claude-opus-4-7",
+      "recommended_model": "claude-opus-5-5",
       "rationale": "Stakes altos; calidad maxima requerida.",
-      "estimated_savings_vs_opus": "1x"
+      "estimated_savings_vs_opus": {"input": "1x", "output": "1x", "cache_write": "1x", "cache_read": "1x"}
     },
     {
       "task_type": "code_review_final",
       "description": "code-reviewer antes de merge, BLOCK gate",
-      "recommended_model": "claude-opus-4-7",
+      "recommended_model": "claude-opus-5-5",
       "rationale": "Bloqueo de calidad; no escatimar.",
-      "estimated_savings_vs_opus": "1x"
+      "estimated_savings_vs_opus": {"input": "1x", "output": "1x", "cache_write": "1x", "cache_read": "1x"}
     },
     {
       "task_type": "iteration_on_error",
       "description": "Fix de errores criticos bloqueantes",
-      "recommended_model": "claude-opus-4-7",
+      "recommended_model": "claude-opus-5-5",
       "rationale": "Error grave requiere maximo razonamiento.",
-      "estimated_savings_vs_opus": "1x"
+      "estimated_savings_vs_opus": {"input": "1x", "output": "1x", "cache_write": "1x", "cache_read": "1x"}
     }
   ],
   "skill_to_task_type": {

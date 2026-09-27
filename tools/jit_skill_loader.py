@@ -1085,13 +1085,13 @@ def _tco_load_routing_cached():
         return _tco_load_routing_cached._cache
     cfg_path = PP_ROOT / "vault" / "config" / "model-routing.json"
     if not cfg_path.is_file():
-        cfg = {"default_model": "claude-opus-4-7",
+        cfg = {"default_model": "claude-opus-5-5",
                "rules": [], "skill_to_task_type": {}}
     else:
         try:
             cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            cfg = {"default_model": "claude-opus-4-7",
+            cfg = {"default_model": "claude-opus-5-5",
                    "rules": [], "skill_to_task_type": {}}
     _tco_load_routing_cached._cache = cfg
     return cfg
@@ -1111,7 +1111,7 @@ def _tco_inject_routing(fn):
             if not task_type:
                 return result
             cfg = _tco_load_routing_cached()
-            default = cfg.get("default_model", "claude-opus-4-7")
+            default = cfg.get("default_model", "claude-opus-5-5")
             rec = default
             for r in cfg.get("rules", []):
                 if r.get("task_type") == task_type:

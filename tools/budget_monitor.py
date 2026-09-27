@@ -88,7 +88,7 @@ def _load_budget_config() -> tuple[dict | None, str]:
         try:
             usd = float(env_val)
             return ({"tier": "env-override", "monthly_usd": usd,
-                     "refill_iso": "", "model_default": "claude-opus-4-7"},
+                     "refill_iso": "", "model_default": "claude-opus-5-5"},
                     f"env:{ENV_BUDGET_OVERRIDE}")
         except (TypeError, ValueError):
             return (None, "env-malformed")
@@ -107,7 +107,7 @@ def _load_budget_config() -> tuple[dict | None, str]:
         return (None, "file-invalid:monthly_usd")
     if cfg.get("tier") not in ("pro", "max5x", "max20x", "env-override"):
         return (None, f"file-invalid:tier={cfg.get('tier')!r}")
-    cfg.setdefault("model_default", "claude-opus-4-7")
+    cfg.setdefault("model_default", "claude-opus-5-5")
     cfg.setdefault("refill_iso", "")
     return (cfg, "file:~/.claude/budget.json")
 
