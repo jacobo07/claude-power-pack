@@ -17,7 +17,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 
 const crypto = require('crypto');
 
@@ -125,7 +125,19 @@ function detectDomain(cwd) {
 
 // ── Gate Execution ──────────────────────────────────────────────────
 
-function runGate(name, command, cwd, timeout = 30000) {
+/** `withProjectBin`: put `<cwd>/node_modules/.bin` first on PATH, as `npm run` would, without
+ *  paying npm's own startup (measured 1.3-12 s on a starved Windows host, which turned the
+ *  declared typecheck into a timeout). The existing PATH key is kept whatever its case. */
+function gateEnv(name, cwd, withProjectBin) {
+  const env = { ...process.env, MIX_ENV: name === 'test' ? 'test' : process.env.MIX_ENV };
+  if (withProjectBin) {
+    const key = Object.keys(env).find(k => k.toUpperCase() === 'PATH') || 'PATH';
+    env[key] = path.join(cwd, 'node_modules', '.bin') + path.delimiter + (env[key] || '');
+  }
+  return env;
+}
+
+function runGate(name, command, cwd, timeout = 30000, withProjectBin = false) {
   if (!command) return { passed: true, gate: name, output: 'skipped' };
 
   try {
@@ -135,7 +147,7 @@ function runGate(name, command, cwd, timeout = 30000) {
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'pipe'],
       windowsHide: true,
-      env: { ...process.env, MIX_ENV: name === 'test' ? 'test' : process.env.MIX_ENV },
+      env: gateEnv(name, cwd, withProjectBin),
     });
     return { passed: true, gate: name, output: output.substring(0, 2000) };
   } catch (err) {
@@ -153,7 +165,8 @@ function runGate(name, command, cwd, timeout = 30000) {
       };
     }
     const output = (err.stdout || '') + '\n' + (err.stderr || '');
-    return { passed: false, gate: name, output: output.substring(0, 3000), exitCode: err.status };
+    // `full` feeds the baseline comparison: a truncated error list would make old debt look new.
+    return { passed: false, gate: name, output: output.substring(0, 3000), full: output.substring(0, 1000000), exitCode: err.status };
   }
 }
 
@@ -162,7 +175,115 @@ function reportInconclusive(result) {
     'Not counted as a failure and no BLOCKED_DELIVERY.md written. Re-run it when the host is idle.\n');
 }
 
-function runScaffoldAudit(cwd) {
+// ── The subject is the CHANGE ───────────────────────────────────────
+// A gate that judges the whole repository reports upstream debt as the session's failure, and an
+// unattended worker cannot tell the two apart. Measured 2026-09-25 (Orca X, P8 worker): 37 upstream
+// TODOs in files the worker never touched, and a root tsconfig.json TypeScript 7 rejects regardless of
+// the code. The session's change = everything that differs from the commit HEAD was at the session's
+// first gate run, committed or not, plus every file the session edited. No git -> full scan (strict).
+
+const WIN_GIT = 'C:\\Program Files\\Git\\cmd\\git.exe';
+const SKIP_DIRS = ['node_modules', '.git', '_build', 'deps', 'target', 'dist', '__pycache__'];
+
+function gitExe() {
+  return process.env.CPP_GIT_EXE || (fs.existsSync(WIN_GIT) ? WIN_GIT : 'git');
+}
+
+function git(cwd, args, timeout = 15000) {
+  try {
+    return execFileSync(gitExe(), ['-C', cwd, ...args], {
+      encoding: 'utf8', timeout, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch { return null; }
+}
+
+function readTracker(name) {
+  try { return JSON.parse(fs.readFileSync(path.join(TRACKER_DIR, name), 'utf8')); } catch { return {}; }
+}
+
+function writeTracker(name, data) {
+  try {
+    if (!fs.existsSync(TRACKER_DIR)) fs.mkdirSync(TRACKER_DIR, { recursive: true });
+    fs.writeFileSync(path.join(TRACKER_DIR, name), JSON.stringify(data));
+  } catch { /* the next run records it again */ }
+}
+
+/** The commit HEAD was at this session's first gate run in `cwd`; null when `cwd` is not in git. */
+function sessionBase(sessionId, cwd) {
+  const name = `base-${sessionId}.json`;
+  const bases = readTracker(name);
+  const key = path.resolve(cwd);
+  if (bases[key]) return bases[key];
+  const head = (git(cwd, ['rev-parse', '--verify', '--quiet', 'HEAD']) || '').trim();
+  if (!/^[0-9a-f]{40}$/.test(head)) return null;
+  bases[key] = head;
+  writeTracker(name, bases);
+  return head;
+}
+
+function isUnder(file, dir) {
+  const rel = path.relative(dir, file);
+  return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
+}
+
+/** Absolute paths of files the session changed under `cwd`, or null when that cannot be known. */
+function changedFiles(sessionId, cwd, base) {
+  if (!base) return null;
+  const top = (git(cwd, ['rev-parse', '--show-toplevel']) || '').trim();
+  const diff = git(cwd, ['diff', '--name-only', '-z', base]);
+  const untracked = git(cwd, ['ls-files', '--others', '--exclude-standard', '--full-name', '-z']);
+  if (!top || diff === null || untracked === null) return null;
+  const files = new Set();
+  for (const rel of (diff + untracked).split('\0').filter(Boolean)) files.add(path.resolve(top, rel));
+  for (const f of getDirtyFiles(sessionId)) {
+    if (typeof f === 'string') files.add(path.resolve(cwd, f));
+  }
+  const root = path.resolve(cwd);
+  return [...files].filter(f => isUnder(f, root) && fs.existsSync(f) && fs.statSync(f).isFile());
+}
+
+function auditFile(cwd, full, violations) {
+  if (!SCANNABLE.has(path.extname(full).toLowerCase())) return;
+  if (path.relative(cwd, full).split(/[\\/]/).some(seg => SKIP_DIRS.includes(seg))) return;
+  try {
+    const content = fs.readFileSync(full, 'utf8');
+    if (jwExemptionGranted(full, content)) return;
+    const lines = content.split('\n');
+    for (const pattern of SCAFFOLD_PATTERNS) {
+      for (let i = 0; i < lines.length; i++) {
+        if (pattern.regex.test(lines[i])) {
+          violations.push({
+            file: path.relative(cwd, full),
+            line: i + 1,
+            text: lines[i].trim().substring(0, 120),
+            desc: pattern.desc,
+            severity: pattern.severity,
+          });
+        }
+      }
+    }
+  } catch { /* skip unreadable */ }
+}
+
+/**
+ * True while any file a scaffold block names still carries a CRITICAL violation -- or when the block
+ * names no file at all, since then nothing can prove it resolved. A block is the only thing that
+ * carries a failure across a worker relay: the next session's base is AFTER the offending commit, so
+ * its own (scoped) pass is vacuous about that file and must not lift the block.
+ */
+function scaffoldBlockStillFails(cwd, body) {
+  const named = [...new Set([...body.matchAll(/^\[\w+\] (.+?):\d+ \u2014 /gm)].map(m => m[1]))];
+  if (named.length === 0) return true;
+  const violations = [];
+  for (const rel of named) {
+    const full = path.resolve(cwd, rel);
+    if (fs.existsSync(full)) auditFile(cwd, full, violations);
+  }
+  return violations.some(v => v.severity === 'CRITICAL');
+}
+
+/** `scope` = the session's changed files; null = unknown, so the whole tree is judged. */
+function runScaffoldAudit(cwd, scope = null) {
   const violations = [];
 
   function scanDir(dir, depth = 0) {
@@ -172,33 +293,17 @@ function runScaffoldAudit(cwd) {
       for (const entry of entries) {
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) {
-          if (['node_modules', '.git', '_build', 'deps', 'target', 'dist', '__pycache__'].includes(entry.name)) continue;
+          if (SKIP_DIRS.includes(entry.name)) continue;
           scanDir(full, depth + 1);
-        } else if (entry.isFile() && SCANNABLE.has(path.extname(entry.name).toLowerCase())) {
-          try {
-            const content = fs.readFileSync(full, 'utf8');
-            if (jwExemptionGranted(full, content)) continue;
-            const lines = content.split('\n');
-            for (const pattern of SCAFFOLD_PATTERNS) {
-              for (let i = 0; i < lines.length; i++) {
-                if (pattern.regex.test(lines[i])) {
-                  violations.push({
-                    file: path.relative(cwd, full),
-                    line: i + 1,
-                    text: lines[i].trim().substring(0, 120),
-                    desc: pattern.desc,
-                    severity: pattern.severity,
-                  });
-                }
-              }
-            }
-          } catch { /* skip unreadable */ }
+        } else if (entry.isFile()) {
+          auditFile(cwd, full, violations);
         }
       }
     } catch { /* skip unreadable dirs */ }
   }
 
-  scanDir(cwd);
+  if (scope) for (const f of scope) auditFile(cwd, f, violations);
+  else scanDir(cwd);
   const critical = violations.filter(v => v.severity === 'CRITICAL');
   return {
     passed: critical.length === 0,
@@ -206,7 +311,66 @@ function runScaffoldAudit(cwd) {
     violations,
     criticalCount: critical.length,
     totalCount: violations.length,
+    scope: scope ? `${scope.length} changed file(s)` : 'whole tree (no git scope)',
   };
+}
+
+// ── The project's own command, and a red that was already there ─────
+
+const DECLARED_TYPECHECK = ['typecheck', 'type-check', 'check-types', 'tc'];
+
+/** A typecheck the project declares for itself beats the registry's guess for its language. */
+function declaredCompile(cwd) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(cwd, 'package.json'), 'utf8'));
+    const key = DECLARED_TYPECHECK.find(k => pkg && pkg.scripts && typeof pkg.scripts[k] === 'string');
+    return key ? pkg.scripts[key] : null;
+  } catch { return null; }
+}
+
+/** Error lines with positions removed, so an edit that shifts a line does not make old debt new. */
+function errorFingerprints(output) {
+  const set = new Set();
+  for (const raw of String(output).replace(/\x1b\[[0-9;]*m/g, '').split(/\r?\n/)) {
+    if (!/\berror\b/i.test(raw)) continue;
+    const norm = raw.replace(/\\/g, '/').replace(/\(\d+,\d+\)/g, '').replace(/:\d+(:\d+)?/g, '')
+      .replace(/\s+/g, ' ').trim();
+    if (norm) set.add(norm);
+  }
+  return set;
+}
+
+/**
+ * The compile errors `command` reports at `base`, from a throwaway worktree; cached per
+ * (repository, base, command). null = could not be established, which the caller must never read
+ * as "no errors at the base".
+ */
+function baselineErrors(cwd, base, command, timeout, withProjectBin = false) {
+  const top = (git(cwd, ['rev-parse', '--show-toplevel']) || '').trim();
+  if (!top || !base) return null;
+  const rel = path.relative(top, path.resolve(cwd));
+  const key = crypto.createHash('sha1').update(`${top}\0${rel}\0${base}\0${command}`).digest('hex').slice(0, 20);
+  const cache = readTracker(`baseline-${key}.json`);
+  if (Array.isArray(cache.errors)) return new Set(cache.errors);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zig-baseline-'));
+  try {
+    if (git(top, ['worktree', 'add', '--detach', '--force', tmp, base], 60000) === null) return null;
+    const where = path.join(tmp, rel);
+    const deps = path.join(path.resolve(cwd), 'node_modules');
+    if (fs.existsSync(deps) && !fs.existsSync(path.join(where, 'node_modules'))) {
+      try { fs.symlinkSync(deps, path.join(where, 'node_modules'), 'junction'); } catch { /* compile may still run */ }
+    }
+    const r = runGate('compile', command, where, timeout, withProjectBin);
+    if (r.inconclusive) return null;
+    const errors = r.passed ? new Set() : errorFingerprints(r.full || r.output);
+    if (!r.passed && errors.size === 0) return null;
+    writeTracker(`baseline-${key}.json`, { base, command, errors: [...errors] });
+    return errors;
+  } finally {
+    git(top, ['worktree', 'remove', '--force', tmp], 60000);
+    try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* os tmp */ }
+    git(top, ['worktree', 'prune'], 30000);
+  }
 }
 
 // ── Failure Tracking & Escalation ───────────────────────────────────
@@ -228,6 +392,32 @@ function trackFailure(sessionId, gate, cwd) {
   } catch { return 1; }
 }
 
+/** A pass ends the run of failures: the block threshold counts CONSECUTIVE failures. */
+function resetFailure(sessionId, gate) {
+  try {
+    const fpath = getFailurePath(sessionId);
+    const data = JSON.parse(fs.readFileSync(fpath, 'utf8'));
+    if (data[gate]) { data[gate] = 0; fs.writeFileSync(fpath, JSON.stringify(data)); }
+  } catch { /* no record, nothing to reset */ }
+}
+
+/**
+ * The block this hook wrote for `gate` is lifted by that same gate passing -- nothing else. A block
+ * for another gate, or a file a person or another tool wrote, is left exactly where it is.
+ */
+function clearOwnBlock(cwd, gate, stillFailing = null) {
+  const f = path.join(cwd, 'BLOCKED_DELIVERY.md');
+  try {
+    const body = fs.readFileSync(f, 'utf8');
+    if (!body.includes(`## Gate that failed: ${gate.toUpperCase()}\n`)) return false;
+    if (!body.includes(`consecutive attempts to fix the ${gate} gate failed.`)) return false;
+    if (stillFailing && stillFailing(body)) return false;
+    fs.unlinkSync(f);
+    process.stderr.write(`\n✅ BLOCKED_DELIVERY.md cleared: the ${gate} gate that wrote it now passes.\n`);
+    return true;
+  } catch { return false; }
+}
+
 function createBlockedDelivery(cwd, gate, output, failureCount, dirtyFiles) {
   const content = `# BLOCKED DELIVERY — ${path.basename(cwd)}
 
@@ -245,7 +435,8 @@ ${dirtyFiles.map(f => `- ${f}`).join('\n') || '(unknown)'}
 
 ### Kill-switch status: ACTIVE
 This file was created because ${failureCount} consecutive attempts to fix the ${gate} gate failed.
-Manual intervention required. Delete this file after fixing to re-enable delivery.
+It clears itself when the ${gate} gate passes again (only the session's change is judged; a red
+already present at the session base is reported as pre-existing, never counted). A person may delete it.
 `;
 
   try {
@@ -284,7 +475,7 @@ function emitReward(sessionId, value, source, metadata = {}) {
 }
 
 // ── Core processing (extracted so hook-dispatcher.js can require this module) ──
-function run(data) {
+function runGates(data) {
   try {
     data = data || {};
     const cwd = data.cwd || process.cwd();
@@ -292,24 +483,44 @@ function run(data) {
     const registry = loadRegistry();
     const maxFailures = registry.max_failures_before_block || 3;
 
-    if (fs.existsSync(path.join(cwd, 'BLOCKED_DELIVERY.md'))) {
-      const blockContent = fs.readFileSync(path.join(cwd, 'BLOCKED_DELIVERY.md'), 'utf8');
-      process.stderr.write(`\n🛑 BLOCKED_DELIVERY.md EXISTS. Fix the issues before doing anything else:\n${blockContent.substring(0, 1000)}\n`);
-    }
-
+    const base = sessionBase(sessionId, cwd);
     const domain = detectDomain(cwd);
     const results = [];
 
-    // Gate 1: COMPILE
-    if (domain && domain.compile) {
-      const compileResult = runGate('compile', domain.compile, cwd, domain.compile_timeout_ms || 30000);
+    // Gate 1: COMPILE -- an explicit per-project override, else the project's own declared
+    // typecheck, else the registry's guess for the language.
+    const overridden = domain && domain.name === 'custom' && Object.prototype.hasOwnProperty.call(domain, 'compile');
+    const declared = overridden ? null : declaredCompile(cwd);
+    const compileCommand = overridden ? domain.compile : (declared || (domain && domain.compile) || null);
+    const projectBin = Boolean(declared) && compileCommand === declared;
+    const compileTimeout = (domain && domain.compile_timeout_ms) || 30000;
+    if (compileCommand) {
+      const compileResult = runGate('compile', compileCommand, cwd, compileTimeout, projectBin);
       if (compileResult.inconclusive) reportInconclusive(compileResult);
-      else results.push(compileResult);
+      let newErrors = null;
       if (!compileResult.passed && !compileResult.inconclusive) {
+        const now = errorFingerprints(compileResult.full || compileResult.output);
+        const before = now.size ? baselineErrors(cwd, base, compileCommand, compileTimeout, projectBin) : null;
+        if (before) newErrors = [...now].filter(e => !before.has(e));
+        if (newErrors && newErrors.length === 0) {
+          process.stderr.write(`\n⚠️ ZERO-ISSUE GATE: COMPILE red is PRE-EXISTING -- all ${now.size} error(s) were already ` +
+            `present at the session base ${base.slice(0, 9)}; none is new. Not counted.\n`);
+          resetFailure(sessionId, 'compile');
+        }
+      }
+      if (compileResult.passed) {
+        results.push(compileResult);
+        resetFailure(sessionId, 'compile');
+        clearOwnBlock(cwd, 'compile');
+      }
+      if (!compileResult.passed && !compileResult.inconclusive && !(newErrors && newErrors.length === 0)) {
+        results.push(compileResult);
         const count = trackFailure(sessionId, 'compile', cwd);
         emitReward(sessionId, 0.0, 'zero-issue-gate', { failed_gate: 'compile', failure_count: count });
-        let msg = `\n❌ ZERO-ISSUE GATE: COMPILE FAILED (${domain.name})\n`;
+        let msg = `\n❌ ZERO-ISSUE GATE: COMPILE FAILED (${domain ? domain.name : 'declared'}: ${compileCommand})\n`;
         msg += `${'─'.repeat(60)}\n`;
+        if (newErrors) msg += `New since the session base ${base.slice(0, 9)}:\n${newErrors.slice(0, 30).join('\n')}\n\n`;
+        else msg += `(no baseline for comparison -- every error counts)\n`;
         msg += compileResult.output.substring(0, 2000) + '\n';
         msg += `${'─'.repeat(60)}\n`;
         msg += `Fix the compile error before claiming done. Failure ${count}/${maxFailures}.\n`;
@@ -327,12 +538,15 @@ function run(data) {
 
     // Gate 2: SCAFFOLD AUDIT
     if (registry.scaffold_audit_enabled !== false) {
-      const scaffoldResult = runScaffoldAudit(cwd);
+      const scaffoldResult = runScaffoldAudit(cwd, changedFiles(sessionId, cwd, base));
       results.push(scaffoldResult);
-      if (!scaffoldResult.passed) {
+      if (scaffoldResult.passed) {
+        resetFailure(sessionId, 'scaffold');
+        clearOwnBlock(cwd, 'scaffold', (body) => scaffoldBlockStillFails(cwd, body));
+      } else {
         const count = trackFailure(sessionId, 'scaffold', cwd);
         emitReward(sessionId, 0.0, 'zero-issue-gate', { failed_gate: 'scaffold', failure_count: count, critical_count: scaffoldResult.criticalCount });
-        let msg = `\n❌ ZERO-ISSUE GATE: SCAFFOLD AUDIT FAILED (${scaffoldResult.criticalCount} CRITICAL)\n`;
+        let msg = `\n❌ ZERO-ISSUE GATE: SCAFFOLD AUDIT FAILED (${scaffoldResult.criticalCount} CRITICAL in ${scaffoldResult.scope})\n`;
         msg += `${'─'.repeat(60)}\n`;
         for (const v of scaffoldResult.violations.slice(0, 10)) {
           msg += `[${v.severity}] ${v.file}:${v.line} — ${v.desc}\n`;
@@ -361,6 +575,10 @@ function run(data) {
       const testResult = runGate('test', domain.test, cwd, 60000);
       if (testResult.inconclusive) reportInconclusive(testResult);
       else results.push(testResult);
+      if (testResult.passed) {
+        resetFailure(sessionId, 'test');
+        clearOwnBlock(cwd, 'test');
+      }
       if (!testResult.passed && !testResult.inconclusive) {
         const count = trackFailure(sessionId, 'test', cwd);
         emitReward(sessionId, 0.0, 'zero-issue-gate', { failed_gate: 'test', failure_count: count });
@@ -391,6 +609,19 @@ function run(data) {
     // On hook error, allow continuation (don't block on hook bugs)
     return { continue: true };
   }
+}
+
+// The standing-block warning comes AFTER the gates: a run that just cleared the block must not
+// also tell the worker to fix it.
+function run(data) {
+  const result = runGates(data);
+  try {
+    const f = path.join((data && data.cwd) || process.cwd(), 'BLOCKED_DELIVERY.md');
+    if (fs.existsSync(f)) {
+      process.stderr.write(`\n🛑 BLOCKED_DELIVERY.md EXISTS. Fix the issues before doing anything else:\n${fs.readFileSync(f, 'utf8').substring(0, 1000)}\n`);
+    }
+  } catch { /* the warning is advisory */ }
+  return result;
 }
 
 // ── Dual-mode entry point ──
