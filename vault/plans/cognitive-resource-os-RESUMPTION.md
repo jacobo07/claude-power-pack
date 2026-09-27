@@ -24,6 +24,13 @@ per session; first-call shared prefix 1.9% sdk-cli, 16.4% cli. Hypothesis (unmea
 Coherence anchor: `python tools/test_tis_observed.py` 25/25, `test_pricing_source.py` 5/5,
 `test_budget_monitor_observed.py` 7/7. test_tco V-BASELINE-INTACT INCONCLUSIVE (full pytest >180s, host ~630 MB free).
 
+## 2b. Owner decisions pending
+- hooks/kobiiclaw-autoresearch.js (Stop, registered at dispatcher:174) has been INERT since TUA-X renamed
+  TUAX_UGC_SYSTEM -> CW_UGC_SYSTEM: its fallback path is dead, so every turn skips silently. Fixing the path
+  REVIVES a per-turn `knowledge_engine.py inject <cwd>` that writes AKOS_KNOWLEDGE_BRIEF.md into every open
+  repo (incl. trees other panes commit in) with a 5 s budget. Revive, retire, or move to SessionStart? Not
+  changed. /knowledge (manual) was repointed; `domains` verified, `query` run, inject/brief not executed here.
+
 ## 3. Active decisions
 - Estimates and observations never mix; every figure names its source.
 - Pricing: never hardcode a dated filename; never invent a price (read the live page).
