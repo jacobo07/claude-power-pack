@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""V-TISOBS gates for tools/tis_observed.py (observed usage from transcripts).
+
+Every fixture is synthetic and built here; no real transcript is read.
+"""
+from __future__ import annotations
+
+import json
+import sys
+import tempfile
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import tis_observed as T  # noqa: E402
+
+passes = fails = 0
+
+
+def _ok(gate, ev):
+    global passes
+    passes += 1
+    print(f"  [PASS] {gate}: {ev}")
+
+
+def _fail(gate, ev):
+    global fails
+    fails += 1
+    print(f"  [FAIL] {gate}: {ev}")
+
+
+def check(gate, cond, ev):
+    (_ok if cond else _fail)(gate, ev)
+
+
+def line(mid, rid, inp, cc, cr, out, model="claude-opus-5-5", thinking=None):
+    usage = {"input_tokens": inp, "cache_creation_input_tokens": cc,
+             "cache_read_input_tokens": cr, "output_tokens": out}
+    if thinking is not None:
+        usage["output_tokens_details"] = {"thinking_tokens": thinking}
+    msg = {"model": model, "usage": usage}
+    if mid is not None:
+        msg["id"] = mid
+    obj = {"type": "assistant", "message": msg}
+    if rid is not None:
+        obj["requestId"] = rid
+    return json.dumps(obj)
+
+
+def main() -> int:
+    with tempfile.TemporaryDirectory() as td:
+        proj = Path(td) / "proj"
+        proj.mkdir()
+        # Session A: call m1 streamed as 3 content-block lines (identical usage),
+        # call m2 once, one synthetic notice, one malformed line, one user line.
+        a = proj / "sessA.jsonl"
+        a.write_text("\n".join([
+            json.dumps({"type": "user", "message": {"content": "hi"}}),
+            line("m1", "r1", 2, 100000, 0, 10, thinking=4),
+            line("m1", "r1", 2, 100000, 0, 10, thinking=4),
+            line("m1", "r1", 2, 100000, 0, 10, thinking=4),
+            "{not json",
+            line("m2", "r2", 5, 1000, 100000, 20),
+            line("s1", "r3", 0, 0, 0, 0, model=T.SYNTHETIC_MODEL),
+        ]) + "\n", encoding="utf-8")
+        # Subagent transcript for session A.
+        sub = proj / "sessA" / "subagents"
+        sub.mkdir(parents=True)
+        (sub / "agent-x.jsonl").write_text(
+            line("g1", "q1", 1, 500, 0, 3) + "\n" + line("g1", "q1", 1, 500, 0, 3) + "\n",
+            encoding="utf-8")
+        # Session B: BOM written as raw bytes (json/Python writers never emit one),
+        # plus a call with no identity at all.
+        b = proj / "sessB.jsonl"
+        b.write_bytes(b"\xef\xbb\xbf" + (line(None, None, 7, 0, 0, 1) + "\n").encode())
+        # Session C: parses, holds no real call.
+        c = proj / "sessC.jsonl"
+        c.write_text(json.dumps({"type": "user", "message": {"content": "x"}}) + "\n",
+                     encoding="utf-8")
+
+        sa = T.read_session(a)
+        check("V-TISOBS-DEDUPE", sa.calls == 2,
+              f"3 streamed lines of m1 + m2 -> calls={sa.calls} (expected 2)")
+        check("V-TISOBS-DEDUPE-TOTALS",
+              sa.cache_creation_tokens == 101000 and sa.output_tokens == 30,
+              f"cc={sa.cache_creation_tokens} out={sa.output_tokens}")
+        check("V-TISOBS-SYNTHETIC-EXCLUDED",
+              sa.synthetic_skipped == 1 and T.SYNTHETIC_MODEL not in sa.models,
+              f"synthetic_skipped={sa.synthetic_skipped} models={sa.models}")
+        check("V-TISOBS-BADLINE-COUNTED", sa.bad_lines == 1,
+              f"bad_lines={sa.bad_lines}")
+        check("V-TISOBS-FIRST-CALL", sa.first_call_context == 100002,
+              f"first_call_context={sa.first_call_context}")
+        check("V-TISOBS-THINKING", sa.thinking_tokens == 4,
+              f"thinking={sa.thinking_tokens} (dedupe must not multiply it)")
+        check("V-TISOBS-SUBAGENT",
+              sa.subagent_files == 1 and sa.subagent_calls == 1
+              and sa.subagent_context_tokens == 501,
+              f"files={sa.subagent_files} calls={sa.subagent_calls} "
+              f"ctx={sa.subagent_context_tokens}")
+        sa_nosub = T.read_session(a, include_subagents=False)
+        check("V-TISOBS-SUBAGENT-CONTROL", sa_nosub.subagent_calls == 0,
+              f"no-subagents run -> subagent_calls={sa_nosub.subagent_calls}")
+
+        sb = T.read_session(b)
+        check("V-TISOBS-BOM", sb.state == "MEASURED" and sb.input_tokens == 7,
+              f"state={sb.state} input={sb.input_tokens}")
+
+        sc = T.read_session(c)
+        check("V-TISOBS-MEASURED-ZERO",
+              sc.state == "MEASURED_ZERO" and sc.first_call_context is None,
+              f"state={sc.state}")
+
+        sd = T.read_session(proj / "missing.jsonl")
+        check("V-TISOBS-UNMEASURED", sd.state == "UNMEASURED" and sd.error,
+              f"state={sd.state} error={sd.error[:40]}")
+        check("V-TISOBS-STATES-DISTINCT",
+              len({sa.state, sc.state, sd.state}) == 3,
+              "MEASURED / MEASURED_ZERO / UNMEASURED all distinct")
+
+        summ = T.summarize(T.scan([proj]))
+        check("V-TISOBS-SUMMARY",
+              summ["sessions"] == 3 and summ["calls"] == 3
+              and summ["duplicate_usage_lines_collapsed"] == 2
+              and summ["by_state"] == {"MEASURED": 2, "MEASURED_ZERO": 1}
+              and summ["source"] == "observed",
+              f"{ {k: summ[k] for k in ('sessions', 'calls', 'by_state', 'duplicate_usage_lines_collapsed')} }")
+
+        # Prefix rides in every call: A = 100002 x 2, B = 7 x 1, over 201014.
+        share = summ["startup_prefix_share_estimate"]
+        check("V-TISOBS-PREFIX-CALL-WEIGHTED",
+              share is not None and abs(share - 0.995) < 1e-4,
+              f"startup_prefix_share_estimate={share} (expected 0.995, "
+              f"a once-per-session ratio would read 0.4975)")
+
+    print(f"TISOBS_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
+    return 0 if fails == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
