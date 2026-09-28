@@ -103,17 +103,20 @@
    "owner": "delegated-work prompt contract (tools/task_contract.py)",
    "disposition": "EXTEND",
    "differential": "explicit owner, acceptance, stop conditions, deterministic contract keys, validation",
-   "status": "PLANNED",
-   "slice": "T4"
+   "status": "LIVE",
+   "slice": "T4",
+   "proof": "python tools/test_task_contract.py",
+   "evidence": "EXTEND: kit's exact key set + bounds validate through the bridge; CPP adds stated write ownership and the durable-output clause inside the kit's own fields. End to end: the real agent-solo-guard passes a rendered long-running contract and blocks the same objective without the clause (control). First production caller: tools/batch_drafts.py."
   },
   {
    "id": "genesis-source-packets",
    "source": "vendor/genesis-suite/modules/genesis-source-packets",
-   "owner": "successor card (tools/gsd_mission.py render_card) + agent briefs",
+   "owner": "tools/source_packet.py (tool built, tested); consumer decided by the T8 paired experiment",
    "disposition": "WRAP",
    "differential": "bounded, filtered, hash-bound source excerpts",
    "status": "PLANNED",
-   "slice": "T2"
+   "slice": "T8",
+   "evidence": "WRAP built: bridge buildSourcePacket + expected-hash STALE detection, test_source_packet 9/9. NOT embedded in the successor card: the card is capped at 8000 bytes (SessionStart truncation) and one packet's default excerpt budget is 24000 -- the spec's consumer assumption does not hold. Stays PLANNED until a consumer earns it."
   },
   {
    "id": "genesis-evidence-collector",

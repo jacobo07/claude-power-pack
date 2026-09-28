@@ -75,7 +75,7 @@ def _owns(files, work_root: Path) -> tuple[list[str] | None, str]:
         pp = Path(p)
         if pp.is_absolute():
             # Plans executed in a git worktree name that worktree's absolute paths (measured:
-            # KobiiCraft luckyarena-arena2 -> C:/Users/User/Apps/kme-wt-arena2/...). Worktrees of
+            # KobiiCraft luckyarena-arena2 -> <home>/Apps/kme-wt-arena2/...). Worktrees of
             # one repo share relative paths, so the key is the path under ITS OWN git root.
             root = next((a for a in [pp, *pp.parents] if (a / ".git").exists()), None)
             try:

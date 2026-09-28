@@ -76,6 +76,19 @@ def main() -> int:
         r = judge(d, root)
         check("V-PGRAPH-DIRECTORY-OVERLAP", r["verdict"] == pg.REFUSED, r["refused"])
 
+        # A real batch reviewer (2026-09-28) claimed `./src/a.py` vs `src/a.py` would MISS an overlap,
+        # having seen only _owns(). The vendored overlap normalizes; `..` spellings are refused outright.
+        d = ph / "07b-dot-segment"
+        plan(d, "07b-01", 1, files=["./src/a.py"])
+        plan(d, "07b-02", 1, files=["src/a.py"])
+        r = judge(d, root)
+        check("V-PGRAPH-DOT-SEGMENT-SAME-KEY", r["verdict"] == pg.REFUSED, r["refused"])
+        d = ph / "07c-parent-segment"
+        plan(d, "07c-01", 1, files=["src/../src/a.py"])
+        plan(d, "07c-02", 1, files=["src/b.py"])
+        r = judge(d, root)
+        check("V-PGRAPH-PARENT-SEGMENT-NEVER-OK", r["verdict"] != pg.OK, r["refused"] or r["unjudged"])
+
         d = ph / "08-cross-wave"
         plan(d, "08-01", 1, files=["src/a.py"])
         plan(d, "08-02", 2, deps=["08-01"], files=["src/a.py"])
