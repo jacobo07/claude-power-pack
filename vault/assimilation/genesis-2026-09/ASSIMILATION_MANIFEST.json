@@ -241,7 +241,8 @@
    "disposition": "WRAP",
    "differential": "staged hash-bound charters, frozen gates, holdout, rollback with reason",
    "status": "PLANNED",
-   "slice": "T9"
+   "slice": "T9 (seam; UCR-CIF construction unmerged)",
+   "evidence": "Not built on purpose: a CPP-side engine would be a second promotion authority beside UCR-CIF (unmerged, 77 commits) and tower ratchet. Requirements recorded for the owner, incl. the missing rule (>=3 train + >=1 holdout, zero regressions, preregistered gain) and its join to item 31 evidence: vault/assimilation/genesis-2026-09/seams/charter-lab-ucr-cif.md. Reopen when ucr-cif merges or the Owner names tower as charter owner."
   },
   {
    "id": "genesis-runner",
