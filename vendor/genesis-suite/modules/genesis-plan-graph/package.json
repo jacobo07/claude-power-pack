@@ -1,0 +1,15 @@
+{
+  "name": "genesis-plan-graph",
+  "version": "1.0.0",
+  "description": "Schedule dependency-ready work with explicit ownership.",
+  "main": "index.cjs",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "demo": "node examples/demo.cjs"
+  },
+  "license": "MIT"
+}

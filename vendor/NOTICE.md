@@ -268,3 +268,46 @@ confirmation of the fix in `e5aff74`.
 - **Confidence:** VERIFIED (full LICENSE text read at the pinned tag, 2026-09-25)
 - **Exit plan:** the gate reports UNJUDGED without the jar and nothing else depends on it. The spec `vault/specs/tla/UWCP.tla` is plain TLA+; it has NOT been checked under any other tool (Apalache would need type annotations and Java 21).
 - **Obligation summary:** Copyright (c) 2017 Microsoft Corporation. MIT: keep the notice if the jar is ever redistributed; it is not.
+
+### genesis-suite 1.2.0 (21 modules + integrated runner) — MIT
+
+- **Source:**    Owner-supplied archive `for cpp-gsd-long.zip` (inner `genesis-suite.zip`); no public URL recorded. Hashes in `vendor/_provenance/genesis-suite.json`.
+- **Snapshot:**  bundled verbatim at `vendor/genesis-suite/` (341 files); byte-pinned by `.gitattributes -text`; upstream `scripts/verify-release.cjs` → `{"ok":true,"files":340}` on 2026-09-28.
+- **Adapter:**   lib/adapters/genesis-suite.js (single entry point, JSON stdin/stdout), driven from Python by `modules/external_assimilation/node_bridge.py`
+- **Added:**     2026-09-28
+- **Gate verdict:** PERMISSIVE
+- **Redistribution:** allowed
+- **Integration mode:** adapter (cold-path modules) — hot-path capabilities are re-implemented natively, see `vault/assimilation/genesis-2026-09/ASSIMILATION_MANIFEST.json`
+- **License file:** `LICENSE` (root; each module keeps its own identical `LICENSE`)
+- **Fingerprint:** 044a5d498371f59e336cc3a224e30ef40d711beb1f66b7777e65a7e16a7bcafe
+- **Confidence:** VERIFIED (full LICENSE text read, "Copyright (c) 2026 Genesis Contributors")
+- **Exit plan:** every caller goes through the bridge, which returns BRIDGE_FAILED when the tree is absent; callers fall back to their pre-assimilation behaviour. Delete `vendor/genesis-suite/` and its record.
+- **Obligation summary:** keep the MIT notice in every redistributed copy (kept per module). Requires Node `^22.23.2 || ^24.14.0` — the bridge refuses other runtimes.
+
+### context-budget 1.0.0 — MIT
+
+- **Source:**    Owner-supplied archive `for cpp-gsd-long.zip` (inner `context-budget (1).zip`). Hashes in `vendor/_provenance/context-budget.json`.
+- **Snapshot:**  bundled verbatim at `vendor/context-budget/` (12 files) as the reference for the native Python port `modules/context_budget/`.
+- **Adapter:**   none at runtime; parity drill in `tools/test_context_budget.py` calls it through the genesis bridge's generic module mode.
+- **Added:**     2026-09-28
+- **Gate verdict:** PERMISSIVE
+- **Redistribution:** allowed
+- **Integration mode:** metadata-only (reference) + native port
+- **License file:** `LICENSE`
+- **Fingerprint:** 3e2e976c41ea6c716135ddc360fbaeeda99f65b49a9cbff2e18db4247f7e6f7a
+- **Confidence:** VERIFIED (full LICENSE text read, "Copyright (c) 2026 Context Budget contributors")
+- **Exit plan:** the port has no runtime dependency on the vendored copy; delete it and its record.
+- **Obligation summary:** MIT notice kept; the port records its derivation in its module docstring.
+
+### event-driven-autonomous-loop kit + self-continuation-protocol — NO LICENSE STATED
+
+- **Source:**    same Owner-supplied archive; hashes in `vendor/_provenance/unlicensed-inputs.json`.
+- **Snapshot:**  NOT bundled. No byte of either is in this repository.
+- **Adapter:**   none.
+- **Added:**     2026-09-28
+- **Gate verdict:** UNKNOWN (no license file)
+- **Redistribution:** unknown → treated as prohibited
+- **Integration mode:** metadata-only — the ideas (completion-driven rearm, instant-failure backoff, failure quarantine, wake-up ordering, four-gate stop rubric) are re-implemented from scratch inside existing CPP owners.
+- **Confidence:** VERIFIED (archive inspected: no LICENSE, no notice in any file)
+- **Exit plan:** nothing to remove.
+- **Obligation summary:** none taken on; ideas are not copyrightable, expression was not copied.

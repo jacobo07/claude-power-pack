@@ -1,0 +1,15 @@
+{
+  "name": "genesis-worker-router",
+  "version": "1.0.0",
+  "description": "Route bounded work across explicitly configured providers.",
+  "main": "index.cjs",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "demo": "node examples/demo.cjs"
+  },
+  "license": "MIT"
+}

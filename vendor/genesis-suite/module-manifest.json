@@ -1,0 +1,35 @@
+{
+  "name": "genesis-suite",
+  "node": "^22.23.2 || ^24.14.0",
+  "exports": {
+    "createGenesis": "Create a caller-scoped integrated runner",
+    "modules": "Twenty-one standalone component APIs"
+  },
+  "methods": [
+    "registerPlan",
+    "ready",
+    "taskStatus",
+    "runTask",
+    "checkpoint",
+    "decide",
+    "scan",
+    "researchPass",
+    "snapshot"
+  ],
+  "handles": [
+    "ledger",
+    "adaptation",
+    "context",
+    "router",
+    "charters"
+  ],
+  "limits": {
+    "tasksPerPlan": 40,
+    "taskConcurrency": 1,
+    "deadlineMs": 120000,
+    "artifactBytes": 65536
+  },
+  "documentation": "docs/API.md",
+  "example": "examples/demo.cjs",
+  "dependencies": "Self-contained modules under modules/; no dependency installation required"
+}

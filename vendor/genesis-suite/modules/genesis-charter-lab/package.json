@@ -1,0 +1,15 @@
+{
+  "name": "genesis-charter-lab",
+  "version": "1.0.0",
+  "description": "Evaluate public role instructions before promotion.",
+  "main": "index.cjs",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "demo": "node examples/demo.cjs"
+  },
+  "license": "MIT"
+}

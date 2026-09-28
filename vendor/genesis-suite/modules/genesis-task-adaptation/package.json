@@ -1,0 +1,15 @@
+{
+  "name": "genesis-task-adaptation",
+  "version": "1.0.0",
+  "description": "Revise active work when feedback and checks change.",
+  "main": "index.cjs",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "demo": "node examples/demo.cjs"
+  },
+  "license": "MIT"
+}

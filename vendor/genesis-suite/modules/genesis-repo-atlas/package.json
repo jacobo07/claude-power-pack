@@ -1,0 +1,15 @@
+{
+  "name": "genesis-repo-atlas",
+  "version": "1.0.0",
+  "description": "Map explicit repositories without reading every file.",
+  "main": "index.cjs",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "demo": "node examples/demo.cjs"
+  },
+  "license": "MIT"
+}

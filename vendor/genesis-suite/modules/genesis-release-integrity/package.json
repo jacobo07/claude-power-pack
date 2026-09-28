@@ -1,0 +1,14 @@
+{
+  "name": "genesis-release-integrity",
+  "version": "1.0.0",
+  "description": "Publish an explicit, inspectable package of known bytes.",
+  "main": "index.cjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test --test-reporter=tap test/index.test.cjs",
+    "demo": "node examples/demo.cjs"
+  },
+  "license": "MIT"
+}

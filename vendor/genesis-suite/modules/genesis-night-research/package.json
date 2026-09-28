@@ -1,0 +1,15 @@
+{
+  "name": "genesis-night-research",
+  "version": "1.0.0",
+  "description": "Run a single research pass within time and resource limits.",
+  "main": "index.cjs",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "demo": "node examples/demo.cjs"
+  },
+  "license": "MIT"
+}

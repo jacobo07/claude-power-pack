@@ -1,0 +1,33 @@
+{
+ "schema": "cpp-unlicensed-inputs/1",
+ "source_zip": "for cpp-gsd-long.zip",
+ "source_zip_sha256": "f46889d091a848a24b5b6f02f42787432f1a58a5224f75344bf14020dc0f3658",
+ "license": "NONE STATED",
+ "treatment": "ideas-only: no bytes copied into this repository; capabilities re-implemented natively",
+ "files": [
+  {
+   "path": "self-continuation-protocol (1).md",
+   "sha256": "d63e60049bc414ef4b625dbef9882ebdf48e50388773bab9f36bb04448bcdbdc"
+  },
+  {
+   "path": "event-driven-autonomous-loop.zip",
+   "sha256": "aa6ff7c9350e06e08265d19a71432dde57b15154fb32f5ca971f938ae735d160"
+  },
+  {
+   "path": "event-driven-autonomous-loop/AI-AGENT-CONTINUATION-RULE.md",
+   "sha256": "5c7dd1c6effaf246f5eb1ffd758bb41b08d2b76e801c0f512c27b71e60c32c94"
+  },
+  {
+   "path": "event-driven-autonomous-loop/loop-runner.cjs",
+   "sha256": "2018d9fc46fd5c81341f45d77526969b2858a7912c61bab9361f715fb8b12f15"
+  },
+  {
+   "path": "event-driven-autonomous-loop/README.md",
+   "sha256": "4da488dfcd94059cdf9dff69ff81fef36524477117a460b0b5082254fffffdac"
+  },
+  {
+   "path": "event-driven-autonomous-loop/SETUP-WINDOWS-MAC-LINUX.md",
+   "sha256": "21b802ed3c6083a7e45f5505882efe0ae9476117c79171e38784bc128c5068d8"
+  }
+ ]
+}

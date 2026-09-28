@@ -1,0 +1,80 @@
+{
+ "schema": "cpp-vendor-provenance/1",
+ "name": "context-budget",
+ "taken_at": "2026-09-28T13:01:42Z",
+ "source": {
+  "zip": "for cpp-gsd-long.zip",
+  "zip_sha256": "f46889d091a848a24b5b6f02f42787432f1a58a5224f75344bf14020dc0f3658",
+  "inner": "context-budget (1).zip",
+  "inner_sha256": "244e392112d2427474302b6c3e2b597f100f7ad2df4ab1ecff7140e7354fdd7d"
+ },
+ "license_gate_fingerprint": "3e2e976c41ea6c716135ddc360fbaeeda99f65b49a9cbff2e18db4247f7e6f7a",
+ "local_patches": [],
+ "files": [
+  {
+   "path": ".env.example",
+   "sha256": "b82584b9b797547fc05b0ecdd8fd5bdcd0c80f55551b8ff1397d0f8469ebb28d",
+   "bytes": 216
+  },
+  {
+   "path": ".github/workflows/ci.yml",
+   "sha256": "fee97bd62edd5ea2baf21e500756ceb699bb57d9e2663fb6d9a79e1ef0f7bbf3",
+   "bytes": 646
+  },
+  {
+   "path": ".gitignore",
+   "sha256": "b746398b761b9bc7d0325c97551b8f2d51fbe5377e482d61d109e7c081af6b7d",
+   "bytes": 330
+  },
+  {
+   "path": "assets/hero.svg",
+   "sha256": "d291d70d7339f62ff0faea146ff1b010375de1e4990974dc154394616f209837",
+   "bytes": 2716
+  },
+  {
+   "path": "CONTRIBUTING.md",
+   "sha256": "2aee68c6b37bac403171bcb2c1aa88d5bcf0d6badca413dbad77b7aab579abfa",
+   "bytes": 888
+  },
+  {
+   "path": "docs/architecture.md",
+   "sha256": "cd3cd838eff3c2ea3703df08017375e54ad1ec381a1c3275c52f48147ad510bc",
+   "bytes": 3057
+  },
+  {
+   "path": "docs/index.html",
+   "sha256": "0eab3feebd991a8456d547932e7f5f8295ac40f0f6c084a5084eee78a8ee49c6",
+   "bytes": 9998
+  },
+  {
+   "path": "examples/demo.cjs",
+   "sha256": "ddd971ff90005cdf38ea17745b44577d43353167099ab64b7e0f27116bf206bd",
+   "bytes": 1728
+  },
+  {
+   "path": "lib/context-budget.cjs",
+   "sha256": "7abdd6a004eb2ed3316ab5ce408f6de17cae53d44646ec08fc39593104a38e63",
+   "bytes": 6168
+  },
+  {
+   "path": "LICENSE",
+   "sha256": "338cf39d5a2d5cefac949788fa1f703299c02214145f4211fc757c7c5d1159fd",
+   "bytes": 1084
+  },
+  {
+   "path": "package.json",
+   "sha256": "e4cbf951785c15e60e78f77624bb92971a2a4c10f3259e500eb310b5aa8f7e0e",
+   "bytes": 727
+  },
+  {
+   "path": "README.md",
+   "sha256": "6f862040468157c213c5da8de0b6c3a2908cf61d0bc8048ee1f5ab692cab200e",
+   "bytes": 5273
+  }
+ ],
+ "version": "1.0.0",
+ "license": "MIT",
+ "engines": {
+  "node": ">=18"
+ }
+}

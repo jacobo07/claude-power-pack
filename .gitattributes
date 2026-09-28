@@ -1,5 +1,11 @@
 knowledge_vault/** -text
 
+# 2026-09-28: vendored third-party trees are byte-pinned. This clone runs core.autocrlf=true,
+# which would hand genesis-suite back with CRLF and fail its own FILES.json sha256 inventory
+# (scripts/verify-release.cjs) on every fresh checkout. Checked by tools/vendor_provenance.py.
+vendor/genesis-suite/** -text
+vendor/context-budget/** -text
+
 # 2026-05-23: union merge driver for append-only ledgers.
 # Both sides legitimately appended different rows -- standard recursive
 # merge falls into content conflict. Union merge concatenates both
