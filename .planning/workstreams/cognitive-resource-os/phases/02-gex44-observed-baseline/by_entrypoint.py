@@ -423,6 +423,22 @@ def measure(dirs, own_dir, now_ts, pricing, pricing_meta) -> dict:
         sdkcli_usd = t7_all.get("sdk-cli", {}).get("usd") or 0.0
         reconcile["R6"] = _reconcile_val(sdkcli_usd, bm_agg.get("usd", 0.0), tol=1e-6)
 
+    # WR-02: R1-R6 never inspect the trailing-7d "unknown" bucket (calls whose own
+    # transcript line carries no `entrypoint`, e.g. a subagent file that never wrote
+    # one) or the "cli" trailing-7d group at all -- a call silently landing there would
+    # understate cli/sdk-cli 7-day figures with no MISMATCH raised. R7 sums calls across
+    # every trailing-7d group (including "unknown") and compares against the same
+    # cutoff_ts-filtered call population computed independently above (`win_calls`), and
+    # separately flags a non-zero "unknown" population outright -- either condition is a
+    # call landing in an unreported/uncompared bucket.
+    sum_calls_7d = sum(g.get("calls", 0) for g in t7_all.values())
+    unknown_calls_7d = t7_all.get("unknown", {}).get("calls", 0)
+    if sum_calls_7d != len(win_calls) or unknown_calls_7d != 0:
+        reconcile["R7"] = (f"MISMATCH sum_calls_7d={sum_calls_7d} "
+                           f"win_calls={len(win_calls)} unknown_calls_7d={unknown_calls_7d}")
+    else:
+        reconcile["R7"] = "MATCH"
+
     overall = "MATCH"
     for k, v in reconcile.items():
         # Skip informational (non-check) entries, e.g. r5_r6_probe_elapsed_s (float) --
@@ -443,6 +459,24 @@ def measure(dirs, own_dir, now_ts, pricing, pricing_meta) -> dict:
 def _write_session(path: Path, entrypoint: str, calls: list):
     """calls: list of {mid, rid, ts, model (default claude-test), usage}."""
     lines = [json.dumps({"type": "user", "entrypoint": entrypoint, "message": {"content": "x"}})]
+    for c in calls:
+        msg = {"model": c.get("model", "claude-test"), "usage": c["usage"]}
+        if c.get("mid") is not None:
+            msg["id"] = c["mid"]
+        obj = {"type": "assistant", "message": msg}
+        if c.get("ts") is not None:
+            obj["timestamp"] = c["ts"]
+        if c.get("rid") is not None:
+            obj["requestId"] = c["rid"]
+        lines.append(json.dumps(obj))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _write_calls_only(path: Path, calls: list):
+    """Like _write_session but with NO `entrypoint` line anywhere in the file -- the
+    WR-02 fixture: an entrypoint-less subagent transcript. calls: same shape as
+    _write_session."""
+    lines = []
     for c in calls:
         msg = {"model": c.get("model", "claude-test"), "usage": c["usage"]}
         if c.get("mid") is not None:
@@ -575,6 +609,29 @@ def selftest() -> int:
             s9 = (str(root) not in dumped and "sessA" not in dumped
                   and "sessB" not in dumped and "sessC" not in dumped)
             check("S9", s9, "no fixture path or session id in json.dumps(result)")
+
+            # S10 (WR-02): an entrypoint-less subagent transcript groups under "unknown"
+            # in the trailing-7d view -- no other Rn check inspects that bucket. Added a
+            # subagent call under proj1/sessA with no `entrypoint` line anywhere in its
+            # file (proj1/sessA.jsonl's own session-level "cli" entrypoint does NOT
+            # propagate to it -- tis_observed reads each file's own entrypoint line, per
+            # tools/tis_observed.py:_calls_in). Before R7 existed, this call silently
+            # understated the real 7-day total with `reconcile.overall` still MATCH; R7
+            # must now flag it.
+            proj1_sub = proj1 / "sessA" / "subagents"
+            proj1_sub.mkdir(parents=True)
+            _write_calls_only(proj1_sub / "subX.jsonl", [
+                {"mid": "x1", "rid": "rx1", "ts": iso(1),
+                 "usage": {"input_tokens": 10, "output_tokens": 5}},
+            ])
+            res10 = measure(dirs, proj1, now_ts, pricing, pricing_meta)
+            rec10 = res10["reconcile"]
+            t7_10 = res10["scopes"]["all_projects"]["trailing_7d"]["by_entrypoint"]
+            s10 = (t7_10.get("unknown", {}).get("calls") == 1
+                   and rec10["R7"].startswith("MISMATCH")
+                   and rec10["overall"] == "MISMATCH")
+            check("S10", s10,
+                  f"unknown={t7_10.get('unknown')} R7={rec10['R7']} overall={rec10['overall']}")
         finally:
             T.PROJECTS_DIR = old_pd
 
