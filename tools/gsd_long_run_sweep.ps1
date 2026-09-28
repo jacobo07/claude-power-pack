@@ -85,10 +85,13 @@ $started = [DateTime]::UtcNow.ToString('o')
 try {
     $fs = [System.IO.File]::Open($lease, 'OpenOrCreate', 'ReadWrite', 'None')
 } catch {
-    $holder = ''
-    try { $holder = [System.IO.File]::ReadAllText($beat, $utf8) } catch { }
-    Write-Beat ([ordered]@{ outcome = 'skipped'; reason = 'another pass holds the lease';
-        at = $started; pid = $PID; holder_beat = $holder })
+    # Never overwrite the holder's heartbeat: a `skipped` stamped over `running` every 5 minutes
+    # hid a pass stuck past its bounds for ever (adversarial review F3, 2026-09-28).
+    $skip = Join-Path $stateDir 'gsd-sweep-skip.json'
+    $tmp = "$skip.$PID.tmp"
+    [System.IO.File]::WriteAllText($tmp, (([ordered]@{ outcome = 'skipped';
+        reason = 'another pass holds the lease'; at = $started; pid = $PID }) | ConvertTo-Json -Compress), $utf8)
+    Move-Item -LiteralPath $tmp -Destination $skip -Force
     exit 0
 }
 try {

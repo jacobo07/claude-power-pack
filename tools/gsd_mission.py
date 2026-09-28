@@ -285,8 +285,12 @@ def history_gaps(rec: dict, events: list[dict] | None = None) -> dict:
     Numbering starts at 1 with the first transition after T4, for new and older records alike;
     an older record's earlier history carries no numbers and is unjudged, not missing."""
     events = lr.ledger_events(rec["mission_id"]) if events is None else events
+    # Only a TRANSITION row witnesses a seq: it always carries `state`. Other rows may quote the
+    # record's seq (gsd_epoch's launch_cause does) and would otherwise fill a real hole
+    # (adversarial review F2, 2026-09-28).
     seen = sorted({int(e["seq"]) for e in events
-                   if e.get("mission_id") == rec["mission_id"] and isinstance(e.get("seq"), int)})
+                   if e.get("mission_id") == rec["mission_id"] and isinstance(e.get("seq"), int)
+                   and "state" in e})
     top = int(rec.get("seq") or 0)
     if not top:
         return {"judged": False, "reason": "no numbered transition yet (T4)", "missing": []}
@@ -305,9 +309,12 @@ def _scan() -> tuple[list[dict], list[dict]]:
         except Exception as exc:  # noqa: BLE001 -- classified below, never dropped
             rec, why = None, f"{type(exc).__name__}: {exc}"
         else:
-            why = None if isinstance(rec, dict) and rec.get("state") in STATES else "not a mission record"
-            if why is None and int(rec.get("schema_version") or 1) > SCHEMA_VERSION:
-                why = f"schema {rec.get('schema_version')} is newer than this build ({SCHEMA_VERSION})"
+            try:  # a well-formed JSON of the wrong SHAPE must not take down the whole pass (F5)
+                why = None if isinstance(rec, dict) and rec.get("state") in STATES else "not a mission record"
+                if why is None and int(rec.get("schema_version") or 1) > SCHEMA_VERSION:
+                    why = f"schema {rec.get('schema_version')} is newer than this build ({SCHEMA_VERSION})"
+            except Exception as exc:  # noqa: BLE001 -- classified as unreadable, never dropped
+                why = f"unclassifiable record: {type(exc).__name__}: {exc}"
         if why:
             try:
                 st = p.stat()
@@ -1180,6 +1187,19 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             act = plan["action"]
             if act == "halt":
                 st = None
+                # Where the work IS, resolved exactly as the relay path does (adversarial review
+                # F1, 2026-09-28): the cwd can hold a reset roadmap while the worker committed in
+                # a git worktree, and `work_dir` is saved only by a fresh launch -- a same-session
+                # continuation never saves it. Asking the cwd read a finished milestone as
+                # "work remains", halted it, and renewed it.
+                halt_wd = rec.get("work_dir") or rec["cwd"]
+                if rec.get("owner"):
+                    try:
+                        halt_wd = (effective_workdir(rec["owner"]["session_id"], rec["cwd"],
+                                                     rec.get("workstream")) or halt_wd)
+                    except Exception:  # noqa: BLE001 -- keep the recorded dir; never guess
+                        pass
+                row["work_dir"] = halt_wd
                 if "budget:" in plan["reason"]:
                     # Asked BEFORE the halt is written: the worker whose turn finished the
                     # milestone is often the last one the budget allows, and a halt written
@@ -1187,7 +1207,7 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     # 0 COMPLETED). Owner 2026-09-25: only "work remains" renews.
                     try:
                         st = (gsd_status or _supervise_gsd_status)(
-                            rec.get("work_dir") or rec["cwd"], workstream=rec.get("workstream"))
+                            halt_wd, workstream=rec.get("workstream"))
                     except Exception as exc:  # noqa: BLE001 -- unanswered, never "complete"
                         st = {"outcome": "UNAVAILABLE", "reason": f"{type(exc).__name__}: {exc}"}
                     row["gsd"] = st.get("outcome")
@@ -1211,8 +1231,7 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         # T5: all 18 renewals of the 6 capped lineages produced 0 commits. A
                         # mission whose tree never moved does not earn a fresh budget. A tree
                         # that cannot be measured is not "unchanged": it still renews.
-                        fp_now = (fingerprint or progress_fingerprint)(
-                            rec.get("work_dir") or rec["cwd"])
+                        fp_now = (fingerprint or progress_fingerprint)(halt_wd)
                         if fp_now is not None and fp_now == origin:
                             why_not = "no progress in this mission (work tree unchanged since its first launch)"
                     if why_not:
@@ -1284,7 +1303,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         row["held"] = turn_end["reason"]
                         continue
                 fp_fn = fingerprint or progress_fingerprint
-                progress = next_progress(rec, fp_fn(work_dir or rec.get("work_dir") or rec["cwd"]))
+                progress = next_progress(rec, fp_fn(work_dir or rec.get("work_dir") or rec["cwd"]),
+                                         ran=rec["state"] != LAUNCHING)
                 row["progress"] = progress
                 if act in ("relay", "replace") and progress["stalls"] >= NO_PROGRESS_EPOCHS:
                     # T5: convergence was asked first (above); a mission whose tree has not moved
@@ -1351,8 +1371,10 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, **kw) -> dict:
     rec = create(cwd, resume_command, **kw)
     if not launch:
         return {"mission": rec}
+    # The origin is the tree BEFORE epoch 1 works (review F6): measured here, at arm, it makes
+    # "unchanged since its first launch" true and credits epoch 1's own progress.
     res = launch_worker(rec["mission_id"], expect_epoch=0, expect_state=PREPARED,
-                        reason="armed")
+                        reason="armed", progress=next_progress(rec, progress_fingerprint(rec["cwd"])))
     if res.get("ok"):
         import gsd_epoch as ge
         ge.record_cause(rec["mission_id"], {"epoch": res["epoch"]},
@@ -1390,11 +1412,14 @@ def progress_fingerprint(work_dir: str) -> str | None:
     return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()[:16]
 
 
-def next_progress(rec: dict, fp: str | None) -> dict:
-    """The progress entry a relay records: stalls count up only on a MEASURED unchanged tree."""
+def next_progress(rec: dict, fp: str | None, ran: bool = True) -> dict:
+    """The progress entry a relay records: stalls count up only on a MEASURED unchanged tree,
+    and only for an epoch whose worker actually ran. A launch that was never acknowledged left
+    the tree unchanged by construction; counting it made "3 epochs ended with no commit" false
+    (adversarial review F4, 2026-09-28)."""
     prev = rec.get("progress") or {}
     stalls = int(prev.get("stalls") or 0)
-    if fp is not None and prev.get("fp") is not None:
+    if ran and fp is not None and prev.get("fp") is not None:
         stalls = stalls + 1 if fp == prev["fp"] else 0
     return {"fp": fp if fp is not None else prev.get("fp"), "stalls": stalls,
             "measured": fp is not None}

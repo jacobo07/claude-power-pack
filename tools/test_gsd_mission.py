@@ -742,6 +742,56 @@ def main() -> int:
     check("V-MC-PROGRESS-ORIGIN-AT-FIRST-LAUNCH", gm.load("m-origin").get("progress_origin") == "O",
           str(gm.load("m-origin").get("progress_origin")))
 
+    # Adversarial review 2026-09-28. F1 (HIGH): the budget-halt GSD question must be asked WHERE
+    # the work is (effective_workdir), not in the cwd -- assert on the directory, not the count.
+    real_ewd = gm.effective_workdir
+    asked_dirs = []
+
+    def gsd_where(c, workstream=None):
+        asked_dirs.append(c)
+        return {"outcome": "ALL_COMPLETE" if c == "WT-DIR" else "OK", "reason": c}
+
+    try:
+        gm.effective_workdir = lambda sid, cwd, ws=None: "WT-DIR"
+        hs = fresh("m-wt-budget")
+        gm.supervise(now=LATE, sessions=hs, gsd_status=gsd_where, runner=launch_run,
+                     stop_runner=stop_run, pid_alive=alive, fingerprint=lambda d: None)
+    finally:
+        gm.effective_workdir = real_ewd
+    check("V-MC-REVIEW-F1-BUDGET-HALT-ASKS-THE-WORKTREE",
+          asked_dirs == ["WT-DIR"] and gm.load("m-wt-budget")["state"] == gm.COMPLETED
+          and not successors("m-wt-budget"), f"asked={asked_dirs} state={gm.load('m-wt-budget')['state']}")
+    # F2: a non-transition row quoting a seq does not fill a hole.
+    h2 = gm.history_gaps({"mission_id": "m-f2", "seq": 2},
+                         [{"mission_id": "m-f2", "seq": 1, "state": "RUNNING"},
+                          {"mission_id": "m-f2", "seq": 2, "event": "launch_cause"}])
+    check("V-MC-REVIEW-F2-ONLY-TRANSITIONS-WITNESS-SEQ", h2["missing"] == [2], str(h2))
+    # F4: an epoch whose worker never ran is not a stalled epoch.
+    np_ = gm.next_progress({"progress": {"fp": "A", "stalls": 1}}, "A", ran=False)
+    check("V-MC-REVIEW-F4-UNRUN-EPOCH-NOT-A-STALL", np_["stalls"] == 1, str(np_))
+    check("V-MC-REVIEW-F4-CONTROL-RUN-EPOCH-STALLS",
+          gm.next_progress({"progress": {"fp": "A", "stalls": 1}}, "A")["stalls"] == 2)
+    # F5: well-formed JSON of the wrong shape is unreadable, and the pass survives it.
+    gm.mission_path("m-shape").write_text(json.dumps({"state": ["RUNNING"], "schema_version": "2.0"}),
+                                          encoding="utf-8")
+    try:
+        bad_ids = {b["mission_id"] for b in gm.unreadable_missions()}
+        check("V-MC-REVIEW-F5-WRONG-SHAPE-IS-UNREADABLE", "m-shape" in bad_ids, str(bad_ids))
+    except Exception as exc:  # noqa: BLE001
+        _fail("V-MC-REVIEW-F5-WRONG-SHAPE-IS-UNREADABLE", f"scan crashed: {exc!r}")
+    gm.mission_path("m-shape").unlink()
+    # F6: the origin is measured at ARM, before epoch 1 works.
+    real_lw, real_fp = gm.launch_worker, gm.progress_fingerprint
+    seen_prog = {}
+    try:
+        gm.launch_worker = lambda mid, **kw: seen_prog.update(kw) or {"ok": False}
+        gm.progress_fingerprint = lambda d: "ARM-TREE"
+        gm.arm(TMP, "/gsd-autonomous", mission_id="m-armorigin")
+    finally:
+        gm.launch_worker, gm.progress_fingerprint = real_lw, real_fp
+    check("V-MC-REVIEW-F6-ORIGIN-AT-ARM",
+          (seen_prog.get("progress") or {}).get("fp") == "ARM-TREE", str(seen_prog.get("progress")))
+
     check("V-MC-CONVERGE-UNANSWERED-STILL-HALTS",
           unk_state == gm.HALTED and not unk_succ,
           "an unanswerable GSD must not keep a spent mission running, nor renew it")

@@ -97,8 +97,11 @@ def main() -> int:
             pass
         time.sleep(0.2)
     rb = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=120)
-    bb = read_beat()
-    check("V-SWEEP-NO-OVERLAP-SKIPPED", rb.returncode == 0 and bb.get("outcome") == "skipped", str(bb)[:200])
+    skip_f = state / "gsd-sweep-skip.json"
+    sk = json.loads(skip_f.read_text(encoding="utf-8-sig")) if skip_f.exists() else {}
+    check("V-SWEEP-NO-OVERLAP-SKIPPED", rb.returncode == 0 and sk.get("outcome") == "skipped", str(sk)[:200])
+    check("V-SWEEP-SKIP-KEEPS-HOLDER-BEAT", read_beat().get("outcome") == "running",
+          "a skipped pass must not overwrite the running pass's heartbeat (review F3)")
     a.wait(timeout=180)
     check("V-SWEEP-HOLDER-FINISHES", read_beat().get("outcome") == "ran", str(read_beat())[:160])
     rc_ = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=180)
