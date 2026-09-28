@@ -180,7 +180,22 @@ transcript carries "CONTEXT WALL"). certify at 02:32Z: epoch 1 = 13 commits in t
 (phases 5–6 done, 7 planned), wall witnessed, 8 more owner samples all ≤ 1 live worker; the
 worker was still finishing its step, so no epoch 2 yet. The in-session watcher and waiter were
 killed by the host's low-memory reaper (312 MB free) and deliberately not restarted.
-Certified rotations so far: **0**. This section is updated from
+Certified rotations so far on the laptop: **0** -- the worker ignored the one-shot wall
+(fixed in `a000ad6`: re-ask every 3 points + supervisor enforcement after a 30 min grace).
+
+### Live proof (S10b) -- GEX44, mission m-a6fedd2e311d
+
+Account `jacobo@costaluzlawyers.es` (Max), Claude Code 2.1.282, PP `6efd815`, project
+`~/missions/gsd-long-smoke` at `4f09667` (0/8 phases), supervised by GEX44's existing
+`agora-mission-sweep` timer. Armed 10:24Z with wall 11/12/10 %. By 10:46Z the production sweep
+had made three fresh launches recorded `CONTEXT_ROTATION` trigger `wall`, each after the
+predecessor's mid-turn flag and with "CONTEXT WALL" in the predecessor's own transcript;
+`certify` passes **2** (epochs 3, 4) and correctly refuses epoch 2 (its predecessor made 0
+commits). `rehydration_verified` fired on epochs 1, 3, 4 -- S7 exercised live. Owner witness
+(`systemd-run` unit `c2-epoch-watch`): never more than one live worker.
+Finding: a fresh GEX44 worker sits at ~107k tokens (11 %) a few calls in, so a 12 % wall left
+~10-20k of room per epoch (5-11 min, 2 commits) -- rotation was real but cost more than it bought.
+Wall raised to 20/21/19 at seq 16 (applies from the epoch after 5). This section is updated from
 `python tools/gsd_epoch.py certify --mission m-916e905e23d4`, never from the mission's own output.
 
 ## 6. Rollback
