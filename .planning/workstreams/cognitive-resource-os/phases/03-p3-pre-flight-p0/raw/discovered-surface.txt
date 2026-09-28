@@ -1,0 +1,48 @@
+## H help flags
+cmd: python3 -c "import re;L=open('<P>/raw/claude-help.txt').read().split(chr(10));s=L.index('Options:');e=L.index('Commands:');E=[];[E.append([l]) if re.match(r'^  -',l) else (E[-1].append(l) if E and l.strip() else None) for l in L[s+1:e]];KW=r'(?i)claude\.md|memory|\brules?\b|setting|config|system.prompt|customi[sz]ation';print(chr(10).join(re.findall(r'--[A-Za-z][A-Za-z0-9-]*',x[0])[0] for x in E if re.search(KW,' '.join(y.strip() for y in x))))"
+--agent
+--append-system-prompt
+--bare
+--client-data-url
+--exclude-dynamic-system-prompt-sections
+--mcp-config
+--print
+--restricted
+--safe-mode
+--setting-sources
+--settings
+--strict-mcp-config
+--system-prompt
+--system-prompt-snapshot
+--verbose
+
+## E env vars
+cmd: timeout 120 grep -a -o -E '\bCLAUDE_[A-Z0-9_]*(CLAUDE_MDS?|MEMORY|RULES|CONFIG_DIR|SETTING[A-Z_]*|SIMPLE|SAFE_MODE|OAUTH_TOKEN)\b' <resolved binary> | sort | uniq -c
+     10 CLAUDE_BG_SESSION_PERMISSION_RULES
+      5 CLAUDE_BRIDGE_OAUTH_TOKEN
+      7 CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD
+     13 CLAUDE_CODE_BRIDGE_CHILD_MACHINE_SETTINGS
+      2 CLAUDE_CODE_COORDINATOR_PROPAGATE_NESTED_MEMORY
+      4 CLAUDE_CODE_DISABLE_AUTO_MEMORY
+     11 CLAUDE_CODE_DISABLE_CLAUDE_MDS
+      2 CLAUDE_CODE_DISABLE_HOME_SETTINGS_SEED
+      3 CLAUDE_CODE_DISABLE_ORG_MEMORY
+      3 CLAUDE_CODE_FLEETVIEW_SIMPLE
+      2 CLAUDE_CODE_FORCE_EVALUATE_MEMORY
+      3 CLAUDE_CODE_HIDE_SETTINGS_HINT
+      8 CLAUDE_CODE_MANAGED_SETTINGS_PATH
+      3 CLAUDE_CODE_MOCK_REMOTE_SETTINGS
+    120 CLAUDE_CODE_OAUTH_TOKEN
+      8 CLAUDE_CODE_POST_TURN_MEMORY
+      7 CLAUDE_CODE_REMOTE_SETTINGS_PATH
+      2 CLAUDE_CODE_REMOTE_SETTINGS_POLL_MS
+     10 CLAUDE_CODE_SAFE_MODE
+     30 CLAUDE_CODE_SIMPLE
+     79 CLAUDE_CONFIG_DIR
+     12 CLAUDE_SECURESTORAGE_CONFIG_DIR
+
+## S settings keys
+cmd: timeout 120 grep -a -o -E '\b[A-Za-z]{3,40}:[A-Za-z]{1,3}\([A-Za-z()]{0,12}\)\.optional\(\)\.describe\(.[^.]{0,300}(CLAUDE\.md|\.claude/rules)' <resolved binary> | cut -d: -f1 | sort | uniq -c
+      1 claudeMd
+      1 claudeMdExcludes
+      2 omitClaudeMd

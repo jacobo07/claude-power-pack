@@ -171,7 +171,9 @@ const CHAIN_MAP = {
     // changed nothing until a run is armed for the new path on purpose.
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/gsd_stop_continuation.js', timeoutMs: 5000, block: true, critical: true },
     { exe: NODE_EXE, script: './zero-issue-gate.js', timeoutMs: 70000, block: true },
-    { exe: NODE_EXE, script: './kobiiclaw-autoresearch.js', timeoutMs: 30000 },
+    // kobiiclaw-autoresearch.js RETIRED 2026-09-28 by the Owner: inert since TUA-X renamed
+    // TUAX_UGC_SYSTEM -> CW_UGC_SYSTEM, and reviving it would write AKOS_KNOWLEDGE_BRIEF.md into every
+    // open repo on every Stop. Manual /knowledge stays. The script file is kept, unregistered.
     { exe: NODE_EXE, script: './trace-flusher.js', timeoutMs: 15000 },
     { exe: NODE_EXE, script: './session-summary.js', timeoutMs: 20000 },
     { exe: NODE_EXE, script: './scaffold-auditor.js', timeoutMs: 15000, block: true },
