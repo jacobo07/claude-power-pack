@@ -4,7 +4,7 @@
 
 - [ ] **CRO-01**: The workstream's gates and the full pytest suite have a recorded verdict on an unstarved host, with a dirty-set bracket.
 - [x] **CRO-02**: GEX44's own transcripts yield an observed usage baseline split by entrypoint, compared with the laptop's.
-- [ ] **CRO-03**: The P3 ablation's pre-flight P0 has a PASS (named mechanism) or STOP verdict, reached without model calls.
+- [x] **CRO-03**: The P3 ablation's pre-flight P0 has a PASS (named mechanism) or STOP verdict, reached without model calls.
 - [ ] **CRO-04**: The cross-session prefix cache-miss hypothesis (MCP tool-list variance) is tested on subscription quota and judged.
 - [ ] **CRO-05**: RESUMPTION and UKDL carry every verdict; every result is committed on the mission branch for the laptop to fetch.
 
@@ -20,6 +20,6 @@
 |-------------|-------|--------|
 | CRO-01 | Phase 1 | Pending |
 | CRO-02 | Phase 2 | Complete |
-| CRO-03 | Phase 3 | Pending |
+| CRO-03 | Phase 3 | Complete |
 | CRO-04 | Phase 4 | Pending |
 | CRO-05 | Phase 5 | Pending |

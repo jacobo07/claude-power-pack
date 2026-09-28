@@ -1,32 +1,32 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1 — Gate verdict on the big host
-current_plan: Not started
-status: planning
-stopped_at: Phase 2 complete, ready to plan Phase 1
-last_updated: "2026-09-28T13:04:08.799Z"
+current_phase: 3
+current_plan: 1
+status: verifying
+stopped_at: "Completed 03-01-PLAN.md (Phase 3: P3 pre-flight P0, CRO-03 SATISFIED)"
+last_updated: "2026-09-28T14:06:58.538Z"
 last_activity: 2026-09-28
-last_activity_desc: Phase 2 complete, transitioned to Phase 1
-state_head: 290972c4b485bd6442445743ae9842ceee3a3633
+last_activity_desc: Phase 3 execution started
+state_head: d08644da6174bacd57262795475657b500b38a0a
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 4
+  completed_plans: 4
   percent: 20
 workstream: cognitive-resource-os
 created: 2026-09-28
-current_phase_name: Gate verdict on the big host
+current_phase_name: P3 pre-flight P0
 ---
 
 # Project State
 
 ## Current Position
 
-**Status:** Ready to plan
-**Current Phase:** 1 — Gate verdict on the big host
-**Last Activity:** 2026-09-28
-**Last Activity Description:** Phase 2 complete, transitioned to Phase 1
+**Status:** Phase complete — ready for verification
+**Current Phase:** 3
+**Last Activity:** 2026-09-28 — Phase 3 execution started
+**Last Activity Description:** Phase 3 execution started
 job-scratch venv) was answered rejected -- no Owner was reachable mid-run to approve it, and the orchestrator cannot
 grant that approval on the Owner's behalf. Tasks 2-3 were not run. EVIDENCE.md sections 2-4 record
 suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
@@ -34,14 +34,14 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 ## Progress
 
 **Phases Complete:** 0
-**Current Plan:** Not started
+**Current Plan:** 1
 **Total Plans in Phase:** 1
 
 ## Session Continuity
 
-**Last session:** 2026-09-28T12:53:57.121Z
+**Last session:** 2026-09-28T14:06:58.514Z
 
-**Stopped At:** Phase 2 complete, ready to plan Phase 1
+**Stopped At:** Completed 03-01-PLAN.md (Phase 3: P3 pre-flight P0, CRO-03 SATISFIED)
 **Resume File:** None
 
 ## Performance Metrics
@@ -51,6 +51,7 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 | Phase 01 P01 | 7min | 2 tasks | 1 files |
 | Phase 01 P02 | 4min | 1 task (of 3; halted at Task 1 rejection) | 1 files |
 | Phase 02 P01 | 17min | 3 tasks | 2 files |
+| Phase 03 P01 | 28min | 3 tasks | 7 files |
 
 ## Decisions
 
@@ -65,6 +66,8 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
   resolution.
 - [Phase 2]: [Phase 2]: by_entrypoint.py composes tis_observed/budget_monitor/tis_report rather than re-implementing dedupe/pricing/TTL logic; lives under .planning, not tools/.
 - [Phase 2]: [Phase 2]: No tool defect found on GEX44 (gates green, reconcile MATCH on first snapshot, no tools/modules diff); CRO-02 verdict phase_verdict MEASURED, cro02 SATISFIED.
+- [Phase 3]: [Phase 3]: P0 verdict PASS (--settings claudeMdExcludes naming the three R1 files), the lowest-numbered ACCEPTABLE block; C01 (--setting-sources) and C04/C05 (config-dir/HOME), the protocol's own first- and second-listed candidates, both REJECTED (rules_effect and credential respectively).
+- [Phase 3]: [Phase 3]: Host applicability recorded: GEX44 itself has no R1 rule files in ~/.claude/rules (0 of 3 present), so this host cannot run the ablation as defined regardless of the PASS; the mechanism is for whichever host (the laptop, per RESUMPTION.md) actually carries R1.
 
 ## Blockers
 
