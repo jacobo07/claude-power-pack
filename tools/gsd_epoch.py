@@ -366,7 +366,8 @@ def resume_argv(session_id: str, prompt: str) -> list[str]:
 
 
 def continue_worker(mission_id: str, rec: dict, *, prompt: str, decision: dict, runner=None,
-                    stop_runner=None, now: float | None = None, progress: dict | None = None) -> dict:
+                    stop_runner=None, now: float | None = None, progress: dict | None = None,
+                    work_dir: str | None = None) -> dict:
     """Claim the continuation (CAS), then wake the SAME session with the prompt. The caller has
     already stopped the owner and waited for its pid (stop_owner).
 
@@ -384,6 +385,13 @@ def continue_worker(mission_id: str, rec: dict, *, prompt: str, decision: dict, 
     extra = {"progress": progress} if progress is not None else {}
     if progress is not None and not rec.get("progress_origin") and progress.get("measured"):
         extra["progress_origin"] = progress.get("fp")
+    # F1 (adversarial review b6f725e): the record must say where the work IS. A continuation is now
+    # the common path, so a worker that entered a worktree and kept continuing left rec.work_dir
+    # stale or unset -- and the budget halt, GSD and the progress fingerprint all read it. Resolved
+    # exactly as the relay resolves it (the owner's own transcript); None changes nothing.
+    wd = work_dir or gm.effective_workdir(sid, rec["cwd"], rec.get("workstream"))
+    if wd and wd != rec.get("work_dir"):
+        extra["work_dir"] = wd
     claimed = gm.transition(
         mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="turn_continued",
         now=now, state=gm.LAUNCHING, worker=sid, reason=decision.get("reason"),

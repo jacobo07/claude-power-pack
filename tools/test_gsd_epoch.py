@@ -214,6 +214,22 @@ def main() -> int:
     rows = [e for e in lr.ledger_events("m-eff") if e.get("event") == "launch_cause"]
     check("V-EPOCH-CAUSE-RECORDED", rows and rows[-1]["cause"] == ge.TURN_CONTINUATION
           and rows[-1]["mechanism"] == ge.RESUME and rows[-1]["epoch"] == 3, rows[-1:])
+    # F1: the continuation records where the work IS (the owner's transcript), and a transcript that
+    # cannot tell (None) leaves the record's work_dir alone.
+    orig_ewd = gm.effective_workdir
+    try:
+        gm.effective_workdir = lambda sid, cwd, ws=None: str(PROJ)
+        rec = running("m-wd", "77777777-0000-0000-0000-000000000000", epoch=1, work_dir=TMP)
+        ge.continue_worker("m-wd", rec, prompt="/x", decision=dec, runner=runner, now=NOW)
+        check("V-EPOCH-CONTINUATION-RECORDS-WORK-DIR", gm.load("m-wd").get("work_dir") == str(PROJ),
+              gm.load("m-wd").get("work_dir"))
+        gm.effective_workdir = lambda sid, cwd, ws=None: None
+        rec = running("m-wd0", "78787878-0000-0000-0000-000000000000", epoch=1, work_dir=TMP)
+        ge.continue_worker("m-wd0", rec, prompt="/x", decision=dec, runner=runner, now=NOW)
+        check("V-EPOCH-CONTINUATION-UNKNOWN-WORK-DIR-KEPT", gm.load("m-wd0").get("work_dir") == TMP)
+    finally:
+        gm.effective_workdir = orig_ewd
+
     # a concurrent supervisor that observed RUNNING at the same epoch loses its CAS after the claim
     rec = running("m-race", "11111111-0000-0000-0000-000000000000", epoch=2)
     ge.continue_worker("m-race", rec, prompt="/x", decision=dec, runner=runner, now=NOW)
@@ -381,6 +397,72 @@ def main() -> int:
             transcript(sid, [asst(t - 10, small)])
         t += 60
     check("V-EPOCH-SUP-SAME-SESSION-LOOP-STILL-HALTS", halted, (i, gm.load("m-s5")["state"]))
+
+    # --- crash consistency: every death point resolves to one owner or an explicit halt ------
+    # supervise() passes over EVERY mission in the test state; each assertion below counts only the
+    # launches of its own mission (by the worker name or the resumed session id), never the total.
+    def mine(calls, mid, sid):
+        return [a for a in calls["run"] if any(str(x).startswith(mid + "-e") for x in a) or sid in a]
+
+    def stopped_host(sid):
+        return [{"sessionId": sid, "id": sid[:8], "state": "stopped", "kind": "background",
+                 "pid": 4242, "name": "x"}]
+
+    # (1) died AFTER stopping the owner, BEFORE the claim: record still RUNNING, host says stopped
+    sid = "f1f1f1f1-0000-0000-0000-000000000000"
+    running("m-c1", sid, epoch=1)
+    transcript(sid, [asst(NOW - 100, small)])
+    rows, calls = sup(sid, sessions=stopped_host(sid))
+    r = next(x for x in rows if x["mission_id"] == "m-c1")
+    check("V-EPOCH-CRASH-AFTER-STOP-RECOVERS-FRESH", gm.load("m-c1")["epoch"] == 2
+          and r.get("cause") == ge.PROCESS_RECOVERY and len(mine(calls, "m-c1", sid)) == 1,
+          (r.get("action"), r.get("cause")))
+
+    # (2) died AFTER the claim, BEFORE the wake: LAUNCHING same epoch, session still stopped
+    sid = "f2f2f2f2-0000-0000-0000-000000000000"
+    running("m-c2", sid, epoch=1)
+    rec = gm.load("m-c2")
+    gm.transition("m-c2", expect_epoch=1, expect_state=gm.RUNNING, event="turn_continued", now=NOW,
+                  state=gm.LAUNCHING, owner=None, previous_owner=rec["owner"], last_continuation_at=NOW,
+                  pending={"kind": "turn_continuation", "epoch": 1, "bg_id": sid[:8], "session_id": sid,
+                           "requested_at": NOW, "deadline": NOW + gm.START_DEADLINE_S})
+    rows, calls = sup(sid, sessions=stopped_host(sid), now=NOW + 60)
+    check("V-EPOCH-CRASH-AFTER-CLAIM-AWAITS-DEADLINE", not mine(calls, "m-c2", sid)
+          and gm.load("m-c2")["state"] == gm.LAUNCHING)
+    rows, calls = sup(sid, sessions=stopped_host(sid), now=NOW + gm.START_DEADLINE_S + 60)
+    r = next(x for x in rows if x["mission_id"] == "m-c2")
+    check("V-EPOCH-CRASH-AFTER-CLAIM-REPLACED-AS-FAILED-CONTINUATION", gm.load("m-c2")["epoch"] == 2
+          and r.get("cause") == ge.CONTINUATION_FAILED and len(mine(calls, "m-c2", sid)) == 1,
+          (r.get("cause"), gm.load("m-c2")["epoch"], len(mine(calls, "m-c2", sid))))
+
+    # (3) died AFTER the wake, BEFORE its ack: the host lists the SAME session working -> adopted,
+    # same epoch, no second worker
+    sid = "f3f3f3f3-0000-0000-0000-000000000000"
+    running("m-c3", sid, epoch=1)
+    rec = gm.load("m-c3")
+    gm.transition("m-c3", expect_epoch=1, expect_state=gm.RUNNING, event="turn_continued", now=NOW,
+                  state=gm.LAUNCHING, owner=None, previous_owner=rec["owner"], last_continuation_at=NOW,
+                  pending={"kind": "turn_continuation", "epoch": 1, "bg_id": sid[:8], "session_id": sid,
+                           "requested_at": NOW, "deadline": NOW + gm.START_DEADLINE_S})
+    rows, calls = sup(sid, sessions=host(sid, status="busy"), now=NOW + 60)
+    after = gm.load("m-c3")
+    check("V-EPOCH-CRASH-AFTER-WAKE-ADOPTS-SAME-SESSION", after["state"] == gm.RUNNING and after["epoch"] == 1
+          and after["owner"]["session_id"] == sid and not mine(calls, "m-c3", sid), (after["state"], after["epoch"]))
+
+    # (4) budget expires while the continuation is in flight: halted, and the woken session reaped
+    sid = "f4f4f4f4-0000-0000-0000-000000000000"
+    running("m-c4", sid, epoch=1, max_hours=1)
+    rec = gm.load("m-c4")
+    gm.transition("m-c4", expect_epoch=1, expect_state=gm.RUNNING, event="turn_continued", now=NOW,
+                  state=gm.LAUNCHING, owner=None, previous_owner=rec["owner"], last_continuation_at=NOW,
+                  pending={"kind": "turn_continuation", "epoch": 1, "bg_id": sid[:8], "session_id": sid,
+                           "requested_at": NOW, "deadline": NOW + gm.START_DEADLINE_S})
+    woke = [{"sessionId": sid, "id": sid[:8], "status": "busy", "kind": "background", "pid": 1,
+             "name": "m-c4-e1"}]
+    rows, calls = sup(sid, sessions=woke, now=NOW + 7200)
+    check("V-EPOCH-BUDGET-DURING-CONTINUATION-HALTS-AND-REAPS", gm.load("m-c4")["state"] == gm.HALTED
+          and any(a[-1] == sid[:8] for a in calls["stop"]) and not mine(calls, "m-c4", sid),
+          (gm.load("m-c4")["state"], calls["stop"]))
 
     c = ge.census()
     check("V-EPOCH-CENSUS-SEPARATES-COUNTERS",
