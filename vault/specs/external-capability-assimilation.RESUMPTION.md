@@ -33,6 +33,18 @@ test_gsd_epoch, test_rollover_active_path, `node tools/test_gsd_stop_continuatio
 2. Certify the smoke mission's rotation; read the VPS night-research report.
 3. Go-live merge + push; final handoff block (mission is PARTIAL on items 22/32/33 by owner state).
 
+## Update ~20:35 Madrid (supersedes the lines above where they differ)
+- LIVE + pushed `5037f36` (both branches; merged the other pane's quota fixes 9b4c64d/2f4e724).
+- R1 done (0 crit/0 high), repaired in `58629ff`; isolation ratchet 38 suites.
+- R2 (claims vs code) dispatched ~20:30 -> `_logs/redteam/R2.md` in pp-assim; if incomplete,
+  re-dispatch ONE agent with the same brief. Fix every confirmed claim, go-live, push.
+- T11 OWED: `m-27f9f1ab9fb6` cannot rotate (phase was uncommitted; fixed in smoke repo e6275c3),
+  halts by budget ~21:27. Then from the live checkout: `python tools/gsd_mission.py arm --cwd
+  "C:\Users\User\Desktop\Cursor Projects\gsd-long-smoke" --command /gsd-autonomous --max-cycles 3
+  --max-hours 1.5 --wall 22,24,20`, later `python tools/gsd_epoch.py certify --mission <id>`.
+- VPS: read `~/.claude/state/night-research/reports/` (kobicraft@204.168.166.63) after 21:05 Madrid.
+- Owner step: `python tools/install_reviewer_contract.py --install` (HR-001).
+
 ## Start instruction
 `git -C C:\Users\User\Apps\pp-assim log --oneline -12`, `python tools/test_assimilation_manifest.py`,
 then action 1.
