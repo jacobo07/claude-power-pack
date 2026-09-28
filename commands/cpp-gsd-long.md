@@ -1,6 +1,6 @@
 ---
 name: cpp-gsd-long
-description: Start a multi-hour unattended /gsd-autonomous run as a Ralph MISSION — at every context wall a FRESH background session continues the work (no compaction). Words like "autocompact" or "compact" in the request do not change this. Plain /gsd-autonomous is right for anything that fits in one context.
+description: Start a multi-hour unattended /gsd-autonomous run as a Ralph MISSION — a turn that ends continues in the SAME background session; at the context wall a FRESH session continues the work (no compaction). Words like "autocompact" or "compact" in the request do not change this. Plain /gsd-autonomous is right for anything that fits in one context.
 argument-hint: "[--from <phase>] [--max-cycles N] [--max-hours H]"
 ---
 
@@ -50,7 +50,9 @@ as `claude --bg`. From then on nothing needs the pane that armed it:
 | worker starts | host (`claude --bg`) | the id the host prints for THIS launch |
 | `LAUNCHING → RUNNING` | the worker's own SessionStart (hub), or the host listing that id | ledger `worker_acked` / `worker_adopted` |
 | wall (40 % used) | judged MID-TURN on every tool call (`hooks/mission_wall.js`, PostToolUse) and again at Stop: finish + commit the step, end with `HANDOFF NOTE:` | `mission-wall-<sid>-e<N>.flag`, ledger `handoff_asked` |
-| relay | sweep (every 5 min, out of band): GSD still has work → stop the worker, **wait for its pid**, launch the next | ledger `launch_claimed` / `launched` |
+| turn end (no wall) | sweep: GSD still has work, the context is under 300k tokens and no background child of the worker is pending → stop it, then wake the **SAME session** (`claude --bg --resume <sid>`, no other flag — a flag makes the host start a copy). Same context epoch; counted by the no-progress halt and by `--max-cycles`. Off: `CPP_MISSION_CONTINUATION=off` | ledger `turn_continued`, `launch_cause` `TURN_CONTINUATION`/`resume` |
+| context rotation | the wall was crossed this epoch (flag or `handoff_*` row), or the ended turn left ≥ 300k tokens resident → stop the worker, **wait for its pid**, launch a FRESH one | ledger `launch_claimed` / `launched`, `launch_cause` `CONTEXT_ROTATION`/`fresh` with `trigger` |
+| background child pending | a `run_in_background` command or async agent the worker (or its subagent) launched has not reported, or its result is unconsumed → nothing is stopped (held up to 30 min) | ledger `relay_held` |
 | rehydration | the supervisor renders the card at relay time (≤ 8 KB: reconcile-first, HEAD, dirty paths, the predecessor's note labelled as a claim) and passes it with `--append-system-prompt` — no hook in between | mission record `card` |
 | end | GSD `ALL_COMPLETE` → `COMPLETED`, **also when it lands on the last budgeted turn** (GSD is asked before any budget halt); budget → `HALTED`; **3 consecutive epochs with no commit or work-tree change → `HALTED no_progress`, never renewed**; permission prompt → `BLOCKED` (surfaced, never replaced) | ledger |
 
@@ -112,5 +114,8 @@ so the retired machinery stays honest, but it cannot arm a live run.
 
 ```
 python tools/test_gsd_mission.py            # V-MC-*    (Ralph: arm, relay, stop, linger)
+python tools/test_gsd_epoch.py              # V-EPOCH-* (turn continuation vs context rotation, child hold)
+python tools/gsd_epoch.py census            # fresh sessions BY CAUSE, continuations, compactions
+python tools/gsd_epoch.py epochs --mission <id>   # one row per context epoch of a mission
 python tools/test_cpp_gsd_long_routing.py   # V-ROUTE-* (Ralph is the only live path)
 ```
