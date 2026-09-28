@@ -93,3 +93,22 @@ ff_command: git -C /home/kobii/missions/cognitive-resource-os merge --ff-only mi
 laptop_fetch_command: git fetch gex44:/home/kobii/missions/cognitive-resource-os mission/cognitive-resource-os-gex44
 pushed: no
 merged: no
+
+## 5. Final status
+
+status_after_seal_commit:
+```
+## mission/cognitive-resource-os-gex44
+ M .planning/workstreams/cognitive-resource-os/STATE.md
+?? .planning/active-workstream
+?? .planning/workstreams/cognitive-resource-os/config.json
+?? .planning/workstreams/cognitive-resource-os/milestone.lock
+?? .planning/workstreams/cognitive-resource-os/state.json
+```
+final_status: TRACKING_ONLY ( M .planning/workstreams/cognitive-resource-os/STATE.md)
+excluded_orchestrator_local: .planning/active-workstream, .planning/workstreams/cognitive-resource-os/config.json,
+  .planning/workstreams/cognitive-resource-os/milestone.lock, .planning/workstreams/cognitive-resource-os/state.json --
+  never committed by this plan.
+seal_commits: 471c749 (Task 1), c34511a (Task 2), 9044735 (commit A), plus the commit that records this section (1a).
+cro05: SATISFIED for this plan's paths; .planning/workstreams/cognitive-resource-os/STATE.md is orchestrator-owned
+  (updated by the execute-plan workflow's own state-update step after this task) and not committed by this plan.
