@@ -53,3 +53,14 @@ MCP servers connect. Tracked by `startup_shared_share_median` in `tis_observed.p
 CEPS auto-capture, one line per tool failure, duplicates included — including failures
 of the session reading it. A corpus that grows with its reader's own errors is a log,
 not doctrine; recorded, not yet fixed.
+
+**`T-RULE-EXCLUSION-SCOPE-001`** -- On GEX44's claude 2.1.283 (Linux build, static reading of the installed
+binary, no run), flag names mislead in both directions. `claudeMdExcludes` passed through `--settings` removes
+only the named files from the user `~/.claude/rules` walk, despite its CLAUDE.md name. `--setting-sources`
+without `user` also drops the user's CLAUDE.md, settings.json, and user-sourced skills/agents/commands, not
+just rules. `CLAUDE_CODE_DISABLE_CLAUDE_MDS` empties the whole user rules directory (all ~22 files) plus
+Managed/project CLAUDE.md, not just the three named files. `CLAUDE_CONFIG_DIR` moves `.credentials.json` along
+with the whole config tree (an alternate HOME is graded the same way, by code structure, not byte-verified), and
+`--bare` forces API-key auth. GEX44. Another claude version must re-run the pre-flight before relying on this.
+Cites `.planning/workstreams/cognitive-resource-os/phases/03-p3-pre-flight-p0/EVIDENCE.md` sections 2b, 3 and 4,
+commits `c632771` `d08644d`.

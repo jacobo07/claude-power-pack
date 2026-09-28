@@ -46,6 +46,15 @@ Coherence anchor: `python tools/test_tis_observed.py` 25/25, `test_pricing_sourc
   repo (incl. trees other panes commit in) with a 5 s budget. Revive, retire, or move to SessionStart? Not
   changed. /knowledge (manual) was repointed; `domains` verified, `query` run, inject/brief not executed here.
 
+## 2d. Verdicts of the GEX44 run (phases 1-4)
+Each verdict is read from its phase EVIDENCE; figures are GEX44's, not the laptop's, unless a line says laptop.
+- Phase 3 (CRO-03) -- PASS via claudeMdExcludes: the arm-B mechanism `--settings {"claudeMdExcludes":[...]}` naming
+  the three R1 rule files (instrument-before-claim.md, destructive-state-authorization.md,
+  real-context-reachability.md), zero model calls, version scope claude 2.1.283 (Linux build). Host applicability:
+  GEX44 has no ~/.claude/rules, so the ablation runs on whichever host carries R1 (the laptop).
+  `.planning/workstreams/cognitive-resource-os/phases/03-p3-pre-flight-p0/EVIDENCE.md` sections 3-4.
+  verification: passed. GEX44. Commits `c632771` `d08644d`.
+
 ## 3. Active decisions
 - Estimates and observations never mix; every figure names its source.
 - Pricing: never hardcode a dated filename; never invent a price (read the live page).
