@@ -1,0 +1,50 @@
+### inv03 claude auth --help
+Usage: claude auth [options] [command]
+
+Manage authentication
+
+Options:
+  -h, --help        Display help for command
+
+Commands:
+  help [command]    display help for command
+  login [options]   Sign in to your Anthropic account
+  logout            Log out from your Anthropic account
+  status [options]  Show authentication status
+### inv04 claude auth login --help
+Usage: claude auth login [options]
+
+Sign in to your Anthropic account
+
+Options:
+  --claudeai       Use Claude subscription (default)
+  --console        Use Anthropic Console (API usage billing) instead of Claude
+                   subscription
+  --email <email>  Pre-populate email address on the login page
+  -h, --help       Display help for command
+  --sso            Force SSO login flow
+### inv05 claude auth status --help
+Usage: claude auth status [options]
+
+Show authentication status
+
+Options:
+  -h, --help  Display help for command
+  --json      Output as JSON (default)
+  --text      Output as human-readable text
+### inv06 claude setup-token --help
+Usage: claude setup-token [options]
+
+Set up a long-lived authentication token (requires Claude subscription)
+
+Options:
+  -h, --help  Display help for command
+### inv07 claude doctor --help
+Usage: claude doctor [options]
+
+Check the health of your Claude Code installation. Reads settings files in the
+current directory without a trust prompt. For a full checkup that can also fix
+issues, run /doctor in a session.
+
+Options:
+  -h, --help  Display help for command
