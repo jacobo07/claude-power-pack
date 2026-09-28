@@ -1215,8 +1215,25 @@ def main() -> int:
           plan(busy_row, owner=bg, iterations=999)["action"] == "none", "control")
     # ... and an owner UNKNOWN for longer than the stale bound is made visible, not replaced.
     stale = plan([], gone, owner=bg, updated_at=NOW - gm.HEARTBEAT_STALE_S - 10)
-    check("V-MC-UNKNOWN-STALE-SURFACED", stale["action"] == "surface_blocked", stale["reason"])
+    # Inverted 2026-09-28 (m-bcaf08f8d856): surfaced as UNKNOWN, never as BLOCKED -- "could not
+    # ask the host" is not "the worker needs a human".
+    check("V-MC-UNKNOWN-STALE-SURFACED-NOT-BLOCKED", stale["action"] == "surface_unknown", str(stale))
     check("V-MC-UNKNOWN-FRESH-QUIET", plan([], gone, owner=bg, updated_at=NOW)["action"] == "none")
+    hs = fresh("m-hunk")
+    real_host = gm.host_sessions
+    gm.host_sessions = lambda *a, **k: None      # the host could not be asked
+    try:
+        n_l = len(launches)
+        for _ in range(2):
+            rows = gm.supervise(now=NOW + gm.HEARTBEAT_STALE_S + 60, gsd_status=gsd("OK"),
+                                runner=launch_run, stop_runner=stop_run, pid_alive=gone)
+    finally:
+        gm.host_sessions = real_host
+    hu = gm.load("m-hunk")
+    ev = [e for e in gm.lr.ledger_events("m-hunk") if e.get("event") == "owner_unknown"]
+    check("V-MC-SUP-HOST-UNANSWERED-NOT-BLOCKED",
+          hu["state"] == gm.RUNNING and hu["epoch"] == 1 and len(launches) == n_l and len(ev) == 1,
+          f"{hu['state']} ledger={len(ev)} rows={rows}")
 
     # H2: the claim moves the lease; the old owner cannot claim the new epoch.
     hs = fresh("m-h2")

@@ -71,3 +71,14 @@ fix the first blocked worker parks the mission BLOCKED and the reason is read fr
   V-MC-ADOPT-BLOCKED-SURFACED-FIRST-PASS (+ V-MC-WORKDIR-FOLLOWS-WORKTREE, a git-timing flake
   unrelated to the mutated line: it passed in every other run). GREEN 173/173. Control
   V-MC-ADOPT-RUNNING (working row -> RUNNING) green.
+  V-MC-ADOPT-RUNNING (working row -> RUNNING) green.- Commit defect 1 (re-scoped): 01567f1.
+- ADDENDUM (orchestrator 2026-09-28, m-bcaf08f8d856): plan_next turned a RUNNING owner that was
+  UNKNOWN past HEARTBEAT_STALE_S -- including "host session list unavailable" -- into
+  surface_blocked -> BLOCKED ("needs a human") while the host, asked moments later, listed it
+  busy/working. Same collapse as defect 2 inverted: a non-answer reported as a refusal. Fixed in
+  the same function: new action `surface_unknown`, ledger `owner_unknown` once per epoch, state
+  unchanged, never replaced. V-MC-UNKNOWN-STALE-SURFACED inverted in place ->
+  V-MC-UNKNOWN-STALE-SURFACED-NOT-BLOCKED; e2e V-MC-SUP-HOST-UNANSWERED-NOT-BLOCKED (host_sessions
+  -> None, two passes). GREEN 174/174; mutation back to surface_blocked -> 172/174 on both gates.
+  Records already parked BLOCKED this way still self-heal via the existing `unblock` on LIVE.
+  Not changed (follow-up): HANDOFF overdue with owner UNKNOWN still surfaces as BLOCKED (:462).
