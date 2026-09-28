@@ -226,6 +226,67 @@ function hookRestartResume(cwd) {
 const WORK_STATE_MAX_AGE_MS = 6 * 60 * MS_PER_MINUTE;  // 6h freshness window
 const WORK_STATE_PENDING_SHOWN = 5;
 
+// Active rollover (P3), successor side. After `/clear` the predecessor's context is gone
+// and the ONLY thing carrying the thread is the capsule it sealed. This does not decide
+// which capsule, and it does not claim one: `/kresume` is the single authority for both,
+// and it refuses cleanly when there is nothing to adopt. All this does is notice that a
+// capsule for THIS repo is lying unretired and tell the successor to go and claim it --
+// silence here is a session that quietly starts from nothing.
+const ROLLOVER_CAPSULE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+function hookRolloverResume(cwd, source) {
+  try {
+    if (source !== 'clear') {
+      return null;   // a fresh start or a compaction is not a rollover crossing
+    }
+    const sw = String(process.env.CPP_ROLLOVER_ACTIVE || '').trim().toLowerCase();
+    if (sw === '0' || sw === 'off' || sw === 'false') {
+      return null;
+    }
+    const cwdL = (cwd || '').toLowerCase();
+    if (!cwdL) {
+      return null;
+    }
+    const dir = path.join(STATE_DIR, 'rollover', 'capsules');
+    let files;
+    try {
+      files = fs.readdirSync(dir).filter(f => f.endsWith('.json'));
+    } catch (readDirErr) {
+      return null;   // nothing has ever been sealed on this host
+    }
+    for (const f of files) {
+      const fp = path.join(dir, f);
+      try {
+        const st = fs.statSync(fp);
+        if (Date.now() - st.mtimeMs > ROLLOVER_CAPSULE_MAX_AGE_MS) {
+          continue;
+        }
+        if (fs.existsSync(fp.replace(/\.json$/, '.certified'))) {
+          continue;  // already adopted and retired by a successor
+        }
+        let raw = fs.readFileSync(fp, 'utf8');
+        if (raw && raw.charCodeAt(0) === UTF8_BOM_CHARCODE) {
+          raw = raw.slice(1);
+        }
+        const rec = JSON.parse(raw);
+        if ((rec.cwd || '').toLowerCase() !== cwdL) {
+          continue;  // another repo's crossing -- leave it for its own successor
+        }
+        return 'ROLLOVER — the session that was working here crossed the context wall and '
+          + 'sealed a capsule before clearing. Run `/kresume` NOW, before anything else: it '
+          + 'claims the capsule (one successor only), refreshes the repo facts, and prints '
+          + 'the goal, the open obligations and a short exam. Do not reconstruct the task '
+          + 'from this message or from the repo — the capsule is the record.';
+      } catch (entryErr) {
+        continue;
+      }
+    }
+    return null;
+  } catch (err) {
+    return null;   // fail-open: a hub that throws costs the successor its whole start
+  }
+}
+
 function hookWorkStateResume(cwd) {
   try {
     const cwdL = (cwd || '').toLowerCase();
@@ -976,6 +1037,17 @@ async function main() {
       additionalContext = additionalContext
         ? (missionCard + '\n' + additionalContext)
         : missionCard;
+    }
+
+    // 0b. Rollover successor card. Ranked with the mission card and for the same reason:
+    // the host truncates SessionStart output near 9 KB, and after a `/clear` this is the
+    // one line without which the successor does not know a thread exists at all.
+    const rolloverLine = hookRolloverResume(cwd,
+      (typeof payload.source === 'string') ? payload.source : '');
+    if (rolloverLine) {
+      additionalContext = additionalContext
+        ? (rolloverLine + '\n' + additionalContext)
+        : rolloverLine;
     }
 
     // 1a. Recovery epoch. MUST run before hookCpcOsRegister, which writes a fresh
