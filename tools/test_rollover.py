@@ -226,6 +226,66 @@ def main() -> int:
         check("V-ROLLOVER-CERTIFY-FLAGS", rc_ok == 0 and (state / "capsules" / f"{SID}.certified").exists(), f"rc={rc_ok}")
         check("V-ROLLOVER-CERTIFIED-RETIRED", ro.newest_capsule(str(repo), state, exclude="x") is None
               or ro.newest_capsule(str(repo), state, exclude="x")["session_id"] != SID, "certified capsule not offered again")
+
+        print("reset gate: may /clear be typed for this session RIGHT NOW?")
+        ro.STATE_DIR = state
+        gsid = "gggggggg-0007"
+        gcap = json.loads(json.dumps(cap))
+        gcap["session_id"] = gcap["handoff"]["session"] = gsid
+        grc = ro.seal(gcap, state)
+        gstf = ro.safe_to_forget(grc, ro.completeness(gcap))
+        ro.ledger("capsule_sealed", state, session_id=gsid, cwd=str(repo), capsule=grc,
+                  safe_to_forget=gstf["verdict"], refusals=gstf["reasons"])
+        # POSITIVE CONTROL. Without it a gate that refused everything would satisfy every
+        # assertion below and read exactly like a working one.
+        g = ro.gate(gsid, state)
+        check("V-ROLLOVER-GATE-GREEN", g["verdict"] == "SAFE_TO_FORGET" and not g["reasons"], g["reasons"])
+        check("V-ROLLOVER-GATE-EXIT-0", ro.main(["gate", "--session", gsid]) == 0, "a good capsule may reset")
+
+        # "nothing was ever sealed" is NOT "your capsule went bad": different code, different fix.
+        check("V-ROLLOVER-GATE-NO-CAPSULE", ro.gate("zzzzzzzz-9999", state)["verdict"] == "NO_CAPSULE"
+              and ro.main(["gate", "--session", "zzzzzzzz-9999"]) == 4, "absent != refused, 4 != 3")
+
+        # The branch a self-comparing hash can never reach: the bytes on disk are no longer
+        # the bytes the receipt was taken over. This is the whole reason the hash is read
+        # from the ledger rather than recomputed from the file and compared to itself.
+        ro.capsule_path(gsid, state).write_text('{"schema":"tampered"}', encoding="utf-8")
+        gt = ro.gate(gsid, state)
+        check("V-ROLLOVER-GATE-TAMPER", gt["verdict"] == "REFUSED"
+              and any("not the bytes that were sealed" in r for r in gt["reasons"]), gt["reasons"])
+
+        ro.seal(gcap, state)                       # restore the sealed bytes
+        gs = ro.gate(gsid, state, now=ro._now() + ro.RESET_MAX_AGE_S + 60)
+        check("V-ROLLOVER-GATE-STALE", gs["verdict"] == "REFUSED"
+              and any("seal again" in r for r in gs["reasons"]), gs["reasons"])
+
+        ro.capsule_path(gsid, state).with_suffix(".certified").write_text("x", encoding="utf-8")
+        gc = ro.gate(gsid, state)
+        check("V-ROLLOVER-GATE-CERTIFIED", gc["verdict"] == "REFUSED"
+              and any("certified" in r for r in gc["reasons"]), gc["reasons"])
+
+        bsid = "hhhhhhhh-0008"                      # the seal itself refused; the gate must say so
+        bcap = json.loads(json.dumps(gcap))
+        bcap["session_id"] = bcap["handoff"]["session"] = bsid
+        bcap["obligations"] = []
+        brc = ro.seal(bcap, state)
+        bstf = ro.safe_to_forget(brc, ro.completeness(bcap))
+        ro.ledger("capsule_sealed", state, session_id=bsid, cwd=str(repo), capsule=brc,
+                  safe_to_forget=bstf["verdict"], refusals=bstf["reasons"])
+        gb = ro.gate(bsid, state)
+        check("V-ROLLOVER-GATE-CARRIES-SEAL-REFUSAL", gb["verdict"] == "REFUSED"
+              and any("obligations" in r for r in gb["reasons"])
+              and ro.main(["gate", "--session", bsid]) == 3, gb["reasons"])
+
+        os.environ.pop("CPP_ROLLOVER_ACTIVE", None)
+        unset = ro.active_enabled()
+        os.environ["CPP_ROLLOVER_ACTIVE"] = "0"
+        off = ro.active_enabled()
+        os.environ["CPP_ROLLOVER_ACTIVE"] = "1"
+        on = ro.active_enabled()
+        os.environ.pop("CPP_ROLLOVER_ACTIVE", None)
+        check("V-ROLLOVER-ACTIVE-DEFAULT-ON", unset and on and not off,
+              f"unset={unset} '1'={on} '0'={off} (the switch only ever disables)")
     finally:
         ro.child_state = real_child
         shutil.rmtree(tmp, ignore_errors=True)
