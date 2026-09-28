@@ -63,10 +63,12 @@ def transcript(sid, rows, sub=None):
     return main
 
 
-def asst(t, usage=None, tool_uses=(), text="ok"):
+def asst(t, usage=None, tool_uses=(), text="ok", stop=None):
     content = [{"type": "text", "text": text}] + [
         {"type": "tool_use", "id": tid, "name": name, "input": inp} for tid, name, inp in tool_uses]
     msg = {"id": f"msg-{t}", "content": content}
+    if stop:
+        msg["stop_reason"] = stop
     if usage:
         msg["usage"] = {"input_tokens": usage[0], "cache_creation_input_tokens": usage[1],
                         "cache_read_input_tokens": usage[2]}
@@ -397,6 +399,33 @@ def main() -> int:
             transcript(sid, [asst(t - 10, small)])
         t += 60
     check("V-EPOCH-SUP-SAME-SESSION-LOOP-STILL-HALTS", halted, (i, gm.load("m-s5")["state"]))
+
+    # --- a finished turn the host lists `done` is a turn end, not a death (m-47fe0c6cb54a) -----
+    def listed(sid, state):
+        return [{"sessionId": sid, "id": sid[:8], "state": state, "kind": "background", "pid": 4242,
+                 "name": "x"}]
+
+    sid = "d0d0d0d0-0000-0000-0000-000000000000"
+    running("m-done", sid, epoch=1)
+    transcript(sid, [asst(NOW - 100, small, stop="end_turn")])
+    rows, calls = sup(sid, sessions=listed(sid, "done"))
+    r = next(x for x in rows if x["mission_id"] == "m-done")
+    check("V-EPOCH-DONE-END-TURN-CONTINUES", r.get("action") == "continue"
+          and any(sid in a and "--resume" in a for a in calls["run"]) and gm.load("m-done")["epoch"] == 1,
+          (r.get("action"), r.get("turn_end")))
+    sid = "d1d1d1d1-0000-0000-0000-000000000000"
+    running("m-done2", sid, epoch=1)
+    transcript(sid, [asst(NOW - 100, small, stop="tool_use")])
+    rows, calls = sup(sid, sessions=listed(sid, "done"))
+    r = next(x for x in rows if x["mission_id"] == "m-done2")
+    check("V-EPOCH-DONE-MIDTURN-IS-RECOVERY", r.get("cause") == ge.PROCESS_RECOVERY
+          and gm.load("m-done2")["epoch"] == 2, (r.get("action"), r.get("cause")))
+    sid = "d2d2d2d2-0000-0000-0000-000000000000"
+    running("m-fail", sid, epoch=1)
+    transcript(sid, [asst(NOW - 100, small, stop="end_turn")])
+    rows, calls = sup(sid, sessions=listed(sid, "failed"))
+    r = next(x for x in rows if x["mission_id"] == "m-fail")
+    check("V-EPOCH-FAILED-IS-RECOVERY", r.get("cause") == ge.PROCESS_RECOVERY, (r.get("action"), r.get("cause")))
 
     # --- crash consistency: every death point resolves to one owner or an explicit halt ------
     # supervise() passes over EVERY mission in the test state; each assertion below counts only the

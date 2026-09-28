@@ -1288,13 +1288,16 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                                          gsd=st.get("outcome"), reason=st.get("reason"))
                         continue
                 turn_end = None
-                if act == "relay" and rec.get("owner"):
+                import gsd_epoch as ge
+                if rec.get("owner") and (act == "relay" or (
+                        act == "replace" and ge.turn_ended_as_done(rec, sessions))):
                     # A turn that ENDED is not a context that ran out (tools/gsd_epoch.py): 444 of
                     # 499 launches were fresh workers for a turn end, each paying the ~187k-token
                     # startup floor and losing the worker's memory. The same session continues
                     # unless the wall was crossed, the context is past the continuation ceiling,
                     # or a background child of the owner has not reported (then nothing is stopped).
-                    import gsd_epoch as ge
+                    # A finished turn the host lists `done` (not `idle`) plans a REPLACE; it is the
+                    # same event and is judged the same way (m-47fe0c6cb54a, 2026-09-28).
                     turn_end = ge.decide_turn_end(rec, now)
                     row["turn_end"] = {k: turn_end.get(k) for k in ("decision", "cause", "reason")}
                     if turn_end["decision"] == ge.HOLD:
@@ -1331,7 +1334,7 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     row["continue"] = ge.continue_worker(
                         mid, rec, prompt=bind_workstream(rec["resume_command"], rec.get("workstream")),
                         decision=turn_end, runner=runner, stop_runner=stop_runner, now=now,
-                        progress=progress)
+                        progress=progress, work_dir=work_dir)
                     row["action"] = "continue"
                     continue
                 note = None

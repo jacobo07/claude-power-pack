@@ -134,6 +134,32 @@ def last_assistant_at(session_id: str) -> float | None:
     return None
 
 
+def last_stop_reason(session_id: str) -> str | None:
+    """`stop_reason` of the worker's last assistant row (`end_turn` = the turn finished normally)."""
+    path = _transcript(session_id)
+    if not path:
+        return None
+    for row in reversed(lr._tail_rows(path)):
+        if row.get("type") == "assistant":
+            return ((row.get("message") or {}).get("stop_reason")) or None
+    return None
+
+
+def turn_ended_as_done(rec: dict, sessions: list[dict] | None, stop_reason=last_stop_reason) -> bool:
+    """A background worker whose turn finished can be listed by the host as `done` instead of
+    `idle`; plan_next then reads the owner as DEAD and plans a REPLACE. Measured 2026-09-28,
+    m-47fe0c6cb54a: worker e0feb695's last row was `end_turn` at 23:56:10Z, the host listed it
+    `done`, and the supervisor launched epoch 2 fresh as "owner dead" -- a turn end paid the
+    startup floor and was recorded as a recovery. True only on BOTH witnesses: the host's `done`
+    and the transcript's own `end_turn`; `stopped`, `failed`, `exited` stay recoveries."""
+    owner = rec.get("owner") or {}
+    sid = owner.get("session_id")
+    if not sid or rec.get("state") != "RUNNING":
+        return False
+    row = next((s for s in sessions or [] if s.get("sessionId") == sid), None)
+    return bool(row and row.get("state") == "done" and stop_reason(sid) == "end_turn")
+
+
 # ------------------------------------------------------------------------ wall evidence
 def _marker_dir() -> Path:
     # hooks/mission_wall.js writes its flag here (GSD_AUTORUN_MARKER_DIR or ~/.claude/state).
