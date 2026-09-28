@@ -226,6 +226,15 @@ def _resolve_progress_path(cwd: str) -> Path:
 
 SNAPSHOT_FLAG = "claude-ctxwd-snap-{session_id}.flag"
 ADVISORY_FLAG = "claude-ctxwd-adv-{session_id}.flag"
+# Active rollover (P3, spec vault/specs/interactive-context-rollover.md). ASK is set when
+# the wall has requested `/kclear`; CLEAR when `/clear` has been dispatched for the capsule
+# that /kclear sealed. WAIT counts the Stops spent waiting for a capsule that never arrived,
+# so a model that does not emit the line falls back to /compact instead of coasting past the
+# wall with no relief at all -- rollover must never leave a session worse off than today.
+ROLLOVER_ASK_FLAG = "claude-ctxwd-rollask-{session_id}.flag"
+ROLLOVER_CLEAR_FLAG = "claude-ctxwd-rollclear-{session_id}.flag"
+ROLLOVER_WAIT_FLAG = "claude-ctxwd-rollwait-{session_id}.flag"
+ROLLOVER_MAX_WAIT = 3
 
 
 def _import_atomic_write():
@@ -649,6 +658,21 @@ def _route_for(session_id: str) -> dict:
         return {"route": "manual", "why": f"endpoint capture failed ({exc.__class__.__name__})"}
     if ep.get("host") == "orca":
         return {"route": "orca-exact", "pane_key": ep.get("pane_key")}
+    # GEX44 and any other tmux host: the Linux sibling of the Orca transport (2b6f183),
+    # so "same behaviour on GEX44" is a route rather than a manual instruction. Probed
+    # only when TMUX names a server -- capture_endpoint shells out to tmux, and on Windows
+    # that would be a subprocess spawned on every Stop to learn what the environment has
+    # already said. Its endpoint file is tmux-endpoint-*, distinct from the Orca one, so
+    # the two captures cannot overwrite each other.
+    if (os.environ.get("TMUX") or "").strip():
+        tm = _load_tool("tmux_transport")
+        if tm is not None:
+            try:
+                tep = tm.capture_endpoint(session_id)
+            except Exception:
+                tep = {}
+            if tep.get("host") == "tmux":
+                return {"route": "tmux-exact", "pane_id": tep.get("pane_id")}
     return {"route": "terminal-inbox",
             "legacy_foreground": os.environ.get("CPP_LEGACY_FOREGROUND_SENDKEYS") == "1"}
 
@@ -675,6 +699,24 @@ def _dispatch_continuation(session_id: str, kind: str, *, transcript: str, cwd: 
                     **({} if ok else {"outcome": "WORKER_SPAWN_FAILED"}))
             if not ok:
                 route = {"route": "manual", "why": "delivery worker failed to start"}
+        elif route["route"] == "tmux-exact":
+            # tmux_transport.deliver waits for a quiet pane and then for the transcript to
+            # show the line, up to minutes. That cannot run inside a Stop hook, so it is
+            # spawned detached exactly as the Orca worker is. It types the literal text
+            # rather than reading the model's trailing line, so the caller's expect_line is
+            # the command itself -- fine for /kclear and /clear, which are fixed strings.
+            tool = Path(__file__).resolve().parents[3] / "tools" / "tmux_transport.py"
+            text = expect_line or expect_prefix or ""
+            ok = bool(text) and tool.is_file() and _detached(
+                [sys.executable, str(tool), "deliver", "--session", session_id,
+                 "--kind", kind, "--text", text, "--transcript", transcript or "",
+                 "--cid", cid],
+                session_id, "delivery_spawned", cid=cid, kind=kind, route=route["route"],
+                pane_id=route.get("pane_id"))
+            if not ok:
+                _ledger(session_id, "delivery_blocked", cid=cid, kind=kind,
+                        route=route["route"], outcome="WORKER_SPAWN_FAILED")
+                route = {"route": "manual", "why": "tmux delivery worker failed to start"}
         elif route["route"] == "terminal-inbox":
             _write_trigger_flag(_import_atomic_write(), session_id, used_pct, cwd,
                                 transcript=transcript, expect_line=expect_line,
@@ -697,6 +739,11 @@ def _route_sentence(route: dict, what: str) -> str:
                 f"session's own Orca terminal (pane {route.get('pane_key')}) once this "
                 "turn ends, and records a receipt only when the transcript shows it "
                 "arrived. The trailing line is the visible record, not the delivery.")
+    if route.get("route") == "tmux-exact":
+        return (f"Delivery: the tmux transport will submit {what} into THIS session's own "
+                f"pane ({route.get('pane_id')}) once this turn ends -- it waits for the pane "
+                "to go quiet, re-resolves it immediately before typing, and records a "
+                "receipt only when the transcript shows the line arrived.")
     if route.get("route") == "terminal-inbox":
         tail = (" LEGACY foreground SendKeys is opted in as a fallback (manual-class)."
                 if route.get("legacy_foreground") else
@@ -860,6 +907,122 @@ def _write_trigger_flag(atomic_write, session_id: str, used_pct, cwd: str,
         return None
 
 
+def _rollover_tool() -> Path:
+    return Path(__file__).resolve().parents[3] / "tools" / "rollover.py"
+
+
+def _detached(argv: list, session_id: str, event: str, **fields) -> bool:
+    """Spawn argv with no console and no parent lifetime, on EITHER host. Never raises.
+
+    Windows: pythonw-style DETACHED_PROCESS, because a console here writes escape codes
+    into the Owner's terminal. POSIX: start_new_session, which is what GEX44 needs --
+    _shadow_rollover below requires pythonw.exe and so silently skips on Linux, and
+    "same behaviour on GEX44" cannot be built out of a spawn that only exists on Windows.
+    """
+    import subprocess
+    try:
+        if os.name == "nt":
+            base = 0x00000008 | 0x00000200      # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+            for flags in (base | 0x01000000, base):
+                try:
+                    subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                     stderr=subprocess.DEVNULL, creationflags=flags, close_fds=True)
+                    _ledger(session_id, event, breakaway=bool(flags & 0x01000000), **fields)
+                    return True
+                except OSError:
+                    continue
+            return False
+        subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True, close_fds=True)
+        _ledger(session_id, event, **fields)
+        return True
+    except Exception:
+        return False
+
+
+def _rollover_active() -> bool:
+    """ON by default (Owner, 2026-09-28, typed in the owning pane); CPP_ROLLOVER_ACTIVE=0
+    disables. Spelled here rather than imported so an absent rollover.py can never be the
+    thing that turns it ON; the two spellings are pinned against each other by the gate."""
+    return (os.environ.get("CPP_ROLLOVER_ACTIVE") or "").strip().lower() not in ("0", "off", "false")
+
+
+def _rollover_waits(session_id: str) -> int:
+    """How many Stops have passed waiting for a capsule that /kclear never sealed."""
+    p = Path(tempfile.gettempdir()) / ROLLOVER_WAIT_FLAG.format(session_id=session_id)
+    try:
+        n = int(p.read_text(encoding="utf-8").strip() or "0")
+    except Exception:
+        n = 0
+    try:
+        p.write_text(str(n + 1), encoding="utf-8")
+    except Exception:
+        pass
+    return n + 1
+
+
+def _rollover_gate(session_id: str) -> dict:
+    """May `/clear` be typed for this session? rollover.py is the ONLY authority and this
+    hook never decides it locally. Foreground on purpose: the answer decides THIS reply,
+    and backgrounding a verification you are about to block on is how a turn dies waiting.
+    It reads one small file and hashes one capsule -- no git, no network. A gate that will
+    not run is a REFUSAL, never a licence."""
+    tool = _rollover_tool()
+    if not tool.is_file():
+        return {"verdict": "REFUSED", "reasons": ["rollover.py absent"], "rc": None}
+    import subprocess
+    try:
+        p = subprocess.run([sys.executable, str(tool), "gate", "--session", session_id],
+                           capture_output=True, text=True, timeout=20,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    except Exception as exc:
+        return {"verdict": "REFUSED", "reasons": [f"gate did not run: {exc.__class__.__name__}"],
+                "rc": None}
+    out = (p.stdout or "") + (p.stderr or "")
+    reasons = [ln.split("refuse", 1)[1].strip() for ln in out.splitlines() if "refuse" in ln]
+    return {"verdict": {0: "SAFE_TO_FORGET", 4: "NO_CAPSULE"}.get(p.returncode, "REFUSED"),
+            "reasons": reasons, "rc": p.returncode}
+
+
+def _rollover_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict | None:
+    """Step 2 of the crossing: `/kclear` was asked for at the wall; if the capsule it sealed
+    is good, ask for `/clear`. Returns a Stop reply, or None to fall through.
+
+    The gate is consulted HERE, immediately before the only destructive step -- never at the
+    wall a turn earlier, which would authorise forgetting whatever the model did in between.
+    """
+    if _flag_exists(session_id, ROLLOVER_CLEAR_FLAG):
+        return None
+    g = _rollover_gate(session_id)
+    if g["verdict"] == "SAFE_TO_FORGET":
+        _set_flag(session_id, ROLLOVER_CLEAR_FLAG)   # before the dispatch: never re-entrant
+        route = _dispatch_continuation(
+            session_id, "clear", transcript=transcript, cwd=cwd, used_pct=used_pct,
+            cid=f"{session_id}:clear:{int(_now_ts())}",
+            expect_line="/clear", expect_prefix="/clear")
+        _ledger(session_id, "rollover_clear_dispatched", route=route.get("route"),
+                why=route.get("why"))
+        return {"decision": "block", "reason": (
+            "ROLLOVER — the capsule for this session is sealed and SAFE_TO_FORGET, so this "
+            "context can be discarded without losing the thread. "
+            + _route_sentence(route, "a trailing `/clear` line") + " "
+            "End your next response with a SINGLE trailing line — exactly `/clear` — and "
+            "nothing after it. The successor claims the capsule with /kresume, refreshes "
+            "reality against the repo and carries the goal on; say nothing else here."
+        )}
+    waits = _rollover_waits(session_id)
+    _ledger(session_id, "rollover_clear_withheld", verdict=g["verdict"],
+            reasons=g["reasons"][:4], waits=waits)
+    if waits < ROLLOVER_MAX_WAIT:
+        return None                                  # /kclear has not landed yet; wait
+    # The capsule never arrived. Rollover must not leave a session worse off than the
+    # /compact it replaced, so hand the crossing back to the compact path exactly once.
+    _set_flag(session_id, ROLLOVER_CLEAR_FLAG)
+    _clear_flag(session_id, ADVISORY_FLAG)
+    _ledger(session_id, "rollover_fell_back_to_compact", verdict=g["verdict"], waits=waits)
+    return None
+
+
 def _shadow_rollover(session_id: str, cwd: str, transcript_path: str, used_pct, tier: str) -> bool:
     """P3 SHADOW (vault/specs/interactive-context-rollover.md): record what a fresh-epoch
     rollover WOULD do at this crossing -- capsule, completeness, safe-to-forget, break-even.
@@ -871,7 +1034,7 @@ def _shadow_rollover(session_id: str, cwd: str, transcript_path: str, used_pct, 
         return False
     try:
         import subprocess
-        tool = Path(__file__).resolve().parents[3] / "tools" / "rollover.py"
+        tool = _rollover_tool()
         pyw = Path(sys.executable).with_name("pythonw.exe")
         if not tool.is_file() or not pyw.is_file():
             _ledger(session_id, "rollover_shadow_skipped", tier=tier,
@@ -1199,9 +1362,23 @@ def _run_inner(event: dict) -> dict:
             and not _flag_exists(session_id, RESUME_CONFIRMED_FLAG):
         _confirm_resume(session_id, event)
 
+    # ACTIVE ROLLOVER, step 2. The wall asked for `/kclear` on an earlier Stop; every Stop
+    # after it asks rollover.py whether the capsule that /kclear sealed licenses a `/clear`.
+    # Ahead of the threshold logic on purpose: whether a capsule covers this session does
+    # not depend on the current reading, and after a seal the reading has not moved anyway.
+    if _rollover_active() and _flag_exists(session_id, ROLLOVER_ASK_FLAG):
+        reply = _rollover_step(session_id, event.get("cwd") or os.getcwd(),
+                               event.get("transcript_path") or "", used_pct)
+        if reply is not None:
+            return reply
+
     snap_pct, adv_pct, rearm_pct = _thresholds(session_id)
     if used_pct < rearm_pct:
         _clear_flag(session_id, ADVISORY_FLAG)
+        # A new cycle: the rollover chain re-arms with it, or one crossing per session
+        # would be the most this could ever do.
+        for _rf in (ROLLOVER_ASK_FLAG, ROLLOVER_CLEAR_FLAG, ROLLOVER_WAIT_FLAG):
+            _clear_flag(session_id, _rf)
 
         # Post-compaction resume (gap C). Same low-context window as the rearm,
         # and it must sit here for the same reason: below the snapshot floor.
@@ -1318,7 +1495,36 @@ def _run_inner(event: dict) -> dict:
         # 2. Empirical-evidence telemetry (Owner DONE-gate 6a).
         tel_path = _dump_telemetry(atomic_write, session_id, used_pct, cwd,
                                    transcript_path, kclear_paths)
-        # 3. Compact dispatch (C4, spec exact-target-continuation.md). The
+        # 3a. ACTIVE ROLLOVER (P3, Owner 2026-09-28, ON by default; CPP_ROLLOVER_ACTIVE=0
+        #     disables). A long goal should not need a long context: instead of compacting
+        #     lossily in place, seal a capsule and cross into a fresh session. Only the ASK
+        #     happens here -- `/clear` is never requested until rollover.py has judged the
+        #     capsule that /kclear actually sealed (step 2 above). If that judgement never
+        #     comes, step 2 hands the crossing back to /compact, so this can only ever be
+        #     as good as the old path or better, never worse.
+        if _rollover_active():
+            _set_flag(session_id, ROLLOVER_ASK_FLAG)
+            kclear_route = _dispatch_continuation(
+                session_id, "kclear", transcript=transcript_path, cwd=cwd,
+                used_pct=used_pct, cid=f"{session_id}:kclear:{int(_now_ts())}",
+                expect_line="/kclear", expect_prefix="/kclear")
+            _ledger(session_id, "rollover_kclear_asked", used_pct=used_pct,
+                    route=kclear_route.get("route"), why=kclear_route.get("why"))
+            return {"decision": "block", "reason": (
+                f"CONTEXT THRESHOLD CROSSED — {used_pct}% used (>= {adv_pct:g}%). "
+                f"Pre-reset vault checkpoint WRITTEN: handoff={kclear_paths.get('handoff')}; "
+                f"telemetry={tel_path}. ACTIVE ROLLOVER is on: this session crosses into a "
+                "fresh one instead of compacting in place, so the goal stops paying rent on "
+                "a long context. "
+                + _route_sentence(kclear_route, "your trailing `/kclear` line") + " "
+                "End your next response with a SINGLE trailing line — exactly `/kclear` — "
+                "no preface, no markdown. /kclear seals a capsule and prints its verdict. "
+                "ONLY if that verdict is SAFE_TO_FORGET will `/clear` be requested; if the "
+                "capsule is refused nothing is cleared, you are told why, and you keep "
+                "working. vault/progress.md remains the anchor either way."
+            )}
+
+        # 3b. Compact dispatch (C4, spec exact-target-continuation.md). The
         #    transport waits for this turn to end, reads the model's own
         #    trailing `/compact ...` line, and submits it into THIS session's
         #    Orca terminal. No exact route -> manual, never the focused window.

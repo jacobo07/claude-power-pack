@@ -310,7 +310,7 @@ def main(argv=None) -> int:
     c.add_argument("--session", required=True)
     d = sub.add_parser("deliver")
     d.add_argument("--session", required=True)
-    d.add_argument("--kind", choices=("resume", "clear", "compact"), required=True)
+    d.add_argument("--kind", choices=("resume", "clear", "compact", "kclear"), required=True)
     d.add_argument("--text", required=True)
     d.add_argument("--transcript", default="")
     d.add_argument("--cid", default=None)

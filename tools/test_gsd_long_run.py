@@ -40,7 +40,12 @@ for d in (STATE, HOOKS, PROJECTS, SESSIONS):
 os.environ.update({"GSD_LONG_RUN_STATE_DIR": str(STATE), "GSD_LONG_RUN_HOOKS_DIR": str(HOOKS),
                    "GSD_LONG_RUN_PROJECTS_DIR": str(PROJECTS), "GSD_LONG_RUN_NO_SPAWN": "1",
                    # the liveness instrument reads the session registry; never the Owner's
-                   "GSD_LONG_RUN_SESSIONS_DIR": str(SESSIONS)})
+                   "GSD_LONG_RUN_SESSIONS_DIR": str(SESSIONS),
+                   # The watchdog spawns a detached `rollover.py shadow` at every crossing, and
+                   # the child inherits this environment. Unredirected, each run sealed goal-less
+                   # gsdlr-* capsules into the Owner's real state (nine on 2026-09-28), and
+                   # /kresume then claimed one.
+                   "CPP_ROLLOVER_STATE_DIR": str(TMP / "rollover")})
 
 passes = fails = inconclusive = 0
 
@@ -325,8 +330,12 @@ def gates_watchdog():
         out = _run(wd2, s, 75.0, str(TMP / "t.jsonl"))
         check("V-GSDLR-WD-CROSSING-LEDGERED", "crossing" in events(s) and out.get("decision") == "block",
               f"events={events(s)}")
-        check("V-GSDLR-WD-COMPACT-EXPECTS-PREFIX",
-              rec and rec[-1].get("kind") == "compact" and rec[-1].get("expect_prefix") == "/compact",
+        # INVERTED 2026-09-28. This gate pinned `/compact` at the wall; active rollover
+        # (Owner-authorized, ON by default) asks for `/kclear` there instead and only
+        # reaches `/clear` once rollover.py has judged the capsule. The diff between this
+        # assertion and the one it replaced IS the evidence the default changed.
+        check("V-GSDLR-WD-ROLLOVER-ASKS-KCLEAR",
+              rec and rec[-1].get("kind") == "kclear" and rec[-1].get("expect_prefix") == "/kclear",
               f"kwargs={rec[-1] if rec else None}")
         # C4: the text states the route that will actually be used, and no
         # longer promises an Enter delivered by whichever window has focus.
@@ -334,6 +343,24 @@ def gates_watchdog():
         check("V-GSDLR-WD-TEXT-NAMES-ROUTE",
               "Delivery: MANUAL" in reason and "focused window" not in reason and not legacy,
               f"route sentence present={('Delivery:' in reason)} legacy_calls={legacy}")
+        # The kill switch must restore the OLD crossing exactly. Without this control,
+        # "rollover is on by default" and "the /compact path has been deleted" are the
+        # same observable, and CPP_ROLLOVER_ACTIVE=0 would be a switch that disables
+        # nothing -- which is what the Owner is relying on to turn this off.
+        os.environ["CPP_ROLLOVER_ACTIVE"] = "0"
+        s2 = sid()
+        _stamp(wd2, s2)
+        try:
+            mk.write_marker(s2, "/gsd-autonomous", cwd=str(ROOT))
+            out2 = _run(wd2, s2, 75.0, str(TMP / "t.jsonl"))
+            check("V-GSDLR-WD-KILLSWITCH-RESTORES-COMPACT",
+                  rec and rec[-1].get("kind") == "compact"
+                  and rec[-1].get("expect_prefix") == "/compact"
+                  and out2.get("decision") == "block",
+                  f"kwargs={rec[-1] if rec else None}")
+        finally:
+            os.environ.pop("CPP_ROLLOVER_ACTIVE", None)
+            _clear_wd(wd2, s2)
     finally:
         _clear_wd(wd2, s)
 

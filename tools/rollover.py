@@ -55,8 +55,23 @@ HANDOFF_SID_RE = re.compile(r"(?:Session ID\*{0,2}:\s*`?|session_id:\s*)([0-9a-f
 GIT_CANDIDATES = [r"C:\Program Files\Git\cmd\git.exe", "git"]
 
 
+RESET_MAX_AGE_S = 30 * 60        # a capsule older than this no longer describes the session
+
+
 def shadow_enabled() -> bool:
     return (os.environ.get("CPP_ROLLOVER_SHADOW") or "").lower() != "off"
+
+
+def active_enabled() -> bool:
+    """Active rollover is ON by default (Owner, 2026-09-28, typed in the owning pane).
+
+    Kill switch `CPP_ROLLOVER_ACTIVE=0`. The switch only ever DISABLES: unset is ON, so a
+    host that never heard of the variable still behaves the way the Owner asked for on
+    every host. A deny is a value you send, not a value you hope is absent -- but here the
+    dangerous direction is enabling by accident, and an unset variable cannot type `/clear`
+    on its own: every reset still has to pass `gate()` first.
+    """
+    return (os.environ.get("CPP_ROLLOVER_ACTIVE") or "").strip().lower() not in ("0", "off", "false")
 
 
 def _now() -> float:
@@ -342,6 +357,78 @@ def safe_to_forget(receipt: dict, comp: dict) -> dict:
     return {"verdict": "SAFE_TO_FORGET" if not reasons else "REFUSED", "reasons": reasons}
 
 
+def sealed_receipt(session_id: str, state_dir: Optional[Path] = None) -> Optional[dict]:
+    """The receipt this session's capsule was ACTUALLY sealed with, read from the ledger.
+
+    A capsule cannot witness its own integrity: hashing the file and comparing the digest
+    to itself is a predicate with one reachable branch, so it would answer "unchanged" for
+    a capsule someone had rewritten between the seal and the reset. The `capsule_sealed`
+    row is the only independent record of the bytes that were observed.
+    """
+    path = (state_dir or STATE_DIR) / "rollover-ledger.jsonl"
+    found = None
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if row.get("event") == "capsule_sealed" and row.get("session_id") == session_id:
+                    found = row          # last one wins: the most recent seal
+    except OSError:
+        return None
+    return found
+
+
+def gate(session_id: str, state_dir: Optional[Path] = None, max_age_s: float = RESET_MAX_AGE_S,
+         now: Optional[float] = None) -> dict:
+    """May `/clear` be typed for this session RIGHT NOW? The one authority for the reset.
+
+    Judges the capsule that was sealed and shown, never a freshly compiled one: re-sealing
+    at the moment of destruction would authorise destroying whatever arrived since the
+    seal, which is exactly the race the receipt exists to close.
+
+    Three verdicts, deliberately not interchangeable. SAFE_TO_FORGET may reset; REFUSED
+    means the capsule moved, aged out, or was never good; NO_CAPSULE means nothing was
+    ever sealed here. Only the middle one is a statement about this session's contents,
+    and only it is fixed by sealing again.
+    """
+    now = _now() if now is None else now
+    p = capsule_path(session_id, state_dir)
+    row = sealed_receipt(session_id, state_dir)
+    if row is None:
+        return {"verdict": "NO_CAPSULE", "capsule": str(p), "sha256": None, "age_s": None,
+                "reasons": ["no capsule_sealed receipt for this session"]}
+    reasons: list[str] = []
+    if row.get("safe_to_forget") != "SAFE_TO_FORGET":
+        reasons += [f"the seal itself refused: {r}" for r in (row.get("refusals") or ["unstated"])]
+    receipt = row.get("capsule") or {}
+    want = receipt.get("sha256")
+    if not receipt.get("sealed") or not want:
+        reasons.append("the recorded receipt carries no sealed hash")
+    else:
+        try:
+            if hashlib.sha256(p.read_bytes()).hexdigest() != want:
+                reasons.append("capsule on disk is not the bytes that were sealed")
+        except OSError as exc:
+            reasons.append(f"capsule unreadable: {exc.__class__.__name__}")
+    # Freshness. The receipt authorises destroying the state it was taken over; work that
+    # landed afterwards was never captured, so an old capsule is not a licence for it.
+    try:
+        age = now - p.stat().st_mtime
+    except OSError:
+        age = None
+    if age is None:
+        reasons.append("capsule age unknown")
+    elif age > max_age_s:
+        reasons.append(f"capsule sealed {int(age)}s ago (limit {int(max_age_s)}s): seal again before clearing")
+    if p.with_suffix(".certified").exists():
+        reasons.append("capsule already certified and retired")
+    return {"verdict": "SAFE_TO_FORGET" if not reasons else "REFUSED", "capsule": str(p),
+            "sha256": want, "age_s": None if age is None else int(age), "reasons": reasons}
+
+
 def bootstrap(capsule: dict) -> str:
     """The successor's first context: pointers and facts, never the transcript."""
     repo = capsule.get("repo") or {}
@@ -473,7 +560,19 @@ def ledger(event: str, state_dir: Optional[Path] = None, **fields) -> None:
         pass  # telemetry: a lost row never blocks a session
 
 
-def newest_capsule(cwd: str, state_dir: Optional[Path] = None, exclude: str = "") -> Optional[dict]:
+def resumable(capsule: dict) -> list[str]:
+    """Why no successor could ever certify this capsule; empty means it can be resumed.
+
+    certify() refuses an exam item whose expected answer is empty, so a capsule sealed with no
+    goal or no obligation is uncertifiable by construction. The shadow seals such capsules into
+    the same directory as /kclear. Offering one would make the successor claim it, which locks
+    out every other successor, and then fail the exam with no way to pass. Measured 2026-09-28:
+    capsule gsdlr-92a0350ee055, leaked by a test run, was claimed that way."""
+    return [f"{item['key']} was never recorded" for item in exam(capsule) if not _norm(item["a"])]
+
+
+def newest_capsule(cwd: str, state_dir: Optional[Path] = None, exclude: str = "",
+                   skipped: Optional[list] = None) -> Optional[dict]:
     d = (state_dir or STATE_DIR) / "capsules"
     best = None
     for p in sorted(d.glob("*.json"), key=lambda q: q.stat().st_mtime, reverse=True) if d.is_dir() else []:
@@ -485,9 +584,14 @@ def newest_capsule(cwd: str, state_dir: Optional[Path] = None, exclude: str = ""
             continue
         if cap.get("schema") != SCHEMA or cap.get("session_id") == exclude:
             continue
-        if _norm(cap.get("cwd")) == _norm(cwd):
-            best = cap
-            break
+        if _norm(cap.get("cwd")) != _norm(cwd):
+            continue
+        if resumable(cap):
+            if skipped is not None:
+                skipped.append(cap.get("session_id"))
+            continue
+        best = cap
+        break
     return best
 
 
@@ -565,6 +669,9 @@ def main(argv=None) -> int:
     for k in ("goal", "branch", "head", "next"):
         ce.add_argument(f"--{k}")
     ce.add_argument("--answers", help='JSON {"goal","branch","head","next"} (fragile under PowerShell 5.1)')
+    ga = sub.add_parser("gate")
+    ga.add_argument("--session", default=current_session())
+    ga.add_argument("--max-age-s", type=float, default=RESET_MAX_AGE_S)
     st = sub.add_parser("status")
     st.add_argument("--n", type=int, default=10)
     a = ap.parse_args(argv)
@@ -575,6 +682,21 @@ def main(argv=None) -> int:
         row = observe(a.session, a.cwd, a.transcript, a.used_pct, a.tier)
         print(json.dumps({k: row[k] for k in ("safe_to_forget", "refusals", "decision")}, indent=1))
         return 0
+    if a.cmd == "gate":
+        if not a.session:
+            print("REFUSED: no session id (CLAUDE_CODE_SESSION_ID unset); pass --session.")
+            return 2
+        g = gate(a.session, max_age_s=a.max_age_s)
+        print(f"capsule   {g['capsule']}")
+        print(f"verdict   {g['verdict']}")
+        for r in g["reasons"]:
+            print(f"  refuse   {r}")
+        ledger("reset_gate", session_id=a.session, verdict=g["verdict"], reasons=g["reasons"],
+               age_s=g.get("age_s"))
+        # Distinct codes on purpose: 3 says this session's capsule is not good enough to
+        # forget, 4 says nothing was ever sealed here. A caller that collapsed them would
+        # tell the Owner their work had moved when in fact nobody had captured it.
+        return {"SAFE_TO_FORGET": 0, "NO_CAPSULE": 4}.get(g["verdict"], 3)
     if a.cmd == "seal":
         if not a.session:
             print("REFUSED: no session id (CLAUDE_CODE_SESSION_ID unset); pass --session.")
@@ -592,10 +714,21 @@ def main(argv=None) -> int:
             print(f"  note     {w}")
         return 0 if stf["verdict"] == "SAFE_TO_FORGET" else 3
     if a.cmd == "resume":
+        skipped: list = []
         cap = (json.loads(capsule_path(a.from_session).read_text(encoding="utf-8"))
-               if a.from_session and capsule_path(a.from_session).is_file() else newest_capsule(a.cwd, exclude=a.claimant))
+               if a.from_session and capsule_path(a.from_session).is_file()
+               else newest_capsule(a.cwd, exclude=a.claimant, skipped=skipped))
         if not cap:
             print("No sealed, unretired capsule for this directory in the last 24 h. Nothing to resume.")
+            if skipped:
+                print(f"  ({len(skipped)} capsule(s) here were skipped as not resumable: no goal or no "
+                      f"obligation was recorded, e.g. {skipped[0]})")
+            return 4
+        why = resumable(cap)
+        if why:
+            # Refused BEFORE the claim: a claim on an uncertifiable capsule only locks others out.
+            print(f"NOT RESUMABLE: capsule {cap['session_id']} cannot be certified -- {'; '.join(why)}.")
+            ledger("resume_not_resumable", session_id=cap["session_id"], claimant=a.claimant, reasons=why)
             return 4
         cl = claim(cap["session_id"], a.claimant)
         if not cl["claimed"]:

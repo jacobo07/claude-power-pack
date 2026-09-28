@@ -1,6 +1,6 @@
 ---
 covers: [interactive-context-rollover, context-rent-p3, kclear-capsule, kresume, rollover-shadow, safe-to-forget]
-status: SHADOW LIVE (5624c17, 440bce4; test_rollover 37/37, 11/11 mutants; real-state chain in one process); active path NOT BUILT
+status: ACTIVE LIVE, ON by default (37a3144 reset gate, 42da3d1 crossing; Owner-authorized in the owning pane 2026-09-28). Gates: test_rollover 48/48, test_rollover_active_path 10/10, test_gsd_long_run 100/100, 4/4 mutants. Kill switch CPP_ROLLOVER_ACTIVE=0. OWED: a real fresh-session crossing (§8)
 date: 2026-09-28
 mode: ULTRA-PLAN for ownership (this document), EXECUTION for every slice
 parent: vault/plans/context-rent-2026-09-27.md (P3), sibling vault/specs/parent-context-epoch-rotation.md
@@ -82,7 +82,10 @@ the decision, capsule size, completeness, safe-to-forget verdict and predicted s
 `CPP_ROLLOVER_SHADOW=off`. Manual path upgraded: `/kclear` seals a capsule, `/clear`, `/kresume`
 reconstructs, refreshes reality and prints the exam.
 
-## 7. Exit criteria for active rollover (not met yet)
+## 7. Exit criteria for active rollover (WAIVED for enablement 2026-09-28 — see the blocks below)
+
+The criteria as originally written, kept verbatim because they remain the right *monitoring*
+targets even though they are no longer the gate:
 
 >= 20 shadow candidates from real sessions; >= 1 real `/kclear -> /clear -> /kresume` crossing
 certified; zero lost obligations across them; would-rollover rate and predicted saving reviewed by
@@ -102,6 +105,31 @@ still collected, now as monitoring rather than as a gate.
 > Default-on waits for the Owner to confirm here, because it makes an automatic context
 > destruction the default in every session. Everything required for it except that switch is
 > listed in `interactive-context-rollover.RESUMPTION.md` item 2.
+
+> **SUPERSEDED 2026-09-28 (later the same day), by the Owner typing it in THIS pane.** The note
+> above is kept because it was correct when written and because the reason it gave — an unverifiable
+> relay may not arm an automatic context destruction — is the rule, not the obstacle. The condition
+> it named has now been met. Owner, verbatim: *"enable active rollover BY DEFAULT. At the context
+> wall do /kclear -> wait for SAFE_TO_FORGET -> /clear -> /kresume in the fresh session -> carry on,
+> delivered through C4 (orca-exact on Windows; on GEX44 use tools/tmux_transport.py, commit 2b6f183,
+> GEX44-PROVEN 28/28). Keep every refusal: no /clear without SAFE_TO_FORGET and a hash-matching
+> capsule. Kill switch CPP_ROLLOVER_ACTIVE=0. Skip the 20-shadow-run gate. Same behaviour on GEX44"*.
+>
+> **Status: the active path is BUILT and ON by default** (`37a3144`, `42da3d1`). What changed:
+> - The wall asks `/kclear`, not `/compact`. `/clear` is never requested there; a later Stop asks
+>   `rollover.py gate` to judge the capsule `/kclear` actually sealed, and only SAFE_TO_FORGET
+>   licenses the reset. The gate is consulted immediately before the destructive step, never at the
+>   wall a turn earlier — that would authorise forgetting whatever happened in between.
+> - The sealed hash is read from the ledger's `capsule_sealed` row, never recomputed from the
+>   capsule and compared with itself: that predicate has one reachable branch.
+> - `_route_for` gained `tmux-exact`, so "same behaviour on GEX44" is a route rather than an
+>   instruction; the detached spawn now works on POSIX (the existing one needed `pythonw.exe` and
+>   so silently did nothing on Linux).
+> - If the capsule never arrives, the crossing hands back to `/compact` after 3 Stops. Rollover can
+>   equal the old path or beat it; it cannot leave a session worse off.
+>
+> The §7 numeric gate is **waived for enablement** by the Owner, as recorded above. Shadow evidence
+> keeps accruing as monitoring. §8 below is still OWED and is unaffected by this decision.
 
 ## 8. Production Reality owed
 
