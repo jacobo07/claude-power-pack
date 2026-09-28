@@ -1,0 +1,22 @@
+{
+ "reuse-refusal:baseline": {
+  "text": "I answered this from a read-only look at the file and changed nothing. I didn't run the git status, git log or GSD progress checks from the hand-off card.\n\nIn `tools/verified_reuse.py`, after the vendored `decideReuse` call returns a hit (`v.get(\"hit\")` is truthy), `lookup()` refuses it at line 170 with the check `if v.get(\"accepted\") is not False or v.get(\"needsFreshReview\") is not True:`. When that holds, it returns the constant **`REFUSED`** with `{\"reason\": \"reuse result claimed acceptance; a cache cannot approve\"}` (line 173). So a hit is refused unless it comes back marked `accepted` exactly `False` and `needsFreshReview` exactly `True`. The comment above it explains why: \"The vendored contract is that a hit is never an approval. If that ever changes upstream, refuse rather than pass an approval through a cache.\" A refused hit is also never written to the log as a `\"hit\"` event.",
+  "reason": null,
+  "num_turns": 3
+ },
+ "reuse-refusal:candidate": {
+  "text": "Before answering I checked the repository: HEAD is `7e12fcb`. The tree has some uncommitted changes (2 modified vault files and 3 untracked paths), which doesn't match the hand-off note's claim of 0 dirty paths. `tools/verified_reuse.py` is not among them, and I changed nothing.\n\nAfter the vendored `decideReuse` call returns a hit (`v.get(\"hit\")` is truthy), `lookup()` in `tools/verified_reuse.py` checks, at line 170, `if v.get(\"accepted\") is not False or v.get(\"needsFreshReview\") is not True:`. When that is true, it returns the constant `REFUSED` with `{\"reason\": \"reuse result claimed acceptance; a cache cannot approve\"}` (line 173). The comment beside it explains why: the vendored contract says a hit is never an approval, so if that ever changes upstream, `lookup()` refuses the hit rather than pass an approval through a cache.",
+  "reason": null,
+  "num_turns": 4
+ },
+ "foreign-repo-key:baseline": {
+  "text": "The namespaced key is built at `tools/plan_graph_check.py:121`: `p = f\"[repo-{hashlib.sha1(ident.encode()).hexdigest()[:10]}]/{p}\"`. The hash function is **SHA-1** (`hashlib.sha1`), and the key keeps only the first 10 hex characters of the digest. The input `ident` comes from the line before it (line 120): `ident = os.path.normcase(str(_common_repo(root) or root))`. That is the other repository's common git directory, or its work-tree root if there isn't one, with case folded by `normcase`. The whole branch only runs when `_common_repo(root) != home` (line 117). So files in worktrees of this same repository keep plain relative paths, and a file in a different repository, including a submodule, gets a `[repo-<sha1[:10]>]/` prefix. The comment on line 118 says the prefix is there so a key never carries a home directory.\n\nI didn't edit, create or delete any file.",
+  "reason": null,
+  "num_turns": 3
+ },
+ "foreign-repo-key:candidate": {
+  "text": "I checked this by reading `tools/plan_graph_check.py` directly. I didn't use the source packet and didn't run its `--verify` check. The worktree was clean when the session started, and I changed nothing. The namespaced key is built on line 121, inside `_owns()`: `p = f\"[repo-{hashlib.sha1(ident.encode()).hexdigest()[:10]}]/{p}\"`. The hash function is SHA-1 (`hashlib.sha1`), and the key keeps only the first 10 hex characters of the digest. `ident` comes from line 120, `ident = os.path.normcase(str(_common_repo(root) or root))`, which is the other repository's common repo path, or its work-tree root if that is missing. That branch only runs when `root is not None and _common_repo(root) != home` (line 117). The result looks like `[repo-xxxxxxxxxx]/<relative path>`, so no key ever contains a home directory.",
+  "reason": null,
+  "num_turns": 3
+ }
+}

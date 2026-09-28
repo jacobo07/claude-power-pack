@@ -74,12 +74,24 @@ def save(exp_id: str, name: str, value, base: Path | None = None) -> Path:
     return p
 
 
+def vendor_id(value: str | None) -> str | None:
+    """Injective escape into the vendor's identifier grammar [a-zA-Z0-9._/-]. The host reports
+    models like `claude-opus-5-5[1m]`, which the vendor rejects outright; `runs.json` keeps the raw
+    observation and only the analysis request carries the escaped form."""
+    if value is None:
+        return None
+    return "".join(c if (c.isascii() and (c.isalnum() or c in "./-")) else f"_{ord(c):02x}" for c in value)
+
+
 def analyze(exp_id: str, base: Path | None = None, overhead_tokens: dict | None = None) -> dict:
     reg = load(exp_id, "registration.json", base)
     if reg is None:
         raise ExperimentError(f"{exp_id}: not registered")
-    payload = {"registration": reg, "runs": load(exp_id, "runs.json", base, []),
-               "grades": load(exp_id, "grades.json", base, [])}
+    runs = load(exp_id, "runs.json", base, [])
+    for run in runs:
+        for attempt in run.get("attempts") or []:
+            attempt["actualModel"] = vendor_id(attempt.get("actualModel"))
+    payload = {"registration": reg, "runs": runs, "grades": load(exp_id, "grades.json", base, [])}
     if overhead_tokens is not None:
         payload["overheadTokens"] = overhead_tokens
     r = nb.call("pairedExperiments", "analyzeExperiment", [payload], timeout=60)

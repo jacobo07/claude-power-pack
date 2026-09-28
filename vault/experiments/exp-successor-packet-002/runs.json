@@ -1,0 +1,126 @@
+[
+ {
+  "caseId": "reuse-refusal",
+  "variant": "baseline",
+  "registrationSha256": "786d7a797441c235a59b82c15a625368d9f36432191fb5888c5000067e27cf05",
+  "promptSha256": "b425f9f1f75ee403a5f1c9836ee8e82dd85c9f76521d7261b3141b2a0541ff37",
+  "sourceSha256": "594d712e076b5185a72b233efe6b6a28760476da63f4e0fbb87de9fdc5f79896",
+  "worker": {
+   "route": "claude-code-headless",
+   "requestedModel": "default",
+   "config": {
+    "mode": "print",
+    "tools": "read-only"
+   }
+  },
+  "startedAt": "2026-09-28T16:59:44.110Z",
+  "attempts": [
+   {
+    "sequence": 1,
+    "status": "passed",
+    "actualModel": "claude-opus-5-5[1m]",
+    "usage": {
+     "input_tokens": 503166,
+     "cached_input_tokens": 349511,
+     "output_tokens": 614
+    },
+    "elapsedMs": 70978,
+    "outputSha256": "ac85e5ae9bfe7ee314e449a7991d2b15f98e5cedcfe36ec7fbb020a8ab4f71fa"
+   }
+  ],
+  "historyComplete": true
+ },
+ {
+  "caseId": "reuse-refusal",
+  "variant": "candidate",
+  "registrationSha256": "786d7a797441c235a59b82c15a625368d9f36432191fb5888c5000067e27cf05",
+  "promptSha256": "9e907bd3e366636800a28938407555381915dd76710a82af8832297aac63cb7c",
+  "sourceSha256": "594d712e076b5185a72b233efe6b6a28760476da63f4e0fbb87de9fdc5f79896",
+  "worker": {
+   "route": "claude-code-headless",
+   "requestedModel": "default",
+   "config": {
+    "mode": "print",
+    "tools": "read-only"
+   }
+  },
+  "startedAt": "2026-09-28T17:00:55.092Z",
+  "attempts": [
+   {
+    "sequence": 1,
+    "status": "passed",
+    "actualModel": "claude-opus-5-5[1m]",
+    "usage": {
+     "input_tokens": 504659,
+     "cached_input_tokens": 351875,
+     "output_tokens": 749
+    },
+    "elapsedMs": 75443,
+    "outputSha256": "e73dbf5bebca1083dd65b160bf523b39cd3a73dcfc0dd1f11d3d8d286f629f9e"
+   }
+  ],
+  "historyComplete": true
+ },
+ {
+  "caseId": "foreign-repo-key",
+  "variant": "baseline",
+  "registrationSha256": "786d7a797441c235a59b82c15a625368d9f36432191fb5888c5000067e27cf05",
+  "promptSha256": "93a91e84fa966b79c9219b6be60dee2dca26f0c398fd36926e0e08695cba4742",
+  "sourceSha256": "2ceaf47c7e988ce3991ca8c8a8e26cff1cc768104819ae0e993b7748ac74adf0",
+  "worker": {
+   "route": "claude-code-headless",
+   "requestedModel": "default",
+   "config": {
+    "mode": "print",
+    "tools": "read-only"
+   }
+  },
+  "startedAt": "2026-09-28T17:02:10.552Z",
+  "attempts": [
+   {
+    "sequence": 1,
+    "status": "passed",
+    "actualModel": "claude-opus-5-5[1m]",
+    "usage": {
+     "input_tokens": 502618,
+     "cached_input_tokens": 351030,
+     "output_tokens": 647
+    },
+    "elapsedMs": 56684,
+    "outputSha256": "7256dfb9d63df5cde197f16ce85cb38b2ad821b87833a3a34cfd13c38c1de322"
+   }
+  ],
+  "historyComplete": true
+ },
+ {
+  "caseId": "foreign-repo-key",
+  "variant": "candidate",
+  "registrationSha256": "786d7a797441c235a59b82c15a625368d9f36432191fb5888c5000067e27cf05",
+  "promptSha256": "edeadcdf5aeabfdcb75b596ddcdd3ecc4c25af9244a7f7d504806260b9442f0c",
+  "sourceSha256": "2ceaf47c7e988ce3991ca8c8a8e26cff1cc768104819ae0e993b7748ac74adf0",
+  "worker": {
+   "route": "claude-code-headless",
+   "requestedModel": "default",
+   "config": {
+    "mode": "print",
+    "tools": "read-only"
+   }
+  },
+  "startedAt": "2026-09-28T17:03:07.248Z",
+  "attempts": [
+   {
+    "sequence": 1,
+    "status": "passed",
+    "actualModel": "claude-opus-5-5[1m]",
+    "usage": {
+     "input_tokens": 501854,
+     "cached_input_tokens": 350480,
+     "output_tokens": 590
+    },
+    "elapsedMs": 81960,
+    "outputSha256": "75a39c646acfd9fee9d3e259564cee2f266c4d06c1883bba3b044ac57d9e2c89"
+   }
+  ],
+  "historyComplete": true
+ }
+]

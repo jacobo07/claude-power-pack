@@ -612,7 +612,7 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
-                  progress: dict | None = None) -> dict:
+                  progress: dict | None = None, packet: dict | None = None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
@@ -633,6 +633,9 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     epoch = expect_epoch + 1
     failed = rec.get("failed_launches", 0) + (1 if rec.get("state") == LAUNCHING else 0)
     extra = {"note": note} if note is not None else {}
+    if note is not None:
+        # The packet travels with THIS hand-off's note and is cleared with it, never inherited.
+        extra["packet"] = packet
     if work_dir:
         extra["work_dir"] = work_dir
     if progress is not None:
@@ -649,6 +652,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         # "epoch 3" with a WORK TREE line the record had since corrected; the worker entered it.
         wd = work_dir or rec.get("work_dir") or rec["cwd"]
         extra["card"] = render_card({**rec, "epoch": expect_epoch + 1, "note": note or "",
+                                     "packet": packet if note is not None else rec.get("packet"),
                                      "work_dir": wd}, _git_facts(wd), _plan_facts(wd, rec.get("workstream")))
     rec = transition(mission_id, expect_epoch=expect_epoch, expect_state=expect_state,
                      event="launch_claimed", now=now, state=LAUNCHING, epoch=epoch,
@@ -735,7 +739,52 @@ def ack_session(session_id: str, *, pid: int | None = None, proc_start: str | No
         return None
 
 
-def request_handoff(session_id: str, note: str, now: float | None = None) -> dict:
+def handoff_packet(session_id: str, specs: list[str], context: int = 30) -> tuple[dict | None, str]:
+    """Build the hand-off's source packet from `PATH::ANCHOR` (the anchor's line with `context`
+    lines either side) or `PATH:START-END` specs, rooted where the work IS (work_dir, else cwd).
+    Returns (reference, "") or (None, why). Only a COMPLETE packet is attached: a partial one is
+    exactly the evidence gap a successor would trust without knowing it."""
+    rec = mission_for_session(session_id)
+    if rec is None:
+        return None, f"session {session_id} owns no mission"
+    root = rec.get("work_dir") or rec["cwd"]
+    paths, selectors = [], []
+    for spec in specs:
+        if "::" in spec:
+            path, anchor = spec.split("::", 1)
+            sel = {"path": path, "anchor": anchor, "beforeLines": 0, "afterLines": 0}
+            # The vendor refuses a context window that runs past either end of the file instead of
+            # clipping it -- so the region most worth handing over (new code at the end of a file)
+            # never attached. A unique anchor becomes a clipped line range here; a missing or
+            # ambiguous one is left to the vendor, which names the gap.
+            try:
+                lines = (Path(root) / path).read_text(encoding="utf-8", errors="replace").splitlines()
+                hits = [i + 1 for i, line in enumerate(lines) if anchor in line]
+                if len(hits) == 1:
+                    sel = {"path": path, "startLine": max(1, hits[0] - context),
+                           "endLine": min(len(lines), hits[0] + context)}
+            except OSError:
+                pass
+        else:
+            m = re.match(r"^(.*):(\d+)-(\d+)$", spec)
+            if not m:
+                return None, f"unreadable packet spec {spec!r} (want PATH::ANCHOR or PATH:START-END)"
+            path = m.group(1)
+            sel = {"path": path, "startLine": int(m.group(2)), "endLine": int(m.group(3))}
+        if path not in paths:
+            paths.append(path)
+        selectors.append(sel)
+    try:
+        import source_packet as sp
+        ref = sp.persist(root, paths, selectors=selectors)
+    except Exception as exc:
+        return None, f"packet could not be built: {type(exc).__name__}: {exc}"
+    if ref.get("verdict") != "COMPLETE":
+        return None, f"packet is {ref.get('verdict')}: {'; '.join(ref.get('gaps') or [])[:400]}"
+    return ref, ""
+
+
+def request_handoff(session_id: str, note: str, now: float | None = None, packet: dict | None = None) -> dict:
     """The owner hit its context wall: record what the successor must know, and
     wait for this turn to end. Only the owner may request it."""
     now = time.time() if now is None else now
@@ -745,6 +794,8 @@ def request_handoff(session_id: str, note: str, now: float | None = None) -> dic
     return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=RUNNING,
                       event="handoff_requested", now=now, state=HANDOFF,
                       note=(note or "").strip()[:2000],
+                      # Always written, so a packet from an earlier hand-off never rides along.
+                      packet=packet,
                       pending={"kind": "handoff", "from": session_id,
                                "requested_at": now, "deadline": now + HANDOFF_DEADLINE_S})
 
@@ -780,6 +831,26 @@ def _autonomy_rubric() -> tuple[str, str]:
     rubric = r.get("rubric") if isinstance(r.get("rubric"), str) and r.get("rubric") else _RUBRIC_FALLBACK
     wake = r.get("wake_order") if isinstance(r.get("wake_order"), str) else ""
     return rubric, wake
+
+
+def _packet_lines(ref) -> list[str]:
+    """The hand-off's source packet as a REFERENCE (vault/experiments/exp-successor-packet-002:
+    inlining would have truncated 28 of 32 real cards; a reference fits all of them and cost the
+    same as no packet). Re-verified here, at render time: a packet whose bytes or sources moved
+    is announced as stale, never presented as evidence. Any failure drops the block, never the
+    card. Kill switch CPP_SOURCE_PACKET_CARD=off."""
+    if not isinstance(ref, dict) or not ref.get("sha256"):
+        return []
+    if (os.environ.get("CPP_SOURCE_PACKET_CARD") or "").strip().lower() in ("off", "0", "false"):
+        return []
+    try:
+        import source_packet as sp
+        state, why = sp.verify(ref)
+        if state == sp.OK:
+            return ["", sp.card_reference(ref)]
+        return ["", f"SOURCE PACKET from the hand-off is {state} ({why}): do not use it; read the files directly."]
+    except Exception as exc:  # the card must never fail for a packet
+        return ["", f"SOURCE PACKET from the hand-off could not be checked ({type(exc).__name__}): read the files directly."]
 
 
 def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -> str:
@@ -836,6 +907,7 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
         parts += ["Recent commits:"] + [f"  {c}" for c in g["recent"][:5]]
     if gsd_facts:
         parts += ["", "GSD:", gsd_facts[:1500]]
+    parts += _packet_lines(rec.get("packet"))
     note = (rec.get("note") or "").strip()
     parts += ["", "Predecessor's note (a claim to verify, not a fact):",
               note if note else "  (none — the predecessor did not hand off; reconstruct from git + GSD)"]
@@ -1392,18 +1464,20 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     row["action"] = "continue"
                     continue
                 note = None
+                packet = None
                 if act in ("relay", "replace") and rec.get("owner"):
                     # Read BEFORE the launch: the note describes the predecessor's last turn.
                     # An explicit `handoff --note` counts only when THIS owner recorded it
                     # (state HANDOFF); otherwise the record's note is the previous epoch's and
-                    # would be handed on as current.
+                    # would be handed on as current. The same holds for its source packet.
                     explicit = rec.get("note") if rec["state"] == HANDOFF else ""
+                    packet = rec.get("packet") if rec["state"] == HANDOFF else None
                     note = explicit or handoff_note_from_transcript(rec["owner"]["session_id"]) or ""
                     row["note_chars"] = len(note)
                 row["launch"] = launch_worker(mid, expect_epoch=rec["epoch"],
                                               expect_state=rec["state"], reason=plan["reason"],
                                               runner=runner, now=now, note=note,
-                                              work_dir=work_dir, progress=progress)
+                                              work_dir=work_dir, progress=progress, packet=packet)
                 if row["launch"].get("ok"):
                     # Every FRESH worker says why it exists: a rotation is certified by its cause,
                     # never by counting fresh sessions (tools/gsd_epoch.py census).
@@ -1709,6 +1783,9 @@ def _cli(argv=None) -> int:
     h = sub.add_parser("handoff")
     h.add_argument("--session", required=True)
     h.add_argument("--note", default="")
+    h.add_argument("--packet", action="append", default=[], metavar="PATH::ANCHOR|PATH:START-END",
+                   help="hand the successor the exact region you were working on, as a hash-bound "
+                        "source packet referenced from its card (repeatable; never inlined)")
     d = sub.add_parser("directive")
     d.add_argument("--mission", required=True)
     d.add_argument("--text", required=True)
@@ -1735,8 +1812,15 @@ def _cli(argv=None) -> int:
             sys.stdout.write(card)
         return 0
     if args.cmd == "handoff":
-        rec = request_handoff(args.session, args.note)
-        print(f"HANDOFF RECORDED mission={rec['mission_id']} epoch={rec['epoch']} -- end your turn now")
+        packet = None
+        if args.packet:
+            packet, why = handoff_packet(args.session, args.packet)
+            if packet is None:
+                # A packet is an aid, never a precondition: the hand-off is recorded without it.
+                print(f"SOURCE PACKET NOT ATTACHED: {why}")
+        rec = request_handoff(args.session, args.note, packet=packet)
+        extra = f" packet={packet['sha256'][:12]} ({packet['bytes']} bytes)" if packet else ""
+        print(f"HANDOFF RECORDED mission={rec['mission_id']} epoch={rec['epoch']}{extra} -- end your turn now")
         return 0
     if args.cmd == "directive":
         rec = add_directive(args.mission, args.text)

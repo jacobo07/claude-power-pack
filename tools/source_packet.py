@@ -11,11 +11,15 @@ Verdicts: COMPLETE (every path included whole, every expectation matched) · PAR
 blocked, truncated, redacted, missing or stale -- each named) · UNJUDGED (the bridge could not answer).
 
     python tools/source_packet.py --root R path [path ...] [--expect path=sha256 ...] [--out packet.txt]
+    python tools/source_packet.py --root R path ... --persist     (store whole, print the card reference)
+    python tools/source_packet.py --verify SHA256                  (exit 0 OK · 3 STALE · 4 MISSING)
 exit 0 COMPLETE · 3 PARTIAL · 2 UNJUDGED
 
-Not embedded in the successor card: the card is capped at 8000 bytes (SessionStart truncation,
-measured) and one packet's default excerpt budget alone is 24000. Which consumer earns it is the
-question the T8 paired experiment is registered to answer.
+Never embedded in the successor card: the card is capped at 8000 bytes and one packet's default
+excerpt budget alone is 24000. Decided by vault/experiments/exp-successor-packet-002 (REPORT.md):
+a packet is stored whole and the card carries a REFERENCE, opt-in via
+`gsd_mission.py handoff --packet PATH::ANCHOR` -- inlining would have truncated 28 of 32 real cards,
+and a reference cost the same as no packet.
 """
 from __future__ import annotations
 
@@ -149,7 +153,8 @@ def card_reference(ref: dict) -> str:
         f"SOURCE PACKET ({ref['verdict']}, {ref['files']} file(s), {ref['bytes']} bytes, sha256 {ref['sha256'][:16]}){gaps}:",
         f"  {ref['path']}",
         "  Exact hashed excerpts of the files this work is about. Read it when you need them, instead of",
-        f"  exploring. Check it first: python tools/source_packet.py --verify {ref['sha256']}",
+        # Absolute: mission workers run in OTHER repositories, where tools/source_packet.py is absent.
+        f'  exploring. Check it first: python "{Path(__file__).resolve()}" --verify {ref["sha256"]}',
     ])
 
 

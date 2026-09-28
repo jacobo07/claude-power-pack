@@ -757,6 +757,30 @@ def _transcript_has_wall(session_id: str | None) -> bool | None:
         return None
 
 
+def _routing(mission_id: str, events: list[dict]) -> dict:
+    """How each continuation ROUTE of this mission performed (tools/routing_metrics.py, T8 item 29):
+    per cause/mechanism/model, runs passed/failed and observed token sums including cache reads --
+    the cost side a rotation is certified against. Unknown stays unknown; any failure is UNJUDGED,
+    never a certify error."""
+    try:
+        import routing_metrics as rm
+        attempts, unjudged = rm.build_attempts([e for e in events if e.get("mission_id") == mission_id])
+        if not attempts:
+            return {"outcome": "EMPTY", "unjudged_runs": len(unjudged)}
+        an = rm.analyze(attempts)
+        if an.get("outcome") != "OK":
+            return {"outcome": "UNJUDGED", "error": an.get("error"), "unjudged_runs": len(unjudged)}
+        groups = [{"route": g["route"], "runs": g["runCount"], "passed": g["successfulRuns"],
+                   "failed": g["failedRuns"], "history_complete": g["historyComplete"],
+                   "input_tokens_observed": g["metrics"]["inputTokens"]["observedTotal"],
+                   "output_tokens_observed": g["metrics"]["outputTokens"]["observedTotal"],
+                   "cache_read_tokens_observed": g.get("cacheReadTokensObserved")}
+                  for g in an["value"]["groups"]]
+        return {"outcome": "OK", "unjudged_runs": len(unjudged), "routes": groups}
+    except Exception as exc:  # noqa: BLE001 -- measurement must never break certification
+        return {"outcome": "UNJUDGED", "error": f"{type(exc).__name__}: {exc}"}
+
+
 def certify(mission_id: str, events: list[dict] | None = None, commits=_commits_between) -> dict:
     """Is each context rotation of this mission REAL? The mission does not certify itself: a rotation
     counts only with (a) its recorded cause CONTEXT_ROTATION, (b) the wall witness for the
@@ -792,6 +816,7 @@ def certify(mission_id: str, events: list[dict] | None = None, commits=_commits_
     out["rotations_certified"] = certified
     out["turn_continuations"] = sum(1 for e in events if e.get("event") == "turn_continued"
                                     and e.get("mission_id") == mission_id)
+    out["routing"] = _routing(mission_id, events)
     log = owners_log(mission_id)
     if log.exists():
         samples = []

@@ -114,12 +114,13 @@
   {
    "id": "genesis-source-packets",
    "source": "vendor/genesis-suite/modules/genesis-source-packets",
-   "owner": "tools/source_packet.py (tool built, tested); consumer decided by the T8 paired experiment",
+   "owner": "tools/source_packet.py persist/verify/card_reference -> gsd_mission.py handoff --packet -> successor card",
    "disposition": "WRAP",
    "differential": "bounded, filtered, hash-bound source excerpts",
-   "status": "PLANNED",
+   "status": "LIVE",
    "slice": "T8",
-   "evidence": "WRAP built: bridge buildSourcePacket + expected-hash STALE detection, test_source_packet 9/9. NOT embedded in the successor card: the card is capped at 8000 bytes (SessionStart truncation) and one packet's default excerpt budget is 24000 -- the spec's consumer assumption does not hold. Stays PLANNED until a consumer earns it."
+   "evidence": "Placement decided by exp-successor-packet-002: the packet is stored whole and content-addressed; the card carries only a reference (never inlined, never truncated), re-verified at render time (STALE / MISSING announced, never presented). Opt-in on hand-off, since a reference was cost- and quality-neutral. Kill switch CPP_SOURCE_PACKET_CARD=off. Known limit: the vendor's credential-line filter blocks 441/1,091 Python files here whole (322 only for 'pass' before ':'/'=').",
+   "proof": "python tools/test_handoff_packet.py"
   },
   {
    "id": "genesis-evidence-collector",
@@ -146,11 +147,13 @@
   {
    "id": "genesis-routing-metrics",
    "source": "vendor/genesis-suite/modules/genesis-routing-metrics",
-   "owner": "modules/cost_collapse + gsd epoch receipts",
+   "owner": "tools/routing_metrics.py (mission ledger + worker transcripts) -> consumed by tools/gsd_epoch.py certify",
    "disposition": "WRAP",
    "differential": "retries, rework, latency, acceptance per route; unknown usage stays unknown",
-   "status": "PLANNED",
-   "slice": "T8"
+   "status": "LIVE",
+   "slice": "T8",
+   "proof": "python tools/test_routing_metrics.py",
+   "evidence": "Route = launch cause/mechanism:model per mission epoch. Real ledger since 2026-09-20: 448 attempts, 66 unjudged runs withheld (no transcript), 389 provider-refusal failures; cache reads 98% of observed input on rotation epochs. gsd_epoch certify reports it per mission (S10: 139.0M of 140.1M input = cache reads). costUsd never invented; incomplete history keeps totals null."
   },
   {
    "id": "genesis-change-impact",
@@ -176,11 +179,13 @@
   {
    "id": "genesis-task-context",
    "source": "vendor/genesis-suite/modules/genesis-task-context",
-   "owner": "tools/source_packet.py",
+   "owner": "tools/source_packet.py build_context (anchors / line ranges) -> handoff --packet",
    "disposition": "WRAP",
    "differential": "exact line ranges / literal anchors with expected hashes, gaps reported",
-   "status": "PLANNED",
-   "slice": "T2"
+   "status": "LIVE",
+   "slice": "T2",
+   "proof": "python tools/test_handoff_packet.py",
+   "evidence": "Selector packets carry the exact region a hand-off names, each range hash-bound. The vendor refuses a context window past either end of a file instead of clipping it; handoff_packet clips a unique anchor to a line range first (the end-of-file region otherwise never attached)."
   },
   {
    "id": "genesis-constraint-compiler",
@@ -196,20 +201,24 @@
   {
    "id": "genesis-verified-reuse",
    "source": "vendor/genesis-suite/modules/genesis-verified-reuse",
-   "owner": "tools/audit_cache.py (hash-bound summaries)",
+   "owner": "tools/verified_reuse.py (store under _audit_cache/reuse/) -> consumed by tools/batch_drafts.py",
    "disposition": "EXTEND",
    "differential": "objective/contract/role/source binding; reuse never inherits approval",
-   "status": "PLANNED",
-   "slice": "T8"
+   "status": "LIVE",
+   "slice": "T8",
+   "proof": "python tools/test_verified_reuse.py",
+   "evidence": "Fingerprint binds objective, task contract (role), output bounds (policy), source sha256s, worker, 24 h window, tree root. batch compile hands back verified drafts, dispatching only the rest; a hit is accepted=false/needsFreshReview=true and is DRIVEN into evidence_bundle.write_review -> 'fail' (no ticket nonce). Avoided work measured as dispatches + source chars; tokens null. Kill switch CPP_VERIFIED_REUSE=off."
   },
   {
    "id": "genesis-paired-experiments",
    "source": "vendor/genesis-suite/modules/genesis-paired-experiments",
-   "owner": "UCR-CIF evidence (seam) + tools/paired_experiment.py",
+   "owner": "tools/paired_experiment.py (vault/experiments/<id>/, frozen registration) + tools/exp_successor_packet.py",
    "disposition": "WRAP",
    "differential": "preregistered hash-frozen comparisons, holdout split, all failures retained",
-   "status": "PLANNED",
-   "slice": "T8"
+   "status": "LIVE",
+   "slice": "T8",
+   "proof": "python tools/test_paired_experiment.py",
+   "evidence": "exp-successor-packet-002 registered and committed (7e12fcb) before 4 real headless successors: quality 4/4 vs 4/4, tokens +0.08% for the packet arm (-5% target not met). Dry run over 32 real cards: inlining truncates 28/32 (58% of packet bytes lost), a reference fits all. 001 withdrawn before any run (WITHDRAWN.md). Decision in vault/experiments/exp-successor-packet-002/REPORT.md. UCR-CIF seam: the construction worktree is untouched."
   },
   {
    "id": "genesis-batch-drafts",

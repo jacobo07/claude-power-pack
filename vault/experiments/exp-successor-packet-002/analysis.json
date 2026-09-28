@@ -1,0 +1,126 @@
+{
+ "schema": "genesis-paired-analysis-v1",
+ "experimentId": "exp-successor-packet-002",
+ "registrationSha256": "786d7a797441c235a59b82c15a625368d9f36432191fb5888c5000067e27cf05",
+ "scope": "diagnostic",
+ "complete": true,
+ "pairs": [
+  {
+   "caseId": "reuse-refusal",
+   "split": "training",
+   "maxScore": 2,
+   "baseline": {
+    "present": true,
+    "historyComplete": true,
+    "score": 2,
+    "tokens": 503780,
+    "elapsedMs": 70978,
+    "recordedAttempts": 1,
+    "actualModels": [
+     "claude-opus-5-5_5b1m_5d"
+    ]
+   },
+   "candidate": {
+    "present": true,
+    "historyComplete": true,
+    "score": 2,
+    "tokens": 505408,
+    "elapsedMs": 75443,
+    "recordedAttempts": 1,
+    "actualModels": [
+     "claude-opus-5-5_5b1m_5d"
+    ]
+   },
+   "sameActualModel": true
+  },
+  {
+   "caseId": "foreign-repo-key",
+   "split": "holdout",
+   "maxScore": 2,
+   "baseline": {
+    "present": true,
+    "historyComplete": true,
+    "score": 2,
+    "tokens": 503265,
+    "elapsedMs": 56684,
+    "recordedAttempts": 1,
+    "actualModels": [
+     "claude-opus-5-5_5b1m_5d"
+    ]
+   },
+   "candidate": {
+    "present": true,
+    "historyComplete": true,
+    "score": 2,
+    "tokens": 502444,
+    "elapsedMs": 81960,
+    "recordedAttempts": 1,
+    "actualModels": [
+     "claude-opus-5-5_5b1m_5d"
+    ]
+   },
+   "sameActualModel": true
+  }
+ ],
+ "quality": {
+  "baseline": {
+   "score": 4,
+   "observedScore": 4,
+   "gradedCases": 2,
+   "maxScore": 4
+  },
+  "candidate": {
+   "score": 4,
+   "observedScore": 4,
+   "gradedCases": 2,
+   "maxScore": 4
+  }
+ },
+ "qualityMetric": "normalized-score",
+ "qualityMultiplier": 1,
+ "scoreMultiplier": 1,
+ "passedCases": {
+  "baseline": 2,
+  "candidate": 2
+ },
+ "passRateMultiplier": 1,
+ "regressions": [],
+ "splits": {
+  "training": {
+   "cases": 1,
+   "scores": {
+    "baseline": 2,
+    "candidate": 2
+   }
+  },
+  "holdout": {
+   "cases": 1,
+   "scores": {
+    "baseline": 2,
+    "candidate": 2
+   }
+  }
+ },
+ "workerTokens": {
+  "baseline": 1007045,
+  "candidate": 1007852
+ },
+ "workerTokenReduction": -0.0008013544578444609,
+ "totalTokens": {
+  "baseline": null,
+  "candidate": null
+ },
+ "wholePipelineTokenReduction": null,
+ "monetarySavings": null,
+ "targets": {
+  "quality": true,
+  "workerTokens": false,
+  "wholePipeline": null
+ },
+ "warnings": [
+  "Supplied records are not authenticated execution or review evidence.",
+  "Results apply to this experiment; they do not establish general task quality or monetary savings."
+ ],
+ "executionAuthorityGranted": false,
+ "routingPolicyChanged": false
+}
