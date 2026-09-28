@@ -109,6 +109,38 @@ function writeJsonBestEffort(p, obj) {
   }
 }
 
+// Autonomy Decision Gate (modules/autonomy_gate): the four-category rubric and the wake-up
+// order, read from the SAME JSON the Python gate reads, so the injected text cannot drift from
+// the classifier. A small file read, no subprocess. Missing file -> the fallback line below,
+// never an empty directive.
+const RUBRIC_FILE = path.join(__dirname, '..', 'modules', 'autonomy_gate', 'rubric.json');
+const RUBRIC_FALLBACK = 'Stop and ask the Owner ONLY for a resource-blocked, irreversible, '
+  + 'outward-facing or pure-preference decision; decide everything else yourself and continue.';
+const RECEIPTS = path.join(STATE_DIR, 'autonomy-decisions.jsonl');
+
+function loadRubric() {
+  const r = readJson(RUBRIC_FILE);
+  return {
+    rubric: (r && typeof r.rubric === 'string' && r.rubric) || RUBRIC_FALLBACK,
+    wake: (r && typeof r.wake_order === 'string' && r.wake_order) || '',
+  };
+}
+
+// Why work continued, or why it was let stop: one compact line per judgement that reached a
+// decision. Best effort -- accounting must never break the turn.
+function receipt(sid, classification, why) {
+  try {
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    fs.appendFileSync(RECEIPTS, JSON.stringify({
+      ts: new Date().toISOString(), source: 'gsd_stop_continuation', session: sid || null,
+      owner: classification === 'CONTINUE' ? 'AGENT' : 'TURN_END',
+      category: classification, why: String(why || '').slice(0, 200),
+    }) + '\n', 'utf8');
+  } catch (err) {
+    // same contract as writeJsonBestEffort
+  }
+}
+
 /**
  * Heartbeat on EVERY judgement, not only on blocks.
  *
@@ -300,6 +332,7 @@ function run(data) {
       classification: 'STALLED', ts: Date.now(),
     };
     writeJsonBestEffort(STATE_FILE, state);
+    receipt(sid, 'STALLED', 'no durable mission fact moved since the last continuation');
     return { continue: true };
   }
 
@@ -310,6 +343,7 @@ function run(data) {
       classification: 'STREAK_CEILING', ts: Date.now(),
     };
     writeJsonBestEffort(STATE_FILE, state);
+    receipt(sid, 'STREAK_CEILING', `${MAX_STREAK} consecutive continuations`);
     return { continue: true };
   }
 
@@ -318,19 +352,23 @@ function run(data) {
     classification: 'CONTINUE', ts: Date.now(),
   };
   writeJsonBestEffort(STATE_FILE, state);
+  receipt(sid, 'CONTINUE', `armed mission unfinished, fingerprint moved (streak ${streak + 1})`);
 
   // Minimum sufficient context (§41): mission status, ONE authoritative next
   // action, and the pointer. Everything else the model already has, or can
   // read. A large injected prompt on every continuation is a context tax paid
-  // once per turn end for the life of the run.
+  // once per turn end for the life of the run. The decision gate replaces the
+  // old "an irreducible Owner decision" -- a phrase that left stop-vs-ask to the
+  // model's mood -- with the four named categories (modules/autonomy_gate).
+  const r = loadRubric();
   return {
     decision: 'block',
     reason: 'GSD AUTONOMOUS RUN STILL ARMED -- the mission is not finished and '
       + 'this turn ended without completing it.\n\n'
       + nextAction(marker, cwd, tasksDir)
-      + '\n\nDo not re-plan the roadmap and do not ask the Owner what to do. '
-      + 'If the mission is genuinely complete, or it needs an irreducible Owner '
-      + 'decision, say so plainly and it will not be resumed again.',
+      + '\n\nDo not re-plan the roadmap. ' + r.rubric
+      + (r.wake ? '\n' + r.wake : '')
+      + '\nIf the mission is genuinely complete, say so plainly and it will not be resumed again.',
   };
 }
 

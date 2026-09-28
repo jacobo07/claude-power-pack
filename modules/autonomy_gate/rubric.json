@@ -1,0 +1,5 @@
+{
+ "schema": "cpp-autonomy-rubric/1",
+ "rubric": "DECISION GATE: stop and ask the Owner ONLY if the pending decision is resource-blocked (credential/access you lack), irreversible (destroys or overwrites state not cheaply undoable), outward-facing (sends, publishes, spends, deploys -- unless a durable authorization covers it) or pure preference. Anything else: pick the best option from the evidence, state in one line why it is safe (reversible, internal, derivable) and continue. Deterministic check: python -m modules.autonomy_gate classify \"<the question>\"",
+ "wake_order": "ON EVERY WAKE, re-orient from durable state before acting, in this order: (1) finished background work and unread task results, (2) the build or phase already in flight, (3) the next todo in the roadmap, (4) only then the standing mission task. A wake is not a new mission and a fresh process is not a fresh run."
+}
