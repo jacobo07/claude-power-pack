@@ -36,7 +36,9 @@ same-session continuation, launch_cause, `tools/gsd_epoch.py census`). "1 of 499
 Gates at 717554f: mission 184/184 · sweep 10/10 · drill 5/5 · route 9/9 · GSDLR 98/98 · epoch 56/56.
 REVIEW CLOSED `b6f725e` (1 HIGH/3 MED/2 LOW fixed; mission 190/190, sweep 11/11). F1 other half
 CLOSED by peer c2 in `dce125b` (continue_worker records work_dir); verified here: epoch 63/63,
-mission 190/190. Live canary: m-916e905e23d4 (smoke worktree, launch_cause INITIAL).
+mission 190/190. Live canary: m-916e905e23d4 (smoke worktree, launch_cause INITIAL) -> COMPLETED live after
+`1a74a23` (archived milestone = ALL_COMPLETE); recorded `8a98d7d`. Linux: `6efd815` git fallback
+proven on GEX44 by peer c2 (CPP_GIT_EXE unset, /usr/bin/git): MC_PASS=190/190.
 NEXT: (1) merge the UKDL candidates when ukdl-universal.md is quiet; (2) watch the first live
 no_progress halt / COMPLETED at budget (`gsd_mission.py status`, ledger `mission_completed`);
 (3) fold isolation into `tools/lane_r_mutate.py` (UWCP-owned; mutates in place today).
