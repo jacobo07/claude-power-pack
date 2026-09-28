@@ -85,11 +85,15 @@ def worker_outcome(session_id: str, find=None) -> dict:
     for row in reversed(rows):
         if row.get("type") != "assistant":
             continue
+        # WHEN the turn ended is the row's own timestamp; the mtime moves on as the host appends
+        # cost/prompt rows. quota_hold anchors a time-only reset on this value (gsd_mission
+        # 9b4c64d): with the mtime, "resets 4pm" written at 15:51 read as tomorrow's 4pm.
+        row_at = lr._parse_iso(row.get("timestamp")) or at
         msg = row.get("message") if isinstance(row.get("message"), dict) else {}
         text = "".join(b.get("text", "") for b in (msg.get("content") or []) if isinstance(b, dict))
         if msg.get("model") == "<synthetic>":
-            return {"class": classify(text), "text": " ".join(text.split())[:200], "at": at}
-        return {"class": None, "at": at}
+            return {"class": classify(text), "text": " ".join(text.split())[:200], "at": row_at}
+        return {"class": None, "at": row_at}
     # No assistant row in the tail. Only call it no_reply if the transcript is small enough that
     # the tail IS the whole file; otherwise the evidence is out of our aperture.
     if path.stat().st_size <= lr.TAIL_BYTES:

@@ -42,6 +42,31 @@ def main() -> int:
     gate("V-BREAKER-QUOTA-CONTRACT-KEPT", h is not None and ref is not None and h["until"] == ref["until"]
          and h["class"] == pb.QUOTA, f"breaker until={h and h['until']} quota_hold until={ref and ref['until']}")
 
+    # The incident (m-d82c7cb6b87e, 2026-09-28) through the REAL hold_for: refusal row 13:51:35Z
+    # "resets 4pm (Europe/Madrid)" = 14:00Z, the host appended rows until 14:52Z (mtime), the sweep
+    # asked at 17:48Z. Both detectors must anchor on the row: either one on the mtime holds 24 h.
+    sess = "You've hit your session limit · resets 4pm (Europe/Madrid)"
+    tdir = Path(tempfile.mkdtemp())
+    tp = tdir / "w-q.jsonl"
+    tp.write_text("\n".join(json.dumps(r) for r in (
+        {"type": "assistant", "timestamp": "2026-09-28T13:51:35.565Z",
+         "message": {"model": "<synthetic>", "content": [{"type": "text", "text": sess}]}},
+        {"type": "system", "timestamp": "2026-09-28T13:51:35.654Z"}, {"type": "cost-state"})) + "\n",
+        encoding="utf-8")
+    os.utime(tp, (1790607120.0, 1790607120.0))
+    o = pb.worker_outcome("w-q", find=lambda sid: tp)
+    gate("V-BREAKER-OUTCOME-AT-IS-ROW-TIME", o.get("at") == 1790603495.565, f"at={o.get('at')}")
+    saved_find = gm.lr.find_transcript
+    gm.lr.find_transcript = lambda sid: tp if sid == "w-q" else None
+    try:
+        after = pb.hold_for({"mission_id": "m-q-anchor", "owner": {"session_id": "w-q"}}, 1790617680.0)
+        before = pb.hold_for({"mission_id": "m-q-anchor", "owner": {"session_id": "w-q"}}, 1790603555.0)
+    finally:
+        gm.lr.find_transcript = saved_find
+    gate("V-BREAKER-QUOTA-ANCHOR-RELEASES", after is None, f"17:48Z -> {after}")
+    gate("V-BREAKER-QUOTA-ANCHOR-CONTROL-HOLDS", before is not None and before.get("until") == 1790604000.0,
+         f"13:52Z -> {before and before.get('until')}")
+
     h = pb.decide("m", "w1", NOW, workers=["w1"], cleared_at=0,
                   outcome=outcomes({"w1": {"class": pb.AUTH, "text": "Invalid API key · Please run /login", "at": at}}))
     gate("V-BREAKER-AUTH-QUARANTINE", h and h["quarantine"] and h["until"] is None, h and h["reason"][:60])

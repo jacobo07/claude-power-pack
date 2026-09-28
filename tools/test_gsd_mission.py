@@ -885,6 +885,40 @@ def main() -> int:
     check("V-MC-QUOTA-CONTROL-NORMAL-REPLY", gm.quota_hold("Phase 3 done. HANDOFF NOTE: next 4",
                                                            NOW, NOW) is None)
     check("V-MC-QUOTA-CONTROL-NO-TEXT", gm.quota_hold(None, None, NOW) is None)
+
+    # --- the reset is anchored on the REFUSAL, not on the pass (m-d82c7cb6b87e, 2026-09-28) ----
+    # Refused 13:51:35Z (15:51 Madrid) "resets 4pm"; the sweep asked at 17:48Z and held until
+    # 16:00 the NEXT day, because a time-only reset was resolved against the pass's clock.
+    SESS = "You've hit your session limit · resets 4pm (Europe/Madrid)"
+    refused, reset, sweep = 1790603495.0, 1790604000.0, 1790617680.0   # 13:51:35Z 14:00Z 17:48Z
+    check("V-MC-QUOTA-ANCHOR-SAME-DAY",
+          gm.quota_reset_at(SESS, sweep, anchor=refused) == reset,
+          str(gm.quota_reset_at(SESS, sweep, anchor=refused)))
+    check("V-MC-QUOTA-ANCHOR-RELEASES-AFTER-RESET", gm.quota_hold(SESS, refused, sweep) is None,
+          str(gm.quota_hold(SESS, refused, sweep)))
+    check("V-MC-QUOTA-ANCHOR-CONTROL-HOLDS-BEFORE",
+          (gm.quota_hold(SESS, refused, refused + 60) or {}).get("until") == reset)
+    qdir = Path(TMP) / "projects" / "quota"
+    qdir.mkdir(parents=True, exist_ok=True)
+    rows = [{"type": "assistant", "timestamp": "2026-09-28T13:51:35.565Z",
+             "message": {"model": "<synthetic>", "content": [{"type": "text", "text": SESS}]}},
+            {"type": "system", "timestamp": "2026-09-28T13:51:35.654Z"},
+            {"type": "cost-state"}]
+    for sid, rs in (("s-q-row", rows), ("s-q-nots", [{**rows[0], "timestamp": None}] + rows[1:])):
+        p = qdir / f"{sid}.jsonl"
+        p.write_text("\n".join(json.dumps(r) for r in rs) + "\n", encoding="utf-8")
+        os.utime(p, (1790607120.0, 1790607120.0))          # host appended until 14:52Z (16:52 Madrid)
+    real_find = gm.lr.find_transcript
+    gm.lr.find_transcript = lambda sid: (qdir / f"{sid}.jsonl") if (qdir / f"{sid}.jsonl").exists() else None
+    try:
+        check("V-MC-QUOTA-ANCHOR-FROM-ROW-TIMESTAMP",
+              gm.quota_hold_from_transcript("s-q-row", sweep) is None,
+              "the refusal row's timestamp, not the file mtime, anchors the reset")
+        h = gm.quota_hold_from_transcript("s-q-nots", sweep)
+        check("V-MC-QUOTA-ANCHOR-MTIME-FALLBACK", h is not None and h["until"] > sweep,
+              "no row timestamp: mtime is the only anchor, and it is still honoured")
+    finally:
+        gm.lr.find_transcript = real_find
     real_q = gm.quota_hold_from_transcript
     try:
         gm.quota_hold_from_transcript = lambda sid, now: (
