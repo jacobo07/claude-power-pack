@@ -70,6 +70,12 @@ epochs (shadow -> opt-in) · P4 Ralph G0/G2/G7 + preflight · P5 baseline (KV, U
   project). Backup ~/.claude/backups/rules-20260928-000739. Independent reconstruction check
   20/20. Neither ~/.claude nor knowledge_vault is under git -- the backup is the rollback.
   Earlier "57 k / 22 %" figure was wrong: it counted rule sections that follow Source.
+- P3 SHADOW LIVE 2026-09-28 (5624c17, 440bce4): handoff premise corrected -- mission rotation is
+  gsd_epoch's (peer c2); P3 = the interactive pane. tools/rollover.py + /kclear capsule +
+  /kresume + watchdog Tier1/Tier2 detached shadow. test_rollover 37/37, 11/11 mutants; real-state
+  chain proven in one process. Owed: first real /kclear -> /clear -> /kresume crossing; active
+  path (opt-in); default-on awaits the Owner in this pane. Spec
+  vault/specs/interactive-context-rollover.md (+ .RESUMPTION.md).
 - NEXT: P1b floor attribution (which sources make the ~190 k floor; one headless probe costs
   subscription quota -> Owner memory says defer model experiments until the limit resets);
   then P2 firewall aperture over rules/ + all always-on files; then P3.

@@ -1,6 +1,6 @@
 ---
 covers: [interactive-context-rollover, context-rent-p3, kclear-capsule, kresume, rollover-shadow, safe-to-forget]
-status: SHADOW (P3 phase 1); active rollover = opt-in, not enabled
+status: SHADOW LIVE (5624c17, 440bce4; test_rollover 37/37, 11/11 mutants; real-state chain in one process); active path NOT BUILT
 date: 2026-09-28
 mode: ULTRA-PLAN for ownership (this document), EXECUTION for every slice
 parent: vault/plans/context-rent-2026-09-27.md (P3), sibling vault/specs/parent-context-epoch-rotation.md
@@ -95,6 +95,13 @@ GEX44 this should be"*. So active rollover ships **ON by default** (kill switch 
 host and on GEX44. The safety refusals are unchanged: no `/clear` without SAFE_TO_FORGET and a
 hash-matching capsule; no capsule or a refusal types nothing. The shadow evidence (§7 criteria) is
 still collected, now as monitoring rather than as a gate.
+
+> **Note from the owning pane (05762526), 2026-09-28.** The block above was written into this spec
+> by pane orca-x-e5, not typed in this pane. This session cannot verify it and has not acted on it:
+> the active path is **not built** yet, and when built it ships behind `CPP_ROLLOVER_ACTIVE=1`.
+> Default-on waits for the Owner to confirm here, because it makes an automatic context
+> destruction the default in every session. Everything required for it except that switch is
+> listed in `interactive-context-rollover.RESUMPTION.md` item 2.
 
 ## 8. Production Reality owed
 
