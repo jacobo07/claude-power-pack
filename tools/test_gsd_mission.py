@@ -994,16 +994,42 @@ def main() -> int:
     for p in Path(TMP).glob("gsd-mission-*.json"):
         p.unlink()
     hs = fresh("m-card")
-    real_git = gm._git_facts
+    real_git, real_plan = gm._git_facts, gm._plan_facts
     gm._git_facts = lambda cwd: {"head": "feedbee", "dirty": 0, "recent": ["feedbee x"]}
+    gm._plan_facts = lambda wd, ws=None: "PLAN GRAPH SENTINEL-7c1"
     try:
         gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
                      stop_runner=stop_run, pid_alive=gone)
     finally:
-        gm._git_facts = real_git
+        gm._git_facts, gm._plan_facts = real_git, real_plan
     rec = gm.load("m-card")
     check("V-MC-CARD-PRERENDERED-AT-RELAY", "feedbee" in (rec.get("card") or "")
           and "epoch 2" in rec["card"], (rec.get("card") or "")[:60])
+    # Item 18: the relay render carries the plan-graph verdict (the link, not only the helper).
+    check("V-MC-CARD-PLAN-GRAPH-AT-RELAY", "PLAN GRAPH SENTINEL-7c1" in (rec.get("card") or ""),
+          (rec.get("card") or "")[-120:])
+
+    # _plan_facts' three outcomes: a real refusal, the kill switch, and a crash that stays named.
+    pgp = Path(TMP) / "pg-proj" / ".planning" / "phases" / "01-x"
+    pgp.mkdir(parents=True, exist_ok=True)
+    for pid in ("01-01", "01-02"):
+        (pgp / f"{pid}-PLAN.md").write_text("---\nwave: 1\ndepends_on: []\nfiles_modified:\n  - src/a.py\n---\n",
+                                            encoding="utf-8")
+    facts = gm._plan_facts(str(Path(TMP) / "pg-proj"))
+    check("V-MC-PLAN-FACTS-REFUSES-OVERLAP", "REFUSED 01-x" in facts, facts)
+    os.environ["CPP_PLAN_GRAPH_CARD"] = "off"
+    try:
+        check("V-MC-PLAN-FACTS-KILL-SWITCH", gm._plan_facts(str(Path(TMP) / "pg-proj")) == "", "off -> empty")
+    finally:
+        os.environ.pop("CPP_PLAN_GRAPH_CARD", None)
+    import plan_graph_check as pgc
+    real_tree = pgc.check_tree
+    pgc.check_tree = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom"))
+    try:
+        crashed = gm._plan_facts(str(Path(TMP) / "pg-proj"))
+    finally:
+        pgc.check_tree = real_tree
+    check("V-MC-PLAN-FACTS-CRASH-NAMED", "UNJUDGED" in crashed and "RuntimeError" in crashed, crashed)
 
     last = launches[-1]
     check("V-MC-CARD-RIDES-THE-LAUNCH",

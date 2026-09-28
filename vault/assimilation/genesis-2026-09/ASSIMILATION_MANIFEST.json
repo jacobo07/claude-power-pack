@@ -33,11 +33,13 @@
   {
    "id": "genesis-plan-graph",
    "source": "vendor/genesis-suite/modules/genesis-plan-graph",
-   "owner": "GSD phase plans consumed by tools/gsd_mission.py (UWCP is a workspace capsule, not a plan owner)",
+   "owner": "tools/plan_graph_check.py -> successor card (tools/gsd_mission.py _plan_facts at relay)",
    "disposition": "CONNECT",
    "differential": "cycle/depth/unknown-dependency validation + write-ownership overlap per wave",
-   "status": "PLANNED",
-   "slice": "T4"
+   "status": "LIVE",
+   "slice": "T4",
+   "proof": "python tools/test_plan_graph_check.py",
+   "evidence": "CONNECT: GSD phase-plan frontmatter judged by vendored validateGraph + per-wave PlanGraph.ready via the bridge; wave order native. Real sweep: 21/21 KobiiCraft workstream phases judged OK incl. 6 multi-plan waves, after two real shapes forced fixes (worktree absolute paths; lone plans with no wave)."
   },
   {
    "id": "genesis-task-ledger",

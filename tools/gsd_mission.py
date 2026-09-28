@@ -649,7 +649,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         # "epoch 3" with a WORK TREE line the record had since corrected; the worker entered it.
         wd = work_dir or rec.get("work_dir") or rec["cwd"]
         extra["card"] = render_card({**rec, "epoch": expect_epoch + 1, "note": note or "",
-                                     "work_dir": wd}, _git_facts(wd))
+                                     "work_dir": wd}, _git_facts(wd), _plan_facts(wd, rec.get("workstream")))
     rec = transition(mission_id, expect_epoch=expect_epoch, expect_state=expect_state,
                      event="launch_claimed", now=now, state=LAUNCHING, epoch=epoch,
                      failed_launches=failed, reason=reason,
@@ -1480,6 +1480,20 @@ def next_progress(rec: dict, fp: str | None, ran: bool = True) -> dict:
         stalls = stalls + 1 if fp == prev["fp"] else 0
     return {"fp": fp if fp is not None else prev.get("fp"), "stalls": stalls,
             "measured": fp is not None}
+
+
+def _plan_facts(work_dir: str, workstream: str | None = None) -> str:
+    """Plan-graph verdict for the successor card (assimilation item 18). GSD runs one wave's plans
+    in parallel; two of them writing the same file are two writers in one tree. Runs at relay
+    time, out of band, like _git_facts. A check that could not run says so -- never silence,
+    which would read as "no overlap". Kill switch: CPP_PLAN_GRAPH_CARD=off."""
+    if (os.environ.get("CPP_PLAN_GRAPH_CARD") or "").strip().lower() == "off":
+        return ""
+    try:
+        import plan_graph_check as pg
+        return pg.card_lines(pg.check_tree(work_dir, workstream))
+    except Exception as exc:  # noqa: BLE001 -- the card must still ship; the gap is named on it
+        return f"PLAN GRAPH: the check could not run ({exc.__class__.__name__}); same-wave overlap is UNJUDGED."
 
 
 def _git_facts(cwd: str) -> dict:
