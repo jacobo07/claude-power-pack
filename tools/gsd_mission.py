@@ -765,11 +765,29 @@ def add_directive(mission_id: str, text: str, now: float | None = None) -> dict:
                       directives=[*(rec.get("directives") or []), text[:1000]])
 
 
+# The autonomy gate's rubric and wake order live in ONE file, read by the classifier
+# (modules/autonomy_gate), the Ralph Stop hook and this card, so the three cannot drift.
+_RUBRIC_FILE = Path(__file__).resolve().parent.parent / "modules" / "autonomy_gate" / "rubric.json"
+_RUBRIC_FALLBACK = ("DECISION GATE: stop only for a resource-blocked, irreversible, outward-facing or "
+                    "pure-preference decision; decide everything else yourself and continue.")
+
+
+def _autonomy_rubric() -> tuple[str, str]:
+    try:
+        r = json.loads(_RUBRIC_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return _RUBRIC_FALLBACK, ""
+    rubric = r.get("rubric") if isinstance(r.get("rubric"), str) and r.get("rubric") else _RUBRIC_FALLBACK
+    wake = r.get("wake_order") if isinstance(r.get("wake_order"), str) else ""
+    return rubric, wake
+
+
 def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -> str:
     """The rehydration card for a fresh worker. Mechanical sources only (the mission
     record, git, GSD); the predecessor's note is labelled as a claim, not a fact.
     Hard-capped: a card the host truncates silently is worse than a short one."""
     g = git_facts or {}
+    rubric, wake = _autonomy_rubric()
     parts = [
         f"MISSION CONTINUITY — you are worker epoch {rec['epoch']} of mission {rec['mission_id']}.",
         "You have no memory of earlier workers. Durable state is the repository and GSD, not this card.",
@@ -788,6 +806,14 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
         "  (the safest one that keeps the mission moving), record it as a decision with its",
         "  reason in the workstream STATE.md, and continue. If a step is genuinely impossible,",
         "  record why, move to the next runnable phase, and keep going.",
+        "",
+        # Unattended form of the autonomy gate: "ask" cannot reach anyone here, so a gated
+        # decision is recorded and skipped, never acted on and never parked on.
+        "For a decision the gate below reserves to the Owner: do NOT act on it. Record it in the",
+        "  workstream STATE.md as OWNER DECISION NEEDED (the question, the options, your pick),",
+        "  then continue with other runnable work.",
+        rubric,
+        *([wake] if wake else []),
         *(["", "OWNER DIRECTIVES (binding; they override the note below):"]
           + [f"  - {d}" for d in rec.get("directives") or []]
           if rec.get("directives") else []),

@@ -292,8 +292,9 @@
    "owner": "successor card (tools/gsd_mission.py render_card)",
    "disposition": "EXTEND",
    "differential": "finished children -> in-flight build -> todo -> standing task",
-   "status": "PLANNED",
-   "slice": "T3"
+   "status": "LIVE",
+   "slice": "T3",
+   "proof": "python tools/test_gsd_mission.py"
   },
   {
    "id": "self-continuation-rubric",
@@ -301,8 +302,9 @@
    "owner": "modules/decision_review (DRK reversibility) via modules/autonomy_gate",
    "disposition": "EXTEND",
    "differential": "four user-owned gate categories over DRK reversibility; everything else decided with a one-line why-safe",
-   "status": "PLANNED",
-   "slice": "T3"
+   "status": "LIVE",
+   "slice": "T3",
+   "proof": "python tools/test_autonomy_gate.py"
   },
   {
    "id": "self-continuation-stop-directive",
@@ -310,8 +312,9 @@
    "owner": "hooks/gsd_stop_continuation.js",
    "disposition": "EXTEND",
    "differential": "the continuation directive carries the gate rubric",
-   "status": "PLANNED",
-   "slice": "T3"
+   "status": "LIVE",
+   "slice": "T3",
+   "proof": "node tools/test_gsd_stop_continuation.js"
   },
   {
    "id": "self-continuation-decision-log",
@@ -319,8 +322,9 @@
    "owner": "modules/autonomy_gate receipts",
    "disposition": "EXTEND",
    "differential": "every continue/stop decision recorded with category and reason",
-   "status": "PLANNED",
-   "slice": "T3"
+   "status": "LIVE",
+   "slice": "T3",
+   "proof": "python tools/test_autonomy_gate.py"
   },
   {
    "id": "context-budget-meter",

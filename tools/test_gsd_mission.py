@@ -376,6 +376,20 @@ def main() -> int:
     with_d = gm.render_card({**card_rec, "directives": ["run D-01 on GEX44", "props to Phase 8"]})
     check("V-MC-CARD-RENDERS-DIRECTIVES", "OWNER DIRECTIVES" in with_d
           and "  - run D-01 on GEX44" in with_d and "  - props to Phase 8" in with_d)
+    # Autonomy gate on the successor card: the SAME rubric.json the classifier and the Stop hook
+    # read, the wake order ahead of the reconcile step, and a non-empty gate when the file is gone.
+    rj = json.loads(gm._RUBRIC_FILE.read_text(encoding="utf-8"))
+    check("V-MC-CARD-GATE-RUBRIC", rj["rubric"] in plain and rj["wake_order"] in plain
+          and "OWNER DECISION NEEDED" in plain
+          and plain.index(rj["wake_order"]) < plain.index("RECONCILE BEFORE ACTING"), plain[:300])
+    real_rubric = gm._RUBRIC_FILE
+    gm._RUBRIC_FILE = Path(TMP) / "no-such-rubric.json"
+    try:
+        no_rubric = gm.render_card(card_rec)
+    finally:
+        gm._RUBRIC_FILE = real_rubric
+    check("V-MC-CARD-GATE-FALLBACK", gm._RUBRIC_FALLBACK in no_rubric and rj["rubric"] not in no_rubric,
+          no_rubric[:300])
     gm.create(TMP, "/gsd-autonomous", mission_id="m-dir", now=NOW)
     blocked = gm.load("m-dir")
     gm.transition("m-dir", expect_epoch=blocked["epoch"], expect_state=blocked["state"],
