@@ -35,9 +35,11 @@ SUITES = [
     "test_genesis_bridge.py", "test_vendor_provenance.py", "test_task_contract.py",
     "test_source_packet.py", "test_plan_graph_check.py", "test_regression_memory.py",
     "test_batch_drafts.py", "test_review_intake.py", "test_evidence_bundle.py",
-    "test_change_impact.py",
+    "test_change_impact.py", "test_routing_metrics.py", "test_verified_reuse.py",
+    "test_paired_experiment.py", "test_handoff_packet.py", "test_task_ledger_seam.py",
+    "test_task_adaptation.py",
 ]
-SUITE_FLOOR = 20
+SUITE_FLOOR = 25
 
 # (suite, path relative to REAL_ROOT with forward slashes, prefix match) -> reason.
 DECLARED: dict[tuple[str, str], str] = {}
@@ -132,6 +134,10 @@ def main(argv: list[str]) -> int:
         work = Path(tmp)
         controls(work)
         present = [s for s in suites if (REPO / "tools" / s).exists()]
+        missing = [s for s in suites if s not in present]
+        if missing:
+            # A renamed or deleted suite must not silently leave the ratchet's scope.
+            _fail("V-ISO-NAMED-SUITES", f"named in scope but not found: {missing}")
         if only or len(present) >= SUITE_FLOOR:
             _ok("V-ISO-FLOOR", f"{len(present)} suites in scope")
         else:

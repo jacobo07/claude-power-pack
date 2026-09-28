@@ -122,17 +122,34 @@ def declare(log: GoalLog, intent: str, acceptance=None, constraints=None,
 
 
 def revise(log: GoalLog, expected_seq: int, intent: str, acceptance=None,
-           constraints=None, scope=None, actor: str = "founder") -> GoalState:
+           constraints=None, scope=None, actor: str = "founder",
+           weakening_reason: str = "") -> GoalState:
     """A meaningful change to what counts as done. Refuses a no-op revision:
     minting a new revision for identical content would stale every piece of
-    evidence for nothing."""
+    evidence for nothing.
+
+    Task Adaptation (genesis-task-adaptation -> CONNECT here): a revision may ADD and REWORD, but
+    one that drops an acceptance criterion or a constraint weakens what "done" means, and is
+    refused unless the actor states why. The stated reason and exactly what was dropped are
+    recorded on the revision itself, so a weakened goal can never look like it was always this
+    easy."""
     current = project(log)
     semantic = normalise(intent, acceptance, constraints, scope)
     rev = revision_of(semantic)
     if rev == current.revision:
         raise GoalLogError(f"{log.goal_id}: revision unchanged ({rev}); nothing to revise")
-    log.append(expected_seq, REVISED, {"semantic": semantic, "revision": rev,
-                                       "supersedes": current.revision}, actor)
+    dropped = {k: [x for x in getattr(current, k) if x not in semantic[k]]
+               for k in ("acceptance", "constraints")}
+    dropped = {k: v for k, v in dropped.items() if v}
+    data = {"semantic": semantic, "revision": rev, "supersedes": current.revision}
+    if dropped:
+        if not (weakening_reason or "").strip():
+            raise GoalLogError(
+                f"{log.goal_id}: this revision drops {dropped} -- that weakens what counts as done; "
+                "state why (weakening_reason) or keep the criteria and add to them")
+        data["weakened"] = dropped
+        data["weakening_reason"] = weakening_reason.strip()
+    log.append(expected_seq, REVISED, data, actor)
     return project(log)
 
 

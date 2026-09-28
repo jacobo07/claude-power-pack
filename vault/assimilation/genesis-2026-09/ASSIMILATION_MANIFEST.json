@@ -55,11 +55,13 @@
   {
    "id": "genesis-task-adaptation",
    "source": "vendor/genesis-suite/modules/genesis-task-adaptation",
-   "owner": "modules/gsd_x/mission/obligation.py",
+   "owner": "modules/gsd_x/goal/contract.py revise (Goal Spine)",
    "disposition": "CONNECT",
    "differential": "plan-bound revisions that cannot weaken original criteria; accept/reject with actor+reason; recheck",
    "status": "PLANNED",
-   "slice": "T9"
+   "slice": "T9 (merged; liveness waits on UWCP S6)",
+   "proof": "python tools/test_task_adaptation.py",
+   "evidence": "CONNECTED in the canonical owner: a revision that drops an acceptance criterion or constraint (rewording included) is refused unless weakening_reason is stated; dropped items, reason and actor are recorded on the revision event (test_task_adaptation 7/7). NOT LIVE: contract.revise has no production caller and the Goal Spine engine has no live invoker (UWCP S6)."
   },
   {
    "id": "genesis-worker-router",
