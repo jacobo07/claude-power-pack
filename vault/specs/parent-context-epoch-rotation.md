@@ -175,7 +175,12 @@ Armed 2026-09-28 00:44Z (PREPARED), launched by the production sweep 00:47Z (`la
 INITIAL/fresh), worker `9e89a87e` adopted 00:51Z and entered the smoke worktree. Wall 29/30/28 % of
 a 1M window; parent context 19 % at start, 24 % at 01:41Z. Single-owner witness: 26 answered
 samples 00:46Z–02:05Z, never 2 live workers; continued by `gsd_epoch.py watch`.
-Certified rotations so far: **0** (epoch 1 still running). This section is updated from
+02:20Z: worker crossed the wall (flag `mission-wall-9e89a87e…-e1.flag`, used_pct 31 ≥ 30; its own
+transcript carries "CONTEXT WALL"). certify at 02:32Z: epoch 1 = 13 commits in the work tree
+(phases 5–6 done, 7 planned), wall witnessed, 8 more owner samples all ≤ 1 live worker; the
+worker was still finishing its step, so no epoch 2 yet. The in-session watcher and waiter were
+killed by the host's low-memory reaper (312 MB free) and deliberately not restarted.
+Certified rotations so far: **0**. This section is updated from
 `python tools/gsd_epoch.py certify --mission m-916e905e23d4`, never from the mission's own output.
 
 ## 6. Rollback
