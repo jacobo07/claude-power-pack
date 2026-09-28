@@ -94,6 +94,16 @@ Each verdict is read from its phase EVIDENCE; figures are GEX44's, not the lapto
 - 04-REVIEW: CR-01, WR-01 and WR-02 are open and must be fixed under a new runner sha before any reuse of ab_runner.py. Open finding: CR-01 (`env_check()` truthy bypass). GEX44.
 - `.planning/workstreams/cognitive-resource-os/phases/03-p3-pre-flight-p0/EVIDENCE.md`: the laptop's claude version is unrecorded, equivalence of the Windows build is assumed, and runtime confirmation of claudeMdExcludes was none by design (zero model calls). GEX44.
 
+## 2f. P3 ablation DONE (laptop, 2026-09-29) -- supersedes section 4 items 1-2
+- 32/32 runs valid first attempt (claude 2.1.284, opus-5-5). Positive control held: arm B first-call context
+  29.0-29.5k lower in all 16 pairs. Both arms pass 8/8 tasks in 2/2 replicates -> decision row 1:
+  R1 is a relocation candidate. CEILING caveat: no task came near failing in either arm, so the set has
+  no measured power for small losses; B-prime (on-demand R1) not run. Arm B total context -20.7 %,
+  wall time unchanged. `.planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/REPORT.md`, commit `bec5fa0`.
+- CRO-01 re-run on GEX44 PASS (section 5 of phase 01 EVIDENCE, commit 7a7b786).
+- Next: Owner go per move; one R1 file per commit to on-demand loading, re-run its domain tasks, ideally
+  after adding judgement tasks that have no pre-existing test.
+
 ## 3. Active decisions
 - Estimates and observations never mix; every figure names its source.
 - Pricing: never hardcode a dated filename; never invent a price (read the live page).
