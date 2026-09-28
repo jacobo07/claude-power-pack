@@ -36,9 +36,12 @@ record is UNKNOWN and keeps it. Proven: red 4/10 before (5 gsd calls for 5 marke
 mutation "absent record read as HALTED" caught. Live: markers 403 -> 4 in one pass; supervise
 resumed (23:05, 23:09, 23:17); `m-8ab6628b7acd` HALTED on budget and its worker reaped.
 
-## Still open
-Single-instance lease + tree reap on timeout so a slow pass can never overlap the next
-(mission-continuity T7, owned by the `claude-power-pack-e9` pane).
+## Closed since (2026-09-28)
+Single-instance lease, the mission stage run FIRST, each stage bounded with a tree kill, and a
+heartbeat written on every pass: `dfe968f` (mission-continuity T7, pane `claude-power-pack-e9`).
+`gsd_mission.sweep_health()` (`07f1e71`) reads that heartbeat as OK / DEGRADED / STALE / STUCK /
+NOT_OBSERVED, so a supervisor that exists but completes no pass is now a named state, not silence.
+Observed live 2026-09-28 00:36Z: mission stage rc 0 in 10.8 s, v2 stage rc 0 in 5.6 s.
 
 ## Transferable lesson
 When a path is retired, retire its **execution**, not only its **entry point** -- and check every

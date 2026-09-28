@@ -1,11 +1,39 @@
 ---
-covers: [parent-context-epoch-rotation, gsd-mission, cpp-gsd-long, context-epoch, sweep-liveness]
-status: PROPOSED (awaiting Owner one-click approval)
-date: 2026-09-27
-mode: PLAN (not ULTRA) -- ownership is settled; one bounded design question (progress signal)
+covers: [parent-context-epoch-rotation, gsd-mission, cpp-gsd-long, context-epoch, sweep-liveness, turn-continuation, gsd-epoch]
+status: IMPLEMENTED (5eee90a, 717554f); live multi-rotation proof S10 IN FLIGHT (mission m-916e905e23d4)
+date: 2026-09-27 (plan) / 2026-09-28 (implementation, pane claude-power-pack-c2)
+mode: ULTRA-PLAN for the turn/epoch decision (Reality Scan), EXECUTION for every slice after it
 ---
 
 # Parent Context Epoch Rotation -- plan
+
+> **UPDATE 2026-09-28 (supersedes the two blocks below where they disagree).**
+>
+> **Host primitive, verified in session (probe `7a42f96f`, scratchpad `probe_resume2.log`):** after
+> `claude stop <id>`, `claude --bg --resume <sid> "<prompt>"` with NO other flag wakes the SAME
+> session id and transcript with its context ("SAME_SESSION_CONTINUED True CONTEXT_PRESERVED True").
+> With any flag the host starts a COPY under a new id -- host text: "keeps its own saved options, so
+> the flags you passed started a copy". So same-session turn continuation EXISTS on this host and
+> the old "every turn end = fresh worker" was a design choice, not a host limit.
+>
+> **Economics, measured:** worker floor 186,856 tokens resident at call #1 (4aa2e2d3,
+> session_autopsy); the resumed probe turn wrote 125,483 and read 33,949 -- a new process breaks the
+> prompt cache near the front, so a continuation costs ~current context and a fresh worker
+> ~floor + reconstruction. Policy: continue below `CONTINUE_MAX_TOKENS` = 300k, rotate at/above it.
+>
+> **Count correction (supersedes "1 of 499"):** `tools/gsd_epoch.py census` finds **10**
+> wall-witnessed rotations in production (KobiiCraft x5, CavEX x2, orca x1, gsd-long-smoke M6 x2),
+> 434 turn-end relays, 9 recoveries, 3 launch retries, 26 initial, 18 renewals. The "1" counted only
+> `handoff_asked`; the mid-turn wall writes `mission-wall-<sid>-e<N>.flag` and the Stop hook then
+> writes `handoff_already_asked`. Corroborated in worker cb70bd86's transcript. The historical 10 are
+> classified by reason + witness (basis `reason+wall_witness`); from 717554f on, every launch
+> ledgers `launch_cause` and rotations are certified by that cause, never by counting sessions.
+>
+> **Implemented:** `5eee90a` tools/gsd_epoch.py (causes, decide_turn_end, continue_worker, G6
+> child_work over main + subagent transcripts, S7 identity_check, G3 epoch_compacted, G4 epochs +
+> census); `717554f` supervise wiring (HOLD / CONTINUE / ROTATE; continuations counted by T5's
+> next_progress; kill switch `CPP_MISSION_CONTINUATION=off`). Gates epoch 56/56, mission 184/184,
+> 8/8 mutants killed on an isolated copy.
 
 > **CORRECTION 2026-09-27 ~23:40 (supersedes the "in production" claims in sections 1 and 5).**
 > Measured across the whole mission ledger: **499 launches in 43 missions, and exactly ONE was
