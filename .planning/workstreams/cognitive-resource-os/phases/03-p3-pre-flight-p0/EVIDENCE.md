@@ -48,6 +48,53 @@ model_calls: 0
 
 ## 2. Candidate mechanisms (ROADMAP criterion 1)
 
+### 2a. Discovery (coverage by construction)
+
+discovery_help_flags: 15 (raw/discovered-surface.txt section H)
+discovery_env_vars: 22 (raw/discovered-surface.txt section E)
+discovery_settings_keys: 3 (raw/discovered-surface.txt section S)
+discovery_rule: raw/discovered-surface.txt sections H, E, S (fixed scans of 03-01-PLAN Task 2)
+- triage[--agent]: NOT_P0 (help: "Agent for the current session. Overrides the 'agent' setting." -- selects an agent profile, does not change which memory/rule files load)
+- triage[--append-system-prompt]: CANDIDATE C10
+- triage[--bare]: CANDIDATE C06
+- triage[--client-data-url]: NOT_P0 (help: "URL for a signed configuration document" -- model/config-document selection, unrelated to CLAUDE.md/rules loading)
+- triage[--exclude-dynamic-system-prompt-sections]: NOT_P0 (help: moves per-machine sections cwd/env-info/memory-paths/git-status into the first user message; relocates where memory PATHS text is sent, does not drop memory CONTENT)
+- triage[--mcp-config]: NOT_P0 (help: "Load MCP servers from JSON files or strings" -- MCP tool config, no relation to CLAUDE.md/rules)
+- triage[--print]: NOT_P0 (run-mode flag for non-interactive output; also outside this phase's own invocation allowlist; does not change which memory/rule files load)
+- triage[--restricted]: CANDIDATE C08
+- triage[--safe-mode]: CANDIDATE C07
+- triage[--setting-sources]: CANDIDATE C01
+- triage[--settings]: CANDIDATE C02
+- triage[--strict-mcp-config]: NOT_P0 (help: "Only use MCP servers from --mcp-config" -- MCP-only)
+- triage[--system-prompt]: CANDIDATE C09
+- triage[--system-prompt-snapshot]: NOT_P0 (help: records/reuses whatever prompt text is produced; does not itself change which files are read into that text)
+- triage[--verbose]: NOT_P0 (help: "Override verbose mode setting from config" -- logging verbosity only)
+- triage[CLAUDE_BG_SESSION_PERMISSION_RULES]: NOT_P0 (name denotes background-session tool PERMISSION rules, a different "rules" concept from the ~/.claude/rules memory files judged here)
+- triage[CLAUDE_BRIDGE_OAUTH_TOKEN]: NOT_P0 (an OAuth bridge/device-pairing token; auth-adjacent, not a memory/rules-loading control)
+- triage[CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD]: NOT_P0 (controls whether --add-dir directories also contribute their own CLAUDE.md -- an addition, not a way to drop the user's own ~/.claude/rules content)
+- triage[CLAUDE_CODE_BRIDGE_CHILD_MACHINE_SETTINGS]: NOT_P0 (multi-machine bridge settings sync; unrelated to a single run's own rules loading)
+- triage[CLAUDE_CODE_COORDINATOR_PROPAGATE_NESTED_MEMORY]: NOT_P0 (propagates memory INTO nested/coordinated sub-sessions; controls what a spawned session inherits, not whether the top-level arm itself loads R1)
+- triage[CLAUDE_CODE_DISABLE_AUTO_MEMORY]: NOT_P0 (disables the auto-generated project MEMORY.md, a distinct kind from rule/rule_scoped per prefix_inventory.py's own APERTURE note)
+- triage[CLAUDE_CODE_DISABLE_CLAUDE_MDS]: CANDIDATE C11
+- triage[CLAUDE_CODE_DISABLE_HOME_SETTINGS_SEED]: NOT_P0 (a first-run/install-time seeding toggle for creating the home settings file, not a per-run suppression of already-installed rules)
+- triage[CLAUDE_CODE_DISABLE_ORG_MEMORY]: NOT_P0 (org/managed-level memory, not the user's own rules dir)
+- triage[CLAUDE_CODE_FLEETVIEW_SIMPLE]: NOT_P0 (a fleet-dashboard UI toggle, matched the scan only via its SIMPLE suffix; unrelated to memory loading)
+- triage[CLAUDE_CODE_FORCE_EVALUATE_MEMORY]: NOT_P0 (forces re-evaluation/refresh of memory state, not an exclusion mechanism)
+- triage[CLAUDE_CODE_HIDE_SETTINGS_HINT]: NOT_P0 (a UI hint-visibility toggle, cosmetic only)
+- triage[CLAUDE_CODE_MANAGED_SETTINGS_PATH]: NOT_P0 (path override for the MANAGED/policy settings source, not the userSettings source R1 lives under; X08 shows Managed/policy files cannot even be excluded via claudeMdExcludes)
+- triage[CLAUDE_CODE_MOCK_REMOTE_SETTINGS]: NOT_P0 (a test/mock toggle for remote-settings polling, dev-only)
+- triage[CLAUDE_CODE_OAUTH_TOKEN]: NOT_P0 (supplies an auth token directly; relevant to the credential grading of C04/C05, not itself a rules-loading gate)
+- triage[CLAUDE_CODE_POST_TURN_MEMORY]: NOT_P0 (timing control for auto-memory writes, not rules)
+- triage[CLAUDE_CODE_REMOTE_SETTINGS_PATH]: NOT_P0 (remote/managed settings source path, not user rules)
+- triage[CLAUDE_CODE_REMOTE_SETTINGS_POLL_MS]: NOT_P0 (polling interval for remote settings, unrelated to which files load)
+- triage[CLAUDE_CODE_SAFE_MODE]: CANDIDATE C07
+- triage[CLAUDE_CODE_SIMPLE]: CANDIDATE C06
+- triage[CLAUDE_CONFIG_DIR]: CANDIDATE C04
+- triage[CLAUDE_SECURESTORAGE_CONFIG_DIR]: NOT_P0 (a config dir specifically for the secure-storage/credential backend, distinct from CLAUDE_CONFIG_DIR; credential-adjacent, not a rules-relocation mechanism)
+- triage[claudeMd]: NOT_P0 (describe text: "CLAUDE.md-style instructions injected as organization-managed memory. Only honored from managed/policy settings." -- an addition mechanism with no exclusion effect, and unsettable from user/project/local sources)
+- triage[claudeMdExcludes]: CANDIDATE C02
+- triage[omitClaudeMd]: NOT_P0 (describe text: "If true, the agent runs without the user, project and local CLAUDE.md files" -- a per-subagent field used with --agents JSON, scoped to a spawned custom agent rather than the top-level arm B session itself, and it names CLAUDE.md only, not rules)
+
 ### 2b. Candidate blocks
 
 ### C01 --setting-sources
@@ -64,8 +111,173 @@ model_calls: 0
 - other_prefix_changes: user CLAUDE.md, user settings.json, and user-sourced skills/agents/commands are all also excluded when "user" is omitted (X04, X05, X07) -- not limited to the three R1 rule files
 - transcripts_visible: YES
 
+### C02 --settings (claudeMdExcludes)
+- mechanism: --settings {"claudeMdExcludes":["/home/kobii/.claude/rules/instrument-before-claim.md","/home/kobii/.claude/rules/destructive-state-authorization.md","/home/kobii/.claude/rules/real-context-reachability.md"]}
+- source: help:--settings (raw/claude-help.txt); binary describe text X08
+- changes: claudeMdExcludes accepts absolute paths or globs that are matched, after backslash normalisation, against files tagged User/Project/Local (X09). Supplying only this one key via --settings contributes it through the flagSettings source; every other value keeps whatever the enabled sources already provide. The matcher is wired directly as excludeMatcher:ye into the walk of the type:"User" rules directory (X10), and the schema's own describe text explicitly gives a .claude/rules/** glob as an example (X08) -- so this key is honored for rule files, not only CLAUDE.md files, despite its name.
+- touches_on_disk: still reads ~/.claude/rules/*.md (X10: walks rulesDir:Ne=oFe()="<home>/rules" for type:"User"), but the three named files are filtered out by the matcher before being added to the prefix. The other 19 rule files, user CLAUDE.md, the rest of user settings.json, and user-level skills/agents/commands are unaffected -- no exclude pattern matches them. Writes nothing; --settings is CLI-ephemeral, not written to ~/.claude/settings.json.
+- rules_effect: EXCLUDES_R1_ONLY
+- evidence_tier: E1+E2
+- evidence: help:"--settings <file-or-json> Path to a settings JSON file or a JSON string to load additional settings from" (raw/claude-help.txt); X08 (describe text incl. .claude/rules/** example); X09 (matcher construction, User/Project/Local scope, backslash normalisation); X10 (excludeMatcher:ye wired into the type:"User" rulesDir walk, same scope as X04/X05 -- shared Ne/Vt/tt/We); identifier_hop[pZe]=2(byte-identical dup, see X09); identifier_hop[FEn]=2(not identical, ye's binding is by local scope not a global hop, see X09/X10 note)
+- credential: NONE_NEEDED
+- global_edit: NONE
+- auth_path: OAUTH_UNCHANGED
+- other_prefix_changes: NONE
+- transcripts_visible: YES
+
+### C03 claudeMdExcludes in a cwd-scoped settings file
+- mechanism: .claude/settings.local.json in the arm's own worktree containing {"claudeMdExcludes":["/home/kobii/.claude/rules/instrument-before-claim.md","/home/kobii/.claude/rules/destructive-state-authorization.md","/home/kobii/.claude/rules/real-context-reachability.md"]}
+- source: settings-source table X03 (localSettings/projectSettings names); same claudeMdExcludes key as C02 (X08)
+- changes: the same claudeMdExcludes matcher mechanism as C02 (X09), but supplied via a project- or local-scoped settings FILE rather than --settings. localSettings must be enabled for .claude/settings.local.json to be read (ar("localSettings"), on by default; projectSettings analogously for .claude/settings.json). pZe()'s matcher gates on the TYPE of the file being tested (User/Project/Local, X09), not on which source supplied claudeMdExcludes, so a project- or local-scoped value still filters the USER's own rules dir the same way C02's does.
+- touches_on_disk: creates a NEW file inside the arm's own worktree (.claude/settings.local.json or .claude/settings.json), not under ~/.claude. Otherwise the same read pattern as C02 (still reads ~/.claude/rules/*.md, minus the three named files).
+- rules_effect: EXCLUDES_R1_ONLY
+- evidence_tier: E1+E2
+- evidence: X03 (localSettings/projectSettings source-name text); X08, X09, X10 (same claudeMdExcludes matcher chain as C02)
+- credential: NONE_NEEDED
+- global_edit: NONE
+- auth_path: OAUTH_UNCHANGED
+- other_prefix_changes: the new .claude/settings.local.json (or settings.json) file changes the arm worktree's own git status -- new/untracked relative to arm A's environment, which the session's environment block reports
+- transcripts_visible: YES
+
+### C04 CLAUDE_CONFIG_DIR
+- mechanism: CLAUDE_CONFIG_DIR=<new empty directory> (env var set for the arm's claude invocation)
+- source: binary env-var scan (raw/discovered-surface.txt section E); X11 (Se() reads CLAUDE_CONFIG_DIR)
+- changes: Se() -- the config-home function used pervasively (oFe()=rules dir per X06, and the same join-with-".claude" pattern for CLAUDE.md/settings) -- resolves to CLAUDE_CONFIG_DIR when set, else <home>/.claude (X11). Pointing it at a new empty directory means settings.json, CLAUDE.md, the rules dir, and credentials all stop resolving to the Owner's real ~/.claude -- the whole config tree moves, not just R1.
+- touches_on_disk: would read (if present) <new-dir>/settings.json, <new-dir>/CLAUDE.md, <new-dir>/rules/*.md, <new-dir>/.credentials.json (X12), and would write session state/transcripts under <new-dir>/projects (X13) instead of ~/.claude/projects.
+- rules_effect: EXCLUDES_MORE_THAN_R1
+- evidence_tier: E1+E2
+- evidence: discovery section E (CLAUDE_CONFIG_DIR); X11, X12, X13
+- credential: NEEDS_COPY
+- global_edit: NONE
+- auth_path: CANNOT_ESTABLISH
+- other_prefix_changes: the whole settings/CLAUDE.md/skills/agents/commands source tree moves with it (X11-X13), well beyond R1
+- transcripts_visible: NO
+
+### C05 alternate HOME
+- mechanism: HOME=<new directory> (env var set for the arm's claude invocation; CLAUDE_CONFIG_DIR left unset)
+- source: X11 (Se()'s fallback path when CLAUDE_CONFIG_DIR is unset: u(R(),".claude"))
+- changes: structurally the same as C04 -- Se() falls back to R()+"/.claude" when CLAUDE_CONFIG_DIR is unset (X11). R()'s own definition could not be reliably resolved by static grep: "function R(" collides across dozens of unrelated modules in the bundle, so per the excerpt protocol's identifier-hop rule this specific hop is unestablished. The structural role (R(),".claude") parallels X12's D(lt(),".claude") pattern for the credential path's own home fallback, which is consistent with R() being a home-directory getter but is inference from pattern, not a byte-verified hop.
+- touches_on_disk: CANNOT_ESTABLISH precisely which files move (same candidate categories as C04, but the exact fallback function is not uniquely traced)
+- rules_effect: CANNOT_ESTABLISH_WITHOUT_MODEL_CALL
+- evidence_tier: E2
+- evidence: X11 (Se() fallback structure); X12 (the parallel D(lt(),".claude") pattern for credentials); identifier_hop[R]=many (not unique; "function R(" collides across dozens of unrelated modules -- link unestablished per the excerpt protocol)
+- credential: NEEDS_COPY
+- global_edit: NONE
+- auth_path: CANNOT_ESTABLISH
+- other_prefix_changes: HOME is read by more than claude alone; within claude, the same settings/CLAUDE.md/rules/skills/agents/commands tree as C04 would be affected if R() indeed feeds Se()'s fallback
+- transcripts_visible: CANNOT_ESTABLISH
+
+### C06 --bare
+- mechanism: --bare (plus explicit --system-prompt-file/--add-dir/--mcp-config/--settings/--agents/--plugin-dir supplied by hand, per its own help text, to restore any needed context)
+- source: help:--bare (raw/claude-help.txt)
+- changes: help text: "Minimal mode: skip hooks..., LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and CLAUDE.md auto-discovery. Sets CLAUDE_CODE_SIMPLE=1. Anthropic auth is strictly ANTHROPIC_API_KEY or apiKeyHelper via --settings (OAuth and keychain are never read)."
+- touches_on_disk: stops auto-discovering CLAUDE.md; auth reads ANTHROPIC_API_KEY or an apiKeyHelper file instead of the OAuth keychain credential (raw/claude-help.txt).
+- rules_effect: CANNOT_ESTABLISH_WITHOUT_MODEL_CALL
+- evidence_tier: E1
+- evidence: help:"--bare Minimal mode: skip hooks..., CLAUDE.md auto-discovery. Sets CLAUDE_CODE_SIMPLE=1. Anthropic auth is strictly ANTHROPIC_API_KEY or apiKeyHelper via --settings (OAuth and keychain are never read)." (raw/claude-help.txt)
+- credential: NEEDS_API_KEY
+- global_edit: NONE
+- auth_path: API_KEY_ONLY
+- other_prefix_changes: hooks, LSP, plugin sync, attribution, auto-memory, background prefetches also disabled per the same help text -- far beyond R1
+- transcripts_visible: CANNOT_ESTABLISH
+
+### C07 --safe-mode
+- mechanism: --safe-mode
+- source: help:--safe-mode (raw/claude-help.txt)
+- changes: help text: "Start with all customizations (CLAUDE.md, skills, installed plugins, hooks, MCP servers, custom commands and agents, output styles, workflows, custom themes, keybindings, and more) disabled... Admin-managed (policy) settings still apply. Auth, model selection, built-in tools and plugins, and permissions work normally. Sets CLAUDE_CODE_SAFE_MODE=1."
+- touches_on_disk: CLAUDE.md is explicitly named as disabled; the rules directory is not separately named but is plausibly covered by the trailing "and more" -- not established either way from text alone.
+- rules_effect: EXCLUDES_MORE_THAN_R1
+- evidence_tier: E1
+- evidence: help:"--safe-mode Start with all customizations (CLAUDE.md, skills, installed plugins, hooks, MCP servers, custom commands and agents, output styles, workflows, custom themes, keybindings, and more) disabled... Sets CLAUDE_CODE_SAFE_MODE=1." (raw/claude-help.txt)
+- credential: NONE_NEEDED
+- global_edit: NONE
+- auth_path: OAUTH_UNCHANGED
+- other_prefix_changes: skills, installed plugins, hooks, MCP servers, custom commands and agents, output styles, workflows, themes, keybindings all also disabled (help text) -- far beyond R1
+- transcripts_visible: YES
+
+### C08 --restricted
+- mechanism: --restricted
+- source: help:--restricted (raw/claude-help.txt)
+- changes: help text: "removes the built-in tools that run commands or code (Bash, PowerShell, REPL...) and WebFetch unless --tools names them, and ignores user, project and local settings files (managed settings and --settings still apply...). Also confines the file tools..., refuses bypassPermissions, and lets only a person or the configured permission handler approve writes to settings, git and tool-configuration files."
+- touches_on_disk: "ignores user, project and local settings files" names settings.json/settings.local.json; the help text never names CLAUDE.md or the rules directory.
+- rules_effect: NO_EFFECT_ON_RULES
+- evidence_tier: E1
+- evidence: help:"--restricted Restricted mode: removes the built-in tools that run commands or code..., and ignores user, project and local settings files (managed settings and --settings still apply...)." (raw/claude-help.txt)
+- credential: NONE_NEEDED
+- global_edit: NONE
+- auth_path: OAUTH_UNCHANGED
+- other_prefix_changes: removes Bash/PowerShell/REPL/WebFetch tools and changes the permission-approval model for settings/git/tool-config writes -- a large difference from arm A regardless of rules_effect
+- transcripts_visible: YES
+
+### C09 --system-prompt
+- mechanism: --system-prompt "<replacement text>" (or --system-prompt-file, named by --bare's help text)
+- source: help:--system-prompt (raw/claude-help.txt); --bare's help text listing "--system-prompt[-file]" among the ways to "Explicitly provide context" once auto-discovery is off
+- changes: replaces the session's system prompt text outright ("System prompt to use for the session", raw/claude-help.txt). Whether CLAUDE.md/rules content is normally carried inside that system prompt text (so replacing it also drops R1) or injected through a separate channel could not be traced to a specific code excerpt within this task's time budget.
+- touches_on_disk: CANNOT_ESTABLISH (no excerpt located showing where CLAUDE.md/rules text is assembled into the request payload)
+- rules_effect: CANNOT_ESTABLISH_WITHOUT_MODEL_CALL
+- evidence_tier: E1
+- evidence: help:"--system-prompt <prompt> System prompt to use for the session" (raw/claude-help.txt); help:"--bare ... Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir (CLAUDE.md dirs), --mcp-config, --settings, --agents, --plugin-dir." (raw/claude-help.txt; a LEAD only, per the plan's own leads list, not a conclusion)
+- credential: NONE_NEEDED
+- global_edit: NONE
+- auth_path: OAUTH_UNCHANGED
+- other_prefix_changes: replaces the entire default system prompt (tone/instructions beyond memory), itself a large, un-scoped difference from arm A regardless of whether it happens to drop R1
+- transcripts_visible: YES
+
+### C10 --append-system-prompt
+- mechanism: --append-system-prompt "<text>"
+- source: help:--append-system-prompt (raw/claude-help.txt)
+- changes: "Append a system prompt to the default system prompt" (raw/claude-help.txt) -- additive only.
+- touches_on_disk: none; does not remove any existing file from the read set.
+- rules_effect: NO_EFFECT_ON_RULES
+- evidence_tier: E1
+- evidence: help:"--append-system-prompt <prompt> Append a system prompt to the default system prompt" (raw/claude-help.txt)
+- credential: NONE_NEEDED
+- global_edit: NONE
+- auth_path: OAUTH_UNCHANGED
+- other_prefix_changes: NONE beyond the appended text itself
+- transcripts_visible: YES
+
+### C11 CLAUDE_CODE_DISABLE_CLAUDE_MDS
+- mechanism: CLAUDE_CODE_DISABLE_CLAUDE_MDS=1 (env var set for the arm's claude invocation)
+- source: binary env-var scan (raw/discovered-surface.txt section E); X14
+- changes: X14 shows a loader function (bZe) that returns [] immediately when this var is set, before it would otherwise push both the "Managed" content (g=Wut()) and, when ar("userSettings") is enabled, the "User" rules directory content (h=oFe() -- the same rules-dir function established in X06) via Q9(...). A second loader (_Mn) checks the same var at its own top for project-scoped CLAUDE.md. So this one var, despite its CLAUDE-MDS name, empties the managed content and the entire user rules directory in at least this code path, not just R1's three files.
+- touches_on_disk: stops reading the user rules directory entirely (all ~22 files, not just the three R1 files), plus Managed-type content and, via _Mn, project-scoped CLAUDE.md.
+- rules_effect: EXCLUDES_MORE_THAN_R1
+- evidence_tier: E2
+- evidence: X14 (bZe/_Mn both early-return [] on CLAUDE_CODE_DISABLE_CLAUDE_MDS; h=oFe() is the same rules-dir function established in X06)
+- credential: NONE_NEEDED
+- global_edit: NONE
+- auth_path: OAUTH_UNCHANGED
+- other_prefix_changes: NONE beyond the memory/rules content itself (X14 does not touch tools/permissions/hooks)
+- transcripts_visible: YES
+
+### C12 editing or moving the R1 files under ~/.claude/rules
+- mechanism: add `paths:` front-matter to, or relocate, the three R1 files under ~/.claude/rules
+- source: ROADMAP.md "Operating constraints (every phase)"; this plan's own C12 definition ("recorded so the direct route has a judgement... never performed")
+- changes: would make the three files path-scoped (conditionally loaded) instead of unconditional, or move them elsewhere, directly editing/relocating files under ~/.claude/rules.
+- touches_on_disk: writes to ~/.claude/rules/*.md directly.
+- rules_effect: EXCLUDES_R1_ONLY
+- evidence_tier: E1
+- evidence: ROADMAP.md: "Never edit ~/.claude/settings.json, ~/.claude/rules/, ~/.claude/CLAUDE.md or credentials. Never relocate rules."; 03-01-PLAN.md Floor candidates: "C12 is recorded so the direct route has a judgement. It is never performed."
+- credential: NONE_NEEDED
+- global_edit: EDITS (~/.claude/rules/instrument-before-claim.md, ~/.claude/rules/destructive-state-authorization.md, ~/.claude/rules/real-context-reachability.md)
+- auth_path: OAUTH_UNCHANGED
+- other_prefix_changes: NONE beyond the three files' own scoping/location
+- transcripts_visible: YES
+
 ## 3. Judgement against the P0 clause (ROADMAP criterion 2)
 
 p0_clause: P0 How to run arm B without R and WITHOUT editing the Owner's global config or copying credentials. Candidates to test, in order: a `--setting-sources` / settings flag that skips user rules (verify it affects rules, not only settings); a per-run config dir only if it can reuse auth without copying the credential file. If none works: STOP, report, do not improvise.
 rule: Judge each candidate block by testing its seven graded properties in this fixed order -- credential (must be NONE_NEEDED), global_edit (must be NONE), auth_path (must be OAUTH_UNCHANGED), transcripts_visible (must be YES), rules_effect (must be EXCLUDES_R1_ONLY), other_prefix_changes (must be NONE), evidence_tier (must be E1+E2) -- and write REJECTED at the first property in that order that fails to hold, naming that property. A block that holds on every one of the seven is ACCEPTABLE. The verdict (section 4) is PASS with the lowest-numbered ACCEPTABLE block's mechanism verbatim, or STOP when no block is ACCEPTABLE (or the API key is set, or the installed version changed between start and end).
 judgement[C01]: REJECTED (rules_effect) the excerpts show --setting-sources without "user" drops the entire user rules directory (all ~22 files, not just R1's three) plus user CLAUDE.md and user-sourced skills/agents/commands (X04, X05, X06, X07) -- EXCLUDES_MORE_THAN_R1, not EXCLUDES_R1_ONLY.
+judgement[C02]: ACCEPTABLE all seven graded properties hold: NONE_NEEDED / NONE / OAUTH_UNCHANGED / YES / EXCLUDES_R1_ONLY / NONE / E1+E2 (X08-X10 trace claudeMdExcludes through to excludeMatcher:ye on the type:"User" rulesDir walk).
+judgement[C03]: REJECTED (other_prefix_changes) the new .claude/settings.local.json (or settings.json) file changes the arm worktree's own git status, a difference from arm A beyond the R1 exclusion itself; every other property (including rules_effect: EXCLUDES_R1_ONLY, same mechanism as C02) holds.
+judgement[C04]: REJECTED (credential) X12 shows .credentials.json is read from the same CLAUDE_CONFIG_DIR-relocated directory, so the arm has no credential there without copying it -- exactly the protocol's own stated test for this candidate.
+judgement[C05]: REJECTED (credential) graded NEEDS_COPY on the same structural basis as C04's byte-verified finding (X11's Se() fallback parallels X12's credential-path fallback); the P0 clause's own credential prohibition governs even where the exact code path (R()'s definition) is not uniquely traced.
+judgement[C06]: REJECTED (credential) the installed version's own help text states --bare forces ANTHROPIC_API_KEY/apiKeyHelper auth (NEEDS_API_KEY), which this workstream's operating constraints forbid outright.
+judgement[C07]: REJECTED (rules_effect) the help text names CLAUDE.md itself as disabled alongside a long list of other customizations, so even the narrowest honest reading (EXCLUDES_MORE_THAN_R1) is broader than R1's three files.
+judgement[C08]: REJECTED (rules_effect) by its own help text this flag does not touch CLAUDE.md or the rules directory at all (NO_EFFECT_ON_RULES), so it does not achieve what P0 is asking for.
+judgement[C09]: REJECTED (rules_effect) whether R1 content rides inside the system prompt at all could not be established from help text or a traced excerpt (CANNOT_ESTABLISH_WITHOUT_MODEL_CALL), and that value cannot carry a PASS per this plan's own must_haves.
+judgement[C10]: REJECTED (rules_effect) an additive flag cannot remove R1 by definition (NO_EFFECT_ON_RULES).
+judgement[C11]: REJECTED (rules_effect) X14 shows this single var empties the whole user rules directory (and Managed/project CLAUDE.md) together (EXCLUDES_MORE_THAN_R1), not R1's three files alone.
+judgement[C12]: REJECTED (global_edit) editing or relocating files under ~/.claude/rules is a global-config edit (EDITS), forbidden outright by the operating constraints and by P0's own clause; not performed.
