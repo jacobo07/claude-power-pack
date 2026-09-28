@@ -109,10 +109,11 @@ Plans:
      tis_observed (not from CLI stdout). The run-2 vs run-1 reuse is compared across arms.
   4. Verdict: hypothesis SUPPORTED / REFUTED / UNJUDGED (with why). n=2 per arm is stated as a limit, not hidden.
 
-**Plans**: 1 plan
+**Plans**: 1/1 plans executed
 
 Plans:
-- [ ] 04-01-PLAN.md — tracer: no-model-call pre-checks (env names, `claude auth status` allowlisted keys, credential stat-only) and one fake-claude run end-to-end; ab_runner.py 4-run schedule with validity/TTL/verdict rules, pre-registration committed before any live run; one `--live` call runs A1 A2 B1 B2 on haiku, figures read from transcripts via tis_observed (autonomous, wave 1, costly)
+
+- [x] 04-01-PLAN.md — tracer: no-model-call pre-checks (env names, `claude auth status` allowlisted keys, credential stat-only) and one fake-claude run end-to-end; ab_runner.py 4-run schedule with validity/TTL/verdict rules, pre-registration committed before any live run; one `--live` call runs A1 A2 B1 B2 on haiku, figures read from transcripts via tis_observed (autonomous, wave 1, costly)
 
 ### Phase 5: Seal and hand back
 
@@ -134,5 +135,5 @@ Plans:
 | 1. Gate verdict on the big host | 2/2 | Blocked (CRO-01: rerun 01-02 pending Owner) | - |
 | 2. GEX44 observed baseline | 1/1 | Complete    | 2026-09-28 |
 | 3. P3 pre-flight P0 | 1/1 | Complete    | 2026-09-28 |
-| 4. Prefix cache-miss A/B | 0/1 | Planned | - |
+| 4. Prefix cache-miss A/B | 1/1 | In Progress|  |
 | 5. Seal and hand back | 0/? | Not started | - |

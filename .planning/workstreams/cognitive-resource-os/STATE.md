@@ -1,32 +1,32 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1 — Gate verdict on the big host
-current_plan: Not started
-status: planning
-stopped_at: Phase 3 complete, ready to plan Phase 1
-last_updated: "2026-09-28T14:17:25.569Z"
+current_phase: 4
+current_plan: 1
+status: verifying
+stopped_at: Completed 04-01-PLAN.md -- CRO-04 judged UNJUDGED (similar-reuse-variance-not-observed)
+last_updated: "2026-09-28T14:47:12.074Z"
 last_activity: 2026-09-28
-last_activity_desc: Phase 3 complete, transitioned to Phase 1
-state_head: dc451d83caea5276f5bf8be61da3c3f38061611e
+last_activity_desc: Phase 4 execution started
+state_head: f32ea4bdab84728cf939039e90b2f3537c845f95
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
   percent: 40
 workstream: cognitive-resource-os
 created: 2026-09-28
-current_phase_name: Gate verdict on the big host
+current_phase_name: Prefix cache-miss A/B
 ---
 
 # Project State
 
 ## Current Position
 
-**Status:** Ready to plan
-**Current Phase:** 1 — Gate verdict on the big host
-**Last Activity:** 2026-09-28
-**Last Activity Description:** Phase 3 complete, transitioned to Phase 1
+**Status:** Phase complete — ready for verification
+**Current Phase:** 4
+**Last Activity:** 2026-09-28 — Phase 4 execution started
+**Last Activity Description:** Phase 4 execution started
 job-scratch venv) was answered rejected -- no Owner was reachable mid-run to approve it, and the orchestrator cannot
 grant that approval on the Owner's behalf. Tasks 2-3 were not run. EVIDENCE.md sections 2-4 record
 suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
@@ -34,14 +34,14 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 ## Progress
 
 **Phases Complete:** 0
-**Current Plan:** Not started
+**Current Plan:** 1
 **Total Plans in Phase:** 1
 
 ## Session Continuity
 
-**Last session:** 2026-09-28T14:06:58.514Z
+**Last session:** 2026-09-28T14:47:12.048Z
 
-**Stopped At:** Phase 3 complete, ready to plan Phase 1
+**Stopped At:** Completed 04-01-PLAN.md -- CRO-04 judged UNJUDGED (similar-reuse-variance-not-observed)
 **Resume File:** None
 
 ## Performance Metrics
@@ -52,6 +52,7 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 | Phase 01 P02 | 4min | 1 task (of 3; halted at Task 1 rejection) | 1 files |
 | Phase 02 P01 | 17min | 3 tasks | 2 files |
 | Phase 03 P01 | 28min | 3 tasks | 7 files |
+| Phase 04 P01 | 26min | 3 tasks | 5 files |
 
 ## Decisions
 
@@ -68,6 +69,7 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 - [Phase 2]: [Phase 2]: No tool defect found on GEX44 (gates green, reconcile MATCH on first snapshot, no tools/modules diff); CRO-02 verdict phase_verdict MEASURED, cro02 SATISFIED.
 - [Phase 3]: [Phase 3]: P0 verdict PASS (--settings claudeMdExcludes naming the three R1 files), the lowest-numbered ACCEPTABLE block; C01 (--setting-sources) and C04/C05 (config-dir/HOME), the protocol's own first- and second-listed candidates, both REJECTED (rules_effect and credential respectively).
 - [Phase 3]: [Phase 3]: Host applicability recorded: GEX44 itself has no R1 rule files in ~/.claude/rules (0 of 3 present), so this host cannot run the ablation as defined regardless of the PASS; the mechanism is for whichever host (the laptop, per RESUMPTION.md) actually carries R1.
+- [Phase 4]: [Phase 4]: CRO-04 verdict UNJUDGED (similar-reuse-variance-not-observed, R8) -- Arm A's MCP tool list and server statuses were byte-identical between A1 and A2 in this observation, so the tool-list-variance hypothesis was not exercised; cro04 SATISFIED (4 launches, judged, not BLOCKED).
 
 ## Blockers
 
