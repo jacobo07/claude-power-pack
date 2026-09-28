@@ -37,7 +37,7 @@ SUITES = [
     "test_batch_drafts.py", "test_review_intake.py", "test_evidence_bundle.py",
     "test_change_impact.py", "test_routing_metrics.py", "test_verified_reuse.py",
     "test_paired_experiment.py", "test_handoff_packet.py", "test_task_ledger_seam.py",
-    "test_task_adaptation.py",
+    "test_task_adaptation.py", "test_install_reviewer_contract.py",
 ]
 SUITE_FLOOR = 25
 
