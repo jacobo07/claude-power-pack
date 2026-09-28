@@ -39,6 +39,13 @@ CLOSED by peer c2 in `dce125b` (continue_worker records work_dir); verified here
 mission 190/190. Live canary: m-916e905e23d4 (smoke worktree, launch_cause INITIAL) -> COMPLETED live after
 `1a74a23` (archived milestone = ALL_COMPLETE); recorded `8a98d7d`. Linux: `6efd815` git fallback
 proven on GEX44 by peer c2 (CPP_GIT_EXE unset, /usr/bin/git): MC_PASS=190/190.
+GEX44 2026-09-28: `agora-mission-sweep` ran `supervise` bare, so T7 (lease/deadline/heartbeat)
+did not exist on Linux and `status` said SWEEP NOT_OBSERVED. `1da6561` adds
+`tools/gsd_sweep_pass.py` (portable twin of the .ps1; SWEEPPY 15/15 on GEX44, 2 mutations
+caught); the unit now runs it `--stages mission` (backup `...service.bak-sweeppass-20260928`);
+status reads SWEEP OK. `b001-mission-sweep` (isolated HOME, Brand #001) still runs bare supervise
+-- not ours, left alone. GEX44's PP tree is at 6efd815 + the two files copied untracked.
+Open on GEX44: mission m-897b0922ee87 BLOCKED "waiting for input" (epoch 8).
 NEXT: (1) merge the UKDL candidates when ukdl-universal.md is quiet; (2) watch the first live
 no_progress halt / COMPLETED at budget (`gsd_mission.py status`, ledger `mission_completed`);
 (3) fold isolation into `tools/lane_r_mutate.py` (UWCP-owned; mutates in place today).
