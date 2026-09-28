@@ -40,8 +40,13 @@ def drill(spec: dict, timeout_s: int = 900) -> tuple[str, str]:
     live_sha = _sha(live)
     root = Path(tempfile.mkdtemp(prefix="mutdrill-"))
     iso_dir = root / live.parent.name
-    shutil.copytree(live.parent, iso_dir, ignore=shutil.ignore_patterns("__pycache__", "*.pyc",
-                                                                          "node_modules"))
+    skip = shutil.ignore_patterns("__pycache__", "*.pyc", "node_modules")
+    shutil.copytree(live.parent, iso_dir, ignore=skip)
+    # Siblings the suite reads through the repo root (`copy_dirs`: ["modules"]). Without them the
+    # suite crashes before its summary and the verdict is UNJUDGED -- honest, but no drill at all
+    # (2026-09-28: test_gsd_mission reads modules/autonomy_gate/rubric.json).
+    for d in spec.get("copy_dirs") or []:
+        shutil.copytree(live.parent.parent / d, root / d, ignore=skip)
     subject = iso_dir / live.name
     test = iso_dir / live_test.relative_to(live.parent) if live_test.is_relative_to(live.parent) \
         else live_test
