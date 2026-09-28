@@ -232,3 +232,18 @@ silently taking the first.
 _Reviewed: 2026-09-28_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: deep_
+
+## Orchestrator disposition (2026-09-28)
+
+Not auto-fixed in this run. The findings are about what `seal_check.py` would fail to catch under an
+adversarial or careless future edit; none claims a defect in the committed RESUMPTION/UKDL content.
+
+- Content was checked independently of seal_check.py: 05-VERIFICATION.md (commit 828f2ed, status passed)
+  re-read both vault files cold and matched every verdict and figure against phases 1-4's own
+  EVIDENCE/VERIFICATION/REVIEW files, and reviewed `git diff cd4e436` line by line.
+- CR-02's practical failure mode (a duplicate block shadowing the checked one) was probed directly on the
+  committed files: exactly one `- Phase N (CRO-0N)` bullet per phase in RESUMPTION, and every UKDL entry ID
+  occurs exactly once.
+- Status: OPEN. seal_check.py is a phase-local helper; before anyone relies on it as a gate for a future
+  edit, fix CR-01 (anchor the verdict to the bullet headline), CR-02/WR-04 (reject duplicate keys),
+  CR-03 (line/multiset preservation), WR-02 (reject a bad --stage), WR-03 (status code aware), WR-01.
