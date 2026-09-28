@@ -219,6 +219,42 @@ def main() -> int:
           gm.history_gaps({"mission_id": "m-old", "state": gm.HALTED})["judged"] is False)
     check("V-MC-LEDGER-APPEND-RETURNS-TRUE-CONTROL", gm.lr.ledger_append("m-hist", "ctl") is True)
 
+    # T6 (2026-09-28): every decision names the build that made it; a newer schema is refused.
+    last = [e for e in gm.lr.ledger_events("m-hist") if e.get("event") == "h5"][-1]
+    check("V-MC-CODE-ID-ON-LEDGER-AND-RECORD",
+          last.get("code") == gm.CODE_ID and gm.load("m-hist").get("code_id") == gm.CODE_ID
+          and len(gm.CODE_ID) == 12, str(last))
+    newer = json.loads(gm.mission_path("m-hist").read_text(encoding="utf-8"))
+    newer.update({"mission_id": "m-newer", "schema_version": gm.SCHEMA_VERSION + 1})
+    gm.mission_path("m-newer").write_text(json.dumps(newer), encoding="utf-8")
+    try:
+        gm.load("m-newer")
+        _fail("V-MC-SCHEMA-NEWER-REFUSED", "a newer-schema record was read as a value")
+    except gm.MissionError as exc:
+        _ok("V-MC-SCHEMA-NEWER-REFUSED", str(exc))
+    check("V-MC-SCHEMA-NEWER-SURFACED-UNREADABLE",
+          any(b["mission_id"] == "m-newer" and "newer" in b["error"] for b in gm.unreadable_missions()))
+    check("V-MC-SCHEMA-CURRENT-CONTROL-READS", gm.load("m-hist") is not None)
+    gm.mission_path("m-newer").unlink()
+
+    hb = Path(TMP) / "gsd-sweep-heartbeat.json"
+    hb.unlink(missing_ok=True)
+    v_ = lambda: gm.sweep_health()["verdict"]  # noqa: E731
+    check("V-MC-SWEEP-ABSENT-NOT-OBSERVED", v_() == "NOT_OBSERVED")
+    hb.write_text(json.dumps({"outcome": "ran", "stages": [{"name": "mission", "timed_out": False}]}),
+                  encoding="utf-8")
+    check("V-MC-SWEEP-FRESH-OK", v_() == "OK")
+    hb.write_text(json.dumps({"outcome": "ran", "stages": [{"name": "v2", "timed_out": True}]}),
+                  encoding="utf-8")
+    check("V-MC-SWEEP-TIMEOUT-DEGRADED", v_() == "DEGRADED")
+    old_t = time.time() - 3600
+    os.utime(hb, (old_t, old_t))
+    check("V-MC-SWEEP-OLD-STALE", v_() == "STALE")
+    hb.write_text(json.dumps({"outcome": "running"}), encoding="utf-8")
+    os.utime(hb, (old_t, old_t))
+    check("V-MC-SWEEP-RUNNING-PAST-BOUND-STUCK", v_() == "STUCK")
+    hb.unlink()
+
     # --- liveness: DEAD only on positive evidence -----------------------------------------
     owner = {"session_id": "s-1", "pid": 4242, "proc_start": "111"}
     host_live = [{"sessionId": "s-1", "status": "busy", "state": "working"}]

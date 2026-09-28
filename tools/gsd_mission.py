@@ -40,6 +40,20 @@ import gsd_long_run as lr  # noqa: E402  (state_dir, ledger, _pid_alive, session
 
 SCHEMA_VERSION = 1
 MISSION_TEMPLATE = "gsd-mission-{mission_id}.json"
+
+
+def _code_id() -> str:
+    """Identity of the code that is DECIDING, taken at import. The sweep re-imports this file
+    every pass and a repo edit is live on the next one (T6, 2026-09-28), so a ledger row that
+    does not name its build cannot say which rules produced it."""
+    import hashlib
+    try:
+        return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:12]
+    except OSError:
+        return "unknown"
+
+
+CODE_ID = _code_id()
 _ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 
 # Lifecycle. Terminal states carry no owner obligation.
@@ -95,6 +109,11 @@ def load(mission_id: str) -> dict | None:
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict) or data.get("state") not in STATES:
         raise MissionError(f"malformed mission record {path.name}")
+    if int(data.get("schema_version") or 1) > SCHEMA_VERSION:
+        # Written by a NEWER build: its fields may mean things this code cannot know. Refuse
+        # rather than misread and write it back in the old shape (T6 downgrade safety).
+        raise MissionError(f"{path.name} has schema {data.get('schema_version')}, "
+                           f"this build reads <= {SCHEMA_VERSION}")
     return data
 
 
@@ -252,10 +271,11 @@ def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
         # Every committed transition has a number, so the ledger's copy of the history can be
         # checked for holes against the record (history_gaps). A record with no seq predates T4.
         rec["seq"] = int(rec.get("seq") or 0) + 1
+        rec["code_id"] = CODE_ID
         _write(path, rec)
     extra = {k: v for k, v in (("reason", changes.get("reason")), ("worker", worker)) if v}
     lr.ledger_append(mission_id, event, mission_id=mission_id, epoch=rec["epoch"],
-                     state=rec["state"], seq=rec["seq"], **extra)
+                     state=rec["state"], seq=rec["seq"], code=CODE_ID, **extra)
     return rec
 
 
@@ -286,6 +306,8 @@ def _scan() -> tuple[list[dict], list[dict]]:
             rec, why = None, f"{type(exc).__name__}: {exc}"
         else:
             why = None if isinstance(rec, dict) and rec.get("state") in STATES else "not a mission record"
+            if why is None and int(rec.get("schema_version") or 1) > SCHEMA_VERSION:
+                why = f"schema {rec.get('schema_version')} is newer than this build ({SCHEMA_VERSION})"
         if why:
             try:
                 st = p.stat()
@@ -1590,8 +1612,43 @@ def _cli(argv=None) -> int:
         m = next((x for x in missions if x["mission_id"] == row["mission_id"]), None)
         if m is not None:
             row["history"] = history_gaps(m, events)
+            row["code_id"] = m.get("code_id")
     print(json.dumps(rows, indent=2))
+    # On stderr so the stdout JSON keeps its shape for every existing consumer.
+    h = sweep_health()
+    print(f"SWEEP {h['verdict']}: {h['detail']}", file=sys.stderr)
+    drift = [r["mission_id"] for r in rows if r.get("state") not in TERMINAL | {"UNREADABLE"}
+             and r.get("code_id") and r["code_id"] != CODE_ID]
+    if drift:
+        print(f"CODE DRIFT: live missions last written by another build than {CODE_ID}: "
+              f"{', '.join(drift)}", file=sys.stderr)
     return 0
+
+
+SWEEP_STALE_S = 900   # 3 missed 5-minute passes
+
+
+def sweep_health(now: float | None = None) -> dict:
+    """The supervisor's liveness, judged from evidence the supervisor does not write about
+    itself on success alone: the sweep script's per-pass heartbeat (T7). Absent heartbeat is
+    NOT_OBSERVED, never healthy."""
+    now = time.time() if now is None else now
+    p = lr.state_dir() / "gsd-sweep-heartbeat.json"
+    try:
+        b = json.loads(p.read_text(encoding="utf-8-sig"))
+        age = now - p.stat().st_mtime
+    except (OSError, ValueError):
+        return {"verdict": "NOT_OBSERVED", "detail": f"no readable heartbeat at {p}"}
+    timed = [s["name"] for s in b.get("stages", []) if s.get("timed_out")]
+    if b.get("outcome") == "running" and age > SWEEP_STALE_S:
+        # A pass is bounded at 840 s by its own stage deadlines; running past that is a pass
+        # that escaped its bounds, not merely a missed schedule.
+        return {"verdict": "STUCK", "detail": f"pass running for {int(age)} s"}
+    if age > SWEEP_STALE_S:
+        return {"verdict": "STALE", "detail": f"last pass {int(age)} s ago ({b.get('outcome')})"}
+    if timed:
+        return {"verdict": "DEGRADED", "detail": f"stages timed out last pass: {timed}"}
+    return {"verdict": "OK", "detail": f"{b.get('outcome')} {int(age)} s ago"}
 
 
 if __name__ == "__main__":
