@@ -54,6 +54,9 @@ def ledger():
         ev("launched", 40, epoch=5), ev("launch_cause", 40, epoch=5, cause="INITIAL", mechanism="fresh"),
         ev("launched", 41, epoch=5),  # relaunch inside the epoch
         ev("worker_acked", 42, epoch=5, worker="w-ok"),
+        ev("launched", 50, epoch=6), ev("launch_cause", 50, epoch=6, cause="CONTEXT_ROTATION", mechanism="fresh"),
+        ev("worker_acked", 51, epoch=6, worker="w-ok"),
+        ev("launch_cause", 55, epoch=6, cause="TURN_CONTINUATION", mechanism="resume"),  # same epoch, later
     ]
 
 
@@ -80,6 +83,8 @@ def main() -> int:
     check("V-ROUTE-RETRY", [a["phase"] for a in e(5)] == ["initial", "retry"] and e(5)[0]["status"] == "failed"
           and e(5)[1]["status"] == "passed" and [a["sequence"] for a in e(5)] == [1, 2],
           "a relaunch inside one epoch is a retry; only the last launch carries the outcome")
+    check("V-ROUTE-FOUNDING-CAUSE", e(6) and e(6)[0]["route"] == "CONTEXT_ROTATION/fresh:claude-x",
+          f"a later continuation cause does not relabel the epoch: {e(6)[:1] and e(6)[0]['route']}")
     check("V-ROUTE-NO-COST", all((a["usage"] or {}).get("costUsd") is None for a in attempts),
           "no attempt carries an invented price")
 

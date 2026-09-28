@@ -38,6 +38,10 @@ SUITES = [
     "test_change_impact.py", "test_routing_metrics.py", "test_verified_reuse.py",
     "test_paired_experiment.py", "test_handoff_packet.py", "test_task_ledger_seam.py",
     "test_task_adaptation.py", "test_install_reviewer_contract.py",
+    # found by measuring every suite that loads the watchdog (red team R1): six more leaked
+    "test_watchdog_overlay_precedence.py", "test_gsd_autocompact.py", "test_continuation_wiring.py",
+    "test_context_watchdog_heartbeat.py", "test_compaction_truth.py", "test_compact_intent_durability.py",
+    "test_rearm_reachability.py", "test_context_watchdog_overlay_guard.py", "test_night_research.py",
 ]
 SUITE_FLOOR = 25
 

@@ -29,6 +29,9 @@ from pathlib import Path
 os.environ["GSD_LONG_RUN_STATE_DIR"] = tempfile.mkdtemp(prefix="ctruth-state-")
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+import _live_state_isolation as _iso  # noqa: E402
+_ISO_TMP = _iso.isolate("test_compaction_truth")  # measured writing the real ~/.claude, 2026-09-28
 WATCHDOG = ROOT / "modules" / "zero-crash" / "hooks" / "context-watchdog.py"
 TOOLS = ROOT / "tools"
 TMP = Path(tempfile.mkdtemp(prefix="ctruth-tx-"))

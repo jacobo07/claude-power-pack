@@ -101,6 +101,31 @@ large effect, cannot establish a small one.
 - **Pattern.** Anchor a resumption on the subject's own history (`git log -- <file>`), and measure
   every anchor you write.
 
+## T-UNCOMMITTED-PHASE-INVISIBLE-TO-WORKTREE-001 — the smoke mission that could not start (T11)
+
+- **Symptom.** Mission `m-27f9f1ab9fb6` ran one worker, made no commit, then the supervisor held
+  the relay every 5 min: "GSD parses 0 phases from ROADMAP.md".
+- **Root cause.** The phase was added with `gsd-tools phase add` but not committed. `/gsd-autonomous`
+  works in a fresh git worktree cut from HEAD, so its roadmap never had the phase; the supervisor
+  judges that worktree (correctly) and holds on NO_PHASES.
+- **Why missed.** `gsd-tools query progress` on the main checkout listed the phase: the instrument
+  asked the wrong tree -- the one the worker would never read.
+- **Repair.** Committed in the smoke repo (`e6275c3`); the stuck mission ends at its own 1.5 h budget.
+- **System trap left open.** A persistent NO_PHASES hold has no escalation short of the mission
+  budget; a mission can idle its whole budget on a setup error.
+
+## Red team R1 (0 critical, 0 high, 4 medium, 6 low) -- repaired in this session
+
+M1 hand-off packet rooted at a stale `work_dir` (now the transcript's `effective_workdir`,
+`V-HPKT-LIVE-WORKDIR`) · M2 a later continuation cause relabelled an epoch's route (founding cause
+kept, `V-ROUTE-FOUNDING-CAUSE`) · M3 reuse admitted a draft under bytes it was not written about
+(compile-time hashes, `V-REUSE-COMPILE-BYTES`) · M4 the night-research host-refusal gate would run a
+real pass on the VPS (status mode; not applicable there) · L six more watchdog suites wrote the real
+~/.claude (shared `_live_state_isolation.isolate`, `CPP_WORK_STATE_DIR`; ratchet now 38 suites) ·
+L admit exception crashed a VALID validate (caught) · L installer rewrote line endings (both kept).
+Open LOWs, recorded: refused launches absent from routing metrics; packet block before the note in a
+tail-truncated card; revisions narrowing scope paths not flagged as weakening.
+
 ## For the rollover owner (not repaired here)
 
 Session `8167513f`: `reset_gate` REFUSED ("capsule on disk is not the bytes that were sealed"), then

@@ -119,6 +119,21 @@ def main() -> int:
           "the same render with the switch unset carries it")
 
     sid2 = running_mission("m-hpkt2", "3c4d5e6f")
+
+    # Red team R1: a worker that moved into a worktree mid-epoch must get ITS bytes, not the stale
+    # main checkout's. effective_workdir is what the transcript says; patched where handoff_packet looks.
+    wt = TMP / "wt"
+    (wt / "src").mkdir(parents=True)
+    (wt / "src" / "mod.py").write_text(SRC.read_text(encoding="utf-8").replace("x + 1", "x + 99"), encoding="utf-8")
+    real_ew = gm.effective_workdir
+    gm.effective_workdir = lambda s, c, w=None: str(wt)
+    try:
+        wref, why = gm.handoff_packet(sid2, ["src/mod.py::return x + 99"])
+    finally:
+        gm.effective_workdir = real_ew
+    wbody = Path(wref["path"]).read_text(encoding="utf-8") if wref else ""
+    check("V-HPKT-LIVE-WORKDIR", wref is not None and wref["root"] == str(wt) and "x + 99" in wbody,
+          why or f"packet rooted at the worktree the worker is in: {wref and wref['root']}")
     ref2, _ = gm.handoff_packet(sid2, ["src/mod.py:41-42"])
     gm.request_handoff(sid2, "first", now=NOW + 60, packet=ref2)
     r2 = gm.load("m-hpkt2")

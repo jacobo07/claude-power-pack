@@ -64,6 +64,15 @@ def main() -> int:
     check("V-RCON-NOT-AGENT", state == irc.NO_AGENT and notagent.read_text(encoding="utf-8") == "# just notes\n", why)
     check("V-RCON-MISSING", irc.check(d / "nope.md") == irc.NO_AGENT)
 
+    for eol, name in ((b"\n", "LF"), (b"\r\n", "CRLF")):
+        f = d / f"eol-{name}.md"
+        f.write_bytes(ORIGINAL.encode("utf-8").replace(b"\n", eol))
+        irc.install(f)
+        out = f.read_bytes()
+        kept = (b"\r\n" in out) if name == "CRLF" else (b"\r\n" not in out)
+        check(f"V-RCON-EOL-{name}", kept and irc.check(f) == irc.INSTALLED,
+              f"a {name} agent file keeps {name} line endings")
+
     real = irc.check(Path.home() / ".claude" / "agents" / "pp-code-reviewer.md")
     print(f"INFO real agent contract state: {real} (installing is the Owner's step)")
     check("V-RCON-REAL-READABLE", real in (irc.INSTALLED, irc.ABSENT, irc.STALE), real)

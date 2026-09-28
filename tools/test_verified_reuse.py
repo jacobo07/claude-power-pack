@@ -116,6 +116,16 @@ def main() -> int:
     check("V-REUSE-KILL-SWITCH", outcome != bd.REUSED and not reused,
           f"with CPP_VERIFIED_REUSE=off nothing is reused: {outcome}")
 
+    import hashlib
+    now_sha = hashlib.sha256((root / "src" / "mod.py").read_bytes()).hexdigest()
+    st, why = vr.admit(root, t, bd.OUTPUT_BOUNDS, DRAFT, plan_id="plan-c", worker_id="w1",
+                       expected_sources={"src/mod.py": "0" * 64})
+    check("V-REUSE-COMPILE-BYTES", st == vr.REFUSED and "changed since the batch was compiled" in why.get("reason", ""),
+          "a draft written about other bytes is not admitted under today's fingerprint")
+    st, _ = vr.admit(root, t, bd.OUTPUT_BOUNDS, DRAFT, plan_id="plan-c", worker_id="w1",
+                     expected_sources={"src/mod.py": now_sha})
+    check("V-REUSE-COMPILE-BYTES-CONTROL", st == vr.ADMITTED, "matching compile-time bytes admit")
+
     s = vr.stats(root)
     check("V-REUSE-MEASURED", s["hits"] >= 3 and s["reviewer_dispatches_avoided"] == s["hits"]
           and s["source_chars_avoided"] > 0 and s["tokens_saved"] is None,

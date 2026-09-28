@@ -747,7 +747,15 @@ def handoff_packet(session_id: str, specs: list[str], context: int = 30) -> tupl
     rec = mission_for_session(session_id)
     if rec is None:
         return None, f"session {session_id} owns no mission"
-    root = rec.get("work_dir") or rec["cwd"]
+    # Where this session is ACTUALLY working, from its own transcript -- the record's work_dir is
+    # refreshed only at relay, so a worker that entered a worktree mid-epoch would otherwise get a
+    # packet of the main checkout's stale bytes that still verifies OK against that same root
+    # (red team R1, 2026-09-28).
+    try:
+        live = effective_workdir(session_id, rec["cwd"], rec.get("workstream"))
+    except Exception:  # noqa: BLE001 -- a packet is an aid; fall back, never block the hand-off
+        live = None
+    root = live or rec.get("work_dir") or rec["cwd"]
     paths, selectors = [], []
     for spec in specs:
         if "::" in spec:

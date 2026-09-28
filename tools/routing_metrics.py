@@ -127,7 +127,10 @@ def build_attempts(events: list[dict], usage_of=None, since: float | None = None
                 slot["launches"].append(t)
             elif e.get("event") in WORKER_EVENTS and e.get("worker"):
                 slot["worker"] = e["worker"]
-            elif e.get("event") == "launch_cause":
+            elif e.get("event") == "launch_cause" and slot["cause"] is None:
+                # The epoch's route is the cause that CREATED it. A same-session continuation
+                # records a later cause on the same epoch; letting it overwrite reported a fresh
+                # epoch under TURN_CONTINUATION/resume (red team R1, 2026-09-28).
                 slot["cause"], slot["mechanism"] = e.get("cause"), e.get("mechanism")
             elif e.get("event") == "quota_held":
                 slot["quota"] = True

@@ -54,12 +54,15 @@ import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+import _live_state_isolation as _iso  # noqa: E402
+_ISO_TMP = _iso.isolate("test_watchdog_overlay_precedence")  # measured writing the real ~/.claude, 2026-09-28
 WATCHDOG = ROOT / "modules" / "zero-crash" / "hooks" / "context-watchdog.py"
-STATE_DIR = Path.home() / ".claude" / "state"
-
-# Ledger rows go to a throwaway dir: this suite must never write synthetic
-# sessions into the Owner's real long-run ledger.
-os.environ["GSD_LONG_RUN_STATE_DIR"] = tempfile.mkdtemp(prefix="ovly-state-")
+# Markers, thresholds, continuation endpoints and ledger rows all go to ONE private dir. This
+# used to be the Owner's real ~/.claude/state (measured by tools/test_state_isolation.py:
+# markers, ctxwd-thresholds, continuation-endpoint and work_state files per run).
+STATE_DIR = _ISO_TMP / "state"
+os.environ["GSD_LONG_RUN_STATE_DIR"] = str(STATE_DIR)
 
 # ABSOLUTE, never derived from the module under test. 25% is what a
 # post-compaction reading MEANS; it sits below every floor, so the legacy path

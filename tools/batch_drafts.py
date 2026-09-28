@@ -78,9 +78,20 @@ def compile_batch(root: str, tasks: list[dict], max_chars: int | None = None) ->
     d.mkdir(parents=True, exist_ok=True)
     # The task specs are recorded here, not read back from the batch at validation time, so the
     # drafts admitted for reuse are bound to what THIS compile was asked for.
+    # ...and so are the SOURCE BYTES: admission compares against these, so a draft written about
+    # the compiled bytes can never be stored under a later edit's fingerprint (red team R1).
+    import hashlib
+    source_hashes = {}
+    for t in tasks:
+        for rel in t.get("sourcePaths") or []:
+            try:
+                source_hashes[rel] = hashlib.sha256((Path(root) / rel).read_bytes()).hexdigest()
+            except OSError:
+                source_hashes[rel] = None
     (d / f"{batch['binding']}.json").write_text(json.dumps(
         {"binding": batch["binding"], "promptSha256": batch["promptSha256"], "root": str(root),
-         "taskIds": batch["manifest"]["taskIds"], "tasks": tasks}, indent=1), encoding="utf-8")
+         "taskIds": batch["manifest"]["taskIds"], "tasks": tasks, "sourceHashes": source_hashes},
+        indent=1), encoding="utf-8")
     return COMPLETE, batch
 
 
@@ -128,9 +139,14 @@ def validate(batch: dict, result_text: str) -> tuple[str, dict]:
         v["admitted"] = {}
         for o in v.get("outputs") or []:
             t = specs.get(o.get("id"))
-            if t is not None:
+            if t is None:
+                continue
+            try:
                 v["admitted"][o["id"]] = vr.admit(rec["root"], t, OUTPUT_BOUNDS, o, plan_id=rec["binding"],
-                                                  worker_id=WORKER["route"])[0]
+                                                  worker_id=WORKER["route"],
+                                                  expected_sources=rec.get("sourceHashes"))[0]
+            except Exception as exc:  # noqa: BLE001 -- admission is an aid; the verdict stands
+                v["admitted"][o["id"]] = f"{vr.UNJUDGED}: {type(exc).__name__}"
     return (VALID if v.get("ok") else REFUSED), v
 
 

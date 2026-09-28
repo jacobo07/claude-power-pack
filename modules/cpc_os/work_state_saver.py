@@ -45,7 +45,11 @@ _MAX_PENDING = 8
 
 
 def _state_dir(state_dir: Path | str | None) -> Path:
-    return Path(state_dir) if state_dir else DEFAULT_STATE_DIR
+    # CPP_WORK_STATE_DIR: test-only redirect, read per call (unset in every real session). Without
+    # it the watchdog suites wrote synthetic work_state_* files into the Owner's real state dir
+    # (tools/test_state_isolation.py, 2026-09-28).
+    import os
+    return Path(state_dir) if state_dir else Path(os.environ.get("CPP_WORK_STATE_DIR") or DEFAULT_STATE_DIR)
 
 
 def _git_exe() -> str:

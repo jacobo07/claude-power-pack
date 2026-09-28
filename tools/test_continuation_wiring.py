@@ -34,6 +34,9 @@ for var in ("ORCA_PANE_KEY", "CPP_CONTINUATION_TRANSPORT", "CPP_LEGACY_FOREGROUN
     os.environ.pop(var, None)
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+import _live_state_isolation as _iso  # noqa: E402
+_ISO_TMP = _iso.isolate("test_continuation_wiring")  # measured writing the real ~/.claude, 2026-09-28
 WATCHDOG = ROOT / "modules" / "zero-crash" / "hooks" / "context-watchdog.py"
 TOOLS = ROOT / "tools"
 TMP = Path(tempfile.mkdtemp(prefix="cwire-"))

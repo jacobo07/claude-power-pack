@@ -103,9 +103,23 @@ def _log(root: Path, row: dict) -> None:
         fh.write(json.dumps(row) + "\n")
 
 
-def admit(root: str | Path, task: dict, bounds: dict, draft: dict, plan_id: str, worker_id: str) -> tuple[str, dict]:
-    """Persist a VALIDATED batch draft so a later identical task may be handed it back."""
+def admit(root: str | Path, task: dict, bounds: dict, draft: dict, plan_id: str, worker_id: str,
+          expected_sources: dict | None = None) -> tuple[str, dict]:
+    """Persist a VALIDATED batch draft so a later identical task may be handed it back.
+
+    `expected_sources` are the bytes the draft was WRITTEN about (the compile receipt's hashes).
+    If any source moved since, or has no recorded hash, the draft is not admitted: storing it under
+    today's fingerprint would hand a review of old code to a request about new code."""
     root = Path(root)
+    if expected_sources is not None:
+        for rel in task["sourcePaths"]:
+            want = expected_sources.get(rel)
+            try:
+                got = _sha((root / rel).read_bytes())
+            except OSError:
+                got = None
+            if not want or got != want:
+                return REFUSED, {"reason": f"{rel}: source changed since the batch was compiled (or was never recorded)"}
     req = request_for(root, task, bounds)
     fp = nb.call("verifiedReuse", "buildFingerprint", [{"root": str(root), "request": req}], timeout=60)
     if not fp.ok or not (fp.value or {}).get("ok"):

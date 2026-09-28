@@ -55,6 +55,9 @@ os.environ["GSD_LONG_RUN_STATE_DIR"] = STATE
 os.environ.pop("CPP_CONTINUATION_TRANSPORT", None)
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+import _live_state_isolation as _iso  # noqa: E402
+_ISO_TMP = _iso.isolate("test_compact_intent_durability")  # measured writing the real ~/.claude, 2026-09-28
 TMP = Path(tempfile.mkdtemp(prefix="intent-"))
 
 REAL_LINE = "/compact focus on KELB-01 Phase 13 recheck revised plan then execute"

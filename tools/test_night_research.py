@@ -39,10 +39,16 @@ def madrid(h: int, day: int = 29) -> int:
 
 def main() -> int:
     os.environ.pop("CPP_NIGHT_RESEARCH_FIXTURE", None)
-    p = subprocess.run([sys.executable, str(ROOT / "tools" / "night_research_runner.py"), "run"],
-                       capture_output=True, text=True, env={**os.environ})
-    check("V-NIGHT-HOST-REFUSED", p.returncode == 3 and "REFUSED" in p.stdout and not any(TMP.iterdir()),
-          f"{p.stdout.strip()[:110]} (state dir untouched)")
+    if nrr.host_ok()[0]:
+        # On the VPS the refusal branch is unreachable by design, and `run` there is a REAL pass
+        # (red team R1). Say so; never launch a model from a test.
+        print("INFO V-NIGHT-HOST-REFUSED not applicable: this IS the permitted host")
+    else:
+        # `status` never dispatches, so even a broken host check could not start a pass here.
+        p = subprocess.run([sys.executable, str(ROOT / "tools" / "night_research_runner.py"), "status"],
+                           capture_output=True, text=True, env={**os.environ})
+        check("V-NIGHT-HOST-REFUSED", p.returncode == 3 and "REFUSED" in p.stdout and not any(TMP.iterdir()),
+              f"{p.stdout.strip()[:110]} (state dir untouched)")
 
     node, why = nrr.find_node()
     check("V-NIGHT-ENGINE", node is not None, why or node)

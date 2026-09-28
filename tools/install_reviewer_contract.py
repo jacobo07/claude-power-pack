@@ -84,7 +84,10 @@ def install(path: Path | None = None) -> tuple[str, str]:
     backup = p.with_name(p.name + f".bak-{time.strftime('%Y%m%d-%H%M%S')}")
     shutil.copy2(p, backup)
     new = _BLOCK_RE.sub(lambda _m: block(), text) if _BLOCK_RE.search(text) else text.rstrip("\n") + "\n\n" + block() + "\n"
-    p.write_text(new, encoding="utf-8")
+    # Keep the file's own line endings (red team R1): read_text folded CRLF to LF, so restore the
+    # original convention explicitly and write bytes, which Windows text mode cannot rewrite.
+    eol = "\r\n" if b"\r\n" in p.read_bytes() else "\n"
+    p.write_bytes(new.replace("\n", eol).encode("utf-8"))
     after = check(p)
     if after != INSTALLED or not new.startswith(text.split("\n", 1)[0]):
         shutil.copy2(backup, p)
