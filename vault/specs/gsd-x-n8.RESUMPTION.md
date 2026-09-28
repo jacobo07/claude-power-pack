@@ -201,14 +201,39 @@ All items from N6 and N7, plus:
     including the two good ones, because the predicate looked for
     `applied|occurrences` and the real proof is spelled `text.count(old_a) != 1`.
 
+## GEX44-PROVEN (2026-09-28) — the F7 closure survives all 13 mutants
+
+The local host fell to ~98 MB free of 32 GB and a local drill was killed mid-run
+(the `held-unknown-allowed` residue above). Verification moved to GEX44 under
+develop-here-prove-there, in an **isolated worktree** `/home/kobii/missions/_gsdx_n8_drill`
+pinned at `1016b76` with the two test files shipped over scp and **sha256-matched at
+both ends** (`4abafbb5…` gate, `89a3f4c9…` drill). Never run it in the shared
+GEX44 checkout: that one has a live writer.
+
+| run | result | what it meant |
+|---|---|---|
+| 1 | HARNESS | control red on `V-FACTSV2-PRODUCER-REACH` — the predicted inversion; fixed `8405cc6` |
+| 2 | 10/13 | three survivors, **all instrument errors of mine**, fixed `784e446` |
+| 3 | **13/13**, restore sha256-verified, worktree dirty only in the two shipped files | tier `GEX44-PROVEN` |
+
+Run 2's three survivors, so nobody re-derives them:
+- `blindness-from-aggregate` was CAUGHT and scored SURVIVED — its `must` still named
+  the pre-inversion gate `GREEN-EMPTY-DOCUMENT`. A stale gate name reads exactly
+  like a coverage gap.
+- `coverage-requires-nothing` was **equivalent**: `frozenset() or X` returns X
+  because the empty set is falsy. Re-anchored on the comprehension filter.
+- `coverage-ignores-dead-operators` could not discriminate: the pole used an
+  operator with ONE gating read, so killing it required nothing either way.
+  Rebuilt on a two-read operator with a precondition asserting both names.
+
+Commits after `1016b76` on this mission: `8405cc6`, `784e446`. **Local only.**
+Owner N7 answer 2 (push nothing) stands.
+
 ## Next exact valid actions, in order
 
-0. Finish the regression: `test_gsd_x_facts_v2_mutation.py`'s `blindness-never-blocks`
-   mutant anchors on `Blindness.blocks`, whose body changed — the drill will report
-   HARNESS (loudly, by design) until the anchor is retranslated.
-1. **Produce a gating fact** (`measured_failure_mode` from `vault/ceps/events.jsonl`),
-   so the F7 mechanism is reachable from the world and missions are clearable.
-2. **Fix `repo_family_report`'s silent-OUT hole** before any promotion.
+0. ~~Retranslate the `blindness-never-blocks` anchor.~~ DONE, drill 13/13 on GEX44.
+1. ~~Produce a gating fact.~~ DONE `99e96e1`.
+2. ~~Fix `repo_family_report`'s silent-OUT hole.~~ DONE `2a80b35`.
 3. Run the earned laws through `modules/tower/ratchet.promote`, then prove one
    inheritance path end to end — or name the missing mechanism as the next blocker.
 4. Recompile the frontier against `C:\Users\User\Downloads\Dataset GSD X 1.txt`
