@@ -73,6 +73,11 @@ START_DEADLINE_S = 300        # launch -> first ack from the launched session
 HANDOFF_DEADLINE_S = 1800     # hand-off requested -> owner's turn ended
 HEARTBEAT_STALE_S = 1800      # RUNNING with no heartbeat -> ask the host
 MAX_REPLACEMENTS = 3          # consecutive unacknowledged launches before HALTED
+# Consecutive relay passes GSD may refuse (answer not OK) before the mission reads BLOCKED instead
+# of RUNNING. Measured 2026-09-28 (T11 smokes m-27f9f1ab9fb6, m-860e4176f1d6): NO_PHASES held the
+# relay every pass for 1.5 h while the record said RUNNING. NO_PHASES does not clear by waiting;
+# UNAVAILABLE (a loaded host) can, so it gets the longer bound. Blocking never relays: only OK does.
+GSD_HOLD_BLOCK_AFTER = {"NO_PHASES": 2, "UNAVAILABLE": 6}
 # Hand-off wall, % of context used, in the watchdog's own vocabulary. The same narrowed wall
 # /cpp-gsd-long has run on since v2 (crossing at 40 % used), so a worker hands off long
 # before native compaction would fire.
@@ -515,6 +520,14 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
             if spent:
                 return {"action": "halt", "reason": f"owner dead and budget: {spent}"}
             return {"action": "replace", "reason": f"owner dead: {why}"}
+        hold = rec.get("gsd_hold") or {}
+        if verdict == LIVE and state == BLOCKED and hold and owner_idle(rec.get("owner"), sessions):
+            # Blocked on GSD, not on a human: a live idle owner is not an answer. Re-ask GSD
+            # through the relay path; only OK leaves BLOCKED (the owner being alive never did).
+            if spent:
+                return {"action": "halt", "reason": f"turn ended and budget: {spent}"}
+            return {"action": "relay",
+                    "reason": f"blocked on gsd {hold.get('outcome')}: re-asking GSD (a relay needs OK)"}
         if verdict == LIVE and state == BLOCKED:
             return {"action": "unblock", "reason": why}
         if verdict == LIVE and owner_idle(rec.get("owner"), sessions):
@@ -1367,7 +1380,7 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 adopt_launched(rec, launched_row(rec.get("pending"), sessions), now=now)
             elif act == "unblock":
                 transition(mid, expect_epoch=rec["epoch"], expect_state=BLOCKED,
-                           event="mission_unblocked", now=now, state=RUNNING,
+                           event="mission_unblocked", now=now, state=RUNNING, gsd_hold=None,
                            reason=plan["reason"])
             elif act in ("launch", "replace", "relay"):
                 # Ask GSD before ANY successor: a background worker that finished its turn reads
@@ -1414,10 +1427,36 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     if st.get("outcome") != "OK":
                         # Positive test: only "work remains" licenses a relay. UNAVAILABLE is
                         # an unanswered question and NO_PHASES a roadmap nobody can run.
-                        row["held"] = f"gsd {st.get('outcome')}: {st.get('reason')}"
-                        lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"],
-                                         gsd=st.get("outcome"), reason=st.get("reason"))
+                        outcome = st.get("outcome")
+                        row["held"] = f"gsd {outcome}: {st.get('reason')}"
+                        prev = rec.get("gsd_hold") or {}
+                        same = prev.get("outcome") == outcome
+                        hold = {"outcome": outcome, "n": int(prev.get("n") or 0) + 1 if same else 1,
+                                "since": prev.get("since") if same else now, "reason": st.get("reason")}
+                        bound = GSD_HOLD_BLOCK_AFTER.get(outcome)
+                        if bound and hold["n"] >= bound and rec["state"] != BLOCKED:
+                            # Bounded silence: RUNNING with an idle owner and a refusal that
+                            # waiting has not cleared is not healthy; say so where status reads.
+                            why = (f"gsd {outcome} on {hold['n']} consecutive passes "
+                                   f"({int(now - float(hold['since'] or now))} s): {st.get('reason')}"
+                                   f" -- no relay until GSD answers OK")
+                            transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                       event="mission_blocked", now=now, state=BLOCKED,
+                                       gsd_hold=hold, reason=why)
+                            row["blocked"] = why
+                        else:
+                            transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                       event="relay_held", now=now, gsd_hold=hold,
+                                       reason=f"gsd {outcome}: {st.get('reason')}")
                         continue
+                    if rec.get("gsd_hold"):
+                        # GSD answered OK: the hold is over. Leave BLOCKED (if the bound had
+                        # blocked it) before relaying, so every later CAS sees RUNNING.
+                        rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                         event=("mission_unblocked" if rec["state"] == BLOCKED
+                                                else "gsd_hold_cleared"),
+                                         now=now, state=RUNNING, gsd_hold=None,
+                                         reason=f"gsd OK: {st.get('reason')}")
                 turn_end = None
                 import gsd_epoch as ge
                 if rec.get("owner") and (act == "relay" or (

@@ -596,6 +596,59 @@ def main() -> int:
                  stop_runner=stop_run, pid_alive=gone)
     check("V-MC-SUP-GSD-UNAVAILABLE-HOLDS", gm.load("m-unk")["state"] == gm.RUNNING
           and len(launches) == 1 and len(stops) == 1)
+
+    # 2026-09-28 (T11 smoke m-860e4176f1d6, and m-27f9f1ab9fb6 before it): GSD answered NO_PHASES
+    # for the worktree the worker moved into, and the supervisor held the relay every 5 minutes
+    # with the mission RUNNING until the budget halted it -- 1.5 h of silence that waiting could
+    # never end. A hold is bounded: at the bound it becomes BLOCKED, visible, and it still never
+    # relays until GSD answers OK (the positive test is unchanged).
+    hs = fresh("m-nophase")
+    nb, sb = len(launches), len(stops)
+    gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("NO_PHASES"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    r1 = gm.load("m-nophase")
+    check("V-MC-GSD-HOLD-ONCE-STAYS-RUNNING",
+          r1["state"] == gm.RUNNING and (r1.get("gsd_hold") or {}).get("n") == 1
+          and len(launches) == nb and len(stops) == sb, str(r1.get("gsd_hold")))
+    gm.supervise(now=NOW + 300, sessions=hs, gsd_status=gsd("NO_PHASES"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    r2 = gm.load("m-nophase")
+    check("V-MC-GSD-HOLD-BOUNDED-BLOCKS",
+          r2["state"] == gm.BLOCKED and "NO_PHASES" in (r2.get("reason") or "")
+          and len(launches) == nb and len(stops) == sb, f"{r2['state']} {r2.get('reason')}")
+    p3 = gm.plan_next(r2, NOW + 600, hs, gone)
+    check("V-MC-GSD-BLOCK-NOT-UNBLOCKED-BY-LIVE-OWNER", p3["action"] == "relay"
+          and "gsd" in p3["reason"], str(p3))
+    gm.supervise(now=NOW + 600, sessions=hs, gsd_status=gsd("NO_PHASES"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    r3 = gm.load("m-nophase")
+    check("V-MC-GSD-BLOCK-STAYS-WHILE-NOT-OK",
+          r3["state"] == gm.BLOCKED and r3["gsd_hold"]["n"] == 3 and len(launches) == nb, str(r3.get("gsd_hold")))
+    gm.supervise(now=NOW + 900, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    r4 = gm.load("m-nophase")
+    check("V-MC-GSD-BLOCK-CLEARS-ON-OK-AND-PROCEEDS",
+          r4["state"] != gm.BLOCKED and not r4.get("gsd_hold") and len(stops) == sb + 1,
+          f"{r4['state']} hold={r4.get('gsd_hold')} stops={len(stops) - sb}")
+    hs = fresh("m-unk2")
+    for k in range(gm.GSD_HOLD_BLOCK_AFTER["UNAVAILABLE"] - 1):
+        gm.supervise(now=NOW + 300 * k, sessions=hs, gsd_status=gsd("UNAVAILABLE"), runner=launch_run,
+                     stop_runner=stop_run, pid_alive=gone)
+    ru = gm.load("m-unk2")
+    check("V-MC-GSD-UNAVAILABLE-GETS-LONGER-BOUND",
+          ru["state"] == gm.RUNNING and ru["gsd_hold"]["n"] == gm.GSD_HOLD_BLOCK_AFTER["UNAVAILABLE"] - 1,
+          str(ru.get("gsd_hold")))
+    gm.supervise(now=NOW + 3000, sessions=hs, gsd_status=gsd("UNAVAILABLE"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    check("V-MC-GSD-UNAVAILABLE-BLOCKS-AT-BOUND", gm.load("m-unk2")["state"] == gm.BLOCKED)
+    hs = fresh("m-flip")
+    gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("UNAVAILABLE"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    gm.supervise(now=NOW + 300, sessions=hs, gsd_status=gsd("NO_PHASES"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    rf = gm.load("m-flip")
+    check("V-MC-GSD-HOLD-COUNTS-CONSECUTIVE-SAME-OUTCOME",
+          rf["state"] == gm.RUNNING and rf["gsd_hold"]["n"] == 1, str(rf.get("gsd_hold")))
     hs = fresh("m-stuck")
     ok, why = gm.stop_owner({**bg, "session_id": "s-m-stuck"}, hs, pid_alive=alive,
                             runner=stop_run, wait_s=0)
