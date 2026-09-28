@@ -38,10 +38,23 @@ proving `/compact` returns byte-identical · 4/4 mutants, run as a differential 
 unmutated copy's own baseline · hub driven for real across 4 cases (clear/startup/killswitch/
 other-repo). Untouched: continuation_transport 28/28, wiring 14/14, cold start 11/11, drills 9/9.
 
+## Reconciled 2026-09-28 by the assimilation pane (facts from the ledger; decisions stay with this file's owner)
+- **A real §8 crossing IS on the ledger.** `~/.claude/state/rollover/rollover-ledger.jsonl`:
+  session `a25f7143` (Orca X, real work) `capsule_sealed` 13:20:12Z -> `reset_gate` SAFE_TO_FORGET
+  13:20:18Z -> `successor_claimed` by a DIFFERENT session `c3d8927a` 13:24:31Z -> `resume_certified`
+  13:24:43Z. Six `resume_certified` rows in all, every one a real working session with its own
+  transcript (CPP, TUA-X, Orca X); none a driver. Not in the ledger: whether that `/clear` was typed by
+  the active-rollover dispatch or by hand -- UNKNOWN, so "crossing observed" is proven and "the
+  automatic crossing observed" is not.
+- **For the owner to judge:** session `8167513f` shows `reset_gate` REFUSED ("capsule on disk is not
+  the bytes that were sealed", 13:40:09Z) and then `successor_claimed` by `ce6166f9` and
+  `resume_certified` 13:47:57Z. The gate refused `/clear`; the resume still claimed and certified that
+  capsule. Whether /kresume should refuse a capsule its own gate refused is this spec's decision.
+- The coherence anchor below was 20+ commits stale; the branch has moved (see `git log`).
+
 ## Open
-1. **§8 Production Reality is still OWED**: no real fresh-session `/kclear -> /clear -> /kresume`
-   crossing has been observed end to end. Everything above is unit- and hub-proven, not
-   crossing-proven.
+1. **§8 Production Reality**: a real crossing is now observed (see Reconciled above); what remains
+   owed is proof that the AUTOMATIC dispatch typed the `/clear`, and the `8167513f` question.
    **An idle worktree will NOT do** — measured 2026-09-28 against two real ones
    (`TUA-X-cross-angle`, `_wt-sge-competitive`): both seal a capsule and both are REFUSED (exit 3)
    for `goal` / `obligations` / `handoff`, because a session that has done no work there has
@@ -60,7 +73,8 @@ is in its observation domain). Measured 38/38 twice at 7.2 GB free after failing
 
 ## Coherence anchor
 `python tools/rollover.py status` shows `shadow_candidate`, `capsule_sealed`, `reset_gate` and
-`resume_certified` rows; `git log --oneline -4` shows `d10bd31 42da3d1 37a3144`.
+`resume_certified` rows; `git log --oneline -3 -- tools/rollover.py` shows `d10bd31 37a3144 440bce4`
+(measured 2026-09-28; the branch head moves with other work, so anchor on the file's own log).
 
 ## Start instruction
 `git log --oneline -5`, then `python tools/test_rollover.py && python tools/test_rollover_active_path.py`,
