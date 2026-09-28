@@ -560,7 +560,19 @@ def ledger(event: str, state_dir: Optional[Path] = None, **fields) -> None:
         pass  # telemetry: a lost row never blocks a session
 
 
-def newest_capsule(cwd: str, state_dir: Optional[Path] = None, exclude: str = "") -> Optional[dict]:
+def resumable(capsule: dict) -> list[str]:
+    """Why no successor could ever certify this capsule; empty means it can be resumed.
+
+    certify() refuses an exam item whose expected answer is empty, so a capsule sealed with no
+    goal or no obligation is uncertifiable by construction. The shadow seals such capsules into
+    the same directory as /kclear. Offering one would make the successor claim it, which locks
+    out every other successor, and then fail the exam with no way to pass. Measured 2026-09-28:
+    capsule gsdlr-92a0350ee055, leaked by a test run, was claimed that way."""
+    return [f"{item['key']} was never recorded" for item in exam(capsule) if not _norm(item["a"])]
+
+
+def newest_capsule(cwd: str, state_dir: Optional[Path] = None, exclude: str = "",
+                   skipped: Optional[list] = None) -> Optional[dict]:
     d = (state_dir or STATE_DIR) / "capsules"
     best = None
     for p in sorted(d.glob("*.json"), key=lambda q: q.stat().st_mtime, reverse=True) if d.is_dir() else []:
@@ -572,9 +584,14 @@ def newest_capsule(cwd: str, state_dir: Optional[Path] = None, exclude: str = ""
             continue
         if cap.get("schema") != SCHEMA or cap.get("session_id") == exclude:
             continue
-        if _norm(cap.get("cwd")) == _norm(cwd):
-            best = cap
-            break
+        if _norm(cap.get("cwd")) != _norm(cwd):
+            continue
+        if resumable(cap):
+            if skipped is not None:
+                skipped.append(cap.get("session_id"))
+            continue
+        best = cap
+        break
     return best
 
 
@@ -697,10 +714,21 @@ def main(argv=None) -> int:
             print(f"  note     {w}")
         return 0 if stf["verdict"] == "SAFE_TO_FORGET" else 3
     if a.cmd == "resume":
+        skipped: list = []
         cap = (json.loads(capsule_path(a.from_session).read_text(encoding="utf-8"))
-               if a.from_session and capsule_path(a.from_session).is_file() else newest_capsule(a.cwd, exclude=a.claimant))
+               if a.from_session and capsule_path(a.from_session).is_file()
+               else newest_capsule(a.cwd, exclude=a.claimant, skipped=skipped))
         if not cap:
             print("No sealed, unretired capsule for this directory in the last 24 h. Nothing to resume.")
+            if skipped:
+                print(f"  ({len(skipped)} capsule(s) here were skipped as not resumable: no goal or no "
+                      f"obligation was recorded, e.g. {skipped[0]})")
+            return 4
+        why = resumable(cap)
+        if why:
+            # Refused BEFORE the claim: a claim on an uncertifiable capsule only locks others out.
+            print(f"NOT RESUMABLE: capsule {cap['session_id']} cannot be certified -- {'; '.join(why)}.")
+            ledger("resume_not_resumable", session_id=cap["session_id"], claimant=a.claimant, reasons=why)
             return 4
         cl = claim(cap["session_id"], a.claimant)
         if not cl["claimed"]:

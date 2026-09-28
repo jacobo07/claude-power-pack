@@ -40,7 +40,12 @@ for d in (STATE, HOOKS, PROJECTS, SESSIONS):
 os.environ.update({"GSD_LONG_RUN_STATE_DIR": str(STATE), "GSD_LONG_RUN_HOOKS_DIR": str(HOOKS),
                    "GSD_LONG_RUN_PROJECTS_DIR": str(PROJECTS), "GSD_LONG_RUN_NO_SPAWN": "1",
                    # the liveness instrument reads the session registry; never the Owner's
-                   "GSD_LONG_RUN_SESSIONS_DIR": str(SESSIONS)})
+                   "GSD_LONG_RUN_SESSIONS_DIR": str(SESSIONS),
+                   # The watchdog spawns a detached `rollover.py shadow` at every crossing, and
+                   # the child inherits this environment. Unredirected, each run sealed goal-less
+                   # gsdlr-* capsules into the Owner's real state (nine on 2026-09-28), and
+                   # /kresume then claimed one.
+                   "CPP_ROLLOVER_STATE_DIR": str(TMP / "rollover")})
 
 passes = fails = inconclusive = 0
 

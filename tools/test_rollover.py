@@ -195,6 +195,22 @@ def main() -> int:
         check("V-ROLLOVER-NEWEST-BY-CWD", found is not None and found["cwd"] == str(repo), found and found["session_id"])
         check("V-ROLLOVER-OTHER-CWD-IGNORED", ro.newest_capsule(str(tmp), state) is None, "different cwd")
 
+        # An uncertifiable capsule (no goal, no obligation -- what the shadow seals for a session
+        # that wrote no plan) sealed NEWER than a good one. It must be skipped, never claimed.
+        NR = "nnnnnnnn-0009"
+        nr = json.loads(json.dumps(cap))
+        nr.update(session_id=NR, goal=ro._unknown("wrote no plan"), obligations=[])
+        ro.seal(nr, state)
+        check("V-ROLLOVER-UNRESUMABLE-NAMED", len(ro.resumable(nr)) == 2 and not ro.resumable(cap), ro.resumable(nr))
+        sk: list = []
+        pick = ro.newest_capsule(str(repo), state, exclude="nobody", skipped=sk)
+        check("V-ROLLOVER-UNRESUMABLE-SKIPPED", pick is not None and pick["session_id"] != NR and NR in sk,
+              (pick and pick["session_id"], sk))
+        ro.STATE_DIR = state
+        rc_nr = ro.main(["resume", "--cwd", str(repo), "--claimant", "succ-Z", "--from", NR])
+        check("V-ROLLOVER-UNRESUMABLE-NOT-CLAIMED", rc_nr == 4 and not (state / "capsules" / f"{NR}.claim").exists(),
+              f"rc={rc_nr}")
+
         boot = ro.bootstrap(cap)
         check("V-ROLLOVER-BOOTSTRAP-SMALL", len(boot) <= ro.BOOTSTRAP_MAX_CHARS and "goal.md" in boot
               and "Wire the shadow observer" in boot, f"{len(boot)} chars")
