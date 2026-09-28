@@ -67,3 +67,29 @@ next_actions_rule: (a) close a requirement this run left unsatisfied, then (b) w
 next_actions: 1. CRO-01 Owner review + re-run 01-02. 2. P3 pre-flight on the laptop's own claude, then P1 A/A on
   quota. 3. Prefix-miss follow-up from the laptop's own transcripts (zero-call step first).
 phase4_action3_variant: standard (04-VERIFICATION.md status read as `passed` at execution time, not gaps_found).
+
+## 3. UKDL changes
+
+ukdl_entries_added:
+  PR-OWNER-GATE-BEFORE-RUN-001: cites .planning/workstreams/cognitive-resource-os/phases/01-gate-verdict-on-the-big-host/EVIDENCE.md, commit eab20dc
+  T-RULE-EXCLUSION-SCOPE-001: cites .planning/workstreams/cognitive-resource-os/phases/03-p3-pre-flight-p0/EVIDENCE.md, commits c632771 d08644d
+  T-BASELINE-WITHOUT-HOST-001: cites .planning/workstreams/cognitive-resource-os/phases/02-gex44-observed-baseline/EVIDENCE.md, commits 1766507 cb6fc62
+  T-MEASURER-IN-CORPUS-001: cites .planning/workstreams/cognitive-resource-os/phases/02-gex44-observed-baseline/EVIDENCE.md and .planning/workstreams/cognitive-resource-os/phases/04-prefix-cache-miss-a-b/EVIDENCE.md, commits 1766507 f32ea4b
+  T-BACK-TO-BACK-REUSE-001: cites .planning/workstreams/cognitive-resource-os/phases/04-prefix-cache-miss-a-b/EVIDENCE.md and .planning/workstreams/cognitive-resource-os/phases/02-gex44-observed-baseline/EVIDENCE.md, commits 740b41b f32ea4b
+  T-TRUTHY-PRESENCE-GUARD-001: cites .planning/workstreams/cognitive-resource-os/phases/04-prefix-cache-miss-a-b/04-REVIEW.md and .planning/workstreams/cognitive-resource-os/phases/04-prefix-cache-miss-a-b/EVIDENCE.md, commits 8c13d18 cd93c98
+ukdl_entries_held: none (both Phase 4 gates read WRITE at execution time)
+ukdl_phase4_entries: WRITTEN
+ukdl_relabelled_lines: 11 lines carrying a UKDL laptop-figure anchor got "(laptop)" beside the figure (Hard Rules,
+  Process Rules and Traps sections, per the Laptop-figure anchors list).
+ukdl_universal_touched: no
+
+## 4. Hand-back
+
+branch: mission/cognitive-resource-os-gex44
+base: cd4e436
+ff_check: git merge-base --is-ancestor mission/cognitive-resource-os HEAD
+ff_check_rc: 0
+ff_command: git -C /home/kobii/missions/cognitive-resource-os merge --ff-only mission/cognitive-resource-os-gex44
+laptop_fetch_command: git fetch gex44:/home/kobii/missions/cognitive-resource-os mission/cognitive-resource-os-gex44
+pushed: no
+merged: no
