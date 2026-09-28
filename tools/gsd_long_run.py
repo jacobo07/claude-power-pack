@@ -532,6 +532,31 @@ def resume_reference(session_id: str, marker: dict) -> float | None:
 
 
 # --------------------------------------------------------------------------- GSD
+def archived_milestone_complete(project, milestone: str | None,
+                                workstream: str | None = None) -> str | None:
+    """A reason string when GSD's own state says THIS milestone finished and was archived.
+
+    Measured 2026-09-28 (canary m-916e905e23d4, found by peer pane c2): after /gsd-autonomous
+    completes and archives a milestone, ROADMAP.md collapses the phases into a <details> block,
+    init.manager parses 0 phases, and gsd_status answered NO_PHASES -- so a FINISHED mission sat
+    relay_held every pass and could only end on budget. Positive evidence required, all of it:
+    .planning/state.json names the SAME milestone init.manager reports, and lists phases, all
+    `complete`. A different milestone name (a new roadmap that fails to parse) stays NO_PHASES.
+    Workstream layouts are not measured here yet, so a workstream never takes this path."""
+    if workstream or not milestone:
+        return None
+    try:
+        st = json.loads((Path(project) / ".planning" / "state.json").read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        return None
+    phases = st.get("phases") if isinstance(st, dict) else None
+    if st.get("milestone") != milestone or not isinstance(phases, list) or not phases:
+        return None
+    if not all(isinstance(p, dict) and p.get("status") == "complete" for p in phases):
+        return None
+    return f"milestone {milestone!r} archived: {len(phases)}/{len(phases)} phases complete (state.json)"
+
+
 def gsd_status(project, timeout: int = 45, workstream: str | None = None) -> dict:
     # 45 s, not 20: measured 5 s alone and >20 s beside other suites on this host
     # at 2.5 GB free. A short ceiling turns a loaded host into an arming refusal.
@@ -576,6 +601,9 @@ def gsd_status(project, timeout: int = 45, workstream: str | None = None) -> dic
     if not data.get("roadmap_exists") or not data.get("state_exists"):
         return dict(base, outcome="NO_PHASES", reason="GSD finds no ROADMAP.md/STATE.md")
     if total == 0:
+        archived = archived_milestone_complete(project, base.get("milestone"), workstream)
+        if archived:
+            return dict(base, outcome="ALL_COMPLETE", reason=archived)
         return dict(base, outcome="NO_PHASES",
                     reason="GSD parses 0 phases from ROADMAP.md (headings must be GSD phases)")
     if base["all_complete"] or base["incomplete"] == 0:
