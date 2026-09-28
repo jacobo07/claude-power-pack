@@ -588,3 +588,33 @@ Owner decision 2026-09-23: a run continues in a fresh session at its wall. Spec
 
 Gates: `tools/test_gsd_mission.py` 76/76 · `tools/test_mission_watchdog.py` 12/12 ·
 `node tools/test_hub_mission_start.js` 8/8 · `node tools/test_mission_wall.js` 7/7.
+
+## 12. Durable substrate pass -- 2026-09-27/28, session 958a5394 (addendum; §11 unchanged)
+
+Layered: each row certifies ONE property on ONE evidence plane. No row broadens M1-M7, and
+"PROVEN" is not used; the tier names the strongest plane that observed the claim.
+Machine-readable twin: `.planning/mission-continuity/claim-ledger.json`. Incidents:
+`vault/lessons/durable-substrate-2026-09-27.md`.
+
+| # | property | tier | evidence |
+|---|---|---|---|
+| D1 | a mission whose last budgeted turn converges ends COMPLETED | ADVERSARIALLY_TESTED (local); REACHABLE live, not yet EXERCISED | 12bee64, V-MC-CONVERGE-*, mutation killed |
+| D2 | a hard kill at the record rename leaves prior or next, never torn | ADVERSARIALLY_TESTED (real process kill) | 859be49, V-MC-KILL-* |
+| D2b | fsync makes the record survive power loss | IMPLEMENTED only -- no power-loss plane here | 859be49 |
+| D3 | an unreadable or newer-schema record is surfaced, never skipped or misread | ADVERSARIALLY_TESTED; live probe 0 of 43 unreadable | 859be49, 07f1e71 |
+| D4 | the record lock frees on holder death and is never taken from a live holder | ADVERSARIALLY_TESTED (real processes) | d730a23, V-MC-LOCK-* |
+| D5 | a lost ledger row is a named gap, not an absence | ADVERSARIALLY_TESTED | 26f14bd, V-MC-HISTORY-* |
+| D6 | relay and renewal require measured progress; unmeasured never stalls | ADVERSARIALLY_TESTED; fingerprint HOST_VERIFIED on a real repo | 676370b, V-MC-PROGRESS-* |
+| D7 | the sweep: one pass at a time, bounded stages with tree kill, heartbeat every pass | HOST_VERIFIED (live pass: mission rc 0 193.7 s, v2 rc 0 35.8 s) | dfe968f + peer 9f750fa, V-SWEEP-* 10/10 |
+| D8 | decisions name their build; status reports sweep health and code drift | ADVERSARIALLY_TESTED; live status printed SWEEP OK + CODE DRIFT | 07f1e71 |
+
+Not proven, stated rather than implied: machine reboot recovery; multi-day endurance; a live
+mission reaching COMPLETED; a live no_progress halt; fsync durability; semantic (vs commit)
+progress; Goal Spine connection -- measured as NOT needed yet: GSD phase state plus the work
+tree carried every property this pass required, and gsd_x/mission remains an opt-in ship:pre
+gate. Wall-triggered rotation economics and TURN_CONTINUATION belong to the peer pane's spec
+`vault/specs/parent-context-epoch-rotation.md`.
+
+Gates at this addendum: `tools/test_gsd_mission.py` 184/184 · `tools/test_gsd_sweep_pass.py`
+10/10 · `tools/test_mutation_drill.py` 5/5 · `tools/test_gsd_long_run.py` 98/98 (1 inconclusive,
+pre-existing) · `tools/test_cpp_gsd_long_routing.py` 9/9.

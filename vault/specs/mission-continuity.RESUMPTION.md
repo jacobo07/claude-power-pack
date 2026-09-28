@@ -25,11 +25,18 @@ T2 fsync + unreadable records surfaced (never skipped) · `d730a23` T3 kernel by
 (killed holder released instantly; live holder never stolen; L1 debt CLOSED).
 Gates: `tools/test_gsd_mission.py` 163/163; each fix mutation-killed, SHA-256 restores
 (drivers: scratchpad `mutate.py --spec`, `gcommit.py snap|commit` — guarded pathspec commit).
-NEXT: T4 history authority (monotonic `seq` on record + ledger rows; failed append counted on the
-record, shown by status) → T5 progress/livelock (measure 6 renewal-capped lineages FIRST; PLAN
-mode) → T6 code identity per decision → T7 sweep liveness (log writes only on action: idle/
-skipped/dead indistinguishable; LastTaskResult 0x41306) → T8 certification addendum + UKDL.
-Live estate: 43 missions, 3 non-terminal; sweep loads the REPO file, so every commit is live.
+ALSO SEALED: `26f14bd` T4 seq + history_gaps · `676370b` T5 progress-gated relay/renewal ·
+`dfe968f` T7 sweep pass contract (lease, mission first, bounded stages + tree kill, heartbeat)
+· `07f1e71` T6 CODE_ID, newer-schema refusal, `status` SWEEP/CODE DRIFT on stderr · T8 docs:
+CERTIFICATION §12, `vault/lessons/durable-substrate-2026-09-27.md`,
+`vault/knowledge_base/mission_continuity/UKDL_CANDIDATES_DURABLE_SUBSTRATE.md` (candidates +
+ratchet extension, NOT merged/promoted), `tools/mutation_drill.py` (isolated drills).
+Peer pane c2 owns `vault/specs/parent-context-epoch-rotation.md` (`9f750fa`, `717554f`:
+same-session continuation, launch_cause, `tools/gsd_epoch.py census`). "1 of 499 wall" RETRACTED.
+Gates at 717554f: mission 184/184 · sweep 10/10 · drill 5/5 · route 9/9 · GSDLR 98/98 · epoch 56/56.
+NEXT: (1) merge the UKDL candidates when ukdl-universal.md is quiet; (2) watch the first live
+no_progress halt / COMPLETED at budget (`gsd_mission.py status`, ledger `mission_completed`);
+(3) fold isolation into `tools/lane_r_mutate.py` (UWCP-owned; mutates in place today).
 
 ## UPDATE 2026-09-24 15:2x — M6 PROVEN, stopped by the Owner
 Two live relays, three workers committing in the run's git worktree, no phase redone, one
