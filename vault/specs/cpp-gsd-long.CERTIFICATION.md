@@ -615,6 +615,11 @@ tree carried every property this pass required, and gsd_x/mission remains an opt
 gate. Wall-triggered rotation economics and TURN_CONTINUATION belong to the peer pane's spec
 `vault/specs/parent-context-epoch-rotation.md`.
 
+**D1 PRODUCTION_VERIFIED 2026-09-28:** live canary `m-916e905e23d4` reached COMPLETED through
+the real sweep, the first COMPLETED of 45 missions on this host. It needed a second fix,
+`1a74a23`: once a milestone is archived its roadmap parses to 0 phases, and GSD used to report
+that as NO_PHASES, which held the relay until the budget ran out. The peer pane c2 found it.
+
 Independent adversarial review (oneshot-architect-auditor, 2026-09-28): WARNING, 1 HIGH /
 3 MEDIUM / 2 LOW, all verified and fixed in `b6f725e`. The HIGH broke D1: the budget-halt branch
 asked GSD in the cwd, not the worktree the worker used, so a finished milestone could be halted

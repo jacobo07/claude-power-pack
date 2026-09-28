@@ -5,7 +5,8 @@
   "tiers": ["DOCUMENTED", "IMPLEMENTED", "LOCALLY_TESTED", "REACHABLE", "EXERCISED", "ADVERSARIALLY_TESTED", "HOST_VERIFIED", "PRODUCTION_VERIFIED"],
   "claims": [
     {"id": "C-T1", "claim": "A /gsd-autonomous mission whose final budgeted turn completes the milestone ends COMPLETED, not HALTED",
-     "owner": "gsd_mission.supervise", "status": "ADVERSARIALLY_TESTED", "plane": "test",
+     "owner": "gsd_mission.supervise", "status": "PRODUCTION_VERIFIED", "plane": "live sweep, 2026-09-28",
+     "production": "m-916e905e23d4 COMPLETED seq 7 via the live sweep after 1a74a23 (archived milestone read ALL_COMPLETE); first COMPLETED of 45 missions on this host; sweep then retired its marker",
      "evidence": ["12bee64", "V-MC-CONVERGE-AT-BUDGET-COMPLETES red on HEAD, green after", "mutation ALL_COMPLETE->NEVER killed"],
      "counterevidence": ["no live mission has reached ALL_COMPLETE yet: 0 of 43 COMPLETED; the path is REACHABLE (sweep runs repo file) but not EXERCISED live"],
      "falsified_by": "a live budget-halted mission whose GSD status is ALL_COMPLETE recorded HALTED"},
