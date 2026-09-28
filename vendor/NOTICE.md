@@ -273,7 +273,7 @@ confirmation of the fix in `e5aff74`.
 
 - **Source:**    Owner-supplied archive `for cpp-gsd-long.zip` (inner `genesis-suite.zip`); no public URL recorded. Hashes in `vendor/_provenance/genesis-suite.json`.
 - **Snapshot:**  bundled verbatim at `vendor/genesis-suite/` (341 files); byte-pinned by `.gitattributes -text`; upstream `scripts/verify-release.cjs` → `{"ok":true,"files":340}` on 2026-09-28.
-- **Adapter:**   lib/adapters/genesis-suite.js (single entry point, JSON stdin/stdout), driven from Python by `modules/external_assimilation/node_bridge.py`
+- **Adapter:**   modules/external_assimilation/genesis_adapter.cjs (single entry point, JSON stdin/stdout), driven from Python by `modules/external_assimilation/node_bridge.py`. Not under `lib/adapters/`: `/lib/` is git-ignored in this repo.
 - **Added:**     2026-09-28
 - **Gate verdict:** PERMISSIVE
 - **Redistribution:** allowed

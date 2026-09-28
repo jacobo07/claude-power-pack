@@ -25,7 +25,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-ADAPTER = ROOT / "lib" / "adapters" / "genesis-suite.js"
+# Beside this file, not under lib/adapters/ (vendor/README.md): /lib/ is git-ignored in this repo,
+# so an adapter there would exist on one disk and nowhere else.
+ADAPTER = Path(__file__).resolve().parent / "genesis_adapter.cjs"
 DEFAULT_TIMEOUT_S = 30.0
 
 OK = "OK"

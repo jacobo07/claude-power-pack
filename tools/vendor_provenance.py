@@ -32,7 +32,20 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 VENDOR = ROOT / "vendor"
 RECORDS = VENDOR / "_provenance"
-GIT = "git"
+
+
+def _git_exe() -> str:
+    # git is not on PATH for non-interactive processes on this Windows host (measured
+    # 2026-09-28: FileNotFoundError from --fresh-checkout); fall back to the standard install.
+    import os
+    import shutil
+    for cand in (os.environ.get("CPP_GIT_EXE"), shutil.which("git"), r"C:\Program Files\Git\cmd\git.exe"):
+        if cand and Path(cand).is_file():
+            return cand
+    return "git"
+
+
+GIT = _git_exe()
 
 VALID, SUBJECT_INVALID, VERIFIER_FAILED, UNREADABLE = "VALID", "SUBJECT_INVALID", "VERIFIER_FAILED", "UNREADABLE"
 EXIT = {VALID: 0, SUBJECT_INVALID: 1, VERIFIER_FAILED: 2, UNREADABLE: 3}
