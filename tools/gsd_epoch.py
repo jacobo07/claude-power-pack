@@ -113,6 +113,11 @@ def context_tokens(session_id: str) -> int | None:
         return None
     for row in reversed(lr._tail_rows(path)):
         msg = row.get("message") if row.get("type") == "assistant" else None
+        if isinstance(msg, dict) and msg.get("model") == "<synthetic>":
+            # A host-written row (quota refusal, API error) is not a model call: its usage is all
+            # zeros. Read as "context 0" it licensed continuations of a ~336k-token worker
+            # (m-d82c7cb6b87e, 2026-09-28). Walk back to the last real call.
+            continue
         u = (msg or {}).get("usage") if isinstance(msg, dict) else None
         if isinstance(u, dict):
             try:

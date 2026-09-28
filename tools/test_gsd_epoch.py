@@ -102,6 +102,19 @@ def main() -> int:
     transcript("s-ctx", [asst(NOW - 100, small)])
     check("V-EPOCH-CONTEXT-MEASURED", ge.context_tokens("s-ctx") == 180_002, ge.context_tokens("s-ctx"))
     check("V-EPOCH-CONTEXT-UNMEASURED-IS-NONE", ge.context_tokens("s-none") is None)
+    # 2026-09-28 (m-d82c7cb6b87e): the host writes a quota refusal as an assistant row with model
+    # `<synthetic>` and all-zero usage. It is not a model call; read as "context 0" it licensed two
+    # same-session continuations on a worker holding ~336k tokens. The real call before it counts.
+    quota = asst(NOW - 50, (0, 0, 0), text="You've hit your session limit")
+    quota["message"]["model"] = "<synthetic>"
+    quota["message"]["usage"] = {"input_tokens": 0, "cache_creation_input_tokens": 0,
+                                 "cache_read_input_tokens": 0}
+    transcript("s-quota", [asst(NOW - 100, big), quota])
+    check("V-EPOCH-CONTEXT-SYNTHETIC-ROW-SKIPPED", ge.context_tokens("s-quota") == 350_002,
+          ge.context_tokens("s-quota"))
+    transcript("s-quota-only", [quota])
+    check("V-EPOCH-CONTEXT-SYNTHETIC-ONLY-IS-UNMEASURED", ge.context_tokens("s-quota-only") is None,
+          ge.context_tokens("s-quota-only"))
 
     # --- the core split: a turn end continues, the wall rotates -------------------------------
     rec = running("m-cont", "s-cont")
