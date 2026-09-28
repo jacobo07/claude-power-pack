@@ -57,14 +57,15 @@ def base_commit() -> str:
 
 def fresh_tree(run_id: str, base: str) -> Path:
     wt = RUNS / run_id
-    if wt.exists():
-        git("worktree", "remove", "--force", str(wt), check=False)
+    drop_tree(wt)  # a run killed mid-`worktree add` leaves it registered AND locked
+    git("worktree", "prune", check=False)
     git("worktree", "add", "--detach", str(wt), base)
     return wt
 
 
 def drop_tree(wt: Path):
-    git("worktree", "remove", "--force", str(wt), check=False)
+    # Twice --force: git refuses a LOCKED worktree with one (measured: an interrupted add left one locked).
+    git("worktree", "remove", "--force", "--force", str(wt), check=False)
 
 
 def apply_mutant(wt: Path, t: dict):
