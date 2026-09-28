@@ -85,9 +85,13 @@ def main() -> int:
         check("V-PGRAPH-DOT-SEGMENT-SAME-KEY", r["verdict"] == pg.REFUSED, r["refused"])
         d = ph / "07c-parent-segment"
         plan(d, "07c-01", 1, files=["src/../src/a.py"])
-        plan(d, "07c-02", 1, files=["src/b.py"])
+        plan(d, "07c-02", 1, files=["src/a.py"])
         r = judge(d, root)
-        check("V-PGRAPH-PARENT-SEGMENT-NEVER-OK", r["verdict"] != pg.OK, r["refused"] or r["unjudged"])
+        check("V-PGRAPH-PARENT-SEGMENT-SAME-KEY", r["verdict"] == pg.REFUSED, r["refused"] or r["unjudged"])
+        d = ph / "07d-parent-control"
+        plan(d, "07d-01", 1, files=["src/../src/a.py"])
+        plan(d, "07d-02", 1, files=["src/b.py"])
+        check("V-PGRAPH-PARENT-SEGMENT-CONTROL", judge(d, root)["verdict"] == pg.OK, "different files stay apart")
 
         d = ph / "08-cross-wave"
         plan(d, "08-01", 1, files=["src/a.py"])
@@ -212,6 +216,34 @@ def main() -> int:
             plan(d, "20d-02", 1, files=["src/real.py"])
             r = judge(d, root)
             check("V-PGRAPH-SYMLINK-ALIAS-COLLIDES", r["verdict"] == pg.REFUSED, r["refused"] or r["unjudged"])
+            d = ph / "20e-relative-alias"
+            plan(d, "20e-01", 1, files=[link.relative_to(root).as_posix()])
+            plan(d, "20e-02", 1, files=["src/real.py"])
+            r = judge(d, root)
+            check("V-PGRAPH-RELATIVE-ALIAS-COLLIDES", r["verdict"] == pg.REFUSED, r["refused"] or r["unjudged"])
+
+        print("one keying path: .planning in a sub-directory, and a submodule in both spellings")
+        mono = tmp / "mono"
+        (mono / ".git" / "worktrees" / "mwt").mkdir(parents=True)
+        (mono / ".git" / "worktrees" / "mwt" / "commondir").write_text("../..\n", encoding="utf-8")
+        sub = mono / "proj"
+        (sub / ".planning" / "phases").mkdir(parents=True)
+        mwt = tmp / "mwt"
+        mwt.mkdir()
+        (mwt / ".git").write_text(f"gitdir: {(mono / '.git' / 'worktrees' / 'mwt').as_posix()}\n", encoding="utf-8")
+        d = sub / ".planning" / "phases" / "30-subdir"
+        plan(d, "30-01", 1, files=["src/a.py"])
+        plan(d, "30-02", 1, files=[(mwt / "proj" / "src" / "a.py").as_posix()])
+        r = judge(d, sub)
+        check("V-PGRAPH-SUBDIR-PLANNING-MIXED-COLLIDES", r["verdict"] == pg.REFUSED, r["refused"] or r["unjudged"])
+        (mono / ".git" / "modules" / "lib").mkdir(parents=True)
+        (sub / "lib").mkdir()
+        (sub / "lib" / ".git").write_text(f"gitdir: {(mono / '.git' / 'modules' / 'lib').as_posix()}\n", encoding="utf-8")
+        d = sub / ".planning" / "phases" / "31-submodule"
+        plan(d, "31-01", 1, files=["lib/x.py"])
+        plan(d, "31-02", 1, files=[(sub / "lib" / "x.py").as_posix()])
+        r = judge(d, sub)
+        check("V-PGRAPH-SUBMODULE-BOTH-SPELLINGS-COLLIDE", r["verdict"] == pg.REFUSED, r["refused"] or r["unjudged"])
         d = ph / "21-outside"
         plan(d, "21-01", 1, files=["C:/no-git-anywhere-xyz/a.py" if os.name == "nt" else "/no-git-anywhere-xyz/a.py"])
         plan(d, "21-02", 1, files=["b"])

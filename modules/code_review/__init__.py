@@ -66,8 +66,9 @@ def derive_verdict(findings: list[dict]) -> str:
     counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
     for f in findings:
         sev = str(f.get("severity", "")).upper()
-        if sev in counts:
-            counts[sev] += 1
+        if sev not in counts:
+            return "INCOMPLETE"  # ungradable, never silently absent (see run_full_review)
+        counts[sev] += 1
     return SeverityTableOutput.derive_verdict(counts)
 
 
@@ -110,11 +111,17 @@ def run_full_review(findings: list[dict]) -> dict:
         kept.append(f)
 
     counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    unrecognised = 0
     for f in kept:
         sev = str(f.get("severity", "")).upper()
         if sev in counts:
             counts[sev] += 1
-    verdict = SeverityTableOutput.derive_verdict(counts)
+        else:
+            unrecognised += 1
+    # A kept finding whose severity is not one of the four was counted nowhere, so a review
+    # listing a "Major" or "blocker" finding derived APPROVE (assimilation item 24, 2026-09-28).
+    # It is not a finding we can grade, and not an absence either: the review is INCOMPLETE.
+    verdict = "INCOMPLETE" if unrecognised else SeverityTableOutput.derive_verdict(counts)
 
     return {
         "kept": kept,
@@ -122,6 +129,7 @@ def run_full_review(findings: list[dict]) -> dict:
         "dropped_gate": dropped_gate,
         "demoted": demoted,
         "counts": counts,
+        "unrecognised": unrecognised,
         "verdict": verdict,
     }
 

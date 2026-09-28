@@ -74,11 +74,13 @@
   {
    "id": "genesis-review-gate",
    "source": "vendor/genesis-suite/modules/genesis-review-gate",
-   "owner": "reviewer agents (pp-code-reviewer, oneshot-architect-auditor) result intake",
+   "owner": "tools/review_intake.py (reviewer reply -> strict verdict) + modules/code_review severity accounting",
    "disposition": "CONNECT",
    "differential": "strict finding/refutation schema; malformed or failed reviewer output = INCOMPLETE, never APPROVE",
-   "status": "PLANNED",
-   "slice": "T5"
+   "status": "LIVE",
+   "slice": "T5",
+   "proof": "python tools/test_review_intake.py",
+   "evidence": "CONNECT: reviewer reply validated by the vendored validateFinderResponse via the bridge; zero findings approves ONLY as an explicit `findings: []`; prose, no block, two blocks, unknown severity, bridge down -> INCOMPLETE. REPLY_INSTRUCTION travels with the dispatch prompt (reviewer agents live in ~/.claude/agents, HR-001). REAL producer: pp-code-reviewer reply parsed as 2 medium/1 low/1 info; its three missed-overlap findings in plan_graph_check._owns were fixed. Also fixed: modules/code_review derived APPROVE for a finding with an unrecognised severity."
   },
   {
    "id": "genesis-context-graph",

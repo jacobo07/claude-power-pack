@@ -88,32 +88,38 @@ def _common_repo(root: Path | None) -> Path | None:
 
 
 def _owns(files, work_root: Path) -> tuple[list[str] | None, str]:
-    home = _common_repo(_git_root(work_root.resolve()))
+    """Ownership keys: ONE path for every entry, relative or absolute.
+
+    Plans executed in a git worktree name that worktree's absolute paths (measured: KobiiCraft
+    luckyarena-arena2 -> <home>/Apps/kme-wt-arena2/...), while their siblings name the same files
+    relative to the project. So each entry is resolved (a relative one against the work root that
+    holds .planning) and keyed under ITS OWN git work tree: worktrees of our repository share
+    relative paths and collide as they must; a symlink or junction keys like its target; a tree
+    of ANOTHER repository -- including a submodule -- keeps its own namespace. Two real reviewers
+    (2026-09-28) found every one of these as a missed or invented overlap while relative and
+    absolute entries took different paths."""
+    import hashlib
+    import os
+    base = work_root.resolve()
+    home = _common_repo(_git_root(base))
     rel = []
     for f in files or []:
         p = str(f).strip()
         if not p:
             continue
         pp = Path(p)
-        if pp.is_absolute():
-            # Plans executed in a git worktree name that worktree's absolute paths (measured:
-            # KobiiCraft luckyarena-arena2 -> <home>/Apps/kme-wt-arena2/...). Worktrees of one
-            # repo share relative paths, so the key is the path under ITS OWN git root. Resolved
-            # first so a symlink and its target cannot become two keys (a missed overlap), and a
-            # tree of ANOTHER repository keeps its own namespace so an unrelated repo's
-            # `plugin.yml` cannot collide with ours (an invented one). Both found by a real batch
-            # reviewer over this function, 2026-09-28.
-            pp = pp.resolve()
-            root = _git_root(pp)
-            try:
-                p = pp.relative_to(root or work_root.resolve()).as_posix()
-            except ValueError:
-                return None, f"path outside any git work tree: {f}"
-            repo = _common_repo(root)
-            if root is not None and repo != home:
-                import hashlib  # a namespace, not a path: never put a home directory in a key
-                p = f"[repo-{hashlib.sha1(str(repo or root).lower().encode()).hexdigest()[:10]}]/{p}"
-        rel.append(p.replace("\\", "/"))
+        pp = (pp if pp.is_absolute() else base / pp).resolve()
+        root = _git_root(pp)
+        try:
+            p = pp.relative_to(root or base).as_posix()
+        except ValueError:
+            return None, f"path outside any git work tree: {f}"
+        if root is not None and _common_repo(root) != home:
+            # A namespace, not a path: a key never carries a home directory. normcase folds case
+            # only where the filesystem does, so case-distinct repos stay distinct on Linux.
+            ident = os.path.normcase(str(_common_repo(root) or root))
+            p = f"[repo-{hashlib.sha1(ident.encode()).hexdigest()[:10]}]/{p}"
+        rel.append(p)
     return rel, ""
 
 
