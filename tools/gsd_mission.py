@@ -455,7 +455,10 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         seen = max(float(owner.get("heartbeat_at") or 0), float(rec.get("updated_at") or 0))
         if seen and now - seen > HEARTBEAT_STALE_S:
             # Not a death (UNKNOWN never replaces), but never silence either: make it visible.
-            return {"action": "surface_blocked",
+            # Nor a block: "could not ask" is not "needs a human". Measured 2026-09-28
+            # (m-bcaf08f8d856): parked BLOCKED on "host session list unavailable" while the host,
+            # asked moments later, listed the owner busy/working. Ledgered; state unchanged.
+            return {"action": "surface_unknown",
                     "reason": f"owner UNKNOWN for {int(now - seen)} s: {why}"}
     if state == HANDOFF:
         if verdict == DEAD:
@@ -1255,6 +1258,12 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                event="mission_blocked", now=now, state=BLOCKED,
                                reason=reason)
+            elif act == "surface_unknown":
+                # Once per epoch: every 5-minute pass would otherwise add the same row.
+                if not any(e.get("event") == "owner_unknown" and e.get("epoch") == rec["epoch"]
+                           for e in lr.ledger_events(mid)):
+                    lr.ledger_append(mid, "owner_unknown", mission_id=mid, epoch=rec["epoch"],
+                                     state=rec["state"], reason=plan["reason"])
             elif act == "adopt":
                 lrow = launched_row(rec.get("pending"), sessions)
                 new = adopt_launched(rec, lrow, now=now)
