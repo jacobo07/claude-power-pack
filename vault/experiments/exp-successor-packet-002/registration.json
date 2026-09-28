@@ -1,0 +1,50 @@
+{
+ "schema": "genesis-experiment-registration-v1",
+ "spec": {
+  "cases": [
+   {
+    "contractSha256": "9545c35b886a773c762357f62515654f2b768982fbccdde8ee10c67e445ea9f9",
+    "id": "reuse-refusal",
+    "maxScore": 2,
+    "promptSha256": {
+     "baseline": "b425f9f1f75ee403a5f1c9836ee8e82dd85c9f76521d7261b3141b2a0541ff37",
+     "candidate": "9e907bd3e366636800a28938407555381915dd76710a82af8832297aac63cb7c"
+    },
+    "rubricSha256": "9725aa793040bf689225510dcc6dfd8afef1eea55adb84dea6ec49aad8df08d9",
+    "sourceSha256": "594d712e076b5185a72b233efe6b6a28760476da63f4e0fbb87de9fdc5f79896",
+    "split": "training"
+   },
+   {
+    "contractSha256": "7e50a7ddf8551ea11cd77707300051cc299ba602286963ecd659e12eb95d33da",
+    "id": "foreign-repo-key",
+    "maxScore": 2,
+    "promptSha256": {
+     "baseline": "93a91e84fa966b79c9219b6be60dee2dca26f0c398fd36926e0e08695cba4742",
+     "candidate": "edeadcdf5aeabfdcb75b596ddcdd3ecc4c25af9244a7f7d504806260b9442f0c"
+    },
+    "rubricSha256": "e03ea3d2fafedaed1cbdc7697c5ebda70abb241903f7068ac55fd4fc5f321127",
+    "sourceSha256": "2ceaf47c7e988ce3991ca8c8a8e26cff1cc768104819ae0e993b7748ac74adf0",
+    "split": "holdout"
+   }
+  ],
+  "createdAt": "2026-09-28T16:58:48.423Z",
+  "id": "exp-successor-packet-002",
+  "maxAttemptsPerRun": 1,
+  "qualityMetric": "normalized-score",
+  "schema": "genesis-paired-experiment-v1",
+  "scope": "diagnostic",
+  "targets": {
+   "qualityMultiplier": 1,
+   "tokenReduction": 0.05
+  },
+  "worker": {
+   "config": {
+    "mode": "print",
+    "tools": "read-only"
+   },
+   "requestedModel": "default",
+   "route": "claude-code-headless"
+  }
+ },
+ "sha256": "786d7a797441c235a59b82c15a625368d9f36432191fb5888c5000067e27cf05"
+}

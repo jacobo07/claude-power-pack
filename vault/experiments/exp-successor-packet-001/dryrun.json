@@ -1,0 +1,331 @@
+{
+ "cases": 32,
+ "card_cap": 8000,
+ "reference_card_max": 4081,
+ "reference_fits_all": true,
+ "inline_would_truncate": 28,
+ "inline_lost_bytes_total": 249455,
+ "packet_bytes_total": 432571,
+ "rows": [
+  {
+   "mission": "m-075bb211b830",
+   "files": 2,
+   "card_bytes": 1761,
+   "packet_bytes": 13985,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2218,
+   "headroom": 6239,
+   "inline_lost_bytes": 7746
+  },
+  {
+   "mission": "m-0fa0c447d80f",
+   "files": 2,
+   "card_bytes": 1761,
+   "packet_bytes": 13985,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2218,
+   "headroom": 6239,
+   "inline_lost_bytes": 7746
+  },
+  {
+   "mission": "m-1d270cd85220",
+   "files": 1,
+   "card_bytes": 1913,
+   "packet_bytes": 7323,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2369,
+   "headroom": 6087,
+   "inline_lost_bytes": 1236
+  },
+  {
+   "mission": "m-215a3e3ecd0a",
+   "files": 1,
+   "card_bytes": 1913,
+   "packet_bytes": 7323,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2369,
+   "headroom": 6087,
+   "inline_lost_bytes": 1236
+  },
+  {
+   "mission": "m-2be47a186897",
+   "files": 1,
+   "card_bytes": 2407,
+   "packet_bytes": 7290,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2863,
+   "headroom": 5593,
+   "inline_lost_bytes": 1697
+  },
+  {
+   "mission": "m-2dd5f3aeb143",
+   "files": 3,
+   "card_bytes": 1417,
+   "packet_bytes": 20940,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 1874,
+   "headroom": 6583,
+   "inline_lost_bytes": 14357
+  },
+  {
+   "mission": "m-30910428c0cc",
+   "files": 2,
+   "card_bytes": 1761,
+   "packet_bytes": 13985,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2218,
+   "headroom": 6239,
+   "inline_lost_bytes": 7746
+  },
+  {
+   "mission": "m-3aaa15177f2b",
+   "files": 1,
+   "card_bytes": 1962,
+   "packet_bytes": 7324,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2418,
+   "headroom": 6038,
+   "inline_lost_bytes": 1286
+  },
+  {
+   "mission": "m-47fe0c6cb54a",
+   "files": 1,
+   "card_bytes": 2253,
+   "packet_bytes": 5314,
+   "packet_verdict": "COMPLETE",
+   "reference_card_bytes": 2671,
+   "headroom": 5747,
+   "inline_lost_bytes": 0
+  },
+  {
+   "mission": "m-4a772271e443",
+   "files": 1,
+   "card_bytes": 1884,
+   "packet_bytes": 3633,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2340,
+   "headroom": 6116,
+   "inline_lost_bytes": 0
+  },
+  {
+   "mission": "m-51249bd0c7c0",
+   "files": 3,
+   "card_bytes": 1417,
+   "packet_bytes": 20940,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 1874,
+   "headroom": 6583,
+   "inline_lost_bytes": 14357
+  },
+  {
+   "mission": "m-5cfc29313ebd",
+   "files": 1,
+   "card_bytes": 2694,
+   "packet_bytes": 7323,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 3150,
+   "headroom": 5306,
+   "inline_lost_bytes": 2017
+  },
+  {
+   "mission": "m-5d5949f39e9f",
+   "files": 1,
+   "card_bytes": 2694,
+   "packet_bytes": 7323,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 3150,
+   "headroom": 5306,
+   "inline_lost_bytes": 2017
+  },
+  {
+   "mission": "m-62c08be815a8",
+   "files": 1,
+   "card_bytes": 2694,
+   "packet_bytes": 7323,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 3150,
+   "headroom": 5306,
+   "inline_lost_bytes": 2017
+  },
+  {
+   "mission": "m-66ebaaa0324e",
+   "files": 3,
+   "card_bytes": 1417,
+   "packet_bytes": 20940,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 1874,
+   "headroom": 6583,
+   "inline_lost_bytes": 14357
+  },
+  {
+   "mission": "m-700d11f14a20",
+   "files": 1,
+   "card_bytes": 1913,
+   "packet_bytes": 7323,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2369,
+   "headroom": 6087,
+   "inline_lost_bytes": 1236
+  },
+  {
+   "mission": "m-73eb20bbbfc3",
+   "files": 4,
+   "card_bytes": 1849,
+   "packet_bytes": 23755,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2306,
+   "headroom": 6151,
+   "inline_lost_bytes": 17604
+  },
+  {
+   "mission": "m-7f6d988e3c93",
+   "files": 1,
+   "card_bytes": 3225,
+   "packet_bytes": 3262,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 3681,
+   "headroom": 4775,
+   "inline_lost_bytes": 0
+  },
+  {
+   "mission": "m-8ab6628b7acd",
+   "files": 1,
+   "card_bytes": 1958,
+   "packet_bytes": 7323,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2414,
+   "headroom": 6042,
+   "inline_lost_bytes": 1281
+  },
+  {
+   "mission": "m-916e905e23d4",
+   "files": 1,
+   "card_bytes": 2000,
+   "packet_bytes": 3262,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2456,
+   "headroom": 6000,
+   "inline_lost_bytes": 0
+  },
+  {
+   "mission": "m-991a7a95c636",
+   "files": 2,
+   "card_bytes": 1761,
+   "packet_bytes": 13985,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2218,
+   "headroom": 6239,
+   "inline_lost_bytes": 7746
+  },
+  {
+   "mission": "m-bba77d357eb4",
+   "files": 6,
+   "card_bytes": 1236,
+   "packet_bytes": 27971,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 1693,
+   "headroom": 6764,
+   "inline_lost_bytes": 21207
+  },
+  {
+   "mission": "m-bcaf08f8d856",
+   "files": 3,
+   "card_bytes": 1416,
+   "packet_bytes": 20940,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 1873,
+   "headroom": 6584,
+   "inline_lost_bytes": 14356
+  },
+  {
+   "mission": "m-cb67afc7cf23",
+   "files": 2,
+   "card_bytes": 2742,
+   "packet_bytes": 13985,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 3199,
+   "headroom": 5258,
+   "inline_lost_bytes": 8727
+  },
+  {
+   "mission": "m-cc9aefcb1da0",
+   "files": 4,
+   "card_bytes": 2897,
+   "packet_bytes": 23755,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 3354,
+   "headroom": 5103,
+   "inline_lost_bytes": 18652
+  },
+  {
+   "mission": "m-cd66a96b3919",
+   "files": 4,
+   "card_bytes": 1849,
+   "packet_bytes": 23755,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2306,
+   "headroom": 6151,
+   "inline_lost_bytes": 17604
+  },
+  {
+   "mission": "m-d82c7cb6b87e",
+   "files": 7,
+   "card_bytes": 3624,
+   "packet_bytes": 28719,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 4081,
+   "headroom": 4376,
+   "inline_lost_bytes": 24343
+  },
+  {
+   "mission": "m-dc815cfccbe3",
+   "files": 1,
+   "card_bytes": 1913,
+   "packet_bytes": 7323,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2369,
+   "headroom": 6087,
+   "inline_lost_bytes": 1236
+  },
+  {
+   "mission": "m-e796bca1e319",
+   "files": 3,
+   "card_bytes": 1417,
+   "packet_bytes": 20940,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 1874,
+   "headroom": 6583,
+   "inline_lost_bytes": 14357
+  },
+  {
+   "mission": "m-ecaa3279b066",
+   "files": 4,
+   "card_bytes": 1849,
+   "packet_bytes": 23755,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 2306,
+   "headroom": 6151,
+   "inline_lost_bytes": 17604
+  },
+  {
+   "mission": "m-edc3f0192d3f",
+   "files": 1,
+   "card_bytes": 2694,
+   "packet_bytes": 7323,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 3150,
+   "headroom": 5306,
+   "inline_lost_bytes": 2017
+  },
+  {
+   "mission": "m-f6e53dd44160",
+   "files": 2,
+   "card_bytes": 1426,
+   "packet_bytes": 10244,
+   "packet_verdict": "PARTIAL",
+   "reference_card_bytes": 1883,
+   "headroom": 6574,
+   "inline_lost_bytes": 3670
+  }
+ ]
+}

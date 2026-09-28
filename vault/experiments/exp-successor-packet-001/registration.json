@@ -1,0 +1,50 @@
+{
+ "schema": "genesis-experiment-registration-v1",
+ "spec": {
+  "cases": [
+   {
+    "contractSha256": "9545c35b886a773c762357f62515654f2b768982fbccdde8ee10c67e445ea9f9",
+    "id": "reuse-refusal",
+    "maxScore": 2,
+    "promptSha256": {
+     "baseline": "b425f9f1f75ee403a5f1c9836ee8e82dd85c9f76521d7261b3141b2a0541ff37",
+     "candidate": "e273c2af80a4752192d2ad4914b7a18c3bf1cf6159def6df12b2fa634c6caf11"
+    },
+    "rubricSha256": "9725aa793040bf689225510dcc6dfd8afef1eea55adb84dea6ec49aad8df08d9",
+    "sourceSha256": "594d712e076b5185a72b233efe6b6a28760476da63f4e0fbb87de9fdc5f79896",
+    "split": "training"
+   },
+   {
+    "contractSha256": "174e918d9f8f2cc123230f1c00cbbd2b8e99ec64e41d440a95311f5958a9a93f",
+    "id": "handoff-and-cap",
+    "maxScore": 2,
+    "promptSha256": {
+     "baseline": "1813cf5172a299a07a7f07413e46e8d59a7e877cba5323086c02a4f9d5e68600",
+     "candidate": "3f8f3ec163e3a662a14189b9d992660cc9c29b64df73bbec43defb6d4e4d7231"
+    },
+    "rubricSha256": "2ae3cfeaf9fb749ef67de90c7b3cba4338af3af5039319e0c53daa3a74f18c0a",
+    "sourceSha256": "562b189ed2d0f81888ad400173cd1f3320fadef32089e6791ee98e1204455855",
+    "split": "holdout"
+   }
+  ],
+  "createdAt": "2026-09-28T16:52:42.462Z",
+  "id": "exp-successor-packet-001",
+  "maxAttemptsPerRun": 1,
+  "qualityMetric": "normalized-score",
+  "schema": "genesis-paired-experiment-v1",
+  "scope": "diagnostic",
+  "targets": {
+   "qualityMultiplier": 1,
+   "tokenReduction": 0.05
+  },
+  "worker": {
+   "config": {
+    "mode": "print",
+    "tools": "read-only"
+   },
+   "requestedModel": "default",
+   "route": "claude-code-headless"
+  }
+ },
+ "sha256": "da1288b45b49283e97ae49e3bcae952031dc2a57383e7145b99a7a1da7da068d"
+}
