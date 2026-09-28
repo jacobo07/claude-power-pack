@@ -10,6 +10,14 @@ findings:
   warning: 5
   total: 5
 status: issues_found
+fix_status: all_fixed
+fixed_at: 2026-09-28T00:00:00Z
+fixes:
+  WR-01: {outcome: fixed, commit: ad22dcd}
+  WR-02: {outcome: fixed, commit: add48ee}
+  WR-03: {outcome: fixed, commit: 71beaf0}
+  WR-04: {outcome: fixed, commit: 35479c8}
+  WR-05: {outcome: fixed, commit: 350fb84}
 ---
 
 # Phase 02: Code Review Report
@@ -168,6 +176,52 @@ consumer instead of re-invoking `T.scan`/`T.iter_calls` per section). At minimum
 explicitly in the module docstring (currently only implied by the Task 2 EVIDENCE.md prose, not
 stated in the code) so a future maintainer building on `measure()` doesn't assume its six read
 passes are atomic.
+
+## Fix Outcomes
+
+All 5 warnings fixed in `by_entrypoint.py`, one commit per finding, edits confined to this
+file (`tools/` and `modules/` untouched, per Defect procedure scope). Verified after each
+commit: `python3 by_entrypoint.py --selftest` (9/9 -> 11/11 as S0/S10 were added) and a live
+`python3 by_entrypoint.py` run, `reconcile.overall: MATCH` throughout.
+
+### WR-01: fixed (`ad22dcd`)
+
+Could not touch `tools/budget_monitor.py`'s `_aggregate_observed` cutoff (peer-owned, out of
+scope). Added `reconcile.r5_r6_probe_elapsed_s`, the measured wall-clock gap between computing
+`cutoff_ts` and calling `_aggregate_observed`, so a future R5/R6 MISMATCH can be attributed to
+clock drift rather than triaged as a possible tool defect. Hardened the `overall` loop to skip
+non-str informational reconcile entries.
+
+### WR-02: fixed (`add48ee`)
+
+Added `reconcile["R7"]`: sums trailing-7d calls across every `by_entrypoint` group (including
+`"unknown"`) and compares against the independently-computed `win_calls` population; also
+flags a non-zero `"unknown"` population outright. Added selftest **S10**: a fixture with an
+entrypoint-less subagent transcript under `proj1/sessA` (verified, before R7 existed, that
+`rec10["R7"]` would `KeyError` / the invariant did not exist and `overall` would have stayed
+`MATCH`) -- with R7 in place, S10 confirms `overall` correctly goes `MISMATCH`.
+
+### WR-03: fixed (`71beaf0`)
+
+Removed the unreachable `if usd is None:` arm in `_by_entrypoint_trailing_7d` (confirmed via
+`tools/tis_observed.py:cost_usd` that it cannot return `None` when the enclosing
+`pricing_ok and prices` guard holds). Replaced with a defensive `assert usd is not None` so a
+real future contract change surfaces loudly instead of silently mis-summing.
+
+### WR-04: fixed (`35479c8`)
+
+Moved the repo-root existence check, `sys.path` mutation, and tool imports into an idempotent
+`_ensure_tools_importable()`, called only from `main()` and `selftest()` -- no longer a module-
+import-time side effect. Added selftest **S0**: a subprocess re-import of the module (`import
+by_entrypoint`) must produce no stdout/stderr and exit 0. CLI behaviour unchanged (same check,
+same `sys.exit(2)`, now run at the top of `main()`/`selftest()` instead of at import).
+
+### WR-05: fixed (`350fb84`)
+
+Document-only, per scope (no corpus-level snapshot mechanism was introduced). Added an explicit
+paragraph to `measure()`'s docstring naming the six-plus independent, unlocked re-reads of the
+live corpus and stating that a `reconcile` MATCH means the passes agreed this run, not that they
+share a snapshot.
 
 ---
 
