@@ -127,9 +127,10 @@
    "owner": "tools/evidence_bundle.py (V-gate check receipts + review ticket/receipt -> vendored collector)",
    "disposition": "WRAP",
    "differential": "scattered receipts normalised; missing evidence stays MISSING",
-   "status": "PLANNED",
+   "status": "LIVE",
    "slice": "T5",
-   "evidence": "WRAP as a PRODUCER: CPP had none for the collector's receipts. Real review of it found a HIGH false green (the review receipt bound disk-now bytes, not the bytes the reviewer read) -> review tickets issued at dispatch; checks hash before+after the run. Stays PLANNED until a real ticketed review of the fixed tool completes a bundle."
+   "evidence": "WRAP as a PRODUCER: CPP had none for the collector's receipts. Real review of it found a HIGH false green (the review receipt bound disk-now bytes, not the bytes the reviewer read) -> review tickets issued at dispatch; checks hash before+after the run.  REAL end to end: two real V-gate suites + a nonce-ticketed pp-code-reviewer review (3rd review; 1st and 2nd each found a real false green, both fixed) -> the vendored collector returned OK. Known limit, recorded: the ticket binds bytes at issue time, so an A->B->A concurrent edit passes as a review of A.",
+   "proof": "python tools/test_evidence_bundle.py"
   },
   {
    "id": "genesis-regression-memory",
@@ -154,11 +155,13 @@
   {
    "id": "genesis-change-impact",
    "source": "vendor/genesis-suite/modules/genesis-change-impact",
-   "owner": "tools/audit_cache.py depends_on graph",
+   "owner": "tools/change_impact.py (graph from the code's own imports + script-path literals)",
    "disposition": "EXTEND",
    "differential": "reverse-edge consumers classified; unmapped impact explicit",
-   "status": "PLANNED",
-   "slice": "T7"
+   "status": "LIVE",
+   "slice": "T7",
+   "proof": "python tools/test_change_impact.py",
+   "evidence": "WRAP via bridge over a graph built from AST imports + tools/modules path literals. NOT audit_cache, as planned: its depends_on is stem-resolved (tools/*.py 'depends on' a worktree tools.md) and only 8 of 25 test suites list their obvious subject; the analyzer reads a missing edge as no dependency, so it would have said 'no suite affected' -- a false green. Non-Python changes are explicit unmatched-change gaps. audit_cache resolver defect recorded for its owner."
   },
   {
    "id": "genesis-release-integrity",

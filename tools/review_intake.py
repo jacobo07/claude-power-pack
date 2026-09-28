@@ -46,6 +46,10 @@ REPLY_INSTRUCTION = (
 # Any json-family label, any case (a real reviewer may write ```JSON or ```jsonc): a label this
 # regex did not know sent a good review to INCOMPLETE (real review of this file, 2026-09-28).
 _FENCE = re.compile(r"```[ \t]*(?:json\w*)?[ \t]*\r?\n?\s*(\{.*?\})\s*```", re.S | re.I)
+# A reviewer may quote a dict from the code in a BARE fence beside the one ```json block it was
+# asked for; counting both as candidates refused a compliant review (third real review). When a
+# json-labelled fence exists, only labelled fences count.
+_LABELLED = re.compile(r"```[ \t]*json\w*[ \t]*\r?\n?\s*(\{.*?\})\s*```", re.S | re.I)
 
 
 class _Duplicate(ValueError):
@@ -71,7 +75,7 @@ class Intake:
 
 def _one_json(text: str):
     """Exactly one JSON object: a fenced block, or the whole reply. Two candidates is ambiguous."""
-    fenced = _FENCE.findall(text)
+    fenced = _LABELLED.findall(text) or _FENCE.findall(text)
     if len(fenced) > 1:
         return None, f"{len(fenced)} JSON blocks in the reply; exactly one is required"
     candidate = fenced[0] if fenced else text.strip()

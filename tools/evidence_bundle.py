@@ -135,7 +135,12 @@ def collect(root: Path, plan: str, task: str, worker: str, criteria: list[str], 
             check_paths: list[str], review_path: str | None = None, required_reviewer: dict | None = None) -> dict:
     # The vendored collector refuses any proof path matching /secret|credential/ (or .env, .git).
     # Say so by name instead of surfacing its bare throw as an unexplained UNJUDGED (second review).
-    protected = [a for a in artifacts if re.search(r"(^|/)(\.env(\.|$)|\.git$)|secret|credential", a, re.I)]
+    # Receipt paths are built from the plan/task/criterion slugs, so a plan named for the secret
+    # firewall trips it too (third review): every path the collector will read is screened.
+    # Known limit, recorded not hidden: the ticket binds bytes at ISSUE time. An edit A->B->A by a
+    # concurrent writer between the ticket and the reviewer's read passes as a review of A.
+    every = [*artifacts, *check_paths, *([review_path] if review_path else [])]
+    protected = [a for a in every if re.search(r"(^|/)(\.env(\.|$)|\.git$)|secret|credential", a, re.I)]
     if protected:
         return {"ok": False, "unjudged": True,
                 "failures": [f"the collector refuses protected proof paths by design: {', '.join(protected)}; "

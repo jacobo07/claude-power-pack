@@ -120,6 +120,12 @@ def main() -> int:
         prot = eb.collect(tmp, "plan-1", "t-prot", "w", ["gate-green"], ["secret_rotation.py"], [])
         check("V-EVB-PROTECTED-PATH-NAMED", prot.get("unjudged") is True
               and "protected proof paths" in (prot.get("failures") or [""])[0], prot.get("failures"))
+        # Third real review: receipt paths carry the plan/task/criterion slugs, so a plan named for
+        # the secret firewall was a bare UNJUDGED from the collector's throw.
+        chk = eb.run_check(tmp, "secret-firewall-v2", "t", "gate-green", good, ["art.py"])
+        prot2 = eb.collect(tmp, "secret-firewall-v2", "t", "w", ["gate-green"], ["art.py"], [chk])
+        check("V-EVB-PROTECTED-RECEIPT-PATH-NAMED", prot2.get("unjudged") is True
+              and "secret-firewall-v2" in (prot2.get("failures") or [""])[0], prot2.get("failures"))
 
         print("a gate binds the bytes it ran against")
         (tmp / "g_mutates.py").write_text("import pathlib\npathlib.Path('art.py').write_text('x = 9\\n')\n"

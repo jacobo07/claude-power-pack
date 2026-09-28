@@ -53,6 +53,11 @@ def main() -> int:
     check("V-RINTAKE-FENCE-LABEL-ANY-CASE", run(upper).verdict == ri.WARNING, run(upper).reason)
     spaced = "Done.\n``` json\n" + json.dumps({"findings": [f("a", "low")]}) + "\n```"
     check("V-RINTAKE-FENCE-SPACED-LABEL", run(spaced).verdict == ri.APPROVE, run(spaced).reason)
+    quoting = ("The config reads:\n```\n{\"retries\": 3}\n```\nVerdict:\n```json\n"
+               + json.dumps({"findings": [f("a", "high")]}) + "\n```")
+    check("V-RINTAKE-BARE-QUOTE-BESIDE-LABELLED", run(quoting).verdict == ri.WARNING, run(quoting).reason)
+    two_bare = "```\n{\"findings\": []}\n```\n```\n{\"findings\": []}\n```"
+    check("V-RINTAKE-TWO-BARE-STILL-AMBIGUOUS", run(two_bare).verdict == ri.INCOMPLETE, run(two_bare).reason)
 
     print("never an approval")
     for gate, reply, needle in [
