@@ -149,7 +149,10 @@ def main(argv: list[str]) -> int:
         used: set[tuple[str, str]] = set()
         for s in present:
             rc, writes, secs = run_suite(s, work)
-            rels = sorted({_rel(p) for _, p in writes})
+            # Bytecode caches are not operational state. They appear only when the suite runs from
+            # the live checkout, which itself lives under ~/.claude -- the instrument's aperture,
+            # not a leak. Excluded by directory name alone, nothing broader.
+            rels = sorted({r for r in (_rel(p) for _, p in writes) if "/__pycache__/" not in f"/{r}"})
             if measure:
                 print(f"--- {s} rc={rc} {secs:.0f}s writes={len(rels)}")
                 for r in rels:
