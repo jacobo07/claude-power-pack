@@ -156,3 +156,49 @@ package installed anywhere (including job scratch) -- the checkpoint was rejecte
 next: Re-run plan 01-02 from Task 1 once the Owner has reviewed and answered (approved or re-rejected) the pinned
 pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0 install described in 01-02-PLAN.md Task 1. CRO-01 stays open -- gates
 alone (section 1) are not sufficient; the full pytest suite still needs a verdict.
+
+## 5. Re-run after the Owner's approval (2026-09-28, supersedes sections 2-4; they stay as the record of the first pass)
+
+Executed from the laptop pane by a shell driver (no model calls) following 01-02-PLAN.md Task 2 steps 0-12.
+Driver + raw artifacts: GEX44 `/home/kobii/.claude/jobs/a293bedf/tmp/cro-p01/` (first run) and `.../cro-p01/rerun2/`.
+
+### 5a. Install (GEX44)
+legitimacy_checkpoint: approved (Owner, laptop pane, 2026-09-28 ~22:10 Madrid)
+api_key_recheck: UNSET
+pypi_pins: pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0 -- py3-none-any sha256 equal to this plan's digests (pin_ok x3)
+pip_install_rc: 0
+pytest_version: pytest 9.1.1
+venv_base_prefix: /usr
+The interpreter is the host's python3 3.12.3 (packaging 24.0, pygments 2.17.2) plus three pytest-dev wheels.
+
+### 5b. First run: collection aborted (GEX44, 20:14Z)
+suite_rc: 3 -- `INTERNALERROR ... ModuleNotFoundError: No module named 'esprima'` then `SystemExit: 3`, "no tests ran in 0.02s".
+Cause: tools/cascade_populate_js.py calls sys.exit(3) at import when esprima is absent; tests/test_cascade_populator.py
+imports it at module level, so the whole collection died. test_tco: `FAIL V-BASELINE-INTACT rc=3`, TCO_PASS=13/14.
+suite_verdict (this run): INCONCLUSIVE, suite_verdict_cause: pytest-rc=3 (a harness defect, not the baseline).
+Fix: laptop commit `71de984` (module raises unittest.SkipTest without esprima; both poles driven on the laptop),
+applied in the GEX44 worktree with `git am` as `016c19f` before the re-run.
+
+### 5c. Re-run (GEX44, 20:20:47Z, worktree HEAD 016c19f)
+suite_command: timeout 1800 /home/kobii/.claude/jobs/a293bedf/tmp/cro-p01/pytest-venv/bin/python -m pytest tests/ -q --tb=line
+suite_cwd: /home/kobii/missions/cognitive-resource-os/.claude/worktrees/cro-gex44
+load_before: loadavg 0.62 0.48 0.32; Mem total 64081 MB, available 52005 MB
+suite_rc: 0
+suite_wall_s: 3.4
+suite_summary: 194 passed, 4 skipped in 3.19s
+suite_failing_ids: none
+suite_moved_lines: 0
+suite_verdict: PASS
+
+### 5d. tools/test_tco.py V-BASELINE-INTACT corroboration (GEX44)
+tco_rc: 0
+tco_v_baseline_intact: PASS  V-BASELINE-INTACT              rc=0 last='194 passed, 4 skipped in 2.79s'
+tco_pass_line: TCO_PASS=14/14  threshold=14/14
+tco_moved_lines: 0
+
+### 5e. Phase verdict (CRO-01), superseding section 4
+inputs: gates_verdict=PASS (section 1), suite_verdict=PASS (5c)
+phase_verdict: PASS
+v_baseline_intact_gex44: PASS (194 passed, 4 skipped; one of the 4 skips is test_cascade_populator, esprima absent there)
+v_baseline_intact_laptop: still INCONCLUSIVE from RESUMPTION section 2 (not re-measured in this pass)
+Scope note: this verdict is about the worktree at 016c19f (mission base + the esprima fix), not the laptop's HEAD.
