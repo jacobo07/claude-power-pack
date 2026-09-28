@@ -41,8 +41,13 @@ other-repo). Untouched: continuation_transport 28/28, wiring 14/14, cold start 1
 ## Open
 1. **§8 Production Reality is still OWED**: no real fresh-session `/kclear -> /clear -> /kresume`
    crossing has been observed end to end. Everything above is unit- and hub-proven, not
-   crossing-proven. An idle worktree (e.g. `TUA-X-cross-angle`, which carries no SGE work) is the
-   safe place to drive it without risking live work.
+   crossing-proven.
+   **An idle worktree will NOT do** — measured 2026-09-28 against two real ones
+   (`TUA-X-cross-angle`, `_wt-sge-competitive`): both seal a capsule and both are REFUSED (exit 3)
+   for `goal` / `obligations` / `handoff`, because a session that has done no work there has
+   nothing to preserve. That is the gate behaving correctly, and it means the crossing drill needs
+   a session carrying REAL work: a named goal file, at least one open obligation, and its own
+   fresh `/kclear` handoff. Pick a live-but-cheap task, not an empty checkout.
 2. Shadow calibration continues as monitoring: `python tools/rollover.py status`.
 3. GEX44 has the `tmux-exact` route wired but it has **not** been exercised on GEX44 itself;
    `tmux_transport` is GEX44-PROVEN 28/28 as a transport, which is not the same claim.
