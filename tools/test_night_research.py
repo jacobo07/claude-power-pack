@@ -62,6 +62,29 @@ def main() -> int:
         r = subprocess.run([node, str(nrr.CORE)], input=json.dumps(req), capture_output=True, text=True, env=env)
         return json.loads(r.stdout)
 
+    # The REAL worker, against a stub claude that answers after 1.8 s. deadlineMs is passed exactly
+    # as the vendor passes it -- a duration (index.cjs:134). The first VPS pass (2026-09-28 19:01Z)
+    # died rc=143 after 1.46 s because the worker read it as an epoch time and fired its 1 s floor;
+    # the fixture worker never reads deadlineMs, so nothing here could see it.
+    stub = TMP / "stub_claude.cjs"
+    stub.write_text("let s='';process.stdin.on('data',c=>s+=c);process.stdin.on('end',()=>setTimeout(()=>{"
+                    "process.stdout.write(JSON.stringify({is_error:false,modelUsage:{stub:{}},"
+                    "result:JSON.stringify({summary:'late answer',sources:[]})}));},1800));", encoding="utf-8")
+    drive = ("const {claudeWorker}=require(process.argv[1]);const c=new AbortController();"
+             "if(process.argv[3]==='abort')setTimeout(()=>c.abort(),300);"
+             "claudeWorker({claude:process.execPath,claudePrefix:[process.argv[2]]})"
+             "({question:'q',maxSources:1,signal:c.signal,deadlineMs:20000})"
+             ".then(r=>process.stdout.write(JSON.stringify(r)));")
+    for mode in ("wait", "abort"):
+        p = subprocess.run([node, "-e", drive, str(nrr.CORE), str(stub), mode], capture_output=True, text=True, timeout=60)
+        r = json.loads(p.stdout or "{}")
+        if mode == "wait":
+            check("V-NIGHT-REAL-WORKER-DEADLINE-IS-DURATION", r.get("ok") is True and "late answer" in (r.get("text") or ""),
+                  f"a 1.8 s worker under a 20 s budget completes: {str(r)[:120]}")
+        else:
+            check("V-NIGHT-REAL-WORKER-ABORT-KILLS", r.get("ok") is False,
+                  f"control -- the abort signal still ends the worker: {str(r)[:120]}")
+
     base = {"mode": "run", "stateDir": str(TMP), "timezone": nrr.TIMEZONE, "maxPassesPerNight": nrr.PASSES_PER_NIGHT,
             "timeoutMs": 20000, "theme": nrr.theme()}
     r = core({**base, "fixture": True, "now": madrid(23)}, env_fixture=False)

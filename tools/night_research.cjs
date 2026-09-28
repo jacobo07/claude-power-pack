@@ -22,17 +22,23 @@ const SHAPE = 'Reply with ONE JSON object and nothing else: {"summary": "...", "
   '"sources": [{"url": "https://...", "claim": "what this page supports"}]}. At most MAXSRC sources; every source must be a ' +
   'page you actually opened. You are researching only: do not modify any file.';
 
+// `claudePrefix` (argv inserted before the claude flags) exists only so a test can drive this real
+// worker against a stub; main() strips it from every request.
 function claudeWorker(req) {
   return ({ question, maxSources, signal, deadlineMs }) => new Promise((resolve) => {
     const prompt = `${question}\n\n${SHAPE.replace('MAXSRC', String(maxSources))}`;
     const args = ['-p', '--output-format', 'json', '--no-session-persistence', '--permission-mode', 'default',
       '--allowedTools', 'WebSearch', 'WebFetch', '--disallowedTools', 'Edit', 'Write', 'NotebookEdit', 'Bash'];
-    const child = spawn(req.claude || 'claude', args, { stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(req.claude || 'claude', [...(req.claudePrefix || []), ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
     let out = '';
     let err = '';
     const kill = () => { try { child.kill('SIGTERM'); } catch (_e) { /* already gone */ } };
     signal.addEventListener('abort', kill, { once: true });
-    const timer = setTimeout(kill, Math.max(1000, deadlineMs - Date.now()));
+    // deadlineMs is a DURATION (vendor: Math.min(timeoutMs, window.remainingMs)), not an epoch time.
+    // Read as a timestamp it made this timer fire at its 1 s floor on every real pass (VPS
+    // 2026-09-28 19:01Z: rc=143 after 1.46 s). The vendor's own timer aborts at deadlineMs and
+    // reports worker-timeout; this one is a backstop and fires after it.
+    const timer = setTimeout(kill, Math.max(1000, deadlineMs + 5000));
     child.stdout.on('data', (c) => { out += c; });
     child.stderr.on('data', (c) => { err += c; });
     child.on('error', (e) => { clearTimeout(timer); resolve({ ok: false, error: `spawn: ${e.message}` }); });
@@ -73,7 +79,7 @@ async function main() {
     const s = nr.status({ ...base, isPaused: require('fs').existsSync(path.join(req.stateDir, 'paused.flag')) });
     return out({ outcome: 'OK', status: s });
   }
-  const worker = req.fixture ? fixtureWorker() : claudeWorker(req);
+  const worker = req.fixture ? fixtureWorker() : claudeWorker({ ...req, claudePrefix: undefined });
   try {
     const r = await nr.runPass({ ...base, worker });
     return out({ outcome: 'OK', result: r });
@@ -84,4 +90,5 @@ async function main() {
 
 function out(v) { process.stdout.write(JSON.stringify(v)); }
 
-main();
+if (require.main === module) main();
+module.exports = { claudeWorker };

@@ -112,7 +112,7 @@
    "status": "IMPLEMENTED",
    "slice": "T10",
    "proof": "python tools/test_night_research.py",
-   "evidence": "VPS-only by construction (runner refuses elsewhere, rc 3). Deployed 2026-09-28 to the Sovereign VPS under a systemd user timer (tools/systemd/cpp-night-research.*). Stays IMPLEMENTED until a real nightly pass is read from the VPS reports directory."
+   "evidence": "VPS-only by construction (runner refuses elsewhere, rc 3). Deployed 2026-09-28 to the Sovereign VPS under a systemd user timer (tools/systemd/cpp-night-research.*). First REAL pass 2026-09-28 19:01Z fired from the timer and returned worker-error rc=143 after 1.46 s: the worker read the vendor's deadlineMs (a duration) as an epoch time and killed claude at its 1 s floor. Fixed and pinned by V-NIGHT-REAL-WORKER-DEADLINE-IS-DURATION (mutant reproduces the VPS signature). Stays IMPLEMENTED until a real pass returns a candidate."
   },
   {
    "id": "genesis-prompt-kit",
