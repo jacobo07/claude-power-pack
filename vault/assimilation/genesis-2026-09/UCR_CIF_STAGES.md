@@ -9,17 +9,18 @@ is the record a promoter reads, not a promotion. CLAUDE.md gained zero lines.
 
 | capability | stage | evidence |
 |---|---|---|
-| test live-state isolation ratchet | REGRESSION PROOF | red measured before fix (4f27cff); 29 suites green; controls |
+| test live-state isolation ratchet | REGRESSION PROOF | red measured before fix (4f27cff). At f6fe86b it named 29 hand-picked suites and MISSED six real leaks (red team R1, incl. a real rollover capsule written to the live store); 58629ff + 5037f36 name 38. Its audit instrument sees Python children only |
 | routing metrics (item 29) | PRODUCTION REALITY | real ledger 448 attempts; `gsd_epoch certify` on S10 and a live mission |
-| verified reuse (item 30) | LOCAL SUCCESS | 13/13 both poles; approval boundary driven; no real duplicate batch yet |
-| paired experiments (item 31) | PRODUCTION REALITY | exp-002: registration committed first, 4 real successors, blinded grades |
-| source packet by reference (item 12) | LOCAL SUCCESS | handoff path 14/14; no live mission has used `--packet` yet |
+| verified reuse (item 30) | LOCAL SUCCESS | 15/15 both poles; approval boundary driven; no real duplicate batch yet; no production caller |
+| paired experiments (item 31) | PRODUCTION REALITY (one experiment) | exp-002: registration committed first, 4 real successors, blinded grades; run by hand, no production caller |
+| source packet by reference (item 12) | LOCAL SUCCESS | handoff path 15/15; no live mission has used `--packet` yet |
 | task ledger seam (item 22) | LOCAL SUCCESS (owner unwired) | 10/10 + AST ratchet; Goal Spine has no live invoker |
 | task adaptation (item 32) | LOCAL SUCCESS (owner unwired) | 7/7; contract.revise has no production caller |
 | charter lab (item 33) | OBSERVED | seam note only |
 | night research (item 34) | CROSS-CONTEXT | local 11/11 + VPS deploy, status on the real host; real pass pending the window |
-| reviewer reply contract | LOCAL SUCCESS | installer 11/11 on a synthetic agent; real agent ABSENT (Owner step, HR-001) |
-| T4–T7 (items 18–28) | PRODUCTION REALITY | live since 6fdd61a; real reviews found real false greens |
+| reviewer reply contract | LOCAL SUCCESS | installer 13/13 on a synthetic agent; real agent ABSENT (Owner step, HR-001) |
+| plan graph (item 18), worker router merged into provider_breaker (item 19) | PRODUCTION REALITY | production edges `gsd_mission.py` -> `plan_graph_check` and -> `provider_breaker`; manifest LIVE with a gate-checked caller |
+| items 20, 21, 23–28 (review gate, prompt kit, evidence collector, regression memory, change impact, release integrity, constraint compiler, batch drafts) | REPEATED SUCCESS | real manual reviews found real false greens, all fixed; NO production caller (red team R2) -- manifest IMPLEMENTED. Item 26's spec check "one real UKDL rule compiles" is not done; item 28 is not wired into the assimilation gate |
 
 ## UKDL candidates (not promoted)
 

@@ -68,16 +68,32 @@ def check(manifest: dict, modules: set[str], run_proofs: bool) -> list[str]:
         if c.get("status") == "PLANNED" and not c.get("slice"):
             errs.append(f"{cid}: PLANNED without a slice")
         if c.get("status") == "LIVE":
+            # A proof that exits 0 says the code works WHEN INVOKED; LIVE also claims something
+            # invokes it. Red team R2 found eight LIVE entries reachable only by a human typing
+            # the CLI, so the claim is now a checked edge: a non-test file that names the owner.
+            caller = c.get("caller") or {}
+            cpath, ref = caller.get("path") or "", caller.get("references") or ""
+            if not cpath or not ref:
+                errs.append(f"{cid}: LIVE without a production caller")
+            elif Path(cpath).name.startswith("test_"):
+                errs.append(f"{cid}: LIVE caller {cpath} is a test, not a production caller")
+            elif ref not in (c.get("owner") or ""):
+                errs.append(f"{cid}: LIVE caller references {ref!r}, which the owner does not name")
+            elif not (ROOT / cpath).is_file():
+                errs.append(f"{cid}: LIVE caller {cpath} does not exist")
+            elif ref not in (ROOT / cpath).read_text(encoding="utf-8", errors="replace"):
+                errs.append(f"{cid}: LIVE caller {cpath} never references {ref!r}")
+        if c.get("status") in ("LIVE", "IMPLEMENTED"):
             proof = c.get("proof")
             if not proof:
-                errs.append(f"{cid}: LIVE without a proof command")
+                errs.append(f"{cid}: {c.get('status')} without a proof command")
             elif run_proofs:
                 argv = shlex.split(proof)
                 if argv[0] == "python":
                     argv[0] = PYTHON
                 rc = subprocess.run(argv, cwd=ROOT, capture_output=True).returncode
                 if rc != 0:
-                    errs.append(f"{cid}: LIVE proof exited {rc}: {proof}")
+                    errs.append(f"{cid}: {c.get('status')} proof exited {rc}: {proof}")
     ops = {o.get("op") for o in manifest.get("runner_operations") or []}
     if ops != RUNNER_OPS:
         errs.append(f"runner operations mismatch: missing {sorted(RUNNER_OPS - ops)} extra {sorted(ops - RUNNER_OPS)}")
@@ -123,6 +139,27 @@ def main() -> int:
          "disposition": "WRAP", "status": "PLANNED", "slice": "T1"}), "stale entry")
     drill("V-ASSIM-RED-FLOOR", lambda m, s: s.clear(), "floor")
     drill("V-ASSIM-RED-DUP", lambda m, s: m["capabilities"].append(dict(m["capabilities"][0])), "duplicate")
+    drill("V-ASSIM-RED-IMPLEMENTED-NO-PROOF", lambda m, s: m["capabilities"][2].update(
+        status="IMPLEMENTED", proof=None), "without a proof")
+
+    # Caller clauses, on a synthetic entry so the drills survive every real entry being fixed.
+    def synthetic(caller):
+        return lambda m, s: m["capabilities"].append(
+            {"id": "genesis-caller-probe", "source": "brief", "owner": "tools/provider_breaker.py",
+             "disposition": "WRAP", "status": "LIVE", "proof": "python -c 0", "caller": caller})
+
+    drill("V-ASSIM-RED-LIVE-NO-CALLER", synthetic(None), "without a production caller")
+    drill("V-ASSIM-RED-LIVE-TEST-CALLER", synthetic(
+        {"path": "tools/test_provider_breaker.py", "references": "provider_breaker"}), "is a test")
+    drill("V-ASSIM-RED-LIVE-CALLER-SILENT", synthetic(
+        {"path": "tools/gsd_epoch.py", "references": "provider_breaker"}), "never references")
+    drill("V-ASSIM-RED-LIVE-CALLER-OFF-OWNER", synthetic(
+        {"path": "tools/gsd_mission.py", "references": "gsd_long_run"}), "owner does not name")
+    m = copy.deepcopy(manifest)
+    synthetic({"path": "tools/gsd_mission.py", "references": "provider_breaker"})(m, set())
+    probe = [x for x in check(m, set(modules), run_proofs=False) if x.startswith("genesis-caller-probe:")]
+    gate("V-ASSIM-GREEN-LIVE-CALLER", probe == ["genesis-caller-probe: stale entry, not a supplied capability"],
+         f"a real edge raises only the synthetic id's staleness: {probe}")
 
     print(f"ASSIM_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1

@@ -7,7 +7,8 @@
   "vendor/_provenance/unlicensed-inputs.json"
  ],
  "statuses": {
-  "LIVE": "implemented, reachable, proof command exits 0",
+  "LIVE": "implemented; proof exits 0; `caller` names a non-test file that references the owner (one textual hop: the gate does not prove that file is itself registered or scheduled)",
+  "IMPLEMENTED": "implemented; proof exits 0; NO production caller -- reached only by a human at the CLI or by tests",
   "PLANNED": "not implemented yet; slice names the tranche",
   "ABSENT": "described historically; nothing implements it"
  },
@@ -39,7 +40,11 @@
    "status": "LIVE",
    "slice": "T4",
    "proof": "python tools/test_plan_graph_check.py",
-   "evidence": "CONNECT: GSD phase-plan frontmatter judged by vendored validateGraph + per-wave PlanGraph.ready via the bridge; wave order native. Real sweep: 21/21 KobiiCraft workstream phases judged OK incl. 6 multi-plan waves, after two real shapes forced fixes (worktree absolute paths; lone plans with no wave)."
+   "evidence": "CONNECT: GSD phase-plan frontmatter judged by vendored validateGraph + per-wave PlanGraph.ready via the bridge; wave order native. Real sweep: 21/21 KobiiCraft workstream phases judged OK incl. 6 multi-plan waves, after two real shapes forced fixes (worktree absolute paths; lone plans with no wave).",
+   "caller": {
+    "path": "tools/gsd_mission.py",
+    "references": "plan_graph_check"
+   }
   },
   {
    "id": "genesis-task-ledger",
@@ -47,7 +52,7 @@
    "owner": "modules/gsd_x/goal/convergence.py (canonical Goal Spine closure evidence) via goal/sweep.py",
    "disposition": "MERGE",
    "differential": "artifact sha256 binding + reviewer identity distinct from worker",
-   "status": "PLANNED",
+   "status": "IMPLEMENTED",
    "slice": "seam:goal-spine (merged; liveness waits on UWCP S6)",
    "evidence": "MERGED into the canonical owner, no parallel ledger: artifact binding was already there (evaluate pins tree, revision, gate files); each SATISFIED row now records the epoch/provider/handle that produced its verdict (sweep._apply_verdicts); reviewer != worker holds by construction and is pinned by an AST ratchet -- the only production caller of convergence.satisfy is the sweep, which takes verdicts solely from gate receipts (test_task_ledger_seam 10/10, red drill on both alias forms). NOT LIVE: the Goal Spine engine itself has no live invoker on this host (no command, hook or scheduled task reaches tools/gsd_x_goal.py; positive control found gsd_mission's three) -- its wiring is UWCP S6 in the liveness registry. Status moves to LIVE when that engine does.",
    "proof": "python tools/test_task_ledger_seam.py"
@@ -58,7 +63,7 @@
    "owner": "modules/gsd_x/goal/contract.py revise (Goal Spine)",
    "disposition": "CONNECT",
    "differential": "plan-bound revisions that cannot weaken original criteria; accept/reject with actor+reason; recheck",
-   "status": "PLANNED",
+   "status": "IMPLEMENTED",
    "slice": "T9 (merged; liveness waits on UWCP S6)",
    "proof": "python tools/test_task_adaptation.py",
    "evidence": "CONNECTED in the canonical owner: a revision that drops an acceptance criterion or constraint (rewording included) is refused unless weakening_reason is stated; dropped items, reason and actor are recorded on the revision event (test_task_adaptation 7/7). NOT LIVE: contract.revise has no production caller and the Goal Spine engine has no live invoker (UWCP S6)."
@@ -66,13 +71,17 @@
   {
    "id": "genesis-worker-router",
    "source": "vendor/genesis-suite/modules/genesis-worker-router",
-   "owner": "tools/gsd_mission.py provider circuit breaker + modules/cost_collapse routing",
+   "owner": "tools/provider_breaker.py (called at the tools/gsd_mission.py supervise site) + modules/cost_collapse routing",
    "disposition": "MERGE",
    "differential": "attempt budget, cooldown, concurrency cap, structured failure; vendored router kept as OPTIONAL provider abstraction",
    "status": "LIVE",
    "slice": "T3",
    "proof": "python tools/test_provider_breaker.py",
-   "evidence": "MERGED: cooldown, attempt budget (quarantine after 4), structured failure classes; concurrency cap = per-mission single flight. The vendored router is an OPTIONAL provider abstraction, not wired: missions launch through claude --bg only"
+   "evidence": "MERGED: cooldown, attempt budget (quarantine after 4), structured failure classes; concurrency cap = per-mission single flight. The vendored router is an OPTIONAL provider abstraction, not wired: missions launch through claude --bg only",
+   "caller": {
+    "path": "tools/gsd_mission.py",
+    "references": "provider_breaker"
+   }
   },
   {
    "id": "genesis-review-gate",
@@ -80,10 +89,10 @@
    "owner": "tools/review_intake.py (reviewer reply -> strict verdict) + modules/code_review severity accounting",
    "disposition": "CONNECT",
    "differential": "strict finding/refutation schema; malformed or failed reviewer output = INCOMPLETE, never APPROVE",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T5",
    "proof": "python tools/test_review_intake.py",
-   "evidence": "CONNECT: reviewer reply validated by the vendored validateFinderResponse via the bridge; zero findings approves ONLY as an explicit `findings: []`; prose, no block, two blocks, unknown severity, bridge down -> INCOMPLETE. REPLY_INSTRUCTION travels with the dispatch prompt (reviewer agents live in ~/.claude/agents, HR-001). REAL producer: pp-code-reviewer reply parsed as 2 medium/1 low/1 info; its three missed-overlap findings in plan_graph_check._owns were fixed. Also fixed: modules/code_review derived APPROVE for a finding with an unrecognised severity."
+   "evidence": "NO PRODUCTION CALLER (red team R2): no command, hook, agent or scheduled task reaches it; install_reviewer_contract.py only copies REPLY_INSTRUCTION into the agent at install time. CONNECT: reviewer reply validated by the vendored validateFinderResponse via the bridge; zero findings approves ONLY as an explicit `findings: []`; prose, no block, two blocks, unknown severity, bridge down -> INCOMPLETE. REPLY_INSTRUCTION travels with the dispatch prompt (reviewer agents live in ~/.claude/agents, HR-001). REAL producer: pp-code-reviewer reply parsed as 2 medium/1 low/1 info; its three missed-overlap findings in plan_graph_check._owns were fixed. Also fixed: modules/code_review derived APPROVE for a finding with an unrecognised severity."
   },
   {
    "id": "genesis-context-graph",
@@ -100,8 +109,10 @@
    "owner": "tools/night_research_runner.py (Sovereign VPS only)",
    "disposition": "WRAP",
    "differential": "time window, single worker, pause signal, bounded report, findings unpromoted",
-   "status": "PLANNED",
-   "slice": "T10"
+   "status": "IMPLEMENTED",
+   "slice": "T10",
+   "proof": "python tools/test_night_research.py",
+   "evidence": "VPS-only by construction (runner refuses elsewhere, rc 3). Deployed 2026-09-28 to the Sovereign VPS under a systemd user timer (tools/systemd/cpp-night-research.*). Stays IMPLEMENTED until a real nightly pass is read from the VPS reports directory."
   },
   {
    "id": "genesis-prompt-kit",
@@ -109,10 +120,10 @@
    "owner": "delegated-work prompt contract (tools/task_contract.py)",
    "disposition": "EXTEND",
    "differential": "explicit owner, acceptance, stop conditions, deterministic contract keys, validation",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T4",
    "proof": "python tools/test_task_contract.py",
-   "evidence": "EXTEND: kit's exact key set + bounds validate through the bridge; CPP adds stated write ownership and the durable-output clause inside the kit's own fields. End to end: the real agent-solo-guard passes a rendered long-running contract and blocks the same objective without the clause (control). First production caller: tools/batch_drafts.py."
+   "evidence": "NO PRODUCTION CALLER (red team R2): no command, hook, agent or scheduled task reaches it; its caller tools/batch_drafts.py is itself manual. EXTEND: kit's exact key set + bounds validate through the bridge; CPP adds stated write ownership and the durable-output clause inside the kit's own fields. End to end: the real agent-solo-guard passes a rendered long-running contract and blocks the same objective without the clause (control). First caller: tools/batch_drafts.py."
   },
   {
    "id": "genesis-source-packets",
@@ -123,7 +134,11 @@
    "status": "LIVE",
    "slice": "T8",
    "evidence": "Placement decided by exp-successor-packet-002: the packet is stored whole and content-addressed; the card carries only a reference (never inlined, never truncated), re-verified at render time (STALE / MISSING announced, never presented). Opt-in on hand-off, since a reference was cost- and quality-neutral. Kill switch CPP_SOURCE_PACKET_CARD=off. Known limit: the vendor's credential-line filter blocks 441/1,091 Python files here whole (322 only for 'pass' before ':'/'=').",
-   "proof": "python tools/test_handoff_packet.py"
+   "proof": "python tools/test_handoff_packet.py",
+   "caller": {
+    "path": "tools/gsd_mission.py",
+    "references": "source_packet"
+   }
   },
   {
    "id": "genesis-evidence-collector",
@@ -131,9 +146,9 @@
    "owner": "tools/evidence_bundle.py (V-gate check receipts + review ticket/receipt -> vendored collector)",
    "disposition": "WRAP",
    "differential": "scattered receipts normalised; missing evidence stays MISSING",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T5",
-   "evidence": "WRAP as a PRODUCER: CPP had none for the collector's receipts. Real review of it found a HIGH false green (the review receipt bound disk-now bytes, not the bytes the reviewer read) -> review tickets issued at dispatch; checks hash before+after the run.  REAL end to end: two real V-gate suites + a nonce-ticketed pp-code-reviewer review (3rd review; 1st and 2nd each found a real false green, both fixed) -> the vendored collector returned OK. Known limit, recorded: the ticket binds bytes at issue time, so an A->B->A concurrent edit passes as a review of A.",
+   "evidence": "NO PRODUCTION CALLER (red team R2): no command, hook, agent or scheduled task reaches it; WRAP as a PRODUCER: CPP had none for the collector's receipts. Real review of it found a HIGH false green (the review receipt bound disk-now bytes, not the bytes the reviewer read) -> review tickets issued at dispatch; checks hash before+after the run.  REAL end to end: two real V-gate suites + a nonce-ticketed pp-code-reviewer review (3rd review; 1st and 2nd each found a real false green, both fixed) -> the vendored collector returned OK. Known limit, recorded: the ticket binds bytes at issue time, so an A->B->A concurrent edit passes as a review of A.",
    "proof": "python tools/test_evidence_bundle.py"
   },
   {
@@ -142,10 +157,10 @@
    "owner": "tools/regression_memory.py (records + committed evidence under vault/regressions/)",
    "disposition": "EXTEND",
    "differential": "failing output + reproducer + source sha256 + passing receipt; reopen when bytes move",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T6",
    "proof": "python tools/test_regression_memory.py",
-   "evidence": "EXTEND: CPP V-gate output converted losslessly to TAP (raw output hashed beside it); vendored create/resolve/reopen lifecycle via the bridge. A moved artifact byte reopens a resolved record ('Stale evidence: art.py'); a crashed suite, a passing 'failure', the failing run reused as the fix and a fix that changes check identities are all refused."
+   "evidence": "NO PRODUCTION CALLER (red team R2): no command, hook, agent or scheduled task reaches it; EXTEND: CPP V-gate output converted losslessly to TAP (raw output hashed beside it); vendored create/resolve/reopen lifecycle via the bridge. A moved artifact byte reopens a resolved record ('Stale evidence: art.py'); a crashed suite, a passing 'failure', the failing run reused as the fix and a fix that changes check identities are all refused."
   },
   {
    "id": "genesis-routing-metrics",
@@ -156,18 +171,22 @@
    "status": "LIVE",
    "slice": "T8",
    "proof": "python tools/test_routing_metrics.py",
-   "evidence": "Route = launch cause/mechanism:model per mission epoch. Real ledger since 2026-09-20: 448 attempts, 66 unjudged runs withheld (no transcript), 389 provider-refusal failures; cache reads 98% of observed input on rotation epochs. gsd_epoch certify reports it per mission (S10: 139.0M of 140.1M input = cache reads). costUsd never invented; incomplete history keeps totals null."
+   "evidence": "Route = launch cause/mechanism:model per mission epoch. Real ledger since 2026-09-20: 448 attempts, 66 unjudged runs withheld (no transcript), 389 provider-refusal failures; cache reads 98% of observed input on rotation epochs. gsd_epoch certify reports it per mission (S10: 139.0M of 140.1M input = cache reads). costUsd never invented; incomplete history keeps totals null.",
+   "caller": {
+    "path": "tools/gsd_epoch.py",
+    "references": "routing_metrics"
+   }
   },
   {
    "id": "genesis-change-impact",
    "source": "vendor/genesis-suite/modules/genesis-change-impact",
    "owner": "tools/change_impact.py (graph from the code's own imports + script-path literals)",
-   "disposition": "EXTEND",
+   "disposition": "WRAP",
    "differential": "reverse-edge consumers classified; unmapped impact explicit",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T7",
    "proof": "python tools/test_change_impact.py",
-   "evidence": "WRAP via bridge over a graph built from AST imports + tools/modules path literals. NOT audit_cache, as planned: its depends_on is stem-resolved (tools/*.py 'depends on' a worktree tools.md) and only 8 of 25 test suites list their obvious subject; the analyzer reads a missing edge as no dependency, so it would have said 'no suite affected' -- a false green. Non-Python changes are explicit unmatched-change gaps. audit_cache resolver defect recorded for its owner."
+   "evidence": "NO PRODUCTION CALLER (red team R2): no command, hook, agent or scheduled task reaches it; WRAP via bridge over a graph built from AST imports + tools/modules path literals. NOT audit_cache, as planned: its depends_on is stem-resolved (tools/*.py 'depends on' a worktree tools.md) and only 8 of 25 test suites list their obvious subject; the analyzer reads a missing edge as no dependency, so it would have said 'no suite affected' -- a false green. Non-Python changes are explicit unmatched-change gaps. audit_cache resolver defect recorded for its owner. The spec's planned SUBSUME into graphify is NOT done."
   },
   {
    "id": "genesis-release-integrity",
@@ -175,9 +194,10 @@
    "owner": "tools/vendor_provenance.py",
    "disposition": "MERGE",
    "differential": "explicit inventory, known bytes, fresh-checkout verification",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T1",
-   "proof": "python tools/vendor_provenance.py verify --fresh-checkout"
+   "proof": "python tools/vendor_provenance.py verify --fresh-checkout",
+   "evidence": "NO PRODUCTION CALLER (red team R2): no command, hook, agent or scheduled task reaches it; the spec planned it 'wired into the assimilation gate'; it is not. "
   },
   {
    "id": "genesis-task-context",
@@ -188,7 +208,11 @@
    "status": "LIVE",
    "slice": "T2",
    "proof": "python tools/test_handoff_packet.py",
-   "evidence": "Selector packets carry the exact region a hand-off names, each range hash-bound. The vendor refuses a context window past either end of a file instead of clipping it; handoff_packet clips a unique anchor to a line range first (the end-of-file region otherwise never attached)."
+   "evidence": "Selector packets carry the exact region a hand-off names, each range hash-bound. The vendor refuses a context window past either end of a file instead of clipping it; handoff_packet clips a unique anchor to a line range first (the end-of-file region otherwise never attached).",
+   "caller": {
+    "path": "tools/gsd_mission.py",
+    "references": "source_packet"
+   }
   },
   {
    "id": "genesis-constraint-compiler",
@@ -196,10 +220,10 @@
    "owner": "tools/batch_drafts.py (compileBatch compiles the packet into every batch)",
    "disposition": "CONNECT",
    "differential": "invariant + counterexample + effect -> named candidate checks, checksRun=0",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T6",
    "proof": "python tools/test_batch_drafts.py",
-   "evidence": "CONNECT by the path where it actually executes: every batch carries the packet, pinned candidate-only, checksRun=0, rules selected by declared effect (V-BDRAFT-CONSTRAINTS-CANDIDATE-ONLY). NOT done: a UKDL crosswalk -- a lexical search found in-repo anchors for 5 of the 12 catalog invariants, and a regex that misses is not evidence of absence, so no 'no CPP rule' claim is recorded."
+   "evidence": "NO PRODUCTION CALLER (red team R2): no command, hook, agent or scheduled task reaches it; it runs only inside tools/batch_drafts.py, itself manual. CONNECT by the path where it actually executes: every batch carries the packet, pinned candidate-only, checksRun=0, rules selected by declared effect (V-BDRAFT-CONSTRAINTS-CANDIDATE-ONLY). NOT done: a UKDL crosswalk -- a lexical search found in-repo anchors for 5 of the 12 catalog invariants, and a regex that misses is not evidence of absence, so no 'no CPP rule' claim is recorded."
   },
   {
    "id": "genesis-verified-reuse",
@@ -207,10 +231,10 @@
    "owner": "tools/verified_reuse.py (store under _audit_cache/reuse/) -> consumed by tools/batch_drafts.py",
    "disposition": "EXTEND",
    "differential": "objective/contract/role/source binding; reuse never inherits approval",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T8",
    "proof": "python tools/test_verified_reuse.py",
-   "evidence": "Fingerprint binds objective, task contract (role), output bounds (policy), source sha256s, worker, 24 h window, tree root. batch compile hands back verified drafts, dispatching only the rest; a hit is accepted=false/needsFreshReview=true and is DRIVEN into evidence_bundle.write_review -> 'fail' (no ticket nonce). Avoided work measured as dispatches + source chars; tokens null. Kill switch CPP_VERIFIED_REUSE=off."
+   "evidence": "NO PRODUCTION CALLER (red team R2): no command, hook, agent or scheduled task reaches it; its consumer tools/batch_drafts.py is itself manual. Fingerprint binds objective, task contract (role), output bounds (policy), source sha256s, worker, 24 h window, tree root. batch compile hands back verified drafts, dispatching only the rest; a hit is accepted=false/needsFreshReview=true and is DRIVEN into evidence_bundle.write_review -> 'fail' (no ticket nonce). Avoided work measured as dispatches + source chars; tokens null. Kill switch CPP_VERIFIED_REUSE=off."
   },
   {
    "id": "genesis-paired-experiments",
@@ -218,10 +242,10 @@
    "owner": "tools/paired_experiment.py (vault/experiments/<id>/, frozen registration) + tools/exp_successor_packet.py",
    "disposition": "WRAP",
    "differential": "preregistered hash-frozen comparisons, holdout split, all failures retained",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T8",
    "proof": "python tools/test_paired_experiment.py",
-   "evidence": "exp-successor-packet-002 registered and committed (7e12fcb) before 4 real headless successors: quality 4/4 vs 4/4, tokens +0.08% for the packet arm (-5% target not met). Dry run over 32 real cards: inlining truncates 28/32 (58% of packet bytes lost), a reference fits all. 001 withdrawn before any run (WITHDRAWN.md). Decision in vault/experiments/exp-successor-packet-002/REPORT.md. UCR-CIF seam: the construction worktree is untouched."
+   "evidence": "NO PRODUCTION CALLER (red team R2): no command, hook, agent or scheduled task reaches it; driven by hand through tools/exp_successor_packet.py. exp-successor-packet-002 registered and committed (7e12fcb) before 4 real headless successors: quality 4/4 vs 4/4, tokens +0.08% for the packet arm (-5% target not met). Dry run over 32 real cards: inlining truncates 28/32 (58% of packet bytes lost), a reference fits all. 001 withdrawn before any run (WITHDRAWN.md). Decision in vault/experiments/exp-successor-packet-002/REPORT.md. UCR-CIF seam: the construction worktree is untouched."
   },
   {
    "id": "genesis-batch-drafts",
@@ -229,15 +253,15 @@
    "owner": "tools/batch_drafts.py (Agent Teams static reviews)",
    "disposition": "WRAP",
    "differential": "2-4 independent static reviews over shared bounded source; bound evidence validation",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T4",
    "proof": "python tools/test_batch_drafts.py",
-   "evidence": "WRAP via bridge; contracts from tools/task_contract.py; binding + prompt hash recorded in a compile receipt that validation reads (never the batch vouching for itself). REAL run over tools/rollover.py + tools/plan_graph_check.py: 1st reply REFUSED (1900-char mechanism vs an unstated 1200 bound) -> bounds now stated in each contract and pinned to the vendored literals; 2nd reply VALID. Its drafts found two real _owns() defects (symlink alias missed overlap; foreign-repo collision), both fixed with tests."
+   "evidence": "NO PRODUCTION CALLER (red team R2): no command, hook, agent or scheduled task reaches it; WRAP via bridge; contracts from tools/task_contract.py; binding + prompt hash recorded in a compile receipt that validation reads (never the batch vouching for itself). REAL run over tools/rollover.py + tools/plan_graph_check.py: 1st reply REFUSED (1900-char mechanism vs an unstated 1200 bound) -> bounds now stated in each contract and pinned to the vendored literals; 2nd reply VALID. Its drafts found two real _owns() defects (symlink alias missed overlap; foreign-repo collision), both fixed with tests."
   },
   {
    "id": "genesis-charter-lab",
    "source": "vendor/genesis-suite/modules/genesis-charter-lab",
-   "owner": "UCR-CIF promotion (seam; construction worktree untouched) + tools/charter_lab.py",
+   "owner": "UCR-CIF promotion (seam note seams/charter-lab-ucr-cif.md); no CPP-side engine",
    "disposition": "WRAP",
    "differential": "staged hash-bound charters, frozen gates, holdout, rollback with reason",
    "status": "PLANNED",
@@ -256,13 +280,17 @@
   {
    "id": "loop-completion-rearm",
    "source": "event-driven-autonomous-loop (unlicensed, ideas only)",
-   "owner": "Ralph turn-end continuation (hooks/gsd_stop_continuation.js + tools/gsd_epoch.py)",
+   "owner": "Ralph turn-end continuation (tools/gsd_epoch.py decide_turn_end, run from the tools/gsd_mission.py supervise pass)",
    "disposition": "SUBSUME",
    "differential": "none missing: a finished turn already continues the same session",
    "status": "LIVE",
    "slice": "T3",
    "proof": "python tools/test_gsd_epoch.py",
-   "evidence": "V-EPOCH-TURN-END-CONTINUES, V-EPOCH-SUP-CONTINUES-SAME-SESSION: a finished turn continues the same session (Ralph); nothing added"
+   "evidence": "V-EPOCH-TURN-END-CONTINUES, V-EPOCH-SUP-CONTINUES-SAME-SESSION: a finished turn continues the same session (Ralph); nothing added. The Stop-hook path (hooks/gsd_stop_continuation.js) is wired in the live dispatcher but OPT-IN: it acts only on a mission marker with continuation='stop-block', which 0 of 12 markers on this host carry (measured 2026-09-28); neither its state file nor ~/.claude/state/autonomy-decisions.jsonl exists. ",
+   "caller": {
+    "path": "tools/gsd_mission.py",
+    "references": "gsd_epoch"
+   }
   },
   {
    "id": "loop-single-flight",
@@ -273,29 +301,41 @@
    "status": "LIVE",
    "slice": "T3",
    "proof": "python tools/test_gsd_mission.py",
-   "evidence": "V-MC-LOCK-LIVE-HOLDER-NEVER-STOLEN, V-MC-REPLACE-RACE-ONE-WINNER: msvcrt lock + CAS; nothing added"
+   "evidence": "V-MC-LOCK-LIVE-HOLDER-NEVER-STOLEN, V-MC-REPLACE-RACE-ONE-WINNER: msvcrt lock + CAS; nothing added",
+   "caller": {
+    "path": "tools/gsd_long_run_sweep.ps1",
+    "references": "gsd_mission"
+   }
   },
   {
    "id": "loop-instant-failure-backoff",
    "source": "event-driven-autonomous-loop (unlicensed, ideas only)",
-   "owner": "tools/gsd_mission.py provider circuit breaker",
+   "owner": "tools/provider_breaker.py via the tools/gsd_mission.py supervise call site",
    "disposition": "EXTEND",
    "differential": "worker dying within seconds with no work -> exponential cooldown",
    "status": "LIVE",
    "slice": "T3",
    "proof": "python tools/test_provider_breaker.py",
-   "evidence": "tools/provider_breaker.py: transient/no_reply -> 300 s * 2^(streak-1), cap 1 h"
+   "evidence": "tools/provider_breaker.py: transient/no_reply -> 300 s * 2^(streak-1), cap 1 h",
+   "caller": {
+    "path": "tools/gsd_mission.py",
+    "references": "provider_breaker"
+   }
   },
   {
    "id": "loop-failure-quarantine",
    "source": "event-driven-autonomous-loop (unlicensed, ideas only)",
-   "owner": "tools/gsd_mission.py provider circuit breaker",
+   "owner": "tools/provider_breaker.py via the tools/gsd_mission.py supervise call site",
    "disposition": "EXTEND",
    "differential": "K consecutive instant failures -> mission held for the operator, not relaunched",
    "status": "LIVE",
    "slice": "T3",
    "proof": "python tools/test_provider_breaker.py",
-   "evidence": "4 consecutive failed workers or a credentials refusal -> QUARANTINE until provider_breaker.py clear; V-MC-BREAKER-AUTH-NO-LAUNCH drives the real supervise call site (mutant severing it: 190/191)"
+   "evidence": "4 consecutive failed workers or a credentials refusal -> QUARANTINE until provider_breaker.py clear; V-MC-BREAKER-AUTH-NO-LAUNCH drives the real supervise call site (mutant severing it: 190/191)",
+   "caller": {
+    "path": "tools/gsd_mission.py",
+    "references": "provider_breaker"
+   }
   },
   {
    "id": "loop-run-log",
@@ -306,14 +346,18 @@
    "status": "LIVE",
    "slice": "T3",
    "proof": "python tools/test_provider_breaker.py",
-   "evidence": "provider_held / quota_held / provider_breaker_unavailable ledger rows; census counts both hold events"
+   "evidence": "provider_held / quota_held / provider_breaker_unavailable ledger rows; census counts both hold events",
+   "caller": {
+    "path": "tools/gsd_mission.py",
+    "references": "gsd_long_run"
+   }
   },
   {
    "id": "loop-startup-guidance",
    "source": "event-driven-autonomous-loop (unlicensed, ideas only)",
    "owner": "scheduled sweep (tools/gsd_long_run_sweep.ps1) + VPS systemd timer for night research",
    "disposition": "SUBSUME",
-   "differential": "none on Windows; Linux timer written for T10",
+   "differential": "none on Windows; the Linux timer is written (tools/systemd) and belongs to genesis-night-research",
    "status": "PLANNED",
    "slice": "T10"
   },
@@ -325,7 +369,11 @@
    "differential": "finished children -> in-flight build -> todo -> standing task",
    "status": "LIVE",
    "slice": "T3",
-   "proof": "python tools/test_gsd_mission.py"
+   "proof": "python tools/test_gsd_mission.py",
+   "caller": {
+    "path": "tools/gsd_long_run_sweep.ps1",
+    "references": "gsd_mission"
+   }
   },
   {
    "id": "self-continuation-rubric",
@@ -335,7 +383,12 @@
    "differential": "four user-owned gate categories over DRK reversibility; everything else decided with a one-line why-safe",
    "status": "LIVE",
    "slice": "T3",
-   "proof": "python tools/test_autonomy_gate.py"
+   "proof": "python tools/test_autonomy_gate.py",
+   "caller": {
+    "path": "tools/gsd_mission.py",
+    "references": "autonomy_gate"
+   },
+   "evidence": "The successor card reads modules/autonomy_gate/rubric.json (gsd_mission.py _RUBRIC_FILE), the same JSON the Python classifier reads. The Stop-hook path (hooks/gsd_stop_continuation.js) is wired in the live dispatcher but OPT-IN: it acts only on a mission marker with continuation='stop-block', which 0 of 12 markers on this host carry (measured 2026-09-28); neither its state file nor ~/.claude/state/autonomy-decisions.jsonl exists. "
   },
   {
    "id": "self-continuation-stop-directive",
@@ -343,19 +396,21 @@
    "owner": "hooks/gsd_stop_continuation.js",
    "disposition": "EXTEND",
    "differential": "the continuation directive carries the gate rubric",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T3",
-   "proof": "node tools/test_gsd_stop_continuation.js"
+   "proof": "node tools/test_gsd_stop_continuation.js",
+   "evidence": "NO OBSERVED PRODUCTION RUN (red team R2 follow-up). The Stop-hook path (hooks/gsd_stop_continuation.js) is wired in the live dispatcher but OPT-IN: it acts only on a mission marker with continuation='stop-block', which 0 of 12 markers on this host carry (measured 2026-09-28); neither its state file nor ~/.claude/state/autonomy-decisions.jsonl exists. "
   },
   {
    "id": "self-continuation-decision-log",
    "source": "self-continuation-protocol (unlicensed, ideas only)",
-   "owner": "modules/autonomy_gate receipts",
+   "owner": "modules/autonomy_gate receipt format; written by hooks/gsd_stop_continuation.js receipt()",
    "disposition": "EXTEND",
    "differential": "every continue/stop decision recorded with category and reason",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T3",
-   "proof": "python tools/test_autonomy_gate.py"
+   "proof": "python tools/test_autonomy_gate.py",
+   "evidence": "NO OBSERVED PRODUCTION RUN (red team R2 follow-up). The Stop-hook path (hooks/gsd_stop_continuation.js) is wired in the live dispatcher but OPT-IN: it acts only on a mission marker with continuation='stop-block', which 0 of 12 markers on this host carry (measured 2026-09-28); neither its state file nor ~/.claude/state/autonomy-decisions.jsonl exists. "
   },
   {
    "id": "context-budget-meter",
@@ -366,7 +421,11 @@
    "status": "LIVE",
    "slice": "T2",
    "proof": "python tools/test_gsd_epoch_context_budget.py",
-   "evidence": "tools/gsd_epoch.py decide_turn_end records modules/context_budget epoch_reading as evidence; record_cause writes it into every launch_cause ledger row"
+   "evidence": "tools/gsd_epoch.py decide_turn_end records modules/context_budget epoch_reading as evidence; record_cause writes it into every launch_cause ledger row",
+   "caller": {
+    "path": "tools/gsd_epoch.py",
+    "references": "context_budget"
+   }
   },
   {
    "id": "context-budget-token-budget",
@@ -376,7 +435,11 @@
    "differential": "token budget + chars/4 estimate labelled ESTIMATED",
    "status": "LIVE",
    "slice": "T2",
-   "proof": "python tools/test_context_budget.py"
+   "proof": "python tools/test_context_budget.py",
+   "caller": {
+    "path": "tools/gsd_epoch.py",
+    "references": "context_budget"
+   }
   },
   {
    "id": "fresh-context-tax",
@@ -384,10 +447,10 @@
    "owner": "tools/fresh_context_tax.py",
    "disposition": "NEW",
    "differential": "no existing metric of bootstrap cost per epoch",
-   "status": "LIVE",
+   "status": "IMPLEMENTED",
    "slice": "T2",
    "proof": "python tools/test_fresh_context_tax.py",
-   "evidence": "measured 2026-09-28 over 506 worker sessions: 56 measured (median 185,930 tokens = 18.6% of 1M at first call; prompt ~33 tokens), 389 PROVIDER_REFUSED, 61 unmeasured"
+   "evidence": "NO PRODUCTION CALLER (red team R2): no command, hook, agent or scheduled task reaches it; measured 2026-09-28 over 506 worker sessions: 56 measured (median 185,930 tokens = 18.6% of 1M at first call; prompt ~33 tokens), 389 PROVIDER_REFUSED, 61 unmeasured"
   }
  ],
  "runner_operations": [

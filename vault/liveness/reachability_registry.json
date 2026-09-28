@@ -11,6 +11,18 @@
     "session_resilience/ui_state"
   ],
   "modules": {
+    "external_assimilation/__init__": {
+      "class": "LIBRARY",
+      "note": "Package marker for the one vendored-code bridge. Reached in production through tools/gsd_mission.py -> tools/plan_graph_check.py -> node_bridge, a tool->tool hop this scanner does not follow (red team R2)."
+    },
+    "external_assimilation/node_bridge": {
+      "class": "LIBRARY",
+      "note": "The single bridge to vendor/genesis-suite. Production edge: tools/plan_graph_check.py:36, called from the tools/gsd_mission.py supervise pass. Proven by tools/test_plan_graph_check.py."
+    },
+    "autonomy_gate/__main__": {
+      "class": "LIBRARY",
+      "note": "Manual CLI (python -m modules.autonomy_gate classify). Production reads modules/autonomy_gate/rubric.json directly (gsd_mission successor card, Stop hook); proven by tools/test_autonomy_gate.py."
+    },
     "lease/__init__": {
       "class": "PLANNED",
       "note": "UWCP assimilation R2; consumer = UWCP S4-25 VPS lease store (A5), not yet built. Proven by tools/test_lease.py 21/21 + 14 mutants. Owner queue: vault/specs/uwcp.AMENDMENTS.md"
