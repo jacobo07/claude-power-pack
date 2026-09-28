@@ -44,11 +44,12 @@
   {
    "id": "genesis-task-ledger",
    "source": "vendor/genesis-suite/modules/genesis-task-ledger",
-   "owner": "modules/gsd_x/mission (closure evidence)",
+   "owner": "SEAM -- modules/gsd_x/goal/convergence.py (Goal Spine, off-limits by Owner decision 1a)",
    "disposition": "MERGE",
    "differential": "artifact sha256 binding + reviewer identity distinct from worker",
    "status": "PLANNED",
-   "slice": "T5"
+   "slice": "seam:goal-spine",
+   "evidence": "Not built, on purpose: artifact binding already exists where it is live (convergence.evaluate pins tree_hash, revision, gate_pin); the only production caller of mission.closure.evaluate_transition is that Goal Spine module. A reviewer!=worker check added to mission/closure would have no live caller. Seam: convergence.satisfy knows `actor`; the obligation does not record its worker."
   },
   {
    "id": "genesis-task-adaptation",
@@ -206,8 +207,10 @@
    "owner": "tools/batch_drafts.py (Agent Teams static reviews)",
    "disposition": "WRAP",
    "differential": "2-4 independent static reviews over shared bounded source; bound evidence validation",
-   "status": "PLANNED",
-   "slice": "T4"
+   "status": "LIVE",
+   "slice": "T4",
+   "proof": "python tools/test_batch_drafts.py",
+   "evidence": "WRAP via bridge; contracts from tools/task_contract.py; binding + prompt hash recorded in a compile receipt that validation reads (never the batch vouching for itself). REAL run over tools/rollover.py + tools/plan_graph_check.py: 1st reply REFUSED (1900-char mechanism vs an unstated 1200 bound) -> bounds now stated in each contract and pinned to the vendored literals; 2nd reply VALID. Its drafts found two real _owns() defects (symlink alias missed overlap; foreign-repo collision), both fixed with tests."
   },
   {
    "id": "genesis-charter-lab",

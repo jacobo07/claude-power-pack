@@ -162,14 +162,56 @@ def main() -> int:
         plan(d, "19-01", 1, files=["a"], done=True)
         check("V-PGRAPH-NOTHING-PENDING", judge(d, root)["verdict"] is None, "no verdict for a finished phase")
 
-        print("worktree absolute paths key under their own git root")
+        print("worktree absolute paths key under their own git root; a foreign repo keeps its own")
+        # A REAL worktree shape: the project is a repository, and the worktree's `.git` is a file
+        # naming <project>/.git/worktrees/wt, whose `commondir` leads back to <project>/.git.
+        # (The first fixture gave the worktree its own .git directory -- a separate clone -- and
+        # passed only because the code could not tell the two apart.)
+        (root / ".git" / "worktrees" / "wt").mkdir(parents=True)
+        (root / ".git" / "worktrees" / "wt" / "commondir").write_text("../..\n", encoding="utf-8")
         wt = tmp / "wt"
-        (wt / ".git").mkdir(parents=True)
+        wt.mkdir()
+        (wt / ".git").write_text(f"gitdir: {(root / '.git' / 'worktrees' / 'wt').as_posix()}\n", encoding="utf-8")
         d = ph / "20-worktree"
         plan(d, "20-01", 1, files=[(wt / "src" / "a.py").as_posix()])
         plan(d, "20-02", 1, files=["src/a.py"])
         r = judge(d, root)
         check("V-PGRAPH-WORKTREE-PATH-COLLIDES", r["verdict"] == pg.REFUSED, r["refused"] or r["unjudged"])
+        for name in ("repoA", "repoB"):
+            (tmp / name / ".git").mkdir(parents=True)
+        d = ph / "20b-foreign-repos"
+        plan(d, "20b-01", 1, files=[(tmp / "repoA" / "plugin.yml").as_posix()])
+        plan(d, "20b-02", 1, files=[(tmp / "repoB" / "plugin.yml").as_posix()])
+        r = judge(d, root)
+        check("V-PGRAPH-FOREIGN-REPOS-NO-COLLISION", r["verdict"] == pg.OK, r["refused"] or r["unjudged"])
+        d = ph / "20c-foreign-vs-ours"
+        plan(d, "20c-01", 1, files=[(tmp / "repoA" / "src" / "a.py").as_posix()])
+        plan(d, "20c-02", 1, files=["src/a.py"])
+        r = judge(d, root)
+        check("V-PGRAPH-FOREIGN-SAME-SUFFIX-NO-COLLISION", r["verdict"] == pg.OK, r["refused"] or r["unjudged"])
+        target = root / "src" / "real.py"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("x = 1\n", encoding="utf-8")
+        link = root / "alias.py"
+        try:
+            link.symlink_to(target)
+            linked = True
+        except OSError:
+            linked = False
+        if not linked and os.name == "nt":
+            # No symlink privilege: a directory junction needs none, and resolve() follows it.
+            try:
+                import _winapi
+                _winapi.CreateJunction(str(target.parent), str(root / "alias-dir"))
+                link, linked = root / "alias-dir" / "real.py", True
+            except (OSError, ImportError, AttributeError) as exc:
+                print(f"  NOTE V-PGRAPH-SYMLINK-ALIAS-COLLIDES not judged: no symlink or junction ({exc.__class__.__name__})")
+        if linked:
+            d = ph / "20d-symlink"
+            plan(d, "20d-01", 1, files=[link.as_posix()])
+            plan(d, "20d-02", 1, files=["src/real.py"])
+            r = judge(d, root)
+            check("V-PGRAPH-SYMLINK-ALIAS-COLLIDES", r["verdict"] == pg.REFUSED, r["refused"] or r["unjudged"])
         d = ph / "21-outside"
         plan(d, "21-01", 1, files=["C:/no-git-anywhere-xyz/a.py" if os.name == "nt" else "/no-git-anywhere-xyz/a.py"])
         plan(d, "21-02", 1, files=["b"])

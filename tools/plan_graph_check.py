@@ -66,7 +66,29 @@ def read_plan(path: Path) -> dict:
     return out
 
 
+def _git_root(path: Path) -> Path | None:
+    return next((a for a in [path, *path.parents] if (a / ".git").exists()), None)
+
+
+def _common_repo(root: Path | None) -> Path | None:
+    """The repository a work tree belongs to. A worktree's `.git` is a FILE naming its gitdir,
+    whose `commondir` names the main repository's; a clone's `.git` is the directory itself."""
+    if root is None:
+        return None
+    g = root / ".git"
+    try:
+        if g.is_dir():
+            return g.resolve()
+        gitdir = Path(g.read_text(encoding="utf-8").split("gitdir:", 1)[1].strip())
+        gitdir = gitdir if gitdir.is_absolute() else (root / gitdir)
+        common = gitdir / "commondir"
+        return (gitdir / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else gitdir.resolve()
+    except (OSError, IndexError):
+        return None
+
+
 def _owns(files, work_root: Path) -> tuple[list[str] | None, str]:
+    home = _common_repo(_git_root(work_root.resolve()))
     rel = []
     for f in files or []:
         p = str(f).strip()
@@ -75,13 +97,22 @@ def _owns(files, work_root: Path) -> tuple[list[str] | None, str]:
         pp = Path(p)
         if pp.is_absolute():
             # Plans executed in a git worktree name that worktree's absolute paths (measured:
-            # KobiiCraft luckyarena-arena2 -> <home>/Apps/kme-wt-arena2/...). Worktrees of
-            # one repo share relative paths, so the key is the path under ITS OWN git root.
-            root = next((a for a in [pp, *pp.parents] if (a / ".git").exists()), None)
+            # KobiiCraft luckyarena-arena2 -> <home>/Apps/kme-wt-arena2/...). Worktrees of one
+            # repo share relative paths, so the key is the path under ITS OWN git root. Resolved
+            # first so a symlink and its target cannot become two keys (a missed overlap), and a
+            # tree of ANOTHER repository keeps its own namespace so an unrelated repo's
+            # `plugin.yml` cannot collide with ours (an invented one). Both found by a real batch
+            # reviewer over this function, 2026-09-28.
+            pp = pp.resolve()
+            root = _git_root(pp)
             try:
                 p = pp.relative_to(root or work_root.resolve()).as_posix()
             except ValueError:
                 return None, f"path outside any git work tree: {f}"
+            repo = _common_repo(root)
+            if root is not None and repo != home:
+                import hashlib  # a namespace, not a path: never put a home directory in a key
+                p = f"[repo-{hashlib.sha1(str(repo or root).lower().encode()).hexdigest()[:10]}]/{p}"
         rel.append(p.replace("\\", "/"))
     return rel, ""
 
