@@ -1690,8 +1690,14 @@ _MONTHS = {m: i for i, m in enumerate(
     ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
 
 
-def quota_reset_at(text: str, now: float) -> float | None:
-    """Epoch seconds at which the refusal says the limit resets; None when unparseable."""
+def quota_reset_at(text: str, now: float, anchor: float | None = None) -> float | None:
+    """Epoch seconds at which the refusal says the limit resets; None when unparseable.
+
+    ``anchor`` is when the refusal was WRITTEN. A time-only reset ("resets 4pm") is the next
+    4pm after that moment, not after ``now``: resolved against ``now``, every pass later than
+    4pm rolled it to tomorrow. Measured 2026-09-28, m-d82c7cb6b87e: refused 15:51 Madrid,
+    "resets 4pm", held until 16:00 the NEXT day -- a quota that had reset nine minutes after
+    the refusal parked the mission for 24 h."""
     import datetime as _dt
     m = RESETS_RE.search(text or "")
     if not m:
@@ -1701,6 +1707,7 @@ def quota_reset_at(text: str, now: float) -> float | None:
         tz = ZoneInfo(m.group("tz").strip()) if m.group("tz") else None
     except Exception:  # noqa: BLE001 -- unknown zone: fall back to the host's local time
         tz = None
+    now = float(anchor) if anchor else now
     base = _dt.datetime.fromtimestamp(now, tz)
     hour = int(m.group("h")) % 12 + (12 if m.group("ap").lower() == "pm" else 0)
     minute = int(m.group("m") or 0)
@@ -1725,7 +1732,7 @@ def quota_hold(text: str | None, replied_at: float | None, now: float) -> dict |
     the reply, so the supervisor probes at most hourly instead of every pass."""
     if not text or not QUOTA_RE.search(text):
         return None
-    until = quota_reset_at(text, now)
+    until = quota_reset_at(text, now, anchor=replied_at)
     if until is None:
         until = (replied_at or now) + QUOTA_UNPARSED_HOLD_S
     if now >= until:
@@ -1747,11 +1754,21 @@ def provider_hold(rec: dict, now: float) -> dict | None:
         return None if h is None else {**h, "class": "quota"}
 
 
+def last_assistant_at(transcript) -> float | None:
+    """The LAST assistant row's own ``timestamp``; None when it carries none. Not the file's
+    mtime: the host appends cost/prompt rows after a refusal (measured: refusal 13:51Z, mtime
+    14:52Z), and a later anchor pushes a time-only reset past the day it named."""
+    for row in reversed(lr._tail_rows(transcript)):
+        if row.get("type") == "assistant":
+            return lr._parse_iso(row.get("timestamp"))
+    return None
+
+
 def quota_hold_from_transcript(session_id: str, now: float) -> dict | None:
     try:
         t = lr.find_transcript(session_id)
         text = lr.last_assistant_text(t) if t else None
-        replied_at = os.path.getmtime(t) if t else None
+        replied_at = (last_assistant_at(t) or os.path.getmtime(t)) if t else None
     except Exception:  # noqa: BLE001 -- no evidence of a refusal is not a refusal
         return None
     return quota_hold(text, replied_at, now)
