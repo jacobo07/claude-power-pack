@@ -638,6 +638,111 @@ def census(events: list[dict] | None = None) -> dict:
                     "`basis` per epoch says which (tools/gsd_epoch.py epochs --mission <id>)"}
 
 
+def owners_log(mission_id: str) -> Path:
+    return lr.state_dir() / f"gsd-epoch-owners-{mission_id}.jsonl"
+
+
+def watch(mission_id: str, every_s: int = 180, max_s: int = 12 * 3600, host=None) -> int:
+    """Single-owner witness, out of process: sample the host's session list every `every_s` and
+    record the live workers carrying this mission's name, until the mission is terminal. A sample
+    the host could not answer is recorded as such (None), never as "no workers"."""
+    import gsd_mission as gm
+    ask = host or gm.host_sessions
+    deadline = time.time() + max_s
+    n = 0
+    while time.time() < deadline:
+        rows = ask()
+        rec = gm.load(mission_id) or {}
+        live = None if rows is None else [
+            {"id": s.get("id"), "session": s.get("sessionId"), "state": s.get("state"), "status": s.get("status")}
+            for s in rows if str(s.get("name", "")).startswith(mission_id + "-e")
+            and s.get("state") not in ("stopped", "done", "exited", "failed")]
+        with open(owners_log(mission_id), "a", encoding="utf-8") as fh:
+            fh.write(json.dumps({"t": time.time(), "state": rec.get("state"), "epoch": rec.get("epoch"),
+                                 "live_workers": live}) + "\n")
+        n += 1
+        if rec.get("state") in gm.TERMINAL:
+            break
+        time.sleep(every_s)
+    return n
+
+
+def _commits_between(work_dir: str, since, until) -> int | None:
+    import subprocess
+    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+    if not Path(g).exists():
+        g = "git"
+    args = [g, "-C", work_dir, "log", "--format=%h"] + ([f"--since={since}"] if since else []) + (
+        [f"--until={until}"] if until else [])
+    try:
+        r = subprocess.run(args, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+    except Exception:  # noqa: BLE001 -- unmeasured, never zero
+        return None
+    return len([l for l in r.stdout.splitlines() if l.strip()]) if r.returncode == 0 else None
+
+
+def _transcript_has_wall(session_id: str | None) -> bool | None:
+    p = _transcript(session_id) if session_id else None
+    if not p:
+        return None
+    try:
+        with open(p, encoding="utf-8", errors="replace") as fh:
+            return any("CONTEXT WALL" in line for line in fh)
+    except OSError:
+        return None
+
+
+def certify(mission_id: str, events: list[dict] | None = None, commits=_commits_between) -> dict:
+    """Is each context rotation of this mission REAL? The mission does not certify itself: a rotation
+    counts only with (a) its recorded cause CONTEXT_ROTATION, (b) the wall witness for the
+    predecessor's epoch (flag or watchdog row), (c) the predecessor's OWN transcript carrying the wall
+    instruction, (d) a different session after it, and (e) commits in the work tree during the
+    predecessor's epoch -- useful work, not churn. Single-owner evidence comes from `watch`."""
+    import gsd_mission as gm
+    events = lr.ledger_events() if events is None else events
+    rec = gm.load(mission_id) or {}
+    wd = rec.get("work_dir") or rec.get("cwd") or ""
+    eps = epochs(mission_id, events)
+    causes = {c.get("epoch"): c for c in events if c.get("event") == "launch_cause"
+              and c.get("mission_id") == mission_id and c.get("mechanism") == FRESH}
+    out = {"mission": mission_id, "state": rec.get("state"), "epoch": rec.get("epoch"),
+           "iterations": rec.get("iterations"), "continuations": rec.get("continuations"), "epochs": []}
+    certified = 0
+    for i, ep in enumerate(eps):
+        row = dict(ep)
+        row["commits"] = commits(wd, ep.get("start"), ep.get("end")) if wd else None
+        rc = causes.get(ep["epoch"])
+        row["recorded_cause"], row["recorded_trigger"] = (rc or {}).get("cause"), (rc or {}).get("trigger")
+        if i and (rc or {}).get("cause") == CONTEXT_ROTATION:
+            prev = out["epochs"][i - 1]
+            w = wall_evidence(prev.get("session"), prev.get("epoch"), events)
+            said = _transcript_has_wall(prev.get("session"))
+            ok = bool(w) and said is True and prev.get("session") != ep.get("session") \
+                and (prev.get("commits") or 0) > 0
+            row["rotation"] = {"certified": ok, "wall_witness": w, "predecessor_transcript_says_wall": said,
+                               "new_session": prev.get("session") != ep.get("session"),
+                               "predecessor_commits": prev.get("commits")}
+            certified += int(ok)
+        out["epochs"].append(row)
+    out["rotations_certified"] = certified
+    out["turn_continuations"] = sum(1 for e in events if e.get("event") == "turn_continued"
+                                    and e.get("mission_id") == mission_id)
+    log = owners_log(mission_id)
+    if log.exists():
+        samples = []
+        for line in log.read_text(encoding="utf-8").splitlines():
+            try:
+                samples.append(json.loads(line))
+            except Exception:  # noqa: BLE001 -- a torn last line while the watcher writes
+                continue
+        answered = [s for s in samples if s.get("live_workers") is not None]
+        out["owner_samples"] = {"taken": len(samples), "answered": len(answered),
+                                "max_live_workers": max((len(s["live_workers"]) for s in answered), default=None)}
+    else:
+        out["owner_samples"] = None
+    return out
+
+
 def _cli(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description="context epochs of GSD missions")
@@ -649,8 +754,20 @@ def _cli(argv=None) -> int:
     c.add_argument("--session", required=True)
     t = sub.add_parser("context")
     t.add_argument("--session", required=True)
+    f = sub.add_parser("certify")
+    f.add_argument("--mission", required=True)
+    w = sub.add_parser("watch")
+    w.add_argument("--mission", required=True)
+    w.add_argument("--every", type=int, default=180)
+    w.add_argument("--max-hours", type=float, default=12)
     a = ap.parse_args(argv)
-    if a.cmd == "census":
+    if a.cmd == "watch":
+        print(json.dumps({"samples": watch(a.mission, a.every, int(a.max_hours * 3600)),
+                          "log": str(owners_log(a.mission))}))
+        return 0
+    if a.cmd == "certify":
+        out = certify(a.mission)
+    elif a.cmd == "census":
         out = census()
     elif a.cmd == "epochs":
         out = epochs(a.mission)

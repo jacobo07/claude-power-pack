@@ -493,6 +493,38 @@ def main() -> int:
           and any(a[-1] == sid[:8] for a in calls["stop"]) and not mine(calls, "m-c4", sid),
           (gm.load("m-c4")["state"], calls["stop"]))
 
+    # --- certify: a rotation counts only with every independent witness ---------------------
+    def cert_fixture(mid, w_prev, wall_text=True, record_cause=True):
+        running(mid, "x", epoch=1)
+        for row in [{"event": "launch_claimed", "epoch": 1, "reason": "armed"},
+                    {"event": "worker_acked", "epoch": 1, "worker": w_prev},
+                    {"event": "launch_claimed", "epoch": 2, "reason": "owner's turn ended without completion: x"},
+                    {"event": "worker_acked", "epoch": 2, "worker": w_prev + "-next"}]:
+            lr.ledger_append(mid, row.pop("event"), mission_id=mid, **row)
+        if record_cause:
+            lr.ledger_append(mid, "launch_cause", mission_id=mid, epoch=2, cause=ge.CONTEXT_ROTATION,
+                             mechanism=ge.FRESH, trigger="wall")
+        (Path(TMP) / f"mission-wall-{w_prev}-e1.flag").write_text("1")
+        transcript(w_prev, [asst(NOW - 50, small, text=("CONTEXT WALL — 30% used" if wall_text else "working"))])
+
+    cert_fixture("m-cert", "cw1")
+    c1 = ge.certify("m-cert", commits=lambda wd, s, u: 3)
+    check("V-EPOCH-CERTIFY-POSITIVE-CONTROL", c1["rotations_certified"] == 1, c1["epochs"][-1].get("rotation"))
+    check("V-EPOCH-CERTIFY-NEEDS-USEFUL-WORK",
+          ge.certify("m-cert", commits=lambda wd, s, u: 0)["rotations_certified"] == 0)
+    cert_fixture("m-cert2", "cw2", wall_text=False)
+    check("V-EPOCH-CERTIFY-NEEDS-PREDECESSOR-TRANSCRIPT",
+          ge.certify("m-cert2", commits=lambda wd, s, u: 3)["rotations_certified"] == 0)
+    cert_fixture("m-cert3", "cw3", record_cause=False)
+    check("V-EPOCH-CERTIFY-NEEDS-RECORDED-CAUSE",
+          ge.certify("m-cert3", commits=lambda wd, s, u: 3)["rotations_certified"] == 0)
+    answers = iter([[{"name": "m-cert-e2", "state": "working", "id": "a"}], None])
+    gm.transition("m-cert", expect_epoch=1, expect_state=gm.RUNNING, event="t_end", state=gm.HALTED, now=NOW)
+    n = ge.watch("m-cert", every_s=0, max_s=5, host=lambda: next(answers, None))
+    c1 = ge.certify("m-cert", commits=lambda wd, s, u: 3)
+    check("V-EPOCH-WATCH-SAMPLES-UNTIL-TERMINAL", n == 1 and c1["owner_samples"]["answered"] == 1
+          and c1["owner_samples"]["max_live_workers"] == 1, c1["owner_samples"])
+
     c = ge.census()
     check("V-EPOCH-CENSUS-SEPARATES-COUNTERS",
           c["fresh_worker_sessions"] >= 4 and c["context_rotations"] >= 1 and c["same_session_continuations"] >= 1
