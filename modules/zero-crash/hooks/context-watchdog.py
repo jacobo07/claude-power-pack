@@ -860,6 +860,43 @@ def _write_trigger_flag(atomic_write, session_id: str, used_pct, cwd: str,
         return None
 
 
+def _shadow_rollover(session_id: str, cwd: str, transcript_path: str, used_pct, tier: str) -> bool:
+    """P3 SHADOW (vault/specs/interactive-context-rollover.md): record what a fresh-epoch
+    rollover WOULD do at this crossing -- capsule, completeness, safe-to-forget, break-even.
+    Destroys nothing and changes no reply. Detached so a starved git never eats this hook's
+    critical 20 s budget. pythonw.exe has no console: no window, no escapes written to the
+    Owner's terminal (the conhost --headless incident). Kill switch CPP_ROLLOVER_SHADOW=off.
+    Never raises."""
+    if (os.environ.get("CPP_ROLLOVER_SHADOW") or "").lower() == "off":
+        return False
+    try:
+        import subprocess
+        tool = Path(__file__).resolve().parents[3] / "tools" / "rollover.py"
+        pyw = Path(sys.executable).with_name("pythonw.exe")
+        if not tool.is_file() or not pyw.is_file():
+            _ledger(session_id, "rollover_shadow_skipped", tier=tier,
+                    why="rollover.py or pythonw.exe absent")
+            return False
+        argv = [str(pyw), str(tool), "shadow", "--session", session_id, "--cwd", cwd or os.getcwd(),
+                "--tier", tier, "--used-pct", str(used_pct)]
+        if transcript_path:
+            argv += ["--transcript", transcript_path]
+        base = 0x00000008 | 0x00000200          # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+        for flags in (base | 0x01000000, base):  # try CREATE_BREAKAWAY_FROM_JOB first
+            try:
+                subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, creationflags=flags, close_fds=True)
+                _ledger(session_id, "rollover_shadow_spawned", tier=tier, used_pct=used_pct,
+                        breakaway=bool(flags & 0x01000000))
+                return True
+            except OSError:
+                continue
+        _ledger(session_id, "rollover_shadow_skipped", tier=tier, why="spawn refused")
+    except Exception:
+        pass
+    return False
+
+
 def _spawn_daemon() -> bool:
     """Spawn the SendKeys daemon detached (Owner PASO 3, 2026-05-20).
     Belt+suspenders: watchdog drops the trigger flag AND launches the
@@ -1221,6 +1258,9 @@ def _run_inner(event: dict) -> dict:
             _set_flag(session_id, SNAPSHOT_FLAG)
         except Exception:
             pass
+        # Mission workers rotate under gsd_epoch; only ordinary sessions are observed here.
+        if not (_read_autorun_marker(session_id) or {}).get("mission_id"):
+            _shadow_rollover(session_id, cwd, transcript_path, used_pct, "tier1")
 
     # Tier 2 (>= 70%) — kclear-equivalent + zero-keystroke compact dispatch
     if used_pct >= adv_pct and not _flag_exists(session_id, ADVISORY_FLAG):
@@ -1273,6 +1313,8 @@ def _run_inner(event: dict) -> dict:
         # 1. Save vault BEFORE compact (Owner 2a: save then free).
         kclear_paths = _kclear_equivalent(atomic_write, session_id, used_pct,
                                           cwd, transcript_path)
+        # 1b. P3 shadow: what a fresh epoch would do here instead of /compact. Recorded only.
+        _shadow_rollover(session_id, cwd, transcript_path, used_pct, "tier2")
         # 2. Empirical-evidence telemetry (Owner DONE-gate 6a).
         tel_path = _dump_telemetry(atomic_write, session_id, used_pct, cwd,
                                    transcript_path, kclear_paths)

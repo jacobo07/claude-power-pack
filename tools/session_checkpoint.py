@@ -36,6 +36,7 @@ from pathlib import Path
 
 PROJECT_MARKERS = ["SKILL.md", ".git", "pyproject.toml", "package.json", "CLAUDE.md", ".claude", ".vscode"]
 HANDOFF_NAME = "project_session_handoff.md"
+HANDOFFS_DIR = "handoffs"          # memory/handoffs/<session_id>.md, one per session
 MEMORY_INDEX_NAME = "MEMORY.md"
 INSIGHTS_REL = "_audit_cache/insights.json"
 INSIGHTS_SCHEMA = "insights-v1"
@@ -256,15 +257,22 @@ def update_memory_index(root: Path, date: str, headline: str) -> None:
 def cmd_record(args) -> int:
     root = find_project_root(Path.cwd())
     if args.stdin:
-        payload = json.loads(sys.stdin.read())
+        # PowerShell 5.1 prepends a UTF-8 BOM when piping to a native exe; json.loads refuses it,
+        # so /kclear from PowerShell (a documented path) crashed before writing anything.
+        payload = json.loads(sys.stdin.read().lstrip("﻿"))
     else:
-        payload = json.loads(Path(args.input).read_text(encoding="utf-8"))
+        payload = json.loads(Path(args.input).read_text(encoding="utf-8-sig"))
 
     date = payload.get("date") or datetime.now().strftime("%Y-%m-%d")
     session_id = payload.get("session_id") or "unknown"
 
     handoff_path = get_memory_dir(root) / HANDOFF_NAME
     atomic_write(handoff_path, render_handoff(payload))
+    # The project-level file is shared by every pane in the repo: the next /kclear anywhere
+    # overwrites it (measured 2026-09-28: a sibling's handoff replaced this session's within the
+    # hour). A per-session copy survives that, and is what a rollover capsule binds to.
+    if re.fullmatch(r"[0-9a-fA-F-]{8,}", session_id or ""):
+        atomic_write(get_memory_dir(root) / HANDOFFS_DIR / f"{session_id}.md", render_handoff(payload))
     added, skipped = append_insights(root, payload.get("insights") or [], session_id, date)
 
     summary_first_line = ((payload.get("summary") or "").strip().splitlines() or [""])[0]

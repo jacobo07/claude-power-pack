@@ -34,10 +34,12 @@ The sequence is `/kclear` → (verdict SAFE_TO_FORGET) → `/clear` → `/kresum
 4. **Answer the exam** from what you just read, then certify:
 
    ```
-   ... rollover.py certify --from <session> --answers '{"goal":"<file name>","branch":"<b>","head":"<7 chars>","next":"<first obligation>"}'
+   ... rollover.py certify --from <session> --goal <file name> --branch <b> --head <7 chars> --next "<first obligation>"
    ```
 
-   RESUME_CERTIFIED retires the capsule. RESUME_FAILED lists what disagreed — re-read and retry.
+   One flag per answer: PowerShell 5.1 strips the quotes out of a JSON argument. Only the session
+   that won the claim may certify (exit 5 otherwise). RESUME_CERTIFIED retires the capsule.
+   RESUME_FAILED lists what disagreed — re-read and retry. Exit 7 = answers unreadable, nothing judged.
    **No file edit, commit or other mutation before RESUME_CERTIFIED.**
 
 5. **Continue** with the first open obligation. Do not ask the Owner to paste a plan path.

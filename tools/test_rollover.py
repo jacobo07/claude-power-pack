@@ -146,6 +146,18 @@ def main() -> int:
               and own["obligations_source"] == "own handoff", own["obligations"])
         bare.unlink()
 
+        print("a sibling's /kclear overwrites the shared file; the per-session copy survives")
+        write_handoff(repo, OTHER)
+        per = repo / "memory" / "handoffs" / f"{SID}.md"
+        per.parent.mkdir(exist_ok=True)
+        per.write_text(f"# Session Handoff\n\n**Session ID**: `{SID}`\n", encoding="utf-8")
+        surv = ro.compile_capsule(SID, str(repo), str(tp))
+        check("V-ROLLOVER-PER-SESSION-HANDOFF", surv["handoff"].get("session") == SID
+              and surv["handoff"].get("path") == str(per) and ro.completeness(surv)["complete"],
+              surv["handoff"].get("path"))
+        per.unlink()
+        write_handoff(repo, SID)
+
         rc2 = ro.seal(dict(cap, session_id="s-tamper"), state)
         Path(rc2["path"]).write_text(Path(rc2["path"]).read_text(encoding="utf-8").replace("Wire", "Wyre"), encoding="utf-8")
         v = ro.safe_to_forget(rc2, ro.completeness(cap))
@@ -201,6 +213,19 @@ def main() -> int:
         n_after = (state / "rollover-ledger.jsonl").read_text(encoding="utf-8").count("\n")
         os.environ.pop("CPP_ROLLOVER_SHADOW", None)
         check("V-ROLLOVER-KILL-SWITCH", n_after == n_before, f"{n_before}->{n_after}")
+
+        print("certify through the CLI: fencing and shell-safe answers")
+        ro.STATE_DIR = state                      # succ-A holds the claim on SID (above)
+        flags = ["--goal", "goal.md", "--branch", cap["repo"]["branch"], "--head", cap["repo"]["head"][:7],
+                 "--next", "Wire the shadow observer"]
+        rc_b = ro.main(["certify", "--from", SID, "--claimant", "succ-B", *flags])
+        check("V-ROLLOVER-CERTIFY-FENCED", rc_b == 5 and not (state / "capsules" / f"{SID}.certified").exists(), f"rc={rc_b}")
+        rc_bad = ro.main(["certify", "--from", SID, "--claimant", "succ-A", "--answers", "{goal:goal.md}"])
+        check("V-ROLLOVER-ANSWERS-UNREADABLE", rc_bad == 7, f"rc={rc_bad} (PowerShell-stripped JSON)")
+        rc_ok = ro.main(["certify", "--from", SID, "--claimant", "succ-A", *flags])
+        check("V-ROLLOVER-CERTIFY-FLAGS", rc_ok == 0 and (state / "capsules" / f"{SID}.certified").exists(), f"rc={rc_ok}")
+        check("V-ROLLOVER-CERTIFIED-RETIRED", ro.newest_capsule(str(repo), state, exclude="x") is None
+              or ro.newest_capsule(str(repo), state, exclude="x")["session_id"] != SID, "certified capsule not offered again")
     finally:
         ro.child_state = real_child
         shutil.rmtree(tmp, ignore_errors=True)

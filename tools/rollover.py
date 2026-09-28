@@ -214,10 +214,14 @@ def obligations_from(path: Optional[str]) -> list[str]:
     return items[:10]
 
 
-def handoff_facts(cwd: str) -> dict:
+def handoff_facts(cwd: str, session_id: str = "") -> dict:
+    """This session's own handoff (memory/handoffs/<sid>.md) first; the shared project file,
+    which any pane's /kclear overwrites, only as a fallback -- and then its Session ID decides."""
     try:
         import session_checkpoint as sc
-        path = sc.get_memory_dir(sc.find_project_root(Path(cwd))) / sc.HANDOFF_NAME
+        mem = sc.get_memory_dir(sc.find_project_root(Path(cwd)))
+        own = mem / getattr(sc, "HANDOFFS_DIR", "handoffs") / f"{session_id}.md"
+        path = own if session_id and own.is_file() else mem / sc.HANDOFF_NAME
     except (Exception, SystemExit) as exc:  # noqa: BLE001 -- find_project_root raises SystemExit
         return _unknown(f"handoff location unresolved: {exc.__class__.__name__}")
     if not path.is_file():
@@ -238,7 +242,7 @@ def compile_capsule(session_id: str, cwd: str, transcript: Optional[str], *, goa
     tp = Path(transcript) if transcript else _find_transcript(session_id)
     writes = session_writes(tp)
     gp = goal_pointer(cwd, writes, goal)
-    handoff = handoff_facts(cwd)
+    handoff = handoff_facts(cwd, session_id)
     own_handoff = handoff.get("state") == "OK" and handoff.get("session") == session_id
     items, source = list(next_items or []), "explicit"
     if not items:
@@ -505,11 +509,29 @@ def observe(session_id: str, cwd: str, transcript: Optional[str], used_pct: Opti
     return row
 
 
-def _answers(raw: str) -> dict:
+def _answers(a) -> Optional[dict]:
+    """One flag per answer is the shell-safe form: PowerShell 5.1 strips the double quotes out of
+    a JSON argument to a native exe (measured 2026-09-28: every field arrived as None). --answers
+    JSON stays accepted; if it does not parse, that is None -- "could not read your answers" --
+    never an empty dict that reads as "you answered nothing"."""
+    got = {k: getattr(a, k) for k in ("goal", "branch", "head", "next") if getattr(a, k, None)}
+    if a.answers:
+        try:
+            parsed = json.loads(a.answers)
+        except ValueError:
+            return None
+        if not isinstance(parsed, dict):
+            return None
+        got = {**parsed, **got}
+    return got
+
+
+def claim_holder(session_id: str, state_dir: Optional[Path] = None) -> Optional[str]:
+    marker = capsule_path(session_id, state_dir).with_suffix(".claim")
     try:
-        return json.loads(raw)
-    except ValueError:
-        return {}
+        return json.loads(marker.read_text(encoding="utf-8")).get("claimant")
+    except (OSError, ValueError):
+        return None
 
 
 def main(argv=None) -> int:
@@ -539,7 +561,10 @@ def main(argv=None) -> int:
     rs.add_argument("--from", dest="from_session")
     ce = sub.add_parser("certify")
     ce.add_argument("--from", dest="from_session", required=True)
-    ce.add_argument("--answers", required=True, help='JSON {"goal","branch","head","next"}')
+    ce.add_argument("--claimant", default=current_session() or f"pid{os.getppid()}")
+    for k in ("goal", "branch", "head", "next"):
+        ce.add_argument(f"--{k}")
+    ce.add_argument("--answers", help='JSON {"goal","branch","head","next"} (fragile under PowerShell 5.1)')
     st = sub.add_parser("status")
     st.add_argument("--n", type=int, default=10)
     a = ap.parse_args(argv)
@@ -587,7 +612,8 @@ def main(argv=None) -> int:
         if rf["verdict"] != "CONTINUE":
             print("Do not continue from the capsule as written: re-read the goal file and the tree first.")
         print("\nResume exam -- answer before any mutation, then run:")
-        print(f"  python {Path(__file__).as_posix()} certify --from {cap['session_id']} --answers '<json>'")
+        print(f"  python {Path(__file__).as_posix()} certify --from {cap['session_id']} "
+              f"--claimant {a.claimant} --goal <file> --branch <b> --head <7> --next \"<first obligation>\"")
         for item in exam(cap):
             print(f"  [{item['key']}] {item['q']}")
         return 0
@@ -596,8 +622,19 @@ def main(argv=None) -> int:
         if not path.is_file():
             print(f"No capsule {path}.")
             return 4
+        holder = claim_holder(a.from_session)
+        if holder != a.claimant:
+            # Fencing: only the successor that won the claim may take mutation authority.
+            print(f"REFUSED: capsule is claimed by {holder or 'nobody'}, not {a.claimant}; run resume first.")
+            ledger("certify_refused", session_id=a.from_session, claimant=a.claimant, holder=holder)
+            return 5
+        answers = _answers(a)
+        if answers is None:
+            print("UNREADABLE: --answers is not a JSON object (PowerShell strips its quotes); "
+                  "pass --goal/--branch/--head/--next instead. Nothing judged.")
+            return 7
         cap = json.loads(path.read_text(encoding="utf-8"))
-        res = certify(cap, _answers(a.answers))
+        res = certify(cap, answers)
         ledger(res["verdict"].lower(), session_id=a.from_session, wrong=res["wrong"])
         if res["verdict"] == "RESUME_CERTIFIED":
             _atomic_write(path.with_suffix(".certified"), _iso().encode("utf-8"))
