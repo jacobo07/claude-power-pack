@@ -113,6 +113,37 @@ large effect, cannot establish a small one.
 - **Repair.** Committed in the smoke repo (`e6275c3`); the stuck mission ends at its own 1.5 h budget.
 - **System trap left open.** A persistent NO_PHASES hold has no escalation short of the mission
   budget; a mission can idle its whole budget on a setup error.
+- **SUPERSEDED 2026-09-28 ~21:05Z** by T-FIX-IN-THE-TREE-THE-JUDGE-DOES-NOT-READ-001 below: the
+  root cause above was wrong and its repair landed in a tree the supervisor never judged.
+
+## T-FIX-IN-THE-TREE-THE-JUDGE-DOES-NOT-READ-001 — the second T11 smoke stalled identically (CLASS 0)
+
+- **Symptom.** `m-860e4176f1d6` (armed 19:49Z) — worker `0704c6a9` crossed the smoke's 22 % test
+  wall 90 s into its first turn (flag `pct 26`), handed off, went idle. Every sweep pass then held
+  the relay on `gsd NO_PHASES` with the mission RUNNING; 5.7 M input tokens, 0 commits. The handoff
+  read it as "turn ended and nothing re-invoked the model; Ralph not opted in". Both false: the
+  sweep (the documented continuation owner) judged the idle worker every pass and refused.
+- **Root cause (measured, `gsd-tools query init.manager` run in each tree).** The worker works in the
+  worktree `.claude/worktrees/gsd-autonomous-run`. Its STATE.md named milestone v1, shipped and
+  collapsed into `<details>`, and Phase 9 sat outside any milestone, so GSD scoped the phase list to
+  a finished milestone: 0 phases. The root checkout parsed 9. The first repair (`e6275c3`) edited
+  the ROOT roadmap -- the tree the judge never reads -- so nothing changed. Switching the worktree's
+  STATE to v2.0 with GSD's own `state.milestone-switch` made GSD answer 1 phase at once.
+- **Failed defenses.** (1) The earlier entry's instrument asked the root tree (the lesson it wrote
+  down, "ask the tree the worker reads", was not applied to its own repair). (2) The supervisor's
+  refusal was correct but unbounded: RUNNING for the whole budget. (3) The T11 wall (22 %) sat
+  barely above the 16.4 % fresh-session floor (164 k of 1 M measured at the first call), so no epoch
+  could ever end a turn below the wall: same-epoch continuation was unobservable by design.
+- **Repairs.** `551bdee` bounded hold (NO_PHASES x2 / UNAVAILABLE x6 -> BLOCKED; only OK relays;
+  8 V-MC-GSD gates, 2 mutation drills KILLED). `ad8f398` a `<synthetic>` quota row no longer reads
+  as context 0 (m-d82c7cb6b87e continued a ~336 k worker on "context 0"). Fixture: v2.0 milestone
+  via the SDK handler.
+- **Race I caused.** The STATE switch landed 40 s before a sweep pass; GSD answered OK and the
+  supervisor rotated m-860 to epoch 2 (CONTEXT_ROTATION, trigger wall) with its old 22 % wall. The
+  hazard was named one step earlier; the order "retire the mission, then repair" was not applied in
+  time. Rule: never repair a fixture a live mission's judge reads until that mission is terminal.
+- **Pattern.** Before repairing what a judge refused, run the judge's own query in the tree the judge
+  reads, and make the repair there. A green instrument run in another tree is not evidence.
 
 ## Red team R1 (0 critical, 0 high, 4 medium, 6 low) -- repaired in this session
 
