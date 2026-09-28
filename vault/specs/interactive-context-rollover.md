@@ -88,6 +88,14 @@ reconstructs, refreshes reality and prints the exam.
 certified; zero lost obligations across them; would-rollover rate and predicted saving reviewed by
 the Owner; then `CPP_ROLLOVER_ACTIVE=1` opt-in wiring of the C4 transport + hub auto-inject.
 
+**Owner decision 2026-09-28 (supersedes the gate above for enablement).** Typed by the Owner in
+pane orca-x-e5 (session 68553ff0), verbatim: *"take care of the context, make sure it automatically
+does /kclear and it sends, and then /clear and it sends, and then carries on, and globally in the
+GEX44 this should be"*. So active rollover ships **ON by default** (kill switch to disable), on this
+host and on GEX44. The safety refusals are unchanged: no `/clear` without SAFE_TO_FORGET and a
+hash-matching capsule; no capsule or a refusal types nothing. The shadow evidence (§7 criteria) is
+still collected, now as monitoring rather than as a gate.
+
 ## 8. Production Reality owed
 
 A real fresh-session crossing spends subscription quota; Owner memory defers model experiments
