@@ -1,32 +1,32 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1
-current_plan: 2
-status: blocked
-stopped_at: Completed 01-02-PLAN.md (legitimacy checkpoint rejected; CRO-01 phase_verdict BLOCKED)
-last_updated: "2026-09-28T12:10:20Z"
+current_phase: 2
+current_plan: 1
+status: verifying
+stopped_at: Completed 02-01-PLAN.md (CRO-02 phase_verdict MEASURED, cro02 SATISFIED)
+last_updated: "2026-09-28T12:53:57.141Z"
 last_activity: 2026-09-28
-last_activity_desc: Phase 1 plan 02 halted -- Task 1 package-legitimacy checkpoint rejected (no Owner reachable mid-run)
-state_head: 5bef2375a17a410b39ef01c0ae1b0ac3abf0ed07
+last_activity_desc: Phase 2 execution started
+state_head: cb6fc622e3030d3266193db3cd3cf02f195ecd4e
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 3
+  completed_plans: 3
   percent: 0
 workstream: cognitive-resource-os
 created: 2026-09-28
-current_phase_name: Gate verdict on the big host
+current_phase_name: GEX44 observed baseline
 ---
 
 # Project State
 
 ## Current Position
 
-**Status:** Blocked -- CRO-01 phase_verdict BLOCKED, pending Owner answer to 01-02's Task 1 checkpoint
-**Current Phase:** 1
-**Last Activity:** 2026-09-28 — Phase 1 plan 02 halted at the Task 1 package-legitimacy checkpoint (rejected)
-**Last Activity Description:** Task 1 of 01-02-PLAN.md (install pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0 into a
+**Status:** Phase complete — ready for verification
+**Current Phase:** 2
+**Last Activity:** 2026-09-28 — Phase 2 execution started
+**Last Activity Description:** Phase 2 execution started
 job-scratch venv) was answered rejected -- no Owner was reachable mid-run to approve it, and the orchestrator cannot
 grant that approval on the Owner's behalf. Tasks 2-3 were not run. EVIDENCE.md sections 2-4 record
 suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
@@ -34,14 +34,14 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 ## Progress
 
 **Phases Complete:** 0
-**Current Plan:** 2 (both plans of Phase 1 executed; phase itself BLOCKED, not complete)
-**Total Plans in Phase:** 2
+**Current Plan:** 1
+**Total Plans in Phase:** 1
 
 ## Session Continuity
 
-**Last session:** 2026-09-28T12:10:20Z
+**Last session:** 2026-09-28T12:53:57.121Z
 
-**Stopped At:** Completed 01-02-PLAN.md (legitimacy checkpoint rejected; CRO-01 phase_verdict BLOCKED)
+**Stopped At:** Completed 02-01-PLAN.md (CRO-02 phase_verdict MEASURED, cro02 SATISFIED)
 **Resume File:** None
 
 ## Performance Metrics
@@ -50,6 +50,7 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 |------|----------|-------|-------|
 | Phase 01 P01 | 7min | 2 tasks | 1 files |
 | Phase 01 P02 | 4min | 1 task (of 3; halted at Task 1 rejection) | 1 files |
+| Phase 02 P01 | 17min | 3 tasks | 2 files |
 
 ## Decisions
 
@@ -62,6 +63,8 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 - [Phase 1]: CRO-01's phase_verdict is composed as BLOCKED (gates_verdict PASS + suite_verdict BLOCKED), not a
   false PASS or a silent skip. requirements-completed stays empty for CRO-01 until plan 01-02 is re-run to a
   resolution.
+- [Phase 2]: [Phase 2]: by_entrypoint.py composes tis_observed/budget_monitor/tis_report rather than re-implementing dedupe/pricing/TTL logic; lives under .planning, not tools/.
+- [Phase 2]: [Phase 2]: No tool defect found on GEX44 (gates green, reconcile MATCH on first snapshot, no tools/modules diff); CRO-02 verdict phase_verdict MEASURED, cro02 SATISFIED.
 
 ## Blockers
 

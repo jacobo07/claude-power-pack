@@ -70,11 +70,11 @@ Plans:
      cache writes) and the comparison states which differences the instrument can and cannot explain.
   4. Evidence file written; no code changes unless a tool defect is found, in which case it gets a failing test first.
 
-**Plans**: 1 plan
+**Plans**: 1/1 plans executed
 
 Plans:
 
-- [ ] 02-01-PLAN.md — tracer: pre-checks + tis_report --observed --all-projects on GEX44 transcripts; by_entrypoint.py reproducer (selftest, reconciled vs tis_observed / tis_report / budget_monitor) for the per-entrypoint table; laptop comparison with can/cannot-explain; defect record; CRO-02 verdict (autonomous, wave 1)
+- [x] 02-01-PLAN.md — tracer: pre-checks + tis_report --observed --all-projects on GEX44 transcripts; by_entrypoint.py reproducer (selftest, reconciled vs tis_observed / tis_report / budget_monitor) for the per-entrypoint table; laptop comparison with can/cannot-explain; defect record; CRO-02 verdict (autonomous, wave 1)
 
 ### Phase 3: P3 pre-flight P0
 
@@ -125,7 +125,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Gate verdict on the big host | 2/2 | Blocked (CRO-01: rerun 01-02 pending Owner) | - |
-| 2. GEX44 observed baseline | 0/1 | Planned | - |
+| 2. GEX44 observed baseline | 1/1 | In Progress|  |
 | 3. P3 pre-flight P0 | 0/? | Not started | - |
 | 4. Prefix cache-miss A/B | 0/? | Not started | - |
 | 5. Seal and hand back | 0/? | Not started | - |
