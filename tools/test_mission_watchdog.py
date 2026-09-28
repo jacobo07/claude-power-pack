@@ -32,6 +32,8 @@ os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
 os.environ["CTXWD_HEARTBEAT_LOG"] = str(Path(TMP) / "context-watchdog.log")
 os.environ["CTXWD_SNAPSHOT_LEDGER"] = str(Path(TMP) / "context_snapshots.jsonl")
+PROJECT = Path(TMP) / "project"
+(PROJECT / "vault").mkdir(parents=True)
 sys.path.insert(0, str(ROOT / "tools"))
 import gsd_autorun_marker as mk  # noqa: E402
 import gsd_long_run as lr  # noqa: E402
@@ -84,7 +86,10 @@ def main() -> int:
             str(time.time()), encoding="utf-8")
         os.environ["_TEST_CONTEXT_PCT"] = str(pct)
         try:
-            return wd.run({"session_id": sid, "cwd": str(ROOT), "transcript_path": ""}) or {}
+            # A private project, never ROOT: the watchdog appends its roll-up to <cwd>/vault/progress.md,
+            # and cwd=ROOT made this suite write the LIVE checkout's progress.md (test_state_isolation,
+            # run from the live checkout, 2026-09-28).
+            return wd.run({"session_id": sid, "cwd": str(PROJECT), "transcript_path": ""}) or {}
         finally:
             os.environ.pop("_TEST_CONTEXT_PCT", None)
 

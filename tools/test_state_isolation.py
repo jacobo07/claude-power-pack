@@ -88,7 +88,18 @@ def _rel(path: str) -> str:
     try:
         return Path(path).resolve().relative_to(REAL_ROOT.resolve()).as_posix()
     except (ValueError, OSError):
+        pass
+    try:
+        return "<checkout>/" + Path(path).resolve().relative_to(REPO.resolve()).as_posix()
+    except (ValueError, OSError):
         return Path(path).as_posix()
+
+
+# The checkout's own vault/ is live state when the checkout IS the live one (it lives under
+# ~/.claude); from a worktree it is outside REAL_ROOT and a write there was invisible.
+# test_mission_watchdog wrote vault/progress.md for months that way (found 2026-09-28 only
+# because the ratchet was run from the live checkout).
+WATCHED = os.pathsep.join([str(REAL_ROOT), str(REPO / "vault")])
 
 
 def run_suite(name: str, work: Path, timeout: int = 900) -> tuple[int | None, list[tuple[str, str]], float]:
@@ -96,7 +107,7 @@ def run_suite(name: str, work: Path, timeout: int = 900) -> tuple[int | None, li
     t0 = time.monotonic()
     try:
         proc = subprocess.run([sys.executable, str(REPO / "tools" / name)], cwd=str(REPO),
-                              env=_env(log, REAL_ROOT), capture_output=True, timeout=timeout)
+                              env=_env(log, WATCHED), capture_output=True, timeout=timeout)
         rc = proc.returncode
     except subprocess.TimeoutExpired:
         rc = None
@@ -128,6 +139,19 @@ def controls(work: Path) -> None:
         _ok("V-ISO-CONTROL-CHILD", "a Python grandchild's write is observed")
     else:
         _fail("V-ISO-CONTROL-CHILD", "a Python grandchild's write was NOT observed")
+    # The SECOND watched root (the checkout's vault/) must be seen, and an unwatched dir must not.
+    second, outside = work / "second_root", work / "outside"
+    second.mkdir()
+    outside.mkdir()
+    log3 = work / "control3.audit"
+    subprocess.run([sys.executable, "-c", f"import pathlib;pathlib.Path(r'{second}/p.md').write_text('x');"
+                    f"pathlib.Path(r'{outside}/q.md').write_text('y')"],
+                   env=_env(log3, os.pathsep.join([str(fake), str(second)])), check=True)
+    seen = [p for _, p in _read(log3)]
+    if any(p.endswith("p.md") for p in seen) and not any(p.endswith("q.md") for p in seen):
+        _ok("V-ISO-CONTROL-SECOND-ROOT", "a write under the second watched root is observed; an unwatched one is not")
+    else:
+        _fail("V-ISO-CONTROL-SECOND-ROOT", f"multi-root aperture wrong: {seen}")
 
 
 def main(argv: list[str]) -> int:

@@ -16,7 +16,10 @@ _LOG = os.environ.get("CPP_STATE_AUDIT_LOG")
 _ROOT = os.environ.get("CPP_STATE_AUDIT_ROOT")
 
 if _LOG and _ROOT:
-    _root = os.path.normcase(os.path.abspath(_ROOT)).rstrip("\\/") + os.sep
+    # os.pathsep-separated: the runner also watches the checkout's own vault/, which is live state
+    # when the checkout is the live one and is invisible under ~/.claude when it is a worktree.
+    _roots = tuple(os.path.normcase(os.path.abspath(r)).rstrip("\\/") + os.sep
+                   for r in _ROOT.split(os.pathsep) if r)
     _busy = threading.local()
 
     def _under(p):
@@ -24,7 +27,7 @@ if _LOG and _ROOT:
             p = os.fspath(p)
             if isinstance(p, bytes):
                 p = p.decode("utf-8", "replace")
-            return os.path.normcase(os.path.abspath(p)).startswith(_root)
+            return os.path.normcase(os.path.abspath(p)).startswith(_roots)
         except Exception:  # unrepresentable path: not ours to judge
             return False
 
