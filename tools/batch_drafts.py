@@ -32,8 +32,10 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 from modules.external_assimilation import node_bridge as nb  # noqa: E402
 import task_contract as tc  # noqa: E402
+import verified_reuse as vr  # noqa: E402
 
 COMPLETE, INCOMPLETE, VALID, REFUSED, UNJUDGED = "COMPLETE", "INCOMPLETE", "VALID", "REFUSED", "UNJUDGED"
+REUSED = "REUSED"
 WORKER = {"route": "claude-code-agent", "requestedModel": "claude-sonnet-5", "config": {}}
 
 
@@ -74,10 +76,36 @@ def compile_batch(root: str, tasks: list[dict], max_chars: int | None = None) ->
         return INCOMPLETE, batch
     d = receipts_dir()
     d.mkdir(parents=True, exist_ok=True)
+    # The task specs are recorded here, not read back from the batch at validation time, so the
+    # drafts admitted for reuse are bound to what THIS compile was asked for.
     (d / f"{batch['binding']}.json").write_text(json.dumps(
         {"binding": batch["binding"], "promptSha256": batch["promptSha256"], "root": str(root),
-         "taskIds": batch["manifest"]["taskIds"]}, indent=1), encoding="utf-8")
+         "taskIds": batch["manifest"]["taskIds"], "tasks": tasks}, indent=1), encoding="utf-8")
     return COMPLETE, batch
+
+
+def reuse_enabled() -> bool:
+    return (os.environ.get("CPP_VERIFIED_REUSE") or "").strip().lower() not in ("off", "0", "false")
+
+
+def compile_with_reuse(root: str, tasks: list[dict], max_chars: int | None = None) -> tuple[str, dict, dict]:
+    """Hand back a verified prior draft for every task whose exact inputs were already reviewed;
+    compile a batch only for the rest. Returns (outcome, batch, reused_by_task_id); outcome
+    REUSED when nothing was left to dispatch. A reused draft is never accepted."""
+    reused: dict = {}
+    if reuse_enabled():
+        remaining = []
+        for t in tasks:
+            outcome, info = vr.lookup(root, t, OUTPUT_BOUNDS)
+            if outcome == vr.HIT:
+                reused[t["id"]] = info
+            else:
+                remaining.append(t)
+        tasks = remaining
+    if not tasks:
+        return REUSED, {}, reused
+    outcome, batch = compile_batch(root, tasks, max_chars)
+    return outcome, batch, reused
 
 
 def validate(batch: dict, result_text: str) -> tuple[str, dict]:
@@ -93,6 +121,16 @@ def validate(batch: dict, result_text: str) -> tuple[str, dict]:
     if not r.ok:
         return UNJUDGED, {"reason": f"bridge {r.outcome}: {r.error}"}
     v = r.value or {}
+    if v.get("ok") and reuse_enabled() and rec.get("tasks"):
+        # Well-formed drafts become reusable DRAFTS for identical future tasks. Admission can fail
+        # (a source changed since compile) without changing this verdict; the outcome is reported.
+        specs = {t["id"]: t for t in rec["tasks"]}
+        v["admitted"] = {}
+        for o in v.get("outputs") or []:
+            t = specs.get(o.get("id"))
+            if t is not None:
+                v["admitted"][o["id"]] = vr.admit(rec["root"], t, OUTPUT_BOUNDS, o, plan_id=rec["binding"],
+                                                  worker_id=WORKER["route"])[0]
     return (VALID if v.get("ok") else REFUSED), v
 
 
@@ -118,7 +156,16 @@ def main(argv=None) -> int:
         except (TypeError, ValueError) as exc:
             print(f"INCOMPLETE: {exc}")
             return 3
-        outcome, batch = compile_batch(spec["root"], tasks, spec.get("maxChars"))
+        outcome, batch, reused = compile_with_reuse(spec["root"], tasks, spec.get("maxChars"))
+        for tid, info in reused.items():
+            # A reused draft is still a draft: it needs a fresh review, exactly like a new one.
+            print(f"REUSED {tid}: draft from {info['sourceTask']['planId'][:12]} (accepted=false, "
+                  f"fresh review required; avoided 1 dispatch, {info['avoided']['source_chars']} source chars)")
+        if reused:
+            Path(a.out).with_suffix(".reused.json").write_text(json.dumps(reused, indent=1), encoding="utf-8")
+        if outcome == REUSED:
+            print("REUSED: every task matched a verified prior draft; nothing to dispatch")
+            return 0
         if outcome == UNJUDGED:
             print(f"UNJUDGED: {batch['error']}")
             return 2
