@@ -69,3 +69,12 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
   package-legitimacy checkpoint (pinned pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0, job-scratch venv only).
   Resolve by re-running plan 01-02 from Task 1 once the Owner reviews the PyPI hash evidence in the plan's context
   section and answers "approved" or "rejected: &lt;reason&gt;".
+
+## Deferred Verification
+
+| Phase | State | Resume |
+|-------|-------|--------|
+| 1 | verification_deferred_gaps | Owner approves 01-02 Task 1 install, then /gsd-execute-phase 1 --ws cognitive-resource-os (re-runs 01-02) |
+
+Autonomous run continued past Phase 1 per the ROADMAP operating constraint ("mark the phase done with verdict
+BLOCKED/UNJUDGED, and continue") rather than stopping; the only open item is the Owner-gated suite run.
