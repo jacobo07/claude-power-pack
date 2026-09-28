@@ -156,9 +156,27 @@ foreign writer; hunk headers checked before every commit.
 
 ## 5. Certification now
 
-IMPLEMENTED, HOST VERIFIED, MULTI-EPOCH VERIFIED (production, hundreds of epochs). NOT
-adversarially verified. Currently DEGRADED (G0). Target after S10: ADVERSARIALLY + PRODUCTION
-VERIFIED for local missions.
+*(Rewritten 2026-09-28; the earlier text claimed "multi-epoch verified, hundreds of epochs" --
+those were turn-end relays, not rotations.)*
+
+| claim | tier | evidence |
+|---|---|---|
+| same-session turn continuation exists on this host | HOST VERIFIED | probe `7a42f96f` (scratch `probe_resume2.log`) |
+| turn end continues, wall/ceiling rotates, child holds | IMPLEMENTED + ADVERSARIALLY TESTED | V-EPOCH 71/71, 11/11 mutants, crash points, peer review F1 fixed |
+| wall-driven rotation happened in production (historical) | CLASSIFIED, 10 epochs | census `reason+wall_witness`; 1 corroborated by transcript (cb70bd86) |
+| every launch names its cause | PRODUCTION (since 717554f) | `launch_cause` rows from the live sweep (first: m-916e905e23d4 INITIAL) |
+| turn continuation in production | see Live proof | `turn_continued` rows |
+| ≥ 3 certified rotations in one real mission | see Live proof | `gsd_epoch.py certify` |
+| supervisor liveness | e9 T7 `dfe968f` + heartbeat | heartbeat rc 0 both stages |
+
+### Live proof (S10) -- mission m-916e905e23d4
+
+Armed 2026-09-28 00:44Z (PREPARED), launched by the production sweep 00:47Z (`launch_cause`
+INITIAL/fresh), worker `9e89a87e` adopted 00:51Z and entered the smoke worktree. Wall 29/30/28 % of
+a 1M window; parent context 19 % at start, 24 % at 01:41Z. Single-owner witness: 26 answered
+samples 00:46Z–02:05Z, never 2 live workers; continued by `gsd_epoch.py watch`.
+Certified rotations so far: **0** (epoch 1 still running). This section is updated from
+`python tools/gsd_epoch.py certify --mission m-916e905e23d4`, never from the mission's own output.
 
 ## 6. Rollback
 
