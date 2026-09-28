@@ -248,3 +248,19 @@ a debug build) documenting that this branch is a deliberate belt-and-braces fall
 _Reviewed: 2026-09-28T14:55:21Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: deep_
+
+## Orchestrator disposition (2026-09-28)
+
+Findings are NOT auto-fixed in this phase. `ab_runner.py` was pre-registered by sha256
+(`runner_sha256: 9414fd25...`, EVIDENCE section 1, commit 740b41b) before the live window, and the
+verifier's integrity check rests on `git diff 740b41b..HEAD -- ab_runner.py` being empty. Editing it now
+would detach the committed evidence from the code that produced it.
+
+- CR-01 (empty-but-set ANTHROPIC_* bypasses G1): no effect on the recorded run. Before dispatching the
+  executor, the orchestrator listed this session's environment by variable NAME (not value) for
+  `^(ANTHROPIC_|CLAUDE_CODE_OAUTH_TOKEN$|CLAUDE_CONFIG_DIR$|CLAUDE_CODE_USE_)` and got no match, so no such
+  name existed, empty or not. Independently, all four runs' init events record `apiKeySource none`
+  (EVIDENCE A1/A2/B1/B2_init, validity rule VR6), i.e. no API key reached claude.
+- Status: OPEN, blocking any REUSE of ab_runner.py. Fix CR-01 (detect by name presence), WR-01, WR-02 and
+  drop IN-01's dead branch in a new commit, with a new runner sha, BEFORE any further live run. The run
+  directory's LIVE-LATCH already refuses a second live invocation of this copy.
