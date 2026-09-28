@@ -44,6 +44,7 @@ B1_credentials_stat: size=524 mtime=1790590674
 - inv05: timeout 30 /home/kobii/.local/bin/claude auth status --help -> raw/claude-subcommand-help.txt rc=0
 - inv06: timeout 30 /home/kobii/.local/bin/claude setup-token --help -> raw/claude-subcommand-help.txt rc=0
 - inv07: timeout 30 /home/kobii/.local/bin/claude doctor --help -> raw/claude-subcommand-help.txt rc=0
+- inv08: timeout 30 /home/kobii/.local/bin/claude --version -> raw/claude-version-end.txt rc=0
 model_calls: 0
 
 ## 2. Candidate mechanisms (ROADMAP criterion 1)
@@ -281,3 +282,24 @@ judgement[C09]: REJECTED (rules_effect) whether R1 content rides inside the syst
 judgement[C10]: REJECTED (rules_effect) an additive flag cannot remove R1 by definition (NO_EFFECT_ON_RULES).
 judgement[C11]: REJECTED (rules_effect) X14 shows this single var empties the whole user rules directory (and Managed/project CLAUDE.md) together (EXCLUDES_MORE_THAN_R1), not R1's three files alone.
 judgement[C12]: REJECTED (global_edit) editing or relocating files under ~/.claude/rules is a global-config edit (EDITS), forbidden outright by the operating constraints and by P0's own clause; not performed.
+
+## 4. Verdict (ROADMAP criterion 3, CRO-03)
+
+claude_version_end: 2.1.283 (Claude Code)
+claude_resolved_end: /home/kobii/.local/share/claude/versions/2.1.283
+B2_settings_json_sha256: 886b884375f2b12d31b7db6b387d8f747d235a7830b201ff32b06c3d8b8d871a
+B2_claude_md_sha256: 31442ce249ed910c9bb601d442e8baf7c1417f918e6b069cbac17545c8a35152
+B2_user_rules_dir: ABSENT
+B2_credentials_stat: size=524 mtime=1790590674
+global_bracket: UNCHANGED
+credentials_stat: UNCHANGED
+phase_status: COMPLETE
+p0_verdict: PASS (--settings {"claudeMdExcludes":["/home/kobii/.claude/rules/instrument-before-claim.md","/home/kobii/.claude/rules/destructive-state-authorization.md","/home/kobii/.claude/rules/real-context-reachability.md"]})
+p0_reason: C02 is the lowest-numbered ACCEPTABLE block (C01 was REJECTED at rules_effect). All seven graded properties hold for C02, backed by E1 (claudeMdExcludes' own describe text naming a .claude/rules/** example, X08) and E2 (X09-X10: the matcher is wired as excludeMatcher:ye into the type:"User" rulesDir walk). Every other floor block failed at its own first-checked property: C01/C07/C08/C09/C10/C11 at rules_effect, C03 at other_prefix_changes, C04/C05/C06 at credential, C12 at global_edit.
+also_acceptable: none
+version_scope: this verdict holds for claude 2.1.283 (Claude Code) as installed on GEX44 (Linux build, binary sha256 1859583ce3292059...). A host running another version must re-run this pre-flight before any counted run. Equivalence of the same version's Windows build is assumed, not measured.
+host_applicability: section 0a records ~/.claude/rules ABSENT on GEX44 (0 of 3 R1 files present) and no rule/rule_scoped rows in prefix_inventory. So arm A on GEX44 carries no R1 at all -- this host cannot run the ablation as defined (arm B would have nothing to differ from) regardless of this PASS. The PASS names a mechanism (claudeMdExcludes) for whichever host actually has R1 in its own ~/.claude/rules -- per vault/plans/cognitive-resource-os-RESUMPTION.md section 1, that is the laptop (Windows, repo at C:\Users\User\.claude\skills\claude-power-pack), whose installed claude version is not recorded anywhere in this repo and so is not covered by version_scope above.
+runtime_confirmation: none by design (zero model calls); the verdict rests only on the help text and the byte-verified excerpts cited in section 2b
+cro03: SATISFIED
+constraints_honoured: no model call (model_calls: 0; section 1's inv01-inv08 are all --version/--help forms); no interactive session; no candidate mechanism was exercised (C02 was judged from text and static excerpts only); no ~/.claude write except the plain temp files under TMP; .credentials.json was only stat-ed (sections 0b/4), never opened, copied or linked; no other mission's directory was read; commits used explicit pathspecs; nothing was pushed.
+next: Phase 5 carries p0_verdict, version_scope and host_applicability into RESUMPTION and UKDL. The P1 A/A and every counted run wait for subscription quota and the Owner. Arm B-prime (R1 on demand) remains the protocol's separate arm and is not judged here.
