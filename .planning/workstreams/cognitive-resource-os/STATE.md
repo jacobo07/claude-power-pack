@@ -1,32 +1,32 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 4
-current_plan: 1
-status: verifying
-stopped_at: Completed 04-01-PLAN.md -- CRO-04 judged UNJUDGED (similar-reuse-variance-not-observed)
-last_updated: "2026-09-28T14:47:12.074Z"
+current_phase: 1 — Gate verdict on the big host
+current_plan: Not started
+status: planning
+stopped_at: Phase 4 complete, ready to plan Phase 1
+last_updated: "2026-09-28T14:57:41.839Z"
 last_activity: 2026-09-28
-last_activity_desc: Phase 4 execution started
-state_head: f32ea4bdab84728cf939039e90b2f3537c845f95
+last_activity_desc: Phase 4 complete, transitioned to Phase 1
+state_head: cd93c9855268e12d43eb1e1aad3432b4b226efed
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 5
   completed_plans: 5
-  percent: 40
+  percent: 60
 workstream: cognitive-resource-os
 created: 2026-09-28
-current_phase_name: Prefix cache-miss A/B
+current_phase_name: Gate verdict on the big host
 ---
 
 # Project State
 
 ## Current Position
 
-**Status:** Phase complete — ready for verification
-**Current Phase:** 4
-**Last Activity:** 2026-09-28 — Phase 4 execution started
-**Last Activity Description:** Phase 4 execution started
+**Status:** Ready to plan
+**Current Phase:** 1 — Gate verdict on the big host
+**Last Activity:** 2026-09-28
+**Last Activity Description:** Phase 4 complete, transitioned to Phase 1
 job-scratch venv) was answered rejected -- no Owner was reachable mid-run to approve it, and the orchestrator cannot
 grant that approval on the Owner's behalf. Tasks 2-3 were not run. EVIDENCE.md sections 2-4 record
 suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
@@ -34,14 +34,14 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 ## Progress
 
 **Phases Complete:** 0
-**Current Plan:** 1
+**Current Plan:** Not started
 **Total Plans in Phase:** 1
 
 ## Session Continuity
 
 **Last session:** 2026-09-28T14:47:12.048Z
 
-**Stopped At:** Completed 04-01-PLAN.md -- CRO-04 judged UNJUDGED (similar-reuse-variance-not-observed)
+**Stopped At:** Phase 4 complete, ready to plan Phase 1
 **Resume File:** None
 
 ## Performance Metrics

@@ -27,7 +27,7 @@ Every figure names its instrument and source (observed transcript vs estimate). 
 - [ ] **Phase 1: Gate verdict on the big host** - run the workstream's gates and the full pytest suite with a dirty-set bracket
 - [x] **Phase 2: GEX44 observed baseline** - tis_observed over this host's own transcripts, split by entrypoint (completed 2026-09-28)
 - [x] **Phase 3: P3 pre-flight P0** - can an arm run without ~/.claude/rules without touching global config or credentials (completed 2026-09-28)
-- [ ] **Phase 4: Prefix cache-miss A/B** - does a second identical session reuse the first one's cached prefix, with and without MCP
+- [x] **Phase 4: Prefix cache-miss A/B** - does a second identical session reuse the first one's cached prefix, with and without MCP (completed 2026-09-28)
 - [ ] **Phase 5: Seal and hand back** - UKDL + RESUMPTION updated from phases 1-4, all committed on the branch
 
 ## Phase Details
@@ -135,5 +135,5 @@ Plans:
 | 1. Gate verdict on the big host | 2/2 | Blocked (CRO-01: rerun 01-02 pending Owner) | - |
 | 2. GEX44 observed baseline | 1/1 | Complete    | 2026-09-28 |
 | 3. P3 pre-flight P0 | 1/1 | Complete    | 2026-09-28 |
-| 4. Prefix cache-miss A/B | 1/1 | In Progress|  |
+| 4. Prefix cache-miss A/B | 1/1 | Complete    | 2026-09-28 |
 | 5. Seal and hand back | 0/? | Not started | - |
