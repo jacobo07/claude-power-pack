@@ -51,6 +51,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
 from modules.gsd_x.mission import closure as cl          # noqa: E402
+from modules.gsd_x.mission import coverage as cov        # noqa: E402
 from modules.gsd_x.mission import obligation as ob       # noqa: E402
 from modules.gsd_x.mission import structured_facts as sf  # noqa: E402
 
@@ -440,19 +441,49 @@ def main() -> int:  # noqa: C901 -- a gate reads better flat than factored
         #     demanding its remaining gating facts would be production nobody
         #     can act on, which is the ceremony tax obligation.py:400-420 names
         #     and the reason a gate gets switched off.
-        with tempfile.TemporaryDirectory(prefix="gsdxv2_m6_") as t2:
-            root = _mission(Path(t2), _covered(dep, not_held=[GATING]),
-                            intent, reality)
-            code, payload = _run_check(root)
-            if code == 0 and not payload.get("unproduced_facts") \
-                    and payload.get("block") is False:
-                _ok("V-FACTSV2-DEAD-OPERATOR-REQUIRES-NOTHING",
-                    f"{GATING!r} measured FALSE kills its operator, so coverage "
-                    "stops requiring that operator's other gating reads and the "
-                    "wave is not held for a fact that could not change a verdict")
-            else:
-                _fail("V-FACTSV2-DEAD-OPERATOR-REQUIRES-NOTHING",
-                      f"exit={code} payload={payload}")
+        #     THE FIXTURE MUST HAVE A SIBLING TO DROP. The first version of this
+        #     case used `no_completion_signal`, whose operator has exactly ONE
+        #     gating read -- so "stop requiring the operator's other reads" had
+        #     no other read to stop requiring, the fixture disposed everything,
+        #     and removing the dead-operator rule changed nothing. The mutant
+        #     `coverage-ignores-dead-operators` SURVIVED on that fixture, which
+        #     is the drill telling me my pole could not discriminate.
+        #
+        #     So it uses a TWO-read operator, disposes one of them as measured
+        #     FALSE, and leaves the other in NO bucket at all. With the rule the
+        #     sibling is not required; without it the sibling is UNPRODUCED and
+        #     the wave is held for a fact that could never have changed a verdict.
+        DEAD_READ = "no_recovery_mechanism"
+        DEAD_SIBLING = "destructive_act_commanded"
+        DEAD_OP = "op_irreversibility_consequence"
+        _og = cov.operator_gating()
+        if {DEAD_READ, DEAD_SIBLING} <= _og.get(DEAD_OP, frozenset()):
+            with tempfile.TemporaryDirectory(prefix="gsdxv2_m6_") as t2:
+                rest = sorted(ob.GATING_FACT_NAMES - {DEAD_READ, DEAD_SIBLING})
+                doc = _v2(facts=[_held(n, dep) for n in rest],
+                          not_held=[_note(DEAD_READ, dep, ob.OBSERVED)])
+                root = _mission(Path(t2), doc, intent, reality)
+                code, payload = _run_check(root)
+                if code == 0 and not payload.get("unproduced_facts") \
+                        and payload.get("block") is False:
+                    _ok("V-FACTSV2-DEAD-OPERATOR-REQUIRES-NOTHING",
+                        f"{DEAD_READ!r} measured FALSE kills {DEAD_OP}, so its "
+                        f"sibling {DEAD_SIBLING!r} -- in NO bucket -- is not "
+                        "required and does not hold the wave, because no value of "
+                        "it could have changed a verdict")
+                else:
+                    _fail("V-FACTSV2-DEAD-OPERATOR-REQUIRES-NOTHING",
+                          f"exit={code} payload={payload}")
+        else:
+            # Not a skip: the fixture's premise is part of the claim, and a
+            # premise that quietly stopped holding would leave this case passing
+            # while measuring nothing.
+            _fail("V-FACTSV2-DEAD-OPERATOR-REQUIRES-NOTHING",
+                  f"fixture premise gone: {DEAD_OP} no longer gates on both "
+                  f"{DEAD_READ!r} and {DEAD_SIBLING!r} (it gates on "
+                  f"{sorted(_og.get(DEAD_OP, ()))}), so this case can no longer "
+                  "discriminate the dead-operator rule and must be re-pointed at "
+                  "another two-read operator")
 
         # (7) an UNPRODUCED gating fact blocks, and says which one. The narrow
         #     pole for F7 itself; the cutover comparison below is the wide one.

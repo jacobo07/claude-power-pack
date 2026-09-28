@@ -67,7 +67,13 @@ MUTANTS = [
      "                   if r.get(\"verdict\") in (sf.STALE, sf.UNKNOWN)} - unknown",
      "    not_current = (set(ob.GATING_FACT_NAMES)\n"
      "                   if sf.freshness_verdict(rows) != sf.FRESH else set()) - unknown",
-     "V-FACTSV2-GREEN-EMPTY-DOCUMENT"),
+     # Renamed with the gate it names. GSDX-M06 inverted the empty-document pole
+     # and renamed it, and this line still said GREEN-EMPTY-DOCUMENT -- so the
+     # mutant was CAUGHT (EMPTY-DOCUMENT-IS-NOT-COVERAGE went red) and scored as
+     # SURVIVED, because the drill was looking for a gate that no longer exists.
+     # A stale `must` name is a harness failure that reads exactly like a coverage
+     # gap, which is why this drill requires the red to land on a NAMED gate.
+     "V-FACTSV2-EMPTY-DOCUMENT-IS-NOT-COVERAGE"),
     # A v2 document may omit `state`: the richer document silently means as
     # little as a v1 one, which is what the old hard refusal existed to prevent.
     ("v2-state-not-required", SF,
@@ -104,11 +110,19 @@ MUTANTS = [
     # Nothing is required, so a document that dispositions one gating name and
     # ignores five is complete again. This is F7 itself, reintroduced at its
     # source, and the inverted cutover gate is the thing that must notice.
+    # The comprehension's filter excludes every operator, so required_facts()
+    # returns the empty set and a document disposing one gating name is complete
+    # again -- F7 reintroduced at its source.
+    #
+    # THE FIRST VERSION OF THIS MUTANT WAS EQUIVALENT and survived on GEX44:
+    # `return frozenset() or frozenset(<comprehension>)`. The empty set is FALSY,
+    # so `or` returned the second operand and the mutation was a no-op. A mutant
+    # that does not change behaviour is not a surviving mutant, it is a mutant
+    # that was never applied -- and the drill cannot tell those apart, because
+    # the anchor matched and the bytes did change.
     ("coverage-requires-nothing", CV,
-     "    dead = dead_operators(not_held)\n"
-     "    return frozenset(\n",
-     "    dead = dead_operators(not_held)\n"
-     "    return frozenset() or frozenset(\n",
+     "        if op not in dead\n",
+     "        if False\n",
      "V-FACTSV2-CUTOVER-CANNOT-LOSE-OBLIGATIONS"),
     # The three buckets stop counting as dispositions, so every gating fact is
     # UNPRODUCED on every document and the gate refuses everything. A drill that
