@@ -15,6 +15,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -81,7 +82,10 @@ def grade(wt: Path, t: dict, base: str) -> dict:
     r = subprocess.run([PY, t["test"]], cwd=wt, capture_output=True, text=True,
                        encoding="utf-8", errors="replace", timeout=900)
     out = r.stdout + r.stderr
-    passes = sum(1 for ln in out.splitlines() if ln.lstrip().startswith("PASS"))
+    # Every suite here ends with a `<NAME>_PASS=n/m` line; its n is the count of gates that ran and passed.
+    # Counting lines that start with "PASS" read 0 on 7 of 8 suites whose lines are shaped differently.
+    m = re.findall(r"\b[A-Z0-9_]+_PASS=(\d+)/(\d+)", out)
+    passes = int(m[-1][0]) if m else 0
     tail = [ln for ln in out.splitlines() if ln.strip()][-1:] or [""]
     return {"rc": r.returncode, "pass_lines": passes, "summary": tail[0][:200]}
 
