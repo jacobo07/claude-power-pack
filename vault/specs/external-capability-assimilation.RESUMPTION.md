@@ -32,11 +32,25 @@ path, no mirror). Both branches pushed at `2f8cc5b`.
 Go-live pattern for later tranches: commit here, merge the live branch in, rerun gates, then
 `merge --ff-only` in the main checkout after checking HEAD unmoved and no dirty-path overlap.
 
+## T4 + T5 on this branch (NOT yet merged live)
+`d0f4eaa` plan graph (item 18, LIVE on the successor card via `_plan_facts`) · `d71f615` task
+contracts (21, LIVE) + source packet (12, tool only, PLANNED for T8: the card's 8000-byte cap
+cannot hold a 24000-byte packet) · `358f7e5` batch drafts (20, LIVE; real Sonnet run, reply 1
+refused for an unstated bound -> bounds now in the contract) · `2faeeaf` review intake (24,
+LIVE; real pp-code-reviewer reply parsed) + modules/code_review unrecognised-severity APPROVE
+fixed + `_owns` one keying path from that review. Item 22 task ledger = SEAM (Goal Spine owns the
+only live caller; Owner decision 1a). Item 23 evidence bundle: tool + 12/12, real run NOT DONE
+only for "Independent review required" -- a real review of it was dispatched; record its outcome.
+Gates added: test_plan_graph_check 34 · test_task_contract 14 · test_source_packet 9 ·
+test_batch_drafts 15 · test_review_intake 18 · test_evidence_bundle 12 · test_gsd_mission 197.
+
 ## Next 3 actions
-1. T4 per spec: `source_packet.py` + plan-graph write-ownership wave check.
-2. T5–T7: review/evidence intake, regression memory, change impact on audit_cache.
-3. T8–T12: routing metrics, verified reuse, paired experiment, task adaptation, charter lab,
-   night research on VPS (Node 24 first), live smoke mission, red team, KV/UKDL.
+1. Finish item 23 (commit evidence_bundle + manifest), then GO-LIVE per the pattern above.
+2. T6-T7: regression memory (KV `regression:` block + staleness reopen), constraint compiler,
+   change impact on audit_cache.
+3. T8-T12: routing metrics, verified reuse, paired experiment (decides the source-packet
+   consumer), task adaptation, charter lab, night research on VPS (Node 24 first), live smoke
+   mission, red team, KV/UKDL.
 
 ## Start instruction
 `git -C C:\Users\User\Apps\pp-assim log --oneline -8`, run the gates, then action 1.
