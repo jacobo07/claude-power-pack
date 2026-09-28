@@ -23,11 +23,21 @@ been widened twice before and both attempts broke a mission that should pass
 again, so a prose mission, an empty phase directory, a nonexistent root and a
 clean v2 document are each pinned here, exiting exactly what they exited before.
 
-HONEST BOUNDARY, ASSERTED RATHER THAN WRITTEN DOWN. V-FACTSV2-PRODUCER-REACH
-measures that NO fact today's producer can emit is a gating fact. The mechanism
-below is therefore correct and NOT reachable from the real producer: proving it
-needs a constructed document. That gate fails the day a producer starts emitting
-a gating fact, which is exactly when this note must stop being true.
+REACHABLE FROM THE WORLD SINCE 2026-09-28, AND ASSERTED RATHER THAN WRITTEN DOWN.
+This paragraph used to record a limitation: no fact the producer could emit was
+gating, so every block branch below was correct and provable only against a
+constructed document. `tools/gsd_x_fact_producer.py` now emits
+`measured_failure_mode` OBSERVED from this estate's own recorded failure history,
+which IS gating -- so the mechanism is reachable from the real producer.
+V-FACTSV2-PRODUCER-REACH holds that property from the other side now: it goes red
+if the block branches ever become fixture-only again, and it checks the call site
+as well as the declaration, because a name in a hand-maintained tuple proves
+nothing about what runs.
+
+WHAT IS STILL NOT REACHABLE. A produced document dispositions three of the ten
+names, so five gating facts remain UNPRODUCED and a real structured mission still
+blocks -- correctly, naming the five that need producers. That is
+clearable-but-not-yet-cleared, and it is the honest state rather than a deadlock.
 """
 from __future__ import annotations
 
@@ -581,26 +591,62 @@ def main() -> int:  # noqa: C901 -- a gate reads better flat than factored
                   "structured root exits 0 again, F7 has REGRESSED: a facts "
                   "document is once more able to delete obligations silently")
 
-    # ---- the honest boundary ---------------------------------------------
-    # This asserts a LIMITATION. The producer can emit exactly two fact names
-    # and neither is gating, so no unknown it produces can reach the block
-    # branch above: the mechanism is proved on a constructed document. When a
-    # producer starts emitting a gating fact this gate fails, which is the
-    # moment this file's opening note must be rewritten.
+    # ---- reachability from the real producer ------------------------------
+    # INVERTED 2026-09-28 (GSDX-M06). This gate used to assert a LIMITATION:
+    # the producer emitted exactly two fact names, neither gating, so no unknown
+    # it produced could reach the block branch and the mechanism was proved only
+    # on a constructed document. Its own text named the condition for its own
+    # death -- "when a producer starts emitting a gating fact this gate fails,
+    # which is the moment this file's opening note must be rewritten" -- and
+    # that is what happened: `measured_failure_mode` is now produced OBSERVED
+    # from vault/ceps/events.jsonl.
+    #
+    # It is inverted in place rather than deleted, because the property worth
+    # holding is the opposite one and it is worth holding permanently: the
+    # blindness and coverage machinery must stay REACHABLE FROM THE WORLD. If
+    # this ever goes red again, every block branch below has quietly become
+    # fixture-only again.
+    #
+    # DECLARED IS NOT WIRED. `PRODUCERS` is a tuple a human maintains, so a name
+    # could sit in it while nothing calls the function -- presence without
+    # reachability, which is the estate's most repeated defect. So the gate
+    # checks the call site too: the producer function must exist AND be invoked
+    # from `produce_all`, read out of its source rather than assumed.
     sys.path.insert(0, str(REPO / "tools"))
+    import inspect  # noqa: E402
     import gsd_x_fact_producer as FP  # noqa: E402
     producible = set(FP.PRODUCERS)
-    reach = producible & ob.GATING_FACT_NAMES
+    reach = sorted(producible & ob.GATING_FACT_NAMES)
     if not reach:
-        _ok("V-FACTSV2-PRODUCER-REACH",
-            f"no producible fact is gating (producible={sorted(producible)}); the "
-            "blindness block branch is NOT reachable from the real producer "
-            "today and is proved on a constructed document")
-    else:
         _fail("V-FACTSV2-PRODUCER-REACH",
-              f"{sorted(reach)} is now producible AND gating -- the mechanism is "
-              "reachable from the producer, so this gate's premise and the "
-              "module docstring must both be rewritten")
+              f"NO producible fact is gating again (producible={sorted(producible)}). "
+              "The blindness and coverage block branches are reachable only from a "
+              "constructed document, so every one of them has become fixture-only. "
+              "A producer for a gating fact was removed, or the gating set moved "
+              "under it")
+    else:
+        try:
+            wiring = inspect.getsource(FP.produce_all)
+        except (OSError, TypeError) as exc:
+            wiring = ""
+            _fail("V-FACTSV2-PRODUCER-REACH",
+                  f"could not read produce_all's source to check wiring: {exc}")
+        if wiring:
+            fns = [n for n in reach
+                   if hasattr(FP, f"produce_{n}")
+                   and f"produce_{n}" in wiring]
+            if fns:
+                _ok("V-FACTSV2-PRODUCER-REACH",
+                    f"{reach} is producible AND gating, and produce_{fns[0]} is "
+                    "called from produce_all -- the blindness and coverage block "
+                    "branches are reachable from the real producer, not only from "
+                    "a constructed document")
+            else:
+                _fail("V-FACTSV2-PRODUCER-REACH",
+                      f"{reach} is declared in PRODUCERS and is gating, but no "
+                      f"matching produce_<name> function is invoked from "
+                      "produce_all -- declared is not wired, and a name in a "
+                      "hand-maintained tuple proves nothing about what runs")
 
     total = len(_passes) + len(_fails)
     print(f"\nGSDX_FACTSV2_PASS={len(_passes)}/{total}  threshold={total}/{total}")
