@@ -89,7 +89,11 @@ Plans:
      global file is REJECTED, with the reason.
   3. Verdict is exactly one of PASS (named mechanism) or STOP (per protocol: do not improvise). No ablation run in this workstream.
 
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+
+- [ ] 03-01-PLAN.md — tracer: pre-checks, global-file bracket, help/version captures and C01 --setting-sources judged end-to-end; candidate set by construction (help/env/settings-schema scans of the installed claude), floor blocks C01-C12 with byte-verified binary excerpts; P0 verdict PASS (mechanism) or STOP by rule, zero model calls (autonomous, wave 1)
 
 ### Phase 4: Prefix cache-miss A/B
 
@@ -126,6 +130,6 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Gate verdict on the big host | 2/2 | Blocked (CRO-01: rerun 01-02 pending Owner) | - |
 | 2. GEX44 observed baseline | 1/1 | Complete    | 2026-09-28 |
-| 3. P3 pre-flight P0 | 0/? | Not started | - |
+| 3. P3 pre-flight P0 | 0/1 | Planned | - |
 | 4. Prefix cache-miss A/B | 0/? | Not started | - |
 | 5. Seal and hand back | 0/? | Not started | - |
