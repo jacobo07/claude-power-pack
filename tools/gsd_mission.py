@@ -1182,6 +1182,20 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             reap(rec, row)
             if row.get("orphans_stopped"):
                 row["action"] = "reaped" if plan["action"] in ("none", "await") else plan["action"]
+            if plan["action"] == "none" and rec["state"] == RUNNING:
+                # The wall is enforced, not requested. Measured 2026-09-28 (m-916e905e23d4): a worker
+                # asked once at 31 % worked on in the same turn for 3.5 h to 49 %. Past the grace after
+                # the FIRST notice, a live owner is relayed anyway -- through the relay branch below,
+                # so GSD, the child hold, T5 progress and the stall halt all still apply. Only a LIVE
+                # owner: an UNKNOWN one may be running, and a replacement would run beside it.
+                import gsd_epoch as ge
+                over = ge.wall_overdue(rec, now)
+                if over and liveness(rec.get("owner"), sessions, pid_alive)[0] == LIVE:
+                    plan = {"action": "relay",
+                            "reason": f"wall enforced: first notice {over['overdue_s'] + over['grace_s']} s "
+                                      f"ago, grace {over['grace_s']} s, {over['notices']} notice(s)"}
+                    row.update(plan)
+                    row["wall_enforced"] = over
             if plan["action"] in ("none", "await"):
                 continue
             act = plan["action"]
@@ -1299,6 +1313,9 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     # A finished turn the host lists `done` (not `idle`) plans a REPLACE; it is the
                     # same event and is judged the same way (m-47fe0c6cb54a, 2026-09-28).
                     turn_end = ge.decide_turn_end(rec, now)
+                    if row.get("wall_enforced") and turn_end["decision"] == ge.ROTATE:
+                        turn_end["evidence"] = {**(turn_end.get("evidence") or {}), "trigger": "wall_enforced"}
+                        turn_end["reason"] = f"{plan['reason']} -- {turn_end['reason']}"
                     row["turn_end"] = {k: turn_end.get(k) for k in ("decision", "cause", "reason")}
                     if turn_end["decision"] == ge.HOLD:
                         lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"],

@@ -188,6 +188,41 @@ def wall_evidence(session_id: str | None, epoch, events: list[dict] | None = Non
     return None
 
 
+WALL_GRACE_S = 1800   # first wall notice -> the supervisor stops a worker still in its turn
+                      # (must match hooks/mission_wall.js DEFAULT_GRACE_S; per mission: wall.grace_s)
+
+
+def wall_overdue(rec: dict, now: float | None = None) -> dict | None:
+    """The wall was asked and the worker is STILL in its turn past the grace period.
+
+    Measured 2026-09-28 (m-916e905e23d4): worker 9e89a87e was asked at 31 % and kept working in the
+    same turn for 3.5 h to 49 %; the wall was a request, and nothing enforced it. The clock is the
+    FIRST notice's `asked_at` in the mid-turn flag (the flag's mtime for a pre-JSON flag), so
+    re-asking never postpones enforcement. None when there is no notice or it is within grace."""
+    now = time.time() if now is None else now
+    owner = rec.get("owner") or {}
+    sid = owner.get("session_id")
+    if not sid or rec.get("state") != "RUNNING":
+        return None
+    flag = _marker_dir() / f"mission-wall-{sid}-e{rec.get('epoch')}.flag"
+    try:
+        raw = flag.read_text(encoding="utf-8")
+        mtime = flag.stat().st_mtime
+    except OSError:
+        return None
+    data = None
+    try:
+        data = json.loads(raw)
+        asked = float(data["asked_at"]) / 1000.0 if isinstance(data, dict) else mtime
+    except (ValueError, KeyError, TypeError):
+        asked = mtime
+    grace = float((rec.get("wall") or {}).get("grace_s") or WALL_GRACE_S)
+    if now - asked < grace:
+        return None
+    return {"asked_at": asked, "overdue_s": int(now - asked - grace), "grace_s": int(grace),
+            "notices": data.get("n", 1) if isinstance(data, dict) else 1}
+
+
 # ------------------------------------------------------------------------ G6 child work
 _NOTE_RE = re.compile(r"<tool-use-id>(toolu_[A-Za-z0-9_]+)</tool-use-id>.*?<status>([a-z_]+)</status>", re.S)
 _BG_RESULT_RE = re.compile(r"running in (?:the )?background|async agent|launched in the background|"

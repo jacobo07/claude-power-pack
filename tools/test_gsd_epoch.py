@@ -493,6 +493,50 @@ def main() -> int:
           and any(a[-1] == sid[:8] for a in calls["stop"]) and not mine(calls, "m-c4", sid),
           (gm.load("m-c4")["state"], calls["stop"]))
 
+    # --- the wall is enforced, not requested (m-916e905e23d4 worked 3.5 h past it) ----------
+    def wall_flag(sid, epoch, asked_at_s, n=1, legacy=False):
+        p = Path(TMP) / f"mission-wall-{sid}-e{epoch}.flag"
+        p.write_text(str(int(asked_at_s * 1000)) if legacy else
+                     json.dumps({"asked_at": asked_at_s * 1000, "pct": 31, "n": n}))
+        if legacy:
+            os.utime(p, (asked_at_s, asked_at_s))
+
+    sid = "e1e1e1e1-0000-0000-0000-000000000000"
+    running("m-wo", sid, epoch=1)
+    wall_flag(sid, 1, NOW - 600)
+    check("V-EPOCH-WALL-WITHIN-GRACE", ge.wall_overdue(gm.load("m-wo"), NOW) is None)
+    wall_flag(sid, 1, NOW - ge.WALL_GRACE_S - 60, n=4)
+    over = ge.wall_overdue(gm.load("m-wo"), NOW)
+    check("V-EPOCH-WALL-OVERDUE", over and over["overdue_s"] == 60 and over["notices"] == 4, over)
+    wall_flag(sid, 1, NOW - ge.WALL_GRACE_S - 60, legacy=True)
+    check("V-EPOCH-WALL-OVERDUE-LEGACY-FLAG", ge.wall_overdue(gm.load("m-wo"), NOW) is not None)
+    check("V-EPOCH-WALL-NO-FLAG-NOT-OVERDUE", ge.wall_overdue(running("m-wo0", "nf", epoch=1), NOW) is None)
+
+    sid = "e2e2e2e2-0000-0000-0000-000000000000"
+    running("m-enf", sid, epoch=1)
+    transcript(sid, [asst(NOW - 30, small)])
+    wall_flag(sid, 1, NOW - ge.WALL_GRACE_S - 120)
+    rows, calls = sup(sid, sessions=host(sid, status="busy"))
+    r = next(x for x in rows if x["mission_id"] == "m-enf")
+    causes = [e for e in lr.ledger_events("m-enf") if e.get("event") == "launch_cause"]
+    check("V-EPOCH-SUP-WALL-ENFORCED-ROTATES", gm.load("m-enf")["epoch"] == 2 and any(
+        a[-1] == sid[:8] for a in calls["stop"]) and causes and causes[-1]["cause"] == ge.CONTEXT_ROTATION
+        and causes[-1].get("trigger") == "wall_enforced", (r.get("action"), causes[-1:]))
+    sid = "e3e3e3e3-0000-0000-0000-000000000000"
+    running("m-enf2", sid, epoch=1)
+    transcript(sid, [asst(NOW - 30, small)])
+    wall_flag(sid, 1, NOW - 300)
+    rows, calls = sup(sid, sessions=host(sid, status="busy"))
+    check("V-EPOCH-SUP-WALL-WITHIN-GRACE-LEFT-ALONE", gm.load("m-enf2")["epoch"] == 1
+          and not any(a[-1] == sid[:8] for a in calls["stop"]))
+    sid = "e4e4e4e4-0000-0000-0000-000000000000"
+    running("m-enf3", sid, epoch=1)
+    transcript(sid, [asst(NOW - 30, small)])
+    wall_flag(sid, 1, NOW - ge.WALL_GRACE_S - 120)
+    rows, calls = sup(sid, sessions=[{"sessionId": "someone-else", "id": "zz", "status": "busy"}])
+    check("V-EPOCH-SUP-UNKNOWN-OWNER-NEVER-FORCED", gm.load("m-enf3")["epoch"] == 1
+          and not any(a[-1] == sid[:8] for a in calls["stop"]))
+
     # --- certify: a rotation counts only with every independent witness ---------------------
     def cert_fixture(mid, w_prev, wall_text=True, record_cause=True):
         running(mid, "x", epoch=1)
