@@ -892,6 +892,25 @@ def main() -> int:
     finally:
         gm.quota_hold_from_transcript = real_q
 
+    # --- provider breaker through the REAL call site (tools/provider_breaker.py, 2026-09-28) ------
+    # A non-quota host refusal (credentials) must not relaunch: quota_hold alone let it churn.
+    tq = Path(tempfile.mkdtemp(prefix="gsd-breaker-"))
+    (tq / "s-m-q3.jsonl").write_text(json.dumps({"type": "user", "message": {"content": "go"}}) + "\n" + json.dumps(
+        {"type": "assistant", "message": {"model": "<synthetic>", "content": [
+            {"type": "text", "text": "Invalid API key · Please run /login"}]}}) + "\n", encoding="utf-8")
+    real_find = gm.lr.find_transcript
+    gm.lr.find_transcript = lambda sid: (tq / f"{sid}.jsonl") if (tq / f"{sid}.jsonl").exists() else None
+    try:
+        hs = fresh("m-q3")
+        n_before = len(launches)
+        rows = gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                            stop_runner=stop_run, pid_alive=gone)
+        row = next((r for r in rows if r["mission_id"] == "m-q3"), {})
+        check("V-MC-BREAKER-AUTH-NO-LAUNCH", len(launches) == n_before and gm.load("m-q3")["epoch"] == 1
+              and "QUARANTINED" in row.get("held", ""), str(row.get("held")))
+    finally:
+        gm.lr.find_transcript = real_find
+
     # --- adopt: the host's witness of THIS launch, when the worker's own ack raced ------------
     for p in Path(TMP).glob("gsd-mission-*.json"):
         p.unlink()

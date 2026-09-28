@@ -63,8 +63,10 @@
    "owner": "tools/gsd_mission.py provider circuit breaker + modules/cost_collapse routing",
    "disposition": "MERGE",
    "differential": "attempt budget, cooldown, concurrency cap, structured failure; vendored router kept as OPTIONAL provider abstraction",
-   "status": "PLANNED",
-   "slice": "T3"
+   "status": "LIVE",
+   "slice": "T3",
+   "proof": "python tools/test_provider_breaker.py",
+   "evidence": "MERGED: cooldown, attempt budget (quarantine after 4), structured failure classes; concurrency cap = per-mission single flight. The vendored router is an OPTIONAL provider abstraction, not wired: missions launch through claude --bg only"
   },
   {
    "id": "genesis-review-gate",
@@ -226,8 +228,10 @@
    "owner": "Ralph turn-end continuation (hooks/gsd_stop_continuation.js + tools/gsd_epoch.py)",
    "disposition": "SUBSUME",
    "differential": "none missing: a finished turn already continues the same session",
-   "status": "PLANNED",
-   "slice": "T3"
+   "status": "LIVE",
+   "slice": "T3",
+   "proof": "python tools/test_gsd_epoch.py",
+   "evidence": "V-EPOCH-TURN-END-CONTINUES, V-EPOCH-SUP-CONTINUES-SAME-SESSION: a finished turn continues the same session (Ralph); nothing added"
   },
   {
    "id": "loop-single-flight",
@@ -235,8 +239,10 @@
    "owner": "tools/gsd_mission.py msvcrt lock",
    "disposition": "SUBSUME",
    "differential": "overlap drill added as proof",
-   "status": "PLANNED",
-   "slice": "T3"
+   "status": "LIVE",
+   "slice": "T3",
+   "proof": "python tools/test_gsd_mission.py",
+   "evidence": "V-MC-LOCK-LIVE-HOLDER-NEVER-STOLEN, V-MC-REPLACE-RACE-ONE-WINNER: msvcrt lock + CAS; nothing added"
   },
   {
    "id": "loop-instant-failure-backoff",
@@ -244,8 +250,10 @@
    "owner": "tools/gsd_mission.py provider circuit breaker",
    "disposition": "EXTEND",
    "differential": "worker dying within seconds with no work -> exponential cooldown",
-   "status": "PLANNED",
-   "slice": "T3"
+   "status": "LIVE",
+   "slice": "T3",
+   "proof": "python tools/test_provider_breaker.py",
+   "evidence": "tools/provider_breaker.py: transient/no_reply -> 300 s * 2^(streak-1), cap 1 h"
   },
   {
    "id": "loop-failure-quarantine",
@@ -253,8 +261,10 @@
    "owner": "tools/gsd_mission.py provider circuit breaker",
    "disposition": "EXTEND",
    "differential": "K consecutive instant failures -> mission held for the operator, not relaunched",
-   "status": "PLANNED",
-   "slice": "T3"
+   "status": "LIVE",
+   "slice": "T3",
+   "proof": "python tools/test_provider_breaker.py",
+   "evidence": "4 consecutive failed workers or a credentials refusal -> QUARANTINE until provider_breaker.py clear; V-MC-BREAKER-AUTH-NO-LAUNCH drives the real supervise call site (mutant severing it: 190/191)"
   },
   {
    "id": "loop-run-log",
@@ -262,8 +272,10 @@
    "owner": "tools/gsd_long_run.py ledger_append",
    "disposition": "SUBSUME",
    "differential": "breaker decisions written as ledger rows",
-   "status": "PLANNED",
-   "slice": "T3"
+   "status": "LIVE",
+   "slice": "T3",
+   "proof": "python tools/test_provider_breaker.py",
+   "evidence": "provider_held / quota_held / provider_breaker_unavailable ledger rows; census counts both hold events"
   },
   {
    "id": "loop-startup-guidance",

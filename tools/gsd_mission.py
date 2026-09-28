@@ -1269,12 +1269,23 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 # completed the milestone must not be followed by another one.
                 work_dir = None
                 if act in ("relay", "replace") and rec.get("owner"):
-                    hold = quota_hold_from_transcript(rec["owner"]["session_id"], now)
+                    hold = provider_hold(rec, now)
                     if hold:
                         # The successor would meet the same refusal: hold, spending no epoch.
-                        row["held"] = f"provider quota until {int(hold['until'])}: {hold['reason']}"
-                        lr.ledger_append(mid, "quota_held", mission_id=mid, epoch=rec["epoch"],
-                                         until=hold["until"], reason=hold["reason"])
+                        # tools/provider_breaker.py: quota keeps this exact row; auth, transient
+                        # failures and repeated instant deaths back off or quarantine.
+                        if hold.get("class", "quota") == "quota":
+                            row["held"] = f"provider quota until {int(hold['until'])}: {hold['reason']}"
+                            lr.ledger_append(mid, "quota_held", mission_id=mid, epoch=rec["epoch"],
+                                             until=hold["until"], reason=hold["reason"])
+                        else:
+                            until = hold.get("until")
+                            row["held"] = (f"provider {hold['class']} "
+                                           f"{'QUARANTINED' if hold.get('quarantine') else f'until {int(until)}'}"
+                                           f" (streak {hold.get('streak')}): {hold['reason']}")
+                            lr.ledger_append(mid, "provider_held", mission_id=mid, epoch=rec["epoch"],
+                                             until=until, reason=hold["reason"], provider_class=hold["class"],
+                                             streak=hold.get("streak"), quarantine=bool(hold.get("quarantine")))
                         continue
                 if act in ("relay", "replace") and rec.get("owner"):
                     # Judge (and brief) where the predecessor actually worked. Measured M6: the
@@ -1606,6 +1617,20 @@ def quota_hold(text: str | None, replied_at: float | None, now: float) -> dict |
     if now >= until:
         return None
     return {"until": until, "reason": " ".join(text.split())[:200]}
+
+
+def provider_hold(rec: dict, now: float) -> dict | None:
+    """The hold for this mission's next successor (tools/provider_breaker.py). If the breaker
+    itself cannot run, fall back to the pre-breaker quota check -- and say so in the ledger:
+    a missing breaker must not read as a provider that is fine."""
+    try:
+        import provider_breaker as pb
+        return pb.hold_for(rec, now)
+    except Exception as exc:  # noqa: BLE001 -- degrade to the previous behaviour, visibly
+        lr.ledger_append(rec.get("mission_id"), "provider_breaker_unavailable",
+                         mission_id=rec.get("mission_id"), error=f"{exc.__class__.__name__}: {exc}"[:200])
+        h = quota_hold_from_transcript((rec.get("owner") or {}).get("session_id"), now)
+        return None if h is None else {**h, "class": "quota"}
 
 
 def quota_hold_from_transcript(session_id: str, now: float) -> dict | None:

@@ -693,7 +693,7 @@ def census(events: list[dict] | None = None) -> dict:
         if e.get("event") == "launch_cause" and e.get("cause") == CONTEXT_ROTATION:
             t = e.get("trigger") or "unrecorded"
             rotation_triggers[t] = rotation_triggers.get(t, 0) + 1
-    holds = sum(1 for e in events if e.get("event") == "quota_held")
+    holds = sum(1 for e in events if e.get("event") in ("quota_held", "provider_held"))
     return {"logical_runs": len(lineages), "missions": len(ids), "fresh_worker_sessions": fresh,
             "fresh_by_cause": by_cause, "context_rotations": by_cause[CONTEXT_ROTATION],
             "rotation_triggers_recorded": rotation_triggers, "same_session_continuations": continuations,
