@@ -289,7 +289,20 @@ def _build_scope(scope_dirs, cutoff_ts, models, pricing_ok) -> dict:
 
 def measure(dirs, own_dir, now_ts, pricing, pricing_meta) -> dict:
     """Pure function of its inputs. Composes tis_observed/budget_monitor/tis_report; adds
-    grouping only. Field names are exact -- Task 2's verify reads them."""
+    grouping only. Field names are exact -- Task 2's verify reads them.
+
+    NOT atomic (WR-05): one call performs six-plus independent, unlocked re-reads of the
+    same live `*.jsonl` corpus under `dirs` -- T.iter_calls for all_calls; T.scan +
+    T.iter_calls inside each of the two _build_scope() calls (all_projects, then
+    excluding_this_repo_project_dir); tis_report.main()'s own T.scan for R4; and
+    bm._aggregate_observed()'s own T.iter_calls for R5/R6. None of these passes share a
+    snapshot or a lock -- each simply re-opens and re-reads every transcript file at
+    whatever moment it runs. On a host where transcripts are actively being appended
+    (true of this host during a run, see EVIDENCE.md), a call landing between two of
+    these reads can be counted on one side and not the other. The `reconcile`
+    MATCH/MISMATCH block (R1-R7, `r5_r6_probe_elapsed_s`) is the only detector for this;
+    a MATCH means the passes happened to agree this run, not that they share a
+    snapshot -- do not build on measure() assuming its reads are atomic."""
     dirs = [Path(d) for d in dirs]
     cutoff_ts = now_ts - bm.BURN_WINDOW_DAYS * 86400
     # WR-01: R5/R6 compare this file's `cutoff_ts` (fixed, from `now_ts` above) against
