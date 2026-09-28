@@ -16,11 +16,10 @@ covered_files:
   - .planning/workstreams/cognitive-resource-os/REQUIREMENTS.md
   - .planning/workstreams/cognitive-resource-os/ROADMAP.md
   - vault/plans/cognitive-resource-os-P3-ablation-protocol.md
-covered_digest: "v1:sha256:bf8eb37fa8760bb2981cde6800f62d475c536d619211a5d7ff2d5d6b4f795add"
-# NOTE: gsd-core / gsd_run is not installed in this repo (bespoke workstream, no gsd-core/bin/gsd-tools.cjs
-# found). covered_digest above is a manual sha256 over covered_files, in the same v1:sha256: shape the
-# verification.fingerprint verb would emit, computed with `python3 -c "import hashlib; ..."` since the
-# canonical verb is unavailable here.
+covered_digest: "v1:sha256:bd52b9977a29748f9749ecf39285cf20d650337916e2715226b1556ceb702cf7"
+# NOTE: the verifier could not find gsd-tools and wrote a manual sha256 (v1:sha256:bf8eb37f...), which the
+# canonical verb reads as stale. The orchestrator recomputed covered_digest over the SAME covered_files with
+# ~/.claude/gsd-core/bin/gsd-tools.cjs `verification.fingerprint` (no verdict or file-list change).
 behavior_unverified: 0
 overrides_applied: 0
 ---
