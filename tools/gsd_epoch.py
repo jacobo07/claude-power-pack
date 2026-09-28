@@ -318,6 +318,28 @@ def child_work(session_id: str, now: float | None = None, wait_s: float = CHILD_
 
 
 # ------------------------------------------------------------------------ the decision
+def budget_evidence(sid: str | None, n: int | None, ceiling: int, kids: dict | None) -> dict:
+    """A context-pressure reading for the decision record. Never raises and never decides: a
+    reading that cannot be taken is recorded as UNMEASURED with its reason."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from modules.context_budget import epoch_reading
+        path = _transcript(sid) if sid else None
+        size = age = None
+        if path:
+            st = path.stat()
+            size = st.st_size
+            # st_ctime is the creation time on Windows; on POSIX it is metadata change -> unmeasured.
+            age = (time.time() - st.st_ctime) if os.name == "nt" else None
+        pending = None
+        if isinstance(kids, dict) and kids.get("verdict") in ("CLEAR", "HOLD", "EXPIRED"):
+            pending = len(kids.get("pending") or []) + len(kids.get("unconsumed") or [])
+        return epoch_reading(context_tokens=n, ceiling=ceiling, transcript_bytes=size,
+                             session_age_s=age, pending_children=pending)
+    except Exception as exc:  # noqa: BLE001 -- evidence only: an unreadable meter is recorded, not raised
+        return {"state": "UNMEASURED", "pressure": None, "reason": f"{exc.__class__.__name__}: {exc}"[:200]}
+
+
 def decide_turn_end(rec: dict, now: float | None = None, *, events: list[dict] | None = None,
                     tokens=context_tokens, children=child_work, last_turn_at=last_assistant_at) -> dict:
     """The owner's turn ended and GSD says work remains. What starts the next turn?
@@ -368,6 +390,9 @@ def decide_turn_end(rec: dict, now: float | None = None, *, events: list[dict] |
     n = tokens(sid) if sid else None
     ev["context_tokens"] = n
     ceiling = int(rec.get("continue_max_tokens") or CONTINUE_MAX_TOKENS)
+    # Context Budget (modules/context_budget) is EVIDENCE for this decision, never the decider:
+    # the policy below is unchanged until a preregistered comparison justifies moving it.
+    ev["context_budget"] = budget_evidence(sid, n, ceiling, kids)
     if n is None:
         return {"decision": ROTATE, "cause": TURN_CONTINUATION, "mechanism": FRESH,
                 "reason": "context size unmeasured: a fresh worker is the bounded choice",
@@ -398,6 +423,11 @@ def record_cause(mission_id: str, rec: dict, decision: dict, mechanism: str,
         fields["worker"] = worker
     if ev.get("children_lost"):
         fields["children_lost"] = ev["children_lost"]
+    cb = ev.get("context_budget")
+    if isinstance(cb, dict):
+        # Compact projection only: state + pressure + band + coverage. UNMEASURED is recorded as such.
+        fields["context_budget"] = {k: cb.get(k) for k in ("state", "pressure", "band", "coverage", "reason")
+                                    if cb.get(k) is not None}
     return lr.ledger_append(mission_id, "launch_cause", **{k: v for k, v in fields.items() if v is not None})
 
 
