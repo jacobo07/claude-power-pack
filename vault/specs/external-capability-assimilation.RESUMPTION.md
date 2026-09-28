@@ -32,25 +32,26 @@ path, no mirror). Both branches pushed at `2f8cc5b`.
 Go-live pattern for later tranches: commit here, merge the live branch in, rerun gates, then
 `merge --ff-only` in the main checkout after checking HEAD unmoved and no dirty-path overlap.
 
-## T4 + T5 on this branch (NOT yet merged live)
-`d0f4eaa` plan graph (item 18, LIVE on the successor card via `_plan_facts`) · `d71f615` task
-contracts (21, LIVE) + source packet (12, tool only, PLANNED for T8: the card's 8000-byte cap
-cannot hold a 24000-byte packet) · `358f7e5` batch drafts (20, LIVE; real Sonnet run, reply 1
-refused for an unstated bound -> bounds now in the contract) · `2faeeaf` review intake (24,
-LIVE; real pp-code-reviewer reply parsed) + modules/code_review unrecognised-severity APPROVE
-fixed + `_owns` one keying path from that review. Item 22 task ledger = SEAM (Goal Spine owns the
-only live caller; Owner decision 1a). Item 23 evidence bundle: tool + 12/12, real run NOT DONE
-only for "Independent review required" -- a real review of it was dispatched; record its outcome.
-Gates added: test_plan_graph_check 34 · test_task_contract 14 · test_source_packet 9 ·
-test_batch_drafts 15 · test_review_intake 18 · test_evidence_bundle 12 · test_gsd_mission 197.
+## T4-T7 LIVE since 2026-09-28 (`6fdd61a`, fast-forwarded; both branches pushed)
+Item 18 plan graph (card `_plan_facts`) · 20 batch drafts · 21 task contracts · 23 evidence
+bundle (REAL end-to-end OK: real gates + nonce-ticketed pp-code-reviewer review; 3 real reviews,
+two found real false greens, both fixed) · 24 review intake (+ modules/code_review
+unrecognised-severity APPROVE fixed) · 25 regression memory · 26 constraint compiler (pinned on
+the batch path; UKDL crosswalk NOT claimed) · 27 change impact (graph from AST imports, NOT
+audit_cache: its depends_on is stem-resolved and would have said "no suite affected").
+Tool only / not LIVE: 12 source packet (card 8000-byte cap vs 24000-byte packet -> T8 decides).
+SEAM: 22 task ledger (Goal Spine owns the only live caller; decision 1a).
+Also fixed on the way: rollover `resume` claimed uncertifiable capsules + test leak (d10bd31);
+test_mission_watchdog control inverted for active rollover (was red on live since 42da3d1).
+Owner-side, not done (HR-001): add REPLY_INSTRUCTION to ~/.claude/agents/pp-code-reviewer.md.
+Known limits recorded in code: review ticket A->B->A window; test_cpp_gsd_long_routing reads
+red in a CRLF worktree only (content identical; 9/9 on the live checkout).
 
 ## Next 3 actions
-1. Finish item 23 (commit evidence_bundle + manifest), then GO-LIVE per the pattern above.
-2. T6-T7: regression memory (KV `regression:` block + staleness reopen), constraint compiler,
-   change impact on audit_cache.
-3. T8-T12: routing metrics, verified reuse, paired experiment (decides the source-packet
-   consumer), task adaptation, charter lab, night research on VPS (Node 24 first), live smoke
-   mission, red team, KV/UKDL.
+1. T8: routing metrics (epoch/worker receipts), verified reuse, the paired experiment
+   (current card vs bounded-packet card: decides item 12's consumer).
+2. T9-T10: task adaptation, charter lab; night research on the VPS (user Node 24 first).
+3. T11-T12: live smoke mission, red team, Knowledge Vault / UKDL capture.
 
 ## Start instruction
 `git -C C:\Users\User\Apps\pp-assim log --oneline -8`, run the gates, then action 1.
