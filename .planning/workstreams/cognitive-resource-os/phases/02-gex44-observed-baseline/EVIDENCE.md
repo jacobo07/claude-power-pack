@@ -182,4 +182,102 @@ planning-time note that this run is measuring transcripts that include its own a
 
 overall: MATCH (reconciled on the first snapshot run; no rerun needed).
 
-<!-- Sections 3-5 are written by Task 3. -->
+## 3. Laptop comparison (ROADMAP criterion 3)
+
+"Instrument can explain" means a factor that tis_observed/budget_monitor MEASURED on GEX44 differs from the
+laptop in a direction consistent with the difference -- an attribution candidate, never a proven cause.
+
+| metric | entrypoint | laptop (source, scope) | GEX44 | same definition? | instrument can explain | instrument cannot explain |
+|--------|------------|-------------------------|-------|-------------------|--------------------------|-----------------------------|
+| first_call_shared_share_median | sdk-cli | 1.9% (L1, commit 10299f8; scope not recorded) | 30.0%; excl. this repo's dir: 30.0%; GEX44 transcripts, not the laptop's | partly (L1's scope is not recorded) | POPULATION (3 sdk-cli sessions total this window vs a much larger laptop population), WINDOW (this corpus spans at most ~7 days, little time for an earlier session to seed a shared cache) | PREFIX CONTENT, MISS CAUSE, LAPTOP PROVENANCE (L1 scope unrecorded), HOST CONFIG |
+| first_call_shared_share_median | cli | 16.4% (L1, commit 10299f8; scope not recorded) | 46.6%; excl. this repo's dir: 46.6%; GEX44 transcripts, not the laptop's | partly (L1's scope is not recorded) | POPULATION (13 cli sessions, mostly mission workers, not the laptop's population), SESSION SHAPE (higher calls-per-session here gives more chances to land inside an earlier session's still-cached front), WINDOW | PREFIX CONTENT, DRIVER (entrypoint does not distinguish a human cli session from a mission-worker one), LAPTOP PROVENANCE, HOST CONFIG |
+| share_1h_write_usd_7d | sdk-cli | 79.9% ($72.00 of $90.06) (L2, commit 10299f8; population: budget_monitor-style iter_calls incl. subagents, ts >= now-7d, entrypoint == sdk-cli; pricing file not named) | 98.6%; excl. this repo's dir: 98.6%; GEX44 transcripts, not the laptop's | yes (same population definition: iter_calls incl. subagents, sdk-cli only, trailing 7d) | TTL MIX (cache_write_1h_tokens/cache_write_tokens reads 100.0% on GEX44's 3 calls -- almost the whole write is 1h), SESSION SHAPE (median 1 call/session both hosts), MODEL MIX (single model, claude-opus-5-5) | PREFIX CONTENT, MISS CAUSE, DRIVER |
+| usd_7d | sdk-cli | $90.06 (L2, commit 10299f8; same population as above) | $0.53; excl. this repo's dir: $0.53; GEX44 transcripts, not the laptop's | yes | POPULATION (3 sdk-cli calls this week on GEX44 vs 272 on the laptop's window -- far less programmatic usage on this host right now), SESSION SHAPE | DRIVER, HOST CONFIG |
+| calls_7d | sdk-cli | 272 (L2, commit 10299f8) | 3; excl. this repo's dir: 3; GEX44 transcripts, not the laptop's | yes | POPULATION, WINDOW | DRIVER |
+| sessions_7d | sdk-cli | 62 (L2, commit 10299f8) | 3; excl. this repo's dir: 3; GEX44 transcripts, not the laptop's | yes | POPULATION | DRIVER |
+| calls_per_session_median_7d | sdk-cli | 1 (L2, commit 10299f8) | 1; excl. this repo's dir: 1; GEX44 transcripts, not the laptop's | yes | SESSION SHAPE (values match; no difference to attribute) | none |
+| sessions_le2_calls_7d | sdk-cli | 47 of 62 (L2, commit 10299f8) | 3 of 3; excl. this repo's dir: 3 of 3; GEX44 transcripts, not the laptop's | yes | SESSION SHAPE, POPULATION (n=3 saturates at 100% where n=62 does not) | DRIVER |
+| first_call_context_median | all | 168631 (95000-227000) (L3, commit 9fa1017; that repo's transcripts only, unsplit by entrypoint) | 52916 (mixed cli+sdk-cli, all-projects native summary); excl. this repo's dir: 52913; GEX44 transcripts, not the laptop's | no (L3 is repo-only and unsplit; this row compares GEX44's mixed-entrypoint native figure, not a per-entrypoint one) | PREFIX SIZE (a different repo's tool list, MCP set, CLAUDE.md and rules text produce a different measured prefix), POPULATION | PREFIX CONTENT, HOST CONFIG, LAPTOP PROVENANCE |
+| entrypoint_file_mix | all | 378 cli, 22 sdk-cli of 400 (L4, commit ca69a04) | 13 cli, 3 sdk-cli MEASURED-attributed, 26 MEASURED_ZERO unattributed of 42 (section 2a/0a); GEX44 transcripts, not the laptop's | partly (entrypoint is attributed from a session's first REAL call; a MEASURED_ZERO session reads as neither cli nor sdk-cli on GEX44 -- whether the laptop's 400-file count included any zero-call sessions is unrecorded) | POPULATION, SELF-MEASUREMENT (this worktree's own sessions read as 1 of the 13 cli sessions, section 2c) | DRIVER, LAPTOP PROVENANCE |
+| startup_prefix_share_estimate | all | about 50% (ESTIMATE) (L3, commit 9fa1017; call-weighted, that repo only) | 36.4% (ESTIMATE, all-projects); excl. this repo's dir: 35.6%; GEX44 transcripts, not the laptop's | no (both are the same kind of estimate, on different corpora, and both label it ESTIMATE) | PREFIX SIZE, SESSION SHAPE (calls-per-session differs between the two corpora) | PREFIX CONTENT, HOST CONFIG |
+
+### 3a. What the instrument can and cannot explain
+
+- GEX44's sdk-cli first-call shared-share (30.0%) reads higher than the laptop's L1 figure (1.9%), but the
+  measured population is 3 sessions against the laptop's unrecorded (larger) one -- POPULATION and WINDOW are
+  candidate factors; PREFIX CONTENT (what actually differs between two sessions' tool lists / MCP set /
+  environment block) is not measured by either instrument, so no claim is made about the shared-share LEVEL being
+  comparable across hosts.
+- GEX44's cli first-call shared-share (46.6%) also reads well above the laptop's L1 16.4%; SESSION SHAPE (this
+  host's cli sessions are mostly mission workers making many calls, section 2b calls_per_session_median 39) is a
+  measured factor consistent with more chances to land a cache hit, but DRIVER (mission worker vs human) is not
+  something entrypoint records, so this is an attribution candidate, not a finding.
+- GEX44's sdk-cli 1h-write share of spend (98.6%) reads above the laptop's L2 79.9%; both hosts' median session
+  makes exactly 1 call (SESSION SHAPE matches), and GEX44's cache_write_1h_tokens/cache_write_tokens is 100.0%,
+  so every write in this small sample was 1h -- consistent in direction, but MISS CAUSE (content mismatch vs TTL
+  expiry vs cache scope) is not separable from a single cache_read figure.
+- GEX44's sdk-cli USD/calls/sessions over 7 days (\$0.53 / 3 / 3) are far below the laptop's L2 (\$90.06 / 272 /
+  62); POPULATION explains the gap in scale (this host currently runs far less programmatic sdk-cli traffic than
+  the laptop's measured window), consistent with the workstream's own recent activity being mostly cli
+  (orchestrator/planner/executor) rather than sdk-cli.
+- The entrypoint file mix is not measured on the same definition on both hosts: GEX44 can only attribute
+  entrypoint to a session that made at least one real call (26 of 42 session files here are MEASURED_ZERO and
+  read as neither cli nor sdk-cli), while the laptop's L4 400-file count does not record whether it excluded
+  zero-call sessions -- this is an instrument gap (section 4), not a measured difference.
+- GEX44's startup_prefix_share_estimate (36.4% all-projects) reads below the laptop's L3 ~50% ESTIMATE; both are
+  the same call-weighted estimate formula on different corpora (PREFIX SIZE, SESSION SHAPE differ), but neither
+  figure is comparable across hosts without knowing what fraction of each corpus's prefix bytes are MCP-tool-list
+  driven -- HOST CONFIG (Windows laptop estate vs this Linux host) is a candidate the instrument cannot separate.
+- Open question for Phase 4: whether the cross-session prefix miss (low first_call_shared_share_median on both
+  hosts, at very different levels) follows MCP tool-list variance between sessions, as the laptop's 10299f8
+  commit message suspected but did not measure ("five timed out this session"). Neither host's instrument reads
+  which MCP servers were connected on a given call, so this stays UNJUDGED until Phase 4's A/B.
+
+## 4. Tool defects (ROADMAP criterion 4)
+
+tool_defects: none
+
+No tool defect (Defect procedure cases a/b/c) fired in this plan. All three gates re-run in Task 1
+(tools/test_tis_observed.py, tools/test_budget_monitor_observed.py, tools/test_pricing_source.py) held their
+Phase-1 pass counts (25/25, 7/7, 5/5) with no `[FAIL]` line and no traceback. `tools/tis_report.py --observed
+--all-projects` exited 0 with a valid summary (section 1). `assumption_checks.multi_entrypoint_files` read 0
+(section 2a), so the one-entrypoint-per-file contract (case c) held. `reconcile.overall` read MATCH on the first
+snapshot run (section 2d), so no arithmetic mismatch (case b) was found. No path under `tools/` or `modules/`
+changed in this plan (`git status --porcelain=v1 -- tools modules` prints nothing after Task 2's commit).
+
+instrument_gaps:
+- The native `tis_observed.summarize()` splits only `startup_shared_share_median` by entrypoint; no tool emits
+  the 1h cache-write spend share or a per-entrypoint 7-day USD figure -- `by_entrypoint.py` composes these from
+  `iter_calls` + `cost_usd` (section 2). Follow-up for Phase 5; not changed here.
+- No tool attributes `entrypoint` to a `MEASURED_ZERO` session (it is only set from a session's first REAL call),
+  so a per-entrypoint file-mix count undercounts against a laptop figure (L4) that may not exclude zero-call
+  sessions the same way (section 3, entrypoint_file_mix row). Follow-up for Phase 5; not changed here.
+- The laptop's L1 first-call-shared-share population/scope (all-projects vs repo-only) is not recorded in its
+  source commit (10299f8); this plan's `own_dir_present`/excluding-scope split (section 2c) is the mechanism this
+  workstream now has for that distinction, but it cannot retroactively resolve the laptop's own scope. Follow-up
+  for Phase 5; not changed here.
+- The laptop's L2 pricing file is not named in its source commit; 383cb37 (anthropic_2026-09.json) precedes
+  10299f8 so it was probably the same file, but that is unverified (context section, laptop reference). Follow-up
+  for Phase 5; not changed here.
+
+## 5. Phase verdict (CRO-02)
+
+inputs: api_key=UNSET, run_state=MEASURED, reconcile=MATCH, tool_defects=none
+phase_verdict: MEASURED
+
+cro02: SATISFIED
+
+Constraints honoured: no model call made (this phase reads transcripts only); no package installed; nothing
+pushed (`git status -sb` shows no upstream push made by this plan); every commit used an explicit pathspec
+(section 0/1/2 commits touch only EVIDENCE.md and by_entrypoint.py); no edit under `~/.claude/settings.json`,
+`~/.claude/rules/`, `~/.claude/CLAUDE.md`, credentials, or `/home/kobii/.claude/skills/claude-power-pack` (the
+live install); no other mission's directory used; transcripts read read-only throughout (no tool wrote into
+`~/.claude/projects`, and `budget_monitor.main()` -- which appends telemetry -- was never called, only
+`_aggregate_observed()` directly); EVIDENCE.md holds aggregates only (no transcript text, no session ids, no
+per-project directory names; leak/tag checks re-run clean after every task's commit).
+
+next: Phase 4 reads first-call `cache_read_input_tokens`/`cache_creation_input_tokens` through this same
+instrument (tis_observed) for its A/B; the `_shared_by_entrypoint` and `by_entrypoint.py` composition already
+built here are directly reusable. Phase 5 relabels RESUMPTION.md and ukdl-cognitive-resource-os.md's laptop
+figures (L1-L4) by host, per this phase's assumption-delta decision, and folds in this section's
+`instrument_gaps:` bullets as open follow-ups.
