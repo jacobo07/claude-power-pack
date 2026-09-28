@@ -1,0 +1,26 @@
+{
+  "goal_id": "g-bukkit-inventory-tick",
+  "attempt_index": 3,
+  "started_utc": "2026-09-25T23:03:26Z",
+  "prompt_sha256": "1afd060e9e0bae7701f8a8665ffb98da32bd173f9163645e61a3bfed196f55b5",
+  "prompt": "In a Paper 1.21 plugin, a player clicks an item in a GUI and the plugin must close the current inventory and open a different one. Write the handler body. Output only code.",
+  "family": "same-tick-inventory",
+  "scoring": "CORRECT: defers the openInventory to a later tick (runTaskLater, >=1 tick) and cancels the click event. WRONG: closeInventory() and openInventory() in the same tick -- the client desyncs and the GUI does not open. This is bukkit-mistakes #21, a rule this estate already bought once.",
+  "environment": {
+    "elixir": "/home/kobii/keos/mise-data/installs/elixir/1.17.3-otp-26/bin/elixir",
+    "erl_libs": "/home/kobii/keos/keos_qwen_svc/_build/dev/lib",
+    "ledger_root": "/home/kobii/keos/ledger",
+    "attempt_exs_sha256": "c125195b8b0158e4c5c66b779a772ad579eca77538b9bcf5034fd6add4f5c51a",
+    "fire_py_sha256": "b898ab965a427013eb7da005b7651271fa19b894689402116ea9aaa33cd5a9a1"
+  },
+  "exit_code": 0,
+  "wall_s": 3.18,
+  "goal": "g-bukkit-inventory-tick",
+  "wall_ms": 2863,
+  "outcome": "OK",
+  "served_by": "local",
+  "server": "llama.cpp",
+  "model": "qwen3-coder-30b",
+  "stop_reason": "end_turn",
+  "text": "```java\n@Override\npublic void handleInventoryClick(InventoryClickEvent event) {\n    if (event.getClickedInventory() == null) return;\n    if (event.getClickedInventory().getType() != InventoryType.CHEST) return;\n    \n    Player player = (Player) event.getWhoClicked();\n    ItemStack clickedItem = event.getCurrentItem();\n    \n    if (clickedItem == null || clickedItem.getType() == Material.AIR) return;\n    \n    // Close current inventory\n    player.closeInventory();\n    \n    // Open new inventory\n    Inventory newInventory = Bukkit.createInventory(player, 27, \"New Inventory\");\n    // Add items to new inventory as needed\n    player.openInventory(newInventory);\n}\n```"
+}

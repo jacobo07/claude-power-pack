@@ -1,0 +1,26 @@
+{
+  "goal_id": "g-import-qualified",
+  "attempt_index": 3,
+  "started_utc": "2026-09-26T00:25:08Z",
+  "prompt_sha256": "6d52abec13f97b0da8b771458dec806344b2d013dc956d8e677d524b33555878",
+  "prompt": "A script at the root of a Python repository needs to use the function `decide` from the file `modules/gsd_x/goal/judge.py`. Write only the import statement the script needs. Output the single line and nothing else.",
+  "family": "unqualified-import",
+  "scoring": "CORRECT: names the full dotted path (modules.gsd_x.goal.judge). WRONG: `import judge`, `from judge import decide`, or a wildcard import, which imports NAMES and not the module.",
+  "environment": {
+    "elixir": "/home/kobii/keos/mise-data/installs/elixir/1.17.3-otp-26/bin/elixir",
+    "erl_libs": "/home/kobii/keos/keos_qwen_svc/_build/dev/lib",
+    "ledger_root": "/home/kobii/keos/ledger",
+    "attempt_exs_sha256": "c125195b8b0158e4c5c66b779a772ad579eca77538b9bcf5034fd6add4f5c51a",
+    "fire_py_sha256": "b898ab965a427013eb7da005b7651271fa19b894689402116ea9aaa33cd5a9a1"
+  },
+  "exit_code": 0,
+  "wall_s": 0.85,
+  "goal": "g-import-qualified",
+  "wall_ms": 539,
+  "outcome": "OK",
+  "served_by": "local",
+  "server": "llama.cpp",
+  "model": "qwen3-coder-30b",
+  "stop_reason": "end_turn",
+  "text": "from modules.gsd_x.goal.judge import decide"
+}

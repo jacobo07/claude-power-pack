@@ -1,0 +1,25 @@
+# KEOS-Qwen corpus evidence, wave 1 -- frozen 2026-09-28
+# Source: gex44 (5.9.23.174) /home/kobii/keos/goals/evidence
+# Every hash below was verified IDENTICAL on the remote host at pull time.
+# 17 corpus attempts (6 goals) + 3 direct-endpoint agentic-loop records.
+# Frozen because the only copy lived on one host at 97% disk.
+b3be870269c4495f38ed37d9c0c85840a5a49eb91a45addea8331b073d30d15c  ./_loop_c1.json
+9c55d587d24c5f31af07a34c77456702d8b656bb6d6cf41eec510c67a8920978  ./_loop_control.json
+9283e886aae768c87bac8afa8d197be22289638c6c07923f241a240e7d5c9799  ./_loop_deep.json
+2e2801499507391a69f3eb15f62698f2f97ac234b14c90b933c29504d753c57d  ./g-bukkit-inventory-tick/20260925T225505Z-a1.json
+dd3e080ec84cbc41db2fa11e589810bad455657b68f7a03ffa656a7441591354  ./g-bukkit-inventory-tick/20260925T225511Z-a2.json
+6b9d6eaadad9848264f9f2e672322ea3555c3b2a4d655e0d325026e3febada2b  ./g-bukkit-inventory-tick/20260925T230329Z-a3.json
+02b6c0ed9f4c7f693915faff4611e8a5a8f62194854fb61e52aa99f0ee7d57d3  ./g-explicit-constraints/20260925T225507Z-a1.json
+8ebb85289938c52e1c6c1c7024b5882a1e18f3d4931e74f64b36bd17d47c32b5  ./g-explicit-constraints/20260925T225513Z-a2.json
+0e20ce97dfef2376e9e024ec7888224f23fcf19e610ecff2f523485ac84e1055  ./g-explicit-constraints/20260925T232442Z-a3.json
+128401b5ad302f22a9fae42d3129ed7668cc58204ac890bcc8dda51d5be34252  ./g-import-path/20260925T171444Z-a1.json
+b255eb5a27d6d759e8d0eef60c6158ce979020f46abc7ec63899009b5516d93b  ./g-import-path/20260925T172551Z-a2.json
+2d97e5e7f057eb74ee25120595420bafe9f91c840153dcec689e43264af6be29  ./g-import-qualified/20260925T225508Z-a1.json
+94e5f669d6f3c6c185b5264b704841fbeed8969d0935915a5295ea3e06bef4b1  ./g-import-qualified/20260925T225514Z-a2.json
+37c702a3b3cb35676e4af40ef934c79ba3c4f88282683757f12c822f673d937b  ./g-import-qualified/20260926T002509Z-a3.json
+108d4ef1ed06b90d6af3741182e9e82d62c53e78182947cb746792aa341b7878  ./g-nonexistent-api/20260925T230325Z-a1.json
+850e19f4866a61b3542cbb12b19f38d15292842994b31df88b53f4c5992bb560  ./g-nonexistent-api/20260925T232439Z-a2.json
+7b23160d2a32a788a4369d2a89edbb050225d59114722d0ffbc7e9e7bcd86497  ./g-nonexistent-api/20260926T002511Z-a3.json
+dbe92c0684ebc5f02f51717384ef8c00892f17258004b766d457540e3323c1af  ./g-strict-output-format/20260925T230326Z-a1.json
+c5175b83e3d45208eace038277a1157f0d9ddb8f9ab0932e6d0c8a5387708cd6  ./g-strict-output-format/20260925T232440Z-a2.json
+fea0d0ca0c0d7773ec827fd5bf39ca2cf5617f7827b75cae1c1023b1de0ed9bd  ./g-strict-output-format/20260926T002512Z-a3.json

@@ -1,0 +1,24 @@
+{
+  "goal_id": "g-import-path",
+  "attempt_index": 2,
+  "started_utc": "2026-09-25T17:25:50Z",
+  "prompt_sha256": "c99d6217fb05e99ca2e2bacf827e1d528afd9221628967d863f555b8cdfa9e88",
+  "prompt": "In a Python project the module lives at modules/gsd_x/goal/judge.py and there is an __init__.py at every level from the repo root. Write ONLY the single import line that a script at the repository root must use to import the judge module. No explanation, no code fence, just the line.",
+  "environment": {
+    "elixir": "/home/kobii/keos/mise-data/installs/elixir/1.17.3-otp-26/bin/elixir",
+    "erl_libs": "/home/kobii/keos/keos_qwen_svc/_build/dev/lib",
+    "ledger_root": "/home/kobii/keos/ledger",
+    "attempt_exs_sha256": "c125195b8b0158e4c5c66b779a772ad579eca77538b9bcf5034fd6add4f5c51a",
+    "fire_py_sha256": "fd21896e98d330408594432be225175a694e35881e1df03d17598c0fbc14a5a7"
+  },
+  "exit_code": 0,
+  "wall_s": 0.87,
+  "goal": "g-import-path",
+  "wall_ms": 571,
+  "outcome": "OK",
+  "served_by": "local",
+  "server": "llama.cpp",
+  "model": "qwen3-coder-30b",
+  "stop_reason": "end_turn",
+  "text": "from modules.gsd_x.goal.judge import *"
+}

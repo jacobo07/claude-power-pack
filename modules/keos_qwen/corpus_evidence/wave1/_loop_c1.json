@@ -1,0 +1,718 @@
+[
+  {
+    "verdict": "SUSTAINED",
+    "detail": "token matches",
+    "utc": "2026-09-25T22:49:09Z",
+    "chain_depth": 36,
+    "min_possible_turns": 37,
+    "turns_taken": 39,
+    "peak_prompt_tokens": 25835,
+    "malformed_tool_calls": 0,
+    "distinct_files_read": 37,
+    "repeated_reads": 0,
+    "submitted": "KQ-373QYNGVFBMV",
+    "secret_len": 15,
+    "turn_log": [
+      {
+        "turn": 1,
+        "wall_s": 0.85,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 444,
+        "completion_tokens": 12,
+        "total_tokens": 456,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "list_dir",
+            "args": {},
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 2,
+        "wall_s": 1.1,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 693,
+        "completion_tokens": 41,
+        "total_tokens": 734,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "README.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 3,
+        "wall_s": 1.19,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 785,
+        "completion_tokens": 44,
+        "total_tokens": 829,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_17.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 4,
+        "wall_s": 1.66,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 1489,
+        "completion_tokens": 44,
+        "total_tokens": 1533,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_23.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 5,
+        "wall_s": 1.6,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 2193,
+        "completion_tokens": 39,
+        "total_tokens": 2232,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_21.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 6,
+        "wall_s": 1.57,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 2892,
+        "completion_tokens": 35,
+        "total_tokens": 2927,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_24.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 7,
+        "wall_s": 1.63,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 3587,
+        "completion_tokens": 35,
+        "total_tokens": 3622,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_35.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 8,
+        "wall_s": 1.66,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 4282,
+        "completion_tokens": 35,
+        "total_tokens": 4317,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_13.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 9,
+        "wall_s": 1.65,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 4977,
+        "completion_tokens": 35,
+        "total_tokens": 5012,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_29.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 10,
+        "wall_s": 1.67,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 5672,
+        "completion_tokens": 35,
+        "total_tokens": 5707,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_14.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 11,
+        "wall_s": 1.67,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 6367,
+        "completion_tokens": 35,
+        "total_tokens": 6402,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_08.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 12,
+        "wall_s": 1.72,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 7062,
+        "completion_tokens": 35,
+        "total_tokens": 7097,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_25.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 13,
+        "wall_s": 1.71,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 7757,
+        "completion_tokens": 35,
+        "total_tokens": 7792,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_01.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 14,
+        "wall_s": 1.69,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 8452,
+        "completion_tokens": 35,
+        "total_tokens": 8487,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_28.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 15,
+        "wall_s": 1.71,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 9147,
+        "completion_tokens": 35,
+        "total_tokens": 9182,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_02.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 16,
+        "wall_s": 1.73,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 9842,
+        "completion_tokens": 35,
+        "total_tokens": 9877,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_09.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 17,
+        "wall_s": 1.75,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 10537,
+        "completion_tokens": 35,
+        "total_tokens": 10572,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_03.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 18,
+        "wall_s": 1.76,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 11232,
+        "completion_tokens": 35,
+        "total_tokens": 11267,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_30.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 19,
+        "wall_s": 1.76,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 11927,
+        "completion_tokens": 35,
+        "total_tokens": 11962,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_31.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 20,
+        "wall_s": 1.8,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 12622,
+        "completion_tokens": 35,
+        "total_tokens": 12657,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_34.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 21,
+        "wall_s": 1.83,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 13317,
+        "completion_tokens": 35,
+        "total_tokens": 13352,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_22.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 22,
+        "wall_s": 1.85,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 14012,
+        "completion_tokens": 35,
+        "total_tokens": 14047,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_06.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 23,
+        "wall_s": 1.86,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 14707,
+        "completion_tokens": 35,
+        "total_tokens": 14742,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_18.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 24,
+        "wall_s": 1.88,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 15402,
+        "completion_tokens": 35,
+        "total_tokens": 15437,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_27.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 25,
+        "wall_s": 1.9,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 16097,
+        "completion_tokens": 35,
+        "total_tokens": 16132,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_07.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 26,
+        "wall_s": 1.92,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 16792,
+        "completion_tokens": 35,
+        "total_tokens": 16827,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_33.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 27,
+        "wall_s": 1.94,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 17487,
+        "completion_tokens": 35,
+        "total_tokens": 17522,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_16.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 28,
+        "wall_s": 1.96,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 18182,
+        "completion_tokens": 35,
+        "total_tokens": 18217,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_32.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 29,
+        "wall_s": 1.95,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 18877,
+        "completion_tokens": 35,
+        "total_tokens": 18912,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_12.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 30,
+        "wall_s": 2.0,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 19572,
+        "completion_tokens": 35,
+        "total_tokens": 19607,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_10.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 31,
+        "wall_s": 2.03,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 20267,
+        "completion_tokens": 35,
+        "total_tokens": 20302,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_20.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 32,
+        "wall_s": 2.03,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 20962,
+        "completion_tokens": 35,
+        "total_tokens": 20997,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_36.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 33,
+        "wall_s": 2.06,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 21657,
+        "completion_tokens": 35,
+        "total_tokens": 21692,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_11.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 34,
+        "wall_s": 2.08,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 22352,
+        "completion_tokens": 35,
+        "total_tokens": 22387,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_05.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 35,
+        "wall_s": 2.13,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 23047,
+        "completion_tokens": 35,
+        "total_tokens": 23082,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_04.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 36,
+        "wall_s": 2.13,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 23742,
+        "completion_tokens": 35,
+        "total_tokens": 23777,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_19.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 37,
+        "wall_s": 2.16,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 24437,
+        "completion_tokens": 35,
+        "total_tokens": 24472,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_26.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 38,
+        "wall_s": 2.18,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 25132,
+        "completion_tokens": 35,
+        "total_tokens": 25167,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "read_file",
+            "args": {
+              "path": "node_15.txt"
+            },
+            "malformed": false
+          }
+        ]
+      },
+      {
+        "turn": 39,
+        "wall_s": 3.07,
+        "finish_reason": "tool_calls",
+        "prompt_tokens": 25835,
+        "completion_tokens": 67,
+        "total_tokens": 25902,
+        "n_tool_calls": 1,
+        "calls": [
+          {
+            "name": "submit_answer",
+            "args": {
+              "token": "KQ-373QYNGVFBMV"
+            },
+            "malformed": false
+          }
+        ]
+      }
+    ]
+  }
+]
