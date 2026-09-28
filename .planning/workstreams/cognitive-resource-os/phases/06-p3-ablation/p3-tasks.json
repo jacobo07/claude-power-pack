@@ -1,0 +1,22 @@
+{
+  "schema": "cro-p3-tasks/1",
+  "frozen_note": "Frozen by the commit that adds this file, before any counted run (protocol: vault/plans/cognitive-resource-os-P3-ablation-protocol.md).",
+  "tasks": [
+    {"id": "T1-tis-dedupe", "domain": "measurement", "file": "tools/tis_observed.py", "test": "tools/test_tis_observed.py",
+     "old": "            key = (msg.get(\"id\"), obj.get(\"requestId\"))\n", "new": "            key = (\"line\", usage_lines)\n"},
+    {"id": "T2-tis-bom", "domain": "measurement", "file": "tools/tis_observed.py", "test": "tools/test_tis_observed.py",
+     "old": "    with open(path, encoding=\"utf-8-sig\") as fh:\n", "new": "    with open(path, encoding=\"utf-8\") as fh:\n"},
+    {"id": "T3-tis-synthetic", "domain": "measurement", "file": "tools/tis_observed.py", "test": "tools/test_tis_observed.py",
+     "old": "                synthetic += 1\n                continue\n", "new": "                synthetic += 1\n"},
+    {"id": "T4-pricing-newest", "domain": "config", "file": "tools/pricing_source.py", "test": "tools/test_pricing_source.py",
+     "old": "    return max(dated)[1]\n", "new": "    return min(dated)[1]\n"},
+    {"id": "T5-pricing-missing", "domain": "config", "file": "tools/pricing_source.py", "test": "tools/test_pricing_source.py",
+     "old": "        raise FileNotFoundError(f\"no anthropic_YYYY-MM.json under {pricing_dir}\")\n", "new": "        return pricing_dir / \"anthropic_2026-01.json\"\n"},
+    {"id": "T6-rollover-sealed-hash", "domain": "R1-destructive", "file": "tools/rollover.py", "test": "tools/test_rollover.py",
+     "old": "            if hashlib.sha256(p.read_bytes()).hexdigest() != want:\n", "new": "            if not p.exists():\n"},
+    {"id": "T7-budget-population", "domain": "R1-measurement", "file": "tools/budget_monitor.py", "test": "tools/test_budget_monitor_observed.py",
+     "old": "        if c.get(\"entrypoint\") != PROGRAMMATIC_ENTRYPOINT:\n", "new": "        if c.get(\"entrypoint\") is None:\n"},
+    {"id": "T8-budget-unknown-not-zero", "domain": "R1-absent-not-zero", "file": "tools/budget_monitor.py", "test": "tools/test_budget_monitor_observed.py",
+     "old": "        if usd is None:\n            out[\"unpriced_calls\"] += 1\n", "new": "        if usd is None:\n            usd = 0.0\n        if False:\n            out[\"unpriced_calls\"] += 1\n"}
+  ]
+}
