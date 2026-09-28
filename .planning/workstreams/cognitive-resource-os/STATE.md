@@ -1,32 +1,32 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1 — Gate verdict on the big host
-current_plan: Not started
-status: planning
-stopped_at: Phase 4 complete, ready to plan Phase 1
-last_updated: "2026-09-28T14:57:41.839Z"
+current_phase: 5
+current_plan: 1
+status: verifying
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-09-28T15:41:46.339Z"
 last_activity: 2026-09-28
-last_activity_desc: Phase 4 complete, transitioned to Phase 1
-state_head: cd93c9855268e12d43eb1e1aad3432b4b226efed
+last_activity_desc: Phase 5 execution started
+state_head: 960afcf9ff58538963a54b2c15c381648a3f3564
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 6
+  completed_plans: 6
   percent: 60
 workstream: cognitive-resource-os
 created: 2026-09-28
-current_phase_name: Gate verdict on the big host
+current_phase_name: Seal and hand back
 ---
 
 # Project State
 
 ## Current Position
 
-**Status:** Ready to plan
-**Current Phase:** 1 — Gate verdict on the big host
-**Last Activity:** 2026-09-28
-**Last Activity Description:** Phase 4 complete, transitioned to Phase 1
+**Status:** Phase complete — ready for verification
+**Current Phase:** 5
+**Last Activity:** 2026-09-28 — Phase 5 execution started
+**Last Activity Description:** Phase 5 execution started
 job-scratch venv) was answered rejected -- no Owner was reachable mid-run to approve it, and the orchestrator cannot
 grant that approval on the Owner's behalf. Tasks 2-3 were not run. EVIDENCE.md sections 2-4 record
 suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
@@ -34,14 +34,14 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 ## Progress
 
 **Phases Complete:** 0
-**Current Plan:** Not started
+**Current Plan:** 1
 **Total Plans in Phase:** 1
 
 ## Session Continuity
 
-**Last session:** 2026-09-28T14:47:12.048Z
+**Last session:** 2026-09-28T15:41:46.309Z
 
-**Stopped At:** Phase 4 complete, ready to plan Phase 1
+**Stopped At:** Completed 05-01-PLAN.md
 **Resume File:** None
 
 ## Performance Metrics
@@ -53,6 +53,7 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 | Phase 02 P01 | 17min | 3 tasks | 2 files |
 | Phase 03 P01 | 28min | 3 tasks | 7 files |
 | Phase 04 P01 | 26min | 3 tasks | 5 files |
+| Phase 05 P01 | 25min | 3 tasks | 4 files |
 
 ## Decisions
 
@@ -70,6 +71,8 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 - [Phase 3]: [Phase 3]: P0 verdict PASS (--settings claudeMdExcludes naming the three R1 files), the lowest-numbered ACCEPTABLE block; C01 (--setting-sources) and C04/C05 (config-dir/HOME), the protocol's own first- and second-listed candidates, both REJECTED (rules_effect and credential respectively).
 - [Phase 3]: [Phase 3]: Host applicability recorded: GEX44 itself has no R1 rule files in ~/.claude/rules (0 of 3 present), so this host cannot run the ablation as defined regardless of the PASS; the mechanism is for whichever host (the laptop, per RESUMPTION.md) actually carries R1.
 - [Phase 4]: [Phase 4]: CRO-04 verdict UNJUDGED (similar-reuse-variance-not-observed, R8) -- Arm A's MCP tool list and server statuses were byte-identical between A1 and A2 in this observation, so the tool-list-variance hypothesis was not exercised; cro04 SATISFIED (4 launches, judged, not BLOCKED).
+- [Phase 5]: [Phase 5]: Both Phase 4 gates (04-VERIFICATION passed, 04-REVIEW CR-01 present) read WRITE at execution time, so all six planned UKDL entries were written (14 total entry-ID lines).
+- [Phase 5]: [Phase 5]: seal_check.py enforces the seal (verdict-token equality, figure-in-cited-file provenance, closed UKDL id set, word preservation, privacy scan) rather than only narrating it; all five automated checks per task gated the commits.
 
 ## Blockers
 
