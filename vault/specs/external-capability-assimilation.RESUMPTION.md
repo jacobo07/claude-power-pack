@@ -1,57 +1,41 @@
 # External Capability Assimilation — resumption contract
 
 **Read this first; it is self-contained.** Spec: `vault/specs/external-capability-assimilation.md`.
-Worktree `C:\Users\User\Apps\pp-assim`, branch `feat/external-assimilation` (off
-`feature/knowledge-acquisition@2b6f183`, pushed to origin). Source: `Downloads\for cpp-gsd-long.zip`.
+Worktree `C:\Users\User\Apps\pp-assim`, branch `feat/external-assimilation`; live checkout
+`C:\Users\User\.claude\skills\claude-power-pack` on `feature/knowledge-acquisition` (the hook
+dispatcher and every running mission load code from THERE). Both pushed at `8ee41c6`.
 
 ## Thesis
 Every capability (Genesis 21 modules + runner, Context Budget, loop kit, self-continuation) gets ONE
-CPP owner/disposition in `vault/assimilation/genesis-2026-09/ASSIMILATION_MANIFEST.json`. Hot path
-native Python; cold path vendored MIT Node via `modules/external_assimilation/node_bridge.py`.
+CPP owner/disposition in `vault/assimilation/genesis-2026-09/ASSIMILATION_MANIFEST.json`.
 
-## Owner decisions (2026-09-28)
-Worktree, full scope, hybrid runtime, autonomy gate LIVE, night research VPS-only (VPS Node v22.22.2
-< ^22.23.2: install user-level Node 24 first), experiments hybrid, push everything.
+## Go-live pattern
+Commit in pp-assim; re-read main HEAD; check branch files vs main's dirty set (another writer keeps
+~590 hook/doc paths dirty there -- never commit in main); `merge --ff-only` in main; rerun the live
+gates there (test_gsd_mission, test_handoff_packet, test_mission_watchdog, test_gsd_long_run,
+test_gsd_epoch, test_rollover_active_path, `node tools/test_gsd_stop_continuation.js`).
 
-## Sealed
-T1 `f9a8391` `6ab1b06` vendor+provenance+bridge+manifest · T2a `0efa0ba` Context Budget as epoch
-evidence + Fresh Context Tax (median 185,930 tokens fixed bootstrap; 389/445 sessions were quota
-refusals) · T3a `6fedb1d` provider circuit breaker · T3b (this commit) autonomy gate extending DRK +
-rubric/wake-order in the Ralph Stop hook + decision receipts.
-Gates: test_genesis_bridge 9/9 · test_assimilation_manifest 9/9 · test_vendor_provenance 5/5 ·
-test_context_budget 8/8 · test_gsd_epoch_context_budget 6/6 · test_fresh_context_tax 3/3 ·
-test_provider_breaker 15/15 · test_gsd_mission 191/191 · test_gsd_epoch pass · test_autonomy_gate
-22/22 · node tools/test_gsd_stop_continuation.js 17/17.
+## Sealed (T1-T7 at 6fdd61a; this session)
+`4f27cff` test isolation: runtime audit hook (tools/state_write_audit) proved d10bd31 left 46 marker
+writes + live watchdog log/snapshot writes; fixed; ratchet `tools/test_state_isolation.py` (28 suites).
+`46675ff` item 29 routing metrics · `96f753c` item 30 verified reuse (batch_drafts consumer; cannot
+approve) · `7e12fcb` exp-successor-packet-002 registered BEFORE runs (001 withdrawn) · `c9f750d` T8
+closed: packets by reference on `handoff --packet`, routes in `gsd_epoch certify` · `fe2be9c` item 22
+task ledger MERGED into gsd_x/goal (attribution + AST ratchet), PLANNED · `8ee41c6` item 32 task
+adaptation in contract.revise, PLANNED. Decision record: `vault/experiments/exp-successor-packet-002/REPORT.md`.
 
-## LIVE since 2026-09-28 (`2f8cc5b`)
-`90ba1d5` successor card carries rubric + wake order; 4 self-continuation entries LIVE (manifest
-9/9 runs 14 LIVE proofs). `2f8cc5b` merged `feature/knowledge-acquisition` INTO this branch, then
-the live checkout fast-forwarded to it: 14 suites green on the merged tree, hook + gate suites
-green again on the live copy (the dispatcher runs `hooks/gsd_stop_continuation.js` from the repo
-path, no mirror). Both branches pushed at `2f8cc5b`.
-Go-live pattern for later tranches: commit here, merge the live branch in, rerun gates, then
-`merge --ff-only` in the main checkout after checking HEAD unmoved and no dirty-path overlap.
-
-## T4-T7 LIVE since 2026-09-28 (`6fdd61a`, fast-forwarded; both branches pushed)
-Item 18 plan graph (card `_plan_facts`) · 20 batch drafts · 21 task contracts · 23 evidence
-bundle (REAL end-to-end OK: real gates + nonce-ticketed pp-code-reviewer review; 3 real reviews,
-two found real false greens, both fixed) · 24 review intake (+ modules/code_review
-unrecognised-severity APPROVE fixed) · 25 regression memory · 26 constraint compiler (pinned on
-the batch path; UKDL crosswalk NOT claimed) · 27 change impact (graph from AST imports, NOT
-audit_cache: its depends_on is stem-resolved and would have said "no suite affected").
-Tool only / not LIVE: 12 source packet (card 8000-byte cap vs 24000-byte packet -> T8 decides).
-SEAM: 22 task ledger (Goal Spine owns the only live caller; decision 1a).
-Also fixed on the way: rollover `resume` claimed uncertifiable capsules + test leak (d10bd31);
-test_mission_watchdog control inverted for active rollover (was red on live since 42da3d1).
-Owner-side, not done (HR-001): add REPLY_INSTRUCTION to ~/.claude/agents/pp-code-reviewer.md.
-Known limits recorded in code: review ticket A->B->A window; test_cpp_gsd_long_routing reads
-red in a CRLF worktree only (content identical; 9/9 on the live checkout).
+## Blockers / truths a successor must not re-derive
+- Goal Spine engine (gsd_x/goal) has NO live invoker (no command/hook/task reaches
+  tools/gsd_x_goal.py; registry says UWCP S6). Items 22, 32 are merged there and stay PLANNED.
+- Vendor credential-line filter blocks 441/1,091 Python files whole (322 only for "pass" + ":"/"=").
+- ~/.claude/agents/pp-code-reviewer.md: HR-001, not written by the agent.
 
 ## Next 3 actions
-1. T8: routing metrics (epoch/worker receipts), verified reuse, the paired experiment
-   (current card vs bounded-packet card: decides item 12's consumer).
-2. T9-T10: task adaptation, charter lab; night research on the VPS (user Node 24 first).
-3. T11-T12: live smoke mission, red team, Knowledge Vault / UKDL capture.
+1. T9 item 33 Charter Lab (UCR-CIF seam; construction worktree untouched), reviewer-contract
+   installer (Owner runs it), rollover RESUMPTION reconcile (its owner's file: facts only).
+2. T10 night research on the VPS (user Node 24 first; check VPS cron for gsd_x_goal).
+3. T11 smoke mission + `gsd_epoch certify`; T12 red team, Knowledge Vault, UKDL, UCR-CIF, baseline.
 
 ## Start instruction
-`git -C C:\Users\User\Apps\pp-assim log --oneline -8`, run the gates, then action 1.
+`git -C C:\Users\User\Apps\pp-assim log --oneline -8`, run `python tools/test_assimilation_manifest.py`
+(re-runs every LIVE proof), then action 1.
