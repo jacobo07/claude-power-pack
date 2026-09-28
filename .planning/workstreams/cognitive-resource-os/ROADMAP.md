@@ -47,12 +47,13 @@ Every figure names its instrument and source (observed transcript vs estimate). 
      `784e446` in a scratch worktree), or environment (Linux vs Windows). No fix outside this workstream's scope.
   4. `.planning/workstreams/cognitive-resource-os/phases/01-*/EVIDENCE.md` holds commands, exit codes and verdicts.
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans executed — phase BLOCKED (CRO-01 not satisfied; see EVIDENCE.md section 4). 01-02's Task 1
+legitimacy checkpoint was answered rejected (no Owner reachable mid-run); rerun once the Owner answers it.
 
 Plans:
 
 - [x] 01-01-PLAN.md — pre-checks (API key, host, pytest probe) + the four workstream gates verbatim, owned-file set, gate verdict (autonomous, wave 1)
-- [ ] 01-02-PLAN.md — package-legitimacy checkpoint, pytest in a job-scratch venv, bracketed full suite (timeout 1800), failure classification at 784e446, CRO-01 phase verdict (wave 2, has a blocking-human checkpoint)
+- [x] 01-02-PLAN.md — package-legitimacy checkpoint, pytest in a job-scratch venv, bracketed full suite (timeout 1800), failure classification at 784e446, CRO-01 phase verdict (wave 2, has a blocking-human checkpoint) — HALTED: Task 1 checkpoint rejected; Tasks 2-3 not run; suite_verdict BLOCKED, phase_verdict BLOCKED
 
 ### Phase 2: GEX44 observed baseline
 
@@ -119,7 +120,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Gate verdict on the big host | 1/2 | In Progress|  |
+| 1. Gate verdict on the big host | 2/2 | Blocked (CRO-01: rerun 01-02 pending Owner) | - |
 | 2. GEX44 observed baseline | 0/? | Not started | - |
 | 3. P3 pre-flight P0 | 0/? | Not started | - |
 | 4. Prefix cache-miss A/B | 0/? | Not started | - |
