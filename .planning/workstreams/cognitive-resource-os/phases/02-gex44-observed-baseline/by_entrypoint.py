@@ -292,6 +292,15 @@ def measure(dirs, own_dir, now_ts, pricing, pricing_meta) -> dict:
     grouping only. Field names are exact -- Task 2's verify reads them."""
     dirs = [Path(d) for d in dirs]
     cutoff_ts = now_ts - bm.BURN_WINDOW_DAYS * 86400
+    # WR-01: R5/R6 compare this file's `cutoff_ts` (fixed, from `now_ts` above) against
+    # bm._aggregate_observed's OWN fresh `_utc_now()`-derived cutoff -- two different
+    # clocks. `measure()` does substantial I/O between the two, so on a host with
+    # actively-appended transcripts a call landing in that gap can land on one side of
+    # R5/R6 and not the other. `cutoff_computed_at` lets `r5_r6_probe_elapsed_s` (set
+    # just before the _aggregate_observed call below) record how wide that gap actually
+    # was this run, so a future R5/R6 MISMATCH can be attributed to clock drift rather
+    # than triaged as a possible budget_monitor arithmetic defect.
+    cutoff_computed_at = time.monotonic()
     models = (pricing or {}).get("models") or {}
     pricing_ok = pricing is not None
 
@@ -401,6 +410,9 @@ def measure(dirs, own_dir, now_ts, pricing, pricing_meta) -> dict:
     except Exception as exc:
         reconcile["R4"] = f"MISMATCH error={type(exc).__name__}: {exc}"
 
+    # Informational only, not a check result: elapsed wall-clock time between computing
+    # cutoff_ts above and this call, i.e. the width of the two-clock gap WR-01 describes.
+    reconcile["r5_r6_probe_elapsed_s"] = round(time.monotonic() - cutoff_computed_at, 3)
     bm_agg = bm._aggregate_observed(bm.BURN_WINDOW_DAYS, pricing, project_dirs=dirs)
     t7_all = scope_all["trailing_7d"]["by_entrypoint"]
     sdkcli_calls = t7_all.get("sdk-cli", {}).get("calls", 0)
@@ -413,6 +425,10 @@ def measure(dirs, own_dir, now_ts, pricing, pricing_meta) -> dict:
 
     overall = "MATCH"
     for k, v in reconcile.items():
+        # Skip informational (non-check) entries, e.g. r5_r6_probe_elapsed_s (float) --
+        # only MATCH/MISMATCH/SKIPPED string results participate in `overall`.
+        if not isinstance(v, str):
+            continue
         if v.startswith("SKIPPED"):
             continue
         if v != "MATCH":
