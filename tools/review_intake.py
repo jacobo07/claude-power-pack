@@ -43,7 +43,22 @@ REPLY_INSTRUCTION = (
     '"title": "...", "description": "...", "evidence": "file:line and the quoted code"}]}. '
     'If you found nothing, the block is {"findings": []} -- say it explicitly; a reply without the '
     "block is recorded as an INCOMPLETE review, never as an approval.")
-_FENCE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.S)
+# Any json-family label, any case (a real reviewer may write ```JSON or ```jsonc): a label this
+# regex did not know sent a good review to INCOMPLETE (real review of this file, 2026-09-28).
+_FENCE = re.compile(r"```(?:json\w*)?[ \t]*\r?\n?\s*(\{.*?\})\s*```", re.S | re.I)
+
+
+class _Duplicate(ValueError):
+    pass
+
+
+def _no_duplicates(pairs):
+    # json.loads keeps the LAST duplicate key, so {"findings":[critical],"findings":[]} collapsed
+    # to an approval before anything could judge it (same review). A duplicate is malformed.
+    keys = [k for k, _ in pairs]
+    if len(keys) != len(set(keys)):
+        raise _Duplicate(f"duplicate key {sorted(k for k in set(keys) if keys.count(k) > 1)}")
+    return dict(pairs)
 
 
 @dataclass
@@ -61,7 +76,9 @@ def _one_json(text: str):
         return None, f"{len(fenced)} JSON blocks in the reply; exactly one is required"
     candidate = fenced[0] if fenced else text.strip()
     try:
-        return json.loads(candidate), ""
+        return json.loads(candidate, object_pairs_hook=_no_duplicates), ""
+    except _Duplicate as exc:
+        return None, f"malformed JSON: {exc}"
     except ValueError:
         return None, "no parseable JSON findings object in the reply"
 

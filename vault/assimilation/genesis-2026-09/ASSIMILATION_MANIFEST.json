@@ -124,20 +124,23 @@
   {
    "id": "genesis-evidence-collector",
    "source": "vendor/genesis-suite/modules/genesis-evidence-collector",
-   "owner": "tools/gsd_epoch.py certify + gsd_x closure",
+   "owner": "tools/evidence_bundle.py (V-gate check receipts + review ticket/receipt -> vendored collector)",
    "disposition": "WRAP",
    "differential": "scattered receipts normalised; missing evidence stays MISSING",
    "status": "PLANNED",
-   "slice": "T5"
+   "slice": "T5",
+   "evidence": "WRAP as a PRODUCER: CPP had none for the collector's receipts. Real review of it found a HIGH false green (the review receipt bound disk-now bytes, not the bytes the reviewer read) -> review tickets issued at dispatch; checks hash before+after the run. Stays PLANNED until a real ticketed review of the fixed tool completes a bundle."
   },
   {
    "id": "genesis-regression-memory",
    "source": "vendor/genesis-suite/modules/genesis-regression-memory",
-   "owner": "Knowledge Vault lessons (vault/lessons)",
+   "owner": "tools/regression_memory.py (records + committed evidence under vault/regressions/)",
    "disposition": "EXTEND",
    "differential": "failing output + reproducer + source sha256 + passing receipt; reopen when bytes move",
-   "status": "PLANNED",
-   "slice": "T6"
+   "status": "LIVE",
+   "slice": "T6",
+   "proof": "python tools/test_regression_memory.py",
+   "evidence": "EXTEND: CPP V-gate output converted losslessly to TAP (raw output hashed beside it); vendored create/resolve/reopen lifecycle via the bridge. A moved artifact byte reopens a resolved record ('Stale evidence: art.py'); a crashed suite, a passing 'failure', the failing run reused as the fix and a fix that changes check identities are all refused."
   },
   {
    "id": "genesis-routing-metrics",

@@ -49,6 +49,8 @@ def main() -> int:
     check("V-RINTAKE-CRITICAL-BLOCKS", run(json.dumps({"findings": [f("a", "critical"), f("b", "high")]})).verdict == ri.BLOCK)
     fenced = "Review done.\n```json\n" + json.dumps({"findings": [f("a", "medium")]}) + "\n```\nThanks."
     check("V-RINTAKE-FENCED-READ", run(fenced).verdict == ri.APPROVE, run(fenced).counts)
+    upper = "Done.\n```JSON\n" + json.dumps({"findings": [f("a", "high")]}) + "\n```"
+    check("V-RINTAKE-FENCE-LABEL-ANY-CASE", run(upper).verdict == ri.WARNING, run(upper).reason)
 
     print("never an approval")
     for gate, reply, needle in [
@@ -60,6 +62,11 @@ def main() -> int:
         ("V-RINTAKE-UNKNOWN-SEVERITY", json.dumps({"findings": [f("a", "major")]}), "severity is invalid"),
         ("V-RINTAKE-DUPLICATE-ID", json.dumps({"findings": [f("a", "low"), f("a", "low")]}), "unique"),
         ("V-RINTAKE-MISSING-FIELD", json.dumps({"findings": [{"id": "a", "severity": "low", "title": "t"}]}), "exactly"),
+        # A real review (2026-09-28): json.loads keeps the LAST duplicate, so this was an APPROVE.
+        ("V-RINTAKE-DUPLICATE-KEY-COLLAPSE", '{"findings": [' + json.dumps(f("a", "critical")) + '], "findings": []}',
+         "duplicate key"),
+        ("V-RINTAKE-DUPLICATE-SEVERITY", '{"findings": [{"id": "a", "severity": "critical", "title": "t", '
+                                         '"description": "d", "evidence": "e", "severity": "low"}]}', "duplicate key"),
     ]:
         r = run(reply)
         check(gate, r.verdict == ri.INCOMPLETE and needle in r.reason, r.reason)
