@@ -1,6 +1,9 @@
 # Cognitive Resource OS — plan of record (2026-09-27)
 
-Status: AWAITING OWNER APPROVAL. Nothing below is implemented.
+Status: APPROVED by the Owner 2026-09-27 (full plan re-confirmed 2026-09-28). IN EXECUTION across several
+panes and a GEX44 mission; progress lives in `cognitive-resource-os-RESUMPTION.md`, not in this file.
+(This line read "AWAITING OWNER APPROVAL. Nothing below is implemented." until 2026-09-28, a day after both
+had stopped being true.)
 Scratch evidence: session scratchpad reality_A.md / reality_B.md (scout reports, key claims re-verified in main thread).
 
 ## Mode
@@ -20,6 +23,9 @@ Scratch evidence: session scratchpad reality_A.md / reality_B.md (scout reports,
 - Overlaps: model routers 7 · completion gates 6 · contract/spec owners 6 · ratchets 4 · epoch/lease 4 · reapers 4 · supervisors 3 · FTS5 stores 5.
 - Documented-not-executed: prg_assess/strength_ladder, premise_verifier.assert_premises, token_autopsy, ukdl_queue, side_effect_ledger, modules/lease.
 - 95-token-reduction doc: NOT FOUND in Downloads (home-wide search timed out → unlocated, not absent).
+  LOCATED 2026-09-28: embedded in `Downloads\Dataset Context Intelligence Fabric 1.md` lines 14220-14546
+  ("95% Token Reduction — Operating Doctrine for Three-Tier LLM Systems"). Its percentages are claims, not
+  measurements. Candidate map of the whole file against this plan: `vault/assimilation/cif-dataset-2026-09/INVENTORY.md`.
 
 ## Governing decision (HR-NOVELTY-001)
 The prompt names ~20 control-plane components. Measured reality: the estate's gap is ORPHANS and OVERLAPS, not missing concepts.
