@@ -216,14 +216,17 @@ def _by_entrypoint_trailing_7d(dirs, cutoff_ts, models, pricing_ok, entrypoint_k
             prices = models.get(model)
             if pricing_ok and prices:
                 usd, _assumed = T.cost_usd(usage, prices)
-                if usd is None:
-                    unpriced_calls += 1
-                    if model not in unpriced_models:
-                        unpriced_models.append(model)
-                else:
-                    usd_total += usd
-                    usd_by_model[model] = usd_by_model.get(model, 0.0) + usd
-                    usd_1h_total += _usd_1h_only(usage, prices)
+                # T.cost_usd (tools/tis_observed.py) returns None only when `not prices`,
+                # which the `pricing_ok and prices` guard above already excludes -- usd
+                # cannot be None here. Assert loudly instead of a silently-unreachable
+                # `if usd is None` arm, so a future contract change (e.g. a malformed
+                # price row) surfaces immediately rather than mis-summing (WR-03).
+                assert usd is not None, (
+                    f"cost_usd returned None for model={model!r} despite truthy prices "
+                    "-- cost_usd's None-contract changed, update this guard")
+                usd_total += usd
+                usd_by_model[model] = usd_by_model.get(model, 0.0) + usd
+                usd_1h_total += _usd_1h_only(usage, prices)
             else:
                 unpriced_calls += 1
                 if model not in unpriced_models:
