@@ -63,6 +63,7 @@ def main() -> int:
 
     def door(*a, **k):
         calls["dispatch"] += 1
+        calls["last"] = k
         return {"route": "stub"}
 
     def kclear(*a, **k):
@@ -135,7 +136,11 @@ def main() -> int:
           and "plan 03-02 task 3" in card2 and "epoch 2" in card2, card2[:80])
     check("V-MCW-SUCCESSOR-OWNS", gm.load(mid)["owner"]["session_id"] == "c0ffee00-aaaa-mcw")
 
-    # --- control: an ordinary armed run at the same wall still asks for /compact -------------
+    # --- control: an ordinary armed run at the same wall still gets a continuation ------------
+    # INVERTED 2026-09-28, in place. This control pinned `/compact`; active rollover (42da3d1,
+    # Owner-authorized, ON by default) asks for `/kclear` at the wall instead. test_gsd_long_run
+    # was inverted with that commit and this sibling was not, so it went red on the live checkout
+    # for a reason unrelated to missions. The diff of this assertion is the evidence.
     plain = f"mcw-plain-{uuid.uuid4().hex[:8]}"
     p = mk.write_marker(plain, "/gsd-autonomous", cwd=str(ROOT))
     data = json.loads(p.read_text(encoding="utf-8"))
@@ -143,8 +148,26 @@ def main() -> int:
     mk._save(p, data)
     before = dict(calls)
     out = run_at(plain, 45.0)
-    check("V-MCW-CONTROL-PLAIN-COMPACTS", "/compact focus" in out.get("reason", "")
-          and calls["dispatch"] == before["dispatch"] + 1, out.get("reason", "")[:80])
+    last = calls.get("last") or {}
+    check("V-MCW-CONTROL-PLAIN-ROLLOVER-KCLEAR", last.get("expect_prefix") == "/kclear"
+          and calls["dispatch"] == before["dispatch"] + 1, (last.get("kind"), last.get("expect_prefix")))
+    # The kill switch must restore the old crossing exactly, or "rollover is on" and "the
+    # /compact path is gone" are the same observable.
+    plain2 = f"mcw-plain-{uuid.uuid4().hex[:8]}"
+    p2 = mk.write_marker(plain2, "/gsd-autonomous", cwd=str(ROOT))
+    data2 = json.loads(p2.read_text(encoding="utf-8"))
+    data2["wall"] = dict(gm.DEFAULT_WALL)
+    mk._save(p2, data2)
+    os.environ["CPP_ROLLOVER_ACTIVE"] = "0"
+    try:
+        before = dict(calls)
+        out2 = run_at(plain2, 45.0)
+    finally:
+        os.environ.pop("CPP_ROLLOVER_ACTIVE", None)
+    last2 = calls.get("last") or {}
+    check("V-MCW-CONTROL-KILLSWITCH-COMPACTS", "/compact focus" in out2.get("reason", "")
+          and last2.get("expect_prefix") == "/compact" and calls["dispatch"] == before["dispatch"] + 1,
+          (last2.get("kind"), out2.get("reason", "")[:60]))
 
     print(f"MCW_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
