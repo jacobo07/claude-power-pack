@@ -292,7 +292,41 @@ def cmd_record(args) -> int:
     if lesson_path:
         msg += f" | lesson -> {lesson_path}"
     print(msg)
+    print(seal_capsule(payload, session_id))
     return 0
+
+
+def seal_capsule(payload: dict, session_id: str) -> str:
+    """P3 (vault/specs/interactive-context-rollover.md): after the handoff is on disk, seal a
+    structured continuation capsule and judge safe-to-forget. Never fails /kclear: a capsule
+    that cannot be built is reported as UNKNOWN, and /clear must then wait."""
+    running = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
+    named = session_id if session_id and session_id != "unknown" else ""
+    if named and running and named != running:
+        # A capsule describes the session that is about to forget. Sealing one for another id
+        # would let that session's successor adopt state it never had.
+        return (f"[capsule] UNKNOWN -- payload names session {named[:8]} but this process is "
+                f"{running[:8]}; nothing sealed")
+    sid = named or running
+    if not sid:
+        return "[capsule] UNKNOWN -- no session id; do not /clear on the strength of this checkpoint"
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import rollover
+        items = [p if isinstance(p, str) else f"{p.get('title', '')} -- {p.get('detail', '')}".strip(" -")
+                 for p in (payload.get("pending") or [])]
+        cap = rollover.compile_capsule(sid, str(Path.cwd()), payload.get("transcript"),
+                                       goal=payload.get("goal"), next_items=items,
+                                       summary=payload.get("summary") or "")
+        receipt, comp = rollover.seal(cap), rollover.completeness(cap)
+        verdict = rollover.safe_to_forget(receipt, comp)
+        rollover.ledger("capsule_sealed", session_id=sid, cwd=str(Path.cwd()), via="kclear",
+                        capsule=receipt, safe_to_forget=verdict["verdict"], refusals=verdict["reasons"])
+    except Exception as exc:  # noqa: BLE001 -- the checkpoint above already succeeded
+        return f"[capsule] UNKNOWN -- capsule step failed ({exc.__class__.__name__}); do not /clear yet"
+    if verdict["verdict"] == "SAFE_TO_FORGET":
+        return f"[capsule] SAFE_TO_FORGET -> {receipt['path']} -- /clear, then /kresume"
+    return "[capsule] REFUSED -- " + "; ".join(verdict["reasons"]) + " -- fix before /clear"
 
 
 def cmd_learn_error(args) -> int:

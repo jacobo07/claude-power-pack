@@ -220,6 +220,8 @@ def gate_kclear_checkpoint_integrity():
                 [PY, str(CHECKPOINT), "record", "--stdin"],
                 input=json.dumps(payload), capture_output=True, text=True,
                 cwd=str(root), timeout=SUBPROC_TIMEOUT_S,
+                # record also seals a rollover capsule; keep it under tmp too
+                env={**os.environ, "CPP_ROLLOVER_STATE_DIR": str(root / "rollover")},
             )
         except subprocess.SubprocessError as exc:
             _fail("V-KCLEAR-CHECKPOINT-INTEGRITY", f"spawn failed: {exc}")

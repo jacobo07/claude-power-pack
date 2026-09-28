@@ -36,9 +36,14 @@ allowed-tools:
      "summary": "≤400 chars",
      "pending": ["..."],
      "insights": [{"category":"feedback|project|reference|user","title":"...","body":"...","path":null,"tags":[]}],
-     "lesson": "≤200 chars or omit field"
+     "lesson": "≤200 chars or omit field",
+     "goal": "path of the plan/spec/RESUMPTION file this session works from (omit if none)"
    }
    ```
+
+   `session_id`: use `$env:CLAUDE_CODE_SESSION_ID` (the host sets it). `pending` becomes the
+   capsule's open obligations, first = next. Name the `goal` file whenever one exists — without
+   it the successor has nothing to read first and the capsule is refused.
 
 3. **Invoke** via stdin (cross-platform, no `/tmp`):
 
@@ -55,10 +60,14 @@ allowed-tools:
      Handoff:  memory/project_session_handoff.md
      Lesson:   vault/knowledge_base/session_lessons.md  (if lesson provided)
      Insights: _audit_cache/insights.json  (+N new)
-   Next: /clear → resume with the first prompt of the next session.
+     Capsule:  <the [capsule] line the tool printed>
    ```
 
-5. **Suggest** `/clear`.
+5. **Only if the tool printed `[capsule] SAFE_TO_FORGET`**, suggest: `/clear`, then `/kresume` in
+   the fresh session (it claims the capsule, refreshes reality and runs the resume exam — no plan
+   path to paste). On `REFUSED` or `UNKNOWN`, fix what it names and re-run `/kclear`; **do not
+   suggest /clear** — the context would be destroyed without a verified checkpoint
+   (spec `vault/specs/interactive-context-rollover.md`).
 
 ---
 
