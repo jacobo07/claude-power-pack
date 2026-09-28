@@ -291,6 +291,97 @@ def main() -> int:
     check("V-EPOCH-VIEW-WALL-BASIS", eps[2]["basis"] == "reason+wall_witness" and eps[1]["wall"] is True)
     check("V-EPOCH-VIEW-END-CAUSE", eps[0]["end_cause"] == ge.TURN_CONTINUATION and eps[3]["end_cause"] == "HALTED")
 
+    # --- supervise end to end: the relay branch decides continue / rotate / hold --------------
+    def host(sid, status="idle"):
+        return [{"sessionId": sid, "id": sid[:8], "status": status, "kind": "background",
+                 "pid": 4242, "name": "x"}]
+
+    def sup(sid, fp="fp-A", **kw):
+        calls = {"run": [], "stop": []}
+
+        def runner(argv, cwd):
+            calls["run"].append(argv)
+            name = argv[argv.index("-n") + 1] if "-n" in argv else sid[:8]
+            short = argv[3][:8] if "--resume" in argv else "fe5e5e5e"
+            return type("R", (), {"returncode": 0, "stderr": "",
+                                  "stdout": f"backgrounded · {short} · {name}"})()
+        rows = gm.supervise(now=kw.get("now", NOW), sessions=kw.get("sessions") or host(sid),
+                            gsd_status=lambda cwd, workstream=None: {"outcome": "OK"},
+                            runner=runner, stop_runner=lambda a: calls["stop"].append(a),
+                            pid_alive=lambda p: False, fingerprint=lambda wd: fp)
+        return rows, calls
+
+    for m in gm.all_missions():   # the unit cases above left RUNNING records; retire them
+        if m["state"] not in gm.TERMINAL:
+            gm.transition(m["mission_id"], expect_epoch=m["epoch"], expect_state=m["state"],
+                          event="t_retire", state=gm.HALTED, now=NOW)
+
+    sid = "aaaa1111-0000-0000-0000-000000000000"
+    running("m-s1", sid, epoch=1)
+    transcript(sid, [asst(NOW - 100, small)])
+    rows, calls = sup(sid)
+    r = next(x for x in rows if x["mission_id"] == "m-s1")
+    after = gm.load("m-s1")
+    check("V-EPOCH-SUP-CONTINUES-SAME-SESSION", r.get("action") == "continue" and calls["run"]
+          and calls["run"][0][1:4] == ["--bg", "--resume", sid] and after["epoch"] == 1
+          and after["state"] == gm.LAUNCHING, (r.get("action"), calls["run"][:1]))
+    check("V-EPOCH-SUP-STOPS-BEFORE-RESUME", calls["stop"] and calls["stop"][0][-1] == sid[:8], calls["stop"])
+    check("V-EPOCH-SUP-CONTINUATION-COUNTED-BY-PROGRESS", (after.get("progress") or {}).get("fp") == "fp-A")
+
+    sid = "bbbb2222-0000-0000-0000-000000000000"
+    running("m-s2", sid, epoch=1)
+    transcript(sid, [asst(NOW - 100, small)])
+    (Path(TMP) / f"mission-wall-{sid}-e1.flag").write_text("1")
+    rows, calls = sup(sid)
+    r = next(x for x in rows if x["mission_id"] == "m-s2")
+    after = gm.load("m-s2")
+    causes = [e for e in lr.ledger_events("m-s2") if e.get("event") == "launch_cause"]
+    check("V-EPOCH-SUP-WALL-LAUNCHES-FRESH", calls["run"] and "--resume" not in calls["run"][0]
+          and after["epoch"] == 2 and r.get("cause") == ge.CONTEXT_ROTATION, (r.get("cause"), after["epoch"]))
+    check("V-EPOCH-SUP-FRESH-CAUSE-LEDGERED", causes and causes[-1]["cause"] == ge.CONTEXT_ROTATION
+          and causes[-1]["mechanism"] == ge.FRESH and causes[-1]["epoch"] == 2
+          and causes[-1].get("trigger") == "wall", causes[-1:])
+
+    sid = "cccc3333-0000-0000-0000-000000000000"
+    running("m-s3", sid, epoch=1)
+    transcript(sid, [asst(NOW - 60, small, [("toolu_k", "Bash", {"run_in_background": True})])])
+    rows, calls = sup(sid)
+    r = next(x for x in rows if x["mission_id"] == "m-s3")
+    check("V-EPOCH-SUP-CHILD-HOLDS-NOTHING-STOPPED", not calls["stop"] and not calls["run"]
+          and gm.load("m-s3")["state"] == gm.RUNNING and "background child" in (r.get("held") or ""), r)
+
+    sid = "dddd4444-0000-0000-0000-000000000000"
+    running("m-s4", sid, epoch=1)
+    transcript(sid, [asst(NOW - 100, small)])
+    os.environ["CPP_MISSION_CONTINUATION"] = "off"
+    try:
+        rows, calls = sup(sid)
+    finally:
+        os.environ.pop("CPP_MISSION_CONTINUATION", None)
+    check("V-EPOCH-SUP-KILL-SWITCH-IS-TODAY", calls["run"] and "--resume" not in calls["run"][0]
+          and gm.load("m-s4")["epoch"] == 2 and next(x for x in rows if x["mission_id"] == "m-s4").get("cause")
+          == ge.TURN_CONTINUATION)
+
+    # e9 (T5) contract: a same-session loop that never changes the tree still HALTs.
+    sid = "eeee5555-0000-0000-0000-000000000000"
+    running("m-s5", sid, epoch=1)
+    t = NOW
+    halted = False
+    for i in range(6):
+        transcript(sid, [asst(t - 100 + i, small)])
+        rows, calls = sup(sid, fp="fp-SAME", now=t)
+        rec5 = gm.load("m-s5")
+        if rec5["state"] == gm.HALTED:
+            halted = "no_progress" in (rec5.get("reason") or "") or any(
+                "no_progress" in str(e.get("reason")) for e in lr.ledger_events("m-s5"))
+            break
+        if rec5["state"] == gm.LAUNCHING:   # the resumed session acks, then its turn runs and ends
+            gm.ack_session(sid, now=t + 1)
+            t += 120
+            transcript(sid, [asst(t - 10, small)])
+        t += 60
+    check("V-EPOCH-SUP-SAME-SESSION-LOOP-STILL-HALTS", halted, (i, gm.load("m-s5")["state"]))
+
     c = ge.census()
     check("V-EPOCH-CENSUS-SEPARATES-COUNTERS",
           c["fresh_worker_sessions"] >= 4 and c["context_rotations"] >= 1 and c["same_session_continuations"] >= 1

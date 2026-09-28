@@ -447,6 +447,22 @@ def identity_check(rec: dict, session_id: str, session_cwd: str | None) -> dict:
     return {"verdict": "MISMATCH", "problems": problems} if problems else {"verdict": "OK"}
 
 
+def registry_cwd(session_id: str) -> str | None:
+    """The session's working directory as the host's session registry records it; None when the
+    registry does not name this session (unknown, never "the mission's cwd")."""
+    try:
+        for p in lr.sessions_dir().glob("*.json"):
+            try:
+                d = json.loads(p.read_text(encoding="utf-8"))
+            except Exception:  # noqa: BLE001 -- a file being rewritten; the next one is read
+                continue
+            if isinstance(d, dict) and d.get("sessionId") == session_id:
+                return d.get("cwd")
+    except OSError:
+        return None
+    return None
+
+
 def on_session_start(rec: dict, session_id: str, source: str, session_cwd: str | None,
                      first: bool) -> str:
     """G3 + S7, called from gsd_mission.session_start for a mission worker. Returns a line to put

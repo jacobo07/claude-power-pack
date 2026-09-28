@@ -1268,6 +1268,21 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"],
                                          gsd=st.get("outcome"), reason=st.get("reason"))
                         continue
+                turn_end = None
+                if act == "relay" and rec.get("owner"):
+                    # A turn that ENDED is not a context that ran out (tools/gsd_epoch.py): 444 of
+                    # 499 launches were fresh workers for a turn end, each paying the ~187k-token
+                    # startup floor and losing the worker's memory. The same session continues
+                    # unless the wall was crossed, the context is past the continuation ceiling,
+                    # or a background child of the owner has not reported (then nothing is stopped).
+                    import gsd_epoch as ge
+                    turn_end = ge.decide_turn_end(rec, now)
+                    row["turn_end"] = {k: turn_end.get(k) for k in ("decision", "cause", "reason")}
+                    if turn_end["decision"] == ge.HOLD:
+                        lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"],
+                                         reason=turn_end["reason"])
+                        row["held"] = turn_end["reason"]
+                        continue
                 fp_fn = fingerprint or progress_fingerprint
                 progress = next_progress(rec, fp_fn(work_dir or rec.get("work_dir") or rec["cwd"]))
                 row["progress"] = progress
@@ -1291,6 +1306,14 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     row["stop"] = why
                     if not ok:
                         continue  # the next pass retries; nothing launched beside a live worker
+                if turn_end is not None and turn_end["decision"] == "continue":
+                    import gsd_epoch as ge
+                    row["continue"] = ge.continue_worker(
+                        mid, rec, prompt=bind_workstream(rec["resume_command"], rec.get("workstream")),
+                        decision=turn_end, runner=runner, stop_runner=stop_runner, now=now,
+                        progress=progress)
+                    row["action"] = "continue"
+                    continue
                 note = None
                 if act in ("relay", "replace") and rec.get("owner"):
                     # Read BEFORE the launch: the note describes the predecessor's last turn.
@@ -1304,6 +1327,13 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                                               expect_state=rec["state"], reason=plan["reason"],
                                               runner=runner, now=now, note=note,
                                               work_dir=work_dir, progress=progress)
+                if row["launch"].get("ok"):
+                    # Every FRESH worker says why it exists: a rotation is certified by its cause,
+                    # never by counting fresh sessions (tools/gsd_epoch.py census).
+                    import gsd_epoch as ge
+                    cause = ge.cause_for(act, plan["reason"], rec, turn_end)
+                    row["cause"] = cause.get("cause")
+                    ge.record_cause(mid, {"epoch": row["launch"]["epoch"]}, cause, ge.FRESH)
         except CasConflict as exc:
             row["cas"] = str(exc)  # another supervisor acted first: correct, not an error
         except Exception as exc:  # noqa: BLE001 -- one mission's failure must not blind the rest
@@ -1323,6 +1353,10 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, **kw) -> dict:
         return {"mission": rec}
     res = launch_worker(rec["mission_id"], expect_epoch=0, expect_state=PREPARED,
                         reason="armed")
+    if res.get("ok"):
+        import gsd_epoch as ge
+        ge.record_cause(rec["mission_id"], {"epoch": res["epoch"]},
+                        {"cause": ge.INITIAL, "reason": "armed"}, ge.FRESH)
     return {"mission": load(rec["mission_id"]), "launch": res}
 
 
@@ -1398,6 +1432,15 @@ def session_start(session_id: str, source: str = "") -> str:
     rec = ack_session(session_id, pid=pid, proc_start=proc_start) or rec
     if first:
         _arm_worker_marker(rec, session_id)
+    try:
+        # G3: an observed compaction is ledgered against the epoch; S7: the first start of a launch
+        # or continuation checks it is where the mission is. A mismatch is the one line returned.
+        import gsd_epoch as ge
+        stop_line = ge.on_session_start(rec, session_id, source, ge.registry_cwd(session_id), first)
+    except Exception:  # noqa: BLE001 -- fail-open: the hub runs under a deadline
+        stop_line = ""
+    if stop_line:
+        return stop_line
     if rec["epoch"] <= 1 and not rec.get("note"):
         return ""
     # The card was rendered at RELAY time by the supervisor (out of band, no deadline), so
