@@ -10324,6 +10324,44 @@ old session restarting mid-launch, reboot). A live pass proves the path it walke
 adversarial review names the paths it did not. Order: review → fix + drill → then the
 expensive real run (M6), so the run spends its budget on the unknowns only it can measure.
 
+### T-CONT-21 — a turn that ends is not a context that ran out
+The supervisor answered every ENDED turn with a fresh `claude --bg` worker: 434 of 500 fresh
+launches in 44 missions were turn ends, 10 were the wall. Each paid the startup floor again
+(186,856 tokens resident at call #1, 70 % of it the `instructions` attachment) and discarded the
+worker's working memory, and the record called them all "rotations". A turn end continues the SAME
+session; only the wall, an explicit hand-off or ≥ 300k resident tokens rotates
+(`tools/gsd_epoch.py decide_turn_end`, `717554f`; lesson `vault/lessons/turn-end-is-not-context-rotation.md`).
+
+### T-CONT-22 — an instrument that reads one witness can only count the cases that leave it
+"1 of 499 relays was the wall" keyed on the watchdog's `handoff_asked` row. The mid-turn wall
+(`hooks/mission_wall.js`) writes a flag file and the Stop hook then writes `handoff_already_asked`,
+so every mid-turn wall was invisible to that count: the census across all witnesses finds 10,
+one corroborated in the predecessor's own transcript. A retraction is a claim too; count it with
+every witness the event can leave before publishing it.
+
+### T-CONT-23 — the host lists a finished background turn as `done` as well as `idle`
+`plan_next` read `done` as DEAD and planned a REPLACE, so a clean turn end bypassed turn-end logic
+and was recorded as a recovery (m-47fe0c6cb54a, 2026-09-28: last row `end_turn`, relaunched fresh
+as "owner dead"). Judge a `done` owner by its transcript's last `stop_reason`; only `end_turn` is a
+turn end (`add6828`, V-EPOCH-DONE-*).
+
+### T-CONT-24 — `claude --bg --resume <sid>` with ANY other flag starts a copy
+Measured 2026-09-28: the host says "keeps its own saved options, so the flags you passed started a
+copy as <new id>". Without flags it wakes the same id, transcript and context. A copy is a second
+worker on the mission: refuse it and stop it (`gsd_epoch.continue_worker`, V-EPOCH-RESUME-ARGV-HAS-NO-FLAGS).
+
+### PR-CONT-11 — record WHY a unit of work restarts at the moment you decide it
+Every launch ledgers `launch_cause` {cause, mechanism, trigger}: INITIAL, TURN_CONTINUATION,
+CONTEXT_ROTATION, CONTINUATION_FAILED, PROCESS_RECOVERY, LAUNCH_RETRY, MISSION_RENEWAL, UNKNOWN.
+Certify each class by its own witnesses (`gsd_epoch.py certify`: recorded cause + wall witness +
+the predecessor's own transcript + a new session + commits), never by a count of restarts.
+
+### PR-CONT-12 — price a lifecycle primitive before making it the default
+Same-session resume looked free and is not: a new process breaks the prompt cache near the front
+(probe turn 2 wrote 125,483 tokens, read 33,949), so a continuation costs ~the current context and a
+fresh worker ~the floor. Hence a continuation ceiling (300k), a per-mission override, and a kill
+switch (`CPP_MISSION_CONTINUATION=off`) -- the policy follows the measurement, not the preference.
+
 
 - [tooling/powershell:g] `ceps_c1b34010b02dc23a` -- Tool failure in powershell:g: fatal: 'origin'. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
