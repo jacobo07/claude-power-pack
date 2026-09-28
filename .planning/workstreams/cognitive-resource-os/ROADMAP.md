@@ -44,7 +44,11 @@ Every figure names its instrument and source (observed transcript vs estimate). 
   3. Any failure is classified: attributable to this workstream's files, pre-existing (reproduced at the base commit
      `784e446` in a scratch worktree), or environment (Linux vs Windows). No fix outside this workstream's scope.
   4. `.planning/workstreams/cognitive-resource-os/phases/01-*/EVIDENCE.md` holds commands, exit codes and verdicts.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — pre-checks (API key, host, pytest probe) + the four workstream gates verbatim, owned-file set, gate verdict (autonomous, wave 1)
+- [ ] 01-02-PLAN.md — package-legitimacy checkpoint, pytest in a job-scratch venv, bracketed full suite (timeout 1800), failure classification at 784e446, CRO-01 phase verdict (wave 2, has a blocking-human checkpoint)
 
 ### Phase 2: GEX44 observed baseline
 **Goal**: A second, independently produced observed baseline, from a Linux host whose sessions are mostly mission workers.
@@ -99,7 +103,7 @@ Every figure names its instrument and source (observed transcript vs estimate). 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Gate verdict on the big host | 0/? | Not started | - |
+| 1. Gate verdict on the big host | 0/2 | Planned | - |
 | 2. GEX44 observed baseline | 0/? | Not started | - |
 | 3. P3 pre-flight P0 | 0/? | Not started | - |
 | 4. Prefix cache-miss A/B | 0/? | Not started | - |
