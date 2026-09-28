@@ -123,3 +123,36 @@ here as GEX44's own figure, not as a match or a difference against the laptop.
 ### 1e. Gate failure classification
 
 No gate failure; no classification needed; no scratch worktree created.
+
+## 2. Full pytest suite
+
+legitimacy_checkpoint: rejected (no-owner-available-mid-run: orchestrator cannot approve a package install on the
+Owner's behalf; ROADMAP operating constraint "never ask the Owner a question mid-run" forbids stalling for approval;
+re-run plan 01-02 after the Owner approves the pinned pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0 install)
+suite_verdict: BLOCKED
+
+Task 1 of 01-02-PLAN.md (blocking-human package-legitimacy checkpoint for installing pytest 9.1.1, pluggy 1.6.0 and
+iniconfig 2.3.0 into the job-scratch venv at /home/kobii/.claude/jobs/a293bedf/tmp/cro-p01/pytest-venv) was answered
+`rejected` by the orchestrator: no Owner was available to approve the install mid-run, and the orchestrator has no
+authority to grant that approval on the Owner's behalf. No venv was created, nothing was installed, nothing was run.
+Tasks 2 and 3 of 01-02-PLAN.md were not executed.
+
+## 3. Failure classification
+
+not reached: suite not run
+
+## 4. Phase verdict (CRO-01)
+
+inputs: gates_verdict=PASS, suite_verdict=BLOCKED
+phase_verdict: BLOCKED
+
+v_baseline_intact_gex44: BLOCKED (suite not run; legitimacy checkpoint rejected before any install)
+v_baseline_intact_laptop: INCONCLUSIVE (pytest tests/ exceeded 180 s, host ~630 MB free; RESUMPTION section 2)
+
+Constraints honoured: no push; no commit outside explicit pathspec; ANTHROPIC_API_KEY UNSET (section 0); no edit
+under ~/.claude config or /home/kobii/.claude/skills/claude-power-pack; no other mission's directory used; no
+package installed anywhere (including job scratch) -- the checkpoint was rejected before any venv was created.
+
+next: Re-run plan 01-02 from Task 1 once the Owner has reviewed and answered (approved or re-rejected) the pinned
+pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0 install described in 01-02-PLAN.md Task 1. CRO-01 stays open -- gates
+alone (section 1) are not sufficient; the full pytest suite still needs a verdict.
