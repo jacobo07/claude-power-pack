@@ -57,6 +57,14 @@ def main() -> int:
         check("V-BDRAFT-COMPILES", outcome == bd.COMPLETE and batch["manifest"]["sourceFilesRead"] == 1
               and batch["prompt"], (outcome, batch.get("gaps")))
         check("V-BDRAFT-RECEIPT-WRITTEN", (tmp / "receipts" / f"{batch['binding']}.json").is_file(), batch["binding"][:12])
+        # Item 26 (genesis-constraint-compiler): compileBatch compiles the constraint packet into
+        # every batch. What the spec requires of it -- labelled candidate, zero checks run, nothing
+        # promoted -- is pinned on this production path, where it actually executes.
+        cons = batch["payload"]["constraints"]
+        check("V-BDRAFT-CONSTRAINTS-CANDIDATE-ONLY", cons["lessonStatus"] == "candidate"
+              and cons["verification"] == {"status": "not-run", "checksRun": 0} and len(cons["rules"]) > 0
+              and "counted-execution-checks" not in {r["id"] for r in cons["rules"]},
+              (cons["lessonStatus"], cons["verification"], [r["id"] for r in cons["rules"]]))
 
         print("validation: a well-formed reply, then one refusal per failure")
         ok, v = bd.validate(batch, reply([good("rev-one", 2, "return 1"), good("rev-two", 5, "return 2")]))

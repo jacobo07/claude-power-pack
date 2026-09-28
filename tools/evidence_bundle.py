@@ -87,26 +87,38 @@ def _ticket_path(root: Path, plan: str, task: str) -> Path:
     return root / "_logs" / "evidence" / _slug(plan) / _slug(task) / "review-ticket.json"
 
 
-def ticket(root: Path, plan: str, task: str, artifacts: list[str]) -> str:
-    """Record the bytes a reviewer is about to read. Issue it IMMEDIATELY before dispatching the
-    review: an approval is about what was observed, so the observation is what gets bound --
-    never whatever sits on disk when the bundle is assembled later."""
+def ticket_line(nonce: str) -> str:
+    """The line a dispatcher puts in the review prompt, and the reviewer must echo back."""
+    return f"REVIEW-TICKET: {nonce}"
+
+
+def ticket(root: Path, plan: str, task: str, artifacts: list[str]) -> tuple[str, str]:
+    """Record the bytes a reviewer is about to read, under an unguessable nonce. Issue it
+    IMMEDIATELY before dispatching the review, and put ticket_line(nonce) in the prompt.
+
+    Hashes alone were not enough (second real review, 2026-09-28): they record when --ticket ran,
+    so re-ticketing after an edit let an OLD approval pass. A reply can only carry the nonce if it
+    was written after this ticket existed, which is what binds the reply to what was observed."""
+    import secrets
+    nonce = secrets.token_hex(12)
     p = _ticket_path(root, plan, task)
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps({"planId": plan, "taskId": task, "artifacts": _proofs(root, artifacts)}, indent=1),
-                 encoding="utf-8")
-    return p.relative_to(root).as_posix()
+    p.write_text(json.dumps({"planId": plan, "taskId": task, "nonce": nonce,
+                             "artifacts": _proofs(root, artifacts)}, indent=1), encoding="utf-8")
+    return p.relative_to(root).as_posix(), nonce
 
 
 def write_review(root: Path, plan: str, task: str, reply: str, reviewer: dict, artifacts: list[str],
                  check_paths: list[str]) -> tuple[str, ri.Intake]:
     """The receipt carries the TICKET's hashes -- what the reviewer saw. If the code moved since,
-    the collector compares those to today's bytes and fails the review as stale; with no ticket
-    there is no record of what was reviewed, and the review cannot pass."""
+    the collector compares those to today's bytes and fails the review as stale. With no ticket, or
+    a reply that does not echo the ticket's nonce, nothing ties this reply to that observation."""
     res = ri.intake(reply, reviewer["agent"], reviewer["model"])
     try:
-        seen = json.loads(_ticket_path(root, plan, task).read_text(encoding="utf-8"))["artifacts"]
-        unbound = ""
+        t = json.loads(_ticket_path(root, plan, task).read_text(encoding="utf-8"))
+        seen, unbound = t["artifacts"], ""
+        if not t.get("nonce") or ticket_line(t["nonce"]) not in (reply or ""):
+            unbound = "the reply does not echo this ticket's nonce: it was not written for this dispatch"
     except (OSError, ValueError, KeyError):
         seen, unbound = [], "no review ticket: nothing records which bytes the reviewer read"
     receipt = {"schema": "genesis-review-v1", "planId": plan, "taskId": task,
@@ -121,6 +133,13 @@ def write_review(root: Path, plan: str, task: str, reply: str, reviewer: dict, a
 
 def collect(root: Path, plan: str, task: str, worker: str, criteria: list[str], artifacts: list[str],
             check_paths: list[str], review_path: str | None = None, required_reviewer: dict | None = None) -> dict:
+    # The vendored collector refuses any proof path matching /secret|credential/ (or .env, .git).
+    # Say so by name instead of surfacing its bare throw as an unexplained UNJUDGED (second review).
+    protected = [a for a in artifacts if re.search(r"(^|/)(\.env(\.|$)|\.git$)|secret|credential", a, re.I)]
+    if protected:
+        return {"ok": False, "unjudged": True,
+                "failures": [f"the collector refuses protected proof paths by design: {', '.join(protected)}; "
+                             "this bundle cannot be judged by it"]}
     inp = {"root": str(root), "planId": plan, "taskId": task, "worker": worker, "criteria": criteria,
            "artifactPaths": artifacts, "checkPaths": check_paths}
     if review_path:
@@ -155,7 +174,10 @@ def main(argv=None) -> int:
     root = Path(a.root).resolve()
     arts = [x.replace("\\", "/") for x in a.artifact]
     if a.ticket:
-        print(f"TICKET {ticket(root, a.plan, a.task, arts)}")
+        path, nonce = ticket(root, a.plan, a.task, arts)
+        print(f"TICKET {path}")
+        print(f"Put this line in the review prompt and require the reviewer to echo it verbatim:\n"
+              f"  {ticket_line(nonce)}")
         return 0
     if not a.check:
         ap.error("--check is required unless --ticket")

@@ -45,7 +45,7 @@ REPLY_INSTRUCTION = (
     "block is recorded as an INCOMPLETE review, never as an approval.")
 # Any json-family label, any case (a real reviewer may write ```JSON or ```jsonc): a label this
 # regex did not know sent a good review to INCOMPLETE (real review of this file, 2026-09-28).
-_FENCE = re.compile(r"```(?:json\w*)?[ \t]*\r?\n?\s*(\{.*?\})\s*```", re.S | re.I)
+_FENCE = re.compile(r"```[ \t]*(?:json\w*)?[ \t]*\r?\n?\s*(\{.*?\})\s*```", re.S | re.I)
 
 
 class _Duplicate(ValueError):

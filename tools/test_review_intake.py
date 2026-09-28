@@ -51,6 +51,8 @@ def main() -> int:
     check("V-RINTAKE-FENCED-READ", run(fenced).verdict == ri.APPROVE, run(fenced).counts)
     upper = "Done.\n```JSON\n" + json.dumps({"findings": [f("a", "high")]}) + "\n```"
     check("V-RINTAKE-FENCE-LABEL-ANY-CASE", run(upper).verdict == ri.WARNING, run(upper).reason)
+    spaced = "Done.\n``` json\n" + json.dumps({"findings": [f("a", "low")]}) + "\n```"
+    check("V-RINTAKE-FENCE-SPACED-LABEL", run(spaced).verdict == ri.APPROVE, run(spaced).reason)
 
     print("never an approval")
     for gate, reply, needle in [

@@ -182,11 +182,13 @@
   {
    "id": "genesis-constraint-compiler",
    "source": "vendor/genesis-suite/modules/genesis-constraint-compiler",
-   "owner": "UKDL (vault/knowledge_base/ukdl-universal.md) -> candidate checks",
+   "owner": "tools/batch_drafts.py (compileBatch compiles the packet into every batch)",
    "disposition": "CONNECT",
    "differential": "invariant + counterexample + effect -> named candidate checks, checksRun=0",
-   "status": "PLANNED",
-   "slice": "T6"
+   "status": "LIVE",
+   "slice": "T6",
+   "proof": "python tools/test_batch_drafts.py",
+   "evidence": "CONNECT by the path where it actually executes: every batch carries the packet, pinned candidate-only, checksRun=0, rules selected by declared effect (V-BDRAFT-CONSTRAINTS-CANDIDATE-ONLY). NOT done: a UKDL crosswalk -- a lexical search found in-repo anchors for 5 of the 12 catalog invariants, and a regex that misses is not evidence of absence, so no 'no CPP rule' claim is recorded."
   },
   {
    "id": "genesis-verified-reuse",

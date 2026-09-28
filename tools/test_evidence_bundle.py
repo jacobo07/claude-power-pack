@@ -42,10 +42,18 @@ def gate_script(root: Path, name: str, summary: str | None, code: int) -> str:
 
 def bundle(root: Path, task: str, cmd: str, reply: str | None, worker: str = "worker-7",
            reviewer: dict = REVIEWER, mutate_after_check: bool = False, ticket: bool = True,
-           edit_after_ticket: bool = False) -> dict:
+           edit_after_ticket: bool = False, echo: bool = True, old_reply: bool = False) -> dict:
     arts = ["art.py"]
+    if reply is not None:
+        reply = "```json\n" + reply + "\n```"  # the shape REPLY_INSTRUCTION asks a real reviewer for
+    if reply is not None and old_reply:
+        # A reply written for an EARLIER dispatch: it echoes that ticket's nonce, not the new one.
+        _, stale_nonce = eb.ticket(root, "plan-1", task, arts)
+        reply = eb.ticket_line(stale_nonce) + "\n" + reply
     if reply is not None and ticket:
-        eb.ticket(root, "plan-1", task, arts)  # the reviewer is dispatched now, on these bytes
+        _, nonce = eb.ticket(root, "plan-1", task, arts)  # the reviewer is dispatched now, on these bytes
+        if echo and not old_reply:
+            reply = eb.ticket_line(nonce) + "\n" + reply
     if edit_after_ticket:
         (root / "art.py").write_text("x = 3  # edited after the review\n", encoding="utf-8")
     chk = eb.run_check(root, "plan-1", task, "gate-green", cmd, arts)
@@ -102,6 +110,16 @@ def main() -> int:
         check("V-EVB-NO-TICKET-NO-PASS", b.get("ok") is False, b.get("failures"))
         b = bundle(tmp, "t-green-2", good, '{"findings": []}')
         check("V-EVB-GREEN-AFTER-RESTORE", b.get("ok") is True, b.get("failures"))
+        # Second real review: re-ticketing after an edit let an OLD approval through, because
+        # hashes record when --ticket ran. The reply must echo the nonce of THIS ticket.
+        b = bundle(tmp, "t-stale-reply", good, '{"findings": []}', old_reply=True)
+        check("V-EVB-OLD-REPLY-RETICKETED-FAILS", b.get("ok") is False, b.get("failures"))
+        b = bundle(tmp, "t-no-echo", good, '{"findings": []}', echo=False)
+        check("V-EVB-NO-NONCE-ECHO-FAILS", b.get("ok") is False, b.get("failures"))
+        (tmp / "secret_rotation.py").write_text("x = 1\n", encoding="utf-8")
+        prot = eb.collect(tmp, "plan-1", "t-prot", "w", ["gate-green"], ["secret_rotation.py"], [])
+        check("V-EVB-PROTECTED-PATH-NAMED", prot.get("unjudged") is True
+              and "protected proof paths" in (prot.get("failures") or [""])[0], prot.get("failures"))
 
         print("a gate binds the bytes it ran against")
         (tmp / "g_mutates.py").write_text("import pathlib\npathlib.Path('art.py').write_text('x = 9\\n')\n"
