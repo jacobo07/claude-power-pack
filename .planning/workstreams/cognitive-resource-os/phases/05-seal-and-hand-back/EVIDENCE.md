@@ -51,3 +51,19 @@ p4_next: Record UNJUDGED in RESUMPTION/UKDL as judged (not BLOCKED); a rerun nee
 
 p4_gate_verification: WRITE
 p4_gate_review_cr01: WRITE
+
+## 2. RESUMPTION changes
+
+resumption_sections_added: 1a, 2c, 2d, 2e, 4a
+resumption_relabelled_lines: 13 lines carrying a laptop-figure anchor got "(laptop)" beside the figure (section 2's
+  sealed bullets and MEASURED/coherence-anchor lines, section 2a's Ralph bullet, and the three former section-4
+  bullets now folded into section 2), plus the section 2d/2e prose that quotes the 1.9%/16.4% laptop figures for
+  comparison.
+resumption_moved: the three sealed bullets (`6aa3bb6` prefix_inventory, P3 protocol predeclared, peer rules-evidence
+  move) moved from the old section 4 to the end of section 2; the two "Owner clarified 2026-09-28" lines moved to
+  the end of section 3; the old section 4 items 1-3 moved verbatim to the new section 4a.
+next_actions_rule: (a) close a requirement this run left unsatisfied, then (b) work that a PASS verdict unblocked
+  on the programme's main line, then (c) an open hypothesis whose next step costs zero model calls.
+next_actions: 1. CRO-01 Owner review + re-run 01-02. 2. P3 pre-flight on the laptop's own claude, then P1 A/A on
+  quota. 3. Prefix-miss follow-up from the laptop's own transcripts (zero-call step first).
+phase4_action3_variant: standard (04-VERIFICATION.md status read as `passed` at execution time, not gaps_found).
