@@ -19,6 +19,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 
+# The tool exits the process (sys.exit(3)) at import when esprima is absent -- right for a CLI,
+# fatal for a collector: on GEX44 (2026-09-28) it aborted the WHOLE pytest session with
+# INTERNALERROR, "no tests ran in 0.02s". Skip this module there instead; a skip is reported.
+try:
+    import esprima  # noqa: F401
+except ImportError:
+    raise unittest.SkipTest("esprima not installed: cascade_populate_js cannot be imported")
+
 import cascade_populate_js as cp  # noqa: E402
 
 
