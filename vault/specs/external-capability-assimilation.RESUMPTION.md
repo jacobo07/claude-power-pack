@@ -23,18 +23,20 @@ test_context_budget 8/8 · test_gsd_epoch_context_budget 6/6 · test_fresh_conte
 test_provider_breaker 15/15 · test_gsd_mission 191/191 · test_gsd_epoch pass · test_autonomy_gate
 22/22 · node tools/test_gsd_stop_continuation.js 17/17.
 
-## NOT YET LIVE
-Nothing is merged into `feature/knowledge-acquisition` (the checkout hooks load from). Going live =
-re-read that branch's HEAD, merge `feat/external-assimilation`, rerun the gates above there.
+## LIVE since 2026-09-28 (`2f8cc5b`)
+`90ba1d5` successor card carries rubric + wake order; 4 self-continuation entries LIVE (manifest
+9/9 runs 14 LIVE proofs). `2f8cc5b` merged `feature/knowledge-acquisition` INTO this branch, then
+the live checkout fast-forwarded to it: 14 suites green on the merged tree, hook + gate suites
+green again on the live copy (the dispatcher runs `hooks/gsd_stop_continuation.js` from the repo
+path, no mirror). Both branches pushed at `2f8cc5b`.
+Go-live pattern for later tranches: commit here, merge the live branch in, rerun gates, then
+`merge --ff-only` in the main checkout after checking HEAD unmoved and no dirty-path overlap.
 
 ## Next 3 actions
-1. Manifest: flip self-continuation-rubric / -stop-directive / -decision-log to LIVE (proofs:
-   test_autonomy_gate.py, test_gsd_stop_continuation.js); add rubric + WAKE_ORDER to
-   `render_card` in tools/gsd_mission.py (wakeup-continuation-order).
-2. Merge to `feature/knowledge-acquisition` (go-live), push.
-3. T4–T12 per spec: source_packet.py, plan-graph wave check, review/evidence intake, regression
-   memory, change impact on audit_cache, routing metrics, verified reuse, paired experiment,
-   task adaptation, charter lab, night research on VPS, live smoke mission, red team, KV/UKDL.
+1. T4 per spec: `source_packet.py` + plan-graph write-ownership wave check.
+2. T5–T7: review/evidence intake, regression memory, change impact on audit_cache.
+3. T8–T12: routing metrics, verified reuse, paired experiment, task adaptation, charter lab,
+   night research on VPS (Node 24 first), live smoke mission, red team, KV/UKDL.
 
 ## Start instruction
 `git -C C:\Users\User\Apps\pp-assim log --oneline -8`, run the gates, then action 1.
