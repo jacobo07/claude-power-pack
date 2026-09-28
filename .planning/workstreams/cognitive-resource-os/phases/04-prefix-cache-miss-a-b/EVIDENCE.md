@@ -88,3 +88,135 @@ version_drift_rule: All four runs use one sha256-pinned resolved binary. If the 
 readout_recovery_rule: The only path to change ab_runner.py after pre-registration. If the runner fails AFTER launches (ab-live.json has complete: false), fix only the readout defect, adding a failing selftest case first. rules_fingerprint must stay byte-identical. Record runner_post_registration_diff: with the reason, then run --readout ... --write, which makes zero model calls.
 n_limit_statement: n=2 runs per arm, i.e. one run-2 reuse observation per arm. No variance estimate is possible. One back-to-back pair can neither bound how often MCP tool-list variance occurs nor exclude a one-off cache eviction. The verdict describes GEX44, the at-run claude version and this MCP configuration at the recorded live window, not the laptop.
 selftest: ABRUN_SELFTEST_PASS=14/14  threshold=14/14
+
+## 2. Runs (ROADMAP criteria 2-3)
+
+source: GEX44 transcripts, not the laptop's, read by session id through tools/tis_observed.py and never from CLI stdout.
+preregistration_commit: 740b41b5f1b47cfc955f32b50974dbbf6ecaff6c 2026-09-28T16:40:50+02:00
+live_window_utc: 2026-09-28T14:41:42Z .. 2026-09-28T14:42:07Z
+launches: 4
+runner_sha256_at_run: 9414fd25dcf2b3517d477144fff7288d026cc01bcc79548fab5b5675a4f5bac0
+rules_fingerprint_at_run: ab6454cd4087923d49c198d78588f4128388ad4d5745f0ec35bcdde87b1c07ea
+claude_at_run: /home/kobii/.local/share/claude/versions/2.1.283 1859583ce32920595c61ef868bee52e1b1594f7486db209935e01f1e5e804ae2
+claude_version_drift: none
+
+### A1 (Arm A, run 1; GEX44 transcript, not the laptop's)
+
+A1_session_id: ac93009b-5638-4c4c-bf4d-7c4fb717576a
+A1_sid_source: preassigned
+A1_transcript: -tmp-claude-1000-cro-p04-ab-armA/ac93009b-5638-4c4c-bf4d-7c4fb717576a.jsonl (matches 1, project_key_match YES)
+A1_rc: 0
+A1_timed_out: false
+A1_start_utc: 2026-09-28T14:41:42Z
+A1_end_utc: 2026-09-28T14:41:51Z
+A1_state: MEASURED
+A1_entrypoint: sdk-cli
+A1_calls: 1 (GEX44)
+A1_model: claude-haiku-4-5-20251001
+A1_first_call_input_tokens: 10 (GEX44)
+A1_first_call_cache_read_input_tokens: 13689 (GEX44)
+A1_first_call_context: 29205 (GEX44)
+A1_first_call_cache_creation_input_tokens: 15506 (5m 0 / 1h 15506) (GEX44)
+A1_reuse_share: 0.468721 (GEX44)
+A1_init: tools 84, mcp_tools 51, mcp_servers [claude.ai Claude Docs:connected, claude.ai Gmail:connected, claude.ai Google Calendar:needs-auth, claude.ai Google Drive:connected, plugin:context7:context7:connected], apiKeySource none
+A1_valid: VALID
+
+### A2 (Arm A, run 2; GEX44 transcript, not the laptop's)
+
+A2_session_id: 5d38ef4d-1d61-4523-9fea-59ad61c6755d
+A2_sid_source: preassigned
+A2_transcript: -tmp-claude-1000-cro-p04-ab-armA/5d38ef4d-1d61-4523-9fea-59ad61c6755d.jsonl (matches 1, project_key_match YES)
+A2_rc: 0
+A2_timed_out: false
+A2_start_utc: 2026-09-28T14:41:51Z
+A2_end_utc: 2026-09-28T14:41:57Z
+A2_state: MEASURED
+A2_entrypoint: sdk-cli
+A2_calls: 1 (GEX44)
+A2_model: claude-haiku-4-5-20251001
+A2_first_call_input_tokens: 10 (GEX44)
+A2_first_call_cache_read_input_tokens: 29195 (GEX44)
+A2_first_call_context: 29205 (GEX44)
+A2_first_call_cache_creation_input_tokens: 0 (5m 0 / 1h 0) (GEX44)
+A2_reuse_share: 0.999658 (GEX44)
+A2_init: tools 84, mcp_tools 51, mcp_servers [claude.ai Claude Docs:connected, claude.ai Gmail:connected, claude.ai Google Calendar:needs-auth, claude.ai Google Drive:connected, plugin:context7:context7:connected], apiKeySource none
+A2_valid: VALID
+
+### B1 (Arm B, run 1; GEX44 transcript, not the laptop's)
+
+B1_session_id: 91b4f044-511b-416b-ba87-07557abd7bf0
+B1_sid_source: preassigned
+B1_transcript: -tmp-claude-1000-cro-p04-ab-armB/91b4f044-511b-416b-ba87-07557abd7bf0.jsonl (matches 1, project_key_match YES)
+B1_rc: 0
+B1_timed_out: false
+B1_start_utc: 2026-09-28T14:41:57Z
+B1_end_utc: 2026-09-28T14:42:03Z
+B1_state: MEASURED
+B1_entrypoint: sdk-cli
+B1_calls: 1 (GEX44)
+B1_model: claude-haiku-4-5-20251001
+B1_first_call_input_tokens: 10 (GEX44)
+B1_first_call_cache_read_input_tokens: 13689 (GEX44)
+B1_first_call_context: 27627 (GEX44)
+B1_first_call_cache_creation_input_tokens: 13928 (5m 0 / 1h 13928) (GEX44)
+B1_reuse_share: 0.495494 (GEX44)
+B1_init: tools 30, mcp_tools 0, mcp_servers [], apiKeySource none
+B1_valid: VALID
+
+### B2 (Arm B, run 2; GEX44 transcript, not the laptop's)
+
+B2_session_id: 0cff6d2e-90d4-40b1-af98-d71487e342d4
+B2_sid_source: preassigned
+B2_transcript: -tmp-claude-1000-cro-p04-ab-armB/0cff6d2e-90d4-40b1-af98-d71487e342d4.jsonl (matches 1, project_key_match YES)
+B2_rc: 0
+B2_timed_out: false
+B2_start_utc: 2026-09-28T14:42:03Z
+B2_end_utc: 2026-09-28T14:42:07Z
+B2_state: MEASURED
+B2_entrypoint: sdk-cli
+B2_calls: 1 (GEX44)
+B2_model: claude-haiku-4-5-20251001
+B2_first_call_input_tokens: 10 (GEX44)
+B2_first_call_cache_read_input_tokens: 27617 (GEX44)
+B2_first_call_context: 27627 (GEX44)
+B2_first_call_cache_creation_input_tokens: 0 (5m 0 / 1h 0) (GEX44)
+B2_reuse_share: 0.999638 (GEX44)
+B2_init: tools 30, mcp_tools 0, mcp_servers [], apiKeySource none
+B2_valid: VALID
+
+## 3. Cross-arm comparison (ROADMAP criterion 3)
+
+s_A1: 0.468721 (GEX44)
+s_A2: 0.999658 (GEX44)
+s_B1: 0.495494 (GEX44)
+s_B2: 0.999638 (GEX44)
+delta_A: 0.530937 (GEX44)
+delta_B: 0.504144 (GEX44)
+gap_run2: -2e-05 (GEX44)
+delta_gap: -0.026793 (GEX44)
+ttl_A: gap_s 5.179 bound_s 3300 same_local_date True
+ttl_B: gap_s 4.783 bound_s 3300 same_local_date True
+vA: NO (A1 and A2 init tools_sha256 and mcp_servers are identical)
+M1: PASS
+M2: PASS
+comparison: run-2 against run-1 reuse in Arm A moved by 0.530937, in Arm B by 0.504144; the arms differ by gap_run2=-2e-05 in run-2 reuse, with vA=NO. Both arms' second run reached near-total cache reuse (99.97% Arm A, 99.96% Arm B) regardless of MCP configuration, and Arm A's MCP tool list and server statuses were byte-identical between A1 and A2 -- the tool-list surface simply did not vary in this observation.
+
+## 4. Verdict (ROADMAP criterion 4, CRO-04)
+
+verdict: UNJUDGED (similar-reuse-variance-not-observed)
+rule_fired: R8
+n_limit: n=2 runs per arm, i.e. one run-2 reuse observation per arm. No variance estimate is possible. One back-to-back pair can neither bound how often MCP tool-list variance occurs nor exclude a one-off cache eviction. The verdict describes GEX44, the at-run claude version and this MCP configuration at the recorded live window, not the laptop.
+host_scope: GEX44 transcripts, not the laptop's; claude 2.1.283 (Claude Code); default MCP configuration for Arm A (claude.ai Claude Docs/Gmail/Google Calendar/Google Drive plus plugin:context7:context7) and --strict-mcp-config with an empty MCP config file for Arm B, at the recorded live window.
+claude_version_end: 2.1.283 (Claude Code)
+claude_resolved_end: /home/kobii/.local/share/claude/versions/2.1.283
+B2_settings_json_sha256: 886b884375f2b12d31b7db6b387d8f747d235a7830b201ff32b06c3d8b8d871a
+B2_claude_md_sha256: 31442ce249ed910c9bb601d442e8baf7c1417f918e6b069cbac17545c8a35152
+B2_credentials_stat: size=524 mtime=1790590674
+B2_user_rules_dir: ABSENT
+global_bracket: UNCHANGED
+credentials_note: the credential file is stat-ed only, never opened, read, copied or linked; claude may rewrite it on its own token refresh during the live window, but the B0 and B2 stat values here are byte-identical (size=524 mtime=1790590674), so no rewrite occurred during this run.
+corpus_side_effect: 4 sdk-cli haiku sessions now sit under project keys -tmp-claude-1000-cro-p04-ab-armA and -tmp-claude-1000-cro-p04-ab-armB, which future GEX44 baselines should exclude.
+phase_status: DONE
+cro04: SATISFIED
+constraints_honoured: ANTHROPIC_API_KEY UNSET throughout (subscription claudeAiOauth only); exactly 4 runs launched via one --live invocation with no retry or replacement (REPLACEMENT_BUDGET 0); nothing written under /home/kobii/.claude by this plan (only claude's own transcripts, plus its own possible credential refresh -- none occurred here); no tools/modules/vault/ROADMAP/STATE edit by this plan; explicit-pathspec commits only, no push; no reply text committed (raw/ab-live.json's json.dumps carries no result/text/content/message/stdout/email/orgId/orgName key).
+next: The tool-list did not vary between A1 and A2 in this observation (vA NO -- Arm A's mcp_servers and tools_sha256 were identical across both runs, including the Google Calendar server sitting at needs-auth in both), so the cache-miss-from-MCP-variance hypothesis was not exercised by this run; both arms independently showed near-total run-2 cache reuse (~99.96-99.97%) regardless of MCP configuration, meaning no miss was observed to attribute to MCP variance or to anything else. Phase 5 should record this as UNJUDGED (similar-reuse-variance-not-observed) in RESUMPTION/UKDL, note CRO-04 is judged (not BLOCKED) with this specific outcome, and note that a future re-run of this harness would need the MCP surface to actually change between run 1 and run 2 (for example an auth-status flip or a plugin toggle) to exercise R5-R7 at all. This run establishes ab_runner.py and the tis_observed-based readout end-to-end against real subscription quota.
