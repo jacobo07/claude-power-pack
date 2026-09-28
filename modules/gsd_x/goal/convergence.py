@@ -87,6 +87,9 @@ class GoalObligation:
     # unreachable and a unit test could prove a production claim. Measured
     # 2026-09-23 in `sweep`, which built {"class": "in_game" if plane == REALITY}.
     gate_class: str = ""
+    # Task Ledger attribution (genesis-task-ledger -> MERGE here): which epoch and provider
+    # produced the verdict that satisfied this obligation. Absent on events that predate it.
+    verdict_source: dict | None = None
 
 
 @dataclass
@@ -118,6 +121,7 @@ def project_convergence(state: GoalState) -> Convergence:
                 o = cv.obligations[d["id"]]
                 o.disposition, o.verdict = SATISFIED, dict(d["verdict"])
                 o.disposition_reason = d.get("reason", "")
+                o.verdict_source = dict(d["source"]) if isinstance(d.get("source"), dict) else None
             elif ev.type == OB_DISPOSITIONED:
                 o = cv.obligations[d["id"]]
                 o.disposition, o.disposition_reason = d["disposition"], d["reason"]
@@ -125,7 +129,7 @@ def project_convergence(state: GoalState) -> Convergence:
                 o = cv.obligations[d["id"]]
                 o.revision = d["revision"]
                 if o.disposition == SATISFIED:      # its proof was about the old meaning
-                    o.disposition, o.verdict = ACCEPTED, None
+                    o.disposition, o.verdict, o.verdict_source = ACCEPTED, None, None
             elif ev.type == FAILURE_RECORDED:
                 cv.failures[d["id"]] = {"summary": d["summary"], "disposition": None,
                                         "reason": "", "seq": ev.seq}
@@ -283,19 +287,26 @@ def evaluate(ob: GoalObligation, verdict: mcl.Verdict | None, state: GoalState,
 
 
 def satisfy(log: GoalLog, state: GoalState, ob_id: str, verdict: mcl.Verdict | None,
-            actor: str, narrative: str | None = None) -> mcl.TransitionResult:
+            actor: str, narrative: str | None = None, source: dict | None = None) -> mcl.TransitionResult:
+    """`source` names who produced the verdict (epoch, provider, handle) so the goal log is a task
+    ledger: every SATISFIED row says what ran, on which tree, under which pinned gate, and where
+    the verdict came from. Reviewer != worker holds by construction, not by this field: the only
+    production caller is sweep._apply_verdicts, which takes verdicts solely from a provider's
+    gate receipt (pinned by tools/test_task_ledger_seam.py)."""
     cv = project_convergence(state)
     if ob_id not in cv.obligations:
         raise GoalLogError(f"no obligation {ob_id!r}")
     res = evaluate(cv.obligations[ob_id], verdict, state, narrative)
     if res.allowed:
         v = verdict
-        log.append(state.last_seq + 1, OB_SATISFIED,
-                   {"id": ob_id, "reason": res.reason,
-                    "verdict": {"gate": v.gate, "exit_status": v.exit_status,
-                                "observed": v.observed, "tree_hash": v.tree_hash,
-                                "revision": v.revision, "gate_class": v.gate_class,
-                                "gate_pin": [list(p) for p in v.gate_pin]}}, actor)
+        data = {"id": ob_id, "reason": res.reason,
+                "verdict": {"gate": v.gate, "exit_status": v.exit_status,
+                            "observed": v.observed, "tree_hash": v.tree_hash,
+                            "revision": v.revision, "gate_class": v.gate_class,
+                            "gate_pin": [list(p) for p in v.gate_pin]}}
+        if source:
+            data["source"] = {str(k): str(val)[:200] for k, val in source.items() if val is not None}
+        log.append(state.last_seq + 1, OB_SATISFIED, data, actor)
     return res
 
 

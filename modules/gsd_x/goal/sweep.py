@@ -182,7 +182,10 @@ def _apply_verdicts(log: gl.GoalLog, receipt, record, actor: str) -> list[str]:
                               v.get("observed", ""), v.get("tree_hash", ""),
                               v.get("revision", ""), v.get("gate_class", ""),
                               tuple(tuple(p) for p in (v.get("gate_pin") or ())))
-        res = cv.satisfy(log, gc.project(log), ob_id, verdict, actor)
+        res = cv.satisfy(log, gc.project(log), ob_id, verdict, actor,
+                         source={"epoch": getattr(record, "epoch_id", None),
+                                 "provider": getattr(record, "provider", None),
+                                 "handle": getattr(record, "handle", None)})
         out.append(f"{log.goal_id}: {ob_id} -> "
                    f"{'SATISFIED' if res.allowed else res.outcome}: {res.reason[:140]}")
     return out

@@ -44,12 +44,13 @@
   {
    "id": "genesis-task-ledger",
    "source": "vendor/genesis-suite/modules/genesis-task-ledger",
-   "owner": "SEAM -- modules/gsd_x/goal/convergence.py (Goal Spine, off-limits by Owner decision 1a)",
+   "owner": "modules/gsd_x/goal/convergence.py (canonical Goal Spine closure evidence) via goal/sweep.py",
    "disposition": "MERGE",
    "differential": "artifact sha256 binding + reviewer identity distinct from worker",
    "status": "PLANNED",
-   "slice": "seam:goal-spine",
-   "evidence": "Not built, on purpose: artifact binding already exists where it is live (convergence.evaluate pins tree_hash, revision, gate_pin); the only production caller of mission.closure.evaluate_transition is that Goal Spine module. A reviewer!=worker check added to mission/closure would have no live caller. Seam: convergence.satisfy knows `actor`; the obligation does not record its worker."
+   "slice": "seam:goal-spine (merged; liveness waits on UWCP S6)",
+   "evidence": "MERGED into the canonical owner, no parallel ledger: artifact binding was already there (evaluate pins tree, revision, gate files); each SATISFIED row now records the epoch/provider/handle that produced its verdict (sweep._apply_verdicts); reviewer != worker holds by construction and is pinned by an AST ratchet -- the only production caller of convergence.satisfy is the sweep, which takes verdicts solely from gate receipts (test_task_ledger_seam 10/10, red drill on both alias forms). NOT LIVE: the Goal Spine engine itself has no live invoker on this host (no command, hook or scheduled task reaches tools/gsd_x_goal.py; positive control found gsd_mission's three) -- its wiring is UWCP S6 in the liveness registry. Status moves to LIVE when that engine does.",
+   "proof": "python tools/test_task_ledger_seam.py"
   },
   {
    "id": "genesis-task-adaptation",
