@@ -193,7 +193,10 @@ RESUME_DONE_FLAG = "claude-ctxwd-resumedone-{session_id}.flag"
 RESUME_CONFIRMED_FLAG = "claude-ctxwd-resumeok-{session_id}.flag"
 
 ROOT = Path.home() / ".claude" / "skills" / "claude-power-pack"
-LEDGER_PATH = ROOT / "vault" / "sleepy" / "context_snapshots.jsonl"
+# Test-only redirect. Unset in every real session, so live behaviour is unchanged; set by the
+# suites that drive this hook, which otherwise appended their fake sessions to the LIVE
+# checkout's snapshot ledger (measured by tools/test_state_isolation.py, 2026-09-28).
+LEDGER_PATH = Path(os.environ.get("CTXWD_SNAPSHOT_LEDGER") or (ROOT / "vault" / "sleepy" / "context_snapshots.jsonl"))
 ATOMIC_WRITE_DIR = ROOT / "lib"
 # PROGRESS_PATH is now derived per-project from cwd (BL-0043 globalization).
 # Fallback to power-pack vault when cwd is missing or unwriteable.
@@ -1206,7 +1209,9 @@ def _orchestrator_overlay(event: dict) -> dict | None:
     return None
 
 
-HEARTBEAT_LOG = Path.home() / ".claude" / "logs" / "context-watchdog.log"
+# Same test-only redirect as CTXWD_SNAPSHOT_LEDGER: a suite's fake judgements must not
+# advance the live heartbeat, which is the evidence that this guard ran at all.
+HEARTBEAT_LOG = Path(os.environ.get("CTXWD_HEARTBEAT_LOG") or (Path.home() / ".claude" / "logs" / "context-watchdog.log"))
 _LAST = {}
 
 

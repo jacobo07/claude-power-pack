@@ -27,6 +27,11 @@ ROOT = Path(__file__).resolve().parents[1]
 TMP = tempfile.mkdtemp(prefix="mcw-state-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
+# The watchdog under test wrote the LIVE checkout's snapshot ledger and heartbeat log
+# (tools/test_state_isolation.py, 2026-09-28); markers follow the same private state dir.
+os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
+os.environ["CTXWD_HEARTBEAT_LOG"] = str(Path(TMP) / "context-watchdog.log")
+os.environ["CTXWD_SNAPSHOT_LEDGER"] = str(Path(TMP) / "context_snapshots.jsonl")
 sys.path.insert(0, str(ROOT / "tools"))
 import gsd_autorun_marker as mk  # noqa: E402
 import gsd_long_run as lr  # noqa: E402

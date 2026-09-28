@@ -4,9 +4,10 @@ Everything that would touch the Owner's live state is redirected:
   GSD_LONG_RUN_STATE_DIR / _HOOKS_DIR / _PROJECTS_DIR -> temp dirs,
   GSD_LONG_RUN_NO_SPAWN=1 (the sweep never launches the real Enter daemon),
   the watchdog's _write_trigger_flag/_spawn_daemon are recorders.
-The one exception is the marker file itself (tools/gsd_autorun_marker.py keeps
-its STATE_DIR constant, as the existing suite relies on): markers are written
-under random `gsdlr-` session ids and removed in `finally`.
+Marker files follow GSD_AUTORUN_MARKER_DIR (read once, when tools/gsd_autorun_marker.py is
+imported below), so they land in the same temp state dir; the `finally` cleanup stays as a
+second line. The watchdog's heartbeat log and snapshot ledger are redirected too. Proof that
+nothing reaches the real ~/.claude: tools/test_state_isolation.py.
 
 One gate reads a REAL project read-only (V-GSDLR-REAL-GSD-ABSW2): the whole
 point of gap 8 is what the real gsd-tools parser does with a real roadmap.
@@ -45,7 +46,15 @@ os.environ.update({"GSD_LONG_RUN_STATE_DIR": str(STATE), "GSD_LONG_RUN_HOOKS_DIR
                    # the child inherits this environment. Unredirected, each run sealed goal-less
                    # gsdlr-* capsules into the Owner's real state (nine on 2026-09-28), and
                    # /kresume then claimed one.
-                   "CPP_ROLLOVER_STATE_DIR": str(TMP / "rollover")})
+                   "CPP_ROLLOVER_STATE_DIR": str(TMP / "rollover"),
+                   # The d10bd31 repair redirected the rollover capsules but left the marker
+                   # files themselves in the real state dir: tools/test_state_isolation.py still
+                   # measured 46 gsd-autorun-gsdlr-* writes there per run (removed in `finally`,
+                   # but live to the sweep and the watchdog for the whole run). And the watchdog
+                   # appended its fake judgements to the LIVE heartbeat log and snapshot ledger.
+                   "GSD_AUTORUN_MARKER_DIR": str(STATE),
+                   "CTXWD_HEARTBEAT_LOG": str(TMP / "context-watchdog.log"),
+                   "CTXWD_SNAPSHOT_LEDGER": str(TMP / "context_snapshots.jsonl")})
 
 passes = fails = inconclusive = 0
 

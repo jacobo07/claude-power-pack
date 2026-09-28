@@ -24,6 +24,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WATCHDOG = ROOT / "modules" / "zero-crash" / "hooks" / "context-watchdog.py"
 
+# Everything the watchdog writes goes to a private dir. Before this, the suite appended to the
+# REAL gsd-autorun ledger and heartbeat log (tools/test_state_isolation.py, 2026-09-28).
+_TMP = Path(tempfile.mkdtemp(prefix="rollact-"))
+os.environ.update({"GSD_LONG_RUN_STATE_DIR": str(_TMP / "state"),
+                   "GSD_LONG_RUN_SESSIONS_DIR": str(_TMP / "sessions"),
+                   "GSD_AUTORUN_MARKER_DIR": str(_TMP / "state"),
+                   "CPP_ROLLOVER_STATE_DIR": str(_TMP / "rollover"),
+                   "CTXWD_HEARTBEAT_LOG": str(_TMP / "context-watchdog.log"),
+                   "CTXWD_SNAPSHOT_LEDGER": str(_TMP / "context_snapshots.jsonl")})
+for _d in ("state", "sessions", "rollover"):
+    (_TMP / _d).mkdir()
+
 passes = fails = 0
 
 
