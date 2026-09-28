@@ -34,6 +34,8 @@ ratchet extension, NOT merged/promoted), `tools/mutation_drill.py` (isolated dri
 Peer pane c2 owns `vault/specs/parent-context-epoch-rotation.md` (`9f750fa`, `717554f`:
 same-session continuation, launch_cause, `tools/gsd_epoch.py census`). "1 of 499 wall" RETRACTED.
 Gates at 717554f: mission 184/184 · sweep 10/10 · drill 5/5 · route 9/9 · GSDLR 98/98 · epoch 56/56.
+REVIEW CLOSED `b6f725e` (1 HIGH/3 MED/2 LOW fixed; mission 190/190, sweep 11/11). OPEN on
+peer c2: gsd_epoch.continue_worker must save work_dir (F1 half); its WIP epoch tests 59/61.
 NEXT: (1) merge the UKDL candidates when ukdl-universal.md is quiet; (2) watch the first live
 no_progress halt / COMPLETED at budget (`gsd_mission.py status`, ledger `mission_completed`);
 (3) fold isolation into `tools/lane_r_mutate.py` (UWCP-owned; mutates in place today).

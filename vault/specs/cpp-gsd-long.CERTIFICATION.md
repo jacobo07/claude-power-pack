@@ -615,6 +615,12 @@ tree carried every property this pass required, and gsd_x/mission remains an opt
 gate. Wall-triggered rotation economics and TURN_CONTINUATION belong to the peer pane's spec
 `vault/specs/parent-context-epoch-rotation.md`.
 
-Gates at this addendum: `tools/test_gsd_mission.py` 184/184 · `tools/test_gsd_sweep_pass.py`
+Independent adversarial review (oneshot-architect-auditor, 2026-09-28): WARNING, 1 HIGH /
+3 MEDIUM / 2 LOW, all verified and fixed in `b6f725e`. The HIGH broke D1: the budget-halt branch
+asked GSD in the cwd, not the worktree the worker used, so a finished milestone could be halted
+and renewed. Fixed on the supervisor side; the peer pane owns saving work_dir on same-session
+continuation. Gates after: mission 190/190, sweep 11/11.
+
+Gates at this addendum (before the review): `tools/test_gsd_mission.py` 184/184 · `tools/test_gsd_sweep_pass.py`
 10/10 · `tools/test_mutation_drill.py` 5/5 · `tools/test_gsd_long_run.py` 98/98 (1 inconclusive,
 pre-existing) · `tools/test_cpp_gsd_long_routing.py` 9/9.
