@@ -69,5 +69,20 @@ Owner clarified 2026-09-28: ONLY the paid experiment is off; free work continues
 - A peer session moved every rule's incident evidence to knowledge_vault/rules-evidence/ (rules ~267->216 KB).
   Three+ transcript parsers now agree on dedupe (peer 8c39c27); consolidating them to one owner is open debt.
 
+## 4a. GEX44 mission (armed 2026-09-28, Owner: "carry on with cognitive resource OS on GEX44")
+- Mission `m-3fa466eb6cc8`, worker 1 bg `a293bedf`, `/gsd-autonomous`, workstream `cognitive-resource-os`,
+  max 12 cycles / 12 h, permission auto. Supervised by the generic `agora-mission-sweep.timer` (all missions
+  under /home/kobii). Clone `~/missions/cognitive-resource-os`, branch `mission/cognitive-resource-os`
+  (base 784e446; roadmap cd4e436). Root flat roadmap untouched (`workstream create --no-migrate`).
+- Roadmap phases: 1 gates + full pytest with dirty-set bracket · 2 GEX44 observed baseline · 3 P3 pre-flight P0
+  (no model calls) · 4 prefix cache-miss A/B (4 runs, subscription quota only: host is claudeAiOauth `max`,
+  no API key) · 5 seal RESUMPTION/UKDL in the clone. Ablation run and rule relocation are OUT of scope.
+- Hand-back is by FETCH, not push (ovo-push-gate refused a remote push; not routed around):
+  `git fetch ssh://gex44/home/kobii/missions/cognitive-resource-os mission/cognitive-resource-os`.
+- Status: `ssh gex44` then, with CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude in env,
+  `python3 ~/.claude/skills/claude-power-pack/tools/gsd_mission.py status` (without it: "host session list unavailable").
+- Set up on GEX44: repo-local git identity in the clone (host has none globally); trust entry added to
+  ~/.claude.json (backup `~/.claude.json.bak-cro-20260928`).
+
 ## 5. Start instruction
 Run the coherence anchor. `git log --oneline -8` and confirm the three commits. Then action 1.
