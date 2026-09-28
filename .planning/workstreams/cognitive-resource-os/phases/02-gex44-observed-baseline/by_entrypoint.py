@@ -18,6 +18,7 @@ import datetime as dt
 import io
 import json
 import statistics
+import subprocess
 import sys
 import tempfile
 import time
@@ -29,17 +30,31 @@ HERE = Path(__file__).resolve().parent
 # 4 .planning/, 5 repo root.
 ROOT = Path(__file__).resolve().parents[5]
 
-if not (ROOT / "tools" / "tis_observed.py").is_file():
-    print(json.dumps({"state": "UNMEASURED", "reason": "repo root not found"}))
-    sys.exit(2)
-
-sys.path.insert(0, str(ROOT / "tools"))
-import tis_observed as T  # noqa: E402
-import budget_monitor as bm  # noqa: E402
-import pricing_source  # noqa: E402
-import tis_report  # noqa: E402
+# Populated by _ensure_tools_importable(), never at module-import time (WR-04): a bare
+# `import by_entrypoint` (e.g. Phase 4 reusing measure()) must not print or sys.exit.
+T = bm = pricing_source = tis_report = None
 
 passes = fails = 0
+
+
+def _ensure_tools_importable() -> None:
+    """Idempotent. Verifies the repo layout, adds tools/ to sys.path, and imports the
+    composed tools into this module's globals. Called from main()/selftest() only --
+    never at module-import time -- so importing this module for its measure() function
+    is import-safe (WR-04): no stdout write, no sys.exit as a side effect of `import
+    by_entrypoint`."""
+    global T, bm, pricing_source, tis_report
+    if T is not None:
+        return
+    if not (ROOT / "tools" / "tis_observed.py").is_file():
+        print(json.dumps({"state": "UNMEASURED", "reason": "repo root not found"}))
+        sys.exit(2)
+    sys.path.insert(0, str(ROOT / "tools"))
+    import tis_observed as _T
+    import budget_monitor as _bm
+    import pricing_source as _pricing_source
+    import tis_report as _tis_report
+    T, bm, pricing_source, tis_report = _T, _bm, _pricing_source, _tis_report
 
 # A zero-valued but truthy price table. Used solely to pull the `ttl_assumed` boolean out
 # of T.cost_usd's own composition (cache_creation breakdown present or not) without
@@ -426,6 +441,20 @@ def _write_session(path: Path, entrypoint: str, calls: list):
 
 
 def selftest() -> int:
+    _ensure_tools_importable()
+
+    # S0 (WR-04): a bare `import by_entrypoint` in a fresh subprocess must not print or
+    # sys.exit -- that side effect used to run unconditionally at module-import time.
+    # Checked in a subprocess (not this process) since this process already imported the
+    # module and mutated sys.path; a subprocess re-imports cold.
+    proc = subprocess.run(
+        [sys.executable, "-c", f"import sys; sys.path.insert(0, {str(HERE)!r}); "
+                                "import by_entrypoint"],
+        capture_output=True, text=True, timeout=30)
+    s0 = proc.returncode == 0 and proc.stdout == "" and proc.stderr == ""
+    check("S0", s0,
+          f"rc={proc.returncode} stdout={proc.stdout!r} stderr={proc.stderr!r}")
+
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         proj1 = root / "proj1"
@@ -544,6 +573,7 @@ def main(argv=None) -> int:
     if args.selftest:
         return selftest()
 
+    _ensure_tools_importable()
     now_ts = bm._utc_now().timestamp()
     if not T.PROJECTS_DIR.is_dir():
         print(json.dumps({"state": "UNMEASURED", "reason": "no transcripts dir"}))
