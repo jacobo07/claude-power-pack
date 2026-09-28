@@ -73,6 +73,11 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 - [Phase 4]: [Phase 4]: CRO-04 verdict UNJUDGED (similar-reuse-variance-not-observed, R8) -- Arm A's MCP tool list and server statuses were byte-identical between A1 and A2 in this observation, so the tool-list-variance hypothesis was not exercised; cro04 SATISFIED (4 launches, judged, not BLOCKED).
 - [Phase 5]: [Phase 5]: Both Phase 4 gates (04-VERIFICATION passed, 04-REVIEW CR-01 present) read WRITE at execution time, so all six planned UKDL entries were written (14 total entry-ID lines).
 - [Phase 5]: [Phase 5]: seal_check.py enforces the seal (verdict-token equality, figure-in-cited-file provenance, closed UKDL id set, word preservation, privacy scan) rather than only narrating it; all five automated checks per task gated the commits.
+- [Epoch 2, 2026-09-28]: Autonomous resume found phases 2-5 complete and Phase 1 BLOCKED only on 01-02 Task 1
+  (package-legitimacy checkpoint, marked "never auto-approvable" in the plan; its "Rejected alternatives" also forbid
+  borrowing another project's pytest, apt, or pip --user). Unattended, the safest option is to leave the gate intact:
+  01-02 was NOT re-run (it would reproduce BLOCKED verbatim), and milestone audit/complete was NOT run, because
+  archiving would seal CRO-01 as BLOCKED while an Owner-resolvable step is still open. Run halted here by choice.
 
 ## Blockers
 
