@@ -1,0 +1,13 @@
+{
+ "note": "Night research questions (T10). Each comes from a measurement this programme made, so a finding can be checked against it. Answers are CANDIDATES: unverified sources, reward 0, never promoted by the runner.",
+ "questions": [
+  {"id": "fresh-session-bootstrap",
+   "question": "Fresh headless agent sessions here re-read about 167k resident tokens per turn before doing any work (exp-successor-packet-002). What published techniques do agent harnesses use to shrink the fixed per-turn bootstrap (system prompt, tool schemas, always-on instructions) without losing required behaviour, and how did they measure the effect?"},
+  {"id": "credential-filter-false-positives",
+   "question": "A source-packet credential filter blocks 40% of this codebase's Python files, mostly because the word 'pass' precedes ':' or '=' (e.g. 'X_PASS=3/3'). What approaches do secret-scanning tools use to cut such false positives (entropy, context, allow-lists) while still refusing real credentials, and what are their documented miss rates?"},
+  {"id": "handoff-fidelity-metrics",
+   "question": "How do long-running agent systems measure whether a successor session resumed correctly after a context reset (resume exams, state checksums, task-progress probes)? Which metrics distinguish a successor that re-derived work from one that continued it?"},
+  {"id": "cache-read-economics",
+   "question": "In long agent sessions, cache reads dominated input here (98% of observed input tokens on context-rotation epochs). What is known about the trade-off between keeping one long cached context and rotating to fresh short contexts, in cost and in task success?"}
+ ]
+}

@@ -1,0 +1,10 @@
+[Unit]
+Description=CPP night research, hourly; eligibility is decided by the gate, not by this timer
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=300
+Persistent=false
+
+[Install]
+WantedBy=timers.target
