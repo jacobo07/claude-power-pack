@@ -1077,6 +1077,9 @@ def main() -> int:
     # --- M6 finding: the run moved into a git worktree; the mission must follow it -----------
     import subprocess as _sp
     G = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+    if not Path(G).exists():   # same fallback as gsd_mission's own resolvers (Linux: GEX44)
+        import shutil as _sh
+        G = _sh.which("git") or "git"
     repo = Path(TMP) / "wt-repo"
     (repo / "sub").mkdir(parents=True, exist_ok=True)
     (repo / "sub" / "a.txt").write_text("a", encoding="utf-8")
