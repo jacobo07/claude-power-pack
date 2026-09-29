@@ -138,6 +138,14 @@ def gate_thresholds(wd) -> None:
             f"{REARM_FLOOR_MIN} <= {wd.THRESHOLD_REARM_PCT} "
             f"< {wd.THRESHOLD_SNAPSHOT_PCT} < {wd.THRESHOLD_ADVISORY_PCT}")
 
+    # Owner decision 2026-09-29: an interactive pane rolls over at roughly 40-50 %. Pinned
+    # as absolute numbers, never derived from the module (see PROBE POINTS above).
+    if 40 <= wd.THRESHOLD_ADVISORY_PCT <= 50:
+        _ok("V-GSDAC-INTERACTIVE-WALL-OWNER-BAND", f"wall {wd.THRESHOLD_ADVISORY_PCT} % in [40, 50]")
+    else:
+        _fail("V-GSDAC-INTERACTIVE-WALL-OWNER-BAND",
+              f"wall {wd.THRESHOLD_ADVISORY_PCT} % is outside the Owner's 40-50 % band (2026-09-29)")
+
 
 def gate_rearm(wd) -> None:
     sid = f"gsdac-{uuid.uuid4().hex[:12]}"

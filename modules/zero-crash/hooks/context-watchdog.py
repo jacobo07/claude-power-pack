@@ -37,16 +37,21 @@ import sys
 import tempfile
 from pathlib import Path
 
-# Thresholds (BL-0033)
-THRESHOLD_SNAPSHOT_PCT = 60
-THRESHOLD_ADVISORY_PCT = 70
+# Thresholds (BL-0033). Owner decision 2026-09-29: an interactive pane rolls over
+# (/kclear -> gate -> /clear -> /kresume, spec interactive-context-rollover.md) at
+# roughly 40-50 %, not 70 %. The wall is the advisory threshold; missions keep their
+# own 35/40/30 through the marker, which outranks these defaults.
+THRESHOLD_SNAPSHOT_PCT = 40
+THRESHOLD_ADVISORY_PCT = 45
 # Rearm floor (spec vault/specs/gsd-autonomous-autocompact.md, gap B). Tier 2
 # is debounced once per session; a long unattended run needs it to fire at
 # EVERY crossing, not the first. A reading this far below the advisory
 # threshold is only reachable through a compaction or a fresh context, so it
 # is the signal that the debounce may be cleared. Kept well under
 # THRESHOLD_SNAPSHOT_PCT so the rearm band and the snapshot band cannot touch.
-THRESHOLD_REARM_PCT = 45
+# 30, not 45, since the 2026-09-29 wall move: it must stay under the 40 % snapshot and
+# at or above REARM_FLOOR_PCT below; a fresh session starts at ~16-20 %, so it is reachable.
+THRESHOLD_REARM_PCT = 30
 # The lowest rearm that is actually REACHABLE after a compaction, and therefore
 # the lowest one that leaves the resume branch alive. The rearm band is where
 # the post-compaction resume lives; set it under the floor and the session can
