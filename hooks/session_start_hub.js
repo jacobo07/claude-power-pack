@@ -1132,18 +1132,13 @@ async function main() {
     const sessionId = (typeof payload.session_id === 'string')
       ? payload.session_id : '';
 
-    // 0a. Rollover autotype, FIRST of all work: the SessionStart chain has a 4 s budget
-    // and a starved host spends it before the hub is done (measured 2026-09-29, 435014d6:
-    // armed at +~6 s, abandoned 0.8 s later). Arming launches the daemon on the spot, so
-    // the typed /kresume no longer depends on the hub living to its end. The card itself
-    // is still placed below, in rank order.
+    // 0a. Rollover card. The autotype is NOT armed here any more: arming first in main()
+    // (435014d6) still lost to the chain's 4 s deadline when the hub was reaped before it
+    // started (cf02a0a5 -> 7e953f9d, 2026-09-29). It is armed by rollover_autotype.js, a
+    // top-level SessionStart hook outside the chain. Arming here too would launch a second
+    // daemon for the same flag.
     const rolloverLine = hookRolloverResume(cwd,
       (typeof payload.source === 'string') ? payload.source : '');
-    if (rolloverLine) {
-      armKresumeAutotype(sessionId, cwd,
-        (typeof payload.transcript_path === 'string') ? payload.transcript_path : '',
-        rolloverFocus(cwd, (typeof payload.source === 'string') ? payload.source : ''));
-    }
 
     // 1. Sync hook (may write to stdout).
     additionalContext = hookRestartResume(cwd);
@@ -1162,7 +1157,7 @@ async function main() {
     // 0b. Rollover successor card. Ranked with the mission card and for the same reason:
     // the host truncates SessionStart output near 9 KB, and after a `/clear` this is the
     // one line without which the successor does not know a thread exists at all.
-    // (rolloverLine was computed, and the autotype armed, at 0a.)
+    // (rolloverLine was computed at 0a; the autotype is rollover_autotype.js.)
     if (rolloverLine) {
       additionalContext = additionalContext
         ? (rolloverLine + '\n' + additionalContext)
@@ -1279,4 +1274,4 @@ if (require.main === module) {
 }
 
 module.exports = { missionNamesSession, hookMissionStart, hookRolloverResume, armKresumeAutotype,
-  rolloverFocus };
+  rolloverFocus, getStdinPayload };

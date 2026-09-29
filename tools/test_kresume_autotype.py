@@ -34,6 +34,7 @@ os.environ.setdefault("AC_TEST_DAEMON", str(HERE.parent / "hooks" / "auto-compac
 import test_autocompact_per_session as acps  # noqa: E402
 
 HUB = Path(os.environ.get("KRA_TEST_HUB") or HERE.parent / "hooks" / "session_start_hub.js")
+AUTOTYPE_HOOK = HUB.parent / "rollover_autotype.js"
 
 passes = fails = 0
 
@@ -134,17 +135,54 @@ def hub_gates():
           out.get("line") and not out.get("armed")
           and not (home / ".claude" / "hooks" / flag_name).exists(), f"out={out}")
 
-    # STATIC, and labelled so: the gates above call the function directly, so deleting
-    # the call in main() would leave them green. Driving main() end to end would fire
-    # every SessionStart side effect, so this reads the source instead: the arm call must
-    # sit inside the block that shows the card, and must receive the payload transcript.
+    # 2026-09-29 (cf02a0a5 -> 7e953f9d): the hub was reaped by the SessionStart chain's 4 s
+    # deadline before it logged a line, so the arm moved to rollover_autotype.js, a
+    # top-level hook. Driven END TO END here as the harness runs it: payload on stdin.
+    def run_autotype_hook(payload, extra_env=None):
+        home = fresh()
+        seed_capsule(home, cwd, obligations=["Re-point rows 28/29"])
+        hooks = home / ".claude" / "hooks"
+        hooks.mkdir(parents=True, exist_ok=True)
+        (hooks / "auto-compact-sendkeys-daemon.ps1").write_text("exit 0\r\n", encoding="ascii")
+        env = dict(os.environ)
+        env.update({"USERPROFILE": str(home), "HOME": str(home), "AC_DAEMON_DIR": str(hooks)})
+        env.update(extra_env or {})
+        r = subprocess.run(["node", str(AUTOTYPE_HOOK)], input=json.dumps(payload), env=env,
+                           capture_output=True, text=True, timeout=60)
+        f = hooks / flag_name
+        return (json.loads(f.read_text(encoding="utf-8")) if f.exists() else None), r
+
+    body, r = run_autotype_hook({"source": "clear", "session_id": "succ-2222", "cwd": cwd,
+                                 "transcript_path": r"C:\t\succ.jsonl"})
+    check("V-KRA-HOOK-ARMS-END-TO-END",
+          r.returncode == 0 and body is not None
+          and body.get("fresh_line") == "/kresume focus on Re-point rows 28/29"
+          and body.get("transcript") == r"C:\t\succ.jsonl",
+          f"rc={r.returncode} body={body} err={r.stderr[-200:]!r}")
+    body, r = run_autotype_hook({"source": "startup", "session_id": "succ-2222", "cwd": cwd})
+    check("V-KRA-HOOK-SILENT-ON-STARTUP", r.returncode == 0 and body is None, f"body={body}")
+    body, r = run_autotype_hook({"source": "clear", "session_id": "succ-2222", "cwd": cwd},
+                                {"CPP_KRESUME_AUTOTYPE": "off"})
+    check("V-KRA-HOOK-KILL-SWITCH", r.returncode == 0 and body is None, f"body={body}")
+
+    # STATIC: the hub must NOT also arm (a second daemon launch for the same flag).
     src = HUB.read_text(encoding="utf-8")
-    i = src.find("if (rolloverLine) {")
-    block = src[i:src.find("\n    }", i)] if i >= 0 else ""
-    check("V-KRA-HUB-WIRED-IN-MAIN (static)",
-          "armKresumeAutotype(sessionId, cwd" in block and "payload.transcript_path" in block
-          and "rolloverFocus(cwd" in block,
-          f"block={block[:300]!r}")
+    main_src = src[src.find("async function main()"):]
+    check("V-KRA-HUB-DOES-NOT-ARM (static)",
+          "armKresumeAutotype(" not in main_src, "armKresumeAutotype called inside hub main()")
+
+    # LIVE CONFIG, labelled so: the hook must be a top-level SessionStart entry, not a
+    # SessionStart-chain member, or it inherits the 4 s deadline that caused the incident.
+    settings = Path(os.environ.get("KRA_SETTINGS") or Path.home() / ".claude" / "settings.json")
+    try:
+        entries = json.loads(settings.read_text(encoding="utf-8")).get("hooks", {}).get("SessionStart", [])
+    except (OSError, ValueError):
+        entries = []
+    cmds = [" ".join([h.get("command", "")] + list(h.get("args", [])))
+            for e in entries for h in e.get("hooks", [])]
+    check("V-KRA-HOOK-REGISTERED-TOP-LEVEL (live config)",
+          any("rollover_autotype.js" in c and "hook-dispatcher" not in c for c in cmds),
+          f"{len(cmds)} SessionStart commands in {settings}")
 
     # A session id that could escape the hooks dir is sanitised, never followed.
     home = fresh()
@@ -227,14 +265,6 @@ def hub_gates():
     check("V-KRA-HUB-KILL-SWITCH-NO-LAUNCH",
           "calls" in got and not got.get("armed") and got["calls"] == [], f"got={got}")
 
-    # STATIC: arming precedes the other SessionStart work in main(), so it lands inside
-    # the chain's 4 s budget even when later hooks do not.
-    arm_at = src.find("armKresumeAutotype(sessionId, cwd")
-    restart_at = src.find("additionalContext = hookRestartResume(cwd)")
-    mission_at = src.find("const missionCard = hookMissionStart(")
-    check("V-KRA-HUB-ARMS-FIRST-IN-MAIN (static)",
-          0 <= arm_at < restart_at and arm_at < mission_at,
-          f"arm={arm_at} restart={restart_at} mission={mission_at}")
 
 
 # --------------------------------------------------------------- daemon half
