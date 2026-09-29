@@ -113,10 +113,12 @@ Each verdict is read from its phase EVIDENCE; figures are GEX44's, not the lapto
   skill auto-activation 0/4 (REPORT.md "Move 1"). Revert = copy the backup over the pointer.
 - MOVE 2 DONE 2026-09-29: real-context-reachability -> PP skill (same shape; backup
   ~/.claude/backups/rules-20260929-135725). B-prime 4/4 pass, first-call ~147.6k (−18k vs pre-move),
-  auto-activation 0/4. MOVE 3 (destructive-state-authorization) BLOCKED: Owner wants it behind a
-  deny-once PreToolUse card hook (`hooks/destructive_doctrine_card.js` in PP, wired into
-  PreToolUse-Bash-chain of BOTH dispatchers); writing it was denied by the auto-mode classifier
-  (Self-Modification). Needs the Owner to approve outside auto mode; rule stays always-loaded until then.
+  auto-activation 0/4.
+- MOVE 3 DONE 2026-09-29 (7f98579): destructive-state-authorization -> PP skill + deny-once card hook
+  `hooks/destructive_doctrine_card.js` (PreToolUse-Bash-chain, both dispatchers; kill switch
+  CLAUDE_DESTRUCTIVE_CARD=off; ledger ~/.claude/state/destructive-card/ledger.jsonl). E2E exposed and
+  fixed a dispatcher deny-dominance defect (rtk-rewrite's allow overwrote gate denies). B-prime 4/4,
+  first-call ~138.5k (≈−27k total), card fired live once and recovered. P3 relocation COMPLETE.
 
 ## 3. Active decisions
 - Estimates and observations never mix; every figure names its source.

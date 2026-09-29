@@ -117,9 +117,27 @@ live copy, 635 B pointer in rules/ (was 22,408 B), backup `~/.claude/backups/rul
 B-prime (`run-jprime --only rcr`): 4/4 valid, 4/4 pass (3/3). first-call 146,046–147,711, i.e. a further
 ~−6.7k after move 1 and ~−18k against arm A before any move. **Skill auto-activation 0/4.**
 
-## Move 3: destructive-state-authorization -- NOT moved
-Owner agreed to move it only behind a PreToolUse hook that denies the first destructive shell command of
-each session with the doctrine card (so the rule reaches the moment of use by an event, given 0/8
-auto-activation above). Writing that hook was refused by the auto-mode classifier (Self-Modification):
-a hook governing the agent's own tool calls needs the Owner's explicit approval outside auto mode.
-The rule stays always-loaded until then; moving it without the hook would drop the protection.
+## Move 3: destructive-state-authorization -> PP skill behind a deny-once card hook (commit 7f98579)
+First attempts to write the hook were refused by the auto-mode classifier (Self-Modification); done after
+the Owner left auto mode. Body byte-identical (sha256 5aaa3088...), 729 B pointer (was 24,495 B), backup
+`~/.claude/backups/rules-20260929-142535/`.
+
+Hook `hooks/destructive_doctrine_card.js` (PreToolUse-Bash-chain, both dispatchers): the first destructive
+shell command of a session is denied once with the doctrine card. Test 15/15 alone; never-deny mutant 11/15.
+**The end-to-end run found a dispatcher defect**: `mergeOutputs` merged hookSpecificOutput last-writer-wins,
+so rtk-rewrite.js's `permissionDecision:'allow'` finishing after a gate's deny turned it into allow (the
+card's deny came back as allow with the card's reason). The same exposure applied to cascade_check_bash.js
+(HR-CASCADE-002). Fixed: deny > ask > allow, all deny reasons kept, updatedInput dropped on deny. E2E 17/17
+after (red before); dispatcher regression suites all green (stop-schema 15, block-reason 20/20,
+bash-channel 25/25, secret-failopen 3/3, priority-lane 4/4, sessionstart-routing 6/6, cascade 8/8).
+
+B-prime (`run-jprime --only dsa`): 4/4 valid, 4/4 pass (3/3), first-call 137,556–139,781 (~−27k against arm A
+before any move). Skill auto-activation 1/4 (J-dsa2 r2 invoked it unprompted). The card fired live once:
+J-dsa2 r1 ran `Remove-Item` for cleanup, was denied with the card, re-issued 8 s later and passed
+(ledger: deny-card then pass-already-shown); it did not load the skill afterwards and the task passed.
+
+## Totals after the three moves
+Always-loaded rule bytes 92,851 -> 1,956 (three pointers). First-call context ~165.5k -> ~138.5k (≈−27k
+tokens at every session start, every repository). Quality: every task passed in every arm and after
+every move (32 + 24 + 12 runs). Auto-activation of the moved skills: 1/12; the destructive rule is the
+only one also delivered by event. Revert any move by copying its backup over the pointer.
