@@ -430,6 +430,12 @@ def main() -> int:
         _fail("V-MC-WS-CONFLICT-REFUSED", "a --ws naming another workstream was accepted")
     except gm.MissionError:
         _ok("V-MC-WS-CONFLICT-REFUSED")
+    # 2026-09-29 m-bb79185652b1: armed with only `--ws ub` in the command, the record kept no
+    # workstream, so the supervisor asked GSD for the ROOT roadmap and parked the mission BLOCKED.
+    rec = gm.create(TMP, "/gsd-autonomous --ws ub", mission_id="m-ws-inferred", now=NOW)
+    check("V-MC-WS-INFERRED-FROM-COMMAND", rec["workstream"] == "ub", rec["workstream"])
+    rec = gm.create(TMP, "/mc-task --ws ub", mission_id="m-ws-non-gsd", now=NOW)
+    check("V-MC-WS-NOT-INFERRED-NON-GSD", rec["workstream"] is None, rec["workstream"])
     # A record armed BEFORE the fix holds the bare command: the launch itself must bind it.
     legacy = gm.create(TMP, "/gsd-autonomous", mission_id="m-ws-legacy", now=NOW)
     legacy["workstream"] = "lobby-ws"

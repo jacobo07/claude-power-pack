@@ -218,6 +218,11 @@ def create(cwd: str, resume_command: str, *, mission_id: str | None = None,
            wall: dict | None = None) -> dict:
     """A PREPARED mission. Refuses to overwrite an existing, non-terminal one."""
     now = time.time() if now is None else now
+    # A `--ws` in the command IS the workstream; without this the supervisor asks GSD for the
+    # root roadmap and parks the mission (2026-09-29, m-bb79185652b1).
+    if workstream is None and resume_command.startswith("/gsd-"):
+        m = _WS_FLAG.search(resume_command)
+        workstream = m.group(1) if m else None
     resume_command = bind_workstream(resume_command, workstream)
     mid = mission_id or f"m-{uuid.uuid4().hex[:12]}"
     path = mission_path(mid)
