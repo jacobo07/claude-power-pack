@@ -64,6 +64,10 @@ const EVENT_MAP = {
     // wall was never judged while it mattered (W8: used_pct=39 vs 40 % wall, zero watchdog
     // lines). One fs.stat for every non-mission session. Pinned: tools/test_mission_wall.js.
     '../skills/claude-power-pack/hooks/mission_wall.js',
+    // Interactive rollover wall, judged MID-TURN: the twin of mission_wall for ordinary panes.
+    // A turn that runs for hours never reaches the watchdog's Stop (f8ea8727, 2026-09-29:
+    // 38 % -> 69 % inside one turn, no /kclear). Pinned: tools/test_rollover_wall.py.
+    '../skills/claude-power-pack/hooks/rollover_wall.js',
     // gsd-context-monitor.js RETIRADO de este carril 2026-09-15.
     // Es un hook VENDORED (upstream GSD, refs #3709/#2289/#4285) escrito para el
     // contrato STANDALONE: lee stdin y termina por allow()/crash(), que son
