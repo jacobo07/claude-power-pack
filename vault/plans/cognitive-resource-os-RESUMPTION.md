@@ -111,7 +111,12 @@ Each verdict is read from its phase EVIDENCE; figures are GEX44's, not the lapto
   instrument-before-claim is now PP skill `skills/instrument-before-claim/` + live copy; rules/ keeps a
   592 B pointer; backup ~/.claude/backups/rules-20260929-134341. B-prime 4/4 pass, first-call −11k,
   skill auto-activation 0/4 (REPORT.md "Move 1"). Revert = copy the backup over the pointer.
-  destructive-state-authorization and real-context-reachability NOT moved; awaiting Owner.
+- MOVE 2 DONE 2026-09-29: real-context-reachability -> PP skill (same shape; backup
+  ~/.claude/backups/rules-20260929-135725). B-prime 4/4 pass, first-call ~147.6k (−18k vs pre-move),
+  auto-activation 0/4. MOVE 3 (destructive-state-authorization) BLOCKED: Owner wants it behind a
+  deny-once PreToolUse card hook (`hooks/destructive_doctrine_card.js` in PP, wired into
+  PreToolUse-Bash-chain of BOTH dispatchers); writing it was denied by the auto-mode classifier
+  (Self-Modification). Needs the Owner to approve outside auto mode; rule stays always-loaded until then.
 
 ## 3. Active decisions
 - Estimates and observations never mix; every figure names its source.

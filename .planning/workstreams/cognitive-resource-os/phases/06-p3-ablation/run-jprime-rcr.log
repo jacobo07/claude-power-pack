@@ -1,0 +1,5 @@
+J-rcr1_error_count-P-r1 attempt=1 valid=True pass=True first_ctx=146046 
+J-rcr2_ad_purchases-P-r1 attempt=1 valid=True pass=True first_ctx=147592 
+J-rcr1_error_count-P-r2 attempt=1 valid=True pass=True first_ctx=147702 
+J-rcr2_ad_purchases-P-r2 attempt=1 valid=True pass=True first_ctx=147711 
+RUN COMPLETE

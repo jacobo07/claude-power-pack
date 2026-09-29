@@ -110,3 +110,16 @@ skill name). The tasks passed without it, as they did in arm B. So the move is m
 without a loss on these tasks; it is NOT measured to deliver the rule when it is needed, because the
 model never asked for it here. Caveat: the runner's `--allowedTools` list does not name `Skill`; a
 Skill call would still have appeared in the transcript as an attempt, and none did.
+
+## Move 2: real-context-reachability -> PP skill (2026-09-29)
+Same procedure: body byte-identical (sha256 9a24cdaa...), `skills/real-context-reachability/SKILL.md` +
+live copy, 635 B pointer in rules/ (was 22,408 B), backup `~/.claude/backups/rules-20260929-135725/`.
+B-prime (`run-jprime --only rcr`): 4/4 valid, 4/4 pass (3/3). first-call 146,046–147,711, i.e. a further
+~−6.7k after move 1 and ~−18k against arm A before any move. **Skill auto-activation 0/4.**
+
+## Move 3: destructive-state-authorization -- NOT moved
+Owner agreed to move it only behind a PreToolUse hook that denies the first destructive shell command of
+each session with the doctrine card (so the rule reaches the moment of use by an event, given 0/8
+auto-activation above). Writing that hook was refused by the auto-mode classifier (Self-Modification):
+a hook governing the agent's own tool calls needs the Owner's explicit approval outside auto mode.
+The rule stays always-loaded until then; moving it without the hook would drop the protection.
