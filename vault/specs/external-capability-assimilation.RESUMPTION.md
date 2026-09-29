@@ -55,8 +55,19 @@ audit) + `node tools/test_gsd_stop_continuation.js`; push both.
   `~/.claude/state/rollover/rollover-ledger.jsonl` for capsule_sealed / reset_gate / successor_claimed
   and the daemon log for `SENT via=extension ... typed=[/clear]`.
 
+## State update 2026-09-29 ~11:45Z (action 1 DONE, with a defect found and fixed)
+- Crossing ea725130 -> bb280e67: capsule_sealed 11:24:23, reset_gate SAFE_TO_FORGET 11:24:29
+  (/clear worked), but NO successor_claimed until a MANUAL /kresume at 11:29:47; resume_certified.
+- Cause: hook-dispatcher listed SessionStart as not accepting hookSpecificOutput.additionalContext,
+  so every session_start_hub card (incl. the "run /kresume NOW" line) went to systemMessage (UI only).
+  Fixed `9e4c326` in canonical AND live `~/.claude/hooks/hook-dispatcher.js` (same edit; the two files
+  had already drifted, so NOT Copy-Item). Test `~/.claude/hooks/tests/test-sessionstart-context-routing.js`
+  6/6, mutant 2/6. Still owed: one real automatic crossing where the successor runs /kresume unprompted.
+- Note: the rollover card sits at char ~4.9k of ~7.7k SessionStart context (other chain members first);
+  host truncates near 9 KB, so growth elsewhere could push it out -- consider moving the hub first.
+
 ## Next 3 actions
-1. Verify this pane's automatic crossing in the rollover ledger (proof owed by the P3 spec §8).
+1. Next automatic crossing: confirm successor_claimed follows reset_gate with no manual /kresume.
 2. Fix quota-blind renewal (above), test-first, go-live pattern.
 3. After Oct 4 quota reset: a smoke that shows >=1 supervisor `turn_continued` (T11's missing half);
    then final handoff block. Mission stays PARTIAL on items 22/32/33 (owner state: Goal Spine has no live
