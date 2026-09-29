@@ -401,6 +401,12 @@ const CHAIN_MAP = {
     // which is never what such a gate intends.
     // Two-way proof: hooks/_tests/test-cascade-deny-and-heredoc.js (8/8).
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/cascade_check_bash.js', timeoutMs: 5000 },
+    // destructive-state-authorization left the always-loaded prefix on 2026-09-29 (P3 ablation) and
+    // lives as a PP skill. Moved rules were auto-invoked 0/8 times, so this one reaches the moment of
+    // use by EVENT: the first destructive shell command of each session is denied once with the
+    // doctrine card. Pure node, no spawn. Proof: hooks/tests/test-destructive-doctrine-card.js
+    // (15/15 alone, + --e2e through this dispatcher; never-deny mutant 11/15).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/destructive_doctrine_card.js', timeoutMs: 5000 },
   ],
   'PreToolUse-Edit-chain': [
     // SECURITY FIX (2026-06-04, Owner-authorized "Wire firewall + fix
@@ -1276,6 +1282,8 @@ function mergeOutputs(outputs, eventName) {
   const contexts = [];
   let decisionDeny = false;
   let decisionAllow = false;
+  let decisionAsk = false;
+  const denyReasons = [];
   // Stop schema: `continue` defaults to true; any explicit `false` wins.
   let continueSeen = false;
   let continueFalse = false;
@@ -1302,6 +1310,19 @@ function mergeOutputs(outputs, eventName) {
 
     if (out.hookSpecificOutput && typeof out.hookSpecificOutput === 'object') {
       merged.hookSpecificOutput = { ...(merged.hookSpecificOutput || {}), ...out.hookSpecificOutput };
+      // DENY-DOMINANCE FIX (2026-09-29). The shallow merge above is last-writer-wins, and the chains run
+      // in a pool, so a member's `permissionDecision:'allow'` (rtk-rewrite.js emits one with every
+      // rewrite) finishing AFTER a gate's 'deny' silently turned the deny into an allow while keeping
+      // the gate's reason. Measured end to end: destructive_doctrine_card.js denied `rm -rf`, the
+      // dispatcher returned allow. cascade_check_bash.js (HR-CASCADE-002) was exposed the same way.
+      // A decision is now a precedence, never an order: deny > ask > allow.
+      const hd = out.hookSpecificOutput.permissionDecision;
+      if (hd === 'deny') {
+        decisionDeny = true;
+        if (typeof out.hookSpecificOutput.permissionDecisionReason === 'string') {
+          denyReasons.push(out.hookSpecificOutput.permissionDecisionReason);
+        }
+      } else if (hd === 'ask') decisionAsk = true;
       // Pull additionalContext out of child hookSpecificOutput too so it can
       // be re-routed by sanitizeForSchema for non-PreToolUse families.
       if (typeof out.hookSpecificOutput.additionalContext === 'string'
@@ -1317,12 +1338,18 @@ function mergeOutputs(outputs, eventName) {
   }
 
   if (eventName && eventName.startsWith('PreToolUse')) {
-    if (decisionDeny || decisionAllow) {
+    if (decisionDeny || decisionAsk || decisionAllow) {
       merged.hookSpecificOutput = {
         hookEventName: 'PreToolUse',
         ...(merged.hookSpecificOutput || {}),
-        permissionDecision: decisionDeny ? 'deny' : 'allow',
+        permissionDecision: decisionDeny ? 'deny' : decisionAsk ? 'ask' : 'allow',
       };
+      if (decisionDeny) {
+        // Every gate that denied is heard, not just the last one to finish; and a rewrite proposed by an
+        // allowing member (updatedInput) must not ride along on a denied call.
+        if (denyReasons.length) merged.hookSpecificOutput.permissionDecisionReason = denyReasons.join('\n\n');
+        delete merged.hookSpecificOutput.updatedInput;
+      }
     }
   } else {
     if (decisionDeny) merged.decision = 'deny';
