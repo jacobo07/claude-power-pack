@@ -184,6 +184,58 @@ def hub_gates():
     got = armed_line(["\r\n\t "])
     check("V-KRA-HUB-FOCUS-EMPTY-BARE", got == "/kresume", f"fresh_line={got!r}")
 
+    # --- launch timing (2026-09-29, 435014d6). The daemon launch used to be QUEUED for
+    # flushSpawns() at the end of main(); a starved host abandoned the hub after arming and
+    # before the flush, so the flag sat unserved until the Owner had already typed.
+    # child_process.spawn is recorded (never executed) before the hub is required, and
+    # flushSpawns is never called: a spawn seen here happened at arm time. Recording,
+    # not launching, because a detached powershell started from inside the agent's tool
+    # sandbox never runs its script (measured: 1.2 s synchronously, nothing in 40 s
+    # detached) -- a marker-file gate would measure the sandbox, not the hub.
+    def spawns_at_arm(extra_env=None):
+        home = fresh()
+        seed_capsule(home, cwd)
+        hooks = home / ".claude" / "hooks"
+        hooks.mkdir(parents=True, exist_ok=True)
+        (hooks / "auto-compact-sendkeys-daemon.ps1").write_text("exit 0\r\n", encoding="ascii")
+        js = (
+            "const cp=require('child_process');const calls=[];"
+            "cp.spawn=(c,a)=>{calls.push([c].concat(a||[]).join(' '));return {pid:1,unref(){}};};"
+            "const h=require(process.argv[1]);"
+            "const line=h.hookRolloverResume(process.argv[3],process.argv[2]);"
+            "const armed=line?h.armKresumeAutotype('succ-2222',process.argv[3],'t',''):null;"
+            "process.stdout.write(JSON.stringify({armed:armed,calls:calls}));"
+        )
+        env = dict(os.environ)
+        env.update({"USERPROFILE": str(home), "HOME": str(home),
+                    "AC_DAEMON_DIR": str(hooks)})
+        env.update(extra_env or {})
+        r = subprocess.run(["node", "-e", js, str(HUB), "clear", cwd],
+                           env=env, capture_output=True, text=True, timeout=60)
+        try:
+            return json.loads(r.stdout or "{}")
+        except ValueError:
+            return {"err": r.stderr[-300:]}
+
+    got = spawns_at_arm()
+    daemon_calls = [c for c in got.get("calls", []) if "auto-compact-sendkeys-daemon.ps1" in c]
+    check("V-KRA-HUB-LAUNCHES-WITHOUT-FLUSH",
+          got.get("armed") and len(daemon_calls) == 1 and daemon_calls[0].startswith("powershell.exe"),
+          f"got={got}")
+
+    got = spawns_at_arm({"CPP_KRESUME_AUTOTYPE": "off"})
+    check("V-KRA-HUB-KILL-SWITCH-NO-LAUNCH",
+          "calls" in got and not got.get("armed") and got["calls"] == [], f"got={got}")
+
+    # STATIC: arming precedes the other SessionStart work in main(), so it lands inside
+    # the chain's 4 s budget even when later hooks do not.
+    arm_at = src.find("armKresumeAutotype(sessionId, cwd")
+    restart_at = src.find("additionalContext = hookRestartResume(cwd)")
+    mission_at = src.find("const missionCard = hookMissionStart(")
+    check("V-KRA-HUB-ARMS-FIRST-IN-MAIN (static)",
+          0 <= arm_at < restart_at and arm_at < mission_at,
+          f"arm={arm_at} restart={restart_at} mission={mission_at}")
+
 
 # --------------------------------------------------------------- daemon half
 def transcript(d: Path, rows) -> Path:

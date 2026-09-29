@@ -372,10 +372,20 @@ function armKresumeAutotype(sessionId, cwd, transcriptPath, focus) {
     const tmp = flag + '.' + process.pid + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(body) + '\n', 'utf8');
     fs.renameSync(tmp, flag);
-    detachedSpawn('kresume_autotype', 'powershell.exe', [
-      '-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden',
-      '-ExecutionPolicy', 'Bypass', '-File', KRESUME_DAEMON_PS1,
-    ]);
+    // Launched NOW, never queued. Measured 2026-09-29 (435014d6): on a starved host the
+    // SessionStart chain abandoned the hub 0.8 s after it armed, before flushSpawns(), so
+    // the queued daemon launch died with it; the flag sat until an unrelated daemon run
+    // found it 35 s later, after the Owner had typed. Everything else in the queue can be
+    // late; this one races the Owner's first keystroke.
+    if (!fs.existsSync(KRESUME_DAEMON_PS1)) {
+      note('SKIP kresume_autotype (missing target ' + KRESUME_DAEMON_PS1 + ')');
+      return flag;
+    }
+    spawnNow({
+      label: 'kresume_autotype', cmd: 'powershell.exe', cwd: PP_PATH, log: null, envDelta: null,
+      args: ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden',
+        '-ExecutionPolicy', 'Bypass', '-File', KRESUME_DAEMON_PS1],
+    });
     note('kresume autotype armed sid=' + safeSid);
     return flag;
   } catch (err) {
@@ -1122,6 +1132,19 @@ async function main() {
     const sessionId = (typeof payload.session_id === 'string')
       ? payload.session_id : '';
 
+    // 0a. Rollover autotype, FIRST of all work: the SessionStart chain has a 4 s budget
+    // and a starved host spends it before the hub is done (measured 2026-09-29, 435014d6:
+    // armed at +~6 s, abandoned 0.8 s later). Arming launches the daemon on the spot, so
+    // the typed /kresume no longer depends on the hub living to its end. The card itself
+    // is still placed below, in rank order.
+    const rolloverLine = hookRolloverResume(cwd,
+      (typeof payload.source === 'string') ? payload.source : '');
+    if (rolloverLine) {
+      armKresumeAutotype(sessionId, cwd,
+        (typeof payload.transcript_path === 'string') ? payload.transcript_path : '',
+        rolloverFocus(cwd, (typeof payload.source === 'string') ? payload.source : ''));
+    }
+
     // 1. Sync hook (may write to stdout).
     additionalContext = hookRestartResume(cwd);
 
@@ -1139,15 +1162,11 @@ async function main() {
     // 0b. Rollover successor card. Ranked with the mission card and for the same reason:
     // the host truncates SessionStart output near 9 KB, and after a `/clear` this is the
     // one line without which the successor does not know a thread exists at all.
-    const rolloverLine = hookRolloverResume(cwd,
-      (typeof payload.source === 'string') ? payload.source : '');
+    // (rolloverLine was computed, and the autotype armed, at 0a.)
     if (rolloverLine) {
       additionalContext = additionalContext
         ? (rolloverLine + '\n' + additionalContext)
         : rolloverLine;
-      armKresumeAutotype(sessionId, cwd,
-        (typeof payload.transcript_path === 'string') ? payload.transcript_path : '',
-        rolloverFocus(cwd, (typeof payload.source === 'string') ? payload.source : ''));
     }
 
     // 1a. Recovery epoch. MUST run before hookCpcOsRegister, which writes a fresh
