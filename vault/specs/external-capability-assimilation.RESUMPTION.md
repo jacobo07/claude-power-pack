@@ -40,14 +40,26 @@ audit) + `node tools/test_gsd_stop_continuation.js`; push both.
   their first turn; epoch 2 made no commit). NEW smoke `m-3e72c75c4a06` armed 21:11Z, production
   wall 35/40/30, 300k continuation ceiling, 6 cycles / 2 h, worker 1 `e050802d`.
 
+## State update 2026-09-29 ~11:25Z (supersedes the T11 watch item)
+- `m-3e72c75c4a06` certified (`gsd_epoch.py certify`): **2 CONTEXT_ROTATIONs** (wall 42 % / 40 %),
+  e1 4 commits -> e2 11 commits (Phase 9 done, 207 tests) -> e3 plan 10-01 (`806f202`).
+  **turn_continuations 0** (every turn ended with a child pending or at the wall). Halted on budget
+  after the WEEKLY QUOTA ran out 23:11Z (resets Oct 4 20:00 Madrid); `quota_held` held correctly.
+- **DEFECT (open):** budget halt RENEWED the mission 3x (m-54d1 -> m-8403 -> m-809c) straight into
+  the known quota hold; each renewal launched a worker. Fix: `renewal_refusal` (tools/gsd_mission.py)
+  must refuse while `provider_hold(rec, now)` is active; test first in test_gsd_mission.py.
+- Night research pass 2 (20:04Z): full 180 s, `worker-timeout`, 0 sources. Not LIVE.
+- **Interactive wall moved to 45 %** (`2905fb4`, Owner 2026-09-29): watchdog defaults 40/45/30, so
+  the interactive rollover (/kclear -> gate -> /clear -> /kresume) fires at ~45 % in every pane.
+  First automatic crossing = THIS pane (session ea725130) at 50 %: check
+  `~/.claude/state/rollover/rollover-ledger.jsonl` for capsule_sealed / reset_gate / successor_claimed
+  and the daemon log for `SENT via=extension ... typed=[/clear]`.
+
 ## Next 3 actions
-1. Watch `m-3e72c75c4a06` with one-shot reads of `~/.claude/state/gsd-autorun-ledger.jsonl` (no
-   watcher; host at ~4 GB free). Wanted: >=2 `turn_continued` with a progress fp change, >=1
-   `launch_cause` CONTEXT_ROTATION, commits in the worktree after it. Then
-   `python tools/gsd_epoch.py certify --mission m-3e72c75c4a06` from the live checkout.
-2. Night research: read `~/.claude/state/night-research/reports/` on the VPS (kobicraft@204.168.166.63,
-   key `~/.ssh/kobicraft_vps`); LIVE only on a produced candidate, never on runtime alone.
-3. Final handoff block. Mission stays PARTIAL on items 22/32/33 (owner state: Goal Spine has no live
+1. Verify this pane's automatic crossing in the rollover ledger (proof owed by the P3 spec §8).
+2. Fix quota-blind renewal (above), test-first, go-live pattern.
+3. After Oct 4 quota reset: a smoke that shows >=1 supervisor `turn_continued` (T11's missing half);
+   then final handoff block. Mission stays PARTIAL on items 22/32/33 (owner state: Goal Spine has no live
    invoker, UCR-CIF unmerged). Owner step still open: `python tools/install_reviewer_contract.py --install`.
 
 ## Start instruction
