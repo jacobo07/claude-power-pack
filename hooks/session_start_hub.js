@@ -234,6 +234,27 @@ const WORK_STATE_PENDING_SHOWN = 5;
 // silence here is a session that quietly starts from nothing.
 const ROLLOVER_CAPSULE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
+// Same identity rule as rollover.py capsule_is_here(), which `/kresume` uses to claim: the
+// card and the autotype must see exactly the capsules the claim will. A capsule belongs to
+// this session's directory when that directory is its session_cwd (the predecessor's own
+// directory, recorded since 2026-09-29), its shell cwd, or its repo root. The exact cwd
+// compare this replaces missed both a seal from a subdirectory (ea5c9025) and a seal after
+// a `cd` into another repo (357823a8): no card, no autotype, capsule claimed by hand.
+// Never "any ancestor": a nested repo's capsule must not surface in its parent.
+function rolloverPathKey(p) {
+  const s = String(p || '').trim();
+  if (!s) return '';
+  const n = path.normalize(s).replace(/[\\/]+$/, '');
+  return process.platform === 'win32' ? n.toLowerCase() : n;
+}
+
+function capsuleIsHere(rec, cwd) {
+  const here = rolloverPathKey(cwd);
+  if (!here || !rec) return false;
+  const repo = (rec.repo && typeof rec.repo === 'object') ? rec.repo : {};
+  return [rec.session_cwd, rec.cwd, repo.root].some(k => rolloverPathKey(k) === here);
+}
+
 // The newest unretired capsule sealed for this cwd, or null. Newest, because that is the
 // one `/kresume` claims; the card only needs one to exist, the focus needs the right one.
 function findRolloverCapsule(cwd, source) {
@@ -245,8 +266,7 @@ function findRolloverCapsule(cwd, source) {
     if (sw === '0' || sw === 'off' || sw === 'false') {
       return null;
     }
-    const cwdL = (cwd || '').toLowerCase();
-    if (!cwdL) {
+    if (!rolloverPathKey(cwd)) {
       return null;
     }
     const dir = path.join(STATE_DIR, 'rollover', 'capsules');
@@ -273,7 +293,7 @@ function findRolloverCapsule(cwd, source) {
           raw = raw.slice(1);
         }
         const rec = JSON.parse(raw);
-        if ((rec.cwd || '').toLowerCase() !== cwdL) {
+        if (!capsuleIsHere(rec, cwd)) {
           continue;  // another repo's crossing -- leave it for its own successor
         }
         best = rec;

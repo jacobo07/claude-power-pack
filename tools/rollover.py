@@ -203,6 +203,34 @@ def current_session() -> str:
     return os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
 
 
+def session_cwd(session_id: str) -> Optional[str]:
+    """The directory the host SESSION runs in, from its registry record, or None.
+
+    Not the shell cwd: measured 2026-09-29, session 357823a8 ran in InfinityOps and sealed
+    after a `cd` into io-chatgpt-plugin, so the capsule named only that repo and the successor,
+    which opens where the session runs, never saw it (no card, no autotype). The registry
+    record (~/.claude/sessions/<pid>.json, the one the daemon routes by) carries the session's
+    own cwd; it is trusted only when its sessionId is this session. CLAUDE_PID is tried first,
+    then every record, since a caller may not run under the host's environment."""
+    if not session_id:
+        return None
+    d = Path(os.environ.get("CPP_CLAUDE_SESSIONS_DIR") or (Path.home() / ".claude" / "sessions"))
+    pid = os.environ.get("CLAUDE_PID") or ""
+    first = [d / f"{pid}.json"] if pid.isdigit() else []
+    try:
+        rest = sorted(d.glob("*.json")) if d.is_dir() else []
+    except OSError:
+        rest = []
+    for p in first + rest:
+        try:
+            rec = json.loads(p.read_text(encoding="utf-8-sig"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(rec, dict) and rec.get("sessionId") == session_id and rec.get("cwd"):
+            return str(rec["cwd"])
+    return None
+
+
 # ------------------------------------------------------------------ goal + handoff
 def goal_pointer(cwd: str, writes: list[str], explicit: Optional[str] = None) -> dict:
     if explicit:
@@ -266,6 +294,7 @@ def compile_capsule(session_id: str, cwd: str, transcript: Optional[str], *, goa
         items, source = obligations_from(handoff.get("path")), "own handoff"
     return {
         "schema": SCHEMA, "session_id": session_id, "cwd": str(cwd), "created": _iso(),
+        "session_cwd": session_cwd(session_id),
         "transcript": str(tp) if tp else None,
         "repo": repo_facts(cwd), "goal": gp,
         "obligations": items or [], "obligations_source": source if items else None,
@@ -583,12 +612,17 @@ def capsule_is_here(cap: dict, cwd: str) -> bool:
     sealed from GEO-audit\\scripts after a `cd`, the successor opened at GEO-audit, and an exact
     cwd compare hid a capsule sealed 38 s earlier -- no card, no autotype, and /kresume exit 4.
     The repo root is the stable identity. Not "any ancestor": a capsule from a nested repo must
-    not surface in its parent."""
+    not surface in its parent.
+
+    Neither covers a `cd` into ANOTHER repo (357823a8, 2026-09-29): the capsule's session_cwd,
+    the session's own directory from session_cwd(), is where its successor opens, so it
+    matches too. Capsules sealed before that field existed keep the two-key rule."""
     here = _pathkey(cwd)
     if not here:
         return False
     repo = cap.get("repo") if isinstance(cap.get("repo"), dict) else {}
-    return here in {k for k in (_pathkey(cap.get("cwd")), _pathkey(repo.get("root"))) if k}
+    keys = (_pathkey(cap.get("session_cwd")), _pathkey(cap.get("cwd")), _pathkey(repo.get("root")))
+    return here in {k for k in keys if k}
 
 
 def newest_capsule(cwd: str, state_dir: Optional[Path] = None, exclude: str = "",
