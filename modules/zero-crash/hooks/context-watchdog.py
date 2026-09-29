@@ -1514,24 +1514,25 @@ def _run_inner(event: dict) -> dict:
         #     as good as the old path or better, never worse.
         if _rollover_active():
             _set_flag(session_id, ROLLOVER_ASK_FLAG)
-            kclear_route = _dispatch_continuation(
-                session_id, "kclear", transcript=transcript_path, cwd=cwd,
-                used_pct=used_pct, cid=f"{session_id}:kclear:{int(_now_ts())}",
-                expect_line="/kclear", expect_prefix="/kclear")
-            _ledger(session_id, "rollover_kclear_asked", used_pct=used_pct,
-                    route=kclear_route.get("route"), why=kclear_route.get("why"))
+            # /kclear is work the MODEL can do itself (a skill + session_checkpoint.py), so it
+            # is never a keystroke. Measured 2026-09-29 (TUA-X, session 1a73990c): asked for a
+            # trailing `/kclear` line, the terminal-inbox route had no owning extension, the
+            # request was refused, and the line sat in the chat doing nothing across three
+            # walls -- while invoking the kclear skill directly sealed SAFE_TO_FORGET at once.
+            # Only `/clear` (a built-in, step 2) still needs the terminal.
+            _ledger(session_id, "rollover_kclear_asked", used_pct=used_pct, route="self")
             return {"decision": "block", "reason": (
                 f"CONTEXT THRESHOLD CROSSED — {used_pct}% used (>= {adv_pct:g}%). "
                 f"Pre-reset vault checkpoint WRITTEN: handoff={kclear_paths.get('handoff')}; "
                 f"telemetry={tel_path}. ACTIVE ROLLOVER is on: this session crosses into a "
                 "fresh one instead of compacting in place, so the goal stops paying rent on "
                 "a long context. "
-                + _route_sentence(kclear_route, "your trailing `/kclear` line") + " "
-                "End your next response with a SINGLE trailing line — exactly `/kclear` — "
-                "no preface, no markdown. /kclear seals a capsule and prints its verdict. "
-                "ONLY if that verdict is SAFE_TO_FORGET will `/clear` be requested; if the "
-                "capsule is refused nothing is cleared, you are told why, and you keep "
-                "working. vault/progress.md remains the anchor either way."
+                "Seal the capsule YOURSELF in your next response: invoke the `kclear` skill "
+                "(Skill tool) and follow it -- it runs session_checkpoint.py and prints a "
+                "[capsule] verdict. Do NOT end on a trailing `/kclear` line: nothing types it "
+                "for you. ONLY if the verdict is SAFE_TO_FORGET is `/clear` requested on the "
+                "next Stop; if the capsule is refused nothing is cleared, you are told why, and "
+                "you keep working. vault/progress.md remains the anchor either way."
             )}
 
         # 3b. Compact dispatch (C4, spec exact-target-continuation.md). The

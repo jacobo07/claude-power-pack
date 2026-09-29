@@ -152,6 +152,34 @@ def main() -> int:
           "a session that never crossed the wall is never asked to clear")
     clear(wd, s)
 
+    # The wall itself. /kclear is the MODEL's work (a skill), not a keystroke: measured
+    # 2026-09-29, a trailing `/kclear` line on a terminal no extension owned was refused and
+    # never ran across three walls, while invoking the skill directly sealed SAFE_TO_FORGET.
+    print("the wall asks the model to seal the capsule itself, and types nothing")
+    s = sid(); clear(wd, s); calls.clear()
+    proj = _TMP / f"proj-{s}"
+    proj.mkdir()
+    (Path(tempfile.gettempdir()) / wd.ORCH_THROTTLE_FLAG.format(session_id=s)).write_text(
+        str(time.time()), encoding="utf-8")
+    os.environ["_TEST_CONTEXT_PCT"] = "90.0"
+    try:
+        out = wd.run({"session_id": s, "cwd": str(proj), "transcript_path": ""}) or {}
+    finally:
+        os.environ.pop("_TEST_CONTEXT_PCT", None)
+    reason = out.get("reason", "")
+    check("V-ROLLACT-WALL-BLOCKS", out.get("decision") == "block" and "CONTEXT THRESHOLD" in reason,
+          f"decision={out.get('decision')} reason={reason[:80]!r}")
+    check("V-ROLLACT-WALL-NO-KCLEAR-KEYSTROKE", not [c for c in calls if c["kind"] == "kclear"],
+          f"dispatched kinds={[c['kind'] for c in calls]}")
+    check("V-ROLLACT-WALL-NAMES-THE-SKILL",
+          "`kclear` skill" in reason and "Do NOT end on a trailing `/kclear` line" in reason,
+          "the model is told to invoke the skill, and told the trailing line does nothing")
+    check("V-ROLLACT-WALL-NO-TRAILING-ASK", "exactly `/kclear`" not in reason,
+          "the old ask for a trailing line is gone")
+    check("V-ROLLACT-WALL-SETS-ASK-FLAG", wd._flag_exists(s, wd.ROLLOVER_ASK_FLAG),
+          "step 2 (the gated /clear) still runs on the next Stop")
+    clear(wd, s)
+
     print(f"ROLLACT_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
