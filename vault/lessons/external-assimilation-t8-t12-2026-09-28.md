@@ -145,6 +145,17 @@ large effect, cannot establish a small one.
 - **Pattern.** Before repairing what a judge refused, run the judge's own query in the tree the judge
   reads, and make the repair there. A green instrument run in another tree is not evidence.
 
+### UKDL candidates from this incident (status = UCR-CIF evidence stage, not promoted)
+
+| id | level | statement | stage |
+|---|---|---|---|
+| HR-CAND-BOUNDED-SILENCE-001 | hard rule | A mission RUNNING with an idle executor and a refusal that waiting cannot clear must become an explicit state (BLOCKED + reason) within a bound; silence is not health. | LOCAL SUCCESS + ADVERSARIAL (2 mutants killed); production transition not yet observed |
+| PR-CAND-ASK-THE-JUDGE-IN-ITS-TREE-001 | process rule | Before repairing what a gate refused, reproduce the refusal with the gate's own query in the tree the gate reads. | OBSERVED x2 (e6275c3 wrong tree; 66c490b right tree, judge OK 0/4) |
+| PR-CAND-TERMINAL-BEFORE-FIXTURE-REPAIR-001 | process rule | Never edit a fixture a live mission's judge reads until that mission is terminal; the judge acts on the half-repaired state. | OBSERVED x1 (m-860 rotated 40 s after the STATE switch) |
+| T-CAND-SYNTHETIC-ROW-READ-AS-ZERO-001 | trap | A host-written `<synthetic>` row carries all-zero usage; taking "the last row with usage" reads it as a measured 0. | LOCAL SUCCESS (red at 0, green after); production recurrence observed 2x on m-d82c7 |
+| T-CAND-TEST-WALL-BELOW-WORK-MARGIN-001 | trap | A context wall set a few points above the fresh-session floor (22 % vs 16.4 %) makes every epoch hit the wall on its first turn: rotations without progress, and same-epoch continuation is unobservable. | OBSERVED x2 epochs (m-860 e1 90 s, e2 2.8 min, 0 commits) |
+| T-CAND-FF-UNLINK-UNDER-LIVE-IMPORT-001 | trap | `merge --ff-only` into a checkout whose modules a scheduler is importing can fail half-way on Windows ("unable to unlink"), leaving files written and HEAD unmoved. | OBSERVED x1 (20:51Z sweep pass vs the c842f23 go-live) |
+
 ## Red team R1 (0 critical, 0 high, 4 medium, 6 low) -- repaired in this session
 
 M1 hand-off packet rooted at a stale `work_dir` (now the transcript's `effective_workdir`,
