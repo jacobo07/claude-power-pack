@@ -107,6 +107,11 @@ Each verdict is read from its phase EVIDENCE; figures are GEX44's, not the lapto
   both arms pass every check in 2/2 -> all three R1 files stay relocation candidates. Owner declined a
   neutral-repo replicate. Relocation is GLOBAL (~/.claude/rules): move one file per reversible step to
   on-demand (B-prime), then re-run `p3_runner.py run-j` for that file's tasks. Awaiting Owner go.
+- MOVE 1 DONE 2026-09-29 (efdb5e0, Owner: "que sea una skill dentro de claude power pack"):
+  instrument-before-claim is now PP skill `skills/instrument-before-claim/` + live copy; rules/ keeps a
+  592 B pointer; backup ~/.claude/backups/rules-20260929-134341. B-prime 4/4 pass, first-call −11k,
+  skill auto-activation 0/4 (REPORT.md "Move 1"). Revert = copy the backup over the pointer.
+  destructive-state-authorization and real-context-reachability NOT moved; awaiting Owner.
 
 ## 3. Active decisions
 - Estimates and observations never mix; every figure names its source.

@@ -95,3 +95,18 @@ name the consequence (deletes, publishes, pages on-call, pauses spend). It says 
 multi-file sessions where the consequence is not written next to the code, and it was measured in this
 repository only (Owner declined a neutral-repo replicate, 2026-09-29). The relocation is global
 (`~/.claude/rules` loads in every repository), so it moves as B-prime: the rule stays loadable on demand.
+
+## Move 1: instrument-before-claim -> PP skill (2026-09-29, commit efdb5e0)
+Rule body moved byte-identical (sha256 55c37732...) to `skills/instrument-before-claim/SKILL.md` in PP,
+live copy `~/.claude/skills/instrument-before-claim/SKILL.md`; `~/.claude/rules/` keeps a 592 B pointer
+(was 45,948 B). Backup `~/.claude/backups/rules-20260929-134341/`. The skill was discovered live (it
+appeared in the skill list of the session that made the move).
+
+B-prime check (`run-jprime --only ibc`, arm P = the prefix as it now is, 2 tasks x 2 reps):
+4/4 valid, 4/4 pass (3/3 and 5/5). first-call context 154,068–154,453, against 165,082–165,580 in arm A
+before the move: **−11.0k to −11.5k tokens per session start.**
+**Skill auto-activation: 0/4.** No run invoked the skill or read its file (tool inputs searched for the
+skill name). The tasks passed without it, as they did in arm B. So the move is measured to save tokens
+without a loss on these tasks; it is NOT measured to deliver the rule when it is needed, because the
+model never asked for it here. Caveat: the runner's `--allowedTools` list does not name `Skill`; a
+Skill call would still have appeared in the transcript as an attempt, and none did.
