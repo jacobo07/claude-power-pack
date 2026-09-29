@@ -195,6 +195,18 @@ def main() -> int:
         check("V-ROLLOVER-NEWEST-BY-CWD", found is not None and found["cwd"] == str(repo), found and found["session_id"])
         check("V-ROLLOVER-OTHER-CWD-IGNORED", ro.newest_capsule(str(tmp), state) is None, "different cwd")
 
+        # 2026-09-29 (ea5c9025): sealed from a subdirectory after a `cd`, resumed from the repo
+        # root. Own state dir so the ordering checks below are untouched.
+        sub_state = tmp / "state_subdir"
+        drifted = json.loads(json.dumps(cap))
+        drifted.update(session_id="subdir-0001", cwd=str(repo / "scripts"))
+        ro.seal(drifted, sub_state)
+        hit = ro.newest_capsule(str(repo), sub_state, exclude="nobody")
+        check("V-ROLLOVER-SUBDIR-SEAL-FOUND-AT-ROOT", hit is not None and hit["session_id"] == "subdir-0001",
+              hit and hit["session_id"])
+        check("V-ROLLOVER-SUBDIR-SEAL-OTHER-DIR-IGNORED", ro.newest_capsule(str(tmp), sub_state) is None,
+              "a directory that is neither the sealed cwd nor the repo root")
+
         # An uncertifiable capsule (no goal, no obligation -- what the shadow seals for a session
         # that wrote no plan) sealed NEWER than a good one. It must be skipped, never claimed.
         NR = "nnnnnnnn-0009"

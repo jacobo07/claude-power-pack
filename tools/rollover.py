@@ -571,6 +571,26 @@ def resumable(capsule: dict) -> list[str]:
     return [f"{item['key']} was never recorded" for item in exam(capsule) if not _norm(item["a"])]
 
 
+def _pathkey(p) -> str:
+    s = str(p or "").strip()
+    return os.path.normcase(os.path.normpath(s)) if s else ""
+
+
+def capsule_is_here(cap: dict, cwd: str) -> bool:
+    """True when this session's cwd is the capsule's cwd OR the repo root it recorded.
+
+    The seal records the SHELL cwd, which drifts: measured 2026-09-29, capsule ea5c9025 was
+    sealed from GEO-audit\\scripts after a `cd`, the successor opened at GEO-audit, and an exact
+    cwd compare hid a capsule sealed 38 s earlier -- no card, no autotype, and /kresume exit 4.
+    The repo root is the stable identity. Not "any ancestor": a capsule from a nested repo must
+    not surface in its parent."""
+    here = _pathkey(cwd)
+    if not here:
+        return False
+    repo = cap.get("repo") if isinstance(cap.get("repo"), dict) else {}
+    return here in {k for k in (_pathkey(cap.get("cwd")), _pathkey(repo.get("root"))) if k}
+
+
 def newest_capsule(cwd: str, state_dir: Optional[Path] = None, exclude: str = "",
                    skipped: Optional[list] = None) -> Optional[dict]:
     d = (state_dir or STATE_DIR) / "capsules"
@@ -584,7 +604,7 @@ def newest_capsule(cwd: str, state_dir: Optional[Path] = None, exclude: str = ""
             continue
         if cap.get("schema") != SCHEMA or cap.get("session_id") == exclude:
             continue
-        if _norm(cap.get("cwd")) != _norm(cwd):
+        if not capsule_is_here(cap, cwd):
             continue
         if resumable(cap):
             if skipped is not None:
