@@ -287,6 +287,47 @@ function hookRolloverResume(cwd, source) {
   }
 }
 
+// The card above is context for a turn that has not started, and nothing starts one:
+// measured 2026-09-29 (fe1c49ea -> e9d6887e), /kclear and /clear were both typed by the
+// daemon, the card reached the successor, and the capsule sat unclaimed until a human
+// asked. So the same condition that shows the card also asks the daemon to TYPE
+// `/kresume` into this new session. The daemon types it only while the transcript has no
+// assistant turn, and only that one command; /kresume itself refuses a second claim.
+// Kill switch CPP_KRESUME_AUTOTYPE=off (the card still shows). Returns the flag path or null.
+const KRESUME_DAEMON_PS1 = path.join(HOME, '.claude', 'hooks', 'auto-compact-sendkeys-daemon.ps1');
+
+function armKresumeAutotype(sessionId, cwd, transcriptPath) {
+  try {
+    const sw = String(process.env.CPP_KRESUME_AUTOTYPE || '').trim().toLowerCase();
+    if (sw === '0' || sw === 'off' || sw === 'false') {
+      return null;
+    }
+    const safeSid = String(sessionId || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 64);
+    if (!safeSid || !cwd) {
+      return null;   // no id = no exact route; the daemon would refuse it anyway
+    }
+    const hooksDir = process.env.AC_DAEMON_DIR || path.join(HOME, '.claude', 'hooks');
+    fs.mkdirSync(hooksDir, { recursive: true });
+    const flag = path.join(hooksDir, 'auto-compact-trigger-' + safeSid + '.flag');
+    const body = {
+      ts: new Date().toISOString(), session_id: sessionId, cwd: cwd,
+      transcript: transcriptPath || '', fresh_line: '/kresume', kind: 'kresume',
+    };
+    const tmp = flag + '.' + process.pid + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(body) + '\n', 'utf8');
+    fs.renameSync(tmp, flag);
+    detachedSpawn('kresume_autotype', 'powershell.exe', [
+      '-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden',
+      '-ExecutionPolicy', 'Bypass', '-File', KRESUME_DAEMON_PS1,
+    ]);
+    note('kresume autotype armed sid=' + safeSid);
+    return flag;
+  } catch (err) {
+    note('kresume autotype failed', err);
+    return null;   // the card is still shown; a human can type it
+  }
+}
+
 function hookWorkStateResume(cwd) {
   try {
     const cwdL = (cwd || '').toLowerCase();
@@ -1048,6 +1089,8 @@ async function main() {
       additionalContext = additionalContext
         ? (rolloverLine + '\n' + additionalContext)
         : rolloverLine;
+      armKresumeAutotype(sessionId, cwd,
+        (typeof payload.transcript_path === 'string') ? payload.transcript_path : '');
     }
 
     // 1a. Recovery epoch. MUST run before hookCpcOsRegister, which writes a fresh
@@ -1159,4 +1202,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { missionNamesSession, hookMissionStart };
+module.exports = { missionNamesSession, hookMissionStart, hookRolloverResume, armKresumeAutotype };

@@ -160,7 +160,7 @@ function Get-Flags {
     foreach ($f in @(Get-ChildItem -LiteralPath $hooksDir -File -ErrorAction SilentlyContinue |
                      Where-Object { $_.Name -like 'auto-compact-trigger*.flag' -or $_.Name -like 'auto-compact-pending*.flag' } |
                      Sort-Object LastWriteTime)) {
-        $leaf = ''; $sid = ''; $tr = ''; $eLine = ''; $ePrefix = ''
+        $leaf = ''; $sid = ''; $tr = ''; $eLine = ''; $ePrefix = ''; $fLine = ''
         try {
             $p = Get-Content -LiteralPath $f.FullName -Raw | ConvertFrom-Json
             if ($p.cwd) { $leaf = Split-Path -Leaf ([string]$p.cwd).TrimEnd('\', '/') }
@@ -168,9 +168,11 @@ function Get-Flags {
             if ($p.transcript) { $tr = [string]$p.transcript }
             if ($p.expect_line) { $eLine = [string]$p.expect_line }
             if ($p.expect_prefix) { $ePrefix = [string]$p.expect_prefix }
+            if ($p.fresh_line) { $fLine = [string]$p.fresh_line }
         } catch {}
         $out += [pscustomobject]@{ file = $f; leaf = $leaf; isTrigger = ($f.Name -like 'auto-compact-trigger*');
-                                   sid = $sid; transcript = $tr; expectLine = $eLine; expectPrefix = $ePrefix }
+                                   sid = $sid; transcript = $tr; expectLine = $eLine; expectPrefix = $ePrefix;
+                                   freshLine = $fLine }
     }
     return $out
 }
@@ -212,7 +214,46 @@ function Get-LastAssistantLine($path) {
 # TYPES it before Enter. Measured 2026-09-18 (session fa6961b6): a bare Enter
 # landed on an empty input box and submitted nothing -- the agent's trailing line
 # lives in the transcript, never in the prompt box, so Enter alone cannot run it.
+# Fresh-session lines (2026-09-29). After a rollover /clear the successor's prompt is
+# empty and no assistant line exists to validate, so the expect-line rule cannot apply.
+# A `fresh_line` flag is typed only while the session has had NO assistant turn: the
+# moment one exists, typing would land inside work somebody started. Only the lines in
+# this allow-list are representable; anything else is refused, never typed.
+$freshAllowed = @('/kresume')
+
+# 'fresh' (file absent, or no assistant row) | 'used' | 'unknown' (unreadable).
+function Get-TranscriptTurnState($path) {
+    if (-not $path) { return 'unknown' }
+    if (-not (Test-Path -LiteralPath $path)) { return 'fresh' }
+    try {
+        $fs = [IO.File]::Open($path, 'Open', 'Read', 'ReadWrite')
+        try {
+            if ($fs.Length -gt 1048576) { return 'used' }
+            $buf = New-Object byte[] ($fs.Length)
+            $n = $fs.Read($buf, 0, $buf.Length)
+        } finally { $fs.Close() }
+        foreach ($l in ([Text.Encoding]::UTF8.GetString($buf, 0, $n) -split "`n")) {
+            if (-not $l.Contains('"assistant"')) { continue }
+            try { $o = $l.Trim() | ConvertFrom-Json } catch { continue }
+            if ($o.type -eq 'assistant') { return 'used' }
+        }
+        return 'fresh'
+    } catch { return 'unknown' }
+}
+
 function Get-ExpectState($fl) {
+    if ($fl.freshLine) {
+        if ($freshAllowed -cnotcontains $fl.freshLine) {
+            return @{ state = 'refuse'; line = ''; why = "fresh_line [$($fl.freshLine)] is not allow-listed" }
+        }
+        $ts = Get-TranscriptTurnState $fl.transcript
+        if ($ts -eq 'fresh') { return @{ state = 'ok'; line = $fl.freshLine } }
+        if ($ts -eq 'used') { return @{ state = 'refuse'; line = ''; why = 'the session already had a turn; not typing into it' } }
+        if (((Get-Date) - $fl.file.LastWriteTime).TotalSeconds -gt $refuseAfter) {
+            return @{ state = 'refuse'; line = ''; why = 'transcript unreadable for the whole wait' }
+        }
+        return @{ state = 'wait'; line = '' }
+    }
     if (-not $fl.transcript -or (-not $fl.expectLine -and -not $fl.expectPrefix)) { return @{ state = 'nocheck'; line = '' } }
     $last = Get-LastAssistantLine $fl.transcript
     if ($null -ne $last) {
@@ -241,9 +282,14 @@ function Write-LedgerRow($sid, $event, $detail) {
     } catch {}
 }
 
-function Refuse-Flag($fl) {
+function Refuse-Flag($fl, $why) {
     $dest = Join-Path $hooksDir ($fl.file.Name -replace '^auto-compact-(trigger|pending)', 'auto-compact-refused')
     try { Move-Item -LiteralPath $fl.file.FullName -Destination $dest -Force -ErrorAction Stop } catch {}
+    if ($fl.freshLine) {
+        Log "REFUSED flag=$($fl.file.Name) fresh_line=[$($fl.freshLine)] -- $why"
+        Write-LedgerRow $fl.sid 'refused' "fresh_line [$($fl.freshLine)] not typed: $why"
+        return
+    }
     $want = if ($fl.expectLine) { $fl.expectLine } else { "$($fl.expectPrefix)..." }
     Log "REFUSED flag=$($fl.file.Name) expected=[$want] -- last assistant line never matched"
     Write-LedgerRow $fl.sid 'refused' "expected [$want]; last assistant line never matched within ${refuseAfter}s"
@@ -487,7 +533,8 @@ try {
                     Refuse-NoExact $fl 'no terminal-inbox provider answered or the session is not resolvable'
                     continue
                 }
-                if ((Get-ExpectState $fl).state -eq 'refuse') { Refuse-Flag $fl }
+                $st = Get-ExpectState $fl
+                if ($st.state -eq 'refuse') { Refuse-Flag $fl $st.why }
             }
             Start-Sleep -Milliseconds $tickMs
             continue
@@ -513,7 +560,7 @@ try {
         $ready = @()
         foreach ($fl in $flags) {
             $st = Get-ExpectState $fl
-            if ($st.state -eq 'refuse') { Refuse-Flag $fl }
+            if ($st.state -eq 'refuse') { Refuse-Flag $fl $st.why }
             elseif ($st.state -ne 'wait') {
                 $fl | Add-Member -NotePropertyName typeLine -NotePropertyValue $st.line -Force
                 $ready += $fl

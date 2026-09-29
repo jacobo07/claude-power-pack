@@ -1,0 +1,306 @@
+"""V-KRA-* gates: after a rollover `/clear`, `/kresume` is typed into the successor.
+
+Measured 2026-09-29 (fe1c49ea -> e9d6887e): /kclear and /clear were both typed by the
+daemon, the SessionStart card reached the successor, and still nobody claimed the
+capsule. A SessionStart card is context for a turn that has not started; nothing
+types into the fresh prompt, so "the successor runs /kresume unprompted" could not
+happen by construction.
+
+The fix has two halves, each pinned here:
+  hub    -- on a `clear` start with an unretired capsule for this cwd, drop a daemon
+            flag for the NEW session carrying fresh_line=/kresume.
+  daemon -- a fresh_line flag is typed only while the session's transcript has no
+            assistant turn; once one exists the request is refused or withdrawn.
+            Only /kresume is representable as a fresh_line.
+
+The daemon runs in DRY-RUN with the terminal inbox and session registry isolated
+(helpers from test_autocompact_per_session). No keystroke reaches a live pane.
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+# The canonical daemon is the one edited and committed; the live copy under ~/.claude/hooks
+# is deployed from it. A mutation drill points this elsewhere.
+os.environ.setdefault("AC_TEST_DAEMON", str(HERE.parent / "hooks" / "auto-compact-sendkeys-daemon.ps1"))
+import test_autocompact_per_session as acps  # noqa: E402
+
+HUB = Path(os.environ.get("KRA_TEST_HUB") or HERE.parent / "hooks" / "session_start_hub.js")
+
+passes = fails = 0
+
+
+def check(gate, cond, ev):
+    global passes, fails
+    if cond:
+        passes += 1
+        print(f"PASS {gate}: {ev}")
+    else:
+        fails += 1
+        print(f"FAIL {gate}: {ev}")
+
+
+def fresh() -> Path:
+    return Path(tempfile.mkdtemp(prefix="kra_"))
+
+
+# ------------------------------------------------------------------ hub half
+def run_hub(home: Path, source: str, sid: str, cwd: str, transcript: str, extra_env=None):
+    """Drive the hub's rollover functions in isolation (require, not the hook main)."""
+    js = (
+        "const h=require(process.argv[1]);"
+        "const line=h.hookRolloverResume(process.argv[3],process.argv[2]);"
+        "const armed=line?h.armKresumeAutotype(process.argv[4],process.argv[3],process.argv[5]):null;"
+        "process.stdout.write(JSON.stringify({line:!!line,armed:armed}));"
+    )
+    env = dict(os.environ)
+    env.update({"USERPROFILE": str(home), "HOME": str(home),
+                "AC_DAEMON_DIR": str(home / ".claude" / "hooks")})
+    env.update(extra_env or {})
+    for k in [k for k, v in env.items() if v is None]:
+        del env[k]
+    r = subprocess.run(["node", "-e", js, str(HUB), source, cwd, sid, transcript],
+                       env=env, capture_output=True, text=True, timeout=60)
+    try:
+        return json.loads(r.stdout or "{}"), r
+    except ValueError:
+        return {}, r
+
+
+def seed_capsule(home: Path, cwd: str, certified=False) -> Path:
+    d = home / ".claude" / "state" / "rollover" / "capsules"
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / "pred-1111.json"
+    p.write_text(json.dumps({"session_id": "pred-1111", "cwd": cwd}), encoding="utf-8")
+    if certified:
+        p.with_suffix(".certified").write_text("x", encoding="utf-8")
+    return p
+
+
+def hub_gates():
+    cwd = r"C:\p\ProjA"
+    flag_name = "auto-compact-trigger-succ-2222.flag"
+
+    home = fresh()
+    seed_capsule(home, cwd)
+    out, r = run_hub(home, "clear", "succ-2222", cwd, r"C:\t\succ.jsonl")
+    if not out:
+        print(f"HARNESS-FAILED: hub did not answer rc={r.returncode} err={r.stderr[-300:]!r}")
+        sys.exit(2)
+    flag = home / ".claude" / "hooks" / flag_name
+    body = json.loads(flag.read_text(encoding="utf-8")) if flag.exists() else {}
+    check("V-KRA-HUB-ARMS-ON-CLEAR",
+          out.get("line") and body.get("fresh_line") == "/kresume"
+          and body.get("session_id") == "succ-2222" and body.get("transcript") == r"C:\t\succ.jsonl"
+          and body.get("cwd") == cwd,
+          f"out={out} flag={body}")
+
+    # Controls: every case in which the card is NOT shown must also not arm.
+    home = fresh()
+    seed_capsule(home, cwd)
+    out, _ = run_hub(home, "startup", "succ-2222", cwd, "t")
+    check("V-KRA-HUB-NOT-ON-STARTUP",
+          not out.get("line") and not (home / ".claude" / "hooks" / flag_name).exists(), f"out={out}")
+
+    home = fresh()
+    seed_capsule(home, cwd, certified=True)
+    out, _ = run_hub(home, "clear", "succ-2222", cwd, "t")
+    check("V-KRA-HUB-NOT-WHEN-RETIRED",
+          not out.get("line") and not (home / ".claude" / "hooks" / flag_name).exists(), f"out={out}")
+
+    home = fresh()
+    seed_capsule(home, r"C:\p\OtherRepo")
+    out, _ = run_hub(home, "clear", "succ-2222", cwd, "t")
+    check("V-KRA-HUB-NOT-OTHER-REPO",
+          not out.get("line") and not (home / ".claude" / "hooks" / flag_name).exists(), f"out={out}")
+
+    # Kill switch: the card still shows (a human can still type it), nothing is typed.
+    home = fresh()
+    seed_capsule(home, cwd)
+    out, _ = run_hub(home, "clear", "succ-2222", cwd, "t", extra_env={"CPP_KRESUME_AUTOTYPE": "off"})
+    check("V-KRA-HUB-KILL-SWITCH",
+          out.get("line") and not out.get("armed")
+          and not (home / ".claude" / "hooks" / flag_name).exists(), f"out={out}")
+
+    # STATIC, and labelled so: the gates above call the function directly, so deleting
+    # the call in main() would leave them green. Driving main() end to end would fire
+    # every SessionStart side effect, so this reads the source instead: the arm call must
+    # sit inside the block that shows the card, and must receive the payload transcript.
+    src = HUB.read_text(encoding="utf-8")
+    i = src.find("if (rolloverLine) {")
+    block = src[i:src.find("\n    }", i)] if i >= 0 else ""
+    check("V-KRA-HUB-WIRED-IN-MAIN (static)",
+          "armKresumeAutotype(sessionId, cwd" in block and "payload.transcript_path" in block,
+          f"block={block[:200]!r}")
+
+    # A session id that could escape the hooks dir is sanitised, never followed.
+    home = fresh()
+    seed_capsule(home, cwd)
+    out, _ = run_hub(home, "clear", "..\\..\\evil", cwd, "t")
+    names = sorted(p.name for p in (home / ".claude" / "hooks").glob("*.flag"))
+    check("V-KRA-HUB-SID-SANITISED", names == ["auto-compact-trigger-evil.flag"], f"names={names}")
+
+
+# --------------------------------------------------------------- daemon half
+def transcript(d: Path, rows) -> Path:
+    t = d / "t.jsonl"
+    t.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    return t
+
+
+FRESH_ROWS = [{"type": "custom-title", "customTitle": "x"},
+              {"type": "user", "message": {"role": "user", "content": "<command-name>/clear</command-name>"}}]
+USED_ROWS = FRESH_ROWS + [{"type": "assistant", "message": {"role": "assistant",
+                                                             "content": [{"type": "text", "text": "hi"}]}}]
+
+
+def kresume_case(ft, me, rows=FRESH_ROWS, line="/kresume", missing_transcript=False):
+    d = fresh()
+    (d / "sessions").mkdir()
+    (d / "sessions" / f"{me}.json").write_text(json.dumps(
+        {"pid": me, "sessionId": "sx", "procStart": ft, "status": "idle"}), encoding="utf-8")
+    tr = d / "never-written.jsonl" if missing_transcript else transcript(d, rows)
+    (d / "auto-compact-trigger-sx.flag").write_text(json.dumps(
+        {"session_id": "sx", "cwd": r"C:\p\ProjA", "transcript": str(tr), "fresh_line": line}) + "\n",
+        encoding="utf-8")
+    return d, tr
+
+
+def daemon_gates():
+    me = os.getpid()
+    ft = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-Command",
+         f"(Get-CimInstance Win32_Process -Filter 'ProcessId={me}').CreationDate.ToFileTimeUtc()"],
+        capture_output=True, text=True, timeout=60).stdout.strip()
+    default = {"CPP_LEGACY_FOREGROUND_SENDKEYS": None}      # production mode: exact or nothing
+    not_cursor = (acps.fg(name="brave", title="x"), ["ProjA - Cursor"])
+
+    d, _ = kresume_case(ft, me)
+    run, seen = _fake(d, "sent")
+    sent, text, started, rc = acps.run_daemon(d, *not_cursor, ttl=6, script=run, extra_env=default)
+    if not started:
+        print(f"HARNESS-FAILED: daemon did not start rc={rc} log={text!r}")
+        sys.exit(2)
+    req = seen.get("req") or {}
+    check("V-KRA-D-FRESH-TYPES-KRESUME",
+          req.get("text") == "/kresume" and "SENT via=extension" in text and acps.remaining(d) == [],
+          f"req={req} left={acps.remaining(d)} log={text[-240:]!r}")
+
+    d, _ = kresume_case(ft, me, missing_transcript=True)
+    run, seen = _fake(d, "sent")
+    sent, text, _, _ = acps.run_daemon(d, *not_cursor, ttl=6, script=run, extra_env=default)
+    check("V-KRA-D-UNWRITTEN-TRANSCRIPT-IS-FRESH",
+          (seen.get("req") or {}).get("text") == "/kresume" and "SENT via=extension" in text,
+          f"req={seen.get('req')} log={text[-200:]!r}")
+
+    # Negative pole: the session already had a turn -> never typed, refused and ledgered.
+    d, _ = kresume_case(ft, me, rows=USED_ROWS)
+    run, seen = _fake(d, "sent")
+    sent, text, _, _ = acps.run_daemon(d, *not_cursor, ttl=5, script=run, extra_env=default)
+    led = d / "gsd-autorun-ledger.jsonl"
+    check("V-KRA-D-USED-SESSION-REFUSED",
+          "REQUESTED" not in text and not seen.get("req")
+          and acps.remaining(d) == ["auto-compact-refused-sx.flag"]
+          and led.exists() and "already had a turn" in led.read_text(encoding="utf-8"),
+          f"left={acps.remaining(d)} log={text[-240:]!r}")
+
+    # Only /kresume is representable: a fresh_line of /clear is refused, never requested.
+    d, _ = kresume_case(ft, me, line="/clear")
+    run, seen = _fake(d, "sent")
+    sent, text, _, _ = acps.run_daemon(d, *not_cursor, ttl=5, script=run, extra_env=default)
+    check("V-KRA-D-ALLOWLIST",
+          "REQUESTED" not in text and not seen.get("req")
+          and acps.remaining(d) == ["auto-compact-refused-sx.flag"],
+          f"left={acps.remaining(d)} log={text[-240:]!r}")
+
+    # The owner defers (session busy); the user starts a turn meanwhile -> withdrawn.
+    d, tr = kresume_case(ft, me)
+
+    def defer_then_user_turn():
+        req_p, ack_p = d / "inbox" / "sx.req.json", d / "inbox" / "sx.ack.json"
+        for _ in range(150):
+            if req_p.exists():
+                try:
+                    req = json.loads(req_p.read_text(encoding="utf-8"))
+                    break
+                except ValueError:
+                    pass
+            time.sleep(0.1)
+        else:
+            return
+        ack_p.write_text(json.dumps({"id": req["id"], "session_id": "sx", "status": "deferred",
+                                     "reason": "status-busy"}), encoding="utf-8")
+        time.sleep(2.0)
+        transcript(d, USED_ROWS)
+
+    sent, text, _, _ = acps.run_daemon(d, *not_cursor, ttl=10, script=defer_then_user_turn,
+                                       extra_env=dict(default, AC_INBOX_TTL="60000"))
+    check("V-KRA-D-WITHDRAWN-WHEN-USER-STARTS",
+          "WITHDRAWN" in text and "SENT via=extension" not in text
+          and not (d / "inbox" / "sx.req.json").exists(),
+          f"log={text[-240:]!r}")
+
+    # Control for the gate above: same deferral, transcript untouched -> still pending.
+    d, _ = kresume_case(ft, me)
+
+    def defer_only():
+        req_p, ack_p = d / "inbox" / "sx.req.json", d / "inbox" / "sx.ack.json"
+        for _ in range(150):
+            if req_p.exists():
+                try:
+                    req = json.loads(req_p.read_text(encoding="utf-8"))
+                    break
+                except ValueError:
+                    pass
+            time.sleep(0.1)
+        else:
+            return
+        ack_p.write_text(json.dumps({"id": req["id"], "session_id": "sx", "status": "deferred",
+                                     "reason": "status-busy"}), encoding="utf-8")
+
+    sent, text, _, _ = acps.run_daemon(d, *not_cursor, ttl=8, script=defer_only,
+                                       extra_env=dict(default, AC_INBOX_TTL="60000"))
+    check("V-KRA-D-NO-WITHDRAW-WHILE-FRESH",
+          "WITHDRAWN" not in text and "deferred by extension" in text
+          and acps.remaining(d) == ["auto-compact-trigger-sx.flag"],
+          f"left={acps.remaining(d)} log={text[-240:]!r}")
+
+
+def _fake(d: Path, status: str, reason: str = ""):
+    seen = {}
+
+    def run():
+        req_p, ack_p = d / "inbox" / "sx.req.json", d / "inbox" / "sx.ack.json"
+        for _ in range(150):
+            if req_p.exists():
+                try:
+                    req = json.loads(req_p.read_text(encoding="utf-8"))
+                except ValueError:
+                    time.sleep(0.1)
+                    continue
+                seen["req"] = req
+                ack_p.write_text(json.dumps({"id": req["id"], "session_id": "sx", "status": status,
+                                             "reason": reason, "terminal": "t1"}), encoding="utf-8")
+                return
+            time.sleep(0.1)
+    return run, seen
+
+
+def main() -> int:
+    hub_gates()
+    daemon_gates()
+    total = passes + fails
+    print(f"KRA_PASS={passes}/{total}  threshold={total}/{total}")
+    return 0 if fails == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
