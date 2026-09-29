@@ -234,7 +234,9 @@ const WORK_STATE_PENDING_SHOWN = 5;
 // silence here is a session that quietly starts from nothing.
 const ROLLOVER_CAPSULE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
-function hookRolloverResume(cwd, source) {
+// The newest unretired capsule sealed for this cwd, or null. Newest, because that is the
+// one `/kresume` claims; the card only needs one to exist, the focus needs the right one.
+function findRolloverCapsule(cwd, source) {
   try {
     if (source !== 'clear') {
       return null;   // a fresh start or a compaction is not a rollover crossing
@@ -254,11 +256,13 @@ function hookRolloverResume(cwd, source) {
     } catch (readDirErr) {
       return null;   // nothing has ever been sealed on this host
     }
+    let best = null;
+    let bestMtime = -1;
     for (const f of files) {
       const fp = path.join(dir, f);
       try {
         const st = fs.statSync(fp);
-        if (Date.now() - st.mtimeMs > ROLLOVER_CAPSULE_MAX_AGE_MS) {
+        if (Date.now() - st.mtimeMs > ROLLOVER_CAPSULE_MAX_AGE_MS || st.mtimeMs <= bestMtime) {
           continue;
         }
         if (fs.existsSync(fp.replace(/\.json$/, '.certified'))) {
@@ -272,18 +276,48 @@ function hookRolloverResume(cwd, source) {
         if ((rec.cwd || '').toLowerCase() !== cwdL) {
           continue;  // another repo's crossing -- leave it for its own successor
         }
-        return 'ROLLOVER — the session that was working here crossed the context wall and '
-          + 'sealed a capsule before clearing. Run `/kresume` NOW, before anything else: it '
-          + 'claims the capsule (one successor only), refreshes the repo facts, and prints '
-          + 'the goal, the open obligations and a short exam. Do not reconstruct the task '
-          + 'from this message or from the repo — the capsule is the record.';
+        best = rec;
+        bestMtime = st.mtimeMs;
       } catch (entryErr) {
         continue;
       }
     }
-    return null;
+    return best;
   } catch (err) {
     return null;   // fail-open: a hub that throws costs the successor its whole start
+  }
+}
+
+function hookRolloverResume(cwd, source) {
+  if (!findRolloverCapsule(cwd, source)) {
+    return null;
+  }
+  return 'ROLLOVER — the session that was working here crossed the context wall and '
+    + 'sealed a capsule before clearing. Run `/kresume` NOW, before anything else: it '
+    + 'claims the capsule (one successor only), refreshes the repo facts, and prints '
+    + 'the goal, the open obligations and a short exam. Do not reconstruct the task '
+    + 'from this message or from the repo — the capsule is the record.';
+}
+
+// The first open obligation, as ONE clean line of at most 200 chars, or ''. Owner
+// 2026-09-29: type `/kresume focus on <it>` like /compact, so the successor's first
+// prompt names the work. It is typed into a terminal, so a newline would submit early
+// and put the rest in a second prompt: control characters become spaces. The daemon
+// re-checks the same shape and refuses anything else; this is not the only guard.
+const KRESUME_FOCUS_MAX = 200;
+
+function rolloverFocus(cwd, source) {
+  try {
+    const rec = findRolloverCapsule(cwd, source);
+    const first = rec && Array.isArray(rec.obligations) ? rec.obligations[0] : null;
+    const text = (first && typeof first === 'object') ? first.title : first;
+    if (typeof text !== 'string') {
+      return '';
+    }
+    return text.replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, ' ')
+      .replace(/\s+/g, ' ').trim().slice(0, KRESUME_FOCUS_MAX).trim();
+  } catch (err) {
+    return '';   // no focus is a bare /kresume, which still continues from the capsule
   }
 }
 
@@ -296,7 +330,7 @@ function hookRolloverResume(cwd, source) {
 // Kill switch CPP_KRESUME_AUTOTYPE=off (the card still shows). Returns the flag path or null.
 const KRESUME_DAEMON_PS1 = path.join(HOME, '.claude', 'hooks', 'auto-compact-sendkeys-daemon.ps1');
 
-function armKresumeAutotype(sessionId, cwd, transcriptPath) {
+function armKresumeAutotype(sessionId, cwd, transcriptPath, focus) {
   try {
     const sw = String(process.env.CPP_KRESUME_AUTOTYPE || '').trim().toLowerCase();
     if (sw === '0' || sw === 'off' || sw === 'false') {
@@ -311,7 +345,9 @@ function armKresumeAutotype(sessionId, cwd, transcriptPath) {
     const flag = path.join(hooksDir, 'auto-compact-trigger-' + safeSid + '.flag');
     const body = {
       ts: new Date().toISOString(), session_id: sessionId, cwd: cwd,
-      transcript: transcriptPath || '', fresh_line: '/kresume', kind: 'kresume',
+      transcript: transcriptPath || '',
+      fresh_line: focus ? '/kresume focus on ' + focus : '/kresume',
+      kind: 'kresume',
     };
     const tmp = flag + '.' + process.pid + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(body) + '\n', 'utf8');
@@ -1090,7 +1126,8 @@ async function main() {
         ? (rolloverLine + '\n' + additionalContext)
         : rolloverLine;
       armKresumeAutotype(sessionId, cwd,
-        (typeof payload.transcript_path === 'string') ? payload.transcript_path : '');
+        (typeof payload.transcript_path === 'string') ? payload.transcript_path : '',
+        rolloverFocus(cwd, (typeof payload.source === 'string') ? payload.source : ''));
     }
 
     // 1a. Recovery epoch. MUST run before hookCpcOsRegister, which writes a fresh
@@ -1202,4 +1239,5 @@ if (require.main === module) {
   });
 }
 
-module.exports = { missionNamesSession, hookMissionStart, hookRolloverResume, armKresumeAutotype };
+module.exports = { missionNamesSession, hookMissionStart, hookRolloverResume, armKresumeAutotype,
+  rolloverFocus };

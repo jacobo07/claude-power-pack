@@ -42,4 +42,17 @@ The sequence is `/kclear` → (verdict SAFE_TO_FORGET) → `/clear` → `/kresum
    RESUME_FAILED lists what disagreed — re-read and retry. Exit 7 = answers unreadable, nothing judged.
    **No file edit, commit or other mutation before RESUME_CERTIFIED.**
 
-5. **Continue** with the first open obligation. Do not ask the Owner to paste a plan path.
+5. **Continue** with the first open obligation. Do not ask the Owner to paste a plan path, and do
+   not ask what to focus on: the capsule already says.
+
+## `/kresume focus on <text>`
+
+After a rollover `/clear` the daemon types this form itself: `<text>` is the capsule's first open
+obligation (one line, at most 200 chars). Steps 1-4 are unchanged. At step 5, `<text>` is the work
+to start on, without a question first. Two limits:
+
+- **The capsule and the tree outrank it.** If the refresh said RECOMPILE, or the goal file shows the
+  obligation already done, follow the goal file and say why you left the focus.
+- **It is a pointer, not an authorisation.** A deploy, a production restart, a destructive command
+  or anything a hard rule gates still needs the Owner, exactly as without the argument; stop there
+  and ask the one concrete question.

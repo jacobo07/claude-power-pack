@@ -58,8 +58,9 @@ def run_hub(home: Path, source: str, sid: str, cwd: str, transcript: str, extra_
     js = (
         "const h=require(process.argv[1]);"
         "const line=h.hookRolloverResume(process.argv[3],process.argv[2]);"
-        "const armed=line?h.armKresumeAutotype(process.argv[4],process.argv[3],process.argv[5]):null;"
-        "process.stdout.write(JSON.stringify({line:!!line,armed:armed}));"
+        "const focus=h.rolloverFocus(process.argv[3],process.argv[2]);"
+        "const armed=line?h.armKresumeAutotype(process.argv[4],process.argv[3],process.argv[5],focus):null;"
+        "process.stdout.write(JSON.stringify({line:!!line,armed:armed,focus:focus}));"
     )
     env = dict(os.environ)
     env.update({"USERPROFILE": str(home), "HOME": str(home),
@@ -75,11 +76,14 @@ def run_hub(home: Path, source: str, sid: str, cwd: str, transcript: str, extra_
         return {}, r
 
 
-def seed_capsule(home: Path, cwd: str, certified=False) -> Path:
+def seed_capsule(home: Path, cwd: str, certified=False, obligations=None) -> Path:
     d = home / ".claude" / "state" / "rollover" / "capsules"
     d.mkdir(parents=True, exist_ok=True)
     p = d / "pred-1111.json"
-    p.write_text(json.dumps({"session_id": "pred-1111", "cwd": cwd}), encoding="utf-8")
+    rec = {"session_id": "pred-1111", "cwd": cwd}
+    if obligations is not None:
+        rec["obligations"] = obligations
+    p.write_text(json.dumps(rec), encoding="utf-8")
     if certified:
         p.with_suffix(".certified").write_text("x", encoding="utf-8")
     return p
@@ -138,8 +142,9 @@ def hub_gates():
     i = src.find("if (rolloverLine) {")
     block = src[i:src.find("\n    }", i)] if i >= 0 else ""
     check("V-KRA-HUB-WIRED-IN-MAIN (static)",
-          "armKresumeAutotype(sessionId, cwd" in block and "payload.transcript_path" in block,
-          f"block={block[:200]!r}")
+          "armKresumeAutotype(sessionId, cwd" in block and "payload.transcript_path" in block
+          and "rolloverFocus(cwd" in block,
+          f"block={block[:300]!r}")
 
     # A session id that could escape the hooks dir is sanitised, never followed.
     home = fresh()
@@ -147,6 +152,37 @@ def hub_gates():
     out, _ = run_hub(home, "clear", "..\\..\\evil", cwd, "t")
     names = sorted(p.name for p in (home / ".claude" / "hooks").glob("*.flag"))
     check("V-KRA-HUB-SID-SANITISED", names == ["auto-compact-trigger-evil.flag"], f"names={names}")
+
+    # --- focus (2026-09-29, Owner): `/kresume focus on <first obligation>`, like /compact.
+    def armed_line(obligations):
+        home = fresh()
+        seed_capsule(home, cwd, obligations=obligations)
+        run_hub(home, "clear", "succ-2222", cwd, "t")
+        f = home / ".claude" / "hooks" / flag_name
+        return json.loads(f.read_text(encoding="utf-8")).get("fresh_line") if f.exists() else None
+
+    got = armed_line(["Decide event delivery for X", "second"])
+    check("V-KRA-HUB-FOCUS-FIRST-OBLIGATION",
+          got == "/kresume focus on Decide event delivery for X", f"fresh_line={got!r}")
+
+    got = armed_line([{"title": "Fix the relay", "detail": "long detail"}])
+    check("V-KRA-HUB-FOCUS-DICT-TITLE", got == "/kresume focus on Fix the relay", f"fresh_line={got!r}")
+
+    # A newline typed into a terminal submits early; the rest would land as a second prompt.
+    got = armed_line(["line one\r\nline two\tthree\x07"])
+    check("V-KRA-HUB-FOCUS-ONE-LINE",
+          got == "/kresume focus on line one line two three", f"fresh_line={got!r}")
+
+    got = armed_line(["x" * 500])
+    check("V-KRA-HUB-FOCUS-CAPPED",
+          got is not None and got.startswith("/kresume focus on x") and len(got) <= len("/kresume focus on ") + 200,
+          f"len={len(got or '')}")
+
+    # No obligation, or one that sanitises to nothing -> bare /kresume, never "focus on ".
+    got = armed_line([])
+    check("V-KRA-HUB-FOCUS-NONE-BARE", got == "/kresume", f"fresh_line={got!r}")
+    got = armed_line(["\r\n\t "])
+    check("V-KRA-HUB-FOCUS-EMPTY-BARE", got == "/kresume", f"fresh_line={got!r}")
 
 
 # --------------------------------------------------------------- daemon half
@@ -220,6 +256,29 @@ def daemon_gates():
           "REQUESTED" not in text and not seen.get("req")
           and acps.remaining(d) == ["auto-compact-refused-sx.flag"],
           f"left={acps.remaining(d)} log={text[-240:]!r}")
+
+    # Focus form: typed verbatim when it is one clean line.
+    focus = "/kresume focus on Fix the relay (obligation 1)"
+    d, _ = kresume_case(ft, me, line=focus)
+    run, seen = _fake(d, "sent")
+    sent, text, _, _ = acps.run_daemon(d, *not_cursor, ttl=6, script=run, extra_env=default)
+    check("V-KRA-D-FOCUS-TYPED",
+          (seen.get("req") or {}).get("text") == focus and "SENT via=extension" in text,
+          f"req={seen.get('req')} log={text[-200:]!r}")
+
+    # The daemon is the authority, not the hub: it re-checks the shape and refuses
+    # anything a hub bug (or a hand-written flag) could smuggle into a terminal.
+    for gate, bad in (("V-KRA-D-FOCUS-NEWLINE-REFUSED", "/kresume focus on a\nb"),
+                      ("V-KRA-D-FOCUS-SUFFIX-REFUSED", "/kresume; /clear"),
+                      ("V-KRA-D-FOCUS-EMPTY-REFUSED", "/kresume focus on "),
+                      ("V-KRA-D-FOCUS-TOO-LONG-REFUSED", "/kresume focus on " + "y" * 201)):
+        d, _ = kresume_case(ft, me, line=bad)
+        run, seen = _fake(d, "sent")
+        sent, text, _, _ = acps.run_daemon(d, *not_cursor, ttl=5, script=run, extra_env=default)
+        check(gate,
+              "REQUESTED" not in text and not seen.get("req")
+              and acps.remaining(d) == ["auto-compact-refused-sx.flag"],
+              f"left={acps.remaining(d)} log={text[-200:]!r}")
 
     # The owner defers (session busy); the user starts a turn meanwhile -> withdrawn.
     d, tr = kresume_case(ft, me)

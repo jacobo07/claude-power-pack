@@ -217,9 +217,13 @@ function Get-LastAssistantLine($path) {
 # Fresh-session lines (2026-09-29). After a rollover /clear the successor's prompt is
 # empty and no assistant line exists to validate, so the expect-line rule cannot apply.
 # A `fresh_line` flag is typed only while the session has had NO assistant turn: the
-# moment one exists, typing would land inside work somebody started. Only the lines in
-# this allow-list are representable; anything else is refused, never typed.
-$freshAllowed = @('/kresume')
+# moment one exists, typing would land inside work somebody started. Only /kresume is
+# representable, bare or as `/kresume focus on <one line>` (Owner 2026-09-29, like
+# /compact). The focus text comes from a capsule and is typed into a terminal, so this
+# shape check is the authority, not the hub: no control or line-separator character
+# (a newline would submit early and put the rest in a second prompt), first char not a
+# space, at most 200 chars. \z, never $: in .NET `$` also matches before a final "\n".
+$freshPattern = '^/kresume( focus on [^\s\u0000-\u001f\u007f-\u009f\u2028\u2029][^\u0000-\u001f\u007f-\u009f\u2028\u2029]{0,199})?\z'
 
 # 'fresh' (file absent, or no assistant row) | 'used' | 'unknown' (unreadable).
 function Get-TranscriptTurnState($path) {
@@ -243,8 +247,8 @@ function Get-TranscriptTurnState($path) {
 
 function Get-ExpectState($fl) {
     if ($fl.freshLine) {
-        if ($freshAllowed -cnotcontains $fl.freshLine) {
-            return @{ state = 'refuse'; line = ''; why = "fresh_line [$($fl.freshLine)] is not allow-listed" }
+        if ($fl.freshLine -cnotmatch $freshPattern) {
+            return @{ state = 'refuse'; line = ''; why = "fresh_line [$($fl.freshLine)] is not an allowed /kresume form" }
         }
         $ts = Get-TranscriptTurnState $fl.transcript
         if ($ts -eq 'fresh') { return @{ state = 'ok'; line = $fl.freshLine } }
