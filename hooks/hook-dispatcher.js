@@ -1179,10 +1179,17 @@ const ROOT_ALLOWED = new Set([
   'systemMessage', 'terminalSequence', 'permissionDecision',
   'hookSpecificOutput',
 ]);
-// Only these 4 events accept hookSpecificOutput.additionalContext.
-// Stop, SessionStart, SessionEnd do NOT — text MUST go to systemMessage.
+// These events (plus PreToolUse, handled separately) accept
+// hookSpecificOutput.additionalContext. Stop and SessionEnd do NOT -- their text
+// must go to systemMessage.
+// SessionStart DOES (2026-09-29): it was listed as not accepting it, so every
+// session_start_hub card -- the /kresume rollover line, mission card, work state --
+// was stranded into systemMessage (UI-only) and never reached the model. Found when
+// an automatic /clear crossing landed in a fresh session that was never told to
+// run /kresume. Positive control: plugin SessionStart hooks inject through this
+// exact field and do reach the model.
 const EVENTS_HSO_ADDITIONAL_CONTEXT = new Set([
-  'UserPromptSubmit', 'PostToolUse', 'PostToolBatch',
+  'UserPromptSubmit', 'PostToolUse', 'PostToolBatch', 'SessionStart',
 ]);
 
 function familyOf(eventName) {
