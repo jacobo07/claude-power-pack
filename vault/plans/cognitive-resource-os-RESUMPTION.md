@@ -103,6 +103,10 @@ Each verdict is read from its phase EVIDENCE; figures are GEX44's, not the lapto
 - CRO-01 re-run on GEX44 PASS (section 5 of phase 01 EVIDENCE, commit 7a7b786).
 - Next: Owner go per move; one R1 file per commit to on-demand loading, re-run its domain tasks, ideally
   after adding judgement tasks that have no pre-existing test.
+- Judgement set DONE 2026-09-29 (ADDENDUM-J, REPORT.md section J): 6 hidden-grader tasks, 24/24 valid,
+  both arms pass every check in 2/2 -> all three R1 files stay relocation candidates. Owner declined a
+  neutral-repo replicate. Relocation is GLOBAL (~/.claude/rules): move one file per reversible step to
+  on-demand (B-prime), then re-run `p3_runner.py run-j` for that file's tasks. Awaiting Owner go.
 
 ## 3. Active decisions
 - Estimates and observations never mix; every figure names its source.
