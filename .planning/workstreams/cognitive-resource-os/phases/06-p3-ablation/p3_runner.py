@@ -305,15 +305,22 @@ def cmd_validate() -> int:
     return 1 if bad else 0
 
 
-def cmd_run(reps: int, judgement: bool = False) -> int:
+def cmd_run(reps: int, judgement: bool = False, only: str = "", prime: bool = False) -> int:
+    """prime: B-prime -- ONE arm "P" = the prefix as it now is (moved rule absent, its skill loadable),
+    no claudeMdExcludes, results in their own file. `only` filters task ids by substring."""
     tasks, results, runner = (jtasks(), JRESULTS, one_run_j) if judgement else (TASKS, RESULTS, one_run)
+    if prime:
+        results = HERE / f"results-jprime-{only or 'all'}.jsonl"
+    tasks = [t for t in tasks if only in t["id"]]
+    if not tasks:
+        raise SystemExit(f"no task id contains {only!r}")
     base = jbase() if judgement else base_commit()
     RUNS.mkdir(parents=True, exist_ok=True)
     done = done_ids(results)
     attempts: dict = {}
     for rep in range(1, reps + 1):
         for i, t in enumerate(tasks):
-            order = ("A", "B") if (i + rep) % 2 == 0 else ("B", "A")
+            order = ("P",) if prime else ("A", "B") if (i + rep) % 2 == 0 else ("B", "A")
             for arm in order:
                 rid = f"{t['id']}-{arm}-r{rep}"
                 while rid not in done and attempts.get(rid, 0) < 3:  # 1 run + max 2 replacements
@@ -344,4 +351,7 @@ if __name__ == "__main__":
         raise SystemExit(cmd_validate_j())
     if a[:1] == ["run-j"]:
         raise SystemExit(cmd_run(int(a[a.index("--reps") + 1]) if "--reps" in a else 2, judgement=True))
+    if a[:1] == ["run-jprime"]:  # run-jprime --only ibc [--reps 2]
+        raise SystemExit(cmd_run(int(a[a.index("--reps") + 1]) if "--reps" in a else 2, judgement=True,
+                                 only=a[a.index("--only") + 1] if "--only" in a else "", prime=True))
     raise SystemExit(__doc__)
