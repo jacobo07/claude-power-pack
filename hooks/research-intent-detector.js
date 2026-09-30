@@ -23,9 +23,15 @@
  *   - Registration is the one-shot `register-deep-research` consolidator
  *     in settings_merger.py.
  *
- * Opt-out: CLAUDEPP_DEEPRESEARCH_DISABLE=1 in env -> the hook still
- * fires but the spawn is skipped, with a single line written to the
- * auto-spawned log so the Owner sees the would-have-fired pattern.
+ * OFF BY DEFAULT (Owner, 2026-09-30). Automatic research is opt-in:
+ * CLAUDEPP_DEEPRESEARCH_AUTO=1 turns it on. Measured over 227 reports
+ * (2026-05-24..09-30): 155 empty, the rest mostly triggered by machine
+ * text, and zero references to any report anywhere in the repo. Manual
+ * runs (/cpp-deep-research) do not pass through this hook and still work.
+ *
+ * Kill switch: CLAUDEPP_DEEPRESEARCH_DISABLE=1 also stops manual runs
+ * (deep_research.py refuses); with it set, an opted-in hook logs a
+ * skipped-by-env line instead of spawning.
  *
  * Safety:
  *   - Fail-OPEN: any exception writes a diagnostic to stderr and exits 0.
@@ -279,6 +285,12 @@ function main() {
   // Fix: the python child sets CLAUDEPP_DEEPRESEARCH_RUNNING=1 in the
   // claude.exe subprocess env. We check it FIRST and exit silently.
   if (process.env.CLAUDEPP_DEEPRESEARCH_RUNNING === '1') {
+    process.exit(0);
+  }
+
+  // Opt-in (see header): without CLAUDEPP_DEEPRESEARCH_AUTO=1 nothing is
+  // read, nothing is spawned, nothing is logged.
+  if (process.env.CLAUDEPP_DEEPRESEARCH_AUTO !== '1') {
     process.exit(0);
   }
 

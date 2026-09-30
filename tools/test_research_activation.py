@@ -83,11 +83,14 @@ def hook_cases():
                 return 0
             return sum(1 for ln in log.read_text().splitlines() if '"spawned"' in ln)
 
-        def case(gate, sid, entries, expect):
+        def case(gate, sid, entries, expect, auto=True):
             (proj / f"{sid}.jsonl").write_text("\n".join(json.dumps(e) for e in entries) + "\n")
             env = dict(os.environ, USERPROFILE=str(home), HOME=str(home))
             env.pop("CLAUDEPP_DEEPRESEARCH_RUNNING", None)
             env.pop("CLAUDEPP_DEEPRESEARCH_DISABLE", None)
+            env.pop("CLAUDEPP_DEEPRESEARCH_AUTO", None)
+            if auto:
+                env["CLAUDEPP_DEEPRESEARCH_AUTO"] = "1"
             before = spawns()
             r = subprocess.run(["node", str(HOOK)], input=json.dumps({"session_id": sid}),
                                capture_output=True, text=True, env=env, timeout=30)
@@ -96,6 +99,9 @@ def hook_cases():
             check(gate, r.returncode == 0 and delta == expect,
                   f"rc={r.returncode} delta={delta} expected={expect}")
 
+        # Automatic research is opt-in (Owner, 2026-09-30); the same prompt
+        # spawns in the next case once opted in, so this cannot pass vacuously.
+        case("V-RID-OFF-BY-DEFAULT", "s0", [human(LONG)], 0, auto=False)
         case("V-RID-HUMAN-RESEARCH-SPAWNS", "s1", [human(LONG)], 1)  # control
         case("V-RID-SAME-PROMPT-NOT-RESPAWNED", "s2", [human(LONG)], 0)
         case("V-RID-SKILL-EXPANSION-IGNORED", "s3",
@@ -146,8 +152,8 @@ def main():
     hook_cases()
     model_cases()
     total = passes + fails
-    print(f"RESEARCH_ACTIVATION_PASS={passes}/{total}  threshold=10/10")
-    return 0 if fails == 0 and total == 10 else 1
+    print(f"RESEARCH_ACTIVATION_PASS={passes}/{total}  threshold=11/11")
+    return 0 if fails == 0 and total == 11 else 1
 
 
 if __name__ == "__main__":
