@@ -4,7 +4,7 @@ Mission-scoped entries. Kept out of `ukdl-universal.md` because that file's tail
 appended by an automated writer (CEPS capture); a hand edit there is a same-file
 collision. Plan: `vault/plans/cognitive-resource-os-2026-09-27.md`.
 
-GEX44 run 2026-09-28 (branch `mission/cognitive-resource-os-gex44`): CRO-01 BLOCKED, CRO-02 MEASURED, CRO-03 PASS, CRO-04 UNJUDGED. Per-phase evidence paths and commits are in RESUMPTION section 2d; the entries below naming GEX44 come from that run and cite their phase EVIDENCE.
+GEX44 run 2026-09-28 (branch `mission/cognitive-resource-os-gex44`): CRO-01 PASS (BLOCKED on 2026-09-28, re-run after Owner approval on 2026-09-30), CRO-02 MEASURED, CRO-03 PASS, CRO-04 UNJUDGED. Per-phase evidence paths and commits are in RESUMPTION section 2d; the entries below naming GEX44 come from that run and cite their phase EVIDENCE.
 
 ### Hard Rules
 
@@ -36,7 +36,8 @@ carries `entrypoint` (one value per file, 400/400 (laptop) measured). (`ca69a04`
 that only the Owner can approve. Settle every Owner-only approval (here, a package install) before launch, or
 take the step out of the run. Evidence: GEX44 Phase 1 put the blocking package-legitimacy checkpoint (pinned
 pytest/pluggy/iniconfig, job-scratch venv) inside the autonomous run; with no Owner reachable it was answered
-rejected, so CRO-01 stayed BLOCKED while its four gates passed. GEX44.
+rejected, so CRO-01 stayed BLOCKED while its four gates passed. GEX44. Once the Owner answered it on 2026-09-30 the
+same plan ran to PASS, so the step itself was sound; only its placement inside an unattended run was wrong.
 Cites `.planning/workstreams/cognitive-resource-os/phases/01-gate-verdict-on-the-big-host/EVIDENCE.md` sections 2 and 4, commit `eab20dc`.
 
 ### Traps

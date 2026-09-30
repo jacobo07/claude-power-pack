@@ -28,7 +28,7 @@ Another writer is LIVE in this tree (touches gsd_mission.py, knowledge_acquisiti
 MEASURED 2026-09-27 (7d, laptop): programmatic $90.06 (laptop) / 272 calls (laptop) / 62 sessions (laptop); 79.9% (laptop) = 1h cache writes; median 1 call
 per session; first-call shared prefix 1.9% sdk-cli (laptop), 16.4% cli (laptop). Hypothesis (unmeasured): tool list varies with MCP. Tested once on GEX44: UNJUDGED (section 2d).
 Coherence anchor: `python tools/test_tis_observed.py` 25/25 (laptop), `test_pricing_source.py` 5/5,
-`test_budget_monitor_observed.py` 7/7. test_tco V-BASELINE-INTACT INCONCLUSIVE (full pytest >180s, host ~630 MB (laptop) free). GEX44 (Phase 1): same three gates plus test_prefix_inventory 9/9; full pytest BLOCKED (section 2d).
+`test_budget_monitor_observed.py` 7/7. test_tco V-BASELINE-INTACT INCONCLUSIVE (full pytest >180s, host ~630 MB (laptop) free). GEX44 (Phase 1): same three gates plus test_prefix_inventory 9/9; full pytest PASS, 194 passed, 4 skipped, V-BASELINE-INTACT PASS (GEX44, section 2d).
 
 - `5496a60` /knowledge repointed (TUA-X renamed TUAX_UGC_SYSTEM -> CW_UGC_SYSTEM); stale session_delta
   PLANNED removed from the liveness registry (scanner: REACHABLE via hooks/session_delta_stop.js).
@@ -57,10 +57,10 @@ Coherence anchor: `python tools/test_tis_observed.py` 25/25 (laptop), `test_pric
   REVIVES a per-turn `knowledge_engine.py inject <cwd>` that writes AKOS_KNOWLEDGE_BRIEF.md into every open
   repo (incl. trees other panes commit in) with a 5 s budget. Revive, retire, or move to SessionStart? Not
   changed. /knowledge (manual) was repointed; `domains` verified, `query` run, inject/brief not executed here.
-- 01-02 Task 1 (package-legitimacy checkpoint: pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0 into a job-scratch venv) needs the Owner's answer -- approved or rejected. `.planning/workstreams/cognitive-resource-os/phases/01-gate-verdict-on-the-big-host/EVIDENCE.md` section 2. GEX44.
+- 01-02 Task 1 (package-legitimacy checkpoint: pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0 into a job-scratch venv): RESOLVED, the Owner answered approved on 2026-09-30 and 01-02 was re-run (section 2d). `.planning/workstreams/cognitive-resource-os/phases/01-gate-verdict-on-the-big-host/EVIDENCE.md` section 2. GEX44.
 
 ## 2c. Sealed on GEX44 (branch mission/cognitive-resource-os-gex44)
-- Phase 1: gate evidence (`55c6212` pre-checks + one gate, `a155e0d` remaining gates + verdict) and the BLOCKED suite record (`eab20dc` package-legitimacy checkpoint answered rejected). GEX44.
+- Phase 1: gate evidence (`55c6212` pre-checks + one gate, `a155e0d` remaining gates + verdict) and the BLOCKED suite record (`eab20dc` package-legitimacy checkpoint answered rejected), superseded by the approved re-run: `016c19f` (esprima skip in tests/test_cascade_populator.py) and `81bc0de` (suite PASS record). GEX44.
 - Phase 2: evidence (`03fffab` tracer, `1766507` by_entrypoint.py reproducer, `cb6fc62` laptop comparison + verdict); `by_entrypoint.py` (the reproducer, under `.planning`, not `tools/`); its five review fixes (`ad22dcd` `add48ee` `71beaf0` `35479c8` `350fb84`) -- after them the selftest reads 11/11 (GEX44).
 - Phase 3: the three evidence commits `6d2c6e1` `c632771` `d08644d`. GEX44.
 - Phase 4: the tracer (`e3d9e1e`), the pre-registration commit (`740b41b`) and the runs (`f32ea4b`), plus the review `8c13d18` and disposition `cd93c98` commits. GEX44.
@@ -68,7 +68,7 @@ Coherence anchor: `python tools/test_tis_observed.py` 25/25 (laptop), `test_pric
 
 ## 2d. Verdicts of the GEX44 run (phases 1-4)
 Each verdict is read from its phase EVIDENCE; figures are GEX44's, not the laptop's, unless a line says laptop.
-- Phase 1 (CRO-01) -- BLOCKED: gates_verdict PASS (25/25, 5/5, 7/7, 9/9), suite_verdict BLOCKED (pytest absent; 01-02's install checkpoint answered rejected, no Owner reachable mid-run). `.planning/workstreams/cognitive-resource-os/phases/01-gate-verdict-on-the-big-host/EVIDENCE.md` sections 1-4. verification: gaps_found. GEX44. The laptop's V-BASELINE-INTACT stays INCONCLUSIVE (laptop). Commits `55c6212` `a155e0d` `eab20dc`.
+- Phase 1 (CRO-01) -- PASS: gates_verdict PASS (25/25, 5/5, 7/7, 9/9), suite_verdict PASS (194 passed, 4 skipped in 2.98s, zero moved lines; test_tco 14/14 with V-BASELINE-INTACT PASS), after the Owner approved 01-02's install checkpoint on 2026-09-30 (it was BLOCKED on 2026-09-28). Measured at `016c19f`, not `784e446` (deviation recorded in section 4 of the evidence). `.planning/workstreams/cognitive-resource-os/phases/01-gate-verdict-on-the-big-host/EVIDENCE.md` sections 1-4. verification: passed. GEX44. The laptop's V-BASELINE-INTACT stays INCONCLUSIVE (laptop). Commits `55c6212` `a155e0d` `eab20dc` `81bc0de`.
 - Phase 2 (CRO-02) -- MEASURED: per-entrypoint first-call shared share sdk-cli 30.0% (3 sessions) and cli 46.6% (13 sessions); sdk-cli trailing-7d $0.53, of which 98.6% was 1h cache writes; reconcile MATCH, no tool defect. `.planning/workstreams/cognitive-resource-os/phases/02-gex44-observed-baseline/EVIDENCE.md` sections 1-5. verification: passed. GEX44. Differs from the laptop's 1.9% sdk-cli / 16.4% cli (laptop); the instrument cannot attribute the cause. Commits `03fffab` `1766507` `cb6fc62`.
 - Phase 3 (CRO-03) -- PASS via claudeMdExcludes: the arm-B mechanism `--settings {"claudeMdExcludes":[...]}` naming
   the three R1 rule files (instrument-before-claim.md, destructive-state-authorization.md,
@@ -93,7 +93,7 @@ Owner clarified 2026-09-28: ONLY the paid experiment is off; free work continues
 (A/B, ablation) wait for subscription quota.
 
 ## 4. Next three actions
-1. CRO-01. The Owner reviews the pinned pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0 install (job-scratch venv only; digests in 01-02-PLAN.md's context) and answers the 01-02 Task 1 checkpoint. Then `/gsd-execute-phase 1 --ws cognitive-resource-os` re-runs 01-02 on GEX44. No model calls. Cites `.planning/workstreams/cognitive-resource-os/phases/01-gate-verdict-on-the-big-host/EVIDENCE.md` section 4 `next:`.
+1. CRO-01 is PASS on GEX44 at `016c19f`. Carry `016c19f` (tests/test_cascade_populator.py skips without esprima) to the laptop's branch, so a host without esprima can collect the suite at all. No model calls. Cites `.planning/workstreams/cognitive-resource-os/phases/01-gate-verdict-on-the-big-host/EVIDENCE.md` section 4 `next:`.
 2. P3 on the laptop. Record the laptop's `claude --version`. Unless it is 2.1.283, re-run the Phase 3 pre-flight procedure (03-01-PLAN.md, zero model calls) against the laptop's own binary. On PASS, and only with the Owner's go on subscription quota, run P1 A/A of `vault/plans/cognitive-resource-os-P3-ablation-protocol.md` with arm B launched through `--settings {"claudeMdExcludes":[...]}` naming the laptop's own paths of the three R1 files. Cites `.planning/workstreams/cognitive-resource-os/phases/03-p3-pre-flight-p0/EVIDENCE.md` section 4 (`version_scope`, `host_applicability`).
 3. Prefix-miss follow-up. The laptop's low first-call shared share (1.9% sdk-cli, laptop) is not reproduced by identical back-to-back sessions on GEX44 (Phase 4, ~99.96% reuse). Take the zero-call step first: from the laptop's own sdk-cli transcripts, through tis_observed, measure the time between consecutive sessions against the cache TTL. Any new A/B reuses ab_runner.py only after the open 04-REVIEW findings are fixed under a new runner sha, and it counts only if the MCP surface changes between run 1 and run 2. Cites `.planning/workstreams/cognitive-resource-os/phases/04-prefix-cache-miss-a-b/EVIDENCE.md` section 4 `next:` and `.planning/workstreams/cognitive-resource-os/phases/02-gex44-observed-baseline/EVIDENCE.md` section 3a.
 Still open, not touched by this run: section 2a (parser consolidation) and section 2b (kobiiclaw-autoresearch.js decision).

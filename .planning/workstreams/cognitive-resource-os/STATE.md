@@ -1,22 +1,22 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1 — Gate verdict on the big host
+current_phase: 5 — Seal and hand back
 current_plan: Not started
 status: planning
-stopped_at: Phase 5 complete, ready to plan Phase 1
-last_updated: "2026-09-28T15:51:51.170Z"
-last_activity: 2026-09-28
-last_activity_desc: Phase 5 complete, transitioned to Phase 1
-state_head: d5d5fa0581223e8388225bce556e23543bb7602a
+stopped_at: All 5 phases complete (Phase 1 re-run 2026-09-30), ready for milestone audit
+last_updated: "2026-09-30T20:40:28.643Z"
+last_activity: 2026-09-30
+last_activity_desc: Phase 1 re-run to PASS after Owner approval; all phases complete
+state_head: 81bc0de77e22ce943e8cd05b51a09133ce704c19
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 6
   completed_plans: 6
-  percent: 80
+  percent: 100
 workstream: cognitive-resource-os
 created: 2026-09-28
-current_phase_name: Gate verdict on the big host
+current_phase_name: Seal and hand back
 ---
 
 # Project State
@@ -24,12 +24,9 @@ current_phase_name: Gate verdict on the big host
 ## Current Position
 
 **Status:** Ready to plan
-**Current Phase:** 1 — Gate verdict on the big host
-**Last Activity:** 2026-09-28
-**Last Activity Description:** Phase 5 complete, transitioned to Phase 1
-job-scratch venv) was answered rejected -- no Owner was reachable mid-run to approve it, and the orchestrator cannot
-grant that approval on the Owner's behalf. Tasks 2-3 were not run. EVIDENCE.md sections 2-4 record
-suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
+**Current Phase:** 5 — Seal and hand back (all 5 phases complete)
+**Last Activity:** 2026-09-30
+**Last Activity Description:** Phase 1 re-run to PASS after Owner approval; all phases complete
 
 ## Progress
 
@@ -41,7 +38,7 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 
 **Last session:** 2026-09-28T15:41:46.309Z
 
-**Stopped At:** Phase 5 complete, ready to plan Phase 1
+**Stopped At:** All 5 phases complete, ready for milestone audit
 **Resume File:** None
 
 ## Performance Metrics
@@ -49,7 +46,7 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 7min | 2 tasks | 1 files |
-| Phase 01 P02 | 4min | 1 task (of 3; halted at Task 1 rejection) | 1 files |
+| Phase 01 P02 | 4min + re-run 2026-09-30 | 3 tasks (Task 1 approved by Owner on re-run) | 2 files |
 | Phase 02 P01 | 17min | 3 tasks | 2 files |
 | Phase 03 P01 | 28min | 3 tasks | 7 files |
 | Phase 04 P01 | 26min | 3 tasks | 5 files |
@@ -78,13 +75,14 @@ suite_verdict: BLOCKED and phase_verdict: BLOCKED for CRO-01.
   borrowing another project's pytest, apt, or pip --user). Unattended, the safest option is to leave the gate intact:
   01-02 was NOT re-run (it would reproduce BLOCKED verbatim), and milestone audit/complete was NOT run, because
   archiving would seal CRO-01 as BLOCKED while an Owner-resolvable step is still open. Run halted here by choice.
+- [2026-09-30]: Owner approved the 01-02 Task 1 install; 01-02 re-run on GEX44 from a laptop session over ssh:
+  suite PASS (194 passed, 4 skipped), CRO-01 PASS at 016c19f (deviation from base 784e446 recorded in EVIDENCE
+  section 4). The pre-existing venv from the 016c19f session was verified file-by-file against hash-checked wheels.
 
 ## Blockers
 
-- [Phase 1, CRO-01]: Full pytest suite has not run on GEX44. Blocked on the Owner answering 01-02-PLAN.md's Task 1
-  package-legitimacy checkpoint (pinned pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0, job-scratch venv only).
-  Resolve by re-running plan 01-02 from Task 1 once the Owner reviews the PyPI hash evidence in the plan's context
-  section and answers "approved" or "rejected: &lt;reason&gt;".
+None. (Resolved 2026-09-30: the Phase 1 CRO-01 blocker on 01-02 Task 1 was answered approved by the Owner;
+  01-02 re-ran on GEX44 to suite_verdict PASS, phase_verdict PASS, commit 81bc0de.)
 
 ## Deferred Verification
 
