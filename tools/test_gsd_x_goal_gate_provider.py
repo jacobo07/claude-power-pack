@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT))
 
 from modules.gsd_x.goal import epoch as ep                      # noqa: E402
 from modules.gsd_x.goal import git_state as gs                  # noqa: E402
+from modules.gsd_x.goal import proc                             # noqa: E402
 from modules.gsd_x.goal.providers.gate import GateProvider      # noqa: E402
 
 from modules.gsd_x.goal.git_state import git_exe          # noqa: E402
@@ -161,10 +162,13 @@ def main() -> int:
           "a live gate reports running", "a live gate did not report running")
     prov.cancel(h3)
     time.sleep(1.0)
-    alive = subprocess.run(["tasklist", "/FI", f"PID eq {h3['pid']}"],
-                           capture_output=True, text=True).stdout
-    check("V-GATE-CANCEL-KILLS", str(h3["pid"]) not in alive,
-          f"cancel killed the process tree (pid {h3['pid']} gone)", alive[-200:])
+    # proc.pid_alive, not `tasklist`: on Linux tasklist does not exist, so the suite died
+    # here after 13 gates and every later gate read as NOT_EXECUTED (W1c, 2026-09-30).
+    # The old substring test was also wrong on Windows (pid 12 "alive" inside 1234).
+    still_alive = proc.pid_alive(h3["pid"])
+    check("V-GATE-CANCEL-KILLS", not still_alive,
+          f"cancel killed the process tree (pid {h3['pid']} gone)",
+          f"pid {h3['pid']} still alive after cancel")
     r3 = prov.harvest(h3, s_slow)
     check("V-GATE-CANCELLED-NO-VERDICT",
           not r3.verdicts and r3.failures
