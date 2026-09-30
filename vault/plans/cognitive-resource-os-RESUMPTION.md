@@ -119,6 +119,13 @@ Each verdict is read from its phase EVIDENCE; figures are GEX44's, not the lapto
   CLAUDE_DESTRUCTIVE_CARD=off; ledger ~/.claude/state/destructive-card/ledger.jsonl). E2E exposed and
   fixed a dispatcher deny-dominance defect (rtk-rewrite's allow overwrote gate denies). B-prime 4/4,
   first-call ~138.5k (≈−27k total), card fired live once and recovered. P3 relocation COMPLETE.
+- MOVES 4-6 DONE 2026-09-30 (Owner go at 75 % weekly quota, pane bb280e67), OUTSIDE the ablation:
+  guard-event-reachability `90c9e82`, monetary-quantity-integrity `46f5f99`, presence-is-not-residency
+  `36091e1`. Same shape (byte-identical body, live==canonical, pointer, backups
+  ~/.claude/backups/rules-20260930-0950xx). prefix_inventory: rules 91.9 KB / ~24.2k tok (was ~130 KB);
+  net ≈ −10k tok per call. NO ablation and NO B-prime for these three -- quality without them in context
+  is UNVERIFIED; revert = copy each backup over its pointer. Next candidates by size:
+  evaluation-corpus-governance, develop-here-prove-there, recurring-work-cardinality.
 
 ## 3. Active decisions
 - Estimates and observations never mix; every figure names its source.
