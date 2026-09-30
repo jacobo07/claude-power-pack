@@ -87,6 +87,41 @@ def main() -> int:
         check("V-AUTOPSY-UNPRICED-UNKNOWN", u["cost_usd"]["total"] is None and u["unpriced_calls"] == 1,
               f"total={u['cost_usd']['total']} unpriced={u['unpriced_calls']}")
 
+        # growth attribution: which content made the session grow (chars, a token ESTIMATE)
+        def tu(tid, name, **inp):
+            return json.dumps({"type": "assistant", "message": {"id": f"a{tid}", "content": [
+                {"type": "tool_use", "id": tid, "name": name, "input": inp}]}})
+
+        def tr(tid, text, side=False):
+            return json.dumps({"type": "user", "isSidechain": side, "message": {"content": [
+                {"type": "tool_result", "tool_use_id": tid, "content": text}]}})
+
+        G = [json.dumps({"type": "user", "message": {"content": "p" * 10}}),
+             tu("t1", "Read", file_path="a.py"), tr("t1", "x" * 100),
+             tu("t2", "Read", file_path="a.py"), tr("t2", "x" * 100),        # unchanged re-read
+             tu("t2b", "Read", file_path="a.py", offset=50, limit=10), tr("t2b", "x" * 5),  # other page
+             tu("t3", "Edit", file_path="a.py"), tr("t3", "ok"),
+             tu("t4", "Read", file_path="a.py"), tr("t4", "y" * 100),        # re-read after edit
+             tu("t5", "PowerShell", command="ls"), tr("t5", "z" * 40),
+             tr("t5", "z" * 40),                                             # duplicated line
+             tr("t9", "s" * 999, side=True),                                  # subagent sidechain
+             json.dumps({"type": "assistant", "message": {"id": "m9", "content": [
+                 {"type": "text", "text": "t" * 7}, {"type": "thinking", "thinking": "k" * 3}]}})]
+        fp3 = Path(td) / "g.jsonl"
+        fp3.write_text("\n".join(G) + "\n", encoding="utf-8")
+        g = sa.growth_sources(fp3)
+        check("V-AUTOPSY-GROWTH-KINDS",
+              g["by_kind"] == {"tool_result": 347, "user_text": 10, "assistant_text": 7, "thinking": 3},
+              f"{g['by_kind']}")
+        check("V-AUTOPSY-GROWTH-BY-TOOL",
+              g["by_tool"] == {"Read": 305, "PowerShell": 40, "Edit": 2}, f"{g['by_tool']}")
+        rd = g["read"]
+        check("V-AUTOPSY-REREAD-UNCHANGED",
+              rd["calls"] == 4 and rd["reread_unchanged"] == 1 and rd["reread_unchanged_chars"] == 100
+              and rd["reread_after_edit"] == 1,
+              f"{rd}")
+        check("V-AUTOPSY-GROWTH-LABELLED", g["unit"] == "chars (token ESTIMATE ~chars/4)", g["unit"])
+
     real = (Path.home() / ".claude" / "projects"
             / "C--Users-User-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects"
             / "04b41ed7-58a3-450c-b5b1-3e8732f5dbc4.jsonl")

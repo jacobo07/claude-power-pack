@@ -142,6 +142,92 @@ def autopsy(path: Path, prices: Optional[dict] = None, ttl_s: int = DEFAULT_TTL_
     }
 
 
+_EDITS = ("Edit", "Write", "MultiEdit", "NotebookEdit")
+
+
+def _result_chars(content) -> int:
+    if isinstance(content, str):
+        return len(content)
+    if isinstance(content, list):
+        return sum(len(b.get("text", "")) for b in content if isinstance(b, dict))
+    return 0
+
+
+def growth_sources(path: Path) -> dict:
+    """What the session accumulated, by content kind and by tool (chars, a token ESTIMATE).
+
+    Blocks are counted once: tool_use/tool_result by id, text/thinking by (message id, text).
+    Subagent sidechain rows are the subagent's context, not this one's, and are skipped.
+    A Read counts as an unchanged re-read only for the same path AND page (offset/limit) with no
+    Edit/Write of that path in between; a re-read after an edit is counted apart, it is legitimate.
+    """
+    kinds = {"tool_result": 0, "user_text": 0, "assistant_text": 0, "thinking": 0}
+    by_tool: dict[str, int] = {}
+    uses: dict[str, tuple] = {}
+    seen_blocks: set = set()
+    read_pages: set = set()
+    edited_since: set = set()
+    rd = {"calls": 0, "reread_unchanged": 0, "reread_unchanged_chars": 0, "reread_after_edit": 0}
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(row, dict) or row.get("isSidechain"):
+                continue
+            msg = row.get("message") if isinstance(row.get("message"), dict) else {}
+            content = msg.get("content")
+            if isinstance(content, str):
+                if row.get("type") == "user" and ("u", content) not in seen_blocks:
+                    seen_blocks.add(("u", content))
+                    kinds["user_text"] += len(content)
+                continue
+            if not isinstance(content, list):
+                continue
+            for b in content:
+                if not isinstance(b, dict):
+                    continue
+                t = b.get("type")
+                if t == "tool_use":
+                    inp = b.get("input") if isinstance(b.get("input"), dict) else {}
+                    uses[b.get("id")] = (b.get("name") or "?", inp)
+                    if b.get("name") in _EDITS and inp.get("file_path"):
+                        edited_since.add(inp["file_path"])
+                elif t == "tool_result":
+                    key = ("r", b.get("tool_use_id"))
+                    if key in seen_blocks:
+                        continue
+                    seen_blocks.add(key)
+                    n = _result_chars(b.get("content"))
+                    name, inp = uses.get(b.get("tool_use_id"), ("?", {}))
+                    kinds["tool_result"] += n
+                    by_tool[name] = by_tool.get(name, 0) + n
+                    fp = inp.get("file_path")
+                    if name == "Read" and fp:
+                        rd["calls"] += 1
+                        page = (fp, inp.get("offset"), inp.get("limit"))
+                        if fp in edited_since:
+                            if any(p[0] == fp for p in read_pages):
+                                rd["reread_after_edit"] += 1
+                            read_pages = {p for p in read_pages if p[0] != fp}
+                            edited_since.discard(fp)
+                        elif page in read_pages:
+                            rd["reread_unchanged"] += 1
+                            rd["reread_unchanged_chars"] += n
+                        read_pages.add(page)
+                elif t in ("text", "thinking"):
+                    body = b.get(t, "")
+                    key = (t, msg.get("id"), body)
+                    if key in seen_blocks:
+                        continue
+                    seen_blocks.add(key)
+                    kinds["thinking" if t == "thinking" else
+                          ("assistant_text" if row.get("type") == "assistant" else "user_text")] += len(body)
+    return {"unit": "chars (token ESTIMATE ~chars/4)", "by_kind": kinds,
+            "by_tool": dict(sorted(by_tool.items(), key=lambda kv: -kv[1])), "read": rd}
+
+
 def _resolve(arg: str) -> Path:
     p = Path(arg)
     if p.is_file():
@@ -180,8 +266,21 @@ def main(argv=None) -> int:
     ap.add_argument("--ttl", type=int, default=DEFAULT_TTL_S)
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
-    r = autopsy(_resolve(a.session), ttl_s=a.ttl)
-    print(json.dumps(r, indent=2, default=str) if a.json else _fmt(r))
+    path = _resolve(a.session)
+    r = autopsy(path, ttl_s=a.ttl)
+    r["growth_sources"] = growth_sources(path)
+    if a.json:
+        print(json.dumps(r, indent=2, default=str))
+    else:
+        g = r["growth_sources"]
+        tot = sum(g["by_kind"].values()) or 1
+        print(_fmt(r))
+        print("growth   " + "  ".join(f"{k} {v / tot:.0%}" for k, v in g["by_kind"].items())
+              + f"  ({g['unit']})")
+        print("by tool  " + "  ".join(f"{k} {v:,}" for k, v in list(g["by_tool"].items())[:6]))
+        rd = g["read"]
+        print(f"reads    {rd['calls']}  unchanged re-reads {rd['reread_unchanged']} "
+              f"({rd['reread_unchanged_chars']:,} chars)  re-reads after edit {rd['reread_after_edit']}")
     return 0
 
 
