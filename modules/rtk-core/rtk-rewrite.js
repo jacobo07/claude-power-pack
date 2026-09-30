@@ -103,6 +103,12 @@ function main() {
     return passThrough();
   }
 
+  // A POSIX rewrite is valid only for the POSIX shell. Both dispatchers route PowerShell through this
+  // same chain, and `"...\rtk.exe" gh pr list` is a PowerShell ParserError (measured 2026-09-30,
+  // tools/test_rtk_rewrite_scope.py). A payload with no tool_name keeps the old behaviour.
+  const toolName = payload && typeof payload === 'object' ? payload.tool_name : undefined;
+  if (toolName !== undefined && toolName !== 'Bash') return passThrough();
+
   const toolInput =
     payload && typeof payload === 'object' ? payload.tool_input : null;
   const cmd =
