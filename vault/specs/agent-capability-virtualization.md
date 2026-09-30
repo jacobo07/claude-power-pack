@@ -27,6 +27,24 @@ inline approval plan. Every capability is PLANNED until its slice gate runs.
   and never consults declared tools. Repo `hooks/` and live `~/.claude/hooks/` copy
   are byte-identical (sha256 D5FE7CCEDE78).
 
+## S0 results (measured 2026-09-30, Claude Code 2.1.286)
+
+- Guard deadlock fixed (aa1b8e9): 18/18, the new case fails on the old guard.
+- Collision probe (`claude -p`, haiku, project agents `collide-probe.md` +
+  `collide-probe.compact.md`, same `name:`): listing shows the name ONCE; the
+  dispatched body was `collide-probe.md`. The 29 GSD `.compact.md` twins therefore
+  cost no listing and are never dispatched. Filename-match vs sort order: UNDETERMINED
+  (one probe).
+- `tools/agent_estate_audit.py` (V-AGE 10/10): 10 dormant repo agents (the 9 above
+  plus python-reviewer; the earlier "9" was a handoff number the auditor repeated).
+  Resident listing bytes: global 23,010; revenue-forensics pack 11,887 (project
+  scoped). Body duplication: 3,288 shared 8-word shingles; largest pair
+  gsd-phase-researcher / gsd-project-researcher (1,220), upstream-owned.
+- `tools/agent_discovery_curve.py`, real parent usage, synthetic listed agents with
+  310 B descriptions: N=0 68,288 · 100 77,082 · 400 97,195 · 1000 135,563 context
+  tokens. 64-88 tokens per listed agent, no ceiling observed: a flat 1,000-agent
+  estate doubles the parent's startup context. S2 must beat this on the same tool.
+
 ## Owner decisions (phase 2)
 
 Collisions first (detect/report, never delete third-party files) · dormant agents

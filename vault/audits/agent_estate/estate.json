@@ -1,0 +1,2405 @@
+{
+ "surfaces": {
+  "repo": {
+   "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents",
+   "files": 16,
+   "unique_names": 16,
+   "total_bytes": 107753,
+   "resident_listing_bytes": 5770,
+   "collisions": {},
+   "agents": [
+    {
+     "name": "comment-analyzer",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\comment-analyzer.md",
+     "bytes": 2318,
+     "desc_bytes": 88,
+     "tools": [
+      "[Read",
+      "Grep",
+      "Glob]"
+     ],
+     "model": "sonnet",
+     "body_bytes": 2145,
+     "sha": "4d48ffef6bd9",
+     "listing_bytes": 122
+    },
+    {
+     "name": "cpp-reviewer",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\cpp-reviewer.md",
+     "bytes": 4263,
+     "desc_bytes": 165,
+     "tools": [
+      "[\"Read\"",
+      "\"Grep\"",
+      "\"Glob\"",
+      "\"Bash\"]"
+     ],
+     "model": "sonnet",
+     "body_bytes": 4003,
+     "sha": "754a8d49cca4",
+     "listing_bytes": 209
+    },
+    {
+     "name": "garyvee",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\garyvee.md",
+     "bytes": 2334,
+     "desc_bytes": 567,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 1686,
+     "sha": "3c3b58d5907d",
+     "listing_bytes": 596
+    },
+    {
+     "name": "go-reviewer",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\go-reviewer.md",
+     "bytes": 4062,
+     "desc_bytes": 167,
+     "tools": [
+      "[\"Read\"",
+      "\"Grep\"",
+      "\"Glob\"",
+      "\"Bash\"]"
+     ],
+     "model": "sonnet",
+     "body_bytes": 3801,
+     "sha": "d9d8dc9abf14",
+     "listing_bytes": 210
+    },
+    {
+     "name": "harness-optimizer",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\harness-optimizer.md",
+     "bytes": 2202,
+     "desc_bytes": 96,
+     "tools": [
+      "[\"Read\"",
+      "\"Grep\"",
+      "\"Glob\"",
+      "\"Bash\"",
+      "\"Edit\"]"
+     ],
+     "model": "sonnet",
+     "body_bytes": 1986,
+     "sha": "ee3979bed2f5",
+     "listing_bytes": 153
+    },
+    {
+     "name": "hawkins",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\hawkins.md",
+     "bytes": 2930,
+     "desc_bytes": 726,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 2124,
+     "sha": "b2b61b2f0086",
+     "listing_bytes": 755
+    },
+    {
+     "name": "java-reviewer",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\java-reviewer.md",
+     "bytes": 13624,
+     "desc_bytes": 259,
+     "tools": [
+      "[\"Read\"",
+      "\"Grep\"",
+      "\"Glob\"",
+      "\"Bash\"]"
+     ],
+     "model": "sonnet",
+     "body_bytes": 13269,
+     "sha": "35c81c487626",
+     "listing_bytes": 304
+    },
+    {
+     "name": "musk",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\musk.md",
+     "bytes": 2494,
+     "desc_bytes": 642,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 1777,
+     "sha": "07dade14698a",
+     "listing_bytes": 668
+    },
+    {
+     "name": "oneshot-architect-auditor",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\oneshot-architect-auditor.md",
+     "bytes": 37847,
+     "desc_bytes": 674,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash",
+      "WebFetch"
+     ],
+     "model": "opus",
+     "body_bytes": 37055,
+     "sha": "7b042ad911f5",
+     "listing_bytes": 731
+    },
+    {
+     "name": "python-reviewer",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\python-reviewer.md",
+     "bytes": 4682,
+     "desc_bytes": 184,
+     "tools": [
+      "[\"Read\"",
+      "\"Grep\"",
+      "\"Glob\"",
+      "\"Bash\"]"
+     ],
+     "model": "sonnet",
+     "body_bytes": 4400,
+     "sha": "b32d6f3badc3",
+     "listing_bytes": 231
+    },
+    {
+     "name": "rust-reviewer",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\rust-reviewer.md",
+     "bytes": 5947,
+     "desc_bytes": 180,
+     "tools": [
+      "[\"Read\"",
+      "\"Grep\"",
+      "\"Glob\"",
+      "\"Bash\"]"
+     ],
+     "model": "sonnet",
+     "body_bytes": 5671,
+     "sha": "2845e232fb40",
+     "listing_bytes": 225
+    },
+    {
+     "name": "silent-failure-hunter",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\silent-failure-hunter.md",
+     "bytes": 2272,
+     "desc_bytes": 96,
+     "tools": [
+      "[Read",
+      "Grep",
+      "Glob",
+      "Bash]"
+     ],
+     "model": "sonnet",
+     "body_bytes": 2080,
+     "sha": "0975f887687c",
+     "listing_bytes": 141
+    },
+    {
+     "name": "steve-jobs",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\steve-jobs.md",
+     "bytes": 5643,
+     "desc_bytes": 470,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 5090,
+     "sha": "046007651564",
+     "listing_bytes": 502
+    },
+    {
+     "name": "type-design-analyzer",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\type-design-analyzer.md",
+     "bytes": 2164,
+     "desc_bytes": 89,
+     "tools": [
+      "[Read",
+      "Grep",
+      "Glob]"
+     ],
+     "model": "sonnet",
+     "body_bytes": 1986,
+     "sha": "25736024e0c4",
+     "listing_bytes": 127
+    },
+    {
+     "name": "typescript-reviewer",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\typescript-reviewer.md",
+     "bytes": 9359,
+     "desc_bytes": 234,
+     "tools": [
+      "[\"Read\"",
+      "\"Grep\"",
+      "\"Glob\"",
+      "\"Bash\"]"
+     ],
+     "model": "sonnet",
+     "body_bytes": 9023,
+     "sha": "e8ea80870f4a",
+     "listing_bytes": 285
+    },
+    {
+     "name": "woz",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agents\\woz.md",
+     "bytes": 5612,
+     "desc_bytes": 486,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 5051,
+     "sha": "2f17e57e31a5",
+     "listing_bytes": 511
+    }
+   ]
+  },
+  "global": {
+   "root": "C:\\Users\\User\\.claude\\agents",
+   "files": 91,
+   "unique_names": 62,
+   "total_bytes": 1212230,
+   "resident_listing_bytes": 23010,
+   "collisions": {
+    "gsd-advisor-researcher": [
+     "gsd-advisor-researcher.compact.md",
+     "gsd-advisor-researcher.md"
+    ],
+    "gsd-ai-researcher": [
+     "gsd-ai-researcher.compact.md",
+     "gsd-ai-researcher.md"
+    ],
+    "gsd-assumptions-analyzer": [
+     "gsd-assumptions-analyzer.compact.md",
+     "gsd-assumptions-analyzer.md"
+    ],
+    "gsd-code-fixer": [
+     "gsd-code-fixer.compact.md",
+     "gsd-code-fixer.md"
+    ],
+    "gsd-code-reviewer": [
+     "gsd-code-reviewer.compact.md",
+     "gsd-code-reviewer.md"
+    ],
+    "gsd-codebase-mapper": [
+     "gsd-codebase-mapper.compact.md",
+     "gsd-codebase-mapper.md"
+    ],
+    "gsd-debug-session-manager": [
+     "gsd-debug-session-manager.compact.md",
+     "gsd-debug-session-manager.md"
+    ],
+    "gsd-doc-classifier": [
+     "gsd-doc-classifier.compact.md",
+     "gsd-doc-classifier.md"
+    ],
+    "gsd-doc-synthesizer": [
+     "gsd-doc-synthesizer.compact.md",
+     "gsd-doc-synthesizer.md"
+    ],
+    "gsd-doc-verifier": [
+     "gsd-doc-verifier.compact.md",
+     "gsd-doc-verifier.md"
+    ],
+    "gsd-doc-writer": [
+     "gsd-doc-writer.compact.md",
+     "gsd-doc-writer.md"
+    ],
+    "gsd-dom-verifier": [
+     "gsd-dom-verifier.compact.md",
+     "gsd-dom-verifier.md"
+    ],
+    "gsd-domain-researcher": [
+     "gsd-domain-researcher.compact.md",
+     "gsd-domain-researcher.md"
+    ],
+    "gsd-eval-auditor": [
+     "gsd-eval-auditor.compact.md",
+     "gsd-eval-auditor.md"
+    ],
+    "gsd-eval-planner": [
+     "gsd-eval-planner.compact.md",
+     "gsd-eval-planner.md"
+    ],
+    "gsd-framework-selector": [
+     "gsd-framework-selector.compact.md",
+     "gsd-framework-selector.md"
+    ],
+    "gsd-integration-checker": [
+     "gsd-integration-checker.compact.md",
+     "gsd-integration-checker.md"
+    ],
+    "gsd-intel-updater": [
+     "gsd-intel-updater.compact.md",
+     "gsd-intel-updater.md"
+    ],
+    "gsd-mempalace-curator": [
+     "gsd-mempalace-curator.compact.md",
+     "gsd-mempalace-curator.md"
+    ],
+    "gsd-nyquist-auditor": [
+     "gsd-nyquist-auditor.compact.md",
+     "gsd-nyquist-auditor.md"
+    ],
+    "gsd-pattern-mapper": [
+     "gsd-pattern-mapper.compact.md",
+     "gsd-pattern-mapper.md"
+    ],
+    "gsd-project-researcher": [
+     "gsd-project-researcher.compact.md",
+     "gsd-project-researcher.md"
+    ],
+    "gsd-research-synthesizer": [
+     "gsd-research-synthesizer.compact.md",
+     "gsd-research-synthesizer.md"
+    ],
+    "gsd-roadmapper": [
+     "gsd-roadmapper.compact.md",
+     "gsd-roadmapper.md"
+    ],
+    "gsd-security-auditor": [
+     "gsd-security-auditor.compact.md",
+     "gsd-security-auditor.md"
+    ],
+    "gsd-ui-auditor": [
+     "gsd-ui-auditor.compact.md",
+     "gsd-ui-auditor.md"
+    ],
+    "gsd-ui-checker": [
+     "gsd-ui-checker.compact.md",
+     "gsd-ui-checker.md"
+    ],
+    "gsd-ui-researcher": [
+     "gsd-ui-researcher.compact.md",
+     "gsd-ui-researcher.md"
+    ],
+    "gsd-user-profiler": [
+     "gsd-user-profiler.compact.md",
+     "gsd-user-profiler.md"
+    ]
+   },
+   "agents": [
+    {
+     "name": "cdio-core",
+     "file": "C:\\Users\\User\\.claude\\agents\\cdio-core.md",
+     "bytes": 8569,
+     "desc_bytes": 869,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": "sonnet",
+     "body_bytes": 7602,
+     "sha": "85e467a2728c",
+     "listing_bytes": 900
+    },
+    {
+     "name": "cdio-reviewer",
+     "file": "C:\\Users\\User\\.claude\\agents\\cdio-reviewer.md",
+     "bytes": 9056,
+     "desc_bytes": 795,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": "sonnet",
+     "body_bytes": 8159,
+     "sha": "1d384daf0814",
+     "listing_bytes": 830
+    },
+    {
+     "name": "cdio-standards-librarian",
+     "file": "C:\\Users\\User\\.claude\\agents\\cdio-standards-librarian.md",
+     "bytes": 5932,
+     "desc_bytes": 577,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": "sonnet",
+     "body_bytes": 5245,
+     "sha": "5baf20f88c7a",
+     "listing_bytes": 623
+    },
+    {
+     "name": "code-reviewer",
+     "file": "C:\\Users\\User\\.claude\\agents\\coderabbit-code-reviewer.md",
+     "bytes": 2919,
+     "desc_bytes": 88,
+     "tools": null,
+     "model": null,
+     "body_bytes": 2788,
+     "sha": "a86cc7a7e341",
+     "listing_bytes": 102
+    },
+    {
+     "name": "garyvee",
+     "file": "C:\\Users\\User\\.claude\\agents\\garyvee.md",
+     "bytes": 2334,
+     "desc_bytes": 567,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 1686,
+     "sha": "3c3b58d5907d",
+     "listing_bytes": 596
+    },
+    {
+     "name": "graphify-librarian",
+     "file": "C:\\Users\\User\\.claude\\agents\\graphify-librarian.md",
+     "bytes": 6944,
+     "desc_bytes": 738,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": "sonnet",
+     "body_bytes": 6102,
+     "sha": "0125867b6cfd",
+     "listing_bytes": 778
+    },
+    {
+     "name": "graphify-route-governor",
+     "file": "C:\\Users\\User\\.claude\\agents\\graphify-route-governor.md",
+     "bytes": 4867,
+     "desc_bytes": 613,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": "sonnet",
+     "body_bytes": 4145,
+     "sha": "3257258d7f96",
+     "listing_bytes": 658
+    },
+    {
+     "name": "graphify-writeback",
+     "file": "C:\\Users\\User\\.claude\\agents\\graphify-writeback.md",
+     "bytes": 6525,
+     "desc_bytes": 730,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": "sonnet",
+     "body_bytes": 5690,
+     "sha": "9fc686bc1c20",
+     "listing_bytes": 770
+    },
+    {
+     "name": "gsd-advisor-researcher",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-advisor-researcher.compact.md",
+     "bytes": 3608,
+     "desc_bytes": 135,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill",
+      "WebSearch",
+      "WebFetch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*"
+     ],
+     "model": null,
+     "body_bytes": 3286,
+     "sha": "bb085c3b911f",
+     "listing_bytes": 259
+    },
+    {
+     "name": "gsd-advisor-researcher",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-advisor-researcher.md",
+     "bytes": 4740,
+     "desc_bytes": 135,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill",
+      "WebSearch",
+      "WebFetch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*"
+     ],
+     "model": null,
+     "body_bytes": 4418,
+     "sha": "8770ed50a0c5",
+     "listing_bytes": 259
+    },
+    {
+     "name": "gsd-ai-researcher",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-ai-researcher.compact.md",
+     "bytes": 5464,
+     "desc_bytes": 322,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "WebFetch",
+      "WebSearch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*"
+     ],
+     "model": null,
+     "body_bytes": 4790,
+     "sha": "b1b3602b0f0d",
+     "listing_bytes": 447
+    },
+    {
+     "name": "gsd-ai-researcher",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-ai-researcher.md",
+     "bytes": 5960,
+     "desc_bytes": 322,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "WebFetch",
+      "WebSearch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*"
+     ],
+     "model": null,
+     "body_bytes": 5286,
+     "sha": "6f88572fbe1e",
+     "listing_bytes": 447
+    },
+    {
+     "name": "gsd-assumptions-analyzer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-assumptions-analyzer.compact.md",
+     "bytes": 3470,
+     "desc_bytes": 129,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 3225,
+     "sha": "1b5ae7adf3eb",
+     "listing_bytes": 182
+    },
+    {
+     "name": "gsd-assumptions-analyzer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-assumptions-analyzer.md",
+     "bytes": 4660,
+     "desc_bytes": 129,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 4414,
+     "sha": "f4e92ab2c750",
+     "listing_bytes": 182
+    },
+    {
+     "name": "gsd-code-fixer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-code-fixer.compact.md",
+     "bytes": 25723,
+     "desc_bytes": 168,
+     "tools": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 25407,
+     "sha": "e7ac8c995300",
+     "listing_bytes": 224
+    },
+    {
+     "name": "gsd-code-fixer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-code-fixer.md",
+     "bytes": 42666,
+     "desc_bytes": 168,
+     "tools": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 42350,
+     "sha": "7d8b372f011c",
+     "listing_bytes": 224
+    },
+    {
+     "name": "gsd-code-reviewer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-code-reviewer.compact.md",
+     "bytes": 15148,
+     "desc_bytes": 168,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 14834,
+     "sha": "c20893655a82",
+     "listing_bytes": 221
+    },
+    {
+     "name": "gsd-code-reviewer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-code-reviewer.md",
+     "bytes": 18761,
+     "desc_bytes": 168,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 18447,
+     "sha": "f35d5b2e633e",
+     "listing_bytes": 221
+    },
+    {
+     "name": "gsd-codebase-mapper",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-codebase-mapper.compact.md",
+     "bytes": 19154,
+     "desc_bytes": 197,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Write",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 18676,
+     "sha": "bf6b50acec97",
+     "listing_bytes": 252
+    },
+    {
+     "name": "gsd-codebase-mapper",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-codebase-mapper.md",
+     "bytes": 21626,
+     "desc_bytes": 197,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Write",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 21149,
+     "sha": "e5a34140111e",
+     "listing_bytes": 252
+    },
+    {
+     "name": "gsd-debug-session-manager",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-debug-session-manager.compact.md",
+     "bytes": 17543,
+     "desc_bytes": 270,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Agent",
+      "AskUserQuestion"
+     ],
+     "model": null,
+     "body_bytes": 16961,
+     "sha": "a7202793b9b9",
+     "listing_bytes": 354
+    },
+    {
+     "name": "gsd-debug-session-manager",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-debug-session-manager.md",
+     "bytes": 18700,
+     "desc_bytes": 270,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Agent",
+      "AskUserQuestion"
+     ],
+     "model": null,
+     "body_bytes": 18117,
+     "sha": "a33c226d03e6",
+     "listing_bytes": 354
+    },
+    {
+     "name": "gsd-debugger",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-debugger.md",
+     "bytes": 46978,
+     "desc_bytes": 123,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill",
+      "WebSearch"
+     ],
+     "model": null,
+     "body_bytes": 46561,
+     "sha": "80a122169fbf",
+     "listing_bytes": 188
+    },
+    {
+     "name": "gsd-doc-classifier",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-doc-classifier.compact.md",
+     "bytes": 9360,
+     "desc_bytes": 238,
+     "tools": [
+      "Read",
+      "Write",
+      "Grep",
+      "Glob"
+     ],
+     "model": null,
+     "body_bytes": 8891,
+     "sha": "f2377927e025",
+     "listing_bytes": 279
+    },
+    {
+     "name": "gsd-doc-classifier",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-doc-classifier.md",
+     "bytes": 11729,
+     "desc_bytes": 238,
+     "tools": [
+      "Read",
+      "Write",
+      "Grep",
+      "Glob"
+     ],
+     "model": null,
+     "body_bytes": 11261,
+     "sha": "f8e5d8901b61",
+     "listing_bytes": 279
+    },
+    {
+     "name": "gsd-doc-synthesizer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-doc-synthesizer.compact.md",
+     "bytes": 11128,
+     "desc_bytes": 300,
+     "tools": [
+      "Read",
+      "Write",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 10590,
+     "sha": "f26ce5317967",
+     "listing_bytes": 348
+    },
+    {
+     "name": "gsd-doc-synthesizer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-doc-synthesizer.md",
+     "bytes": 13162,
+     "desc_bytes": 300,
+     "tools": [
+      "Read",
+      "Write",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 12624,
+     "sha": "27174a8decf0",
+     "listing_bytes": 348
+    },
+    {
+     "name": "gsd-doc-verifier",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-doc-verifier.compact.md",
+     "bytes": 10796,
+     "desc_bytes": 101,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob"
+     ],
+     "model": null,
+     "body_bytes": 10427,
+     "sha": "6d28c2a96658",
+     "listing_bytes": 146
+    },
+    {
+     "name": "gsd-doc-verifier",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-doc-verifier.md",
+     "bytes": 12448,
+     "desc_bytes": 101,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob"
+     ],
+     "model": null,
+     "body_bytes": 12047,
+     "sha": "4232dcf9076e",
+     "listing_bytes": 146
+    },
+    {
+     "name": "gsd-doc-writer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-doc-writer.compact.md",
+     "bytes": 23187,
+     "desc_bytes": 152,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Write",
+      "Edit",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 22756,
+     "sha": "b7c5e84c4e47",
+     "listing_bytes": 208
+    },
+    {
+     "name": "gsd-doc-writer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-doc-writer.md",
+     "bytes": 38937,
+     "desc_bytes": 152,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Write",
+      "Edit",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 38506,
+     "sha": "47de3b2469a6",
+     "listing_bytes": 208
+    },
+    {
+     "name": "gsd-dom-verifier",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-dom-verifier.compact.md",
+     "bytes": 5912,
+     "desc_bytes": 213,
+     "tools": [
+      "Read",
+      "Write",
+      "Glob",
+      "Grep",
+      "mcp__chrome-devtools__*",
+      "mcp__claude-in-chrome__*"
+     ],
+     "model": null,
+     "body_bytes": 5403,
+     "sha": "ce5ee8e3d021",
+     "listing_bytes": 303
+    },
+    {
+     "name": "gsd-dom-verifier",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-dom-verifier.md",
+     "bytes": 7187,
+     "desc_bytes": 213,
+     "tools": [
+      "Read",
+      "Write",
+      "Glob",
+      "Grep",
+      "mcp__chrome-devtools__*",
+      "mcp__claude-in-chrome__*"
+     ],
+     "model": null,
+     "body_bytes": 6679,
+     "sha": "62ae9e745392",
+     "listing_bytes": 303
+    },
+    {
+     "name": "gsd-domain-researcher",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-domain-researcher.compact.md",
+     "bytes": 5860,
+     "desc_bytes": 364,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "WebSearch",
+      "WebFetch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*"
+     ],
+     "model": null,
+     "body_bytes": 5124,
+     "sha": "13c450e6eba6",
+     "listing_bytes": 493
+    },
+    {
+     "name": "gsd-domain-researcher",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-domain-researcher.md",
+     "bytes": 7049,
+     "desc_bytes": 364,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "WebSearch",
+      "WebFetch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*"
+     ],
+     "model": null,
+     "body_bytes": 6313,
+     "sha": "fc92b7db12cd",
+     "listing_bytes": 493
+    },
+    {
+     "name": "gsd-eval-auditor",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-eval-auditor.compact.md",
+     "bytes": 10041,
+     "desc_bytes": 306,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 9454,
+     "sha": "085c7aa60d23",
+     "listing_bytes": 358
+    },
+    {
+     "name": "gsd-eval-auditor",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-eval-auditor.md",
+     "bytes": 10659,
+     "desc_bytes": 306,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 10039,
+     "sha": "848f5c54b4ce",
+     "listing_bytes": 358
+    },
+    {
+     "name": "gsd-eval-planner",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-eval-planner.compact.md",
+     "bytes": 6555,
+     "desc_bytes": 332,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "AskUserQuestion"
+     ],
+     "model": null,
+     "body_bytes": 5913,
+     "sha": "5f08427df539",
+     "listing_bytes": 400
+    },
+    {
+     "name": "gsd-eval-planner",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-eval-planner.md",
+     "bytes": 7026,
+     "desc_bytes": 332,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "AskUserQuestion"
+     ],
+     "model": null,
+     "body_bytes": 6383,
+     "sha": "89d9f475151f",
+     "listing_bytes": 400
+    },
+    {
+     "name": "gsd-executor",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-executor.md",
+     "bytes": 49077,
+     "desc_bytes": 166,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*"
+     ],
+     "model": null,
+     "body_bytes": 48577,
+     "sha": "5b4f0fcbc780",
+     "listing_bytes": 272
+    },
+    {
+     "name": "gsd-framework-selector",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-framework-selector.compact.md",
+     "bytes": 4758,
+     "desc_bytes": 238,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "WebSearch",
+      "AskUserQuestion"
+     ],
+     "model": null,
+     "body_bytes": 4385,
+     "sha": "9c046aff86d2",
+     "listing_bytes": 310
+    },
+    {
+     "name": "gsd-framework-selector",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-framework-selector.md",
+     "bytes": 6479,
+     "desc_bytes": 238,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "WebSearch",
+      "AskUserQuestion"
+     ],
+     "model": null,
+     "body_bytes": 6105,
+     "sha": "40bfc700ca22",
+     "listing_bytes": 310
+    },
+    {
+     "name": "gsd-integration-checker",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-integration-checker.compact.md",
+     "bytes": 10079,
+     "desc_bytes": 123,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 9841,
+     "sha": "6a372a685a3d",
+     "listing_bytes": 175
+    },
+    {
+     "name": "gsd-integration-checker",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-integration-checker.md",
+     "bytes": 15461,
+     "desc_bytes": 123,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 15184,
+     "sha": "e8c57f1dec5d",
+     "listing_bytes": 175
+    },
+    {
+     "name": "gsd-intel-updater",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-intel-updater.compact.md",
+     "bytes": 15152,
+     "desc_bytes": 72,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Glob",
+      "Grep"
+     ],
+     "model": null,
+     "body_bytes": 14962,
+     "sha": "54f7f0e63664",
+     "listing_bytes": 118
+    },
+    {
+     "name": "gsd-intel-updater",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-intel-updater.md",
+     "bytes": 16285,
+     "desc_bytes": 72,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Glob",
+      "Grep"
+     ],
+     "model": null,
+     "body_bytes": 16096,
+     "sha": "c6a2caf10434",
+     "listing_bytes": 118
+    },
+    {
+     "name": "gsd-mempalace-curator",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-mempalace-curator.compact.md",
+     "bytes": 3839,
+     "desc_bytes": 233,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob"
+     ],
+     "model": null,
+     "body_bytes": 3500,
+     "sha": "37e04f56aed8",
+     "listing_bytes": 276
+    },
+    {
+     "name": "gsd-mempalace-curator",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-mempalace-curator.md",
+     "bytes": 4666,
+     "desc_bytes": 233,
+     "tools": [
+      "Read",
+      "Bash",
+      "Grep",
+      "Glob"
+     ],
+     "model": null,
+     "body_bytes": 4328,
+     "sha": "c672c3b4ad30",
+     "listing_bytes": 276
+    },
+    {
+     "name": "gsd-nyquist-auditor",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-nyquist-auditor.compact.md",
+     "bytes": 6812,
+     "desc_bytes": 95,
+     "tools": [
+      "- Read\n  - Write\n  - Edit\n  - Bash\n  - Glob\n  - Grep\n  - Skill"
+     ],
+     "model": null,
+     "body_bytes": 6569,
+     "sha": "b9ac9cc8bc51",
+     "listing_bytes": 176
+    },
+    {
+     "name": "gsd-nyquist-auditor",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-nyquist-auditor.md",
+     "bytes": 7357,
+     "desc_bytes": 95,
+     "tools": [
+      "- Read\n  - Write\n  - Edit\n  - Bash\n  - Glob\n  - Grep\n  - Skill"
+     ],
+     "model": null,
+     "body_bytes": 7115,
+     "sha": "01688cba877d",
+     "listing_bytes": 176
+    },
+    {
+     "name": "gsd-pattern-mapper",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-pattern-mapper.compact.md",
+     "bytes": 11182,
+     "desc_bytes": 187,
+     "tools": [
+      "Read",
+      "Bash",
+      "Glob",
+      "Grep",
+      "Write"
+     ],
+     "model": null,
+     "body_bytes": 10720,
+     "sha": "442672011abe",
+     "listing_bytes": 234
+    },
+    {
+     "name": "gsd-pattern-mapper",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-pattern-mapper.md",
+     "bytes": 13261,
+     "desc_bytes": 187,
+     "tools": [
+      "Read",
+      "Bash",
+      "Glob",
+      "Grep",
+      "Write"
+     ],
+     "model": null,
+     "body_bytes": 12800,
+     "sha": "6e2e22884e59",
+     "listing_bytes": 234
+    },
+    {
+     "name": "gsd-phase-researcher",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-phase-researcher.md",
+     "bytes": 44728,
+     "desc_bytes": 139,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill",
+      "WebSearch",
+      "WebFetch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*",
+      "mcp__firecrawl__*",
+      "mcp__exa__*",
+      "mcp__tavily__*",
+      "mcp__ref__*",
+      "mcp__jina__*",
+      "mcp__perplexity__*"
+     ],
+     "model": null,
+     "body_bytes": 44133,
+     "sha": "1b9575298658",
+     "listing_bytes": 369
+    },
+    {
+     "name": "gsd-plan-checker",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-plan-checker.md",
+     "bytes": 49195,
+     "desc_bytes": 137,
+     "tools": [
+      "Read",
+      "Bash",
+      "Glob",
+      "Grep",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 48910,
+     "sha": "32c4638016d3",
+     "listing_bytes": 182
+    },
+    {
+     "name": "gsd-planner",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-planner.md",
+     "bytes": 48864,
+     "desc_bytes": 145,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep",
+      "Skill",
+      "WebFetch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*"
+     ],
+     "model": null,
+     "body_bytes": 48376,
+     "sha": "91c89856c455",
+     "listing_bytes": 260
+    },
+    {
+     "name": "gsd-project-researcher",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-project-researcher.compact.md",
+     "bytes": 19034,
+     "desc_bytes": 189,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill",
+      "WebSearch",
+      "WebFetch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*",
+      "mcp__firecrawl__*",
+      "mcp__exa__*",
+      "mcp__tavily__*",
+      "mcp__ref__*",
+      "mcp__jina__*",
+      "mcp__perplexity__*"
+     ],
+     "model": null,
+     "body_bytes": 18393,
+     "sha": "8cae5bd9ecbc",
+     "listing_bytes": 415
+    },
+    {
+     "name": "gsd-project-researcher",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-project-researcher.md",
+     "bytes": 20362,
+     "desc_bytes": 189,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill",
+      "WebSearch",
+      "WebFetch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*",
+      "mcp__firecrawl__*",
+      "mcp__exa__*",
+      "mcp__tavily__*",
+      "mcp__ref__*",
+      "mcp__jina__*",
+      "mcp__perplexity__*"
+     ],
+     "model": null,
+     "body_bytes": 19721,
+     "sha": "8560887ca20a",
+     "listing_bytes": 415
+    },
+    {
+     "name": "gsd-research-synthesizer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-research-synthesizer.compact.md",
+     "bytes": 11187,
+     "desc_bytes": 141,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 10770,
+     "sha": "5f7aa5cabb8c",
+     "listing_bytes": 189
+    },
+    {
+     "name": "gsd-research-synthesizer",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-research-synthesizer.md",
+     "bytes": 11983,
+     "desc_bytes": 141,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 11567,
+     "sha": "79ac394c793c",
+     "listing_bytes": 189
+    },
+    {
+     "name": "gsd-roadmapper",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-roadmapper.compact.md",
+     "bytes": 19795,
+     "desc_bytes": 163,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Glob",
+      "Grep",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 19354,
+     "sha": "5e1f6eede36c",
+     "listing_bytes": 213
+    },
+    {
+     "name": "gsd-roadmapper",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-roadmapper.md",
+     "bytes": 24503,
+     "desc_bytes": 163,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Glob",
+      "Grep",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 24061,
+     "sha": "da5bc83e8616",
+     "listing_bytes": 213
+    },
+    {
+     "name": "gsd-security-auditor",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-security-auditor.compact.md",
+     "bytes": 8190,
+     "desc_bytes": 183,
+     "tools": [
+      "- Read\n  - Bash\n  - Glob\n  - Grep\n  - Skill"
+     ],
+     "model": null,
+     "body_bytes": 7880,
+     "sha": "a85f1cff50fe",
+     "listing_bytes": 246
+    },
+    {
+     "name": "gsd-security-auditor",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-security-auditor.md",
+     "bytes": 9445,
+     "desc_bytes": 183,
+     "tools": [
+      "- Read\n  - Bash\n  - Glob\n  - Grep\n  - Skill"
+     ],
+     "model": null,
+     "body_bytes": 9134,
+     "sha": "851de08a1d2b",
+     "listing_bytes": 246
+    },
+    {
+     "name": "gsd-ui-auditor",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-ui-auditor.compact.md",
+     "bytes": 14596,
+     "desc_bytes": 133,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 14187,
+     "sha": "bbd1c8e0e142",
+     "listing_bytes": 183
+    },
+    {
+     "name": "gsd-ui-auditor",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-ui-auditor.md",
+     "bytes": 15651,
+     "desc_bytes": 133,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 15210,
+     "sha": "d6c3ca42919a",
+     "listing_bytes": 183
+    },
+    {
+     "name": "gsd-ui-checker",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-ui-checker.compact.md",
+     "bytes": 12910,
+     "desc_bytes": 141,
+     "tools": [
+      "Read",
+      "Bash",
+      "Glob",
+      "Grep",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 12663,
+     "sha": "6bab4b3735db",
+     "listing_bytes": 184
+    },
+    {
+     "name": "gsd-ui-checker",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-ui-checker.md",
+     "bytes": 19455,
+     "desc_bytes": 141,
+     "tools": [
+      "Read",
+      "Bash",
+      "Glob",
+      "Grep",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 19169,
+     "sha": "de98eafe7919",
+     "listing_bytes": 184
+    },
+    {
+     "name": "gsd-ui-researcher",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-ui-researcher.compact.md",
+     "bytes": 18334,
+     "desc_bytes": 182,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill",
+      "WebSearch",
+      "WebFetch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*",
+      "mcp__firecrawl__*",
+      "mcp__exa__*",
+      "mcp__tavily__*",
+      "mcp__ref__*",
+      "mcp__jina__*"
+     ],
+     "model": null,
+     "body_bytes": 17717,
+     "sha": "38f8fb055ab1",
+     "listing_bytes": 389
+    },
+    {
+     "name": "gsd-ui-researcher",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-ui-researcher.md",
+     "bytes": 21013,
+     "desc_bytes": 182,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill",
+      "WebSearch",
+      "WebFetch",
+      "mcp__context7__*",
+      "mcp__plugin_context7_context7__*",
+      "mcp__firecrawl__*",
+      "mcp__exa__*",
+      "mcp__tavily__*",
+      "mcp__ref__*",
+      "mcp__jina__*"
+     ],
+     "model": null,
+     "body_bytes": 20396,
+     "sha": "1d0cd773d9ae",
+     "listing_bytes": 389
+    },
+    {
+     "name": "gsd-user-profiler",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-user-profiler.compact.md",
+     "bytes": 6747,
+     "desc_bytes": 185,
+     "tools": [
+      "Read"
+     ],
+     "model": null,
+     "body_bytes": 6476,
+     "sha": "7abf70a8d92b",
+     "listing_bytes": 206
+    },
+    {
+     "name": "gsd-user-profiler",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-user-profiler.md",
+     "bytes": 8753,
+     "desc_bytes": 185,
+     "tools": [
+      "Read"
+     ],
+     "model": null,
+     "body_bytes": 8481,
+     "sha": "cf2fc5dcae94",
+     "listing_bytes": 206
+    },
+    {
+     "name": "gsd-verifier",
+     "file": "C:\\Users\\User\\.claude\\agents\\gsd-verifier.md",
+     "bytes": 49177,
+     "desc_bytes": 172,
+     "tools": [
+      "Read",
+      "Write",
+      "Bash",
+      "Grep",
+      "Glob",
+      "Skill"
+     ],
+     "model": null,
+     "body_bytes": 48697,
+     "sha": "d91c889e7bc7",
+     "listing_bytes": 220
+    },
+    {
+     "name": "hawkins",
+     "file": "C:\\Users\\User\\.claude\\agents\\hawkins.md",
+     "bytes": 2930,
+     "desc_bytes": 726,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 2124,
+     "sha": "b2b61b2f0086",
+     "listing_bytes": 755
+    },
+    {
+     "name": "musk",
+     "file": "C:\\Users\\User\\.claude\\agents\\musk.md",
+     "bytes": 2494,
+     "desc_bytes": 642,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 1777,
+     "sha": "07dade14698a",
+     "listing_bytes": 668
+    },
+    {
+     "name": "omni-singularity",
+     "file": "C:\\Users\\User\\.claude\\agents\\omni-singularity.md",
+     "bytes": 5666,
+     "desc_bytes": 449,
+     "tools": [
+      "Bash",
+      "Read",
+      "Glob",
+      "Grep",
+      "Write"
+     ],
+     "model": null,
+     "body_bytes": 5123,
+     "sha": "3c73fb004776",
+     "listing_bytes": 494
+    },
+    {
+     "name": "oneshot-architect-auditor",
+     "file": "C:\\Users\\User\\.claude\\agents\\oneshot-architect-auditor.md",
+     "bytes": 37847,
+     "desc_bytes": 674,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash",
+      "WebFetch"
+     ],
+     "model": "opus",
+     "body_bytes": 37055,
+     "sha": "7b042ad911f5",
+     "listing_bytes": 731
+    },
+    {
+     "name": "pp-cascade-guard",
+     "file": "C:\\Users\\User\\.claude\\agents\\pp-cascade-guard.md",
+     "bytes": 2943,
+     "desc_bytes": 361,
+     "tools": [
+      "Bash",
+      "Read",
+      "Grep"
+     ],
+     "model": null,
+     "body_bytes": 2501,
+     "sha": "be4961255bba",
+     "listing_bytes": 393
+    },
+    {
+     "name": "pp-ceps-analyst",
+     "file": "C:\\Users\\User\\.claude\\agents\\pp-ceps-analyst.md",
+     "bytes": 3717,
+     "desc_bytes": 385,
+     "tools": [
+      "Bash",
+      "Read"
+     ],
+     "model": null,
+     "body_bytes": 3255,
+     "sha": "9a8ee97a6746",
+     "listing_bytes": 410
+    },
+    {
+     "name": "pp-code-reviewer",
+     "file": "C:\\Users\\User\\.claude\\agents\\pp-code-reviewer.md",
+     "bytes": 4420,
+     "desc_bytes": 510,
+     "tools": [
+      "Bash",
+      "Read",
+      "Grep",
+      "Glob"
+     ],
+     "model": null,
+     "body_bytes": 3823,
+     "sha": "5755852f2824",
+     "listing_bytes": 548
+    },
+    {
+     "name": "pp-error-analyst",
+     "file": "C:\\Users\\User\\.claude\\agents\\pp-error-analyst.md",
+     "bytes": 2061,
+     "desc_bytes": 362,
+     "tools": [
+      "Read",
+      "Grep",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 1614,
+     "sha": "a209ef6f935d",
+     "listing_bytes": 394
+    },
+    {
+     "name": "pp-monitor",
+     "file": "C:\\Users\\User\\.claude\\agents\\pp-monitor.md",
+     "bytes": 2379,
+     "desc_bytes": 345,
+     "tools": [
+      "Bash",
+      "Read"
+     ],
+     "model": null,
+     "body_bytes": 1964,
+     "sha": "c71d5ef7ffa5",
+     "listing_bytes": 365
+    },
+    {
+     "name": "pp-never-again",
+     "file": "C:\\Users\\User\\.claude\\agents\\pp-never-again.md",
+     "bytes": 3816,
+     "desc_bytes": 375,
+     "tools": [
+      "Bash",
+      "Read",
+      "Write"
+     ],
+     "model": null,
+     "body_bytes": 3361,
+     "sha": "13ea2422666a",
+     "listing_bytes": 406
+    },
+    {
+     "name": "pp-premise-guardian",
+     "file": "C:\\Users\\User\\.claude\\agents\\pp-premise-guardian.md",
+     "bytes": 2304,
+     "desc_bytes": 398,
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob"
+     ],
+     "model": null,
+     "body_bytes": 1819,
+     "sha": "cbc0d384ca7d",
+     "listing_bytes": 433
+    },
+    {
+     "name": "pp-spec-guardian",
+     "file": "C:\\Users\\User\\.claude\\agents\\pp-spec-guardian.md",
+     "bytes": 2416,
+     "desc_bytes": 377,
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob"
+     ],
+     "model": null,
+     "body_bytes": 1957,
+     "sha": "75bcdff9d90f",
+     "listing_bytes": 409
+    },
+    {
+     "name": "pp-tco-advisor",
+     "file": "C:\\Users\\User\\.claude\\agents\\pp-tco-advisor.md",
+     "bytes": 3290,
+     "desc_bytes": 335,
+     "tools": [
+      "Bash",
+      "Read"
+     ],
+     "model": null,
+     "body_bytes": 2879,
+     "sha": "2ec2dc7d4d95",
+     "listing_bytes": 359
+    },
+    {
+     "name": "pp-token-auditor",
+     "file": "C:\\Users\\User\\.claude\\agents\\pp-token-auditor.md",
+     "bytes": 1969,
+     "desc_bytes": 398,
+     "tools": [
+      "- Bash\n  - Read"
+     ],
+     "model": null,
+     "body_bytes": 1500,
+     "sha": "7f4686105d32",
+     "listing_bytes": 429
+    },
+    {
+     "name": "pp-uqf-auditor",
+     "file": "C:\\Users\\User\\.claude\\agents\\pp-uqf-auditor.md",
+     "bytes": 2884,
+     "desc_bytes": 357,
+     "tools": [
+      "Bash",
+      "Read",
+      "Glob"
+     ],
+     "model": null,
+     "body_bytes": 2446,
+     "sha": "f7085b0decf7",
+     "listing_bytes": 387
+    },
+    {
+     "name": "rtk-testing-specialist",
+     "file": "C:\\Users\\User\\.claude\\agents\\rtk-testing-specialist.md",
+     "bytes": 13135,
+     "desc_bytes": 78,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Grep",
+      "Glob"
+     ],
+     "model": "sonnet",
+     "body_bytes": 12948,
+     "sha": "121560797ede",
+     "listing_bytes": 135
+    },
+    {
+     "name": "rust-rtk",
+     "file": "C:\\Users\\User\\.claude\\agents\\rust-rtk.md",
+     "bytes": 15991,
+     "desc_bytes": 91,
+     "tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Bash",
+      "Grep",
+      "Glob"
+     ],
+     "model": "sonnet",
+     "body_bytes": 15794,
+     "sha": "070c5041ea17",
+     "listing_bytes": 145
+    },
+    {
+     "name": "steve-jobs",
+     "file": "C:\\Users\\User\\.claude\\agents\\steve-jobs.md",
+     "bytes": 5643,
+     "desc_bytes": 470,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 5090,
+     "sha": "046007651564",
+     "listing_bytes": 502
+    },
+    {
+     "name": "woz",
+     "file": "C:\\Users\\User\\.claude\\agents\\woz.md",
+     "bytes": 5612,
+     "desc_bytes": 486,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 5051,
+     "sha": "2f17e57e31a5",
+     "listing_bytes": 511
+    }
+   ]
+  },
+  "pack:revenue-forensics": {
+   "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics",
+   "files": 14,
+   "unique_names": 14,
+   "total_bytes": 200634,
+   "resident_listing_bytes": 11887,
+   "collisions": {},
+   "agents": [
+    {
+     "name": "analytics-measurement-auditor",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\analytics-measurement-auditor.md",
+     "bytes": 12676,
+     "desc_bytes": 823,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 11737,
+     "sha": "949b7614ef8e",
+     "listing_bytes": 889
+    },
+    {
+     "name": "behavioral-psychologist",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\behavioral-psychologist.md",
+     "bytes": 13237,
+     "desc_bytes": 799,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 12328,
+     "sha": "c1777f117bb7",
+     "listing_bytes": 859
+    },
+    {
+     "name": "competitive-intelligence-analyst",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\competitive-intelligence-analyst.md",
+     "bytes": 12133,
+     "desc_bytes": 733,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 11282,
+     "sha": "e46dc63d1b76",
+     "listing_bytes": 802
+    },
+    {
+     "name": "cro-auditor",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\cro-auditor.md",
+     "bytes": 15105,
+     "desc_bytes": 803,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 14202,
+     "sha": "97fa89b6d70b",
+     "listing_bytes": 851
+    },
+    {
+     "name": "customer-journey-forensics",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\customer-journey-forensics.md",
+     "bytes": 13012,
+     "desc_bytes": 764,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 12135,
+     "sha": "1dfe90da0b92",
+     "listing_bytes": 827
+    },
+    {
+     "name": "growth-experimentation-scientist",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\growth-experimentation-scientist.md",
+     "bytes": 13264,
+     "desc_bytes": 864,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 12281,
+     "sha": "8bd3a3cff894",
+     "listing_bytes": 933
+    },
+    {
+     "name": "offer-architect",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\offer-architect.md",
+     "bytes": 12854,
+     "desc_bytes": 735,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 12015,
+     "sha": "89a8ac7f7fbb",
+     "listing_bytes": 787
+    },
+    {
+     "name": "pmf-investigator",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\pmf-investigator.md",
+     "bytes": 12364,
+     "desc_bytes": 810,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 11450,
+     "sha": "fa4260cb7e86",
+     "listing_bytes": 863
+    },
+    {
+     "name": "positioning-strategist",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\positioning-strategist.md",
+     "bytes": 12405,
+     "desc_bytes": 748,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 11548,
+     "sha": "8f5e96066d06",
+     "listing_bytes": 807
+    },
+    {
+     "name": "pricing-value-economist",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\pricing-value-economist.md",
+     "bytes": 30540,
+     "desc_bytes": 1015,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 29414,
+     "sha": "df5af60bdd5f",
+     "listing_bytes": 1075
+    },
+    {
+     "name": "revenue-forensics-director",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\revenue-forensics-director.md",
+     "bytes": 17044,
+     "desc_bytes": 768,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 16161,
+     "sha": "c7e884221b73",
+     "listing_bytes": 831
+    },
+    {
+     "name": "revenue-forensics-synthesizer",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\revenue-forensics-synthesizer.md",
+     "bytes": 8936,
+     "desc_bytes": 609,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep"
+     ],
+     "model": null,
+     "body_bytes": 8230,
+     "sha": "4ee15d54e815",
+     "listing_bytes": 654
+    },
+    {
+     "name": "sales-process-auditor",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\sales-process-auditor.md",
+     "bytes": 12727,
+     "desc_bytes": 744,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 11873,
+     "sha": "02443e802ff7",
+     "listing_bytes": 802
+    },
+    {
+     "name": "unit-economics-analyst",
+     "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\agent-packs\\revenue-forensics\\unit-economics-analyst.md",
+     "bytes": 14337,
+     "desc_bytes": 848,
+     "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+     ],
+     "model": null,
+     "body_bytes": 13379,
+     "sha": "1f561240d2c5",
+     "listing_bytes": 907
+    }
+   ]
+  }
+ },
+ "unreadable": [],
+ "dormant_repo_agents": [
+  "comment-analyzer",
+  "cpp-reviewer",
+  "go-reviewer",
+  "harness-optimizer",
+  "java-reviewer",
+  "python-reviewer",
+  "rust-reviewer",
+  "silent-failure-hunter",
+  "type-design-analyzer",
+  "typescript-reviewer"
+ ],
+ "duplication": {
+  "shared_shingles": 3288,
+  "per_agent_shared_share": {
+   "harness-optimizer": 0.668,
+   "type-design-analyzer": 0.646,
+   "garyvee": 0.64,
+   "silent-failure-hunter": 0.625,
+   "comment-analyzer": 0.612,
+   "musk": 0.598,
+   "gsd-project-researcher": 0.521,
+   "go-reviewer": 0.422,
+   "gsd-eval-auditor": 0.391,
+   "cpp-reviewer": 0.39,
+   "gsd-research-synthesizer": 0.382,
+   "python-reviewer": 0.367,
+   "gsd-domain-researcher": 0.344,
+   "gsd-ui-researcher": 0.308,
+   "hawkins": 0.293,
+   "rust-reviewer": 0.275,
+   "steve-jobs": 0.265,
+   "woz": 0.264,
+   "gsd-phase-researcher": 0.235,
+   "gsd-intel-updater": 0.226,
+   "pp-ceps-analyst": 0.181,
+   "pp-uqf-auditor": 0.175,
+   "pp-monitor": 0.172,
+   "pp-never-again": 0.169,
+   "typescript-reviewer": 0.168,
+   "gsd-debug-session-manager": 0.163,
+   "pp-cascade-guard": 0.16,
+   "gsd-nyquist-auditor": 0.134,
+   "java-reviewer": 0.126,
+   "pp-tco-advisor": 0.126,
+   "gsd-planner": 0.123,
+   "gsd-advisor-researcher": 0.111,
+   "gsd-executor": 0.111,
+   "rtk-testing-specialist": 0.111,
+   "pp-error-analyst": 0.108,
+   "gsd-security-auditor": 0.106,
+   "pp-code-reviewer": 0.101,
+   "competitive-intelligence-analyst": 0.1,
+   "positioning-strategist": 0.1,
+   "sales-process-auditor": 0.097,
+   "offer-architect": 0.092,
+   "gsd-code-fixer": 0.091,
+   "gsd-eval-planner": 0.091,
+   "gsd-plan-checker": 0.091,
+   "pmf-investigator": 0.091,
+   "gsd-ai-researcher": 0.09,
+   "customer-journey-forensics": 0.09,
+   "gsd-pattern-mapper": 0.087,
+   "rust-rtk": 0.087,
+   "behavioral-psychologist": 0.084,
+   "gsd-doc-classifier": 0.08,
+   "cro-auditor": 0.079,
+   "pp-spec-guardian": 0.076,
+   "gsd-verifier": 0.074,
+   "gsd-assumptions-analyzer": 0.073,
+   "gsd-debugger": 0.073,
+   "analytics-measurement-auditor": 0.073,
+   "gsd-codebase-mapper": 0.071,
+   "gsd-integration-checker": 0.071,
+   "pp-premise-guardian": 0.071,
+   "gsd-doc-verifier": 0.07,
+   "unit-economics-analyst": 0.07,
+   "gsd-doc-synthesizer": 0.067,
+   "omni-singularity": 0.067,
+   "gsd-code-reviewer": 0.062,
+   "gsd-ui-checker": 0.062,
+   "growth-experimentation-scientist": 0.061,
+   "gsd-ui-auditor": 0.056,
+   "gsd-mempalace-curator": 0.044,
+   "graphify-librarian": 0.041,
+   "graphify-route-governor": 0.039,
+   "gsd-roadmapper": 0.039,
+   "cdio-core": 0.034,
+   "gsd-dom-verifier": 0.034,
+   "cdio-standards-librarian": 0.028,
+   "revenue-forensics-synthesizer": 0.028,
+   "graphify-writeback": 0.026,
+   "gsd-user-profiler": 0.025,
+   "pricing-value-economist": 0.025,
+   "gsd-doc-writer": 0.023,
+   "gsd-framework-selector": 0.023,
+   "cdio-reviewer": 0.018,
+   "revenue-forensics-director": 0.012,
+   "oneshot-architect-auditor": 0.0,
+   "code-reviewer": 0.0,
+   "pp-token-auditor": 0.0
+  },
+  "top_pairs": [
+   {
+    "a": "gsd-phase-researcher",
+    "b": "gsd-project-researcher",
+    "shared_shingles": 1220
+   },
+   {
+    "a": "gsd-phase-researcher",
+    "b": "gsd-ui-researcher",
+    "shared_shingles": 752
+   },
+   {
+    "a": "gsd-executor",
+    "b": "gsd-planner",
+    "shared_shingles": 720
+   },
+   {
+    "a": "gsd-executor",
+    "b": "gsd-phase-researcher",
+    "shared_shingles": 699
+   },
+   {
+    "a": "gsd-phase-researcher",
+    "b": "gsd-planner",
+    "shared_shingles": 698
+   },
+   {
+    "a": "gsd-project-researcher",
+    "b": "gsd-ui-researcher",
+    "shared_shingles": 698
+   },
+   {
+    "a": "gsd-planner",
+    "b": "gsd-ui-researcher",
+    "shared_shingles": 667
+   },
+   {
+    "a": "gsd-executor",
+    "b": "gsd-ui-researcher",
+    "shared_shingles": 666
+   },
+   {
+    "a": "gsd-planner",
+    "b": "gsd-project-researcher",
+    "shared_shingles": 643
+   },
+   {
+    "a": "gsd-executor",
+    "b": "gsd-project-researcher",
+    "shared_shingles": 631
+   }
+  ]
+ }
+}

@@ -1,0 +1,60 @@
+[
+ {
+  "label": "flat-listed",
+  "catalog_only": false,
+  "desc_bytes": 310,
+  "model": "haiku",
+  "measured_at": "2026-09-30T18:11:24Z",
+  "rows": [
+   {
+    "n": 0,
+    "status": "MEASURED",
+    "context_tokens": 68288,
+    "input_tokens": 10,
+    "cache_creation_input_tokens": 50342,
+    "cache_read_input_tokens": 17936,
+    "seconds": 76.0
+   },
+   {
+    "n": 100,
+    "status": "MEASURED",
+    "context_tokens": 77082,
+    "input_tokens": 10,
+    "cache_creation_input_tokens": 59136,
+    "cache_read_input_tokens": 17936,
+    "seconds": 34.9
+   },
+   {
+    "n": 400,
+    "status": "MEASURED",
+    "context_tokens": 97195,
+    "input_tokens": 10,
+    "cache_creation_input_tokens": 79249,
+    "cache_read_input_tokens": 17936,
+    "seconds": 58.1
+   }
+  ],
+  "tokens_per_agent": 72.27,
+  "note": "offset = global estate + hooks, shared by every N; slope is the per-agent cost"
+ },
+ {
+  "label": "flat-listed-1000",
+  "catalog_only": false,
+  "desc_bytes": 310,
+  "model": "haiku",
+  "measured_at": "2026-09-30T18:12:56Z",
+  "rows": [
+   {
+    "n": 1000,
+    "status": "MEASURED",
+    "context_tokens": 135563,
+    "input_tokens": 10,
+    "cache_creation_input_tokens": 117617,
+    "cache_read_input_tokens": 17936,
+    "seconds": 58.3
+   }
+  ],
+  "tokens_per_agent": null,
+  "note": "offset = global estate + hooks, shared by every N; slope is the per-agent cost"
+ }
+]
