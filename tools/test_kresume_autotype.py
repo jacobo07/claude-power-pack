@@ -289,8 +289,52 @@ def hub_gates():
     got = spawns_at_arm()
     daemon_calls = [c for c in got.get("calls", []) if "auto-compact-sendkeys-daemon.ps1" in c]
     check("V-KRA-HUB-LAUNCHES-WITHOUT-FLUSH",
-          got.get("armed") and len(daemon_calls) == 1 and daemon_calls[0].startswith("powershell.exe"),
+          got.get("armed") and len(daemon_calls) == 1 and daemon_calls[0].startswith("wscript.exe")
+          and "hidden_launch.vbs" in daemon_calls[0],
           f"got={got}")
+
+    # --- the launch must actually BOOT (2026-09-30, 614697c1). The recorded-spawn gate above
+    # pinned `powershell.exe` for a year of runs while that exact launch never executed a line:
+    # the note above blamed the sandbox, but a detached powershell never starts ANYWHERE
+    # (DETACHED_PROCESS = no console), and 0 of 10 real arms that day wrote `daemon start`.
+    # So this drives the hub's real launch, unmocked, against a stub daemon that writes a
+    # marker, and pairs it with the old shape as a control that must stay dark.
+    def real_launch_boots(old_shape=False, wait_s=25.0):
+        home = fresh()
+        seed_capsule(home, cwd)
+        hooks = home / ".claude" / "hooks"
+        hooks.mkdir(parents=True, exist_ok=True)
+        marker = home / "booted.txt"
+        stub = hooks / "auto-compact-sendkeys-daemon.ps1"
+        stub.write_text(f"\"$PID\" | Out-File -FilePath '{marker}' -Encoding ascii\r\n", encoding="ascii")
+        if old_shape:
+            js = ("const cp=require('child_process');"
+                  "const c=cp.spawn('powershell.exe',['-NoProfile','-NonInteractive','-WindowStyle','Hidden',"
+                  "'-ExecutionPolicy','Bypass','-File',process.argv[1]],"
+                  "{detached:true,stdio:'ignore',windowsHide:true});c.unref();process.exit(0);")
+            args = ["node", "-e", js, str(stub)]
+        else:
+            js = ("const h=require(process.argv[1]);"
+                  "const line=h.hookRolloverResume(process.argv[3],process.argv[2]);"
+                  "const armed=line?h.armKresumeAutotype('succ-3333',process.argv[3],'t',''):null;"
+                  "process.stdout.write(JSON.stringify({armed:armed}));process.exit(0);")
+            args = ["node", "-e", js, str(HUB), "clear", cwd]
+        env = dict(os.environ)
+        env.update({"USERPROFILE": str(home), "HOME": str(home), "AC_DAEMON_DIR": str(hooks)})
+        env.pop("CPP_KRESUME_AUTOTYPE", None)
+        r = subprocess.run(args, env=env, capture_output=True, text=True, timeout=60)
+        deadline = time.time() + wait_s
+        while time.time() < deadline and not marker.exists():
+            time.sleep(0.25)
+        return marker.exists(), (r.stdout or "")[-200:]
+
+    booted, out = real_launch_boots()
+    check("V-KRA-HUB-LAUNCH-BOOTS", booted and '"armed"' in out and "null" not in out,
+          f"stub daemon ran from the hub's real launch: {booted}; hub={out!r}")
+    booted_old, _ = real_launch_boots(old_shape=True, wait_s=12.0)
+    check("V-KRA-HUB-LAUNCH-CONTROL-OLD-SHAPE-DARK", not booted_old,
+          f"detached powershell (the pre-fix shape) booted={booted_old}; must be False, or this "
+          "gate cannot tell a working launch from a dead one")
 
     got = spawns_at_arm({"CPP_KRESUME_AUTOTYPE": "off"})
     check("V-KRA-HUB-KILL-SWITCH-NO-LAUNCH",

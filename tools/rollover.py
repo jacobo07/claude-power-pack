@@ -231,6 +231,30 @@ def session_cwd(session_id: str) -> Optional[str]:
     return None
 
 
+def host_identity() -> Optional[dict]:
+    """The claude process this code runs under, as {pid, proc_start}, or None.
+
+    `/clear` starts a new session INSIDE the same claude process, so the process is the one
+    thing a predecessor and its successor share; the successor's transcript names only itself.
+    Measured 2026-09-30 (614697c1): a sibling pane in the same repo sealed 9e694f9a eleven
+    minutes after this pane's predecessor sealed f3099e7b, and newest-for-this-directory handed
+    the successor the sibling's capsule -- locking the sibling's real successor out (exit 5).
+    proc_start comes from the host registry (~/.claude/sessions/<pid>.json) so a recycled pid
+    cannot impersonate the sealer. None when either half is missing: unknown never matches."""
+    pid = os.environ.get("CLAUDE_PID") or ""
+    if not pid.isdigit():
+        return None
+    d = Path(os.environ.get("CPP_CLAUDE_SESSIONS_DIR") or (Path.home() / ".claude" / "sessions"))
+    try:
+        rec = json.loads((d / f"{pid}.json").read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        return None
+    start = rec.get("procStart") if isinstance(rec, dict) else None
+    if not start or str(rec.get("pid")) != pid:
+        return None
+    return {"pid": int(pid), "proc_start": str(start)}
+
+
 # ------------------------------------------------------------------ goal + handoff
 def goal_pointer(cwd: str, writes: list[str], explicit: Optional[str] = None) -> dict:
     if explicit:
@@ -295,6 +319,7 @@ def compile_capsule(session_id: str, cwd: str, transcript: Optional[str], *, goa
     return {
         "schema": SCHEMA, "session_id": session_id, "cwd": str(cwd), "created": _iso(),
         "session_cwd": session_cwd(session_id),
+        "host": host_identity(),
         "transcript": str(tp) if tp else None,
         "repo": repo_facts(cwd), "goal": gp,
         "obligations": items or [], "obligations_source": source if items else None,
@@ -625,8 +650,19 @@ def capsule_is_here(cap: dict, cwd: str) -> bool:
     return here in {k for k in keys if k}
 
 
+def same_host(cap: dict, host: Optional[dict]) -> bool:
+    """True when the capsule was sealed by the claude process `host` names (pid AND start)."""
+    h = cap.get("host") if isinstance(cap.get("host"), dict) else None
+    return bool(host and h and h.get("pid") == host.get("pid") and h.get("proc_start")
+                and str(h.get("proc_start")) == str(host.get("proc_start")))
+
+
 def newest_capsule(cwd: str, state_dir: Optional[Path] = None, exclude: str = "",
-                   skipped: Optional[list] = None) -> Optional[dict]:
+                   skipped: Optional[list] = None, host: Optional[dict] = None) -> Optional[dict]:
+    """The capsule a successor here adopts: the newest one sealed by ITS OWN claude process
+    (its predecessor, see host_identity) when one exists, else the newest here. The fallback
+    keeps a restart in a new process, and capsules sealed before `host` was recorded,
+    resumable exactly as before."""
     d = (state_dir or STATE_DIR) / "capsules"
     best = None
     for p in sorted(d.glob("*.json"), key=lambda q: q.stat().st_mtime, reverse=True) if d.is_dir() else []:
@@ -644,8 +680,12 @@ def newest_capsule(cwd: str, state_dir: Optional[Path] = None, exclude: str = ""
             if skipped is not None:
                 skipped.append(cap.get("session_id"))
             continue
-        best = cap
-        break
+        if same_host(cap, host):
+            return cap
+        if best is None:
+            best = cap
+        if host is None:
+            break
     return best
 
 
@@ -771,7 +811,7 @@ def main(argv=None) -> int:
         skipped: list = []
         cap = (json.loads(capsule_path(a.from_session).read_text(encoding="utf-8"))
                if a.from_session and capsule_path(a.from_session).is_file()
-               else newest_capsule(a.cwd, exclude=a.claimant, skipped=skipped))
+               else newest_capsule(a.cwd, exclude=a.claimant, skipped=skipped, host=host_identity()))
         if not cap:
             print("No sealed, unretired capsule for this directory in the last 24 h. Nothing to resume.")
             if skipped:

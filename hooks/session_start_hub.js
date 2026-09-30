@@ -357,6 +357,23 @@ function rolloverFocus(cwd, source) {
 // Kill switch CPP_KRESUME_AUTOTYPE=off (the card still shows). Returns the flag path or null.
 const KRESUME_DAEMON_PS1 = path.join(HOME, '.claude', 'hooks', 'auto-compact-sendkeys-daemon.ps1');
 
+// How the daemon is launched. Measured 2026-09-30 (614697c1): spawn('powershell.exe',
+// {detached:true}) NEVER starts the script -- DETACHED_PROCESS leaves the console host with
+// no console and it dies before line 1, with or without -WindowStyle Hidden. Attached, it
+// boots but dies with node (libuv's kill-on-close job). 0 of 10 arms that day produced a
+// `daemon start`; every /kresume that did arrive came from the Stop launcher one turn
+// late. wscript.exe is a GUI-subsystem host that needs no console, survives a detached
+// spawn, and hidden_launch.vbs starts powershell hidden from birth.
+// Pinned for real (no mock) by V-KRA-HUB-LAUNCH-BOOTS in test_kresume_autotype.py.
+const KRESUME_LAUNCHER_VBS = path.join(PP_PATH, 'tools', 'hidden_launch.vbs');
+
+function kresumeLaunchSpec() {
+  return {
+    label: 'kresume_autotype', cmd: 'wscript.exe', cwd: PP_PATH, log: null, envDelta: null,
+    args: ['//B', '//Nologo', KRESUME_LAUNCHER_VBS, KRESUME_DAEMON_PS1],
+  };
+}
+
 function armKresumeAutotype(sessionId, cwd, transcriptPath, focus) {
   try {
     const sw = String(process.env.CPP_KRESUME_AUTOTYPE || '').trim().toLowerCase();
@@ -391,11 +408,11 @@ function armKresumeAutotype(sessionId, cwd, transcriptPath, focus) {
       note('SKIP kresume_autotype (missing target ' + KRESUME_DAEMON_PS1 + ')');
       return flag;
     }
-    spawnNow({
-      label: 'kresume_autotype', cmd: 'powershell.exe', cwd: PP_PATH, log: null, envDelta: null,
-      args: ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden',
-        '-ExecutionPolicy', 'Bypass', '-File', KRESUME_DAEMON_PS1],
-    });
+    if (!fs.existsSync(KRESUME_LAUNCHER_VBS)) {
+      note('SKIP kresume_autotype (missing launcher ' + KRESUME_LAUNCHER_VBS + ')');
+      return flag;   // the Stop launcher still serves the flag, one turn late
+    }
+    spawnNow(kresumeLaunchSpec());
     note('kresume autotype armed sid=' + safeSid);
     return flag;
   } catch (err) {
