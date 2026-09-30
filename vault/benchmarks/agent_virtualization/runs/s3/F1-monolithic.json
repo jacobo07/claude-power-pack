@@ -1,0 +1,58 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "monolithic",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 149.0,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 493,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "C:/Users/User/.claude/state/agent_images/oneshot-architect-auditor-f83c8d193e667054.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 8067,
+ "reply": "## Audit Result\n\n**Plan reviewed:** Webhook-driven payments ledger with a new `payments_registry` module, Stripe charge-then-insert, timestamp webhook dedup, a `ledger_v2` backfill, a read-modify-write balance update, a config.yaml secret, a mock-only done-gate, and a `ReconcileService`.\n**Files in scope:** 0 confirmed. The plan names no file paths. It implies a new `payments_registry` module, a `ledger_v2` migration and backfill script, the webhook handler, `config.yaml`, tests and `ReconcileService`, which is at least 6 new or changed artifacts.\n**Gaps found:** 10\n\n### Gaps\n\n1. **[INTEGRATION] Step 1 creates a second writer and a second owner for charges and the ledger**\n   - Where: Step 1 and Step 2 (`payments_registry.charge()`)\n   - Why this matters: Context says `billing/` already owns card charges and is the single writer of `ledger`. A new module that also charges and records charges creates split-brain ledger authority and duplicate charge paths. The new checkout flow and the old flow could double-charge or diverge. The plan gives no ownership-absence evidence. (REUSE \u2192 EXTEND before CREATE.)\n   - Suggested fix: Drop `payments_registry`. Extend `billing/` with the checkout entry point, or make the new module a thin caller of `billing.charge()`, so `billing/` stays the only writer.\n\n2. **[EDGE] Step 2 charge-then-insert loses the ledger row if the process dies after Stripe succeeds**\n   - Where: Step 2\n   - Why this matters: A crash, timeout or exception between the Stripe return and the insert leaves money taken with no ledger row. A client retry then charges the customer again, because there is no idempotency key. Stripe holds the strongest truth, and the plan has no way to reconcile it.\n   - Suggested fix: Insert a `pending` ledger row with its own id first. Call Stripe with that id as the `Idempotency-Key`. Then mark the row `succeeded` or `failed` in a transaction. The webhook and reconciliation complete any rows stuck in `pending`.\n\n3. **[EDGE] Step 3 timestamp dedup drops or double-processes events**\n   - Where: Step 3\n   - Why this matters: Stripe does not guarantee event ordering, and delivery is at-least-once. Two distinct events can share a `created` second, so the later one is dropped as a duplicate. Out-of-order arrival drops a valid older event. A redelivery with an older timestamp than the watermark is ignored. Also, Stripe events expose `created` (epoch seconds), not `created_at` (UNVERIFIED field name). A single global watermark is also a lost-update hazard under concurrent webhook workers.\n   - Suggested fix: Dedupe on `event.id` using a `processed_events(event_id PRIMARY KEY)` table and `INSERT ... ON CONFLICT DO NOTHING`, in the same transaction as the ledger effect. Verify the Stripe signature. Handle ordering through object state, not timestamps.\n\n4. **[EDGE] Step 4 dual-write backfill loses rows and has no cutover or rollback**\n   - Where: Step 4\n   - Why this matters: Old code keeps writing to `ledger` while the backfill copies it. Rows written after the copy passes their position never reach `ledger_v2`, and the plan has no catch-up. \"Reads switch when the script finishes\" is an unspecified flip with no verification, and no way back if `ledger_v2` is wrong. This is a persistent-state migration that affects money. A second table also conflicts with the single-writer `ledger` owner.\n   - Suggested fix: Decide whether `ledger_v2` is needed at all. If it is, use an expand/contract migration. Write to both tables in one transaction from the single `billing/` writer. Backfill in batches. Reconcile with a row-count and sum comparison. Flip reads behind a flag. Keep `ledger` as a rollback source until the comparison is clean.\n\n5. **[EDGE] Step 5 read-modify-write balance update is a lost-update race**\n   - Where: Step 5\n   - Why this matters: Two concurrent charges, refunds or webhook retries read the same balance. The last write wins and one amount is silently lost. The balance can also drift from the ledger. A retried webhook applies the delta twice unless dedup and the update share a transaction.\n   - Suggested fix: Use an atomic `UPDATE balances SET amount = amount + %s WHERE id = %s`, or `SELECT ... FOR UPDATE` in the same transaction as the ledger insert and the event-dedup insert. Better, derive the balance from the ledger.\n\n6. **[ENV] Step 6 reads the Stripe secret key from a repo-root config.yaml**\n   - Where: Step 6\n   - Why this matters: A live secret in a file at the repository root is likely to be committed, and it is exposed to anyone with checkout access. The plan does not mention `.gitignore`. It does not name the webhook signing secret (`STRIPE_WEBHOOK_SECRET`) and does not handle a missing key.\n   - Suggested fix: Read `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` from environment variables or a secret manager. Fail fast at startup if either is missing. Update `.env.example` with the names only. Use restricted keys and separate test and live keys.\n\n7. **[AUTH] Step 3 never verifies the webhook signature, and Stripe failures are unhandled**\n   - Where: Step 3 and Step 2\n   - Why this matters: An unauthenticated webhook endpoint lets anyone forge `charge.succeeded` events and create ledger or balance effects. Step 2 has no handling for Stripe timeouts, card declines, 401 or 429.\n   - Suggested fix: Use `stripe.Webhook.construct_event` with the raw body and the signing secret, and reject invalid signatures with 400. Define `charge()` outcomes for timeout (ambiguous, reconcile), decline (failed) and auth error (alert, no retry).\n\n8. **[COMPLETION-GATE] Step 7 done-gate proves only that a mock was called**\n   - Where: Step 7\n   - Why this matters: Asserting that a mocked Stripe client was called once proves mock behavior. It cannot detect the crash-window loss, duplicate events, the balance race, the backfill gap or signature handling. The plan has no real boundary, no real Postgres, and no Stripe test-mode run.\n   - Suggested fix: Make the gate real. Use Postgres 15 and Stripe test mode with `stripe trigger` or the CLI. Show a ledger row and a balance after a webhook. Test the same event id delivered twice for exactly one effect. Test two concurrent balance updates. Kill the process between the Stripe call and the insert and show that recovery works. Test that each of these fails against a mutated build, so the gate can go red.\n\n9. **[REALITY-CONTRACT] Step 8 `ReconcileService` \"fixes differences\" with no spec or owner**\n   - Where: Step 8\n   - Why this matters: \"Fixes differences\" is undefined. It could be an automatic write to a money ledger by a second writer. The plan does not say whether Stripe or the ledger wins, how drift is bounded, or how it is invoked. A class nothing calls is a Scaffold Illusion. It is also the only real defense against the gap in Step 2, yet it is listed last and is not wired to anything.\n   - Suggested fix: Specify it as a scheduled or CLI job owned by `billing/`. It lists Stripe charges, matches them to ledger rows by the idempotency key, and reports mismatches. Corrections go through `billing`'s writer only. Name its trigger and add a test with seeded drift.\n\n10. **[PATH] The plan names no files, locations or entry points**\n    - Where: all steps\n    - Why this matters: There is no path for `payments_registry`, the migration, the backfill script, the webhook handler or `config.yaml`. The \"new checkout flow\" consumer is also unspecified. Without these, wiring cannot be verified.\n    - Suggested fix: List every file under the `billing/` conventions. Name the caller chain from checkout to `charge()` to the ledger row, and the verification step that proves that wiring.\n\n### Audit clean items (informational, not blocking)\n- The stack statement (Python 3.12, Postgres 15, Stripe) is consistent. No version-mixing issues are visible from the text.\n- No unfinished-work markers, empty catch blocks or \"handle later\" phrases appear in the plan text. Step 8 is vague but not a marker.\n- No GraphQL surface is in scope, so the Apollo rules are not applicable.",
+ "parent_usage": {
+  "input_tokens": 10,
+  "cache_creation_input_tokens": 3055,
+  "cache_read_input_tokens": 69873,
+  "output_tokens": 2530,
+  "output_tokens_details": {
+   "thinking_tokens": 322
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 3055,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 10,
+    "output_tokens": 2530,
+    "cache_read_input_tokens": 69873,
+    "cache_creation_input_tokens": 3055,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 3055
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "fixture": "F1-payments-ledger.md",
+ "arm": "monolithic",
+ "finished": "2026-09-30T21:46:05Z"
+}

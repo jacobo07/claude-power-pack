@@ -1,0 +1,58 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "virtual",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 100.7,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 470,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "C:/Users/User/.claude/state/agent_images/oneshot-architect-auditor-ab9cc2ed2ba75a89.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 6598,
+ "reply": "## Audit Result\n\n**Plan reviewed:** Admin CSV export of the `orders` table (up to 5M rows per tenant). It adds `/api/admin/export`, guarded by `isLoggedIn`, with an Export button, an in-memory CSV build, an `EXPORT_ENABLED` flag and a screenshot done-gate.\n**Files in scope:** 3 (inferred, not read: the API route, the dashboard component, and env/config for `EXPORT_ENABLED`)\n**Gaps found:** 10\n\n### Gaps\n\n1. **[AUTH] Tenant is taken from `req.query.tenant`, which allows cross-tenant data export**\n   - Where: Step 2\n   - Why this matters: Any logged-in user can pass another tenant's id and download that tenant's orders. This is a cross-tenant breach (IDOR) in a multi-tenant system. Severity: CRITICAL. Confidence: PROVEN from the plan text.\n   - Suggested fix: Derive the tenant from the authenticated session or token (`req.user.tenantId`) and ignore or reject any client-supplied tenant.\n\n2. **[AUTH] `isLoggedIn` is authentication only, with no admin authorization, on an `/admin` route**\n   - Where: Step 1\n   - Why this matters: Any logged-in non-admin user can reach a bulk-PII export. The route path implies a role check that the plan never adds.\n   - Suggested fix: Add an admin or role middleware (e.g. `requireRole('admin')`), enforced server-side, and add a negative test for a non-admin user.\n\n3. **[AUTH] SQL injection through string concatenation**\n   - Where: Step 2\n   - Why this matters: `\"... tenant = '\" + req.query.tenant + \"'\"` is directly injectable. Payloads such as `' OR '1'='1`, `UNION SELECT`, or stacked statements can read all tenants' data or other tables. Severity: CRITICAL, a BLOCK-class finding. Confidence: PROVEN.\n   - Suggested fix: Use a parameterized query (`WHERE tenant = $1`, `[tenantId]`). Also validate the type or format of the tenant id.\n\n4. **[ANTI-CRASH] Loading up to 5M rows into an array and building the CSV in memory**\n   - Where: Step 5\n   - Why this matters: `SELECT *` over 5M rows exhausts the Node heap, crashes the API process for all tenants, and lets a single click cause a denial of service. The plan also has no timeout, row cap or concurrency limit.\n   - Suggested fix: Stream with a server-side cursor (`pg-query-stream` or `COPY ... TO STDOUT CSV`) piped to `res`. Set `Content-Disposition` and headers before streaming, handle `close` and abort events, and add a statement timeout and a per-tenant concurrency limit.\n\n5. **[REALITY-CONTRACT] `SELECT *` exposes every column, including any sensitive ones**\n   - Where: Step 2\n   - Why this matters: It exports columns never intended for export (internal flags, PII, payment tokens), and schema changes silently change the CSV contract.\n   - Suggested fix: Use an explicit column allowlist. CSV output also needs formula-injection escaping for cells starting with `=`, `+`, `-` or `@`, plus correct quote and comma escaping.\n\n6. **[EDGE] The UI shows the raw `error.message` to the user**\n   - Where: Step 4\n   - Why this matters: Driver or SQL errors, stack fragments and schema details are leaked. A mid-stream failure after the download has started also yields a truncated file that looks valid.\n   - Suggested fix: Map errors to fixed product copy (forbidden, too large, retry). Log the cause server-side with a correlation id. Fail a streamed download visibly, for example with a row-count trailer or an error on the aborted connection.\n\n7. **[ENV] `EXPORT_ENABLED` is read from `process.env` with no default, parsing rule or enforcement point specified**\n   - Where: Step 6\n   - Why this matters: `process.env` values are strings, so `\"false\"` is truthy. The plan does not say whether the flag gates the route server-side or only the button. It also does not say where the variable is documented, or which side (Next frontend or Express) reads it. A Next client bundle cannot read `process.env.EXPORT_ENABLED` without a `NEXT_PUBLIC_` prefix.\n   - Suggested fix: Parse explicitly (`=== 'true'`, default off). Enforce it on the API route with a 404 or 403 when off. Hide the button via a server-provided capability. Document it in `.env.example`.\n\n8. **[EDGE] A zero-row result shows \"Export complete\" and downloads an empty file**\n   - Where: Step 7\n   - Why this matters: This reports success for a valid-but-empty result, so the user cannot tell it from a failure or a wrong tenant. It is a false-success state. An empty file also carries no header row.\n   - Suggested fix: Show an explicit \"No orders to export\" state and skip the download, or emit a header-only CSV with matching copy. Keep \"complete\" distinct from \"empty\".\n\n9. **[COMPLETION-GATE] The done-gate is a screenshot of the button rendered**\n   - Where: Step 8\n   - Why this matters: It proves the structural and rendered plane only. It says nothing about authorization, tenant isolation, injection, memory behavior at scale, or the CSV contents. This is the false-DONE pattern. The done claim should be capped at LOCAL_RENDER.\n   - Suggested fix: Require, at minimum:\n     - a test that a non-admin gets 403;\n     - a cross-tenant request returning no foreign rows;\n     - an injection-probe test (`' OR '1'='1`) returning no foreign rows;\n     - a large-fixture export, for example 1M+ rows, with bounded RSS;\n     - the empty and error paths exercised;\n     - a real click-to-file download check.\n\n10. **[INTEGRATION] The Export button calls `/api/admin/export` with no plan for how a download is triggered, or for the auth and tenant contract**\n    - Where: Step 3\n    - Why this matters: A `fetch` call would buffer the whole response in browser memory. The plan does not say how the session cookie or token is sent, or how the UI obtains the tenant once it is no longer a query param. It also does not check that the route's mount path `/api` + `/admin/export` matches what the UI calls.\n    - Suggested fix: Use a navigation or anchor download, or a streamed blob with progress. Drop the `tenant` query param from the UI call. Add an integration test of the Next-to-Express call through the real mount.\n\n### Audit clean items (informational, not blocking)\n- Mount path `/api` + `/admin/export` = `/api/admin/export` is consistent between Steps 1 and 3 (INFERRED from the plan text only; no code was read, per the self-contained instruction).\n- Steps 2 and 1 together are not minimal-safe as written. Gaps 1 to 3 need to be fixed before implementation, not after. The overall verdict is ARCHITECTURAL REPAIR REQUIRED, with a DONE grade capped at LOCAL_RENDER.\n- No new abstraction is needed. Reuse the existing `isLoggedIn`, add a role guard alongside it, and use the pg driver's existing streaming.",
+ "parent_usage": {
+  "input_tokens": 10,
+  "cache_creation_input_tokens": 3550,
+  "cache_read_input_tokens": 73036,
+  "output_tokens": 779,
+  "output_tokens_details": {
+   "thinking_tokens": 503
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 3550,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 10,
+    "output_tokens": 779,
+    "cache_read_input_tokens": 73036,
+    "cache_creation_input_tokens": 3550,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 3550
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "fixture": "F3-admin-export.md",
+ "arm": "virtual",
+ "finished": "2026-09-30T22:00:52Z"
+}

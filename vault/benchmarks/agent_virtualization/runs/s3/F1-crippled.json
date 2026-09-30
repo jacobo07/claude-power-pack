@@ -1,0 +1,58 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "crippled",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 118.0,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 471,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "C:/Users/User/.claude/state/agent_images/oneshot-architect-auditor-ab831d8d46e88443.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 6709,
+ "reply": "## Audit Result\n\n**Plan reviewed:** Webhook-driven payments ledger. It adds a `payments_registry` module that charges cards and writes ledger rows, timestamp-based webhook dedup, a `ledger_v2` backfill and cutover, an app-side balance update, a repo-root Stripe key, mock-only tests, and a new `ReconcileService`.\n**Files in scope:** 0 verified. The plan is self-contained and I did not explore a repository. The 8 steps touch roughly `payments_registry`, the webhook handler, a migration and backfill script, the balance code, `config.yaml`, tests and `ReconcileService`.\n**Gaps found:** 9\n\n### Gaps\n\n1. **[INTEGRATION] A second writer and charger duplicates the `billing/` owner**\n   - Where: Step 1 (`payments_registry`), Step 8 (`ReconcileService`)\n   - Why this matters: Context says `billing/` already owns card charges and is the single writer of `ledger`. A new module that charges cards and records charges creates a parallel authority and a split-brain ledger. The plan never says how it relates to `billing/`.\n   - Suggested fix: Extend `billing/` with the new checkout entry point. If a separate module is unavoidable, make it a thin caller of `billing.charge()` that never writes `ledger` itself. Put reconcile in `billing/` as well.\n\n2. **[EDGE] The Stripe call comes before the ledger insert, so a crash loses the record**\n   - Where: Step 2\n   - Why this matters: A crash, timeout or DB error after Stripe succeeds leaves the customer charged with no ledger row. A client retry then charges again. The plan has no idempotency key, no pending row and no recovery.\n   - Suggested fix: Insert a `pending` ledger row with a unique id first. Pass that id as the Stripe `Idempotency-Key`. Finalize the row from the API result or the webhook. A timeout means \"unknown\", not \"failed\".\n\n3. **[EDGE] Timestamp-based webhook dedup drops or replays events**\n   - Where: Step 3\n   - Why this matters: Stripe delivers events at least once and out of order, and `created` has one-second resolution. Comparing against the last processed timestamp discards legitimate older events that arrive late and lets same-second duplicates through. Stripe events also have no `event.created_at` field. The field is `created`, so the code may fail at runtime or read a wrong field.\n   - Suggested fix: De-duplicate on `event.id` with a unique-constrained `processed_events` table. Insert it in the same transaction as the ledger effect. Handle ordering by state transition, not by timestamp.\n\n4. **[INTEGRATION] Dual-write cutover loses rows during the `ledger_v2` backfill**\n   - Where: Step 4\n   - Why this matters: Old paths write only to `ledger` during the backfill. Rows inserted after the backfill snapshot never reach `ledger_v2`, and reads then switch to it. That is silent financial data loss. The plan has no rollback and no parity check.\n   - Suggested fix: Dual-write to both tables (or use a trigger) before the backfill starts. Backfill idempotently (`ON CONFLICT DO NOTHING`). Run a row-count and sum parity check. Flip reads behind a flag, and keep `ledger` as the rollback target.\n\n5. **[EDGE] The balance read-modify-write races**\n   - Where: Step 5\n   - Why this matters: Reading the balance, adding in application code and writing it back gives a lost update when two webhooks or charges hit the same customer. Money is lost or invented.\n   - Suggested fix: Use an atomic `UPDATE balances SET amount = amount + $1 WHERE ...` in the same transaction as the ledger insert. Alternatively, derive the balance from ledger sums. Use integer minor units, never floats.\n\n6. **[AUTH] The Stripe secret is read from a repo-root `config.yaml`**\n   - Where: Step 6\n   - Why this matters: A live key in a file at the repository root is one commit away from leaking, and `config.yaml` is usually tracked. The plan also omits webhook signature verification. Without `Stripe-Signature` and the `whsec_` secret, anyone can forge events into the ledger.\n   - Suggested fix: Load `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` from the environment or a secret manager. Document both as new env vars. Add `config.yaml` to `.gitignore`. Verify signatures with `stripe.Webhook.construct_event` before any processing.\n\n7. **[COMPLETION-GATE] The mock-only test cannot certify the feature**\n   - Where: Step 7\n   - Why this matters: Asserting that a mocked client was called once proves only the call shape. It does not prove the ledger row, idempotency, dedup, backfill parity or a real Stripe round-trip. A green result here would be a false DONE.\n   - Suggested fix: Add integration tests on real Postgres. Cover duplicate event replay, out-of-order delivery, a crash between the Stripe call and the insert, and concurrent balance updates. Do one Stripe test-mode charge with a signed webhook delivered through the real handler. Red-team the tests by mutating the dedup and idempotency logic and confirming they fail. Name the evidence level reached.\n\n8. **[REALITY-CONTRACT] `ReconcileService` \"fixes differences\" with no defined rules**\n   - Where: Step 8\n   - Why this matters: Auto-correcting financial rows without rules is speculative. It could overwrite true data, it is a second ledger writer (see gap 1), and nothing tests or authorizes it. The plan gives no source of truth, no dry-run and no audit trail.\n   - Suggested fix: Remove it from this scope. Alternatively, make it read-only and report-only first, run through `billing/`, with explicit rules for each mismatch class. Add corrections only after review.\n\n9. **[INTEGRATION] The plan never wires the new checkout flow to the webhook and ledger path**\n   - Where: Steps 1 and 3\n   - Why this matters: Step 1 and Step 3 each write ledger state (the charge path and the webhook) with no defined ordering or ownership between them. Both may record the same charge, or neither may finalize a pending charge. A real webhook consumer for the new flow is also not specified.\n   - Suggested fix: Specify one state machine: `pending`, then `succeeded` or `failed`. The charge path creates the pending row. Only the webhook finalizes it, keyed by the charge id. Both go through the `billing/` writer.\n\n### Audit clean items (informational, not blocking)\n- Stack choices (Python 3.12, Postgres 15, Stripe) raise no version-mismatch concern. Postgres 15 supports `ON CONFLICT` and unique constraints for the fixes above.\n- Creating `ledger_v2` alongside `ledger`, not altering it in place, is a reasonable start for a migration. It lacks only the dual-write and parity steps in gap 4.\n- File existence could not be checked because the plan is self-contained. Gaps 1 and 9 rest on the stated `billing/` context and are INFERRED from it, not observed in a repository.",
+ "parent_usage": {
+  "input_tokens": 10,
+  "cache_creation_input_tokens": 2370,
+  "cache_read_input_tokens": 70571,
+  "output_tokens": 1874,
+  "output_tokens_details": {
+   "thinking_tokens": 103
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 2370,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 10,
+    "output_tokens": 1874,
+    "cache_read_input_tokens": 70571,
+    "cache_creation_input_tokens": 2370,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2370
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "fixture": "F1-payments-ledger.md",
+ "arm": "crippled",
+ "finished": "2026-09-30T21:50:21Z"
+}

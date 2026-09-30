@@ -1,0 +1,58 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "monolithic",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 118.6,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 473,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "C:/Users/User/.claude/state/agent_images/oneshot-architect-auditor-61cc36e5c3842c35.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 6530,
+ "reply": "## Audit Result\n\n**Plan reviewed:** Windows Node 18.19 session-recovery daemon covering PID liveness, lock-file single instance, in-place state persistence, kill-all-node cleanup, a process-based health check, a fail-closed prompt hook, fake-process-table tests, and `fs.globSync` discovery.\n**Files in scope:** 4 artifacts (`daemon.pid`, `daemon.lock`, `state.json`, the prompt hook), plus the daemon, status command and tests, which the plan leaves unnamed.\n**Gaps found:** 9\n\n### Gaps\n\n1. **[EDGE] Step 4 kills every `node.exe` that is not the daemon**\n   - Where: Step 4\n   - Why this matters: The host also runs editors and dev servers on Node. Their processes, and possibly the daemon's own helpers and the hook's Node process, would be killed. This is data loss on unrelated work and also risks the session recovery being restored.\n   - Suggested fix: Delete the step. If orphan cleanup is needed, kill only PIDs the daemon recorded itself, and verify each one's start time and command line before killing.\n\n2. **[EDGE] Step 1 treats \"a process with that PID exists\" as \"the daemon is alive\"**\n   - Where: Step 1\n   - Why this matters: After a crash, Windows reuses PIDs. An unrelated process can hold the stale PID, so the second launch wrongly concludes the daemon is alive, or a stale `daemon.pid` is trusted. A PID existing says nothing about what the process is.\n   - Suggested fix: Record PID plus process start time and a nonce in the pidfile. On check, confirm the image name and start time match, and confirm the daemon answers on its IPC endpoint.\n\n3. **[EDGE] Step 2 uses an exists-then-create lock, which is a check-then-act race**\n   - Where: Step 2\n   - Why this matters: Two simultaneous launches can both see no lock and both start. A lock left by a crash then blocks every later start forever, because it is never reclaimed.\n   - Suggested fix: Create it atomically with `fs.openSync(path, 'wx')`, or bind a named pipe or localhost port as the lock. Write the PID into the lock, and on `EEXIST` apply the Step 1 liveness check to reclaim a stale lock. Merge the lock and the pidfile into one owner record.\n\n4. **[EDGE] Step 3 overwrites `state.json` in place with `writeFileSync`**\n   - Where: Step 3\n   - Why this matters: A crash mid-write leaves a truncated or corrupt file, and that file is exactly what recovery reads. The plan has no handling for corrupt, missing or empty state, and no defined behaviour when two writers race.\n   - Suggested fix: Write to a temp file in the same directory, fsync it, then `rename` over `state.json`. Keep the previous generation as a backup. Validate and parse with a fallback to the backup on restore, and check that state is coherent on restore.\n\n5. **[COMPLETION-GATE] Step 5 reports HEALTHY whenever the process is running**\n   - Where: Step 5\n   - Why this matters: A hung, deadlocked or state-corrupt daemon still reports HEALTHY. That reports state that disagrees with reality, which violates the Reality Contract.\n   - Suggested fix: Health is a request/response probe with a timeout. Require a heartbeat age below a threshold and a successful read of the state file. Report UNKNOWN or UNHEALTHY otherwise.\n\n6. **[AUTH] Step 6 makes the hook exit 2 on daemon unreachable, and the hook is itself a harness edit**\n   - Where: Step 6\n   - Why this matters: A crashed or starting daemon blocks every prompt. The recovery tool then locks the user out of the session they need to use to repair it. This is fail-closed on an availability dependency. Registering the hook also edits harness config (`settings.json`), which the plan does not acknowledge. The request has no timeout, and no authentication is stated on the IPC channel, so any local process could answer or query it.\n   - Suggested fix: Fail open: on unreachable or timeout, exit 0 and log a diagnostic. Bound the hook with a short timeout. Keep the IPC endpoint local-only with an ACL or token. Name the `settings.json` edit and its permission path explicitly.\n\n7. **[COMPLETION-GATE] Step 7 verifies only against a fake process table**\n   - Where: Step 7\n   - Why this matters: A fake table proves the mock's behaviour. It cannot show PID reuse, a lock race, torn writes, or that Step 4 would hit real editors. The suite would go green with all of those defects present. No real-input phase-7 gate is defined, and no red-branch test drives the failure each step guards against.\n   - Suggested fix: Add a real-process integration run on the actual Windows host: two concurrent real launches where exactly one survives. Also add a kill-mid-write test, a pidfile holding a reused PID, and a check that an unrelated `node.exe` survives startup. Each test must be shown to go red against a mutated implementation.\n\n8. **[ENV] Step 8 uses `fs.globSync`, which does not exist on the stated Node 18.19 host**\n   - Where: Step 8\n   - Why this matters: `fs.globSync` was added in Node 22 (experimental). On Node 18.19 the call is `undefined`, so session discovery throws a TypeError, and recovery finds no transcripts.\n   - Suggested fix: Use a recursive `fs.readdirSync` (`withFileTypes`) with a filter, or a vetted glob package pinned in the lockfile. Also assert the runtime version at startup.\n\n9. **[PATH] File locations and Windows semantics are unspecified**\n   - Where: Steps 1, 2, 3 (`daemon.pid`, `daemon.lock`, `state.json`)\n   - Why this matters: The plan uses bare relative names, so they resolve against the current working directory. A daemon launched from two different directories gets two lock files and runs as two instances, which defeats Step 2. On Windows, `rename` over an open file can fail with EPERM or EBUSY, and antivirus scanners can hold files briefly.\n   - Suggested fix: Use one absolute state directory (for example `%LOCALAPPDATA%\\<daemon>\\`) built with `path.join`. Add a retry on EPERM and EBUSY for the rename.\n\n### Audit clean items (informational, not blocking)\n- The plan contains no unfinished-work markers, stub bodies or empty catch blocks, so there is no REALITY-CONTRACT gap. Step 5 breaches the Reality Contract's state-must-match-reality law, and that is recorded as gap 5.\n- No GraphQL operations are in scope, so APOLLO-GRAPHQL does not apply. No external service credentials or env vars are named, beyond the IPC authentication point already noted under gap 6.\n- Reuse check: Steps 1 and 2 describe two owners of the same responsibility (pidfile and lockfile). Gap 3 recommends collapsing them into one. No new agent, registry or telemetry layer is warranted.",
+ "parent_usage": {
+  "input_tokens": 10,
+  "cache_creation_input_tokens": 2379,
+  "cache_read_input_tokens": 70498,
+  "output_tokens": 2138,
+  "output_tokens_details": {
+   "thinking_tokens": 410
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 2379,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 10,
+    "output_tokens": 2138,
+    "cache_read_input_tokens": 70498,
+    "cache_creation_input_tokens": 2379,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2379
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "fixture": "F2-recovery-daemon.md",
+ "arm": "monolithic",
+ "finished": "2026-09-30T21:52:20Z"
+}

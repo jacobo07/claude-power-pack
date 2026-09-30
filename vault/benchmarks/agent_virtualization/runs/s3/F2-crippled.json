@@ -1,0 +1,58 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "crippled",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 125.4,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 471,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "C:/Users/User/.claude/state/agent_images/oneshot-architect-auditor-59352aeb2fd63f53.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 5725,
+ "reply": "## Audit Result\n\n**Plan reviewed:** Node 18.19 session-recovery daemon on Windows. It uses a PID file for liveness, a lock file for single instance, in-place state writes, a kill-all-node cleanup, a process-running health check, a fail-closed prompt hook, fake-process-table tests, and `fs.globSync` for discovery.\n**Files in scope:** 4 (`daemon.pid`, `daemon.lock`, `state.json`, daemon and hook code). The plan is self-contained and I did not explore a repository.\n**Gaps found:** 8\n\n### Gaps\n\n1. **[ANTI-CRASH] Step 4 kills every other `node.exe` on the machine**\n   - Where: Step 4\n   - Why this matters: The host runs editors and dev servers on Node. Killing all non-daemon `node.exe` processes destroys unrelated work, and possibly the session being recovered. Orphan status is not established by the process image name. On Windows, killing a parent does not reap its children, so the intended cleanup is not achieved either.\n   - Suggested fix: Remove the blanket kill. Reap only processes recorded in a daemon-owned registry, matched by PID plus creation time (and command line). Use a Windows Job Object or `taskkill /T` on those PIDs only.\n\n2. **[EDGE] Step 1 treats \"a process with that PID exists\" as \"the daemon is alive\"**\n   - Where: Step 1\n   - Why this matters: Windows reuses PIDs quickly. After a crash, the stale `daemon.pid` can match an unrelated `node.exe`. The second launch then concludes the daemon is alive and refuses to start. Recovery fails exactly when it is needed.\n   - Suggested fix: Record PID plus process start time (or a nonce). Confirm liveness with a handshake on the daemon's own IPC endpoint, such as a named pipe or localhost port.\n\n3. **[EDGE] Step 2 uses check-then-create on `daemon.lock`, which is a race and never self-heals**\n   - Where: Step 2\n   - Why this matters: An existence check followed by a create is not atomic, so two launches can both pass. A crash also leaves `daemon.lock` behind. The next start then sees it and refuses to run, so the crash the daemon exists to recover from blocks recovery.\n   - Suggested fix: Use atomic exclusive create (`fs.openSync(path, 'wx')`) or a named pipe or port bind as the lock. On `EEXIST`, validate the holder using the Step 1 handshake and reclaim the lock if it is stale. Steps 1 and 2 should be one mechanism.\n\n4. **[EDGE] Step 3 overwrites `state.json` in place with `writeFileSync`**\n   - Where: Step 3\n   - Why this matters: A crash mid-write leaves a truncated or empty file. The daemon restores from that file, so the crash corrupts the state used to recover from it. The write is not atomic and has no fsync.\n   - Suggested fix: Write to `state.json.tmp`, fsync, then `renameSync` over the target. Keep one previous generation as a fallback. On restore, validate parse and schema and fall back to the previous generation on failure.\n\n5. **[REALITY-CONTRACT] Step 5 reports HEALTHY whenever the process is running**\n   - Where: Step 5\n   - Why this matters: A live process can be wedged, unable to write state, or have lost its lock. This is a proxy, not a corroborant, and it produces false HEALTHY. The same flawed liveness test from Step 1 would feed it.\n   - Suggested fix: Health should come from a round-trip request to the daemon. Add a last-successful-state-write age, a lock-ownership check, and a restore-ability check. Report UNKNOWN when the probe itself fails, not HEALTHY.\n\n6. **[INTEGRATION] Step 6 makes an unreachable daemon block every prompt (fail-closed, exit 2)**\n   - Where: Step 6\n   - Why this matters: If the daemon crashes or hangs, or is stale per gaps 2 and 3, every prompt is blocked. The user cannot type anything, including the prompt needed to restart the daemon. A recovery aid becomes a lockout. A hang with no timeout is worse.\n   - Suggested fix: Fail open: exit 0 with a warning when the daemon is unreachable. Give the request a hard timeout of about 2s. Reserve exit 2 for an explicit, positively reported refusal.\n\n7. **[COMPLETION-GATE] Step 7 verifies only against a fake process table**\n   - Where: Step 7\n   - Why this matters: The fake table can never exhibit PID reuse, a crash-left lock, a torn write, or an unrelated `node.exe`. That is the same world the plan's own assumptions come from, so the tests cannot fail on gaps 1 to 6. Those defects would pass as green.\n   - Suggested fix: Add real-process tests on Windows. SIGKILL the daemon mid-write and assert the restore. Run a decoy `node.exe` and assert it survives startup. Test PID reuse with a stale `daemon.pid`. Test simultaneous double launch. Run the hook against a dead daemon and assert it does not block. Include a positive control for each.\n\n8. **[ENV] Step 8 uses `fs.globSync`, which does not exist in Node 18.19**\n   - Where: Step 8\n   - Why this matters: `fs.globSync` was added in Node 22 and is experimental there. On the stated Node 18.19 host it is undefined, so session discovery throws a `TypeError` at runtime and restoration finds no transcripts.\n   - Suggested fix: Use `fs.readdirSync(dir, { recursive: true })` (available from 18.17) with a filter. Or use `fast-glob` as a pinned dependency. Add an `engines` check and a startup assertion.\n\n### Audit clean items (informational, not blocking)\n- No repository access was needed or used. Every finding follows from the plan text plus documented Node and Windows semantics.\n- The plan's core intent (restore state after a crash, single instance, a pre-prompt state hook) is sound and needs no new architecture. The gaps are all in the mechanisms chosen.\n- Gaps 2, 3 and 5 share one root cause: liveness is judged by the PID alone. One handshake-based liveness primitive fixes all three, so the fix budget is smaller than the gap count suggests.",
+ "parent_usage": {
+  "input_tokens": 46,
+  "cache_creation_input_tokens": 58709,
+  "cache_read_input_tokens": 304484,
+  "output_tokens": 3235,
+  "output_tokens_details": {
+   "thinking_tokens": 1223
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 58709,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 8,
+    "output_tokens": 1727,
+    "cache_read_input_tokens": 72804,
+    "cache_creation_input_tokens": 3841,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 3841
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "fixture": "F2-recovery-daemon.md",
+ "arm": "crippled",
+ "finished": "2026-09-30T21:56:52Z"
+}

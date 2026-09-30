@@ -21,10 +21,16 @@ worktree = repo root. Plan + Owner decisions: `vault/specs/agent-capability-virt
   CHAIN-DEADLINE log). Never commit or deploy it; stage only your own hunks.
 
 ## Next 3 actions
-1. S3 benchmark: for F1..F3 x modes monolithic/virtual/crippled, run
-   `python tools/agent_carrier_run.py oneshot-architect-auditor --mission-file <fixture> --mode <m> --model sonnet`
-   (mission = "Audit this plan. Output the ULTRA gap list." + fixture text); write a scorer
-   against answer_key.json (verify MANIFEST hashes first). Verdict rule is in the spec.
+1. S3 DONE -> VERDICT VOID (2026-10-01, runs/s3/score.json). Hits/8 mono|virtual|crippled:
+   F1 8|7|8, F2 8|8|7, F3 8|8|8; FP F1 0|2|1, F2 0|0|1, F3 1|1|1. The crippled control
+   (inline pages only) never regressed, so these fixtures cannot see a capability loss. The
+   inline core alone reaches ceiling on them. Also: virtual carriers read their image but
+   opened 0 deep pages in 3/3 runs -- virtual behaved as crippled + a path list, so even a
+   valid NON_INFERIOR would not have tested paging. F1 virtual's miss+FP is one block that
+   raised a different real ReconcileService flaw (frozen key: miss + FP). S4 BLOCKED.
+   OWNER DECISION PENDING: (a) author harder fixtures whose defects need the deep pages,
+   freeze, re-run; (b) accept inline core as sufficient and redesign/drop paging; (c) raise n.
+   One F3-crippled run was UNMEASURED (Haiku parent made no Agent call) and re-run once.
 2. S4: migrate the other 9 dormant agents (agent_split_markers/*.json), gated on S3 NON_INFERIOR.
 3. S5 telemetry, S6 foundry, S7 closure (UKDL, liveness, agent-creation gate).
 

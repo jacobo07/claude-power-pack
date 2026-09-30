@@ -1,0 +1,58 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "virtual",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 137.5,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 470,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "C:/Users/User/.claude/state/agent_images/oneshot-architect-auditor-04a43798c7b37e87.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 8092,
+ "reply": "## Audit Result\n\n**Plan reviewed:** Webhook-driven payments ledger. It adds a new `payments_registry` module that charges cards, a `ledger_v2` backfill with cut-over, timestamp-based webhook de-duplication, application-side balance updates, and a Stripe key in `config.yaml`. The done-gate is a mocked-Stripe test, and a new `ReconcileService` is added.\n**Files in scope:** 0 (the plan is self-contained and I was told not to explore a repository. Existence checks are INFERRED from the plan text only.)\n**Gaps found:** 10\n\n### Gaps\n\n1. **[AUTH] Stripe secret key read from `config.yaml` in the repo root**\n   - Where: Step 6\n   - Why this matters: A live secret in a file at the repository root is likely to be committed, and it leaks through backups and CI logs. The plan gives no rotation or per-environment separation. It also does not mention webhook signature verification (`Stripe-Signature` with the endpoint signing secret). Without that check, anyone can post forged events to the webhook handler in Step 3.\n   - Suggested fix: Read `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` from the environment or a secret manager. Document them as new env vars. Add `config.yaml` to `.gitignore`. Verify the signature with `stripe.Webhook.construct_event` before any processing.\n\n2. **[INTEGRATION] A new `payments_registry` duplicates the ownership of `billing/`**\n   - Where: Step 1\n   - Why this matters: The context says `billing/` already owns card charges and is the single writer of `ledger`. A second module that charges cards and records charges creates a parallel authority. The result is two writers to `ledger`, or a split-brain with a separate store. This breaks the single-writer invariant.\n   - Suggested fix: Extend `billing/` (REUSE, then EXTEND). Expose `billing.charge()` to the checkout flow and drop `payments_registry`. If a new module is truly needed, it must call `billing` and must never write `ledger` itself.\n\n3. **[EDGE] Stripe charge is called before the ledger insert, with no idempotency key and no recovery**\n   - Where: Step 2\n   - Why this matters: If the process crashes or the insert fails after the charge succeeds, the customer is charged with no ledger row. A client or network retry then charges twice. The Stripe API call cannot be rolled back by a database transaction.\n   - Suggested fix: Insert a `pending` ledger row with its own id first, and commit it. Call Stripe with `Idempotency-Key` equal to that id. Then mark the row `succeeded` or `failed`. Rely on the webhook and reconciliation to settle ambiguous results, and never retry automatically.\n\n4. **[EDGE] Webhook de-duplication by timestamp comparison**\n   - Where: Step 3\n   - Why this matters: Stripe delivers events at-least-once and out of order. Events in the same second share a `created` value. The Stripe field is `created` (a Unix integer), not `created_at`, so the plan's field name does not match Stripe's. A \"greater than last processed\" check drops legitimate older events that arrive late. It also lets a replayed event through when the stored timestamp is stale, and it races between concurrent workers.\n   - Suggested fix: De-duplicate on `event.id`, using a `processed_events(event_id PRIMARY KEY)` table. Insert it in the same transaction as the ledger effect, with `ON CONFLICT DO NOTHING` and a rowcount check. Do not rely on ordering.\n\n5. **[EDGE] Dual-write backfill to `ledger_v2` loses or diverges rows**\n   - Where: Step 4\n   - Why this matters: Old paths keep writing only to `ledger` while the copy runs. Rows written after the copy passes their position are never copied, and reads then switch to `ledger_v2` with gaps. The plan defines no cut-over atomicity, no verification and no rollback. It also does not say whether the new `payments_registry` writes to `ledger_v2`. That may already be a second writer to the ledger.\n   - Suggested fix: Dual-write to both tables inside one transaction from the start, or use a trigger. Backfill idempotently (`ON CONFLICT DO NOTHING`). Before switching reads, verify row counts and sums per account. Keep `ledger` authoritative until the verification passes, and define a rollback. Alternatively, `ALTER TABLE` in place and avoid `ledger_v2`.\n\n6. **[EDGE] Read-modify-write balance update in application code**\n   - Where: Step 5\n   - Why this matters: Two concurrent charges or webhooks read the same balance and one update is lost. With money, this is silent corruption. Postgres at the default READ COMMITTED isolation does not prevent it. A separate stored balance also becomes a second source of truth next to the ledger.\n   - Suggested fix: Use an atomic `UPDATE balances SET amount = amount + %s WHERE id = %s` in the same transaction as the ledger insert. Alternatively, `SELECT ... FOR UPDATE`, or derive the balance from the ledger. Use integer minor units (cents) plus a currency, never floats.\n\n7. **[COMPLETION-GATE] The done-gate is a mocked Stripe test asserting a single call**\n   - Where: Step 7\n   - Why this matters: A test that mocks the client and asserts `charge()` called it once proves only that the mock was invoked. It does not prove the ledger row, idempotency, webhook handling, or crash-ordering behaviour. It would pass with every defect in Steps 2 to 5 present. It is also not a real boundary crossing.\n   - Suggested fix: Gate on Stripe test mode with real test-mode keys and a real Postgres. Drive checkout, then deliver a real signed webhook. Assert exactly one ledger row and the correct balance. Replay the same event and assert no second effect. Inject a crash after the Stripe call and assert the recovery. Keep the mock only as a unit-level supplement.\n\n8. **[REALITY-CONTRACT] `ReconcileService` that \"fixes differences\" is unspecified and is an unbounded autonomous writer**\n   - Where: Step 8\n   - Why this matters: It has no defined direction of truth and no rules for mismatch classes. Automatically rewriting ledger rows can destroy the audit trail. It also adds a third writer beside `billing/`, which breaks the single-writer invariant. Reading the class description alone, it could be a stub.\n   - Suggested fix: Put reconciliation inside `billing/`, which owns the ledger. Have it detect and report first, with Stripe as the external truth. Corrections must be append-only adjustment entries, each with an actor, a reason and a timestamp. Specify the mismatch classes and ship a test for each. Otherwise leave Step 8 out of this feature.\n\n9. **[INTEGRATION] The webhook handler's owner and its path to the ledger are unspecified**\n   - Where: Steps 3 and 5\n   - Why this matters: The plan does not say which module handles the webhook or how it writes to `ledger`. It could bypass `billing/` and add another writer. It does not specify which event types are handled, nor how a refund or dispute is reflected, nor what the response is when processing fails. A non-2xx response causes Stripe retries, and this is exactly why Gap 4 matters.\n   - Suggested fix: The handler only verifies the signature, de-duplicates, and calls one `billing/` entry point. Name the handled event types and the retry and response semantics.\n\n10. **[ENV] `ledger_v2` migration and new config have no rollout or rollback definition**\n    - Where: Step 4, Step 6\n    - Why this matters: The plan has no migration tool or versioned migration file. It does not say how a long-running backfill on Postgres 15 is bounded, for example batching to avoid long locks. It does not say how the new secret names are documented across environments.\n    - Suggested fix: Ship a versioned migration and a batched backfill with a resume point. Write the rollback step. Document the new env vars.\n\n### Audit clean items (informational, not blocking)\n- The stack (Python 3.12, Postgres 15, Stripe) is consistent with the steps. No version-era mismatch was found.\n- The Stripe-charge-then-insert ordering in Step 2 is INFERRED to be the defect, based on the plan text alone. No repository code was read, per the instruction.\n- No GraphQL or Apollo surface is present in the plan, so no APOLLO-GRAPHQL gaps apply.",
+ "parent_usage": {
+  "input_tokens": 10,
+  "cache_creation_input_tokens": 3826,
+  "cache_read_input_tokens": 72268,
+  "output_tokens": 2413,
+  "output_tokens_details": {
+   "thinking_tokens": 335
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 3826,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 10,
+    "output_tokens": 2413,
+    "cache_read_input_tokens": 72268,
+    "cache_creation_input_tokens": 3826,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 3826
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "fixture": "F1-payments-ledger.md",
+ "arm": "virtual",
+ "finished": "2026-09-30T21:48:23Z"
+}

@@ -1,0 +1,58 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "monolithic",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 139.3,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 473,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "C:/Users/User/.claude/state/agent_images/oneshot-architect-auditor-aed2c4a7cef0eb07.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 8441,
+ "reply": "## Audit Result\n\n**Plan reviewed:** Admin CSV export of the `orders` table: a new `/admin/export` route guarded by `isLoggedIn`, a Next.js Export button, an in-memory CSV build, an `EXPORT_ENABLED` flag, and a screenshot as the done-gate.\n**Files in scope:** 3 (the new API route, the dashboard Export button component, and the env/config for `EXPORT_ENABLED`). This is INFERRED, because the plan names no paths.\n**Gaps found:** 10\n\n### Gaps\n\n1. **[AUTH] Tenant is taken from the query string and the route has no authorization check**\n   - Where: Step 1 and Step 2 (`req.query.tenant`)\n   - Why this matters: The tenant comes from client input, so any logged-in user of any tenant can export another tenant's orders by changing `?tenant=`. That is cross-tenant data exfiltration, and it breaks tenant isolation in the multi-tenant SaaS (PROVEN from the plan text). `isLoggedIn` only proves that someone is authenticated.\n   - Suggested fix: Derive the tenant from the authenticated session and ignore `req.query.tenant`. Add an admin-role check, since the route is named admin but only `isLoggedIn` guards it. Write an audit log entry for each export.\n\n2. **[AUTH] `isLoggedIn` is not an admin guard**\n   - Where: Step 1\n   - Why this matters: The route lives under `/admin` but the only guard is authentication. Any ordinary tenant user can reach a bulk PII export. The plan does not say whether `isLoggedIn` checks role or only session validity (UNKNOWN), and it states no 401 or 403 handling.\n   - Suggested fix: Add an explicit `requireAdmin` middleware, or confirm by source that `isLoggedIn` enforces the role. Specify 401 and 403 responses, and have the UI handle each.\n\n3. **[AUTH] SQL injection through string concatenation**\n   - Where: Step 2: `\"SELECT * FROM orders WHERE tenant = '\" + req.query.tenant + \"'\"`\n   - Why this matters: A `tenant` value of `' OR '1'='1` returns every tenant's orders, and stacked or UNION payloads can reach other tables. This is exploitable as written and is a hardcoded-injection vector, which the review doctrine treats as BLOCK-level (snippet, scenario and failed guard are all in the plan text). `isLoggedIn` is the only guard and it does not sanitize input.\n   - Suggested fix: Use a parameterized query (`WHERE tenant_id = $1`) with the session-derived tenant. Select an explicit column list instead of `SELECT *`.\n\n4. **[EDGE] Loading up to 5M rows into memory and building the CSV in memory**\n   - Where: Step 5\n   - Why this matters: 5 million rows times wide `SELECT *` records can reach several GB of heap. The Node process will hit OOM and take the Express API down for every tenant, and concurrent exports multiply the damage. Node's default heap limit of roughly 2-4 GB is a hard wall. The response also has no timeout and no pagination.\n   - Suggested fix: Stream the export with a server-side cursor (`pg-cursor` or `pg-query-stream`) piped through a CSV transform into `res`, with backpressure handling and `Content-Disposition`. Add a per-tenant concurrency limit, a rate limit, and an abort on client disconnect (`req.on('close')`).\n\n5. **[EDGE] CSV and formula injection, and escaping**\n   - Where: Step 5 (CSV conversion)\n   - Why this matters: Order fields that begin with `=`, `+`, `-` or `@` execute as formulas when an admin opens the file in Excel. Embedded commas, quotes and newlines corrupt rows if the plan hand-rolls the CSV. The plan names no CSV library.\n   - Suggested fix: Use a vetted CSV library with RFC 4180 quoting, prefix dangerous leading characters with `'`, and state the encoding (UTF-8 with BOM if Excel is the target).\n\n6. **[REALITY-CONTRACT] The UI shows the raw caught error message**\n   - Where: Step 4\n   - Why this matters: For this route the message can carry the Postgres error text, which exposes the schema and possibly the query from the injection vector. The raw string is also not usable product copy. A failed fetch and a 403 would both render as the same unhelpful text.\n   - Suggested fix: Map status classes (401, 403, 429, 5xx, network) to fixed product copy and log the cause server-side with a correlation id. Give the error state no renderable `message` field.\n\n7. **[REALITY-CONTRACT] The empty export is reported as \"Export complete\"**\n   - Where: Step 7\n   - Why this matters: An empty result produces a success toast and a zero-row download, which looks like a finished export. Combined with the injection bug or a wrong tenant, it reads as success when nothing was exported. \"Export complete\" is asserted with no evidence of rows. A header-only file is also not well-defined.\n   - Suggested fix: Show \"No orders to export\" as a distinct empty state with no download. If a file is still downloaded, it should contain at least the header row.\n\n8. **[ENV] `EXPORT_ENABLED` is undefined in behavior, location and validation**\n   - Where: Step 6\n   - Why this matters: The plan does not say what happens when the variable is missing (fail open or closed), or how a string such as `\"false\"` is parsed. `process.env` values are always strings, so `if (process.env.EXPORT_ENABLED)` treats `\"false\"` as truthy. The plan also does not say whether the button is hidden when the flag is off. A Next.js client component cannot read the server's `process.env` without a `NEXT_PUBLIC_` prefix, so the UI and the API can disagree. `.env.example` is not mentioned.\n   - Suggested fix: Parse the flag strictly (`=== \"true\"`) and default to disabled. Enforce it server-side (return 404 or 403 when off) and expose the UI state through a server-provided capability, not a duplicated env var. Add the key to `.env.example`.\n\n9. **[COMPLETION-GATE] The done-gate is a screenshot of a rendered button**\n   - Where: Step 8\n   - Why this matters: It proves only the rendered plane. It does not show that the route works, that tenants are isolated, that the auth and injection fixes hold, or that a 5M-row export survives. It is the exact false-green pattern the plan's own risks warn about, and it names no real boundary. The strongest level earned is IMPLEMENTED or WIRED, not VERIFIED.\n   - Suggested fix: Replace the gate with real-boundary checks. Against a real Postgres seeded with at least two tenants and a large table, run these checks and capture observed output:\n     - A tenant-A session requesting tenant B gets no rows or a 403.\n     - A `' OR '1'='1` payload returns no extra rows (negative control).\n     - A large export stays under a bounded RSS and the row count matches.\n     - The flag-off state returns the refusal.\n     - The UI path downloads the file.\n     Each check should fail if the corresponding fix is reverted.\n\n10. **[INTEGRATION] The route mount path, the URL contract and the Next-to-Express hop are unspecified**\n    - Where: Step 1 and Step 3\n    - Why this matters: The Express API is mounted at `/api`, so the route is `/api/admin/export`, but the plan registers `/admin/export`. The plan does not say whether the Next.js frontend proxies `/api` or calls the Express origin directly (UNKNOWN). That affects the cookie or session forwarding that `isLoggedIn` depends on, CORS, and a proxy or serverless response-size and timeout limit that would truncate a multi-GB stream. The plan also names no file paths for the route or the button, and no call chain proving the button is wired to the route.\n    - Suggested fix: State the mount order and file paths, confirm the frontend path (same-origin proxy versus direct), and include a wiring check that clicks the real button and observes the request in the done-gate.\n\n### Audit clean items (informational, not blocking)\n- Nothing in the plan text contains an unfinished-work marker, a not-implemented raise or an empty catch block. The plan contains no GraphQL, so APOLLO-GRAPHQL does not apply.\n- ANTI-CRASH: the batch size of about 3 files is within limits, and no harness files are edited.\n- No file existence or consumer grep was possible because the plan is self-contained and no repository access was used. Findings 1-10 rest on the plan text alone, and the `isLoggedIn` behavior in Finding 2 is UNKNOWN until its source is read.\n\n**Verdict:** ARCHITECTURAL REPAIR REQUIRED. Findings 1, 3 and 4 are each independently blocking (cross-tenant exfiltration, SQL injection, process OOM).\n\n**Do not build:** a new auth system (reuse `isLoggedIn` plus a role check), a separate export microservice or queue for this first cut, or a parallel feature-flag registry.",
+ "parent_usage": {
+  "input_tokens": 10,
+  "cache_creation_input_tokens": 4262,
+  "cache_read_input_tokens": 83492,
+  "output_tokens": 2395,
+  "output_tokens_details": {
+   "thinking_tokens": 181
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 4262,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 10,
+    "output_tokens": 2395,
+    "cache_read_input_tokens": 83492,
+    "cache_creation_input_tokens": 4262,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 4262
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "fixture": "F3-admin-export.md",
+ "arm": "monolithic",
+ "finished": "2026-09-30T21:59:11Z"
+}

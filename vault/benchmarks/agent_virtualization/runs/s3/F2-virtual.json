@@ -1,0 +1,58 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "virtual",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 145.4,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 470,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "C:/Users/User/.claude/state/agent_images/oneshot-architect-auditor-cdedaa9982d7ad0e.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 6699,
+ "reply": "## Audit Result\n\n**Plan reviewed:** Windows Node 18.19 session-recovery daemon covering PID liveness, lock-file single instance, in-place state persistence, orphan cleanup, health status, a fail-closed prompt hook, fake-process-table tests, and glob-based transcript discovery.\n**Files in scope:** 4 artifacts (`daemon.pid`, `daemon.lock`, `state.json`, hook script). Plan text only, so all findings are INFERRED from the plan.\n**Gaps found:** 9\n\n### Gaps\n\n1. **[ENV] `fs.globSync` does not exist on the stated runtime (Node 18.19)**\n   - Where: Step 8\n   - Why this matters: `fs.globSync` first appeared in Node 22 as experimental. On 18.19 it is `undefined`, so session discovery throws `TypeError` at runtime. Discovery is the restore path, so recovery would fail after every crash. Unit tests with fakes would not catch it.\n   - Suggested fix: Use a manual `fs.readdirSync(..., {withFileTypes:true})` recursive walk with a filename filter, or pin and verify a Node version that has it. Add a startup assertion `typeof fs.globSync === 'function'` if the API is kept.\n\n2. **[EDGE] Step 4 kills every `node.exe` that is not the daemon, including unrelated tools**\n   - Where: Step 4\n   - Why this matters: The plan states that editors and dev servers run on the same host as Node processes. The cleanup would kill them and cause data loss in unrelated tools. It could also kill the prompt-hook process from Step 6 and the daemon's own children. The daemon has no record of which processes are \"orphans of the previous crash\", so the plan's stated purpose does not match what it does.\n   - Suggested fix: Remove blanket kill. Keep a registry of spawned children as PID plus process creation time, written by the daemon. On start, kill only registry entries whose PID and start time still match. Better, spawn children in a Windows Job Object or with a parent-death guard.\n\n3. **[EDGE] Step 1 treats PID existence as liveness, so PID reuse gives a false \"alive\"**\n   - Where: Step 1\n   - Why this matters: After a crash, Windows can reuse the PID for any unrelated process, including one of the Node tools. The second launch then refuses to start, or attaches to a stranger, and the daemon never recovers. Existence also says nothing about identity.\n   - Suggested fix: Store PID plus process start time, or verify identity via a local IPC handshake (named pipe or localhost port) that returns a daemon nonce. Treat a failed handshake as dead.\n\n4. **[EDGE] Step 2 lock is check-then-create (TOCTOU) and has no stale-lock recovery**\n   - Where: Step 2\n   - Why this matters: Two simultaneous starts can both see no lock and both continue, which gives two writers to `state.json`. Conversely, a crash leaves `daemon.lock` behind, so the plan refuses every restart. That is the exact scenario the daemon exists for.\n   - Suggested fix: Create atomically with `fs.openSync(path,'wx')`, and write the PID and start time inside. On `EEXIST`, validate the holder as in gap 3 and reclaim only if it is dead. Better, bind a named pipe or port as the lock, because the OS releases it on crash.\n\n5. **[INTEGRATION] Steps 1 and 2 are two independent authorities for \"is the daemon running\" (split-brain)**\n   - Where: Steps 1, 2\n   - Why this matters: `daemon.pid` and `daemon.lock` can disagree. A pid file with no lock, or a lock with a dead pid, leaves the decision undefined. Each half can fail in a different way (gaps 3 and 4).\n   - Suggested fix: Make one artifact the single owner (the lock file holding pid plus start time, or the IPC endpoint) and drop the other, or define one precedence rule.\n\n6. **[EDGE] Step 3 overwrites `state.json` in place with `writeFileSync`, so a crash mid-write corrupts the only copy**\n   - Where: Step 3\n   - Why this matters: `writeFileSync` truncates and then writes. A crash, power loss, or kill during the write leaves an empty or partial file. The recovery daemon then restores from garbage or fails to parse, losing the very state it exists to protect. Writing \"after every change\" maximizes the exposure window.\n   - Suggested fix: Write to `state.json.tmp`, `fsync`, then `fs.renameSync` over the target (atomic on the same volume). Keep the previous generation as `state.json.bak`. On load, validate the JSON and fall back to the `.bak` on parse failure.\n\n7. **[REALITY-CONTRACT] Step 5 reports HEALTHY whenever the process is running**\n   - Where: Step 5\n   - Why this matters: A hung event loop, an unreadable or corrupt `state.json`, or a failed write loop still shows \"running\". The status command would report HEALTHY while recovery is impossible, which is a false-green verifier.\n   - Suggested fix: Derive health from evidence: an IPC round trip that answers, a heartbeat timestamp newer than N seconds, the last successful atomic state write time, and a state-file validity check. Report DEGRADED or UNKNOWN distinctly.\n\n8. **[EDGE] Step 6 hook fails closed with exit 2 when the daemon is unreachable**\n   - Where: Step 6\n   - Why this matters: A daemon crash is the expected event. With exit 2 every prompt is blocked while the daemon is down, including the prompts needed to diagnose or restart it. The user is locked out by the recovery mechanism.\n   - Suggested fix: Fail open. Exit 0 with a stderr warning on unreachable, timeout, or parse error, and apply a short bounded timeout to the state request. Reserve exit 2 for an explicit, positively verified policy denial.\n\n9. **[COMPLETION-GATE] Step 7 verifies only against a fake process table**\n   - Where: Step 7\n   - Why this matters: A fake table cannot exhibit PID reuse, real kill semantics on Windows, torn writes, lock races, or a missing `fs.globSync`. The suite would pass while gaps 1 to 8 are live, and a green result would not show the real behavior.\n   - Suggested fix: Add real-process tests on the Windows host under Node 18.19. They should cover kill -9 of the daemon mid-write and restore from `state.json`, two simultaneous launches with exactly one winner, a recycled PID, an unrelated `node.exe` surviving startup, the hook fail-open path, and discovery on the real runtime. Add a red-branch control for each (for example, revert to `writeFileSync` and require the torn-write test to fail).\n\n### Audit clean items (informational, not blocking)\n- Step 3's restore-from-file design has a sound owner (the daemon is the single writer). The defect is the write method, not the architecture.\n- No AUTH, APOLLO-GRAPHQL, or PATH concerns are visible in the plan text. Hook exit-code semantics (2 blocks) are taken as stated.\n- The Node-version finding (gap 1) rests on my knowledge that `fs.globSync` landed in Node 22, not on anything in the plan. The plan itself does not state this.",
+ "parent_usage": {
+  "input_tokens": 10,
+  "cache_creation_input_tokens": 4325,
+  "cache_read_input_tokens": 72141,
+  "output_tokens": 1957,
+  "output_tokens_details": {
+   "thinking_tokens": 178
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 4325,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 10,
+    "output_tokens": 1957,
+    "cache_read_input_tokens": 72141,
+    "cache_creation_input_tokens": 4325,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 4325
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "fixture": "F2-recovery-daemon.md",
+ "arm": "virtual",
+ "finished": "2026-09-30T21:54:46Z"
+}
