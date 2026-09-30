@@ -27,7 +27,9 @@ from modules.gsd_x.mission import store as st            # noqa: E402
 
 BENCH = ROOT / "vault" / "benchmarks" / "mission_spine"
 FIXTURE = BENCH / "fixture"
-GIT = r"C:\Program Files\Git\cmd\git.exe"
+from modules.gsd_x.goal.git_state import git_exe          # noqa: E402
+
+GIT = git_exe()
 
 # The sealed blob ids, copied from HOLDOUT-SEALED.md. If the fixture is edited
 # after sealing, these stop matching -- which is the point of sealing it.

@@ -28,7 +28,7 @@ from pathlib import Path
 
 from ..epoch import (COMPLETED, EXPIRED, FAILED, OBS_ENDED, OBS_LOST, OBS_RUNNING,
                      EpochError, Observation, Receipt)
-from ..git_state import head, tree_id
+from ..git_state import head, tree_id, git_exe
 
 BIN_ENV = "CLAUDE_BIN"
 ARGS_ENV = "CLAUDE_ARGS_TEMPLATE"        # space-separated; {prompt} substituted
@@ -165,7 +165,7 @@ class HeadlessClaudeProvider:
         before, after = handle.get("head_before", ""), head(root)
         commits = []
         if before and after and before != after:
-            rng = subprocess.run([r"C:\Program Files\Git\cmd\git.exe", "-C", str(root),
+            rng = subprocess.run([git_exe(), "-C", str(root),
                                   "log", "--format=%H", f"{before}..{after}"],
                                  capture_output=True, text=True, timeout=60)
             commits = [c for c in (rng.stdout or "").split() if c]
@@ -267,7 +267,7 @@ class InteractiveClaudeProvider:
         before, after = handle.get("head_before", ""), head(root)
         commits = []
         if before and after and before != after:
-            rng = subprocess.run([r"C:\Program Files\Git\cmd\git.exe", "-C", str(root),
+            rng = subprocess.run([git_exe(), "-C", str(root),
                                   "log", "--format=%H", f"{before}..{after}"],
                                  capture_output=True, text=True, timeout=60)
             commits = [c for c in (rng.stdout or "").split() if c]

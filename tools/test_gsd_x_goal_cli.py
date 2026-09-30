@@ -19,7 +19,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-GIT = r"C:\Program Files\Git\cmd\git.exe"
+from modules.gsd_x.goal.git_state import git_exe          # noqa: E402
+
+GIT = git_exe()
 CLI = ROOT / "tools" / "gsd_x_goal.py"
 MISSION_CLI = ROOT / "tools" / "gsd_x_mission.py"
 ENV = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",

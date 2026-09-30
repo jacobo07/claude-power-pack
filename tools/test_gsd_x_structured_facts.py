@@ -45,7 +45,9 @@ SEALED = {  # HOLDOUT-SEALED.md:13-15 -- the seal of record
     "README.md": "b85af34",
     "probe_env.py": "35e1a7d",
 }
-GIT = r"C:\Program Files\Git\cmd\git.exe"
+from modules.gsd_x.goal.git_state import git_exe          # noqa: E402
+
+GIT = git_exe()
 
 _passes: list[str] = []
 _fails: list[str] = []

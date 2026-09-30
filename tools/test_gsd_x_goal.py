@@ -24,7 +24,9 @@ from modules.gsd_x.goal import contract as gc  # noqa: E402
 from modules.gsd_x.goal import log as gl       # noqa: E402
 from modules.gsd_x.mission import store as st  # noqa: E402
 
-GIT = r"C:\Program Files\Git\cmd\git.exe"
+from modules.gsd_x.goal.git_state import git_exe          # noqa: E402
+
+GIT = git_exe()
 REPO = "a" * 40
 
 RACE_SCRIPT = r"""

@@ -15,10 +15,32 @@ evidence about a commit, which is the tree-hash rule with the safety removed.
 from __future__ import annotations
 
 import hashlib
+import os
+import shutil
 import subprocess
 from pathlib import Path
 
 GIT_CANDIDATES = (r"C:\Program Files\Git\cmd\git.exe", "git")
+
+
+def git_exe() -> str:
+    """One git executable for callers that need a path, not a probe.
+
+    The absolute Windows path first (git is not on this host's non-interactive PATH), then
+    whatever PATH offers. A single hardcoded Windows path elsewhere made every provider and
+    test that used it raise FileNotFoundError on a Linux plane (measured 2026-09-30 on GEX44:
+    4 of 11 owning suites could not start). Never raises: an unresolved "git" fails at the
+    call site, where the caller already reports it.
+    """
+    for exe in GIT_CANDIDATES:
+        if "\\" in exe or os.path.isabs(exe):
+            if os.path.isfile(exe):
+                return exe
+        else:
+            found = shutil.which(exe)
+            if found:
+                return found
+    return "git"
 
 
 def _git(root: Path, *args: str) -> tuple[int, str]:

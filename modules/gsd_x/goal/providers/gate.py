@@ -23,6 +23,7 @@ import sys
 import time
 from pathlib import Path
 
+from ..proc import pid_alive
 from ..epoch import (COMPLETED, FAILED, LOST, OBS_ENDED, OBS_LOST, OBS_RUNNING,
                      EpochError, Observation, Receipt)
 from ..convergence import GATE_CLASSES
@@ -84,17 +85,7 @@ class GateProvider:
 
     @staticmethod
     def _pid_alive(pid) -> bool:
-        if not pid:
-            return False
-        if os.name == "nt":
-            out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}"],
-                                 capture_output=True, text=True).stdout
-            return str(pid) in out
-        try:
-            os.kill(int(pid), 0)
-            return True
-        except (OSError, ProcessLookupError, ValueError):
-            return False
+        return pid_alive(pid)
 
     @staticmethod
     def _spec_gate(spec: dict) -> dict:

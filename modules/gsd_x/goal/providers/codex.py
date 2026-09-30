@@ -43,7 +43,8 @@ from pathlib import Path
 
 from ..epoch import COMPLETED, FAILED, OBS_ENDED, OBS_LOST, OBS_RUNNING, EpochError, \
     Observation, Receipt
-from ..git_state import head, tree_id
+from ..git_state import git_exe, head, tree_id
+from ..proc import pid_alive
 
 # The other tiers' own names, reused so one account keeps one switch and one
 # ledger. Re-spelling them here would create the second control surface this
@@ -76,17 +77,7 @@ def _expand(p: str) -> Path:
 
 
 def _pid_alive(pid: int) -> bool:
-    if pid <= 0:
-        return False
-    if os.name == "nt":
-        out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}"],
-                             capture_output=True, text=True).stdout
-        return str(pid) in out
-    try:
-        os.kill(pid, 0)
-        return True
-    except (OSError, ProcessLookupError):
-        return False
+    return pid_alive(pid)
 
 
 class CodexProvider:
@@ -295,7 +286,7 @@ class CodexProvider:
         commits = []
         before = handle.get("head_before", "")
         if before and after and before != after:
-            rng = subprocess.run([r"C:\Program Files\Git\cmd\git.exe", "-C", str(root),
+            rng = subprocess.run([git_exe(), "-C", str(root),
                                   "log", "--format=%H", f"{before}..{after}"],
                                  capture_output=True, text=True, timeout=60)
             commits = [c for c in (rng.stdout or "").split() if c]

@@ -28,7 +28,9 @@ from modules.gsd_x.goal import epoch as ep                          # noqa: E402
 from modules.gsd_x.goal.providers.codex import CodexProvider        # noqa: E402
 from modules.gsd_x.goal.providers import codex as cx                # noqa: E402
 
-GIT = r"C:\Program Files\Git\cmd\git.exe"
+from modules.gsd_x.goal.git_state import git_exe          # noqa: E402
+
+GIT = git_exe()
 ENV = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
        "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
 
@@ -37,7 +39,9 @@ ENV = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
 # same cwd, same exit code, same stdout channel.
 FAKE = """
 import subprocess, sys, pathlib
-GIT = r"C:\\Program Files\\Git\\cmd\\git.exe"
+import os as _os, shutil as _sh
+_W = r"C:\\Program Files\\Git\\cmd\\git.exe"
+GIT = _W if _os.path.isfile(_W) else (_sh.which("git") or "git")
 args = sys.argv[1:]
 mode = "ok"
 for a in args:

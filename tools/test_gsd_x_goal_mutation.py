@@ -333,6 +333,37 @@ def suite_for(gate: str) -> Path:
                    f"{[p.name for p in owners]} -- rename one")
 
 
+def _run_suite(suite: Path) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, "-B", str(suite)], capture_output=True, text=True,
+                          encoding="utf-8", errors="replace", cwd=str(ROOT), timeout=300,
+                          env={**os.environ, "PYTHONIOENCODING": "utf-8",
+                               "PYTHONDONTWRITEBYTECODE": "1"})
+
+
+def _gates(stdout: str, word: str) -> list[str]:
+    """Gate names printed as `  PASS <gate>: ...` or `  FAIL <gate>: ...`."""
+    return [ln.strip()[len(word) + 1:].split(":")[0] for ln in stdout.splitlines()
+            if ln.strip().startswith(word + " ")]
+
+
+def eligibility(gate: str, control: dict) -> str:
+    """Can a mutant aimed at `gate` say anything, given the UNMUTATED run of its suite?
+
+    A mutant only proves something if its gate was green before the mutation. Measured
+    2026-09-30 on a Linux plane: a suite that could not start (a hardcoded Windows git path)
+    printed no gate at all, every one of its mutants read as "malformed", and the summary
+    still printed a caught ratio over them -- a verdict about code that never ran.
+      RUNS          the gate passed unmutated
+      NOT_EXECUTED  its suite printed no PASS line at all (did not start, or crashed early)
+      PRE_RED       the suite ran, but this gate was already red or never printed
+    """
+    if gate in control["passed"]:
+        return "RUNS"
+    if not control["passed"]:
+        return "NOT_EXECUTED"
+    return "PRE_RED"
+
+
 def main() -> int:
     targets = {m[0] for m in MUTATIONS.values()}
     for p in targets | set(SUITES.values()):
@@ -341,9 +372,39 @@ def main() -> int:
             return 2
     originals = {p: p.read_bytes() for p in targets}
     digests = {p: hashlib.sha256(b).hexdigest() for p, b in originals.items()}
+
+    # Control first: every owning suite, UNMUTATED, once.
+    owner: dict[str, Path | None] = {}
+    for gate in {m[4] for m in MUTATIONS.values()}:
+        try:
+            owner[gate] = suite_for(gate)
+        except KeyError as exc:
+            owner[gate] = None
+            print(f"  UNOWNED   {gate}: {exc}")
+    controls: dict[Path, dict] = {}
+    for suite in sorted({s for s in owner.values() if s is not None}):
+        proc = _run_suite(suite)
+        controls[suite] = {"rc": proc.returncode, "passed": set(_gates(proc.stdout, "PASS")),
+                           "failed": set(_gates(proc.stdout, "FAIL"))}
+        c = controls[suite]
+        state = "ran" if c["passed"] else "DID NOT EXECUTE"
+        print(f"control {suite.name}: {state}, rc={c['rc']}, "
+              f"pass={len(c['passed'])} fail={len(c['failed'])}")
+        if not c["passed"]:
+            tail = (proc.stderr or proc.stdout).strip().splitlines()[-1:] or ["(no output)"]
+            print(f"          last line: {tail[0][:160]}")
+
     outcomes: dict[str, object] = {}
     try:
         for name, (path, old, new, prop, gate) in MUTATIONS.items():
+            suite = owner.get(gate)
+            if suite is None:
+                outcomes[name] = ("UNOWNED", prop, gate)
+                continue
+            elig = eligibility(gate, controls[suite])
+            if elig != "RUNS":
+                outcomes[name] = (elig, prop, gate)
+                continue
             text = originals[path].decode("utf-8")
             if "\r\n" in text:
                 old, new = old.replace("\n", "\r\n"), new.replace("\n", "\r\n")
@@ -352,44 +413,52 @@ def main() -> int:
                 continue
             path.write_bytes(text.replace(old, new, 1).encode("utf-8"))
             try:
-                proc = subprocess.run([sys.executable, "-B", str(suite_for(gate))],
-                                      capture_output=True, text=True, cwd=str(ROOT),
-                                      timeout=300,
-                                      env={**os.environ, "PYTHONIOENCODING": "utf-8",
-                                           "PYTHONDONTWRITEBYTECODE": "1"})
+                proc = _run_suite(suite)
             finally:
                 path.write_bytes(originals[path])
-            failed = [ln.strip() for ln in proc.stdout.splitlines()
-                      if ln.strip().startswith("FAIL")]
-            outcomes[name] = ((proc.returncode, failed), prop, gate)
+            outcomes[name] = ((proc.returncode, _gates(proc.stdout, "FAIL")), prop, gate)
     finally:
         for p, b in originals.items():
             p.write_bytes(b)
 
     restored = all(hashlib.sha256(p.read_bytes()).hexdigest() == digests[p] for p in targets)
-    print(f"restored (sha256, {len(targets)} file(s)): {restored}\n")
+    print(f"\nrestored (sha256, {len(targets)} file(s)): {restored}\n")
     if not restored:
         print("INSTRUMENT_FAILED: a mutated module was not restored")
         return 2
-    caught = 0
+    caught, not_run = 0, {"NOT_EXECUTED": 0, "PRE_RED": 0, "UNOWNED": 0}
     for name, (outcome, prop, gate) in outcomes.items():
+        if isinstance(outcome, str) and outcome in not_run:
+            not_run[outcome] += 1
+            print(f"  {outcome:12s} {name}  (gate {gate}) -- no verdict")
+            continue
         if isinstance(outcome, str):
             print(f"  INVALID   {name}: {outcome}")
             continue
-        rc, failed = outcome
-        names = [f.split(":")[0].replace("FAIL ", "") for f in failed]
-        if rc != 0 and not failed:
+        rc, names = outcome
+        # Only gates that were green in the control count as "turned red by the mutant".
+        newly_red = [n for n in names if n not in controls[owner[gate]]["failed"]]
+        if rc != 0 and not names:
             print(f"  CRASHED   {name}  rc={rc} with no failing gate -- mutant malformed")
-        elif gate in names:
+        elif gate in newly_red:
             caught += 1
             print(f"  CAUGHT  {name} by {gate}")
-        elif failed:
-            print(f"  CAUGHT-ELSEWHERE  {name}: expected {gate}, red: {names}")
+        elif newly_red:
+            print(f"  CAUGHT-ELSEWHERE  {name}: expected {gate}, red: {newly_red}")
         else:
             print(f"  SURVIVED  {name}  rc={rc}\n            property: {prop}")
-    print(f"\nGSDX_GOAL_MUTATIONS_CAUGHT={caught}/{len(MUTATIONS)}  "
-          f"threshold={len(MUTATIONS)}/{len(MUTATIONS)}")
-    return 0 if caught == len(MUTATIONS) else 2
+    total = len(MUTATIONS)
+    skipped = sum(not_run.values())
+    executed = total - skipped
+    print(f"\nEXECUTED={executed}/{total}  NOT_EXECUTED={not_run['NOT_EXECUTED']}  "
+          f"PRE_RED={not_run['PRE_RED']}  UNOWNED={not_run['UNOWNED']}")
+    if skipped:
+        # No ratio: a caught count over mutants that never ran is not a verdict.
+        print(f"GSDX_GOAL_MUTATIONS=NO_VERDICT  {skipped} mutant(s) could not be judged; "
+              f"caught {caught} of the {executed} that ran  threshold={total}/{total} executed")
+        return 2
+    print(f"GSDX_GOAL_MUTATIONS_CAUGHT={caught}/{total}  threshold={total}/{total}")
+    return 0 if caught == total else 2
 
 
 if __name__ == "__main__":

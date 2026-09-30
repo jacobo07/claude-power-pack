@@ -26,14 +26,18 @@ from modules.gsd_x.goal import epoch as ep                  # noqa: E402
 from modules.gsd_x.goal import log as gl                    # noqa: E402
 from modules.gsd_x.goal.providers import claude as cl       # noqa: E402
 
-GIT = r"C:\Program Files\Git\cmd\git.exe"
+from modules.gsd_x.goal.git_state import git_exe          # noqa: E402
+
+GIT = git_exe()
 ENV = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
        "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
 REPO_ID = "d" * 40
 
 FAKE = """
 import sys, pathlib, subprocess
-GIT = r"C:\\Program Files\\Git\\cmd\\git.exe"
+import os as _os, shutil as _sh
+_W = r"C:\\Program Files\\Git\\cmd\\git.exe"
+GIT = _W if _os.path.isfile(_W) else (_sh.which("git") or "git")
 brief = sys.argv[-1]
 root = pathlib.Path.cwd()
 (root / "claude_did_this.txt").write_text(brief[:80], encoding="utf-8")
