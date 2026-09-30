@@ -254,5 +254,12 @@ Owner N7 answer 2 (push nothing) stands.
    decision). (c) Hook latency is INCONCLUSIVE: in-process the family step is ~60-300 ms,
    mostly imports, but the subprocess medians swung 0.7 s -> 2.9 s with one 7.8 s outlier
    on a host at 711 MB free of 32 GB; the child deadline is 6 s. Re-measure on headroom.
-4. Recompile the frontier against `C:\Users\User\Downloads\Dataset GSD X 1.txt`
-   (762 KB, 24,148 lines; §50's candidate list is its own section).
+4. ~~Recompile the frontier.~~ **DONE 2026-09-30** — `vault/datasets/gsd_x/FRONTIER-2026-09-30.md`.
+   The Downloads file is the only version (762,470 B, 2026-09-22; 45,030 LF lines — the
+   "24,148" above was a different count). The ledger had stopped at 09-20: 6 of 14 UNPROVEN
+   claims had already met their own tests in N5–N8 / GSD phases 1–2 and were never written
+   back. Now 8 UNPROVEN; C30/M09/M10 added; 5 ids left the unpinned inventory.
+5. **§50 (GSDX-M08), next unit.** The 18 candidates stay unpromoted, but the blocker has
+   changed name: the UKDL's continuous writer is the CEPS auto-appender (GSDX-M09), so
+   "quiet for an hour" never comes. Reconcile the candidates against the UKDL, then land
+   only those rows by hunk-scoped staging beside the appender's uncommitted ones.
