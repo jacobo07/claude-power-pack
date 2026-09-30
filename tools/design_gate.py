@@ -527,7 +527,50 @@ def _attach_capability_decisions(parsed: dict) -> dict:
         return {}
 
 
-def design_gate(design_md_path: str) -> dict:
+def _project_relative(surface: str, design_md_path: str) -> str:
+    """The surface path as seen from the project root (the DESIGN.md's directory).
+
+    The resolver infers the surface kind from path tokens, so it must see only the
+    project's own path. Given the absolute path, every ancestor voted: a checkout
+    under `/home/<user>` classified every surface as `landing`, and one under a
+    folder named `docs` or `demo` inherited that kind. A surface that is not under
+    the root (another drive) is passed through unchanged."""
+    try:
+        root = os.path.dirname(os.path.abspath(design_md_path))
+        abs_surface = os.path.abspath(surface)
+        if os.path.commonpath([root, abs_surface]) == root:
+            return os.path.relpath(abs_surface, root)
+    except ValueError:                        # different drives on Windows
+        pass
+    return surface
+
+
+def _attach_motion_guidance(out: dict, parsed: dict, surface, design_md_path: str = "") -> None:
+    """Decision-time motion retrieval (modules/cdio/motion_patterns.py).
+
+    Reported beside the score and never inside it, for the CDIO-07 reason: a new
+    axis must not re-score history. Isolated for the hard-filter reason: a corpus
+    problem must never take the design verdict down with it, and a failure is its
+    own named state rather than an empty list that reads as "nothing applies"."""
+    if not surface:
+        return
+    try:
+        from modules.cdio.motion_patterns import advisory_line, resolve
+        guidance = resolve(parsed.get("experience"),
+                           _project_relative(surface, design_md_path) if design_md_path
+                           else surface)
+        # Rendered HERE so the node hook appends a string and never re-implements
+        # the wording: one formatter, not two drifting copies across a language edge.
+        guidance["advisory"] = advisory_line(guidance)
+        out["motion_guidance"] = guidance
+    except Exception as exc:                  # noqa: BLE001 -- isolation is the point
+        out["motion_guidance"] = {"state": "unevaluated", "surface": surface,
+                                  "reason": f"motion resolver raised "
+                                            f"{type(exc).__name__}: {exc}",
+                                  "patterns": []}
+
+
+def design_gate(design_md_path: str, surface: str = None) -> dict:
     """Run the CDIO-06 anti-slop checks against a DESIGN.md.
 
     Returns a dict with `verdict` in {APPROVE, REVISE, BLOCK, SKIP}. SKIP means the
@@ -660,6 +703,7 @@ def design_gate(design_md_path: str) -> dict:
     # the second one means somebody looked. Collapsing them would turn a
     # capability that never ran into a capability that approved.
     out["capability_decisions"] = decisions
+    _attach_motion_guidance(out, parsed, surface, design_md_path)
     statuses = {d.get("status") for d in decisions.values()}
     if not decisions:
         out["capability_state"] = "unassessed"
@@ -722,6 +766,10 @@ def _render(out: dict) -> str:
     elif cap_state == "unassessed":
         lines.append("  capability: unassessed -- no capability claims the "
                      "`design_md` artifact kind (not a finding)")
+    mg = out.get("motion_guidance")
+    if mg:
+        ids = ", ".join(p["id"] for p in mg.get("patterns") or []) or "none"
+        lines.append(f"  motion:     {mg.get('state')} [{ids}] -- {mg.get('reason')}")
     for sev in ("critical", "major", "minor"):
         for f in out.get(sev, []) or []:
             lines.append(f"  [{sev.upper():8}] {f['criterion']}: {f['observed']}")
@@ -744,6 +792,9 @@ def main(argv=None) -> int:
                          "Prefer this over a shell redirect on Windows: PowerShell's "
                          "`>` and `Out-File -Encoding utf8` both prepend a BOM, and a "
                          "BOM'd context is a file the consumer cannot parse")
+    ap.add_argument("--surface", metavar="PATH",
+                    help="the visual surface being written; adds `motion_guidance` "
+                         "(contract-aware motion patterns, or why none) to the output")
     args = ap.parse_args(argv)
 
     if args.emit_context:
@@ -774,7 +825,7 @@ def main(argv=None) -> int:
         return 0
 
     try:
-        out = design_gate(args.design_md)
+        out = design_gate(args.design_md, surface=args.surface)
     except Exception as exc:                      # noqa: BLE001 -- fail-open is the contract
         out = _skip(args.design_md,
                     f"gate error, standing down (fail-open): {exc}")
