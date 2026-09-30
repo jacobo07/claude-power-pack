@@ -16,6 +16,15 @@
 // Same functions as the hub (required, not copied, so the card and the autotype cannot
 // disagree about which capsule is here). Emits nothing; the hub still shows the card.
 // Kill switch: CPP_KRESUME_AUTOTYPE=off (checked inside armKresumeAutotype).
+//
+// Measured 2026-09-30 (0518ccd0 -> 31ab653e): the require below also imported the hub's
+// 2 s stdin budget. On a starved host the payload arrived later, the read timed out, the
+// payload became {}, and the arm was skipped for want of a session id. The budget is the
+// hub's to own, but this hook's harness timeout is 15 s, so it asks for 10 s (the hub's
+// hard-exit is budget + 3 s = 13 s, still inside 15). Must be set BEFORE the require.
+if (!process.env.PP_HUB_STDIN_BUDGET_MS) {
+  process.env.PP_HUB_STDIN_BUDGET_MS = '10000';
+}
 const hub = require('./session_start_hub.js');
 
 async function main() {

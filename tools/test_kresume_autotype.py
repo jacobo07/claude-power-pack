@@ -159,6 +159,37 @@ def hub_gates():
           and body.get("fresh_line") == "/kresume focus on Re-point rows 28/29"
           and body.get("transcript") == r"C:\t\succ.jsonl",
           f"rc={r.returncode} body={body} err={r.stderr[-200:]!r}")
+    # 2026-09-30 (0518ccd0 -> 31ab653e): on a starved host the harness closed the hook's
+    # stdin after the HUB's 2 s budget, which this hook inherited by require. The read timed
+    # out, the payload became {}, there was no session id, and the arm was skipped with no
+    # log line -- while the card, which falls back to cwd, still showed. A payload that
+    # arrives 3 s late must still arm.
+    def run_autotype_hook_late(payload, delay_s):
+        home = fresh()
+        seed_capsule(home, cwd, obligations=["Late payload"])
+        hooks = home / ".claude" / "hooks"
+        hooks.mkdir(parents=True, exist_ok=True)
+        (hooks / "auto-compact-sendkeys-daemon.ps1").write_text("exit 0\r\n", encoding="ascii")
+        env = dict(os.environ)
+        env.update({"USERPROFILE": str(home), "HOME": str(home), "AC_DAEMON_DIR": str(hooks)})
+        p = subprocess.Popen(["node", str(AUTOTYPE_HOOK)], stdin=subprocess.PIPE, env=env,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        time.sleep(delay_s)
+        try:
+            p.stdin.write(json.dumps(payload))
+            p.stdin.close()
+        except OSError:
+            pass   # the hook already exited: that IS the defect, the flag check reports it
+        p.wait(timeout=60)
+        f = hooks / flag_name
+        return (json.loads(f.read_text(encoding="utf-8")) if f.exists() else None), p.returncode
+
+    body, rc = run_autotype_hook_late({"source": "clear", "session_id": "succ-2222", "cwd": cwd,
+                                       "transcript_path": "t"}, 3.0)
+    check("V-KRA-HOOK-ARMS-ON-LATE-STDIN",
+          rc == 0 and body is not None and body.get("fresh_line") == "/kresume focus on Late payload",
+          f"rc={rc} body={body}")
+
     body, r = run_autotype_hook({"source": "startup", "session_id": "succ-2222", "cwd": cwd})
     check("V-KRA-HOOK-SILENT-ON-STARTUP", r.returncode == 0 and body is None, f"body={body}")
     body, r = run_autotype_hook({"source": "clear", "session_id": "succ-2222", "cwd": cwd},

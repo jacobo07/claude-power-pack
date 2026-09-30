@@ -119,7 +119,14 @@ function note(msg, err) {
 // with NO declared budget, so a stall here holds the session open screen itself.
 const { readStdinRaw, armHardExit } = require('./hook-utils');
 
-const STDIN_BUDGET_MS = 2000;
+// 2 s is right for the hub, which lives inside SessionStart-chain's 4 s deadline. A
+// top-level hook that requires this module (rollover_autotype.js, 15 s harness timeout)
+// sets PP_HUB_STDIN_BUDGET_MS before the require. Measured 2026-09-30 (-> 31ab653e): the
+// inherited 2 s expired on a starved host, the payload became {}, and /kresume was never armed.
+const STDIN_BUDGET_MS = (() => {
+  const v = Number(process.env.PP_HUB_STDIN_BUDGET_MS);
+  return (Number.isFinite(v) && v >= 500 && v <= 12000) ? v : 2000;
+})();
 const HARD_EXIT = armHardExit(STDIN_BUDGET_MS + 3000,
   () => note('hard-exit watchdog fired', new Error('stdin never closed')));
 
@@ -358,7 +365,10 @@ function armKresumeAutotype(sessionId, cwd, transcriptPath, focus) {
     }
     const safeSid = String(sessionId || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 64);
     if (!safeSid || !cwd) {
-      return null;   // no id = no exact route; the daemon would refuse it anyway
+      // No id = no exact route; the daemon would refuse it anyway. Logged, because a
+      // silent skip here is exactly how the 2026-09-30 miss stayed invisible.
+      note('SKIP kresume_autotype (no session id or cwd -- stdin payload missing?)');
+      return null;
     }
     const hooksDir = process.env.AC_DAEMON_DIR || path.join(HOME, '.claude', 'hooks');
     fs.mkdirSync(hooksDir, { recursive: true });
