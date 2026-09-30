@@ -547,6 +547,30 @@
       "class": "SCHEDULED",
       "note": "part of the sqi package driven by tools/run_sqi.py -- see sqi/__init__ note"
     },
+    "pp_eval/__init__": {
+      "class": "SCHEDULED",
+      "note": "PP Self-Eval (vault/specs/pp-self-eval.md). Driven nightly by the Windows scheduled task PP-SelfEval -> tools/hidden_launch.vbs -> tools/pp_eval.py night; gate tools/test_pp_eval.py"
+    },
+    "pp_eval/common": {
+      "class": "SCHEDULED",
+      "note": "PP Self-Eval -- see pp_eval/__init__ note"
+    },
+    "pp_eval/harvest": {
+      "class": "SCHEDULED",
+      "note": "PP Self-Eval -- see pp_eval/__init__ note (also tools/pp_eval.py harvest)"
+    },
+    "pp_eval/runner": {
+      "class": "SCHEDULED",
+      "note": "PP Self-Eval -- see pp_eval/__init__ note"
+    },
+    "pp_eval/verdict": {
+      "class": "SCHEDULED",
+      "note": "PP Self-Eval -- see pp_eval/__init__ note"
+    },
+    "pp_eval/nightly": {
+      "class": "SCHEDULED",
+      "note": "PP Self-Eval -- see pp_eval/__init__ note"
+    },
     "sweep_enforcer/__init__": {
       "class": "LIBRARY",
       "note": "manual sweep tool invoked by an agent/Owner performing a specific prevention-rule sweep (P3); self-contained, no standing harness consumer required"
