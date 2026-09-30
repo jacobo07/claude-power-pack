@@ -126,33 +126,127 @@ No gate failure; no classification needed; no scratch worktree created.
 
 ## 2. Full pytest suite
 
-legitimacy_checkpoint: rejected (no-owner-available-mid-run: orchestrator cannot approve a package install on the
-Owner's behalf; ROADMAP operating constraint "never ask the Owner a question mid-run" forbids stalling for approval;
-re-run plan 01-02 after the Owner approves the pinned pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0 install)
-suite_verdict: BLOCKED
+### 2a. pytest availability and install (GEX44)
 
-Task 1 of 01-02-PLAN.md (blocking-human package-legitimacy checkpoint for installing pytest 9.1.1, pluggy 1.6.0 and
-iniconfig 2.3.0 into the job-scratch venv at /home/kobii/.claude/jobs/a293bedf/tmp/cro-p01/pytest-venv) was answered
-`rejected` by the orchestrator: no Owner was available to approve the install mid-run, and the orchestrator has no
-authority to grant that approval on the Owner's behalf. No venv was created, nothing was installed, nothing was run.
-Tasks 2 and 3 of 01-02-PLAN.md were not executed.
+legitimacy_checkpoint: approved
+api_key_recheck: UNSET
+
+Approved by the Owner on 2026-09-30 (answer `y` to: install pytest 9.1.1, pluggy 1.6.0 and iniconfig 2.3.0 into the
+job-scratch venv), relayed by a laptop session driving GEX44 over ssh. This supersedes the 2026-09-28 orchestrator
+rejection, which was recorded here before.
+
+Pin re-verification against the PyPI JSON API (fetched 2026-09-30, `timeout 30 curl -sS https://pypi.org/pypi/<name>/<version>/json`):
+
+```
+pytest 9.1.1 wheel=pytest-9.1.1-py3-none-any.whl pypi_sha256=37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c match=True
+pluggy 1.6.0 wheel=pluggy-1.6.0-py3-none-any.whl pypi_sha256=e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746 match=True
+iniconfig 2.3.0 wheel=iniconfig-2.3.0-py3-none-any.whl pypi_sha256=f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12 match=True
+PINS_OK
+```
+
+pip_install_rc: 0
+pytest_version: pytest 9.1.1
+venv_base_prefix: /usr
+
+Sanity line (python, base_prefix, packaging, pygments, pluggy): `3.12.3 /usr 24.0 2.17.2 1.6.0`
+
+The interpreter is the host's python3 3.12 plus three pytest-dev wheels, which is why it stands in for `python3` in
+ROADMAP criterion 2.
+
+Provenance note. The venv directory already existed when this run started: commit 016c19f (2026-09-28 22:20 +0200)
+records a pytest 9.1.1 run in this same job-scratch venv that ended rc=3 (INTERNALERROR at collection, no esprima),
+but no approval or install record for it was ever written to this file. pip therefore reported the three
+requirements as already satisfied and installed nothing new. Because `--require-hashes` does not re-check an already
+installed distribution, the installed files were verified directly: the three wheels were downloaded again with
+`pip download --require-hashes --no-deps --only-binary :all:` (rc 0) and every file listed in each wheel's RECORD was
+hashed in the venv's site-packages: iniconfig 9/9, pluggy 13/13, pytest 88/88 files match, 0 mismatches.
+
+### 2b. Dirty-set bracket (GEX44)
+
+Before:
+
+```
+?? .planning/active-workstream
+?? .planning/workstreams/cognitive-resource-os/config.json
+?? .planning/workstreams/cognitive-resource-os/state.json
+```
+
+After:
+
+```
+?? .planning/active-workstream
+?? .planning/workstreams/cognitive-resource-os/config.json
+?? .planning/workstreams/cognitive-resource-os/state.json
+```
+
+suite_moved_lines: 0
+
+### 2c. Run (GEX44)
+
+suite_command: timeout 1800 /home/kobii/.claude/jobs/a293bedf/tmp/cro-p01/pytest-venv/bin/python -m pytest tests/ -q --tb=line
+suite_cwd: /home/kobii/missions/cognitive-resource-os/.claude/worktrees/cro-gex44
+suite_head: 016c19f
+
+Host load immediately before the run (GEX44):
+
+```
+== loadavg
+0.57 0.67 0.68 4/972 1584475
+== free -m
+               total        used        free      shared  buff/cache   available
+Mem:           64081       14126        1479         315       49628       49955
+Swap:          16366         142       16224
+```
+
+suite_rc: 0
+suite_wall_s: 3.2
+suite_summary: 194 passed, 4 skipped in 2.98s
+suite_failing_ids: none
+suite_verdict: PASS
+
+The suite ran at HEAD 016c19f, which differs from 784e446 outside `.planning/` (see section 4, deviation). One of the
+4 skips is tests/test_cascade_populator.py, which since 016c19f skips when esprima is absent; esprima is not importable
+by the venv interpreter (`ModuleNotFoundError: No module named 'esprima'`).
+
+### 2d. tools/test_tco.py V-BASELINE-INTACT corroboration (GEX44)
+
+tco_rc: 0
+tco_v_baseline_intact: PASS  V-BASELINE-INTACT              rc=0 last='194 passed, 4 skipped in 2.86s'
+tco_pass_line: TCO_PASS=14/14  threshold=14/14
+tco_moved_lines: 0
+
+FAIL lines: none
 
 ## 3. Failure classification
 
-not reached: suite not run
+No failure in the suite or in test_tco; no classification needed; no scratch worktree created.
+
+class_counts: ENVIRONMENT=0 ATTRIBUTABLE=0 PRE-EXISTING=0 UNCLASSIFIED=0
 
 ## 4. Phase verdict (CRO-01)
 
-inputs: gates_verdict=PASS, suite_verdict=BLOCKED
-phase_verdict: BLOCKED
+inputs: gates_verdict=PASS, suite_verdict=PASS
+phase_verdict: PASS
 
-v_baseline_intact_gex44: BLOCKED (suite not run; legitimacy checkpoint rejected before any install)
+v_baseline_intact_gex44: PASS (suite_wall_s=3.2, bound 1800 s, GEX44)
 v_baseline_intact_laptop: INCONCLUSIVE (pytest tests/ exceeded 180 s, host ~630 MB free; RESUMPTION section 2)
+tco_v_baseline_intact_gex44: PASS  V-BASELINE-INTACT              rc=0 last='194 passed, 4 skipped in 2.86s'
 
-Constraints honoured: no push; no commit outside explicit pathspec; ANTHROPIC_API_KEY UNSET (section 0); no edit
-under ~/.claude config or /home/kobii/.claude/skills/claude-power-pack; no other mission's directory used; no
-package installed anywhere (including job scratch) -- the checkpoint was rejected before any venv was created.
+Constraints honoured:
+- no push
+- commits by explicit pathspec only
+- ANTHROPIC_API_KEY UNSET (section 0; rechecked UNSET at suite run)
+- no edit under ~/.claude config or /home/kobii/.claude/skills/claude-power-pack
+- no other mission's directory used
+- pytest only in job scratch (/home/kobii/.claude/jobs/a293bedf/tmp/cro-p01/pytest-venv)
+- no refusal recorded
 
-next: Re-run plan 01-02 from Task 1 once the Owner has reviewed and answered (approved or re-rejected) the pinned
-pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0 install described in 01-02-PLAN.md Task 1. CRO-01 stays open -- gates
-alone (section 1) are not sufficient; the full pytest suite still needs a verdict.
+Deviation (recorded, not hidden): the plan's check `git diff --name-only 784e446 HEAD -- . ':(exclude).planning'`
+does not print nothing. It lists vault/knowledge_base/ukdl-cognitive-resource-os.md and
+vault/plans/cognitive-resource-os-RESUMPTION.md (Phase 5 commits 471c749, c34511a, 9044735, both in the section 1b
+owned set) and tests/test_cascade_populator.py (016c19f, a peer-owned test outside the owned set). The last one
+changes what this instrument collects: without it, collection aborted with INTERNALERROR on this host. This verdict
+is therefore about HEAD 016c19f, not about 784e446.
+
+next: Phase 5 follow-up: push 016c19f with the branch (it is local-only, ahead 1), and state in RESUMPTION/UKDL that
+V-BASELINE-INTACT on GEX44 is PASS at 016c19f. No ATTRIBUTABLE failures.
