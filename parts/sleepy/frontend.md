@@ -40,6 +40,9 @@ Apply these in priority order; do NOT skip CRITICAL even for prototypes:
 5. **MEDIUM Typography**: line-height 1.5–1.75 body, line-length 65–75ch, pair display + body fonts intentionally.
 6. **MEDIUM Animation**: 150–300ms for micro-interactions, animate `transform`/`opacity` only.
 
+### Motion decisions (CDIO-07 × visual-patterns, 2026-09-30)
+Which motion a surface may carry is decided by its DESIGN.md `experience:` contract, not by taste. On every visual Write the CDIO hook appends `CDIO motion: …` with the applicable `VP-0xx` pattern ids for that surface kind, or `abstain`. Read the named entry (`vault/knowledge_base/visual-patterns/`) before animating; implement only patterns it named, tag each with `data-pattern="VP-0xx"`, and prove it with `python tools/test_motion_grammar.py`. No contract ⇒ no motion is proposed. Auto-advancing content always ships pause + a reduced-motion equivalent (VP-016). Worked example: `examples/motion-grammar/device-demo/`.
+
 ### From `brand-guidelines` (when "Anthropic" mentioned)
 Read `vendor/skills/brand-guidelines/instructions.md` for the canonical color hex codes + typography system. Default whenever the work is for/about Anthropic itself.
 

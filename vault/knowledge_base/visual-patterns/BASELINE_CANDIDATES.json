@@ -1,0 +1,41 @@
+{
+  "family": "web_surface",
+  "status": "candidate",
+  "written": "2026-09-30",
+  "note": "NOT a baseline generation. vault/tower/baselines/web_surface/B0.json is unchanged. Entries use the B0 entry shape (id, requirement, why, origin{file,line,quote}, class, check) so a promotion can lift them verbatim into B1 through modules/tower/baselines.py. Promotion condition per entry is stated in `promote_when`; none is met by one reference.",
+  "entries": [
+    {
+      "id": "web_surface-autoadvance-pause-and-reduced-motion-equivalent",
+      "requirement": "Any web surface content that advances on its own (carousel, device demo, rotating proof) ships a visible, keyboard-operable pause control, stops when hidden or out of view, and under prefers-reduced-motion does not autoplay while keeping every state reachable by a non-motion control.",
+      "why": "Auto-advancing content without pause fails WCAG 2.2.2, and CDIO-07 sec.5 makes the reduced-motion floor non-arbitrable. The reference that seeded VP-016 itself had no pause control.",
+      "origin": {
+        "file": "vault/knowledge_base/visual-patterns/device-demo-state-carousel.md",
+        "line": 43,
+        "quote": "4. **Control de pausa visible y operable por teclado** (WCAG 2.2.2) y selector"
+      },
+      "supporting_origin": {
+        "file": "vault/knowledge_base/cdio/CDIO-07-experience-contract.md",
+        "line": 194,
+        "quote": "posture, however deliberately chosen, buys a reduced-motion exemption, a"
+      },
+      "class": "D",
+      "check": "python tools/test_motion_grammar.py (V-MGRAM-PR-KEYBOARD, V-MGRAM-PR-FOCUS-PAUSES, V-MGRAM-PR-HIDDEN-PAUSES, V-MGRAM-PR-REDUCED-*)",
+      "evidence_strength": "standard-backed (WCAG 2.2.2 + sealed CDIO-07 floor) and proven once in a real render",
+      "promote_when": "Owner review at the next web_surface generation. The floor does not depend on the motion reference, so it is the strongest candidate here; the only missing step is the promotion decision itself."
+    },
+    {
+      "id": "web_surface-motion-via-declared-contract",
+      "requirement": "Motion on a web surface is chosen from patterns that clear the project's declared CDIO-07 experience contract for that surface kind (design_gate --surface -> motion_guidance); a surface with no contract gets no motion proposed, and expressiveness:none is honoured as abstention.",
+      "why": "Before this, motion knowledge was reachable only by keyword search blind to the contract, so the same query served decorative motion to a payments console and to a hero.",
+      "origin": {
+        "file": "vault/knowledge_base/visual-patterns/README.md",
+        "line": 82,
+        "quote": "`modules/cdio/motion_patterns.py` DISCOVERS those entries (none are enrolled by"
+      },
+      "class": "P",
+      "check": "python tools/test_motion_grammar.py (V-MGRAM-HOOK-*, V-MGRAM-DECIDE-*, V-MGRAM-MUTANT-*)",
+      "evidence_strength": "local: one reference, one transfer surface",
+      "promote_when": "A second independent motion reference processed through the same pipeline AND the guidance used on a second, unrelated product surface whose render passes the production lane."
+    }
+  ]
+}

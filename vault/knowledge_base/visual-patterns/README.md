@@ -64,9 +64,43 @@ uniforme sobre las letras.
 | VP-014 | [[glassmorphism-brand-card]] — Glassmorphism Brand Card | D1 superficie-textura | Investigacion |
 | VP-015 | [[grainy-gradient-background]] — Grainy Gradient Background | D2 superficie-textura | Investigacion |
 
+| VP-016 | [[device-demo-state-carousel]] — Device Demo State Carousel | B4 movimiento | local (REF-MOTION-001) |
+| VP-017 | [[progressive-state-build]] — Intra-State Progressive Build | B5 movimiento | local (REF-MOTION-001) |
+| VP-018 | [[shared-element-continuity]] — Shared-Element Continuity | B6 movimiento | hypothesis (REF-MOTION-001) |
+
 "Investigacion" = patron verificado con fuentes reales, sin implementacion
 propia todavia en un proyecto del Owner. Actualizar el campo Evidence de la
 entrada correspondiente en cuanto se implemente por primera vez.
+
+## Motion patterns reach the decision automatically (added 2026-09-30)
+
+Every entry of the movement axis (B*) carries a machine-read `motion:` block in
+its front-matter: `applies_to` / `excluded_from` (surface kinds),
+`min_expressiveness` / `min_motion_budget` (CDIO-07 ceilings it needs),
+`requires_reduced_motion: equivalent`, `evidence_level`, `provenance`, `purpose`.
+
+`modules/cdio/motion_patterns.py` DISCOVERS those entries (none are enrolled by
+hand) and resolves them against the project's CDIO-07 `experience:` contract and
+the path of the surface being written. `tools/design_gate.py --surface <path>`
+returns the result as `motion_guidance`, and the PreToolUse hook
+`hooks/cdio_visual_advisory.js` appends one line to its advisory on every visual
+write: the applicable pattern ids, or `abstain`. Nobody has to know this folder
+exists to be helped by it. No contract -> nothing is proposed (`unassessed`).
+
+`evidence_level` ladder: hypothesis < research < local < repeated < proven <
+baseline-candidate < baseline. An entry fed by a single reference may not claim
+more than `local` (gate `V-MGRAM-NO-SINGLE-REF-PROMOTION`).
+
+Adding a motion pattern: add the `motion:` block, a real "Cuando NO usar", a
+reduced-motion equivalent, and run `python tools/test_motion_grammar.py`. A
+malformed block is reported in `corpus_errors`, never silently skipped.
+
+Learning from a new motion reference: follow `evidence/REF-MOTION-001/` —
+decode frames (`decompose.py`, `crop.py`), write an OBSERVATION.md with
+OBSERVED / INFERRED / HYPOTHESIZED / UNKNOWN per claim, then either raise an
+existing entry's `evidence_level` (a second independent reference) or add an
+entry at `local`. Open-source libraries are principle sources only unless
+`research/motion-oss-reference-classes.md` marks them SAFE-TO-DEPEND.
 
 ## Discoverable via /cpp-design
 
