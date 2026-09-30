@@ -1,0 +1,35 @@
+{
+  "_doc": "Seeded defects for the agent-virtualization quality benchmark (spec S3). A defect is HIT when one numbered finding block matches its anchor regex AND its concept regex (case-insensitive). Frozen by sha256 in MANIFEST.json before the auditor role was split into pages; editing this file or a fixture voids every run scored against the old hashes.",
+  "fixtures": {
+    "F1-payments-ledger.md": [
+      {"id": "F1-D1", "anchor": "step\\s*1\\b|payments_registry", "concept": "billing|existing|duplicat|owner|parallel|single writer", "doctrine": "ownership before creation"},
+      {"id": "F1-D2", "anchor": "step\\s*2\\b|charge\\(\\)", "concept": "idempoten|reconcil|crash|dies|process death|before record|partial|double", "doctrine": "side effects"},
+      {"id": "F1-D3", "anchor": "step\\s*3\\b|created_at|webhook", "concept": "dedup|timestamp|event id|event\\.id|unique|replay|same second|collision", "doctrine": "distributed systems"},
+      {"id": "F1-D4", "anchor": "step\\s*4\\b|ledger_v2|backfill", "concept": "rollback|dual.?writ|mixed|cutover|lost|miss|concurrent writ|stale", "doctrine": "migration"},
+      {"id": "F1-D5", "anchor": "step\\s*5\\b|balance", "concept": "race|lost update|lock|concurren|atomic|transaction|read-modify-write", "doctrine": "concurrency"},
+      {"id": "F1-D6", "anchor": "step\\s*6\\b|config\\.yaml|secret key", "concept": "secret|credential|commit|vault|env|leak|plaintext", "doctrine": "security"},
+      {"id": "F1-D7", "anchor": "step\\s*7\\b|mock", "concept": "mock|real|sandbox|production reality|cannot fail|would not fail|prove|oracle", "doctrine": "test the test"},
+      {"id": "F1-D8", "anchor": "step\\s*8\\b|ReconcileService", "concept": "wir|caller|invok|unreachable|never run|schedul|consumer|trigger", "doctrine": "zero vapor"}
+    ],
+    "F2-recovery-daemon.md": [
+      {"id": "F2-D1", "anchor": "step\\s*1\\b|daemon\\.pid|pid", "concept": "reuse|recycl|identity|start time|stale|another process", "doctrine": "reliability"},
+      {"id": "F2-D2", "anchor": "step\\s*2\\b|daemon\\.lock|lock", "concept": "race|toctou|atomic|exclusive|both|check.then|simultan", "doctrine": "concurrency"},
+      {"id": "F2-D3", "anchor": "step\\s*3\\b|state\\.json|writeFileSync", "concept": "atomic|rename|torn|partial|corrupt|fsync|temp file", "doctrine": "persistence"},
+      {"id": "F2-D4", "anchor": "step\\s*4\\b|node\\.exe|kill", "concept": "foreign|other|unrelated|allow.?list|owner|editor|dev server|innocent", "doctrine": "destructive operations"},
+      {"id": "F2-D5", "anchor": "step\\s*5\\b|healthy|health", "concept": "hung|progress|heartbeat|stuck|deadlock|running is not|responsive", "doctrine": "presence is not capability"},
+      {"id": "F2-D6", "anchor": "step\\s*6\\b|exit.{0,10}2|hook", "concept": "fail.?open|fail.?closed|block|unavailab|outage|every prompt|lock.?out", "doctrine": "fail-open/fail-closed"},
+      {"id": "F2-D7", "anchor": "step\\s*7\\b|fake process", "concept": "real|runtime|fake|production reality|actual process|integration", "doctrine": "production reality"},
+      {"id": "F2-D8", "anchor": "step\\s*8\\b|globSync", "concept": "version|node 18|18\\.19|node 22|not available|compat|undefined", "doctrine": "version truth"}
+    ],
+    "F3-admin-export.md": [
+      {"id": "F3-D1", "anchor": "step\\s*1\\b|isLoggedIn|/admin/export", "concept": "authoriz|admin role|role|permission|privilege|any logged|any authenticated", "doctrine": "security"},
+      {"id": "F3-D2", "anchor": "step\\s*2\\b|req\\.query|concaten", "concept": "injection|sql|parameteri|sanitiz|prepared", "doctrine": "security"},
+      {"id": "F3-D3", "anchor": "step\\s*3\\b|/api/admin/export|export button", "concept": "path|mismatch|404|route|mount|disconnect|/api", "doctrine": "integration"},
+      {"id": "F3-D4", "anchor": "step\\s*4\\b|error.{0,10}message", "concept": "raw|leak|user-facing|copy|product|failed to fetch|internal|expose", "doctrine": "reality contract"},
+      {"id": "F3-D5", "anchor": "step\\s*5\\b|in memory|array", "concept": "memory|stream|paginat|oom|5 million|large|batch|cursor", "doctrine": "performance"},
+      {"id": "F3-D6", "anchor": "step\\s*6\\b|EXPORT_ENABLED", "concept": "default|missing|env\\.example|document|undefined|unset|validat", "doctrine": "env"},
+      {"id": "F3-D7", "anchor": "step\\s*7\\b|no rows|empty file|Export complete", "concept": "empty|fake success|misleading|zero|no rows|false success|success toast", "doctrine": "reality contract"},
+      {"id": "F3-D8", "anchor": "step\\s*8\\b|screenshot", "concept": "done|gate|end.to.end|real|download|does not prove|prove|functional", "doctrine": "completion strength"}
+    ]
+  }
+}

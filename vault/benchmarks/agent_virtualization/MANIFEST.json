@@ -1,0 +1,11 @@
+{
+    "frozen_at":  "2026-09-30T18:18:01Z",
+    "note":  "Frozen before the auditor role was split (spec S0). Any hash mismatch voids scoring.",
+    "files":  {
+                  "vault/benchmarks/agent_virtualization/fixtures/F1-payments-ledger.md":  "6a3aae27eec6887b111debaf78d51740a154a4714cb3a1f69d47b04ae1faeff4",
+                  "vault/benchmarks/agent_virtualization/fixtures/F2-recovery-daemon.md":  "6be0d0afe71f023c3e53bcecdf75a7a1f1cbb6d00968a031435d0d7c7965dd67",
+                  "vault/benchmarks/agent_virtualization/fixtures/F3-admin-export.md":  "ca105ce8520f9b9792432d377627610d258ee97f4f5d266cf9d1a72115e37e1c",
+                  "vault/benchmarks/agent_virtualization/answer_key.json":  "994cc2913d6fffe103348fe7bab7fa549caddca5d93d6c6ccc02d2d56ae6271d",
+                  "agents/oneshot-architect-auditor.md":  "7b042ad911f5aba81774777e587fe09571cad659a430707d8ca5cba0a0d9c770"
+              }
+}
