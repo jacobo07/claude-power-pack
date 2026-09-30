@@ -85,7 +85,8 @@ edits made outside git, which a commit hook would miss.
 Windows scheduled task, nightly 03:30, hidden launch (wscript + `hidden_launch.vbs`, per
 memory `feedback_scheduled_task_zero_flash_wscript`). Each night: acquire a kernel lock
 (same mechanism as `gsd_mission._Lock`) → skip if free RAM < 6 GB or an interactive claude
-session wrote to its transcript in the last 15 min → pick work (changed layers first; Sunday
+session wrote to its transcript in the last 15 min → harvest if the bank is short (no model
+calls, so it runs even under the quota ceiling) → quota ceiling → pick work (changed layers first; Sunday
 = baseline) → run ≤ 16 → stop early on a usage-limit / rate-limit signal in the stream
 (recorded `DEFERRED_QUOTA`, never retried the same night).
 

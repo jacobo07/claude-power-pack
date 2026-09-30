@@ -201,16 +201,23 @@ def run_night(dry_run: bool = False, now: float | None = None, weekday: int | No
         _append("nights.jsonl", night)
         return night
     try:
-        for check in (lambda: quota_block(cfg, now), lambda: owner_active(cfg, now), lambda: ram_block(cfg)):
+        for check in (lambda: owner_active(cfg, now), lambda: ram_block(cfg)):
             reason = check()
             if reason:
                 night["outcome"] = f"SKIPPED: {reason}"
                 _append("nights.jsonl", night)
                 return night
+        # Harvesting makes no model calls, so it runs even when quota keeps the model idle:
+        # otherwise the bank would stay empty until the weekly reset for no reason.
         bank = harvest.load_bank()
         if len(bank["tasks"]) < cfg["bank_target"] and not dry_run:
             night["harvest"] = harvest.harvest([Path(r) for r in cfg["repos"]], max_new=cfg["harvest_per_night"], log=log)
             bank = harvest.load_bank()
+        reason = quota_block(cfg, now)
+        if reason:
+            night["outcome"] = f"SKIPPED: {reason}"
+            _append("nights.jsonl", night)
+            return night
         rows = _read_jsonl("runs.jsonl")
         evaluated = _load("evaluated.json", {})
         fps = {l: fingerprint(l) for l in runner.LAYERS}

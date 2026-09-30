@@ -216,6 +216,11 @@ def s3_nightly(repo: Path) -> None:
     nightly._save("quota.json", {"windows": {"seven_day": {"utilization": 0.93, "resetsAt": now + 3600}}})
     n = nightly.run_night(now=now, weekday=0, log=lambda *_: None)
     check("V-EVAL-QUOTA-CEILING-SKIPS", n["outcome"].startswith("SKIPPED: quota"), n["outcome"])
+    (state / "config.json").write_text(json.dumps({"repos": [str(repo)], "bank_target": 99}), encoding="utf-8")
+    n = nightly.run_night(now=now, weekday=0, log=lambda *_: None)
+    check("V-EVAL-HARVEST-RUNS-UNDER-QUOTA-BLOCK", n["outcome"].startswith("SKIPPED: quota") and "harvest" in n,
+          json.dumps({k: n.get(k) for k in ("outcome", "harvest")}))
+    (state / "config.json").write_text(json.dumps({"repos": [str(repo)], "bank_target": 0}), encoding="utf-8")
     nightly._save("quota.json", {"windows": {"seven_day": {"utilization": 0.93, "resetsAt": now - 60}}})
 
     t = home / ".claude/projects/p/live.jsonl"
@@ -256,7 +261,7 @@ def s3_nightly(repo: Path) -> None:
     n = nightly.run_night(weekday=6, dry_run=True, log=lambda *_: None)
     check("V-EVAL-BASELINE-ON-SUNDAY", n.get("kind") == "baseline", str(n.get("kind")))
     nights = nightly._read_jsonl("nights.jsonl")
-    check("V-EVAL-EVERY-NIGHT-RECORDED", len(nights) == 9, f"{len(nights)} rows")
+    check("V-EVAL-EVERY-NIGHT-RECORDED", len(nights) == 10, f"{len(nights)} rows")
 
 
 def main() -> int:
