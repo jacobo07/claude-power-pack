@@ -102,3 +102,11 @@ as a truthiness test (`environ.get(name)`), lets an empty-but-set variable throu
 claude. The recorded GEX44 run was not affected: no such name existed, and all four runs' init events record
 apiKeySource none. Test membership (`name in environ`) and fix before any reuse of the runner. GEX44.
 Cites `.planning/workstreams/cognitive-resource-os/phases/04-prefix-cache-miss-a-b/04-REVIEW.md` (CR-01 and the disposition) and `.planning/workstreams/cognitive-resource-os/phases/04-prefix-cache-miss-a-b/EVIDENCE.md` sections 0 and 2, commits `8c13d18` `cd93c98`.
+
+**`T-POSIX-REWRITE-ON-POWERSHELL-001`** -- A command-rewriting PreToolUse hook that never reads `tool_name` rewrites
+every shell the dispatcher routes to it. Both dispatchers send PowerShell through the chain that runs
+`rtk-rewrite.js`; rtk turned a PowerShell `gh pr list` into `"...\rtk.exe" gh pr list`, a string followed by stray
+tokens, and the call failed with ParserError. The failure reads as a PowerShell quirk, not as a hook, so nobody traced it.
+Any hook that rewrites `tool_input.command` must scope itself to the tool whose grammar it emits; a missing
+`tool_name` keeps the old behaviour so a rename degrades to "fires", never to "never fires". Laptop, 2026-09-30.
+Cites `tools/test_rtk_rewrite_scope.py` (4/4, 2 red before), commit `f2a4788`.
