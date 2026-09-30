@@ -34,6 +34,7 @@
 
 'use strict';
 
+const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -41,7 +42,12 @@ const { spawnSync } = require('child_process');
 
 const STATE_DIR = path.join(os.homedir(), '.claude', 'state', 'cdio');
 const THROTTLE_MS = 15 * 60 * 1000;   // advisory nudge only — never a BLOCK
-const GATE_TIMEOUT_MS = 6000;
+// Was 6000. MEASURED 2026-09-30 on a RAM-starved host (2.7 of 32 GB free): the gate's
+// own work is ~0.7 s, but a bare `python -c pass` took 0.4-5.9 s to start, and a full
+// run 9.2 s -- so the gate timed out, the hook returned {}, and a write was reported
+// by NOTHING as unchecked. 8500 stays under the dispatcher's 10000 ms child budget
+// (hook-dispatcher.js CHAIN_MAP), which is the real ceiling.
+const GATE_TIMEOUT_MS = 8500;
 
 // PP root = two levels up from hooks/ (…/claude-power-pack/hooks/this.js)
 const PP_ROOT = path.resolve(__dirname, '..');
@@ -175,29 +181,62 @@ function pythonExe() {
 
 /** Run tools/design_gate.py against a DESIGN.md. Returns the parsed verdict, or null
  *  on ANY failure (missing script, no python, timeout, bad JSON) -> fail-open. */
-function runGate(designMd) {
+function runGate(designMd, surface) {
+  return runGateDetailed(designMd, surface).out;
+}
+
+/** Same as runGate, but says WHY there is no verdict. `{out, failure}`: exactly one
+ *  is non-null. "The gate ran and had nothing to say" and "the gate never finished"
+ *  both used to surface as {} -- the second is an unchecked write reading as a
+ *  checked one, so it now gets its own words. */
+function runGateDetailed(designMd, surface) {
   try {
-    if (!fs.existsSync(GATE_SCRIPT)) return null;
-    const res = spawnSync(pythonExe(), [GATE_SCRIPT, designMd, '--json'], {
+    if (!fs.existsSync(GATE_SCRIPT)) return { out: null, failure: 'gate script missing' };
+    // --surface adds `motion_guidance`: the contract-aware motion patterns for THIS
+    // surface, or the reason there are none. Retrieval happens here, at the decision,
+    // so nobody has to know the motion corpus exists to be helped by it.
+    const args = [GATE_SCRIPT, designMd, '--json'];
+    if (surface) args.push('--surface', surface);
+    const res = spawnSync(pythonExe(), args, {
       encoding: 'utf8',
       timeout: GATE_TIMEOUT_MS,
       windowsHide: true,
       env: Object.assign({}, process.env, { PYTHONIOENCODING: 'utf-8' }),
     });
-    if (!res || res.error || typeof res.stdout !== 'string') return null;
+    if (!res) return { out: null, failure: 'no result from spawn' };
+    if (res.error) {
+      const timedOut = res.error.code === 'ETIMEDOUT';
+      return { out: null, failure: timedOut
+        ? `timed out after ${GATE_TIMEOUT_MS} ms (usually interpreter startup on a loaded host)`
+        : `could not start python (${res.error.code || res.error.message})` };
+    }
+    if (typeof res.stdout !== 'string') return { out: null, failure: 'no stdout' };
     let raw = res.stdout;
     if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
     const out = JSON.parse(raw);
-    return out && typeof out.verdict === 'string' ? out : null;
-  } catch (_) {
-    return null;
+    return out && typeof out.verdict === 'string'
+      ? { out, failure: null }
+      : { out: null, failure: 'unrecognised gate output' };
+  } catch (err) {
+    return { out: null, failure: `gate output unreadable (${err && err.name})` };
   }
+}
+
+function adviseUnevaluated(surface, designMd, failure) {
+  return `CDIO design gate NOT evaluated for \`${path.basename(surface)}\`: ${failure}. `
+    + `This write was not checked against ${designMd} -- treat it as unknown, not as a `
+    + `pass. Run: python tools/design_gate.py "${designMd}" --surface "${surface}"`;
 }
 
 function throttled(sessionId, familyKey) {
   try {
     const safe = String(sessionId || 'nosess').replace(/[^a-zA-Z0-9]+/g, '') || 'nosess';
-    const fk = String(familyKey || 'nofam').replace(/[^a-zA-Z0-9]+/g, '').slice(0, 32) || 'nofam';
+    // HASH, never truncate. `.slice(0, 32)` of the sanitised path kept only its PREFIX
+    // ("CUsersUserAppDataLocalTempppdesi"), so every surface under the same first 32
+    // characters -- in practice every project in the user's home -- shared ONE slot:
+    // an advisory in project A silenced project B's for 15 minutes. Found 2026-09-30
+    // when test_design_hook.js went red only on its second run within the window.
+    const fk = crypto.createHash('sha1').update(String(familyKey || 'nofam')).digest('hex').slice(0, 16);
     const marker = path.join(STATE_DIR, `.cdio_${safe}_${fk}`);
     try {
       const st = fs.statSync(marker);
@@ -238,7 +277,16 @@ function adviseReview(surface, out) {
     + `anti-slop floor, which is necessary but NOT sufficient. Before declaring it done, `
     + `run cdio-reviewer against the RENDERED surface: PR-CDIO-REVIEW-GATE-001 requires a `
     + `Design Quality Score >= 80 and zero critical issues. This gate read the declared `
-    + `tokens; it cannot see what you actually rendered.`;
+    + `tokens; it cannot see what you actually rendered.`
+    + motionSuffix(out);
+}
+
+/** The gate's pre-rendered motion advisory, or ''. Empty for unassessed / unknown
+ *  surface / nothing applicable: the injection stays proportional to the decision. */
+function motionSuffix(out) {
+  const mg = out && out.motion_guidance;
+  const line = mg && typeof mg.advisory === 'string' ? mg.advisory.trim() : '';
+  return line ? `\n\n${line}` : '';
 }
 
 /**
@@ -297,8 +345,18 @@ function run(input) {
     }
 
     // Tier 1 — the project HAS a DESIGN.md: run the real gate.
-    const out = runGate(designMd);
-    if (!out) return {};                       // fail-open: no python / broken gate
+    const { out, failure } = runGateDetailed(designMd, surface);
+    if (!out) {
+      // Still fail-OPEN -- never a deny on a gate that did not run -- but no longer
+      // fail-SILENT. Throttled like any advisory.
+      if (throttled(sessionId, path.dirname(surface) + ':unevaluated')) return {};
+      return {
+        hookSpecificOutput: {
+          hookEventName: 'PreToolUse',
+          additionalContext: adviseUnevaluated(surface, designMd, failure),
+        },
+      };
+    }
 
     if (out.verdict === 'BLOCK') {
       // NEVER throttled. A refusal that goes quiet for 15 minutes is not a refusal.
@@ -312,7 +370,12 @@ function run(input) {
     }
 
     // APPROVE / REVISE / SKIP -> surface the verdict, throttled per surface family.
-    const familyKey = path.dirname(surface) + path.extname(surface);
+    // Motion guidance is per SURFACE (its kind decides the patterns), the review
+    // advisory is per directory. Keying on the directory alone swallowed a different
+    // motion answer for a sibling surface for 15 minutes; the answer is in the key.
+    const mg = out.motion_guidance || {};
+    const motionSig = (mg.state || '') + ':' + (mg.patterns || []).map(p => p.id).join(',');
+    const familyKey = path.dirname(surface) + path.extname(surface) + '|' + motionSig;
     if (throttled(sessionId, familyKey)) return {};
     return {
       hookSpecificOutput: {
@@ -325,7 +388,8 @@ function run(input) {
   }
 }
 
-module.exports = { run, isVisualSurface, targetPath, findDesignMd, runGate };
+module.exports = { run, isVisualSurface, targetPath, findDesignMd, runGate, runGateDetailed,
+  motionSuffix, adviseUnevaluated };
 
 // --- Standalone CLI (shell-free CHAIN_MAP child) --------------------------
 if (require.main === module) {
