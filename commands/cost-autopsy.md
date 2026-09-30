@@ -34,8 +34,18 @@ python "$PP/tools/tis_report.py" --cache-ratio       # overall cache-hit %
 python "$PP/tools/tis_report.py" --cost-projection   # actual vs routed cost
 python "$PP/tools/session_autopsy.py" <session-id>   # context rent of ONE session: floor vs
                                                      # growth, TTL rewrites, USD by category,
-                                                     # fresh-epoch saving UPPER BOUND
+                                                     # fresh-epoch saving UPPER BOUND, and what
+                                                     # the growth was made of (kind, tool, re-reads)
+python "$PP/tools/fresh_context_tax.py"              # Ralph worker floor, all-time and by_day
+cd "$PP" && python -m modules.pp_eval.floor --cwd <dir> --reps 2 --out floor.json
+                                                     # WHAT the floor is made of: one headless call
+                                                     # per arm (hooks/skills/mcp/plugins/context off)
 ```
+
+`modules.pp_eval.floor` spends subscription quota (about 14 short calls per cwd). Each arm is VOID
+unless its positive control shows the lever really went off, and a delta counts only above the A/A
+spread. It measures what switching a lever OFF saves -- moving that content without losing
+behaviour is a separate claim that needs a load-back path.
 
 Filter to a date range:
 
