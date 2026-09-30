@@ -927,7 +927,13 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
         # Measured M6 (2026-09-24): /gsd-autonomous moved into a git worktree and reset the main
         # checkout's planning files, so everything done lives THERE. A successor that starts in
         # the main checkout sees the old roadmap and redoes finished phases.
-        parts[2:2] = [f"WORK TREE: the work is in {wd} -- enter it first (EnterWorktree path=\"{wd}\").",
+        # 2026-09-30 (m-3e3a400b52d4): the successor obeyed "EnterWorktree path=..." and parked on a
+        # permission prompt although EnterWorktree is in --allowedTools -- a worktree outside the
+        # launch directory still asks. Worker 1 of the same mission moved with the shell and never
+        # prompted, and the supervisor follows the transcript cwd either way. So: shell, never the tool.
+        parts[2:2] = [f"WORK TREE: the work is in {wd} -- enter it first with the shell: "
+                      f"Set-Location '{wd}' (PowerShell). Do NOT call EnterWorktree: it raises a permission "
+                      "prompt nobody is watching.",
                       "The main checkout below is only where you were launched; its .planning is stale."]
     if g.get("recent"):
         parts += ["Recent commits:"] + [f"  {c}" for c in g["recent"][:5]]

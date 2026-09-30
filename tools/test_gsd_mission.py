@@ -1325,6 +1325,9 @@ def main() -> int:
         check("V-MC-SUP-GSD-ASKED-IN-WORKTREE", asked_at == [os.path.normcase(wt)], str(asked_at))
         check("V-MC-CARD-NAMES-WORKTREE", "WORK TREE" in (rec.get("card") or "")
               and wt.lower() in (rec.get("card") or "").lower())
+        # 2026-09-30 m-3e3a400b52d4: "EnterWorktree path=" parked the successor on a prompt.
+        check("V-MC-CARD-ENTERS-BY-SHELL", "Set-Location" in (rec.get("card") or "")
+              and "EnterWorktree path=" not in (rec.get("card") or ""), (rec.get("card") or "")[:300])
         check("V-MC-LAUNCH-STAYS-AT-TRUSTED-CWD",
               launched_at == [os.path.normcase(str(Path(repo).resolve()))], str(launched_at))
         # control: a predecessor that never left the main checkout gets no WORK TREE line
