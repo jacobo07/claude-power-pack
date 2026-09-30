@@ -39,6 +39,13 @@ Coherence anchor: `python tools/test_pp_eval_floor.py` 19/19; `python tools/test
   rules; pp/ = modules/pp_eval). No CLAUDE_CONFIG_DIR swap (would need credentials). `caeec1a` adds
   PP_FLOOR_CONTEXT_FILES. First run: 6/6 `<synthetic>` "weekly limit, resets Oct 4 8pm Europe/Berlin" ->
   UNMEASURED. Re-run after the reset: cmv_gex_run.sh shape (nohup, disown, --arms A,context --reps 3).
+- GEX44 after Owner re-login (2026-09-30 evening), laptop instructions staged, 3 reps/arm, A/A noise 0, every
+  run valid (vault/audits/floor-attribution-2026-09-30-gex44-laptop-*.json): all 25 files 43,843 tok (laptop
+  neutral run 44,692 -> reproduces within 2 %). Split: rules/ 24,329 (69,099 B, 2.84 B/tok) · global
+  CLAUDE.md 16,923 (40,117 B, 2.37 B/tok) · home CLAUDE.md 2,591 by remainder. bytes/3.8 undercounts 1.3-1.6x.
+- Ablation validity limit: most movable global-CLAUDE.md text is Windows transport doctrine; a Linux (GEX44)
+  ablation cannot exercise it, and P3 tasks sit at ceiling. Evidence-only moves (no rule sentence removed) are
+  verifiable by a rule-sentence reconstruction check; rule-text moves need a Windows ablation.
 - Move candidate (global CLAUDE.md, 39,810 chars): "Parallel Subagent Limit" 13,505 (incident accounts of rules
   I-L), "Root + history" 4,664. Move narratives only, keep rule text; B-prime arm = narratives reachable on demand.
 

@@ -1,0 +1,442 @@
+{
+ "cwd": "/home/kobii/cmv-probe/work",
+ "model": "claude-opus-5-5",
+ "prompt": "Reply with the single word ok.",
+ "reps": 3,
+ "summary": {
+  "verdict": "MEASURED",
+  "baseline_median": 77784,
+  "aa_noise": 0,
+  "arms": {
+   "A": {
+    "valid": 3,
+    "void": [],
+    "median": 77784,
+    "delta": 0
+   },
+   "context": {
+    "valid": 3,
+    "void": [],
+    "median": 53455,
+    "delta": 24329,
+    "significance": "ABOVE_NOISE"
+   }
+  }
+ },
+ "runs": [
+  {
+   "arm": "A",
+   "rep": 0,
+   "rc": 0,
+   "wall_s": 3.7,
+   "ev": {
+    "state": "MEASURED",
+    "reason": null,
+    "first_call": 77784,
+    "init": {
+     "tools": 39,
+     "skills": 152,
+     "agents": 40,
+     "slash_commands": 247,
+     "mcp_servers": 4,
+     "plugins_non_builtin": 5
+    },
+    "hook_started": 13,
+    "injections": [
+     {
+      "event": "SessionStart",
+      "chars": 30,
+      "fingerprint": "/bin/sh: 1: python: not found"
+     },
+     {
+      "event": "SessionStart",
+      "chars": 3604,
+      "fingerprint": "{ \"hookSpecificOutput\": { \"hookEventName\": \"SessionStart\", \"additionalContext\": "
+     },
+     {
+      "event": "UserPromptSubmit",
+      "chars": 471,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 465,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 474,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     }
+    ],
+    "bad_lines": 0
+   },
+   "void": null
+  },
+  {
+   "arm": "context",
+   "rep": 0,
+   "rc": 0,
+   "wall_s": 3.6,
+   "ev": {
+    "state": "MEASURED",
+    "reason": null,
+    "first_call": 53455,
+    "init": {
+     "tools": 39,
+     "skills": 152,
+     "agents": 40,
+     "slash_commands": 247,
+     "mcp_servers": 4,
+     "plugins_non_builtin": 5
+    },
+    "hook_started": 13,
+    "injections": [
+     {
+      "event": "SessionStart",
+      "chars": 30,
+      "fingerprint": "/bin/sh: 1: python: not found"
+     },
+     {
+      "event": "SessionStart",
+      "chars": 3604,
+      "fingerprint": "{ \"hookSpecificOutput\": { \"hookEventName\": \"SessionStart\", \"additionalContext\": "
+     },
+     {
+      "event": "UserPromptSubmit",
+      "chars": 471,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 465,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 474,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     }
+    ],
+    "bad_lines": 0
+   },
+   "void": null
+  },
+  {
+   "arm": "A",
+   "rep": 1,
+   "rc": 0,
+   "wall_s": 3.3,
+   "ev": {
+    "state": "MEASURED",
+    "reason": null,
+    "first_call": 77784,
+    "init": {
+     "tools": 39,
+     "skills": 152,
+     "agents": 40,
+     "slash_commands": 247,
+     "mcp_servers": 4,
+     "plugins_non_builtin": 5
+    },
+    "hook_started": 13,
+    "injections": [
+     {
+      "event": "SessionStart",
+      "chars": 30,
+      "fingerprint": "/bin/sh: 1: python: not found"
+     },
+     {
+      "event": "SessionStart",
+      "chars": 3604,
+      "fingerprint": "{ \"hookSpecificOutput\": { \"hookEventName\": \"SessionStart\", \"additionalContext\": "
+     },
+     {
+      "event": "UserPromptSubmit",
+      "chars": 471,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 474,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 465,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     }
+    ],
+    "bad_lines": 0
+   },
+   "void": null
+  },
+  {
+   "arm": "context",
+   "rep": 1,
+   "rc": 0,
+   "wall_s": 4.2,
+   "ev": {
+    "state": "MEASURED",
+    "reason": null,
+    "first_call": 53455,
+    "init": {
+     "tools": 39,
+     "skills": 152,
+     "agents": 40,
+     "slash_commands": 247,
+     "mcp_servers": 4,
+     "plugins_non_builtin": 5
+    },
+    "hook_started": 13,
+    "injections": [
+     {
+      "event": "SessionStart",
+      "chars": 30,
+      "fingerprint": "/bin/sh: 1: python: not found"
+     },
+     {
+      "event": "SessionStart",
+      "chars": 3604,
+      "fingerprint": "{ \"hookSpecificOutput\": { \"hookEventName\": \"SessionStart\", \"additionalContext\": "
+     },
+     {
+      "event": "UserPromptSubmit",
+      "chars": 471,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 474,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 465,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     }
+    ],
+    "bad_lines": 0
+   },
+   "void": null
+  },
+  {
+   "arm": "A",
+   "rep": 2,
+   "rc": 0,
+   "wall_s": 3.4,
+   "ev": {
+    "state": "MEASURED",
+    "reason": null,
+    "first_call": 77784,
+    "init": {
+     "tools": 39,
+     "skills": 152,
+     "agents": 40,
+     "slash_commands": 247,
+     "mcp_servers": 4,
+     "plugins_non_builtin": 5
+    },
+    "hook_started": 13,
+    "injections": [
+     {
+      "event": "SessionStart",
+      "chars": 30,
+      "fingerprint": "/bin/sh: 1: python: not found"
+     },
+     {
+      "event": "SessionStart",
+      "chars": 3604,
+      "fingerprint": "{ \"hookSpecificOutput\": { \"hookEventName\": \"SessionStart\", \"additionalContext\": "
+     },
+     {
+      "event": "UserPromptSubmit",
+      "chars": 471,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 474,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 465,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     }
+    ],
+    "bad_lines": 0
+   },
+   "void": null
+  },
+  {
+   "arm": "context",
+   "rep": 2,
+   "rc": 0,
+   "wall_s": 3.8,
+   "ev": {
+    "state": "MEASURED",
+    "reason": null,
+    "first_call": 53455,
+    "init": {
+     "tools": 39,
+     "skills": 152,
+     "agents": 40,
+     "slash_commands": 247,
+     "mcp_servers": 4,
+     "plugins_non_builtin": 5
+    },
+    "hook_started": 13,
+    "injections": [
+     {
+      "event": "SessionStart",
+      "chars": 30,
+      "fingerprint": "/bin/sh: 1: python: not found"
+     },
+     {
+      "event": "SessionStart",
+      "chars": 3604,
+      "fingerprint": "{ \"hookSpecificOutput\": { \"hookEventName\": \"SessionStart\", \"additionalContext\": "
+     },
+     {
+      "event": "UserPromptSubmit",
+      "chars": 471,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 468,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 465,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 474,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     },
+     {
+      "event": "Stop",
+      "chars": 467,
+      "fingerprint": "node:internal/modules/cjs/loader:1137 throw err; ^ Error: Cannot find module '/r"
+     }
+    ],
+    "bad_lines": 0
+   },
+   "void": null
+  }
+ ]
+}
