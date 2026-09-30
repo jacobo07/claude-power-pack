@@ -272,6 +272,28 @@ Owner N7 answer 2 (push nothing) stands.
      per-event; per-stream is the stated coarsening), then re-read and re-pin the 21
      PIN-CURRENCY claims (re-read the moved surface first -- never re-pin blind), then
      advance `RECONCILED-THROUGH` and run test_gsd_x_dataset (~35 min; background it).
+   - **2026-09-30 (session 624f4750), step 5 executed in the ledger:**
+     - 15 stream claims `GSDX-S01..S15`, one per stream, every sha cited; 475 events through
+       `0ba8565` (the other 11 material shas are cited by M11/M12 and earlier rows). The stream
+       map lives in the builder, not the ledger: `tools/gsd_x_recon_streams.py`, which
+       REFUSES any unmapped scope -- it fired twice on streams that landed mid-session
+       (CDIO motion grammar -> S14, pp-eval -> S15). Each row names the pinned surfaces its
+       stream touched; S01/S03/S04/S06/S07/S08 did, the rest touched none.
+     - Stale pins: **24 entries on 17 claims** (not 21). 11 re-pinned after re-reading the
+       moved surface (B03 B04 C12 C13 N3A N3B M02 M03 M04 M07, M06 moved to the DAIF file it
+       describes); 6 were dated records on path pins and moved to `commit:` pins (I12 C20 C21
+       M01 M05 D13). **C20's path pin never held its property** -- test_gsd_x_dataset.py has no
+       bytecode clause. **D13 has no implementation anywhere** -- gsd_x_mission.py never
+       mentions planning.
+     - Obligation 3 done: M08 CONTRADICTED by new M11 (dc7962b/a6abf9d); M05 superseded by new
+       UNPROVEN M12 (manifest registered at ship:pre, never live-dispatched, #5133 + GHSA).
+     - **RECONCILED-THROUGH `a30f39f` -> `0ba8565`.** Verified with the reconciler's own
+       functions, not its full run: the full run was reaped by the host memory guard (1.2 GB free
+       of 32 GB; it does one `git show` per commit). Inventory: 486 already covered, 2 uncovered
+       (`e079c57`, `94491a3`), both proven after the boundary by rev-list. `dependency_verdicts`:
+       STALE_DEPENDENCY 0.
+     - **Open:** obligation 4 (test_gsd_x_dataset, ~35 min) and 5 (hook latency) need memory
+       headroom; neither was run. Expect COVERAGE red for foreign commits after `0ba8565`.
 6. *(superseded by 5)* **§50 (GSDX-M08).** The 18 candidates stay unpromoted, but the blocker has
    changed name: the UKDL's continuous writer is the CEPS auto-appender (GSDX-M09), so
    "quiet for an hour" never comes. Reconcile the candidates against the UKDL, then land
