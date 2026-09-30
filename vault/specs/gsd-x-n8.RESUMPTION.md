@@ -259,7 +259,20 @@ Owner N7 answer 2 (push nothing) stands.
    "24,148" above was a different count). The ledger had stopped at 09-20: 6 of 14 UNPROVEN
    claims had already met their own tests in N5–N8 / GSD phases 1–2 and were never written
    back. Now 8 UNPROVEN; C30/M09/M10 added; 5 ids left the unpinned inventory.
-5. **§50 (GSDX-M08), next unit.** The 18 candidates stay unpromoted, but the blocker has
+5. **2026-09-30, Owner answers 1=y 2=repo-wide 3=yes, state after this session:**
+   - §50 DONE `a6abf9d` (7 rows into the UKDL, index built as HEAD + section; the CEPS
+     appender's ~916 rows untouched) + `dc7962b` analysis. Owed in claims.jsonl: GSDX-M08
+     -> CONTRADICTED by a new OBSERVED claim citing a6abf9d/dc7962b.
+   - Upstream FILED: #5133 (D1+D2) and GHSA-27c7-mm4w-qwgp (D4, private per SECURITY.md).
+     Owed: GSDX-M05 note. Defects unchanged in v1.15.0.
+   - **NEXT: repo-wide reconciliation** of the ~473 uncovered commits since `a30f39f`.
+     Inventory script (one git log call, reuses the reconciler's own predicate):
+     scratchpad `recon_inventory.py <out.json>` -- rewrite it if the scratchpad is gone.
+     One OBSERVED claim per stream/scope citing every sha it covers (precedent 977223e is
+     per-event; per-stream is the stated coarsening), then re-read and re-pin the 21
+     PIN-CURRENCY claims (re-read the moved surface first -- never re-pin blind), then
+     advance `RECONCILED-THROUGH` and run test_gsd_x_dataset (~35 min; background it).
+6. *(superseded by 5)* **§50 (GSDX-M08).** The 18 candidates stay unpromoted, but the blocker has
    changed name: the UKDL's continuous writer is the CEPS auto-appender (GSDX-M09), so
    "quiet for an hour" never comes. Reconcile the candidates against the UKDL, then land
    only those rows by hunk-scoped staging beside the appender's uncommitted ones.

@@ -1,7 +1,11 @@
 # Upstream report draft — `@opengsd/gsd-core` 1.14.0
 
-**Status: LOCAL DRAFT. NOT FILED.** Owner decision N6/N7 answer 1 stands: draft locally,
-do not submit. Submitting is outward-facing and needs explicit Owner authorization.
+**Status: FILED 2026-09-30 on the Owner's go.** Re-verified first against the `v1.15.0`
+tag sources (released 2026-09-26, so the "1.14.0 is latest" premise below had expired):
+all three defects unchanged. Split by the project's own SECURITY.md:
+D1+D2 -> public issue https://github.com/open-gsd/gsd-core/issues/5133 ;
+D4 (re-consent bypass, in SECURITY.md scope) -> private advisory GHSA-27c7-mm4w-qwgp
+(state `triage`). The body below is the original draft, kept as written.
 
 **Subject version.** `~/.claude/gsd-core/VERSION` = `1.14.0`. N6 read the npm registry
 directly (not through `npm`, which is broken on this host — `npm view` dies with
