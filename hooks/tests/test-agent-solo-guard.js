@@ -141,6 +141,21 @@ const CASES = [
   // verb list would have opened a new hole exactly where it closed one.
   ['"create" clause + read-only agent still impossible',
     () => run(as(BOUNDED_CREATE, 'readonly-probe')), BLOCK],
+
+  // --- 2026-09-30 deadlock: the two checks demanded opposite things ---------
+  // Measured: the contract check told the caller to drop the clause and let the parent
+  // persist; the bound check then blocked the narrowed prompt. Every case below is one the
+  // opposite implementation gets wrong.
+  ['long + read-only + "parent persists" is the honest contract',
+    () => run(as(UNBOUNDED + ' Return the report; the parent persists it.', 'readonly-probe')), ALLOW],
+  ['long + read-only + no clause at all still unbounded',
+    () => run(as(UNBOUNDED, 'readonly-probe')), BLOCK],
+  // A writer CAN write, so it must carry the clause itself; the exemption is for incapacity only.
+  ['long + writer + "parent persists" is not an excuse',
+    () => run(as(UNBOUNDED + ' Return the report; the parent persists it.', 'writer-probe')), BLOCK],
+  // Unresolvable is UNKNOWN, not incapable: the original demand stands.
+  ['long + unresolvable agent + "parent persists" still blocks',
+    () => run(as(UNBOUNDED + ' Return the report; the parent persists it.', 'no-such-agent-anywhere')), BLOCK],
 ];
 
 let pass = 0;
@@ -172,6 +187,7 @@ resetTracker();
 try { fs.rmSync(FIXROOT, { recursive: true, force: true }); } catch (_) { /* tmp only */ }
 console.log(
   `AGENT_SOLO_GUARD=${pass}/${pass + fail}  ` +
-  `(blocks: 5, allows: 6, fail-open: 3)`
+  `(blocks: ${CASES.filter((c) => c[2] === BLOCK).length}, ` +
+  `allows: ${CASES.filter((c) => c[2] === ALLOW).length})`
 );
 process.exit(fail === 0 ? 0 : 1);

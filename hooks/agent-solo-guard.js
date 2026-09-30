@@ -372,7 +372,21 @@ async function main() {
     }
   }
 
-  if (looksLong && !hasDurable &&
+  // 2026-09-30 DEADLOCK FIX. The contract check above tells a read-only agent's caller to
+  // DROP the durable-output clause and let the parent persist the report (its fix 2); this
+  // bound check then refused the same prompt for lacking that clause and never looked at the
+  // toolset. A long read-only specialist (oneshot-architect-auditor) was undispatchable by
+  // construction: two blocks of opposite demand on one dispatch. The honest contract for an
+  // agent that CANNOT write is "the parent persists the returned report", so it is accepted
+  // here -- only when the toolset provably lacks a write tool. An unresolvable agent is not
+  // proven incapable, so it keeps the original demand.
+  const PARENT_PERSISTS = /\b(parent|caller|orchestrator)\b[^.]{0,40}\b(persists?|saves?|writes?|records?)\b/i;
+  const boundedByParent = looksLong && !hasDurable && PARENT_PERSISTS.test(prompt) && (() => {
+    const t = declaredTools(subagentType);
+    return Array.isArray(t) && !t.some((x) => WRITE_TOOLS.includes(x));
+  })();
+
+  if (looksLong && !hasDurable && !boundedByParent &&
       String(process.env.CLAUDE_AGENT_BOUND_GUARD || "").toLowerCase() !== "off") {
     const reason = [
       "AGENT-SOLO GUARD blocked an UNBOUNDED research dispatch.",
