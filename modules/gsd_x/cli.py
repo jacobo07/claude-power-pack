@@ -88,6 +88,71 @@ def inherited_block(payload: dict) -> str:
         return ""
 
 
+FAMILY_SWITCH = "CPP_FAMILY_BASELINES"
+
+
+def _offer_counter(sid: str, key: str) -> Path:
+    safe = "".join(c if c.isalnum() or c == "-" else "_" for c in "%s.%s" % (sid, key))
+    return _tower_dir() / "offers" / ("%s.count" % safe)
+
+
+def family_block(prompt: str, payload: dict, families=None, root=None) -> str:
+    """Family baselines, spec 2026-09-24 slice S4 -- the constitutive rules of every family
+    this prompt BUILDS, to be implemented without being asked. "" when no family matches,
+    when the switch is off, or on any error -- never raises.
+
+    The selection is `select.select_for_injection`, the same compiler `donegate.judge`
+    re-runs, so what the gate calls "injected" is what was shown here. Each family is
+    stamped `<family>/B<n>` + the generation's SHA-256: a later, stronger generation must
+    not rewrite what this mission was told. Offered on the first MAX_OFFERS prompts of a
+    session per family, for the same abandoned-stdout reason as `inherited_block`.
+    """
+    try:
+        import os
+        if os.environ.get(FAMILY_SWITCH, "").strip().lower() in ("off", "0", "false"):
+            return ""
+        from modules.tower import baselines as bl, families as fm, select as sel
+        sid = str(payload.get("session_id") or payload.get("sessionId") or "")
+        blocks = []
+        for fid, hits in fm.classify_prompt(prompt, families):
+            gens = bl.generations(fid, root)
+            active = bl.active_entries(fid, root)
+            if not gens or not active:
+                continue
+            if sid:
+                counter = _offer_counter(sid, "family-" + fid)
+                counter.parent.mkdir(parents=True, exist_ok=True)
+                done = int(counter.read_text().strip() or 0) if counter.exists() else 0
+                if done >= MAX_OFFERS:
+                    continue
+                counter.write_text(str(done + 1))
+            n = gens[-1]
+            stamp = "%s/B%d" % (fid, n)
+            sha = bl.generation_sha256(fid, n, root)
+            s = sel.select_for_injection(active)
+            try:
+                import time as _t
+                with (_tower_dir() / "consumption.jsonl").open("a", encoding="utf-8") as fh:
+                    fh.write(json.dumps({"ts": _t.time(), "sid": sid, "kind": "family",
+                                         "family": fid, "judged_under": stamp,
+                                         "generation_sha256": sha, "hits": list(hits),
+                                         **s.as_dict()}) + "\n")
+            except Exception:                           # noqa: BLE001
+                pass
+            lines = ["Family baseline %s (sha256 %s) -- this prompt builds a %s (matched: %s). "
+                     "Implement each rule WITHOUT being asked, or state `NO APLICA: <reason>` "
+                     "for it. The done-gate judges every active entry of this generation, "
+                     "shown here or not:" % (stamp, sha[:12], fid, ", ".join(hits))]
+            lines += ["- [%s] %s" % (e.get("id"), e.get("requirement")) for e in s.injected]
+            if s.deferred:
+                lines.append("Not shown (prompt ceiling), judged anyway: "
+                             + ", ".join(str(e.get("id")) for e in s.deferred))
+            blocks.append("\n".join(lines))
+        return "\n\n".join(blocks)
+    except Exception:                                   # noqa: BLE001
+        return ""
+
+
 def advisory(v: "tier.TierVerdict") -> str:
     """The text the model sees. Empty when there is nothing worth saying."""
     if v.abstained:
@@ -141,10 +206,10 @@ def main() -> int:
     heartbeat.record(v.tier, by_floor=v.by_floor, abstained=v.abstained,
                      informative=v.informative, reason=v.reason)
 
-    # Independent of the tier: a floor-LIGHT prompt still inherits the estate.
-    parts = [p for p in (advisory(v),
-                         inherited_block(payload if isinstance(payload, dict) else {}))
-             if p]
+    # Independent of the tier: a floor-LIGHT prompt still inherits the estate,
+    # and a prompt that builds a known family still inherits that family's law.
+    pl = payload if isinstance(payload, dict) else {}
+    parts = [p for p in (advisory(v), inherited_block(pl), family_block(prompt, pl)) if p]
     if parts:
         sys.stdout.write("\n\n".join(parts))
     return 0

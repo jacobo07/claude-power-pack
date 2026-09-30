@@ -234,7 +234,25 @@ Owner N7 answer 2 (push nothing) stands.
 0. ~~Retranslate the `blindness-never-blocks` anchor.~~ DONE, drill 13/13 on GEX44.
 1. ~~Produce a gating fact.~~ DONE `99e96e1`.
 2. ~~Fix `repo_family_report`'s silent-OUT hole.~~ DONE `2a80b35`.
-3. Run the earned laws through `modules/tower/ratchet.promote`, then prove one
-   inheritance path end to end — or name the missing mechanism as the next blocker.
+3. ~~Prove one inheritance path end to end.~~ **DONE 2026-09-30 (S4 of the family
+   baselines spec).** The missing mechanism was the injection: `families.classify_prompt`,
+   `select.select_for_injection` and `baselines.active_entries` all existed with zero
+   production callers. `modules/gsd_x/cli.py::family_block` now calls them from `main()`,
+   i.e. from the process `hooks/gsd_x_tier.js` spawns on every prompt (live dispatcher
+   `~/.claude/hooks/hook-dispatcher.js:546` runs the REPO copy, so there is no mirror step).
+   Stamped `<family>/B<n>` + generation SHA-256; deferred entries named, never dropped;
+   `CPP_FAMILY_BASELINES=off` kills it; 3 offers per session per family.
+   `tools/test_family_injection.py` FINJ 23/23, hermetic (temp HOME), both predeclared
+   poles of all four families, E2E through `node hooks/gsd_x_tier.js`. Source mutants on an
+   isolated repo slice (`tools/mutation_drill.py` cannot drill a `modules/` subject with a
+   `tools/` test: it copies only the subject's directory and would run the LIVE file):
+   4/4 KILLED, each proven applied, live sha unchanged.
+   **Still open, named:** (a) nothing has been promoted -- every family is at B0, so no
+   EARNED law has travelled yet; the first real `ratchet.promote` -> B1 -> injected-B1 is
+   the next proof. (b) `donegate.judge` still has zero production callers, so what is
+   injected is not yet judged at done time (spec §7: report-only; wiring it is its own
+   decision). (c) Hook latency is INCONCLUSIVE: in-process the family step is ~60-300 ms,
+   mostly imports, but the subprocess medians swung 0.7 s -> 2.9 s with one 7.8 s outlier
+   on a host at 711 MB free of 32 GB; the child deadline is 6 s. Re-measure on headroom.
 4. Recompile the frontier against `C:\Users\User\Downloads\Dataset GSD X 1.txt`
    (762 KB, 24,148 lines; §50's candidate list is its own section).
