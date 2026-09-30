@@ -98,6 +98,39 @@ function throttled(sessionId, repoKey) {
   }
 }
 
+// Session-scoped, no expiry: unlike throttled(), a record shown once is never
+// re-shown in the same session. Fail-open means a failed read re-shows, never blocks.
+function recordKey(rec) {
+  const raw = String(rec.id || rec.pattern_id || rec.fingerprint
+    || (rec.root_cause || '') + '|' + (rec.subsystems || []).join(','));
+  let h = 0;
+  for (let i = 0; i < raw.length; i++) h = (h * 31 + raw.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
+function shownMarker(sessionId, key) {
+  const safe = String(sessionId || 'nosess').replace(/[^a-zA-Z0-9]+/g, '') || 'nosess';
+  return path.join(STATE_DIR, `.xpb_${safe}_${key}`);
+}
+
+function shownThisSession(sessionId, key) {
+  try { return fs.existsSync(shownMarker(sessionId, key)); } catch (_) { return false; }
+}
+
+function shownCount(sessionId) {
+  try {
+    const safe = String(sessionId || 'nosess').replace(/[^a-zA-Z0-9]+/g, '') || 'nosess';
+    return fs.readdirSync(STATE_DIR).filter(f => f.startsWith(`.xpb_${safe}_`)).length;
+  } catch (_) { return 0; }
+}
+
+function markShown(sessionId, key) {
+  try {
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    fs.writeFileSync(shownMarker(sessionId, key), '');
+  } catch (_) { /* best-effort: a miss re-shows once more, never blocks */ }
+}
+
 function buildAdvisory(entry, globalCount, cwd) {
   const repoName = path.basename(String(cwd || '').replace(/[\\/]+$/, '')) || 'this repo';
   if (entry && entry.nodeCount) {
@@ -222,8 +255,18 @@ function run(input) {
     // ordinary `python x.py` -- never an exploration op -- still gets it.
     if (toolName === 'Bash' || toolName === 'PowerShell') {
       const programs = programTokens(toolInput && toolInput.command);
-      const hits = relevantPromotions(loadPromoted(), programs);
-      if (hits.length && !throttled(sessionId, 'xpb:' + [...programs].sort().join(','))) {
+      // Once per RECORD per session (2026-09-30). The throttle used to be keyed on the
+      // command's program set, which differs on nearly every PowerShell call, so the
+      // same three records were re-injected ~19 times in one session (~14 KB that
+      // every later call re-read). A record already shown stays shown.
+      // And a session BUDGET: the pool is large and the program matcher is loose (it also
+      // matches words inside quoted arguments), so without a cap it simply rotated to the
+      // next three unseen records on every call. BASELINE_TOP_N records per session, total.
+      const fresh = loadPromoted().filter(r => !shownThisSession(sessionId, recordKey(r)));
+      const budget = BASELINE_TOP_N - shownCount(sessionId);
+      const hits = budget > 0 ? relevantPromotions(fresh, programs).slice(0, budget) : [];
+      hits.forEach(r => markShown(sessionId, recordKey(r)));
+      if (hits.length) {
         return {
           hookSpecificOutput: {
             hookEventName: 'PreToolUse',
