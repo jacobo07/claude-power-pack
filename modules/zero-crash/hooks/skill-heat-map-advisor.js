@@ -33,8 +33,14 @@ const HEAT_MAP_PATH = path.join(
 );
 
 const ELIGIBLE_TOOLS = new Set(['Bash', 'Edit', 'Write']);
-const SCORE_FLOOR = 6;        // minimum match score to surface
+// 2026-09-30: 6 -> 40. Measured in one session: the one relevant suggestion scored 81
+// (hook-development while editing the dispatcher); the irrelevant ones scored 9-41
+// (math-olympiad, build-mcp-server, ui-ux-pro-max on plain docs edits).
+const SCORE_FLOOR = 40;       // minimum match score to surface
 const TOP_K = 2;              // max suggestions per advisory
+// Total suggestions per session. Per-skill dedupe alone rotated to two NEW skills on
+// every Edit, so the "one advisory per session" in the header never held.
+const SESSION_BUDGET = 4;
 const TEXT_FIELD_KEYS = ['command', 'description', 'file_path', 'content', 'old_string', 'new_string', 'prompt'];
 const KEYWORD_RE = /[a-zA-Z][a-zA-Z0-9_-]{2,}/g;
 const STOP_WORDS = new Set([
@@ -183,7 +189,8 @@ function pickTopK(heatMap, tokens, used) {
   const used = loadAlreadyUsedSkills(sessionId);
   const suggested = loadSuggestedSkills(sessionId);
   const exclude = new Set([...used, ...suggested]);
-  const top = pickTopK(heatMap, tokens, exclude);
+  const room = SESSION_BUDGET - suggested.size;
+  const top = room > 0 ? pickTopK(heatMap, tokens, exclude).slice(0, room) : [];
   if (!top.length) {
     process.stdout.write('{}');
     return;
