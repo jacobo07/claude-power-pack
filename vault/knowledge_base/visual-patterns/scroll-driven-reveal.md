@@ -4,6 +4,15 @@ name: Scroll-Driven Reveal (zero-JS)
 type: pattern
 domain: visual-patterns
 status: active
+motion:
+  applies_to: [landing, hero, product-tour, docs]
+  excluded_from: [checkout, auth, admin, settings, form, dashboard, destructive]
+  min_expressiveness: restrained
+  min_motion_budget: low
+  requires_reduced_motion: equivalent
+  evidence_level: research
+  provenance: web research 2026-07-30 (see Fuentes)
+  purpose: "revelar una seccion al entrar en viewport sin JS de scroll"
 ---
 
 # VP-010 — Scroll-Driven Reveal (zero-JS)

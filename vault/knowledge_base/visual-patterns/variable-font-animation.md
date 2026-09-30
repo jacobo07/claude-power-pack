@@ -4,6 +4,15 @@ name: Variable Font Weight/Width Animation
 type: pattern
 domain: visual-patterns
 status: active
+motion:
+  applies_to: [landing, hero]
+  excluded_from: [checkout, auth, admin, settings, form, dashboard, destructive, docs]
+  min_expressiveness: moderate
+  min_motion_budget: medium
+  requires_reduced_motion: equivalent
+  evidence_level: research
+  provenance: web research 2026-07-30 (see Fuentes)
+  purpose: "dar caracter de marca a un titular animando peso/ancho de una fuente variable"
 ---
 
 # VP-009 — Variable Font Weight/Width Animation

@@ -4,6 +4,15 @@ name: Animated Grainy Texture
 type: pattern
 domain: visual-patterns
 status: active
+motion:
+  applies_to: [landing, hero]
+  excluded_from: [checkout, auth, admin, settings, form, dashboard, destructive, docs, list-detail]
+  min_expressiveness: high
+  min_motion_budget: medium
+  requires_reduced_motion: equivalent
+  evidence_level: research
+  provenance: web research 2026-07-30 (see Fuentes)
+  purpose: "textura ambiental de marca; puramente decorativa, por eso exige el techo expresivo mas alto"
 ---
 
 # VP-011 — Animated Grainy Texture
