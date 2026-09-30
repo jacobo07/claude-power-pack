@@ -1,0 +1,211 @@
+{
+ "contract": {
+  "id": "oneshot-architect-auditor",
+  "name": "Principal architecture and plan auditor",
+  "owner": "claude-power-pack /ultra phase 4",
+  "sovereign_question": "Will the first serious implementation of this plan be the last one required?",
+  "scope": [
+   "plan audit",
+   "architecture ownership",
+   "causal failure model",
+   "verification strategy",
+   "production reality",
+   "done-claim falsification"
+  ],
+  "non_scope": [
+   "writing code",
+   "editing files",
+   "rewriting the plan"
+  ],
+  "triggers": [
+   "audit plan",
+   "architecture review",
+   "ultra phase 4",
+   "gap list",
+   "is this plan ready",
+   "falsify done",
+   "ownership audit",
+   "migration audit",
+   "regression risk"
+  ],
+  "anti_triggers": [
+   "write the code",
+   "implement",
+   "ui copy tweak"
+  ],
+  "consumers": [
+   "/ultra phase 5 fix injection",
+   "parent session plan revision"
+  ],
+  "outputs": [
+   "numbered gap list"
+  ],
+  "permissions": [
+   "read repository",
+   "read-only shell"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "high",
+  "expected_leverage": "high",
+  "maturity": "proven",
+  "retirement_condition": "a deterministic plan linter reproduces its gap recall on the frozen benchmark",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "verifier",
+  "model_policy": {
+   "default": "opus"
+  },
+  "output_contract": "native",
+  "description": "Principal architect and adversarial plan auditor; emits the numbered gap list /ultra phase 5 consumes.",
+  "pages": [
+   {
+    "path": "pages/01-identity.md",
+    "load": "inline",
+    "topics": [
+     "role",
+     "mission"
+    ],
+    "bytes": 1923,
+    "sha256": "99bf0e6afc9fd4f159566853564e592ee2ddff837374700f032a74850672473c"
+   },
+   {
+    "path": "pages/02-expertise-map.md",
+    "load": "on_demand",
+    "topics": [
+     "discipline catalogue: architecture, causal, forensics, full-stack, data, distributed, security, reliability, performance, verification, production, git, tooling, versions, agents, context, knowledge, reverse engineering, product completeness"
+    ],
+    "bytes": 4934,
+    "sha256": "0d52a65134d2c456da6242ad737c736fc1b09645b9e1f06e00e8710364f1d232"
+   },
+   {
+    "path": "pages/03-operating-contract.md",
+    "load": "inline",
+    "topics": [
+     "negative capability",
+     "reuse before create",
+     "reality before audit",
+     "evidence states",
+     "truth law",
+     "ownership"
+    ],
+    "bytes": 3386,
+    "sha256": "0424340aa85a0ed423045f81572acd891385ff820502620523ad3a0d22b15e3c"
+   },
+   {
+    "path": "pages/04-audit-core.md",
+    "load": "inline",
+    "topics": [
+     "one-shot audit",
+     "causal failure model",
+     "competing hypotheses",
+     "change impact",
+     "minimum change"
+    ],
+    "bytes": 2002,
+    "sha256": "06c3f216e900a53cdd0154300cf12d94adfd303b7d1393aebd9a898fcbec9045"
+   },
+   {
+    "path": "pages/05-verification-playbook.md",
+    "load": "on_demand",
+    "topics": [
+     "mode routing",
+     "determinism",
+     "strongest oracle",
+     "test the test",
+     "verifier validity",
+     "production reality",
+     "completion strength",
+     "zero vapor",
+     "reality contract"
+    ],
+    "bytes": 3992,
+    "sha256": "23613ac3f23b7d142643d1ea6eae283aea908ff0cb7257ab6de5ad8d27b7ca69"
+   },
+   {
+    "path": "pages/06-domain-playbook.md",
+    "load": "on_demand",
+    "topics": [
+     "persistence, transactions, migrations",
+     "concurrency, locks, races",
+     "external side effects, idempotency, reconciliation",
+     "security, auth, secrets, injection",
+     "performance, memory",
+     "version truth",
+     "git concurrent writers",
+     "agent systems and teams",
+     "context and knowledge"
+    ],
+    "bytes": 3581,
+    "sha256": "ff5fbd52b0614cb5aa38e3c0d01a1b2294031283a4ae03ea65dd17ed263e817d"
+   },
+   {
+    "path": "pages/07-learning-and-scope.md",
+    "load": "on_demand",
+    "topics": [
+     "failure learning",
+     "UKDL",
+     "baseline elevation",
+     "what not to build",
+     "refactor opportunity",
+     "expensive reality loops"
+    ],
+    "bytes": 2350,
+    "sha256": "1991c0297da120672cb73525a47f30da993d4210ba5673ba6331419040ba6b63"
+   },
+   {
+    "path": "pages/08-procedures.md",
+    "load": "on_demand",
+    "topics": [
+     "audit before implementation",
+     "after implementation",
+     "bug audit",
+     "refactor audit",
+     "migration audit",
+     "done audit"
+    ],
+    "bytes": 2100,
+    "sha256": "2d598cb0dc5ef82ac3d6f5a1285de81834cf97f6b8c14dfff811738045a2626c"
+   },
+   {
+    "path": "pages/09-output-and-laws.md",
+    "load": "inline",
+    "topics": [
+     "default output",
+     "pre-report gate",
+     "severity",
+     "confidence",
+     "laws",
+     "ultra output contract"
+    ],
+    "bytes": 7766,
+    "sha256": "9490e47459f4834663536acac260d3e7f4fcc7bb0f3fb672fa25409877d68f86"
+   },
+   {
+    "path": "pages/10-category-checklist.md",
+    "load": "on_demand",
+    "topics": [
+     "per-category checklist: AUTH, ENV, PATH, EDGE, INTEGRATION, REALITY-CONTRACT, COMPLETION-GATE, ANTI-CRASH, APOLLO-GRAPHQL"
+    ],
+    "bytes": 3624,
+    "sha256": "6b50c20ee059eec6f1d2f7544045060d9ffdc8ac33aa6f337693808cf35f6319"
+   },
+   {
+    "path": "pages/11-grounding.md",
+    "load": "inline",
+    "topics": [
+     "grounding",
+     "examples",
+     "priority"
+    ],
+    "bytes": 1398,
+    "sha256": "fdb00c2b01aaf4abe18ebf1a18912450f1d2dd2cde397ab9e0fd29b4502a2e0e"
+   }
+  ],
+  "source": {
+   "file": "agents/oneshot-architect-auditor.md",
+   "sha256": "7b042ad911f5aba81774777e587fe09571cad659a430707d8ca5cba0a0d9c770",
+   "frontmatter": "---\nname: oneshot-architect-auditor\ndescription: Resident macroagent \u2014 principal architect, adversarial auditor, causal investigator, verification strategist and Production Reality authority in one. Dispatch to audit any proposed or completed change (feature, bug fix, refactor, migration, integration, agent-system change, infra change, data-model change, production claim) for architectural correctness, causal validity, implementation-readiness and regression safety, and to decide EXECUTION vs PLAN vs ULTRA-PLAN. Also the canonical phase-4 auditor of the /ultra ONESHOT workflow, where it emits the numbered gap list that phase 5 consumes. Read-only \u2014 never writes code, never edits files, never rewrites the plan.\ntools: Read, Glob, Grep, Bash, WebFetch\nmodel: opus\ncolor: red\n---\n"
+  }
+ }
+}

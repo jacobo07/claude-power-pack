@@ -1,0 +1,41 @@
+{
+ "_doc": "Split recipe for agents/oneshot-architect-auditor.md -> vault/capability_runtime/agent_specs/oneshot-architect-auditor/. Markers are exact line prefixes in the body, in order. Capability inventory of the move (capability-preserving compaction): tools Read, Glob, Grep, Bash RETAINED via the verifier carrier (Bash under carrier_bash_guard); WebFetch REMOVED from the virtual variant (no carrier class carries network authority) and RETAINED in the AOT projection, whose frontmatter is the original; model opus -> model_policy default opus, unchanged.",
+ "contract": {
+  "id": "oneshot-architect-auditor",
+  "name": "Principal architecture and plan auditor",
+  "owner": "claude-power-pack /ultra phase 4",
+  "sovereign_question": "Will the first serious implementation of this plan be the last one required?",
+  "scope": ["plan audit", "architecture ownership", "causal failure model", "verification strategy", "production reality", "done-claim falsification"],
+  "non_scope": ["writing code", "editing files", "rewriting the plan"],
+  "triggers": ["audit plan", "architecture review", "ultra phase 4", "gap list", "is this plan ready", "falsify done", "ownership audit", "migration audit", "regression risk"],
+  "anti_triggers": ["write the code", "implement", "ui copy tweak"],
+  "consumers": ["/ultra phase 5 fix injection", "parent session plan revision"],
+  "outputs": ["numbered gap list"],
+  "permissions": ["read repository", "read-only shell"],
+  "risk_class": "reversible",
+  "context_cost": "high",
+  "expected_leverage": "high",
+  "maturity": "proven",
+  "retirement_condition": "a deterministic plan linter reproduces its gap recall on the frozen benchmark",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "verifier",
+  "model_policy": {"default": "opus"},
+  "output_contract": "native",
+  "description": "Principal architect and adversarial plan auditor; emits the numbered gap list /ultra phase 5 consumes."
+ },
+ "markers": [
+  {"prefix": "", "slug": "identity", "load": "inline", "topics": ["role", "mission"]},
+  {"prefix": "## 1. MACROAGENT EXPERTISE", "slug": "expertise-map", "load": "on_demand", "topics": ["discipline catalogue: architecture, causal, forensics, full-stack, data, distributed, security, reliability, performance, verification, production, git, tooling, versions, agents, context, knowledge, reverse engineering, product completeness"]},
+  {"prefix": "## 2. YOU ARE NOT ALL EXPERTISE", "slug": "operating-contract", "load": "inline", "topics": ["negative capability", "reuse before create", "reality before audit", "evidence states", "truth law", "ownership"]},
+  {"prefix": "## 8. ONE-SHOT AUDIT", "slug": "audit-core", "load": "inline", "topics": ["one-shot audit", "causal failure model", "competing hypotheses", "change impact", "minimum change"]},
+  {"prefix": "## 13. MODE ROUTING", "slug": "verification-playbook", "load": "on_demand", "topics": ["mode routing", "determinism", "strongest oracle", "test the test", "verifier validity", "production reality", "completion strength", "zero vapor", "reality contract"]},
+  {"prefix": "## 22. DATA AND PERSISTENCE", "slug": "domain-playbook", "load": "on_demand", "topics": ["persistence, transactions, migrations", "concurrency, locks, races", "external side effects, idempotency, reconciliation", "security, auth, secrets, injection", "performance, memory", "version truth", "git concurrent writers", "agent systems and teams", "context and knowledge"]},
+  {"prefix": "## 33. FAILURE LEARNING", "slug": "learning-and-scope", "load": "on_demand", "topics": ["failure learning", "UKDL", "baseline elevation", "what not to build", "refactor opportunity", "expensive reality loops"]},
+  {"prefix": "## 39. AUDIT BEFORE IMPLEMENTATION", "slug": "procedures", "load": "on_demand", "topics": ["audit before implementation", "after implementation", "bug audit", "refactor audit", "migration audit", "done audit"]},
+  {"prefix": "## 45. AUDIT OUTPUT", "slug": "output-and-laws", "load": "inline", "topics": ["default output", "pre-report gate", "severity", "confidence", "laws", "ultra output contract"]},
+  {"prefix": "<audit_checklist>", "slug": "category-checklist", "load": "on_demand", "topics": ["per-category checklist: AUTH, ENV, PATH, EDGE, INTEGRATION, REALITY-CONTRACT, COMPLETION-GATE, ANTI-CRASH, APOLLO-GRAPHQL"]},
+  {"prefix": "<grounding_rules>", "slug": "grounding", "load": "inline", "topics": ["grounding", "examples", "priority"]}
+ ]
+}

@@ -377,6 +377,12 @@ const CHAIN_MAP = {
     // chain's settings matcher is "Bash|PowerShell" despite the chain's name, so PowerShell
     // launches -- the ones that actually caused it -- are covered.
     { exe: NODE_EXE, script: './gui-app-console-inherit-guard.js', timeoutMs: 5000, block: true },
+    // Carrier least privilege (agent-capability-virtualization S1, 2026-09-30). A carrier's
+    // frontmatter can grant Bash but not a READ-ONLY Bash; the PreToolUse payload names the
+    // calling subagent (agent_type, measured), so the verifier class is held to observe/test
+    // commands here and the investigator class to none. Non-carriers pass untouched.
+    // Proof: hooks/tests/test-carrier-bash-guard.js (31/31; always-allow mutant 14/31).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/carrier_bash_guard.js', timeoutMs: 3000, block: true },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/process-sandbox.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/ovo-push-gate.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js', timeoutMs: 5000 },
