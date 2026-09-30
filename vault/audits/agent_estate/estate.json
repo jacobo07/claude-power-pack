@@ -268,10 +268,10 @@
   },
   "global": {
    "root": "C:\\Users\\User\\.claude\\agents",
-   "files": 91,
-   "unique_names": 62,
-   "total_bytes": 1212230,
-   "resident_listing_bytes": 23010,
+   "files": 94,
+   "unique_names": 65,
+   "total_bytes": 1215150,
+   "resident_listing_bytes": 23705,
    "collisions": {
     "gsd-advisor-researcher": [
      "gsd-advisor-researcher.compact.md",
@@ -449,6 +449,55 @@
      "body_bytes": 2788,
      "sha": "a86cc7a7e341",
      "listing_bytes": 102
+    },
+    {
+     "name": "cpp-carrier-investigator",
+     "file": "C:\\Users\\User\\.claude\\agents\\cpp-carrier-investigator.md",
+     "bytes": 932,
+     "desc_bytes": 177,
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob"
+     ],
+     "model": null,
+     "body_bytes": 678,
+     "sha": "4f15cb351435",
+     "listing_bytes": 217
+    },
+    {
+     "name": "cpp-carrier-verifier",
+     "file": "C:\\Users\\User\\.claude\\agents\\cpp-carrier-verifier.md",
+     "bytes": 1032,
+     "desc_bytes": 193,
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "model": null,
+     "body_bytes": 760,
+     "sha": "77f58c6b990c",
+     "listing_bytes": 235
+    },
+    {
+     "name": "cpp-carrier-writer",
+     "file": "C:\\Users\\User\\.claude\\agents\\cpp-carrier-writer.md",
+     "bytes": 956,
+     "desc_bytes": 190,
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash",
+      "Edit",
+      "Write"
+     ],
+     "model": null,
+     "body_bytes": 676,
+     "sha": "52f96a84acc1",
+     "listing_bytes": 243
     },
     {
      "name": "garyvee",
@@ -2260,14 +2309,17 @@
   "typescript-reviewer"
  ],
  "duplication": {
-  "shared_shingles": 3288,
+  "shared_shingles": 3358,
   "per_agent_shared_share": {
+   "cpp-carrier-investigator": 0.673,
+   "cpp-carrier-writer": 0.673,
    "harness-optimizer": 0.668,
    "type-design-analyzer": 0.646,
    "garyvee": 0.64,
    "silent-failure-hunter": 0.625,
    "comment-analyzer": 0.612,
    "musk": 0.598,
+   "cpp-carrier-verifier": 0.598,
    "gsd-project-researcher": 0.521,
    "go-reviewer": 0.422,
    "gsd-eval-auditor": 0.391,

@@ -56,6 +56,9 @@ from modules.capability_runtime.contract import (  # noqa: E402
 SPECS_DIR = _PP_ROOT / "vault" / "capability_runtime" / "agent_specs"
 PRIMITIVES_DIR = _PP_ROOT / "vault" / "capability_runtime" / "agent_primitives"
 CARRIERS_DIR = _PP_ROOT / "agents" / "carriers"
+# Compiled context images, content-addressed: the same spec + mode + mission + state
+# compiles to the same file, which is reused rather than rewritten.
+IMAGES_DIR = Path.home() / ".claude" / "state" / "agent_images"
 
 # The ONLY place tool surfaces are named. Ordered least -> most privileged.
 CLASS_TOOLS = {
@@ -130,8 +133,16 @@ class AgentSpec:
         if self.output_contract != "native" and not (PRIMITIVES_DIR / f"{self.output_contract}.md").is_file():
             raise AgentSpecError("MISSING_OUTPUT_CONTRACT", f"{self.id}: {self.output_contract}")
 
+    def page_path(self, page: dict) -> Path:
+        """A page is either the spec's own file or a SHARED primitive. A primitive
+        exists once on disk however many specs carry it (measured: the Prompt Defense
+        Baseline was copied into all 10 dormant repo agents)."""
+        if page.get("primitive"):
+            return PRIMITIVES_DIR / f"{page['primitive']}.md"
+        return self.dir / page["path"]
+
     def page_text(self, page: dict) -> str:
-        path = self.dir / page["path"]
+        path = self.page_path(page)
         if not path.is_file():
             raise AgentSpecError("MISSING_PAGE", str(path))
         # Line endings are normalised before hashing: this repo checks text out with
@@ -164,16 +175,20 @@ class AgentSpec:
                   + (f"model: {model}\n" if model else "") + "---\n")
         return fm + self.body()
 
-    def compile(self, mission: str, mode: str = "virtual") -> str:
+    def compile(self, mission: str, mode: str = "virtual", state_version: str | None = None) -> str:
         """Carrier prompt. `monolithic` = every page inline (the pre-virtualization
         role); `virtual` = inline pages + on-demand page paths; `crippled` = inline
-        pages only (the benchmark's positive control)."""
+        pages only (the benchmark's positive control). `state_version` is the repo
+        state the specialist will read (git HEAD); a bundle carries it back so a
+        result computed against a state that has since moved is refused as STALE."""
         if mode not in MODES:
             raise AgentSpecError("BAD_MODE", mode)
         if not mission.strip():
             raise AgentSpecError("EMPTY_MISSION", self.id)
+        sv = state_version if state_version is not None else current_state_version()
+        sh = self.spec_hash()
         out = [f"{HEADER} {self.id}@{self.contract.version} class={self.permission_class} "
-               f"spec={self.spec_hash()} mode={mode}]\n"]
+               f"spec={sh} mode={mode} state={sv}]\n"]
         deep = []
         for p in self.pages:
             if p["load"] == "inline" or mode == "monolithic":
@@ -185,17 +200,66 @@ class AgentSpec:
                        "Read a page with the Read tool as soon as your task touches its topics; "
                        "never guess what a page says.\n\n")
             for p in deep:
-                out.append(f"- `{(self.dir / p['path']).as_posix()}` -- {', '.join(p.get('topics', []))}\n")
+                out.append(f"- `{self.page_path(p).as_posix()}` -- {', '.join(p.get('topics', []))}\n")
         if self.output_contract != "native":
-            out.append("\n" + (PRIMITIVES_DIR / f"{self.output_contract}.md").read_text(encoding="utf-8"))
+            contract = (PRIMITIVES_DIR / f"{self.output_contract}.md").read_text(encoding="utf-8")
+            out.append("\n" + contract.replace("{spec}", f"{self.id}@{self.contract.version}")
+                       .replace("{spec_hash}", sh).replace("{state_version}", sv))
         out.append(f"\n## Mission\n\n{mission.strip()}\n")
         return "".join(out)
 
-    def dispatch(self, mission: str, mode: str = "virtual") -> dict:
-        """What the parent passes to the Agent tool."""
-        return {"subagent_type": carrier_name(self.permission_class),
-                "model": self.model_policy.get("default"),
-                "prompt": self.compile(mission, mode)}
+    def dispatch(self, mission: str, mode: str = "virtual", state_version: str | None = None,
+                 delivery: str = "pointer", images_dir: Path | None = None) -> dict:
+        """What the parent passes to the Agent tool.
+
+        `pointer` (default): the compiled role is written once as a context image and
+        the carrier Reads it, so the parent's context pays a header and a path per
+        dispatch instead of the whole role (an Agent prompt is parent output tokens,
+        and it stays in the parent's transcript). `inline`: the role IS the prompt."""
+        compiled = self.compile(mission, mode, state_version)
+        out = {"subagent_type": carrier_name(self.permission_class),
+               "model": self.model_policy.get("default")}
+        if delivery == "inline":
+            return {**out, "prompt": compiled}
+        if delivery != "pointer":
+            raise AgentSpecError("BAD_DELIVERY", delivery)
+        root = images_dir or IMAGES_DIR
+        root.mkdir(parents=True, exist_ok=True)
+        img = root / f"{self.id}-{_sha(compiled.encode())[:16]}.md"
+        if not img.is_file():
+            img.write_bytes(compiled.encode("utf-8"))
+        header = compiled.split("\n", 1)[0]
+        return {**out, "image": str(img),
+                # The last sentence is the carrier's durability contract, and it is true: the
+                # parent persists the returned result (agent_bundle.accept). agent-solo-guard
+                # accepts it only for a carrier with no write tool (measured 2026-09-30: without
+                # it, `class=investigator` read as long-running research and the dispatch was
+                # blocked before the carrier ran).
+                "prompt": f"{header}\nYour complete role, output contract and mission are in "
+                          f"`{img.as_posix()}`. Read that file in full with the Read tool before doing "
+                          f"anything else; it is authoritative and replaces any assumption. Return your "
+                          f"result as the reply; the parent persists it."}
+
+
+def current_state_version(cwd: Path | None = None) -> str:
+    """git HEAD of the working repo, or the literal 'none' when there is no repo to
+    read. 'none' is a typed absence, never a match for a real sha."""
+    import shutil
+    import subprocess
+    # Measured 2026-09-30: `git` is not on this host's subprocess PATH, so a bare "git"
+    # silently returned 'none' and switched the stale-state check off for every bundle.
+    git = shutil.which("git") or next((p for p in (r"C:\Program Files\Git\cmd\git.exe",
+                                                   r"C:\Program Files\Git\bin\git.exe")
+                                       if Path(p).is_file()), None)
+    if not git:
+        return "none"
+    try:
+        r = subprocess.run([git, "rev-parse", "HEAD"], cwd=str(cwd or Path.cwd()),
+                           capture_output=True, text=True, timeout=10)
+        sha = r.stdout.strip()
+        return sha if r.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", sha) else "none"
+    except (OSError, subprocess.SubprocessError):
+        return "none"
 
 
 # --- catalog ---------------------------------------------------------------
@@ -254,10 +318,24 @@ def split(source: Path, spec_dir: Path, markers: list[dict], contract: dict, age
     pages = []
     for i, mk in enumerate(markers):
         chunk = body[starts[i]: starts[i + 1] if i + 1 < len(starts) else len(body)]
+        entry = {"load": mk["load"], "topics": mk.get("topics", []),
+                 "bytes": len(chunk.encode()), "sha256": _sha(chunk.encode())}
+        if mk.get("primitive"):
+            # A shared primitive is stored once. The first split that names it seals it;
+            # every later one must carry the identical text, or the "shared" doctrine is
+            # really a variant and must stay the agent's own page.
+            prim = PRIMITIVES_DIR / f"{mk['primitive']}.md"
+            if prim.is_file():
+                if prim.read_bytes().replace(b"\r\n", b"\n") != chunk.encode():
+                    raise AgentSpecError("PRIMITIVE_MISMATCH", f"{source.name}: {mk['primitive']} differs")
+            else:
+                prim.parent.mkdir(parents=True, exist_ok=True)
+                prim.write_bytes(chunk.encode("utf-8"))
+            pages.append({"primitive": mk["primitive"], **entry})
+            continue
         rel = f"pages/{i + 1:02d}-{mk['slug']}.md"
         (spec_dir / rel).write_bytes(chunk.encode("utf-8"))
-        pages.append({"path": rel, "load": mk["load"], "topics": mk.get("topics", []),
-                      "bytes": len(chunk.encode()), "sha256": _sha(chunk.encode())})
+        pages.append({"path": rel, **entry})
     raw = {"contract": contract,
            "agent": {**agent, "pages": pages,
                      "source": {"file": source.as_posix(), "sha256": _sha(text.encode()),
@@ -275,6 +353,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("split"); s.add_argument("source"); s.add_argument("spec_dir"); s.add_argument("--markers-file", required=True)
     c = sub.add_parser("compile"); c.add_argument("spec_id"); c.add_argument("--mission-file", required=True)
     c.add_argument("--mode", default="virtual", choices=MODES); c.add_argument("--json", action="store_true")
+    c.add_argument("--delivery", default="pointer", choices=("pointer", "inline"))
     p = sub.add_parser("project"); p.add_argument("spec_id")
     sub.add_parser("list")
     a = ap.parse_args(argv)
@@ -289,7 +368,7 @@ def main(argv=None) -> int:
             spec = load(a.spec_id)
             mission = Path(a.mission_file).read_text(encoding="utf-8")
             if a.json:
-                print(json.dumps(spec.dispatch(mission, a.mode)))
+                print(json.dumps(spec.dispatch(mission, a.mode, delivery=a.delivery)))
             else:
                 sys.stdout.write(spec.compile(mission, a.mode))
         elif a.cmd == "project":

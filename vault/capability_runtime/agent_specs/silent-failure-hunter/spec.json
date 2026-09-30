@@ -1,0 +1,94 @@
+{
+ "contract": {
+  "id": "silent-failure-hunter",
+  "name": "Silent failure and swallowed error reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Where does this code fail without anyone finding out?",
+  "scope": [
+   "empty catch blocks",
+   "swallowed errors",
+   "dangerous fallbacks",
+   "lost error propagation",
+   "missing error handling",
+   "inadequate logging"
+  ],
+  "non_scope": [
+   "fixing the code",
+   "style review"
+  ],
+  "triggers": [
+   "silent failure",
+   "silent failures",
+   "swallowed error",
+   "swallowed errors",
+   "empty catch",
+   "error handling",
+   "bad fallback",
+   "error propagation",
+   "catch blocks",
+   "fails silently"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "proof bundle of findings"
+  ],
+  "permissions": [
+   "read repository"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "low",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "developing",
+  "retirement_condition": "a static analyzer rule set reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "investigator",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "proof-bundle-v1",
+  "description": "Reviews code for silent failures, swallowed errors, bad fallbacks and missing error propagation.",
+  "pages": [
+   {
+    "path": "pages/01-provenance.md",
+    "load": "inline",
+    "topics": [
+     "provenance"
+    ],
+    "bytes": 282,
+    "sha256": "eee32c3310067f3dc9112f63c724d2da3faf0f3945b331832323cccb26987672"
+   },
+   {
+    "primitive": "prompt-defense-baseline",
+    "load": "inline",
+    "topics": [
+     "prompt defense"
+    ],
+    "bytes": 993,
+    "sha256": "65b9871a85e2506b7416eac21c389a3617d6351a808b263c8ad14fd005990489"
+   },
+   {
+    "path": "pages/03-role.md",
+    "load": "inline",
+    "topics": [
+     "hunt targets",
+     "output format"
+    ],
+    "bytes": 805,
+    "sha256": "0ec740c49b4e1f76d0f4ca3bd185c1c25ae5a8228fc3f76cd3166701a5823b32"
+   }
+  ],
+  "source": {
+   "file": "agents/silent-failure-hunter.md",
+   "sha256": "0975f887687c3bfecfce2ab75bd14f7677a400745302e00ff54a6ee53b037c93",
+   "frontmatter": "---\nname: silent-failure-hunter\ndescription: Review code for silent failures, swallowed errors, bad fallbacks, and missing error propagation.\nmodel: sonnet\ntools: [Read, Grep, Glob, Bash]\n---\n"
+  }
+ }
+}

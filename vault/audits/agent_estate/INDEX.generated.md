@@ -3,7 +3,7 @@
 | surface | files | unique names | total bytes | resident listing bytes | collisions |
 |---|---|---|---|---|---|
 | repo | 16 | 16 | 107753 | 5770 | 0 |
-| global | 91 | 62 | 1212230 | 23010 | 29 |
+| global | 94 | 65 | 1215150 | 23705 | 29 |
 | pack:revenue-forensics | 14 | 14 | 200634 | 11887 | 0 |
 
 Dormant repo agents (no install surface): comment-analyzer, cpp-reviewer, go-reviewer, harness-optimizer, java-reviewer, python-reviewer, rust-reviewer, silent-failure-hunter, type-design-analyzer, typescript-reviewer
@@ -37,6 +37,9 @@ Dormant repo agents (no install surface): comment-analyzer, cpp-reviewer, go-rev
 | cdio-reviewer | cdio-reviewer.md | 9056 | 795 | Read, Glob, Grep, Bash | sonnet |
 | cdio-standards-librarian | cdio-standards-librarian.md | 5932 | 577 | Read, Glob, Grep, Bash | sonnet |
 | code-reviewer | coderabbit-code-reviewer.md | 2919 | 88 | (inherits all) |  |
+| cpp-carrier-investigator | cpp-carrier-investigator.md | 932 | 177 | Read, Grep, Glob |  |
+| cpp-carrier-verifier | cpp-carrier-verifier.md | 1032 | 193 | Read, Grep, Glob, Bash |  |
+| cpp-carrier-writer | cpp-carrier-writer.md | 956 | 190 | Read, Grep, Glob, Bash, Edit, Write |  |
 | garyvee | garyvee.md | 2334 | 567 | Read, Glob, Grep, Bash |  |
 | graphify-librarian | graphify-librarian.md | 6944 | 738 | Read, Glob, Grep, Bash | sonnet |
 | graphify-route-governor | graphify-route-governor.md | 4867 | 613 | Read, Glob, Grep, Bash | sonnet |
@@ -167,7 +170,7 @@ Dormant repo agents (no install surface): comment-analyzer, cpp-reviewer, go-rev
 
 ## Duplicated doctrine
 
-8-word shingles shared by >= 2 agents: 3288
+8-word shingles shared by >= 2 agents: 3358
 
 - gsd-phase-researcher / gsd-project-researcher: 1220
 - gsd-phase-researcher / gsd-ui-researcher: 752

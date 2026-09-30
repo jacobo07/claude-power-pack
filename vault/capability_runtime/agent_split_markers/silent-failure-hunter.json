@@ -1,0 +1,34 @@
+{
+ "_doc": "Split recipe for agents/silent-failure-hunter.md (dormant repo agent, never installed). Capability inventory: Read, Grep, Glob RETAINED via the investigator carrier; Bash REMOVED (the role is static review; Grep covers its searches and no hunt target needs a command). Prompt Defense Baseline moved to the shared primitive, byte-identical. Output format RETAINED in the page; the proof-bundle contract wraps each finding as a claim.",
+ "contract": {
+  "id": "silent-failure-hunter",
+  "name": "Silent failure and swallowed error reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Where does this code fail without anyone finding out?",
+  "scope": ["empty catch blocks", "swallowed errors", "dangerous fallbacks", "lost error propagation", "missing error handling", "inadequate logging"],
+  "non_scope": ["fixing the code", "style review"],
+  "triggers": ["silent failure", "silent failures", "swallowed error", "swallowed errors", "empty catch", "error handling", "bad fallback", "error propagation", "catch blocks", "fails silently"],
+  "anti_triggers": ["write the fix"],
+  "consumers": ["parent session code review"],
+  "outputs": ["proof bundle of findings"],
+  "permissions": ["read repository"],
+  "risk_class": "reversible",
+  "context_cost": "low",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "developing",
+  "retirement_condition": "a static analyzer rule set reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "investigator",
+  "model_policy": {"default": "sonnet"},
+  "output_contract": "proof-bundle-v1",
+  "description": "Reviews code for silent failures, swallowed errors, bad fallbacks and missing error propagation."
+ },
+ "markers": [
+  {"prefix": "", "slug": "provenance", "load": "inline", "topics": ["provenance"]},
+  {"prefix": "## Prompt Defense Baseline", "slug": "prompt-defense", "load": "inline", "primitive": "prompt-defense-baseline", "topics": ["prompt defense"]},
+  {"prefix": "# Silent Failure Hunter Agent", "slug": "role", "load": "inline", "topics": ["hunt targets", "output format"]}
+ ]
+}

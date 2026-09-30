@@ -113,6 +113,32 @@ def main() -> int:
         check("V-SPEC-CATALOG-TYPED-BROKEN", any(b["spec"] == "broken" and b["code"] == "UNREADABLE_SPEC" for b in bad)
               and any(s.id == "oneshot-architect-auditor" for s in ok), f"ok={len(ok)} bad={[b['code'] for b in bad]}")
 
+    # state version: a real sha from this repo (the bare-`git` PATH gap returned 'none')
+    sv = A.current_state_version(ROOT)
+    check("V-SPEC-STATE-VERSION", bool(re.fullmatch(r"[0-9a-f]{40}", sv)), sv[:12])
+
+    # pointer delivery: the parent carries a header + path, the carrier Reads the image,
+    # and the live agent-solo-guard accepts the dispatch for a no-write carrier.
+    import subprocess
+    with tempfile.TemporaryDirectory() as t:
+        for sid in ("silent-failure-hunter", "oneshot-architect-auditor"):
+            sp = A.load(sid)
+            d = sp.dispatch("Review x for problems.", images_dir=Path(t))
+            img = Path(d["image"])
+            ok_img = img.is_file() and img.read_text(encoding="utf-8") == sp.compile("Review x for problems.")
+            check(f"V-SPEC-POINTER-{sid}", ok_img and len(d["prompt"]) < 600 and img.as_posix() in d["prompt"],
+                  f"prompt={len(d['prompt'])} chars, image={img.stat().st_size if img.is_file() else 0} B")
+            guard = Path.home() / ".claude" / "hooks" / "agent-solo-guard.js"
+            payload = json.dumps({"tool_name": "Agent", "cwd": str(ROOT),
+                                  "tool_input": {"prompt": d["prompt"], "subagent_type": d["subagent_type"]}})
+            tracker = Path.home() / ".claude" / "state" / "agent-solo-tracker.json"
+            if tracker.exists():
+                tracker.unlink()
+            g = subprocess.run(["node", str(guard)], input=payload, capture_output=True, text=True, timeout=30)
+            check(f"V-SPEC-GUARD-ACCEPTS-{sid}", g.returncode == 0, f"exit={g.returncode} {g.stderr[:80]}")
+            if tracker.exists():
+                tracker.unlink()
+
     print(f"AGENT_SPEC_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
