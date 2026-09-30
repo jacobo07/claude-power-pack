@@ -107,10 +107,24 @@ function findSessionJsonl(sessionId) {
   return null;
 }
 
-// Walk the .jsonl tail and find the most recent user message (type=user
-// with message.role=user). The tail (last 256 KB) is a safe upper bound
-// for finding the latest few turns.
-function lastUserPrompt(jsonlPath) {
+function entryText(obj) {
+  const content = (obj.message || {}).content;
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    const parts = content
+      .filter(c => c && c.type === 'text' && typeof c.text === 'string')
+      .map(c => c.text);
+    if (parts.length) return parts.join('\n');
+  }
+  return null;
+}
+
+// The most recent prompt the Owner TYPED, or null. type=user entries also
+// carry skill expansions (isMeta), inter-session messages and command
+// wrappers; measured 2026-09-30: 134 of 136 spawns in 7 days came from
+// those, 2 from a human. Only origin.kind === 'human' counts, and if the
+// newest text entry is machine-made the turn was not a research request.
+function lastHumanPrompt(jsonlPath) {
   let stat;
   try { stat = fs.statSync(jsonlPath); } catch (_) { return null; }
   const start = Math.max(0, stat.size - 256 * 1024);
@@ -130,21 +144,30 @@ function lastUserPrompt(jsonlPath) {
     if (!line) continue;
     let obj;
     try { obj = JSON.parse(line); } catch (_) { continue; }
-    if (obj && obj.type === 'user') {
-      const msg = obj.message || {};
-      if (msg.role !== 'user') continue;
-      const content = msg.content;
-      if (typeof content === 'string') return content;
-      if (Array.isArray(content)) {
-        // Multi-part: collect text segments only.
-        const parts = content
-          .filter(c => c && c.type === 'text' && typeof c.text === 'string')
-          .map(c => c.text);
-        if (parts.length) return parts.join('\n');
-      }
-    }
+    if (!obj || obj.type !== 'user') continue;
+    if ((obj.message || {}).role !== 'user') continue;
+    if (obj.isMeta) continue;                // skill/command expansion
+    const text = entryText(obj);
+    if (!text) continue;                     // tool_result-only entry
+    const human = obj.origin && obj.origin.kind === 'human';
+    if (!human) return null;
+    if (/^\s*<command-/.test(text)) return null;   // slash command
+    return text;
   }
   return null;
+}
+
+function promptSha(prompt) {
+  return require('crypto').createHash('sha256').update(prompt, 'utf-8')
+    .digest('hex').slice(0, 16);
+}
+
+// True when this exact prompt already produced a spawn (Stop fires again
+// on the same prompt after a blocked closer or a resumed session).
+function alreadySpawned(sha) {
+  let text;
+  try { text = fs.readFileSync(AUTO_LOG, 'utf-8'); } catch (_) { return false; }
+  return text.includes('"prompt_sha":"' + sha + '"');
 }
 
 function looksLikeResearchPrompt(prompt) {
@@ -183,6 +206,8 @@ function findPython() {
 }
 
 function spawnDetached(prompt) {
+  const sha = promptSha(prompt);
+  if (alreadySpawned(sha)) return;
   if (process.env.CLAUDEPP_DEEPRESEARCH_DISABLE === '1') {
     logAutoSpawn({
       ts: new Date().toISOString(),
@@ -200,12 +225,14 @@ function spawnDetached(prompt) {
     return;
   }
   const py = findPython();
-  // Use `cmd.exe /c start "" /B` to fully detach on Windows (the empty
-  // "" is the window title; /B suppresses a new console window). The
-  // child writes its own output; nothing comes back to this hook.
+  // Spawn python directly. detached gives it its own console and windowsHide
+  // keeps that console hidden, so the git/node children it starts inherit a
+  // hidden console instead of each opening a visible one. The old
+  // `cmd /c start "" /B` route mangled the "" title under Node's quoting
+  // (cmd does not honour \" escapes) and could pop a window stealing focus;
+  // it also let cmd reinterpret the user's prompt (a `&` ran a second command).
   const args = [
-    '/c', 'start', '""', '/B',
-    py, DEEPRESEARCH_PY,
+    DEEPRESEARCH_PY,
     '--prompt', prompt,
     '--depth', '2',
     '--breadth', '3',
@@ -213,7 +240,7 @@ function spawnDetached(prompt) {
   ];
   let child;
   try {
-    child = child_process.spawn('cmd.exe', args, {
+    child = child_process.spawn(py, args, {
       detached: true,
       stdio: 'ignore',
       windowsHide: true,
@@ -231,6 +258,7 @@ function spawnDetached(prompt) {
     ts: new Date().toISOString(),
     verdict: 'spawned',
     pid: child.pid || null,
+    prompt_sha: sha,
     prompt: prompt.slice(0, 200),
     cmd_summary: 'python deep_research.py --depth 2 --breadth 3',
   });
@@ -262,8 +290,10 @@ function main() {
   const jsonlPath = findSessionJsonl(sessionId);
   if (!jsonlPath) failOpen('jsonl not found for session ' + sessionId);
 
-  const prompt = lastUserPrompt(jsonlPath);
-  if (!prompt) failOpen('no recent user prompt found');
+  // null = the turn was not started by a typed prompt (skill expansion,
+  // agent message, slash command). That is the common case: exit quietly.
+  const prompt = lastHumanPrompt(jsonlPath);
+  if (!prompt) process.exit(0);
 
   if (!looksLikeResearchPrompt(prompt)) {
     // Not research-intent. This is the common case — exit silently to
@@ -272,8 +302,68 @@ function main() {
     process.exit(0);
   }
 
+  // SREE. Before spending a research run, ask whether one already answered
+  // this. `research_discovery.discover_for_cwd` computes exactly that --
+  // prior research relevant to this directory, with an age -- and was an
+  // audited ORPHAN with zero callers, so every repeat prompt spawned a full
+  // run while the module that would have prevented it sat unreachable.
+  // (Wired in 9909076, lost when 75d62ac copied the older live file over the
+  // repo; restored 2026-09-30.)
+  //
+  // Its 24h window is the anti-fossilisation control: reuse is bounded by
+  // freshness, so a stale answer expires into a real search instead of
+  // hardening into a fact.
+  const prior = priorResearch();
+  if (prior) {
+    logAutoSpawn({
+      ts: new Date().toISOString(),
+      status: 'skipped-prior-research',
+      prompt_head: String(prompt).slice(0, 120),
+      report_path: prior.report_path || '',
+      age_hours: prior.age_hours,
+    });
+    process.stdout.write(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'Stop',
+        additionalContext:
+          `[Woz] [deep-research] a prior run already covers this, ${prior.age_hours}h `
+          + `old -- not spawning a new one.\n  ${prior.report_path}\n`
+          + '  Re-run explicitly with /cpp-deep-research if it is stale.',
+      },
+    }));
+    process.exit(0);
+  }
+
   spawnDetached(prompt);
   process.exit(0);
+}
+
+/** Prior research for this cwd, or null. Fail-open in every direction:
+ *  a discovery that errors, times out, or answers ambiguously must never
+ *  suppress a real run -- skipping a needed search is the expensive
+ *  mistake, not repeating one. */
+function priorResearch() {
+  try {
+    const py = findPython();
+    if (!py) return null;
+    const r = child_process.spawnSync(py, [
+      '-c',
+      'import json,sys;'
+      + 'sys.path.insert(0, r"' + PP_REPO + '");'
+      + 'sys.path.insert(0, r"'
+      + path.join(PP_REPO, 'modules', 'deep-research') + '");'
+      + 'from research_discovery import discover_for_cwd;'
+      + 'h = discover_for_cwd();'
+      + 'print(json.dumps(h) if h else "")',
+    ], { encoding: 'utf8', timeout: 5000, windowsHide: true });
+    if (r.status !== 0 || !r.stdout) return null;
+    const body = r.stdout.trim().split('\n').pop();
+    if (!body) return null;
+    const hit = JSON.parse(body);
+    return (hit && hit.report_path) ? hit : null;
+  } catch (_e) {
+    return null;
+  }
 }
 
 try { main(); }

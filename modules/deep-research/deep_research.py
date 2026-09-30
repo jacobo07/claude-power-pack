@@ -75,6 +75,16 @@ def env_str(name: str, default: str = "") -> str:
     return v if v else default
 
 
+# Cheapest current model; every step is query writing, learning extraction
+# or report synthesis over fetched text. CLAUDEPP_RESEARCH_MODEL overrides.
+DEFAULT_RESEARCH_MODEL = "claude-haiku-4-5-20251001"
+
+
+def research_model() -> str:
+    """The model both LLM layers use (env override, else the cheap default)."""
+    return env_str("CLAUDEPP_RESEARCH_MODEL", DEFAULT_RESEARCH_MODEL)
+
+
 def env_int(name: str, default: int) -> int:
     raw = os.environ.get(name, "")
     if not raw:
@@ -790,9 +800,9 @@ def _llm_claude_cli(system: str, user: str, schema: dict | None,
         "--append-system-prompt", system,
     ]
 
-    model = env_str("CLAUDEPP_RESEARCH_MODEL")
-    if model:
-        args[1:1] = ["--model", model]
+    # Always pin a model: without --model the child inherits the session
+    # default (Opus), which is the most expensive way to write SERP queries.
+    args[1:1] = ["--model", research_model()]
 
     # RECURSION GUARD: set CLAUDEPP_DEEPRESEARCH_RUNNING=1 in the spawned
     # claude.exe's env so research-intent-detector.js (Stop hook in the
@@ -841,7 +851,7 @@ def _llm_anthropic_sdk(system: str, user: str, schema: dict | None,
     except ImportError as e:
         raise LayerError("anthropic-sdk", f"package missing: {e}")
 
-    model = env_str("CLAUDEPP_RESEARCH_MODEL") or "claude-sonnet-4-6"
+    model = research_model()
 
     augmented_user = user
     if schema is not None:

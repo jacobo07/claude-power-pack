@@ -46,9 +46,6 @@ KNOWN_DIVERGENCES = {
         "onlyRepo=1 onlyLive=21; BOTH sides carry real work -- repo has a "
         "CLAUDE_PROJECT_DIR cwd fallback, live has drive-letter normalisation. "
         "Blind mirroring either way destroys the other side",
-    "research-intent-detector.js":
-        "onlyRepo=58 onlyLive=0; repo STRICTLY AHEAD and newer (08-26 vs 05-23). "
-        "Repo work that has never executed, because settings.json runs live",
     "windows-bash-bridge-guard.js":
         "onlyRepo=1 onlyLive=18; live newer (09-15), carries the stderr-channel "
         "fix. Repo copy is behind the guard that is actually blocking calls",
