@@ -93,3 +93,88 @@ literal token.
 docs, {"secret"} for the 3 fixture/narrative files), each with a one-line
 justification matching the existing host-pinned/fixture precedent. Then
 `python tools/normalize_paths.py --check` exits 0. ~30-45 min.
+
+---
+
+# Added 2026-09-30 (session 5fb53f17) — Owner: "leave everything remaining in the backlog"
+
+## D4 — PP Self-Eval: observe the first night (acceptance §4.4)
+
+**State:** scheduled task `PP-SelfEval` installed (daily 03:30), code at `e079c57`, gate
+`tools/test_pp_eval.py` 38/38. No night has run yet.
+
+**Why deferred:** it can only be observed after 03:30.
+
+**Activation criterion:** after 2026-10-01 03:30, read `~/.claude/state/pp-eval/nights.jsonl`.
+Pass = one row with a harvest block or a named skip reason (RAM < 6 GB, owner active). No row
+at all = the task did not fire: check `schtasks /Query /TN PP-SelfEval /V` LastTaskResult.
+Resumption: `vault/specs/pp-self-eval.RESUMPTION.md`.
+
+## D5 — PP Self-Eval: 5 mutation drills never ran
+
+**State:** S1 4/4 and S2–S4 7/12 killed, 0 survived. Not run: quota mid-night stop, quota
+ceiling, lock, owner-active skip, proposal gating (`drills_s2s4.json` entries 9–13; harness
+`eval_drill.py` with a clean-copy control). Both lived in session scratchpad 5fb53f17; if it is
+gone, rebuild from the drill list in commit `0ba8565`'s message and this entry.
+
+**Why deferred:** Claude Code reaped the drill for host memory pressure (1.9 GB free of 31 GB)
+and asked that it not be restarted unprompted.
+
+**Activation criterion:** free RAM >= 6 GB. Run the 5 drills on isolated copies; each must
+print KILLED and the live files must hash unchanged. ~20 min.
+
+## D6 — PP Self-Eval: bank has 0 validated tasks (need >= 8)
+
+**State:** first real harvest reaped after 2 legitimate rejections (an environment-dependent
+mirror test; a 200-check suite red at its own fix). Nights harvest 5 per night on their own.
+
+**Why deferred:** memory pressure; the nightly run will continue it without a session.
+
+**Activation criterion:** `python tools/pp_eval.py status` shows `bank_tasks`. If still < 8 after
+3 nights, PP's history is too environment-bound (many tests read the live install): add repos
+whose tests read their own tree to `~/.claude/state/pp-eval/config.json` `"repos"`.
+
+## D7 — Capability gaps 2–6 (audit `vault/audits/se-capability-gaps-2026-09-30.md`)
+
+**State:** gap 1 (self-eval) built. Open, in the audit's order: (2) post-edit diagnostics —
+`quality-gate.js` only reminds, nothing runs ruff/tsc on an edited file; (3) testing aimed at
+user code — hypothesis and coverage installed, unused; mutation machinery points at PP only;
+(4) SAST + dependency CVE scanning — semgrep, osv-scanner/pip-audit not installed; (5) symbol-
+level code intelligence — no language server installed; (6) CI for PP's own 600+ gates.
+Cheap alongside: wire `refcheck` and `done_gate` (built, no caller).
+
+**Why deferred:** Owner chose gap 1 first; each is its own T2 spec.
+
+**Activation criterion:** Owner picks the next gap. Gap 2 is the cheapest (ruff is installed).
+Once D4–D6 give verdicts, re-rank using the self-eval's own data.
+
+## D8 — Mission continuity: merge the UKDL candidates
+
+**State:** `vault/knowledge_base/mission_continuity/UKDL_CANDIDATES_DURABLE_SUBSTRATE.md` not yet
+merged into `ukdl-universal.md`. On 2026-09-30 another pane held 884 uncommitted lines there.
+
+**Why deferred:** committing that file would sweep the other pane's hunks into this commit.
+
+**Activation criterion:** `git status -- vault/knowledge_base/ukdl-universal.md` is clean. Then
+merge by pathspec and check the hunk headers before committing.
+
+## D9 — Delete the `gsd-long-smoke` worktree and branch `gsd-autonomous-run`
+
+**State:** leftover from the M6 canary; obligation 3 of the 2026-09-30 rollover capsule.
+
+**Why deferred:** destructive; needs an explicit Owner yes (a bare "y" to a two-option question
+was not taken as one).
+
+**Activation criterion:** Owner says delete. Then read both first (worktree status, unpushed
+commits on the branch) and delete only if nothing unique would be lost.
+
+## D10 — `test_hook_mirror_identity` red 3/5 (other panes' files)
+
+**State:** new live/repo drift in `hook-dispatcher.js`, `zero-issue-gate.js`; stale
+KNOWN_DIVERGENCES entries `closer-guard.js`, `learning-sentinel.js`,
+`windows-bash-bridge-guard.js`. `research-intent-detector.js` was reconciled in `55fe169`.
+
+**Why deferred:** those files belong to live work in other panes.
+
+**Activation criterion:** when those panes commit, decide per file which side wins (the gate's
+own instruction), sync, and drop the stale entries so the ratchet turns.
