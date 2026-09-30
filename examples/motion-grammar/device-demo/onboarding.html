@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fieldnote: research notes that read themselves back to you</title>
+<style>
+  /* Tokens mirror DESIGN.md. Motion timing lives ONLY here. */
+  :root {
+    --c-primary: #191817;
+    --c-secondary: #6b665f;
+    --c-accent: #b4532f;
+    --c-neutral: #f4f3ee;
+    --c-surface: #fffdf9;
+    --c-line: #e3dfd6;
+    --font-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+    --font-body: "Work Sans", "Segoe UI", system-ui, sans-serif;
+    --motion-transition: 180ms;
+    --motion-build-gap: 420ms;
+    --motion-shared: 260ms;
+    --motion-hold: 2600ms;
+    --ease-out: cubic-bezier(.2, .7, .2, 1);
+  }
+  /* VP-016/017/018 reduced-motion equivalent: every state still arrives, instantly. */
+  @media (prefers-reduced-motion: reduce) {
+    :root { --motion-transition: 0ms; --motion-shared: 0ms; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--c-neutral);
+    color: var(--c-primary);
+    font: 400 17px/1.6 var(--font-body);
+    overflow-x: hidden;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .hero {
+    max-width: 1080px; margin: 0 auto; padding: 48px 20px 32px;
+    display: grid; gap: 40px; align-items: center;
+  }
+  @media (min-width: 900px) { .hero { grid-template-columns: 1.1fr 1fr; padding-top: 72px; } }
+  .eyebrow { font-weight: 600; letter-spacing: .04em; color: var(--c-accent); margin: 0 0 8px; }
+  h1 { font: 400 clamp(38px, 6vw, 56px)/1.05 var(--font-display); margin: 0 0 16px; }
+  .lede { color: var(--c-secondary); max-width: 34ch; margin: 0 0 28px; }
+  .cta {
+    display: inline-block; background: var(--c-accent); color: #fff; text-decoration: none;
+    font-weight: 600; padding: 14px 22px; border-radius: 10px; min-height: 44px;
+  }
+  .cta:focus-visible, button:focus-visible { outline: 3px solid var(--c-primary); outline-offset: 3px; }
+
+  /* VP-016: the shell. Nothing outside .screen moves. */
+  .demo { display: grid; justify-items: center; gap: 16px; }
+  .device {
+    width: min(300px, 78vw); aspect-ratio: 9 / 17; background: var(--c-primary);
+    border-radius: 42px; padding: 12px; box-shadow: 0 24px 60px rgba(25, 24, 23, .18);
+  }
+  .screen {
+    position: relative; width: 100%; height: 100%; overflow: hidden;
+    background: var(--c-surface); border-radius: 32px;
+  }
+  /* Persistent app chrome: part of the depicted screen, never animated. It is the
+     inner anchor that stays put while the content layer changes (VP-016). */
+  .chrome-top, .chrome-bottom { position: absolute; left: 0; right: 0; z-index: 2;
+    background: var(--c-surface); pointer-events: none; }
+  .chrome-top { top: 0; height: 40px; display: flex; align-items: flex-end;
+    justify-content: space-between; padding: 0 20px 6px; font-size: 11px; font-weight: 600; }
+  .chrome-top .notch { width: 72px; height: 18px; border-radius: 12px; background: var(--c-primary);
+    position: absolute; left: 50%; top: 8px; transform: translateX(-50%); }
+  .chrome-bottom { bottom: 0; padding: 10px 14px 16px; border-top: 1px solid var(--c-line); }
+  .chrome-bottom .field { border: 1px solid var(--c-line); border-radius: 18px; padding: 8px 12px;
+    font-size: 12px; color: var(--c-secondary); margin-bottom: 10px; }
+  .chrome-bottom .nav { display: flex; justify-content: space-around; font-size: 10px;
+    color: var(--c-secondary); }
+  .chrome-bottom .nav b { color: var(--c-accent); font-weight: 600; }
+  .state {
+    position: absolute; top: 40px; left: 0; right: 0; bottom: 96px; padding: 14px 18px 12px;
+    overflow: hidden;
+    opacity: 0; transform: translateX(10px);
+    transition: opacity var(--motion-transition) var(--ease-out),
+                transform var(--motion-transition) var(--ease-out);
+  }
+  .state.is-active { opacity: 1; transform: none; }
+  .vt-running .state { transition: none; }
+  .state h2 { font: 600 15px/1.3 var(--font-body); margin: 0 0 4px; }
+  .state .meta { font-size: 12px; color: var(--c-secondary); margin: 0 0 14px; }
+  .row {
+    border: 1px solid var(--c-line); border-radius: 12px; padding: 10px 12px;
+    margin-bottom: 8px; font-size: 13px; line-height: 1.35;
+  }
+  .row small { display: block; color: var(--c-secondary); font-size: 11px; }
+
+  /* VP-017: lines arrive in causal order. */
+  .build-line {
+    opacity: 0; transform: translateY(8px);
+    transition: opacity var(--motion-transition) var(--ease-out),
+                transform var(--motion-transition) var(--ease-out);
+  }
+  .build-line.is-in { opacity: 1; transform: none; }
+  .ask { background: var(--c-accent); color: #fff; border-color: transparent; margin-left: 24px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .card { border: 1px solid var(--c-line); border-radius: 12px; padding: 8px; font-size: 12px; line-height: 1.3; }
+  .thumb {
+    height: 64px; border-radius: 8px; margin-bottom: 6px;
+    background: linear-gradient(135deg, #cfd8c4 0 40%, #b9c9d6 40% 70%, #e8d3b8 70%);
+  }
+  .detail-hero { height: 170px; border-radius: 14px; margin-bottom: 12px; }
+  .detail-hero.thumb { margin-bottom: 12px; }
+  ::view-transition-group(note-hero) { animation-duration: var(--motion-shared); animation-timing-function: var(--ease-out); }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--motion-transition); }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
+  .controls button {
+    font: 500 14px/1 var(--font-body); min-height: 44px; padding: 0 14px; border-radius: 10px;
+    border: 1px solid var(--c-line); background: var(--c-surface); color: var(--c-primary); cursor: pointer;
+  }
+  [role="tab"][aria-selected="true"] { border-color: var(--c-accent); color: var(--c-accent); font-weight: 600; }
+
+  .features { max-width: 1080px; margin: 0 auto; padding: 24px 20px 72px; }
+  .features h2 { font: 400 34px/1.2 var(--font-display); margin: 0 0 16px; }
+  .features ol { padding-left: 20px; max-width: 60ch; }
+  .features li { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<main class="hero">
+  <section class="copy">
+    <p class="eyebrow">Fieldnote</p>
+    <h1>Research notes that read themselves back to you</h1>
+    <p class="lede">Save a source in one tap, get a summary that cites it, and open the note you need from a board instead of a search box.</p>
+    <a class="cta" href="#what-you-get">See what you get</a>
+  </section>
+
+  <section class="demo" aria-label="Fieldnote product demo" data-pattern="VP-016">
+    <div class="device" id="device">
+      <div class="screen">
+        <div class="chrome-top" aria-hidden="true"><span>9:41</span><span class="notch"></span><span>Fieldnote</span></div>
+        <div class="chrome-bottom" aria-hidden="true">
+          <div class="field">Ask your notebook&hellip;</div>
+          <div class="nav"><b>Notebook</b><span>Ask</span><span>Board</span><span>Sources</span></div>
+        </div>
+        <article class="state is-active" id="s-capture" role="tabpanel" aria-labelledby="t-capture"
+                 data-state="capture" data-label="Capture: three saved sources" data-hold="2400">
+          <h2>Bike lanes notebook</h2>
+          <p class="meta">4 sources saved this week</p>
+          <div class="row">Protected lane pilot, year one<small>city transport report</small></div>
+          <div class="row">Corridor counts, spring survey<small>open data portal</small></div>
+          <div class="row">Merchant interviews on Elm St<small>your voice memo</small></div>
+          <div class="row">Winter corridor survey, draft<small>shared by a colleague</small></div>
+        </article>
+
+        <article class="state" id="s-summary" role="tabpanel" aria-labelledby="t-summary"
+                 data-state="summary" data-label="Summary built from your sources" data-hold="1800" data-pattern="VP-017">
+          <h2>Ask your notebook</h2>
+          <p class="meta">Answers cite only what you saved</p>
+          <div class="row ask build-line">What do my sources say about weekday ridership?</div>
+          <div class="row build-line">Both counts you saved report more weekday trips after the pilot. <small>cites [1] [2]</small></div>
+          <div class="row build-line">Your Elm St interviews mention delivery loading as the main worry. <small>cites [3]</small></div>
+          <div class="row build-line">Next: compare against the winter survey? <small>suggestion</small></div>
+        </article>
+
+        <article class="state" id="s-board" role="tabpanel" aria-labelledby="t-board"
+                 data-state="board" data-label="Board: notes grouped by theme" data-hold="2400">
+          <h2>Board</h2>
+          <p class="meta">Grouped by theme, newest first</p>
+          <div class="grid">
+            <div class="card"><div class="thumb" data-shared="note-hero"></div>Elm St route sketch</div>
+            <div class="card">Ridership counts<small class="meta"> 2 sources</small></div>
+            <div class="card">Loading zones<small class="meta"> 1 memo</small></div>
+            <div class="card">Open questions<small class="meta"> 3 items</small></div>
+          </div>
+        </article>
+
+        <article class="state" id="s-detail" role="tabpanel" aria-labelledby="t-detail"
+                 data-state="detail" data-label="Note opened from the board" data-hold="2600" data-pattern="VP-018">
+          <div class="thumb detail-hero" data-shared-target="note-hero"></div>
+          <h2>Elm St route sketch</h2>
+          <p class="meta">Linked to 2 sources and 1 memo</p>
+          <div class="row">Loading bays on the north side keep the lane continuous past the bakery.</div>
+        </article>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="pause" type="button" aria-pressed="false">Pause demo</button>
+      <div role="tablist" aria-label="Demo screens">
+        <button role="tab" id="t-capture" aria-controls="s-capture" aria-selected="true" type="button">Capture</button>
+        <button role="tab" id="t-summary" aria-controls="s-summary" aria-selected="false" tabindex="-1" type="button">Summary</button>
+        <button role="tab" id="t-board" aria-controls="s-board" aria-selected="false" tabindex="-1" type="button">Board</button>
+        <button role="tab" id="t-detail" aria-controls="s-detail" aria-selected="false" tabindex="-1" type="button">Note</button>
+      </div>
+    </div>
+    <p class="sr-only" aria-live="polite" id="live"></p>
+  </section>
+</main>
+
+<section class="features" id="what-you-get" tabindex="-1">
+  <h2>What you get</h2>
+  <ol>
+    <li><strong>Capture.</strong> Save a page, a dataset or a voice memo into a notebook in one tap.</li>
+    <li><strong>Summary.</strong> Ask a question and get an answer that cites only the sources you saved.</li>
+    <li><strong>Board.</strong> Notes group themselves by theme so the one you need is on screen, not behind a search.</li>
+    <li><strong>Note.</strong> Every note keeps its links to the sources and memos it came from.</li>
+  </ol>
+</section>
+
+<script>
+(() => {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const root = document.documentElement;
+  const device = document.getElementById('device');
+  const demo = device.closest('.demo');
+  const states = Array.from(device.querySelectorAll('.state'));
+  const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+  const pauseBtn = document.getElementById('pause');
+  const live = document.getElementById('live');
+
+  let index = 0;
+  let timer = null;
+  let buildTimers = [];
+  // Every reason to stop is its own flag, so releasing one never overrides another.
+  let userPaused = reduce.matches;     // VP-016: no autoplay under reduced motion
+  let pointerPaused = false;
+  let focusPaused = false;
+  let hidden = document.hidden;
+  let offscreen = false;
+
+  const ms = (name) => parseFloat(getComputedStyle(root).getPropertyValue(name)) || 0;
+  const running = () => !userPaused && !pointerPaused && !focusPaused && !hidden && !offscreen;
+
+  function clearBuild() { buildTimers.forEach(clearTimeout); buildTimers = []; }
+
+  // VP-017: lines arrive in the order the product would produce them.
+  function runBuild(state) {
+    const lines = Array.from(state.querySelectorAll('.build-line'));
+    clearBuild();
+    if (reduce.matches) { lines.forEach((l) => l.classList.add('is-in')); return; }
+    lines.forEach((l) => l.classList.remove('is-in'));
+    const gap = ms('--motion-build-gap');
+    lines.forEach((l, i) => buildTimers.push(setTimeout(() => l.classList.add('is-in'), (i + 1) * gap)));
+  }
+
+  // The dwell always covers the build, so a state never leaves half-assembled.
+  function holdFor(state) {
+    const base = Number(state.dataset.hold) || ms('--motion-hold');
+    return base + state.querySelectorAll('.build-line').length * ms('--motion-build-gap');
+  }
+
+  function render(next) {
+    states.forEach((s, i) => {
+      const on = i === next;
+      s.classList.toggle('is-active', on);
+      s.setAttribute('aria-hidden', String(!on));
+      s.inert = !on;
+    });
+    tabs.forEach((t, i) => {
+      t.setAttribute('aria-selected', String(i === next));
+      t.tabIndex = i === next ? 0 : -1;
+    });
+    index = next;
+    device.dataset.activeState = states[next].dataset.state;
+    live.textContent = states[next].dataset.label;
+    performance.mark('state:' + states[next].dataset.state);
+    runBuild(states[next]);
+    // The dwell is armed HERE, after `index` moved. Arming it in go() used the
+    // OLD state's hold on the view-transition path, whose render runs later.
+    schedule(true);
+  }
+
+  // VP-018: the chosen card becomes the next screen's hero. Names are assigned
+  // only for the duration of the transition: two live elements sharing one
+  // view-transition-name abort the transition.
+  let activeVT = null;
+  function go(next) {
+    next = (next + states.length) % states.length;
+    // A new request while a transition runs finishes that one first, so `from`
+    // below is the state actually on screen and cleanup cannot cross transitions.
+    if (activeVT) activeVT.skipTransition();
+    const from = states[index];
+    const to = states[next];
+    const source = from.querySelector('[data-shared]');
+    const target = to.querySelector('[data-shared-target]');
+    const shared = source && target && typeof document.startViewTransition === 'function' && !reduce.matches;
+    if (!shared) { render(next); return; }
+    source.style.viewTransitionName = source.dataset.shared;
+    root.classList.add('vt-running');
+    const vt = document.startViewTransition(() => {
+      source.style.viewTransitionName = '';
+      target.style.viewTransitionName = target.dataset.sharedTarget;
+      render(next);
+    });
+    activeVT = vt;
+    // A skipped transition rejects `finished`; that is expected, not an error.
+    vt.finished.catch(() => {}).then(() => {
+      target.style.viewTransitionName = '';
+      if (activeVT === vt) { activeVT = null; root.classList.remove('vt-running'); }
+    });
+  }
+
+  function syncPauseButton() {
+    pauseBtn.setAttribute('aria-pressed', String(userPaused));
+    pauseBtn.textContent = userPaused ? 'Play demo' : 'Pause demo';
+  }
+
+  // Only a state change (reset) or a resume starts a new dwell. Re-arming on every
+  // call let unrelated events -- an IntersectionObserver crossing while scrolling --
+  // restart the clock, so a state could be held indefinitely (measured: a 2400 ms
+  // dwell observed at 3818 ms on a cold load).
+  function schedule(reset) {
+    if (!running()) {
+      clearTimeout(timer);
+      timer = null;
+    } else if (reset || timer === null) {
+      clearTimeout(timer);
+      timer = setTimeout(() => { timer = null; go(index + 1); }, holdFor(states[index]));
+    }
+    device.dataset.playing = String(running());
+  }
+
+  pauseBtn.addEventListener('click', () => { userPaused = !userPaused; syncPauseButton(); schedule(); });
+
+  // Choosing a screen is taking control: autoplay stops until Play is pressed.
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => { userPaused = true; syncPauseButton(); go(i); });
+    tab.addEventListener('keydown', (e) => {
+      const map = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 };
+      if (!(e.key in map)) return;
+      e.preventDefault();
+      const n = (map[e.key] + tabs.length) % tabs.length;
+      userPaused = true; syncPauseButton(); go(n); tabs[n].focus();
+    });
+  });
+
+  device.addEventListener('pointerenter', () => { pointerPaused = true; schedule(); });
+  device.addEventListener('pointerleave', () => { pointerPaused = false; schedule(); });
+  demo.addEventListener('focusin', () => { focusPaused = true; schedule(); });
+  demo.addEventListener('focusout', (e) => {
+    if (!demo.contains(e.relatedTarget)) { focusPaused = false; schedule(); }
+  });
+  document.addEventListener('visibilitychange', () => { hidden = document.hidden; schedule(); });
+  new IntersectionObserver(([entry]) => { offscreen = !entry.isIntersecting; schedule(); },
+                           { threshold: 0.25 }).observe(device);
+  reduce.addEventListener('change', () => {
+    if (reduce.matches) userPaused = true;
+    syncPauseButton(); runBuild(states[index]); schedule();
+  });
+
+  syncPauseButton();
+  render(0);
+  schedule();
+})();
+</script>
+</body>
+</html>
