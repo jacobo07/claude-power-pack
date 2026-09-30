@@ -13015,3 +13015,69 @@ $env:DATABASE: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RES.... C
 - [tooling/powershell:g] `ceps_4d7d209c554fd178` -- Tool failure in powershell:g: Exception as exc:  # noqa: BLE001 -- unanswered, never "com.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
 - [env/powershell:Get-Content] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:Get-Content: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+## Derived Obligations and Knowledge Freshness (GSD X §50 promotions, 2026-09-30)
+
+Seven of the eighteen GSD X rule candidates, promoted after a reconciliation against every
+existing store (`vault/datasets/gsd_x/S50-RECONCILIATION-2026-09-30.md`). The other eleven
+are already owned by CLAE, the UKDL or a PP skill and are deliberately NOT restated here.
+Two candidates recorded as HARD RULE enter as process rules: by
+`PR-CLAE-PROMOTE-ON-IRRECOVERABILITY`, violating them wastes work but does not foreclose
+recovery.
+
+### Process Rules
+
+**`PR-PIN-BY-CLAIM-TENSE-001`** -- Pin a standing property to the surface it was observed
+against, and a dated measurement to the commit that produced it. A standing property goes
+stale when its surface moves, so a `path@sha` pin is the correct alarm; a dated measurement
+stays true about its day however the code moves, so pinning it to a living file
+manufactures a permanent false stale -- and a staleness gate nobody can legitimately green
+gets switched off. Extends `PR-CLAE-ALWAYS-PINNED`, which says to pin but not which pin.
+Already structural in `tools/gsd_x_claim_reconcile.py` (`commit:` vs `path:` kinds).
+ORIGEN: `vault/lessons/derived-obligation-first-vertical.md:141` (GSD X N4, `a30f39f`).
+SCOPE: universal -- any ledger, cache or report whose entries cite evidence.
+
+**`PR-STALENESS-IS-DEPENDENCY-NOT-AGE-001`** -- A claim is current when the evidence it
+depends on is current, not when it was written recently. A timestamp says when someone
+looked; it says nothing about whether what they looked at still holds, so an age threshold
+both expires claims that are still true and keeps claims whose surface moved an hour ago.
+Complements `PR-CLAE-UNVERIFIED-DISPOSITION`, whose re-measurement interval is a schedule,
+not a staleness signal. Intended HARD RULE at authoring; entered as a process rule (see
+header). ORIGEN: `vault/lessons/knowledge-stale-by-omission.md:106` (GSD X N3).
+SCOPE: universal.
+
+**`PR-OBLIGATION-FOLLOWS-ITS-PARENT-001`** -- A derived obligation is released when the fact
+that made it material stops holding, including one already SATISFIED: proof of something
+no longer required is not a reason to keep requiring it. Extends
+`T-CLAE-STANDING-DEVIATION` (a constraint persisting for a reason that no longer exists) to
+the obligation side. Intended HARD RULE at authoring; entered as a process rule (see
+header). ORIGEN: `vault/lessons/derived-obligation-first-vertical.md:137`.
+SCOPE: autonomous engineering -- any planner that derives work from facts.
+
+### Traps
+
+**`T-TWO-OF-THREE-INPUTS-001`** -- Proving two of a verdict's three inputs unchanged and
+concluding the verdict is unchanged. The third input is the one that decides, and the proof
+was built exactly where it was cheapest. Enumerate every input of the function being
+judged before calling anything "unchanged".
+ORIGEN: `vault/lessons/derived-obligation-first-vertical.md:144`. SCOPE: universal.
+
+**`T-CONJUNCTION-SPLIT-REQUIREMENTS-001`** -- Splitting prose on "and" / "or" / commas to
+manufacture a requirement list. The list reads well and every item is a fabrication:
+grammar joins clauses for reasons that have nothing to do with independent obligations.
+ORIGEN: `vault/lessons/derived-obligation-first-vertical.md:145`.
+SCOPE: autonomous engineering -- extracting work from natural-language specs.
+
+**`T-CLOSED-VOCABULARY-CHASING-001`** -- A closed vocabulary over natural language is fitted
+by construction; adding the word each new domain reveals is chasing, not generalising, and
+the recall figure it reports is recall on the domains already seen. Neighbour of
+`evaluation-corpus-governance` (a revealed case is no longer unseen); the vocabulary
+mechanism is what this entry names.
+ORIGEN: `vault/lessons/derived-obligation-first-vertical.md:39,142` (GSD X N4, GSDX-M04).
+SCOPE: autonomous engineering.
+
+**`T-PREREGISTRATION-WRONG-LAYER-001`** -- A pre-registered prediction tests the layer it was
+written at. A prediction about which commits deserve a claim cannot grade a predicate about
+which commits are material; the pre-registration was honest and still measured the wrong
+thing. Extends `T-CLAE-WRONG-INSTRUMENT-KIND` to predictions.
+ORIGEN: `vault/lessons/knowledge-stale-by-omission.md:59,108`. SCOPE: universal.
