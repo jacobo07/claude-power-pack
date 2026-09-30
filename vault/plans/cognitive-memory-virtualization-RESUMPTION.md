@@ -49,13 +49,26 @@ Coherence anchor: `python tools/test_pp_eval_floor.py` 19/19; `python tools/test
 - Move candidate (global CLAUDE.md, 39,810 chars): "Parallel Subagent Limit" 13,505 (incident accounts of rules
   I-L), "Root + history" 4,664. Move narratives only, keep rule text; B-prime arm = narratives reachable on demand.
 
+- Owner chose option 3 (growth) over floor moves: narrative-only text in all 25 always-on files is <= 7.0 %
+  (7,983 of 114,701 chars, ~3k tok) -- history-only compaction deferred as not worth a review of the global file.
+- GROWTH, rent-weighted (chars x later calls, reset at compact boundaries; 60 transcripts): Read(full) 39.2 %
+  (8-30k chars: 21.4 % from 121 reads), PowerShell 25.2 % (>8k only 4.5 %), Read(paged) 19.2 %, Grep 7.4 %.
+  -> T6 (PowerShell tee) DROPPED: at most 4.5 % of tool rent. Large full reads: 113 distinct files / 141 reads,
+  56 % markdown docs read legitimately in full; unchanged re-reads are already refused by a live hook. No clean
+  per-call growth lever left; the lever is WHEN a context ends (rollover).
+- rollover shadow (234 decisions): 102 were test noise (mcw-/gsdlr-/cwhb-/gsdac- ids -> "usage no transcript");
+  every REAL session got a decision. Real verdicts: 101 "worth it, but not at a work boundary", 10 pressure,
+  2 break-even. Real calls after first shadow decision: median 6, Q3 35, max 766 (confounded: 62/76 then
+  rolled over via the live wall). FOR THE ROLLOVER OWNER (not changed here, Q4): the boundary condition
+  vetoes ~90 % of worth-it rollovers; horizon 30 is an ESTIMATE with a heavy-tailed reality.
+- `fd3f25d` test_mission_watchdog no longer writes the live ledger (drill red/green). Pre-existing, untouched:
+  V-MCW-CONTROL-PLAIN-ROLLOVER-KCLEAR fails with and without the fix. The drill added 4 test rows to the live
+  ledger (ids mcw-plain-*, 2026-09-30); the 113+4 historical test rows remain, filter by prefix.
+
 ## 4. Next 3 actions
-1. Read the floor run (scratchpad floor_neutral.json / floor_pprepo.json of session 9e694f9a, or re-run
-   `python -m modules.pp_eval.floor --cwd <dir> --reps 2 --out <json>`); write the per-lever table here.
-2. T5: rank V1 moves by measured delta; each move = backup -> change -> B-prime arm (content loadable,
-   not removed) -> keep/revert. Claim only "no degradation observed" unless >= 2 tasks/rule failed without it.
-3. T6 (PLAN mode): PowerShell tee branch in rtk-rewrite.js — flag default OFF, no permissionDecision allow,
-   `$LASTEXITCODE` preserved, both dispatchers diffed.
+1. Owner / rollover owner: decide whether the boundary veto should soften (data above); feed only from here.
+2. Floor rule-text moves need a Windows ablation with rule-discriminating tasks (laptop RAM headroom required).
+3. T7: pp_eval bank from P3 tasks (peer-active module; coordinate first).
 
 ## 5. Start instruction
 Run the coherence anchor; read the plan's task table; continue at the first unchecked action above.
