@@ -33,6 +33,15 @@ Coherence anchor: `python tools/test_pp_eval_floor.py` 19/19; `python tools/test
 - Growth (60 transcripts): tool_result 78 %, Read 56.5 % of it, PowerShell 26 %, Agent 0.9 %.
 - Floor attribution run (T3/T4, 2 cwds x 7 arms x 2 reps): results -> section 4 once read.
 
+- GEX44 substrate (Owner option 2, 2026-09-30): GEX44's ~/.claude is NOT the laptop's (CLAUDE.md 3,748 B vs
+  40,117; no rules/; claude 2.1.113 on PATH, 2.1.284 at ~/.local/bin). Laptop instructions staged as project
+  memory in ~/cmv-probe (CLAUDE.md = laptop ~/CLAUDE.md; work/CLAUDE.md = laptop global; work/.claude/rules = 23
+  rules; pp/ = modules/pp_eval). No CLAUDE_CONFIG_DIR swap (would need credentials). `caeec1a` adds
+  PP_FLOOR_CONTEXT_FILES. First run: 6/6 `<synthetic>` "weekly limit, resets Oct 4 8pm Europe/Berlin" ->
+  UNMEASURED. Re-run after the reset: cmv_gex_run.sh shape (nohup, disown, --arms A,context --reps 3).
+- Move candidate (global CLAUDE.md, 39,810 chars): "Parallel Subagent Limit" 13,505 (incident accounts of rules
+  I-L), "Root + history" 4,664. Move narratives only, keep rule text; B-prime arm = narratives reachable on demand.
+
 ## 4. Next 3 actions
 1. Read the floor run (scratchpad floor_neutral.json / floor_pprepo.json of session 9e694f9a, or re-run
    `python -m modules.pp_eval.floor --cwd <dir> --reps 2 --out <json>`); write the per-lever table here.
