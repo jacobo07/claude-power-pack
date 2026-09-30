@@ -124,8 +124,11 @@ Each verdict is read from its phase EVIDENCE; figures are GEX44's, not the lapto
   `36091e1`. Same shape (byte-identical body, live==canonical, pointer, backups
   ~/.claude/backups/rules-20260930-0950xx). prefix_inventory: rules 91.9 KB / ~24.2k tok (was ~130 KB);
   net ≈ −10k tok per call. NO ablation and NO B-prime for these three -- quality without them in context
-  is UNVERIFIED; revert = copy each backup over its pointer. Next candidates by size:
-  evaluation-corpus-governance, develop-here-prove-there, recurring-work-cardinality.
+  is UNVERIFIED; revert = copy each backup over its pointer.
+- MOVES 7-9 DONE 2026-09-30, same terms (no ablation): evaluation-corpus-governance `569bde0`,
+  develop-here-prove-there `11df818`, recurring-work-cardinality `323b35a`; backups rules-20260930-0956xx.
+  prefix_inventory: rules 69.1 KB / ~18.2k tok; skill_listing +0.5k. Moves 4-9 together ≈ −15k tok/call.
+  Next by size: concurrent-writers-shared-tree, technical-failure-to-product-state, scoped-side-effect-authority.
 
 ## 3. Active decisions
 - Estimates and observations never mix; every figure names its source.
