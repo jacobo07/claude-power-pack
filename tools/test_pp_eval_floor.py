@@ -82,6 +82,14 @@ def main() -> int:
           and "claudeMdExcludes" in s and "enabledPlugins" in s
           and "--strict-mcp-config" in a and "--disable-slash-commands" in a, a[2:])
     check("V-FLOOR-A-IS-UNTOUCHED", floor.arm_args("A") == [], floor.arm_args("A"))
+    os.environ["PP_FLOOR_CONTEXT_FILES"] = json.dumps(["/probe/CLAUDE.md", "/probe/work/.claude/rules/x.md"])
+    try:
+        staged = json.loads(floor.arm_args("context")[1])["claudeMdExcludes"]
+    finally:
+        os.environ.pop("PP_FLOOR_CONTEXT_FILES", None)
+    own = json.loads(floor.arm_args("context")[1])["claudeMdExcludes"]
+    check("V-FLOOR-STAGED-CONTEXT", staged == ["/probe/CLAUDE.md", "/probe/work/.claude/rules/x.md"]
+          and own != staged, f"staged={staged} own_count={len(own)}")
     try:
         floor.arm_args("bogus")
         check("V-FLOOR-UNKNOWN-ARM-REFUSED", False, "no error")

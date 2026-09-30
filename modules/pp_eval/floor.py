@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import statistics
 import sys
 import time
@@ -51,7 +52,11 @@ def arm_args(arm: str) -> list[str]:
     flags: list[str] = []
     for lv in levers:
         if lv == "context":
-            settings["claudeMdExcludes"] = context_files()
+            # PP_FLOOR_CONTEXT_FILES (JSON list) names the instruction files when they are staged
+            # somewhere other than this host's home, e.g. a laptop's CLAUDE.md+rules copied to a probe
+            # directory on another host. Unset = this host's own files.
+            raw = os.environ.get("PP_FLOOR_CONTEXT_FILES")
+            settings["claudeMdExcludes"] = json.loads(raw) if raw else context_files()
         elif lv == "hooks":
             settings["disableAllHooks"] = True
         elif lv == "plugins":
