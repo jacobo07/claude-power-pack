@@ -21,7 +21,15 @@ Live peer writers in this tree (~600 dirty paths, not ours): commit by explicit 
 Coherence anchor: `python tools/test_pp_eval_floor.py` 19/19; `python tools/test_session_autopsy.py` 15/15.
 
 ## 3. Measured facts
-- Neutral cwd first call 92,535 tok (one probe, 2026-09-30); Ralph workers in repos 150.4k median.
+- Ralph workers in repos: 150.4k median first call.
+- FLOOR ATTRIBUTION, neutral cwd (`vault/audits/floor-attribution-2026-09-30-neutral.json`; 14/14 runs valid,
+  every control held, A/A noise 1,035): baseline 91,863. Delta when switched off: CLAUDE.md+rules (context)
+  44,692 · skills listing 6,502 · hooks 4,797 · MCP 2,049 · plugins 1,355 · all off 57,364 -> 34,499 left
+  (harness system prompt + tool schemas, not movable by CPP). context = 78 % of the movable floor.
+  bytes/3.8 had ESTIMATED those files at ~30k: the estimate undercounts by ~1.5x.
+  Hook injections at startup, arm A: SessionStart 7,215 + 3,604 chars, UserPromptSubmit 2,185, Stop 356.
+- PP-repo cwd run: KILLED by Claude Code for host memory pressure (390 MB free of 32 GB). Not re-run; the
+  ~58k project-dependent part stays unattributed until the Owner asks for a re-run on a host with headroom.
 - Growth (60 transcripts): tool_result 78 %, Read 56.5 % of it, PowerShell 26 %, Agent 0.9 %.
 - Floor attribution run (T3/T4, 2 cwds x 7 arms x 2 reps): results -> section 4 once read.
 
