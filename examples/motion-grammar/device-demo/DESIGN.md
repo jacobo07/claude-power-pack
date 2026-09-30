@@ -27,7 +27,7 @@ experience:
 colors:
   primary: "#191817"
   secondary: "#6b665f"
-  accent: "#b4532f"
+  accent: "#a84d2a"   # 5.03:1 on neutral, 5.59:1 under white (was #b4532f = 4.48:1, below AA)
   neutral: "#f4f3ee"
   surface: "#fffdf9"
   on-surface: "#191817"

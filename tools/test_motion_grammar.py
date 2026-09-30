@@ -421,6 +421,42 @@ try { new PerformanceObserver((l) => { for (const e of l.getEntries())
   .observe({type: 'longtask', buffered: true}); } catch (e) { window.__mg.longtasks = null; }
 """
 
+# Every element with its own text: computed colour against the nearest opaque
+# background, as RENDERED. Added after cdio-reviewer BLOCKed the page on a 4.48:1
+# eyebrow that every other gate here was blind to.
+TEXT_PAIRS = r"""
+() => {
+  const rgb = (s) => { const m = s.match(/\d+(\.\d+)?/g) || []; return m.slice(0, 4).map(Number); };
+  const hex = (a) => '#' + a.slice(0, 3).map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+  const bgOf = (el) => { for (let n = el; n; n = n.parentElement) {
+      const c = rgb(getComputedStyle(n).backgroundColor);
+      if (c.length === 3 || (c.length === 4 && c[3] > 0.99)) return hex(c); }
+    return '#ffffff'; };
+  const out = [];
+  for (const el of document.querySelectorAll('body *')) {
+    const own = Array.from(el.childNodes).some(n => n.nodeType === 3 && n.textContent.trim());
+    if (!own) continue;
+    const cs = getComputedStyle(el);
+    out.push({text: el.textContent.trim().slice(0, 30), fg: hex(rgb(cs.color)), bg: bgOf(el),
+              size: parseFloat(cs.fontSize), weight: parseInt(cs.fontWeight, 10) || 400});
+  }
+  return out;
+}
+"""
+
+
+def _contrast_failures(pairs):
+    """AA: 4.5:1 body, 3:1 large (>=24px, or >=18.66px at weight >=700). Ratio from
+    the CDIO scorer, so this check and cdio-reviewer cannot disagree on arithmetic."""
+    from modules.cdio.scorer import contrast_ratio
+    bad = []
+    for p in pairs:
+        large = p["size"] >= 24 or (p["size"] >= 18.66 and p["weight"] >= 700)
+        ratio = contrast_ratio(p["fg"], p["bg"])
+        if ratio < (3.0 if large else 4.5):
+            bad.append((p["text"], p["fg"], p["bg"], round(ratio, 2)))
+    return bad
+
 
 def lane_production(evidence_dir):
     print("\n[H] Production Reality (real Chromium, real page)")
@@ -433,6 +469,23 @@ def lane_production(evidence_dir):
     os.makedirs(evidence_dir, exist_ok=True)
     with sync_playwright() as p:
         browser = p.chromium.launch()
+
+        # --- H0 rendered text contrast, with a positive control -------------------------
+        ctx = browser.new_context(viewport={"width": 1280, "height": 800})
+        page = ctx.new_page()
+        page.goto(url)
+        page.wait_for_timeout(300)
+        pairs = page.evaluate(TEXT_PAIRS)
+        bad = _contrast_failures(pairs)
+        check("V-MGRAM-PR-TEXT-CONTRAST", len(pairs) >= 20 and not bad,
+              f"{len(pairs)} rendered text elements all clear WCAG AA",
+              f"below AA (text, fg, bg, ratio): {bad} of {len(pairs)}")
+        page.add_style_tag(content=":root { --c-accent: #b4532f; }")
+        control = _contrast_failures(page.evaluate(TEXT_PAIRS))
+        check("V-MGRAM-PR-CONTRAST-CONTROL", any(c[0] == "Fieldnote" for c in control),
+              f"instrument sees the reviewed defect when the old accent is restored: {control[:2]}",
+              "old #b4532f accent restored and the check still passes -- it cannot see contrast")
+        ctx.close()
 
         # --- H1 normal motion, desktop ------------------------------------------------
         ctx = browser.new_context(viewport={"width": 1280, "height": 800})

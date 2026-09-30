@@ -89,6 +89,17 @@ repo's DESIGN.md, while `findDesignMd` has deliberately promoted to the enclosin
 2026-09-13 (TUA-X fix). The test was green whenever the gate timed out and red whenever it
 finished. OPEN: which intent wins is an Owner decision; neither side was changed this session.
 
+## T-CAND-6-A-MOTION-SUITE-IS-BLIND-TO-THE-STATIC-FRAME
+44 of 44 motion gates (order, dwell, build, composited properties, reduced motion,
+keyboard, responsive) were green on a page whose brand eyebrow was 4.48:1 on its ground --
+below AA. Every lane observed behaviour; none observed the pixels at rest. The rendered
+CDIO-05 review (cdio-reviewer, score 75, BLOCK) was the only instrument whose plane
+included it. Motion work is judged on BOTH planes: the behaviour suite AND the rendered
+review, and the suite now carries a rendered text-contrast check with a positive control
+that restores the old token and must go red (`V-MGRAM-PR-TEXT-CONTRAST`, `-CONTRAST-CONTROL`).
+Instance of `validation-planes-do-not-transfer`; recorded because the blindness is
+specific and likely: a motion task invites a motion-only suite.
+
 ## T-CAND-5-A-SENTINEL-ANSWER-SATISFIES-A-NEGATIVE-CHECK
 "Context is non-empty and names no motion pattern" is satisfied by a timeout message. Every check
 that asserts an absence must first assert the instrument ran (`ran(ctx)` in lane E). Caught by
