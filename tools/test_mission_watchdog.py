@@ -32,6 +32,11 @@ os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
 os.environ["CTXWD_HEARTBEAT_LOG"] = str(Path(TMP) / "context-watchdog.log")
 os.environ["CTXWD_SNAPSHOT_LEDGER"] = str(Path(TMP) / "context_snapshots.jsonl")
+# The watchdog spawns `rollover.py shadow` DETACHED for the plain sessions below; without this the
+# child wrote shadow_candidate rows + capsules into the LIVE ~/.claude/state/rollover (measured
+# 2026-09-30: 4 rows + 2 capsules per run, 70 mcw-plain rows accumulated, 44 % of all shadow rows).
+LIVE_ROLLOVER = Path.home() / ".claude" / "state" / "rollover"
+os.environ["CPP_ROLLOVER_STATE_DIR"] = str(Path(TMP) / "rollover")
 PROJECT = Path(TMP) / "project"
 (PROJECT / "vault").mkdir(parents=True)
 sys.path.insert(0, str(ROOT / "tools"))
@@ -178,6 +183,25 @@ def main() -> int:
     check("V-MCW-CONTROL-KILLSWITCH-COMPACTS", "/compact focus" in out2.get("reason", "")
           and last2.get("expect_prefix") == "/compact" and calls["dispatch"] == before["dispatch"] + 1,
           (last2.get("kind"), out2.get("reason", "")[:60]))
+
+    # Isolation of the detached shadow child: its rows must land in the private ledger (positive
+    # control: the child ran and was redirected, not silenced) and never in the live one.
+    def rows_for(ledger: Path) -> int:
+        try:
+            text = ledger.read_text(encoding="utf-8-sig", errors="replace")
+        except OSError:
+            return 0
+        return sum(1 for line in text.splitlines() if plain in line or plain2 in line)
+
+    private = Path(TMP) / "rollover" / "rollover-ledger.jsonl"  # not the env: a drill that drops it must FAIL, not crash
+    deadline = time.time() + 20  # bounded on the condition, not a fixed flush
+    while time.time() < deadline and rows_for(private) == 0:
+        time.sleep(0.25)
+    check("V-MCW-SHADOW-REDIRECTED", rows_for(private) > 0, f"private rows {rows_for(private)}")
+    check("V-MCW-LIVE-ROLLOVER-UNTOUCHED", rows_for(LIVE_ROLLOVER / "rollover-ledger.jsonl") == 0
+          and not any((LIVE_ROLLOVER / "capsules").glob(f"{plain}*"))
+          and not any((LIVE_ROLLOVER / "capsules").glob(f"{plain2}*")),
+          f"live rows {rows_for(LIVE_ROLLOVER / 'rollover-ledger.jsonl')}")
 
     print(f"MCW_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
