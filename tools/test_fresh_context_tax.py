@@ -56,6 +56,14 @@ def main() -> int:
              r["state"] + " " + r.get("reason", "")[:40])
         n = fct.measure_session("gone", 1_000_000, find=find)
         gate("V-FCT-UNMEASURED", n["state"] == "UNMEASURED", n["reason"])
+        gate("V-FCT-DAY", g.get("day") == "2026-09-28", g.get("day"))
+        rows = [g, {"state": "MEASURED", "bootstrap_tokens": 100, "day": "2026-09-29"},
+                {"state": "MEASURED", "bootstrap_tokens": 300, "day": "2026-09-29"},
+                {"state": "MEASURED", "bootstrap_tokens": 50, "day": None}, r, n]
+        bd = fct.by_day(rows)
+        gate("V-FCT-BY-DAY", bd == {"2026-09-28": {"n": 1, "median": 180010, "min": 180010, "max": 180010},
+                                    "2026-09-29": {"n": 2, "median": 200.0, "min": 100, "max": 300},
+                                    "UNDATED": {"n": 1, "median": 50, "min": 50, "max": 50}}, bd)
     print(f"FCT_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

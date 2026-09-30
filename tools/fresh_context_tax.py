@@ -22,7 +22,7 @@ import argparse
 import json
 import statistics
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -108,7 +108,20 @@ def measure_session(session_id: str, window: int, find=None) -> dict:
             "bootstrap_tokens": boot, "first_prompt_chars": chars, "first_prompt_tokens_est": prompt_est,
             "fixed_tokens_est": max(0, boot - prompt_est), "tokens_at_first_action": act_tokens,
             "secs_to_first_action": round(act_ts - first_ts, 1) if (act_ts and first_ts) else None,
-            "pct_of_window": round(100.0 * boot / window, 2)}
+            "pct_of_window": round(100.0 * boot / window, 2),
+            "day": datetime.fromtimestamp(first_ts, timezone.utc).strftime("%Y-%m-%d") if first_ts else None}
+
+
+def by_day(rows: list[dict]) -> dict:
+    """Bootstrap distribution per UTC day of the session's first row. The floor moves when always-on
+    context changes, so one all-time median hides every change; a row with no timestamp is UNDATED,
+    never dropped and never guessed from a file mtime."""
+    groups: dict[str, list[int]] = {}
+    for r in rows:
+        if r.get("state") == "MEASURED" and r.get("bootstrap_tokens") is not None:
+            groups.setdefault(r.get("day") or "UNDATED", []).append(r["bootstrap_tokens"])
+    return {d: {"n": len(v), "median": statistics.median(v), "min": min(v), "max": max(v)}
+            for d, v in sorted(groups.items())}
 
 
 def workers_by_mission(mission: str | None = None) -> dict[str, list[str]]:
@@ -162,7 +175,7 @@ def report(mission: str | None, window: int) -> dict:
             "first_prompt_tokens_est": dist("first_prompt_tokens_est"),
             "tokens_at_first_action": dist("tokens_at_first_action"),
             "secs_to_first_action": dist("secs_to_first_action"), "pct_of_window": dist("pct_of_window"),
-            "missions": missions, "rows": rows}
+            "by_day": by_day(rows), "missions": missions, "rows": rows}
 
 
 def main(argv=None) -> int:
