@@ -33,9 +33,9 @@ succeeded. Checkers by extension:
 
 | extension | checker | what it reports | status |
 |---|---|---|---|
-| `.py` | `ruff check --select E9,F63,F7,F82 --output-format json <file>` | syntax errors, invalid `is`/comparison forms, statement-placement errors (`break` outside loop, `return` outside function), undefined names | PLANNED |
-| `.js` `.mjs` `.cjs` | `node --check <file>` (the node running the hook) | syntax errors | PLANNED |
-| `.json` | `JSON.parse` in-process | parse errors; a leading UTF-8 BOM reported as its own finding, because `JSON.parse` and Python's `json` with `utf-8` both reject it | PLANNED |
+| `.py` | `ruff check --select E9,F63,F7,F82 --output-format json <file>` | syntax errors, invalid `is`/comparison forms, statement-placement errors (`break` outside loop, `return` outside function), undefined names | LIVE |
+| `.js` `.mjs` `.cjs` | `node --check <file>` (the node running the hook) | syntax errors | LIVE |
+| `.json` | `JSON.parse` in-process | parse errors; a leading UTF-8 BOM reported as its own finding, because `JSON.parse` and Python's `json` with `utf-8` both reject it | LIVE |
 | `.ts` `.tsx` | none | not covered. A per-file `tsc` ignores `tsconfig.json`, so it would report errors the project does not have. | ABSENT |
 
 Why this rule set and not all of ruff: E9/F63/F7/F82 are real bugs in almost every project, and
@@ -87,6 +87,21 @@ The log is how liveness is proven: if the hook is registered and edits happen, l
 - Live proof: in a real session after registration, an Edit that introduces an undefined name in
   a scratch `.py` returns the diagnostic in that turn, and the log gains a `findings` line.
 - Registered in `vault/liveness/reachability_registry.json` if the reachability gate asks for it.
+
+## Evidence (2026-09-30)
+
+- Suite: `python tools/test_post_edit_diagnostics.py` -> `PED_PASS=17/17`.
+- Mutation drill on an isolated copy (via the `PED_HOOK` seam; `tools/mutation_drill.py` copies
+  only the subject's directory, so it would have run the live hook): 3/3 KILLED (findings
+  context dropped, ruff findings discarded, stdin BOM strip removed). Live hash unchanged.
+- Registered in `~/.claude/settings.json` PostToolUse, matcher `Write|Edit|MultiEdit`,
+  timeout 12 s. Picked up live without a restart.
+- Live proof: a Write of a scratch `.py` with an undefined name returned
+  `L2:25 F821 Undefined name ...` as additionalContext in the same turn; log line
+  `outcome: findings` at 20:53:55Z; the fixed file logged `clean` (2.6 s on a host with
+  681 MB free RAM). Other sessions' edits appear in the log from the same minute.
+- Liveness: `modules/liveness/reachability.py` observes `modules/` only, so a hook in `hooks/` is
+  outside its domain; nothing to register there.
 
 ## Rollback
 
