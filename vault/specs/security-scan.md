@@ -79,6 +79,22 @@ changed-line SAST finding, and upgrade or justify each `introduced` vulnerable d
 Mutation drill: with the changed-line filter removed, `UNCHECKED` collapsed into `CLEAN`, or the
 `introduced` mark inverted, the suite goes red.
 
+## Evidence (2026-10-01)
+
+- Installs: osv-scanner v2.6.0, SHA-256 `e0ed7644...` equal to the release's `SHA256SUMS`;
+  semgrep 1.178.0 in `Apps\semgrep-venv` (runs natively on Windows; `p/default` scan of one file
+  27 s, metrics off).
+- Probes: osv-scanner exit 1 + 4 advisories on PyYAML 5.3, exit 0 on 6.0.2; it lists one
+  requirement twice (`5.3` and `5.3.0`), hence the dedup.
+- `python tools/test_security_scan.py`: 12/12 (452 s, network) - changed-line SAST, pre_existing
+  count, introduced vs existing, dedup, clean and patched controls, UNCHECKED for each missing
+  binary, exit 2 when nothing could run, project untouched.
+- Mutation drill on isolated copies: **1 of 4 run, KILLED** (changed-line filter removed ->
+  V-SEC-SAST-CHANGED-LINE red, 9/12). The other three (binary-not-found read as CLEAN,
+  `introduced` inverted, dedup removed) were **not run**: Claude Code stopped the drill for host
+  memory pressure. Rows below stay PLANNED until they are.
+- Real-project scan: not yet run.
+
 ## Rollback
 
 Delete the tool, its test and the command file; remove `Apps\osv-scanner` and
