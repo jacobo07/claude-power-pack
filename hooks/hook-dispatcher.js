@@ -248,7 +248,10 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/background-verifier.js', timeoutMs: 8000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/jobs_woz_gate.js', timeoutMs: 15000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/jit_correlate_stop.js', timeoutMs: 8000 },
-    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/session_snapshot_stop.js', timeoutMs: 10000 },
+    // session_snapshot_stop.js UNREGISTERED 2026-10-01: it zipped all of
+    // ~/.claude/projects (~3 GB) on EVERY turn end (871 launches on 2026-09-30);
+    // killed runs left 132 .zip.tmp.<pid> files = 198 GB. The daily
+    // ClaudePP-SessionSnapshot task (03:00) is Layer 3's sole trigger.
     // Wired 2026-07-20 (PP audit). Was built + documented as enforcing
     // HR-OUTPUT-001 but registered nowhere. Advisory only, block:false.
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/output_contract_stop.js', timeoutMs: 8000 },
@@ -513,8 +516,11 @@ const CHAIN_MAP = {
   // rather than competing in the pool for a slot it might not get.
   'SessionStart-chain': [
     { exe: NODE_EXE, script: './host-memory-floor.js', timeoutMs: 5000, critical: true },
-    { exe: NODE_EXE, script: './learning-sentinel.js', timeoutMs: 3000 },
+    // Hub BEFORE learning-sentinel: contexts merge in chain order and the harness shows only a ~2 KB
+    // preview of a large SessionStart block. Sentinel-first buried the /kresume card at line 68 of
+    // 10 KB, so a SAFE_TO_FORGET rollover (3a2bfcf4 -> b2567fc8, 2026-09-29) never resumed.
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/session_start_hub.js', timeoutMs: 10000 },
+    { exe: NODE_EXE, script: './learning-sentinel.js', timeoutMs: 3000 },
   ],
   // UserPromptSubmit standalone fold (hub-fold 2026-06-04). The EVENT_MAP
   // 'UserPromptSubmit-default' bundle (power-pack-reminder + baseline-
@@ -1441,7 +1447,7 @@ function readStdin(timeoutMs) {
 // which is exactly what a working filter looks like from the outside on a
 // starved host, so only a direct assertion on the predicate can tell them apart.
 module.exports = { sanitizeForSchema, familyOf, mergeOutputs, stderrIsSafeToSurface, runChain, isScratchTarget,
-  deriveEventFromPayload, NO_EVENT_ROUTES, CHAIN_NAMES: Object.keys(CHAIN_MAP), EVENT_NAMES: Object.keys(EVENT_MAP) };
+  deriveEventFromPayload, NO_EVENT_ROUTES, CHAIN_MAP, CHAIN_NAMES: Object.keys(CHAIN_MAP), EVENT_NAMES: Object.keys(EVENT_MAP) };
 
 // --- Main (CLI path only — skipped when required as a module) ---
 if (require.main === module) (async () => {
