@@ -102,6 +102,20 @@
   "fix" for it. Do not print the UKDL tail to a tool result when a Read of a line range
   would do.
 
+## FP-SECRET-CONNSTRING-SHELLVAR — Secret Firewall denies a connection URL whose password is a shell variable
+- What it really is: HR-SECRET-001's `connection_string` pattern matches the SHAPE of a
+  database URL with credentials (scheme, user, colon, password, at-sign, host) whatever the
+  password is. A harness line whose password segment is an unexpanded shell variable such as
+  `$PGPW` is denied although no secret is on disk.
+- Symptom: `PreToolUse:Write hook error: HR-SECRET-001 ... connection_string` on a `.sh` /
+  `.ps1` that only references secrets by name (often one sourcing a `stack.env`). Writing THIS
+  entry with a literal example URL was denied too, so it describes the shape in words.
+- Measured 2026-10-01 (InfinityOps focus-surface run, GEX44 harness `build-focus.sh`).
+- Response (≤2 min): do not split the string to slip past the detector, and do not disable it.
+  Generate the script on the host that already holds the env (e.g. derive it with `sed` from the
+  proven script there), or let the program read `DATABASE_URL` from the sourced env file. Then
+  nothing credential-shaped is written from the dev machine at all.
+
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
