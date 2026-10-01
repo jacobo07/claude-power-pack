@@ -68,6 +68,21 @@ def main():
     reply, src = R.carrier_reply(R.parse_stream([PARENT_CALL, CARRIER_READ]))
     check("V-ACR-NO-RESULT-IS-EMPTY", reply == "" and src == "none", f"reply={reply!r} src={src}")
 
+    # Measured 2026-10-01 (GEX44, first writer-class run): an event whose `message` is a STRING
+    # crashed parse_stream with AttributeError, and the run's whole record was lost as a traceback.
+    # Odd events are skipped; the usable events around them still parse.
+    odd = [PARENT_CALL, json.dumps({"type": "system", "message": "permission denied: Edit"}),
+           ev("assistant", ["bare string item", {"type": "text", "text": "SIDE"}], side=TU),
+           CARRIER_READ, result("WRITER ANSWER")]
+    try:
+        s = R.parse_stream(odd)
+        reply, src = R.carrier_reply(s)
+        ok = reply == "SIDE" and len(s["carrier_tools"]) == 1 and len(s["parent_calls"]) == 1
+        detail = f"reply={reply!r} src={src} carrier_tools={len(s['carrier_tools'])}"
+    except (AttributeError, TypeError) as e:
+        ok, detail = False, f"crashed: {e!r}"
+    check("V-ACR-STRING-MESSAGE-DOES-NOT-CRASH", ok, detail)
+
     total = passes + fails
     print(f"ACR_PASS={passes}/{total}  threshold={total}/{total}")
     return 0 if fails == 0 else 1

@@ -51,9 +51,14 @@ def parse_stream(lines: list[str]) -> dict:
             ev = json.loads(ln)
         except json.JSONDecodeError:
             continue
+        if not isinstance(ev, dict):
+            continue
         side = ev.get("parent_tool_use_id")
-        msg = ev.get("message") or {}
-        content = msg.get("content") if isinstance(msg.get("content"), list) else []
+        # Measured 2026-10-01 (GEX44, first writer run): some events carry `message` as a
+        # string; reading it as a dict crashed the parser and lost the whole run record.
+        msg = ev.get("message") if isinstance(ev.get("message"), dict) else {}
+        content = [c for c in msg.get("content") or [] if isinstance(c, dict)] \
+            if isinstance(msg.get("content"), list) else []
         if ev.get("type") == "assistant":
             for c in content:
                 if c.get("type") == "tool_use":
@@ -95,7 +100,8 @@ def carrier_reply(s: dict) -> tuple[str, str]:
 
 
 def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = None,
-        parent_model: str = "haiku", timeout: int = 900, state_version: str | None = None) -> dict:
+        parent_model: str = "haiku", timeout: int = 900, state_version: str | None = None,
+        stream_out: Path | None = None) -> dict:
     spec = A.load(spec_id)
     d = spec.dispatch(mission, mode, state_version=state_version)
     carrier_model = model or d.get("model") or "sonnet"
@@ -120,6 +126,11 @@ def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = N
                                errors="replace", timeout=timeout)
         except subprocess.TimeoutExpired:
             return {"status": "UNMEASURED", "reason": f"timeout {timeout}s", "spec": spec_id, "mode": mode}
+    if stream_out:
+        # The raw event log is the evidence a record is derived from. A tool_use in the
+        # record does not say whether the runtime let it run; the stream's results do.
+        stream_out.parent.mkdir(parents=True, exist_ok=True)
+        stream_out.write_text(p.stdout, encoding="utf-8")
     s = parse_stream(p.stdout.splitlines())
     if not s["parent_calls"]:
         return {"status": "UNMEASURED", "reason": f"parent made no tool call (exit {p.returncode})",
@@ -163,7 +174,8 @@ def main(argv=None) -> int:
     ap.add_argument("--out"); ap.add_argument("--timeout", type=int, default=900)
     a = ap.parse_args(argv)
     rec = run(a.spec_id, Path(a.mission_file).read_text(encoding="utf-8"), a.mode, a.model,
-              a.parent_model, a.timeout, A.current_state_version(ROOT))
+              a.parent_model, a.timeout, A.current_state_version(ROOT),
+              Path(a.out).with_suffix(".stream.jsonl") if a.out else None)
     text = json.dumps(rec, indent=1)
     if a.out:
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
