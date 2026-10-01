@@ -219,6 +219,14 @@ and untracked `smoketext/reverse.py`, `tests/test_reverse.py`, phase `09-word-co
 written 2026-09-29. Needs a second answer: archive first (git bundle of the branch + a copy of
 the dirty worktree under `~/.claude/backups/`) then delete, or keep.
 
+**DONE 2026-10-01 16:2x** (Owner: "delete"). State re-verified first (head 806f202, 78 unique,
+same diff, no write since 09-29, no process). Archived to
+`~/.claude/backups/d9-gsd-long-smoke-20261001-162241/`: `gsd-autonomous-run.bundle` (verify OK,
+head 806f202) + `worktree/` (190/190 files, uncommitted files hash-identical). Then
+`git worktree remove --force` and `git update-ref -d refs/heads/gsd-autonomous-run 806f202`
+(deletes only at the expected head). Restore drill: cloning the bundle gives head 806f202, 91
+commits, 78 not on master. Restore with `git fetch <bundle> gsd-autonomous-run:gsd-autonomous-run`.
+
 ## D10 — `test_hook_mirror_identity` red 3/5 (other panes' files)
 
 **State:** new live/repo drift in `hook-dispatcher.js`, `zero-issue-gate.js`; stale
