@@ -1,0 +1,55 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "monolithic",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 69.0,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 471,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "/home/kobii/.claude/state/agent_images/oneshot-architect-auditor-19f2a6b893e6d2f5.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 7208,
+ "reply": "I have read the full AgentSpec. I am operating in ULTRA DISPATCH CONTRACT mode: auditing a submitted implementation plan. The plan is self-contained; no repository exploration is required.\n\n## Audit Result\n\n**Plan reviewed:** Thermostat firmware release stabilisation \u2014 6-step plan covering typo fix, sensor dropout debugging, sensor_bus refactor, telemetry daemon, security negative test, and agent context loading.\n**Files in scope:** 0 explicitly named (plan is self-contained; audit is structural)\n**Gaps found:** 6\n\n---\n\n### Gaps\n\n1. **[ANTI-CRASH] ULTRA-PLAN classification applied to a one-character typo fix \u2014 cost-to-value mismatch**\n   - Where: Step 1\n   - Why this matters: Classifying a cosmetic boot-banner typo as ULTRA-PLAN forces a 7-phase protocol (expensive, slow, consumes both boards) before a sub-minute character change. The ULTRA-PLAN mode exists for unresolved architecture, trust-boundary changes, or migration-level risk (AgentSpec \u00a713). A typo correction has none of those attributes. The full protocol will consume flash cycles, board time, and orchestrator context budget with zero reduction in defect probability.\n   - Suggested fix: Classify Step 1 as EXECUTION mode. Apply code review + single build verification only. Reserve the two boards and the ULTRA-PLAN budget for the sensor dropout work.\n\n2. **[EDGE] Sensor dropout debugging strategy has zero hypothesis discrimination \u2014 exhausts flash budget without causal progress**\n   - Where: Step 2\n   - Why this matters: \"Flash one candidate fix per board cycle, watch, pick next candidate\" is a serial binary trial with no discrimination oracle. With 25-minute flash cycles and two boards, each round produces one bit of signal. If the dropout is intermittent, a single observation window may not even produce that bit reliably (false-negative probability unknown). There is no: prioritised hypothesis list, minimum observation window definition, stopping criterion, pass/fail oracle, or plan for \"we observed it on neither board this cycle.\" This will consume unbounded board time and produce ambiguous results. AgentSpec \u00a710 requires competing hypotheses with discriminating experiments; \u00a738 requires maximising information per expensive attempt.\n   - Suggested fix: Before flashing, produce an ordered hypothesis list (firmware timing, bus contention, power, IRQ priority, etc.). Define the minimum observation window per cycle. Where possible, instrument the firmware to log diagnostic signals so each flash cycle answers multiple unknowns simultaneously. Define the stopping criterion.\n\n3. **[COMPLETION-GATE] sensor_bus refactor DONE criterion is \"unit tests still pass\" \u2014 insufficient for a module split**\n   - Where: Step 3\n   - Why this matters: Splitting one file into three changes compilation units, linkage, include paths, and translation-unit-local state scope. Unit tests passing confirms only unit-level surface contracts. It does not verify: linkage correctness across the three files, no static-local-variable state duplication, no ODR violations, correct inclusion order in all callers, build-system correctness (Makefile/CMake targets for the new files), and integration with the sensor dropout path under Step 2. AgentSpec \u00a742 states a refactor's success criterion cannot be \"tests still pass\" alone. AgentSpec \u00a715 requires the strongest practical oracle proportional to risk.\n   - Suggested fix: Add to the DONE criterion: full firmware build succeeds, hardware integration test (even a smoke test on one board) passes, and all callers of sensor_bus are confirmed to compile against the new split headers.\n\n4. **[INTEGRATION] telemetry_daemon logs to SQLite with no reader, no consumer, and no defined schema \u2014 Zero Vapor**\n   - Where: Step 4\n   - Why this matters: A daemon that writes to a file that nothing reads provides zero observable value. There is no dashboard, no reader, no export, no query, no alerting, and no schema defined. AgentSpec \u00a720 (Zero Vapor) states: presence is not capability. Existence of the daemon and the SQLite file does not constitute working telemetry. Resources are consumed (host process, disk, development time) with no defined return. AgentSpec \u00a736 (Negative Capability) categorises this as a candidate for DO NOT BUILD.\n   - Suggested fix: Either (a) define a minimal consumer now (even a CLI query command) and a schema, making the capability reachable and verifiable, or (b) defer the daemon entirely until a consumer exists. Do not ship infrastructure with no defined reader.\n\n5. **[REALITY-CONTRACT] Security negative test oracle is invalid \u2014 a 404 from a missing command does not prove rejection**\n   - Where: Step 5\n   - Why this matters: The test asserts that `factory_reset` is rejected without a service token, but the observed evidence is a 404 because the command is not compiled into this build. These are causally different: a 404 due to absent compilation proves nothing about the authorization check. If the command were compiled into a future build without the service-token guard, this test would not catch the regression \u2014 it would still pass as long as the command remained unreachable. AgentSpec \u00a716 (Test-the-Test) requires that the setup actually creates the condition being tested. AgentSpec \u00a76 (Architectural Truth Law) states: a desired outcome reached through an invalid path is not correct completion. This is a false-green security test.\n   - Suggested fix: Either (a) compile the `factory_reset` command into the test build with the authorization guard present, and assert rejection specifically due to missing service token (not due to 404), or (b) explicitly label this test as \"command-absent smoke test\" \u2014 not a security negative test \u2014 and track the actual authorization check as an untested risk.\n\n6. **[ANTI-CRASH] Triage agents receive 4,000-file repository as full prompt context \u2014 resource exhaustion and signal loss**\n   - Where: Step 6\n   - Why this matters: Loading a 4,000-file repository into every agent prompt does not mean the agent \"has everything useful.\" It means context budget is consumed by irrelevant files, model attention is diluted across noise, latency per agent call increases substantially, token cost scales linearly with file count per invocation, and agent output quality degrades on the signal buried in the repository. AgentSpec \u00a731 (Context Engineering) requires minimum sufficient correct context. AgentSpec \u00a712 (Minimum Sufficient Change) applies to context as well. This is the canonical failure mode of context dumping.\n   - Suggested fix: Route triage agents only the harness output, the relevant module under investigation (sensor_bus or dropout candidates), and architectural invariants. Use targeted Grep/Read to fetch additional context on demand. This reduces cost per run and improves discrimination quality.\n\n---\n\n### Audit clean items (informational, not blocking)\n\n- No AUTH, ENV, or PATH issues are present in this plan; it references no credentials, env vars, file paths, or external services by name.\n- No Apollo/GraphQL operations are in scope for this firmware plan.\n- The plan does not contain any todo/fixme/stand-in comment markers or not-implemented stubs explicitly described.",
+ "reply_source": "tool_result",
+ "parent_usage": {
+  "input_tokens": 18,
+  "cache_creation_input_tokens": 17656,
+  "cache_read_input_tokens": 35183,
+  "output_tokens": 2282,
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 17656,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "",
+  "iterations": [
+   {
+    "input_tokens": 8,
+    "output_tokens": 1852,
+    "cache_read_input_tokens": 25335,
+    "cache_creation_input_tokens": 2169,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2169
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard"
+ },
+ "fixture": "F6-firmware-release.md",
+ "arm": "monolithic",
+ "finished": "2026-10-01T08:02:03Z"
+}

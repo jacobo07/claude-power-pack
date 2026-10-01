@@ -1,0 +1,86 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "virtual",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 72.3,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 468,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "/home/kobii/.claude/state/agent_images/oneshot-architect-auditor-7d7cca61df962802.md"
+  },
+  {
+   "name": "Read",
+   "path": "/home/kobii/missions/agent-bench-s3b/vault/capability_runtime/agent_specs/oneshot-architect-auditor/pages/02-expertise-map.md"
+  },
+  {
+   "name": "Read",
+   "path": "/home/kobii/missions/agent-bench-s3b/vault/capability_runtime/agent_specs/oneshot-architect-auditor/pages/05-verification-playbook.md"
+  },
+  {
+   "name": "Read",
+   "path": "/home/kobii/missions/agent-bench-s3b/vault/capability_runtime/agent_specs/oneshot-architect-auditor/pages/06-domain-playbook.md"
+  },
+  {
+   "name": "Read",
+   "path": "/home/kobii/missions/agent-bench-s3b/vault/capability_runtime/agent_specs/oneshot-architect-auditor/pages/07-learning-and-scope.md"
+  },
+  {
+   "name": "Read",
+   "path": "/home/kobii/missions/agent-bench-s3b/vault/capability_runtime/agent_specs/oneshot-architect-auditor/pages/08-procedures.md"
+  },
+  {
+   "name": "Read",
+   "path": "/home/kobii/missions/agent-bench-s3b/vault/capability_runtime/agent_specs/oneshot-architect-auditor/pages/10-category-checklist.md"
+  }
+ ],
+ "pages_read": [
+  "pages/02-expertise-map.md",
+  "pages/05-verification-playbook.md",
+  "pages/06-domain-playbook.md",
+  "pages/07-learning-and-scope.md",
+  "pages/08-procedures.md",
+  "pages/10-category-checklist.md"
+ ],
+ "returned_chars": 7437,
+ "reply": "All deep pages read. Now I will audit the plan systematically against each category checklist.\n\n**Plan analysis:**\n\n- Step 1: `query ($teamId: ID!) { teamActivity(...) { ... } }` \u2014 unnamed operation (no identifier before `(`)\n- Step 2: `query RecentIncidents { incidents(severity: \"high\", first: 25) { ... } }` \u2014 named, but `severity: \"high\"` and `first: 25` are inline literals, not `$variables`\n- Step 3: CLI writes to `reports/activity.json` \"wherever the command happens to be launched from\" \u2014 bare relative path\n- Step 4: Cache path uses `os.homedir() + \"\\\\.cache\\\\activity\\\\\" + teamId + \".json\"` \u2014 Windows-only hardcoded separator, not cross-platform\n- Step 5: Hook placed at repo root and registered from there \u2014 hooks should be in `~/.claude/hooks/` per convention; registration method not stated\n- Step 6: LLM call to validate JSON shape \u2014 uses a probabilistic model as a deterministic correctness gate (REALITY-CONTRACT/ANTI-CRASH)\n\nCOMPLETION-GATE: No verification step defined anywhere in the plan. No observable success criterion named.\n\nINTEGRATION: `activity.graphql` is never wired to an Apollo Client `useQuery` call \u2014 no consumer named.\n\n## Audit Result\n\n**Plan reviewed:** Add team activity dashboard widget with GraphQL operations, CLI export tool, pre-commit hook, and LLM-based shape validator\n**Files in scope:** 4 new files (activity.graphql, export_activity.js, activity-guard.js, widget component implied)\n**Gaps found:** 8\n\n### Gaps\n\n1. **[APOLLO-GRAPHQL] Unnamed operation in Step 1**\n   - Where: `src/graphql/activity.graphql` (the `teamActivity` query)\n   - Why this matters: `query ($teamId: ID!) { ... }` has no operation name before the `(`. This is a HARD VETO \u2014 breaks Apollo Client cache normalization, persisted queries, and telemetry. The `RecentIncidents` query in Step 2 is correctly named; Step 1 must match.\n   - Suggested fix: Rename to `query TeamActivity($teamId: ID!) { teamActivity(teamId: $teamId) { id kind actor at } }`\n\n2. **[APOLLO-GRAPHQL] Inline literals in RecentIncidents operation (Step 2)**\n   - Where: `src/graphql/activity.graphql` (the `RecentIncidents` query)\n   - Why this matters: `severity: \"high\"` and `first: 25` are hardcoded scalar literals inside the operation body. This violates the inline-literal rule \u2014 they cannot be varied per call, break persisted query correctness, and prevent caller-side filtering. Both must be declared as `$variables` in the operation signature.\n   - Suggested fix: Declare `query RecentIncidents($severity: String!, $first: Int!) { incidents(severity: $severity, first: $first) { id title openedAt } }`\n\n3. **[PATH] CLI output path is bare-relative (Step 3)**\n   - Where: `tools/export_activity.js` \u2014 `reports/activity.json`\n   - Why this matters: \"wherever the command happens to be launched from\" means the file lands in a different directory depending on cwd. On CI, inside a sub-shell, or when invoked from `tools/`, the path resolves differently. Cross-platform consumers expecting a stable artifact will silently receive nothing or the wrong file.\n   - Suggested fix: Root the output to the repo root via `path.join(__dirname, '..', 'reports', 'activity.json')` or accept it as a required CLI argument.\n\n4. **[PATH] Cache path uses hardcoded Windows backslash separators (Step 4)**\n   - Where: `tools/export_activity.js` \u2014 `os.homedir() + \"\\\\.cache\\\\activity\\\\\" + teamId + \".json\"`\n   - Why this matters: The context states developers work on both Windows and macOS. `\\\\` is a Windows path separator; this string produces a broken path on macOS/Linux. `os.homedir() + \"/.cache/activity/\" + teamId + \".json\"` fails on Windows. Neither is portable.\n   - Suggested fix: Use `path.join(os.homedir(), '.cache', 'activity', teamId + '.json')` \u2014 `path.join` resolves the correct separator per platform.\n\n5. **[PATH] Pre-commit hook placed and registered from repo root (Step 5)**\n   - Where: `activity-guard.js` at repository root\n   - Why this matters: Git hooks must reside in `.git/hooks/` (or the path configured in `core.hooksPath`) to be executed by Git. A file at the repository root is never invoked automatically. \"Registered from there\" is not a valid registration mechanism unless `core.hooksPath` is explicitly set to `.` \u2014 which would expose all root-level JS files as potential hooks and is non-standard. The plan provides no registration command.\n   - Suggested fix: Place the hook in `.git/hooks/pre-commit` (or a conventional `hooks/` directory with `git config core.hooksPath hooks`), and include the explicit registration command in the plan.\n\n6. **[REALITY-CONTRACT] LLM call used as a structural correctness gate (Step 6)**\n   - Where: Widget render path \u2014 \"sends each GraphQL response to a small LLM call that answers whether the JSON has the expected shape\"\n   - Why this matters: An LLM is a probabilistic oracle. It can hallucinate \"valid\" for a malformed response, or \"invalid\" for a correct one. Using it as the sole render gate means: (a) the widget silently fails to render when the model disagrees with the schema, (b) the widget renders corrupt data when the model agrees by accident, (c) a network or rate-limit failure in the LLM call blocks the entire widget even when the data is perfectly correct. This is a deterministic problem (schema shape) being solved with a non-deterministic tool.\n   - Suggested fix: Replace with a deterministic structural check \u2014 a JSON Schema validator (e.g. `ajv`) or a TypeScript type guard generated from the GraphQL schema. The LLM call is unnecessary architecture for a solved problem.\n\n7. **[INTEGRATION] GraphQL operations never wired to a consumer (Steps 1-2)**\n   - Where: `src/graphql/activity.graphql` \u2014 no Apollo Client `useQuery` call, no codegen hook-up, no component named\n   - Why this matters: Under \u00a720 Zero Vapor, a `.graphql` file that no component imports is not a capability. Apollo Client 3.11 with codegen requires the operation to be consumed via a generated hook or explicit `useQuery(ActivityDocument)`. The plan names no widget component file, no codegen step, and no import. The GraphQL file will exist but be unreachable.\n   - Suggested fix: Add a task that names the widget component file (e.g. `src/components/TeamActivityWidget.tsx`), runs codegen (or specifies the import pattern), and wires `useQuery(TeamActivityDocument, { variables: { teamId } })`.\n\n8. **[COMPLETION-GATE] No verification step defined anywhere in the plan**\n   - Where: Plan globally \u2014 no step names a success criterion or observable output\n   - Why this matters: The plan adds a CLI, a widget, a hook, and two GraphQL operations with no stated verification. \"Done\" is unobservable. Per \u00a718 Production Reality and \u00a719 Completion Strength, DONE cannot exceed IMPLEMENTED without a named real boundary crossed. There is no way to distinguish a working implementation from a scaffold that compiles.\n   - Suggested fix: Add a final verification task: (a) run `node tools/export_activity.js --teamId test` and assert `reports/activity.json` is written with expected shape; (b) run the dev server and observe the widget renders data; (c) stage a violation file and confirm the pre-commit hook rejects the commit.\n\n### Apollo advisories (non-blocking)\n\n- The `RecentIncidents` selection set has 3 scalar leaf fields (`id`, `title`, `openedAt`) \u2014 well below the over-fetch threshold. No over-fetch advisory applies.\n- No duplicate field selections observed in either operation.",
+ "reply_source": "tool_result",
+ "parent_usage": {
+  "input_tokens": 18,
+  "cache_creation_input_tokens": 17965,
+  "cache_read_input_tokens": 35182,
+  "output_tokens": 2470,
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 17965,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "",
+  "iterations": [
+   {
+    "input_tokens": 8,
+    "output_tokens": 2058,
+    "cache_read_input_tokens": 25334,
+    "cache_creation_input_tokens": 2479,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2479
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard"
+ },
+ "fixture": "F4-graphql-dashboard.md",
+ "arm": "virtual",
+ "finished": "2026-10-01T07:56:44Z"
+}

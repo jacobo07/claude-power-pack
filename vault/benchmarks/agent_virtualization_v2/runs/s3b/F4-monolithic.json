@@ -1,0 +1,55 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "monolithic",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 55.6,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 471,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "/home/kobii/.claude/state/agent_images/oneshot-architect-auditor-334f1cbeba520864.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 5840,
+ "reply": "## Audit Result\n\n**Plan reviewed:** Team activity dashboard widget \u2014 GraphQL operations, Node CLI, pre-commit hook, LLM-gated render\n**Files in scope:** 3 new files + 1 hook registration\n**Gaps found:** 7\n\n---\n\n### Gaps\n\n1. **[APOLLO-GRAPHQL] Unnamed query operation in Step 1**\n   - Where: `src/graphql/activity.graphql`, Step 1\n   - Why this matters: `query ($teamId: ID!) { ... }` has no operation name. Anonymous operations break Apollo Client cache normalization, persisted queries, and telemetry. Hard veto per APOLLO-GRAPHQL rules.\n   - Suggested fix: Rename to `query TeamActivity($teamId: ID!) { ... }`.\n\n2. **[APOLLO-GRAPHQL] Inline scalar literals in Step 2**\n   - Where: `src/graphql/activity.graphql`, Step 2 \u2014 `incidents(severity: \"high\", first: 25)`\n   - Why this matters: Both `\"high\"` and `25` are request-specific scalar literals passed as inline arguments, not declared `$variables`. This breaks cache normalization (Apollo cannot parameterize keyed cache entries) and prevents variable reuse. Hard veto per APOLLO-GRAPHQL rules.\n   - Suggested fix: Declare `query RecentIncidents($severity: String!, $first: Int!) { incidents(severity: $severity, first: $first) { ... } }` and pass variables at call site.\n\n3. **[PATH] CLI output path is bare-relative, not absolute or CWD-anchored**\n   - Where: Step 3 \u2014 `reports/activity.json`, \"wherever the command happens to be launched from\"\n   - Why this matters: A bare relative path resolves against the shell's current working directory at invocation time. On Windows, a drive-relative path may resolve differently depending on which drive is active. Downstream consumers (CI, orchestrators) cannot reliably locate the file.\n   - Suggested fix: Accept `--output <path>` flag and default to `path.join(process.cwd(), 'reports', 'activity.json')` with an explicit log line showing the resolved absolute path on write.\n\n4. **[PATH] Cache path uses hardcoded Windows path separator**\n   - Where: Step 4 \u2014 `os.homedir() + \"\\\\.cache\\\\activity\\\\\" + teamId + \".json\"`\n   - Why this matters: Raw `\\\\` separators break on macOS/Linux (POSIX paths). The plan states developers work on both Windows and macOS, so this path construction will fail on all non-Windows hosts.\n   - Suggested fix: Replace with `path.join(os.homedir(), '.cache', 'activity', teamId + '.json')` using Node's `path.join`, which is cross-platform.\n\n5. **[PATH] Pre-commit hook placed at repository root, not conventional hooks directory**\n   - Where: Step 5 \u2014 `activity-guard.js` at repo root, registered from there\n   - Why this matters: Git hooks live in `.git/hooks/` (or a configured `core.hooksPath` directory such as `~/.claude/hooks/`). A JS file at the repo root is not a Git hook \u2014 it will never execute as a pre-commit guard unless explicitly wired. The plan does not state how registration happens (symlink? `core.hooksPath` config? Husky/lint-staged?).\n   - Suggested fix: Clarify the hook registration mechanism. If using `core.hooksPath`, place the file in the configured path. If adding to `.git/hooks/pre-commit`, name and place the file accordingly. Confirm the hook file is executable on POSIX.\n\n6. **[INTEGRATION] Hook file is not consumed by any wiring described in the plan**\n   - Where: Step 5 \u2014 no task states how `activity-guard.js` is linked to the Git pre-commit lifecycle\n   - Why this matters: A JS file at the repo root with no registration path is Zero Vapor \u2014 presence is not capability (LAW XV). There is no task that runs `git config core.hooksPath`, adds a symlink, or updates `package.json` scripts/Husky config.\n   - Suggested fix: Add an explicit registration task: e.g., add a `prepare` script in `package.json` that symlinks or copies the hook, or document the `git config core.hooksPath` invocation required.\n\n7. **[REALITY-CONTRACT] LLM model call used as a rendering gate is a non-deterministic oracle**\n   - Where: Step 6 \u2014 widget renders only when an LLM answers \"valid\"\n   - Why this matters: Using a probabilistic model to validate a deterministic JSON shape violates the DETERMINISM TARGET (\u00a714) and STRONGEST PRACTICAL ORACLE (\u00a715). The LLM may return \"valid\" for malformed data, \"invalid\" for correctly shaped data, or fail entirely (network error, rate limit, timeout), leaving the widget permanently blank with no recovery path. This also introduces model API auth, latency, and cost into the render critical path with no fallback, no error boundary, and no stated credential source.\n   - Suggested fix: Replace with a deterministic schema validator (e.g., Zod, JSON Schema via `ajv`) that validates the GraphQL response shape at the TypeScript/runtime level. The GraphQL type system already provides a contract \u2014 honor it with a typed codegen check or a narrow `typeof`/shape assertion, not an LLM call.\n\n---\n\n### Audit clean items (informational, not blocking)\n\n- Step 2 operation `RecentIncidents` is correctly named (has an identifier) \u2014 the naming part passes; only the inline literals block it.\n- `os.homedir()` is used for the cache base, which is correctly portable in intent \u2014 only the concatenation method is broken, not the choice of base directory.\n- No env vars, auth credentials, or external service integrations are introduced in Steps 1-5, so AUTH and ENV categories are clean for those steps. Step 6 (LLM call) implies an API key that is entirely unaddressed; this is covered under REALITY-CONTRACT above rather than AUTH because the plan contains no API auth specification at all, making the gap structural rather than merely a missing credential name.\n\n---\n\n### Apollo advisories (non-blocking)\n\n- **Over-fetch advisory (Step 2):** `RecentIncidents` selects `id`, `title`, `openedAt` \u2014 only 3 scalar fields, within the 8-field threshold. Clean.\n- **Duplicate field selection:** No duplicate fields observed in either operation as written. Clean.",
+ "reply_source": "tool_result",
+ "parent_usage": {
+  "input_tokens": 18,
+  "cache_creation_input_tokens": 17557,
+  "cache_read_input_tokens": 35181,
+  "output_tokens": 2029,
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 17557,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "",
+  "iterations": [
+   {
+    "input_tokens": 8,
+    "output_tokens": 1595,
+    "cache_read_input_tokens": 25333,
+    "cache_creation_input_tokens": 2072,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2072
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard"
+ },
+ "fixture": "F4-graphql-dashboard.md",
+ "arm": "monolithic",
+ "finished": "2026-10-01T07:55:32Z"
+}

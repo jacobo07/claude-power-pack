@@ -1,0 +1,70 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "virtual",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 80.5,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 468,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "/home/kobii/.claude/state/agent_images/oneshot-architect-auditor-daf2cd58e701c595.md"
+  },
+  {
+   "name": "Read",
+   "path": "/home/kobii/missions/agent-bench-s3b/vault/capability_runtime/agent_specs/oneshot-architect-auditor/pages/10-category-checklist.md"
+  },
+  {
+   "name": "Read",
+   "path": "/home/kobii/missions/agent-bench-s3b/vault/capability_runtime/agent_specs/oneshot-architect-auditor/pages/06-domain-playbook.md"
+  },
+  {
+   "name": "Read",
+   "path": "/home/kobii/missions/agent-bench-s3b/vault/capability_runtime/agent_specs/oneshot-architect-auditor/pages/05-verification-playbook.md"
+  }
+ ],
+ "pages_read": [
+  "pages/05-verification-playbook.md",
+  "pages/06-domain-playbook.md",
+  "pages/10-category-checklist.md"
+ ],
+ "returned_chars": 0,
+ "reply": "",
+ "parent_usage": {
+  "input_tokens": 18,
+  "cache_creation_input_tokens": 18261,
+  "cache_read_input_tokens": 35186,
+  "output_tokens": 2768,
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 18261,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "",
+  "iterations": [
+   {
+    "input_tokens": 8,
+    "output_tokens": 2316,
+    "cache_read_input_tokens": 25338,
+    "cache_creation_input_tokens": 2771,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2771
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard"
+ },
+ "fixture": "F4-graphql-dashboard.md",
+ "arm": "virtual",
+ "finished": "2026-10-01T07:40:14Z"
+}

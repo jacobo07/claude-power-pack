@@ -35,14 +35,15 @@ worktree = repo root. Plan + Owner decisions: `vault/specs/agent-capability-virt
    Benchmark v2 (S3b) authored + FROZEN: vault/benchmarks/agent_virtualization_v2 (F4-F6,
    6 defects each, every one deep-page-only doctrine; key gates in test_agent_bench.py 16/16:
    correct finding hits own defect, restating a step scores nothing, page is on_demand).
-   v2 RUNS ON GEX44 (laptop run was reaped at 0.8 GB free, 0/9 done): clone
-   /home/kobii/missions/agent-bench-s3b @ bench/s3b = 8a7cfaa (manifest now hashes LF-normalized
-   content; same frozen content), carriers installed in kobii's ~/.claude/agents, runner pid
-   2188580 detached, log s3b_run.log, records in that clone's runs/s3b/. Resumable: re-run
-   `python3 tools/agent_bench.py run --set v2` there. Then score there (or fetch runs/s3b back)
-   with `score --set v2`. Only NON_INFERIOR unblocks S4. GEX44 has no agent-solo-guard and no
-   carrier_bash_guard hook (test_agent_spec 24/26 there for that reason only).
-2. S4: migrate the other 9 dormant agents (agent_split_markers/*.json), gated on S3 NON_INFERIOR.
+   S3b DONE -> VERDICT NON_INFERIOR (run on GEX44 @ cdae503, records copied to
+   vault/benchmarks/agent_virtualization_v2/runs/s3b/, laptop re-score identical). Hits/6
+   mono|virtual|crippled: F4 6|6|5, F5 6|5|4, F6 6|6|5 (totals 18|17|14); FP F4 1|2|2,
+   F5 0|1|1, F6 0|1|1. Crippled regressed on F5 only (the control can now see a loss; thinly).
+   Virtual paged 5-6 deep pages in 3/3. Mean seconds 64.1|76.9|59.1 (virtual +20 %). n=1 per
+   arm. Fixed on the way: manifest hashed host line endings (8a7cfaa); parser lost the reply in
+   claude 2.1.285's sync Agent shape and recorded reply=0 as MEASURED (cdae503; 3 bad records
+   kept in runs/s3b/invalid/). GEX44 lacks agent-solo-guard + carrier_bash_guard hooks.
+2. S4 UNBLOCKED: migrate the other 9 dormant agents (agent_split_markers/*.json).
 3. S5 telemetry, S6 foundry, S7 closure (UKDL, liveness, agent-creation gate).
 
 Start: read the spec, run `python tools/test_agent_spec.py`, `test_agent_resolver.py`,

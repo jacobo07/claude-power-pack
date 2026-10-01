@@ -1,0 +1,58 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "monolithic",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 68.6,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 471,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "/home/kobii/.claude/state/agent_images/oneshot-architect-auditor-8300f552967cc39f.md"
+  },
+  {
+   "name": "Read",
+   "path": "/home/kobii/.claude/knowledge_vault/claude-doctrine/reality-contract-detail.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 0,
+ "reply": "",
+ "parent_usage": {
+  "input_tokens": 18,
+  "cache_creation_input_tokens": 27618,
+  "cache_read_input_tokens": 25332,
+  "output_tokens": 2233,
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 27618,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "",
+  "iterations": [
+   {
+    "input_tokens": 8,
+    "output_tokens": 1862,
+    "cache_read_input_tokens": 25332,
+    "cache_creation_input_tokens": 2286,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2286
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard"
+ },
+ "fixture": "F4-graphql-dashboard.md",
+ "arm": "monolithic",
+ "finished": "2026-10-01T07:38:54Z"
+}

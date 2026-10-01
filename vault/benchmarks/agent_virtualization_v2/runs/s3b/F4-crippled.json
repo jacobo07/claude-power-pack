@@ -1,0 +1,55 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "crippled",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 49.8,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 469,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "/home/kobii/.claude/state/agent_images/oneshot-architect-auditor-408a12d09921c0c3.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 5499,
+ "reply": "I have read the full AgentSpec. I am operating in ULTRA DISPATCH mode (plan input received, self-contained audit, no repository exploration). Applying the output contract exactly.\n\n---\n\n## Audit Result\n\n**Plan reviewed:** Team activity dashboard widget \u2014 GraphQL queries, CLI tool, pre-commit hook, and LLM shape validator across Next.js 15 / Apollo Client 3.11 / Node 22\n**Files in scope:** 5 (activity.graphql, second query operation, tools/export_activity.js, activity-guard.js, widget render logic)\n**Gaps found:** 6\n\n---\n\n### Gaps\n\n1. **[APOLLO-GRAPHQL] Two operations in one `.graphql` file with no operation name on the first query**\n   - Where: Step 1 (`src/graphql/activity.graphql`) and Step 2 (second operation added to same widget)\n   - Why this matters: Apollo Client 3 requires every operation in a multi-operation document to have an explicit, unique name. An anonymous `query ($teamId: ID!) { ... }` alongside a named `query RecentIncidents { ... }` in the same file will throw `Apollo: Operations must have names when document contains multiple operations` at codegen and at runtime. The widget will never load.\n   - Suggested fix: Name the first query, e.g. `query TeamActivity($teamId: ID!) { ... }`, and keep both in the same file only if intentional; otherwise split into separate `.graphql` files.\n\n2. **[PATH] CLI writes report to a CWD-relative path without pinning or documenting the launch directory**\n   - Where: Step 3 (`tools/export_activity.js` \u2014 `reports/activity.json`)\n   - Why this matters: `reports/activity.json` resolves against whatever the working directory is at invocation time. On CI this is typically the repo root; a developer running the CLI from inside `tools/` will write to `tools/reports/activity.json` and silently diverge. On Windows the backslash assumption in Step 4 compounds the risk.\n   - Suggested fix: Use `path.resolve(__dirname, '../reports/activity.json')` (or `path.join(repoRoot, 'reports', 'activity.json')` derived from `package.json` location) so the output path is absolute and launch-directory-independent.\n\n3. **[PATH] Hard-coded Windows path separator in cross-platform cache path**\n   - Where: Step 4 (`os.homedir() + \"\\\\.cache\\\\activity\\\\\" + teamId + \".json\"`)\n   - Why this matters: The plan states developers work on both Windows and macOS. `os.homedir() + \"\\\\.cache\\\\\"` produces a broken path on macOS/Linux (`/Users/alice\\.cache\\activity\\...`). Node resolves forward slashes on Windows, but backslash literals are not resolved on POSIX.\n   - Suggested fix: Replace with `path.join(os.homedir(), '.cache', 'activity', teamId + '.json')` \u2014 portable across both platforms.\n\n4. **[PATH] `teamId` used raw in a filesystem path without sanitization**\n   - Where: Step 4 (cache filename `teamId + \".json\"`)\n   - Why this matters: If `teamId` ever contains `..`, `/`, `\\`, or other path metacharacters, the cache write traverses outside the intended directory. This is both a correctness risk and a potential path-traversal vulnerability in a CLI tool that may consume untrusted data.\n   - Suggested fix: Sanitize `teamId` before composing the path (e.g. `encodeURIComponent(teamId)` or a strict alphanumeric allowlist).\n\n5. **[INTEGRATION] Pre-commit hook registered from the repository root but not wired into git hooks infrastructure**\n   - Where: Step 5 (`activity-guard.js` at repo root)\n   - Why this matters: Placing a JS file at the repo root does not register it with Git. The plan says \"register it from there\" but does not specify the registration mechanism \u2014 `.husky/`, `simple-git-hooks`, `.lefthook.yml`, or direct `.git/hooks/` symlink. Without an explicit wiring step the hook is a dead file; no developer machine will execute it. The team uses Claude Code hooks alongside the project, so a conflict with an existing hook runner is also possible.\n   - Suggested fix: Specify the exact registration method matching the repo's existing hook runner (inspect `package.json` for husky/lefthook/simple-git-hooks) and add the wiring step explicitly to the plan.\n\n6. **[REALITY-CONTRACT] LLM shape validator as a render gate is non-deterministic and introduces latency-per-render**\n   - Where: Step 6 (widget render gated on LLM \"valid\" answer)\n   - Why this matters: (a) An LLM returning \"valid\"/\"invalid\" on a JSON shape is non-deterministic \u2014 it can hallucinate or timeout, permanently blocking the widget with no fallback path. (b) Every render incurs a full LLM round-trip; at any meaningful poll interval this will saturate rate limits or produce unacceptable UX latency. (c) GraphQL already enforces shape via its type system; the Apollo response is typed by the schema. A runtime LLM gate adds no new correctness information and introduces multiple failure modes with no upside.\n   - Suggested fix: Replace with a deterministic schema validator (e.g. `zod` parse of the expected response shape) or rely on Apollo's built-in type checking. If an LLM is genuinely required for downstream enrichment, decouple it from the synchronous render path.\n\n---\n\n### Audit clean items (informational, not blocking)\n\n- The GraphQL fields requested (`id kind actor at` / `id title openedAt`) are minimal and well-scoped; no over-fetching concern at this stage.\n- Using `os.homedir()` for the cache root (Step 4) is the correct cross-platform base \u2014 the gap is only the separator and sanitization, not the base choice.\n- Scoping the second query to `severity: \"high\", first: 25` is a reasonable bounded fetch for an incident strip.",
+ "reply_source": "tool_result",
+ "parent_usage": {
+  "input_tokens": 18,
+  "cache_creation_input_tokens": 17525,
+  "cache_read_input_tokens": 35181,
+  "output_tokens": 1961,
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 17525,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "",
+  "iterations": [
+   {
+    "input_tokens": 8,
+    "output_tokens": 1465,
+    "cache_read_input_tokens": 25333,
+    "cache_creation_input_tokens": 2040,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2040
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard"
+ },
+ "fixture": "F4-graphql-dashboard.md",
+ "arm": "crippled",
+ "finished": "2026-10-01T07:57:34Z"
+}

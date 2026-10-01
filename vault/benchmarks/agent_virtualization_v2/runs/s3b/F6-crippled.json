@@ -1,0 +1,55 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "crippled",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 67.6,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 469,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "/home/kobii/.claude/state/agent_images/oneshot-architect-auditor-f05df6b94f64977b.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 7114,
+ "reply": "I have fully read the AgentSpec. The `/ultra` dispatch contract applies. This plan was submitted under the ULTRA orchestrator mode. I will audit the 6-step plan against the output contract.\n\n---\n\n## Audit Result\n\n**Plan reviewed:** Stabilise thermostat firmware release \u2014 6-step plan covering typo fix, sensor dropout debug, sensor_bus refactor, telemetry daemon, security negative test, and triage agent context loading.\n**Files in scope:** 0 (plan is self-contained; no repository exploration requested)\n**Gaps found:** 6\n\n---\n\n### Gaps\n\n1. **[COMPLETION-GATE] ULTRA-PLAN 7-phase overhead applied to a one-character typo fix**\n   - Where: Step 1\n   - Why this matters: Classifying a trivially isolated boot-banner string correction as ULTRA-PLAN invokes the full 7-phase protocol \u2014 Q&A, architecture audit, fix injection, regression, rollback plan, etc. Protocol cost is enormous relative to the change's blast radius (zero functional impact, no callers, no state, no migration). This wastes two physical board flash cycles (50 min minimum) and delays a release that is gated on hardware time. Correct tier is LIGHT / single-file edit with a diff-verify.\n   - Suggested fix: Demote Step 1 to a direct patch: edit the string, grep all callers of the banner constant to confirm uniqueness, flash once, compare boot serial output. Remove ULTRA-PLAN classification from this step entirely.\n\n2. **[EDGE] Sensor dropout debug strategy is non-discriminating: one candidate per board cycle**\n   - Where: Step 2\n   - Why this matters: With two boards and one fix candidate per 25-minute flash cycle, the search space is explored linearly. If the dropout is intermittent (not reproducible on every boot) there is no dwell time budget per candidate, no minimum observation window, and no protocol to distinguish \"fixed\" from \"not triggered this cycle.\" A candidate that suppresses the dropout in one 25-minute window cannot be distinguished from a candidate that merely got lucky. This creates false DONE risk \u2014 the release could ship a non-fix.\n   - Suggested fix: Define a minimum observation window per candidate (e.g., N dropout-triggering cycles or M elapsed minutes under load) before declaring a candidate effective. Run both boards in parallel against the same candidate to double evidence per cycle. Document the discriminating condition before flashing.\n\n3. **[COMPLETION-GATE] sensor_bus refactor completion gate relies on unit tests that may not exercise integration boundaries**\n   - Where: Step 3\n   - Why this matters: LAW VI \u2014 TEST THE TEST. \"Existing unit tests still pass\" is the sole done-criterion. If those tests mock the bus or test internal logic rather than the cross-file integration boundary produced by the split into three files, they can pass green while the inter-file contracts (header inclusion order, shared state ownership, init call sequencing across compilation units) are broken at the hardware integration level. Firmware unit tests frequently run on a host simulator, not on the target MCU.\n   - Suggested fix: Expand the completion gate: after unit tests pass, additionally verify a clean firmware build that links all three new files, confirm no symbol-duplication or missing-extern linker errors, and run at least one hardware-in-loop smoke test on a real board before declaring DONE.\n\n4. **[INTEGRATION] telemetry_daemon writes to SQLite with no reader, no schema owner, and no migration plan**\n   - Where: Step 4\n   - Why this matters: Durable state is being created (SQLite file, schema, write path) with no declared reader, no schema version, no retention/rotation policy, and no query interface. Per LAW III every durable responsibility requires one legitimate authority. Writing persistent data with no reader is orphaned state: it will accumulate indefinitely, occupy disk on the host, and when a reader is eventually added it will encounter an undocumented schema that may have already diverged across environments. No dashboard or reader is planned \u2014 the value of the data is therefore unverifiable.\n   - Suggested fix: Either (a) defer the SQLite persistence until a reader is designed (log to stdout/file only for now), or (b) add a schema file, a schema version field in the table, a rotation cap, and nominate the reader owner before implementing the writer. Do not write durable state without a declared consumer.\n\n5. **[REALITY-CONTRACT] Security negative test passes because the feature is absent from the build, not because the guard rejects it**\n   - Where: Step 5\n   - Why this matters: The test asserts that `factory_reset` is rejected without a service token. It passes because the command is not compiled into the build (404 at the harness level). This is an invalid verifier (LAW VII): the test does not exercise the authentication guard at all \u2014 it exercises the build configuration. If the command is ever compiled in (debug build, different SKU, future firmware variant), the test will still pass or fail based on compilation, not on the correctness of the token check. A security gap passes undetected. The test name implies security coverage it does not provide.\n   - Suggested fix: For valid security coverage, the test must run against a build in which `factory_reset` IS compiled in, and assert that the harness receives the rejection (not 404 but the defined auth-failure response) when no service token is supplied. The current test should be re-labelled as a \"build configuration check\" and a true auth-guard test added against the debug/full build.\n\n6. **[ANTI-CRASH] Triage agents receive full 4,000-file firmware repository in every prompt**\n   - Where: Step 6\n   - Why this matters: LAW XII \u2014 CONTEXT ECONOMY. Loading 4,000 files into every triage agent prompt does not improve agent accuracy; it degrades it. LLM context windows have a finite effective attention span: relevant signal is diluted by irrelevant firmware files (drivers, generated headers, test fixtures, vendor libraries). Prompt size approaches or exceeds context limits, causing truncation or degraded recall. Cost per agent run is maximised. The claim that the agent \"has everything\" does not follow \u2014 having everything in a window does not mean the relevant signal is found. This is agent count / context size masquerading as intelligence.\n   - Suggested fix: Implement a retrieval step: triage agents receive the harness output, the relevant module(s) identified by the failing test or dropout log, and at most the direct dependents of those modules. Use a manifest or source map to select files. Maximum context per agent run should be bounded (e.g., 50 files or the files named in the stack trace).\n\n---\n\n### Audit clean items (informational, not blocking)\n- The plan correctly scopes hardware-in-loop testing to physical boards, consistent with Production Reality requirements for embedded firmware.\n- The two-board parallelism constraint is acknowledged in Step 2, which is accurate resource accounting.\n- No env vars, auth secrets, or network endpoints were introduced in any step, so ENV and AUTH categories have no gaps outside Step 5's misclassified security test.",
+ "reply_source": "tool_result",
+ "parent_usage": {
+  "input_tokens": 18,
+  "cache_creation_input_tokens": 17642,
+  "cache_read_input_tokens": 35181,
+  "output_tokens": 2109,
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 17642,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "",
+  "iterations": [
+   {
+    "input_tokens": 8,
+    "output_tokens": 1680,
+    "cache_read_input_tokens": 25333,
+    "cache_creation_input_tokens": 2157,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2157
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard"
+ },
+ "fixture": "F6-firmware-release.md",
+ "arm": "crippled",
+ "finished": "2026-10-01T08:04:36Z"
+}

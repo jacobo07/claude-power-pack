@@ -1,0 +1,55 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "monolithic",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 67.7,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 471,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "/home/kobii/.claude/state/agent_images/oneshot-architect-auditor-f868e8f6798102b0.md"
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 6648,
+ "reply": "I have read the full AgentSpec. I am operating under the ULTRA DISPATCH CONTRACT. This is a `/ultra` phase 4 audit. I must emit exactly the format specified in the output contract.\n\nI will now audit the 6-step plan against the checklist. Since the plan is self-contained and I am instructed not to explore any repository, I will ground against the plan's own claims and the checklist categories.\n\n---\n\n## Audit Result\n\n**Plan reviewed:** Rewrite bash-guard.js and 8 companion hook files, register new PreToolUse matcher, commit, verify with test suite, classify CI OOM as hook failure, and add CONTRIBUTING.md paragraph.\n**Files in scope:** 10 (bash-guard.js + 8 helper-sharing hook files + hook-utils.js commit scope) plus settings.json and CONTRIBUTING.md\n**Gaps found:** 6\n\n### Gaps\n\n1. **[ANTI-CRASH] 9 hook files changed in a single execution batch without micro-batching or checkpoint**\n   - Where: Step 1\n   - Why this matters: Changing 9 files (bash-guard.js + 8 co-dependents) in one atomic step with no checkpoint means a mid-batch failure leaves hooks in a partially rewritten state \u2014 some still referencing the old helper interface, some the new. A crashed or OOM-killed session during Step 1 leaves the hook tree in an undefined mixed state with no recovery path. The ANTI-CRASH rule flags file count >5 in a single batch for mandatory micro-batching.\n   - Suggested fix: Split into at minimum two batches: (a) rewrite hook-utils.js + bash-guard.js; restart and verify; (b) update the remaining 7 consumers only after confirming the helper API is stable.\n\n2. **[ANTI-CRASH] Agent editing its own session's settings.json via PreToolUse registration**\n   - Where: Step 2\n   - Why this matters: settings.json is a harness file governing the running session's hook registration. Editing it from inside the same session creates a self-referential mutation: the new matcher may be partially active during the same session that registered it, or the session may need a restart to observe the change \u2014 which is uncontrolled. The ANTI-CRASH rule requires confirmed permission/auth flow for harness file edits. No such confirmation appears in the plan.\n   - Suggested fix: State explicitly that settings.json must be edited out-of-band (before session start or by a separate session), and that the target session must be fully restarted before the new matcher is considered active.\n\n3. **[INTEGRATION] Concurrent writer conflict on hook-utils.js is not resolved before commit**\n   - Where: Step 3\n   - Why this matters: The plan states \"another session is editing hook-utils.js right now\" and then proceeds to commit hook-utils.js in the same step. This violates \u00a728 (Git / Concurrent Writers): two writers on the same file without a coordination step creates a lost-update risk. A `git commit -- hook-utils.js bash-guard.js` will silently include whichever version is currently staged or on-disk, potentially overwriting the concurrent session's work or committing an untested blend of both writers' changes without any merge review.\n   - Suggested fix: Block the commit on hook-utils.js until the other session's changes are known, reviewed, and either merged or deferred. At minimum: `git diff hook-utils.js` must be inspected and reconciled before commit.\n\n4. **[REALITY-CONTRACT] CI OOM classified as FAIL of the hook change without causal evidence**\n   - Where: Step 5\n   - Why this matters: The OOM was caused by the CI runner's browser tests \u2014 not by any behavior of the hook change. \u00a717 (Verification Instrument Validity) and the Causal Failure Model (\u00a79) require distinguishing instrument failure from subject failure. Recording this as a FAIL of the hook change is a false attribution that will corrupt the failure history and may trigger a revert of a correct change. OBSERVED cause is resource pressure on browser tests; the hook is not implicated by any stated evidence.\n   - Suggested fix: Classify the run as INCONCLUSIVE/CONTAMINATED (OOM from unrelated browser tests), not FAIL. Re-run the suite on a non-OOM runner or isolate hook-related tests before issuing a verdict on the hook change.\n\n5. **[COMPLETION-GATE] Verification in Step 4 uses \"if anything turns red, revert\" as its success criterion \u2014 not a discriminating oracle**\n   - Where: Step 4\n   - Why this matters: \"Run the full suite; revert on red\" is not a measurable gate with an observable, named success criterion. It does not name which real boundary is crossed (\u00a718), does not specify what a hook-specific passing signal looks like, and does not protect against the CONTAMINATED run scenario already present in Step 5. A red from an unrelated test causes a revert of a correct hook change; a false-green suite (\u00a716 Test-The-Test) certifies nothing about the guard's actual blocking behavior.\n   - Suggested fix: Define a targeted oracle: a test that specifically invokes the `rm -rf` subshell pattern and asserts the guard blocks it \u2014 plus a negative that confirms a safe command passes. Name the real boundary (actual hook process execution, not mock). This is the STRONGEST PRACTICAL ORACLE for a bash safety guard.\n\n6. **[REALITY-CONTRACT] CONTRIBUTING.md paragraph as recurrence prevention for a recurring security escape**\n   - Where: Step 6\n   - Why this matters: This is the third fix for the same \"rm -rf inside a subshell\" escape. \u00a734 (UKDL) and \u00a733 (Failure Learning) require that a recurring defect be addressed at the level of its causal owner \u2014 which for a hook bypass is the hook enforcement mechanism itself, not a documentation paragraph. A CONTRIBUTING.md note is a weak, non-enforced, human-attention-dependent control that will not prevent the escape from recurring; it is documentation masquerading as prevention. \u00a746 Pre-Report Gate: this is a genuine architectural gap, not mere style.\n   - Suggested fix: The prevention owner is the hook itself. The fix must be a structural guard that makes the bypass mechanically impossible (e.g., pattern coverage in the guard that catches subshell variants), not prose. The CONTRIBUTING.md edit may accompany it but cannot substitute for it. Evaluate the bypass pattern for UKDL registration as a HARD RULE.\n\n### Audit clean items (informational, not blocking)\n- No GraphQL operations referenced; APOLLO-GRAPHQL category not applicable.\n- No env vars introduced or modified; ENV category has no findings.\n- No new file paths introduced requiring cross-platform resolution; PATH category has no findings.\n- The commit scope (`git commit -- hook-utils.js bash-guard.js`) correctly uses explicit pathspec rather than `git add -A`, consistent with anti-overlap rules \u2014 pending resolution of Gap 3 above.",
+ "reply_source": "tool_result",
+ "parent_usage": {
+  "input_tokens": 18,
+  "cache_creation_input_tokens": 17665,
+  "cache_read_input_tokens": 35184,
+  "output_tokens": 2132,
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 17665,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "",
+  "iterations": [
+   {
+    "input_tokens": 8,
+    "output_tokens": 1678,
+    "cache_read_input_tokens": 25336,
+    "cache_creation_input_tokens": 2177,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2177
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard"
+ },
+ "fixture": "F5-shared-hook-change.md",
+ "arm": "monolithic",
+ "finished": "2026-10-01T07:58:41Z"
+}

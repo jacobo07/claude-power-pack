@@ -1,0 +1,58 @@
+{
+ "status": "MEASURED",
+ "spec": "oneshot-architect-auditor",
+ "mode": "crippled",
+ "carrier": "cpp-carrier-verifier",
+ "carrier_model": "sonnet",
+ "spec_hash": "ef543622a759d280",
+ "seconds": 61.7,
+ "dispatched_to": "cpp-carrier-verifier",
+ "dispatch_prompt_chars": 469,
+ "image_read": true,
+ "carrier_tools": [
+  {
+   "name": "Read",
+   "path": "/home/kobii/.claude/state/agent_images/oneshot-architect-auditor-11aa5d04954b862d.md"
+  },
+  {
+   "name": "Bash",
+   "path": "ls /tmp/acr-gg413juc/ 2>/dev/null || echo \"empty or no files\""
+  }
+ ],
+ "pages_read": [],
+ "returned_chars": 0,
+ "reply": "",
+ "parent_usage": {
+  "input_tokens": 18,
+  "cache_creation_input_tokens": 17691,
+  "cache_read_input_tokens": 35184,
+  "output_tokens": 2130,
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 17691,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "",
+  "iterations": [
+   {
+    "input_tokens": 8,
+    "output_tokens": 1695,
+    "cache_read_input_tokens": 25336,
+    "cache_creation_input_tokens": 2203,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2203
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard"
+ },
+ "fixture": "F4-graphql-dashboard.md",
+ "arm": "crippled",
+ "finished": "2026-10-01T07:41:16Z"
+}
