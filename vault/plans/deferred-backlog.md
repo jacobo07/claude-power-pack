@@ -184,8 +184,15 @@ wiring; still waiting for the Owner to pick.
 **2026-10-01: gap 3 v1 BUILT** (Owner: "3") — `tools/test_gaps.py` + `/test-gaps`, spec
 `vault/specs/test-gaps.md`, dc7f781. Uncovered changed lines + surviving mutants on covered
 changed lines, in an isolated copy; subprocess-driven tests measured. 14/14 gates; GEX44 drill
-6/6 KILLED. Not in v1: hypothesis, fuzzing, flaky tests, non-Python. Owner step: copy
-`commands/test-gaps.md` to `~/.claude/commands/` for the slash command. Open: gaps 4–6.
+6/6 KILLED. Not in v1: hypothesis, fuzzing, flaky tests, non-Python. `/test-gaps` copied live
+2026-10-01 (Owner "y"). Real project verified on GEX44 (75b0fd7).
+
+**2026-10-01: gap 4 v1 BUILT** (Owner: "gap 4") — `tools/security_scan.py` + `/security-scan`
+(live), spec `vault/specs/security-scan.md`. semgrep 1.178.0 (own venv `Apps\semgrep-venv`)
+on changed lines + osv-scanner v2.6.0 (official release, SHA-256 verified, `Apps\osv-scanner`)
+over lockfiles, `introduced` vs `existing`. UNCHECKED never reads as CLEAN. 12/12 gates (452 s,
+needs network). Not in v1: done-gate wiring (blocking Stop hook + network scan = the starvation
+shape), SBOM, licences. Open: gaps 5–6.
 
 ## D8 — Mission continuity: merge the UKDL candidates
 
