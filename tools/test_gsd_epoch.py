@@ -75,9 +75,11 @@ def asst(t, usage=None, tool_uses=(), text="ok", stop=None):
     return {"type": "assistant", "timestamp": iso(t), "message": msg}
 
 
-def result(t, tid, text):
-    return {"type": "user", "timestamp": iso(t),
-            "message": {"content": [{"type": "tool_result", "tool_use_id": tid, "content": text}]}}
+def result(t, tid, text, is_error=False):
+    block = {"type": "tool_result", "tool_use_id": tid, "content": text}
+    if is_error:
+        block["is_error"] = True
+    return {"type": "user", "timestamp": iso(t), "message": {"content": [block]}}
 
 
 def note(t, tid, status, op="enqueue"):
@@ -197,6 +199,19 @@ def main() -> int:
                sub={"agent-1.jsonl": [asst(NOW - 50, None, [("toolu_sb", "Bash", {"run_in_background": True})])]})
     check("V-EPOCH-SUBAGENT-CHILD-SEEN", ge.child_work("s-sub", NOW)["verdict"] == "HOLD")
     check("V-EPOCH-NO-TRANSCRIPT-UNKNOWN", ge.child_work("s-nobody", NOW)["verdict"] == "UNKNOWN")
+    # A background call a PreToolUse hook DENIED never ran, so no notification will ever come.
+    # Measured 2026-10-01 (session 697f41a7): it held the /kclear capsule at REFUSED for the full
+    # 30-minute wait bound although nothing was running.
+    denied = ("toolu_dn", "PowerShell", {"description": "commit", "run_in_background": True})
+    transcript("s-denied", [asst(NOW - 60, small, [denied]),
+                            result(NOW - 59, "toolu_dn", "PreToolUse:PowerShell hook error: "
+                                   "[Remove-Item] -- this command was NOT run", is_error=True)])
+    k = ge.child_work("s-denied", NOW)
+    check("V-EPOCH-DENIED-BG-IS-NOT-A-CHILD", k["verdict"] == "CLEAR", k)
+    # control: the same call that the host DID start still holds
+    transcript("s-started", [asst(NOW - 60, small, [denied]),
+                             result(NOW - 59, "toolu_dn", "Command running in background with ID: by7")])
+    check("V-EPOCH-STARTED-BG-STILL-HOLDS", ge.child_work("s-started", NOW)["verdict"] == "HOLD")
 
     # --- a continuation in flight is never doubled ------------------------------------------
     rec = running("m-fl", "s-fl", last_continuation_at=NOW - 30, last_continuation_session="s-fl")

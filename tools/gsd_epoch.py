@@ -292,6 +292,12 @@ def child_work(session_id: str, now: float | None = None, wait_s: float = CHILD_
                 for b in content if isinstance(content, list) else []:
                     if isinstance(b, dict) and b.get("type") == "tool_result":
                         tid = b.get("tool_use_id")
+                        if tid in launches and tid not in agent_calls and (
+                                b.get("is_error")
+                                or not _BG_RESULT_RE.search(_content_text(b.get("content")))):
+                            # Never started: a PreToolUse hook denied it or it failed to launch,
+                            # so no notification will ever arrive (measured 2026-10-01, 697f41a7).
+                            launches.pop(tid, None)
                         if tid in agent_calls:
                             if _BG_RESULT_RE.search(_content_text(b.get("content"))):
                                 launches[tid] = agent_calls[tid]
