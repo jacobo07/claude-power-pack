@@ -40,6 +40,56 @@ from modules.capability_runtime import agent_spec as A  # noqa: E402
 DENIED_RE = re.compile(r"Permission to use (\w+) has been denied")
 
 
+def _posix_root(root: str) -> str:
+    """Absolute path in the permission engine's form: POSIX, Windows drive as /c/..."""
+    p = str(root).replace("\\", "/").rstrip("/")
+    m = re.match(r"^([A-Za-z]):(/.*)?$", p)
+    return f"/{m.group(1).lower()}{m.group(2) or ''}" if m else p
+
+
+def _surfaces(spec: A.AgentSpec) -> list[str]:
+    out = []
+    for s in spec.contract.write_surfaces:
+        s = str(s).replace("\\", "/")
+        if s.startswith("/") or re.match(r"^[A-Za-z]:", s) or ".." in s.split("/"):
+            raise A.AgentSpecError("SURFACE_ESCAPES_ROOT", f"{spec.id}: {s!r} is not relative to the target root")
+        out.append(s)
+    return out
+
+
+def write_grant(spec: A.AgentSpec, target_root: str | None) -> list[str]:
+    """Runtime allow rules bounding a writer carrier to its declared write_surfaces under one
+    explicit target root (Owner go 2026-10-01). Headless `claude -p` grants a carrier nothing
+    the parent was not granted; measured 2026-10-01, the writer's Edit was denied outright.
+
+    Only `Edit(...)` rules: per the permission docs an Edit rule governs every built-in file
+    editor including Write, while a `Write(path)` rule is accepted and never consulted -- a
+    grant written that way would look scoped and do nothing. `//` marks an absolute path; a
+    single `/` would anchor at the working directory. A directory surface (trailing /) grants
+    its subtree, a file surface grants that file only."""
+    if not target_root:
+        return []
+    if spec.permission_class != "writer":
+        raise A.AgentSpecError("GRANT_EXCEEDS_CLASS",
+                               f"{spec.id} is {spec.permission_class}; only a writer may receive a write grant")
+    root = _posix_root(target_root)
+    return [f"Edit(/{root}/{s.rstrip('/')}/**)" if s.endswith("/") else f"Edit(/{root}/{s})"
+            for s in _surfaces(spec)]
+
+
+def writes_outside(target_root: str, surfaces: list[str], written: list[str]) -> list[str]:
+    """Paths the carrier edited that no declared surface covers. Judged from the record,
+    independently of what the runtime allowed, so a grant wider than intended shows up."""
+    root = _posix_root(target_root)
+    allowed = [(root + "/" + s.replace("\\", "/"), s.endswith("/")) for s in surfaces]
+    out = []
+    for w in written:
+        p = _posix_root(w)
+        if not any(p.startswith(a) if is_dir else p == a for a, is_dir in allowed):
+            out.append(w)
+    return out
+
+
 def parse_stream(lines: list[str]) -> dict:
     """The Agent tool is ASYNC in this runtime (measured 2026-09-30): its tool_result is
     a 'launched' notice and the carrier's answer arrives later. So the carrier's reply is
@@ -111,8 +161,9 @@ def carrier_reply(s: dict) -> tuple[str, str]:
 
 def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = None,
         parent_model: str = "haiku", timeout: int = 900, state_version: str | None = None,
-        stream_out: Path | None = None) -> dict:
+        stream_out: Path | None = None, target_root: str | None = None) -> dict:
     spec = A.load(spec_id)
+    grant = write_grant(spec, target_root)        # typed refusal before anything is dispatched
     d = spec.dispatch(mission, mode, state_version=state_version)
     carrier_model = model or d.get("model") or "sonnet"
     exe = shutil.which("claude")
@@ -131,7 +182,7 @@ def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = N
         try:
             p = subprocess.run([exe, "-p", parent_prompt, "--model", parent_model,
                                 "--output-format", "stream-json", "--verbose",
-                                "--allowedTools", "Agent", "Read", "Grep", "Glob"],
+                                "--allowedTools", "Agent", "Read", "Grep", "Glob", *grant],
                                cwd=cwd, capture_output=True, text=True, encoding="utf-8",
                                errors="replace", timeout=timeout)
         except subprocess.TimeoutExpired:
@@ -170,7 +221,14 @@ def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = N
                               if any(r.lower().endswith("/".join(x.split("/")[-2:]).lower()) for x in deep)}),
         "returned_chars": len(reply), "reply": reply, "reply_source": reply_source, "parent_usage": s["usage"],
         "denied_tools": s["denied_tools"],
+        "write_grant": grant,
     }
+    written = [str(c["input"].get("file_path", "")) for c in s["carrier_tools"]
+               if c["name"] in ("Edit", "Write", "MultiEdit", "NotebookEdit")]
+    if target_root:
+        # Attempted writes, not proven ones: a denied attempt is listed here AND in denied_tools.
+        rec["write_attempts"] = written
+        rec["writes_outside_surface"] = writes_outside(target_root, _surfaces(spec), written)
     if spec.output_contract == "proof-bundle-v1":
         res = B.validate(reply, spec, state_version or A.current_state_version(ROOT))
         rec["bundle"] = {"verdict": res["verdict"], "reasons": res["reasons"]}
@@ -183,10 +241,18 @@ def main(argv=None) -> int:
     ap.add_argument("--mode", default="virtual", choices=A.MODES)
     ap.add_argument("--model"); ap.add_argument("--parent-model", default="haiku")
     ap.add_argument("--out"); ap.add_argument("--timeout", type=int, default=900)
+    ap.add_argument("--target-root", help="writer only: grant Edit on the spec's write_surfaces under this dir")
     a = ap.parse_args(argv)
-    rec = run(a.spec_id, Path(a.mission_file).read_text(encoding="utf-8"), a.mode, a.model,
-              a.parent_model, a.timeout, A.current_state_version(ROOT),
-              Path(a.out).with_suffix(".stream.jsonl") if a.out else None)
+    if a.target_root and not Path(a.target_root).is_dir():
+        print(f"AGENTSPEC_ERROR NO_TARGET_ROOT {a.target_root} is not a directory", file=sys.stderr)
+        return 2
+    try:
+        rec = run(a.spec_id, Path(a.mission_file).read_text(encoding="utf-8"), a.mode, a.model,
+                  a.parent_model, a.timeout, A.current_state_version(ROOT),
+                  Path(a.out).with_suffix(".stream.jsonl") if a.out else None, a.target_root)
+    except A.AgentSpecError as e:
+        print(f"AGENTSPEC_ERROR {e.code} {e}", file=sys.stderr)
+        return 2
     text = json.dumps(rec, indent=1)
     if a.out:
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)

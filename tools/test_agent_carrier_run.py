@@ -92,6 +92,39 @@ def main():
     s = R.parse_stream([PARENT_CALL, CARRIER_READ, result("ANSWER")])
     check("V-ACR-NO-DENIAL-IS-EMPTY", s.get("denied_tools") == [], f"denied={s.get('denied_tools')}")
 
+    # Write grant (Owner go 2026-10-01): the runtime, not the prompt, bounds a writer's surface.
+    # Docs: `//` = absolute, Windows paths normalise to //c/...; Edit rules also govern Write,
+    # and a Write(path) rule is accepted but never consulted -- so only Edit rules are emitted.
+    from modules.capability_runtime import agent_spec as A
+    ho = A.load("harness-optimizer")
+    g = R.write_grant(ho, "/home/kobii/t/")
+    check("V-ACR-GRANT-POSIX", "Edit(//home/kobii/t/.claude/settings.json)" in g
+          and "Edit(//home/kobii/t/.claude/hooks/**)" in g and all(r.startswith("Edit(//") for r in g)
+          and len(g) == len(ho.contract.write_surfaces), f"{g}")
+    g = R.write_grant(ho, r"C:\Users\U\target")
+    check("V-ACR-GRANT-WINDOWS", "Edit(//c/Users/U/target/.claude/agents/**)" in g, f"{g}")
+    check("V-ACR-GRANT-NONE-WITHOUT-ROOT", R.write_grant(ho, None) == [], "no target root -> no grant")
+
+    def refused(spec, root):
+        try:
+            R.write_grant(spec, root)
+            return False
+        except A.AgentSpecError as e:
+            return e.code
+    check("V-ACR-GRANT-REFUSES-NON-WRITER", refused(A.load("python-reviewer"), "/t") == "GRANT_EXCEEDS_CLASS",
+          "a verifier with a target root is refused, never granted Edit")
+    esc = A.AgentSpec(json.loads(json.dumps(ho.raw)), ho.dir)
+    esc.contract.write_surfaces = ["../outside/"]
+    check("V-ACR-GRANT-REFUSES-ESCAPE", refused(esc, "/t") == "SURFACE_ESCAPES_ROOT", "'..' surface refused")
+    esc.contract.write_surfaces = ["/etc/passwd"]
+    check("V-ACR-GRANT-REFUSES-ABSOLUTE", refused(esc, "/t") == "SURFACE_ESCAPES_ROOT", "absolute surface refused")
+
+    # Writes observed against the granted surface (independent of what the runtime allowed).
+    w = R.writes_outside("/home/kobii/t", ho.contract.write_surfaces,
+                         ["/home/kobii/t/.claude/settings.json", "/home/kobii/t/src/app.py",
+                          "/home/kobii/t/.claude/hooks/x.sh"])
+    check("V-ACR-WRITES-OUTSIDE", w == ["/home/kobii/t/src/app.py"], f"{w}")
+
     total = passes + fails
     print(f"ACR_PASS={passes}/{total}  threshold={total}/{total}")
     return 0 if fails == 0 else 1
