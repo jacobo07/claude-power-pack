@@ -88,7 +88,10 @@ def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = N
         f"<<<PROMPT\n{d['prompt']}\nPROMPT>>>\n"
         "When it returns, output only the agent's reply, verbatim, with nothing added.")
     t0 = time.time()
-    with tempfile.TemporaryDirectory(prefix="acr-") as cwd:
+    # ignore_cleanup_errors: measured 2026-10-01, a process the `claude -p` child left behind
+    # still held this cwd, rmtree raised PermissionError on exit and the finished run's whole
+    # record was lost. A leftover temp dir is litter; a lost measurement is not recoverable.
+    with tempfile.TemporaryDirectory(prefix="acr-", ignore_cleanup_errors=True) as cwd:
         try:
             p = subprocess.run([exe, "-p", parent_prompt, "--model", parent_model,
                                 "--output-format", "stream-json", "--verbose",

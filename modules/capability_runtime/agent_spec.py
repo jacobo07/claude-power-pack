@@ -196,9 +196,15 @@ class AgentSpec:
             else:
                 deep.append(p)
         if deep and mode == "virtual":
-            out.append("\n## Deep pages of this role\n\nThese are part of your role but not loaded yet. "
-                       "Read a page with the Read tool as soon as your task touches its topics; "
-                       "never guess what a page says.\n\n")
+            # Measured 2026-10-01 (S3 + probe): the soft wording ("read a page as soon as your
+            # task touches its topics") produced 0 page reads in 4/4 virtual runs, including one
+            # with the fixture's "do not explore any repository" removed. Paging is now a stated
+            # step before the answer, and role pages are named as NOT the thing under audit.
+            out.append("\n## Deep pages of this role\n\nThese pages are part of your role, not loaded yet. "
+                       "They are not the repository or plan under review, so reading them is never "
+                       "'exploring'. Before you write your answer: (1) list every page below whose topics "
+                       "your mission touches; (2) Read each of those pages in full with the Read tool. "
+                       "A finding that rests on a topic of a page you did not read is a guess.\n\n")
             for p in deep:
                 out.append(f"- `{self.page_path(p).as_posix()}` -- {', '.join(p.get('topics', []))}\n")
         if self.output_contract != "native":
