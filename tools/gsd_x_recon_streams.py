@@ -1,10 +1,14 @@
 """Build one OBSERVED claim per stream from the recon inventory. Refuses on any unmapped event.
 
 Usage: python tools/gsd_x_recon_inventory.py recon.json
-       python tools/gsd_x_recon_streams.py recon.json out.jsonl
+       python tools/gsd_x_recon_streams.py recon.json out.jsonl [ID_SUFFIX]
 Exit 2 names every event whose scope no stream owns; add it to STREAMS, never to a catch-all.
-Rows are written to out.jsonl for review; appending them to claims.jsonl is a separate step."""
-import collections, json, sys
+Rows are written to out.jsonl for review; appending them to claims.jsonl is a separate step.
+ID_SUFFIX (e.g. W2) is required on every wave after the first, or ids collide with earlier rows.
+
+Commit a change to THIS file on its own, before the ledger commit. A ledger commit that also
+touches tools/ is material evidence, and a commit cannot cite its own sha (aed9803 did this)."""
+import collections, datetime, json, sys
 from pathlib import Path
 
 PP = Path(r"C:\Users\User\.claude\skills\claude-power-pack")
@@ -47,7 +51,14 @@ STREAMS = {
     "S14": ("CDIO motion grammar (visual patterns, motion resolver, CDIO hook, V-MGRAM gate)",
             {"visual-patterns", "cdio", "cdio-hook", "motion-grammar"}),
     "S15": ("Power Pack standing self-evaluation (pp-eval)", {"pp-eval"}),
+    "S16": ("Agent capability and memory virtualization (plans, benchmark, agent estate audit)",
+            {"plan", "agent-virtualization", "agent-estate"}),
+    "S17": ("Context-floor attribution (what a fresh session pays before work: floor, session and cost autopsy)",
+            {"floor", "pp-eval/floor", "session-autopsy", "fresh-context-tax", "cost-autopsy"}),
 }
+# Later waves reuse the stream ids with a suffix (argv[3], e.g. "W2"), so ids never collide.
+S09_LATE = {"rtk-rewrite", "agent-solo-guard", "specs"}
+S03_LATE = {"test-mission-watchdog"}
 # .planning phase scopes are split by date: the v1 milestone ran 09-20..09-22, CRO from 09-28.
 PLANNING = {"01", "02", "03", "04", "05", "02,03", "phase 5", "gate", "roadmap", "state"}
 CRO_START = "2026-09-27"
@@ -55,6 +66,14 @@ CRO_START = "2026-09-27"
 
 def stream_of(e):
     s = e["scope"]
+    # A subject outranks a generic scope: "docs(spec): agent capability virtualization plan" is
+    # virtualization work, not the long-run stream that scope "spec" otherwise means.
+    if "virtualization" in e["subject"].lower():
+        return "S16"
+    if s in S09_LATE:
+        return "S09"
+    if s in S03_LATE:
+        return "S03"
     if s == "unscoped":
         subj = e["subject"].lower()
         if subj.startswith("gsd-x"):
@@ -78,6 +97,7 @@ def stream_of(e):
 
 def main():
     groups = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+    suffix = sys.argv[3] if len(sys.argv) > 3 else ""
     claims = rc.load_claims()
     pins = collections.defaultdict(set)
     for c in claims:
@@ -117,12 +137,12 @@ def main():
         else:
             pin_sentence = "None of them touched a surface any GSD X claim is path-pinned to."
         rows.append({
-            "id": f"GSDX-{sid}",
+            "id": f"GSDX-{sid}{suffix}",
             "state": "OBSERVED",
-            "date": "2026-09-30",
+            "date": datetime.date.today().isoformat(),
             "claim": (f"Stream '{title}' landed {len(es)} material commits {span} "
                       f"that no GSD X claim spoke about. {pin_sentence}"),
-            "evidence": ("tools/gsd_x_recon_inventory.py over a30f39f.." + head + ", grouped by commit "
+            "evidence": (f"tools/gsd_x_recon_inventory.py over {rc.DEFAULT_SINCE}.." + head + ", grouped by commit "
                          "scope into streams; commits: " + " ".join(e["sha"] for e in es)),
             "instrument": ("the reconciler's own materiality predicate (imported by the inventory) plus a "
                            "stream map that refuses any unmapped event; pin intersection is exact path "
