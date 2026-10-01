@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -74,6 +75,25 @@ def parse_stream(lines: list[str]) -> dict:
             "carrier_text": carrier_text}
 
 
+LAUNCH_RE = re.compile(r"(?i)\b(launched|running in the background|started in the background|async agent)\b")
+AGENT_FOOTER_RE = re.compile(r"agentId:\s*[0-9a-f]{8,}[\s\S]*$")
+
+
+def carrier_reply(s: dict) -> tuple[str, str]:
+    """The carrier's answer and where it came from. Two runtime shapes, both measured:
+      2.1.286 (2026-09-30): Agent is ASYNC -- the tool_result is a launch notice and the answer
+               is the carrier's last SIDECHAIN text block.
+      2.1.285 (2026-10-01, GEX44): Agent is SYNC -- no sidechain text is streamed at all; the
+               answer is the parent's Agent tool_result, followed by an `agentId: ...` footer.
+    Reading only the first shape recorded three GEX44 runs as MEASURED with reply=0."""
+    if s.get("carrier_text", "").strip():
+        return s["carrier_text"], "sidechain"
+    tool_result = s["agent_results"][-1] if s.get("agent_results") else ""
+    if tool_result and not LAUNCH_RE.search(tool_result[:300]):
+        return AGENT_FOOTER_RE.sub("", tool_result).strip(), "tool_result"
+    return "", "none"
+
+
 def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = None,
         parent_model: str = "haiku", timeout: int = 900, state_version: str | None = None) -> dict:
     spec = A.load(spec_id)
@@ -106,12 +126,15 @@ def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = N
                 "stderr": p.stderr[-400:], "spec": spec_id, "mode": mode}
     agent_call = next((c for c in s["parent_calls"] if c["name"] in ("Agent", "Task")), None)
     tool_result = s["agent_results"][-1] if s["agent_results"] else ""
-    reply = s["carrier_text"]
     if not s["carrier_tools"] and "hook error" in tool_result[:200]:
-        reply = tool_result
         # Measured 2026-09-30: a PreToolUse gate refused the dispatch and its text came back
         # as the "reply". The carrier never ran; that is not a result of any kind.
-        return {"status": "DISPATCH_BLOCKED", "reason": reply[:300], "spec": spec_id, "mode": mode}
+        return {"status": "DISPATCH_BLOCKED", "reason": tool_result[:300], "spec": spec_id, "mode": mode}
+    reply, reply_source = carrier_reply(s)
+    if not reply.strip():
+        # An empty answer is not a measurement (2026-10-01: three GEX44 runs were MEASURED, reply=0).
+        return {"status": "UNMEASURED", "reason": "carrier reply empty in every known stream shape",
+                "carrier_tools": [c["name"] for c in s["carrier_tools"]], "spec": spec_id, "mode": mode}
     reads = [str(c["input"].get("file_path", "")).replace("\\", "/") for c in s["carrier_tools"] if c["name"] == "Read"]
     deep = [(spec.page_path(pg)).as_posix() for pg in spec.pages if pg["load"] == "on_demand"]
     rec = {
@@ -124,7 +147,7 @@ def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = N
                            or c["input"].get("command")} for c in s["carrier_tools"]],
         "pages_read": sorted({"/".join(r.split("/")[-2:]) for r in reads
                               if any(r.lower().endswith("/".join(x.split("/")[-2:]).lower()) for x in deep)}),
-        "returned_chars": len(reply), "reply": reply, "parent_usage": s["usage"],
+        "returned_chars": len(reply), "reply": reply, "reply_source": reply_source, "parent_usage": s["usage"],
     }
     if spec.output_contract == "proof-bundle-v1":
         res = B.validate(reply, spec, state_version or A.current_state_version(ROOT))

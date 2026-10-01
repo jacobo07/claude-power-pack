@@ -35,8 +35,13 @@ worktree = repo root. Plan + Owner decisions: `vault/specs/agent-capability-virt
    Benchmark v2 (S3b) authored + FROZEN: vault/benchmarks/agent_virtualization_v2 (F4-F6,
    6 defects each, every one deep-page-only doctrine; key gates in test_agent_bench.py 16/16:
    correct finding hits own defect, restating a step scores nothing, page is on_demand).
-   NEXT: `python tools/agent_bench.py run --set v2` (9 dispatches -> runs/s3b/), then
-   `score --set v2`. Only NON_INFERIOR unblocks S4.
+   v2 RUNS ON GEX44 (laptop run was reaped at 0.8 GB free, 0/9 done): clone
+   /home/kobii/missions/agent-bench-s3b @ bench/s3b = 8a7cfaa (manifest now hashes LF-normalized
+   content; same frozen content), carriers installed in kobii's ~/.claude/agents, runner pid
+   2188580 detached, log s3b_run.log, records in that clone's runs/s3b/. Resumable: re-run
+   `python3 tools/agent_bench.py run --set v2` there. Then score there (or fetch runs/s3b back)
+   with `score --set v2`. Only NON_INFERIOR unblocks S4. GEX44 has no agent-solo-guard and no
+   carrier_bash_guard hook (test_agent_spec 24/26 there for that reason only).
 2. S4: migrate the other 9 dormant agents (agent_split_markers/*.json), gated on S3 NON_INFERIOR.
 3. S5 telemetry, S6 foundry, S7 closure (UKDL, liveness, agent-creation gate).
 
