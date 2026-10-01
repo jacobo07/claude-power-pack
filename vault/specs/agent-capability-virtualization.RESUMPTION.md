@@ -43,7 +43,32 @@ worktree = repo root. Plan + Owner decisions: `vault/specs/agent-capability-virt
    arm. Fixed on the way: manifest hashed host line endings (8a7cfaa); parser lost the reply in
    claude 2.1.285's sync Agent shape and recorded reply=0 as MEASURED (cdae503; 3 bad records
    kept in runs/s3b/invalid/). GEX44 lacks agent-solo-guard + carrier_bash_guard hooks.
-2. S4 UNBLOCKED: migrate the other 9 dormant agents (agent_split_markers/*.json).
+2. S4 IN PROGRESS -- plan APPROVED by Owner 2026-10-01, harness-optimizer = WRITER class (option a).
+   Correction: only 2 markers existed (both done). The 9 come from
+   vault/audits/agent_estate/INDEX.generated.md: comment-analyzer, type-design-analyzer
+   (investigator); cpp/go/java/python/rust/typescript-reviewer (verifier: they run diagnostic
+   commands); harness-optimizer (writer). Nothing written yet. Verified facts for the markers:
+   - Each body = provenance comment, `## Prompt Defense Baseline` (byte-identical to
+     agent_primitives/prompt-defense-baseline.md in all 9 -> use the primitive), then the role.
+     Role-start prefixes (unique): `# Comment Analyzer Agent`, `# Type Design Analyzer Agent`,
+     `You are the harness optimizer.`, `You are a senior {C++|Go|Python|Rust} code reviewer`,
+     `You are a senior {Java|TypeScript} engineer`. Copy silent-failure-hunter.json's shape.
+   - Deep (on_demand) pages ONLY: java `### HIGH -- JPA / Relational Database` (data layer,
+     incl. Panache/NoSQL) up to `### MEDIUM -- Concurrency and State` (inline again);
+     java `### MEDIUM -- Workflow and State Machine` up to `## Diagnostic Commands` (inline);
+     typescript `### MEDIUM -- React / Next.js` up to `### MEDIUM -- Performance` (inline).
+     Everything else inline (paging cost +20 % in S3b). output_contract native for all 9.
+   - Contracts: CapabilityContract needs owner, triggers, consumers. Writer harness-optimizer
+     with write_surfaces REQUIRES rollback + kill_switch (HR-APA-009). Resolver default grant
+     is verifier, so writer is only resolvable with an explicit writer grant (intended).
+   - Triggers are phrase + order-free word-set matched: use multi-word language triggers
+     (`go code`, `go handler`, `golang`), never bare `go`.
+   NEXT: write 9 markers (new files) -> `python -m modules.capability_runtime.agent_spec split
+   agents/<n>.md vault/capability_runtime/agent_specs/<n> --markers-file <marker>` each (fails
+   unless the pages round-trip) -> new tools/test_agent_s4.py (routing: "review this Go
+   handler" -> go-reviewer, not rust; class/tool allowlist; all 9 load) -> existing spec,
+   resolver, bundle gates -> one real GEX44 dispatch per carrier class used, incl. the first
+   writer-class run.
 3. S5 telemetry, S6 foundry, S7 closure (UKDL, liveness, agent-creation gate).
 
 Start: read the spec, run `python tools/test_agent_spec.py`, `test_agent_resolver.py`,
