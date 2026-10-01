@@ -159,6 +159,36 @@ an unmerged branch).
 | 14 | mutation drills (`tools/mutation_drill.py`) on readiness / tier reconciliation / UNJUDGEABLE / ambiguity / empty-denominator guards | run | prove each guard has a red branch | all KILLED; floors recorded in `mutation_ratchet.json` |
 | 15 | `vault/liveness/reachability_registry.json` (if needed), `ukdl-universal.md`, wiki | edit | declare new modules; UKDL traps per defect class (dedupe first); wiki update + handoff | `reachability.py` exit 0; grep dedupe |
 
+## Phase 4 — Audit (oneshot-architect-auditor, 2026-10-01): 24 gaps. Phase 5 — fixes
+
+| gap | disposition (amends the tasks above) |
+|---|---|
+| 1 a missing or broken repo `.py` makes exit 2 → blocks every edit | Task 10 registers a **node launcher** (`hooks/sdd_write_gate.js`, exec-form like the existing entries). It checks the script exists, spawns absolute PY_EXE (`CLAUDE_PY_EXE` override), emits `{}` and logs on missing file / non-zero exit / timeout. Registered only after the hook is committed and its stdin/stdout gates pass. No argparse in the hook. |
+| 2 state written after jit's slow `fn(data)` (killed at ~11.5 s) | Task 7/8: write the decision state **before** `fn(data)`, stamped with prompt time and task key. |
+| 3 short or meta prompts leave the old state | Every UserPromptSubmit writes either a fresh decision or `INHERITED` with the prompt time. The hook treats INHERITED on a high-risk record as UNJUDGEABLE. |
+| 4 UNKNOWN→ALLOW paths; cwd-hash session fallback | Never key state without a real session_id. Log a `started` marker before imports, paired with the decision row. Promotion to enforce also requires a measured unjudgeable/no-state rate. |
+| 5 Windows hook I/O | Absolute PY_EXE; stdin read as bytes and decoded utf-8-sig; UTF-8 output; stdout redirected during imports; stdlib-only fast path; timeout 5 s; NotebookEdit covered deliberately; p50/p95 latency on the host is a gate. |
+| 6 `_active_spec()` newest-wins injector | Task 5b: `_active_spec` injects only a STRONG/REFERENCED bound spec. Exclude `*.RESUMPTION/AMENDMENTS/CERTIFICATION.md` from candidates and lint. |
+| 7 escalators duplicate `modules/autonomy_gate/gate.py:38-55` | REUSE: derive risk dims from autonomy_gate's patterns through a shared accessor; add only public-contract terms. Owner table gains autonomy_gate (REUSE). |
+| 8 parser cannot hold nested YAML | Flat item grammar: `- AC-1 \| verify: <cmd>`, `- Q1 \| RESOLVED \| …`. Nested YAML is reported MALFORMED (red gate). Readiness checks syntax and never executes `verify`. |
+| 9 LEGACY is an unbounded bypass | LEGACY only for specs first committed before the cutover, with no readiness key at all. Any readiness key → full judgement. The window ends after a dated deadline in the plan (proposed 2026-11-01), then NOT_READY. |
+| 10 tier-value changes reach many consumers | Pre/post tier-diff gate over each consumer's suite (cost_gate, sdd_tier, dataset_first, decision_review, prd_generator, reframing, test_sdd_os incl. V-SDD-KNOWLEDGE-QUIET-ON-ORDINARY); consumers listed in the W2 commit body; CLI exit semantics documented. |
+| 11 pasted logs, negations, Spanish | Corpus must include Spanish, pasted-log, negation and benign-delete cases. At least half from real transcript prompts, redacted. Escalators match only non-fenced, non-quoted text. False escalations reported per escalator. |
+| 12 vertical slice cannot close (UCR_CIF_LEARNING plane cannot be N/A) | **Task 12 deferred** to a follow-up. The D1–D6 closure does not depend on it. |
+| 13 mutation drill cannot load module mutants; floors owned by `mutation_ratchet.py` | The test resolves PP_ROOT from an env override. One known mutant must be KILLED before the rest are trusted. Floors only via `mutation_ratchet.py --baseline`. Test prints `FAIL <gate>` and `*_PASS=`. |
+| 14 tests pollute the live ledger | `SDD_OS_STATE_DIR` override set in every test; hook subprocess tests override HOME/USERPROFILE; a gate asserts the live ledger line count is unchanged. |
+| 15 re-evaluation needs task text; out-of-repo files | Store task tokens (redacted), not raw prompt text. Judge only files under the state's repo root; anything else logs `out_of_scope`. |
+| 16 exemption normalisation and scope | normcase+abspath relative to the root. Exempt = SPEC_GLOBS + explicit non-code list (tests, fixtures, wiki, RESUMPTION, memory, plans). Gates for mixed case and backslashes. |
+| 17 Windows concurrency on state/ledger | Temp file + `os.replace` with bounded retries; share-friendly reads; O_EXCL first-write marker; single-line appends with a failure counter; TTL + sweep. |
+| 18 settings.json write is Owner-side (HR-001) | Ship the exact JSON snippet; run `test_hook_registration_integrity.py --live` before and after; DONE grade capped at INTEGRATION-VERIFIED until a real-session ledger row exists; declare in the reachability registry if needed. |
+| 19 `ask` fatigue; headless sessions | Ask once per (session, task key, spec digest). Non-interactive runs log would_block instead of asking. Test both before any promotion. |
+| 20 `pp-sdd-tier` signal uses the old gate | Retire the signal from SDD decisions (activation owns the directive). |
+| 21 tier reconciliation rule | Effective tier = max(task, spec). Requirements judged at the effective tier. Drill named for a max→min flip. |
+| 22 kill switch is not live mid-session | File switch `~/.claude/state/sdd-os/WRITE_GATE_OFF`, read on each call. Rollback order: switch file → Owner removes the settings entry → revert commits. |
+| 23 shared-churn files; wide oracle | `tools/foreign_hunk_guard.py` and a re-read of HEAD before each commit. The oracle becomes "no NEW orphan among the named modules", bracketed by the sorted dirty-path set. |
+| 24 "0 specs declare covers" | **OVERTURNED**: `^covers:` matches 26 files in `vault/specs` (Grep, 2026-10-01). Still adopted: a numeric promotion threshold, minimum sample and labelling procedure defined before W5; UNBOUND-with-zero-declared-specs reported as its own class. |
+| info | Holdout flag **deferred** (no consumer). Residue item STALE → follow-up through `scaffold.check_drift`. Keep: shadow-first, no dispatcher edit, reuse of the GSD goal log. |
+
 `intent_verified` is NOT extended in this mission: the GSD goal obligations already provide
 tree-bound requirement→gate evidence. Recorded as a follow-up (join on AC ids), not dropped
 silently.
