@@ -28,6 +28,12 @@ Goal: understand Claude Power Pack and find the changes that would make it bette
    and names the task, never its content; an empty draft spec unlocks a T2 task. Of the spec practices
    with measured evidence, none is required ([[sdd-os-gap-analysis]]). The same pattern as point 3:
    machinery exists and runs, while its effect goes unmeasured.
+6. **PP builds the enforcement before the content, then delivers the promise anyway.** The
+   Constitutive Baseline Ratchet has hash-anchored generations, an anti-downgrade diff and an honest
+   check grammar. But its 60 rules carry 0 runnable checks, no generation past B0 exists, and the
+   done-gate it tells the agent about has no caller ([[cbr-gap-analysis]]). Converse of point 5:
+   there the template allowed what nothing required; here the code requires what no content
+   supplies.
 
 ## Open questions
 

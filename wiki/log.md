@@ -51,3 +51,27 @@ Append-only. Newest at the bottom. `grep "^## \[" log.md` lists every entry.
   load-bearing papers against their abstracts (the third is a pilot study with unverified numbers).
   Reproduced the binder and tier defects with `tools/sdd_probe.py`, including a no-spec control.
   Score: 0 met / 18 partial / 15 missing. Fixes ranked; none approved.
+
+## [2026-10-01] query | Constitutive Baseline Ratchet: gaps and full potential
+- touched: [[cbr-gap-analysis]], [[constitutive-baseline-ratchet]], [[2026-10-01-cbr-external-research]],
+  [[2026-10-01-cbr-internal-inventory]], [[overview]], [[index]]
+- notes: two research subagents (external web ~33 sources, internal read-only audit @ 298975d).
+  Verified 3 load-bearing external claims (OpenSSF confirmed; agent-memory claim weaker than stated;
+  Infer snippet-only). Corrected the audit's "47/47 identical capsules" to 43/47. `tools/cbr_probe.py`
+  reproduced 9 defects with controls and REFUTED one hypothesis (newest-generation edit is caught).
+  Score: 2 met / 15 partial / 15 missing. Fixes ranked; none approved.
+
+## [2026-10-01] query | Maturity transfer pilot: KobiiCraft → KobiiSports Resort
+- touched: [[maturity-transfer]], [[maturity-transfer-pilot-kobiicraft-ksr]],
+  [[2026-10-01-kobiicraft-capability-harvest]], [[2026-10-01-ksr-maturity-profile]], [[index]]
+- notes: Owner asked whether a mature system can raise others' maturity "and not only lessons".
+  Two blind read-only agents, shared taxonomy (L1-L5 + LG, 14 traits). Verified in source: KSR
+  save zeroes and overwrites on any failed load (main.cpp:1443-1565); KC codifies the inverse
+  (world_persistence_gate.py:7-16); KC CI skips its missing praxis guard. 50 KC capabilities:
+  12 → 6 ranked proposals, 11 second-tier, 4 product questions, 7 present/shared, 16 not
+  transferable. Diff not blind; 19/24 gap coverage is interpretation. Nothing changed in either repo.
+
+## [2026-10-01] query | Maturity transfer pilot: Owner decisions recorded
+- touched: [[maturity-transfer-pilot-kobiicraft-ksr]]
+- notes: Owner accepted P1 and both reverse CI items. Landed as backlog rows only: KSR-B-073
+  (KSR `5345ca1`) and KobiiCraft P1 "CI gates that cannot fire" (KC `61cd4448`). P2-P6 undecided.
