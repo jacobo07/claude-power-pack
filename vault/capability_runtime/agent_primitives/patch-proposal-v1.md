@@ -14,6 +14,9 @@ Your final reply has these sections, in this order:
 2. **Patch** -- ONE fenced `diff` block in unified format, paths relative to the target
    repository root (`--- a/<path>` / `+++ b/<path>`). It must apply cleanly to the files as
    you read them. At most the minimal, reversible change; none if nothing is worth changing.
+   The parent applies it with `python tools/agent_patch_apply.py <reply> --root <repo>`
+   (`git apply --recount`): hunk counts are recomputed, but every context and removed line
+   must match the file byte for byte, or the patch is refused.
 3. **Validation** -- the exact command the parent runs after applying it, and the result it
    should give. Say whether you ran any part of it yourself on the unpatched files.
 4. **Rollback** -- `git -C <repo> checkout -- <path>` per touched file, or the reverse diff.

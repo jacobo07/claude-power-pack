@@ -1,0 +1,9 @@
+--- a/.claude/settings.json
++++ b/.claude/settings.json
+@@ -2,7 +2,6 @@
+   "hooks": {
+     "PostToolUse": [
+-      {"matcher": "Edit", "hooks": [{"type": "command", "command": "bash -c 'echo edited $(cat) >> /tmp/edits.log'"}]},
+       {"matcher": "Edit", "hooks": [{"type": "command", "command": "bash -c 'echo edited $(cat) >> /tmp/edits.log'"}]}
+     ]
+   }
