@@ -91,11 +91,17 @@ worktree = repo root. Plan + Owner decisions: `vault/specs/agent-capability-virt
      V-ACR 18/18. E2E on GEX44 (synthetic probe-writer, surface docs/): docs edit landed,
      src edit denied by runtime, record denied_tools=['Edit'] + writes_outside_surface.
      Evidence: real_boundary/s4/{writer3,probe,e2e,mech}*.
-   OPEN (Owner): harness-optimizer's whole surface is protected, so it can NEVER write
-   headlessly (grant refused SURFACE_PROTECTED). Options: (a) keep writer for interactive
-   dispatch only, where the Owner approves each .claude/ edit; (b) demote to verifier that
-   returns a patch for the parent to apply; (c) bypassPermissions -- not recommended.
-3. S5 telemetry, S6 foundry, S7 closure (UKDL, liveness, agent-creation gate).
+   OWNER CHOSE (b), 2026-10-01: harness-optimizer is a VERIFIER, Edit REPLACED by the new
+   output contract patch-proposal-v1 (ec703ec); parent applies with
+   tools/agent_patch_apply.py (git apply --recount, dry run by default; 131180e). Real GEX44
+   run: verifier carrier, no edit attempt, target untouched, one diff whose hunk header was
+   miscounted (plain git apply: corrupt) -> applied cleanly via the tool on GEX44, JSON valid.
+   Gates: S4 44/44, V-ACR 19/19, V-PATCH 9/9 (real miscounted patch + plain-rejects control),
+   spec 26/26, resolver 14/14, bundle 14/14, bench 16/16. S4 CLOSED. No spec in the catalog
+   is writer class now; the writer path stays proven by the synthetic e2e (f6a18ae).
+3. NEXT: S5 telemetry, then S6 foundry, S7 closure (UKDL, liveness, agent-creation gate).
+   Debt: "C++" alone never routes to cpp-reviewer (tokenizer); hermetic runs load no user
+   hooks; GEX44 lacks carrier_bash_guard; hub rolloverFocus picks newest capsule per dir.
 
 Start: read the spec, run `python tools/test_agent_spec.py`, `test_agent_resolver.py`,
 `test_agent_bundle.py` (all green at this commit), then action 1.
