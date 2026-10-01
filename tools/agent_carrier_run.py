@@ -37,12 +37,15 @@ from modules.capability_runtime import agent_bundle as B  # noqa: E402
 from modules.capability_runtime import agent_spec as A  # noqa: E402
 
 
+DENIED_RE = re.compile(r"Permission to use (\w+) has been denied")
+
+
 def parse_stream(lines: list[str]) -> dict:
     """The Agent tool is ASYNC in this runtime (measured 2026-09-30): its tool_result is
     a 'launched' notice and the carrier's answer arrives later. So the carrier's reply is
     its own LAST sidechain text block, not the parent's tool_result."""
     carrier_tools, parent_agent_calls, agent_results, final, usage = [], [], [], "", {}
-    carrier_text = ""
+    carrier_text, denied = "", []
     for ln in lines:
         ln = ln.strip()
         if not ln.startswith("{"):
@@ -66,18 +69,25 @@ def parse_stream(lines: list[str]) -> dict:
                     (carrier_tools if side else parent_agent_calls).append(rec)
                 elif c.get("type") == "text" and side and c.get("text", "").strip():
                     carrier_text = c["text"]
-        elif ev.get("type") == "user" and not side:
+        elif ev.get("type") == "user":
             for c in content:
-                if c.get("type") == "tool_result":
-                    body = c.get("content")
-                    text = body if isinstance(body, str) else "".join(
-                        b.get("text", "") for b in (body or []) if isinstance(b, dict))
+                if c.get("type") != "tool_result":
+                    continue
+                body = c.get("content")
+                text = body if isinstance(body, str) else "".join(
+                    b.get("text", "") for b in (body or []) if isinstance(b, dict))
+                # A tool_use in the record says only that the call was attempted. Measured
+                # 2026-10-01: a writer carrier's Edit was refused by the runtime and the run
+                # still read MEASURED. The refusal is a fact of the run; record it.
+                if c.get("is_error") and (d := DENIED_RE.match(text)):
+                    denied.append(d.group(1))
+                if not side:
                     agent_results.append(text)
         elif ev.get("type") == "result":
             final, usage = ev.get("result") or "", ev.get("usage") or {}
     return {"carrier_tools": carrier_tools, "parent_calls": parent_agent_calls,
             "agent_results": agent_results, "final": final, "usage": usage,
-            "carrier_text": carrier_text}
+            "carrier_text": carrier_text, "denied_tools": denied}
 
 
 LAUNCH_RE = re.compile(r"(?i)\b(launched|running in the background|started in the background|async agent)\b")
@@ -159,6 +169,7 @@ def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = N
         "pages_read": sorted({"/".join(r.split("/")[-2:]) for r in reads
                               if any(r.lower().endswith("/".join(x.split("/")[-2:]).lower()) for x in deep)}),
         "returned_chars": len(reply), "reply": reply, "reply_source": reply_source, "parent_usage": s["usage"],
+        "denied_tools": s["denied_tools"],
     }
     if spec.output_contract == "proof-bundle-v1":
         res = B.validate(reply, spec, state_version or A.current_state_version(ROOT))

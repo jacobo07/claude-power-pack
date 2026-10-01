@@ -71,8 +71,18 @@ worktree = repo root. Plan + Owner decisions: `vault/specs/agent-capability-virt
    bundle 14/14, bench 16/16. Known limit: "C++" tokenizes to nothing, so cpp-reviewer is
    reached via cpp / cmake / raii / smart pointer vocabulary, never by "C++" alone.
    harness-optimizer gains Write via the writer class (source had Edit only).
-   NEXT: one real GEX44 dispatch per carrier class (investigator: comment-analyzer; verifier:
-   go-reviewer; writer: harness-optimizer on a throwaway repo -- first writer-class run).
+   GEX44 real runs DONE (clone ~/missions/agent-bench-s4 @ b3ac329, fixtures ~/missions/
+   s4-fixtures, records in vault/audits/agent_estate/real_boundary/s4/): investigator
+   comment-analyzer MEASURED 19 s, found the planted comment lies; verifier python-reviewer
+   (no Go toolchain on GEX44) MEASURED 23 s, really ran Bash py_compile exit 0. Writer
+   harness-optimizer: run 1 lost to a parser crash (string `message` event; fixed b3ac329,
+   raw stream now saved); run 2 MEASURED 24 s but the RUNTIME DENIED its Edit -- headless
+   parent grants only Agent/Read/Grep/Glob. Carrier did not work around it, found the planted
+   duplicate hook, proposed an in-surface fix; target repo unchanged (empty diff). The record
+   hid the denial -> now `denied_tools` (V-ACR 8/8, re-parsed on the real stream: ['Edit']).
+   OPEN (Owner): grant the writer carrier writes in headless dispatch? Proposal: derive
+   path-scoped Edit/Write allow rules from write_surfaces + an explicit --target-root, so the
+   runtime (not the prompt) enforces the surface; verify rule syntax against docs; re-run.
 3. S5 telemetry, S6 foundry, S7 closure (UKDL, liveness, agent-creation gate).
 
 Start: read the spec, run `python tools/test_agent_spec.py`, `test_agent_resolver.py`,

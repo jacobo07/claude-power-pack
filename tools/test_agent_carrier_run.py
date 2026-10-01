@@ -83,6 +83,15 @@ def main():
         ok, detail = False, f"crashed: {e!r}"
     check("V-ACR-STRING-MESSAGE-DOES-NOT-CRASH", ok, detail)
 
+    # Measured 2026-10-01 (GEX44, writer run 2): the runtime denied the carrier's Edit, the
+    # carrier said so, and the record still read MEASURED with no trace of the refusal.
+    denial = ev("user", [{"type": "tool_result", "tool_use_id": "t2", "is_error": True,
+                          "content": "Permission to use Edit has been denied. IMPORTANT: ..."}], side=TU)
+    s = R.parse_stream([PARENT_CALL, CARRIER_READ, denial, result("ANSWER")])
+    check("V-ACR-DENIAL-RECORDED", s.get("denied_tools") == ["Edit"], f"denied={s.get('denied_tools')}")
+    s = R.parse_stream([PARENT_CALL, CARRIER_READ, result("ANSWER")])
+    check("V-ACR-NO-DENIAL-IS-EMPTY", s.get("denied_tools") == [], f"denied={s.get('denied_tools')}")
+
     total = passes + fails
     print(f"ACR_PASS={passes}/{total}  threshold={total}/{total}")
     return 0 if fails == 0 else 1
