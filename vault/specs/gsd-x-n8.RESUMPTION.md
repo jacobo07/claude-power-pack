@@ -292,8 +292,17 @@ Owner N7 answer 2 (push nothing) stands.
        of 32 GB; it does one `git show` per commit). Inventory: 486 already covered, 2 uncovered
        (`e079c57`, `94491a3`), both proven after the boundary by rev-list. `dependency_verdicts`:
        STALE_DEPENDENCY 0.
-     - **Open:** obligation 4 (test_gsd_x_dataset, ~35 min) and 5 (hook latency) need memory
-       headroom; neither was run. Expect COVERAGE red for foreign commits after `0ba8565`.
+     - **2026-10-01, obligation 4 DONE on GEX44 (develop-here-prove-there):
+       `test_gsd_x_dataset` 11/11 at `bb62bcd`**, in an isolated clone
+       `/home/kobii/missions/_gsdx_recon` (a `git clone` of the live install, never the live
+       tree), fed by git bundles sha256-matched at both ends. The suite took ~1 s there; the
+       "~35 min" was this laptop's memory pressure (557 MB free of 32 GB), not the suite.
+       First run at `aed9803` was 10/11: **a reconciliation commit that also touches tools/ is
+       material and cannot cite its own sha**, so it leaves itself uncovered. Fixed by order:
+       tool alone (`e0f541f`), then a ledger-only commit (`bb62bcd`, wave 2, ids `S..W2`,
+       RECONCILED-THROUGH -> `e0f541f`). The builder's docstring now says so.
+     - **Open:** obligation 5 (hook latency) still needs headroom; not run. Coverage reads red
+       again for any foreign commit after `e0f541f` -- that is the next wave, with suffix W3.
 6. *(superseded by 5)* **§50 (GSDX-M08).** The 18 candidates stay unpromoted, but the blocker has
    changed name: the UKDL's continuous writer is the CEPS auto-appender (GSDX-M09), so
    "quiet for an hour" never comes. Reconcile the candidates against the UKDL, then land
