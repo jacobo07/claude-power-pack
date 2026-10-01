@@ -98,10 +98,19 @@ in `governance/` (one domain per file, imperative, each rule cites a real incide
 - `governance/KNOWN_FALSE_POSITIVES.md` — check FIRST on any confusing hook/gate signal (FIOS/IRR/FD-07 cross-contamination, BLOCKED_DELIVERY npm, scaffold/Woz literal matcher, 3rd-edit block).
 - `governance/README.md` — index + how to apply in a new project.
 
-Confirmed learnings (origin + rule + where they apply): `knowledge/PORTFOLIO_LEARNINGS.md`.
-Standing obligation: a new false positive goes into `KNOWN_FALSE_POSITIVES.md`, and a new
-learned pattern into `knowledge/PORTFOLIO_LEARNINGS.md`, the SAME session it is found — zero
-knowledge debt. Governance is the first artifact of a new project, not an afterthought.
+Rule origins, July 2026 (frozen history, LRN-01..11): `knowledge/PORTFOLIO_LEARNINGS.md`.
+Standing obligation: a new false positive goes into `KNOWN_FALSE_POSITIVES.md` the SAME session
+it is found. A new learned pattern goes to its existing home (UKDL, memory, or `governance/` when
+normative); its origin story and evidence go to `wiki/` (schema: `wiki/CLAUDE.md`). Governance is
+the first artifact of a new project, not an afterthought.
+
+## Compact Instructions
+When summarizing this conversation, keep verbatim:
+- the `RESUMPTION_FILE.md` path in use and its next action, if any;
+- every HR-* rule that fired this session, and any Owner bypass phrase given;
+- Owner decisions still pending, written as questions;
+- measured numbers with the command that produced them (never keep a number without its source);
+- if `wiki/` was edited: the last `wiki/log.md` entry header.
 
 <!-- PP-HARD-RULES-START -->
 

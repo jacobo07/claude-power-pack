@@ -1,0 +1,278 @@
+title: The Stupid Simple Content Strategy That's Making Apps Go Viral
+url: https://www.youtube.com/watch?v=I10xtUiXfeY
+published: 2026-03-15
+playlist: $ Datasets: Vibe Coding (PLjUfmZdHPirc2sUhPCpFTGSsQ6kKwF29-)
+transcript: YouTube auto-captions (I10xtUiXfeY.en-orig.vtt), de-duplicated, unedited
+
+Right now, there are thousands of creators getting paid by app companies to figure out exactly which video formats convert. And those winning formats are hiding in plain sight, sitting right there on
+their profiles, public, documented, free to use. Casper figured this out and used it to build an app that made $217,000 in 5 months. &gt;&gt; I get paid to be sponsored by these companies and I see
+which ideas flop and which ones work. So, I'll take the ideas that work and the video structures that I come up with that go viral for these competitors and I can take that, build my own version of
+it, and instead of promoting a company and making them hundreds of thousands of dollars, I can do that for myself with my own app. &gt;&gt; But the thing is, Casper is the creator in this story. Most
+app founders are thinking on the outside of this trying to figure out how to even get a creator like him to pick up the phone. So, in this episode, he's flipping the table completely. Today, he's
+giving app founders the view from his side, the stuff creators never say out loud, like how to actually tell which sponsored videos on a creator's profile are genuinely converting versus just boosted.
+&gt;&gt; If a video has 2 million views and 2,000 likes, it was boosted. But if it has 50,000 likes and 2 million views, that means it's probably organic. And that's pretty much what you would look
+for. &gt;&gt; And the exact pitch that makes an A-player creator like Casper almost impossible to say no to. &gt;&gt; If someone were to come to me and be like, "Hey, we built this app for you based
+on this ad or brand you that went well for you. Here it is. I want to give you 50%. All you have to do is make these videos over and over again." If I saw that email come in, it would be really hard
+to say no and it would be easy to convince me to join. &gt;&gt; Once he's in, the system he runs is ruthless. He found one format that worked, made it again and again until it dried up, and then just
+found a second one. &gt;&gt; So, this is the second format that we cracked and to this day, these are the only two formats that make significant money. I tried it with the Temu class action and it
+went crazy. I think this video alone probably generated close to dollars. &gt;&gt; But, it's not just formats that Casper has down to a science. He's found that certain qualities, like never saying
+the name of his app out loud in any video, is massive for conversions. &gt;&gt; Another interesting thing I learned is to never say the name of the app. I always say go to this app, so it sounds more
+like a friendly, helpful resource, in a way where people don't notice it's an ad. &gt;&gt; In this episode, Casper breaks down how to find pre-validated app ideas hiding in plain sight on creator
+profiles, the pitch that gets a top creator to say yes, and what the deal actually looks like from the other side of the table. This is the conversation app founders don't normally get to have with a
+creator like this. Let's get into it. &gt;&gt; This is the Superwall podcast, and I'm Joseph Choi, founder of Consumer Club. The members in the Consumer Club Discord and the founders I interview on
+the pod build apps at a median of 1 million ARR. A lot of these apps that make the most money run AB tests on their paywalls to make more revenue with the same number of users. Superwall has a lot of
+data on the thousands of apps that use their paywalls. So, recently they put together a free AI tool trained on 422 profitable paywall experiments. It lets you upload a screenshot of your own paywall
+and gives you an experiment idea to increase your revenue. You can use it for free at paywallexperiments.com. Also, if you're building a mobile app doing at least 100K a month in revenue, Superwall
+hosts dinners in San Francisco and New York. They keep each gathering small, thoughtful, genuinely useful for everyone. If you meet this criteria of 100K a month in revenue and want an invite, apply
+using the Typeform in the description. Let's get into the pod. &gt;&gt; Casper, I want to start here um with this tweet. You co-founded an app that made $217,000 in 5 months. And in your bio you say
+co-founder of a 100K a month app. So, yeah, what's your app and uh what does it do? &gt;&gt; The app is called Payout, and we help people find and claim class action settlements. And I have a co-
+founder on this. He's a brilliant guy, and he focused more on the product and development side. And I'm focusing more on the distribution side. &gt;&gt; That's awesome. And if if people are watching
+and you're kind of a a long-time listener to Braille, you know that we we actually ran an episode with Connor uh a few weeks ago, and it was interesting to hear his perspective from the dev side. Um
+but I think this episode will be really interesting to hear from the creator side cuz you're actually the you know, the creator that kind of made this um happen on the distribution side. So, I'm
+curious to get your perspective on like what does it take to get you to want to partner with a developer? And actually be even before that like like why did you decide that you want to start an app?
+&gt;&gt; I wasn't really interested in starting an app at all. I had about 9 million followers across platforms at the time, monetizing through awesome brand deals, sponsorships, affiliates, all this
+cool stuff, but like apps were never on my mind, but Connor reached out, and I remember like thinking nothing of it. Like he reached out via Twitter. I was like, "Yeah, yeah, this app stuff. Whatever,
+not my thing." And I had a friend named Austin who connected us again with Connor. And he was like, "This Connor guy he's a smart guy. He knows his stuff. I think you guys should really try
+something." And Austin's a great friend of mine, and since I heard that coming out of his mouth, I was like, "All right. Let's give it a shot. Let's see how it goes." I'm always like that towards
+ideas where it's like if it's low input on my end to build out, and it's very easy to just say yes and perform a simple action like I could say yes to Connor, he builds it all out, and then I post a
+video, and we see how it does. Like there's no expectations, no guarantees, no nothing. Then it's an easy yes for me. So, that's what we did. We hopped on a call. We went through like five ideas. I
+had a few ideas from companies that have reached out to me in the past to sponsor me, and they just like had low budgets or just didn't work out. And one of those ideas was a competitor of Payout Now.
+And they offered me like 500 bucks for a video, which for the amount of followers and the niche I'm in is really not a lot. I kind of just politely denied it. And I brought it to Connor. I was like,
+"Hey, what do you think about like class action apps, whatever?" And he said, "Honestly, this is probably going to be the easiest one to build. Let's give it a shot. If it works, we scale it. If we
+don't, we'll try a different idea." And little do you know, the first idea just blew up. It's really interesting that you already had inbound sponsor requests, and then some of the sponsorship deals
+that they're proposing just didn't seem like good deals, but then it ended up being a source of a good idea. What What makes you want to partner with a developer on this? Cuz I think a lot of people
+in the audience um are developers or, you know, have like a tech background, and they they would be looking to partner with um a creator like you. If you're a creator for more than say 2 years, you
+learn that your time is best spent creating. It's not best spent responding to emails from agencies from agencies and brand deals, negotiating, and reading through contracts. If you can pay an agency
+20%, and you make more videos in that time, you will make more money long-term. I know vibe coding isn't too tough to use in order to build an app nowadays, but even so, it's not worth my time to
+learn how to do that from front to end, from start to finish. I'd rather partner with someone, give up some equity, and have them handle that whole side while I handle the whole distribution side.
+They do what they're best at and I do what I'm best at. &gt;&gt; Yeah, I feel like some people might be uneasy about that or they're like, oh, like why can't these creators just vibe code the apps
+themselves? Like I'm going to have I'm going to have to like give up a lot. It's not It's not really about the skill. Like like this The skills are all becoming easier and easier with AI, but it's
+just how much attention do you put into it? And like how much do you care about really making that final product like really good? Um and the same thing with the creator side. Like I see a lot of
+technical founders they try to outsource the distribution side without having a marketing co-founder. But then it just doesn't go well because there's there's not someone who's like really has years
+of experience like doing iterations and iterations of the distribution side. So I feel like it's really valuable to have two people. Like one who's really putting all their attention into
+distribution. One who's really putting their attention into the product. And that you you said another thing that was interesting like you can source ideas from the brand deals that do well and even
+copy the format itself, too. Like if you do a a brand deal and you know that it you know, it it does a you know, good number of views, you can then basically just take that as an app idea for
+yourself. I feel like that's a good approach. Like if someone came to you and they're like, hey, I saw you did a brand deal with this company. I have some experience with apps. Like how how about I
+come and make that app for you, give you equity in it, and you make basically the same video again. Is Is that a attractive offer to you? Like what would they have to say to make that a good um
+attractive deal for you? &gt;&gt; Yeah, honestly, that is a really unique approach. I haven't heard anyone talk about it. That's the way I think about it as being someone who has a little bit of
+experience now with what does well in the app space and it is about replicating viral formats that have already worked for you for other brands cuz making an organic video where you just inform people
+on something is a completely different story than making a video promoting a company or a product or a service. You have to be a lot more clever with how you intertwine it with your video so it seems
+organic, not like an ad, and people want to click on it. So, if people can scan your profile, see brands, sponsorships you've done that have gotten a lot of views, but you got to be careful because a
+lot of companies we work with they boost the videos, they put paid ad spend behind it. So, you got to find the ones with high like to view ratios. Those are probably organic views and organic likes.
+If a video has 2 million views and 2,000 likes, it was boosted. But, if it has 50,000 likes and 2 million views, that means it's probably organic. And that's pretty much what you would look for. One
+more thing about this because I had an interesting conversation with a friend who's also looking for creators to partner with and it seems like it's kind of like this gold rush where everyone's
+chasing influencers. All of my influencer friends say they're getting like five emails a day about, "Hey, can we build you a payout app alternative? Can we build you this app, that app?" And they're
+like sending me the screenshots of emails and I'm like, it seems like creators are now being put on like this pedestal, which it kind of makes sense. It's like free distribution, unlimited
+distribution. However, you have to outcompete everyone else who's reaching out to them now. And I think what would work for me personally, I was talking with a friend who is a developer, not a
+creator, and I told her that if someone were to come to me and be like, "Hey, I built this app for you and if we combine this with what you just said, we built this app for you based on this ad or
+brand you that went well for you. Here it is. I want to give you 50%. All you have to do is make these videos over and over again. My friend has done this successfully, made 50k, whatever, whatever.
+If I saw that email come in, it would be really hard to say no, and it would be easy to convince me to join. &gt;&gt; I mean, that's a great script. Guys, like DM DM Caster right now with that exact
+script. Let's just go through it right now. Like, let's look at some videos. Like, I think you prepared some videos, too, but like, were those um I wanted to find some videos where you did a brand
+deal where you feel like it could potentially be there could be competitors out there. &gt;&gt; There is these print-on-demand companies that work with me, and I found a format that worked really
+well, and they would just keep rebooking me over and over again because it was clearly making them more than they were spending on me. So, and then I'll show you the video I remade for payout
+literally like a week later, and it got half a million views, and like, 20,000 comments or something crazy. &gt;&gt; So, this video got 24,000 likes. Um based on your calculation before, that's
+probably a may- maybe a million views-ish. &gt;&gt; Yeah, right about a million views. And this is all organic, no boosting. &gt;&gt; So, then this was a company that reached out. You You did several
+videos with them that were doing well. And then, did you like, are you starting a competitor, or is this one off &gt;&gt; Okay, so here's what happened with Gelato. So, they've been working with me
+probably for like five videos up until this one, and I kept testing different ideas. It's like, if a video gets 100k views, that's okay. We're trying to shoot for like 200 to 500,000 views per
+sponsored video. Obviously, the more the better. This one got a million. But, that basically, they're paying me to experiment on which ideas work well for them. So, I took that experiment. This video
+did the best out of all of them. And if you click on the second link I sent you, I reused that same exact hook for the payout app in that same structure for the video to promote my app, and it
+crushed. This video alone generated I can't tell you. Probably close to 5,000 or more in subscription revenue. &gt;&gt; Wow, that's crazy. &gt;&gt; Watch me make up to $900 in just 30 seconds. First,
+I go to Google and search class action. This is when a large company gets sued and has to pay you for using them. Next, you can scroll through websites to find companies you can apply for, or an
+easier way could be using an app where you select a bunch of companies you've used at some point in your life, and they show you exactly which ones you can get paid for. Here's up to $500 from
+T-Mobile, 250 from Mitsubishi, and 147 from Cash App. Click here, apply, and start getting paid up to hundreds of dollars per claim. Just comment claim, and I'll send you the app. &gt;&gt; Notice how
+the hook is the exact same thing too. &gt;&gt; Yeah. Watch me make up to $900, and then uh &gt;&gt; $900 in just 30 &gt;&gt; in 30 seconds. And then you have like the step-by-step, you know, go to
+Google, class action, and then, you know, here's an here's an alternative. Wow, that's crazy. And then you are you you're using ManyChat automation for this too, right? &gt;&gt; Yep. So, if you open
+up the comments, there's a billion of them that were interested, and we converted quite well from this video. &gt;&gt; 25,000 people commented, um or maybe half of that, like 13,000. And then those
+those people are getting DM'd the link, the actual link to the app. So, it's showing up in their DMs, so they have to click it, or else the notification be sticking there forever. &gt;&gt; Yeah,
+pretty much. And there's some interesting stats behind it for those who are curious. Usually, out of the people who request the link, there's about a 50% click-through rate. So, out of those 13,000,
+about 6 and 1/2 thousand actually clicked on the link to pay out. And then we have our own conversion metrics where from download to paid, I think is 6.7% or around 7%. So, we had quite a successful
+week after this one. &gt;&gt; Once you make this video, this got this one did really well. Are you able to replicate it even more? Like could you say "Watch me make $800 in 30 seconds." And then like
+would that like go viral again? &gt;&gt; Absolutely. That's exactly what I did. I just made more videos, swapped out the numbers, kept the structure exactly the same, changed up the backgrounds a
+little bit just so people wouldn't get like creative fatigue or like ad fatigue. So, it seems a little bit different. I would change the background of the first screen, change the number. Um maybe I
+would say 45 seconds instead of 30 seconds. But as long as you keep the idea and the structure, overall flow the same of the video, it just keeps crushing over and over and over again. &gt;&gt; This
+is more of a skit format. &gt;&gt; is the second format that we cracked. And to this day, these are the only two formats that make significant money. I'll show you I'll send you the video that kind of
+started this whole format being successful. I tried it with the Temu class action and it went crazy. I think this video alone probably generated close to $10,000 in revenue for our app. If not more
+with the subscriptions recurring. &gt;&gt; Hey Temu, is it true that I can make a thousand dollars from your lawsuit? &gt;&gt; Yeah, and some people can make up to $5,000 from it. &gt;&gt; Woah, do
+you know how I can apply for this too? &gt;&gt; Fine, but you didn't hear this from me. First, you go to this app, find the Temu lawsuit. There's a bunch of other ones on here, too. Click claim, see
+how long you have to file, and if you need proof. Then click get started, fill out a simple form, and once the settlement ends, you'll get your payout from Temu and any other company you applied for.
+Just comment claim and I'll send you the app. &gt;&gt; So, it's just like hey, insert company name, is it true that I can make a thousand dollars from your lawsuit? And then it's just like the rest of
+the script. Is it hard for you to make the rest of the script? Like how scientific is it with like all the view retention and stuff? Like do you have like some kind of secret sauce where you're like
+the sound of your voice or like is there like certain way that you say words? Like why do you think beyond like the script itself, like this actually does well? &gt;&gt; The biggest thing I would say
+is the script and the idea. That's by far the most important, the script and the idea. After that comes all the retention hacky things like you can see we have emojis pop up. I don't know if you
+noticed, but I move my hands a lot, but not too much cuz if you move your hands too much, people get ADHD and they scroll off. But if you move them too little, they get bored. So, you can barely see
+my hands moving, but it's in a nice flowing way. Eyes are attracted to movement. For example, if you look out into the woods and you try to find a squirrel, you won't see it until it moves. So, eyes
+are attracted to movement. So, I make sure there's some sort of movement, but not too much where people get overwhelmed and I make sure it's very clear and one path of logic where it's not like you
+can do this or you can do that, but if you do that, then you have to do this. It just like it would be understandable to my 12-year-old cousin if I showed him it, you know? &gt;&gt; You also just
+speak very like deliberately and very clearly, which that's seems important, too. &gt;&gt; Yeah, and you also have to know what audience you're going for. For example, for Instagram, certain videos do
+better than others. Like this one didn't do anything crazy on TikTok, but if I had it like super ADHD and I was talking at 2x speed, it would probably do better on there. Um I also do certain tricks
+like I don't have the CTAs to ManyChat in YouTube shorts and in TikTok, but instead, uh I'm giving out my sauce now. Instead, I put as the pinned comment there's many apps you can use to do this, but
+the one I use in the video is called Payout. So, it's like a very soft sell where people don't feel like it's an ad. You're just being showing them how they can get to what you showed in the video
+without saying link in bio, click my link, etc. &gt;&gt; YouTube shorts, there's no ManyChat automation, so you're basically just asking people to go to the App Store manually and search it. &gt;&gt;
+Yes, pretty much. &gt;&gt; I've tried different things like saying click on my profile and click the link in my bio, but people don't really do that on YouTube. It does all right, &gt;&gt; Right.
+&gt;&gt; but it's just easier for me to clip clip the video a little bit shorter and then put in the comments that uh they can just search it on the App Store. But, keep it very subtle, like very,
+very subtle, and that keeps retention high cuz CTAs reduce retention. And people have shorter attention spans on YouTube shorts and on TikTok. So, on those, I just cut the video to be shorter, so that
+actually does better, higher retention, and people can check the comments for more info. &gt;&gt; You know, link in bio or click click the link, it just starts to feel like an ad, and then you're
+like, oh, the whole video is just ruined. It's like I don't want to watch this anymore. &gt;&gt; All that stuff is learned from being paid by brands, and I could just apply to my own company's
+softwares, apps. Another interesting thing I learned is to never say the name of the app. I don't think in any of my videos I have said verbally the name of my app. I always say go to this app, so it
+sounds more like a friendly, helpful resource. First, you go to this app instead of first I go to the Payout app. That immediately triggers in people's minds ad ad ad ad ad scroll. So, we want to stay
+away from that, and all I say is like, oh, I just used this app. You can use an app like this one in a way where people don't notice it's an ad. So, you just say, "First, you go to this app, find the
+YouTube lawsuit." Then, &gt;&gt; Yeah. &gt;&gt; You're not thinking much of it. You're like, "Okay, like what is this?" right? You're not like, "Oh, it's sponsored sponsored." &gt;&gt; Actually, you
+know what's interesting? You kind of transitions the script halfway. Like in the in the beginning it's a it's a skit. You say, "Hey, YouTube, is it true that you're being sued for $30 million?" "Yeah,
+a lot of people are going to get a nice paycheck from us." But, yeah, I can I can get this "check, too. Fine, but you didn't hear it from me." And then you as like the YouTube character, you like are
+the one that explains the rest of the of the thing, but not really in skit format anymore. So, like in the beginning it's like kind of a skit where you're kind of explaining the premise. And then for
+But, that's like, you know, 30 40% of the video. And then the rest of the video is just pure like how-to. Um but, the how-to is also structured in a way that it doesn't it still doesn't feel like an
+ad. Well, was there a reasoning behind that behind like doing the like making it a skit and then turning it into a how-to? Like instead of just saying, "Here's how to, you know, make, you know, this
+amount of money." Cuz I guess he's used that format, too. &gt;&gt; So, I did that in another format, and that kind of like started drying up. So, I had to come up with something different. I've
+noticed what works well for my videos is I tried a version where I tried talking about the actual class action, but that didn't translate to many sign-ups. It translated to a lot of views, but not
+sign-ups. For example, Poppy's getting sued. Why is Poppy getting sued? Well, they're getting sued for this much money because yada yada. People don't care about that. They care about how they
+themselves can get that bag. That's all they care about. So, talk to that. Talk to that issue, that problem. So, if you focus on the bag, which is what people are actually going for, people will sign
+up. They will search it up. They will be interested in it. Rather than like, "Oh, this company's getting sued for this much money because they're stealing your info." It's like, "Bro, do I really
+care?" Like, honestly, no. I just want to know if I can get paid from this. That's like 90% of people. So, you got to tailor towards that. &gt;&gt; You also said like the the format dried out. So, you
+you had pure how-to format. You ran it up. Eventually, it dried out. Now, you're doing the skit. Eventually, this will probably dry out dry up as well. But, the cool thing is like you are a co-
+founder. You have equity in this app. So, you're going to continuously try to find new formats and uh just have infinite infinite distribution. I think that's I feel like that's also sort of a
+misconception that people have is that giving creators equity is dangerous because eventually their audience uh gets like used up, quote unquote. But, never really made sense to me because like in the
+short-form world where your your aim is to show up on the For You page, there's no such thing as like audience drying up. Like, you just grow. Like, as long as you're iterating on content and making
+new formats all the time, you're reaching new audience continuously. Like, do you feel like your audience is is actually growing like every time you make videos? &gt;&gt; Yeah, I mean, if you look at
+these videos, even these ads, they bring me like thousands of new followers, meaning they are going viral. Like, 70% of the views are not my followers. They're brand new people I scrape from the For
+You or the explore page. So, it is what you said essentially. Like, as long as the creator is creative enough and incentivized enough, like, Connor and I are 50/50 owners. So, I'm like, if he's not
+going to do anything, this app is just going to die. So, I have to take the responsibility. So, I'm going to be creative. I'm going to come up with ideas for the distribution side. And uh I keep
+iterating. &gt;&gt; And and And on Connor's side, he can iterate on stuff like paywalls and get more, you know, build new features, make sure that retention is high, you know, to get more revenue out
+of each user. &gt;&gt; Another cool thing is Connor also takes these videos and tests them as paid ads. Um so that's also another like use case. If it does well in organic, we can take that same
+video. I give him the file or the boosting code. And we had a video recently that was profitable and was making us money uh profitably with Meta ads for quite some time. Not a lot of time, few weeks.
+And that's another perk of just like working with a creator cuz you have unlimited creatives as well for your ads. &gt;&gt; Yeah, ad creatives can get really expensive cuz like in those especially in
+those terms, like for a premium creator that really knows how to execute the UGC scripts really well in an engaging way, a lot of times they'll take a percentage of your ad spend um or they'll cut off
+the terms like you can only put ads behind this for, you know, X number of months. &gt;&gt; Yeah. &gt;&gt; Um but if you have a creator on your team, um you know, with equity, then they're
+incentivized to just make make unlimited ad creatives and um or you know, make videos that can be repurposed for free as as ad creatives. So. &gt;&gt; Someone who has a lot of friends in the creator
+space, UGC videos, I don't know how companies profit off of because we charge a lot for them. Like especially bigger creators don't usually go under 1,000 to 1,500 per video. And that only includes
+like a few months of usage. So, you're just testing. That ad might be unprofitable. So, you just threw out like 1,000 or 1,500. Maybe 20-30% of ads will be profitable. Who knows how long and how much
+money you need to put behind them for them to actually pay off. But I guess with these big companies that are paying us these checks, they have budgets of like 100k to spend on paid ads in this week
+or this month or 250k in this quarter, whatever it is. So, they got money to put behind it. If one ad creative hits, like I've had for brands I've worked with, they've boosted it to like 35, 40
+million views. And you already know they're printing off that. Like they paid me X amount of money, they definitely made back 10 times over easily. &gt;&gt; So, let me show you this. A lot of app
+founders I talk to have a feeling their app has viral potential, but don't want to be the person brain rot scrolling an hour a day hunting for formats or worse burning thousands on creators shooting
+videos that just flop. Recently, I've been telling every founder I meet about Spytalk. It's basically an AI TikTok viral marketer that I've seen a lot of top app growth teams using. You just paste a
+link to your app and this agent scrolls hundreds of thousands of TikToks for you, finds the outlier videos from competitors who've already cracked the best formats that are driving installs in the
+niche of your app. And then it remixes the hooks, the angles, and then it makes playbooks so you can pretty much copy paste virality. And then it alerts you when it detects new breakout formats that
+would also work for your app. This is the only growth tool I 100% vouch for on this channel because there's a ton of gen AI content tools out there, but none of them tell you what to make. Spytalk
+makes sure you're never in the dark about what's actually working now. I'll put the link in the description. I'm curious about the niches that you see. Like do you feel like cuz you're you're you
+know, a business and finance investing uh creator. And that that works well for, you know, business and finance apps, but there's all all all kinds of niches. Do you think this Have you seen other
+creators in different niches also express interest in like building apps or owning equity in apps? &gt;&gt; So, I actually moved to San Francisco for about a month and a half. And there I met with a
+lot of my creator friends cuz they're from California. And as soon as we hung out together in one big group, it was like, "Yo, Casper, how's that app idea going?" And I'm like, "I know they're
+interested. I know they're interested, um but they're just not making moves yet." So, there's definitely still a lot of potential with creators who are interested in it but haven't started anything
+themselves yet. And I think the biggest thing is just having that really easy trigger for them to say yes. Where you give them the idea, you're like, "Based on this ad you did, I built you this app.
+I'll give you 50% of it. Just make these videos. Try it once. Just try one video. I'll give you 100% of the revenue." It's like, how easy is that to say yes to? It's incredibly easy, right? So, I
+think there's so much potential out there, and this app stuff is probably like I'm probably like 25% through its like lifespan and run that I think it's going to be on. &gt;&gt; Do you think that all
+creators are like deserve equity, or is there certain aspects of your background that you feel like you add a lot of value to an actual co-founding team? Cuz I feel like you even just like the mind,
+for example, the mindset that you have around inventing new formats when when the other ones dry up, I feel like that is really valuable that maybe not every creator has. Do Does that align with how
+you think? And also, are there other traits that you feel like people should look for in creators? &gt;&gt; I think the traits people should look for in creators are 100% they need to understand the
+algorithm. Because there's some creators that just push out like insane volume, and something hits eventually. And although that's good, it just might take time for something to hit. But if someone
+understands the algorithm and is more business savvy, is like, "I'm going to optimize this video to do well." Then some of your first videos will probably pop off like within three, four videos,
+you'll probably have one that makes you a thousand plus in sales. While the others, I think it'll just take more time. But, there is something to say about creators that have a very loyal audience.
+And that'll show in one of two types of creators. Number one, creators that truly understand the algorithm well. For example, if you were to look at my Instagram, I've posted a lot of brand deals
+lately. So, if you scroll down, my views on average, across all platforms, if you sum them up, around 1.4 million views. And that's an insane average to have. And other creators will maybe not have
+those averages, but other creators will have those averages, although they're not optimizing for retention, all that stuff, simply because they have a very loyal audience. Like, I know Alex Sedlak on
+TikTok is one of those people who has an incredibly valuable and like strong audience, where he'll just spam, but people love him so much, they'll buy anything from him. &gt;&gt; So, would you would
+you go after someone like this who has like a really strong personal brand and audience, or would you rather go after like partner with someone who is more like you? I mean, I guess that's a biased
+question, but &gt;&gt; Honestly, you'll be surprised at my answer. I would actually, if I was a developer, I would look for people like Alex, because although I can do it, for them, it's more
+effortless. Like, they, no matter what video they make, it'll just it'll get views and people will be interested in it. So, I guess I'm I'm I'm going back on what I said a little bit, but I think if
+you were to post a video and kind of hype it up that he's launching something that he owns, I think off the bat, people would sign up. So, disregard what I said before. I think that if they make it
+clear that this is something of their own, people will be hyped about it in their audience, and they'll go and buy it right away. &gt;&gt; I feel like all the the issue with personal brand creators
+though is was of them don't have like a specific like like Alex wouldn't be able to sell pay the payout app as well as you do. Right? Cuz his audience is just not matched to that niche as much like
+people are used to kind of seeing finance content from you or from Alex, he would you you would need to have like sell some some other type of app. &gt;&gt; I actually don't know because this main
+thing that makes a ton of money he makes like hundreds of thousands a month from is Media Labs and that is helping people make money from TikTok shop. So, although he rarely well some of his videos
+are about money, not all of them are about money yet people still buy it like crazy. Um so, that is interesting. I would say though that the biggest formula that I've noticed for apps to be successful
+is if you can spend X amount of money and get X plus a number back it's such an easy sell. For example, for payout you spend $40 in a year, you're probably going to make back I don't know at least 200
+in class actions if you're actually monitoring the app and applying for them. It's like the same thing with what Alex does. He has Media Labs where you spend X amount of money and the average person
+makes or maybe not the average but if you actually try, you will make back that investment plus much more. It's just such an easy sell. So, I think you got to have a good product, good offer um and
+have that somewhat aligned to your audience. &gt;&gt; Are you just bullish on that category of apps in general or are there any other categories of apps or any like uh niches of creators that you're
+kind of interested in seeing more apps show up? &gt;&gt; I'd say I'm pretty deep into two niches and that's number one, the finance niche and number two the street interviewer niche and it's just
+because I have a lot of friends in both of those. And I think that what just makes so much sense in the finance space is creating an app around the general idea, whatever it is, where you spend X
+amount of money per year or per week, whatever it is, and you're expected to make more than that with whatever service you're providing. Just like I explained with Payout, you spend 40 bucks, you
+expect to make more than 40 bucks over the course of a year because you have our app now. &gt;&gt; So, for street interview creators, you feel like that's like a it's a it's a very broad audience type
+of content, and you feel like personal finance and like finance-oriented apps do well would like do well with that with street interviews. &gt;&gt; You know, we haven't tested that. I don't My gut's
+saying not really, but I also don't think something like a general trivia app like oh, trivia questions daily on your home screen would do well either. I think you just have to be a little bit more
+creative. And the broader the audience, it's probably harder to come up with an idea then, if that's the case. The more niche the audience, the easier it is. It's like you know their wants and needs.
+Like for my channels, I make videos about saving money and side hustles. But I notice saving money is like either gets 100,000 views or 10 million views. Side hustles always get like at least 300,000
+views, if not more. So, I see there's a consistent demand for side hustles. Everyone wants to know how to make money online for my audience, so that's why I think Payout was the perfect fit. It's not
+about the save money where I kind of have to hit lotto shots, but instead something where there's consistent demand. &gt;&gt; Are you just looking at like number of videos on on an account from a
+specific brand deal and seeing like oh if this person did like five of the same brand deal within a couple months like that seems like a good candidate. &gt;&gt; Sometimes but not always if those
+videos are consistently getting high views sometimes brands just want packages like they'll hit you with hey I want five videos for this amount of money right off the bat. So it doesn't mean that
+they're necessarily doing well they just kind of want to hedge their bets with multiple videos. But I would say what you can do which is very simple like most creators will at least put company name
+partner in the hashtags of their video say a company I work with partner. And if you scroll through my videos you can look at the descriptions and you'll see which ones are paid and which ones are
+organic. Actually we can give an idea that has worked well for brands but I just haven't pursued cuz I don't believe there's enough money in this opportunity. If you want I'll I'll show you a video
+topic that has just crushed. &gt;&gt; Amazon will hate me for exposing this secret. Hey Amazon can I buy this air purifier for $65? Ha you're funny this purifier is $139. Watch me get over 50% off.
+Okay I'll be using my special discount code. What discount code? Easy I'll show you. I just search for coupon.ai search for the product that I want and click on the item. Hit get code copy the code
+and paste it into Amazon. Now voila the code was added and I got over 50% off. &gt;&gt; Boom. So clean you don't even know it's an ad. &gt;&gt; So it's a coupon app shopping deals. I feel like coupon
+apps become like almost like venture backed businesses sometimes like Groupon. How big is Groupon? Groupon's a billion dollar public company. Like I feel like these like coupon like savings type of um
+companies like they don't monetize immediately like I was looking at this they don't have any in-app purchases. So, they probably make their money from &gt;&gt; links. &gt;&gt; Affiliate links. Yeah,
+exactly. &gt;&gt; Which make like 2 to 10% off each purchase. So, you have to have crazy volume to make money. &gt;&gt; Yeah. And and but this is like a decent amount of volume. 12 12 million viewers.
+&gt;&gt; They told me before that they worked with a a creator and one single video generated over 300,000 downloads. One single video with a creator. Creator was big, over a million followers. But
+imagine 300,000 downloads from one single video. Insane. I think mine honestly probably did something similar. Um but I promoted the I promoted the website, not the app in that video. So. &gt;&gt;
+Yeah, I mean, I guess I guess someone could like make a website or a an app competitor in this space. Um you just need a lot of volume. But it seems like the volume is there. Like, the potential is
+there. If you wanted to co-found this, for example, like you would have you would already have the formula for making more of these types of videos. You just have to figure out the monetization
+somehow, but it seems like it's a niche that's just like it's it's another super obvious value prop. With Claim, it's like, you know, make, you know, extra few hundred dollars a month or a thousand
+dollars a month. With this, it's kind of like get half off on or or you know, like like pretty decently big discounts on Amazon products, which is a super obvious value prop. And it's free. Like, you
+just get free coupons. It's just like it makes sense why this would get so many views. It's just basically everyone on the planet could use this product. Like, if you if you buy anything on Amazon,
+you you're you'd be down to get, you know, free discounts. You feel like certain opportunities are just not worth the effort to pursue. Like for this one, you just feel like it it just requires like
+too much volume for what it's worth. &gt;&gt; Well, actually, I signed a a year-long partnership with them, and I think that's the best of both worlds. So, someone were to come to me, number one, I
+would say I can't do it because I'm exclusive with Coupon now, but um I just don't think there's enough volume cuz people will check this website out or this app out once, and then the chance of them
+returning is probably like less than 20%. So, I don't know. If you could find a way to make it work, I've thought about like maybe charging a really low subscription to have access to these deals that
+like is that are really, really hard to find elsewhere. You know, fortune favors the bold. If you figure out an idea, you make it work, there's a lot of money, and there's a lot of volume behind it.
+&gt;&gt; Like the fact that they wanted to sign a year-long exclusivity agreement with you and pay you, you know, every month to make these videos, that tells me that their strategy is basically just
+attrition, like market domination. They don't really care how much money it costs uh cuz they're probably venture-backed. They just need to get every everyone in the market, and that's worth a lot to
+them cuz then they have data on like who who uses which coupons on what, and then they can send like more personalized affiliate deals to those people. So, it's probably just like a game of scale, and
+then the creator the creators like you benefit from that cuz then you get paid for an entire year of exclusivity. But then apps like Payout, where it's you don't need to dominate the entire market.
+You can make a hundred thousand dollars a month. You don't need 12 million views every video to to make a lot of money with apps. Um you don't need to like dominate the entire market. So, I think
+seems like there's also like an ideal type of app for this type of creator partnership. If you if you want to give 50% equity to a creator, uh you shouldn't be trying to build the next Groupon or the
+next like Facebook or whatever. Like But, you can make, you know, 100k a month with these apps that you don't need to like take the entire market. &gt;&gt; What I've done in like previous videos, like
+the one you started the video with on X, kind of walk through the revenue chart of each video I posted at the start and kind of showed, "Here's the first video we tried. Here's why it worked. Here's
+why it didn't work. Here's what we did next time." &gt;&gt; Are these spikes all videos? &gt;&gt; But, lo- notice how the base becomes bigger after every one of them. Like, we don't fall below
+&gt;&gt; Right, cuz you're getting residual views from those. &gt;&gt; Something that a lot of people don't realize is that short-form content actually has longevity. Where if I stop posting today,
+all videos, I would still probably bring in a few hundred downloads every single day from my videos I posted months ago. These videos have longer lifespans than a lot of people think. And uh that's
+kind of like the benefit of short form because it's so easy to make, but they do also have that lifespan. &gt;&gt; That's really interesting cuz this this is over the course of 3 months, but the
+baseline after the spike is like here. And that's like almost all the way to where the first spike was from uh like a like a month and a half before. So, the video from a month and a half before is
+still getting views, you know, a month and a half later. Right, a lot of people just think like oh you it lasts like a day or a couple days. But, it it it actually has some longevity. &gt;&gt; I can
+show some graphs, too. I can send screenshots if that's helpful like kind of what the growth curve looks like. So, here is that one video we just showed you guys that got 17 million views, but you can
+see that during the first week, the video only had 2.9 million views. In the last In the next like three In three weeks, it had 5 million views. In the first month, it had 7.5 million, which isn't
+even half of the lifetime of the video in the first month. And it continued to get views, kind of plateaus, but if you look every single day, it's still getting like tens of thousands of views, like
+at least 10,000 views every single day. There's spikes, there's plateaus, and there's more spikes. And to this day, I posted this video over 500 days ago. It's still getting 50 views an hour. 30 views
+an hour, which is insane. The longevity on short form is actually there, and no one talks about it. &gt;&gt; That's That's crazy. And if you have like a I don't know, half a percent, 1% uh download
+rate on something like this, you're getting like, you know, 10, 20 downloads a day still, like a year and a half later. &gt;&gt; Yeah. &gt;&gt; Yeah, I feel like the compounding factor on like
+algorithmic video content is so underrated for creators and like distribution. I feel like a broken record. I keep I I'm just an advocate for creators, you know, like I'm a creator myself, so I'm just
+like I feel like a lot of people just don't understand the compounding factor. You know, Naval Ravikant, you know, the famous like VC guy, he talks about like the different types of leverage, and I
+think there's like tech leverage, media leverage, and like capital leverage, and labor leverage, I think some some kind of framework like that. But like media is a form of leverage, like just just
+like technology is, like you know, you can sell a technology company for, you know, five to 10 times its annual revenue. Um but in the same way, like one piece of media is worth like so much more than
+just the views that it has itself. There's a compounding factor where, you know, it becomes an asset almost, like an evergreen asset. I really appreciated this talk. Was there anything else that uh
+was like top of mind for you to share? &gt;&gt; I did have one interesting thing that happened. We had like five creators post in one single day and we did $9,700 in revenue that day. And we charted
+on the App Store. So, that was pretty cool. Um so, I guess like the takeaway and now I'm telling my friends this that are building software is if you have a bunch of creators you're working with is to
+have them all post on one day if possible because then your app can get charted as number whatever 20 in finance and you'll get organic traction from the App Store, people searching it. &gt;&gt; I
+don't know if this is going to open up a whole new topic, but I'm curious also like do you have a network of creators that you know in the in your own niche where you would actually be able to do
+influencer marketing for the apps that you own equity in? Like you're a creator, but you're also like, you know, a co-founder and of of the business now and you're like I you probably have a network
+of other creators that you could like do influencer marketing and do those like coordinated pushes. Is that something you're working on, too? &gt;&gt; Okay, so right here you can see this huge spike
+we had on a certain day. That was when we had five creators post in a single day and we ranked number I don't remember, number 70 or number 80 in finance on the App Store, which is really cool. If you
+get that to push up top 20 you're probably going to get organic traction from people just going into the App Store and scrolling through the top apps and finding yours and downloading it. So, if
+you're working with creators, try to coordinate them all in the same day to post so you can get this charting on the App Store which can definitely help um with visibility, but also clout. Like how
+cool would it be to say my app was top 10 in the App Store at some point. That's aura right there, right? &gt;&gt; Um that is aura, yeah. &gt;&gt; So, this day actually happened because I did
+coordinate a lot of my friends who are creators to post. And because we all help each other out and we all have like goodwill going around, I literally have done free videos for my friends' companies.
+So, when I ask them to make a video, I'm like, "Hey, how much would you charge for a video?" They hit me back with a "Bro, don't worry about it. It's free." So, it's like either free or highly
+discounted. If you have a creator you're working with that has a big network of friends in the space, like the rates I get are very discounted from like another company reaching out to them would have
+to pay. Literally like 70% off. However, the thing is it's still tricky and dangerous because I have had videos go out with creators. And off of like a $1,500 ad, I've lost money. And that's hard to
+believe if these people are like normally charging $6,000 plus dollars per video. But even if you are getting these discounted rates, you have to try around with different creators and see which ones
+work. Some will work, some won't, but um having this network of friends has definitely helped me secure more deals. And it's literally just a text away. Like, I have everyone's phone number. It's not
+like I have to email them negotiate. It's like, "Hey, can you post a video next week?" "Sure." "Okay, here's the script." And then they're like, "Cool. Here's the video. It's live." And then it's just
+so fun, honestly, that way. It's fun, it's easy, it's simple. Still a risk, like I said, we don't make money off of all of our our partnerships. And but that's what makes business fun, I guess. It's
+the risk. &gt;&gt; That's so powerful, though. Just like a network of friends who are creators and be able to exchange favors like that. That's so powerful to have that, you know, just one of those
+nodes um on your team with equity cuz then you can do it iteration. That That's also so true. Like your a lot of these brand deals just don't work. Like even if it's discounted. So creator marketing
+is is super iterative. It can be demoralizing for a lot of people to pay a creator a couple thousand dollars and the video flops. You know, you learn something from it, but each time it's it's very
+costly. So I feel like having a creator on your team is just very like peace of mind, um, and in a lot of ways it like lowers the the risk, um, quite a bit. Something that is interesting though, like
+last note, is after partnering on I have I work on a web app and an app and now working on one more app. I did learn the value of distribution and being a creator. And the truth is the development
+side is accessible to everyone and it's becoming easier and easier. So I wouldn't be surprised if creators want to own more equity because they see the value in it. Some still don't understand it and
+they will be willing to give up more, but for my third app I gave up only 15% for the development and product side because I know I've been able to scale an app from zero to like 100k majority using
+just my own distribution. So if I'm giving up 50% for someone to just to build it well, on the other side I could pay someone 10, 15 thousand to build it. It's like that developer has got to have like
+good skills, maintain it, but also have like some sort of business knowledge behind it, too. Like they want to be in it. They want to optimize paywalls, all that stuff. &gt;&gt; That's I feel like
+that's one of the biggest mistakes I see in co-founder relationships is both partners need to have business sense. &gt;&gt; Yeah. &gt;&gt; 100% &gt;&gt; Regardless of what your skill set is, if it's
+development or marketing, uh, that's just table stakes. Of course, you have to be good at something, but like the more important thing is like, do you actually have business sense and can you make
+development decisions with a business mindset, and then can you make videos with a business mindset? I think that's like the most important thing. So, um if you if one person in the co-founder
+relationship has more of that more of that experience than the other, that is what dictates uh who gets more equity, not like who has the skill, um because as you said, like the skills are becoming
+easier and like more accessible to everyone. So, that's a really good insight. Something you might not know, most of the founders I cover on this podcast are hanging out right now in the Consumer Club
+Discord, sharing with each other what's working now for consumer apps. So, you can apply to join Consumer Club if that sounds interesting to you. And this is the Superwall podcast, of course you got
+to check out superwall.com. We have more videos on the channel, so dig into those to learn from app founders who are willing to share super tactical stuff about app growth.

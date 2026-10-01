@@ -1,0 +1,95 @@
+title: I Have Spent 500+ Hours Programming With AI. This Is what I learned
+url: https://www.youtube.com/watch?v=91B_v-wOaws
+published: 2026-01-22
+playlist: $ Datasets: Vibe Coding (PLjUfmZdHPirc2sUhPCpFTGSsQ6kKwF29-)
+transcript: YouTube auto-captions (91B_v-wOaws.es-US-orig.vtt), de-duplicated, unedited
+
+He pasado una cantidad de tiempo poco saludable programando con IA, y quiero compartir todos los consejos y trucos que he aprendido después de pasar cientos de horas programando con IA, solo para que
+no tengas que perder tu valioso tiempo porque asumo que en realidad tienes una vida diferente a la mía, y así puedes obtener los mismos beneficios que yo, porque muchas personas han estado diciendo
+que han obtenido buenos y malos resultados con la IA. Y después de pasar muchas horas sin salir, sin tocar el césped, creo que finalmente descubrí cómo obtener buenos resultados de manera constante
+con ella. Definitivamente es mejor que antes. Diré que todavía estoy aprendiendo cómo funciona esta herramienta, pero al menos quiero compartir lo que he aprendido hasta ahora contigo. Entonces,
+sabiendo esto, comencemos con el primer consejo. Ah, y este video está patrocinado por Jetrain. Consejo número uno, aprende a programar primero. Sí, es un consejo obvio. Dolorosamente obvio, pero lo
+voy a decir de todos modos porque aparentemente es necesario decirlo. Si quieres que la IA sea útil en la programación, necesitas saber cómo programar. Esto no es ninguna ciencia. No es ninguna
+controversia. Son solo hechos. A día de hoy, la IA es un multiplicador. Aunque sea un multiplicador pequeño, pero aun así es un multiplicador. Multiplica lo que ya sabes. No puedes externalizar tu
+cerebro a la IA si no tienes cerebro. Consejo número dos: sé lo más específico posible. A mi juicio, muchos no son precisos a la hora de hablar de IA. Y supongo que esa es una de las principales
+razones por las que obtienen malos resultados. Y ahora que lo pienso, los programadores no son precisamente conocidos por sus habilidades comunicativas. Así que esto tiene sentido. Lo que significa
+que, por desgracia para ti, será mejor que empieces a ver algunos tutoriales de comunicación porque esas habilidades importan ahora, porque la IA es tan buena como el contexto que le das. Y decidí
+hacer un experimento rápido para demostrártelo. Le dije a la IA que creara un clon de Google Docs tres veces. Y cada vez le di más información a la IA para ver qué pasaba. Hice este experimento con el
+asistente de IA de Jet Brain, Juny, porque Juny tiene algunas medidas de seguridad para evitar que hagas el nivel uno, el cerebro fluido. Si le hablas así a la IA, te mereces los malos resultados. La
+instrucción que le voy a dar es que cree Google Docs. Eso es todo. Si la IA puede crear una versión decente de Google Docs solo con esto, me impresionaría y me aterraría, ya que básicamente
+reemplazaría a los programadores. Pero ya te digo esto, no es así. Así que, por favor, nunca le des instrucciones así a la IA. No lo hagas. Nivel dos, la persona promedio. Más detalles, pero no son
+técnicos. Así es como la mayoría de la gente suele dar instrucciones a la IA, pero sinceramente estoy siendo generoso porque no creo que la mayoría de la gente realmente ponga tantos detalles. Son una
+especie de mezcla entre el nivel uno y el nivel dos. Nivel tres, el ideal. Ahora bien, si te tomas en serio el uso de la IA o quieres mejorar su rendimiento, así es como deberías plantearla según mi
+experiencia y las mejores prácticas de las empresas de IA reales. Para esta indicación, voy a dar todos los detalles técnicos, la pila tecnológica exacta, cómo deberían funcionar las cosas, comandos
+de terminal, básicamente información que solo un programador conocería. Prepárate, vamos a dar un montón de consejos. También he incluido documentación, capturas de pantalla de cómo quiero que se vea,
+ya que es más fácil mostrar un diseño que explicarlo. Y también he dado enlaces a los que puedo hacer referencia. Ahora bien, todavía hay muchos problemas con esta indicación y podemos hacerlo incluso
+mejor, pero hablaré de eso más adelante. La gente siempre se pregunta por qué debería usar la IA cuando puedo buscarla en Google en 5 segundos. Y, personalmente, esto siempre me ha confundido un poco,
+porque ¿por qué no hacer ambas cosas? Encuentra los recursos y la solución que necesitas y dáselos a la IA. Los asistentes de IA pueden visitar la web. Muchas empresas están empezando a reconocer esto
+porque tienen algo llamado página LLM's.ext, que es documentación formateada para IA. Y luego puedes dejar que escriba el código usando la información de los recursos. Te ahorra tiempo de escritura ,
+pero soy perezoso, así que es una preferencia personal. Ah, y un truco rápido para los perezosos. Puedes escribir un aviso simple, pero asegúrate de que tenga toda la información técnica. Y una vez
+que lo tengas, dile a la IA que mejore el aviso con las mejores prácticas de LLM . La IA hará que tu aviso sea más detallado y funcionará mejor. Los resultados del nivel uno, nada. De hecho, Juny
+pidió más información, lo que me impresionó mucho porque así es como un desarrollador real debería responder cuando no le das ninguna información. La mayoría de las herramientas de IA simplemente
+asumirían todo y luego vomitarían código. Por lo tanto, me alegra mucho ver que Jet Brains agregó salvaguardas a esto. Si bien completó la tarea, es mejor que darme un desperdicio, lo que honestamente
+hace que Juny sea mejor que la mayoría de las herramientas de IA. Bueno, si eres de los que realmente te piden ayuda de esta manera, te recomiendo usar Juny, ya que te verás obligado a usar mejores
+indicaciones y a comunicarte con la IA, porque no hay descuido que no haya descuido grave. ¿ Estoy en lo cierto, amigos? Resultados del nivel dos. Ahora bien, con toda esta información, Juny empezó a
+desarrollarse. Creó un plan y armó la aplicación, lo cual está bastante bien. Ahora, los resultados. Sí, errores, cero estilos y ni siquiera se ejecutó al principio. Parece que HTML se me arrojó en la
+pantalla. Tuve que dedicar un esfuerzo humano repugnante para arreglarlo. Pero aquí está la parte interesante. Una vez que lo arreglé, tenía la mayoría de las funciones que pedí. Es solo la palabra
+que busco en desarrollo. Sí, lo usaremos. Entonces, ¿qué salió mal con esta indicación? Bueno, no es que Juny fuera malo. Es que no le di suficiente contexto técnico para tomar buenas decisiones. Juny
+tuvo que adivinar todas las implementaciones técnicas, la pila tecnológica, cómo gestionar los websockets y ni siquiera intentó aplicarle estilo, ya que no le indicamos cómo. Y cuando la IA tiene que
+adivinar la arquitectura, es más probable que obtengas un resultado deficiente y un código de tipo catfish . Un código que parece bueno a primera vista, pero que cuando lo analizas en profundidad es
+repugnante. Ahora bien, los resultados del nivel tres, de hecho , se ejecutó al primer intento. Sin errores. Todas las funciones que solicité funcionaron. El estilo fue mejor. No es perfecto, pero en
+general es mucho mejor. Y el código en sí, bastante bueno. Es un código que básicamente escribiría yo, ya que le di toda la documentación y los recursos que usaría personalmente para escribir el
+código yo mismo. Entonces, ¿qué significa esto? Bueno, la diferencia entre que la IA es inútil y la IA es increíble podría no ser la IA. Podría ser tú específicamente lo bien que comunicas lo que
+quieres. Pero como puedes ver, incluso con tanto detalle, Juny no lo hizo todo bien. Sigue habiendo algunos problemas. Y esto no se debe solo a que la información no fuera lo suficientemente
+detallada, siempre puedes añadir más detalles, sino también a que le estaba pidiendo que hiciera demasiadas cosas a la vez. Mucha gente dice que la IA es genial para tareas pequeñas, pero no tanto
+para tareas grandes y complejas. Así que, ¿por qué no aprovecharlo? Este es un consejo de todos. Cuanto más pequeña sea la tarea, mejores serán los resultados. Si ya sabemos que la IA es buena para
+tareas pequeñas, ¿por qué no dividir una tarea grande en tareas más pequeñas? Y si no puedes dividirla, es que todavía no entiendes bien el problema. Y esto no es un truco de la IA. Esto es
+simplemente ingeniería fundamental. Incluso antes de la IA, esto es lo que deberías haber estado haciendo. Planificar una solución, dividir el problema en partes más pequeñas y luego codificarla. A
+esto se le llama resolución de problemas y pensamiento crítico, por si no lo sabías. La única diferencia ahora es que puedes ser tú quien lo codifique o dejar que lo haga la IA. Y yo, que la mayoría
+de las veces soy bastante perezoso, prefiero que lo codifique la IA. Sigo teniendo que encontrar la solución. Simplemente no lo escribo. Una vez más , es una cuestión de preferencia personal.
+Simplemente soy perezoso. Y, para que quede claro, si veo que la IA comete un error con el código, lo arreglo manualmente. Ahora bien, esto es lo interesante. Si sigues este flujo de trabajo, acabarás
+con un buen aviso detallado que ya puedes darle a la IA. Y siempre que hice este flujo de trabajo, la IA era bastante buena. Y sé lo que algunos de vosotros estáis pensando. Oh, pensaba que se suponía
+que la IA nos facilitaría el trabajo. No quiero tener que pensar en la solución yo mismo. No quiero pensar en absoluto. La IA debería poder hacerlo todo. Y entiendo de dónde vienes. Es un poco
+desalentador porque eso nos sustituiría a nosotros. Pero todavía no ha llegado ese momento. Entiendo lo que se supone que debe hacer en el futuro, pero no estamos en el futuro, ¿verdad? Estamos en el
+presente ahora mismo, y estoy intentando que funcione en el presente. Quiero que la herramienta funcione en el estado actual en el que se encuentra, y realmente deseo que ustedes hagan lo mismo. Pero
+en su estado actual, no dejen que la IA piense por ustedes. Personalmente, no me importa dejar que la IA escriba por ustedes, pero no que piense por ustedes. Porque en el momento en que dejan que la
+IA piense por ustedes, no sirven para nada. Y esa es la pura verdad. No están aplicando ninguna de las habilidades que han aprendido, ¿qué sentido tiene que estén ahí? Ahora, mientras tanto, mientras
+piensan en su autoestima, pasemos a la basura. Todos los que usan la IA para programar se encontrarán algún día con la basura. La buena noticia es que hay formas de reducir la basura. Ya hemos hablado
+de ello con indicaciones detalladas, pero hay otros métodos y este no se lo van a creer. Es revolucionario. Todo lo que tienen que hacer es decirle a la IA lo que no quieren. Lo sé, es una locura.
+Nunca se ha hecho. Soy muy innovador. Aquí tienes un patrón que podrías usar ahora mismo. Número uno, la tarea. Recuerda ser lo más descriptivo posible. Número dos, información de fondo, archivos,
+documentación e imágenes. Y luego, el número tres, la sección de no hacer. He obtenido muchos mejores resultados con esto. En el clon de Google Docs, quiero añadir una función de comentarios tal como
+lo hace Google Docs. Hago clic en el botón de comentarios. Se abre este pequeño panel y cuando hay texto en la página, tendrá este botón para añadir comentarios y cuando lo presiono, resaltará la
+línea y puedo añadir mi comentario. Y le pedí a Juny que usara este patrón de tres secciones. El número uno tiene la tarea y, como puedes ver, es muy detallado. El número dos tiene la información de
+fondo, la documentación útil, cualquier archivo y varias imágenes que muestren el flujo de usuario y el estilo. Y luego, el número tres, la sección de no hacer, que tiene lo que no se debe tocar, lo
+que no se debe cambiar y las únicas cosas que debería modificar. Y con este patrón de tres secciones, obtuve resultados sorprendentes. Hizo exactamente eso. Bastante impresionante para una instrucción
+rápida de 3 minutos. Mucho más rápido que si la escribiera. Y personalmente prefiero 10 minutos de resolución de problemas y sugerencias que 30 minutos o una hora de resolución de problemas y
+codificación. Y lo diré de nuevo porque algunos de ustedes a veces no pueden escuchar. Preferencias personales. Soy perezoso. Ahora bien, este patrón es genial. Funciona muy bien. Pueden probarlo
+ustedes mismos y contármelo. El enlace está en la descripción. Pero aún no hemos terminado. Hay otra estrategia que pueden seguir para reducir la cantidad de errores que comete la IA. Y esta también
+es revolucionaria. No lo creerán. Dile a la IA que recuerde. Lo sé. Sé que es una locura. Para las herramientas de programación, esto estará en archivos Markdown. Para Juny , usarías un archivo
+guidelines.md o un archivo agents.mmd. Y este archivo es increíble. Es hermoso. Me encanta usar este archivo. Este archivo debería tener toda la información de tu proyecto. De qué trata el proyecto,
+la pila tecnológica, los comandos importantes, el flujo de trabajo, la información específica del proyecto, todo debería estar en este archivo. Puedes crearlo tú mismo o incluso puedes pedirle a la IA
+que lo genere por sí misma. Analizará la base de código, obtendrá una descripción general de lo que es el proyecto y lo pondrá en el archivo. Pero si no quieres escribirlo o no quieres que lo escriba
+la IA, hay plantillas en línea . Puedes encontrar una basada en la pila de texto que estés usando y pegarla allí. Y si eres muy específico para ciertas tecnologías, puedes crear archivos de reglas
+independientes para cada tipo de tecnología. Y si eres perezoso como yo , muchas empresas ya tienen plantillas de reglas para sus herramientas. Y te recomiendo al 100%que las copies y pegues en el
+proyecto si las estás usando. Nuestro siguiente consejo, MCPS te salvará la vida. Ahora bien, si no sabes qué significa MCP, significa protocolo de contexto de modelo. Hay muchos vídeos por ahí.
+Puedes ver una , pero en general, son solo herramientas que pueden ampliar lo que la IA puede hacer realmente. También son muy fáciles de usar. Simplemente vas a la pestaña MCP en la configuración y
+copias y pegas la información. Por ahora, mis MCP favoritos son el número uno, Context 7. Este permite que la IA obtenga documentación automáticamente, lo que significa que no tengo que copiar y pegar
+la misma documentación por quincuagésima vez. La IA puede tomarla cuando la necesita. Otra MCP que me agrada es la de herramientas de Next.js. Este proporciona a la IA información sobre tu aplicación
+Next.js. Por ejemplo, errores de compilación, estado del proyecto, metadatos de página, registros de desarrolladores, en general, información útil que la IA puede usar en tus proyectos. Prefiero el
+tercer MCP: el de las herramientas de desarrollo de Chrome. La IA puede usar las herramientas de desarrollo de Chrome. Por lo tanto, puede ver cosas como cambios de diseño, rendimiento, errores de
+consola, solicitudes de red, todo en las herramientas de desarrollo. Es genial. Bueno, yo me dedico principalmente al desarrollo web, así que estos MCP son perfectos para mí, pero puede que no te
+sirvan a ti. Encuentra los MCP que se adapten a tu pila tecnológica. Hay muchos MCP para bases de datos, servicios en la nube, software de terceros, sea lo que sea que estés creando, probablemente
+haya un MCP para ello. La cuestión aquí no es que uses mis herramientas. Puedes hacerlo si quieres. Solo quiero que sepas que estas herramientas existen porque, una vez que encuentras la combinación
+correcta de herramientas MCP para tu proyecto, marca una gran diferencia. Te lo prometo. Siguiente consejo: dale siempre a la IA una forma de verificar su trabajo. La IA nunca debería limitarse a
+escribir código. También necesita una forma de verificar el código. Pruebas, la app en el navegador, comandos de línea, CI /CD, todo lo que compruede que el código funciona correctamente, ¿ verdad?
+Puedes crear estas pruebas o métodos de verificación tú mismo. O, si eres perezoso como yo, puedes decirle a la IA que los genere por ti y asegurarte de que todos pasan. Ahora bien, para las tareas
+relacionadas con el diseño y la interfaz, recomiendo tener una herramienta MCP. Y para cualquier tipo de método de verificación que utilices, verifica siempre que funcione correctamente, especialmente
+si dejas que la IA lo genere. Después de pasar tanto tiempo con herramientas de codificación de IA , he notado algunos patrones sobre a quién ayuda realmente y a quién no. Los programadores que más se
+benefician de la IA son los que ya tienen buenos hábitos. Todos los consejos que te he mostrado a lo largo de todo este vídeo, ser específico, desglosar las tareas, decirle a la IA lo que no debe
+hacer, decirle que recuerde, hacer que verifique su trabajo, todos esos son fundamentos de una buena ingeniería y liderazgo. La IA no reemplaza esas habilidades. Las amplifica. Pero si tienes malos
+hábitos, te saltas pruebas, no documentas nada, no piensas en casos extremos, la IA también amplificará esos malos hábitos. Podría estar equivocado. No lo sé. Pero esto es lo que quiero para ti.
+Quiero que estés preparado. Hay desarrolladores que están aprendiendo a trabajar con IA de forma eficaz y estoy tratando de aprender de ellos y espero que tú también lo hagas. Es mejor estar demasiado
+preparado que no estarlo lo suficiente, ¿verdad? Si quieres empezar a desarrollar un asistente de IA, prueba Juny. Llevo un tiempo usándolo. Te lo he demostrado creando este clon de Google Docs y
+podría convertirse en una de esas herramientas que forman parte de tu flujo de trabajo diario. Tiene algunas medidas de seguridad para indicaciones erróneas. Tiene plantillas prediseñadas que puedes
+usar para indicar a la IA. Está integrado en el ecosistema de Jetrain. En general, Juny es genial. Si quieres probarlo, el enlace está en la descripción. Haz un proyecto real y comprueba si los
+consejos que te he dado hoy funcionan como a mí. Solo estoy intentando averiguar cómo funciona esta herramienta y espero que tú hagas lo mismo. Pero aparte de eso, nos vemos en el próximo vídeo.
