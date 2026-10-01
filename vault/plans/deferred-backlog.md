@@ -158,6 +158,10 @@ mirror test; a 200-check suite red at its own fix). Nights harvest 5 per night o
 3 nights, PP's history is too environment-bound (many tests read the live install): add repos
 whose tests read their own tree to `~/.claude/state/pp-eval/config.json` `"repos"`.
 
+**2026-10-01:** `bank_tasks: 0, rejected: 2`. Night count toward the 3-night rule: 0 that ran
+(the only night skipped on a mission worker, fixed in D4). Not harvested on GEX44 instead: the
+bank validates tasks in the environment that ran them, and the nights run on Windows.
+
 ## D7 — Capability gaps 2–6 (audit `vault/audits/se-capability-gaps-2026-09-30.md`)
 
 **State:** gap 1 (self-eval) built. Open, in the audit's order: (2) post-edit diagnostics —
@@ -172,6 +176,11 @@ Cheap alongside: wire `refcheck` and `done_gate` (built, no caller).
 **Activation criterion:** Owner picks the next gap. Gap 2 is the cheapest (ruff is installed).
 Once D4–D6 give verdicts, re-rank using the self-eval's own data.
 
+**2026-10-01: gap 2 DONE** — `hooks/post_edit_diagnostics.js`, spec
+`vault/specs/post-edit-diagnostics.md` (LIVE rows + evidence), 88e8c91 / cfa3275, registered
+and proven live. Open: gaps 3–6 (each its own T2 spec) and the cheap `refcheck` / `done_gate`
+wiring; still waiting for the Owner to pick.
+
 ## D8 — Mission continuity: merge the UKDL candidates
 
 **State:** `vault/knowledge_base/mission_continuity/UKDL_CANDIDATES_DURABLE_SUBSTRATE.md` not yet
@@ -181,6 +190,9 @@ merged into `ukdl-universal.md`. On 2026-09-30 another pane held 884 uncommitted
 
 **Activation criterion:** `git status -- vault/knowledge_base/ukdl-universal.md` is clean. Then
 merge by pathspec and check the hunk headers before committing.
+
+**2026-10-01 check:** still blocked. `ukdl-universal.md` now carries 1248 uncommitted lines
+(was 884) and was written 10:45, seven minutes before the check: a live writer.
 
 ## D9 — Delete the `gsd-long-smoke` worktree and branch `gsd-autonomous-run`
 
@@ -202,3 +214,15 @@ KNOWN_DIVERGENCES entries `closer-guard.js`, `learning-sentinel.js`,
 
 **Activation criterion:** when those panes commit, decide per file which side wins (the gate's
 own instruction), sync, and drop the stale entries so the ratchet turns.
+
+**2026-10-01 — now 4/5.** Stale entries dropped (the three files are identical on both sides).
+Decisions on the two drifts, neither applied:
+- `zero-issue-gate.js`: **repo wins.** Committed (6f897bf 09-28, 745cc3b 09-27) and a behavioural
+  superset of live (live is the 09-16 build; its 42 "unique" lines are the pre-refactor shapes,
+  and MIX_ENV, jwExemptionGranted and the BLOCKED_DELIVERY notice all survive in repo; only the
+  footer wording changed). Never deployed, so the "never starve the host" fix is not live.
+  Deploy = back up `~/.claude/hooks/zero-issue-gate.js`, copy the repo file over it, `node
+  --check`. **Refused by the auto-mode classifier (self-modification): Owner action.**
+- `hook-dispatcher.js`: **repo is ahead, not applied.** Its only difference is uncommitted work of
+  another pane (names the abandoned scripts in `CHAIN-DEADLINE-ABANDONED before pool`; `node
+  --check` OK, `restSteps` in scope). Idle since 09-30 20:27. Deploy after that pane commits it.

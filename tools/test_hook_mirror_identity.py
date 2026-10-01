@@ -38,17 +38,9 @@ REPO_DIR = HOME / ".claude" / "skills" / "claude-power-pack" / "hooks"
 
 # Frozen 2026-09-16, each with the MEASURED direction rather than a guess.
 # "onlyRepo" / "onlyLive" are counts of lines present in only that copy.
+# 2026-10-01: closer-guard.js, learning-sentinel.js and windows-bash-bridge-guard.js were
+# reconciled (identical on both sides) and their entries removed so the ratchet turns.
 KNOWN_DIVERGENCES = {
-    "closer-guard.js":
-        "onlyRepo=10 onlyLive=391; live newer (09-15 vs 09-14). Bidirectional, "
-        "live far ahead. Needs a human merge, not a copy",
-    "learning-sentinel.js":
-        "onlyRepo=1 onlyLive=21; BOTH sides carry real work -- repo has a "
-        "CLAUDE_PROJECT_DIR cwd fallback, live has drive-letter normalisation. "
-        "Blind mirroring either way destroys the other side",
-    "windows-bash-bridge-guard.js":
-        "onlyRepo=1 onlyLive=18; live newer (09-15), carries the stderr-channel "
-        "fix. Repo copy is behind the guard that is actually blocking calls",
     "_oneshot_solitary_empty_shell_cleanup.js":
         "onlyRepo=3 onlyLive=0; repo strictly ahead and newer. Same shape as "
         "research-intent-detector: never deployed",
