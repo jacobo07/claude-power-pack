@@ -1,0 +1,101 @@
+{
+ "_doc": "Split recipe for agents/harness-optimizer.md (dormant repo agent). Capability inventory: Read, Grep, Glob, Bash, Edit RETAINED via the writer carrier; Write is ADDED by the class (writer is the only class with Edit; a spec never names tools). Owner chose writer class 2026-10-01 (option a). Write surfaces are harness config only -- never product code, which the role's own Mission forbids. Kill switch is real: the resolver's default grant is verifier, so this spec is unresolvable unless a caller passes --max-class writer. Prompt Defense Baseline moved to the shared primitive, byte-identical. Output format RETAINED in the role page (output_contract native).",
+ "contract": {
+  "id": "harness-optimizer",
+  "name": "Agent harness configuration optimizer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Which minimal, reversible harness change most raises agent completion quality?",
+  "scope": [
+   "hooks",
+   "evals",
+   "routing",
+   "context",
+   "safety",
+   "harness configuration"
+  ],
+  "non_scope": [
+   "product code",
+   "rewriting application logic"
+  ],
+  "triggers": [
+   "harness configuration",
+   "harness config",
+   "agent harness",
+   "harness audit",
+   "optimize the harness",
+   "harness reliability",
+   "hook configuration"
+  ],
+  "anti_triggers": [
+   "product code"
+  ],
+  "consumers": [
+   "parent session harness maintenance"
+  ],
+  "outputs": [
+   "baseline scorecard",
+   "applied changes",
+   "measured improvements",
+   "remaining risks"
+  ],
+  "permissions": [
+   "read repository",
+   "run commands",
+   "edit harness configuration"
+  ],
+  "write_surfaces": [
+   ".claude/settings.json",
+   ".claude/settings.local.json",
+   ".claude/hooks/",
+   ".claude/agents/",
+   ".claude/commands/"
+  ],
+  "risk_class": "local",
+  "context_cost": "low",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "low",
+  "maturity": "experimental",
+  "rollback": "every applied change is reported with its file and diff; restore with `git -C <repo> checkout -- <file>` (uncommitted) or `git revert <sha>` (committed)",
+  "kill_switch": "omit the writer grant: agent_resolver.resolve defaults to max_class=verifier, which excludes this spec with CLASS_EXCEEDS_GRANT",
+  "retirement_condition": "a harness-audit command applies the same changes deterministically",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "writer",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Analyzes and improves the local agent harness configuration for reliability, cost and throughput."
+ },
+ "markers": [
+  {
+   "prefix": "",
+   "slug": "provenance",
+   "load": "inline",
+   "topics": [
+    "provenance"
+   ]
+  },
+  {
+   "prefix": "## Prompt Defense Baseline",
+   "slug": "prompt-defense",
+   "load": "inline",
+   "primitive": "prompt-defense-baseline",
+   "topics": [
+    "prompt defense"
+   ]
+  },
+  {
+   "prefix": "You are the harness optimizer.",
+   "slug": "role",
+   "load": "inline",
+   "topics": [
+    "mission",
+    "workflow",
+    "constraints",
+    "output"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,148 @@
+{
+ "contract": {
+  "id": "java-reviewer",
+  "name": "Java code reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Is this Java change safe, idiomatic and correct enough to merge?",
+  "scope": [
+   "Java code review",
+   "security",
+   "error handling",
+   "idioms",
+   "performance"
+  ],
+  "non_scope": [
+   "writing the fix",
+   "code in other languages"
+  ],
+  "triggers": [
+   "java",
+   "java code",
+   "spring boot",
+   "quarkus",
+   "jpa",
+   "hibernate",
+   "panache",
+   "maven",
+   "gradle"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "review findings with severity"
+  ],
+  "permissions": [
+   "read repository",
+   "run read-only diagnostic commands"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "medium",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "developing",
+  "retirement_condition": "a Java linter/analyzer set reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "verifier",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Reviews Java (Spring Boot / Quarkus) code: layered architecture, JPA/Panache, security, concurrency.",
+  "pages": [
+   {
+    "path": "pages/01-provenance.md",
+    "load": "inline",
+    "topics": [
+     "provenance"
+    ],
+    "bytes": 282,
+    "sha256": "eee32c3310067f3dc9112f63c724d2da3faf0f3945b331832323cccb26987672"
+   },
+   {
+    "primitive": "prompt-defense-baseline",
+    "load": "inline",
+    "topics": [
+     "prompt defense"
+    ],
+    "bytes": 993,
+    "sha256": "65b9871a85e2506b7416eac21c389a3617d6351a808b263c8ad14fd005990489"
+   },
+   {
+    "path": "pages/03-role.md",
+    "load": "inline",
+    "topics": [
+     "framework detection",
+     "security",
+     "error handling",
+     "architecture",
+     "concurrency",
+     "testing",
+     "approval criteria"
+    ],
+    "bytes": 4803,
+    "sha256": "480e991f9980da3a89a80ea4bb7e844ed8c511271561fd5cfa0657cff988549d"
+   },
+   {
+    "path": "pages/04-data-layer.md",
+    "load": "on_demand",
+    "topics": [
+     "jpa",
+     "relational database",
+     "transactions",
+     "n+1 queries",
+     "panache",
+     "mongodb",
+     "nosql"
+    ],
+    "bytes": 2955,
+    "sha256": "3ffc747bd60f015524248b7e9bea9f3d249b8775c8563e4ceae8e8238edaf010"
+   },
+   {
+    "path": "pages/05-core-2.md",
+    "load": "inline",
+    "topics": [
+     "concurrency",
+     "java idioms",
+     "performance",
+     "testing"
+    ],
+    "bytes": 2262,
+    "sha256": "4fa874d02b25c86b3ad72fca6c0272de9213bfdd77b1a75de89aa0602747efe3"
+   },
+   {
+    "path": "pages/06-workflow-state-machine.md",
+    "load": "on_demand",
+    "topics": [
+     "workflow",
+     "state machine",
+     "payment",
+     "event-driven",
+     "idempotency"
+    ],
+    "bytes": 773,
+    "sha256": "336a5158cecd344704ae0f68d439e428bfae08f59f2aa307dd4e3878977821f1"
+   },
+   {
+    "path": "pages/07-diagnostics-approval.md",
+    "load": "inline",
+    "topics": [
+     "diagnostic commands",
+     "approval criteria"
+    ],
+    "bytes": 1201,
+    "sha256": "fc402bba070d10d0d4f78afeeada6c911b677d19fea51bdae7d39d1a4cd55195"
+   }
+  ],
+  "source": {
+   "file": "C:/Users/User/.claude/skills/claude-power-pack/agents/java-reviewer.md",
+   "sha256": "35c81c487626deb14aadd09c1aee0eefcd9f0b8a718318e544c5acef2bd8a22f",
+   "frontmatter": "---\nname: java-reviewer\ndescription: Expert Java code reviewer for Spring Boot and Quarkus projects. Automatically detects the framework and applies the appropriate review rules. Covers layered architecture, JPA/Panache, MongoDB, security, and concurrency. MUST BE USED for all Java code changes.\ntools: [\"Read\", \"Grep\", \"Glob\", \"Bash\"]\nmodel: sonnet\n---\n"
+  }
+ }
+}

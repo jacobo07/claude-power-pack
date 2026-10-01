@@ -1,0 +1,95 @@
+{
+ "contract": {
+  "id": "rust-reviewer",
+  "name": "Rust code reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Is this Rust change safe, idiomatic and correct enough to merge?",
+  "scope": [
+   "Rust code review",
+   "security",
+   "error handling",
+   "idioms",
+   "performance"
+  ],
+  "non_scope": [
+   "writing the fix",
+   "code in other languages"
+  ],
+  "triggers": [
+   "rust",
+   "rust code",
+   "borrow checker",
+   "lifetimes",
+   "unsafe rust",
+   "cargo",
+   "clippy",
+   "ownership rust"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "review findings with severity"
+  ],
+  "permissions": [
+   "read repository",
+   "run read-only diagnostic commands"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "medium",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "developing",
+  "retirement_condition": "a Rust linter/analyzer set reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "verifier",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Reviews Rust code for ownership, lifetimes, error handling, unsafe usage and idioms.",
+  "pages": [
+   {
+    "path": "pages/01-provenance.md",
+    "load": "inline",
+    "topics": [
+     "provenance"
+    ],
+    "bytes": 282,
+    "sha256": "eee32c3310067f3dc9112f63c724d2da3faf0f3945b331832323cccb26987672"
+   },
+   {
+    "primitive": "prompt-defense-baseline",
+    "load": "inline",
+    "topics": [
+     "prompt defense"
+    ],
+    "bytes": 993,
+    "sha256": "65b9871a85e2506b7416eac21c389a3617d6351a808b263c8ad14fd005990489"
+   },
+   {
+    "path": "pages/03-role.md",
+    "load": "inline",
+    "topics": [
+     "ownership",
+     "lifetimes",
+     "error handling",
+     "unsafe",
+     "idioms"
+    ],
+    "bytes": 4396,
+    "sha256": "26ff4df5d8a9802886519b04cbd96d1b8859811d31cef626278903a336740963"
+   }
+  ],
+  "source": {
+   "file": "C:/Users/User/.claude/skills/claude-power-pack/agents/rust-reviewer.md",
+   "sha256": "2845e232fb40114200111cae077392bf6a525c456aaeebb7a9bcc9620ac18f7a",
+   "frontmatter": "---\nname: rust-reviewer\ndescription: Expert Rust code reviewer specializing in ownership, lifetimes, error handling, unsafe usage, and idiomatic patterns. Use for all Rust code changes. MUST BE USED for Rust projects.\ntools: [\"Read\", \"Grep\", \"Glob\", \"Bash\"]\nmodel: sonnet\n---\n"
+  }
+ }
+}

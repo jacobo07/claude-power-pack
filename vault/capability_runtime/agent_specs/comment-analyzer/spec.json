@@ -1,0 +1,92 @@
+{
+ "contract": {
+  "id": "comment-analyzer",
+  "name": "Code comment accuracy reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Do these comments still tell the truth about the code beside them?",
+  "scope": [
+   "comment accuracy",
+   "comment completeness",
+   "comment rot",
+   "docstrings"
+  ],
+  "non_scope": [
+   "fixing the code",
+   "style review"
+  ],
+  "triggers": [
+   "code comments",
+   "comment rot",
+   "stale comments",
+   "outdated comments",
+   "comment accuracy",
+   "docstring",
+   "docstrings",
+   "misleading comments"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "review findings"
+  ],
+  "permissions": [
+   "read repository"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "low",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "low",
+  "maturity": "developing",
+  "retirement_condition": "a static check reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "investigator",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Analyzes code comments for accuracy, completeness, maintainability and comment rot.",
+  "pages": [
+   {
+    "path": "pages/01-provenance.md",
+    "load": "inline",
+    "topics": [
+     "provenance"
+    ],
+    "bytes": 282,
+    "sha256": "eee32c3310067f3dc9112f63c724d2da3faf0f3945b331832323cccb26987672"
+   },
+   {
+    "primitive": "prompt-defense-baseline",
+    "load": "inline",
+    "topics": [
+     "prompt defense"
+    ],
+    "bytes": 993,
+    "sha256": "65b9871a85e2506b7416eac21c389a3617d6351a808b263c8ad14fd005990489"
+   },
+   {
+    "path": "pages/03-role.md",
+    "load": "inline",
+    "topics": [
+     "accuracy",
+     "completeness",
+     "comment rot",
+     "output format"
+    ],
+    "bytes": 870,
+    "sha256": "10ad6deb79971cefab6a452fdee023074b2c5af69ad4525c2436f8069039f33e"
+   }
+  ],
+  "source": {
+   "file": "C:/Users/User/.claude/skills/claude-power-pack/agents/comment-analyzer.md",
+   "sha256": "4d48ffef6bd998ecb4049533a007026f707da2aabe8ff63c6d3b55ca27b22d71",
+   "frontmatter": "---\nname: comment-analyzer\ndescription: Analyze code comments for accuracy, completeness, maintainability, and comment rot risk.\nmodel: sonnet\ntools: [Read, Grep, Glob]\n---\n"
+  }
+ }
+}

@@ -1,0 +1,91 @@
+{
+ "_doc": "Split recipe for agents/go-reviewer.md (dormant repo agent). Capability inventory: Read, Grep, Glob, Bash RETAINED via the verifier carrier (source tools were exactly these; Bash runs the role's diagnostic commands, read-only under carrier_bash_guard). Prompt Defense Baseline moved to the shared primitive, byte-identical. Output format RETAINED in the role page (output_contract native).",
+ "contract": {
+  "id": "go-reviewer",
+  "name": "Go code reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Is this Go change safe, idiomatic and correct enough to merge?",
+  "scope": [
+   "Go code review",
+   "security",
+   "error handling",
+   "idioms",
+   "performance"
+  ],
+  "non_scope": [
+   "writing the fix",
+   "code in other languages"
+  ],
+  "triggers": [
+   "golang",
+   "go code",
+   "go handler",
+   "go package",
+   "go module",
+   "go service",
+   "goroutine",
+   "goroutines",
+   "gofmt",
+   "go vet",
+   "staticcheck"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "review findings with severity"
+  ],
+  "permissions": [
+   "read repository",
+   "run read-only diagnostic commands"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "medium",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "developing",
+  "retirement_condition": "a Go linter/analyzer set reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "verifier",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Reviews Go code for idioms, concurrency patterns, error handling and performance."
+ },
+ "markers": [
+  {
+   "prefix": "",
+   "slug": "provenance",
+   "load": "inline",
+   "topics": [
+    "provenance"
+   ]
+  },
+  {
+   "prefix": "## Prompt Defense Baseline",
+   "slug": "prompt-defense",
+   "load": "inline",
+   "primitive": "prompt-defense-baseline",
+   "topics": [
+    "prompt defense"
+   ]
+  },
+  {
+   "prefix": "You are a senior Go code reviewer",
+   "slug": "role",
+   "load": "inline",
+   "topics": [
+    "idiomatic go",
+    "concurrency",
+    "error handling",
+    "performance"
+   ]
+  }
+ ]
+}

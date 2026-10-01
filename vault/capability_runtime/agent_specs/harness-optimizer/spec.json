@@ -1,0 +1,107 @@
+{
+ "contract": {
+  "id": "harness-optimizer",
+  "name": "Agent harness configuration optimizer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Which minimal, reversible harness change most raises agent completion quality?",
+  "scope": [
+   "hooks",
+   "evals",
+   "routing",
+   "context",
+   "safety",
+   "harness configuration"
+  ],
+  "non_scope": [
+   "product code",
+   "rewriting application logic"
+  ],
+  "triggers": [
+   "harness configuration",
+   "harness config",
+   "agent harness",
+   "harness audit",
+   "optimize the harness",
+   "harness reliability",
+   "hook configuration"
+  ],
+  "anti_triggers": [
+   "product code"
+  ],
+  "consumers": [
+   "parent session harness maintenance"
+  ],
+  "outputs": [
+   "baseline scorecard",
+   "applied changes",
+   "measured improvements",
+   "remaining risks"
+  ],
+  "permissions": [
+   "read repository",
+   "run commands",
+   "edit harness configuration"
+  ],
+  "write_surfaces": [
+   ".claude/settings.json",
+   ".claude/settings.local.json",
+   ".claude/hooks/",
+   ".claude/agents/",
+   ".claude/commands/"
+  ],
+  "risk_class": "local",
+  "context_cost": "low",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "low",
+  "maturity": "experimental",
+  "rollback": "every applied change is reported with its file and diff; restore with `git -C <repo> checkout -- <file>` (uncommitted) or `git revert <sha>` (committed)",
+  "kill_switch": "omit the writer grant: agent_resolver.resolve defaults to max_class=verifier, which excludes this spec with CLASS_EXCEEDS_GRANT",
+  "retirement_condition": "a harness-audit command applies the same changes deterministically",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "writer",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Analyzes and improves the local agent harness configuration for reliability, cost and throughput.",
+  "pages": [
+   {
+    "path": "pages/01-provenance.md",
+    "load": "inline",
+    "topics": [
+     "provenance"
+    ],
+    "bytes": 282,
+    "sha256": "eee32c3310067f3dc9112f63c724d2da3faf0f3945b331832323cccb26987672"
+   },
+   {
+    "primitive": "prompt-defense-baseline",
+    "load": "inline",
+    "topics": [
+     "prompt defense"
+    ],
+    "bytes": 993,
+    "sha256": "65b9871a85e2506b7416eac21c389a3617d6351a808b263c8ad14fd005990489"
+   },
+   {
+    "path": "pages/03-role.md",
+    "load": "inline",
+    "topics": [
+     "mission",
+     "workflow",
+     "constraints",
+     "output"
+    ],
+    "bytes": 711,
+    "sha256": "36028de3109c78dd5feb534b6cf41e787398c9772e8d0e37edc197aa0a322d65"
+   }
+  ],
+  "source": {
+   "file": "C:/Users/User/.claude/skills/claude-power-pack/agents/harness-optimizer.md",
+   "sha256": "ee3979bed2f5efa27ad3456d9573c6790f838178d4f8cb8ddcd28cecc7d05e00",
+   "frontmatter": "---\nname: harness-optimizer\ndescription: Analyze and improve the local agent harness configuration for reliability, cost, and throughput.\ntools: [\"Read\", \"Grep\", \"Glob\", \"Bash\", \"Edit\"]\nmodel: sonnet\ncolor: teal\n---\n"
+  }
+ }
+}

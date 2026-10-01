@@ -1,0 +1,96 @@
+{
+ "contract": {
+  "id": "python-reviewer",
+  "name": "Python code reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Is this Python change safe, idiomatic and correct enough to merge?",
+  "scope": [
+   "Python code review",
+   "security",
+   "error handling",
+   "idioms",
+   "performance"
+  ],
+  "non_scope": [
+   "writing the fix",
+   "code in other languages"
+  ],
+  "triggers": [
+   "python",
+   "pythonic",
+   "python code",
+   "pep 8",
+   "pep8",
+   "type hints",
+   "django",
+   "fastapi",
+   "flask"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "review findings with severity"
+  ],
+  "permissions": [
+   "read repository",
+   "run read-only diagnostic commands"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "medium",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "developing",
+  "retirement_condition": "a Python linter/analyzer set reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "verifier",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Reviews Python code for PEP 8, Pythonic idioms, type hints, security and performance.",
+  "pages": [
+   {
+    "path": "pages/01-provenance.md",
+    "load": "inline",
+    "topics": [
+     "provenance"
+    ],
+    "bytes": 282,
+    "sha256": "eee32c3310067f3dc9112f63c724d2da3faf0f3945b331832323cccb26987672"
+   },
+   {
+    "primitive": "prompt-defense-baseline",
+    "load": "inline",
+    "topics": [
+     "prompt defense"
+    ],
+    "bytes": 993,
+    "sha256": "65b9871a85e2506b7416eac21c389a3617d6351a808b263c8ad14fd005990489"
+   },
+   {
+    "path": "pages/03-role.md",
+    "load": "inline",
+    "topics": [
+     "pep 8",
+     "pythonic idioms",
+     "type hints",
+     "security",
+     "performance"
+    ],
+    "bytes": 3125,
+    "sha256": "c95b6f033f7e1e8ad4e258397c47dc8ef405c13f39569d22014261d73f7e6283"
+   }
+  ],
+  "source": {
+   "file": "C:/Users/User/.claude/skills/claude-power-pack/agents/python-reviewer.md",
+   "sha256": "b32d6f3badc36a8329a079a36d1d23a968350ac52f002cf0aa2178e08fae6487",
+   "frontmatter": "---\nname: python-reviewer\ndescription: Expert Python code reviewer specializing in PEP 8 compliance, Pythonic idioms, type hints, security, and performance. Use for all Python code changes. MUST BE USED for Python projects.\ntools: [\"Read\", \"Grep\", \"Glob\", \"Bash\"]\nmodel: sonnet\n---\n"
+  }
+ }
+}

@@ -1,0 +1,92 @@
+{
+ "contract": {
+  "id": "type-design-analyzer",
+  "name": "Type design reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Do these types make illegal states unrepresentable and enforce their own invariants?",
+  "scope": [
+   "type design",
+   "encapsulation",
+   "invariant expression",
+   "invariant enforcement"
+  ],
+  "non_scope": [
+   "fixing the code",
+   "style review"
+  ],
+  "triggers": [
+   "type design",
+   "type invariants",
+   "type invariant",
+   "invariant expression",
+   "encapsulation",
+   "illegal states",
+   "data model types"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "review findings"
+  ],
+  "permissions": [
+   "read repository"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "low",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "low",
+  "maturity": "developing",
+  "retirement_condition": "a static check reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "investigator",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Analyzes type design for encapsulation, invariant expression, usefulness and enforcement.",
+  "pages": [
+   {
+    "path": "pages/01-provenance.md",
+    "load": "inline",
+    "topics": [
+     "provenance"
+    ],
+    "bytes": 282,
+    "sha256": "eee32c3310067f3dc9112f63c724d2da3faf0f3945b331832323cccb26987672"
+   },
+   {
+    "primitive": "prompt-defense-baseline",
+    "load": "inline",
+    "topics": [
+     "prompt defense"
+    ],
+    "bytes": 993,
+    "sha256": "65b9871a85e2506b7416eac21c389a3617d6351a808b263c8ad14fd005990489"
+   },
+   {
+    "path": "pages/03-role.md",
+    "load": "inline",
+    "topics": [
+     "encapsulation",
+     "invariants",
+     "usefulness",
+     "enforcement",
+     "output format"
+    ],
+    "bytes": 711,
+    "sha256": "c40cf46f3735431706b4d23e5536255bee5dfae8804b3b185027c19f55ecf130"
+   }
+  ],
+  "source": {
+   "file": "C:/Users/User/.claude/skills/claude-power-pack/agents/type-design-analyzer.md",
+   "sha256": "25736024e0c4a3f94a1475c7c57bbd45648358abce86898c31c24510949ab8b8",
+   "frontmatter": "---\nname: type-design-analyzer\ndescription: Analyze type design for encapsulation, invariant expression, usefulness, and enforcement.\nmodel: sonnet\ntools: [Read, Grep, Glob]\n---\n"
+  }
+ }
+}

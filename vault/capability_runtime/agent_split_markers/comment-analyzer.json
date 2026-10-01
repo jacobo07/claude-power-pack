@@ -1,0 +1,86 @@
+{
+ "_doc": "Split recipe for agents/comment-analyzer.md (dormant repo agent). Capability inventory: Read, Grep, Glob RETAINED via the investigator carrier (source tools were exactly these). Prompt Defense Baseline moved to the shared primitive, byte-identical. Output format RETAINED in the role page (output_contract native).",
+ "contract": {
+  "id": "comment-analyzer",
+  "name": "Code comment accuracy reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Do these comments still tell the truth about the code beside them?",
+  "scope": [
+   "comment accuracy",
+   "comment completeness",
+   "comment rot",
+   "docstrings"
+  ],
+  "non_scope": [
+   "fixing the code",
+   "style review"
+  ],
+  "triggers": [
+   "code comments",
+   "comment rot",
+   "stale comments",
+   "outdated comments",
+   "comment accuracy",
+   "docstring",
+   "docstrings",
+   "misleading comments"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "review findings"
+  ],
+  "permissions": [
+   "read repository"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "low",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "low",
+  "maturity": "developing",
+  "retirement_condition": "a static check reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "investigator",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Analyzes code comments for accuracy, completeness, maintainability and comment rot."
+ },
+ "markers": [
+  {
+   "prefix": "",
+   "slug": "provenance",
+   "load": "inline",
+   "topics": [
+    "provenance"
+   ]
+  },
+  {
+   "prefix": "## Prompt Defense Baseline",
+   "slug": "prompt-defense",
+   "load": "inline",
+   "primitive": "prompt-defense-baseline",
+   "topics": [
+    "prompt defense"
+   ]
+  },
+  {
+   "prefix": "# Comment Analyzer Agent",
+   "slug": "role",
+   "load": "inline",
+   "topics": [
+    "accuracy",
+    "completeness",
+    "comment rot",
+    "output format"
+   ]
+  }
+ ]
+}

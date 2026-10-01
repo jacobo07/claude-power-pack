@@ -1,0 +1,138 @@
+{
+ "_doc": "Split recipe for agents/java-reviewer.md (dormant repo agent). Capability inventory: Read, Grep, Glob, Bash RETAINED via the verifier carrier (source tools were exactly these; Bash runs the role's diagnostic commands, read-only under carrier_bash_guard). Prompt Defense Baseline moved to the shared primitive, byte-identical. Output format RETAINED in the role page (output_contract native). Deep pages: data-layer, workflow-state-machine (on_demand, rest inline: paging cost +20 % in S3b).",
+ "contract": {
+  "id": "java-reviewer",
+  "name": "Java code reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Is this Java change safe, idiomatic and correct enough to merge?",
+  "scope": [
+   "Java code review",
+   "security",
+   "error handling",
+   "idioms",
+   "performance"
+  ],
+  "non_scope": [
+   "writing the fix",
+   "code in other languages"
+  ],
+  "triggers": [
+   "java",
+   "java code",
+   "spring boot",
+   "quarkus",
+   "jpa",
+   "hibernate",
+   "panache",
+   "maven",
+   "gradle"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "review findings with severity"
+  ],
+  "permissions": [
+   "read repository",
+   "run read-only diagnostic commands"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "medium",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "developing",
+  "retirement_condition": "a Java linter/analyzer set reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "verifier",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Reviews Java (Spring Boot / Quarkus) code: layered architecture, JPA/Panache, security, concurrency."
+ },
+ "markers": [
+  {
+   "prefix": "",
+   "slug": "provenance",
+   "load": "inline",
+   "topics": [
+    "provenance"
+   ]
+  },
+  {
+   "prefix": "## Prompt Defense Baseline",
+   "slug": "prompt-defense",
+   "load": "inline",
+   "primitive": "prompt-defense-baseline",
+   "topics": [
+    "prompt defense"
+   ]
+  },
+  {
+   "prefix": "You are a senior Java engineer",
+   "slug": "role",
+   "load": "inline",
+   "topics": [
+    "framework detection",
+    "security",
+    "error handling",
+    "architecture",
+    "concurrency",
+    "testing",
+    "approval criteria"
+   ]
+  },
+  {
+   "prefix": "### HIGH -- JPA / Relational Database",
+   "slug": "data-layer",
+   "load": "on_demand",
+   "topics": [
+    "jpa",
+    "relational database",
+    "transactions",
+    "n+1 queries",
+    "panache",
+    "mongodb",
+    "nosql"
+   ]
+  },
+  {
+   "prefix": "### MEDIUM -- Concurrency and State",
+   "slug": "core-2",
+   "load": "inline",
+   "topics": [
+    "concurrency",
+    "java idioms",
+    "performance",
+    "testing"
+   ]
+  },
+  {
+   "prefix": "### MEDIUM -- Workflow and State Machine",
+   "slug": "workflow-state-machine",
+   "load": "on_demand",
+   "topics": [
+    "workflow",
+    "state machine",
+    "payment",
+    "event-driven",
+    "idempotency"
+   ]
+  },
+  {
+   "prefix": "## Diagnostic Commands",
+   "slug": "diagnostics-approval",
+   "load": "inline",
+   "topics": [
+    "diagnostic commands",
+    "approval criteria"
+   ]
+  }
+ ]
+}

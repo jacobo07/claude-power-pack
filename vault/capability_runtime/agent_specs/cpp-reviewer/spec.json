@@ -1,0 +1,98 @@
+{
+ "contract": {
+  "id": "cpp-reviewer",
+  "name": "C++ code reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Is this C++ change safe, idiomatic and correct enough to merge?",
+  "scope": [
+   "C++ code review",
+   "security",
+   "error handling",
+   "idioms",
+   "performance"
+  ],
+  "non_scope": [
+   "writing the fix",
+   "code in other languages"
+  ],
+  "triggers": [
+   "cpp",
+   "cpp code",
+   "cplusplus",
+   "cmake",
+   "raii",
+   "unique_ptr",
+   "shared_ptr",
+   "smart pointer",
+   "smart pointers",
+   "move semantics",
+   "clang-tidy",
+   "undefined behavior"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "review findings with severity"
+  ],
+  "permissions": [
+   "read repository",
+   "run read-only diagnostic commands"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "medium",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "developing",
+  "retirement_condition": "a C++ linter/analyzer set reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "verifier",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Reviews C++ code for memory safety, modern idioms, concurrency and performance.",
+  "pages": [
+   {
+    "path": "pages/01-provenance.md",
+    "load": "inline",
+    "topics": [
+     "provenance"
+    ],
+    "bytes": 282,
+    "sha256": "eee32c3310067f3dc9112f63c724d2da3faf0f3945b331832323cccb26987672"
+   },
+   {
+    "primitive": "prompt-defense-baseline",
+    "load": "inline",
+    "topics": [
+     "prompt defense"
+    ],
+    "bytes": 993,
+    "sha256": "65b9871a85e2506b7416eac21c389a3617d6351a808b263c8ad14fd005990489"
+   },
+   {
+    "path": "pages/03-role.md",
+    "load": "inline",
+    "topics": [
+     "memory safety",
+     "modern c++",
+     "concurrency",
+     "performance"
+    ],
+    "bytes": 2728,
+    "sha256": "bc018cafefa0710631108d9c1b8ee80db6d5d69b5b88fa0f121e3ff53da243b0"
+   }
+  ],
+  "source": {
+   "file": "C:/Users/User/.claude/skills/claude-power-pack/agents/cpp-reviewer.md",
+   "sha256": "754a8d49cca4551d8a9b835c45d59a4562c476040f9c81f255c65c3101a828d6",
+   "frontmatter": "---\nname: cpp-reviewer\ndescription: Expert C++ code reviewer specializing in memory safety, modern C++ idioms, concurrency, and performance. Use for all C++ code changes. MUST BE USED for C++ projects.\ntools: [\"Read\", \"Grep\", \"Glob\", \"Bash\"]\nmodel: sonnet\n---\n"
+  }
+ }
+}

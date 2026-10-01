@@ -63,12 +63,16 @@ worktree = repo root. Plan + Owner decisions: `vault/specs/agent-capability-virt
      is verifier, so writer is only resolvable with an explicit writer grant (intended).
    - Triggers are phrase + order-free word-set matched: use multi-word language triggers
      (`go code`, `go handler`, `golang`), never bare `go`.
-   NEXT: write 9 markers (new files) -> `python -m modules.capability_runtime.agent_spec split
-   agents/<n>.md vault/capability_runtime/agent_specs/<n> --markers-file <marker>` each (fails
-   unless the pages round-trip) -> new tools/test_agent_s4.py (routing: "review this Go
-   handler" -> go-reviewer, not rust; class/tool allowlist; all 9 load) -> existing spec,
-   resolver, bundle gates -> one real GEX44 dispatch per carrier class used, incl. the first
-   writer-class run.
+   DONE 2026-10-01: 9 markers written + split, all 9 round-trip byte for byte (java 7 pages,
+   ts 5, rest 3). tools/test_agent_s4.py 43/43 (load+round-trip, class keeps every source
+   tool, carriers grant exactly their class, primitive in 9/9, deep set exact, 9 positive
+   routes, 3 negatives, writer excluded without grant / top with --max-class writer,
+   HR-APA-009 refusal, bare-"go" mutant turns a negative red). spec 26/26, resolver 14/14,
+   bundle 14/14, bench 16/16. Known limit: "C++" tokenizes to nothing, so cpp-reviewer is
+   reached via cpp / cmake / raii / smart pointer vocabulary, never by "C++" alone.
+   harness-optimizer gains Write via the writer class (source had Edit only).
+   NEXT: one real GEX44 dispatch per carrier class (investigator: comment-analyzer; verifier:
+   go-reviewer; writer: harness-optimizer on a throwaway repo -- first writer-class run).
 3. S5 telemetry, S6 foundry, S7 closure (UKDL, liveness, agent-creation gate).
 
 Start: read the spec, run `python tools/test_agent_spec.py`, `test_agent_resolver.py`,

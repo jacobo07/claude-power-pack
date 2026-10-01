@@ -1,0 +1,122 @@
+{
+ "contract": {
+  "id": "typescript-reviewer",
+  "name": "TypeScript/JavaScript code reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Is this TypeScript/JavaScript change safe, idiomatic and correct enough to merge?",
+  "scope": [
+   "TypeScript/JavaScript code review",
+   "security",
+   "error handling",
+   "idioms",
+   "performance"
+  ],
+  "non_scope": [
+   "writing the fix",
+   "code in other languages"
+  ],
+  "triggers": [
+   "typescript",
+   "javascript",
+   "typescript code",
+   "javascript code",
+   "tsx",
+   "node.js",
+   "nodejs",
+   "react component",
+   "next.js",
+   "nextjs"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "review findings with severity"
+  ],
+  "permissions": [
+   "read repository",
+   "run read-only diagnostic commands"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "medium",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "developing",
+  "retirement_condition": "a TypeScript/JavaScript linter/analyzer set reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "verifier",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Reviews TypeScript/JavaScript for type safety, async correctness, Node/web security and idioms.",
+  "pages": [
+   {
+    "path": "pages/01-provenance.md",
+    "load": "inline",
+    "topics": [
+     "provenance"
+    ],
+    "bytes": 282,
+    "sha256": "eee32c3310067f3dc9112f63c724d2da3faf0f3945b331832323cccb26987672"
+   },
+   {
+    "primitive": "prompt-defense-baseline",
+    "load": "inline",
+    "topics": [
+     "prompt defense"
+    ],
+    "bytes": 993,
+    "sha256": "65b9871a85e2506b7416eac21c389a3617d6351a808b263c8ad14fd005990489"
+   },
+   {
+    "path": "pages/03-role.md",
+    "load": "inline",
+    "topics": [
+     "security",
+     "type safety",
+     "async correctness",
+     "error handling",
+     "node.js"
+    ],
+    "bytes": 4978,
+    "sha256": "1d4815126021960f354ab8c1b5390160542bed70252f471a476d80a40cb4b465"
+   },
+   {
+    "path": "pages/04-react-nextjs.md",
+    "load": "on_demand",
+    "topics": [
+     "react",
+     "next.js",
+     "hooks",
+     "rendering",
+     "server components"
+    ],
+    "bytes": 899,
+    "sha256": "dc18d6f0d10f4b0046eb4c7020246107d64afab581ff886ccfe43c7ffddbd687"
+   },
+   {
+    "path": "pages/05-core-2.md",
+    "load": "inline",
+    "topics": [
+     "performance",
+     "best practices",
+     "diagnostic commands",
+     "approval criteria"
+    ],
+    "bytes": 1871,
+    "sha256": "0d0bf0b3a21e99759e5351b4f3c17a57252fcdefa8b3371ffa6ab839cec23a94"
+   }
+  ],
+  "source": {
+   "file": "C:/Users/User/.claude/skills/claude-power-pack/agents/typescript-reviewer.md",
+   "sha256": "e8ea80870f4aa295edcd962c14a0437c336acd61ca38baa8cec7791724d107d8",
+   "frontmatter": "---\nname: typescript-reviewer\ndescription: Expert TypeScript/JavaScript code reviewer specializing in type safety, async correctness, Node/web security, and idiomatic patterns. Use for all TypeScript and JavaScript code changes. MUST BE USED for TypeScript/JavaScript projects.\ntools: [\"Read\", \"Grep\", \"Glob\", \"Bash\"]\nmodel: sonnet\n---\n"
+  }
+ }
+}

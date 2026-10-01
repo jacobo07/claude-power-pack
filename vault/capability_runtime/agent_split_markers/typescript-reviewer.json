@@ -1,0 +1,114 @@
+{
+ "_doc": "Split recipe for agents/typescript-reviewer.md (dormant repo agent). Capability inventory: Read, Grep, Glob, Bash RETAINED via the verifier carrier (source tools were exactly these; Bash runs the role's diagnostic commands, read-only under carrier_bash_guard). Prompt Defense Baseline moved to the shared primitive, byte-identical. Output format RETAINED in the role page (output_contract native). Deep pages: react-nextjs (on_demand, rest inline: paging cost +20 % in S3b).",
+ "contract": {
+  "id": "typescript-reviewer",
+  "name": "TypeScript/JavaScript code reviewer",
+  "owner": "claude-power-pack agents (ECC absorption 2026-06-06)",
+  "sovereign_question": "Is this TypeScript/JavaScript change safe, idiomatic and correct enough to merge?",
+  "scope": [
+   "TypeScript/JavaScript code review",
+   "security",
+   "error handling",
+   "idioms",
+   "performance"
+  ],
+  "non_scope": [
+   "writing the fix",
+   "code in other languages"
+  ],
+  "triggers": [
+   "typescript",
+   "javascript",
+   "typescript code",
+   "javascript code",
+   "tsx",
+   "node.js",
+   "nodejs",
+   "react component",
+   "next.js",
+   "nextjs"
+  ],
+  "anti_triggers": [
+   "write the fix"
+  ],
+  "consumers": [
+   "parent session code review"
+  ],
+  "outputs": [
+   "review findings with severity"
+  ],
+  "permissions": [
+   "read repository",
+   "run read-only diagnostic commands"
+  ],
+  "risk_class": "reversible",
+  "context_cost": "medium",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "developing",
+  "retirement_condition": "a TypeScript/JavaScript linter/analyzer set reproduces its findings on a held-out sample",
+  "version": "1.0.0"
+ },
+ "agent": {
+  "permission_class": "verifier",
+  "model_policy": {
+   "default": "sonnet"
+  },
+  "output_contract": "native",
+  "description": "Reviews TypeScript/JavaScript for type safety, async correctness, Node/web security and idioms."
+ },
+ "markers": [
+  {
+   "prefix": "",
+   "slug": "provenance",
+   "load": "inline",
+   "topics": [
+    "provenance"
+   ]
+  },
+  {
+   "prefix": "## Prompt Defense Baseline",
+   "slug": "prompt-defense",
+   "load": "inline",
+   "primitive": "prompt-defense-baseline",
+   "topics": [
+    "prompt defense"
+   ]
+  },
+  {
+   "prefix": "You are a senior TypeScript engineer",
+   "slug": "role",
+   "load": "inline",
+   "topics": [
+    "security",
+    "type safety",
+    "async correctness",
+    "error handling",
+    "node.js"
+   ]
+  },
+  {
+   "prefix": "### MEDIUM -- React / Next.js",
+   "slug": "react-nextjs",
+   "load": "on_demand",
+   "topics": [
+    "react",
+    "next.js",
+    "hooks",
+    "rendering",
+    "server components"
+   ]
+  },
+  {
+   "prefix": "### MEDIUM -- Performance",
+   "slug": "core-2",
+   "load": "inline",
+   "topics": [
+    "performance",
+    "best practices",
+    "diagnostic commands",
+    "approval criteria"
+   ]
+  }
+ ]
+}
