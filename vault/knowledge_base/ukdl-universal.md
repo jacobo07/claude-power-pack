@@ -5999,6 +5999,62 @@ pasted logs and command output, so a slug derived from it is noise; (2) the prom
 path is READ-ONLY, generation is an explicit act; (3) scaffolding a repo is consent
 to be GOVERNED, never consent to be WRITTEN TO on every prompt.
 
+## SDD-OS evolution W2 -- risk-aware tiers (2026-10-01, vault/plans/sdd-os-evolution-2026-10-01.md)
+
+**`T-SDD-TIER-FROM-VOCABULARY-NOT-RISK-001`** -- A tier read off task-shape keywords cannot
+see blast radius. *Observed on the W1 replay corpus at f6518c6:* "drop the old table" -> T1,
+"rename get_user across the public SDK" -> T0, "refactor the APIs" -> T1 (a plural fell past
+`\bapi\b`), "subelo a produccion" -> T1; 15/40 labelled tasks too low, 2/40 too high. *Fix:*
+two judgements combined monotonically -- base shape, plus a hard risk floor from intent-scoped
+risk facts (`modules/autonomy_gate/risk_facts.py`); effective = max(base, floor), so a risk
+fact can raise a tier and never lower it (`V-SDDEVO-TIER-MONOTONIC`, with a constructed
+base>floor control the corpus lacked). Result: 1/40 low, 0/40 high. Same family as
+`T-SQI-NARROW-VOCABULARY-BLINDS-THE-GATE-001`: a vocabulary gate is bounded by its words.
+
+**`T-RISK-WORD-IS-NOT-A-RISK-FACT-001`** -- A risk WORD becomes a risk FACT only if it is (1) in
+the request, not in a fenced log, a pasted block or a long quote; (2) not negated in its clause;
+(3) attached to the right object (deleting a table vs a helper function vs a "delete" button);
+(4) aimed at the right target (production vs staging). *The reverse trap, found only by
+running against real history:* stripping reference text from a prompt that is ALL reference
+silently downgraded pasted missions (`/ultra plan` inside a fence: 3 of 150 real prompts,
+T2/T3 -> T1), and a quoted FILENAME is the artifact being acted on, not reference. *Rule:*
+reference stripping needs a residual-request floor (fewer than 3 words left -> read it all),
+and quoted names/paths stay.
+
+**`T-REGEX-STEM-MATCHES-NOUN-001`** -- A verb written as a bare stem plus `\w*` also matches
+nouns, and no author-written fixture contains them. *Observed on a stable 400-prompt history
+sample:* `lanz\w*` matched "lanzamiento" (launch, in a read-only prod probe URL),
+`despleg\w*` "desplegables" (dropdowns), `quit\w*` "quite", `alter\w*` "alternative",
+`chang\w*` "changelog", `notific\w*` "notificaciones". Each produced a false risk fact. *Rule:*
+write verbs as explicit verb-form alternations; pin each former trap as a near-neighbour
+negative (`tools/test_risk_facts.py`, the "stem traps" block).
+
+**`T-SAMPLE-OF-A-GROWING-FILE-001`** -- A seeded shuffle over an append-only file is not a
+stable sample. Two runs of identical code over `history.jsonl` compared different prompts
+because the session itself appended to the file between them. *Fix:* select by timestamp
+cutoff, then by content hash; check stability by diffing two runs byte for byte
+(`tools/sdd_tier_diff.py`). Related, same tool: a module exec'd from `git show` source must be
+in `sys.modules` before a `@dataclass` in it is created, or class creation raises.
+
+**`T-INSTRUMENT-FIX-NOT-PROPAGATED-TO-SIBLING-001`** -- `mutation_drill.py` was made to mutate
+an isolated copy on 2026-09-28, after mutants reached a live supervisor. Its sibling
+`mutation_probe.py`, which `mutation_ratchet.py --baseline` runs, still wrote mutants IN PLACE --
+and `spec_gate/gate.py` is loaded by the JIT hook on every prompt in every pane. The drill's own
+isolation was also flat (subject directory only), so a test importing through the repo root
+drilled the LIVE module: every mutant read SURVIVED (task 14). *Measured control:* the same
+mutant SURVIVED without root injection and was KILLED with it. *Fix:* one repo-layout
+isolation contract (`root_env` + `copy_dirs`) in both instruments, and `--pair` so enrolling a
+new pair never re-baselines other owners' floors. *Rule:* when an instrument's defect is
+fixed, grep for every sibling that does the same operation and fix or name them in the same
+change.
+
+**`PR-TIER-DIFF-BEFORE-RECLASSIFICATION-001`** -- Before changing a classifier with several
+consumers, run every consumer's REAL entry point twice -- old classifier patched in, then new
+-- over labelled cases (judged: correction / REGRESSION / in-range / still-wrong) and over a
+stable sample of real inputs (listed, never judged). State which consumers are derived rather
+than called, and why. A count of changed tiers says nothing; named behaviour deltas per
+consumer do (`tools/sdd_tier_diff.py`, `TIERDIFF_VERDICT`).
+
 - **UKDL-OSA-2026-07-29T17:13:01Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
 
 ### T-CONSUMER-CHAIN-STARVED-001 -- a fully live chain can produce nothing, forever

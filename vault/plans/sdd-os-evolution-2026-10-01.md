@@ -217,6 +217,17 @@ autonomy_gate.classify not yet on risk_facts; jit loader runs near the dispatche
 under load (pre-existing; classify_tier itself ~2 ms/call); other in-place ratchet pairs are not
 audited for live-load.
 
+Owner answers after W2 (2026-10-01, "1. rec. 2. push everything"):
+1. Baseline family: the recommendation -- a NEW tower family `governed_change` in
+   `vault/tower/families/`, promoted through `modules/tower/ratchet.promote` with Owner authority,
+   only after W3 proves readiness on the live route. A parallel pane is researching the
+   constitutive baseline ratchet (`wiki/components/constitutive-baseline-ratchet.md`): read it
+   before writing the family, so there is one owner.
+2. Push: authorized for the branch's committed work. Uncommitted W3 work-in-progress is not
+   pushed until it passes its gates.
+
+W2 verified on a clean checkout of e725c37: test_risk_facts 62/62, test_sdd_os_evolution 16/16.
+
 `intent_verified` is NOT extended in this mission: the GSD goal obligations already provide
 tree-bound requirement→gate evidence. Recorded as a follow-up (join on AC ids), not dropped
 silently.
