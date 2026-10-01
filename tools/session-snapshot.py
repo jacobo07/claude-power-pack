@@ -120,50 +120,136 @@ def _lower_priority() -> str:
         return f"priority-noop: {e!r}"
 
 
+def _pid_alive(pid: int) -> bool:
+    """True if a process with this pid exists. Unknown -> True (keep)."""
+    if pid <= 0:
+        return False
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            from ctypes import wintypes
+            kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+            kernel32.OpenProcess.restype = wintypes.HANDLE
+            kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL,
+                                             wintypes.DWORD]
+            kernel32.GetExitCodeProcess.argtypes = [
+                wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+            kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+            handle = kernel32.OpenProcess(0x1000, False, pid)  # QUERY_LIMITED
+            if not handle:
+                # 87 = ERROR_INVALID_PARAMETER: no such pid. Anything else
+                # (e.g. access denied) means it exists.
+                return ctypes.get_last_error() != 87
+            try:
+                code = wintypes.DWORD()
+                if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+                    return True
+                return code.value == 259  # STILL_ACTIVE
+            finally:
+                kernel32.CloseHandle(handle)
+        except Exception:  # noqa: BLE001 — unknown liveness keeps the subject
+            return True
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except OSError:
+        return True
+
+
+def _lock_owner_pid() -> int:
+    try:
+        for line in LOCK_PATH.read_text(encoding="utf-8").splitlines():
+            if line.startswith("pid="):
+                return int(line[4:])
+    except (OSError, ValueError):
+        pass
+    return -1
+
+
 def _acquire_lock() -> str:
-    """Single-instance lock. Returns one of:
-      "acquired"        — lock taken, caller proceeds
-      "stale-reclaimed" — old lock found + reclaimed
-      "held"            — another instance holds a fresh lock — abort
-      "error:<msg>"     — IO error, fail-open (caller proceeds anyway)
+    """Single-instance lock, created atomically (O_CREAT|O_EXCL).
+
+    The previous exists()-then-write() check let bursts of concurrent
+    Stop events all pass it: 3 writers were measured running at once on
+    2026-10-01. A lock is stale only when its owner pid is dead, or when
+    it is older than LOCK_STALE_SECONDS AND unreadable. A live owner
+    always holds it, however slow its IDLE-priority run is.
+
+    Returns "acquired" | "stale-reclaimed" | "held" | "error:<msg>"
+    (error is fail-open: caller proceeds).
     """
     try:
         BACKUP_ROOT.mkdir(parents=True, exist_ok=True)
-        if LOCK_PATH.exists():
-            try:
-                age = time.time() - LOCK_PATH.stat().st_mtime
-            except OSError:
-                age = LOCK_STALE_SECONDS + 1  # unreadable → treat as stale
-            if age < LOCK_STALE_SECONDS:
+    except OSError as e:
+        return f"error:{e}"
+    for attempt in range(2):
+        try:
+            fd = os.open(str(LOCK_PATH), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            owner = _lock_owner_pid()
+            if owner > 0:
+                if _pid_alive(owner):
+                    return "held"
+            else:
+                try:
+                    age = time.time() - LOCK_PATH.stat().st_mtime
+                except OSError:
+                    continue  # vanished between open and stat -> retry
+                if age < LOCK_STALE_SECONDS:
+                    return "held"  # being written right now, or unreadable+fresh
+            if attempt:
                 return "held"
-            # stale → reclaim
             try:
                 LOCK_PATH.unlink()
             except OSError:
                 pass
-            _write_lock_payload()
-            return "stale-reclaimed"
-        _write_lock_payload()
-        return "acquired"
-    except OSError as e:
-        return f"error:{e}"
-
-
-def _write_lock_payload() -> None:
-    try:
-        LOCK_PATH.write_text(
-            f"pid={os.getpid()}\nts={int(time.time())}\nhost={os.uname().nodename if hasattr(os, 'uname') else os.environ.get('COMPUTERNAME', '?')}\n",
-            encoding="utf-8",
-        )
-    except OSError:
-        pass
+            continue
+        except OSError as e:
+            return f"error:{e}"
+        host = os.environ.get('COMPUTERNAME', '?')
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(f"pid={os.getpid()}\nts={int(time.time())}\nhost={host}\n")
+        return "stale-reclaimed" if attempt else "acquired"
+    return "held"
 
 
 def _release_lock() -> None:
+    """Remove the lock only if this process owns it — an unconditional
+    unlink let one run delete the lock another run was holding."""
+    if _lock_owner_pid() != os.getpid():
+        return
     try:
         LOCK_PATH.unlink()
     except OSError:
         pass
+
+
+def _sweep_orphan_tmps(dry_run: bool) -> list[Path]:
+    """Delete <prefix>*.zip.tmp.<pid> files whose writer is dead.
+
+    A run killed mid-write (session end, reaper, BSOD) never reaches the
+    tmp.unlink() in _write_zip, and _rotate only globs *.zip, so these were
+    never collected: 132 of them = 198 GB on 2026-10-01. Called while
+    holding the lock; a tmp whose pid is alive (or unknown) is kept.
+    """
+    victims = []
+    for tmp in BACKUP_ROOT.glob(f"{ZIP_PREFIX}*.zip.tmp.*"):
+        try:
+            pid = int(tmp.name.rsplit(".", 1)[1])
+        except ValueError:
+            continue
+        if pid == os.getpid() or _pid_alive(pid):
+            continue
+        victims.append(tmp)
+        if not dry_run:
+            try:
+                tmp.unlink()
+            except OSError as e:
+                print(f"session-snapshot: failed to sweep {tmp.name}: {e}",
+                      file=sys.stderr)
+    return victims
 
 
 def _enumerate_source() -> tuple[int, int]:
@@ -296,6 +382,10 @@ def main(argv: list[str]) -> int:
         print("session-snapshot: lock       skipped (dry-run)")
 
     try:
+        swept = _sweep_orphan_tmps(dry_run=dry_run)
+        if swept:
+            print(f"session-snapshot: {'would sweep' if dry_run else 'swept'}"
+                  f"      {len(swept)} orphan .zip.tmp file(s)")
         file_count, total_bytes = _enumerate_source()
         target = _today_target()
         existing = _existing_snapshots()
