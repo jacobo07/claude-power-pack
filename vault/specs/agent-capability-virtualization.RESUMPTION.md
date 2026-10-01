@@ -28,9 +28,15 @@ worktree = repo root. Plan + Owner decisions: `vault/specs/agent-capability-virt
    opened 0 deep pages in 3/3 runs -- virtual behaved as crippled + a path list, so even a
    valid NON_INFERIOR would not have tested paging. F1 virtual's miss+FP is one block that
    raised a different real ReconcileService flaw (frozen key: miss + FP). S4 BLOCKED.
-   OWNER DECISION PENDING: (a) author harder fixtures whose defects need the deep pages,
-   freeze, re-run; (b) accept inline core as sufficient and redesign/drop paging; (c) raise n.
    One F3-crippled run was UNMEASURED (Haiku parent made no Agent call) and re-run once.
+   OWNER CHOSE (a), 2026-10-01. Done so far: paging fixed (af6b287: probe refuted "the
+   no-explore sentence blocks paging", a stated read-step made the carrier read 05/06/10 on
+   frozen F1; cost 354 s vs ~140 s, n=1) + harness no longer loses a run to temp-dir cleanup.
+   Benchmark v2 (S3b) authored + FROZEN: vault/benchmarks/agent_virtualization_v2 (F4-F6,
+   6 defects each, every one deep-page-only doctrine; key gates in test_agent_bench.py 16/16:
+   correct finding hits own defect, restating a step scores nothing, page is on_demand).
+   NEXT: `python tools/agent_bench.py run --set v2` (9 dispatches -> runs/s3b/), then
+   `score --set v2`. Only NON_INFERIOR unblocks S4.
 2. S4: migrate the other 9 dormant agents (agent_split_markers/*.json), gated on S3 NON_INFERIOR.
 3. S5 telemetry, S6 foundry, S7 closure (UKDL, liveness, agent-creation gate).
 

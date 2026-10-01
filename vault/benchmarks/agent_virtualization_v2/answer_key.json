@@ -1,0 +1,29 @@
+{
+  "_doc": "Benchmark v2 (S3b). Every seeded defect rests on doctrine that exists ONLY in a deep (on_demand) page of oneshot-architect-auditor, never in an inline page, so the crippled arm (inline pages only) has a reason to miss it. v1 was VOID because its defects were generic knowledge the inline core already reached. Scoring rule unchanged from v1: a defect is HIT when one numbered finding block matches its anchor AND its concept (case-insensitive). Concept regexes avoid words printed verbatim in their own step, so restating a step cannot score. Frozen by sha256 in MANIFEST.json before the first v2 run.",
+  "fixtures": {
+    "F4-graphql-dashboard.md": [
+      {"id": "F4-D1", "page": "10-category-checklist", "anchor": "step\\s*1\\b|activity\\.graphql|query \\(\\$teamId", "concept": "unnamed|anonymous|operation name|name (the|this|each) (query|operation)|no name|without a name|named operation"},
+      {"id": "F4-D2", "page": "10-category-checklist", "anchor": "step\\s*2\\b|RecentIncidents|first:\\s*25", "concept": "variable|\\$|literal|hard.?cod|inline|parameteri"},
+      {"id": "F4-D3", "page": "10-category-checklist", "anchor": "step\\s*3\\b|export_activity|reports/activity\\.json", "concept": "relative|cwd|working directory|absolute|__dirname|resolve"},
+      {"id": "F4-D4", "page": "10-category-checklist", "anchor": "step\\s*4\\b|homedir|\\.cache", "concept": "posix|macos|mac\\b|linux|separator|backslash|path\\.join|cross.?platform|portab"},
+      {"id": "F4-D5", "page": "10-category-checklist", "anchor": "step\\s*5\\b|activity-guard", "concept": "\\.claude[/\\\\]hooks|hooks? dir|convention|location|wrong place|outside"},
+      {"id": "F4-D6", "page": "05-verification-playbook", "anchor": "step\\s*6\\b|LLM|model answers", "concept": "schema|validator|determinis|zod|codegen|generated types|type.?check"}
+    ],
+    "F5-shared-hook-change.md": [
+      {"id": "F5-D1", "page": "10-category-checklist", "anchor": "step\\s*1\\b|8 other|bash-guard", "concept": "micro.?batch|batch|too many files|split|increment|one at a time|checkpoint|blast radius|smaller"},
+      {"id": "F5-D2", "page": "10-category-checklist", "anchor": "step\\s*2\\b|settings\\.json", "concept": "permission|allow.?rule|classifier|deny|denied|block|approv|owner|auth|self.?modif"},
+      {"id": "F5-D3", "page": "06-domain-playbook", "anchor": "step\\s*3\\b|pathspec|git commit --", "concept": "same.?file|hunk|foreign|other session'?s|sweep|ownership|swallow|their (changes|edits|work)"},
+      {"id": "F5-D4", "page": "05-verification-playbook", "anchor": "step\\s*4\\b|full (repository )?(test )?suite|revert", "concept": "foreign|another session|other session|concurrent|contaminat|inconclusive|attribut|not (necessarily )?(caused by|this change)|bracket|someone else"},
+      {"id": "F5-D5", "page": "05-verification-playbook", "anchor": "step\\s*5\\b|out.of.memory|\\boom\\b|ci runner", "concept": "infrastructure|host|resource|inconclusive|not a (software |real )?fail|unavailable|causal|environment|flak"},
+      {"id": "F5-D6", "page": "07-learning-and-scope", "anchor": "step\\s*6\\b|CONTRIBUTING|third fix", "concept": "prose|documentation (alone|is not)|not enforce|enforc|gate|regression test|hard rule|mechani|lint"}
+    ],
+    "F6-firmware-release.md": [
+      {"id": "F6-D1", "page": "05-verification-playbook", "anchor": "step\\s*1\\b|ULTRA.?PLAN|banner", "concept": "overkill|disproportion|\\broi\\b|execution mode|trivial|unnecessary|too heavy|overhead|planning (has a )?cost"},
+      {"id": "F6-D2", "page": "07-learning-and-scope", "anchor": "step\\s*2\\b|one candidate|board cycle", "concept": "instrument|hypothes|eliminat|maximi|discriminat|multiple (candidates|fixes)|static|bisect|both boards|per (flash|attempt)"},
+      {"id": "F6-D3", "page": "08-procedures", "anchor": "step\\s*3\\b|sensor_bus|refactor", "concept": "timing|behavio|semantic|stronger|insufficient|not (enough|sufficient|proof)|preserv|contract|error semantics|side effect"},
+      {"id": "F6-D4", "page": "07-learning-and-scope", "anchor": "step\\s*4\\b|telemetry", "concept": "no (consumer|one reads)|nobody|unused|useless|do not build|don't build|speculative|unread|negative capab|yagni|vapor|without a (consumer|reader)"},
+      {"id": "F6-D5", "page": "05-verification-playbook", "anchor": "step\\s*5\\b|factory_reset|security negative", "concept": "wrong reason|not exercis|never (reach|exercis)|false.?green|vacuous|would pass|proves nothing|does(n.t| not) prove|test.the.test|\\b40[13]\\b|unauthori[sz]ed"},
+      {"id": "F6-D6", "page": "06-domain-playbook", "anchor": "step\\s*6\\b|4,000|has everything", "concept": "context|dump|minimum|relevant|token|excessive|noise|too (much|large)|dilut"}
+    ]
+  }
+}
