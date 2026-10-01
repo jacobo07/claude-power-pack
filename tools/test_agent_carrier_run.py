@@ -97,13 +97,13 @@ def main():
     # and a Write(path) rule is accepted but never consulted -- so only Edit rules are emitted.
     from modules.capability_runtime import agent_spec as A
     ho = A.load("harness-optimizer")
-    g = R.write_grant(ho, "/home/kobii/t/")
-    check("V-ACR-GRANT-POSIX", "Edit(//home/kobii/t/.claude/settings.json)" in g
-          and "Edit(//home/kobii/t/.claude/hooks/**)" in g and all(r.startswith("Edit(//") for r in g)
-          and len(g) == len(ho.contract.write_surfaces), f"{g}")
-    g = R.write_grant(ho, r"C:\Users\U\target")
-    check("V-ACR-GRANT-WINDOWS", "Edit(//c/Users/U/target/.claude/agents/**)" in g, f"{g}")
-    check("V-ACR-GRANT-NONE-WITHOUT-ROOT", R.write_grant(ho, None) == [], "no target root -> no grant")
+    syn = A.AgentSpec(json.loads(json.dumps(ho.raw)), ho.dir)      # synthetic writer, unprotected surface
+    syn.contract.write_surfaces = ["docs/", "notes.md"]
+    g = R.write_grant(syn, "/home/kobii/t/")
+    check("V-ACR-GRANT-POSIX", g == ["Edit(//home/kobii/t/docs/**)", "Edit(//home/kobii/t/notes.md)"], f"{g}")
+    g = R.write_grant(syn, r"C:\Users\U\target")
+    check("V-ACR-GRANT-WINDOWS", g[0] == "Edit(//c/Users/U/target/docs/**)", f"{g}")
+    check("V-ACR-GRANT-NONE-WITHOUT-ROOT", R.write_grant(syn, None) == [], "no target root -> no grant")
 
     def refused(spec, root):
         try:
@@ -111,8 +111,27 @@ def main():
             return False
         except A.AgentSpecError as e:
             return e.code
+    # Measured 2026-10-01: .claude/ is a protected path; dontAsk denied the writer's in-surface
+    # edit although it was granted. harness-optimizer's whole surface is protected.
+    check("V-ACR-GRANT-REFUSES-PROTECTED", refused(ho, "/t") == "SURFACE_PROTECTED",
+          f"harness-optimizer surfaces {ho.contract.write_surfaces}")
     check("V-ACR-GRANT-REFUSES-NON-WRITER", refused(A.load("python-reviewer"), "/t") == "GRANT_EXCEEDS_CLASS",
           "a verifier with a target root is refused, never granted Edit")
+
+    # A grant forces a hermetic run; no grant leaves the historical argv untouched.
+    hv = R.parent_argv("claude", "P", "haiku", ["Edit(//t/docs/**)"], "writer")
+    agents = json.loads(hv[hv.index("--agents") + 1]) if "--agents" in hv else {}
+    check("V-ACR-ARGV-HERMETIC-WITH-GRANT",
+          hv[hv.index("--permission-mode") + 1] == "dontAsk"
+          and hv[hv.index("--setting-sources") + 1] == "project,local"
+          and sorted(agents.get("cpp-carrier-writer", {}).get("tools", [])) == sorted(A.CLASS_TOOLS["writer"])
+          and agents["cpp-carrier-writer"]["prompt"].strip() and hv[-1] == "Edit(//t/docs/**)",
+          f"flags={[x for x in hv if x.startswith('--')]}")
+    pv = R.parent_argv("claude", "P", "haiku", [], "verifier")
+    check("V-ACR-ARGV-UNCHANGED-WITHOUT-GRANT",
+          not {"--permission-mode", "--setting-sources", "--agents"} & set(pv)
+          and pv[-4:] == ["Agent", "Read", "Grep", "Glob"], f"{pv[3:]}")
+
     esc = A.AgentSpec(json.loads(json.dumps(ho.raw)), ho.dir)
     esc.contract.write_surfaces = ["../outside/"]
     check("V-ACR-GRANT-REFUSES-ESCAPE", refused(esc, "/t") == "SURFACE_ESCAPES_ROOT", "'..' surface refused")

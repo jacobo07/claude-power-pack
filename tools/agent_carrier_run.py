@@ -47,12 +47,23 @@ def _posix_root(root: str) -> str:
     return f"/{m.group(1).lower()}{m.group(2) or ''}" if m else p
 
 
+# Paths the permission system never auto-approves outside bypassPermissions, whatever the
+# allow rules say (docs: permission-modes "Protected paths", sandboxing "Protected paths").
+# Headless dontAsk turns that into a denial, so a grant over one is a grant that cannot work.
+PROTECTED_DIRS = {".claude", ".git", ".vscode", ".idea"}
+PROTECTED_FILES = {".mcp.json", ".bashrc", ".zshrc", ".profile", ".bash_profile", ".gitconfig"}
+
+
 def _surfaces(spec: A.AgentSpec) -> list[str]:
     out = []
     for s in spec.contract.write_surfaces:
         s = str(s).replace("\\", "/")
-        if s.startswith("/") or re.match(r"^[A-Za-z]:", s) or ".." in s.split("/"):
+        parts = [p for p in s.split("/") if p not in ("", ".")]
+        if s.startswith("/") or re.match(r"^[A-Za-z]:", s) or ".." in parts:
             raise A.AgentSpecError("SURFACE_ESCAPES_ROOT", f"{spec.id}: {s!r} is not relative to the target root")
+        if parts and (parts[0] in PROTECTED_DIRS or parts[-1] in PROTECTED_FILES):
+            raise A.AgentSpecError("SURFACE_PROTECTED",
+                                   f"{spec.id}: {s!r} is a protected path; a headless run can never write it")
         out.append(s)
     return out
 
@@ -88,6 +99,36 @@ def writes_outside(target_root: str, surfaces: list[str], written: list[str]) ->
         if not any(p.startswith(a) if is_dir else p == a for a, is_dir in allowed):
             out.append(w)
     return out
+
+
+def carrier_agents_json(permission_class: str) -> str:
+    """The carrier definition, from the repo file, for `--agents`. A hermetic run excludes
+    user settings, and measured 2026-10-01 that also hides ~/.claude/agents ("Agent type
+    'cpp-carrier-writer' not found"), so the carrier has to travel with the run."""
+    name = A.carrier_name(permission_class)
+    text = (A.CARRIERS_DIR / f"{name}.md").read_text(encoding="utf-8").replace("\r\n", "\n")
+    m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
+    if not m:
+        raise A.AgentSpecError("CARRIER_UNREADABLE", name)
+    fm, body = m.groups()
+    field = lambda k: ((re.search(rf"(?m)^{k}:\s*(.+)$", fm) or [None, ""])[1]).strip()
+    tools = re.findall(r"[A-Za-z]+", field("tools"))
+    if sorted(tools) != sorted(A.CLASS_TOOLS[permission_class]):
+        raise A.AgentSpecError("CARRIER_TOOLS_DRIFT", f"{name}: {tools} != {A.CLASS_TOOLS[permission_class]}")
+    return json.dumps({name: {"description": field("description"), "prompt": body, "tools": tools}})
+
+
+def parent_argv(exe: str, prompt: str, parent_model: str, grant: list[str], permission_class: str) -> list[str]:
+    """Without a grant: the historical argv (S2/S3 runs were measured with it). With a grant
+    the run is HERMETIC, or the grant is a lie: measured 2026-10-01 on GEX44, whose user
+    settings allow Edit everywhere, a scoped grant narrowed nothing and an out-of-surface edit
+    landed. dontAsk denies whatever is not granted; project/local sources keep the host's
+    user-level allows out; the carrier then has to be passed inline."""
+    argv = [exe, "-p", prompt, "--model", parent_model, "--output-format", "stream-json", "--verbose"]
+    if grant:
+        argv += ["--setting-sources", "project,local", "--permission-mode", "dontAsk",
+                 "--agents", carrier_agents_json(permission_class)]
+    return argv + ["--allowedTools", "Agent", "Read", "Grep", "Glob", *grant]
 
 
 def parse_stream(lines: list[str]) -> dict:
@@ -161,8 +202,9 @@ def carrier_reply(s: dict) -> tuple[str, str]:
 
 def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = None,
         parent_model: str = "haiku", timeout: int = 900, state_version: str | None = None,
-        stream_out: Path | None = None, target_root: str | None = None) -> dict:
-    spec = A.load(spec_id)
+        stream_out: Path | None = None, target_root: str | None = None,
+        specs_dir: Path | None = None) -> dict:
+    spec = A.load(spec_id, specs_dir)
     grant = write_grant(spec, target_root)        # typed refusal before anything is dispatched
     d = spec.dispatch(mission, mode, state_version=state_version)
     carrier_model = model or d.get("model") or "sonnet"
@@ -180,11 +222,11 @@ def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = N
     # record was lost. A leftover temp dir is litter; a lost measurement is not recoverable.
     with tempfile.TemporaryDirectory(prefix="acr-", ignore_cleanup_errors=True) as cwd:
         try:
-            p = subprocess.run([exe, "-p", parent_prompt, "--model", parent_model,
-                                "--output-format", "stream-json", "--verbose",
-                                "--allowedTools", "Agent", "Read", "Grep", "Glob", *grant],
+            # stdin closed: `claude -p` reads stdin, and inherited it swallowed the rest of a
+            # `bash -s` script on GEX44 (measured 2026-10-01).
+            p = subprocess.run(parent_argv(exe, parent_prompt, parent_model, grant, spec.permission_class),
                                cwd=cwd, capture_output=True, text=True, encoding="utf-8",
-                               errors="replace", timeout=timeout)
+                               errors="replace", timeout=timeout, stdin=subprocess.DEVNULL)
         except subprocess.TimeoutExpired:
             return {"status": "UNMEASURED", "reason": f"timeout {timeout}s", "spec": spec_id, "mode": mode}
     if stream_out:
@@ -221,7 +263,7 @@ def run(spec_id: str, mission: str, mode: str = "virtual", model: str | None = N
                               if any(r.lower().endswith("/".join(x.split("/")[-2:]).lower()) for x in deep)}),
         "returned_chars": len(reply), "reply": reply, "reply_source": reply_source, "parent_usage": s["usage"],
         "denied_tools": s["denied_tools"],
-        "write_grant": grant,
+        "write_grant": grant, "hermetic": bool(grant),
     }
     written = [str(c["input"].get("file_path", "")) for c in s["carrier_tools"]
                if c["name"] in ("Edit", "Write", "MultiEdit", "NotebookEdit")]
@@ -242,6 +284,7 @@ def main(argv=None) -> int:
     ap.add_argument("--model"); ap.add_argument("--parent-model", default="haiku")
     ap.add_argument("--out"); ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--target-root", help="writer only: grant Edit on the spec's write_surfaces under this dir")
+    ap.add_argument("--specs-dir", help="alternate spec catalog (synthetic probes); default = the repo's")
     a = ap.parse_args(argv)
     if a.target_root and not Path(a.target_root).is_dir():
         print(f"AGENTSPEC_ERROR NO_TARGET_ROOT {a.target_root} is not a directory", file=sys.stderr)
@@ -249,7 +292,8 @@ def main(argv=None) -> int:
     try:
         rec = run(a.spec_id, Path(a.mission_file).read_text(encoding="utf-8"), a.mode, a.model,
                   a.parent_model, a.timeout, A.current_state_version(ROOT),
-                  Path(a.out).with_suffix(".stream.jsonl") if a.out else None, a.target_root)
+                  Path(a.out).with_suffix(".stream.jsonl") if a.out else None, a.target_root,
+                  Path(a.specs_dir) if a.specs_dir else None)
     except A.AgentSpecError as e:
         print(f"AGENTSPEC_ERROR {e.code} {e}", file=sys.stderr)
         return 2
