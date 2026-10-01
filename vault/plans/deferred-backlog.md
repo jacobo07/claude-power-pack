@@ -237,7 +237,10 @@ Decisions on the two drifts, neither applied:
   and MIX_ENV, jwExemptionGranted and the BLOCKED_DELIVERY notice all survive in repo; only the
   footer wording changed). Never deployed, so the "never starve the host" fix is not live.
   Deploy = back up `~/.claude/hooks/zero-issue-gate.js`, copy the repo file over it, `node
-  --check`. **Refused by the auto-mode classifier (self-modification): Owner action.**
+  --check`. Refused twice by the auto-mode classifier (self-modification). **DEPLOYED
+  2026-10-01 15:33** after the Owner left auto mode ("try the hook thing again"): live == repo
+  (SHA-256), `node --check` OK, old 09-16 build at `~/.claude/backups/hooks-20261001-153359/`.
+  Mirror gate still 4/5, now only on `hook-dispatcher.js`.
 - `hook-dispatcher.js`: **repo is ahead, not applied.** Its only difference is uncommitted work of
   another pane (names the abandoned scripts in `CHAIN-DEADLINE-ABANDONED before pool`; `node
   --check` OK, `restSteps` in scope). Idle since 09-30 20:27. Deploy after that pane commits it.
