@@ -1,12 +1,12 @@
 {
  "frozen_at": "2026-10-01T06:50:16Z",
- "note": "Benchmark v2 (S3b), frozen before the first v2 run. spec.json carries every page sha256; agent_spec.py carries the paging instruction (af6b287). Any mismatch voids scoring.",
+ "note": "Benchmark v2 (S3b), frozen before the first v2 run. spec.json carries every page sha256; agent_spec.py carries the paging instruction (af6b287). Any mismatch voids scoring. Hashes are of LF-normalized content (agent_bench.content_sha256). Amended before any v2 run completed: spec.json was first recorded as 7d5eb63f..., the laptop's CRLF bytes of the same git blob 1411d551; its content hash is the value below. No frozen content changed.",
  "files": {
   "vault/benchmarks/agent_virtualization_v2/fixtures/F4-graphql-dashboard.md": "6bedc2f28524be3d8fd1eb4c5c17a0d4f3cb0fc720b6a84b0eded608975682a4",
   "vault/benchmarks/agent_virtualization_v2/fixtures/F5-shared-hook-change.md": "57529ed56599e15fcf651420c12923481343a7d2efe7558129d1dda921a584f1",
   "vault/benchmarks/agent_virtualization_v2/fixtures/F6-firmware-release.md": "87d2ae03a4ce507b1b8cbdc962cd02c9490b1fbb922aff49d25b1806dcfcf362",
   "vault/benchmarks/agent_virtualization_v2/answer_key.json": "c5532ae350bdde84ac5a1cdc73200e4de1c0993dc06fe4bac910d2ac74ba2ee6",
-  "vault/capability_runtime/agent_specs/oneshot-architect-auditor/spec.json": "7d5eb63ffc291aaa971c94fd3c7cdfc47cb67b2109316a36b4783d4b822b5012",
+  "vault/capability_runtime/agent_specs/oneshot-architect-auditor/spec.json": "674427792e0880b681b0d0b82a33237013c449e91a630f24689b1298baa02870",
   "modules/capability_runtime/agent_spec.py": "c2d9b6696a766a09674c75c5e3bc3e07b564ae85202e93b1815ecc8f01323e09"
  }
 }

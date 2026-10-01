@@ -67,13 +67,20 @@ def fixtures_of(bench: Path = BENCH) -> tuple:
 FIXTURES = fixtures_of(BENCH)
 
 
+def content_sha256(p: Path) -> str:
+    """sha256 of the file with CRLF folded to LF. A freeze is about CONTENT: measured 2026-10-01,
+    the v2 manifest hashed the laptop's autocrlf bytes of spec.json, and the Linux checkout of the
+    SAME git blob (1411d55) failed the check on GEX44. Line endings are the host's, not the content's."""
+    return hashlib.sha256(p.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
 def manifest_mismatches(root: Path = ROOT, bench: Path = BENCH) -> list[str]:
-    """Every frozen file whose sha256 differs from the set's MANIFEST.json. Empty = scoring allowed."""
+    """Every frozen file whose content hash differs from the set's MANIFEST.json. Empty = scoring allowed."""
     man = json.loads((bench / "MANIFEST.json").read_text(encoding="utf-8"))
     bad = []
     for rel, want in man["files"].items():
         p = root / rel
-        got = hashlib.sha256(p.read_bytes()).hexdigest() if p.is_file() else "MISSING"
+        got = content_sha256(p) if p.is_file() else "MISSING"
         if got != want:
             bad.append(f"{rel}: {got[:12]} != {want[:12]}")
     return bad
