@@ -62,6 +62,12 @@ def module_hash(path: Path) -> str:
         return ""
 
 
+def _isolation(spec: dict) -> dict:
+    """Pair-level isolation for live-loaded modules (see mutation_probe.probe). Passed only when
+    declared, so a pair without it calls probe exactly as before."""
+    return {k: spec[k] for k in ("root_env", "copy_dirs") if spec.get(k)}
+
+
 def load_config() -> dict:
     if not CONFIG.exists():
         return {"pairs": {}}
@@ -86,7 +92,7 @@ def measure(key: str, spec: dict) -> dict:
         return {**row, "verdict": UNMEASURABLE,
                 "reason": "suite or module is absent from this checkout"}
 
-    res = probe(suite, module, spec.get("max", DEFAULT_MAX))
+    res = probe(suite, module, spec.get("max", DEFAULT_MAX), **_isolation(spec))
     row["killed"] = len(res["killed"])
     row["sampled"] = res.get("sampled", 0)
     row["restored_intact"] = res.get("restored_intact", True)
@@ -112,9 +118,17 @@ def measure(key: str, spec: dict) -> dict:
                        "The suite catches fewer injected defects than it did.")}
 
 
-def write_baseline(tier: str) -> int:
+def write_baseline(tier: str, only: list | None = None) -> int:
     cfg = load_config()
     selected = pairs_for(cfg, tier)
+    if only:
+        # Enrolling a new pair must not re-measure everyone else's floor: a re-baseline
+        # absorbs any regression another owner has not noticed yet.
+        missing = sorted(set(only) - {k for k, _ in selected})
+        if missing:
+            print(f"--pair names no configured pair in tier {tier!r}: {missing}")
+            return 1
+        selected = [(k, s) for k, s in selected if k in only]
     if not selected:
         print(f"no pairs configured for tier {tier!r}; nothing measured")
         return 1
@@ -125,7 +139,7 @@ def write_baseline(tier: str) -> int:
         if not suite.is_file() or not module.is_file():
             print(f"  SKIP  {key} -- absent")
             continue
-        res = probe(suite, module, spec.get("max", DEFAULT_MAX))
+        res = probe(suite, module, spec.get("max", DEFAULT_MAX), **_isolation(spec))
         if res["verdict"] == UNMEASURABLE:
             print(f"  SKIP  {key} -- {res.get('reason', '')}")
             continue
@@ -145,10 +159,12 @@ def main(argv=None) -> int:
     ap.add_argument("--tier", default="push", choices=("push", "weekly", "all"))
     ap.add_argument("--baseline", action="store_true",
                     help="record the current kill counts as the floor")
+    ap.add_argument("--pair", action="append", default=None,
+                    help="with --baseline: measure only this suite::module key (repeatable)")
     args = ap.parse_args(argv)
 
     if args.baseline:
-        return write_baseline(args.tier)
+        return write_baseline(args.tier, args.pair)
 
     cfg = load_config()
     selected = pairs_for(cfg, args.tier)

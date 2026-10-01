@@ -32,8 +32,10 @@ import argparse
 import ast
 import hashlib
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -106,14 +108,14 @@ def mutate(src: str, index: int) -> tuple[str, str]:
     return ast.unparse(tree), m.description
 
 
-def _run(suite: Path) -> int:
+def _run(suite: Path, extra_env: dict | None = None) -> int:
     # PYTHONDONTWRITEBYTECODE is not decoration. CPython invalidates a .pyc on
     # (mtime, size), and `==` -> `!=` is length-preserving: two mutants written in
     # the same second with identical size let the child import the PREVIOUS
     # mutant's bytecode and report SURVIVED for a line that is in fact covered.
     # Observed on the first real run of this probe -- a plausible, wrong result
     # from the instrument built to catch plausible, wrong results.
-    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", **(extra_env or {}))
     proc = subprocess.run([sys.executable, str(suite)], cwd=str(REPO_ROOT),
                           capture_output=True, text=True, timeout=SUITE_TIMEOUT_S,
                           env=env)
@@ -132,15 +134,41 @@ def _purge_cache(module: Path) -> None:
             pass
 
 
-def probe(suite: Path, module: Path, max_mutants: int = DEFAULT_MAX_MUTANTS) -> dict:
-    """Break `module` one edit at a time; report which edits `suite` notices."""
+def probe(suite: Path, module: Path, max_mutants: int = DEFAULT_MAX_MUTANTS,
+          root_env: str | None = None, copy_dirs: list | None = None) -> dict:
+    """Break `module` one edit at a time; report which edits `suite` notices.
+
+    With `root_env`, the LIVE module is never written: the repo layout (`copy_dirs`,
+    default the module's top-level dir) is copied to a temp root, the mutants go there,
+    and the suite runs with `root_env` pointing at it -- the suite must import through
+    that variable. Required for any module a hook loads on every prompt: an in-place
+    mutant is in production for as long as the probe runs (2026-10-01: spec_gate/gate.py
+    and autonomy_gate/risk_facts.py are loaded live by the JIT hook).
+    """
+    if root_env:
+        rel = module.resolve().relative_to(REPO_ROOT)
+        iso = Path(tempfile.mkdtemp(prefix="mutprobe-"))
+        try:
+            for d in copy_dirs or [rel.parts[0]]:
+                shutil.copytree(REPO_ROOT / d, iso / d,
+                                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            live_digest = hashlib.sha256(module.read_bytes()).hexdigest()
+            res = _probe_at(suite, iso / rel, max_mutants, {root_env: str(iso)})
+            res["live_untouched"] = hashlib.sha256(module.read_bytes()).hexdigest() == live_digest
+            return res
+        finally:
+            shutil.rmtree(iso, ignore_errors=True)
+    return _probe_at(suite, module, max_mutants, None)
+
+
+def _probe_at(suite: Path, module: Path, max_mutants: int, extra_env: dict | None) -> dict:
     original = module.read_text(encoding="utf-8-sig")
     digest = hashlib.sha256(original.encode("utf-8")).hexdigest()
     result: dict = {"suite": suite.name, "module": module.name,
                     "killed": [], "survived": [], "errors": []}
 
     try:
-        if _run(suite) != 0:
+        if _run(suite, extra_env) != 0:
             result["verdict"] = "UNMEASURABLE"
             result["reason"] = ("the suite does not pass before mutation, so a red "
                                 "run proves nothing about the mutant")
@@ -175,7 +203,7 @@ def probe(suite: Path, module: Path, max_mutants: int = DEFAULT_MAX_MUTANTS) -> 
             module.write_text(mutated, encoding="utf-8")
             _purge_cache(module)
             try:
-                (result["killed"] if _run(suite) != 0
+                (result["killed"] if _run(suite, extra_env) != 0
                  else result["survived"]).append(label)
             except subprocess.TimeoutExpired:
                 result["errors"].append(f"{label}: TIMEOUT")

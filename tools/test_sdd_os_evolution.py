@@ -202,6 +202,57 @@ def tier_report(c: dict) -> None:
     print(f"  tier: false_downgrade={down}/{n} false_escalation={esc}/{n}")
 
 
+def invariant_gates(c: dict) -> None:
+    """Named W2 invariants, so a mutant is killed by the property it breaks,
+    not only by the generic ratchet."""
+    known = set(c["known_red"])
+    live = [t for t in c["tier_cases"] if t["id"] not in known]
+    results_by_id = {t["id"]: classify_tier(t["prompt"]) for t in c["tier_cases"]}
+    for dim in sorted(RISK_DIMS):
+        labelled = [t for t in live if dim in t["risk"]]
+        missed = [t["id"] for t in labelled
+                  if dim not in (getattr(results_by_id[t["id"]], "risk_dims", None) or ())]
+        gate(f"V-SDDEVO-DIM-{dim.upper()}", bool(labelled) and not missed,
+             f"{len(labelled) - len(missed)}/{len(labelled)} labelled cases detected"
+             + (f"; missed {missed}" if missed else ""))
+    broken, unexplained = [], []
+    for cid, r in results_by_id.items():
+        base = getattr(r, "base_tier", None)
+        floor = getattr(r, "risk_floor", 0)
+        if base is None or r.tier != max(base, floor) or r.tier < base:
+            broken.append(cid)
+        elif r.tier != base and not (getattr(r, "risk_evidence", ()) and "raised" in r.reason):
+            unexplained.append(cid)
+    # Control the corpus lacks: base above a non-zero risk floor. Without it, "risk floor
+    # replaces base" is indistinguishable from "max(base, floor)" on every corpus case.
+    ctl = classify_tier("redesign the full architecture and drop the old tables")
+    if getattr(ctl, "base_tier", None) != 3 or ctl.tier != 3 or not getattr(ctl, "risk_floor", 0):
+        broken.append(f"CONTROL base={getattr(ctl, 'base_tier', None)} floor="
+                      f"{getattr(ctl, 'risk_floor', None)} tier={ctl.tier}")
+    gate("V-SDDEVO-TIER-MONOTONIC", not broken,
+         f"tier == max(base, risk floor) on {len(results_by_id) - len(broken)}/{len(results_by_id)}"
+         + (f"; broken {broken}" if broken else ""))
+    # Risk facts must not depend on unrelated import side effects (code review W2, F5): with no
+    # home directory, importing the autonomy_gate PACKAGE raised and every prompt came back
+    # UNASSESSED. Run in a child with no home at all.
+    import subprocess
+    env = {k: v for k, v in os.environ.items()
+           if k not in ("HOME", "USERPROFILE", "HOMEDRIVE", "HOMEPATH")}
+    probe = ("import sys; sys.path.insert(0, sys.argv[1]); "
+             "from modules.spec_gate.gate import classify_tier; "
+             "r = classify_tier('truncate the sessions table and run the migration against production'); "
+             "print(r.tier, r.risk_state, '+'.join(r.risk_dims))")
+    child = subprocess.run([sys.executable, "-c", probe, str(_IMPORT_ROOT)], capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", env=env, timeout=60)
+    seen = (child.stdout.strip() or child.stderr.strip()[-120:])
+    gate("V-SDDEVO-RISK-WITHOUT-HOME", seen.startswith("3 FOUND"), f"no-home child -> {seen!r}")
+    raised = sum(1 for r in results_by_id.values()
+                 if getattr(r, "base_tier", None) is not None and r.tier != r.base_tier)
+    gate("V-SDDEVO-TIER-EXPLAINED", raised > 0 and not unexplained,
+         f"{raised} raised verdicts carry risk evidence"
+         + (f"; unexplained {unexplained}" if unexplained else ""))
+
+
 def main(argv: list[str]) -> int:
     ledger_before = _ledger_lines()
     corpus = json.loads(CORPUS.read_text(encoding="utf-8"))
@@ -240,6 +291,7 @@ def main(argv: list[str]) -> int:
         gate("V-SDDEVO-RATCHET-NO-STALE", not stale,
              f"now green, remove from known_red: {sorted(stale)}" if stale
              else f"known_red={len(corpus['known_red'])} all still red")
+        invariant_gates(corpus)
         # Positive control: the comparator must see both directions.
         r_ctl, s_ctl = compare({"a", "b"}, {"b", "c"})
         gate("V-SDDEVO-RATCHET-CONTROL", r_ctl == {"a"} and s_ctl == {"c"},

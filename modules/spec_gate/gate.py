@@ -177,50 +177,143 @@ _TIER0: tuple[str, ...] = (
 )
 
 
+# Text-only micro edits: with no risk fact, these decide the tier even when the
+# sentence also names a domain noun ("fix billing typo in the README" is Tier 0,
+# not Tier 2 because "billing" appears). `rename` is excluded on purpose: a
+# rename can break a consumer, which the public-contract fact decides.
+_TEXT_MICRO: frozenset[str] = frozenset(
+    {"typo", "comment", "docstring", "whitespace", "indent", "wording"})
+# The micro noun must be the OBJECT of an edit ("fix the typo", "reword the comment"), and must
+# not be a product noun ("add a comment system", "build a comments feature" stayed Tier 2 --
+# code review W2, F1, which measured both dropping to Tier 0 under the bare-noun rule).
+_MICRO_EDIT = re.compile(
+    r"\b(?:fix|fixes|fixing|correct|correcting|update|tidy|clean up|adjust|reword|rewrite|"
+    r"arregla|corrige|ajusta|cambia)\b(?:\s+\w+){0,3}?\s+(?:typos?|comments?|docstrings?|"
+    r"whitespace|indent\w*|wording)\b(?!\s+(?:system|feature|section|service|api|module|engine|"
+    r"thread|widget|sistema|seccion|servicio)s?\b)")
+
+
 @dataclass
 class TierResult:
-    tier: int            # 0..3
+    tier: int            # 0..3 -- effective: max(base_tier, risk_floor)
     size: str            # S / M / L / XL
     requires_spec: bool  # tier >= 2
     requires_prd: bool   # tier >= 2
     reason: str
+    # Why, as data (W2). Defaults keep every existing constructor valid.
+    base_tier: int | None = None
+    base_reason: str = ""
+    risk_dims: tuple = ()
+    risk_floor: int = 0
+    risk_state: str = "UNASSESSED"   # FOUND | NONE_DETECTED | UNASSESSED
+    risk_evidence: tuple = ()        # (dim, rule, matched text) per fact
 
 
 def _kw_hit(tokens: tuple[str, ...], text: str) -> str | None:
+    # Plural-tolerant: "apis" and "modules" are the same signal as "api" and
+    # "module" (D3: a plural used to fall through to the Tier 1 default).
     for t in tokens:
-        if re.search(r"\b" + re.escape(t) + r"\b", text):
+        if re.search(r"\b" + re.escape(t) + r"(?:s|es)?\b", text):
             return t
     return None
+
+
+_RISK_FACTS_MOD = None
+
+
+def _risk_facts():
+    """Load risk_facts BY FILE, not through the autonomy_gate package: the package __init__
+    imports autonomy_gate.gate, whose import-time `Path.home()` raised in a process with no home
+    directory and turned every prompt UNASSESSED (code review W2, F5). Cached per process."""
+    global _RISK_FACTS_MOD
+    if _RISK_FACTS_MOD is None:
+        import importlib.util
+        import sys as _sys
+        path = Path(__file__).resolve().parents[1] / "autonomy_gate" / "risk_facts.py"
+        spec = importlib.util.spec_from_file_location("_sdd_risk_facts", path)
+        mod = importlib.util.module_from_spec(spec)
+        _sys.modules[spec.name] = mod          # @dataclass resolves through sys.modules
+        spec.loader.exec_module(mod)
+        _RISK_FACTS_MOD = mod
+    return _RISK_FACTS_MOD
+
+
+def _risk_floor(dims: tuple) -> int:
+    """Hard conjuncts, not a score: any material risk needs a spec (Tier 2);
+    destroying persistent data in production is a Tier 3 change."""
+    if not dims:
+        return 0
+    if "destructive_data" in dims and "production" in dims:
+        return 3
+    return 2
 
 
 def classify_tier(description: str) -> TierResult:
     """Map a free-text task description to an SDD-OS tier (0-3).
 
-    Highest matching tier wins (3 > 2 > 1 > 0). A PRD-trigger keyword
-    forces at least Tier 2. No explicit signal -> Tier 1 (Standard) as a
-    safe non-trivial default (the dataset escalates under ambiguity).
+    Two independent judgements, combined monotonically:
+      base   task shape from keyword signals (highest wins: 3 > 2 > 1 > 0; a
+             PRD trigger forces >= 2; no signal -> Tier 1, never Tier 0)
+      risk   risk facts from modules.autonomy_gate.risk_facts, read from the
+             request only (fenced logs, pasted and long quoted text, negated
+             clauses do not count)
+    Effective tier = max(base, risk floor). A risk fact can raise the tier and
+    can never lower it. The BASE, however, differs from the pre-W2 keyword read
+    in both directions, on purpose: it reads the request (a keyword that only
+    appears in a pasted log no longer counts), it tolerates plurals, and an edit
+    aimed at text only ("fix the billing typo") is Tier 0 even beside a domain
+    noun. Every such change is listed by tools/sdd_tier_diff.py, never assumed.
     """
-    text = (description or "").lower()
+    risk_err = ""
+    try:
+        risk = _risk_facts().assess(description or "")
+        text = risk.intent
+    except Exception as exc:  # noqa: BLE001 -- unknown risk is not low risk
+        risk, text = None, (description or "").lower()
+        risk_err = type(exc).__name__
     hit3 = _kw_hit(_TIER3, text)
     prd = _kw_hit(_PRD_TRIGGER, text)
     hit2 = _kw_hit(_TIER2, text)
     hit1 = _kw_hit(_TIER1, text)
     hit0 = _kw_hit(_TIER0, text)
+    dims = risk.dims if risk else ()
 
     if hit3:
-        tier, reason = 3, f"strategic/platform signal: {hit3!r}"
+        base, base_reason = 3, f"strategic/platform signal: {hit3!r}"
+    elif hit0 in _TEXT_MICRO and not dims and _MICRO_EDIT.search(text):
+        base, base_reason = 0, f"text-only micro edit: {hit0!r}"
     elif hit2 or prd:
-        tier, reason = 2, f"feature/system signal: {(hit2 or prd)!r}"
+        base, base_reason = 2, f"feature/system signal: {(hit2 or prd)!r}"
     elif hit1:
-        tier, reason = 1, f"standard signal: {hit1!r}"
+        base, base_reason = 1, f"standard signal: {hit1!r}"
     elif hit0:
-        tier, reason = 0, f"micro signal: {hit0!r}"
+        base, base_reason = 0, f"micro signal: {hit0!r}"
     else:
-        tier, reason = 1, "no explicit signal -> default Standard (Tier 1)"
+        base, base_reason = 1, "no explicit signal -> default Standard (Tier 1)"
+
+    floor = _risk_floor(dims)
+    tier = max(base, floor)
+    if risk is None:
+        state, evidence = "UNASSESSED", ()
+        # A classifier that could not read risk must not report a micro task.
+        tier = max(tier, 1)
+        risk_note = f"risk UNASSESSED (risk_facts unavailable: {risk_err})"
+    else:
+        state = risk.state if (dims or hit0 or hit1 or hit2 or hit3 or prd) \
+            else "UNASSESSED"
+        evidence = tuple((f.dim, f.rule, f.match) for f in risk.facts)
+        risk_note = (f"risk {'+'.join(dims)} -> floor Tier {floor}" if dims
+                     else f"risk {state}")
+    reason = base_reason if tier == base else \
+        f"{base_reason}; raised to Tier {tier} by {risk_note}"
+    if tier == base and dims:
+        reason = f"{base_reason}; {risk_note}"
 
     return TierResult(
         tier=tier, size=TIER_TO_SIZE[tier],
-        requires_spec=tier >= 2, requires_prd=tier >= 2, reason=reason)
+        requires_spec=tier >= 2, requires_prd=tier >= 2, reason=reason,
+        base_tier=base, base_reason=base_reason, risk_dims=dims,
+        risk_floor=floor, risk_state=state, risk_evidence=evidence)
 
 
 # --- Novelty proof gate (PR-NOVELTY-PROOF-REQUIRED-001) -----------------

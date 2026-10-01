@@ -9,8 +9,7 @@
     "deferred": "LEGACY readiness cases land in W3 with the cutover mechanism (audit gap 9); write-gate cases land in W5 with hooks/sdd_write_gate.py. Neither has a producer yet."
   },
   "known_red": [
-    "T-R01", "T-R02", "T-R09", "T-R11", "T-R13", "T-R14", "T-R15",
-    "T-S02", "T-S04", "T-S05", "T-S08", "T-S09", "T-S10", "T-S11", "T-S12", "T-S14", "T-S15", "T-S16", "T-S17",
+    "T-R09", "T-R13", "T-R23",
     "B-01", "B-03", "B-04",
     "R-01", "R-02", "R-03", "R-04", "R-05", "R-06", "R-07", "R-08", "R-09",
     "X-01", "X-03", "X-05", "X-06"
@@ -55,7 +54,13 @@
     {"id": "T-S17", "source": "synthetic", "lang": "en", "prompt": "change the OAuth scopes and permission checks for admin users", "tier_min": 2, "tier_max": 3, "risk": ["auth_secrets"]},
     {"id": "T-S18", "source": "synthetic", "lang": "en", "prompt": "update the copy on the pricing page hero", "tier_min": 0, "tier_max": 1, "risk": []},
     {"id": "T-S19", "source": "synthetic", "lang": "en", "prompt": "delete the unused helper function in utils.py", "tier_min": 0, "tier_max": 1, "risk": [], "note": "benign delete: code, not data"},
-    {"id": "T-S20", "source": "synthetic", "lang": "en", "prompt": "redesign the full architecture", "tier_min": 3, "tier_max": 3, "risk": []}
+    {"id": "T-S20", "source": "synthetic", "lang": "en", "prompt": "redesign the full architecture", "tier_min": 3, "tier_max": 3, "risk": []},
+    {"id": "T-R21", "source": "real", "lang": "en", "prompt": "```text\n/ultra plan mode\nROLE: act as principal platform architect for <project>\nMISSION: overhaul the commerce platform architecture across every repo\n```", "tier_min": 2, "tier_max": 3, "risk": [], "note": "added W2 from the tier-diff history sample: a mission pasted entirely inside a fence (3/150 real prompts had this shape). Stripping the fence as reference text downgraded these to the T1 default."},
+    {"id": "T-R22", "source": "real", "lang": "es", "prompt": "AUTHORIZED: deploy directo porque [razón]", "tier_min": 2, "tier_max": 3, "risk": ["production"], "note": "added W2 from the tier-diff history sample (appeared 3x with variants)"},
+    {"id": "T-R23", "source": "real", "lang": "es", "prompt": "go ahead, y tambien hay carpetas de plugins directamente en la raiz", "tier_min": 0, "tier_max": 1, "risk": [], "note": "added W2 from the tier-diff history sample: a remark, not a feature. Red: base vocabulary escalates a domain noun ('plugin', now also plural). Named debt, not fixed in W2."},
+    {"id": "T-S23", "source": "synthetic", "lang": "en", "prompt": "Add a comment system to the blog with an API endpoint and database persistence", "tier_min": 2, "tier_max": 3, "risk": [], "note": "added W2 from code review F1: 'comment' is a product noun here, not a text-only micro edit"},
+    {"id": "T-S24", "source": "synthetic", "lang": "en", "prompt": "Build a comments feature with auth and a new database schema", "tier_min": 2, "tier_max": 3, "risk": [], "note": "added W2 from code review F1: plural 'comments' as a feature, not a comment edit"},
+    {"id": "T-S22", "source": "synthetic", "lang": "en", "prompt": "logged-in prod probe of the lanzamiento page, check the styling", "tier_min": 0, "tier_max": 1, "risk": [], "note": "added W2: a read-only probe whose Spanish noun 'lanzamiento' (launch) a bare verb stem read as a production action"}
   ],
   "specs": {
     "billing-ready": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [modules/billing/]\nopen_questions:\n  - Q1 | RESOLVED | invoices are per tenant\nacceptance:\n  - AC-1 | verify: python tools/test_billing.py\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n\n# Billing endpoint\n",

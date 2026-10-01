@@ -69,6 +69,30 @@
    "sampled": 6,
    "module_hash": "2da982a6e1789c2f",
    "measured_at": "2026-08-10T18:00:50Z"
+  },
+  "tools/test_risk_facts.py::modules/autonomy_gate/risk_facts.py": {
+   "tier": "push",
+   "root_env": "SDD_OS_PP_ROOT",
+   "copy_dirs": [
+    "modules"
+   ],
+   "_why": "SDD-OS W2 risk facts. Loaded live by the JIT hook on every prompt, so the probe runs isolated (root_env); an in-place probe would put each mutant in production for the run.",
+   "min_kill": 3,
+   "sampled": 6,
+   "module_hash": "07c78914bcc00aab",
+   "measured_at": "2026-10-01T12:29:47Z"
+  },
+  "tools/test_sdd_os_evolution.py::modules/spec_gate/gate.py": {
+   "tier": "weekly",
+   "root_env": "SDD_OS_PP_ROOT",
+   "copy_dirs": [
+    "modules"
+   ],
+   "_why": "SDD-OS W2 tier classifier, judged by the replay ratchet. Weekly: the suite runs ~10s, x7 runs per probe. Isolated for the same live-load reason as risk_facts.",
+   "min_kill": 3,
+   "sampled": 6,
+   "module_hash": "4d753f23567ac5e9",
+   "measured_at": "2026-10-01T12:29:47Z"
   }
  }
 }

@@ -189,6 +189,34 @@ an unmerged branch).
 | 24 "0 specs declare covers" | **OVERTURNED**: `^covers:` matches 26 files in `vault/specs` (Grep, 2026-10-01). Still adopted: a numeric promotion threshold, minimum sample and labelling procedure defined before W5; UNBOUND-with-zero-declared-specs reported as its own class. |
 | info | Holdout flag **deferred** (no consumer). Residue item STALE → follow-up through `scaffold.check_drift`. Keep: shadow-first, no dispatcher edit, reuse of the GSD goal log. |
 
+## W2 -- risk-aware tiers (approved 2026-10-01 "y"; EXECUTION mode)
+
+Owners: `modules/autonomy_gate/risk_facts.py` (NEW submodule of the existing irreversibility /
+outward owner; one interpretation per risk fact) consumed by `spec_gate.classify_tier`
+(effective = max(base, risk floor); `TierResult` gains base_tier, base_reason, risk_dims,
+risk_floor, risk_state, risk_evidence -- all defaulted). `autonomy_gate.classify` keeps its own
+older patterns: named debt (its subject includes git operations risk_facts does not model).
+
+Measured, base f6518c6:
+- known_red 35 -> 18. Removed by implementation (17): T-R01 T-R02 T-R11 T-R14 T-R15 T-S02 T-S04
+  T-S05 T-S08 T-S09 T-S10 T-S11 T-S12 T-S14 T-S15 T-S16 T-S17. Still red in W2 scope: T-R09
+  (Spanish UI feature; task shape, not risk) and T-R13 ("not only staging", no deploy verb).
+- tier false_downgrade 15/40 -> 1/40; false_escalation 2/40 -> 0/40.
+- tier-diff (`tools/sdd_tier_diff.py`): corpus 16 corrections, 0 regressions, 1 in-range
+  change; stable history sample 400 -> 20 changed (18 up, 2 down), each explained; consumers run
+  for real with old/new patched (sdd activation, sdd_tier signal, DFP verdict/class, PRD
+  sections, reframing gate) plus two derived (router floor, cost_gate Haiku tip).
+- Mutation: 7 named drills KILLED, isolated (root_env); control without isolation SURVIVED.
+  Ratchet pairs enrolled via `--baseline --pair`: risk_facts 3/6 (push), gate.py 3/6 (weekly).
+- Production Reality: real UserPromptSubmit JSON -> `tools/jit_skill_loader.py` (the script
+  `hook-dispatcher.js:558` spawns) -> directive "Tier 3 ... raised to Tier 3 by risk
+  destructive_data+production". Probe-owned throttle files removed by computed key.
+
+Debt carried: base vocabulary escalates domain nouns (now incl. plurals: "plugins" -> T2);
+autonomy_gate.classify not yet on risk_facts; jit loader runs near the dispatcher's 12 s cap
+under load (pre-existing; classify_tier itself ~2 ms/call); other in-place ratchet pairs are not
+audited for live-load.
+
 `intent_verified` is NOT extended in this mission: the GSD goal obligations already provide
 tree-bound requirement→gate evidence. Recorded as a follow-up (join on AC ids), not dropped
 silently.
