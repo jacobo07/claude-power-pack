@@ -11,8 +11,7 @@
     "expect_spec": "binding cases: the spec stem that must be resolved; null means NO spec_path may be reported."
   },
   "known_red": [
-    "T-R09", "T-R13", "T-R23",
-    "X-01", "X-05", "X-06", "X-08", "X-09", "X-10", "X-11"
+    "T-R09", "T-R13", "T-R23"
   ],
   "tier_cases": [
     {"id": "T-R01", "source": "real", "lang": "en", "prompt": "deploy main to <domain> on the VPS", "tier_min": 2, "tier_max": 3, "risk": ["production"]},

@@ -270,6 +270,47 @@ def invariant_gates(c: dict) -> None:
          + (f"; unexplained {unexplained}" if unexplained else ""))
 
 
+def w3_gates(c: dict, base: Path) -> None:
+    """Named W3 admission invariants the corpus cannot reach through its cases."""
+    import modules.sdd_os.pre_exec_gate as peg
+    task = "add a billing endpoint for invoices"
+    repo = _make_repo(base, ["billing-ready"], c["specs"])
+    # A crashing judge must refuse. The corpus never makes assess() raise, so "error -> proceed"
+    # would survive every case; only this gate can see it.
+    real = peg._readiness_mod.assess
+    def _boom(*_a, **_k):
+        raise RuntimeError("synthetic readiness failure")
+    peg._readiness_mod.assess = _boom
+    try:
+        d = evaluate(task, repo)
+    finally:
+        peg._readiness_mod.assess = real
+    gate("V-SDDEVO-READINESS-ERROR-REFUSES",
+         d.action == peg.SPEC_NOT_READY and d.readiness is not None
+         and d.readiness.state == "UNJUDGEABLE",
+         f"assess() raising -> action={d.action}, state="
+         f"{getattr(d.readiness, 'state', None)}")
+    # Control: the same repo with a working judge proceeds, so the refusal above is the error.
+    ok = evaluate(task, repo)
+    gate("V-SDDEVO-READINESS-ERROR-CONTROL", ok.action == "proceed", f"healthy judge -> {ok.action}")
+    # Every refusal is `blocked`, and its directive carries enough provenance to act on.
+    probes = {
+        peg.SPEC_NOT_READY: (["sessions-t1"],
+                             "truncate the sessions table and run the migration against production",
+                             ("sessions-t1.md", "checkpoints")),
+        peg.BINDING_AMBIGUOUS: (["billing-ready", "billing-ready-twin"], task,
+                                ("billing-ready.md", "billing-ready-twin.md")),
+        peg.BINDING_WEAK: (["billing-single"], task, ("billing-single.md",)),
+    }
+    bad = []
+    for action, (names, t, needles) in probes.items():
+        dd = evaluate(t, _make_repo(base, names, c["specs"]))
+        if dd.action != action or not dd.blocked or not all(n in dd.directive for n in needles):
+            bad.append(f"{action}: got {dd.action}, blocked={dd.blocked}")
+    gate("V-SDDEVO-REFUSAL-PROVENANCE", not bad and peg.REFUSALS >= set(probes),
+         "; ".join(bad) or f"{len(probes)} refusals blocked, each names spec + reason")
+
+
 def main(argv: list[str]) -> int:
     ledger_before = _ledger_lines()
     corpus = json.loads(CORPUS.read_text(encoding="utf-8"))
@@ -309,6 +350,7 @@ def main(argv: list[str]) -> int:
              f"now green, remove from known_red: {sorted(stale)}" if stale
              else f"known_red={len(corpus['known_red'])} all still red")
         invariant_gates(corpus)
+        w3_gates(corpus, base)
         # Positive control: the comparator must see both directions.
         r_ctl, s_ctl = compare({"a", "b"}, {"b", "c"})
         gate("V-SDDEVO-RATCHET-CONTROL", r_ctl == {"a"} and s_ctl == {"c"},

@@ -42,10 +42,14 @@ def cmd_classify(args) -> int:
     print(f"Tier {d.tier} -- {d.tier_label}")
     print(f"  repo    : {root}")
     print(f"  action  : {d.action}")
-    print(f"  binding : {d.binding.reason}")
+    print(f"  binding : {d.binding.strength} -- {d.binding.reason}")
     if d.binding.bound:
         print(f"  spec    : {d.binding.spec_path}")
         print(f"  matched : {list(d.binding.matched)}")
+    for alt in (d.binding.alternatives if not d.binding.bound else ()):
+        print(f"  candidate: {alt}")
+    if d.readiness is not None:
+        print(f"  ready   : {d.readiness.state} {' '.join(d.readiness.missing)}".rstrip())
     print()
     print(d.directive)
     return 0 if d.action == "proceed" else 1

@@ -18,6 +18,11 @@ two ways that matter:
      spec skeleton -- with a `covers` declaration so the task actually
      binds (OD-1) -- instead of asking the agent to remember to.
 
+W3 (2026-10-01) moved the authority boundary from "a spec binds" to "the
+right spec binds strongly and is ready for this tier": `evaluate` refuses
+with binding_ambiguous / binding_weak / spec_not_ready at Tier 2+. A
+generated skeleton is `status: draft`, so generating one never authorizes.
+
 Non-destructive by contract: an existing file is never overwritten.
 Stdlib only, cwd-relative, no hardcoded paths (E11).
 """
@@ -36,6 +41,7 @@ if str(PP_ROOT) not in sys.path:
 from modules.sdd_os.spec_binding import (  # noqa: E402
     SpecBinding, find_bound_spec, infer_covers,
 )
+from modules.sdd_os import readiness as _readiness_mod  # noqa: E402
 
 TIER_LABEL: dict[int, str] = {
     0: "Micro Task",
@@ -60,6 +66,12 @@ _MAX_SLUG_LEN = 48
 # string is spec_gate's, not a new one -- that gate reached the same verdict
 # first and nothing consumed it.
 KNOWLEDGE_FIRST = "knowledge_first_required"
+# W3: three more refusals, each naming a different fix. A spec that exists is not a spec that
+# authorizes: it may bind too weakly, compete with another, or not be ready for this tier.
+SPEC_NOT_READY = "spec_not_ready"
+BINDING_WEAK = "binding_weak"
+BINDING_AMBIGUOUS = "binding_ambiguous"
+REFUSALS = frozenset({KNOWLEDGE_FIRST, SPEC_NOT_READY, BINDING_WEAK, BINDING_AMBIGUOUS})
 
 
 @dataclass
@@ -69,16 +81,18 @@ class GateDecision:
     requires_written_spec: bool
     binding: SpecBinding
     action: str            # "proceed" | "inline_mini_spec" | "write_spec"
-    directive: str         #   | "knowledge_first_required"
+    directive: str         #   | REFUSALS (knowledge_first_required, spec_not_ready,
+                           #     binding_weak, binding_ambiguous)
     spec_path: Path | None = None
     spec_written: bool = False
     knowledge_verdict: str = ""       # DFP class, when it was consulted
     missing_knowledge: tuple = ()     # named kinds, never "this feels big"
+    readiness: object | None = None   # readiness.Readiness of the bound spec, when judged
 
     @property
     def blocked(self) -> bool:
         """The gate refuses. Distinct from `write_spec`, which instructs."""
-        return self.action == KNOWLEDGE_FIRST
+        return self.action in REFUSALS
 
 
 def _knowledge_gap(task_description: str):
@@ -320,29 +334,84 @@ The command whose observed output proves this works.
 """
 
 
+def _assess(spec_path: Path, tier: int, today: date | None):
+    """Readiness of the bound spec. An error is UNJUDGEABLE -- never a pass."""
+    try:
+        return _readiness_mod.assess(spec_path, tier, today=today)
+    except Exception as exc:  # noqa: BLE001 -- a broken judge must refuse, not admit
+        return _readiness_mod.Readiness(
+            _readiness_mod.UNJUDGEABLE, (f"assess-error:{type(exc).__name__}",),
+            effective_tier=tier)
+
+
 def evaluate(task_description: str,
-             cwd: Path | str | None = None) -> GateDecision:
-    """Classify the task and resolve whether a spec covers it. No writes."""
+             cwd: Path | str | None = None, *,
+             today: date | None = None) -> GateDecision:
+    """Classify the task, resolve its spec, and judge whether that spec may authorize it.
+
+    Order, each a hard conjunct (no blended score):
+      1. tier       -- the single W2 producer, spec_gate.classify_tier
+      2. binding    -- AMBIGUOUS / WEAK refuse at Tier 2+ (and never spawn a skeleton)
+      3. readiness  -- a bound spec authorizes Tier 2+ only if READY / LEGACY_READY at
+                       max(task tier, spec tier); MALFORMED / UNJUDGEABLE refuse too
+      4. unbound    -- knowledge sufficiency, then write_spec (unchanged)
+    Below Tier 2 nothing here refuses: weak/ambiguous/unready become a note. No writes.
+    `today` pins the legacy readiness window for replay; production leaves it None.
+    """
     root = Path(cwd) if cwd else Path.cwd()
     tier, reason = _classify(task_description)
     binding = find_bound_spec(task_description, root)
+    label = f"SDD-OS Tier {tier} ({TIER_LABEL[tier]})"
+
+    def _decision(action: str, directive: str, **kw) -> GateDecision:
+        return GateDecision(tier=tier, tier_label=TIER_LABEL[tier],
+                            requires_written_spec=tier >= 2, binding=binding,
+                            action=action, directive=directive, **kw)
+
+    if tier >= 2 and binding.strength == "AMBIGUOUS":
+        names = ", ".join(str(p) for p in binding.alternatives)
+        return _decision(BINDING_AMBIGUOUS, (
+            f"{label} -- REFUSED: binding ambiguous. {binding.reason}.\n"
+            f"Candidates: {names}.\nNo spec is chosen for you (newest is not more "
+            f"relevant). Name the governing spec by path in the task, or narrow the "
+            f"`covers` of the one that does not govern it."))
+
+    if tier >= 2 and binding.strength == "WEAK":
+        names = ", ".join(str(p) for p in binding.alternatives)
+        return _decision(BINDING_WEAK, (
+            f"{label} -- REFUSED: binding weak. {binding.reason}.\n"
+            f"Candidate(s): {names}.\nOne shared word does not make a spec govern this "
+            f"task. If it does govern it, name it by path in the task or give it a "
+            f"multi-word `covers` entry; if not, write the task's own spec "
+            f"(`/cpp-sdd-os spec \"<task>\"`). No skeleton was generated."))
 
     if binding.bound:
-        return GateDecision(
-            tier=tier, tier_label=TIER_LABEL[tier],
-            requires_written_spec=tier >= 2, binding=binding,
-            action="proceed", spec_path=binding.spec_path,
-            directive=(
-                f"SDD-OS Tier {tier} ({TIER_LABEL[tier]}). Spec bound: "
-                f"{binding.spec_path}. Read it before editing -- scope and "
-                f"done-gate live there, not in your head."))
+        r = _assess(binding.spec_path, tier, today)
+        state = f"{r.state}" + (f" ({', '.join(r.missing)})" if r.missing else "")
+        if tier >= 2 and not r.authorizes:
+            return _decision(SPEC_NOT_READY, (
+                f"{label} -- REFUSED: spec not ready. Bound ({binding.strength}): "
+                f"{binding.spec_path}\nReadiness at Tier {r.effective_tier}: {state}."
+                + (f"\n{r.notes[0]}" if r.notes else "")
+                + "\nA spec that exists is not a spec that authorizes: complete the named "
+                  "items (see modules/sdd_os/readiness.py for the grammar), then re-run."),
+                spec_path=binding.spec_path, readiness=r)
+        note = ("" if r.authorizes else
+                f"\nNote: the spec is {state}; at Tier {tier} that is advisory.")
+        return _decision("proceed", (
+            f"{label}. Spec bound ({binding.strength}, {r.state}): "
+            f"{binding.spec_path}. Read it before editing -- scope and "
+            f"done-gate live there, not in your head.{note}"),
+            spec_path=binding.spec_path, readiness=r)
 
     if tier < 2:
+        weak = ("" if binding.strength not in ("WEAK", "AMBIGUOUS") else
+                f"\nNote: no spec governs this task ({binding.reason}).")
         return GateDecision(
             tier=tier, tier_label=TIER_LABEL[tier],
             requires_written_spec=False, binding=binding,
             action="inline_mini_spec",
-            directive=_mini_spec_block(task_description, tier, reason))
+            directive=_mini_spec_block(task_description, tier, reason) + weak)
 
     # Before demanding a spec, ask whether a spec is even the right artifact.
     # Writing one against knowledge that does not exist yet does not capture
@@ -439,6 +508,10 @@ __all__ = [
     "TIER_LABEL",
     "SPEC_DIR_PREFERENCE",
     "KNOWLEDGE_FIRST",
+    "SPEC_NOT_READY",
+    "BINDING_WEAK",
+    "BINDING_AMBIGUOUS",
+    "REFUSALS",
     "GateDecision",
     "slugify",
     "resolve_spec_dir",
