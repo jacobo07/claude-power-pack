@@ -123,6 +123,19 @@ and asked that it not be restarted unprompted.
 **Activation criterion:** free RAM >= 6 GB. Run the 5 drills on isolated copies; each must
 print KILLED and the live files must hash unchanged. ~20 min.
 
+**2026-10-01 — 4 of 5 RUN on GEX44, all KILLED.** The handoff of 5fb53f17 listed 4 unrun
+(`d5_b.json` + `d5_c.json`); `d5_a.json` (quota ceiling) is not re-verified here and its
+earlier result is not on record in this entry. Method: `git archive` of HEAD `8a7cfaa`
+(subject paths last changed `caeec1a`) for `modules/pp_eval`, `modules/owner_queue`,
+`tools/test_pp_eval.py` and its fixture, copied to `kobii@gex44:~/drills/d5-<ts>/`; the
+harness was `eval_drill.py` with its hardcoded `PP = ~/.claude/...` replaced by an argument,
+because on GEX44 that path is the host's own live install, not the laptop's HEAD. Result:
+CONTROL clean copy `PP_EVAL_PASS=38/38`; KILLED V-EVAL-QUOTA-STOPS-NIGHT,
+V-EVAL-LOCK-REFUSES-SECOND, V-EVAL-OWNER-ACTIVE-SKIPS,
+V-EVAL-PROPOSAL-QUEUED-ONLY-WHEN-ACTIONABLE; exported tree hash unchanged. Laptop files never
+touched. Remaining: re-run V-EVAL-QUOTA-CEILING-SKIPS (`d5_a.json`) if its first result
+cannot be found.
+
 ## D6 — PP Self-Eval: bank has 0 validated tasks (need >= 8)
 
 **State:** first real harvest reaped after 2 legitimate rejections (an environment-dependent
