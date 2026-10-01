@@ -80,9 +80,21 @@ worktree = repo root. Plan + Owner decisions: `vault/specs/agent-capability-virt
    parent grants only Agent/Read/Grep/Glob. Carrier did not work around it, found the planted
    duplicate hook, proposed an in-surface fix; target repo unchanged (empty diff). The record
    hid the denial -> now `denied_tools` (V-ACR 8/8, re-parsed on the real stream: ['Edit']).
-   OPEN (Owner): grant the writer carrier writes in headless dispatch? Proposal: derive
-   path-scoped Edit/Write allow rules from write_surfaces + an explicit --target-root, so the
-   runtime (not the prompt) enforces the surface; verify rule syntax against docs; re-run.
+   Owner said YES to a scoped headless write grant (2026-10-01). Built + proven:
+   - 0117001 scoped Edit(//abs) rules: on GEX44 came out INVERTED (in-surface .claude/ edit
+     denied, src/ edit landed). Causes (docs + measured): GEX44 user settings allow
+     Edit/Write/Bash everywhere and allow rules only add; .claude/ is a PROTECTED path that
+     no allow rule pre-approves and headless always denies.
+   - f6a18ae: a grant makes the run hermetic (dontAsk + --setting-sources project,local +
+     carrier inline via --agents, since excluding user settings hides ~/.claude/agents);
+     SURFACE_PROTECTED refuses grants over .claude/.git/.mcp.json; no grant = old argv.
+     V-ACR 18/18. E2E on GEX44 (synthetic probe-writer, surface docs/): docs edit landed,
+     src edit denied by runtime, record denied_tools=['Edit'] + writes_outside_surface.
+     Evidence: real_boundary/s4/{writer3,probe,e2e,mech}*.
+   OPEN (Owner): harness-optimizer's whole surface is protected, so it can NEVER write
+   headlessly (grant refused SURFACE_PROTECTED). Options: (a) keep writer for interactive
+   dispatch only, where the Owner approves each .claude/ edit; (b) demote to verifier that
+   returns a patch for the parent to apply; (c) bypassPermissions -- not recommended.
 3. S5 telemetry, S6 foundry, S7 closure (UKDL, liveness, agent-creation gate).
 
 Start: read the spec, run `python tools/test_agent_spec.py`, `test_agent_resolver.py`,
