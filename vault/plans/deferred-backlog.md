@@ -181,6 +181,12 @@ Once D4–D6 give verdicts, re-rank using the self-eval's own data.
 and proven live. Open: gaps 3–6 (each its own T2 spec) and the cheap `refcheck` / `done_gate`
 wiring; still waiting for the Owner to pick.
 
+**2026-10-01: gap 3 v1 BUILT** (Owner: "3") — `tools/test_gaps.py` + `/test-gaps`, spec
+`vault/specs/test-gaps.md`, dc7f781. Uncovered changed lines + surviving mutants on covered
+changed lines, in an isolated copy; subprocess-driven tests measured. 14/14 gates; GEX44 drill
+6/6 KILLED. Not in v1: hypothesis, fuzzing, flaky tests, non-Python. Owner step: copy
+`commands/test-gaps.md` to `~/.claude/commands/` for the slash command. Open: gaps 4–6.
+
 ## D8 — Mission continuity: merge the UKDL candidates
 
 **State:** `vault/knowledge_base/mission_continuity/UKDL_CANDIDATES_DURABLE_SUBSTRATE.md` not yet
@@ -203,6 +209,15 @@ was not taken as one).
 
 **Activation criterion:** Owner says delete. Then read both first (worktree status, unpushed
 commits on the branch) and delete only if nothing unique would be lost.
+
+**2026-10-01 — Owner said delete; NOT deleted, unique work found.** Repo
+`Desktop\Cursor Projects\gsd-long-smoke` (no remote), worktree
+`.claude\worktrees\gsd-autonomous-run`, branch head `806f202`. The branch carries **78 commits on
+no other ref** (`rev-list --count master..gsd-autonomous-run`; a first query with `--exclude`
+returned 0 and was wrong), and the worktree holds uncommitted work: 4 modified files (+76/-17)
+and untracked `smoketext/reverse.py`, `tests/test_reverse.py`, phase `09-word-count`, last
+written 2026-09-29. Needs a second answer: archive first (git bundle of the branch + a copy of
+the dirty worktree under `~/.claude/backups/`) then delete, or keep.
 
 ## D10 — `test_hook_mirror_identity` red 3/5 (other panes' files)
 

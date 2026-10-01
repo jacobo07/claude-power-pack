@@ -97,6 +97,20 @@ survivors that matter are killed.
 Mutation drill: with the per-line restriction removed, or the SURVIVED/KILLED mapping inverted,
 the suite goes red.
 
+## Evidence (2026-10-01)
+
+- `python tools/test_test_gaps.py`: 14/14 locally (839 s, RAM-starved Windows host).
+- GEX44 (Linux, throwaway venv `~/drills/tg-venv`, coverage 7.16.2): control 14/14; isolated drill
+  6/6 KILLED (per-line restriction removed, kill/survive mapping corrupted, whole suite per
+  mutant, mutant written to the project, subprocess patch removed, context-less lines skipped);
+  source unchanged.
+- Real project `gsd-long-smoke` worktree, **before** the subprocess fix: MEASURED in 115 s,
+  2 changed files, 0 mutant candidates. Diagnosis: `test_reverse.py` only checks the import
+  (true gap), and `test_cli.py` drives `python -m smoketext` in subprocesses (the blind spot that
+  produced item 7 above).
+- Real project **after** the fix: NOT verified. The run was stopped by Claude Code for host memory
+  pressure before printing anything. Re-run when free RAM allows (or on GEX44 with `--files`).
+
 ## Rollback
 
 Delete the tool, its test and the command file. No state is persisted.
