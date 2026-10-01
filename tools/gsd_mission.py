@@ -1009,6 +1009,63 @@ def _worktree_carries_workstream(worktree: str, base_cwd: str, workstream: str) 
         return False
 
 
+CWD_ALIGN_BLOCKING = ("behind_dirty", "diverged", "unreadable")
+
+
+def align_cwd(cwd: str, work_dir: str | None) -> dict:
+    """Make the mission cwd carry the work before a worker is launched in it.
+
+    The worker is LAUNCHED in the cwd (workspace trust is exact-path) and /gsd-autonomous reads
+    `.planning/` there, so a cwd that lags its work_dir briefs the successor with a stale roadmap.
+    Measured 2026-09-30 (Brand #001, m-cdd8fc64ed65): the 09-28 handback advanced only the
+    worktree; the cwd stayed on the seed, and the renewed worker redid Phase 1 on a new worktree
+    branched from the seed -- 73 commits of finished work invisible to it, 22 merge conflicts.
+
+    Statuses: same / aligned / ahead (cwd already contains the work) / unrelated (different
+    repository: not ours to judge) -> no action; fast_forwarded (cwd was a clean ancestor:
+    `merge --ff-only`, nothing can be lost); behind_dirty / diverged / unreadable -> the caller
+    must NOT launch (CWD_ALIGN_BLOCKING)."""
+    import subprocess
+    if not work_dir or os.path.normcase(str(Path(work_dir).resolve())) == os.path.normcase(str(Path(cwd).resolve())):
+        return {"status": "same", "detail": ""}
+    here, there = _git_toplevel_and_common(cwd), _git_toplevel_and_common(work_dir)
+    if not here or not there:
+        return {"status": "unreadable", "detail": f"git could not read cwd={cwd} or work_dir={work_dir}"}
+    if here[1] != there[1]:
+        return {"status": "unrelated", "detail": "work_dir is not a worktree of the cwd's repository"}
+    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+    if not Path(g).exists():
+        g = "git"
+
+    def git(path, *args):
+        return subprocess.run([g, "-C", path, *args], capture_output=True, text=True, timeout=60)
+
+    try:
+        hc = git(cwd, "rev-parse", "HEAD").stdout.strip()
+        hw = git(work_dir, "rev-parse", "HEAD").stdout.strip()
+        if not hc or not hw:
+            return {"status": "unreadable", "detail": "HEAD unreadable"}
+        facts = {"cwd_head": hc[:12], "work_dir_head": hw[:12]}
+        if hc == hw:
+            return {"status": "aligned", "detail": "", **facts}
+        if git(cwd, "merge-base", "--is-ancestor", hw, hc).returncode == 0:
+            return {"status": "ahead", "detail": "cwd already contains the work_dir head", **facts}
+        if git(cwd, "merge-base", "--is-ancestor", hc, hw).returncode != 0:
+            return {"status": "diverged", "detail": f"cwd {hc[:12]} and work_dir {hw[:12]} have diverged;"
+                    " a worker launched here would branch from a lineage without the work", **facts}
+        dirty = git(cwd, "status", "--porcelain", "--untracked-files=no").stdout.strip()
+        if dirty:
+            return {"status": "behind_dirty", "detail": f"cwd {hc[:12]} is behind work_dir {hw[:12]}"
+                    " but has uncommitted tracked changes; not fast-forwarding over them", **facts}
+        ff = git(cwd, "merge", "--ff-only", hw)
+        if ff.returncode != 0:
+            return {"status": "behind_dirty", "detail": "fast-forward refused: "
+                    + ((ff.stderr or ff.stdout).strip()[-200:]), **facts}
+        return {"status": "fast_forwarded", "detail": f"cwd {hc[:12]} -> {hw[:12]}", **facts}
+    except Exception as exc:  # never launch on an unanswered question
+        return {"status": "unreadable", "detail": f"{type(exc).__name__}: {exc}"}
+
+
 def effective_workdir(session_id: str, base_cwd: str, workstream: str | None = None) -> str | None:
     """Where the predecessor was ACTUALLY working, from its own transcript's `cwd` field.
 
@@ -1520,6 +1577,21 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         decision=turn_end, runner=runner, stop_runner=stop_runner, now=now,
                         progress=progress, work_dir=work_dir)
                     row["action"] = "continue"
+                    continue
+                # The successor is launched in the cwd and reads its roadmap there: the cwd must
+                # carry the work first (align_cwd; measured Brand #001 2026-09-30).
+                aligned = align_cwd(rec["cwd"], work_dir or rec.get("work_dir"))
+                row["cwd_align"] = aligned["status"]
+                if aligned["status"] == "fast_forwarded":
+                    lr.ledger_append(mid, "cwd_fast_forwarded", mission_id=mid, epoch=rec["epoch"],
+                                     detail=aligned["detail"])
+                elif aligned["status"] in CWD_ALIGN_BLOCKING:
+                    why = f"launch held: cwd not aligned with work_dir ({aligned['status']}): {aligned['detail']}"
+                    lr.ledger_append(mid, "launch_held_cwd", mission_id=mid, epoch=rec["epoch"],
+                                     status=aligned["status"], detail=aligned["detail"])
+                    transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                               event="launch_held", now=now, reason=why)
+                    row["held"] = why
                     continue
                 note = None
                 packet = None
