@@ -47,7 +47,37 @@ from pathlib import Path
 from .models import IntegrityVerdict, canonicalize
 from .session import _AUTH_WALL_MARKERS, BrowserSession, SessionState
 
-ADAPTER_VERSION = "eva-adapter/1.0.0"
+ADAPTER_VERSION = "eva-adapter/1.1.0"
+
+#: Words that only mean "logged out" when the page is structurally a login page.
+#: EVA Unified (observed 2026-10-01) ends every conversation with "No compartas
+#: contraseñas ni datos sensibles", so the bare word reads as a wall on every
+#: answer. A credential word therefore needs a password field or a missing
+#: composer beside it.
+_CREDENTIAL_MARKERS = frozenset({
+    "log in", "login", "iniciar sesion", "iniciar sesión", "acceder",
+    "sign in", "registrarse", "contraseña",
+})
+
+
+def classify_wall(chrome_text: str, *, has_password_field: bool,
+                  has_composer: bool) -> str | None:
+    """Return the marker that proves an auth wall or throttle, or None.
+
+    `chrome_text` must be the frame text WITHOUT the conversation nodes: an
+    answer about checkout friction may say "captcha", and that is content, not
+    a challenge.
+    """
+    low = chrome_text.lower()
+    for marker in _AUTH_WALL_MARKERS:
+        if marker not in low:
+            continue
+        if marker in _CREDENTIAL_MARKERS and has_composer and not has_password_field:
+            continue
+        return marker
+    if not has_composer and has_password_field:
+        return "password field without composer"
+    return None
 
 FRAME_HOST = "chatbot.nexau.es"
 ASSISTANT_SEL = ".prose-chat"
@@ -148,8 +178,7 @@ class EvaAdapter:
         found' on a blank document reads as authenticated. Requiring the
         composer to exist makes the check assert something real.
         """
-        body = (self._frame.inner_text("body") or "").lower()
-        hit = next((m for m in _AUTH_WALL_MARKERS if m in body), None)
+        hit = self._wall_hit()
         if hit:
             raise AdapterError(f"auth wall or challenge detected: {hit!r}")
         if self._frame.locator("textarea").count() == 0:
@@ -157,6 +186,20 @@ class EvaAdapter:
                 "composer not found: the session may have expired, or the "
                 "interface changed. Re-run session-bootstrap."
             )
+
+    def _wall_hit(self) -> str | None:
+        """Judge the frame chrome, never the conversation, for a wall."""
+        body = self._frame.inner_text("body") or ""
+        # Unreadable nodes raise to the caller: leaving their text in would make
+        # the verdict conservative, but silently is the wrong way to get there.
+        for sel in (ASSISTANT_SEL, USER_BUBBLE_SEL):
+            for text in self._frame.locator(sel).all_inner_texts():
+                body = body.replace(text, "")
+        return classify_wall(
+            body,
+            has_password_field=self._frame.locator('input[type="password"]').count() > 0,
+            has_composer=self._frame.locator("textarea").count() > 0,
+        )
 
     def teardown(self) -> None:
         for closer in (
@@ -229,8 +272,7 @@ class EvaAdapter:
         while time.time() - t0 < APPEARANCE_TIMEOUT_S:
             if self._assistant_count() > before:
                 return self._frame.locator(ASSISTANT_SEL).nth(before)
-            body = (self._frame.inner_text("body") or "").lower()
-            hit = next((m for m in _AUTH_WALL_MARKERS if m in body), None)
+            hit = self._wall_hit()
             if hit:
                 raise AdapterError(f"auth wall appeared mid-request: {hit!r}")
             time.sleep(POLL_INTERVAL_S)
