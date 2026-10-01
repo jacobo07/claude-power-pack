@@ -14,7 +14,8 @@
   ],
   "non_scope": [
    "product code",
-   "rewriting application logic"
+   "rewriting application logic",
+   "applying the change"
   ],
   "triggers": [
    "harness configuration",
@@ -29,43 +30,34 @@
    "product code"
   ],
   "consumers": [
-   "parent session harness maintenance"
+   "parent session harness maintenance (applies the patch after review)"
   ],
   "outputs": [
    "baseline scorecard",
-   "applied changes",
-   "measured improvements",
+   "proposed patch (unified diff)",
+   "validation command",
+   "rollback",
    "remaining risks"
   ],
   "permissions": [
    "read repository",
-   "run commands",
-   "edit harness configuration"
+   "run read-only diagnostic commands"
   ],
-  "write_surfaces": [
-   ".claude/settings.json",
-   ".claude/settings.local.json",
-   ".claude/hooks/",
-   ".claude/agents/",
-   ".claude/commands/"
-  ],
-  "risk_class": "local",
+  "risk_class": "reversible",
   "context_cost": "low",
   "expected_leverage": "medium",
   "failure_risk_if_omitted": "low",
   "maturity": "experimental",
-  "rollback": "every applied change is reported with its file and diff; restore with `git -C <repo> checkout -- <file>` (uncommitted) or `git revert <sha>` (committed)",
-  "kill_switch": "omit the writer grant: agent_resolver.resolve defaults to max_class=verifier, which excludes this spec with CLASS_EXCEEDS_GRANT",
-  "retirement_condition": "a harness-audit command applies the same changes deterministically",
-  "version": "1.0.0"
+  "retirement_condition": "a harness-audit command proposes the same changes deterministically",
+  "version": "1.1.0"
  },
  "agent": {
-  "permission_class": "writer",
+  "permission_class": "verifier",
   "model_policy": {
    "default": "sonnet"
   },
-  "output_contract": "native",
-  "description": "Analyzes and improves the local agent harness configuration for reliability, cost and throughput.",
+  "output_contract": "patch-proposal-v1",
+  "description": "Analyzes the local agent harness configuration and proposes a minimal patch for reliability, cost and throughput.",
   "pages": [
    {
     "path": "pages/01-provenance.md",
@@ -99,7 +91,7 @@
    }
   ],
   "source": {
-   "file": "C:/Users/User/.claude/skills/claude-power-pack/agents/harness-optimizer.md",
+   "file": "agents/harness-optimizer.md",
    "sha256": "ee3979bed2f5efa27ad3456d9573c6790f838178d4f8cb8ddcd28cecc7d05e00",
    "frontmatter": "---\nname: harness-optimizer\ndescription: Analyze and improve the local agent harness configuration for reliability, cost, and throughput.\ntools: [\"Read\", \"Grep\", \"Glob\", \"Bash\", \"Edit\"]\nmodel: sonnet\ncolor: teal\n---\n"
   }

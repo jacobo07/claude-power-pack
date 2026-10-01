@@ -98,6 +98,7 @@ def main():
     from modules.capability_runtime import agent_spec as A
     ho = A.load("harness-optimizer")
     syn = A.AgentSpec(json.loads(json.dumps(ho.raw)), ho.dir)      # synthetic writer, unprotected surface
+    syn.permission_class = "writer"
     syn.contract.write_surfaces = ["docs/", "notes.md"]
     g = R.write_grant(syn, "/home/kobii/t/")
     check("V-ACR-GRANT-POSIX", g == ["Edit(//home/kobii/t/docs/**)", "Edit(//home/kobii/t/notes.md)"], f"{g}")
@@ -113,8 +114,13 @@ def main():
             return e.code
     # Measured 2026-10-01: .claude/ is a protected path; dontAsk denied the writer's in-surface
     # edit although it was granted. harness-optimizer's whole surface is protected.
-    check("V-ACR-GRANT-REFUSES-PROTECTED", refused(ho, "/t") == "SURFACE_PROTECTED",
-          f"harness-optimizer surfaces {ho.contract.write_surfaces}")
+    prot = A.AgentSpec(json.loads(json.dumps(ho.raw)), ho.dir)
+    prot.permission_class = "writer"
+    prot.contract.write_surfaces = [".claude/settings.json", ".claude/hooks/"]   # the old writer surface
+    check("V-ACR-GRANT-REFUSES-PROTECTED", refused(prot, "/t") == "SURFACE_PROTECTED",
+          f"surfaces {prot.contract.write_surfaces}")
+    check("V-ACR-GRANT-REFUSES-HO", refused(ho, "/t") == "GRANT_EXCEEDS_CLASS",
+          "harness-optimizer is a verifier now (option b): no grant at all")
     check("V-ACR-GRANT-REFUSES-NON-WRITER", refused(A.load("python-reviewer"), "/t") == "GRANT_EXCEEDS_CLASS",
           "a verifier with a target root is refused, never granted Edit")
 
@@ -133,13 +139,14 @@ def main():
           and pv[-4:] == ["Agent", "Read", "Grep", "Glob"], f"{pv[3:]}")
 
     esc = A.AgentSpec(json.loads(json.dumps(ho.raw)), ho.dir)
+    esc.permission_class = "writer"
     esc.contract.write_surfaces = ["../outside/"]
     check("V-ACR-GRANT-REFUSES-ESCAPE", refused(esc, "/t") == "SURFACE_ESCAPES_ROOT", "'..' surface refused")
     esc.contract.write_surfaces = ["/etc/passwd"]
     check("V-ACR-GRANT-REFUSES-ABSOLUTE", refused(esc, "/t") == "SURFACE_ESCAPES_ROOT", "absolute surface refused")
 
     # Writes observed against the granted surface (independent of what the runtime allowed).
-    w = R.writes_outside("/home/kobii/t", ho.contract.write_surfaces,
+    w = R.writes_outside("/home/kobii/t", [".claude/settings.json", ".claude/hooks/"],
                          ["/home/kobii/t/.claude/settings.json", "/home/kobii/t/src/app.py",
                           "/home/kobii/t/.claude/hooks/x.sh"])
     check("V-ACR-WRITES-OUTSIDE", w == ["/home/kobii/t/src/app.py"], f"{w}")

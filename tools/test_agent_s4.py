@@ -8,7 +8,8 @@ What each gate would catch if it broke:
            or a carrier whose frontmatter grants more than its class
   PRIM     a Prompt Defense copy that drifted back into an agent's own page
   DEEP     paging on the wrong blocks: only java data-layer, java workflow and ts react are deep
-  ROUTE    a language request reaching the wrong reviewer; the writer reachable without a grant
+  ROUTE    a language request reaching the wrong reviewer
+  HO       harness-optimizer applying instead of proposing (its surface is protected)
   CONTROL  the routing negatives are not vacuous: a bare "go" trigger turns one of them red
 """
 from __future__ import annotations
@@ -29,8 +30,13 @@ EXPECTED = {
     "comment-analyzer": "investigator", "type-design-analyzer": "investigator",
     "cpp-reviewer": "verifier", "go-reviewer": "verifier", "java-reviewer": "verifier",
     "python-reviewer": "verifier", "rust-reviewer": "verifier", "typescript-reviewer": "verifier",
-    "harness-optimizer": "writer",
+    # Owner option b, 2026-10-01: its whole surface is protected (.claude/), so a headless
+    # writer can never apply anything; it proposes a patch and the parent applies it.
+    "harness-optimizer": "verifier",
 }
+# A source tool the class drops is a capability loss unless it is REPLACED by a named
+# output contract that hands the effect to the parent. Anything else dropped is a FAIL.
+REPLACED = {"harness-optimizer": {"Edit": "patch-proposal-v1"}}
 DEEP = {("java-reviewer", "data-layer"), ("java-reviewer", "workflow-state-machine"),
         ("typescript-reviewer", "react-nextjs")}
 passes = fails = 0
@@ -70,9 +76,13 @@ def main() -> int:
     for sid, s in specs.items():
         src_tools = fm_tools((ROOT / "agents" / f"{sid}.md").read_text(encoding="utf-8"))
         cls_tools = set(A.CLASS_TOOLS[s.permission_class])
-        check(f"V-S4-CLASS-{sid}", bool(src_tools) and src_tools <= cls_tools,
-              f"source={sorted(src_tools)} class+={sorted(cls_tools - src_tools)}")
-    for cls in sorted(set(EXPECTED.values())):
+        rep = REPLACED.get(sid, {})
+        dropped = src_tools - cls_tools
+        covered = all(t in rep and s.output_contract == rep[t] for t in dropped)
+        check(f"V-S4-CLASS-{sid}", bool(src_tools) and covered,
+              f"source={sorted(src_tools)} class+={sorted(cls_tools - src_tools)} "
+              f"replaced={ {t: rep.get(t) for t in sorted(dropped)} }")
+    for cls in A.CLASS_ORDER:          # every carrier, used by a spec here or not
         carrier = ROOT / "agents" / "carriers" / f"{A.carrier_name(cls)}.md"
         got = fm_tools(carrier.read_text(encoding="utf-8")) if carrier.is_file() else set()
         check(f"V-S4-CARRIER-{cls}", got == set(A.CLASS_TOOLS[cls]), f"{carrier.name} tools={sorted(got)}")
@@ -131,29 +141,41 @@ def main() -> int:
         c = ids(q(task))
         check(f"V-S4-NEG-{absent}", absent not in c, f"{task!r} -> {c}")
 
+    # harness-optimizer: a verifier that proposes, never applies (Owner option b).
     hw = "optimize the agent harness configuration for reliability"
     r_default = q(hw)
-    check("V-S4-WRITER-UNGRANTED",
-          "harness-optimizer" not in ids(r_default)
-          and any(e["id"] == "harness-optimizer" and e["code"] == "CLASS_EXCEEDS_GRANT" for e in r_default["excluded"]),
-          f"default grant -> candidates={ids(r_default)} excluded={[e['id'] for e in r_default['excluded']]}")
-    r_writer = q(hw, max_class="writer")
-    check("V-S4-WRITER-GRANTED", ids(r_writer)[:1] == ["harness-optimizer"],
-          f"max_class=writer -> {ids(r_writer)}")
+    check("V-S4-HO-ROUTES-AT-VERIFIER", ids(r_default)[:1] == ["harness-optimizer"],
+          f"default grant -> {ids(r_default)}")
     hs = specs.get("harness-optimizer")
-    check("V-S4-WRITER-CONTRACT",
-          bool(hs and hs.contract.write_surfaces and hs.contract.rollback and hs.contract.kill_switch),
-          f"write_surfaces={hs.contract.write_surfaces if hs else None}")
-    # HR-APA-009 still bites: the same contract without a kill switch is refused at load.
     if hs:
+        img = hs.compile("propose a harness fix", "virtual", state_version="none")
+        check("V-S4-HO-PATCH-CONTRACT",
+              hs.output_contract == "patch-proposal-v1" and not hs.contract.write_surfaces
+              and "Output contract: patch proposal v1" in img and "You cannot edit files" in img
+              and "{spec}" not in img and f"harness-optimizer@{hs.contract.version}" in img,
+              f"contract={hs.output_contract} write_surfaces={hs.contract.write_surfaces}")
+        # The carrier it lands on really has no editor: the contract is not a request, it is the surface.
+        check("V-S4-HO-NO-EDITOR", not {"Edit", "Write"} & set(A.CLASS_TOOLS[hs.permission_class]),
+              f"{A.carrier_name(hs.permission_class)} tools={A.CLASS_TOOLS[hs.permission_class]}")
+        # HR-APA-009 still binds any future writer: write surfaces without a kill switch are refused.
         bad = json.loads(json.dumps(hs.raw))
-        bad["contract"]["kill_switch"] = ""
+        bad["agent"]["permission_class"] = "writer"
+        bad["contract"].update(write_surfaces=["docs/"], rollback="git checkout", kill_switch="")
         try:
             A.AgentSpec(bad, hs.dir)
             refused = False
         except A.AgentSpecError as e:
             refused = e.code == "INVALID_CONTRACT"
         check("V-S4-WRITER-HR-APA-009", refused, "writer contract without kill_switch is refused")
+        # And the opposite authority mismatch: write surfaces on a verifier.
+        bad["agent"]["permission_class"] = "verifier"
+        bad["contract"]["kill_switch"] = "x"
+        try:
+            A.AgentSpec(bad, hs.dir)
+            refused = False
+        except A.AgentSpecError as e:
+            refused = e.code == "CLASS_BELOW_WRITE_SURFACE"
+        check("V-S4-VERIFIER-NO-WRITE-SURFACE", refused, "write_surfaces on a verifier are refused")
 
     # --- CONTROL: a bare "go" trigger must turn the go-ahead negative red, or that gate is vacuous.
     with tempfile.TemporaryDirectory() as t:
