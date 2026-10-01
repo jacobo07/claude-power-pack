@@ -110,6 +110,17 @@ Pass = one row with a harvest block or a named skip reason (RAM < 6 GB, owner ac
 at all = the task did not fire: check `schtasks /Query /TN PP-SelfEval /V` LastTaskResult.
 Resumption: `vault/specs/pp-self-eval.RESUMPTION.md`.
 
+**2026-10-01 — PASS on the criterion, and a defect it exposed, FIXED.** The task fired:
+row `started 2026-10-01T01:30:01Z`, `SKIPPED: a session transcript changed in the last 15 min
+(2639597a-....jsonl)`. That transcript is the worker of mission `m-20f1013db18c` (RUNNING), and
+7 missions were RUNNING, so "owner active" would have skipped every night a mission was in
+flight and D6 could never start. Fix in `nightly.owner_active`: a transcript whose session owns a
+live mission (`gsd_mission.mission_for_session`) is not the Owner; an unavailable mission store
+fails closed. Gates V-EVAL-MISSION-WORKER-NOT-OWNER, -ENDED-MISSION-IS-OWNER (control),
+-MISSION-LOOKUP-FAILS-CLOSED; suite 41/41; isolated drill 2/2 KILLED, control 41/41. Note for
+future drills: the harness must also copy `tools/gsd_mission.py` + `tools/gsd_long_run.py`, or
+the control goes red. Next observable: tomorrow's row should not skip on a mission worker.
+
 ## D5 — PP Self-Eval: 5 mutation drills never ran
 
 **State:** S1 4/4 and S2–S4 7/12 killed, 0 survived. Not run: quota mid-night stop, quota

@@ -232,6 +232,44 @@ def s3_nightly(repo: Path) -> None:
     os.environ["PP_EVAL_FREE_RAM_GB"] = "2"
     n = nightly.run_night(weekday=0, log=lambda *_: None)
     check("V-EVAL-RAM-SKIPS", "free RAM" in n["outcome"], n["outcome"])
+
+    # A live mission's worker writing its transcript is not the Owner (2026-10-01: the first
+    # real night skipped on one while 7 missions ran). RAM stays low so "got past the owner
+    # check" reads as the RAM skip instead of running a night. The control is the SAME
+    # transcript once the mission is terminal: then it counts as the Owner again.
+    missions = TMP / "missions"
+    missions.mkdir(exist_ok=True)
+    prev_dir = os.environ.get("GSD_LONG_RUN_STATE_DIR")
+    os.environ["GSD_LONG_RUN_STATE_DIR"] = str(missions)
+    sid = "11111111-2222-3333-4444-555555555555"
+    worker = home / ".claude/projects/p" / f"{sid}.jsonl"
+    worker.write_text("{}", encoding="utf-8")
+    rec = missions / "gsd-mission-m-000000000001.json"
+    try:
+        rec.write_text(json.dumps({"mission_id": "m-000000000001", "state": "RUNNING",
+                                   "owner": {"session_id": sid}}), encoding="utf-8")
+        n = nightly.run_night(weekday=0, log=lambda *_: None)
+        check("V-EVAL-MISSION-WORKER-NOT-OWNER", "free RAM" in n["outcome"], n["outcome"])
+        rec.write_text(json.dumps({"mission_id": "m-000000000001", "state": "COMPLETED",
+                                   "owner": {"session_id": sid}}), encoding="utf-8")
+        n = nightly.run_night(weekday=0, log=lambda *_: None)
+        check("V-EVAL-ENDED-MISSION-IS-OWNER", "session transcript changed" in n["outcome"], n["outcome"])
+        # Mission store unavailable (None) must fail closed: the transcript counts as the Owner.
+        rec.write_text(json.dumps({"mission_id": "m-000000000001", "state": "RUNNING",
+                                   "owner": {"session_id": sid}}), encoding="utf-8")
+        real_lookup = nightly._mission_owner
+        nightly._mission_owner = lambda _sid: None
+        try:
+            n = nightly.run_night(weekday=0, log=lambda *_: None)
+        finally:
+            nightly._mission_owner = real_lookup
+        check("V-EVAL-MISSION-LOOKUP-FAILS-CLOSED", "session transcript changed" in n["outcome"], n["outcome"])
+    finally:
+        os.utime(worker, (now - 7200, now - 7200))
+        if prev_dir is None:
+            os.environ.pop("GSD_LONG_RUN_STATE_DIR", None)
+        else:
+            os.environ["GSD_LONG_RUN_STATE_DIR"] = prev_dir
     os.environ["PP_EVAL_FREE_RAM_GB"] = "16"
 
     held = common.Lock(state / "night.lock")
@@ -261,7 +299,8 @@ def s3_nightly(repo: Path) -> None:
     n = nightly.run_night(weekday=6, dry_run=True, log=lambda *_: None)
     check("V-EVAL-BASELINE-ON-SUNDAY", n.get("kind") == "baseline", str(n.get("kind")))
     nights = nightly._read_jsonl("nights.jsonl")
-    check("V-EVAL-EVERY-NIGHT-RECORDED", len(nights) == 10, f"{len(nights)} rows")
+    # One row per run_night call above: 10, plus the 3 mission-worker nights (2026-10-01).
+    check("V-EVAL-EVERY-NIGHT-RECORDED", len(nights) == 13, f"{len(nights)} rows")
 
 
 def main() -> int:

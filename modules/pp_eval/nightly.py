@@ -103,15 +103,34 @@ def quota_block(cfg: dict, now: float) -> str | None:
     return None
 
 
+def _mission_owner(session_id: str) -> bool | None:
+    """True when a live Ralph mission owns this session (an unattended worker, not the Owner).
+    None when the mission store cannot be consulted. Measured 2026-10-01: the first real night
+    skipped on m-20f1013db18c's worker transcript while 7 missions were RUNNING, so without this
+    any night with a mission in flight read as "owner active" and the eval could never run."""
+    try:
+        tools = str(PP / "tools")
+        if tools not in sys.path:
+            sys.path.insert(0, tools)
+        import gsd_mission  # noqa: PLC0415 -- optional authority, absent in isolated copies
+        return gsd_mission.mission_for_session(session_id) is not None
+    except Exception:  # noqa: BLE001 -- caller fails closed on None
+        return None
+
+
 def owner_active(cfg: dict, now: float) -> str | None:
     projects = Path(os.environ.get("PP_EVAL_PROJECTS") or _home() / ".claude" / "projects")
     horizon = now - cfg["idle_minutes"] * 60
     for p in projects.glob("*/*.jsonl"):
         try:
-            if p.stat().st_mtime > horizon:
-                return f"a session transcript changed in the last {cfg['idle_minutes']} min ({p.name})"
+            if p.stat().st_mtime <= horizon:
+                continue
         except OSError:
             continue
+        # Fail closed: only a positive "a live mission owns it" exempts a transcript.
+        if _mission_owner(p.stem) is True:
+            continue
+        return f"a session transcript changed in the last {cfg['idle_minutes']} min ({p.name})"
     return None
 
 
