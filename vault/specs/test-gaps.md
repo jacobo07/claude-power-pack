@@ -35,11 +35,11 @@ The mutator is imported from `tools/mutation_probe.py` unchanged (one engine, no
 
 | capability | status |
 |---|---|
-| changed lines from `git diff -U0 <base>` plus untracked `.py` files | PLANNED |
-| coverage with per-test contexts (`pytest --cov --cov-context=test`) | PLANNED |
-| mutants restricted to changed and covered lines, each re-running only the tests that ran that line | PLANNED |
-| lines run inside a subprocess a test spawns (`coverage [run] patch = subprocess`), their mutants judged by the whole suite | PLANNED |
-| all work in an isolated copy; the project's own files hashed before and after | PLANNED |
+| changed lines from `git diff -U0 <base>` plus untracked `.py` files | LIVE |
+| coverage with per-test contexts (`pytest --cov --cov-context=test`) | LIVE |
+| mutants restricted to changed and covered lines, each re-running only the tests that ran that line | LIVE |
+| lines run inside a subprocess a test spawns (`coverage [run] patch = subprocess`), their mutants judged by the whole suite | LIVE |
+| all work in an isolated copy; the project's own files hashed before and after | LIVE |
 | property-based tests (hypothesis), fuzzing, flaky-test detection | ABSENT (not v1) |
 | non-Python projects | ABSENT (not v1) |
 
@@ -108,8 +108,14 @@ the suite goes red.
   2 changed files, 0 mutant candidates. Diagnosis: `test_reverse.py` only checks the import
   (true gap), and `test_cli.py` drives `python -m smoketext` in subprocesses (the blind spot that
   produced item 7 above).
-- Real project **after** the fix: NOT verified. The run was stopped by Claude Code for host memory
-  pressure before printing anything. Re-run when free RAM allows (or on GEX44 with `--files`).
+- Real project **after** the fix: a laptop run was stopped by Claude Code for host memory pressure
+  before printing anything; re-run on GEX44 (Owner: "on GEX44 now") with `--files
+  smoketext/cli.py smoketext/reverse.py` (every line of both, no git history there), same tool
+  bytes as dc7f781. MEASURED: uncovered `cli.py` shrank from
+  `49,93,107-109,127,129-130,145-150` to `108`; 25 candidates, 13 sampled, **11 KILLED, 2
+  SURVIVED**. Both survivors are genuine gaps, read against the source: `reverse.py:23`
+  `or`->`and` (no test reverses spacing/enclosing/class-0 marks, the case the `or` exists for)
+  and `reverse.py:66` `<`->`>=` (no test starts with a mark; line 67 uncovered agrees).
 
 ## Rollback
 
