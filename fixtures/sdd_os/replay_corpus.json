@@ -6,13 +6,13 @@
     "tier_min / tier_max": "acceptable tier range. tier < tier_min is a false downgrade; tier > tier_max is a false escalation.",
     "risk": "risk dimensions a correct classifier must report: destructive_data, public_contract, auth_secrets, production, irreversible_external. [] means none is required.",
     "source": "real = a prompt from ~/.claude/history.jsonl, redacted (paths, hosts, domains, names, keys replaced by <placeholders>); synthetic = written for a defect (D1-D6) or an audit gap.",
-    "deferred": "LEGACY readiness cases land in W3 with the cutover mechanism (audit gap 9); write-gate cases land in W5 with hooks/sdd_write_gate.py. Neither has a producer yet."
+    "deferred": "write-gate cases land in W5 with hooks/sdd_write_gate.py; no producer yet. LEGACY readiness cases landed in W3 (R-10..R-13, X-10, X-11).",
+    "today": "optional ISO date pinned into readiness/decision cases whose answer depends on the legacy window, so the corpus does not flip on its own when the calendar crosses it.",
+    "expect_spec": "binding cases: the spec stem that must be resolved; null means NO spec_path may be reported."
   },
   "known_red": [
     "T-R09", "T-R13", "T-R23",
-    "B-01", "B-03", "B-04",
-    "R-01", "R-02", "R-03", "R-04", "R-05", "R-06", "R-07", "R-08", "R-09",
-    "X-01", "X-03", "X-05", "X-06"
+    "X-01", "X-05", "X-06", "X-08", "X-09", "X-10", "X-11"
   ],
   "tier_cases": [
     {"id": "T-R01", "source": "real", "lang": "en", "prompt": "deploy main to <domain> on the VPS", "tier_min": 2, "tier_max": 3, "risk": ["production"]},
@@ -66,7 +66,7 @@
     "billing-ready": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [modules/billing/]\nopen_questions:\n  - Q1 | RESOLVED | invoices are per tenant\nacceptance:\n  - AC-1 | verify: python tools/test_billing.py\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n\n# Billing endpoint\n",
     "billing-ready-twin": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [modules/invoicing/]\nopen_questions:\n  - Q1 | RESOLVED | none\nacceptance:\n  - AC-1 | verify: python tools/test_invoicing.py\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n\n# Invoicing endpoint\n",
     "billing-single": "---\ncovers: [billing]\nstatus: ready\ntier: 2\nscope: [modules/billing/]\nopen_questions:\n  - Q1 | RESOLVED | none\nacceptance:\n  - AC-1 | verify: python tools/test_billing.py\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n\n# Billing\n",
-    "empty-draft": "---\ncovers: [billing]\nstatus: draft\ntier: 2\n---\n\n## Acceptance criteria\n\nAC-001:\n",
+    "empty-draft": "---\ncovers: [billing endpoint, invoices]\nstatus: draft\ntier: 2\n---\n\n## Acceptance criteria\n\nAC-001:\n",
     "open-owner-question": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [modules/billing/]\nopen_questions:\n  - Q1 | OWNER_DECISION | which currency is canonical\nacceptance:\n  - AC-1 | verify: python tools/test_billing.py\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n",
     "ac-without-verify": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [modules/billing/]\nopen_questions:\n  - Q1 | RESOLVED | none\nacceptance:\n  - AC-1 | invoices are listed\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n",
     "no-must-still-pass": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [modules/billing/]\nopen_questions:\n  - Q1 | RESOLVED | none\nacceptance:\n  - AC-1 | verify: python tools/test_billing.py\n---\n",
@@ -74,15 +74,25 @@
     "sessions-t1": "---\ncovers: [sessions table]\nstatus: ready\ntier: 1\nscope: [db/]\nopen_questions:\n  - Q1 | RESOLVED | none\nacceptance:\n  - AC-1 | verify: python tools/test_sessions.py\nmust_still_pass:\n  - none: no suite covers db/ yet\n---\n",
     "sessions-t3": "---\ncovers: [sessions table]\nstatus: ready\ntier: 3\nscope: [db/]\nopen_questions:\n  - Q1 | RESOLVED | none\nacceptance:\n  - AC-1 | verify: python tools/test_sessions.py\nmust_still_pass:\n  - python tools/test_sdd_os.py\ncheckpoints:\n  - CP-1 | backup verified before truncate\n---\n",
     "nested-yaml": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [modules/billing/]\nacceptance:\n  - id: AC-1\n    verify: python tools/test_billing.py\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n",
-    "undeclared": "# A spec with no front matter\n\nNo covers declaration, so it can never bind.\n"
+    "undeclared": "# A spec with no front matter\n\nNo covers declaration, so it can never bind.\n",
+    "ready": "---\ncovers: [feature flag]\nstatus: ready\ntier: 2\nscope: [modules/flags/]\nopen_questions: none\nacceptance:\n  - AC-1 | verify: python tools/test_flags.py\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n",
+    "legacy-approved": "---\ncovers: [billing endpoint, invoices]\nstatus: APPROVED -- Owner \"y\" (2026-09-01)\ntier: 2\n---\n\n# Billing endpoint\n\nDone when `python tools/test_billing.py` exits 0 (V-BILLING-LIST green).\n",
+    "legacy-no-proof": "---\ncovers: [billing endpoint, invoices]\nstatus: APPROVED -- Owner \"y\" (2026-09-01)\ntier: 2\n---\n\n# Billing endpoint\n\nInvoices should be listed correctly for every tenant.\n",
+    "legacy-blank-ac": "---\ncovers: [billing endpoint, invoices]\nstatus: approved\ntier: 2\n---\n\n## Acceptance criteria\n\n- AC-001:\n- AC-002:\n\n## Validation\n\npython tools/test_billing.py\n",
+    "verify-tbd": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [modules/billing/]\nopen_questions: none\nacceptance:\n  - AC-1 | verify: TBD\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n",
+    "scope-tbd": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [TBD]\nopen_questions: none\nacceptance:\n  - AC-1 | verify: python tools/test_billing.py\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n",
+    "resolved-no-answer": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [modules/billing/]\nopen_questions:\n  - Q1 | RESOLVED |\nacceptance:\n  - AC-1 | verify: python tools/test_billing.py\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n",
+    "questions-none": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [modules/billing/]\nopen_questions: none\nacceptance:\n  - AC-1 | verify: python tools/test_billing.py\nmust_still_pass:\n  - python tools/test_sdd_os.py\n---\n",
+    "none-reason-tbd": "---\ncovers: [billing endpoint, invoices]\nstatus: ready\ntier: 2\nscope: [modules/billing/]\nopen_questions: none\nacceptance:\n  - AC-1 | verify: python tools/test_billing.py\nmust_still_pass:\n  - none: TBD\n---\n"
   },
   "binding_cases": [
     {"id": "B-01", "specs": ["billing-single"], "task": "fix billing typo in the README footer", "expect_strength": "WEAK", "note": "D2: one shared word"},
     {"id": "B-02", "specs": ["billing-ready"], "task": "add a billing endpoint for invoices", "expect_strength": "STRONG", "expect_spec": "billing-ready"},
-    {"id": "B-03", "specs": ["billing-ready", "billing-ready-twin"], "task": "add a billing endpoint for invoices", "expect_strength": "AMBIGUOUS", "note": "equal-strength tie: never newest-wins"},
+    {"id": "B-03", "specs": ["billing-ready", "billing-ready-twin"], "task": "add a billing endpoint for invoices", "expect_strength": "AMBIGUOUS", "expect_spec": null, "note": "equal-strength tie: never newest-wins, and no spec_path a careless consumer could read"},
     {"id": "B-04", "specs": ["billing-single", "billing-ready"], "task": "implement vault/specs/billing-ready.md acceptance AC-1", "expect_strength": "REFERENCED", "expect_spec": "billing-ready", "note": "explicit path reference wins over a token match on another spec"},
     {"id": "B-05", "specs": ["billing-ready"], "task": "rotate the leaked API key in the config", "expect_strength": "UNBOUND"},
-    {"id": "B-06", "specs": ["undeclared"], "task": "add a billing endpoint for invoices", "expect_strength": "UNBOUND"}
+    {"id": "B-06", "specs": ["undeclared"], "task": "add a billing endpoint for invoices", "expect_strength": "UNBOUND"},
+    {"id": "B-07", "specs": ["ready", "billing-ready"], "task": "implement vault/specs/billing-ready.md acceptance AC-1", "expect_strength": "REFERENCED", "expect_spec": "billing-ready", "note": "a file name inside a longer file name is not a reference (ready.md in billing-ready.md)"}
   ],
   "readiness_cases": [
     {"id": "R-01", "spec": "empty-draft", "task_tier": 2, "expect_state": "NOT_READY", "note": "D1"},
@@ -93,7 +103,16 @@
     {"id": "R-06", "spec": "tier-string-t2", "task_tier": 2, "expect_state": "READY", "note": "D6: tier written as T2"},
     {"id": "R-07", "spec": "sessions-t1", "task_tier": 3, "expect_state": "NOT_READY", "note": "D6: effective tier max(3,1)=3 requires checkpoints"},
     {"id": "R-08", "spec": "sessions-t3", "task_tier": 3, "expect_state": "READY"},
-    {"id": "R-09", "spec": "nested-yaml", "task_tier": 2, "expect_state": "MALFORMED", "note": "audit gap 8: nested YAML is reported, never half-read"}
+    {"id": "R-09", "spec": "nested-yaml", "task_tier": 2, "expect_state": "MALFORMED", "note": "audit gap 8: nested YAML is reported, never half-read"},
+    {"id": "R-10", "spec": "legacy-approved", "task_tier": 2, "today": "2026-10-15", "expect_state": "LEGACY_READY", "note": "legacy: approving status + a runnable proof carries the information the new keys ask for"},
+    {"id": "R-11", "spec": "legacy-approved", "task_tier": 2, "today": "2026-11-02", "expect_state": "NOT_READY", "note": "legacy window ended: the same spec must migrate"},
+    {"id": "R-12", "spec": "legacy-no-proof", "task_tier": 2, "today": "2026-10-15", "expect_state": "NOT_READY", "note": "approved prose with nothing falsifiable is not ready"},
+    {"id": "R-13", "spec": "legacy-blank-ac", "task_tier": 2, "today": "2026-10-15", "expect_state": "NOT_READY", "note": "skeleton headings with an approving status: blank AC lines are not criteria"},
+    {"id": "R-14", "spec": "verify-tbd", "task_tier": 2, "expect_state": "NOT_READY", "note": "adversarial: verify: TBD names no instrument"},
+    {"id": "R-15", "spec": "scope-tbd", "task_tier": 2, "expect_state": "NOT_READY", "note": "adversarial: scope [TBD] is blank"},
+    {"id": "R-16", "spec": "resolved-no-answer", "task_tier": 2, "expect_state": "NOT_READY", "note": "adversarial: RESOLVED with no stated resolution"},
+    {"id": "R-17", "spec": "questions-none", "task_tier": 2, "expect_state": "READY", "note": "explicit 'open_questions: none' is an answer, not a gap"},
+    {"id": "R-18", "spec": "none-reason-tbd", "task_tier": 2, "expect_state": "NOT_READY", "note": "adversarial: 'none: TBD' is not a reason"}
   ],
   "decision_cases": [
     {"id": "X-01", "specs": ["empty-draft"], "task": "add a billing endpoint for invoices", "allowed_actions": ["spec_not_ready"], "note": "D1: empty draft must not unlock a T2 task"},
@@ -102,6 +121,10 @@
     {"id": "X-04", "specs": ["billing-ready"], "task": "add a billing endpoint for invoices", "allowed_actions": ["proceed"], "note": "legitimate case must stay PROCEED"},
     {"id": "X-05", "specs": ["billing-ready", "billing-ready-twin"], "task": "add a billing endpoint for invoices", "allowed_actions": ["binding_ambiguous"]},
     {"id": "X-06", "specs": ["sessions-t1"], "task": "truncate the sessions table and run the migration against production", "allowed_actions": ["spec_not_ready"], "note": "D6: a T1 spec cannot unlock a T3 task"},
-    {"id": "X-07", "specs": ["sessions-t3"], "task": "truncate the sessions table and run the migration against production", "allowed_actions": ["proceed"], "note": "legitimate T3 with a ready T3 spec"}
+    {"id": "X-07", "specs": ["sessions-t3"], "task": "truncate the sessions table and run the migration against production", "allowed_actions": ["proceed"], "note": "legitimate T3 with a ready T3 spec"},
+    {"id": "X-08", "specs": [], "generate_first": true, "task": "add a billing endpoint for invoices", "allowed_actions": ["spec_not_ready"], "note": "REAL producer: pre_exec_gate.generate_spec() writes the skeleton, then the same task is evaluated. Generation must not cause readiness."},
+    {"id": "X-09", "specs": ["billing-single"], "task": "add a billing endpoint for invoices", "allowed_actions": ["binding_weak"], "note": "D2 at Tier 2: one shared word must not authorize, and must not spawn a competing skeleton"},
+    {"id": "X-10", "specs": ["legacy-approved"], "today": "2026-10-15", "task": "add a billing endpoint for invoices", "allowed_actions": ["proceed"], "note": "a legacy spec that proves readiness keeps working"},
+    {"id": "X-11", "specs": ["legacy-approved"], "today": "2026-11-02", "task": "add a billing endpoint for invoices", "allowed_actions": ["spec_not_ready"], "note": "after the legacy window the same spec must migrate"}
   ]
 }

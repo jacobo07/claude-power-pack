@@ -82,6 +82,9 @@ class SpecBinding:
     reason: str = ""
     candidates_seen: int = 0
     undeclared: tuple[Path, ...] = field(default_factory=tuple)
+    # W3: how much the match can be trusted. `bound` is True only for STRONG/REFERENCED.
+    strength: str = "UNBOUND"     # REFERENCED | STRONG | WEAK | AMBIGUOUS | UNBOUND
+    alternatives: tuple[Path, ...] = field(default_factory=tuple)   # tied specs when AMBIGUOUS
 
 
 def tokenize(text: str) -> set[str]:
@@ -229,14 +232,36 @@ def iter_candidates(cwd: Path,
     return found
 
 
+_RANK = {"WEAK": 1, "STRONG": 2, "REFERENCED": 3}
+
+
+def _named_in(needle: str, haystack: str) -> bool:
+    """`needle` occurs in `haystack` as a whole path/file token, not inside a longer name
+    ("ready.md" must not be found inside "billing-ready.md")."""
+    return bool(needle) and re.search(
+        r"(?<![\w.-])" + re.escape(needle) + r"(?![\w-])", haystack) is not None
+
+
+def _referenced(spec: Path, root: Path, low_task: str) -> bool:
+    """The task names this spec by repo-relative path or by file name."""
+    try:
+        rel = spec.resolve().relative_to(root.resolve()).as_posix().lower()
+    except (OSError, ValueError):
+        rel = ""
+    return _named_in(rel, low_task) or _named_in(spec.name.lower(), low_task)
+
+
 def find_bound_spec(task_description: str,
                     cwd: Path | str | None = None,
                     globs: tuple[str, ...] = SPEC_GLOBS) -> SpecBinding:
     """Resolve the spec that covers THIS task, if any.
 
-    Newest matching spec wins. Specs without a `covers` declaration are
-    reported in `undeclared` so a migration nudge can name them, but they
-    never bind.
+    Every candidate is scored REFERENCED (the task names the file) > STRONG
+    (a multi-token entry, or two entries, match) > WEAK (one single-word
+    entry). The top level decides; a tie at the top is AMBIGUOUS and names
+    no spec. Modification time is never consulted: newer is not more
+    relevant (W3 gap 6). Specs without `covers` are reported in
+    `undeclared` and bind only when the task names them explicitly.
     """
     root = Path(cwd) if cwd else Path.cwd()
     task_tokens = tokenize(task_description)
@@ -247,27 +272,61 @@ def find_bound_spec(task_description: str,
             bound=False, reason="no spec-shaped file in this repo",
             candidates_seen=0)
 
-    def _mtime(p: Path) -> float:
-        try:
-            return p.stat().st_mtime
-        except OSError:
-            return 0.0
+    # Deterministic and deliberately NON-semantic: path order only fixes the
+    # order of names in a message, it never picks a winner.
+    candidates.sort(key=lambda p: p.as_posix().lower())
 
-    candidates.sort(key=_mtime, reverse=True)
-
+    # W3: every candidate is scored, then the strongest level decides. Newest-wins on the
+    # first match (the old loop) let one shared generic word bind an unrelated spec (D2) and
+    # silently picked between equally good specs.
+    low_task = (task_description or "").lower().replace("\\", "/")
     undeclared: list[Path] = []
+    scored: list[tuple[int, Path, tuple, tuple]] = []
     for spec in candidates:
         covers = read_covers(spec)
+        if _referenced(spec, root, low_task):
+            scored.append((_RANK["REFERENCED"], spec, covers or (), ()))
+            continue
         if covers is None:
             undeclared.append(spec)
             continue
         matched = tuple(e for e in covers if entry_matches(e, task_tokens))
         if matched:
+            strong = len(matched) >= 2 or any(len(tokenize(e)) >= 2 for e in matched)
+            scored.append((_RANK["STRONG" if strong else "WEAK"], spec, covers, matched))
+
+    if scored:
+        top = max(s[0] for s in scored)
+        best = [s for s in scored if s[0] == top]
+        level = next(k for k, v in _RANK.items() if v == top)
+        alternatives = tuple(b[1] for b in best)
+        if len(best) > 1 and level in ("REFERENCED", "STRONG"):
+            # spec_path stays None: any one of them would be a guess, and a consumer that
+            # reads spec_path without checking strength must get nothing, not the newest.
             return SpecBinding(
-                bound=True, spec_path=spec, covers=covers, matched=matched,
-                reason=f"covers {list(matched)} present in task",
-                candidates_seen=len(candidates),
-                undeclared=tuple(undeclared))
+                bound=False,
+                reason=(f"{len(best)} specs match equally ({level}): "
+                        f"{[b[1].name for b in best]} -- name one explicitly"),
+                candidates_seen=len(candidates), undeclared=tuple(undeclared),
+                strength="AMBIGUOUS", alternatives=alternatives)
+        if level == "WEAK":
+            # Never bound. A lone weak candidate is named so the directive can point at it;
+            # several are listed and none is chosen.
+            only = best[0] if len(best) == 1 else None
+            return SpecBinding(
+                bound=False, spec_path=only[1] if only else None,
+                covers=only[2] if only else (), matched=only[3] if only else (),
+                reason=(f"weak: {[b[1].name for b in best]} share only one single-word "
+                        f"`covers` entry with the task -- too generic to trust"),
+                candidates_seen=len(candidates), undeclared=tuple(undeclared),
+                strength="WEAK", alternatives=alternatives)
+        _, spec, covers, matched = best[0]
+        why = (f"task names {spec.name}" if level == "REFERENCED"
+               else f"covers {list(matched)} present in task")
+        return SpecBinding(
+            bound=True, spec_path=spec, covers=covers,
+            matched=matched, reason=why, candidates_seen=len(candidates),
+            undeclared=tuple(undeclared), strength=level)
 
     declared = len(candidates) - len(undeclared)
     if declared == 0:

@@ -37,7 +37,7 @@ LIVE_LEDGER = Path.home() / ".claude" / "state" / "sdd-os" / "decisions.jsonl"
 RISK_DIMS = frozenset({"destructive_data", "public_contract", "auth_secrets",
                        "production", "irreversible_external"})
 STRENGTHS = frozenset({"STRONG", "WEAK", "AMBIGUOUS", "REFERENCED", "UNBOUND"})
-READINESS = frozenset({"READY", "NOT_READY", "LEGACY", "MALFORMED"})
+READINESS = frozenset({"READY", "LEGACY_READY", "NOT_READY", "MALFORMED", "UNJUDGEABLE"})
 
 _STATE_DIR = Path(tempfile.mkdtemp(prefix="sddevo-state-"))
 os.environ["SDD_OS_STATE_DIR"] = str(_STATE_DIR)
@@ -107,12 +107,17 @@ def eval_binding(case: dict, specs: dict, base: Path) -> tuple[bool, str]:
     why: list[str] = []
     if got != case["expect_strength"]:
         why.append(f"strength={got}{note}, want {case['expect_strength']}")
-    want_spec = case.get("expect_spec")
-    if want_spec:
+    if "expect_spec" in case:              # null is a claim too: NO spec may be reported
+        want_spec = case["expect_spec"]
         stem = b.spec_path.stem if b.spec_path else None
         if stem != want_spec:
             why.append(f"spec={stem}, want {want_spec}")
     return (not why), ("; ".join(why) or f"strength={got}")
+
+
+def _today(case: dict):
+    from datetime import date
+    return date.fromisoformat(case["today"]) if case.get("today") else None
 
 
 def eval_readiness(case: dict, specs: dict, base: Path) -> tuple[bool, str]:
@@ -121,7 +126,8 @@ def eval_readiness(case: dict, specs: dict, base: Path) -> tuple[bool, str]:
     except ImportError:
         return False, "modules.sdd_os.readiness absent (W3)"
     repo = _make_repo(base, [case["spec"]], specs)
-    got = assess(repo / "vault" / "specs" / f"{case['spec']}.md", case["task_tier"])
+    got = assess(repo / "vault" / "specs" / f"{case['spec']}.md", case["task_tier"],
+                 today=_today(case))
     state = str(getattr(got, "state", got))
     ok = state == case["expect_state"]
     return ok, f"state={state}" + ("" if ok else f", want {case['expect_state']}")
@@ -129,7 +135,18 @@ def eval_readiness(case: dict, specs: dict, base: Path) -> tuple[bool, str]:
 
 def eval_decision(case: dict, specs: dict, base: Path) -> tuple[bool, str]:
     repo = _make_repo(base, case["specs"], specs)
-    d = evaluate(case["task"], repo)
+    if case.get("generate_first"):
+        # The REAL producer, not a hand-written skeleton: whatever generate_spec() emits today
+        # is what must fail to authorize.
+        from modules.sdd_os.pre_exec_gate import generate_spec
+        path, written = generate_spec(case["task"], repo)
+        if not written:
+            return False, f"generate_spec wrote nothing ({path.name})"
+    kwargs = {"today": _today(case)} if case.get("today") else {}
+    try:
+        d = evaluate(case["task"], repo, **kwargs)
+    except TypeError as exc:
+        return False, f"evaluate() cannot pin the date: {exc}"
     ok = d.action in case["allowed_actions"]
     return ok, f"action={d.action}" + ("" if ok else f", want one of {case['allowed_actions']}")
 
