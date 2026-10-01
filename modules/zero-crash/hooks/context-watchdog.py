@@ -992,6 +992,39 @@ def _rollover_gate(session_id: str) -> dict:
             "reasons": reasons, "rc": p.returncode}
 
 
+def _spawn_kresume_courier(session_id: str, cwd: str, transcript: str) -> bool:
+    """Arm `/kresume` for the successor from HERE, the predecessor (spec kresume-courier.md).
+
+    The successor's own SessionStart hook could not be trusted to: on a starved host its stdin
+    never arrived and it armed nothing, silently (2026-10-01, 5b46e055 -> d3e92cda). The courier
+    watches this session's own claude.exe in the host registry until /clear swaps the id in
+    place, then arms the new id. Detached, bounded, one ledger row per crossing. Never raises."""
+    tool = Path(__file__).resolve().parents[3] / "tools" / "kresume_courier.py"
+    if not tool.is_file():
+        _ledger(session_id, "kresume_courier", outcome="ARM_FAILED", why="kresume_courier.py absent")
+        return False
+    argv = [sys.executable, str(tool), "--predecessor", session_id, "--cwd", cwd or os.getcwd()]
+    if transcript:
+        argv += ["--transcript", transcript]
+    # Resolve THIS process now, while the registry still names this session for certain. A
+    # courier left to look it up itself can start after /clear has already swapped the id
+    # (measured under load: NO_REGISTRY_ENTRY), and then it has nothing to watch.
+    # Filtered by THIS process's ancestry: two live claude.exe can hold one session id (pids
+    # 21620/41256 on c4f1031c, 2026-10-01), and the first match may be the other pane. With
+    # no unique match nothing is passed, and the courier's own lookup refuses by name.
+    try:
+        kc = _load_tool("kresume_courier")
+        found = kc.find_process(session_id, kc.ancestor_pids(os.getpid())) if kc is not None else None
+    except Exception:
+        found = None
+    if found:
+        argv += ["--registry-file", str(found[0]), "--identity", found[1]]
+    ok = _detached(argv, session_id, "kresume_courier_spawned")
+    if not ok:
+        _ledger(session_id, "kresume_courier", outcome="ARM_FAILED", why="courier spawn refused")
+    return ok
+
+
 def _rollover_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict | None:
     """Step 2 of the crossing: `/kclear` was asked for at the wall; if the capsule it sealed
     is good, ask for `/clear`. Returns a Stop reply, or None to fall through.
@@ -1010,6 +1043,7 @@ def _rollover_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict
             expect_line="/clear", expect_prefix="/clear")
         _ledger(session_id, "rollover_clear_dispatched", route=route.get("route"),
                 why=route.get("why"))
+        _spawn_kresume_courier(session_id, cwd, transcript)
         return {"decision": "block", "reason": (
             "ROLLOVER — the capsule for this session is sealed and SAFE_TO_FORGET, so this "
             "context can be discarded without losing the thread. "

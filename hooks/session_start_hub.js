@@ -1301,4 +1301,4 @@ if (require.main === module) {
 }
 
 module.exports = { missionNamesSession, hookMissionStart, hookRolloverResume, armKresumeAutotype,
-  rolloverFocus, getStdinPayload };
+  rolloverFocus, getStdinPayload, note };
