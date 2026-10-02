@@ -13,7 +13,9 @@ Built against the DOM as observed in a live authenticated session on
     genuinely semantic hooks are the custom classes `prose-chat` (one per
     assistant message) and `bg-bubble-light` (one per user message).
   * Typing swaps the `Grabar audio` control for `Enviar`. Enter also sends.
-  * There is NO stop/streaming indicator to watch.
+  * There is NO stop/streaming indicator to watch -- except one, found
+    2026-10-02: EVA keeps the composer textarea `disabled` while it is still
+    generating. Text stability alone ended captures during mid-answer pauses.
 
 THE COMPLETION GATE, AND WHY IT IS NOT A SLEEP
 ----------------------------------------------
@@ -47,7 +49,9 @@ from pathlib import Path
 from .models import IntegrityVerdict, canonicalize
 from .session import _AUTH_WALL_MARKERS, BrowserSession, SessionState
 
-ADAPTER_VERSION = "eva-adapter/1.1.0"
+#: 1.2.0 (2026-10-02): settle also requires the composer unlocked; ask() waits
+#: for it before typing. 1.1.0 called a mid-answer pause "finished".
+ADAPTER_VERSION = "eva-adapter/1.2.0"
 
 #: Words that only mean "logged out" when the page is structurally a login page.
 #: EVA Unified (observed 2026-10-01) ends every conversation with "No compartas
@@ -245,6 +249,7 @@ class EvaAdapter:
         if not prompt.strip():
             raise AdapterError("refusing to send an empty prompt")
 
+        self._await_composer()
         before = self._assistant_count()
         t0 = time.time()
 
@@ -266,6 +271,30 @@ class EvaAdapter:
         paired = self._verify_pairing(prompt)
         verdict, reason = self._judge(text, paired)
         return CapturedResponse(text, html, verdict, reason, elapsed, paired)
+
+    def _composer_enabled(self) -> bool:
+        """EVA disables the textarea while it is generating."""
+        try:
+            box = self._frame.locator("textarea")
+            return box.count() > 0 and box.first.is_enabled(timeout=2_000)
+        except Exception:
+            return False
+
+    def _await_composer(self) -> None:
+        """Wait for EVA to release the composer before typing the next prompt.
+
+        Raises AdapterError, which fails one job, instead of letting a raw
+        Playwright click timeout escape the runner and end the whole run.
+        """
+        deadline = time.time() + APPEARANCE_TIMEOUT_S
+        while time.time() < deadline:
+            if self._composer_enabled():
+                return
+            time.sleep(POLL_INTERVAL_S)
+        raise AdapterError(
+            f"composer stayed disabled for {APPEARANCE_TIMEOUT_S}s -- EVA is still "
+            f"generating the previous answer, or the chat is locked"
+        )
 
     def _await_appearance(self, before: int, t0: float):
         """Phase 1. Nothing is 'stable' before an assistant node exists."""
@@ -293,7 +322,8 @@ class EvaAdapter:
                 continue
             stable = stable + 1 if len(text) == last else 0
             last = len(text)
-            if stable >= STABLE_POLLS:
+            # A quiet node is not a finished one while EVA still holds the composer.
+            if stable >= STABLE_POLLS and self._composer_enabled():
                 return text, html
             time.sleep(POLL_INTERVAL_S)
         # Budget exhausted while still growing: return what exists and let the
