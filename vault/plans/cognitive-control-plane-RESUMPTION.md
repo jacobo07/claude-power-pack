@@ -60,18 +60,25 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
 - §12 commit 3 SEALED `6b95854`: `fanout_ledger.project_of` shared; nested spawn project fixed;
   bands guard inside `replay()`. PRG-2 replay identical after migration. `test_estate_shadow` 11/11.
 
+- §13 APPROVED (mega-prompt reconciled; additions c8 receipt, c8b journey, c8c ledger
+  independence, 3 extra mutants). OWNERSHIP: the §13 pane holds c4-c8; the s12 pane stepped
+  off by message and stays off usage_index / fanout_ledger / estate_shadow / decide_spawn
+  until a handoff is posted here.
+- §12 commit 4 SEALED `2856f8e`: schema v3 spawn outcomes, live index migrated (spawns-only
+  backfill, offsets untouched, anchor unchanged). Window: 201 RETURNED / 39 HOOK_BLOCKED / 0
+  other (RCA §16 corrected: the 32/7 split was a scratch-matcher error). Gate
+  `test_spawn_outcomes` 23/23. Fixed in passing: connect() would have re-run the v2 full re-read
+  on ANY schema bump.
+
 ## 4. Next three actions
-1. Commit 4 per §12.1 G4: spawn outcomes. Schema v3 adds `spawns.result_ts / is_error /
-   result_head`; `_ancestry_line` parses the parent's tool_result BEFORE the promptId branch.
-   Backfill ONLY spawns (do not reset every file offset: audit G2); bump inside one BEGIN
-   IMMEDIATE in refresh(), not connect(). Gate: the 32 hook-denied / 7 other split reproduced
-   from the index alone.
-2. Commit 5 per G5/G6: transitive root, execution shape (width approx, depth = longest call
+1. Commit 5 per G5/G6: transitive root, execution shape (width approx, depth = longest call
    chain, spawn-tree height separate, active vs wall duration); per-root sums = window totals.
-3. Commit 7: progress v1 = written files joined to commits in the WORKSPACE repo (RCA §17).
+2. Commit 7: progress v1 = written files joined to commits in the WORKSPACE repo (RCA §17).
+3. Commit 8 + §13: `decide_spawn` v2 shadow with POLICY RECEIPTS (pre-spawn data only, G7),
+   replay diff vs v1; then c8b `fanout_ledger journey`, c8c ledger-independence test.
    Debt: `token_ground_truth` enumeration may still walk junctions (not checked).
    Still open from before: `floor_probe.py probe` rent ranking -> C4.1; G5 probe after 10-07.
 
 ## 5. Start instruction
-`git log --oneline -5 -- tools/usage_index.py`, run the coherence anchor, read plan §12 + §12.1
-and `vault/audits/ccp-s12-audit.md`, then action 1.
+`git log --oneline -5 -- tools/usage_index.py`, run the coherence anchor (+ `test_spawn_outcomes`
+23/23), read plan §12, §12.1, §13 and `vault/audits/ccp-s12-audit.md`, then action 1.

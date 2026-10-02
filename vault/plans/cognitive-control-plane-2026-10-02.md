@@ -231,3 +231,35 @@ second telemetry system, fixed N-agent councils, a compiler framework as code.
   "active" = no `result_ts <= t`; UNKNOWN separate, replay-only vs live counts reported.
 - Commit 9 (G8): the bands assertion moves into `replay()`; each mutant names its killing test.
 - G9: goal-log joins stay out of `usage_index` (engine-closure test pins it).
+
+## 13. Meta-optimization mega-prompt reconciled onto §12 (2026-10-02; Owner APPROVED, six defaults)
+
+Defaults accepted: first dimension = spawn admission; journey unit = root joined to goal;
+receipts regenerable from the index; only "path identity is not resource identity" becomes a
+UKDL trap now; no live hook, no model-calling runs before 10-07 17:00Z; push per sealed commit.
+c4 sealed `2856f8e` (owner: the pane writing §13; the s12 pane stepped off c4-c8 by message).
+
+Reality: HEAD `7dd864d`, 9 commits past `5b8057c`; PRG-2 PASS (`e8d05c9`), store identity sealed
+(`f234580`), nested-spawn project (`6b95854`). Anchor re-run: 22/22, 11/11, 17/17, 11/11, 4/4,
+window 23,925 / 6,230,548,450. The prompt's P0/P1/P3 are DONE; its P2/P4/P5 are §12 commits 4-8.
+Goal spine holds 3 goal logs / 226 events: goal-level learning is LOW SAMPLE (M0-M1).
+
+Owners (D2A): journey substrate = goal log + epochs (`epoch.py`, peer, read-only join); journey
+metrology = `fanout_ledger`; policy + shadow verdict = `scheduler.decide_spawn`; Policy Lab =
+`estate_shadow replay`; ledger = `usage_index` (never written by the optimizer); CBR =
+`modules/tower/ratchet.py`; mutants = `tools/mutation_drill.py`. NEW modules: none.
+
+Additions to §12 (all zero model calls, shadow only):
+- c8 gains a POLICY RECEIPT: policy id+version (bands hash), subject, pre-spawn features with
+  as-of ts, verdict, reason band, floors checked, expected effect labelled ESTIMATE, evidence class
+  (OBSERVATIONAL / REPLAY), deopt condition. Derived from the index, regenerable, never in context.
+- c8b `fanout_ledger journey`: per root, joined to goal/epoch when bound, else UNBOUND: origin,
+  shape, spawn outcomes, progress v1 or UNSETTLED, receipts, meta-overhead (wall s, rows read).
+- c8c accounting independence: closure test that scheduler/estate_shadow never write usage_index.
+- c9 extra mutants: receipt without deopt; optimizer writes ledger; UNSETTLED counted as WASTE.
+- c10: UKDL trap "path identity is not resource identity" (evidence f234580); other laws stay
+  candidates; tower entry for the receipt contract recorded EXPERIMENTAL, never promoted here.
+Kill criterion: if v2 adds no would-defer over v1 with protected_deferred=0 across two windows,
+verdict NO_CHANGE and the extra features are retired.
+NEXT/LATER/RESEARCH/REJECT: see the inline plan of this date; NEXT = singleflight observer,
+re-derivation detector (first compile-out candidate), C4.1 rent ranking, rollover-timing shadow.

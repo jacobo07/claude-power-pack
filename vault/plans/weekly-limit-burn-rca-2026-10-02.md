@@ -256,6 +256,14 @@ shape, so the anchor stood; it is now order-independent by construction.*
 Spawn outcomes: 240 spawns in the window, 39 with no transcript = 32 hook-denied + 7 other
 errors, 0 with a result. A requested spawn is not an executed one.
 
+*Correction (`2856f8e`, outcomes now read from the index alone): the split is 39 HOOK_BLOCKED,
+0 other. 34 carry the harness prefix "PreToolUse:Agent hook error:"; 5 are permission
+denials that carry only the guard's own text ("AGENT-SOLO GUARD blocked ..."). The 32/7 came
+from a scratch matcher that required both "hook" and "block", so the denials fell into
+"other" (confirmed by the pane that wrote it). Also wrong above: "0 with a result". All 240
+have a tool_result (201 RETURNED, 39 error). Each refused spawn got a result; none got a
+transcript.*
+
 **PRG-2 (estate shadow replay, `tools/estate_shadow.py`, decider unchanged).** Bands frozen
 from 09-16..09-30 (957 spawns; p90 active_sessions 15, active_subagents 6, calls/h 1,132).
 240 judged: BACKGROUND 88 allow / 15 would-defer, CRITICAL_VERIFY 80, INTERACTIVE 46, NORMAL 11.
