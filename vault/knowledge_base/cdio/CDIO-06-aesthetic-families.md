@@ -47,11 +47,11 @@ family in its `aesthetic_family` field. That declaration is load-bearing — it 
   and the rest of the product keeps its own family. A variant, not an eleventh family: it
   changes one F1 commitment (the accent) and keeps every other. Its behaviour, criteria and
   measured floor collisions live in CDIO-09.
-- **Dark zero-accent variant (added 2026-10-02, PROVISIONAL):** the same commitment on a
-  near-black ground — off-white ink, the primary action inverted (light fill, dark label),
-  no hue. Distinct from F5 Cinematic Dark, which is defined by saturated gradients. One
-  measured exemplar so far and no external reference bank, so every rule in sec. 10 is a
-  hypothesis until the bank exists.
+- **Dark zero-accent variant (added 2026-10-02, PARTIAL):** the same commitment on a
+  black or near-black ground — off-white running text, hue confined to status signals,
+  regions separated by hairlines rather than lightness. Distinct from F5 Cinematic Dark,
+  which is defined by saturated gradients. Distilled from a measured six-site bank (sec. 10);
+  its signature collision is a fourth text tier at 3.45–4.0:1, found in all five dark sources.
 
 ### F2 — Terminal-Core
 - **Palette:** `#000` / `#fff` / no accent (or phosphor-green, amber)
@@ -447,49 +447,77 @@ Each is present in a majority of the exemplars and none of them is a principle. 
 is whether the trait survives a change of brand, platform or domain — and every item on
 that list is an artefact of three template kits sold in the same year.
 
-## 10. The F1 dark zero-accent variant — PROVISIONAL
+## 10. The F1 dark zero-accent variant — PARTIAL
 
-**Status: PROVISIONAL.** One exemplar measured, zero external references. Nothing in this
-section may fail a review on its own authority yet; a reviewer cites the CDIO-00 floors it
-restates, never this section. It becomes binding when an external bank of three to seven
-references (the Owner's, as for F10) has confirmed or struck each hypothesis below. Backlog:
-`vault/backlog/2026-10-02_cdio-modern-saas-styles.md`, item 1.
+**Status: PARTIAL.** Rules 1–4 below were tested against a measured reference bank on
+2026-10-02 and are binding as written; rules 5 and 6 are still open hypotheses and may not
+fail a review on their own. Backlog: `vault/backlog/2026-10-02_cdio-modern-saas-styles.md`,
+item 1.
 
-**The exemplar.** InfinityOps `.theme-dark` (`app/globals.css`, an opt-in theme behind the
-ThemeToggle, live on 2026-10-02): ground `#130F0A`, surface `#1D1814`, ink `#F2EDE4`, muted
-`#9E9487`, label `#756B5E`, accent `#FFFFFF`, borders as warm white at 8% and 16% alpha. It is
-monochrome by construction — the "accent" is white — and warm rather than neutral, which is
-a brand choice and not part of the variant.
+### The bank, and how it was measured
 
-**What it gets right, measured:** ink at 16.4:1 on the ground (off-white, not screen-white),
-muted text at 5.5–6.4:1 on every surface, the inverted primary action at 19.1:1.
+Six public sites were rendered in a real Chromium at 1440×900 with the dark colour scheme,
+screenshotted, and measured in the page: every colour normalised to sRGB through a canvas (so
+oklch and oklab values are compared like any other), every text run given its **effective**
+background by compositing the translucent ancestors beneath it, and text over an image or
+gradient set aside as not computable rather than guessed. The bank was chosen by the agent at
+the Owner's request, knowing these sites to be dark — a selection bias worth stating.
 
-**Where it collides, measured** — the same collision as the light variant, plus two that only
-a dark ground produces:
+| source | classification |
+|---|---|
+| Linear (`linear.app`) | **exemplar** — ground `#08090a`, ink `#f7f8f8`, 0.7% of painted area chromatic |
+| Vercel docs (`vercel.com/docs`) | **exemplar** — ground `#000000`, ink `#ededed`, 0% chromatic; the only pure product surface in the bank |
+| Resend (`resend.com`) | **exemplar** — ground `#000000`, ink `#f0f0f0`, 0% chromatic |
+| Raycast (`raycast.com`) | **contrast case** — monochrome chrome around a saturated red hero: an F1-dark × F5 remix |
+| PlanetScale (`planetscale.com`) | **contrast case** — monospace everywhere and an orange action: F2 Terminal-Core |
+| Zed (`zed.dev`) | **contrast case** — dark, but a blue primary action carries emphasis: F1 dark *with* an accent |
 
-- **The quietest text tier falls under the floor.** `--label` is 3.65:1 on the ground and
-  3.37:1 on a surface, and it is used for real text: 10px uppercase mono labels and 12px field
-  hints on the Council screens. Small text is exactly where 4.5:1 is least negotiable.
-- **Alpha borders cannot identify a control.** The 8% border composites to 1.19–1.22:1 and the
-  16% one to 1.57:1. Fine as decoration; a failure on the Council text area, whose only
-  boundary is the 8% line. And an alpha border's contrast is not a property of the token at
-  all — it depends on what it is laid over, so it must be measured composited, per surface.
-  This is F7's non-determinism arriving through the border instead of the panel.
-- **Elevation nearly vanishes.** Surface on ground is 1.08:1 and hover on surface 1.07:1. No
-  WCAG floor governs this, so it is not a failure — but shadow cannot carry depth on
-  near-black, so lightness has to, and a step this small is a hierarchy the eye can barely
-  find.
+Plus the one exemplar the estate owns, InfinityOps `.theme-dark` (opt-in), measured from its
+tokens. Three of the four marketing pages render product mock-ups as live DOM, so some of their
+measured text is mock-up text; Vercel docs is the clean product reading.
 
-**Hypotheses the reference bank must test** (each could be wrong):
+### Rules (binding)
 
-1. The ground is near-black, never `#000`; the ink is off-white, never `#fff`. Pure white on
-   pure black halates for many readers.
-2. Depth is carried by lightness steps between surfaces, not by shadow.
-3. The primary action inverts — light fill, dark label — rather than introducing a hue.
-4. Borders that identify a control are opaque or are measured composited on every surface
-   they sit on; alpha borders are decoration only.
-5. The focus ring is the one place a dark monochrome surface may need more than ink, because
-   a white ring next to white primary actions can stop meaning "focus".
-6. Under CDIO-09, a focused decision surface on a dark ground cannot de-emphasise its backdrop
-   by dimming alone (dimming near-black changes little); blur has to do more of the work.
+1. **Hue is confined to signals.** Across the three exemplars at most 0.7% of the painted area
+   is chromatic, and what hue there is marks status (an issue-state icon, a "Beta" chip, syntax
+   colour). The contrast cases run from 2.2% to 47.5%. A dark surface whose primary action or
+   large surfaces carry a hue is not this variant: it is F1 dark with an accent, or a remix.
+2. **Running text is off-white.** All three exemplars set body and secondary text below pure
+   white (`#ededed`, `#f7f8f8`, `#f0f0f0`), keeping pure white for the largest headings at most.
+   The ground, however, may be pure black: two of three exemplars use `#000000`. *(This
+   overturns the earlier draft's "never `#000`", which the bank did not support.)*
+3. **Separation is drawn, not lit.** Surfaces sit 1.01–1.06:1 from the ground in every
+   exemplar, and InfinityOps' 1.08:1 is inside that range. What separates regions is a hairline
+   border (decorative lines measured 1.10–1.57:1), not a lightness step and not a shadow.
+   *(This overturns the earlier draft's "depth by lightness steps".)* Because those lines are
+   decorative, their low contrast is not a failure — until a line is what identifies a control.
+4. **The primary action owns the highest contrast against the ground.** Linear and Vercel
+   invert it (light fill, dark label, 15.8–17.9:1 fill against ground); Resend uses a dark fill
+   with a border. Inversion is the common form, not the invariant; the invariant is that no other
+   element on the surface out-contrasts the primary action.
 
+### The collisions — measured, and shared by the whole bank
+
+**(a) The fourth ink tier.** Every dark source measured has a quietest text tier between 3.45
+and 4.0:1 — Linear `#62666d` 3.45, Vercel `#666666` 3.45 (a 10px "Beta" label), Resend
+`#6c6c6c` 4.0, Raycast `#6a6b6c` 3.75 (12px helper text and input hints), InfinityOps `--label`
+3.37–3.65 (10–12px labels and hints). Five of five. This is the variant's signature failure:
+once body text is grey, the designer needs one step quieter still for metadata, and there is no
+room left above 4.5:1. It is always small text, which is where the floor is least negotiable.
+The fix is to have three text tiers, not four, or to make the quietest tier a size and weight
+step rather than a luminance step.
+
+**(b) Control boundaries drawn as hairlines.** Every exemplar that had a measurable control
+boundary drew it at 1.33–1.49:1, because the control borrows the decorative hairline of rule 3.
+WCAG 2.1 asks 3:1 for what identifies a control, and the floor is not arbitrable (CDIO-00).
+The references being wrong does not make the floor wrong; it makes this the variant's second
+characteristic collision. Give controls their own border token; keep the hairline for layout.
+
+### Open hypotheses (not binding)
+
+5. **The focus ring may need the one permitted hue.** Linear's focus ring is its indigo, the only
+   hue on the surface. The other sites' focus styles were not measurable: programmatic focus did
+   not reliably trigger `:focus-visible` in the measuring browser, so their result is
+   INCONCLUSIVE, not "no ring".
+6. **A focused decision surface on a dark ground cannot de-emphasise its backdrop by dimming
+   alone** (CDIO-09). No page in the bank showed a modal; untested.
