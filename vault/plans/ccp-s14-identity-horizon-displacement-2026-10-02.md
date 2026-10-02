@@ -76,6 +76,12 @@ classified; "savings" wording removed from replay output.
   [0, 349,600,836] cache read; 2 without child transcript. Async-ack bug (1,184/1,452 results are
   launch acks) handed to 2a, whose Equivalents fix is theirs to commit. FP-AGENT-CONTRACT-IDENTIFIER
   `dfa38fa6`. OPEN: backup delete needs typed consent; transcript overlap left RESEARCH (audit G8-G10).
+- S3 ONE DEFINITION 2026-10-03: `estate_displacement.child_span` removed; "finished" is
+  `fanout_ledger.child_last_call`, refusal is `refused_launches` (spawns.is_error = 1). Gates:
+  test_displacement 16/16, estate_shadow 11/11, spawn_policy_v2 26/26, async_spawns 12/12. 8/8
+  drills KILLED on a repo-layout replica (tools/mutation_drill.py copies tools/ only, and
+  test_displacement reads modules/cognitive_os/scheduler.py, so all 8 came back UNJUDGED there).
+  PRG replay-v2 on the real index: unchanged (20 judged; RAN_LATER 1, UNKNOWN 19; [0, 349,600,836]).
 
 ## Not this pane / not now
 Horizontal = decide_spawn + estate_shadow (2a). Longitudinal actuator = rollover + context-watchdog

@@ -41,32 +41,24 @@ LATER_HORIZON_S = 6 * 3600     # unvalidated bound, reported with every result
 NEVER_ASSERTED = ("ELIMINATED", "CONSUMED")
 
 
-def child_span(con) -> dict:
-    """tool_use_id -> (launch refused?, first child call ts, last child call ts).
-    Child times are None when the spawn left no child transcript with calls."""
-    out = {}
-    for tuid, err, first, last in con.execute(
-            "SELECT s.tool_use_id, s.is_error, min(c.ts), max(c.ts) FROM spawns s "
-            "LEFT JOIN subagents a ON a.tool_use_id = s.tool_use_id "
-            "LEFT JOIN calls c ON c.file = a.file GROUP BY s.tool_use_id"):
-        out[tuid] = (err == 1, first, last)
-    return out
+def refused_launches(con) -> set:
+    """tool_use_ids whose launch returned an error: their child calls are not a result."""
+    return {t for (t,) in con.execute("SELECT tool_use_id FROM spawns WHERE is_error = 1")}
 
 
-def classify(spawn: dict, peers: list[dict], span: dict) -> str:
-    """One judged spawn against the other spawns of its (input_hash, root)."""
+def classify(spawn: dict, peers: list[dict], last_call: dict, refused: set) -> str:
+    """One judged spawn against the other spawns of its (input_hash, root).
+    last_call: fanout_ledger.child_last_call, the one definition of "finished"."""
     if not spawn.get("input_hash"):
         return NO_HASH
     t, me = spawn["ts"], spawn["tool_use_id"]
     others = [p for p in peers if p["tool_use_id"] != me]
-    for p in others:                                   # an equivalent had finished
-        refused, _first, last = span.get(p["tool_use_id"], (False, None, None))
-        if p["ts"] < t and not refused and last is not None and last <= t:
-            return REUSABLE
-    for p in others:                                   # an equivalent was still running
-        refused, _first, last = span.get(p["tool_use_id"], (False, None, None))
-        if p["ts"] < t and not refused and last is not None and last > t:
-            return ACTIVE
+    ran = [(p["ts"], last_call.get(p["tool_use_id"])) for p in others
+           if p["tool_use_id"] not in refused]
+    if any(ts < t and last is not None and last <= t for ts, last in ran):
+        return REUSABLE                                # an equivalent had finished
+    if any(ts < t and last is not None and last > t for ts, last in ran):
+        return ACTIVE                                  # an equivalent was still running
     if any(t < p["ts"] <= t + LATER_HORIZON_S for p in others):
         return RAN_LATER
     return UNKNOWN
@@ -80,14 +72,16 @@ def displacement(con, judged: list[dict], verdict_of: dict, universe: list[dict]
     for p in universe:                 # an unresolved root matches nothing, not other unknowns
         if p.get("input_hash") and p.get("prompt"):
             groups[(p["input_hash"], p["prompt"])].append(p)
-    span = child_span(con)
+    import fanout_ledger as fl         # tools/ sibling, already on sys.path for every caller
+    last_call, refused = fl.child_last_call(con), refused_launches(con)
     count, calls, cache_read = Counter(), Counter(), Counter()
     no_transcript, rows = 0, []
     for s in judged:
         verdict = verdict_of.get(s["tool_use_id"])
         if verdict is None or verdict == "ALLOW":
             continue
-        cls = classify(s, groups.get((s.get("input_hash"), s["prompt"]), []), span)
+        cls = classify(s, groups.get((s.get("input_hash"), s["prompt"]), []),
+                       last_call, refused)
         count[cls] += 1
         no_transcript += s["subtree_calls"] is None
         calls[cls] += s["subtree_calls"] or 0
