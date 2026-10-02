@@ -175,3 +175,38 @@ Owner OK, since registration edits the shared dispatcher) -> C4.0 (differential 
 from visible injected text + agent-class differences; provider-opaque remainder explicit;
 lifetime rent from the index) -> C4.1 decision by ranked controllable lifetime rent.
 C5-C8 of section 4 move to the state-centric peer or wait for C4.1.
+
+## 12. Observation -> governed admission (Owner "y", six defaults, 2026-10-02 night)
+
+PRG-1 and PRG-2 passed on the real index (RCA §16). Six defaults accepted: PRG-2 = PASS with
+five preconditions for enforcement; fix only the transcript-store identity now (workspace =
+cwd and repository = git common dir arrive with their first consumer); progress v1 = commits,
+goal-log events, green test runs, everything else UNSETTLED; obligations / proof / semantic
+delta / epochs stay with the peer Goal spine (`modules/gsd_x/goal`, read-only joins, no edits);
+phase-4 audit before code; no live admission hook in this plan.
+
+Ownership: fan-out, shape, spawn outcomes = `tools/fanout_ledger.py`; admission =
+`scheduler.decide_spawn` + `tools/estate_shadow.py` (shadow); identity = inside
+`tools/usage_index.py`, no new module. Repeated-attempt refusal already exists
+(`goal/epoch.RetryWithoutNewInformation`); proof reuse is `goal/judge.py` + `git_state.py`.
+
+Sequence (micro-commits, execution mode):
+1. this record. 2. `usage_index`: resolved-path store identity, alias rows migrated in one
+transaction + schema bump, sha256-verified sqlite copy first; fixture with reversed listing
+order. 3. `estate_shadow`: project from the resolved identity. 4. spawn outcomes REQUESTED /
+HOOK_BLOCKED / FAILED_TO_START / RAN / RETURNED. 5. execution shape per root: width (peak
+concurrent subagents), depth (parent chain + longest child chain), area (calls), surface
+(input + cache write + cache read), duration; per-root sums must equal window totals.
+6. golden incident f319ce75. 7. progress v1, UNSETTLED default, coverage reported.
+8. `decide_spawn` v2 shadow: owner present, spend since last advancement, equivalent spawn
+active, UNKNOWN separate from BACKGROUND; ALLOW / WOULD_DEFER / WOULD_REJECT; replay diff vs v1.
+9. mutants via `tools/mutation_drill.py`: reversed listing -> two identities; blocked spawn
+charged as executed; protected deferred; UNKNOWN treated as BACKGROUND; bands tuned on the
+judged window; shape sums diverge; UNSETTLED reported as WASTE. 10. UKDL traps.
+
+NEXT: duplicate-spawn report (singleflight observer), C4.0 rent ranking, re-derivation detector
+(identical Read/Grep/Explore inputs across sessions) feeding "known work compiled out",
+per-workflow cost envelopes. LATER: live admission, renewable leases, Goal P&L, event waits,
+proof DAG. RESEARCH: archetypes, evidence market, correlated cognition, policy genomes,
+digital twin. REJECTED: a goal/uncertainty graph inside CCP, a scalar cognitive currency, a
+second telemetry system, fixed N-agent councils, a compiler framework as code.

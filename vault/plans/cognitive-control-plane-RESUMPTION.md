@@ -45,14 +45,15 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
   build on it (spawns declare nothing). A live C3 hook needs Owner OK (shared dispatcher).
 - Provider quota: the Wed-17Z seven-day window is REJECTED 2026-10-02T11:54Z -> 2026-10-07T17:00Z.
 
+- PRG-2 PASS (RCA §16): protected_deferred=0, all 15 would-defers reviewed and explainable.
+  Plan §12 approved (Owner "y", six defaults): observation -> governed admission, ten micro-commits.
+
 ## 4. Next three actions
-1. PRG on the real index once the v2 backfill is done: anchor totals unchanged; one real HUMAN
-   prompt tree and one CONTINUATION/MISSION root (`fanout_ledger.py prompt/top/summary`);
-   `estate_shadow.py replay` (protected_deferred must be 0, review top 15); `floor_probe.py
-   probe` (rent ranking). Record results in RCA §16 + plan §12.
-2. C4.1: pick the largest CPP-controllable lifetime-rent component with an enforcement-preserving
-   path; quality A/B waits for the reset.
-3. C4.0b zero-quota probe of `updatedInput.model` on the Agent tool (audit G5).
+1. Phase-4 audit of plan §12 (oneshot-architect-auditor, Sonnet, findings to
+   `vault/audits/ccp-s12-audit.md`); inject fixes into §12 before any code.
+2. Commit 2 of §12: store identity in `usage_index` (copy + sha256 the sqlite first).
+3. Commits 3-5: estate_shadow project fix, spawn outcomes, execution shape; then f319ce75.
+   Still open from before: `floor_probe.py probe` rent ranking -> C4.1; G5 probe after 10-07.
 
 ## 5. Start instruction
 `git log --oneline -5 -- tools/usage_index.py`, run the coherence anchor, read plan section 10,

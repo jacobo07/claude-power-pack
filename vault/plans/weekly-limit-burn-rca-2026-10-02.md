@@ -229,3 +229,41 @@ from these rows, and `NO_SIGNAL` when there are none. It never shows a fitted pe
 Consequence: §5's lesson still stands, and a second one joins it. **An alarm calibrated
 on transcripts cannot see a change in what the meter charges.** The control-plane levers
 (agent floor, fan-out, concurrency) cut the standing level whatever the meter does.
+
+## 16. Production Reality Gate on the real index (PRG-1/PRG-2, 2026-10-02 night)
+
+Window 09-30 17:00Z -> 10-02 09:40Z, same reader. No model call.
+
+**PRG-1 (fan-out ledger, `5b8057c`).** Anchor unchanged (23,925 calls / 6,230,548,450 cache
+read). Root split: human 11,622 · mission 10,473 · continuation 1,637 · SDK 179 · unknown 14.
+9,893/9,893 subagent calls linked to the prompt that spawned them. Human prompt fan-out median
+12, p90 67, max 239. The max, f319ce75, is 214 parent calls + 25 subagent calls: depth, not
+width. Two amplification shapes exist and need separate measures.
+
+Two report defects found and fixed: the single-prompt view ignored the mission title
+(mission prompts read HUMAN), and a subagent's project came from the spawn row's file.
+Root cause of the second: `projects/C--Users-User-Apps-mcp-video-analyzer` is a JUNCTION to
+the PP project dir; 148 sessions are indexed under both paths. Call totals are safe (dedup on
+message id + request id); path-keyed rows (`spawns.file`) land on whichever alias was written
+last. Calls themselves land on the real path only because `iterdir()` on NTFS lists it first:
+correct by listing order, not by design.
+
+Spawn outcomes: 240 spawns in the window, 39 with no transcript = 32 hook-denied + 7 other
+errors, 0 with a result. A requested spawn is not an executed one.
+
+**PRG-2 (estate shadow replay, `tools/estate_shadow.py`, decider unchanged).** Bands frozen
+from 09-16..09-30 (957 spawns; p90 active_sessions 15, active_subagents 6, calls/h 1,132).
+240 judged: BACKGROUND 88 allow / 15 would-defer, CRITICAL_VERIFY 80, INTERACTIVE 46, NORMAL 11.
+**protected_deferred = 0.** All 15 would-defers reviewed (the whole set): every one a MISSION
+root at BACKGROUND (orca-dws-wt 8, InfinityOps 7, 10-01 10:59Z..22:38Z); reasons 11 calls/h
+(some with active_subagents), 2 active_sessions, 2 prompt fan-out over the envelope of 3.
+Each names its band; each would be admitted when load drops below p90. 2 of the 15 had
+already been hook-denied. Upper bound touched: 1,063 calls / 248,905,008 cache read, not a
+saving. The junction does not inflate the load dims today: 0/128,567 baseline and 0/23,925
+judged calls carry the alias path.
+
+Preconditions recorded before any enforcement: (1) store identity by resolved path, not
+listing order; (2) `estate_shadow.py:90` takes project from the spawn file (display only
+today); (3) deferring a child can convert width into parent depth, invisible to replay, so
+any saving stays an upper bound; (4) UNKNOWN roots map to BACKGROUND (`scheduler.py:325`);
+(5) the decider sees load only, no owner or progress.
