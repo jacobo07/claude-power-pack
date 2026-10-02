@@ -47,6 +47,11 @@ family in its `aesthetic_family` field. That declaration is load-bearing — it 
   and the rest of the product keeps its own family. A variant, not an eleventh family: it
   changes one F1 commitment (the accent) and keeps every other. Its behaviour, criteria and
   measured floor collisions live in CDIO-09.
+- **Dark zero-accent variant (added 2026-10-02, PROVISIONAL):** the same commitment on a
+  near-black ground — off-white ink, the primary action inverted (light fill, dark label),
+  no hue. Distinct from F5 Cinematic Dark, which is defined by saturated gradients. One
+  measured exemplar so far and no external reference bank, so every rule in sec. 10 is a
+  hypothesis until the bank exists.
 
 ### F2 — Terminal-Core
 - **Palette:** `#000` / `#fff` / no accent (or phosphor-green, amber)
@@ -441,3 +446,50 @@ gradient hero; the pill status chips; the photo-card treatment; the tab-bar item
 Each is present in a majority of the exemplars and none of them is a principle. The test
 is whether the trait survives a change of brand, platform or domain — and every item on
 that list is an artefact of three template kits sold in the same year.
+
+## 10. The F1 dark zero-accent variant — PROVISIONAL
+
+**Status: PROVISIONAL.** One exemplar measured, zero external references. Nothing in this
+section may fail a review on its own authority yet; a reviewer cites the CDIO-00 floors it
+restates, never this section. It becomes binding when an external bank of three to seven
+references (the Owner's, as for F10) has confirmed or struck each hypothesis below. Backlog:
+`vault/backlog/2026-10-02_cdio-modern-saas-styles.md`, item 1.
+
+**The exemplar.** InfinityOps `.theme-dark` (`app/globals.css`, an opt-in theme behind the
+ThemeToggle, live on 2026-10-02): ground `#130F0A`, surface `#1D1814`, ink `#F2EDE4`, muted
+`#9E9487`, label `#756B5E`, accent `#FFFFFF`, borders as warm white at 8% and 16% alpha. It is
+monochrome by construction — the "accent" is white — and warm rather than neutral, which is
+a brand choice and not part of the variant.
+
+**What it gets right, measured:** ink at 16.4:1 on the ground (off-white, not screen-white),
+muted text at 5.5–6.4:1 on every surface, the inverted primary action at 19.1:1.
+
+**Where it collides, measured** — the same collision as the light variant, plus two that only
+a dark ground produces:
+
+- **The quietest text tier falls under the floor.** `--label` is 3.65:1 on the ground and
+  3.37:1 on a surface, and it is used for real text: 10px uppercase mono labels and 12px field
+  hints on the Council screens. Small text is exactly where 4.5:1 is least negotiable.
+- **Alpha borders cannot identify a control.** The 8% border composites to 1.19–1.22:1 and the
+  16% one to 1.57:1. Fine as decoration; a failure on the Council text area, whose only
+  boundary is the 8% line. And an alpha border's contrast is not a property of the token at
+  all — it depends on what it is laid over, so it must be measured composited, per surface.
+  This is F7's non-determinism arriving through the border instead of the panel.
+- **Elevation nearly vanishes.** Surface on ground is 1.08:1 and hover on surface 1.07:1. No
+  WCAG floor governs this, so it is not a failure — but shadow cannot carry depth on
+  near-black, so lightness has to, and a step this small is a hierarchy the eye can barely
+  find.
+
+**Hypotheses the reference bank must test** (each could be wrong):
+
+1. The ground is near-black, never `#000`; the ink is off-white, never `#fff`. Pure white on
+   pure black halates for many readers.
+2. Depth is carried by lightness steps between surfaces, not by shadow.
+3. The primary action inverts — light fill, dark label — rather than introducing a hue.
+4. Borders that identify a control are opaque or are measured composited on every surface
+   they sit on; alpha borders are decoration only.
+5. The focus ring is the one place a dark monochrome surface may need more than ink, because
+   a white ring next to white primary actions can stop meaning "focus".
+6. Under CDIO-09, a focused decision surface on a dark ground cannot de-emphasise its backdrop
+   by dimming alone (dimming near-black changes little); blur has to do more of the work.
+
