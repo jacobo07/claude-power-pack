@@ -1,0 +1,213 @@
+{
+ "controls": {
+  "tools/test_estate_shadow.py": {
+   "summary": [
+    "ESTATE_SHADOW_PASS=11/11  threshold=11/11"
+   ],
+   "fails": [],
+   "clean": true
+  },
+  "tools/test_execution_shape.py": {
+   "summary": [
+    "EXECUTION_SHAPE_PASS=14/14  threshold=14/14"
+   ],
+   "fails": [],
+   "clean": true
+  },
+  "tools/test_goal_journey.py": {
+   "summary": [
+    "GOAL_JOURNEY_PASS=7/7  threshold=7/7"
+   ],
+   "fails": [],
+   "clean": true
+  },
+  "tools/test_root_progress.py": {
+   "summary": [
+    "  PASS V-PROG-TESTS: tests={'GREEN': 2, 'RED': 1} (pytest '3 passed' green; X_PASS=4/5 red; PowerShell Y_PASS=6/6 green; git status not a test)",
+    "ROOT_PROGRESS_PASS=11/11  threshold=11/11"
+   ],
+   "fails": [],
+   "clean": true
+  },
+  "tools/test_spawn_outcomes.py": {
+   "summary": [
+    "SPAWN_OUTCOMES_PASS=24/24  threshold=24/24"
+   ],
+   "fails": [],
+   "clean": true
+  },
+  "tools/test_spawn_policy_v2.py": {
+   "summary": [
+    "SPAWN_POLICY_V2_PASS=26/26  threshold=26/26"
+   ],
+   "fails": [],
+   "clean": true
+  },
+  "tools/test_usage_index_identity.py": {
+   "summary": [
+    "USAGE_INDEX_IDENTITY_PASS=11/11  threshold=11/11"
+   ],
+   "fails": [],
+   "clean": true
+  }
+ },
+ "mutants": [
+  {
+   "mutant": "1 listing order picks identity",
+   "file": "tools/usage_index.py",
+   "test": "tools/test_usage_index_identity.py",
+   "gate": "V-UXID-NO-ALIAS-PATH",
+   "verdict": "KILLED",
+   "all_failing_gates": [
+    "FAIL V-UXID-NO-ALIAS-PATH",
+    "FAIL V-UXID-ONE-IDENTITY",
+    "FAIL V-UXID-SEED-VISIBLE",
+    "FAIL V-UXID-MIGRATED",
+    "FAIL V-UXID-BACKUP-VERIFIED",
+    "FAIL V-UXID-IDEMPOTENT"
+   ],
+   "summary": [
+    "USAGE_INDEX_IDENTITY_PASS=5/11  threshold=11/11"
+   ]
+  },
+  {
+   "mutant": "2 blocked spawn charged as executed",
+   "file": "tools/fanout_ledger.py",
+   "test": "tools/test_spawn_outcomes.py",
+   "gate": "V-SPOUT-SUMMARY",
+   "verdict": "KILLED",
+   "all_failing_gates": [
+    "FAIL V-SPOUT-HOOK_BLOCKED-HOOK",
+    "FAIL V-SPOUT-HOOK_BLOCKED-DENY",
+    "FAIL V-SPOUT-SUMMARY",
+    "FAIL V-SPOUT-TREE",
+    "FAIL V-SPOUT-V3-BACKFILL",
+    "FAIL V-SPOUT-HARNESS-PREFIX"
+   ],
+   "summary": [
+    "SPAWN_OUTCOMES_PASS=18/24  threshold=24/24"
+   ]
+  },
+  {
+   "mutant": "3 protected deferred",
+   "file": "modules/cognitive_os/scheduler.py",
+   "test": "tools/test_estate_shadow.py",
+   "gate": "V-SHADOW-PROTECTED",
+   "verdict": "KILLED",
+   "all_failing_gates": [
+    "FAIL V-SHADOW-PROTECTED"
+   ],
+   "summary": [
+    "ESTATE_SHADOW_PASS=10/11  threshold=11/11"
+   ]
+  },
+  {
+   "mutant": "4 UNKNOWN treated as BACKGROUND",
+   "file": "modules/cognitive_os/scheduler.py",
+   "test": "tools/test_spawn_policy_v2.py",
+   "gate": "V-SPV2-PRIORITY-UNKNOWN",
+   "verdict": "KILLED",
+   "all_failing_gates": [
+    "FAIL V-SPV2-PRIORITY-UNKNOWN"
+   ],
+   "summary": [
+    "SPAWN_POLICY_V2_PASS=25/26  threshold=26/26"
+   ]
+  },
+  {
+   "mutant": "5 bands tuned on judged window",
+   "file": "tools/estate_shadow.py",
+   "test": "tools/test_estate_shadow.py",
+   "gate": "V-SHADOW-BANDS-BEFORE-WINDOW",
+   "verdict": "KILLED",
+   "all_failing_gates": [
+    "FAIL V-SHADOW-BANDS-BEFORE-WINDOW"
+   ],
+   "summary": [
+    "ESTATE_SHADOW_PASS=10/11  threshold=11/11"
+   ]
+  },
+  {
+   "mutant": "6 shape sums diverge",
+   "file": "tools/fanout_ledger.py",
+   "test": "tools/test_execution_shape.py",
+   "gate": "V-SHAPE-SUMS",
+   "verdict": "KILLED",
+   "all_failing_gates": [
+    "FAIL V-SHAPE-SUMS"
+   ],
+   "summary": [
+    "EXECUTION_SHAPE_PASS=13/14  threshold=14/14"
+   ]
+  },
+  {
+   "mutant": "7 UNSETTLED reported as WASTE (producer)",
+   "file": "tools/root_progress.py",
+   "test": "tools/test_root_progress.py",
+   "gate": "V-PROG-UNSETTLED",
+   "verdict": "KILLED",
+   "all_failing_gates": [
+    "FAIL V-PROG-UNSETTLED"
+   ],
+   "summary": [
+    "  PASS V-PROG-TESTS: tests={'GREEN': 2, 'RED': 1} (pytest '3 passed' green; X_PASS=4/5 red; PowerShell Y_PASS=6/6 green; git status not a test)",
+    "ROOT_PROGRESS_PASS=10/11  threshold=11/11"
+   ]
+  },
+  {
+   "mutant": "8 receipt without deopt",
+   "file": "modules/cognitive_os/scheduler.py",
+   "test": "tools/test_spawn_policy_v2.py",
+   "gate": "V-SPV2-DEOPT",
+   "verdict": "KILLED",
+   "all_failing_gates": [
+    "FAIL V-SPV2-RECEIPT-FIELDS",
+    "FAIL V-SPV2-DEOPT"
+   ],
+   "summary": [
+    "SPAWN_POLICY_V2_PASS=24/26  threshold=26/26"
+   ]
+  },
+  {
+   "mutant": "9 optimizer writes ledger (CREATE escapes the verb regex)",
+   "file": "tools/estate_shadow.py",
+   "test": "tools/test_spawn_policy_v2.py",
+   "gate": "V-SPV2-LEDGER-UNTOUCHED",
+   "verdict": "KILLED",
+   "all_failing_gates": [
+    "FAIL V-SPV2-LEDGER-UNTOUCHED",
+    "FAIL V-SPV2-NO-WRITE-SQL"
+   ],
+   "summary": [
+    "SPAWN_POLICY_V2_PASS=24/26  threshold=26/26"
+   ]
+  },
+  {
+   "mutant": "9b same mutant, static gate widened",
+   "file": "tools/estate_shadow.py",
+   "test": "tools/test_spawn_policy_v2.py",
+   "gate": "V-SPV2-NO-WRITE-SQL",
+   "verdict": "KILLED",
+   "all_failing_gates": [
+    "FAIL V-SPV2-LEDGER-UNTOUCHED",
+    "FAIL V-SPV2-NO-WRITE-SQL"
+   ],
+   "summary": [
+    "SPAWN_POLICY_V2_PASS=24/26  threshold=26/26"
+   ]
+  },
+  {
+   "mutant": "10 UNSETTLED counted as WASTE (journey consumer)",
+   "file": "tools/root_progress.py",
+   "test": "tools/test_goal_journey.py",
+   "gate": "V-JRNY-SHAPE-PROGRESS",
+   "verdict": "KILLED",
+   "all_failing_gates": [
+    "FAIL V-JRNY-SHAPE-PROGRESS"
+   ],
+   "summary": [
+    "GOAL_JOURNEY_PASS=6/7  threshold=7/7"
+   ]
+  }
+ ]
+}

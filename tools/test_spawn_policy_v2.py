@@ -173,7 +173,9 @@ def main() -> int:
            "c8c: a replay leaves the index bytes identical (the optimizer never writes its ledger)")
 
     src = (HERE / "estate_shadow.py").read_text(encoding="utf-8")
-    writes = re.findall(r"(?i)\b(INSERT|UPDATE|DELETE|REPLACE INTO|ALTER|DROP)\b\s", src)
+    # CREATE + executescript: the c9 drill wrote a table through CREATE and this gate saw nothing
+    writes = re.findall(r"(?i)\b(INSERT|UPDATE|DELETE|REPLACE INTO|ALTER|DROP|CREATE)\b\s"
+                        r"|\bexecutescript\b", src)
     ok("V-SPV2-NO-WRITE-SQL", not writes, f"write verbs in estate_shadow.py: {writes}")
 
     total = PASS + FAIL

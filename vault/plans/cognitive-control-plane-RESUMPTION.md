@@ -74,21 +74,36 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
   1.0, max width 2 -> cost is sequential depth); c7 `1db28b93` `tools/root_progress.py` progress
   v1 (19/20 costliest roots ADVANCED); c8 `142146f9` decide_spawn v2 + receipts + replay-v2
   (index schema v4 input_hash): window A REJECT (5 changed verdicts, all on ADVANCED roots),
-  window B NO_CHANGE -> v1 stays champion; equivalence rule fired 0 times. c8b = this commit:
+  window B NO_CHANGE -> v1 stays champion; equivalence rule fired 0 times. c8b `65d31a0`:
   `root_progress.py journey` (819 B real record, goal join via bind_mission; live: no mission
-  is goal-bound). Lane split: s14 (S1/S2/S3) belongs to pane claude-power-pack-da; S3 waits for
-  my handoff (input-hash field = `spawns.input_hash`).
-  Debt: tools/mutation_drill.py returns UNJUDGED for a tools/* subject whose test imports
-  modules/* (isolated copy lacks modules/; PYTHONPATH not passed) -- manual replica drill used.
+  is goal-bound). Lane split: s14 (S1/S2/S3) belongs to pane claude-power-pack-da.
+- S3 handoff SENT 2026-10-03 (input_hash, WOULD_DEFER read path, estate_shadow.py free with
+  V-SPV2-NO-WRITE-SQL / LEDGER-UNTOUCHED kept green). Peer S1 landed `2fc1a3c5`
+  (`tis_observed.store_dirs`); peer S3 displacement `1e2a9725`: 19/20 v2 defers UNKNOWN, no
+  absorption, saving stays an interval [0, 1,399 calls / 349.6M cache read].
+- c9 SEALED: `vault/audits/ccp-c9/c9_replica_drill.py` (replica = tools + modules +
+  vault/pricing + vault/config, clean control per test first, live SHA asserted) -> 11/11
+  KILLED, each by its named gate (`c9_results.json`). Two gate defects found and fixed: the
+  BANDS gate crashed instead of failing (caught only ValueError), and V-SPV2-NO-WRITE-SQL missed
+  CREATE (only the runtime byte gate killed mutant 9; now both do). tools/mutation_drill.py debt
+  stands (no repo-layout replica for a modules/* subject drilled by a tools/* test).
+- OPEN BUG (peer S3 audit, 2026-10-03, VERIFY before fixing): `spawns.result_head` = "Async agent
+  launched successfully." on ~1,184/1,452 rows -> c4 RETURNED is mostly LAUNCHED, and
+  `Equivalents.active()` counts an async equivalent finished at launch (under-detects v2 REJECT).
+  Completion evidence = child's last call ts (subagents.file -> max(calls.ts)).
 
 ## 4. Next three actions
-1. c9 mutants (s12 seven + s13 three) via a replica drill; each names its killing gate.
+1. Verify + fix the async-launch bug (c4 outcome LAUNCHED distinct from RETURNED; Equivalents
+   end = child last call); re-run replay-v2 windows A/B and correct RCA §16 / c8 numbers.
 2. c10: UKDL trap "path identity is not resource identity" (+ validate peer candidates:
    spawn requested != executed, upper bound reported as savings, raw spend != waste [c8
-   REJECT]); tower entry for the receipt contract EXPERIMENTAL only; RCA §18 with c5-c8 facts.
-3. Send S3 handoff to claude-power-pack-da; switch `_store_dirs` to tis_observed after S1.
+   REJECT], launch ack != completion); tower entry for the receipt contract EXPERIMENTAL only;
+   RCA §18 with c5-c8 facts.
+3. Switch `_store_dirs` to `tis_observed.store_dirs` (S1 landed; gate
+   test_store_identity_consumers 7/7); tell claude-power-pack-da before that commit.
    Still open: `floor_probe.py probe` rent ranking -> C4.1; re-derivation detector (NEXT).
 
 ## 5. Start instruction
 `git log --oneline -5 -- tools/usage_index.py`, run the coherence anchor (+ `test_spawn_outcomes`
-23/23), read plan §12, §12.1, §13 and `vault/audits/ccp-s12-audit.md`, then action 1.
+24/24, `test_spawn_policy_v2` 26/26), read plan §12, §12.1, §13 and `vault/audits/ccp-s12-audit.md`,
+then action 1.

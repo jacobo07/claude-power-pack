@@ -69,6 +69,8 @@ def main() -> int:
         tuned = "accepted"
     except ValueError as e:
         tuned = f"refused: {e}"
+    except Exception as e:      # guard absent: the body ran (c9 drill: a crash is not a FAIL)
+        tuned = f"accepted: reached the body ({type(e).__name__})"
     ok("V-SHADOW-BANDS-BEFORE-WINDOW", tuned.startswith("refused"), tuned)
 
     # A spawn made from a subagent transcript belongs to the project dir that holds
