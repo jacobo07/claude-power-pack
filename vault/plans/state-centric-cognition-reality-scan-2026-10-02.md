@@ -128,6 +128,13 @@ owner (no edit). Defaults: goal spine is the only state store; model-calling epo
    One action per 5-min pass, ~14 passes. Expected stops: ob-reality UNREADABLE_INPUT if the
    proxy/GEX44 runner is unreachable; READY_FOR_JUDGE is REPORTED, never self-certified -- the
    judge run is a separate deliberate step.
-2. S3: observe-only Ralph binding (goal-spine C7: project the long-run ledger by session id).
-   Check `providers/long_run.py` first; it may already own most of it.
+2. **S3 BUILT** `738ed40` (SPEC-GOAL-OBSERVE-RALPH): `bind-mission` adopts a running Ralph
+   mission observe-only (cancel refused, record bytes untouched, probe adopts via marker); the
+   sweep observes/harvests/recovers every provider's epochs. Bind suite 10/10, mutation 58/58,
+   record re-earned. Production proof PENDING an Owner goal: running missions are
+   `m-9955845c3eaa` (KobiiCraft, `luckyarena-arena1`: same repo as G-001 but unrelated work,
+   and binding would hold G-001's single epoch slot), `m-4c6125338df1` (CPP, `ucep`, no CPP
+   goal), `m-129ddae5ccf3` (InfinityOps, no goal). A goal's intent is the Founder's words.
+   Observed bonus: while engine files were dirty (my edits, the mutation drill) every scheduled
+   pass REFUSED with a named reason -- the sweep cannot run unverified code or a mutant.
 3. S6 proposal note to the SPEC-ECON-ROLLOVER owner.
