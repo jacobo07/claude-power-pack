@@ -240,60 +240,99 @@ def _parse_turn_ts(s):
         return None
 
 
-def window_output(hours: float, proj_base=None,
-                  now: datetime | None = None) -> int | None:
-    """Output tokens for turns whose OWN timestamp falls in the last `hours`.
+def _tis():
+    """tools/tis_observed.py, the reference call reader (dedup, last copy wins)."""
+    import importlib.util
+    import sys
+    if "tis_observed" in sys.modules:
+        return sys.modules["tis_observed"]
+    spec = importlib.util.spec_from_file_location(
+        "tis_observed", Path(__file__).resolve().parent / "tis_observed.py")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["tis_observed"] = mod
+    spec.loader.exec_module(mod)
+    return mod
 
-    Unlike today_output_tokens() (file-mtime bucket, whole-file sum, an
-    over-estimate), this filters per-TURN by the turn's `timestamp`, so a
-    long-running session contributes only the turns that actually fired inside
-    the window -- the precision the weekly-burn projection needs.
 
-    mtime pre-filter is LOSSLESS here: a turn at time T implies the file was
-    written at/after T, so a file whose mtime predates the window cannot hold an
-    in-window turn. That bounds the scan to recently-touched transcripts.
+def iter_transcripts_with_subagents(proj_base):
+    """(path, is_subagent) for every transcript, subagents included.
 
-    Returns the summed output (>=0), or None when NO transcript was touched in
-    the window at all (honest "unmeasured", never a fake 0).
-    """
+    iter_transcripts() sees only top-level files; subagent transcripts live at
+    <project>/<session>/subagents/*.jsonl and were 41 % of all calls in the
+    2026-09-30..10-02 weekly-limit incident."""
+    base = Path(proj_base or DEFAULT_PROJ_BASE)
+    if not base.is_dir():
+        return
+    for sub in base.iterdir():
+        if not sub.is_dir():
+            continue
+        for jf in sub.glob("*.jsonl"):
+            yield jf, False
+        for jf in sub.glob("*/subagents/*.jsonl"):
+            yield jf, True
+
+
+def window_usage(hours: float, proj_base=None,
+                 now: datetime | None = None) -> dict | None:
+    """Every usage category for API calls whose own timestamp is in (now-hours, now].
+
+    One call counted once, last copy wins (tis_observed contract): input and cache
+    figures repeat across a call's lines but output_tokens grows while it streams.
+    Subagent transcripts included. Keys: USAGE_KEYS + calls, subagent_calls,
+    sdk_calls (entrypoint sdk-cli = claude -p / programmatic, i.e. not an
+    interactive pane). mtime only prunes files, it never admits a call.
+
+    None when no call fell in the window: unmeasured, never a fake 0."""
     now = now or datetime.now(timezone.utc)
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
     from datetime import timedelta
     start = now - timedelta(hours=hours)
     start_epoch = start.timestamp()
-    total = 0
-    seen = False
-    for fp in iter_transcripts(proj_base):
+    tis = _tis()
+    # Keyed across files: one session file can sit under two project dirs
+    # (2026-10-02: 3,044 calls, +12.7 % when summed per file). The copy with
+    # more output is the more complete one. Identity-less calls stay per file.
+    best: dict = {}
+    for fp, is_sub in iter_transcripts_with_subagents(proj_base):
         try:
             if fp.stat().st_mtime < start_epoch:
                 continue
-        except OSError:
+            calls, _, _, _ = tis._calls_in(fp)
+        except (OSError, UnicodeDecodeError):
             continue
-        try:
-            text = fp.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
-        for line in text.split("\n"):
-            line = line.strip()
-            if not line:
+        for c in calls:
+            ts = _parse_turn_ts(c.get("ts"))
+            if ts is None or ts <= start or ts > now:
                 continue
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            msg = entry.get("message")
-            if not isinstance(msg, dict):
-                continue
-            usage = msg.get("usage")
-            if not isinstance(usage, dict) or not usage:
-                continue
-            ts = _parse_turn_ts(entry.get("timestamp"))
-            if ts is None or ts < start:
-                continue
-            seen = True
-            total += usage.get("output_tokens", 0) or 0
-    return total if seen else None
+            key = c.get("key")
+            if not key or key[0] == "line":
+                key = (str(fp), key)
+            prev = best.get(key)
+            if prev is None or ((c["usage"].get("output_tokens") or 0)
+                                > (prev[0]["usage"].get("output_tokens") or 0)):
+                best[key] = (c, is_sub)
+    if not best:
+        return None
+    out = {k: 0 for k in USAGE_KEYS}
+    out.update(calls=len(best), subagent_calls=0, sdk_calls=0)
+    for c, is_sub in best.values():
+        for k in USAGE_KEYS:
+            out[k] += c["usage"].get(k, 0) or 0
+        out["subagent_calls"] += is_sub
+        out["sdk_calls"] += c.get("entrypoint") == "sdk-cli"
+    return out
+
+
+def window_output(hours: float, proj_base=None,
+                  now: datetime | None = None) -> int | None:
+    """Output tokens for calls in the last `hours` -- window_usage()'s output.
+
+    Until 2026-10-02 this summed every transcript LINE and skipped subagents:
+    39.2 M for a window whose deduplicated output was 19.1 M. None when no call
+    fell in the window (honest "unmeasured", never a fake 0)."""
+    u = window_usage(hours, proj_base, now)
+    return None if u is None else u["output_tokens"]
 
 
 def _fmt_agg(a: dict) -> str:

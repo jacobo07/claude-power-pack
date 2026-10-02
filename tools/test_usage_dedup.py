@@ -110,6 +110,48 @@ def main() -> int:
         check("V-DEDUP-CORPUS-MERGES-TOOLS", sorted(m1["tool_names"]) == ["Grep", "Read"],
               f"m1 tool_names={m1['tool_names']}")
 
+    # Streaming: one call's lines do NOT always repeat usage verbatim. output_tokens
+    # grows across them (measured 2026-10-02: 5,825 of 23,933 calls; first-copy
+    # output 12.7 M vs last-copy 19.1 M). Last copy wins, so every reader must land
+    # on the final count. The weekly-burn reader (window_output) is held here too:
+    # it summed every line and skipped subagent transcripts.
+    from datetime import datetime, timezone
+    now = datetime(2026, 9, 27, 12, 0, tzinfo=timezone.utc)
+    stream = [line("s1", "q1", 500, 9_000, 3, {"type": "thinking", "thinking": ""}),
+              line("s1", "q1", 500, 9_000, 400, {"type": "text", "text": "ok"})]
+    sub = [line("a1", "qa", 0, 5_000, 70, {"type": "text", "text": "sub"})]
+    with tempfile.TemporaryDirectory() as td:
+        proj = Path(td) / "proj"
+        (proj / "sess" / "subagents").mkdir(parents=True)
+        (proj / "sess.jsonl").write_text("\n".join(stream) + "\n", encoding="utf-8")
+        (proj / "sess" / "subagents" / "agent-a1.jsonl").write_text("\n".join(sub) + "\n", encoding="utf-8")
+        fp = proj / "sess.jsonl"
+        check("V-DEDUP-STREAM-REFERENCE", tis.read_session(fp, include_subagents=False).output_tokens == 400,
+              f"tis_observed out={tis.read_session(fp, include_subagents=False).output_tokens} want 400")
+        check("V-DEDUP-STREAM-GT", gt.parse_session(fp)["agg"]["output_tokens"] == 400,
+              f"ground_truth out={gt.parse_session(fp)['agg']['output_tokens']} want 400")
+        check("V-DEDUP-STREAM-CORPUS", corpus.parse_turns(fp)["turns"][0]["output_tokens"] == 400,
+              f"corpus out={corpus.parse_turns(fp)['turns'][0]['output_tokens']} want 400")
+        w = gt.window_output(24, proj_base=td, now=now)
+        check("V-DEDUP-WINDOW-OUTPUT", w == 400 + 70,
+              f"window_output={w} want {400 + 70} (last copy of s1 + subagent a1)")
+        u = gt.window_usage(24, proj_base=td, now=now)
+        check("V-DEDUP-WINDOW-USAGE",
+              u is not None and u["calls"] == 2 and u["cache_read_input_tokens"] == 14_000
+              and u["subagent_calls"] == 1 and u["output_tokens"] == 470,
+              f"window_usage={u}")
+        # The same session file can exist under two project dirs (measured
+        # 2026-10-02: 3,044 calls in two files, +12.7 % if summed per file).
+        # An estate reader dedupes across files, not only within one.
+        (Path(td) / "proj2").mkdir()
+        (Path(td) / "proj2" / "sess.jsonl").write_text("\n".join(stream) + "\n", encoding="utf-8")
+        u2 = gt.window_usage(24, proj_base=td, now=now)
+        check("V-DEDUP-WINDOW-CROSS-FILE", u2 is not None and u2["calls"] == 2 and u2["output_tokens"] == 470,
+              f"session copied into a second project dir -> calls={u2 and u2['calls']} want 2")
+        early = gt.window_usage(1, proj_base=td, now=now)
+        check("V-DEDUP-WINDOW-EMPTY-IS-NONE", early is None,
+              f"window with no call -> {early} (unmeasured is None, never 0)")
+
     # Positive control on the real incident, read-only. Its value is that a
     # synthetic fixture cannot carry a shape the author did not imagine.
     real = (Path.home() / ".claude" / "projects"

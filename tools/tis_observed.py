@@ -113,7 +113,7 @@ def _calls_in(path: Path) -> tuple[list[dict], int, int, int]:
             if key not in calls:
                 order.append(key)
             calls[key] = {"model": msg.get("model") or "", "usage": msg["usage"],
-                          "ts": obj.get("timestamp")}
+                          "ts": obj.get("timestamp"), "key": key}
     ordered = [calls[k] for k in order]
     for c in ordered:
         c["entrypoint"] = entrypoint
