@@ -57,11 +57,34 @@ Other owners found:
 `vault/plans/cognitive-control-plane-2026-10-02.md` (verified today by ANOTHER pane). Read it before
 proposing any scheduler/budget work — it may already own Planes 17/18/31.
 
-## Next (fresh session)
+## Sweep completed (session 969d8063, 2026-10-02, after RESUME_CERTIFIED)
 
-1. Read `vault/plans/cognitive-control-plane-2026-10-02.md` and the KobiiCraft goal-spine plan.
-2. Finish the sweep: singleflight/dedup, event waits/timers, verification reuse, HCMH, Graphify,
-   UCR-CIF, CBR/UBC owners (grep, docstrings via a local script, no agents needed).
-3. Why is the goal spine orphaned — which live surface should call it first (candidate: Ralph
-   missions via `providers/long_run.py`)?
-4. Then present ONE inline ULTRA-PLAN (CONNECT-first) and wait for approval.
+**Cognitive Control Plane (CCP) is a peer program, Owner-APPROVED, executing in another pane**
+(`vault/plans/cognitive-control-plane-2026-10-02.md` + `-RESUMPTION.md`; C0 `19a7bc5`, C1
+`286ccbe`). It OWNS: burn monitor / usage index, fan-out ledger (C2), estate governor CO-08 shadow
+(C3), agent floor + model policy (C4), in-agent growth (C5), rollover observation (C6), bounded
+backpressure (C7). Its P0 measured that subagents do NOT inherit the parent transcript (0/219) —
+the state-centric "context firewall" plane is therefore REJECTED, not deferred. This mission must
+not edit any CCP surface, `tools/rollover.py`, `context-watchdog.py`, `tools/gsd_mission.py` or
+`hooks/agent-solo-guard.js`.
+
+Remaining owners (grep, 2026-10-02):
+- singleflight: only local idioms (`context-watchdog.py`, `night_research_runner.py`); no shared
+  primitive. Not a gap this mission needs.
+- verification reuse: the goal spine already pins gate identity + tree hash (`git_state.py`,
+  `judge.py`, plan GAP-5/GAP-7). EXTEND there, nothing new.
+- event waits: no shared primitive (`monitoring/monitor.py`, `cpc_os` savers, harness Monitor).
+  Out of scope.
+- HCMH: ABSENT, doctrine only, Owner ruling open (`specs/agent-capability-virtualization.md:174`).
+- Graphify: LIVE (GK-12 advisory fired on this session's PowerShell calls).
+
+**Why the goal spine is orphaned (measured):** no hook, command or scheduled task calls
+`modules/gsd_x/goal/*` or `tools/gsd_x_goal.py` (grep over hooks/, commands/, scripts/,
+`tools/gsd_long_run*.py`, `tools/gsd_mission.py` = 0). Its own sweep (`goal/sweep.py`) needs a
+precondition record; `~/.claude/state/gsd-x/autonomy_gates.json` exists (2026-09-22) but nothing
+schedules the sweep. Other importers are research corpora (`keos_qwen`, `uwcp_*`), not live work.
+Plan C12 (sweep hook) and K2/C15 (G-001, G-002 convergence) of the goal-spine plan never landed.
+
+## Next
+
+Present ONE inline ULTRA-PLAN (CONNECT-first, CCP-disjoint) with the six Q&A questions; wait.
