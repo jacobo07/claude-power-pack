@@ -44,3 +44,34 @@ the context-cap and rollover levers cheaper too ([[token-economy-brainstorm]], A
 3. If the read rises, apply to the launchers that start most sessions (mission epochs first).
 
 Owner: none for interactive starts; Ralph / `gsd_epoch` for mission epochs.
+
+## Experiment result (2026-10-03, Owner approved the quota)
+
+Six Haiku `-p` calls (`wiki/tools/cache_experiment.2026-10-03.out`):
+- **Identical consecutive sessions share everything**: in a clean scratch repo the second session
+  read 69,796 and wrote 0.
+- **The flag is not the fix**: with `--exclude-dynamic-system-prompt-sections` the second session
+  read 21.8k and wrote 48.8k (worse). Candidate 1 above is refuted for this setup.
+- **In the PP repo the second identical session read 22k of ~88k.** The diff
+  (`wiki/tools/token_economy_prefix_diff.py`, `.2026-10-03.out`) names the cause. The first
+  pre-call items are SessionStart hook outputs, and they changed between two runs 45 s apart:
+  - the superpowers plugin hook and the PP dispatcher finished in swapped order;
+  - PP's text carries relative times and timestamps ("cache pulled 4.2h ago", Compound Learnings
+    "Detected at", pending count);
+  - the first-prompt JIT injection added a 3.4 KB project spec in one run only.
+  All of it precedes the 172k-char instructions block and the listings, so one changed byte at
+  the top rewrites everything after it.
+
+n = 1 per arm; direction clear, magnitudes single observations.
+
+## Revised proposal (PP-owned)
+
+1. **Byte-stable SessionStart output**: no relative times, timestamps or counters in the injected
+   text (move them to a file the agent reads on demand, or to a later turn).
+2. **Deterministic order**: the two SessionStart hooks race; emit PP's block from one hook, or ask
+   the Owner whether the plugin's SessionStart is needed.
+3. **First-prompt injections stable**: the JIT spec injection should not differ between two
+   sessions given the same prompt.
+4. Re-run the same R1/R2 pair; success = R2 reads ≥ 80k.
+
+Bound unchanged (≤ 12.4 %), now with a named, PP-owned cause.

@@ -1,0 +1,222 @@
+window 30 d to 2026-10-02 21:41Z; transcripts scanned=2,689
+listed distinct=352; invoked distinct=50; invocations=572
+accepted values present in binary: {'on': True, 'off': True, 'name-only': True, 'user-invocable-only': True}
+binary context around "name-only": 's the normal MCP config trust flow. Any-source-true wins: a project can opt out, but a project-level false cannot override a user-level true.\x00\x00�\x00\x00��M�\x00Per-skill listing overrides keyed by skill name. "name-only" lists the skill without its description; "user-invocable-only" hides it from the model but keeps /name; "off" hides it from both. Absent = on.\x00\'\x01\x00�>\x1f�\x00Disable the skills and workflows that'
+
+KEEP (210):
+  kclear                                        invoked 116x/30d; named in CLAUDE.md or rules
+  ultra                                         invoked 101x/30d; named in CLAUDE.md or rules
+  cpp-gsd-long                                  invoked 50x/30d
+  gsd-plan-phase                                invoked 49x/30d
+  claude-power-pack                             invoked 36x/30d; named in CLAUDE.md or rules
+  gsd-execute-phase                             invoked 35x/30d
+  gsd-autonomous                                invoked 24x/30d
+  gsd-code-review                               invoked 16x/30d
+  superpowers:brainstorming                     invoked 16x/30d; plugin (not overridable)
+  kresume                                       invoked 14x/30d
+  code-reviewer                                 invoked 13x/30d; named in CLAUDE.md or rules
+  superpowers:systematic-debugging              invoked 10x/30d; plugin (not overridable)
+  vision-video                                  invoked 8x/30d
+  update-config                                 invoked 7x/30d; bundled / not under ~/.claude (left alone)
+  anydesign                                     invoked 6x/30d
+  claude-in-chrome                              invoked 6x/30d; bundled / not under ~/.claude (left alone)
+  destructive-state-authorization               invoked 6x/30d; named in CLAUDE.md or rules
+  wii-power-pack                                invoked 5x/30d
+  frontend-design:frontend-design               invoked 4x/30d; plugin (not overridable)
+  seo-geo-session                               invoked 4x/30d; bundled / not under ~/.claude (left alone)
+  anthropic-skills:chrome-browser               invoked 3x/30d; plugin (not overridable)
+  evaluation-corpus-governance                  invoked 3x/30d; named in CLAUDE.md or rules
+  gsd-audit-milestone                           invoked 3x/30d
+  instrument-before-claim                       invoked 3x/30d; named in CLAUDE.md or rules
+  anthropic-skills:skill-creator                invoked 2x/30d; plugin (not overridable)
+  claude-api                                    invoked 2x/30d; bundled / not under ~/.claude (left alone)
+  gsd-cleanup                                   invoked 2x/30d
+  gsd-complete-milestone                        invoked 2x/30d
+  gsd-ui-phase                                  invoked 2x/30d
+  monetary-quantity-integrity                   invoked 2x/30d; named in CLAUDE.md or rules
+  superpowers:test-driven-development           invoked 2x/30d; plugin (not overridable)
+  superpowers:writing-plans                     invoked 2x/30d; plugin (not overridable)
+  absw2-continue                                invoked 1x/30d; named in CLAUDE.md or rules
+  compound-learnings                            invoked 1x/30d
+  cpp-compound                                  invoked 1x/30d
+  elixir-phoenix-patterns                       invoked 1x/30d
+  embedded-systems                              invoked 1x/30d
+  gsd-discuss-phase                             invoked 1x/30d
+  gsd-new-project                               invoked 1x/30d
+  gsd-verify-work                               invoked 1x/30d
+  gsd-workstreams                               invoked 1x/30d
+  image-calco                                   invoked 1x/30d
+  lateral-thinking                              invoked 1x/30d
+  python-pro                                    invoked 1x/30d
+  research-youtube                              invoked 1x/30d
+  superpowers:executing-plans                   invoked 1x/30d; plugin (not overridable)
+  superpowers:finishing-a-development-branch    invoked 1x/30d; plugin (not overridable)
+  superpowers:writing-skills                    invoked 1x/30d; plugin (not overridable)
+  video-analyzer                                invoked 1x/30d
+  web-design-guidelines                         invoked 1x/30d
+  andrej-karpathy-skills:karpathy-guidelines    plugin (not overridable)
+  android-reverse-engineering                   named in CLAUDE.md or rules
+  anthropic-skills:algorithmic-art              plugin (not overridable)
+  anthropic-skills:artifacts-builder            plugin (not overridable)
+  anthropic-skills:brand-guidelines             plugin (not overridable)
+  anthropic-skills:building-ai-saas-products    plugin (not overridable)
+  anthropic-skills:built-in-browser             plugin (not overridable)
+  anthropic-skills:canvas-design                plugin (not overridable)
+  anthropic-skills:code-auditor                 plugin (not overridable)
+  anthropic-skills:computer-use                 plugin (not overridable)
+  anthropic-skills:content-research-writer      plugin (not overridable)
+  anthropic-skills:deep-research                plugin (not overridable)
+  anthropic-skills:doc-coauthoring              plugin (not overridable)
+  anthropic-skills:docs                         plugin (not overridable)
+  anthropic-skills:docx                         plugin (not overridable)
+  anthropic-skills:generating-hook-matrix       plugin (not overridable)
+  anthropic-skills:google-workspace             plugin (not overridable)
+  anthropic-skills:import-memory                plugin (not overridable)
+  anthropic-skills:internal-comms               plugin (not overridable)
+  anthropic-skills:mcp-builder                  plugin (not overridable)
+  anthropic-skills:meeting-insights-analyzer    plugin (not overridable)
+  anthropic-skills:morning                      plugin (not overridable)
+  anthropic-skills:pdf                          plugin (not overridable)
+  anthropic-skills:pptx                         plugin (not overridable)
+  anthropic-skills:project-bootstrapper         plugin (not overridable)
+  anthropic-skills:seo                          plugin (not overridable)
+  anthropic-skills:skill-builder                plugin (not overridable)
+  anthropic-skills:skill-prompt-efficiency-001  plugin (not overridable)
+  anthropic-skills:skill-share                  plugin (not overridable)
+  anthropic-skills:slack-gif-creator            plugin (not overridable)
+  anthropic-skills:theme-factory                plugin (not overridable)
+  anthropic-skills:token-optimizer              plugin (not overridable)
+  anthropic-skills:video-analyzer               plugin (not overridable)
+  anthropic-skills:watch                        plugin (not overridable)
+  anthropic-skills:web-artifacts-builder        plugin (not overridable)
+  anthropic-skills:xlsx                         plugin (not overridable)
+  artifact-capabilities                         bundled / not under ~/.claude (left alone)
+  artifact-design                               bundled / not under ~/.claude (left alone)
+  artifact-diagramming                          bundled / not under ~/.claude (left alone)
+  bmad:architecture                             plugin (not overridable)
+  bmad:brainstorm                               plugin (not overridable)
+  bmad:create-agent                             plugin (not overridable)
+  bmad:create-story                             plugin (not overridable)
+  bmad:create-ux-design                         plugin (not overridable)
+  bmad:create-workflow                          plugin (not overridable)
+  bmad:dev-story                                plugin (not overridable)
+  bmad:prd                                      plugin (not overridable)
+  bmad:product-brief                            plugin (not overridable)
+  bmad:research                                 plugin (not overridable)
+  bmad:solutioning-gate-check                   plugin (not overridable)
+  bmad:sprint-planning                          plugin (not overridable)
+  bmad:tech-spec                                plugin (not overridable)
+  bmad:workflow-init                            plugin (not overridable)
+  bmad:workflow-status                          plugin (not overridable)
+  carl:manager                                  plugin (not overridable)
+  carl:tasks:add-rule                           plugin (not overridable)
+  carl:tasks:create-command                     plugin (not overridable)
+  carl:tasks:create-domain                      plugin (not overridable)
+  carl:tasks:edit-rule                          plugin (not overridable)
+  carl:tasks:toggle-domain                      plugin (not overridable)
+  carl:templates:domain-template                plugin (not overridable)
+  carl:templates:manifest-entries               plugin (not overridable)
+  carl:utils:manifest-parser                    plugin (not overridable)
+  claude-code-setup:claude-automation-recommender plugin (not overridable)
+  claude-md-management:claude-md-improver       plugin (not overridable)
+  claude-md-management:revise-claude-md         plugin (not overridable)
+  claude-mem:do                                 plugin (not overridable)
+  claude-mem:make-plan                          plugin (not overridable)
+  claude-mem:mem-search                         plugin (not overridable)
+  claude-mem:smart-explore                      plugin (not overridable)
+  code-review                                   named in CLAUDE.md or rules
+  code-review:code-review                       plugin (not overridable)
+  d1-continue                                   bundled / not under ~/.claude (left alone)
+  dataviz                                       bundled / not under ~/.claude (left alone)
+  design                                        named in CLAUDE.md or rules; bundled / not under ~/.claude (left alone)
+  design-md                                     named in CLAUDE.md or rules
+  develop-here-prove-there                      named in CLAUDE.md or rules
+  fewer-permission-prompts                      bundled / not under ~/.claude (left alone)
+  fix                                           named in CLAUDE.md or rules
+  governance-overlay                            named in CLAUDE.md or rules
+  gsd:add-phase                                 plugin (not overridable)
+  gsd:add-tests                                 plugin (not overridable)
+  gsd:add-todo                                  plugin (not overridable)
+  gsd:audit-milestone                           plugin (not overridable)
+  gsd:check-todos                               plugin (not overridable)
+  gsd:cleanup                                   plugin (not overridable)
+  gsd:complete-milestone                        plugin (not overridable)
+  gsd:debug                                     plugin (not overridable)
+  gsd:discuss-phase                             plugin (not overridable)
+  gsd:execute-phase                             plugin (not overridable)
+  gsd:health                                    plugin (not overridable)
+  gsd:help                                      plugin (not overridable)
+  gsd:insert-phase                              plugin (not overridable)
+  gsd:join-discord                              plugin (not overridable)
+  gsd:list-phase-assumptions                    plugin (not overridable)
+  gsd:map-codebase                              plugin (not overridable)
+  gsd:new-milestone                             plugin (not overridable)
+  gsd:new-project                               plugin (not overridable)
+  gsd:pause-work                                plugin (not overridable)
+  gsd:plan-milestone-gaps                       plugin (not overridable)
+  gsd:plan-phase                                plugin (not overridable)
+  gsd:progress                                  plugin (not overridable)
+  gsd:quick                                     plugin (not overridable)
+  gsd:reapply-patches                           plugin (not overridable)
+  gsd:remove-phase                              plugin (not overridable)
+  gsd:research-phase                            plugin (not overridable)
+  gsd:resume-work                               plugin (not overridable)
+  gsd:set-profile                               plugin (not overridable)
+  gsd:settings                                  plugin (not overridable)
+  gsd:update                                    plugin (not overridable)
+  gsd:validate-phase                            plugin (not overridable)
+  gsd:verify-work                               plugin (not overridable)
+  guard-event-reachability                      named in CLAUDE.md or rules
+  ingestdataset                                 bundled / not under ~/.claude (left alone)
+  init                                          named in CLAUDE.md or rules; bundled / not under ~/.claude (left alone)
+  io-prcheck                                    bundled / not under ~/.claude (left alone)
+  io-verify                                     bundled / not under ~/.claude (left alone)
+  keybindings-help                              bundled / not under ~/.claude (left alone)
+  knowledge                                     named in CLAUDE.md or rules
+  ksr-dev-ops                                   bundled / not under ~/.claude (left alone)
+  loop                                          named in CLAUDE.md or rules; bundled / not under ~/.claude (left alone)
+  mc-task                                       bundled / not under ~/.claude (left alone)
+  mobile-app-ui-design                          named in CLAUDE.md or rules
+  mobile-game-wii-port                          named in CLAUDE.md or rules
+  motion-promo                                  named in CLAUDE.md or rules
+  n8n-mcp-skills:n8n-code-javascript            plugin (not overridable)
+  n8n-mcp-skills:n8n-code-python                plugin (not overridable)
+  n8n-mcp-skills:n8n-expression-syntax          plugin (not overridable)
+  n8n-mcp-skills:n8n-mcp-tools-expert           plugin (not overridable)
+  n8n-mcp-skills:n8n-node-configuration         plugin (not overridable)
+  n8n-mcp-skills:n8n-validation-expert          plugin (not overridable)
+  n8n-mcp-skills:n8n-workflow-patterns          plugin (not overridable)
+  osa                                           bundled / not under ~/.claude (left alone)
+  plugin-authoring                              bundled / not under ~/.claude (left alone)
+  presence-is-not-residency                     named in CLAUDE.md or rules
+  real-context-reachability                     named in CLAUDE.md or rules
+  recurring-work-cardinality                    named in CLAUDE.md or rules
+  restart                                       named in CLAUDE.md or rules
+  run                                           named in CLAUDE.md or rules; bundled / not under ~/.claude (left alone)
+  schedule                                      bundled / not under ~/.claude (left alone)
+  security-review                               bundled / not under ~/.claude (left alone)
+  simplify                                      bundled / not under ~/.claude (left alone)
+  superpowers:diagnosing-superpowers            plugin (not overridable)
+  superpowers:dispatching-parallel-agents       plugin (not overridable)
+  superpowers:receiving-code-review             plugin (not overridable)
+  superpowers:requesting-code-review            plugin (not overridable)
+  superpowers:subagent-driven-development       plugin (not overridable)
+  superpowers:using-git-worktrees               plugin (not overridable)
+  superpowers:using-superpowers                 plugin (not overridable)
+  superpowers:verification-before-completion    plugin (not overridable)
+  ui-ux-pro-max:ui-ux-pro-max                   plugin (not overridable)
+  update                                        named in CLAUDE.md or rules
+  wii-boot-determinism                          bundled / not under ~/.claude (left alone)
+  wii-dev-best-practices                        named in CLAUDE.md or rules
+  wii-ios-re                                    bundled / not under ~/.claude (left alone)
+  wii-networking                                bundled / not under ~/.claude (left alone)
+  wii-platform                                  bundled / not under ~/.claude (left alone)
+  wii-runtime-telemetry                         bundled / not under ~/.claude (left alone)
+  wii-uiux                                      bundled / not under ~/.claude (left alone)
+  workflow-authoring                            bundled / not under ~/.claude (left alone)
+
+PROPOSED name-only (142):
+  adversarial-longevity, agent-reach, artifacts-builder, audit-all, autofix, autoresearch, autoupdate, brand-guidelines, building-ai-saas-products, canvas-design, carl-manager, code-auditor, coderabbit-review, composition-patterns, copywriting, cpp-pro, cpp-resume-sovereign, customclaw, debugging-wizard, design-taste-frontend, dios-segun-buda, elevenlabs-music-generation, evaluate-repository, frontend-design, game-feel-codex, github-actions-templates, gsd-add-tests, gsd-ai-integration-phase, gsd-audit-fix, gsd-audit-uat, gsd-capture, gsd-config, gsd-debug, gsd-docs-update, gsd-eval-review, gsd-explore, gsd-extract-learnings, gsd-fast, gsd-forensics, gsd-graphify, gsd-health, gsd-help, gsd-import, gsd-inbox, gsd-ingest-docs, gsd-manager, gsd-map-codebase, gsd-mempalace-capture, gsd-mempalace-recall, gsd-milestone-summary, gsd-mvp-phase, gsd-new-milestone, gsd-next, gsd-ns-context, gsd-ns-ideate, gsd-ns-manage, gsd-ns-project, gsd-ns-review, gsd-ns-workflow, gsd-onboard, gsd-pause-work, gsd-phase, gsd-plan-review-convergence, gsd-pr-branch, gsd-profile-user, gsd-progress, gsd-quick, gsd-quick-batch, gsd-resume-work, gsd-review, gsd-review-backlog, gsd-secure-phase, gsd-settings, gsd-ship, gsd-sketch, gsd-spec-phase, gsd-spike, gsd-stats, gsd-surface, gsd-thread, gsd-ui-review, gsd-ultraplan-phase, gsd-undo, gsd-update, gsd-validate-phase, gsd-workspace, humanizer, image-to-video, investment-ready-audit, ira, java-architect, kobiicraft-debug, kobiicraft-dev, kobiicraft-execution, kobiicraft-ops, kobiicraft-prd, kobiicraft-product, kobiicraft-review, kobiicraft-testing, lazarus, leverage-research, managing-sleepy-skills, marketing-psychology, mcp-builder, minecraft-android-renderer-stack, minecraft-mod-jar-patcher, obsidian-setup, omni-verification-oracle-audit, on-device-verification-loop, ovo-audit, pojavlauncher-headless-driver, powershell-51-native-cli-orchestrator, project-bootstrapper, project-pulse, prompt-engineering-patterns, python-best-practices, react-best-practices, remotion-best-practices, remotion-discovery-trap, remotion-foundation, remotion-kobii-templates, resume-clean, saas-continue, saas-launch, saas_system_audit, secrets-management, security-scan, session-handoff-protocol, skill-creator, skill-prompt-efficiency-001, sleepy-skills, social-content, software-best-practices, spanish-mc-menus, stripe-best-practices, test-gaps, test-master, vault-setup, vault-sync, voice-spec-lock, webapp-testing, wii-disc-reconstruction
+
+Invoked but not in any listing seen (commands or renamed):
+  

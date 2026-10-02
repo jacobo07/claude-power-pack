@@ -1,0 +1,55 @@
+﻿system sections: a=16 b=16
+pre-call items: a=18 b=18
+   0 DIFF hook_success:SessionStart:startup          4,043 chars
+        @@ -1,5 +1,2 @@
+        -{"command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start", "content": "", "durationMs": 6812, "exitCode": 0, "hookEvent": "SessionStart", "hookN
+        -  \"hookSpecificOutput\": {
+        -    \"hookEventName\": \"SessionStart\",
+        -    \"additionalContext\": \"<EXTREMELY_IMPORTANT>\
+        -You have superpowers.\
+        +{"command": "C:/Program Files/nodejs/node.exe C:/Users/User/.claude/hooks/hook-dispatcher.js --event=SessionStart-chain", "content": "", "durationMs": 9900, "e
+        +# Compound Learnings — Pending Consolidation\
+   1 DIFF hook_success:SessionStart:startup          8,737 chars
+        @@ -1,3 +1,5 @@
+        -{"command": "C:/Program Files/nodejs/node.exe C:/Users/User/.claude/hooks/hook-dispatcher.js --event=SessionStart-chain", "content": "", "durationMs": 8537, "e
+        -[AutoResearch VPS] Latest digest (cache pulled 4.2h ago from KobiiClaw):\
+        -# Autoresearch Digest - 2026-10-02 08:00 UTC\
+        +{"command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start", "content": "", "durationMs": 10380, "exitCode": 0, "hookEvent": "SessionStart", "hook
+        +  \"hookSpecificOutput\": {
+        +    \"hookEventName\": \"SessionStart\",
+        +    \"additionalContext\": \"<EXTREMELY_IMPORTANT>\
+   2 DIFF hook_additional_context:SessionStart      11,830 chars
+        @@ -1 +1,66 @@
+        -{"content": ["<EXTREMELY_IMPORTANT>
+        +{"content": ["## ⚠️ Compound Learnings — STUCK (auto-invoke suppressed)
+        +# Compound Learnings — Pending Consolidation
+        +
+        +**Pending count:** 13 new learning files since 2026-10-02T01:33:51.581Z.
+        +**Source:** `.claude/cache/learnings/*.md`
+        +**Detected at:** 2026-10-02T21:52:50.203Z
+   3 same user                                          22 chars
+   4 same environment:                                 421 chars
+   5 same model:                                       288 chars
+   6 same deferred_tools_delta:                      6,503 chars
+   7 same agent_listing_delta:                      28,130 chars
+   8 same mcp_instructions_delta:                    3,921 chars
+   9 same skill_listing:                            16,937 chars
+  10 same total_tokens_reminder:                        94 chars
+  11 DIFF hook_additional_context:UserPromptSubmit   3,840 chars
+        @@ -7,0 +8,75 @@
+        +
+        +## JIT Aggressive Activation — active project spec injected (3417 B); no Apollo trigger matched this prompt.
+        +
+        +=== ACTIVE PROJECT SPEC: vault\\specs\\goal-observe-ralph-mission.md (priority context, PASO -1 of the Apex Onboarding Standard) ===
+        +---
+        +id: SPEC-GOAL-OBSERVE-RALPH
+        +title: A goal observes a running Ralph mission without owning it
+  12 same instructions:                            172,117 chars
+  13 same session_context:                             643 chars
+  14 same date:                                         38 chars
+  15 same credential_org:                               86 chars
+  16 same remote_session_change:                       259 chars
+  17 DIFF deferred_tools_record:                       115 chars
+        @@ -1 +1 @@
+        -{"entries": [], "nameOnlyAnnouncements": ["7c10e003-266a-4794-9cc7-8bd046ad5391"], "type": "deferred_tools_record"}
+        +{"entries": [], "nameOnlyAnnouncements": ["6b49fe91-43d3-4246-bb9d-e27a83e2a18d"], "type": "deferred_tools_record"}

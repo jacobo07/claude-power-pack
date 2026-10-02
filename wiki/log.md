@@ -101,3 +101,10 @@ Append-only. Newest at the bottom. `grep "^## \[" log.md` lists every entry.
   Six zero-quota transcript instruments in wiki/tools. First per-kind table was invalid (UI-only
   attachments counted as context); replaced by a fit against measured context deltas (R^2 0.20,
   rough). Refuted my own wave-1 TTL row: 5 m would cost +$1,262 net. One research subagent (Sonnet).
+## [2026-10-03] query | Start-up cache experiment + skillOverrides keep-list
+- touched: [[cold-start-cache-sharing]], [[hide-unused-skills]]
+- notes: Owner approved quota and the keep-list ("yes"). Six Haiku -p calls: identical sessions
+  share the whole prefix; the exclude-dynamic flag is worse; in the PP repo sharing breaks at the
+  SessionStart hook outputs (order race, relative times, timestamps) and the first-prompt JIT
+  injection. Keep-list: 210 keep / 142 name-only; savings corrected to ~1.2k tok/call (listing
+  already capped at 30,000 chars).

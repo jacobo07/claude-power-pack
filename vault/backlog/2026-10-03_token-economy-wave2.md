@@ -37,9 +37,10 @@ Escala de `/what-now`: prioridad 0-3 (0 = P0), esfuerzo S/M/L/XL, impacto Critic
 | # | Tarea | P | Esf. | Impacto | Estado | Qué falta / cómo se cierra |
 |---|---|---|---|---|---|---|
 | 1 | **Rollover al volver de inactividad > 1 h** (A1) | 1 | S | High | DECISIÓN DEL OWNER (¿redactar ya?) | La caché ya está fría, así que un epoch fresco desde la cápsula cuesta menos que reescribir ~300k. Cota ≤ 6,5 % (los $541 de reescritura) más relecturas posteriores menores. Es del dueño del rollover (SPEC-ECON-ROLLOVER): entregar como propuesta (paso S6 de la misión state-centric), sin editar `tools/rollover.py` ni `context-watchdog.py`. |
-| 2 | **Ocultar las skills no usadas** (B1) | 1 | S | Medium | DECISIÓN DEL OWNER | `skillOverrides: "name-only"` en settings.json para las 280 no invocadas; mantener las 39 usadas y toda skill nombrada en una tabla de activación de un CLAUDE.md. settings.json es paso del Owner (HR-001). Cota ≈ -5k tok/llamada ≈ 1,5-2 %. Verificar una semana después con `token_economy_coldstart.py` [K] y un floor probe. Página: `wiki/improvements/hide-unused-skills.md`. |
+| 2 | **Ocultar las skills no usadas** (B1) | 2 | S | Low | LISTA HECHA, ESPERA AL OWNER | Lista construida (Owner "yes", 2026-10-03): `wiki/tools/skill_keep_list.py` sobre 30 d → conservar 210, `name-only` para 142 (`wiki/tools/skill_overrides.proposed.json`). Las skills de plugin no se pueden ocultar (el CLI devuelve "on" con `source==="plugin"`); las del harness y de otros repos se dejan. **Cota corregida: ≈ -1,2k tok/llamada (~0,4 %)**: el listado ya está topado a 30.000 caracteres y el harness ya quita descripciones poco usadas; la ganancia principal es de calidad. El Owner pega el fragmento en `~/.claude/settings.json` (HR-001) tras revisar `kobiicraft-*` y `gsd-*`. Página: `wiki/improvements/hide-unused-skills.md`. |
 | 3 | **Dieta de avisos de hooks** (B3) | 1 | S | Medium | PENDIENTE | `additionalContext` repetido (Tower baseline en cada prompt, GK-12 en cada Grep/PowerShell, skill advisor en Write, cross-project baseline en PowerShell) → una vez por sesión y luego un puntero de una línea, como `power-pack-reminder.js`. Primero un censo por hook. ~$202 / 7 d. Código propio de PP, el cambio más pequeño. Página: `wiki/improvements/hook-injection-diet.md`. |
-| 4 | **Experimento de caché de arranque** (A3) | 1 | S | High | DECISIÓN DEL OWNER (cuota antes del reset 2026-10-07 17:00Z) | Dos sesiones por brazo en la misma carpeta, con y sin `--exclude-dynamic-system-prompt-sections` (presente en CLI 2.1.288); comparar la lectura de caché de la primera llamada de la segunda sesión. ~4 llamadas pequeñas. Decide si existe una palanca de hasta 12,4 %. Página: `wiki/improvements/cold-start-cache-sharing.md`. |
+| 4 | **Experimento de caché de arranque** (A3) | 1 | S | High | HECHO 2026-10-03 | 6 llamadas Haiku (`wiki/tools/cache_experiment.2026-10-03.out`). Dos sesiones idénticas seguidas comparten TODO el prefijo (la 2ª leyó 69.796, escribió 0). El flag `--exclude-dynamic-system-prompt-sections` empeora (descartado). En este repo la 2ª sesión leyó solo 22k de ~88k: la causa es la salida de SessionStart (ver #16). |
+| 16 | **Salida de SessionStart estable byte a byte** | 1 | S | High | PENDIENTE | Causa medida de que las sesiones no compartan caché (`wiki/tools/token_economy_prefix_diff.2026-10-03.out`): los hooks de SessionStart (plugin superpowers y dispatcher de PP) terminan en orden variable; el texto de PP lleva tiempos relativos y marcas ("cache pulled 4.2h ago", "Detected at", contadores); la inyección JIT del primer prompt varía (spec de 3,4 KB en una sola sesión). Todo va antes del bloque de instrucciones de 172k y los listados. Arreglo: sin tiempos ni contadores en el texto inyectado, orden determinista, inyecciones del primer prompt estables. Éxito = repetir R1/R2 y que R2 lea ≥ 80k. Cota ≤ 12,4 %. Código propio de PP. Página: `wiki/improvements/cold-start-cache-sharing.md`. |
 | 5 | **Calibrar cómo cuenta el límite semanal las lecturas de caché** (E1) | 1 | M | Critical | PENDIENTE | Un antes/después controlado del % semanal frente a tokens de transcript, para ordenar estas palancas por medidor y no por dólares. Comparte la calibración con la fila #2 del backlog 2026-10-02. |
 | 6 | **Arranque estable en worktrees/misiones** (A2) | 2 | S | Medium | PENDIENTE | ~550 sesiones comparten solo ~2,5k frente a ~32k. Diff de los `prompt_snapshot` de dos epochs consecutivos en `wt_keosdtk_home` (cero cuota); si es texto por epoch en el system prompt, moverlo al primer mensaje de usuario. ~1,5 %. Dueño: Ralph / `gsd_epoch`. |
 | 7 | **Origen de los cambios de modelo a mitad de sesión** (A4) | 2 | S | Low | PENDIENTE | 36 reconstrucciones, ~$88. Candidatos: advisor model, `opusplan`, skills con `model:` en frontmatter. |
@@ -54,14 +55,16 @@ Escala de `/what-now`: prioridad 0-3 (0 = P0), esfuerzo S/M/L/XL, impacto Critic
 
 ## Orden recomendado
 
-1. **#1, #3 y #2**: el dinero más barato por unidad de esfuerzo (precio y prefijo), sin cuota.
-2. **#4 y #5**: deciden el tamaño real de la palanca mayor y cambian la unidad de medida a la del
-   medidor.
+1. **#16, #1 y #3**: tras el experimento (#4), #16 es la palanca mayor con causa nombrada y es
+   código de PP; #1 y #3 siguen siendo baratas y sin cuota.
+2. **#5**: cambia la unidad de medida a la del medidor.
 3. **#6, #7, #11**: investigación de cero cuota que puede abrir más palancas.
-4. El resto cuando una de las anteriores lo pida.
+4. **#2** cuando el Owner revise la lista (ganancia de calidad, ahorro pequeño).
+5. El resto cuando una de las anteriores lo pida.
 
 ## Preguntas abiertas al Owner
 
 - ¿Redacto ya la propuesta de rollover por inactividad para el dueño del rollover (#1)?
-- ¿Puedo gastar unas pocas llamadas de cuota en el experimento de caché de arranque antes del reset (#4)?
-- ¿Construyo la lista de skills a conservar para `skillOverrides` (#2)?
+- ¿Arreglo la salida de SessionStart para que sea estable (#16)? Toca hooks de PP.
+- ¿Aplicas el fragmento `skillOverrides` de `wiki/tools/skill_overrides.proposed.json` (#2)?
+- Respondidas 2026-10-03 (Owner "yes"): experimento de caché (#4, hecho) y lista de skills (#2, hecha).

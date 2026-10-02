@@ -1,0 +1,27 @@
+Start-up cache experiment, 2026-10-03 (Owner approved "a few calls of quota").
+claude.exe 2.1.288, `claude -p "Reply with exactly: OK" --model haiku --output-format json`,
+runs back to back (seconds apart, inside every TTL). Usage = the run's only API call.
+Scripts: scratchpad cachetest_run.ps1 / cachetest_repo.ps1 (reproduced inline below).
+
+Scratch git repo (one commit, clean tree, no project CLAUDE.md):
+A1 flag=False secs=56 input=10 cache_read=17943 cache_write=51853 output=40 result=OK
+A2 flag=False secs=63 input=10 cache_read=69796 cache_write=0 output=197 result=OK
+B1 flag=True secs=115 input=10 cache_read=20875 cache_write=47622 output=93 result=OK
+B2 flag=True secs=57 input=10 cache_read=21799 cache_write=48783 output=67 result=OK
+(flag = --exclude-dynamic-system-prompt-sections)
+
+PP repo (busy tree, full project hooks), no flag:
+R1 secs=44 cache_read=17943 cache_write=69866 output=167 session=1794424a-7a41-43d4-927a-266a3c62a2bd
+R2 secs=40 cache_read=22018 cache_write=65905 output=39 session=f5b37a97-6eed-42e8-95b3-bd83ae630e0c
+
+Reading:
+- Identical consecutive sessions share the WHOLE prefix (A2 read 69,796, wrote 0).
+- The flag made sharing worse here (B2 read 21.8k, wrote 48.8k). Not the fix.
+- In the PP repo the second identical session read only 22k of ~88k.
+- token_economy_prefix_diff.2026-10-03.out names why: the first pre-call items are SessionStart
+  hook outputs, and they differ between two runs 45 s apart (completion order of the superpowers
+  plugin hook vs the PP dispatcher swaps; PP text carries relative times and timestamps:
+  "cache pulled 4.2h ago", Compound Learnings "Detected at"); the first-prompt UserPromptSubmit
+  JIT injection also differed (3.4 KB project spec in one run only). All of it precedes the
+  172k-char instructions block and the listings.
+n = 1 per arm; -p mode; Haiku. Direction is clear, magnitudes are single observations.
