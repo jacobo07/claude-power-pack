@@ -85,6 +85,31 @@ precondition record; `~/.claude/state/gsd-x/autonomy_gates.json` exists (2026-09
 schedules the sweep. Other importers are research corpora (`keos_qwen`, `uwcp_*`), not live work.
 Plan C12 (sweep hook) and K2/C15 (G-001, G-002 convergence) of the goal-spine plan never landed.
 
+## Plan of record (Owner "y", six defaults, 2026-10-02)
+
+S1 re-record autonomy gates · S2 schedule the goal sweep (gate epochs only) · S3 bind Ralph
+missions observe-only · S4 finish G-001 · S5 G-002 transfer -> L3 · S6 proposal to the rollover
+owner (no edit). Defaults: goal spine is the only state store; model-calling epochs wait for the
+2026-10-07 17:00Z reset; Ralph read-only; done = L3, L5 excluded.
+
+## Progress
+
+- **S1 SEALED.** `c4c45b7`: the autonomy record is pinned to `engine_identity` (digest of the
+  engine's discovered import closure, 49 files) instead of repo HEAD; HEAD moved every 7.6 min
+  (median), the closure 43 times in 336 commits / 7 d. `7d5b3bd`: two mutation drills were
+  INVALID before this work (stale anchors after `0ff7cf7`, `fe2be9c`), repaired, plus two engine
+  mutants: 56/56. Record GREEN on engine `9114b69a`; `autonomy_verdict` = True.
+- **S2 findings (not built yet):** zero goals carry `goal.autonomous`, and the store records no
+  root path, so a scheduled sweep has nothing to enumerate. G-001's seven obligations were all
+  proven at KobiiCraft tree `b0dd193`; the worktree is now at `af38161` (no change inside its
+  scope paths since 09-22), so G-001 needs only a RE-GATE, zero model quota. But `ob-reality`'s
+  gate (`scripts/goal/gate_lobby_hotbar_live.py`) drives a bot through the PRODUCTION proxy
+  (read-only). Marking G-001 autonomous = unattended production contact on every worktree move:
+  Owner decision pending.
+
 ## Next
 
-Present ONE inline ULTRA-PLAN (CONNECT-first, CCP-disjoint) with the six Q&A questions; wait.
+1. Owner answer: may G-001 be re-gated (attended once, or autonomous)?
+2. S2 build: `goal.autonomous` event carries the root; `sweep --all` enumerates autonomous goals
+   from the store; scheduled sibling of `PP-GsdLongRun-Sweep` (peer task untouched).
+3. S3 observe-only Ralph binding.
