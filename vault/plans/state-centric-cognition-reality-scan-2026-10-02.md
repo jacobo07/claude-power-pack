@@ -116,9 +116,18 @@ owner (no edit). Defaults: goal spine is the only state store; model-calling epo
   (read-only). Marking G-001 autonomous = unattended production contact on every worktree move:
   Owner decision pending.
 
+- **S2 LIVE (observed):** scheduled run 2026-10-02T19:15:47Z (`PP-GoalSweep`, rc 0) harvested
+  `ep-0954eedea9fe`: ob-evidence SATISFIED at the current tree (`GOALRCPT_PASS=4/4`), with
+  nobody attending. `ob-reality` had no gate class (accepted before the class rule), so the sweep
+  would have refused it forever; re-accepted 19:2xZ as `in_game` (the script's own docstring:
+  "the in-game gate", read-only), same text/gate/files, actor `claude` under Owner "b".
+
 ## Next
 
-1. Owner answer: may G-001 be re-gated (attended once, or autonomous)?
-2. S2 build: `goal.autonomous` event carries the root; `sweep --all` enumerates autonomous goals
-   from the store; scheduled sibling of `PP-GsdLongRun-Sweep` (peer task untouched).
-3. S3 observe-only Ralph binding.
+1. Watch G-001 converge: `goal-sweep.log`, `gsd-x/sweep_heartbeat.json`, `gsd_x_goal.py status`.
+   One action per 5-min pass, ~14 passes. Expected stops: ob-reality UNREADABLE_INPUT if the
+   proxy/GEX44 runner is unreachable; READY_FOR_JUDGE is REPORTED, never self-certified -- the
+   judge run is a separate deliberate step.
+2. S3: observe-only Ralph binding (goal-spine C7: project the long-run ledger by session id).
+   Check `providers/long_run.py` first; it may already own most of it.
+3. S6 proposal note to the SPEC-ECON-ROLLOVER owner.
