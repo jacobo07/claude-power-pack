@@ -90,7 +90,16 @@ HARNESS_HOOK_PREFIX = "PreToolUse:"
 GUARD_MARKERS = ("AGENT-SOLO GUARD blocked",            # hooks/agent-solo-guard.js
                  "Agent isolation guard:")              # hooks/gsd-agent-isolation-guard.js
 SPAWN_OUTCOMES = ("REQUESTED", "RAN", "HOOK_BLOCKED", "FAILED_TO_START", "FAILED", "RETURNED",
-                  "UNMEASURED")
+                  "LAUNCHED", "ASYNC_RAN", "UNMEASURED")
+# A background Agent's tool_result is the harness's launch acknowledgement, not the
+# agent's answer: its real return arrives later as a task notification, which the
+# index does not record. Measured 2026-10-03: 1,184 of 1,452 recorded results were
+# this ack, so reading them as RETURNED counted launches as completions.
+ASYNC_LAUNCH_ACK = "Async agent launched successfully"
+
+
+def is_launch_ack(is_error, head) -> bool:
+    return not is_error and (head or "").lstrip().startswith(ASYNC_LAUNCH_ACK)
 
 
 def spawn_outcome(result_ts, is_error, head, linked: bool) -> str:
@@ -100,9 +109,14 @@ def spawn_outcome(result_ts, is_error, head, linked: bool) -> str:
     HOOK_BLOCKED error result carrying a hook marker; never executed
     FAILED_TO_START  any other error result with no subagent transcript
     FAILED       error result after a subagent transcript exists
-    RETURNED     a non-error result"""
+    RETURNED     a non-error result that is the agent's answer
+    LAUNCHED     async launch ack, no subagent transcript (nothing observed to run)
+    ASYNC_RAN    async launch ack + a subagent transcript; how it ended is not
+                 recorded, only when it stopped calling (child_last_call)"""
     if result_ts is None:
         return "RAN" if linked else "REQUESTED"
+    if is_launch_ack(is_error, head):
+        return "ASYNC_RAN" if linked else "LAUNCHED"
     if not is_error:
         return "RETURNED"
     h = (head or "").removeprefix("Error: ").lstrip()
@@ -127,6 +141,15 @@ def spawn_rows(con, start: float, end: float) -> list[dict]:
                     "outcome": (spawn_outcome(rts, err, head, bool(linked)) if measured
                                 else "UNMEASURED")})
     return out
+
+
+def child_last_call(con) -> dict:
+    """spawn tool_use_id -> ts of its subagent's last indexed call. For an async spawn
+    this is the only completion evidence the index holds (the launch ack is not one).
+    Retrospective: valid for replay, not a fact a live decider has at launch time."""
+    return dict(con.execute(
+        "SELECT a.tool_use_id, MAX(c.ts) FROM subagents a JOIN calls c ON c.file = a.file "
+        "WHERE a.tool_use_id IS NOT NULL GROUP BY a.tool_use_id"))
 
 
 def _is_sub_path(transcript) -> bool:

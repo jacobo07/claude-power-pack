@@ -264,6 +264,17 @@ from a scratch matcher that required both "hook" and "block", so the denials fel
 have a tool_result (201 RETURNED, 39 error). Each refused spawn got a result; none got a
 transcript.*
 
+*Correction 2 (2026-10-03, peer S3 audit, re-measured here): 200 of those 201 "RETURNED"
+are the async LAUNCH ack ("Async agent launched successfully."), not the agent's answer; the
+real return arrives as a task notification the index does not record. The window is 200
+ASYNC_RAN / 1 RETURNED / 39 HOOK_BLOCKED (`fanout_ledger summary`, outcomes LAUNCHED /
+ASYNC_RAN added; completion of an async spawn = its subagent's last call). All-time: 1,184 of
+1,452 results were the ack. c8 consequence: `Equivalents` counted an async twin finished at
+launch. Corrected and re-run: window A still REJECT (5 changed, all ADVANCED), window B still
+NO_CHANGE, WOULD_REJECT still 0 -- and that zero is reachable, not structural: 27 exact
+repeats all-time (A 5, B 2), none started while its twin was still running under either the
+old or the corrected end.*
+
 **PRG-2 (estate shadow replay, `tools/estate_shadow.py`, decider unchanged).** Bands frozen
 from 09-16..09-30 (957 spawns; p90 active_sessions 15, active_subagents 6, calls/h 1,132).
 240 judged: BACKGROUND 88 allow / 15 would-defer, CRITICAL_VERIFY 80, INTERACTIVE 46, NORMAL 11.
@@ -314,3 +325,30 @@ Three corrections this incident forces:
 3. The first instrument also returned "30 of 30 covered" beside a non-empty "never committed"
    list (case mismatch). Both instrument faults were caught by a contradiction in their own
    output, not by a test: the progress attributor needs a fixture for each.
+
+## 18. What the c5-c8 instruments say about the burn (2026-10-03)
+
+Window 09-30T17Z..10-02T09:40Z unless stated. Each line names its instrument.
+
+- **Depth, not width** (c5 `ff7a61d5`, `fanout_ledger shape`): per-root depth/area median
+  1.0, max width 2. A root's cost is sequential calls carrying their context, not parallel
+  fan-out. f319ce75 (§17) is the extreme of the same shape.
+- **Spawns mostly ran in the background** (c4 corrected, `2a4b24f6`+fix): 240 spawns = 200
+  ASYNC_RAN / 1 RETURNED / 39 HOOK_BLOCKED. The "201 RETURNED" of §16 was 200 launch acks.
+- **Spend is not waste** (c7 `1db28b93`, `root_progress top`): 19 of the 20 costliest roots
+  ADVANCED (a commit or a green test in span). Raw spend ranks progress as readily as waste.
+- **A spend rule cannot tell them apart** (c8 `142146f9`, `estate_shadow replay-v2`): v2's
+  only changed verdicts in window A were 5 ALLOW -> WOULD_DEFER on "root spend > 83", all
+  on roots that ADVANCED -> REJECT. Window B NO_CHANGE. Verdict: v1 stays champion.
+- **Exact duplicates are not the burn**: 27 exact request repeats in the whole index (A 5,
+  B 2), none started while its twin was still running, under the corrected async end.
+  WOULD_REJECT 0 is a measured zero, not a blind one.
+- **Deferral saves an interval, not a number** (peer S3 `1e2a9725`/`6b61e29a`): of 20 v2
+  WOULD_DEFER, none duplicated returned or running work, 19 have UNKNOWN displacement, and the
+  parent re-issued at most 11.1 % of a child's inputs. Any saving is in [0, 1,399 calls /
+  349.6M cache read].
+
+So the levers that remain are the ones that touch depth x context rent: fresh epochs at work
+boundaries (SPEC-ECON-ROLLOVER, peer) and a "spend since last advancement" signal, which is
+not live-computable today. Fan-out admission (C3) earns nothing on this history and stays
+shadow.

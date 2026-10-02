@@ -87,19 +87,24 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
   BANDS gate crashed instead of failing (caught only ValueError), and V-SPV2-NO-WRITE-SQL missed
   CREATE (only the runtime byte gate killed mutant 9; now both do). tools/mutation_drill.py debt
   stands (no repo-layout replica for a modules/* subject drilled by a tools/* test).
-- OPEN BUG (peer S3 audit, 2026-10-03, VERIFY before fixing): `spawns.result_head` = "Async agent
-  launched successfully." on ~1,184/1,452 rows -> c4 RETURNED is mostly LAUNCHED, and
-  `Equivalents.active()` counts an async equivalent finished at launch (under-detects v2 REJECT).
-  Completion evidence = child's last call ts (subagents.file -> max(calls.ts)).
+- Async-launch bug FIXED (peer S3 audit, verified: 1,184/1,452 results were the launch ack;
+  PRG window 200 of 201 "RETURNED"). No schema change: `fanout_ledger.is_launch_ack` derives
+  LAUNCHED / ASYNC_RAN from the stored head; `child_last_call` = completion of an async spawn;
+  `Equivalents` ends an ack row there. Gate `test_async_spawns` 12/12, 4 fix-mutants KILLED on
+  the replica; review APPROVE (`vault/audits/ccp-c9/async-fix-review.md`). Re-run: PRG 200
+  ASYNC_RAN / 1 RETURNED / 39 HOOK_BLOCKED; replay-v2 A REJECT, B NO_CHANGE (unchanged);
+  WOULD_REJECT 0 is reachable (27 exact repeats all-time, none overlapping a running twin).
+  RCA §16 correction 2 + §18 (c5-c8 facts: depth not width, spend != waste) recorded.
+- c10 PARTIAL: UKDL `T-PATH-IDENTITY-IS-NOT-RESOURCE-IDENTITY-001` written (uncommitted until
+  hunk-staged: the UKDL tail is a live CEPS auto-append). Still open: peer candidates stay
+  candidates; tower receipt entry EXPERIMENTAL.
 
 ## 4. Next three actions
-1. Verify + fix the async-launch bug (c4 outcome LAUNCHED distinct from RETURNED; Equivalents
-   end = child last call); re-run replay-v2 windows A/B and correct RCA §16 / c8 numbers.
-2. c10: UKDL trap "path identity is not resource identity" (+ validate peer candidates:
+1. c10: UKDL trap "path identity is not resource identity" (+ validate peer candidates:
    spawn requested != executed, upper bound reported as savings, raw spend != waste [c8
    REJECT], launch ack != completion); tower entry for the receipt contract EXPERIMENTAL only;
    RCA §18 with c5-c8 facts.
-3. Switch `_store_dirs` to `tis_observed.store_dirs` (S1 landed; gate
+2. Switch `_store_dirs` to `tis_observed.store_dirs` (S1 landed; gate
    test_store_identity_consumers 7/7); tell claude-power-pack-da before that commit.
    Still open: `floor_probe.py probe` rent ranking -> C4.1; re-derivation detector (NEXT).
 

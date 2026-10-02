@@ -111,13 +111,20 @@ def spawns_in(con, start: float, end: float) -> list[dict]:
 class Equivalents:
     """Spawns already running with the same input_hash at an instant. Running = no
     result recorded at or before t; a spawn that never recorded a result counts as
-    running for NO_RESULT_ACTIVE_S. Pre-spawn data only (audit G7)."""
+    running for NO_RESULT_ACTIVE_S. Pre-spawn data only (audit G7).
+    An async spawn's result is its LAUNCH ack, so its end is its subagent's last call
+    (fanout_ledger.child_last_call); with no subagent calls it has no end and falls
+    under the NO_RESULT bound. Reading the ack as the end counted every async
+    equivalent finished at launch (2026-10-03, peer S3 audit)."""
 
     def __init__(self, con):
         self.by_hash = defaultdict(list)
-        for tuid, ts, h, rts in con.execute(
-                "SELECT tool_use_id, ts, input_hash, result_ts FROM spawns "
+        last = fl.child_last_call(con)
+        for tuid, ts, h, rts, err, head in con.execute(
+                "SELECT tool_use_id, ts, input_hash, result_ts, is_error, result_head FROM spawns "
                 "WHERE input_hash IS NOT NULL AND ts IS NOT NULL ORDER BY ts"):
+            if rts is not None and fl.is_launch_ack(err, head):
+                rts = last.get(tuid)
             self.by_hash[h].append((ts, tuid, rts))
 
     def active(self, h, t: float, tuid: str) -> int | None:
