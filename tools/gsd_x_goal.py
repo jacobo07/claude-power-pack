@@ -218,6 +218,20 @@ def cmd_autonomous(args) -> int:
     return 0
 
 
+def cmd_bind_mission(args) -> int:
+    """Observe a Ralph mission that is already running as this goal's epoch.
+
+    Observe-only (SPEC-GOAL-OBSERVE-RALPH): nothing arms, halts or writes the
+    mission. The run dir matches the sweep's, so its probe finds the marker.
+    """
+    from modules.gsd_x.goal import bind_mission as bm
+    lg = _log(args)
+    e = bm.bind_running_mission(lg, Path(args.root), args.mission, args.reason, args.actor,
+                                lg.dir / "runs")
+    print(f"{args.goal}: {e.epoch_id} observes mission {args.mission} (observe-only)")
+    return 0
+
+
 def cmd_sweep_all(args) -> int:
     """The scheduler's entrance: every autonomous goal the store holds.
 
@@ -399,6 +413,11 @@ def main(argv: list[str] | None = None) -> int:
     au_on.add_argument("--off", action="store_true")
     au.add_argument("--reason", required=True)
     au.set_defaults(fn=cmd_autonomous)
+
+    bmp = common(sub.add_parser("bind-mission"))
+    bmp.add_argument("--mission", required=True)
+    bmp.add_argument("--reason", required=True)
+    bmp.set_defaults(fn=cmd_bind_mission)
 
     sa = sub.add_parser("sweep-all")
     sa.add_argument("--dry-run", action="store_true")

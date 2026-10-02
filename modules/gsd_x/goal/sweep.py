@@ -41,6 +41,7 @@ from . import log as gl
 from . import reconcile as rc
 from .engine_identity import engine_identity
 from .providers.gate import GateProvider
+from .providers.long_run import LongRunProvider
 
 # The suites whose green is the precondition for acting unattended.
 REQUIRED_SUITES = ("test_gsd_x_goal_judge.py", "test_gsd_x_goal_chaos.py")
@@ -285,11 +286,17 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
     tree = gs.tree_id(root, paths)
     eps = ep.project_epochs(state)
     prov = GateProvider(Path(run_dir or (log.dir / "runs")))
+    # Every provider whose epochs this sweep may find running is OBSERVED here,
+    # even though only the gate is dispatched: an unobserved epoch is a goal that
+    # waits forever ("could not observe it"). A bound Ralph mission is one
+    # (SPEC-GOAL-OBSERVE-RALPH); its provider reads, it never acts on the mission.
+    provs = {"gate": prov,
+             LongRunProvider.name: LongRunProvider(Path(run_dir or (log.dir / "runs")))}
 
     observations = {}
     for e in eps.values():
-        if e.state == "running" and e.provider == "gate" and e.handle:
-            observations[e.epoch_id] = prov.observe(e.handle)
+        if e.state == "running" and e.provider in provs and e.handle:
+            observations[e.epoch_id] = provs[e.provider].observe(e.handle)
 
     # The engine's own identity is part of the retry key: when the orchestrator
     # is what failed an attempt, retrying against fixed code is new information
@@ -309,7 +316,8 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
                              engine=engine))
     if d.kind == rc.RECOVER:
         if not dry_run:
-            out = ep.recover(log, state, prov, d.epoch_id, actor)
+            out = ep.recover(log, state, provs.get(eps[d.epoch_id].provider, prov),
+                             d.epoch_id, actor)
             acted.append(f"{log.goal_id}: recovered {d.epoch_id} -> {out}")
         else:
             acted.append(f"{log.goal_id}: would recover {d.epoch_id}")
@@ -325,7 +333,7 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
                                                    "files": []}}
             obs = observations.get(e.epoch_id)
             try:
-                receipt = prov.harvest(e.handle or {}, spec)
+                receipt = provs.get(e.provider, prov).harvest(e.handle or {}, spec)
                 ep.ingest_receipt(log, gc.project(log), receipt, actor)
                 acted.extend(_apply_verdicts(log, receipt, e, actor))
             except (ep.EpochError, KeyError) as exc:

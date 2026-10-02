@@ -88,6 +88,9 @@ class LongRunProvider:
     def dispatch(self, spec: dict) -> dict:
         sid = (spec.get("bind_session") or "").strip()
         mission = spec.get("mission")
+        bound = (spec.get("bind_mission") or "").strip()
+        if bound:
+            return self._observe_existing(spec, bound)
         if sid:
             return self._bind_v2(spec, sid)
         if not mission:
@@ -106,6 +109,28 @@ class LongRunProvider:
         self._marker(token).write_text(json.dumps({"session_id": sid, "bound_at": time.time()}),
                                        encoding="utf-8")
         return {"session_id": sid, "token": token, "bound_at": time.time()}
+
+    def _observe_existing(self, spec: dict, mid: str) -> dict:
+        """Adopt a mission somebody else armed, as an observer (SPEC-GOAL-OBSERVE-RALPH).
+
+        Nothing here writes the mission record: the goal watches it, the mission's
+        own supervisor owns it. The handle says so, and `cancel` honours that.
+        """
+        gm = _mission()
+        try:
+            rec = gm.load(mid)
+        except (gm.MissionError, OSError, ValueError) as exc:
+            raise EpochError(f"mission {mid} is unreadable: {exc}") from exc
+        if rec is None:
+            raise EpochError(f"no mission {mid}; nothing to observe")
+        if rec["state"] in gm.TERMINAL:
+            raise EpochError(f"mission {mid} already ended ({rec['state']}); "
+                             "there is nothing running to observe")
+        token = spec["identity"]["run_token"]
+        self._marker(token).write_text(json.dumps({"mission_id": mid, "observe_only": True,
+                                                   "bound_at": time.time()}), encoding="utf-8")
+        return {"mission_id": mid, "token": token, "bound_at": time.time(),
+                "observe_only": True}
 
     def _arm_v3(self, spec: dict, m: dict) -> dict:
         if not m.get("cwd") or not m.get("command"):
@@ -219,6 +244,11 @@ class LongRunProvider:
     # --- cancel / probe ---------------------------------------------------------
 
     def cancel(self, handle: dict) -> None:
+        if handle.get("observe_only"):
+            # The goal only watches this mission; halting it is its owner's call.
+            raise EpochError(
+                f"mission {handle.get('mission_id')} is observed, not owned, by this goal: "
+                "stop it with `gsd_mission.py` where it was armed, or end this epoch instead")
         if handle.get("mission_id"):
             gm = _mission()
             rec = gm.load(handle["mission_id"])
@@ -252,6 +282,11 @@ class LongRunProvider:
             if data.get("session_id"):
                 return {"session_id": data["session_id"], "token": token,
                         "bound_at": data.get("bound_at", 0)}
+            if data.get("observe_only") and data.get("mission_id"):
+                # A foreign mission's id is not derived from our token: only the
+                # marker knows it, so the marker is the adoption path.
+                return {"mission_id": data["mission_id"], "token": token,
+                        "bound_at": data.get("bound_at", 0), "observe_only": True}
         if token:
             try:
                 rec = _mission().load(mission_id_for(token))

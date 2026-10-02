@@ -55,6 +55,7 @@ SUITES = {
     "V-JUDGE-": ROOT / "tools" / "test_gsd_x_goal_judge.py",
     "V-SWEEP-": ROOT / "tools" / "test_gsd_x_goal_sweep.py",
     "V-ENGINE-": ROOT / "tools" / "test_gsd_x_goal_engine_identity.py",
+    "V-BIND-": ROOT / "tools" / "test_gsd_x_goal_bind_mission.py",
 }
 CLP = GOAL / "providers" / "claude.py"
 BRIEF = GOAL / "brief.py"
@@ -283,6 +284,14 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         SWEEP, "    if rec_engine and engine:", "    if False:",
         "an unrelated commit must not void a record for the same engine",
         "V-ENGINE-VERDICT-SURVIVES-UNRELATED-COMMIT"),
+    "observed-mission-can-be-cancelled": (
+        LRP, '        if handle.get("observe_only"):', "        if False:",
+        "a goal that only observes a mission must not halt it",
+        "V-BIND-CANCEL-REFUSED"),
+    "sweep-observes-gates-only": (
+        SWEEP, "e.provider in provs and e.handle", 'e.provider == "gate" and e.handle',
+        "a running long-run epoch must be observed, or its goal waits forever",
+        "V-BIND-SWEEP-HARVESTS-ENDED"),
     "sweep-runs-every-goal": (
         SWEEP, "        if not is_autonomous(state):", "        if False:",
         "a goal nobody marked autonomous must not be driven unattended",
