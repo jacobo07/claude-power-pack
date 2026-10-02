@@ -93,3 +93,11 @@ Append-only. Newest at the bottom. `grep "^## \[" log.md` lists every entry.
   @ fd27800); two research agents (raw @ 3b07419). Verified the price table matches documented cache
   multipliers; sonnet-5-5 priced by family fallback. Four unowned levers filed as IDEA. USD is not
   the meter; bounds overlap. Nothing changed outside wiki/.
+## [2026-10-02] query | Token economy wave 2: deep measurements + lateral brainstorm
+- touched: [[token-economy-brainstorm]], [[2026-10-02-token-economy-external-research-2]],
+  [[cold-start-cache-sharing]], [[hide-unused-skills]], [[hook-injection-diet]],
+  [[mid-session-prefix-rebuilds]], [[token-economy-levers]], [[overview]], [[index]]
+- notes: Owner asked for "next level research and massive brainstorming" (Owner, 2026-10-02).
+  Six zero-quota transcript instruments in wiki/tools. First per-kind table was invalid (UI-only
+  attachments counted as context); replaced by a fit against measured context deltas (R^2 0.20,
+  rough). Refuted my own wave-1 TTL row: 5 m would cost +$1,262 net. One research subagent (Sonnet).

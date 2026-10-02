@@ -30,3 +30,11 @@ loading mid-session, `/compact`, idle panes past 1 h, a model switch.
 2. Rank causes by cost. Act only on a cause PP controls.
 
 Owner: none found. Small, read-only, and decides whether an 8 % line is reachable.
+
+## Result (2026-10-02, step 1 done)
+
+Main thread, 307 rebuilds (`wiki/tools/token_economy_deep.2026-10-02.out` [P]): idle > 1 h (cache
+expired) 224 (~$541); model switch 36 (~$88); after compaction 31 (~$38); gap ≤ 5 min 16 (~$30).
+The dominant cause is not a prefix change but a cold cache after a break. A 5 min TTL would make it
+worse (net +$1,262). Next step lives in [[token-economy-brainstorm]] A1 (idle-return rollover) and
+A4 (find the model-switch source).

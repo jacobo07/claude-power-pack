@@ -46,7 +46,10 @@ Goal: understand Claude Power Pack and find the changes that would make it bette
    are a smaller floor (≤ 12.6 %) and a main-thread context cap (≤ 8.8 %); the largest clean one,
    the cache TTL, belongs to the harness. Several cheap levers have no owner
    ([[token-economy-levers]]). Same pattern as point 5: savings machinery exists in SHADOW or as
-   advice while the unmeasured paths keep spending.
+   advice while the unmeasured paths keep spending. Wave 2 sharpened it: a token written instead
+   of read costs 40× more, and most writes are avoidable ones (85-91 % of every session start
+   written fresh; 73 % of mid-session rebuilds come back from idle > 1 h). Price-mix levers beat
+   floor trimming per unit of effort ([[token-economy-brainstorm]]).
 
 ## Open questions
 

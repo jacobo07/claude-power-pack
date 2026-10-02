@@ -159,3 +159,9 @@ owner (no edit). Defaults: goal spine is the only state store; model-calling epo
    multipliers; sonnet-5-5 priced by family fallback. Next: Owner picks which IDEA to pursue;
    `mid-session-prefix-rebuilds` is zero-quota and read-only. Spec
    `parent-context-epoch-rotation.md` still unread.
+   **WAVE 2 WRITTEN** (Owner: "next level research and massive brainstorming"):
+   `wiki/syntheses/token-economy-brainstorm.md` + raw research-2 + six zero-quota instruments
+   (`wiki/tools/token_economy_{deep,listings,coldstart,coldstart_bydir,prefix_stability,ttl_net}`).
+   Key: session starts write 85-91 % fresh (<= 12.4 %); 73 % of rebuilds = idle > 1 h; 5 m TTL
+   net +$1,262 (refutes wave-1 row); 280/319 skills never invoked. S6 proposal should carry
+   idle-return rollover (A1). Next: Owner picks; A3 experiment needs quota.

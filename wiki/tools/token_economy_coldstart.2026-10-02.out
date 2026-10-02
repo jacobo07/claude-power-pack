@@ -1,0 +1,8 @@
+﻿[F] first call per transcript: cache READ (shared prefix) vs WRITTEN fresh
+  sub   transcripts=   569  read p-share=9.3%  mean read=    9,768  mean written=   95,334  usd actual=   207  usd if all were reads=   12  gap=   195
+  main  transcripts=   982  read p-share=15.0%  mean read=   19,319  mean written=  109,370  usd actual=   859  usd if all were reads=   26  gap=   833
+  main first-call cache_read p10/p50/p90 = 2,487/2,494/32,412
+
+[K] skills listed (union over transcripts)=319; distinct invoked=39; invocations=336
+  top invoked: [('kclear', 113), ('gsd-plan-phase', 28), ('cpp-gsd-long', 27), ('ultra', 25), ('gsd-execute-phase', 21), ('kresume', 14), ('gsd-code-review', 12), ('claude-power-pack', 11), ('code-reviewer', 10), ('gsd-autonomous', 8), ('anydesign', 6), ('superpowers:brainstorming', 5), ('destructive-state-authorization', 5), ('claude-in-chrome', 4), ('seo-geo-session', 4)]
+  listed but never invoked in 7 d: 280

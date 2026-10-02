@@ -1,0 +1,15 @@
+﻿main first calls=982, with prompt_snapshot=982
+same-dir consecutive session pairs within 1 h: 673; tools block identical in 673 (100%)
+  first-call cache_read median: tools same=2494  tools differ=NA
+  tool definitions that differ between paired sessions (top 15):
+  system-prompt sections that differ (index: pairs, first 60 chars):
+    sec  8:   85  '# Background Session\n\nThis session runs as a background job.'
+    sec 10:   70  'When you have enough information to act, act. Do not re-deri'
+    sec 11:   64  'EndConversation (deferred tool): use only for sustained user'
+    sec  9:   61  '# Context management\nWhen the conversation grows long, some '
+    sec  5:   39  '# Session-specific guidance\n - If the user asks about "ultra'
+    sec 13:   28  '# Claude in Chrome browser automation\n\nYou have access to br'
+    sec  7:   12  '# Environment\n - The most recent Claude models are the Claud'
+    sec 12:   10  '<total_tokens>15000000 tokens left</total_tokens>'
+    sec  0:    4  '\nYou are an interactive agent that helps users with software'
+    sec  1:    1  '__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__'

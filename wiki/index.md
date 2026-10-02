@@ -19,6 +19,7 @@ Map of every page. Read this first on every query. Schema: [[CLAUDE]]. Timeline:
 - [[2026-10-02-state-centric-reality-scan]] — state-centric mission: ownership sweep, goal spine connected, G-001 converged
 - [[2026-10-02-token-economy-external-research]] — cache mechanics, masking vs summarising, fan-out cost; 30-item checklist with tiers
 - [[2026-10-02-token-economy-internal-inventory]] — every PP token mechanism with status, measured numbers, owners, 15 contradictions
+- [[2026-10-02-token-economy-external-research-2]] — Claude Code knobs (TTL, skillOverrides, autocompact, hook rewrites), coding-agent cost studies
 - [[2026-09-30-yt-i10xtuixfey]] — app growth (off-topic for PP): creator equity partnerships, organic-format mining
 - [[2026-09-30-yt-pffo4jysptw]] — app growth (off-topic for PP): paid UGC machine, views × conversion model, pay structure
 
@@ -45,14 +46,18 @@ Map of every page. Read this first on every query. Schema: [[CLAUDE]]. Timeline:
 - [[spec-acceptance-as-goal-obligations]] — DISCUSSING, M: spec acceptance → goal obligations; done = judge PASS (3 sources)
 - [[mutation-anchor-rot]] — IDEA, S: check drill anchors statically at record-gates / commit (1 source)
 - [[tool-output-at-source]] — IDEA, M: tool results are 78 % of growth; shrink them before they land (2 sources)
-- [[mid-session-prefix-rebuilds]] — IDEA, S: 358 rebuilds = 8.1 % of spend; attribute causes, zero quota (1 source)
+- [[mid-session-prefix-rebuilds]] — IDEA, S: attributed — 73 % come back from idle > 1 h; see idle-return rollover (1 source)
 - [[sdk-probe-floor]] — IDEA, S: 508 one-call `claude -p` runs pay a full floor; neutral cwd saves ~20k each (1 source)
 - [[rtk-powershell-gap]] — IDEA, M: RTK compresses Bash only; PowerShell is 26 % of growth (1 source)
+- [[cold-start-cache-sharing]] — IDEA, M: first calls write 85-91 % fresh; ≤ 12.4 % if starts read instead (1 source)
+- [[hide-unused-skills]] — IDEA, S: 280 of 319 listed skills never invoked in 7 d; `skillOverrides: name-only` (1 source)
+- [[hook-injection-diet]] — IDEA, S: hook additionalContext re-read ~$202 / 7 d; inject once per session (1 source)
 
 ## Syntheses
 
 - [[goal-spine-connect-not-build]] — state-centric work became real by wiring, not building; G-001 converged unattended
 - [[token-economy-levers]] — 7 d spend cut by category/thread/model; 10 levers ranked by bound × evidence × owner
+- [[token-economy-brainstorm]] — wave 2: 10 new measurements, lateral pass, ~35 ideas by write/read, context, calls, output
 - [[sdd-os-gap-analysis]] — SDD-OS vs an engineer-grade spec checklist: 0/33 met, 6 verified defects, 7 ranked fixes
 - [[cbr-gap-analysis]] — CBR vs a 32-item ratchet checklist: 2/32 met, 10 verified defects, full-potential path, 8 ranked fixes
 - [[maturity-transfer-pilot-kobiicraft-ksr]] — KobiiCraft → KSR: 6 ranked proposals, 4 product ideas, 16 non-transfers, reverse transfer

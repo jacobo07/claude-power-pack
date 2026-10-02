@@ -68,7 +68,7 @@ controlled study with numbers; B = practitioner with numbers; C = opinion
 | 2 | Cap main-thread context at 150-200k (fresh epoch at the wall) | 7.4-8.8 % | A/B (JetBrains, OpenHands: bounded context = linear cost) | yes | rollover (SPEC-ECON-ROLLOVER, CCP C6) |
 | 3 | Shrink tool output at its source | share of growth: tool results 78.4 % | A (JetBrains masking 52 % cheaper, +2.6 % solve; context editing -84 %) | partly (harness owns masking) | **none for the main thread** → [[tool-output-at-source]] |
 | 4 | Find why prefixes rebuild mid-session | 8.1 % | A (invalidation hierarchy in caching doc) | yes, once attributed | **none** → [[mid-session-prefix-rebuilds]] |
-| 5 | 1 h → 5 m cache TTL | 9.6 % | A (97.8 % of inter-call gaps ≤ 5 min) | **no**: harness picks the TTL by plan | outside PP |
+| 5 | ~~1 h → 5 m cache TTL~~ **SUPERSEDED**: reachable via `CLAUDE_CODE_PROMPT_CACHE_TTL`, and net **+$1,262 more expensive** (1,327 calls at 5-60 min gaps would miss); see [[token-economy-brainstorm]] F5 | ~~9.6 %~~ | measured | do not apply | — |
 | 6 | Cheaper floor for one-shot `claude -p` calls | ≤ 4.9 % | measured | yes | **none** → [[sdk-probe-floor]] |
 | 7 | Subagents to Sonnet 5.5 | 3.8 % | A (costs doc recommends) | yes | CCP C4 (PLANNED, waits for quota) |
 | 8 | RTK compression for PowerShell | ≤ PowerShell's 25-26 % of growth × unknown ratio | measured on one Bash command only (80 %) | yes, with a PS-native rewriter | **none** → [[rtk-powershell-gap]] |

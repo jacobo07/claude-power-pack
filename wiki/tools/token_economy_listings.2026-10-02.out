@@ -1,0 +1,6 @@
+﻿main transcripts=466
+agent_listing_delta      injections=  572 initial=  498 later=   74 per-transcript max=6 median chars=43,500 | later-injection ctx jump n=29 median=1563 p90=6881
+deferred_tools_delta     injections= 1129 initial=  464 later=  665 per-transcript max=19 median chars=3,139 | later-injection ctx jump n=347 median=2158 p90=7127
+instructions             injections=  540 initial=  469 later=   71 per-transcript max=6 median chars=220,658 | later-injection ctx jump n=2 median=12399 p90=15214
+mcp_instructions_delta   injections=  696 initial=  458 later=  238 per-transcript max=14 median chars=2,072 | later-injection ctx jump n=0 median=NA p90=NA
+skill_listing            injections= 1349 initial=  474 later=  875 per-transcript max=19 median chars=5,442 | later-injection ctx jump n=776 median=2833 p90=6273

@@ -1,0 +1,2 @@
+﻿main calls=48,398; inter-call gaps: {'<=5m': 45884, '>60m': 205, '5-60m': 1327}
+5m TTL: cheaper writes save ~usd 795; new misses on 5-60 min gaps n=1,327 cost ~usd 2,056; NET ~usd -1,262 (positive = 5m is cheaper)

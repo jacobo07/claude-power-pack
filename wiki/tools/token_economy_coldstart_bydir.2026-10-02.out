@@ -1,0 +1,17 @@
+﻿first-call cache_read by cwd (dirs with >= 8 sessions): n, median, share reading >= 20k
+   253  med=  2,494  >=20k=  10%  C:\Users\User\Apps\recon_work\wt_keosdtk_home
+   156  med=  2,487  >=20k=  10%  C:\Users\User\Apps\orca-dws-wt
+    70  med=  2,487  >=20k=   9%  C:\Users\User\Apps\orca-backlog-wt
+    61  med= 30,230  >=20k=  85%  Projects\Minecraft Projects\KobiiCraft Workspace\KobiiCraft Core Files
+    57  med= 32,058  >=20k=  91%  C:\Users\User\.claude\skills\claude-power-pack
+    50  med= 32,019  >=20k= 100%  C:\Users\User\Desktop\Cursor Projects\TUA-X
+    45  med= 32,020  >=20k=  96%  C:\Users\User\Desktop\Cursor Projects\InfinityOps
+    30  med= 32,430  >=20k=  97%  C:\Users\User\Desktop\Cursor Projects\Vibe Coding Projects\Orca X
+    25  med= 32,418  >=20k= 100%  C:\Users\User\Desktop\Cursor Projects\GEO-audit
+    25  med=  2,487  >=20k=  16%  C:\Users\User\Apps\orca-cogws-shell-wt
+    23  med=  2,483  >=20k=  13%  C:\Users\User\Apps\orca-integration-wt
+    21  med=  2,478  >=20k=   0%  op\Cursor Projects\gsd-long-smoke\.claude\worktrees\gsd-autonomous-run
+    12  med= 33,463  >=20k= 100%  Desktop\Cursor Projects\Wii Projects\KobiiSports Resort\CursorProjects
+    12  med= 32,026  >=20k= 100%  C:\Users\User\Desktop\Cursor Projects\CostaLuz Lawyers
+[git] n=856 median=2,494 share>=20k=41%
+[no-git] n=126 median=17,226 share>=20k=8%
