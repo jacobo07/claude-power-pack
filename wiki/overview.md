@@ -41,6 +41,13 @@ Goal: understand Claude Power Pack and find the changes that would make it bette
    also closes the gap points 5-6 share: a judge that re-runs acceptance at the final tree is the
    outcome signal SDD-OS and CBR lack ([[spec-acceptance-as-goal-obligations]]).
 
+8. **The bill is the prefix times the number of calls.** Over 7 days, cache read + write were
+   87 % of estimated spend; tool output is 78 % of context growth. The largest reachable levers
+   are a smaller floor (≤ 12.6 %) and a main-thread context cap (≤ 8.8 %); the largest clean one,
+   the cache TTL, belongs to the harness. Several cheap levers have no owner
+   ([[token-economy-levers]]). Same pattern as point 5: savings machinery exists in SHADOW or as
+   advice while the unmeasured paths keep spending.
+
 ## Open questions
 
 - Which always-loaded rules only restate the harness's own prompt?

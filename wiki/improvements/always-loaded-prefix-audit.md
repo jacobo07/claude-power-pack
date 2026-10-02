@@ -1,8 +1,8 @@
 ---
 type: improvement
 created: 2026-09-30
-updated: 2026-09-30
-sources: [2026-09-30-yt-9uojngzcjo, 2026-09-30-system-prompts-leaks]
+updated: 2026-10-02
+sources: [2026-09-30-yt-9uojngzcjo, 2026-09-30-system-prompts-leaks, 2026-10-02-token-economy-internal-inventory]
 status: IDEA
 effort: M
 graduated_to:
@@ -40,6 +40,16 @@ How much of the ~167 KB is (a) needed on every call, (b) better as an on-demand 
 - The global CLAUDE.md is 39,810 characters and 292 lines (measured 2026-09-30): 190 characters
   under the harness's 40.0k-character warning (Owner memory, `reference_claude_md_40k_char_warning.md`)
   and about 3× its own "CLAUDE.md < 100 lines" rule.
+
+## Measured value of acting — 2026-10-02
+
+- Floor delta when each part is switched off (neutral cwd, baseline 91.9k): CLAUDE.md + rules
+  44.7k, skills listing 6.5k, hooks 4.8k, MCP 2.0k, plugins 1.4k; harness + tool schemas 34.5k
+  not movable ([[2026-10-02-token-economy-internal-inventory]]).
+- Upper bound over 7 d: -20k per call ≈ 6.3 % of estimated spend, -40k ≈ 12.6 %; the largest
+  reachable lever found ([[token-economy-levers]]).
+- Since 2026-09-30 nine rules moved to skills; six of those moves have no ablation, and moved rules
+  auto-invoke 0/8 (same inventory). Quality risk is the open question.
 
 ## Proposed steps
 

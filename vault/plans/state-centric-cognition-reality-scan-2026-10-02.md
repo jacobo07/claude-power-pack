@@ -153,3 +153,9 @@ owner (no edit). Defaults: goal spine is the only state store; model-calling epo
    Then: wiki synthesis ranking levers (share x evidence tier x owner CCP vs this mission),
    improvement pages for unowned levers, source pages, index, log. Also inspect
    `vault/specs/parent-context-epoch-rotation.md` (unread owner).
+   **SYNTHESIS WRITTEN** (2026-10-02, session ab73b303): `wiki/syntheses/token-economy-levers.md`,
+   two source pages, four IDEA pages (tool-output-at-source, mid-session-prefix-rebuilds,
+   sdk-probe-floor, rtk-powershell-gap), overview point 8. Price table verified against documented
+   multipliers; sonnet-5-5 priced by family fallback. Next: Owner picks which IDEA to pursue;
+   `mid-session-prefix-rebuilds` is zero-quota and read-only. Spec
+   `parent-context-epoch-rotation.md` still unread.

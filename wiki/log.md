@@ -83,3 +83,13 @@ Append-only. Newest at the bottom. `grep "^## \[" log.md` lists every entry.
 - notes: Owner directed "use the research we did for the wiki" (Owner, 2026-10-02). Goal spine was
   built and unreachable; connected via PP-GoalSweep (c4c45b7..738ed40). G-001 judge PASS 20:44Z incl.
   live production bot gate. Overview point 7 added; next step proposed from SDD/CBR gap rows.
+## [2026-10-02] query | Token economy: where the spend goes, levers ranked
+- touched: [[token-economy-levers]], [[2026-10-02-token-economy-external-research]],
+  [[2026-10-02-token-economy-internal-inventory]], [[tool-output-at-source]],
+  [[mid-session-prefix-rebuilds]], [[sdk-probe-floor]], [[rtk-powershell-gap]],
+  [[always-loaded-prefix-audit]], [[overview]], [[index]]
+- notes: Owner asked to expand token-saving research (Owner, 2026-10-02). 7 d usage-index cuts
+  (est. $8,312; cache 87 %, main 72 %, Opus 86 %) + upper-bound levers (`wiki/tools/token_economy_*`
+  @ fd27800); two research agents (raw @ 3b07419). Verified the price table matches documented cache
+  multipliers; sonnet-5-5 priced by family fallback. Four unowned levers filed as IDEA. USD is not
+  the meter; bounds overlap. Nothing changed outside wiki/.
