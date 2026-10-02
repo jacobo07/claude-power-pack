@@ -75,3 +75,11 @@ Append-only. Newest at the bottom. `grep "^## \[" log.md` lists every entry.
 - touched: [[maturity-transfer-pilot-kobiicraft-ksr]]
 - notes: Owner accepted P1 and both reverse CI items. Landed as backlog rows only: KSR-B-073
   (KSR `5345ca1`) and KobiiCraft P1 "CI gates that cannot fire" (KC `61cd4448`). P2-P6 undecided.
+
+## [2026-10-02] ingest | State-centric reality scan; goal spine connected; G-001 converged
+- touched: [[2026-10-02-state-centric-reality-scan]], [[goal-spine]], [[goal-spine-connect-not-build]],
+  [[verdict-pinned-to-what-runs]], [[spec-acceptance-as-goal-obligations]], [[mutation-anchor-rot]],
+  [[overview]], [[index]]
+- notes: Owner directed "use the research we did for the wiki" (Owner, 2026-10-02). Goal spine was
+  built and unreachable; connected via PP-GoalSweep (c4c45b7..738ed40). G-001 judge PASS 20:44Z incl.
+  live production bot gate. Overview point 7 added; next step proposed from SDD/CBR gap rows.

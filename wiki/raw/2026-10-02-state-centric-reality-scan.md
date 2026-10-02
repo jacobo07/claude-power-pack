@@ -124,13 +124,10 @@ owner (no edit). Defaults: goal spine is the only state store; model-calling epo
 
 ## Next
 
-1. **S4 DONE.** The scheduler re-proved all G-001 obligations unattended 19:14Z-20:30Z
-   (`ob-reality` `GOALLIVE_PASS=4/4`, real bot through the production proxy); READY_FOR_JUDGE at
-   20:30Z; judge PASS recorded 20:44:47Z (34 s, every pinned gate re-run); status `may_close=True`,
-   0 blocking at KobiiCraft tree `af38161`. Written up in `wiki/` (Owner: "use the research we did
-   for the wiki"): [[goal-spine-connect-not-build]] and 5 more pages; next step proposed there:
-   `wiki/improvements/spec-acceptance-as-goal-obligations.md` (spec acceptance -> goal
-   obligations, done = judge PASS), drawn from the SDD-OS and CBR gap analyses.
+1. Watch G-001 converge: `goal-sweep.log`, `gsd-x/sweep_heartbeat.json`, `gsd_x_goal.py status`.
+   One action per 5-min pass, ~14 passes. Expected stops: ob-reality UNREADABLE_INPUT if the
+   proxy/GEX44 runner is unreachable; READY_FOR_JUDGE is REPORTED, never self-certified -- the
+   judge run is a separate deliberate step.
 2. **S3 BUILT** `738ed40` (SPEC-GOAL-OBSERVE-RALPH): `bind-mission` adopts a running Ralph
    mission observe-only (cancel refused, record bytes untouched, probe adopts via marker); the
    sweep observes/harvests/recovers every provider's epochs. Bind suite 10/10, mutation 58/58,

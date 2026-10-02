@@ -34,6 +34,12 @@ Goal: understand Claude Power Pack and find the changes that would make it bette
    done-gate it tells the agent about has no caller ([[cbr-gap-analysis]]). Converse of point 5:
    there the template allowed what nothing required; here the code requires what no content
    supplies.
+7. **When the machinery is sound, the missing piece is often only a caller.** The goal spine
+   (durable goal state, judge, reconciler) was built, tested and unreachable for a week; making
+   it LIVE took a scheduler, a re-pinned precondition and discovery, with no new concepts. G-001
+   then converged unattended through a production check ([[goal-spine-connect-not-build]]). It
+   also closes the gap points 5-6 share: a judge that re-runs acceptance at the final tree is the
+   outcome signal SDD-OS and CBR lack ([[spec-acceptance-as-goal-obligations]]).
 
 ## Open questions
 
