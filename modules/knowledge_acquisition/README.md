@@ -40,6 +40,14 @@ python -m modules.knowledge_acquisition.cli <command>
 | `assess-backfill` | Judge answers already captured. Reads raw, never writes it. |
 | `quality` | What the source can answer, and what it has declared it cannot. |
 | `route` | Decide where each pending question belongs. `--write DIR` materialises the queue and the evidence-request pack. |
+| `hold --lens L --reason R` | Move unasked prompts of one template to `HELD`: `run` never claims them. `--dry-run` lists them first. |
+| `release --lens L --reason R` | Return held prompts to `PENDING`. Both record the reason on every job's audit trail. |
+
+An operator statement about where a source's figures come from lives in
+`provenance.py`. With one recorded (EVA, 2026-10-02: anonymised self-reports
+from chats), a cohort claim is `DEEPEN` + `SELF_REPORTED_AGGREGATE` instead of
+`UNVERIFIABLE_CLAIM`. It never raises the epistemic cap and never lifts
+`route_to_expert`.
 
 `run` also takes `--prompt-id ID` (repeatable) to ask an explicit set rather
 than a slab of the queue -- what a calibration probe needs, since measuring one

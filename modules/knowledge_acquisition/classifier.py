@@ -64,6 +64,7 @@ from .expectation import (
     derive_expectation,
     fold,
 )
+from .provenance import ProvenanceAttestation
 
 #: Below this an answer carries no extractable content whatever its shape.
 MIN_SUBSTANTIVE_CHARS = 400
@@ -181,8 +182,19 @@ def _decide(
     claims: list[CohortClaim],
     governing: BoundaryDeclaration | None,
     answer: str,
+    attestation: ProvenanceAttestation | None = None,
 ) -> tuple[Disposition, str]:
     """Resolution order is by strength of evidence, not convenience."""
+    if claims and governing is not None and attestation is not None:
+        # The operator has said what these figures rest on, so they are not
+        # unsourced -- but they rest on self-reports, so they are not evidence
+        # either. DEEPEN keeps the "how many cases?" follow-up (provenance.py).
+        return Disposition.DEEPEN, (
+            f"{len(claims)} quantified claim(s) about a population; the source "
+            f"declared no access to connected client data, and its operator "
+            f"attests the figures are self-reported chat metrics -- weak, not "
+            f"unsourced"
+        )
     if claims and governing is not None:
         return Disposition.UNVERIFIABLE_CLAIM, (
             f"{len(claims)} quantified claim(s) about a population the source "
@@ -250,6 +262,7 @@ def assess(
     answer_text: str,
     family: str = "",
     known_boundaries: list[BoundaryDeclaration] | None = None,
+    attestation: ProvenanceAttestation | None = None,
 ) -> Assessment:
     """Classify one answer against the question it was meant to answer.
 
@@ -258,6 +271,11 @@ def assess(
     is only DEEPEN, and the same statistic re-assessed after the source admits
     it cannot see the cohort becomes UNVERIFIABLE_CLAIM. Re-assessment is an
     explicit operation, never a silent rewrite.
+
+    `attestation` is what the source's operator has said its figures rest on
+    (provenance.py). With one, a crossing claim is DEEPEN with a
+    SELF_REPORTED_AGGREGATE flag instead of UNVERIFIABLE_CLAIM. It never lifts
+    route_to_expert and never raises the epistemic cap.
     """
     expectation = derive_expectation(prompt_text, family)
     declared = detect_boundaries(answer_text)
@@ -268,7 +286,9 @@ def assess(
 
     context_bound, markers = _detect_context(answer_text)
     shape = _derive_shape(answer_text, declared, claims)
-    disposition, why = _decide(expectation, declared, claims, governing, answer_text)
+    disposition, why = _decide(
+        expectation, declared, claims, governing, answer_text, attestation
+    )
 
     coverage = (
         engine3.COVERAGE_VENDOR_ONLY
@@ -303,6 +323,8 @@ def assess(
         flags.append(Flag("GOVERNING_BOUNDARY", governing.scope_text[:200]))
     for c in claims:
         flags.append(Flag("COHORT_CLAIM", c.sentence[:200]))
+    if claims and attestation is not None:
+        flags.append(Flag("SELF_REPORTED_AGGREGATE", attestation.summary()))
     if _has_carryover(markers):
         flags.append(Flag(
             "CONTEXT_CARRYOVER",

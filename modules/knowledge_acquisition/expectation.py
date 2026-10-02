@@ -28,7 +28,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 #: Bump when derivation changes in a way that alters a stored assessment.
-CLASSIFIER_VERSION = "kacq-assess/1.3.0"
+CLASSIFIER_VERSION = "kacq-assess/1.4.0"  # 1.4.0: operator provenance attestation
 
 
 def fold(text: str) -> str:

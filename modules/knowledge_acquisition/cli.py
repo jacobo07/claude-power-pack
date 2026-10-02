@@ -180,6 +180,65 @@ def cmd_recover(args) -> int:
     return 0
 
 
+def _select_by_lens(store, lens_name: str, states: tuple[str, ...], corpus: str | None):
+    """Jobs in `states` whose prompt came from template `lens_name`.
+
+    The lens is recomputed from the prompt text (routing.derive_lens), not read
+    from a stored route row, so a hold does not depend on `route` having run.
+    """
+    from .routing import Lens, derive_lens
+
+    lens = Lens(lens_name)
+    sql = ("SELECT p.prompt_id, p.external_id, p.raw_prompt, j.state "
+           "FROM job j JOIN prompt p ON p.prompt_id=j.prompt_id "
+           f"WHERE j.state IN ({','.join('?' * len(states))})")
+    params: list = list(states)
+    if corpus:
+        sql += " AND p.corpus_id=?"
+        params.append(corpus)
+    rows = store.con.execute(sql + " ORDER BY p.ordinal", params).fetchall()
+    return [r for r in rows if derive_lens(r["raw_prompt"])[0] is lens]
+
+
+def _move_by_lens(args, *, from_states: tuple[str, ...], target, verb: str) -> int:
+    store = _open(_load_config())
+    try:
+        rows = _select_by_lens(store, args.lens, from_states, args.corpus)
+        print(f"{len(rows)} job(s) in {'/'.join(from_states)} with lens {args.lens}"
+              + (f" in {args.corpus}" if args.corpus else ""))
+        if args.dry_run:
+            for r in rows[:10]:
+                print(f"  {r['external_id']:>10} [{r['state']}] {r['raw_prompt'][:70]}")
+            print("dry run: nothing changed")
+            return 0
+        for r in rows:
+            store.transition(r["prompt_id"], target, reason=args.reason, actor="owner")
+        print(f"{verb} {len(rows)}")
+        _print_status(store)
+    finally:
+        store.close()
+    return 0
+
+
+def cmd_hold(args) -> int:
+    """Take not-yet-asked prompts of one lens out of the work set, with a reason.
+
+    Only PENDING and FAILED jobs move. A RUNNING job is in flight and must be
+    recovered first; a COMPLETE one already has its answer.
+    """
+    from .models import JobState
+
+    return _move_by_lens(args, from_states=("PENDING", "FAILED"),
+                         target=JobState.HELD, verb="held")
+
+
+def cmd_release(args) -> int:
+    from .models import JobState
+
+    return _move_by_lens(args, from_states=("HELD",),
+                         target=JobState.PENDING, verb="released")
+
+
 def cmd_verify(args) -> int:
     store = _open(_load_config())
     try:
@@ -358,6 +417,7 @@ def cmd_assess_backfill(args) -> int:
 
     from .classifier import assess
     from .expectation import CLASSIFIER_VERSION
+    from .provenance import attestation_for
 
     cfg = _load_config()
     store = _open(cfg)
@@ -381,6 +441,7 @@ def cmd_assess_backfill(args) -> int:
                 prompt_id=r["prompt_id"], response_id=r["response_id"],
                 prompt_text=r["raw_prompt"], answer_text=answer,
                 family=r["family"], known_boundaries=ledger,
+                attestation=attestation_for(interface),
             )
 
             # A boundary is a fact about what the LIVE source said. Answers
@@ -620,6 +681,20 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--write", metavar="DIR",
                    help="materialise the queue and evidence-request artifacts")
     p.set_defaults(func=cmd_route)
+
+    for name, func, helptext in (
+        ("hold", cmd_hold, "take one lens's unasked prompts out of the work set"),
+        ("release", cmd_release, "return one lens's held prompts to PENDING"),
+    ):
+        p = sub.add_parser(name, help=helptext)
+        p.add_argument("--lens", required=True,
+                       help="REAL_CASES, INTERNAL_PATTERNS, THRESHOLD, EXPERIMENT, "
+                            "PITFALLS or FREEFORM")
+        p.add_argument("--corpus")
+        p.add_argument("--reason", required=True,
+                       help="recorded on every job's audit trail")
+        p.add_argument("--dry-run", action="store_true")
+        p.set_defaults(func=func)
 
     return ap
 

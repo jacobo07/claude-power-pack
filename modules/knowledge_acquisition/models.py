@@ -86,18 +86,24 @@ class JobState(str, Enum):
     COMPLETE = "COMPLETE"
     FAILED = "FAILED"
     NEEDS_HUMAN = "NEEDS_HUMAN"
+    #: Deliberately not asked yet, with a recorded reason (e.g. the source
+    #: cannot answer it until a data product exists). Never claimed by `run`;
+    #: only an explicit `release` returns it to PENDING.
+    HELD = "HELD"
 
 
 #: COMPLETE is terminal by design: nothing may move a captured answer back
 #: into the work set. Re-acquiring a prompt is an explicit, audited operation
 #: that creates a new prompt row, not a state transition on the old one.
+#: HELD is reachable only from a job that is not in flight and holds no answer.
 LEGAL_TRANSITIONS: dict[JobState, frozenset[JobState]] = {
-    JobState.PENDING: frozenset({JobState.RUNNING}),
+    JobState.PENDING: frozenset({JobState.RUNNING, JobState.HELD}),
     JobState.RUNNING: frozenset(
         {JobState.COMPLETE, JobState.FAILED, JobState.NEEDS_HUMAN, JobState.PENDING}
     ),
-    JobState.FAILED: frozenset({JobState.PENDING, JobState.NEEDS_HUMAN}),
+    JobState.FAILED: frozenset({JobState.PENDING, JobState.NEEDS_HUMAN, JobState.HELD}),
     JobState.NEEDS_HUMAN: frozenset({JobState.PENDING}),
+    JobState.HELD: frozenset({JobState.PENDING}),
     JobState.COMPLETE: frozenset(),
 }
 

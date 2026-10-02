@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 from .classifier import Disposition, assess
 from .eva_adapter import ADAPTER_VERSION, AdapterError, EvaAdapter
 from .models import ConversationMode, IntegrityVerdict, JobState
+from .provenance import attestation_for
 from .store import Store
 
 #: Seconds between prompts. Politeness, not throughput tuning.
@@ -139,6 +140,7 @@ class AcquisitionRunner:
                 answer_text=captured.text,
                 family=job.family,
                 known_boundaries=self._ledger,
+                attestation=attestation_for(self.interface),
             )
             self.store.record_assessment(a, interface=self.interface)
             for b in a.boundaries:
