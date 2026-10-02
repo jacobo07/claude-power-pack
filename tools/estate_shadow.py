@@ -284,6 +284,12 @@ def replay_v2(con, b0, b1, start, end) -> dict:
     changed_states = Counter(state_of.get(r["subject"]["root_prompt"], "UNJUDGED") for r in changed)
     rec = recommend(len(changed), dict(changed_states))
     reconstructed = sum(S.replay_receipt(r).verdict == r["verdict"] for r in receipts)
+    # Where would non-ALLOW work have gone (plan s14 S3)? Hindsight, so it runs only after
+    # every receipt is final and is handed a fresh verdict map, never a receipt.
+    import estate_displacement as ed                # local: the live decider never needs it
+    verdict_of = {r["subject"]["tool_use_id"]: r["verdict"] for r in receipts}
+    universe = spawns_in(con, start - ROOT_LOOKBACK_S, end + ed.LATER_HORIZON_S)
+    disp = ed.displacement(con, sp, verdict_of, universe)
     return {
         "status": "SHADOW (no launch was or will be changed)",
         "policy": S.POLICY_V2, "bands_digest": S.bands_digest(bands), "bands": bands,
@@ -300,6 +306,7 @@ def replay_v2(con, b0, b1, start, end) -> dict:
                                        "shadow, never a certified improvement"},
         "meta_overhead": {"wall_s": round(time.perf_counter() - t0, 2), "model_calls": 0,
                           "spawns_judged": len(sp)},
+        "displacement": disp,
         "_receipts": receipts,
     }
 
