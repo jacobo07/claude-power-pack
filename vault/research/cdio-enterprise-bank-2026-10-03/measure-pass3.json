@@ -1,0 +1,601 @@
+{
+ "carbon": {
+  "url": "https://react.carbondesignsystem.com/iframe.html?id=components-datatable-basic--default&viewMode=story",
+  "sel": null,
+  "finalUrl": "https://react.carbondesignsystem.com/iframe.html?id=components-datatable-basic--default&viewMode=story",
+  "status": 200,
+  "title": "components-datatable-basic--default",
+  "frames": 1,
+  "crossOriginFrames": 0,
+  "ground": "#ffffff",
+  "table": {
+   "count": 1,
+   "width": 1356,
+   "bodyRows": 7,
+   "headRows": 1,
+   "bodyRowH": 48,
+   "headRowH": 48,
+   "cellFont": "14px",
+   "cellLine": "18.0001px",
+   "cellPadL": "16px",
+   "cellWeight": "400",
+   "cellInk": "#525252",
+   "cellInkRatio": 7.1,
+   "headFont": "14px",
+   "headWeight": "600",
+   "headTransform": "none",
+   "headBg": "#e0e0e0",
+   "headBgVsTable": 1.32,
+   "tableBg": "#ffffff",
+   "rowBgs": [
+    [
+     "#f4f4f4",
+     7
+    ]
+   ],
+   "dividers": [
+    {
+     "c": "#c6c6c6",
+     "r": 1.55,
+     "w": "1px"
+    },
+    {
+     "c": "#c6c6c6",
+     "r": 1.55,
+     "w": "1px"
+    },
+    {
+     "c": "#c6c6c6",
+     "r": 1.55,
+     "w": "1px"
+    }
+   ],
+   "radius": "0px",
+   "sample": "Load Balancer 1"
+  },
+  "controls": [],
+  "controlH": null,
+  "controlRadius": null,
+  "actionH": null,
+  "actionRadius": null,
+  "accentFills": [],
+  "actions": 0,
+  "fonts": [
+   [
+    "IBM Plex Sans",
+    41
+   ],
+   [
+    "Nunito Sans",
+    21
+   ]
+  ],
+  "frameUrl": "https://react.carbondesignsystem.com/iframe.html?id=components-datatable-basic--default&viewMode=story"
+ },
+ "fluent": {
+  "url": "https://react.fluentui.dev/iframe.html?id=components-table--default&viewMode=story",
+  "sel": null,
+  "finalUrl": "https://storybooks.fluentui.dev/react/iframe.html?id=components-table--default&viewMode=story",
+  "status": 200,
+  "title": "components-table--default",
+  "frames": 1,
+  "crossOriginFrames": 0,
+  "ground": "#ffffff",
+  "table": {
+   "count": 1,
+   "width": 1360,
+   "bodyRows": 4,
+   "headRows": 1,
+   "bodyRowH": 45,
+   "headRowH": 32.5,
+   "cellFont": "14px",
+   "cellLine": "20px",
+   "cellPadL": "8px",
+   "cellWeight": "400",
+   "cellInk": "#242424",
+   "cellInkRatio": 14.87,
+   "headFont": "14px",
+   "headWeight": "400",
+   "headTransform": "none",
+   "headBg": "#fafafa",
+   "headBgVsTable": 1,
+   "tableBg": "#fafafa",
+   "rowBgs": [
+    [
+     "#fafafa",
+     4
+    ]
+   ],
+   "dividers": [
+    {
+     "c": "#e0e0e0",
+     "r": 1.26,
+     "w": "1px"
+    },
+    {
+     "c": "#e0e0e0",
+     "r": 1.26,
+     "w": "1px"
+    },
+    {
+     "c": "#e0e0e0",
+     "r": 1.26,
+     "w": "1px"
+    }
+   ],
+   "radius": "0px",
+   "sample": "Meeting notes"
+  },
+  "controls": [],
+  "controlH": null,
+  "controlRadius": null,
+  "actionH": null,
+  "actionRadius": null,
+  "accentFills": [],
+  "actions": 0,
+  "fonts": [
+   [
+    "Segoe UI",
+    23
+   ],
+   [
+    "Nunito Sans",
+    16
+   ],
+   [
+    "Arial",
+    3
+   ]
+  ],
+  "frameUrl": "https://storybooks.fluentui.dev/react/iframe.html?id=components-table--default&viewMode=story"
+ },
+ "primer": {
+  "url": "https://primer.style/react/storybook/iframe.html?id=experimental-components-datatable--default&viewMode=story",
+  "sel": null,
+  "finalUrl": "https://primer.style/react/storybook/iframe.html?id=experimental-components-datatable--default&viewMode=story",
+  "status": 200,
+  "title": "experimental-components-datatable--default",
+  "frames": 1,
+  "crossOriginFrames": 0,
+  "ground": "#ffffff",
+  "table": {
+   "count": 1,
+   "width": 1408,
+   "bodyRows": 0,
+   "headRows": 9,
+   "bodyRowH": null,
+   "headRowH": 37,
+   "cellFont": null,
+   "cellLine": null,
+   "cellPadL": null,
+   "cellWeight": null,
+   "cellInk": null,
+   "cellInkRatio": null,
+   "headFont": "12px",
+   "headWeight": "600",
+   "headTransform": "none",
+   "headBg": "#f6f8fa",
+   "headBgVsTable": 1.06,
+   "tableBg": "#ffffff",
+   "rowBgs": [],
+   "dividers": [],
+   "radius": "0px",
+   "sample": ""
+  },
+  "controls": [],
+  "controlH": null,
+  "controlRadius": null,
+  "actionH": null,
+  "actionRadius": null,
+  "accentFills": [],
+  "actions": 0,
+  "fonts": [
+   [
+    "-apple-system",
+    46
+   ],
+   [
+    "Nunito Sans",
+    18
+   ],
+   [
+    "Arial",
+    3
+   ]
+  ],
+  "frameUrl": "https://primer.style/react/storybook/iframe.html?id=experimental-components-datatable--default&viewMode=story"
+ },
+ "atlassian": {
+  "url": "https://atlassian.design/components/dynamic-table/examples",
+  "sel": null,
+  "finalUrl": "https://atlassian.design/components/dynamic-table/examples",
+  "status": 200,
+  "title": "Dynamic table - Examples - Components - Atlassian Design",
+  "frames": 1,
+  "crossOriginFrames": 0,
+  "ground": "#ffffff",
+  "table": {
+   "count": 11,
+   "width": 1000,
+   "bodyRows": 10,
+   "headRows": 1,
+   "bodyRowH": 45,
+   "headRowH": 34,
+   "cellFont": "14px",
+   "cellLine": "20px",
+   "cellPadL": "0px",
+   "cellWeight": "400",
+   "cellInk": "#292a2e",
+   "cellInkRatio": 14.34,
+   "headFont": "12px",
+   "headWeight": "653",
+   "headTransform": "none",
+   "headBg": "#ffffff",
+   "headBgVsTable": 1,
+   "tableBg": "#ffffff",
+   "rowBgs": [
+    [
+     "#ffffff",
+     9
+    ],
+    [
+     "#e9f2fe",
+     1
+    ]
+   ],
+   "dividers": [],
+   "radius": "0px",
+   "sample": "George Washington"
+  },
+  "controls": [],
+  "controlH": null,
+  "controlRadius": null,
+  "actionH": 32,
+  "actionRadius": 6,
+  "accentFills": [
+   [
+    "#e9f2fe",
+    6
+   ]
+  ],
+  "actions": 223,
+  "fonts": [
+   [
+    "Atlassian Sans",
+    581
+   ],
+   [
+    "Charlie Display",
+    11
+   ],
+   [
+    "Arial",
+    2
+   ]
+  ],
+  "frameUrl": "https://atlassian.design/components/dynamic-table/examples"
+ },
+ "lightning": {
+  "url": "https://www.lightningdesignsystem.com/2e1ef8501/p/86f13a-data-table",
+  "sel": null,
+  "finalUrl": "https://www.lightningdesignsystem.com/2e1ef8501/p/86f13a-data-table",
+  "status": 200,
+  "title": "Data Table · Lightning Design System 2",
+  "frames": 1,
+  "crossOriginFrames": 9,
+  "ground": "#ffffff",
+  "table": {
+   "count": 2,
+   "width": 848,
+   "bodyRows": 17,
+   "headRows": 0,
+   "bodyRowH": 79,
+   "headRowH": null,
+   "cellFont": "13px",
+   "cellLine": "normal",
+   "cellPadL": "8px",
+   "cellWeight": "400",
+   "cellInk": "#444444",
+   "cellInkRatio": 9.74,
+   "headFont": null,
+   "headWeight": null,
+   "headTransform": null,
+   "headBg": null,
+   "headBgVsTable": null,
+   "tableBg": "#ffffff",
+   "rowBgs": [
+    [
+     "#ffffff",
+     17
+    ]
+   ],
+   "dividers": [
+    {
+     "c": "#e5e5e5",
+     "r": 1.26,
+     "w": "1px"
+    },
+    {
+     "c": "#e5e5e5",
+     "r": 1.26,
+     "w": "1px"
+    },
+    {
+     "c": "#e5e5e5",
+     "r": 1.26,
+     "w": "1px"
+    }
+   ],
+   "radius": "0px",
+   "sample": ""
+  },
+  "controls": [
+   {
+    "h": 22,
+    "radius": "0px",
+    "font": "14px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 32,
+    "radius": "4px",
+    "font": "12px",
+    "fill": "#ffffff",
+    "border": {
+     "c": "#757575",
+     "r": 4.46,
+     "top": "1px",
+     "bottom": "1px"
+    }
+   }
+  ],
+  "controlH": 32,
+  "controlRadius": 4,
+  "actionH": 20,
+  "actionRadius": 0,
+  "accentFills": [],
+  "actions": 74,
+  "fonts": [
+   [
+    "DM sans",
+    71
+   ],
+   [
+    "Arial",
+    18
+   ],
+   [
+    "AvantGardeForSalesforce",
+    7
+   ]
+  ],
+  "frameUrl": "https://www.lightningdesignsystem.com/2e1ef8501/p/86f13a-data-table"
+ },
+ "ui5": {
+  "url": "https://ui5.github.io/webcomponents/components/Table/",
+  "sel": "ui5-table",
+  "finalUrl": "https://ui5.github.io/webcomponents/components/Table/",
+  "status": 200,
+  "title": "Table | UI5 Web Components",
+  "frames": 1,
+  "crossOriginFrames": 0,
+  "ground": "#f5f6f7",
+  "table": {
+   "count": 1,
+   "width": 805,
+   "bodyRows": 7,
+   "headRows": 1,
+   "bodyRowH": 32,
+   "headRowH": 34,
+   "cellFont": "14px",
+   "cellLine": "normal",
+   "cellPadL": "16px",
+   "cellWeight": "400",
+   "cellInk": "#131e29",
+   "cellInkRatio": 16.86,
+   "headFont": "14px",
+   "headWeight": "400",
+   "headTransform": "none",
+   "headBg": "#ffffff",
+   "headBgVsTable": 1.08,
+   "tableBg": "#f5f6f7",
+   "rowBgs": [
+    [
+     "#eff1f2",
+     2
+    ],
+    [
+     "#ffffff",
+     5
+    ]
+   ],
+   "dividers": [
+    {
+     "c": "#a8b2bd",
+     "r": 2.15,
+     "w": "1px"
+    }
+   ],
+   "radius": "0px",
+   "sample": "Berlin"
+  },
+  "controls": [],
+  "controlH": null,
+  "controlRadius": null,
+  "actionH": null,
+  "actionRadius": null,
+  "accentFills": [],
+  "actions": 0,
+  "fonts": [
+   [
+    "Times New Roman",
+    1
+   ]
+  ],
+  "frameUrl": "https://unpkg.com/playground-elements@0.18.1/__playground_swfs_1dae6563/36pq57f/index.html"
+ },
+ "ant": {
+  "url": "https://ant.design/components/table",
+  "sel": "first:.ant-table table",
+  "finalUrl": "https://ant.design/components/table",
+  "status": 200,
+  "title": "Table - Ant Design",
+  "frames": 1,
+  "crossOriginFrames": 0,
+  "ground": "#ffffff",
+  "table": {
+   "count": 61,
+   "width": 878,
+   "bodyRows": 3,
+   "headRows": 1,
+   "bodyRowH": 55,
+   "headRowH": 55,
+   "cellFont": "14px",
+   "cellLine": "22px",
+   "cellPadL": "16px",
+   "cellWeight": "400",
+   "cellInk": "#1f1f1f",
+   "cellInkRatio": 16.48,
+   "headFont": "14px",
+   "headWeight": "600",
+   "headTransform": "none",
+   "headBg": "#fafafa",
+   "headBgVsTable": 1.04,
+   "tableBg": "#ffffff",
+   "rowBgs": [
+    [
+     "#ffffff",
+     3
+    ]
+   ],
+   "dividers": [
+    {
+     "c": "#f0f0f0",
+     "r": 1.14,
+     "w": "1px"
+    },
+    {
+     "c": "#f0f0f0",
+     "r": 1.14,
+     "w": "1px"
+    },
+    {
+     "c": "#f0f0f0",
+     "r": 1.14,
+     "w": "1px"
+    }
+   ],
+   "radius": "8px",
+   "sample": "John Brown"
+  },
+  "controls": [
+   {
+    "h": 32,
+    "radius": "20px",
+    "font": "14px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 22,
+    "radius": "0px",
+    "font": "14px",
+    "fill": "#f5f5f5",
+    "border": null
+   },
+   {
+    "h": 22,
+    "radius": "0px",
+    "font": "14px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 22,
+    "radius": "0px",
+    "font": "14px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 22,
+    "radius": "0px",
+    "font": "14px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 22,
+    "radius": "0px",
+    "font": "14px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 22,
+    "radius": "0px",
+    "font": "14px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 22,
+    "radius": "0px",
+    "font": "14px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 24,
+    "radius": "6px",
+    "font": "14px",
+    "fill": "#ffffff",
+    "border": {
+     "c": "#d9d9d9",
+     "r": 1.41,
+     "top": "1px",
+     "bottom": "1px"
+    }
+   },
+   {
+    "h": 24,
+    "radius": "6px",
+    "font": "14px",
+    "fill": "#ffffff",
+    "border": {
+     "c": "#d9d9d9",
+     "r": 1.41,
+     "top": "1px",
+     "bottom": "1px"
+    }
+   }
+  ],
+  "controlH": 22,
+  "controlRadius": 0,
+  "actionH": 24,
+  "actionRadius": 6,
+  "accentFills": [
+   [
+    "#1677ff",
+    10
+   ]
+  ],
+  "actions": 283,
+  "fonts": [
+   [
+    "AlibabaSans",
+    2523
+   ],
+   [
+    "SFMono-Regular",
+    634
+   ],
+   [
+    "Avenir",
+    10
+   ]
+  ],
+  "frameUrl": "https://ant.design/components/table"
+ }
+}

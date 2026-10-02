@@ -1,0 +1,458 @@
+{
+ "primer": {
+  "url": "https://primer.style/react/storybook/iframe.html?id=experimental-components-datatable--default&viewMode=story",
+  "sel": null,
+  "finalUrl": "https://primer.style/react/storybook/iframe.html?id=experimental-components-datatable--default&viewMode=story",
+  "status": 200,
+  "title": "experimental-components-datatable--default",
+  "frames": 1,
+  "crossOriginFrames": 0,
+  "ground": "#ffffff",
+  "table": {
+   "count": 1,
+   "width": 1408,
+   "bodyRows": 8,
+   "headRows": 1,
+   "bodyRowH": 37,
+   "headRowH": 38,
+   "cellFont": "12px",
+   "cellLine": "20px",
+   "cellPadL": "12px",
+   "cellWeight": "400",
+   "cellInk": "#1f2328",
+   "cellInkRatio": 15.8,
+   "headFont": "12px",
+   "headWeight": "600",
+   "headTransform": "none",
+   "headBg": "#f6f8fa",
+   "headBgVsTable": 1.06,
+   "tableBg": "#ffffff",
+   "rowBgs": [
+    [
+     "#ffffff",
+     8
+    ]
+   ],
+   "dividers": [
+    {
+     "c": "#d1d9e0",
+     "r": 1.43,
+     "w": "1px"
+    },
+    {
+     "c": "#d1d9e0",
+     "r": 1.43,
+     "w": "1px"
+    },
+    {
+     "c": "#d1d9e0",
+     "r": 1.43,
+     "w": "1px"
+    }
+   ],
+   "radius": "0px",
+   "sample": "Internal"
+  },
+  "controls": [],
+  "controlH": null,
+  "controlRadius": null,
+  "actionH": null,
+  "actionRadius": null,
+  "accentFills": [],
+  "actions": 0,
+  "fonts": [
+   [
+    "-apple-system",
+    46
+   ],
+   [
+    "Nunito Sans",
+    18
+   ],
+   [
+    "Arial",
+    3
+   ]
+  ],
+  "frameUrl": "https://primer.style/react/storybook/iframe.html?id=experimental-components-datatable--default&viewMode=story"
+ },
+ "lightning_v1": {
+  "url": "https://v1.lightningdesignsystem.com/components/data-tables/",
+  "sel": "first:.slds-table",
+  "finalUrl": "https://v1.lightningdesignsystem.com/components/data-tables/",
+  "status": 200,
+  "title": "Data Tables - Lightning Design System",
+  "frames": 2,
+  "crossOriginFrames": 0,
+  "ground": "#ffffff",
+  "table": {
+   "count": 72,
+   "width": 729,
+   "bodyRows": 3,
+   "headRows": 1,
+   "bodyRowH": 29.5625,
+   "headRowH": 32,
+   "cellFont": "13px",
+   "cellLine": "19.5px",
+   "cellPadL": "8px",
+   "cellWeight": "400",
+   "cellInk": "#181818",
+   "cellInkRatio": 17.76,
+   "headFont": "13px",
+   "headWeight": "700",
+   "headTransform": "none",
+   "headBg": "#f3f3f3",
+   "headBgVsTable": 1.11,
+   "tableBg": "#ffffff",
+   "rowBgs": [
+    [
+     "#ffffff",
+     3
+    ]
+   ],
+   "dividers": [],
+   "radius": "0px",
+   "sample": "Select item 1"
+  },
+  "controls": [
+   {
+    "h": 32,
+    "radius": "4px",
+    "font": "14px",
+    "fill": "#ffffff",
+    "border": {
+     "c": "#d8dee6",
+     "r": 1.35,
+     "top": "1px",
+     "bottom": "1px"
+    }
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   }
+  ],
+  "controlH": 1,
+  "controlRadius": 0,
+  "actionH": 20,
+  "actionRadius": 4,
+  "accentFills": [
+   [
+    "#0b5cab",
+    2
+   ]
+  ],
+  "actions": 657,
+  "fonts": [
+   [
+    "-apple-system",
+    2309
+   ],
+   [
+    "SalesforceSansLight",
+    1
+   ],
+   [
+    "Times New Roman",
+    1
+   ]
+  ],
+  "frameUrl": "https://v1.lightningdesignsystem.com/components/data-tables/"
+ },
+ "lightning_lwc": {
+  "url": "https://developer.salesforce.com/docs/component-library/bundle/lightning-datatable/example",
+  "sel": "first:table",
+  "finalUrl": "https://developer.salesforce.com/docs/platform/lightning-component-reference/guide/lightning-datatable.html?type=Example",
+  "status": 200,
+  "title": "Datatable | Components | Lightning Component Reference | Salesforce Developers",
+  "frames": 1,
+  "crossOriginFrames": 0,
+  "ground": "#ffffff",
+  "table": {
+   "count": 1,
+   "width": 947,
+   "bodyRows": 100,
+   "headRows": 0,
+   "bodyRowH": 36.5,
+   "headRowH": null,
+   "cellFont": "13px",
+   "cellLine": "19.5px",
+   "cellPadL": "8px",
+   "cellWeight": "400",
+   "cellInk": "#5c5c5c",
+   "cellInkRatio": 6.69,
+   "headFont": null,
+   "headWeight": null,
+   "headTransform": null,
+   "headBg": null,
+   "headBgVsTable": null,
+   "tableBg": "#ffffff",
+   "rowBgs": [
+    [
+     "#ffffff",
+     20
+    ]
+   ],
+   "dividers": [],
+   "radius": "0px",
+   "sample": "Select Item 1"
+  },
+  "controls": [
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   },
+   {
+    "h": 1,
+    "radius": "0px",
+    "font": "13px",
+    "fill": "#ffffff",
+    "border": null
+   }
+  ],
+  "controlH": 1,
+  "controlRadius": 0,
+  "actionH": 32,
+  "actionRadius": 8,
+  "accentFills": [],
+  "actions": 11,
+  "fonts": [
+   [
+    "system-ui",
+    718
+   ],
+   [
+    "ITC Avant Garde",
+    7
+   ],
+   [
+    "Salesforce Sans",
+    4
+   ]
+  ],
+  "frameUrl": "https://developer.salesforce.com/playground/lwc/lightning/datatable.html"
+ }
+}
