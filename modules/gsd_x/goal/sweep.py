@@ -39,6 +39,7 @@ from . import epoch as ep
 from . import git_state as gs
 from . import log as gl
 from . import reconcile as rc
+from .engine_identity import engine_identity
 from .providers.gate import GateProvider
 
 # The suites whose green is the precondition for acting unattended.
@@ -97,7 +98,8 @@ def record_gates(pp_root: Path, python: str | None = None) -> dict:
         tail = [ln for ln in (proc.stdout or "").splitlines() if "_PASS=" in ln]
         results[suite] = {"ok": proc.returncode == 0, "detail": tail[-1] if tail else
                           f"exit {proc.returncode}"}
-    payload = {"head": head, "ts": datetime.now(timezone.utc).isoformat(),
+    payload = {"head": head, "engine": engine_identity(pp_root),
+               "ts": datetime.now(timezone.utc).isoformat(),
                "suites": results,
                "green": all(r["ok"] for r in results.values())}
     path = record_path()
@@ -119,6 +121,17 @@ def autonomy_verdict(pp_root: Path) -> tuple[bool, str]:
     if not rec.get("green"):
         bad = [s for s, r in (rec.get("suites") or {}).items() if not r.get("ok")]
         return False, f"the autonomy record is not green: {bad}"
+    # The engine digest, when both sides have one, is the identity that matters:
+    # it moves when the code that would run moves and ignores the other writers'
+    # commits that move HEAD every few minutes (engine_identity docstring).
+    rec_engine = rec.get("engine") or ""
+    engine = engine_identity(pp_root) if rec_engine else ""
+    if rec_engine and engine:
+        if rec_engine != engine:
+            return False, (f"the autonomy record is for engine {rec_engine[7:19]}, this "
+                           f"runtime's engine is {engine[7:19]}: re-run `record-gates` on "
+                           "the code that would run")
+        return True, f"judge and chaos suites green on engine {engine[7:15]}"
     head = runtime_identity(pp_root)
     if not head:
         # UNKNOWN is not a match (UWCP S1-10): a runtime nobody can identify
