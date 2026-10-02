@@ -150,6 +150,21 @@ def main() -> int:
     wd._read_autorun_marker = lambda s_: None
     check("V-ROLLECON-MISSION-WORKER-EXCLUDED", out is None and spawned == [], f"mission -> out={out}")
 
+    # A Ralph mission worker launched by `claude --bg` carries NO autorun marker; it is known
+    # only as the owner of a gsd-mission-*.json (measured 2026-10-02: session 4ec01521,
+    # mission m-129ddae5ccf3, mode ralph). The Owner keeps those runs untouched.
+    s = fresh()
+    mfile = Path(os.environ["GSD_AUTORUN_MARKER_DIR"]) / "gsd-mission-m-test.json"
+    mfile.write_text(json.dumps({"mission_id": "m-test", "mode": "ralph", "state": "RUNNING",
+                                 "owner": {"session_id": s}}), encoding="utf-8")
+    wd._econ_rollover(s, str(ROOT), "", 30.0)
+    head["v"] = "bbb222"
+    write_decision(s, "bbb222", True)
+    out = wd._econ_rollover(s, str(ROOT), "", 32.0)
+    mfile.unlink()
+    check("V-ROLLECON-MISSION-OWNER-EXCLUDED", out is None and spawned == [],
+          f"owner of a mission file, no marker -> out={out} spawned={spawned}")
+
     s = fresh()
     head["v"] = None
     out = wd._econ_rollover(s, str(ROOT), "", 32.0)

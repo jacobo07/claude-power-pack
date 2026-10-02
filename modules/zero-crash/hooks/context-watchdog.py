@@ -1238,8 +1238,27 @@ def _econ_spawn(session_id: str, cwd: str, transcript_path: str, used_pct, start
     return False
 
 
+def _mission_owner(session_id: str) -> bool:
+    """True when this session owns a gsd-mission-*.json. A Ralph worker launched by `claude
+    --bg` carries no autorun marker -- measured 2026-10-02, session 4ec01521 owning mission
+    m-129ddae5ccf3 (mode ralph) -- so the marker check alone let the economic trigger reach
+    it. Unknown (unreadable dir) counts as owner: refusing an offer costs nothing."""
+    try:
+        for p in Path(mk_state_dir()).glob("gsd-mission-*.json"):
+            try:
+                m = json.loads(p.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if isinstance(m, dict) and (m.get("owner") or {}).get("session_id") == session_id:
+                return True
+    except Exception:
+        return True
+    return False
+
+
 def _econ_rollover(session_id: str, cwd: str, transcript_path: str, used_pct) -> dict | None:
-    """One Stop of the economic trigger. Returns the /kclear block, or None. Never raises."""
+    """One Stop of the economic trigger. Returns the /kclear block, or None. Never raises.
+    Mission ownership is checked only before a spawn or an ask -- rare events -- not per Stop."""
     try:
         if not _econ_enabled() or _flag_exists(session_id, ROLLOVER_ASK_FLAG):
             return None
@@ -1256,6 +1275,10 @@ def _econ_rollover(session_id: str, cwd: str, transcript_path: str, used_pct) ->
         if used_pct is None or float(used_pct) < _econ_floor() or head == st.get("declined_head"):
             return None
         dec = _econ_decision(session_id)
+        if head != st.get("eval_head") or (dec.get("head") == head and
+                                           (dec.get("decision") or {}).get("would_rollover") is True):
+            if _mission_owner(session_id):
+                return None                  # Ralph worker without a marker: Owner's run, untouched
         if dec.get("head") == head and (dec.get("decision") or {}).get("would_rollover") is True:
             st.update(asked_head=head, eval_head=head)   # a withdrawal declines THIS head
             _econ_save(session_id, st)
