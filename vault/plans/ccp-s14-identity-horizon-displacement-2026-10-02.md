@@ -59,6 +59,15 @@ classified; "savings" wording removed from replay output.
   S2 (b) scratch rebuild NOT RUN: it tests live-index regenerability, not this decision.
   Recommendation: DELETE, on the Owner's typed consent only, re-hashing to the sha256 above
   immediately before the delete and refusing on any mismatch.
+- S3 MEASURED 2026-10-03 (scratch, read-only, 0 model calls; code waits for its audit). Handoff
+  from 2a: `spawns.input_hash` (schema v4), `replay_v2` receipts, estate_shadow free to edit.
+  replay-v2 over the PRG window judged 240 spawns: 20 WOULD_DEFER (v1: 15), 0 WOULD_REJECT.
+  Displacement: REUSABLE_RESULT_EXISTED 0, EQUIVALENT_ACTIVE 0, RAN_LATER_EQUIVALENT 1 (child 0
+  calls, equivalent ran later), UNKNOWN 19. Parent overlap (child tool inputs re-issued by the
+  parent after the spawn) measured 18/20: max 0.111, 11 at 0.0 -> evidence AGAINST absorption.
+  Saving claim = interval [0, 1,399 calls / 349,600,836 cache read]; history cannot place the
+  work, and it was not duplicate work. Implication for live admission: these defers would delay
+  or drop distinct work, not remove waste.
 
 ## Not this pane / not now
 Horizontal = decide_spawn + estate_shadow (2a). Longitudinal actuator = rollover + context-watchdog
