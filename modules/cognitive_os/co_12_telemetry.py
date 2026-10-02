@@ -181,7 +181,10 @@ def loop_boundedness(proj_base=None, *,
             return {"sessions": 0, "bounded": 0, "unbounded": 0,
                     "threshold": threshold, "top_unbounded": [],
                     "note": "no projects dir"}
-        rows = []
+        # One row per SESSION id: a junction alias (2,275 rows for 2,123 ids on
+        # 2026-10-02) or a session recorded under two project dirs would count
+        # twice. The longer copy is the more complete one.
+        by_sid: dict[str, int] = {}
         for sub in base.iterdir():
             if not sub.is_dir():
                 continue
@@ -190,7 +193,8 @@ def loop_boundedness(proj_base=None, *,
                     continue
                 if not _SID_RE.match(jf.stem):
                     continue  # only real session transcripts (uuid-like stem)
-                rows.append((jf.stem, _count_entries(jf)))
+                by_sid[jf.stem] = max(by_sid.get(jf.stem, 0), _count_entries(jf))
+        rows = list(by_sid.items())
         unbounded = [(sid, n) for sid, n in rows if n > threshold]
         unbounded.sort(key=lambda r: r[1], reverse=True)
         return {

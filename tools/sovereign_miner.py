@@ -153,16 +153,21 @@ backforth_clusters = Counter()  # project -> count of >=3 consecutive short user
 
 
 def mine_transcripts():
+    # Each store once (tis_observed.store_dirs): walking PROJECTS_DIR as listed
+    # followed a junction alias and mined 273 files twice (2026-10-02). The
+    # project is the store's own dir name, so a junction to a dir outside
+    # PROJECTS_DIR does not read as "..".
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import tis_observed
     files = sorted(
-        glob.glob(os.path.join(PROJECTS_DIR, "**", "*.jsonl"), recursive=True)
-        + glob.glob(os.path.join(PROJECTS_DIR, "**", "*.jsonl.live"), recursive=True)
-    )
+        (path, d.name) for d in tis_observed.store_dirs(PROJECTS_DIR)
+        for pat in ("*.jsonl", "*.jsonl.live")
+        for path in glob.glob(os.path.join(str(d), "**", pat), recursive=True))
     STATS["files_total"] = len(files)
-    for i, path in enumerate(files):
+    for i, (path, proj) in enumerate(files):
         if i % 200 == 0:
             sys.stderr.write(f"[miner] {i}/{len(files)} files\n")
             sys.stderr.flush()
-        proj = project_of(path)
         STATS["files_scanned"] += 1
         run_short_user = 0
         try:

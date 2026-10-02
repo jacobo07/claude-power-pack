@@ -136,17 +136,8 @@ def _store_dirs(proj_base) -> list[Path]:
     mcp-video-analyzer -> the PP dir): walked as listed, 152 transcripts were
     read twice on 2026-10-02. Yielding the resolved path also makes the
     path-keyed identity of an id-less call independent of listing order, as
-    usage_index does since f234580."""
-    base = Path(proj_base or DEFAULT_PROJ_BASE)
-    if not base.is_dir():
-        return []
-    seen: dict[str, Path] = {}
-    for sub in sorted(base.iterdir()):
-        if not sub.is_dir():
-            continue
-        real = Path(os.path.realpath(sub))
-        seen.setdefault(os.path.normcase(str(real)), real)
-    return list(seen.values())
+    usage_index does since f234580. One implementation: tis_observed.store_dirs."""
+    return _tis().store_dirs(proj_base or DEFAULT_PROJ_BASE)
 
 
 def iter_transcripts(proj_base) -> list[Path]:

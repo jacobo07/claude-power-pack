@@ -212,7 +212,7 @@ def _aggregate_observed(window_days: int, pricing: dict | None,
     if dirs is None:
         if not tob.PROJECTS_DIR.is_dir():
             return {"state": "UNMEASURED", "reason": "no transcripts dir"}
-        dirs = [p for p in tob.PROJECTS_DIR.iterdir() if p.is_dir()]
+        dirs = tob.store_dirs()   # junction aliases once: +65 calls / 7 d (2026-10-02)
     models = (pricing or {}).get("models") or {}
     out = {"state": "MEASURED", "source": "observed", "calls": 0,
            "interactive_calls_excluded": 0, "usd": 0.0, "unpriced_calls": 0,

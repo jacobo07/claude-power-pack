@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import statistics
 import sys
@@ -345,11 +346,31 @@ def project_key(path: Path) -> str:
     return re.sub(r"[^A-Za-z0-9]", "-", str(path))
 
 
+def store_dirs(base=None) -> list[Path]:
+    """Each transcript store under `base` once, by resolved path, as that path.
+
+    A directory junction aliases a project dir (projects/C--Users-User-Apps-
+    mcp-video-analyzer -> the PP dir): walked as listed, 152 transcripts were
+    read twice on 2026-10-02. The resolved path also makes a path-keyed
+    identity independent of listing order. A junction to a dir OUTSIDE `base`
+    is a distinct store and is kept. This is STORE identity: a reader that
+    counts sessions dedupes by session id instead."""
+    base = Path(base or PROJECTS_DIR)
+    if not base.is_dir():
+        return []
+    seen: dict[str, Path] = {}
+    for sub in sorted(base.iterdir()):
+        if sub.is_dir():
+            real = Path(os.path.realpath(sub))
+            seen.setdefault(os.path.normcase(str(real)), real)
+    return list(seen.values())
+
+
 def _project_dirs(args) -> list[Path]:
     if args.project_dir:
         return [Path(p) for p in args.project_dir]
     if args.all_projects:
-        return sorted(p for p in PROJECTS_DIR.iterdir() if p.is_dir())
+        return store_dirs()
     return [PROJECTS_DIR / project_key(Path.cwd().resolve())]
 
 
