@@ -1,0 +1,9 @@
+﻿total est usd=8,312
+[L1] main ctx cap 150k: upper-bound saving ~usd 729 (8.8%); crossings ~891
+[L1] main ctx cap 200k: upper-bound saving ~usd 613 (7.4%); crossings ~583
+[L1] main ctx cap 250k: upper-bound saving ~usd 471 (5.7%); crossings ~365
+[L1] main ctx cap 300k: upper-bound saving ~usd 231 (2.8%); crossings ~315
+[L2] subagents actual usd=2,315 -> all-Sonnet-5.5 usd=1,997: saving 318 (3.8%)
+[L3] 1h writes=265,601,135; 1h->5m price delta=798 (9.6%); inter-call gaps <=5min: 97.8%
+[L4] floor -20k tokens on every call: saving ~usd 525 (6.3%)
+[L4] floor -40k tokens on every call: saving ~usd 1,050 (12.6%)

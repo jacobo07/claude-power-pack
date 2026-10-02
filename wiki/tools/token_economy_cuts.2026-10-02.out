@@ -1,0 +1,53 @@
+﻿window: 2026-09-25 20:48Z -> 2026-10-02 20:48Z
+calls=76126
+
+[1] est usd=8,312
+  input        tokens=        268,294  usd=         1  share=  0.0%
+  cache_write  tokens=    429,793,944  usd=     2,754  share= 33.1%
+  cache_read   tokens= 22,129,709,473  usd=     4,481  share= 53.9%
+  output       tokens=     57,272,207  usd=     1,077  share= 13.0%
+
+[2] main: calls=48336 ctx p10/p50/p90/p99 = 171,325/305,549/467,874/660,801  usd=5,997 (72.1%)
+
+[2] sub: calls=27790 ctx p10/p50/p90/p99 = 134,929/238,253/420,323/571,629  usd=2,315 (27.9%)
+
+[3] by model
+  claude-opus-5-5                          calls= 62,354 usd=    7,124 (85.7%)
+  claude-sonnet-5-5                        calls=  8,526 usd=      595 (7.2%)
+  claude-sonnet-5                          calls=  4,608 usd=      412 (5.0%)
+  claude-opus-5                            calls=    549 usd=      177 (2.1%)
+  claude-haiku-4-5-20251001                calls=     89 usd=        4 (0.0%)
+
+[4] by prompt kind/source
+  human/typed                              calls= 31,620 usd=    3,657 (44.0%)
+  peer/system                              calls= 22,155 usd=    2,031 (24.4%)
+  human/?                                  calls= 13,003 usd=    1,265 (15.2%)
+  sdk/sdk                                  calls=  1,071 usd=      504 (6.1%)
+  task-notification/system                 calls=  3,642 usd=      379 (4.6%)
+  human/queued                             calls=  3,259 usd=      319 (3.8%)
+  auto-continuation/system                 calls=    797 usd=       92 (1.1%)
+  ?/?                                      calls=    166 usd=       21 (0.3%)
+  sdk/?                                    calls=    159 usd=       21 (0.3%)
+  scheduled/system                         calls=    216 usd=       17 (0.2%)
+
+[5] subagent types
+  general-purpose              calls=13,375 usd=   1,063 (12.8%) ctx p50=228,037
+  gsd-executor                 calls= 7,787 usd=     666 (8.0%) ctx p50=319,922
+  gsd-planner                  calls= 2,156 usd=     255 (3.1%) ctx p50=289,254
+  gsd-phase-researcher         calls=   886 usd=      63 (0.8%) ctx p50=217,907
+  oneshot-architect-auditor    calls=   647 usd=      49 (0.6%) ctx p50=136,588
+  gsd-verifier                 calls=   535 usd=      45 (0.5%) ctx p50=173,413
+  pp-code-reviewer             calls=   534 usd=      44 (0.5%) ctx p50=108,201
+  Explore                      calls=   762 usd=      37 (0.4%) ctx p50=80,893
+  gsd-code-fixer               calls=   466 usd=      33 (0.4%) ctx p50=269,132
+  gsd-code-reviewer            calls=   251 usd=      24 (0.3%) ctx p50=176,563
+
+[6] entrypoint
+  cli            calls= 74,881 usd=    7,787 (93.7%)
+  sdk-cli        calls=  1,245 usd=      525 (6.3%)
+
+[7] sessions=983 top10=14.2% top50=38.7% median_session_usd=1.0
+
+[8] cache writes: total=429,793,944 5m=164,192,809 (38.2%) 1h=265,601,135 (61.8%)
+
+[9] main transcripts=981 calls/transcript p50=1 p90=175; (>=20 calls) first ctx p50=145,954 last ctx p50=420,872 p90=510,881

@@ -1,0 +1,18 @@
+﻿[A] peer/system by project dir
+  SUB:7480f14f-a0f2-4f0c-9ee3-1c7eee960640                               calls=  1258 usd=    108
+  C--Users-User-Apps-orca-dws-wt                                         calls=   853 usd=    107
+  SUB:2639597a-7463-4117-a6bd-285315f3239c                               calls=  1132 usd=    101
+  C--Users-User-Desktop-Cursor-Projects-InfinityOps                      calls=   914 usd=     96
+  SUB:60cfcec4-80d1-4245-80f8-a93dba41b75a                               calls=  1194 usd=     92
+  SUB:030cc820-afa2-4c0e-9b5a-1fd7d6ee9961                               calls=   871 usd=     85
+  SUB:997a0f04-4531-4a2b-bf19-7ed523e9c100                               calls=  1053 usd=     80
+  SUB:65cb71ae-3e40-4e45-a43b-ae1e8d2a17d1                               calls=   620 usd=     68
+  prompt kinds in table: [('human/typed', 3664), ('task-notification/system', 1144), ('human/?', 993), ('?/?', 873), ('sdk/sdk', 681), ('peer/system', 660), ('human/queued', 457), ('?/sdk', 81), ('sdk/?', 40), ('human/suggestion_accepted', 17), ('?/system', 15), ('scheduled/system', 11)]
+
+[B] one-call main transcripts=516 of 981; usd=409 (4.9%); entrypoints=[('sdk-cli', 508), ('cli', 8)]
+  sample titles: ['Decompose the research topic below into specialise', 'Decompose the research topic below into specialise', 'Decompose the research topic below into specialise', 'A fact is "topic clusters can saturate". A capabil', 'A fact is "topic clusters can saturate". A capabil', 'Decompose the research topic below into specialise', 'Reply with exactly: PROBE-OK', 'Reply with exactly: PROBE-OK']
+
+[C] transcripts=1547 first-call cache_write=162,282,767 (37.8% of all writes); first-call usd=1,095 (13.2%)
+  first-call context p10/p50/p90 = 85,495/114,148/165,472
+
+[D] later calls=74579; with cache_write>50k (prefix rebuilt mid-session)=358 usd=670 (8.1%); their cw sum=98,883,412

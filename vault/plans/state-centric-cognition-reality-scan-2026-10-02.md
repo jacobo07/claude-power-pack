@@ -141,3 +141,15 @@ owner (no edit). Defaults: goal spine is the only state store; model-calling epo
    Observed bonus: while engine files were dirty (my edits, the mutation drill) every scheduled
    pass REFUSED with a named reason -- the sweep cannot run unverified code or a mutant.
 3. S6 proposal note to the SPEC-ECON-ROLLOVER owner.
+4. **TOKEN-ECONOMY RESEARCH (Owner: "expand the research on token saving ... massive evolution",
+   2026-10-02), IN PROGRESS.** Measured (7 d to 2026-10-02T20:48Z, `wiki/tools/token_economy_*.py`
+   + `.out`): $8,312 API-equiv; cache read 54 %, cache WRITE 33 %, output 13 %; main thread 72 %
+   (ctx p50 305k); Opus 85.7 %; cold first calls 13.2 %; 508 one-call sdk probes 4.9 %; mid-session
+   prefix rebuilds 8.1 %. Upper bounds: floor -40k 12.6 %, 1h->5m TTL 9.6 % (97.8 % gaps <= 5 min;
+   TTL is harness-chosen, not in settings), main ctx cap 150-200k 7-9 %, subagents->Sonnet 3.8 %
+   (price table gives Opus/Sonnet equal cache_read: verify). USD != meter (CCP C1 G6).
+   Two research agents write `wiki/raw/2026-10-02-token-economy-external-research.md` and
+   `...-internal-inventory.md` (check they are complete; re-dispatch only the missing part).
+   Then: wiki synthesis ranking levers (share x evidence tier x owner CCP vs this mission),
+   improvement pages for unowned levers, source pages, index, log. Also inspect
+   `vault/specs/parent-context-epoch-rotation.md` (unread owner).
