@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
-"""scheduler.py -- CO-08: hard hot-session cap (the 48h-burn systemic fix).
+"""scheduler.py -- CO-08: hot-session cap DECIDER (the 48h-burn systemic fix).
+
+STATUS (verified 2026-10-02, vault/plans/cognitive-control-plane-2026-10-02.md §2):
+  decide()/admit()  LIVE   -- pure verdict, unit-tested.
+  enforcement       ABSENT -- the only live consumer is modules/wrapper/prelaunch.py,
+                    which turns a "refuse" into an ADVISORY line (_gate_advisory) since
+                    T-KCLAUDE-PASTE-WINDOW-001; no launch is blocked or redirected.
+  scope             kclaude pane launches only -- mission workers, subagents and GEX44
+                    sessions never reach admit(). At the 2026-10-02 incident 34 sessions
+                    were hot against a cap of 2.
+The "REFUSED" wording below describes the verdict, not an enforced effect.
 
 Where repo_coordinator (W4) DETECTS a second same-repo pane and the parallel-burn
 pattern but only ADVISES, this promotes those detectors into an admission gate
