@@ -186,6 +186,22 @@ and every compaction this estate has ever completed was ultimately submitted by 
 human. Raising the ceiling would have masked latency; budgeting the cold start did
 not. `97512f7`.
 
+### T-PATH-IDENTITY-IS-NOT-RESOURCE-IDENTITY-001
+
+A store walked by listing its directories counts one resource once per SPELLING.
+Measured 2026-10-02 (CPP usage index, `f234580`): `projects/C--Users-User-Apps-mcp-video-analyzer`
+is a junction to the Power Pack project dir, so 148 sessions were indexed under two paths.
+Totals survived only because calls dedup on a message id; an id-less call was counted
+twice whenever the alias listed first, and every path-keyed row (spawn parent, project,
+file offset) split in two. The defect hid because the alias is a directory like any other
+and listing order decided which spelling "won". Fix: identity = resolved physical path,
+canonical spelling = the non-link one (else the smallest), never listing order; a link
+whose target is outside the store is a distinct store. Peer S1 (`2fc1a3c5`,
+`tis_observed.store_dirs`) found the same double count in four other live consumers
+(budget_monitor +50 phantom calls in 7 d, co_12 +151 sessions, sovereign_miner 273
+duplicate files, tis --all-projects 152). Mutation-drilled: listing-order identity is
+KILLED by V-UXID-NO-ALIAS-PATH (`2a4b24f6`). #CROSS-PROJECT
+
 ### T-A-QUOTA-REFUSAL-IS-NOT-A-FINISHED-EPOCH-001
 
 A long-run supervisor that relays whenever a worker's turn ends will spend its
