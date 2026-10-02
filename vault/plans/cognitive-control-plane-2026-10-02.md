@@ -210,3 +210,24 @@ per-workflow cost envelopes. LATER: live admission, renewable leases, Goal P&L, 
 proof DAG. RESEARCH: archetypes, evidence market, correlated cognition, policy genomes,
 digital twin. REJECTED: a goal/uncertainty graph inside CCP, a scalar cognitive currency, a
 second telemetry system, fixed N-agent councils, a compiler framework as code.
+
+### 12.1 Phase-4 fix injection (`vault/audits/ccp-s12-audit.md`, EXECUTE-WITH-FIXES)
+
+- Commit 2 (G1-G3): migration rewrites all 8 path keys (`files.path`, `calls.file`, `calls.k`
+  for `off|` keys, `quota.file`, `prompts.file`, `spawns.file`, `subagents.file`) with
+  UPDATE OR IGNORE + delete-leftover, canonical row wins; one `BEGIN IMMEDIATE` transaction that
+  re-checks the version inside it; sha256-verified copy first; no forced re-read. Dedupe in
+  `_iter_files` by resolved path, keeping junction targets outside the store. Real `mklink /J`
+  fixture, reversed order variant, shown red on the pre-fix code.
+- Commit 4 (G4): schema gains `spawns.result_ts / is_error / result_head`; the index parses the
+  parent's tool_result; HOOK_BLOCKED by an explicit marker set.
+- Commit 5 (G5, G6): root resolved transitively with a cycle guard (nested fixture); depth =
+  longest sequential call chain, children by max; spawn-tree height separate; active duration
+  beside wall-clock; width stated as an approximation from call timestamps.
+- Commit 7 (golden incident, RCA §17): progress cannot be "commit issued by this root". Attribute
+  by joining the root's written files to commits in the WORKSPACE repository, in-span vs later,
+  and report the instrument's own blind spots (truncated commands, quiet output).
+- Commit 8 (G7): only pre-spawn data; equivalence via an input hash stored at index time;
+  "active" = no `result_ts <= t`; UNKNOWN separate, replay-only vs live counts reported.
+- Commit 9 (G8): the bands assertion moves into `replay()`; each mutant names its killing test.
+- G9: goal-log joins stay out of `usage_index` (engine-closure test pins it).

@@ -267,3 +267,37 @@ listing order; (2) `estate_shadow.py:90` takes project from the spawn file (disp
 today); (3) deferring a child can convert width into parent depth, invisible to replay, so
 any saving stays an upper bound; (4) UNKNOWN roots map to BACKGROUND (`scheduler.py:325`);
 (5) the decider sees load only, no owner or progress.
+
+## 17. Golden incident f319ce75 (largest human root of the window)
+
+Read-only over session `8b2c7516` (scratch `golden.py`, `golden_settle.py`). One pasted
+`/ultra-plan` prompt (InfinityOps "Focused Monochrome UI"), 2026-10-01 12:15Z -> 16:26Z,
+4.19 h, no further human prompt (one AskUserQuestion answer inside it).
+
+- 214 parent calls, 236 tool uses: PowerShell 67, Edit 61, Read 42, Write 28, Grep 25,
+  Agent 5, Glob 5. 89 mutations; 9 tool errors (5 hook denials); the most re-read file 5 times;
+  one gap > 10 min. No retry loop, no micro-step explosion.
+- 7 `git commit` commands; 7 commits touching the root's files landed in the workspace during
+  the span (one-to-one with the commands NOT verified: the repo has other writers); 16 of the 30
+  files the root wrote were committed inside the span, all 30 by 10-02 (later roots).
+- Context: first call 140,072, median 364,413, max 487,666. Surface (sum of per-call context)
+  76,239,282; 163 calls ran at >= 300k (64.4M); 46.3M (61 %) is the excess over the first-call
+  floor. The 45 % rollover fired at 16:23, three minutes before the end.
+
+Verdict: legitimate long construction. Its cost is **depth x context rent**, not width and not
+pathology: one prompt carried a growing context through 214 sequential calls. This is the
+case SPEC-ECON-ROLLOVER (peer) targets; the lever is fresh epochs at work boundaries, not
+fan-out control.
+
+Three corrections this incident forces:
+1. **Store, workspace and repository are different identities.** The session ran from the PP
+   cwd (store = PP project dir) and edited `C:\Users\User\Apps\io-focus`, a worktree of the
+   InfinityOps repository. Attribution by store bills this InfinityOps work to PP.
+2. **Progress "commit issued by this root" is not a usable signal.** My first instrument read
+   the first 80 characters of each command and the printed `[branch hash]` and found 0 commits;
+   the commands put `commit` late in long PowerShell lines and printed no hash. Full-text
+   matching found 7. Value also settles later: 14 files were committed by later roots.
+   Attribution must join written files to commits in the workspace repository.
+3. The first instrument also returned "30 of 30 covered" beside a non-empty "never committed"
+   list (case mismatch). Both instrument faults were caught by a contradiction in their own
+   output, not by a test: the progress attributor needs a fixture for each.

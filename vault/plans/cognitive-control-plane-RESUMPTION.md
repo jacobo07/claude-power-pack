@@ -47,14 +47,17 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
 
 - PRG-2 PASS (RCA §16): protected_deferred=0, all 15 would-defers reviewed and explainable.
   Plan §12 approved (Owner "y", six defaults): observation -> governed admission, ten micro-commits.
+- Phase-4 audit DONE: `vault/audits/ccp-s12-audit.md`, EXECUTE-WITH-FIXES, injected as plan §12.1.
+- Golden incident f319ce75 DONE (RCA §17): depth x context rent, legitimate construction;
+  store != workspace != repository proven on real data (io-focus = InfinityOps worktree).
 
 ## 4. Next three actions
-1. Phase-4 audit of plan §12 (oneshot-architect-auditor, Sonnet, findings to
-   `vault/audits/ccp-s12-audit.md`); inject fixes into §12 before any code.
-2. Commit 2 of §12: store identity in `usage_index` (copy + sha256 the sqlite first).
-3. Commits 3-5: estate_shadow project fix, spawn outcomes, execution shape; then f319ce75.
+1. Commit 2 of §12 per §12.1 G1-G3: store identity in `usage_index` (8 path keys, one
+   BEGIN IMMEDIATE transaction, sha256-verified sqlite copy, real `mklink /J` fixture red first).
+2. Commit 3: `estate_shadow.py:90` project from the resolved identity; bands assertion into `replay()`.
+3. Commits 4-5 per §12.1 G4-G6: spawn outcomes (tool_result columns), execution shape.
    Still open from before: `floor_probe.py probe` rent ranking -> C4.1; G5 probe after 10-07.
 
 ## 5. Start instruction
-`git log --oneline -5 -- tools/usage_index.py`, run the coherence anchor, read plan section 10,
-then action 1.
+`git log --oneline -5 -- tools/usage_index.py`, run the coherence anchor, read plan §12 + §12.1
+and `vault/audits/ccp-s12-audit.md`, then action 1.

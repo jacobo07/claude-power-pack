@@ -1,0 +1,21 @@
+# Phase-4 audit — CCP plan §12 (2026-10-02)
+
+Auditor: `oneshot-architect-auditor` (Sonnet), read-only, 21 tool uses, 119,319 tokens.
+Subject: `vault/plans/cognitive-control-plane-2026-10-02.md` §12, evidence RCA §16.
+The auditor executed nothing; its Windows runtime claims are INFERRED. Persisted by the parent
+session (the auditor has no write tool). Text below is the returned report, lightly condensed.
+
+**Verdict: EXECUTE-WITH-FIXES.** G1/G2 gate commit 2, G4 gates commit 4, G5/G6 gate commit 5,
+G7 gates commit 8.
+
+| # | Sev | Finding | Fix injected |
+|---|---|---|---|
+| G1 | BLOCK | Path keys live in 8 places: `files.path` PK (usage_index.py:66), `calls.file` and `calls.k` (k embeds the path as `off\|{fp}\|{n}` for lines without a message id, `_key` :138-141), `quota.file` (PK file,off :74-75), `prompts.file` :77, `spawns.file` :79, `subagents.file` PK :81. Rewriting only `files` orphans the joins (fanout_ledger.py:84-90, estate_shadow.py:74-77). Collisions: files PK, subagents PK, quota PK, `off\|` call keys. | Per table `UPDATE OR IGNORE ... SET file=canon WHERE file=alias`, then delete leftover alias rows; same rule for `calls.k`; canonical row wins; an alias row with no canonical twin moves whole. Dropped alias offsets are discarded: re-reading is idempotent (calls upsert max(), quota INSERT OR IGNORE, prompts ON CONFLICT, spawns REPLACE). |
+| G2 | BLOCK | `connect()` (:105-122) runs `executescript(SCHEMA)` and the v2 backfill unguarded; every reader (cost_gate.py:197, fanout_ledger, estate_shadow) would migrate, two concurrent connects both see version<3, and a write lock stalls hook readers up to the 30 s timeout. | `BEGIN IMMEDIATE`, re-check `schema_version` inside the transaction, all rewrites + version bump in one transaction; sha256-verified `.bak` first; no forced full re-read (no `offset=0`). |
+| G3 | FIX | Python 3.12 `Path.resolve()` follows junctions (INFERRED). Skipping aliases blindly loses data if a junction points OUTSIDE the store. `test_usage_index.py` has no junction coverage. | Dedupe in `_iter_files` (:125-135) by resolved path, record under the resolved path, keep targets outside the store. Fixture with a REAL junction (`mklink /J`) + reversed-order variant; prove the pre-fix code fails it. |
+| G4 | FIX | The index stores no tool_result; `spawns` has no outcome column. The RCA's 32/7 split was derived outside the index. | Schema adds `spawns.result_ts, is_error, result_head`; parse the parent's tool_result before the promptId branch; HOOK_BLOCKED by an explicit hook-denial marker set, otherwise FAILED_TO_START. |
+| G5 | FIX | Ancestry is one level (fanout_ledger.py:94): a subagent spawned by a subagent gets the spawner's prompt, not the human root. | Resolve the root transitively with a cycle guard; two-level nested fixture. |
+| G6 | FIX | No start/end events for width; "parent chain + longest child chain" mixes call chains with spawn-tree height (`subagents.depth`). Wall-clock duration includes idle time. | Width from min/max call ts per subagent file (approximation, stated); depth = longest sequential call chain, children by max not sum; spawn-tree height reported separately; active duration (gaps < ACTIVE_S) beside wall-clock. |
+| G7 | FIX | Leaks: "equivalent spawn active" has no stored equivalence key (type-only over-blocks; "active" via the later last-call ts uses the future); replay UNKNOWN rate differs from live; green tests are not indexed. | Input hash at index time; active = no `result_ts <= t`; UNKNOWN kept separate, replay-only vs live-computable counts reported; progress sources named; owner/advancement filtered to ts <= spawn ts. |
+| G8 | NOTE | `tools/mutation_drill.py` exists (copy-isolated, live-file SHA asserted) and reaches tools/*.py and scheduler.py. No killer yet for "bands tuned on judged window" (only the CLI enforces b1<=s, estate_shadow.py:163-164). | Move the assertion into `replay()`; one named killing test per mutant; drill after the tests exist. |
+| G9 | NOTE | No peer duplication. `test_gsd_x_goal_engine_identity.py:75` pins `usage_index` outside the engine closure. | Goal-log joins live in fanout_ledger/estate_shadow, never in usage_index; "equivalent spawn" must not become a retry key; re-derivation detector stays an observer. |
