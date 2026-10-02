@@ -149,3 +149,29 @@ into the RCA §13 and build the incremental burn index with the replay test.
 
 Revised order: C0 -> C1 -> C2 -> C3 (shadow) -> C4.0 probe -> [reset] -> C4 A/B, C6 observe ->
 C5 -> C7 -> C8.
+
+## 11. Reconciliation after C1 (2026-10-02 evening; AWAITING Owner approval)
+
+Reality: HEAD `ebc5446` (ea34e0c/286ccbe/19a7bc5 ancestors), 13 commits ahead of origin, unpushed,
+697 dirty paths, 28 `claude.exe`. C1 revalidated: 22/22, incident window = 23,925 calls / 6,230,548,450.
+Peer `ebc5446` (state-centric mission, reality scan, not yet approved) assigns: CCP owns burn,
+fan-out, estate governor, agent floor, rollover observation. Durable Goal state / packet /
+semantic delta / event log = state-centric peer, by CONNECT to `modules/gsd_x/goal` (orphan spine).
+CCP does not build them; it supplies metrology.
+
+**Provider meter signal found locally.** Transcript rows carry `quotaLimits` (511 rows since
+09-16): `rateLimitType` seven_day / five_hour, `status`, `resetsAt`, `overageDisabledReason`.
+Distinct seven_day reset anchors coexist in time: Wed 17:00Z (09-16, 09-23, 09-30, 10-07),
+Sat 18:00Z (09-27 -> 10-04, `out_of_credits`), 10-06 02:00Z. One account has one weekly window,
+so >= 2 (probably 3) accounts/orgs write into the same transcript store. Current: the Wed-17Z
+window REJECTED since 2026-10-02T11:54Z until 2026-10-07T17:00Z, while this session kept
+calling = another account. New leading hypothesis H4 for RCA §14: week A usage was split across
+accounts, the meter read covered one. The external meter becomes an ADAPTER over `quotaLimits`
+(rejection, reset, window identity) -- provider truth, no fitted percentage.
+
+Revised sequence: C1b (quota adapter + RCA §15) -> C2 (causal fan-out from promptId / origin.kind /
+turnOrigin / subagent meta) -> C3 (post-hoc shadow over the index first; a live hook only with
+Owner OK, since registration edits the shared dispatcher) -> C4.0 (differential floor decomposition
+from visible injected text + agent-class differences; provider-opaque remainder explicit;
+lifetime rent from the index) -> C4.1 decision by ranked controllable lifetime rent.
+C5-C8 of section 4 move to the state-centric peer or wait for C4.1.

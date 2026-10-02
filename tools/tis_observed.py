@@ -120,7 +120,8 @@ def _calls_in(path: Path) -> tuple[list[dict], int, int, int]:
     return ordered, usage_lines, synthetic, bad
 
 
-def calls_from(path: Path, offset: int = 0) -> tuple[list[dict], int, Optional[str]]:
+def calls_from(path: Path, offset: int = 0,
+               on_line=None) -> tuple[list[dict], int, Optional[str]]:
     """Incremental twin of _calls_in: real calls in the COMPLETE lines after `offset`.
 
     Same filters and identity as _calls_in (synthetic skipped, last copy of a
@@ -129,7 +130,10 @@ def calls_from(path: Path, offset: int = 0) -> tuple[list[dict], int, Optional[s
     harness is still writing is read whole on the next pass, never half. An
     identity-less call is keyed by its byte offset, which is stable across passes
     where _calls_in's line counter is not. Used by tools/usage_index.py; the
-    agreement of both readers is pinned in tools/test_usage_index.py."""
+    agreement of both readers is pinned in tools/test_usage_index.py.
+
+    `on_line(obj, start_offset)` sees every parsed JSON line in file order, so an
+    indexer can read ancestry (promptId, origin, quotaLimits) in the same pass."""
     calls: dict = {}
     order: list = []
     entrypoint = None
@@ -140,7 +144,7 @@ def calls_from(path: Path, offset: int = 0) -> tuple[list[dict], int, Optional[s
             if not raw.endswith(b"\n"):
                 break
             start, pos = pos, pos + len(raw)
-            text = raw.decode("utf-8", errors="replace").lstrip("﻿").strip()
+            text = raw.decode("utf-8", errors="replace").lstrip("\ufeff").strip()
             if not text:
                 continue
             try:
@@ -149,6 +153,8 @@ def calls_from(path: Path, offset: int = 0) -> tuple[list[dict], int, Optional[s
                 continue
             if isinstance(obj, dict) and entrypoint is None and obj.get("entrypoint"):
                 entrypoint = obj["entrypoint"]
+            if on_line is not None and isinstance(obj, dict):
+                on_line(obj, start)
             msg = obj.get("message") if isinstance(obj, dict) else None
             if not isinstance(msg, dict) or not isinstance(msg.get("usage"), dict):
                 continue

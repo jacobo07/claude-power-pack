@@ -197,6 +197,35 @@ usage that no transcript records (claude.ai, Desktop, mobile, another machine);
 `vault/config/weekly_meter_readings.json` has the 75 % reading `suspended` and the alarm
 shows NO percentage (UNKNOWN), only rates, the anomaly ratio and typed MONITOR_FAILURE.
 
+## 15. The provider's own quota rows (C1b, 2026-10-02 evening)
+
+Transcripts carry `quotaLimits` on the synthetic rows the harness writes when a call is
+refused: `rateLimitType` (seven_day / five_hour), `status`, `resetsAt`,
+`overageDisabledReason`. 511 rows since 09-16 (laptop). Decoded reset anchors:
+
+| seven_day window (reset weekday, UTC) | resets seen | overage reason | rejected spans |
+|---|---|---|---|
+| Wed 17:00Z | 09-16, 09-23, 09-30, 10-07 | org_level_disabled | 09-16, 09-22, 09-26, 09-30, **10-02 11:54Z -> 10-07 17:00Z** |
+| Sat 18:00Z | 09-27 (then 10-04) | out_of_credits | 09-24..09-27, 09-28/29 |
+| other | 10-06 02:00Z | org_level_disabled | 09-30 14:49Z |
+
+One account has one weekly window, so **at least two, probably three, accounts or orgs
+write into this transcript store**. That is corroborated live: the Wed-17Z window has
+refused calls since 10-02 11:54Z, yet this session went on calling, so it runs on another
+account.
+
+Ranked hypotheses for §14 (supersedes nothing; §14's three remain listed):
+- **H4 (leading, consistent with every measured fact):** week A's laptop usage was spread
+  across accounts, and the meter the Owner read covered one of them. By week B the others
+  were refusing, so the usage concentrated on the one being read. This predicts a B/A
+  ratio below 1 in every category at once, which is what §14 measured.
+- H1 (allowance change) is not needed to explain the data, and not excluded.
+- Transcripts carry no account id, so per-account attribution is impossible locally
+  until the Owner names the accounts.
+
+What this changes: the alarm now shows provider truth (window, rejected-since, until)
+from these rows, and `NO_SIGNAL` when there are none. It never shows a fitted percentage.
+
 Consequence: §5's lesson still stands, and a second one joins it. **An alarm calibrated
 on transcripts cannot see a change in what the meter charges.** The control-plane levers
 (agent floor, fan-out, concurrency) cut the standing level whatever the meter does.

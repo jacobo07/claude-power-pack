@@ -61,6 +61,7 @@ STALE_AFTER_S = float(os.environ.get("CPP_USAGE_INDEX_STALE_S", "7200"))
 RATE_WINDOW_H = 6.0
 ANOMALY_FACTOR = 1.5      # 24 h rate vs the median daily rate of the prior 14 days
 
+SCHEMA_VERSION = 2
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS files(path TEXT PRIMARY KEY, offset INTEGER, size INTEGER,
   mtime_ns INTEGER, is_sub INTEGER, entrypoint TEXT);
@@ -69,7 +70,20 @@ CREATE TABLE IF NOT EXISTS calls(k TEXT PRIMARY KEY, file TEXT, ts REAL, model T
   cr INTEGER, out INTEGER);
 CREATE INDEX IF NOT EXISTS calls_ts ON calls(ts);
 CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v TEXT);
+-- v2 (C1b/C2): provider quota events and causal ancestry.
+CREATE TABLE IF NOT EXISTS quota(file TEXT, off INTEGER, ts REAL, type TEXT, status TEXT,
+  resets_at REAL, overage_reason TEXT, PRIMARY KEY(file, off));
+CREATE INDEX IF NOT EXISTS quota_ts ON quota(ts);
+CREATE TABLE IF NOT EXISTS prompts(prompt_id TEXT PRIMARY KEY, session TEXT, file TEXT,
+  ts REAL, kind TEXT, source TEXT, is_sub INTEGER);
+CREATE TABLE IF NOT EXISTS spawns(tool_use_id TEXT PRIMARY KEY, parent_k TEXT, session TEXT,
+  ts REAL, subagent_type TEXT, model_req TEXT, prompt_id TEXT, file TEXT);
+CREATE TABLE IF NOT EXISTS subagents(file TEXT PRIMARY KEY, session TEXT, agent_type TEXT,
+  tool_use_id TEXT, depth INTEGER, model_meta TEXT);
 """
+_V2_COLUMNS = (("calls", "session", "TEXT"), ("calls", "prompt_id", "TEXT"),
+               ("calls", "agent_id", "TEXT"), ("files", "cur_prompt", "TEXT"),
+               ("files", "title", "TEXT"))
 
 
 def _iso(t: float) -> str:
@@ -93,6 +107,18 @@ def connect(db: Path = DEFAULT_DB) -> sqlite3.Connection:
     db.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(str(db), timeout=30)
     con.executescript(SCHEMA)
+    row = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
+    if row is None or int(row[0]) < SCHEMA_VERSION:
+        for table, col, typ in _V2_COLUMNS:
+            have = {r[1] for r in con.execute(f"PRAGMA table_info({table})")}
+            if col not in have:
+                con.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
+        # Backfill: re-read every file from byte 0 so ancestry and quota rows exist
+        # for history. Call rows are upserts on the same key, so totals cannot move.
+        con.execute("UPDATE files SET offset=0, size=-1, cur_prompt=NULL")
+        con.execute("INSERT OR REPLACE INTO meta VALUES('schema_version', ?)",
+                    (str(SCHEMA_VERSION),))
+        con.commit()
     return con
 
 
@@ -118,6 +144,66 @@ def _key(fp: str, key) -> str:
 def _num(u: dict, k: str) -> int:
     v = u.get(k)
     return v if isinstance(v, int) and v >= 0 else 0
+
+
+SPAWN_TOOLS = ("Agent", "Task")      # the harness renamed Task -> Agent; accept both
+
+
+def _ancestry_line(con, path: str, is_sub: int, state: dict, o: dict, start: int) -> None:
+    """Causal ancestry from one transcript line (C2). Never infers from time.
+
+    - user line with promptId: the prompt every later call in this file belongs
+      to, until the next promptId. The turn-opening line carries origin.kind /
+      turnOrigin / promptSource (human, task-notification, peer, sdk, system).
+    - assistant line: binds its call key to (session, prompt, agentId); an
+      Agent/Task tool_use becomes a spawn row with the model the caller asked
+      for (None = inherited from the parent -- the 53.5 % of RCA §6).
+    - any line with quotaLimits: a provider-side quota event (C1b)."""
+    t = o.get("type")
+    ts = _epoch(o.get("timestamp"))
+    if isinstance(o.get("quotaLimits"), dict):
+        q = o["quotaLimits"]
+        con.execute("INSERT OR IGNORE INTO quota VALUES(?,?,?,?,?,?,?)",
+                    (path, start, ts, q.get("rateLimitType"), q.get("status"),
+                     _epoch(q.get("resetsAt")), q.get("overageDisabledReason")))
+    if t == "user" and o.get("promptId"):
+        pid = o["promptId"]
+        state["prompt"] = pid
+        origin = o.get("origin")
+        kind = origin.get("kind") if isinstance(origin, dict) else o.get("turnOrigin")
+        con.execute("INSERT INTO prompts VALUES(?,?,?,?,?,?,?) ON CONFLICT(prompt_id) DO UPDATE "
+                    "SET kind=coalesce(prompts.kind, excluded.kind), "
+                    "source=coalesce(prompts.source, excluded.source)",
+                    (pid, o.get("sessionId"), path, ts, kind, o.get("promptSource"), is_sub))
+    elif t == "custom-title" and o.get("customTitle"):
+        state["title"] = o["customTitle"]
+    elif t == "assistant":
+        msg = o.get("message") if isinstance(o.get("message"), dict) else {}
+        key = (msg.get("id"), o.get("requestId"))
+        if key == (None, None):
+            key = ("off", start)
+        state["call_meta"][key] = (o.get("sessionId"), state["prompt"], o.get("agentId"))
+        for c in msg.get("content") or []:
+            if (isinstance(c, dict) and c.get("type") == "tool_use"
+                    and c.get("name") in SPAWN_TOOLS and c.get("id")):
+                inp = c.get("input") if isinstance(c.get("input"), dict) else {}
+                con.execute("INSERT OR REPLACE INTO spawns VALUES(?,?,?,?,?,?,?,?)",
+                            (c["id"], _key(path, key), o.get("sessionId"), ts,
+                             inp.get("subagent_type"), inp.get("model"), state["prompt"], path))
+
+
+def _index_subagent_meta(con, fp: Path) -> None:
+    """agentType / toolUseId / spawnDepth from <agent>.meta.json. A missing or
+    unreadable meta is recorded with NULLs: typed unknown, never a guess."""
+    meta = Path(str(fp)[:-len(".jsonl")] + ".meta.json")
+    md = {}
+    try:
+        md = json.loads(meta.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        md = {}
+    con.execute("INSERT OR REPLACE INTO subagents VALUES(?,?,?,?,?,?)",
+                (str(fp), fp.parent.parent.name, md.get("agentType"), md.get("toolUseId"),
+                 md.get("spawnDepth"), md.get("model")))
 
 
 def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
@@ -153,31 +239,47 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             offset = prev[0] if prev else 0
             entry = prev[3] if prev else None
             if prev and st.st_size < offset:            # rewritten: start over
-                con.execute("DELETE FROM calls WHERE file=?", (path,))
+                for t in ("calls", "quota"):
+                    con.execute(f"DELETE FROM {t} WHERE file=?", (path,))
                 offset, entry = 0, None
-            calls, end, ep = _tis.calls_from(fp, offset)
+            srow = con.execute("SELECT cur_prompt, title FROM files WHERE path=?",
+                               (path,)).fetchone()
+            state = {"prompt": srow[0] if srow and offset else None,
+                     "title": srow[1] if srow else None, "call_meta": {}}
+            if is_sub and offset == 0:
+                _index_subagent_meta(con, fp)
+            calls, end, ep = _tis.calls_from(
+                fp, offset, on_line=lambda o, s: _ancestry_line(con, path, is_sub, state, o, s))
             entry = entry or ep
             for c in calls:
                 u = c["usage"]
                 cc = u.get("cache_creation") if isinstance(u.get("cache_creation"), dict) else {}
+                sess, pid, aid = state["call_meta"].get(c["key"], (None, None, None))
                 con.execute(
-                    "INSERT INTO calls(k,file,ts,model,is_sub,entrypoint,inp,cw,cw5,cw1,cr,out) "
-                    "VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(k) DO UPDATE SET "
+                    "INSERT INTO calls(k,file,ts,model,is_sub,entrypoint,inp,cw,cw5,cw1,cr,out,"
+                    "session,prompt_id,agent_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                    "ON CONFLICT(k) DO UPDATE SET "
                     "ts=excluded.ts, inp=max(inp,excluded.inp), cw=max(cw,excluded.cw), "
                     "cw5=max(cw5,excluded.cw5), cw1=max(cw1,excluded.cw1), "
-                    "cr=max(cr,excluded.cr), out=max(out,excluded.out)",
+                    "cr=max(cr,excluded.cr), out=max(out,excluded.out), "
+                    "session=coalesce(excluded.session,session), "
+                    "prompt_id=coalesce(excluded.prompt_id,prompt_id), "
+                    "agent_id=coalesce(excluded.agent_id,agent_id)",
                     (_key(path, c["key"]), path, _epoch(c.get("ts")), c.get("model") or "",
                      is_sub, entry, _num(u, "input_tokens"),
                      _num(u, "cache_creation_input_tokens"),
                      _num(cc, "ephemeral_5m_input_tokens"),
                      _num(cc, "ephemeral_1h_input_tokens"),
-                     _num(u, "cache_read_input_tokens"), _num(u, "output_tokens")))
+                     _num(u, "cache_read_input_tokens"), _num(u, "output_tokens"),
+                     sess, pid, aid))
                 upserts += 1
             if entry:
                 con.execute("UPDATE calls SET entrypoint=? WHERE file=? AND entrypoint IS NULL",
                             (entry, path))
-            con.execute("INSERT OR REPLACE INTO files VALUES(?,?,?,?,?,?)",
-                        (path, end, st.st_size, st.st_mtime_ns, is_sub, entry))
+            con.execute("INSERT OR REPLACE INTO files(path,offset,size,mtime_ns,is_sub,entrypoint,"
+                        "cur_prompt,title) VALUES(?,?,?,?,?,?,?,?)",
+                        (path, end, st.st_size, st.st_mtime_ns, is_sub, entry,
+                         state["prompt"], state["title"]))
             con.commit()
             files_read += 1
     except Exception as e:  # noqa: BLE001 -- typed, never silent
@@ -336,18 +438,72 @@ def assess(con, now: float, *, allowance_usd: float | None, anchor: float,
     return out
 
 
+WEEK_S = 7 * 86400
+
+
+def _anchor_label(resets_at: float) -> str:
+    """Weekly window identity: weekday + time of its reset (UTC). Two different
+    labels live at once = two different accounts/orgs (one account, one window)."""
+    d = datetime.fromtimestamp(resets_at, timezone.utc)
+    return d.strftime("%a %H:%MZ")
+
+
+def quota_status(con, now: float, lookback_days: float = 21.0) -> dict:
+    """C1b provider adapter: what the PROVIDER said, from `quotaLimits` rows.
+
+    Provider truth, never fitted: rejections, resets, overage reasons. No row in
+    the lookback = NO_SIGNAL (unknown), never "fine". Weekly windows are told
+    apart by their reset anchor; `weekly_windows` counts distinct anchors seen,
+    a lower bound on the accounts writing into this transcript store."""
+    rows = con.execute(
+        "SELECT ts, type, status, resets_at, overage_reason FROM quota "
+        "WHERE ts > ? AND ts <= ? ORDER BY ts", (now - lookback_days * 86400, now)).fetchall()
+    if not rows:
+        return {"signal": "NO_SIGNAL", "lookback_days": lookback_days}
+    windows: dict = {}
+    for ts, typ, st, reset, reason in rows:
+        if typ == "seven_day" and reset:
+            label = _anchor_label(reset)
+            w = windows.setdefault(label, {"resets": set(), "reasons": set(),
+                                           "first_reject": None, "last_event": None})
+            w["resets"].add(reset)
+            w["reasons"].add(reason)
+            if st == "rejected" and w["first_reject"] is None:
+                w["first_reject"] = ts
+            w["last_event"] = ts
+    live = []
+    for ts, typ, st, reset, reason in rows:
+        if st == "rejected" and reset and reset > now:
+            item = {"type": typ, "window": _anchor_label(reset) if typ == "seven_day" else None,
+                    "rejected_since": _iso(ts), "until": _iso(reset)}
+            if item not in live and not any(x["type"] == typ and x["until"] == item["until"]
+                                            for x in live):
+                live.append(item)
+    return {"signal": "PRESENT", "events": len(rows),
+            "weekly_windows": len(windows),
+            "windows": {k: {"resets": [_iso(r) for r in sorted(v["resets"])],
+                            "overage_reasons": sorted(x for x in v["reasons"] if x),
+                            "last_event": _iso(v["last_event"])} for k, v in windows.items()},
+            "rejected_now": live}
+
+
 def advisory_line(a: dict) -> str | None:
-    """One human line for launch advisories, or None when NORMAL."""
+    """One human line for launch advisories, or None when NORMAL and no live
+    provider rejection."""
+    prov = (a.get("provider") or {}).get("rejected_now") or []
+    prov_txt = "; ".join(f"proveedor: ventana {p['window'] or p['type']} RECHAZADA hasta {p['until']}"
+                         for p in prov)
     if a["state"] == MONITOR_FAILURE:
         return f"PP burn monitor FAILED -- {'; '.join(a['reasons'])}. Usage is UNKNOWN, not low."
     if a["state"] in (None, "NORMAL"):
-        return None
+        return f"PP quota: {prov_txt}." if prov_txt else None
     pct = f" ~{a['estimated_pct']:.0f}% semana (estimado)" if a.get("estimated_pct") is not None else ""
     r = a.get("rate_6h") or {}
     return (f"PP burn {a['state']}{pct}: {'; '.join(a['reasons'])}. "
             f"Ritmo 6h: {r.get('calls_h')} llamadas/h ({r.get('subagent_calls_h')} subagente), "
             f"{(r.get('cache_read_h') or 0) / 1e6:.0f}M cache-read/h. "
-            "Prioriza cerrar trabajo abierto antes de lanzar mas agentes/misiones en segundo plano.")
+            + (f"{prov_txt}. " if prov_txt else "")
+            + "Prioriza cerrar trabajo abierto antes de lanzar mas agentes/misiones en segundo plano.")
 
 
 def current_allowance(con, prices=None) -> tuple[float | None, float]:
@@ -369,8 +525,10 @@ def burn(db: Path = DEFAULT_DB, proj: Path = DEFAULT_PROJ, deadline_s: float = 8
         rs["at"] = time.time()
         prices = load_prices()
         allowance, anchor = current_allowance(con, prices)
-        return assess(con, time.time(), allowance_usd=allowance, anchor=anchor,
-                      prices=prices, refresh_status=rs)
+        a = assess(con, time.time(), allowance_usd=allowance, anchor=anchor,
+                   prices=prices, refresh_status=rs)
+        a["provider"] = quota_status(con, time.time())
+        return a
     except Exception as e:  # noqa: BLE001
         return {"state": MONITOR_FAILURE, "reasons": [f"{type(e).__name__}: {e}"],
                 "estimated_pct": None}
