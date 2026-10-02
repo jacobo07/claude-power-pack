@@ -188,16 +188,28 @@ Removing hue moves the variant's failures onto two axes, and both were measured 
 
 **(a) Quiet chrome below the non-text floor.** With no colour to separate controls from their
 ground, designers reach for whisper-grey borders, and the controls stop being identifiable. In
-the InfinityOps tokens as distilled, the unselected radio ring sits at 1.56:1 against its card,
-the text-field border at 1.23:1 against the surface, and the unselected card border at 1.18:1.
-The selected state is excellent (the selected border is 11.7:1); the problem is entirely the
-resting state, which is the state the user meets first. WCAG 2.1 asks 3:1 for the visual
-information required to identify a control. A slightly different fill helps the eye and does not
-count, because the fill difference is itself below 1.1:1.
+the InfinityOps tokens as distilled, the unselected radio ring sat at 1.56:1 against its card
+(1.51:1 on the hover fill) and
+the text-field border at 1.23:1 against the surface. The selected state was excellent (the
+selected border is 11.7:1); the problem was entirely the resting state, which is the state the
+user meets first. WCAG 2.1 asks 3:1 for the visual information **required to identify** a
+control, and the precision matters: the unselected option card's own border (1.18:1) is not a
+failure, because the radio ring inside it is what identifies the option and the border is
+decoration. Judge the element that carries identity, not every line on the surface. A slightly
+different fill helps the eye and does not count, because the fill difference is itself below
+1.1:1.
+
+InfinityOps closed both on 2026-10-02 (`506dea04`, inside PR #467): ring `#848B9A` (3.10:1),
+field border `#878E9C` (3.10:1), a new hover step between rest and focus because the field had
+borrowed the card's hover border and would otherwise have lightened on hover, and a test pinning
+twenty rendered pairings against their floors. The darkening needed to clear 3:1 was modest and
+the surface still reads as monochrome, which is the evidence that the collision is a default
+rather than a cost of the style.
 
 **(b) Hint text treated as decoration.** An example answer shown inside an empty field is still
-text. The exemplar renders its example line at 2.76:1, which reads as appropriately quiet and
-fails the 4.5:1 text floor. If the hint carries information — and an example of a good answer
+text. The exemplar rendered its example line at 2.81:1 on the field fill, which read as
+appropriately quiet and failed the 4.5:1 text floor (fixed in the same commit, `#6B7283`,
+4.61:1). If the hint carries information — and an example of a good answer
 does — it must be readable; if it does not, delete it. This is the same trap CDIO-06 sec. 5 names
 for F1 and F10: restraint governs the quantity of elements, never the contrast of text.
 

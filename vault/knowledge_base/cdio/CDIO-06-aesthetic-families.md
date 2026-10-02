@@ -283,9 +283,9 @@ executing it *well* still lands you outside a floor if you are not deliberate.
 - **F1 Editorial Minimalism** — its restraint tempts a low-contrast grey-on-white body
   (the "timid palette" symptom). Restraint is about *quantity* of elements, never about
   contrast of text. Body copy still clears 4.5:1. The zero-accent variant meets a second
-  collision sooner: with no hue to separate a control from its ground, resting borders and
-  radio rings drift to whisper grey and fall under the 3:1 non-text floor (measured 1.18–1.56:1
-  on the distilled exemplar; CDIO-09 sec. 4).
+  collision sooner: with no hue to separate a control from its ground, the resting borders
+  and radio rings that identify controls drift to whisper grey and fall under the 3:1
+  non-text floor (measured 1.23–1.51:1 on the distilled exemplar, then fixed; CDIO-09 sec. 4).
 - **F2 Terminal-Core** — monospace at a small size wrecks the line-measure ceiling: a
   mono face at 14px in a full-width container routinely exceeds 100 characters per
   line, well past the 75-character readability ceiling. Constrain the measure, or the
