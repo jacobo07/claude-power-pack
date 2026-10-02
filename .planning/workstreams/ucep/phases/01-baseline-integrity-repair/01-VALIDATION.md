@@ -37,7 +37,7 @@ Failure = non-zero exit OR a `FAIL` line OR `PASS=n/m` with n<m.
 |---|---|---|---|---|
 | 1 reanchor + 9 entries | UCEP-01 | `tools/test_ucep_baseline_integrity.py` (V-UCEP-REANCHOR-*) + `tools/test_baseline_generations.py` | `BASELINE_GENERATIONS_PASS=16/16`; generations == [0, 1] for persistent_state, wii_homebrew | pending |
 | 2 diff fields, unanchored, allowlist, H1/H2/H3b | UCEP-01 | V-UCEP-H1/-H2/-H3B (+ -CONTROL) on a B0-only synthetic family + `tools/test_tower_ratchet.py` | `TOWER_RATCHET_PASS=21/21`; RED proof on pre-change code recorded in EVIDENCE | pending |
-| 3 N/A vocabulary + cap; `test:` UNJUDGED | UCEP-01 | V-UCEP-H5, V-UCEP-H6, V-UCEP-NO-EXEC-IMPORTS + `tools/test_tower_donegate.py` + `tools/test_tower_checks.py` | `TOWER_CHECKS_PASS=23/23` unchanged; no `verdict=DELEGATED` | pending |
+| 3 N/A vocabulary + cap; `test:` UNJUDGED | UCEP-01 | `tools/test_ucep_donegate_exits.py` (V-UCEP-H5-*, V-UCEP-H6-*, V-UCEP-NO-EXEC-*; separate file so plan 01-02 runs in wave 1 beside 01-01) + `tools/test_tower_donegate.py` + `tools/test_tower_checks.py` | `UCEP_DONEGATE_EXITS_PASS=13/13`; `TOWER_CHECKS_PASS=23/23` unchanged; no `verdict=DELEGATED` for a `test:` check | pending |
 | 4 discovery walk + floor | UCEP-01 | V-UCEP-DISCOVER-* + both edited tests; hardcoded-tuple grep returns nothing | discovered counts cited | pending |
 | 5 green + immutability | UCEP-01 | full suite + LF sha256 of 5 pre-existing generation files == F0 table | all PASS; hashes equal | pending |
 

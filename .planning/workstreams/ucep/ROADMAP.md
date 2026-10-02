@@ -67,6 +67,13 @@ reusable maturity ratchets the baseline. UNKNOWN / UNJUDGED / DELEGATED / DEFERR
      (nested axes included) with a population floor, not a hardcoded family tuple [G9].
   5. `python tools/test_baseline_generations.py` 16/16+, `test_tower_ratchet.py`, `test_tower_donegate.py`,
      `test_family_baselines.py` all PASS; B0 and web_surface B1 sha256 unchanged (recorded before/after).
+**Plans:** 5 plans
+Plans:
+- [ ] 01-01-PLAN.md — (wave 1) LF-pin baseline generations (tracer: V-TRAT-REAL-CHAINS green) + RED harness for H1/H2/H3b
+- [ ] 01-02-PLAN.md — (wave 1) donegate exits: `test:` -> UNJUDGED never run, N/A closed vocabulary + 30% cap (H5/H6)
+- [ ] 01-03-PLAN.md — (wave 2) ratchet hardening: unanchored not ok, diff why/origin/class/scope, authority allowlist
+- [ ] 01-04-PLAN.md — (wave 3) `ratchet.reanchor` + CLI; re-anchor 9 entries -> persistent_state/B1, wii_homebrew/B1
+- [ ] 01-05-PLAN.md — (wave 4) `discover_subjects` replaces hardcoded families; phase gate; 01-EVIDENCE.md
 
 ### Phase 2: Capability subject and archetypes
 **Goal**: A capability subject (traits + archetypes) resolved from repo reality first, intent second.
