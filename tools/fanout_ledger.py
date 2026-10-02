@@ -61,6 +61,14 @@ def classify_root(kind, source, entrypoint, title) -> str:
     return "UNKNOWN"
 
 
+def project_of(transcript) -> str:
+    """Store project dir of a transcript path: the dir holding it, or for a subagent
+    transcript (<proj>/<session>/subagents/agent-*.jsonl) the dir two levels up.
+    Never a spawn row's copy of the parent path (a copied session lives in two dirs)."""
+    fp = Path(transcript)
+    return fp.parents[2].name if fp.parent.name == "subagents" else fp.parent.name
+
+
 def workflow_of(agent_type) -> str:
     """Workflow family of a subagent type. None stays UNKNOWN."""
     if not agent_type:
@@ -103,10 +111,7 @@ def load_calls(con, start: float, end: float, prices: dict | None = None) -> lis
         usd = None if p is None else (inp * p["input"] + cw5 * p["cache_write_5m"]
                                       + (cw1 + unsplit) * p["cache_write_1h"]
                                       + cr * p["cache_read"] + outp * p["output"]) / 1e6
-        # A call's project is the dir holding its own transcript. Never the spawn row's
-        # file: a copied session lives in two dirs and `spawns` keeps one copy.
-        fp = Path(file)
-        project = fp.parents[2].name if fp.parent.name == "subagents" else fp.parent.name
+        project = project_of(file)
         out.append({"k": k, "ts": ts, "model": model, "is_sub": bool(is_sub), "root": root,
                     "prompt": root_pid, "cache_read": cr, "output": outp, "usd": usd,
                     "agent_type": atype if is_sub else None,

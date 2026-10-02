@@ -87,7 +87,7 @@ def spawns_in(con, start: float, end: float) -> list[dict]:
         root = fl.classify_root(pr[0], pr[1], pr[3], pr[2]) if pr else "UNKNOWN"
         calls, cr = sub_cost.get(tuid, (None, None))
         out.append({"tool_use_id": tuid, "ts": ts, "agent_type": stype, "prompt": pid,
-                    "root": root, "ordinal": seen[pid], "project": Path(pfile).parent.name,
+                    "root": root, "ordinal": seen[pid], "project": fl.project_of(pfile),
                     "nested": "subagents" in Path(pfile).parts,
                     "subtree_calls": calls, "subtree_cache_read": cr})
     return out
@@ -105,6 +105,8 @@ def bands_from(con, b0: float, b1: float) -> dict:
 
 
 def replay(con, b0, b1, start, end) -> dict:
+    if not b1 <= start:     # here, not only in the CLI: no caller may tune on the judged window
+        raise ValueError("the baseline must end before the judged window starts")
     bands = bands_from(con, b0, b1)
     if not bands["spawns"]:
         return {"verdict": "UNMEASURED", "reason": "no spawns in the baseline window",

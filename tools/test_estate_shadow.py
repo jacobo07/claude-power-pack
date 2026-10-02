@@ -62,6 +62,28 @@ def main() -> int:
     ok("V-SHADOW-PCT", es._pct([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 0.9) == 9
        and es._pct([], 0.9) is None, "nearest-rank percentile; empty -> None")
 
+    # Bands must precede the judged window inside replay() itself, not only in the CLI
+    # (audit G8): otherwise a caller can tune the thresholds on the window it judges.
+    try:
+        es.replay(None, 0.0, 200.0, 100.0, 300.0)
+        tuned = "accepted"
+    except ValueError as e:
+        tuned = f"refused: {e}"
+    ok("V-SHADOW-BANDS-BEFORE-WINDOW", tuned.startswith("refused"), tuned)
+
+    # A spawn made from a subagent transcript belongs to the project dir that holds
+    # that transcript, never to the literal "subagents" folder (plan s12 commit 3).
+    import usage_index as ux
+    con = ux.connect(Path(":memory:"))
+    base = r"C:\x\projects\C--proj\S1"
+    con.execute("INSERT INTO spawns(tool_use_id, ts, subagent_type, prompt_id, file) VALUES"
+                "('tuA', 5, 'Explore', 'P1', ?), ('tuB', 6, 'Explore', 'P1', ?)",
+                (base + ".jsonl", base + r"\subagents\agent-a.jsonl"))
+    got = {s["tool_use_id"]: (s["project"], s["nested"]) for s in es.spawns_in(con, 0, 10)}
+    ok("V-SHADOW-NESTED-PROJECT", got == {"tuA": ("C--proj", False), "tuB": ("C--proj", True)},
+       f"{got}")
+    con.close()
+
     # Shadow only: no module outside the shadow tool and the tests calls decide_spawn.
     callers = []
     for p in list((HERE.parent / "modules").rglob("*.py")) + list((HERE.parent / "hooks").rglob("*.js")) \
