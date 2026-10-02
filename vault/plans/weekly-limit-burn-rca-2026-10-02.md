@@ -248,6 +248,11 @@ message id + request id); path-keyed rows (`spawns.file`) land on whichever alia
 last. Calls themselves land on the real path only because `iterdir()` on NTFS lists it first:
 correct by listing order, not by design.
 
+*Correction (same night, `f234580`): "call totals are safe" holds only for calls with a
+message id. An id-less call is keyed `off|<path>|<offset>`, so when an alias lists first it is
+counted twice (fixture: 10 calls for 9). On the live index the alias held 0 call keys of that
+shape, so the anchor stood; it is now order-independent by construction.*
+
 Spawn outcomes: 240 spawns in the window, 39 with no transcript = 32 hook-denied + 7 other
 errors, 0 with a result. A requested spawn is not an executed one.
 
