@@ -208,6 +208,34 @@ def cmd_sweep(args) -> int:
     return 0
 
 
+def cmd_autonomous(args) -> int:
+    """Mark a goal for unattended sweeping (or stop it), recording where it runs."""
+    from modules.gsd_x.goal import sweep as sw
+    lg = _log(args)
+    sw.set_autonomous(lg, gc.project(lg), args.on, args.reason, args.actor,
+                      root=Path(args.root) if args.on else None)
+    print(f"{args.goal}: autonomous {'ON at ' + str(Path(args.root).resolve()) if args.on else 'OFF'}")
+    return 0
+
+
+def cmd_sweep_all(args) -> int:
+    """The scheduler's entrance: every autonomous goal the store holds.
+
+    Silent when nothing happened; the heartbeat file says the run took place.
+    """
+    from modules.gsd_x.goal import sweep as sw
+    report = sw.sweep_all(ROOT, dry_run=args.dry_run, actor=args.actor)
+    if report.refused:
+        print(f"REFUSED: {report.refused}")
+        return 1
+    out = report.render()
+    if out or args.verbose:
+        for line in report.skipped:
+            print(f"  skipped {line}")
+        print(out or "(nothing to do)")
+    return 0
+
+
 def cmd_explain(args) -> int:
     s = _state(args)
     root = Path(args.root)
@@ -364,6 +392,19 @@ def main(argv: list[str] | None = None) -> int:
     sw_p = common(sub.add_parser("sweep"))
     sw_p.add_argument("--dry-run", action="store_true")
     sw_p.set_defaults(fn=cmd_sweep)
+
+    au = common(sub.add_parser("autonomous"))
+    au_on = au.add_mutually_exclusive_group(required=True)
+    au_on.add_argument("--on", action="store_true")
+    au_on.add_argument("--off", action="store_true")
+    au.add_argument("--reason", required=True)
+    au.set_defaults(fn=cmd_autonomous)
+
+    sa = sub.add_parser("sweep-all")
+    sa.add_argument("--dry-run", action="store_true")
+    sa.add_argument("--verbose", action="store_true")
+    sa.add_argument("--actor", default="sweep")
+    sa.set_defaults(fn=cmd_sweep_all)
 
     rt = common(sub.add_parser("retire"))
     rt.add_argument("--id", required=True)

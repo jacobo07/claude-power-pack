@@ -155,9 +155,79 @@ def is_autonomous(state: gc.GoalState) -> bool:
 
 
 def set_autonomous(log: gl.GoalLog, state: gc.GoalState, enabled: bool, reason: str,
-                   actor: str) -> None:
-    log.append(state.last_seq + 1, AUTONOMOUS_EVENT,
-               {"enabled": bool(enabled), "reason": reason}, actor)
+                   actor: str, root: Path | None = None) -> None:
+    """Switch unattended sweeping on or off, recording WHERE the goal runs.
+
+    The store is keyed by repository identity, not by path, so without the root
+    on this event a scheduler cannot find the work tree to gate. A root holding
+    another repository is refused before anything is appended.
+    """
+    data = {"enabled": bool(enabled), "reason": reason}
+    if enabled and root is not None:
+        rid = gl.repo_id(Path(root))
+        if rid != log.repo:
+            raise gl.GoalLogError(f"root {root} holds repository {rid[:12]}, goal "
+                                  f"{log.goal_id} belongs to {log.repo[:12]}")
+        data["root"] = str(Path(root).resolve())
+    log.append(state.last_seq + 1, AUTONOMOUS_EVENT, data, actor)
+
+
+def _autonomy_event(state: gc.GoalState):
+    last = None
+    for ev in state.events:
+        if ev.type == AUTONOMOUS_EVENT:
+            last = ev
+    return last
+
+
+def autonomous_goals(base: Path | None = None) -> tuple[list, list[str]]:
+    """Every goal the store says may be swept, with its root; and why the rest were not.
+
+    Discovered from the store's directories, never from a list somebody keeps:
+    a goal marked autonomous is found because it exists.
+    """
+    base = Path(base or gl.goals_root())
+    found: list = []
+    skipped: list[str] = []
+    if not base.is_dir():
+        return found, [f"no goal store at {base}"]
+    for repo_dir in sorted(p for p in base.iterdir() if p.is_dir()):
+        for goal_dir in sorted(p for p in repo_dir.iterdir() if p.is_dir()):
+            try:
+                log = gl.GoalLog(repo_dir.name, goal_dir.name, base=base)
+                if not log.exists():
+                    continue
+                ev = _autonomy_event(gc.project(log))
+            except gl.GoalLogError as exc:
+                skipped.append(f"{goal_dir.name}: unreadable ({exc})")
+                continue
+            if ev is None or not ev.data.get("enabled"):
+                continue
+            root = ev.data.get("root")
+            if not root:
+                skipped.append(f"{goal_dir.name}: autonomous but no root recorded "
+                               "(re-run `autonomous --on --root`)")
+            elif not Path(root).is_dir():
+                skipped.append(f"{goal_dir.name}: recorded root {root} is missing")
+            else:
+                found.append((log, Path(root)))
+    return found, skipped
+
+
+HEARTBEAT = "sweep_heartbeat.json"
+
+
+def heartbeat_path() -> Path:
+    return state_dir() / HEARTBEAT
+
+
+def retry_engine_term(pp_root: Path) -> str:
+    """The engine's part of the retry key: the code that runs, not repo HEAD.
+
+    HEAD moves for every other writer's commit; keyed on it, each retry of a
+    failing gate would look like new information.
+    """
+    return engine_identity(pp_root) or runtime_identity(pp_root)
 
 
 @dataclass
@@ -226,7 +296,8 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
     # rather than the same attempt again.
     # runtime_identity, not bare HEAD: on a non-git runtime HEAD is "" and the
     # engine term silently dropped out of the key (audit gap 2, UWCP S1-10).
-    engine = runtime_identity(Path(__file__).resolve().parents[3])
+    # engine_identity first: repo HEAD moves for unrelated commits (retry_engine_term).
+    engine = retry_engine_term(Path(__file__).resolve().parents[3])
     d = rc.decide(rc.Context(state=state, tree_hash=tree,
                              scope_hash=ep.scope_hash(root, paths),
                              observations=observations, now=time.time(),
@@ -332,4 +403,24 @@ def sweep(pp_root: Path, goals: list[tuple[gl.GoalLog, Path]], dry_run: bool = F
             report.acted.extend(sweep_goal(log, root, dry_run=dry_run, actor=actor))
         except (gl.GoalLogError, OSError) as exc:
             report.skipped.append(f"{log.goal_id}: {exc.__class__.__name__}: {exc}")
+    return report
+
+
+def sweep_all(pp_root: Path, dry_run: bool = False, actor: str = "sweep") -> SweepReport:
+    """The scheduler's entrance: every autonomous goal in the store, then a heartbeat.
+
+    The heartbeat is written on EVERY run, refusal included, so "the schedule
+    stopped" and "the schedule ran and had nothing to do" are different facts.
+    """
+    goals, skipped = autonomous_goals()
+    report = sweep(pp_root, goals, dry_run=dry_run, actor=actor)
+    report.skipped = skipped + report.skipped
+    beat = {"ts": datetime.now(timezone.utc).isoformat(), "dry_run": dry_run,
+            "refused": report.refused, "goals_seen": len(goals),
+            "acted": report.acted, "skipped": report.skipped}
+    path = heartbeat_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(beat, indent=2), encoding="utf-8")
+    os.replace(tmp, path)
     return report
