@@ -44,7 +44,12 @@ is the surface free of trust leaks (CDIO-03)?
 
 **Lens 5 — Conversion path.** Is there one clear primary action; is the value
 before the friction; is the structure value-then-proof-then-ask; are there no
-dark patterns (CDIO-02 §4; CDIO-04)?
+dark patterns (CDIO-02 §4; CDIO-04)? When the surface is a modal or focus-mode
+decision (onboarding step, approval, irreversible confirmation), this lens also
+applies the CDIO-09 criteria (applicability, one filled action, inert backdrop,
+initial focus, single effect in flight, retry only if nothing changed, non-colour
+selected state); they report under `ux`, `visual` and `trust`, so the score
+formula is unchanged.
 
 **Lens 6 — Mobile-first check.** Does the surface hold at a 320–390px width:
 body text ≥ 16px, tap targets ≥ 44×44px, no horizontal scroll, the primary CTA

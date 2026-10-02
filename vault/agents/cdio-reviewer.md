@@ -31,7 +31,10 @@ yourself picking a number, stop — you record verdicts, the code scores them.
    spacing, contrast clears the floor? (Run the scorer for the mechanical checks.)
 4. **Trust signals** — present, specific, honest, well-placed; no trust leaks?
 5. **Conversion path** — one primary action, value before friction, no dark
-   patterns?
+   patterns? For a modal or focus-mode decision, also apply the CDIO-09 §3
+   criteria (reported under `ux` / `visual` / `trust`). Inertness, focus and
+   in-flight behaviour cannot be seen in a screenshot: mark them not assessed
+   unless you drove the real surface (CDIO-09 §7).
 6. **Mobile-first** — at 320–390px: body ≥16px, tap targets ≥44px, no horizontal
    scroll, primary CTA reachable? For an app screen built for the hand, also
    apply the CDIO-08 §3 criteria (reported under `ux` / `visual`; a convention

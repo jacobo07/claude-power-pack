@@ -29,7 +29,7 @@ one; do not re-derive design principles from memory:
 - **CDIO-03** — trust & premium perception.
 - **CDIO-04** — conversion: CTA, page structure, pricing, value-before-friction.
 - **CDIO-05** — the review pipeline and the exact Design Quality Score formula.
-- **CDIO-06** — the generative axis: the nine aesthetic families, the picker, the
+- **CDIO-06** — the generative axis: the ten aesthetic families, the picker, the
   anti-slop kit. Chosen BEFORE any token is written.
 - **CDIO-07** — the behavioural axis: the experience contract. What the surface
   does when touched and while it waits. Declared BEFORE the first interactive
@@ -38,12 +38,20 @@ one; do not re-derive design principles from memory:
   held in one hand (thumb-zone primary action, value over label, search zero
   state, input-method fit, bottom-nav count, tabular figures), plus mobile
   industry conventions and the classified absorption of an external mobile skill.
+- **CDIO-09** — the one-decision axis: when a product should interrupt with a
+  focused decision surface (four conditions, exclusions), its criteria (inert
+  backdrop, one filled action, initial focus, single effect in flight, retry only
+  if nothing changed, non-colour selected state), and the measured floor
+  collisions of F1's zero-accent monochrome variant.
 
 CDIO-00 through CDIO-05 are evaluative, CDIO-06 is generative, CDIO-07 is
-behavioural, CDIO-08 is evaluative for app screens. A question that is really
-about which direction to take belongs to 06 or 07; a question about whether an
-existing surface holds belongs to 00–05, and to 08 as well when it is an app
-screen rather than a web page viewed on a phone.
+behavioural, CDIO-08 is evaluative for app screens, CDIO-09 is evaluative for
+focused decisions. A question that is really about which direction to take
+belongs to 06 or 07; a question about whether an existing surface holds belongs
+to 00–05, and to 08 as well when it is an app screen rather than a web page
+viewed on a phone. An onboarding modal, an approval or confirmation dialog, a
+"focus mode" or "one decision at a time" routes to 09 first; the monochrome look
+on its own routes to 06 F1's zero-accent variant.
 
 Because these are ordinary Graphify nodes, you can also locate them with the
 graph. Read the dataset that governs the question rather than guessing.

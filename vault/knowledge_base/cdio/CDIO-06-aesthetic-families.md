@@ -41,6 +41,12 @@ family in its `aesthetic_family` field. That declaration is load-bearing — it 
 - **Use when:** reading-heavy surfaces, pricing pages, documentation
 - **Proof:** Linear, Stripe, Vercel
 - **Sanctions default-tier fonts:** yes (Inter, deliberately — the restraint *is* the point)
+- **Zero-accent variant (added 2026-10-01):** near-black ink is the only state colour —
+  progress, selection and the primary action share it, and no hue competes. Distilled from
+  the InfinityOps Focused Monochrome UI, where it is scoped to focused decision surfaces
+  and the rest of the product keeps its own family. A variant, not an eleventh family: it
+  changes one F1 commitment (the accent) and keeps every other. Its behaviour, criteria and
+  measured floor collisions live in CDIO-09.
 
 ### F2 — Terminal-Core
 - **Palette:** `#000` / `#fff` / no accent (or phosphor-green, amber)
@@ -276,7 +282,10 @@ executing it *well* still lands you outside a floor if you are not deliberate.
 
 - **F1 Editorial Minimalism** — its restraint tempts a low-contrast grey-on-white body
   (the "timid palette" symptom). Restraint is about *quantity* of elements, never about
-  contrast of text. Body copy still clears 4.5:1.
+  contrast of text. Body copy still clears 4.5:1. The zero-accent variant meets a second
+  collision sooner: with no hue to separate a control from its ground, resting borders and
+  radio rings drift to whisper grey and fall under the 3:1 non-text floor (measured 1.18–1.56:1
+  on the distilled exemplar; CDIO-09 sec. 4).
 - **F2 Terminal-Core** — monospace at a small size wrecks the line-measure ceiling: a
   mono face at 14px in a full-width container routinely exceeds 100 characters per
   line, well past the 75-character readability ceiling. Constrain the measure, or the

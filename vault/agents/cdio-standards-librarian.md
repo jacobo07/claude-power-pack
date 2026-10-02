@@ -26,7 +26,9 @@ exists to prevent.
 
 - **CDIO-00** kernel, **CDIO-01..04** dimension datasets, **CDIO-05** pipeline,
   **CDIO-06** aesthetic families (generative), **CDIO-07** experience contract
-  (behavioural), **CDIO-08** mobile app surface (hand-held). CDIO-08 §12 names
+  (behavioural), **CDIO-08** mobile app surface (hand-held), **CDIO-09** focused
+  decision surface (one-decision; its sec. 8 names the transfer evidence that
+  would justify a design_gate check). CDIO-08 §12 names
   its thresholds as uncalibrated: the first real app reviews that cite them are
   the evidence you re-check them against.
 - The invariant that every criterion is expressed as a **threshold with an
