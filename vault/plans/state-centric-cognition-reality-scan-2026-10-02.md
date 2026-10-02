@@ -99,7 +99,16 @@ owner (no edit). Defaults: goal spine is the only state store; model-calling epo
   (median), the closure 43 times in 336 commits / 7 d. `7d5b3bd`: two mutation drills were
   INVALID before this work (stale anchors after `0ff7cf7`, `fe2be9c`), repaired, plus two engine
   mutants: 56/56. Record GREEN on engine `9114b69a`; `autonomy_verdict` = True.
-- **S2 findings (not built yet):** zero goals carry `goal.autonomous`, and the store records no
+- **S2 BUILT** (Owner "b"): `61914f9` (SPEC-GOAL-SWEEP-SCHEDULED) `autonomous --on --root`,
+  `sweep-all` discovering goals from the store, heartbeat on every run, engine retry key;
+  `tools/goal_sweep.ps1` + Windows task `PP-GoalSweep` (5 min, hidden, lease, bounded stage).
+  Mutation drill 56/56; record re-earned at `61914f9`. G-001 marked autonomous with its root;
+  first manual pass dispatched `ep-0954eedea9fe` (ob-evidence).
+- **CORRECTION:** the claim below that "zero goals carry `goal.autonomous`" was a FAILED LOOK,
+  not an absence: G-001 already held a root-less legacy autonomy event. The PowerShell probe
+  printed two object shapes into one table and the second query's rows never rendered.
+  `autonomous_goals()` found it and named it ("no root recorded").
+- **S2 findings (original, superseded):** zero goals carry `goal.autonomous`, and the store records no
   root path, so a scheduled sweep has nothing to enumerate. G-001's seven obligations were all
   proven at KobiiCraft tree `b0dd193`; the worktree is now at `af38161` (no change inside its
   scope paths since 09-22), so G-001 needs only a RE-GATE, zero model quota. But `ob-reality`'s
