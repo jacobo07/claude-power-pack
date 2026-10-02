@@ -129,10 +129,47 @@ def spawn_rows(con, start: float, end: float) -> list[dict]:
     return out
 
 
+def _is_sub_path(transcript) -> bool:
+    return Path(transcript).parent.name == "subagents"
+
+
+def root_resolver(con):
+    """subagent transcript -> root prompt id, followed TRANSITIVELY (audit G5).
+
+    A spawn made inside a subagent carries that subagent's own prompt, so one hop
+    (the spawn row's prompt) charges a nested agent to its spawner instead of the
+    prompt the work belongs to. Follow toolUseId -> spawn -> spawning transcript
+    until the spawning transcript is a main one. A broken link or a cycle is None
+    (UNKNOWN), never a guess."""
+    sub_tuid = dict(con.execute("SELECT file, tool_use_id FROM subagents"))
+    spawn = {r[0]: (r[1], r[2]) for r in con.execute(
+        "SELECT tool_use_id, file, prompt_id FROM spawns")}
+    memo: dict = {}
+
+    def resolve(sub_file):
+        if sub_file in memo:
+            return memo[sub_file]
+        seen, f, pid = set(), sub_file, None
+        while f not in seen:
+            seen.add(f)
+            sp = spawn.get(sub_tuid.get(f))
+            if sp is None:
+                break
+            if _is_sub_path(sp[0]):
+                f = sp[0]
+                continue
+            pid = sp[1]
+            break
+        memo[sub_file] = pid
+        return pid
+    return resolve
+
+
 def load_calls(con, start: float, end: float, prices: dict | None = None) -> list[dict]:
     """Every call in (start, end] with its resolved ancestry. Ancestry joins only
     along recorded ids; a missing link leaves root/prompt as None (UNKNOWN)."""
     prices = prices if prices is not None else ux.load_prices()
+    resolve = root_resolver(con)
     q = """
     SELECT c.k, c.ts, c.model, c.is_sub, c.entrypoint, c.inp, c.cw, c.cw5, c.cw1, c.cr, c.out,
            c.prompt_id, c.file, f.title, s.agent_type, s.tool_use_id, s.depth,
@@ -148,7 +185,7 @@ def load_calls(con, start: float, end: float, prices: dict | None = None) -> lis
     out = []
     for (k, ts, model, is_sub, ep, inp, cw, cw5, cw1, cr, outp, pid, file, title, atype,
          tuid, depth, sp_pid, model_req, sp_sess, sp_file) in con.execute(q, (start, end)):
-        root_pid = sp_pid if is_sub else pid
+        root_pid = resolve(file) if is_sub else pid
         pr = prompts.get(root_pid)
         if pr is None:
             root = "UNKNOWN"
@@ -163,6 +200,7 @@ def load_calls(con, start: float, end: float, prices: dict | None = None) -> lis
         project = project_of(file)
         out.append({"k": k, "ts": ts, "model": model, "is_sub": bool(is_sub), "root": root,
                     "prompt": root_pid, "cache_read": cr, "output": outp, "usd": usd,
+                    "surface": inp + cw + cr,
                     "agent_type": atype if is_sub else None,
                     "linked": (not is_sub) or bool(sp_pid) or bool(tuid and sp_file),
                     "model_req": (model_req or "inherit") if is_sub and sp_file else None,
@@ -226,6 +264,96 @@ def top(con, start: float, end: float, n: int = 10) -> list[dict]:
             for p, v in ranked]
 
 
+# Execution shape (plan s12 commit 5, audit G6). Calls inside one transcript are
+# sequential; a spawning call waits for its children, so the longest chain is a
+# file's own calls plus its longest child chain (children by max, never sum). It is
+# an UPPER bound on the critical path in calls: a parent may keep working while a
+# background child runs. Width has no start/end events to use, so a subagent counts
+# as live between its first and last call in the window: an approximation.
+ACTIVE_GAP_S = 300.0      # gaps longer than this between consecutive calls are idle
+
+
+def _tree_maps(con) -> tuple[dict, dict]:
+    """(parent_of: subagent transcript -> spawning transcript, child_of: inverse)."""
+    parent_of = dict(con.execute(
+        "SELECT a.file, s.file FROM subagents a JOIN spawns s ON s.tool_use_id = a.tool_use_id"))
+    child_of: dict = defaultdict(list)
+    for c, p in parent_of.items():
+        child_of[p].append(c)
+    return parent_of, child_of
+
+
+def _root_shape(rows: list[dict], parent_of: dict, child_of: dict) -> dict:
+    n_by_file = Counter(r["file"] for r in rows)
+    seen_top = set()
+    for f in n_by_file:
+        hops = set()
+        while f in parent_of and f not in hops:
+            hops.add(f)
+            f = parent_of[f]
+        seen_top.add(f)
+
+    def chain(f, path=frozenset()):
+        kids = [c for c in child_of.get(f, ()) if c not in path]
+        return n_by_file.get(f, 0) + max((chain(c, path | {f}) for c in kids), default=0)
+
+    def height(f, path=frozenset()):
+        kids = [c for c in child_of.get(f, ()) if c not in path]
+        return max((1 + height(c, path | {f}) for c in kids), default=0)
+
+    spans: dict = {}
+    for r in rows:
+        if r["is_sub"]:
+            lo, hi = spans.get(r["file"], (r["ts"], r["ts"]))
+            spans[r["file"]] = (min(lo, r["ts"]), max(hi, r["ts"]))
+    live = peak = 0
+    for _t, kind in sorted([(lo, 0) for lo, _ in spans.values()]
+                           + [(hi, 1) for _, hi in spans.values()]):
+        live += 1 if kind == 0 else -1
+        peak = max(peak, live)
+    ts = sorted(r["ts"] for r in rows)
+    gaps = [b - a for a, b in zip(ts, ts[1:])]
+    return {"area": len(rows), "parent_calls": sum(not r["is_sub"] for r in rows),
+            "surface": sum(r["surface"] for r in rows),
+            "depth_calls": max((chain(f) for f in seen_top), default=0),
+            "spawn_height": max((height(f) for f in seen_top), default=0),
+            "width_approx": peak,
+            "wall_s": round(ts[-1] - ts[0]) if ts else 0,
+            "active_s": round(sum(g for g in gaps if g <= ACTIVE_GAP_S))}
+
+
+def shape(con, start: float, end: float, n: int | None = None) -> dict:
+    """Shape of every root with calls in (start, end], largest surface first, plus
+    the calls no root claims. `check` proves the per-root split loses and invents
+    nothing: roots + unrooted must equal the window totals."""
+    rows = load_calls(con, start, end)
+    parent_of, child_of = _tree_maps(con)
+    resolve = root_resolver(con)
+    per: dict = defaultdict(list)
+    for r in rows:
+        per[r["prompt"]].append(r)
+    spawned: dict = defaultdict(Counter)
+    for s in spawn_rows(con, start, end):
+        root = resolve(s["file"]) if _is_sub_path(s["file"]) else s["prompt"]
+        spawned[root][s["outcome"]] += 1
+    unrooted = per.pop(None, [])
+    roots = []
+    for pid, rs in per.items():
+        roots.append({"prompt": pid, "root": rs[0]["root"], "project": project_of(rs[0]["file"]),
+                      **_root_shape(rs, parent_of, child_of),
+                      "spawns": sum(spawned[pid].values()), "spawn_outcomes": dict(spawned[pid])})
+    roots.sort(key=lambda s: -s["surface"])
+    w = ux.window(con, start, end)
+    calls = sum(s["area"] for s in roots) + len(unrooted)
+    surface = sum(s["surface"] for s in roots) + sum(r["surface"] for r in unrooted)
+    w_surface = w["input"] + w["cache_write"] + w["cache_read"]
+    return {"window": [ux._iso(start), ux._iso(end)], "roots": roots[:n] if n else roots,
+            "unrooted": {"calls": len(unrooted), "surface": sum(r["surface"] for r in unrooted)},
+            "check": {"calls": calls, "window_calls": w["calls"], "surface": surface,
+                      "window_surface": w_surface,
+                      "consistent": calls == w["calls"] and surface == w_surface}}
+
+
 def prompt_tree(con, prompt_id: str) -> dict:
     """One prompt's execution tree: parent calls, then each spawn and its calls."""
     pr = con.execute("SELECT p.session, p.file, p.ts, p.kind, p.source, f.title, f.entrypoint "
@@ -251,12 +379,13 @@ def prompt_tree(con, prompt_id: str) -> dict:
     return {"prompt": prompt_id, "session": pr[0], "at": ux._iso(pr[2]) if pr[2] else None,
             "root": classify_root(kind, source, pr[6], pr[5]), "origin": kind, "source": source,
             "total": _agg(rows), "parent": _agg([r for r in rows if not r["is_sub"]]),
+            "shape": _root_shape(rows, *_tree_maps(con)) if rows else "UNMEASURED",
             "spawns": children}
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
-    ap.add_argument("cmd", choices=["quota", "summary", "top", "prompt"])
+    ap.add_argument("cmd", choices=["quota", "summary", "top", "prompt", "shape"])
     ap.add_argument("args", nargs="*")
     ap.add_argument("--db", default=str(ux.DEFAULT_DB))
     ap.add_argument("--from", dest="start", default=None)
@@ -273,6 +402,8 @@ def main(argv=None) -> int:
         res = summary(con, start, end)
     elif a.cmd == "top":
         res = top(con, start, end, a.n)
+    elif a.cmd == "shape":
+        res = shape(con, start, end, a.n)
     else:
         if not a.args:
             ap.error("prompt needs a PROMPT_ID")
