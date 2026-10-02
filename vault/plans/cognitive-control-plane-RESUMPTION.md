@@ -16,8 +16,16 @@ Thesis: close the burn control loop inside EXISTING owners; no new mega-system.
   `cost_gate`; `weekly_burn` unwired. RCA §13 (P0: subagents do not inherit the parent; the floor
   is set by agent type) and §14 (meter reconciliation FAILS: no weighting of transcript usage
   explains 75 % -> 90 %; GEX44 not the cause; anomaly replay NORMAL throughout).
-Coherence anchor: `python tools/test_usage_index.py` 22/22; `python tools/usage_index.py window
-2026-09-30T17:00:00Z 2026-10-02T09:40:00Z` = 23,925 calls / 6,230,548,450 cache read.
+- `30bdaaa` C1b+C2: index schema v2 (prompts, spawns, subagents, quota tables; one-pass
+  ancestry via `tis_observed.calls_from(on_line=)`), `tools/fanout_ledger.py` (quota / summary /
+  top / prompt), RCA §15 (>= 2 accounts share the transcript store: H4).
+- `9a9ea1f` C3: `scheduler.decide_spawn` (SHADOW ONLY) + `tools/estate_shadow.py replay`.
+- `4cb3606` C4.0: `tools/floor_probe.py probe` (attachment-text fit, provider remainder explicit).
+- Plan §11 = the approved reconciliation (Owner "y" 2026-10-02). Peer state-centric mission owns
+  Goal state / packet / delta (`modules/gsd_x/goal`); CCP feeds it metrology only.
+Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 15/15, `test_estate_shadow` 9/9,
+`test_floor_probe` 4/4; `python tools/usage_index.py window 2026-09-30T17:00:00Z
+2026-10-02T09:40:00Z` = 23,925 calls / 6,230,548,450 cache read (must survive the v2 backfill).
 
 ## 3. Active decisions
 - The 75 % reading is `suspended` in `vault/config/weekly_meter_readings.json`; the alarm shows
@@ -25,17 +33,18 @@ Coherence anchor: `python tools/test_usage_index.py` 22/22; `python tools/usage_
 - Do not edit `tools/rollover.py`, `context-watchdog.py` (SPEC-ECON-ROLLOVER peer-owned and
   implemented), `tools/gsd_mission.py` (Ralph, peer), `hooks/agent-solo-guard.js` (audit G4).
 - Model-calling runs wait for the weekly reset (2026-10-07 17:00Z) unless the Owner says "spend now".
-- `modules/cognitive_os/loop_budget.py` (CO-09, "subagent admission budget") has only one
-  non-test caller: inspect it before building any C3 budget.
+- `loop_budget.py` (CO-09) is a declared-budget library with no spawn-path caller; C3 did not
+  build on it (spawns declare nothing). A live C3 hook needs Owner OK (shared dispatcher).
+- Provider quota: the Wed-17Z seven-day window is REJECTED 2026-10-02T11:54Z -> 2026-10-07T17:00Z.
 
 ## 4. Next three actions
-1. C2 fan-out ledger: extend the index with subagent meta (`agentType`, `toolUseId`,
-   `spawnDepth`, model inherit-vs-explicit) and a "why did this prompt cost N calls" report.
-   0 model calls.
-2. C3 shadow: first MEASURE which spawn classes traverse PreToolUse-Agent (positive control: a
-   mission worker's subagent), then a NEW sibling non-blocking hook that logs shadow verdicts
-   from the cached estate view.
-3. C4.0 zero-quota probe of `updatedInput.model` on the Agent tool.
+1. PRG on the real index once the v2 backfill is done: anchor totals unchanged; one real HUMAN
+   prompt tree and one CONTINUATION/MISSION root (`fanout_ledger.py prompt/top/summary`);
+   `estate_shadow.py replay` (protected_deferred must be 0, review top 15); `floor_probe.py
+   probe` (rent ranking). Record results in RCA §16 + plan §12.
+2. C4.1: pick the largest CPP-controllable lifetime-rent component with an enforcement-preserving
+   path; quality A/B waits for the reset.
+3. C4.0b zero-quota probe of `updatedInput.model` on the Agent tool (audit G5).
 
 ## 5. Start instruction
 `git log --oneline -5 -- tools/usage_index.py`, run the coherence anchor, read plan section 10,
