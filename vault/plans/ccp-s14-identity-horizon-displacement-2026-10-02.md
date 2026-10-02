@@ -69,6 +69,14 @@ classified; "savings" wording removed from replay output.
   work, and it was not duplicate work. Implication for live admission: these defers would delay
   or drop distinct work, not remove waste.
 
+- S3 SEALED `6b61e29a` (Owner "spend now"): `tools/estate_displacement.py` + replay_v2 key `displacement`.
+  Audit `vault/audits/ccp-s14-s3-audit.md` EXECUTE-WITH-FIXES, folded. Gate `test_displacement` 16/16; 8/8
+  mutants KILLED; committed tree: estate_shadow 11/11, spawn_policy_v2 26/26. PRG (real index, CLI):
+  20 non-ALLOW = 20 judged = class sum; RAN_LATER 1, UNKNOWN 19, reusable 0, active 0; possible saving
+  [0, 349,600,836] cache read; 2 without child transcript. Async-ack bug (1,184/1,452 results are
+  launch acks) handed to 2a, whose Equivalents fix is theirs to commit. FP-AGENT-CONTRACT-IDENTIFIER
+  `dfa38fa6`. OPEN: backup delete needs typed consent; transcript overlap left RESEARCH (audit G8-G10).
+
 ## Not this pane / not now
 Horizontal = decide_spawn + estate_shadow (2a). Longitudinal actuator = rollover + context-watchdog
 (peer, do not edit); CCP feeds metrology via c5 shape. Fresh-epoch counterfactual needs c5. Progress
