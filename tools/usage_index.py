@@ -32,6 +32,7 @@ CLI:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sqlite3
@@ -122,17 +123,130 @@ def connect(db: Path = DEFAULT_DB) -> sqlite3.Connection:
     return con
 
 
-def _iter_files(proj: Path):
-    """(path, is_subagent) -- the same enumeration token_ground_truth uses."""
-    if not proj.is_dir():
-        return
+def _is_link(p: Path) -> bool:
+    is_junction = getattr(p, "is_junction", None)          # Python >= 3.12
+    return p.is_symlink() or bool(is_junction and is_junction())
+
+
+def _store_dirs(proj: Path) -> tuple[list[Path], dict[str, str]]:
+    """(one directory per physical project dir, {alias dir: canonical dir}).
+
+    A junction or symlink in the store that resolves to a sibling is an ALIAS: its
+    transcripts are the sibling's bytes, so indexing both spellings gives one store
+    two identities (RCA s16: `C--Users-User-Apps-mcp-video-analyzer` -> the PP dir).
+    The canonical spelling is the one that is not a link; among links only, the
+    smallest. A link whose target lies outside the store has no sibling and is kept
+    under its own spelling (audit G3). Identity never depends on listing order."""
+    groups: dict[str, list[Path]] = {}
     for sub in proj.iterdir():
         if not sub.is_dir():
             continue
+        try:
+            phys = os.path.normcase(str(sub.resolve(strict=True)))
+        except OSError:
+            phys = os.path.normcase(str(sub))
+        groups.setdefault(phys, []).append(sub)
+    dirs, aliases = [], {}
+    for subs in groups.values():
+        real = sorted((s for s in subs if not _is_link(s)), key=lambda s: str(s).lower())
+        canon = real[0] if real else min(subs, key=lambda s: str(s).lower())
+        dirs.append(canon)
+        aliases.update({str(s): str(canon) for s in subs if s != canon})
+    return sorted(dirs, key=lambda s: str(s).lower()), aliases
+
+
+def _iter_files(proj: Path):
+    """(path, is_subagent), one spelling per physical transcript (_store_dirs)."""
+    if not proj.is_dir():
+        return
+    for sub in _store_dirs(proj)[0]:
         for jf in sub.glob("*.jsonl"):
             yield jf, 0
         for jf in sub.glob("*/subagents/*.jsonl"):
             yield jf, 1
+
+
+# Every column that carries a transcript path (audit G1, plus spawns.parent_k).
+# (table, column, kind): "pk" columns may collide with a canonical twin, which wins;
+# "key" columns embed the path after an `off|` prefix.
+_PATH_COLUMNS = (("files", "path", "pk"), ("calls", "k", "key"), ("calls", "file", "plain"),
+                 ("quota", "file", "pk"), ("prompts", "file", "plain"),
+                 ("spawns", "file", "plain"), ("spawns", "parent_k", "key"),
+                 ("subagents", "file", "pk"))
+
+
+def _alias_rows(con, alias: str) -> int:
+    n = 0
+    for table, col, kind in _PATH_COLUMNS:
+        pre = ("off|" + alias) if kind == "key" else alias
+        n += con.execute(f"SELECT count(*) FROM {table} WHERE substr({col},1,?)=?",
+                         (len(pre), pre)).fetchone()[0]
+    return n
+
+
+def _backup(con) -> dict:
+    """sha256-verified snapshot of the index, taken before any row is rewritten."""
+    db = Path(con.execute("PRAGMA database_list").fetchone()[2])
+    bak = db.with_name(f"{db.stem}.identity-{int(time.time())}.bak")
+    dst = sqlite3.connect(str(bak))
+    con.backup(dst)
+    dst.close()
+    digest = hashlib.sha256(bak.read_bytes()).hexdigest()
+    chk = sqlite3.connect(str(bak))
+    try:
+        integrity = chk.execute("PRAGMA integrity_check").fetchone()[0]
+        n = chk.execute("SELECT count(*) FROM calls").fetchone()[0]
+    finally:
+        chk.close()
+    live = con.execute("SELECT count(*) FROM calls").fetchone()[0]
+    if integrity != "ok" or n != live:
+        raise RuntimeError(f"identity backup unverified: integrity={integrity} rows {n}/{live}")
+    return {"path": str(bak), "sha256": digest, "calls": n, "at": time.time()}
+
+
+def _canonicalize(con, proj: Path) -> dict:
+    """Rewrite rows recorded under an alias spelling to the canonical one.
+
+    Runs only where alias rows exist, so a clean index costs one count per column.
+    Destructive (alias duplicates are deleted), hence: a verified backup first, the
+    alias map re-read from the filesystem after the backup (an alias that stopped
+    resolving to its canonical dir is dropped), and every rewrite inside one
+    BEGIN IMMEDIATE, so no other writer interleaves and a failure rolls back whole.
+    A canonical twin always wins; an alias row without one moves whole. Re-reading
+    a transcript afterwards is idempotent, so a discarded alias offset loses nothing."""
+    if not proj.is_dir():
+        return {"aliases": 0, "rewritten": 0}
+    aliases = _store_dirs(proj)[1]
+    todo = {a + os.sep: c + os.sep for a, c in aliases.items()
+            if _alias_rows(con, a + os.sep)}
+    if not todo:
+        return {"aliases": len(aliases), "rewritten": 0}
+    con.commit()
+    bk = _backup(con)
+    now = _store_dirs(proj)[1]                     # re-authorize against the disk now
+    todo = {a: c for a, c in todo.items() if now.get(a[:-1]) == c[:-1]}
+    rewritten = 0
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        for a, c in todo.items():
+            for table, col, kind in _PATH_COLUMNS:
+                pa, pc = (("off|" + a, "off|" + c) if kind == "key" else (a, c))
+                where = f"substr({col},1,{len(pa)})=?"
+                verb = "UPDATE OR IGNORE" if kind in ("pk", "key") else "UPDATE"
+                rewritten += con.execute(
+                    f"{verb} {table} SET {col}=?||substr({col},{len(pa) + 1}) WHERE {where}",
+                    (pc, pa)).rowcount
+                if kind in ("pk", "key") and table != "spawns":
+                    con.execute(f"DELETE FROM {table} WHERE {where}", (pa,))
+        con.execute("INSERT OR REPLACE INTO meta VALUES('identity_backup', ?)", (json.dumps(bk),))
+        con.execute("INSERT OR REPLACE INTO meta VALUES('identity_migration', ?)",
+                    (json.dumps({"at": time.time(), "aliases": sorted(todo),
+                                 "rewritten": rewritten}),))
+        con.commit()
+    except BaseException:
+        con.rollback()
+        raise
+    return {"aliases": len(aliases), "rewritten": rewritten, "backup": bk["path"]}
 
 
 def _key(fp: str, key) -> str:
@@ -219,6 +333,7 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
     status = "OK"
     err = ""
     try:
+        _canonicalize(con, Path(proj))
         known = {r[0]: r[1:] for r in con.execute(
             "SELECT path, offset, size, mtime_ns, entrypoint FROM files")}
         for fp, is_sub in _iter_files(Path(proj)):
