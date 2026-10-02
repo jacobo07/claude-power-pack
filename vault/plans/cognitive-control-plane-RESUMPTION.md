@@ -51,11 +51,25 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
 - Golden incident f319ce75 DONE (RCA §17): depth x context rent, legitimate construction;
   store != workspace != repository proven on real data (io-focus = InfinityOps worktree).
 
+- §12 commit 2 SEALED `f234580`: store identity by resolved path (`_store_dirs`), alias rows
+  canonicalized in refresh() (8 columns incl. spawns.parent_k, one BEGIN IMMEDIATE, verified
+  backup). Pre-fix an id-less `off|<path>` call was DOUBLE-counted when the alias listed first.
+  Live: 3 junctions, 1 with rows, 124 rewritten, alias rows 0, anchor unchanged, backup
+  `~/.claude/state/usage_index/index.identity-1790970811.bak` (sha256 re-verified; delete only
+  with Owner OK). Gate `test_usage_index_identity` 11/11.
+- §12 commit 3 SEALED `6b95854`: `fanout_ledger.project_of` shared; nested spawn project fixed;
+  bands guard inside `replay()`. PRG-2 replay identical after migration. `test_estate_shadow` 11/11.
+
 ## 4. Next three actions
-1. Commit 2 of §12 per §12.1 G1-G3: store identity in `usage_index` (8 path keys, one
-   BEGIN IMMEDIATE transaction, sha256-verified sqlite copy, real `mklink /J` fixture red first).
-2. Commit 3: `estate_shadow.py:90` project from the resolved identity; bands assertion into `replay()`.
-3. Commits 4-5 per §12.1 G4-G6: spawn outcomes (tool_result columns), execution shape.
+1. Commit 4 per §12.1 G4: spawn outcomes. Schema v3 adds `spawns.result_ts / is_error /
+   result_head`; `_ancestry_line` parses the parent's tool_result BEFORE the promptId branch.
+   Backfill ONLY spawns (do not reset every file offset: audit G2); bump inside one BEGIN
+   IMMEDIATE in refresh(), not connect(). Gate: the 32 hook-denied / 7 other split reproduced
+   from the index alone.
+2. Commit 5 per G5/G6: transitive root, execution shape (width approx, depth = longest call
+   chain, spawn-tree height separate, active vs wall duration); per-root sums = window totals.
+3. Commit 7: progress v1 = written files joined to commits in the WORKSPACE repo (RCA §17).
+   Debt: `token_ground_truth` enumeration may still walk junctions (not checked).
    Still open from before: `floor_probe.py probe` rent ranking -> C4.1; G5 probe after 10-07.
 
 ## 5. Start instruction
