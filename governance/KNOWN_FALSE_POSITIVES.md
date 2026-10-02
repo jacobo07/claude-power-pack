@@ -116,6 +116,21 @@
   proven script there), or let the program read `DATABASE_URL` from the sourced env file. Then
   nothing credential-shaped is written from the dev machine at all.
 
+## FP-AGENT-CONTRACT-IDENTIFIER — contract guard reads a gate NAME as a write demand
+- What it really is: `~/.claude/hooks/agent-solo-guard.js` `DURABLE_OUTPUT[0]` matches a
+  write-family verb followed, within 60+60 characters, by a token ending in `.md` / `.json`.
+  `\b` treats a hyphen as a word boundary, so a gate identifier such as `V-SPV2-NO-WRITE-SQL`
+  followed by a plan path reads as "write ... file.md". A read-only specialist
+  (`oneshot-architect-auditor`) is then refused as an IMPOSSIBLE AGENT CONTRACT even after the
+  durable clause is removed and the prompt says the parent persists the report.
+- Symptom: the same `IMPOSSIBLE AGENT CONTRACT` block on two consecutive dispatches, the second
+  already following the guard's own fix (2).
+- Measured 2026-10-03 (CCP plan s14 S3 audit): the regex replayed on the exact prompt matched
+  `WRITE-SQL and V-SPV2-LEDGER-UNTOUCHED), vault/plan...`; with only the gate name removed it
+  did not match.
+- Response (≤2 min): in a read-only agent's prompt, refer to write-related gates descriptively
+  ("the no-SQL-mutation gate"), or use the guard's fix (1): `general-purpose` told to adopt the
+  specialist's definition, with a real write clause. Do not switch the guard off.
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
