@@ -120,7 +120,40 @@ Far (>1 h or none) main cache read 1.44 B + worktree-project subagents 1.55 B: a
 48 % of the window's cache read had no human prompt within the previous hour.
 `entrypoint` marks only 194 calls as sdk-cli, so it cannot be the discriminator.
 
-## 9. Open (next)
+## 9. Correction — cache-read rate
+
+Sections 2 and 4 used cache read at 0.1x input. The rate card verified on 2026-09-27
+(`vault/plans/context-rent-2026-09-27.md`) has **Opus 5.5 cache read at 0.05x**, and
+1h-TTL writes at 2x (5m: 1.25x). Re-estimated weight: cache read ~50-57 %, cache write
+~25-35 % (depends on the 1h share, UNKNOWN here), output ~10-15 %. Still ESTIMATED;
+the weekly-limit weighting itself remains UNKNOWN.
+
+## 10. Startup floor vs growth (measured, transcripts born in the window)
+
+| | first-call context, median (p10-p90) | share of their re-read that is floor |
+|---|---|---|
+| main (150) | 126k (70k-141k) | 46 % |
+| subagent (219) | 95k (49k-101k) | 40 % |
+
+Floor and history growth are levers of about the same size.
+
+## 11. Interactive rollover is ON, but fires only at ~450k
+
+Ledger `~/.claude/state/rollover/rollover-ledger.jsonl`, in-window rows: 126
+shadow_candidate, 64 capsule_sealed, 55 SAFE_TO_FORGET / 5 REFUSED gates, 55 claimed,
+54 resume_certified — rollover works. But:
+
+- The active crossing is asked only at the advisory wall, `THRESHOLD_ADVISORY_PCT = 45`
+  (`modules/zero-crash/hooks/context-watchdog.py:45`) ≈ 450k on a 1M window.
+- The economic decider (`tools/rollover.py::decide`) runs at the 40 % snapshot tier in
+  SHADOW only, and is called without `start_head` (`context-watchdog.py:1484`), so
+  `at_boundary` (`rollover.py:538`) is true only for a clean tracked tree — which a shared
+  tree never is. Result: **110 of 126 decisions = "worth it, but not at a work boundary"**,
+  4 would_rollover, 12 unreadable. Median resident at decision 451k (break-even ~15 calls).
+
+Every session therefore pays rent on the band between its ~126k floor and ~450k.
+
+## 12. Open (next)
 
 - GEX44 transcripts (same account per Owner) — not yet read.
 - Weighted-burn alarm replacing the output-only one (P5). Calibration needs a meter

@@ -243,6 +243,13 @@ ROLLOVER_ASK_FLAG = "claude-ctxwd-rollask-{session_id}.flag"
 ROLLOVER_CLEAR_FLAG = "claude-ctxwd-rollclear-{session_id}.flag"
 ROLLOVER_WAIT_FLAG = "claude-ctxwd-rollwait-{session_id}.flag"
 ROLLOVER_MAX_WAIT = 3
+# Economic trigger (spec vault/specs/economic-rollover-trigger.md): set beside ASK when the ask
+# came from the break-even decider rather than the wall, so a capsule that never arrives
+# withdraws the ask instead of falling back to /compact at 25 %. Per-session state (start
+# head, last evaluated head, declined head) lives in ROLLOVER_ECON_STATE.
+ROLLOVER_ECON_FLAG = "claude-ctxwd-rollecon-{session_id}.flag"
+ROLLOVER_ECON_STATE = "claude-ctxwd-rollecon-{session_id}.json"
+ROLLOVER_ECON_PCT_DEFAULT = 20.0
 
 
 def _import_atomic_write():
@@ -1057,6 +1064,18 @@ def _rollover_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict
             reasons=g["reasons"][:4], waits=waits)
     if waits < ROLLOVER_MAX_WAIT:
         return None                                  # /kclear has not landed yet; wait
+    if _flag_exists(session_id, ROLLOVER_ECON_FLAG):
+        # An economic ask is an offer, not a wall: compacting at 25 % would discard context for
+        # nothing. Withdraw, remember the head so it is not re-asked before the next commit,
+        # and leave ADVISORY/CLEAR alone so the wall still fires exactly as before.
+        st = _econ_state(session_id)
+        st["declined_head"] = st.get("asked_head") or st.get("eval_head")
+        _econ_save(session_id, st)
+        for _rf in (ROLLOVER_ASK_FLAG, ROLLOVER_WAIT_FLAG, ROLLOVER_ECON_FLAG):
+            _clear_flag(session_id, _rf)
+        _ledger(session_id, "rollover_econ_withdrawn", verdict=g["verdict"], waits=waits,
+                head=st.get("declined_head"))
+        return None
     # The capsule never arrived. Rollover must not leave a session worse off than the
     # /compact it replaced, so hand the crossing back to the compact path exactly once.
     _set_flag(session_id, ROLLOVER_CLEAR_FLAG)
@@ -1100,6 +1119,169 @@ def _shadow_rollover(session_id: str, cwd: str, transcript_path: str, used_pct, 
     except Exception:
         pass
     return False
+
+
+# ------------------------------------------------- economic rollover trigger
+# Spec vault/specs/economic-rollover-trigger.md. Measured 2026-10-02: active rollover was
+# asked only at the 45 % wall (~450k of 1M), and the break-even decider ran once in shadow
+# without a start head, so 110 of 126 decisions read "worth it, but not at a work boundary".
+# Here: record the session's start head, evaluate once per commit above the floor (detached,
+# tools/rollover_econ.py), and ask for /kclear when that evaluation says the crossing pays at
+# the current head. The gate in _rollover_step stays the only authority over /clear.
+
+def _econ_enabled() -> bool:
+    return (_rollover_active() and (os.environ.get("CPP_ROLLOVER_ECONOMIC") or "")
+            .strip().lower() not in ("0", "off", "false"))
+
+
+def _econ_floor() -> float:
+    try:
+        return float(os.environ.get("CPP_ROLLOVER_ECON_PCT") or ROLLOVER_ECON_PCT_DEFAULT)
+    except ValueError:
+        return ROLLOVER_ECON_PCT_DEFAULT
+
+
+def _econ_state(session_id: str) -> dict:
+    p = Path(tempfile.gettempdir()) / ROLLOVER_ECON_STATE.format(session_id=session_id)
+    try:
+        st = json.loads(p.read_text(encoding="utf-8"))
+        return st if isinstance(st, dict) else {}
+    except Exception:
+        return {}
+
+
+def _econ_save(session_id: str, st: dict) -> None:
+    p = Path(tempfile.gettempdir()) / ROLLOVER_ECON_STATE.format(session_id=session_id)
+    try:
+        p.write_text(json.dumps(st), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _git_head(cwd: str):
+    """HEAD sha read from the .git files, no process: this runs on every Stop above the floor,
+    and a git spawn on a starved host is what eats a hook's budget. Worktrees (a `.git` file
+    naming the gitdir, refs in `commondir`) and packed refs are followed. None when unknown."""
+    try:
+        start = Path(cwd or os.getcwd()).resolve()
+        gitdir = None
+        for d in (start, *start.parents):
+            g = d / ".git"
+            if g.is_dir():
+                gitdir = g
+                break
+            if g.is_file():
+                line = g.read_text(encoding="utf-8").strip()
+                if line.startswith("gitdir:"):
+                    gitdir = (d / line[7:].strip()).resolve()
+                break
+        if gitdir is None:
+            return None
+        head = (gitdir / "HEAD").read_text(encoding="utf-8").strip()
+        if not head.startswith("ref:"):
+            return head or None
+        ref = head[4:].strip()
+        common = gitdir
+        cd = gitdir / "commondir"
+        if cd.is_file():
+            common = (gitdir / cd.read_text(encoding="utf-8").strip()).resolve()
+        for base in (gitdir, common):
+            rf = base / ref
+            if rf.is_file():
+                return rf.read_text(encoding="utf-8").strip() or None
+        packed = common / "packed-refs"
+        if packed.is_file():
+            for ln in packed.read_text(encoding="utf-8").splitlines():
+                parts = ln.split()
+                if len(parts) == 2 and parts[1] == ref:
+                    return parts[0]
+    except Exception:
+        return None
+    return None
+
+
+def _econ_decision(session_id: str) -> dict:
+    """The decision tools/rollover_econ.py wrote, or {}. Same path spelling as its
+    decision_path(): CPP_ROLLOVER_STATE_DIR or ~/.claude/state/rollover, then decisions/."""
+    base = Path(os.environ.get("CPP_ROLLOVER_STATE_DIR")
+                or (Path.home() / ".claude" / "state" / "rollover"))
+    try:
+        d = json.loads((base / "decisions" / f"{session_id}.json").read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def _econ_spawn(session_id: str, cwd: str, transcript_path: str, used_pct, start_head: str) -> bool:
+    """Detached tools/rollover_econ.py, same spawn discipline as _shadow_rollover."""
+    try:
+        import subprocess
+        tool = _rollover_tool().with_name("rollover_econ.py")
+        pyw = Path(sys.executable).with_name("pythonw.exe")
+        if not tool.is_file() or not pyw.is_file():
+            _ledger(session_id, "rollover_econ_skipped", why="rollover_econ.py or pythonw.exe absent")
+            return False
+        argv = [str(pyw), str(tool), "--session", session_id, "--cwd", cwd or os.getcwd(),
+                "--used-pct", str(used_pct), "--start-head", start_head]
+        if transcript_path:
+            argv += ["--transcript", transcript_path]
+        base = 0x00000008 | 0x00000200
+        for flags in (base | 0x01000000, base):
+            try:
+                subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, creationflags=flags, close_fds=True)
+                return True
+            except OSError:
+                continue
+    except Exception:
+        pass
+    return False
+
+
+def _econ_rollover(session_id: str, cwd: str, transcript_path: str, used_pct) -> dict | None:
+    """One Stop of the economic trigger. Returns the /kclear block, or None. Never raises."""
+    try:
+        if not _econ_enabled() or _flag_exists(session_id, ROLLOVER_ASK_FLAG):
+            return None
+        if (_read_autorun_marker(session_id) or {}).get("mission_id"):
+            return None                      # mission workers rotate under gsd_epoch
+        head = _git_head(cwd)
+        if not head:
+            return None
+        st = _econ_state(session_id)
+        if not st.get("start_head"):
+            st.update(start_head=head, eval_head=head)
+            _econ_save(session_id, st)
+            return None
+        if used_pct is None or float(used_pct) < _econ_floor() or head == st.get("declined_head"):
+            return None
+        dec = _econ_decision(session_id)
+        if dec.get("head") == head and (dec.get("decision") or {}).get("would_rollover") is True:
+            st.update(asked_head=head, eval_head=head)   # a withdrawal declines THIS head
+            _econ_save(session_id, st)
+            _set_flag(session_id, ROLLOVER_ASK_FLAG)
+            _set_flag(session_id, ROLLOVER_ECON_FLAG)
+            d = dec["decision"]
+            _ledger(session_id, "rollover_kclear_asked", used_pct=used_pct, route="economic",
+                    head=head, resident=d.get("resident"), breakeven_calls=d.get("breakeven_calls"))
+            return {"decision": "block", "reason": (
+                f"ROLLOVER PAYS NOW — {used_pct}% used, ~{(d.get('resident') or 0) // 1000}k "
+                f"tokens resident, of which ~{(d.get('growth_above_fresh') or 0) // 1000}k is "
+                "history a fresh session would not re-read on every call (break-even "
+                f"{d.get('breakeven_calls')} calls). A commit has just landed, so this is a "
+                "work boundary. Seal the capsule YOURSELF in your next response: invoke the "
+                "`kclear` skill (Skill tool) and follow it -- it prints a [capsule] verdict. "
+                "ONLY if the verdict is SAFE_TO_FORGET is `/clear` requested on the next Stop; "
+                "if the capsule is refused nothing is cleared and you keep working.")}
+        if head != st.get("eval_head"):
+            st["eval_head"] = head
+            _econ_save(session_id, st)
+            spawned = _econ_spawn(session_id, cwd, transcript_path, used_pct, st["start_head"])
+            _ledger(session_id, "rollover_econ_evaluating", used_pct=used_pct, head=head,
+                    spawned=spawned)
+    except Exception:
+        return None
+    return None
 
 
 def _spawn_daemon() -> bool:
@@ -1459,6 +1641,15 @@ def _run_inner(event: dict) -> dict:
                         command=marker.get("resume_command"), route=route.get("route"),
                         why=route.get("why"))
                 return {}
+
+    # Economic rollover (spec economic-rollover-trigger.md): below the wall, cross when it
+    # pays at a commit boundary. Ahead of the snapshot return because its floor (20 %) is
+    # under the snapshot tier (40 %); it never acts at the wall, where ASK is already set.
+    econ = (_econ_rollover(session_id, event.get("cwd") or os.getcwd(),
+                           event.get("transcript_path") or "", used_pct)
+            if used_pct < adv_pct else None)   # at the wall, the wall path owns the crossing
+    if econ:
+        return econ
 
     if used_pct < snap_pct:
         return {}
