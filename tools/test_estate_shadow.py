@@ -88,7 +88,8 @@ def main() -> int:
     callers = []
     for p in list((HERE.parent / "modules").rglob("*.py")) + list((HERE.parent / "hooks").rglob("*.js")) \
             + list(HERE.glob("*.py")):
-        if p.name in ("scheduler.py", "estate_shadow.py", "test_estate_shadow.py"):
+        if p.name in ("scheduler.py", "estate_shadow.py", "test_estate_shadow.py",
+                      "test_spawn_policy_v2.py"):
             continue
         try:
             if re.search(r"decide_spawn", p.read_text(encoding="utf-8", errors="replace")):

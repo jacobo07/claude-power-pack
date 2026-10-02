@@ -44,6 +44,7 @@ normalizes both. I/O: gather_hot_sessions() + admit().
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -363,6 +364,96 @@ def decide_spawn(priority: str, load: dict, prompt_spawns: int, bands: dict) -> 
         v.verdict = SPAWN_WOULD_DEFER
         v.reasons.append(f"prompt fan-out {prompt_spawns} > envelope {env}")
     return v
+
+
+# --- C3 v2 (plan s12 commit 8 + s13): challenger, SHADOW ONLY ------------------------
+#
+# Adds two pre-spawn facts to v1 and one class, and emits a POLICY RECEIPT for every
+# verdict. Never replaces v1: tools/estate_shadow.py replay-v2 judges both on the same
+# history and recommends NO_CHANGE unless v2 differs. Every input is computable BEFORE
+# the spawn from the usage index (audit G7: no future data).
+#   equivalent_active  spawns with the same input_hash (type + exact prompt) started
+#                      earlier and with no result recorded at the spawn instant
+#   root_calls_before  calls already charged to this spawn's root prompt
+#   UNKNOWN            a root the ledger could not classify is never judged on load:
+#                      v1 folded it into BACKGROUND, which defers what it cannot see.
+
+SPAWN_WOULD_REJECT = "WOULD_REJECT"
+PRIO_UNKNOWN = "UNKNOWN"
+POLICY_V2 = "decide_spawn/v2"
+_VERDICT_RANK = {SPAWN_ALLOW: 0, SPAWN_WOULD_DEFER: 1, SPAWN_WOULD_REJECT: 2}
+FLOORS = ("protected priorities never deferred or rejected",
+          "an UNKNOWN root is never judged on load",
+          "an unmeasured input never triggers a verdict",
+          "bands come from a baseline that ends before the judged window")
+
+
+def spawn_priority_v2(root_class: str, agent_type) -> str:
+    p = spawn_priority(root_class, agent_type)
+    return PRIO_UNKNOWN if p == PRIO_BACKGROUND and root_class == "UNKNOWN" else p
+
+
+def decide_spawn_v2(priority: str, load: dict, prompt_spawns: int, bands: dict, *,
+                    equivalent_active: int | None, root_calls_before: int | None) -> SpawnVerdict:
+    """v2 shadow verdict: ALLOW / WOULD_DEFER / WOULD_REJECT (most severe wins).
+
+    WOULD_REJECT: a non-protected spawn whose exact request is already running.
+    WOULD_DEFER : v1's load and fan-out rules, plus a BACKGROUND root whose spend
+                  is above the baseline p90 root envelope (`root_calls_p90`)."""
+    if priority in PROTECTED:
+        v = SpawnVerdict(SPAWN_ALLOW, priority, [f"{priority} is protected"])
+        if equivalent_active:
+            v.reasons.append(f"equivalent spawn active ({equivalent_active}): allowed, protected")
+        return v
+    if priority == PRIO_UNKNOWN:
+        return SpawnVerdict(SPAWN_ALLOW, priority, ["root UNKNOWN: not judged on load"])
+    v = decide_spawn(priority, load, prompt_spawns, bands)
+    env = bands.get("root_calls_p90")
+    if (priority == PRIO_BACKGROUND and env is not None and root_calls_before is not None
+            and root_calls_before > env):
+        v.verdict = SPAWN_WOULD_DEFER
+        v.reasons.append(f"root spend {root_calls_before} calls > envelope {env}")
+    if equivalent_active:
+        v.verdict = SPAWN_WOULD_REJECT
+        v.reasons.append(f"equivalent spawn still running ({equivalent_active}): same type + prompt")
+    return v
+
+
+def bands_digest(bands: dict) -> str:
+    raw = json.dumps({k: bands.get(k) for k in ("p90", "p99", "prompt_spawns_p90",
+                                                "root_calls_p90")}, sort_keys=True)
+    return hashlib.sha256(raw.encode()).hexdigest()[:12]
+
+
+def spawn_receipt(subject: dict, features: dict, bands: dict, v: SpawnVerdict,
+                  evidence_class: str, expected_effect: dict | None = None) -> dict:
+    """A policy receipt: everything needed to re-derive the verdict without the index
+    (features + bands travel inside it), plus what would void it. Never injected
+    into model context; regenerable from the index."""
+    deopt = {SPAWN_ALLOW: "none: no action taken",
+             SPAWN_WOULD_DEFER: "void once every triggering band is back under its limit; "
+                                "re-judged at the next spawn, never applied to protected work",
+             SPAWN_WOULD_REJECT: "void as soon as the equivalent spawn records a result "
+                                 "(returned, failed or blocked)"}[v.verdict]
+    body = {"policy": POLICY_V2, "bands_digest": bands_digest(bands), "subject": subject,
+            "features": features, "bands": {k: bands.get(k) for k in (
+                "p90", "p99", "prompt_spawns_p90", "root_calls_p90")},
+            "verdict": v.verdict, "priority": v.priority, "reasons": list(v.reasons),
+            "floors_checked": list(FLOORS), "evidence_class": evidence_class,
+            "expected_effect": expected_effect or {"kind": "UNMEASURED"}, "deopt": deopt}
+    body["receipt_id"] = hashlib.sha256(json.dumps(
+        [body["policy"], body["bands_digest"], subject.get("tool_use_id")],
+        sort_keys=True).encode()).hexdigest()[:16]
+    return body
+
+
+def replay_receipt(receipt: dict) -> SpawnVerdict:
+    """Re-derive a receipt's verdict from the receipt alone (done-gate: a receipt
+    that cannot reproduce itself is not evidence)."""
+    f = receipt["features"]
+    return decide_spawn_v2(receipt["priority"], f["load"], f["prompt_spawns"], receipt["bands"],
+                           equivalent_active=f["equivalent_active"],
+                           root_calls_before=f["root_calls_before"])
 
 
 if __name__ == "__main__":
