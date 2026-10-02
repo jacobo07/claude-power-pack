@@ -294,5 +294,76 @@ def main(argv=None) -> int:
     return 0
 
 
+# --- C3: estate spawn governor, SHADOW ONLY (cognitive-control-plane-2026-10-02 §11) ---
+#
+# CO-08 above judges top-level panes. Two panes that each fan out to twenty
+# subagents pass it; this judges every SPAWN against the estate. Pure and
+# deterministic. STATUS: shadow -- no caller blocks, defers or alters a launch on
+# this verdict; tools/estate_shadow.py replays history through it and logs.
+
+SPAWN_ALLOW = "ALLOW"
+SPAWN_WOULD_DEFER = "WOULD_DEFER"
+# Priority classes, most protected first. PROTECTED classes are never deferred.
+PRIO_VERIFY = "CRITICAL_VERIFY"
+PRIO_INTERACTIVE = "INTERACTIVE"
+PRIO_NORMAL = "NORMAL"
+PRIO_BACKGROUND = "BACKGROUND"
+PROTECTED = (PRIO_VERIFY, PRIO_INTERACTIVE)
+_VERIFY_MARKERS = ("verifier", "reviewer", "checker", "auditor", "plan-check")
+
+
+def spawn_priority(root_class: str, agent_type) -> str:
+    """Priority of one spawn from what the ledger recorded (root class of the
+    prompt that caused it + the requested agent type)."""
+    at = (agent_type or "").lower()
+    if any(m in at for m in _VERIFY_MARKERS):
+        return PRIO_VERIFY
+    if root_class == "HUMAN":
+        return PRIO_INTERACTIVE
+    if root_class == "CONTINUATION":
+        return PRIO_NORMAL
+    return PRIO_BACKGROUND          # MISSION, SDK, SYSTEM, UNKNOWN
+
+
+@dataclass
+class SpawnVerdict:
+    verdict: str
+    priority: str
+    reasons: list = field(default_factory=list)
+
+
+def decide_spawn(priority: str, load: dict, prompt_spawns: int, bands: dict) -> SpawnVerdict:
+    """Shadow verdict for one spawn.
+
+    load  -- estate at the spawn instant: {"active_sessions", "active_subagents",
+             "calls_per_h"} (numbers, or None when unmeasured)
+    bands -- frozen from a BASELINE window, never from the window being judged:
+             {"p90": {dim: v}, "p99": {dim: v}, "prompt_spawns_p90": n}
+    Protected priorities always ALLOW. BACKGROUND defers above any p90 band,
+    NORMAL above any p99 band; any non-protected spawn beyond its prompt's
+    fan-out envelope defers. An unmeasured dimension never triggers a deferral."""
+    v = SpawnVerdict(SPAWN_ALLOW, priority)
+    if priority in PROTECTED:
+        v.reasons.append(f"{priority} is protected")
+        return v
+
+    def over(level):
+        return [d for d, lim in (bands.get(level) or {}).items()
+                if load.get(d) is not None and lim is not None and load[d] > lim]
+
+    hot90, hot99 = over("p90"), over("p99")
+    if priority == PRIO_BACKGROUND and hot90:
+        v.verdict = SPAWN_WOULD_DEFER
+        v.reasons.append("estate above baseline p90: " + ", ".join(hot90))
+    if priority == PRIO_NORMAL and hot99:
+        v.verdict = SPAWN_WOULD_DEFER
+        v.reasons.append("estate above baseline p99: " + ", ".join(hot99))
+    env = bands.get("prompt_spawns_p90")
+    if env is not None and prompt_spawns > env:
+        v.verdict = SPAWN_WOULD_DEFER
+        v.reasons.append(f"prompt fan-out {prompt_spawns} > envelope {env}")
+    return v
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
