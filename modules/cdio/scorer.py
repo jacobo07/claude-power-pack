@@ -326,17 +326,20 @@ def check_color_discipline(fill_opacities, *, threshold: float = TINT_FILL_OPACI
 # preference, not a gate. These four checks make it refusable.
 #
 # The load-bearing nuance (CDIO-06 sec.1): a default is not slop; a default
-# WITHOUT A DECLARED INTENT is slop. Three of the nine families use Inter
+# WITHOUT A DECLARED INTENT is slop. Four of the ten families use a default stack
 # deliberately and for stated reasons, so check_font_stack does not blanket-fail
 # a default-tier font -- it fails one whose declared family does not sanction it.
 # --------------------------------------------------------------------------- #
 
 # Families that deliberately sanction a default-tier font (CDIO-06 sec.1):
-#   F1 Editorial Minimalism (Inter -- restraint is the point)
-#   F4 Data-Dense Pro       (Inter -- for its tabular numerals)
-#   F6 Playful Color        (Inter -- paired against a characterful display face)
-KNOWN_FAMILIES = {f"F{i}" for i in range(1, 10)}
-FAMILIES_SANCTIONING_DEFAULT_FONTS = {"F1", "F4", "F6"}
+#   F1  Editorial Minimalism (Inter -- restraint is the point)
+#   F4  Data-Dense Pro       (Inter -- for its tabular numerals)
+#   F6  Playful Color        (Inter -- paired against a characterful display face)
+#   F10 Calm Utility         (the platform's own sans -- deference to the platform IS
+#                             the commitment; see CDIO-06 sec.1, and sec.6 for the
+#                             mismatch that abusing this licence produces)
+KNOWN_FAMILIES = {f"F{i}" for i in range(1, 11)}
+FAMILIES_SANCTIONING_DEFAULT_FONTS = {"F1", "F4", "F6", "F10"}
 
 DEFAULT_TIER_FONTS = {
     "inter", "roboto", "arial", "helvetica", "helvetica neue", "system-ui",
@@ -392,11 +395,12 @@ def check_family_declared(family, *, criterion: str = "aesthetic-family-declared
         return Verdict(
             criterion=criterion, dimension="visual", status="fail", severity="critical",
             observed="aesthetic_family absent from DESIGN.md front-matter",
-            recommendation="run the CDIO-06 sec.2 three-question picker; declare one of F1..F9")
+            recommendation="run the CDIO-06 sec.2 picker (four questions since F10); "
+                           "declare one of F1..F10")
     return Verdict(
         criterion=criterion, dimension="visual", status="fail", severity="critical",
-        observed=f"aesthetic_family={fam!r} is not one of F1..F9",
-        recommendation="declare a known CDIO-06 family (F1..F9)")
+        observed=f"aesthetic_family={fam!r} is not one of F1..F10",
+        recommendation="declare a known CDIO-06 family (F1..F10)")
 
 
 def check_font_stack(fonts, family, *, criterion: str = "font-stack-intent") -> Verdict:

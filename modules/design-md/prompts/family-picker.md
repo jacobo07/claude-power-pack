@@ -1,7 +1,7 @@
 # Prompt Pack — `family-picker`
 
 **Objective.** Turn a product description into exactly one declared CDIO-06 aesthetic
-family (F1–F9), with the reasoning shown, so the DESIGN.md `aesthetic_family` field can
+family (F1–F10), with the reasoning shown, so the DESIGN.md `aesthetic_family` field can
 be filled with a decision instead of a guess.
 
 **When to use.** Before any token is written for a new product or a redesign. This is
@@ -17,11 +17,12 @@ running it backwards to rationalize a preference is how a default becomes a "cho
 >
 > Product: `<one paragraph: what it does, who uses it, what the user's core task is>`
 >
-> Run the three-question picker in CDIO-06 sec. 2, in order. For each question, state
-> the answer AND the evidence from the product description that forces it — not a
-> preference, an inference. Then:
+> Run the picker in CDIO-06 sec. 2, in order. Questions 1–3 always; question 4 only if
+> they left a real choice — say so explicitly when it does not fire, because "form factor
+> did not discriminate" is a finding. For each question, state the answer AND the evidence
+> from the product description that forces it — not a preference, an inference. Then:
 >
-> 1. Name the recommended family (F1–F9) and the runner-up.
+> 1. Name the recommended family (F1–F10) and the runner-up.
 > 2. State what the runner-up would have bought you and what it would have cost. If you
 >    cannot articulate a real cost, you have not actually compared them.
 > 3. From CDIO-06 sec. 5, name the specific floor this family will collide with, and

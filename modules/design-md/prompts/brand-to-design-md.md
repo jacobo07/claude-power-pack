@@ -22,7 +22,7 @@ reference brand you have permission to build in the spirit of. The output is a
 >    explicitly rather than filling it with a plausible default — an invented token is
 >    indistinguishable from an inherited one, which is the failure mode this whole
 >    system exists to prevent.
-> 2. **Declare the family.** Classify the source into one of F1–F9 and state the
+> 2. **Declare the family.** Classify the source into one of F1–F10 and state the
 >    evidence (its palette, its type strategy, its density). If it is a remix, name the
 >    base and the voice, and apply the CDIO-06 sec. 3 arbitration rules explicitly.
 > 3. **Nine sections, all present:** Color Palette; Typography; Components; Spacing &

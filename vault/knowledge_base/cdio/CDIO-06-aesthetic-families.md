@@ -22,13 +22,13 @@ The distinction this dataset exists to enforce:
 
 > A default is not slop. A default **without a declared intent** is slop.
 
-Three of the nine families below use Inter deliberately, as a considered choice with
-a stated reason. The Power Pack's own token template used Inter with no reason at
-all. The first is design; the second is the absence of design. The gate
+Four of the ten families below use a default-tier stack deliberately, as a considered
+choice with a stated reason. The Power Pack's own token template used Inter with no
+reason at all. The first is design; the second is the absence of design. The gate
 (`modules/cdio/scorer.py`, `check_font_stack`) draws exactly this line: a default-tier
 font passes only when the declared family sanctions it.
 
-## 1. The nine families
+## 1. The ten families
 
 Each family is a *commitment*: a palette, a type strategy, a context where it earns
 its keep, and real products that prove it works. A DESIGN.md declares exactly one
@@ -97,21 +97,94 @@ family in its `aesthetic_family` field. That declaration is load-bearing — it 
 - **Proof:** A24, Criterion, Granola, Superhuman
 - **Sanctions default-tier fonts:** no
 
+### F10 — Calm Utility (Minimal iOS / Clean SaaS)
+- **Palette:** opaque `#fff`–`#f7f8fa` ground / near-black ink (`#141a2e`-class) / at most
+  one saturated accent, carried by a small fraction of the surface
+- **Typography:** the platform's own sans at a short scale — four levels, not nine
+- **Use when:** mobile-first consumer utilities where the user has one task per screen:
+  weather, habit, transit, personal finance, scheduling, lightweight consumer SaaS
+- **Proof:** the CDIO-06 reference bank (sec. 9), distilled 2026-09-14
+- **Sanctions default-tier fonts:** yes — and this is the family's most abusable licence,
+  see below
+
+F10 is the family the other nine kept almost-covering. F7 Glass is Apple-adjacent but its
+defining commitment is *translucency*; F1 Editorial Minimalism is restraint but for
+read-heavy web. F10 is neither: **opaque flat surfaces, scan-heavy, one task per screen,
+thumb-operated.** No existing family's proof set contained a bottom-tab mobile app, which
+is what made the gap real rather than a naming preference.
+
+**The font sanction is deliberate and narrow.** F10 defers to the platform's own text
+rendering because deference to the platform *is* the commitment — the same logic that lets
+F1 keep Inter. It is not a licence to skip the type decision: the short scale, the weight
+discipline and the ink colour are still choices, and a surface that declared F10 purely to
+escape `check_font_stack` has declared the wrong family. The mismatch in sec. 6 is the
+check on that.
+
+#### Invariants — break one and it is not this family
+- **Surfaces are opaque.** Contrast must be computable from the surface's own tokens. A
+  frosted or gradient-backed panel makes it depend on what sits behind, which is F7's
+  problem to own, not this one's.
+- **At most one hue carries emphasis.** Two accents is not richness; it is the absence of
+  a hierarchy decision.
+- **The accent is scarce.** It earns its emphasis from how little of the surface it
+  occupies. An interface that is mostly accent has no accent.
+- **Exactly one dominant action per screen.** Scarcity of emphasis is the whole mechanism.
+- **One radius family**, ordered with surface size — larger surfaces may carry a larger
+  radius, never the reverse.
+- **Depth is information.** Elevation says "this layer is above that one" or "this is
+  interactive". Decorative shadow is noise wearing depth's clothes.
+
+#### Strong preferences — adapt to brand and platform
+White or near-white ground; a large hero surface carrying the screen's primary fact;
+bottom tab navigation on mobile (on desktop the same philosophy becomes a restrained
+sidebar or top nav with few persistent destinations — never a transplanted tab bar);
+generous outer gutters; metadata quieter than content.
+
+#### Optional motifs — present in the references, required by nothing
+A **blue** accent specifically; a centred floating action; a gradient on the hero surface;
+rounded photo cards; pill-shaped status chips. Every one of these is a choice the
+reference bank happened to make. None is the family.
+
+#### Anti-patterns
+Card soup — a rounded rectangle around every heading, metric and row, so that containment
+stops meaning grouping. Several equally-weighted accent buttons competing for one
+decision. Accent gradient on every surface rather than on the one that leads. Whitespace
+standing in for functionality that was never built. Slot names surviving into the shipped
+screen — a tile labelled `Primary`, a venue labelled `Place Name` — which is the reference
+bank's own most common defect and is a Contract of Reality breach, not a style note.
+
 ## 2. The picker (three questions, one family)
 
-Answer in order. The first two narrow; the third can override into F8/F9.
+Answer in order. The first two narrow; the third can override into F8/F9; the fourth
+fires only where the first three left a real choice.
 
 1. **Is the product read-heavy or scan-heavy?**
    - Read → F1 Editorial Minimalism, or F3 Warm Editorial
-   - Scan → F4 Data-Dense Pro, or F2 Terminal-Core
+   - Scan → F4 Data-Dense Pro, F2 Terminal-Core, or F10 Calm Utility
 2. **Who is the user?**
    - Developer → F2 or F4
    - Designer / creator → F5 or F6
-   - Consumer → F7 or F6
+   - Consumer → F7, F6, or F10
    - Prosumer → F3
 3. **Does the brand need to feel courageous?**
    - Yes → F8 Neon Brutalist, or F9 Cult/Indie
-   - No → stay within F1–F7
+   - No → stay within F1–F7, F10
+4. **What does the user hold, and how many decisions does one screen carry?**
+   - A phone, one decision per screen → **F10 Calm Utility**
+   - A phone, premium/immersive, translucency is part of the brand → F7
+   - A desktop, many simultaneous decisions → F4
+   - Form factor does not discriminate here → the sec. 2 answer above stands
+
+Question 4 was added 2026-09-14 and is the reason F10 exists. The first three questions
+route on *content* and *audience* and never on **form factor**, so a consumer mobile
+utility and a premium desktop consumer surface arrived at the same pair — and the mobile
+answer was always slightly wrong. A picker that cannot ask what the user is holding
+cannot choose between a tab bar and a sidebar, and that difference is structural rather
+than stylistic.
+
+Do not read question 4 as "mobile means F10". A phone running a dense trading terminal is
+still F4; a phone running a film-archive brand is still F9. Question 4 discriminates only
+when questions 1–3 have already landed on the calm, consumer, scan-heavy branch.
 
 A family reached by this tree is a *hypothesis*, not a verdict: it must still clear
 the CDIO-01..04 thresholds. A beautiful family that fails legibility is a defect
@@ -230,6 +303,19 @@ executing it *well* still lands you outside a floor if you are not deliberate.
 - **F9 Cult / Indie** — differentiation as a goal tends to produce novel navigation,
   which collides with the Flow dimension (CDIO-00 sec. 2.5). Being memorable and being
   operable are not in tension unless you let them be.
+- **F10 Calm Utility** — two collisions, and the first is the family's signature move.
+  **(a) The accent hero that cannot carry its own text.** F10's characteristic gesture is
+  the screen's primary fact set in white on a large surface filled with the one saturated
+  accent. Whether that clears 4.5:1 is decided entirely by the accent's luminance, and the
+  friendly blues this family reaches for sit right on the line: white text stops clearing
+  the floor somewhere around `#3b82f6`, and every blue lighter than that fails while
+  looking perfectly pleasant. Choose the accent against the contrast it must carry *in the
+  hero*, not against how it looks as a button, and darken the accent rather than greying
+  the text. **(b) Quiet metadata dropping under the floor.** Restraint governs the
+  quantity of elements, never the contrast of text — the trap F1 also carries, but F10
+  meets it sooner because its whole vocabulary is secondary labels: timestamps, distances,
+  unit suffixes, "see all" affordances. A label being unimportant is not a licence for it
+  to be unreadable. If it may not be read, delete it.
 
 ## 6. Family mismatch is a structural defect, not a taste dispute
 
@@ -239,8 +325,18 @@ family produces *systematic* incoherence — every component is individually def
 and the whole is incoherent. This is why the picker runs before the tokens, and why the
 gate refuses to review a surface that has not declared one.
 
-Two mismatches recur often enough to name:
+Three mismatches recur often enough to name:
 
+- **Calm Utility (F10) on a product whose task is comparison.** F10 buys its calm by
+  putting one fact per screen and paying in density. A user comparing eleven rows, or
+  reading a column against another column, needs them simultaneously present — and F10's
+  answer is to give each its own generous surface and make the user scroll. The symptom is
+  a product where every individual screen reviews well and the *task* takes nine taps.
+  This is also the shape of the family's font licence being abused: F10 declared on a
+  desktop data-dense surface reads, from the gate's side, as a family that sanctions a
+  default font stack — so the wrong declaration buys a pass on the very check that would
+  have asked whether the type was chosen. F4 is the family; density is not a failure of
+  restraint.
 - **Terminal-Core (F2) on a consumer product.** The mono grid signals "you are expected
   to already know what this does". Consumers read that as coldness, and no amount of
   friendly copy inside a mono grid undoes it — the type *is* the message. The symptom
@@ -286,9 +382,53 @@ This dataset is not advisory prose. Three of its structures are read by code:
   `PR-DESIGN-FAMILY-BEFORE-BUILD-001` enforceable rather than aspirational.
 - **Sanctions default-tier fonts** — the per-family flag above. `check_font_stack`
   fails a default-tier font stack *only* when the declared family does not sanction
-  it, so F1/F4/F6 keep Inter and everyone else must earn their typeface.
+  it, so F1/F4/F6/F10 keep their system stacks and everyone else must earn their typeface.
 - **Clichéd gradients** — `check_palette_cliche` fails a purple-family gradient over
   a white or black ground, and flags the teal `#16d5e6` fingerprint.
 
 A rule that no gate can refuse is a preference. These three are refusable, and the
 gate has been observed refusing them (`tools/test_cdio.py`).
+
+## 9. The F10 reference bank — evidence, and what it refused to support
+
+F10 was distilled on 2026-09-14 from a bank of seven supplied images. The distillation is
+recorded here rather than summarised, because **what the bank refused to support shaped
+the family more than what it confirmed.**
+
+The brief described the bank as three mobile weather screens: white canvas, vivid blue
+accent, large rounded hero cards, bottom navigation. Measured, the bank was not that.
+
+| source | classification |
+|---|---|
+| an iOS screen-kit sheet, a travel app, a home-automation kit | **exemplar** — the described family |
+| a fourth image | **duplicate** — the same home-automation kit, re-rendered as a marketplace advert |
+| a dark neon-mint VPN concept, neumorphic dial over a world map | **contrast case** — competent, and outside F10 entirely |
+| a monochrome iOS home screen, light and dark | **contrast case** — minimal with *no* accent hue |
+| a monochrome line-art habit tracker | **contrast case** — minimal with *no* accent hue |
+
+Six distinct sources, not seven. Three exemplars, three outside the family, and none of
+them a weather app.
+
+**What the bank refused to support.** Had the family been written from the brief's prose,
+"a vivid accent, scarce against white" would have been an invariant — and *half the
+supplied evidence would have violated it*. The two monochrome references are arguably the
+most minimal artefacts in the bank and carry no accent at all. So accent *hue* dropped to
+an optional motif and accent *scarcity* survived as the invariant, because scarcity is the
+mechanism and blue was only ever the instance. The dark neumorphic reference did the same
+work from the other side: it is the one image the brief's own anti-pattern list would
+reject, and it is not bad design — it is a different family, executed competently.
+
+**The exemplars carry their own defects, and this is why a reference is evidence rather
+than authority.** The travel app's search field asks *"Where shalud we go?"* — misspelled,
+in the shipped asset. The home-automation kit ships tiles reading `Primary`, `Secondary`,
+`Tertiary` and a venue card reading `Place Name` / `Location, Country`: slot names that
+survived into the screen, presented as product state. Both are marketplace template
+assets, which is to say they are instances of the cookie-cutter layout sec. 4 names as a
+default fingerprint. **The family's best available exemplars are also carriers of the slop
+the family must refuse.** A distillation that copied them would have encoded both.
+
+**What was deliberately not universalised**: the blue; the centred floating action; the
+gradient hero; the pill status chips; the photo-card treatment; the tab-bar item count.
+Each is present in a majority of the exemplars and none of them is a principle. The test
+is whether the trait survives a change of brand, platform or domain — and every item on
+that list is an artefact of three template kits sold in the same year.

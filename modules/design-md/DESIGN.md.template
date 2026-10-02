@@ -2,8 +2,8 @@
 version: alpha
 name: ProjectName
 description: One-line summary of the visual identity (e.g. Heritage editorial, type-led, minimal motion)
-# REQUIRED. One of F1..F9 from CDIO-06 (vault/knowledge_base/cdio/CDIO-06-aesthetic-families.md).
-# Reach it with the three-question picker (CDIO-06 sec.2). An absent or unknown value
+# REQUIRED. One of F1..F10 from CDIO-06 (vault/knowledge_base/cdio/CDIO-06-aesthetic-families.md).
+# Reach it with the picker (CDIO-06 sec.2 — four questions since F10). An absent or unknown value
 # fails `check_family_declared` and BLOCKS the design gate — a surface with no declared
 # family cannot be reviewed, only reacted to (PR-DESIGN-FAMILY-BEFORE-BUILD-001).
 # This template ships F3 as a starting point, not as a default to leave unexamined:
@@ -158,7 +158,7 @@ Three families, each with a job: **Instrument Serif** for display, **Lora** for 
 Line-height contracts as size grows (1.05 at h1, 1.65 at body) — a deliberate hierarchy signal.
 
 No default-tier font stack (Inter, Roboto, Arial, system-ui) appears here, because F3
-does not sanction one. Three of the nine families do sanction Inter, deliberately and
+does not sanction one. Four of the ten families do sanction a default stack, deliberately and
 for stated reasons; F3 is not among them. Inheriting a framework's font is not a
 typographic decision, and `check_font_stack` will fail it.
 
