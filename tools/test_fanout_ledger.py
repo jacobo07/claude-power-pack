@@ -136,6 +136,9 @@ def main() -> int:
            and by_k["s9|rs9"]["root"] == "UNKNOWN" and by_k["s9|rs9"]["linked"] is False
            and by_k["s1|rs1"]["linked"] is True,
            "no-origin prompt and meta-less subagent stay UNKNOWN; linked control holds")
+        tm = fl.prompt_tree(con, "PM")
+        ok("V-FAN-PROMPT-TREE-MISSION", tm["root"] == "MISSION" and t1["root"] == "HUMAN",
+           f"prompt PM tree -> {tm['root']} (must agree with load_calls/top; P1 control HUMAN)")
         ok("V-FAN-CLASSIFY-SDK", fl.classify_root("sdk", "sdk", None, None) == "SDK"
            and fl.classify_root(None, "system", None, None) == "SYSTEM"
            and fl.classify_root(None, None, None, None) == "UNKNOWN", "SDK / SYSTEM / UNKNOWN reachable")
@@ -191,6 +194,26 @@ def main() -> int:
         ok("V-FAN-SCHEMA-MIGRATION", {"session", "prompt_id", "agent_id"} <= cols
            and off == (0, -1) and ver == "2", f"offset/size={off} version={ver}")
         c2.close()
+
+        # A session whose parent transcript was indexed from ANOTHER project dir (a
+        # copied/forked session): a subagent call belongs to the dir that holds its own
+        # transcript, never to whichever spawn copy the index kept (real: 8b2c7516).
+        r2 = Path(td) / "projects2"
+        (r2 / "C--own" / "S2" / "subagents").mkdir(parents=True)
+        (r2 / "C--copy").mkdir()
+        (r2 / "C--copy" / "S2.jsonl").write_text(
+            user("Q1", 1, "S2", origin="human", source="typed")
+            + asst("q1", 1.1, "S2", spawn=("tu9", "Explore", None)), encoding="utf-8")
+        sd = r2 / "C--own" / "S2" / "subagents"
+        (sd / "agent-b1.jsonl").write_text(asst("qs1", 1.2, "S2", agent="b1"), encoding="utf-8")
+        (sd / "agent-b1.meta.json").write_text(
+            json.dumps({"agentType": "Explore", "toolUseId": "tu9", "spawnDepth": 1}), encoding="utf-8")
+        c3 = ux.connect(Path(td) / "ix2.sqlite")
+        ux.refresh(c3, r2, deadline_s=30)
+        proj = {r["k"]: r["project"] for r in fl.load_calls(c3, T0, T0 + 10 * 3600, PRICES)}
+        ok("V-FAN-PROJECT-OWN-TRANSCRIPT", proj.get("qs1|rqs1") == "C--own"
+           and proj.get("q1|rq1") == "C--copy", f"{proj} (parent control stays C--copy)")
+        c3.close()
 
     total = PASS + FAIL
     print(f"FANOUT_LEDGER_PASS={PASS}/{total}  threshold={total}/{total}")

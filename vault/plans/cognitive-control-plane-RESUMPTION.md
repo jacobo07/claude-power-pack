@@ -23,7 +23,15 @@ Thesis: close the burn control loop inside EXISTING owners; no new mega-system.
 - `4cb3606` C4.0: `tools/floor_probe.py probe` (attachment-text fit, provider remainder explicit).
 - Plan §11 = the approved reconciliation (Owner "y" 2026-10-02). Peer state-centric mission owns
   Goal state / packet / delta (`modules/gsd_x/goal`); CCP feeds it metrology only.
-Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 15/15, `test_estate_shadow` 9/9,
+- PRG-1 (fanout_ledger on the real index, window 09-30T17Z..10-02T09:40Z): anchor intact;
+  roots HUMAN 11,622 / MISSION 10,473 / CONTINUATION 1,637 / SDK 179 / UNKNOWN 14 calls; 9,893/9,893
+  subagent calls linked; HUMAN fan-out median 12, p90 67, max 239 (f319ce75 = 214 parent + 25 sub).
+  Two report defects found and fixed: `prompt` tree dropped title/entrypoint (mission prompts read
+  HUMAN), and subagent project came from the spawn row's file. Cause of the second:
+  `projects/C--Users-User-Apps-mcp-video-analyzer` is a JUNCTION to the PP project dir (148
+  sessions indexed twice; totals safe via k-dedup, path-keyed rows alias). 39/240 NOT_INDEXED
+  spawns = 32 hook-denied + 7 other errors, 0 with a result. Debt: indexer still walks the junction.
+Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_estate_shadow` 9/9,
 `test_floor_probe` 4/4; `python tools/usage_index.py window 2026-09-30T17:00:00Z
 2026-10-02T09:40:00Z` = 23,925 calls / 6,230,548,450 cache read (must survive the v2 backfill).
 

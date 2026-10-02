@@ -103,9 +103,10 @@ def load_calls(con, start: float, end: float, prices: dict | None = None) -> lis
         usd = None if p is None else (inp * p["input"] + cw5 * p["cache_write_5m"]
                                       + (cw1 + unsplit) * p["cache_write_1h"]
                                       + cr * p["cache_read"] + outp * p["output"]) / 1e6
-        project = Path(sp_file if (is_sub and sp_file) else file).parent.name
-        if is_sub and not sp_file:
-            project = Path(file).parents[2].name
+        # A call's project is the dir holding its own transcript. Never the spawn row's
+        # file: a copied session lives in two dirs and `spawns` keeps one copy.
+        fp = Path(file)
+        project = fp.parents[2].name if fp.parent.name == "subagents" else fp.parent.name
         out.append({"k": k, "ts": ts, "model": model, "is_sub": bool(is_sub), "root": root,
                     "prompt": root_pid, "cache_read": cr, "output": outp, "usd": usd,
                     "agent_type": atype if is_sub else None,
@@ -172,7 +173,8 @@ def top(con, start: float, end: float, n: int = 10) -> list[dict]:
 
 def prompt_tree(con, prompt_id: str) -> dict:
     """One prompt's execution tree: parent calls, then each spawn and its calls."""
-    pr = con.execute("SELECT session, file, ts, kind, source FROM prompts WHERE prompt_id=?",
+    pr = con.execute("SELECT p.session, p.file, p.ts, p.kind, p.source, f.title, f.entrypoint "
+                     "FROM prompts p LEFT JOIN files f ON f.path = p.file WHERE p.prompt_id=?",
                      (prompt_id,)).fetchone()
     if pr is None:
         return {"prompt": prompt_id, "status": "UNKNOWN_PROMPT"}
@@ -189,7 +191,7 @@ def prompt_tree(con, prompt_id: str) -> dict:
                          "transcript": "FOUND" if files else "NOT_INDEXED", **_agg(crow)})
     kind, source = pr[3], pr[4]
     return {"prompt": prompt_id, "session": pr[0], "at": ux._iso(pr[2]) if pr[2] else None,
-            "root": classify_root(kind, source, None, None), "origin": kind, "source": source,
+            "root": classify_root(kind, source, pr[6], pr[5]), "origin": kind, "source": source,
             "total": _agg(rows), "parent": _agg([r for r in rows if not r["is_sub"]]),
             "spawns": children}
 
