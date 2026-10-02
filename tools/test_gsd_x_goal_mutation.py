@@ -54,6 +54,7 @@ SUITES = {
     "V-RC-": ROOT / "tools" / "test_gsd_x_goal_reconcile.py",
     "V-JUDGE-": ROOT / "tools" / "test_gsd_x_goal_judge.py",
     "V-SWEEP-": ROOT / "tools" / "test_gsd_x_goal_sweep.py",
+    "V-ENGINE-": ROOT / "tools" / "test_gsd_x_goal_engine_identity.py",
 }
 CLP = GOAL / "providers" / "claude.py"
 BRIEF = GOAL / "brief.py"
@@ -123,7 +124,7 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "an undispositioned failure must block closure", "V-CONV-FAILURE-BLOCKS"),
     "carry-keeps-old-proof": (
         CONV, "                if o.disposition == SATISFIED:      # its proof was about the old meaning\n"
-              "                    o.disposition, o.verdict = ACCEPTED, None\n",
+              "                    o.disposition, o.verdict, o.verdict_source = ACCEPTED, None, None\n",
         "",
         "a carried obligation must be proven again under the new revision",
         "V-CONV-REVISION-CARRIED"),
@@ -270,10 +271,18 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "the sweep must not act unattended with no recorded green",
         "V-SWEEP-REFUSES-WITHOUT-RECORD"),
     "sweep-accepts-stale-record": (
-        SWEEP, '    if head and rec.get("head") and rec["head"] != head:',
+        SWEEP, '    if rec.get("head") != head:',
         "    if False:",
         "a green recorded for another commit must not authorise this one",
         "V-SWEEP-REFUSES-STALE-RECORD"),
+    "sweep-accepts-other-engine": (
+        SWEEP, "        if rec_engine != engine:", "        if False:",
+        "a green recorded on another engine must not authorise this one",
+        "V-ENGINE-VERDICT-REFUSES-OTHER-ENGINE"),
+    "sweep-ignores-engine": (
+        SWEEP, "    if rec_engine and engine:", "    if False:",
+        "an unrelated commit must not void a record for the same engine",
+        "V-ENGINE-VERDICT-SURVIVES-UNRELATED-COMMIT"),
     "sweep-runs-every-goal": (
         SWEEP, "        if not is_autonomous(state):", "        if False:",
         "a goal nobody marked autonomous must not be driven unattended",
