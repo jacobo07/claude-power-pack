@@ -70,14 +70,24 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
   `test_spawn_outcomes` 23/23. Fixed in passing: connect() would have re-run the v2 full re-read
   on ANY schema bump.
 
+- SEALED (§13 pane): c5 `ff7a61d5` execution shape + transitive root (window: depth/area median
+  1.0, max width 2 -> cost is sequential depth); c7 `1db28b93` `tools/root_progress.py` progress
+  v1 (19/20 costliest roots ADVANCED); c8 `142146f9` decide_spawn v2 + receipts + replay-v2
+  (index schema v4 input_hash): window A REJECT (5 changed verdicts, all on ADVANCED roots),
+  window B NO_CHANGE -> v1 stays champion; equivalence rule fired 0 times. c8b = this commit:
+  `root_progress.py journey` (819 B real record, goal join via bind_mission; live: no mission
+  is goal-bound). Lane split: s14 (S1/S2/S3) belongs to pane claude-power-pack-da; S3 waits for
+  my handoff (input-hash field = `spawns.input_hash`).
+  Debt: tools/mutation_drill.py returns UNJUDGED for a tools/* subject whose test imports
+  modules/* (isolated copy lacks modules/; PYTHONPATH not passed) -- manual replica drill used.
+
 ## 4. Next three actions
-1. Commit 5 per G5/G6: transitive root, execution shape (width approx, depth = longest call
-   chain, spawn-tree height separate, active vs wall duration); per-root sums = window totals.
-2. Commit 7: progress v1 = written files joined to commits in the WORKSPACE repo (RCA §17).
-3. Commit 8 + §13: `decide_spawn` v2 shadow with POLICY RECEIPTS (pre-spawn data only, G7),
-   replay diff vs v1; then c8b `fanout_ledger journey`, c8c ledger-independence test.
-   Debt: `token_ground_truth` enumeration may still walk junctions (not checked).
-   Still open from before: `floor_probe.py probe` rent ranking -> C4.1; G5 probe after 10-07.
+1. c9 mutants (s12 seven + s13 three) via a replica drill; each names its killing gate.
+2. c10: UKDL trap "path identity is not resource identity" (+ validate peer candidates:
+   spawn requested != executed, upper bound reported as savings, raw spend != waste [c8
+   REJECT]); tower entry for the receipt contract EXPERIMENTAL only; RCA §18 with c5-c8 facts.
+3. Send S3 handoff to claude-power-pack-da; switch `_store_dirs` to tis_observed after S1.
+   Still open: `floor_probe.py probe` rent ranking -> C4.1; re-derivation detector (NEXT).
 
 ## 5. Start instruction
 `git log --oneline -5 -- tools/usage_index.py`, run the coherence anchor (+ `test_spawn_outcomes`

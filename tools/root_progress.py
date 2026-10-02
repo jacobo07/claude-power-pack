@@ -273,20 +273,115 @@ def top(con, start: float, end: float, n: int = 20) -> dict:
             "roots": rows}
 
 
+# -- Goal journey (plan s13 c8b) ------------------------------------------------------
+# One compact, external record per root: who caused it, its shape, what its spawns
+# became, what it moved, which policy verdicts touched it, and the goal epoch it
+# served if any. Never injected into model context. The goal join is read-only
+# through the goal spine's own reader (peer-owned, audit G9: not in usage_index).
+
+MISSION_TITLE = re.compile(r"^(m-[0-9a-f]+)-e(\d+)$")
+
+
+def _find_key(obj, key):
+    if isinstance(obj, dict):
+        if key in obj:
+            return obj[key]
+        for v in obj.values():
+            hit = _find_key(v, key)
+            if hit is not None:
+                return hit
+    elif isinstance(obj, list):
+        for v in obj:
+            hit = _find_key(v, key)
+            if hit is not None:
+                return hit
+    return None
+
+
+def goal_bindings() -> tuple[dict, int]:
+    """({mission_id: [{repo, goal_id, seq}]}, unreadable goal logs). A mission is
+    bound to a goal only by an event that names it under `bind_mission`."""
+    _pp = str(_HERE.parent)
+    if _pp not in sys.path:
+        sys.path.insert(0, _pp)
+    from modules.gsd_x.goal import log as gl
+    out: dict = {}
+    bad = 0
+    root = gl.goals_root()
+    if not root.is_dir():
+        return out, 0
+    for repo_dir in root.iterdir():
+        for goal_dir in (repo_dir.iterdir() if repo_dir.is_dir() else ()):
+            try:
+                events = gl.GoalLog(repo_dir.name, goal_dir.name).read()
+            except Exception:  # noqa: BLE001 -- corrupt or foreign: counted, never guessed
+                bad += 1
+                continue
+            for ev in events:
+                mid = _find_key(ev.data, "bind_mission")
+                if isinstance(mid, str):
+                    out.setdefault(mid, []).append(
+                        {"repo": repo_dir.name, "goal_id": goal_dir.name, "seq": ev.seq})
+    return out, bad
+
+
+def journey(con, prompt_id: str, receipts_path: str | None = None) -> dict:
+    t0 = time.perf_counter()
+    span = con.execute("SELECT min(ts), max(ts) FROM calls WHERE prompt_id=? AND is_sub=0",
+                       (prompt_id,)).fetchone()
+    if not span or span[0] is None:
+        return {"prompt": prompt_id, "status": "UNKNOWN_PROMPT"}
+    lo, hi = span[0] - 1, span[1] + LATER_S
+    rows = [r for r in fl.load_calls(con, lo, hi) if r["prompt"] == prompt_id]
+    resolve = fl.root_resolver(con)
+    spawns = Counter(s["outcome"] for s in fl.spawn_rows(con, lo, hi)
+                     if (resolve(s["file"]) if fl._is_sub_path(s["file"]) else s["prompt"]) == prompt_id)
+    title = (con.execute("SELECT f.title FROM prompts p LEFT JOIN files f ON f.path = p.file "
+                         "WHERE p.prompt_id=?", (prompt_id,)).fetchone() or [None])[0]
+    m = MISSION_TITLE.match(title or "")
+    if m:
+        binds, bad = goal_bindings()
+        goal = binds.get(m.group(1)) or "UNBOUND"
+        goal_note = {"mission": m.group(1), "epoch": int(m.group(2)), "unreadable_goal_logs": bad}
+    else:
+        goal, goal_note = "UNBOUND", {"mission": None, "reason": "not a mission root"}
+    receipts = None
+    if receipts_path:
+        receipts = Counter()
+        p = Path(receipts_path)
+        if p.is_file():
+            for line in p.read_text(encoding="utf-8").splitlines():
+                r = json.loads(line)
+                if r.get("subject", {}).get("root_prompt") == prompt_id:
+                    receipts[r["verdict"]] += 1
+        receipts = dict(receipts) if p.is_file() else "UNREADABLE"
+    prog = root_progress(con, prompt_id)
+    return {"prompt": prompt_id, "root": rows[0]["root"] if rows else "UNKNOWN", "title": title,
+            "goal": goal, "goal_join": goal_note,
+            "shape": fl._root_shape(rows, *fl._tree_maps(con)) if rows else "UNMEASURED",
+            "spawn_outcomes": dict(spawns),
+            "progress": {k: prog.get(k) for k in ("state", "writes", "written_committed",
+                                                  "commits_in_span", "commits_later", "tests")},
+            "policy_receipts": receipts if receipts is not None else "NOT_REQUESTED",
+            "meta_overhead": {"wall_s": round(time.perf_counter() - t0, 2), "model_calls": 0}}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
-    ap.add_argument("cmd", choices=["prompt", "top"])
+    ap.add_argument("cmd", choices=["prompt", "top", "journey"])
     ap.add_argument("args", nargs="*")
     ap.add_argument("--db", default=str(ux.DEFAULT_DB))
     ap.add_argument("--from", dest="start", default=None)
     ap.add_argument("--to", dest="end", default=None)
     ap.add_argument("--n", type=int, default=20)
+    ap.add_argument("--receipts", default=None)
     a = ap.parse_args(argv)
     con = ux.connect(Path(a.db))
-    if a.cmd == "prompt":
+    if a.cmd in ("prompt", "journey"):
         if not a.args:
-            ap.error("prompt needs a PROMPT_ID")
-        res = root_progress(con, a.args[0])
+            ap.error(f"{a.cmd} needs a PROMPT_ID")
+        res = (root_progress(con, a.args[0]) if a.cmd == "prompt"
+               else journey(con, a.args[0], a.receipts))
     else:
         now = time.time()
         res = top(con, ux._epoch(a.start) if a.start else now - 86400,
