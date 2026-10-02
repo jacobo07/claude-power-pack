@@ -129,14 +129,29 @@ def _session_date(info: dict) -> str:
     return "unknown"
 
 
-def iter_transcripts(proj_base) -> list[Path]:
+def _store_dirs(proj_base) -> list[Path]:
+    """Each project dir once, by resolved path.
+
+    A directory junction aliases a project dir (projects/C--Users-User-Apps-
+    mcp-video-analyzer -> the PP dir): walked as listed, 152 transcripts were
+    read twice on 2026-10-02. Yielding the resolved path also makes the
+    path-keyed identity of an id-less call independent of listing order, as
+    usage_index does since f234580."""
     base = Path(proj_base or DEFAULT_PROJ_BASE)
     if not base.is_dir():
         return []
-    out: list[Path] = []
-    for sub in base.iterdir():
+    seen: dict[str, Path] = {}
+    for sub in sorted(base.iterdir()):
         if not sub.is_dir():
             continue
+        real = Path(os.path.realpath(sub))
+        seen.setdefault(os.path.normcase(str(real)), real)
+    return list(seen.values())
+
+
+def iter_transcripts(proj_base) -> list[Path]:
+    out: list[Path] = []
+    for sub in _store_dirs(proj_base):
         for jf in sub.glob("*.jsonl"):
             if "subagent" in str(jf).lower():
                 continue
@@ -260,12 +275,7 @@ def iter_transcripts_with_subagents(proj_base):
     iter_transcripts() sees only top-level files; subagent transcripts live at
     <project>/<session>/subagents/*.jsonl and were 41 % of all calls in the
     2026-09-30..10-02 weekly-limit incident."""
-    base = Path(proj_base or DEFAULT_PROJ_BASE)
-    if not base.is_dir():
-        return
-    for sub in base.iterdir():
-        if not sub.is_dir():
-            continue
+    for sub in _store_dirs(proj_base):
         for jf in sub.glob("*.jsonl"):
             yield jf, False
         for jf in sub.glob("*/subagents/*.jsonl"):
