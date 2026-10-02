@@ -95,8 +95,11 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
   ASYNC_RAN / 1 RETURNED / 39 HOOK_BLOCKED; replay-v2 A REJECT, B NO_CHANGE (unchanged);
   WOULD_REJECT 0 is reachable (27 exact repeats all-time, none overlapping a running twin).
   RCA §16 correction 2 + §18 (c5-c8 facts: depth not width, spend != waste) recorded.
-- c10 PARTIAL: UKDL `T-PATH-IDENTITY-IS-NOT-RESOURCE-IDENTITY-001` written (uncommitted until
-  hunk-staged: the UKDL tail is a live CEPS auto-append). Still open: peer candidates stay
+  Peer re-ran replay-v2 on 3924a106: no figure moved (displacement RAN_LATER 1 / UNKNOWN 19,
+  interval [0, 349,600,836] cache read). Peer's NEXT session switches
+  `estate_displacement.child_span` to `fanout_ledger.child_last_call` (one definition).
+- c10 PARTIAL: UKDL `T-PATH-IDENTITY-IS-NOT-RESOURCE-IDENTITY-001` committed `47d2e93a`
+  (hunk-staged: the UKDL tail is a live CEPS auto-append). Still open: peer candidates stay
   candidates; tower receipt entry EXPERIMENTAL.
 
 ## 4. Next three actions
