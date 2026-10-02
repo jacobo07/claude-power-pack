@@ -62,7 +62,8 @@ STALE_AFTER_S = float(os.environ.get("CPP_USAGE_INDEX_STALE_S", "7200"))
 RATE_WINDOW_H = 6.0
 ANOMALY_FACTOR = 1.5      # 24 h rate vs the median daily rate of the prior 14 days
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
+V2 = 2          # the version whose upgrade re-reads every file; never re-run for a later bump
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS files(path TEXT PRIMARY KEY, offset INTEGER, size INTEGER,
   mtime_ns INTEGER, is_sub INTEGER, entrypoint TEXT);
@@ -78,7 +79,8 @@ CREATE INDEX IF NOT EXISTS quota_ts ON quota(ts);
 CREATE TABLE IF NOT EXISTS prompts(prompt_id TEXT PRIMARY KEY, session TEXT, file TEXT,
   ts REAL, kind TEXT, source TEXT, is_sub INTEGER);
 CREATE TABLE IF NOT EXISTS spawns(tool_use_id TEXT PRIMARY KEY, parent_k TEXT, session TEXT,
-  ts REAL, subagent_type TEXT, model_req TEXT, prompt_id TEXT, file TEXT);
+  ts REAL, subagent_type TEXT, model_req TEXT, prompt_id TEXT, file TEXT,
+  result_ts REAL, is_error INTEGER, result_head TEXT);
 CREATE TABLE IF NOT EXISTS subagents(file TEXT PRIMARY KEY, session TEXT, agent_type TEXT,
   tool_use_id TEXT, depth INTEGER, model_meta TEXT);
 """
@@ -109,7 +111,11 @@ def connect(db: Path = DEFAULT_DB) -> sqlite3.Connection:
     con = sqlite3.connect(str(db), timeout=30)
     con.executescript(SCHEMA)
     row = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
-    if row is None or int(row[0]) < SCHEMA_VERSION:
+    # Only the v1 -> v2 upgrade re-reads every file. Later versions migrate inside
+    # refresh() (_migrate_v3): a reader must never trigger a write-locked rewrite
+    # (audit G2), and comparing against SCHEMA_VERSION here would re-run this
+    # full re-read on every future bump.
+    if row is None or int(row[0]) < V2:
         for table, col, typ in _V2_COLUMNS:
             have = {r[1] for r in con.execute(f"PRAGMA table_info({table})")}
             if col not in have:
@@ -117,10 +123,87 @@ def connect(db: Path = DEFAULT_DB) -> sqlite3.Connection:
         # Backfill: re-read every file from byte 0 so ancestry and quota rows exist
         # for history. Call rows are upserts on the same key, so totals cannot move.
         con.execute("UPDATE files SET offset=0, size=-1, cur_prompt=NULL")
-        con.execute("INSERT OR REPLACE INTO meta VALUES('schema_version', ?)",
-                    (str(SCHEMA_VERSION),))
+        con.execute("INSERT OR REPLACE INTO meta VALUES('schema_version', ?)", (str(V2),))
         con.commit()
     return con
+
+
+_V3_COLUMNS = (("result_ts", "REAL"), ("is_error", "INTEGER"), ("result_head", "TEXT"))
+RESULT_HEAD = 200       # chars of the parent's tool_result kept per spawn
+
+
+def _migrate_v3(con) -> None:
+    """v2 -> v3: spawn outcomes (audit G4). Adds the result columns and queues ONLY
+    the transcripts that hold a spawn without a result for a result backfill; no
+    file offset is touched, so totals cannot move. One BEGIN IMMEDIATE, version
+    re-checked inside it, so two concurrent refreshes migrate once."""
+    row = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
+    if row is not None and int(row[0]) >= 3:
+        return
+    con.commit()
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        row = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
+        if row is None or int(row[0]) < 3:
+            have = {r[1] for r in con.execute("PRAGMA table_info(spawns)")}
+            for col, typ in _V3_COLUMNS:
+                if col not in have:
+                    con.execute(f"ALTER TABLE spawns ADD COLUMN {col} {typ}")
+            todo = sorted(r[0] for r in con.execute(
+                "SELECT DISTINCT file FROM spawns WHERE result_ts IS NULL AND file IS NOT NULL"))
+            con.execute("INSERT OR REPLACE INTO meta VALUES('spawn_backfill', ?)", (json.dumps(todo),))
+            con.execute("INSERT OR REPLACE INTO meta VALUES('schema_version', '3')")
+        con.commit()
+    except BaseException:
+        con.rollback()
+        raise
+
+
+def _spawn_results(con, o: dict) -> None:
+    """Record the parent's tool_result for any spawn it answers. A user line that
+    carries a tool_result may ALSO carry a promptId, so this runs before that branch.
+    First result wins; an id that is not a spawn updates nothing."""
+    msg = o.get("message")
+    content = msg.get("content") if isinstance(msg, dict) else None
+    if not isinstance(content, list):
+        return
+    ts = _epoch(o.get("timestamp"))
+    for c in content:
+        if not (isinstance(c, dict) and c.get("type") == "tool_result" and c.get("tool_use_id")):
+            continue
+        body = c.get("content")
+        if isinstance(body, list):
+            body = " ".join(x.get("text", "") for x in body if isinstance(x, dict))
+        con.execute("UPDATE spawns SET result_ts=?, is_error=?, result_head=? "
+                    "WHERE tool_use_id=? AND result_ts IS NULL",
+                    (ts, 1 if c.get("is_error") else 0, str(body or "").strip()[:RESULT_HEAD],
+                     c["tool_use_id"]))
+
+
+def _backfill_spawns(con, t_end: float) -> int:
+    """Resumable one-time scan of the queued transcripts for spawn results.
+    Returns how many files remain; bounded by the caller's deadline."""
+    row = con.execute("SELECT v FROM meta WHERE k='spawn_backfill'").fetchone()
+    todo = json.loads(row[0]) if row else []
+    while todo and time.monotonic() < t_end:
+        fp = todo[0]
+        try:
+            with open(fp, encoding="utf-8", errors="replace") as fh:
+                for line in fh:
+                    if '"tool_result"' not in line:
+                        continue
+                    try:
+                        o = json.loads(line)
+                    except ValueError:
+                        continue
+                    if isinstance(o, dict) and o.get("type") == "user":
+                        _spawn_results(con, o)
+        except OSError:
+            pass                                    # gone: its spawns stay without a result
+        todo.pop(0)
+        con.execute("INSERT OR REPLACE INTO meta VALUES('spawn_backfill', ?)", (json.dumps(todo),))
+        con.commit()
+    return len(todo)
 
 
 def _is_link(p: Path) -> bool:
@@ -280,6 +363,8 @@ def _ancestry_line(con, path: str, is_sub: int, state: dict, o: dict, start: int
         con.execute("INSERT OR IGNORE INTO quota VALUES(?,?,?,?,?,?,?)",
                     (path, start, ts, q.get("rateLimitType"), q.get("status"),
                      _epoch(q.get("resetsAt")), q.get("overageDisabledReason")))
+    if t == "user":
+        _spawn_results(con, o)
     if t == "user" and o.get("promptId"):
         pid = o["promptId"]
         state["prompt"] = pid
@@ -301,7 +386,13 @@ def _ancestry_line(con, path: str, is_sub: int, state: dict, o: dict, start: int
             if (isinstance(c, dict) and c.get("type") == "tool_use"
                     and c.get("name") in SPAWN_TOOLS and c.get("id")):
                 inp = c.get("input") if isinstance(c.get("input"), dict) else {}
-                con.execute("INSERT OR REPLACE INTO spawns VALUES(?,?,?,?,?,?,?,?)",
+                # Upsert, not REPLACE: a re-read must not erase a recorded result.
+                con.execute("INSERT INTO spawns(tool_use_id,parent_k,session,ts,subagent_type,"
+                            "model_req,prompt_id,file) VALUES(?,?,?,?,?,?,?,?) "
+                            "ON CONFLICT(tool_use_id) DO UPDATE SET parent_k=excluded.parent_k, "
+                            "session=excluded.session, ts=excluded.ts, "
+                            "subagent_type=excluded.subagent_type, model_req=excluded.model_req, "
+                            "prompt_id=excluded.prompt_id, file=excluded.file",
                             (c["id"], _key(path, key), o.get("sessionId"), ts,
                              inp.get("subagent_type"), inp.get("model"), state["prompt"], path))
 
@@ -330,10 +421,12 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
     reader can tell a missed run from a quiet one."""
     t_end = time.monotonic() + deadline_s
     files_read = upserts = pending = 0
+    backfill_pending = None
     status = "OK"
     err = ""
     try:
         _canonicalize(con, Path(proj))
+        _migrate_v3(con)
         known = {r[0]: r[1:] for r in con.execute(
             "SELECT path, offset, size, mtime_ns, entrypoint FROM files")}
         for fp, is_sub in _iter_files(Path(proj)):
@@ -397,17 +490,21 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                          state["prompt"], state["title"]))
             con.commit()
             files_read += 1
+        # Historical spawn results (v3 backfill) use only the time left. They are not
+        # freshness: pending files here never make the pass PARTIAL, which would turn
+        # the burn alarm into MONITOR_FAILURE while the live index is current.
+        backfill_pending = _backfill_spawns(con, t_end)
     except Exception as e:  # noqa: BLE001 -- typed, never silent
         status, err = "FAILED", f"{type(e).__name__}: {e}"
     now = time.time()
     con.execute("INSERT OR REPLACE INTO meta VALUES('last_refresh_status', ?)",
                 (json.dumps({"status": status, "at": now, "error": err,
-                             "pending": pending}),))
+                             "pending": pending, "backfill_pending": backfill_pending}),))
     if status == "OK":
         con.execute("INSERT OR REPLACE INTO meta VALUES('last_ok_at', ?)", (str(now),))
     con.commit()
     return {"status": status, "files_read": files_read, "calls_upserted": upserts,
-            "pending": pending, "error": err}
+            "pending": pending, "backfill_pending": backfill_pending, "error": err}
 
 
 # -- pricing -----------------------------------------------------------------

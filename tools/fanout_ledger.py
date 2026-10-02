@@ -80,6 +80,55 @@ def workflow_of(agent_type) -> str:
     return agent_type
 
 
+# Spawn outcomes (plan s12 commit 4, audit G4). A hook can refuse a spawn two ways:
+# a failing hook, which the harness reports with this prefix, or a permission
+# denial, which carries only the guard's own text. So the guard markers are a
+# declared set, each pinned to its live source by V-SPOUT-MARKERS-LIVE: a guard
+# reworded without updating this set turns that gate red instead of quietly
+# reclassifying its denials as FAILED_TO_START.
+HARNESS_HOOK_PREFIX = "PreToolUse:"
+GUARD_MARKERS = ("AGENT-SOLO GUARD blocked",            # hooks/agent-solo-guard.js
+                 "Agent isolation guard:")              # hooks/gsd-agent-isolation-guard.js
+SPAWN_OUTCOMES = ("REQUESTED", "RAN", "HOOK_BLOCKED", "FAILED_TO_START", "FAILED", "RETURNED",
+                  "UNMEASURED")
+
+
+def spawn_outcome(result_ts, is_error, head, linked: bool) -> str:
+    """REQUESTED   no result, no subagent transcript (nothing observed to run)
+    RAN          a subagent transcript exists, no result recorded (running, or
+                 its parent ended first: the index cannot tell which)
+    HOOK_BLOCKED error result carrying a hook marker; never executed
+    FAILED_TO_START  any other error result with no subagent transcript
+    FAILED       error result after a subagent transcript exists
+    RETURNED     a non-error result"""
+    if result_ts is None:
+        return "RAN" if linked else "REQUESTED"
+    if not is_error:
+        return "RETURNED"
+    h = (head or "").removeprefix("Error: ").lstrip()
+    if h.startswith(HARNESS_HOOK_PREFIX) or h.startswith(GUARD_MARKERS):
+        return "HOOK_BLOCKED"
+    return "FAILED" if linked else "FAILED_TO_START"
+
+
+def spawn_rows(con, start: float, end: float) -> list[dict]:
+    """Every spawn requested in (start, end] with its outcome. An index without the
+    v3 result columns reports UNMEASURED: an unread outcome is not a quiet one."""
+    have = {r[1] for r in con.execute("PRAGMA table_info(spawns)")}
+    measured = {"result_ts", "is_error", "result_head"} <= have
+    cols = "s.result_ts, s.is_error, s.result_head" if measured else "NULL, NULL, NULL"
+    q = (f"SELECT s.tool_use_id, s.ts, s.subagent_type, s.model_req, s.prompt_id, s.file, {cols}, "
+         "EXISTS(SELECT 1 FROM subagents a WHERE a.tool_use_id = s.tool_use_id) "
+         "FROM spawns s WHERE s.ts > ? AND s.ts <= ? ORDER BY s.ts")
+    out = []
+    for tuid, ts, stype, mreq, pid, file, rts, err, head, linked in con.execute(q, (start, end)):
+        out.append({"tool_use_id": tuid, "ts": ts, "subagent_type": stype, "model_req": mreq,
+                    "prompt": pid, "file": file, "linked": bool(linked), "result_ts": rts,
+                    "outcome": (spawn_outcome(rts, err, head, bool(linked)) if measured
+                                else "UNMEASURED")})
+    return out
+
+
 def load_calls(con, start: float, end: float, prices: dict | None = None) -> list[dict]:
     """Every call in (start, end] with its resolved ancestry. Ancestry joins only
     along recorded ids; a missing link leaves root/prompt as None (UNKNOWN)."""
@@ -155,6 +204,7 @@ def summary(con, start: float, end: float) -> dict:
         "subagent_links": {"linked": sum(r["linked"] for r in sub_rows),
                            "unlinked": sum(not r["linked"] for r in sub_rows),
                            "depth": dict(Counter(r["depth"] for r in sub_rows))},
+        "spawn_outcomes": dict(Counter(s["outcome"] for s in spawn_rows(con, start, end))),
         "by_workflow": dict(sorted(((k, _agg(v)) for k, v in by_wf.items()),
                                    key=lambda kv: -kv[1]["cache_read"])[:15]),
         "by_project": dict(sorted(((k, _agg(v)) for k, v in by_proj.items()),
@@ -186,6 +236,8 @@ def prompt_tree(con, prompt_id: str) -> dict:
     rows = [r for r in load_calls(con, 0, time.time() + 86400) if r["prompt"] == prompt_id]
     spawns = con.execute("SELECT tool_use_id, subagent_type, model_req, ts FROM spawns "
                          "WHERE prompt_id=? ORDER BY ts", (prompt_id,)).fetchall()
+    outcome = {s["tool_use_id"]: s["outcome"] for s in spawn_rows(con, 0, time.time() + 86400)
+               if s["prompt"] == prompt_id}
     children = []
     for tuid, stype, mreq, ts in spawns:
         files = [r[0] for r in con.execute("SELECT file FROM subagents WHERE tool_use_id=?",
@@ -193,7 +245,8 @@ def prompt_tree(con, prompt_id: str) -> dict:
         crow = [r for r in rows if r["is_sub"] and r["file"] in files]
         children.append({"tool_use_id": tuid, "subagent_type": stype,
                          "model_requested": mreq or "inherit", "at": ux._iso(ts) if ts else None,
-                         "transcript": "FOUND" if files else "NOT_INDEXED", **_agg(crow)})
+                         "transcript": "FOUND" if files else "NOT_INDEXED",
+                         "outcome": outcome.get(tuid, "UNMEASURED"), **_agg(crow)})
     kind, source = pr[3], pr[4]
     return {"prompt": prompt_id, "session": pr[0], "at": ux._iso(pr[2]) if pr[2] else None,
             "root": classify_root(kind, source, pr[6], pr[5]), "origin": kind, "source": source,
