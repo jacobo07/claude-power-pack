@@ -120,6 +120,50 @@ def _calls_in(path: Path) -> tuple[list[dict], int, int, int]:
     return ordered, usage_lines, synthetic, bad
 
 
+def calls_from(path: Path, offset: int = 0) -> tuple[list[dict], int, Optional[str]]:
+    """Incremental twin of _calls_in: real calls in the COMPLETE lines after `offset`.
+
+    Same filters and identity as _calls_in (synthetic skipped, last copy of a
+    (message.id, requestId) wins). Returns (calls, end_offset, entrypoint): the
+    end offset stops before a trailing line with no newline yet, so a line the
+    harness is still writing is read whole on the next pass, never half. An
+    identity-less call is keyed by its byte offset, which is stable across passes
+    where _calls_in's line counter is not. Used by tools/usage_index.py; the
+    agreement of both readers is pinned in tools/test_usage_index.py."""
+    calls: dict = {}
+    order: list = []
+    entrypoint = None
+    pos = offset
+    with open(path, "rb") as fh:
+        fh.seek(offset)
+        for raw in fh:
+            if not raw.endswith(b"\n"):
+                break
+            start, pos = pos, pos + len(raw)
+            text = raw.decode("utf-8", errors="replace").lstrip("﻿").strip()
+            if not text:
+                continue
+            try:
+                obj = json.loads(text)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(obj, dict) and entrypoint is None and obj.get("entrypoint"):
+                entrypoint = obj["entrypoint"]
+            msg = obj.get("message") if isinstance(obj, dict) else None
+            if not isinstance(msg, dict) or not isinstance(msg.get("usage"), dict):
+                continue
+            if msg.get("model") == SYNTHETIC_MODEL:
+                continue
+            key = (msg.get("id"), obj.get("requestId"))
+            if key == (None, None):
+                key = ("off", start)
+            if key not in calls:
+                order.append(key)
+            calls[key] = {"model": msg.get("model") or "", "usage": msg["usage"],
+                          "ts": obj.get("timestamp"), "key": key}
+    return [calls[k] for k in order], pos, entrypoint
+
+
 def iter_calls(project_dirs: Iterable[Path], include_subagents: bool = True,
                modified_since: Optional[float] = None):
     """Yield every deduplicated real call, subagent calls included, each with

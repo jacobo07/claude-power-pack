@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "note": "Owner-reported weekly-limit meter readings. The meter weighting is UNKNOWN; tools/usage_index.py turns a reading paired with the measured window into an ESTIMATED allowance in API-equivalent USD. 'calibration' readings set the allowance; 'holdout' readings are only ever predicted, never fitted (plan cognitive-control-plane-2026-10-02 audit G6). Laptop transcripts only: GEX44 usage on the same account is not in the index, so the allowance absorbs its share as long as that share is stable.",
+  "reset_anchor": "2026-09-30T17:00:00Z",
+  "reset_anchor_source": "Owner: reset 2026-09-30 19:00 local (+02:00); weekly period assumed",
+  "readings": [
+    {
+      "at": "2026-09-30T07:51:07Z",
+      "fraction": 0.75,
+      "use": "suspended",
+      "suspended_reason": "Holdout 2026-10-02 FAILED: calibrated on this reading, the 10-02 reading is predicted at 21.2 % vs 90 % observed. Every usage category gives a B/A per-meter-% ratio of 0.23-0.38 (USD 0.24), so no positive weighting of transcript-visible usage reconciles the two weeks. GEX44 measured read-only: 3,362 calls in week A, 263 in week B -- not the cause. Remaining hypotheses (UNVERIFIED, Owner-checkable): the weekly allowance changed ~4x between the weeks (plan tier), or the meter counts usage no transcript records (claude.ai, Desktop, mobile, other machines). Until resolved the alarm shows NO percentage.",
+      "source": "Owner go 'at 75 % weekly quota' recorded in vault/plans/cognitive-resource-os-RESUMPTION.md section 2f; time = commit 90c9e82 author date (2026-09-30T09:51:07+02:00), the first move made under that go"
+    },
+    {
+      "at": "2026-10-02T09:40:00Z",
+      "fraction": 0.90,
+      "use": "holdout",
+      "source": "Owner observation 2026-10-02 11:40 local, vault/plans/weekly-limit-burn-rca-2026-10-02.md section 1"
+    }
+  ],
+  "rejected": [
+    {
+      "fraction": 0.5,
+      "reason": "Owner 'at ~50% used' on 2026-09-28 has no recorded time; too imprecise to calibrate or score"
+    }
+  ]
+}

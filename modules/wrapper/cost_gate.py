@@ -72,7 +72,14 @@ def weekly_burn(proj_base=None, now=None, *,
                 weekly_limit: int = WEEKLY_OUTPUT_LIMIT_EST,
                 elevated_factor: float = ELEVATED_FACTOR,
                 w24_fn=None, w7_fn=None) -> WeeklyBurn:
-    """Real weekly burn + projection from per-turn transcript output (D1).
+    """SUPERSEDED 2026-10-02 -- no live caller; cost_gate() uses tools/usage_index.py.
+
+    Kept only as the record of the D1 alarm and for test_weekly_burn_tracking.
+    It watched output alone (~11 % of the estimated weight in the 2026-10-02
+    incident, vault/plans/weekly-limit-burn-rca-2026-10-02.md §4) against a June
+    baseline inflated ~2x by the per-line counting bug. Do not re-wire it.
+
+    Real weekly burn + projection from per-turn transcript output (D1).
 
     Fires the advisory when the last-24h output rate exceeds
     `elevated_factor` * the June daily average. The projection ("limite agotado
@@ -146,7 +153,7 @@ def cost_gate(cwd: str, *, description: str | None = None,
               output_threshold: int = DEFAULT_OUTPUT_THRESHOLD,
               now: datetime | None = None, proj_base=None,
               burn_fn=None, assess_fn=None, context_fn=None,
-              classify_fn=None) -> CostGate:
+              classify_fn=None, estate_fn=None) -> CostGate:
     """Compose the three advisories. Every block is independently fail-open."""
     lines: list[str] = []
     burn = None
@@ -178,14 +185,23 @@ def cost_gate(cwd: str, *, description: str | None = None,
     except Exception:  # noqa: BLE001
         pass
 
-    # 3b. weekly burn -- real per-turn output, projection to limit (D1).
-    #     Independent fail-open; only a line when the 24h rate is elevated.
-    try:
-        wb = weekly_burn(proj_base=proj_base, now=now)
-        if wb.line:
-            lines.append(wb.line)
-    except Exception:  # noqa: BLE001
-        pass
+    # 3b. estate burn (C1, cognitive-control-plane-2026-10-02) -- every usage
+    #     category priced per model from tools/usage_index.py, typed state. It
+    #     REPLACES weekly_burn (output only, ~11 % of the weight, and a 40 s full
+    #     scan that failed open to silence). Unlike the other blocks this one is
+    #     NOT silent on failure: a monitor that cannot look says so. Runs on the
+    #     real estate only (proj_base None) or through an injected estate_fn.
+    if estate_fn is not None or proj_base is None:
+        try:
+            if estate_fn is None:
+                from tools.usage_index import burn as estate_fn  # type: ignore
+            from tools.usage_index import advisory_line  # type: ignore
+            ln = advisory_line(estate_fn())
+            if ln:
+                lines.append(ln)
+        except Exception as e:  # noqa: BLE001 -- loud, typed
+            lines.append(f"PP burn monitor FAILED -- {type(e).__name__}: {e}. "
+                         "Usage is UNKNOWN, not low.")
 
     # 3. model hint -- opt-in (needs a task description; cwd alone stays silent)
     if description:

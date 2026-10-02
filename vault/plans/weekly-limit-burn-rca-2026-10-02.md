@@ -159,3 +159,44 @@ Every session therefore pays rent on the band between its ~126k floor and ~450k.
 - Weighted-burn alarm replacing the output-only one (P5). Calibration needs a meter
   reading paired with a measured window; this incident gives the first pair
   (90 % at this window).
+
+## 13. Subagent inheritance (P0 of plan cognitive-control-plane-2026-10-02, MEASURED)
+
+219 subagent transcripts born in the window, each joined to the parent call that
+dispatched it (meta `toolUseId`). 0/219 start at >= 80 % of the parent's context;
+spawnDepth 1 in all. First-call context is set by agent TYPE (general-purpose 98k,
+gsd-executor 98k, carrier-verifier 49k, Explore 26k), not by the parent (155k-409k).
+Subagents do NOT replay the parent transcript. Their cost is a ~95k floor x calls,
+plus growth to ~232k average per call.
+
+## 14. Meter reconciliation FAILS (C1, `tools/usage_index.py`, 2026-10-02)
+
+The new incremental index reproduces §2 to the token (23,925 calls, 9,893 subagent,
+6,230,548,450 cache read, 19,115,576 output): a third reader agrees. Then:
+
+| week (from reset) | Owner meter | laptop calls | cache read | API-equiv USD | per meter-% |
+|---|---|---|---|---|---|
+| A 09-23 17:00Z -> 09-30 07:51Z | 75 % | 62,418 | 20.75 B | 8,041 | $107 |
+| B 09-30 17:00Z -> 10-02 09:40Z | 90 % | 23,925 | 6.23 B | 2,275 | $25 |
+
+B/A usage per meter-% is 0.23-0.38 in EVERY category (calls, subagent calls, cache
+read, cache write, output, USD 0.24), so **no positive weighting of transcript-visible
+usage reconciles the two readings**. Calibrated on A, B is predicted at 21 % (observed 90 %).
+GEX44 (same account) measured read-only over ssh: 3,362 calls in A, 263 in B. It is not
+the cause, and adding it widens the gap.
+
+Replay of the rate-anomaly alarm over B (4 h steps): NORMAL throughout, 24 h burn
+0.79-1.32x the 14-day median day. **By everything the transcripts record, the incident
+window ran at the prior standing level (~$1.2k/day API-equivalent).** What changed is
+the meter cost of that level, about 4x.
+
+Hypotheses, UNVERIFIED, Owner-checkable only: (1) the weekly allowance changed about 4x
+at the 09-30 reset (plan tier or limit policy; max20x/max5x = 4); (2) the meter counts
+usage that no transcript records (claude.ai, Desktop, mobile, another machine);
+(3) the 75 % reading was of a different meter. Until one is confirmed,
+`vault/config/weekly_meter_readings.json` has the 75 % reading `suspended` and the alarm
+shows NO percentage (UNKNOWN), only rates, the anomaly ratio and typed MONITOR_FAILURE.
+
+Consequence: §5's lesson still stands, and a second one joins it. **An alarm calibrated
+on transcripts cannot see a change in what the meter charges.** The control-plane levers
+(agent floor, fan-out, concurrency) cut the standing level whatever the meter does.
