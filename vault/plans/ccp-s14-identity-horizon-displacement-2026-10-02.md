@@ -43,6 +43,23 @@ same root), PARENT_OVERLAP (PROBABLE: parent's later tool inputs overlap the chi
 never a point. Home: function in `estate_shadow` via handoff after c8. Done: the 15 PRG-2 defers
 classified; "savings" wording removed from replay output.
 
+## Results
+- S1 SEALED `2fc1a3c5`: 4 ACCOUNTING consumers fixed (tis --all-projects 152 dup files; co_12
+  2,275 -> 2,124 sessions, keyed by session id; sovereign_miner 273 dup files; budget_monitor
+  programmatic 7 d 1,295 -> 1,245 calls, same moment). Shared `tis_observed.store_dirs`;
+  token_ground_truth delegates. SAFE, untouched: cognitive_os.scheduler, token_autopsy, nightly,
+  resume_reindex (report-only inflation, rename re-checked). Gate `test_store_identity_consumers` 7/7.
+- S2 (a) DONE 2026-10-02, read-only: backup sha256 `167f16fe5dc73f39f9e8a1c931d4e8abd861e99074abe53ff1ab4a4ce904bfb2`,
+  111,706,112 B. Backup-only keys after alias mapping: 0 in calls / files / prompts / spawns /
+  subagents. Controls: mapping fired on 452 path values (files.path 230, spawns.file 118,
+  subagents.file 80, quota.file 18, calls.file 6); mapping OFF -> all 452 red, ON -> 0. Calls with
+  changed values: 0. Anchor window identical (23,925 / 6,230,548,450 / 9,893). Source transcript
+  missing for 0 of 2,719 files (228,249 calls). Verdict: the backup is strictly dominated by the
+  live index plus the transcript store; restoring it could only lose v3/v4 columns and 1,601 calls.
+  S2 (b) scratch rebuild NOT RUN: it tests live-index regenerability, not this decision.
+  Recommendation: DELETE, on the Owner's typed consent only, re-hashing to the sha256 above
+  immediately before the delete and refusing on any mismatch.
+
 ## Not this pane / not now
 Horizontal = decide_spawn + estate_shadow (2a). Longitudinal actuator = rollover + context-watchdog
 (peer, do not edit); CCP feeds metrology via c5 shape. Fresh-epoch counterfactual needs c5. Progress
