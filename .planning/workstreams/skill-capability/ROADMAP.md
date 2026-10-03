@@ -72,60 +72,72 @@ result. UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is n
 ## Phase Details
 
 ### Phase 1: Card precision
+
 **Goal**: The commit card stops denying the session's own tool-mediated writes without letting a foreign hunk through.
 **Requirements**: SC-A
 **Success Criteria**:
+
   1. `hooks/doctrine_cards.js` classifies a file whose mtime lies inside one of this session's shell tool-call
      windows after its last own edit as `unknown` (allowed), never `foreign`.
   2. A gate replays the five D-CARD denies as allowed AND a pre-session foreign hunk (arm C shape) as denied;
      existing card tests and the destructive card suite stay green.
   3. The `git exit 128` x6 class is reproduced and named (cause + fix or explicit fail-open reason).
   4. `--pillar A` PASS.
-**Plans:** 3 plans (waves 1 -> 2 -> 3, sequential: shared `hooks/doctrine_cards.js` / `tools/test_card_precision.py`)
+
+**Plans:** 1/3 plans executed (waves 1 -> 2 -> 3, sequential: shared `hooks/doctrine_cards.js` / `tools/test_card_precision.py`)
 
 Plans:
-- [ ] 01-01-PLAN.md -- D-01 mtime-window provenance in the card + D-02 replay gate (5 D-CARD denies allowed, pre-session + mutant denied, 6th deny beside)
+
+- [x] 01-01-PLAN.md -- D-01 mtime-window provenance in the card + D-02 replay gate (5 D-CARD denies allowed, pre-session + mutant denied, 6th deny beside)
 - [ ] 01-02-PLAN.md -- D-03 `git exit 128` x6: stderr class per row, unborn-HEAD empty-tree fallback, capsule test hermetic + sweep
 - [ ] 01-03-PLAN.md -- D-04 ledger closure: prg evidence, state.A IMPLEMENTED_AND_VERIFIED, `[A]` owner-bundle line, `--pillar A` PASS
 
 ### Phase 2: Listing floor
+
 **Goal**: Decide pillar B under its frozen rule; no third hiding attempt without a fresh-session D-LISTING measurement.
 **Requirements**: SC-B
 **Success Criteria**: a measurement file naming D-LISTING with its `command:`; `--pillar B` PASS.
 
 ### Phase 3: Opportunity and delivery measurement
+
 **Goal**: One gate computes opportunity, delivery, recall and precision over a named transcript window.
 **Requirements**: SC-C
 **Success Criteria**: the gate is driven red once; n is reported per rate; `--pillar C` PASS.
 
 ### Phase 4: Coverage, criticality and freshness
+
 **Goal**: Every installed skill gets a coverage and criticality class (discovered, not curated); drift is gated.
 **Requirements**: SC-D, SC-H
 **Success Criteria**: sweep with a population floor and a positive control; drift gate red on a mutated mirror;
 `--pillar D`, `--pillar H` PASS.
 
 ### Phase 5: Representation operations
+
 **Goal**: Apply disclosure / fission / fusion / inline / dedup only where measured to help.
 **Requirements**: SC-F
 **Success Criteria**: each applied operation carries before/after D-LISTING and a recall check; `--pillar F` PASS.
 
 ### Phase 6: Compile-out lineage
+
 **Goal**: Compiled-out cards carry source lineage, and a source change without re-derivation fails a gate.
 **Requirements**: SC-G
 **Success Criteria**: lineage field + gate driven from both poles; `--pillar G` PASS.
 
 ### Phase 7: Contribution
+
 **Goal**: Measure whether delivered capability changed outcomes, inside the D-SESSIONS budget.
 **Requirements**: SC-E
 **Success Criteria**: paired arms, n stated, budget consumption recorded; `--pillar E` PASS.
 
 ### Phase 8: Owner reconciliation and creation governance
+
 **Goal**: Close I, K, L, M by verified handoffs to their owners; land the J creation gate.
 **Requirements**: SC-I, SC-J, SC-K, SC-L, SC-M
 **Success Criteria**: one committed handoff per merged/deferred pillar; J gate refuses an undeclared skill and
 admits a declared one; each `--pillar` PASS.
 
 ### Phase 9: Closeout
+
 **Goal**: Reviews, deltas, retained-settings declaration and the done-gate.
 **Requirements**: SC-N
 **Success Criteria**: `reviews.ukdl` / `reviews.cbr` files exist; deltas filled; `retained.settings` matches live
@@ -136,7 +148,7 @@ settings; `python tools/test_skill_capability_program.py --final` exits 0, outpu
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Card precision | 0/3 | Planned | - |
+| 1. Card precision | 1/3 | In Progress|  |
 | 2. Listing floor | 0/0 | Not started | - |
 | 3. Opportunity and delivery measurement | 0/0 | Not started | - |
 | 4. Coverage, criticality and freshness | 0/0 | Not started | - |

@@ -1,20 +1,20 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-milestone_name: skill-capability
-current_phase: 1 — Card precision
-current_plan: Not started
-status: planning
-stopped_at: Workstream created; P0 ledger + done-gate wrapper sealed interactively
-last_updated: "2026-10-03T00:00:00.000Z"
+current_phase: 1
+current_plan: 2
+status: executing
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-10-03T16:37:44.290Z"
 last_activity: 2026-10-03
-last_activity_desc: Workstream created from the approved skill-capability program
+last_activity_desc: Phase 1 execution started
+state_head: 48c46acc798561714a4582ce15564f67cb740660
 progress:
   total_phases: 9
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 3
+  completed_plans: 1
+milestone_name: skill-capability
 workstream: skill-capability
 created: 2026-10-03
 current_phase_name: Card precision
@@ -30,9 +30,11 @@ compile-out, capability-lifecycle. Availability without residency, proven by nee
 
 ## Current Position
 
-**Status:** Ready to plan
-**Current Phase:** 1 — Card precision
-**Last Activity:** 2026-10-03
+Current Plan: 2
+Total Plans in Phase: 3
+**Status:** Ready to execute
+**Current Phase:** 1
+**Last Activity:** 2026-10-03 — Phase 1 execution started
 
 ## Sealed before the run (interactive pane, session c85f3eb9)
 
@@ -49,8 +51,17 @@ compile-out, capability-lifecycle. Availability without residency, proven by nee
   as read at run time; every other CE line must pass, and both red poles of the substitution were driven.
 - [Plan]: the committed ledger is the authority; the verifier re-runs each IMPLEMENTED pillar's gate.
 - [Plan]: Owner items are batched into `vault/programs/skill-capability/owner-bundle.md`; never asked mid-run.
+- [Phase 1]: [Phase 1 P01-01]: window rule lives in one declaration ownShellWindowHit; only 3a05f288 mtime is measured, other four replays placed and labelled placed; 6th deny 4615e1d1 reported beside D-CARD (class rollover-predecessor-lines)
 
 ## Session Continuity
 
-**Stopped At:** Workstream created, ready to plan Phase 1
+**Last session:** 2026-10-03T16:37:44.274Z
+
+**Stopped At:** Completed 01-01-PLAN.md
 **Resume File:** None
+
+## Performance Metrics
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 1 P01-01 | 12min | 3 tasks | 5 files |
