@@ -1811,7 +1811,7 @@ ESTIMATE_MODELS = {"G": ESTIMATE_MODEL_G, "I": ESTIMATE_MODEL_I}   # H keeps the
 
 
 # --------------------------------------------------------------------------- CLI
-def _build_parser():
+def build_parser():
     ap = argparse.ArgumentParser(prog="kme_pillars.py", description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True, metavar="PILLAR")
 
@@ -2088,7 +2088,7 @@ def _population_report(ctx, sc, loc, until):
 
 
 def main(argv=None):
-    ap = _build_parser()
+    ap = build_parser()
     try:
         a = ap.parse_args(sys.argv[1:] if argv is None else list(argv))
     except SystemExit as e:
