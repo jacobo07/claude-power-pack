@@ -55,6 +55,11 @@ Base commit at creation: `a9c603f` on `feature/knowledge-acquisition`.
 
 ## Decisions (unattended run)
 
+- 2026-10-03, epoch 3: the security step (`gsd-secure-phase`) is skipped for Phase 2, following
+  Phase 1's precedent (no `01-SECURITY.md` exists). Reason: Phase 2 adds offline read-only
+  scanners over the repo with no network, auth or secret surface; skipping is reversible, since
+  the step can be run later against the same files. Decided in epoch 2, written down in epoch 3.
+
 - 2026-10-03, epoch 2: the Phase 9 live-observation feed now lives at
   `.planning/workstreams/ucep/LIVE-OBSERVATIONS.md` (copied from job 300ac3a1's tmp dir, which
   is deleted with that job). Append new observations HERE. Reason: Phase 9 depends on it and a
