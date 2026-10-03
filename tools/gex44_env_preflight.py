@@ -49,12 +49,14 @@ REASONS = ("auth_expired", "auth_missing", "pp_install_stale", "hooks_broken", "
 # Non-refusing observations: reported beside a READY (or any) verdict, never a reason to refuse.
 FINDINGS = ("access_token_lapsed_refreshable", "hooks_foreign_env", "install_modified", "hook_entries_unjudged")
 
-# The first PP commit whose install parks an auth refusal (plan 02-01, tools/gsd_mission.py +
-# tools/provider_breaker.py + tools/test_persistent_failure_park.py). An install that does not contain it
-# relaunches a dead-login worker forever. Raising the floor edits this constant plus PP_REQUIRED_FILES when the
-# new floor adds a required file -- plan 02-04 raises it to the 02-03 launch-gate commit.
-PP_COMMIT_FLOOR = "5962571c840943ae0a3aa901efb08e69a04434da"
-PP_REQUIRED_FILES = ("tools/gsd_mission.py", "tools/provider_breaker.py")
+# The first PP commit whose install both parks an auth refusal (plan 02-01: tools/gsd_mission.py +
+# tools/provider_breaker.py) and carries the pre-launch gate (plan 02-03: tools/mission_launch_gate.py, which is
+# also the one place a renewal inherits a quarantine and a NOT_READY env refuses). An install that does not contain
+# it relaunches a dead-login worker forever, or launches into a NOT_READY env. Raising the floor edits this
+# constant plus PP_REQUIRED_FILES when the new floor adds a required file -- plan 02-04 raised it from the 02-01
+# commit 5962571c to the 02-03 commit.
+PP_COMMIT_FLOOR = "60e7947dcf3cf0f9c660e412ec6276a8b2922f99"
+PP_REQUIRED_FILES = ("tools/gsd_mission.py", "tools/provider_breaker.py", "tools/mission_launch_gate.py")
 PYTHON_MIN = (3, 9)
 PROBE_TIMEOUT_S = 15
 BUDGET_S = 120
