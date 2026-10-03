@@ -61,7 +61,7 @@ All from the worktree root on GEX44.
 `python3 tools/test_floor_regression_gate.py` (exit 0):
 
 ```
-FLOOR_PASS=60/60  threshold=60/60  skipped=0  inconclusive=0
+FLOOR_PASS=67/67  threshold=67/67  skipped=0  inconclusive=0
 ```
 
 Real-data lines of that run (none SKIPped on GEX44):
@@ -71,21 +71,23 @@ PASS V-FLOOR-REAL-GEX44 real GEX44 floor reproduced exactly: total=202803 tokens
 PASS V-FLOOR-REAL-A7-NO-CALL login-expired session: tokens no_model_call, owner startup_tokens 0, no reference written (exit 2)
 PASS V-FLOOR-REAL-APPENDED-PROMPT reference from the interactive session, check of the mission worker: RISE system_prompt scope=unattributed delta=+4383 unit=chars rules=universal_1k
 PASS V-FLOOR-SEEDED-REAL real transcript 607795c4: +1,024 user CLAUDE.md RED (memory_global universal), same bytes in the project CLAUDE.md green (project +1024)
-PASS V-FLOOR-REF-GEX44-GREEN today's interactive floor (607795c4) is within bound of the plane-gex44 reference: universal +0, project +0
+PASS V-FLOOR-REF-GEX44-GREEN today's interactive floor (607795c4) vs the plane-gex44 reference: tokens not comparable -> exit 2 tokens_unmeasured; --chars-only -> WITHIN_BOUND_CHARS_ONLY, universal +0, project +0
 PASS V-FLOOR-REAL-REFERENCE-PINNED committed reference window pinned to 34f03871: sha256 dc6d23b90cac rows=34 re-derived from disk
-PASS V-FLOOR-BUNDLE-ARGV-PARSES 6 gate lines and 2 test lines of the Phase 4 [K] item parse with their own argparse (controls: bad bundle raises 3 problems, good bundle none)
+PASS V-FLOOR-BUNDLE-ARGV-PARSES 7 gate lines and 2 test lines of the Phase 4 [K] item parse with their own argparse (controls: bad bundle raises 3 problems, good bundle none)
 ```
 
-`python3 tools/test_floor_regression_gate.py --drill` (exit 0): `PASS DRILL-CONTROL unmutated run: 50/50 gates green
-(skipped 0)`, 13 `KILLED` lines (M1 scope_key universal, M2 scope_key project, M3 `UNIVERSAL_MIN_CHARS = 10**9`, M4
+`python3 tools/test_floor_regression_gate.py --drill` (exit 0): `PASS DRILL-CONTROL unmutated run: 57/57 gates green
+(skipped 0)`, 18 `KILLED` lines (M1 scope_key universal, M2 scope_key project, M3 `UNIVERSAL_MIN_CHARS = 10**9`, M4
 validate_explanations accepts all, M5 covering ignores bound and unit, M6 exit_code maps UNMEASURABLE to 0, M7 no
 layer_3pct, M8 system prompt part scope harness, M9 correlate_hook returns no producing command, M10 scope_for_name never
 project, M11 host_has always true, M12 newest_transcript returns the oldest, M13 first_call_tokens accepts a
-`<synthetic>` row), `PASS DRILL-CLEAN-AFTER-MUTANTS 50/50`, `PASS DRILL-RESTORE gate file sha256 775574882200de2e before
-== after`, and:
+`<synthetic>` row; review-fix mutants M14 read_window drops an unparseable window line, M15 hook_source_key stores the raw
+command, M16 absent_layers finds nothing, M17 uncorrelated hook element filed by its event's registrations, M18
+unmeasured tokens verdict reads plain WITHIN_BOUND), `PASS DRILL-CLEAN-AFTER-MUTANTS 57/57`, `PASS DRILL-RESTORE gate file
+sha256 096d71cc164eac46 before == after`, and:
 
 ```
-DRILL killed=13/13
+DRILL killed=18/18
 ```
 
 GEX44 check, today's interactive session against the committed plane-gex44 reference (the reference was written from
@@ -165,7 +167,9 @@ ICP_SELFTEST=PASS
 Ledger `state.K` prints `{}`; `grep -c '\[x\] \*\*IC-K\*\*' .planning/workstreams/incremental-cognition/REQUIREMENTS.md` prints `0`.
 
 Code commits of the gate (oldest first): `7fdef637`, `e4459393`, `8422eb2d`, `13f3bffe`, `11686c8d`, `f065ac8e`,
-`17228d2f`, `09bb9142`; the `[K]` bundle item and its parse gate: `d40bd16c`.
+`17228d2f`, `09bb9142`; the `[K]` bundle item and its parse gate: `d40bd16c`. Phase 4 code-review fixes (report:
+`.planning/workstreams/incremental-cognition/phases/04-cognitive-cost-regression-gate/04-REVIEW-FIX.md`): CR-01
+`19792a95`, CR-02 `25c13924`, WR-01 `b7adc31f`, WR-02 `03f845e1`, WR-03 `440578c4`, IN-01 `e8fe57c5`, IN-02 `ef336ec7`.
 
 ## R2-W1 pin of the plane-gex44 reference
 
@@ -174,7 +178,11 @@ and `window_rows` 34, written from the mission worker session `34f03871` (plane 
 `V-FLOOR-REAL-REFERENCE-PINNED` re-reads that transcript from disk with `read_window` + `window_digest`, recomputes both
 values, and compares them to the committed reference; it prints SKIP (never PASS) when the transcript is absent and
 FAILs when the reference is missing or the pin differs. This reference is a test and smoke input only; it is not the
-frozen rule's reference (that is the laptop one, `floor/reference.json`, not produced here).
+frozen rule's reference (that is the laptop one, `floor/reference.json`, not produced here). It was regenerated twice by
+the review fixes (CR-02: hook sources became `hook:<sha256[:16]>[:basename]` instead of raw command text; WR-02: the
+`UserPromptSubmit` element became `unattributed`), each time with `--write-reference ... --replace` from the same transcript
+(read only: its sha256 was identical before and after); `window_sha256` `dc6d23b90cac...`, `window_rows` 34, `total_chars`
+207245 and `tokens` came out identical, and `V-FLOOR-REAL-REFERENCE-PINNED` still PASSes.
 
 ## Owners consumed
 
@@ -214,9 +222,9 @@ by `V-FLOOR-BUNDLE-ARGV-PARSES`), and, once K closes, the ledger `gate` evidence
 ## Artifacts (LF sha256)
 
 ```
-775574882200de2efc94dc5bf15b7ffc24f01417d2eb70b92cba70385e49856d  tools/floor_regression_gate.py
-4f7b094b7282425a34be9145f8ed62fd5fffaddb25b467f99e9109dda17bd386  tools/test_floor_regression_gate.py
-4d88fe83a164ecd02dd20e6ce7305ab067604f7c21b636e8db82064b7af3fffb  vault/programs/incremental-cognition/floor/reference-gex44.json
+096d71cc164eac46c03061d0a3940be2562223fc900abaec14d986a9379f9359  tools/floor_regression_gate.py
+3bec0f7b62fb273a4fb15565992abac563e2e11635332c846c0b89b33dc462bf  tools/test_floor_regression_gate.py
+0d59e0dcf57837aa386e31e5259c8c6855d54f76c71e671bc9d604f82bce49c6  vault/programs/incremental-cognition/floor/reference-gex44.json
 ```
 
 (`hashlib.sha256` over the file bytes with CRLF folded to LF, the CE verifier's `lf_sha256`.)
@@ -259,14 +267,20 @@ Measured facts learned while building it:
 - LAPTOP-RUN DEBT: the closing gate `tools/test_floor_regression_gate.py` has never been run on the laptop. There its GEX44
   `-REAL` gates SKIP and the gates that need POSIX file modes or a script as the owner's argv[0] SKIP on Windows (expected,
   not measured), so the laptop's own evidence is `V-FLOOR-SEEDED-REAL` via `--real-session` plus the PRG `--check`.
-- Tokens are comparable only on equal prompt digests (otherwise `not_comparable`).
+- Tokens are comparable only on equal prompt digests (otherwise `not_comparable`). Since WR-03 that is exit 2
+  `tokens_unmeasured`, and only an explicit `--chars-only` gives exit 0 (`WITHIN_BOUND_CHARS_ONLY`, tokens axis not
+  compared); in practice an ordinary session checked against a probe-written reference is chars-only by construction.
+- Since CR-01 / WR-01 the gate also refuses (exit 2) an unparseable startup-window line and a reference layer of >= 1,000
+  chars that is wholly absent from the check; since WR-02 a hook element with no producing `hook_success` row is
+  `unattributed`; since CR-02 no hook command text is stored.
 - Scopes are computed on the measuring host at measure time; a check run on another host re-attributes from that host.
 - `hook_success` raw stdout is excluded from the floor (counted only).
 - A resumed session's startup window is its original start.
 - The 64 pre-existing liveness offenders on GEX44 are not this phase's.
 - The cherry-pick list in the bundle is the eight code commits by full sha, taken from `git log --reverse` on the three
   K artifacts before the bundle commit; it is proven to resolve (`git cat-file -t` prints `commit` for each) on GEX44 and
-  to apply on the laptop only by the Owner's run.
+  to apply on the laptop only by the Owner's run. The seven review-fix commits are taken as the tree state of `ef336ec7`
+  for the three tool / reference paths (one of them also edits the bundle and this file); likewise unproven on the laptop.
 
 ## Status: OPEN
 

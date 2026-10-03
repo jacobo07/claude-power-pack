@@ -233,6 +233,14 @@ tools/test_floor_regression_gate.py`); nothing below has been run on the laptop.
       git fetch kobii@kobicraft-gex44:/home/kobii/missions/incremental-cognition mission/incremental-cognition-run
       git cherry-pick 7fdef637db297983496bd137d85e695ffdc27f46 e445939387f3d1747a76ba2aa0fac9ea2bc17716 8422eb2d704f510ba37a89d47ba6eafa3ebf6a55 13f3bffe619b340470ac8970fe1a0aa56ff49a8c 11686c8d33795da5e6eccc02b40fa621656c40d5 f065ac8eeb47d1ae594a2790590e426485e873d8 17228d2f025ef524dd82467030136b36d4812874 09bb91427cddd1963d6b567e8e3146b5f3636710
 
+  Then the phase 4 code-review fixes (seven commits, CR-01 `19792a95` .. IN-02 `ef336ec7`). One of them also edits this
+  bundle and `evidence/K.md`, which the laptop does not need, so they are taken as a tree state, not cherry-picked; the
+  three paths below are exactly the files they change that the laptop uses (the reference is regenerated, the gate now
+  refuses an unparseable window line, a wholly absent layer and an uncompared tokens axis, and `--chars-only` exists):
+
+      git checkout ef336ec7d81c965e1e2543abb63bdb33c1179501 -- tools/floor_regression_gate.py tools/test_floor_regression_gate.py vault/programs/incremental-cognition/floor/reference-gex44.json
+      git commit -F <msgfile you wrote first> -- tools/floor_regression_gate.py tools/test_floor_regression_gate.py vault/programs/incremental-cognition/floor/reference-gex44.json
+
   Then the fixture suite and the seeded positive control on a real laptop transcript (the control seeds scratch copies,
   so any real laptop session serves it; the champion-startup probe session is used here). Expected, not measured:
   exit 0; the GEX44 `-REAL` gates print SKIP on the laptop, and the gates that need POSIX file modes or a script as
