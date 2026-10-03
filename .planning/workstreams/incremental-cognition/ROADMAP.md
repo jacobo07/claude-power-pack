@@ -93,12 +93,12 @@ environment first.
 1. Red test of the 137-relaunch shape (worker dies on `Login expired` before any API call) -> fix -> green.
 2. GEX44 a5/a7: rules version, hook health and interpreters checked by a repeatable preflight; broken hooks and
    stale rules repaired by a deploy script; re-login recorded in the owner bundle, never bypassed.
-**Plans:** 4 plans (sequential waves 1-4)
+**Plans:** 1/4 plans executed (sequential waves 1-4)
 
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — C: 137-relaunch shape red through supervise; auth fallback parks without the breaker (C's one gsd_mission hunk); re-login releases a quarantine
+- [x] 02-01-PLAN.md — C: 137-relaunch shape red through supervise; auth fallback parks without the breaker (C's one gsd_mission hunk); re-login releases a quarantine
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

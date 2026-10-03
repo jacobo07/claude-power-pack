@@ -6,12 +6,12 @@
     {
       "number": "1",
       "name": "Mission relay in a shared checkout",
-      "status": "in_progress"
+      "status": "pending"
     },
     {
       "number": "2",
       "name": "Persistent failures and remote integrity",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "3",
@@ -37,7 +37,7 @@
   "next": {
     "command": "/gsd:progress --next",
     "label": "Advance to the next step",
-    "reason": "Phase 1 of 6 · executing"
+    "reason": "Phase 2 of 6 · executing"
   },
-  "updated_at": "2026-10-03T18:04:47.169Z"
+  "updated_at": "2026-10-03T18:14:39.054Z"
 }
