@@ -68,6 +68,18 @@ def gate_line(gate: str, word: str, out: str) -> bool:
     return re.search(rf"{w}[\s:]+{g}(?![\w-])|(?<![\w-]){g}\s+{w}", out) is not None
 
 
+_FAIL_TOKEN = re.compile(r"(?:^|\s)(?:\[FAIL\]|FAIL)(?=[\s:]|$)")
+
+
+def detail_lines(out: str) -> list[str]:
+    """The lines a human needs to see why a drill ended as it did: every FAIL line and the
+    `*_PASS=` summary. DETAIL only -- the verdict is decided by gate_line(), never by this.
+
+    Until 2026-10-03 this was `startswith("FAIL")`, which dropped the indented `  FAIL V-X:`
+    lines most suites print, so a KILLED drill could show no failing line at all (ACV C4)."""
+    return [l for l in out.splitlines() if _FAIL_TOKEN.search(l) or "_PASS=" in l]
+
+
 def _copy(src: Path, dst: Path) -> None:
     if dst.exists():
         return
@@ -173,7 +185,7 @@ def drill(spec: dict, timeout_s: int = 900) -> tuple[str, str]:
     if _sha(live) != live_sha:
         return "HARNESS", "the LIVE file changed during the drill"
     lines = out.splitlines()
-    tail = "\n".join(l for l in lines if l.startswith("FAIL") or "_PASS=" in l)
+    tail = "\n".join(detail_lines(out))
     if not any("_PASS=" in l for l in lines):
         return "UNJUDGED", "\n".join(lines[-12:])
     if gate_line(gate, "FAIL", out):

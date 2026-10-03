@@ -129,6 +129,13 @@ def main() -> int:
     v, _ = md.drill({**base, "old": "# anchor", "new": "# anchor"})
     check("V-MD-NOOP-MUTATION-HARNESS", v == "HARNESS", v)
 
+    # Detail (ACV C4): the indented FAIL lines the resolver/capability suites print must reach the
+    # drill's detail. Detail never decides a verdict; it only has to show the failing line.
+    out = "  FAIL V-X: ev\n[FAIL] V-Y: ev\n  V-Z  FAIL  ev\n  PASS V-W\nFAILED to parse\nprefixFAIL x\nX_PASS=1/4"
+    got = md.detail_lines(out)
+    check("V-MD-DETAIL-INDENTED-FAIL", got == ["  FAIL V-X: ev", "[FAIL] V-Y: ev", "  V-Z  FAIL  ev", "X_PASS=1/4"],
+          got)
+
     print(f"MD_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 
