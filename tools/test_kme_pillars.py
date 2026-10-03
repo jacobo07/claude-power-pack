@@ -1144,6 +1144,67 @@ GATES_PILLAR_EF = [
 ]
 
 
+# =========================================================================== pillar G / H fixtures
+GP = "-home-x-kme-g"
+C6_TEXT = ("C6 result: listing hiding FALSIFIED. 134 name-only overrides moved the skill listing from 29,991 to "
+           "30,002 chars; startup tokens did not fall.")
+K4_TEXT = ("K4 plan: re-test listing hiding behind a gateway. Move 133 pageable skills to user-invocable-only and "
+           "measure startup tokens again.")
+
+
+def g_session(root, session, t, text, project=GP, usage=(10, 0, 1000, 5), n=0):
+    """One session of one human prompt and one assistant call carrying `text`."""
+    fx = Fx(root, project=project, session=session)
+    fx.human("go", ts(t - 1))
+    fx.assistant(f"{session}-m{n}", f"{session}-r{n}", usage, ts(t), text=text)
+    return fx
+
+
+def g_pair(first_text, second_text, t_first=-3 * 86400, t_second=-2 * 86400):
+    root = scratch("g")
+    g_session(root, "sA", t_first, first_text)
+    g_session(root, "sB", t_second, second_text)
+    return root
+
+
+def g_other(root, extra=(), label="FX-A"):
+    out_dir = scratch("out")
+    rc, res, out, err = run_json(["g", "--denominator", "OTHER", "--label", label, "--select", "all",
+                                  "--until", "none", "--root", str(pdir(root, GP)), "--out-dir", str(out_dir)]
+                                 + list(extra))
+    return rc, res, out, err, out_dir
+
+
+def g_det(res):
+    d = res["details"]
+    return d["retested_falsifications"], d["relitigated_sealed"], d
+
+
+def g_c6_k4_positive():
+    root = g_pair(C6_TEXT, K4_TEXT)
+    frozen = write_frozen(root / "frozen.json", **{"KME-L": {
+        "sessions_active": 2, "sessions_dead": 0, "calls": 2, "input": 20, "cache_write": 0, "cache_read": 2000,
+        "output": 10}})
+    outd = root / "m"
+    rc, out, err = run_main(["g", "--denominator", "KME-L", "--frozen-file", frozen, "--root",
+                             str(pdir(root, GP)), "--out-dir", str(outd)])
+    files = sorted(outd.glob("G-KME-L-*.md")) if outd.is_dir() else []
+    if rc != 0 or len(files) != 1:
+        return False, f"rc={rc} files={[f.name for f in files]} err={err[-200:]}"
+    text = files[0].read_text(encoding="utf-8")
+    front, res = parse_measurement(text)
+    rt, _sealed, det = g_det(res)
+    si = res["share_interval"]
+    subjects = [m["subject"] for m in det["samples"]]
+    ok = (front["pillar"] == "G" and front["population_match"] == "exact" and rt["strict"] == 1
+          and rt["loose"] >= 1 and subjects == ["listing hiding"] and si is not None and si[0] <= si[1]
+          and "startup tokens did not fall" not in text)
+    return ok, f"rc={rc} strict={rt['strict']} loose={rt['loose']} subjects={subjects} share={si}"
+
+
+GATES_G_TRACER = [("V-KMEP-G-C6-K4-POSITIVE", g_c6_k4_positive)]
+
+
 GATES_EXPANSION = [
     ("V-KMEP-POPULATION-DRIFT", g_population_drift),
     ("V-KMEP-VERDICT-TABLE", g_verdict_table),
@@ -1176,7 +1237,7 @@ GATES_TRACER = [
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
     ("V-KMEP-CLI-USAGE", g_cli_usage),
 ]
-GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_REAL
+GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_REAL
 
 
 def summary_line() -> str:
@@ -1198,7 +1259,7 @@ def run_all() -> int:
 
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
-DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF]    # the -REAL gates are excluded for speed
+DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER]    # the -REAL gates are excluded for speed
 
 
 def _quiet(names) -> dict:

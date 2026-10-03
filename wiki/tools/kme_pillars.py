@@ -715,10 +715,291 @@ class FObserver(PillarObserver):
         }
 
 
-OBSERVERS = {"D": DObserver, "E": EObserver, "F": FObserver}
+# --------------------------------------------------------------------------- pillar G
+# Heuristic text markers (English only). Every pattern is a module constant so the gates and drills can drive it.
+FALSIFY_RE = re.compile(
+    r"\b(?:falsified|falsification|falsify|falsifies|disproven|disproved|refuted|ruled out|rejected by evidence"
+    r"|no measurable (?:effect|saving|savings|reduction))\b", re.I)
+SEALED_RE = re.compile(r"\b(?:sealed|locked decision|decision locked)\b", re.I)
+RETEST_RE = re.compile(
+    r"\b(?:re-?test(?:ed|ing|s)?|re-?run(?:ning|s)?|re-?measure(?:d|ment|s)?|(?:try|test) (?:it |that |this )?again"
+    r"|another (?:attempt|experiment|try)|second (?:attempt|experiment)|challenger|retry|retries)\b", re.I)
+RELITIGATE_RE = re.compile(
+    r"\b(?:re-?open(?:ed|ing|s)?|revisit(?:ed|ing|s)?|reconsider(?:ed|ing|s)?|overturn(?:ed|ing|s)?"
+    r"|undo the decision)\b", re.I)
+NEGATED_RE = re.compile(r"\b(?:do not|don't|dont|never|no need to|without)\s+(?:" + RETEST_RE.pattern + "|"
+                        + RELITIGATE_RE.pattern + ")", re.I)
+CITE_RE = re.compile(
+    r"\b(?:already|previously|known)\s+(?:falsified|sealed|ruled out)\b|\b(?:was|were)\s+(?:falsified|sealed|ruled out)\b"
+    r"|\bfalsified\s+(?:in|at|by|twice|x2)\b|\bper\s+(?:the\s+)?sealed\b|\bas\s+sealed\b", re.I)
+DECISION_ID_RE = re.compile(r"\b([A-Z]{1,3})-?(\d{1,3})\b")
+SENT_SPLIT_RE = re.compile(r"[.!?;]+(?:\s+|$)|\n+")
+STOPWORDS = frozenset((
+    "the and for are was were with that this from into onto behind then than them they but not you our its has "
+    "have had will would should could can may might must all any each per via one two now here there when what "
+    "which who how why also only just more most some such over under after before between about because while "
+    "where does did done being been get got let use used using make made next first last other another still "
+    "very much many both either neither than too yet said says say see seen look looks need needs want wants "
+    "like likewise okay yes").split())
+MARKER_WORDS = frozenset((
+    "falsified falsification falsify falsifies disproven disproved refuted ruled rejected evidence sealed locked "
+    "decision retest tested testing tests test rerun running run remeasure measured measure again try attempt "
+    "experiment second challenger retry retries reopen reopened open revisit reconsider overturn undo already "
+    "previously known not never without").split())
+
+
+def _norm_word(w):
+    return w[:-1] if len(w) > 3 and w.endswith("s") and not w.endswith("ss") else w
+
+
+def _words(sentence):
+    return re.findall(r"[a-z]+", sentence.lower())
+
+
+def _content(tokens):
+    return [t for t in tokens if 3 <= len(t) <= 20 and t not in STOPWORDS and t not in MARKER_WORDS]
+
+
+def strip_negated(sentence):
+    """Remove 'do not re-test' style phrases before RETEST / RELITIGATE are looked for."""
+    return NEGATED_RE.sub(" ", sentence)
+
+
+def _decision_ids(sentence):
+    return [f"{m.group(1)}-{int(m.group(2))}" for m in DECISION_ID_RE.finditer(sentence)]
+
+
+def _subject(sentence, marker):
+    """Last two content words before the marker, or the first two after it when the marker opens the sentence
+    and is followed by ':'. May be one or no words (kept for loose matching only)."""
+    before = _content(_words(sentence[:marker.start()]))
+    if not before and sentence[marker.end():].lstrip().startswith(":"):
+        return tuple(_content(_words(sentence[marker.end():]))[:2])
+    return tuple(before[-2:])
+
+
+def contains_seq(words, seq):
+    n = len(seq)
+    if n == 0 or n > len(words):
+        return False
+    return any(words[i:i + n] == list(seq) for i in range(len(words) - n + 1))
+
+
+def is_earlier(rec_key, cand_key) -> bool:
+    """A record only counts as the earlier half of a re-test when it precedes the candidate in time."""
+    return rec_key < cand_key
+
+
+def overlap_loose(a, b) -> bool:
+    shared = len(a & b)
+    return shared >= 2 and shared / max(1, min(len(a), len(b))) >= 0.4
+
+
+_EPOCH = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+
+
+class GObserver(PillarObserver):
+    """Pillar G: falsified hypotheses and sealed decisions that later text re-tests or re-litigates. Heuristic: the
+    count is an interval (strict subject phrase match .. loose window overlap), never a point."""
+    pillar = "G"
+
+    def __init__(self):
+        self.records = []
+        self.cands = []
+        self.reuse = []
+        self._state = {}
+        self._pref = {}
+        self._by_path = collections.defaultdict(list)
+        self._seq = 0
+
+    def _st(self, path):
+        st = self._state.get(path)
+        if st is None:
+            st = {"turn": 0, "starts": [0], "msg": {}, "ts": None, "blk": 0}
+            self._state[path] = st
+        return st
+
+    def on_line(self, path, o, idx, sess):
+        if not isinstance(o, dict):
+            return
+        st = self._st(path)
+        t = parse_instant(o.get("timestamp"))
+        if t is not None:
+            st["ts"] = t
+        msg = o.get("message")
+        if not isinstance(msg, dict):
+            return
+        content = msg.get("content")
+        typ = o.get("type")
+        if typ == "user":
+            text, has_result = _user_text(content)
+            if not has_result and not o.get("isMeta") and not text.startswith(SKILL_BODY_PREFIX):
+                st["turn"] += 1
+                st["starts"].append(idx)
+            return
+        if typ != "assistant":
+            return
+        call = None
+        if isinstance(msg.get("usage"), dict):
+            key = (msg.get("id") or o.get("uuid"), o.get("requestId"))
+            call = st["msg"].setdefault(key, idx)
+        for c in _blocks(content):
+            if isinstance(c, dict) and c.get("type") == "text" and isinstance(c.get("text"), str):
+                self._text(path, st, sess, c["text"], call, t)
+
+    def _text(self, path, st, sess, text, call, t):
+        st["blk"] += 1
+        blk = (path, st["blk"])
+        self._seq += 1
+        key = (t or st["ts"] or _EPOCH, self._seq)
+        base = {"sid": id(sess), "file": path, "blk": blk, "key": key, "call": call, "turn": st["turn"],
+                "session": str(sess.get("session") or "")[:8]}
+        for sent in SENT_SPLIT_RE.split(text):
+            s = sent.replace("’", "'").strip()
+            if len(s) < 4:
+                continue
+            tokens = _words(s)
+            cw = [_norm_word(w) for w in _content(tokens)]
+            if CITE_RE.search(s):
+                self.reuse.append(dict(base))
+            elif FALSIFY_RE.search(s):
+                subj = _subject(s, FALSIFY_RE.search(s))
+                self._record("falsified", base, s, subj, None, cw)
+            elif SEALED_RE.search(s):
+                ids = _decision_ids(s)
+                subj = () if ids else _subject(s, SEALED_RE.search(s))
+                self._record("sealed", base, s, subj, ids[0] if ids else None, cw)
+            stripped = strip_negated(s)
+            kinds = []
+            if RETEST_RE.search(stripped):
+                kinds.append("retest")
+            if RELITIGATE_RE.search(stripped):
+                kinds.append("relitigate")
+            if kinds:
+                cand = dict(base, kinds=kinds, content=frozenset(cw), seqw=[_norm_word(w) for w in tokens],
+                            ids=frozenset(_decision_ids(s)), chars=len(s))
+                self.cands.append(cand)
+                self._by_path[path].append(cand)
+
+    def _record(self, kind, base, s, subj, ident, cw):
+        self.records.append(dict(base, kind=kind, subject_raw=tuple(subj),
+                                 subject=tuple(_norm_word(w) for w in subj), ident=ident, content=frozenset(cw)))
+
+    def on_file_end(self, path, sess, order, calls, compact_points):
+        st = self._state.get(path)
+        pref = [0.0]
+        for key in order:
+            r = calls[key]
+            pref.append(pref[-1] + (0.0 if r.get("model") == "<synthetic>" else call_weighted(r)))
+        self._pref[path] = pref
+        starts = (st or {"starts": [0]})["starts"] + [len(order)]
+        for cand in self._by_path.pop(path, []):
+            c = cand["call"]
+            if c is None or c >= len(order):
+                cand["span"] = None
+                continue
+            nxt = [x for x in starts if x > c]
+            cand["span"] = (c, nxt[0] if nxt else len(order))
+
+    def _match(self, selected):
+        recs = [r for r in self.records if r["sid"] in selected]
+        cands = [c for c in self.cands if c["sid"] in selected]
+        by_word, by_id = collections.defaultdict(list), collections.defaultdict(list)
+        for i, r in enumerate(recs):
+            for w in r["content"]:
+                by_word[w].append(i)
+            if r["ident"]:
+                by_id[r["ident"]].append(i)
+        hits = []        # (cand, strict record idx set, loose record idx set)
+        for cand in cands:
+            shared = collections.Counter()
+            for w in cand["content"]:
+                for i in by_word.get(w, ()):
+                    shared[i] += 1
+            pool = set(shared)
+            for ident in cand["ids"]:
+                pool.update(by_id.get(ident, ()))
+            strict, loose = set(), set()
+            for i in pool:
+                r = recs[i]
+                if r["blk"] == cand["blk"] or not is_earlier(r["key"], cand["key"]):
+                    continue
+                is_strict = (bool(r["ident"]) and r["ident"] in cand["ids"]) or \
+                    (len(r["subject"]) == 2 and contains_seq(cand["seqw"], r["subject"]))
+                if is_strict:
+                    strict.add(i)
+                if is_strict or overlap_loose(r["content"], cand["content"]):
+                    loose.add(i)
+            if loose:
+                hits.append((cand, strict, loose))
+        return recs, cands, hits
+
+    def result(self, selected, sessions, population):
+        recs, cands, hits = self._match(selected)
+        out = {}
+        for kind in ("falsified", "sealed"):
+            idxs = [i for i, r in enumerate(recs) if r["kind"] == kind]
+            sset = set().union(*[h[1] for h in hits]) if hits else set()
+            lset = set().union(*[h[2] for h in hits]) if hits else set()
+            out[kind] = {"records": len(idxs), "strict": len([i for i in idxs if i in sset]),
+                         "loose": len([i for i in idxs if i in lset])}
+        lower_calls = {}
+        spans = collections.defaultdict(list)
+        sample_pool = []
+        for cand, strict, loose in hits:
+            if cand["span"] is None:
+                continue
+            spans[cand["file"]].append(cand["span"])
+            if strict:
+                lower_calls[(cand["file"], cand["span"][0])] = True
+                r = recs[sorted(strict)[0]]
+                subj = " ".join(r["subject_raw"]) if len(r["subject_raw"]) == 2 else (r["ident"] or "")
+                sample_pool.append((cand["key"], {"kind": "falsification" if r["kind"] == "falsified" else "sealed",
+                                                  "subject": subj, "session": cand["session"],
+                                                  "call": cand["span"][0]}))
+        lo = sum(self._pref[f][c + 1] - self._pref[f][c] for f, c in lower_calls)
+        hi = 0.0
+        for f, rngs in spans.items():
+            pref = self._pref[f]
+            covered = set()
+            for a, b in rngs:
+                covered.update(range(a, b))
+            hi += sum(pref[i + 1] - pref[i] for i in covered)
+        hi = max(hi, lo)
+        sample_pool.sort(key=lambda x: x[0])
+        n = len(sample_pool)
+        picks = list(range(n)) if n <= 20 else sorted({round(i * (n - 1) / 19) for i in range(20)})
+        strict_c = [h for h in hits if h[1]]
+        reuse_n = len([r for r in self.reuse if r["sid"] in selected])
+        return {
+            "numerator": {
+                "name": "re-tested falsified hypotheses and re-litigated sealed decisions (heuristic)",
+                "definition": ("assistant text sentences carrying a re-test / re-litigation marker that match a "
+                               "strictly earlier falsification or sealed-decision sentence (strict = the subject "
+                               "phrase or decision id recurs; loose = content-word overlap); lower bound = measured "
+                               "weighted cost of the calls carrying strict matches, upper bound = the whole turns "
+                               "of the calls carrying loose matches"),
+                "kind": "heuristic re-test interval", "chars": sum(h[0]["chars"] for h in strict_c),
+                "weighted_lo": lo, "weighted_hi": hi, "weighted_interval": [lo, hi],
+            },
+            "observability": 1.0,
+            "details": {
+                "retested_falsifications": out["falsified"], "relitigated_sealed": out["sealed"],
+                "reuse_citations": reuse_n,
+                "candidates": {"retest": len([c for c in cands if "retest" in c["kinds"]]),
+                               "relitigate": len([c for c in cands if "relitigate" in c["kinds"]]),
+                               "strict_matched": len(strict_c), "loose_matched": len(hits)},
+                "samples": [sample_pool[i][1] for i in picks],
+                "sample_note": "up to 20 strict matches, evenly spread in time, for a human precision check",
+            },
+        }
+
+
+OBSERVERS = {"D": DObserver, "E": EObserver, "F": FObserver, "G": GObserver}
 PILLAR_HELP = {"D": "silent-success hooks: hook_additional_context rent per call",
                "E": "large-source read virtualization: rereads of identical file versions",
-               "F": "GSD operational projection: workflow-doc residency beside the init JSON"}
+               "F": "GSD operational projection: workflow-doc residency beside the init JSON",
+               "G": "derived cognition: re-tested falsified hypotheses and re-litigated sealed decisions (interval)"}
 
 
 # --------------------------------------------------------------------------- scan + population
@@ -796,6 +1077,13 @@ def _pillar_details(p, det):
         out.append(f"- gsd-tools init calls: {json.dumps(det.get('init'))}")
         out.append(f"- paired turns (doc and init in the same human-prompt turn): {json.dumps(det.get('paired_turns'))}")
         out.append(f"- init_json_present: {det.get('init_json_present')}")
+    elif p == "G":
+        out.append(f"- re-tested falsifications (records / strict / loose): {json.dumps(det.get('retested_falsifications'))}")
+        out.append(f"- re-litigated sealed decisions (records / strict / loose): {json.dumps(det.get('relitigated_sealed'))}")
+        out.append(f"- reuse citations (cited, never counted as re-tests): {det.get('reuse_citations')}")
+        out.append(f"- candidates: {json.dumps(det.get('candidates'))}")
+        for m in det.get("samples", []):
+            out.append(f"- sample: {m['kind']} subject={m['subject']} session={m['session']} call={m['call']}")
     return out
 
 
@@ -876,6 +1164,24 @@ CAVEATS = (
     "measured here; hook_success / hook_system_message are reported beside the numerator, never inside it",
     "only active sessions (calls > 0) of the selected population enter the numerator and the denominator",
 )
+
+
+G_CAVEATS = (
+    "heuristic: sentence-level English text markers, no semantic reading; the count is an interval, never a point",
+    "precision is not measured by the instrument: up to 20 strict matches are sampled (two-word subject, session "
+    "prefix, call index) for a human to read in the named session; recall is unknown",
+    "subjects are the two content words before a falsification marker (or a decision id), so two unrelated "
+    "findings that share a phrase collide, and a first-time statement phrased 'was falsified' is read as a citation",
+    "share interval: lower = measured weighted cost of the calls carrying strict matches, upper = the whole turns "
+    "of the calls carrying loose matches; no chars-per-token estimate is involved",
+    "only assistant text blocks of the selected active sessions are read; user text, tool results and thinking "
+    "are not",
+)
+CAVEATS_BY_PILLAR = {"G": G_CAVEATS}
+ESTIMATE_MODEL_G = ("no char estimate: weighted cost of the carrying calls from their recorded usage "
+                    "(input 1 + cache_read 0.1 + cache_write 2 + output 5); lower = calls with strict matches, "
+                    "upper = their whole turns for loose matches; share = cost / weighted denominator")
+ESTIMATE_MODELS = {"G": ESTIMATE_MODEL_G}
 
 
 # --------------------------------------------------------------------------- CLI
@@ -1014,10 +1320,10 @@ def main(argv=None):
         "numerator": pres["numerator"],
         "share_interval": share, "share_measured_population": share_meas, "threshold": THRESHOLD,
         "materiality": verdict, "materiality_reason": reason, "observability": pres["observability"],
-        "second_workload_required": verdict in (">= 3 %", "STRADDLES"), "estimate_model": ESTIMATE_MODEL,
+        "second_workload_required": verdict in (">= 3 %", "STRADDLES"), "estimate_model": ESTIMATE_MODELS.get(pillar, ESTIMATE_MODEL),
         "host": host, "select": spec["select"],
         "population": measured, "frozen_population": frozen_pop, "population_deltas": deltas,
-        "details": pres["details"], "caveats": list(CAVEATS),
+        "details": pres["details"], "caveats": list(CAVEATS_BY_PILLAR.get(pillar, CAVEATS)),
         "corpus": {"roots": len(a.root), "project_dirs": len(dirs), "sessions_scanned": len(sessions),
                    "sessions_selected_active": len(sel_sessions)},
     }
