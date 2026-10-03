@@ -149,6 +149,28 @@ boundaries, 169 growth-gated, 302 judged by the prior -> 0 CONTINUE (prior or re
 moves 113/225 WOULD to INSUFFICIENT. Negative check stays PARTIAL; Stage 2 (state-conditioned prior) is
 the evidence-earning step.
 
+Progress 2 (2026-10-03): S1 `d34a0b4d` (custody 8/8, 2 drills KILLED; 4/40 recent sealed sessions would be
+refused now, all uncommitted vault plans in the TUA-X-brand001 worktree), R1 `70fbb600` (prior 33/33, 2 drills;
+real artifact n=2519 / 525 sessions / 127 censored, rehydration p50 1,856,237, build 177 s), D1a `7fefbc46`
+(decide evidence 11/11, 3 drills), D1b `4bc970d6` (wiring 11/11, 3 drills; spec §5 rewritten, it said <= 20 while
+the code shipped 30), UKDL `409efa3f` (T-CHECKPOINT-CUSTODY-SCOPED-TO-CWD-REPO-001,
+T-UNCONDITIONED-PRIOR-CANNOT-SAY-CONTINUE-001).
+P1 Production Reality:
+- Decision: real shadow on session cf503730 -> economics ROBUST_ROLLOVER from evidence, n* 19.3, n*+C/G 26.0,
+  share 0.79 / 0.753 at the pessimistic end (margin 0.003 over 0.75), would_rollover false (shadow has no start
+  head -> no boundary). The fixed 30 no longer appears in the decision. POSITIVE control: real, shadow.
+- Writer: 22 live rows since W1 (08:06Z), torn still 6, 0 ledger-failures; 0.12 fragments expected at the old
+  rate -> INCONCLUSIVE (window too short). Primary evidence stays the race gate + its old-shape control.
+- NEGATIVE control: PARTIAL. Synthetic reachability (V-DEV-ROBUST-CONTINUE); historical-real 0/302 (R2).
+Ratchet: EXPERIMENTAL -- evidence-interval decide, custody check. CANDIDATE (one incident each, not promoted):
+HR "an economic control decision must not hide decision-reversing uncertainty behind a point estimate"; PR
+"concurrent event writer -> reproduce with a control -> repair -> reader compat -> failure observability -> PRG".
+Debt: agent-solo-guard FP-AGENT-CONTRACT-IDENTIFIER hit 3x today (guard fix belongs to ~/.claude/hooks);
+shadow/econ seal() overwrites a /kclear capsule (G12, predates this plan); hooks/rollover_autotype.js hunk
+(author untraced, not released) still uncommitted.
+NEXT: Stage 2 -- condition the prior on open obligations at the boundary (goal file at the boundary commit),
+replay it hindsight-free, and look for the first real horizon-driven CONTINUE.
+
 ## Not now
 NEXT: the `decide` horizon/rehydration change (owner rollover.py); `gsd_epoch` 300k static threshold (c2/e9 lane);
 the torn-append fix. LATER: live shadow on new sessions, bounded live experiment. RESEARCH: context live-range
