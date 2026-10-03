@@ -1,0 +1,29 @@
+﻿sha256 5fd854d82ea1ea903a0451e6b06656d5279f7c4629f835fd54f07b7843f82c7a
+controls {"planted_used_detected": true, "planted_unused_not_observed": true, "self_vs_cross_by_family": {"ps": {"n": 3277, "self": 0.381, "cross": 0.002, "ratio": 249.6, "valid": true}, "tool": {"n": 1496, "self": 0.162, "cross": 0.001, "ratio": 121.5, "valid": true}, "read": {"n": 1841, "self": 0.363, "cross": 0.005, "ratio": 74.22, "valid": true}, "bash": {"n": 5, "self": 0.2, "cross": 0.0, "ratio": null, "valid": true}}, "token_calibration_est_over_actual": 0.1288}
+[all] weighted 554.3M | tool output: carry 10.28% dead<= 6.93% unmeasured 2.44% replaceable 0.53% repeat 0.00%
+   read:~/.claude skills/PP                 carry  3.91%  dead<=  2.67%  unmeas  0.84%  repl  0.29%  rep  0.00%  rank4w  0.56%
+   tool:Grep                                carry  1.12%  dead<=  0.97%  unmeas  0.10%  repl  0.00%  rep  0.00%  rank4w  0.17%
+   ps:file content via shell                carry  0.51%  dead<=  0.43%  unmeas  0.04%  repl  0.00%  rep  0.00%  rank4w  0.08%
+   read:unclassified                        carry  0.56%  dead<=  0.38%  unmeas  0.07%  repl  0.05%  rep  0.00%  rank4w  0.04%
+   ps:git diff/show                         carry  0.48%  dead<=  0.36%  unmeas  0.06%  repl  0.00%  rep  0.00%  rank4w  0.07%
+   ps:python script (non-test)              carry  0.44%  dead<=  0.36%  unmeas  0.05%  repl  0.00%  rep  0.00%  rank4w  0.07%
+   read:harness-temp (scratchpad/task outpu carry  0.60%  dead<=  0.32%  unmeas  0.17%  repl  0.12%  rep  0.00%  rank4w  0.06%
+   read:~/.claude other                     carry  0.53%  dead<=  0.23%  unmeas  0.27%  repl  0.07%  rep  0.00%  rank4w  0.05%
+   ps:git status/log/other                  carry  0.33%  dead<=  0.22%  unmeas  0.10%  repl  0.00%  rep  0.00%  rank4w  0.04%
+   ps:tests                                 carry  0.25%  dead<=  0.21%  unmeas  0.04%  repl  0.00%  rep  0.00%  rank4w  0.04%
+   read:KSR tools                           carry  0.22%  dead<=  0.17%  unmeas  0.03%  repl  0.00%  rep  0.00%  rank4w  0.02%
+   ps:search                                carry  0.14%  dead<=  0.12%  unmeas  0.02%  repl  0.00%  rep  0.00%  rank4w  0.02%
+[excl] weighted 554.3M | tool output: carry 10.28% dead<= 6.93% unmeasured 2.44% replaceable 0.53% repeat 0.00%
+   read:~/.claude skills/PP                 carry  3.91%  dead<=  2.67%  unmeas  0.84%  repl  0.29%  rep  0.00%  rank4w  0.56%
+   tool:Grep                                carry  1.12%  dead<=  0.97%  unmeas  0.10%  repl  0.00%  rep  0.00%  rank4w  0.17%
+   ps:file content via shell                carry  0.51%  dead<=  0.43%  unmeas  0.04%  repl  0.00%  rep  0.00%  rank4w  0.08%
+   read:unclassified                        carry  0.56%  dead<=  0.38%  unmeas  0.07%  repl  0.05%  rep  0.00%  rank4w  0.04%
+   ps:git diff/show                         carry  0.48%  dead<=  0.36%  unmeas  0.06%  repl  0.00%  rep  0.00%  rank4w  0.07%
+   ps:python script (non-test)              carry  0.44%  dead<=  0.36%  unmeas  0.05%  repl  0.00%  rep  0.00%  rank4w  0.07%
+   read:harness-temp (scratchpad/task outpu carry  0.60%  dead<=  0.32%  unmeas  0.17%  repl  0.12%  rep  0.00%  rank4w  0.06%
+   read:~/.claude other                     carry  0.53%  dead<=  0.23%  unmeas  0.27%  repl  0.07%  rep  0.00%  rank4w  0.05%
+   ps:git status/log/other                  carry  0.33%  dead<=  0.22%  unmeas  0.10%  repl  0.00%  rep  0.00%  rank4w  0.04%
+   ps:tests                                 carry  0.25%  dead<=  0.21%  unmeas  0.04%  repl  0.00%  rep  0.00%  rank4w  0.04%
+   read:KSR tools                           carry  0.22%  dead<=  0.17%  unmeas  0.03%  repl  0.00%  rep  0.00%  rank4w  0.02%
+   ps:search                                carry  0.14%  dead<=  0.12%  unmeas  0.02%  repl  0.00%  rep  0.00%  rank4w  0.02%
+sample {"0dc5ef92": {"measured_read_w": 228726, "dead_read_w": 221811, "not_observed_items": 49, "used_items": 2}, "2d5926f8": {"measured_read_w": 210797, "dead_read_w": 207074, "not_observed_items": 52, "used_items": 12}, "3cbde20e": {"measured_read_w": 409523, "dead_read_w": 378043, "not_observed_items": 43, "used_items": 6}, "435014d6": {"measured_read_w": 107749, "dead_read_w": 103565, "not_observed_items": 38, "used_items": 5}, "57ef6707": {"measured_read_w": 401914, "dead_read_w": 400085, "not_observed_items": 59, "used_items": 7}, "624f4750": {"measured_read_w": 767584, "dead_read_w": 726233, "not_observed_items": 89, "used_items": 7}, "8b2c7516": {"measured_read_w": 1075600, "dead_read_w": 805541, "not_observed_items": 54, "used_items": 22}, "8ce177ec": {"measured_read_w": 53935, "dead_read_w": 35313, "not_observed_items": 19, "used_items": 6}, "9af80e55": {"measured_read_w": 2630164, "dead_read_w": 1985934, "not_observed_items": 399, "used_items": 113}, "ac98ed90": {"measured_read_w": 555544, "dead_read_w": 524399, "not_observed_items": 57, "used_items": 14}}
