@@ -249,8 +249,10 @@ def decide(mission_id: str, owner_sid: str, now: float, *, workers=None, outcome
     return {"until": until, "reason": reason, "class": cls, "streak": streak, "quarantine": False}
 
 
-def hold_for(rec: dict, now: float) -> dict | None:
-    """Entry point for gsd_mission's supervisor. Falls back to quota_hold when disabled."""
+def hold_for(rec: dict, now: float, cleared_at=None) -> dict | None:
+    """Entry point for gsd_mission's supervisor. Falls back to quota_hold when disabled. `cleared_at` overrides
+    the instant of the last operator clear (lineage_hold passes the later of the successor's and the
+    predecessor's)."""
     gm = _gm()
     sid = (rec.get("owner") or {}).get("session_id")
     if not sid:
@@ -263,7 +265,7 @@ def hold_for(rec: dict, now: float) -> dict | None:
     if not enabled():
         return None
     trace: dict = {}
-    hold = decide(rec.get("mission_id"), sid, now, trace=trace)
+    hold = decide(rec.get("mission_id"), sid, now, cleared_at=cleared_at, trace=trace)
     if trace.get("released"):
         lr.ledger_append(rec.get("mission_id"), "provider_released", mission_id=rec.get("mission_id"),
                          reason=trace["released"])
@@ -302,7 +304,10 @@ def lineage_hold(rec: dict, now: float, load=None) -> dict | None:
         if not isinstance(pred, dict):
             return None
         if pred.get("owner"):
-            h = hold_for(pred, now)
+            # An operator clears the id the supervisor row and the logs show, which is the SUCCESSOR's; the hold
+            # itself is keyed by the predecessor's. A clear on either releases it.
+            clears = [t for t in (last_clear(rec.get("mission_id")), last_clear(pred.get("mission_id") or pid)) if t]
+            h = hold_for(pred, now, cleared_at=max(clears) if clears else None)
             return None if h is None else {**h, "inherited_from": pred.get("mission_id") or pid}
         cur = pred
     return None
@@ -326,7 +331,9 @@ def _cli(argv=None) -> int:
     if not rec:
         print(json.dumps({"mission": a.mission, "error": "mission record not found"}))
         return 3
-    print(json.dumps({"mission": a.mission, "hold": hold_for(rec, time.time())}, indent=1))
+    now = time.time()
+    # a PREPARED renewal successor has no owner, so hold_for is None for it while the gate refuses its launch
+    print(json.dumps({"mission": a.mission, "hold": hold_for(rec, now) or lineage_hold(rec, now)}, indent=1))
     return 0
 
 
