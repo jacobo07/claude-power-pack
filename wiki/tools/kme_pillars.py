@@ -35,6 +35,7 @@ from __future__ import annotations
 import argparse
 import collections
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -345,8 +346,153 @@ class DObserver(PillarObserver):
         }
 
 
-OBSERVERS = {"D": DObserver}
-PILLAR_HELP = {"D": "silent-success hooks: hook_additional_context rent per call"}
+# --------------------------------------------------------------------------- pillar E
+STUB_PREFIX = "File unchanged since last read"
+WRITE_TOOLS = ("Edit", "Write", "MultiEdit", "NotebookEdit")
+E_CLASSES = ("first", "stub", "identical_same_segment", "identical_after_compaction", "rewritten_identical",
+             "changed_after_write", "changed_outside_tools", "unhashable")
+
+
+def is_stub_text(text) -> bool:
+    """The harness's own answer to a reread of an unchanged file: already virtualized, never pure waste."""
+    return text.lstrip().startswith(STUB_PREFIX)
+
+
+def classify_read(prev, h, wcount, seg):
+    """E class of a hashed Read result against the previous read of the same (path, range) in the same transcript
+    file. prev = None | (hash, writes_seen, segment); h = this result's hash; wcount = writes to the path so far;
+    seg = this file's compaction count now."""
+    if prev is None:
+        return "first"
+    p_hash, p_writes, p_seg = prev
+    written = wcount > p_writes
+    if h == p_hash:
+        if written:
+            return "rewritten_identical"
+        return "identical_same_segment" if seg == p_seg else "identical_after_compaction"
+    return "changed_after_write" if written else "changed_outside_tools"
+
+
+def _blocks(content):
+    return content if isinstance(content, list) else []
+
+
+class EObserver(PillarObserver):
+    """Pillar E: rereads of an identical file version within one transcript file (one thread = one context).
+
+    Per transcript file: Read tool_use id -> (path, range); Edit / Write / MultiEdit / NotebookEdit bump a per-path
+    write counter; a Read result is hashed (sha256 of the extracted text, never emitted) and classified against the
+    previous read of the same (path, range) in that file. Only identical_same_segment is in the lower bound, the
+    upper bound adds identical_after_compaction. A stub or an errored result is never an identical reread."""
+    pillar = "E"
+
+    def __init__(self):
+        self.events = []
+        self._by_path = collections.defaultdict(list)
+        self._state = {}
+
+    def _st(self, path):
+        st = self._state.get(path)
+        if st is None:
+            st = {"reads": {}, "writes": collections.Counter(), "last": {}, "seg": 0}
+            self._state[path] = st
+        return st
+
+    def on_line(self, path, o, idx, sess):
+        if not isinstance(o, dict):
+            return
+        st = self._st(path)
+        t = o.get("type")
+        if t == "system" and o.get("subtype") == "compact_boundary":
+            st["seg"] += 1
+            return
+        msg = o.get("message")
+        if not isinstance(msg, dict):
+            return
+        content = msg.get("content")
+        if t == "assistant":
+            for c in _blocks(content):
+                if not (isinstance(c, dict) and c.get("type") == "tool_use"):
+                    continue
+                inp = c.get("input") if isinstance(c.get("input"), dict) else {}
+                name = c.get("name")
+                if name == "Read" and inp.get("file_path"):
+                    st["reads"][c.get("id")] = (str(inp["file_path"]),
+                                                (inp.get("offset"), inp.get("limit"), inp.get("pages")))
+                elif name in WRITE_TOOLS:
+                    target = inp.get("file_path") or inp.get("notebook_path")
+                    if target:
+                        st["writes"][str(target)] += 1
+        elif t == "user":
+            for c in _blocks(content):
+                if not (isinstance(c, dict) and c.get("type") == "tool_result"):
+                    continue
+                rec = st["reads"].get(c.get("tool_use_id"))
+                if rec is None or c.get("is_error"):
+                    continue
+                self._on_read_result(path, st, rec, c, idx, sess)
+
+    def _on_read_result(self, path, st, rec, block, idx, sess):
+        target, rng = rec
+        raw = block.get("content")
+        text = kme_token_audit.text_of(raw)
+        chars = len(text)
+        if is_stub_text(text):
+            klass_ = "stub"
+        elif any(isinstance(x, dict) and x.get("type") == "image" for x in _blocks(raw)):
+            klass_ = "unhashable"     # an image result carries no text to hash: equal "[image]" would be a false match
+        else:
+            h = hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()
+            wcount = st["writes"][target]
+            klass_ = classify_read(st["last"].get((target, rng)), h, wcount, st["seg"])
+            st["last"][(target, rng)] = (h, wcount, st["seg"])
+        ev = {"sid": id(sess), "idx": idx, "chars": chars, "class": klass_, "path": target, "resident": 0}
+        self.events.append(ev)
+        self._by_path[path].append(ev)
+
+    def on_file_end(self, path, sess, order, calls, compact_points):
+        for ev in self._by_path.pop(path, []):
+            ev["resident"] = resident_calls(ev["idx"], compact_points, len(order))
+
+    def result(self, selected, sessions, population):
+        evs = [e for e in self.events if e["sid"] in selected]
+        classes = {k: {"count": 0, "chars": 0, "char_x_calls": 0} for k in E_CLASSES}
+        lo = hi = 0.0
+        per_path = {}
+        for e in evs:
+            c = classes[e["class"]]
+            c["count"] += 1
+            c["chars"] += e["chars"]
+            c["char_x_calls"] += e["chars"] * e["resident"]
+            if e["class"] in ("identical_same_segment", "identical_after_compaction"):
+                blo, bhi = burden_interval(e["chars"], e["resident"])
+                hi += bhi
+                if e["class"] == "identical_same_segment":
+                    lo += blo
+                pp = per_path.setdefault(e["path"], {"path": e["path"], "count": 0, "chars": 0})
+                pp["count"] += 1
+                pp["chars"] += e["chars"]
+        top = sorted(per_path.values(), key=lambda x: (-x["chars"], x["path"]))[:20]
+        same, after = classes["identical_same_segment"], classes["identical_after_compaction"]
+        chars = same["chars"] + after["chars"]
+        return {
+            "numerator": {
+                "name": "identical-version rereads, residency-weighted",
+                "definition": ("Read results whose sha256 equals the previous read of the same path and "
+                               "offset/limit range in the same transcript file, with no Edit / Write / MultiEdit / "
+                               "NotebookEdit of that path between; lower bound = same compaction segment only, "
+                               "upper bound adds rereads after a compaction"),
+                "kind": "identical-version rereads", "chars": chars, "chars_lower": same["chars"],
+                "weighted_lo": lo, "weighted_hi": hi, "weighted_interval": [lo, hi],
+            },
+            "observability": 1.0,
+            "details": {"classes": classes, "top_paths": top, "reads_total": len(evs)},
+        }
+
+
+OBSERVERS = {"D": DObserver, "E": EObserver}
+PILLAR_HELP = {"D": "silent-success hooks: hook_additional_context rent per call",
+               "E": "large-source read virtualization: rereads of identical file versions"}
 
 
 # --------------------------------------------------------------------------- scan + population
@@ -406,6 +552,17 @@ def command_string(argv):
     return shlex.join([os.path.basename(sys.executable) or "python3"] + parts)
 
 
+def _pillar_details(p, det):
+    """Human-readable details lines for pillars other than D (the json block carries the full structure)."""
+    out = []
+    if p == "E":
+        for k, c in det.get("classes", {}).items():
+            out.append(f"- class {k}: {c['count']} reads, {c['chars']} chars, {c['char_x_calls']} char x calls")
+        for t in det.get("top_paths", []):
+            out.append(f"- reread path {t['path']}: {t['count']} rereads, {t['chars']} chars")
+    return out
+
+
 def render_measurement(res) -> str:
     lines = ["---"]
     for k in FRONT_KEYS:
@@ -423,22 +580,31 @@ def render_measurement(res) -> str:
         lines.append(f"| {f} | {m} | {z if z is not None else 'n/a'} | {d} |")
     lines.append(f"| weighted | {meas.get('weighted')} | {froz.get('weighted', 'n/a')} | |")
     n = res["numerator"]
-    lines += ["", "## Numerator", "",
-              f"- kind: {n.get('kind')}", f"- attachments: {n.get('attachments')}", f"- chars: {n.get('chars')}",
-              f"- tokens interval: {n.get('tokens_interval')}",
-              f"- weighted interval: {n.get('weighted_interval')}",
-              f"- chars per tool use: {n.get('chars_per_tool_use')}", f"- chars per call: {n.get('chars_per_call')}",
-              f"- share interval (judged): {res['share_interval']}",
-              f"- share interval (measured population): {res['share_measured_population']}",
-              f"- materiality: {res['materiality']} ({res['materiality_reason']})",
-              f"- observability: {res['observability']}"]
+    if p == "D":
+        num_lines = [f"- kind: {n.get('kind')}", f"- attachments: {n.get('attachments')}",
+                     f"- chars: {n.get('chars')}", f"- tokens interval: {n.get('tokens_interval')}",
+                     f"- weighted interval: {n.get('weighted_interval')}",
+                     f"- chars per tool use: {n.get('chars_per_tool_use')}",
+                     f"- chars per call: {n.get('chars_per_call')}"]
+    else:
+        num_lines = [f"- name: {n.get('name')}", f"- definition: {n.get('definition')}",
+                     f"- chars: {n.get('chars')}", f"- weighted interval: {n.get('weighted_interval')}"]
+    lines += ["", "## Numerator", ""] + num_lines + [
+        f"- share interval (judged): {res['share_interval']}",
+        f"- share interval (measured population): {res['share_measured_population']}",
+        f"- materiality: {res['materiality']} ({res['materiality_reason']})",
+        f"- observability: {res['observability']}"]
     det = res["details"]
     lines += ["", "## Details", ""]
-    for h in det.get("by_hook", []):
-        lines.append(f"- hook {h['hook']}: {h['count']} attachments, {h['chars']} chars, "
-                     f"weighted {h['weighted_lo']}..{h['weighted_hi']}")
-    lines.append(f"- other hook attachments (never in the numerator): {json.dumps(det.get('other_hook_attachments'))}")
-    lines.append(f"- hook errors: {json.dumps(det.get('hook_errors'))}")
+    if p == "D":
+        for h in det.get("by_hook", []):
+            lines.append(f"- hook {h['hook']}: {h['count']} attachments, {h['chars']} chars, "
+                         f"weighted {h['weighted_lo']}..{h['weighted_hi']}")
+        lines.append(f"- other hook attachments (never in the numerator): "
+                     f"{json.dumps(det.get('other_hook_attachments'))}")
+        lines.append(f"- hook errors: {json.dumps(det.get('hook_errors'))}")
+    else:
+        lines += _pillar_details(p, det)
     lines += ["", "## Caveats", ""] + [f"- {c}" for c in res["caveats"]]
     lines += ["", "<!-- kmep-json -->", json.dumps(res, indent=1, ensure_ascii=False), "<!-- /kmep-json -->", ""]
     return "\n".join(lines)

@@ -743,6 +743,71 @@ def g_kmeg_frozen_real():
     return mine == frozen and res["population_match"] == "exact", f"rc={rc} measured={mine} frozen_equal={mine == frozen}"
 
 
+# =========================================================================== pillar E / F fixtures
+def pil_args(pillar, project_dir, out_dir, label="FX-A", extra=()):
+    return [pillar, "--denominator", "OTHER", "--label", label, "--select", "all", "--until", "none",
+            "--root", str(project_dir), "--out-dir", str(out_dir)] + list(extra)
+
+
+def pil_other(pillar, root, extra=(), label="FX-A", project="-home-x-kme-fixture"):
+    out_dir = scratch("out")
+    rc, res, out, err = run_json(pil_args(pillar, pdir(root, project), out_dir, label, extra))
+    return rc, res, out, err, out_dir
+
+
+def call(fx, n, tool_uses=(), usage=(10, 0, 1000, 5)):
+    """One assistant call c<n>; timestamps are monotone in n."""
+    return fx.assistant(f"m{n}", f"r{n}", usage, ts(10 + 2 * n), tool_uses=list(tool_uses))
+
+
+def rd(fx, n, tid, path, text, **rng):
+    """Assistant call n carrying a Read of `path`, followed by its tool_result."""
+    inp = dict({"file_path": path}, **rng)
+    call(fx, n, [(tid, "Read", inp)])
+    fx.tool_result(tid, text, ts(10 + 2 * n + 1))
+    return fx
+
+
+def klass(res, name):
+    return res["details"]["classes"].get(name, {"count": 0, "chars": 0, "char_x_calls": 0})
+
+
+E_BODY = "def f():\n" + "x = 1\n" * 500          # a stable 3,000-char file body
+E_BODY = (E_BODY + "#" * 3000)[:3000]
+
+
+def g_e_tracer_e2e():
+    root = scratch("etracer")
+    fx = Fx(root, project="-home-x-kme-e")
+    fx.human("start", ts(0))
+    marker = "UNIQUE-CONTENT-MARKER-E"
+    body = (marker + "\n" + E_BODY)[:3000]
+    rd(fx, 0, "r1", "/w/big.py", body)
+    call(fx, 1)
+    rd(fx, 2, "r2", "/w/big.py", body)
+    call(fx, 3)
+    call(fx, 4)
+    frozen = write_frozen(root / "frozen.json", **{"KME-L": {
+        "sessions_active": 1, "sessions_dead": 0, "calls": 5, "input": 50, "cache_write": 0, "cache_read": 5000,
+        "output": 25}})
+    outd = root / "m"
+    rc, out, err = run_main(["e", "--denominator", "KME-L", "--frozen-file", frozen, "--root",
+                             str(root / "projects" / "-home-x-kme-e"), "--out-dir", str(outd)])
+    files = sorted(outd.glob("E-KME-L-*.md")) if outd.is_dir() else []
+    if rc != 0 or len(files) != 1:
+        return False, f"rc={rc} files={[f.name for f in files]} err={err[-200:]}"
+    text = files[0].read_text(encoding="utf-8")
+    front, res = parse_measurement(text)
+    c = klass(res, "identical_same_segment")
+    resident = c["char_x_calls"] // c["chars"] if c["chars"] else None
+    ok = (front["pillar"] == "E" and c["count"] == 1 and c["chars"] == 3000 and resident == 2
+          and marker not in text and front["population_match"] == "exact")
+    return ok, f"rc={rc} file={files[0].name} same_segment={c} resident={resident} marker_absent={marker not in text}"
+
+
+GATES_E_TRACER = [("V-KMEP-E-E2E", g_e_tracer_e2e)]
+
+
 GATES_EXPANSION = [
     ("V-KMEP-POPULATION-DRIFT", g_population_drift),
     ("V-KMEP-VERDICT-TABLE", g_verdict_table),
@@ -775,7 +840,7 @@ GATES_TRACER = [
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
     ("V-KMEP-CLI-USAGE", g_cli_usage),
 ]
-GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_REAL
+GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_REAL
 
 
 def summary_line() -> str:
@@ -797,7 +862,7 @@ def run_all() -> int:
 
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
-DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION]    # the -REAL gates are excluded for speed
+DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER]    # the -REAL gates are excluded for speed
 
 
 def _quiet(names) -> dict:
