@@ -4,11 +4,11 @@
 1. Modules: `modules/liveness/reachability.gate()` (imported, never edited). Every gate OFFENDER (unreachable,
    undeclared, not standing debt) gets two facts that decide whether it may be PROPOSED for retirement:
      age      days since the last commit touching its file (git log -1, this checkout's history)
-     tested   some tools/*.py text names it (dotted import or path)
-   Disposition (rule written before running):
+     tested   some test file names it (dotted import or path): tools/*.py, tests/**/*.py, modules/**/test_*.py
+   Disposition (rule written before running; the test aperture was widened after run 1 read tools/ only):
      ACTIVE            touched within 14 days -- someone is building it; never proposed
-     DORMANT_TESTED    older, a tools/ file names it -- declare (LIBRARY/PLANNED) or wire; Owner decides
-     RETIRE_CANDIDATE  older, nothing in tools/ names it -- proposed for deletion; Owner decides
+     DORMANT_TESTED    older, a test file names it -- declare (LIBRARY/PLANNED) or wire; Owner decides
+     RETIRE_CANDIDATE  older, no test file names it -- proposed for deletion; Owner decides
 2. Skills: every skill directory installed under ~/.claude/skills (SKILL.md present) and the number of times it was
    invoked in D-W7 transcripts (Skill tool_use `skill` input, or a `<command-name>/x` slash invocation). Zero is
    reported as "not invoked in D-W7", which is a fact about one week, not a verdict of uselessness.
@@ -48,8 +48,11 @@ def last_commit_ts(path: Path) -> float | None:
 
 def modules_part() -> dict:
     passed, offs, rows = rb.gate(REPO)
-    tools_text = "\n".join(p.read_text(encoding="utf-8", errors="replace")
-                           for p in (REPO / "tools").glob("*.py"))
+    # Where tests live in this repo: tools/*.py (V-gates), tests/**, and module-local test_*.py. An earlier
+    # version read tools/ only and proposed a package with five tests under tests/ as untested.
+    test_files = [*(REPO / "tools").glob("*.py"), *(REPO / "tests").rglob("*.py"),
+                  *(REPO / "modules").rglob("test_*.py")]
+    tools_text = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in test_files)
     out = []
     for r in offs:
         path = rb._unit_path(REPO, r["unit"])

@@ -57,5 +57,5 @@ turn-advancement, compile-out, baseline-ratchet. Waste less intelligence, never 
 
 ## Session Continuity
 
-**Stopped At:** Phases 3, 5 complete; K closed. Next: Phase 4 F, G, P, C(tools); then 6 (S, T); then 7
+**Stopped At:** Epoch 2 hit the context wall. Closed this epoch: K, L, H, J, F, G, P, S (all `--pillar` PASS). Open: B, C, M, R, T. Handoffs C.md and M.md are written+committed but their ledger rows are NOT. Phase 6 T: `measure/t_sweep.py` matcher still misses `from modules.pkg import mod` imports -- fix (package dotted path + basename word, per file), re-run, then propose only untested packages. B: 13 global rules still resident (56,861 B); remaining moves -> owner bundle, AUTHORIZATION_BOUND. R: write ukdl-candidates.md + a format gate. Then Phase 7 close (after-snapshot, CLOSE.md, reviews/deltas, --final).
 **Resume File:** None

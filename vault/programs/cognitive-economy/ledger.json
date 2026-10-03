@@ -767,8 +767,24 @@
    "savings": []
   },
   "S": {
-   "terminal": null,
-   "evidence": [],
+   "terminal": "MERGED_INTO_EXISTING_OWNER",
+   "reason": "Audit of trait->obligation derivation: neither frozen owner derives obligations (baseline_ledger.py is a version ratchet, family_baseline.py a cited-generation ratchet). The derivation already exists in modules/gsd_x/mission/obligation.py via tools/gsd_x_mission.py derive, and was demonstrated on a real project's README (ABSW2-Wii, temp roots): a faithful-port intent derives DO-4 ACCEPTED, the same port without a fidelity premise derives nothing, a cosmetic intent derives nothing. It is ORPHAN to the PP reachability scanner (its edge is an opt-in GSD ship:pre capability). No measured gap justifies a second derivation, so nothing is extended; the finding is handed to the baseline owners.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "tools/baseline_ledger.py"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/S.md",
+     "sha256": "a1fe7b43300ac02477db6b77b302e95bf5098b57b879ad0d2536f69511589016"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/s_demo/derive_stdout.txt",
+     "sha256": "e4d0becf48533fac194eabdd75bc006caccee7285571e274503254076253f207"
+    }
+   ],
    "savings": []
   },
   "T": {
