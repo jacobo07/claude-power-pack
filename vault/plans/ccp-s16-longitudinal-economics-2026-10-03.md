@@ -196,6 +196,23 @@ and the prepared `s2_replay.py`; both under the session scratchpad of cf503730. 
 judge F-a/F-b with the parser caveat; if the parser is the limit, measure obligations with a parser that
 reports NO_HEADING separately (do not change the live capsule parser without its own gate).
 
+Stage 2 verdict (2026-10-03, session 84a5bc3c): NOT BUILT -- F-a FAILS, F-b FAILS/underpowered, F-c not run.
+The cf503730 run left a 0-byte s2_summary and no rows (died before printing), so it was rerun as
+`s2_feasibility2.py` with a local three-state reader (NO_HEADING / heading-empty / N; live parser untouched).
+Sample: 60 most recent commit-bearing sessions in the 14-day window, 360 boundaries, wall-capped at 432 s,
+so this is a sample of the window, not the whole window.
+- F-a: COUNTED (heading found) 62/360 = 17.2 % < 30 % -> FAIL. Blind/unknown: 101 no goal written before T,
+  66 goal never committed before T, 131 NO_HEADING (26 of them carry prose "NEXT:"). Ceiling even for a perfect
+  prose reader = goal readable at T, 193/360 = 54 %.
+- F-b: bucket 0-1 n=3 from ONE session (p50 132) vs 4+ p25 34 -> FAIL as worded, but n=1 session is no evidence
+  either way. The stronger reading is 2-3 vs 4+: p50 52 (10 sessions) vs 48 (4 sessions), per-session medians
+  52 vs 79 -- no monotone separation where there is data.
+- F-c: moot (pre-registration: any falsifier holding stops Stage 2), so s2_replay.py was not run.
+Not done, on purpose: rescoring with a prose "NEXT:" reader after seeing these numbers would be a new
+instrument chosen post hoc. If wanted, it is a NEW pre-registration (instrument fixed first), and its F-a
+ceiling is 54 %, while F-b already shows no signal among the counted rows.
+Consequence: T-UNCONDITIONED-PRIOR-CANNOT-SAY-CONTINUE-001 stands; the negative control stays PARTIAL.
+
 ## Not now
 NEXT: the `decide` horizon/rehydration change (owner rollover.py); `gsd_epoch` 300k static threshold (c2/e9 lane);
 the torn-append fix. LATER: live shadow on new sessions, bounded live experiment. RESEARCH: context live-range
