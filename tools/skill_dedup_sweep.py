@@ -30,7 +30,7 @@ Hash scheme:
   body_sha    sha256 of the LF-normalized SKILL.md with the frontmatter stripped by `_FM_RE` (whole text when there
               is no frontmatter): what the listing loads, independent of how a copy names itself;
   dir_digest  `smd.dir_digest` over `<relpath>\\0<lf_sha256>` of every file: what a deletion would remove;
-  group       one body_sha shared by >= 2 DISTINCT names (any planes). Rank: distinct names descending, then
+  group       one non-empty body_sha shared by >= 2 DISTINCT names (any planes). Rank: distinct names descending, then
               body_bytes descending, then body_sha (Claude's discretion, D-01).
 
 The recording holds names, hashes and counts only: no file content and no description text.
@@ -75,7 +75,8 @@ DESCRIBED_RE = re.compile(r"described \((\d+)\)")
 METHOD = {
     "body": "sha256 of the LF-normalized SKILL.md after skill_index._FM_RE strips the frontmatter",
     "dir": "skill_mirror_drift.dir_digest over sorted <relpath>\\0<lf_sha256> lines of every file in the directory",
-    "group": "one body_sha shared by >= 2 distinct skill names; same-name cross-plane copies are drift_excluded",
+    "group": "one body_sha shared by >= 2 distinct skill names; same-name cross-plane copies are drift_excluded; an "
+             "empty body (body_bytes 0) forms no group",
 }
 RECORD_KEYS = ("body_bytes", "body_sha", "dir_digest", "files", "fm_name", "has_frontmatter", "skill_md_sha")
 
@@ -223,6 +224,12 @@ def subset_pairs(group: dict, member_files: dict) -> list:
     return [[a, b] for a in ids for b in ids if a != b and a in sets and b in sets and sets[a] <= sets[b]]
 
 
+def groupable(rec) -> bool:
+    """An empty body (frontmatter only, or frontmatter + blank lines, which `_FM_RE` also eats) hashes to sha256(b"")
+    whatever the skill is: sharing it says nothing about duplication, so it forms no group."""
+    return rec["body_bytes"] > 0
+
+
 def groups(planes: dict, member_files: dict | None = None):
     """(groups, drift_excluded) over `planes` = {label: plane with records}. Pure. Groups carry `subset` only when
     `member_files` is given (it is derived from the per-file lists, which V-FD-MEMBER-FILES owns)."""
@@ -236,7 +243,7 @@ def groups(planes: dict, member_files: dict | None = None):
         for label, name, _ in mem:
             planes_of.setdefault(name, set()).add(label)
         drift |= {n for n, ps in planes_of.items() if len(ps) >= 2}
-        if len(planes_of) < 2:
+        if len(planes_of) < 2 or not groupable(mem[0][2]):
             continue
         mem = sorted(mem, key=lambda t: (t[0], t[1]))
         fm = {}

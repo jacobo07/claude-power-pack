@@ -367,9 +367,24 @@ def pole_discovery(tmp):
     return ok, f"skills={p['names']} no_skill_md={p['no_skill_md']} non_dir={p['non_dir']} entries={p['entries']}"
 
 
+def pole_empty_body(tmp):
+    # Frontmatter-only skills (and frontmatter + blank lines, which _FM_RE's closing `---\s*\n` also eats) all hash
+    # to sha256(b""): unrelated skills must not become one dedup group on that (05-REVIEW WR-04).
+    r = Path(tmp) / "empty"
+    _skill(r, "pdf-tools", "---\nname: pdf-tools\ndescription: Extract tables from PDF files\n---\n")
+    _skill(r, "slack-notify", "---\nname: slack-notify\ndescription: Post a message to a Slack channel\n---\n")
+    _skill(r, "x", "---\nname: x\ndescription: x\n---\n\n\n")
+    p = _plane(r)
+    sizes = sorted({rec["body_bytes"] for rec in p["records"].values()})
+    g, _ = sweep.groups({"live": p})
+    ok = sizes == [0] and not g
+    return ok, f"body_bytes={sizes} groups={len(g)}"
+
+
 POLES = (("SAME-BODY", pole_same_body), ("CRLF", pole_crlf), ("ONE-BYTE", pole_one_byte),
          ("NO-FRONTMATTER", pole_no_frontmatter), ("SAME-NAME-CROSS-PLANE", pole_same_name_cross_plane),
-         ("CROSS-PLANE-RENAMED", pole_cross_plane_renamed), ("DISCOVERY", pole_discovery))
+         ("CROSS-PLANE-RENAMED", pole_cross_plane_renamed), ("DISCOVERY", pole_discovery),
+         ("EMPTY-BODY", pole_empty_body))
 
 
 def _whole_file_hasher(skill_md_bytes):
@@ -402,7 +417,19 @@ def c_hash_poles():
         all_ok &= killed
         lines.append(f"{'ok  ' if killed else 'FAIL'} V-FD-MUTANT-WHOLE-FILE-HASHER "
                      f"{'killed by SAME-BODY' if killed else 'SURVIVED SAME-BODY'} ({ev})")
-    head = f"{len(POLES)} poles + 1 mutant"
+        real_g = sweep.groupable
+        sub = Path(tmp) / "MUTANT-EMPTY"
+        sub.mkdir()
+        try:
+            sweep.groupable = lambda rec: True
+            mut_ok, ev = pole_empty_body(sub)
+        finally:
+            sweep.groupable = real_g
+        killed = not mut_ok
+        all_ok &= killed
+        lines.append(f"{'ok  ' if killed else 'FAIL'} V-FD-MUTANT-EMPTY-BODY-GROUPED "
+                     f"{'killed by EMPTY-BODY' if killed else 'SURVIVED EMPTY-BODY'} ({ev})")
+    head = f"{len(POLES)} poles + 2 mutants"
     if not all_ok:
         fail(head + "\n" + "\n".join(lines))
     return head + "\n" + "\n".join(lines)
