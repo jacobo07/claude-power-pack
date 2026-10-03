@@ -60,3 +60,14 @@ measured by `token_ground_truth.window_usage` against the 2026-10-02 window.
 ## Rollback
 
 `CPP_ROLLOVER_ECONOMIC=0`, or revert the commit. Nothing else reads the decision files.
+
+## Inbound evidence (2026-10-03, from PLAN-KSR-EPOCH-REHYDRATION s12 C; informs, changes nothing above)
+
+KSR corpus, 73 main sessions, D-decision 616.0M weighted: tool output is ~10% of weighted spend in
+carriage and <= 6.34% (upper bound; excl. mega-session 489739e3 <= 5.83%) is carried after its last
+observable use, spread across every class (none > 1.3%). Identical repeats ~0%; admission-side
+replacement ~0.6%. The harness cannot evict single tool results, so this residency ends only at
+compaction or a fresh epoch -- i.e. it is part of the rent this trigger crosses, not an additive lever.
+A semantic boundary (edit cluster / commit) is the natural eviction point, which matches Behaviour 2.
+Source + method + controls: `vault/audits/ksr_archaeology/2026-10-03-context-admission.md` (result
+sha256 117d042c..., reproduced).
