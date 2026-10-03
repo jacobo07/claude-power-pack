@@ -24,8 +24,11 @@ free. A generation holding two entries with one id is DUPLICATE_ID: the dicts
 below would silently keep one and hide a withdrawal of the other.
 
 Each child anchors its parent's exact bytes (`parent_sha256`), so an older
-generation edited after the fact reads TAMPERED at the child. The newest
-generation has no child to anchor it; its integrity is the repo's history.
+generation edited after the fact reads TAMPERED at the child. A child with NO
+`parent_sha256` is UNANCHORED and the chain is not ok: hollowing both
+generations and dropping the anchor (H3b) left nothing to diff and nothing
+that pinned the parent. The newest generation has no child to anchor it; its
+integrity is the repo's history.
 """
 from __future__ import annotations
 
@@ -109,7 +112,7 @@ class ChainReport:
 
     @property
     def ok(self) -> bool:
-        return not self.regressions and not self.tampered
+        return not self.regressions and not self.tampered and not self.unanchored
 
     def as_dict(self) -> dict:
         return {"family": self.family, "generations": self.generations,

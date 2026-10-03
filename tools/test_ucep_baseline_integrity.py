@@ -34,7 +34,9 @@ Run: python tools/test_ucep_baseline_integrity.py     (exit 0 = all gates pass)
 """
 from __future__ import annotations
 
+import contextlib
 import copy
+import io
 import json
 import os
 import shutil
@@ -252,6 +254,39 @@ def main() -> int:
                "the same hollowing with the anchor intact reads TAMPERED at B1",
                _dict(rep))
 
+        # --- the CLI reports an unanchored child and exits 1 ----------------
+        import family_baseline as fb
+        saved_dir = bl.BASELINES_DIR
+        buf = io.StringIO()
+        buf_ctl = io.StringIO()
+        try:
+            root = b0_copy("cli-unanchored")
+            child(root)
+            p1 = os.path.join(root, FAMILY, "B1.json")
+            with open(p1, "r", encoding="utf-8") as fh:
+                doc = json.load(fh)
+            doc["parent_sha256"] = None
+            with open(p1, "w", encoding="utf-8", newline="\n") as fh:
+                json.dump(doc, fh, indent=2, ensure_ascii=False)
+                fh.write("\n")
+            bl.BASELINES_DIR = root
+            with contextlib.redirect_stdout(buf):
+                rc_unanchored = fb.main(["verify", FAMILY])
+            root = b0_copy("cli-anchored")
+            child(root)
+            bl.BASELINES_DIR = root
+            with contextlib.redirect_stdout(buf_ctl):
+                rc_anchored = fb.main(["verify", FAMILY])
+        finally:
+            bl.BASELINES_DIR = saved_dir
+        _check("V-UCEP-CLI-UNANCHORED",
+               rc_unanchored == 1 and "UNANCHORED B1" in buf.getvalue()
+               and rc_anchored == 0 and "UNANCHORED" not in buf_ctl.getvalue(),
+               "verify exits 1 and prints UNANCHORED B1 for a child with no anchor; "
+               "the anchored chain exits 0",
+               "unanchored rc=%s out=%r; anchored rc=%s out=%r"
+               % (rc_unanchored, buf.getvalue(), rc_anchored, buf_ctl.getvalue()))
+
         # --- control: ok is not "refuse everything" -------------------------
         root = b0_copy("clean")
         child(root)
@@ -264,7 +299,7 @@ def main() -> int:
 
         print()
         print("UCEP_BASELINE_INTEGRITY_PASS=%d/%d  threshold=%d/%d"
-              % (_PASS, _PASS + _FAIL, 12, 12))
+              % (_PASS, _PASS + _FAIL, 13, 13))
         return 0 if _FAIL == 0 else 1
     finally:
         for k, v in saved_env.items():

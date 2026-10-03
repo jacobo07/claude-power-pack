@@ -115,10 +115,12 @@ def verify(family: str) -> int:
     from modules.tower import ratchet as rt
     rep = rt.verify_chain(family)
     for r in rep.regressions:
-        print("  REGRESSION B%d %s %s (no reason+authority on record)"
+        print("  REGRESSION B%d %s %s (no allowlisted reason+authority on record)"
               % (r["generation"], r["id"], r["kind"]))
     for n in rep.tampered:
         print("  TAMPERED B%d: its parent's bytes changed after it was written" % n)
+    for n in rep.unanchored:
+        print("  UNANCHORED B%d: no parent_sha256, so its parent's bytes are not pinned" % n)
     print("%s chain: %s (generations %s)" % (family, "OK" if rep.ok else "REGRESSED",
                                               rep.generations))
     return 0 if rep.ok else 1
