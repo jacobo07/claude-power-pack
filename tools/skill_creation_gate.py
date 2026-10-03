@@ -33,7 +33,8 @@ Population, DISCOVERED (never listed): every distinct `<name>` among the paths `
 judged commit. A directory with no tracked SKILL.md is a member and fails DECLARED. Floor 2.
 
 Clauses (all 7 must be PASS for a PASS verdict; outcomes PASS, FAIL or UNMEASURED):
-  per skill  DECLARED         a tracked SKILL.md whose frontmatter holds exactly one opportunity_detector line
+  per skill  DECLARED         a tracked SKILL.md whose frontmatter holds exactly one opportunity_detector line and
+                              at most one opportunity_detector_reason line
              FORM             every opportunity_detector and opportunity_detector_reason line is a metadata child;
                               every detector value is `none` or a plain canonical relative path (PATH_RE, no
                               `//`, no `..` segment, equal to its posixpath.normpath); every reason matches REASON_RE and is not a YAML non-string scalar
@@ -235,6 +236,9 @@ def c_declared(ctx, member):
     if not decl["frontmatter"]:
         return _out(FAIL, "no frontmatter")
     n = decl["count"]
+    if len(decl["reason"]) > 1:
+        # A duplicated YAML key (review IN-02): strict parsers refuse the frontmatter, PyYAML keeps the last value.
+        return _out(FAIL, f"{len(decl['reason'])} {REASON_KEY} lines")
     if n == 1:
         return _out(PASS)
     if n == 0:

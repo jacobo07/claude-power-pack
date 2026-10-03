@@ -294,6 +294,13 @@ def drill_table(seed, originals):
             return f"precondition: {line!r} occurs {t.count(line)} times"
         _replace_md(fx, repo, cw, t.replace(line, line + line, 1), "CWST duplicate detector line")
 
+    def m_duplicate_reason(fx, repo):
+        line = f"  {scg.REASON_KEY}: {s_reason}\n"
+        t = read_md(repo, s)
+        if t.count(line) != 1:
+            return f"precondition: {line!r} occurs {t.count(line)} times"
+        _replace_md(fx, repo, s, t.replace(line, line + line, 1), "S duplicate reason line")
+
     def m_dotslash(fx, repo):
         t = read_md(repo, cw)
         _replace_md(fx, repo, cw, t.replace(f"{scg.DETECTOR_KEY}: {p}\n", f"{scg.DETECTOR_KEY}: ./{p}\n", 1),
@@ -401,6 +408,7 @@ def drill_table(seed, originals):
         ("BASELINE", m_baseline, {}, False),
         ("UNDECLARED-S", m_undeclared_s, four, True),
         ("DUPLICATE-CWST", m_duplicate, {f"{cw}:DECLARED": F}, True),
+        ("DUPLICATE-REASON-S", m_duplicate_reason, {f"{s}:DECLARED": F}, True),
         ("DOTSLASH-CWST", m_dotslash, {f"{cw}:FORM": F}, True),
         ("TOPLEVEL-S", m_toplevel, {f"{s}:FORM": F}, True),
         ("DOT-SEGMENT-CWST", path_edit(p.replace("/", "/./", 1), "CWST a/./b path"), {f"{cw}:FORM": F}, True),
