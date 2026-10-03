@@ -85,3 +85,12 @@ Full inline plan: chat message of this date (approved).
   delivers the behaviour. Move 4 verdict: KEEP PAGED (no revert: residency bought 0/2 at ~2k/session)
   + COMMIT-TIME EVENT CARD carries the hard boundary (C4, after audit G'1-G'5). n=2 per arm, one task.
   Raw: results-delivery.jsonl, results-delivery-regrade.jsonl.
+- Arm C (P + commit card in deny mode via --settings hooks, live dispatcher untouched): 2/2
+  FAIL-SWALLOW. The card FIRED both times but judged `unknown` (pricing.py "shell-written") and failed
+  open: its shell-write check read the JUDGED commit itself (message ending `<noreply@anthropic.com>`
+  + names pricing.py) and `test_pricing.py` as writes. Fixed: a file is shell-written only when a write
+  operator's TARGET has that exact basename (V-DC 16/16, drills 9/9 incl. the old rule as a mutant).
+  NEXT: re-run arm C x2 on the fixed card; then C4b (Owner registers the card in the live dispatcher).
+- Disclosure: this pane's own commit `b826a504` (UKDL traps) swallowed ~1,880 machine-appended CEPS
+  lines at the end of ukdl-universal.md -- the same failure, in production, by the executor of this
+  plan. Content intact, title wrong, not rewritten (live peers).

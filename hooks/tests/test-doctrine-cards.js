@@ -122,6 +122,19 @@ const writeOwnAndForeign = (s) => { writeOwn(s); fs.appendFileSync(path.join(s.r
   const r = run(s, t, 'git commit -m fix');
   check('V-DC-SHELL-WRITE-UNKNOWN', r.last && r.last.decision === 'unknown' && r.last.unknown_files.includes('pricing.py'), `decision=${r.last && r.last.decision}`); }
 
+// 7b. Arm-C regression (2026-10-03): the judged commit is already in the transcript; its message ends with
+// `<noreply@anthropic.com>` and it names pricing.py, and the test run uses `2>&1` on test_pricing.py.
+// None of that writes pricing.py, so the foreign hunk must still be an opportunity, not unknown.
+{ const s = scratch('armc'); const t = transcript(s.root); writeOwnAndForeign(s); g(s.repo, 'add', 'pricing.py');
+  const cmd = "$g='git'; & $g add pricing.py; & $g commit -m @'\nFix discount\n\nCo-Authored-By: X <noreply@anthropic.com>\n'@";
+  const extra = [
+    { type: 'assistant', message: { content: [{ type: 'tool_use', id: 't8', name: 'PowerShell', input: { command: 'python test_pricing.py 2>&1; "exit=$LASTEXITCODE"' } }] } },
+    { type: 'assistant', message: { content: [{ type: 'tool_use', id: 't9', name: 'PowerShell', input: { command: cmd.replace('@\'\n', '"').replace("\n'@", '"') } }] } },
+  ];
+  fs.appendFileSync(t.tp, extra.map((r) => JSON.stringify(r)).join('\n') + '\n');
+  const r = run(s, t, 'git commit -m "Fix discount <noreply@anthropic.com>"', 'deny');
+  check('V-DC-JUDGED-COMMIT-NOT-A-WRITE', r.denied && r.last.decision === 'deny-card', `decision=${r.last && r.last.decision} unknown=${r.last && JSON.stringify(r.last.unknown_files)}`); }
+
 // 8. Commit regex: both poles.
 { const { COMMIT_RE } = require(CARD);
   const yes = ['git commit -m x', '& $g -C $r commit -F f', "& 'C:\\Program Files\\Git\\cmd\\git.exe' commit -m x", 'git -C "a b" commit'];

@@ -18,7 +18,10 @@ MUTANTS = [  # (gate that must FAIL, anchor, replacement) -- one invariant each
     ("V-DC-NONCOMMIT-NO-IO", "if (!COMMIT_RE.test(elideLiteralBodies(command)))",
      "ledger({ decision: 'seen' }); if (!COMMIT_RE.test(elideLiteralBodies(command)))"),     # G'11
     ("V-DC-DENY-ONCE", "if (fs.existsSync(flag))", "if (false)"),                            # once per foreign set
-    ("V-DC-SHELL-WRITE-UNKNOWN", "own.shell.some((c) => c.toLowerCase().includes(base))", "false"),
+    ("V-DC-SHELL-WRITE-UNKNOWN", "own.shell.has(base)", "false"),
+    # arm-C regression: reinstate the OLD rule ("any `>` + the command mentions the file") -- must go red
+    ("V-DC-JUDGED-COMMIT-NOT-A-WRITE", "for (const t of shellTargets(String(i.command || ''))) shell.add(t);",
+     "{ const c = String(i.command || ''); if (/>/.test(c) && /pricing\\.py/i.test(c)) shell.add('pricing.py'); }"),
     ("V-DC-SUBAGENT-OWN", "if (f.endsWith('.jsonl')) files.push(path.join(sub, f));", "void f;"),  # G'9
     ("V-DC-LEDGER-NEVER-DENIES", "if (MODE !== 'deny')", "if (MODE === 'never')"),           # G'3
 ]

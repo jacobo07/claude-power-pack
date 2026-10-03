@@ -44,7 +44,26 @@ const GIT_FALLBACK = 'C:\\Program Files\\Git\\cmd\\git.exe';
 const GITCMD = String.raw`(?:\bgit(?:\.exe)?['"]?|\$\w+)(?:\s+-C\s+(?:'[^']*'|"[^"]*"|\S+))?\s+`;
 const COMMIT_RE = new RegExp(GITCMD + String.raw`commit(?![\w-])`);
 const ADD_RE = new RegExp(GITCMD + String.raw`add(?![\w-])([^;\n|&]*)`);
-const SHELL_WRITE = /(?:>>?\s*\S|\bSet-Content\b|\bAdd-Content\b|\bOut-File\b|WriteAllText|AppendAllText|\bsed\s+-i|write_text\(|open\([^)]*['"][wa]['"])/i;
+// A shell command WRITES a file only when a write operator's TARGET is that file. Measured 2026-10-03
+// (arm C, both runs): "any `>` + the command mentions the basename" flagged the judged commit itself
+// (its message ended `<noreply@anthropic.com>`, and `test_pricing.py` contains `pricing.py`), so the
+// card called its own subject unknowable, failed open, and the swallow went through.
+const WRITE_TARGETS = [
+  /(?:^|[^\d&*\w-])>>?[ \t]*(?!&)['"]?([^\s'";|&<>()]+)/g,                       // > f, >> f (not 2>&1)
+  /\b(?:Set-Content|Add-Content|Out-File)\b(?:\s+-(?:Literal)?(?:File)?Path)?\s+['"]?([^\s'";|]+)/gi,
+  /\b(?:WriteAllText|AppendAllText|WriteAllLines|AppendAllLines)\(\s*['"]?([^'",)]+)/g,
+  /\bsed\s+-i\S*\s+(?:'[^']*'|"[^"]*"|\S+)\s+['"]?([^\s'";|]+)/g,
+  /\bopen\(\s*r?['"]([^'"]+)['"]\s*,\s*['"][wa]/g,
+  /\bPath\(\s*r?['"]([^'"]+)['"]\s*\)\.write_(?:text|bytes)\(/g,
+];
+function shellTargets(command) {
+  const out = new Set(); const cmd = elideLiteralBodies(command);
+  for (const re of WRITE_TARGETS) for (const m of cmd.matchAll(re)) {
+    const b = path.basename(m[1].replace(/\\/g, '/')).toLowerCase();
+    if (b && b !== '$null' && b !== 'null') out.add(b);
+  }
+  return out;
+}
 const VALUE_FLAGS = new Set(['-m', '--message', '-F', '--file', '-c', '-C', '--reuse-message', '--reedit-message',
   '--author', '--date', '--cleanup', '--fixup', '--squash', '-t', '--template', '--trailer']);
 
@@ -167,7 +186,7 @@ function parseDiff(out) {
 
 // Lines this session wrote, from its own transcript and its subagents' transcripts.
 function ownership(transcriptPath) {
-  const added = new Set(); const removed = new Set(); const whole = new Set(); const shell = [];
+  const added = new Set(); const removed = new Set(); const whole = new Set(); const shell = new Set();
   const files = [];
   if (transcriptPath && fs.existsSync(transcriptPath)) {
     files.push(transcriptPath);
@@ -189,7 +208,7 @@ function ownership(transcriptPath) {
         else if (b.name === 'Write') { addLines(added, i.content); if (i.file_path) whole.add(path.basename(i.file_path).toLowerCase()); }
         else if (b.name === 'MultiEdit') for (const e of (i.edits || [])) { addLines(added, e.new_string); addLines(removed, e.old_string); }
         else if (b.name === 'NotebookEdit') addLines(added, i.new_source);
-        else if ((b.name === 'Bash' || b.name === 'PowerShell') && SHELL_WRITE.test(String(i.command || ''))) shell.push(String(i.command));
+        else if (b.name === 'Bash' || b.name === 'PowerShell') for (const t of shellTargets(String(i.command || ''))) shell.add(t);
       }
       const sp = (d.toolUseResult || {}).structuredPatch;
       if (Array.isArray(sp)) for (const h of sp) for (const l of (h.lines || [])) {
@@ -206,7 +225,7 @@ function judge(diff, own) {
   const foreign = []; const unknown = [];
   for (const f of diff) {
     const base = path.basename(f.file).toLowerCase();
-    if (own.shell.some((c) => c.toLowerCase().includes(base))) { unknown.push(f.file); continue; }
+    if (own.shell.has(base)) { unknown.push(f.file); continue; }
     const hunks = [];
     for (const h of f.hunks) {
       const fa = h.added.filter((l) => l.trim().length > 2 && !own.added.has(l.trim()));

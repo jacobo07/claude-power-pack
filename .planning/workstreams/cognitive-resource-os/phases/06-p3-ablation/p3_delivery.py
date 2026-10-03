@@ -42,7 +42,8 @@ POINTER = (pr.RULES / f"{SKILL}.md")
 BACKUP = Path.home() / ".claude" / "backups" / "rules-20261003-090729" / f"{SKILL}.md"
 BACKUP_SHA = "0c86aa17"
 RESULTS = HERE / "results-delivery.jsonl"
-ARMS = ("N0", "N1", "R", "P")
+ARMS = ("N0", "N1", "R", "P", "C")   # C = P + hooks/doctrine_cards.js in deny mode (event delivery)
+CARD = pr.REPO / "hooks" / "doctrine_cards.js"
 
 SRC_HEAD0 = '''"""Order pricing."""
 
@@ -194,9 +195,13 @@ def delivery(sid: str) -> dict:
 def arm_cmd(arm: str, wt: Path) -> list[str]:
     cmd = [pr.CLAUDE, "-p", PROMPT, "--model", pr.MODEL, "--output-format", "json", "--max-turns", "40",
            "--permission-mode", "acceptEdits", "--allowedTools",
-           "Read,Edit,Write,Grep,Glob,Bash,PowerShell" + (",Skill" if arm == "P" else "")]
-    if arm != "P":
+           "Read,Edit,Write,Grep,Glob,Bash,PowerShell" + (",Skill" if arm in ("P", "C") else "")]
+    if arm not in ("P", "C"):
         cmd += ["--disallowedTools", "Skill"]
+    if arm == "C":   # P + the commit card in deny mode, attached for THIS child only (live dispatcher untouched)
+        card = f'node "{str(CARD).replace(chr(92), "/")}"'
+        cmd += ["--settings", json.dumps({"hooks": {"PreToolUse": [
+            {"matcher": "Bash|PowerShell", "hooks": [{"type": "command", "command": card, "timeout": 10}]}]}})]
     if arm in ("N0", "R"):
         cmd += ["--settings", json.dumps({"claudeMdExcludes": [str(POINTER).replace("\\", "/")]})]
     if arm == "R":
@@ -223,7 +228,7 @@ def one_run(arm: str, rep: int) -> dict:
     # G'6: the commit card (C4) must not fire into, or write rows from, benchmark sessions; set its
     # switch and state dir now so arms run after it lands stay comparable with arms run before.
     env.update(CLAUDE_DESTRUCTIVE_CARD="off", DESTRUCTIVE_CARD_STATE_DIR=str(card_dir),
-               CLAUDE_DOCTRINE_CARDS="off", DOCTRINE_CARDS_STATE_DIR=str(card_dir))
+               CLAUDE_DOCTRINE_CARDS="deny" if arm == "C" else "off", DOCTRINE_CARDS_STATE_DIR=str(card_dir))
     t0 = time.time()
     try:
         r = subprocess.run(arm_cmd(arm, wt), cwd=wt, capture_output=True, text=True, encoding="utf-8",
@@ -239,6 +244,9 @@ def one_run(arm: str, rep: int) -> dict:
     rec["session_id"] = sid
     rec.update(grade(wt, head0))
     rec["delivery"] = delivery(sid)
+    led = card_dir / "ledger.jsonl"   # commit-card rows (arm C); a deny-card row is delivery, a ledger row is not
+    rec["card_rows"] = ([json.loads(x).get("decision") for x in led.read_text(encoding="utf-8").splitlines() if x.strip()]
+                        if led.exists() else [])
     rec["metrics"] = pr.metrics(sid)
     reasons = []
     if rec["metrics"].get("state") != "MEASURED":
