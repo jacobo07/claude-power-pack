@@ -329,6 +329,13 @@ def m_skill_mismatch(fx, repo):
 
 
 def m_source_path(fx, repo):
+    """Only the source string is wrong (lower-case skill.md); digest and commit are CW's real lineage, and the
+    content clauses judge the canonical path, so SOURCE-PATH alone fails."""
+    fx.set_trailer(repo, CW, source=f"skills/{fx.skill(CW)}/skill.md")
+    return _rerecorded(fx, repo, "CW trailer source path not canonical")
+
+
+def m_source_path_foreign(fx, repo):
     ds = fx.trailer(repo, DS)
     fx.set_trailer(repo, CW, skill=fx.skill(CW), source=fx.source(DS), sha256=ds["sha256"], commit=fx.info["A"])
     return _rerecorded(fx, repo, "CW trailer source path of DS")
@@ -591,6 +598,8 @@ def _drill_table():
         ("TRAILER-UNPARSEABLE", m_trailer_unparseable, ALL7(DS), "FAIL"),
         ("SKILL-MISMATCH", m_skill_mismatch, {f"{CW}:SKILL"}, "FAIL"),
         ("SOURCE-PATH", m_source_path, {f"{CW}:SOURCE-PATH"}, "FAIL"),
+        ("SOURCE-PATH-FOREIGN", m_source_path_foreign, {f"{CW}:SOURCE-PATH", f"{CW}:SOURCE-CURRENT",
+                                                        f"{CW}:COMMIT-DIGEST"}, "FAIL"),
         ("GHOST-SKILL", m_ghost_skill, {f"{CW}:SOURCE-CURRENT", f"{CW}:COMMIT-TOUCHES", f"{CW}:COMMIT-DIGEST",
                                         "H-RECORD-CURRENT"}, "FAIL"),
         ("COMMIT-UNKNOWN", m_commit_unknown, {f"{CW}:COMMIT-ANCESTOR", f"{CW}:COMMIT-TOUCHES",
@@ -950,7 +959,8 @@ CLAUSE_TEXT = {
     "SKILL": "the set of trailer skills EQUALS the set of skills the card text names in CARD_TOKEN form (`<name>` "
              "skill): a named skill without a trailer, or a trailer for an unnamed skill, is FAIL. The five clauses "
              "below are judged per trailer and folded (any FAIL is FAIL, else any UNMEASURED is UNMEASURED).",
-    "SOURCE-PATH": "the trailer's source is `skills/<trailer skill>/SKILL.md`.",
+    "SOURCE-PATH": "the trailer's source is `skills/<trailer skill>/SKILL.md`. SOURCE-CURRENT and the three COMMIT-* "
+                   "clauses judge that canonical path, never the trailer's source string.",
     "SOURCE-CURRENT": "the committed source at the judged commit has the trailer's LF sha256; an absent source is "
                       "UNMEASURED. This is the clause a re-record of H alone cannot clear.",
     "COMMIT-ANCESTOR": "the trailer commit resolves and is an ancestor of the judged commit (unresolvable: "
@@ -985,7 +995,9 @@ DRILL_TEXT = {
     "TRAILER-DUPLICATE": "DS trailer line duplicated",
     "TRAILER-UNPARSEABLE": "DS trailer sha256 cut to 63 hex",
     "SKILL-MISMATCH": "CW trailer replaced by the trailer for DS's skill",
-    "SOURCE-PATH": "CW trailer keeps its skill but points at DS's source, digest and commit A",
+    "SOURCE-PATH": "CW trailer source = skills/<CW skill>/skill.md (not canonical); digest and commit are CW's own",
+    "SOURCE-PATH-FOREIGN": "CW trailer keeps its skill but points at DS's source, digest and commit A (the content "
+                           "clauses judge CW's canonical source, so they cannot pass on DS's)",
     "GHOST-SKILL": "CW's CARD_TOKEN and trailer renamed to ghost-skill (sha256 and commit kept); re-record refused",
     "COMMIT-UNKNOWN": "CW trailer commit = deadbeef x 5 (absent from a complete history: COMMIT-ANCESTOR is a "
                       "measured FAIL)",

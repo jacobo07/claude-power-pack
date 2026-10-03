@@ -38,6 +38,8 @@ Clauses (all 10 must be PASS for a PASS verdict; outcomes are PASS, FAIL or UNME
             SOURCE-PATH      the trailer's source is skills/<trailer skill>/SKILL.md
             SOURCE-CURRENT   the committed source at the judged commit has the trailer's digest (an absent source,
                              i.e. a skill that does not exist, is UNMEASURED)
+  SOURCE-CURRENT and the three COMMIT-* clauses judge the CANONICAL source skills/<trailer skill>/SKILL.md, never the
+  trailer's source string, so a wrong path cannot make them report a foreign file as current (06 review IN-02).
             COMMIT-ANCESTOR  the trailer commit resolves and is an ancestor of the judged commit
             COMMIT-TOUCHES   the trailer commit changed the source path: last_change(commit, source) == commit, the
                              same definition trailer_for prints (a merge that resolved the source counts)
@@ -339,17 +341,18 @@ def c_source_path(ctx, member=None, trailer=None):
 
 @_per_trailer
 def c_source_current(ctx, member=None, trailer=None):
-    pair = {"card": member["card"], "skill": trailer["skill"], "source": trailer["source"]}
+    src = _source_rel(trailer["skill"])
+    pair = {"card": member["card"], "skill": trailer["skill"], "source": src}
     state = smd.card_source_state(ctx["repo"], ctx["sha"], [pair])
     if state.get("status") != "MEASURED":
-        return _out(UNMEASURED, f"{trailer['source']}: {state.get('reason', 'unmeasured')}", git=True)
+        return _out(UNMEASURED, f"{src}: {state.get('reason', 'unmeasured')}", git=True)
     row = state["pairs"][0]
     if row.get("status") in ("UNTRACKED", "INCONCLUSIVE"):
-        return _out(UNMEASURED, f"{trailer['source']} {row['status']}: {row.get('reason')}",
+        return _out(UNMEASURED, f"{src} {row['status']}: {row.get('reason')}",
                     git=row.get("status") == "INCONCLUSIVE")
     if row["source_sha256"] == trailer["sha256"]:
         return _out(PASS, "source digest at the judged commit equals the trailer")
-    return _out(FAIL, f"{trailer['source']} at {ctx['sha'][:8]} is {row['source_sha256'][:12]}, "
+    return _out(FAIL, f"{src} at {ctx['sha'][:8]} is {row['source_sha256'][:12]}, "
                       f"trailer says {trailer['sha256'][:12]}: re-derive the card")
 
 
@@ -393,12 +396,13 @@ def c_commit_touches(ctx, member=None, trailer=None):
     commit, why, kind = _trailer_commit(ctx, trailer)
     if commit is None:
         return _commit_unreadable(why, kind)
-    last, why = last_change(ctx["repo"], commit, trailer["source"])
+    src = _source_rel(trailer["skill"])
+    last, why = last_change(ctx["repo"], commit, src)
     if last is None:
         return _out(UNMEASURED, why, git=True)
     if last == commit:
-        return _out(PASS, f"{commit[:8]} changed {trailer['source']}")
-    return _out(FAIL, f"{commit[:8]} did not change {trailer['source']} (the last commit up to it that did: "
+        return _out(PASS, f"{commit[:8]} changed {src}")
+    return _out(FAIL, f"{commit[:8]} did not change {src} (the last commit up to it that did: "
                       f"{last[:8] if last else 'none'})")
 
 
@@ -407,7 +411,7 @@ def c_commit_digest(ctx, member=None, trailer=None):
     commit, why, kind = _trailer_commit(ctx, trailer)
     if commit is None:
         return _commit_unreadable(why, kind)
-    src = trailer["source"]
+    src = _source_rel(trailer["skill"])
     data, why = smd.vgm.batch_blobs(str(ctx["repo"]), commit, [src]).get(src, (None, "not returned"))
     if data is None and why == "git-batch-empty":
         data = b""
