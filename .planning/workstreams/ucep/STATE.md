@@ -1,18 +1,18 @@
 ---
 gsd_state_version: "1.0"
 current_phase: 2
-current_plan: 2
+current_plan: 3
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-10-03T17:35:09.035Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-10-03T17:56:49.471Z"
 last_activity: 2026-10-03
 last_activity_desc: Phase 2 execution started
-state_head: 18320d2f3346831fd3502c60da2467594d2cb478
+state_head: addd825bf2d1e31c6842a74e239d80a840a46509
 progress:
   total_phases: 9
   completed_phases: 1
   total_plans: 10
-  completed_plans: 6
+  completed_plans: 7
   percent: 11
 workstream: ucep
 created: 2026-10-02
@@ -23,7 +23,7 @@ current_phase_name: Capability subject and archetypes
 
 ## Current Position
 
-Current Plan: 2
+Current Plan: 3
 Total Plans in Phase: 5
 
 **Status:** Ready to execute
@@ -32,8 +32,8 @@ Total Plans in Phase: 5
 
 ## Session Continuity
 
-**Last session:** 2026-10-03T17:34:17.520Z
-**Stopped at:** Completed 02-01-PLAN.md
+**Last session:** 2026-10-03T17:56:49.318Z
+**Stopped at:** Completed 02-02-PLAN.md
 **Resume file:** None
 
 Read, in order: `vault/plans/ucep-naked-verb-2026-10-02.md` (plan of record + Owner answers),
@@ -71,8 +71,11 @@ Base commit at creation: `a9c603f` on `feature/knowledge-acquisition`.
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 02 P01 | 13 min | 2 tasks | 6 files |
+| Phase 02 P02 | 14 min | 3 tasks | 2 files |
 
 ## Decisions
 
 - [Phase 02]: 02-01: archetype ids are single path segments, ARCHETYPE_ID_RE anchored with backslash-Z; ARCHETYPES in archetypes.py is the sole conjunction authority — A slash in an id invents a three-level baseline axis (R-5); a trailing newline must not slip through
 - [Phase 02]: 02-01: every cache miss reads UNJUDGED with a named cause (no-cache, stale, cache-malformed, unresolvable-root), never ABSENT; trait_scan is the only walker and archetypes never imports it — Absent is not zero: a later phase turns ABSENT into a justified NOT_APPLICABLE; the reader must stay inside the 3000 ms prompt chain
+- [Phase 02]: 02-02: archetypes.ceiling() is the only place an archetype strength is decided; REQUIRED needs PRESENT structure plus a verb-object intent and no demoter, intent-only is CONDITIONAL and EXTRACTED, demoters never produce NONE — Audit G16: a word alone must never create a requirement; one function makes it unrepresentable and the two drills show the control can go red
+- [Phase 02]: 02-02: TRAIT_INTENT is a closed fitted bilingual vocabulary for six traits matched on folded text through _hits semantics (_spans parity-gated); traits without a detector read no-intent-detector — GSDX-M04 debt: structure-only CONDITIONAL compensates for a vocabulary miss; a noun bag for the other traits would reopen the D7 defect
