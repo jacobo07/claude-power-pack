@@ -93,7 +93,7 @@ environment first.
 1. Red test of the 137-relaunch shape (worker dies on `Login expired` before any API call) -> fix -> green.
 2. GEX44 a5/a7: rules version, hook health and interpreters checked by a repeatable preflight; broken hooks and
    stale rules repaired by a deploy script; re-login recorded in the owner bundle, never bypassed.
-**Plans:** 2/4 plans executed (sequential waves 1-4)
+**Plans:** 3/4 plans executed (sequential waves 1-4)
 
 Plans:
 **Wave 1**
@@ -106,7 +106,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-03-PLAN.md — B+C: one pre-launch gate (B's one gsd_mission hunk): renewals inherit a quarantine; declared planes refuse on measured NOT_READY
+- [x] 02-03-PLAN.md — B+C: one pre-launch gate (B's one gsd_mission hunk): renewals inherit a quarantine; declared planes refuse on measured NOT_READY
 
 **Wave 4** *(blocked on Wave 3 completion)*
 

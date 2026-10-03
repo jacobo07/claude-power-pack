@@ -2,16 +2,16 @@
 gsd_state_version: "1.0"
 milestone: v1
 current_phase: 2
-current_plan: 3
+current_plan: 4
 status: executing
-stopped_at: Completed 02-01-PLAN.md (code commit 5962571c, PP_COMMIT_FLOOR for 02-02)
-last_updated: "2026-10-03T18:30:22.340Z"
-state_head: d69005731ff0648b4eca29154dd353aa0193da2f
+stopped_at: Completed 02-03-PLAN.md (code commit 60e7947d: launch gate, B+C)
+last_updated: "2026-10-03T18:42:27.590Z"
+state_head: 60e7947dcf3cf0f9c660e412ec6276a8b2922f99
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 milestone_name: incremental-cognition
 last_activity: 2026-10-03
 workstream: incremental-cognition
@@ -32,7 +32,7 @@ invalidation, cognitive-compiler, baseline-ratchet.
 
 **Status:** Ready to execute
 **Current Phase:** 2
-Current Plan: 3
+Current Plan: 4
 Total Plans in Phase: 4
 
 ## Decisions
@@ -44,12 +44,18 @@ Total Plans in Phase: 4
   #001 shape stays blocked.
 - [Audit G6]: the gsd_mission.py repair is deployed only at >= 4 GB free RAM.
 - [Plan]: arming waits for pillar A and >= 4 GB free; until then phases run in the interactive pane.
+- [02-03]: a renewed successor inherits the hold of its nearest predecessor that has an owner (`provider_breaker.lineage_hold`,
+  bounded by a seen-set and MAX_LINEAGE_HOPS=4); a re-login after the refusal still releases it.
+- [02-03]: the env preflight gates launches only on a declared plane (CPP_ENV_PREFLIGHT=on, or CPP_MISSION_PLANE set and
+  CPP_ENV_PREFLIGHT not off). Only a MEASURED NOT_READY refuses; UNMEASURABLE, a raising preflight and an unknown verdict
+  launch and are ledgered `launch_preflight_unmeasurable` (never READY). Kill switches CPP_LAUNCH_GATE=off / CPP_ENV_PREFLIGHT=off.
+  `gsd_mission.py arm` stays ungated (named debt, 02-04 records it).
 
 ## Session Continuity
 
-**Last session:** 2026-10-03T18:14:42.999Z
+**Last session:** 2026-10-03T18:42:27.569Z
 
-**Stopped At:** Completed 02-01-PLAN.md (code commit 5962571c, PP_COMMIT_FLOOR for 02-02)
+**Stopped At:** Completed 02-03-PLAN.md (code commit 60e7947d: launch gate, B+C)
 `tools/test_gsd_mission_cwd_align.py` has 4 NEW uncommitted cases (V-MCA-DIVERGED-FOLLOWED / -UNPROVEN /
 -STALE-ROADMAP / -THREE-RELAYS) calling `gm.align_cwd(cwd, wt, proven_workstream="ws")`; the
 `threshold=9/9` line still needs 13/13. Not yet run (expected RED: align_cwd has no proven_workstream).
@@ -87,20 +93,22 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 2 P01 | 35min | 3 tasks | 3 files |
+| Phase 02 P03 | 40min | 3 tasks | 4 files |
 
 ## Session Continuity (GEX44 run, 2026-10-03 ~19:00Z, session 607795c4)
 
 Run branch `mission/incremental-cognition-run` in worktree `.claude/worktrees/ic-run` (never pushed; the
 clone root stays on `mission/incremental-cognition`). `.planning/config.json` has `workflow.use_worktrees=false`
 (single-plan sequential waves run in this worktree; harness worktrees would fork from origin default).
+
 - Phase 1: deferred human verification (PRG laptop-plane, owner bundle [A]).
 - Phases 3-6: CONTEXT.md written and committed (discuss skipped). Phase 6 J/M R2 externally blocked (CE/SC
   ledgers have no terminals on this history; CE 21671d6c absent from this clone).
-- Phase 2: 4 plans, checker PASSED after one revision. Wave 1 (02-01, code 5962571c) and wave 2 (02-02, code
-  4c31bb0a) DONE and spot-checked (PFP 24/24, BREAKER 18/18, ENVPF 55/55; a7 NOT_READY auth_expired +
-  pp_install_stale). IC-C deliberately left unticked (requirement = ledger terminal).
-**Next exact action:** `/gsd-execute-phase 2 --no-transition --ws incremental-cognition` resumes at wave 3
-(02-03 launch gate, B's single gsd_mission.py hunk before `turn_end = None`), then wave 4 (02-04 deploy +
-evidence C.md/B.md + [B]/[C] owner-bundle lines), then phase verification; then `/gsd-autonomous --ws
+- Phase 2: 4 plans, checker PASSED after one revision. Wave 1 (02-01, code 5962571c), wave 2 (02-02, code
+  4c31bb0a) and wave 3 (02-03, code 60e7947d: LG 19/19, drill 6/6, six-suite FAIL lists identical to baseline, one
+  gsd_mission.py hunk at old-start 1544) DONE. IC-B / IC-C deliberately left unticked (requirement = ledger terminal).
+**Next exact action:** `/gsd-execute-phase 2 --no-transition --ws incremental-cognition` resumes at wave 4
+(02-04 repeatable deploy + evidence C.md/B.md + [B]/[C] owner-bundle lines, incl. the `arm` ungated DEBT line),
+then phase verification; then `/gsd-autonomous --ws
 incremental-cognition` continues at Phase 3 (plan from its CONTEXT). Note for 02-03: every deployed a5/a7 install
 reports `interpreters` UNMEASURABLE (no vendored engine range) -- must not churn launches.
