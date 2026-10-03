@@ -100,6 +100,17 @@ L_CLAIM_CONTROL = "vault/audits/usirc/CAPABILITY_MATRIX_G_TO_M.md"
 L_CLAIM_FILES = (L_CLAIM_CONTROL, "vault/audits/frontier28/VERDICTS.md",
                  "vendor/genesis-suite/modules/genesis-batch-drafts/lib/genesis-batch-drafts.cjs")
 APERTURE_DIRS = ("modules", "tools")
+# Cost-model marker hits read and judged not to be a cost model. Keyed by (path, exact stripped line), so an
+# edit to the line drops the exception and the hit is open again. An exception whose file is in the population
+# but whose line no longer hits is STALE and makes the sweep UNMEASURED.
+M_ADJUDICATED = (
+    ("tools/skill_dedup_sweep.py", "def _line_cost(name, status, shape):",
+     "pillar F listing arithmetic: the characters one listing line occupies (len(name) + overhead + N), an "
+     "integer char count with no price, currency or rate"),
+    ("tools/test_card_precision.py", "def write_unborn_pricing(repo: str) -> None:",
+     "pillar A drill fixture: writes a pricing.py into a temporary repo as the subject the commit card judges; "
+     "its domain is test data, not a cost model of this program"),
+)
 
 
 def router_hits(rel: str, text: str) -> list:
@@ -248,6 +259,11 @@ def _sweep_added(repo, ctx, m, kind):
     return rows, None
 
 
+def cell(s) -> str:
+    """A markdown table cell: pipes escaped (GFM honours `\\|` inside code spans), newlines flattened."""
+    return str(s).replace("|", "\\|").replace("\n", " ")
+
+
 def _sweep_table(rows, label):
     out = [f"| added file | {label} hits | hit lines |", "|---|---|---|"]
     for rel, hits in rows:
@@ -340,7 +356,7 @@ def measure_L(repo, ctx, host):
     ev.append(f"### CO-12 writers at {sha[:8]}")
     ev.append("")
     ev += ["| file:line | line |", "|---|---|"]
-    ev += [f"| {p}:{n} | `{t.strip()}` |" for p, n, t in writers]
+    ev += [f"| {p}:{n} | `{cell(t.strip())}` |" for p, n, t in writers]
     ev.append("")
     ev.append(f"Writer controls: {', '.join(L_WRITER_CONTROLS)}. The first is the owner's `record_signal`; "
               "the other two are tests that write a fixture file in a temporary state directory.")
@@ -467,9 +483,21 @@ def measure_M(repo, ctx, host):
     parts["aperture"] = (["PASS", f"{len(rows)} added files"] if rows else
                          ["UNMEASURED", "zero added files under modules/ and tools/"])
     n_hits = sum(len(h) for _, h in rows)
-    cmds.append(["cost-model marker over each added file (each line)", f"{n_hits} hits"])
-    parts["cost"] = (["FAIL", "; ".join(f"{rel}:{h[0][0]}:{h[0][1]}" for rel, h in rows if h)[:300]]
-                     if n_hits else ["PASS", f"0 hits in {len(rows)} files"])
+    adj = {(rel, text): why for rel, text, why in M_ADJUDICATED}
+    open_hits = [(rel, ln, k, t) for rel, h in rows for ln, k, t in h if (rel, t) not in adj]
+    used = [(rel, ln, k, t, adj[(rel, t)]) for rel, h in rows for ln, k, t in h if (rel, t) in adj]
+    pop = {rel for rel, _ in rows}
+    stale = [(rel, text) for rel, text, _ in M_ADJUDICATED
+             if rel in pop and not any(u[0] == rel and u[3] == text for u in used)]
+    cmds.append(["cost-model marker over each added file (each line)",
+                 f"{n_hits} hits: {len(open_hits)} open, {len(used)} adjudicated not a cost model"])
+    if open_hits:
+        parts["cost"] = ["FAIL", "; ".join(f"{rel}:{ln}:{k}" for rel, ln, k, _ in open_hits)[:300]]
+    elif stale:
+        parts["cost"] = ["UNMEASURED", f"stale adjudications (file in population, line no longer hits): {stale}"]
+    else:
+        parts["cost"] = ["PASS", f"0 open hits in {len(rows)} files ({len(used)} adjudicated)"]
+    r["info"]["adjudicated"] = used
     text, why = blob(repo, sha, M_CONTROL)
     ctl = m_hits(text or "")
     kinds = {k for _, k, _ in ctl}
@@ -513,14 +541,19 @@ def measure_M(repo, ctx, host):
     ]
     ev += ["### Turn and token figures this program reported", "",
            "| pillar | what | value | unit | status | displacement | denominator |", "|---|---|---|---|---|---|---|"]
-    ev += [f"| {p} | {s.get('what')} | {s.get('value')} | {s.get('unit')} | {s.get('status')} | "
+    ev += [f"| {p} | {cell(s.get('what'))} | {s.get('value')} | {s.get('unit')} | {s.get('status')} | "
            f"{s.get('displacement')} | {s.get('denominator')} |" for p, s in savings]
     ev += ["", "### Delta lines quoted from evidence (denominator from each file's line 1)", "",
            "| source | denominator | line |", "|---|---|---|"]
-    ev += [f"| {n}:{i} | {d} | {t.replace('|', '/')} |" for n, i, t, d in deltas]
+    ev += [f"| {n}:{i} | {d} | {cell(t)} |" for n, i, t, d in deltas]
     ev += ["", "E reports no turn or token delta. Its only effect figure is a pass-rate difference "
            "against arm N0, denominator D-SESSIONS.",
            "", f"### Cost-model sweep at {sha[:8]}", ""] + _sweep_table(rows, "cost-model")
+    ev += ["", f"### Marker hits adjudicated not a cost model: {len(used)}", "",
+           "Each is pinned in `M_ADJUDICATED` of tools/skill_handoffs.py by path and exact line; an edit to the "
+           "line re-opens the hit. The Owner may disagree with a reason.", "",
+           "| file:line | line | why it is not a cost model |", "|---|---|---|"]
+    ev += [f"| {rel}:{ln} | `{cell(t)}` | {cell(why)} |" for rel, ln, _, t, why in used]
     ev += ["", f"### Control {M_CONTROL}", ""] + [f"- {ln}: {k}: `{t}`" for ln, k, t in ctl]
     r["owner_do"] = [
         "`tools/usage_index.py`: cost figures stay yours, from your windows. The figures above are turn and "
@@ -571,7 +604,8 @@ def _run_json(script: Path, cwd: Path, home: Path):
     """(json, rc, None) or (None, rc, reason). rc 1 with valid JSON is a measurement."""
     if not script.is_file():
         return None, None, f"{script.relative_to(cwd).as_posix()} not in the export"
-    env = dict(os.environ, HOME=str(home), USERPROFILE=str(home))
+    # No bytecode cache: the export must read back byte-identical after the runs (the nowrite part).
+    env = dict(os.environ, HOME=str(home), USERPROFILE=str(home), PYTHONDONTWRITEBYTECODE="1")
     try:
         p = subprocess.run([sys.executable, str(script), "--json"], cwd=str(cwd), env=env,
                            capture_output=True, timeout=RUN_TIMEOUT)
@@ -688,7 +722,7 @@ def measure_I(repo, ctx, host):
                    "`gate offender` = no (the module is in the registry's standing debt `known_orphans`).", "",
                    "| module | status | class | gate offender | via | note |", "|---|---|---|---|---|---|"]
             ev += [f"| {x['unit']} | {x['status']} | {x['klass'] or '-'} | {'yes' if x['unit'] in offs else 'no'}"
-                   f" | {x.get('via') or '-'} | {(x.get('note') or '-').replace('|', '/')} |" for x in cands]
+                   f" | {cell(x.get('via') or '-')} | {cell(x.get('note') or '-')} |" for x in cands]
         if not (isinstance(ret, dict) and isinstance(ret.get("verdicts"), list) and ret["verdicts"]):
             parts["retirement"] = ["UNMEASURED", why2 or "no verdicts"]
         else:
@@ -705,7 +739,7 @@ def measure_I(repo, ctx, host):
                    f"Verdicts {len(vs)}: " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items(), key=str))
                    + f"; stale {len(ret.get('stale') or [])}.", "",
                    "| contract | status | evidence |", "|---|---|---|"]
-            ev += [f"| {v.get('contract_id')} | {v.get('status')} | {(v.get('evidence') or '').replace('|', '/')} |"
+            ev += [f"| {v.get('contract_id')} | {v.get('status')} | {cell(v.get('evidence') or '')} |"
                    for v in vs]
         after, why3 = _porcelain(repo)
         if after is None:
@@ -807,9 +841,9 @@ def render(r) -> str:
          f"- produced by: {SELF_CMD} --write {p}",
          f"- claim: {worst(r['parts'])} {parts}", "",
          "## Commands and observed output", "", "| command | observed |", "|---|---|"]
-    L += [f"| `{c}` | {o.replace('|', '/')} |" for c, o in r["commands"]]
+    L += [f"| `{cell(c)}` | {cell(o)} |" for c, o in r["commands"]]
     L += ["", "## Claim parts", "", "| part | outcome | reason |", "|---|---|---|"]
-    L += [f"| {k} | {v[0]} | {v[1].replace('|', '/')} |" for k, v in r["parts"].items()]
+    L += [f"| {k} | {v[0]} | {cell(v[1])} |" for k, v in r["parts"].items()]
     L += ["", "## Aperture", ""] + [f"- {a}" for a in r["aperture"]]
     L += ["", "## Evidence", ""] + r["evidence"]
     L += ["", "## What the owner should do", ""] + [f"- {a}" for a in r["owner_do"]]
