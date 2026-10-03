@@ -1400,6 +1400,10 @@ def pred_V_ARCH_MISS_UNJUDGED():
     def no_produced_at(doc):
         del doc["produced_at"]
 
+    def traversal(doc):
+        # A forged evidence path that climbs out of the repository: the reader would stat it.
+        doc["fingerprint"]["evidence_files"][0]["path"] = "../outside.txt"
+
     cases = [
         ("no-file", None, ar.CACHE_MISSING, "no-cache"),
         ("non-json", b"\x00\xffnot json", ar.CACHE_MALFORMED, "cache-malformed"),
@@ -1409,6 +1413,7 @@ def pred_V_ARCH_MISS_UNJUDGED():
         ("repo-key-mismatch", variant(foreign_key), ar.CACHE_MALFORMED, "cache-malformed"),
         ("oversize", variant(pad), ar.CACHE_MALFORMED, "cache-malformed"),
         ("produced-at-missing", variant(no_produced_at), ar.CACHE_MALFORMED, "cache-malformed"),
+        ("evidence-path-traversal", variant(traversal), ar.CACHE_MALFORMED, "cache-malformed"),
     ]
     # Control: the unmodified document reads FRESH, so each case fails for its own change.
     ctrl = ar.read_traits(repo, state_dir=state)
@@ -1437,7 +1442,7 @@ def pred_V_ARCH_MISS_UNJUDGED():
             problems.append("MISS-NOT-UNJUDGED[%s]: traits=%d reasons=%s" % (
                 label, len(traits), sorted({r["reason"] for r in traits.values()})))
     return not problems, "; ".join(problems) or \
-        "%d unusable shapes (no file, non-JSON, other schema, missing trait, state MAYBE, foreign repo_key, > %d bytes, no produced_at): ten UNJUDGED each with its cause, none ABSENT; control FRESH" % (
+        "%d unusable shapes (no file, non-JSON, other schema, missing trait, state MAYBE, foreign repo_key, > %d bytes, no produced_at, evidence path climbing out of the repo): ten UNJUDGED each with its cause, none ABSENT; control FRESH" % (
             len(cases), max_bytes)
 
 
