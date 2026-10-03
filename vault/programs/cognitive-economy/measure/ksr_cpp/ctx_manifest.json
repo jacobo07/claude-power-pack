@@ -1,0 +1,648 @@
+{
+ "files": [
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\010150f0-8ba3-487f-b864-cc67591eff69.jsonl",
+   "sha256": "0460e8a6c5025294009300c0af3e7d97d268987f0c3fff8871e07a54e42f5bb8",
+   "sid": "010150f0",
+   "size": 2396106
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\030a24ec-b163-4e3f-afaa-0f74614bbc44.jsonl",
+   "sha256": "1f145dca87ef32883772b04723443ab18602fc7395ee143bd2610aa327eb59bc",
+   "sid": "030a24ec",
+   "size": 2379633
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\030ce26b-81c4-4f2f-8ee6-3d3ee919a5ee.jsonl",
+   "sha256": "3e9d23598f877af79b1945045f7b59cfca129c772ccd671816fa91b57291de2a",
+   "sid": "030ce26b",
+   "size": 631380
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\03dcad48-8646-42c8-8b58-ce881301ef5f.jsonl",
+   "sha256": "ef8c9f892c331e628e3eea368aedfee2f0e48b62a0fca17c43960cbdd1ed9cd7",
+   "sid": "03dcad48",
+   "size": 3221105
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\05762526-283b-45c9-a436-c1bf925e7500.jsonl",
+   "sha256": "07e1263787fe1555add95a595d5ec4e3aff6a14b16b4417f7fd12cd11d8f84a6",
+   "sid": "05762526",
+   "size": 4944021
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\05c497a1-2b72-4499-be86-2cffc6fb16b2.jsonl",
+   "sha256": "9cf151188697abb5d8b08cf33cf81cada17940ac887d95c4fcb9839f82ae548f",
+   "sid": "05c497a1",
+   "size": 3045757
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\096e0961-a7d6-4c55-8ce4-f9bba073b91c.jsonl",
+   "sha256": "365a82616dc10a01a5385bcc7c5bbaca6bcea34337a9d18326d98998c44b4dac",
+   "sid": "096e0961",
+   "size": 5470745
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\0dc5ef92-6e25-48ad-8163-87fb5547ddb6.jsonl",
+   "sha256": "79256c4a0741d2cfa9e6cdc4302cc89c73994b3464a5858dc0b0149de04c04b9",
+   "sid": "0dc5ef92",
+   "size": 3240882
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\1034f60b-5979-4dc3-a246-be677c09df7d.jsonl",
+   "sha256": "197027eee1c7b7fccc10355dfbeb877f9c38570b6d49038bae3b9969713fde18",
+   "sid": "1034f60b",
+   "size": 1247908
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\1074c712-b1ee-4ffb-87e8-655860c8ace7.jsonl",
+   "sha256": "69c87136c6a518c635ee31171969f378e1b2e89b691966ef806bdd5878173ae9",
+   "sid": "1074c712",
+   "size": 5351217
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\1420ab69-43cf-4386-854e-8bab3850b258.jsonl",
+   "sha256": "8a081c0d97ec71672bdf4786ce197bf384cf7135b8083dcbf247f12a810f7e46",
+   "sid": "1420ab69",
+   "size": 7599795
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\1794424a-7a41-43d4-927a-266a3c62a2bd.jsonl",
+   "sha256": "b8f153ce48f689b69fdce30acfa88c83360a36ab0a4d6af1f9456704cf335c9b",
+   "sid": "1794424a",
+   "size": 673799
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\1a5fa7f4-bda3-4d74-ad9e-ae53aaf64d87.jsonl",
+   "sha256": "1a75509dd0e3a3ecddcd86d3708b2b76f69a7f6308b9d4c3cf3e0a46de6baed0",
+   "sid": "1a5fa7f4",
+   "size": 596344
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\223fedf2-67ff-4e83-af8b-8c6fb6673d97.jsonl",
+   "sha256": "ac5a1f8d7ffa81f53003ec00bddbeadb61667ab68a66d3ebee4043113f8829d8",
+   "sid": "223fedf2",
+   "size": 4297407
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\27722cc4-82ea-45db-82e5-fb38ce253624.jsonl",
+   "sha256": "60688cb10a0c6e93b041ec10b292eb5cca36b4176e4681fdb58bed5f033215ed",
+   "sid": "27722cc4",
+   "size": 877760
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\277656db-25c9-4680-8205-8b94fef3616f.jsonl",
+   "sha256": "f489e91b8fadb2bf021cb9fcfaf47e910a4983ace41c2e631e0a85717b69469b",
+   "sid": "277656db",
+   "size": 19485091
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\27f350ed-3ae1-490e-b5ea-b0233d973a5f.jsonl",
+   "sha256": "6bdef22e561c8d602b5894fca5fac188f69c8e77abbec7253190e0d56826791d",
+   "sid": "27f350ed",
+   "size": 1013190
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\28c7b7ae-00a7-4f73-886d-54efdba03d00.jsonl",
+   "sha256": "7f7cb2808d32e872b67860f34e361148f968b6827d7130c666bc82607e196b62",
+   "sid": "28c7b7ae",
+   "size": 2332155
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\298b1bce-cd9f-4afc-b5b3-91a8428b6ffc.jsonl",
+   "sha256": "65b6b95968aaa77b08db8a67b53d098307f1cf09076479736f4cec7b09bf7802",
+   "sid": "298b1bce",
+   "size": 9222882
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\2d5926f8-6ad5-4693-bc58-7bf06e76c7ed.jsonl",
+   "sha256": "120b1a92ae3d1afc0d8660017ee1b75b76562154a96102e6c1d6f2aa9b7122f4",
+   "sid": "2d5926f8",
+   "size": 3479453
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\2e1ed996-ff63-4aa6-9f8f-2337bc304dbd.jsonl",
+   "sha256": "10220826786408787b4903e1acd0e6662fdede817160fab611f0d9f13ec3db8d",
+   "sid": "2e1ed996",
+   "size": 1488700
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\2f6e9166-465c-4a62-8d2b-4b8e50503b54.jsonl",
+   "sha256": "8bb6ae2586825fa33d6cfbf4737593e600896db9ef14b5ba5d84bfc72c706515",
+   "sid": "2f6e9166",
+   "size": 4219767
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\300ac3a1-ce26-4aca-b1f8-7af213c96cea.jsonl",
+   "sha256": "924d80ce5f649645cce2a94ea1ac67f2d9e1f3ddb46148f1d97233f1134d8a83",
+   "sid": "300ac3a1",
+   "size": 2927127
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\33d88296-368a-47d2-93c1-35e6755c72fb.jsonl",
+   "sha256": "d00b2a15606c62b971b9dd12b6104fee4e8145136a3e8881a75926d25e1154c8",
+   "sid": "33d88296",
+   "size": 935229
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\3707943b-27f8-4672-9f4d-9f9c7bc5d1ae.jsonl",
+   "sha256": "c97886641db1eb7bec00a4acfa2a201684d6c8dcd353896d49de9f881606de46",
+   "sid": "3707943b",
+   "size": 1022256
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\39424c7a-d078-457a-a750-a1650459e57a.jsonl",
+   "sha256": "e48caf65522788b56e14d7a4f0af0bbdbfb66ba5e7730b597ffc4d5cf750f4bc",
+   "sid": "39424c7a",
+   "size": 5893540
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\3b2d7afc-d31e-4cf6-9888-6593334d0a9d.jsonl",
+   "sha256": "3c0bd8566a0d5501465ce8acdc6519d3df71e83dd8eb8163771e3f9df2ecc213",
+   "sid": "3b2d7afc",
+   "size": 882643
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\3b9e09b3-24de-4cce-8fc6-cd1c5432a2ca.jsonl",
+   "sha256": "ab745a083b3e75c7264386f971142e5f008918df4165521ccefb0ef3c1cf5117",
+   "sid": "3b9e09b3",
+   "size": 8326898
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\3cbde20e-b954-4d08-9a70-d90a31e0012b.jsonl",
+   "sha256": "ff267f53d557bfdabbff595333d42c22a89a18a2a1ebf2ff80e14359e6141af2",
+   "sid": "3cbde20e",
+   "size": 4109653
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\435014d6-d8ed-448d-a7f1-bb4b9d6c0e7f.jsonl",
+   "sha256": "48481ffa75e0f81d2574961df6f1bc19c2045be7227f80c0f31c9c60fdf12bed",
+   "sid": "435014d6",
+   "size": 2221602
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\4398cf8c-466c-45c1-b7b0-28ecda16b3d7.jsonl",
+   "sha256": "bde76d645ed327287b72d45fd34fa4d854a1c928653de9264cd666f440b0254a",
+   "sid": "4398cf8c",
+   "size": 3137522
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\44095d9a-df27-40f8-96e5-664effa8625a.jsonl",
+   "sha256": "5bf577a913a5632a831c98b13ebafcbead6e50818a26907f776810d68dc0d137",
+   "sid": "44095d9a",
+   "size": 3917226
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\4a7ee8bc-c2a9-4ed3-8e37-7d3e22aba693.jsonl",
+   "sha256": "c5076de1d216fa0cfde12ed935e3c5936bc884088d3f79cc35591f961b6491b6",
+   "sid": "4a7ee8bc",
+   "size": 3278143
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\57ef6707-4f1c-46fb-83da-e1adeaedd11b.jsonl",
+   "sha256": "dd5e2cb0c93e05f6b98d5069310c67aecf195fb93e7413feb52e0fb53399e4a5",
+   "sid": "57ef6707",
+   "size": 3839095
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\58421b93-1334-4bd4-9827-4406bcd348f3.jsonl",
+   "sha256": "2b451048d3795085c9a6c96af86dee147fd2a47869ad1864d2b29282b7eade28",
+   "sid": "58421b93",
+   "size": 5426066
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\5fb53f17-962e-47af-b85e-8cfbcd206f94.jsonl",
+   "sha256": "91d75eff243932bc23580b5b5bfaadd9ee5a904a067f73e3f25efd5defd89df8",
+   "sid": "5fb53f17",
+   "size": 4970080
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\614697c1-c9f6-428f-9758-119411e4fef1.jsonl",
+   "sha256": "f85dfdfee1ec6510defee93a932a3319ed01d3f958162e9e1f741b9a7f59c493",
+   "sid": "614697c1",
+   "size": 4665724
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\624f4750-0025-4c9e-91e5-c102be9d6a8d.jsonl",
+   "sha256": "7c6479b59d02eaf51b5daa426092f4bc73ad697f5e8416bbab46f77fba82a0e6",
+   "sid": "624f4750",
+   "size": 4657687
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\62f6a1a7-7d92-4260-a442-f8eb16d45ee7.jsonl",
+   "sha256": "86f6448244442cd8736b7ce103dfb2cb505414102a7ae983b0ca9989a3f3f5cb",
+   "sid": "62f6a1a7",
+   "size": 3975535
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\64798bfe-8fa8-4d53-a2b0-0d29b2004350.jsonl",
+   "sha256": "8cfe7993436b9549f9007001a181fa39185d008461fe59f7b6051c46ae726009",
+   "sid": "64798bfe",
+   "size": 1657596
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\6bb69636-a85b-4d59-84ed-ef52b5381ab5.jsonl",
+   "sha256": "2351f3e21a95978656f9849678a5eb7e196286ea055534ff277e878bbbb7a7de",
+   "sid": "6bb69636",
+   "size": 828863
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\6d128db5-0b16-415e-9a38-367d870ee525.jsonl",
+   "sha256": "a8a49e3c99f30b4dcc47396f28bdf03206a1df0762a99b8765ce6ac0807e7040",
+   "sid": "6d128db5",
+   "size": 4186087
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\6dde01bf-4ffc-4547-bd50-5bb81b9f514a.jsonl",
+   "sha256": "d7aad9a0b8fd17fa5b4d0ec873401a0618ebcf770003e756587658b86c162bad",
+   "sid": "6dde01bf",
+   "size": 773985
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\70d16064-f265-4ad2-8353-98a325964a88.jsonl",
+   "sha256": "d60a275c4c8540d838b379ff84ff095e9889157000ddf529094d364c234c9a6f",
+   "sid": "70d16064",
+   "size": 3456463
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\7ab5d032-77d5-4e87-96f1-0b8e2a6ab2d3.jsonl",
+   "sha256": "9fcf0d4143f83f98171b254bc3d697f873946f4e079e71cd77d93f19a482f9f0",
+   "sid": "7ab5d032",
+   "size": 10493801
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\82961b0b-7bfd-4e6d-8803-e5283258f6d0.jsonl",
+   "sha256": "4dd2f931eea85933ad77f9db69b768e256e7ba8bbfe05a0fac64f64784cd81f9",
+   "sid": "82961b0b",
+   "size": 3192839
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\83135faa-d656-4976-ae43-138c957aad33.jsonl",
+   "sha256": "7f5f05ee8661c3a396dbc1a8d69386faf120afaa00c0bf462b4a6b3500417635",
+   "sid": "83135faa",
+   "size": 9689603
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\84a5bc3c-0b59-449d-a79a-f261740e7ea4.jsonl",
+   "sha256": "1afba6ef6c1ccd22d0564b0f06d45544d6a5224e5a1093209b0c61671f763cf2",
+   "sid": "84a5bc3c",
+   "size": 948371
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\8a4be44c-64a4-4a3a-bf9a-466db4b5c118.jsonl",
+   "sha256": "d24be393663146cec4bce9e5b559173e4b04591540e251b545c70870df7d6f6e",
+   "sid": "8a4be44c",
+   "size": 6293141
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\8b2c7516-bd6a-4b37-b6c8-1e42a101852b.jsonl",
+   "sha256": "d66a61f027e463e6df62caaf793ab994c2e509f5380169513e8e8a714d7a8739",
+   "sid": "8b2c7516",
+   "size": 6219609
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\8ce177ec-01bd-4738-aa5d-15d6e4a9a582.jsonl",
+   "sha256": "2e1daf5e60b45cf4807be738d3bb354f81eb95d6d564e41bfad2c987aa0fcc1b",
+   "sid": "8ce177ec",
+   "size": 1762707
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\8d57f0bd-dcfe-434d-9831-dc337ac08a6c.jsonl",
+   "sha256": "5304492b53a466fef5405374722193582426e748811cf341f396980f220d0966",
+   "sid": "8d57f0bd",
+   "size": 3740290
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\8e3b49e6-0ba4-4010-8e6d-5db8a71235e2.jsonl",
+   "sha256": "9253d3079204aa698c571b32660fc805fc132df931e8b71d4ada1a311f47c8f6",
+   "sid": "8e3b49e6",
+   "size": 2066062
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\958a5394-8c07-40e3-ab08-6f250af0fd5c.jsonl",
+   "sha256": "5341416eaecb9fe90b411bd0d2a0164689d0bfa7df5bda8ce667718f6fc1723c",
+   "sid": "958a5394",
+   "size": 6422561
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\96790076-c8fe-4cea-b41e-74635f6592b1.jsonl",
+   "sha256": "ae2e0400488c701fbf5de9c4f66f5fa42f39bd6b4507dc7dcd7778389a554699",
+   "sid": "96790076",
+   "size": 1590203
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\969d8063-9eee-482b-a8af-42d29635a228.jsonl",
+   "sha256": "4955505ab44a50e0522610540f9cbfd0ad5bad638779daad3bb4fe71405e9c17",
+   "sid": "969d8063",
+   "size": 4459555
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\96f079a7-1ee0-40d6-ab19-a2334f6d267c.jsonl",
+   "sha256": "63c67343aa9df02e820d4f830973393ae72bd114edd8a36043c98b2494366daa",
+   "sid": "96f079a7",
+   "size": 1994566
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\9af80e55-9865-4c6f-877c-d155da18becf.jsonl",
+   "sha256": "435a2e47cf613573b97e0dbca968652911e5a23a68ae11c34f7e52b73b96c817",
+   "sid": "9af80e55",
+   "size": 32707632
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\9dd9823e-6275-43af-9c7d-a0de44f98511.jsonl",
+   "sha256": "dad7455f856810c012d4ad382269cd207199c677e9af8be22e3f64a43f694372",
+   "sid": "9dd9823e",
+   "size": 870460
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\9e694f9a-48ac-4729-8b93-7cd471a612e4.jsonl",
+   "sha256": "4ff734ec3a93c67c28bb34da6d3cde7aa31b7c0c473b4e8cfef3c141e33e84b0",
+   "sid": "9e694f9a",
+   "size": 4113399
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\a01bdd42-a298-40b2-ba04-f7358ed73434.jsonl",
+   "sha256": "d07bccedac18953835d989f584468a45dace44d61f8d7794eb2d8021e0a20caa",
+   "sid": "a01bdd42",
+   "size": 897930
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\a5df8940-9670-4d17-817f-edbb4eec9d8b.jsonl",
+   "sha256": "1351b0cc7d390c6d2707c9947377237b55b18ae62a9acde534efc14727dd9ae0",
+   "sid": "a5df8940",
+   "size": 612778
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\a63f5cf9-981b-47b6-b8a6-f6461e402b4d.jsonl",
+   "sha256": "558c3a0ac862c7b795e71a4dee0b7d96182cb47526af9e71cc84a010ad962c9c",
+   "sid": "a63f5cf9",
+   "size": 932563
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\ab73b303-c4aa-4bfc-bc56-2009a02c53ed.jsonl",
+   "sha256": "5f386620eb146f49e4f8c05bb16616dc93ece271d1fd370df5e475d8564518e6",
+   "sid": "ab73b303",
+   "size": 3333134
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\ac98ed90-1ce4-479f-b94e-28e496ed00ed.jsonl",
+   "sha256": "1e65c072cdc524d271b6919039216989f5464501dee6b0b1b2934c3b0e293222",
+   "sid": "ac98ed90",
+   "size": 4383251
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\ad6704bc-578a-4fe1-a83b-5b7d96e7fe7b.jsonl",
+   "sha256": "3bfa4f3935bb841089c9ae29b348836d7821ff5d9de391edcad29055506ab641",
+   "sid": "ad6704bc",
+   "size": 2257338
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\b0d83764-280c-4ef8-9c0a-109be3c6e7a4.jsonl",
+   "sha256": "10347e5ba308ce74aa8a994df0c0d9d5ad7f1f51abbe94d25a27b7c2daf2a54a",
+   "sid": "b0d83764",
+   "size": 13593804
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\b1ccf221-60f2-4492-bec1-53a8af5e230f.jsonl",
+   "sha256": "0d59f502311567c4e89e896c770fd8b4e2b7cc1f34c4e57b57b3702493dafc85",
+   "sid": "b1ccf221",
+   "size": 1299401
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\b3c38ac8-95f1-4487-89cc-884bd3293733.jsonl",
+   "sha256": "237b940a522c89a077b21ac991559fa87357cecb52b986d1551d16ad582024cb",
+   "sid": "b3c38ac8",
+   "size": 4308560
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\b4ce165c-1443-47dc-bd5b-0a0ee17c164d.jsonl",
+   "sha256": "f9e4e7b6454bf0b7cb3db5f5e08ef70986dbb99828484aaf38d3f27ea22f4db2",
+   "sid": "b4ce165c",
+   "size": 5378079
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\b620e9e2-80ec-4bd7-bba0-2bd35ef42972.jsonl",
+   "sha256": "14543211847dafe5133f5bef36667848dafe987dd0df8fe255e05238ce5ae2a8",
+   "sid": "b620e9e2",
+   "size": 1724119
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\bb280e67-63ee-4644-9e9b-29076c4246d6.jsonl",
+   "sha256": "e467a3d6c8dd1ff4d6d703e204b40c2d4250ae480fecd6d68284791e1a25b61f",
+   "sid": "bb280e67",
+   "size": 3324565
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\bfe97833-3312-4e50-a61c-efb6de71e846.jsonl",
+   "sha256": "35a67552db546255baf140ab487164bd8c3ed8fd8f59e63cc0c8d01226261494",
+   "sid": "bfe97833",
+   "size": 3744057
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\c3022d75-7e1c-444b-a5cd-4574d70f3aaf.jsonl",
+   "sha256": "3b4f193e2f338a1047b6f60d4b746c99fcd74f5764bbcf0f8aec38f33a5f38d6",
+   "sid": "c3022d75",
+   "size": 1663532
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\c69c0ac3-ea12-4ce7-9b9b-f85e933832bb.jsonl",
+   "sha256": "bf5c426fe1ca361b1a588b7a7f578aadd2d3fa6efa37377ec567e322070034c8",
+   "sid": "c69c0ac3",
+   "size": 1283093
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\cf503730-8ad2-4943-ad25-4fb19f7496d5.jsonl",
+   "sha256": "d557ceaa47f10a0f00b564269c6c6fa27c9727692c527776ccfc0933298aeeb2",
+   "sid": "cf503730",
+   "size": 4323034
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\d037e348-411d-43b4-8626-fb6973c70c1d.jsonl",
+   "sha256": "c52a15b92488ae07c9166921b6e43d3f814ea966e4110eb3d5103edeaefddfa0",
+   "sid": "d037e348",
+   "size": 1714474
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\d64d2f98-dc3c-44ae-b2e1-996d312f77c7.jsonl",
+   "sha256": "e9fd578847597c6dc207bb591546846d26b40860d7d08960eddba746e5beff74",
+   "sid": "d64d2f98",
+   "size": 4571039
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\db8ae5cd-1ec6-442d-9ce8-86fcd8a4daf8.jsonl",
+   "sha256": "c9f7bc768c8a3d7552c32348130af083eea1f7a7a599b9cf95b5607f29694855",
+   "sid": "db8ae5cd",
+   "size": 4451073
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\dc383770-e4b5-4930-bb8c-3a49d7c34ce8.jsonl",
+   "sha256": "ac86471da5780cd0d77d2c9d1ea43553f4f60624fe15b34372b529806bed8225",
+   "sid": "dc383770",
+   "size": 3447188
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\e06381e2-d70e-424e-a0ef-61bb9f4443f5.jsonl",
+   "sha256": "0d470f179140aa2752f47359a161656511b3311f2018caf97611801ea65dac19",
+   "sid": "e06381e2",
+   "size": 4305989
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\e0e1a7a9-2500-4680-98a4-0c46ef1cea39.jsonl",
+   "sha256": "8a9c872e33545a9c401444b6b1e7574fe33e179a5f65bdfb46f4350f4adcc7bb",
+   "sid": "e0e1a7a9",
+   "size": 6801389
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\e247fad3-8c7b-4bca-bc04-e98f29c76e4c.jsonl",
+   "sha256": "d16c2bf67cc7a0a4a0dac0b0c4818adc0f14b9d8b30af22fbb0d73b05d912ae7",
+   "sid": "e247fad3",
+   "size": 1301480
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\e273e266-239b-4cf7-9df3-187fbef33386.jsonl",
+   "sha256": "bd140ac7122f010785f2c8a2e56f94427082608983cbd0e2017046816ee33f81",
+   "sid": "e273e266",
+   "size": 8172969
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\e4701f02-7214-4ccd-a2c2-2a9e8bdf80df.jsonl",
+   "sha256": "4514f726f9ba55b062104a3b62ee5d47806e679cb0ff70d6718f19ea388c7467",
+   "sid": "e4701f02",
+   "size": 1170904
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\e4c2d161-bfee-4d77-88e3-7aa31b00faa9.jsonl",
+   "sha256": "c0ea5a2a038bfa0c3e0bd0d766402513eb37c0a53cba4dc5c89fead5995c320a",
+   "sid": "e4c2d161",
+   "size": 4003204
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\e688a932-c493-49d7-9418-3b834db12065.jsonl",
+   "sha256": "30cde60b029f379071f531f3b428dd90baf4aae2132f731706d4e9ae85c7ec7d",
+   "sid": "e688a932",
+   "size": 1774406
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\e6b63e59-aa4e-43f8-951f-3a11e76da159.jsonl",
+   "sha256": "80c61daf2d796cb8e8ae41bb2ac7138f88d638c04e698eef6ed4cbfbc52f91d5",
+   "sid": "e6b63e59",
+   "size": 4015631
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\e9d6887e-d36d-41a8-8061-dd6267014f8b.jsonl",
+   "sha256": "a688bacea3fe714d9a830ce7ed7b5525c59f7f8ae2dadb4786d98b5debc19d0a",
+   "sid": "e9d6887e",
+   "size": 3964271
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\ea08d402-f835-488e-9452-9f99cabb4a1d.jsonl",
+   "sha256": "c784dd8485fb6951c21ae02a4a047aeb96470ba9eff402c7823a022e6b8b569d",
+   "sid": "ea08d402",
+   "size": 598473
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\ea725130-68e0-4dde-9eba-b50ac8314c20.jsonl",
+   "sha256": "5ccd39ea79ad631eba486653589d01537d0000577587a3002bb68a1bcfcd381c",
+   "sid": "ea725130",
+   "size": 4438144
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\f19774a9-71b1-49d9-b7b3-e7b520c93fa4.jsonl",
+   "sha256": "de263e623350a27bff88a071d21a863d275dfb67132cb3e65e3de65f74f4368c",
+   "sid": "f19774a9",
+   "size": 3893112
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\f3099e7b-20d5-4a6e-a88d-b8c6af4c915f.jsonl",
+   "sha256": "203d732d744c87d7fc717fdbc0652c99ffb81739b312210f2f73e288f7fb80db",
+   "sid": "f3099e7b",
+   "size": 4027109
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\f5b37a97-6eed-42e8-95b3-bd83ae630e0c.jsonl",
+   "sha256": "78c36b80265ee25b15b4449a617a9a9cf8fc57baac9e9e64456c633368d62250",
+   "sid": "f5b37a97",
+   "size": 671272
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\f8a4fb6d-ee83-4475-89ff-9188232b5304.jsonl",
+   "sha256": "2f478e362701b0155b27ee6c64e656e8bf764555722250246c0ff411e3d349ae",
+   "sid": "f8a4fb6d",
+   "size": 4770163
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\fa590a33-086f-4bd0-bb6a-d204c3f587c9.jsonl",
+   "sha256": "81ad649055cee037d62a264cb620bae0cde9e56f033580df6adc75f659b0fd5c",
+   "sid": "fa590a33",
+   "size": 4259271
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\fa65b059-ae77-4fcc-956a-8d4914871b4d.jsonl",
+   "sha256": "90a0f244d59cc5da3adaec67b0fc193cc093d71c0b45552502ceb2dd333ef1f8",
+   "sid": "fa65b059",
+   "size": 3785553
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\fd91d5ae-69dc-4781-8e28-b8a15fdeb1da.jsonl",
+   "sha256": "bf65347b0d1a596d5c65d97182d8c96f146f2b6d53c160943951d6ec321dca42",
+   "sid": "fd91d5ae",
+   "size": 6861336
+  },
+  {
+   "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\fe1c49ea-6018-4345-9b57-8fea78d5e4a5.jsonl",
+   "sha256": "deb31298a83a52d45aa13875d5b3c485098b0aa601893482a6211cceefc7c700",
+   "sid": "fe1c49ea",
+   "size": 7350210
+  }
+ ],
+ "population_n": 79,
+ "quartiles": [
+  0.21750773057626077,
+  0.2935087921813075,
+  0.34005578104581746
+ ],
+ "rule": "S1-S3 of phase4_bc_gaps.md; population = top-level jsonl, >=20 model calls, excl 489739e3",
+ "sample": [
+  [
+   "624f4750",
+   "top-PS"
+  ],
+  [
+   "0dc5ef92",
+   "top-PS"
+  ],
+  [
+   "8ce177ec",
+   "top-PS"
+  ],
+  [
+   "8b2c7516",
+   "mid-PS"
+  ],
+  [
+   "435014d6",
+   "mid-PS"
+  ],
+  [
+   "ac98ed90",
+   "mid-PS"
+  ],
+  [
+   "57ef6707",
+   "low-PS"
+  ],
+  [
+   "3cbde20e",
+   "low-PS"
+  ],
+  [
+   "9af80e55",
+   "high-unknown"
+  ],
+  [
+   "2d5926f8",
+   "high-unknown"
+  ]
+ ],
+ "seed": 20261004
+}

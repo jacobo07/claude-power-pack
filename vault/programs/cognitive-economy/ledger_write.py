@@ -33,27 +33,31 @@ def main(argv) -> int:
     if len(argv) != 2:
         print(__doc__)
         return 1
-    spec = json.loads(Path(argv[1]).read_text(encoding="utf-8"))
+    loaded = json.loads(Path(argv[1]).read_text(encoding="utf-8"))
+    specs = loaded if isinstance(loaded, list) else [loaded]
     led = json.loads(LEDGER.read_text(encoding="utf-8"))
-    pid = spec.pop("pillar")
-    if pid not in led["state"]:
-        print(f"unknown pillar {pid!r}")
-        return 1
     frozen_before = json.dumps(led["frozen"], sort_keys=True)
-    for e in spec.get("evidence", []):
-        if e.get("kind") in FILE_KINDS:
-            p = Path(e["ref"]).expanduser()
-            p = p if p.is_absolute() else REPO / e["ref"]
-            if not p.is_file():
-                print(f"cited file missing: {e['ref']}")
-                return 1
-            e["sha256"] = lf_sha256(p)
-    led["state"][pid] = spec
+    done = []
+    for spec in specs:
+        pid = spec.pop("pillar")
+        if pid not in led["state"]:
+            print(f"unknown pillar {pid!r}; nothing written")
+            return 1
+        for e in spec.get("evidence", []):
+            if e.get("kind") in FILE_KINDS:
+                p = Path(e["ref"]).expanduser()
+                p = p if p.is_absolute() else REPO / e["ref"]
+                if not p.is_file():
+                    print(f"cited file missing: {e['ref']}; nothing written")
+                    return 1
+                e["sha256"] = lf_sha256(p)
+        led["state"][pid] = spec
+        done.append(f"state.{pid} written: {spec['terminal']} with {len(spec.get('evidence', []))} evidence")
     if json.dumps(led["frozen"], sort_keys=True) != frozen_before:
         print("refused: frozen would change")
         return 1
     LEDGER.write_text(json.dumps(led, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
-    print(f"state.{pid} written: {spec['terminal']} with {len(spec.get('evidence', []))} evidence")
+    print("\n".join(done))
     return 0
 
 
