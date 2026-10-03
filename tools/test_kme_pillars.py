@@ -2306,6 +2306,47 @@ def g_signature_no_url_token():
     return ok, f"rc={rc} leaked={leaked} unit={unit} sigs={sigs}"
 
 
+def g_r3_terminal_requires_primary():
+    """WR-04: R3 on a pillar WITH a terminal, driven by the instrument's real output: the primary file is accepted, a
+    hand-written KME-G file and a doctored primary are refused, and the wrapper's frozen-rule table equals the instrument's."""
+    icp = _icp()
+    root = scratch("wr04")
+    fx = Fx(root, project="-home-x-kme-e")
+    fx.human("start", ts(0))
+    rd(fx, 0, "r1", "/w/big.py", E_BODY)
+    call(fx, 1)
+    call(fx, 2)
+    pop = {"sessions_active": 1, "sessions_dead": 0, "calls": 3, "input": 30, "cache_write": 0, "cache_read": 3000,
+           "output": 15}
+    frozen = write_frozen(root / "frozen.json", **{"KME-L": pop, "KME-G": pop})
+    proj, outd = root / "projects" / "-home-x-kme-e", root / "m"
+    rc1, _o, e1 = run_main(["e", "--denominator", "KME-L", "--frozen-file", frozen, "--root", str(proj),
+                            "--out-dir", str(outd)])
+    prim = next(iter(outd.glob("E-KME-L-*.md")), None)
+    if rc1 not in (0, 3) or prim is None:
+        return False, f"rc={rc1} files={sorted(f.name for f in outd.glob('*.md'))} err={e1[-200:]}"
+    hand = outd / "E-HAND-KME-G.md"
+    hand.write_text('---\ndenominator: "KME-G"\ncommand: "python3 x"\n---\n\nKME-L KME-G CPP-D-W7 by hand.\n',
+                    encoding="utf-8")
+    text = prim.read_text(encoding="utf-8")
+    fm0 = parse_measurement(text)[0]
+    forged = outd / "E-FORGED.md"
+    forged.write_text(text.replace('denominator: "KME-L"', 'denominator: "KME-G"', 1), encoding="utf-8")
+    res = icp.ce.Resolver()
+
+    def fails(*refs):
+        led = {"state": {"E": {"terminal": "RESEARCH_INSUFFICIENT_EVIDENCE", "evidence": [
+            {"kind": "measurement", "ref": str(r), "sha256": "0" * 64} for r in refs]}}}
+        return icp.check_measurement_scope(led, res, only=["E"])
+    # the instrument's terminal claim is only believed when the file agrees with itself: a verdict-bearing,
+    # reproduced primary on the frozen rule. (A UNMEASURED verdict file is terminal_evidence false by construction.)
+    good, hand_f, forged_f = fails(prim), fails(hand), fails(forged)
+    table_eq = {k: list(v) for k, v in kp.RULE_DENOMINATORS.items()} == icp.FROZEN_RULE_DENOMINATORS
+    ok = (fm0["terminal_evidence"] is True and good == [] and any("cites no kme_pillars primary" in x for x in hand_f)
+          and any("claims terminal_evidence true but" in x for x in forged_f) and table_eq)
+    return ok, f"primary_terminal={fm0['terminal_evidence']} good={good} hand={hand_f[:1]} forged={forged_f[:1]} table_eq={table_eq}"
+
+
 GATES_TRACER = [
     ("V-KMEP-TRACER-D-E2E", g_tracer_e2e),
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
@@ -2314,6 +2355,7 @@ GATES_TRACER = [
 GATES_REVIEW_FIX = [
     ("V-KMEP-OUT-DIR-INSIDE-ROOT", g_out_dir_inside_root),
     ("V-KMEP-SIGNATURE-NO-URL-TOKEN", g_signature_no_url_token),
+    ("V-KMEP-R3-TERMINAL-REQUIRES-PRIMARY", g_r3_terminal_requires_primary),
 ]
 GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_PLAN5_TRACER + GATES_PLAN5_BUNDLE + GATES_REAL + GATES_REAL_2 + GATES_REVIEW_FIX
 

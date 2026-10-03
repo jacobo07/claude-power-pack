@@ -27,7 +27,10 @@ Added here:
       file measuring another pillar never does. A kme_pillars file (its `instrument` line, its
       json block marker or either role field; a leading BOM is ignored) without readable role fields is
       refused, never skipped; only a file with no kme_pillars mark at all is another instrument's and is left
-      to the CE clauses. This is the mechanical form of "never substitute
+      to the CE clauses. For pillars D..I a TERMINAL must cite at least one kme_pillars primary file whose
+      terminal_evidence true agrees with its own fields (instrument mark, role primary, reproduced population,
+      measured verdict, denominator inside the frozen rule table kept here); a hand-written file cannot stand in.
+      This is the mechanical form of "never substitute
       KME-G for KME-L".
   V-ICP-REBIND  the rebinding took: ledger.program must be "incremental-cognition", and a
       ledger read through any other program's path is refused.
@@ -196,6 +199,40 @@ def is_kmep_file(text: str, fm: dict) -> bool:
             or f'"instrument": "{KMEP_INSTRUMENT}"' in t or "evidence_role" in fm or "terminal_evidence" in fm)
 
 
+KME_PILLARS = ("D", "E", "F", "G", "H", "I")
+# The frozen rule's denominators per pillar (ledger frozen.pillars rule text; mirrors kme_pillars.RULE_DENOMINATORS,
+# and test_kme_pillars pins the two equal). A file's own `rule_denominators` is checked against THIS table, never
+# trusted alone.
+FROZEN_RULE_DENOMINATORS = {"D": ["KME-L", "CPP-D-W7"], "E": ["KME-L"], "F": ["KME-L"], "G": ["KME-L"],
+                            "H": ["KME-L"], "I": ["KME-L"]}
+MEASURED_VERDICTS = (">= 3 %", "< 3 %", "STRADDLES")
+
+
+def terminal_claim_problems(pid: str, fm: dict) -> list:
+    """Why a kme_pillars file that says `terminal_evidence: true` contradicts itself (pillars D..I only). A claim
+    is believed only when the file's own fields agree with it: role primary, the instrument's own mark, a population
+    that reproduced the frozen denominator (a referenced CPP-D-W7 only at coverage exactly 1), a measured verdict,
+    and a denominator inside this pillar's frozen rule."""
+    if pid not in KME_PILLARS or fm.get("terminal_evidence") is not True:
+        return []
+    bad = []
+    if fm.get("instrument") != KMEP_INSTRUMENT:
+        bad.append(f"instrument is {fm.get('instrument')!r}, not {KMEP_INSTRUMENT!r}")
+    if fm.get("evidence_role") != "primary":
+        bad.append(f"evidence_role is {fm.get('evidence_role')!r}, not 'primary'")
+    pm, den = fm.get("population_match"), fm.get("denominator")
+    if not (pm == "exact" or (pm == "referenced" and den == "CPP-D-W7" and fm.get("coverage") == 1.0)):
+        bad.append(f"population_match is {pm!r} (coverage {fm.get('coverage')!r}), not a reproduced population")
+    if fm.get("materiality") not in MEASURED_VERDICTS:
+        bad.append(f"materiality is {fm.get('materiality')!r}, not a measured verdict")
+    rule = FROZEN_RULE_DENOMINATORS[pid]
+    if fm.get("rule_denominators") != rule:
+        bad.append(f"rule_denominators {fm.get('rule_denominators')!r} is not the frozen rule {rule!r}")
+    if den not in rule:
+        bad.append(f"denominator {den!r} is not in pillar {pid}'s frozen rule {rule!r}")
+    return bad
+
+
 def check_measurement_scope(led: dict, res, only=None) -> list:
     f = []
     for pid in (list(only) if only is not None else list(ce.PILLARS)):
@@ -216,7 +253,11 @@ def check_measurement_scope(led: dict, res, only=None) -> list:
             files.append((ref, fm))
         on_pillar = [(r, fm) for r, fm in files if fm.get("pillar", pid) == pid]
         has_primary = any((fm.get("evidence_role") or "primary") == "primary" and fm.get("terminal_evidence") is True
-                          for _r, fm in on_pillar)
+                          and not terminal_claim_problems(pid, fm) for _r, fm in on_pillar)
+        if st.get("terminal") and pid in KME_PILLARS and not has_primary and not any(
+                fm.get("pillar", pid) != pid or terminal_claim_problems(pid, fm) for _r, fm in files):
+            f.append(f"R3 {pid}: terminal {st.get('terminal')} cites no kme_pillars primary measurement file with "
+                     f"terminal_evidence true (a hand-written or other-instrument file cannot stand in for it)")
         for ref, fm in files:
             if fm.get("pillar", pid) != pid:
                 f.append(f"R3 {pid}: {ref} measures pillar {fm.get('pillar')}")
@@ -236,6 +277,9 @@ def check_measurement_scope(led: dict, res, only=None) -> list:
             elif fm.get("terminal_evidence") is not True:
                 f.append(f"R3 {pid}: {ref} is not terminal evidence: "
                          f"{fm.get('terminal_evidence_reason') or 'terminal_evidence is not true'}")
+            else:
+                for why in terminal_claim_problems(pid, fm):
+                    f.append(f"R3 {pid}: {ref} claims terminal_evidence true but {why}")
     return f
 
 
@@ -323,7 +367,10 @@ def selftest(verbose=True) -> bool:
         led_ = {"state": {pillar: {"evidence": [{"kind": "measurement", "ref": r, "sha256": "0" * 64} for r in refs]}}}
         return check_measurement_scope(led_, FakeText(table), only=[pillar])
 
-    prim = fm(pillar="E", evidence_role="primary", terminal_evidence=True, second_workload_valid=None)
+    good_kv = dict(instrument=KMEP_INSTRUMENT, pillar="E", denominator="KME-L", rule_denominators=["KME-L"],
+                   evidence_role="primary", terminal_evidence=True, population_match="exact", materiality=">= 3 %",
+                   second_workload_valid=None)
+    prim = fm(**good_kv)
     prim_false = fm(pillar="E", evidence_role="primary", terminal_evidence=False,
                     terminal_evidence_reason="primary file but not terminal: population_match=drifted")
     sec = fm(pillar="E", evidence_role="second_workload", terminal_evidence=False, second_workload_valid=True)
@@ -350,6 +397,41 @@ def selftest(verbose=True) -> bool:
     quoted = "---\ndenominator: \"KME-L\"\n---\n\nThe words evidence_role: smoke appear in this body sentence.\n"
     say(r3("E", {"q": quoted}, ["q"]) == [] and front_matter_fields(quoted) == {"denominator": "KME-L"},
         "V-ICP-R3-QUOTED-NOT-FIELD (body words are not front matter)")
+    # WR-04: a pillar D..I with a terminal needs a cited kme_pillars primary file, and a file's terminal claim must
+    # agree with its own fields.
+    def r3t(pillar, table, refs, terminal="RESEARCH_INSUFFICIENT_EVIDENCE"):
+        led_ = {"state": {pillar: {"terminal": terminal, "evidence": [
+            {"kind": "measurement", "ref": r, "sha256": "0" * 64} for r in refs]}}}
+        return check_measurement_scope(led_, FakeText(table), only=[pillar])
+
+    say(r3t("E", {"p": prim}, ["p"]) == [], "V-ICP-R3-TERMINAL-CLEAN (terminal + a consistent primary -> no failure)")
+    hand = ("---\ndenominator: \"KME-G\"\ncommand: \"python3 x --denominator KME-G\"\n---\n\n"
+            "KME-L KME-G CPP-D-W7 measured by hand.\n")
+    say(any("cites no kme_pillars primary" in x for x in r3t("E", {"h": hand}, ["h"])),
+        "V-ICP-R3-TERMINAL-HAND-WRITTEN-REFUSED (a hand-written KME-G md cannot stand in for KME-L)")
+    say(any("cites no kme_pillars primary" in x for x in r3t("E", {}, [])),
+        "V-ICP-R3-TERMINAL-NO-EVIDENCE-REFUSED")
+    contradictions = {
+        "denominator-KME-G": dict(good_kv, denominator="KME-G"),
+        "population-drifted": dict(good_kv, population_match="drifted"),
+        "verdict-UNMEASURED": dict(good_kv, materiality="UNMEASURED"),
+        "no-verdict": {k: v for k, v in good_kv.items() if k != "materiality"},
+        "rule-widened": dict(good_kv, rule_denominators=["KME-L", "KME-G"]),
+        "foreign-instrument": dict(good_kv, instrument="hand/edited.py"),
+        "referenced-on-E": dict(good_kv, population_match="referenced", denominator="CPP-D-W7",
+                                rule_denominators=["KME-L", "CPP-D-W7"], coverage=1.0),
+    }
+    for name, kv in contradictions.items():
+        got = r3t("E", {"c": fm(**kv)}, ["c"])
+        say(any("claims terminal_evidence true but" in x for x in got),
+            f"V-ICP-R3-MUT-{name} killed by R3 (terminal_evidence true contradicts its own fields)")
+    d_ref = dict(good_kv, pillar="D", denominator="CPP-D-W7", rule_denominators=["KME-L", "CPP-D-W7"],
+                 population_match="referenced", coverage=1.0)
+    say(r3t("D", {"w": fm(**d_ref)}, ["w"], "FALSIFIED_OR_REJECTED_BY_EVIDENCE") == [],
+        "V-ICP-R3-TERMINAL-DW7-REFERENCED-ACCEPTED (pillar D, CPP-D-W7 at coverage exactly 1)")
+    say(any("claims terminal_evidence true but" in x for x in r3t(
+        "D", {"w": fm(**dict(d_ref, coverage=1.5))}, ["w"], "FALSIFIED_OR_REJECTED_BY_EVIDENCE")),
+        "V-ICP-R3-TERMINAL-DW7-COVERAGE-REFUSED (coverage 1.5)")
     # WR-03: a kme_pillars file whose role fields are missing, damaged or hidden behind a BOM is refused, not skipped.
     kmep_fm = fm(instrument=KMEP_INSTRUMENT, pillar="E", denominator="KME-G", command="x")
     bom_smoke = "\ufeff" + fm(instrument=KMEP_INSTRUMENT, pillar="E", evidence_role="smoke", terminal_evidence=False)
@@ -371,7 +453,7 @@ def selftest(verbose=True) -> bool:
         real_led = {"state": {"D": {"terminal": "FALSIFIED_OR_REJECTED_BY_EVIDENCE", "evidence": [
             {"kind": "measurement", "ref": rel, "sha256": ce.lf_sha256(REPO / rel)}]}}}
         got = check_measurement_scope(real_led, ce.Resolver(), only=["D"])
-        say(len(got) == 1 and got[0].startswith("R3 D:"),
+        say(len(got) >= 1 and all(x.startswith("R3 D:") for x in got) and any("smoke" in x for x in got),
             f"V-ICP-R3-REAL (committed KME-G smoke file {rel} refused: {got[:1]})")
     else:
         ok = False
