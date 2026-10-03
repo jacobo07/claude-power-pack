@@ -276,10 +276,81 @@ def test_persistence_and_failopen() -> None:
         _fail("V-CAPRT-FAILOPEN", "absent directory did not fail open")
 
 
+# --- symbol-bearing names (ACV S5a, D1) ---------------------------------------
+def _old_hits(text: str, phrases) -> list:
+    """The pre-S5a matcher, kept here as the reference the identity test compares to."""
+    import re
+    t = (text or "").lower()
+    return [p for p in (str(x).strip().lower() for x in phrases or [])
+            if p and re.search(r"\b" + re.escape(p) + r"\b", t)]
+
+
+def _discovered_phrases() -> list:
+    """Every trigger / anti-trigger the shared matcher is fed in production, discovered from
+    its three real sources -- never a hand-picked list."""
+    from modules.capability_runtime import agent_spec as A
+    from modules.tower.families import load_families
+    out = []
+    for c in load_contracts(_PP_ROOT / "vault" / "capability_runtime" / "contracts"):
+        out += list(c.triggers) + list(c.anti_triggers)
+    specs, _ = A.catalog()
+    for s in specs:
+        out += list(s.contract.triggers) + list(s.contract.anti_triggers)
+    for f in load_families():
+        out += f.triggers + f.anti_triggers
+    return sorted({str(p).strip().lower() for p in out if str(p).strip()})
+
+
+def test_symbols() -> None:
+    import re
+    from modules.capability_runtime import applicability as AP
+    print("\n[applicability] symbol-bearing names (S5a D1)")
+    cases = [("review this C++ code", "c++"), ("fix the C# service", "c#"),
+             ("an F# script", "f#"), ("port it to .NET 8", ".net")]
+    got = {p: AP._hits(t, [p]) for t, p in cases}
+    (_ok("V-CAPRT-SYMBOL-HITS", f"{sorted(got)} all hit")
+     if all(got[p] == [p] for _, p in cases)
+     else _fail("V-CAPRT-SYMBOL-HITS", f"misses: {[p for p in got if got[p] != [p]]}"))
+
+    lex = [AP._hits("review this C++ code", ["cpp"]), AP._hits("use cpp here", ["c++"]),
+           AP._hits("a c# api", ["csharp"]), AP._hits("dotnet build", [".net"])]
+    (_ok("V-CAPRT-SYMBOL-LEXICON", "c++~cpp, c#~csharp, .net~dotnet; original phrase returned")
+     if lex == [["cpp"], ["c++"], ["csharp"], [".net"]]
+     else _fail("V-CAPRT-SYMBOL-LEXICON", f"got {lex}"))
+
+    keep = {"example.network": ("network", True), "asp.net core": ("asp.net", True),
+            "c++11 features": ("cpp", False), "the network layer": ("dotnet", False)}
+    bad = [t for t, (p, want) in keep.items() if bool(AP._hits(t, [p])) is not want]
+    texts = ["example.network", "asp.net", "c++11", "C++", "C# and .NET", "cpp csharp"]
+    once = [AP.canonical_text(x) for x in texts]
+    idem = once == [AP.canonical_text(x) for x in once]
+    (_ok("V-CAPRT-SYMBOL-NO-CORRUPTION", f"ordinary text intact, canonical_text idempotent: {once}")
+     if not bad and idem and once[0] == "example.network" and once[1] == "asp.net"
+     else _fail("V-CAPRT-SYMBOL-NO-CORRUPTION", f"bad={bad} idempotent={idem} canon={once}"))
+
+    phrases = _discovered_phrases()
+    word_edged = [p for p in phrases if re.match(r"\w", p) and re.search(r"\w$", p)
+                  and AP.canonical_text(p) == p]
+    diffs = []
+    for p in word_edged:
+        for t in (p, f"x {p} y", f"{p}s", f"pre{p}", f"({p})", f"{p}.", f"a-{p}-b", "unrelated"):
+            if AP._hits(t, [p]) != _old_hits(t, [p]):
+                diffs.append((p, t))
+    control = AP._hits("use c++ here", ["c++"]) != _old_hits("use c++ here", ["c++"])
+    floor = 40
+    if len(word_edged) >= floor and not diffs and control:
+        _ok("V-CAPRT-HITS-IDENTITY",
+            f"{len(word_edged)} discovered word-edged phrases x 8 texts identical to the old "
+            f"matcher (of {len(phrases)} discovered); symbol control differs as it must")
+    else:
+        _fail("V-CAPRT-HITS-IDENTITY",
+              f"phrases={len(word_edged)} (floor {floor}) diffs={diffs[:5]} control={control}")
+
+
 def main() -> int:
     print("capability_runtime V-gates")
     for fn in (test_contract_rules, test_gates, test_scoring, test_stack,
-               test_derivatives, test_persistence_and_failopen):
+               test_derivatives, test_persistence_and_failopen, test_symbols):
         fn()
     total = _passes + _fails
     print(f"\nCAPABILITY_RUNTIME_PASS={_passes}/{total}  threshold={total}/{total}")

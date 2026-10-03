@@ -44,7 +44,7 @@ if str(_PP_ROOT) not in sys.path:
 
 from modules.capability_runtime import agent_spec as A  # noqa: E402
 from modules.capability_runtime.applicability import (  # noqa: E402
-    MissionContext, Verdict, evaluate,
+    MissionContext, Verdict, canonical_text, evaluate,
 )
 
 CACHE = Path.home() / ".claude" / "state" / "agent_resolver_cache.json"
@@ -56,7 +56,8 @@ _STOP = frozenset("a an the and or of to in on for with is are be this that it a
 
 
 def _tokens(text: str) -> list[str]:
-    return [t for t in _TOK.findall((text or "").lower()) if t not in _STOP and len(t) > 1]
+    # canonical_text first: [a-z0-9]+ alone turned "C++" into "c" and then dropped it (S5a D1).
+    return [t for t in _TOK.findall(canonical_text(text).lower()) if t not in _STOP and len(t) > 1]
 
 
 def _stem(t: str) -> str:

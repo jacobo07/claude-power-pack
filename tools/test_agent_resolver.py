@@ -120,6 +120,13 @@ def main() -> int:
             code = e.code
         check("V-RES-BAD-GRANT-TYPED", code == "UNKNOWN_CLASS", code)
 
+    # Symbol-bearing names (S5a D1), on the REAL catalog: measured 2026-10-03, "C++" tokenised
+    # to nothing and this request resolved to no specialist while "cpp" reached cpp-reviewer.
+    toks = [R._tokens(x) for x in ("C++", "C#", "F#", "review this C++ code")]
+    check("V-RES-SYMBOL-TOKENS", toks == [["cpp"], ["csharp"], ["fsharp"], ["review", "cpp", "code"]], toks)
+    r = R.resolve("review this C++ code for memory bugs", use_cache=False)
+    check("V-RES-SYMBOL-ROUTES", top(r)[:1] == ["cpp-reviewer"], f"{r['status']} {top(r)}")
+
     print(f"AGENT_RESOLVER_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
