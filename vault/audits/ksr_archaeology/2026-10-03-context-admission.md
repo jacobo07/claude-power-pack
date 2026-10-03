@@ -1,7 +1,7 @@
 ---
 plan: PLAN-KSR-EPOCH-REHYDRATION s12 (B + C), Owner-approved 2026-10-03
 instrumentation: scripts/ctx_admission.py, scripts/ctx_dead.py, scripts/ctx_manifest.json (commit 99d76964, frozen before measurement)
-result_sha256: 117d042cf17a0702b6aad50c9b67eab964ad58aaede3c6f09d88f36ca10d9471 (ctx_dead_out.json)
+result_sha256: 117d042cf17a0702b6aad50c9b67eab964ad58aaede3c6f09d88f36ca10d9471 (ctx_dead_out.json; hash of the LF content = the git blob, `git show HEAD:<path> | sha256`. A CRLF autocrlf checkout hashes differently (13df7bce...). Reproduced 2026-10-03 by a fresh `ctx_dead.py --measure`, printed sha256 identical)
 decision: TOOL-I/O FIREWALL NOT EARNED; LIFETIME (dead carriage) is the material horizontal lever -> OWNER_EXISTS_ELSEWHERE
 status: EXPERIMENTAL (findings); nothing built
 ---
