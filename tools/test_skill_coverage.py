@@ -374,7 +374,12 @@ def c_criticality_rule(planes):
             bad.append(f"{plane}/{name}: {r and r['criticality']!r} want {want!r}")
         else:
             out.append(f"{plane}/{name} = {want} [{'; '.join(r['criticality_evidence'])}]")
-    if "rule_stub" not in " ".join(by_skill(live_plane(planes))["destructive-state-authorization"]["criticality_evidence"]):
+    lp = live_plane(planes)
+    dsa = by_skill(lp).get("destructive-state-authorization") if lp else None
+    if dsa is None:
+        bad.append("gex44 plane or its destructive-state-authorization row is absent (review IN-04: a FAIL line, "
+                   "not a KeyError)")
+    elif "rule_stub" not in " ".join(dsa["criticality_evidence"]):
         bad.append("gex44 destructive-state-authorization is not high via rule_stub")
     empty = next((r for r in planes[0]["rows"] if not r["criticality_evidence"]), None)
     if empty is None or empty["criticality"] != "low":

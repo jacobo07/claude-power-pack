@@ -393,7 +393,8 @@ def evidence_bytes(repo=REPO):
 
 
 def evidence_current(raw: bytes, rendered: str):
-    """(ok, diagnostic). Compared after CRLF->LF: the laptop checkout hands the committed file back CRLF."""
+    """True when the bytes equal the render. Compared after CRLF->LF: the laptop checkout hands the committed file
+    back CRLF."""
     return smd.lf_bytes(raw) == rendered.encode("utf-8")
 
 
