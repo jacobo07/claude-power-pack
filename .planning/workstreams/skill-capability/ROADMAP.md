@@ -61,7 +61,7 @@ result. UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is n
 
 - [x] **Phase 1: Card precision** - pillar A (completed 2026-10-03)
 - [x] **Phase 2: Listing floor** - pillar B (completed 2026-10-03)
-- [ ] **Phase 3: Opportunity and delivery measurement** - pillar C
+- [x] **Phase 3: Opportunity and delivery measurement** - pillar C (completed 2026-10-03)
 - [ ] **Phase 4: Coverage, criticality and freshness** - pillars D, H
 - [ ] **Phase 5: Representation operations** - pillar F
 - [ ] **Phase 6: Compile-out lineage** - pillar G
@@ -111,13 +111,13 @@ Plans:
 **Requirements**: SC-C
 **Success Criteria**: the gate is driven red once; n is reported per rate; `--pillar C` PASS.
 
-**Plans:** 3 plans (waves 1 -> 2 -> 3, sequential: shared `tools/test_skill_delivery.py` / `evidence/C-delivery.md`)
+**Plans:** 3/3 plans complete
 
 Plans:
 
-- [ ] 03-01-PLAN.md -- D-01/D-03 gate `tools/test_skill_delivery.py` over committed fixture window F, owner row-time bounds in `tools/skill_invocations.py`, mutant drills, subprocess red run, rendered prg `evidence/C-delivery.md`
-- [ ] 03-02-PLAN.md -- D-02 windows: L = pinned laptop pack (selection-bound recall, invocation UNMEASURED), G = `--measure-live` recorded on gex44 into `evidence/C-window-G.json` (`--compare` reproduces it), V-SD-PLANES
-- [ ] 03-03-PLAN.md -- D-04 closure: state.C IMPLEMENTED_AND_VERIFIED, one `[C]` owner-bundle line, `--pillar C` PASS, A and B stay PASS
+- [x] 03-01-PLAN.md -- D-01/D-03 gate `tools/test_skill_delivery.py` over committed fixture window F, owner row-time bounds in `tools/skill_invocations.py`, mutant drills, subprocess red run, rendered prg `evidence/C-delivery.md`
+- [x] 03-02-PLAN.md -- D-02 windows: L = pinned laptop pack (selection-bound recall, invocation UNMEASURED), G = `--measure-live` recorded on gex44 into `evidence/C-window-G.json` (`--compare` reproduces it), V-SD-PLANES
+- [x] 03-03-PLAN.md -- D-04 closure: state.C IMPLEMENTED_AND_VERIFIED, one `[C]` owner-bundle line, `--pillar C` PASS, A and B stay PASS
 
 ### Phase 4: Coverage, criticality and freshness
 
@@ -165,7 +165,7 @@ settings; `python tools/test_skill_capability_program.py --final` exits 0, outpu
 |-------|----------------|--------|-----------|
 | 1. Card precision | 3/3 | Complete    | 2026-10-03 |
 | 2. Listing floor | 2/2 | Complete    | 2026-10-03 |
-| 3. Opportunity and delivery measurement | 0/0 | Not started | - |
+| 3. Opportunity and delivery measurement | 3/3 | Complete    | 2026-10-03 |
 | 4. Coverage, criticality and freshness | 0/0 | Not started | - |
 | 5. Representation operations | 0/0 | Not started | - |
 | 6. Compile-out lineage | 0/0 | Not started | - |

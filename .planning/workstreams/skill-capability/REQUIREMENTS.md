@@ -10,7 +10,7 @@ Mission terms: skill-capability, card-precision, skill-delivery, skill-listing, 
 
 - [x] **SC-A**: Card precision + C8 maturity -- mtime-window provenance; the 5 live false denies replay as allowed, a pre-session foreign hunk stays denied; `git exit 128` x6 root-caused.
 - [x] **SC-B**: Listing floor + plugin gateway + economics -- any third hypothesis measured against D-LISTING in a fresh session.
-- [ ] **SC-C**: Opportunity / delivery / recall / precision -- one gate over a named transcript window, n reported.
+- [x] **SC-C**: Opportunity / delivery / recall / precision -- one gate over a named transcript window, n reported.
 - [ ] **SC-D**: Coverage + criticality -- every installed skill classified from a discovered sweep.
 - [ ] **SC-E**: Contribution + result consumption -- paired benchmark inside the <= 10 session budget, or the measured reason it cannot separate.
 - [ ] **SC-F**: Disclosure / fission / fusion / inline / dedup -- each operation with before/after D-LISTING and a recall check.
@@ -35,7 +35,7 @@ Mission terms: skill-capability, card-precision, skill-delivery, skill-listing, 
 |-------------|-------|--------|
 | SC-A | Phase 1 | Complete |
 | SC-B | Phase 2 | Complete |
-| SC-C | Phase 3 | Pending |
+| SC-C | Phase 3 | Complete |
 | SC-D | Phase 4 | Pending |
 | SC-H | Phase 4 | Pending |
 | SC-F | Phase 5 | Pending |
