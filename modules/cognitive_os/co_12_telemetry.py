@@ -427,6 +427,15 @@ def main(argv=None) -> int:
                       f"{ar['unparseable_lines']} unparseable signal lines not counted")
                 for miss, c in sorted(ar["by_miss"].items()):
                     print(f"  {miss}: {c['fresh']} fresh, {c['cached']} cached")
+                ru = ar.get("runs") or {}
+                # Resources consumed, not value: consumption and outcome joins do not exist yet.
+                print(f"agent-runs: {ru.get('runs', 0)} runs ({ru.get('linked', 0)} linked to a resolution, "
+                      f"{ru.get('unlinked', 0)} unlinked, {ru.get('dangling', 0)} dangling); usage "
+                      f"{ru.get('usage_state', {})}; carrier share {ru.get('carrier_share', {})}; "
+                      f"by purpose {ru.get('by_purpose', {})}; executor {ru.get('by_executor_status', {})}; "
+                      f"{ru.get('resolutions_with_zero_runs', 0)} resolutions with zero runs")
+                for mdl, toks in sorted((ru.get("measured_tokens") or {}).items()):
+                    print(f"  {mdl}: {toks} ({ru.get('measured_tokens_scope')})")
     return 0
 
 

@@ -164,7 +164,8 @@ def cmd_run(bench: Path, out_dir: Path, model: str) -> int:
                 print(f"skip {dest.name} (already MEASURED)", flush=True)
                 continue
             t0 = time.time()
-            rec = R.run(SPEC_ID, mission_for(f, bench), arm, model, "haiku", 900, A.current_state_version(ROOT))
+            rec = R.run(SPEC_ID, mission_for(f, bench), arm, model, "haiku", 900, A.current_state_version(ROOT),
+                        purpose="benchmark")      # ACV C6: real runs, real tokens, tagged as an experiment
             rec.update({"fixture": f, "arm": arm, "finished": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
             dest.write_text(json.dumps(rec, indent=1), encoding="utf-8")   # durable as it goes
             print(f"{dest.name}: {rec.get('status')} {round(time.time() - t0)}s "

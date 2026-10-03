@@ -20,6 +20,7 @@ count of resolver answers, not of capabilities anyone needs: that needs run outc
 """
 from __future__ import annotations
 
+import json
 import sys
 import uuid
 from pathlib import Path
@@ -92,6 +93,132 @@ def resolve_and_record(task: str, max_class: str = "verifier", k: int = 3,
     return Recorded(result, recorded, rid)
 
 
+# --------------------------------------------------------------------------- #
+# Run accounting (ACV C6): one terminal `agent_run` signal per executed run.
+# --------------------------------------------------------------------------- #
+RUN_KIND = "agent_run"
+# Token fields copied verbatim from the executor's result.modelUsage. Price, context window and
+# provider are left out on purpose: C6 accounts resources, pricing is downstream.
+USAGE_FIELDS = ("inputTokens", "outputTokens", "cacheReadInputTokens", "cacheCreationInputTokens",
+                "thinkingTokens", "webSearchRequests")
+CORE_USAGE = USAGE_FIELDS[:4]
+
+
+def _int(v) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def usage_from_result(result: dict | None) -> tuple[str, dict]:
+    """(usage_state, per-model token fields) from ONE executor result event.
+
+    MEASURED: every model entry carries the four core token counts. PARTIAL: modelUsage is there
+    but an entry lacks one -- the missing field stays missing. UNMEASURED: no result event, or no
+    or empty modelUsage. Nothing is zero-filled, estimated or summed into a new total."""
+    mu = (result or {}).get("modelUsage")
+    if not isinstance(mu, dict) or not mu:
+        return "UNMEASURED", {}
+    usage, partial = {}, False
+    for model, u in mu.items():
+        row = {f: u[f] for f in USAGE_FIELDS if isinstance(u, dict) and _int(u.get(f))}
+        partial = partial or any(f not in row for f in CORE_USAGE)
+        usage[str(model)] = row
+    return ("PARTIAL" if partial else "MEASURED"), usage
+
+
+def usage_from_results(results: list) -> tuple[str, dict, str | None]:
+    """The run's usage from ALL its result events (real streams carry two: same session, same
+    session-cumulative modelUsage, different per-turn fields). The last one is used; if the
+    events disagree on session or modelUsage the total is not trustworthy -> PARTIAL."""
+    if not results:
+        return "UNMEASURED", {}, "no_result_event"
+    state, usage = usage_from_result(results[-1])
+    if len({json.dumps((r.get("session_id"), r.get("modelUsage")), sort_keys=True) for r in results}) > 1:
+        return ("PARTIAL" if usage else "UNMEASURED"), usage, "result_events_disagree"
+    return state, usage, None
+
+
+def carrier_share(usage: dict, models_observed: dict) -> str:
+    """Whether the carrier's own usage can be read off the per-model totals. modelUsage covers the
+    whole session (parent + carrier), so only a carrier on a model the parent never used is
+    SEPARABLE. Models are the OBSERVED message.model ids, never a configured alias."""
+    parent = set(models_observed.get("parent") or [])
+    carrier = set(models_observed.get("carrier") or [])
+    if not carrier:
+        return "UNKNOWN"
+    if parent & carrier:
+        return "UNSEPARABLE"
+    return "SEPARABLE" if carrier <= set(usage) else "UNKNOWN"
+
+
+def run_payload(*, resolution_id, run_id, run_id_source, spec, spec_hash, permission_class, carrier,
+                purpose, executor_status, executor_error, harness_status, results, models_observed,
+                carrier_model_configured, seconds) -> dict:
+    state, usage, reason = usage_from_results(results)
+    payload = {
+        "schema": SCHEMA, "resolution_id": resolution_id, "run_id": run_id, "run_id_source": run_id_source,
+        "spec": spec, "spec_hash": spec_hash, "permission_class": permission_class, "carrier": carrier,
+        "purpose": purpose, "executor_status": executor_status, "executor_error": executor_error,
+        "harness_status": harness_status, "result_events": len(results), "usage_state": state,
+        "model_usage": usage, "carrier_share": carrier_share(usage, models_observed),
+        "models_observed": {k: sorted(v) for k, v in models_observed.items()},
+        "carrier_model_configured": carrier_model_configured, "seconds": seconds,
+    }
+    if reason:
+        payload["usage_reason"] = reason
+    return payload
+
+
+def record_run(payload: dict, *, sink: Callable[[str, dict], bool] | None = None) -> bool:
+    """One agent_run signal. Fail-open: False on any failure, never raises, never changes the run.
+    sink None -> CO-12 record_signal looked up at call time (a test guard intercepts it)."""
+    try:
+        if RESERVED & payload.keys():
+            return False
+        write = sink if sink is not None else CO12.record_signal
+        return write(RUN_KIND, payload) is True
+    except Exception:  # noqa: BLE001 -- accounting never breaks the run it describes
+        return False
+
+
+def _run_metrics(sigs: list, resolutions: list) -> dict:
+    """Run accounting, derived from the signals. Token sums cover MEASURED runs only, per model and
+    category, and say so; PARTIAL and UNMEASURED runs are counted, never zero-filled. These are
+    resources consumed, not value: consumption and outcome joins do not exist yet (C7)."""
+    runs = [s for s in sigs if isinstance(s, dict) and s.get("kind") == RUN_KIND and s.get("schema") == SCHEMA]
+    res_cache = {r.get("resolution_id"): r.get("cache") for r in resolutions if r.get("schema") == SCHEMA}
+    count = lambda xs: {k: xs.count(k) for k in sorted(set(xs), key=str)}  # noqa: E731
+    linked = [r for r in runs if r.get("resolution_id") in res_cache]
+    tokens: dict = {}
+    for r in runs:
+        if r.get("usage_state") != "MEASURED":
+            continue
+        for model, row in (r.get("model_usage") or {}).items():
+            slot = tokens.setdefault(model, {})
+            for f, v in row.items():
+                if _int(v):
+                    slot[f] = slot.get(f, 0) + v
+    per_res: dict = {}
+    for r in linked:
+        per_res[r["resolution_id"]] = per_res.get(r["resolution_id"], 0) + 1
+    return {
+        "runs": len(runs),
+        "distinct_run_ids": len({r.get("run_id") for r in runs if r.get("run_id")}),
+        "linked": len(linked),
+        "unlinked": sum(1 for r in runs if r.get("resolution_id") is None),
+        "dangling": sum(1 for r in runs if r.get("resolution_id") is not None and r.get("resolution_id") not in res_cache),
+        "by_purpose": count([r.get("purpose") for r in runs]),
+        "by_executor_status": count([f"{r.get('executor_status')}{'+is_error' if r.get('executor_error') else ''}"
+                                     for r in runs]),
+        "usage_state": count([r.get("usage_state") for r in runs]),
+        "carrier_share": count([r.get("carrier_share") for r in runs]),
+        "measured_tokens": tokens,
+        "measured_tokens_scope": "sum over MEASURED runs only",
+        "linked_by_resolution_cache": count([res_cache[r["resolution_id"]] for r in linked]),
+        "resolutions_with_zero_runs": sum(1 for rid in res_cache if rid not in per_res),
+        "max_runs_per_resolution": max(per_res.values(), default=0),
+    }
+
+
 def agent_metrics(*, state_dir=None) -> dict:
     """Resolver telemetry, derived from CO-12 signals. UNREADABLE is not EMPTY: an unreadable
     signals file reports measured=False and no numbers at all."""
@@ -130,4 +257,4 @@ def agent_metrics(*, state_dir=None) -> dict:
             "cache_unknown": cache_unknown, "by_miss": by_miss,
             "distinct_fresh_observations": len(observations),
             "distinct_query_fp": len(qfps), "schemas_seen": schemas,
-            "unparseable_lines": unparseable}
+            "unparseable_lines": unparseable, "runs": _run_metrics(sigs, rows)}
