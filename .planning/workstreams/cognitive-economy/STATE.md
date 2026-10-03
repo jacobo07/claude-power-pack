@@ -47,6 +47,13 @@ turn-advancement, compile-out, baseline-ratchet. Waste less intelligence, never 
 - [Plan s10]: The mission runs in the main checkout (own-branch worktree rejected: the live `ucep` mission is held
   on "cwd not aligned with work_dir (diverged)").
 - [Plan s7]: Owner items are batched into `vault/programs/cognitive-economy/owner-bundle.md`; never asked mid-run.
+- [Epoch 2, 2026-10-03]: the run continues in worktree `.claude/worktrees/cognitive-economy`, branch
+  `cognitive-economy/autonomous-run` (the predecessor moved there; the repository wins over the s10 note). Safe:
+  isolated branch, nothing pushed, reversible.
+- [Epoch 2]: K closed FALSIFIED_OR_REJECTED_BY_EVIDENCE (largest dead class 2.67 % < 3 %), `--pillar K` PASS.
+- [Epoch 2]: turns.py -- a repo whose `git log` fails or times out labels its edits `edit_unknown` (UNSETTLED), not
+  `edit_uncommitted`; the old 60 s timeout silently turned every edit in a large repo into non-convergence.
+  Repo tops found in-process (nearest `.git`); root_progress fed by in-process monkeypatch, file untouched.
 
 ## Session Continuity
 

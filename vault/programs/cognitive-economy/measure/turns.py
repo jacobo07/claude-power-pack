@@ -14,6 +14,7 @@ Features of a call (observable state only):
                edit_committed   Write/Edit/MultiEdit/NotebookEdit on a file a commit in the file's
                                 repo touched within [call - 300 s, call + 24 h] (any branch)
                edit_uncommitted the same, in a git repo, no such commit
+               edit_unknown     the same, but the repo's `git log` failed: no class claims it (UNSETTLED)
                edit_bookkeeping edit of a record file (BOOKKEEPING_PATH), in or out of a repo
                edit_outside     edit of a file outside any git repo, not a record file
                test             shell command that runs a test or gate (TEST_CMD | GATE_CMD)
@@ -56,6 +57,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import random
 import re
 import sqlite3
@@ -185,7 +187,8 @@ def scan_file(path: str, wanted: set) -> dict:
                     seen.clear()
                     f["reps"].append(False)
                 else:
-                    k2 = name + json.dumps(inp, sort_keys=True, default=str)
+                    k2 = hashlib.sha1((str(name) + json.dumps(inp, sort_keys=True, default=str))
+                                      .encode("utf-8", "replace")).digest()
                     f["reps"].append(k2 in seen)
                     seen.add(k2)
                 if epath and o.get("cwd") and not Path(epath).is_absolute():
@@ -201,41 +204,149 @@ def ts_of(v):
         return None
 
 
+_TOP_CACHE: dict = {}
+
+
+def find_top(d: str):
+    """The repo top of directory `d`, found in-process: the nearest ancestor holding a `.git`
+    entry (a directory, or a file for worktrees and submodules) -- what `git rev-parse
+    --show-toplevel` answers for a normal tree, without one subprocess per directory. Every
+    directory on the walk is cached, so siblings and children cost one dict lookup."""
+    walked = []
+    p = Path(d)
+    top = None
+    while True:
+        key = str(p)
+        if key in _TOP_CACHE:
+            top = _TOP_CACHE[key]
+            break
+        walked.append(key)
+        try:
+            if (p / ".git").exists():
+                top = p
+                break
+        except OSError:
+            pass
+        if p.parent == p:
+            break
+        p = p.parent
+    for key in walked:
+        _TOP_CACHE[key] = top
+    return top
+
+
 class Commits:
-    """Commit join: is a path touched by a commit of its repo within [t - GRACE, t + LATER]?"""
+    """Commit join: is a path touched by a commit of its repo within [t - GRACE, t + LATER]?
+    One `git log` per repo over the whole window, indexed path -> sorted commit times."""
 
     def __init__(self):
         import root_progress as rp
         self.rp = rp
-        self.dir_top: dict = {}
-        self.repo_commits: dict = {}
+        self.repo_commits: dict = {}   # norm(top) -> raw commit list (also fed to root_progress)
+        self.repo_index: dict = {}     # norm(top) -> {norm(path): sorted [ct]}
+        self.failed: dict = {}         # norm(top) -> why its log could not be read
+        self.raw_by_store: dict = {}   # git common dir -> [(sha, ct, [relative paths])] or None
 
-    def top(self, d: str):
-        if d not in self.dir_top:
-            self.dir_top[d] = self.rp.repo_top(d) if Path(d).is_dir() else None
-        return self.dir_top[d]
+    @staticmethod
+    def common_dir(top: Path) -> str:
+        """The object store a work tree shares with its siblings: `.git` itself, or for a linked
+        worktree the `commondir` of the gitdir its `.git` file names. `--all` answers the same
+        commits for every worktree of one store, so the log is fetched once per store."""
+        dotgit = top / ".git"
+        try:
+            if dotgit.is_file():
+                gd = Path(dotgit.read_text(encoding="utf-8", errors="replace").split("gitdir:", 1)[1].strip())
+                gd = gd if gd.is_absolute() else (top / gd)
+                cd = gd / "commondir"
+                if cd.is_file():
+                    c = Path(cd.read_text(encoding="utf-8").strip())
+                    gd = c if c.is_absolute() else gd / c
+                return os.path.normcase(os.path.normpath(str(gd.resolve())))
+        except (OSError, IndexError):
+            pass
+        return os.path.normcase(os.path.normpath(str(dotgit)))
+
+    def git_log(self, top: Path, since: float, until: float):
+        """root_progress._commits' query and parsing, with three differences that matter for a
+        measurement: a 600 s timeout (`--all --name-only` on a ~10k-ref repo exceeds the original
+        60 s), a non-zero exit is a FAILURE (None) rather than an empty history, and the log is
+        fetched once per object store (`--no-renames`: a rename lists both paths, a superset for
+        "touched")."""
+        def iso(t):
+            return datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        store = self.common_dir(top)
+        if store not in self.raw_by_store:
+            t0 = datetime.now().timestamp()
+            try:
+                r = subprocess.run([self.rp.GIT, "-C", str(top), "log", "--all", "--no-renames",
+                                    f"--since={iso(since)}", f"--until={iso(until)}", "--name-only",
+                                    "--format=%x00%H %ct"], capture_output=True, text=True, encoding="utf-8",
+                                   errors="replace", timeout=600)
+                rc, why = r.returncode, f"rc {r.returncode}"
+            except (OSError, subprocess.SubprocessError) as exc:
+                r, rc, why = None, -1, type(exc).__name__
+            print(f"[git] {top} store={store} rc={rc} {datetime.now().timestamp() - t0:.0f}s",
+                  file=sys.stderr, flush=True)
+            raw = None
+            if rc == 0:
+                raw = []
+                for block in r.stdout.split("\x00")[1:]:
+                    lines = [x for x in block.splitlines() if x.strip()]
+                    if lines:
+                        sha, ct = lines[0].split()
+                        raw.append((sha, float(ct), lines[1:]))
+            else:
+                self.failed[store] = why
+            self.raw_by_store[store] = raw
+        raw = self.raw_by_store[store]
+        if raw is None:
+            return None
+        return [(sha, ct, {self.rp._norm(top / f) for f in fs}) for sha, ct, fs in raw]
 
     def commits(self, top: Path):
         key = self.rp._norm(top)
         if key not in self.repo_commits:
-            try:
-                self.repo_commits[key] = self.rp._commits(top, W_START - GRACE_S, W_END + LATER_S)
-            except (OSError, subprocess.SubprocessError):
-                self.repo_commits[key] = None
+            cs = self.git_log(Path(top), W_START - GRACE_S - 7 * 86400, W_END + LATER_S)
+            self.repo_commits[key] = cs
+            if cs is not None:
+                idx = defaultdict(list)
+                for _sha, ct, ch in cs:
+                    for n in ch:
+                        idx[n].append(ct)
+                self.repo_index[key] = {n: sorted(v) for n, v in idx.items()}
         return self.repo_commits[key]
 
     def status(self, path: str, t: float) -> str:
+        from bisect import bisect_left
         if BOOKKEEPING_PATH.search(path or ""):
             return "edit_bookkeeping"
-        top = self.top(str(Path(path).parent))
+        top = find_top(str(Path(path).parent))
         if top is None:
             return "edit_outside"
-        cs = self.commits(top)
-        if cs is None:
+        if self.commits(top) is None:
+            return "edit_unknown"      # the repo's log could not be read: UNSETTLED, never non-convergent
+        times = self.repo_index[self.rp._norm(top)].get(self.rp._norm(path))
+        if not times:
             return "edit_uncommitted"
-        n = self.rp._norm(path)
-        return "edit_committed" if any(t - GRACE_S <= ct <= t + LATER_S and n in ch for _, ct, ch in cs) \
-            else "edit_uncommitted"
+        i = bisect_left(times, t - GRACE_S)
+        return "edit_committed" if i < len(times) and times[i] <= t + LATER_S else "edit_uncommitted"
+
+    def patch_root_progress(self):
+        """Hand root_progress (imported, never edited) the same in-process repo discovery and the
+        already-fetched commit logs, filtered to its span; a span outside the cached range falls
+        back to its own `git log`."""
+        rp, orig = self.rp, self.rp._commits
+        lo, hi = W_START - GRACE_S - 7 * 86400, W_END + LATER_S
+
+        def commits(top, since, until):
+            if since >= lo and until <= hi:
+                cs = self.commits(Path(top))
+                if cs is not None:
+                    return [c for c in cs if since <= c[1] <= until]
+            return orig(top, since, until)
+
+        rp.repo_top = lambda cwd: find_top(str(cwd)) if Path(str(cwd)).is_dir() else None
+        rp._commits = commits
 
 
 def extract() -> tuple[list[dict], dict]:
@@ -250,9 +361,15 @@ def extract() -> tuple[list[dict], dict]:
     by_file = defaultdict(list)
     for r in rows:
         by_file[r[1]].append(r)
+    del rows
     commits = Commits()
+    commits.patch_root_progress()
     feats, missing = [], 0
-    for fp, rs in by_file.items():
+    t0 = datetime.now().timestamp()
+    for i, (fp, rs) in enumerate(by_file.items()):
+        if i % 200 == 0:
+            print(f"[extract] {i}/{len(by_file)} files, {len(feats)} calls, "
+                  f"{datetime.now().timestamp() - t0:.0f}s", file=sys.stderr, flush=True)
         found = scan_file(fp, {r[0] for r in rs})
         root_pid = resolve(fp) if rs[0][3] else None
         for k, _f, ts, is_sub, pid, inp, cw, cr, out in rs:
@@ -274,7 +391,8 @@ def extract() -> tuple[list[dict], dict]:
                           "cats": sorted(set(cats)), "prev_error": g["prev_error"],
                           "repeat": bool(g["reps"]) and all(g["reps"]), "text_only": not g["tools"]})
     con.close()
-    return feats, {"files": len(by_file), "featureless": missing, "repos": len(commits.repo_commits)}
+    return feats, {"files": len(by_file), "featureless": missing, "repos": len(commits.repo_commits),
+                   "repos_log_failed": commits.failed}
 
 
 def aggregate(feats: list[dict]) -> dict:
