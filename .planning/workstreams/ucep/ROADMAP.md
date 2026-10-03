@@ -39,7 +39,7 @@ reusable maturity ratchets the baseline. UNKNOWN / UNJUDGED / DELEGATED / DEFERR
 
 ## Phases
 
-- [ ] **Phase 1: Baseline integrity repair** - the chain is green and ratchet/gate holes are closed before new authority is built
+- [x] **Phase 1: Baseline integrity repair** - the chain is green and ratchet/gate holes are closed before new authority is built (completed 2026-10-03)
 - [ ] **Phase 2: Capability subject and archetypes** - traits from repo structure (cached) + intent; archetype orthogonal to family
 - [ ] **Phase 3: Promotion admission and scope contract** - every entry added after the cutover carries an admission record
 - [ ] **Phase 4: Archetype maturity generations** - three archetype B0 generations on a second tower axis, admitted
@@ -69,7 +69,7 @@ reusable maturity ratchets the baseline. UNKNOWN / UNJUDGED / DELEGATED / DEFERR
      (nested axes included) with a population floor, not a hardcoded family tuple [G9].
   5. `python tools/test_baseline_generations.py` 16/16+, `test_tower_ratchet.py`, `test_tower_donegate.py`,
      `test_family_baselines.py` all PASS; B0 and web_surface B1 sha256 unchanged (recorded before/after).
-**Plans:** 5/5 plans executed
+**Plans:** 5/5 plans complete
 Plans:
 
 - [x] 01-01-PLAN.md — (wave 1) LF-pin baseline generations (tracer: V-TRAT-REAL-CHAINS green) + RED harness for H1/H2/H3b

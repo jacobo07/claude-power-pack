@@ -1,19 +1,18 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1
-status: executing
-last_updated: "2026-10-03T10:52:30.934Z"
+current_phase: 02 — Capability subject and archetypes
+status: planning
+last_updated: "2026-10-03T17:03:00.001Z"
 last_activity: 2026-10-03
-last_activity_desc: Phase 1 execution started
 progress:
   total_phases: 9
-  completed_phases: 0
-  total_plans: 5
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 10
+  completed_plans: 5
+  percent: 11
 workstream: ucep
 created: 2026-10-02
-current_phase_name: Baseline integrity repair
+current_phase_name: Capability subject and archetypes
 current_plan: Not started
 stopped_at: ULTRA-PLAN approved-pending; ready to plan Phase 1
 ---
@@ -22,9 +21,9 @@ stopped_at: ULTRA-PLAN approved-pending; ready to plan Phase 1
 
 ## Current Position
 
-**Status:** Executing Phase 1
-**Current Phase:** 1
-**Last Activity:** 2026-10-03 — Phase 1 execution started
+**Status:** Ready to plan
+**Current Phase:** 02 — Capability subject and archetypes
+**Last Activity:** 2026-10-03
 
 ## Session Continuity
 
