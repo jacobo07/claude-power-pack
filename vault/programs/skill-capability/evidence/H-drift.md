@@ -64,15 +64,7 @@ Drift found on this host is reported and never fixed here (no write under the ho
 
 Pairs are discovered: each deny card registered in `hooks/hook-dispatcher.js` names its skill, and the source is `skills/<skill>/SKILL.md`. The record pins the LF sha256 of both, read from committed blobs.
 
-- rule: Re-run `--record-cards` only after re-deriving each card from its current source; recording is the re-derivation act.
-- recorded_at_commit `0a2ab9eaafcfcd7f915d2d0908c53b240bbde2de`
-
-| skill | card | status at HEAD |
-|---|---|---|
-| concurrent-writers-shared-tree | hooks/doctrine_cards.js | CURRENT |
-| destructive-state-authorization | hooks/destructive_doctrine_card.js | CURRENT |
-
-Lineage fields inside a card (which source line each rule came from) belong to pillar G and are not recorded here; this record only makes a source change visible to a gate.
+Record unreadable (uncommitted: working-tree vault/programs/skill-capability/card_source_digests.json differs from HEAD (commit it, or restore it)).
 
 ## Commands
 
