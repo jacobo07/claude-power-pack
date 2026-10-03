@@ -439,6 +439,332 @@ def g_hook_correlated():
     return (not why), "; ".join(why) or "+1024 in the project-registered hook: exit 0, scope project; in the user-registered hook: exit 1, scope universal (universal_1k); CLI and in-process"
 
 
+def touch(path, text="x"):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def measure_floor(root, sizes, session="m"):
+    """Measure a freshly built floor (HOME pointed at the scratch home) -> the gate's measurement dict."""
+    path = build_floor(root, session, sizes).write()
+    with with_home(Path(root) / "home"):
+        return GATE.measure(str(path))
+
+
+def comp(m, layer, source):
+    """(scope, scope_basis) of one component, or None."""
+    for c in m["components"]:
+        if c["layer"] == layer and c["source"] == source:
+            return c["scope"], c.get("scope_basis")
+    return None
+
+
+def skill_sizes(named, filler=6000):
+    """Floor sizes whose skill listing holds the named entries [(name, description length)] then `filler` chars of generic ones."""
+    return {"skill_entries": [(n, "d" * k) for n, k in named] + listing_entries(filler, 50)}
+
+
+def g_hook_system_message():
+    why = []
+    u_text, p_text = "u" * 2000, "p" * 2000
+    for label, now_u, now_p, want_rc, want_scope in (
+            ("project hook message +1024", u_text, p_text + "q" * 1024, 0, "project"),
+            ("universal hook message +1024", u_text + "q" * 1024, p_text, 1, "universal")):
+        root = scratch("sysm")
+        U, P = hook_cmds(root)
+        sizes = lambda a, b: {"sysmsg": [(U, a), (P, b)], "hook_name": "SessionStart"}
+        rc, out, _ = attr_check(sizes(u_text, p_text), sizes(now_u, now_p), user_regs={"SessionStart": [U]},
+                                project_regs={"SessionStart": [P]}, root=root)
+        lay = find_lines(out, "LAYER hook_system_message:SessionStart:SessionStart ")
+        if rc != want_rc or len(lay) != 1 or f"scope={want_scope} " not in lay[0] or not lay[0].endswith("delta=+1024"):
+            why.append(f"{label}: rc={rc} layer={lay} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "systemMessage attributed through the producing command: project +1024 green, universal +1024 red"
+
+
+def g_hook_plugin():
+    root = scratch("plug")
+    cmd = "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd session-start"
+    sizes = lambda n: {"hookrows": [(cmd, "x" * n)], "hook_name": "SessionStart"}
+    m = measure_floor(root, sizes(2000))
+    got = comp(m, "hook_context:SessionStart:SessionStart", cmd)
+    rc, out, _ = attr_check(sizes(2000), sizes(3024))
+    risk = find_lines(out, "RISE hook_context:SessionStart:SessionStart scope=universal")
+    ok = got == ("universal", "plugin") and rc == 1 and len(risk) == 1
+    return ok, f"component={got} +1024: rc={rc} rise={risk}"
+
+
+def g_hook_event_fallback():
+    why = []
+    layer, src = "hook_context:UserPromptSubmit:UserPromptSubmit", "event:UserPromptSubmit"
+    U, P = "node user.js", "node project.js"
+    for label, user, proj, want in (("user only", {"UserPromptSubmit": [U]}, None, ("universal", "event_fallback")),
+                                    ("project only", None, {"UserPromptSubmit": [P]}, ("project", "event_fallback")),
+                                    ("both", {"UserPromptSubmit": [U]}, {"UserPromptSubmit": [P]}, ("unattributed", "ambiguous")),
+                                    ("user registers another event", {"SessionStart": [U]}, {"SessionStart": [P]},
+                                     ("universal", "event_fallback"))):
+        root = scratch("evfb")
+        if user is not None:
+            write_settings(root / "home", user)
+        if proj is not None:
+            write_settings(root / "repo", proj)
+        m = measure_floor(root, {"hook_event": "UserPromptSubmit", "hook_name": "UserPromptSubmit"})
+        got = comp(m, layer, src)
+        if got != want:
+            why.append(f"{label}: {got} want {want}")
+    sizes = lambda n: {"hook_event": "UserPromptSubmit", "hook_name": "UserPromptSubmit", "hook": n}
+    rc, out, _ = attr_check(sizes(2000), sizes(3024), project_regs={"UserPromptSubmit": [P]})
+    if rc != 0 or not find_lines(out, f"LAYER {layer} scope=project"):
+        why.append(f"project-only +1024: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "no producing row: project-only event -> project, user-only/neither -> universal, both -> unattributed"
+
+
+def g_hook_ambiguous():
+    why = []
+    layer = "hook_context:SessionStart:SessionStart"
+    root = scratch("amb")
+    C = f'node "{root}/shared.js"'
+    sizes = lambda n: {"hookrows": [(C, "c" * n)], "hook_name": "SessionStart"}
+    rc, out, _ = attr_check(sizes(2000), sizes(3024), user_regs={"SessionStart": [C]}, project_regs={"SessionStart": [C]},
+                            root=root)
+    risk = find_lines(out, f"RISE {layer} scope=unattributed")
+    if rc != 1 or len(risk) != 1:
+        why.append(f"one command in both settings +1024: rc={rc} rise={risk}")
+    root = scratch("amb")
+    X1, X2 = f'node "{root}/x1.js"', f'node "{root}/x2.js"'
+    sizes = lambda n: {"hookrows": [(X1, "t" * n), (X2, "t" * n)], "hook_name": "SessionStart"}
+    write_settings(root / "home", {"SessionStart": [X1, X2]})
+    m = measure_floor(root, sizes(1000))
+    got = comp(m, layer, "ambiguous:SessionStart")
+    if got != ("unattributed", "ambiguous"):
+        why.append(f"two commands, equal text: {got}")
+    return (not why), "; ".join(why) or "a command registered in both settings, and two commands producing equal text, are unattributed"
+
+
+def g_settings_unreadable():
+    why = []
+    layer = "hook_context:SessionStart:SessionStart"
+    for label, bad_where, bad_text in (("project settings not JSON", "project", "{not json"),
+                                       ("project settings a JSON list", "project", "[]"),
+                                       ("user settings not JSON", "user", "{nope")):
+        root = scratch("unr")
+        U, P = hook_cmds(root)
+        sizes = lambda a, b: {"hookrows": [(U, a), (P, b)], "hook_name": "SessionStart"}
+        user = {"SessionStart": [U]} if bad_where != "user" else bad_text
+        proj = {"SessionStart": [P]} if bad_where != "project" else bad_text
+        rc, out, _ = attr_check(sizes("u" * 2000, "p" * 2000), sizes("u" * 2000, "p" * 3024), user_regs=user,
+                                project_regs=proj, root=root)
+        m = measure_floor(root, sizes("u" * 2000, "p" * 2000))
+        got = comp(m, layer, P)
+        risk = find_lines(out, f"RISE {layer} scope=unattributed")
+        if rc != 1 or len(risk) != 1 or got != ("unattributed", "unknown_settings"):
+            why.append(f"{label}: rc={rc} rise={risk} component={got}")
+    root = scratch("unr")
+    U, P = hook_cmds(root)
+    sizes = lambda b: {"hookrows": [(U, "u" * 2000), (P, b)], "hook_name": "SessionStart"}
+    rc, out, _ = attr_check(sizes("p" * 2000), sizes("p" * 3024), user_regs={"SessionStart": [U]},
+                            project_regs={"SessionStart": [P]}, root=root)
+    if rc != 0:
+        why.append(f"control (readable settings, project hook +1024): rc={rc}")
+    return (not why), "; ".join(why) or "malformed or non-object settings -> unknown_settings, +1024 red; readable control green"
+
+
+def g_cwd_absent_unattributed():
+    """A transcript whose cwd is not a directory on this host (a laptop transcript read elsewhere) is never filed as project."""
+    why = []
+    layer = "hook_context:SessionStart:SessionStart"
+    sizes = lambda: {"hookrows": [(U, "u" * 2000), (P, "p" * 2000)], "hook_name": "SessionStart",
+                     "skill_entries": [("ps", "d" * 100), ("us", "d" * 100)] + listing_entries(6000, 50),
+                     "agents": [("pa", "agent"), ("ua", "agent")]}
+    for present in (True, False):
+        root = scratch("cwdabs")
+        U, P = hook_cmds(root)
+        write_settings(root / "home", {"SessionStart": [U], "UserPromptSubmit": [U]})
+        write_settings(root / "repo", {"SessionStart": [P]})
+        touch(root / "repo" / ".claude" / "skills" / "ps" / "SKILL.md")
+        touch(root / "home" / ".claude" / "skills" / "us" / "SKILL.md")
+        touch(root / "repo" / ".claude" / "agents" / "pa.md")
+        touch(root / "home" / ".claude" / "agents" / "ua.md")
+        path = build_floor(root, "m", {**sizes(), "hook_event": "SessionStart"}).write()
+        up = build_floor(root, "up", {"hook_event": "UserPromptSubmit", "hook_name": "UserPromptSubmit"}).write()
+        if not present:
+            shutil.rmtree(root / "repo")
+        with with_home(root / "home"):
+            m, mu = GATE.measure(str(path)), GATE.measure(str(up))
+        want = {
+            "hook P": (comp(m, layer, P), ("project", "project_settings") if present else ("unattributed", "not_on_this_host")),
+            "hook U": (comp(m, layer, U), ("universal", "user_settings") if present else ("unattributed", "not_on_this_host")),
+            "event fallback": (comp(mu, "hook_context:UserPromptSubmit:UserPromptSubmit", "event:UserPromptSubmit"),
+                               ("universal", "event_fallback") if present else ("unattributed", "not_on_this_host")),
+            "skill ps": (comp(m, "skill_listing", "ps"), ("project", "project_file") if present else ("unattributed", "not_on_this_host")),
+            "skill us": (comp(m, "skill_listing", "us"), ("universal", "install_file") if present else ("unattributed", "not_on_this_host")),
+            "agent pa": (comp(m, "other:agent_listing_delta", "pa"), ("project", "project_file") if present else ("unattributed", "not_on_this_host")),
+            "agent ua": (comp(m, "other:agent_listing_delta", "ua"), ("universal", "install_file") if present else ("unattributed", "not_on_this_host")),
+        }
+        for k, (got, w) in want.items():
+            if got != w:
+                why.append(f"cwd {'present' if present else 'absent'} {k}: {got} want {w}")
+    # the verdict: a +1,024 skill rise that is green as project with the cwd present is red without it
+    for present in (True, False):
+        root = scratch("cwdabs")
+        touch(root / "repo" / ".claude" / "skills" / "ps" / "SKILL.md")
+        ref, now = floor_pair(root, skill_sizes([("ps", 100)]), skill_sizes([("ps", 1124)]))
+        if not present:
+            shutil.rmtree(root / "repo")
+        ref_json = root / "ref.json"
+        with with_home(root / "home"):
+            rc0, out0, _ = run_main(["--write-reference", ref_json, "--transcript", ref])
+            rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", now])
+        if rc0 != 0 or rc != (0 if present else 1):
+            why.append(f"verdict cwd {'present' if present else 'absent'}: write={rc0} check={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "cwd present: hooks/skills/agents attributed; cwd absent: all unattributed (not_on_this_host), +1024 red"
+
+
+def g_skill_project():
+    root = scratch("skp")
+    touch(root / "repo" / ".claude" / "skills" / "ps" / "SKILL.md")
+    touch(root / "repo" / ".claude" / "commands" / "ns" / "rest.md")
+    named = lambda n: [("ps", n), ("ns:rest", 100)]
+    rc, out, _ = attr_check(skill_sizes(named(100)), skill_sizes(named(1124)), root=root)
+    lay = find_lines(out, "LAYER skill_listing ")
+    why = []
+    if rc != 0 or len(lay) != 1 or "scope=project" not in lay[0] or not lay[0].endswith("delta=+1024") or find_lines(out, "RISE"):
+        why.append(f"project skill +1024: rc={rc} layer={lay} last={last_line(out)!r}")
+    m = measure_floor(root, skill_sizes(named(100)))
+    got = comp(m, "skill_listing", "ns:rest")
+    if got != ("project", "project_file"):
+        why.append(f"ns:rest via commands/ns/rest.md: {got}")
+    return (not why), "; ".join(why) or "a skill under <cwd>/.claude/skills and a ns:rest command under <cwd>/.claude/commands/ns are project; +1024 green"
+
+
+def g_skill_universal():
+    root = scratch("sku")
+    touch(root / "home" / ".claude" / "skills" / "us" / "SKILL.md")
+    rc, out, _ = attr_check(skill_sizes([("us", 100)]), skill_sizes([("us", 1124)]), root=root)
+    risk = find_lines(out, "RISE skill_listing scope=universal delta=+1024")
+    ok = rc == 1 and len(risk) == 1 and "universal_1k" in risk[0]
+    return ok, f"rc={rc} rise={risk}"
+
+
+def g_skill_namespace():
+    why = []
+    root = scratch("skn")
+    touch(root / "home" / ".claude" / "commands" / "bmad" / "architecture.md")
+    touch(root / "home" / ".claude" / "commands" / "carl" / "tasks" / "add-rule.md")
+    touch(root / "repo" / ".claude" / "commands" / "both" / "x.md")
+    touch(root / "home" / ".claude" / "commands" / "both" / "x.md")
+    named = [("bmad:architecture", 50), ("carl:tasks:add-rule", 50), ("superpowers:brainstorming", 50),
+             ("both:x", 50), ("anthropic-skills:pdf", 50)]
+    m = measure_floor(root, skill_sizes(named))
+    for name, want in (("bmad:architecture", ("universal", "install_file")),
+                       ("carl:tasks:add-rule", ("universal", "install_file")),
+                       ("superpowers:brainstorming", ("universal", "plugin_namespace")),
+                       ("anthropic-skills:pdf", ("universal", "plugin_namespace")),
+                       ("both:x", ("unattributed", "ambiguous"))):
+        got = comp(m, "skill_listing", name)
+        if got != want:
+            why.append(f"{name}: {got} want {want}")
+    return (not why), "; ".join(why) or "ns:rest -> commands/ns/rest.md under the install is universal, an unfound plugin namespace is universal, both homes unattributed"
+
+
+def g_skill_builtin_unattributed():
+    why = []
+    root = scratch("skb")
+    touch(root / "repo" / ".claude" / "commands" / "osa.md")
+    touch(root / "home" / ".claude" / "commands" / "osa.md")
+    touch(root / "repo" / ".claude" / "escape" / "SKILL.md")      # <cwd>/.claude/skills/../escape/SKILL.md must NOT be reached
+    named = [("init", 50), ("osa", 50), ("../escape", 50)]
+    m = measure_floor(root, skill_sizes(named))
+    for name, want in (("init", ("unattributed", "no_file")), ("osa", ("unattributed", "ambiguous")),
+                       ("../escape", ("unattributed", "bad_name"))):
+        got = comp(m, "skill_listing", name)
+        if got != want:
+            why.append(f"{name}: {got} want {want}")
+    rc, out, _ = attr_check(skill_sizes([("init", 100)]), skill_sizes([("init", 1124)]))
+    if rc != 1 or not find_lines(out, "RISE skill_listing scope=unattributed delta=+1024"):
+        why.append(f"built-in +1024: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "a built-in, a name in both homes and a path-traversal name are unattributed; +1024 red"
+
+
+def g_listing_split_exact():
+    root = scratch("split")
+    touch(root / "repo" / ".claude" / "skills" / "ps" / "SKILL.md")
+    touch(root / "home" / ".claude" / "skills" / "us" / "SKILL.md")
+    tx = Tx(root, None, "split")
+    tx.user("x")
+    listing = "header text\n- ps: first\n  more\n- us: second\n- init: third\n- bmad:thing: fourth\n"
+    tx.attachment("skill_listing", content=listing, names=["ps", "us", "init", "bmad:thing"], skillCount=4, isInitial=True)
+    tx.assistant()
+    with with_home(root / "home"):
+        m = GATE.measure(str(tx.write()))
+    comps = [c for c in m["components"] if c["layer"] == "skill_listing"]
+    by = {c["source"]: (c["scope"], c["chars"]) for c in comps}
+    want = {"listing:header": ("unattributed", len("header text\n")),
+            "ps": ("project", len("- ps: first\n") + len("  more\n")), "us": ("universal", len("- us: second\n")),
+            "init": ("unattributed", len("- init: third\n")), "bmad:thing": ("universal", len("- bmad:thing: fourth\n"))}
+    why = []
+    if by != want:
+        why.append(f"entries {by} want {want}")
+    if sum(c["chars"] for c in comps) != len(listing):
+        why.append("entries do not sum to len(content)")
+    layers = {(r["layer"], r["scope"]): r["chars"] for r in m["layers"] if r["layer"] == "skill_listing"}
+    if sum(layers.values()) != len(listing) or set(k[1] for k in layers) != {"project", "universal", "unattributed"}:
+        why.append(f"layer rows {layers}")
+    return (not why), "; ".join(why) or "per-entry scopes mix project / universal / unattributed and still sum to the listing's chars"
+
+
+def g_agent_scope():
+    why = []
+    root = scratch("agt")
+    touch(root / "repo" / ".claude" / "agents" / "pa.md")
+    touch(root / "home" / ".claude" / "agents" / "sub" / "ua.md")
+    entries = lambda n: [("pa", "p" * n), ("ua", "u" * 100), ("general-purpose", "g" * 100), ("plug:thing", "t" * 100)]
+    m = measure_floor(root, {"agents": entries(100)})
+    for name, want in (("pa", ("project", "project_file")), ("ua", ("universal", "install_file")),
+                       ("general-purpose", ("unattributed", "no_file")), ("plug:thing", ("universal", "plugin_namespace"))):
+        got = comp(m, "other:agent_listing_delta", name)
+        if got != want:
+            why.append(f"{name}: {got} want {want}")
+    rc, out, _ = attr_check({"agents": entries(100)}, {"agents": entries(1124)}, root=root)
+    if rc != 0 or not find_lines(out, "LAYER other:agent_listing_delta scope=project"):
+        why.append(f"project agent +1024: rc={rc} last={last_line(out)!r}")
+    ent2 = lambda n: [("pa", "p" * 100), ("ua", "u" * n)]
+    root = scratch("agt")
+    touch(root / "repo" / ".claude" / "agents" / "pa.md")
+    touch(root / "home" / ".claude" / "agents" / "sub" / "ua.md")
+    rc, out, _ = attr_check({"agents": ent2(100)}, {"agents": ent2(1124)}, root=root)
+    if rc != 1 or not find_lines(out, "RISE other:agent_listing_delta scope=universal delta=+1024"):
+        why.append(f"universal agent +1024: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "agents resolve under <cwd>/.claude/agents and <home>/.claude/agents (nested); a built-in is unattributed"
+
+
+def g_relabel_no_rise():
+    root = scratch("rel")
+    U, P = hook_cmds(root)
+    sizes = {"hookrows": [(P, "p" * 2000)], "hook_name": "SessionStart",
+             "skill_entries": [("ps", "d" * 100)] + listing_entries(6000, 50)}
+    ref_tx, now_tx = floor_pair(root, sizes, sizes)
+    ref_json = root / "ref.json"
+    with with_home(root / "home"):
+        rc0, out0, _ = run_main(["--write-reference", ref_json, "--transcript", ref_tx])
+    # after the reference: a project settings file registers P and a project skill file appears -> the same chars relabel
+    write_settings(root / "repo", {"SessionStart": [P]})
+    touch(root / "repo" / ".claude" / "skills" / "ps" / "SKILL.md")
+    with with_home(root / "home"):
+        rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", now_tx])
+        now_m = GATE.measure(str(now_tx))
+    ref = json.loads(ref_json.read_text(encoding="utf-8"))
+    ref_scope = {(c["layer"], c["source"]): c["scope"] for c in ref["components"]}
+    now_scope = {(c["layer"], c["source"]): c["scope"] for c in now_m["components"]}
+    layer = "hook_context:SessionStart:SessionStart"
+    relabeled = (ref_scope.get((layer, P)), now_scope.get((layer, P)), ref_scope.get(("skill_listing", "ps")),
+                 now_scope.get(("skill_listing", "ps")))
+    ok = (rc0 == 0 and rc == 0 and relabeled == ("unattributed", "project", "unattributed", "project")
+          and not find_lines(out, "RISE") and not find_lines(out, "LAYER "))
+    return ok, f"write={rc0} check={rc} relabeled(hook ref,now; skill ref,now)={relabeled} layers={find_lines(out, 'LAYER ')}"
+
+
 # --------------------------------------------------------------------------- gates: rules (Task 2)
 def pair_check(ref_sizes, now_sizes, ref_edit=None, extra_args=()):
     """Build a floor pair, write the reference in-process, optionally edit it, check the second transcript."""
@@ -521,7 +847,7 @@ def g_layer_table():
         ("skill_listing", "unattributed"): len(listing),
         ("other:agent_listing_delta", "unattributed"): len("- Explore: reads") + len("- Plan: plans a lot"),
         ("hook_context:SessionStart:SessionStart:startup", "universal"): 33,    # no producing row, nobody registers it: event fallback
-        ("hook_system_message:SessionStart:SessionStart:startup", "unattributed"): 33,
+        ("hook_system_message:SessionStart:SessionStart:startup", "universal"): 33,
         ("system_prompt", "unattributed"): len("one " * 10) + len("two " * 20),
         ("other:deferred_tools_delta", "unattributed"): jl({"addedNames": ["t"], "addedLines": ["- t"]}),
         ("other:brand_new", "unattributed"): jl({"payload": "p" * 50}),
@@ -1021,6 +1347,21 @@ GATES_RULES = [
     ("V-FLOOR-EXPLANATION-FIELDS", g_explanation_fields),
     ("V-FLOOR-TOKENS-RULE", g_tokens_rule),
 ]
+GATES_ATTRIBUTION = [
+    ("V-FLOOR-HOOK-SYSTEM-MESSAGE", g_hook_system_message),
+    ("V-FLOOR-HOOK-PLUGIN", g_hook_plugin),
+    ("V-FLOOR-HOOK-EVENT-FALLBACK", g_hook_event_fallback),
+    ("V-FLOOR-HOOK-AMBIGUOUS", g_hook_ambiguous),
+    ("V-FLOOR-SETTINGS-UNREADABLE", g_settings_unreadable),
+    ("V-FLOOR-CWD-ABSENT-UNATTRIBUTED", g_cwd_absent_unattributed),
+    ("V-FLOOR-SKILL-PROJECT", g_skill_project),
+    ("V-FLOOR-SKILL-UNIVERSAL", g_skill_universal),
+    ("V-FLOOR-SKILL-NAMESPACE", g_skill_namespace),
+    ("V-FLOOR-SKILL-BUILTIN-UNATTRIBUTED", g_skill_builtin_unattributed),
+    ("V-FLOOR-LISTING-SPLIT-EXACT", g_listing_split_exact),
+    ("V-FLOOR-AGENT-SCOPE", g_agent_scope),
+    ("V-FLOOR-RELABEL-NO-RISE", g_relabel_no_rise),
+]
 GATES_SAFETY = [
     ("V-FLOOR-UNMEASURABLE-TABLE", g_unmeasurable_table),
     ("V-FLOOR-NOT-COMPARABLE", g_not_comparable),
@@ -1031,7 +1372,7 @@ GATES_SAFETY = [
     ("V-FLOOR-JSON", g_json),
     ("V-FLOOR-CLI-USAGE", g_cli_usage),
 ]
-GATES = GATES_TRACER + GATES_RULES + GATES_SAFETY
+GATES = GATES_TRACER + GATES_RULES + GATES_ATTRIBUTION + GATES_SAFETY
 
 
 def run_all() -> int:
@@ -1109,6 +1450,23 @@ def _m_system_prompt_harness():
     return _patch("scope_for_system_prompt_part", lambda part_text: "harness")
 
 
+def _m_correlate_empty():
+    return _patch("correlate_hook", lambda element, event, field, window_rows: set())
+
+
+def _m_skill_never_project():
+    real = GATE.scope_for_name
+
+    def fake(kind, name, ctx):
+        scope, basis = real(kind, name, ctx)
+        return ("unattributed" if scope == "project" else scope), basis
+    return _patch("scope_for_name", fake)
+
+
+def _m_host_has_always():
+    return _patch("host_has", lambda path: True)
+
+
 MUTANTS = [
     ("M1 scope_key returns universal (the scope split is dropped)", _m_scope_universal,
      ["V-FLOOR-PROJECT-LOCAL", "V-FLOOR-SCOPE-REPORT"]),
@@ -1123,6 +1481,12 @@ MUTANTS = [
     ("M7 is_material never returns layer_3pct", _m_no_layer_3pct, ["V-FLOOR-PROJECT-3PCT"]),
     ("M8 scope_for_system_prompt_part returns harness (type-based harness for system prompt parts)",
      _m_system_prompt_harness, ["V-FLOOR-SYSTEM-PROMPT-NEW-PART"]),
+    ("M9 correlate_hook returns no producing command (every hook element falls back to its event)", _m_correlate_empty,
+     ["V-FLOOR-HOOK-CORRELATED"]),
+    ("M10 scope_for_name never returns project (a project skill or agent reads as unattributed)", _m_skill_never_project,
+     ["V-FLOOR-SKILL-PROJECT"]),
+    ("M11 host_has treats an absent cwd as available (a foreign transcript is attributed from this host)",
+     _m_host_has_always, ["V-FLOOR-CWD-ABSENT-UNATTRIBUTED"]),
 ]
 
 

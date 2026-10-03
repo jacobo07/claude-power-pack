@@ -17,10 +17,10 @@ Classification table (layer key / scope / chars):
   instructions file, CLAUDE.md|CLAUDE.local.md, Project|Local  memory_project  / project   / len(content)
   instructions file under /.claude/rules/ ............... rules           / by file type
   any other instructions file ........................... other:instructions / by file type
-  skill_listing (per entry) ............................. skill_listing   / unattributed
-  agent_listing_delta (per added type) .................. other:agent_listing_delta / unattributed
-  hook_additional_context (per element) ................. hook_context:<event>:<name> / unattributed
-  hook_system_message ................................... hook_system_message:<event>:<name> / unattributed
+  skill_listing (per entry; header lines) ............... skill_listing   / by name (below); header unattributed
+  agent_listing_delta (per added type) .................. other:agent_listing_delta / by name (below)
+  hook_additional_context (per element) ................. hook_context:<event>:<name> / by producing hook (below)
+  hook_system_message ................................... hook_system_message:<event>:<name> / by producing hook
   prompt_snapshot (per part, identified by digest) ...... system_prompt    / unattributed
   environment, model, date, auto_mode, command_permissions, credential_org, remote_session_change,
   session_context ....................................... other:<type>     / harness (origin provable by type)
@@ -29,6 +29,21 @@ Classification table (layer key / scope / chars):
   hook_success rows ..................................... EXCLUDED (raw stdout, counted only)
 File type -> scope: User universal; Project and Local project; anything else unattributed. Scope is never guessed:
 a component whose origin cannot be proved is `unattributed` and stays under the 1,000-char rule.
+
+Hook / skill / agent attribution (every lookup is a read; the basis is recorded as `scope_basis`):
+  hook element -> the hook_success row of the same hookEvent whose stdout JSON carries the element
+     (hookSpecificOutput.additionalContext, or systemMessage) names the command (the source key).
+     `${CLAUDE_PLUGIN_ROOT}` in the command: universal (plugin). Else the settings file REGISTERING the command
+     decides, never where its script lives: only <cwd>/.claude/settings[.local].json -> project, only
+     <install_home>/.claude/settings[.local].json -> universal, both or neither -> unattributed.
+  no producing row -> the event's registrations: project only -> project, project settings known and not registering it
+     -> universal, both -> unattributed. Several producing commands -> unattributed.
+  skill / agent entry -> a file under <cwd>/.claude (skills/<n>/SKILL.md, commands/<n>.md, commands/<ns>/<rest>.md,
+     agents/**/<n>.md) -> project; under <install_home>/.claude -> universal; both -> unattributed; neither: a `ns:rest`
+     plugin name -> universal, anything else (a harness built-in) -> unattributed. A name that could leave its
+     directory is unattributed.
+  unreadable or malformed settings -> unattributed (unknown, never empty). A cwd or install_home that is not a directory
+  on the measuring host -> every one of the above is unattributed (absent is not zero).
 
 Materiality (a rise is a positive delta of one (layer, scope) row against the reference):
   layer_3pct   delta >= 3 % of the reference total_chars
@@ -226,6 +241,26 @@ class AttributionContext:
         self.install_home = str(install_home) if install_home else None
         self.available = host_has(self.cwd) and host_has(self.install_home)
         self._regs = {}
+        self._files = {}
+        self._agents = {}
+
+    def is_file(self, path):
+        """Path.is_file, once per path per context (a listing holds hundreds of names)."""
+        if path not in self._files:
+            try:
+                self._files[path] = Path(path).is_file()
+            except (OSError, ValueError):
+                self._files[path] = False
+        return self._files[path]
+
+    def agent_names(self, base):
+        """Stems of every *.md under <base>/.claude/agents (nested), scanned once. os.walk never follows a directory link."""
+        if base not in self._agents:
+            names = set()
+            for _dp, _dns, fns in os.walk(Path(base) / ".claude" / "agents"):
+                names.update(f[:-3] for f in fns if f.endswith(".md"))
+            self._agents[base] = names
+        return self._agents[base]
 
     def _side(self, name, base):
         if name not in self._regs:
@@ -331,6 +366,44 @@ def hook_scope(element, event, field, ctx, window_rows):
     return scope, f"event:{event}", basis
 
 
+def _name_parts(name):
+    """The ':'-separated parts of a skill / agent name, or None when any part could leave its directory."""
+    parts = name.split(":")
+    if not all(p and p not in (".", "..") and not re.search(r"[\\/\x00]", p) for p in parts):
+        return None
+    return parts
+
+
+def _named_file_exists(kind, name, parts, base, ctx):
+    claude = Path(base) / ".claude"
+    if kind == "agent":
+        return name in ctx.agent_names(base)
+    return (ctx.is_file(claude / "skills" / name / "SKILL.md")
+            or ctx.is_file(claude / "commands" / (os.sep.join(parts) + ".md")))
+
+
+def scope_for_name(kind, name, ctx):
+    """-> (scope, basis) for a skill or agent entry. A file under <cwd>/.claude is project, under <install_home>/.claude
+    universal, both unattributed. A ns:rest name found in neither is a plugin namespace: universal. Reads only."""
+    ctx = _ctx(ctx)
+    if not ctx.available:
+        return "unattributed", "not_on_this_host"
+    parts = _name_parts(name)
+    if parts is None:
+        return "unattributed", "bad_name"
+    in_proj = _named_file_exists(kind, name, parts, ctx.cwd, ctx)
+    in_user = _named_file_exists(kind, name, parts, ctx.install_home, ctx)
+    if in_proj and in_user:
+        return "unattributed", "ambiguous"
+    if in_proj:
+        return "project", "project_file"
+    if in_user:
+        return "universal", "install_file"
+    if len(parts) > 1:
+        return "universal", "plugin_namespace"
+    return "unattributed", "no_file"
+
+
 # --------------------------------------------------------------------------- classification
 def scope_for_instruction(file_type):
     if file_type == "User":
@@ -404,11 +477,16 @@ def classify(rows, ctx=None):
             for ln in lines:
                 if ln.startswith("- "):
                     current = ln[2:].partition(": ")[0].rstrip("\r\n")
-                add("skill_listing", current, "unattributed", len(ln))
+                if current == "listing:header":
+                    add("skill_listing", current, "unattributed", len(ln), "header")
+                else:
+                    scope, basis = scope_for_name("skill", current, ctx)
+                    add("skill_listing", current, scope, len(ln), basis)
         elif at == "agent_listing_delta":
             types, lines = a.get("addedTypes") or [], a.get("addedLines") or []
             for i, t in enumerate(types):
-                add("other:agent_listing_delta", str(t), "unattributed", _chars(lines[i]) if i < len(lines) else 0)
+                scope, basis = scope_for_name("agent", str(t), ctx)
+                add("other:agent_listing_delta", str(t), scope, _chars(lines[i]) if i < len(lines) else 0, basis)
             for i in range(len(types), len(lines)):
                 add("other:agent_listing_delta", f"extra#{i}", "unattributed", _chars(lines[i]))
         elif at == "hook_additional_context":
@@ -419,8 +497,9 @@ def classify(rows, ctx=None):
                 scope, source, basis = hook_scope(el, a.get("hookEvent"), "additionalContext", ctx, rows)
                 add(layer, source, scope, _chars(el), basis)
         elif at == "hook_system_message":
-            add(f"hook_system_message:{a.get('hookEvent')}:{a.get('hookName')}", "message", "unattributed",
-                _chars(a.get("content")))
+            content = a.get("content")
+            scope, source, basis = hook_scope(content, a.get("hookEvent"), "systemMessage", ctx, rows)
+            add(f"hook_system_message:{a.get('hookEvent')}:{a.get('hookName')}", source, scope, _chars(content), basis)
         elif at == "prompt_snapshot":
             seen = {}
             for part in a.get("systemPrompt") or []:
@@ -621,7 +700,11 @@ CAVEATS = [
     "skill_count are reported beside chars",
     "prompt-driven rows (user rows, file attachments) are excluded from the floor",
     "tokens are comparable only when the excluded prompt digests are equal",
-    "scopes are computed on the measuring host",
+    "scopes are computed on the measuring host, at measure time, from the settings files and skill / agent files "
+    "present then; deltas are per source, so a later relabel of the same chars (a settings file added after the "
+    "reference) costs nothing",
+    "a plugin `ns:name` skill or agent with no file under the project is filed universal (the stricter side of the "
+    "1,000-char rule); a project-scoped plugin is therefore over-reported, never under-reported",
     "system prompt parts are compared by digest: a reference and a check of different session kinds (an "
     "interactive session against a mission worker whose launcher appends a prompt) differ by that part and go red "
     "unless explained",
