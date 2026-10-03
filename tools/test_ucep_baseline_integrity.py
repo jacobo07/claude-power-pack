@@ -41,6 +41,12 @@ pointer stub, plus a "skill" file holding the same quotes lower down), and
 V-UCEP-REAL-REANCHORED reads the real tree to prove the 9 rotted citations were
 re-anchored through recorded generations.
 
+UCEP-01 plan 01-05 adds `baselines.discover_subjects` (D-05, audit G9): the real-tree
+gates of test_tower_ratchet.py and test_baseline_generations.py enumerate subjects from
+disk instead of a hardcoded family tuple. V-UCEP-DISCOVER-* drive it from both poles on
+temp roots (nested axis found, empty/missing root gives [], residue ignored, read at call
+time) and on the real tree (population floor 4 subjects / 60 active entries).
+
 Run: python tools/test_ucep_baseline_integrity.py     (exit 0 = all gates pass)
 """
 from __future__ import annotations
@@ -610,6 +616,81 @@ def main() -> int:
                "authority, every active entry VERIFIED, chains ok, B0 bytes = F0 blobs",
                "; ".join(real_diag))
 
+        # --- discovery: the real-tree gates must not curate their subjects ---
+        # `getattr` keeps the RED run on predicates, never on an AttributeError.
+        disc = getattr(bl, "discover_subjects", None)
+
+        def discover(*args):
+            """(subjects, error): what discover_subjects returned, or why it could not."""
+            if disc is None:
+                return None, "baselines.discover_subjects does not exist"
+            try:
+                return disc(*args), ""
+            except Exception as exc:  # noqa: BLE001 -- the diagnostic names it
+                return None, "%s: %s" % (type(exc).__name__, exc)
+
+        def touch(path, text="{}\n"):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(text)
+
+        r_nested = os.path.join(tmp, "disc_nested")
+        bl.write_generation("archetype/X", [{"id": "e1"}], "b0", root=r_nested)
+        bl.write_generation("fam", [{"id": "e1"}], "b0", root=r_nested)
+        got, err = discover(r_nested)
+        _check("V-UCEP-DISCOVER-NESTED", got == ["archetype/X", "fam"],
+               "a nested axis is found with a forward-slash id, sorted: %s" % got,
+               "got=%s err=%s (want ['archetype/X', 'fam'])" % (got, err))
+
+        r_empty = os.path.join(tmp, "disc_empty")
+        os.makedirs(r_empty)
+        got_empty, err_a = discover(r_empty)
+        got_absent, err_b = discover(os.path.join(tmp, "disc_absent"))
+        # The floors of the two real-tree gates (4 subjects) must fail on these.
+        _check("V-UCEP-DISCOVER-EMPTY",
+               got_empty == [] and got_absent == []
+               and not (len(got_empty or []) >= 4) and not (len(got_absent or []) >= 4),
+               "an empty root and a missing root both give [] without raising, so a "
+               "floor of 4 subjects is red on an empty walk",
+               "empty=%s (%s) absent=%s (%s)" % (got_empty, err_a, got_absent, err_b))
+
+        r_res = os.path.join(tmp, "disc_residue")
+        touch(os.path.join(r_res, "a", "B9.json.tmp"))
+        touch(os.path.join(r_res, "b", ".B1.123.tmp"))
+        touch(os.path.join(r_res, "c", "notes.json"))
+        touch(os.path.join(r_res, "B3.json"))          # a generation file AT the root
+        got_res, err_c = discover(r_res)
+        touch(os.path.join(r_res, "d", "B0.json"))     # control: a real generation is seen
+        got_ctl, err_d = discover(r_res)
+        _check("V-UCEP-DISCOVER-RESIDUE", got_res == [] and got_ctl == ["d"],
+               "temp residue, a non-generation json and a root-level B<n>.json are not "
+               "subjects; the same root with d/B0.json gives ['d']",
+               "residue=%s (%s) control=%s (%s)" % (got_res, err_c, got_ctl, err_d))
+
+        r_call = os.path.join(tmp, "disc_calltime")
+        bl.write_generation("only", [{"id": "e1"}], "b0", root=r_call)
+        saved_dir = bl.BASELINES_DIR
+        bl.BASELINES_DIR = r_call
+        try:
+            got_call, err_e = discover()
+        finally:
+            bl.BASELINES_DIR = saved_dir
+        _check("V-UCEP-DISCOVER-CALL-TIME", got_call == ["only"],
+               "with no argument it reads bl.BASELINES_DIR at call time (monkeypatched)",
+               "got=%s err=%s (want ['only'])" % (got_call, err_e))
+
+        subjects, err_f = discover()
+        total = 0
+        starts_at_zero = bool(subjects)
+        for s in subjects or []:
+            total += len(bl.active_entries(s))
+            starts_at_zero = starts_at_zero and bl.generations(s)[:1] == [0]
+        _check("V-UCEP-DISCOVER-REAL",
+               subjects is not None and len(subjects) >= 4 and starts_at_zero and total >= 60,
+               "%d subjects, %d active entries, floor 4/60" % (len(subjects or []), total),
+               "subjects=%s total_active=%d starts_at_zero=%s err=%s"
+               % (subjects, total, starts_at_zero, err_f))
+
         # --- control: ok is not "refuse everything" -------------------------
         root = b0_copy("clean")
         child(root)
@@ -622,7 +703,7 @@ def main() -> int:
 
         print()
         print("UCEP_BASELINE_INTEGRITY_PASS=%d/%d  threshold=%d/%d"
-              % (_PASS, _PASS + _FAIL, 28, 28))
+              % (_PASS, _PASS + _FAIL, 33, 33))
         return 0 if _FAIL == 0 else 1
     finally:
         for k, v in saved_env.items():

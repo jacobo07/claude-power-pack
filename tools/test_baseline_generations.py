@@ -198,15 +198,19 @@ def main() -> int:
                "B0 stores the literal cited line", "no quote stored: %s" % g0)
 
         # --- the REAL B0s: every stored citation still stands -------------
+        # Subjects are DISCOVERED from disk (nested axes included), never listed.
+        subjects = bl.discover_subjects()
         real = {}
-        for fam in ("web_surface", "persistent_state", "kobiicraft_mode", "wii_homebrew"):
+        for fam in subjects:
             for e in bl.active_entries(fam):
                 real[e["id"]] = bl.verify_origin(e)
         broken = {k: v for k, v in real.items() if v not in (bl.VERIFIED, bl.MOVED)}
         moved = sorted(k for k, v in real.items() if v == bl.MOVED)
-        _check("V-BGEN-REAL-B0-CITATIONS-HOLD", len(real) >= 60 and not broken,
-               "%d stored entries hold (%d moved: %s)" % (len(real), len(moved), moved[:3]),
-               "population=%d broken=%s" % (len(real), broken))
+        _check("V-BGEN-REAL-B0-CITATIONS-HOLD",
+               len(subjects) >= 4 and len(real) >= 60 and not broken,
+               "%d stored entries over %d discovered subjects hold (floor 4/60; %d moved: %s)"
+               % (len(real), len(subjects), len(moved), moved[:3]),
+               "subjects=%s population=%d broken=%s" % (subjects, len(real), broken))
 
         print()
         print("BASELINE_GENERATIONS_PASS=%d/%d  threshold=%d/%d"

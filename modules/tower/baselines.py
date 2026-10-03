@@ -108,6 +108,34 @@ def generations(family: str, root: str | None = None) -> list:
     return sorted(int(m.group(1)) for m in (_GEN.match(f) for f in os.listdir(d)) if m)
 
 
+def discover_subjects(root: str | None = None) -> list:
+    """Every subject id under the baselines tree, discovered from disk.
+
+    A subject is a directory (other than the root itself) that DIRECTLY holds at
+    least one `B<n>.json`; its id is its path relative to the root with forward
+    slashes, so a nested axis such as `archetype/<ID>` is found as
+    `archetype/<ID>`, and `_family_dir` already resolves that id for
+    `generations`, `latest`, `active_entries` and `write_generation`. Temp residue
+    (`B9.json.tmp`, `.B1.<pid>.tmp`) and other files never match `_GEN`.
+
+    The real-tree gates (test_tower_ratchet V-TRAT-REAL-CHAINS,
+    test_baseline_generations V-BGEN-REAL-B0-CITATIONS-HOLD) call this instead of
+    naming their families: an audit whose subjects are enrolled by hand measures
+    memory, not reality, and a subject added later (the Phase 4 `archetype/<ID>`
+    axis) is verified with no test edit. `BASELINES_DIR` is read at CALL time so a
+    test that monkeypatches it is honoured. A missing root gives [].
+    """
+    base = root or BASELINES_DIR
+    if not os.path.isdir(base):
+        return []
+    found = []
+    for dirpath, dirnames, filenames in os.walk(base):
+        dirnames.sort()
+        if dirpath != base and any(_GEN.match(f) for f in filenames):
+            found.append(os.path.relpath(dirpath, base).replace(os.sep, "/"))
+    return sorted(found)
+
+
 def load_generation(family: str, n: int, root: str | None = None) -> dict:
     with open(os.path.join(_family_dir(family, root), "B%d.json" % n), "r",
               encoding="utf-8") as fh:

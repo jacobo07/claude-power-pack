@@ -231,17 +231,18 @@ def main() -> int:
                "verify 0, revert w/o reason 2, revert 0, review 0, raw weaken -> verify 1",
                (rc_clean, rc_no_reason, rc_revert, rc_after, rc_regressed))
 
-        # --- the real families: chain verified, population floored ---------
-        seen = 0
+        # --- the real subjects: discovered from disk, chain verified, population
+        # floored. Never a hand-written list: a subject added later is judged
+        # with no edit here (nested axes such as archetype/<ID> included).
+        subjects = bl.discover_subjects()
         bad = {}
-        for f in ("web_surface", "persistent_state", "kobiicraft_mode", "wii_homebrew"):
-            if bl.generations(f):
-                seen += 1
-                r = rt.verify_chain(f)
-                if not r.ok:
-                    bad[f] = r.as_dict()
-        _check("V-TRAT-REAL-CHAINS", seen == 4 and not bad,
-               "4 real families verified clean", "seen=%d bad=%s" % (seen, bad))
+        for f in subjects:
+            r = rt.verify_chain(f)
+            if not r.ok:
+                bad[f] = r.as_dict()
+        _check("V-TRAT-REAL-CHAINS", len(subjects) >= 4 and not bad,
+               "%d discovered subjects verified clean (floor 4): %s" % (len(subjects), subjects),
+               "subjects=%s bad=%s" % (subjects, bad))
 
         print()
         print("TOWER_RATCHET_PASS=%d/%d  threshold=%d/%d"
