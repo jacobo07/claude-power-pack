@@ -90,11 +90,21 @@ def _skill_repo(s: "Scenario", live_text: str) -> None:
 def main() -> int:
     print("== V-RFG gates ==")
 
-    # V-RFG-CLEAN -- the real repo, as repaired, passes.
-    if gate.run() == 0:
+    # V-RFG-CLEAN -- the real repo, as repaired, passes. Behaviour unchanged (review WR-01): it still runs the
+    # real router AND the host's real live skills tree. Its red is made attributable: the diagnostic names every
+    # sub-check that failed, so a pre-existing router-layout failure (V-ROUTER-LINKS "router absent") and real
+    # host drift (V-ROUTER-SKILL-DRIFT) read as what they are, never as one opaque "does not pass".
+    _buf = io.StringIO()
+    with contextlib.redirect_stdout(_buf):
+        _rc = gate.run()
+    _out = _buf.getvalue()
+    print(_out, end="")
+    if _rc == 0:
         _ok("V-RFG-CLEAN", "live repo exits 0")
     else:
-        _fail("V-RFG-CLEAN", "live repo does not pass")
+        _why = [ln.split("  ")[0].split(" ")[0] + ": " + ln.split("FAIL", 1)[1].strip()[:140]
+                for ln in _out.splitlines() if ln.startswith("V-ROUTER-") and " FAIL " in f" {ln} "]
+        _fail("V-RFG-CLEAN", "live repo does not pass; failing sub-checks: " + ("; ".join(_why) or "none named"))
 
     # V-RFG-BROKEN-LINK -- an unresolvable pointer must fail.
     with Scenario() as s:
