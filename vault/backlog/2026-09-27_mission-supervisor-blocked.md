@@ -50,7 +50,7 @@ fix the first blocked worker parks the mission BLOCKED and the reason is read fr
   RED pre-fix: 6 FAIL / MC_PASS=162/168 (5 new cases + control coupled to the red count, decoupled).
   GREEN post-fix: MC_PASS=168/168. Control V-MC-SUP-CONTROL-STOPPED-STILL-REPLACED green;
   V-MC-BG-TURN-ENDED-RELAY (status idle) still relays.
-  V-MC-BG-TURN-ENDED-RELAY (status idle) still relays.- Commit defect 2: 1b27fbf.
+- Commit defect 2: 1b27fbf.
 - DEFECT 3 fix: ack_session now stamps last_progress_at (ack + heartbeat); new progress_evidence()
   = last_progress_at, or a ledger event only the worker itself emits (worker_acked, heartbeat,
   handoff_requested/_asked/_already_asked), or a transcript of any worker the mission ever named
@@ -63,7 +63,12 @@ fix the first blocked worker parks the mission BLOCKED and the reason is read fr
   V-MC-RENEW-UNIT-NO-PROGRESS-REFUSED + V-MC-RENEW-ZERO-PROGRESS-NOT-RENEWED; restore sha256-verified.
   Controls green: V-MC-RENEW-BUDGET-HALT-RENEWS, V-MC-RENEW-CONTROL-TRANSCRIPT-IS-PROGRESS.
   Routing ROUTE_PASS=8/9, same pre-existing FAIL: live command (8F0382..) == main repo's dirty copy,
-  worktree HEAD copy differs (6CB5FF..) -- another session's uncommitted edit, not this branch.- Commit defect 3: 216e39e.
+  worktree HEAD copy differs (6CB5FF..) -- another session's uncommitted edit, not this branch.
+- Commit defect 3: 216e39e -- NOT MIGRATED (2026-10-03, T6 entry gate). feature/knowledge-acquisition
+  had meanwhile shipped its own zero-progress refusal (`progress_origin` work-tree fingerprint in
+  supervise: "all 18 renewals of the 6 capped lineages produced 0 commits"), which covers this
+  defect and was the only merge conflict. progress_evidence()/ZERO_PROGRESS and the
+  last_progress_at stamping described above are ABSENT from that branch.
 - DEFECT 1 (re-scoped per F1-F3, orchestrator 2026-09-27 23:35): NO trust check. Instead the
   adopt pass that first sees the launched worker already `blocked` (or with waitingFor) parks the
   mission BLOCKED on that same pass, reason = host state + waitingFor + the job file's `needs`
@@ -71,7 +76,7 @@ fix the first blocked worker parks the mission BLOCKED and the reason is read fr
   V-MC-ADOPT-BLOCKED-SURFACED-FIRST-PASS (+ V-MC-WORKDIR-FOLLOWS-WORKTREE, a git-timing flake
   unrelated to the mutated line: it passed in every other run). GREEN 173/173. Control
   V-MC-ADOPT-RUNNING (working row -> RUNNING) green.
-  V-MC-ADOPT-RUNNING (working row -> RUNNING) green.- Commit defect 1 (re-scoped): 01567f1.
+- Commit defect 1 (re-scoped): 01567f1.
 - ADDENDUM (orchestrator 2026-09-28, m-bcaf08f8d856): plan_next turned a RUNNING owner that was
   UNKNOWN past HEARTBEAT_STALE_S -- including "host session list unavailable" -- into
   surface_blocked -> BLOCKED ("needs a human") while the host, asked moments later, listed it
