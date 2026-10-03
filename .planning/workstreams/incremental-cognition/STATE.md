@@ -64,6 +64,10 @@ D5324568... untouched): align_cwd(proven_workstream) -> `diverged_followed`; sup
 supervise wiring -> 3 new gates V-MCA-SUP-PROVEN-PASSED / -RECORDED-NOT-PROOF / -BASE-NOT-PROOF (repo test file
 now 16/16 threshold; RED against the live module until deploy). Against scratch: cwd_align 16/16,
 test_gsd_mission 213/213, test_gsd_epoch 82/82, legacy golden 32/32; mutation drills m1-m7 all KILLED (controls valid; specs in scratchpad\drills).
-**Next:** Owner go for the deploy (copy scratch gsd_mission.py over tools/gsd_mission.py; free RAM was 7.1 GB),
-then rerun the four suites on the live tree and commit gsd_mission.py hunk + test by pathspec.
+**DEPLOYED + committed d2505df6** (Owner go; 8.1 GB free; live sha A217654F..., pre-deploy backup in the session
+scratchpad). Live tree: cwd_align 16/16, test_gsd_mission 213/213, test_gsd_epoch 82/82, golden 32/32.
+Note: m-fdefb0fca0c0 (cognitive-economy) and m-876f8b5a904a (ucep) were already RUNNING epoch 2 before the
+deploy (relaunched 16:10 / 17:01 UTC on "owner dead"); the fix applies from their next relay on.
+**Next:** obligation 5 -- arm `gsd_mission.py arm --workstream incremental-cognition` (12/24h), needs Owner go
+on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 **Resume File:** this STATE.md + vault/plans/incremental-cognition-program-2026-10-03.md
