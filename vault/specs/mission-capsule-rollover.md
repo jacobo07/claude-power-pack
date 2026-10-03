@@ -200,7 +200,7 @@ Audit 2026-10-03 (oneshot-architect-auditor, EXECUTE-WITH-FIXES, 25 gaps). Each 
 Every tranche is additive behind 3.1 and the kill switch. Guard rollback: remove its two dispatcher
 lines (canonical and live) or `CPP_CAPSULE_ROLLOVER=off`. `git revert` per tranche.
 
-## 9. T5 as built -- the seam T6 calls (status IMPLEMENTED: no production caller yet)
+## 9. T5 as built -- the seam T6 calls (status: LIVE in code since T6, see 10; no real mission yet)
 
 | T6 call site (gsd_mission) | adapter call | guarantees / failure meaning |
 |---|---|---|
@@ -216,3 +216,41 @@ T6 adds to the record: `rollover_protocol`, `capsule_key` (G6, the CLI refuses w
 (G4), the first-refused-seal time (G5). `mc.worker_name` mirrors `gsd_mission.worker_name` and is pinned
 to it by V-MCAP-IDENTITY. Gates: `tools/test_mission_capsule.py` (V-MCAP), `tools/test_rollover_capsule_v2.py`
 (V-CAP2), and G23 unchanged (`tools/test_gsd_mission_legacy_characterization.py`, never re-captured).
+
+## 10. T6 as built (2026-10-03)
+
+One predicate, `gsd_mission.capsule_v2(rec)`: the record's field AND neither kill switch (G13 file,
+env). Every v2 branch sits behind it; G23 stayed 32/32 against the unchanged golden.
+
+| where | what |
+|---|---|
+| `create` / `arm --rollover-protocol capsule-v2` | field written only when asked (legacy bytes unchanged); G11 refuses any mode but auto/bypassPermissions |
+| `plan_next(..., v2=)` | G4: a BLOCKED `capsule_hold` sticks over a live owner; `seal_refused` + idle owner re-judges via relay; `resume_not_certified` waits for the marker |
+| `supervise` before `stop_owner` | `_capsule_rotate`: an uncertified worker never seals (dead -> its successor inherits the same `capsule_key`; alive -> held); a G3 authorization for this epoch is reused, never re-judged; origins: idle/done -> worker_handoff (+ fallback past grace), dead -> recovery, busy -> nothing until the G5 grace (counted from the FIRST refused seal), then fallback. SAFE seal -> `gate_before_stop` -> `outgoing_stop_authorized` (capsule_key, sha). Final refusal -> BLOCKED `seal_refused`, worker NOT stopped |
+| `supervise` before `launch_worker` | `_capsule_arm` with the record's `capsule_key` (G6; the adapter gained that argument): no marker, no spawn |
+| `launch_worker` / `ack_session` / `adopt_launched` | bind bg_id, then owner_session (G7, ledgered on failure, never raised); ack starts `capsule_acked_at` |
+| `supervise` per pass | `_capsule_certify_check`: 30 min after ack uncertified -> BLOCKED `resume_not_certified`; certification lifts it |
+| `worker_argv` / `render_card` / `renew_mission` | G9 MCP strip; G22 block before GSD and note (survives the cap); G20 protocol carried |
+
+Clock rule found while building: the capsule's times are rollover's own wall clock (its ledger stamps
+the seal), so the supervisor passes no `now` to compile or gate. Gate: `tools/test_gsd_mission_capsule_v2.py`
+(V-MV2, 32 checks, every refusal with an admitted twin, legacy control) + 7 source mutants all KILLED.
+
+**Not built (named, not hidden):** (a) 3.5's "a worker that ended its turn with no note is asked once for
+one" -- such a worker's handoff seal is refused and the fallback takes over after the grace; (b) the guard's
+deny message prints `python <marker.resume_cmd> resume`, but `resume_cmd` is the mission command
+(`/gsd-autonomous`), not the script path -- a T4/T5 seam defect in the instruction text, the deny itself is
+correct; (c) T7 fault matrix + chain audit; (d) T8 real run (held).
+
+**Review 2026-10-03 (pp-code-reviewer, APPROVE with notes, 0 CRITICAL/HIGH).** M1 FIXED: `capsule_v2(rec)`
+ran outside supervise's per-mission isolation, so one undecidable v2 record ended the pass for every later
+mission; now fail-closed for that mission only (V-MV2-UNDECIDABLE-*, mutant KILLED). OPEN, named:
+- **M2 -- section 5 does NOT hold on the halt path.** A budget or no_progress halt of a v2 mission reaps
+  its live owner as an orphan (`orphan_workers` on a terminal record) with no capsule, and `renew_mission`
+  starts a mission carrying the protocol but no `capsule_key`, i.e. a legacy rotation across the renewal.
+  Needs an Owner decision: seal before a v2 halt and carry `capsule_key` into the renewal, or declare
+  halt/renewal out of v2 scope.
+- **L1** an idle `seal_refused` owner is re-judged every pass (one GSD query + two ledger rows), bounded
+  only by budget; wants a backoff or a change fingerprint.
+- **L2** a LIVE uncertified successor under `resume_not_certified` is never halted by budget
+  (plan_next returns none before the budget check); it holds until a human acts.

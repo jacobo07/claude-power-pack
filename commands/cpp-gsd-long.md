@@ -71,6 +71,17 @@ through PowerShell here, so a GSD run in that mode parks on a permission prompt 
 `BLOCKED`). A `BLOCKED` mission waits for you: answer the worker's prompt and the next sweep
 resumes it.
 
+**Capsule rotation (opt-in, `arm --rollover-protocol capsule-v2`)** — status: LIVE in code
+(`tools/test_gsd_mission_capsule_v2.py`), not yet run on a real mission (T8 held). A fresh worker
+then starts only after its predecessor's capsule is sealed and judged SAFE_TO_FORGET; the outgoing
+worker is not stopped otherwise, and a mission whose capsule cannot be sealed even from durable state
+goes `BLOCKED`. The successor launches with MCP stripped and cannot edit, write or run a mutating
+command until it certifies (`tools/mission_capsule.py resume|certify --mission <m>`, named on its
+card); 30 min without certifying parks the mission `BLOCKED`. Needs `--permission-mode auto` or
+`bypassPermissions`. Omit the flag and the mission rotates exactly as before. Kill switch: the file
+`~/.claude/state/rollover/capsule-v2.off` or `CPP_CAPSULE_ROLLOVER=off` (v2 missions then rotate the
+legacy way). Spec: `vault/specs/mission-capsule-rollover.md`.
+
 **If the run moves into a git worktree** (`/gsd-autonomous` may enter one), the supervisor
 follows it: the predecessor's transcript names the directory, GSD is asked there, and the
 successor's card says `WORK TREE: … enter it first`. Launches stay in the trusted cwd.

@@ -48,8 +48,10 @@ The sequence is `/kclear` → (verdict SAFE_TO_FORGET) → `/clear` → `/kresum
    A claim nobody certifies for 30 min (or whose session died) can be taken over by the next
    `/kresume`. **No file edit, commit or other mutation before RESUME_CERTIFIED.** In an interactive
    pane this is your discipline (status: no guard, by design -- a failed exam must not lock a pane
-   with a human in it). For capsule-v2 mission workers a guard enforces it -- status PLANNED until
-   the supervisor writes their pre-certification marker (spec `vault/specs/mission-capsule-rollover.md`, T4-T6).
+   with a human in it). For capsule-v2 mission workers a guard enforces it -- status LIVE in code: the
+   supervisor arms each successor's pre-certification marker before spawning it, driven end to end by
+   `tools/test_gsd_mission_capsule_v2.py`. Not yet observed on a real mission: no mission is armed with
+   `--rollover-protocol capsule-v2` until the T8 run (held). Spec `vault/specs/mission-capsule-rollover.md`.
 
 5. **Continue** with the first open obligation. Do not ask the Owner to paste a plan path, and do
    not ask what to focus on: the capsule already says.

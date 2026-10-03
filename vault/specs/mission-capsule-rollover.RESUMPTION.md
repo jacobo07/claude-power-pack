@@ -54,6 +54,19 @@ Verified at seal time: HEAD a5debf2d, 44 ahead of origin, 0 behind, nothing new 
   (entrypoint-evidenced executables, any dir, ratchet), not T6 scope.
 - Missions: 89 records, 0 carry `rollover_protocol` (raw grep).
 
+**Owner approved A-D (2026-10-03, "y").** A DONE: 95f494cd/06866df0/482469b8 (3 legacy fixes migrated
+via worktree C:/Users/User/Apps/pp-t6-migrate, branch t6/migrate-legacy-fixes) + c28d5b09 backlog; MC
+220/220, G23 32/32 UNCHANGED (no re-capture), 3 drills KILLED (drills need copy_dirs ["vendor"]).
+B DONE: 2e4be931 GSDLR 100/100. C BUILT (uncommitted at this write): gsd_mission.py capsule-v2 wiring
+(spec section 10), mission_capsule.arm_successor(capsule_key=), new tools/test_gsd_mission_capsule_v2.py
+MV2 32/32, 7 source mutants KILLED (drills need copy_dirs ["vendor"]); G23 32/32 golden unchanged, MC 220,
+MCA 16, EPOCH 82, MCAP 49, CAP2 36, ROLLOVER 55, CMG 18. Docs: kresume.md guard LIVE-in-code (no real
+mission), cpp-gsd-long.md flag section, spec 9 status + 10. D DONE: pp-code-reviewer APPROVE (0 C/H);
+M1 fixed (MV2 34/34, mutant KILLED); M2/L1/L2 named OPEN in spec 10. Committed as one T6 commit.
+OWNER DECISION PENDING (M2): on a budget/no_progress halt of a v2 mission, seal before stopping the live
+owner and carry capsule_key into the renewal -- or declare halt/renewal out of v2 scope?
+Then: T7 fault matrix + chain audit; T8 stays HELD.
+
 **Next 3 actions.**
 1. T6 entry gate: run the 5 gates above; list live missions (`~/.claude/state/gsd-mission-*.json`) and
    confirm none carries `rollover_protocol`; check `git log` and pp-mission-fix for gsd_mission.py moves.

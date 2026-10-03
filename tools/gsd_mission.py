@@ -88,6 +88,25 @@ DEAD = "DEAD"
 UNKNOWN = "UNKNOWN"
 WAITING_HUMAN = "BLOCKED"
 
+# capsule-v2 rotation (spec vault/specs/mission-capsule-rollover.md). Set ONLY by
+# `arm --rollover-protocol capsule-v2`; a record without the field is legacy and never reaches a
+# v2 branch (spec 3.1), which tools/test_gsd_mission_legacy_characterization.py pins.
+CAPSULE_V2 = "capsule-v2"
+CAPSULE_V2_MODES = ("auto", "bypassPermissions")   # G11: the successor must run its exam in a shell
+CAPSULE_CERTIFY_DEADLINE_S = 1800                  # spec 3.5: successor ack -> RESUME_CERTIFIED
+
+
+def capsule_v2(rec: dict | None) -> bool:
+    """Does capsule-v2 govern this mission's rotation NOW? Only a record armed with the protocol, and
+    never while a kill switch is set: the file <rollover state>/capsule-v2.off (G13, read by the
+    mutation guard too) or CPP_CAPSULE_ROLLOVER=off. Switched off, a v2 mission rotates the legacy way."""
+    if (rec or {}).get("rollover_protocol") != CAPSULE_V2:
+        return False
+    if (os.environ.get("CPP_CAPSULE_ROLLOVER") or "").strip().lower() == "off":
+        return False
+    import mission_capsule as mc
+    return not (mc.state_dir() / "capsule-v2.off").exists()
+
 
 class MissionError(ValueError):
     pass
@@ -215,9 +234,16 @@ def create(cwd: str, resume_command: str, *, mission_id: str | None = None,
            max_cycles: int | None = None, max_hours: float | None = None,
            mode: str = "ralph", now: float | None = None,
            permission_mode: str | None = None, allowed_tools=None, add_dirs=None,
-           wall: dict | None = None) -> dict:
+           wall: dict | None = None, rollover_protocol: str | None = None) -> dict:
     """A PREPARED mission. Refuses to overwrite an existing, non-terminal one."""
     now = time.time() if now is None else now
+    if rollover_protocol not in (None, CAPSULE_V2):
+        raise MissionError(f"unknown rollover protocol {rollover_protocol!r} (only {CAPSULE_V2})")
+    if rollover_protocol == CAPSULE_V2 and permission_mode not in CAPSULE_V2_MODES:
+        # G11: a v2 successor certifies by running mission_capsule.py in a shell. A mode that cannot
+        # run one would leave every successor without authority for ever.
+        raise MissionError(f"{CAPSULE_V2} needs permission mode {' or '.join(CAPSULE_V2_MODES)}, "
+                           f"not {permission_mode!r}")
     # A `--ws` in the command IS the workstream; without this the supervisor asks GSD for the
     # root roadmap and parks the mission (2026-09-29, m-bb79185652b1).
     if workstream is None and resume_command.startswith("/gsd-"):
@@ -245,6 +271,9 @@ def create(cwd: str, resume_command: str, *, mission_id: str | None = None,
             "add_dirs": [str(Path(d).resolve()) for d in (add_dirs or [])],
             "wall": wall or dict(DEFAULT_WALL),
         }
+        if rollover_protocol:
+            # Absent, not null, for a legacy record: its bytes stay those the golden pinned.
+            rec["rollover_protocol"] = rollover_protocol
         _write(path, rec)
     lr.ledger_append(mid, "mission_prepared", mission_id=mid, cwd=rec["cwd"],
                      command=resume_command, mode=mode)
@@ -465,12 +494,15 @@ def budget_exhausted(rec: dict, now: float) -> str | None:
 
 
 def plan_next(rec: dict, now: float, sessions: list[dict] | None,
-              pid_alive=lr._pid_alive) -> dict:
+              pid_alive=lr._pid_alive, v2: bool | None = None) -> dict:
     """What the out-of-band supervisor should do for this mission, and why.
 
     Actions: none · launch · replace · halt · surface_blocked · await.
-    Pure: no I/O beyond the injected ``pid_alive``.
+    Pure: no I/O beyond the injected ``pid_alive``. ``v2`` is capsule_v2(rec) as the caller read it
+    (the kill switch is a file); None reads the record's field alone.
     """
+    if v2 is None:
+        v2 = rec.get("rollover_protocol") == CAPSULE_V2
     state = rec.get("state")
     if state in TERMINAL:
         return {"action": "none", "reason": f"terminal {state}"}
@@ -535,6 +567,16 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
             if spent:
                 return {"action": "halt", "reason": f"owner dead and budget: {spent}"}
             return {"action": "replace", "reason": f"owner dead: {why}"}
+        chold = (rec.get("capsule_hold") or {}) if v2 else {}
+        if chold and state == BLOCKED:
+            # G4: a capsule hold sticks like gsd_hold -- a live owner is not an answer to it. A refused
+            # seal is re-judged once the owner's turn has ended (the relay path seals again); an
+            # uncertified successor is lifted only by its certification (supervise checks the marker).
+            if chold.get("kind") == "seal_refused" and verdict == LIVE and owner_idle(rec.get("owner"), sessions):
+                if spent:
+                    return {"action": "halt", "reason": f"turn ended and budget: {spent}"}
+                return {"action": "relay", "reason": f"capsule hold: re-judging the seal ({chold.get('reason')})"}
+            return {"action": "none", "reason": f"capsule hold {chold.get('kind')}: {chold.get('reason')}"}
         hold = rec.get("gsd_hold") or {}
         if verdict == LIVE and state == BLOCKED and hold and owner_idle(rec.get("owner"), sessions):
             # Blocked on GSD, not on a human: a live idle owner is not an answer. Re-ask GSD
@@ -621,8 +663,10 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
         argv += ["--add-dir", d]
     # A worker nobody watches must not be able to park on a question (Owner 2026-09-25).
     argv += ["--disallowedTools", "AskUserQuestion"]
-    if worker_mcp_verdict() == "APPLY":
+    if capsule_v2(rec) or worker_mcp_verdict() == "APPLY":
         # Measured, not assumed: only a fresh APPLY from tools/worker_mcp_probe.sh strips MCP.
+        # capsule-v2 always strips it (G9): the mutation guard sits on the Bash and Edit chains, so
+        # an `mcp__*` tool would be a write path no guard sees before the successor certifies.
         argv += ["--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}']
     mode = rec.get("permission_mode")
     if mode:
@@ -721,6 +765,8 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         return {"ok": False, "epoch": epoch, "bg_id": bg_id, "why": why, "detail": detail}
     rec = transition(mission_id, expect_epoch=epoch, expect_state=LAUNCHING, event="launched",
                      now=now, pending={**rec["pending"], "bg_id": bg_id})
+    if rec.get("capsule_key") and capsule_v2(rec):
+        _capsule_bind(rec, bg_id=bg_id)
     return {"ok": True, "epoch": epoch, "bg_id": bg_id}
 
 
@@ -752,13 +798,19 @@ def ack_session(session_id: str, *, pid: int | None = None, proc_start: str | No
         return None
     try:
         if rec["state"] == LAUNCHING:
-            return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=LAUNCHING,
-                              event="worker_acked", now=now, state=RUNNING, pending=None,
-                              failed_launches=0, iterations=rec.get("iterations", 0) + 1,
-                              worker=session_id,
-                              owner={"session_id": session_id, "pid": pid,
-                                     "proc_start": proc_start, "heartbeat_at": now,
-                                     "epoch": rec["epoch"], "kind": "background"})
+            v2 = bool(rec.get("capsule_key")) and capsule_v2(rec)
+            new = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=LAUNCHING,
+                             event="worker_acked", now=now, state=RUNNING, pending=None,
+                             failed_launches=0, iterations=rec.get("iterations", 0) + 1,
+                             worker=session_id,
+                             owner={"session_id": session_id, "pid": pid,
+                                    "proc_start": proc_start, "heartbeat_at": now,
+                                    "epoch": rec["epoch"], "kind": "background"},
+                             # spec 3.5: the certification deadline runs from the successor's ack.
+                             **({"capsule_acked_at": now} if v2 else {}))
+            if v2:
+                _capsule_bind(new, owner_session=session_id)
+            return new
         owner = dict(rec.get("owner") or {})
         owner["heartbeat_at"] = now
         return transition(rec["mission_id"], expect_epoch=rec["epoch"],
@@ -905,6 +957,8 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
            f"--cwd .` (session-local pointer; gsd_run calls do not forward --ws). The repo's ROOT "
            f"milestone belongs to another track -- never plan or execute it."]
           if rec.get("workstream") else []),
+        # G22: before the GSD facts and the note, so the byte cap cuts those and never this.
+        *_capsule_card_lines(rec),
         "",
         # Owner decision 2026-09-25 (settings.json autoMode.allow entry): four workers sat for
         # hours on an AskUserQuestion / permission prompt nobody watching could answer.
@@ -1148,14 +1202,18 @@ def adopt_launched(rec: dict, row: dict, now: float | None = None) -> dict:
     """RUNNING from the host's witness when the worker's own ack did not arrive. The worker
     missed its SessionStart, so it gets no card this epoch -- recorded, not hidden."""
     sid = row.get("sessionId")
+    v2 = bool(rec.get("capsule_key")) and capsule_v2(rec)
     new = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=LAUNCHING,
                      event="worker_adopted", now=now, state=RUNNING, pending=None,
                      failed_launches=0, iterations=rec.get("iterations", 0) + 1, worker=sid,
                      reason="host witness; worker's own ack absent (no card this epoch)",
                      owner={"session_id": sid, "pid": row.get("pid"), "proc_start": None,
                             "heartbeat_at": now or time.time(), "epoch": rec["epoch"],
-                            "kind": "background"})
+                            "kind": "background"},
+                     **({"capsule_acked_at": now or time.time()} if v2 else {}))
     _arm_worker_marker(new, sid)
+    if v2 and sid:
+        _capsule_bind(new, owner_session=sid)
     return new
 
 
@@ -1345,7 +1403,9 @@ def renew_mission(rec: dict, now: float | None = None) -> dict:
                  max_cycles=rec.get("max_cycles"), max_hours=rec.get("max_hours"),
                  now=now, permission_mode=rec.get("permission_mode"),
                  allowed_tools=rec.get("allowed_tools"), add_dirs=rec.get("add_dirs"),
-                 wall=rec.get("wall"))
+                 wall=rec.get("wall"),
+                 # G20: a renewal keeps the protocol it was armed with, or it would rotate legacy.
+                 rollover_protocol=rec.get("rollover_protocol"))
     carried = {"renewed_from": rec["mission_id"],
                "lineage_id": rec.get("lineage_id") or rec["mission_id"],
                "renewal": int(rec.get("renewal") or 0) + 1,
@@ -1359,9 +1419,190 @@ def renew_mission(rec: dict, now: float | None = None) -> dict:
     return new
 
 
+# --------------------------------------------------------------------------- capsule-v2 (T6)
+# Every function here is reached only through a `capsule_v2(rec)` branch (spec 3.1). The adapter
+# (tools/mission_capsule.py) owns compile/seal/gate/arm/bind; rollover.py owns the format, the
+# marker and "certified". What lives here is WHEN each is asked, and what the mission does with
+# the answer (spec sections 8 and 9).
+def _capsule_card_lines(rec: dict) -> list[str]:
+    """G22: the successor's first duty. Only when a predecessor sealed a capsule for it
+    (`capsule_key`): the first worker of a mission has nothing to certify."""
+    if rec.get("rollover_protocol") != CAPSULE_V2 or not rec.get("capsule_key"):
+        return []
+    tool = (Path(__file__).resolve().parent / "mission_capsule.py").as_posix()
+    return ["",
+            f"CAPSULE-V2 SUCCESSOR: your predecessor sealed capsule {rec['capsule_key']}. Until you certify",
+            "  it, a guard refuses every edit, write and mutating command. Do this FIRST:",
+            f"  1. python {tool} resume --mission {rec['mission_id']}   (prints the bootstrap and an exam)",
+            "  2. read the goal file it names, answer from the tree and GSD NOW, run the certify command it prints.",
+            "  Only RESUME_CERTIFIED restores your authority; a refusal names what disagreed -- re-read, retry."]
+
+
+def _capsule_bind(rec: dict, **ids) -> str:
+    """G7: name the armed successor as the host reported it (bg id at launch, session at its ack).
+    Never raised into a launch or an ack -- the worker exists either way, and the guard still
+    matches the launch cwd inside its window -- but always ledgered by name."""
+    try:
+        import mission_capsule as mc
+        mc.bind_successor(rec["mission_id"], worker_name(rec), **ids)
+        return "bound"
+    except Exception as exc:  # noqa: BLE001 -- see docstring: recorded, never swallowed silently
+        why = f"{type(exc).__name__}: {exc}"
+        lr.ledger_append(rec["mission_id"], "capsule_bind_failed", mission_id=rec["mission_id"],
+                         epoch=rec["epoch"], error=why[:300])
+        return why
+
+
+def _capsule_marker(rec: dict) -> dict | None:
+    """The precert marker of THIS epoch's worker, or None (no marker, or one naming another worker)."""
+    import mission_capsule as mc
+    import rollover as ro
+    mk = ro.precert_read(rec["mission_id"], mc.state_dir())
+    return mk if mk and mk.get("worker") == worker_name(rec) else None
+
+
+def _capsule_certify_check(rec: dict, row: dict, now: float) -> bool:
+    """Spec 3.5: a successor that has not certified within CAPSULE_CERTIFY_DEADLINE_S of its ack
+    parks the mission BLOCKED (`resume_not_certified`, a G4 hold); its certification lifts it.
+    True when this pass acted for the mission."""
+    mid = rec["mission_id"]
+    hold = rec.get("capsule_hold") or {}
+    mk = _capsule_marker(rec)
+    if rec["state"] == BLOCKED and hold.get("kind") == "resume_not_certified":
+        if mk and mk.get("certified_at"):
+            transition(mid, expect_epoch=rec["epoch"], expect_state=BLOCKED, event="mission_unblocked",
+                       now=now, state=RUNNING, capsule_hold=None,
+                       reason=f"successor certified {rec.get('capsule_key')}")
+            row["action"] = "capsule_certified"
+            return True
+        return False
+    acked = rec.get("capsule_acked_at")
+    if (rec["state"] == RUNNING and acked and mk and not mk.get("certified_at")
+            and now - float(acked) > CAPSULE_CERTIFY_DEADLINE_S):
+        why = (f"resume_not_certified: worker {worker_name(rec)} acked {int(now - float(acked))} s ago "
+               f"and has not certified {rec.get('capsule_key')}")
+        transition(mid, expect_epoch=rec["epoch"], expect_state=RUNNING, event="mission_blocked",
+                   now=now, state=BLOCKED, reason=why,
+                   capsule_hold={"kind": "resume_not_certified", "reason": why, "since": now})
+        row["action"], row["reason"] = "capsule_blocked", why
+        return True
+    return False
+
+
+def _capsule_rotate(rec: dict, row: dict, act: str, sessions, pid_alive, now: float,
+                    work_dir: str | None, capsule_io: dict | None = None) -> dict | None:
+    """The v2 gate between ROTATE and stop_owner (spec 3.3; G3/G5/G6/G21). Returns the record to
+    go on with when the outgoing worker may be stopped; None when it may not -- held or BLOCKED, the
+    reason in the row and the ledger, NOTHING stopped (spec 5: never a stopped worker without a
+    sealed capsule)."""
+    import gsd_epoch as ge
+    import mission_capsule as mc
+    mid = rec["mission_id"]
+    verdict, why = liveness(rec.get("owner"), sessions, pid_alive)
+    mk = _capsule_marker(rec)
+    if mk is not None and not mk.get("certified_at"):
+        # This worker was launched for a capsule and never certified it, so the guard kept it from
+        # mutating: it has nothing of its own to seal. Dead, its successor inherits the same
+        # capsule; alive, nothing rotates and the certification deadline decides.
+        if verdict == DEAD:
+            row["capsule"] = f"inherited {rec.get('capsule_key')}: worker {worker_name(rec)} died uncertified"
+            if rec.get("capsule_hold"):
+                rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                 event="capsule_inherited", now=now, capsule_hold=None, reason=row["capsule"])
+            return rec
+        row["held"] = f"capsule-v2: worker {worker_name(rec)} has not certified {rec.get('capsule_key')}; no rotation"
+        lr.ledger_append(mid, "capsule_rotation_held", mission_id=mid, epoch=rec["epoch"], reason=row["held"])
+        return None
+    key = mc.capsule_key(rec)
+    auth = rec.get("capsule_stop_authorized") or {}
+    if rec.get("capsule_key") == key and auth.get("epoch") == rec["epoch"]:
+        # G3: a later pass retrying an unfinished stop reuses the authorization; it never re-judges.
+        row["capsule"] = f"stop authorized for {key} ({auth.get('origin')}), reused"
+        return rec
+    idle = verdict == LIVE and owner_idle(rec.get("owner"), sessions)
+    done = act == "replace" and verdict == DEAD and ge.turn_ended_as_done(rec, sessions)
+    grace = float((rec.get("wall") or {}).get("grace_s") or ge.WALL_GRACE_S)
+    first = rec.get("capsule_first_refused_at")
+    overdue = first is not None and now - float(first) >= grace
+    if idle or done:
+        origins = ["worker_handoff"] + (["supervisor_fallback"] if overdue else [])
+    elif verdict == DEAD:
+        origins = ["recovery"]                       # G21: a crashed predecessor, degraded
+    else:
+        # G3: a busy owner's turn has not ended, so no hand-off seal. G5: past the grace, counted
+        # from the FIRST refusal, a degraded capsule from durable state stops it anyway.
+        origins = ["supervisor_fallback"] if overdue else []
+    owner_sid = (rec.get("owner") or {}).get("session_id")
+    note = ((rec.get("note") if rec["state"] == HANDOFF else "")
+            or (handoff_note_from_transcript(owner_sid) if owner_sid else "") or "")
+    packet = rec.get("packet") if rec["state"] == HANDOFF else None
+    wd = work_dir or rec.get("work_dir") or rec["cwd"]
+    reasons = [] if origins else [f"owner {verdict} and its turn has not ended: {why}"]
+    for origin in origins:
+        # The capsule's times are rollover's own: the seal row is stamped by its ledger's wall clock,
+        # and the gate's freshness is judged against that same clock. Passing this pass's `now`
+        # mixed two clocks -- harmless only while they happen to agree (measured in T6's suite: an
+        # injected now read a fresh seal as 103 days old).
+        cap = mc.compile_mission_capsule(rec, origin=origin, note=note, work_dir=wd, packet=packet,
+                                         **(capsule_io or {}))
+        seal = mc.seal_mission(cap)
+        if seal["verdict"] != "SAFE_TO_FORGET":
+            reasons.append(f"{origin} {seal['verdict']}: {'; '.join(seal.get('reasons') or [])}")
+            continue
+        # Re-judged immediately before the stop (section 9): the bytes as sealed, fresh, uncertified.
+        gate = mc.gate_before_stop(key)
+        if gate["verdict"] != "SAFE_TO_FORGET":
+            reasons.append(f"{origin} gate {gate['verdict']}: {'; '.join(gate.get('reasons') or [])}")
+            continue
+        rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                         event="outgoing_stop_authorized", now=now, capsule_key=key,
+                         capsule_stop_authorized={"epoch": rec["epoch"], "origin": origin, "at": now,
+                                                  "sha256": (seal.get("receipt") or {}).get("sha256")},
+                         capsule_first_refused_at=None, capsule_hold=None,
+                         reason=f"capsule {key} sealed ({origin}): SAFE_TO_FORGET")
+        row["capsule"] = f"sealed {key} ({origin})"
+        return rec
+    reason = " | ".join(reasons)[:600]
+    row["capsule"] = f"refused {key}: {reason}"
+    if "supervisor_fallback" in origins or "recovery" in origins:
+        # Spec 3.5: not even a capsule from durable state is sealable -- BLOCKED, worker NOT stopped.
+        why_b = f"capsule-v2 seal impossible for {key}: {reason}"
+        if rec["state"] == BLOCKED and (rec.get("capsule_hold") or {}).get("kind") == "seal_refused":
+            lr.ledger_append(mid, "capsule_seal_refused", mission_id=mid, epoch=rec["epoch"], reason=reason)
+        else:
+            transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="mission_blocked",
+                       now=now, state=BLOCKED, reason=why_b,
+                       capsule_hold={"kind": "seal_refused", "reason": why_b[:300], "since": now})
+        row["blocked"] = why_b
+    elif first is None:
+        transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="capsule_seal_refused",
+                   now=now, capsule_first_refused_at=now, reason=reason)
+        row["held"] = f"capsule-v2 seal refused; fallback clock started (grace {int(grace)} s): {reason}"
+    else:
+        lr.ledger_append(mid, "capsule_seal_refused", mission_id=mid, epoch=rec["epoch"], reason=reason)
+        row["held"] = (f"capsule-v2 seal refused ({int(now - float(first))} of {int(grace)} s to the "
+                       f"fallback): {reason}")
+    return None
+
+
+def _capsule_arm(rec: dict, row: dict) -> bool:
+    """Spec 3.3: the successor's marker exists BEFORE it is spawned, or it is not spawned (section
+    9). The key is the record's own field (G6), never epoch arithmetic."""
+    import mission_capsule as mc
+    try:
+        mc.arm_successor(rec, capsule_key=rec["capsule_key"])
+        return True
+    except Exception as exc:  # noqa: BLE001 -- refused as a hold, ledgered by name
+        why = f"capsule-v2: successor marker not armed ({type(exc).__name__}: {exc}); nothing spawned"
+        lr.ledger_append(rec["mission_id"], "capsule_arm_failed", mission_id=rec["mission_id"],
+                         epoch=rec["epoch"], error=why[:300])
+        row["held"] = why
+        return False
+
+
 def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
               gsd_status=None, runner=None, stop_runner=None, pid_alive=lr._pid_alive,
-              fingerprint=None) -> list[dict]:
+              fingerprint=None, capsule_io: dict | None = None) -> list[dict]:
     """One out-of-band pass over every mission. Each action is ledgered by the
     transition it makes; a pass that decides nothing still returns one row per
     mission, so an empty estate and an unjudged one never look alike."""
@@ -1401,7 +1642,22 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
         if not _needs_look(rec, now):
             continue
         mid = rec["mission_id"]
-        plan = plan_next(rec, now, sessions, pid_alive)
+        try:
+            v2 = capsule_v2(rec)   # False for every record without the field, before any I/O
+        except Exception as exc:  # noqa: BLE001 -- isolated per mission, see below
+            # Review M1 (2026-10-03): this ran outside the per-mission isolation, so an import or
+            # permission error on ONE v2 record ended the pass for every mission after it. Fail
+            # closed for that mission only: undecidable is never "legacy", which would rotate it
+            # unsealed. Nothing is done for it this pass; the rest are supervised.
+            err = f"capsule-v2 undecidable: {type(exc).__name__}: {exc}"
+            out.append({"mission_id": mid, "state": rec["state"], "epoch": rec["epoch"],
+                        "action": "none", "reason": err, "error": err})
+            try:
+                lr.ledger_append(mid, "supervise_error", mission_id=mid, error=err[:300])
+            except Exception:  # noqa: BLE001 -- the row still carries the error
+                pass
+            continue
+        plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
         row = {"mission_id": mid, "state": rec["state"], "epoch": rec["epoch"], **plan}
         out.append(row)
         if dry_run:
@@ -1410,6 +1666,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             reap(rec, row)
             if row.get("orphans_stopped"):
                 row["action"] = "reaped" if plan["action"] in ("none", "await") else plan["action"]
+            if v2 and rec.get("capsule_key") and _capsule_certify_check(rec, row, now):
+                continue
             if plan["action"] == "none" and rec["state"] == RUNNING:
                 # The wall is enforced, not requested. Measured 2026-09-28 (m-916e905e23d4): a worker
                 # asked once at 31 % worked on in the same turn for 3.5 h to 49 %. Past the grace after
@@ -1630,6 +1888,14 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     reap(halted, row)
                     row["action"] = "halt"
                     continue
+                continuing = turn_end is not None and turn_end["decision"] == "continue"
+                if v2 and act in ("relay", "replace") and rec.get("owner") and not continuing:
+                    # capsule-v2 ROTATE: seal, gate, authorize -- or hold with nothing stopped. Same-
+                    # session continuation hands nothing over and takes no capsule (spec 3.6).
+                    rotated = _capsule_rotate(rec, row, act, sessions, pid_alive, now, work_dir, capsule_io)
+                    if rotated is None:
+                        continue
+                    rec = rotated
                 if act in ("relay", "replace") and rec.get("owner"):
                     # A replaced owner is DEAD by the host's word, and its pid can still outlive
                     # that word (W0 E13): wait for it too, or the successor overlaps it.
@@ -1675,6 +1941,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     packet = rec.get("packet") if rec["state"] == HANDOFF else None
                     note = explicit or handoff_note_from_transcript(rec["owner"]["session_id"]) or ""
                     row["note_chars"] = len(note)
+                if v2 and rec.get("capsule_key") and act in ("relay", "replace") and not _capsule_arm(rec, row):
+                    continue   # spec 3.3: no marker, no spawn
                 row["launch"] = launch_worker(mid, expect_epoch=rec["epoch"],
                                               expect_state=rec["state"], reason=plan["reason"],
                                               runner=runner, now=now, note=note,
@@ -1995,6 +2263,9 @@ def _cli(argv=None) -> int:
     a.add_argument("--add-dir", action="append", default=None)
     a.add_argument("--wall", default=None,
                    help="snapshot,advisory,rearm in %% of context (default 35,40,30)")
+    a.add_argument("--rollover-protocol", choices=(CAPSULE_V2,), default=None,
+                   help="rotate through a sealed, certified capsule (spec mission-capsule-rollover); "
+                        "needs --permission-mode auto or bypassPermissions. Omitted: legacy.")
     s = sub.add_parser("session-start")
     s.add_argument("--session", required=True)
     s.add_argument("--source", default="")
@@ -2021,7 +2292,7 @@ def _cli(argv=None) -> int:
         res = arm(args.cwd, args.command, launch=not args.no_launch, workstream=args.workstream,
                   max_cycles=args.max_cycles, max_hours=args.max_hours,
                   permission_mode=args.permission_mode, allowed_tools=args.allowed_tools,
-                  add_dirs=args.add_dir, wall=wall)
+                  add_dirs=args.add_dir, wall=wall, rollover_protocol=args.rollover_protocol)
         print(json.dumps(res, indent=2))
         return 0 if args.no_launch or res.get("launch", {}).get("ok") else 1
     if args.cmd == "session-start":

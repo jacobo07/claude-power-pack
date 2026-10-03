@@ -209,13 +209,18 @@ def gate_before_stop(key: str, sd=None, now: Optional[float] = None,
 
 
 # --------------------------------------------------------------------------- pre-certification marker
-def arm_successor(rec: dict, sd=None, now: Optional[float] = None) -> dict:
+def arm_successor(rec: dict, sd=None, now: Optional[float] = None, capsule_key: Optional[str] = None) -> dict:
     """The marker for the worker about to run epoch+1, written BEFORE it is spawned (spec 3.3): from
     its first tool call it has no mutation authority until it certifies the capsule of `rec["epoch"]`.
     Created by rollover.precert_arm (G25), which replaces any earlier epoch's marker -- a merge would
-    have inherited that epoch's certification."""
+    have inherited that epoch's certification.
+
+    `capsule_key` (G6): the caller passes the record's own field. Epoch arithmetic is right only on a
+    relay from the epoch that sealed; a replace after a launch that never acked runs from an epoch
+    that sealed nothing, and the successor must still certify the capsule its predecessor left."""
     mid, epoch = rec["mission_id"], int(rec["epoch"])
-    fields = {"worker": worker_name(mid, epoch + 1), "epoch": epoch + 1, "capsule_key": ro.mission_key(mid, epoch),
+    fields = {"worker": worker_name(mid, epoch + 1), "epoch": epoch + 1,
+              "capsule_key": capsule_key or ro.mission_key(mid, epoch),
               "cwd": rec.get("cwd"), "resume_cmd": rec.get("resume_command")}
     if now is not None:
         fields["created_at"] = now
