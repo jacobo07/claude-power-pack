@@ -21,7 +21,13 @@ paid the bootstrap and did nothing is not a transient.
 
 Clearing: `python tools/provider_breaker.py clear --mission <id>` writes a `provider_cleared`
 ledger row; a quarantine whose evidence is OLDER than the latest clear is not enforced.
-Kill switch: CPP_PROVIDER_BREAKER=off -> quota_hold only (the pre-breaker behaviour).
+An AUTH quarantine is also released by a RE-LOGIN: the credentials file rewritten AFTER the refusal
+with an access token that is usable (unexpired, or lapsed but still refreshable) is the qualifying
+precondition change; the release is ledgered as `provider_released`. An unchanged, unreadable or
+still-expired (expiresAt 0) credentials file keeps the park. Only mtime, expiresAt,
+refreshTokenExpiresAt and the presence of a refresh token are ever read -- never a token value.
+Kill switches: CPP_PROVIDER_BREAKER=off -> quota_hold only (the pre-breaker behaviour);
+CPP_BREAKER_CRED_RELEASE=off -> a re-login no longer releases (only `clear` does).
 
     python tools/provider_breaker.py status --mission <id>
     python tools/provider_breaker.py clear  --mission <id> [--note "..."]
@@ -115,9 +121,90 @@ def last_clear(mission_id: str) -> float | None:
     return max(ts) if ts else None
 
 
+def _secs(value) -> float | None:
+    """Credentials instants are epoch milliseconds; 0 is kept as 0.0 (the measured mark of an
+    invalidated login). Anything that is not a number is unmeasured."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    if value == 0:
+        return 0.0
+    return value / 1000.0 if value > 1e11 else float(value)
+
+
+def credentials_state(home=None) -> dict:
+    """Shape of ~/.claude/.credentials.json, never its secrets: the seven keys below and nothing else.
+    expires_at / refresh_expires_at are epoch SECONDS (the file stores milliseconds); refresh_token
+    is only whether the key is present."""
+    path = (Path(home) if home else Path.home()) / ".claude" / ".credentials.json"
+    out = {"path": str(path), "readable": False, "mtime": None, "expires_at": None,
+           "refresh_token": False, "refresh_expires_at": None, "why": ""}
+    try:
+        out["mtime"] = path.stat().st_mtime
+    except FileNotFoundError:
+        out["why"] = "missing"
+        return out
+    except OSError as exc:
+        out["why"] = exc.__class__.__name__
+        return out
+    try:
+        oauth = json.loads(path.read_text(encoding="utf-8"))["claudeAiOauth"]
+        if not isinstance(oauth, dict):
+            raise TypeError("claudeAiOauth is not an object")
+        out["expires_at"] = _secs(oauth.get("expiresAt"))
+        out["refresh_expires_at"] = _secs(oauth.get("refreshTokenExpiresAt"))
+        out["refresh_token"] = "refreshToken" in oauth
+        out["readable"] = True
+    except Exception as exc:  # noqa: BLE001 -- the class name only: a message could quote file content
+        out["why"] = exc.__class__.__name__
+    return out
+
+
+def credentials_expired(cred: dict, now: float) -> bool | None:
+    """True / False when the login can be judged, None when it cannot (unreadable, no expiresAt).
+    The access token lapses every few hours and the CLI refreshes it with the refresh token, so a
+    past expiresAt alone is NOT expired (a preflight refusing it would deadlock an idle env);
+    expiresAt 0 is the measured a7 mark of an invalidated login."""
+    if not cred or not cred.get("readable"):
+        return None
+    exp = cred.get("expires_at")
+    if exp is None:
+        return None
+    if exp <= 0:
+        return True
+    if exp > now:
+        return False
+    if not cred.get("refresh_token"):
+        return True
+    rexp = cred.get("refresh_expires_at")
+    return bool(rexp is not None and rexp <= now)
+
+
+def _iso(ts: float) -> str:
+    import datetime as _dt
+    return _dt.datetime.fromtimestamp(ts, _dt.timezone.utc).isoformat(timespec="seconds")
+
+
+def auth_released(evidence_at: float, cred: dict, now: float) -> str | None:
+    """A one-line reason when a re-login qualifies as the precondition change for an AUTH quarantine:
+    credentials rewritten strictly AFTER the refusal and still usable. Everything else keeps the park
+    (unmeasurable included: churn is the harm being prevented, and `clear` remains)."""
+    if os.environ.get("CPP_BREAKER_CRED_RELEASE", "").lower() == "off":
+        return None
+    if not cred or not cred.get("readable"):
+        return None
+    mtime = cred.get("mtime")
+    if mtime is None or not mtime > evidence_at:
+        return None
+    if credentials_expired(cred, now) is not False:
+        return None
+    return f"credentials rewritten {_iso(mtime)} after the refusal at {_iso(evidence_at)}; access token usable"
+
+
 def decide(mission_id: str, owner_sid: str, now: float, *, workers=None, outcome=worker_outcome,
-           cleared_at=None) -> dict | None:
-    """The hold for this mission's next successor, or None. Pure over its injected readers."""
+           cleared_at=None, credentials=None, trace=None) -> dict | None:
+    """The hold for this mission's next successor, or None. Pure over its injected readers.
+    `credentials` is a callable returning a credentials_state() dict; `trace`, when a dict, receives
+    {"released": reason} if a re-login released an AUTH quarantine."""
     first = outcome(owner_sid)
     cls = first.get("class")
     if cls is None:
@@ -140,6 +227,12 @@ def decide(mission_id: str, owner_sid: str, now: float, *, workers=None, outcome
     evidence_at = float(first.get("at") or now)
     if clear and clear >= evidence_at:
         return None  # an operator cleared the breaker after this evidence was written
+    if cls == AUTH:
+        released = auth_released(evidence_at, (credentials or credentials_state)(), now)
+        if released:
+            if isinstance(trace, dict):
+                trace["released"] = released
+            return None  # a re-login after the refusal: the qualifying precondition change
     reason = f"{cls}: {first.get('text', '')}"[:220]
     if cls == AUTH or streak >= QUARANTINE_AFTER:
         why = "credentials" if cls == AUTH else f"{streak} consecutive workers ended in provider failure"
@@ -165,7 +258,12 @@ def hold_for(rec: dict, now: float) -> dict | None:
         return {**h, "class": QUOTA, "streak": 1, "quarantine": False}
     if not enabled():
         return None
-    return decide(rec.get("mission_id"), sid, now)
+    trace: dict = {}
+    hold = decide(rec.get("mission_id"), sid, now, trace=trace)
+    if trace.get("released"):
+        lr.ledger_append(rec.get("mission_id"), "provider_released", mission_id=rec.get("mission_id"),
+                         reason=trace["released"])
+    return hold
 
 
 def _cli(argv=None) -> int:
