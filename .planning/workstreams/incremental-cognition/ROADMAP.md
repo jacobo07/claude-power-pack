@@ -146,6 +146,24 @@ Plans:
 **Goal**: a material rise in startup floor by layer is visible in review.
 **Depends on**: nothing.
 **Success criteria**: gate green on today's floor, red on a seeded rise (positive control), layer and scope reported.
+**Plans:** 4 plans (sequential waves 1-4; all share tools/floor_regression_gate.py and its test)
+
+Plans:
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — K core: floor_regression_gate.py (transcript window -> layer/scope table -> reference -> check; exit 0/1/2), materiality + explanations + tokens axis, drill incl. source-level scope split
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 04-02-PLAN.md — K attribution: hook context / system messages by producing command + settings registration, skill and agent entries by name, host-absent is unattributed
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 04-03-PLAN.md — K sources + real floor: --project-dir / --session / --probe (owner probe reused, stub-proven), GEX44 smoke green, seeded real rise red, plane-gex44 reference committed
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 04-04-PLAN.md — K closeout on GEX44: [K] owner-bundle item (laptop reference + PRG, parse-proven), evidence/K.md Status OPEN, liveness disposition
 
 ### Phase 5: Offline replay and owner bundle
 
