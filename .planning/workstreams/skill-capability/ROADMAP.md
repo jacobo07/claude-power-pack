@@ -126,6 +126,15 @@ Plans:
 **Success Criteria**: sweep with a population floor and a positive control; drift gate red on a mutated mirror;
 `--pillar D`, `--pillar H` PASS.
 
+**Plans:** 4 plans (wave 1: 04-01 || 04-02; wave 2: 04-03; wave 3: 04-04)
+
+Plans:
+
+- [ ] 04-01-PLAN.md -- D: `tools/skill_coverage.py` + gate `tools/test_skill_coverage.py`, coverage/criticality derived from code, gex44 plane recorded in `evidence/D-live-gex44.json`, rendered `evidence/D-coverage.md`
+- [ ] 04-02-PLAN.md -- H: `tools/skill_mirror_drift.py` + gate `tools/test_skill_drift.py` (committed-blob, LF-normalized whole-dir compare), gex44 plane recorded in `evidence/H-live-gex44.json`, rendered `evidence/H-drift.md`
+- [ ] 04-03-PLAN.md -- H: card-vs-source digests `card_source_digests.json` + gate checks + wiring in `tools/router_freshness_gate.py`
+- [ ] 04-04-PLAN.md -- D/H closure: state.D, state.H, `[D]` + 2 `[H]` owner-bundle lines, `--pillar D/H` PASS, A/B/C stay PASS
+
 ### Phase 5: Representation operations
 
 **Goal**: Apply disclosure / fission / fusion / inline / dedup only where measured to help.
