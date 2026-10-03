@@ -12,15 +12,19 @@ vault/programs/skill-capability/ledger.json (read only, never written). Nothing 
 verdict is recomputed from the rows `champion-startup` / `challenger-startup`.
 
 Verdict (K4 falsification of "hide listing entries behind a gateway"):
-  V-LF-TOKENS  challenger startup_tokens >= champion startup_tokens (model-visible, primary).
+  V-LF-TOKENS  challenger startup_tokens >= champion startup_tokens (model-visible, primary): ok.
+               A fall inside the stated noise (lessons file) is INCONCLUSIVE ("no saving shown"),
+               a fall larger than the noise is FAIL (NOT_FALSIFIED: a saving appeared, n=1 per arm).
   V-LF-CAP     challenger listing chars >= cap - band. cap = D-LISTING.listing_chars_cap and
-               band = floor(cap * CAP_BIND_FRACTION), CAP_BIND_FRACTION = 0.01. Claude's discretion
+               band = cap // CAP_BIND_DIVISOR, CAP_BIND_DIVISOR = 100 (1%). Claude's discretion
                per CONTEXT: within 1% of its cap a listing is still cap-bound; V-LF-TOKENS carries
                the falsification on its own.
 
 Output lines: `  ok   V-LF-X <evidence>` / `  FAIL V-LF-X <diagnostic>` / `  INCONCLUSIVE V-LF-X <why>`,
 last line `LF_PASS=<passed>/<total>`. Exit codes: 0 pass, 1 fail or inconclusive, 2 could not run.
 INCONCLUSIVE is never a pass: a gate that could not read its source must not look green.
+The verdict is FALSIFIED only when SOURCES, TOKENS, CAP and DENOM-MATCH are all ok; `--json` exits 1
+for any other verdict. A zero startup_tokens or zero listing chars is UNMEASURED (INCONCLUSIVE).
 
 The planes: the rows are laptop fresh-session readings (derived from their Windows cwd); this
 script's derivation is host-independent and consumes no session. GEX44 is a different install, so
@@ -34,7 +38,6 @@ import functools
 import hashlib
 import importlib.util
 import json
-import math
 import re
 import shutil
 import subprocess
@@ -60,7 +63,7 @@ NON_DERIVABLE = (("22 -> 50", "described plugin entries"),
 FRESH_SESSIONS_THIS_PHASE = 0
 
 K4_LABELS = ("R2R1", "R3", "champion-startup", "challenger-startup")
-CAP_BIND_FRACTION = 0.01
+CAP_BIND_DIVISOR = 100  # band = 1% of the cap, integer arithmetic
 
 
 # --------------------------------------------------------------------------- sources
@@ -99,6 +102,9 @@ def k4_arms(rows):
             return None, f"{label}: listing.chars is not an int"
         if not _is_int(row.get("startup_tokens")):
             return None, f"{label}: startup_tokens is not an int"
+        if listing["chars"] <= 0 or row["startup_tokens"] <= 0:
+            return None, (f"{label}: UNMEASURED (listing.chars {listing['chars']}, startup_tokens "
+                          f"{row['startup_tokens']}; a reading of zero or less is no measurement)")
         arms[key] = row
     return arms, None
 
@@ -109,7 +115,7 @@ def frozen() -> dict:
 
 
 def band_of(cap: int) -> int:
-    return int(math.floor(cap * CAP_BIND_FRACTION))
+    return cap // CAP_BIND_DIVISOR
 
 
 # --------------------------------------------------------------------------- provenance (git + plan texts)
@@ -140,6 +146,7 @@ def _lf_sha(data: str) -> str:
     return hashlib.sha256(data.replace("\r\n", "\n").encode("utf-8")).hexdigest()
 
 
+C6_BULLET_RE = re.compile(r"^- (C6 DONE:.*?)(?=^- |\Z)", re.M | re.S)  # one bullet, never the next one
 C6_RE = re.compile(r"C6 DONE: (\d+) name-only overrides.*?initial listing before \((\w+)\) vs after "
                    r"\(fresh (\w+)\): ([\d,]+) -> ([\d,]+) chars")
 BOUND_RE = re.compile(r"~listing\s+size\s+\(~(\d+)k\s+tokens\),\s+minus\s+gateway\s+reads\s+"
@@ -151,7 +158,10 @@ def c6_parse(text):
     """Figures of the C6 bullet from the whitespace-collapsed plan text, or None."""
     if not text:
         return None
-    m = C6_RE.search(_collapse(text))
+    b = C6_BULLET_RE.search(text)
+    if not b:
+        return None
+    m = C6_RE.search(_collapse(b.group(1)))
     if not m:
         return None
     return {"overrides": int(m.group(1)), "before_session": m.group(2), "after_session": m.group(3),
@@ -265,7 +275,7 @@ def clause_c6(c6, c6_commit, cap):
     text = (f"C6 {c6['overrides']} name-only overrides, listing {c6['before']} ({c6['before_session']}) -> "
             f"{c6['after']} ({c6['after_session']}) chars, commit {c6_commit[:8]}")
     if c6["after"] >= c6["before"] - band:
-        return "ok", text + ": listing did not drop, cap still binds"
+        return "ok", text + ": listing did not drop (within the band of its before figure)"
     return "FAIL", text + f": listing fell by more than the band {band}"
 
 
@@ -316,13 +326,18 @@ def clause_cited(cited):
 # every clause returns (status, text); status in ok | FAIL | INCONCLUSIVE
 
 
-def clause_tokens(arms):
+def clause_tokens(arms, noise=None):
+    """noise: the stated token noise (int) from the lessons file, or None when it is not readable."""
     champ, chall = arms["champion"]["startup_tokens"], arms["challenger"]["startup_tokens"]
     delta = chall - champ
     text = f"challenger startup_tokens {chall} vs champion {champ} (delta {delta:+d})"
     if delta >= 0:
-        return "ok", text + ": not below champion"
-    return "FAIL", text + ": challenger is below champion, the floor fell"
+        return "ok", text + ": not below champion, no saving"
+    if noise is None:
+        return "INCONCLUSIVE", text + ": below champion but the stated noise is unreadable, cannot judge"
+    if delta >= -noise:
+        return "INCONCLUSIVE", text + f": change inside the stated noise +-{noise}, no saving shown (n=1 per arm)"
+    return "FAIL", text + f": fall larger than the stated noise +-{noise}, a saving appeared (n=1 per arm, needs a repeat)"
 
 
 def clause_cap(arms, denoms):
@@ -365,7 +380,7 @@ def evaluate_core(rows, denoms):
                 ("V-LF-CAP", "INCONCLUSIVE", "no arms"),
                 ("V-LF-DENOM-MATCH", "INCONCLUSIVE", "no arms")], None
     res = [("V-LF-SOURCES", "ok", "champion-startup and challenger-startup resolved, one row each")]
-    res.append(("V-LF-TOKENS",) + clause_tokens(arms))
+    res.append(("V-LF-TOKENS",) + clause_tokens(arms, (static()["noise"] or {}).get("tokens")))
     res.append(("V-LF-CAP",) + clause_cap(arms, denoms))
     res.append(("V-LF-DENOM-MATCH",) + clause_denom_match(arms, denoms))
     return res, arms
@@ -375,7 +390,8 @@ def verdict_of(results) -> str:
     st = {n: s for n, s, _ in results}
     if "FAIL" in (st.get("V-LF-TOKENS"), st.get("V-LF-CAP")):
         return "NOT_FALSIFIED"
-    if st.get("V-LF-TOKENS") == "ok" and st.get("V-LF-CAP") == "ok":
+    # FALSIFIED only on rows that are readable, equal to the frozen D-LISTING and clear both clauses.
+    if all(st.get(n) == "ok" for n in ("V-LF-SOURCES", "V-LF-TOKENS", "V-LF-CAP", "V-LF-DENOM-MATCH")):
         return "FALSIFIED"
     return "INCONCLUSIVE"
 
@@ -404,7 +420,9 @@ def command_for(row) -> str:
 
 def delta_wording(delta: int, noise: int) -> str:
     if delta < 0:
-        return f"startup tokens fell by {-delta} (n=1 per arm, not a saving without a repeat)"
+        if -delta <= noise:
+            return f"startup tokens fell by {-delta}, inside the stated noise (n=1 per arm, no saving shown)"
+        return f"startup tokens fell by {-delta}, beyond the stated noise (n=1 per arm, not a saving without a repeat)"
     if delta <= noise:
         return "no saving shown (delta inside noise)"
     return f"startup tokens rose by {delta}, above the stated noise (+-{noise}) by {delta - noise}"
@@ -489,6 +507,8 @@ def render(rows, denoms, fro, st=None) -> str:
     L.append(f"- K4 moved startup tokens {delta:+d} ({ch['startup_tokens']} -> {cl['startup_tokens']}) against the "
              f"stated noise +-{noise['tokens']} ({LESSONS_REL} line {noise['line']}): "
              f"{delta_wording(delta, noise['tokens'])}. {d['caveat']}.")
+    L.append(f"- the noise figure +-{noise['tokens']} is a stated estimate from `{LESSONS_REL}` line {noise['line']}, "
+             "not a computed spread; each arm is n=1 session, so the margin above or below it is indicative only.")
     L.append(f"- recorded next hypothesis (`{KSLICE_REL}` line {bound['line']}, needs Owner): an UPPER BOUND of "
              f"~{bound['listing_tokens']} startup tokens per session minus ~{bound['gateway_read_tokens']} per "
              "gateway read; displacement unknown; denominator D-LISTING; never a realized saving.")
@@ -530,6 +550,26 @@ def _m_tokens_lowered(rows, denoms):
     chall["startup_tokens"] = champ["startup_tokens"] - 1
 
 
+def _m_tokens_lowered_by(n):
+    def mut(rows, denoms):
+        champ, chall = _arms_of(rows)
+        chall["startup_tokens"] = champ["startup_tokens"] - n
+    return mut
+
+
+def _m_tokens_up_5(rows, denoms):
+    champ, chall = _arms_of(rows)
+    chall["startup_tokens"] += 5  # still FALSIFIED-shaped, but no longer the frozen D-LISTING row
+
+
+def _m_tokens_zero(rows, denoms):
+    _arms_of(rows)[1]["startup_tokens"] = 0
+
+
+def _m_chars_zero(rows, denoms):
+    _arms_of(rows)[1]["listing"]["chars"] = 0
+
+
 def _m_chars_lowered(rows, denoms):
     cap = denoms["D-LISTING"]["listing_chars_cap"]
     _arms_of(rows)[1]["listing"]["chars"] = cap - band_of(cap) - 1
@@ -556,7 +596,11 @@ def _m_denom_changed(rows, denoms):
 VERDICT_DRILLS = [
     ("clean", _m_clean, "V-LF-SOURCES", "ok",
      {"V-LF-TOKENS": "ok", "V-LF-CAP": "ok", "V-LF-DENOM-MATCH": "ok"}),
-    ("tokens-lowered", _m_tokens_lowered, "V-LF-TOKENS", "FAIL", {"V-LF-CAP": "ok"}),
+    ("tokens-lowered-1-inside-noise", _m_tokens_lowered, "V-LF-TOKENS", "INCONCLUSIVE", {"V-LF-CAP": "ok"}),
+    ("tokens-lowered-1000-inside-noise", _m_tokens_lowered_by(1000), "V-LF-TOKENS", "INCONCLUSIVE", {"V-LF-CAP": "ok"}),
+    ("tokens-lowered-2000-beyond-noise", _m_tokens_lowered_by(2000), "V-LF-TOKENS", "FAIL", {"V-LF-CAP": "ok"}),
+    ("tokens-zero-unmeasured", _m_tokens_zero, "V-LF-SOURCES", "INCONCLUSIVE", {"V-LF-TOKENS": "INCONCLUSIVE"}),
+    ("chars-zero-unmeasured", _m_chars_zero, "V-LF-SOURCES", "INCONCLUSIVE", {"V-LF-CAP": "INCONCLUSIVE"}),
     ("chars-lowered", _m_chars_lowered, "V-LF-CAP", "FAIL", {"V-LF-TOKENS": "ok"}),
     ("chars-at-band-edge", _m_chars_boundary, "V-LF-CAP", "ok", {"V-LF-TOKENS": "ok"}),
     ("listing-unmeasured", _m_unmeasured, "V-LF-SOURCES", "INCONCLUSIVE", {}),
@@ -580,6 +624,15 @@ def drills(rows, denoms, fro, st=None) -> list:
         good = got.get(clause) == want and all(got.get(c) == w for c, w in others.items())
         out.append((name, clause, got.get(clause), good))
     st = st if st is not None else static()
+    for name, mut, want in (("verdict-clean", _m_clean, "FALSIFIED"),
+                            ("verdict-challenger-tokens-plus-5", _m_tokens_up_5, "INCONCLUSIVE"),
+                            ("verdict-tokens-inside-noise", _m_tokens_lowered, "INCONCLUSIVE"),
+                            ("verdict-tokens-zero", _m_tokens_zero, "INCONCLUSIVE"),
+                            ("verdict-tokens-beyond-noise", _m_tokens_lowered_by(2000), "NOT_FALSIFIED")):
+        vrows = copy.deepcopy(rows)
+        mut(vrows, denoms)
+        v = verdict_of(evaluate_core(vrows, denoms)[0])
+        out.append((name, "verdict", v, v == want))
     cap = denoms["D-LISTING"]["listing_chars_cap"]
     c6, c6c = st["c6"], st["c6_commit"]
     out.append(("c6-clean", "V-LF-C6", clause_c6(c6, c6c, cap)[0], clause_c6(c6, c6c, cap)[0] == "ok"))
@@ -717,8 +770,9 @@ def main(argv=None) -> int:
     except (OSError, ValueError) as exc:
         return emit([("V-LF-SOURCES", "INCONCLUSIVE", str(exc))])
     if args.json:
-        print(json.dumps(derived_json(rows, denoms, fro), indent=1, sort_keys=True))
-        return 0
+        dj = derived_json(rows, denoms, fro)
+        print(json.dumps(dj, indent=1, sort_keys=True))
+        return 0 if dj["verdict"] == "FALSIFIED" else 1
     if args.drills:
         d = drills(rows, denoms, fro, static())
         for name, clause, obs, good in d:

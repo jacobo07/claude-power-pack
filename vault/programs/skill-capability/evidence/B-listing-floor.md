@@ -18,7 +18,7 @@ Frozen pillar B rule (ledger, quoted):
 ## Verdict (recomputed from the rows)
 
 - ok V-LF-SOURCES: champion-startup and challenger-startup resolved, one row each
-- ok V-LF-TOKENS: challenger startup_tokens 89844 vs champion 87739 (delta +2105): not below champion
+- ok V-LF-TOKENS: challenger startup_tokens 89844 vs champion 87739 (delta +2105): not below champion, no saving
 - ok V-LF-CAP: challenger listing chars 29795, cap 30000, gap 205 chars (0.68% of cap), band 300: still cap-bound
 - ok V-LF-DENOM-MATCH: rows equal frozen D-LISTING (challenger chars 29795, champion startup_tokens 87739, challenger startup_tokens 89844)
 - verdict: FALSIFIED (frozen cap 30000, band 300)
@@ -36,7 +36,7 @@ Frozen pillar B rule (ledger, quoted):
 
 ## C6 (name-only skillOverrides, laptop)
 
-- ok V-LF-C6: C6 134 name-only overrides, listing 29991 (bfe97833) -> 30002 (a5df8940) chars, commit d9072185: listing did not drop, cap still binds
+- ok V-LF-C6: C6 134 name-only overrides, listing 29991 (bfe97833) -> 30002 (a5df8940) chars, commit d9072185: listing did not drop (within the band of its before figure)
 - source: `vault/plans/skill-residency-program-2026-10-03.md` bullet `C6 DONE`, introduced by commit d9072185; no startup-token reading recorded for C6.
 
 ## Economics
@@ -44,6 +44,7 @@ Frozen pillar B rule (ledger, quoted):
 - realized saving: none.
 - C6 moved the initial listing +11 chars (29991 -> 30002).
 - K4 moved startup tokens +2105 (87739 -> 89844) against the stated noise +-1500 (vault/lessons/2026-10-03-capped-listing-and-card-aperture.md line 12): startup tokens rose by 2105, above the stated noise (+-1500) by 605. fresh-session first-call figures; one session each, n=1 per arm.
+- the noise figure +-1500 is a stated estimate from `vault/lessons/2026-10-03-capped-listing-and-card-aperture.md` line 12, not a computed spread; each arm is n=1 session, so the margin above or below it is indicative only.
 - recorded next hypothesis (`vault/plans/skill-virtualization-k-slice-2026-10-03.md` line 110, needs Owner): an UPPER BOUND of ~9000 startup tokens per session minus ~4000 per gateway read; displacement unknown; denominator D-LISTING; never a realized saving.
 
 ## Sessions (D-SESSIONS)
