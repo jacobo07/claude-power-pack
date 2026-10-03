@@ -1,0 +1,127 @@
+{
+ "schema": "skill-capability-ledger/1",
+ "program": "cpp-skill-capability",
+ "plan": "vault/plans/skill-capability-program-2026-10-03.md",
+ "verifier": "tools/test_skill_capability_program.py (wraps tools/test_cognitive_economy_program.py, never edits it)",
+ "terminal_vocabulary": [
+  "IMPLEMENTED_AND_VERIFIED", "MERGED_INTO_EXISTING_OWNER", "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+  "DEFERRED_STRONGER_OWNER", "AUTHORIZATION_BOUND", "EXTERNAL_BLOCKED", "RESEARCH_INSUFFICIENT_EVIDENCE"
+ ],
+ "frozen": {
+  "pillars": [
+   {"id": "A", "name": "card precision + C8 maturity",
+    "owner": ["hooks/doctrine_cards.js", "vault/audits/cwst-representation-verdict-2026-10-03.md"],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "mtime-window provenance: a file whose mtime lies inside one of this session's shell tool-call windows after its last own edit is unknown, not foreign; pre-session foreign hunks stay foreign (arm C must stay 2/2 GREEN). Gate replays the 5 live false denies (300ac3a1, 5b36b02f x2, 3a05f288, 4a7ee8bc) as allowed AND keeps a pre-session foreign hunk denied; the 'git exit 128' x6 class is root-caused and named. C8 target is a delivery card (deny-once question), never an authority."},
+   {"id": "B", "name": "listing floor + plugin gateway + economics",
+    "owner": ["wiki/tools/listing_floor_probe.py", "wiki/tools/capability_directory_experiment.py", "wiki/tools/skill_listing_visibility.py"],
+    "predicted": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+    "rule": "listing hiding was falsified twice (C6, K4) against D-LISTING; a third hypothesis closes this pillar only with its own measurement against D-LISTING recording the command; a lower floor claimed without a fresh-session measurement is refused"},
+   {"id": "C", "name": "opportunity / delivery / recall / precision",
+    "owner": ["tools/skill_invocations.py", ".planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/p3_delivery.py"],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "opportunity, delivery, recall and precision are computed by one gate from transcripts over a named window; recall and precision report n and are never extrapolated from n < 5"},
+   {"id": "D", "name": "coverage + criticality",
+    "owner": ["tools/skill_invocations.py", "modules/zero-crash/hooks/skill-heat-map-advisor.js"],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "every installed skill gets a coverage class (opportunity detector / card / none) and a criticality class from a discovered sweep, never a hand list"},
+   {"id": "E", "name": "contribution + result consumption",
+    "owner": ["vault/specs/agent-capability-virtualization.md", "modules/capability_runtime/agent_spec.py"],
+    "predicted": "RESEARCH_INSUFFICIENT_EVIDENCE",
+    "rule": "contribution is claimed only from a paired benchmark inside the <= 10 new-session budget (D-SESSIONS); otherwise the measurement records why the budget cannot separate the arms"},
+   {"id": "F", "name": "disclosure / fission / fusion / inline / dedup",
+    "owner": ["vault/plans/skill-virtualization-k-slice-2026-10-03.md", "modules/skill_router/skill_index.py"],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "each representation operation applied to a skill carries a before/after listing measurement against D-LISTING and a recall check; dedup decisions come from a content-hash sweep"},
+   {"id": "G", "name": "compile-out + lineage",
+    "owner": ["hooks/doctrine_cards.js"],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "a compiled-out card names the skill and commit it was compiled from, and a gate fails when the source skill changes without the card being re-derived"},
+   {"id": "H", "name": "freshness / drift / recert",
+    "owner": ["tools/router_freshness_gate.py"],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "drift between a skill's live copy and its repo mirror, and between a card and its source, is detected by a gate driven from both poles"},
+   {"id": "I", "name": "lifecycle / retirement / self-pruning / GC",
+    "owner": ["modules/liveness/reachability.py", "vault/programs/cognitive-economy/ledger.json"],
+    "predicted": "MERGED_INTO_EXISTING_OWNER",
+    "rule": "merged into cognitive-economy pillar T; this program hands over its retirement candidates with evidence and deletes nothing"},
+   {"id": "J", "name": "creation governance",
+    "owner": ["~/.claude/skills/skill-creator/SKILL.md"],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "a new skill must declare its opportunity detector or why it has none; a gate refuses a skill directory without the declaration"},
+   {"id": "K", "name": "capability routing + ACV",
+    "owner": ["vault/specs/agent-capability-virtualization.md", "modules/capability_runtime/agent_spec.py"],
+    "predicted": "MERGED_INTO_EXISTING_OWNER",
+    "rule": "routing lives with ACV; this program contributes opportunity rows through CO-12 and builds no second router"},
+   {"id": "L", "name": "CO-12 + Context Compiler",
+    "owner": ["modules/cognitive_os/co_12_telemetry.py", "vault/programs/cognitive-economy/ledger.json"],
+    "predicted": "DEFERRED_STRONGER_OWNER",
+    "rule": "the Context Compiler is ABSENT; it is deferred to the cognitive-economy program with a handoff; CO-12 is written only through record_signal"},
+   {"id": "M", "name": "economics / model / goal relativity",
+    "owner": ["tools/usage_index.py"],
+    "predicted": "MERGED_INTO_EXISTING_OWNER",
+    "rule": "cost figures come from tools/usage_index.py windows; this program reports token and turn deltas relative to a named denominator and owns no cost model"},
+   {"id": "N", "name": "CBR / UBC / UKDL / settings / push closeout",
+    "owner": ["vault/knowledge_base/ukdl-universal.md", "~/.claude/settings.json"],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "closeout: UKDL and CBR reviews exist, global settings equal the declared retained state (wrapper --final check), and push happens only once no foreign commits interleave (Owner boundary 4)"}
+  ],
+  "denominators": {
+   "D-LISTING": {
+    "source": "wiki/tools/skill_listing_visibility.py + wiki/tools/listing_floor_probe.py (K4 4d1cfb83)",
+    "listing_chars_cap": 30000,
+    "listing_chars_after_K4": 29795,
+    "startup_tokens_before_K4": 87739,
+    "startup_tokens_after_K4": 89844,
+    "plugin_refill_entries": "22 -> 50",
+    "caveat": "fresh-session first-call figures; one session each, n=1 per arm"
+   },
+   "D-CARD": {
+    "source": "doctrine card ledger, live sessions after K1 bf3d526a",
+    "live_denies": 5,
+    "true_positives": 0,
+    "deny_shas": ["300ac3a1", "5b36b02f", "5b36b02f", "3a05f288", "4a7ee8bc"],
+    "unknown_git_exit_128": 6,
+    "arm_c": "2/2 PASS (123c96cc)"
+   },
+   "D-SESSIONS": {
+    "listing_family_remaining": 8,
+    "listing_family_total": 12,
+    "new_benchmark_cap": 10,
+    "source": "Owner boundary 2, plan vault/plans/skill-capability-program-2026-10-03.md"
+   },
+   "D-W7": {
+    "source": "vault/programs/cognitive-economy/ledger.json frozen.denominators.D-W7 (reused, not re-measured)"
+   }
+  }
+ },
+ "state": {
+  "A": {"terminal": null, "evidence": [], "savings": []},
+  "B": {"terminal": null, "evidence": [], "savings": []},
+  "C": {"terminal": null, "evidence": [], "savings": []},
+  "D": {"terminal": null, "evidence": [], "savings": []},
+  "E": {"terminal": null, "evidence": [], "savings": []},
+  "F": {"terminal": null, "evidence": [], "savings": []},
+  "G": {"terminal": null, "evidence": [], "savings": []},
+  "H": {"terminal": null, "evidence": [], "savings": []},
+  "I": {"terminal": null, "evidence": [], "savings": []},
+  "J": {"terminal": null, "evidence": [], "savings": []},
+  "K": {"terminal": null, "evidence": [], "savings": []},
+  "L": {"terminal": null, "evidence": [], "savings": []},
+  "M": {"terminal": null, "evidence": [], "savings": []},
+  "N": {"terminal": null, "evidence": [], "savings": []}
+ },
+ "retained": {
+  "settings": {
+   "file": "~/.claude/settings.json",
+   "keys": [
+    {"pointer": "/skillOverrides", "sha256": "ffbedf71cbcc8e4d3c178ed1c4a31b48acd6a6049dfb548191685dac67843e5f",
+     "why": "C6: 134 name-only overrides, backup ~/.claude/backups/settings.pre-skillOverrides-20261003.json"},
+    {"pointer": "/env/CLAUDE_DOCTRINE_CARDS", "value": "deny",
+     "why": "C4b: Owner set the commit card to deny mode"}
+   ]
+  }
+ },
+ "reviews": {"ukdl": null, "cbr": null},
+ "deltas": {"product": [], "intelligence": []}
+}
