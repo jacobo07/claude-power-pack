@@ -67,6 +67,15 @@ dirty set) · goal pointer (existing file) · >= 1 open obligation · handoff th
 reads back · child-work state. Pending background children HOLD. A dirty tree is recorded, not
 refused (it survives a reset on disk; peers' writes are dirty too).
 
+AMENDED 2026-10-03 (plan ccp-s16 §16.1 S1) -- custody. The exception above holds for the capsule's
+OWN repo, which the successor reopens. It does not hold for a repo the successor will never look
+at: a session's own Write/Edit paths that are uncommitted in ANOTHER repo REFUSE (`foreign` in the
+capsule; status scoped to those paths, so peers' dirt is never judged; a git failure refuses;
+paths outside any repo only warn). Origin: session a4849588 sealed SAFE_TO_FORGET in an Orca-X
+worktree with an uncommitted edit to the Power Pack's rollover.py, orphaned for 3 days. At
+amendment time 4 of the last 40 sealed sessions held such paths. Shell-written files are not seen.
+Gate: tools/test_rollover_custody.py.
+
 ## 5. Trigger policy (deterministic, explainable)
 
 Inputs: resident R (last call), floor F (call #1 of the session), capsule estimate B (bytes/4,

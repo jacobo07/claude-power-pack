@@ -122,6 +122,42 @@ def repo_facts(cwd: str) -> dict:
     return out
 
 
+def foreign_custody(writes: list[str], capsule_root: Optional[str]) -> dict:
+    """This session's OWN written paths that are uncommitted in a repo other than the capsule's.
+
+    Measured 2026-10-03 (plan ccp-s16 F7): session a4849588 resumed in an Orca-X worktree, fixed
+    tools/rollover.py in the Power Pack repo, sealed SAFE_TO_FORGET and was cleared; the edit sat
+    uncommitted for 3 days with no obligation naming it. The capsule kept the last 15 writes and
+    read dirty state only for its own repo. Status is scoped to the session's own paths, so peers'
+    dirt in a shared tree is never judged. Only Write/Edit/NotebookEdit paths are seen: files
+    written through a shell are invisible here."""
+    by_root: dict[str, list[str]] = {}
+    unchecked = 0
+    roots: dict[str, Optional[str]] = {}
+    own = os.path.normcase(os.path.abspath(capsule_root)) if capsule_root else None
+    for w in writes:
+        parent = str(Path(w).parent)
+        if parent not in roots:
+            ok, top = _git(Path(parent), "rev-parse", "--show-toplevel") if Path(parent).is_dir() else (False, "")
+            roots[parent] = top if ok else None
+        top = roots[parent]
+        if not top:
+            unchecked += 1
+            continue
+        if own and os.path.normcase(os.path.abspath(top)) == own:
+            continue
+        by_root.setdefault(top, []).append(w)
+    repos = []
+    for top, paths in sorted(by_root.items()):
+        ok, status = _git(Path(top), "status", "--porcelain", "--untracked-files=all", "--", *paths, timeout=30.0)
+        if not ok:
+            return _unknown(f"git status failed in {top}: {status[:80]}")
+        dirty = sorted({ln[3:].strip() for ln in status.splitlines() if len(ln) > 3})
+        if dirty:
+            repos.append({"root": top, "dirty": dirty})
+    return {"state": "OK", "repos": repos, "unchecked_non_repo": unchecked}
+
+
 # ----------------------------------------------------------------------- transcript
 def _rows(path: Optional[Path]):
     if not path or not Path(path).is_file():
@@ -316,12 +352,14 @@ def compile_capsule(session_id: str, cwd: str, transcript: Optional[str], *, goa
         items, source = obligations_from(gp.get("path")), "goal file"
     if not items and own_handoff:
         items, source = obligations_from(handoff.get("path")), "own handoff"
+    repo = repo_facts(cwd)
     return {
         "schema": SCHEMA, "session_id": session_id, "cwd": str(cwd), "created": _iso(),
         "session_cwd": session_cwd(session_id),
         "host": host_identity(),
         "transcript": str(tp) if tp else None,
-        "repo": repo_facts(cwd), "goal": gp,
+        "repo": repo, "goal": gp,
+        "foreign": foreign_custody(writes, repo.get("root") if repo.get("state") == "OK" else None),
         "obligations": items or [], "obligations_source": source if items else None,
         "handoff": handoff, "children": child_state(session_id),
         "usage": usage_facts(tp),
@@ -342,6 +380,17 @@ def completeness(capsule: dict, now: Optional[float] = None) -> dict:
                 missing.append(f"repo.{k}: {repo[k].get('reason')}")
         if isinstance(repo.get("dirty"), list) and repo["dirty"]:
             warnings.append(f"{len(repo['dirty'])} dirty tracked paths survive on disk, not in context")
+    # Custody (ccp-s16 S1): the session's own uncommitted writes in ANOTHER repo leave nobody holding
+    # them once this context is gone. Capsules sealed before this key existed are not judged on it.
+    fo = capsule.get("foreign")
+    if isinstance(fo, dict) and fo.get("state") != "OK":
+        missing.append(f"custody: {fo.get('reason', 'unreadable')}")
+    elif isinstance(fo, dict):
+        for r in fo.get("repos") or []:
+            missing.append(f"custody: {len(r['dirty'])} uncommitted path(s) this session wrote in {r['root']}: "
+                           + ", ".join(r["dirty"][:4]) + " -- commit them there before /clear")
+        if fo.get("unchecked_non_repo"):
+            warnings.append(f"custody: {fo['unchecked_non_repo']} written path(s) outside any git repo, not checked")
     if (capsule.get("goal") or {}).get("state") != "OK":
         missing.append(f"goal: {(capsule.get('goal') or {}).get('reason', 'absent')}")
     if not capsule.get("obligations"):
