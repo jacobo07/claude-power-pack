@@ -52,9 +52,11 @@ reusable maturity ratchets the baseline. UNKNOWN / UNJUDGED / DELEGATED / DEFERR
 ## Phase Details
 
 ### Phase 1: Baseline integrity repair
+
 **Goal**: The baseline chain is green and the known ratchet/gate escape routes are closed.
 **Depends on**: Nothing
 **Success Criteria**:
+
   1. `ratchet.reanchor(family, {id: new_origin}, reason, authority)` writes ONE generation per family with
      `changes[id].kind="REANCHORED"`, keeps ids, refuses unless the new origin's `verify_origin == VERIFIED` [G1].
      The 9 QUOTE_MISSING entries are re-anchored to PP `skills/<name>/SKILL.md` (or reverted with a reason if the
@@ -67,18 +69,21 @@ reusable maturity ratchets the baseline. UNKNOWN / UNJUDGED / DELEGATED / DEFERR
      (nested axes included) with a population floor, not a hardcoded family tuple [G9].
   5. `python tools/test_baseline_generations.py` 16/16+, `test_tower_ratchet.py`, `test_tower_donegate.py`,
      `test_family_baselines.py` all PASS; B0 and web_surface B1 sha256 unchanged (recorded before/after).
-**Plans:** 5 plans
+**Plans:** 5/5 plans executed
 Plans:
-- [ ] 01-01-PLAN.md — (wave 1) LF-pin baseline generations (tracer: V-TRAT-REAL-CHAINS green) + RED harness for H1/H2/H3b
-- [ ] 01-02-PLAN.md — (wave 1) donegate exits: `test:` -> UNJUDGED never run, N/A closed vocabulary + 30% cap (H5/H6)
-- [ ] 01-03-PLAN.md — (wave 2) ratchet hardening: unanchored not ok, diff why/origin/class/scope, authority allowlist
-- [ ] 01-04-PLAN.md — (wave 3) `ratchet.reanchor` + CLI; re-anchor 9 entries -> persistent_state/B1, wii_homebrew/B1
-- [ ] 01-05-PLAN.md — (wave 4) `discover_subjects` replaces hardcoded families; phase gate; 01-EVIDENCE.md
+
+- [x] 01-01-PLAN.md — (wave 1) LF-pin baseline generations (tracer: V-TRAT-REAL-CHAINS green) + RED harness for H1/H2/H3b
+- [x] 01-02-PLAN.md — (wave 1) donegate exits: `test:` -> UNJUDGED never run, N/A closed vocabulary + 30% cap (H5/H6)
+- [x] 01-03-PLAN.md — (wave 2) ratchet hardening: unanchored not ok, diff why/origin/class/scope, authority allowlist
+- [x] 01-04-PLAN.md — (wave 3) `ratchet.reanchor` + CLI; re-anchor 9 entries -> persistent_state/B1, wii_homebrew/B1
+- [x] 01-05-PLAN.md — (wave 4) `discover_subjects` replaces hardcoded families; phase gate; 01-EVIDENCE.md
 
 ### Phase 2: Capability subject and archetypes
+
 **Goal**: A capability subject (traits + archetypes) resolved from repo reality first, intent second.
 **Depends on**: Phase 1
 **Success Criteria**:
+
   1. `modules/capability_runtime/archetypes.py`: traits (persistent, multi_actor, bulk, destructive, distributed,
      external_effect, scheduled, money, policy_layers, ui) and archetypes as trait conjunctions; family and archetype
      are independent outputs.
@@ -89,9 +94,11 @@ Plans:
      (ephemeral->persistent, local->distributed) recompiles differently, positive controls per archetype.
 
 ### Phase 3: Promotion admission and scope contract
+
 **Goal**: Constitutive admission is evidence-gated and enforced by the chain, not by convention.
 **Depends on**: Phase 1
 **Success Criteria**:
+
   1. `modules/tower/admission.py`: origin VERIFIED and not under a worktree or a rules stub [G15]; a runnable check or
      an explicit MANUAL do-confirm; evidence ref (commit/incident); production evidence ref; negative applicability;
      counterfactual verdict (instance/product/archetype/constitutive); status provisional.
@@ -104,9 +111,11 @@ Plans:
      refused; a fully evidenced archetype entry is admitted (positive control).
 
 ### Phase 4: Archetype maturity generations
+
 **Goal**: Three materially distinct archetypes carry admitted B0 maturity on a second tower axis.
 **Depends on**: Phases 2, 3
 **Success Criteria**:
+
   1. `vault/tower/archetypes/<ID>.json` definitions + `vault/tower/baselines/archetype/<ID>/B0.json` through
      admission, for WORLD_MUTATION/persistent-state (donor KC world_persistence_gate), EXTERNAL_EFFECT (donor
      InfinityOps effect-keeps-http-status, generalized), BACKGROUND_JOB (donor PP gsd sweep lease/heartbeat/bounded
@@ -116,9 +125,11 @@ Plans:
   3. `verify_chain` ok for each; the discovered-subject gates (Phase 1.4) include them.
 
 ### Phase 5: Envelope compiler
+
 **Goal**: The capability envelope is compiled as derived Obligations and closes only on evidence.
 **Depends on**: Phase 4
 **Success Criteria**:
+
   1. `modules/gsd_x/mission/envelope.py`: subject -> archetype + family entries -> causally applicable UKDL traps ->
      contract dependencies -> one `Obligation` per surface, with consequence and trait-fact evidence; considered
      surfaces it excludes are listed NOT_APPLICABLE with a reason.
@@ -131,9 +142,11 @@ Plans:
   5. Tests: naked-verb, irrelevant-surface, consequence-escalation, silent-omission, N/A gaming, deferred-forever.
 
 ### Phase 6: Live delivery and report-only closure
+
 **Goal**: Real sessions receive the envelope and their Stop leaves an evidence row — report-only.
 **Depends on**: Phase 5
 **Success Criteria**:
+
   1. `modules/gsd_x/cli.py`: bounded envelope block beside family_block; one total ceiling, dedup by entry id across
      family and archetype blocks [G18]; the delivered sentence states exactly what runs (report-only).
   2. Budget gate: measured added latency on the UserPromptSubmit child stays under the chain deadline with
@@ -148,9 +161,11 @@ Plans:
      A V-gate drives the canonical dispatcher end to end (not in-process) and shows a row.
 
 ### Phase 7: Proving grounds and cross-context transfer
+
 **Goal**: The plane works on real code in three archetypes and transfers across projects.
 **Depends on**: Phase 6
 **Success Criteria**:
+
   1. KC worktree `ucep/world-mutation`: a real persistence/world-mutation feature compiles an envelope; required
      surfaces close via a local gate with the exact command recorded (no live server, no deploy).
   2. InfinityOps worktree `ucep/external-effect`: a real external-effect feature inherits EXTERNAL_EFFECT surfaces;
@@ -161,9 +176,11 @@ Plans:
   5. Each run's envelope is captured as a fixture for Phase 8.
 
 ### Phase 8: Falsification, live promotion, inheritance
+
 **Goal**: The mechanism is proven falsifiable and the ratchet demonstrably moves future work.
 **Depends on**: Phase 7
 **Success Criteria**:
+
   1. `tools/test_capability_envelope_adversarial.py`: the 12 challenges (naked verb, irrelevant surface, trait
      transition, archetype negative control, consequence escalation, existing maturity, silent omission, N/A gaming,
      deferred-forever, instrument positive control, compiler severing, ratchet inheritance), `*_PASS=` line.
@@ -176,9 +193,11 @@ Plans:
      and one real run with zero false activations all pass — otherwise stay report-only and record why.
 
 ### Phase 9: Knowledge, metrics and handoff
+
 **Goal**: Product Delta and Intelligence Delta are both durable and discoverable by a fresh agent.
 **Depends on**: Phase 8
 **Success Criteria**:
+
   1. Incidents (symptom, causal chain, fix, regression proof) for every bug met; UKDL HR/PR/Trap candidates in a NEW
      file `vault/knowledge_base/ukdl-candidates-ucep.md` [G14].
   2. Metrics from the rung rows with real denominators: capability closure rate, naked-verb escape rate, archetype
