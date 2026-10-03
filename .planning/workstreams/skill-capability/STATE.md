@@ -4,15 +4,15 @@ milestone: v1
 current_phase: 04 — Coverage, criticality and freshness
 current_plan: Not started
 status: planning
-stopped_at: Phase 3 complete, ready to plan Phase 04
-last_updated: "2026-10-03T18:17:55.025Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-10-03T18:55:16.175Z"
 last_activity: 2026-10-03
-state_head: 8b0137aa6d0d51d0c82e116784adb69c7d536a4b
+state_head: c552a293111de3a9b2b03ec922a1af8ad96d3109
 progress:
   total_phases: 9
   completed_phases: 3
-  total_plans: 12
-  completed_plans: 8
+  total_plans: 17
+  completed_plans: 12
   percent: 33
 milestone_name: skill-capability
 workstream: skill-capability
@@ -61,10 +61,10 @@ Total Plans in Phase: 3
 
 ## Session Continuity
 
-**Last session:** 2026-10-03T16:53:11.686Z
+**Last session:** 2026-10-03T18:55:16.029Z
 
-**Stopped At:** HANDOFF epoch 2 -> 3, 2026-10-03T18:33Z (mission context wall, session stopped 18:40Z)
-**Resume File:** None (this section is the hand-off)
+**Stopped At:** Completed 04-04-PLAN.md (c552a293: D and H IMPLEMENTED_AND_VERIFIED, `--pillar A/B/C/D/H` PASS on gex44). Previous: HANDOFF epoch 2 -> 3, 2026-10-03T18:33Z (mission context wall, session stopped 18:40Z)
+**Resume File:** None (the epoch 2 hand-off section below; its NEXT is now phase 4 code review + verification)
 
 ### Epoch 2 hand-off (verify against git, the repository wins)
 
