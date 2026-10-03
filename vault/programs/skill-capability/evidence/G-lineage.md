@@ -72,17 +72,18 @@ Each drill starts from a copy of a clean temporary git repo seeded from the HEAD
 | DISPATCHER-UNCOVERED-DOTSLASH | hooks/tests/fixtures/dot_card.js = copy of CW, registered next to CW with the `./tests/fixtures/dot_card.js` shape (H's parser does not read it, no re-record) | FAIL {DISPATCHER-COVERED} | FAIL {DISPATCHER-COVERED} | ok |
 | SUBDIR-CARD-DOTSLASH | hooks/_shared/sub_card.js = copy of CW with its marker defused, registered with the `./_shared/sub_card.js` shape (no re-record) | FAIL {hooks/_shared/sub_card.js:COMMIT-ANCESTOR, hooks/_shared/sub_card.js:COMMIT-DIGEST, hooks/_shared/sub_card.js:COMMIT-TOUCHES, hooks/_shared/sub_card.js:SKILL, hooks/_shared/sub_card.js:SOURCE-CURRENT, hooks/_shared/sub_card.js:SOURCE-PATH, hooks/_shared/sub_card.js:TRAILER} | FAIL {hooks/_shared/sub_card.js:COMMIT-ANCESTOR, hooks/_shared/sub_card.js:COMMIT-DIGEST, hooks/_shared/sub_card.js:COMMIT-TOUCHES, hooks/_shared/sub_card.js:SKILL, hooks/_shared/sub_card.js:SOURCE-CURRENT, hooks/_shared/sub_card.js:SOURCE-PATH, hooks/_shared/sub_card.js:TRAILER} | ok |
 | CARD-EDIT-UNRECORDED | one comment line added to CW's body above its lineage block, H not re-recorded | FAIL {H-RECORD-CURRENT} | FAIL {H-RECORD-CURRENT} | ok |
-| TRAILER-NOT-LAST | one comment line appended to CW after its trailer; H re-recorded | FAIL {hooks/doctrine_cards.js:COMMIT-ANCESTOR, hooks/doctrine_cards.js:COMMIT-DIGEST, hooks/doctrine_cards.js:COMMIT-TOUCHES, hooks/doctrine_cards.js:SKILL, hooks/doctrine_cards.js:SOURCE-CURRENT, hooks/doctrine_cards.js:SOURCE-PATH, hooks/doctrine_cards.js:TRAILER} | FAIL {hooks/doctrine_cards.js:COMMIT-ANCESTOR, hooks/doctrine_cards.js:COMMIT-DIGEST, hooks/doctrine_cards.js:COMMIT-TOUCHES, hooks/doctrine_cards.js:SKILL, hooks/doctrine_cards.js:SOURCE-CURRENT, hooks/doctrine_cards.js:SOURCE-PATH, hooks/doctrine_cards.js:TRAILER} | ok |
+| TRAILER-NOT-LAST | one comment line appended to CW after its trailer; H re-recorded | FAIL {hooks/doctrine_cards.js:TRAILER} | FAIL {hooks/doctrine_cards.js:TRAILER} | ok |
 | RECORD-UNPARSEABLE | H record replaced by a lone `{` | FAIL {H-RECORD-CURRENT} | FAIL {H-RECORD-CURRENT} | ok |
 | CRLF | CW's SKILL.md, both cards, the dispatcher and the record committed with CRLF line ends | PASS {} | PASS {} | ok |
 | WORKTREE-ONLY | CW source byte changed and DS trailer deleted in the working tree only, not committed | PASS {} | PASS {} | ok |
 
 ## Load-bearing
 
-Each clause was forced PASS (its CLAUSES entry replaced) and its singleton drill re-judged; TRAILER has no singleton (its failure leaves the other six unmeasurable), so the population was narrowed to members carrying the marker. Each patch was restored and the drill re-judged.
+Each of the 10 clauses was forced PASS (its CLAUSES entry replaced) and its singleton drill re-judged; TRAILER's singleton is TRAILER-NOT-LAST, where every trailer parses and only the block's position fails. Two further rows are not clause flips: the population narrowed to members carrying the marker (the CARD_TOKEN branch of discovery is load-bearing), and TRAILER forced PASS on TRAILER-ABSENT, which must stay FAIL (SKILL: the card names a skill with no trailer). Each patch was restored and the drill re-judged.
 
 | clause | drill | patched verdict | restored verdict |
 |---|---|---|---|
+| TRAILER | TRAILER-NOT-LAST | PASS | FAIL |
 | SOURCE-CURRENT | SOURCE-CHANGED-RERECORDED | PASS | FAIL |
 | SKILL | SKILL-MISMATCH | PASS | FAIL |
 | SOURCE-PATH | SOURCE-PATH | PASS | FAIL |
@@ -92,7 +93,8 @@ Each clause was forced PASS (its CLAUSES entry replaced) and its singleton drill
 | FLOOR | FLOOR-ONE | PASS | FAIL |
 | DISPATCHER-COVERED | DISPATCHER-UNCOVERED | PASS | FAIL |
 | H-RECORD-CURRENT | CARD-EDIT-UNRECORDED | PASS | FAIL |
-| TRAILER | UNLINEAGED-CARD | PASS | FAIL |
+| TRAILER (defence in depth) | TRAILER-ABSENT | FAIL | FAIL |
+| population CARD_TOKEN branch | UNLINEAGED-CARD | PASS | FAIL |
 
 Git unavailable (`vgm._git_exe` raising): live INCONCLUSIVE, fixture INCONCLUSIVE, after restoration PASS.
 

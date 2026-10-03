@@ -22,9 +22,10 @@ What each V-CLG clause proves:
   V-CLG-GIT-FAILURE-MIDJUDGE  one git subcommand failing inside a clause (merge-base, log, cat-file; timeout,
                             rc and OS-error forms) is INCONCLUSIVE with every non-PASS clause git-tagged, never FAIL;
                             the same failure on a red fixture still reads FAIL
-  V-CLG-EVERY-CLAUSE        the declared fail sets cover all 10 clauses; forcing each clause PASS flips its
-                            singleton drill to PASS (and restoring it flips it back); TRAILER, which has no
-                            singleton, is shown load-bearing by a marker-only population on UNLINEAGED-CARD
+  V-CLG-EVERY-CLAUSE        the declared fail sets cover all 10 clauses; forcing each of the 10 clauses PASS flips
+                            its singleton drill to PASS (and restoring it flips it back; TRAILER's is TRAILER-NOT-LAST);
+                            a marker-only population flips UNLINEAGED-CARD (the population's CARD_TOKEN branch); and
+                            TRAILER forced PASS on TRAILER-ABSENT stays FAIL on SKILL, with no crash
   V-CLG-EVIDENCE-CURRENT    the COMMITTED blob of evidence/G-lineage.md (CRLF->LF) equals the render of this run
   V-CLG-EVIDENCE-DRILL      the render is accepted, its CRLF copy is accepted, a one-character change is refused
 
@@ -607,16 +608,19 @@ def _drill_table():
         ("DISPATCHER-UNCOVERED-DOTSLASH", m_dispatcher_uncovered_dotslash, {"DISPATCHER-COVERED"}, "FAIL"),
         ("SUBDIR-CARD-DOTSLASH", m_subdir_card_dotslash, ALL7(SUB_CARD), "FAIL"),
         ("CARD-EDIT-UNRECORDED", m_card_edit_unrecorded, {"H-RECORD-CURRENT"}, "FAIL"),
-        ("TRAILER-NOT-LAST", m_trailer_not_last, ALL7(CW), "FAIL"),
+        ("TRAILER-NOT-LAST", m_trailer_not_last, {f"{CW}:TRAILER"}, "FAIL"),
         ("RECORD-UNPARSEABLE", m_record_unparseable, {"H-RECORD-CURRENT"}, "FAIL"),
         ("CRLF", m_crlf, set(), "PASS"),
         ("WORKTREE-ONLY", m_worktree_only, set(), "PASS"),
     ]
 
 
-# Singleton drill per clause (V-CLG-EVERY-CLAUSE). TRAILER has none by construction: its failure leaves the other
-# six per-card clauses unmeasurable, so its proof is the marker-only population on UNLINEAGED-CARD.
+# Singleton drill per clause (V-CLG-EVERY-CLAUSE): forcing the clause PASS must flip it to PASS. TRAILER's singleton is
+# TRAILER-NOT-LAST (a measured FAIL with every trailer parsed; 06 review WR-04). Two further rows are not clause flips:
+# the population's CARD_TOKEN branch (narrowed to marker-carrying members on UNLINEAGED-CARD) and TRAILER forced PASS on
+# TRAILER-ABSENT, which must stay FAIL without a crash (SKILL catches the card naming a skill with no trailer).
 SINGLETON = {
+    "TRAILER": "TRAILER-NOT-LAST",
     "SOURCE-CURRENT": "SOURCE-CHANGED-RERECORDED",
     "SKILL": "SKILL-MISMATCH",
     "SOURCE-PATH": "SOURCE-PATH",
@@ -628,6 +632,7 @@ SINGLETON = {
     "H-RECORD-CURRENT": "CARD-EDIT-UNRECORDED",
 }
 TRAILER_DRILL = "UNLINEAGED-CARD"
+DEPTH_DRILL = "TRAILER-ABSENT"
 
 # Clauses that must be UNMEASURED (not a measured FAIL) in a drill: an absent, duplicate or unparseable trailer, a
 # zero population and empty dispatcher card set, an unreadable record, and a missing source.
@@ -890,9 +895,24 @@ def c_every_clause(st):
         flips.append((cid, did, forced, restored))
         if forced != PASS or restored != "FAIL":
             problems.append(f"{cid}: forced PASS gave {did}={forced}, restored gave {restored} (not load-bearing)")
+    row = drills.get(DEPTH_DRILL)
+    if not row or not drill_ok(row, DEPTH_DRILL):
+        problems.append(f"TRAILER depth: drill {DEPTH_DRILL} itself is not ok")
+    else:
+        orig = cl.CLAUSES["TRAILER"]
+        cl.CLAUSES["TRAILER"] = _forced
+        try:
+            r = cl.judge(row["repo"])
+        finally:
+            cl.CLAUSES["TRAILER"] = orig
+        restored = cl.judge(row["repo"])["verdict"]
+        flips.append(("TRAILER (defence in depth)", DEPTH_DRILL, r["verdict"], restored))
+        if r["verdict"] != "FAIL" or outcomes(r).get(f"{DS}:SKILL") != cl.FAIL or restored != "FAIL":
+            problems.append(f"TRAILER depth: forced PASS on {DEPTH_DRILL} gave {r['verdict']} "
+                            f"{_fmt(cl.fail_set(r))} ({r.get('reason')}), restored {restored}; expected FAIL on SKILL")
     row = drills.get(TRAILER_DRILL)
     if not row or not drill_ok(row, TRAILER_DRILL):
-        problems.append(f"TRAILER: drill {TRAILER_DRILL} itself is not ok")
+        problems.append(f"population: drill {TRAILER_DRILL} itself is not ok")
     else:
         orig_pop = cl.population
 
@@ -907,14 +927,17 @@ def c_every_clause(st):
         finally:
             cl.population = orig_pop
         restored = cl.judge(row["repo"])["verdict"]
-        flips.append(("TRAILER", TRAILER_DRILL, forced, restored))
+        flips.append(("population CARD_TOKEN branch", TRAILER_DRILL, forced, restored))
         if forced != PASS or restored != "FAIL":
-            problems.append(f"TRAILER: marker-only population gave {forced}, restored gave {restored}")
+            problems.append(f"population: marker-only population gave {forced}, restored gave {restored}")
     st["flips"] = flips
     if problems:
         return [(FAIL, "V-CLG-EVERY-CLAUSE", "; ".join(problems))]
-    return [(OK, "V-CLG-EVERY-CLAUSE", f"declared sets cover all {len(ids)} clauses; {len(flips)} forced passes "
-                                       f"flipped their drill FAIL->PASS and back on restore")]
+    n = len(SINGLETON)
+    return [(OK, "V-CLG-EVERY-CLAUSE", f"declared sets cover all {len(ids)} clauses; each of the {n} clauses forced "
+                                       f"PASS flipped its singleton drill FAIL->PASS and back on restore; the "
+                                       f"population CARD_TOKEN branch flipped UNLINEAGED-CARD; TRAILER forced PASS on "
+                                       f"TRAILER-ABSENT stayed FAIL on SKILL")]
 
 
 # --------------------------------------------------------------------------- evidence (G-lineage.md)
@@ -1072,9 +1095,11 @@ def render(st) -> str:
         L.append(f"| {did} | {_cell(DRILL_TEXT.get(did, '-'))} | {row['declared_verdict']} "
                  f"{_fmt(row['declared'])} | {obs} | {res} |")
     L += ["", "## Load-bearing", "",
-          "Each clause was forced PASS (its CLAUSES entry replaced) and its singleton drill re-judged; TRAILER has no "
-          "singleton (its failure leaves the other six unmeasurable), so the population was narrowed to members "
-          "carrying the marker. Each patch was restored and the drill re-judged.", "",
+          "Each of the 10 clauses was forced PASS (its CLAUSES entry replaced) and its singleton drill re-judged; "
+          "TRAILER's singleton is TRAILER-NOT-LAST, where every trailer parses and only the block's position fails. "
+          "Two further rows are not clause flips: the population narrowed to members carrying the marker (the "
+          "CARD_TOKEN branch of discovery is load-bearing), and TRAILER forced PASS on TRAILER-ABSENT, which must stay "
+          "FAIL (SKILL: the card names a skill with no trailer). Each patch was restored and the drill re-judged.", "",
           "| clause | drill | patched verdict | restored verdict |", "|---|---|---|---|"]
     flips = st.get("flips")
     if flips is None:

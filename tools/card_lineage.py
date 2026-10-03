@@ -29,7 +29,8 @@ verdict INCONCLUSIVE; it is never dropped. Floor 2.
 Clauses (all 10 must be PASS for a PASS verdict; outcomes are PASS, FAIL or UNMEASURED):
   per card  TRAILER          at least one marker line, every one parses, no skill twice (absent, duplicate skill,
                              unparseable: UNMEASURED; the other six per-card clauses are then UNMEASURED "no trailer"),
-                             and the marker lines are the last lines of the card (content after them: FAIL)
+                             and the marker lines are the last lines of the card (content after them: FAIL, and the
+                             other six are still judged on the parsed trailers, so TRAILER alone can fail a card)
             SKILL            the trailer skills EQUAL the set of skills the card text names in CARD_TOKEN form: a
                              named skill without a trailer, or a trailer for a skill the card does not name, is FAIL
   The five clauses below SKILL are judged per trailer and folded: FAIL if any trailer FAILs, else UNMEASURED if any is
@@ -471,11 +472,15 @@ def judge(repo=smd.REPO, ref="HEAD") -> dict:
         for m in members:
             trailers, _ = parse_trailers(m["text"])
             clauses = {"TRAILER": CLAUSES["TRAILER"](ctx, m, trailers)}
+            # The six depend on TRAILER's OUTCOME alone (06 review WR-04): UNMEASURED (absent, duplicate, unparseable)
+            # leaves them unmeasured; PASS or a measured FAIL (block not at the end) judges them on the parsed
+            # trailers. A TRAILER forced PASS on a card without trailers judges an empty list: SKILL is then a measured
+            # FAIL (named skill, no trailer) and the per-trailer clauses read "no trailer", never a crash.
             for cid in CARD_CLAUSES[1:]:
-                if clauses["TRAILER"]["outcome"] != PASS or trailers is None:
+                if clauses["TRAILER"]["outcome"] == UNMEASURED:
                     clauses[cid] = _out(UNMEASURED, "no trailer")
                 else:
-                    clauses[cid] = CLAUSES[cid](ctx, m, trailers)
+                    clauses[cid] = CLAUSES[cid](ctx, m, trailers or [])
             result["cards"].append({"card": m["card"], "trailers": trailers, "clauses": clauses})
         for cid in GATE_CLAUSES:
             result["gate"][cid] = CLAUSES[cid](ctx)
