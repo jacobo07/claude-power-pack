@@ -34,6 +34,22 @@ It overrides nothing in it.
   rule: control -> mutate -> named discriminator -> explicit verdict.
 - C4 Record results here. s14 closes except obligation 1 (Owner consent).
 
+## Results (2026-10-03, Owner "y")
+- C0 DONE: audit materialised from blob `673ff92c` (create-only, blob re-verified, path left `git status`).
+- C1 SEALED `94c55903`: control run on its own copy (CONTROL_INVALID, exit 4), fresh mutant copy,
+  repo layout for a test outside the subject dir, default siblings modules/vault/pricing/vault/config,
+  gate lines in all three suite formats and never by prefix, no-op mutation -> HARNESS. Audit
+  `vault/audits/ccp-s15-c1-audit.md` EXECUTE-WITH-FIXES, folded. `test_mutation_drill` 6/11 on the
+  old harness -> 13/13. Open, documented: a suite importing its subject by absolute live path.
+- C2 DONE (standard CLI, no copy_dirs): 8/8 S3 drills KILLED (5-12 s each) + 2 self-drills KILLED
+  (control dropped -> V-MD-CONTROL-MISSPELLED-GATE; prefix match -> V-MD-GATE-LINE-SHAPES).
+- C3 SEALED `b4935494`: UKDL T-DRILL-VERDICT-WITHOUT-CONTROL-001 (+PR), T-PRIVATE-INDEX-PUBLISH-
+  LEAVES-TREE-WITHOUT-FILE-001, T-RESUME-FOCUS-IS-NOT-OWNERSHIP-001; one hunk via private index.
+- Peer (2a) landed `0f4a8796`: store identity one producer (s14 obligation 3 CLOSED by its owner).
+- s14 CLOSED except obligation 1 (backup delete, Owner typed consent; sha256 still `167f16fe`).
+- Merge candidate (not mine): `vault/audits/ccp-c9/c9_replica_drill.py` is now expressible as
+  standard specs; it stays as 2a's frozen audit record.
+
 ## Not now
 - Rollover-timing shadow / fresh-epoch economics: owners exist (`vault/specs/economic-rollover-trigger.md`,
   `parent-context-epoch-rotation.md`, `context-watchdog.py`, `session_autopsy.py`). D2A first, in a later PLAN.
