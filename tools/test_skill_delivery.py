@@ -30,7 +30,11 @@ line `SD_PASS=<passed>/<total>`. Exit codes: 0 all clauses ok, 1 any FAIL or INC
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
+import re
+import socket
 import subprocess
 import sys
 import tempfile
@@ -44,6 +48,16 @@ FIXTURE_REL = "vault/programs/skill-capability/delivery_fixture.json"
 LEDGER_REL = "vault/programs/skill-capability/ledger.json"
 EVIDENCE_REL = "vault/programs/skill-capability/evidence/C-delivery.md"
 SELF_REL = "tools/test_skill_delivery.py"
+PACK_REL = "vault/programs/skill-capability/card_evidence_pack.json"
+G_RECORD_REL = "vault/programs/skill-capability/evidence/C-window-G.json"
+# D-02: window L is this committed laptop pack, pinned by its LF sha256 (the value ledger state.A already cites).
+PACK_SHA256 = "dacfdf5aa8afb0a5e6221ebf98fcf1b70866c7de3931083e210e7e948a6c0c05"
+# The builder rule, copied from /home/kobii/missions/skill-capability-data/card_evidence_pack.py lines 81-82
+# (outside the repo, so not read here): the builder picks NO `opportunity` rows.
+PACK_SELECTION_RULE = ('decision in ("deny-card", "pass-after-card") or "exit 128" in str(reason)  '
+                       '(card_evidence_pack.py lines 81-82)')
+WINDOW_RECORD_SCHEMA = "skill-delivery-window/1"
+TS_FORMAT = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")  # the pack's exact ts shape (24 chars)
 
 FIXTURE_SCHEMA = "skill-delivery-fixture/1"
 CAPABILITY = "concurrent-writers-shared-tree"  # mirrors tools/skill_opportunity_signals.py:CAPABILITY
@@ -131,7 +145,8 @@ def compute_window(card_rows, index, installed, needed_of, *, window="?", plane=
                    capability=CAPABILITY, detector=invoked_before, opportunity=is_opportunity,
                    absent_policy="unmeasured", fmt=fmt_rate) -> dict:
     rows_out, unmeasured = [], []
-    c = dict(opportunities=0, pass_after_card=0, no_opportunity=0, judgement_unknown=0, ignored_non_commit=0)
+    c = dict(opportunities=0, pass_after_card=0, no_opportunity=0, judgement_unknown=0, ignored_non_commit=0,
+             unparseable_ts=0)
     for row in card_rows:
         if not is_commit_row(row):
             c["ignored_non_commit"] += 1
@@ -155,7 +170,12 @@ def compute_window(card_rows, index, installed, needed_of, *, window="?", plane=
             invoked = False
         else:
             invoked = detector(paths, capability, installed, until)
-        if dec == "deny-card":
+        if until is None:
+            c["unparseable_ts"] += 1  # A-1: delivery UNMEASURED for any decision, counted, never a crash or a drop
+            state = "UNMEASURED"
+            why = "no judgement ts"
+            unmeasured.append(f"{sess} {dec} {row.get('ts')}: {why}")
+        elif dec == "deny-card":
             state = "card"
         elif invoked is True:
             state = "invocation"
@@ -163,8 +183,7 @@ def compute_window(card_rows, index, installed, needed_of, *, window="?", plane=
             state = "none"
         else:
             state = "UNMEASURED"
-            why = "no judgement ts" if until is None else (
-                "no transcript read" if not paths else "only untimed candidate rows")
+            why = "no transcript read" if not paths else "only untimed candidate rows"
             unmeasured.append(f"{sess} {dec} {row.get('ts')}: {why}")
         rows_out.append({"session": sess, "decision": dec, "ts": row.get("ts"), "delivery": state,
                          "invoked": invoked, "needed": needed_of(row)})
@@ -187,7 +206,7 @@ def compute_window(card_rows, index, installed, needed_of, *, window="?", plane=
         "recall_line": fmt(rec), "precision_line": fmt(prec),
         "pass_after_card": c["pass_after_card"], "no_opportunity": c["no_opportunity"],
         "judgement_unknown": c["judgement_unknown"], "ignored_non_commit": c["ignored_non_commit"],
-        "unlabelled_delivered": len(delivered) - len(labelled),
+        "unlabelled_delivered": len(delivered) - len(labelled), "unparseable_ts": c["unparseable_ts"],
         "unmeasured": unmeasured, "rows": rows_out,
     }
 
@@ -274,6 +293,228 @@ def f_clauses(rep: dict, fx: dict) -> list:
     return out
 
 
+# --------------------------------------------------------------------------- window L (the laptop pack)
+
+
+def pack_sha256(path: Path) -> str:
+    with open(path, "rb") as fh:
+        return hashlib.sha256(fh.read().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def load_json(path: Path):
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def frozen_dcard() -> dict:
+    return load_json(REPO / LEDGER_REL)["frozen"]["denominators"]["D-CARD"]
+
+
+def pack_selected(row) -> bool:
+    return row.get("decision") in ("deny-card", "pass-after-card") or "exit 128" in str(row.get("reason"))
+
+
+def dcard_labels(rows, dcard):
+    """(needed_of, beside, unconsumed, refusal). The frozen D-CARD is an aggregate (live_denies, true_positives,
+    deny_shas). With true_positives != 0 no row can be labelled from it, so every row is None. Otherwise walk the
+    deny-card rows in ts order against a consumable multiset of deny_shas: a match is labelled False (not needed,
+    TP 0); every other delivered row is None and its session prefix goes to `beside`."""
+    left = list(dcard["deny_shas"])
+    if dcard.get("true_positives") != 0:
+        return (lambda row: None), [], left, (f"true_positives {dcard.get('true_positives')!r} != 0: "
+                                              "no row can be labelled from an aggregate")
+    labels, beside = {}, []
+    deny = [r for r in rows if r.get("decision") == "deny-card"]
+    for row in sorted(deny, key=lambda r: judged_at(r) or 0.0):
+        pre = str(row.get("session", ""))[:8]
+        if pre in left:
+            left.remove(pre)
+            labels[id(row)] = False
+        else:
+            beside.append(pre)
+    return (lambda row: labels.get(id(row))), beside, left, None
+
+
+def pack_window(pack: dict, dcard: dict, *, wrap_labeller=None, **kw) -> dict:
+    rows = pack["rows"]
+    needed_of, beside, unconsumed, refusal = dcard_labels(rows, dcard)
+    if wrap_labeller is not None:
+        needed_of = wrap_labeller(needed_of)
+    by_dec: dict = {}
+    for r in rows:
+        by_dec[r.get("decision")] = by_dec.get(r.get("decision"), 0) + 1
+    rep = compute_window(rows, {}, {CAPABILITY}, needed_of, window="L", plane="laptop",
+                         selection=f"the laptop evidence pack: {len(rows)} of {pack.get('source_ledger_rows')} "
+                                   "ledger rows, picked by the builder rule", **kw)
+    nameless = sum(1 for s in pack.get("sessions", {}).values() if isinstance(s, dict)
+                   for t in (s.get("tool_calls") or []) if isinstance(t, dict) and t.get("tool") == "Skill")
+    rep.update({
+        "selection_detail": {"rule": PACK_SELECTION_RULE, "source_ledger_rows": pack.get("source_ledger_rows"),
+                             "rows": len(rows), "by_decision": dict(sorted(by_dec.items()))},
+        "skill_calls_without_name": nameless, "invocation_channel": "UNMEASURED",
+        "recall_label": ("selection-bound: the builder picks no undelivered opportunity rows, so this is 1 by "
+                         "construction and is not a population recall"),
+        "population_recall": "UNMEASURED on host gex44",
+        "beside_dcard": beside, "dcard_unconsumed": unconsumed, "dcard_refusal": refusal,
+    })
+    return rep
+
+
+def l_clauses(rep: dict, pack: dict, dcard: dict, pack_path: Path | None = None) -> list:
+    """Window-L clauses. Every expectation derives from the pack or from frozen D-CARD."""
+    out = []
+
+    def add(name, bad, good):
+        out.append((name, "FAIL" if bad else "ok", "; ".join(bad) if bad else good))
+
+    path = pack_path or REPO / PACK_REL
+    try:
+        got = pack_sha256(path)
+    except OSError as exc:
+        got = f"unreadable: {exc}"
+    add("V-SD-L-PINNED", [] if got == PACK_SHA256 else [f"LF sha256 {got}, pinned {PACK_SHA256}"],
+        f"{PACK_REL} LF sha256 {PACK_SHA256[:16]}...")
+    off = [str(r.get("session"))[:8] for r in pack["rows"] if not pack_selected(r)]
+    sel = rep["selection_detail"]
+    add("V-SD-L-SELECTION", [f"rows outside the builder rule: {off}"] if off else [],
+        f"all {sel['rows']} rows satisfy the builder rule; source_ledger_rows {sel['source_ledger_rows']}; "
+        f"by_decision {sel['by_decision']}")
+    add("V-SD-L-FLOOR", [] if rep["opportunities"] >= 1 else ["opportunities 0 on the real window: the detector "
+                                                           "found nothing (positive control)"],
+        f"opportunities {rep['opportunities']} (floor >= 1)")
+    bad = [f"deny_sha {s} never matched a pack deny-card row" for s in rep["dcard_unconsumed"]]
+    if rep["dcard_refusal"]:
+        bad.append(rep["dcard_refusal"])
+    add("V-SD-L-DCARD-MATCH", bad, f"all {len(dcard['deny_shas'])} frozen deny_shas consumed; beside D-CARD: "
+        + ", ".join(rep["beside_dcard"]))
+    bad = []
+    pr = rep["precision"]
+    if pr["n"] != dcard["live_denies"]:
+        bad.append(f"precision n {pr['n']}, D-CARD live_denies {dcard['live_denies']}")
+    if pr["num"] != dcard["true_positives"]:
+        bad.append(f"precision num {pr['num']}, D-CARD true_positives {dcard['true_positives']}")
+    if rep["unlabelled_delivered"] != len(rep["beside_dcard"]):
+        bad.append(f"unlabelled_delivered {rep['unlabelled_delivered']}, beside {len(rep['beside_dcard'])}")
+    if rep["precision_line"] != fmt_rate(rate(pr["num"], pr["n"])):
+        bad.append(f"precision_line {rep['precision_line']!r}")
+    add("V-SD-L-PRECISION", bad, f"{rep['precision_line']} derived from frozen D-CARD; unlabelled "
+        f"{rep['unlabelled_delivered']}")
+    bad = []
+    rc = rep["recall"]
+    if rc["n"] < 1 or rep["recall_line"] != fmt_rate(rate(rc["num"], rc["n"])):
+        bad.append(f"recall_line {rep['recall_line']!r}")
+    if not str(rep.get("recall_label", "")).startswith("selection-bound"):
+        bad.append(f"recall_label {rep.get('recall_label')!r}")
+    if rep.get("population_recall") != "UNMEASURED on host gex44":
+        bad.append(f"population_recall {rep.get('population_recall')!r}")
+    add("V-SD-L-RECALL-LABEL", bad, f"{rep['recall_line']} labelled selection-bound; population recall "
+        f"{rep['population_recall']}")
+    bad = [f"{k} is {rep.get(k)!r}, expected the string 'UNMEASURED'" for k in ("invocation_channel", "card_and_invocation")
+           if rep.get(k) != "UNMEASURED"]
+    add("V-SD-L-INVOCATION-UNMEASURED", bad, f"invocation channel UNMEASURED, card_and_invocation UNMEASURED; "
+        f"{rep['skill_calls_without_name']} nameless Skill calls in the pack")
+    return out
+
+
+def _unlabelled_false(inner):
+    """Mutant: an unlabelled delivered row is read as 'not needed'."""
+    return lambda row: False if inner(row) is None else inner(row)
+
+
+def _invocation_zero(rep):
+    rep = dict(rep)
+    rep["invocation_channel"] = 0
+    return rep
+
+
+def _dcard_tp(d):
+    d = dict(d)
+    d["true_positives"] = 1
+    return d
+
+
+def _empty_pack(p):
+    p = dict(p)
+    p["rows"] = []
+    return p
+
+
+def _same(x):
+    return x
+
+
+# (name, pack transform, D-CARD transform, labeller wrap, report transform, clause that must go red)
+L_MUTANTS = (
+    ("UNLABELLED-AS-FALSE", _same, _same, _unlabelled_false, _same, "V-SD-L-PRECISION"),
+    ("INVOCATION-ZERO", _same, _same, None, _invocation_zero, "V-SD-L-INVOCATION-UNMEASURED"),
+    ("DCARD-TP", _same, _dcard_tp, None, _same, "V-SD-L-PRECISION"),
+    ("EMPTY-WINDOW", _empty_pack, _same, None, _same, "V-SD-L-FLOOR"),
+)
+
+
+def l_drills(pack: dict, dcard: dict) -> list:
+    out = []
+    clean = l_clauses(pack_window(pack, dcard), pack, dcard)
+    bad = [n for n, st, _ in clean if st != "ok"]
+    out.append(("V-SD-DRILL-L-CLEAN", "FAIL" if bad else "ok",
+                f"clean pack window red on {bad}" if bad else f"clean pack window: all {len(clean)} L clauses ok"))
+    for name, ptf, dtf, wrap, rtf, kill in L_MUTANTS:
+        mp, md = ptf(pack), dtf(dcard)
+        rep = rtf(pack_window(mp, md, wrap_labeller=wrap))
+        res = {n: st for n, st, _ in l_clauses(rep, pack, dcard)}  # expectations stay the REAL pack and D-CARD
+        survived = res.get(kill) == "ok"
+        pinned = res.get("V-SD-L-PINNED") == "ok"
+        if survived or not pinned:
+            why = f"{kill} stayed ok (mutant survived)" if survived else "V-SD-L-PINNED went red (mutant touched the file)"
+            out.append((f"V-SD-DRILL-L-{name}", "FAIL", why))
+        else:
+            out.append((f"V-SD-DRILL-L-{name}", "ok", f"killed by {kill}; V-SD-L-PINNED stays ok"))
+    return out
+
+
+def ts_clause(fx: dict, **mutants) -> tuple:
+    """A-1: an unparseable card ts makes that row's delivery UNMEASURED, counted in unparseable_ts; never a crash,
+    never a silent drop. Also pins the fixture card ts to the pack's 24-char ISO shape."""
+    name = "V-SD-TS-UNPARSEABLE"
+    clean = fixture_window(fx, **mutants)
+    mut = json.loads(json.dumps(fx))
+    row = next(r for r in mut["card_rows"] if r.get("decision") == "deny-card")
+    row["ts"] = "not-a-time"
+    try:
+        rep = fixture_window(mut, **mutants)
+    except Exception as exc:  # noqa: BLE001 -- a crash is the failure being tested for
+        return (name, "FAIL", f"crash on an unparseable ts: {exc!r}")
+    bad = []
+    shape = [r["ts"] for r in fx["card_rows"] if not (isinstance(r.get("ts"), str) and TS_FORMAT.match(r["ts"]))]
+    if shape:
+        bad.append(f"fixture card ts not in the pack shape: {shape}")
+    if rep["unparseable_ts"] != 1:
+        bad.append(f"unparseable_ts {rep['unparseable_ts']}, expected 1")
+    if rep["opportunities"] != clean["opportunities"]:
+        bad.append(f"opportunities {rep['opportunities']}, clean {clean['opportunities']} (a silent drop)")
+    if rep["delivery_unmeasured"] != clean["delivery_unmeasured"] + 1:
+        bad.append(f"delivery_unmeasured {rep['delivery_unmeasured']}, expected {clean['delivery_unmeasured'] + 1}")
+    if rep["delivered"] != clean["delivered"] - 1:
+        bad.append(f"delivered {rep['delivered']}, expected {clean['delivered'] - 1}")
+    return (name, "FAIL" if bad else "ok",
+            "; ".join(bad) if bad else "unparseable ts -> UNMEASURED, counted (unparseable_ts 1), opportunity kept; "
+            "fixture ts all 24-char ISO")
+
+
+def _drop_unparseable(row):
+    return is_opportunity(row) and judged_at(row) is not None
+
+
+def ts_drill(fx: dict) -> tuple:
+    """M-TS-DROP: a window that silently drops unparseable-ts rows from the opportunities is killed by
+    V-SD-TS-UNPARSEABLE; the real window stays ok."""
+    killed = ts_clause(fx, opportunity=_drop_unparseable)[1] == "FAIL"
+    control = ts_clause(fx)[1] == "ok"
+    return ("V-SD-DRILL-TS-DROP", "ok" if (killed and control) else "FAIL",
+            "killed by V-SD-TS-UNPARSEABLE (a silent drop moves the opportunity count); the real window stays ok"
+            if (killed and control) else f"killed={killed}, control ok={control}")
+
+
 # --------------------------------------------------------------------------- evidence render
 
 
@@ -286,6 +527,31 @@ def _frozen_rule() -> str:
     return "(frozen C rule not found)"
 
 
+def _render_l() -> list:
+    pack, dcard = load_json(REPO / PACK_REL), frozen_dcard()
+    r = pack_window(pack, dcard)
+    sel = r["selection_detail"]
+    return [f"## Window L (plane: {r['plane']}, selection: {len(pack['rows'])} of {sel['source_ledger_rows']} "
+            "ledger rows picked by the builder rule)", "",
+            f"- [L] pack: {PACK_REL}, LF sha256 {PACK_SHA256}",
+            f"- [L] selection rule: {sel['rule']}",
+            f"- [L] selection: {sel['rows']} of {sel['source_ledger_rows']} ledger rows; by decision {sel['by_decision']}",
+            f"- [L] opportunities: {r['opportunities']} (n={r['opportunities']})",
+            f"- [L] delivery measured: {r['delivery_measured']}, UNMEASURED: {r['delivery_unmeasured']}",
+            f"- [L] delivered: {r['delivered']} (by card {r['by_card']}, invocation-only {r['by_invocation_only']})",
+            f"- [L] card and invocation: {r['card_and_invocation']} (the pack ships {r['skill_calls_without_name']} "
+            "Skill tool calls with no skill name, so the invocation channel is UNMEASURED, never 0 and never "
+            f"{r['skill_calls_without_name']})",
+            f"- [L] recall: {r['recall_line']} -- {r['recall_label']}",
+            f"- [L] population recall: {r['population_recall']}",
+            f"- [L] precision (card channel): {r['precision_line']}, labels from frozen D-CARD "
+            f"(live_denies {dcard['live_denies']}, true_positives {dcard['true_positives']})",
+            f"- [L] unlabelled delivered beside D-CARD, never folded in: {r['unlabelled_delivered']} "
+            f"({', '.join(r['beside_dcard'])})",
+            f"- [L] pass-after-card rows (not opportunities): {r['pass_after_card']}",
+            f"- [L] judgement unknown (git exit 128), beside and never counted: {r['judgement_unknown']}", ""]
+
+
 def render(fx: dict | None = None) -> str:
     fx = fx if fx is not None else load_fixture(REPO / FIXTURE_REL)
     rep = fixture_window(fx)
@@ -295,6 +561,8 @@ def render(fx: dict | None = None) -> str:
     L += [f"- {d}" for d in DEFINITIONS]
     L += ["", "## Planes", "",
           "- Window F is the fixture plane: synthetic rows authored for a known answer, host-independent.",
+          "- Window L is the laptop plane: the committed content-free evidence pack (a selection of the laptop's "
+          "card ledger), pinned by its LF sha256.",
           "- No figure in this file sums across windows. Each figure line carries its window prefix and its n.", "",
           f"## Window {rep['window']}", "",
           f"- [F] plane: {rep['plane']}",
@@ -310,8 +578,10 @@ def render(fx: dict | None = None) -> str:
           f"- [F] pass-after-card rows (not opportunities): {rep['pass_after_card']}",
           f"- [F] no_opportunity rows: {rep['no_opportunity']}",
           f"- [F] judgement unknown or timeout rows: {rep['judgement_unknown']}",
-          f"- [F] non-commit rows ignored: {rep['ignored_non_commit']}", "",
-          "## Commands", "",
+          f"- [F] non-commit rows ignored: {rep['ignored_non_commit']}",
+          f"- [F] unparseable card ts (UNMEASURED, counted): {rep['unparseable_ts']}", ""]
+    L += _render_l()
+    L += ["## Commands", "",
           "- command: python3 tools/test_skill_delivery.py",
           "- command: python3 tools/test_skill_delivery.py --write-evidence", "",
           "## D-SESSIONS", "",
@@ -428,6 +698,10 @@ def drills(fx: dict) -> list:
             out.append((f"V-SD-DRILL-{name}", "FAIL", why))
         else:
             out.append((f"V-SD-DRILL-{name}", "ok", f"killed by {kill}; controls ok: {', '.join(controls)}"))
+    out.append(ts_clause(fx))
+    out.append(ts_drill(fx))
+    pack, dcard = load_json(REPO / PACK_REL), frozen_dcard()
+    out += l_drills(pack, dcard)
     text = render(fx)
     digit = next(i for i, ch in enumerate(text) if ch.isdigit())
     stale = text[:digit] + str((int(text[digit]) + 1) % 10) + text[digit + 1:]
@@ -465,7 +739,7 @@ def main(argv=None) -> int:
         print(f"cannot run: {fpath}: {exc}", file=sys.stderr)
         return 2
     if a.json:
-        print(json.dumps([rep], indent=1))
+        print(json.dumps([rep, pack_window(load_json(REPO / PACK_REL), frozen_dcard())], indent=1))
         return 0
     if a.write_evidence:
         with open(REPO / EVIDENCE_REL, "w", encoding="utf-8", newline="\n") as fh:
@@ -474,6 +748,8 @@ def main(argv=None) -> int:
         return 0
     results = f_clauses(rep, fx)
     if not a.fixture:
+        pack, dcard = load_json(REPO / PACK_REL), frozen_dcard()
+        results += l_clauses(pack_window(pack, dcard), pack, dcard)
         results.append(evidence_current())
         results += drills(fx)
         results.append(red_subprocess(fx))
