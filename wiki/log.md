@@ -118,3 +118,9 @@ Append-only. Newest at the bottom. `grep "^## \[" log.md` lists every entry.
 - touched: [[mid-session-prefix-rebuilds]], [[token-economy-brainstorm]]
 - notes: deep.py read `<synthetic>` client rows (limit notices, 'No response requested.') as a model.
   1 real switch ($5). Fixed and re-run: idle > 1 h 252 (~$611). A4 closed. New tool token_economy_model_switch.py.
+
+## [2026-10-03] query | skillOverrides applied: freed listing space goes to kept skills
+- touched: [[hide-unused-skills]]
+- notes: 134 name-only overrides live. Listing stays at the ~30k cap; kept skills cut to name-only 19 -> 11
+  (CWST, guard-event-reachability recovered; presence-is-not-residency did not). Not a token saving: a
+  recall gain. New tool skill_listing_visibility.py. Detail: vault/plans/skill-residency-program-2026-10-03.md.

@@ -86,3 +86,18 @@ C6 Owner applies skillOverrides; re-measure listing + description visibility.
 C7 zero-observed triage report (classes, no action).
 C8 CWST verdict; then TFPS / SSEA N0 screens under SPLIT.
 C9 KV + UKDL (only earned entries) + resumption.
+
+## Results (2026-10-03, session bfe97833)
+- C3 arm C on fixed card (123c96cc): 2/2 PASS, 1 commit each; ledger deny-card before the first commit
+  in both; Skill never invoked. Prior: N0 0/2, R 0/2, P 0/2 (P-r1 stored PASS = amended shape, regrades
+  FAIL-SWALLOW-REPAIRED), C-old 0/2. 10/40 sessions used. n=2 per arm.
+- Card aperture (open): repo path or pathspec held in a shell variable -> `unknown`, allowed (r2's 2nd
+  commit; live pane 2f6e9166 11:55:09).
+- C4b DONE `91cdc85e`: card in PreToolUse-Bash-chain (Bash|PowerShell), live + mirror by edit (live still
+  lacks the repo's 09-23 'skipped: <names>' hunk). Owner set CLAUDE_DOCTRINE_CARDS=deny in settings env;
+  own-session ledger row mode=deny. Checks: 16/16, destructive 17/17 incl e2e, matcher-liveness 71/71.
+- C6 DONE: 134 name-only overrides in ~/.claude/settings.json (backup
+  ~/.claude/backups/settings.pre-skillOverrides-20261003.json). `wiki/tools/skill_listing_visibility.py`,
+  initial listing before (bfe97833) vs after (fresh a5df8940): 29,991 -> 30,002 chars (still capped);
+  overridden-and-described 21 -> 1; kept-but-name-only 19 -> 11. CWST and guard-event-reachability now
+  described; presence-is-not-residency still name-only. Recall improved, cap still binds.
