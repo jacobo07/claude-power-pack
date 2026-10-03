@@ -316,15 +316,16 @@ def _dedupe_pairs(cards) -> list:
     return [seen[k] for k in sorted(seen, key=lambda k: (k[1], k[0]))]
 
 
-def committed_card_pairs(repo, sha):
+def committed_card_pairs(repo, sha, dotslash=False):
     """([{card, skill, source}], None) DISCOVERED from the dispatcher and hook blobs at `sha` (never listed, never
     the working tree, so discovery and hashing share one plane: review WR-04), or (None, reason) for a git failure.
-    A registered hook that is not committed at `sha` is not a pair."""
+    A registered hook that is not committed at `sha` is not a pair. dotslash: also read `./<rel>` registrations
+    (skill_coverage.registered_hooks); off for pillar H's own record, on for pillar G's DISPATCHER-COVERED."""
     disp, why = git_run(repo, "cat-file", "blob", f"{sha}:{sc.DISPATCHER_REL}")
     if disp is None:
         return None, f"{sc.DISPATCHER_REL} at {sha[:8]}: {why}"
     text = sc.lf(disp.decode("utf-8", "replace"))
-    pre = sorted(rel for rel, regs in sc.registered_hooks(text).items()
+    pre = sorted(rel for rel, regs in sc.registered_hooks(text, dotslash=dotslash).items()
                  if any(r["chain"].startswith("PreToolUse-") for r in regs))
     blobs = vgm.batch_blobs(str(repo), sha, pre)
     texts = {}
@@ -337,7 +338,8 @@ def committed_card_pairs(repo, sha):
                 return None, f"{rel}: {w}"
             continue
         texts[rel] = data.decode("utf-8", "replace")
-    return _dedupe_pairs(sc.discover_cards(Path(repo), text, hook_texts=texts, read_disk=False)), None
+    return _dedupe_pairs(sc.discover_cards(Path(repo), text, hook_texts=texts, read_disk=False,
+                                           dotslash=dotslash)), None
 
 
 def card_pairs(repo, dispatcher_text=None, ref="HEAD") -> list:

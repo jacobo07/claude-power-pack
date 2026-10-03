@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import posixpath
 import re
 import sys
 from datetime import datetime, timezone
@@ -60,6 +61,7 @@ CRITICALITY_RULE = (
 
 CHAIN_KEY = re.compile(r"""^\s*['"]([A-Za-z0-9_-]+-chain)['"]\s*:\s*\[""")
 SCRIPT = re.compile(r"""\bscript:\s*['"]\.\./skills/claude-power-pack/([^'"]+)['"]""")
+DOTSLASH_SCRIPT = re.compile(r"""\bscript:\s*['"]\./([^'"]+)['"]""")
 CARD_TOKEN = re.compile(r"`([A-Za-z0-9_-]+)`\s+skill\b")
 SKILL_TOKENS = (re.compile(r"`([A-Za-z0-9_-]+)`"), re.compile(r"skills/([A-Za-z0-9_-]+)"))
 KIND_LINE = re.compile(r"""^KIND\s*=\s*['"]capability_opportunity['"]""", re.M)
@@ -96,8 +98,12 @@ def repo_population(repo: Path = REPO) -> list[str]:
 # ------------------------------------------------------------------ registrations
 
 
-def registered_hooks(dispatcher_text: str) -> dict:
-    """{rel: [{chain, line}]} for every `script: '../skills/claude-power-pack/<rel>'` entry of CHAIN_MAP."""
+def registered_hooks(dispatcher_text: str, dotslash: bool = False) -> dict:
+    """{rel: [{chain, line}]} for every `script: '../skills/claude-power-pack/<rel>'` entry of CHAIN_MAP.
+
+    dotslash=True also reads the dispatcher's own-directory shape `script: './<rel>'` (subdirectories included) as
+    `hooks/<rel>`, normalized. Off by default: this module's coverage class and pillar H's pairs keep the one shape
+    their recorded evidence states as a limit (review WR-07); pillar G's DISPATCHER-COVERED opts in (06 review WR-01)."""
     out: dict = {}
     chain = None
     inside = False
@@ -117,11 +123,16 @@ def registered_hooks(dispatcher_text: str) -> dict:
         m = SCRIPT.search(line)
         if m and chain:
             out.setdefault(m.group(1), []).append({"chain": chain, "line": n})
+            continue
+        m = DOTSLASH_SCRIPT.search(line) if dotslash else None
+        if m and chain:
+            rel = posixpath.normpath("hooks/" + m.group(1))
+            out.setdefault(rel, []).append({"chain": chain, "line": n})
     return out
 
 
 def discover_cards(repo: Path = REPO, dispatcher_text: str | None = None, *, hook_texts: dict | None = None,
-                   read_disk: bool = True) -> list:
+                   read_disk: bool = True, dotslash: bool = False) -> list:
     """Card sources: registered PreToolUse hooks whose text emits a deny and names `<skill>` skill.
 
     hook_texts (rel -> text) overlays disk reads, for drills. read_disk=False uses the overlay alone (a caller that
@@ -132,7 +143,7 @@ def discover_cards(repo: Path = REPO, dispatcher_text: str | None = None, *, hoo
         dispatcher_text = read_lf(repo / DISPATCHER_REL)
     overlay = {k: lf(v) for k, v in (hook_texts or {}).items()}
     cards = []
-    for rel, regs in registered_hooks(dispatcher_text).items():
+    for rel, regs in registered_hooks(dispatcher_text, dotslash=dotslash).items():
         pre = [r for r in regs if r["chain"].startswith("PreToolUse-")]
         if not pre:
             continue

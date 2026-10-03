@@ -21,8 +21,9 @@ sha256 is the LF-normalized sha256 of the committed SKILL.md (identity); commit 
 SKILL.md when the card was derived (provenance). `--trailer-for` prints the line; it never writes a card, because the
 gate does not generate card text: a person or agent re-reads the skill, re-derives the card and pastes the line.
 
-Population, DISCOVERED (never listed): every top-level `hooks/*.js` tracked at the judged commit whose LF text holds a
-skill_coverage CARD_TOKEN match or a line starting with the marker. A member whose blob cannot be read makes the
+Population, DISCOVERED (never listed): every `hooks/**/*.js` tracked at the judged commit, outside `hooks/tests/` and
+`hooks/_tests/`, whose LF text holds a skill_coverage CARD_TOKEN match or a line starting with the marker. Discovery
+does not depend on the registration shape. A member whose blob cannot be read makes the
 verdict INCONCLUSIVE; it is never dropped. Floor 2.
 
 Clauses (all 10 must be PASS for a PASS verdict; outcomes are PASS, FAIL or UNMEASURED):
@@ -39,8 +40,10 @@ Clauses (all 10 must be PASS for a PASS verdict; outcomes are PASS, FAIL or UNME
             COMMIT-TOUCHES   the trailer commit changed the source path
             COMMIT-DIGEST    the source blob at the trailer commit has the trailer's digest
   gate      FLOOR            population size >= 2 (0 is UNMEASURED, 1 is FAIL)
-            DISPATCHER-COVERED  every card the dispatcher registers (skill_mirror_drift.committed_card_pairs) is a
-                             population member, so a registered card outside the sweep cannot escape it
+            DISPATCHER-COVERED  every card the dispatcher registers, in either CHAIN_MAP shape
+                             (`../skills/claude-power-pack/<rel>` and `./<rel>`, via
+                             skill_mirror_drift.committed_card_pairs(dotslash=True)), is a population member, so a
+                             registered card outside the sweep (e.g. under hooks/tests/) cannot escape it
             H-RECORD-CURRENT pillar H's committed record agrees with the committed cards and sources
                              (skill_mirror_drift.card_drift + card_verdict)
 
@@ -74,7 +77,8 @@ LINEAGE_MARKER = "// COMPILED-FROM:"
 TRAILER_RE = re.compile(
     r"^// COMPILED-FROM: skill=(?P<skill>[A-Za-z0-9_-]+) source=(?P<source>\S+) "
     r"sha256=(?P<sha256>[0-9a-f]{64}) commit=(?P<commit>[0-9a-f]{40})$")
-CARD_FILE_RE = re.compile(r"hooks/[^/]+\.js")
+# Every tracked hooks/**/*.js except the test trees (whose texts quote card tokens as test data).
+CARD_FILE_RE = re.compile(r"hooks/(?!tests/|_tests/)(?:[^/]+/)*[^/]+\.js")
 SKILL_NAME_RE = re.compile(r"[A-Za-z0-9_-]+")
 POPULATION_FLOOR = 2
 CARD_CLAUSES = ("TRAILER", "SKILL", "SOURCE-PATH", "SOURCE-CURRENT", "COMMIT-ANCESTOR", "COMMIT-TOUCHES",
@@ -129,7 +133,8 @@ def parse_trailer(text):
 
 def population(repo, sha, tracked):
     """([{card, text}] sorted by card, None) or (None, "<rel>: <reason>") when a candidate blob cannot be read.
-    Candidates are the tracked top-level hooks/*.js; a member holds a CARD_TOKEN match or a marker line."""
+    Candidates are the tracked hooks/**/*.js outside the test trees (CARD_FILE_RE); a member holds a CARD_TOKEN match
+    or a marker line."""
     rels = sorted(t for t in tracked if CARD_FILE_RE.fullmatch(t))
     blobs = smd.vgm.batch_blobs(str(repo), sha, rels)
     members = []
@@ -173,7 +178,7 @@ def trailer_for(repo, skill, ref="HEAD"):
 
 # --------------------------------------------------------------------------- clauses
 # Each clause takes (ctx, member=None, trailers=None) and returns {outcome, reason}; trailers is the card's parsed
-# trailer list. ctx holds repo, sha, members, pairs and pairs_why. judge() looks every clause up in CLAUSES at call time.
+# trailer list. ctx holds repo, sha, members, pairs, pairs_why, registered and registered_why. judge() looks every clause up in CLAUSES at call time.
 
 
 def _fold(rows):
@@ -206,9 +211,9 @@ def c_floor(ctx, member=None, trailer=None):
 
 
 def c_dispatcher_covered(ctx, member=None, trailer=None):
-    pairs = ctx["pairs"]
+    pairs = ctx["registered"]
     if pairs is None:
-        return _out(UNMEASURED, f"dispatcher card set unreadable: {ctx['pairs_why']}")
+        return _out(UNMEASURED, f"dispatcher card set unreadable: {ctx['registered_why']}")
     covered = {p["card"] for p in pairs}
     if not covered:
         return _out(UNMEASURED, "the dispatcher registers no card")
@@ -376,8 +381,12 @@ def judge(repo=smd.REPO, ref="HEAD") -> dict:
         if members is None:
             return _inconclusive(sha, f"population read failed: {why}", result)
         result["population"] = [m["card"] for m in members]
+        # pairs: pillar H's own pair set (its record's definition, one registration shape). registered: every card
+        # the dispatcher registers in either shape, for DISPATCHER-COVERED (06 review WR-01).
         pairs, pairs_why = smd.committed_card_pairs(repo, sha)
-        ctx = {"repo": repo, "sha": sha, "members": members, "pairs": pairs, "pairs_why": pairs_why}
+        registered, registered_why = smd.committed_card_pairs(repo, sha, dotslash=True)
+        ctx = {"repo": repo, "sha": sha, "members": members, "pairs": pairs, "pairs_why": pairs_why,
+               "registered": registered, "registered_why": registered_why}
 
         for m in members:
             trailers, _ = parse_trailers(m["text"])

@@ -9,7 +9,7 @@ This file is rendered by `tools/test_card_lineage.py --write-evidence` from the 
 ## Method
 
 - Trailer grammar: the last lines of each card are one comment line per skill the card names, `// COMPILED-FROM: skill=<name> source=skills/<name>/SKILL.md sha256=<64 hex> commit=<40 hex>`. A card naming two skills carries two lines, so a change to either skill's SKILL.md fails SOURCE-CURRENT until that line is re-derived (drill MULTI-SKILL-RERECORDED). sha256 is the LF-normalized digest of the committed SKILL.md; commit is the commit that last changed it when the card was derived.
-- Population, discovered: every top-level `hooks/*.js` tracked at the judged commit whose LF text holds a CARD_TOKEN match (`<name>` skill) or a line starting with `// COMPILED-FROM:`. Nothing is listed by hand. Floor 2.
+- Population, discovered: every `hooks/**/*.js` tracked at the judged commit outside `hooks/tests/` and `hooks/_tests/`, whose LF text holds a CARD_TOKEN match (`<name>` skill) or a line starting with `// COMPILED-FROM:`. Discovery does not depend on how (or whether) the dispatcher registers the file. Nothing is listed by hand. Floor 2.
 - Committed-blob rule: every byte compared comes from git blobs at the judged commit or at the trailer commit, CRLF->LF. No working-tree file is read, so an uncommitted edit never stands in for a source.
 - Reuse: git access, blob reads, failure classification and the H record comparison are the skill_mirror_drift functions (git_run, resolve_commit, tracked_paths, committed_card_pairs, card_source_state, card_drift, card_verdict, is_git_failure); the card token and dispatcher reading are skill_coverage's (CARD_TOKEN, registered_hooks, discover_cards). One implementation each.
 - Outcomes are PASS, FAIL or UNMEASURED; the verdict is PASS only when all 10 clauses are PASS for every card. A git failure (git missing, unresolvable ref, nothing tracked, a member blob unreadable) is INCONCLUSIVE, never PASS and never a traceback.
@@ -24,7 +24,7 @@ Clauses:
 - COMMIT-TOUCHES (per card): the trailer commit changed the source path.
 - COMMIT-DIGEST (per card): the source blob at the trailer commit has the trailer's digest.
 - FLOOR (gate): population size >= 2 (0 is UNMEASURED, 1 is FAIL).
-- DISPATCHER-COVERED (gate): every card the dispatcher registers (skill_mirror_drift.committed_card_pairs) is a population member, so a registered card outside the top-level sweep cannot escape it.
+- DISPATCHER-COVERED (gate): every card the dispatcher registers, in either CHAIN_MAP shape (`../skills/claude-power-pack/<rel>` and `./<rel>`, skill_mirror_drift.committed_card_pairs with dotslash), is a population member, so a registered card outside the sweep (a test directory) cannot escape it.
 - H-RECORD-CURRENT (gate): pillar H's committed record agrees with the committed cards and sources (skill_mirror_drift.card_source_state + card_drift + card_verdict).
 
 ## Population (live checkout, HEAD)
@@ -66,7 +66,9 @@ Each drill starts from a copy of a clean temporary git repo seeded from the HEAD
 | FLOOR-ONE | DS hook file removed (registration kept); H re-recorded with one pair | FAIL {FLOOR} | FAIL {FLOOR} | ok |
 | FLOOR-ZERO | both card files removed; re-record refused | FAIL {DISPATCHER-COVERED, FLOOR, H-RECORD-CURRENT} | FAIL {DISPATCHER-COVERED, FLOOR, H-RECORD-CURRENT} | ok |
 | UNLINEAGED-CARD | new top-level hooks/new_card.js naming CW's skill, no trailer, not registered | FAIL {hooks/new_card.js:COMMIT-ANCESTOR, hooks/new_card.js:COMMIT-DIGEST, hooks/new_card.js:COMMIT-TOUCHES, hooks/new_card.js:SKILL, hooks/new_card.js:SOURCE-CURRENT, hooks/new_card.js:SOURCE-PATH, hooks/new_card.js:TRAILER} | FAIL {hooks/new_card.js:COMMIT-ANCESTOR, hooks/new_card.js:COMMIT-DIGEST, hooks/new_card.js:COMMIT-TOUCHES, hooks/new_card.js:SKILL, hooks/new_card.js:SOURCE-CURRENT, hooks/new_card.js:SOURCE-PATH, hooks/new_card.js:TRAILER} | ok |
-| DISPATCHER-UNCOVERED | hooks/sub/deep_card.js = copy of CW, registered next to CW; H re-recorded with 3 pairs | FAIL {DISPATCHER-COVERED} | FAIL {DISPATCHER-COVERED} | ok |
+| DISPATCHER-UNCOVERED | hooks/tests/deep_card.js (test directories are outside the sweep) = copy of CW, registered next to CW; H re-recorded with 3 pairs | FAIL {DISPATCHER-COVERED} | FAIL {DISPATCHER-COVERED} | ok |
+| DISPATCHER-UNCOVERED-DOTSLASH | hooks/tests/fixtures/dot_card.js = copy of CW, registered next to CW with the `./tests/fixtures/dot_card.js` shape (H's parser does not read it, no re-record) | FAIL {DISPATCHER-COVERED} | FAIL {DISPATCHER-COVERED} | ok |
+| SUBDIR-CARD-DOTSLASH | hooks/_shared/sub_card.js = copy of CW with its marker defused, registered with the `./_shared/sub_card.js` shape (no re-record) | FAIL {hooks/_shared/sub_card.js:COMMIT-ANCESTOR, hooks/_shared/sub_card.js:COMMIT-DIGEST, hooks/_shared/sub_card.js:COMMIT-TOUCHES, hooks/_shared/sub_card.js:SKILL, hooks/_shared/sub_card.js:SOURCE-CURRENT, hooks/_shared/sub_card.js:SOURCE-PATH, hooks/_shared/sub_card.js:TRAILER} | FAIL {hooks/_shared/sub_card.js:COMMIT-ANCESTOR, hooks/_shared/sub_card.js:COMMIT-DIGEST, hooks/_shared/sub_card.js:COMMIT-TOUCHES, hooks/_shared/sub_card.js:SKILL, hooks/_shared/sub_card.js:SOURCE-CURRENT, hooks/_shared/sub_card.js:SOURCE-PATH, hooks/_shared/sub_card.js:TRAILER} | ok |
 | CARD-EDIT-UNRECORDED | one comment line appended to CW after its trailer, H not re-recorded | FAIL {H-RECORD-CURRENT} | FAIL {H-RECORD-CURRENT} | ok |
 | RECORD-UNPARSEABLE | H record replaced by a lone `{` | FAIL {H-RECORD-CURRENT} | FAIL {H-RECORD-CURRENT} | ok |
 | CRLF | CW's SKILL.md, both cards, the dispatcher and the record committed with CRLF line ends | PASS {} | PASS {} | ok |

@@ -389,7 +389,9 @@ def m_floor_zero(fx, repo):
 
 
 NEW_CARD = "hooks/new_card.js"
-DEEP_CARD = "hooks/sub/deep_card.js"
+DEEP_CARD = "hooks/tests/deep_card.js"
+SUB_CARD = "hooks/_shared/sub_card.js"
+DOT_CARD = "hooks/tests/fixtures/dot_card.js"
 
 
 def m_unlineaged_card(fx, repo):
@@ -412,6 +414,31 @@ def m_dispatcher_uncovered(fx, repo):
     if rec is None:
         return f"re-record refused: {why}"
     return None if len(rec["pairs"]) == 3 else f"re-record holds {len(rec['pairs'])} pairs, not 3"
+
+
+def _register_dotslash(fx, repo, card, text):
+    """Write `card` and register it next to CW with the dispatcher's own-directory shape `./<rel>` (no re-record:
+    pillar H's parser reads only the `../skills/claude-power-pack/` shape, so its record does not move)."""
+    fx.write(repo, card, text)
+    lines = fx.read(repo, sc.DISPATCHER_REL).split("\n")
+    idx = [i for i, ln in enumerate(lines) if f"{CW}'" in ln]
+    if len(idx) != 1:
+        return f"dispatcher lines registering {CW}: {len(idx)}, expected 1"
+    rel = card[len("hooks/"):]
+    lines.insert(idx[0] + 1, f"    {{ exe: NODE_EXE, script: './{rel}', timeoutMs: 5000 }},")
+    fx.write(repo, sc.DISPATCHER_REL, "\n".join(lines))
+    fx.commit(repo, f"{card} registered as ./{rel}")
+    regs = sc.registered_hooks(fx.read(repo, sc.DISPATCHER_REL), dotslash=True)
+    return None if card in regs else f"{card} not parsed as a registration"
+
+
+def m_subdir_card_dotslash(fx, repo):
+    text = fx.read(repo, CW).replace(cl.LINEAGE_MARKER, "// was-COMPILED-FROM:")
+    return _register_dotslash(fx, repo, SUB_CARD, text)
+
+
+def m_dispatcher_uncovered_dotslash(fx, repo):
+    return _register_dotslash(fx, repo, DOT_CARD, fx.read(repo, CW))
 
 
 def m_card_edit_unrecorded(fx, repo):
@@ -516,6 +543,8 @@ def _drill_table():
         ("FLOOR-ZERO", m_floor_zero, {"FLOOR", "DISPATCHER-COVERED", "H-RECORD-CURRENT"}, "FAIL"),
         ("UNLINEAGED-CARD", m_unlineaged_card, ALL7(NEW_CARD), "FAIL"),
         ("DISPATCHER-UNCOVERED", m_dispatcher_uncovered, {"DISPATCHER-COVERED"}, "FAIL"),
+        ("DISPATCHER-UNCOVERED-DOTSLASH", m_dispatcher_uncovered_dotslash, {"DISPATCHER-COVERED"}, "FAIL"),
+        ("SUBDIR-CARD-DOTSLASH", m_subdir_card_dotslash, ALL7(SUB_CARD), "FAIL"),
         ("CARD-EDIT-UNRECORDED", m_card_edit_unrecorded, {"H-RECORD-CURRENT"}, "FAIL"),
         ("RECORD-UNPARSEABLE", m_record_unparseable, {"H-RECORD-CURRENT"}, "FAIL"),
         ("CRLF", m_crlf, set(), "PASS"),
@@ -545,6 +574,7 @@ UNMEASURED_EXPECT = {
     "TRAILER-DUPLICATE": ALL7(DS),
     "TRAILER-UNPARSEABLE": ALL7(DS),
     "UNLINEAGED-CARD": ALL7(NEW_CARD),
+    "SUBDIR-CARD-DOTSLASH": ALL7(SUB_CARD),
     "FLOOR-ZERO": {"FLOOR", "DISPATCHER-COVERED"},
     "RECORD-UNPARSEABLE": {"H-RECORD-CURRENT"},
     "GHOST-SKILL": {f"{CW}:SOURCE-CURRENT"},
@@ -784,8 +814,10 @@ CLAUSE_TEXT = {
     "COMMIT-TOUCHES": "the trailer commit changed the source path.",
     "COMMIT-DIGEST": "the source blob at the trailer commit has the trailer's digest.",
     "FLOOR": "population size >= 2 (0 is UNMEASURED, 1 is FAIL).",
-    "DISPATCHER-COVERED": "every card the dispatcher registers (skill_mirror_drift.committed_card_pairs) is a "
-                          "population member, so a registered card outside the top-level sweep cannot escape it.",
+    "DISPATCHER-COVERED": "every card the dispatcher registers, in either CHAIN_MAP shape "
+                          "(`../skills/claude-power-pack/<rel>` and `./<rel>`, "
+                          "skill_mirror_drift.committed_card_pairs with dotslash), is a population member, so a "
+                          "registered card outside the sweep (a test directory) cannot escape it.",
     "H-RECORD-CURRENT": "pillar H's committed record agrees with the committed cards and sources "
                         "(skill_mirror_drift.card_source_state + card_drift + card_verdict).",
 }
@@ -814,7 +846,12 @@ DRILL_TEXT = {
     "FLOOR-ONE": "DS hook file removed (registration kept); H re-recorded with one pair",
     "FLOOR-ZERO": "both card files removed; re-record refused",
     "UNLINEAGED-CARD": "new top-level hooks/new_card.js naming CW's skill, no trailer, not registered",
-    "DISPATCHER-UNCOVERED": "hooks/sub/deep_card.js = copy of CW, registered next to CW; H re-recorded with 3 pairs",
+    "DISPATCHER-UNCOVERED": "hooks/tests/deep_card.js (test directories are outside the sweep) = copy of CW, "
+                            "registered next to CW; H re-recorded with 3 pairs",
+    "DISPATCHER-UNCOVERED-DOTSLASH": "hooks/tests/fixtures/dot_card.js = copy of CW, registered next to CW with the "
+                                     "`./tests/fixtures/dot_card.js` shape (H's parser does not read it, no re-record)",
+    "SUBDIR-CARD-DOTSLASH": "hooks/_shared/sub_card.js = copy of CW with its marker defused, registered with the "
+                            "`./_shared/sub_card.js` shape (no re-record)",
     "CARD-EDIT-UNRECORDED": "one comment line appended to CW after its trailer, H not re-recorded",
     "RECORD-UNPARSEABLE": "H record replaced by a lone `{`",
     "CRLF": "CW's SKILL.md, both cards, the dispatcher and the record committed with CRLF line ends",
@@ -858,9 +895,10 @@ def render(st) -> str:
           "until that line is re-derived (drill MULTI-SKILL-RERECORDED). "
           "sha256 is the LF-normalized digest of the committed SKILL.md; commit is the commit that last changed it "
           "when the card was derived.",
-          "- Population, discovered: every top-level `hooks/*.js` tracked at the judged commit whose LF text holds a "
-          "CARD_TOKEN match (`<name>` skill) or a line starting with `// COMPILED-FROM:`. Nothing is listed by "
-          "hand. Floor 2.",
+          "- Population, discovered: every `hooks/**/*.js` tracked at the judged commit outside `hooks/tests/` and "
+          "`hooks/_tests/`, whose LF text holds a CARD_TOKEN match (`<name>` skill) or a line starting with "
+          "`// COMPILED-FROM:`. Discovery does not depend on how (or whether) the dispatcher registers the file. "
+          "Nothing is listed by hand. Floor 2.",
           "- Committed-blob rule: every byte compared comes from git blobs at the judged commit or at the trailer "
           "commit, CRLF->LF. No working-tree file is read, so an uncommitted edit never stands in for a source.",
           "- Reuse: git access, blob reads, failure classification and the H record comparison are the "
