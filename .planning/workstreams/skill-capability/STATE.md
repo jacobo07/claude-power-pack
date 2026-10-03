@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 milestone: v1
 current_phase: 1
-current_plan: 2
+current_plan: 3
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-10-03T16:37:44.290Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-10-03T16:48:39.640Z"
 last_activity: 2026-10-03
 last_activity_desc: Phase 1 execution started
-state_head: 48c46acc798561714a4582ce15564f67cb740660
+state_head: 4ed37f5d992e3e8f8fdd4b054625a2f3456f1d4d
 progress:
   total_phases: 9
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 milestone_name: skill-capability
 workstream: skill-capability
 created: 2026-10-03
@@ -30,7 +30,7 @@ compile-out, capability-lifecycle. Availability without residency, proven by nee
 
 ## Current Position
 
-Current Plan: 2
+Current Plan: 3
 Total Plans in Phase: 3
 **Status:** Ready to execute
 **Current Phase:** 1
@@ -52,12 +52,13 @@ Total Plans in Phase: 3
 - [Plan]: the committed ledger is the authority; the verifier re-runs each IMPLEMENTED pillar's gate.
 - [Plan]: Owner items are batched into `vault/programs/skill-capability/owner-bundle.md`; never asked mid-run.
 - [Phase 1]: [Phase 1 P01-01]: window rule lives in one declaration ownShellWindowHit; only 3a05f288 mtime is measured, other four replays placed and labelled placed; 6th deny 4615e1d1 reported beside D-CARD (class rollover-predecessor-lines)
+- [Phase 1]: [Phase 1 P01-02]: card ledger rows carry a stderr class field (never raw stderr); unborn HEAD judged against the empty tree; outside a repo diff exits 129 not 128; dubious ownership NOT-REPRODUCED on gex44; capsule_mutation_guard unwrapCall uses win32 basename (pre-existing POSIX defect, own commit eadc0fd5)
 
 ## Session Continuity
 
-**Last session:** 2026-10-03T16:37:44.274Z
+**Last session:** 2026-10-03T16:48:39.623Z
 
-**Stopped At:** Completed 01-01-PLAN.md
+**Stopped At:** Completed 01-02-PLAN.md
 **Resume File:** None
 
 ## Performance Metrics
@@ -65,3 +66,4 @@ Total Plans in Phase: 3
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 1 P01-01 | 12min | 3 tasks | 5 files |
+| Phase 1 P02 | 8min | 3 tasks | 5 files |
