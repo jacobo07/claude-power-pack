@@ -27,6 +27,17 @@ red with HEAD's module too (context-watchdog.py changed 10-01/10-02, test last 0
 `C:/Users/User/Apps/pp-mission-fix` holds 3 gsd_mission.py fixes NOT on this branch: merging them changes
 legacy behaviour = G23 red = a deliberate migration. /liveness scans modules/ only (tools/ invisible).
 
+**Owner T6 brief (2026-10-03, after a5debf2d).** Mode: ULTRA-PLAN entry. Run the entry gate READ-ONLY,
+then present an INLINE plan for one-click approval BEFORE any gsd_mission.py edit; after approval execute
+unattended. The gate must classify (CONTINUE / MIGRATE FIRST / COORDINATE FIRST / BLOCKED): d2505df6 (the
+only gsd_mission.py commit since 313416ff, another pane's "follow a proven worktree when a shared cwd
+diverged"; G23 stayed 32/32 after it); the G23 golden's source hash vs current gsd_mission.py -- keep
+HISTORICAL WITNESS identity separate from CURRENT BEHAVIOURAL compatibility, never re-capture just to match
+the hash; each of pp-mission-fix's 3 fixes (legacy bug fix / v2-only / unrelated / superseded / stale);
+GSDLR 2 reds (stale test vs regression vs concurrent owner); the liveness tools/ blind spot as a capability
+class (production-critical executables discoverable regardless of directory), not a "scan tools/" patch.
+Verified at seal time: HEAD a5debf2d, 44 ahead of origin, 0 behind, nothing new since a5debf2d.
+
 **Next 3 actions.**
 1. T6 entry gate: run the 5 gates above; list live missions (`~/.claude/state/gsd-mission-*.json`) and
    confirm none carries `rollover_protocol`; check `git log` and pp-mission-fix for gsd_mission.py moves.
