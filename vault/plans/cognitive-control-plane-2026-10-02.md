@@ -334,3 +334,27 @@ this is spend, not waste (RCA §18). The controllable part is the same-root half
 already held the bytes; the lever there is what the spawn prompt carries, not a cache. Grep/Glob
 re-derivation is negligible: a detector for them would measure nothing. NEXT if pursued: per-
 workflow attribution of the same-root half (gsd planner -> executor -> verifier re-reading PLAN).
+
+### 15.1 Same-root attribution (Owner "y", same prototype, same window; ~94M token-calls)
+
+| first reader -> re-reader | share |
+|---|---|
+| general-purpose -> general-purpose (siblings) | 55.0 % |
+| gsd -> gsd | 30.9 % (executor -> executor 13.4, researcher -> planner 5.8, plan-checker -> executor 4.5, planner -> executor 4.3) |
+| MAIN -> any subagent | 8.2 % |
+| everything else | 5.9 % |
+
+By file: `.planning` docs 53 % (PLAN 23.5, SUMMARY 8.6, RESEARCH 7.7, CONTEXT 6.4, STATE 2.1);
+source and other files 46.9 %; workflow/agent definitions 0.1 %.
+
+**Correction to §15:** the same-root half is NOT mainly "the parent already held the bytes".
+Parent -> child is 8.2 %; ~86 % is SIBLINGS reading the same file: parallel general-purpose
+agents, and gsd executors of one phase each reading PLAN / CONTEXT / RESEARCH.
+
+What this does and does not license. Carrying a file in the spawn prompt instead of letting the
+child Read it moves the same bytes into the same resident context, so it saves ~nothing. The
+rent falls only if (a) fewer subagents each hold the document (fewer siblings, or one agent
+doing the work serially), or (b) each child gets only the excerpt it needs. Both change workflow
+behaviour (gsd is not this repo's code: `~/.claude/gsd-core`), so neither is a CCP edit; they
+are inputs for whoever owns the workflow. No detector tool is promoted: no consumer, and the
+finding is a one-off structural fact, not a quantity that needs watching.
