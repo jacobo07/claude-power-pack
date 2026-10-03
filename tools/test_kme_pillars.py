@@ -1791,9 +1791,26 @@ def g_until_auto_unreachable():
     ok_c = (rc3 == 3 and r3["materiality"] == "UNMEASURED" and r3["materiality_reason"] == "cutoff_not_found"
             and r3["terminal_evidence"] is False and r3["share_interval"] is None
             and r3["until_located"]["method"] == "not_found" and len(list(out_dir.glob("I-KME-L-*.md"))) == 1)
-    return ok_a and ok_b and ok_c, f"calls reachable, one field off: rc={rc} {ul.get('method')}; above corpus: rc={rc2} " \
-                                   f"{ul2.get('method')} scans={ul2.get('scans')}; measuring: rc={rc3} " \
-                                   f"{r3['materiality']}/{r3['materiality_reason']}"
+    # the locator itself (the CLI also re-verifies the located cutoff after its final scan, which would mask a
+    # locator that accepted a calls-only match): drive locate_cutoff with a probe whose calls reach the frozen
+    # figure while one field never does
+    base = datetime.datetime(2026, 10, 3, 12, 0, 0, tzinfo=datetime.timezone.utc)
+    inst = [base + datetime.timedelta(seconds=i) for i in range(10)]
+    freeze = inst[-1] + datetime.timedelta(seconds=1)
+
+    def measured(t):
+        n = sum(1 for x in inst if x <= t)
+        return {"sessions_active": 1, "sessions_dead": 0, "calls": n, "input": n, "cache_write": 0, "cache_read": n,
+                "output": 0}
+    off4 = dict(measured(inst[3]), cache_read=measured(inst[3])["cache_read"] + 1)
+    lo_off = kp.locate_cutoff(lambda t, w: (measured(t), list(inst) if w else None), off4, freeze)
+    lo_ok = kp.locate_cutoff(lambda t, w: (measured(t), list(inst) if w else None), measured(inst[3]), freeze)
+    ok_d = lo_off["method"] == "not_found" and lo_off["until"] is None and lo_ok["method"] == "bisect" \
+        and lo_ok["until"] == inst[3]
+    return ok_a and ok_b and ok_c and ok_d, \
+        f"calls reachable, one field off: rc={rc} {ul.get('method')}; above corpus: rc={rc2} " \
+        f"{ul2.get('method')} scans={ul2.get('scans')}; measuring: rc={rc3} " \
+        f"{r3['materiality']}/{r3['materiality_reason']}; locator direct: off-by-one {lo_off['method']}, control {lo_ok['method']}"
 
 
 def g_until_auto_before_next_call():
@@ -2251,6 +2268,29 @@ def _m_h_verdict_on_sensitivity():
     return _patch("h_numerator_interval", lambda lo, hi, sens: (sens, sens))
 
 
+def _m_i_main_for_subagents():
+    return _patch("is_subagent_path", lambda path: False)
+
+
+def _m_locate_calls_only():
+    return _patch("cutoff_accepts", lambda match, measured, frozen: measured.get("calls") == frozen.get("calls"))
+
+
+def _m_all_scans_per_pillar():
+    real = kp.scan
+
+    def mutant(roots, expand, host, observers, keep, project_filter=None):
+        out = None
+        for ob in observers:
+            out = real(roots, expand, host, [ob], keep, project_filter)
+        return out if out is not None else real(roots, expand, host, observers, keep, project_filter)
+    return _patch("scan", mutant)
+
+
+def _m_coverage_ignored():
+    return _patch("referenced_coverage", lambda measured_calls, frozen_calls: 1.0)
+
+
 MUTANTS = [
     ("M1 materiality maps UNMEASURED to '< 3 %'", _m_unmeasured_to_below, ["V-KMEP-UNMEASURED-NOT-BELOW"]),
     ("M2 compare_population always exact", _m_always_exact, ["V-KMEP-POPULATION-DRIFT"]),
@@ -2271,6 +2311,11 @@ MUTANTS = [
     ("M15 H VERIFIER_AGENT_RE never matches", _m_h_verifier_never, ["V-KMEP-H-VERIFIER-SUBAGENT"]),
     ("M16 H verdict computed on upper_sensitivity", _m_h_verdict_on_sensitivity,
      ["V-KMEP-H-SENSITIVITY-NOT-VERDICT"]),
+    ("M17 I takes the main thread's first call for subagent files (every file read as a main-thread file)",
+     _m_i_main_for_subagents, ["V-KMEP-I-E2E"]),
+    ("M18 locate_cutoff accepts a calls-only match", _m_locate_calls_only, ["V-KMEP-UNTIL-AUTO-UNREACHABLE"]),
+    ("M19 all scans once per pillar", _m_all_scans_per_pillar, ["V-KMEP-ALL-ONE-SCAN"]),
+    ("M20 coverage ignored for a referenced denominator", _m_coverage_ignored, ["V-KMEP-DW7-COVERAGE"]),
 ]
 
 
