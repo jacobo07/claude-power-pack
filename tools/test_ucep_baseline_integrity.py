@@ -459,6 +459,157 @@ def main() -> int:
                "dry rc=%s gens=%s; real rc=%s gens=%s; bad rc=%s gens=%s; out=%r"
                % (rc_dry, gens_dry, rc_real, gens_real, rc_bad, gens_bad, out.getvalue()))
 
+        # --- reanchor refusal matrix: every laundering and rot path ----------
+        def refuse_gate(gate, label, build, needle, evidence, setup=None,
+                        authority="Owner", expect_gens=None):
+            """Fresh synthetic root; the call must raise RatchetRefusal naming
+            `needle`, and the generations must be what `expect_gens` says."""
+            s = synth(label, canon_rel=(setup or {}).get("canon_rel", "canon"))
+            if setup and setup.get("before"):
+                setup["before"](s)
+            before = bl.generations(sfam, s["root"])
+            ids_map = build(s)
+            msg, other = attempt(lambda: call(
+                "reanchor", sfam, ids_map, reason="rule moved", authority=authority,
+                root=s["root"]))
+            gens = bl.generations(sfam, s["root"])
+            want = before if expect_gens is None else expect_gens
+            _check(gate, msg is not None and all(n in msg for n in needle)
+                   and gens == want,
+                   evidence,
+                   "refusal=%r other=%r generations=%s (want %s)"
+                   % (msg, other, gens, want))
+            return s
+
+        refuse_gate("V-UCEP-REANCHOR-REFUSES-MOVED", "ra-moved",
+                    lambda s: {"r1": new_origin(s, 0, line=q_line[0] + 6)}, ("r1", "MOVED"),
+                    "a quote that exists in the new file but not on the cited line is "
+                    "refused (MOVED), nothing written")
+        refuse_gate("V-UCEP-REANCHOR-REFUSES-CHANGED-QUOTE", "ra-cq",
+                    lambda s: {"r1": new_origin(s, 0, quote="a claim names the plane")},
+                    ("r1", "quote"),
+                    "a different quote that IS on the cited line is refused: a changed "
+                    "rule text is not a provenance move")
+        refuse_gate("V-UCEP-REANCHOR-REFUSES-EMPTY-QUOTE", "ra-eq",
+                    lambda s: {"r1": new_origin(s, 0, quote="")}, ("r1",),
+                    "an empty quote is refused, never the weak-vocabulary fallback")
+
+        s = synth("ra-rel")
+        saved_cwd = os.getcwd()
+        try:
+            os.chdir(os.path.dirname(s["canon"]))
+            msg, other = attempt(lambda: call(
+                "reanchor", sfam, {"r1": new_origin(s, 0, file="SKILL.md")},
+                reason="rule moved", authority="Owner", root=s["root"]))
+        finally:
+            os.chdir(saved_cwd)
+        gens = bl.generations(sfam, s["root"])
+        _check("V-UCEP-REANCHOR-REFUSES-RELATIVE-PATH",
+               msg is not None and "r1" in msg and "absolute" in msg and gens == [0],
+               "a relative path (which resolves from the cwd, so verify_origin alone "
+               "would accept it) is refused, nothing written",
+               "refusal=%r other=%r generations=%s" % (msg, other, gens))
+
+        s = synth("ra-wt", canon_rel=".claude/worktrees/x")
+        msg, other = attempt(lambda: call(
+            "reanchor", sfam, {"r1": new_origin(s, 0)}, reason="rule moved",
+            authority="Owner", root=s["root"]))
+        gens = bl.generations(sfam, s["root"])
+        # Control in the same gate: the identical bytes outside a worktrees segment
+        # are accepted, so the refusal is the path rule and not a broken fixture.
+        sc = synth("ra-wt-ctl", canon_rel="canon2")
+        msg_c, other_c = attempt(lambda: call(
+            "plan_reanchor", sfam, {"r1": new_origin(sc, 0)}, "rule moved", "Owner",
+            root=sc["root"]))
+        _check("V-UCEP-REANCHOR-REFUSES-WORKTREE-PATH",
+               msg is not None and "r1" in msg and "worktrees" in msg and gens == [0]
+               and msg_c is None and other_c is None,
+               "a file under .claude/worktrees/ is refused (nothing written); the same "
+               "bytes at canon2/ are accepted by plan_reanchor",
+               "refusal=%r other=%r generations=%s; control refusal=%r other=%r"
+               % (msg, other, gens, msg_c, other_c))
+
+        refuse_gate("V-UCEP-REANCHOR-REFUSES-BAD-AUTHORITY", "ra-auth",
+                    lambda s: {"r1": new_origin(s, 0)}, ("allowlist",),
+                    "authority 'x' is refused, nothing written", authority="x")
+        refuse_gate("V-UCEP-REANCHOR-REFUSES-UNKNOWN-ID", "ra-unk",
+                    lambda s: {"nope": new_origin(s, 0)}, ("nope",),
+                    "an id the generation does not hold is refused, nothing written")
+
+        s = synth("ra-rev")
+        call_rev = attempt(lambda: rt.revert(sfam, "r3", reason="retired for the test",
+                                             authority="Owner", root=s["root"]))
+        msg, other = attempt(lambda: call(
+            "reanchor", sfam, {"r3": new_origin(s, 2)}, reason="rule moved",
+            authority="Owner", root=s["root"]))
+        gens = bl.generations(sfam, s["root"])
+        _check("V-UCEP-REANCHOR-REFUSES-REVERTED-ID",
+               call_rev == (None, None) and msg is not None and "r3" in msg
+               and "active" in msg and gens == [0, 1],
+               "a reverted entry cannot be re-anchored (only the revert generation exists)",
+               "revert=%r refusal=%r other=%r generations=%s"
+               % (call_rev, msg, other, gens))
+
+        def noop_before(s):
+            with open(s["old"], "w", encoding="utf-8", newline="\n") as fh:
+                fh.write("\n".join(old_lines) + "\n")     # r1's current origin verifies
+
+        refuse_gate("V-UCEP-REANCHOR-REFUSES-NOOP", "ra-noop",
+                    lambda s: {"r1": {"file": s["old"], "line": q_line[0],
+                                      "quote": quotes[0]}},
+                    ("r1", "no-op"),
+                    "a new origin equal to the current (VERIFIED) origin is refused",
+                    setup={"before": noop_before})
+        s = refuse_gate("V-UCEP-REANCHOR-ALL-OR-NOTHING", "ra-aon",
+                        lambda s: {"r1": new_origin(s, 0),
+                                   "r2": new_origin(s, 1, file=os.path.join(
+                                       os.path.dirname(s["canon"]), "absent.md"))},
+                        ("r2: ",), "r1 valid + r2 at a missing file: refused naming r2, "
+                        "and r1 is NOT written either")
+
+        # --- the real tree: 9 rotted citations re-anchored on the record ------
+        real_ids = {
+            "persistent_state": {
+                "persistent_state-destructive-op-authorizes-exact-state-seen",
+                "persistent_state-destructive-identity-falsification-test",
+                "persistent_state-absence-of-identity-refuses",
+                "persistent_state-precondition-window-must-be-closed",
+                "persistent_state-batch-reauthorize-per-item",
+                "persistent_state-monetary-qualifiers-travel-with-amount",
+                "persistent_state-monetary-conflicting-qualifiers-refuse",
+                "persistent_state-monetary-no-conversion-without-authorized-source"},
+            "wii_homebrew": {"wii_homebrew-claim-must-name-observing-plane"}}
+        f0 = {"persistent_state":
+              "bcb20d37f568a8873710990e4e43351010e882ac6fcd0f38b1e387a1d674dc64",
+              "wii_homebrew":
+              "2603cf39889cb421c9fd31968b706d68a79aa7f14539173a4eb669761a4bc1bd"}
+        real_diag, real_ok = [], True
+        union = set()
+        for fam in real_ids:
+            gens = bl.generations(fam)
+            g1 = bl.load_generation(fam, 1) if 1 in gens else {}
+            ch = g1.get("changes") or {}
+            union |= set(ch)
+            kinds_ok = bool(ch) and all(
+                v.get("kind") == "REANCHORED" and rt.is_authorized(v.get("authority"))
+                for v in ch.values())
+            broken = sorted(e["id"] for e in bl.active_entries(fam)
+                            if bl.verify_origin(e) != bl.VERIFIED)
+            chain = rt.verify_chain(fam)
+            sha0 = bl.generation_sha256(fam, 0) if 0 in gens else None
+            fam_ok = (gens == [0, 1] and kinds_ok and not broken and chain.ok
+                      and sha0 == f0[fam])
+            real_ok = real_ok and fam_ok
+            real_diag.append("%s: gens=%s kinds_ok=%s broken=%s chain_ok=%s b0_sha_ok=%s"
+                             % (fam, gens, kinds_ok, broken, chain.ok, sha0 == f0[fam]))
+        want_union = real_ids["persistent_state"] | real_ids["wii_homebrew"]
+        real_ok = real_ok and union == want_union
+        real_diag.append("union==9 ids: %s" % (union == want_union))
+        _check("V-UCEP-REAL-REANCHORED", real_ok,
+               "real tree: both families [0, 1], the 9 ids REANCHORED by an allowlisted "
+               "authority, every active entry VERIFIED, chains ok, B0 bytes = F0 blobs",
+               "; ".join(real_diag))
+
         # --- control: ok is not "refuse everything" -------------------------
         root = b0_copy("clean")
         child(root)
@@ -471,7 +622,7 @@ def main() -> int:
 
         print()
         print("UCEP_BASELINE_INTEGRITY_PASS=%d/%d  threshold=%d/%d"
-              % (_PASS, _PASS + _FAIL, 17, 17))
+              % (_PASS, _PASS + _FAIL, 28, 28))
         return 0 if _FAIL == 0 else 1
     finally:
         for k, v in saved_env.items():

@@ -36,6 +36,7 @@ integrity is the repo's history.
 """
 from __future__ import annotations
 
+import os
 import re
 from collections import Counter
 from dataclasses import dataclass, field
@@ -269,9 +270,36 @@ def plan_reanchor(family: str, new_origins: dict, reason: str, authority: str,
             line = int(new.get("line") or 0)
         except (TypeError, ValueError):
             line = 0
-        # The quote is used AS SUPPLIED: substituting the old one here would hide
-        # an attempt to launder a different rule text through a provenance move.
-        origin = {"file": new.get("file"), "line": line, "quote": new.get("quote")}
+        # The quote is checked AS SUPPLIED: substituting the old one before the
+        # check would hide an attempt to launder a different rule text through a
+        # provenance move. Once it is squash-equal to the old quote, the OLD string
+        # is what gets stored, so the entry's quote stays byte-identical to B0.
+        old_origin = old.get("origin") if isinstance(old.get("origin"), dict) else {}
+        old_quote = old_origin.get("quote")
+        supplied = new.get("quote")
+        path = new.get("file")
+        if not _squash(supplied):
+            bad.append("%s: the new origin has no quote (an empty quote falls back to "
+                       "a weak vocabulary test and proves nothing)" % ident)
+            continue
+        if _squash(supplied) != _squash(old_quote):
+            bad.append("%s: the quote must be unchanged (a changed rule text is a "
+                       "REWORDED change for revert + promote, not a provenance move)"
+                       % ident)
+            continue
+        if not isinstance(path, str) or not os.path.isabs(path):
+            bad.append("%s: the new origin path %r is not absolute (it would resolve "
+                       "from whatever the working directory is)" % (ident, path))
+            continue
+        if "/.claude/worktrees/" in path.replace("\\", "/").lower():
+            bad.append("%s: the new origin path is under .claude/worktrees/, a "
+                       "disposable checkout that will not outlive the mission "
+                       "(audit G15): %s" % (ident, path))
+            continue
+        origin = {"file": path, "line": line, "quote": old_quote}
+        if _origin_key(origin) == _origin_key(old_origin):
+            bad.append("%s: no-op, the new origin equals the current origin" % ident)
+            continue
         candidate = dict(old, origin=origin)
         verdict = bl.verify_origin(candidate)
         if verdict != bl.VERIFIED:
@@ -299,8 +327,16 @@ def reanchor(family: str, new_origins: dict, reason: str, authority: str,
     `changes[id] = {kind: REANCHORED, reason, authority, from, to}` so
     `verify_chain` accepts the origin change as recorded.
 
-    Refuses (nothing written) unless every new origin is VERIFIED by
-    `baselines.verify_origin`; one bad id refuses the whole call."""
+    Refuses (nothing written), and one bad id refuses the whole call, when:
+      - the authority is not on the allowlist, or the reason is empty;
+      - an id is unknown or not active (a reverted entry is gone, not movable);
+      - a new origin has no quote, or a quote that differs from the old one (a
+        changed rule text is a REWORDED change for revert + promote);
+      - its `file` is not an absolute path, or sits under `.claude/worktrees/`
+        (audit G15: a disposable checkout is not a home for provenance);
+      - the new origin equals the current one (a no-op);
+      - `baselines.verify_origin` of the new origin is not VERIFIED.
+    The stored quote is the old quote verbatim, so B0's rule text is never edited."""
     entries, changes = plan_reanchor(family, new_origins, reason, authority, root=root)
     return bl.write_generation(
         family, entries, "reanchor %s: %s" % (", ".join(sorted(changes)), reason),
