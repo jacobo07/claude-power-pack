@@ -44,6 +44,7 @@ Total Plans in Phase: 4
   #001 shape stays blocked.
 - [Audit G6]: the gsd_mission.py repair is deployed only at >= 4 GB free RAM.
 - [Plan]: arming waits for pillar A and >= 4 GB free; until then phases run in the interactive pane.
+- [Phase 2 close, unattended 2026-10-03]: verification human_needed (8/8 automated, PRGs Owner-run) -> recorded verification_deferred_human, autonomous run continues at Phase 3 as with Phase 1 (phases 3-4 depend on nothing; safe, reversible, internal). Review WR-01..07 fixed before verification; WR-08 merge strategy is an Owner note in the bundle.
 - [02-03]: a renewed successor inherits the hold of its nearest predecessor that has an owner (`provider_breaker.lineage_hold`,
   bounded by a seen-set and MAX_LINEAGE_HOPS=4); a re-login after the refusal still releases it.
 - [02-03]: the env preflight gates launches only on a declared plane (CPP_ENV_PREFLIGHT=on, or CPP_MISSION_PLANE set and
@@ -89,6 +90,7 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 | Phase | State | Resume |
 |-------|-------|--------|
 | 1 | verification_deferred_human | owner bundle [A] (laptop PRG), then /gsd-verify-work 1 |
+| 2 | verification_deferred_human | owner bundle [B]/[C] (a7 re-login, env deploys, laptop PRG), then /gsd-verify-work 2 |
 
 ## Performance Metrics
 
