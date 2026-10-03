@@ -45,7 +45,7 @@ INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is never a realized s
 
 ## Phases
 
-- [ ] **Phase 1: Baseline gate and owner reconciliation** - pillar A gate; handoffs for I, N, O, Q
+- [x] **Phase 1: Baseline gate and owner reconciliation** - pillar A gate; handoffs for I, N, O, Q (completed 2026-10-03)
 - [ ] **Phase 2: Context lifetime and fresh-epoch economics** - pillars D, E measured with displacement
 - [ ] **Phase 3: Turn advancement and non-convergence** - pillars H, J turn taxonomy archaeology
 - [ ] **Phase 4: Re-derivation, admission, proof reuse and tool-schema residency** - pillars F, G, K, P, C(tools)
@@ -180,7 +180,7 @@ record Product Delta and Intelligence Delta, and pass the done-gate.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Baseline gate and owner reconciliation | 0/0 | Not started | - |
+| 1. Baseline gate and owner reconciliation | 1/1 | Complete    | 2026-10-03 |
 | 2. Context lifetime and fresh-epoch economics | 0/0 | Not started | - |
 | 3. Turn advancement and non-convergence | 0/0 | Not started | - |
 | 4. Re-derivation, admission, proof reuse and tool-schema residency | 0/0 | Not started | - |

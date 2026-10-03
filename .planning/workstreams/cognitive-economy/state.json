@@ -1,0 +1,48 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1",
+  "phases": [
+    {
+      "number": "1",
+      "name": "Baseline gate and owner reconciliation",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "Context lifetime and fresh-epoch economics",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "Turn advancement and non-convergence",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "Re-derivation, admission, proof reuse and tool-schema residency",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "Compile-out of compound steps 7 and 8",
+      "status": "pending"
+    },
+    {
+      "number": "6",
+      "name": "Baseline compiler audit and institutional GC",
+      "status": "pending"
+    },
+    {
+      "number": "7",
+      "name": "Owner bundle, baseline-ratchet review and close",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step (plan phase 2)",
+    "reason": "Phase 2 of 7 — needs a plan"
+  },
+  "updated_at": "2026-10-03T14:29:55.057Z"
+}
