@@ -101,6 +101,12 @@ FISHER_PINS = (((4, 4, 0, 4), Fraction(1, 35)), ((5, 5, 0, 5), Fraction(1, 126))
                ((4, 5, 0, 5), Fraction(1, 21)), ((3, 5, 0, 5), Fraction(1, 6)),
                ((2, 2, 0, 2), Fraction(1, 3)), ((1, 2, 0, 2), Fraction(1)),
                ((3, 4, 0, 5), Fraction(1, 21)), ((10, 10, 5, 10), Fraction(21, 646)))
+# Review-time pins for the necessary session figures (07-REVIEW WR-01, recomputed independently with
+# factorial-form fractions): effect -> (smallest n1 + n2 that separates it, its allocations, equal k).
+# 3/6 vs 0/9 has effect 1/2 and p = 4/91; 2/2 vs 0/5 has effect 1 and p = 1/21 (2/2 vs 0/4 = 1/15 and
+# 3/3 vs 0/3 = 1/10 do not separate, so 7 is the smallest total for effect 1).
+NEEDED_PINS = ((Fraction(1, 2), 15, ((6, 9), (9, 6)), 10),
+               (Fraction(1), 7, ((2, 5), (3, 4), (4, 3), (5, 2)), 4))
 
 # Session-count phrasings used by phases 1-6 (three at plan time, a fourth found at execution in F).
 SESSION_RES = (re.compile(r"(\d+) fresh sessions? were consumed", re.I),
@@ -200,6 +206,33 @@ def needed_k(effect):
         if ms is not None and ms[0] <= effect:
             return k
     return None
+
+
+def needed_total(effect):
+    """(smallest n1 + n2 over ALL allocations whose floor <= effect, [(n1, n2) attaining it]), the same
+    most-favourable-design rule as the verdict floor. Searched up to 2 x needed_k(effect), where (k, k)
+    always qualifies, so the answer is never above the equal one. None when needed_k is None."""
+    k = needed_k(effect)
+    if k is None:
+        return None
+    for tot in range(2, 2 * k + 1):
+        hits = []
+        for n1 in range(1, tot):
+            ms = min_separable(n1, tot - n1)
+            if ms is not None and ms[0] <= effect:
+                hits.append((n1, tot - n1))
+        if hits:
+            return tot, hits
+    return None
+
+
+def needed_text(effect) -> str:
+    """'smallest total T sessions (n1 vs n2 or ...); equal allocation k per arm (2k sessions)'."""
+    nt, k = needed_total(effect), needed_k(effect)
+    if nt is None or k is None:
+        return f"no design up to {NEEDED_K_MAX} per arm separates it"
+    alloc = " or ".join(f"{a} vs {b}" for a, b in nt[1])
+    return f"smallest total {nt[0]} sessions ({alloc}); equal allocation {k} per arm ({2 * k} sessions)"
 
 
 def frac(x) -> str:
@@ -1194,13 +1227,12 @@ def render(rows, regrade_rows, fro, st, outside=()) -> str:
     if cf is None:
         L.append("  - `D-CARD.arm_c` states no `a/n PASS` figure against a measured control; nothing to judge.")
     else:
-        kk = cf["needed_k"]
         can = ("the budget could separate an effect of this size" if cf["verdict"] == "SEPARABLE"
                else "the budget could not separate it")
         L.append(f"  - judged by the verdict rule used for the committed rows: {cf['passes']}/{cf['n']} PASS against "
                  f"{CONTROL_ARM} {cf['control']['passes']}/{cf['control']['n']} is an effect of {frac(cf['effect'])} "
                  f"({points(cf['effect'])} points), floor {frac(b['floor'])}, so {cf['verdict']}: {can} "
-                 f"(equal k = {kk} per arm, {2 * kk if kk else 'none'} sessions, against new_benchmark_cap {cap}). "
+                 f"({needed_text(cf['effect'])}, against new_benchmark_cap {cap}). "
                  f"Rows like these, judged as committed rows, would give the verdict {cf['verdict']}.")
         L.append(f"  - fisher_two_sided({cf['passes']}, {cf['n']}, {cf['control']['passes']}, {cf['control']['n']}) = "
                  f"{frac(cf['p_rows'])}: whether these few rows are significant on their own, which is not what "
@@ -1213,15 +1245,13 @@ def render(rows, regrade_rows, fro, st, outside=()) -> str:
     L.append("")
     L.append("## What a separating benchmark would need (necessary condition, not a power calculation)")
     L.append("")
-    if e_auth == 0:
-        L.append("- authoritative effect 0: no n separates a zero effect.")
-    else:
-        ka = needed_k(e_auth)
-        L.append(f"- authoritative effect {frac(e_auth)}: equal k = {ka} per arm ({2 * ka if ka else 'none'} sessions).")
-    ks = needed_k(e_stored)
-    L.append(f"- stored-grade effect {frac(e_stored)}: the smallest equal k whose floor reaches it is {ks} per arm, "
-             f"{2 * ks if ks else 'more than ' + str(2 * NEEDED_K_MAX)} sessions for two arms, against "
-             f"new_benchmark_cap {cap}.")
+    for label, eff in (("authoritative effect", e_auth), ("stored-grade effect", e_stored)):
+        if eff == 0:
+            L.append(f"- {label} 0: no n separates a zero effect.")
+        else:
+            L.append(f"- {label} {frac(eff)}: {needed_text(eff)}, against new_benchmark_cap {cap}.")
+    L.append("- The smallest total is taken over every allocation n1 + n2 (the same most-favourable-design rule as "
+             "the floor); the equal allocation is shown beside it.")
     L.append("- This is only the smallest design in which such a table could separate at all; a powered design "
              "(a stated chance of separating when the effect is real) needs more sessions than this.")
     L.append("")
@@ -1296,7 +1326,23 @@ def run_drills(inp, fro, cap, rendered, remaining):
                                                                        inp["st"]["info"]),
         "evidence-one-digit-changed": lambda: clause_evidence_current_drill(rendered),
     }
-    return drills(inp["rows"], inp["regrade"], cap, inp["st"], remaining, text_drills)
+    return drills(inp["rows"], inp["regrade"], cap, inp["st"], remaining, text_drills) + [needed_pins_drill()]
+
+
+def needed_pins_drill():
+    """WR-01 pin: needed_total reproduces NEEDED_PINS, and an equal-allocation-only answer (2 x needed_k)
+    would differ from the pin for 1/2 (the pin can tell the two rules apart)."""
+    bad, notes = [], []
+    for eff, tot, at, k in NEEDED_PINS:
+        got, gk = needed_total(eff), needed_k(eff)
+        if got is None or got[0] != tot or tuple(got[1]) != at or gk != k:
+            bad.append(f"{frac(eff)}: needed_total {got}, needed_k {gk}, pinned {tot} {at} k {k}")
+        notes.append(f"{frac(eff)} -> total {tot} {'/'.join(f'({a},{b})' for a, b in at)}, equal {2 * k}")
+    half = NEEDED_PINS[0]
+    if 2 * half[3] == half[1]:
+        bad.append("pin cannot tell the equal-only rule from the all-allocation rule")
+    obs = ("pins reproduced: " + "; ".join(notes)) if not bad else "WRONG " + "; ".join(bad)
+    return ("needed-total-pins", obs, not bad)
 
 
 def default_results(inp, fro, cap):
@@ -1350,11 +1396,16 @@ def derived_json(inp, fro, cap) -> dict:
                           for a, c in sorted(ctx["consumption"].items())}
     ea, es = max_effect(counts) if counts else None, max_effect(stored)
     out["needed_k"] = {"authoritative": needed_k(ea), "stored": needed_k(es)}
+
+    def _nt(e):
+        nt = needed_total(e)
+        return None if nt is None else {"total": nt[0], "at": [list(x) for x in nt[1]]}
+    out["needed_total"] = {"authoritative": _nt(ea), "stored": _nt(es)}
     cf = c_fixed_frozen(fro["denominators"].get("D-CARD", {}).get("arm_c"), ctx["counts"], b)
     out["c_fixed_frozen"] = None if cf is None else {
         "passes": cf["passes"], "n": cf["n"], "control": f"{cf['control']['passes']}/{cf['control']['n']}",
         "effect": frac(cf["effect"]), "verdict": cf["verdict"], "needed_k": cf["needed_k"],
-        "p_rows": frac(cf["p_rows"]), "committed_row": False}
+        "needed_total": _nt(cf["effect"]), "p_rows": frac(cf["p_rows"]), "committed_row": False}
     info = st["info"]
     out["pins"] = {"rows_commit": info["rows_commit"], "rows_blob_sha256": info["rows_sha"],
                    "regrade_add_commit": st["regrade_commit"], "regrade_blob_sha256": info["regrade_sha"]}
