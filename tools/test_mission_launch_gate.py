@@ -268,6 +268,17 @@ def grp_renewal() -> None:
     guarded("V-LG-RENEWAL-RELOGIN-LAUNCHES", relogin)
 
 
+class _Sink:
+    def __init__(self, buf):
+        self.buf = buf
+
+    def write(self, text):
+        self.buf.append(text)
+
+    def flush(self):
+        pass
+
+
 def _record(mid: str, *, renewed_from=None, owner=None) -> dict:
     gm.create(TMP, "/gsd-autonomous", mission_id=mid, now=NOW)
     kw: dict = {}
@@ -310,6 +321,39 @@ def grp_lineage() -> None:
         ok = h is None and len(calls) <= pb.MAX_LINEAGE_HOPS
         return ok, f"hold={h} loads={len(calls)} (cap {pb.MAX_LINEAGE_HOPS})"
     guarded("V-LG-LINEAGE-CYCLE-BOUNDED", cycle)
+
+    def operator_surfaces():
+        # WR-06: `status` and `clear` take the id the supervisor row and the logs show -- the held SUCCESSOR's
+        base = _fresh_state("m-lg-op")
+        p, s1, other = base + "-p", base + "-s", base + "-other"
+        _record(p, owner={"session_id": f"s-{p}", "pid": 5151, "kind": "background"})
+        rec_s = _record(s1, renewed_from=p)
+        _record(other)
+
+        def cli(*argv):
+            buf = []
+            with contextlib.redirect_stdout(_Sink(buf)):
+                rc = pb._cli(list(argv))
+            return rc, "".join(buf)
+        saved_now = gm.lr._now_iso
+        gm.lr._now_iso = lambda: iso(NOW)        # the operator's clear lands after the evidence, as it would live
+        try:
+            with scenario(syn, fresh_home()):
+                held0 = pb.lineage_hold(rec_s, NOW)
+                rc_st, out_st = cli("status", "--mission", s1)
+                shown = json.loads(out_st).get("hold") if out_st.strip().startswith("{") else None
+                cli("clear", "--mission", other)                       # control: another mission's clear releases nothing
+                held_other = pb.lineage_hold(rec_s, NOW)
+                rc_cl, out_cl = cli("clear", "--mission", s1)
+                held1 = pb.lineage_hold(rec_s, NOW)
+                gate = mlg.refusal(rec_s, "launch", NOW)
+        finally:
+            gm.lr._now_iso = saved_now
+        ok = (bool(held0) and held0.get("quarantine") is True and bool(shown) and shown.get("inherited_from") == p
+              and bool(held_other) and rc_cl == 0 and held1 is None and gate is None)
+        return ok, (f"held_before={bool(held0)} status_shows_hold={bool(shown)} inherited_from={(shown or {}).get('inherited_from')} "
+                    f"other_clear_releases={held_other is None} clear_rc={rc_cl} held_after_clear={bool(held1)} gate={gate}")
+    guarded("V-LG-LINEAGE-OPERATOR-SURFACES", operator_surfaces)
 
 
 # ----------------------------------------------------------------- env preflight (pillar B)
