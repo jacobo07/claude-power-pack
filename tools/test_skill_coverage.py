@@ -19,8 +19,10 @@ could not be read is INCONCLUSIVE and is never classified as all `none`: UNMEASU
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import sys
+import tempfile
 from collections import Counter
 from pathlib import Path
 
@@ -37,6 +39,7 @@ CONTROLS = {
     "concurrent-writers-shared-tree": "opportunity_detector",
     "destructive-state-authorization": "card",
 }
+CRIT_CONTROLS = (("repo", "motion-promo", "medium"), ("gex44", "destructive-state-authorization", "high"))
 REC_KEYS = ("schema", "host", "node", "measured_at", "command", "skills", "counts", "evidence")
 
 
@@ -286,6 +289,182 @@ def c_crlf_controls(disp_text):
     return "ok", f"CRLF dispatcher/hooks/adapter: {sum(per_cr.values())} registrations, controls {got}"
 
 
+def drop_script_line(text: str, rel: str):
+    """(text without the registration line of rel, number of lines removed)."""
+    keep, n = [], 0
+    for ln in sc.lf(text).split("\n"):
+        if "script:" in ln and rel in ln:
+            n += 1
+            continue
+        keep.append(ln)
+    return "\n".join(keep), n
+
+
+def live_plane(planes, host="gex44"):
+    return next((p for p in planes if p.get("plane") == host and "rows" in p), None)
+
+
+def c_criticality_rule(planes):
+    out, bad = [], []
+    for plane, name, want in CRIT_CONTROLS:
+        p = next((q for q in planes if q["plane"] == plane and "rows" in q), None)
+        if p is None:
+            return "INCONCLUSIVE", f"plane {plane} not available for control {name}"
+        r = by_skill(p).get(name)
+        if r is None or r["criticality"] != want or not r["criticality_evidence"]:
+            bad.append(f"{plane}/{name}: {r and r['criticality']!r} want {want!r}")
+        else:
+            out.append(f"{plane}/{name} = {want} [{'; '.join(r['criticality_evidence'])}]")
+    if "rule_stub" not in " ".join(by_skill(live_plane(planes))["destructive-state-authorization"]["criticality_evidence"]):
+        bad.append("gex44 destructive-state-authorization is not high via rule_stub")
+    empty = next((r for r in planes[0]["rows"] if not r["criticality_evidence"]), None)
+    if empty is None or empty["criticality"] != "low":
+        bad.append(f"no-evidence repo skill is not low: {empty and empty['skill']}")
+    else:
+        out.append(f"repo/{empty['skill']} (no evidence) = low")
+    return ("FAIL", "; ".join(bad)) if bad else ("ok", " | ".join(out))
+
+
+def cov_of(planes, plane, name):
+    return by_skill(next(p for p in planes if p["plane"] == plane))[name]["coverage"]
+
+
+def c_drill_detector(disp_text, recs):
+    mut, n = drop_script_line(disp_text, "hooks/doctrine_cards.js")
+    name = "concurrent-writers-shared-tree"
+    ctl = cov_of(compute(REPO, disp_text, []), "repo", name)
+    got = cov_of(compute(REPO, mut, []), "repo", name)
+    if n and ctl == "opportunity_detector" and got == "none":
+        return "ok", f"{n} registration line removed: {name} {ctl} -> {got}"
+    return "FAIL", f"removed {n}; control {ctl}; mutated {got} (want opportunity_detector -> none)"
+
+
+def c_drill_adapter(disp_text, recs):
+    name = "concurrent-writers-shared-tree"
+    f, _ = sc.opportunity_adapters(REPO)[name]
+    text = sc.read_lf(REPO / f)
+    kept = [ln for ln in text.split("\n") if not ln.startswith("CAPABILITY")]
+    removed = len(text.split("\n")) - len(kept)
+    got = cov_of(compute(REPO, disp_text, [], None, {f: "\n".join(kept)}), "repo", name)
+    ctl = cov_of(compute(REPO, disp_text, []), "repo", name)
+    if removed and ctl == "opportunity_detector" and got == "card":
+        return "ok", f"{removed} CAPABILITY line removed from {f}: {name} {ctl} -> {got}"
+    return "FAIL", f"removed {removed}; control {ctl}; mutated {got} (want opportunity_detector -> card)"
+
+
+def c_drill_card(disp_text, recs):
+    mut, n = drop_script_line(disp_text, "hooks/destructive_doctrine_card.js")
+    name = "destructive-state-authorization"
+    ctl = cov_of(compute(REPO, disp_text, []), "repo", name)
+    got = cov_of(compute(REPO, mut, []), "repo", name)
+    if n and ctl == "card" and got == "none":
+        return "ok", f"{n} registration line removed: {name} {ctl} -> {got}"
+    return "FAIL", f"removed {n}; control {ctl}; mutated {got} (want card -> none)"
+
+
+def c_drill_stubs(disp_text, recs):
+    name = "destructive-state-authorization"
+    rec = next((r for r, _, _ in recs if r and r["host"] == "gex44"), None)
+    if rec is None:
+        return "INCONCLUSIVE", "no gex44 recording to drop stubs from"
+    mut = copy.deepcopy(rec)
+    mut["evidence"] = [e for e in mut["evidence"] if e["kind"] != "rule_stub"]
+    ctl = by_skill(live_plane(compute(REPO, disp_text, [(rec, None, "gex44")])))[name]["criticality"]
+    got = by_skill(live_plane(compute(REPO, disp_text, [(mut, None, "gex44")])))[name]["criticality"]
+    if ctl == "high" and got != "high":
+        return "ok", f"rule_stub items dropped from the gex44 recording: {name} {ctl} -> {got}"
+    return "FAIL", f"control {ctl}; mutated {got} (want high -> not high)"
+
+
+SYN_DISP = "const CHAIN_MAP = {\n  '%s': [\n    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/x.js', timeoutMs: 1 },\n  ],\n};\n"
+SYN_DENY = "emit({ permissionDecision: 'deny' }); // Full rule: the `xs` skill.\n"
+
+
+def c_synthetic(disp_text, recs):
+    bad, ok = [], []
+    # (a) hard_rule path, both sources, each with a control
+    a1 = sc.criticality("skx", sc.repo_evidence(REPO, {"skx"}, "## HARD RULES (sealed)\nuse `skx` here\n\n## Notes\n", ""))
+    a1c = sc.criticality("skx", sc.repo_evidence(REPO, {"skx"}, "## HARD RULES (sealed)\n\n## Notes\nuse `skx` here\n", ""))
+    a2 = sc.criticality("skx", sc.repo_evidence(REPO, {"skx"}, "", "see skills/skx/ here\n"))
+    a2c = sc.criticality("skx", sc.repo_evidence(REPO, {"skx"}, "", "nothing here\n"))
+    for tag, got, want, extra in (("a1", a1, "high", "hard_rule@repo"), ("a1-control", a1c, "low", ""),
+                                  ("a2", a2, "high", "hard_rule@repo"), ("a2-control", a2c, "low", "")):
+        if got[0] != want or (extra and not any(extra in e for e in got[1])):
+            bad.append(f"{tag}: {got}")
+    ok.append("a hard_rule -> high (+ Notes-section control low)")
+    # (b) non-deny hook
+    hooks = {"hooks/x.js": "// names the `xs` skill but never denies\n"}
+    nd = sc.coverage("xs", sc.discover_cards(REPO, SYN_DISP % "PreToolUse-Bash-chain", hook_texts=hooks), {})[0]
+    dn = sc.coverage("xs", sc.discover_cards(REPO, SYN_DISP % "PreToolUse-Bash-chain",
+                                             hook_texts={"hooks/x.js": SYN_DENY}), {})[0]
+    if (nd, dn) != ("none", "card"):
+        bad.append(f"b: non-deny {nd}, deny control {dn}")
+    ok.append("b non-deny hook -> none (deny control card)")
+    # (c) non-PreToolUse chain
+    st = sc.coverage("xs", sc.discover_cards(REPO, SYN_DISP % "Stop-chain", hook_texts={"hooks/x.js": SYN_DENY}), {})[0]
+    pt = sc.coverage("xs", sc.discover_cards(REPO, SYN_DISP % "PreToolUse-Bash-chain",
+                                             hook_texts={"hooks/x.js": SYN_DENY}), {})[0]
+    if (st, pt) != ("none", "card"):
+        bad.append(f"c: Stop-chain {st}, PreToolUse control {pt}")
+    ok.append("c Stop-chain registration -> none (PreToolUse control card)")
+    # (d) cross-plane
+    rec1 = {"host": "p1", "skills": ["s"], "counts": {}, "evidence": [
+        {"kind": "rule_stub", "plane": "p1", "file": "~/r.md", "line": 3, "skill": "s"}]}
+    rec2 = {"host": "p2", "skills": ["s"], "counts": {}, "evidence": []}
+    pl = compute(REPO, disp_text, [(rec1, None, "p1"), (rec2, None, "p2")])
+    r1, r2 = by_skill(pl[1])["s"], by_skill(pl[2])["s"]
+    if (r1["criticality"], r2["criticality"]) != ("high", "low") or r2["criticality_evidence"] \
+            or not r1["criticality_evidence"]:
+        bad.append(f"d: p1 {r1['criticality']} {r1['criticality_evidence']}, p2 {r2['criticality']} {r2['criticality_evidence']}")
+    ok.append("d p1 stub -> high on p1, low on p2, p1 item absent from p2")
+    return ("FAIL", "; ".join(bad)) if bad else ("ok", "; ".join(ok))
+
+
+def with_recording_text(raw: bytes, mutate=None):
+    """Load a recording from bytes through a temporary file; (record, reason)."""
+    with tempfile.TemporaryDirectory() as td:
+        f = Path(td) / "D-live-copy.json"
+        f.write_bytes(raw)
+        return load_recording(f)
+
+
+def c_recording_crlf(disp_text, recs):
+    committed = REPO / sc.EVIDENCE_DIR_REL / "D-live-gex44.json"
+    if not committed.is_file():
+        return "INCONCLUSIVE", "no committed gex44 recording"
+    raw = committed.read_bytes().replace(b"\r\n", b"\n")
+    cr = raw.replace(b"\n", b"\r\n")
+    base, w0 = with_recording_text(raw)
+    crl, w1 = with_recording_text(cr)
+    d = json.loads(raw)
+    d["skills"][0] += "-altered"
+    alt, w2 = with_recording_text(json.dumps(d).encode("utf-8"))
+    if w0 or w1 or w2 or b"\r\n" not in cr:
+        has_cr = b"\r\n" in cr
+        return "FAIL", f"load reasons {w0} {w1} {w2}; CR present {has_cr}"
+    rows = [live_plane(compute(REPO, disp_text, [(r, None, "gex44")]))["rows"] for r in (base, crl, alt)]
+    if rows[0] == rows[1] and rows[0] != rows[2]:
+        return "ok", f"CRLF copy classifies identically ({len(rows[0])} rows); an altered skill name changes the rows"
+    return "FAIL", f"crlf same {rows[0] == rows[1]}; altered differs {rows[0] != rows[2]}"
+
+
+def c_unmeasured(disp_text, recs):
+    committed = REPO / sc.EVIDENCE_DIR_REL / "D-live-gex44.json"
+    if not committed.is_file():
+        return "INCONCLUSIVE", "no committed gex44 recording"
+    d = json.loads(sc.read_lf(committed))
+    d["skills"] = []
+    rec, why = with_recording_text(json.dumps(d).encode("utf-8"))
+    pl = compute(REPO, disp_text, [(rec, why, "gex44")])
+    p = pl[1]
+    d2 = json.loads(sc.read_lf(committed))
+    d2["schema"] = "other/9"
+    rec2, why2 = with_recording_text(json.dumps(d2).encode("utf-8"))
+    if rec is None and "inconclusive" in p and "rows" not in p and rec2 is None and why2:
+        return "ok", f"empty skills -> INCONCLUSIVE ({why}); schema mismatch -> INCONCLUSIVE; no rows, never all none"
+    return "FAIL", f"rec {rec is not None}, plane {sorted(p)}, schema-mismatch {rec2 is not None}"
+
+
 # ------------------------------------------------------------------ run
 
 
@@ -305,7 +484,15 @@ def clauses(disp_text, recs):
            ("V-SKC-CLASS-TOTAL", c_class_total(planes)),
            ("V-SKC-EVIDENCE-CURRENT", c_evidence_current(planes)),
            ("V-SKC-EVIDENCE-DRILL", c_evidence_drill(planes)),
-           ("V-SKC-CRLF-CONTROLS", c_crlf_controls(disp_text))]
+           ("V-SKC-CRLF-CONTROLS", c_crlf_controls(disp_text)),
+           ("V-SKC-CRITICALITY-RULE", c_criticality_rule(planes)),
+           ("V-SKC-DRILL-DETECTOR-UNREGISTERED", c_drill_detector(disp_text, recs)),
+           ("V-SKC-DRILL-ADAPTER-REMOVED", c_drill_adapter(disp_text, recs)),
+           ("V-SKC-DRILL-CARD-UNREGISTERED", c_drill_card(disp_text, recs)),
+           ("V-SKC-DRILL-STUBS-REMOVED", c_drill_stubs(disp_text, recs)),
+           ("V-SKC-SYNTHETIC-PATHS", c_synthetic(disp_text, recs)),
+           ("V-SKC-RECORDING-CRLF", c_recording_crlf(disp_text, recs)),
+           ("V-SKC-UNMEASURED-NOT-NONE", c_unmeasured(disp_text, recs))]
     return planes, res
 
 
