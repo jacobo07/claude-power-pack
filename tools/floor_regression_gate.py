@@ -12,7 +12,10 @@ transcript whose floor rose materially against that reference without an explana
 
 Measurement source (one of): --transcript T.jsonl | --project-dir DIR (the newest top-level *.jsonl) |
 --session SID (located by the owner's listing_floor_probe.transcript) | --probe [--cwd DIR] (one fresh headless
-session through listing_floor_probe.main; costs one session, never started from a test).
+session through listing_floor_probe.main; costs one session, never started from a test). NOTE: --probe appends one
+row to the TRACKED file wiki/tools/listing_floor_probe.results.jsonl (the owner probe's own behaviour) unless env
+CPP_FLOOR_PROBE_RESULTS names another file; commit that row with the reference or discard it deliberately.
+--json carries `detail` and `probe_error` too, so an exit 2 names its cause in machine mode as it does in text mode.
 
 Exit codes: 0 within bound, 1 material unexplained rise, 2 UNMEASURABLE (never 0 on anything not measured).
 The tokens axis counts: when it could not be compared (the check has no model call, or its prompt differs from the
@@ -1161,7 +1164,9 @@ def build_parser():
     src.add_argument("--project-dir", metavar="DIR", help="the newest top-level *.jsonl of a project directory")
     src.add_argument("--session", metavar="SID", help="a session id, located by listing_floor_probe.transcript")
     src.add_argument("--probe", action="store_true",
-                     help="start ONE fresh headless session through listing_floor_probe (costs a session)")
+                     help="start ONE fresh headless session through listing_floor_probe (costs a session; appends one row "
+                          "to the TRACKED wiki/tools/listing_floor_probe.results.jsonl unless env "
+                          "CPP_FLOOR_PROBE_RESULTS names another file)")
     ap.add_argument("--cwd", metavar="DIR", default=None, help="working directory of the --probe session")
     ap.add_argument("--reference", metavar="PATH", default=None)
     ap.add_argument("--chars-only", action="store_true",
@@ -1174,7 +1179,7 @@ def build_parser():
 
 
 JSON_KEYS = ("verdict", "exit", "reason", "rows", "findings", "explained", "scope_deltas", "tokens_axis",
-             "ratchet_hint", "reference", "provenance", "caveats")
+             "ratchet_hint", "reference", "provenance", "caveats", "detail", "probe_error")
 
 
 def _ascii(text):

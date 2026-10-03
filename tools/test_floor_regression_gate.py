@@ -1089,7 +1089,7 @@ def g_tokens_rule():
 REFERENCE_KEYS = {"schema", "provenance", "components", "layers", "total_chars", "tokens", "skill_listing",
                   "excluded", "explanations", "caveats"}
 JSON_KEYS = {"verdict", "exit", "reason", "rows", "findings", "explained", "scope_deltas", "tokens_axis",
-             "ratchet_hint", "reference", "provenance", "caveats"}
+             "ratchet_hint", "reference", "provenance", "caveats", "detail", "probe_error"}
 
 
 @contextlib.contextmanager
@@ -1351,7 +1351,7 @@ def g_json():
     doc = json.loads(out)
     if set(doc) != JSON_KEYS or doc.get("verdict") != "UNMEASURABLE" or doc.get("exit") != 2 or doc.get("reason") != "no_transcript":
         why.append(f"unmeasurable doc: keys={sorted(doc)} verdict={doc.get('verdict')} reason={doc.get('reason')}")
-    return (not why), "; ".join(why) or "one JSON document with the 12 keys, for a verdict and for UNMEASURABLE"
+    return (not why), "; ".join(why) or "one JSON document with the 14 keys (detail and probe_error since IN-02), for a verdict and for UNMEASURABLE"
 
 
 def g_cli_usage():
@@ -2558,7 +2558,42 @@ def g_replace_failure_no_stray_tmp():
     return (not why), "; ".join(why) or "failed --replace: exit 2 write_failed and no temp file left; successful --replace leaves only the target; CLI and in-process"
 
 
+def g_json_detail_and_probe_note():
+    """IN-02: --json carries `detail` / `probe_error` on exit 2, and the probe's tracked results file is named in the docs."""
+    why = []
+    root = scratch("in02")
+    ref_tx, _ = floor_pair(root, {}, {})
+    rc, out, _ = run_cli(["--check", "--reference", root / "absent.json", "--transcript", ref_tx, "--json"])
+    doc = json.loads(out)
+    if rc != 2 or doc.get("reason") != "reference_missing" or doc.get("detail") != "no such reference file" or "probe_error" not in doc:
+        why.append(f"reference_missing --json: rc={rc} reason={doc.get('reason')!r} detail={doc.get('detail')!r} keys={sorted(doc)}")
+    text_rc, text_out, _ = run_cli(["--check", "--reference", root / "absent.json", "--transcript", ref_tx])
+    if "no such reference file" not in text_out or str(doc.get("detail")) not in text_out:
+        why.append(f"text mode no longer names the detail: {text_out[-200:]!r}")
+    if os.name != "nt":
+        proot, stubs = probe_root("in02")
+        rc, out, _ = run_cli(["--write-reference", proot / "x.json", "--probe", "--cwd", proot / "repo", "--json"],
+                             probe_env(proot, stubs["noexec"]))
+        doc = json.loads(out)
+        if rc != 2 or doc.get("reason") != "probe_failed" or doc.get("probe_error") != "PermissionError" or not doc.get("detail"):
+            why.append(f"probe_failed --json: rc={rc} reason={doc.get('reason')!r} probe_error={doc.get('probe_error')!r} detail={doc.get('detail')!r}")
+    # success paths carry the two keys too, empty (the schema does not depend on the verdict)
+    rc, out, _ = run_cli(["--write-reference", root / "w.json", "--transcript", ref_tx, "--json"])
+    doc = json.loads(out)
+    if rc != 0 or "detail" not in doc or doc.get("probe_error") is not None:
+        why.append(f"written --json: rc={rc} detail={'detail' in doc} probe_error={doc.get('probe_error')!r}")
+    # the documentation names the tracked file a --probe appends to
+    rc, helptext, _ = run_cli(["--help"])
+    flat = " ".join(helptext.split())
+    if "listing_floor_probe.results.jsonl" not in flat or "CPP_FLOOR_PROBE_RESULTS" not in flat:
+        why.append("--help does not name the tracked results file / CPP_FLOOR_PROBE_RESULTS")
+    if "listing_floor_probe.results.jsonl" not in (GATE.__doc__ or ""):
+        why.append("the module docstring does not name the tracked results file")
+    return (not why), "; ".join(why) or "--json carries detail / probe_error on exit 2 (and null/empty on success); --help and the docstring name wiki/tools/listing_floor_probe.results.jsonl"
+
+
 GATES_REVIEWFIX = [
+    ("V-FLOOR-JSON-DETAIL-AND-PROBE-NOTE", g_json_detail_and_probe_note),
     ("V-FLOOR-REPLACE-FAILURE-NO-STRAY-TMP", g_replace_failure_no_stray_tmp),
     ("V-FLOOR-TOKENS-UNMEASURED", g_tokens_unmeasured),
     ("V-FLOOR-HOOK-UNCORRELATED-UNATTRIBUTED", g_hook_uncorrelated_unattributed),
