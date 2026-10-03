@@ -34,6 +34,7 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -63,21 +64,65 @@ def _default_proj_base() -> Path:
 # --------------------------------------------------------------------------- #
 # Producer-side signal sink (opus-avoided, and any future producer signal).
 # --------------------------------------------------------------------------- #
+SIGNAL_LOCK_TIMEOUT_S = 2.0   # bounded: hook producers call this; a stuck holder costs a row, never a hang
+
+
+def _lock_try(fd: int) -> bool:
+    try:
+        if sys.platform == "win32":
+            import msvcrt
+            os.lseek(fd, 0, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except OSError:
+        return False
+
+
 def record_signal(kind: str, payload: dict, *, state_dir=None,
                   now: datetime | None = None) -> bool:
-    """Append one telemetry signal as a JSONL line. Fail-open -> False on any
-    error (the caller's work must never break on a telemetry write)."""
+    """Append one telemetry signal as a JSONL line, under an exclusive lock. Fail-open -> False
+    on any error (the caller's work must never break on a telemetry write).
+
+    Measured 2026-10-03 (ACV C5): the unlocked open("a") append lost 214 of 900 rows to six
+    concurrent writers on Windows (append = seek-to-end + write, so writers overwrite each other)
+    and the live file already held 7 fragments. The lock is a sidecar file, never deleted and
+    released by the OS if the holder dies; signals.jsonl itself is not locked, because Windows
+    locks are mandatory and would block load_signals readers (idiom of tools/rollover.py ledger).
+    A row that cannot get the lock in SIGNAL_LOCK_TIMEOUT_S is dropped and the call returns False:
+    never written torn, never raised, nothing printed (hook callers may parse stderr)."""
+    fd, locked = None, False
     try:
         now = now or datetime.now(timezone.utc)
         d = Path(state_dir) if state_dir else _default_state_dir()
         d.mkdir(parents=True, exist_ok=True)
         rec = {"kind": str(kind), "ts": now.isoformat()}
         rec.update(payload or {})
-        with (d / "signals.jsonl").open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        data = (json.dumps(rec, ensure_ascii=False) + "\n").encode("utf-8")
+        fd = os.open(d / "signals.lock", os.O_RDWR | os.O_CREAT)
+        deadline = time.monotonic() + SIGNAL_LOCK_TIMEOUT_S
+        while not _lock_try(fd):
+            if time.monotonic() > deadline:
+                return False
+            time.sleep(0.005)
+        locked = True
+        with (d / "signals.jsonl").open("ab") as fh:
+            fh.write(data)
         return True
     except Exception:  # noqa: BLE001 -- fail-open ABSOLUTE
         return False
+    finally:
+        if fd is not None:
+            try:
+                if locked and sys.platform == "win32":
+                    import msvcrt
+                    os.lseek(fd, 0, os.SEEK_SET)
+                    msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)   # explicit: close-release can lag
+            except OSError:
+                pass
+            os.close(fd)                                      # closing releases the lock everywhere
 
 
 def load_signals(*, state_dir=None) -> list:
