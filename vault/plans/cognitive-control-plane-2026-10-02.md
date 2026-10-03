@@ -259,6 +259,20 @@ Additions to §12 (all zero model calls, shadow only):
 - c9 extra mutants: receipt without deopt; optimizer writes ledger; UNSETTLED counted as WASTE.
 - c10: UKDL trap "path identity is not resource identity" (evidence f234580); other laws stay
   candidates; tower entry for the receipt contract recorded EXPERIMENTAL, never promoted here.
+- c10 closure (2026-10-03, Owner "y" option A). Trap committed `47d2e93a`. The tower clause is
+  NOT executed, on purpose: the tower has no EXPERIMENTAL tier. CBR generations
+  (`vault/tower/baselines/<family>/B<n>.json`) carry only `reviewed` / `auto` / `reverted`, and
+  every non-reverted entry is injected and judged by the family done-gate (`active_entries`);
+  FD deposits (`fable_distillation/deposits_*.jsonl`) have no maturity field and are inherited
+  by every repo. Either write would make the receipt contract binding or broadcast. So the
+  receipt contract is recorded HERE, with its maturity:
+
+  | capability | status | owner | authority |
+  |---|---|---|---|
+  | policy receipt (`scheduler.spawn_receipt` / `replay_receipt`) | EXPERIMENTAL | §13 pane | shadow only: no hook, gate or launch reads it; regenerable from the index; gates V-SPV2-RECEIPT-* + c9 mutants |
+
+  Promotion path, not taken here: a tower maturity tier excluded from injection and judging
+  (tower owner's decision), then a control-plane family. The four candidate laws stay candidates.
 Kill criterion: if v2 adds no would-defer over v1 with protected_deferred=0 across two windows,
 verdict NO_CHANGE and the extra features are retired.
 NEXT/LATER/RESEARCH/REJECT: see the inline plan of this date; NEXT = singleflight observer,

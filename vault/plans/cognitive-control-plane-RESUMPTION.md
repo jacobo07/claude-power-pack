@@ -96,20 +96,24 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
   WOULD_REJECT 0 is reachable (27 exact repeats all-time, none overlapping a running twin).
   RCA §16 correction 2 + §18 (c5-c8 facts: depth not width, spend != waste) recorded.
   Peer re-ran replay-v2 on 3924a106: no figure moved (displacement RAN_LATER 1 / UNKNOWN 19,
-  interval [0, 349,600,836] cache read). Peer's NEXT session switches
-  `estate_displacement.child_span` to `fanout_ledger.child_last_call` (one definition).
-- c10 PARTIAL: UKDL `T-PATH-IDENTITY-IS-NOT-RESOURCE-IDENTITY-001` committed `47d2e93a`
-  (hunk-staged: the UKDL tail is a live CEPS auto-append). Still open: peer candidates stay
-  candidates; tower receipt entry EXPERIMENTAL.
+  interval [0, 349,600,836] cache read). Peer closed the one-definition follow-up in
+  `9b28175c` (displacement reads `fanout_ledger.child_last_call`; replay unchanged).
+- c10 CLOSED (Owner "y", option A, 2026-10-03): trap `47d2e93a`; the receipt contract is
+  recorded EXPERIMENTAL in plan §13 (status table), NOT in the tower -- the tower has no
+  EXPERIMENTAL tier (CBR entries reviewed/auto/reverted are all injected + judged; FD deposits
+  are broadcast). Four candidate laws stay candidates.
+- tools/mutation_drill.py debt: OWNED by peer pane (claude-power-pack-95 / da), pending Owner.
 
 ## 4. Next three actions
-1. c10: UKDL trap "path identity is not resource identity" (+ validate peer candidates:
-   spawn requested != executed, upper bound reported as savings, raw spend != waste [c8
-   REJECT], launch ack != completion); tower entry for the receipt contract EXPERIMENTAL only;
-   RCA §18 with c5-c8 facts.
-2. Switch `_store_dirs` to `tis_observed.store_dirs` (S1 landed; gate
-   test_store_identity_consumers 7/7); tell claude-power-pack-da before that commit.
-   Still open: `floor_probe.py probe` rent ranking -> C4.1; re-derivation detector (NEXT).
+1. Store identity, one producer (peer-approved, they stay off both files): add
+   `tis_observed.store_identity(base) -> (dirs, aliases)` (canonical = RESOLVED path, alias map
+   to that same path incl. out-of-store), `store_dirs = store_identity()[0]` byte-compatible;
+   alias cases + a RED-FIRST out-of-store `_canonicalize` fixture in
+   `test_store_identity_consumers.py`; then usage_index consumes it and `_store_dirs` is deleted.
+   PRG: live set/alias equality (298 dirs, 3 junctions all in-store), refresh rewrites 0 rows,
+   anchor 23,925 / 6,230,548,450, async 200/1/39. Identity backup (sha256 167f16fe...) stays
+   out of every migration/cleanup path.
+2. Still open: `floor_probe.py probe` rent ranking -> C4.1; re-derivation detector (NEXT).
 
 ## 5. Start instruction
 `git log --oneline -5 -- tools/usage_index.py`, run the coherence anchor (+ `test_spawn_outcomes`
