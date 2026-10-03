@@ -104,3 +104,111 @@ Run plane: GEX44 clone `~/missions/incremental-cognition`, branch `mission/incre
   after `60e7947dcf3cf0f9c660e412ec6276a8b2922f99`.
 
       python3 /home/kobii/missions/incremental-cognition/.claude/worktrees/ic-run/tools/gex44_env_preflight.py --env-root /home/kobii/a7-env --json
+
+## Phase 3 -- KME-L measurements (laptop plane)
+
+Status of every command below: **NOT RUNNABLE HERE** (laptop paths, the KME-L corpus is not on GEX44). They are
+proven only to parse with the instrument's own argument parser (gate `V-KMEP-BUNDLE-ARGV-PARSES`,
+`python3 tools/test_kme_pillars.py`); nothing below has been run on the laptop.
+
+Expects: the laptop PP checkout (`C:\Users\User\.claude\skills\claude-power-pack`, Python is `python`, projects
+root `C:\Users\User\.claude\projects`) holding the P0 freeze commit `18e928af8c489f9d29dd1e76e0c7aa3c6a6975eb` and
+the pointer commit that writes `vault/programs/incremental-cognition/FROZEN_AT` (`d4d350599d2272141681162e4ae79a1361c34676`;
+the gate `V-KMEP-FREEZE-INSTANT` reads that file: if `git log --oneline -1 -- vault/programs/incremental-cognition/FROZEN_AT`
+prints nothing, run `git cherry-pick d4d350599d2272141681162e4ae79a1361c34676` first), then the phase-3 code commits of branch `mission/incremental-cognition-run`, obtained as in `[C]` (only the ssh
+host alias may differ; the repository path and branch are exact). The fourteen picks, in order: plan 03-01
+`4e0333f8`, `d1f67731`, `ac0e5f2e`; plan 03-02 `7e6d46e1`, `35a58f87`, `9d9795dd`; plan 03-03 `10eec6dc`,
+`4d2a25f4`, `a85752b1`; plan 03-04 `263d8ac2`, `80eab96c`, `3e5fd0d7`; plan 03-05 `754d19c9` (the R3 done-gate
+guard) and `333adc90` (the parser entry point). The commits that only add this bundle text, its parse gate and
+the evidence file are not needed on the laptop.
+
+    git fetch kobii@kobicraft-gex44:/home/kobii/missions/incremental-cognition mission/incremental-cognition-run
+    git cherry-pick 4e0333f81081dbd75aa68acf8cfb1397e5c60c59 d1f677317f84de0100d52588bfc350c2f3400a13 ac0e5f2ecd672bf9e5af90156c4402981ebafac6 7e6d46e1c8361dcd4a8e8ac934211b91fbf45290 35a58f8776ecf1d905035829a6dfefafbc85a86f 9d9795dd49b3a92f6393858713ff6b1bdb9d8a68 10eec6dc2652f81a844063ca80e90e7de990e13d 4d2a25f44771ecabaef6e14c18746199f5e29464 a85752b1cb7eeac5553e5771e1bd77c47cbb91a0 263d8ac2424969a08726749605ff7a6987cec34e 80eab96c89559e8155ca0a147eeccc29c95d24d5 3e5fd0d788e5778cbd5ed71edafac895f5a45a97 754d19c9e89db83c86359671a728168508ecd96d 333adc90abcdaf3eeb68922e04c77f89f8b2f6c6
+    python tools/test_kme_pillars.py
+    python tools/test_incremental_cognition_program.py --selftest
+
+`python tools/test_kme_pillars.py` must exit 0 on the laptop (its GEX44 real-corpus gates print SKIP there).
+
+The population proof comes first and gates every file. Its first run is UNFILTERED over the whole projects root,
+because the frozen KME rule classifies sessions by content, so a dir holding KME sessions need not match any name
+filter:
+
+    python wiki/tools/kme_pillars.py population --denominator KME-L --until auto --expand --root C:\Users\User\.claude\projects
+
+Its `per_project` rows list every dir that holds KME sessions. If it prints `"population_match": "exact"` (exit 0),
+use the same flags below. If not (exit 3, `cutoff_not_found` names the fields that differ), P0's project-dir list
+was never recorded, so the unfiltered root may include KME sessions P0 did not scan: re-run with one `--root <dir>`
+per P0 project dir taken from those rows (no `--expand`) until it is exact, and use those roots in every command
+below instead of `--expand --root C:\Users\User\.claude\projects`. Optional speed-up once the dirs are known, accepted
+only if the filtered population is still exact (example regex):
+
+    python wiki/tools/kme_pillars.py population --denominator KME-L --until auto --expand --root C:\Users\User\.claude\projects --project-filter "(?i)kobii|kme|mapengine"
+
+A KME-L file whose population is not exact is UNMEASURED and closes nothing (the R3 guard in
+`tools/test_incremental_cognition_program.py` also refuses any file without `terminal_evidence: true`). One-scan
+alternative that writes all six KME-L files at once (with the roots the proof settled on):
+
+    python wiki/tools/kme_pillars.py all --denominator KME-L --until auto --expand --root C:\Users\User\.claude\projects
+
+After the runs, commit only the printed files, by pathspec (`git add --
+vault/programs/incremental-cognition/measurements/`, then `git commit -F <msgfile> --
+vault/programs/incremental-cognition/measurements/`). Each file is named `<P>-KME-L-<date>.md` and names its
+denominator, plane and exact `command:`.
+
+- **[D]** hook additional-context rent (silent-success hooks). Expects: the population proof above exact. **Action:**
+
+      python wiki/tools/kme_pillars.py d --denominator KME-L --until auto --expand --root C:\Users\User\.claude\projects
+      python wiki/tools/kme_pillars.py d --denominator CPP-D-W7 --expand --root C:\Users\User\.claude\projects
+
+  Writes `D-KME-L-<date>.md` and `D-CPP-D-W7-<date>.md`. The D-W7 file is a referenced denominator (the CE ledger's
+  window and weighted figure; never re-measured): its coverage must be >= 1 for terminal evidence, and the parser
+  difference (CE dedupes calls across files keeping the last copy, this instrument counts per file with max-merge) is
+  in its caveats. Pillar D then takes the terminal its frozen rule gives ("a slice only at >= 3 % weighted"; broken
+  hook delivery is fixed under B regardless); the ledger cites both files. Pillar stays open until its file lands;
+  ledger state.D is not written by this mission run.
+- **[E]** identical rereads of large sources. Expects: the population proof above exact. **Action:**
+
+      python wiki/tools/kme_pillars.py e --denominator KME-L --until auto --expand --root C:\Users\User\.claude\projects
+
+  Writes `E-KME-L-<date>.md` (the primary file). If that file says `second_workload_required: true`, also:
+
+      python wiki/tools/kme_pillars.py e --denominator CPP-D-W7 --role second_workload --expand --root C:\Users\User\.claude\projects
+
+  This is the frozen rule's "confirmed on a second workload". The program accepts CPP-D-W7 as the second workload
+  (it is the frozen, referenced workload; a KME-G file is never a second workload for E, it is smoke). The ledger
+  then cites BOTH files for E: R3 accepts the second workload only beside a primary file with `terminal_evidence`
+  true, and only when its `second_workload_valid` is true (coverage >= 1). Pillar stays open until its file lands;
+  ledger state.E is not written by this mission run.
+- **[F]** GSD workflow-doc residency. Expects: the population proof above exact. **Action:**
+
+      python wiki/tools/kme_pillars.py f --denominator KME-L --until auto --expand --root C:\Users\User\.claude\projects
+
+  Writes `F-KME-L-<date>.md`. Then the residency finding goes to the GSD owner
+  (`~/.claude/gsd-core/bin/gsd-tools.cjs`) as `vault/programs/incremental-cognition/handoffs/F.md`, using the file's
+  `init_json_present` and its paired doc-to-init ratio ("never fork GSD"). Pillar stays open until its file lands;
+  ledger state.F is not written by this mission run.
+- **[G]** re-tested falsified hypotheses and re-litigated sealed decisions. Expects: the population proof above
+  exact. **Action:**
+
+      python wiki/tools/kme_pillars.py g --denominator KME-L --until auto --expand --root C:\Users\User\.claude\projects
+
+  Writes `G-KME-L-<date>.md`. The count is an interval from a heuristic text classifier (positive control: the C6
+  -> K4 listing-hiding pair): check its samples by hand and record the measured precision beside the file before any
+  slice ("one falsifiable slice on the existing owner only if the count clears materiality or a correctness
+  exception"). Pillar stays open until its file lands; ledger state.G is not written by this mission run.
+- **[H]** verification share. Expects: the population proof above exact. **Action:**
+
+      python wiki/tools/kme_pillars.py h --denominator KME-L --until auto --expand --root C:\Users\User\.claude\projects
+
+  Writes `H-KME-L-<date>.md` (the file also records `consumed_owner_verdicts`). The frozen rule is "consume CE P and
+  G verdicts; one KME-specific check that verification share is below materiality": R2 additionally needs
+  `owner_ledger` evidence of the CE P and G terminals at a commit on this history (both are open at this branch's
+  HEAD as read by the H smoke file). Pillar stays open until its file lands; ledger state.H is not written by this
+  mission run.
+- **[I]** subagent bootstrap floor. Expects: the population proof above exact. **Action:**
+
+      python wiki/tools/kme_pillars.py i --denominator KME-L --until auto --expand --root C:\Users\User\.claude\projects
+
+  Writes `I-KME-L-<date>.md`. Then the measured subagent first-call context goes to CE B / SC A-C as a handoff
+  ("no move of a rule or skill here"); R2 needs `owner_ledger` evidence of the CE B and SC B terminals. Pillar stays
+  open until its file lands; ledger state.I is not written by this mission run.

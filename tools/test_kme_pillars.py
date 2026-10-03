@@ -16,6 +16,7 @@ import datetime
 import io
 import json
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -2169,6 +2170,66 @@ def g_r3_e_pair():
 GATES_PLAN5_TRACER = [("V-KMEP-R3-E-PAIR", g_r3_e_pair)]
 
 
+BUNDLE_REL = "vault/programs/incremental-cognition/owner-bundle.md"
+
+
+def bundle_commands(text):
+    """(item tag or None, argv tokens after the script token) for every indented kme_pillars command line."""
+    import shlex
+    tag, rows = None, []
+    for ln in text.split("\n"):
+        m = re.match(r"^- \*\*\[([A-Z])\]\*\*", ln)
+        if m:
+            tag = m.group(1)
+        elif re.match(r"^(## |# )", ln):
+            tag = None
+        if not re.match(r"^ {4,}\S", ln) or "wiki/tools/kme_pillars.py" not in ln:
+            continue
+        toks = [t.strip("\"'") for t in shlex.split(ln.strip(), posix=False)]
+        i = next(k for k, t in enumerate(toks) if t.endswith("wiki/tools/kme_pillars.py"))
+        rows.append((tag, ln.strip(), toks[i + 1:]))
+    return rows
+
+
+def g_bundle_argv_parses():
+    text = (REPO / BUNDLE_REL).read_text(encoding="utf-8")
+    rows = bundle_commands(text)
+    ap = kp.build_parser()
+    parsed, bad = [], []
+    for tag, line, argv in rows:
+        try:
+            with contextlib.redirect_stderr(io.StringIO()):
+                parsed.append((tag, ap.parse_args(argv), line))
+        except SystemExit:
+            bad.append(line[:90])
+    blocks = {}
+    for m in re.finditer(r"^- \*\*\[([A-Z])\]\*\*.*?(?=^- \*\*\[|\Z)", text, re.M | re.S):
+        blocks.setdefault(m.group(1), "")
+        blocks[m.group(1)] += m.group(0)
+    missing, wrong = [], []
+    for P in "DEFGHI":
+        blk = blocks.get(P)
+        if not blk or f"**[{P}]**" not in blk:
+            missing.append(P)
+            continue
+        own = [a for t, a, _l in parsed if t == P and a.cmd == P.lower() and a.denominator == "KME-L"
+               and a.until == "auto"]
+        if not own or f"{P}-KME-L-" not in blk:
+            wrong.append(P)
+    d_w7 = [a for t, a, _l in parsed if t == "D" and a.cmd == "d" and a.denominator == "CPP-D-W7"]
+    e_w7 = [a for t, a, _l in parsed if t == "E" and a.cmd == "e" and a.denominator == "CPP-D-W7"
+            and a.role == "second_workload"]
+    pops = [a for _t, a, _l in parsed if a.cmd == "population"]
+    pop_ok = bool(pops) and pops[0].expand is True and pops[0].project_filter is None and pops[0].denominator == "KME-L"
+    ok = (len(parsed) >= 7 and not bad and not missing and not wrong and bool(d_w7) and bool(e_w7) and pop_ok)
+    return ok, (f"{len(parsed)} commands parsed (>= 7), unparsable={bad} missing_items={missing} "
+                f"items_without_own_KME-L_command_or_file_pattern={wrong} D-W7(d)={bool(d_w7)} "
+                f"E-second_workload={bool(e_w7)} first_population_unfiltered_expand={pop_ok}")
+
+
+GATES_PLAN5_BUNDLE = [("V-KMEP-BUNDLE-ARGV-PARSES", g_bundle_argv_parses)]
+
+
 GATES_EXPANSION = [
     ("V-KMEP-POPULATION-DRIFT", g_population_drift),
     ("V-KMEP-VERDICT-TABLE", g_verdict_table),
@@ -2201,7 +2262,7 @@ GATES_TRACER = [
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
     ("V-KMEP-CLI-USAGE", g_cli_usage),
 ]
-GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_PLAN5_TRACER + GATES_REAL + GATES_REAL_2
+GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_PLAN5_TRACER + GATES_PLAN5_BUNDLE + GATES_REAL + GATES_REAL_2
 
 
 def summary_line() -> str:
