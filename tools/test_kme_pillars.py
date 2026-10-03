@@ -1568,6 +1568,533 @@ def g_i_e2e():
 GATES_I_TRACER = [("V-KMEP-I-E2E", g_i_e2e)]
 
 
+# =========================================================================== gates (plan 03-04, task 2: expansion)
+def i_run(build, extra=(), project="-home-x-kme-fixture", label="FX-I"):
+    root = scratch("i")
+    fx = Fx(root, project=project)
+    fx.human("go", ts(0))
+    build(fx)
+    out_dir = scratch("out")
+    rc, res, out, err = run_json(pil_args("i", pdir(root, project), out_dir, label, extra))
+    return rc, res
+
+
+def g_i_synthetic_first():
+    def build(fx):
+        call(fx, 0, usage=(10, 0, 1000, 5))
+        sub = fx.subagent("s1", "Explore")
+        sub.human("task", ts(5))
+        sub.assistant("syn", "rsyn", (0, 0, 0, 0), ts(6), model="<synthetic>")
+        sub.assistant("s2", "rs2", (4, 1000, 0, 5), ts(7))
+        sub.assistant("s3", "rs3", (4, 0, 1000, 5), ts(8))
+    rc, res = i_run(build)
+    d, n = res["details"], res["numerator"]
+    want = (4 + 2000 + 25) + 1004 * 0.1 * 1
+    ok = (rc in (0, 3) and d["subagent_files"] == 1 and d["first_ctx"]["min"] == d["first_ctx"]["max"] == 1004
+          and abs(n["weighted_lo"] - want) < 1e-9)
+    return ok, f"first_ctx={d['first_ctx']} weighted={n['weighted_lo']}/{want}"
+
+
+def g_i_no_subagents():
+    def build(fx):
+        call(fx, 0)
+        call(fx, 1)
+    rc, res = i_run(build)
+    d, n = res["details"], res["numerator"]
+    ok = (rc == 0 and d["subagent_files"] == 0 and n["weighted_lo"] == 0 == n["weighted_hi"]
+          and res["observability"] == 1.0 and res["materiality"] == "< 3 %" and d["first_ctx"]["n"] == 0
+          and d["main_first_ctx"]["n"] == 1)
+    return ok, f"rc={rc} files={d['subagent_files']} numerator={n['weighted_lo']} obs={res['observability']} verdict={res['materiality']}"
+
+
+def g_i_agent_type():
+    def build(fx):
+        call(fx, 0)
+        for name, typ in (("a1", "Explore"), ("a2", "Explore"), ("a3", "Ex plore<>"), ("a4", None), ("a5", "gsd-planner")):
+            sub = fx.subagent(name, typ)
+            sub.human("task", ts(5))
+            sub.assistant(f"{name}x", f"r{name}", (1, 100, 0, 1), ts(6))
+        bad = fx.subagent("a6")
+        (bad.path.parent / "agent-a6.meta.json").write_text("{not json")
+        bad.human("task", ts(5))
+        bad.assistant("a6x", "ra6", (1, 100, 0, 1), ts(6))
+    rc, res = i_run(build)
+    t = res["details"]["by_agent_type"]
+    files = {k: v["files"] for k, v in t.items()}
+    ok = files == {"Explore": 3, "gsd-planner": 1, "unknown": 2}
+    return ok, f"by_agent_type files={files}"
+
+
+def g_i_inline_sidechain_unobserved():
+    def heavy(inline):
+        root = scratch("inl")
+        s1 = Fx(root)
+        s1.human("go", ts(0))
+        for i in range(5):
+            s1.assistant(f"m{i}", f"r{i}", (10, 0, 1000000, 50), ts(10 + i))
+        if inline:
+            s1._w({"type": "assistant", "isSidechain": True, "timestamp": ts(20), "uuid": "u-sc", "requestId": "rsc",
+                   "message": {"id": "sc", "model": "claude-opus-5-5", "role": "assistant", "content": [],
+                               "usage": {"input_tokens": 1, "cache_creation_input_tokens": 100,
+                                         "cache_read_input_tokens": 0, "output_tokens": 1}}})
+        sub = s1.subagent("a1", "Explore")
+        sub.human("t", ts(30))
+        sub.assistant("x1", "rx1", (1, 100, 0, 1), ts(31))
+        s2 = Fx(root, session="s2")
+        s2.human("go", ts(0))
+        for i in range(5):
+            s2.assistant(f"n{i}", f"q{i}", (10, 0, 1000000, 50), ts(10 + i))
+        out_dir = scratch("out")
+        rc, res, _o, _e = run_json(pil_args("i", pdir(root), out_dir))
+        return rc, res
+    rc1, r1 = heavy(True)
+    rc0, r0 = heavy(False)
+    ok = (rc1 == 3 and r1["observability"] < 1.0 and r1["materiality"] == "UNMEASURED"
+          and r1["details"]["sessions_with_inline_sidechain"] == 1
+          and rc0 == 0 and r0["observability"] == 1.0 and r0["materiality"] == "< 3 %")
+    # lower bound clearing 3 % is still a verdict although the signal is partial
+    def clears():
+        root = scratch("inl2")
+        s1 = Fx(root)
+        s1.human("go", ts(0))
+        s1.assistant("m0", "r0", (10, 0, 1000, 5), ts(10))
+        s1._w({"type": "assistant", "isSidechain": True, "timestamp": ts(11), "uuid": "u-sc", "requestId": "rsc",
+               "message": {"id": "sc", "model": "claude-opus-5-5", "role": "assistant", "content": [],
+                           "usage": {"input_tokens": 1, "cache_creation_input_tokens": 100,
+                                     "cache_read_input_tokens": 0, "output_tokens": 1}}})
+        sub = s1.subagent("a1", "Explore")
+        sub.human("t", ts(30))
+        sub.assistant("x1", "rx1", (1, 100000, 0, 1), ts(31))
+        sub.assistant("x2", "rx2", (1, 0, 100000, 1), ts(32))
+        rc, res, _o, _e = run_json(pil_args("i", pdir(root), scratch("out")))
+        return rc, res
+    rc2, r2 = clears()
+    ok2 = rc2 == 0 and r2["observability"] < 1.0 and r2["materiality"] == ">= 3 %"
+    return ok and ok2, f"inline: rc={rc1} obs={r1['observability']:.3f} verdict={r1['materiality']}; " \
+                       f"clean: obs={r0['observability']} verdict={r0['materiality']}; clears: {r2['materiality']} obs={r2['observability']:.3f}"
+
+
+def all_args(root, out_dir, project_root=None, extra=()):
+    return ["all", "--denominator", "OTHER", "--label", "FX-ALL", "--select", "all", "--until", "none", "--expand",
+            "--root", str(project_root or (root / "projects")), "--out-dir", str(out_dir)] + list(extra)
+
+
+def g_all_one_scan():
+    base = scratch("allscan")
+    projects = rich_fixture(base / "fx")
+    out_all = base / "all"
+    before = kp.SCAN_COUNT
+    rc, _o, err = run_main(all_args(base, out_all, projects))
+    scans_all = kp.SCAN_COUNT - before
+    files = {p.name[0]: p for p in out_all.glob("?-FX-ALL-*.md")} if out_all.is_dir() else {}
+    got = {}
+    for pillar, path in files.items():
+        got[pillar] = parse_measurement(path.read_text(encoding="utf-8"))
+    singles, before = {}, kp.SCAN_COUNT
+    for pillar in "DEFGHI":
+        od = base / f"one-{pillar}"
+        run_main([pillar.lower(), "--denominator", "OTHER", "--label", "FX-ALL", "--select", "all", "--until", "none",
+                  "--expand", "--root", str(projects), "--out-dir", str(od)])
+        files1 = list(od.glob("*.md"))
+        singles[pillar] = parse_measurement(files1[0].read_text(encoding="utf-8")) if files1 else None
+    scans_single = kp.SCAN_COUNT - before
+    if sorted(got) != list("DEFGHI") or any(v is None for v in singles.values()):
+        return False, f"rc={rc} all files={sorted(got)} single files missing={[k for k, v in singles.items() if v is None]} err={err[-200:]}"
+    pop_blocks = {json.dumps(r["population"], sort_keys=True) for _f, r in got.values()}
+    cmds = {f["command"] for f, _r in got.values()}
+    same = []
+    for pillar in "DEFGHI":
+        a, b = got[pillar][1], singles[pillar][1]
+        same.append(all(a[k] == b[k] for k in ("numerator", "share_interval", "materiality", "observability",
+                                                "population", "details", "evidence_role")))
+    ok = (scans_all == 1 and scans_single == 6 and len(pop_blocks) == 1 and len(cmds) == 1
+          and " all " in next(iter(cmds)) + " " and all(same))
+    return ok, f"scans all={scans_all} six singles={scans_single} population blocks={len(pop_blocks)} commands={len(cmds)} equal={same}"
+
+
+def six_calls(root, project="-home-x-kme-auto", session="s1"):
+    fx = Fx(root, project=project, session=session)
+    fx.human("go", ts(0))
+    for i in range(1, 7):
+        fx.assistant(f"m{i}", f"r{i}", (10, 100 * i, 1000 * i, 5), ts(i))
+    return fx
+
+
+def pop_at(k):
+    return {"sessions_active": 1, "sessions_dead": 0, "calls": k, "input": 10 * k,
+            "cache_write": 100 * k * (k + 1) // 2, "cache_read": 1000 * k * (k + 1) // 2, "output": 5 * k}
+
+
+def run_pop(args):
+    rc, out, err = run_main(["population"] + list(args))
+    try:
+        return rc, json.loads(out), err
+    except ValueError:
+        return rc, None, err + out
+
+
+def auto_pop(root, frozen_pop, extra=(), project="-home-x-kme-auto"):
+    frozen = write_frozen(root / f"frozen{len(list(root.glob('frozen*')))}.json", **{"KME-L": frozen_pop})
+    return run_pop(["--denominator", "KME-L", "--frozen-file", frozen, "--until", "auto", "--root",
+                    str(pdir(root, project))] + list(extra))
+
+
+def g_until_auto_locate():
+    root = scratch("auto")
+    six_calls(root)
+    rc, res, err = auto_pop(root, pop_at(4))
+    ul = (res or {}).get("until_located") or {}
+    ok = (rc == 0 and res is not None and res["population_match"] == "exact" and ul.get("method") == "bisect"
+          and kp.parse_instant(res["until"]) == kp.parse_instant(ts(4)) and 1 < ul.get("scans", 99) <= kp.LOCATE_MAX_SCANS)
+    # the measuring subcommands accept the same flag and measure at the located cutoff
+    frozen = write_frozen(root / "f_i.json", **{"KME-L": pop_at(4)})
+    out_dir = scratch("out")
+    rc2, r2, _o, _e = run_json(["i", "--denominator", "KME-L", "--frozen-file", frozen, "--until", "auto", "--root",
+                                str(pdir(root, "-home-x-kme-auto")), "--out-dir", str(out_dir)])
+    ok2 = (rc2 == 0 and r2["population_match"] == "exact" and r2["population"]["calls"] == 4
+           and r2["until_located"]["method"] == "bisect" and kp.parse_instant(r2["until"]) == kp.parse_instant(ts(4))
+           and r2["terminal_evidence"] is True)
+    return ok and ok2, f"population: rc={rc} match={(res or {}).get('population_match')} until={(res or {}).get('until')} " \
+                       f"located={ul}; measuring: rc={rc2} calls={r2['population']['calls']} until={r2['until']}"
+
+
+def g_until_auto_at_freeze():
+    root = scratch("autof")
+    six_calls(root)
+    rc, res, err = auto_pop(root, pop_at(6))
+    ul = (res or {}).get("until_located") or {}
+    ok = (rc == 0 and res is not None and res["population_match"] == "exact" and ul.get("method") == "exact_at_freeze"
+          and ul.get("scans") == 1 and res["until"] == kp.FREEZE_INSTANT)
+    rc2, res2, err2 = auto_pop(root, pop_at(4), ["--freeze-instant", ts(4.5)])
+    ul2 = (res2 or {}).get("until_located") or {}
+    ok2 = (rc2 == 0 and res2 is not None and ul2.get("method") == "exact_at_freeze" and ul2.get("scans") == 1
+           and kp.parse_instant(res2["until"]) == kp.parse_instant(ts(4.5)))
+    return ok and ok2, f"freeze default: rc={rc} method={ul.get('method')} scans={ul.get('scans')}; " \
+                       f"--freeze-instant: rc={rc2} method={ul2.get('method')} until={(res2 or {}).get('until')}"
+
+
+def g_until_auto_unreachable():
+    root = scratch("autou")
+    six_calls(root)
+    off = dict(pop_at(4), cache_read=pop_at(4)["cache_read"] + 1)
+    rc, res, err = auto_pop(root, off)
+    ul = (res or {}).get("until_located") or {}
+    ok_a = (rc == 3 and res is not None and res["population_match"] == "drifted" and ul.get("method") == "not_found")
+    above = dict(pop_at(6), calls=9)
+    rc2, res2, err2 = auto_pop(root, above)
+    ul2 = (res2 or {}).get("until_located") or {}
+    ok_b = (rc2 == 3 and res2 is not None and ul2.get("method") == "not_found" and ul2.get("scans") == 1)
+    frozen = write_frozen(root / "f_m.json", **{"KME-L": off})
+    out_dir = scratch("out")
+    rc3, r3, _o, _e = run_json(["i", "--denominator", "KME-L", "--frozen-file", frozen, "--until", "auto", "--root",
+                                str(pdir(root, "-home-x-kme-auto")), "--out-dir", str(out_dir)])
+    ok_c = (rc3 == 3 and r3["materiality"] == "UNMEASURED" and r3["materiality_reason"] == "cutoff_not_found"
+            and r3["terminal_evidence"] is False and r3["share_interval"] is None
+            and r3["until_located"]["method"] == "not_found" and len(list(out_dir.glob("I-KME-L-*.md"))) == 1)
+    return ok_a and ok_b and ok_c, f"calls reachable, one field off: rc={rc} {ul.get('method')}; above corpus: rc={rc2} " \
+                                   f"{ul2.get('method')} scans={ul2.get('scans')}; measuring: rc={rc3} " \
+                                   f"{r3['materiality']}/{r3['materiality_reason']}"
+
+
+def g_until_auto_before_next_call():
+    root = scratch("autob")
+    fx = Fx(root, project="-home-x-kme-auto")
+    fx.human("go", ts(0))
+    for i in range(1, 7):
+        fx.assistant(f"m{i}", f"r{i}", (10, 100 * i, 1000 * i, 5), ts(i))
+        if i == 4:
+            Fx(root, project="-home-x-kme-auto", session="s2").human("late prompt", ts(4.5))
+    frozen_pop = dict(pop_at(4), sessions_dead=1)
+    rc, res, err = auto_pop(root, frozen_pop)
+    ul = (res or {}).get("until_located") or {}
+    until = kp.parse_instant(res["until"]) if res else None
+    ok = (rc == 0 and res is not None and res["population_match"] == "exact" and ul.get("method") == "bisect"
+          and until is not None and kp.parse_instant(ts(4.5)) <= until < kp.parse_instant(ts(5)))
+    return ok, f"rc={rc} match={(res or {}).get('population_match')} until={(res or {}).get('until')} located={ul}"
+
+
+def g_until_auto_other_refused():
+    root = scratch("autoo")
+    six_calls(root)
+    pd = pdir(root, "-home-x-kme-auto")
+    out_dir = scratch("out")
+    rows = {}
+    rows["OTHER+auto"] = run_main(["i", "--denominator", "OTHER", "--label", "FX-A", "--select", "all", "--until", "auto",
+                                   "--root", str(pd), "--out-dir", str(out_dir)])[0]
+    rows["population OTHER+auto"] = run_main(["population", "--denominator", "OTHER", "--label", "FX-A", "--select", "all",
+                                              "--until", "auto", "--root", str(pd)])[0]
+    rows["D-W7+auto"] = run_main(["d", "--denominator", "CPP-D-W7", "--until", "auto", "--root", str(pd),
+                                  "--out-dir", str(out_dir)])[0]
+    frozen = write_frozen(root / "f.json", **{"KME-L": pop_at(6)})
+    rows["freeze-instant without auto"] = run_main(["i", "--denominator", "KME-L", "--frozen-file", frozen,
+                                                    "--freeze-instant", ts(4), "--root", str(pd), "--out-dir", str(out_dir)])[0]
+    rows["since with auto"] = run_main(["i", "--denominator", "KME-L", "--frozen-file", frozen, "--until", "auto",
+                                        "--since", ts(1), "--root", str(pd), "--out-dir", str(out_dir)])[0]
+    rows["control: KME-L auto"] = run_main(["i", "--denominator", "KME-L", "--frozen-file", frozen, "--until", "auto",
+                                            "--root", str(pd), "--out-dir", str(out_dir)])[0]
+    wrote = len(list(out_dir.glob("*.md")))
+    ok = all(v == 2 for k, v in rows.items() if not k.startswith("control")) and rows["control: KME-L auto"] == 0 and wrote == 1
+    return ok, f"rcs={rows} files written={wrote}"
+
+
+def g_until_auto_budget():
+    import bisect as _bisect
+    base = datetime.datetime(2026, 10, 3, 12, 0, 0, tzinfo=datetime.timezone.utc)
+    inst = [base + datetime.timedelta(seconds=7 * i) for i in range(5000)]
+    freeze = inst[-1] + datetime.timedelta(seconds=1)
+    probes = []
+
+    def measured(t):
+        n = _bisect.bisect_right(inst, t)
+        return {"sessions_active": 1, "sessions_dead": 0, "calls": n, "input": n, "cache_write": 0, "cache_read": 3 * n,
+                "output": 0}
+
+    def probe(t, want):
+        probes.append(t)
+        return measured(t), (list(inst) if want else None)
+    never = dict(measured(freeze), calls=2500, cache_read=7)             # no instant reproduces cache_read 7
+    r1 = kp.locate_cutoff(probe, never, freeze, first=(measured(freeze), list(inst)))
+    n1 = len(probes) + 1
+    probes.clear()
+    r2 = kp.locate_cutoff(probe, never, freeze, first=(measured(freeze), list(inst)), max_scans=5)
+    n2 = len(probes) + 1
+    probes.clear()
+    want = measured(inst[3776])
+    r3 = kp.locate_cutoff(probe, want, freeze, first=(measured(freeze), list(inst)))
+    n3 = len(probes) + 1
+    ok = (r1["method"] == "not_found" and n1 <= kp.LOCATE_MAX_SCANS == 24 and r1["scans"] == n1
+          and r2["method"] == "not_found" and n2 <= 5 and "budget" in r2["why"]
+          and r3["method"] == "bisect" and r3["until"] == inst[3776] and r3["scans"] <= kp.LOCATE_MAX_SCANS)
+    return ok, f"never matches: {r1['method']} scans={r1['scans']}; max_scans=5: {r2['method']} scans={r2['scans']} " \
+               f"({r2['why'][:40]}); reachable: {r3['method']} scans={r3['scans']}"
+
+
+def g_window_since():
+    root = scratch("since")
+    fx = Fx(root)
+    fx.human("go", ts(0))
+    for i in range(1, 5):
+        fx.assistant(f"m{i}", f"r{i}", (10, 0, 100, 5), ts(i))
+    Fx(root, session="s2").human("early", ts(1)).assistant("e1", "re1", (1, 1, 1, 1), ts(1.5))
+    out_dir = scratch("out")
+    rc, res, _o, _e = run_json(pil_args("i", pdir(root), out_dir, extra=["--since", ts(2.5)]))
+    p = res["population"]
+    lines = scratch("sincekeep") / "f.jsonl"
+    f = Fx(root, path=lines)
+    f.meta()
+    f.human("a", ts(8))
+    f.meta()
+    rows = [json.loads(x) for x in lines.read_text().splitlines()]
+    k_early = kp.make_keep(kp.parse_instant(ts(5)), None)
+    k_late = kp.make_keep(kp.parse_instant(ts(9)), None)
+    got_early = [k_early(str(lines), o) for o in rows]
+    got_late = [k_late(str(lines), o) for o in rows]
+    ok = (rc == 0 and p["calls"] == 2 and p["sessions_active"] == 1 and p["sessions_dead"] == 0
+          and got_early == [True, True, True] and got_late == [False, False, False]
+          and res.get("since") == kp.fmt_instant(kp.parse_instant(ts(2.5))))
+    return ok, f"calls={p['calls']} active={p['sessions_active']} dead={p['sessions_dead']} keep early={got_early} late={got_late}"
+
+
+# ---- D-W7 (referenced denominator from the CE ledger)
+def ce_ledger_file(path, calls, window="2026-10-03T09:00:00Z 2026-10-03T12:00:00Z", weighted_delta=0, drop=False, **over):
+    fields = {"input": 40, "cache_write": 1000, "cache_read": 400000, "output": 200}
+    fields.update(over)
+    w = round(kp.weighted(fields)) + weighted_delta
+    entry = dict(fields, source=f"python tools/usage_index.py window {window}", calls=calls, subagent_calls=1,
+                 weighted_input_equivalent=w)
+    denoms = {} if drop else {"D-W7": entry}
+    Path(path).write_text(json.dumps({"frozen": {"denominators": denoms}}))
+    return str(path)
+
+
+def dw7_args(pillar, root, ledger, out_dir, extra=()):
+    return [pillar, "--denominator", "CPP-D-W7", "--frozen-ce-ledger", ledger, "--root", str(pdir(root)),
+            "--out-dir", str(out_dir)] + list(extra)
+
+
+def g_dw7_spec():
+    spec = kp.frozen_specs()["CPP-D-W7"]
+    f = spec["fields"]
+    led = json.loads((REPO / kp.CE_LEDGER_REL).read_text(encoding="utf-8"))["frozen"]["denominators"]["D-W7"]
+    ok = (spec["fields"]["calls"] == 75969 == led["calls"] and spec["weighted"] == 3325101725 == round(kp.weighted(f))
+          and spec["since"] == "2026-09-26T00:00:00Z" and spec["until"] == "2026-10-03T00:00:00Z"
+          and spec["select"] == "all" and spec["denominator_kind"] == "referenced" and spec["host"] == "local"
+          and f["cache_read"] == 21968212607)
+    root = scratch("dw7spec")
+    tracer_fixture(root)
+    bad = ce_ledger_file(root / "bad.json", 4, weighted_delta=5)
+    miss = ce_ledger_file(root / "miss.json", 4, drop=True)
+    out_dir = scratch("out")
+    rc_bad = run_main(dw7_args("d", root, bad, out_dir))[0]
+    rc_miss = run_main(dw7_args("d", root, miss, out_dir))[0]
+    spec_bad = kp.frozen_specs(REPO / kp.DENOMS_REL, bad).get("CPP-D-W7", {})
+    okf = (rc_bad == 2 and rc_miss == 2 and "error" in spec_bad and not list(out_dir.glob("*.md")))
+    return ok and okf, f"calls={f['calls']} weighted={spec['weighted']} window={spec['since']}..{spec['until']} " \
+                       f"refusals: weighted mismatch rc={rc_bad}, absent rc={rc_miss}"
+
+
+def g_dw7_coverage():
+    root = scratch("dw7cov")
+    tracer_fixture(root)                                   # 4 calls, 900 hook chars
+    out = {}
+
+    def run(name, calls, **over):
+        led = ce_ledger_file(root / f"{name}.json", calls, **over)
+        rc, res, _o, _e = run_json(dw7_args("d", root, led, scratch("out")))
+        out[name] = (rc, res)
+        return rc, res
+    rc_a, a = run("partial", 8)                           # measured 4 of 8 calls
+    rc_b, b = run("equal", 4)
+    rc_c, c = run("above", 3)
+    rc_d, d = run("partial-clears", 8, cache_read=3000, cache_write=100)
+    ok = (rc_a == 3 and a["population_match"] == "referenced" and a["coverage"] == 0.5 and a["observability"] == 0.5
+          and a["materiality"] == "UNMEASURED" and a["share_interval"][0] < 0.03
+          and rc_b == 0 and b["coverage"] == 1.0 and b["observability"] == 1.0 and b["materiality"] == "< 3 %"
+          and rc_c == 0 and c["coverage"] > 1 and c["observability"] == 1.0 and c["materiality"] == "< 3 %"
+          and rc_d == 0 and d["observability"] == 0.5 and d["materiality"] == ">= 3 %")
+    return ok, f"partial: rc={rc_a} cov={a['coverage']} obs={a['observability']} verdict={a['materiality']} lo={a['share_interval'][0]:.4f}; " \
+               f"equal: {b['materiality']}; above: cov={c['coverage']:.2f} {c['materiality']}; partial but lo clears: {d['materiality']}"
+
+
+def g_dw7_window_fixed():
+    root = scratch("dw7win")
+    tracer_fixture(root)
+    led = ce_ledger_file(root / "led.json", 2, window="2026-10-03T10:00:03Z 2026-10-03T10:00:08Z")
+    out_dir = scratch("out")
+    rc, res, _o, _e = run_json(dw7_args("d", root, led, out_dir))
+    rcs = {k: run_main(dw7_args("d", root, led, out_dir, [k, ts(1)]))[0] for k in ("--since", "--until")}
+    rcs["--freeze-instant"] = run_main(dw7_args("d", root, led, out_dir, ["--freeze-instant", ts(1)]))[0]
+    rcs["--select"] = run_main(dw7_args("d", root, led, out_dir, ["--select", "kme"]))[0]
+    ok = (rc in (0, 3) and res["population"]["calls"] == 2 and res["until"] == "2026-10-03T10:00:08Z"
+          and res["since"] == "2026-10-03T10:00:03Z" and all(v == 2 for v in rcs.values())
+          and len(list(out_dir.glob("D-CPP-D-W7-*.md"))) == 1)
+    return ok, f"calls={res['population']['calls']} window={res['since']}..{res['until']} refusals={rcs}"
+
+
+def g_dw7_roles():
+    root = scratch("dw7role")
+    tracer_fixture(root)
+    full = ce_ledger_file(root / "full.json", 4)
+    part = ce_ledger_file(root / "part.json", 8)
+
+    def get(pillar, led, extra=()):
+        rc, res, _o, _e = run_json(dw7_args(pillar, root, led, scratch("out"), extra))
+        return rc, None if res is None else (res["evidence_role"], res["terminal_evidence"], res["second_workload_valid"])
+    rows = [
+        ("d full", get("d", full)[1], ("primary", True, None)),
+        ("d partial", get("d", part)[1], ("primary", False, None)),
+        ("e second_workload full", get("e", full, ["--role", "second_workload"])[1], ("second_workload", False, True)),
+        ("e second_workload partial", get("e", part, ["--role", "second_workload"])[1], ("second_workload", False, False)),
+        ("e auto", get("e", full)[1], ("smoke", False, None)),
+    ]
+    rc_d_sw = run_main(dw7_args("d", root, full, scratch("out"), ["--role", "second_workload"]))[0]
+    bad = [r[0] for r in rows if r[1] != r[2]]
+    return not bad and rc_d_sw == 2, f"{len(rows)} rows wrong={bad} got={[(r[0], r[1]) for r in rows if r[1] != r[2]]} d+second_workload rc={rc_d_sw}"
+
+
+def multi_project_root():
+    root = scratch("mp")
+    a = Fx(root, project="-home-x-kme-a", session="sa1")
+    a.human("go", ts(0))
+    a.assistant("a1", "ra1", (10, 100, 0, 5), ts(1))
+    a.assistant("a2", "ra2", (10, 0, 100, 5), ts(2))
+    Fx(root, project="-home-x-kme-a", session="sa2").human("only a prompt", ts(3))
+    m = Fx(root, project="-home-x-misc", session="sm1")                 # a KME session whose dir name says nothing
+    m.human("go", ts(0))
+    m.assistant("m1", "rm1", (7, 0, 50, 3), ts(1), tool_uses=[("t1", "Bash", {"command": "ls kme/arena KMEIP"}),
+                                                                ("t2", "Bash", {"command": "cat kme/KMEIP.md"})])
+    p = Fx(root, project="-home-x-plain", session="sp1")
+    p.human("go", ts(0))
+    p.assistant("p1", "rp1", (3, 50, 0, 7), ts(1), tool_uses=[("t3", "Bash", {"command": "ls"})])
+    return root
+
+
+MP_POP = {"sessions_active": 2, "sessions_dead": 1, "calls": 3, "input": 27, "cache_write": 100, "cache_read": 150,
+          "output": 13}
+
+
+def g_project_filter():
+    root = scratch("pf")
+    for proj in ("-home-x-kme-a", "-home-x-misc", "-home-x-plain"):
+        Fx(root, project=proj).human("go", ts(0)).assistant("m1", "r1", (1, 1, 1, 1), ts(1))
+
+    def dirs(extra, roots=None):
+        rc, res, _o, _e = run_json(["i", "--denominator", "OTHER", "--label", "FX-A", "--select", "all", "--until", "none",
+                                    "--root", str(roots or (root / "projects")), "--out-dir", str(scratch("out"))] + list(extra))
+        return rc, None if res is None else res["corpus"]["project_dirs"]
+    rows = {
+        "expand, no filter": dirs(["--expand"])[1],
+        "expand, filter kme": dirs(["--expand", "--project-filter", "kme"])[1],
+        "expand, filter none-match": dirs(["--expand", "--project-filter", "zzz"])[1],
+        "plain root, matching basename": dirs(["--project-filter", "kme-a"], pdir(root, "-home-x-kme-a"))[1],
+        "plain root, other basename": dirs(["--project-filter", "kme-a"], pdir(root, "-home-x-plain"))[1],
+    }
+    rc_bad = run_main(["i", "--denominator", "OTHER", "--label", "FX-A", "--select", "all", "--until", "none", "--root",
+                       str(root / "projects"), "--expand", "--project-filter", "(", "--out-dir", str(scratch("out"))])[0]
+    want = {"expand, no filter": 3, "expand, filter kme": 1, "expand, filter none-match": 0,
+            "plain root, matching basename": 1, "plain root, other basename": 0}
+    return rows == want and rc_bad == 2, f"project dirs {rows} invalid regex rc={rc_bad}"
+
+
+def g_population_subcommand():
+    root = multi_project_root()
+    frozen = write_frozen(root / "frozen.json", **{"KME-L": MP_POP})
+    measure_dir = REPO / kp.MEASUREMENTS_REL
+    before = sorted(p.name for p in measure_dir.iterdir()) if measure_dir.is_dir() else []
+    rc, res, err = run_pop(["--denominator", "KME-L", "--frozen-file", frozen, "--expand", "--root", str(root / "projects")])
+    after = sorted(p.name for p in measure_dir.iterdir()) if measure_dir.is_dir() else []
+    rows = [(r["project"], r["sessions_active"], r["sessions_dead"], r["calls"], r["cache_read"])
+            for r in (res or {}).get("per_project", [])]
+    want_rows = [("-home-x-kme-a", 1, 1, 2, 100), ("-home-x-misc", 1, 0, 1, 50)]
+    rc2, res2, _e2 = run_pop(["--denominator", "KME-L", "--frozen-file", frozen, "--expand", "--project-filter", "kme-a",
+                              "--root", str(root / "projects")])
+    ok = (rc == 0 and res is not None and res["population_match"] == "exact" and rows == want_rows
+          and res["denominator"] == "KME-L" and before == after and "frozen" in res and "population" in res
+          and rc2 == 3 and res2 is not None and res2["population_match"] == "drifted"
+          and [r["project"] for r in res2["per_project"]] == ["-home-x-kme-a"])
+    return ok, f"rc={rc} match={(res or {}).get('population_match')} rows={rows} filtered rc={rc2} " \
+               f"wrote_nothing={before == after}"
+
+
+def g_kmeg_auto_real():
+    roots = ENV_ROOTS + [MAIN_ROOT]
+    if not all(os.path.isdir(r) for r in roots):
+        return "SKIP", "corpus roots absent"
+    args = ["--denominator", "KME-G", "--until", "auto", "--expand"]
+    for r in roots:
+        args += ["--root", r]
+    before = kp.SCAN_COUNT
+    rc, res, err = run_pop(args)
+    scans = kp.SCAN_COUNT - before
+    ul = (res or {}).get("until_located") or {}
+    ok = (rc == 0 and res is not None and res["population_match"] == "exact" and ul.get("method") == "exact_at_freeze"
+          and ul.get("scans") == 1 and scans == 1)
+    return ok, f"rc={rc} match={(res or {}).get('population_match')} method={ul.get('method')} scans={ul.get('scans')}/{scans}"
+
+
+GATES_EXPANSION_2 = [
+    ("V-KMEP-I-SYNTHETIC-FIRST", g_i_synthetic_first),
+    ("V-KMEP-I-NO-SUBAGENTS", g_i_no_subagents),
+    ("V-KMEP-I-AGENT-TYPE", g_i_agent_type),
+    ("V-KMEP-I-INLINE-SIDECHAIN-UNOBSERVED", g_i_inline_sidechain_unobserved),
+    ("V-KMEP-ALL-ONE-SCAN", g_all_one_scan),
+    ("V-KMEP-UNTIL-AUTO-LOCATE", g_until_auto_locate),
+    ("V-KMEP-UNTIL-AUTO-AT-FREEZE", g_until_auto_at_freeze),
+    ("V-KMEP-UNTIL-AUTO-UNREACHABLE", g_until_auto_unreachable),
+    ("V-KMEP-UNTIL-AUTO-BEFORE-NEXT-CALL", g_until_auto_before_next_call),
+    ("V-KMEP-UNTIL-AUTO-OTHER-REFUSED", g_until_auto_other_refused),
+    ("V-KMEP-UNTIL-AUTO-BUDGET", g_until_auto_budget),
+    ("V-KMEP-WINDOW-SINCE", g_window_since),
+    ("V-KMEP-DW7-SPEC", g_dw7_spec),
+    ("V-KMEP-DW7-COVERAGE", g_dw7_coverage),
+    ("V-KMEP-DW7-WINDOW-FIXED", g_dw7_window_fixed),
+    ("V-KMEP-DW7-ROLES", g_dw7_roles),
+    ("V-KMEP-PROJECT-FILTER", g_project_filter),
+    ("V-KMEP-POPULATION-SUBCOMMAND", g_population_subcommand),
+]
+GATES_REAL_2 = [("V-KMEP-KMEG-AUTO-REAL", g_kmeg_auto_real)]
+
+
 GATES_EXPANSION = [
     ("V-KMEP-POPULATION-DRIFT", g_population_drift),
     ("V-KMEP-VERDICT-TABLE", g_verdict_table),
@@ -1600,7 +2127,7 @@ GATES_TRACER = [
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
     ("V-KMEP-CLI-USAGE", g_cli_usage),
 ]
-GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_REAL
+GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_REAL + GATES_REAL_2
 
 
 def summary_line() -> str:
@@ -1622,7 +2149,7 @@ def run_all() -> int:
 
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
-DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER]    # the -REAL gates are excluded for speed
+DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2]    # the -REAL gates are excluded for speed
 
 
 def _quiet(names) -> dict:

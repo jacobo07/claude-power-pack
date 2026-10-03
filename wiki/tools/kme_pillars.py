@@ -13,6 +13,20 @@ the first; E..I plug one observer each into the same core.
                                   selection rule (kme_report.is_kme) and compares it field by field; only an exact
                                   match lets the share be judged. --until defaults to the freeze instant for these.
     --denominator OTHER --label N a named workload (never a frozen name); written to its own file, never merged.
+    --denominator CPP-D-W7        a REFERENCED denominator read from the CE ledger (frozen.denominators.D-W7), never
+                                  re-measured: the window is the frozen one, the share is judged against the ledger's
+                                  weighted figure, and coverage = measured calls / frozen calls (below 1 the upper
+                                  bound is unknown, so UNMEASURED unless the lower bound alone clears 3 %).
+
+    python3 wiki/tools/kme_pillars.py all ...        every pillar (D..I) in ONE scan, one measurement file each
+    python3 wiki/tools/kme_pillars.py population ... print the recomputed population and per-project rows of the
+        selected sessions (KME is decided by content, so run it UNFILTERED with --expand over a whole projects root to
+        find every dir that holds KME sessions); writes nothing; exit 0 when the frozen population is reproduced
+    --until auto [--freeze-instant ISO]   locate the cutoff at which the recomputed population equals the frozen one on
+                                  EVERY field: at the freeze instant (one scan), else bisect the call instants within
+                                  24 h before it; a run never exceeds 24 scans; not found is UNMEASURED
+    --since ISO                   drop lines before the instant (a time window with --until)
+    --project-filter REGEX        only child dirs (--expand) or roots whose name matches; an optional speed-up
 
 Parsing is the frozen instrument's own: kme_token_audit.scan_project, imported (never forked), extended only by
 its additive observer= / keep= hooks. The measurement file is written once, exclusively, under
@@ -72,12 +86,20 @@ VERDICTS = (">= 3 %", "< 3 %", "STRADDLES", "UNMEASURED")
 FROZEN_NAMES = ("KME-L", "KME-G", "CPP-D-W7")
 LABEL_RE = re.compile(r"^[A-Z0-9][A-Z0-9-]{1,40}$")
 EXIT_OK, EXIT_USAGE, EXIT_UNMEASURED = 0, 2, 3
+LOCATE_MAX_SCANS = 24      # the whole of a run, including the final measuring scan after a located cutoff
+LOCATE_WINDOW_H = 24       # the cutoff search looks at call instants within this many hours before the freeze instant
+SCAN_COUNT = 0             # transcript-tree scans done by this process (the one-scan claim of `all` is checked on it)
+CE_LEDGER_REL = "vault/programs/cognitive-economy/ledger.json"
+DW7_NAME = "CPP-D-W7"
+DW7_FIELDS = ("calls", "input", "cache_write", "cache_read", "output")
+DW7_WINDOW_RE = re.compile(r"(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)\s+(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)\s*$")
 
 FRONT_KEYS = ("instrument", "pillar", "denominator", "denominator_kind", "rule_denominators", "evidence_role",
               "terminal_evidence", "terminal_evidence_reason", "second_workload_valid", "plane", "measured_at",
               "until", "command", "population_match", "numerator", "share_interval", "share_measured_population",
               "threshold", "materiality", "materiality_reason", "observability", "second_workload_required",
               "estimate_model")
+FRONT_OPTIONAL = ("since", "until_located", "coverage")     # written only when the run has them
 
 ESTIMATE_MODEL = (
     "chars -> tokens at 3.0..4.5 chars per token; an attachment is cache-written once (weight 2) and cache-read "
@@ -133,14 +155,42 @@ def context_chars(a) -> int:
 
 
 # --------------------------------------------------------------------------- frozen denominators
-def frozen_specs(denoms_path):
-    """{"KME-L": {fields, host, select, weighted}, "KME-G": {...}} from the frozen denominator file."""
-    raw = json.loads(Path(denoms_path).read_text(encoding="utf-8"))
+def dw7_spec(ce_ledger_path):
+    """The referenced CPP-D-W7 denominator read (never written) from the CE ledger's frozen D-W7 entry: the
+    five usage fields, its weighted_input_equivalent and its window (the two ISO tokens at the end of `source`).
+    Returns the spec, or {"error": why} when the entry is absent, unparseable or self-inconsistent."""
+    try:
+        raw = json.loads(Path(ce_ledger_path).read_text(encoding="utf-8").lstrip("\ufeff"))
+        e = raw["frozen"]["denominators"]["D-W7"]
+        fields = {k: e[k] for k in DW7_FIELDS}
+        wanted = e["weighted_input_equivalent"]
+        m = DW7_WINDOW_RE.search(str(e["source"]))
+    except (OSError, ValueError, KeyError, TypeError):
+        return {"error": f"{ce_ledger_path} has no readable frozen.denominators.D-W7 entry"}
+    if m is None or not all(isinstance(fields[k], (int, float)) for k in DW7_FIELDS) \
+            or not isinstance(wanted, (int, float)):
+        return {"error": "the D-W7 entry has no window in its source string or non-numeric figures"}
+    if abs(weighted(fields) - wanted) > 1:
+        return {"error": f"D-W7 weighted_input_equivalent {wanted} differs from its fields' weighted() "
+                         f"{round(weighted(fields))} by more than 1"}
+    return {"fields": fields, "host": "local", "select": "all", "weighted": wanted, "since": m.group(1),
+            "until": m.group(2), "denominator_kind": "referenced"}
+
+
+def frozen_specs(denoms_path=None, ce_ledger_path=None):
+    """{"KME-L": {fields, host, select, weighted}, "KME-G": {...}, "CPP-D-W7": {...}}: the first two from the
+    frozen denominator file, the third (referenced, never re-measured here) from the CE ledger when it is readable
+    (a damaged D-W7 entry is {"error": why}, so it refuses only the runs that use it)."""
+    raw = json.loads(Path(denoms_path or (REPO / DENOMS_REL)).read_text(encoding="utf-8"))
     out = {}
     for name, host in (("KME-L", "local"), ("KME-G", "gex44")):
         if name in raw:
             fields = {k: raw[name][k] for k in POP_FIELDS}
-            out[name] = {"fields": fields, "host": host, "select": "kme", "weighted": weighted(fields)}
+            out[name] = {"fields": fields, "host": host, "select": "kme", "weighted": weighted(fields),
+                         "denominator_kind": "frozen"}
+    ce = Path(ce_ledger_path or (REPO / CE_LEDGER_REL))
+    if ce.exists():
+        out[DW7_NAME] = dw7_spec(ce)
     return out
 
 
@@ -148,6 +198,11 @@ def compare_population(measured, frozen):
     """("exact" | "drifted", {field: [measured, frozen]} for the unequal fields)."""
     deltas = {f: [measured.get(f), frozen.get(f)] for f in POP_FIELDS if measured.get(f) != frozen.get(f)}
     return ("drifted" if deltas else "exact"), deltas
+
+
+def referenced_coverage(measured_calls, frozen_calls):
+    """Measured calls / frozen calls of a referenced denominator: below 1 the window was not fully observed."""
+    return (measured_calls / frozen_calls) if frozen_calls else 0.0
 
 
 def materiality(share_interval, population_match, observability=1.0):
@@ -201,6 +256,16 @@ def _first_ts(path):
     return None
 
 
+def fmt_instant(t):
+    """Aware datetime -> ISO Z text: whole seconds when exact, else milliseconds when exact, else microseconds."""
+    t = t.astimezone(datetime.timezone.utc)
+    if t.microsecond == 0:
+        return t.strftime("%Y-%m-%dT%H:%M:%SZ")
+    if t.microsecond % 1000 == 0:
+        return t.strftime("%Y-%m-%dT%H:%M:%S.") + f"{t.microsecond // 1000:03d}Z"
+    return t.strftime("%Y-%m-%dT%H:%M:%S.") + f"{t.microsecond:06d}Z"
+
+
 _UNSET = object()
 
 
@@ -233,6 +298,89 @@ def make_keep(since, until):
     return keep
 
 
+# --------------------------------------------------------------------------- cutoff locator
+class _ScanBudget(Exception):
+    pass
+
+
+def cutoff_accepts(match, measured, frozen):
+    """A located cutoff is accepted only when the recomputed population equals the frozen one on EVERY field."""
+    return match == "exact"
+
+
+def locate_cutoff(probe, frozen, freeze, first=None, max_scans=LOCATE_MAX_SCANS, window_h=LOCATE_WINDOW_H):
+    """Find the instant at which the recomputed population equals the frozen one on every field.
+
+    probe(until, want_instants) -> (population fields, call instants or None) performs ONE scan of the corpus
+    truncated at `until`. Order: (1) the freeze instant itself (`first` is that scan when the caller already ran it);
+    exact -> done. (2) The corpus holds fewer calls at the freeze than the frozen figure -> not found. (3) Bisect
+    the sorted call instants within `window_h` hours before the freeze for the smallest instant reaching the frozen
+    call count (the call count is monotone in the cutoff) and accept it only on an every-field match; if the calls
+    match but another field does not, try the instant just before the next call (later non-call lines, streamed
+    duplicates). Anything else is not found. Never more than `max_scans` scans. Returns {method: exact_at_freeze |
+    bisect | not_found, until (datetime | None), scans, why}."""
+    scans = 0
+    seen = {}
+
+    def result(method, why, until=None):
+        return {"method": method, "until": until, "scans": scans, "why": why}
+
+    def run(until, want):
+        nonlocal scans
+        if until in seen and not want:
+            return seen[until], None
+        if scans >= max_scans:
+            raise _ScanBudget()
+        scans += 1
+        m, inst = probe(until, want)
+        seen[until] = m
+        return m, inst
+
+    try:
+        if first is None:
+            m_f, inst = run(freeze, True)
+        else:
+            scans = 1
+            m_f, inst = first
+            seen[freeze] = m_f
+        match, deltas = compare_population(m_f, frozen)
+        if cutoff_accepts(match, m_f, frozen):
+            return result("exact_at_freeze", "the population at the freeze instant equals the frozen one", freeze)
+        want_calls = frozen["calls"]
+        if m_f.get("calls", 0) < want_calls:
+            return result("not_found", f"the corpus holds {m_f.get('calls')} calls at the freeze instant, below the "
+                                       f"frozen {want_calls}: no earlier cutoff can reach it")
+        floor = freeze - datetime.timedelta(hours=window_h)
+        instants = sorted({t for t in (inst or ()) if floor <= t <= freeze})
+        if not instants:
+            return result("not_found", f"no call instants within {window_h} h before the freeze instant")
+        lo, hi = 0, len(instants) - 1
+        while lo < hi:
+            mid = (lo + hi) // 2
+            m, _ = run(instants[mid], False)
+            if m.get("calls", 0) >= want_calls:
+                hi = mid
+            else:
+                lo = mid + 1
+        cand = instants[lo]
+        m, _ = run(cand, False)
+        match, deltas = compare_population(m, frozen)
+        if cutoff_accepts(match, m, frozen):
+            return result("bisect", f"first call instant reaching {want_calls} calls", cand)
+        if m.get("calls") == want_calls and lo + 1 < len(instants):
+            cand2 = instants[lo + 1] - datetime.timedelta(microseconds=1)
+            m2, _ = run(cand2, False)
+            match2, deltas2 = compare_population(m2, frozen)
+            if cutoff_accepts(match2, m2, frozen):
+                return result("bisect", "just before the call instant after the first one reaching "
+                                        f"{want_calls} calls", cand2)
+            deltas = deltas2
+        return result("not_found", "no cutoff within the window reproduces every field; at the best candidate the "
+                                   f"fields [measured, frozen] differ: {json.dumps(deltas, sort_keys=True)}")
+    except _ScanBudget:
+        return result("not_found", f"scan budget of {max_scans} exhausted before a cutoff reproduced the population")
+
+
 # --------------------------------------------------------------------------- observers
 class PillarObserver:
     """Base of the per-pillar observers plugged into kme_token_audit.scan_file."""
@@ -263,6 +411,29 @@ class _Fanout:
     def on_file_end(self, path, sess, order, calls, compact_points):
         for ob in self.observers:
             ob.on_file_end(path, sess, order, calls, compact_points)
+
+
+class InstantObserver(PillarObserver):
+    """Collects the timestamp of every usage-bearing assistant line (a call instant) of every scanned file, for the
+    cutoff locator; `lo` drops instants earlier than the search window."""
+    pillar = "?"
+
+    def __init__(self, lo=None):
+        self.lo = lo
+        self.rows = []
+
+    def on_line(self, path, o, idx, sess):
+        if not isinstance(o, dict) or o.get("type") != "assistant":
+            return
+        msg = o.get("message")
+        if not isinstance(msg, dict) or not isinstance(msg.get("usage"), dict):
+            return
+        t = parse_instant(o.get("timestamp"))
+        if t is not None and (self.lo is None or t >= self.lo):
+            self.rows.append((id(sess), t))
+
+    def for_selected(self, selected):
+        return sorted({t for sid, t in self.rows if sid in selected})
 
 
 class DObserver(PillarObserver):
@@ -1036,7 +1207,6 @@ class GObserver(PillarObserver):
 
 
 # --------------------------------------------------------------------------- pillar H
-CE_LEDGER_REL = "vault/programs/cognitive-economy/ledger.json"
 VERIFY_CMD_RE = re.compile(
     r"\btest_[\w.-]*\.(?:py|js|cjs|mjs)\b|\bpytest\b|\bnpm\s+(?:run\s+)?test\b|\bnode\s+--test\b|\bmix\s+test\b"
     r"|\bgo\s+test\b|\bcargo\s+test\b|--selftest\b|--final\b|--drill\b|\bverify\b|\btsc\b[^\n]*--noEmit", re.I)
@@ -1386,14 +1556,18 @@ PILLAR_HELP = {"D": "silent-success hooks: hook_additional_context rent per call
 
 
 # --------------------------------------------------------------------------- scan + population
-def scan(roots, expand, host, observers, keep):
-    """Frozen-parser scan of every root; returns (sessions, fanout, dirs)."""
+def scan(roots, expand, host, observers, keep, project_filter=None):
+    """Frozen-parser scan of every root; returns (sessions, fanout, dirs). `project_filter` (a compiled regex) keeps
+    only the child dirs (expand) or the roots whose basename it matches (re.search)."""
+    global SCAN_COUNT
+    SCAN_COUNT += 1
     _META_CACHE.clear()
     dirs = []
     for r in roots:
         if expand:
-            dirs += [os.path.join(r, d) for d in sorted(os.listdir(r)) if os.path.isdir(os.path.join(r, d))]
-        else:
+            dirs += [os.path.join(r, d) for d in sorted(os.listdir(r)) if os.path.isdir(os.path.join(r, d))
+                     and (project_filter is None or project_filter.search(d))]
+        elif project_filter is None or project_filter.search(os.path.basename(r.rstrip("/\\"))):
             dirs.append(r)
     fan = _Fanout(observers)
     sessions = []
@@ -1409,22 +1583,30 @@ def population(sessions, spec, kept, window_active):
     lines were kept does not exist yet (dropped, not a dead session)."""
     pop = {f: 0 for f in POP_FIELDS}
     selected = set()
+    projects = {}
     for s in sessions:
         if window_active and kept.get(id(s), 0) == 0:
             continue
         if spec.get("select", "kme") == "kme" and not kme_report.is_kme(s):
             continue
         calls = s["main"].get("calls", 0) + s["sub"].get("calls", 0)
+        pr = projects.setdefault(s.get("project") or "?", {"project": s.get("project") or "?", "sessions_active": 0,
+                                                           "sessions_dead": 0, "calls": 0, "cache_read": 0})
         if calls == 0:
             pop["sessions_dead"] += 1
+            pr["sessions_dead"] += 1
             continue
         pop["sessions_active"] += 1
+        pr["sessions_active"] += 1
+        pr["calls"] += calls
+        pr["cache_read"] += s["main"].get("cr", 0) + s["sub"].get("cr", 0)
         selected.add(id(s))
         pop["calls"] += calls
         for src, dst in (("inp", "input"), ("cw", "cache_write"), ("cr", "cache_read"), ("out", "output")):
             pop[dst] += s["main"].get(src, 0) + s["sub"].get(src, 0)
     pop["weighted"] = weighted(pop)
     pop["selected"] = selected
+    pop["projects"] = projects
     return pop
 
 
@@ -1506,6 +1688,9 @@ def render_measurement(res) -> str:
     lines = ["---"]
     for k in FRONT_KEYS:
         lines.append(f"{k}: {json.dumps(res[k], ensure_ascii=False)}")
+    for k in FRONT_OPTIONAL:
+        if res.get(k) is not None:
+            lines.append(f"{k}: {json.dumps(res[k], ensure_ascii=False)}")
     lines.append("---")
     p = res["pillar"]
     lines += ["", f"# Pillar {p} measurement: {PILLAR_HELP.get(p, p)} -- {res['denominator']} "
@@ -1628,21 +1813,34 @@ ESTIMATE_MODELS = {"G": ESTIMATE_MODEL_G, "I": ESTIMATE_MODEL_I}   # H keeps the
 # --------------------------------------------------------------------------- CLI
 def _build_parser():
     ap = argparse.ArgumentParser(prog="kme_pillars.py", description=__doc__.split("\n")[0])
-    sub = ap.add_subparsers(dest="pillar", required=True, metavar="PILLAR")
-    for p, helptext in PILLAR_HELP.items():
-        sp = sub.add_parser(p.lower(), help=helptext)
-        sp.add_argument("--denominator", required=True, choices=["KME-L", "KME-G", "OTHER"])
+    sub = ap.add_subparsers(dest="cmd", required=True, metavar="PILLAR")
+
+    def common(sp, measuring):
+        sp.add_argument("--denominator", required=True, choices=["KME-L", "KME-G", DW7_NAME, "OTHER"])
         sp.add_argument("--label", default=None, help="name of the OTHER workload (A-Z 0-9 -)")
         sp.add_argument("--select", choices=["kme", "all"], default=None)
         sp.add_argument("--host", default=None)
         sp.add_argument("--root", action="append", required=True)
         sp.add_argument("--expand", action="store_true")
-        sp.add_argument("--until", default=None, help="ISO instant or 'none' (default: freeze instant for frozen "
-                                                       "denominators, none for OTHER)")
-        sp.add_argument("--out-dir", default=None)
+        sp.add_argument("--project-filter", default=None, help="regex (re.search) on each child dir name under "
+                                                               "--expand, or on the basename of a plain root")
+        sp.add_argument("--since", default=None, help="ISO instant: lines before it are dropped")
+        sp.add_argument("--until", default=None, help="ISO instant, 'none', or 'auto' (locate the freeze-time cutoff; "
+                                                      "frozen KME denominators only)")
+        sp.add_argument("--freeze-instant", default=None, help="the instant --until auto starts from "
+                                                               f"(default {FREEZE_INSTANT})")
         sp.add_argument("--frozen-file", default=None)
-        sp.add_argument("--role", choices=["auto", "second_workload"], default="auto")
-        sp.add_argument("--json", action="store_true")
+        sp.add_argument("--frozen-ce-ledger", default=None, help="CE ledger read for the referenced CPP-D-W7 denominator")
+        if measuring:
+            sp.add_argument("--out-dir", default=None)
+            sp.add_argument("--role", choices=["auto", "second_workload"], default="auto")
+            sp.add_argument("--json", action="store_true")
+    for p, helptext in PILLAR_HELP.items():
+        common(sub.add_parser(p.lower(), help=helptext), True)
+    common(sub.add_parser("all", help="every pillar in ONE scan, one measurement file per pillar"), True)
+    common(sub.add_parser("population", help="print the recomputed population (and per-project rows of the "
+                                              "selected sessions) and whether it reproduces the frozen one; "
+                                              "writes nothing"), False)
     return ap
 
 
@@ -1651,132 +1849,280 @@ def _fail(msg):
     return EXIT_USAGE
 
 
+def _prepare(a, pillars):
+    """Validate the flags and build the run context. Returns (ctx, None) or (None, exit code)."""
+    den = a.denominator
+    kme_kind = den in ("KME-L", "KME-G")
+    dw7 = den == DW7_NAME
+    if den == "OTHER":
+        if not a.label or not LABEL_RE.match(a.label):
+            return None, _fail("--denominator OTHER needs --label matching ^[A-Z0-9][A-Z0-9-]{1,40}$")
+        if a.label in FROZEN_NAMES:
+            return None, _fail(f"--label {a.label} is a frozen denominator name; a named workload may not take it")
+        label = a.label
+    else:
+        if a.label:
+            return None, _fail("--label is only valid with --denominator OTHER")
+        label = den
+    if kme_kind and a.select == "all":
+        return None, _fail("--select all is not the frozen selection rule of a frozen denominator")
+    role = getattr(a, "role", "auto")
+    if role == "second_workload":
+        clash = [p for p in pillars if label in RULE_DENOMINATORS[p]]
+        if clash:
+            return None, _fail(f"{label} is in pillar {clash[0]}'s own frozen rule {RULE_DENOMINATORS[clash[0]]}; "
+                               f"it cannot be its second workload")
+    if dw7:
+        if a.select is not None:
+            return None, _fail(f"--select is fixed to all for {DW7_NAME}")
+        if a.since is not None or a.until is not None or a.freeze_instant is not None:
+            return None, _fail(f"the window of {DW7_NAME} is the frozen one: --since / --until / --freeze-instant "
+                               f"are not accepted")
+    auto = a.until is not None and a.until.lower() == "auto"
+    if auto and not kme_kind:
+        return None, _fail("--until auto locates a frozen population's cutoff: only --denominator KME-L / KME-G")
+    if auto and a.since is not None:
+        return None, _fail("--since cannot be combined with --until auto")
+    if a.freeze_instant is not None and not auto:
+        return None, _fail("--freeze-instant is only meaningful with --until auto")
+    freeze = parse_instant(a.freeze_instant) if a.freeze_instant is not None else parse_instant(FREEZE_INSTANT)
+    if freeze is None:
+        return None, _fail(f"--freeze-instant {a.freeze_instant!r} is not an ISO instant")
+    since = None
+    if a.since is not None:
+        since = parse_instant(a.since)
+        if since is None:
+            return None, _fail(f"--since {a.since!r} is not an ISO instant")
+    until = None
+    if auto:
+        until = freeze
+    elif a.until is None:
+        until = parse_instant(FREEZE_INSTANT) if kme_kind else None
+    elif a.until.lower() != "none":
+        until = parse_instant(a.until)
+        if until is None:
+            return None, _fail(f"--until {a.until!r} is not an ISO instant")
+    for r in a.root:
+        if not os.path.isdir(r):
+            return None, _fail(f"--root {r} is not a directory")
+    pf = None
+    if a.project_filter is not None:
+        try:
+            pf = re.compile(a.project_filter)
+        except re.error as exc:
+            return None, _fail(f"--project-filter {a.project_filter!r} is not a regex ({exc})")
+
+    kind, frozen, select = "named_workload", None, a.select or "kme"
+    if kme_kind:
+        fpath = a.frozen_file or str(REPO / DENOMS_REL)
+        try:
+            specs = frozen_specs(fpath, a.frozen_ce_ledger)
+        except (OSError, ValueError, KeyError) as exc:
+            return None, _fail(f"frozen file {fpath} unreadable ({exc.__class__.__name__})")
+        if den not in specs:
+            return None, _fail(f"frozen file {fpath} has no {den} entry")
+        kind, frozen, select = "frozen", specs[den], specs[den]["select"]
+    elif dw7:
+        frozen = dw7_spec(a.frozen_ce_ledger or str(REPO / CE_LEDGER_REL))
+        if "error" in frozen:
+            return None, _fail(frozen["error"])
+        kind, select = "referenced", "all"
+        since, until = parse_instant(frozen["since"]), parse_instant(frozen["until"])
+    host = a.host or (frozen["host"] if frozen else "local")
+    return {"label": label, "den": den, "kind": kind, "frozen": frozen, "select": select, "host": host,
+            "since": since, "until": until, "auto": auto, "freeze": freeze, "roots": a.root, "expand": a.expand,
+            "pf": pf, "role": role, "pillars": list(pillars)}, None
+
+
+def _measure(ctx, pillars, until, want_instants=False):
+    """ONE scan with the named pillar observers (plus the call-instant observer on request) truncated at `until`."""
+    obs = {p: OBSERVERS[p]() for p in pillars}
+    inst = InstantObserver(ctx["freeze"] - datetime.timedelta(hours=LOCATE_WINDOW_H)) if want_instants else None
+    keep = make_keep(ctx["since"], until) if (ctx["since"] is not None or until is not None) else None
+    sessions, fan, dirs = scan(ctx["roots"], ctx["expand"], ctx["host"], list(obs.values()) + ([inst] if inst else []),
+                               keep, ctx["pf"])
+    pop = population(sessions, {"select": ctx["select"]}, fan.kept, keep is not None)
+    selected = pop.pop("selected")
+    measured = {f: pop[f] for f in POP_FIELDS}
+    measured["weighted"] = pop["weighted"]
+    return {"sessions": sessions, "dirs": dirs, "pop": pop, "selected": selected, "measured": measured, "obs": obs,
+            "instants": inst.for_selected(selected) if inst else None, "until": until}
+
+
+def _resolve(ctx, pillars):
+    """The measuring scan for the run: at the fixed cutoff, or at the located one for --until auto.
+    Returns (scan, until, located) where located is None or the locator's verdict."""
+    if not ctx["auto"]:
+        return _measure(ctx, pillars, ctx["until"]), ctx["until"], None
+    frozen = ctx["frozen"]["fields"]
+    first = _measure(ctx, pillars, ctx["freeze"], want_instants=True)
+
+    def probe(until, want):
+        sc = _measure(ctx, [], until, want)
+        return sc["measured"], sc["instants"]
+    loc = locate_cutoff(probe, frozen, ctx["freeze"], first=(first["measured"], first["instants"]),
+                        max_scans=LOCATE_MAX_SCANS - 1)
+    if loc["method"] == "exact_at_freeze":
+        return first, ctx["freeze"], loc
+    if loc["method"] == "bisect":
+        final = _measure(ctx, pillars, loc["until"])
+        loc["scans"] += 1
+        if compare_population(final["measured"], frozen)[0] == "exact":
+            return final, loc["until"], loc
+        loc.update(method="not_found", until=None, why="the corpus changed between the probe and the final scan: "
+                                                       "the located cutoff no longer reproduces the population")
+    return first, ctx["freeze"], loc
+
+
+def _located_block(loc, until):
+    if loc is None:
+        return None
+    return {"method": loc["method"], "scans": loc["scans"], "why": loc["why"],
+            "located": fmt_instant(loc["until"]) if loc["until"] is not None else None,
+            "freeze_instant": fmt_instant(until) if loc["method"] == "not_found" and until else None}
+
+
+def _match(ctx, sc, loc):
+    """(population_match, deltas, frozen_population, coverage) of a scan against the context's denominator."""
+    measured, frozen = sc["measured"], ctx["frozen"]
+    if ctx["kind"] == "frozen":
+        match, deltas = compare_population(measured, frozen["fields"])
+        if loc is not None and loc["method"] == "not_found":
+            match = "drifted"
+        return match, deltas, dict(frozen["fields"], weighted=frozen["weighted"]), None
+    if ctx["kind"] == "referenced":
+        f = frozen["fields"]
+        deltas = {k: [measured.get(k), f[k]] for k in DW7_FIELDS if measured.get(k) != f[k]}
+        return "referenced", deltas, dict(f, weighted=frozen["weighted"]), referenced_coverage(measured["calls"], f["calls"])
+    return "not_frozen", {}, None, None
+
+
+def _result(ctx, sc, pillar, loc, until, argv):
+    label, kind = ctx["label"], ctx["kind"]
+    match, deltas, frozen_pop, coverage = _match(ctx, sc, loc)
+    pres = sc["obs"][pillar].result(sc["selected"], sc["sessions"], sc["pop"])
+    measured = sc["measured"]
+    wlo, whi = pres["numerator"]["weighted_interval"]
+    w = measured["weighted"]
+    share_meas = [wlo / w, whi / w] if w > 0 else None
+    pobs = pres["observability"]
+    if kind == "referenced":
+        wf = ctx["frozen"]["weighted"]
+        share = [wlo / wf, whi / wf] if wf > 0 else None
+        obs = None if pobs is None else pobs * min(1.0, coverage)
+    else:
+        share = share_meas if match in ("exact", "not_frozen") else None
+        obs = pobs
+    verdict, reason = materiality(share, match, obs)
+    if loc is not None and loc["method"] == "not_found":
+        reason = "cutoff_not_found"
+    in_rule = label in RULE_DENOMINATORS[pillar]
+    role = "second_workload" if ctx["role"] == "second_workload" else ("primary" if in_rule else "smoke")
+    cov_ok = coverage is not None and coverage >= 1.0
+    full = match == "exact" or (match == "referenced" and cov_ok)
+    terminal = role == "primary" and full and verdict != "UNMEASURED"
+    rule = list(RULE_DENOMINATORS[pillar])
+    ref_note = f" (referenced from the CE ledger, coverage {coverage:.4f})" if kind == "referenced" else ""
+    if role == "primary":
+        if terminal:
+            t_reason = (f"primary file: {label} is in pillar {pillar}'s frozen rule {rule} and its population "
+                        f"reproduced the frozen denominator{ref_note}")
+        else:
+            t_reason = (f"primary file but not terminal: population_match={match}, materiality={verdict}{ref_note} "
+                        f"(a terminal needs an exact or fully covered population and a measured verdict)")
+    elif role == "second_workload":
+        t_reason = f"second_workload file: confirms a primary file on {rule}; never terminal itself{ref_note}"
+    else:
+        t_reason = (f"smoke: {label} is outside pillar {pillar}'s frozen rule {rule} (the rule names KME-L and "
+                    f"CPP-D-W7); evidence about the instrument, not a pillar terminal")
+    sw_valid = full or match == "not_frozen" if role == "second_workload" else None
+    caveats = list(CAVEATS_BY_PILLAR.get(pillar, CAVEATS))
+    if kind == "referenced":
+        caveats.append("CPP-D-W7 is a REFERENCED denominator read from the CE ledger and never re-measured: its calls "
+                       "were deduplicated across files keeping the last copy (tools/usage_index.py) while this "
+                       "instrument deduplicates per file and max-merges, so coverage >= 1 does not prove the same "
+                       "call set, and coverage < 1 makes the upper bound unknown (UNMEASURED unless the lower bound "
+                       "alone clears 3 %)")
+    if loc is not None:
+        caveats.append(f"the cutoff was located by --until auto ({loc['method']}, {loc['scans']} scans): "
+                       f"{loc['why']}")
+    res = {
+        "instrument": INSTRUMENT, "pillar": pillar, "denominator": label,
+        "denominator_kind": kind, "rule_denominators": rule,
+        "evidence_role": role, "terminal_evidence": terminal, "terminal_evidence_reason": t_reason,
+        "second_workload_valid": sw_valid, "plane": plane_name(),
+        "measured_at": _utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "until": fmt_instant(until) if until is not None else None,
+        "command": command_string(argv), "population_match": match,
+        "numerator": pres["numerator"],
+        "share_interval": share, "share_measured_population": share_meas, "threshold": THRESHOLD,
+        "materiality": verdict, "materiality_reason": reason, "observability": obs,
+        "second_workload_required": verdict in (">= 3 %", "STRADDLES"),
+        "estimate_model": ESTIMATE_MODELS.get(pillar, ESTIMATE_MODEL),
+        "host": ctx["host"], "select": ctx["select"],
+        "population": measured, "frozen_population": frozen_pop, "population_deltas": deltas,
+        "details": pres["details"], "caveats": caveats,
+        "corpus": {"roots": len(ctx["roots"]), "project_dirs": len(sc["dirs"]), "sessions_scanned": len(sc["sessions"]),
+                   "sessions_selected_active": len(sc["selected"]),
+                   "project_filter": ctx["pf"].pattern if ctx["pf"] else None},
+        "since": fmt_instant(ctx["since"]) if ctx["since"] is not None else None,
+        "until_located": _located_block(loc, until),
+        "coverage": coverage,
+    }
+    return res
+
+
+def _population_report(ctx, sc, loc, until):
+    match, deltas, frozen_pop, coverage = _match(ctx, sc, loc)
+    rows = sorted(({k: v for k, v in r.items()} for r in sc["pop"]["projects"].values()),
+                  key=lambda r: (-r["calls"], r["project"]))
+    rep = {"denominator": ctx["label"], "denominator_kind": ctx["kind"], "select": ctx["select"],
+           "until": fmt_instant(until) if until is not None else None,
+           "since": fmt_instant(ctx["since"]) if ctx["since"] is not None else None,
+           "until_located": _located_block(loc, until), "population": sc["measured"], "frozen": frozen_pop,
+           "population_match": match, "deltas": deltas, "coverage": coverage, "per_project": rows,
+           "corpus": {"roots": len(ctx["roots"]), "project_dirs": len(sc["dirs"]),
+                      "sessions_scanned": len(sc["sessions"]), "project_filter": ctx["pf"].pattern if ctx["pf"] else None}}
+    ok = match in ("exact", "not_frozen") or (match == "referenced" and coverage >= 1.0)
+    return rep, ok
+
+
 def main(argv=None):
     ap = _build_parser()
     try:
         a = ap.parse_args(sys.argv[1:] if argv is None else list(argv))
     except SystemExit as e:
         return int(e.code or 0)
-    pillar = a.pillar.upper()
+    pillars = list(OBSERVERS) if a.cmd == "all" else ([] if a.cmd == "population" else [a.cmd.upper()])
 
     try:
         redact = _load_redact()
     except Exception as exc:  # noqa: BLE001 -- no redaction available means nothing is written
         return _fail(f"secret_firewall unavailable ({exc.__class__.__name__}); nothing written")
 
-    frozen_kind = a.denominator in ("KME-L", "KME-G")
-    if a.denominator == "OTHER":
-        if not a.label or not LABEL_RE.match(a.label):
-            return _fail("--denominator OTHER needs --label matching ^[A-Z0-9][A-Z0-9-]{1,40}$")
-        if a.label in FROZEN_NAMES:
-            return _fail(f"--label {a.label} is a frozen denominator name; a named workload may not take it")
-        label = a.label
-    else:
-        if a.label:
-            return _fail("--label is only valid with --denominator OTHER")
-        label = a.denominator
-    if frozen_kind and a.select == "all":
-        return _fail("--select all is not the frozen selection rule of a frozen denominator")
-    in_rule = label in RULE_DENOMINATORS[pillar]
-    if a.role == "second_workload" and in_rule:
-        return _fail(f"{label} is in pillar {pillar}'s own frozen rule {RULE_DENOMINATORS[pillar]}; "
-                     f"it cannot be its second workload")
+    ctx, rc = _prepare(a, pillars)
+    if ctx is None:
+        return rc
+    sc, until, loc = _resolve(ctx, pillars)
 
-    if a.until is None:
-        until = parse_instant(FREEZE_INSTANT) if frozen_kind else None
-    elif a.until.lower() == "none":
-        until = None
-    else:
-        until = parse_instant(a.until)
-        if until is None:
-            return _fail(f"--until {a.until!r} is not an ISO instant")
-    for r in a.root:
-        if not os.path.isdir(r):
-            return _fail(f"--root {r} is not a directory")
-
-    spec = {"select": a.select or "kme"}
-    frozen = None
-    if frozen_kind:
-        fpath = a.frozen_file or str(REPO / DENOMS_REL)
-        try:
-            specs = frozen_specs(fpath)
-        except (OSError, ValueError, KeyError) as exc:
-            return _fail(f"frozen file {fpath} unreadable ({exc.__class__.__name__})")
-        if a.denominator not in specs:
-            return _fail(f"frozen file {fpath} has no {a.denominator} entry")
-        frozen = specs[a.denominator]
-        spec["select"] = frozen["select"]
-    host = a.host or (frozen["host"] if frozen else "local")
-
-    obs = OBSERVERS[pillar]()
-    keep = make_keep(None, until) if until is not None else None
-    sessions, fan, dirs = scan(a.root, a.expand, host, [obs], keep)
-    pop = population(sessions, spec, fan.kept, keep is not None)
-    selected = pop.pop("selected")
-    measured = {f: pop[f] for f in POP_FIELDS}
-    measured["weighted"] = pop["weighted"]
-    sel_sessions = [s for s in sessions if id(s) in selected]
-    pres = obs.result(selected, sessions, pop)
-
-    if frozen is not None:
-        match, deltas = compare_population(measured, frozen["fields"])
-        frozen_pop = dict(frozen["fields"], weighted=frozen["weighted"])
-    else:
-        match, deltas, frozen_pop = "not_frozen", {}, None
-
-    wlo, whi = pres["numerator"]["weighted_interval"]
-    w = pop["weighted"]
-    share_meas = [wlo / w, whi / w] if w > 0 else None
-    share = share_meas if match in ("exact", "not_frozen") else None
-    verdict, reason = materiality(share, match, pres["observability"])
-
-    if a.role == "second_workload":
-        role = "second_workload"
-    else:
-        role = "primary" if in_rule else "smoke"
-    terminal = role == "primary" and match == "exact" and verdict != "UNMEASURED"
-    rule = list(RULE_DENOMINATORS[pillar])
-    if role == "primary":
-        if terminal:
-            t_reason = (f"primary file: {label} is in pillar {pillar}'s frozen rule {rule} and its population "
-                        f"reproduced the frozen denominator")
-        else:
-            t_reason = (f"primary file but not terminal: population_match={match}, materiality={verdict} "
-                        f"(a terminal needs an exact population and a measured verdict)")
-    elif role == "second_workload":
-        t_reason = (f"second_workload file: confirms a primary file on {rule}; never terminal itself")
-    else:
-        t_reason = (f"smoke: {label} is outside pillar {pillar}'s frozen rule {rule} (the rule names KME-L and "
-                    f"CPP-D-W7); evidence about the instrument, not a pillar terminal")
-    sw_valid = (match in ("exact", "not_frozen")) if role == "second_workload" else None
-
-    res = {
-        "instrument": INSTRUMENT, "pillar": pillar, "denominator": label,
-        "denominator_kind": "frozen" if frozen_kind else "named_workload", "rule_denominators": rule,
-        "evidence_role": role, "terminal_evidence": terminal, "terminal_evidence_reason": t_reason,
-        "second_workload_valid": sw_valid, "plane": plane_name(),
-        "measured_at": _utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "until": until.strftime("%Y-%m-%dT%H:%M:%SZ") if until is not None else None,
-        "command": command_string(argv), "population_match": match,
-        "numerator": pres["numerator"],
-        "share_interval": share, "share_measured_population": share_meas, "threshold": THRESHOLD,
-        "materiality": verdict, "materiality_reason": reason, "observability": pres["observability"],
-        "second_workload_required": verdict in (">= 3 %", "STRADDLES"), "estimate_model": ESTIMATE_MODELS.get(pillar, ESTIMATE_MODEL),
-        "host": host, "select": spec["select"],
-        "population": measured, "frozen_population": frozen_pop, "population_deltas": deltas,
-        "details": pres["details"], "caveats": list(CAVEATS_BY_PILLAR.get(pillar, CAVEATS)),
-        "corpus": {"roots": len(a.root), "project_dirs": len(dirs), "sessions_scanned": len(sessions),
-                   "sessions_selected_active": len(sel_sessions)},
-    }
+    if a.cmd == "population":
+        rep, ok = _population_report(ctx, sc, loc, until)
+        print(redact(json.dumps(rep, indent=1, ensure_ascii=True)))
+        return EXIT_OK if ok else EXIT_UNMEASURED
 
     out_dir = Path(a.out_dir) if a.out_dir else REPO / MEASUREMENTS_REL
-    stem = f"{pillar}-{label}-{_utcnow().strftime('%Y-%m-%d')}"
-    text = redact(render_measurement(res))
-    path = write_measurement(out_dir, stem, text)
-    if a.json:
-        print(redact(json.dumps(res, ensure_ascii=True)))
-    print(f"KMEP pillar={pillar} denominator={label} population={match} materiality={verdict} file={path}")
-    return EXIT_UNMEASURED if verdict == "UNMEASURED" else EXIT_OK
+    unmeasured = False
+    for pillar in pillars:
+        res = _result(ctx, sc, pillar, loc, until, argv)
+        stem = f"{pillar}-{ctx['label']}-{_utcnow().strftime('%Y-%m-%d')}"
+        path = write_measurement(out_dir, stem, redact(render_measurement(res)))
+        if a.json:
+            print(redact(json.dumps(res, ensure_ascii=True)))
+        cut = f" cutoff={loc['method']}" if loc is not None else ""
+        print(f"KMEP pillar={pillar} denominator={ctx['label']} population={res['population_match']} "
+              f"materiality={res['materiality']}{cut} file={path}")
+        unmeasured = unmeasured or res["materiality"] == "UNMEASURED"
+    return EXIT_UNMEASURED if unmeasured else EXIT_OK
 
 
 if __name__ == "__main__":
