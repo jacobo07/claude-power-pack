@@ -442,9 +442,11 @@ class Counting:                                            # proves the seam was
 | A11 | Hosting the producer: `PP-Tower-Capsules` second step or a SessionStart detached spawn are Owner steps in Phase 6 | F3 | Owner may prefer a separate scheduled task |
 | A12 | Absence claims about ABSW2-Wii/CavEX/KobiiHub ("no traits") are detector blindness, not facts about those repos | F5 | none: they are recorded as UNJUDGED-class by design |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does Phase 4 keep `vault/tower/archetypes/<ID>.json` as pure donor/baseline descriptors, with `ARCHETYPES` in code as the sole conjunction authority?**
+All five are resolved in the plans: Q1 = R-2, Q2 = R-1, Q3 = R-3, Q4 = R-4 (02-01-PLAN.md objective), Q5 = `subject_root` takes the root as a required argument (02-01).
+
+1. **(RESOLVED, R-2) Does Phase 4 keep `vault/tower/archetypes/<ID>.json` as pure donor/baseline descriptors, with `ARCHETYPES` in code as the sole conjunction authority?**
    - What we know: CONTEXT says Phase 2 defines archetypes in code; ROADMAP Phase 4 lists JSON definitions.
    - What's unclear: whether JSON may restate conjunctions (two truths).
    - Recommendation: code is authoritative; JSON carries `id`, `description`, `donor`, and a Phase 4 gate asserts every JSON id exists in `ARCHETYPES` and no JSON restates a conjunction.
