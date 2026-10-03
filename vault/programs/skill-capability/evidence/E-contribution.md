@@ -63,7 +63,7 @@ Largest effect against N0: authoritative 0 (0 points), stored 1/2 (50 points).
 - phase 6: not stated
 - consumed_stated 0; remaining 10 (the budget of the bound below)
 - this phase (7): 0 sessions; this script runs no session. `.planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/p3_runner.py` at HEAD sets line 29 `RUNS = Path(r"C:\Users\User\Apps\p3-runs")`; line 32 `CLAUDE = r"C:\Users\User\.local\bin\claude.exe"`, so the benchmark cannot run on a POSIX host as committed.
-- Unstated phases can only lower the true remaining budget, and a lower budget never lowers the floor (checked below), so NOT_SEPARABLE at the stated budget implies NOT_SEPARABLE at the true one.
+- Unstated phases can only lower the true remaining budget, and a lower budget never lowers the floor (by construction: a smaller budget's allocations are a subset of a larger one's), so NOT_SEPARABLE at the stated budget implies NOT_SEPARABLE at the true one.
 
 ## Separation bound (alpha 1/20, budget 10 sessions)
 
@@ -106,7 +106,7 @@ All allocations n1 + n2 <= 10 (n1, n2 >= 1): 45 allocations, 23 separate nothing
 
 Floor: 3/4 (75 points), attained at (4,5), (4,6), (5,4), (6,4); equal-allocation floor 4/5 (80 points).
 
-Floor per budget (non-increasing in the budget, checked): 2: none, 3: none, 4: none, 5: none, 6: none, 7: 1, 8: 1, 9: 3/4, 10: 3/4
+Floor per budget (non-increasing in the budget by construction, a subset minimum): 2: none, 3: none, 4: none, 5: none, 6: none, 7: 1, 8: 1, 9: 3/4, 10: 3/4
 
 verdict: NOT_SEPARABLE (largest committed effect 0, floor 3/4; under the stored grades 1/2, also NOT_SEPARABLE)
 

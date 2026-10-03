@@ -32,7 +32,10 @@ k = 1..budget//2 per arm (D-01) and every allocation n1 + n2 <= budget, n1, n2 >
 discretion (recorded here): a "cannot separate" claim must hold for the most favourable design, so
 the verdict floor is the minimum separable effect over ALL allocations, which is never above the
 equal-allocation floor. Unstated phases can only lower the true budget, and the floor never falls
-as the budget shrinks (checked), so the stated budget is the most favourable one.
+as the budget shrinks (by construction: a smaller budget's allocations are a subset of a larger
+one's, so its floor is a minimum over fewer tables; V-CT-BOUND re-checks the per-budget table and the
+bound-floors-fall drill proves only that comparator, not the property), so the stated budget is the
+most favourable one.
 
 Verdict: NOT_SEPARABLE when every clause is ok (the largest committed effect is below the floor);
 SEPARABLE when V-CT-SEPARATION fails and every other clause is ok (per D-01: record an [E]
@@ -653,7 +656,7 @@ def clause_bound(b, remaining, refusal, floors=None):
     at = ",".join(f"({n1},{n2})" for n1, n2 in b["floor_at"])
     return "ok", (f"budget {b['budget']} sessions: all-allocation floor {frac(b['floor'])} "
                   f"({points(b['floor'])} points) attained at {at or 'none'}{k5t}; floors non-increasing in the "
-                  f"budget over 2..{b['budget']}")
+                  f"budget over 2..{b['budget']} (by construction: subset minimum)")
 
 
 def separation_verdict(effect, floor) -> str:
@@ -1213,7 +1216,8 @@ def render(rows, regrade_rows, fro, st, outside=(), regrade_outside=()) -> str:
     L.append(f"- this phase ({THIS_PHASE}): {FRESH_SESSIONS_THIS_PHASE} sessions; this script runs no session. "
              f"`{RUNNER_REL}` at HEAD sets {rc}, so the benchmark cannot run on a POSIX host as committed.")
     L.append("- Unstated phases can only lower the true remaining budget, and a lower budget never lowers the floor "
-             "(checked below), so NOT_SEPARABLE at the stated budget implies NOT_SEPARABLE at the true one.")
+             "(by construction: a smaller budget's allocations are a subset of a larger one's), so NOT_SEPARABLE at "
+             "the stated budget implies NOT_SEPARABLE at the true one.")
     L.append("")
     L.append(f"## Separation bound (alpha {frac(ALPHA)}, budget {b['budget']} sessions)")
     L.append("")
@@ -1242,7 +1246,7 @@ def render(rows, regrade_rows, fro, st, outside=(), regrade_outside=()) -> str:
     L.append(f"Floor: {frac(b['floor'])} ({points(b['floor'])} points), attained at {at}; "
              f"equal-allocation floor {frac(b['equal_floor'])} ({points(b['equal_floor'])} points).")
     L.append("")
-    L.append("Floor per budget (non-increasing in the budget, checked): " + ", ".join(
+    L.append("Floor per budget (non-increasing in the budget by construction, a subset minimum): " + ", ".join(
         f"{bb}: {frac(f)}" for bb, f in sorted(b["floors"].items())))
     L.append("")
     L.append(f"verdict: {verdict_of(results)} (largest committed effect {frac(e_auth)}, floor {frac(b['floor'])}; "
