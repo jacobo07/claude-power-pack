@@ -150,6 +150,19 @@ def make_repo(kind: str) -> str:
         for i in range(60):
             with open(os.path.join(root, bulk_dir, "n%02d.txt" % i), "w", encoding="utf-8") as fh:
                 fh.write("x\n")
+    elif kind in ("persistent_pip", "pip_fastapi", "scheduled_pip"):
+        # No marker file: the only structure is a declared dependency in requirements.txt.
+        reqs = {"persistent_pip": "sqlalchemy==2.0.30\nasyncpg\n",
+                "pip_fastapi": "fastapi==0.110.0\n",
+                "scheduled_pip": "apscheduler==3.10.4\n"}[kind]
+        os.makedirs(os.path.join(root, "app"))
+        with open(os.path.join(root, "requirements.txt"), "w", encoding="utf-8") as fh:
+            fh.write(reqs)
+        with open(os.path.join(root, "app", "models.py"), "w", encoding="utf-8") as fh:
+            fh.write("VALUE = 1\n")
+    elif kind == "external_npm":
+        with open(os.path.join(root, "package.json"), "w", encoding="utf-8") as fh:
+            json.dump({"name": "fixture", "dependencies": {"resend": "^3.0.0", "stripe": "^14.0.0"}}, fh)
     elif kind == "zero_manifest":
         # RESEARCH F5: three real repos had no manifest any parser knows.
         os.makedirs(os.path.join(root, "src"))
@@ -1071,9 +1084,65 @@ GATES = [
     ("V-ARCH-UNREADABLE-SUBTREE", pred_V_ARCH_UNREADABLE_SUBTREE),
 ]
 
+# -- plan 02-03 Task 2: each archetype REQUIRED end to end (D-07) -----------------
+# fixture repo -> producer -> cache -> resolve, for the Spanish and the English
+# prompt of the 02-02 table, with the evidence naming the manifest and the
+# dependency; the negative pole removes that dependency and the archetype falls to
+# CONDITIONAL with basis `intent`.
+
+def _archetype_positive(aid, pos_kind, neg_kind, evidence_item):
+    if ar is None or ts is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    anchor, es, en = ARCH_PROMPTS[aid]
+    pos_state, pos_repo = new_state(), make_repo(pos_kind)
+    neg_state, neg_repo = new_state(), make_repo(neg_kind)
+    for repo, state in ((pos_repo, pos_state), (neg_repo, neg_state)):
+        res = ts.produce(repo, state_dir=state)
+        if res.get("outcome") != ts.WRITTEN:
+            return False, "produce outcome=%r reason=%r" % (res.get("outcome"), res.get("reason"))
+    problems, seen = [], []
+    for lang, prompt in (("es", es), ("en", en)):
+        subject = ar.resolve(prompt, pos_repo, state_dir=pos_state)
+        entry = _find(subject["archetypes"], aid)
+        evidence = subject["traits"][anchor]["evidence"]
+        if entry is None or not (entry["strength"] == ar.Strength.REQUIRED
+                                 and entry["basis"] == "structural+intent"
+                                 and evidence_item in evidence):
+            problems.append("positive[%s]: %s evidence=%s (want REQUIRED structural+intent naming %s)" % (
+                lang, entry and (entry["strength"], entry["basis"]), evidence, evidence_item))
+        else:
+            seen.append("%s=REQUIRED %s" % (lang, evidence))
+        neg_subject = ar.resolve(prompt, neg_repo, state_dir=neg_state)
+        neg = _find(neg_subject["archetypes"], aid)
+        if neg is None or not (neg["strength"] == ar.Strength.CONDITIONAL and neg["basis"] == "intent"):
+            problems.append("negative[%s]: %s (want CONDITIONAL intent)" % (
+                lang, neg and (neg["strength"], neg["basis"], neg["anchor_state"])))
+        else:
+            seen.append("%s-neg=CONDITIONAL/intent(anchor %s)" % (lang, neg["anchor_state"]))
+    return not problems, "; ".join(problems) or " | ".join(seen)
+
+
+def pred_V_ARCH_POSITIVE_WORLD_MUTATION():
+    return _archetype_positive("WORLD_MUTATION", "persistent_pip", "pip_fastapi", "requirements.txt:sqlalchemy")
+
+
+def pred_V_ARCH_POSITIVE_EXTERNAL_EFFECT():
+    return _archetype_positive("EXTERNAL_EFFECT", "external_npm", "ephemeral", "package.json:resend")
+
+
+def pred_V_ARCH_POSITIVE_BACKGROUND_JOB():
+    return _archetype_positive("BACKGROUND_JOB", "scheduled_pip", "pip_fastapi", "requirements.txt:apscheduler")
+
+
+GATES += [
+    ("V-ARCH-POSITIVE-WORLD_MUTATION", pred_V_ARCH_POSITIVE_WORLD_MUTATION),
+    ("V-ARCH-POSITIVE-EXTERNAL_EFFECT", pred_V_ARCH_POSITIVE_EXTERNAL_EFFECT),
+    ("V-ARCH-POSITIVE-BACKGROUND_JOB", pred_V_ARCH_POSITIVE_BACKGROUND_JOB),
+]
+
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 33
+EXPECTED = 36
 
 
 def main() -> int:

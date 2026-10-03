@@ -24,9 +24,15 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import tempfile
 import time
+
+try:                      # stdlib on 3.11+; a missing tomllib records a manifest error, never raises
+    import tomllib
+except ImportError:       # pragma: no cover
+    tomllib = None
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _PP_ROOT = os.path.normpath(os.path.join(_HERE, "..", ".."))
@@ -90,14 +96,200 @@ def _parse_package_json(text):
     return runtime, _names(data.get("devDependencies"))
 
 
-# Manifests are matched by exact lower-cased basename.
-PARSERS = {"package.json": _parse_package_json}
-ECOSYSTEMS = {"package.json": "npm"}
+_REQ_NAME_RE = re.compile(r"\s*([A-Za-z0-9][A-Za-z0-9._-]*)")
 
-# Dependency-class signals: trait -> {exact lower-cased declared name: evidence class}.
-# Closed and fitted (RESEARCH A4): an unknown library is a recall gap that reads ABSENT
-# only when a manifest was visible, never a precision gap. Matching is name equality on
-# parsed names, never a substring (family_scan read `ecto` inside `vector`).
+
+def _req_name(spec):
+    """The distribution name of one PEP 508 requirement string, lower-cased ('' if none)."""
+    m = _REQ_NAME_RE.match(spec)
+    return m.group(1).lower() if m else ""
+
+
+def _parse_requirements(text):
+    """requirements.txt -> (runtime_names, set()). Comments, blank lines, `-r`/`-e`
+    options and bare URLs are ignored; `name @ url` keeps the name."""
+    runtime = set()
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line or line.startswith("-"):
+            continue
+        if "://" in line and " @ " not in line:
+            continue
+        name = _req_name(line)
+        if name:
+            runtime.add(name)
+    return runtime, set()
+
+
+def _toml(text):
+    if tomllib is None:
+        raise RuntimeError("tomllib unavailable")
+    return tomllib.loads(text)
+
+
+def _table(obj, *path):
+    for key in path:
+        obj = obj.get(key) if isinstance(obj, dict) else None
+    return obj if isinstance(obj, dict) else {}
+
+
+def _spec_names(specs):
+    return {n for n in (_req_name(s) for s in (specs if isinstance(specs, list) else ())
+                        if isinstance(s, str)) if n}
+
+
+def _parse_pyproject(text):
+    """PEP 621 `[project]` dependencies (runtime) and optional-dependencies (dev), plus
+    Poetry `[tool.poetry.dependencies]` (runtime, `python` excluded) and the Poetry dev group."""
+    data = _toml(text)
+    project = _table(data, "project")
+    runtime = _spec_names(project.get("dependencies"))
+    dev = set()
+    for group in _table(project, "optional-dependencies").values():
+        dev |= _spec_names(group)
+    poetry = _table(data, "tool", "poetry")
+    runtime |= {k.lower() for k in _table(poetry, "dependencies") if k.lower() != "python"}
+    dev |= {k.lower() for k in _table(poetry, "group", "dev", "dependencies")}
+    return runtime, dev
+
+
+# `{:name, ...` up to the next brace; only the atoms of an `only:` option decide dev use.
+# Tuples elsewhere in a mix.exs may add names no signal lists, which is harmless.
+_MIX_DEP_RE = re.compile(r"\{:([a-z_][A-Za-z0-9_]*)\s*,([^{}]*)")
+_MIX_ONLY_RE = re.compile(r"only:\s*(\[[^\]]*\]|:[a-z_]+)")
+_MIX_ATOM_RE = re.compile(r":([a-z_]+)")
+
+
+def _parse_mix_exs(text):
+    runtime, dev = set(), set()
+    for m in _MIX_DEP_RE.finditer(text):
+        only = _MIX_ONLY_RE.search(m.group(2))
+        atoms = set(_MIX_ATOM_RE.findall(only.group(1))) if only else set()
+        if atoms and atoms <= {"dev", "test"}:
+            dev.add(m.group(1))
+        else:
+            runtime.add(m.group(1))
+    return runtime, dev
+
+
+def _strip_xml_comments(text):
+    out, i = [], 0
+    while True:
+        j = text.find("<!--", i)
+        if j < 0:
+            out.append(text[i:])
+            break
+        out.append(text[i:j])
+        k = text.find("-->", j + 4)
+        if k < 0:
+            break
+        i = k + 3
+    return "".join(out)
+
+
+# One regex over the tags that matter, one pass, no nested quantifiers.
+_POM_TAG_RE = re.compile(r"<(/?)(dependencyManagement|plugins|dependency|artifactId|scope)\b[^>]*>([^<]*)")
+
+
+def _parse_pom(text):
+    """artifactIds inside <dependency> blocks; scope `test` is dev. A BOM entry under
+    <dependencyManagement> and a plugin's own dependencies are not this project's."""
+    runtime, dev = set(), set()
+    skip, in_dep, artifact, scope = 0, False, "", ""
+    for m in _POM_TAG_RE.finditer(_strip_xml_comments(text)):
+        if m.group(0).endswith("/>"):
+            continue
+        closing, tag, body = m.group(1) == "/", m.group(2), m.group(3).strip()
+        if tag in ("dependencyManagement", "plugins"):
+            skip = max(0, skip - 1) if closing else skip + 1
+        elif tag == "dependency":
+            if closing and in_dep and skip == 0 and artifact:
+                (dev if scope == "test" else runtime).add(artifact)
+            in_dep, artifact, scope = (not closing), "", ""
+        elif in_dep and not closing:
+            if tag == "artifactId" and not artifact:
+                artifact = body.lower()
+            elif tag == "scope":
+                scope = body.lower()
+    return runtime, dev
+
+
+_GRADLE_RE = re.compile(
+    r"^[ \t]*(implementation|api|compileOnly|runtimeOnly|testImplementation|testCompileOnly|"
+    r"testRuntimeOnly|androidTestImplementation)[ \t]*\(?[ \t]*['\"]([^'\":\s]+):([^'\":\s]+)[^'\"]*['\"]",
+    re.M)
+
+
+def _parse_gradle(text):
+    """`implementation 'g:a:v'` and `implementation("g:a:v")` -> the artifact part;
+    `test*` configurations are dev. Version-catalog aliases are a recall gap."""
+    runtime, dev = set(), set()
+    for m in _GRADLE_RE.finditer(text):
+        name = m.group(3).lower()
+        (dev if m.group(1).lower().startswith(("test", "androidtest")) else runtime).add(name)
+    return runtime, dev
+
+
+def _parse_cargo(text):
+    data = _toml(text)
+    return _names(data.get("dependencies")), _names(data.get("dev-dependencies"))
+
+
+def _gomod_module(code, comment):
+    """The module path of one require entry, or '' (an `// indirect` entry is not declared)."""
+    parts = code.split()
+    if "indirect" in comment or len(parts) < 2:
+        return ""
+    return parts[0].lower()
+
+
+def _parse_gomod(text):
+    runtime, in_block = set(), False
+    for raw in text.splitlines():
+        line = raw.strip()
+        if in_block:
+            if line.startswith(")"):
+                in_block = False
+                continue
+            code, _sep, comment = line.partition("//")
+            name = _gomod_module(code, comment)
+            if name:
+                runtime.add(name)
+        elif line.split(None, 1)[:1] == ["require"]:
+            rest = line[len("require"):].strip()
+            if rest.startswith("("):
+                in_block = True
+                continue
+            code, _sep, comment = rest.partition("//")
+            name = _gomod_module(code, comment)
+            if name:
+                runtime.add(name)
+    return runtime, set()
+
+
+# Manifests are matched by exact lower-cased basename.
+PARSERS = {
+    "package.json": _parse_package_json,
+    "requirements.txt": _parse_requirements,
+    "pyproject.toml": _parse_pyproject,
+    "mix.exs": _parse_mix_exs,
+    "pom.xml": _parse_pom,
+    "build.gradle": _parse_gradle,
+    "build.gradle.kts": _parse_gradle,
+    "cargo.toml": _parse_cargo,
+    "go.mod": _parse_gomod,
+}
+ECOSYSTEMS = {
+    "package.json": "npm", "requirements.txt": "pip", "pyproject.toml": "pyproject",
+    "mix.exs": "mix", "pom.xml": "maven", "build.gradle": "gradle",
+    "build.gradle.kts": "gradle", "cargo.toml": "cargo", "go.mod": "go",
+}
+
+# Dependency-class signals: trait -> {declared name: evidence class}. Closed and fitted
+# (RESEARCH A4; executors may add names, never remove these): an unknown library is a
+# recall gap that reads ABSENT only when a manifest was visible, never a precision gap.
+# Matching is name equality on parsed names with `_` and `-` folded together, never a
+# substring (family_scan read `ecto` inside `vector`).
 def _strong(*names):
     return {n: STRONG for n in names}
 
@@ -106,7 +298,33 @@ DEP_SIGNALS = {
     "persistent": _strong(
         "prisma", "@prisma/client", "drizzle-orm", "typeorm", "sequelize", "mongoose",
         "mongodb", "pg", "mysql2", "better-sqlite3", "sqlite3", "knex",
-        "@supabase/supabase-js"),
+        "@supabase/supabase-js", "sqlalchemy", "asyncpg", "psycopg2", "psycopg2-binary",
+        "psycopg", "alembic", "peewee", "django", "ecto", "ecto_sql", "postgrex", "myxql",
+        "hibernate-core", "spring-boot-starter-data-jpa", "mybatis", "diesel", "sqlx",
+        "rusqlite", "gorm.io/gorm"),
+    "external_effect": _strong(
+        "stripe", "@stripe/stripe-js", "resend", "nodemailer", "@sendgrid/mail", "sendgrid",
+        "twilio", "axios", "node-fetch", "got", "requests", "httpx", "aiohttp", "openai",
+        "anthropic", "@anthropic-ai/sdk", "discord.js", "discord.py", "finch", "req",
+        "httpoison", "tesla", "swoosh", "okhttp", "retrofit", "reqwest", "slack_sdk",
+        "@slack/web-api"),
+    "money": _strong(
+        "stripe", "@stripe/stripe-js", "stripity_stripe", "braintree",
+        "@paypal/checkout-server-sdk", "mollie-api-python", "@lemonsqueezy/lemonsqueezy.js",
+        "vault", "vaultapi"),
+    "multi_actor": _strong(
+        "phoenix", "phoenix_live_view", "phoenix_pubsub", "socket.io", "ws",
+        "@supabase/realtime-js", "channels", "paper-api", "spigot-api", "bukkit",
+        "velocity-api", "colyseus", "pusher"),
+    "scheduled": _strong(
+        "oban", "quantum", "celery", "apscheduler", "rq-scheduler", "schedule", "node-cron",
+        "node-schedule", "cron", "bull", "bullmq", "agenda", "quartz", "@nestjs/schedule"),
+    "distributed": _strong(
+        "libcluster", "horde", "kafkajs", "kafka-python", "confluent-kafka", "amqplib",
+        "pika", "nats", "@grpc/grpc-js", "grpcio"),
+    # A library for policy layers says little about how many layers there are: always WEAK.
+    "policy_layers": {n: WEAK for n in (
+        "casl", "@casl/ability", "oso", "casbin", "pycasbin", "django-guardian", "bodyguard")},
 }
 
 
@@ -202,16 +420,23 @@ def _entitle(trait, found, walk):
                               "no %s evidence in a complete walk (ecosystems seen: %s)" % (trait, seen))
 
 
+def _canon(name):
+    """`_` and `-` fold together (pip treats them alike); both sides of a match use this."""
+    return name.lower().replace("_", "-")
+
+
 def _dependency_evidence(parsed, found):
-    """Add declared-dependency evidence. A name declared only in a dev section is WEAK."""
+    """Add declared-dependency evidence. A name declared only in a dev section is WEAK.
+    The evidence string carries the name as declared, lower-cased."""
+    tables = {t: {_canon(k): v for k, v in table.items()} for t, table in DEP_SIGNALS.items()}
     for rel, _eco, runtime, dev in parsed:
-        for trait, table in DEP_SIGNALS.items():
+        for trait, table in tables.items():
             for name in sorted(runtime):
-                cls = table.get(name)
+                cls = table.get(_canon(name))
                 if cls:
                     found[trait].append((cls, "%s:%s" % (rel, name), "dependency"))
             for name in sorted(dev - runtime):
-                if name in table:
+                if _canon(name) in table:
                     found[trait].append((WEAK, "%s:%s" % (rel, name), "dependency"))
 
 
