@@ -211,6 +211,37 @@ def c_no_live_root():
     return [(FAIL, "V-SKD-NO-LIVE-ROOT", f"wrong exit: {bad}; no UNMEASURED/INCONCLUSIVE label: {unlabelled}")]
 
 
+def c_compare():
+    """Review IN-02: `--compare` names a row that vanished from the re-measure, and a malformed recording (a JSON
+    list, a row without status) is INCONCLUSIVE, never a traceback. Control: an unchanged recording moves nothing."""
+    no = _need_git()
+    if no:
+        return [(INCONC, "V-SKD-COMPARE", f"git unavailable: {no}")]
+    with temp_repo() as (repo, sha, live):
+        put_live(live, {"SKILL.md": SKILL_MD, "core/x.py": X_PY})
+        rec, why = smd.measure(repo, live, "t")
+        if rec is None:
+            return [(INCONC, "V-SKD-COMPARE", f"temp measure failed: {why}")]
+        cases = {"unchanged": rec, "row vanished": dict(rec, rows=rec["rows"] + [dict(rec["rows"][0], skill="gone")]),
+                 "json list": [rec], "row without status": dict(rec, rows=[{"skill": "a"}])}
+        got = {}
+        for label, body in cases.items():
+            f = live.parent / f"{label.replace(' ', '_')}.json"
+            f.write_text(json.dumps(body), encoding="utf-8")
+            try:
+                got[label] = _cli(["--compare", str(f), "--repo", str(repo), "--live-root", str(live)])
+            except Exception as e:  # noqa: BLE001 -- the clause asserts that nothing escapes
+                got[label] = (None, f"raised {type(e).__name__}: {e}")
+    want = {"unchanged": (0, None), "row vanished": (1, "MOVED gone"), "json list": (1, "INCONCLUSIVE"),
+            "row without status": (1, "INCONCLUSIVE")}
+    bad = [f"{k}: rc={got[k][0]} out={got[k][1][-120:]!r}" for k, (rc, tok) in want.items()
+           if got[k][0] != rc or (tok and tok not in got[k][1])]
+    if not bad:
+        return [(OK, "V-SKD-COMPARE", "unchanged -> exit 0; vanished row -> MOVED gone; JSON list and row without "
+                                      "status -> INCONCLUSIVE, no traceback")]
+    return [(FAIL, "V-SKD-COMPARE", "; ".join(bad))]
+
+
 # --------------------------------------------------------------------------- evidence
 
 def load_recording(raw: bytes):
@@ -919,7 +950,7 @@ def c_card_source_git_failure():
 
 # --------------------------------------------------------------------------- driver
 
-CLAUSES = [c_pole_identical, c_pole_drift, c_pole_absent, c_no_live_root, c_committed_not_worktree, c_committed_records, c_record_reproduces,
+CLAUSES = [c_pole_identical, c_pole_drift, c_pole_absent, c_no_live_root, c_compare, c_committed_not_worktree, c_committed_records, c_record_reproduces,
            c_record_drill, c_git_failure, c_card_source_current, c_card_source_poles, c_card_source_crlf,
            c_card_source_git_failure, c_evidence_current, c_evidence_drill]
 

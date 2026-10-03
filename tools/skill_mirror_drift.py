@@ -556,14 +556,23 @@ def main(argv=None) -> int:
         except (OSError, ValueError) as e:
             print(f"INCONCLUSIVE cannot read recording: {e}")
             return 1
-        rep = live_report(repo, live_root, rec.get("repo_commit", a.ref))
+        try:
+            old = {r["skill"]: r for r in rec.get("rows", [])}
+            for r in old.values():
+                r["status"]  # noqa: B018 -- a row without status is malformed (review IN-02)
+            ref = rec.get("repo_commit", a.ref)
+        except (AttributeError, KeyError, TypeError) as e:
+            print(f"INCONCLUSIVE malformed recording: {type(e).__name__}: {e}")
+            return 1
+        rep = live_report(repo, live_root, ref)
         if rep["status"] != "MEASURED":
             print(f"INCONCLUSIVE {rep.get('reason')}")
             return 1
-        old = {r["skill"]: r for r in rec.get("rows", [])}
+        now = {r["skill"] for r in rep["rows"]}
         moved = [r["skill"] for r in rep["rows"]
                  if r["skill"] not in old or old[r["skill"]]["status"] != r["status"]
                  or old[r["skill"]].get("live_digest") != r["live_digest"]]
+        moved += sorted(set(old) - now)  # recorded, gone from the re-measure (review IN-02)
         for n in moved:
             print(f"MOVED {n}")
         print(f"compared {len(rep['rows'])} skills, moved {len(moved)}")
