@@ -8,7 +8,7 @@ Frozen rule (ledger `frozen.pillars`):
 
 Frozen owners: `modules/cognitive_os/co_12_telemetry.py`, `vault/programs/cognitive-economy/ledger.json`.
 
-- measured_at_commit: a9177a05a67be111147063392614e3bbdad971a0
+- measured_at_commit: d0f7bab78458471956fa7b9c005f73c77185e35b
 - freeze: 217d72b5944a664fbc0baa1060c04617ff10f481
 - host: kobicraft-gex44
 - plane: committed blobs at measured_at_commit (git grep / cat-file / diff / archive), never the working tree
@@ -19,11 +19,11 @@ Frozen owners: `modules/cognitive_os/co_12_telemetry.py`, `vault/programs/cognit
 
 | command | observed |
 |---|---|
-| `git ls-tree -r --name-only a9177a05 | grep -icE 'context[_-]?compiler'` | 0 of 4289 tracked paths |
-| `git grep -nIE 'class ContextCompiler|def compile_context|context_compiler' a9177a05 -- '*.py' '*.js'` | 0 lines (rc 1) |
-| `git grep -nIi -F 'context compiler' a9177a05 -- vault/audits/usirc/CAPABILITY_MATRIX_G_TO_M.md vault/audits/frontier28/VERDICTS.md vendor/genesis-suite/modules/genesis-batch-drafts/lib/genesis-batch-drafts.cjs` | 3 lines |
-| `git grep -nI -F 'signals.jsonl' a9177a05 -- '*.py' '*.js'  (then the writer marker per line)` | 15 lines, 3 writer lines |
-| `git diff -U0 217d72b5 a9177a05 -- '*.py' '*.js'  (added lines, writer marker)` | 13987 added lines, 0 writer lines |
+| `git ls-tree -r --name-only d0f7bab7 \| grep -icE 'context[_-]?compiler'` | 0 of 4290 tracked paths |
+| `git grep -nIE 'class ContextCompiler\|def compile_context\|context_compiler' d0f7bab7 -- '*.py' '*.js'` | 0 lines (rc 1) |
+| `git grep -nIi -F 'context compiler' d0f7bab7 -- vault/audits/usirc/CAPABILITY_MATRIX_G_TO_M.md vault/audits/frontier28/VERDICTS.md vendor/genesis-suite/modules/genesis-batch-drafts/lib/genesis-batch-drafts.cjs` | 3 lines |
+| `git grep -nI -F 'signals.jsonl' d0f7bab7 -- '*.py' '*.js'  (then the writer marker per line)` | 15 lines, 3 writer lines |
+| `git diff -U0 217d72b5 d0f7bab7 -- '*.py' '*.js'  (added lines, writer marker)` | 14022 added lines, 0 writer lines |
 
 ## Claim parts
 
@@ -31,7 +31,7 @@ Frozen owners: `modules/cognitive_os/co_12_telemetry.py`, `vault/programs/cognit
 |---|---|---|
 | absence | PASS | 0 tracked paths, 0 code lines |
 | control | PASS | name control vault/audits/usirc/CAPABILITY_MATRIX_G_TO_M.md:63; 3 writer controls hit |
-| writer | PASS | 0 of 13987 added lines write signals.jsonl |
+| writer | PASS | 0 of 14022 added lines write signals.jsonl |
 
 ## Aperture
 
@@ -47,7 +47,7 @@ Frozen owners: `modules/cognitive_os/co_12_telemetry.py`, `vault/programs/cognit
 - `vault/audits/usirc/CAPABILITY_MATRIX_G_TO_M.md:63`: | J4 | Memory Runtime and Context Compiler | **EXISTS_AND_COMPLETE** | `memory-engine` + **DAIF-08 Context Assembly and Mission Runtime** (20 Parts) + `cognitive_os` residency CO-13/14 | HIGH |
 - `vendor/genesis-suite/modules/genesis-batch-drafts/lib/genesis-batch-drafts.cjs:3`: // to the task-context compiler; this module never dispatches, persists or accepts.
 
-### CO-12 writers at a9177a05
+### CO-12 writers at d0f7bab7
 
 | file:line | line |
 |---|---|
