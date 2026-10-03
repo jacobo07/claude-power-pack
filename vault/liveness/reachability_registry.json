@@ -67,6 +67,14 @@
       "class": "PLANNED",
       "note": "UWCP assimilation R6 (see inference_bench/__init__). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
     },
+    "capability_runtime/archetypes": {
+      "class": "PLANNED",
+      "note": "UCEP Phase 2 (UCEP-02): capability subject = ten traits + three archetypes. Consumer = the Phase 5 envelope compiler (modules/gsd_x/mission/envelope.py), prompt-path delivery in Phase 6. Producer host = tools/capability_traits.py (built in 02-04), hosting is an Owner step. Proven by tools/test_capability_archetypes.py. Owner queue: .planning/workstreams/ucep/phases/02-capability-subject-and-archetypes/02-OWNER-QUEUE.md"
+    },
+    "capability_runtime/trait_scan": {
+      "class": "PLANNED",
+      "note": "UCEP Phase 2 (UCEP-02): off-path producer of the structural trait cache read by capability_runtime/archetypes. Consumer = the Phase 5 envelope compiler, prompt-path delivery in Phase 6. Producer host = tools/capability_traits.py (built in 02-04), hosting is an Owner step. Proven by tools/test_capability_archetypes.py. Owner queue: .planning/workstreams/ucep/phases/02-capability-subject-and-archetypes/02-OWNER-QUEUE.md"
+    },
     "auto-testing/detectors": {
       "class": "LIBRARY",
       "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
