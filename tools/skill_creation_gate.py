@@ -35,8 +35,8 @@ judged commit. A directory with no tracked SKILL.md is a member and fails DECLAR
 Clauses (all 7 must be PASS for a PASS verdict; outcomes PASS, FAIL or UNMEASURED):
   per skill  DECLARED         a tracked SKILL.md whose frontmatter holds exactly one opportunity_detector line
              FORM             every opportunity_detector and opportunity_detector_reason line is a metadata child;
-                              every detector value is `none` or a plain relative path (PATH_RE, no `//`, no `..`
-                              segment); every reason matches REASON_RE and is not a YAML non-string scalar
+                              every detector value is `none` or a plain canonical relative path (PATH_RE, no
+                              `//`, no `..` segment, equal to its posixpath.normpath); every reason matches REASON_RE and is not a YAML non-string scalar
              TARGET           a path value (normalized) is tracked at the judged commit; `none` has a non-blank reason
              COVERAGE-AGREES  checked against pillar D's coverage class, computed from the committed dispatcher, hooks
                               and tools/*.py through skill_coverage: class opportunity_detector agrees only with a path
@@ -158,7 +158,9 @@ def _value_form_ok(value: str) -> bool:
         return True
     if not PATH_RE.match(value) or "//" in value:
         return False
-    return ".." not in value.split("/")
+    # Canonical only (review IN-01): `a/./b`, `a/b/` and `a/b/.` normalize to a path the gate would judge, while a
+    # reader that does not normalize sees another one, and a trailing `/` names a directory.
+    return ".." not in value.split("/") and posixpath.normpath(value) == value
 
 
 def evidence_files(evidence) -> set:

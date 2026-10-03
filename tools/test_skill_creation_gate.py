@@ -299,6 +299,15 @@ def drill_table(seed, originals):
         _replace_md(fx, repo, cw, t.replace(f"{scg.DETECTOR_KEY}: {p}\n", f"{scg.DETECTOR_KEY}: ./{p}\n", 1),
                     "CWST ./ path")
 
+    def path_edit(new, msg):
+        def m(fx, repo):
+            t = read_md(repo, cw)
+            line = f"{scg.DETECTOR_KEY}: {p}\n"
+            if t.count(line) != 1:
+                return f"precondition: {line!r} occurs {t.count(line)} times"
+            _replace_md(fx, repo, cw, t.replace(line, f"{scg.DETECTOR_KEY}: {new}\n", 1), msg)
+        return m
+
     def m_toplevel(fx, repo):
         lines = [f"{scg.DETECTOR_KEY}: none", f"{scg.REASON_KEY}: {s_reason}"]
         _replace_md(fx, repo, s, scg.insert_declaration(originals[s], lines), "S top-level keys")
@@ -394,6 +403,8 @@ def drill_table(seed, originals):
         ("DUPLICATE-CWST", m_duplicate, {f"{cw}:DECLARED": F}, True),
         ("DOTSLASH-CWST", m_dotslash, {f"{cw}:FORM": F}, True),
         ("TOPLEVEL-S", m_toplevel, {f"{s}:FORM": F}, True),
+        ("DOT-SEGMENT-CWST", path_edit(p.replace("/", "/./", 1), "CWST a/./b path"), {f"{cw}:FORM": F}, True),
+        ("TRAILING-SLASH-CWST", path_edit(p + "/", "CWST trailing slash"), {f"{cw}:FORM": F}, True),
         ("NONE-NO-REASON-S", m_no_reason, {f"{s}:TARGET": F}, True),
         ("REASON-NULL-S", m_reason_null, {f"{s}:FORM": F}, True),
         ("REASON-TOPLEVEL-S", m_reason_toplevel, {f"{s}:FORM": F}, True),
