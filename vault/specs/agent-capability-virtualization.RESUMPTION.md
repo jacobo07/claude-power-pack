@@ -111,9 +111,22 @@ worktree = repo root. Plan + Owner decisions: `vault/specs/agent-capability-virt
    Do not re-litigate: near_misses / excluded rows are lexical noise, never causes; an
    anti-trigger veto is NO_MATCH (`vetoed_by`), not BELOW_GATE; tools/test_agent_spec.py cannot
    be mutation-drilled in a copy (V-SPEC-STATE-VERSION needs .git) -- drill via the resolver.
-   NEXT: C5 agent_telemetry.py -> CO-12 record_signal (emit `miss`, `miss_ids`, `cache`,
-   `policy`, `fingerprint`; injectable sink; live signals.jsonl untouched), then C6 run
-   accounting, C7 portable guards, C8 GEX44 PRG (weekly reset or Owner go), then S6/S7.
+   C5 DONE 2026-10-03 (plan vault/plans/acv-c5-agent-telemetry-2026-10-03.md, R2 audited, 5
+   gaps applied): 163f0b2f record_signal under a sidecar lock; 965fb859 query_fp on every
+   resolver return, NO_CATALOG contributes no miss_id, NOT_POLICY; 050c3484 CLI moved to
+   agent_resolver_cli (outside policy_hash; agent_resolver.main is a delegating stub);
+   d1f2d541 V-RES-LATENCY median of 3 (bar 2000 ms unchanged; a 2,884 ms red was 1 sample at
+   100% CPU); 383fa916 agent_telemetry + resolve_and_record + agent_metrics + CLI;
+   361aea29 13/13 drills KILLED. Gates: telemetry 20/20, resolver 33/33, co12 8/8, race 5/5,
+   s4 44/44. Live `co_12_telemetry --report`: 0 resolutions, 7 unparseable lines (pre-lock
+   fragments, now counted).
+   Do not re-litigate: telemetry COPIES resolver facts (query_fp, policy, miss, miss_ids,
+   cache, fingerprint) -- never recompute; a cache HIT is reuse, not evidence; NO_MATCH counts
+   are not demand; tests never write the live corpus (record_signal guarded suite-wide + nonce
+   query_fp gate; resolver CLI subprocess under a temp HOME); `reachability.py --baseline` is
+   NOT a way to clear one module -- it freezes every pane's orphans.
+   NEXT: C6 run accounting (agent_run joined on resolution_id; tokens from result.modelUsage
+   else UNMEASURED), C7 portable guards, C8 GEX44 PRG (weekly reset or Owner go), then S6/S7.
    Debt: hermetic runs load no user hooks; GEX44 lacks carrier_bash_guard; hub rolloverFocus
    picks newest capsule per dir; test_surface_architecture 35/36 (V-SA-NO-DERIVATIVE-IN-
    CONTRACTS on surface_architecture_design_md.json, committed 2026-09-22, not ours, pre-C4).
