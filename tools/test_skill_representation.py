@@ -1310,6 +1310,16 @@ def _m_missing_applied_commit(fx):
     del fx["entry"]["applied_commit"]
 
 
+def _windows_around(fx, t):
+    """Place the before window 8..1 days before epoch `t` and the after window 1..8 days after it."""
+    day, t = 86400, int(t)
+
+    def iso(x):
+        return datetime.datetime.fromtimestamp(x, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    for k, (a, b) in (("before", (t - 8 * day, t - day)), ("after", (t + day, t + 8 * day))):
+        fx["docs"][DRILL_W[k]]["start"], fx["docs"][DRILL_W[k]]["end"] = iso(a), iso(b)
+
+
 def _m_applied_commit_real(fx, real):
     """A real ancestor of HEAD (the commit that added the operations file) resolved by git, with the two windows
     placed one day either side of its real committer time: the anchor's green branch on real git output."""
@@ -1320,13 +1330,7 @@ def _m_applied_commit_real(fx, real):
     res = resolve_applied_commits([sha])[sha]
     if res[0] != "ok":
         raise KeyError(f"{sha[:8]} did not resolve: {res[1]}")
-    day = 86400
-
-    def iso(t):
-        return datetime.datetime.fromtimestamp(t, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    t = int(res[1])
-    for k, (a, b) in (("before", (t - 8 * day, t - day)), ("after", (t + day, t + 8 * day))):
-        fx["docs"][DRILL_W[k]]["start"], fx["docs"][DRILL_W[k]]["end"] = iso(a), iso(b)
+    _windows_around(fx, res[1])
     fx["entry"]["applied_commit"] = sha
     fx["commits"] = {sha: res}
 
@@ -1335,6 +1339,27 @@ def _m_applied_commit_unresolved(fx, real):
     ref = "0" * 40  # no such commit: resolved by git, not by the fixture
     fx["entry"]["applied_commit"] = ref
     fx["commits"] = resolve_applied_commits([ref])
+
+
+def _m_applied_commit_not_ancestor(fx, real):
+    """A real commit that is not an ancestor of HEAD: a throwaway repository (never this one) with HEAD on one
+    commit and a second commit on a side branch, resolved by resolve_applied_commits against that repository."""
+    with tempfile.TemporaryDirectory() as tmp:
+        cfg = ("-c", "user.name=drill", "-c", "user.email=drill@invalid", "-c", "commit.gpgsign=false")
+        steps = (("init", "-q"), cfg + ("commit", "-q", "--allow-empty", "-m", "head"),
+                 ("checkout", "-q", "-b", "side"), cfg + ("commit", "-q", "--allow-empty", "-m", "side"))
+        for args in steps + (("checkout", "-q", "--detach", "side~1"),):
+            out, why = smd.git_run(tmp, *args)
+            if out is None:
+                raise KeyError(f"throwaway repository step {' '.join(args[-2:])!r} failed: {why}")
+        side, why = smd.resolve_commit(tmp, "side")
+        raw, _ = smd.git_run(tmp, "log", "-1", "--format=%cI", "side")
+        t = _utc_epoch(raw.decode("utf-8", "replace").strip()) if raw else None
+        if side is None or t is None:
+            raise KeyError(f"throwaway repository side commit: {why}")
+        _windows_around(fx, t)  # the windows bracket the commit, so only ancestry can refuse it
+        fx["entry"]["applied_commit"] = side
+        fx["commits"] = resolve_applied_commits([side], repo=tmp)
 
 
 def _m_applied_commit_git_failure(fx, real):
@@ -1413,6 +1438,7 @@ FO_DRILLS = (
     ("MISSING-APPLIED-COMMIT", _m_missing_applied_commit, {"V-FO-RECALL"}),
     ("APPLIED-COMMIT-REAL", _m_applied_commit_real, set()),
     ("APPLIED-COMMIT-UNRESOLVED", _m_applied_commit_unresolved, {"V-FO-RECALL"}),
+    ("APPLIED-COMMIT-NOT-ANCESTOR", _m_applied_commit_not_ancestor, {"V-FO-RECALL"}),
     ("APPLIED-COMMIT-GIT-FAILURE", _m_applied_commit_git_failure, {"V-FO-RECALL"}),
     ("NOT-HELPED", _m_not_helped, {"V-FO-HELPED"}),
     ("NOISE-ABSENT", _m_noise_absent, {"V-FO-HELPED"}),
@@ -1423,7 +1449,7 @@ FO_DRILLS = (
     ("K4-REAL", _m_k4_real, {"V-FO-HELPED"}),
 )
 _REAL_DRILLS = {"DEDUP-GEX44-REAL", "K4-REAL", "APPLIED-COMMIT-REAL", "APPLIED-COMMIT-UNRESOLVED",
-                "APPLIED-COMMIT-GIT-FAILURE"}
+                "APPLIED-COMMIT-NOT-ANCESTOR", "APPLIED-COMMIT-GIT-FAILURE"}
 # Drills whose red clause must read INCONCLUSIVE (could not judge), not FAIL; every other mutant must read FAIL.
 _INCONCLUSIVE_DRILLS = {"NOISE-ABSENT", "APPLIED-COMMIT-GIT-FAILURE"}
 ENTRY_STATUS_EXPECT = (("UNCOMMITTED-WINDOW", "INCONCLUSIVE"), ("NOISE-UNSOURCED", "INCONCLUSIVE"),
