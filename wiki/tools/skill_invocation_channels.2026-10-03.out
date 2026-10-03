@@ -1,0 +1,31 @@
+﻿window 7 d; transcripts 1969; model Skill calls 463 (41 names); typed commands 550 (7 names)
+typed names that are installed skills/commands: 7
+names seen ONLY as typed (a tool_use counter reports them as zero): 2
+     33  /cpp-compound
+      4  /restart
+top by total (model / typed):
+     14   300  gsd-autonomous
+    160    56  kclear
+     21   149  kresume
+     35     6  ultra
+     35     2  cpp-gsd-long
+     36     0  gsd-plan-phase
+      0    33  cpp-compound
+     24     0  gsd-execute-phase
+     17     0  claude-power-pack
+     14     0  gsd-code-review
+     10     0  code-reviewer
+     10     0  superpowers:brainstorming
+      8     0  destructive-state-authorization
+      6     0  anydesign
+      6     0  update-config
+      5     0  superpowers:systematic-debugging
+      0     4  restart
+      4     0  vision-video
+      4     0  anthropic-skills:chrome-browser
+      4     0  claude-in-chrome
+      4     0  claude-api
+      4     0  seo-geo-session
+      4     0  gsd-audit-milestone
+      3     0  gsd-complete-milestone
+      3     0  gsd-cleanup
