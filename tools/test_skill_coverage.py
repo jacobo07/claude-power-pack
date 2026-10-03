@@ -429,6 +429,12 @@ def with_recording_text(raw: bytes, mutate=None):
 
 
 def c_recording_crlf(disp_text, recs):
+    """Parse robustness only, and it says so (review WR-02). JSON treats CR as insignificant whitespace and the
+    recording holds no multi-line string, so a CRLF re-encoding parses to the same object with or without
+    `read_lf`: this clause cannot prove the normalization and does not claim to. The CR-significant pole of this
+    gate is a raw-bytes compare, V-SKC-EVIDENCE-DRILL (the rendered .md). The clause asserts that boundary: the raw
+    CRLF bytes parsed WITHOUT normalization equal the LF parse; if a recording ever carries CR inside a value, that
+    assertion goes red and normalization has become load-bearing here."""
     committed = REPO / sc.EVIDENCE_DIR_REL / "D-live-gex44.json"
     if not committed.is_file():
         return "INCONCLUSIVE", "no committed gex44 recording"
@@ -442,10 +448,14 @@ def c_recording_crlf(disp_text, recs):
     if w0 or w1 or w2 or b"\r\n" not in cr:
         has_cr = b"\r\n" in cr
         return "FAIL", f"load reasons {w0} {w1} {w2}; CR present {has_cr}"
+    insignificant = json.loads(cr.decode("utf-8")) == json.loads(raw.decode("utf-8"))
     rows = [live_plane(compute(REPO, disp_text, [(r, None, "gex44")]))["rows"] for r in (base, crl, alt)]
-    if rows[0] == rows[1] and rows[0] != rows[2]:
-        return "ok", f"CRLF copy classifies identically ({len(rows[0])} rows); an altered skill name changes the rows"
-    return "FAIL", f"crlf same {rows[0] == rows[1]}; altered differs {rows[0] != rows[2]}"
+    if rows[0] == rows[1] and rows[0] != rows[2] and insignificant:
+        return "ok", (f"CRLF copy loads and classifies identically ({len(rows[0])} rows; parse robustness, CR is "
+                      f"insignificant to JSON, the CR pole is V-SKC-EVIDENCE-DRILL); an altered skill name changes "
+                      f"the rows")
+    return "FAIL", (f"crlf same {rows[0] == rows[1]}; altered differs {rows[0] != rows[2]}; CR insignificant to "
+                    f"the raw parse {insignificant}")
 
 
 def c_unmeasured(disp_text, recs):

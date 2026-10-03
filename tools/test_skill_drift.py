@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import copy
+import hashlib
 import json
 import subprocess
 import sys
@@ -572,10 +573,10 @@ def c_record_drill():
     lines, ok = [], True
     base = reproduce(rec)
     ctl = worst(base) == OK
-    crlf_rec = load_recording(path.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
-    crlf = worst(reproduce(crlf_rec)) == OK
-    ok = ok and ctl and crlf
-    lines.append(f"control unmutated {'ok' if ctl else 'NOT ok'}, CRLF re-encoding {'ok' if crlf else 'NOT ok'}")
+    # No CRLF re-encoding control here: JSON ignores CR, so it could not go red (review WR-02). The CR pole of the
+    # hashed content is V-SKD-POLE-IDENTICAL (eol_only) and V-SKD-CARD-SOURCE-CRLF (CRLF blobs).
+    ok = ok and ctl
+    lines.append(f"control unmutated {'ok' if ctl else 'NOT ok'}")
     for name, m, part, verdict, token in mutants(rec):
         fs = reproduce(m)
         fb = first_bad(fs)
@@ -721,27 +722,35 @@ def _flip(h):
 
 
 def c_card_source_crlf():
+    """The CR pole sits where CR changes the result: in the hashed blobs, not in the JSON record (JSON treats CR as
+    insignificant whitespace, so a CRLF re-encoded record parses the same with or without normalization; review
+    WR-02). A card and source recorded LF, then committed again as CRLF bytes (autocrlf=false, so the blobs really
+    carry CR), must stay CURRENT through the LF-normalized digest; the raw sha256 of the CRLF source blob must differ
+    from the recorded digest (so without normalization the pair would read SOURCE_CHANGED); and a real source edit
+    committed CRLF must still read SOURCE_CHANGED."""
     no = _need_git()
     if no:
         return [(INCONC, "V-SKD-CARD-SOURCE-CRLF", f"git unavailable: {no}")]
-    path = REPO / smd.CARD_RECORD_REL
-    try:
-        raw = path.read_bytes()
-    except OSError as e:
-        return [(INCONC, "V-SKD-CARD-SOURCE-CRLF", f"record unreadable: {e}")]
-    lf_rec = json.loads(smd.lf_bytes(raw))
-    crlf_rec = json.loads(smd.lf_bytes(raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")))
-    state = smd.card_source_state(REPO, "HEAD", smd.card_pairs(REPO))
-    base = smd.card_verdict(smd.card_drift(lf_rec, state))
-    crlf = smd.card_verdict(smd.card_drift(crlf_rec, state))
-    mut = copy.deepcopy(lf_rec)
-    mut["pairs"][0]["source_sha256"] = _flip(mut["pairs"][0]["source_sha256"])
-    mrows = smd.card_drift(mut, state)
-    hit = [r["status"] for r in mrows if r["skill"] == mut["pairs"][0]["skill"]]
-    if base == "CURRENT" and crlf == "CURRENT" and hit == ["SOURCE_CHANGED"]:
-        return [(OK, "V-SKD-CARD-SOURCE-CRLF", "LF record CURRENT, CRLF re-encoding CURRENT, one source digit "
-                                               "changed -> SOURCE_CHANGED for that pair")]
-    return [(FAIL, "V-SKD-CARD-SOURCE-CRLF", f"lf={base} crlf={crlf} mutated={hit}")]
+    with card_repo() as (repo, git, write):
+        rec, why = smd.record_cards(repo)
+        if rec is None:
+            return [(INCONC, "V-SKD-CARD-SOURCE-CRLF", f"temp record failed: {why}")]
+        write("hooks/card_a.js", (CARD_TMPL % "a").replace("\n", "\r\n"))
+        write("skills/a/SKILL.md", SKILL_MD.replace("\n", "\r\n"))
+        git("commit", "-q", "-am", "crlf re-encoding")
+        crlf_rows = card_state_rows(repo)
+        raw = smd.vgm.batch_blobs(str(repo), "HEAD", ["skills/a/SKILL.md"])["skills/a/SKILL.md"][0]
+        carries_cr = raw is not None and b"\r\n" in raw
+        raw_differs = carries_cr and hashlib.sha256(raw).hexdigest() != rec["pairs"][0]["source_sha256"]
+        write("skills/a/SKILL.md", (SKILL_MD + "new rule\n").replace("\n", "\r\n"))
+        git("commit", "-q", "-am", "crlf source edit")
+        edit_rows = card_state_rows(repo)
+    got = (statuses(crlf_rows), carries_cr, raw_differs, statuses(edit_rows))
+    if got == (["a:CURRENT"], True, True, ["a:SOURCE_CHANGED"]):
+        return [(OK, "V-SKD-CARD-SOURCE-CRLF", "card + source recorded LF, re-committed as CRLF blobs: CURRENT; raw "
+                                               "sha256 of the CRLF blob differs from the record (normalization is "
+                                               "load-bearing); CRLF source edit -> SOURCE_CHANGED")]
+    return [(FAIL, "V-SKD-CARD-SOURCE-CRLF", f"(crlf rows, blob carries CR, raw sha differs, edit rows) = {got}")]
 
 
 def c_card_source_git_failure():
