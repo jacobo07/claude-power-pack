@@ -4,28 +4,35 @@
     python3 tools/test_contribution_verdict.py                   # check (default mode)
     python3 tools/test_contribution_verdict.py --jsonl PATH      # verdict clauses on one rows file only
     python3 tools/test_contribution_verdict.py --jsonl P --regrade R   # same, with a regrade file
+    python3 tools/test_contribution_verdict.py --drills          # print the in-process mutant drills
+    python3 tools/test_contribution_verdict.py --json            # derived figures as one JSON object
     python3 tools/test_contribution_verdict.py --write-evidence  # render the D-SESSIONS measurement file
 
 What it reads: the committed paired delivery benchmark of the cognitive-resource-os P3 ablation
 (results-delivery.jsonl, arms N0/R/P/C) joined by run_id with results-delivery-regrade.jsonl, and
 the frozen D-SESSIONS denominator of vault/programs/skill-capability/ledger.json (read only, never
 written). Nothing is typed in: the per-arm counts, the separation bound and the verdict are
-recomputed from the rows on every run.
+recomputed from the rows on every run. In the default mode only the rows whose run_id is in the
+blob at ROWS_PIN_COMMIT are used; the P3 jsonl is append-only and owned by another workstream.
 
-Authoritative grade: a run's regrade row when one exists, else its stored grade. Only an exact
-`PASS` passes, so `FAIL-SWALLOW-REPAIRED` is a failure. A row is measured only when `valid is True`
-and its grade is a non-empty string; any other row is UNMEASURED and left out of every count. An arm
-with no measured row is UNMEASURED, never a zero rate.
+Authoritative grade: a run's regrade row when one exists, else its stored grade. Three provenance
+clauses justify that choice (V-CT-AUTH-COMMIT, -GRADER, -AUDIT); the verdict needs all three. Only an
+exact `PASS` passes, so `FAIL-SWALLOW-REPAIRED` is a failure. A row is measured only when
+`valid is True` and its grade is a non-empty string; any other row is UNMEASURED and left out of
+every count. An arm with no measured row is UNMEASURED, never a zero rate.
 
 Fisher: two-sided exact test over the 2x2 tables with the observed margins (hypergeometric, computed
 with math.comb and fractions.Fraction, no float, no scipy). p = the sum of the probabilities of every
 table whose probability is <= the observed table's probability (minimum-likelihood method, exact
 comparison). "Separates" means p <= ALPHA = 1/20.
 
-Bound: for the remaining D-SESSIONS budget, the equal allocations k = 1..budget//2 per arm (D-01)
-and every allocation n1 + n2 <= budget, n1, n2 >= 1. Claude's discretion (recorded here): a "cannot
-separate" claim must hold for the most favourable design, so the verdict floor is the minimum
-separable effect over ALL allocations, which is never above the equal-allocation floor.
+Bound: the budget is D-SESSIONS.new_benchmark_cap minus the session counts stated by phases 1-6
+(read from their committed SUMMARYs and evidence files). It covers the equal allocations
+k = 1..budget//2 per arm (D-01) and every allocation n1 + n2 <= budget, n1, n2 >= 1. Claude's
+discretion (recorded here): a "cannot separate" claim must hold for the most favourable design, so
+the verdict floor is the minimum separable effect over ALL allocations, which is never above the
+equal-allocation floor. Unstated phases can only lower the true budget, and the floor never falls
+as the budget shrinks (checked), so the stated budget is the most favourable one.
 
 Verdict: NOT_SEPARABLE when every clause is ok (the largest committed effect is below the floor);
 SEPARABLE when V-CT-SEPARATION fails and every other clause is ok (per D-01: record an [E]
@@ -33,7 +40,14 @@ owner-bundle line and run no sessions); INCONCLUSIVE otherwise.
 
 Output lines: `  ok   V-CT-X <evidence>` / `  FAIL V-CT-X <diagnostic>` / `  INCONCLUSIVE V-CT-X <why>`,
 then `verdict: <V>`, last line `CT_PASS=<passed>/<total>`. Exit codes: 0 pass, 1 fail, inconclusive
-or separable, 2 could not run. INCONCLUSIVE is never a pass.
+or separable, 2 could not run. INCONCLUSIVE is never a pass; a git failure is INCONCLUSIVE, never a
+guessed hash. `--json` exits 1 unless the verdict is NOT_SEPARABLE.
+
+Committed sources only: the audit, the residency plan, p3_runner.py, the phase SUMMARYs, the
+evidence files and the ledger's frozen object are read as their HEAD blobs (`git show HEAD:<path>`).
+An edit to a cited line, or a new phase 1-6 SUMMARY with a session statement, makes
+V-CT-EVIDENCE-CURRENT go red. That is the intended signal: re-render, and re-pin state.E's sha256
+in the same commit.
 
 The planes: the rows are laptop fresh-session readings (derived from their Windows transcript paths);
 this script's derivation is host-independent and runs no session.
@@ -49,6 +63,7 @@ import re
 import shutil
 import subprocess
 import sys
+from collections import Counter
 from fractions import Fraction
 from math import comb
 from pathlib import Path
@@ -58,8 +73,14 @@ P3_REL = ".planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/"
 ROWS_REL = P3_REL + "results-delivery.jsonl"
 REGRADE_REL = P3_REL + "results-delivery-regrade.jsonl"
 DELIVERY_REL = P3_REL + "p3_delivery.py"
+RUNNER_REL = P3_REL + "p3_runner.py"
+AUDIT_REL = "vault/audits/cwst-representation-verdict-2026-10-03.md"
+RESIDENCY_REL = "vault/plans/skill-residency-program-2026-10-03.md"
+REQ_REL = ".planning/workstreams/skill-capability/REQUIREMENTS.md"
+PHASES_REL = ".planning/workstreams/skill-capability/phases/"
+EVIDENCE_DIR_REL = "vault/programs/skill-capability/evidence/"
 LEDGER_REL = "vault/programs/skill-capability/ledger.json"
-EVIDENCE_REL = "vault/programs/skill-capability/evidence/E-contribution.md"
+EVIDENCE_REL = EVIDENCE_DIR_REL + "E-contribution.md"
 SELF_REL = "tools/test_contribution_verdict.py"
 
 ALPHA = Fraction(1, 20)
@@ -68,14 +89,28 @@ TREATMENT_ARMS = ("R", "P", "C")
 ARM_ORDER = (CONTROL_ARM,) + TREATMENT_ARMS
 PASS_GRADE = "PASS"
 LAPTOP_PREFIX = "C:\\Users\\User\\"
+THIS_PHASE = 7
 # D-01: this phase runs no fresh session (a statement about this phase, not a measurement).
 FRESH_SESSIONS_THIS_PHASE = 0
+NEEDED_K_MAX = 40
+# The commit that brought results-delivery.jsonl to its 8 rows (appended the 2 C rows).
+ROWS_PIN_COMMIT = "123c96cc"
 
 # Plan-time exact pins (07-01 interfaces): (a, n1, b, n2) -> two-sided p.
 FISHER_PINS = (((4, 4, 0, 4), Fraction(1, 35)), ((5, 5, 0, 5), Fraction(1, 126)),
                ((4, 5, 0, 5), Fraction(1, 21)), ((3, 5, 0, 5), Fraction(1, 6)),
                ((2, 2, 0, 2), Fraction(1, 3)), ((1, 2, 0, 2), Fraction(1)),
                ((3, 4, 0, 5), Fraction(1, 21)), ((10, 10, 5, 10), Fraction(21, 646)))
+
+# Session-count phrasings used by phases 1-6 (three at plan time, a fourth found at execution in F).
+SESSION_RES = (re.compile(r"(\d+) fresh sessions? were consumed", re.I),
+               re.compile(r"consumed this phase: (\d+) fresh sessions?", re.I),
+               re.compile(r"fresh sessions consumed in this phase: (\d+)", re.I),
+               re.compile(r"this phase consumed (\d+) fresh sessions?", re.I))
+SUMMARY_PATH_RE = re.compile(r"^" + re.escape(PHASES_REL) + r"(\d{2})-[^/]+/[^/]+-SUMMARY\.md$")
+EVIDENCE_PATH_RE = re.compile(r"^" + re.escape(EVIDENCE_DIR_REL) + r"([A-Z])-[^/]+\.md$")
+TRACE_RE = re.compile(r"^\| SC-([A-Z]) \| Phase (\d+) \|", re.M)
+RUNNER_RES = (re.compile(r'^RUNS = Path\(r"C:\\[^"]*"\)', re.M), re.compile(r'^CLAUDE = r"C:\\[^"]*"', re.M))
 
 
 # --------------------------------------------------------------------------- exact arithmetic
@@ -102,7 +137,7 @@ def fisher_two_sided(a: int, n1: int, b: int, n2: int) -> Fraction:
 
 @functools.lru_cache(maxsize=None)
 def min_separable(n1: int, n2: int):
-    """(smallest |a/n1 - b/n2| over the tables with p <= ALPHA, [(a, b, p) attaining it]) or None."""
+    """(smallest |a/n1 - b/n2| over the tables with p <= ALPHA, ((a, b, p) attaining it)) or None."""
     best, hits = None, []
     for a in range(n1 + 1):
         for b in range(n2 + 1):
@@ -117,28 +152,54 @@ def min_separable(n1: int, n2: int):
     return None if best is None else (best, tuple(hits))
 
 
+def _floor_over(allocs, budget):
+    floor, at = None, []
+    for key in sorted(allocs):
+        ms = allocs[key]
+        if ms is None or key[0] + key[1] > budget:
+            continue
+        if floor is None or ms[0] < floor:
+            floor, at = ms[0], [key]
+        elif ms[0] == floor:
+            at.append(key)
+    return floor, at
+
+
 def bound(budget: int) -> dict:
-    """Equal and all-allocation separation floors for a session budget."""
+    """Equal and all-allocation separation floors for a session budget, plus the floor per smaller budget."""
     equal = [(k, min_separable(k, k)) for k in range(1, budget // 2 + 1)]
     allocs = {}
     for n1 in range(1, budget):
         for n2 in range(1, budget - n1 + 1):
             allocs[(n1, n2)] = min_separable(n1, n2)
-    floor, floor_at = None, []
-    for key in sorted(allocs):
-        ms = allocs[key]
-        if ms is None:
-            continue
-        if floor is None or ms[0] < floor:
-            floor, floor_at = ms[0], [key]
-        elif ms[0] == floor:
-            floor_at.append(key)
+    floor, floor_at = _floor_over(allocs, budget)
     eq_floor = None
     for _, ms in equal:
         if ms is not None and (eq_floor is None or ms[0] < eq_floor):
             eq_floor = ms[0]
+    floors = {bb: _floor_over(allocs, bb)[0] for bb in range(2, budget + 1)}
     return {"budget": budget, "equal": equal, "allocs": allocs, "floor": floor,
-            "floor_at": floor_at, "equal_floor": eq_floor}
+            "floor_at": floor_at, "equal_floor": eq_floor, "floors": floors}
+
+
+def floors_monotone(floors) -> list:
+    """Budgets at which the floor FALLS as the budget shrinks (None = nothing separates = infinite)."""
+    inf = Fraction(10 ** 9)
+    keys = sorted(floors)
+    return [(lo, hi) for lo, hi in zip(keys, keys[1:])
+            if (floors[lo] if floors[lo] is not None else inf) < (floors[hi] if floors[hi] is not None else inf)]
+
+
+def needed_k(effect):
+    """Smallest equal k <= NEEDED_K_MAX whose floor <= effect; None for a zero effect (a table with
+    a == b at equal k is the modal table, p = 1) or when no k up to the cap is enough."""
+    if effect is None or effect <= 0:
+        return None
+    for k in range(1, NEEDED_K_MAX + 1):
+        ms = min_separable(k, k)
+        if ms is not None and ms[0] <= effect:
+            return k
+    return None
 
 
 def frac(x) -> str:
@@ -162,7 +223,7 @@ def dec4(p: Fraction) -> str:
 
 
 def load_rows(path):
-    """(rows, refusal): exactly one is None. Refuses bad JSON, a missing run_id/arm, a duplicate run_id."""
+    """(rows, refusal): exactly one is None. Refuses bad JSON, a missing run_id, a duplicate run_id."""
     rows, seen = [], set()
     try:
         with open(path, encoding="utf-8") as fh:
@@ -210,6 +271,115 @@ def frozen(git=_git) -> dict:
 
 def lf_sha(text: str) -> str:
     return hashlib.sha256(text.replace("\r\n", "\n").encode("utf-8")).hexdigest()
+
+
+def _collapse(text: str) -> str:
+    return re.sub(r"\s+", " ", text)
+
+
+def _line_of(text: str, offset: int) -> int:
+    return text.count("\n", 0, offset) + 1
+
+
+def _find_line(text, pattern):
+    """(1-based line, matched text) of the first regex match, or (None, None)."""
+    if text is None:
+        return None, None
+    m = re.search(pattern, text)
+    return (None, None) if not m else (_line_of(text, m.start()), _collapse(m.group(0)))
+
+
+# --------------------------------------------------------------------------- pins and static texts (git)
+
+
+def _parse_blob(text):
+    return [json.loads(line) for line in text.splitlines() if line.strip()]
+
+
+def add_commit(rel, git=_git):
+    """Full hash of the commit that added rel, or None when git fails or answers empty."""
+    rc, out = git("log", "--diff-filter=A", "--format=%H", "--", rel)
+    hashes = out.split() if rc == 0 else []
+    return hashes[-1] if hashes else None
+
+
+def pin_info(git=_git) -> dict:
+    """Both pins, their ancestry and their blobs. Any git failure is recorded as `error`, never guessed."""
+    info = {"rows_commit": ROWS_PIN_COMMIT, "regrade_commit": None, "error": None,
+            "rows_blob": None, "regrade_blob": None, "rows_sha": None, "regrade_sha": None}
+    info["regrade_commit"] = add_commit(REGRADE_REL, git)
+    if not info["regrade_commit"]:
+        info["error"] = f"git log --diff-filter=A -- {REGRADE_REL} failed or was empty"
+        return info
+    for ref in (ROWS_PIN_COMMIT, info["regrade_commit"]):
+        rc, _ = git("merge-base", "--is-ancestor", ref, "HEAD")
+        if rc != 0:
+            info["error"] = f"pin {ref[:8]} is not an ancestor of HEAD (git rc {rc})"
+            return info
+    for key, ref, rel in (("rows", ROWS_PIN_COMMIT, ROWS_REL), ("regrade", info["regrade_commit"], REGRADE_REL)):
+        text = git_text(f"{ref}:{rel}", git)
+        if text is None:
+            info["error"] = f"git show {ref[:8]}:{rel} failed"
+            return info
+        try:
+            info[key + "_blob"] = _parse_blob(text)
+        except ValueError as exc:
+            info["error"] = f"blob {ref[:8]}:{rel} is not JSON lines ({exc})"
+            return info
+        info[key + "_sha"] = lf_sha(text)
+    return info
+
+
+def session_sources(git=_git):
+    """(sources, refusal). Committed phase 1-6 SUMMARYs and evidence/<P>-*.md files whose pillar maps to
+    a phase below 7, each as its HEAD blob. Phase 7 files and E-contribution.md are never scanned."""
+    req = git_text(f"HEAD:{REQ_REL}", git)
+    if req is None:
+        return None, f"git show HEAD:{REQ_REL} failed"
+    phase_of = {p: int(n) for p, n in TRACE_RE.findall(req)}
+    if not phase_of:
+        return None, f"{REQ_REL} has no traceability rows"
+    rc, out = git("ls-tree", "-r", "--name-only", "HEAD", "--", PHASES_REL, EVIDENCE_DIR_REL)
+    if rc != 0:
+        return None, f"git ls-tree HEAD failed (rc {rc})"
+    sources = []
+    for path in sorted(out.split()):
+        m, e = SUMMARY_PATH_RE.match(path), EVIDENCE_PATH_RE.match(path)
+        if m:
+            phase = int(m.group(1))
+        elif e and path != EVIDENCE_REL:
+            if e.group(1) not in phase_of:
+                sources.append({"path": path, "phase": None, "text": git_text(f"HEAD:{path}", git)})
+                continue
+            phase = phase_of[e.group(1)]
+        else:
+            continue
+        if phase >= THIS_PHASE:
+            continue
+        text = git_text(f"HEAD:{path}", git)
+        if text is None:
+            return None, f"git show HEAD:{path} failed"
+        sources.append({"path": path, "phase": phase, "text": text})
+    return sources, None
+
+
+def static(git=_git) -> dict:
+    """Every committed text the verdict and the render cite. None marks a git failure."""
+    st = {"info": pin_info(git)}
+    rc_commit = add_commit(REGRADE_REL, git)
+    st["regrade_commit"] = rc_commit
+    msg = None
+    if rc_commit:
+        rc, out = git("log", "-1", "--format=%s%n%b", rc_commit)
+        msg = out if rc == 0 and out.strip() else None
+    st["commit_msg"] = msg
+    st["grader"] = git_text(f"{rc_commit}:{DELIVERY_REL}", git) if rc_commit else None
+    st["delivery_head"] = git_text(f"HEAD:{DELIVERY_REL}", git)
+    st["audit"] = git_text(f"HEAD:{AUDIT_REL}", git)
+    st["residency"] = git_text(f"HEAD:{RESIDENCY_REL}", git)
+    st["runner"] = git_text(f"HEAD:{RUNNER_REL}", git)
+    st["sessions_src"], st["sessions_refusal"] = session_sources(git)
+    return st
 
 
 # --------------------------------------------------------------------------- joins and counts
@@ -290,6 +460,79 @@ def max_effect(counts):
     return max(e for _, e, _ in ps) if ps else None
 
 
+def consumption(rows) -> dict:
+    """Per arm, from the rows' delivery / card_rows fields. A row is measured for consumption only when
+    valid is True and delivery.state is MEASURED with boolean skill fields; otherwise UNMEASURED."""
+    out = {}
+    for r in rows:
+        arm = r.get("arm") if isinstance(r.get("arm"), str) else "?"
+        a = out.setdefault(arm, {"n": 0, "unmeasured": 0, "listing": Counter(), "invoked": 0,
+                                 "before_commit": 0, "card_rows": Counter(), "consumed": 0, "contradictions": []})
+        d = r.get("delivery")
+        if (r.get("valid") is not True or not isinstance(d, dict) or d.get("state") != "MEASURED"
+                or not isinstance(d.get("skill_invoked"), bool) or not isinstance(d.get("skill_before_commit"), bool)):
+            a["unmeasured"] += 1
+            continue
+        a["n"] += 1
+        a["listing"][str(d.get("listing"))] += 1
+        a["invoked"] += d["skill_invoked"]
+        a["before_commit"] += d["skill_before_commit"]
+        cards = r.get("card_rows") if isinstance(r.get("card_rows"), list) else []
+        for c in cards:
+            a["card_rows"][str(c)] += 1
+        if d["skill_before_commit"] and not d["skill_invoked"]:
+            a["contradictions"].append(r["run_id"])
+        a["consumed"] += d["skill_invoked"] or any(str(c).startswith("deny") for c in cards)
+    return out
+
+
+def session_statements(sources) -> dict:
+    """{phase: {"figures": {n}, "where": [(path, line, n)]}} plus unattributed statements under None."""
+    out = {}
+    for src in sources:
+        text = src["text"] or ""
+        seen = set()
+        for rx in SESSION_RES:
+            for m in rx.finditer(text):
+                key = (_line_of(text, m.start()), int(m.group(1)))
+                if key in seen:
+                    continue
+                seen.add(key)
+                ph = out.setdefault(src["phase"], {"figures": set(), "where": []})
+                ph["figures"].add(key[1])
+                ph["where"].append((src["path"], key[0], key[1]))
+    return out
+
+
+def sessions_budget(st, cap):
+    """(per-phase statements, consumed_stated, remaining, refusal)."""
+    if st.get("sessions_src") is None:
+        return None, None, None, st.get("sessions_refusal") or "session sources unreadable"
+    stm = session_statements(st["sessions_src"])
+    if None in stm:
+        w = stm[None]["where"][0]
+        return stm, None, None, f"a session statement in {w[0]}:{w[1]} maps to no phase (no traceability row)"
+    conflicts = [p for p, v in stm.items() if len(v["figures"]) > 1]
+    if conflicts:
+        p = conflicts[0]
+        return stm, None, None, f"phase {p} states different figures {sorted(stm[p]['figures'])}"
+    consumed = sum(next(iter(v["figures"])) for v in stm.values())
+    remaining = cap - consumed
+    if remaining < 0:
+        return stm, consumed, remaining, f"budget overdrawn: stated {consumed} > new_benchmark_cap {cap}"
+    return stm, consumed, remaining, None
+
+
+def runner_constants(text):
+    """[(line, text)] of the p3_runner.py Windows constants, by regex."""
+    out = []
+    for rx in RUNNER_RES:
+        m = rx.search(text or "")
+        if m:
+            out.append((_line_of(text, m.start()), m.group(0)))
+    return out
+
+
 # --------------------------------------------------------------------------- clauses
 
 
@@ -326,14 +569,32 @@ def clause_fisher_pins(fn=fisher_two_sided):
     return "ok", f"{len(FISHER_PINS)} exact pins reproduced, each symmetric (e.g. 3/4 vs 0/5 = 1/21, 1/2 vs 0/2 = 1)"
 
 
-def clause_bound(b):
+def clause_sessions(stm, consumed, remaining, refusal, runner):
+    if refusal:
+        return "INCONCLUSIVE", refusal
+    if len(runner) != len(RUNNER_RES):
+        return "INCONCLUSIVE", f"the p3_runner.py Windows constants backing this phase's 0 were not found in HEAD:{RUNNER_REL}"
+    per = ", ".join(f"phase {p} {next(iter(v['figures']))}" for p, v in sorted(stm.items())) or "none"
+    unstated = [str(p) for p in range(1, THIS_PHASE) if p not in stm]
+    return "ok", (f"stated: {per}; not stated: phase {', '.join(unstated) or 'none'}; consumed_stated {consumed}, "
+                  f"remaining {remaining}; this phase {FRESH_SESSIONS_THIS_PHASE} (p3_runner.py lines "
+                  f"{', '.join(str(ln) for ln, _ in runner)} are Windows paths)")
+
+
+def clause_bound(b, remaining, refusal, floors=None):
+    if refusal:
+        return "INCONCLUSIVE", f"no budget: {refusal}"
     if b is None:
-        return "INCONCLUSIVE", "no budget"
+        return "INCONCLUSIVE", f"budget {remaining!r} is not an int >= 0"
+    falls = floors_monotone(floors if floors is not None else b["floors"])
+    if falls:
+        return "FAIL", f"the floor falls as the budget shrinks between budgets {falls[0]}"
     k5 = dict(b["equal"]).get(5)
     k5t = f"; equal k=5 floor {frac(k5[0])}" if k5 else ""
     at = ",".join(f"({n1},{n2})" for n1, n2 in b["floor_at"])
     return "ok", (f"budget {b['budget']} sessions: all-allocation floor {frac(b['floor'])} "
-                  f"({points(b['floor'])} points) first at {at or 'none'}{k5t}")
+                  f"({points(b['floor'])} points) attained at {at or 'none'}{k5t}; floors non-increasing in the "
+                  f"budget over 2..{b['budget']}")
 
 
 def separation_verdict(effect, floor) -> str:
@@ -371,6 +632,48 @@ def clause_grades_agree(rows, grades, b, ok_sources):
                             f"stored effect {frac(es)} -> {vs}")
 
 
+def clause_auth_commit(msg, commit):
+    if not commit or msg is None:
+        return "INCONCLUSIVE", f"could not read the commit that added {REGRADE_REL} (git failed or empty)"
+    subject, _, body = msg.partition("\n")
+    if "6/6 swallow" not in subject:
+        return "FAIL", f"subject of {commit[:8]} lacks '6/6 swallow': {subject[:80]!r}"
+    if "reflog-aware grader" not in _collapse(body):
+        return "FAIL", f"body of {commit[:8]} does not name the reflog-aware grader"
+    return "ok", f"{commit[:8]} added the regrade file; subject has '6/6 swallow', body names the reflog-aware grader"
+
+
+def clause_auth_grader(src, commit):
+    if not commit or src is None:
+        return "INCONCLUSIVE", f"could not read {DELIVERY_REL} at the regrade add commit (git failed)"
+    n = src.count("FAIL-SWALLOW-REPAIRED")
+    if n == 0:
+        return "FAIL", f"{DELIVERY_REL} at {commit[:8]} has no FAIL-SWALLOW-REPAIRED label"
+    return "ok", f"{DELIVERY_REL} at {commit[:8]} carries FAIL-SWALLOW-REPAIRED ({n} occurrences)"
+
+
+def clause_auth_audit(text):
+    if text is None:
+        return "INCONCLUSIVE", f"git show HEAD:{AUDIT_REL} failed"
+    if "regrades FAIL-SWALLOW-REPAIRED" not in _collapse(text):
+        return "FAIL", f"{AUDIT_REL} does not say the P run regrades FAIL-SWALLOW-REPAIRED"
+    line, _ = _find_line(text, r"regrades\s+FAIL-SWALLOW-REPAIRED")
+    return "ok", f"{AUDIT_REL} line {line}: P r1 stored PASS regrades FAIL-SWALLOW-REPAIRED"
+
+
+def clause_consumption(cons):
+    bad = [rid for a in cons.values() for rid in a["contradictions"]]
+    if bad:
+        return "FAIL", f"skill_before_commit true while skill_invoked false (contradiction): {bad}"
+    n = sum(a["n"] for a in cons.values())
+    if n == 0:
+        return "INCONCLUSIVE", "UNMEASURED: no row carries a measured delivery"
+    consumed = sum(a["consumed"] for a in cons.values())
+    unm = sum(a["unmeasured"] for a in cons.values())
+    per = "; ".join(f"{arm} invoked {a['invoked']} of {a['n']}" for arm, a in sorted(cons.items()) if a["n"])
+    return "ok", f"consumed in {consumed} of {n} measured rows ({unm} UNMEASURED); {per}"
+
+
 def verdict_of(results) -> str:
     st = {name: status for name, status, _ in results}
     if all(s == "ok" for s in st.values()):
@@ -380,67 +683,36 @@ def verdict_of(results) -> str:
     return "INCONCLUSIVE"
 
 
-def evaluate_core(rows, refusal, regrade_rows, budget, fisher_fn=fisher_two_sided):
-    """Pure clauses over one rows set. Returns (results, ctx)."""
+def evaluate_core(rows, refusal, regrade_rows, cap, st, fisher_fn=fisher_two_sided, floors=None,
+                  verdict_only=False):
+    """Pure clauses over one rows set and one set of committed texts. Returns (results, ctx)."""
     grades, grade_refusal = (None, None) if refusal else authoritative(rows, regrade_rows)
     counts = arm_counts(grades, rows) if grades is not None else None
     results = [("V-CT-SOURCES",) + clause_sources(rows, refusal, grades or {}, grade_refusal,
                                                    counts or {CONTROL_ARM: {"n": 0}})]
     ok_sources = results[0][1] == "ok"
     results.append(("V-CT-FISHER-PINS",) + clause_fisher_pins(fisher_fn))
-    b = bound(budget) if _is_int(budget) and budget > 0 else None
-    results.append(("V-CT-BOUND",) + (clause_bound(b) if b else ("INCONCLUSIVE", f"budget {budget!r} is not an int > 0")))
+    if not _is_int(cap) or cap <= 0:
+        stm, consumed, remaining, srefusal = None, None, None, f"new_benchmark_cap {cap!r} is not an int > 0"
+    else:
+        stm, consumed, remaining, srefusal = sessions_budget(st, cap)
+    runner = runner_constants(st.get("runner"))
+    results.append(("V-CT-SESSIONS",) + clause_sessions(stm, consumed, remaining, srefusal, runner))
+    b = bound(remaining) if srefusal is None and _is_int(remaining) and remaining >= 0 else None
+    results.append(("V-CT-BOUND",) + clause_bound(b, remaining, srefusal, floors))
     results.append(("V-CT-SEPARATION",) + clause_separation(counts, b, ok_sources))
     results.append(("V-CT-GRADES-AGREE",) + clause_grades_agree(rows, grades, b, ok_sources))
-    return results, {"grades": grades, "counts": counts, "bound": b}
+    cons = consumption(rows if rows else [])
+    if not verdict_only:
+        results.append(("V-CT-AUTH-COMMIT",) + clause_auth_commit(st.get("commit_msg"), st.get("regrade_commit")))
+        results.append(("V-CT-AUTH-GRADER",) + clause_auth_grader(st.get("grader"), st.get("regrade_commit")))
+        results.append(("V-CT-AUTH-AUDIT",) + clause_auth_audit(st.get("audit")))
+        results.append(("V-CT-CONSUMPTION",) + clause_consumption(cons))
+    return results, {"grades": grades, "counts": counts, "bound": b, "sessions": stm, "consumed": consumed,
+                     "remaining": remaining, "runner": runner, "consumption": cons}
 
 
-# --------------------------------------------------------------------------- pins (git)
-
-# The commit that brought results-delivery.jsonl to its 8 rows (appended the 2 C rows).
-ROWS_PIN_COMMIT = "123c96cc"
-
-
-def _parse_blob(text):
-    rows = []
-    for line in text.splitlines():
-        if line.strip():
-            rows.append(json.loads(line))
-    return rows
-
-
-def add_commit(rel, git=_git):
-    """Full hash of the commit that added rel, or None when git fails or answers empty."""
-    rc, out = git("log", "--diff-filter=A", "--format=%H", "--", rel)
-    hashes = out.split() if rc == 0 else []
-    return hashes[-1] if hashes else None
-
-
-def pin_info(git=_git) -> dict:
-    """Both pins, their ancestry and their blobs. Any git failure is recorded as `error`, never guessed."""
-    info = {"rows_commit": ROWS_PIN_COMMIT, "regrade_commit": None, "error": None,
-            "rows_blob": None, "regrade_blob": None, "rows_sha": None, "regrade_sha": None}
-    info["regrade_commit"] = add_commit(REGRADE_REL, git)
-    if not info["regrade_commit"]:
-        info["error"] = f"git log --diff-filter=A -- {REGRADE_REL} failed or was empty"
-        return info
-    for ref in (ROWS_PIN_COMMIT, info["regrade_commit"]):
-        rc, _ = git("merge-base", "--is-ancestor", ref, "HEAD")
-        if rc != 0:
-            info["error"] = f"pin {ref[:8]} is not an ancestor of HEAD (git rc {rc})"
-            return info
-    for key, ref, rel in (("rows", ROWS_PIN_COMMIT, ROWS_REL), ("regrade", info["regrade_commit"], REGRADE_REL)):
-        text = git_text(f"{ref}:{rel}", git)
-        if text is None:
-            info["error"] = f"git show {ref[:8]}:{rel} failed"
-            return info
-        try:
-            info[key + "_blob"] = _parse_blob(text)
-        except ValueError as exc:
-            info["error"] = f"blob {ref[:8]}:{rel} is not JSON lines ({exc})"
-            return info
-        info[key + "_sha"] = lf_sha(text)
-    return info
+# --------------------------------------------------------------------------- rows-pinned / evidence-current
 
 
 def pinned_split(rows, info):
@@ -516,6 +788,11 @@ def _fisher_one_sided(a, n1, b, n2):
     return sum((Fraction(comb(n1, x) * comb(n2, s - x), total) for x in xs if x >= a), Fraction(0))
 
 
+def _git_fails_log(*args):
+    """A failing git for the drill: every `git log` call fails, everything else is real."""
+    return (128, "") if args and args[0] == "log" else _git(*args)
+
+
 def _template(rows, arm):
     return next(r for r in rows if r.get("arm") == arm)
 
@@ -534,103 +811,168 @@ def _fab(rows, spec):
 F, P_ = "FAIL-SWALLOW", "PASS"
 
 
+def _with_text(st, path_suffix, old, new):
+    """A copy of st whose session source ending in path_suffix has `old` replaced by `new` (must occur)."""
+    st = dict(st)
+    srcs = []
+    for s in st["sessions_src"]:
+        s = dict(s)
+        if s["path"].endswith(path_suffix):
+            if old not in s["text"]:
+                raise ValueError(f"drill anchor {old!r} not in {s['path']}")
+            s["text"] = s["text"].replace(old, new)
+        srcs.append(s)
+    st["sessions_src"] = srcs
+    return st
+
+
 def _drill_specs():
-    """(name, mutate(rows, regrade) -> (rows, regrade, fisher_fn), {clause: status}, verdict, check)."""
-    def same(rows, reg):
-        return rows, reg, fisher_two_sided
+    """(name, mutate(inp) -> inp, {clause: status}, verdict, check). inp keys: rows, regrade, st, fn, floors."""
+    def upd(**kw):
+        def mut(inp):
+            out = dict(inp)
+            out.update({k: (v(inp) if callable(v) else v) for k, v in kw.items()})
+            return out
+        return mut
 
-    def sep(rows, reg):
-        return _fab(rows, [("P", [P_] * 5), ("N0", [F] * 5)]), [], fisher_two_sided
+    def rows_with(fn):
+        def f(inp):
+            rows = copy.deepcopy(inp["rows"])
+            fn(rows)
+            return rows
+        return f
 
-    def edge_hit(rows, reg):
-        return _fab(rows, [("P", [P_] * 3 + [F]), ("N0", [F] * 5)]), [], fisher_two_sided
-
-    def edge_miss(rows, reg):
-        return _fab(rows, [("P", [P_] * 3 + [F] * 2), ("N0", [F] * 5)]), [], fisher_two_sided
-
-    def no_n0(rows, reg):
-        keep = [r for r in rows if r.get("arm") != CONTROL_ARM]
-        ids = {r["run_id"] for r in keep}
-        return copy.deepcopy(keep), [g for g in reg if g["run_id"] in ids], fisher_two_sided
-
-    def p_invalid(rows, reg):
-        rows = copy.deepcopy(rows)
+    def set_invalid_p(rows):
         for r in rows:
             if r.get("arm") == "P":
                 r["valid"] = False
-        return rows, reg, fisher_two_sided
 
-    def c_empty(rows, reg):
-        rows = copy.deepcopy(rows)
+    def set_c_empty(rows):
         next(r for r in rows if r.get("arm") == "C")["grade"] = ""
-        return rows, reg, fisher_two_sided
 
-    def reg_ghost(rows, reg):
-        return rows, list(reg) + [{"run_id": "X-ghost-r1", "grade": F}], fisher_two_sided
+    def set_contradiction(rows):
+        rows[0]["delivery"]["skill_before_commit"] = True
 
-    def disagree(rows, reg):
-        fab = _fab(rows, [("P", [P_] * 5), ("N0", [F] * 5)])
-        return fab, [{"run_id": f"X-P-r{i}", "grade": F} for i in (1, 2, 3)], fisher_two_sided
+    def drop_delivery(rows):
+        del rows[0]["delivery"]
 
-    def doubled(rows, reg):
-        return rows, reg, _fisher_doubled_one_sided
+    def st_text(key, old, new):
+        def f(inp):
+            st = dict(inp["st"])
+            st[key] = (st[key] or "").replace(old, new)
+            return st
+        return f
 
-    def one_sided(rows, reg):
-        return rows, reg, _fisher_one_sided
+    def falling(inp):
+        fl = dict(bound(inp["remaining"])["floors"])
+        top = max(fl)
+        fl[top - 1] = fl[top] / 2
+        return fl
 
     def unmeasured(arm):
-        def chk(rows, ctx, results):
+        def chk(inp, ctx, results):
             t = count_text(ctx["counts"][arm]) if ctx["counts"] else "no counts"
             joined = " ".join(x[2] for x in results)
             good = t.startswith("UNMEASURED") and "0/0" not in joined and f"{arm} 0 of" not in joined
             return good, f"{arm} {t}"
         return chk
 
-    def p_out(rows, ctx, results):
-        good, note = unmeasured("P")(rows, ctx, results)
+    def p_out(inp, ctx, results):
+        good, note = unmeasured("P")(inp, ctx, results)
         used = [a for a, _, _ in pairs(ctx["counts"])]
         return good and used == ["R", "C"], f"{note}; pairs from {','.join(used)}"
 
-    def c_n1(rows, ctx, results):
+    def c_n1(inp, ctx, results):
         n = ctx["counts"]["C"]["n"]
         return n == 1, f"C measured n {n}"
 
+    def remaining_is(n):
+        def chk(inp, ctx, results):
+            return ctx["remaining"] == n, f"remaining {ctx['remaining']}"
+        return chk
+
+    def cons_unmeasured(inp, ctx, results):
+        c = ctx["consumption"]
+        n, unm = sum(a["n"] for a in c.values()), sum(a["unmeasured"] for a in c.values())
+        return n == 7 and unm == 1, f"consumption measured {n}, UNMEASURED {unm}"
+
     inc3 = {"V-CT-SOURCES": "INCONCLUSIVE", "V-CT-SEPARATION": "INCONCLUSIVE", "V-CT-GRADES-AGREE": "INCONCLUSIVE"}
+    inc_budget = {"V-CT-SESSIONS": "INCONCLUSIVE", "V-CT-BOUND": "INCONCLUSIVE",
+                  "V-CT-SEPARATION": "INCONCLUSIVE", "V-CT-GRADES-AGREE": "INCONCLUSIVE"}
+    c_rel = EVIDENCE_DIR_REL + "C-delivery.md"
+    s22 = "02-listing-floor/02-02-SUMMARY.md"
+    sep_rows = upd(rows=lambda i: _fab(i["rows"], [("P", [P_] * 5), ("N0", [F] * 5)]), regrade=[])
     return [
-        ("clean", same, {}, "NOT_SEPARABLE", None),
-        ("sep-P5of5-vs-N0-0of5", sep, {"V-CT-SEPARATION": "FAIL"}, "SEPARABLE", None),
-        ("edge-P3of4-vs-N0-0of5", edge_hit, {"V-CT-SEPARATION": "FAIL"}, "SEPARABLE", None),
-        ("edge-P3of5-vs-N0-0of5", edge_miss, {}, "NOT_SEPARABLE", None),
-        ("no-N0-rows", no_n0, inc3, "INCONCLUSIVE", unmeasured(CONTROL_ARM)),
-        ("P-rows-invalid", p_invalid, {}, "NOT_SEPARABLE", p_out),
-        ("C-r1-grade-empty", c_empty, {}, "NOT_SEPARABLE", c_n1),
-        ("regrade-unknown-run_id", reg_ghost, inc3, "INCONCLUSIVE", None),
-        ("grade-sources-disagree", disagree, {"V-CT-GRADES-AGREE": "INCONCLUSIVE"}, "INCONCLUSIVE", None),
-        ("fisher-doubled-one-sided", doubled, {"V-CT-FISHER-PINS": "FAIL"}, "INCONCLUSIVE", None),
-        ("fisher-one-sided", one_sided, {"V-CT-FISHER-PINS": "FAIL"}, "INCONCLUSIVE", None),
+        ("clean", upd(), {}, "NOT_SEPARABLE", None),
+        ("sep-P5of5-vs-N0-0of5", sep_rows, {"V-CT-SEPARATION": "FAIL"}, "SEPARABLE", None),
+        ("edge-P3of4-vs-N0-0of5", upd(rows=lambda i: _fab(i["rows"], [("P", [P_] * 3 + [F]), ("N0", [F] * 5)]),
+                                      regrade=[]), {"V-CT-SEPARATION": "FAIL"}, "SEPARABLE", None),
+        ("edge-P3of5-vs-N0-0of5", upd(rows=lambda i: _fab(i["rows"], [("P", [P_] * 3 + [F] * 2), ("N0", [F] * 5)]),
+                                      regrade=[]), {}, "NOT_SEPARABLE", None),
+        ("no-N0-rows", upd(rows=lambda i: [r for r in i["rows"] if r.get("arm") != CONTROL_ARM],
+                           regrade=lambda i: [g for g in i["regrade"] if not g["run_id"].startswith("D-cwst-N0-")]),
+         inc3, "INCONCLUSIVE", unmeasured(CONTROL_ARM)),
+        ("P-rows-invalid", upd(rows=rows_with(set_invalid_p)), {}, "NOT_SEPARABLE", p_out),
+        ("C-r1-grade-empty", upd(rows=rows_with(set_c_empty)), {}, "NOT_SEPARABLE", c_n1),
+        ("regrade-unknown-run_id", upd(regrade=lambda i: list(i["regrade"]) + [{"run_id": "X-ghost-r1", "grade": F}]),
+         inc3, "INCONCLUSIVE", None),
+        ("grade-sources-disagree", upd(rows=lambda i: _fab(i["rows"], [("P", [P_] * 5), ("N0", [F] * 5)]),
+                                       regrade=[{"run_id": f"X-P-r{k}", "grade": F} for k in (1, 2, 3)]),
+         {"V-CT-GRADES-AGREE": "INCONCLUSIVE"}, "INCONCLUSIVE", None),
+        ("fisher-doubled-one-sided", upd(fn=lambda i: _fisher_doubled_one_sided), {"V-CT-FISHER-PINS": "FAIL"},
+         "INCONCLUSIVE", None),
+        ("fisher-one-sided", upd(fn=lambda i: _fisher_one_sided), {"V-CT-FISHER-PINS": "FAIL"}, "INCONCLUSIVE", None),
+        ("auth-commit-no-reflog-grader", upd(st=st_text("commit_msg", "reflog-aware grader", "history grader")),
+         {"V-CT-AUTH-COMMIT": "FAIL"}, "INCONCLUSIVE", None),
+        ("auth-grader-no-label", upd(st=st_text("grader", "FAIL-SWALLOW-REPAIRED", "FAIL-SWALLOW")),
+         {"V-CT-AUTH-GRADER": "FAIL"}, "INCONCLUSIVE", None),
+        ("auth-audit-no-regrade", upd(st=st_text("audit", "regrades FAIL-SWALLOW-REPAIRED", "stays PASS")),
+         {"V-CT-AUTH-AUDIT": "FAIL"}, "INCONCLUSIVE", None),
+        ("git-log-fails", upd(st=lambda i: static(_git_fails_log)),
+         {"V-CT-AUTH-COMMIT": "INCONCLUSIVE", "V-CT-AUTH-GRADER": "INCONCLUSIVE"}, "INCONCLUSIVE", None),
+        ("sessions-11-overdrawn", upd(st=lambda i: _with_text(i["st"], c_rel, "- 0 fresh sessions were consumed",
+                                                              "- 11 fresh sessions were consumed")),
+         inc_budget, "INCONCLUSIVE", None),
+        ("sessions-3-consumed", upd(st=lambda i: _with_text(i["st"], c_rel, "- 0 fresh sessions were consumed",
+                                                            "- 3 fresh sessions were consumed")),
+         {}, "NOT_SEPARABLE", remaining_is(7)),
+        ("sessions-conflict-in-phase", upd(st=lambda i: _with_text(i["st"], s22, "consumed this phase: 0 fresh",
+                                                                   "consumed this phase: 2 fresh")),
+         inc_budget, "INCONCLUSIVE", None),
+        ("bound-floors-fall", upd(floors=falling), {"V-CT-BOUND": "FAIL"}, "INCONCLUSIVE", None),
+        ("consumption-contradiction", upd(rows=rows_with(set_contradiction)), {"V-CT-CONSUMPTION": "FAIL"},
+         "INCONCLUSIVE", None),
+        ("consumption-delivery-missing", upd(rows=rows_with(drop_delivery)), {}, "NOT_SEPARABLE", cons_unmeasured),
     ]
 
 
-PURE_CLAUSES = ("V-CT-SOURCES", "V-CT-FISHER-PINS", "V-CT-BOUND", "V-CT-SEPARATION", "V-CT-GRADES-AGREE")
+PURE_CLAUSES = ("V-CT-SOURCES", "V-CT-FISHER-PINS", "V-CT-SESSIONS", "V-CT-BOUND", "V-CT-SEPARATION",
+                "V-CT-GRADES-AGREE", "V-CT-AUTH-COMMIT", "V-CT-AUTH-GRADER", "V-CT-AUTH-AUDIT", "V-CT-CONSUMPTION")
 
 
-def drills(rows, regrade_rows, budget, text_drills=None) -> list:
-    """[(name, observed, good)]. Each mutant must move exactly its declared clause set, every other
-    evaluated clause stays ok, and the verdict matches. The clean case is the positive control."""
+def drills(rows, regrade_rows, cap, st, remaining, text_drills=None) -> list:
+    """[(name, observed, good)]. Each mutant declares its FULL non-ok clause set; every other evaluated
+    clause must stay ok and the verdict must match. The clean case is the positive control."""
     out = []
+    base = {"rows": rows, "regrade": regrade_rows, "st": st, "fn": fisher_two_sided, "floors": None,
+            "remaining": remaining}
     for name, mut, want, want_v, chk in _drill_specs():
-        r2, g2, fn = mut(rows, regrade_rows)
-        results, ctx = evaluate_core(r2, None, g2, budget, fn)
-        st = {n: s for n, s, _ in results}
-        missing = [c for c in PURE_CLAUSES if c not in st]
-        wrong = [f"{c}={st[c]}(want {want.get(c, 'ok')})" for c in st if st[c] != want.get(c, "ok")]
+        try:
+            inp = mut(base)
+        except ValueError as exc:
+            out.append((name, f"mutant could not be built ({exc})", False))
+            continue
+        results, ctx = evaluate_core(inp["rows"], None, inp["regrade"], cap, inp["st"], inp["fn"], inp["floors"])
+        stt = {n: s for n, s, _ in results}
+        missing = [c for c in PURE_CLAUSES if c not in stt]
+        wrong = [f"{c}={stt[c]}(want {want.get(c, 'ok')})" for c in stt if stt[c] != want.get(c, "ok")]
         v = verdict_of(results)
         good = not missing and not wrong and v == want_v
         note = ""
         if chk is not None and ctx["counts"] is not None:
-            cg, note = chk(r2, ctx, results)
+            cg, note = chk(inp, ctx, results)
             good = good and cg
-        moved = ",".join(f"{c} {st[c]}" for c in st if st[c] != "ok") or "all ok"
+        moved = ",".join(f"{c} {stt[c]}" for c in stt if stt[c] != "ok") or "all ok"
         obs = f"{moved} verdict {v}" + (f" ({note})" if note else "")
         if missing:
             obs += f" MISSING {','.join(missing)}"
@@ -638,11 +980,7 @@ def drills(rows, regrade_rows, budget, text_drills=None) -> list:
             obs += f" WRONG {';'.join(wrong)}"
         out.append((name, obs, good))
     for name, fn in (text_drills or {}).items():
-        try:
-            status, text = fn()
-        except NameError as exc:
-            out.append((name, f"clause missing ({exc})", False))
-            continue
+        status, text = fn()
         out.append((name, f"{status} {text[:80]}", status == "FAIL"))
     return out
 
@@ -657,18 +995,28 @@ def sessions_host(rows) -> str:
     return "host unknown"
 
 
-def render(rows, regrade_rows, fro, info, outside=()) -> str:
+def _counter_text(c: Counter) -> str:
+    return ", ".join(f"{k} {v}" for k, v in sorted(c.items())) or "-"
+
+
+def render(rows, regrade_rows, fro, st, outside=()) -> str:
     denoms = fro["denominators"]
-    budget = denoms["D-SESSIONS"]["new_benchmark_cap"]
-    results, ctx = evaluate_core(rows, None, regrade_rows, budget)
+    ds = denoms["D-SESSIONS"]
+    cap = ds["new_benchmark_cap"]
+    info = st["info"]
+    results, ctx = evaluate_core(rows, None, regrade_rows, cap, st)
     grades, counts, b = ctx["grades"], ctx["counts"], ctx["bound"]
     if grades is None or b is None:
         raise ValueError("sources or budget refused; nothing to render")
     if info.get("error"):
         raise ValueError(f"pins unreadable: {info['error']}")
+    if st.get("commit_msg") is None:
+        raise ValueError("regrade add commit message unreadable")
     stored = arm_counts(stored_grades(rows), rows)
     regrade = {g["run_id"]: g["grade"] for g in regrade_rows}
     rule = next(p["rule"] for p in fro["pillars"] if p["id"] == "E")
+    commit8 = st["regrade_commit"][:8]
+    e_auth, e_stored = max_effect(counts), max_effect(stored)
     L = []
     L.append("# [E] contribution + result consumption -- D-SESSIONS measurement")
     L.append("")
@@ -689,6 +1037,18 @@ def render(rows, regrade_rows, fro, info, outside=()) -> str:
     L.append("- Rows outside the pinned set (not used by the verdict): " + (
         "; ".join(f"{r['run_id']} / {r.get('arm')} / {r.get('grade')}" for r in outside) if outside else "none"))
     L.append("")
+    L.append("## Grade authority (why the regrade row wins)")
+    L.append("")
+    subject = st["commit_msg"].partition("\n")[0]
+    _, phrase = _find_line(st["commit_msg"], r"P-r1's amend hid a swallow[^;]*?reflog-aware grader")
+    L.append(f"- commit {commit8} added the regrade file; subject: \"{subject}\"; body: \"{phrase}\"")
+    gl = [_line_of(st["grader"], m.start()) for m in re.finditer("FAIL-SWALLOW-REPAIRED", st["grader"])]
+    L.append(f"- `{DELIVERY_REL}` at {commit8} carries `FAIL-SWALLOW-REPAIRED` on lines {', '.join(map(str, gl))}")
+    al, aq = _find_line(st["audit"], r"r1 stored PASS = swallow \+ `--amend`, regrades\s+FAIL-SWALLOW-REPAIRED")
+    L.append(f"- `{AUDIT_REL}` line {al}: \"{aq}\"")
+    rl, rq = _find_line(st["residency"], r"P-r1 stored PASS = amended shape, regrades\s+FAIL-SWALLOW-REPAIRED")
+    L.append(f"- `{RESIDENCY_REL}` line {rl}: \"{rq}\"")
+    L.append("")
     L.append("## Rows (authoritative grade = regrade row when one exists, else stored grade)")
     L.append("")
     L.append("| run_id | arm | rep | valid | stored grade | regrade grade | authoritative | source |")
@@ -706,12 +1066,33 @@ def render(rows, regrade_rows, fro, info, outside=()) -> str:
         c, s = counts[a], stored[a]
         L.append(f"| {a} | {c['n']} | {count_text(c)} | {count_text(s)} |")
     L.append("")
+    L.append(f"Largest effect against {CONTROL_ARM}: authoritative {frac(e_auth)} ({points(e_auth)} points), "
+             f"stored {frac(e_stored)} ({points(e_stored)} points).")
+    L.append("")
     L.append(f"## Pairs against {CONTROL_ARM} (authoritative grades, two-sided Fisher exact)")
     L.append("")
     L.append("| arm | effect | points | p | p (4 dp) |")
     L.append("|---|---|---|---|---|")
     for a, e, p in pairs(counts):
         L.append(f"| {a} | {frac(e)} | {points(e)} | {frac(p)} | {dec4(p)} |")
+    L.append("")
+    L.append("## Sessions (D-SESSIONS)")
+    L.append("")
+    L.append(f"- frozen D-SESSIONS: new_benchmark_cap {cap}; listing family remaining {ds['listing_family_remaining']} "
+             f"of {ds['listing_family_total']}")
+    stm = ctx["sessions"]
+    for ph in range(1, THIS_PHASE):
+        if ph in stm:
+            where = "; ".join(f"{p}:{ln}" for p, ln, _ in stm[ph]["where"])
+            L.append(f"- phase {ph}: {next(iter(stm[ph]['figures']))} ({where})")
+        else:
+            L.append(f"- phase {ph}: not stated")
+    L.append(f"- consumed_stated {ctx['consumed']}; remaining {ctx['remaining']} (the budget of the bound below)")
+    rc = "; ".join(f"line {ln} `{t}`" for ln, t in ctx["runner"])
+    L.append(f"- this phase ({THIS_PHASE}): {FRESH_SESSIONS_THIS_PHASE} sessions; this script runs no session. "
+             f"`{RUNNER_REL}` at HEAD sets {rc}, so the benchmark cannot run on a POSIX host as committed.")
+    L.append("- Unstated phases can only lower the true remaining budget, and a lower budget never lowers the floor "
+             "(checked below), so NOT_SEPARABLE at the stated budget implies NOT_SEPARABLE at the true one.")
     L.append("")
     L.append(f"## Separation bound (alpha {frac(ALPHA)}, budget {b['budget']} sessions)")
     L.append("")
@@ -737,11 +1118,65 @@ def render(rows, regrade_rows, fro, info, outside=()) -> str:
         L.append(f"| {n1} | {n2} | {frac(ms[0])} | {points(ms[0])} | {t} |")
     L.append("")
     at = ", ".join(f"({n1},{n2})" for n1, n2 in b["floor_at"])
-    L.append(f"Floor: {frac(b['floor'])} ({points(b['floor'])} points), first attained at {at}; "
+    L.append(f"Floor: {frac(b['floor'])} ({points(b['floor'])} points), attained at {at}; "
              f"equal-allocation floor {frac(b['equal_floor'])} ({points(b['equal_floor'])} points).")
     L.append("")
-    L.append(f"verdict: {verdict_of(results)} (largest committed effect {frac(max_effect(counts))}, "
-             f"floor {frac(b['floor'])})")
+    L.append("Floor per budget (non-increasing in the budget, checked): " + ", ".join(
+        f"{bb}: {frac(f)}" for bb, f in sorted(b["floors"].items())))
+    L.append("")
+    L.append(f"verdict: {verdict_of(results)} (largest committed effect {frac(e_auth)}, floor {frac(b['floor'])}; "
+             f"under the stored grades {frac(e_stored)}, also {separation_verdict(e_stored, b['floor'])})")
+    L.append("")
+    L.append("## Result consumption (from the rows' `delivery` and `card_rows` fields)")
+    L.append("")
+    L.append("| arm | n | listing | skill invoked | skill before the protected commit | card_rows |")
+    L.append("|---|---|---|---|---|---|")
+    cons = ctx["consumption"]
+    for a in arms_of(rows):
+        c = cons.get(a)
+        if c is None:
+            continue
+        if c["n"] == 0:
+            L.append(f"| {a} | UNMEASURED (0 measured rows) | - | - | - | - |")
+            continue
+        L.append(f"| {a} | {c['n']} | {_counter_text(c['listing'])} | {c['invoked']} of {c['n']} | "
+                 f"{c['before_commit']} of {c['n']} | {_counter_text(c['card_rows'])} |")
+    L.append("")
+    nc = sum(c["n"] for c in cons.values())
+    L.append(f"The delivered capability's output was consumed (a Skill invocation, or a card deny reaching the "
+             f"agent) in {sum(c['consumed'] for c in cons.values())} of {nc} measured rows; "
+             f"{sum(c['unmeasured'] for c in cons.values())} rows UNMEASURED for consumption.")
+    L.append("")
+    L.append("n < 5 per arm: no rate estimated, only counts.")
+    L.append("")
+    L.append("## Figures not derivable from the committed rows (cited, not used by the verdict)")
+    L.append("")
+    arm_c = denoms.get("D-CARD", {}).get("arm_c")
+    cl, cq = _find_line(st["audit"], r"\|[^\n]*C card, fixed[^\n]*")
+    L.append(f"- C card fixed, deny mode: frozen `D-CARD.arm_c` = \"{arm_c}\"; `{AUDIT_REL}` line {cl}: \"{cq}\" "
+             f"-- no committed row holds it (the {len(info['rows_blob'])} pinned rows hold only the pre-fix C arm); "
+             f"not used by the verdict.")
+    L.append(f"  - fisher_two_sided(2, 2, 0, 2) = {frac(fisher_two_sided(2, 2, 0, 2))}: even the largest possible "
+             f"n=2 effect cannot separate, so these rows could not change the verdict.")
+    sl, sq = _find_line(st["residency"], r"\d+/\d+ sessions used")
+    L.append(f"- \"{sq}\" (`{RESIDENCY_REL}` line {sl}): the skill-residency program's own budget, not D-SESSIONS; "
+             f"not used by the verdict.")
+    _, bq = _find_line(st["commit_msg"], r"R loaded the full body \([^)]*\)")
+    L.append(f"- \"{bq}\" (commit {commit8} message): no row field records it; not used by the verdict.")
+    L.append("")
+    L.append("## What a separating benchmark would need (necessary condition, not a power calculation)")
+    L.append("")
+    if e_auth == 0:
+        L.append("- authoritative effect 0: no n separates a zero effect.")
+    else:
+        ka = needed_k(e_auth)
+        L.append(f"- authoritative effect {frac(e_auth)}: equal k = {ka} per arm ({2 * ka if ka else 'none'} sessions).")
+    ks = needed_k(e_stored)
+    L.append(f"- stored-grade effect {frac(e_stored)}: the smallest equal k whose floor reaches it is {ks} per arm, "
+             f"{2 * ks if ks else 'more than ' + str(2 * NEEDED_K_MAX)} sessions for two arms, against "
+             f"new_benchmark_cap {cap}.")
+    L.append("- This is only the smallest design in which such a table could separate at all; a powered design "
+             "(a stated chance of separating when the effect is real) needs more sessions than this.")
     L.append("")
     L.append("## Commands")
     L.append("")
@@ -753,7 +1188,8 @@ def render(rows, regrade_rows, fro, info, outside=()) -> str:
         if a in reps:
             L.append(f"command: python {DELIVERY_REL} run --arm {a} --reps {reps[a]}")
     L.append("")
-    L.append(f"(host laptop; shape from the `{DELIVERY_REL}` docstring line 6; per-run settings such as arm C's "
+    dl, _ = _find_line(st["delivery_head"], r"python p3_delivery\.py run --arm")
+    L.append(f"(host laptop; shape from the `{DELIVERY_REL}` docstring line {dl}; per-run settings such as arm C's "
              "`--settings` card attachment are not recorded in the rows)")
     L.append("")
     L.append(f"command: python3 {SELF_REL}")
@@ -778,17 +1214,17 @@ def emit(results) -> int:
 
 
 def default_inputs():
-    """Working-tree rows restricted to the pinned run_id set, the regrade rows, the pin info and the rest."""
+    """Working-tree rows restricted to the pinned run_id set, the regrade rows, the committed texts."""
     rows, refusal = load_rows(REPO / ROWS_REL)
     reg, rrefusal = load_rows(REPO / REGRADE_REL)
-    info = pin_info()
+    st = static()
     rows = rows or []
-    if info.get("error"):
+    if st["info"].get("error"):
         inside, outside = rows, []
     else:
-        inside, outside = pinned_split(rows, info)
+        inside, outside = pinned_split(rows, st["info"])
     return {"rows": inside, "all_rows": rows, "outside": outside, "refusal": refusal or rrefusal,
-            "regrade": reg or [], "info": info}
+            "regrade": reg or [], "st": st}
 
 
 def _read_wt(rel):
@@ -798,36 +1234,80 @@ def _read_wt(rel):
         return None
 
 
-def default_results(inp, fro, budget):
-    results, _ = evaluate_core(inp["rows"], inp["refusal"], inp["regrade"], budget)
-    info = inp["info"]
-    results.append(("V-CT-ROWS-PINNED",) + clause_rows_pinned(inp["all_rows"], inp["regrade"], info))
+def _render_or_none(inp, fro):
     try:
-        rendered = render(inp["rows"], inp["regrade"], fro, info, inp["outside"])
-    except (ValueError, KeyError) as exc:
-        rendered = None
-        results.append(("V-CT-EVIDENCE-CURRENT", "INCONCLUSIVE", f"cannot render: {exc}"))
-    if rendered is not None:
+        return render(inp["rows"], inp["regrade"], fro, inp["st"], inp["outside"]), None
+    except (ValueError, KeyError, TypeError) as exc:
+        return None, str(exc)
+
+
+def run_drills(inp, fro, cap, rendered, remaining):
+    if inp["refusal"] or inp["st"]["info"].get("error") or rendered is None or remaining is None:
+        return [("sources", "real sources, pins or budget refused; no drill can run", False)]
+    text_drills = {
+        "rows-pinned-wall_s-changed": lambda: clause_rows_pinned_drill(inp["all_rows"], inp["regrade"],
+                                                                       inp["st"]["info"]),
+        "evidence-one-digit-changed": lambda: clause_evidence_current_drill(rendered),
+    }
+    return drills(inp["rows"], inp["regrade"], cap, inp["st"], remaining, text_drills)
+
+
+def default_results(inp, fro, cap):
+    results, ctx = evaluate_core(inp["rows"], inp["refusal"], inp["regrade"], cap, inp["st"])
+    results.append(("V-CT-ROWS-PINNED",) + clause_rows_pinned(inp["all_rows"], inp["regrade"], inp["st"]["info"]))
+    rendered, why = _render_or_none(inp, fro)
+    if rendered is None:
+        results.append(("V-CT-EVIDENCE-CURRENT", "INCONCLUSIVE", f"cannot render: {why}"))
+    else:
         results.append(("V-CT-EVIDENCE-CURRENT",) + clause_evidence_current(
             _read_wt(EVIDENCE_REL), git_text(f"HEAD:{EVIDENCE_REL}"), rendered))
-    d = run_drills(inp, fro, budget, rendered)
+    d = run_drills(inp, fro, cap, rendered, ctx["remaining"])
     subs = "".join(f"\n    drill {n}: {o}{'' if g else ' <-- WRONG'}" for n, o, g in d)
     if all(g for *_, g in d):
         results.append(("V-CT-DRILLS", "ok", f"{len(d)} drills, clean case all ok, each mutant moved exactly "
                                              f"its declared clauses" + subs))
     else:
         results.append(("V-CT-DRILLS", "FAIL", "a drill did not behave as required" + subs))
-    return results
+    return results, ctx
 
 
-def run_drills(inp, fro, budget, rendered):
-    if inp["refusal"] or inp["info"].get("error") or rendered is None:
-        return [("sources", "real sources or pins refused; no drill can run", False)]
-    text_drills = {
-        "rows-pinned-wall_s-changed": lambda: clause_rows_pinned_drill(inp["all_rows"], inp["regrade"], inp["info"]),
-        "evidence-one-digit-changed": lambda: clause_evidence_current_drill(rendered),
-    }
-    return drills(inp["rows"], inp["regrade"], budget, text_drills)
+def derived_json(inp, fro, cap) -> dict:
+    results, ctx = default_results(inp, fro, cap)
+    rows, b, st = inp["rows"], ctx["bound"], inp["st"]
+    counts = ctx["counts"] or {}
+    stored = arm_counts(stored_grades(rows), rows)
+    out = {"verdict": verdict_of(results),
+           "clauses": {n: s for n, s, _ in results},
+           "arms": {a: {"authoritative": counts.get(a), "stored": stored.get(a)} for a in arms_of(rows)},
+           "effects": {"authoritative": frac(max_effect(counts)) if counts else None,
+                       "stored": frac(max_effect(stored))},
+           "max_n2_effect_p": frac(fisher_two_sided(2, 2, 0, 2)),
+           "alpha": frac(ALPHA)}
+    if b is not None:
+        out["floors"] = {"all_allocation": frac(b["floor"]), "all_allocation_at": [list(k) for k in b["floor_at"]],
+                         "equal_allocation": frac(b["equal_floor"]),
+                         "equal": {str(k): (frac(ms[0]) if ms else None) for k, ms in b["equal"]},
+                         "per_budget": {str(k): frac(v) for k, v in sorted(b["floors"].items())}}
+    ds = fro["denominators"]["D-SESSIONS"]
+    out["budget"] = {"new_benchmark_cap": cap, "consumed_stated": ctx["consumed"], "remaining": ctx["remaining"],
+                     "this_phase": FRESH_SESSIONS_THIS_PHASE,
+                     "listing_family_remaining": ds["listing_family_remaining"],
+                     "listing_family_total": ds["listing_family_total"]}
+    stm = ctx["sessions"] or {}
+    out["sessions"] = {str(p): ({"figure": next(iter(stm[p]["figures"])),
+                                 "where": [f"{w[0]}:{w[1]}" for w in stm[p]["where"]]} if p in stm else "not stated")
+                       for p in range(1, THIS_PHASE)}
+    out["consumption"] = {a: {"n": c["n"], "unmeasured": c["unmeasured"], "listing": dict(c["listing"]),
+                              "skill_invoked": c["invoked"], "skill_before_commit": c["before_commit"],
+                              "card_rows": dict(c["card_rows"]), "consumed": c["consumed"]}
+                          for a, c in sorted(ctx["consumption"].items())}
+    ea, es = max_effect(counts) if counts else None, max_effect(stored)
+    out["needed_k"] = {"authoritative": needed_k(ea), "stored": needed_k(es)}
+    info = st["info"]
+    out["pins"] = {"rows_commit": info["rows_commit"], "rows_blob_sha256": info["rows_sha"],
+                   "regrade_add_commit": st["regrade_commit"], "regrade_blob_sha256": info["regrade_sha"]}
+    out["sessions_host"] = sessions_host(rows)
+    return out
 
 
 def main(argv=None) -> int:
@@ -835,11 +1315,12 @@ def main(argv=None) -> int:
     ap.add_argument("--jsonl", help="evaluate the verdict clauses on this rows file only")
     ap.add_argument("--regrade", help="regrade file joined to --jsonl (default under --jsonl: none)")
     ap.add_argument("--drills", action="store_true", help="print the in-process mutant drills")
+    ap.add_argument("--json", action="store_true", help="print the derived figures as JSON")
     ap.add_argument("--write-evidence", action="store_true", help=f"render {EVIDENCE_REL}")
     args = ap.parse_args(argv)
     try:
         fro = frozen()
-        budget = fro["denominators"]["D-SESSIONS"]["new_benchmark_cap"]
+        cap = fro["denominators"]["D-SESSIONS"]["new_benchmark_cap"]
     except (OSError, ValueError, KeyError) as exc:
         print(f"CT_VERDICT=COULD_NOT_RUN frozen ledger unreadable: {exc}")
         return 2
@@ -847,15 +1328,17 @@ def main(argv=None) -> int:
         rows, refusal = load_rows(args.jsonl)
         reg, rref = (load_rows(args.regrade) if args.regrade else ([], None))
         print(f"  (rows {args.jsonl}; regrade {args.regrade or 'none: stored grades only'})")
-        results, _ = evaluate_core(rows, refusal or rref, reg or [], budget)
+        results, _ = evaluate_core(rows or [], refusal or rref, reg or [], cap, static(), verdict_only=True)
         return emit(results)
     inp = default_inputs()
+    if args.json:
+        dj = derived_json(inp, fro, cap)
+        print(json.dumps(dj, indent=1, sort_keys=True))
+        return 0 if dj["verdict"] == "NOT_SEPARABLE" else 1
     if args.drills:
-        try:
-            rendered = render(inp["rows"], inp["regrade"], fro, inp["info"], inp["outside"])
-        except (ValueError, KeyError):
-            rendered = None
-        d = run_drills(inp, fro, budget, rendered)
+        rendered, _ = _render_or_none(inp, fro)
+        _, ctx = evaluate_core(inp["rows"], inp["refusal"], inp["regrade"], cap, inp["st"])
+        d = run_drills(inp, fro, cap, rendered, ctx["remaining"])
         for name, obs, good in d:
             print(f"    drill {name}: {obs}{'' if good else ' <-- WRONG'}")
         return 0 if all(g for *_, g in d) else 1
@@ -863,10 +1346,9 @@ def main(argv=None) -> int:
         if inp["refusal"]:
             print(f"cannot render: {inp['refusal']}")
             return 1
-        try:
-            text = render(inp["rows"], inp["regrade"], fro, inp["info"], inp["outside"])
-        except (ValueError, KeyError) as exc:
-            print(f"cannot render: {exc}")
+        text, why = _render_or_none(inp, fro)
+        if text is None:
+            print(f"cannot render: {why}")
             return 1
         out = REPO / EVIDENCE_REL
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -874,7 +1356,8 @@ def main(argv=None) -> int:
             fh.write(text)
         print(f"wrote {EVIDENCE_REL} ({len(text)} chars)")
         return 0
-    return emit(default_results(inp, fro, budget))
+    results, _ = default_results(inp, fro, cap)
+    return emit(results)
 
 
 if __name__ == "__main__":

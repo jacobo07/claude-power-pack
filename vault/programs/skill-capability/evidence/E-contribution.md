@@ -12,6 +12,13 @@ Frozen pillar E rule (ledger `frozen.pillars[E].rule`):
 - regrade: `.planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/results-delivery-regrade.jsonl`, blob at its add commit 713b02a7 (6 rows), LF sha256 `07792b9862814703a7e9d57269bebb9ed48257b01ac70395fa0997b84ee78620`
 - Rows outside the pinned set (not used by the verdict): none
 
+## Grade authority (why the regrade row wins)
+
+- commit 713b02a7 added the regrade file; subject: "test(r2): CWST delivery runs -- 6/6 swallow across N0/R/P; residency and judged paging both fail, commit card earned (C3, C7)"; body: "P-r1's amend hid a swallow from the history grader -> reflog-aware grader"
+- `.planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/p3_delivery.py` at 713b02a7 carries `FAIL-SWALLOW-REPAIRED` on lines 147, 307, 308
+- `vault/audits/cwst-representation-verdict-2026-10-03.md` line 19: "r1 stored PASS = swallow + `--amend`, regrades FAIL-SWALLOW-REPAIRED"
+- `vault/plans/skill-residency-program-2026-10-03.md` line 92: "P-r1 stored PASS = amended shape, regrades FAIL-SWALLOW-REPAIRED"
+
 ## Rows (authoritative grade = regrade row when one exists, else stored grade)
 
 | run_id | arm | rep | valid | stored grade | regrade grade | authoritative | source |
@@ -34,6 +41,8 @@ Frozen pillar E rule (ledger `frozen.pillars[E].rule`):
 | P | 2 | 0 of 2 | 1 of 2 |
 | C | 2 | 0 of 2 | 0 of 2 |
 
+Largest effect against N0: authoritative 0 (0 points), stored 1/2 (50 points).
+
 ## Pairs against N0 (authoritative grades, two-sided Fisher exact)
 
 | arm | effect | points | p | p (4 dp) |
@@ -41,6 +50,19 @@ Frozen pillar E rule (ledger `frozen.pillars[E].rule`):
 | R | 0 | 0 | 1 | 1.0000 |
 | P | 0 | 0 | 1 | 1.0000 |
 | C | 0 | 0 | 1 | 1.0000 |
+
+## Sessions (D-SESSIONS)
+
+- frozen D-SESSIONS: new_benchmark_cap 10; listing family remaining 8 of 12
+- phase 1: not stated
+- phase 2: 0 (.planning/workstreams/skill-capability/phases/02-listing-floor/02-02-SUMMARY.md:47; vault/programs/skill-capability/evidence/B-listing-floor.md:3; vault/programs/skill-capability/evidence/B-listing-floor.md:52)
+- phase 3: 0 (vault/programs/skill-capability/evidence/C-delivery.md:84)
+- phase 4: not stated
+- phase 5: 0 (vault/programs/skill-capability/evidence/F-representation.md:50)
+- phase 6: not stated
+- consumed_stated 0; remaining 10 (the budget of the bound below)
+- this phase (7): 0 sessions; this script runs no session. `.planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/p3_runner.py` at HEAD sets line 29 `RUNS = Path(r"C:\Users\User\Apps\p3-runs")`; line 32 `CLAUDE = r"C:\Users\User\.local\bin\claude.exe"`, so the benchmark cannot run on a POSIX host as committed.
+- Unstated phases can only lower the true remaining budget, and a lower budget never lowers the floor (checked below), so NOT_SEPARABLE at the stated budget implies NOT_SEPARABLE at the true one.
 
 ## Separation bound (alpha 1/20, budget 10 sessions)
 
@@ -81,9 +103,37 @@ All allocations n1 + n2 <= 10 (n1, n2 >= 1): 45 allocations, 23 separate nothing
 | 7 | 3 | 6/7 | 600/7 | 1/7 vs 3/3 p=1/30; 6/7 vs 0/3 p=1/30 |
 | 8 | 2 | 1 | 100 | 0/8 vs 2/2 p=1/45; 8/8 vs 0/2 p=1/45 |
 
-Floor: 3/4 (75 points), first attained at (4,5), (4,6), (5,4), (6,4); equal-allocation floor 4/5 (80 points).
+Floor: 3/4 (75 points), attained at (4,5), (4,6), (5,4), (6,4); equal-allocation floor 4/5 (80 points).
 
-verdict: NOT_SEPARABLE (largest committed effect 0, floor 3/4)
+Floor per budget (non-increasing in the budget, checked): 2: none, 3: none, 4: none, 5: none, 6: none, 7: 1, 8: 1, 9: 3/4, 10: 3/4
+
+verdict: NOT_SEPARABLE (largest committed effect 0, floor 3/4; under the stored grades 1/2, also NOT_SEPARABLE)
+
+## Result consumption (from the rows' `delivery` and `card_rows` fields)
+
+| arm | n | listing | skill invoked | skill before the protected commit | card_rows |
+|---|---|---|---|---|---|
+| N0 | 2 | absent 2 | 0 of 2 | 0 of 2 | - |
+| R | 2 | absent 2 | 0 of 2 | 0 of 2 | - |
+| P | 2 | bare 2 | 0 of 2 | 0 of 2 | - |
+| C | 2 | bare 2 | 0 of 2 | 0 of 2 | unknown 2 |
+
+The delivered capability's output was consumed (a Skill invocation, or a card deny reaching the agent) in 0 of 8 measured rows; 0 rows UNMEASURED for consumption.
+
+n < 5 per arm: no rate estimated, only counts.
+
+## Figures not derivable from the committed rows (cited, not used by the verdict)
+
+- C card fixed, deny mode: frozen `D-CARD.arm_c` = "2/2 PASS (123c96cc)"; `vault/audits/cwst-representation-verdict-2026-10-03.md` line 21: "| **C card, fixed (123c96cc), deny mode** | 2 | **2/2 PASS**, 1 commit each |" -- no committed row holds it (the 8 pinned rows hold only the pre-fix C arm); not used by the verdict.
+  - fisher_two_sided(2, 2, 0, 2) = 1/3: even the largest possible n=2 effect cannot separate, so these rows could not change the verdict.
+- "10/40 sessions used" (`vault/plans/skill-residency-program-2026-10-03.md` line 93): the skill-residency program's own budget, not D-SESSIONS; not used by the verdict.
+- "R loaded the full body (proven by a body-only sentence)" (commit 713b02a7 message): no row field records it; not used by the verdict.
+
+## What a separating benchmark would need (necessary condition, not a power calculation)
+
+- authoritative effect 0: no n separates a zero effect.
+- stored-grade effect 1/2: the smallest equal k whose floor reaches it is 10 per arm, 20 sessions for two arms, against new_benchmark_cap 10.
+- This is only the smallest design in which such a table could separate at all; a powered design (a stated chance of separating when the effect is real) needs more sessions than this.
 
 ## Commands
 
