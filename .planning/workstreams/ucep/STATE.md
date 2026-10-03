@@ -50,6 +50,16 @@ Base commit at creation: `a9c603f` on `feature/knowledge-acquisition`.
   `gsd-plan-checker.md`, because the contract guard blocks the read-only checker on the phrase
   "plan of record" (FP-AGENT-CONTRACT-RECORD-NOUN, `governance/KNOWN_FALSE_POSITIVES.md`).
   In agent prompts, call the spec "governing spec", never "plan of record".
+- 2026-10-03, epoch 2: Phase 2 executors are sequential `gsd-executor` (sonnet), isolation `none`.
+  The workflow's build-time embed of execute-plan.md / summary.md / checkpoints.md / tdd.md /
+  worktree-path-safety.md is replaced by a mandatory first-step Read of those exact files (same
+  content, no `@`-include risk, prompt stays small). The step-0p root pin IS embedded verbatim,
+  bound to this worktree, with a PATH line for git. Every executor's gates are re-run by the
+  orchestrator before the next dispatch (02-01: 12/12, 20/20, 24/24 reproduced).
+- 2026-10-03, epoch 2: `.planning/workstreams/ucep/config.json` (only `_auto_chain_active:false`)
+  was created by the orchestrator's `config-set` despite its "No config.json" message; left
+  uncommitted with `state.json`/`milestone.lock`. `git.base-branch --is-protected` fails closed
+  ("protected") because branch metadata is unreadable; `ucep/mission` is not a protected branch.
 
 ## Owner review items
 
