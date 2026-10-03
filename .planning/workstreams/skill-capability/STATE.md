@@ -1,23 +1,23 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-current_phase: 05 — Representation operations
+current_phase: 06 — Compile-out lineage
 current_plan: Not started
 status: planning
-stopped_at: Phase 04 complete, ready to plan Phase 05
-last_updated: "2026-10-03T19:28:05.463Z"
+stopped_at: Phase 05 complete, ready to plan Phase 06
+last_updated: "2026-10-03T20:40:06.672Z"
 last_activity: 2026-10-03
-state_head: bec199a7cfabe83dc679ef4fc984a6dbbf9b881c
+state_head: 9e4435afba9528ebac89bc5115ea0fc802499ad7
 progress:
   total_phases: 9
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 20
-  completed_plans: 12
-  percent: 44
+  completed_plans: 15
+  percent: 56
 milestone_name: skill-capability
 workstream: skill-capability
 created: 2026-10-03
-current_phase_name: Representation operations
+current_phase_name: Compile-out lineage
 ---
 
 # Project State
@@ -33,7 +33,7 @@ compile-out, capability-lifecycle. Availability without residency, proven by nee
 Current Plan: Not started
 Total Plans in Phase: 3
 **Status:** Ready to plan
-**Current Phase:** 05 — Representation operations
+**Current Phase:** 06 — Compile-out lineage
 **Last Activity:** 2026-10-03
 
 ## Sealed before the run (interactive pane, session c85f3eb9)
@@ -66,7 +66,7 @@ Total Plans in Phase: 3
 
 **Last session:** 2026-10-03T18:55:16.029Z
 
-**Stopped At:** Phase 04 complete, ready to plan Phase 05
+**Stopped At:** Phase 05 complete, ready to plan Phase 06
 **Resume File:** None (the epoch 2 hand-off section below; its NEXT is now phase 4 code review + verification)
 
 ### Epoch 3 progress (verify against git, the repository wins)

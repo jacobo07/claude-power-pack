@@ -1,8 +1,8 @@
 ---
 phase: 05-representation-operations
 verified: 2026-10-03T22:55:00Z
-status: gaps_found
-score: 17/18 must-have truths verified (roadmap criterion + 17 plan truths). One partial - 05-01 truth 5, the listing-chars "upper bound" (WR-05). 3/3 plans have a must-have I drove red independently
+status: passed
+score: 18/18 (re-verified after gap closure)
 covered_files:
   - .planning/workstreams/skill-capability/REQUIREMENTS.md
   - .planning/workstreams/skill-capability/phases/05-representation-operations/05-01-PLAN.md
@@ -18,13 +18,13 @@ covered_files:
   - vault/programs/skill-capability/f-operations.json
   - vault/programs/skill-capability/ledger.json
   - vault/programs/skill-capability/owner-bundle.md
-covered_digest: "v1:sha256:66fa1f3b871ad7b42c2b45b5fca91fce11f8117a89834b57e4c2c12dbbfbaf33"
+covered_digest: "v1:sha256:933e4b23623aa919e5a80dff89f23c411a48039d39b72c203125bf0bfb05a669"
 behavior_unverified: 0
 overrides_applied: 0
-verifier: gsd-verifier subagent, host gex44, worktree sc-run, HEAD 78ca9cac
+verifier: gsd-verifier subagent (HEAD 78ca9cac), re-verified by the orchestrator after gap closure (HEAD 9e4435af)
 gaps:
   - truth: "05-01 truth 5: the predicted effect is an UPPER BOUND (listing chars UNMEASURED unless every removable member is watched as described)"
-    status: partial
+    status: closed  # 8a8ffb8d, see Re-verification section
     reason: >-
       skill_dedup_sweep.listing_effect counts each member as len(name) + LINE_OVERHEAD (5) + N, where N is the
       probe's `described (N)`. The probe (wiki/tools/listing_floor_probe.py analyse) takes N from the FIRST line of
@@ -126,3 +126,21 @@ There is one partial gap. The listing-chars "upper bound" is not an upper bound 
 
 ---
 _Verified: 2026-10-03T22:55:00Z, gsd-verifier, host gex44_
+
+
+## Re-verification after gap closure (orchestrator, gex44, HEAD 9e4435af + owner-bundle line)
+
+- Gap WR-05 closed by 8a8ffb8d: a listing-chars figure counts only with `watch_shape` proof (one line, one key,
+  exact length = len(name) + 5 + N), else UNMEASURED; poles LISTING-MULTILINE and LISTING-NAME-COLLISION failed on
+  the old code (bound 108 vs 420 freed; 49 vs 316) and pass now. Checked against the real gex44 listing (transcript
+  88cfe52b): agent-reach, claude-api refused as multi-line, code-review refused as a collision.
+- WR-02 anchor closed by 76d5cac5 / f349cbcb: entries must name `applied_commit` (an ancestor of HEAD); V-FO-RECALL
+  requires before.end <= its %cI <= after.start. RECALL-BOTH-PRE-OP, RECALL-BOTH-POST-OP and MISSING-APPLIED-COMMIT
+  read no red clause on the old code and FAIL now; the git-failure drill reads INCONCLUSIVE; 4 mutants each turn
+  V-FO-DRILLS red (fixer-run).
+- state.F reason quotes the gate's drill line verbatim (27867eb1). Owner bundle [F] laptop line now names the
+  `applied_commit` and `watch_shape` requirements.
+- Gates observed by the orchestrator after these commits: `python3 tools/test_skill_representation.py` SR_PASS=15/15;
+  `--pillar` A, B, C, D, F, H all PASS; `--status` violations [].
+- Residual (stated limit, not a gap): a description continuation line beginning with `- ` reads as a new entry to
+  both the probe and `entry_shape` (docstring of tools/skill_dedup_sweep.py).

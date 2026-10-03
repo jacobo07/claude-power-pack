@@ -63,7 +63,7 @@ result. UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is n
 - [x] **Phase 2: Listing floor** - pillar B (completed 2026-10-03)
 - [x] **Phase 3: Opportunity and delivery measurement** - pillar C (completed 2026-10-03)
 - [x] **Phase 4: Coverage, criticality and freshness** - pillars D, H (completed 2026-10-03)
-- [ ] **Phase 5: Representation operations** - pillar F
+- [x] **Phase 5: Representation operations** - pillar F (completed 2026-10-03)
 - [ ] **Phase 6: Compile-out lineage** - pillar G
 - [ ] **Phase 7: Contribution** - pillar E
 - [ ] **Phase 8: Owner reconciliation and creation governance** - pillars I, J, K, L, M
@@ -176,7 +176,7 @@ settings; `python tools/test_skill_capability_program.py --final` exits 0, outpu
 | 2. Listing floor | 2/2 | Complete    | 2026-10-03 |
 | 3. Opportunity and delivery measurement | 3/3 | Complete    | 2026-10-03 |
 | 4. Coverage, criticality and freshness | 4/4 | Complete    | 2026-10-03 |
-| 5. Representation operations | 0/0 | Not started | - |
+| 5. Representation operations | 3/3 | Complete    | 2026-10-03 |
 | 6. Compile-out lineage | 0/0 | Not started | - |
 | 7. Contribution | 0/0 | Not started | - |
 | 8. Owner reconciliation and creation governance | 0/0 | Not started | - |
