@@ -1,31 +1,40 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 02 — Capability subject and archetypes
-status: planning
-last_updated: "2026-10-03T17:03:00.001Z"
+current_phase: 2
+current_plan: 2
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-10-03T17:35:09.035Z"
 last_activity: 2026-10-03
+last_activity_desc: Phase 2 execution started
+state_head: 18320d2f3346831fd3502c60da2467594d2cb478
 progress:
   total_phases: 9
   completed_phases: 1
   total_plans: 10
-  completed_plans: 5
+  completed_plans: 6
   percent: 11
 workstream: ucep
 created: 2026-10-02
 current_phase_name: Capability subject and archetypes
-current_plan: Not started
-stopped_at: Phase 2 planned; plan-checker running, then execute 02-01..02-05 sequentially
 ---
 
 # Project State
 
 ## Current Position
 
-**Status:** Ready to plan
-**Current Phase:** 02 — Capability subject and archetypes
-**Last Activity:** 2026-10-03
+Current Plan: 2
+Total Plans in Phase: 5
+
+**Status:** Ready to execute
+**Current Phase:** 2
+**Last Activity:** 2026-10-03 — Phase 2 execution started
 
 ## Session Continuity
+
+**Last session:** 2026-10-03T17:34:17.520Z
+**Stopped at:** Completed 02-01-PLAN.md
+**Resume file:** None
 
 Read, in order: `vault/plans/ucep-naked-verb-2026-10-02.md` (plan of record + Owner answers),
 `vault/plans/ucep-naked-verb-2026-10-02.audit.md` (18 gaps), this workstream's `ROADMAP.md`.
@@ -46,3 +55,14 @@ Base commit at creation: `a9c603f` on `feature/knowledge-acquisition`.
 
 - A1 (from Phase 1): the agent-typed "Owner" authority on the two re-anchor generations — see
   `phases/01-baseline-integrity-repair/01-EVIDENCE.md`.
+
+## Performance Metrics
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 02 P01 | 13 min | 2 tasks | 6 files |
+
+## Decisions
+
+- [Phase 02]: 02-01: archetype ids are single path segments, ARCHETYPE_ID_RE anchored with backslash-Z; ARCHETYPES in archetypes.py is the sole conjunction authority — A slash in an id invents a three-level baseline axis (R-5); a trailing newline must not slip through
+- [Phase 02]: 02-01: every cache miss reads UNJUDGED with a named cause (no-cache, stale, cache-malformed, unresolvable-root), never ABSENT; trait_scan is the only walker and archetypes never imports it — Absent is not zero: a later phase turns ABSENT into a justified NOT_APPLICABLE; the reader must stay inside the 3000 ms prompt chain
