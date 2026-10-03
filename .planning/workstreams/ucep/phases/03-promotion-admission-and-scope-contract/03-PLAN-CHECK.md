@@ -50,3 +50,11 @@ revision: requested from the planner, all five warnings
 - The `legacy=(0,)` migrations keep every gate name and `EXPECTED` value.
 - Gate 24 relies on `would_block_on_violated`, and nobody has verified that it exists in `donegate.judge`. The
   executor reads `donegate.py` before writing that predicate.
+
+## Pass 2 (after revision 897f5720)
+
+**Verdict: 0 blockers, 1 warning.** W1-W5 were all confirmed fixed, with plan:task citations; there was no regression in the criteria mapping, the RED-first order, the F0 sourcing, task sizes or dependencies; and the junction arm never touches the real tree.
+
+- **F1 (03-03 T1, gate 20, arm k):** an uncreatable junction dropped the arm while the suite still printed `20/20`, and the `JUNCTION_ARM=UNJUDGED` line was not machine-checked. **Fixed by the orchestrator in the plan text:** a second committed verify requires exactly one `JUNCTION_ARM=RAN` and zero `UNJUDGED`, printing `JUNCTION_ARM_GATE=PASS|FAIL`. The acceptance criteria and section 11 of 03-EVIDENCE record an unrun arm as UNJUDGED, never as passed.
+
+Plans are cleared for execution.
