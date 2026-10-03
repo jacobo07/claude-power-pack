@@ -93,7 +93,7 @@ environment first.
 1. Red test of the 137-relaunch shape (worker dies on `Login expired` before any API call) -> fix -> green.
 2. GEX44 a5/a7: rules version, hook health and interpreters checked by a repeatable preflight; broken hooks and
    stale rules repaired by a deploy script; re-login recorded in the owner bundle, never bypassed.
-**Plans:** 1/4 plans executed (sequential waves 1-4)
+**Plans:** 2/4 plans executed (sequential waves 1-4)
 
 Plans:
 **Wave 1**
@@ -102,7 +102,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02-PLAN.md — B: read-only GEX44 env preflight (auth, rules version, hooks, interpreters; READY/NOT_READY/UNMEASURABLE); evidence on a5/a7
+- [x] 02-02-PLAN.md — B: read-only GEX44 env preflight (auth, rules version, hooks, interpreters; READY/NOT_READY/UNMEASURABLE); evidence on a5/a7
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
