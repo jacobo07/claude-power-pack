@@ -277,13 +277,41 @@
    }
   },
   "B": {
-   "terminal": null,
-   "evidence": [],
+   "terminal": "AUTHORIZATION_BOUND",
+   "reason": "By the frozen rule, every rules->skills move needs an Owner yes per move, and the campaign executes none. 13 global rules (56,861 B) are still resident in full. Their moves are batched into the owner bundle as one [B] item; the bytes are a ceiling, not a saving.",
+   "evidence": [
+    {
+     "kind": "owner_decision",
+     "ref": "vault/programs/cognitive-economy/owner-bundle.md",
+     "sha256": "46f46172ca66dd886c62a97a630fd907d0b8e8990ebc9e1d866b503253479d7f"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/evidence/B-T-floor-and-gc.md",
+     "sha256": "7226675925015d55938a5f39895080a68aa755e5559ee0caf9378291d627c8a9"
+    }
+   ],
    "savings": []
   },
   "C": {
-   "terminal": null,
-   "evidence": [],
+   "terminal": "DEFERRED_STRONGER_OWNER",
+   "reason": "Tool half measured below the frozen 3 % rule (ToolSearch-loaded schema carriage 0.0020 % of D-W7 weighted; lazy loading already exists in the harness), so nothing is built. Skill and agent residency belong to the skill-residency program, the K-slice and agent-capability-virtualization; the campaign's per-skill invocation count for D-W7 is handed to them.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "vault/plans/skill-residency-program-2026-10-03.md"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/C.md",
+     "sha256": "a92ef536483147bcd626394a919057441040aea627bfcd14b16a296d82fce29a"
+    },
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/F-G-P-C-carriage.md",
+     "sha256": "d3dc5eb25df84a121ec13488f538a92ae5bf7965c07c3bb98b12d440b78c7abd"
+    }
+   ],
    "savings": []
   },
   "D": {
@@ -645,8 +673,19 @@
    }
   },
   "M": {
-   "terminal": null,
-   "evidence": [],
+   "terminal": "DEFERRED_STRONGER_OWNER",
+   "reason": "Model policy is owned by CCP C4 and modules/cost_collapse; a routing experiment spends quota outside the mission's authorization, so none was run. The measured turn-class weights and the 0.50 % verification cost are handed to the owner.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "vault/plans/cognitive-control-plane-2026-10-02.md"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/M.md",
+     "sha256": "d1f58c93741012e5688ae8d6bb4db6976c9f3260ae77b06ea1edf535021eb3b7"
+    }
+   ],
    "savings": []
   },
   "N": {
@@ -762,8 +801,27 @@
    }
   },
   "R": {
-   "terminal": null,
-   "evidence": [],
+   "terminal": "IMPLEMENTED_AND_VERIFIED",
+   "reason": "The UKDL 3-level and CBR review is written to ukdl-candidates.md: 7 candidates, each evidence-cited with a verdict and reason (1 promote sent to the Owner as [R] UC-04, 2 reject as already owned, 4 keep-candidate), all CBR EXPERIMENTAL. gate_ukdl_candidates.py checks the format and on every run proves five mutants of the real file red.",
+   "evidence": [
+    {
+     "kind": "gate",
+     "argv": [
+      "python",
+      "vault/programs/cognitive-economy/gates/gate_ukdl_candidates.py"
+     ]
+    },
+    {
+     "kind": "prg",
+     "ref": "vault/programs/cognitive-economy/evidence/R-prg.md",
+     "sha256": "0052ebd4d1a9d3f4cc193b8fccb389af9cc37a45b8a132c3e2fe6c1e4b2b343b"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/ukdl-candidates.md",
+     "sha256": "36e0136101fbab5eae5b1981ac5192ca89d15c80e391fd4bef6112a9fda074ce"
+    }
+   ],
    "savings": []
   },
   "S": {
@@ -788,8 +846,25 @@
    "savings": []
   },
   "T": {
-   "terminal": null,
-   "evidence": [],
+   "terminal": "AUTHORIZATION_BOUND",
+   "reason": "The liveness sweep (490 modules, 64 gate offenders) proposes no deletion: 0 RETIRE_CANDIDATE once the matcher handles from-package and relative sibling imports (controls recorded). 14 DORMANT_TESTED modules need a declare-or-wire decision in the registry, which is the Owner's. The 142 skills not invoked in D-W7 go to the C owners, not to removal.",
+   "evidence": [
+    {
+     "kind": "owner_decision",
+     "ref": "vault/programs/cognitive-economy/owner-bundle.md",
+     "sha256": "46f46172ca66dd886c62a97a630fd907d0b8e8990ebc9e1d866b503253479d7f"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/evidence/B-T-floor-and-gc.md",
+     "sha256": "7226675925015d55938a5f39895080a68aa755e5559ee0caf9378291d627c8a9"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/t_sweep_out.json",
+     "sha256": "2465e6eb265049976bb1aa6ade035a68356d5e2f09f0686a99527dd011842f6c"
+    }
+   ],
    "savings": []
   }
  },

@@ -8,6 +8,8 @@
    Disposition (rule written before running; the test aperture was widened after run 1 read tools/ only):
      ACTIVE            touched within 14 days -- someone is building it; never proposed
      DORMANT_TESTED    older, a test file names it -- declare (LIBRARY/PLANNED) or wire; Owner decides
+     PACKAGE_INTERNAL  older, untested, but a package `__init__` or relatively imported by a sibling -- the
+                       package is the subject, not the module (added after run 3; see package_internal)
      RETIRE_CANDIDATE  older, no test file names it -- proposed for deletion; Owner decides
 2. Skills: every skill directory installed under ~/.claude/skills (SKILL.md present) and the number of times it was
    invoked in D-W7 transcripts (Skill tool_use `skill` input, or a `<command-name>/x` slash invocation). Zero is
@@ -46,26 +48,60 @@ def last_commit_ts(path: Path) -> float | None:
     return float(r.stdout.strip()) if r.returncode == 0 and r.stdout.strip() else None
 
 
+def names_unit(texts: list, unit: str) -> bool:
+    """Does any ONE test file name `unit` (e.g. "pkg/mod")? Three shapes, judged per file:
+    the dotted path (`import modules.pkg.mod`, `from modules.pkg.mod import x`), the slash path,
+    or `from modules.pkg import ..., mod` -- the package's dotted path plus the module's basename
+    as an imported word in the same file. Run 2 checked only the first two over one concatenated
+    text and so filed every `from modules.pkg import mod` user as untested."""
+    dotted = "modules." + unit.replace("/", ".")
+    parent, _, base = ("modules/" + unit).rpartition("/")
+    pkg = parent.replace("/", ".")
+    from_pkg = re.compile(rf"from\s+{re.escape(pkg)}\s+import\s+(?:\([^)]*|[^\n]*)\b{re.escape(base)}\b")
+    for t in texts:
+        if dotted in t or f"modules/{unit}" in t:
+            return True
+        if "/" in unit and from_pkg.search(t):
+            return True
+    return False
+
+
+def package_internal(path: Path, unit: str) -> bool:
+    """A package's `__init__`, or a module a sibling in the same package imports relatively
+    (`from . import mod`, `from .mod import x`). Such a unit is not a retirement subject by
+    itself: deleting it breaks the sibling. Run 3 proposed three of these for deletion."""
+    base = unit.rpartition("/")[2]
+    if base == "__init__":
+        return True
+    rel = re.compile(rf"from\s+\.\s+import\s+(?:\([^)]*|[^\n]*)\b{re.escape(base)}\b"
+                     rf"|from\s+\.{re.escape(base)}\s+import\b")
+    for sib in path.parent.glob("*.py"):
+        if sib != path and rel.search(sib.read_text(encoding="utf-8", errors="replace")):
+            return True
+    return False
+
+
 def modules_part() -> dict:
     passed, offs, rows = rb.gate(REPO)
     # Where tests live in this repo: tools/*.py (V-gates), tests/**, and module-local test_*.py. An earlier
     # version read tools/ only and proposed a package with five tests under tests/ as untested.
     test_files = [*(REPO / "tools").glob("*.py"), *(REPO / "tests").rglob("*.py"),
                   *(REPO / "modules").rglob("test_*.py")]
-    tools_text = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in test_files)
+    texts = [p.read_text(encoding="utf-8", errors="replace") for p in test_files]
     out = []
     for r in offs:
         path = rb._unit_path(REPO, r["unit"])
         ts = last_commit_ts(path)
         age = None if ts is None else round((NOW - ts) / 86400, 1)
-        dotted = "modules." + r["unit"].replace("/", ".")
-        tested = dotted in tools_text or f"modules/{r['unit']}" in tools_text
+        tested = names_unit(texts, r["unit"])
         if age is not None and age <= ACTIVE_DAYS:
             disp = "ACTIVE"
         elif age is None:
             disp = "ACTIVE"            # never committed: work in progress in this tree
         elif tested:
             disp = "DORMANT_TESTED"
+        elif package_internal(path, r["unit"]):
+            disp = "PACKAGE_INTERNAL"  # retires with its package, never alone
         else:
             disp = "RETIRE_CANDIDATE"
         out.append({"unit": r["unit"], "age_days": age, "tested_in_tools": tested, "disposition": disp})

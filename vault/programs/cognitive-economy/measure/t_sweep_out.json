@@ -1,0 +1,1213 @@
+{
+ "modules": {
+  "dispositions": {
+   "ACTIVE": 47,
+   "DORMANT_TESTED": 14,
+   "PACKAGE_INTERNAL": 3
+  },
+  "gate_passed": false,
+  "modules": 490,
+  "offenders": 64,
+  "rows": [
+   {
+    "age_days": 2.2,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "capability_runtime/agent_bundle"
+   },
+   {
+    "age_days": 91.5,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "cognitive_os/hibernate_runner"
+   },
+   {
+    "age_days": 57.4,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "craif/oier"
+   },
+   {
+    "age_days": 68.5,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "dataset_first/transduction"
+   },
+   {
+    "age_days": 22.1,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "done_gate/architectural_truth"
+   },
+   {
+    "age_days": 57.4,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "fable_distillation/fd_04_acceleration"
+   },
+   {
+    "age_days": 10.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "gsd_x/goal/__init__"
+   },
+   {
+    "age_days": 0.2,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/bind_mission"
+   },
+   {
+    "age_days": 7.5,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/brief"
+   },
+   {
+    "age_days": 4.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/contract"
+   },
+   {
+    "age_days": 4.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/convergence"
+   },
+   {
+    "age_days": 0.2,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/engine_identity"
+   },
+   {
+    "age_days": 7.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/epoch"
+   },
+   {
+    "age_days": 7.5,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/git_state"
+   },
+   {
+    "age_days": 7.5,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/judge"
+   },
+   {
+    "age_days": 7.6,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/log"
+   },
+   {
+    "age_days": 10.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "gsd_x/goal/providers/__init__"
+   },
+   {
+    "age_days": 7.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/providers/claude"
+   },
+   {
+    "age_days": 7.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/providers/codex"
+   },
+   {
+    "age_days": 7.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/providers/gate"
+   },
+   {
+    "age_days": 0.2,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/providers/long_run"
+   },
+   {
+    "age_days": 7.5,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/reconcile"
+   },
+   {
+    "age_days": 0.2,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/goal/sweep"
+   },
+   {
+    "age_days": 13.0,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "gsd_x/mission/__init__"
+   },
+   {
+    "age_days": 5.1,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/mission/closure"
+   },
+   {
+    "age_days": 13.0,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/mission/contract"
+   },
+   {
+    "age_days": 5.1,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/mission/coverage"
+   },
+   {
+    "age_days": 7.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/mission/obligation"
+   },
+   {
+    "age_days": 10.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/mission/store"
+   },
+   {
+    "age_days": 7.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "gsd_x/mission/structured_facts"
+   },
+   {
+    "age_days": 8.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "keos_qwen/__init__"
+   },
+   {
+    "age_days": 7.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "keos_qwen/goals/__init__"
+   },
+   {
+    "age_days": 7.0,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "keos_qwen/goals/fire"
+   },
+   {
+    "age_days": 7.0,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "keos_qwen/goals/seed_goals"
+   },
+   {
+    "age_days": 8.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "keos_qwen/ledger/__init__"
+   },
+   {
+    "age_days": 8.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "keos_qwen/ledger/ledger"
+   },
+   {
+    "age_days": 8.3,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "keos_qwen/outcome"
+   },
+   {
+    "age_days": 7.0,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "keos_qwen/probe/__init__"
+   },
+   {
+    "age_days": 7.0,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "keos_qwen/probe/agentic_loop"
+   },
+   {
+    "age_days": 4.6,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "keos_qwen/score/score_corpus"
+   },
+   {
+    "age_days": 37.5,
+    "disposition": "PACKAGE_INTERNAL",
+    "tested_in_tools": false,
+    "unit": "knowledge_acquisition/__init__"
+   },
+   {
+    "age_days": 37.2,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/boundary"
+   },
+   {
+    "age_days": 0.6,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/classifier"
+   },
+   {
+    "age_days": 0.6,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/cli"
+   },
+   {
+    "age_days": 37.5,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/corpus_parser"
+   },
+   {
+    "age_days": 37.2,
+    "disposition": "PACKAGE_INTERNAL",
+    "tested_in_tools": false,
+    "unit": "knowledge_acquisition/engine3"
+   },
+   {
+    "age_days": 0.2,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/eva_adapter"
+   },
+   {
+    "age_days": 0.6,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/expectation"
+   },
+   {
+    "age_days": 0.6,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/models"
+   },
+   {
+    "age_days": 0.6,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/provenance"
+   },
+   {
+    "age_days": 36.4,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/queues"
+   },
+   {
+    "age_days": 37.5,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/raw_vault"
+   },
+   {
+    "age_days": 36.5,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/routing"
+   },
+   {
+    "age_days": 37.4,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/runlock"
+   },
+   {
+    "age_days": 0.6,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "knowledge_acquisition/runner"
+   },
+   {
+    "age_days": 37.4,
+    "disposition": "PACKAGE_INTERNAL",
+    "tested_in_tools": false,
+    "unit": "knowledge_acquisition/session"
+   },
+   {
+    "age_days": 36.5,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "knowledge_acquisition/store"
+   },
+   {
+    "age_days": 97.1,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "session_resilience/snapshot_versioning"
+   },
+   {
+    "age_days": 59.3,
+    "disposition": "DORMANT_TESTED",
+    "tested_in_tools": true,
+    "unit": "sqi/ratchet"
+   },
+   {
+    "age_days": 10.6,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "surface_architecture/verticals/design_md_adapter"
+   },
+   {
+    "age_days": 10.6,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "surface_architecture/verticals/prd_adapter"
+   },
+   {
+    "age_days": 10.6,
+    "disposition": "ACTIVE",
+    "tested_in_tools": false,
+    "unit": "surface_architecture/verticals/surface_phrases"
+   },
+   {
+    "age_days": 7.4,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "tower/donegate"
+   },
+   {
+    "age_days": 7.4,
+    "disposition": "ACTIVE",
+    "tested_in_tools": true,
+    "unit": "tower/ratchet"
+   }
+  ],
+  "status": {
+   "ORPHAN": 180,
+   "REACHABLE": 310
+  }
+ },
+ "skills": {
+  "installed": 165,
+  "invoked_in_DW7": 23,
+  "not_invoked_in_DW7": [
+   "adversarial-longevity",
+   "agent-reach",
+   "android-reverse-engineering",
+   "artifacts-builder",
+   "autofix",
+   "autoresearch",
+   "brand-guidelines",
+   "building-ai-saas-products",
+   "canvas-design",
+   "carl-manager",
+   "code-auditor",
+   "code-review",
+   "composition-patterns",
+   "compound-learnings",
+   "concurrent-writers-shared-tree",
+   "copywriting",
+   "cpp-pro",
+   "debugging-wizard",
+   "design-taste-frontend",
+   "develop-here-prove-there",
+   "dios-segun-buda",
+   "elevenlabs-music-generation",
+   "embedded-systems",
+   "fix",
+   "game-feel-codex",
+   "github-actions-templates",
+   "governance-overlay",
+   "gsd-add-tests",
+   "gsd-ai-integration-phase",
+   "gsd-audit-fix",
+   "gsd-audit-uat",
+   "gsd-capture",
+   "gsd-config",
+   "gsd-debug",
+   "gsd-docs-update",
+   "gsd-eval-review",
+   "gsd-explore",
+   "gsd-extract-learnings",
+   "gsd-fast",
+   "gsd-forensics",
+   "gsd-graphify",
+   "gsd-health",
+   "gsd-help",
+   "gsd-import",
+   "gsd-inbox",
+   "gsd-ingest-docs",
+   "gsd-manager",
+   "gsd-map-codebase",
+   "gsd-mempalace-capture",
+   "gsd-mempalace-recall",
+   "gsd-milestone-summary",
+   "gsd-mvp-phase",
+   "gsd-new-milestone",
+   "gsd-new-project",
+   "gsd-next",
+   "gsd-ns-context",
+   "gsd-ns-ideate",
+   "gsd-ns-manage",
+   "gsd-ns-project",
+   "gsd-ns-review",
+   "gsd-ns-workflow",
+   "gsd-onboard",
+   "gsd-pause-work",
+   "gsd-phase",
+   "gsd-plan-review-convergence",
+   "gsd-pr-branch",
+   "gsd-profile-user",
+   "gsd-progress",
+   "gsd-quick",
+   "gsd-quick-batch",
+   "gsd-resume-work",
+   "gsd-review",
+   "gsd-review-backlog",
+   "gsd-secure-phase",
+   "gsd-settings",
+   "gsd-ship",
+   "gsd-sketch",
+   "gsd-spec-phase",
+   "gsd-spike",
+   "gsd-stats",
+   "gsd-surface",
+   "gsd-thread",
+   "gsd-ui-review",
+   "gsd-ultraplan-phase",
+   "gsd-undo",
+   "gsd-update",
+   "gsd-validate-phase",
+   "gsd-verify-work",
+   "gsd-workspace",
+   "gsd-workstreams",
+   "guard-event-reachability",
+   "humanizer",
+   "image-to-video",
+   "java-architect",
+   "kobiicraft-debug",
+   "kobiicraft-dev",
+   "kobiicraft-execution",
+   "kobiicraft-ops",
+   "kobiicraft-prd",
+   "kobiicraft-product",
+   "kobiicraft-review",
+   "kobiicraft-testing",
+   "leverage-research",
+   "managing-sleepy-skills",
+   "marketing-psychology",
+   "mcp-builder",
+   "minecraft-android-renderer-stack",
+   "minecraft-mod-jar-patcher",
+   "mobile-app-ui-design",
+   "mobile-game-wii-port",
+   "motion-promo",
+   "on-device-verification-loop",
+   "pojavlauncher-headless-driver",
+   "powershell-51-native-cli-orchestrator",
+   "presence-is-not-residency",
+   "project-bootstrapper",
+   "project-pulse",
+   "prompt-engineering-patterns",
+   "python-best-practices",
+   "python-pro",
+   "react-best-practices",
+   "real-context-reachability",
+   "recurring-work-cardinality",
+   "remotion-best-practices",
+   "remotion-discovery-trap",
+   "remotion-foundation",
+   "remotion-kobii-templates",
+   "secrets-management",
+   "session-handoff-protocol",
+   "skill-prompt-efficiency-001",
+   "sleepy-skills",
+   "social-content",
+   "software-best-practices",
+   "spanish-mc-menus",
+   "stripe-best-practices",
+   "test-master",
+   "video-analyzer",
+   "voice-spec-lock",
+   "webapp-testing",
+   "wii-dev-best-practices",
+   "wii-disc-reconstruction",
+   "wii-power-pack"
+  ],
+  "rows": [
+   {
+    "invocations_DW7": 0,
+    "skill": "adversarial-longevity"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "agent-reach"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "android-reverse-engineering"
+   },
+   {
+    "invocations_DW7": 6,
+    "skill": "anydesign"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "artifacts-builder"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "autofix"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "autoresearch"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "brand-guidelines"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "building-ai-saas-products"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "canvas-design"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "carl-manager"
+   },
+   {
+    "invocations_DW7": 11,
+    "skill": "claude-power-pack"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "code-auditor"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "code-review"
+   },
+   {
+    "invocations_DW7": 10,
+    "skill": "code-reviewer"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "composition-patterns"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "compound-learnings"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "concurrent-writers-shared-tree"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "copywriting"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "cpp-pro"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "debugging-wizard"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "design-taste-frontend"
+   },
+   {
+    "invocations_DW7": 6,
+    "skill": "destructive-state-authorization"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "develop-here-prove-there"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "dios-segun-buda"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "elevenlabs-music-generation"
+   },
+   {
+    "invocations_DW7": 1,
+    "skill": "elixir-phoenix-patterns"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "embedded-systems"
+   },
+   {
+    "invocations_DW7": 3,
+    "skill": "evaluation-corpus-governance"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "fix"
+   },
+   {
+    "invocations_DW7": 2,
+    "skill": "frontend-design"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "game-feel-codex"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "github-actions-templates"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "governance-overlay"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-add-tests"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-ai-integration-phase"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-audit-fix"
+   },
+   {
+    "invocations_DW7": 2,
+    "skill": "gsd-audit-milestone"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-audit-uat"
+   },
+   {
+    "invocations_DW7": 159,
+    "skill": "gsd-autonomous"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-capture"
+   },
+   {
+    "invocations_DW7": 1,
+    "skill": "gsd-cleanup"
+   },
+   {
+    "invocations_DW7": 19,
+    "skill": "gsd-code-review"
+   },
+   {
+    "invocations_DW7": 1,
+    "skill": "gsd-complete-milestone"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-config"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-debug"
+   },
+   {
+    "invocations_DW7": 1,
+    "skill": "gsd-discuss-phase"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-docs-update"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-eval-review"
+   },
+   {
+    "invocations_DW7": 18,
+    "skill": "gsd-execute-phase"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-explore"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-extract-learnings"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-fast"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-forensics"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-graphify"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-health"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-help"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-import"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-inbox"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-ingest-docs"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-manager"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-map-codebase"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-mempalace-capture"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-mempalace-recall"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-milestone-summary"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-mvp-phase"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-new-milestone"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-new-project"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-next"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-ns-context"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-ns-ideate"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-ns-manage"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-ns-project"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-ns-review"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-ns-workflow"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-onboard"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-pause-work"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-phase"
+   },
+   {
+    "invocations_DW7": 26,
+    "skill": "gsd-plan-phase"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-plan-review-convergence"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-pr-branch"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-profile-user"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-progress"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-quick"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-quick-batch"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-resume-work"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-review"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-review-backlog"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-secure-phase"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-settings"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-ship"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-sketch"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-spec-phase"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-spike"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-stats"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-surface"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-thread"
+   },
+   {
+    "invocations_DW7": 2,
+    "skill": "gsd-ui-phase"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-ui-review"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-ultraplan-phase"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-undo"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-update"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-validate-phase"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-verify-work"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-workspace"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "gsd-workstreams"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "guard-event-reachability"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "humanizer"
+   },
+   {
+    "invocations_DW7": 1,
+    "skill": "image-calco"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "image-to-video"
+   },
+   {
+    "invocations_DW7": 3,
+    "skill": "instrument-before-claim"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "java-architect"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "kobiicraft-debug"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "kobiicraft-dev"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "kobiicraft-execution"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "kobiicraft-ops"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "kobiicraft-prd"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "kobiicraft-product"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "kobiicraft-review"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "kobiicraft-testing"
+   },
+   {
+    "invocations_DW7": 1,
+    "skill": "lateral-thinking"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "leverage-research"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "managing-sleepy-skills"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "marketing-psychology"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "mcp-builder"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "minecraft-android-renderer-stack"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "minecraft-mod-jar-patcher"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "mobile-app-ui-design"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "mobile-game-wii-port"
+   },
+   {
+    "invocations_DW7": 2,
+    "skill": "monetary-quantity-integrity"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "motion-promo"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "on-device-verification-loop"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "pojavlauncher-headless-driver"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "powershell-51-native-cli-orchestrator"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "presence-is-not-residency"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "project-bootstrapper"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "project-pulse"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "prompt-engineering-patterns"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "python-best-practices"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "python-pro"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "react-best-practices"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "real-context-reachability"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "recurring-work-cardinality"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "remotion-best-practices"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "remotion-discovery-trap"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "remotion-foundation"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "remotion-kobii-templates"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "secrets-management"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "session-handoff-protocol"
+   },
+   {
+    "invocations_DW7": 2,
+    "skill": "skill-creator"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "skill-prompt-efficiency-001"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "sleepy-skills"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "social-content"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "software-best-practices"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "spanish-mc-menus"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "stripe-best-practices"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "test-master"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "video-analyzer"
+   },
+   {
+    "invocations_DW7": 3,
+    "skill": "vision-video"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "voice-spec-lock"
+   },
+   {
+    "invocations_DW7": 1,
+    "skill": "web-design-guidelines"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "webapp-testing"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "wii-dev-best-practices"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "wii-disc-reconstruction"
+   },
+   {
+    "invocations_DW7": 0,
+    "skill": "wii-power-pack"
+   }
+  ],
+  "transcripts_scanned": 1541
+ }
+}
