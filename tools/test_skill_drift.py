@@ -784,10 +784,43 @@ def c_card_source_git_failure():
         smd.vgm._git_exe = orig
     good = (err is None and len(rows) == 1 and rows[0]["status"] == "INCONCLUSIVE"
             and "git not found" in str(rows[0].get("reason")) and smd.card_verdict(rows) == "INCONCLUSIVE")
-    if good:
+    # Review WR-05: rev-parse succeeds, then `cat-file --batch` fails. Every failure reason batch_blobs emits
+    # (rc, error, truncated, badheader, ambiguous) is a git failure -> INCONCLUSIVE, never UNTRACKED/DRIFT; only
+    # `git-batch-missing` (the path is not in the commit) is UNTRACKED.
+    orig_bb = smd.vgm.batch_blobs
+    batch = []
+    for reason, part in (("git-batch-rc128", False), ("git-batch-error:boom", False), ("git-batch-truncated", True),
+                         ("git-batch-badheader", True), ("git-batch-ambiguous", True)):
+        def fake(repo, ref, rels, _r=reason, _p=part):
+            real = orig_bb(repo, ref, rels)
+            return {k: ((None, _r) if (not _p or i == 0) else v) for i, (k, v) in enumerate(sorted(real.items()))}
+        smd.vgm.batch_blobs = fake
+        try:
+            v = smd.card_verdict(card_state_rows(REPO, record)) if record else "no record"
+        except Exception as e:  # noqa: BLE001
+            v = f"raised {type(e).__name__}"
+        finally:
+            smd.vgm.batch_blobs = orig_bb
+        batch.append((reason, "partial" if part else "all", v))
+    missing = []
+
+    def fake_missing(repo, ref, rels):
+        real = orig_bb(repo, ref, rels)
+        return {k: ((None, "git-batch-missing") if i == 0 else val) for i, (k, val) in enumerate(sorted(real.items()))}
+    smd.vgm.batch_blobs = fake_missing
+    try:
+        missing = [r["status"] for r in card_state_rows(REPO, record)] if record else []
+    finally:
+        smd.vgm.batch_blobs = orig_bb
+    bad_batch = [b for b in batch if b[2] != "INCONCLUSIVE"]
+    if good and not bad_batch and "UNTRACKED" in missing:
         return [(OK, "V-SKD-CARD-SOURCE-GIT-FAILURE", "git missing: card check INCONCLUSIVE ('git not found'), "
-                                                      "no exception escaped")]
-    return [(FAIL, "V-SKD-CARD-SOURCE-GIT-FAILURE", f"escaped={err}; rows={rows}; record={'ok' if record else why}")]
+                                                      "no exception escaped; cat-file rc128 / error / truncated / "
+                                                      "badheader / ambiguous -> INCONCLUSIVE; missing blob -> "
+                                                      "UNTRACKED (control)")]
+    return [(FAIL, "V-SKD-CARD-SOURCE-GIT-FAILURE", f"escaped={err}; rows={rows}; record={'ok' if record else why}; "
+                                                    f"batch failures not INCONCLUSIVE: {bad_batch}; missing control "
+                                                    f"{missing}")]
 
 
 # --------------------------------------------------------------------------- driver

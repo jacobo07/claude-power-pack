@@ -273,6 +273,16 @@ CARD_RULE = ("Re-run `--record-cards` only after re-deriving each card from its 
 CARD_STATUSES = ("CURRENT", "SOURCE_CHANGED", "CARD_CHANGED", "RECORD_STALE", "UNTRACKED", "INCONCLUSIVE")
 
 
+# Every reason `vgm.batch_blobs` gives for a failed `cat-file --batch` (review WR-05). Only `git-batch-missing` (the
+# path is not in the commit) means UNTRACKED; each of these is a git failure and reads INCONCLUSIVE.
+BATCH_FAILURES = ("git-batch-error", "git-batch-rc", "git-batch-truncated", "git-batch-badheader",
+                  "git-batch-ambiguous")
+
+
+def is_git_failure(reason) -> bool:
+    return str(reason or "").startswith(BATCH_FAILURES)
+
+
 def card_pairs(repo, dispatcher_text=None) -> list:
     """[{card, skill, source}] DISCOVERED from the dispatcher registrations (never listed): each registered
     deny-card hook names its skill, and the source is `skills/<skill>/SKILL.md`. Sorted, de-duplicated."""
@@ -295,21 +305,21 @@ def card_source_state(repo, ref, pairs) -> dict:
     out = []
     for p in pairs:
         row = {"card": p["card"], "skill": p["skill"], "source": p["source"]}
-        digests, bad = {}, None
+        digests, bad, failed = {}, None, False
         for key, rel in (("card_sha256", p["card"]), ("source_sha256", p["source"])):
             data, why = blobs.get(rel, (None, "not returned"))
             if data is None and why == "git-batch-empty":
                 data, why = b"", None
             if data is None:
-                bad = f"{rel}: {why}"
+                bad, failed = f"{rel}: {why}", is_git_failure(why)
                 break
             digests[key] = vgm._norm_sha(data)
         if bad:
-            row.update({"status": "UNTRACKED", "reason": bad})
+            row.update({"status": "INCONCLUSIVE" if failed else "UNTRACKED", "reason": bad})
         else:
             row.update(digests)
         out.append(row)
-    if out and all(r.get("status") == "UNTRACKED" and "git-batch-error" in r.get("reason", "") for r in out):
+    if out and all(r.get("status") == "INCONCLUSIVE" for r in out):
         return {"status": "INCONCLUSIVE", "reason": out[0]["reason"]}
     return {"status": "MEASURED", "commit": sha, "pairs": out}
 
@@ -330,8 +340,8 @@ def card_drift(record, state) -> list:
         k = (p["card"], p["skill"])
         now.add(k)
         row = {"card": p["card"], "skill": p["skill"]}
-        if p.get("status") == "UNTRACKED":
-            row.update({"status": "UNTRACKED", "reason": p["reason"]})
+        if p.get("status") in ("UNTRACKED", "INCONCLUSIVE"):
+            row.update({"status": p["status"], "reason": p["reason"]})
         elif k not in rec:
             row.update({"status": "RECORD_STALE", "reason": "discovered pair absent from the record"})
         elif p["source_sha256"] != rec[k].get("source_sha256"):
@@ -348,11 +358,14 @@ def card_drift(record, state) -> list:
 
 
 def card_verdict(rows) -> str:
-    """CURRENT only when there is at least one row and every row is CURRENT."""
+    """CURRENT only when there is at least one row and every row is CURRENT; INCONCLUSIVE when every row that is
+    not CURRENT is INCONCLUSIVE (a git failure must not be labelled drift)."""
     if not rows:
         return "INCONCLUSIVE"
     sts = {r["status"] for r in rows}
-    return "CURRENT" if sts == {"CURRENT"} else ("INCONCLUSIVE" if sts == {"INCONCLUSIVE"} else "DRIFT")
+    if sts == {"CURRENT"}:
+        return "CURRENT"
+    return "INCONCLUSIVE" if sts - {"CURRENT"} == {"INCONCLUSIVE"} else "DRIFT"
 
 
 def load_card_record(repo=REPO):
@@ -368,7 +381,7 @@ def record_cards(repo, ref="HEAD"):
     state = card_source_state(repo, ref, card_pairs(repo))
     if state["status"] != "MEASURED":
         return None, state.get("reason", "unmeasured")
-    bad = [p for p in state["pairs"] if p.get("status") == "UNTRACKED"]
+    bad = [p for p in state["pairs"] if p.get("status") in ("UNTRACKED", "INCONCLUSIVE")]
     if bad or not state["pairs"]:
         return None, f"refusing to record: {bad[0]['reason'] if bad else 'no card pairs discovered'}"
     rec = {"schema": CARD_SCHEMA, "recorded_at_commit": state["commit"], "rule": CARD_RULE,
