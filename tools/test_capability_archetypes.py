@@ -27,6 +27,7 @@ import os
 import re
 import shutil
 import statistics
+import subprocess
 import sys
 import tempfile
 import time
@@ -1760,6 +1761,187 @@ GATES += [
     ("V-ARCH-DRILL-FP-IGNORES-MANIFEST", pred_V_ARCH_DRILL_FP_IGNORES_MANIFEST),
 ]
 
+
+# -- plan 02-04 Task 3: the out-of-band producer CLI -------------------------------------
+# `tools/capability_traits.py` is the entry point a scheduled task will host (Owner step O-1).
+# Everything here runs inside the temp HOME: the subprocess environment pins HOME, USERPROFILE
+# and CLAUDE_STATE_DIR, and `--all` is only ever driven with an explicit fixture list, never
+# against the estate.
+
+_CLI_PATH = os.path.join(_PP_ROOT, "tools", "capability_traits.py")
+_LEDGER = os.path.join(STATE, "traits_production.jsonl")
+
+
+def _cli_env():
+    return dict(os.environ, HOME=_HOME, USERPROFILE=_HOME,
+                CLAUDE_STATE_DIR=os.path.join(_HOME, ".claude", "state"), PYTHONIOENCODING="utf-8")
+
+
+def _cli(*args):
+    return subprocess.run([sys.executable, _CLI_PATH, *args], capture_output=True, text=True,
+                          encoding="utf-8", env=_cli_env(), timeout=120)
+
+
+def _ledger_rows():
+    if not os.path.isfile(_LEDGER):
+        return []
+    with open(_LEDGER, "r", encoding="utf-8") as fh:
+        return [json.loads(line) for line in fh if line.strip()]
+
+
+def pred_V_ARCH_CLI_ONE():
+    problems = []
+    repo = make_repo("external_npm")
+    rows0 = len(_ledger_rows())
+    first = _cli(repo)
+    path = ar.cache_path(repo, state_dir=STATE)
+    if first.returncode != 0 or "WRITTEN" not in first.stdout or not os.path.isfile(path):
+        problems.append("FIRST-RUN: rc=%s written_in_stdout=%s cache_exists=%s stderr=%s" % (
+            first.returncode, "WRITTEN" in first.stdout, os.path.isfile(path), first.stderr[-200:]))
+    rows1 = _ledger_rows()
+    if len(rows1) != rows0 + 1 or rows1[-1].get("mode") != "one":
+        problems.append("LEDGER-AFTER-FIRST: rows %d -> %d last=%s" % (rows0, len(rows1), rows1[-1:] ))
+    second = _cli(repo)
+    if second.returncode != 0 or "SKIPPED" not in second.stdout or len(_ledger_rows()) != rows0 + 2:
+        problems.append("SECOND-RUN: rc=%s skipped_in_stdout=%s rows=%d (want %d)" % (
+            second.returncode, "SKIPPED" in second.stdout, len(_ledger_rows()), rows0 + 2))
+    forced = _cli(repo, "--force")
+    if forced.returncode != 0 or "WRITTEN" not in forced.stdout or len(_ledger_rows()) != rows0 + 3:
+        problems.append("FORCE-RUN: rc=%s written_in_stdout=%s rows=%d (want %d)" % (
+            forced.returncode, "WRITTEN" in forced.stdout, len(_ledger_rows()), rows0 + 3))
+    last = (_ledger_rows() or [{}])[-1]
+    if not {"ts", "mode", "projects", "outcomes", "truncated"} <= set(last):
+        problems.append("LEDGER-ROW-SHAPE: %s" % sorted(last))
+    return not problems, "; ".join(problems) or \
+        "WRITTEN (cache file exists, ledger +1 mode=one), then SKIPPED (+1), then --force WRITTEN (+1); row keys %s" % sorted(last)
+
+
+def pred_V_ARCH_CLI_SHOW():
+    problems = []
+    repo = make_repo("external_npm")
+    ts.produce(repo, state_dir=STATE)
+    rows0, listing0 = len(_ledger_rows()), sorted(os.listdir(STATE))
+    shown = _cli("--show", repo)
+    lines = shown.stdout.splitlines()
+    named = [t for t in ar.TRAITS if any(l.strip().startswith(t + " ") for l in lines)]
+    if shown.returncode != 0 or "FRESH" not in shown.stdout or named != list(ar.TRAITS):
+        problems.append("SHOW-FRESH: rc=%s fresh_in_stdout=%s traits_named=%d stderr=%s" % (
+            shown.returncode, "FRESH" in shown.stdout, len(named), shown.stderr[-200:]))
+    never = make_repo("external_npm")                         # never produced
+    shown2 = _cli("--show", never)
+    lines2 = shown2.stdout.splitlines()
+    unjudged = [l for l in lines2 if l.strip().split(" ")[0] in ar.TRAITS and "UNJUDGED" in l]
+    if shown2.returncode != 0 or "NO_CACHE" not in shown2.stdout or len(unjudged) != 10:
+        problems.append("SHOW-NO-CACHE: rc=%s no_cache_in_stdout=%s unjudged_lines=%d" % (
+            shown2.returncode, "NO_CACHE" in shown2.stdout, len(unjudged)))
+    if len(_ledger_rows()) != rows0 or sorted(os.listdir(STATE)) != listing0:
+        problems.append("SHOW-WROTE: --show changed the ledger or the state dir")
+    return not problems, "; ".join(problems) or \
+        "--show prints FRESH with all ten traits for a produced repo, NO_CACHE with ten UNJUDGED lines for a never-produced one, writes nothing"
+
+
+def pred_V_ARCH_CLI_UNRESOLVABLE():
+    problems = []
+    before = sorted(os.listdir(STATE)) if os.path.isdir(STATE) else []
+    rows_before = len(_ledger_rows())
+    for label, arg in (("relative", "src"), ("missing-absolute", os.path.join(_HOME, "no-such-repo-directory"))):
+        res = _cli(arg)
+        # rc 2 alone is also what the interpreter returns for a missing script, so the CLI's
+        # own word for the refusal must be in its output.
+        if res.returncode != 2 or "UNRESOLVABLE" not in res.stdout:
+            problems.append("EXIT-NOT-2[%s]: rc=%s unresolvable_in_stdout=%s stderr=%s" % (
+                label, res.returncode, "UNRESOLVABLE" in res.stdout, res.stderr[-100:]))
+    bogus = _cli("--no-such-flag")
+    if bogus.returncode != 2 or "usage" not in (bogus.stdout + bogus.stderr).lower():
+        problems.append("UNKNOWN-ARGUMENT: rc=%s usage_printed=%s" % (
+            bogus.returncode, "usage" in (bogus.stdout + bogus.stderr).lower()))
+    after = sorted(os.listdir(STATE)) if os.path.isdir(STATE) else []
+    if after != before or len(_ledger_rows()) != rows_before:
+        problems.append("WROTE-ON-UNRESOLVABLE: state dir %s -> %s, ledger rows %d -> %d" % (
+            before, after, rows_before, len(_ledger_rows())))
+    return not problems, "; ".join(problems) or \
+        "relative path, missing path and an unknown flag each exit 2 with nothing written (state dir and ledger unchanged)"
+
+
+def pred_V_ARCH_CLI_ALL_INJECTED():
+    """`--all` driven in-process over three fixtures, one of which fails. `find_repos` is
+    replaced by a counting stub so a wiring mistake can never enumerate the real estate."""
+    try:
+        from tools import capability_traits
+    except Exception as exc:  # noqa: BLE001 -- a RED run fails on the predicate, never crashes
+        return False, "import tools.capability_traits failed: %s: %s" % (type(exc).__name__, exc)
+    problems = []
+    repos = [make_repo("persistent_prisma"), make_repo("ephemeral"), make_repo("external_npm")]
+    victim = os.path.normcase(os.path.abspath(ar.subject_root(repos[1])))
+    real_scan = ts.scan
+
+    def scan_or_raise(root, **kw):
+        if os.path.normcase(os.path.abspath(root)) == victim:
+            raise RuntimeError("injected scan failure")
+        return real_scan(root, **kw)
+
+    scan_counter = Counting(scan_or_raise)
+    # The CLI imports the TOP-LEVEL module `family_scan` (a sibling import, as
+    # tools/tower_capsule.py does), a different object from `tools.family_scan`.
+    tools_dir = os.path.join(_PP_ROOT, "tools")
+    saved_path = list(sys.path)
+    if tools_dir not in sys.path:
+        sys.path.insert(0, tools_dir)
+    import family_scan                                       # the same module object the CLI imports
+    real_find = family_scan.find_repos
+    bound_name = hasattr(capability_traits, "find_repos")
+    real_bound = getattr(capability_traits, "find_repos", None)
+    find_counter = Counting(lambda: [])
+    family_scan.find_repos = find_counter
+    if bound_name:
+        capability_traits.find_repos = find_counter
+    ts.scan = scan_counter
+    rows0 = len(_ledger_rows())
+    import contextlib
+    import io
+    printed = io.StringIO()               # the CLI prints one line per repository; keep it out of the gate log
+    try:
+        with contextlib.redirect_stdout(printed):
+            rc = capability_traits.produce_all(repos)
+        rows = _ledger_rows()
+        enumerated = find_counter.calls
+        # Positive control: with the stub standing in for the estate, produce_all(None) must
+        # reach it exactly once, so a counter that cannot see the enumeration proves nothing.
+        find_counter.calls = 0
+        with contextlib.redirect_stdout(io.StringIO()):
+            capability_traits.produce_all(None)
+        control_calls = find_counter.calls
+    finally:
+        ts.scan = real_scan
+        family_scan.find_repos = real_find
+        if bound_name:
+            capability_traits.find_repos = real_bound
+        sys.path[:] = saved_path
+    if rc != 1:
+        problems.append("EXIT-CODE: produce_all returned %r (want 1, one scan failed)" % rc)
+    new_rows = rows[rows0:rows0 + 1]
+    row = new_rows[0] if new_rows else {}
+    if len(rows) != rows0 + 1 or row.get("mode") != "all" or row.get("projects") != 3 \
+            or row.get("outcomes") != {"WRITTEN": 2, "FAILED": 1}:
+        problems.append("LEDGER-ROW: rows %d -> %d row=%s" % (rows0, len(rows), row))
+    if enumerated != 0:
+        problems.append("ENUMERATED-THE-ESTATE: find_repos called %d times for an explicit list" % enumerated)
+    if control_calls != 1:
+        problems.append("CONTROL: produce_all(None) reached the find_repos stub %d times (want 1)" % control_calls)
+    if scan_counter.calls < 3:
+        problems.append("INJECTION-NOT-REACHED: ts.scan wrapper called %d times (want >= 3)" % scan_counter.calls)
+    return not problems, "; ".join(problems) or \
+        "produce_all([3 fixtures]) -> rc=1, ledger row mode=all projects=3 with %d written and %d scan-failed, find_repos calls=0 for the explicit list; control produce_all(None) reached the stub %d time" % (
+            row["outcomes"]["WRITTEN"], row["outcomes"]["FAILED"], control_calls)
+
+
+GATES += [
+    ("V-ARCH-CLI-ONE", pred_V_ARCH_CLI_ONE),
+    ("V-ARCH-CLI-SHOW", pred_V_ARCH_CLI_SHOW),
+    ("V-ARCH-CLI-UNRESOLVABLE", pred_V_ARCH_CLI_UNRESOLVABLE),
+    ("V-ARCH-CLI-ALL-INJECTED", pred_V_ARCH_CLI_ALL_INJECTED),
+]
+
 # Runs after every other gate, so its sweep sees every cache file this process produced.
 FINAL_GATES = [
     ("V-ARCH-CACHE-PATH-SAFE", pred_V_ARCH_CACHE_PATH_SAFE),
@@ -1767,7 +1949,7 @@ FINAL_GATES = [
 
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 51
+EXPECTED = 55
 
 
 def main() -> int:
