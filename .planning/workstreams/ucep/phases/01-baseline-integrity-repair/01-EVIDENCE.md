@@ -150,3 +150,13 @@ LIVE: 232836ce (last code commit on ucep/mission; docs commits follow, pushed by
 NEXT: Owner review of A1-A4; Phase 2 capability subject and archetypes
 DEBT: 14 MOVED citations; cbr_probe P4 abort; ledger-bracket method; gsd-x-heartbeat writer unidentified
 ```
+
+## 11. Addendum 2026-10-03 (orchestrator, after code-review fixes; sections 1-10 above are kept as written at 232836ce)
+
+Superseding facts at HEAD 0939d27b (pushed to origin/ucep/mission):
+- Review `01-REVIEW.md` (0 critical / 7 warning / 3 info) fixed WR-02..WR-07 and IN-01 (commits 8ddb5b0b, a3b35fd6, b1732af7, 6c6835f6, 099a6579, 1ba16a61, 66556c06); WR-01 comment-only (cc61c551), binding the authority deferred to Phase 3; IN-02 and the IN-03 reason-mapping half deferred.
+- Gate counts now (CLAUDE_STATE_DIR on a temp dir, all rc=0, re-run independently by the orchestrator and by the verifier): BASELINE_GENERATIONS 18/18, TOWER_RATCHET 21/21, TOWER_DONEGATE 10/10, FAMILY_BASELINES 20/20, UCEP_BASELINE_INTEGRITY 40/40, UCEP_DONEGATE_EXITS 17/17, TOWER_SELECT 15/15, TOWER_CHECKS 23/23, TOWER_CAPSULE 16/16, TOWER_INHERITANCE 17/17, FINJ 24/24, TOWER_O4 7/7, GSD_X_HEARTBEAT_PATH 7/7 (new). Liveness gate: 63 offenders / 486 rows, unchanged.
+- CORRECTION to section 9: "no live hook path is changed in Phase 1" is no longer true. Fix 1ba16a61 changed `modules/gsd_x/heartbeat.py` (path resolved per call, same formula; module no longer raises at import without a home). Behaviour-preserving by 7/7 gates; never run in a live session -> Production Reality for that change is UNJUDGED. Live sessions run the main checkout's copy until this branch is merged, so nothing live changed yet.
+- WR-07 commit message cites a real-HOME heartbeat bracket as proof; that bracket is confounded by other live sessions writing the same file. The decisive evidence is the RED/GREEN temp-state-dir gates (see 01-REVIEW.md).
+- Verification `01-VERIFICATION.md`: status passed, 5/5. A1 accepted as a disclosed assumption, still on the Owner-review list.
+- Overall Phase 1 verdict unchanged: OBSERVED; PROVEN none; UNJUDGED: donegate hook path, live family_block stamp, live heartbeat.py.
