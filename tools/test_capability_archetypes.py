@@ -20,10 +20,13 @@ Run: python tools/test_capability_archetypes.py     (exit 0 = all gates pass)
 from __future__ import annotations
 
 import ast
+import glob
 import json
+import math
 import os
 import re
 import shutil
+import statistics
 import sys
 import tempfile
 import time
@@ -1259,14 +1262,517 @@ GATES += [
     ("V-ARCH-STALE-MANIFEST", pred_V_ARCH_STALE_MANIFEST),
 ]
 
+
+# -- plan 02-04 Task 2: the reader contract --------------------------------------------
+
+def _stored_doc(repo, state):
+    with open(ar.cache_path(repo, state_dir=state), "r", encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def _produce_fixture(kind):
+    """-> (state, repo): the fixture produced into a fresh state dir. Raises on failure."""
+    state, repo = new_state(), make_repo(kind)
+    res = ts.produce(repo, state_dir=state)
+    if res.get("outcome") != ts.WRITTEN:
+        raise RuntimeError("produce(%s) outcome=%r reason=%r" % (kind, res.get("outcome"), res.get("reason")))
+    return state, repo
+
+
+_SCHEMA_REL = os.path.join("prisma", "schema.prisma")
+
+
+def pred_V_ARCH_STALE_EVIDENCE_FILE():
+    problems = []
+    # (a) an evidence file edited in place: no directory listing moves, only its stat does.
+    state, repo = _produce_fixture("persistent_prisma")
+    _edit_file(os.path.join(repo, _SCHEMA_REL), "model Subscription {\n  id Int @id\n  name String\n}\n")
+    edited = ar.read_traits(repo, state_dir=state)
+    if edited["cache"]["state"] != ar.CACHE_STALE or "prisma/schema.prisma" not in edited["cache"]["reason"]:
+        problems.append("EDIT-NOT-DETECTED: evidence file edited, cache=%s reason=%s" % (
+            edited["cache"]["state"], edited["cache"]["reason"]))
+    # (b) an evidence file deleted.
+    state_b, repo_b = _produce_fixture("persistent_prisma")
+    os.remove(os.path.join(repo_b, _SCHEMA_REL))
+    deleted = ar.read_traits(repo_b, state_dir=state_b)
+    if deleted["cache"]["state"] != ar.CACHE_STALE:
+        problems.append("DELETE-NOT-DETECTED: evidence file deleted, cache=%s" % deleted["cache"]["state"])
+    # (c) control: an untouched fixture is FRESH.
+    state_c, repo_c = _produce_fixture("persistent_prisma")
+    ctrl = ar.read_traits(repo_c, state_dir=state_c)
+    if ctrl["cache"]["state"] != ar.CACHE_FRESH:
+        problems.append("CONTROL: untouched fixture cache=%s" % ctrl["cache"]["state"])
+    # (d) a data file (a database a program rewrites) is WEAK evidence by NAME: its content
+    # says nothing the judgment uses, and re-stat'ing it would pin the cache STALE on every
+    # repository that holds a live database. The walk saw it (precondition), the evidence
+    # list does not hold it, and an edit leaves the cache FRESH.
+    state_d, repo_d = new_state(), make_repo("ephemeral")
+    os.makedirs(os.path.join(repo_d, "data"))
+    data_file = os.path.join(repo_d, "data", "app.sqlite")
+    with open(data_file, "wb") as fh:
+        fh.write(b"SQLite format 3\x00" + b"\x00" * 64)
+    ts.produce(repo_d, state_dir=state_d)
+    doc_d = _stored_doc(repo_d, state_d)
+    persistent_d = doc_d["traits"]["persistent"]
+    listed = [e["path"] for e in doc_d["fingerprint"]["evidence_files"]]
+    if not (persistent_d["state"] == ar.WEAK and "data/app.sqlite" in persistent_d["evidence"]):
+        problems.append("PRECONDITION: the walk did not see the data file: persistent=%s %s" % (
+            persistent_d["state"], persistent_d["evidence"]))
+    _edit_file(data_file, "rewritten by the program under test")
+    live = ar.read_traits(repo_d, state_dir=state_d)
+    if "data/app.sqlite" in listed or live["cache"]["state"] != ar.CACHE_FRESH:
+        problems.append("VOLATILE-DATA-FILE-STALES-CACHE: listed=%s cache=%s" % (
+            "data/app.sqlite" in listed, live["cache"]["state"]))
+    return not problems, "; ".join(problems) or \
+        "edit and delete of prisma/schema.prisma -> STALE; untouched control FRESH; a rewritten data file stays FRESH (not listed among %d evidence files)" % len(listed)
+
+
+def pred_V_ARCH_STALE_AGE():
+    problems = []
+    bound = getattr(ar, "TRAIT_MAX_AGE_S", None)
+    if bound != 7 * 24 * 3600:
+        problems.append("CONSTANT: TRAIT_MAX_AGE_S=%r (want 604800)" % (bound,))
+    bound = 7 * 24 * 3600
+    state, repo = _produce_fixture("persistent_prisma")
+    produced_at = _stored_doc(repo, state)["produced_at"]
+    over = ar.read_traits(repo, state_dir=state, now=produced_at + bound + 1)
+    under = ar.read_traits(repo, state_dir=state, now=produced_at + bound - 60)
+    if over["cache"]["state"] != ar.CACHE_STALE or "age" not in over["cache"]["reason"]:
+        problems.append("AGE-NOT-DETECTED: now = produced_at + bound + 1 gave cache=%s reason=%s" % (
+            over["cache"]["state"], over["cache"]["reason"]))
+    elif not all(r["state"] == ar.UNJUDGED and r["reason"] == "stale" for r in over["traits"].values()):
+        problems.append("AGE-TRAITS-NOT-UNJUDGED")
+    if under["cache"]["state"] != ar.CACHE_FRESH:
+        problems.append("AGE-TOO-EAGER: now = produced_at + bound - 60 gave cache=%s" % under["cache"]["state"])
+    return not problems, "; ".join(problems) or \
+        "bound=%d s: +1 s over reads STALE (%s), 60 s under reads FRESH" % (bound, over["cache"]["reason"])
+
+
+def pred_V_ARCH_STALE_DEEP_BLINDSPOT():
+    """Pitfall 4, pinned so nobody claims more than is true: the prompt-path reader does
+    not see a new deep module."""
+    state, repo = _produce_fixture("persistent_prisma")
+    stored = _stored_doc(repo, state)["fingerprint"]
+    deep = os.path.join(repo, "src", "a", "b", "c")
+    os.makedirs(deep)
+    with open(os.path.join(deep, "new_module.py"), "w", encoding="utf-8") as fh:
+        fh.write("VALUE = 1\n")
+    read = ar.read_traits(repo, state_dir=state)
+    fp1_same = ar.fingerprint(repo, 1) == stored["fp1"]
+    fp2_moved = ar.fingerprint(repo, 2) != stored["fp2"]
+    ok = read["cache"]["state"] == ar.CACHE_FRESH and fp1_same and fp2_moved
+    return ok, ("cache=%s fp1_unchanged=%s fp2_moved=%s -- documented bound: a module added below the root "
+                "(src/a/b/c/new_module.py) is not an evidence file and not in the depth-1 fingerprint, so "
+                "the reader stays FRESH; it is caught by the age backstop (TRAIT_MAX_AGE_S) and by the "
+                "producer's depth-2 check on its next run" % (read["cache"]["state"], fp1_same, fp2_moved))
+
+
+def pred_V_ARCH_MISS_UNJUDGED():
+    """Pitfall 2: every way the cache can be unusable reads all ten traits UNJUDGED with a
+    named cause, never ABSENT and never a shorter dict. Builds and produces its own fixture."""
+    state, repo = _produce_fixture("persistent_prisma")
+    path = ar.cache_path(repo, state_dir=state)
+    with open(path, "rb") as fh:
+        base_bytes = fh.read()
+    max_bytes = getattr(ar, "CACHE_MAX_BYTES", 256 * 1024)
+    problems = []
+    if max_bytes != 256 * 1024:
+        problems.append("CONSTANT: CACHE_MAX_BYTES=%r (want 262144)" % (getattr(ar, "CACHE_MAX_BYTES", None),))
+
+    def variant(mutate):
+        doc = json.loads(base_bytes.decode("utf-8"))
+        mutate(doc)
+        return json.dumps(doc).encode("utf-8")
+
+    def drop_trait(doc):
+        del doc["traits"]["ui"]
+
+    def set_state(doc):
+        doc["traits"]["persistent"]["state"] = "MAYBE"
+
+    def foreign_key(doc):
+        doc["repo_key"] = "another-repository-key"
+
+    def pad(doc):
+        doc["pad"] = "x" * (max_bytes + 10)
+
+    def no_produced_at(doc):
+        del doc["produced_at"]
+
+    cases = [
+        ("no-file", None, ar.CACHE_MISSING, "no-cache"),
+        ("non-json", b"\x00\xffnot json", ar.CACHE_MALFORMED, "cache-malformed"),
+        ("other-schema", variant(lambda d: d.__setitem__("schema", "ucep-traits/9")), ar.CACHE_MALFORMED, "cache-malformed"),
+        ("trait-missing", variant(drop_trait), ar.CACHE_MALFORMED, "cache-malformed"),
+        ("state-MAYBE", variant(set_state), ar.CACHE_MALFORMED, "cache-malformed"),
+        ("repo-key-mismatch", variant(foreign_key), ar.CACHE_MALFORMED, "cache-malformed"),
+        ("oversize", variant(pad), ar.CACHE_MALFORMED, "cache-malformed"),
+        ("produced-at-missing", variant(no_produced_at), ar.CACHE_MALFORMED, "cache-malformed"),
+    ]
+    # Control: the unmodified document reads FRESH, so each case fails for its own change.
+    ctrl = ar.read_traits(repo, state_dir=state)
+    if ctrl["cache"]["state"] != ar.CACHE_FRESH:
+        problems.append("CONTROL: the unmodified document reads %s" % ctrl["cache"]["state"])
+    for label, payload, want_state, cause in cases:
+        if payload is None:
+            os.remove(path)
+        else:
+            with open(path, "wb") as fh:
+                fh.write(payload)
+        res = ar.read_traits(repo, state_dir=state)
+        traits = res["traits"]
+        if res["cache"]["state"] != want_state:
+            # The document was accepted (or refused for another reason): not a miss at all.
+            problems.append("MISS-NOT-REFUSED[%s]: cache=%s want=%s" % (label, res["cache"]["state"], want_state))
+            continue
+        absent = sorted(t for t, r in traits.items() if r["state"] == ar.ABSENT)
+        if absent:
+            problems.append("READ-ABSENT[%s]: a refused cache answered ABSENT for %s" % (label, absent))
+            continue
+        shape_ok = (set(traits) == set(ar.TRAITS)
+                    and all(r["state"] == ar.UNJUDGED and r["fact_state"] == ar.UNKNOWN and r["reason"] == cause
+                            for r in traits.values()))
+        if not shape_ok:
+            problems.append("MISS-NOT-UNJUDGED[%s]: traits=%d reasons=%s" % (
+                label, len(traits), sorted({r["reason"] for r in traits.values()})))
+    return not problems, "; ".join(problems) or \
+        "%d unusable shapes (no file, non-JSON, other schema, missing trait, state MAYBE, foreign repo_key, > %d bytes, no produced_at): ten UNJUDGED each with its cause, none ABSENT; control FRESH" % (
+            len(cases), max_bytes)
+
+
+def pred_V_ARCH_KEY_NORMALIZATION():
+    problems = []
+    state, repo = _produce_fixture("persistent_prisma")
+    canonical = ar.subject_root(repo)
+    expected = ar.cache_path(canonical, state_dir=state)
+    spellings = {
+        "canonical": canonical,
+        "forward-slash": canonical.replace("\\", "/"),
+        "trailing-separator": canonical + os.sep,
+        "subdirectory": os.path.join(canonical, "src"),
+        "dot-dot": os.path.join(canonical, "src", ".."),
+    }
+    for label, variant in (("upper-case", canonical.upper()), ("lower-case", canonical.lower())):
+        if os.path.isdir(variant):          # only where the filesystem really folds case
+            spellings[label] = variant
+    if os.name == "nt" and len(canonical) > 2 and canonical[1] == ":":
+        spellings["git-bash"] = "/" + canonical[0].lower() + "/" + canonical[3:].replace("\\", "/")
+    for label, spelling in spellings.items():
+        got = ar.cache_path(spelling, state_dir=state)
+        fresh = ar.read_traits(spelling, state_dir=state)["cache"]["state"]
+        if got is None or os.path.normcase(got) != os.path.normcase(expected) or fresh != ar.CACHE_FRESH:
+            problems.append("KEY-DIFFERS[%s]: %r -> cache_path=%s read=%s" % (label, spelling, got, fresh))
+    files_before = sorted(os.listdir(state))
+    for label, bad in (("relative", "src"), ("missing-absolute", os.path.join(_HOME, "no-such-repo-directory"))):
+        path = ar.cache_path(bad, state_dir=state)
+        res = ar.read_traits(bad, state_dir=state)
+        causes = {r["reason"] for r in res["traits"].values()}
+        if not (path is None and res["cache"]["state"] == ar.CACHE_UNRESOLVABLE
+                and res["cache"]["reason"] == "unresolvable-root" and causes == {"unresolvable-root"}):
+            problems.append("INVENTED-KEY[%s]: cache_path=%s cache=%s causes=%s" % (
+                label, path, res["cache"]["state"], sorted(causes)))
+    if sorted(os.listdir(state)) != files_before:
+        problems.append("a lookup created a file: %s -> %s" % (files_before, sorted(os.listdir(state))))
+    return not problems, "; ".join(problems) or \
+        "%d spellings of one repo (%s) share one cache file and read FRESH; relative and missing paths invent no key" % (
+            len(spellings), ", ".join(sorted(spellings)))
+
+
+_SAFE_CACHE_NAME = re.compile(r"^traits_[A-Za-z0-9-]+\.json\Z")
+
+
+def pred_V_ARCH_CACHE_PATH_SAFE():
+    """T-02-02, run LAST so it sees every cache this file produced: the filename comes
+    from the repo key only, in the state directory it was given, with nothing else left."""
+    problems, swept = [], 0
+    state = new_state()
+    awkward_parent = tempfile.mkdtemp(prefix="carch-repo-")
+    _TEMP_DIRS.append(awkward_parent)
+    awkward = os.path.join(awkward_parent, "we ird&name;..%$")
+    os.makedirs(os.path.join(awkward, ".git"))
+    roots = [make_repo("persistent_prisma"), make_repo("ephemeral"), awkward]
+    for root in roots:
+        p = ar.cache_path(root, state_dir=state)
+        if p is None or not _SAFE_CACHE_NAME.match(os.path.basename(p)) \
+                or os.path.normcase(os.path.dirname(p)) != os.path.normcase(state):
+            problems.append("UNSAFE-PATH: %r -> %r" % (root, p))
+    state_root = os.path.join(_HOME, ".claude", "state")
+    for dirpath, _dirs, files in os.walk(state_root):
+        for fn in files:
+            if not fn.startswith(("traits_", ".traits_")):
+                continue
+            swept += 1
+            if fn == "traits_production.jsonl":
+                continue
+            if not _SAFE_CACHE_NAME.match(fn):
+                problems.append("UNSAFE-FILE: %s" % os.path.join(dirpath, fn))
+    if swept == 0:
+        problems.append("CONTROL: the sweep found no cache file, so it checked nothing")
+    return not problems, "; ".join(problems) or \
+        "%d awkward roots map to safe names inside the given state dir; %d produced files swept, all `traits_<key>.json`, no stray temp file" % (
+            len(roots), swept)
+
+
+def pred_V_ARCH_CACHE_OUTSIDE_REPO():
+    """Pitfall 6: the cache lives in the per-user state dir; producing, skipping, reading and
+    resolving leave the scanned repository byte-identical and put no cache in the worktree."""
+    problems = []
+    kinds = ("persistent_prisma", "ephemeral", "external_npm", "zero_manifest",
+             "prisma_marker_react", "pip_fastapi")
+    for kind in kinds:
+        state, repo = new_state(), make_repo(kind)
+        before = listing(repo)
+        ts.produce(repo, state_dir=state)
+        ts.produce(repo, state_dir=state)
+        ar.resolve(WM_ES, repo, state_dir=state)
+        ar.read_traits(repo, state_dir=state)
+        after = listing(repo)
+        if before != after:
+            problems.append("REPO-CHANGED[%s]: %d -> %d entries" % (kind, len(before), len(after)))
+    stray = [p for p in glob.glob(os.path.join(_PP_ROOT, "**", "traits_*.json"), recursive=True)
+             if os.sep + ".git" + os.sep not in p]
+    if stray:
+        problems.append("CACHE-IN-WORKTREE: %s" % stray[:3])
+    return not problems, "; ".join(problems) or \
+        "%d fixture repos byte-identical across produce x2, resolve and read; no traits_*.json under the worktree" % len(kinds)
+
+
+def _p95(values):
+    s = sorted(values)
+    return s[max(0, math.ceil(0.95 * len(s)) - 1)]
+
+
+def pred_V_ARCH_READ_ONLY():
+    """G4: the prompt-path reader walks nothing, scans nothing, produces nothing and creates
+    nothing. Counters are installed only around the resolve loop, after this predicate's own
+    produce calls, so a producer-side effect can never be what turns it red."""
+    if ar is None or ts is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    state_f, repo_f = _produce_fixture("persistent_prisma")            # fresh
+    state_s, repo_s = _produce_fixture("prisma_marker_react")          # stale after the edit
+    _edit_file(os.path.join(repo_s, "package.json"),
+               json.dumps({"name": "fixture", "dependencies": {"react": "^18.0.0", "stripe": "^14.0.0"}}))
+    state_m, repo_m = new_state(), make_repo("persistent_prisma")      # missing: never produced
+    cases = [(repo_f, state_f, "fresh"), (repo_s, state_s, "stale"), (repo_m, state_m, "missing")]
+    before = listing(_HOME)
+    real_walk, real_scan, real_produce = os.walk, ts.scan, ts.produce
+    walk_c, scan_c, prod_c = Counting(real_walk), Counting(real_scan), Counting(real_produce)
+    os.walk, ts.scan, ts.produce = walk_c, scan_c, prod_c
+    ms, seen = [], {}
+    try:
+        for i in range(20):
+            repo, state, label = cases[i % 3]
+            t0 = time.perf_counter()
+            subject = ar.resolve(WM_ES, repo, state_dir=state)
+            ms.append((time.perf_counter() - t0) * 1000.0)
+            seen.setdefault(label, set()).add(subject["cache"]["state"])
+        counts = (walk_c.calls, scan_c.calls, prod_c.calls)
+    finally:
+        os.walk, ts.scan, ts.produce = real_walk, real_scan, real_produce
+    after = listing(_HOME)
+    # Control: the same counters DO see a walk, a scan and a produce when one happens.
+    cw, cs, cp = Counting(real_walk), Counting(real_scan), Counting(real_produce)
+    os.walk, ts.scan, ts.produce = cw, cs, cp
+    try:
+        list(os.walk(repo_m))
+        ts.scan(repo_m)
+        ts.produce(repo_m, state_dir=new_state())
+        control = (cw.calls, cs.calls, cp.calls)
+    finally:
+        os.walk, ts.scan, ts.produce = real_walk, real_scan, real_produce
+    problems = []
+    if counts[0] > 0:
+        problems.append("READER-WALKED: os.walk calls=%d during 20 resolve calls" % counts[0])
+    if counts[1] > 0:
+        problems.append("READER-SCANNED: ts.scan calls=%d" % counts[1])
+    if counts[2] > 0:
+        problems.append("READER-PRODUCED: ts.produce calls=%d" % counts[2])
+    if before != after:
+        problems.append("READER-WROTE: _HOME listing changed (%d -> %d paths)" % (len(before), len(after)))
+    if seen != {"fresh": {ar.CACHE_FRESH}, "stale": {ar.CACHE_STALE}, "missing": {ar.CACHE_MISSING}}:
+        problems.append("BRANCHES-NOT-REACHED: %s" % {k: sorted(v) for k, v in seen.items()})
+    if not (control[0] >= 1 and control[1] == 2 and control[2] == 1):
+        problems.append("CONTROL: the counters did not see a deliberate walk/scan/produce: %s" % (control,))
+    return not problems, "; ".join(problems) or \
+        "walk=%d scan=%d produce=%d over 20 resolve calls (fresh, stale, missing); _HOME unchanged (%d paths); median=%.2f ms p95=%.2f ms; control saw walk=%d scan=%d produce=%d" % (
+            counts[0], counts[1], counts[2], len(after), statistics.median(ms), _p95(ms),
+            control[0], control[1], control[2])
+
+
+def pred_V_ARCH_PRODUCER_SKIP():
+    problems = []
+    original = ts._walk
+    walks = Counting(original)
+    ts._walk = walks
+    try:
+        state, repo = new_state(), make_repo("persistent_prisma")
+        first = ts.produce(repo, state_dir=state)
+        path = ar.cache_path(repo, state_dir=state)
+        with open(path, "rb") as fh:
+            bytes1 = fh.read()
+        mtime1 = os.stat(path).st_mtime_ns
+        walks.calls = 0
+        second = ts.produce(repo, state_dir=state)
+        skip_walks = walks.calls
+        with open(path, "rb") as fh:
+            bytes2 = fh.read()
+        mtime2 = os.stat(path).st_mtime_ns
+        walks.calls = 0
+        forced = ts.produce(repo, state_dir=state, force=True)
+        force_walks = walks.calls
+        produced_at = _stored_doc(repo, state)["produced_at"]
+        walks.calls = 0
+        aged = ts.produce(repo, state_dir=state, now=produced_at + ts.SKIP_WINDOW_S + 1)
+        aged_walks = walks.calls
+        # A moved root manifest (fp2 moves) and a moved evidence file each force a rewalk, each
+        # with a skip control immediately before the edit.
+        state_b, repo_b = new_state(), make_repo("persistent_prisma")
+        ts.produce(repo_b, state_dir=state_b)
+        ctrl_b = ts.produce(repo_b, state_dir=state_b)
+        _edit_file(os.path.join(repo_b, "package.json"),
+                   json.dumps({"name": "fixture", "dependencies": {"@prisma/client": "^5.0.0", "zod": "^3.0.0"}}))
+        after_manifest = ts.produce(repo_b, state_dir=state_b)
+        state_c, repo_c = new_state(), make_repo("persistent_prisma")
+        ts.produce(repo_c, state_dir=state_c)
+        ctrl_c = ts.produce(repo_c, state_dir=state_c)
+        _edit_file(os.path.join(repo_c, _SCHEMA_REL), "model Subscription {\n  id Int @id\n  note String\n}\n")
+        after_evidence = ts.produce(repo_c, state_dir=state_c)
+    finally:
+        ts._walk = original
+    if first.get("outcome") != ts.WRITTEN:
+        problems.append("first produce outcome=%r" % first.get("outcome"))
+    if second.get("outcome") != ts.SKIPPED or skip_walks != 0 or mtime1 != mtime2 or bytes1 != bytes2:
+        problems.append("SKIP-FAILED: outcome=%r walks=%d mtime_same=%s bytes_same=%s" % (
+            second.get("outcome"), skip_walks, mtime1 == mtime2, bytes1 == bytes2))
+    if forced.get("outcome") != ts.WRITTEN or force_walks != 1:
+        problems.append("FORCE-FAILED: outcome=%r walks=%d" % (forced.get("outcome"), force_walks))
+    if aged.get("outcome") != ts.WRITTEN or aged_walks != 1:
+        problems.append("AGE-NOT-REWALKED: outcome=%r walks=%d" % (aged.get("outcome"), aged_walks))
+    if ctrl_b.get("outcome") != ts.SKIPPED or after_manifest.get("outcome") != ts.WRITTEN:
+        problems.append("MANIFEST-EDIT-NOT-REWALKED: control=%r after_edit=%r" % (
+            ctrl_b.get("outcome"), after_manifest.get("outcome")))
+    if ctrl_c.get("outcome") != ts.SKIPPED or after_evidence.get("outcome") != ts.WRITTEN:
+        problems.append("EVIDENCE-EDIT-NOT-REWALKED: control=%r after_edit=%r" % (
+            ctrl_c.get("outcome"), after_evidence.get("outcome")))
+    if ts.SKIP_WINDOW_S != 24 * 3600:
+        problems.append("CONSTANT: SKIP_WINDOW_S=%r" % ts.SKIP_WINDOW_S)
+    return not problems, "; ".join(problems) or \
+        "second produce SKIPPED (0 walks, file bytes and mtime unchanged); force and age rewalk once; edited root manifest and edited evidence file rewalk after a SKIPPED control"
+
+
+def pred_V_ARCH_MANIFEST_NAMES_COVER():
+    names = set(ar.MANIFEST_NAMES)
+    parsed = {k.lower() for k in ts.PARSERS}
+    missing = sorted(parsed - names)
+    markers = ("schema.prisma", "docker-compose.yml", "compose.yaml", "fly.toml", "vercel.json",
+               "plugin.yml", "dockerfile")
+    missing_markers = [m for m in markers if m not in names]
+    not_lower = sorted(n for n in names if n != n.lower())
+    control = bool({"definitely-not-a-manifest.txt"} - names)       # the comparison can answer "missing"
+    ok = not missing and not missing_markers and not not_lower and control
+    return ok, "parsers missing=%s markers missing=%s not lower-case=%s control=%s (%d names)" % (
+        missing, missing_markers, not_lower, control, len(names))
+
+
+# -- plan 02-04 Task 2: reader drills (RESEARCH drills 2, 3, 4) ----------------------------
+# Same four conditions as the 02-02 drills: the mutated predicate goes RED, the counting wrapper
+# was reached, the red evidence names the sub-assertion under test, and after the restore the
+# same predicate is GREEN on real code.
+
+def pred_V_ARCH_DRILL_ABSENT_ON_MISS():
+    """RESEARCH drill 2: a reader whose miss path answers ABSENT must turn the miss gate red."""
+    original = ar.unjudged_reading
+
+    def absent_on_miss(cause):
+        return ar.reading(ar.ABSENT, ar.OBSERVED, [], cause)
+
+    counter = Counting(absent_on_miss)
+    ar.unjudged_reading = counter
+    try:
+        ok_m, ev_m = pred_V_ARCH_MISS_UNJUDGED()
+    finally:
+        ar.unjudged_reading = original
+    restored_is_original = ar.unjudged_reading is original
+    ok_r, _ev_r = pred_V_ARCH_MISS_UNJUDGED()
+    _drill_report("absent-on-miss", [("V-ARCH-MISS-UNJUDGED", ok_m, ev_m)])
+    named = "READ-ABSENT" in ev_m
+    ok = ok_m is False and counter.calls > 0 and named and restored_is_original and ok_r is True
+    return ok, "mutated ok=%s calls=%d named_sub_assertion=%s restored ok=%s | %s" % (
+        ok_m, counter.calls, named, ok_r, ev_m)
+
+
+def pred_V_ARCH_DRILL_READER_SCAN():
+    """RESEARCH drill 3: a reader that walks, however little, must turn the read-only gate red."""
+    original = ar.fingerprint
+
+    def scanning(root, depth=1):
+        for _item in os.walk(root):       # pull one item: the reader just walked
+            break
+        return original(root, depth)
+
+    counter = Counting(scanning)
+    ar.fingerprint = counter
+    try:
+        ok_m, ev_m = pred_V_ARCH_READ_ONLY()
+    finally:
+        ar.fingerprint = original
+    restored_is_original = ar.fingerprint is original
+    ok_r, _ev_r = pred_V_ARCH_READ_ONLY()
+    _drill_report("reader-scan", [("V-ARCH-READ-ONLY", ok_m, ev_m)])
+    named = "READER-WALKED" in ev_m
+    ok = ok_m is False and counter.calls > 0 and named and restored_is_original and ok_r is True
+    return ok, "mutated ok=%s calls=%d named_sub_assertion=%s restored ok=%s | %s" % (
+        ok_m, counter.calls, named, ok_r, ev_m)
+
+
+def pred_V_ARCH_DRILL_FP_IGNORES_MANIFEST():
+    """RESEARCH drill 4: a fingerprint that ignores manifests must turn the stale-manifest gate
+    red. The root manifest there is not an evidence file, so only the fingerprint can see it."""
+    original_names, original_fp = ar.MANIFEST_NAMES, ar.fingerprint
+    counter = Counting(original_fp)
+    ar.MANIFEST_NAMES = frozenset()
+    ar.fingerprint = counter
+    try:
+        ok_m, ev_m = pred_V_ARCH_STALE_MANIFEST()
+    finally:
+        ar.MANIFEST_NAMES, ar.fingerprint = original_names, original_fp
+    restored = ar.MANIFEST_NAMES is original_names and ar.fingerprint is original_fp
+    ok_r, _ev_r = pred_V_ARCH_STALE_MANIFEST()
+    _drill_report("fp-ignores-manifest", [("V-ARCH-STALE-MANIFEST", ok_m, ev_m)])
+    named = "STALE-MANIFEST-NOT-DETECTED" in ev_m
+    ok = ok_m is False and counter.calls > 0 and named and restored and ok_r is True
+    return ok, "mutated ok=%s calls=%d named_sub_assertion=%s restored ok=%s | %s" % (
+        ok_m, counter.calls, named, ok_r, ev_m)
+
+
+GATES += [
+    ("V-ARCH-STALE-EVIDENCE-FILE", pred_V_ARCH_STALE_EVIDENCE_FILE),
+    ("V-ARCH-STALE-AGE", pred_V_ARCH_STALE_AGE),
+    ("V-ARCH-STALE-DEEP-BLINDSPOT", pred_V_ARCH_STALE_DEEP_BLINDSPOT),
+    ("V-ARCH-MISS-UNJUDGED", pred_V_ARCH_MISS_UNJUDGED),
+    ("V-ARCH-KEY-NORMALIZATION", pred_V_ARCH_KEY_NORMALIZATION),
+    ("V-ARCH-CACHE-OUTSIDE-REPO", pred_V_ARCH_CACHE_OUTSIDE_REPO),
+    ("V-ARCH-READ-ONLY", pred_V_ARCH_READ_ONLY),
+    ("V-ARCH-PRODUCER-SKIP", pred_V_ARCH_PRODUCER_SKIP),
+    ("V-ARCH-MANIFEST-NAMES-COVER", pred_V_ARCH_MANIFEST_NAMES_COVER),
+    ("V-ARCH-DRILL-ABSENT-ON-MISS", pred_V_ARCH_DRILL_ABSENT_ON_MISS),
+    ("V-ARCH-DRILL-READER-SCAN", pred_V_ARCH_DRILL_READER_SCAN),
+    ("V-ARCH-DRILL-FP-IGNORES-MANIFEST", pred_V_ARCH_DRILL_FP_IGNORES_MANIFEST),
+]
+
+# Runs after every other gate, so its sweep sees every cache file this process produced.
+FINAL_GATES = [
+    ("V-ARCH-CACHE-PATH-SAFE", pred_V_ARCH_CACHE_PATH_SAFE),
+]
+
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 38
+EXPECTED = 51
 
 
 def main() -> int:
     try:
-        for name, pred in GATES:
+        for name, pred in GATES + FINAL_GATES:
             run_gate(name, pred)
         print("CAPABILITY_ARCHETYPES_PASS=%d/%d  threshold=%d/%d" % (
             _PASS, _PASS + _FAIL, EXPECTED, EXPECTED))

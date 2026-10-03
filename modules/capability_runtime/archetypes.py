@@ -118,6 +118,17 @@ MANIFEST_NAMES = frozenset({
 # are re-stat'ed: the reader's cost is bounded whatever a document claims.
 EVIDENCE_FILES_MAX = 32
 
+# Age backstop (D-09). The fingerprint carries freshness; age only catches what the
+# fingerprint cannot see (a module added below the root). Seven days, not the
+# capsule's 24 h: a laptop that was off over a weekend would read STALE every Monday.
+TRAIT_MAX_AGE_S = 7 * 24 * 3600
+
+# A cache document larger than this is refused before it is parsed.
+CACHE_MAX_BYTES = 256 * 1024
+
+# Git Bash spells C:\Users\x as /c/Users/x (the form `family_scan.main_repo_of` converts).
+_MSYS_PATH_RE = re.compile(r"^/([a-zA-Z])/(.*)$")
+
 # Depth-2 fingerprints do not descend into trees the producer never walks.
 _FP_SKIP_DIRS = frozenset(_FAMILY_SKIP_DIRS)
 
@@ -306,12 +317,18 @@ def subject_root(root):
     Only an absolute, existing directory resolves. A relative or missing path gets
     no key at all: inventing one would file the reader's question under an
     identity no producer ever wrote. The subject root is a required argument; the
-    current working directory is never consulted."""
+    current working directory is never consulted. On Windows the Git Bash form
+    `/c/Users/x` is converted to `C:\\Users\\x` first, so one repository has one key
+    however its caller spells it."""
     if not isinstance(root, (str, os.PathLike)):
         return None
     path = os.fspath(root)
     if not isinstance(path, str) or not path:
         return None
+    if os.name == "nt":
+        msys = _MSYS_PATH_RE.match(path)
+        if msys:
+            path = msys.group(1).upper() + ":\\" + msys.group(2).replace("/", "\\")
     if not os.path.isabs(path) or not os.path.isdir(path):
         return None
     return canonical_repo(os.path.abspath(path))
@@ -359,11 +376,19 @@ def _list_dir(path):
         return None
 
 
+def _live_stat(entry):
+    """A real `os.stat` of a directory entry. NOT `entry.stat()`: on Windows that returns the
+    timestamps and size cached in the parent's directory listing, which NTFS refreshes
+    lazily. Measured on this host: a directory created a moment earlier listed with an
+    mtime 1 ms different from its own `os.stat` and kept it for seconds, so two
+    fingerprints taken at different moments disagreed about an untouched repository."""
+    return os.stat(entry.path)
+
+
 def _entry_stat(entry):
-    """`name|size|mtime_ns` of a directory entry, or `name|<error type>`. On Windows the
-    values come from the directory listing itself, so this costs no extra call."""
+    """`name|size|mtime_ns` of a directory entry, or `name|<error type>`."""
     try:
-        st = entry.stat()
+        st = _live_stat(entry)
     except OSError as exc:
         return "%s|%s" % (entry.name, type(exc).__name__)
     return "%s|%d|%d" % (entry.name, st.st_size, st.st_mtime_ns)
@@ -405,7 +430,7 @@ def fingerprint(root, depth=1):
             try:
                 if not entry.is_dir(follow_symlinks=False):
                     continue
-                mtime = entry.stat().st_mtime_ns
+                mtime = _live_stat(entry).st_mtime_ns
             except OSError:
                 continue
             kids = _list_dir(entry.path)
@@ -428,7 +453,7 @@ def root_manifest_stats(root):
         if entry.name.lower() not in MANIFEST_NAMES:
             continue
         try:
-            st = entry.stat()
+            st = _live_stat(entry)
             if entry.is_dir():
                 continue
         except OSError:
@@ -510,14 +535,19 @@ def _read_traits(root, state_dir, now=None):
                 "traits": _all_unjudged("cache-malformed")}
 
     try:
-        with open(path, "r", encoding="utf-8-sig") as fh:
-            doc = json.load(fh)
+        with open(path, "rb") as fh:
+            raw = fh.read(CACHE_MAX_BYTES + 1)       # bounded: an oversize file is never parsed
+        if len(raw) > CACHE_MAX_BYTES:
+            return malformed("larger than %d bytes" % CACHE_MAX_BYTES)
+        doc = json.loads(raw.decode("utf-8-sig"))
     except (OSError, ValueError) as exc:
         return malformed("%s" % type(exc).__name__)
     if not isinstance(doc, dict):
         return malformed("not an object")
     if doc.get("schema") != SCHEMA:
         return malformed("schema")
+    if doc.get("repo_key") != repo_key(sroot):       # a document filed under another repository's name
+        return malformed("repo_key")
     stored = doc.get("traits")
     if not isinstance(stored, dict) or set(stored) != set(TRAITS):
         return malformed("trait keys")
@@ -529,7 +559,9 @@ def _read_traits(root, state_dir, now=None):
     try:
         produced_at = float(doc.get("produced_at"))
     except (TypeError, ValueError):
-        produced_at = None
+        return malformed("produced_at")
+    if not -1e18 < produced_at < 1e18:               # NaN and infinity fail this comparison
+        return malformed("produced_at")
     walk = doc.get("walk") if isinstance(doc.get("walk"), dict) else None
     fp = doc.get("fingerprint")
     if not isinstance(fp, dict) or not isinstance(fp.get("fp1"), str):
@@ -538,7 +570,11 @@ def _read_traits(root, state_dir, now=None):
     if (not isinstance(evidence, list) or len(evidence) > EVIDENCE_FILES_MAX
             or not all(_valid_evidence_entry(sroot, e) for e in evidence)):
         return malformed("evidence files")
-    why = _stale_reason(sroot, fp)
+    age = (time.time() if now is None else float(now)) - produced_at
+    if age > TRAIT_MAX_AGE_S:
+        why = "age %d s exceeds the %d s bound (TRAIT_MAX_AGE_S)" % (age, TRAIT_MAX_AGE_S)
+    else:
+        why = _stale_reason(sroot, fp)
     if why:
         return {"cache": _cache_info(CACHE_STALE, path=path, produced_at=produced_at,
                                      reason="stale: " + why, walk=walk, last_known=traits),
@@ -554,7 +590,13 @@ def read_traits(root, *, state_dir=None, now=None):
     Never raises and never returns fewer than ten traits. A cache is FRESH only while
     the root fingerprint and every recorded evidence file are unchanged; otherwise it
     reads STALE, every trait UNJUDGED `stale`, and the old readings survive only as
-    `cache["last_known"]`, for display."""
+    `cache["last_known"]`, for display. Known blind spot: a module added below the root
+    is neither an evidence file nor in the depth-1 fingerprint, so only the age backstop
+    (`TRAIT_MAX_AGE_S`) and the producer's depth-2 check on its next run catch it.
+
+    Every unusable cache (missing, oversize, unparsable, wrong schema, missing trait,
+    unknown state, a `repo_key` that is not this repository's, no `produced_at`, no
+    fingerprint block) reads all ten traits UNJUDGED with a named cause, never ABSENT."""
     try:
         return _read_traits(root, state_dir, now)
     except Exception as exc:  # noqa: BLE001 -- a reader that raises drops the whole chain

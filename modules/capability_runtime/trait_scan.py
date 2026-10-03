@@ -65,8 +65,7 @@ SKIP_DIRS = frozenset(_FAMILY_SKIP_DIRS) | frozenset({
     "vendor", "third_party", "site-packages", "Library", "PackageCache", "Temp",
     "obj", "bin", "Pods", ".gradle", "_knowledge_graph"})
 
-# Outcomes of produce(). SKIPPED is reserved for the skip-if-unchanged rule of
-# plan 02-04.
+# Outcomes of produce(). SKIPPED is the skip-if-unchanged rule (see SKIP_WINDOW_S).
 WRITTEN = "WRITTEN"
 SKIPPED = "SKIPPED"
 UNRESOLVABLE = "UNRESOLVABLE"
@@ -630,30 +629,80 @@ def _evidence_paths(found):
     at most `archetypes.EVIDENCE_FILES_MAX`. These are what the reader re-stats: an
     edit to one of them moves a reading without moving any directory listing. A
     dependency item reads `<manifest path>:<name>`, so its path is cut at the last
-    colon. Beyond the cap the remainder is covered only by the age bound."""
+    colon. Beyond the cap the remainder is covered only by the age bound.
+
+    A `data-file` item (a database or world file, WEAK by name) is left out on
+    purpose: a program rewrites it in normal use, so re-stat'ing it would pin the
+    cache STALE on every repository that holds a live database, while its content
+    changes nothing the judgment uses (a deletion at the root still moves the root
+    fingerprint, anywhere else the age bound covers it)."""
     paths = set()
     for items in found.values():
         for _cls, evidence, kind in items:
+            if kind == "data-file":
+                continue
             paths.add(evidence.rsplit(":", 1)[0] if kind == "dependency" else evidence)
     return sorted(paths, key=lambda p: (p.count("/"), p))[:archetypes.EVIDENCE_FILES_MAX]
 
 
-def produce(root, *, state_dir=None, cap=DEFAULT_CAP, budget_s=DEFAULT_BUDGET_S):
+# A document younger than this whose depth-2 fingerprint and evidence files are unchanged
+# stands in for a new walk. A skip never rewrites the document, so it never extends its
+# age: a change the fingerprints cannot see is rewalked within a day of the scheduled run.
+SKIP_WINDOW_S = 24 * 3600
+
+
+def _skippable(sroot, state_dir, now):
+    """The stored document when it can stand in for a new walk, else None.
+
+    The reader is the judge of validity: the document must read FRESH (valid, depth-1
+    fingerprint and every evidence file unchanged, inside the reader's age bound), and on
+    top of that its stored depth-2 fingerprint must equal the current one and its age must
+    lie in [0, SKIP_WINDOW_S)."""
+    cached = archetypes.read_traits(sroot, state_dir=state_dir, now=now)
+    cache = cached["cache"]
+    produced_at = cache.get("produced_at")
+    if cache["state"] != archetypes.CACHE_FRESH or produced_at is None:
+        return None
+    if not 0 <= now - produced_at < SKIP_WINDOW_S:
+        return None
+    try:
+        with open(cache["path"], "rb") as fh:
+            doc = json.loads(fh.read(archetypes.CACHE_MAX_BYTES + 1).decode("utf-8-sig"))
+    except (OSError, ValueError):
+        return None
+    if doc["fingerprint"].get("fp2") != archetypes.fingerprint(sroot, 2):
+        return None
+    return doc
+
+
+def produce(root, *, state_dir=None, cap=DEFAULT_CAP, budget_s=DEFAULT_BUDGET_S,
+            now=None, force=False):
     """Scan the repository containing `root` and publish its trait cache.
 
-    Returns {"outcome": WRITTEN, "path", "doc"}, or UNRESOLVABLE (nothing
-    written) for a root that is not an absolute existing directory, or FAILED
-    with the reason when anything goes wrong (nothing published).
+    Returns {"outcome": WRITTEN, "path", "doc"}, or SKIPPED (the stored document, left
+    exactly as it was), or UNRESOLVABLE (nothing written) for a root that is not an
+    absolute existing directory, or FAILED with the reason when anything goes wrong
+    (nothing published). Unless `force`, an unchanged repository inside `SKIP_WINDOW_S`
+    is not rewalked. One known limit: the skip ignores the `cap` and `budget_s` the stored
+    document was produced with, so a document cut by a small cap or budget can be kept up
+    to `SKIP_WINDOW_S`; that errs toward UNJUDGED (safe), and `force=True` rewalks.
 
     The document carries a `fingerprint` block that the reader compares: depth-1 and
     depth-2 fingerprints and the root manifest stats, all taken BEFORE the walk so a
     change made during the walk reads STALE on the next read instead of being
-    absorbed; and the stats of the evidence files, taken right after it."""
+    absorbed; and the stats of the evidence files, taken right after it. `now` is the
+    clock for the skip window and for `produced_at` (default: the current time)."""
     sroot = archetypes.subject_root(root)
     if sroot is None:
         return {"outcome": UNRESOLVABLE, "reason": "unresolvable-root"}
     tmp = None
     try:
+        now = time.time() if now is None else float(now)
+        if not force:
+            stored = _skippable(sroot, state_dir, now)
+            if stored is not None:
+                return {"outcome": SKIPPED, "path": archetypes.cache_path(sroot, state_dir=state_dir),
+                        "doc": stored}
         fingerprint = {"fp1": archetypes.fingerprint(sroot, 1),
                        "fp2": archetypes.fingerprint(sroot, 2),
                        "root_manifests": archetypes.root_manifest_stats(sroot)}
@@ -661,7 +710,7 @@ def produce(root, *, state_dir=None, cap=DEFAULT_CAP, budget_s=DEFAULT_BUDGET_S)
         fingerprint["evidence_files"] = archetypes.evidence_stats(sroot, result["evidence_paths"])
         path = archetypes.cache_path(sroot, state_dir=state_dir)
         doc = {"schema": archetypes.SCHEMA, "repo_key": repo_key(sroot), "repo": sroot,
-               "produced_at": time.time(), "producer": "trait_scan/1",
+               "produced_at": now, "producer": "trait_scan/1",
                "walk": result["walk"], "fingerprint": fingerprint,
                "traits": result["traits"]}
         directory = os.path.dirname(path)
