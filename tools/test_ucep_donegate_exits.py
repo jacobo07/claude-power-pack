@@ -283,6 +283,51 @@ def main() -> int:
                and row13.get("unjudged_reason") == "na-no-reason",
                "blank reason -> UNJUDGED/na-no-reason", row13)
 
+        # -- WR-03: the chain verdict must reach would_block ---------------------
+        # Every entry PASSes, so only the chain can set would_block. The attack is a
+        # TAMPERED chain (B0 edited after B1 anchored it); the control is the same
+        # fixture untouched (chain ok -> would_block False).
+        def two_gens(label_entries):
+            fam = _family(gens, label_entries)
+            bl.write_generation(fam, label_entries, "b1", root=gens)
+            return fam
+
+        passing = [_entry("c%d" % i, "file:README.md", i) for i in range(4)]
+        fam_ok = two_gens(passing)
+        rep_ok = _judge(fam_ok, repo, gens)
+        fam_bad = two_gens(passing)
+        b0_path = os.path.join(gens, fam_bad, "B0.json")
+        with open(b0_path, "r", encoding="utf-8") as fh:
+            doc0 = json.load(fh)
+        doc0["reason"] = "edited after B1 anchored it"
+        with open(b0_path, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump(doc0, fh, indent=2, ensure_ascii=False)
+            fh.write("\n")
+        rep_bad = _judge(fam_bad, repo, gens)
+        all_pass = all(r["verdict"] == dg.APPLIED_VERIFIED
+                       for r in _rows(rep_bad).values())
+        _check("V-UCEP-WR03-CHAIN-BLOCKS",
+               rep_bad.get("chain_ok") is False and all_pass
+               and rep_bad.get("would_block") is True
+               and rep_bad.get("would_block_on_chain") is True
+               and rep_bad.get("would_block_on_violated") is False,
+               "a TAMPERED chain whose entries all PASS -> would_block True "
+               "(on_chain True, on_violated False)",
+               {"chain_ok": rep_bad.get("chain_ok"), "all_pass": all_pass,
+                "would_block": rep_bad.get("would_block"),
+                "would_block_on_chain": rep_bad.get("would_block_on_chain"),
+                "would_block_on_violated": rep_bad.get("would_block_on_violated")})
+        _check("V-UCEP-WR03-CLEAN-CHAIN-CONTROL",
+               rep_ok.get("chain_ok") is True
+               and all(r["verdict"] == dg.APPLIED_VERIFIED
+                       for r in _rows(rep_ok).values())
+               and rep_ok.get("would_block") is False
+               and rep_ok.get("would_block_on_chain") is False,
+               "the same fixture with an intact chain -> would_block False "
+               "(a gate that always blocks cannot pass this)",
+               {"chain_ok": rep_ok.get("chain_ok"), "would_block": rep_ok.get("would_block"),
+                "would_block_on_chain": rep_ok.get("would_block_on_chain")})
+
         # 2 -- never executed: observed after EVERY judge() call in this file
         _check("V-UCEP-H6-NOT-EXECUTED", _EXECUTED_AFTER == [],
                "marker absent after every judge() call (control: by-hand run writes it)",

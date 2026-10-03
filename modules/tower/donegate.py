@@ -22,8 +22,10 @@ A `test:` check whose file exists is UNJUDGED with `unjudged_reason`
 test must not read as handled (audit G13). `registry:` checks keep DELEGATED.
 Every row carries `unjudged_reason` (None unless the verdict is UNJUDGED), and
 the report's `counts` keeps UNJUDGED apart from VIOLATED, with `unjudged_tests`
-naming the `test:` entries. `would_block` is unchanged (VIOLATED or UNJUDGED);
-`would_block_on_violated` is the VIOLATED-only reading.
+naming the `test:` entries. `would_block` is a VIOLATED or UNJUDGED entry OR a
+chain that is not ok (`would_block_on_chain`, WR-03: the chain hardening must
+bite at the exit, not only in `chain_ok`); `would_block_on_violated` is the
+VIOLATED-only reading.
 
 Declaring an entry not applicable is a claim by the caller, so it is bounded
 twice. The reason must carry a token from the closed vocabulary `NA_REASONS`
@@ -131,6 +133,7 @@ def judge(family: str, repo_root: str, registry: str | None = None,
         return {"family": family, "judged_under": None, "generation_sha256": None,
                 "chain_ok": None, "status": NO_BASELINE, "report_only": True,
                 "would_block": False, "would_block_on_violated": False,
+                "would_block_on_chain": False,
                 "counts": _counts([]), "unjudged_tests": [],
                 "na_count": 0, "na_cap": 0, "na_over_cap": False,
                 "entries": [], "deferred_from_prompt": []}
@@ -180,11 +183,18 @@ def judge(family: str, repo_root: str, registry: str | None = None,
                     "detail": detail, "requirement": e.get("requirement"),
                     "injected": ident in injected, "source": SOURCE,
                     "judged_under": stamp})
+    chain_ok = rt.verify_chain(family, root).ok
+    # A chain that is not ok (TAMPERED, UNANCHORED, unrecorded regressions, missing
+    # root) is a block on its own: the entries it carries are not trustworthy even
+    # when every one of them passes (code review WR-03).
+    would_block_on_chain = chain_ok is False
     return {"family": family, "judged_under": stamp,
             "generation_sha256": bl.generation_sha256(family, n, root),
-            "chain_ok": rt.verify_chain(family, root).ok, "status": JUDGED,
+            "chain_ok": chain_ok, "status": JUDGED,
             "report_only": True,
-            "would_block": any(x["verdict"] in (VIOLATED, UNJUDGED) for x in out),
+            "would_block": would_block_on_chain
+            or any(x["verdict"] in (VIOLATED, UNJUDGED) for x in out),
+            "would_block_on_chain": would_block_on_chain,
             "would_block_on_violated": any(x["verdict"] == VIOLATED for x in out),
             "counts": _counts(out),
             "unjudged_tests": sorted(x["entry_id"] for x in out
