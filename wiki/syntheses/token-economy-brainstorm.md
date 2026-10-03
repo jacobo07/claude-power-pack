@@ -142,8 +142,12 @@ the 7 d window as a share of est. spend; "?" = unmeasured. Owner: who would buil
 
 ## 4. Recommended next steps (cheapest money first)
 
-1. **A1 idle-return rollover**: send it as this mission's S6 proposal to the rollover owner
-   (no edit). The cache is already cold, so the only cost is capsule quality.
+1. **A1 idle-return rollover**: sent as this mission's S6 proposal to the rollover owner
+   (`vault/proposals/2026-10-03_idle-return-rollover.md`). **Correction 2026-10-03:** a fresh
+   epoch is not free. `/kclear` after the gap needs a model turn on the cold context, because the
+   handoff must be less than 30 min old (`tools/rollover.py:403` @ `20d0e66`). That turn is the rewrite. Only
+   a pre-call UserPromptSubmit block with a handoff-less capsule avoids it, and that weakens
+   SAFE_TO_FORGET.
 2. **B1 hide never-invoked skills**: Owner step in settings.json; measurable next week by
    `_coldstart` [K] and floor probe.
 3. **B3 advisory diet**: PP-owned hooks, smallest code change.

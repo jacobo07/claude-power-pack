@@ -108,3 +108,8 @@ Append-only. Newest at the bottom. `grep "^## \[" log.md` lists every entry.
   SessionStart hook outputs (order race, relative times, timestamps) and the first-prompt JIT
   injection. Keep-list: 210 keep / 142 name-only; savings corrected to ~1.2k tok/call (listing
   already capped at 30,000 chars).
+## [2026-10-03] query | A1 idle-return rollover checked against the shipped gate
+- touched: [[token-economy-brainstorm]]
+- notes: 'a fresh epoch is free' was wrong. A handoff older than 30 min fails SAFE_TO_FORGET, so
+  /kclear after the gap is the cold rewrite. Sent to the rollover owner as S6:
+  vault/proposals/2026-10-03_idle-return-rollover.md (pre-call block + handoff-less capsule = owner call).

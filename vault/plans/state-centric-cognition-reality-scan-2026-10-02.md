@@ -140,7 +140,10 @@ owner (no edit). Defaults: goal spine is the only state store; model-calling epo
    goal), `m-129ddae5ccf3` (InfinityOps, no goal). A goal's intent is the Founder's words.
    Observed bonus: while engine files were dirty (my edits, the mutation drill) every scheduled
    pass REFUSED with a named reason -- the sweep cannot run unverified code or a mutant.
-3. S6 proposal note to the SPEC-ECON-ROLLOVER owner.
+3. **S6 DELIVERED** (2026-10-03): `vault/proposals/2026-10-03_idle-return-rollover.md`. It corrects
+   A1: a capsule older than 30 min fails SAFE_TO_FORGET (`rollover.py:403`), so `/kclear` after
+   the gap is itself the cold rewrite. The $541 is only reachable by a UserPromptSubmit block
+   plus a handoff-less capsule, which is a quality-authority change for the owner to decide.
 4. **TOKEN-ECONOMY RESEARCH (Owner: "expand the research on token saving ... massive evolution",
    2026-10-02), IN PROGRESS.** Measured (7 d to 2026-10-02T20:48Z, `wiki/tools/token_economy_*.py`
    + `.out`): $8,312 API-equiv; cache read 54 %, cache WRITE 33 %, output 13 %; main thread 72 %
