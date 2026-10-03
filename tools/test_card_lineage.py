@@ -716,7 +716,192 @@ def c_every_clause(st):
                                        f"flipped their drill FAIL->PASS and back on restore")]
 
 
-CLAUSES = [c_live_clean, c_positive_control, c_drills, c_subprocess_red, c_git_failure, c_every_clause]
+# --------------------------------------------------------------------------- evidence (G-lineage.md)
+
+CLAUSE_TEXT = {
+    "TRAILER": "exactly one `// COMPILED-FROM:` line in the card, and it parses; absent, duplicate or unparseable "
+               "is UNMEASURED and the other six per-card clauses are then UNMEASURED (\"no trailer\").",
+    "SKILL": "the trailer's skill is one the card text names in CARD_TOKEN form (`<name>` skill).",
+    "SOURCE-PATH": "the trailer's source is `skills/<trailer skill>/SKILL.md`.",
+    "SOURCE-CURRENT": "the committed source at the judged commit has the trailer's LF sha256; an absent source is "
+                      "UNMEASURED. This is the clause a re-record of H alone cannot clear.",
+    "COMMIT-ANCESTOR": "the trailer commit resolves and is an ancestor of the judged commit (unresolvable: "
+                       "UNMEASURED, and so are the next two).",
+    "COMMIT-TOUCHES": "the trailer commit changed the source path.",
+    "COMMIT-DIGEST": "the source blob at the trailer commit has the trailer's digest.",
+    "FLOOR": "population size >= 2 (0 is UNMEASURED, 1 is FAIL).",
+    "DISPATCHER-COVERED": "every card the dispatcher registers (skill_mirror_drift.committed_card_pairs) is a "
+                          "population member, so a registered card outside the top-level sweep cannot escape it.",
+    "H-RECORD-CURRENT": "pillar H's committed record agrees with the committed cards and sources "
+                        "(skill_mirror_drift.card_source_state + card_drift + card_verdict).",
+}
+
+DRILL_TEXT = {
+    "CLEAN": "none",
+    "SOURCE-CHANGED-RERECORDED": "first byte of CW's SKILL.md changed and committed; trailer untouched; H re-recorded",
+    "SOURCE-CHANGED-RAW": "the same source change, H not re-recorded",
+    "REDERIVED": "SOURCE-CHANGED-RAW, then CW's trailer re-derived with trailer_for and H re-recorded",
+    "TRAILER-SHA-DIGIT": "one hex digit of CW's trailer sha256 changed",
+    "TRAILER-ABSENT": "DS trailer line deleted (its two LINEAGE comment lines kept)",
+    "TRAILER-DUPLICATE": "DS trailer line duplicated",
+    "TRAILER-UNPARSEABLE": "DS trailer sha256 cut to 63 hex",
+    "SKILL-MISMATCH": "CW trailer replaced by the trailer for DS's skill",
+    "SOURCE-PATH": "CW trailer keeps its skill but points at DS's source, digest and commit A",
+    "GHOST-SKILL": "CW's CARD_TOKEN and trailer renamed to ghost-skill (sha256 and commit kept); re-record refused",
+    "COMMIT-UNKNOWN": "CW trailer commit = deadbeef x 5",
+    "COMMIT-NOT-ANCESTOR": "CW trailer commit = a side-branch commit adding identical source bytes",
+    "COMMIT-NOT-TOUCHING": "CW trailer commit = the H record commit (did not change the source)",
+    "COMMIT-WRONG-DIGEST": "CW source changed; trailer carries the new digest but commit A",
+    "FLOOR-ONE": "DS hook file removed (registration kept); H re-recorded with one pair",
+    "FLOOR-ZERO": "both card files removed; re-record refused",
+    "UNLINEAGED-CARD": "new top-level hooks/new_card.js naming CW's skill, no trailer, not registered",
+    "DISPATCHER-UNCOVERED": "hooks/sub/deep_card.js = copy of CW, registered next to CW; H re-recorded with 3 pairs",
+    "CARD-EDIT-UNRECORDED": "one comment line appended to CW after its trailer, H not re-recorded",
+    "RECORD-UNPARSEABLE": "H record replaced by a lone `{`",
+    "CRLF": "CW's SKILL.md, both cards, the dispatcher and the record committed with CRLF line ends",
+    "WORKTREE-ONLY": "CW source byte changed and DS trailer deleted in the working tree only, not committed",
+}
+
+
+def _head_json(rel):
+    out, why = smd.git_run(REPO, "show", f"HEAD:{rel}")
+    if out is None:
+        return None
+    try:
+        return json.loads(smd.lf_bytes(out).decode("utf-8"))
+    except ValueError:
+        return None
+
+
+def _frozen_rule():
+    led = _head_json(LEDGER_REL)
+    try:
+        return next(p["rule"] for p in led["frozen"]["pillars"] if p["id"] == "G")
+    except (TypeError, KeyError, StopIteration):
+        return None
+
+
+def _cell(s) -> str:
+    return str(s).replace("|", "\\|")
+
+
+def render(st) -> str:
+    """Deterministic LF text: no HEAD sha of this run, no host, no temp path, no timing."""
+    L = ["# [G] compile-out + lineage -- evidence", "", "Frozen pillar G rule (ledger, quoted):", ""]
+    rule = _frozen_rule()
+    L += [f"> {rule}" if rule else "(frozen rule unreadable)", ""]
+    L += ["This file is rendered by `tools/test_card_lineage.py --write-evidence` from the gate's own results, and "
+          "V-CLG-EVIDENCE-CURRENT compares the committed copy with a fresh render.", ""]
+    L += ["## Method", "",
+          "- Trailer grammar: the last line of each card is one comment line, "
+          "`// COMPILED-FROM: skill=<name> source=skills/<name>/SKILL.md sha256=<64 hex> commit=<40 hex>`. "
+          "sha256 is the LF-normalized digest of the committed SKILL.md; commit is the commit that last changed it "
+          "when the card was derived.",
+          "- Population, discovered: every top-level `hooks/*.js` tracked at the judged commit whose LF text holds a "
+          "CARD_TOKEN match (`<name>` skill) or a line starting with `// COMPILED-FROM:`. Nothing is listed by "
+          "hand. Floor 2.",
+          "- Committed-blob rule: every byte compared comes from git blobs at the judged commit or at the trailer "
+          "commit, CRLF->LF. No working-tree file is read, so an uncommitted edit never stands in for a source.",
+          "- Reuse: git access, blob reads, failure classification and the H record comparison are the "
+          "skill_mirror_drift functions (git_run, resolve_commit, tracked_paths, committed_card_pairs, "
+          "card_source_state, card_drift, card_verdict, is_git_failure); the card token and dispatcher reading are "
+          "skill_coverage's (CARD_TOKEN, registered_hooks, discover_cards). One implementation each.",
+          "- Outcomes are PASS, FAIL or UNMEASURED; the verdict is PASS only when all 10 clauses are PASS for every "
+          "card. A git failure (git missing, unresolvable ref, nothing tracked, a member blob unreadable) is "
+          "INCONCLUSIVE, never PASS and never a traceback.", "",
+          "Clauses:", ""]
+    for cid in cl.CARD_CLAUSES + cl.GATE_CLAUSES:
+        L.append(f"- {cid} ({'per card' if cid in cl.CARD_CLAUSES else 'gate'}): {CLAUSE_TEXT[cid]}")
+    L += ["", "## Population (live checkout, HEAD)", ""]
+    live = st["live"]
+    L.append(f"verdict {live['verdict']}, population {len(live['population'])}")
+    L.append("")
+    L.append("| card | skill | source | sha256 | commit | " + " | ".join(cl.CARD_CLAUSES) + " |")
+    L.append("|" + "---|" * (5 + len(cl.CARD_CLAUSES)))
+    for card in live["cards"]:
+        t = card["trailer"] or {}
+        L.append(f"| {card['card']} | {t.get('skill', '-')} | {t.get('source', '-')} | {t.get('sha256', '-')} | "
+                 f"{t.get('commit', '-')} | " + " | ".join(card["clauses"][c]["outcome"] for c in cl.CARD_CLAUSES)
+                 + " |")
+    L.append("")
+    L.append("Gate clauses: " + ", ".join(f"{cid} {live['gate'].get(cid, {}).get('outcome', '-')}"
+                                          for cid in cl.GATE_CLAUSES))
+    rec = _head_json(smd.CARD_RECORD_REL)
+    L.append(f"H record `{smd.CARD_RECORD_REL}` recorded_at_commit "
+             f"`{(rec or {}).get('recorded_at_commit', '(unreadable)')}`")
+    L += ["", "## Drills", "",
+          "Each drill starts from a copy of a clean temporary git repo seeded from the HEAD blobs of the dispatcher, "
+          "the two cards and their SKILL.md sources (commits R, A, B, C). CW is hooks/doctrine_cards.js, DS is "
+          "hooks/destructive_doctrine_card.js; a per-card clause is `<card>:<CLAUSE>`. A drill is ok only when the "
+          "observed verdict and fail set EQUAL the declared ones (and the clauses expected UNMEASURED are "
+          "UNMEASURED).", "",
+          "| id | mutation | declared | observed | result |", "|---|---|---|---|---|"]
+    for did, row in st["drills"].items():
+        res = "ok" if drill_ok(row, did) else "FAIL"
+        obs = f"{row['verdict']} {_fmt(row['fail_set'])}" if row["fail_set"] is not None else "not observed"
+        L.append(f"| {did} | {_cell(DRILL_TEXT.get(did, '-'))} | {row['declared_verdict']} "
+                 f"{_fmt(row['declared'])} | {obs} | {res} |")
+    L += ["", "## Load-bearing", "",
+          "Each clause was forced PASS (its CLAUSES entry replaced) and its singleton drill re-judged; TRAILER has no "
+          "singleton (its failure leaves the other six unmeasurable), so the population was narrowed to members "
+          "carrying the marker. Each patch was restored and the drill re-judged.", "",
+          "| clause | drill | patched verdict | restored verdict |", "|---|---|---|---|"]
+    flips = st.get("flips")
+    if flips is None:
+        L.append("| (not measured) | - | - | - |")
+    else:
+        for cid, did, forced, restored in flips:
+            L.append(f"| {cid} | {did} | {forced} | {restored} |")
+    gf = st.get("git_failure")
+    L += ["", "Git unavailable (`vgm._git_exe` raising): " + (
+        f"live {gf['live']}, fixture {gf['fixture']}, after restoration {gf['restored']}." if gf else
+        "(not measured).")]
+    L += ["", "## Re-derivation", "",
+          "When a source skill changes: re-read the skill, update the card text and its trailer together (the line "
+          "comes from `python3 tools/card_lineage.py --trailer-for <skill>`, which prints and never writes), commit, "
+          "then re-record H with `python3 tools/skill_mirror_drift.py --record-cards` and commit the record. H's "
+          "re-record alone does not clear SOURCE-CURRENT (drill SOURCE-CHANGED-RERECORDED).", "",
+          "## Commands", "",
+          "command: python3 tools/test_card_lineage.py",
+          "command: python3 tools/test_card_lineage.py --write-evidence",
+          "command: python3 tools/card_lineage.py",
+          "command: python3 tools/card_lineage.py --trailer-for <skill>",
+          "command: python3 tools/skill_mirror_drift.py --record-cards", ""]
+    return "\n".join(L)
+
+
+def evidence_current(raw: bytes, rendered: str) -> bool:
+    """Compared after CRLF->LF: the laptop checkout hands the committed file back CRLF."""
+    return smd.lf_bytes(raw) == rendered.encode("utf-8")
+
+
+def c_evidence_current(st):
+    raw, why = smd.git_run(REPO, "show", f"HEAD:{EVIDENCE_REL}")
+    if raw is None:
+        if " rc=128:" in (why or "") and ("does not exist" in why or "not in 'HEAD'" in why):
+            return [(FAIL, "V-CLG-EVIDENCE-CURRENT", f"{EVIDENCE_REL} not committed: run --write-evidence and commit")]
+        return [(INCONC, "V-CLG-EVIDENCE-CURRENT", f"committed blob unreadable: {why}")]
+    if evidence_current(raw, render(st)):
+        return [(OK, "V-CLG-EVIDENCE-CURRENT", f"committed {EVIDENCE_REL} equals the render (after CRLF->LF)")]
+    return [(FAIL, "V-CLG-EVIDENCE-CURRENT", f"committed {EVIDENCE_REL} differs from the render; run "
+                                             f"--write-evidence and commit")]
+
+
+def c_evidence_drill(st):
+    r = render(st)
+    raw = r.encode("utf-8")
+    ctrl = evidence_current(raw, r)
+    crlf = evidence_current(raw.replace(b"\n", b"\r\n"), r)
+    mutated = r.replace("sha256", "sha257", 1) if "sha256" in r else r + "x"
+    accepted = evidence_current(mutated.encode("utf-8"), r)
+    if ctrl and crlf and not accepted:
+        return [(OK, "V-CLG-EVIDENCE-DRILL", "render accepted, CRLF copy accepted, one-character change refused")]
+    return [(FAIL, "V-CLG-EVIDENCE-DRILL", f"control={ctrl} crlf={crlf} mutated_accepted={accepted}")]
+
+
+JUDGE_CLAUSES = [c_live_clean, c_positive_control, c_drills, c_subprocess_red, c_git_failure, c_every_clause]
+EVIDENCE_CLAUSES = [c_evidence_current, c_evidence_drill]
+CLAUSES = JUDGE_CLAUSES + EVIDENCE_CLAUSES
 
 
 # --------------------------------------------------------------------------- driver
@@ -763,6 +948,15 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     with tempfile.TemporaryDirectory(prefix="clg-") as td:
         st = collect(Path(td))
+        if a.write_evidence:
+            # The render needs the drill results, the forced-pass flips and the git-failure outcome; currency is
+            # not judged here (the committed blob is what V-CLG-EVIDENCE-CURRENT reads).
+            run_clauses(st, JUDGE_CLAUSES)
+            dest = REPO / EVIDENCE_REL
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(render(st).encode("utf-8"))
+            print(f"wrote {EVIDENCE_REL}")
+            return 0
         return report(run_clauses(st, CLAUSES))
 
 
