@@ -78,7 +78,13 @@ def main() -> int:
     home = tempfile.mkdtemp(prefix="finj-home-")
     env = dict(os.environ, HOME=home, USERPROFILE=home, PYTHONIOENCODING="utf-8")
     env.pop(cli.FAMILY_SWITCH, None)
-    os.environ.update(HOME=home, USERPROFILE=home)
+    # cli was imported above, BEFORE this swap. heartbeat.py resolves its path per
+    # call (WR-07), and CLAUDE_STATE_DIR is pinned to the temp home for this process
+    # AND the subprocesses so an inherited value cannot point either at the real one.
+    saved_state = os.environ.get("CLAUDE_STATE_DIR")
+    state_dir = os.path.join(home, ".claude", "state")
+    env["CLAUDE_STATE_DIR"] = state_dir
+    os.environ.update(HOME=home, USERPROFILE=home, CLAUDE_STATE_DIR=state_dir)
     os.environ.pop(cli.FAMILY_SWITCH, None)
     try:
         check("V-FINJ-HERMETIC-HOME", Path.home() == Path(home), Path.home())
@@ -165,6 +171,19 @@ def main() -> int:
               and header("kobiicraft_mode") not in unwired and cli.family_block is real_fb,
               "main() reaches family_block; unwiring it removes the block")
 
+        # -- WR-07: the in-process main() heartbeats landed in the TEMP home ----------
+        # run_main() above called cli.main() twice in this process (the control and
+        # the unwired drill); each records a gsd_x heartbeat. The subprocess runs
+        # below are not counted: they never shared this process's import-time binding.
+        hb_file = Path(home) / ".claude" / "state" / "gsd-x-heartbeat.json"
+        try:
+            judged = int(json.loads(hb_file.read_text(encoding="utf-8")).get("judgements", 0))
+        except (OSError, ValueError):
+            judged = 0
+        check("V-FINJ-HEARTBEAT-HERMETIC", judged >= 2,
+              "the in-process cli.main() heartbeats landed in the temp home "
+              "(%d judgements), not the real ~/.claude/state" % judged)
+
         # -- the real process, and the real hook that spawns it ------------------------
         def spawn(argv, prompt):
             r = subprocess.run(argv, input=json.dumps({"prompt": prompt, "session_id": ""}),
@@ -184,6 +203,10 @@ def main() -> int:
             check("V-FINJ-E2E-HOOK", rc_h == 0 and header("kobiicraft_mode") in out_h,
                   "rc=%s, hook stdout carries the block (%d chars)" % (rc_h, len(out_h)))
     finally:
+        if saved_state is None:
+            os.environ.pop("CLAUDE_STATE_DIR", None)
+        else:
+            os.environ["CLAUDE_STATE_DIR"] = saved_state
         shutil.rmtree(home, ignore_errors=True)
 
     total = _PASS + _FAIL

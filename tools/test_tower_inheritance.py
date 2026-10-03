@@ -11,6 +11,7 @@ Run: python tools/test_tower_inheritance.py     (exit 0 = all gates pass)
 """
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import sys
@@ -164,6 +165,12 @@ def _c2(tmp: str) -> None:
 
 def main() -> int:
     tmp = tempfile.mkdtemp(prefix="tower_inheritance_gate_")
+    hb_state = os.path.join(tmp, "hb_state")
+    # cli.main() (run in-process by _c2) records a gsd_x heartbeat; redirect it BEFORE
+    # anything runs. heartbeat.py resolves its path per call, so this holds even if
+    # another suite already imported cli in this process (WR-07).
+    saved_state = os.environ.get("CLAUDE_STATE_DIR")
+    os.environ["CLAUDE_STATE_DIR"] = hb_state
     try:
         print("V-TINH gates (C1 capture)")
         repo = os.path.join(tmp, "repo")
@@ -251,6 +258,23 @@ def main() -> int:
 
         _c2(tmp)
 
+        # --- WR-07: the heartbeat of _c2's cli.main() landed in the TEMP state --------
+        # cli.main() records a gsd_x heartbeat. Hermeticity is observed on the
+        # redirect itself: the temp state dir holds a heartbeat with at least the one
+        # judgement _c2's cli.main() made. (The real file's mtime is no gate: live
+        # hooks of other sessions write it too, so it is recorded as evidence only.)
+        hb_file = os.path.join(hb_state, "gsd-x-heartbeat.json")
+        try:
+            with open(hb_file, "r", encoding="utf-8") as fh:
+                judged = int(json.load(fh).get("judgements", 0))
+        except (OSError, ValueError):
+            judged = 0
+        _check("V-TINH-HEARTBEAT-HERMETIC", judged >= 1,
+               "cli.main()'s heartbeat landed under the temp CLAUDE_STATE_DIR "
+               "(%d judgement(s)), not the real ~/.claude/state" % judged,
+               "no heartbeat under the temp state dir %s: cli.main() wrote the REAL "
+               "home heartbeat" % hb_state)
+
         # --- C3 population: an MSYS worktree pointer resolves to a REAL repo --
         # `tower_capsule.py --all` produced a capsule for `\c\Users\...\TUA-X`,
         # a phantom: a Git-Bash worktree records `gitdir: /c/...`.
@@ -276,6 +300,10 @@ def main() -> int:
               % (_PASS, _PASS + _FAIL, _PASS + _FAIL, _PASS + _FAIL))
         return 0 if _FAIL == 0 else 1
     finally:
+        if saved_state is None:
+            os.environ.pop("CLAUDE_STATE_DIR", None)
+        else:
+            os.environ["CLAUDE_STATE_DIR"] = saved_state
         shutil.rmtree(tmp, ignore_errors=True)
 
 

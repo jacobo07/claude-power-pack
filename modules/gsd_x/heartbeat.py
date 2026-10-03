@@ -28,8 +28,29 @@ import os
 import time
 from pathlib import Path
 
-_STATE = Path(os.environ.get("CLAUDE_STATE_DIR") or (Path.home() / ".claude" / "state"))
-HEARTBEAT = _STATE / "gsd-x-heartbeat.json"
+
+def _state_dir() -> Path:
+    """CLAUDE_STATE_DIR if set, else <home>/.claude/state -- resolved per CALL.
+
+    This used to be bound once at import. `cli.main()` records a heartbeat on every
+    judgement, so a caller that swapped HOME or CLAUDE_STATE_DIR after the module
+    was imported (every hermetic suite) still wrote the real heartbeat and bumped
+    production counters (code review WR-07). For a stable environment the answer is
+    exactly what the import-time formula gave, so the live hook is unchanged.
+    """
+    return Path(os.environ.get("CLAUDE_STATE_DIR") or (Path.home() / ".claude" / "state"))
+
+
+def heartbeat_path() -> Path:
+    return _state_dir() / "gsd-x-heartbeat.json"
+
+
+def __getattr__(name: str):
+    # `heartbeat.HEARTBEAT` was a module constant; keep it resolvable for readers.
+    if name == "HEARTBEAT":
+        return heartbeat_path()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 # Bounded: the tail is a debugging aid, not an archive. The counters are the
 # durable half and they never reset.
@@ -52,7 +73,7 @@ def _empty() -> dict:
 def read() -> dict:
     """Current state, or an empty record. Never raises."""
     try:
-        return json.loads(HEARTBEAT.read_text(encoding="utf-8-sig"))
+        return json.loads(heartbeat_path().read_text(encoding="utf-8-sig"))
     except Exception:                                  # noqa: BLE001
         return _empty()
 
@@ -83,10 +104,11 @@ def record(tier: str, *, by_floor: bool, abstained: bool,
                        "reason": reason[:160]})
         state["recent"] = recent[-_TAIL:]
 
-        HEARTBEAT.parent.mkdir(parents=True, exist_ok=True)
-        tmp = HEARTBEAT.with_suffix(".json.tmp")
+        target = heartbeat_path()      # per call: a HOME/CLAUDE_STATE_DIR swap is honoured
+        target.parent.mkdir(parents=True, exist_ok=True)
+        tmp = target.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(state), encoding="utf-8")
-        os.replace(tmp, HEARTBEAT)                     # atomic; no torn reads
+        os.replace(tmp, target)                        # atomic; no torn reads
         return True
     except Exception:                                  # noqa: BLE001
         return False
@@ -115,4 +137,4 @@ if __name__ == "__main__":
     print(f"abstained  : {s.get('abstained', 0)}")
     print(f"informative: {s.get('informative', 0)}"
           f"  ({'n/a -- nothing judged' if rate is None else f'{rate:.0%}'})")
-    print(f"path       : {HEARTBEAT}")
+    print(f"path       : {heartbeat_path()}")
