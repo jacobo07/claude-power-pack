@@ -1,0 +1,1912 @@
+{
+ "meta": {
+  "captured_on_head": "1b0b929d",
+  "gsd_mission_sha256": "d53245689ce9a87ae05039c9b22d79ce6765446f0f7a2fa3e7671344fc9531e8",
+  "gsd_mission_has_rollover_protocol": false,
+  "scenarios": 23
+ },
+ "scenarios": {
+  "s_launch_ack_heartbeat": {
+   "rows": [
+    {
+     "mission_id": "m-launch",
+     "state": "PREPARED",
+     "epoch": 0,
+     "action": "launch",
+     "reason": "prepared, nothing launched",
+     "progress": {
+      "fp": null,
+      "stalls": 0,
+      "measured": false
+     },
+     "cwd_align": "same",
+     "launch": {
+      "ok": true,
+      "epoch": 1,
+      "bg_id": "9e9e9e9e"
+     },
+     "cause": "INITIAL"
+    }
+   ],
+   "events": {
+    "m-launch": [
+     "mission_prepared",
+     "launch_claimed",
+     "launched",
+     "launch_cause",
+     "worker_acked",
+     "heartbeat"
+    ]
+   },
+   "launch_argv": [
+    [
+     "claude",
+     "--bg",
+     "-n",
+     "m-launch-e1",
+     "--allowedTools",
+     "EnterWorktree",
+     "--allowedTools",
+     "ExitWorktree",
+     "--allowedTools",
+     "Edit(.planning/**)",
+     "--disallowedTools",
+     "AskUserQuestion",
+     "--autocompact",
+     "600k",
+     "/gsd-autonomous"
+    ]
+   ],
+   "stop_argv": [],
+   "records": {
+    "m-launch": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "previous_owner",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "RUNNING",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_adopt": {
+   "rows": [
+    {
+     "mission_id": "m-adopt",
+     "state": "LAUNCHING",
+     "epoch": 1,
+     "action": "adopt",
+     "reason": "host lists launched worker 9e9e9e9e"
+    }
+   ],
+   "events": {
+    "m-adopt": [
+     "mission_prepared",
+     "launch_claimed",
+     "launched",
+     "launch_cause",
+     "worker_adopted"
+    ]
+   },
+   "launch_argv": [
+    [
+     "claude",
+     "--bg",
+     "-n",
+     "m-adopt-e1",
+     "--allowedTools",
+     "EnterWorktree",
+     "--allowedTools",
+     "ExitWorktree",
+     "--allowedTools",
+     "Edit(.planning/**)",
+     "--disallowedTools",
+     "AskUserQuestion",
+     "--autocompact",
+     "600k",
+     "/gsd-autonomous"
+    ]
+   ],
+   "stop_argv": [],
+   "records": {
+    "m-adopt": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "previous_owner",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "RUNNING",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_replace_overdue_launch": {
+   "rows": [
+    {
+     "mission_id": "m-overdue",
+     "state": "LAUNCHING",
+     "epoch": 1,
+     "action": "replace",
+     "reason": "start ack overdue",
+     "gsd": "OK",
+     "progress": {
+      "fp": null,
+      "stalls": 0,
+      "measured": false
+     },
+     "cwd_align": "same",
+     "launch": {
+      "ok": true,
+      "epoch": 2,
+      "bg_id": "9e9e9e9e"
+     },
+     "cause": "LAUNCH_RETRY"
+    }
+   ],
+   "events": {
+    "m-overdue": [
+     "mission_prepared",
+     "launch_claimed",
+     "launched",
+     "launch_cause",
+     "launch_claimed",
+     "launched",
+     "launch_cause"
+    ]
+   },
+   "launch_argv": [
+    [
+     "claude",
+     "--bg",
+     "-n",
+     "m-overdue-e1",
+     "--allowedTools",
+     "EnterWorktree",
+     "--allowedTools",
+     "ExitWorktree",
+     "--allowedTools",
+     "Edit(.planning/**)",
+     "--disallowedTools",
+     "AskUserQuestion",
+     "--autocompact",
+     "600k",
+     "/gsd-autonomous"
+    ],
+    [
+     "claude",
+     "--bg",
+     "-n",
+     "m-overdue-e2",
+     "--allowedTools",
+     "EnterWorktree",
+     "--allowedTools",
+     "ExitWorktree",
+     "--allowedTools",
+     "Edit(.planning/**)",
+     "--disallowedTools",
+     "AskUserQuestion",
+     "--autocompact",
+     "600k",
+     "/gsd-autonomous"
+    ]
+   ],
+   "stop_argv": [],
+   "records": {
+    "m-overdue": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "previous_owner",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "LAUNCHING",
+     "epoch": 2,
+     "pending_kind": "worker_start",
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_halt_unacknowledged": {
+   "rows": [
+    {
+     "mission_id": "m-unack",
+     "state": "LAUNCHING",
+     "epoch": 1,
+     "action": "halt",
+     "reason": "3 launches never acknowledged",
+     "work_dir": "<TMP>"
+    }
+   ],
+   "events": {
+    "m-unack": [
+     "mission_prepared",
+     "seed",
+     "mission_halted"
+    ]
+   },
+   "launch_argv": [],
+   "stop_argv": [],
+   "records": {
+    "m-unack": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "HALTED",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_relay_continue": {
+   "rows": [
+    {
+     "mission_id": "m-cont",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "continue",
+     "reason": "owner's turn ended without completion: host lists session idle",
+     "gsd": "OK",
+     "turn_end": {
+      "decision": "continue",
+      "cause": "TURN_CONTINUATION",
+      "reason": "turn ended; context 1000 < 300000 tokens: same session continues"
+     },
+     "progress": {
+      "fp": null,
+      "stalls": 0,
+      "measured": false
+     },
+     "stop": "stopped; pid 999 gone",
+     "continue": {
+      "ok": true,
+      "mechanism": "resume",
+      "session": "cont-owner-session",
+      "epoch": 1
+     }
+    }
+   ],
+   "events": {
+    "m-cont": [
+     "mission_prepared",
+     "seed",
+     "turn_continued",
+     "launch_cause"
+    ]
+   },
+   "launch_argv": [
+    [
+     "claude",
+     "--bg",
+     "--resume",
+     "cont-owner-session",
+     "/gsd-autonomous"
+    ]
+   ],
+   "stop_argv": [
+    [
+     "claude",
+     "stop",
+     "cont-own"
+    ]
+   ],
+   "records": {
+    "m-cont": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "continuations",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_continuation_at",
+      "last_continuation_session",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "previous_owner",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "LAUNCHING",
+     "epoch": 1,
+     "pending_kind": "turn_continuation",
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_relay_rotate_unmeasured": {
+   "rows": [
+    {
+     "mission_id": "m-unmeas",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "relay",
+     "reason": "owner's turn ended without completion: host lists session idle",
+     "gsd": "OK",
+     "turn_end": {
+      "decision": "rotate",
+      "cause": "TURN_CONTINUATION",
+      "reason": "context size unmeasured: a fresh worker is the bounded choice"
+     },
+     "progress": {
+      "fp": null,
+      "stalls": 0,
+      "measured": false
+     },
+     "stop": "stopped; pid 999 gone",
+     "cwd_align": "same",
+     "note_chars": 24,
+     "launch": {
+      "ok": true,
+      "epoch": 2,
+      "bg_id": "9e9e9e9e"
+     },
+     "cause": "TURN_CONTINUATION"
+    }
+   ],
+   "events": {
+    "m-unmeas": [
+     "mission_prepared",
+     "seed",
+     "launch_claimed",
+     "launched",
+     "launch_cause"
+    ]
+   },
+   "launch_argv": [
+    [
+     "claude",
+     "--bg",
+     "-n",
+     "m-unmeas-e2",
+     "--allowedTools",
+     "EnterWorktree",
+     "--allowedTools",
+     "ExitWorktree",
+     "--allowedTools",
+     "Edit(.planning/**)",
+     "--disallowedTools",
+     "AskUserQuestion",
+     "--append-system-prompt",
+     "<CARD 80d96fcecaa4f4d3 1269B>",
+     "--autocompact",
+     "600k",
+     "/gsd-autonomous"
+    ]
+   ],
+   "stop_argv": [
+    [
+     "claude",
+     "stop",
+     "unmeas-o"
+    ]
+   ],
+   "records": {
+    "m-unmeas": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "card",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "packet",
+      "pending",
+      "permission_mode",
+      "previous_owner",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "LAUNCHING",
+     "epoch": 2,
+     "pending_kind": "worker_start",
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_relay_rotate_ceiling": {
+   "rows": [
+    {
+     "mission_id": "m-ceil",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "relay",
+     "reason": "owner's turn ended without completion: host lists session idle",
+     "gsd": "OK",
+     "turn_end": {
+      "decision": "rotate",
+      "cause": "CONTEXT_ROTATION",
+      "reason": "context 300001 tokens >= continuation ceiling 300000"
+     },
+     "progress": {
+      "fp": null,
+      "stalls": 0,
+      "measured": false
+     },
+     "stop": "stopped; pid 999 gone",
+     "cwd_align": "same",
+     "note_chars": 24,
+     "launch": {
+      "ok": true,
+      "epoch": 2,
+      "bg_id": "9e9e9e9e"
+     },
+     "cause": "CONTEXT_ROTATION"
+    }
+   ],
+   "events": {
+    "m-ceil": [
+     "mission_prepared",
+     "seed",
+     "launch_claimed",
+     "launched",
+     "launch_cause"
+    ]
+   },
+   "launch_argv": [
+    [
+     "claude",
+     "--bg",
+     "-n",
+     "m-ceil-e2",
+     "--allowedTools",
+     "EnterWorktree",
+     "--allowedTools",
+     "ExitWorktree",
+     "--allowedTools",
+     "Edit(.planning/**)",
+     "--disallowedTools",
+     "AskUserQuestion",
+     "--append-system-prompt",
+     "<CARD 74a3d332ce8e8c31 1267B>",
+     "--autocompact",
+     "600k",
+     "/gsd-autonomous"
+    ]
+   ],
+   "stop_argv": [
+    [
+     "claude",
+     "stop",
+     "ceil-own"
+    ]
+   ],
+   "records": {
+    "m-ceil": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "card",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "packet",
+      "pending",
+      "permission_mode",
+      "previous_owner",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "LAUNCHING",
+     "epoch": 2,
+     "pending_kind": "worker_start",
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_replace_turn_done": {
+   "rows": [
+    {
+     "mission_id": "m-tdone",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "continue",
+     "reason": "owner dead: host lists session done",
+     "gsd": "OK",
+     "turn_end": {
+      "decision": "continue",
+      "cause": "TURN_CONTINUATION",
+      "reason": "turn ended; context 1000 < 300000 tokens: same session continues"
+     },
+     "progress": {
+      "fp": null,
+      "stalls": 0,
+      "measured": false
+     },
+     "stop": "stopped; pid 999 gone",
+     "continue": {
+      "ok": true,
+      "mechanism": "resume",
+      "session": "tdone-owner-session",
+      "epoch": 1
+     }
+    }
+   ],
+   "events": {
+    "m-tdone": [
+     "mission_prepared",
+     "seed",
+     "turn_continued",
+     "launch_cause"
+    ]
+   },
+   "launch_argv": [
+    [
+     "claude",
+     "--bg",
+     "--resume",
+     "tdone-owner-session",
+     "/gsd-autonomous"
+    ]
+   ],
+   "stop_argv": [],
+   "records": {
+    "m-tdone": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "continuations",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_continuation_at",
+      "last_continuation_session",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "previous_owner",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "LAUNCHING",
+     "epoch": 1,
+     "pending_kind": "turn_continuation",
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_replace_owner_dead": {
+   "rows": [
+    {
+     "mission_id": "m-dead",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "replace",
+     "reason": "owner dead: host lists session stopped",
+     "gsd": "OK",
+     "progress": {
+      "fp": null,
+      "stalls": 0,
+      "measured": false
+     },
+     "stop": "stopped; pid 999 gone",
+     "cwd_align": "same",
+     "note_chars": 24,
+     "launch": {
+      "ok": true,
+      "epoch": 2,
+      "bg_id": "9e9e9e9e"
+     },
+     "cause": "PROCESS_RECOVERY"
+    }
+   ],
+   "events": {
+    "m-dead": [
+     "mission_prepared",
+     "seed",
+     "launch_claimed",
+     "launched",
+     "launch_cause"
+    ]
+   },
+   "launch_argv": [
+    [
+     "claude",
+     "--bg",
+     "-n",
+     "m-dead-e2",
+     "--allowedTools",
+     "EnterWorktree",
+     "--allowedTools",
+     "ExitWorktree",
+     "--allowedTools",
+     "Edit(.planning/**)",
+     "--disallowedTools",
+     "AskUserQuestion",
+     "--append-system-prompt",
+     "<CARD 6187951beeefdb68 1267B>",
+     "--autocompact",
+     "600k",
+     "/gsd-autonomous"
+    ]
+   ],
+   "stop_argv": [],
+   "records": {
+    "m-dead": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "card",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "packet",
+      "pending",
+      "permission_mode",
+      "previous_owner",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "LAUNCHING",
+     "epoch": 2,
+     "pending_kind": "worker_start",
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_gsd_complete": {
+   "rows": [
+    {
+     "mission_id": "m-gdone",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "relay",
+     "reason": "owner's turn ended without completion: host lists session idle",
+     "gsd": "ALL_COMPLETE"
+    }
+   ],
+   "events": {
+    "m-gdone": [
+     "mission_prepared",
+     "seed",
+     "mission_completed"
+    ]
+   },
+   "launch_argv": [],
+   "stop_argv": [],
+   "records": {
+    "m-gdone": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "COMPLETED",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_gsd_hold_block_unblock": {
+   "rows": [
+    {
+     "mission_id": "m-hold",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "relay",
+     "reason": "owner's turn ended without completion: host lists session idle",
+     "gsd": "NO_PHASES",
+     "held": "gsd NO_PHASES: no_phases"
+    },
+    {
+     "mission_id": "m-hold",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "relay",
+     "reason": "owner's turn ended without completion: host lists session idle",
+     "gsd": "NO_PHASES",
+     "held": "gsd NO_PHASES: no_phases",
+     "blocked": "gsd NO_PHASES on 2 consecutive passes (300 s): no_phases -- no relay until GSD answers OK"
+    },
+    {
+     "mission_id": "m-hold",
+     "state": "BLOCKED",
+     "epoch": 1,
+     "action": "continue",
+     "reason": "blocked on gsd NO_PHASES: re-asking GSD (a relay needs OK)",
+     "gsd": "OK",
+     "turn_end": {
+      "decision": "continue",
+      "cause": "TURN_CONTINUATION",
+      "reason": "turn ended; context 1000 < 300000 tokens: same session continues"
+     },
+     "progress": {
+      "fp": null,
+      "stalls": 0,
+      "measured": false
+     },
+     "stop": "stopped; pid 999 gone",
+     "continue": {
+      "ok": true,
+      "mechanism": "resume",
+      "session": "hold-owner-session",
+      "epoch": 1
+     }
+    }
+   ],
+   "events": {
+    "m-hold": [
+     "mission_prepared",
+     "seed",
+     "relay_held",
+     "mission_blocked",
+     "mission_unblocked",
+     "turn_continued",
+     "launch_cause"
+    ]
+   },
+   "launch_argv": [
+    [
+     "claude",
+     "--bg",
+     "--resume",
+     "hold-owner-session",
+     "/gsd-autonomous"
+    ]
+   ],
+   "stop_argv": [
+    [
+     "claude",
+     "stop",
+     "hold-own"
+    ]
+   ],
+   "records": {
+    "m-hold": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "continuations",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "gsd_hold",
+      "iterations",
+      "last_continuation_at",
+      "last_continuation_session",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "previous_owner",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "LAUNCHING",
+     "epoch": 1,
+     "pending_kind": "turn_continuation",
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_gsd_unavailable_held": {
+   "rows": [
+    {
+     "mission_id": "m-unav",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "relay",
+     "reason": "owner's turn ended without completion: host lists session idle",
+     "gsd": "UNAVAILABLE",
+     "held": "gsd UNAVAILABLE: unavailable"
+    }
+   ],
+   "events": {
+    "m-unav": [
+     "mission_prepared",
+     "seed",
+     "relay_held"
+    ]
+   },
+   "launch_argv": [],
+   "stop_argv": [],
+   "records": {
+    "m-unav": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "gsd_hold",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "RUNNING",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_provider_quota_hold": {
+   "rows": [
+    {
+     "mission_id": "m-quota",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "relay",
+     "reason": "owner's turn ended without completion: host lists session idle",
+     "held": "provider quota until 1800000600: usage limit reached"
+    }
+   ],
+   "events": {
+    "m-quota": [
+     "mission_prepared",
+     "seed",
+     "quota_held"
+    ]
+   },
+   "launch_argv": [],
+   "stop_argv": [],
+   "records": {
+    "m-quota": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "RUNNING",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_provider_auth_hold": {
+   "rows": [
+    {
+     "mission_id": "m-auth",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "relay",
+     "reason": "owner's turn ended without completion: host lists session idle",
+     "held": "provider auth until 1800000900 (streak 2): 401"
+    }
+   ],
+   "events": {
+    "m-auth": [
+     "mission_prepared",
+     "seed",
+     "provider_held"
+    ]
+   },
+   "launch_argv": [],
+   "stop_argv": [],
+   "records": {
+    "m-auth": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "RUNNING",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_child_hold": {
+   "rows": [
+    {
+     "mission_id": "m-child",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "relay",
+     "reason": "owner's turn ended without completion: host lists session idle",
+     "gsd": "OK",
+     "turn_end": {
+      "decision": "hold",
+      "cause": null,
+      "reason": "1 background child(ren) pending, 0 result(s) unconsumed"
+     },
+     "held": "1 background child(ren) pending, 0 result(s) unconsumed"
+    }
+   ],
+   "events": {
+    "m-child": [
+     "mission_prepared",
+     "seed",
+     "relay_held"
+    ]
+   },
+   "launch_argv": [],
+   "stop_argv": [],
+   "records": {
+    "m-child": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "RUNNING",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_handoff_relay": {
+   "rows": [
+    {
+     "mission_id": "m-hand",
+     "state": "HANDOFF_REQUESTED",
+     "epoch": 1,
+     "action": "relay",
+     "reason": "owner finished its step: host lists session idle",
+     "gsd": "OK",
+     "turn_end": {
+      "decision": "rotate",
+      "cause": "CONTEXT_ROTATION",
+      "reason": "owner requested a hand-off"
+     },
+     "progress": {
+      "fp": null,
+      "stalls": 0,
+      "measured": false
+     },
+     "stop": "stopped; pid 999 gone",
+     "cwd_align": "same",
+     "note_chars": 22,
+     "launch": {
+      "ok": true,
+      "epoch": 2,
+      "bg_id": "9e9e9e9e"
+     },
+     "cause": "CONTEXT_ROTATION"
+    }
+   ],
+   "events": {
+    "m-hand": [
+     "mission_prepared",
+     "seed",
+     "handoff_requested",
+     "launch_claimed",
+     "launched",
+     "launch_cause"
+    ]
+   },
+   "launch_argv": [
+    [
+     "claude",
+     "--bg",
+     "-n",
+     "m-hand-e2",
+     "--allowedTools",
+     "EnterWorktree",
+     "--allowedTools",
+     "ExitWorktree",
+     "--allowedTools",
+     "Edit(.planning/**)",
+     "--disallowedTools",
+     "AskUserQuestion",
+     "--append-system-prompt",
+     "<CARD 4e93f91618a593de 1265B>",
+     "--autocompact",
+     "600k",
+     "/gsd-autonomous"
+    ]
+   ],
+   "stop_argv": [
+    [
+     "claude",
+     "stop",
+     "hand-own"
+    ]
+   ],
+   "records": {
+    "m-hand": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "card",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "packet",
+      "pending",
+      "permission_mode",
+      "previous_owner",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "LAUNCHING",
+     "epoch": 2,
+     "pending_kind": "worker_start",
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_wall_enforced": {
+   "rows": [
+    {
+     "mission_id": "m-wall",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "relay",
+     "reason": "wall enforced: first notice 1900 s ago, grace 1800 s, 2 notice(s)",
+     "wall_enforced": {
+      "asked_at": 1799998100,
+      "overdue_s": 100,
+      "grace_s": 1800,
+      "notices": 2
+     },
+     "gsd": "OK",
+     "turn_end": {
+      "decision": "rotate",
+      "cause": "CONTEXT_ROTATION",
+      "reason": "wall enforced: first notice 1900 s ago, grace 1800 s, 2 notice(s) -- context wall crossed in epoch 1 (mission_wall_flag)"
+     },
+     "progress": {
+      "fp": null,
+      "stalls": 0,
+      "measured": false
+     },
+     "stop": "stopped; pid 999 gone",
+     "cwd_align": "same",
+     "note_chars": 24,
+     "launch": {
+      "ok": true,
+      "epoch": 2,
+      "bg_id": "9e9e9e9e"
+     },
+     "cause": "CONTEXT_ROTATION"
+    }
+   ],
+   "events": {
+    "m-wall": [
+     "mission_prepared",
+     "seed",
+     "launch_claimed",
+     "launched",
+     "launch_cause"
+    ]
+   },
+   "launch_argv": [
+    [
+     "claude",
+     "--bg",
+     "-n",
+     "m-wall-e2",
+     "--allowedTools",
+     "EnterWorktree",
+     "--allowedTools",
+     "ExitWorktree",
+     "--allowedTools",
+     "Edit(.planning/**)",
+     "--disallowedTools",
+     "AskUserQuestion",
+     "--append-system-prompt",
+     "<CARD 06d3ef3aa944edb8 1267B>",
+     "--autocompact",
+     "600k",
+     "/gsd-autonomous"
+    ]
+   ],
+   "stop_argv": [
+    [
+     "claude",
+     "stop",
+     "wall-own"
+    ]
+   ],
+   "records": {
+    "m-wall": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "card",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "packet",
+      "pending",
+      "permission_mode",
+      "previous_owner",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "LAUNCHING",
+     "epoch": 2,
+     "pending_kind": "worker_start",
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_budget_halt_renew": {
+   "rows": [
+    {
+     "mission_id": "m-budget",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "halt",
+     "reason": "turn ended and budget: iterations 1 >= max 1",
+     "work_dir": "<TMP>",
+     "gsd": "OK",
+     "renewed_as": "<RENEWED-ID>"
+    }
+   ],
+   "events": {
+    "m-budget": [
+     "mission_prepared",
+     "seed",
+     "mission_halted",
+     "mission_renewed"
+    ],
+    "renewed[0]": [
+     "mission_prepared",
+     "mission_renewed"
+    ]
+   },
+   "launch_argv": [],
+   "stop_argv": [],
+   "records": {
+    "m-budget": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "HALTED",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    },
+    "renewed[0]": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "directives",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "lineage_id",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "renewal",
+      "renewed_from",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "PREPARED",
+     "epoch": 0,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_budget_halt_complete": {
+   "rows": [
+    {
+     "mission_id": "m-bdone",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "completed",
+     "reason": "turn ended and budget: iterations 1 >= max 1",
+     "work_dir": "<TMP>",
+     "gsd": "ALL_COMPLETE"
+    }
+   ],
+   "events": {
+    "m-bdone": [
+     "mission_prepared",
+     "seed",
+     "mission_completed"
+    ]
+   },
+   "launch_argv": [],
+   "stop_argv": [],
+   "records": {
+    "m-bdone": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "COMPLETED",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_no_progress_halt": {
+   "rows": [
+    {
+     "mission_id": "m-stall",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "halt",
+     "reason": "owner's turn ended without completion: host lists session idle",
+     "gsd": "OK",
+     "turn_end": {
+      "decision": "continue",
+      "cause": "TURN_CONTINUATION",
+      "reason": "turn ended; context 1000 < 300000 tokens: same session continues"
+     },
+     "progress": {
+      "fp": "same-tree",
+      "stalls": 3,
+      "measured": true
+     }
+    }
+   ],
+   "events": {
+    "m-stall": [
+     "mission_prepared",
+     "seed",
+     "mission_halted"
+    ]
+   },
+   "launch_argv": [],
+   "stop_argv": [],
+   "records": {
+    "m-stall": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "progress",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "HALTED",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_waiting_human_then_unblock": {
+   "rows": [
+    {
+     "mission_id": "m-human",
+     "state": "RUNNING",
+     "epoch": 1,
+     "action": "surface_blocked",
+     "reason": "host: waiting for permission prompt"
+    },
+    {
+     "mission_id": "m-human",
+     "state": "BLOCKED",
+     "epoch": 1,
+     "action": "unblock",
+     "reason": "host lists session busy"
+    }
+   ],
+   "events": {
+    "m-human": [
+     "mission_prepared",
+     "seed",
+     "mission_blocked",
+     "mission_unblocked"
+    ]
+   },
+   "launch_argv": [],
+   "stop_argv": [],
+   "records": {
+    "m-human": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "code_id",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "gsd_hold",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "reason",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "RUNNING",
+     "epoch": 1,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   }
+  },
+  "s_records_and_argv": {
+   "rows": [],
+   "events": {
+    "m-rec": [
+     "mission_prepared"
+    ],
+    "m-arm": [
+     "mission_prepared"
+    ]
+   },
+   "launch_argv": [],
+   "stop_argv": [],
+   "records": {
+    "m-rec": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "PREPARED",
+     "epoch": 0,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    },
+    "m-arm": {
+     "keys": [
+      "add_dirs",
+      "allowed_tools",
+      "created_at",
+      "cwd",
+      "epoch",
+      "failed_launches",
+      "iterations",
+      "last_progress_at",
+      "max_cycles",
+      "max_hours",
+      "mission_id",
+      "mission_terms",
+      "mode",
+      "note",
+      "owner",
+      "pending",
+      "permission_mode",
+      "resume_command",
+      "schema_version",
+      "seq",
+      "state",
+      "updated_at",
+      "wall",
+      "workstream"
+     ],
+     "state": "PREPARED",
+     "epoch": 0,
+     "pending_kind": null,
+     "has_rollover_protocol": false
+    }
+   },
+   "argv_plain": [
+    "claude",
+    "--bg",
+    "-n",
+    "m-arm-e3",
+    "--allowedTools",
+    "Bash(git:*)",
+    "--allowedTools",
+    "EnterWorktree",
+    "--allowedTools",
+    "ExitWorktree",
+    "--allowedTools",
+    "Edit(.planning/**)",
+    "--add-dir",
+    "D:/extra",
+    "--disallowedTools",
+    "AskUserQuestion",
+    "--permission-mode",
+    "auto",
+    "--append-system-prompt",
+    "<CARD ed693ed7da4fd938 1255B>",
+    "--autocompact",
+    "500k",
+    "/gsd-autonomous"
+   ],
+   "argv_mcp_apply": [
+    "claude",
+    "--bg",
+    "-n",
+    "m-arm-e3",
+    "--allowedTools",
+    "Bash(git:*)",
+    "--allowedTools",
+    "EnterWorktree",
+    "--allowedTools",
+    "ExitWorktree",
+    "--allowedTools",
+    "Edit(.planning/**)",
+    "--add-dir",
+    "D:/extra",
+    "--disallowedTools",
+    "AskUserQuestion",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "{\"mcpServers\":{}}",
+    "--permission-mode",
+    "auto",
+    "--append-system-prompt",
+    "<CARD ed693ed7da4fd938 1255B>",
+    "--autocompact",
+    "500k",
+    "/gsd-autonomous"
+   ]
+  },
+  "s_cards": {
+   "full": "<CARD 243b50fdfd302f78 1896B>",
+   "bare": "<CARD fe92d1c7639ca5d2 1256B>",
+   "capped": "<CARD bf42db8a5474e71e 7828B>",
+   "capped_bytes": 7984
+  }
+ },
+ "cards": {
+  "06d3ef3aa944edb8": "MISSION CONTINUITY — you are worker epoch 2 of mission m-wall.\nYou have no memory of earlier workers. Durable state is the repository and GSD, not this card.\nProject: <TMP>\nResume command: /gsd-autonomous\n\nUNATTENDED: nobody reads this session and nobody will answer a question or a prompt.\n  Never ask the Owner. When a choice is needed, take the option you would recommend\n  (the safest one that keeps the mission moving), record it as a decision with its\n  reason in the workstream STATE.md, and continue. If a step is genuinely impossible,\n  record why, move to the next runnable phase, and keep going.\n\nFor a decision the gate below reserves to the Owner: do NOT act on it. Record it in the\n  workstream STATE.md as OWNER DECISION NEEDED (the question, the options, your pick),\n  then continue with other runnable work.\nRUBRIC (fixed for characterization)\n\nRECONCILE BEFORE ACTING (run these first and say what you found):\n  git status --short ; git log --oneline -5 ; GSD progress for the active milestone\nIf they contradict the note below, the repository wins.\n\nHEAD at hand-off: abc1234\nDirty paths at hand-off: 0\nRecent commits:\n  abc1234 seed commit\n\nGSD:\nPhase 1 of 2: pending\n\nPredecessor's note (a claim to verify, not a fact):\nnote from the transcript",
+  "243b50fdfd302f78": "MISSION CONTINUITY — you are worker epoch 4 of mission m-card.\nYou have no memory of earlier workers. Durable state is the repository and GSD, not this card.\nWORK TREE: the work is in <TMP>-wt -- enter it first with the shell: Set-Location '<TMP>-wt' (PowerShell). Do NOT call EnterWorktree: it raises a permission prompt nobody is watching.\nThe main checkout below is only where you were launched; its .planning is stale.\nProject: <TMP>\nResume command: /gsd-autonomous --ws alpha\nWORKSTREAM alpha: before any GSD step run `node ~/.claude/gsd-core/bin/gsd-tools.cjs query workstream.set alpha --raw --cwd .` (session-local pointer; gsd_run calls do not forward --ws). The repo's ROOT milestone belongs to another track -- never plan or execute it.\n\nUNATTENDED: nobody reads this session and nobody will answer a question or a prompt.\n  Never ask the Owner. When a choice is needed, take the option you would recommend\n  (the safest one that keeps the mission moving), record it as a decision with its\n  reason in the workstream STATE.md, and continue. If a step is genuinely impossible,\n  record why, move to the next runnable phase, and keep going.\n\nFor a decision the gate below reserves to the Owner: do NOT act on it. Record it in the\n  workstream STATE.md as OWNER DECISION NEEDED (the question, the options, your pick),\n  then continue with other runnable work.\nRUBRIC (fixed for characterization)\n\nOWNER DIRECTIVES (binding; they override the note below):\n  - do X first\n\nRECONCILE BEFORE ACTING (run these first and say what you found):\n  git status --short ; git log --oneline -5 ; GSD progress for the active milestone\nIf they contradict the note below, the repository wins.\n\nHEAD at hand-off: abc1234\nDirty paths at hand-off: 3\nRecent commits:\n  abc1234 one\n  def5678 two\n\nGSD:\nGSD facts line\n\nPredecessor's note (a claim to verify, not a fact):\npredecessor says phase 2 is half done",
+  "4e93f91618a593de": "MISSION CONTINUITY — you are worker epoch 2 of mission m-hand.\nYou have no memory of earlier workers. Durable state is the repository and GSD, not this card.\nProject: <TMP>\nResume command: /gsd-autonomous\n\nUNATTENDED: nobody reads this session and nobody will answer a question or a prompt.\n  Never ask the Owner. When a choice is needed, take the option you would recommend\n  (the safest one that keeps the mission moving), record it as a decision with its\n  reason in the workstream STATE.md, and continue. If a step is genuinely impossible,\n  record why, move to the next runnable phase, and keep going.\n\nFor a decision the gate below reserves to the Owner: do NOT act on it. Record it in the\n  workstream STATE.md as OWNER DECISION NEEDED (the question, the options, your pick),\n  then continue with other runnable work.\nRUBRIC (fixed for characterization)\n\nRECONCILE BEFORE ACTING (run these first and say what you found):\n  git status --short ; git log --oneline -5 ; GSD progress for the active milestone\nIf they contradict the note below, the repository wins.\n\nHEAD at hand-off: abc1234\nDirty paths at hand-off: 0\nRecent commits:\n  abc1234 seed commit\n\nGSD:\nPhase 1 of 2: pending\n\nPredecessor's note (a claim to verify, not a fact):\nexplicit hand-off note",
+  "6187951beeefdb68": "MISSION CONTINUITY — you are worker epoch 2 of mission m-dead.\nYou have no memory of earlier workers. Durable state is the repository and GSD, not this card.\nProject: <TMP>\nResume command: /gsd-autonomous\n\nUNATTENDED: nobody reads this session and nobody will answer a question or a prompt.\n  Never ask the Owner. When a choice is needed, take the option you would recommend\n  (the safest one that keeps the mission moving), record it as a decision with its\n  reason in the workstream STATE.md, and continue. If a step is genuinely impossible,\n  record why, move to the next runnable phase, and keep going.\n\nFor a decision the gate below reserves to the Owner: do NOT act on it. Record it in the\n  workstream STATE.md as OWNER DECISION NEEDED (the question, the options, your pick),\n  then continue with other runnable work.\nRUBRIC (fixed for characterization)\n\nRECONCILE BEFORE ACTING (run these first and say what you found):\n  git status --short ; git log --oneline -5 ; GSD progress for the active milestone\nIf they contradict the note below, the repository wins.\n\nHEAD at hand-off: abc1234\nDirty paths at hand-off: 0\nRecent commits:\n  abc1234 seed commit\n\nGSD:\nPhase 1 of 2: pending\n\nPredecessor's note (a claim to verify, not a fact):\nnote from the transcript",
+  "74a3d332ce8e8c31": "MISSION CONTINUITY — you are worker epoch 2 of mission m-ceil.\nYou have no memory of earlier workers. Durable state is the repository and GSD, not this card.\nProject: <TMP>\nResume command: /gsd-autonomous\n\nUNATTENDED: nobody reads this session and nobody will answer a question or a prompt.\n  Never ask the Owner. When a choice is needed, take the option you would recommend\n  (the safest one that keeps the mission moving), record it as a decision with its\n  reason in the workstream STATE.md, and continue. If a step is genuinely impossible,\n  record why, move to the next runnable phase, and keep going.\n\nFor a decision the gate below reserves to the Owner: do NOT act on it. Record it in the\n  workstream STATE.md as OWNER DECISION NEEDED (the question, the options, your pick),\n  then continue with other runnable work.\nRUBRIC (fixed for characterization)\n\nRECONCILE BEFORE ACTING (run these first and say what you found):\n  git status --short ; git log --oneline -5 ; GSD progress for the active milestone\nIf they contradict the note below, the repository wins.\n\nHEAD at hand-off: abc1234\nDirty paths at hand-off: 0\nRecent commits:\n  abc1234 seed commit\n\nGSD:\nPhase 1 of 2: pending\n\nPredecessor's note (a claim to verify, not a fact):\nnote from the transcript",
+  "80d96fcecaa4f4d3": "MISSION CONTINUITY — you are worker epoch 2 of mission m-unmeas.\nYou have no memory of earlier workers. Durable state is the repository and GSD, not this card.\nProject: <TMP>\nResume command: /gsd-autonomous\n\nUNATTENDED: nobody reads this session and nobody will answer a question or a prompt.\n  Never ask the Owner. When a choice is needed, take the option you would recommend\n  (the safest one that keeps the mission moving), record it as a decision with its\n  reason in the workstream STATE.md, and continue. If a step is genuinely impossible,\n  record why, move to the next runnable phase, and keep going.\n\nFor a decision the gate below reserves to the Owner: do NOT act on it. Record it in the\n  workstream STATE.md as OWNER DECISION NEEDED (the question, the options, your pick),\n  then continue with other runnable work.\nRUBRIC (fixed for characterization)\n\nRECONCILE BEFORE ACTING (run these first and say what you found):\n  git status --short ; git log --oneline -5 ; GSD progress for the active milestone\nIf they contradict the note below, the repository wins.\n\nHEAD at hand-off: abc1234\nDirty paths at hand-off: 0\nRecent commits:\n  abc1234 seed commit\n\nGSD:\nPhase 1 of 2: pending\n\nPredecessor's note (a claim to verify, not a fact):\nnote from the transcript",
+  "bf42db8a5474e71e": "MISSION CONTINUITY — you are worker epoch 4 of mission m-card.\nYou have no memory of earlier workers. Durable state is the repository and GSD, not this card.\nWORK TREE: the work is in <TMP>-wt -- enter it first with the shell: Set-Location '<TMP>-wt' (PowerShell). Do NOT call EnterWorktree: it raises a permission prompt nobody is watching.\nThe main checkout below is only where you were launched; its .planning is stale.\nProject: <TMP>\nResume command: /gsd-autonomous --ws alpha\nWORKSTREAM alpha: before any GSD step run `node ~/.claude/gsd-core/bin/gsd-tools.cjs query workstream.set alpha --raw --cwd .` (session-local pointer; gsd_run calls do not forward --ws). The repo's ROOT milestone belongs to another track -- never plan or execute it.\n\nUNATTENDED: nobody reads this session and nobody will answer a question or a prompt.\n  Never ask the Owner. When a choice is needed, take the option you would recommend\n  (the safest one that keeps the mission moving), record it as a decision with its\n  reason in the workstream STATE.md, and continue. If a step is genuinely impossible,\n  record why, move to the next runnable phase, and keep going.\n\nFor a decision the gate below reserves to the Owner: do NOT act on it. Record it in the\n  workstream STATE.md as OWNER DECISION NEEDED (the question, the options, your pick),\n  then continue with other runnable work.\nRUBRIC (fixed for characterization)\n\nOWNER DIRECTIVES (binding; they override the note below):\n  - do X first\n\nRECONCILE BEFORE ACTING (run these first and say what you found):\n  git status --short ; git log --oneline -5 ; GSD progress for the active milestone\nIf they contradict the note below, the repository wins.\n\nHEAD at hand-off: abc1234\nDirty paths at hand-off: 3\nRecent commits:\n  abc1234 one\n  def5678 two\n\nGSD:\ngggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg\n\nPredecessor's note (a claim to verify, not a fact):\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n[card truncated at cap]",
+  "ed693ed7da4fd938": "MISSION CONTINUITY — you are worker epoch 3 of mission m-arm.\nYou have no memory of earlier workers. Durable state is the repository and GSD, not this card.\nProject: <TMP>\nResume command: /gsd-autonomous\n\nUNATTENDED: nobody reads this session and nobody will answer a question or a prompt.\n  Never ask the Owner. When a choice is needed, take the option you would recommend\n  (the safest one that keeps the mission moving), record it as a decision with its\n  reason in the workstream STATE.md, and continue. If a step is genuinely impossible,\n  record why, move to the next runnable phase, and keep going.\n\nFor a decision the gate below reserves to the Owner: do NOT act on it. Record it in the\n  workstream STATE.md as OWNER DECISION NEEDED (the question, the options, your pick),\n  then continue with other runnable work.\nRUBRIC (fixed for characterization)\n\nRECONCILE BEFORE ACTING (run these first and say what you found):\n  git status --short ; git log --oneline -5 ; GSD progress for the active milestone\nIf they contradict the note below, the repository wins.\n\nHEAD at hand-off: unknown\nDirty paths at hand-off: unknown\n\nPredecessor's note (a claim to verify, not a fact):\n  (none — the predecessor did not hand off; reconstruct from git + GSD)",
+  "fe92d1c7639ca5d2": "MISSION CONTINUITY — you are worker epoch 4 of mission m-card.\nYou have no memory of earlier workers. Durable state is the repository and GSD, not this card.\nProject: <TMP>\nResume command: /gsd-autonomous\n\nUNATTENDED: nobody reads this session and nobody will answer a question or a prompt.\n  Never ask the Owner. When a choice is needed, take the option you would recommend\n  (the safest one that keeps the mission moving), record it as a decision with its\n  reason in the workstream STATE.md, and continue. If a step is genuinely impossible,\n  record why, move to the next runnable phase, and keep going.\n\nFor a decision the gate below reserves to the Owner: do NOT act on it. Record it in the\n  workstream STATE.md as OWNER DECISION NEEDED (the question, the options, your pick),\n  then continue with other runnable work.\nRUBRIC (fixed for characterization)\n\nRECONCILE BEFORE ACTING (run these first and say what you found):\n  git status --short ; git log --oneline -5 ; GSD progress for the active milestone\nIf they contradict the note below, the repository wins.\n\nHEAD at hand-off: unknown\nDirty paths at hand-off: unknown\n\nPredecessor's note (a claim to verify, not a fact):\n  (none — the predecessor did not hand off; reconstruct from git + GSD)"
+ }
+}
