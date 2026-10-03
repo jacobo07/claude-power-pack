@@ -1,6 +1,9 @@
 ---
 name: evaluation-corpus-governance
 description: Evaluation-boundary doctrine for anything that learns from a corpus and is later judged against it (fine-tuning, retrieval corpora, knowledge bases, prompt libraries, rule distillation). Use BEFORE ingesting material: partition by contamination group not by row, generated seeds never caller-supplied, edits to a registered item refused rather than re-drawn, held-out fraction sized to evaluator throughput, the learning-side gate bound where ingestion really happens, three-outcome screening, and claims decomposed to their real size. Core rule - govern, register and partition before teaching; a corpus cannot be un-taught.
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Evaluation Corpus Governance

@@ -2,6 +2,9 @@
 name: mobile-game-wii-port
 description: Reverse engineer a commercial mobile game (APK/XAPK/IPA asset corpus) down to a verified, portable content model, then reimplement it as a native Nintendo Wii game and ship it as boot.dol or a disc image. Covers engine fingerprinting from stripped native binaries, structural cipher characterisation without a key, container and payload decoding, data-versus-behaviour measurement, the port-versus-extract decision, and Wii packaging. Use when the user wants to port a mobile game to the Wii, decrypt or read a game's packed asset corpus, identify which engine a game binary runs, or decide whether to port a scripting runtime or extract its data.
 trigger: port to wii|apk to wii|apk to wbfs|wbfs|mobile game port|port a game|native wii port|decrypt game assets|game asset corpus|which engine does this game use|lua bytecode|extract game data|absw2|angry birds star wars|rovio fusion|homebrew channel|boot.dol|devkitPPC port
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Mobile Game -> Native Wii Port

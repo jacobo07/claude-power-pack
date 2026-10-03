@@ -3,6 +3,9 @@ name: agent-architecture-audit
 description: Full-stack diagnostic for agent and LLM applications. Audits the 12-layer agent stack for wrapper regression, memory pollution, tool discipline failures, hidden repair loops, and rendering corruption. Produces severity-ranked findings with code-first fixes. Essential for developers building agent applications, autonomous loops, or any LLM-powered feature.
 origin: oh-my-agent-check
 tools: Read, Write, Edit, Bash, Grep, Glob
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 <!-- Absorbed from ECC v2.0.0-rc.1 (github.com/affaan-m/ECC), MIT License (c) 2026 Affaan Mustafa. Curated selective absorption into claude-power-pack (2026-06-06). PP-canonical copy; activate globally by copying into ~/.claude/agents or ~/.claude/skills (Owner-side, HR-001). -->
 

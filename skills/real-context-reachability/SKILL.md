@@ -1,6 +1,9 @@
 ---
 name: real-context-reachability
 description: Reachability and missing-data doctrine. Use when a capability must be invoked from the context the product really has (an imported account, a customer record, an external provider row) rather than from inside the engine; when estimating "N steps / one dependency away"; when parsing a provider or API response where a field can be absent; when a missing value could default to zero or to a neutral answer (absent vs measured zero vs unmeasured, abstention vs "continue"); when separating read / mutate / decide / spend authorities; when proving a path cannot mutate; and when recording decisions taken against live state. Core rule - absent is not zero, and a capability the real entry point cannot reach is not delivered.
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Real-Context Reachability

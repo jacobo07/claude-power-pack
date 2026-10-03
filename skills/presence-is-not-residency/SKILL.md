@@ -1,6 +1,9 @@
 ---
 name: presence-is-not-residency
 description: Working-set virtualization doctrine. Use when many subjects (terminals, agent sessions, panes, tasks) can be visible while few are running: sleep, dormant and parked states, lazy restore, re-materialization on activation, remount or selection, render deferrals mistaken for a residency policy, snapshots and restore plans, pinning or retention vs materialization, identity below presentation. Core rule - a row that survives is not a released runtime; prove the ordinary path back leaves dormant subjects dormant.
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Presence Is Not Residency

@@ -1,6 +1,9 @@
 ---
 name: destructive-state-authorization
 description: Doctrine for any irreversible operation - deleting or overwriting files, discarding uncommitted work, git reset/clean/checkout/restore/force-push, dropping or truncating data, revoking, cancelling, bulk deletes, cleanup of worktrees/caches/sessions. Use BEFORE running or writing code that destroys state, and when designing a confirm dialog, a batch delete, a retry/idempotency path, or a peer protocol that can destroy. Answers - what exact state was authorized, is it still there (content identity, not mtime/size/ids), what can change between the check and the effect, per-item re-authorization in batches, truthful results, and mixed-version peers failing closed. A PreToolUse hook (destructive_doctrine_card.js) also shows its core once per session on the first destructive shell command.
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class card; deny card hooks/destructive_doctrine_card.js names this skill and no CO-12 adapter declares it, so it is not an opportunity detector
 ---
 
 # Destructive State Authorization

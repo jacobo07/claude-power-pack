@@ -1,6 +1,9 @@
 ---
 name: develop-here-prove-there
 description: Development-plane vs validation-plane doctrine. Use when the machine you code on is not the one that can run the thing honestly (emulator on a GPU box, device lab, staging, a phone, a remote host): naming which plane observed a claim, pinning the instrument configuration, hashing the artifact that actually ran at both ends, evidence bundles and currency gates, comparators with four outcomes, A/A before A/B, and fixtures that must never touch real data on the validation host. Core rule - a runtime claim names the plane that observed it, or it is not a claim.
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Develop Here, Prove There

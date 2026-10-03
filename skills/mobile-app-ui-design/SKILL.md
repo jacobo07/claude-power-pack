@@ -2,6 +2,9 @@
 name: mobile-app-ui-design
 description: Design mobile app screens, flows and components that hold up under a CDIO review — onboarding, home and dashboard screens, search, status tracking, settings, navigation, as HTML/React prototypes or React Native / Flutter / SwiftUI-style mockups. Use when someone asks to design an app screen, make app mockups, build mobile UI components, improve an existing app screen ("make this screen look better"), design an onboarding flow or mobile navigation, or says "design an app". Do not wait to be named. Generates; the verdict belongs to cdio-reviewer against CDIO-08.
 origin: github.com/ceorkm/mobile-app-ui-design (README declares MIT), absorbed into Claude Power Pack 2026-09-18 and rewritten to CDIO doctrine; what was kept, changed and rejected is classified in vault/knowledge_base/cdio/CDIO-08-mobile-app-surface.md
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Mobile App UI Design

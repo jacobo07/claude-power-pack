@@ -1,6 +1,9 @@
 ---
 name: instrument-before-claim
 description: Measurement-integrity doctrine. Use BEFORE reporting any measured number, count, timing, size or percentage; before asserting an absence ("not found", "no callers", "zero", "nothing uses it", "unused", "never ran"); before trusting or declaring green a test, gate, sweep, detector, comparator, probe or verdict; and when WRITING one (fixtures, thresholds, tolerances, mutation drills, population floors, A/A baselines). Also when two instruments disagree, when a result looks too clean, or when a verdict contradicts the evidence it quotes. Core question - could this instrument have returned the other answer?
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Instrument Before Claim

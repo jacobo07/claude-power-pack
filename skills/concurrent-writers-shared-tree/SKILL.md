@@ -1,6 +1,8 @@
 ---
 name: concurrent-writers-shared-tree
 description: Doctrine for two or more agent sessions writing in ONE working tree. Use before committing in a shared checkout (pathspec commits are file-granular: two writers in the same file means one commit takes the other's hunks), before publishing a commit built from a private index seeded from HEAD (re-read HEAD, refuse on a move, compare-and-swap), and before trusting a repo-wide test, lint or type-check run while other sessions edit (bracket the run with the SET of dirty paths; if it moved, the verdict is INCONCLUSIVE unless the moved paths are outside the oracle's domain). Also when a commit has already swallowed another session's work. Core rule - prefer new files, commit early, and make the oracle's scope equal the change's scope.
+metadata:
+  opportunity_detector: hooks/doctrine_cards.js
 ---
 
 # Concurrent Writers in One Working Tree

@@ -2,6 +2,9 @@
 name: android-reverse-engineering
 description: Decompile Android APK, XAPK, JAR and AAR files with jadx or Fernflower/Vineflower, recover R8-obfuscated Kotlin class names, extract HTTP API endpoints (Retrofit, OkHttp, Ktor, Apollo, Volley), and trace call flows from UI down to the network layer. Use when the user wants to decompile, analyse or reverse engineer an Android package, find an app's API endpoints, or follow a call flow through decompiled code.
 trigger: decompile APK|decompile XAPK|reverse engineer Android|extract API|analyze Android|analyse Android|jadx|fernflower|vineflower|follow call flow|decompile JAR|decompile AAR|Android reverse engineering|find API endpoints|APK teardown|deobfuscate Kotlin
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Android Reverse Engineering

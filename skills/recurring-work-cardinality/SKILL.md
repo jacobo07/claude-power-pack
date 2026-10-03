@@ -1,6 +1,9 @@
 ---
 name: recurring-work-cardinality
 description: Recurring-work scaling doctrine. Use when adding, reviewing or shrinking a timer, poll, watcher, worker, retry loop or scheduler: what multiplies it (panes, rows, worktrees, hosts, subscribers), whether it stops when its subject stops being live, caps that move cost into latency, sharing one clock across cadences, batching the transport but not the verdict, and a shrink-only ratchet over producers. Core rule - cost follows the live or visible set, never the remembered set.
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Recurring Work Cardinality

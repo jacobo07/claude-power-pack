@@ -1,6 +1,9 @@
 ---
 name: monetary-quantity-integrity
 description: Money and unit-integrity doctrine. Use when code or analysis adds, subtracts, sums, divides or compares monetary amounts: currency, majors vs cents, basis, date, observed vs derived; field suffixes like _usd or _cents; thresholds compared against amounts; ratios such as ROAS or markup; FX conversion; empty provider reads (not called vs zero vs rejected); requested vs documented vs live-observed provider fields; ratchet gates over monetary columns. Core rule - an amount travels with its qualifiers as fields, or it cannot be combined with another amount.
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Monetary Quantity Integrity

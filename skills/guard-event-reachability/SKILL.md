@@ -1,6 +1,9 @@
 ---
 name: guard-event-reachability
 description: Guard, hook and gate liveness doctrine. Use when a guard, hook, gate, detector or CI check failed to catch something, or when writing or registering one: prove it RAN before debugging its predicate (replay the escaped bytes), check the event still fires in the abnormal state it exists for (interrupt, deny, timeout), hook timeouts that fail open silently, a block whose reason goes to a channel nobody reads, a parser (BOM) in front of the predicate, a CI job no runner ever picked up (runner_id 0), and optional build parts missing before any guard runs. Core rule - a gate that cannot fire is indistinguishable from one that passes.
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Guard Event Reachability

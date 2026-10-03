@@ -3,6 +3,9 @@ name: recursive-decision-ledger
 description: Use when the user asks for repeated rollouts, marked decision processes, high-dimensional search, stochastic optimization, local-optima exploration, ensemble comparison, or recursive reasoning with a visible evidence trail.
 origin: ECC
 tools: Read, Write, Edit, Bash, Grep, Glob
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 <!-- Absorbed from ECC v2.0.0-rc.1 (github.com/affaan-m/ECC), MIT License (c) 2026 Affaan Mustafa. Curated selective absorption into claude-power-pack (2026-06-06). PP-canonical copy; activate globally by copying into ~/.claude/agents or ~/.claude/skills (Owner-side, HR-001). -->
 

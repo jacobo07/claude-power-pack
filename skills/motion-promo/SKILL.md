@@ -2,6 +2,9 @@
 name: motion-promo
 description: Turn a written script, a product description, or a website into a finished promo film — a dark, neon, glass-and-light motion piece in the register of an Apple product reveal crossed with synthwave. Delivers a scrubbable .html player and an H.264 .mp4. Use when someone asks for a promo, launch film, product video, teaser, trailer, sizzle, animated ad, motion graphics piece, "a video for our landing page", "turn this script into a video", "make a 20 second promo, 9:16", or "turn acme.com into a launch film". Do not wait to be named — recognise the request.
 origin: MOTION PROMPT Claude (User Guide), absorbed into Claude Power Pack 2026-09-05
+metadata:
+  opportunity_detector: none
+  opportunity_detector_reason: coverage class none; no registered card hook and no CO-12 adapter names this skill
 ---
 
 # Motion Promo
