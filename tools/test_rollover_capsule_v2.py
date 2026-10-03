@@ -232,6 +232,27 @@ def main() -> int:
         fenced = ro.claim(k, "succ-Z", state, alive=lambda pid: False)
         check("V-CAP2-CERTIFIED-NOT-TAKEN-OVER", not fenced["claimed"] and fenced.get("why") == "already certified", fenced)
 
+        print("T5 precert arm: a new epoch's marker never inherits the last one's certification")
+        # The guard (hooks/capsule_mutation_guard.js) treats ANY certified_at as certified. precert_write
+        # MERGES, so creating epoch N+1's marker with it over epoch N's certified one kept certified_at:
+        # the new worker would have started with full mutation authority (I1 fail-open).
+        assert (ro.precert_read(mid, state) or {}).get("certified_at"), "precondition: the marker is certified"
+        merged = ro.precert_write(mid, {"worker": f"{mid}-e5", "capsule_key": ro.mission_key(mid, 4)}, state)
+        check("V-CAP2-WRITE-MERGES-IS-NOT-CREATE", bool(merged.get("certified_at")),
+              "control: the merging writer carries certification over, so it must never create a marker")
+        armed = ro.precert_arm(mid, {"worker": f"{mid}-e5", "capsule_key": ro.mission_key(mid, 4),
+                                     "cwd": str(repo), "resume_cmd": "/gsd-autonomous"}, state)
+        on_disk = ro.precert_read(mid, state) or {}
+        check("V-CAP2-ARM-RESETS-CERTIFIED", not armed.get("certified_at") and not on_disk.get("certified_at")
+              and not on_disk.get("certified_by") and on_disk.get("worker") == f"{mid}-e5"
+              and isinstance(on_disk.get("created_at"), (int, float)), on_disk)
+        try:
+            ro.precert_arm(mid, {"worker": f"{mid}-e6", "capsule_key": ro.mission_key(mid, 5)}, state)
+            check("V-CAP2-ARM-REFUSES-INCOMPLETE", False, "armed without cwd/resume_cmd")
+        except ValueError as exc:
+            check("V-CAP2-ARM-REFUSES-INCOMPLETE", (ro.precert_read(mid, state) or {}).get("worker") == f"{mid}-e5",
+                  f"refused, previous marker intact: {exc}")
+
         print("T3 degraded capsule: RECOVERY adds the dirty question")
         kd = ro.mission_key("m-degraded", 2)
         dc = mission_capsule(repo, mid="m-degraded", epoch=2, seal_origin="supervisor_fallback", degraded=True, note="",

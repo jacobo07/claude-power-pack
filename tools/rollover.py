@@ -849,7 +849,8 @@ def precert_path(mission_id: str, state_dir: Optional[Path] = None) -> Path:
 
 
 def precert_write(mission_id: str, fields: dict, state_dir: Optional[Path] = None) -> dict:
-    """Create or update this mission's marker (atomic: the guard never reads a torn one)."""
+    """UPDATE this mission's marker, merging (atomic: the guard never reads a torn one). Creating a
+    marker for a new worker is precert_arm's job: a merge would inherit an old certification."""
     p = precert_path(mission_id, state_dir)
     try:
         cur = json.loads(p.read_text(encoding="utf-8"))
@@ -857,6 +858,24 @@ def precert_write(mission_id: str, fields: dict, state_dir: Optional[Path] = Non
         cur = {}
     rec = {**(cur if isinstance(cur, dict) else {}), **fields, "mission_id": mission_id, "updated_at": _now()}
     _atomic_write(p, json.dumps(rec, sort_keys=True).encode("utf-8"))
+    return rec
+
+
+PRECERT_ARM_FIELDS = ("worker", "capsule_key", "cwd", "resume_cmd")
+
+
+def precert_arm(mission_id: str, fields: dict, state_dir: Optional[Path] = None) -> dict:
+    """CREATE the marker for a new worker, replacing any previous one. Never merges: precert_write
+    keeps keys it is not given, so over an earlier epoch's certified marker it kept `certified_at`
+    and the guard (which reads any certified_at as certified) let the new worker mutate (I1).
+    Refuses an incomplete marker before touching the file: the guard matches a worker by these."""
+    absent = [k for k in PRECERT_ARM_FIELDS if not fields.get(k)]
+    if absent:
+        raise ValueError(f"precert marker for {mission_id} lacks {', '.join(absent)}")
+    rec = {k: v for k, v in fields.items() if k not in ("certified_at", "certified_by")}
+    now = _now()
+    rec.update({"mission_id": mission_id, "created_at": fields.get("created_at") or now, "updated_at": now})
+    _atomic_write(precert_path(mission_id, state_dir), json.dumps(rec, sort_keys=True).encode("utf-8"))
     return rec
 
 
