@@ -16,7 +16,8 @@ const { judgeTool, matchMarker, decide } = require(GUARD);
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'cmg-'));
 const STATE = path.join(TMP, 'rollover');
 const REG = path.join(TMP, 'sessions');
-const ENV = { CPP_ROLLOVER_STATE_DIR: STATE, CPP_CLAUDE_SESSIONS_DIR: REG, CPP_CAPSULE_ROLLOVER: '' };
+const ENV = { CPP_ROLLOVER_STATE_DIR: STATE, CPP_CLAUDE_SESSIONS_DIR: REG, CPP_CAPSULE_ROLLOVER: '',
+  DOCTRINE_CARDS_STATE_DIR: path.join(TMP, 'doctrine-cards') };   // the e2e commit runs the card: never the live ledger
 fs.mkdirSync(path.join(STATE, 'precert'), { recursive: true });
 fs.mkdirSync(REG, { recursive: true });
 

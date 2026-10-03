@@ -415,6 +415,49 @@ def check_128_classes() -> None:
         shutil.rmtree(root, ignore_errors=True)
 
 
+# --------------------------------------------------------------------------------------
+# D-03 abcd1234 root cause: a test that starts the card without a private state dir writes the live ledger.
+# The population is DISCOVERED by an independent marker (the file drives the card or a dispatcher AND
+# contains a commit command literal), never by searching for the fix.
+# --------------------------------------------------------------------------------------
+CARD_REF_RE = re.compile(r"doctrine_cards|hook-dispatcher|--e2e")
+COMMIT_LITERAL_RE = re.compile(r"""\bgit(?:\.exe)?['"]?\s+(?:-C\s+\S+\s+)?commit\b""")
+CAPSULE_TEST = "test-capsule-mutation-guard.js"
+CARDS_TEST = "test-doctrine-cards.js"
+
+
+def sweep_state_dir(texts: dict) -> tuple:
+    """(population, offenders): population = files that reference the card or a dispatcher and carry a commit
+    command literal; offenders = population members without DOCTRINE_CARDS_STATE_DIR."""
+    pop = [n for n in sorted(texts) if CARD_REF_RE.search(texts[n]) and COMMIT_LITERAL_RE.search(texts[n])]
+    return pop, [n for n in pop if "DOCTRINE_CARDS_STATE_DIR" not in texts[n]]
+
+
+def read_hook_tests() -> dict:
+    d = os.path.join(ROOT, "hooks", "tests")
+    return {n: open(os.path.join(d, n), encoding="utf-8").read() for n in sorted(os.listdir(d)) if n.endswith(".js")}
+
+
+def check_hermetic_card_tests() -> None:
+    rc, out = run_suite(CAPSULE_TEST)
+    last = (out.strip().splitlines() or [""])[-1]
+    m = re.match(r"CMG_PASS=(\d+)/(\d+)", last)
+    check("V-SCA-NODE-CAPSULE-GUARD", rc == 0 and bool(m) and m.group(1) == m.group(2),
+          f"rc={rc} last={last!r} (run without --e2e: the dispatcher's card path ../skills/claude-power-pack/hooks/"
+          f"doctrine_cards.js is the laptop layout and does not resolve on this host)")
+    texts = read_hook_tests()
+    pop, off = sweep_state_dir(texts)
+    check("V-SCA-STATE-DIR-SWEEP", len(pop) >= 2 and CAPSULE_TEST in pop and CARDS_TEST in pop and not off,
+          f"population={pop} without_private_state_dir={off} floor=2")
+    # drill: the same sweep over the capsule test with every DOCTRINE_CARDS_STATE_DIR removed must go red,
+    # and over the unmodified text must stay green (both poles of the sweep itself)
+    stripped = texts[CAPSULE_TEST].replace("DOCTRINE_CARDS_STATE_DIR", "")
+    mpop, moff = sweep_state_dir({CAPSULE_TEST: stripped})
+    gpop, goff = sweep_state_dir({CAPSULE_TEST: texts[CAPSULE_TEST]})
+    check("V-SCA-STATE-DIR-DRILL", stripped != texts[CAPSULE_TEST] and moff == [CAPSULE_TEST] and gpop == [CAPSULE_TEST] and goff == [],
+          f"stripped copy flagged={moff} (population {mpop}); unmodified copy flagged={goff}")
+
+
 def info_fce2689e(pack: dict) -> list:
     """Count the pack's tool calls of the fce2689e session in the 120 s before each of its 128 rows."""
     sess = next(v for k, v in pack["sessions"].items() if k.startswith("fce2689e"))
@@ -492,6 +535,7 @@ def main() -> int:
               f"calls_in_window={counts[0]},{counts[1]},{counts[2]}); classes now recorded per row: git_error")
 
     check_suites()
+    check_hermetic_card_tests()
 
     print(f"SCA_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
