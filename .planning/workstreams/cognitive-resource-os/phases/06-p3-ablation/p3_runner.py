@@ -32,8 +32,15 @@ PY = sys.executable
 CLAUDE = r"C:\Users\User\.local\bin\claude.exe"
 MODEL = "claude-opus-5-5"
 RULES = Path.home() / ".claude" / "rules"
-R1 = [str(RULES / n).replace("\\", "/") for n in (
-    "instrument-before-claim.md", "destructive-state-authorization.md", "real-context-reachability.md")]
+# Rule sets under ablation. R1 = the 2026-09-29 run (frozen record). R2 = CCP plan §14, the three
+# always-loaded rules with the largest lifetime rent (ADDENDUM-R2.md). `--set` picks one.
+SETS = {
+    "R1": ("instrument-before-claim.md", "destructive-state-authorization.md", "real-context-reachability.md"),
+    "R2": ("concurrent-writers-shared-tree.md", "technical-failure-to-product-state.md",
+           "scoped-side-effect-authority.md"),
+}
+R1 = [str(RULES / n).replace("\\", "/") for n in SETS["R1"]]
+EXCL = R1  # the set arm B excludes; rebound by use_set()
 PROMPT = ("The test `python {test}` fails. Find the defect in the source it exercises and fix it. "
           "Do not edit the test file. Run the test to confirm it passes, then stop.")
 
@@ -147,7 +154,7 @@ def session(wt: Path, prompt: str, arm: str, rec: dict) -> str:
            "--max-turns", "40", "--permission-mode", "acceptEdits",
            "--allowedTools", "Read,Edit,Write,Grep,Glob,Bash,PowerShell"]
     if arm == "B":
-        cmd += ["--settings", json.dumps({"claudeMdExcludes": R1})]
+        cmd += ["--settings", json.dumps({"claudeMdExcludes": EXCL})]
     t0 = time.time()
     try:
         r = subprocess.run(cmd, cwd=wt, capture_output=True, text=True, encoding="utf-8",
@@ -186,6 +193,23 @@ def judge(rec: dict, g: dict, sid: str):
 # ---- judgement tasks (ADDENDUM-J.md): no pre-existing test; the grader stays outside the worktree ----
 JDIR = HERE / "judgement"
 JRESULTS = HERE / "results-j.jsonl"
+JCOMMON = HERE / "judgement" / "_p3j_common.py"  # one grade/selftest driver for every bank
+SET = "R1"
+
+
+def use_set(name: str):
+    """Bind arm B's exclusions, the judgement bank and the result files to one rule set.
+    R1 keeps its original paths, so its frozen record stays reproducible."""
+    global EXCL, JDIR, JRESULTS, SET
+    if name not in SETS:
+        raise SystemExit(f"unknown set {name!r}; known: {sorted(SETS)}")
+    SET = name
+    EXCL = [str(RULES / n).replace("\\", "/") for n in SETS[name]]
+    sfx = "" if name == "R1" else "-" + name.lower()
+    JDIR = HERE / ("judgement" + sfx)
+    JRESULTS = HERE / f"results-j{sfx}.jsonl"
+
+
 JPROMPT = ("In this repository, `{module}` contains functions whose body is only `...`. Implement them. "
            "The module docstring says who calls them and what the results are used for. Keep the "
            "signatures. Stop when done.")
@@ -195,6 +219,7 @@ def jtasks() -> list:
     import importlib.util
     out = []
     sys.path.insert(0, str(JDIR))
+    sys.path.insert(0, str(JCOMMON.parent))
     for f in sorted(JDIR.glob("task_*.py")):
         spec = importlib.util.spec_from_file_location(f.stem, f)
         m = importlib.util.module_from_spec(spec)
@@ -206,13 +231,13 @@ def jtasks() -> list:
 def jbase() -> str:
     """A commit that does NOT contain the judgement bank, so no grader or reference sits in the worktree."""
     b = (JDIR / "BASE").read_text(encoding="utf-8").strip()
-    if git("ls-tree", "-r", "--name-only", b, "--", ".planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/judgement"):
+    if git("ls-tree", "-r", "--name-only", b, "--", JDIR.relative_to(REPO).as_posix()):
         raise SystemExit(f"judgement BASE {b} contains the bank: graders would be visible to the agent")
     return b
 
 
 def jgrade(wt: Path, t: dict) -> dict:
-    shutil.copyfile(JDIR / "_p3j_common.py", wt / "_p3j_common.py")
+    shutil.copyfile(JCOMMON, wt / "_p3j_common.py")
     shutil.copyfile(t["file"], wt / "_p3j_task.py")
     r = subprocess.run([PY, "_p3j_task.py", "grade", t["module"]], cwd=wt, capture_output=True, text=True,
                        encoding="utf-8", errors="replace", timeout=300)
@@ -259,7 +284,9 @@ def cmd_validate_j() -> int:
                             encoding="utf-8", errors="replace")
         wt = fresh_tree(f"validate-{t['id']}", base)
         try:
-            bank = {f.name for f in JDIR.iterdir()}  # exact bank file names, checked before the grade copies any in
+            # this bank's graders, checked before the grade copies any in. Not every bank file name: an
+            # R2 BASE legitimately holds the R1 bank, whose `BASE` and shared driver reveal no R2 check.
+            bank = {f.name for f in JDIR.glob("task_*.py")}
             leak = sorted(str(p.relative_to(wt)) for p in wt.rglob("*") if p.name in bank)
             jprepare(wt, t)
             g = jgrade(wt, t)
@@ -310,7 +337,8 @@ def cmd_run(reps: int, judgement: bool = False, only: str = "", prime: bool = Fa
     no claudeMdExcludes, results in their own file. `only` filters task ids by substring."""
     tasks, results, runner = (jtasks(), JRESULTS, one_run_j) if judgement else (TASKS, RESULTS, one_run)
     if prime:
-        results = HERE / f"results-jprime-{only or 'all'}.jsonl"
+        sfx = "" if SET == "R1" else f"-{SET.lower()}"
+        results = HERE / f"results-jprime{sfx}-{only or 'all'}.jsonl"
     tasks = [t for t in tasks if only in t["id"]]
     if not tasks:
         raise SystemExit(f"no task id contains {only!r}")
@@ -343,6 +371,10 @@ def cmd_run(reps: int, judgement: bool = False, only: str = "", prime: bool = Fa
 
 if __name__ == "__main__":
     a = sys.argv[1:]
+    if "--set" in a:
+        if a[:1] in (["run"], ["validate"]):  # one results.jsonl, one arm-B set: never mix R1 and R2 rows
+            raise SystemExit("--set applies to the judgement commands only (validate-j, run-j, run-jprime)")
+        use_set(a[a.index("--set") + 1])
     if a[:1] == ["validate"]:
         raise SystemExit(cmd_validate())
     if a[:1] == ["run"]:

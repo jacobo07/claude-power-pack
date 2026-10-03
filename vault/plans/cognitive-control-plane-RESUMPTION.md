@@ -118,8 +118,14 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
    Identity backup (sha256 167f16fe...) retained, out of every migration path.
 1. DONE: peer acked `0f4a8796`. DONE: C4.1 ranking (plan §14; `floor_probe.py probe` key
    `c41`, `test_floor_probe` 9/9; floor total unchanged 2,719,590,330). Global rules 17.9 % +
-   global CLAUDE.md 9.7 % of the floor lead. PENDING OWNER: which lever first (recommended:
-   rules -> skills one at a time, each with ablation after the 10-07 reset).
+   global CLAUDE.md 9.7 % of the floor lead. Owner "y" (2026-10-03): lever 1, rules -> skills one
+   at a time, each ablated.
+1c. DONE offline: P3 set R2 prepared and FROZEN (`.planning/workstreams/cognitive-resource-os/
+   phases/06-p3-ablation/ADDENDUM-R2.md`, bank `judgement-r2/`, runner `--set R2`).
+   `validate-j --set R2` 6/6, R1 re-validated 6/6. NO counted run yet, NO rule moved.
+   AFTER 2026-10-07 17:00Z (or Owner "spend now"): `python p3_runner.py run-j --set R2` (24 runs),
+   then per ADDENDUM-R2 decision table move each surviving file as B-prime, one commit each
+   (Owner-side `~/.claude` edit, HR-001), then `run-jprime --set R2 --only <cwst|tfps|ssea>`.
 2. Next: re-derivation detector (first compile-out candidate).
 
 ## 5. Start instruction
