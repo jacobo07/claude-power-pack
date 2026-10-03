@@ -54,7 +54,7 @@ command: python3 tools/test_skill_representation.py --write-evidence
 
 - `op`: one of disclosure, fission, fusion, inline, dedup; `skill`: the skill name.
 - `before` / `after`: {`denominator`: "D-LISTING", `probe_label`, `session_id`, `command`}: a reference to ONE row of the D-LISTING probe results, resolved by label AND session id. No figure is typed: startup_tokens and listing chars are read from that row.
-- `recall`: {`before`: {`window`, `command`}, `after`: {`window`, `command`}}: committed skill-delivery windows (`skill-delivery-window/1`) under the evidence directory; num and n are read from them.
+- `recall`: {`before`: {`window`, `command`}, `after`: {`window`, `command`}}: committed skill-delivery windows (`skill-delivery-window/1`) under the evidence directory; num and n are read from them, and their `start` / `end` order them (the before window ends by the after window's start).
 - dedup only: `sweep` (a committed `F-sweep-*.json` recording) and `group` (the 64-hex body_sha of a group re-derived from it).
 
 ## What each clause refuses
@@ -65,7 +65,7 @@ command: python3 tools/test_skill_representation.py --write-evidence
 - V-FO-BEFORE: refuses a before side that is missing, not D-LISTING or without its command, or that resolves to zero or several probe rows by label AND session id, or to a row with rc != 0, result != OK, or a zero / non-int figure (UNMEASURED).
 - V-FO-AFTER: refuses an after side with any defect V-FO-BEFORE refuses.
 - V-FO-PAIR: refuses before and after resolving to one row, or the after row preceding the before row in the append-only rows.
-- V-FO-RECALL: refuses a missing recall check; a window outside the evidence directory, uncommitted, of another schema or capability; a null recall, n = 0, num outside [0, n]; windows from two hosts, or from a host that is not the D-LISTING plane (laptop).
+- V-FO-RECALL: refuses a missing recall check; a window outside the evidence directory, uncommitted, of another schema or capability; a null recall, n = 0, num outside [0, n]; a window without timezone-bearing start < end, or a before window that does not end by the after window's start (one window twice, or reversed); windows from two hosts, or from a host that is not the D-LISTING plane (laptop).
 - V-FO-HELPED: refuses after startup_tokens + sourced noise >= before startup_tokens (not measured to help); unsourced noise is INCONCLUSIVE.
 - V-FO-RECALL-HELD: refuses after recall below before recall (integer cross-multiplication).
 - V-FO-DEDUP-SWEEP: refuses a dedup whose sweep is not a committed recording that passed every V-FD clause, whose group is not re-derived from it, or whose skill is not a member.
@@ -93,6 +93,9 @@ command: python3 tools/test_skill_representation.py --write-evidence
 | RECALL-N0 | V-FO-RECALL | killed by V-FO-RECALL |
 | RECALL-WRONG-CAP | V-FO-RECALL | killed by V-FO-RECALL |
 | RECALL-WRONG-HOST | V-FO-RECALL | killed by V-FO-RECALL |
+| RECALL-DUPLICATE | V-FO-RECALL | killed by V-FO-RECALL |
+| RECALL-ORDER | V-FO-RECALL | killed by V-FO-RECALL |
+| RECALL-UNTIMED | V-FO-RECALL | killed by V-FO-RECALL |
 | NOT-HELPED | V-FO-HELPED | killed by V-FO-HELPED |
 | NOISE-ABSENT | V-FO-HELPED | killed by V-FO-HELPED |
 | RECALL-DROP | V-FO-RECALL-HELD | killed by V-FO-RECALL-HELD |

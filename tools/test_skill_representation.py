@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import datetime
 import fnmatch
 import functools
 import hashlib
@@ -632,6 +633,17 @@ def check_entry(entry, rows, docs, sweeps, noise, denoms):
     return [(c,) + out[c] for c in ENTRY_CLAUSES]
 
 
+def _utc_epoch(v):
+    """Seconds since the epoch for an ISO-8601 timestamp that carries a timezone (`Z` accepted), else None."""
+    if not isinstance(v, str) or not v.strip():
+        return None
+    try:
+        t = datetime.datetime.fromisoformat(v.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return t.timestamp() if t.tzinfo is not None else None
+
+
 def _recall(entry, docs):
     """(status, text, {side: (num, n)} or None). Figures come from the committed window documents only."""
     rc = entry.get("recall")
@@ -649,7 +661,7 @@ def _recall(entry, docs):
         paths[k] = s["window"]
     if paths["before"] == paths["after"]:
         return "FAIL", f"recall before and after name the same window {paths['before']}", None
-    got, hosts = {}, set()
+    got, hosts, spans = {}, set(), {}
     for k in SIDES:
         w = paths[k]
         doc = docs.get(w)
@@ -665,8 +677,19 @@ def _recall(entry, docs):
         num, n = r.get("num"), r.get("n")
         if not (lfv._is_int(num) and lfv._is_int(n)) or n <= 0 or not 0 <= num <= n:
             return "FAIL", f"UNMEASURED: {w} recall num={num!r} n={n!r} (n > 0 and 0 <= num <= n required)", None
+        start, end = _utc_epoch(doc.get("start")), _utc_epoch(doc.get("end"))
+        if start is None or end is None or not start < end:
+            return "FAIL", (f"UNMEASURED: {w} start={doc.get('start')!r} end={doc.get('end')!r} (two timezone-bearing "
+                            "timestamps with start < end required)"), None
+        spans[k] = (start, end)
         got[k] = (num, n)
         hosts.add(doc.get("host"))
+    # Two filenames for one measurement, or an "after" measured before the "before", would satisfy the recall check
+    # without any post-operation measurement (05-REVIEW WR-02).
+    if not spans["before"][1] <= spans["after"][0]:
+        return "FAIL", (f"recall before window {paths['before']} (end {docs[paths['before']].get('end')}) does not end "
+                        f"by the start of the after window {paths['after']} ({docs[paths['after']].get('start')}): "
+                        "no post-operation measurement"), None
     if len(hosts) != 1:
         return "FAIL", f"recall windows come from different hosts {sorted(map(str, hosts))}", None
     host = hosts.pop()
@@ -838,8 +861,13 @@ def _drill_row(label, sid, tokens, chars):
             "listing": {"chars": chars}}
 
 
-def _drill_window(num, n, cap=DRILL_SKILL, host="laptop"):
-    return {"schema": WINDOW_SCHEMA, "capability": cap, "host": host, "recall": {"num": num, "n": n}}
+DRILL_SPANS = {"before": ("2026-09-01T00:00:00Z", "2026-09-08T00:00:00Z"),
+               "after": ("2026-09-10T00:00:00Z", "2026-09-17T00:00:00Z")}
+
+
+def _drill_window(num, n, cap=DRILL_SKILL, host="laptop", span=DRILL_SPANS["before"]):
+    return {"schema": WINDOW_SCHEMA, "capability": cap, "host": host, "recall": {"num": num, "n": n},
+            "start": span[0], "end": span[1]}
 
 
 def _drill_record(body_sha, fm):
@@ -862,7 +890,8 @@ def base_fixture(denoms):
     rows = [_drill_row("unrelated", "00000000-0000-4000-8000-000000000000", 70000, 25000),
             _drill_row("drill-before", DRILL_SIDS["before"], 90000, 30000),
             _drill_row("drill-after", DRILL_SIDS["after"], 80000, 29000)]
-    docs = {DRILL_W["before"]: _drill_window(4, 5), DRILL_W["after"]: _drill_window(5, 5)}
+    docs = {DRILL_W["before"]: _drill_window(4, 5, span=DRILL_SPANS["before"]),
+            DRILL_W["after"]: _drill_window(5, 5, span=DRILL_SPANS["after"])}
     rec = {"planes": {"repo": {"records": {}},
                       "laptop": {"records": {DRILL_SKILL: _drill_record(_DRILL_BODY, DRILL_SKILL),
                                              DRILL_SKILL + "-copy": _drill_record(_DRILL_BODY, DRILL_SKILL),
@@ -928,6 +957,19 @@ def _m_recall_wrong_host(fx):
         fx["docs"][DRILL_W[k]]["host"] = "gex44"
 
 
+def _m_recall_duplicate(fx):
+    fx["docs"][DRILL_W["after"]] = copy.deepcopy(fx["docs"][DRILL_W["before"]])  # one measurement, two filenames
+
+
+def _m_recall_order(fx):
+    fx["docs"][DRILL_W["before"]]["start"], fx["docs"][DRILL_W["before"]]["end"] = DRILL_SPANS["after"]
+    fx["docs"][DRILL_W["after"]]["start"], fx["docs"][DRILL_W["after"]]["end"] = DRILL_SPANS["before"]
+
+
+def _m_recall_untimed(fx):
+    del fx["docs"][DRILL_W["after"]]["start"]
+
+
 def _m_not_helped(fx):
     fx["rows"][2]["startup_tokens"] = fx["rows"][1]["startup_tokens"] - fx["noise"]["tokens"]  # the boundary
 
@@ -990,6 +1032,9 @@ FO_DRILLS = (
     ("RECALL-N0", _m_recall_n0, {"V-FO-RECALL"}),
     ("RECALL-WRONG-CAP", _m_recall_wrong_cap, {"V-FO-RECALL"}),
     ("RECALL-WRONG-HOST", _m_recall_wrong_host, {"V-FO-RECALL"}),
+    ("RECALL-DUPLICATE", _m_recall_duplicate, {"V-FO-RECALL"}),
+    ("RECALL-ORDER", _m_recall_order, {"V-FO-RECALL"}),
+    ("RECALL-UNTIMED", _m_recall_untimed, {"V-FO-RECALL"}),
     ("NOT-HELPED", _m_not_helped, {"V-FO-HELPED"}),
     ("NOISE-ABSENT", _m_noise_absent, {"V-FO-HELPED"}),
     ("RECALL-DROP", _m_recall_drop, {"V-FO-RECALL-HELD"}),
@@ -1099,7 +1144,8 @@ ENTRY_SCHEMA_LINES = (
     "row of the D-LISTING probe results, resolved by label AND session id. No figure is typed: startup_tokens and "
     "listing chars are read from that row.",
     "`recall`: {`before`: {`window`, `command`}, `after`: {`window`, `command`}}: committed skill-delivery windows "
-    "(`skill-delivery-window/1`) under the evidence directory; num and n are read from them.",
+    "(`skill-delivery-window/1`) under the evidence directory; num and n are read from them, and their `start` / "
+    "`end` order them (the before window ends by the after window's start).",
     "dedup only: `sweep` (a committed `F-sweep-*.json` recording) and `group` (the 64-hex body_sha of a group "
     "re-derived from it).",
 )
@@ -1116,8 +1162,9 @@ FO_CLAUSE_DOC = (
     ("V-FO-PAIR", "before and after resolving to one row, or the after row preceding the before row in the "
                   "append-only rows"),
     ("V-FO-RECALL", "a missing recall check; a window outside the evidence directory, uncommitted, of another schema "
-                    "or capability; a null recall, n = 0, num outside [0, n]; windows from two hosts, or from a host "
-                    "that is not the D-LISTING plane (laptop)"),
+                    "or capability; a null recall, n = 0, num outside [0, n]; a window without timezone-bearing start < end, or a "
+                    "before window that does not end by the after window's start (one window twice, or reversed); "
+                    "windows from two hosts, or from a host that is not the D-LISTING plane (laptop)"),
     ("V-FO-HELPED", "after startup_tokens + sourced noise >= before startup_tokens (not measured to help); unsourced "
                     "noise is INCONCLUSIVE"),
     ("V-FO-RECALL-HELD", "after recall below before recall (integer cross-multiplication)"),
