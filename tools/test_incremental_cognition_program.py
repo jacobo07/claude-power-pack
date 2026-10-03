@@ -19,6 +19,14 @@ Added here:
       owner ledger is read AT that commit with git (the commit must be reachable from HEAD,
       so the owner's work has to be on this line of history) and must show that pillar in
       that terminal. A handoff file alone cannot close a consuming pillar.
+  R3  measurement scope (--final and --pillar X): a kme_pillars measurement file carries
+      `evidence_role` and `terminal_evidence` as line-anchored front-matter fields. Only a reproduced
+      primary file (terminal_evidence true) supports a terminal; a second_workload file supports one
+      only when it is valid (coverage reached) AND the same pillar also cites such a primary file
+      (frozen rule E: "confirmed on a second workload"); a smoke file (KME-G on GEX44) never does; a
+      file measuring another pillar never does. A measurement file with neither field is another
+      instrument's and is left to the CE clauses. This is the mechanical form of "never substitute
+      KME-G for KME-L".
   V-ICP-REBIND  the rebinding took: ledger.program must be "incremental-cognition", and a
       ledger read through any other program's path is refused.
 
@@ -31,6 +39,7 @@ import contextlib
 import copy
 import io
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -149,6 +158,70 @@ def check_binding(led: dict) -> list:
     return f
 
 
+# ---------------------------------------------------------------- R3 measurement scope
+def front_matter_fields(text: str) -> dict:
+    """The line-anchored `key: <json>` lines between the first two `---` lines. A value that is
+    not valid JSON is absent. Text that does not open with `---` has no front matter."""
+    lines = [x.rstrip("\r") for x in (text or "").split("\n")]
+    if not lines or lines[0].strip() != "---":
+        return {}
+    try:
+        end = lines.index("---", 1)
+    except ValueError:
+        return {}
+    out = {}
+    for ln in lines[1:end]:
+        m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*): (.*)$", ln)
+        if not m:
+            continue
+        try:
+            out[m.group(1)] = json.loads(m.group(2))
+        except json.JSONDecodeError:
+            continue
+    return out
+
+
+KNOWN_ROLES = ("primary", "second_workload", "smoke")
+
+
+def check_measurement_scope(led: dict, res, only=None) -> list:
+    f = []
+    for pid in (list(only) if only is not None else list(ce.PILLARS)):
+        st = (led.get("state") or {}).get(pid) or {}
+        files = []
+        for e in st.get("evidence") or []:
+            ref = e.get("ref")
+            if e.get("kind") != "measurement" or not ref:
+                continue
+            fm = front_matter_fields(res.file_text(ref))
+            if "evidence_role" not in fm and "terminal_evidence" not in fm:
+                continue  # another instrument's measurement: the CE clauses judge it
+            files.append((ref, fm))
+        on_pillar = [(r, fm) for r, fm in files if fm.get("pillar", pid) == pid]
+        has_primary = any((fm.get("evidence_role") or "primary") == "primary" and fm.get("terminal_evidence") is True
+                          for _r, fm in on_pillar)
+        for ref, fm in files:
+            if fm.get("pillar", pid) != pid:
+                f.append(f"R3 {pid}: {ref} measures pillar {fm.get('pillar')}")
+                continue
+            role = fm.get("evidence_role") or "primary"
+            if role not in KNOWN_ROLES:
+                f.append(f"R3 {pid}: {ref} has unknown evidence_role {role!r}")
+            elif role == "smoke":
+                f.append(f"R3 {pid}: {ref} is a smoke measurement (instrument evidence, never terminal)")
+            elif role == "second_workload":
+                if fm.get("second_workload_valid") is not True:
+                    f.append(f"R3 {pid}: {ref} is a second_workload file with second_workload_valid "
+                             f"{fm.get('second_workload_valid')!r} (coverage not reached)")
+                elif not has_primary:
+                    f.append(f"R3 {pid}: {ref} is a second_workload file cited without a primary file with "
+                             f"terminal_evidence true for pillar {pid}")
+            elif fm.get("terminal_evidence") is not True:
+                f.append(f"R3 {pid}: {ref} is not terminal evidence: "
+                         f"{fm.get('terminal_evidence_reason') or 'terminal_evidence is not true'}")
+    return f
+
+
 class FakeOwners(OwnerLedgers):
     def __init__(self, table):
         self.table = table  # {(sha, ref, pillar): terminal}
@@ -216,6 +289,61 @@ def selftest(verbose=True) -> bool:
             f"at phase-1 commit 21671d6c -> {closed_pole})")
     else:
         print("  INCONCLUSIVE V-ICP-REAL-OWNER-READ: fa9ae2ed / 21671d6c not in this clone")
+
+    # R3 measurement scope: each pole on a fake resolver mapping ref -> front-matter text.
+    def fm(**kv):
+        body = "".join(f"{k}: {json.dumps(v)}\n" for k, v in kv.items())
+        return f"---\n{body}---\n\n# measurement\n"
+
+    class FakeText(ce.Resolver):
+        def __init__(self, table):
+            self.table = table
+
+        def file_text(self, rel):
+            return self.table.get(rel, "")
+
+    def r3(pillar, table, refs):
+        led_ = {"state": {pillar: {"evidence": [{"kind": "measurement", "ref": r, "sha256": "0" * 64} for r in refs]}}}
+        return check_measurement_scope(led_, FakeText(table), only=[pillar])
+
+    prim = fm(pillar="E", evidence_role="primary", terminal_evidence=True, second_workload_valid=None)
+    prim_false = fm(pillar="E", evidence_role="primary", terminal_evidence=False,
+                    terminal_evidence_reason="primary file but not terminal: population_match=drifted")
+    sec = fm(pillar="E", evidence_role="second_workload", terminal_evidence=False, second_workload_valid=True)
+    sec_bad = fm(pillar="E", evidence_role="second_workload", terminal_evidence=False, second_workload_valid=False)
+    smoke = fm(pillar="E", evidence_role="smoke", terminal_evidence=False, second_workload_valid=None)
+    say(r3("E", {"p": prim}, ["p"]) == [], "V-ICP-R3-CLEAN (primary, terminal_evidence true -> no failure)")
+    say(any(x.startswith("R3 E:") and "drifted" in x for x in r3("E", {"p": prim_false}, ["p"])),
+        "V-ICP-MUT-terminal-evidence-false killed by R3")
+    say(any(x.startswith("R3 E:") and "smoke" in x for x in r3("E", {"s": smoke}, ["s"])),
+        "V-ICP-R3-SMOKE-REFUSED")
+    say(r3("E", {"p": prim, "w": sec}, ["p", "w"]) == [],
+        "V-ICP-R3-E-PAIR-ACCEPTED (primary true + valid second workload, both pillar E)")
+    alone = r3("E", {"w": sec}, ["w"])
+    say(len(alone) == 1 and alone[0].startswith("R3 E:"), "V-ICP-R3-SECOND-ALONE-REFUSED")
+    say(any(x.startswith("R3 E:") and "second_workload_valid" in x for x in r3("E", {"p": prim, "w": sec_bad}, ["p", "w"])),
+        "V-ICP-R3-SECOND-INVALID-REFUSED")
+    fp = r3("E", {"p": prim_false, "w": sec}, ["p", "w"])
+    say(len(fp) == 2 and any("not terminal evidence" in x for x in fp) and any("second_workload" in x for x in fp),
+        "V-ICP-R3-SECOND-WITH-FALSE-PRIMARY-REFUSED (both the primary and the orphaned second workload refused)")
+    say(any(x.startswith("R3 D:") and "pillar E" in x for x in r3("D", {"p": prim}, ["p"])),
+        "V-ICP-R3-WRONG-PILLAR-REFUSED")
+    say(r3("E", {"o": fm(pillar="E", denominator="KME-L"), "n": "no front matter here\n"}, ["o", "n"]) == [],
+        "V-ICP-R3-NON-KMEP (no evidence_role and no terminal_evidence line -> skipped)")
+    quoted = "---\ndenominator: \"KME-L\"\n---\n\nThe words evidence_role: smoke appear in this body sentence.\n"
+    say(r3("E", {"q": quoted}, ["q"]) == [] and front_matter_fields(quoted) == {"denominator": "KME-L"},
+        "V-ICP-R3-QUOTED-NOT-FIELD (body words are not front matter)")
+    smoke_files = sorted((REPO / PROGRAM_DIR / "measurements").glob("D-KME-G-*.md"))
+    if smoke_files:
+        rel = smoke_files[0].relative_to(REPO).as_posix()
+        real_led = {"state": {"D": {"terminal": "FALSIFIED_OR_REJECTED_BY_EVIDENCE", "evidence": [
+            {"kind": "measurement", "ref": rel, "sha256": ce.lf_sha256(REPO / rel)}]}}}
+        got = check_measurement_scope(real_led, ce.Resolver(), only=["D"])
+        say(len(got) == 1 and got[0].startswith("R3 D:"),
+            f"V-ICP-R3-REAL (committed KME-G smoke file {rel} refused: {got[:1]})")
+    else:
+        ok = False
+        print("  INCONCLUSIVE V-ICP-R3-REAL: no KME-G smoke file")
     return ok
 
 
@@ -243,10 +371,31 @@ def main(argv=None) -> int:
             print(f"ICP_VERDICT=COULD_NOT_RUN ledger unreadable: {exc}")
             return 2
         fails += check_binding(led) + check_consumed(led, OwnerLedgers())
+        fails += check_measurement_scope(led, ce.Resolver())
         for x in fails:
             print("  FAIL", x)
         print(f"ICP_VERDICT={'PASS' if not fails else 'FAIL'} failures={len(fails)}")
         return 0 if not fails else 1
+    pid = None
+    for i, a in enumerate(argv):
+        if a == "--pillar" and i + 1 < len(argv):
+            pid = argv[i + 1]
+        elif a.startswith("--pillar="):
+            pid = a.split("=", 1)[1]
+    if pid in ce.PILLARS:
+        rc = ce.main(argv)
+        try:
+            led = json.loads((REPO / ce.LEDGER_REL).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"ICP_VERDICT=COULD_NOT_RUN ledger unreadable: {exc}")
+            return 2
+        r3 = check_measurement_scope(led, ce.Resolver(), only=[pid])
+        for x in r3:
+            print("  FAIL", x)
+        print(f"ICP_PILLAR_{pid}={'PASS' if rc == 0 and not r3 else 'FAIL'}")
+        if rc == 2:
+            return 2
+        return 0 if rc == 0 and not r3 else 1
     return ce.main(argv)
 
 

@@ -2112,6 +2112,63 @@ GATES_EXPANSION_2 = [
 GATES_REAL_2 = [("V-KMEP-KMEG-AUTO-REAL", g_kmeg_auto_real)]
 
 
+# =========================================================================== plan 03-05: R3 through the done-gate
+def _icp():
+    """The program-owned done-gate wrapper (imported lazily: it rebinds the CE verifier's module globals)."""
+    if str(HERE) not in sys.path:
+        sys.path.insert(0, str(HERE))
+    import test_incremental_cognition_program as icp
+    return icp
+
+
+def r3_led(pillar, *refs):
+    return {"state": {pillar: {"evidence": [{"kind": "measurement", "ref": str(r), "sha256": "0" * 64}
+                                            for r in refs]}}}
+
+
+def g_r3_e_pair():
+    """The instrument's own pillar-E files (primary KME-L, second workload CPP-D-W7, smoke KME-G) through R3."""
+    icp = _icp()
+    root = scratch("r3e")
+    fx = Fx(root, project="-home-x-kme-e")
+    fx.human("start", ts(0))
+    rd(fx, 0, "r1", "/w/big.py", E_BODY)
+    call(fx, 1)
+    rd(fx, 2, "r2", "/w/big.py", E_BODY)
+    call(fx, 3)
+    call(fx, 4)
+    pop = {"sessions_active": 1, "sessions_dead": 0, "calls": 5, "input": 50, "cache_write": 0, "cache_read": 5000,
+           "output": 25}
+    frozen = write_frozen(root / "frozen.json", **{"KME-L": pop, "KME-G": pop})
+    proj = root / "projects" / "-home-x-kme-e"
+    outd = root / "m"
+    rc1, o1, e1 = run_main(["e", "--denominator", "KME-L", "--frozen-file", frozen, "--root", str(proj),
+                            "--out-dir", str(outd)])
+    ledger = ce_ledger_file(root / "ce.json", 5)
+    rc2, o2, e2 = run_main(["e", "--denominator", "CPP-D-W7", "--role", "second_workload", "--frozen-ce-ledger",
+                            ledger, "--root", str(proj), "--out-dir", str(outd)])
+    rc3, o3, e3 = run_main(["e", "--denominator", "KME-G", "--frozen-file", frozen, "--root", str(proj),
+                            "--out-dir", str(outd)])
+    prim, second, smoke = (next(iter(outd.glob(f"E-{d}-*.md")), None) for d in ("KME-L", "CPP-D-W7", "KME-G"))
+    if rc1 != 0 or rc2 != 0 or rc3 != 0 or not (prim and second and smoke):
+        return False, f"rc={rc1},{rc2},{rc3} files={sorted(f.name for f in outd.glob('*.md'))} err={(e1 + e2 + e3)[-200:]}"
+    fp, fs, fk = (parse_measurement(f.read_text(encoding="utf-8"))[0] for f in (prim, second, smoke))
+    shaped = (fp["evidence_role"] == "primary" and fp["terminal_evidence"] is True
+              and fs["evidence_role"] == "second_workload" and fs["second_workload_valid"] is True
+              and fs["terminal_evidence"] is False and fk["evidence_role"] == "smoke")
+    res = icp.ce.Resolver()
+
+    def fails(pillar, *refs):
+        return icp.check_measurement_scope(r3_led(pillar, *refs), res, only=[pillar])
+    pair, alone, smk, wrong = fails("E", prim, second), fails("E", second), fails("E", smoke), fails("D", prim)
+    ok = (shaped and pair == [] and len(alone) == 1 and alone[0].startswith("R3 E:")
+          and len(smk) == 1 and smk[0].startswith("R3 E:") and len(wrong) == 1 and wrong[0].startswith("R3 D:"))
+    return ok, f"front shaped={shaped} pair={pair} second_alone={alone} smoke={smk} E-file-cited-by-D={wrong}"
+
+
+GATES_PLAN5_TRACER = [("V-KMEP-R3-E-PAIR", g_r3_e_pair)]
+
+
 GATES_EXPANSION = [
     ("V-KMEP-POPULATION-DRIFT", g_population_drift),
     ("V-KMEP-VERDICT-TABLE", g_verdict_table),
@@ -2144,7 +2201,7 @@ GATES_TRACER = [
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
     ("V-KMEP-CLI-USAGE", g_cli_usage),
 ]
-GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_REAL + GATES_REAL_2
+GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_PLAN5_TRACER + GATES_REAL + GATES_REAL_2
 
 
 def summary_line() -> str:
