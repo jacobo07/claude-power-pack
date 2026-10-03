@@ -41,6 +41,7 @@ this script's derivation is host-independent and runs no session.
 from __future__ import annotations
 
 import argparse
+import copy
 import functools
 import hashlib
 import json
@@ -353,6 +354,23 @@ def clause_separation(counts, b, ok_sources):
                     f"{frac(b['floor'])}); per D-01 record an [E] owner-bundle line and run no sessions; {per}")
 
 
+def clause_grades_agree(rows, grades, b, ok_sources):
+    """D-01: the verdict must not depend on which grade source is authoritative."""
+    if not ok_sources:
+        return "INCONCLUSIVE", "sources refused; no comparison"
+    if b is None:
+        return "INCONCLUSIVE", "no bound; no floor"
+    auth, stored = arm_counts(grades, rows), arm_counts(stored_grades(rows), rows)
+    if stored[CONTROL_ARM]["n"] == 0 or max_effect(stored) is None:
+        return "INCONCLUSIVE", "the stored grades leave the control or every treatment arm UNMEASURED"
+    ea, es = max_effect(auth), max_effect(stored)
+    va, vs = separation_verdict(ea, b["floor"]), separation_verdict(es, b["floor"])
+    if va == vs:
+        return "ok", f"both grade sources give {va}: authoritative effect {frac(ea)}, stored effect {frac(es)}"
+    return "INCONCLUSIVE", (f"grade source decides the verdict: authoritative effect {frac(ea)} -> {va}, "
+                            f"stored effect {frac(es)} -> {vs}")
+
+
 def verdict_of(results) -> str:
     st = {name: status for name, status, _ in results}
     if all(s == "ok" for s in st.values()):
@@ -362,18 +380,271 @@ def verdict_of(results) -> str:
     return "INCONCLUSIVE"
 
 
-def evaluate_core(rows, refusal, regrade_rows, budget):
+def evaluate_core(rows, refusal, regrade_rows, budget, fisher_fn=fisher_two_sided):
     """Pure clauses over one rows set. Returns (results, ctx)."""
     grades, grade_refusal = (None, None) if refusal else authoritative(rows, regrade_rows)
     counts = arm_counts(grades, rows) if grades is not None else None
     results = [("V-CT-SOURCES",) + clause_sources(rows, refusal, grades or {}, grade_refusal,
                                                    counts or {CONTROL_ARM: {"n": 0}})]
     ok_sources = results[0][1] == "ok"
-    results.append(("V-CT-FISHER-PINS",) + clause_fisher_pins())
+    results.append(("V-CT-FISHER-PINS",) + clause_fisher_pins(fisher_fn))
     b = bound(budget) if _is_int(budget) and budget > 0 else None
     results.append(("V-CT-BOUND",) + (clause_bound(b) if b else ("INCONCLUSIVE", f"budget {budget!r} is not an int > 0")))
     results.append(("V-CT-SEPARATION",) + clause_separation(counts, b, ok_sources))
+    results.append(("V-CT-GRADES-AGREE",) + clause_grades_agree(rows, grades, b, ok_sources))
     return results, {"grades": grades, "counts": counts, "bound": b}
+
+
+# --------------------------------------------------------------------------- pins (git)
+
+# The commit that brought results-delivery.jsonl to its 8 rows (appended the 2 C rows).
+ROWS_PIN_COMMIT = "123c96cc"
+
+
+def _parse_blob(text):
+    rows = []
+    for line in text.splitlines():
+        if line.strip():
+            rows.append(json.loads(line))
+    return rows
+
+
+def add_commit(rel, git=_git):
+    """Full hash of the commit that added rel, or None when git fails or answers empty."""
+    rc, out = git("log", "--diff-filter=A", "--format=%H", "--", rel)
+    hashes = out.split() if rc == 0 else []
+    return hashes[-1] if hashes else None
+
+
+def pin_info(git=_git) -> dict:
+    """Both pins, their ancestry and their blobs. Any git failure is recorded as `error`, never guessed."""
+    info = {"rows_commit": ROWS_PIN_COMMIT, "regrade_commit": None, "error": None,
+            "rows_blob": None, "regrade_blob": None, "rows_sha": None, "regrade_sha": None}
+    info["regrade_commit"] = add_commit(REGRADE_REL, git)
+    if not info["regrade_commit"]:
+        info["error"] = f"git log --diff-filter=A -- {REGRADE_REL} failed or was empty"
+        return info
+    for ref in (ROWS_PIN_COMMIT, info["regrade_commit"]):
+        rc, _ = git("merge-base", "--is-ancestor", ref, "HEAD")
+        if rc != 0:
+            info["error"] = f"pin {ref[:8]} is not an ancestor of HEAD (git rc {rc})"
+            return info
+    for key, ref, rel in (("rows", ROWS_PIN_COMMIT, ROWS_REL), ("regrade", info["regrade_commit"], REGRADE_REL)):
+        text = git_text(f"{ref}:{rel}", git)
+        if text is None:
+            info["error"] = f"git show {ref[:8]}:{rel} failed"
+            return info
+        try:
+            info[key + "_blob"] = _parse_blob(text)
+        except ValueError as exc:
+            info["error"] = f"blob {ref[:8]}:{rel} is not JSON lines ({exc})"
+            return info
+        info[key + "_sha"] = lf_sha(text)
+    return info
+
+
+def pinned_split(rows, info):
+    """(rows inside the pinned run_id set, rows outside it). Without a blob every row is outside."""
+    ids = {r["run_id"] for r in (info.get("rows_blob") or [])}
+    return [r for r in rows if r["run_id"] in ids], [r for r in rows if r["run_id"] not in ids]
+
+
+def clause_rows_pinned(rows, regrade_rows, info):
+    if info.get("error"):
+        return "INCONCLUSIVE", info["error"]
+    blob = {r["run_id"]: r for r in info["rows_blob"]}
+    wt = {r["run_id"]: r for r in rows}
+    missing = sorted(set(blob) - set(wt))
+    if missing:
+        return "FAIL", f"pinned run_ids absent from the working tree: {missing}"
+    diff = sorted(rid for rid in blob if wt[rid] != blob[rid])
+    if diff:
+        return "FAIL", f"pinned rows differ from the blob at {ROWS_PIN_COMMIT}: {diff}"
+    gb = sorted(json.dumps(g, sort_keys=True) for g in info["regrade_blob"])
+    gw = sorted(json.dumps(g, sort_keys=True) for g in regrade_rows)
+    if gb != gw:
+        return "FAIL", f"regrade rows differ from the blob at {info['regrade_commit'][:8]}"
+    outside = len(rows) - len(blob)
+    return "ok", (f"{len(blob)} rows equal the blob at {ROWS_PIN_COMMIT} (LF sha256 {info['rows_sha'][:12]}), "
+                  f"{len(gb)} regrade rows equal the blob at {info['regrade_commit'][:8]} (LF sha256 "
+                  f"{info['regrade_sha'][:12]}); both pins are ancestors of HEAD; {outside} rows outside the pinned set")
+
+
+def clause_evidence_current(wt_text, head_text, rendered):
+    if wt_text is None:
+        return "FAIL", f"{EVIDENCE_REL} absent from the working tree; re-render with --write-evidence"
+    if head_text is None:
+        return "FAIL", f"{EVIDENCE_REL} absent at HEAD; re-render with --write-evidence and commit it"
+    want = rendered.replace("\r\n", "\n")
+    for where, text in (("working tree", wt_text), ("HEAD", head_text)):
+        if text.replace("\r\n", "\n") != want:
+            return "FAIL", f"{EVIDENCE_REL} at {where} differs from a fresh render; re-render with --write-evidence"
+    return "ok", f"working tree and HEAD both equal a fresh render (LF sha256 {lf_sha(want)[:12]})"
+
+
+def clause_rows_pinned_drill(rows, regrade_rows, info):
+    """Text drill: one pinned row's wall_s changed must FAIL."""
+    rows = copy.deepcopy(rows)
+    rows[0]["wall_s"] = (rows[0].get("wall_s") or 0) + 1
+    return clause_rows_pinned(rows, regrade_rows, info)
+
+
+def clause_evidence_current_drill(rendered):
+    """Text drill: one digit of the rendered text changed must FAIL."""
+    m = re.search(r"\d", rendered)
+    mutated = rendered[:m.start()] + str((int(m.group(0)) + 1) % 10) + rendered[m.end():]
+    return clause_evidence_current(mutated, rendered, rendered)
+
+
+# --------------------------------------------------------------------------- drills
+
+
+def _fisher_doubled_one_sided(a, n1, b, n2):
+    """A wrong implementation for the drill: 2 x the smaller one-sided tail."""
+    s, total = a + b, comb(n1 + n2, a + b)
+    xs = range(max(0, s - n2), min(n1, s) + 1)
+    pr = {x: Fraction(comb(n1, x) * comb(n2, s - x), total) for x in xs}
+    up = sum((pr[x] for x in xs if x >= a), Fraction(0))
+    lo = sum((pr[x] for x in xs if x <= a), Fraction(0))
+    return min(Fraction(1), 2 * min(up, lo))
+
+
+def _fisher_one_sided(a, n1, b, n2):
+    """A wrong implementation for the drill: the upper tail only."""
+    s, total = a + b, comb(n1 + n2, a + b)
+    xs = range(max(0, s - n2), min(n1, s) + 1)
+    return sum((Fraction(comb(n1, x) * comb(n2, s - x), total) for x in xs if x >= a), Fraction(0))
+
+
+def _template(rows, arm):
+    return next(r for r in rows if r.get("arm") == arm)
+
+
+def _fab(rows, spec):
+    """Fabricated rows from deep copies of real rows: only run_id / arm / rep / grade / valid change."""
+    out = []
+    for arm, grades in spec:
+        for i, g in enumerate(grades, 1):
+            r = copy.deepcopy(_template(rows, arm if any(x.get("arm") == arm for x in rows) else "P"))
+            r.update({"run_id": f"X-{arm}-r{i}", "arm": arm, "rep": i, "grade": g, "valid": True})
+            out.append(r)
+    return out
+
+
+F, P_ = "FAIL-SWALLOW", "PASS"
+
+
+def _drill_specs():
+    """(name, mutate(rows, regrade) -> (rows, regrade, fisher_fn), {clause: status}, verdict, check)."""
+    def same(rows, reg):
+        return rows, reg, fisher_two_sided
+
+    def sep(rows, reg):
+        return _fab(rows, [("P", [P_] * 5), ("N0", [F] * 5)]), [], fisher_two_sided
+
+    def edge_hit(rows, reg):
+        return _fab(rows, [("P", [P_] * 3 + [F]), ("N0", [F] * 5)]), [], fisher_two_sided
+
+    def edge_miss(rows, reg):
+        return _fab(rows, [("P", [P_] * 3 + [F] * 2), ("N0", [F] * 5)]), [], fisher_two_sided
+
+    def no_n0(rows, reg):
+        keep = [r for r in rows if r.get("arm") != CONTROL_ARM]
+        ids = {r["run_id"] for r in keep}
+        return copy.deepcopy(keep), [g for g in reg if g["run_id"] in ids], fisher_two_sided
+
+    def p_invalid(rows, reg):
+        rows = copy.deepcopy(rows)
+        for r in rows:
+            if r.get("arm") == "P":
+                r["valid"] = False
+        return rows, reg, fisher_two_sided
+
+    def c_empty(rows, reg):
+        rows = copy.deepcopy(rows)
+        next(r for r in rows if r.get("arm") == "C")["grade"] = ""
+        return rows, reg, fisher_two_sided
+
+    def reg_ghost(rows, reg):
+        return rows, list(reg) + [{"run_id": "X-ghost-r1", "grade": F}], fisher_two_sided
+
+    def disagree(rows, reg):
+        fab = _fab(rows, [("P", [P_] * 5), ("N0", [F] * 5)])
+        return fab, [{"run_id": f"X-P-r{i}", "grade": F} for i in (1, 2, 3)], fisher_two_sided
+
+    def doubled(rows, reg):
+        return rows, reg, _fisher_doubled_one_sided
+
+    def one_sided(rows, reg):
+        return rows, reg, _fisher_one_sided
+
+    def unmeasured(arm):
+        def chk(rows, ctx, results):
+            t = count_text(ctx["counts"][arm]) if ctx["counts"] else "no counts"
+            joined = " ".join(x[2] for x in results)
+            good = t.startswith("UNMEASURED") and "0/0" not in joined and f"{arm} 0 of" not in joined
+            return good, f"{arm} {t}"
+        return chk
+
+    def p_out(rows, ctx, results):
+        good, note = unmeasured("P")(rows, ctx, results)
+        used = [a for a, _, _ in pairs(ctx["counts"])]
+        return good and used == ["R", "C"], f"{note}; pairs from {','.join(used)}"
+
+    def c_n1(rows, ctx, results):
+        n = ctx["counts"]["C"]["n"]
+        return n == 1, f"C measured n {n}"
+
+    inc3 = {"V-CT-SOURCES": "INCONCLUSIVE", "V-CT-SEPARATION": "INCONCLUSIVE", "V-CT-GRADES-AGREE": "INCONCLUSIVE"}
+    return [
+        ("clean", same, {}, "NOT_SEPARABLE", None),
+        ("sep-P5of5-vs-N0-0of5", sep, {"V-CT-SEPARATION": "FAIL"}, "SEPARABLE", None),
+        ("edge-P3of4-vs-N0-0of5", edge_hit, {"V-CT-SEPARATION": "FAIL"}, "SEPARABLE", None),
+        ("edge-P3of5-vs-N0-0of5", edge_miss, {}, "NOT_SEPARABLE", None),
+        ("no-N0-rows", no_n0, inc3, "INCONCLUSIVE", unmeasured(CONTROL_ARM)),
+        ("P-rows-invalid", p_invalid, {}, "NOT_SEPARABLE", p_out),
+        ("C-r1-grade-empty", c_empty, {}, "NOT_SEPARABLE", c_n1),
+        ("regrade-unknown-run_id", reg_ghost, inc3, "INCONCLUSIVE", None),
+        ("grade-sources-disagree", disagree, {"V-CT-GRADES-AGREE": "INCONCLUSIVE"}, "INCONCLUSIVE", None),
+        ("fisher-doubled-one-sided", doubled, {"V-CT-FISHER-PINS": "FAIL"}, "INCONCLUSIVE", None),
+        ("fisher-one-sided", one_sided, {"V-CT-FISHER-PINS": "FAIL"}, "INCONCLUSIVE", None),
+    ]
+
+
+PURE_CLAUSES = ("V-CT-SOURCES", "V-CT-FISHER-PINS", "V-CT-BOUND", "V-CT-SEPARATION", "V-CT-GRADES-AGREE")
+
+
+def drills(rows, regrade_rows, budget, text_drills=None) -> list:
+    """[(name, observed, good)]. Each mutant must move exactly its declared clause set, every other
+    evaluated clause stays ok, and the verdict matches. The clean case is the positive control."""
+    out = []
+    for name, mut, want, want_v, chk in _drill_specs():
+        r2, g2, fn = mut(rows, regrade_rows)
+        results, ctx = evaluate_core(r2, None, g2, budget, fn)
+        st = {n: s for n, s, _ in results}
+        missing = [c for c in PURE_CLAUSES if c not in st]
+        wrong = [f"{c}={st[c]}(want {want.get(c, 'ok')})" for c in st if st[c] != want.get(c, "ok")]
+        v = verdict_of(results)
+        good = not missing and not wrong and v == want_v
+        note = ""
+        if chk is not None and ctx["counts"] is not None:
+            cg, note = chk(r2, ctx, results)
+            good = good and cg
+        moved = ",".join(f"{c} {st[c]}" for c in st if st[c] != "ok") or "all ok"
+        obs = f"{moved} verdict {v}" + (f" ({note})" if note else "")
+        if missing:
+            obs += f" MISSING {','.join(missing)}"
+        if wrong:
+            obs += f" WRONG {';'.join(wrong)}"
+        out.append((name, obs, good))
+    for name, fn in (text_drills or {}).items():
+        try:
+            status, text = fn()
+        except NameError as exc:
+            out.append((name, f"clause missing ({exc})", False))
+            continue
+        out.append((name, f"{status} {text[:80]}", status == "FAIL"))
+    return out
 
 
 # --------------------------------------------------------------------------- render
@@ -386,13 +657,15 @@ def sessions_host(rows) -> str:
     return "host unknown"
 
 
-def render(rows, regrade_rows, fro) -> str:
+def render(rows, regrade_rows, fro, info, outside=()) -> str:
     denoms = fro["denominators"]
     budget = denoms["D-SESSIONS"]["new_benchmark_cap"]
     results, ctx = evaluate_core(rows, None, regrade_rows, budget)
     grades, counts, b = ctx["grades"], ctx["counts"], ctx["bound"]
     if grades is None or b is None:
         raise ValueError("sources or budget refused; nothing to render")
+    if info.get("error"):
+        raise ValueError(f"pins unreadable: {info['error']}")
     stored = arm_counts(stored_grades(rows), rows)
     regrade = {g["run_id"]: g["grade"] for g in regrade_rows}
     rule = next(p["rule"] for p in fro["pillars"] if p["id"] == "E")
@@ -406,6 +679,15 @@ def render(rows, regrade_rows, fro) -> str:
     L.append("Frozen pillar E rule (ledger `frozen.pillars[E].rule`):")
     L.append("")
     L.append(f"> {rule}")
+    L.append("")
+    L.append("## Sources")
+    L.append("")
+    L.append(f"- rows: `{ROWS_REL}`, the run_id set of its blob at {info['rows_commit']} (the commit that brought it "
+             f"to {len(info['rows_blob'])} rows), LF sha256 `{info['rows_sha']}`")
+    L.append(f"- regrade: `{REGRADE_REL}`, blob at its add commit {info['regrade_commit'][:8]} "
+             f"({len(info['regrade_blob'])} rows), LF sha256 `{info['regrade_sha']}`")
+    L.append("- Rows outside the pinned set (not used by the verdict): " + (
+        "; ".join(f"{r['run_id']} / {r.get('arm')} / {r.get('grade')}" for r in outside) if outside else "none"))
     L.append("")
     L.append("## Rows (authoritative grade = regrade row when one exists, else stored grade)")
     L.append("")
@@ -495,16 +777,64 @@ def emit(results) -> int:
     return 0 if passed == len(results) else 1
 
 
-def default_rows():
+def default_inputs():
+    """Working-tree rows restricted to the pinned run_id set, the regrade rows, the pin info and the rest."""
     rows, refusal = load_rows(REPO / ROWS_REL)
     reg, rrefusal = load_rows(REPO / REGRADE_REL)
-    return rows, refusal or rrefusal, reg or []
+    info = pin_info()
+    rows = rows or []
+    if info.get("error"):
+        inside, outside = rows, []
+    else:
+        inside, outside = pinned_split(rows, info)
+    return {"rows": inside, "all_rows": rows, "outside": outside, "refusal": refusal or rrefusal,
+            "regrade": reg or [], "info": info}
+
+
+def _read_wt(rel):
+    try:
+        return (REPO / rel).read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+
+def default_results(inp, fro, budget):
+    results, _ = evaluate_core(inp["rows"], inp["refusal"], inp["regrade"], budget)
+    info = inp["info"]
+    results.append(("V-CT-ROWS-PINNED",) + clause_rows_pinned(inp["all_rows"], inp["regrade"], info))
+    try:
+        rendered = render(inp["rows"], inp["regrade"], fro, info, inp["outside"])
+    except (ValueError, KeyError) as exc:
+        rendered = None
+        results.append(("V-CT-EVIDENCE-CURRENT", "INCONCLUSIVE", f"cannot render: {exc}"))
+    if rendered is not None:
+        results.append(("V-CT-EVIDENCE-CURRENT",) + clause_evidence_current(
+            _read_wt(EVIDENCE_REL), git_text(f"HEAD:{EVIDENCE_REL}"), rendered))
+    d = run_drills(inp, fro, budget, rendered)
+    subs = "".join(f"\n    drill {n}: {o}{'' if g else ' <-- WRONG'}" for n, o, g in d)
+    if all(g for *_, g in d):
+        results.append(("V-CT-DRILLS", "ok", f"{len(d)} drills, clean case all ok, each mutant moved exactly "
+                                             f"its declared clauses" + subs))
+    else:
+        results.append(("V-CT-DRILLS", "FAIL", "a drill did not behave as required" + subs))
+    return results
+
+
+def run_drills(inp, fro, budget, rendered):
+    if inp["refusal"] or inp["info"].get("error") or rendered is None:
+        return [("sources", "real sources or pins refused; no drill can run", False)]
+    text_drills = {
+        "rows-pinned-wall_s-changed": lambda: clause_rows_pinned_drill(inp["all_rows"], inp["regrade"], inp["info"]),
+        "evidence-one-digit-changed": lambda: clause_evidence_current_drill(rendered),
+    }
+    return drills(inp["rows"], inp["regrade"], budget, text_drills)
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--jsonl", help="evaluate the verdict clauses on this rows file only")
     ap.add_argument("--regrade", help="regrade file joined to --jsonl (default under --jsonl: none)")
+    ap.add_argument("--drills", action="store_true", help="print the in-process mutant drills")
     ap.add_argument("--write-evidence", action="store_true", help=f"render {EVIDENCE_REL}")
     args = ap.parse_args(argv)
     try:
@@ -519,14 +849,23 @@ def main(argv=None) -> int:
         print(f"  (rows {args.jsonl}; regrade {args.regrade or 'none: stored grades only'})")
         results, _ = evaluate_core(rows, refusal or rref, reg or [], budget)
         return emit(results)
-    rows, refusal, reg = default_rows()
+    inp = default_inputs()
+    if args.drills:
+        try:
+            rendered = render(inp["rows"], inp["regrade"], fro, inp["info"], inp["outside"])
+        except (ValueError, KeyError):
+            rendered = None
+        d = run_drills(inp, fro, budget, rendered)
+        for name, obs, good in d:
+            print(f"    drill {name}: {obs}{'' if good else ' <-- WRONG'}")
+        return 0 if all(g for *_, g in d) else 1
     if args.write_evidence:
-        if refusal:
-            print(f"cannot render: {refusal}")
+        if inp["refusal"]:
+            print(f"cannot render: {inp['refusal']}")
             return 1
         try:
-            text = render(rows, reg, fro)
-        except ValueError as exc:
+            text = render(inp["rows"], inp["regrade"], fro, inp["info"], inp["outside"])
+        except (ValueError, KeyError) as exc:
             print(f"cannot render: {exc}")
             return 1
         out = REPO / EVIDENCE_REL
@@ -535,8 +874,7 @@ def main(argv=None) -> int:
             fh.write(text)
         print(f"wrote {EVIDENCE_REL} ({len(text)} chars)")
         return 0
-    results, _ = evaluate_core(rows, refusal, reg, budget)
-    return emit(results)
+    return emit(default_results(inp, fro, budget))
 
 
 if __name__ == "__main__":
