@@ -12,7 +12,7 @@ Mission terms: skill-capability, card-precision, skill-delivery, skill-listing, 
 - [x] **SC-B**: Listing floor + plugin gateway + economics -- any third hypothesis measured against D-LISTING in a fresh session.
 - [x] **SC-C**: Opportunity / delivery / recall / precision -- one gate over a named transcript window, n reported.
 - [x] **SC-D**: Coverage + criticality -- every installed skill classified from a discovered sweep.
-- [ ] **SC-E**: Contribution + result consumption -- paired benchmark inside the <= 10 session budget, or the measured reason it cannot separate.
+- [x] **SC-E**: Contribution + result consumption -- paired benchmark inside the <= 10 session budget, or the measured reason it cannot separate.
 - [x] **SC-F**: Disclosure / fission / fusion / inline / dedup -- each operation with before/after D-LISTING and a recall check.
 - [x] **SC-G**: Compile-out + lineage -- a card names its source skill + commit; a gate fails on unre-derived source change.
 - [x] **SC-H**: Freshness / drift / recert -- live-vs-mirror and card-vs-source drift gate, driven from both poles.
@@ -40,7 +40,7 @@ Mission terms: skill-capability, card-precision, skill-delivery, skill-listing, 
 | SC-H | Phase 4 | Complete |
 | SC-F | Phase 5 | Complete |
 | SC-G | Phase 6 | Complete |
-| SC-E | Phase 7 | Pending |
+| SC-E | Phase 7 | Complete |
 | SC-I | Phase 8 | Pending |
 | SC-J | Phase 8 | Pending |
 | SC-K | Phase 8 | Pending |

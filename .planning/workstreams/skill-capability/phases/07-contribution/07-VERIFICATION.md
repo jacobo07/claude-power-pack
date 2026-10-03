@@ -14,7 +14,7 @@ covered_files:
   - vault/programs/skill-capability/evidence/E-contribution.md
   - vault/programs/skill-capability/ledger.json
   - vault/programs/skill-capability/owner-bundle.md
-covered_digest: "v1:sha256:f954a6695f1d46578fbd44e3d467951837b5024c9724fa7e776209eb74416755"
+covered_digest: "v1:sha256:3517eebd2865df655fd91ac216647066ae4381c7139d4a020d5339e446b92d5e"
 behavior_unverified: 0
 overrides_applied: 0
 verifier: orchestrator (epoch 4), host gex44, worktree sc-run, HEAD 419d35ac; the dispatched gsd-verifier stalled after its header and was superseded
