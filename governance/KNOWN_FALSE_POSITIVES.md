@@ -87,6 +87,24 @@
   `Failed to resolve 'rg' via PATH` notice while doing so. Observed 2026-08-27; the
   warning had been read as gap G1 of a three-gap remediation brief.
 
+## FP-CLOSER-COLON — closer-guard blocks a report whose colon DOES introduce content
+- What it really is: `classify()`'s D2 window tests the **last three sentences one at a
+  time**, and every `INTENT_NARRATION` pattern is anchored with `$`. That anchor is
+  therefore SENTENCE-final, not MESSAGE-final — so a gerund clause ending in a colon
+  fires even when a list, table or code block follows it. D6b's own comment claims the
+  opposite ("a colon that actually introduces content cannot match — the list after it is
+  non-whitespace and the anchor fails"); that reasoning was written for the pre-D2
+  single-sentence form and did not survive the window being widened.
+- Symptom: a legitimate report such as `Measuring the three runs:` followed by three
+  bullets is blocked as `INTENT_NARRATION`. A bare label line (`Remaining:`) is blocked
+  the same way, via D3 `VERBLESS_INTENT`.
+- Measured 2026-09-15 (Power Pack), both reproduced against a reconstructed pre-edit
+  build, so **neither is a regression** — both predate today's session.
+- Response (≤2 min): do not widen the class, do not disable the guard, do not add a
+  pattern. Re-emit with the colon's content starting on the same line, or close the
+  sentence with a full stop. The block is cry-wolf, not a dead closer — and a guard
+  switched off because it cried wolf IS the dead screen it exists to prevent.
+
 ## FP-CEPS-MUTATION-ECHO — CEPS "regression captured" from a mutation drill or its own echo
 - What it really is: the PostToolUse CEPS capture (`[Woz] [pp-ceps-analyst] regression
   failure captured`) matches failure words in ANY tool output. Two shapes produce records
@@ -131,6 +149,10 @@
 - Response (≤2 min): in a read-only agent's prompt, refer to write-related gates descriptively
   ("the no-SQL-mutation gate"), or use the guard's fix (1): `general-purpose` told to adopt the
   specialist's definition, with a real write clause. Do not switch the guard off.
+- Recurred 2026-10-03 (R2 residency audit), wider shape: no gate name at all. The honest
+  disclaimer itself tripped it -- "You have no write tool: ... the parent session persists it to
+  vault/audits/r2-residency-audit.md". Naming the parent's output path near any write-family word
+  is enough. Fix (1) worked first time.
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
