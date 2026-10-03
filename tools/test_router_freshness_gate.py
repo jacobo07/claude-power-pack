@@ -219,6 +219,28 @@ def main() -> int:
     else:
         _fail("V-RFG-SKILL-DRIFT-NO-LIVE", f"absent={v_abs} {l_abs[:1]}; empty={v_emp} {l_emp[:1]}; control={v_ctl}")
 
+    # V-RFG-SKILL-DRIFT-GIT-FAILURE -- git missing: the router line is FAIL carrying the INCONCLUSIVE reason, never
+    # PASS and never a traceback (review IN-03). The control is the same Scenario with git present: PASS.
+    import skill_mirror_drift as smd  # noqa: PLC0415 -- _skill_repo put tools/ on sys.path
+    with Scenario() as s:
+        _skill_repo(s, "---\nname: x\n---\nbody\n")
+        v_ctl, _ = gate.skill_drift_check(s.repo)
+        _orig = smd.vgm._git_exe
+
+        def _gone():
+            raise FileNotFoundError("git executable not found (drill)")
+        smd.vgm._git_exe = _gone
+        try:
+            v_g, l_g = gate.skill_drift_check(s.repo)
+        except Exception as e:  # noqa: BLE001 -- the clause asserts that nothing escapes
+            v_g, l_g = "RAISED", [f"{type(e).__name__}: {e}"]
+        finally:
+            smd.vgm._git_exe = _orig
+    if v_ctl == "PASS" and v_g == "FAIL" and "INCONCLUSIVE: git not found" in l_g[0]:
+        _ok("V-RFG-SKILL-DRIFT-GIT-FAILURE", f"git missing: {v_g} ({l_g[0][:60]}); git present control PASS")
+    else:
+        _fail("V-RFG-SKILL-DRIFT-GIT-FAILURE", f"control={v_ctl}; git missing -> {v_g} {l_g[:1]}")
+
     total = len(PASSES) + len(FAILS)
     print(f"ROUTER_GATE_TESTS={len(PASSES)}/{total}  threshold={total}/{total}")
     return 0 if not FAILS else 1
