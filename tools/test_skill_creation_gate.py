@@ -122,6 +122,33 @@ def head_blob(rel) -> bytes:
     return out
 
 
+def undeclared(text: str) -> str:
+    """`text` without the gate-grammar declaration block, so fixtures start from an undeclared skill whether or not
+    HEAD already declares it (08-02 declared every repo skill). Removes a top-level `metadata:` line inside the
+    frontmatter only when every child under it is an opportunity_detector / opportunity_detector_reason line;
+    any other metadata shape is left alone, and insert_declaration then refuses it loudly."""
+    m = scg._FM_RE.match(sc.lf(text))
+    if m is None or "\r" in text:
+        return text
+    lines = m.group(1).split("\n")
+    out, i = [], 0
+    while i < len(lines):
+        if scg.METADATA_LINE.match(lines[i]):
+            j = i + 1
+            while j < len(lines) and lines[j].startswith("  ") and lines[j].strip():
+                j += 1
+            kids = lines[i + 1:j]
+            if kids and all(scg.DETECTOR_LINE.match(k) or scg.REASON_LINE.match(k) for k in kids):
+                i = j
+                continue
+        out.append(lines[i])
+        i += 1
+    stripped = text[:m.start(1)] + "\n".join(out) + text[m.end(1):]
+    if scg.parse_declaration(stripped)["count"] or scg.parse_declaration(stripped)["reason"]:
+        raise FixtureError("declaration left after stripping")
+    return stripped
+
+
 def render_evidence(fx, repo, msg="render evidence"):
     """record/render -> commit -> gate: the render of the current HEAD, committed."""
     r = scg.judge(repo)
@@ -188,8 +215,8 @@ def tracer(fx, seed):
     fx.init(repo)
     for rel, data in seed.files.items():
         write(repo, rel, data)
-    write(repo, md_rel(seed.cwst), seed.declared(seed.cwst, head_blob(md_rel(seed.cwst)).decode("utf-8")))
-    s_text = head_blob(md_rel(seed.s)).decode("utf-8")
+    write(repo, md_rel(seed.cwst), seed.declared(seed.cwst, undeclared(head_blob(md_rel(seed.cwst)).decode("utf-8"))))
+    s_text = undeclared(head_blob(md_rel(seed.s)).decode("utf-8"))
     write(repo, md_rel(seed.s), s_text)
     fx.commit(repo, ["."], "tracer: one declared, one undeclared")
     r1 = scg.judge(repo)
@@ -217,6 +244,8 @@ def build_base(fx, seed) -> tuple:
         raise FixtureError(f"git archive: {why}")
     with tarfile.open(fileobj=io.BytesIO(tar)) as tf:
         tf.extractall(base, filter="data") if hasattr(tarfile, "data_filter") else tf.extractall(base)
+    for md in sorted((base / "skills").glob(f"*/{scg.SKILL_MD}")):
+        md.write_bytes(undeclared(md.read_bytes().decode("utf-8")).encode("utf-8"))
     for rel, data in seed.files.items():
         write(base, rel, data)
     fx.commit(base, ["."], "base: HEAD skills undeclared")
