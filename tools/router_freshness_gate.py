@@ -179,7 +179,9 @@ def skill_drift_check(repo_root: Path, live_root: Path | None = None) -> tuple[s
 
     The blobs belong to `repo_root` (the checkout being judged); the worktree
     arithmetic is only used to find the live root. Fails closed for this line:
-    any import, git or read error is FAIL with its reason, never a traceback."""
+    any import, git or read error is FAIL with its reason, never a traceback.
+    An absent live root, or one holding none of the repo skills (zero pairs
+    IDENTICAL or DRIFT), compared nothing: UNMEASURED, never PASS (review CR-01)."""
     repo_root = Path(repo_root)
     if not any(repo_root.glob("skills/*/SKILL.md")):
         return "UNMEASURED", ["no skills/<name>/SKILL.md in this checkout; not counted as a pass"]
@@ -189,6 +191,8 @@ def skill_drift_check(repo_root: Path, live_root: Path | None = None) -> tuple[s
             sys.path.insert(0, here)
         import skill_mirror_drift as smd  # noqa: PLC0415
         root = Path(live_root) if live_root is not None else live_skills_root(repo_root)
+        if not root.is_dir():
+            return "UNMEASURED", [f"live root {smd._tilde(root)} absent; nothing compared, not a pass"]
         rep = smd.live_report(repo_root, root)
     except Exception as e:  # noqa: BLE001 -- fail closed with the reason
         return "FAIL", [f"skill drift check could not run: {type(e).__name__}: {e}"]
@@ -206,6 +210,8 @@ def skill_drift_check(repo_root: Path, live_root: Path | None = None) -> tuple[s
                          f"extra_live={r['extra_live']} changed={r['changed']}")
         else:
             lines.append(f"{r['skill']}: INCONCLUSIVE {r.get('reason', '')}")
+    if not bad and c["IDENTICAL"] + c["DRIFT"] == 0:
+        return "UNMEASURED", [head + "; zero pairs compared, not a pass"]
     return ("FAIL" if bad else "PASS"), lines
 
 

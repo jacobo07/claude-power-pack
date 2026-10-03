@@ -30,7 +30,11 @@ counted in `excluded`. Symlinked files are hashed by their link text, symlinked 
 
 This module only READS the live tree. It never writes under the home directory.
 
-Exit codes: 0 no DRIFT/INCONCLUSIVE, 1 DRIFT or INCONCLUSIVE, 2 could not run (bad arguments).
+An absent live root is INCONCLUSIVE, and a live root holding none of the repo skills (zero pairs IDENTICAL or DRIFT)
+is UNMEASURED: both exit 1, because "compared nothing" must never print the same verdict as "all identical".
+
+Exit codes: 0 no DRIFT/INCONCLUSIVE and at least one pair compared, 1 DRIFT, INCONCLUSIVE or UNMEASURED,
+2 could not run (bad arguments).
 """
 from __future__ import annotations
 
@@ -203,12 +207,21 @@ def count_rows(rows) -> dict:
     return c
 
 
+def compared(counts) -> int:
+    """Pairs actually compared (IDENTICAL + DRIFT). Zero means nothing was measured, whatever else the counts say:
+    an all-ABSENT_LIVE plane must never read as a pass (review CR-01)."""
+    return counts["IDENTICAL"] + counts["DRIFT"]
+
+
 def live_report(repo, live_root, ref="HEAD") -> dict:
-    """{status: MEASURED|INCONCLUSIVE, repo_commit, live_root, rows, counts} or {status: INCONCLUSIVE, reason}.
+    """{status: MEASURED, repo_commit, live_root, rows, counts, compared} or {status: INCONCLUSIVE, reason}.
+    An absent live root is INCONCLUSIVE (nothing to compare against), never an all-ABSENT_LIVE population.
     Never raises."""
     sha, why = resolve_commit(repo, ref)
     if sha is None:
         return {"status": "INCONCLUSIVE", "reason": why}
+    if not Path(live_root).is_dir():
+        return {"status": "INCONCLUSIVE", "reason": f"live root {_tilde(live_root)} absent: nothing compared"}
     skills, why = repo_skills(repo, sha)
     if skills is None:
         return {"status": "INCONCLUSIVE", "reason": why}
@@ -237,8 +250,9 @@ def live_report(repo, live_root, ref="HEAD") -> dict:
         row["missing_live"], row["extra_live"], row["changed"] = (
             cmp_["missing_live"], cmp_["extra_live"], cmp_["changed"])
         rows.append(row)
+    counts = count_rows(rows)
     return {"status": "MEASURED", "repo_commit": sha, "live_root": str(live_root), "rows": rows,
-            "counts": count_rows(rows)}
+            "counts": counts, "compared": compared(counts)}
 
 
 # --------------------------------------------------------------------------- card vs source (D-02)
@@ -387,6 +401,8 @@ def measure(repo, live_root, host, ref="HEAD", command=""):
     bad = [r["skill"] for r in rep["rows"] if r["status"] == "INCONCLUSIVE"]
     if bad:
         return None, f"INCONCLUSIVE rows, refusing to record: {bad}"
+    if rep["compared"] == 0:
+        return None, f"zero pairs compared against {_tilde(live_root)} (UNMEASURED), refusing to record"
     return {
         "schema": SCHEMA, "host": host, "node": platform.node(),
         "measured_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -468,14 +484,17 @@ def main(argv=None) -> int:
     if rep["status"] != "MEASURED":
         print(f"INCONCLUSIVE {rep.get('reason')}")
         return 1
+    unmeasured = rep["compared"] == 0
     if a.json:
         print(json.dumps(rep, indent=1, sort_keys=True))
-        return 0 if not (rep["counts"]["DRIFT"] or rep["counts"]["INCONCLUSIVE"]) else 1
+        return 0 if not (rep["counts"]["DRIFT"] or rep["counts"]["INCONCLUSIVE"] or unmeasured) else 1
     if a.live:
         for r in rep["rows"]:
             print(_line(r))
         print(f"counts {rep['counts']} repo_commit={rep['repo_commit'][:8]} live_root={_tilde(live_root)}")
-        return 1 if (rep["counts"]["DRIFT"] or rep["counts"]["INCONCLUSIVE"]) else 0
+        if unmeasured:
+            print(f"UNMEASURED zero pairs compared against {_tilde(live_root)}: not a pass")
+        return 1 if (rep["counts"]["DRIFT"] or rep["counts"]["INCONCLUSIVE"] or unmeasured) else 0
     ap.print_help()
     return 2
 

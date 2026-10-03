@@ -194,6 +194,21 @@ def main() -> int:
         else:
             _fail("V-RFG-SKILL-DRIFT-UNMEASURED", f"verdict={verdict} rc={rc}")
 
+    # V-RFG-SKILL-DRIFT-NO-LIVE -- a live root that is absent, or that holds none of the repo skills, compared
+    # nothing: UNMEASURED, never PASS (review CR-01). Control: the same checkout against its identical copy passes.
+    with Scenario() as s:
+        _skill_repo(s, "---\nname: x\n---\nbody\n")
+        v_abs, l_abs = gate.skill_drift_check(s.repo, s.tmp / "no-such-skills")
+        empty = s.tmp / "empty-live"
+        empty.mkdir()
+        v_emp, l_emp = gate.skill_drift_check(s.repo, empty)
+        v_ctl, _ = gate.skill_drift_check(s.repo)
+    if v_abs == "UNMEASURED" and v_emp == "UNMEASURED" and v_ctl == "PASS":
+        _ok("V-RFG-SKILL-DRIFT-NO-LIVE", f"absent root UNMEASURED ({l_abs[0]}); empty root UNMEASURED; "
+                                         "identical-copy control PASS")
+    else:
+        _fail("V-RFG-SKILL-DRIFT-NO-LIVE", f"absent={v_abs} {l_abs[:1]}; empty={v_emp} {l_emp[:1]}; control={v_ctl}")
+
     total = len(PASSES) + len(FAILS)
     print(f"ROUTER_GATE_TESTS={len(PASSES)}/{total}  threshold={total}/{total}")
     return 0 if not FAILS else 1

@@ -140,6 +140,40 @@ def c_pole_absent():
     return [(FAIL, "V-SKD-POLE-ABSENT", f"expected ABSENT_LIVE, got {r and r['status']}")]
 
 
+def _cli(argv):
+    """(rc, stdout) of smd.main(argv), stdout captured."""
+    import io
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = smd.main(argv)
+    return rc, buf.getvalue()
+
+
+def c_no_live_root():
+    """CR-01: an absent live root, or one holding none of the repo skills, compared nothing. `--live` and `--json`
+    must not exit 0 on it; the identical-copy control must."""
+    no = _need_git()
+    if no:
+        return [(INCONC, "V-SKD-NO-LIVE-ROOT", f"git unavailable: {no}")]
+    with temp_repo() as (repo, sha, live):
+        put_live(live, {"SKILL.md": SKILL_MD, "core/x.py": X_PY})
+        empty = live.parent / "empty-live"
+        empty.mkdir()
+        absent = live.parent / "no-such-root"
+        got = {}
+        for label, root in (("absent", absent), ("empty", empty), ("control", live)):
+            for mode in ("--live", "--json"):
+                got[(label, mode)] = _cli([mode, "--repo", str(repo), "--live-root", str(root)])
+    bad = [f"{k[0]} {k[1]} rc={rc}" for k, (rc, _) in got.items() if (rc == 0) != (k[0] == "control")]
+    unlabelled = [f"{k[0]} {k[1]}" for k, (rc, out) in got.items()
+                  if k[0] != "control" and k[1] == "--live"
+                  and not any(ln.startswith(("UNMEASURED ", "INCONCLUSIVE ")) for ln in out.splitlines())]
+    if not bad and not unlabelled:
+        return [(OK, "V-SKD-NO-LIVE-ROOT", "absent and empty live roots: --live and --json exit 1 (UNMEASURED / "
+                                           "INCONCLUSIVE), identical-copy control exits 0")]
+    return [(FAIL, "V-SKD-NO-LIVE-ROOT", f"wrong exit: {bad}; no UNMEASURED/INCONCLUSIVE label: {unlabelled}")]
+
+
 # --------------------------------------------------------------------------- evidence
 
 def load_recording(raw: bytes):
@@ -734,7 +768,7 @@ def c_card_source_git_failure():
 
 # --------------------------------------------------------------------------- driver
 
-CLAUSES = [c_pole_identical, c_pole_drift, c_pole_absent, c_committed_not_worktree, c_record_reproduces,
+CLAUSES = [c_pole_identical, c_pole_drift, c_pole_absent, c_no_live_root, c_committed_not_worktree, c_record_reproduces,
            c_record_drill, c_git_failure, c_card_source_current, c_card_source_poles, c_card_source_crlf,
            c_card_source_git_failure, c_evidence_current, c_evidence_drill]
 
