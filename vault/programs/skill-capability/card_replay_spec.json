@@ -3,16 +3,107 @@
   "pack_sha256": "dacfdf5aa8afb0a5e6221ebf98fcf1b70866c7de3931083e210e7e948a6c0c05",
   "replays": [
     {
+      "id": "300ac3a1",
+      "session": "300ac3a1-ce26-4aca-b1f8-7af213c96cea",
+      "deny_ts": "2026-10-03T12:14:12.096Z",
+      "files": [
+        ".planning/workstreams/ucep/ROADMAP.md",
+        ".planning/workstreams/ucep/STATE.md"
+      ],
+      "writer_call_id": "toolu_01KaUpAebLRSL1dYJX9VHYgY",
+      "writer_window": [
+        "2026-10-03T12:13:52.456Z",
+        "2026-10-03T12:14:04.421Z"
+      ],
+      "mtime_ms": 1791029638438.5,
+      "mtime_source": "placed",
+      "note": "placed at the midpoint of the writer window; the writer call is identified from the command text in the pack; no measured mtime is usable: the pack's mtime_now is of the MAIN checkout copy while the session worked in .claude/worktrees/ucep. Command (300 chars, complete in the pack): gsd-tools roadmap.update-plan-progress for plans 01-01..01-05 in --ws ucep."
+    },
+    {
+      "id": "5b36b02f-1",
+      "session": "5b36b02f-04b6-4865-8de9-98c5202346aa",
+      "deny_ts": "2026-10-03T13:29:15.159Z",
+      "files": [
+        "tests/e2e/force-reload-renderer-replacement.spec.ts"
+      ],
+      "writer_call_id": "toolu_01Y2yAeMUdcRgrkqpyVPvUGj",
+      "writer_window": [
+        "2026-10-03T13:26:38.207Z",
+        "2026-10-03T13:27:00.341Z"
+      ],
+      "mtime_ms": 1791034009274.0,
+      "mtime_source": "placed",
+      "note": "placed at the midpoint of the writer window; the writer call is identified from the command text in the pack; no measured mtime is usable: the file is absent in the pack (exists: false). FLAG: the pack truncates the command to 300 chars and the text ends at the oxlint call, so oxfmt (named by the phase context) is not visible in this window's command text; the window times match the context exactly."
+    },
+    {
+      "id": "5b36b02f-2",
+      "session": "5b36b02f-04b6-4865-8de9-98c5202346aa",
+      "deny_ts": "2026-10-03T13:50:42.964Z",
+      "files": [
+        "tests/e2e/helpers/terminal-input-probes.ts"
+      ],
+      "writer_call_id": "toolu_01GT1WCnXMcqgRYjPbj96GdQ",
+      "writer_window": [
+        "2026-10-03T13:50:01.259Z",
+        "2026-10-03T13:50:27.830Z"
+      ],
+      "mtime_ms": 1791035414544.5,
+      "mtime_source": "placed",
+      "note": "placed at the midpoint of the writer window; the writer call is identified from the command text in the pack; no measured mtime is usable: the pack's mtime_now 1786883304.6 predates the session. Command text shows oxlint then oxfmt over terminal.ts and terminal-input-probes.ts."
+    },
+    {
       "id": "3a05f288",
       "session": "3a05f288-aba1-4ec3-a96d-e9cfeed19e78",
       "deny_ts": "2026-10-03T13:43:56.219Z",
-      "files": ["data/costaluz/leads-stall-2026-10/trust-census/census.json"],
+      "files": [
+        "data/costaluz/leads-stall-2026-10/trust-census/census.json"
+      ],
       "writer_call_id": "toolu_014BkTUUhuKSPbvLgPpUWhDy",
-      "writer_window": ["2026-10-03T13:39:24.204Z", "2026-10-03T13:40:45.729Z"],
-      "mtime_ms": 1791034845084.3275,
+      "writer_window": [
+        "2026-10-03T13:39:24.204Z",
+        "2026-10-03T13:40:45.729Z"
+      ],
+      "mtime_ms": 1791034845084.3274,
       "mtime_source": "measured",
       "note": "mtime is sessions[sid].denied_files[0].mtime_now (1791034845.0843275 s, read on the laptop) = 2026-10-03T13:40:45.084Z, inside the writer window of the trust_figures_census.py call. The only measured mtime among the five frozen denies. Hunks are synthetic (the pack is content-free); file names, timestamps and tool-call windows are real."
+    },
+    {
+      "id": "4a7ee8bc",
+      "session": "4a7ee8bc-c2a9-4ed3-8e37-7d3e22aba693",
+      "deny_ts": "2026-10-03T14:25:15.572Z",
+      "files": [
+        "vault/programs/cognitive-economy/ledger.json"
+      ],
+      "writer_call_id": "toolu_01McaxH96TWdkVLre6f3rbEs",
+      "writer_window": [
+        "2026-10-03T14:23:51.562Z",
+        "2026-10-03T14:24:04.907Z"
+      ],
+      "mtime_ms": 1791037438234.5,
+      "mtime_source": "placed",
+      "note": "placed at the midpoint of the writer window; the writer call is identified from the command text in the pack; no measured mtime is usable: the pack's mtime_now 1791036283.37 is the main checkout copy and precedes the writer window. FLAG: the pack truncates the command to 300 chars; it shows WriteAllText of spec_*.json under the job tmp dir and does not contain `ledger_write.py` (named by the phase context), so that identification is not confirmable from the pack; the window times match the context exactly."
     }
   ],
-  "beside": []
+  "beside": [
+    {
+      "id": "4615e1d1",
+      "session": "4615e1d1-fd08-4488-8cce-1b67f34861a1",
+      "deny_ts": "2026-10-03T14:42:22.154Z",
+      "after_freeze": true,
+      "files": [
+        "docs/reference/pty-multi-window-lifecycle-reset.md"
+      ],
+      "writer_call_id": "toolu_01MYLKgTVZEKK8KJhDzqdYFj",
+      "writer_kind": "own-edit",
+      "writer_window": [
+        "2026-10-03T14:41:53.299Z",
+        "2026-10-03T14:42:07.480Z"
+      ],
+      "mtime_ms": 1791038527480.0,
+      "mtime_source": "placed",
+      "class": "rollover-predecessor-lines",
+      "expect": "denied",
+      "note": "Reported BESIDE D-CARD, never folded into the 5. A rollover-resumed session (certify --from 5b36b02f) commits lines its predecessor wrote by Edit at 13:38:30Z; the file's mtime is this session's own last Edit (end of the placed call), not a shell window, so the window rule does NOT allow it. Named, not fixed here (deferred: read the certified predecessor's transcript)."
+    }
+  ]
 }

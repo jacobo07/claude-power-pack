@@ -160,7 +160,7 @@ def first_call_start_ms(rep: dict, pack: dict) -> float:
     return min(ms_of(c["start"]) for c in pack["sessions"][rep["session"]]["tool_calls"])
 
 
-def check_replay(rep: dict, pack: dict) -> None:
+def check_replay(rep: dict, pack: dict) -> tuple:
     rid = rep["id"]
     src = rep["mtime_source"]
     r = replay(rep, pack, rep["mtime_ms"], "deny")
@@ -168,12 +168,70 @@ def check_replay(rep: dict, pack: dict) -> None:
     reasons = last.get("unknown_reasons") or {}
     good = (not r["denied"] and last.get("decision") == "unknown"
             and all(reasons.get(f) == "mtime-in-own-shell-window" for f in rep["files"]))
-    check(f"V-SCA-REPLAY-ALLOWED-{rid}", good,
-          f"mtime={src} decision={last.get('decision')} denied={r['denied']} reasons={reasons}")
+    allowed = check(f"V-SCA-REPLAY-ALLOWED-{rid}", good,
+                    f"mtime={src} decision={last.get('decision')} denied={r['denied']} reasons={reasons}")
     pre = replay(rep, pack, first_call_start_ms(rep, pack) - 60_000, "deny")
     plast = pre["last"] or {}
-    check(f"V-SCA-PRESESSION-DENIED-{rid}", pre["denied"] and plast.get("decision") == "deny-card",
-          f"mtime=first_tool_call-60s denied={pre['denied']} decision={plast.get('decision')}")
+    presession = check(f"V-SCA-PRESESSION-DENIED-{rid}", pre["denied"] and plast.get("decision") == "deny-card",
+                       f"mtime=first_tool_call-60s denied={pre['denied']} decision={plast.get('decision')}")
+    return allowed, presession
+
+
+FROZEN_IDS = {"300ac3a1", "5b36b02f-1", "5b36b02f-2", "3a05f288", "4a7ee8bc"}
+
+
+def make_mutant(dest_dir: str) -> tuple:
+    """Copy of the card whose ownShellWindowHit body is `return false` (the window rule removed).
+    Returns (path, declaration_count, differs). Never a silent skip: the caller FAILs on any other count."""
+    src = open(CARD, encoding="utf-8").read()
+    decl = "function ownShellWindowHit("
+    n = src.count(decl)
+    if n != 1:
+        return None, n, False
+    at = src.index(decl)
+    open_brace = src.index("{", src.index(")", at))
+    depth = 0
+    end = None
+    for i in range(open_brace, len(src)):
+        if src[i] == "{":
+            depth += 1
+        elif src[i] == "}":
+            depth -= 1
+            if depth == 0:
+                end = i
+                break
+    if end is None:
+        return None, n, False
+    mutated = src[:open_brace + 1] + " return false; " + src[end:]
+    path = os.path.join(dest_dir, "doctrine_cards.js")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(mutated)
+    return path, n, mutated != src
+
+
+def check_spec(spec: dict, pack: dict) -> None:
+    ids = [r["id"] for r in spec["replays"]]
+    check("V-SCA-SPEC-FIVE-FROZEN", len(ids) == 5 and set(ids) == FROZEN_IDS, f"replays={ids}")
+    check("V-SCA-SPEC-6TH-BESIDE", [b["id"] for b in spec["beside"]] == ["4615e1d1"] and "4615e1d1" not in ids,
+          f"beside={[b['id'] for b in spec['beside']]}")
+    measured = sorted(r["id"] for r in spec["replays"] if r["mtime_source"] == "measured")
+    placed = sorted(r["id"] for r in spec["replays"] if r["mtime_source"] == "placed")
+    check("V-SCA-SPEC-MEASURED-ONLY-3a05f288", measured == ["3a05f288"] and len(placed) == 4,
+          f"measured={measured} placed={placed}")
+    inside = []
+    for r in spec["replays"]:
+        lo, hi = ms_of(r["writer_window"][0]), ms_of(r["writer_window"][1])
+        inside.append(lo <= r["mtime_ms"] <= hi)
+    check("V-SCA-SPEC-MTIME-INSIDE-WRITER-WINDOW", all(inside), f"inside={inside}")
+    problems = []
+    for r in spec["replays"] + spec["beside"]:
+        calls = {c["id"]: c for c in pack["sessions"][r["session"]]["tool_calls"]}
+        c = calls.get(r["writer_call_id"])
+        if c is None:
+            problems.append(f"{r['id']}: writer_call_id absent from pack")
+        elif [c["start"], c["end"]] != r["writer_window"]:
+            problems.append(f"{r['id']}: window {r['writer_window']} != pack {[c['start'], c['end']]}")
+    check("V-SCA-SPEC-WRITER-IDS-REAL", not problems, "; ".join(problems) or "every writer id and window equals the pack's call")
 
 
 def main() -> int:
@@ -190,8 +248,43 @@ def main() -> int:
     spec = json.load(open(SPEC, encoding="utf-8"))
     check("V-SCA-SPEC-PACK-PIN", spec.get("pack_sha256") == PACK_SHA, f"spec pins {spec.get('pack_sha256')}")
 
+    check_spec(spec, pack)
+
+    allowed = presession = 0
     for rep in spec["replays"]:
-        check_replay(rep, pack)
+        a, p = check_replay(rep, pack)
+        allowed += bool(a)
+        presession += bool(p)
+
+    # mutant pole: the window rule removed -> every replay is denied again
+    mdir = tempfile.mkdtemp(prefix="sca-mutant-")
+    mutant_denied = 0
+    try:
+        mpath, count, differs = make_mutant(mdir)
+        applied = check("V-SCA-MUTANT-APPLIED", count == 1 and differs and mpath is not None,
+                        f"declarations={count} differs={differs}")
+        for rep in spec["replays"]:
+            if not applied:
+                bad(f"V-SCA-MUTANT-DENIES-{rep['id']}", "mutant not applied")
+                continue
+            m = replay(rep, pack, rep["mtime_ms"], "deny", card=mpath)
+            ml = m["last"] or {}
+            if check(f"V-SCA-MUTANT-DENIES-{rep['id']}", m["denied"] and ml.get("decision") == "deny-card",
+                     f"mtime={rep['mtime_source']} denied={m['denied']} decision={ml.get('decision')}"):
+                mutant_denied += 1
+    finally:
+        shutil.rmtree(mdir, ignore_errors=True)
+
+    # 6th deny, reported beside D-CARD and never folded into the /5 counts
+    b = spec["beside"][0]
+    br = replay(b, pack, b["mtime_ms"], "deny")
+    bl = br["last"] or {}
+    beside_denied = br["denied"] and bl.get("decision") == "deny-card"
+    check(f"V-SCA-6TH-DENY-STAYS-DENIED-{b['id']}", beside_denied and b["class"] == "rollover-predecessor-lines",
+          f"mtime={b['mtime_source']} denied={br['denied']} decision={bl.get('decision')} class={b['class']}")
+
+    print(f"D-CARD frozen_denies=5 replayed_allowed={allowed}/5 presession_denied={presession}/5 "
+          f"mutant_denied={mutant_denied}/5 | beside: {b['id']} (after freeze) denied={beside_denied} class={b['class']}")
 
     print(f"SCA_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
