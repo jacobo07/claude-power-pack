@@ -113,7 +113,7 @@ def compile_mission_capsule(rec: dict, *, origin: str, note: str = "", work_dir:
                             transcript: Optional[str] = None, packet: Optional[dict] = None,
                             manager: Optional[dict] = None, ask: Optional[Callable] = None,
                             children: Optional[dict] = None, child_reader: Optional[Callable] = None,
-                            now: Optional[float] = None) -> dict:
+                            find_transcript: Optional[Callable] = None, now: Optional[float] = None) -> dict:
     """The capsule for the worker that ran `rec["epoch"]`. Facts only from durable sources (the
     record, git, GSD, the transcript's own reader); the note is the predecessor's CLAIM.
 
@@ -131,6 +131,12 @@ def compile_mission_capsule(rec: dict, *, origin: str, note: str = "", work_dir:
     gsd_why = ""
     if manager is None:
         manager, gsd_why = (ask or ask_gsd)(wd, rec.get("workstream"))
+    # The worker's own record of what it wrote. Found the way the interactive seal finds it when the
+    # caller passed none; a path that is not a file is NO transcript (review 2026-10-03: a wrong path
+    # read as "wrote nothing", i.e. custody OK).
+    tp = Path(transcript) if transcript else ((find_transcript or ro._find_transcript)(sid) if sid else None)
+    if tp is not None and not tp.is_file():
+        tp = None
     items, source = render_obligations(manager)
     key = capsule_key(rec)
     cap = {
@@ -147,24 +153,26 @@ def compile_mission_capsule(rec: dict, *, origin: str, note: str = "", work_dir:
         "resume_cmd": rec.get("resume_command"),
         "note": (note or "").strip()[:NOTE_MAX_CHARS],
         "packet": _packet_ref(packet),
-        "transcript_mark": transcript_mark(transcript),
+        "transcript_mark": transcript_mark(tp),
     }
     if children is None:
         children = (child_reader or ro.child_state)(sid) if sid else {"verdict": ro.UNKNOWN, "reason": "no owner"}
-    if origin == "recovery" and children.get("verdict") == ro.UNKNOWN and not cap["transcript_mark"]:
+    if origin == "recovery" and children.get("verdict") == ro.UNKNOWN and tp is None:
         # G21: the predecessor is gone and left no transcript -- nothing can be waited on. Its
         # children are named lost (a warning the successor sees), not a refusal that blocks for ever.
         children = {"verdict": "EXPIRED", "pending": [], "unconsumed": [],
                     "reason": f"predecessor dead with no transcript; any background child is lost ({children.get('reason')})"}
     cap["children"] = children
-    if transcript:
-        writes = ro.session_writes(Path(transcript))
+    if tp is not None:
         root = cap["repo"].get("root") if cap["repo"].get("state") == "OK" else None
-        cap["foreign"] = ro.foreign_custody(writes, root)
-    else:
-        # Custody cannot be judged without the worker's own record of what it wrote. Said so, not
-        # papered over with an empty "OK".
+        cap["foreign"] = ro.foreign_custody(ro.session_writes(tp), root)
+    elif origin == "recovery":
+        # G21 only: a dead predecessor with no transcript. Stated, never an empty "OK".
         cap["custody_unchecked"] = "no transcript"
+    else:
+        # A live handoff or a fallback with no readable transcript cannot show what the worker wrote
+        # elsewhere: UNKNOWN custody, which rollover.completeness refuses by name (spec 3.5).
+        cap["foreign"] = {"state": ro.UNKNOWN, "reason": "no readable transcript: the worker's own writes cannot be checked"}
     return cap
 
 
@@ -187,26 +195,17 @@ def seal_mission(cap: dict, sd=None) -> dict:
             "reasons": reasons, "warnings": comp["warnings"]}
 
 
-def gate_before_stop(key: str, transcript: Optional[str] = None, sd=None, now: Optional[float] = None,
+def gate_before_stop(key: str, sd=None, now: Optional[float] = None,
                      max_age_s: float = ro.RESET_MAX_AGE_S) -> dict:
-    """May the outgoing worker be stopped RIGHT NOW? rollover.gate on the sealed capsule, plus I2:
-    the transcript has not moved since the seal (the worker did nothing the capsule missed)."""
-    sd = state_dir(sd)
-    g = ro.gate(key, sd, max_age_s=max_age_s, now=now)
-    if g["verdict"] == "NO_CAPSULE":
-        return g
-    reasons = list(g["reasons"])
-    try:
-        sealed = json.loads(ro.capsule_path(key, sd).read_text(encoding="utf-8")).get("transcript_mark")
-    except (OSError, ValueError):
-        sealed = None
-    if transcript:
-        cur = transcript_mark(transcript)
-        if sealed is None:
-            reasons.append("the capsule carries no transcript mark to compare")
-        elif cur != sealed:
-            reasons.append("the outgoing transcript moved since the seal")
-    return {**g, "verdict": "SAFE_TO_FORGET" if not reasons else "REFUSED", "reasons": reasons}
+    """May the outgoing worker be stopped RIGHT NOW? Exactly rollover.gate on the sealed capsule:
+    the bytes are those sealed, the seal is fresh, it is not already certified.
+
+    No transcript re-check -- G3 (binding, supersedes I2) replaced it with "seal only when the host
+    lists the owner idle/done" plus `outgoing_stop_authorized`, which T6 ledgers. A first version
+    re-checked the transcript mark here; the review of 2026-10-03 found it both contradicted G3
+    (refusing a stop for rows the host appends after the turn) and switched itself off when no path
+    was passed. `transcript_mark` stays in the capsule as provenance for the chain audit (T7)."""
+    return ro.gate(key, state_dir(sd), max_age_s=max_age_s, now=now)
 
 
 # --------------------------------------------------------------------------- pre-certification marker
@@ -223,15 +222,22 @@ def arm_successor(rec: dict, sd=None, now: Optional[float] = None) -> dict:
     return ro.precert_arm(mid, fields, state_dir(sd))
 
 
-def bind_successor(mission_id: str, *, bg_id: Optional[str] = None, owner_session: Optional[str] = None,
-                   sd=None) -> dict:
+def bind_successor(mission_id: str, worker: str, *, bg_id: Optional[str] = None,
+                   owner_session: Optional[str] = None, sd=None) -> dict:
     """Name the armed worker as the host reported it (bg id after the spawn, session at its ack).
-    An update of the existing marker, so it goes through the merging writer."""
+    An update of the existing marker, so it goes through the merging writer -- and therefore only
+    onto THIS worker's uncertified marker. Binding a new bg id into an earlier epoch's certified
+    marker (left behind when arming failed) would make the guard read the new worker as certified."""
     fields = {k: v for k, v in (("bg_id", bg_id), ("owner_session", owner_session)) if v}
     if not fields:
         raise ValueError("bind_successor needs a bg_id or an owner_session")
-    if ro.precert_read(mission_id, state_dir(sd)) is None:
+    mk = ro.precert_read(mission_id, state_dir(sd))
+    if mk is None:
         raise ValueError(f"no armed marker for {mission_id}: arm before binding")
+    if mk.get("worker") != worker:
+        raise ValueError(f"the marker for {mission_id} names worker {mk.get('worker')!r}, not {worker!r}: arm first")
+    if mk.get("certified_at"):
+        raise ValueError(f"the marker for {mission_id} is already certified: it is not an armed successor's")
     return ro.precert_write(mission_id, fields, state_dir(sd))
 
 

@@ -142,6 +142,7 @@ def compile_(m, **kw):
     rec = kw.pop("rec", None) or record()
     kw.setdefault("manager", MANAGER)
     kw.setdefault("children", CLEAR)
+    kw.setdefault("find_transcript", lambda sid: None)   # never a real transcript
     return m.compile_mission_capsule(rec, **kw)
 
 
@@ -186,7 +187,7 @@ def c_handoff_safe(m):
     tp = transcript("h.jsonl")
     cap = compile_(m, origin="worker_handoff", note="phase 2 half done", transcript=str(tp))
     s = m.seal_mission(cap, STATE)
-    g = m.gate_before_stop(cap["session_id"], str(tp), STATE)
+    g = m.gate_before_stop(cap["session_id"], STATE)
     return s["verdict"] == "SAFE_TO_FORGET" and g["verdict"] == "SAFE_TO_FORGET", (s["reasons"], g["reasons"])
 
 
@@ -258,16 +259,17 @@ def c_bad_identity_raises(m):
     return not bad, f"accepted: {bad}"
 
 
-def c_transcript_moved_refused(m):
+def c_gate_follows_g3(m):
+    """G3 (binding): no transcript re-check at the stop. Rows appended after the seal do not refuse it."""
     tp = transcript("moved.jsonl")
     rec = record(mid="m-mcapmoved0001")
     cap = compile_(m, rec=rec, origin="worker_handoff", note="n", transcript=str(tp))
     m.seal_mission(cap, STATE)
-    before = m.gate_before_stop(cap["session_id"], str(tp), STATE)["verdict"]
+    before = m.gate_before_stop(cap["session_id"], STATE)["verdict"]
     with open(tp, "a", encoding="utf-8") as fh:
         fh.write(json.dumps({"type": "user"}) + "\n")
-    after = m.gate_before_stop(cap["session_id"], str(tp), STATE)
-    return before == "SAFE_TO_FORGET" and after["verdict"] == "REFUSED", after["reasons"]
+    after = m.gate_before_stop(cap["session_id"], STATE)
+    return before == "SAFE_TO_FORGET" and after["verdict"] == "SAFE_TO_FORGET", after["reasons"]
 
 
 def c_tamper_refused(m):
@@ -276,12 +278,12 @@ def c_tamper_refused(m):
     m.seal_mission(cap, STATE)
     p = ro.capsule_path(cap["session_id"], STATE)
     p.write_text(p.read_text(encoding="utf-8").replace('"note": "n"', '"note": "edited"'), encoding="utf-8")
-    g = m.gate_before_stop(cap["session_id"], None, STATE)
+    g = m.gate_before_stop(cap["session_id"], STATE)
     return g["verdict"] == "REFUSED", g["reasons"]
 
 
 def c_wrong_epoch_no_capsule(m):
-    g = m.gate_before_stop(ro.mission_key("m-mcap00000001", 9), None, STATE)
+    g = m.gate_before_stop(ro.mission_key("m-mcap00000001", 9), STATE)
     return g["verdict"] == "NO_CAPSULE", g["verdict"]
 
 
@@ -352,7 +354,7 @@ CHECKS = [("V-MCAP-OBLIG-RECOMMENDED", c_oblig_recommended), ("V-MCAP-OBLIG-PART
           ("V-MCAP-STATE-MISSING-REFUSED", c_state_missing_refused),
           ("V-MCAP-REPO-UNREADABLE-REFUSED", c_repo_unreadable_refused),
           ("V-MCAP-BAD-IDENTITY-RAISES", c_bad_identity_raises),
-          ("V-MCAP-TRANSCRIPT-MOVED-REFUSED", c_transcript_moved_refused),
+          ("V-MCAP-GATE-FOLLOWS-G3", c_gate_follows_g3),
           ("V-MCAP-TAMPER-REFUSED", c_tamper_refused), ("V-MCAP-WRONG-EPOCH-NO-CAPSULE", c_wrong_epoch_no_capsule),
           ("V-MCAP-LEDGER-DOWN-UNKNOWN", c_ledger_down_unknown), ("V-MCAP-BOUNDED", c_bounded),
           ("V-MCAP-ROUNDTRIP-CERTIFY", c_roundtrip_certify), ("V-MCAP-ROUNDTRIP-STALE-NEXT-REFUSED", c_roundtrip_wrong_next),
@@ -422,12 +424,12 @@ def c_arm_over_certified(m):
 
 def c_bind(m):
     try:
-        m.bind_successor("m-mcapnoarm001", bg_id="abcd1234", sd=STATE)
+        m.bind_successor("m-mcapnoarm001", "m-mcapnoarm001-e4", bg_id="abcd1234", sd=STATE)
         return False, "bound a marker that was never armed"
     except ValueError:
         pass
     m.arm_successor(record(mid="m-mcapbind0001"), STATE)
-    mk = m.bind_successor("m-mcapbind0001", bg_id="abcd1234", sd=STATE)
+    mk = m.bind_successor("m-mcapbind0001", "m-mcapbind0001-e4", bg_id="abcd1234", sd=STATE)
     return (mk.get("bg_id") == "abcd1234" and mk.get("worker") == "m-mcapbind0001-e4"
             and not mk.get("certified_at")), mk
 
@@ -483,6 +485,49 @@ def c_cli_gsd_down_refused_before_claim(m):
     return rc == 4 and ro.claim_holder(cap["session_id"], STATE) is None, rc
 
 
+def c_handoff_no_transcript_refused(m):
+    """Review MEDIUM: no transcript found -> custody UNKNOWN -> refused by name, never skipped."""
+    cap = compile_(m, rec=record(mid="m-mcapnotrans01"), origin="worker_handoff", note="n")
+    s = m.seal_mission(cap, STATE)
+    return (s["verdict"] == "REFUSED" and any(r.startswith("custody") for r in s["reasons"])
+            and not cap.get("custody_unchecked")), s["reasons"]
+
+
+def c_wrong_transcript_path_refused(m):
+    """Review MEDIUM: a path that is not a file is NO transcript, not 'the worker wrote nothing'."""
+    cap = compile_(m, rec=record(mid="m-mcapbadpath01"), origin="worker_handoff", note="n",
+                   transcript=str(TMP / "no-such-transcript.jsonl"))
+    s = m.seal_mission(cap, STATE)
+    return s["verdict"] == "REFUSED" and any(r.startswith("custody") for r in s["reasons"]), s["reasons"]
+
+
+def c_transcript_found_by_session(m):
+    """Control: with no path passed, the transcript is found by the worker's session id."""
+    tp = transcript("found.jsonl")
+    cap = compile_(m, rec=record(mid="m-mcapfound0001"), origin="worker_handoff", note="n",
+                   find_transcript=lambda sid: tp)
+    s = m.seal_mission(cap, STATE)
+    return (s["verdict"] == "SAFE_TO_FORGET" and cap["foreign"].get("state") == "OK"
+            and cap["transcript_mark"] is not None), s["reasons"]
+
+
+def c_bind_refuses_foreign_marker(m):
+    """Review LOW: never bind into an earlier epoch's certified marker, or another worker's."""
+    mid = "m-mcapbindold1"
+    ro.precert_write(mid, {"worker": f"{mid}-e3", "capsule_key": "mission-x-e2", "certified_at": 1.0}, STATE)
+    refused = []
+    for worker in (f"{mid}-e4", f"{mid}-e3"):          # wrong worker, then right name but certified
+        try:
+            m.bind_successor(mid, worker, bg_id="abcd1234", sd=STATE)
+        except ValueError as exc:
+            refused.append(str(exc)[:60])
+    return len(refused) == 2 and not (ro.precert_read(mid, STATE) or {}).get("bg_id"), refused
+
+
+CHECKS += [("V-MCAP-HANDOFF-NO-TRANSCRIPT-REFUSED", c_handoff_no_transcript_refused),
+           ("V-MCAP-WRONG-TRANSCRIPT-PATH-REFUSED", c_wrong_transcript_path_refused),
+           ("V-MCAP-TRANSCRIPT-FOUND-BY-SESSION", c_transcript_found_by_session),
+           ("V-MCAP-BIND-REFUSES-FOREIGN-MARKER", c_bind_refuses_foreign_marker)]
 CHECKS += [("V-MCAP-ARM-MARKER", c_arm_marker), ("V-MCAP-ARM-OVER-CERTIFIED", c_arm_over_certified),
            ("V-MCAP-BIND", c_bind), ("V-MCAP-GUARD-CHAIN", c_guard_chain),
            ("V-MCAP-CLI-REQUIRES-SESSION", c_cli_requires_session), ("V-MCAP-CLI-WRONG-SESSION", c_cli_wrong_session),
@@ -501,7 +546,13 @@ MUTANTS = [
      "V-MCAP-FALLBACK-CHILDREN-UNKNOWN-REFUSED"),
     ("SEAL-IGNORES-LEDGER", 'verdict = stf["verdict"] if recorded else ro.UNKNOWN', 'verdict = stf["verdict"]',
      "V-MCAP-LEDGER-DOWN-UNKNOWN"),
-    ("GATE-SKIPS-TRANSCRIPT", "        elif cur != sealed:", "        elif False:", "V-MCAP-TRANSCRIPT-MOVED-REFUSED"),
+    ("GATE-ALWAYS-SAFE", "    return ro.gate(key, state_dir(sd), max_age_s=max_age_s, now=now)",
+     "    return {**ro.gate(key, state_dir(sd), max_age_s=max_age_s, now=now), \"verdict\": \"SAFE_TO_FORGET\"}",
+     "V-MCAP-TAMPER-REFUSED"),
+    ("NO-TRANSCRIPT-UNCHECKED-FOR-ALL", "    elif origin == \"recovery\":\n        # G21 only",
+     "    elif True:\n        # G21 only", "V-MCAP-HANDOFF-NO-TRANSCRIPT-REFUSED"),
+    ("BIND-INTO-CERTIFIED", "    if mk.get(\"certified_at\"):\n        raise",
+     "    if False:\n        raise", "V-MCAP-BIND-REFUSES-FOREIGN-MARKER"),
     ("PARTIAL-PHASE-DROPPED", 'return [f"continue phase', 'return [] or [f"continue phase-x',
      "V-MCAP-OBLIG-PARTIAL"),
     ("NOTE-UNBOUNDED", '"note": (note or "").strip()[:NOTE_MAX_CHARS]', '"note": (note or "").strip()',
