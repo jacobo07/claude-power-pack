@@ -17,7 +17,9 @@
 //   CLAUDE_DOCTRINE_CARDS=off               nothing at all.
 // Unknown is a first-class answer, never "no opportunity": a commit form it cannot plan (--amend,
 // --pathspec-from-file, GIT_INDEX_FILE, an unresolved variable), a git timeout, or a file the session
-// wrote through the shell (its lines are invisible to the transcript) is recorded as unknown.
+// wrote through the shell (its lines are invisible to the transcript) is recorded as unknown. A git failure
+// records its stderr CLASS in the row (`git_error`: not_a_repo, cannot_chdir, unborn_head, outside_repo,
+// dubious_ownership, other), never the raw stderr, so a row can say why it judged nothing.
 //
 // WINDOW RULE (skill-capability pillar A, D-01). A file with foreign hunks is ALSO recorded as unknown
 // (reason `mtime-in-own-shell-window`, listed in the ledger row's `unknown_reasons`) when its current mtime
@@ -247,6 +249,22 @@ function git(repo, args) {
   return spawnGit(['--no-optional-locks', '-C', repo, ...args, '-U0', '--no-color', '--no-ext-diff']);
 }
 
+// The class of a failed git call, from its stderr only (pure; the row stores this enum, never the text:
+// stderr can carry absolute paths and remote URLs). Measured on git 2.43 (gex44): `git diff` run outside
+// a repository does NOT die with 128, it falls into --no-index mode and exits 129, printing the
+// `Not a git repository` warning for `diff HEAD` but only `unknown option cached` + the no-index usage for
+// `diff --cached`; the usage banner is therefore the one stable not_a_repo marker for the index basis.
+function classifyGitError(stderr) {
+  const s = String(stderr || '');
+  if (/dubious ownership/i.test(s)) return 'dubious_ownership';
+  if (/cannot change to/i.test(s)) return 'cannot_chdir';
+  if (/not a git repository/i.test(s)) return 'not_a_repo';
+  if (/usage: git diff --no-index/i.test(s)) return 'not_a_repo';
+  if (/is outside repository/i.test(s)) return 'outside_repo';
+  if (/(?:ambiguous argument|bad revision|unknown revision)[^\n]*HEAD|HEAD[^\n]*(?:ambiguous argument|unknown revision)/i.test(s)) return 'unborn_head';
+  return 'other';
+}
+
 function parseDiff(out) {
   const files = [];
   let cur = null; let hunk = null;
@@ -389,8 +407,11 @@ async function main() {
   if (p.unknown) { ledger({ decision: 'unknown', session, reason: p.unknown }); return emit({ continue: true }); }
   const r = git(p.repo, p.args);
   if (r.error || r.status !== 0) {
+    // A numeric non-zero status carries a stderr CLASS (never the raw text, HR-SECRET-002); a spawn error
+    // (timeout, ENOENT) keeps its code as the reason and has no git_error.
+    const gitError = !r.error && typeof r.status === 'number' ? { git_error: classifyGitError(r.stderr) } : {};
     ledger({ decision: r.error && r.error.code === 'ETIMEDOUT' ? 'timeout' : 'unknown', session, basis: p.basis,
-      reason: r.error ? r.error.code : `git exit ${r.status}` });
+      reason: r.error ? r.error.code : `git exit ${r.status}`, ...gitError });
     return emit({ continue: true });
   }
   const own = ownership(req.transcript_path);
@@ -427,4 +448,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(() => emit({ continue: true }));
-module.exports = { plan, parseDiff, judge, ownership, COMMIT_RE };
+module.exports = { plan, parseDiff, judge, ownership, classifyGitError, COMMIT_RE };

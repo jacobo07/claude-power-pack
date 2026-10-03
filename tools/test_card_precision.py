@@ -74,9 +74,10 @@ def git(repo: str, *args: str) -> subprocess.CompletedProcess:
 # --------------------------------------------------------------------------------------
 # the ONLY way this gate starts the card: private state dir, so the live ledger is never written
 # --------------------------------------------------------------------------------------
-def run_card(payload: dict, state_dir: str, mode: str, card: str = CARD) -> dict:
+def run_card(payload: dict, state_dir: str, mode: str, card: str = CARD, extra_env: dict | None = None) -> dict:
     env = dict(os.environ)
-    env["DOCTRINE_CARDS_STATE_DIR"] = state_dir
+    env.update(extra_env or {})
+    env["DOCTRINE_CARDS_STATE_DIR"] = state_dir   # always wins over extra_env
     env["CLAUDE_DOCTRINE_CARDS"] = mode
     r = subprocess.run([NODE, card], input=json.dumps(payload), capture_output=True, text=True,
                        env=env, timeout=60)
@@ -258,6 +259,43 @@ def check_spec(spec: dict, pack: dict) -> None:
     check("V-SCA-SPEC-WRITER-IDS-REAL", not problems, "; ".join(problems) or "every writer id and window equals the pack's call")
 
 
+# --------------------------------------------------------------------------------------
+# D-03: the `git exit 128` x6 class. The card records git's stderr CLASS, never the text.
+# --------------------------------------------------------------------------------------
+G128 = "git exit 128"
+CAPSULE_COMMIT = "& 'C:\\Program Files\\Git\\cmd\\git.exe' commit -m x"
+
+
+def row_fields(last: dict | None) -> str:
+    last = last or {}
+    return (f"decision={last.get('decision')} reason={last.get('reason')!r} basis={last.get('basis')} "
+            f"git_error={last.get('git_error')}")
+
+
+def check_128_split(pack: dict) -> None:
+    rows = [r for r in pack["rows"] if r.get("reason") == G128]
+    a = [r for r in rows if r["session"].startswith("abcd1234") and r.get("basis") == "index"]
+    f = [r for r in rows if r["session"].startswith("fce2689e") and r.get("basis") == "only-paths"]
+    check("V-SCA-128-ROWS-SPLIT", len(rows) == 6 and len(a) == 3 and len(f) == 3,
+          f"{len(rows)} = abcd1234 x{len(a)} (index) + fce2689e x{len(f)} (only-paths)")
+
+
+def check_128_abcd1234() -> None:
+    """The capsule-guard e2e payload, verbatim: PowerShell git commit -m x in cwd C:\\proj, no transcript."""
+    sd = tempfile.mkdtemp(prefix="sca-128-abcd-")
+    try:
+        payload = {"tool_name": "PowerShell", "session_id": "abcd1234-ffff-0000", "cwd": "C:\\proj",
+                   "hook_event_name": "PreToolUse", "tool_input": {"command": CAPSULE_COMMIT}}
+        r = run_card(payload, sd, "deny")
+        last = r["last"] or {}
+        good = (r["out"].get("continue") is True and not r["denied"] and last.get("decision") == "unknown"
+                and last.get("reason") == G128 and last.get("basis") == "index"
+                and last.get("git_error") == "cannot_chdir")
+        check("V-SCA-128-CANNOT-CHDIR-abcd1234", good, f"denied={r['denied']} {row_fields(last)}")
+    finally:
+        shutil.rmtree(sd, ignore_errors=True)
+
+
 def main() -> int:
     print(f"host={socket.gethostname()}")
     if not NODE or not GIT:
@@ -309,6 +347,9 @@ def main() -> int:
 
     print(f"D-CARD frozen_denies=5 replayed_allowed={allowed}/5 presession_denied={presession}/5 "
           f"mutant_denied={mutant_denied}/5 | beside: {b['id']} (after freeze) denied={beside_denied} class={b['class']}")
+
+    check_128_split(pack)
+    check_128_abcd1234()
 
     check_suites()
 
