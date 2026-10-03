@@ -161,6 +161,176 @@ def window_digest(raw_lines):
     return hashlib.sha256(b"\n".join(raw_lines)).hexdigest(), len(raw_lines)
 
 
+# --------------------------------------------------------------------------- attribution (reads only)
+PLUGIN_ROOT_TOKEN = "${CLAUDE_PLUGIN_ROOT}"
+_SETTINGS_FILES = ("settings.json", "settings.local.json")
+_LABEL_MAX = 200
+
+
+def host_has(path):
+    """True when `path` is an existing directory on THIS host. The one seam behind every filesystem attribution: a
+    transcript measured elsewhere (a laptop path read on GEX44) must never be attributed from what happens to be here."""
+    if not path:
+        return False
+    try:
+        return os.path.isdir(str(path))
+    except (OSError, ValueError):
+        return False
+
+
+def registrations(settings_path):
+    """{event: set(command strings)} from one settings file. Missing file -> {} (measured empty); unreadable or
+    malformed -> None (unknown, never empty)."""
+    p = Path(settings_path)
+    try:
+        if not p.exists():
+            return {}
+        with open(p, encoding="utf-8") as fh:
+            doc = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(doc, dict):
+        return None
+    hooks = doc.get("hooks")
+    if hooks is None:
+        return {}
+    if not isinstance(hooks, dict):
+        return None
+    regs = {}
+    for event, matchers in hooks.items():
+        if not isinstance(matchers, list):
+            return None
+        for m in matchers:
+            for h in (m.get("hooks") if isinstance(m, dict) else None) or []:
+                if isinstance(h, dict) and isinstance(h.get("command"), str):
+                    regs.setdefault(str(event), set()).add(h["command"])
+    return regs
+
+
+def _merge_regs(parts):
+    merged = {}
+    for part in parts:
+        if part is None:
+            return None
+        for event, cmds in part.items():
+            merged.setdefault(event, set()).update(cmds)
+    return merged
+
+
+class AttributionContext:
+    """What scope attribution may read: the transcript's cwd and install_home, and only when both exist on this host.
+    Settings registrations are read once per context (one measure() call)."""
+
+    def __init__(self, cwd=None, install_home=None):
+        self.cwd = str(cwd) if cwd else None
+        self.install_home = str(install_home) if install_home else None
+        self.available = host_has(self.cwd) and host_has(self.install_home)
+        self._regs = {}
+
+    def _side(self, name, base):
+        if name not in self._regs:
+            self._regs[name] = _merge_regs(registrations(Path(base) / ".claude" / f) for f in _SETTINGS_FILES)
+        return self._regs[name]
+
+    def project_regs(self):
+        return self._side("project", self.cwd)
+
+    def user_regs(self):
+        return self._side("user", self.install_home)
+
+
+UNAVAILABLE = AttributionContext()
+
+
+def _ctx(ctx):
+    return ctx if isinstance(ctx, AttributionContext) else UNAVAILABLE
+
+
+def command_label(cmd):
+    """A stable, short source key for a hook command: long one-liners keep 120 chars and a digest of the whole."""
+    if len(cmd) <= _LABEL_MAX:
+        return cmd
+    return cmd[:120] + "...#" + hashlib.sha256(cmd.encode("utf-8")).hexdigest()[:12]
+
+
+def command_scope(cmd, ctx):
+    """-> (scope, basis) for one registered hook command. Project needs a project registration and no user one."""
+    ctx = _ctx(ctx)
+    if not ctx.available:
+        return "unattributed", "not_on_this_host"
+    if PLUGIN_ROOT_TOKEN in cmd:
+        return "universal", "plugin"
+    proj, user = ctx.project_regs(), ctx.user_regs()
+    if proj is None or user is None:
+        return "unattributed", "unknown_settings"
+    in_proj = any(cmd in cmds for cmds in proj.values())
+    in_user = any(cmd in cmds for cmds in user.values())
+    if in_proj and in_user:
+        return "unattributed", "ambiguous"
+    if in_proj:
+        return "project", "project_settings"
+    if in_user:
+        return "universal", "user_settings"
+    return "unattributed", "no_registration"
+
+
+def correlate_hook(element, event, field, window_rows):
+    """The commands of hook_success rows (same hookEvent, never hookName) whose decoded stdout carries `element`:
+    hookSpecificOutput.additionalContext for field additionalContext, the top-level key for systemMessage."""
+    found = set()
+    for row in window_rows:
+        a = row.get("attachment") if isinstance(row, dict) else None
+        if not isinstance(a, dict) or a.get("type") != "hook_success" or a.get("hookEvent") != event:
+            continue
+        cmd, stdout = a.get("command"), a.get("stdout")
+        if not isinstance(cmd, str) or not isinstance(stdout, str):
+            continue
+        try:
+            doc = json.loads(stdout)
+        except ValueError:
+            continue
+        if not isinstance(doc, dict):
+            continue
+        if field == "additionalContext":
+            spec = doc.get("hookSpecificOutput")
+            value = spec.get(field) if isinstance(spec, dict) else None
+        else:
+            value = doc.get(field)
+        if value is not None and value == element:
+            found.add(cmd)
+    return found
+
+
+def _event_scope(event, ctx):
+    """Fallback when no hook_success row produced the element: who registers this event."""
+    ctx = _ctx(ctx)
+    if not ctx.available:
+        return "unattributed", "not_on_this_host"
+    proj, user = ctx.project_regs(), ctx.user_regs()
+    if proj is None or user is None:
+        return "unattributed", "unknown_settings"
+    in_proj, in_user = bool(proj.get(event)), bool(user.get(event))
+    if in_proj and in_user:
+        return "unattributed", "ambiguous"
+    if in_proj:
+        return "project", "event_fallback"
+    return "universal", "event_fallback"
+
+
+def hook_scope(element, event, field, ctx, window_rows):
+    """-> (scope, source, basis) for one hook-produced element. Exactly one producing command decides; several are
+    ambiguous; none falls back to the event's registrations."""
+    cmds = correlate_hook(element, event, field, window_rows)
+    if len(cmds) == 1:
+        cmd = next(iter(cmds))
+        scope, basis = command_scope(cmd, ctx)
+        return scope, command_label(cmd), basis
+    if len(cmds) > 1:
+        return "unattributed", f"ambiguous:{event}", "ambiguous"
+    scope, basis = _event_scope(event, ctx)
+    return scope, f"event:{event}", basis
+
+
 # --------------------------------------------------------------------------- classification
 def scope_for_instruction(file_type):
     if file_type == "User":
@@ -194,13 +364,15 @@ def _instruction_layer(path, file_type):
 
 
 def classify(rows, ctx=None):
-    """-> (components [{layer, source, scope, chars}], excluded {...}, prompt_digest). Duplicate (layer, source) merge."""
+    """-> (components [{layer, source, scope, scope_basis, chars}], excluded {...}, prompt_digest). Duplicate
+    (layer, source) merge; a merge of two different scopes is unattributed, never the first one's."""
+    ctx = _ctx(ctx)
     comps = []
     excluded = {"prompt_chars": 0, "file_chars": 0, "hook_success_rows": 0}
     pdig = hashlib.sha256()
 
-    def add(layer, source, scope, chars):
-        comps.append({"layer": layer, "source": source, "scope": scope, "chars": chars})
+    def add(layer, source, scope, chars, basis="origin_unprovable"):
+        comps.append({"layer": layer, "source": source, "scope": scope, "scope_basis": basis, "chars": chars})
 
     for row in rows:
         rtype = row.get("type")
@@ -223,7 +395,7 @@ def classify(rows, ctx=None):
                 if not isinstance(f, dict):
                     continue
                 layer, scope = _instruction_layer(f.get("path", ""), f.get("type"))
-                add(layer, str(f.get("path", "")), scope, _chars(f.get("content") or ""))
+                add(layer, str(f.get("path", "")), scope, _chars(f.get("content") or ""), "file_type")
         elif at == "skill_listing":
             content = a.get("content") or ""
             parts = content.split("\n")
@@ -243,8 +415,9 @@ def classify(rows, ctx=None):
             content = a.get("content")
             elems = content if isinstance(content, list) else [content]
             layer = f"hook_context:{a.get('hookEvent')}:{a.get('hookName')}"
-            for i, el in enumerate(elems):
-                add(layer, f"elem:{i}", "unattributed", _chars(el))
+            for el in elems:
+                scope, source, basis = hook_scope(el, a.get("hookEvent"), "additionalContext", ctx, rows)
+                add(layer, source, scope, _chars(el), basis)
         elif at == "hook_system_message":
             add(f"hook_system_message:{a.get('hookEvent')}:{a.get('hookName')}", "message", "unattributed",
                 _chars(a.get("content")))
@@ -258,7 +431,7 @@ def classify(rows, ctx=None):
                     src += f"#{seen[src]}"
                 add("system_prompt", src, scope_for_system_prompt_part(text), len(text))
         elif at in HARNESS_TYPES:
-            add(f"other:{at}", at, "harness", len(_jdump({k: v for k, v in a.items() if k != "type"})))
+            add(f"other:{at}", at, "harness", len(_jdump({k: v for k, v in a.items() if k != "type"})), "harness_type")
         elif at:
             add(f"other:{at}", str(at), "unattributed", len(_jdump({k: v for k, v in a.items() if k != "type"})))
     merged = {}
@@ -266,6 +439,8 @@ def classify(rows, ctx=None):
         key = (c["layer"], c["source"])
         if key in merged:
             merged[key]["chars"] += c["chars"]
+            if merged[key]["scope"] != c["scope"]:
+                merged[key]["scope"], merged[key]["scope_basis"] = "unattributed", "ambiguous"
         else:
             merged[key] = dict(c)
     return list(merged.values()), excluded, pdig.hexdigest()
@@ -301,14 +476,6 @@ def measure(path):
     listing = _initial_listing(rows)
     if listing is None:
         raise Unmeasurable("no_skill_listing", "the startup window holds no initial skill_listing")
-    components, excluded, prompt_digest = classify(rows, {})
-    msg = (assistant or {}).get("message") or {}
-    usage = msg.get("usage") or {}
-    total = sum(_num(usage.get(k)) for k in _USAGE_KEYS)
-    if assistant is not None and msg.get("model") != "<synthetic>" and total > 0:
-        tokens = {"status": "measured", "first_call_total": total, "prompt_digest": prompt_digest}
-    else:
-        tokens = {"status": "no_model_call", "first_call_total": None, "prompt_digest": prompt_digest}
     platform = cwd = None
     for r in rows:
         a = r.get("attachment") or {}
@@ -320,6 +487,15 @@ def measure(path):
         if r.get("cwd"):
             cwd = r["cwd"]
             break
+    install_home = _install_home(path)
+    components, excluded, prompt_digest = classify(rows, AttributionContext(cwd, install_home))
+    msg = (assistant or {}).get("message") or {}
+    usage = msg.get("usage") or {}
+    total = sum(_num(usage.get(k)) for k in _USAGE_KEYS)
+    if assistant is not None and msg.get("model") != "<synthetic>" and total > 0:
+        tokens = {"status": "measured", "first_call_total": total, "prompt_digest": prompt_digest}
+    else:
+        tokens = {"status": "no_model_call", "first_call_total": None, "prompt_digest": prompt_digest}
     sha, nrows = window_digest(raw)
     return {
         "components": components,
@@ -329,7 +505,7 @@ def measure(path):
         "skill_listing": listing,
         "excluded": excluded,
         "provenance": {
-            "plane": host_plane(), "platform": platform, "install_home": _install_home(path), "cwd": cwd,
+            "plane": host_plane(), "platform": platform, "install_home": install_home, "cwd": cwd,
             "transcript": os.path.abspath(path), "session_id": Path(path).stem,
             "measured_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "first_call_at": (assistant or {}).get("timestamp"),

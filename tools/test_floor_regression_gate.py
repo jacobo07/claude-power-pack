@@ -185,7 +185,21 @@ class Tx:
 
 
 FLOOR_DEFAULTS = dict(g=10000, p=10000, r=8000, skills=12000, hook=2000, sp=None, usage=(2, 30000, 0, 10),
-                      prompt="Reply with the single word OK.", extra=())
+                      prompt="Reply with the single word OK.", extra=(), hookrows=None, skill_entries=None,
+                      agents=None, sysmsg=None, hook_event="SessionStart", hook_name="SessionStart:startup")
+
+
+def write_settings(base, regs, name="settings.json"):
+    """Write <base>/.claude/<name> registering {event: [command, ...]}; a str `regs` is written verbatim (malformed fixtures)."""
+    path = Path(base) / ".claude" / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if isinstance(regs, str):
+        path.write_text(regs, encoding="utf-8")
+    else:
+        doc = {"hooks": {ev: [{"matcher": "", "hooks": [{"type": "command", "command": c} for c in cmds]}]
+                         for ev, cmds in regs.items()}}
+        path.write_text(json.dumps(doc), encoding="utf-8")
+    return path
 
 
 def listing_entries(total, n=100):
@@ -212,8 +226,19 @@ def build_floor(root, session, sizes, cwd=None) -> Tx:
         (wd / "CLAUDE.md", "Project", "P" * s["p"]),
         (home / ".claude" / "rules" / "r1.md", "User", "R" * s["r"]),
     ])
-    tx.skill_listing(listing_entries(s["skills"]))
-    tx.hook_context("SessionStart", "SessionStart:startup", ["H" * s["hook"]])
+    tx.skill_listing(s["skill_entries"] if s["skill_entries"] is not None else listing_entries(s["skills"]))
+    if s["agents"]:
+        tx.agent_listing(s["agents"])
+    ev, nm = s["hook_event"], s["hook_name"]
+    if s["hookrows"] is not None:
+        for command, text in s["hookrows"]:
+            tx.hook_success(ev, nm, command, additional_context=text)
+        tx.hook_context(ev, nm, [text for _, text in s["hookrows"]])
+    else:
+        tx.hook_context(ev, nm, ["H" * s["hook"]])
+    for command, text in s["sysmsg"] or ():
+        tx.hook_success(ev, nm, command, system_message=text)
+        tx.hook_system_message(ev, nm, text)
     tx.prompt_snapshot(sp)
     for atype, fields in s["extra"]:
         tx.attachment(atype, **fields)
@@ -349,6 +374,71 @@ def g_window_append_stable():
     return True, f"window_sha256={pa['window_sha256'][:12]} rows={pa['window_rows']} stable under 4 appended rows; pre-assistant edit -> {c['provenance']['window_sha256'][:12]}"
 
 
+# --------------------------------------------------------------------------- gates: attribution (plan 04-02)
+def attr_check(ref_sizes, now_sizes, user_regs=None, project_regs=None, cli=False, root=None):
+    """Floor pair under one home / cwd with the given settings registrations written first; (rc, out, root)."""
+    root = root or scratch("attr")
+    home, repo = root / "home", root / "repo"
+    repo.mkdir(parents=True, exist_ok=True)
+    if user_regs is not None:
+        write_settings(home, user_regs)
+    if project_regs is not None:
+        write_settings(repo, project_regs)
+    ref_tx, now_tx = floor_pair(root, ref_sizes, now_sizes)
+    ref_json = root / "ref.json"
+    if cli:
+        rc, out, err = run_cli(["--write-reference", ref_json, "--transcript", ref_tx])
+    else:
+        with with_home(home):
+            rc, out, err = run_main(["--write-reference", ref_json, "--transcript", ref_tx])
+    if rc != 0:
+        raise AssertionError(f"reference write rc={rc} {out[-200:]!r} {err[-200:]!r}")
+    if cli:
+        rc, out, err = run_cli(["--check", "--reference", ref_json, "--transcript", now_tx])
+    else:
+        with with_home(home):
+            rc, out, err = run_main(["--check", "--reference", ref_json, "--transcript", now_tx])
+    return rc, out, root
+
+
+def hook_cmds(root):
+    root = Path(root)
+    return f'node "{root}/home/.claude/hooks/u.js"', f'node "{root}/repo/hooks/p.js"'
+
+
+def g_hook_correlated():
+    """A hook element is attributed to the command that produced it and the settings file that registers that command.
+
+    Each case runs twice: through the real CLI (a subprocess) and in-process (where a drill mutant can reach it)."""
+    why = []
+    u_text, p_text = "u" * 2000, "p" * 2000
+    for cli in (True, False):
+        for label, now_u, now_p, want_rc, want_scope in (
+                ("project hook +1024", u_text, p_text + "q" * 1024, 0, "project"),
+                ("universal hook +1024", u_text + "q" * 1024, p_text, 1, "universal")):
+            tag = f"{'cli' if cli else 'in-process'} {label}"
+            root = scratch("hookc")
+            U, P = hook_cmds(root)
+            sizes = lambda a, b: {"hookrows": [(U, a), (P, b)], "hook_name": "SessionStart"}
+            rc, out, _ = attr_check(sizes(u_text, p_text), sizes(now_u, now_p), user_regs={"SessionStart": [U]},
+                                    project_regs={"SessionStart": [P]}, cli=cli, root=root)
+            lay = find_lines(out, "LAYER hook_context:SessionStart:SessionStart ")
+            scope = find_lines(out, "SCOPE ")
+            risk = find_lines(out, "RISE hook_context:SessionStart:SessionStart ")
+            if rc != want_rc or len(lay) != 1 or f"scope={want_scope} " not in lay[0] or not lay[0].endswith("delta=+1024"):
+                why.append(f"{tag}: rc={rc} layer={lay} last={last_line(out)!r}")
+                continue
+            want_line = ("SCOPE universal=+0 project=+1024 harness=+0 unattributed=+0" if want_scope == "project"
+                         else "SCOPE universal=+1024 project=+0 harness=+0 unattributed=+0")
+            if scope != [want_line]:
+                why.append(f"{tag}: scope={scope}")
+            if want_rc == 1 and (len(risk) != 1 or "scope=universal" not in risk[0] or "universal_1k" not in risk[0]):
+                why.append(f"{tag}: rise={risk}")
+            if want_rc == 0 and risk:
+                why.append(f"{tag}: unexpected rise {risk}")
+    return (not why), "; ".join(why) or "+1024 in the project-registered hook: exit 0, scope project; in the user-registered hook: exit 1, scope universal (universal_1k); CLI and in-process"
+
+
 # --------------------------------------------------------------------------- gates: rules (Task 2)
 def pair_check(ref_sizes, now_sizes, ref_edit=None, extra_args=()):
     """Build a floor pair, write the reference in-process, optionally edit it, check the second transcript."""
@@ -430,7 +520,7 @@ def g_layer_table():
         ("rules", "project"): 404, ("other:instructions", "project"): 505, ("other:instructions", "unattributed"): 606,
         ("skill_listing", "unattributed"): len(listing),
         ("other:agent_listing_delta", "unattributed"): len("- Explore: reads") + len("- Plan: plans a lot"),
-        ("hook_context:SessionStart:SessionStart:startup", "unattributed"): 33,
+        ("hook_context:SessionStart:SessionStart:startup", "universal"): 33,    # no producing row, nobody registers it: event fallback
         ("hook_system_message:SessionStart:SessionStart:startup", "unattributed"): 33,
         ("system_prompt", "unattributed"): len("one " * 10) + len("two " * 20),
         ("other:deferred_tools_delta", "unattributed"): jl({"addedNames": ["t"], "addedLines": ["- t"]}),
@@ -911,6 +1001,7 @@ def g_cli_usage():
 GATES_TRACER = [
     ("V-FLOOR-TRACER-E2E", g_tracer_e2e),
     ("V-FLOOR-WINDOW-APPEND-STABLE", g_window_append_stable),
+    ("V-FLOOR-HOOK-CORRELATED", g_hook_correlated),
 ]
 GATES_RULES = [
     ("V-FLOOR-LAYER-TABLE", g_layer_table),
