@@ -46,6 +46,7 @@ Total Plans in Phase: 4
 - [Plan]: arming waits for pillar A and >= 4 GB free; until then phases run in the interactive pane.
 - [Phase 2 close, unattended 2026-10-03]: verification human_needed (8/8 automated, PRGs Owner-run) -> recorded verification_deferred_human, autonomous run continues at Phase 3 as with Phase 1 (phases 3-4 depend on nothing; safe, reversible, internal). Review WR-01..07 fixed before verification; WR-08 merge strategy is an Owner note in the bundle.
 - [Phase 3 plan, unattended 2026-10-03]: research skipped -- 03-CONTEXT already carries the pre-research (existing kme_* instruments, measurement definitions, plane constraint); stdlib build over a known transcript format. Nyquist VALIDATION.md therefore not produced; plans carry their own V-KMEP-* gates. Reversible: `/gsd-plan-phase 3 --research` re-runs it.
+- [Phase 3 close, unattended 2026-10-04]: verification human_needed (7/7 GEX44-plane, no gaps; D..I terminals need KME-L laptop runs) -> verification_deferred_human, run continues at Phase 4. Review WR-01..07 + IN-01 fixed before verification. Notable smoke fact: H clears 3 % on both GEX44 workloads (verifier subagents), contrary to its prediction -- KME-L decides.
 - [02-03]: a renewed successor inherits the hold of its nearest predecessor that has an owner (`provider_breaker.lineage_hold`,
   bounded by a seen-set and MAX_LINEAGE_HOPS=4); a re-login after the refusal still releases it.
 - [02-03]: the env preflight gates launches only on a declared plane (CPP_ENV_PREFLIGHT=on, or CPP_MISSION_PLANE set and
@@ -109,6 +110,7 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 |-------|-------|--------|
 | 1 | verification_deferred_human | owner bundle [A] (laptop PRG), then /gsd-verify-work 1 |
 | 2 | verification_deferred_human | owner bundle [B]/[C] (a7 re-login, env deploys, laptop PRG), then /gsd-verify-work 2 |
+| 3 | verification_deferred_human | owner bundle [D]..[I] (KME-L laptop runs, population proof first), then /gsd-verify-work 3 |
 
 ## Performance Metrics
 
