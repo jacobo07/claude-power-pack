@@ -144,6 +144,12 @@ owner (no edit). Defaults: goal spine is the only state store; model-calling epo
    A1: a capsule older than 30 min fails SAFE_TO_FORGET (`rollover.py:403`), so `/kclear` after
    the gap is itself the cold rewrite. The $541 is only reachable by a UserPromptSubmit block
    plus a handoff-less capsule, which is a quality-authority change for the owner to decide.
+   `parent-context-epoch-rotation.md` now READ (2026-10-03). It is the mission-worker analogue and
+   already owns it: continue below `CONTINUE_MAX_TOKENS` = 300k, rotate at or above it. Its probe
+   `7a42f96f` measured a resumed turn writing 125k and reading 34k, so a new process breaks the
+   cache near the front, the same cold rewrite as F4. Fresh epochs pay a ~736 KB instructions floor.
+   No new lever for interactive panes (that spec puts them out of scope); it corroborates the S6
+   premise correction.
 4. **TOKEN-ECONOMY RESEARCH (Owner: "expand the research on token saving ... massive evolution",
    2026-10-02), IN PROGRESS.** Measured (7 d to 2026-10-02T20:48Z, `wiki/tools/token_economy_*.py`
    + `.out`): $8,312 API-equiv; cache read 54 %, cache WRITE 33 %, output 13 %; main thread 72 %
