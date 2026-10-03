@@ -87,3 +87,20 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 2 P01 | 35min | 3 tasks | 3 files |
+
+## Session Continuity (GEX44 run, 2026-10-03 ~19:00Z, session 607795c4)
+
+Run branch `mission/incremental-cognition-run` in worktree `.claude/worktrees/ic-run` (never pushed; the
+clone root stays on `mission/incremental-cognition`). `.planning/config.json` has `workflow.use_worktrees=false`
+(single-plan sequential waves run in this worktree; harness worktrees would fork from origin default).
+- Phase 1: deferred human verification (PRG laptop-plane, owner bundle [A]).
+- Phases 3-6: CONTEXT.md written and committed (discuss skipped). Phase 6 J/M R2 externally blocked (CE/SC
+  ledgers have no terminals on this history; CE 21671d6c absent from this clone).
+- Phase 2: 4 plans, checker PASSED after one revision. Wave 1 (02-01, code 5962571c) and wave 2 (02-02, code
+  4c31bb0a) DONE and spot-checked (PFP 24/24, BREAKER 18/18, ENVPF 55/55; a7 NOT_READY auth_expired +
+  pp_install_stale). IC-C deliberately left unticked (requirement = ledger terminal).
+**Next exact action:** `/gsd-execute-phase 2 --no-transition --ws incremental-cognition` resumes at wave 3
+(02-03 launch gate, B's single gsd_mission.py hunk before `turn_end = None`), then wave 4 (02-04 deploy +
+evidence C.md/B.md + [B]/[C] owner-bundle lines), then phase verification; then `/gsd-autonomous --ws
+incremental-cognition` continues at Phase 3 (plan from its CONTEXT). Note for 02-03: every deployed a5/a7 install
+reports `interpreters` UNMEASURABLE (no vendored engine range) -- must not churn launches.
