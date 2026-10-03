@@ -505,4 +505,4 @@ if (require.main === module) main().catch(() => emit({ continue: true }));
 module.exports = { plan, parseDiff, judge, ownership, classifyGitError, COMMIT_RE, MAX_WINDOW_MS };
 // LINEAGE (skill-capability pillar G): this card is compiled out of the skill named on the next line. When that
 // skill changes, re-read it and re-derive the card text and this line together; tools/card_lineage.py fails until then.
-// COMPILED-FROM: skill=concurrent-writers-shared-tree source=skills/concurrent-writers-shared-tree/SKILL.md sha256=f1f52de4c3115d0aafc39d69c67a2e1ae7936ae63b26ecc9263d89f1150e57c0 commit=31e1e25ca20bdf1266aa48c832312ef983d5d1eb
+// COMPILED-FROM: skill=concurrent-writers-shared-tree source=skills/concurrent-writers-shared-tree/SKILL.md sha256=77f55d19fdf07a873b267c9d374bef25997aa7e754d67ea31b30a78c79e0ef11 commit=007f1d866bea62eb35a131936e9e92b1d98de9ab
