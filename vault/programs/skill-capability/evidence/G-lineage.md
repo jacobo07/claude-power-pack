@@ -12,7 +12,7 @@ This file is rendered by `tools/test_card_lineage.py --write-evidence` from the 
 - Population, discovered: every `hooks/**/*.js` tracked at the judged commit outside `hooks/tests/` and `hooks/_tests/`, whose LF text holds a CARD_TOKEN match (`<name>` skill) or a line starting with `// COMPILED-FROM:`. Discovery does not depend on how (or whether) the dispatcher registers the file. Nothing is listed by hand. Floor 2.
 - Committed-blob rule: every byte compared comes from git blobs at the judged commit or at the trailer commit, CRLF->LF. No working-tree file is read, so an uncommitted edit never stands in for a source.
 - Reuse: git access, blob reads, failure classification and the H record comparison are the skill_mirror_drift functions (git_run, resolve_commit, tracked_paths, committed_card_pairs, card_source_state, card_drift, card_verdict, is_git_failure); the card token and dispatcher reading are skill_coverage's (CARD_TOKEN, registered_hooks, discover_cards). One implementation each.
-- Outcomes are PASS, FAIL or UNMEASURED; the verdict is PASS only when all 10 clauses are PASS for every card. A git failure (git missing, unresolvable ref, nothing tracked, a member blob unreadable) is INCONCLUSIVE, never PASS and never a traceback.
+- Outcomes are PASS, FAIL or UNMEASURED; the verdict is PASS only when all 10 clauses are PASS for every card. A git failure before or during discovery (git missing, unresolvable ref, nothing tracked, a member blob unreadable) is INCONCLUSIVE, never PASS and never a traceback. After discovery a clause whose git call did not answer (failure, timeout, a trailer commit beyond a shallow clone's history) is a git-tagged UNMEASURED, and the verdict is INCONCLUSIVE when every non-PASS clause is one; any measured FAIL, or an UNMEASURED that is not git (no trailer, missing source), makes it FAIL.
 
 Clauses:
 
@@ -59,7 +59,8 @@ Each drill starts from a copy of a clean temporary git repo seeded from the HEAD
 | SKILL-MISMATCH | CW trailer replaced by the trailer for DS's skill | FAIL {hooks/doctrine_cards.js:SKILL} | FAIL {hooks/doctrine_cards.js:SKILL} | ok |
 | SOURCE-PATH | CW trailer keeps its skill but points at DS's source, digest and commit A | FAIL {hooks/doctrine_cards.js:SOURCE-PATH} | FAIL {hooks/doctrine_cards.js:SOURCE-PATH} | ok |
 | GHOST-SKILL | CW's CARD_TOKEN and trailer renamed to ghost-skill (sha256 and commit kept); re-record refused | FAIL {H-RECORD-CURRENT, hooks/doctrine_cards.js:COMMIT-DIGEST, hooks/doctrine_cards.js:COMMIT-TOUCHES, hooks/doctrine_cards.js:SOURCE-CURRENT} | FAIL {H-RECORD-CURRENT, hooks/doctrine_cards.js:COMMIT-DIGEST, hooks/doctrine_cards.js:COMMIT-TOUCHES, hooks/doctrine_cards.js:SOURCE-CURRENT} | ok |
-| COMMIT-UNKNOWN | CW trailer commit = deadbeef x 5 | FAIL {hooks/doctrine_cards.js:COMMIT-ANCESTOR, hooks/doctrine_cards.js:COMMIT-DIGEST, hooks/doctrine_cards.js:COMMIT-TOUCHES} | FAIL {hooks/doctrine_cards.js:COMMIT-ANCESTOR, hooks/doctrine_cards.js:COMMIT-DIGEST, hooks/doctrine_cards.js:COMMIT-TOUCHES} | ok |
+| COMMIT-UNKNOWN | CW trailer commit = deadbeef x 5 (absent from a complete history: COMMIT-ANCESTOR is a measured FAIL) | FAIL {hooks/doctrine_cards.js:COMMIT-ANCESTOR, hooks/doctrine_cards.js:COMMIT-DIGEST, hooks/doctrine_cards.js:COMMIT-TOUCHES} | FAIL {hooks/doctrine_cards.js:COMMIT-ANCESTOR, hooks/doctrine_cards.js:COMMIT-DIGEST, hooks/doctrine_cards.js:COMMIT-TOUCHES} | ok |
+| SHALLOW-CLONE | the clean fixture judged through a depth-1 clone that lacks the trailer commits (real ancestors) | INCONCLUSIVE {hooks/destructive_doctrine_card.js:COMMIT-ANCESTOR, hooks/destructive_doctrine_card.js:COMMIT-DIGEST, hooks/destructive_doctrine_card.js:COMMIT-TOUCHES, hooks/doctrine_cards.js:COMMIT-ANCESTOR, hooks/doctrine_cards.js:COMMIT-DIGEST, hooks/doctrine_cards.js:COMMIT-TOUCHES} | INCONCLUSIVE {hooks/destructive_doctrine_card.js:COMMIT-ANCESTOR, hooks/destructive_doctrine_card.js:COMMIT-DIGEST, hooks/destructive_doctrine_card.js:COMMIT-TOUCHES, hooks/doctrine_cards.js:COMMIT-ANCESTOR, hooks/doctrine_cards.js:COMMIT-DIGEST, hooks/doctrine_cards.js:COMMIT-TOUCHES} | ok |
 | COMMIT-NOT-ANCESTOR | CW trailer commit = a side-branch commit adding identical source bytes | FAIL {hooks/doctrine_cards.js:COMMIT-ANCESTOR} | FAIL {hooks/doctrine_cards.js:COMMIT-ANCESTOR} | ok |
 | COMMIT-NOT-TOUCHING | CW trailer commit = the H record commit (did not change the source) | FAIL {hooks/doctrine_cards.js:COMMIT-TOUCHES} | FAIL {hooks/doctrine_cards.js:COMMIT-TOUCHES} | ok |
 | COMMIT-WRONG-DIGEST | CW source changed; trailer carries the new digest but commit A | FAIL {hooks/doctrine_cards.js:COMMIT-DIGEST} | FAIL {hooks/doctrine_cards.js:COMMIT-DIGEST} | ok |
@@ -92,6 +93,8 @@ Each clause was forced PASS (its CLAUSES entry replaced) and its singleton drill
 | TRAILER | UNLINEAGED-CARD | PASS | FAIL |
 
 Git unavailable (`vgm._git_exe` raising): live INCONCLUSIVE, fixture INCONCLUSIVE, after restoration PASS.
+
+Git failing inside a clause on the clean fixture (one subcommand stubbed): merge-base: INCONCLUSIVE 2 clause(s); diff-tree: INCONCLUSIVE 2 clause(s); cat-file: INCONCLUSIVE 2 clause(s).
 
 ## Re-derivation
 

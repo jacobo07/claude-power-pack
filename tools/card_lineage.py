@@ -54,7 +54,10 @@ deliberately not used: at HEAD they read the working tree to refuse an uncommitt
 failure classification and the record comparison are the functions pillar H uses (one implementation).
 
 A git failure before or during discovery (unresolvable ref, git missing, nothing tracked, a member blob read failure)
-is INCONCLUSIVE, never PASS and never a traceback.
+is INCONCLUSIVE, never PASS and never a traceback. After discovery, a clause whose git call did not answer (failure,
+timeout, a non-absence rc, or a trailer commit beyond a shallow clone's history) is a git-tagged UNMEASURED; when every
+non-PASS clause is git-tagged the verdict is INCONCLUSIVE, and any measured FAIL or non-git UNMEASURED makes it FAIL.
+A trailer commit absent from a complete (non-shallow) history cannot be an ancestor: COMMIT-ANCESTOR FAIL.
 
 Exit codes: 0 PASS, 1 FAIL or INCONCLUSIVE (or a refused --trailer-for), 2 bad arguments. This tool never writes a file.
 """
@@ -87,8 +90,34 @@ GATE_CLAUSES = ("FLOOR", "DISPATCHER-COVERED", "H-RECORD-CURRENT")
 PASS, FAIL, UNMEASURED = "PASS", "FAIL", "UNMEASURED"
 
 
-def _out(outcome, reason=""):
-    return {"outcome": outcome, "reason": reason}
+def _out(outcome, reason="", git=False):
+    """A clause outcome. git=True marks an UNMEASURED that came from git not answering (a failure, a timeout, a
+    shallow history), which folds into an INCONCLUSIVE verdict instead of FAIL (06 review WR-02)."""
+    o = {"outcome": outcome, "reason": reason}
+    if git and outcome == UNMEASURED:
+        o["git"] = True
+    return o
+
+
+# git_run answers that are a fact about the judged tree (a path or object that is not there), not git failing.
+_GIT_ANSWERS = ("does not exist", "exists on disk, but not in", "not in '")
+
+
+def _git_reason(why) -> bool:
+    """True when a reason string says git did not answer: git missing, an OS error or timeout (`git <sub> failed:`),
+    a batch failure (smd.BATCH_FAILURES), or a non-zero rc that is not an absence answer."""
+    w = str(why or "")
+    if "git not found" in w or any(f in w for f in smd.BATCH_FAILURES):
+        return True
+    if re.search(r"\bgit [\w-]* failed:", w):
+        return True
+    if re.search(r"\bgit [\w-]* rc=\d+:", w):
+        return not any(a in w for a in _GIT_ANSWERS)
+    return False
+
+
+def _unmeasured(reason, why=None):
+    return _out(UNMEASURED, reason, git=_git_reason(why if why is not None else reason))
 
 
 def _source_rel(skill) -> str:
@@ -189,7 +218,8 @@ def _fold(rows):
     for want in (FAIL, UNMEASURED):
         bad = [(sk, o) for sk, o in rows if o["outcome"] == want]
         if bad:
-            return _out(want, "; ".join(o["reason"] if len(rows) == 1 else f"{sk}: {o['reason']}" for sk, o in bad))
+            return _out(want, "; ".join(o["reason"] if len(rows) == 1 else f"{sk}: {o['reason']}" for sk, o in bad),
+                        git=all(o.get("git") for _, o in bad))
     return _out(PASS, "; ".join(o["reason"] if len(rows) == 1 else f"{sk}: {o['reason']}" for sk, o in rows))
 
 
@@ -213,7 +243,7 @@ def c_floor(ctx, member=None, trailer=None):
 def c_dispatcher_covered(ctx, member=None, trailer=None):
     pairs = ctx["registered"]
     if pairs is None:
-        return _out(UNMEASURED, f"dispatcher card set unreadable: {ctx['registered_why']}")
+        return _unmeasured(f"dispatcher card set unreadable: {ctx['registered_why']}", ctx["registered_why"])
     covered = {p["card"] for p in pairs}
     if not covered:
         return _out(UNMEASURED, "the dispatcher registers no card")
@@ -227,13 +257,13 @@ def c_dispatcher_covered(ctx, member=None, trailer=None):
 def c_h_record_current(ctx, member=None, trailer=None):
     raw, why = smd.git_run(ctx["repo"], "cat-file", "blob", f"{ctx['sha']}:{smd.CARD_RECORD_REL}")
     if raw is None:
-        return _out(UNMEASURED, f"{smd.CARD_RECORD_REL} not readable at {ctx['sha'][:8]}: {why}")
+        return _unmeasured(f"{smd.CARD_RECORD_REL} not readable at {ctx['sha'][:8]}: {why}", why)
     try:
         record = json.loads(smd.lf_bytes(raw).decode("utf-8"))
     except ValueError:
         return _out(UNMEASURED, "record unparseable")
     if ctx["pairs"] is None:
-        return _out(UNMEASURED, f"dispatcher card set unreadable: {ctx['pairs_why']}")
+        return _unmeasured(f"dispatcher card set unreadable: {ctx['pairs_why']}", ctx["pairs_why"])
     # The measured pair list is passed as-is: [] is a measured empty set, never None (None would re-discover).
     rows = smd.card_drift(record, smd.card_source_state(ctx["repo"], ctx["sha"], ctx["pairs"]))
     verdict = smd.card_verdict(rows)
@@ -242,7 +272,10 @@ def c_h_record_current(ctx, member=None, trailer=None):
     bad = "; ".join(f"{r.get('card')}<-{r.get('skill')} {r['status']}"
                     + (f" ({r['reason']})" if r.get("reason") else "")
                     for r in rows if r["status"] != "CURRENT")
-    return _out(UNMEASURED if verdict == "INCONCLUSIVE" else FAIL, bad or verdict)
+    if verdict == "INCONCLUSIVE":
+        return _out(UNMEASURED, bad or verdict,
+                    git=bool(rows) and all(_git_reason(r.get("reason")) for r in rows if r["status"] != "CURRENT"))
+    return _out(FAIL, bad or verdict)
 
 
 def c_trailer(ctx, member=None, trailers=None):
@@ -279,10 +312,11 @@ def c_source_current(ctx, member=None, trailer=None):
     pair = {"card": member["card"], "skill": trailer["skill"], "source": trailer["source"]}
     state = smd.card_source_state(ctx["repo"], ctx["sha"], [pair])
     if state.get("status") != "MEASURED":
-        return _out(UNMEASURED, f"{trailer['source']}: {state.get('reason', 'unmeasured')}")
+        return _out(UNMEASURED, f"{trailer['source']}: {state.get('reason', 'unmeasured')}", git=True)
     row = state["pairs"][0]
     if row.get("status") in ("UNTRACKED", "INCONCLUSIVE"):
-        return _out(UNMEASURED, f"{trailer['source']} {row['status']}: {row.get('reason')}")
+        return _out(UNMEASURED, f"{trailer['source']} {row['status']}: {row.get('reason')}",
+                    git=row.get("status") == "INCONCLUSIVE")
     if row["source_sha256"] == trailer["sha256"]:
         return _out(PASS, "source digest at the judged commit equals the trailer")
     return _out(FAIL, f"{trailer['source']} at {ctx['sha'][:8]} is {row['source_sha256'][:12]}, "
@@ -290,31 +324,49 @@ def c_source_current(ctx, member=None, trailer=None):
 
 
 def _trailer_commit(ctx, trailer):
-    return smd.resolve_commit(ctx["repo"], trailer["commit"])
+    """(full sha, None, None) or (None, reason, kind). kind "absent" = the commit does not exist in a complete
+    (non-shallow) history; "git" = git did not answer, or the history is shallow so absence proves nothing."""
+    commit, why = smd.resolve_commit(ctx["repo"], trailer["commit"])
+    if commit is not None:
+        return commit, None, None
+    if not re.search(r"\bgit rev-parse rc=1: no stderr$", str(why or "")):
+        return None, why, "git"
+    out, w = smd.git_run(ctx["repo"], "rev-parse", "--is-shallow-repository")
+    if out is None:
+        return None, f"{why}; shallow check: {w}", "git"
+    if out.decode("utf-8", "replace").strip() == "false":
+        return None, f"{trailer['commit'][:8]} does not exist in this complete history", "absent"
+    return None, f"shallow clone: {trailer['commit'][:8]} is beyond the history this checkout holds", "git"
+
+
+def _commit_unreadable(why, kind):
+    return _out(UNMEASURED, f"commit-not-readable: {why}", git=kind == "git")
 
 
 @_per_trailer
 def c_commit_ancestor(ctx, member=None, trailer=None):
-    commit, why = _trailer_commit(ctx, trailer)
+    commit, why, kind = _trailer_commit(ctx, trailer)
     if commit is None:
-        return _out(UNMEASURED, f"commit-not-readable: {why}")
+        if kind == "absent":
+            return _out(FAIL, f"{why}, so it is not an ancestor of {ctx['sha'][:8]}")
+        return _commit_unreadable(why, kind)
     out, why = smd.git_run(ctx["repo"], "merge-base", "--is-ancestor", commit, ctx["sha"])
     if out is not None:
         return _out(PASS, f"{commit[:8]} is an ancestor of {ctx['sha'][:8]}")
     if " rc=1:" in (why or ""):
         return _out(FAIL, f"{commit[:8]} is not an ancestor of {ctx['sha'][:8]}")
-    return _out(UNMEASURED, f"merge-base: {why}")
+    return _out(UNMEASURED, f"merge-base: {why}", git=True)
 
 
 @_per_trailer
 def c_commit_touches(ctx, member=None, trailer=None):
-    commit, why = _trailer_commit(ctx, trailer)
+    commit, why, kind = _trailer_commit(ctx, trailer)
     if commit is None:
-        return _out(UNMEASURED, f"commit-not-readable: {why}")
+        return _commit_unreadable(why, kind)
     out, why = smd.git_run(ctx["repo"], "diff-tree", "--no-commit-id", "--name-only", "-r", "--root", commit,
                            "--", trailer["source"])
     if out is None:
-        return _out(UNMEASURED, f"diff-tree: {why}")
+        return _out(UNMEASURED, f"diff-tree: {why}", git=True)
     names = out.decode("utf-8", "replace").split("\n")
     if trailer["source"] in names:
         return _out(PASS, f"{commit[:8]} changed {trailer['source']}")
@@ -323,9 +375,9 @@ def c_commit_touches(ctx, member=None, trailer=None):
 
 @_per_trailer
 def c_commit_digest(ctx, member=None, trailer=None):
-    commit, why = _trailer_commit(ctx, trailer)
+    commit, why, kind = _trailer_commit(ctx, trailer)
     if commit is None:
-        return _out(UNMEASURED, f"commit-not-readable: {why}")
+        return _commit_unreadable(why, kind)
     src = trailer["source"]
     data, why = smd.vgm.batch_blobs(str(ctx["repo"]), commit, [src]).get(src, (None, "not returned"))
     if data is None and why == "git-batch-empty":
@@ -338,8 +390,8 @@ def c_commit_digest(ctx, member=None, trailer=None):
     if why == "git-batch-missing":
         return _out(FAIL, f"no-blob-at-commit: {src} at {commit[:8]}")
     if smd.is_git_failure(why):
-        return _out(UNMEASURED, f"git failure: {why}")
-    return _out(UNMEASURED, f"{src} at {commit[:8]}: {why}")
+        return _out(UNMEASURED, f"git failure: {why}", git=True)
+    return _unmeasured(f"{src} at {commit[:8]}: {why}", why)
 
 
 CLAUSES = {
@@ -400,12 +452,26 @@ def judge(repo=smd.REPO, ref="HEAD") -> dict:
         for cid in GATE_CLAUSES:
             result["gate"][cid] = CLAUSES[cid](ctx)
 
-        outcomes = [c["outcome"] for c in result["gate"].values()]
-        outcomes += [c["outcome"] for card in result["cards"] for c in card["clauses"].values()]
-        result["verdict"] = PASS if outcomes and all(o == PASS for o in outcomes) else FAIL
+        result["verdict"], result["reason"] = fold_verdict(result)
         return result
     except Exception as e:  # noqa: BLE001 -- a judge that crashes must say INCONCLUSIVE, never print a traceback
         return _inconclusive(result.get("head"), f"exception {type(e).__name__}", result)
+
+
+def fold_verdict(result):
+    """(verdict, reason). PASS when every clause is PASS. FAIL when any clause is a measured FAIL, or UNMEASURED for a
+    reason that is not git (an absent trailer, a missing source, a zero population). INCONCLUSIVE when every non-PASS
+    clause is a git-tagged UNMEASURED: git did not answer, which is not drift (06 review WR-02)."""
+    named = [(cid, c) for cid, c in result["gate"].items()]
+    named += [(f"{card['card']}:{cid}", c) for card in result["cards"] for cid, c in card["clauses"].items()]
+    if not named:
+        return FAIL, "no clause judged"
+    non_pass = [(k, c) for k, c in named if c["outcome"] != PASS]
+    if not non_pass:
+        return PASS, ""
+    if all(c["outcome"] == UNMEASURED and c.get("git") for _, c in non_pass):
+        return "INCONCLUSIVE", "git did not answer in " + ", ".join(sorted(k for k, _ in non_pass))
+    return FAIL, ""
 
 
 def fail_set(result) -> set:

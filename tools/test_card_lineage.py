@@ -19,6 +19,9 @@ What each V-CLG clause proves:
                             clean one
   V-CLG-GIT-FAILURE         git unavailable (vgm._git_exe raising) is INCONCLUSIVE with no exception escaping, and
                             the judge returns PASS again after restoration
+  V-CLG-GIT-FAILURE-MIDJUDGE  one git subcommand failing inside a clause (merge-base, diff-tree, cat-file; timeout,
+                            rc and OS-error forms) is INCONCLUSIVE with every non-PASS clause git-tagged, never FAIL;
+                            the same failure on a red fixture still reads FAIL
   V-CLG-EVERY-CLAUSE        the declared fail sets cover all 10 clauses; forcing each clause PASS flips its
                             singleton drill to PASS (and restoring it flips it back); TRAILER, which has no
                             singleton, is shown load-bearing by a marker-only population on UNLINEAGED-CARD
@@ -517,6 +520,16 @@ def m_multi_skill_unlineaged(fx, repo):
     return _add_third(fx, repo, trailer=False)
 
 
+def m_shallow_clone(fx, repo):
+    """The judged checkout is a depth-1 clone of the clean fixture: the trailer commits are real ancestors that the
+    clone does not hold. Missing history is not drift."""
+    full = repo.with_name(repo.name + "-full")
+    shutil.move(str(repo), str(full))
+    fx.git(full.parent, "clone", "-q", "--depth", "1", f"file://{full}", str(repo))
+    out = fx.git(repo, "rev-parse", "--is-shallow-repository").strip()
+    return None if out == "true" else f"clone is not shallow ({out})"
+
+
 def _drill_table():
     return [
         ("CLEAN", m_clean, set(), "PASS"),
@@ -536,6 +549,9 @@ def _drill_table():
                                         "H-RECORD-CURRENT"}, "FAIL"),
         ("COMMIT-UNKNOWN", m_commit_unknown, {f"{CW}:COMMIT-ANCESTOR", f"{CW}:COMMIT-TOUCHES",
                                               f"{CW}:COMMIT-DIGEST"}, "FAIL"),
+        ("SHALLOW-CLONE", m_shallow_clone, {f"{c}:{k}" for c in (CW, DS)
+                                            for k in ("COMMIT-ANCESTOR", "COMMIT-TOUCHES", "COMMIT-DIGEST")},
+         "INCONCLUSIVE"),
         ("COMMIT-NOT-ANCESTOR", m_commit_not_ancestor, {f"{CW}:COMMIT-ANCESTOR"}, "FAIL"),
         ("COMMIT-NOT-TOUCHING", m_commit_not_touching, {f"{CW}:COMMIT-TOUCHES"}, "FAIL"),
         ("COMMIT-WRONG-DIGEST", m_commit_wrong_digest, {f"{CW}:COMMIT-DIGEST"}, "FAIL"),
@@ -578,7 +594,13 @@ UNMEASURED_EXPECT = {
     "FLOOR-ZERO": {"FLOOR", "DISPATCHER-COVERED"},
     "RECORD-UNPARSEABLE": {"H-RECORD-CURRENT"},
     "GHOST-SKILL": {f"{CW}:SOURCE-CURRENT"},
-    "COMMIT-UNKNOWN": {f"{CW}:COMMIT-ANCESTOR", f"{CW}:COMMIT-TOUCHES", f"{CW}:COMMIT-DIGEST"},
+    "COMMIT-UNKNOWN": {f"{CW}:COMMIT-TOUCHES", f"{CW}:COMMIT-DIGEST"},
+    "SHALLOW-CLONE": {f"{c}:{k}" for c in (CW, DS) for k in ("COMMIT-ANCESTOR", "COMMIT-TOUCHES", "COMMIT-DIGEST")},
+}
+# Clauses that must be a MEASURED FAIL (not UNMEASURED) in a drill: a trailer commit absent from a complete history
+# cannot be an ancestor (only a shallow clone makes absence unmeasurable, SHALLOW-CLONE).
+FAIL_EXPECT = {
+    "COMMIT-UNKNOWN": {f"{CW}:COMMIT-ANCESTOR"},
 }
 
 
@@ -612,7 +634,8 @@ def unmeasured_mismatch(did, row) -> list:
     """Members of UNMEASURED_EXPECT[did] whose outcome is not UNMEASURED (a measured FAIL where the judge could not
     measure would be a different defect wearing the same fail set)."""
     got = outcomes(row["result"])
-    return sorted(k for k in UNMEASURED_EXPECT.get(did, set()) if got.get(k) != cl.UNMEASURED)
+    return sorted([k for k in UNMEASURED_EXPECT.get(did, set()) if got.get(k) != cl.UNMEASURED]
+                  + [f"{k} (expected a measured FAIL)" for k in FAIL_EXPECT.get(did, set()) if got.get(k) != cl.FAIL])
 
 
 def drill_ok(row, did=None) -> bool:
@@ -738,6 +761,57 @@ def c_git_failure(st):
                                         f"fixture={fixture.get('verdict')}/{fixture.get('reason')}; restored={after}")]
 
 
+MIDJUDGE_STUBS = (
+    ("merge-base", "git merge-base failed: timed out after 30 seconds"),
+    ("diff-tree", "git diff-tree rc=128: fatal: unable to read tree (drill)"),
+    ("cat-file", "git cat-file failed: [Errno 5] Input/output error (drill)"),
+)
+
+
+def _judge_with_failing(repo, sub, why):
+    """cl.judge with smd.git_run failing for one git subcommand only (after discovery, which reads via batch)."""
+    orig = smd.git_run
+
+    def flaky(r, *a, **k):
+        if a and a[0] == sub:
+            return None, why
+        return orig(r, *a, **k)
+    smd.git_run = flaky
+    try:
+        return cl.judge(repo)
+    finally:
+        smd.git_run = orig
+
+
+def c_git_failure_midjudge(st):
+    """A git failure inside a clause (after discovery) is INCONCLUSIVE, never FAIL: every non-PASS clause is
+    git-tagged and the verdict says INCONCLUSIVE. A measured FAIL still dominates (red control)."""
+    clean, red = st["drills"].get("CLEAN"), st["drills"].get("SOURCE-CHANGED-RERECORDED")
+    if not clean or not red or clean["repo"] is None or red["repo"] is None:
+        return [(FAIL, "V-CLG-GIT-FAILURE-MIDJUDGE", "drill repos missing")]
+    bad, seen = [], []
+    for sub, why in MIDJUDGE_STUBS:
+        r = _judge_with_failing(clean["repo"], sub, why)
+        fs = cl.fail_set(r)
+        non_pass = [c for c in outcomes(r).items() if c[1] != PASS]
+        tail = cl.render(r)[-1]
+        seen.append(f"{sub}: {r['verdict']} {len(fs)} clause(s)")
+        if r["verdict"] != "INCONCLUSIVE" or not fs or any(o == cl.FAIL for _, o in non_pass) \
+                or not tail.startswith("CARD_LINEAGE INCONCLUSIVE"):
+            bad.append(f"{sub}: verdict {r['verdict']} {_fmt(fs)} last={tail!r}")
+    r = _judge_with_failing(red["repo"], "merge-base", MIDJUDGE_STUBS[0][1])
+    if r["verdict"] != cl.FAIL or f"{CW}:SOURCE-CURRENT" not in cl.fail_set(r):
+        bad.append(f"red control: merge-base failure on SOURCE-CHANGED-RERECORDED gave {r['verdict']}")
+    after = cl.judge(clean["repo"])["verdict"]
+    if after != PASS:
+        bad.append(f"restored judge gave {after}")
+    st["git_midjudge"] = seen
+    if bad:
+        return [(FAIL, "V-CLG-GIT-FAILURE-MIDJUDGE", "; ".join(bad))]
+    return [(OK, "V-CLG-GIT-FAILURE-MIDJUDGE", "; ".join(seen) + "; a measured FAIL dominates (red control); "
+                                                  "restored judge PASS")]
+
+
 def _forced(ctx, member=None, trailer=None):
     return {"outcome": "PASS", "reason": "forced (drill)"}
 
@@ -839,7 +913,9 @@ DRILL_TEXT = {
     "SKILL-MISMATCH": "CW trailer replaced by the trailer for DS's skill",
     "SOURCE-PATH": "CW trailer keeps its skill but points at DS's source, digest and commit A",
     "GHOST-SKILL": "CW's CARD_TOKEN and trailer renamed to ghost-skill (sha256 and commit kept); re-record refused",
-    "COMMIT-UNKNOWN": "CW trailer commit = deadbeef x 5",
+    "COMMIT-UNKNOWN": "CW trailer commit = deadbeef x 5 (absent from a complete history: COMMIT-ANCESTOR is a "
+                      "measured FAIL)",
+    "SHALLOW-CLONE": "the clean fixture judged through a depth-1 clone that lacks the trailer commits (real ancestors)",
     "COMMIT-NOT-ANCESTOR": "CW trailer commit = a side-branch commit adding identical source bytes",
     "COMMIT-NOT-TOUCHING": "CW trailer commit = the H record commit (did not change the source)",
     "COMMIT-WRONG-DIGEST": "CW source changed; trailer carries the new digest but commit A",
@@ -906,8 +982,11 @@ def render(st) -> str:
           "card_source_state, card_drift, card_verdict, is_git_failure); the card token and dispatcher reading are "
           "skill_coverage's (CARD_TOKEN, registered_hooks, discover_cards). One implementation each.",
           "- Outcomes are PASS, FAIL or UNMEASURED; the verdict is PASS only when all 10 clauses are PASS for every "
-          "card. A git failure (git missing, unresolvable ref, nothing tracked, a member blob unreadable) is "
-          "INCONCLUSIVE, never PASS and never a traceback.", "",
+          "card. A git failure before or during discovery (git missing, unresolvable ref, nothing tracked, a member "
+          "blob unreadable) is INCONCLUSIVE, never PASS and never a traceback. After discovery a clause whose git "
+          "call did not answer (failure, timeout, a trailer commit beyond a shallow clone's history) is a git-tagged "
+          "UNMEASURED, and the verdict is INCONCLUSIVE when every non-PASS clause is one; any measured FAIL, or an "
+          "UNMEASURED that is not git (no trailer, missing source), makes it FAIL.", "",
           "Clauses:", ""]
     for cid in cl.CARD_CLAUSES + cl.GATE_CLAUSES:
         L.append(f"- {cid} ({'per card' if cid in cl.CARD_CLAUSES else 'gate'}): {CLAUSE_TEXT[cid]}")
@@ -955,6 +1034,9 @@ def render(st) -> str:
     L += ["", "Git unavailable (`vgm._git_exe` raising): " + (
         f"live {gf['live']}, fixture {gf['fixture']}, after restoration {gf['restored']}." if gf else
         "(not measured).")]
+    gm = st.get("git_midjudge")
+    L += ["", "Git failing inside a clause on the clean fixture (one subcommand stubbed): " + (
+        "; ".join(gm) + "." if gm else "(not measured).")]
     L += ["", "## Re-derivation", "",
           "When a source skill changes: re-read the skill, update the card text and its trailer together (the line "
           "comes from `python3 tools/card_lineage.py --trailer-for <skill>`, which prints and never writes), commit, "
@@ -998,7 +1080,8 @@ def c_evidence_drill(st):
     return [(FAIL, "V-CLG-EVIDENCE-DRILL", f"control={ctrl} crlf={crlf} mutated_accepted={accepted}")]
 
 
-JUDGE_CLAUSES = [c_live_clean, c_positive_control, c_drills, c_subprocess_red, c_git_failure, c_every_clause]
+JUDGE_CLAUSES = [c_live_clean, c_positive_control, c_drills, c_subprocess_red, c_git_failure,
+                 c_git_failure_midjudge, c_every_clause]
 EVIDENCE_CLAUSES = [c_evidence_current, c_evidence_drill]
 CLAUSES = JUDGE_CLAUSES + EVIDENCE_CLAUSES
 
