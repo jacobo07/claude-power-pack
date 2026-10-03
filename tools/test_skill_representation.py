@@ -93,15 +93,22 @@ def run_clause(fn, *args):
 
 # --------------------------------------------------------------------------- discovery
 
+GIT_ROW = "(git ls-tree HEAD)"
+GIT_UNAVAILABLE = "INCONCLUSIVE: git cannot list the tracked paths at HEAD"
+
+
 def discover(repo=REPO):
     """[(filename, recording or None, reason or None)] for every F-sweep-*.json tracked at HEAD or present in the
     working tree, sorted. Each is read as its COMMITTED blob at HEAD (`smd.committed_bytes`): a recording that exists
     only in the working tree, or differs from HEAD, is refused as uncommitted (INCONCLUSIVE), never judged."""
+    tracked, why = smd.tracked_paths(repo, "HEAD")
+    if tracked is None:
+        # Committed cannot be told from uncommitted: one INCONCLUSIVE row carrying git's reason, never a per-file
+        # "exists only in the working tree" diagnosis, and never "nothing discovered" (05-REVIEW IN-04).
+        return [(GIT_ROW, None, f"{GIT_UNAVAILABLE}: {why}")]
     names = {p.name for p in (Path(repo) / EVIDENCE_DIR).glob(SWEEP_GLOB)}
-    tracked, _ = smd.tracked_paths(repo, "HEAD")
-    names |= {t[len(EVIDENCE_DIR):] for t in (tracked or ()) if t.startswith(EVIDENCE_DIR)
+    names |= {t[len(EVIDENCE_DIR):] for t in tracked if t.startswith(EVIDENCE_DIR)
               and fnmatch.fnmatch(t[len(EVIDENCE_DIR):], SWEEP_GLOB)}
-    tracked = tracked or set()
     out = []
     for n in sorted(names):
         if EVIDENCE_DIR + n not in tracked:
@@ -469,11 +476,33 @@ def pole_unreadable_inconclusive(tmp):
     return ok, "; ".join(parts)
 
 
+def pole_git_unavailable(tmp):
+    # When git cannot list HEAD, discovery cannot tell committed from uncommitted: every recording is INCONCLUSIVE
+    # with git's own reason, never "exists only in the working tree", and an empty evidence directory is not a FAIL
+    # "no recording discovered" (05-REVIEW IN-04). Driven on the real repo and on an empty temp tree.
+    real = smd.tracked_paths
+    smd.tracked_paths = lambda repo, ref: (None, "git ls-tree timed out (pole)")
+    try:
+        parts, ok = [], True
+        for label, repo in (("repo", REPO), ("empty", Path(tmp))):
+            res, _ = recordings_results(discover(repo))
+            st, text = res.get("V-FD-RECORDINGS", ("absent", ""))
+            worst = max((RANK.get(v[0], 2) for v in res.values()), default=2)
+            good = st == "INCONCLUSIVE" and "timed out (pole)" in text and "uncommitted" not in text and worst == 1
+            ok &= good
+            parts.append(f"{label}: V-FD-RECORDINGS {st} ({'git reason' if 'timed out' in text else text[:60]}), "
+                         f"worst {[k for k, v in RANK.items() if v == worst]}")
+    finally:
+        smd.tracked_paths = real
+    return ok, "; ".join(parts)
+
+
 POLES = (("SAME-BODY", pole_same_body), ("CRLF", pole_crlf), ("ONE-BYTE", pole_one_byte),
          ("NO-FRONTMATTER", pole_no_frontmatter), ("SAME-NAME-CROSS-PLANE", pole_same_name_cross_plane),
          ("CROSS-PLANE-RENAMED", pole_cross_plane_renamed), ("DISCOVERY", pole_discovery),
          ("EMPTY-BODY", pole_empty_body), ("LISTING-LINE-BOUND", pole_listing_line_bound),
-         ("HOST-REPO-REFUSED", pole_host_repo_refused), ("UNREADABLE-INCONCLUSIVE", pole_unreadable_inconclusive))
+         ("HOST-REPO-REFUSED", pole_host_repo_refused), ("UNREADABLE-INCONCLUSIVE", pole_unreadable_inconclusive),
+         ("GIT-UNAVAILABLE", pole_git_unavailable))
 
 
 def _whole_file_hasher(skill_md_bytes):
@@ -1563,25 +1592,32 @@ def emit(results) -> int:
     return 0 if results and passed == len(results) else 1
 
 
-def default_run():
-    """The full clause table over every discovered recording, plus poles and drills."""
+def recordings_results(found):
+    """(clause table of the V-FD recording clauses over `found`, the admitted gex44 recording or None)."""
     results = {}
-    found = discover()
     if not found:
         results["V-FD-RECORDINGS"] = ("FAIL", f"no {EVIDENCE_DIR}{SWEEP_GLOB} discovered")
     gex44 = None
     for name, rec, why in found:
         if rec is None:
+            unjudged = "uncommitted" in str(why) or name == GIT_ROW
             merge(results, {cid: ("INCONCLUSIVE" if cid != "V-FD-RECORDINGS" else
-                                  ("INCONCLUSIVE" if "uncommitted" in str(why) else "FAIL"),
+                                  ("INCONCLUSIVE" if unjudged else "FAIL"),
                                   f"{name}: {why}") for cid in CLAUSE_IDS})
             continue
         merge(results, judge_recording(name, rec))
         if name == GEX44_NAME:
             gex44 = rec
-    if gex44 is None and GEX44_NAME not in {n for n, _, _ in found}:
+    if gex44 is None and not ({GEX44_NAME, GIT_ROW} & {n for n, _, _ in found}):
         merge(results, {"V-FD-REAL-GROUP": ("FAIL", f"{GEX44_NAME} not discovered (or unreadable): the positive "
                                                     "control on real data is missing")})
+    return results, gex44
+
+
+def default_run():
+    """The full clause table over every discovered recording, plus poles and drills."""
+    found = discover()
+    results, gex44 = recordings_results(found)
     results["V-FD-HASH-POLES"] = run_clause(c_hash_poles)
     if gex44 is None:
         results["V-FD-TAMPER-DRILLS"] = ("INCONCLUSIVE", f"{GEX44_NAME} not admitted: no recording to tamper")
