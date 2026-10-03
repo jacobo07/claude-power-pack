@@ -15205,3 +15205,56 @@ $js=@: fatal: path. Confirm the tool actually ran and returned the expected outp
 - [regression/powershell:g] `ceps_8b4a0b94853e28ac` -- Before touching powershell:g, verify the regression scenario (2 failed) is still covered by a passing test.
 
 - [tooling/powershell:python.exe] `ceps_5cccbbfbe30354db` -- Tool failure in powershell:python.exe: Exception: a Spanish resident who is also a Spanish national. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+## Capsule-v2 mission rollover, T5 adapter (2026-10-03)
+
+Source: `vault/specs/mission-capsule-rollover.md` T5. Status of every entry below: OBSERVED once,
+LOCAL SUCCESS (fixed and pinned in this repo). None is promoted; the candidates at the end need more
+evidence first.
+
+### Process Rules
+
+### PR-CHARACTERIZE-THEN-ADAPT-THEN-WIRE-001
+
+Before a live durable protocol gets a successor, pin the old behaviour (a golden captured on the
+pre-change code, with mutants that route old to new and must go red), build the new side as an
+adapter beside it, and only then wire the runtime behind an explicit version field. The golden is
+never re-captured to make a red go away. Evidence: G23 `313416ff` (32/32, 4 mutants), T5 commits
+`87b90738`..`d99851cc` left it byte-identical (golden sha256 `8FF376809E5B` unchanged). Not yet
+proven through the wiring step (T6).
+
+### Traps
+
+### T-A-MERGING-WRITER-USED-TO-CREATE-INHERITS-AUTHORITY-001
+
+A record updater that merges into what is on disk, called to CREATE the record for a new subject,
+carries the previous subject's fields over. When one of those fields IS authority, the new subject
+starts authorised. Measured: `rollover.precert_write` merged, the guard reads any `certified_at` as
+certified, so epoch N+1's marker written over epoch N's certified one would have left the new worker
+unguarded. Fix: a separate create that replaces, strips authority fields and refuses missing identity;
+the merging writer stays the updater. The estate's opposite rule (merge, never replace, or you destroy
+what you do not model) still holds for UPDATES -- the question is which operation you are performing.
+Evidence: `87b90738`, V-CAP2-WRITE-MERGES-IS-NOT-CREATE (control) + V-CAP2-ARM-RESETS-CERTIFIED.
+
+### T-A-CRASH-UNDER-A-MUTANT-COUNTED-AS-A-KILL-001
+
+A mutation harness that treats "the check raised" as "the check went red" reports kills for lines it
+never judged. Measured: two of three new mutants read as killed because their check crashed on a
+missing fixture directory before reaching the mutated code. A kill counts only when the check ran and
+returned red. Evidence: `d99851cc`, `Crashed` in tools/test_mission_capsule.py.
+
+### T-AN-MTIME-SENTINEL-OVER-STATE-OTHER-WRITERS-OWN-001
+
+"Live state unchanged" checked by mtime or size over a directory that other processes legitimately
+write is an instrument that cannot tell a leak from a neighbour. Measured: the production sweep
+rewrote live mission records during the suite's own run and failed the check. Check for the suite's
+OWN subjects instead (its ids and temp paths in file names and in ledger bytes appended during the
+run), with a positive control that the same predicate finds them in the isolated tree. Evidence:
+`5cdd7d9f`, V-MCAP-LIVE-STATE-HOLDS-NO-TEST-SUBJECT + V-MCAP-SENTINEL-SEES-OWN-SUBJECTS.
+
+### Evaluated, not promoted
+
+Hard-rule candidates with one migration of evidence each, below the bar for a Hard Rule: a
+characterization witness before replacing a supported durable protocol; no silent golden recapture;
+tests never fall back to live state; an adapter keeps the canonical identity domain. They stay
+candidates until T6 and the T8 Production Reality run add evidence.
