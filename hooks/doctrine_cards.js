@@ -19,13 +19,29 @@
 // --pathspec-from-file, GIT_INDEX_FILE, an unresolved variable), a git timeout, or a file the session
 // wrote through the shell (its lines are invisible to the transcript) is recorded as unknown.
 //
+// WINDOW RULE (skill-capability pillar A, D-01). A file with foreign hunks is ALSO recorded as unknown
+// (reason `mtime-in-own-shell-window`, listed in the ledger row's `unknown_reasons`) when its current mtime
+// lies inside one of THIS session's shell tool-call windows [tool_use row timestamp, tool_result row
+// timestamp] (1 s slack for fs/clock granularity) AND after this session's last Edit/Write/MultiEdit/
+// NotebookEdit of that file. Measured cause: a tool-mediated write by the session's own script or
+// formatter (gsd-tools, oxfmt, a census script) is invisible to the line ledger and read as foreign
+// (5 false denies, 0 true positives). A missing file or stat, a transcript row without a timestamp, an
+// unfinished shell call (no result row) and a failed toplevel lookup yield no window: the file stays
+// foreign, i.e. the failure goes toward the card, which asks once and is never an authority.
+//
 // APERTURE. Untracked files staged by `git add -A` in the same command are not checked; aliases and
 // commits made inside scripts are not seen; peers can stage between this check and the commit (TOCTOU).
 // Ownership is by exact trimmed line text, so a foreign line identical to one this session wrote reads
-// as own, and lines of 1-2 characters (braces) are not judged.
+// as own, and lines of 1-2 characters (braces) are not judged. Window rule aperture, stated and not hidden:
+// a peer writing the same file during one of this session's shell windows reads as unknown; a file this
+// session's shell touched after a pre-session foreign edit reads as unknown; pre-session foreign hunks whose
+// mtime precedes every shell window stay foreign; a rollover-resumed session committing lines its
+// predecessor wrote (mtime = its own Edit, not a shell window) stays foreign. Ownership is by lowercased
+// basename, so two files with one basename in different directories share an edit time.
 //
 // COST. Returns before ANY I/O unless the command matches the commit pattern (every shell call in every
-// pane pays this hook). One bounded git spawn (2.5 s). Pure node: no python on the hook path.
+// pane pays this hook). One bounded git spawn (2.5 s), plus one more bounded `rev-parse --show-toplevel`
+// ONLY on the foreign-with-windows path. Pure node: no python on the hook path.
 // State: DOCTRINE_CARDS_STATE_DIR (tests, benchmarks) or ~/.claude/state/doctrine-cards/.
 'use strict';
 
@@ -219,13 +235,16 @@ function plan(command, cwd) {
   return { repo, args: ['diff', '--cached'], basis: 'index' };
 }
 
-function git(repo, args) {
-  const full = ['--no-optional-locks', '-C', repo, ...args, '-U0', '--no-color', '--no-ext-diff'];
+function spawnGit(full) {
   let r = spawnSync('git', full, { encoding: 'utf8', timeout: GIT_TIMEOUT_MS, windowsHide: true });
   if (r.error && r.error.code === 'ENOENT' && fs.existsSync(GIT_FALLBACK)) {
     r = spawnSync(GIT_FALLBACK, full, { encoding: 'utf8', timeout: GIT_TIMEOUT_MS, windowsHide: true });
   }
   return r;
+}
+
+function git(repo, args) {
+  return spawnGit(['--no-optional-locks', '-C', repo, ...args, '-U0', '--no-color', '--no-ext-diff']);
 }
 
 function parseDiff(out) {
@@ -248,6 +267,9 @@ function parseDiff(out) {
 // Lines this session wrote, from its own transcript and its subagents' transcripts.
 function ownership(transcriptPath) {
   const added = new Set(); const removed = new Set(); const whole = new Set(); const shell = new Set();
+  // Window provenance (D-01): tool_use id -> {kind, base, start, end}, filled from tool_use rows and closed
+  // by the tool_result row carrying the same id. A row without a timestamp gives NaN and contributes nothing.
+  const calls = new Map();
   const files = [];
   if (transcriptPath && fs.existsSync(transcriptPath)) {
     files.push(transcriptPath);
@@ -259,12 +281,23 @@ function ownership(transcriptPath) {
     let raw;
     try { raw = fs.readFileSync(f, 'utf8'); } catch (_) { continue; }
     for (const line of raw.split('\n')) {
-      if (!/"(?:Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell)"|structuredPatch/.test(line)) continue;
+      const usesTool = /"(?:Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell)"|structuredPatch/.test(line);
+      // A result line is parsed only when it closes a call we are tracking (no JSON.parse of every result).
+      const closesCall = !usesTool && line.includes('"tool_result"')
+        && [...line.matchAll(/"tool_use_id"\s*:\s*"([^"]+)"/g)].some((m) => calls.has(m[1]));
+      if (!usesTool && !closesCall) continue;
       let d;
       try { d = JSON.parse(line); } catch (_) { continue; }
+      const rowTs = Date.parse(d.timestamp);
       for (const b of ((d.message || {}).content || [])) {
+        if (b && b.type === 'tool_result' && calls.has(b.tool_use_id)) { calls.get(b.tool_use_id).end = rowTs; continue; }
         if (!b || b.type !== 'tool_use') continue;
         const i = b.input || {};
+        if (b.name === 'Bash' || b.name === 'PowerShell') calls.set(b.id, { kind: 'shell', start: rowTs, end: NaN });
+        else if (EDIT_TOOLS.has(b.name)) {
+          const fp = String(i.file_path || i.notebook_path || '').replace(/\\/g, '/');
+          calls.set(b.id, { kind: 'edit', base: path.basename(fp).toLowerCase(), start: rowTs, end: NaN });
+        }
         if (b.name === 'Edit') { addLines(added, i.new_string); addLines(removed, i.old_string); }
         else if (b.name === 'Write') { addLines(added, i.content); if (i.file_path) whole.add(path.basename(i.file_path).toLowerCase()); }
         else if (b.name === 'MultiEdit') for (const e of (i.edits || [])) { addLines(added, e.new_string); addLines(removed, e.old_string); }
@@ -279,23 +312,45 @@ function ownership(transcriptPath) {
       }
     }
   }
-  return { added, removed, whole, shell, read: files.length };
+  const windows = []; const lastOwnEdit = new Map();
+  for (const c of calls.values()) {
+    if (c.kind === 'shell') { if (Number.isFinite(c.start) && Number.isFinite(c.end)) windows.push({ start: c.start, end: c.end }); continue; }
+    const t = Number.isFinite(c.end) ? c.end : c.start;
+    if (c.base && Number.isFinite(t) && !(lastOwnEdit.get(c.base) >= t)) lastOwnEdit.set(c.base, t);
+  }
+  return { added, removed, whole, shell, windows, lastOwnEdit, read: files.length };
 }
 
-function judge(diff, own) {
-  const foreign = []; const unknown = [];
+const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
+const WINDOW_SLACK_MS = 1000;
+
+// The window rule, in ONE declaration (the replay gate's mutant replaces exactly this body).
+function ownShellWindowHit(m, base, own) {
+  if (!Number.isFinite(m) || !own || !own.windows) return false;
+  if (!own.windows.some((w) => w.start - WINDOW_SLACK_MS <= m && m <= w.end + WINDOW_SLACK_MS)) return false;
+  return m > (own.lastOwnEdit && own.lastOwnEdit.has(base) ? own.lastOwnEdit.get(base) : -Infinity);
+}
+
+function judge(diff, own, mtimeOf) {
+  const foreign = []; const unknown = []; const unknownReasons = {};
   for (const f of diff) {
     const base = path.basename(f.file).toLowerCase();
-    if (own.shell.has(base)) { unknown.push(f.file); continue; }
+    if (own.shell.has(base)) { unknown.push(f.file); unknownReasons[f.file] = 'shell-write-target'; continue; }
     const hunks = [];
     for (const h of f.hunks) {
       const fa = h.added.filter((l) => l.trim().length > 2 && !own.added.has(l.trim()));
       const fr = own.whole.has(base) ? [] : h.removed.filter((l) => l.trim().length > 2 && !own.removed.has(l.trim()));
       if (fa.length || fr.length) hunks.push({ header: h.header, added: fa.length, removed: fr.length, sample: (fa[0] || fr[0]).trim().slice(0, 80) });
     }
-    if (hunks.length) foreign.push({ file: f.file, hunks });
+    if (!hunks.length) continue;
+    // mtimeOf is optional (judge stays pure for callers without a filesystem) and is only asked about a file
+    // that already has foreign hunks, and only when this session has at least one closed shell window.
+    if (typeof mtimeOf === 'function' && own.windows && own.windows.length && ownShellWindowHit(mtimeOf(f.file), base, own)) {
+      unknown.push(f.file); unknownReasons[f.file] = 'mtime-in-own-shell-window'; continue;
+    }
+    foreign.push({ file: f.file, hunks });
   }
-  return { foreign, unknown };
+  return { foreign, unknown, unknownReasons };
 }
 
 function card(foreign) {
@@ -340,8 +395,18 @@ async function main() {
   }
   const own = ownership(req.transcript_path);
   if (!own.read) { ledger({ decision: 'unknown', session, basis: p.basis, reason: 'transcript unreadable' }); return emit({ continue: true }); }
-  const { foreign, unknown } = judge(parseDiff(r.stdout || ''), own);
-  const rec = { session, basis: p.basis, aperture: p.aperture, unknown_files: unknown,
+  // mtime of a diffed file: one bounded toplevel lookup, made lazily (only for a foreign-with-windows file).
+  let top;
+  const mtimeOf = (file) => {
+    if (top === undefined) {
+      const t = spawnGit(['--no-optional-locks', '-C', p.repo, 'rev-parse', '--show-toplevel']);
+      top = !t.error && t.status === 0 && (t.stdout || '').trim() ? (t.stdout || '').trim() : null;
+    }
+    if (!top) return null;
+    try { return fs.statSync(path.join(top, file)).mtimeMs; } catch (_) { return null; }
+  };
+  const { foreign, unknown, unknownReasons } = judge(parseDiff(r.stdout || ''), own, mtimeOf);
+  const rec = { session, basis: p.basis, aperture: p.aperture, unknown_files: unknown, unknown_reasons: unknownReasons,
     foreign: foreign.map((f) => ({ file: f.file, hunks: f.hunks.map((h) => h.header) })) };
   if (!foreign.length) { ledger({ decision: unknown.length ? 'unknown' : 'no_opportunity', ...rec }); return emit({ continue: true }); }
   if (MODE !== 'deny') { ledger({ decision: 'opportunity', ...rec }); return emit({ continue: true }); }
@@ -362,4 +427,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(() => emit({ continue: true }));
-module.exports = { plan, parseDiff, judge, COMMIT_RE };
+module.exports = { plan, parseDiff, judge, ownership, COMMIT_RE };

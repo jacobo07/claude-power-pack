@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "pack_sha256": "dacfdf5aa8afb0a5e6221ebf98fcf1b70866c7de3931083e210e7e948a6c0c05",
+  "replays": [
+    {
+      "id": "3a05f288",
+      "session": "3a05f288-aba1-4ec3-a96d-e9cfeed19e78",
+      "deny_ts": "2026-10-03T13:43:56.219Z",
+      "files": ["data/costaluz/leads-stall-2026-10/trust-census/census.json"],
+      "writer_call_id": "toolu_014BkTUUhuKSPbvLgPpUWhDy",
+      "writer_window": ["2026-10-03T13:39:24.204Z", "2026-10-03T13:40:45.729Z"],
+      "mtime_ms": 1791034845084.3275,
+      "mtime_source": "measured",
+      "note": "mtime is sessions[sid].denied_files[0].mtime_now (1791034845.0843275 s, read on the laptop) = 2026-10-03T13:40:45.084Z, inside the writer window of the trust_figures_census.py call. The only measured mtime among the five frozen denies. Hunks are synthetic (the pack is content-free); file names, timestamps and tool-call windows are real."
+    }
+  ],
+  "beside": []
+}
