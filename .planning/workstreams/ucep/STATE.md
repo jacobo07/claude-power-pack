@@ -34,18 +34,17 @@ Total Plans in Phase: 5
 **Stopped at:** Phase 2 complete, ready to plan Phase 03
 **Resume file:** None
 
-**Next exact action (epoch 3):** Phase 2 is COMPLETE (0fe8a73e, verification passed 4/4; CR-01
-fixed in d61b5c23). Phase 3: context 9fd8c079, F0 reference 0b2953af, plans aeec9efd, plan check
-pass 1 b2815e16 (0 blockers, 5 warnings W1-W5, see 03-PLAN-CHECK.md). In order: (1) planner
-revision of 03-0N-PLAN.md for W1-W5 (in flight in epoch 3; if the files are unchanged since
-aeec9efd, the revision never landed -- re-dispatch gsd-planner with 03-PLAN-CHECK.md);
-(2) commit the revision, re-check (one pass, the checker returns text and the orchestrator
-writes the file -- gsd-plan-checker has no Write tool, the agent-contract guard blocks a
-"write as you go" clause for it); (3) execute 03-01..03-04 sequentially with gsd-executor
-(sonnet), isolation none, running `query dispatch-isolation --raw --phase 03 --plan 03-0M
---force-isolation none --ws ucep` before each dispatch, and re-running each plan's gates in the
-orchestrator before the next; (4) code review on the Phase 3 code paths only, regression gate,
-gsd-verifier, `phase.complete 3`, commit, push; (5) Phase 4.
+**Next exact action (epoch 3 -> 4):** Phase 2 COMPLETE (0fe8a73e). Phase 3 plans revised and
+checked twice, 0 blockers (fdce07dc). EXECUTE INLINE (subagents have no PowerShell; see
+decisions). 03-01 Task 1 DONE (137c583b: PHASE3_BASE 8cf3fd9c, F0_START=EQUAL, FLOORS_BAD=0,
+63 offenders in 03-liveness-before.json). 03-01 Task 2 IN PROGRESS: Step 1 done, the RED harness
+`tools/test_tower_admission.py` is committed with its RED row (1/6). Next: (a) optionally show
+the gate-3 hole directly on the current code (see the caveat in 03-EVIDENCE section 5); (b) 03-01
+Task 2 Steps 2-8 exactly as written in 03-01-PLAN.md (baselines additions, admission.py,
+ratchet wiring, test_tower_ratchet `_ev` fixtures, registry row + 03-OWNER-QUEUE.md, GREEN
+verifies, commit with the eight Step 8 paths; the test file is already committed, so Step 8 adds
+the other seven plus any test edit); (c) 03-01 Task 3, then 03-02..03-04 inline; (d) Phase 3
+code review, regression, verifier, `phase.complete 3`. Floors: see 03-EVIDENCE section 3.
 
 Read, in order: `vault/plans/ucep-naked-verb-2026-10-02.md` (plan of record + Owner answers),
 `vault/plans/ucep-naked-verb-2026-10-02.audit.md` (18 gaps), this workstream's `ROADMAP.md`.

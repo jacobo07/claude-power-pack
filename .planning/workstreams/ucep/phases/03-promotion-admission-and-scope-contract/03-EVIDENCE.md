@@ -72,3 +72,4 @@ standing debt and match the Phase 2 snapshot by name.
 
 | task | RED line (verbatim) | failing gates | already passing (with control) | HEAD |
 |---|---|---|---|---|
+| 03-01 T2 | `TOWER_ADMISSION_PASS=1/6  threshold=6/6` (rc 1) | TRACER-ARCHETYPE, TRACER-REFUSED-ORIGIN, TRACER-RECORD-INVALID (admission module absent: guarded ImportError), LEGACY-IDENTITY (no LEGACY_GENERATIONS), LIVENESS-DECLARED (no row) | HERMETIC-HOME (instrument, no control needed). Caveat: TRACER-REFUSED-ORIGIN failed on the import guard, not on today's `promote` writing the unverified entry; the successor should show that hole directly (promote `bad` on 137c583b code writes B0) before writing the module, or record it as not demonstrated | 137c583b |
