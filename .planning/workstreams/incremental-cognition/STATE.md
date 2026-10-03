@@ -68,6 +68,14 @@ test_gsd_mission 213/213, test_gsd_epoch 82/82, legacy golden 32/32; mutation dr
 scratchpad). Live tree: cwd_align 16/16, test_gsd_mission 213/213, test_gsd_epoch 82/82, golden 32/32.
 Note: m-fdefb0fca0c0 (cognitive-economy) and m-876f8b5a904a (ucep) were already RUNNING epoch 2 before the
 deploy (relaunched 16:10 / 17:01 UTC on "owner dead"); the fix applies from their next relay on.
-**Next:** obligation 5 -- arm `gsd_mission.py arm --workstream incremental-cognition` (12/24h), needs Owner go
-on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
+**ARMED ON GEX44 (Owner "GEX44", 2026-10-03 17:12 UTC):** mission `m-d2bdfa31de21`, epoch 1 worker
+`607795c4` acked; 12 cycles / 24 h, permission auto; cwd `/home/kobii/missions/incremental-cognition` (clone of
+bare `mission/incremental-cognition` at b6e024ca, repo-local identity, trust set, ~/.claude.json backed up as
+`.bak-ic-<ts>`). Supervised by `agora-mission-sweep.timer`. ROADMAP "Run plane: GEX44" routes A-PRG, KME-L
+(D,E,F,G,I,L) and K's reference to the owner bundle; run starts at Phase 2.
+**Handback (Owner/laptop):** status = ssh gex44 with `CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude python3
+~/.claude/skills/claude-power-pack/tools/gsd_mission.py status`; work = `git fetch
+ssh://gex44/home/kobii/missions/incremental-cognition <worker branch, e.g. mission/incremental-cognition-run>`
+(the worker commits on its OWN worktree branch). Any gsd_mission.py hunk (B, C) reaches the laptop's live file
+only by a deploy at >= 4 GB free (G6).
 **Resume File:** this STATE.md + vault/plans/incremental-cognition-program-2026-10-03.md
