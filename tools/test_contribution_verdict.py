@@ -109,10 +109,14 @@ NEEDED_PINS = ((Fraction(1, 2), 15, ((6, 9), (9, 6)), 10),
                (Fraction(1), 7, ((2, 5), (3, 4), (4, 3), (5, 2)), 4))
 
 # Session-count phrasings used by phases 1-6 (three at plan time, a fourth found at execution in F).
-SESSION_RES = (re.compile(r"(\d+) fresh sessions? were consumed", re.I),
-               re.compile(r"consumed this phase: (\d+) fresh sessions?", re.I),
-               re.compile(r"fresh sessions consumed in this phase: (\d+)", re.I),
-               re.compile(r"this phase consumed (\d+) fresh sessions?", re.I))
+# Each is anchored (no digit, letter, '/' or '.' before the statement) and refuses a statement opened by
+# "of " ("2 of 10 fresh sessions were consumed"), "if " or "would " (a conditional), which are not a
+# phase's own count (07-REVIEW IN-01).
+_SESSION_GUARD = r"(?<![\w/.])(?<!\bof )(?<!\bif )(?<!\bwould )"
+SESSION_RES = (re.compile(_SESSION_GUARD + r"(\d+) fresh sessions? were consumed", re.I),
+               re.compile(_SESSION_GUARD + r"consumed this phase: (\d+) fresh sessions?", re.I),
+               re.compile(_SESSION_GUARD + r"fresh sessions consumed in this phase: (\d+)(?![\w/]|\.\d)", re.I),
+               re.compile(_SESSION_GUARD + r"this phase consumed (\d+) fresh sessions?", re.I))
 SUMMARY_PATH_RE = re.compile(r"^" + re.escape(PHASES_REL) + r"(\d{2})-[^/]+/[^/]+-SUMMARY\.md$")
 EVIDENCE_PATH_RE = re.compile(r"^" + re.escape(EVIDENCE_DIR_REL) + r"([A-Z])-[^/]+\.md$")
 TRACE_RE = re.compile(r"^\| SC-([A-Z]) \| Phase (\d+) \|", re.M)
@@ -1045,6 +1049,11 @@ def _drill_specs():
         ("sessions-conflict-in-phase", upd(st=lambda i: _with_text(i["st"], s22, "consumed this phase: 0 fresh",
                                                                    "consumed this phase: 2 fresh")),
          inc_budget, "INCONCLUSIVE", None),
+        ("sessions-conditional-and-n-of-m", upd(st=lambda i: _with_text(
+            i["st"], c_rel, "- 0 fresh sessions were consumed",
+            "- 0 fresh sessions were consumed\n2 of 10 fresh sessions were consumed. If this phase consumed 3 fresh "
+            "sessions, the cap is exceeded; it would consume 4 fresh sessions.")), {}, "NOT_SEPARABLE",
+         remaining_is(10)),
         ("bound-floors-fall", upd(floors=falling), {"V-CT-BOUND": "FAIL"}, "INCONCLUSIVE", None),
         ("consumption-contradiction", upd(rows=rows_with(set_contradiction)), {"V-CT-CONSUMPTION": "FAIL"},
          "INCONCLUSIVE", None),
