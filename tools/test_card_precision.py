@@ -21,6 +21,7 @@ import datetime
 import hashlib
 import json
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -209,6 +210,29 @@ def make_mutant(dest_dir: str) -> tuple:
     return path, n, mutated != src
 
 
+def run_suite(script: str) -> tuple:
+    """Run one node suite (bounded 300 s). Returns (rc, stdout); a timeout is rc=-1."""
+    try:
+        r = subprocess.run([NODE, os.path.join(ROOT, "hooks", "tests", script)], capture_output=True, text=True,
+                           timeout=300, cwd=ROOT)
+        return r.returncode, r.stdout
+    except subprocess.TimeoutExpired:
+        return -1, ""
+
+
+def check_suites() -> None:
+    rc, out = run_suite("test-doctrine-cards.js")
+    last = (out.strip().splitlines() or [""])[-1]
+    m = re.fullmatch(r"DOCTRINE_CARDS_PASS=(\d+)/(\d+)", last)
+    check("V-SCA-NODE-DOCTRINE-CARDS", rc == 0 and bool(m) and m.group(1) == m.group(2), f"rc={rc} last={last!r}")
+    check("V-SCA-ARM-C", "PASS V-DC-JUDGED-COMMIT-NOT-A-WRITE" in out,
+          "doctrine-cards output contains PASS V-DC-JUDGED-COMMIT-NOT-A-WRITE" if "PASS V-DC-JUDGED-COMMIT-NOT-A-WRITE" in out
+          else "arm C line missing from the doctrine-cards output")
+    rc2, out2 = run_suite("test-destructive-doctrine-card.js")
+    last2 = (out2.strip().splitlines() or [""])[-1]
+    check("V-SCA-NODE-DESTRUCTIVE-CARD", rc2 == 0, f"rc={rc2} last={last2!r}")
+
+
 def check_spec(spec: dict, pack: dict) -> None:
     ids = [r["id"] for r in spec["replays"]]
     check("V-SCA-SPEC-FIVE-FROZEN", len(ids) == 5 and set(ids) == FROZEN_IDS, f"replays={ids}")
@@ -285,6 +309,8 @@ def main() -> int:
 
     print(f"D-CARD frozen_denies=5 replayed_allowed={allowed}/5 presession_denied={presession}/5 "
           f"mutant_denied={mutant_denied}/5 | beside: {b['id']} (after freeze) denied={beside_denied} class={b['class']}")
+
+    check_suites()
 
     print(f"SCA_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1

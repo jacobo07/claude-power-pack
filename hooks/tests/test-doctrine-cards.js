@@ -203,5 +203,47 @@ const writeOwnAndForeign = (s) => { writeOwn(s); fs.appendFileSync(path.join(s.r
   check('V-DC-REPLAY', fx.cases.length >= 50 && bad.length === 0,
     `${fx.cases.length} cases, ${unknown} expected unknown, mismatches: ${bad.map((c) => c.id).join(',') || 'none'}`); }
 
+// 11. Window rule (skill-capability pillar A, D-01): a file with foreign hunks whose mtime lies inside one of
+// this session's shell tool-call windows (1 s slack) and after its last own edit is UNKNOWN, not foreign.
+// Rows carry timestamps (the harness shape); cases 1-10 use rows without, which must stay foreign.
+const T0 = Date.parse('2026-10-03T10:00:00.000Z');
+const iso = (ms) => new Date(ms).toISOString();
+function windowTranscript(root, { shellEnd = T0 + 10000, editEndAt = T0 - 300000 } = {}) {
+  const sid = 'sess-0001';
+  const tp = path.join(root, `${sid}.jsonl`);
+  const use = (ts, id, name, input) => ({ type: 'assistant', timestamp: iso(ts), message: { content: [{ type: 'tool_use', id, name, input }] } });
+  const res = (ts, id) => ({ type: 'user', timestamp: iso(ts), message: { content: [{ type: 'tool_result', tool_use_id: id, content: 'ok' }] } });
+  const rows = [{ type: 'user', message: { content: 'fix the test' } },
+    use(editEndAt - 5000, 'e1', 'Edit', { file_path: 'C:\\proj\\pricing.py', old_string: '    return amount - pct', new_string: '    return amount * (1 - pct / 100)' }),
+    res(editEndAt, 'e1'),
+    use(T0, 's1', 'PowerShell', { command: 'python gen_report.py' })];
+  if (shellEnd != null) rows.push(res(shellEnd, 's1'));
+  fs.writeFileSync(tp, rows.map((r) => JSON.stringify(r)).join('\n') + '\n');
+  return { sid, tp };
+}
+function windowCase(tag, mtimeMs, opts) {
+  const s = scratch(tag); const t = windowTranscript(s.root, opts); writeOwnAndForeign(s);
+  fs.utimesSync(path.join(s.repo, 'pricing.py'), mtimeMs / 1000, mtimeMs / 1000);
+  return run(s, t, 'git commit -m fix -- pricing.py', 'deny');
+}
+{ const r = windowCase('win-in', T0 + 5000);
+  check('V-DC-MTIME-IN-SHELL-WINDOW', !r.denied && r.last && r.last.decision === 'unknown'
+    && (r.last.unknown_reasons || {})['pricing.py'] === 'mtime-in-own-shell-window',
+  `denied=${r.denied} decision=${r.last && r.last.decision} reasons=${JSON.stringify(r.last && r.last.unknown_reasons)}`);
+  const pre = windowCase('win-pre', T0 - 120000);
+  check('V-DC-MTIME-PRE-SESSION', pre.denied && pre.last && pre.last.decision === 'deny-card',
+    `mtime=T0-120s denied=${pre.denied} decision=${pre.last && pre.last.decision}`);
+  const own = windowCase('win-own', T0 + 5000, { editEndAt: T0 + 8000 });
+  check('V-DC-MTIME-BEFORE-LAST-OWN-EDIT', own.denied && own.last && own.last.decision === 'deny-card',
+    `mtime=T0+5s, own edit result at T0+8s: denied=${own.denied} decision=${own.last && own.last.decision}`);
+  const open = windowCase('win-open', T0 + 5000, { shellEnd: null });
+  check('V-DC-MTIME-WINDOW-OPEN', open.denied && open.last && open.last.decision === 'deny-card',
+    `shell call without a result row: denied=${open.denied} decision=${open.last && open.last.decision}`);
+  const inSlack = windowCase('win-slack-in', T0 + 10000 + 900);
+  const outSlack = windowCase('win-slack-out', T0 + 10000 + 1500);
+  check('V-DC-MTIME-SLACK', !inSlack.denied && inSlack.last && inSlack.last.decision === 'unknown'
+    && outSlack.denied && outSlack.last && outSlack.last.decision === 'deny-card',
+  `end+0.9s: ${inSlack.last && inSlack.last.decision}; end+1.5s: ${outSlack.last && outSlack.last.decision}`); }
+
 console.log(`DOCTRINE_CARDS_PASS=${pass}/${pass + fail}`);
 process.exit(fail ? 1 : 0);
