@@ -146,12 +146,12 @@ Plans:
 **Goal**: a material rise in startup floor by layer is visible in review.
 **Depends on**: nothing.
 **Success criteria**: gate green on today's floor, red on a seeded rise (positive control), layer and scope reported.
-**Plans:** 4 plans (sequential waves 1-4; all share tools/floor_regression_gate.py and its test)
+**Plans:** 1/4 plans executed (sequential waves 1-4; all share tools/floor_regression_gate.py and its test)
 
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — K core: floor_regression_gate.py (transcript window -> layer/scope table -> reference -> check; exit 0/1/2), materiality + explanations + tokens axis, drill incl. source-level scope split
+- [x] 04-01-PLAN.md — K core: floor_regression_gate.py (transcript window -> layer/scope table -> reference -> check; exit 0/1/2), materiality + explanations + tokens axis, drill incl. source-level scope split
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

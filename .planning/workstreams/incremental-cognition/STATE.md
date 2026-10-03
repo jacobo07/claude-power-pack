@@ -4,14 +4,14 @@ milestone: v1
 current_phase: 2
 current_plan: 4
 status: verifying
-stopped_at: Completed 03-05-PLAN.md
-last_updated: "2026-10-03T21:52:13.808Z"
-state_head: 7492d2c08cf2bed8f5e95e26aab558c21f68c8c3
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-10-03T23:16:32.504Z"
+state_head: 92c94558424514a275f280bf86ea47b9062d3348
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 13
+  completed_plans: 10
 milestone_name: incremental-cognition
 last_activity: 2026-10-03
 workstream: incremental-cognition
@@ -73,12 +73,13 @@ Total Plans in Phase: 4
 - [Phase 3]: [03-05] second workloads accepted for E (advisory 2): any instrument-written second_workload file with second_workload_valid true beside a terminal KME-L primary -- CPP-D-W7 at coverage >= 1 (named in the bundle), a KME-G run with an exact population, or a named OTHER workload; the claim stays in the KME-L primary and KME-G cannot stand in for it (R3 refuses a second workload without a terminal primary); independence is argued at close time in evidence/E.md
 - [Phase 3]: [03-05] bundle [D]-[I]: population proof UNFILTERED first (P0 dir list never recorded), fourteen-commit cherry-pick list preceded by the conditional FROZEN_AT pick d4d35059, replayed in a scratch clone from 18e928af (KMEP 82/82); commands NOT RUNNABLE HERE, proven only to parse (11 parsed)
 - [Phase 3]: [03-05] phase 3 closes on GEX44 with every pillar D-I OPEN: ledger state.D..I empty, IC-D..IC-I unticked, requirements.mark-complete not called; terminals wait for the six laptop KME-L files; evidence/phase3.md Status OPEN
+- [Phase 4]: [04-01] R2-W1 items 1-2 applied (window_sha256/window_rows via one window_digest, V-FLOOR-WINDOW-APPEND-STABLE); floor gate core built, drill 8/8; IC-K addressed not satisfied
 
 ## Session Continuity
 
-**Last session:** 2026-10-03T21:52:13.731Z
+**Last session:** 2026-10-03T23:16:32.425Z
 
-**Stopped At:** Completed 03-05-PLAN.md
+**Stopped At:** Completed 04-01-PLAN.md
 `tools/test_gsd_mission_cwd_align.py` has 4 NEW uncommitted cases (V-MCA-DIVERGED-FOLLOWED / -UNPROVEN /
 -STALE-ROADMAP / -THREE-RELAYS) calling `gm.align_cwd(cwd, wt, proven_workstream="ws")`; the
 `threshold=9/9` line still needs 13/13. Not yet run (expected RED: align_cwd has no proven_workstream).
@@ -125,6 +126,7 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 | Phase 03 P03 | 40min | 3 tasks | 5 files |
 | Phase 3 P04 | 10min | 3 tasks | 4 files |
 | Phase 03 P05 | 11min | 3 tasks | 6 files |
+| Phase 04 P01 | ~1h | 3 tasks | 2 files |
 
 ## Session Continuity (GEX44 run, 2026-10-03 ~19:00Z, session 607795c4)
 
