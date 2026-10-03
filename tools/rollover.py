@@ -614,14 +614,75 @@ def certify(capsule: dict, answers: dict) -> dict:
 
 
 # -------------------------------------------------------------------------- ledger
-def ledger(event: str, state_dir: Optional[Path] = None, **fields) -> None:
-    path = (state_dir or STATE_DIR) / "rollover-ledger.jsonl"
+LEDGER_LOCK_TIMEOUT_S = 2.0     # bounded well inside the 20 s foreground gate: a stuck holder costs a row
+
+
+def _lock_try(fd: int) -> bool:
     try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "a", encoding="utf-8") as fh:
-            fh.write(json.dumps({"ts": _iso(), "event": event, **fields}, ensure_ascii=False) + "\n")
+        if sys.platform == "win32":
+            import msvcrt
+            os.lseek(fd, 0, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
     except OSError:
-        pass  # telemetry: a lost row never blocks a session
+        return False
+
+
+def _ledger_failed(base: Path, event: str, why: str) -> None:
+    """A dropped row leaves its own uniquely named file: no shared append, so no race to lose it."""
+    try:
+        d = base / "ledger-failures"
+        d.mkdir(parents=True, exist_ok=True)
+        name = f"{time.time_ns()}-{os.getpid()}.json"
+        (d / name).write_text(json.dumps({"ts": _iso(), "event": event, "why": why}), encoding="utf-8")
+    except OSError:
+        pass
+    print(f"rollover ledger: row {event!r} NOT written ({why})", file=sys.stderr)
+
+
+def ledger(event: str, state_dir: Optional[Path] = None, **fields) -> bool:
+    """Append one row under an exclusive lock. Measured 2026-10-03 (plan ccp-s16 F6): Windows
+    append is seek-to-end + write, so concurrent sessions OVERWROTE each other's rows (6 tails
+    left in the live ledger; the old shape loses 114-271 of 900 rows in test_rollover_ledger_race;
+    O_APPEND + one os.write lost as many in a scratch run). The lock is a sidecar file, never
+    deleted, released by the OS if the holder dies (idiom of gsd_mission._Lock); the ledger itself
+    is not locked, because Windows locks are mandatory and would block `sealed_receipt` readers.
+    On timeout or OSError the row is dropped and REPORTED (returns False, ledger-failures/ file);
+    it is never written torn and this function never raises -- callers that need the row (the
+    capsule_sealed writers) check the return."""
+    base = state_dir or STATE_DIR
+    path = base / "rollover-ledger.jsonl"
+    data = (json.dumps({"ts": _iso(), "event": event, **fields}, ensure_ascii=False) + "\n").encode("utf-8")
+    fd, locked = None, False
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+        fd = os.open(base / "rollover-ledger.lock", os.O_RDWR | os.O_CREAT)
+        deadline = time.time() + LEDGER_LOCK_TIMEOUT_S
+        while not _lock_try(fd):
+            if time.time() > deadline:
+                _ledger_failed(base, event, f"lock busy > {LEDGER_LOCK_TIMEOUT_S}s")
+                return False
+            time.sleep(0.005)
+        locked = True
+        with open(path, "ab") as fh:
+            fh.write(data)
+        return True
+    except OSError as exc:
+        _ledger_failed(base, event, f"{exc.__class__.__name__}: {exc}")
+        return False
+    finally:
+        if fd is not None:
+            try:
+                if locked and sys.platform == "win32":
+                    import msvcrt
+                    os.lseek(fd, 0, os.SEEK_SET)
+                    msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)   # explicit: close-release can lag
+            except OSError:
+                pass
+            os.close(fd)      # closing releases the lock on every platform
 
 
 def resumable(capsule: dict) -> list[str]:
@@ -808,9 +869,12 @@ def main(argv=None) -> int:
         cap = compile_capsule(a.session, a.cwd, a.transcript, goal=a.goal, next_items=a.next, summary=a.summary)
         receipt, comp = seal(cap), completeness(cap)
         stf = safe_to_forget(receipt, comp)
-        ledger("capsule_sealed", session_id=a.session, cwd=a.cwd, capsule=receipt,
-               safe_to_forget=stf["verdict"], refusals=stf["reasons"])
+        recorded = ledger("capsule_sealed", session_id=a.session, cwd=a.cwd, capsule=receipt,
+                          safe_to_forget=stf["verdict"], refusals=stf["reasons"])
         print(f"capsule   {receipt.get('path')}  sealed={receipt.get('sealed')}  sha={str(receipt.get('sha256'))[:12]}")
+        if not recorded:    # the gate reads this row: without it /clear would meet NO_CAPSULE (ccp-s16 W1)
+            print(f"verdict   {UNKNOWN} -- the seal record was not written (ledger busy); seal again before /clear")
+            return 3
         print(f"verdict   {stf['verdict']}")
         for r in stf["reasons"]:
             print(f"  missing  {r}")
