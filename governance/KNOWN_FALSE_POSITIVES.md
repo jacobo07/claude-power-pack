@@ -153,6 +153,12 @@
   disclaimer itself tripped it -- "You have no write tool: ... the parent session persists it to
   vault/audits/r2-residency-audit.md". Naming the parent's output path near any write-family word
   is enough. Fix (1) worked first time.
+- Recurred 2026-10-03 (KSR epoch-rehydration ultra phase 4), converse shape: the guard's
+  UNBOUNDED-research branch refused `oneshot-architect-auditor` because the prompt carried NO
+  write clause -- which a read-only specialist cannot honour. So the canonical phase-4 auditor is
+  undispatchable with any audit-sized prompt: one branch refuses a write clause, the other demands
+  one. Fix (1) again, first time. Structural fix belongs in the guard (exempt agents whose
+  definition has no write tool from the durable-output demand), not in prompt wording.
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
