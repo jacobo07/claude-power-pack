@@ -146,7 +146,7 @@ Plans:
 **Goal**: a material rise in startup floor by layer is visible in review.
 **Depends on**: nothing.
 **Success criteria**: gate green on today's floor, red on a seeded rise (positive control), layer and scope reported.
-**Plans:** 1/4 plans executed (sequential waves 1-4; all share tools/floor_regression_gate.py and its test)
+**Plans:** 2/4 plans executed (sequential waves 1-4; all share tools/floor_regression_gate.py and its test)
 
 Plans:
 **Wave 1**
@@ -155,7 +155,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 04-02-PLAN.md — K attribution: hook context / system messages by producing command + settings registration, skill and agent entries by name, host-absent is unattributed
+- [x] 04-02-PLAN.md — K attribution: hook context / system messages by producing command + settings registration, skill and agent entries by name, host-absent is unattributed
 
 **Wave 3** *(blocked on Wave 2 completion)*
 

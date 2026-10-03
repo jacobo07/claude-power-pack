@@ -4,14 +4,14 @@ milestone: v1
 current_phase: 2
 current_plan: 4
 status: verifying
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-10-03T23:16:32.504Z"
-state_head: 92c94558424514a275f280bf86ea47b9062d3348
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-10-03T23:24:07.926Z"
+state_head: a52860d20da645b3bba9311b9c4fd06610647fb9
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 13
-  completed_plans: 10
+  completed_plans: 11
 milestone_name: incremental-cognition
 last_activity: 2026-10-03
 workstream: incremental-cognition
@@ -74,12 +74,13 @@ Total Plans in Phase: 4
 - [Phase 3]: [03-05] bundle [D]-[I]: population proof UNFILTERED first (P0 dir list never recorded), fourteen-commit cherry-pick list preceded by the conditional FROZEN_AT pick d4d35059, replayed in a scratch clone from 18e928af (KMEP 82/82); commands NOT RUNNABLE HERE, proven only to parse (11 parsed)
 - [Phase 3]: [03-05] phase 3 closes on GEX44 with every pillar D-I OPEN: ledger state.D..I empty, IC-D..IC-I unticked, requirements.mark-complete not called; terminals wait for the six laptop KME-L files; evidence/phase3.md Status OPEN
 - [Phase 4]: [04-01] R2-W1 items 1-2 applied (window_sha256/window_rows via one window_digest, V-FLOOR-WINDOW-APPEND-STABLE); floor gate core built, drill 8/8; IC-K addressed not satisfied
+- [Phase 4]: [04-02] hook/skill/agent scope attributed by registration or file under <cwd>/.claude vs <install_home>/.claude; unreadable settings and a cwd absent on this host stay unattributed; plugin ns:name with no project file is filed universal (stricter side); deltas per source so relabels are cost-neutral
 
 ## Session Continuity
 
-**Last session:** 2026-10-03T23:16:32.425Z
+**Last session:** 2026-10-03T23:24:07.824Z
 
-**Stopped At:** Completed 04-01-PLAN.md
+**Stopped At:** Completed 04-02-PLAN.md
 `tools/test_gsd_mission_cwd_align.py` has 4 NEW uncommitted cases (V-MCA-DIVERGED-FOLLOWED / -UNPROVEN /
 -STALE-ROADMAP / -THREE-RELAYS) calling `gm.align_cwd(cwd, wt, proven_workstream="ws")`; the
 `threshold=9/9` line still needs 13/13. Not yet run (expected RED: align_cwd has no proven_workstream).
@@ -127,6 +128,7 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 | Phase 3 P04 | 10min | 3 tasks | 4 files |
 | Phase 03 P05 | 11min | 3 tasks | 6 files |
 | Phase 04 P01 | ~1h | 3 tasks | 2 files |
+| Phase 04 P02 | 40min | 2 tasks | 2 files |
 
 ## Session Continuity (GEX44 run, 2026-10-03 ~19:00Z, session 607795c4)
 
