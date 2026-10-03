@@ -8,22 +8,23 @@ Frozen rule (ledger `frozen.pillars`):
 
 Frozen owners: `tools/usage_index.py`.
 
-- measured_at_commit: 1e32ae7a3a6404070cb8e5ff6fa9c983ace8c5d6
+- measured_at_commit: 73c80794f0143a63fcabdd3cd17fe3d0eba75613
 - freeze: 217d72b5944a664fbc0baa1060c04617ff10f481
 - host: kobicraft-gex44
 - plane: committed blobs at measured_at_commit (git grep / cat-file / diff / archive), never the working tree
 - produced by: python3 tools/skill_handoffs.py --write M
-- claim: PASS aperture=PASS cost=PASS control=PASS
+- claim: PASS aperture=PASS cost=PASS control=PASS denominator=PASS
 
 ## Commands and observed output
 
 | command | observed |
 |---|---|
-| `git diff --name-only --diff-filter=A 217d72b5 1e32ae7a -- modules tools` | 16 added files |
+| `git diff --name-only --diff-filter=A 217d72b5 73c80794 -- modules tools` | 16 added files |
 | `cost-model marker over each added file (each line)` | 2 hits: 0 open, 2 adjudicated not a cost model |
 | `cost-model marker over the control tools/usage_index.py` | 3 hits, kinds ['def', 'import'] |
-| `ledger state.<P>.savings[] at 1e32ae7a (vault/programs/skill-capability/ledger.json)` | 2 entries |
+| `ledger state.<P>.savings[] at 73c80794 (vault/programs/skill-capability/ledger.json)` | 2 entries |
 | `delta lines of evidence/B-listing-floor.md and evidence/E-contribution.md (pattern `(?i)\bdelta [+-]\d\|\bmoved\b.*[+-]\d\|\blargest effect\b`; denominator from line 1)` | 4 lines |
+| `denominator of every savings[] entry and every delta line` | 2 savings entries and 4 delta lines, each with a named denominator |
 
 ## Claim parts
 
@@ -32,6 +33,7 @@ Frozen owners: `tools/usage_index.py`.
 | aperture | PASS | 16 added files |
 | cost | PASS | 0 open hits in 16 files (2 adjudicated) |
 | control | PASS | tools/usage_index.py: 3 hits |
+| denominator | PASS | 2 savings entries and 4 delta lines, each with a named denominator |
 
 ## Aperture
 
@@ -57,9 +59,9 @@ Frozen owners: `tools/usage_index.py`.
 | B-listing-floor.md:46 | D-LISTING | - K4 moved startup tokens +2105 (87739 -> 89844) against the stated noise +-1500 (vault/lessons/2026-10-03-capped-listing-and-card-aperture.md line 12): startup tokens rose by 2105, above the stated noise (+-1500) by 605. fresh-session first-call figures; one session each, n=1 per arm. |
 | E-contribution.md:45 | D-SESSIONS | Largest effect against N0: authoritative 0 (0 points), stored 1/2 (50 points). |
 
-E reports no turn or token delta. Its only effect figure is a pass-rate difference against arm N0, denominator D-SESSIONS.
+Per source (measured above, not typed): B-listing-floor.md: 3 delta line(s), denominator D-LISTING (from its line 1); E-contribution.md: 1 delta line(s), denominator D-SESSIONS (from its line 1).
 
-### Cost-model sweep at 1e32ae7a
+### Cost-model sweep at 73c80794
 
 | added file | cost-model hits | hit lines |
 |---|---|---|

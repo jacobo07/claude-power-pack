@@ -485,6 +485,8 @@ def measure_K(repo, ctx, host):
 
 DELTA_LINE = re.compile(r"(?i)\bdelta [+-]\d|\bmoved\b.*[+-]\d|\blargest effect\b")
 DENOM_HEAD = re.compile(r"--\s*(D-[A-Z0-9]+)\s+measurement")
+M_DELTA_SOURCES = ("B-listing-floor.md", "E-contribution.md")
+UNNAMED = "UNNAMED"
 
 
 def measure_M(repo, ctx, host):
@@ -492,7 +494,7 @@ def measure_M(repo, ctx, host):
     sha, parts, cmds, ev = ctx["sha"], r["parts"], r["commands"], r["evidence"]
     rows, why = _sweep_added(repo, ctx, r, "m")
     if rows is None:
-        for p in ("aperture", "cost", "control"):
+        for p in ("aperture", "cost", "control", "denominator"):
             parts[p] = ["INCONCLUSIVE", f"git failed: {why}"]
         return r
     cmds.append([aperture_cmd(ctx), f"{len(rows)} added files"])
@@ -531,21 +533,40 @@ def measure_M(repo, ctx, host):
         for s in (st or {}).get("savings") or []:
             savings.append((pid, s))
     cmds.append([f"ledger state.<P>.savings[] at {sha[:8]} ({LEDGER_REL})", f"{len(savings)} entries"])
-    deltas = []
-    for name in ("B-listing-floor.md", "E-contribution.md"):
+    deltas, unreadable, per_source = [], [], []
+    for name in M_DELTA_SOURCES:
         t, why = blob(repo, sha, EVIDENCE_REL + name)
         if t is None:
             deltas.append((name, 0, f"UNREADABLE: {why}", "-"))
+            unreadable.append((name, why))
+            per_source.append(f"{name}: unreadable")
             continue
         m = DENOM_HEAD.search(t.splitlines()[0] if t else "")
-        denom = m.group(1) if m else "UNNAMED"
-        for i, line in enumerate(t.splitlines(), 1):
-            if DELTA_LINE.search(line):
-                deltas.append((name, i, line.strip(), denom))
+        denom = m.group(1) if m else UNNAMED
+        hit = [(name, i, line.strip(), denom) for i, line in enumerate(t.splitlines(), 1) if DELTA_LINE.search(line)]
+        deltas += hit
+        per_source.append(f"{name}: {len(hit)} delta line(s), denominator {denom} (from its line 1)")
     cmds.append(["delta lines of evidence/B-listing-floor.md and evidence/E-contribution.md (pattern "
                  f"`{DELTA_LINE.pattern}`; denominator from line 1)", f"{len(deltas)} lines"])
     r["info"]["savings"] = savings
     r["info"]["deltas"] = deltas
+    # The frozen rule: deltas relative to a NAMED denominator. Judge it on every figure (review WR-03).
+    no_denom = [p for p, s in savings if not str(s.get("denominator") or "").strip()]
+    unnamed = [f"{n}:{i}" for n, i, _, d in deltas if d == UNNAMED]
+    readable_lines = [x for x in deltas if x[1] > 0]
+    if no_denom or unnamed:
+        parts["denominator"] = ["FAIL", f"savings entries of pillars {no_denom} lack a denominator; delta lines "
+                                        f"under an unnamed denominator {unnamed}"[:300]]
+    elif any(git_failed(w) for _, w in unreadable):
+        parts["denominator"] = ["INCONCLUSIVE", f"git failed: {unreadable}"[:300]]
+    elif unreadable:
+        parts["denominator"] = ["UNMEASURED", f"evidence not committed: {[n for n, _ in unreadable]}"]
+    elif not readable_lines:
+        parts["denominator"] = ["UNMEASURED", f"dead control: the delta pattern hits no line of {M_DELTA_SOURCES}"]
+    else:
+        parts["denominator"] = ["PASS", f"{len(savings)} savings entries and {len(readable_lines)} delta lines, each "
+                                        "with a named denominator"]
+    cmds.append(["denominator of every savings[] entry and every delta line", parts["denominator"][1]])
     r["aperture"] = [
         "Population: the same added-file set as K (modules/ and tools/, `--diff-filter=A`, freeze to the "
         "measured commit, a superset of this program's files).",
@@ -562,8 +583,7 @@ def measure_M(repo, ctx, host):
     ev += ["", "### Delta lines quoted from evidence (denominator from each file's line 1)", "",
            "| source | denominator | line |", "|---|---|---|"]
     ev += [f"| {n}:{i} | {d} | {cell(t)} |" for n, i, t, d in deltas]
-    ev += ["", "E reports no turn or token delta. Its only effect figure is a pass-rate difference "
-           "against arm N0, denominator D-SESSIONS.",
+    ev += ["", "Per source (measured above, not typed): " + "; ".join(per_source) + ".",
            "", f"### Cost-model sweep at {sha[:8]}", ""] + _sweep_table(rows, "cost-model")
     ev += ["", f"### Marker hits adjudicated not a cost model: {len(used)}", "",
            "Each is pinned in `M_ADJUDICATED` of tools/skill_handoffs.py by path and exact line; an edit to the "

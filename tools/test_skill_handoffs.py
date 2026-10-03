@@ -183,6 +183,41 @@ def coverage_without_plane(d):
     commit(d, "D-coverage.md without plane tables", add=[rel])
 
 
+def evidence_header_unnamed(name):
+    """Drop the `-- D-XXX measurement` denominator from line 1 of evidence/<name>."""
+    def m(d):
+        rel = skh.EVIDENCE_REL + name
+        path = Path(d) / rel
+        head, rest = path.read_text(encoding="utf-8").split("\n", 1)
+        new = skh.DENOM_HEAD.sub("-- (no denominator)", head)
+        if new == head:
+            raise RuntimeError(f"precondition: line 1 of {name} names no denominator")
+        path.write_bytes((new + "\n" + rest).encode("utf-8"))
+        commit(d, f"{name} line 1 without a denominator", add=[rel])
+    return m
+
+
+def savings_without_denominator(d):
+    import json  # noqa: PLC0415
+    path = Path(d) / skh.LEDGER_REL
+    led = json.loads(path.read_text(encoding="utf-8"))
+    hit = [s for st in led["state"].values() for s in (st or {}).get("savings") or [] if "denominator" in s]
+    if not hit:
+        raise RuntimeError("precondition: no savings entry carries a denominator")
+    hit[0].pop("denominator")
+    path.write_bytes(json.dumps(led, indent=1).encode("utf-8"))
+    commit(d, "one savings entry without its denominator", add=[skh.LEDGER_REL])
+
+
+def deltas_without_lines(d):
+    """Keep line 1 of each delta source (its denominator) and drop every line the delta pattern could hit."""
+    rels = [skh.EVIDENCE_REL + n for n in skh.M_DELTA_SOURCES]
+    for rel in rels:
+        path = Path(d) / rel
+        path.write_bytes((path.read_text(encoding="utf-8").split("\n", 1)[0] + "\n").encode("utf-8"))
+    commit(d, "delta sources reduced to their headers", add=rels)
+
+
 # A reachability scanner that answers well-formed rows and writes a file into the export it runs in.
 WRITING_SCANNER = ("import json, pathlib\n"
                    "pathlib.Path('scanner_wrote_this.txt').write_text('x')\n"
@@ -219,6 +254,7 @@ GIT_SITES = (
     ("K-CONTROL", skh.K_CONTROLS[0], _probe_part("K", "control"), "UNMEASURED"),
     ("M-CONTROL", skh.M_CONTROL, _probe_part("M", "control"), "UNMEASURED"),
     ("I-SKILLS", skh.EVIDENCE_REL + "D-coverage.md", _probe_part("I", "skills"), "UNMEASURED"),
+    ("M-DENOMINATOR", skh.EVIDENCE_REL + "B-listing-floor.md", _probe_part("M", "denominator"), "UNMEASURED"),
 )
 
 
@@ -305,6 +341,9 @@ def main() -> int:
             ("CONTRACT-L-NON-OWNER", edit_handoff("L", lambda t: re.sub(r"^\[L\] -> \S+", "[L] -> tools/clean_tool.py",
                                                                           t, count=1)),
              {("L", "contract"): "FAIL"}),
+            ("M-DENOMINATOR-UNNAMED", evidence_header_unnamed("E-contribution.md"), {("M", "denominator"): "FAIL"}),
+            ("M-SAVINGS-NO-DENOMINATOR", savings_without_denominator, {("M", "denominator"): "FAIL"}),
+            ("M-DELTA-DEAD-CONTROL", deltas_without_lines, {("M", "denominator"): "UNMEASURED"}),
             # I has no sweep; its red branch: an export with neither scanner reads UNMEASURED, never PASS.
             ("I-NO-SCANNERS", None, I_BASE, ("I",), ("I",)),
             ("I-SKILLS-NO-PLANE", coverage_without_plane, {**I_BASE, ("I", "skills"): "UNMEASURED"},
@@ -325,7 +364,7 @@ def main() -> int:
         need = {("K", "router"), ("K", "control"), ("K", "aperture"), ("M", "cost"), ("M", "control"),
                 ("M", "aperture"), ("L", "writer"), ("L", "absence"), ("L", "control"), ("K", "contract"),
                 ("M", "contract"), ("L", "contract"), ("I", "reachability"), ("I", "retirement"), ("I", "skills"),
-                ("I", "nowrite"), ("I", "contract")}
+                ("I", "nowrite"), ("I", "contract"), ("M", "denominator")}
         record("V-SKH-EVERY-PART-RED", need <= flipped, f"driven={len(flipped & need)}/{len(need)} "
                                                         f"missing={sorted(need - flipped)}")
     finally:
