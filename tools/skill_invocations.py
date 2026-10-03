@@ -12,7 +12,8 @@ expansion that follows a typed command (turnCompanion) or a Skill call (sourceTo
 the FILE's session id, never by a row's session_id field.
 
 Row-time bounds (optional): count_file(since=, until=) and scan(bound_rows=True) keep only candidate rows whose
-`timestamp` lies in [since, until] (epoch seconds). A candidate row with no parseable timestamp is counted in
+`timestamp` lies in [since, until] (epoch seconds). A candidate row with no parseable timestamp (a timezone-naive one
+included) is counted in
 `untimed_rows` and on no channel: an aperture, never an invocation and never a zero. Unbounded output is unchanged.
 
 Not observable here at all: bodies a hook injects (SessionStart, JIT), doctrine cards. Those deliver
@@ -68,14 +69,19 @@ def session_of(path: Path) -> str:
 
 
 def row_epoch(d: dict) -> float | None:
-    """The row's ISO `timestamp` as epoch seconds, or None when missing or unparseable."""
+    """The row's ISO `timestamp` as epoch seconds, or None when missing or unparseable. A timezone-naive
+    timestamp (no `Z` or offset, or a date only) is unparseable here: reading it as host-local time would
+    bound the same row differently on two hosts."""
     ts = d.get("timestamp") if isinstance(d, dict) else None
     if not isinstance(ts, str):
         return None
     try:
-        return datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
     except ValueError:
         return None
+    if dt.tzinfo is None:
+        return None
+    return dt.timestamp()
 
 
 def count_file(path: Path, installed: set[str], seen: set | None = None,

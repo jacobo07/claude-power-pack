@@ -138,6 +138,24 @@
     "src/f8_0.py"
    ],
    "needed": false
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000009",
+   "decision": "pass-unrecordable",
+   "ts": "2026-10-01T12:10:00.000Z",
+   "foreign": [
+    "src/f9_0.py"
+   ],
+   "needed": false
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000009",
+   "decision": "future-decision",
+   "ts": "2026-10-01T12:20:00.000Z",
+   "foreign": [],
+   "needed": null
   }
  ],
  "transcripts": {
@@ -329,11 +347,24 @@
      ]
     }
    }
+  ],
+  "f0000000-0000-4000-8000-000000000009": [
+   {
+    "type": "user",
+    "sessionId": "f0000000-0000-4000-8000-000000000009",
+    "uuid": "u-9-1",
+    "timestamp": "2026-10-01T12:05:00.000Z",
+    "isSidechain": false,
+    "message": {
+     "role": "user",
+     "content": "Refactor the config loader"
+    }
+   }
   ]
  },
  "expected": {
-  "opportunities": 8,
-  "delivery_measured": 6,
+  "opportunities": 9,
+  "delivery_measured": 7,
   "delivery_unmeasured": 2,
   "delivered": 4,
   "by_card": 3,
@@ -341,17 +372,18 @@
   "card_and_invocation": 1,
   "recall": {
    "num": 4,
-   "n": 6
+   "n": 7
   },
   "precision": {
    "num": 1,
    "n": 4
   },
-  "recall_line": "4/6 = 0.667 (n=6)",
+  "recall_line": "4/7 = 0.571 (n=7)",
   "precision_line": "n=4 (< 5, not estimated)",
   "pass_after_card": 1,
   "no_opportunity": 1,
   "judgement_unknown": 2,
-  "ignored_non_commit": 1
+  "ignored_non_commit": 1,
+  "other_decision": 1
  }
 }

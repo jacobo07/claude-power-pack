@@ -64,13 +64,21 @@ CAPABILITY = "concurrent-writers-shared-tree"  # mirrors tools/skill_opportunity
 MIN_N = 5
 # mirrors tools/skill_opportunity_signals.py:DECISIONS; that module is not imported (it pulls
 # modules.cognitive_os.co_12_telemetry at import time)
-OPPORTUNITY_DECISIONS = ("opportunity", "deny-card")
+# `pass-unrecordable` (hooks/doctrine_cards.js:493-497) is a commit with foreign files whose card flag could not be
+# written, so the card was NOT shown: an opportunity that card delivery missed (an invocation may still have delivered).
+OPPORTUNITY_DECISIONS = ("opportunity", "deny-card", "pass-unrecordable")
 UNKNOWN_DECISIONS = ("unknown", "timeout")
+NON_OPPORTUNITY_DECISIONS = ("pass-after-card", "no_opportunity")
+# Every decision value the gate recognises. A commit row whose decision is in none of these is counted in
+# `other_decision`, never dropped silently.
+KNOWN_DECISIONS = OPPORTUNITY_DECISIONS + UNKNOWN_DECISIONS + NON_OPPORTUNITY_DECISIONS
 FRESH_SESSIONS_THIS_PHASE = 0  # D-SESSIONS: a statement about this phase, not a measurement
 
 DEFINITIONS = (
-    "opportunity: a commit-card judgement row with decision `opportunity` or `deny-card` that lists at "
-    "least one foreign file (the capability was needed or shown at a commit).",
+    "opportunity: a commit-card judgement row with decision `opportunity`, `deny-card` or `pass-unrecordable` "
+    "that lists at least one foreign file (the capability was needed or shown at a commit; `pass-unrecordable` "
+    "is a commit whose card could not be shown, so card delivery missed it). A commit row with any other "
+    "decision value is counted in `other_decision`, never dropped.",
     "delivered: the capability reached the model at or before the judgement `ts` in the same session, by "
     "the card (decision `deny-card`) OR by an invocation (a Skill tool_use or a typed command counted by "
     "tools/skill_invocations.py); a mention, listing or hook body is never delivery.",
@@ -80,6 +88,9 @@ DEFINITIONS = (
     "truth or the window fixture's per-row label.",
     "small n: a rate is printed with its n, and with n < 5 no ratio is printed or estimated.",
     "a skill with no opportunity detector reports opportunity UNMEASURED, never 0.",
+    "subagent caveat: a Skill call inside a subagent transcript is joined to its parent session "
+    "(tools/skill_invocations.py session_of), so invocation delivery can count a call that reached the "
+    "subagent's context and not the parent's; the gate does not split subagent from main-session hits.",
 )
 
 
@@ -143,10 +154,11 @@ def fmt_rate(r: dict) -> str:
 
 def compute_window(card_rows, index, installed, needed_of, *, window="?", plane="?", selection="?",
                    capability=CAPABILITY, detector=invoked_before, opportunity=is_opportunity,
-                   absent_policy="unmeasured", fmt=fmt_rate) -> dict:
+                   absent_policy="unmeasured", fmt=fmt_rate, known=KNOWN_DECISIONS,
+                   tsless_deny="card") -> dict:
     rows_out, unmeasured = [], []
     c = dict(opportunities=0, pass_after_card=0, no_opportunity=0, judgement_unknown=0, ignored_non_commit=0,
-             unparseable_ts=0)
+             unparseable_ts=0, other_decision=0)
     for row in card_rows:
         if not is_commit_row(row):
             c["ignored_non_commit"] += 1
@@ -158,6 +170,8 @@ def compute_window(card_rows, index, installed, needed_of, *, window="?", plane=
             c["no_opportunity"] += 1
         elif dec in UNKNOWN_DECISIONS:
             c["judgement_unknown"] += 1
+        elif dec not in known:
+            c["other_decision"] += 1  # WR-01: an unrecognised decision is counted and visible, never dropped
         if not opportunity(row):
             continue
         c["opportunities"] += 1
@@ -171,10 +185,15 @@ def compute_window(card_rows, index, installed, needed_of, *, window="?", plane=
         else:
             invoked = detector(paths, capability, installed, until)
         if until is None:
-            c["unparseable_ts"] += 1  # A-1: delivery UNMEASURED for any decision, counted, never a crash or a drop
-            state = "UNMEASURED"
-            why = "no judgement ts"
-            unmeasured.append(f"{sess} {dec} {row.get('ts')}: {why}")
+            c["unparseable_ts"] += 1  # A-1: counted, never a crash or a drop
+            if dec == "deny-card" and tsless_deny == "card":
+                # WR-02: the decision itself proves card delivery; only the overlap with an invocation needs the ts
+                # and it stays UNMEASURED (card_invocation_unmeasured), so the row keeps its place in the recall n.
+                state = "card"
+            else:
+                state = "UNMEASURED"
+                why = "no judgement ts"
+                unmeasured.append(f"{sess} {dec} {row.get('ts')}: {why}")
         elif dec == "deny-card":
             state = "card"
         elif invoked is True:
@@ -206,6 +225,7 @@ def compute_window(card_rows, index, installed, needed_of, *, window="?", plane=
         "recall_line": fmt(rec), "precision_line": fmt(prec),
         "pass_after_card": c["pass_after_card"], "no_opportunity": c["no_opportunity"],
         "judgement_unknown": c["judgement_unknown"], "ignored_non_commit": c["ignored_non_commit"],
+        "other_decision": c["other_decision"],
         "unlabelled_delivered": len(delivered) - len(labelled), "unparseable_ts": c["unparseable_ts"],
         "unmeasured": unmeasured, "rows": rows_out,
     }
@@ -261,7 +281,8 @@ def f_clauses(rep: dict, fx: dict) -> list:
     add("V-SD-F-SOURCES", bad,
         f"schema {FIXTURE_SCHEMA}, {len(fx['card_rows'])} card rows, {len(fx['transcripts'])} transcripts, "
         f"invocations found {rep['by_invocation_only']} invocation-only")
-    keys = ("opportunities", "pass_after_card", "no_opportunity", "judgement_unknown", "ignored_non_commit")
+    keys = ("opportunities", "pass_after_card", "no_opportunity", "judgement_unknown", "ignored_non_commit",
+            "other_decision")
     add("V-SD-OPPORTUNITY", _cmp(rep, exp, keys), ", ".join(f"{k} {rep[k]}" for k in keys))
     keys = ("delivered", "by_card", "by_invocation_only", "card_and_invocation")
     add("V-SD-DELIVERY", _cmp(rep, exp, keys), ", ".join(f"{k} {rep[k]}" for k in keys))
@@ -325,7 +346,8 @@ def dcard_labels(rows, dcard):
                                               "no row can be labelled from an aggregate")
     labels, beside = {}, []
     deny = [r for r in rows if r.get("decision") == "deny-card"]
-    for row in sorted(deny, key=lambda r: judged_at(r) or 0.0):
+    # a ts-less deny-card row sorts last, never first, so it cannot reorder which row consumes a deny_sha
+    for row in sorted(deny, key=lambda r: (judged_at(r) is None, judged_at(r) or 0.0)):
         pre = str(row.get("session", ""))[:8]
         if pre in left:
             left.remove(pre)
@@ -443,12 +465,48 @@ def _same(x):
     return x
 
 
+def _pack_tamper(p):
+    """Mutant: the pack file changed on disk (one header field), nothing else."""
+    p = dict(p)
+    p["source_ledger_rows"] = (p.get("source_ledger_rows") or 0) + 1
+    return p
+
+
+def _pack_offrule_row(p):
+    """Mutant: a row the builder rule never picks (an `opportunity` row) slipped into the pack."""
+    p = dict(p)
+    p["rows"] = list(p["rows"]) + [{"decision": "opportunity", "session": "9" * 8 + "-0000-4000-8000-000000000000",
+                                    "ts": "2026-10-01T00:00:00.000Z", "foreign": ["x.py"], "reason": ""}]
+    return p
+
+
+def _dcard_extra_sha(d):
+    """Mutant: the frozen D-CARD names a deny_sha no pack deny-card row carries."""
+    d = dict(d)
+    d["deny_shas"] = list(d["deny_shas"]) + ["deadbeef"]
+    return d
+
+
+def _dcard_drop_sha(d):
+    """Mutant: the frozen D-CARD loses one deny_sha, so one pack deny-card row stays unlabelled."""
+    d = dict(d)
+    d["deny_shas"] = list(d["deny_shas"])[1:]
+    return d
+
+
 # (name, pack transform, D-CARD transform, labeller wrap, report transform, clause that must go red)
+# Every mutant is judged against its OWN mutated pack and D-CARD. A mutant that changes the pack is also written to a
+# temp file and hashed, so V-SD-L-PINNED goes red exactly when the pack bytes changed.
 L_MUTANTS = (
     ("UNLABELLED-AS-FALSE", _same, _same, _unlabelled_false, _same, "V-SD-L-PRECISION"),
     ("INVOCATION-ZERO", _same, _same, None, _invocation_zero, "V-SD-L-INVOCATION-UNMEASURED"),
     ("DCARD-TP", _same, _dcard_tp, None, _same, "V-SD-L-PRECISION"),
     ("EMPTY-WINDOW", _empty_pack, _same, None, _same, "V-SD-L-FLOOR"),
+    ("PACK-TAMPER", _pack_tamper, _same, None, _same, "V-SD-L-PINNED"),
+    ("OFFRULE-ROW", _pack_offrule_row, _same, None, _same, "V-SD-L-SELECTION"),
+    ("DCARD-EXTRA-SHA", _same, _dcard_extra_sha, None, _same, "V-SD-L-DCARD-MATCH"),
+    ("DCARD-REFUSAL", _same, _dcard_tp, None, _same, "V-SD-L-DCARD-MATCH"),
+    ("DCARD-DROP-SHA", _same, _dcard_drop_sha, None, _same, "V-SD-L-PRECISION"),
 )
 
 
@@ -461,19 +519,30 @@ def l_drills(pack: dict, dcard: dict) -> list:
     for name, ptf, dtf, wrap, rtf, kill in L_MUTANTS:
         mp, md = ptf(pack), dtf(dcard)
         rep = rtf(pack_window(mp, md, wrap_labeller=wrap))
-        res = {n: st for n, st, _ in l_clauses(rep, pack, dcard)}  # expectations stay the REAL pack and D-CARD
+        with tempfile.TemporaryDirectory() as td:
+            if ptf is _same:
+                path = None  # the real committed pack: its bytes are untouched
+            else:
+                path = Path(td) / "mutated_pack.json"
+                with open(path, "w", encoding="utf-8", newline="\n") as fh:
+                    json.dump(mp, fh)
+            res = {n: st for n, st, _ in l_clauses(rep, mp, md, pack_path=path)}
         survived = res.get(kill) == "ok"
-        pinned = res.get("V-SD-L-PINNED") == "ok"
-        if survived or not pinned:
-            why = f"{kill} stayed ok (mutant survived)" if survived else "V-SD-L-PINNED went red (mutant touched the file)"
+        pinned_ok = res.get("V-SD-L-PINNED") == "ok"
+        if survived or pinned_ok != (ptf is _same):
+            why = (f"{kill} stayed ok (mutant survived)" if survived else
+                   f"V-SD-L-PINNED is {res.get('V-SD-L-PINNED')!r} for a mutant that "
+                   f"{'leaves' if ptf is _same else 'changes'} the pack bytes")
             out.append((f"V-SD-DRILL-L-{name}", "FAIL", why))
         else:
-            out.append((f"V-SD-DRILL-L-{name}", "ok", f"killed by {kill}; V-SD-L-PINNED stays ok"))
+            out.append((f"V-SD-DRILL-L-{name}", "ok", f"killed by {kill}; V-SD-L-PINNED "
+                        f"{'stays ok (pack bytes untouched)' if ptf is _same else 'red (pack bytes changed)'}"))
     return out
 
 
 def ts_clause(fx: dict, **mutants) -> tuple:
-    """A-1: an unparseable card ts makes that row's delivery UNMEASURED, counted in unparseable_ts; never a crash,
+    """A-1 / WR-02: a deny-card row with an unparseable ts keeps CARD delivery (the decision proves it); only its overlap
+    with an invocation becomes UNMEASURED (card_invocation_unmeasured). It is counted in unparseable_ts, never a crash and
     never a silent drop. Also pins the fixture card ts to the pack's 24-char ISO shape."""
     name = "V-SD-TS-UNPARSEABLE"
     clean = fixture_window(fx, **mutants)
@@ -492,27 +561,44 @@ def ts_clause(fx: dict, **mutants) -> tuple:
         bad.append(f"unparseable_ts {rep['unparseable_ts']}, expected 1")
     if rep["opportunities"] != clean["opportunities"]:
         bad.append(f"opportunities {rep['opportunities']}, clean {clean['opportunities']} (a silent drop)")
-    if rep["delivery_unmeasured"] != clean["delivery_unmeasured"] + 1:
-        bad.append(f"delivery_unmeasured {rep['delivery_unmeasured']}, expected {clean['delivery_unmeasured'] + 1}")
-    if rep["delivered"] != clean["delivered"] - 1:
-        bad.append(f"delivered {rep['delivered']}, expected {clean['delivered'] - 1}")
+    if rep["delivery_unmeasured"] != clean["delivery_unmeasured"]:
+        bad.append(f"delivery_unmeasured {rep['delivery_unmeasured']}, expected {clean['delivery_unmeasured']} "
+                   "(card delivery is proven by the decision, not the ts)")
+    if rep["delivered"] != clean["delivered"]:
+        bad.append(f"delivered {rep['delivered']}, expected {clean['delivered']}")
+    if rep["recall"] != clean["recall"]:
+        bad.append(f"recall {rep['recall']}, expected {clean['recall']} (a bad ts must not move the recall n)")
+    if rep["card_and_invocation"] != "UNMEASURED" or rep["card_invocation_unmeasured"] != 1:
+        bad.append(f"card_and_invocation {rep['card_and_invocation']!r} with card_invocation_unmeasured "
+                   f"{rep['card_invocation_unmeasured']}, expected 'UNMEASURED' and 1")
     return (name, "FAIL" if bad else "ok",
-            "; ".join(bad) if bad else "unparseable ts -> UNMEASURED, counted (unparseable_ts 1), opportunity kept; "
-            "fixture ts all 24-char ISO")
+            "; ".join(bad) if bad else "unparseable deny-card ts -> card delivery kept (delivered and recall n unchanged), "
+            "invocation overlap UNMEASURED (card_invocation_unmeasured 1), counted (unparseable_ts 1), opportunity "
+            "kept; fixture ts all 24-char ISO")
 
 
 def _drop_unparseable(row):
     return is_opportunity(row) and judged_at(row) is not None
 
 
-def ts_drill(fx: dict) -> tuple:
-    """M-TS-DROP: a window that silently drops unparseable-ts rows from the opportunities is killed by
-    V-SD-TS-UNPARSEABLE; the real window stays ok."""
-    killed = ts_clause(fx, opportunity=_drop_unparseable)[1] == "FAIL"
+# (drill name, ts_clause mutants, what the mutant is)
+TS_MUTANTS = (
+    ("V-SD-DRILL-TS-DROP", {"opportunity": _drop_unparseable}, "a silent drop moves the opportunity count"),
+    ("V-SD-DRILL-TS-UNMEASURED-DENY", {"tsless_deny": "unmeasured"},
+     "a ts-less deny-card read as UNMEASURED moves delivered and the recall n"),
+)
+
+
+def ts_drills(fx: dict) -> list:
+    """Each ts mutant is killed by V-SD-TS-UNPARSEABLE; the real window stays ok."""
     control = ts_clause(fx)[1] == "ok"
-    return ("V-SD-DRILL-TS-DROP", "ok" if (killed and control) else "FAIL",
-            "killed by V-SD-TS-UNPARSEABLE (a silent drop moves the opportunity count); the real window stays ok"
-            if (killed and control) else f"killed={killed}, control ok={control}")
+    out = []
+    for name, kw, what in TS_MUTANTS:
+        killed = ts_clause(fx, **kw)[1] == "FAIL"
+        out.append((name, "ok" if (killed and control) else "FAIL",
+                    f"killed by V-SD-TS-UNPARSEABLE ({what}); the real window stays ok"
+                    if (killed and control) else f"killed={killed}, control ok={control}"))
+    return out
 
 
 # --------------------------------------------------------------------------- live measurement (--measure-live)
@@ -565,7 +651,7 @@ def measure_live(root, days, end_iso, *, root_label=None, card_ledger=None, inst
         rec.update({"card_ledger": "ABSENT", "opportunities": "UNMEASURED", "recall": None, "precision": None,
                     "delivery": None})
         return rec
-    rows = []
+    rows, membership_unknown = [], 0
     with open(ledger, encoding="utf-8") as fh:
         for line in fh:
             try:
@@ -575,7 +661,12 @@ def measure_live(root, days, end_iso, *, root_label=None, card_ledger=None, inst
             if not is_commit_row(row):
                 continue
             ep = judged_at(row)
-            if ep is None or start <= ep <= end:  # an unparseable ts is kept: it prints UNMEASURED, never dropped
+            if ep is None:
+                # WR-02: window membership of a ts-less row is unknowable. Keep it (never a silent drop) and count it
+                # in window_membership_unknown, printed beside recall; the row's own delivery is judged in compute_window.
+                membership_unknown += 1
+                rows.append(row)
+            elif start <= ep <= end:
                 rows.append(row)
     d_needed = dcard_labels(rows, frozen_dcard())[0]
     rep = compute_window(rows, transcript_index(rootp), installed,
@@ -583,9 +674,10 @@ def measure_live(root, days, end_iso, *, root_label=None, card_ledger=None, inst
                          window=window, plane=host, selection=rec["selection"])
     keep = ("opportunities", "delivery_measured", "delivery_unmeasured", "delivered", "by_card",
             "by_invocation_only", "card_and_invocation", "pass_after_card", "no_opportunity", "judgement_unknown",
-            "unlabelled_delivered", "unparseable_ts", "recall_line", "precision_line")
+            "unlabelled_delivered", "unparseable_ts", "other_decision", "recall_line", "precision_line")
     rec.update({"card_ledger": "PRESENT", "opportunities": rep["opportunities"], "recall": rep["recall"],
-                "precision": rep["precision"], "delivery": {k: rep[k] for k in keep}})
+                "precision": rep["precision"], "delivery": {k: rep[k] for k in keep},
+                "window_membership_unknown": membership_unknown})
     return rec
 
 
@@ -606,11 +698,8 @@ def write_record(rec: dict, path: Path) -> None:
         fh.write(json.dumps(rec, sort_keys=True, indent=1) + "\n")
 
 
-def live_path_clause(fx: dict) -> tuple:
-    """V-SD-LIVE-PATH: measure_live over the fixture materialised as a fake root plus a card ledger reproduces
-    window F's expected figures, so the laptop `[C]` run executes tested code."""
-    name = "V-SD-LIVE-PATH"
-    exp = fx["expected"]
+def _live_run(fx: dict, *, end="2026-10-02T00:00:00Z", drop_first_row=False, extra_rows=()) -> dict:
+    """measure_live over the fixture materialised as a fake root plus a card ledger."""
     with tempfile.TemporaryDirectory() as td:
         root = Path(td) / "projects"
         base = root / "fixture-window-F"
@@ -620,23 +709,64 @@ def live_path_clause(fx: dict) -> tuple:
                 for r in rows:
                     fh.write(json.dumps(r) + "\n")
         ledger = Path(td) / "ledger.jsonl"
+        card_rows = list(fx["card_rows"])[1 if drop_first_row else 0:] + list(extra_rows)
         with open(ledger, "w", encoding="utf-8", newline="\n") as fh:
-            for r in fx["card_rows"]:
+            for r in card_rows:
                 fh.write(json.dumps(r) + "\n")
-        rec = measure_live(root, 2, "2026-10-02T00:00:00Z", card_ledger=ledger, installed=set(fx["installed"]),
-                           host="fixture-host", window="F-live")
+        return measure_live(root, 2, end, card_ledger=ledger, installed=set(fx["installed"]),
+                            host="fixture-host", window="F-live")
+
+
+def live_path_clause(fx: dict, **mutants) -> tuple:
+    """V-SD-LIVE-PATH: measure_live over the fixture materialised as a fake root plus a card ledger reproduces
+    window F's expected figures, so the laptop `[C]` run executes tested code. A second run appends a deny-card row with an
+    unparseable ts: it must stay in the window (card delivery from the decision) and be counted in
+    window_membership_unknown, never dropped."""
+    name = "V-SD-LIVE-PATH"
+    exp = fx["expected"]
+    rec = _live_run(fx, **mutants)
     d = rec.get("delivery") or {}
     bad = [f"{k}: live {d.get(k)!r}, window F {exp[k]!r}" for k in
            ("opportunities", "delivery_measured", "delivery_unmeasured", "delivered", "by_card",
             "by_invocation_only", "card_and_invocation", "pass_after_card", "no_opportunity",
-            "judgement_unknown", "recall_line", "precision_line") if d.get(k) != exp[k]]
+            "judgement_unknown", "other_decision", "recall_line", "precision_line") if d.get(k) != exp[k]]
     if (rec.get("recall") or {}).get("num") != exp["recall"]["num"] or (rec.get("recall") or {}).get("n") != exp["recall"]["n"]:
         bad.append(f"recall {rec.get('recall')!r}, window F {exp['recall']!r}")
     if (rec.get("precision") or {}).get("num") != exp["precision"]["num"] or (rec.get("precision") or {}).get("n") != exp["precision"]["n"]:
         bad.append(f"precision {rec.get('precision')!r}, window F {exp['precision']!r}")
+    if rec.get("window_membership_unknown") != 0:
+        bad.append(f"window_membership_unknown {rec.get('window_membership_unknown')!r} with no ts-less ledger row")
+    tsless = {"card": "commit", "session": "f0000000-0000-4000-8000-000000000001", "decision": "deny-card",
+              "ts": "not-a-time", "foreign": ["src/tsless.py"], "needed": None}
+    r2 = _live_run(fx, **mutants, extra_rows=(tsless,))
+    d2 = r2.get("delivery") or {}
+    if r2.get("window_membership_unknown") != 1:
+        bad.append(f"window_membership_unknown {r2.get('window_membership_unknown')!r}, expected 1 for one ts-less row")
+    if d2.get("opportunities") != exp["opportunities"] + 1 or d2.get("delivered") != exp["delivered"] + 1:
+        bad.append(f"ts-less deny-card: opportunities {d2.get('opportunities')!r}, delivered {d2.get('delivered')!r}, "
+                   f"expected {exp['opportunities'] + 1} and {exp['delivered'] + 1} (kept, card delivery from the decision)")
     return (name, "FAIL" if bad else "ok",
             "; ".join(bad) if bad else f"live path on the fixture reproduces window F: recall {d['recall_line']}, "
-            f"precision {d['precision_line']}, opportunities {d['opportunities']}")
+            f"precision {d['precision_line']}, opportunities {d['opportunities']}; a ts-less ledger row is kept and "
+            "counted in window_membership_unknown 1")
+
+
+# (drill name, _live_run mutant, what the mutant is)
+LIVE_MUTANTS = (
+    ("V-SD-DRILL-LIVE-END-EARLY", {"end": "2026-09-20T00:00:00Z"}, "a window ending before the card rows"),
+    ("V-SD-DRILL-LIVE-ROW-DROPPED", {"drop_first_row": True}, "a card ledger row lost on the way in"),
+)
+
+
+def live_drills(fx: dict) -> list:
+    control = live_path_clause(fx)[1] == "ok"
+    out = []
+    for name, kw, what in LIVE_MUTANTS:
+        killed = live_path_clause(fx, **kw)[1] == "FAIL"
+        out.append((name, "ok" if (killed and control) else "FAIL",
+                    f"killed by V-SD-LIVE-PATH ({what}); the real path stays ok" if (killed and control)
+                    else f"killed={killed}, control ok={control}"))
+    return out
 
 
 def g_record_clause(rec: dict | None) -> tuple:
@@ -690,22 +820,47 @@ def g_record_load():
     return load_json(path) if path.is_file() else None
 
 
-def _g_opportunity_zero(rec):
+def _g_set(**kv):
+    def f(rec):
+        rec = json.loads(json.dumps(rec))
+        for k, v in kv.items():
+            rec[k] = v
+        return rec
+    return f
+
+
+def _g_totals(rec):
     rec = json.loads(json.dumps(rec))
-    rec["opportunities"] = 0
+    rec["totals"]["model"] = -1
     return rec
+
+
+# (drill name, record mutator, text the FAIL must carry: each sub-clause is driven on its own)
+G_MUTANTS = (
+    ("OPPORTUNITY-ZERO", _g_set(opportunities=0), "opportunities 0"),
+    ("SCHEMA", _g_set(schema="skill-delivery-window/0"), "schema"),
+    ("HOST", _g_set(host="laptop-x"), "does not name gex44"),
+    ("LEDGER-PRESENT", _g_set(card_ledger="PRESENT"), "expected ABSENT"),
+    ("RECALL-NOT-NULL", _g_set(recall={"num": 1, "n": 1}), "recall/precision must be null"),
+    ("TOTALS", _g_totals, "totals.model"),
+    ("COMMAND", _g_set(command="python tools/test_skill_delivery.py"), "no --end/--days"),
+    ("ROOT-EXPANDED", _g_set(root="/home/kobii/.claude/projects"), "expanded path"),
+)
 
 
 def g_drills(rec, text: str) -> list:
     out = []
-    if rec is not None:
-        killed = g_record_clause(_g_opportunity_zero(rec))[1] == "FAIL"
-        control = g_record_clause(rec)[1] == "ok"
-        out.append(("V-SD-DRILL-G-OPPORTUNITY-ZERO", "ok" if (killed and control) else "FAIL",
-                    "killed by V-SD-G-RECORD (opportunities 0 with the card ledger ABSENT); the real record stays ok"
-                    if (killed and control) else f"killed={killed}, control ok={control}"))
-    else:
-        out.append(("V-SD-DRILL-G-OPPORTUNITY-ZERO", "INCONCLUSIVE", "no window G record to mutate"))
+    control = rec is not None and g_record_clause(rec)[1] == "ok"
+    for name, mut, needle in G_MUTANTS:
+        dname = f"V-SD-DRILL-G-{name}"
+        if rec is None:
+            out.append((dname, "INCONCLUSIVE", "no window G record to mutate"))
+            continue
+        st, why = g_record_clause(mut(rec))[1:]
+        killed = st == "FAIL" and needle in why
+        out.append((dname, "ok" if (killed and control) else "FAIL",
+                    f"killed by V-SD-G-RECORD (`{needle}`); the real record stays ok" if (killed and control)
+                    else f"status {st}, needle {needle!r} in diagnostic: {needle in why}, control ok={control}"))
     summed = text.rstrip("\n") + "\n[L] 6 delivered plus [G] 3 invoked = 9 total\n"
     killed = planes_clause(summed)[1] == "FAIL"
     control = planes_clause(text)[1] == "ok"
@@ -749,7 +904,8 @@ def _render_l() -> list:
             f"[L] unlabelled delivered beside D-CARD, never folded in: {r['unlabelled_delivered']} "
             f"({', '.join(r['beside_dcard'])})",
             f"[L] pass-after-card rows (not opportunities): {r['pass_after_card']}",
-            f"[L] judgement unknown (git exit 128), beside and never counted: {r['judgement_unknown']}", ""]
+            f"[L] judgement unknown (git exit 128), beside and never counted: {r['judgement_unknown']}",
+            f"[L] other decision rows (counted, never dropped): {r['other_decision']}", ""]
 
 
 def _render_g() -> list:
@@ -812,7 +968,9 @@ def render(fx: dict | None = None) -> str:
           f"[F] no_opportunity rows: {rep['no_opportunity']}",
           f"[F] judgement unknown or timeout rows: {rep['judgement_unknown']}",
           f"[F] non-commit rows ignored: {rep['ignored_non_commit']}",
-          f"[F] unparseable card ts (UNMEASURED, counted): {rep['unparseable_ts']}", ""]
+          f"[F] other decision rows (counted, never dropped): {rep['other_decision']}",
+          f"[F] unparseable card ts (counted; a deny-card keeps card delivery, any other decision is UNMEASURED): "
+          f"{rep['unparseable_ts']}", ""]
     L += _render_l()
     L += _render_g()
     L += ["## Commands", "",
@@ -899,6 +1057,11 @@ def _pass_after_opportunity(row):
                                    and len(row.get("foreign") or []) >= 1)
 
 
+def _without_unrecordable(row):
+    """Mutant (WR-01): `pass-unrecordable` dropped from the opportunity set."""
+    return is_opportunity(row) and row.get("decision") != "pass-unrecordable"
+
+
 def _always_ratio(r):
     return f"{r['num']}/{r['n']} = {r['num'] / r['n']:.3f} (n={r['n']})"
 
@@ -912,6 +1075,9 @@ MUTANTS = (
      ("V-SD-OPPORTUNITY", "V-SD-DELIVERY")),
     ("PASS-AFTER", {"opportunity": _pass_after_opportunity}, "V-SD-OPPORTUNITY", ("V-SD-DELIVERY",)),
     ("SMALL-N-RATIO", {"fmt": _always_ratio}, "V-SD-SMALL-N", ("V-SD-RECALL",)),
+    ("DROP-UNRECORDABLE", {"opportunity": _without_unrecordable}, "V-SD-OPPORTUNITY", ("V-SD-DELIVERY",)),
+    ("OTHER-DECISION-SILENT", {"known": KNOWN_DECISIONS + ("future-decision",)}, "V-SD-OPPORTUNITY",
+     ("V-SD-DELIVERY",)),
 )
 
 
@@ -933,9 +1099,10 @@ def drills(fx: dict) -> list:
         else:
             out.append((f"V-SD-DRILL-{name}", "ok", f"killed by {kill}; controls ok: {', '.join(controls)}"))
     out.append(ts_clause(fx))
-    out.append(ts_drill(fx))
+    out += ts_drills(fx)
     pack, dcard = load_json(REPO / PACK_REL), frozen_dcard()
     out += l_drills(pack, dcard)
+    out += live_drills(fx)
     text = render(fx)
     out += g_drills(g_record_load(), text)
     digit = next(i for i, ch in enumerate(text) if ch.isdigit())
