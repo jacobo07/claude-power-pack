@@ -494,9 +494,52 @@
    }
   },
   "L": {
-   "terminal": null,
-   "evidence": [],
-   "savings": []
+   "terminal": "IMPLEMENTED_AND_VERIFIED",
+   "reason": "Compound steps 7+8 compiled into a new campaign module (compound/steps78.py: mkdir mutex with stale recovery and timeout, byte backup, case-sensitive merge of the project entry, sibling tmp + fsync + os.replace, marker unlink with rollback to the backup bytes). Its gate runs every case on temp copies of the live state with the real marker and 224 real learning files, holds green, goes red when the rollback restore is disabled, and leaves the live state's sha256 unchanged. The live apply and call-site switch are in the Owner bundle as [L], per the frozen rule (audit G6).",
+   "evidence": [
+    {
+     "kind": "gate",
+     "argv": [
+      "python",
+      "vault/programs/cognitive-economy/gates/gate_compound78.py"
+     ]
+    },
+    {
+     "kind": "prg",
+     "ref": "vault/programs/cognitive-economy/evidence/L-prg.md",
+     "sha256": "db559d92b08e010e23fc5e8955b3fc96ec74c8157ce7f03901dfa608c0a9eda8"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/compound/steps78.py",
+     "sha256": "0749958f134e0ed0a92f4d5b674414f8f9f729abaeeceac95fb08bb4c365665b"
+    }
+   ],
+   "savings": [
+    {
+     "lever": "compound steps 7+8 compiled out",
+     "status": "unknown",
+     "displacement": "not_applicable",
+     "denominator": "D-W7",
+     "measurement": "vault/programs/cognitive-economy/evidence/L-prg.md"
+    }
+   ],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/compound/steps78.py",
+      "vault/programs/cognitive-economy/gates/gate_compound78.py",
+      "vault/programs/cognitive-economy/evidence/L-prg.md"
+     ],
+     "lines_added": 330,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none until the Owner switches the call site",
+     "gate_seconds": 2,
+     "model_calls_per_run": 0
+    }
+   }
   },
   "M": {
    "terminal": null,
