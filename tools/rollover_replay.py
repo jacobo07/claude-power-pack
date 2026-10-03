@@ -48,6 +48,7 @@ import json
 import re
 import sqlite3
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Optional
@@ -376,9 +377,93 @@ def replay(session_id: str, ledger_path: Optional[Path] = None, find: Optional[C
     return out
 
 
+# ------------------------------------------------------------------- live prior (plan ccp-s16 §16.1 R1)
+PRIOR_SCHEMA = "rollover-horizon-prior-v1"
+PRIOR_FILE = "horizon-prior.json"
+PRIOR_TTL_S = 24 * 3600      # a prior older than this is UNKNOWN to its readers, never "about right"
+LIVE_GUARD_S = 6 * 3600      # a session active in the last 6 h may still be running: its tail is unknown
+
+
+def build_prior(now: Optional[float] = None, sessions: Optional[list] = None, ledger_path: Optional[Path] = None,
+                find: Optional[Callable] = None, min_samples: int = MIN_SAMPLES) -> dict:
+    """The remaining-work evidence decide() may consume: `calls after a commit` from interactive
+    sessions that ENDED in the PRIOR_DAYS before now - LIVE_GUARD_S (a live session's tail is not
+    yet observed), rolled sessions censored and counted; plus measured rehydration (an UPPER bound).
+    Not conditioned on the session being judged: R2 found it never yields a CONTINUE (Stage 1)."""
+    now = time.time() if now is None else now
+    sessions = sessions if sessions is not None else prior_from_index()
+    ledger_path = Path(ledger_path or rollover.STATE_DIR / "rollover-ledger.jsonl")
+    rows, torn = read_ledger(ledger_path)
+    rolled = {r["session_id"] for r in rows if r.get("event") == "successor_claimed" and r.get("session_id")}
+    t = now - LIVE_GUARD_S
+    pr = Prior(sessions, set(), rolled).at(t)
+    fc = fresh_cost(ledger_path, find, min_samples, before=now)
+    c = fc["carried_before_first_mutation"]
+    enough = len(pr["values"]) >= min_samples
+    return {
+        "schema": PRIOR_SCHEMA, "basis": "MEASURED_PRIOR" if enough else "UNKNOWN",
+        "reason": None if enough else f"prior has {len(pr['values'])} values < {min_samples}",
+        "values": sorted(pr["values"]), "n": len(pr["values"]), "sessions": pr["sessions"],
+        "censored_excluded": pr["censored_excluded"], "torn_ledger_rows": torn,
+        "window": {"ended_after": t - PRIOR_DAYS * 86400, "ended_before": t},
+        "index_newest_ts": max((last for _, _, last in sessions), default=None),
+        "computed_at": now, "expires_at": now + PRIOR_TTL_S,
+        "rehydration": ({"basis": "UPPER_BOUND_P50", "tokens": c["p50"], "p90": c["p90"], "n": c["n"]}
+                        if c["p50"] is not None else {"basis": "UNKNOWN", "reason": "too few certified resumes"}),
+        "conditioned_on": None, "source": "tools/rollover_replay.py build_prior",
+    }
+
+
+def write_prior(state_dir: Optional[Path] = None, **kw) -> Path:
+    p = Path(state_dir or rollover.STATE_DIR) / PRIOR_FILE
+    rollover._atomic_write(p, json.dumps(build_prior(**kw)).encode("utf-8"))
+    return p
+
+
+def negative_search(limit: int = 80, sessions: Optional[list] = None, find: Optional[Callable] = None,
+                    ledger_path: Optional[Path] = None) -> dict:
+    """R2, re-runnable: replay recent sessions that committed and grew past decide's growth gate,
+    and list every boundary where the PRIOR (not the growth gate) said CONTINUE."""
+    sessions = sessions if sessions is not None else prior_from_index()
+    lookup = {s: p for s, p, _ in sessions}
+    find = find or lookup.get
+    newest = max((last for _, _, last in sessions), default=0)
+    recent = sorted([s for s in sessions if s[2] >= newest - PRIOR_DAYS * 86400], key=lambda s: -s[2])
+    out = {"sessions": len(sessions), "recent": len(recent), "scanned": 0, "candidates": 0, "boundaries": 0,
+           "growth_gated": 0, "prior": {}, "rehydrated": {}, "horizon_driven_continue": []}
+    for sid, path, _ in recent:
+        if out["candidates"] >= limit:
+            break
+        try:
+            tr = session_trace(path)
+        except OSError:
+            continue
+        out["scanned"] += 1
+        if not (tr["commit_calls"] and tr["ctx"] and max(tr["ctx"]) - tr["ctx"][0] >= rollover.MIN_GROWTH_TOKENS):
+            continue
+        out["candidates"] += 1
+        for j in replay(sid, ledger_path, find, sessions).get("boundaries", []):
+            out["boundaries"] += 1
+            if "growth" in str(j.get("reason", "")):
+                out["growth_gated"] += 1
+                continue
+            pv, rv = j["prior"].get("verdict"), j["rehydrated"]
+            out["prior"][pv] = out["prior"].get(pv, 0) + 1
+            out["rehydrated"][rv] = out["rehydrated"].get(rv, 0) + 1
+            if "CONTINUE" in (pv, rv):
+                out["horizon_driven_continue"].append({"session": sid, "call": j["call"],
+                                                       "n_star": j["breakeven_calls"],
+                                                       "share": j["prior"].get("share")})
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
+    pp = sub.add_parser("prior")
+    pp.add_argument("--write", action="store_true")
+    se = sub.add_parser("search")
+    se.add_argument("--limit", type=int, default=80)
     fc = sub.add_parser("fresh-cost")
     fc.add_argument("--json", action="store_true")
     fc.add_argument("--min-samples", type=int, default=MIN_SAMPLES)
@@ -387,6 +472,19 @@ def main(argv=None) -> int:
     rp.add_argument("--json", action="store_true")
     rp.add_argument("--out", default=None)
     a = ap.parse_args(argv)
+    if a.cmd == "prior":
+        if a.write:
+            p = write_prior()
+            res = json.loads(p.read_text(encoding="utf-8"))
+            print(f"prior written: {p}")
+        else:
+            res = build_prior()
+        print(f"  basis {res['basis']} n={res['n']} sessions={res['sessions']} censored={res['censored_excluded']} "
+              f"rehydration={res['rehydration']} expires {datetime.fromtimestamp(res['expires_at'], timezone.utc):%Y-%m-%d %H:%MZ}")
+        return 0 if res["basis"] != "UNKNOWN" else 1
+    if a.cmd == "search":
+        print(json.dumps(negative_search(a.limit), indent=1))
+        return 0
     if a.cmd == "replay":
         res = replay(a.session)
         if a.out:

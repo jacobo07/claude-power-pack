@@ -170,6 +170,32 @@ def main() -> int:
     ok("V-RR-EXPOSURE-CARRIES-WRITE-PREMIUM", prem > 0 and ev and ev["mechanical_exposure_read_eq"] == want,
        f"premium={prem:.0f} want={want} got={ev and ev['mechanical_exposure_read_eq']}")
 
+    # ---- R1 live prior: provenance, expiry, a live session's tail never counted, censoring counted.
+    led2 = d / "ledger2.jsonl"
+    stamped = [{**r, "ts": T - 1000} for r in rows]   # real rows carry ts; an untimed resume is never "before"
+    led2.write_text("\n".join(json.dumps(r) for r in stamped + [
+        {"event": "successor_claimed", "session_id": "ROLLED", "claimant": "SX", "ts": T - 1000}]) + "\n",
+        encoding="utf-8")
+    now = T + rr.LIVE_GUARD_S
+    live = sessions + [("LIVE", d / "E1.jsonl", now - 60)]          # active a minute ago: may still run
+    bp = rr.build_prior(now=now, sessions=live, ledger_path=led2, find=paths.get, min_samples=1)
+    ok("V-RR-PRIOR-ARTIFACT-MEASURED", bp["basis"] == "MEASURED_PRIOR" and bp["values"] == [39, 39, 39]
+       and bp["censored_excluded"] == 1 and bp["expires_at"] == now + rr.PRIOR_TTL_S
+       and bp["index_newest_ts"] == now - 60, f"{bp['basis']} values={bp['values']} censored={bp['censored_excluded']}")
+    ok("V-RR-PRIOR-LIVE-GUARD", bp["sessions"] == 3, f"sessions={bp['sessions']} (E1, E2, CHAIN; LATE+LIVE in guard)")
+    ok("V-RR-PRIOR-REHYDRATION-UPPER-BOUND", bp["rehydration"].get("basis") == "UPPER_BOUND_P50"
+       and isinstance(bp["rehydration"].get("tokens"), int), str(bp["rehydration"]))
+    thin = rr.build_prior(now=now, sessions=live, ledger_path=led2, find=paths.get, min_samples=5)
+    ok("V-RR-PRIOR-THIN-IS-UNKNOWN", thin["basis"] == "UNKNOWN" and thin["reason"], str(thin["reason"]))
+
+    # ---- R2 re-runnable: a grown, committing session is a candidate; a flat one is not.
+    grow = [call(f"G{k}", 100_000 + k * 20_000) if k != 30 else use(f"G{k}", "Gt30", 100_000 + k * 20_000,
+            "git commit -m g") for k in range(40)] + [result("Gt30")]
+    transcript(d, "GROW", grow)
+    srch = rr.negative_search(limit=5, sessions=sessions + [("GROW", d / "GROW.jsonl", T - 50)],
+                              find={"GROW": d / "GROW.jsonl"}.get, ledger_path=led2)
+    ok("V-RR-SEARCH-CANDIDATES", srch["candidates"] == 1 and srch["boundaries"] == 1, str(srch))
+
     print(f"ROLLOVER_REPLAY_PASS={PASS}/{PASS + FAIL}")
     return 0 if FAIL == 0 else 1
 
