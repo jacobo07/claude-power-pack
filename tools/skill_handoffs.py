@@ -412,9 +412,15 @@ def _report_rows():
         return {"state": "UNMEASURED", "reason": f"report failed: {type(e).__name__}: {e}"}
     present = path.is_file()
     if not present or not rep.get("rows"):
-        why = "gex44 has no card ledger" if platform.node() == "kobicraft-gex44" else "no CO-12 rows on this host"
-        return {"state": "UNMEASURED", "reason": f"{why} (file present: {present}, rows {rep.get('rows', 0)})",
-                "report": rep}
+        # Read the host, never infer it from the host name (review IN-03): the card ledger the producer syncs from.
+        card = sos.card_state_dir() / "ledger.jsonl"
+        try:
+            card_present = card.is_file()
+        except OSError as e:
+            card_present = f"unreadable ({type(e).__name__})"
+        why = "no card ledger on this host" if card_present is False else "no CO-12 opportunity rows on this host"
+        return {"state": "UNMEASURED", "reason": f"{why} (card ledger present: {card_present}; CO-12 file present: "
+                                                 f"{present}, rows {rep.get('rows', 0)})", "report": rep}
     return {"state": "MEASURED", "reason": f"rows {rep['rows']}", "report": rep}
 
 

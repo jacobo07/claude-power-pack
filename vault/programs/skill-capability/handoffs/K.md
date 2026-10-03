@@ -8,7 +8,7 @@ Frozen rule (ledger `frozen.pillars`):
 
 Frozen owners: `vault/specs/agent-capability-virtualization.md`, `modules/capability_runtime/agent_spec.py`.
 
-- measured_at_commit: 1e32ae7a3a6404070cb8e5ff6fa9c983ace8c5d6
+- measured_at_commit: 8d4947aed21012cf511093ca18d8ee6de8031489
 - freeze: 217d72b5944a664fbc0baa1060c04617ff10f481
 - host: kobicraft-gex44
 - plane: committed blobs at measured_at_commit (git grep / cat-file / diff / archive), never the working tree; plus the host-state row count named below
@@ -19,7 +19,7 @@ Frozen owners: `vault/specs/agent-capability-virtualization.md`, `modules/capabi
 
 | command | observed |
 |---|---|
-| `git diff --name-only --diff-filter=A 217d72b5 1e32ae7a -- modules tools` | 16 added files |
+| `git diff --name-only --diff-filter=A 217d72b5 8d4947ae -- modules tools` | 16 added files |
 | `router marker over each added file (basename, then each line)` | 0 hits |
 | `router marker over the controls modules/cost_collapse/router.py, modules/cognitive_os/router.py, modules/knowledge_acquisition/routing.py` | 3 of 3 hit by content |
 | `python3 tools/skill_opportunity_signals.py report  (in-process report(); never sync)` | {"rows": 0, "by_decision": {}, "opportunities": 0, "delivered_by_card": 0, "unknown": 0} |
@@ -40,7 +40,7 @@ Frozen owners: `vault/specs/agent-capability-virtualization.md`, `modules/capabi
 
 ## Evidence
 
-### Router sweep at 1e32ae7a
+### Router sweep at 8d4947ae
 
 | added file | router hits | hit lines |
 |---|---|---|
@@ -69,7 +69,7 @@ Frozen owners: `vault/specs/agent-capability-virtualization.md`, `modules/capabi
 
 ### CO-12 opportunity rows
 
-- state: UNMEASURED; gex44 has no card ledger (file present: False, rows 0)
+- state: UNMEASURED; no card ledger on this host (card ledger present: False; CO-12 file present: True, rows 0)
 - producer: `tools/skill_opportunity_signals.py` (kind `capability_opportunity`, capability `concurrent-writers-shared-tree`), which writes only through `record_signal`.
 
 ## What the owner should do

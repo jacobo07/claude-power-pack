@@ -307,6 +307,33 @@ def git_failure_drills(root, base):
            f"{len(reasons)} reasons, misclassified {bad}")
 
 
+def rows_reason_reads_host(root):
+    """K's row-count reason states the card ledger's presence as read from the host (review IN-03), under a HOME
+    without and then with `~/.claude/state/doctrine-cards/ledger.jsonl`; never the host name."""
+    saved = {k: os.environ.get(k) for k in ("HOME", "DOCTRINE_CARDS_STATE_DIR")}
+    home = root / "rows-home"
+    home.mkdir()
+    got = {}
+    try:
+        os.environ["HOME"] = str(home)
+        os.environ.pop("DOCTRINE_CARDS_STATE_DIR", None)
+        got["absent"] = skh._report_rows()
+        led = home / ".claude" / "state" / "doctrine-cards" / "ledger.jsonl"
+        led.parent.mkdir(parents=True)
+        led.write_text("", encoding="utf-8")
+        got["present"] = skh._report_rows()
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+    ok = (got["absent"].get("state") == "UNMEASURED" and "card ledger present: False" in got["absent"]["reason"]
+          and got["present"].get("state") == "UNMEASURED" and "card ledger present: True" in got["present"]["reason"])
+    record("V-SKH-K-ROWS-CARD-LEDGER", ok, f"absent -> {got['absent'].get('reason')!r}; present -> "
+                                           f"{got['present'].get('reason')!r}")
+
+
 def main() -> int:
     t0 = time.monotonic()
     root = Path(tempfile.mkdtemp(prefix="skh-drills-"))
@@ -361,6 +388,7 @@ def main() -> int:
             if got == exp:
                 flipped |= set(exp)
         git_failure_drills(root, base)
+        rows_reason_reads_host(root)
         need = {("K", "router"), ("K", "control"), ("K", "aperture"), ("M", "cost"), ("M", "control"),
                 ("M", "aperture"), ("L", "writer"), ("L", "absence"), ("L", "control"), ("K", "contract"),
                 ("M", "contract"), ("L", "contract"), ("I", "reachability"), ("I", "retirement"), ("I", "skills"),
