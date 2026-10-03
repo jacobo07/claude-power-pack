@@ -355,7 +355,7 @@
   },
   "E": {
    "terminal": "MERGED_INTO_EXISTING_OWNER",
-   "reason": "Continuation vs rotation measured from the epoch census and D-W7 transcripts: 49 measured mission rotations, net [-0.91 %, +2.41 %]; the ceiling for any threshold change is <= 2.78 % (earlier, net of the cheapest rehydration) and <= 0.91 % (later), both below the frozen 3 %, so no threshold change is proposed. Result handed to the rotation owner.",
+   "reason": "Continuation vs rotation measured from the epoch census and D-W7 transcripts: 49 measured mission rotations, net [-0.91 %, +2.41 %]; the ceiling for any threshold change is <= 2.78 % for a lowered threshold (net of the cheapest rehydration) and <= 0.91 % for a raised one, both below the frozen 3 %, so no threshold change is proposed. Result handed to the rotation owner.",
    "evidence": [
     {
      "kind": "owner",
