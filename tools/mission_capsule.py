@@ -1,0 +1,209 @@
+#!/usr/bin/env python
+"""Mission capsule adapter -- capsule-v2 for cpp-gsd-long workers (spec vault/specs/mission-capsule-rollover.md).
+
+A THIN adapter, not a second engine (spec section 2): it translates a mission record and GSD's own
+answer into a capsule, then hands that capsule to tools/rollover.py, which owns the format, the seal,
+completeness, SAFE_TO_FORGET, the claim, the exam, certification and the pre-certification marker.
+Nothing here re-implements any of those.
+
+What this module owns:
+- compile_mission_capsule: mission record + GSD init.manager -> a rollover-capsule-v2 dict (G1/G2).
+- seal_mission: rollover.seal + completeness + the same `capsule_sealed` ledger row the interactive
+  seal writes, because rollover.gate trusts only that row.
+- gate_before_stop: rollover.gate, plus the outgoing transcript unchanged since the seal (I2).
+
+State directories are resolved at CALL time and passed explicitly (G24): rollover.STATE_DIR is frozen
+at import, so a test that redirects the environment after importing would otherwise write live state.
+
+Status: IMPLEMENTED. No production caller until T6 wires tools/gsd_mission.py behind
+`rollover_protocol == "capsule-v2"`; a record without that field never reaches this module.
+"""
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+from typing import Callable, Optional
+
+import rollover as ro
+
+PROTOCOL = "capsule-v2"
+NOTE_MAX_CHARS = 2000
+PACKET_REF_KEYS = ("verdict", "path", "sha256", "bytes", "root", "files")
+
+
+def state_dir(explicit=None) -> Path:
+    """The rollover state dir, resolved NOW (never rollover.STATE_DIR, which is fixed at import)."""
+    if explicit:
+        return Path(explicit)
+    env = os.environ.get("CPP_ROLLOVER_STATE_DIR")
+    return Path(env) if env else Path.home() / ".claude" / "state" / "rollover"
+
+
+def capsule_key(rec: dict) -> str:
+    """The OUTGOING worker's capsule: the epoch it ran (spec 3.2)."""
+    return ro.mission_key(rec["mission_id"], rec["epoch"])
+
+
+def worker_name(mission_id: str, epoch) -> str:
+    """The name the supervisor launches a worker under. Same expression as gsd_mission.worker_name,
+    which T6 makes the caller; a test pins the two together so they cannot drift."""
+    return f"{mission_id}-e{int(epoch)}"
+
+
+# --------------------------------------------------------------------------- GSD -> obligations
+def render_obligations(manager: Optional[dict]) -> tuple[list[str], Optional[str]]:
+    """G1/G2: GSD's recommended actions as plain strings, first = next. When GSD recommends nothing
+    (a phase mid-execution), the first phase not complete is the obligation: `continue phase N`."""
+    if not isinstance(manager, dict):
+        return [], None
+    items = []
+    for a in manager.get("recommended_actions") or []:
+        if isinstance(a, dict) and a.get("action") and a.get("phase") not in (None, ""):
+            name = str(a.get("phase_name") or "").strip()
+            items.append(f"{a['action']} phase {a['phase']}" + (f": {name}" if name else ""))
+    if items:
+        return items, "gsd recommended_actions"
+    for p in manager.get("phases") or []:
+        if isinstance(p, dict) and not p.get("phase_complete") and p.get("number") not in (None, ""):
+            name = str(p.get("name") or "").strip()
+            return [f"continue phase {p['number']}" + (f": {name}" if name else "")], "gsd first incomplete phase"
+    return [], None
+
+
+def goal_pointer(manager: Optional[dict], work_dir: str) -> dict:
+    """The mission's goal = GSD's STATE.md, resolved against the work tree and required to exist."""
+    if not isinstance(manager, dict):
+        return {"state": ro.UNKNOWN, "reason": "GSD could not be asked"}
+    raw = manager.get("state_path")
+    if not raw:
+        return {"state": ro.UNKNOWN, "reason": "GSD names no STATE.md"}
+    p = Path(raw)
+    if not p.is_absolute():
+        p = Path(work_dir) / p
+    if not p.is_file():
+        return {"state": ro.UNKNOWN, "reason": f"STATE.md not on disk: {p}"}
+    return {"state": "OK", "path": str(p), "source": "gsd init.manager"}
+
+
+def ask_gsd(work_dir: str, workstream: Optional[str]) -> tuple[Optional[dict], str]:
+    import gsd_long_run as lr
+    return lr.gsd_manager(work_dir, workstream=workstream)
+
+
+# --------------------------------------------------------------------------- compile
+def transcript_mark(transcript) -> Optional[dict]:
+    """Size + mtime of the outgoing transcript: if either moved after the seal, the worker did
+    something the capsule did not see (I2)."""
+    try:
+        st = Path(transcript).stat()
+    except (OSError, TypeError):
+        return None
+    return {"size": st.st_size, "mtime_ns": st.st_mtime_ns}
+
+
+def _packet_ref(ref) -> Optional[dict]:
+    """A reference, never the packet: the source list stays in the packet's own .json."""
+    if not isinstance(ref, dict) or not ref.get("sha256"):
+        return None
+    return {k: ref[k] for k in PACKET_REF_KEYS if k in ref}
+
+
+def compile_mission_capsule(rec: dict, *, origin: str, note: str = "", work_dir: Optional[str] = None,
+                            transcript: Optional[str] = None, packet: Optional[dict] = None,
+                            manager: Optional[dict] = None, ask: Optional[Callable] = None,
+                            children: Optional[dict] = None, child_reader: Optional[Callable] = None,
+                            now: Optional[float] = None) -> dict:
+    """The capsule for the worker that ran `rec["epoch"]`. Facts only from durable sources (the
+    record, git, GSD, the transcript's own reader); the note is the predecessor's CLAIM.
+
+    Raises ValueError for a record that has no identity to key a capsule by: that is a caller bug,
+    not a refusal. Everything else that is missing is left absent, so rollover.completeness refuses
+    it by name -- the adapter never fills a gap to make a capsule look sealable."""
+    if origin not in ro.MISSION_SEAL_ORIGINS:
+        raise ValueError(f"seal origin {origin!r} is not one of {', '.join(ro.MISSION_SEAL_ORIGINS)}")
+    mid, epoch = rec.get("mission_id"), rec.get("epoch")
+    if not mid or not isinstance(epoch, int) or epoch < 1:
+        raise ValueError(f"mission record has no usable identity (mission_id={mid!r}, epoch={epoch!r})")
+    wd = str(work_dir or rec.get("work_dir") or rec.get("cwd") or "")
+    owner = rec.get("owner") or {}
+    sid = owner.get("session_id")
+    gsd_why = ""
+    if manager is None:
+        manager, gsd_why = (ask or ask_gsd)(wd, rec.get("workstream"))
+    items, source = render_obligations(manager)
+    key = capsule_key(rec)
+    cap = {
+        "schema": ro.SCHEMA_V2, "protocol": PROTOCOL, "kind": "mission",
+        "capsule_key": key, "session_id": key, "cwd": wd, "created": ro._iso(now),
+        "run": {"lineage_id": rec.get("lineage_id") or mid, "mission_id": mid, "epoch": epoch,
+                "successor_epoch": epoch + 1, "worker": sid, "worker_name": worker_name(mid, epoch)},
+        "seal_origin": origin, "degraded": origin != "worker_handoff",
+        "repo": ro.repo_facts(wd),
+        "goal": goal_pointer(manager, wd) if manager is not None else
+        {"state": ro.UNKNOWN, "reason": f"GSD could not be asked: {gsd_why}"},
+        "obligations": items, "obligations_source": source,
+        "goal_ref": rec.get("goal_ref"),
+        "resume_cmd": rec.get("resume_command"),
+        "note": (note or "").strip()[:NOTE_MAX_CHARS],
+        "packet": _packet_ref(packet),
+        "transcript_mark": transcript_mark(transcript),
+    }
+    if children is None:
+        children = (child_reader or ro.child_state)(sid) if sid else {"verdict": ro.UNKNOWN, "reason": "no owner"}
+    if origin == "recovery" and children.get("verdict") == ro.UNKNOWN and not cap["transcript_mark"]:
+        # G21: the predecessor is gone and left no transcript -- nothing can be waited on. Its
+        # children are named lost (a warning the successor sees), not a refusal that blocks for ever.
+        children = {"verdict": "EXPIRED", "pending": [], "unconsumed": [],
+                    "reason": f"predecessor dead with no transcript; any background child is lost ({children.get('reason')})"}
+    cap["children"] = children
+    if transcript:
+        writes = ro.session_writes(Path(transcript))
+        root = cap["repo"].get("root") if cap["repo"].get("state") == "OK" else None
+        cap["foreign"] = ro.foreign_custody(writes, root)
+    else:
+        # Custody cannot be judged without the worker's own record of what it wrote. Said so, not
+        # papered over with an empty "OK".
+        cap["custody_unchecked"] = "no transcript"
+    return cap
+
+
+# --------------------------------------------------------------------------- seal / gate
+def seal_mission(cap: dict, sd=None) -> dict:
+    """Seal through rollover, and record the receipt where rollover.gate reads it. The verdict is
+    UNKNOWN when that row could not be written: a seal the gate cannot see is not a seal."""
+    sd = state_dir(sd)
+    receipt = ro.seal(cap, sd)
+    comp = ro.completeness(cap)
+    stf = ro.safe_to_forget(receipt, comp)
+    run = cap.get("run") or {}
+    recorded = ro.ledger("capsule_sealed", sd, session_id=cap.get("session_id"), cwd=cap.get("cwd"),
+                         capsule=receipt, safe_to_forget=stf["verdict"], refusals=stf["reasons"],
+                         kind="mission", mission_id=run.get("mission_id"), epoch=run.get("epoch"),
+                         seal_origin=cap.get("seal_origin"))
+    verdict = stf["verdict"] if recorded else ro.UNKNOWN
+    reasons = stf["reasons"] if recorded else stf["reasons"] + ["the seal record was not written (ledger busy)"]
+    return {"verdict": verdict, "key": cap.get("session_id"), "receipt": receipt,
+            "reasons": reasons, "warnings": comp["warnings"]}
+
+
+def gate_before_stop(key: str, transcript: Optional[str] = None, sd=None, now: Optional[float] = None,
+                     max_age_s: float = ro.RESET_MAX_AGE_S) -> dict:
+    """May the outgoing worker be stopped RIGHT NOW? rollover.gate on the sealed capsule, plus I2:
+    the transcript has not moved since the seal (the worker did nothing the capsule missed)."""
+    sd = state_dir(sd)
+    g = ro.gate(key, sd, max_age_s=max_age_s, now=now)
+    if g["verdict"] == "NO_CAPSULE":
+        return g
+    reasons = list(g["reasons"])
+    try:
+        sealed = json.loads(ro.capsule_path(key, sd).read_text(encoding="utf-8")).get("transcript_mark")
+    except (OSError, ValueError):
+        sealed = None
+    if transcript:
+        cur = transcript_mark(transcript)
+        if sealed is None:
+            reasons.append("the capsule carries no transcript mark to compare")
+        elif cur != sealed:
+            reasons.append("the outgoing transcript moved since the seal")
+    return {**g, "verdict": "SAFE_TO_FORGET" if not reasons else "REFUSED", "reasons": reasons}
