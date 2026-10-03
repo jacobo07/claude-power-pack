@@ -186,11 +186,29 @@ def run_cli(args, cwd=REPO):
     return p.returncode, p.stdout, p.stderr
 
 
+FOLLOW_DEFAULTS = [True]
+
+
 def run_main(args):
-    """In-process main() with stdout/stderr captured, so a drill's monkeypatch reaches it."""
+    """In-process main() with stdout/stderr captured, so a drill's monkeypatch reaches it.
+
+    Fixture runs pass a scratch --frozen-file / --frozen-ce-ledger. The instrument (WR-07) only calls a frozen source
+    the committed default, so while FOLLOW_DEFAULTS is on this runner points the module's default paths at the
+    scratch files the call names (a patch of kp.DENOMS_REL / kp.CE_LEDGER_REL, which `REPO / abs` resolves to the
+    scratch path). Gates about the non-default behaviour turn it off or run the CLI as a subprocess."""
+    args = list(args)
+    saved = (kp.DENOMS_REL, kp.CE_LEDGER_REL)
+    if FOLLOW_DEFAULTS[0]:
+        if "--frozen-file" in args:
+            kp.DENOMS_REL = args[args.index("--frozen-file") + 1]
+        if "--frozen-ce-ledger" in args:
+            kp.CE_LEDGER_REL = args[args.index("--frozen-ce-ledger") + 1]
     out, err = io.StringIO(), io.StringIO()
-    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-        rc = kp.main(list(args))
+    try:
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            rc = kp.main(args)
+    finally:
+        kp.DENOMS_REL, kp.CE_LEDGER_REL = saved
     return rc, out.getvalue(), err.getvalue()
 
 
@@ -302,9 +320,12 @@ def g_tracer_e2e():
         return False, f"rc={rc} files={[f.name for f in files]} err={err[-200:]}"
     front, res = parse_measurement(files[0].read_text(encoding="utf-8"))
     ok = (front.get("pillar") == "D" and front.get("denominator") == "KME-L"
-          and front.get("population_match") == "exact" and front.get("terminal_evidence") is True
+          and front.get("population_match") == "exact" and front.get("terminal_evidence") is False
+          and "frozen source is not the repo default" in front.get("terminal_evidence_reason", "")
+          and front.get("frozen_source", {}).get("all_default") is False
           and "kme_pillars.py" in front.get("command", "") and res["numerator"]["chars"] == 900)
-    return ok, f"rc={rc} file={files[0].name} chars={res['numerator']['chars']} match={front.get('population_match')}"
+    return ok, f"rc={rc} file={files[0].name} chars={res['numerator']['chars']} match={front.get('population_match')} " \
+               f"terminal={front.get('terminal_evidence')} (scratch frozen file is not the committed default)"
 
 
 def g_audit_byte_identical():
@@ -2142,6 +2163,18 @@ def _icp():
     return icp
 
 
+@contextlib.contextmanager
+def icp_sources(icp, **paths):
+    """The wrapper's committed-frozen-source table pointed at scratch files for the duration (R3 reads it at call time)."""
+    saved = dict(icp.FROZEN_SOURCE_DEFAULTS)
+    icp.FROZEN_SOURCE_DEFAULTS.update({k: str(v) for k, v in paths.items()})
+    try:
+        yield
+    finally:
+        icp.FROZEN_SOURCE_DEFAULTS.clear()
+        icp.FROZEN_SOURCE_DEFAULTS.update(saved)
+
+
 def r3_led(pillar, *refs):
     return {"state": {pillar: {"evidence": [{"kind": "measurement", "ref": str(r), "sha256": "0" * 64}
                                             for r in refs]}}}
@@ -2180,7 +2213,8 @@ def g_r3_e_pair():
     res = icp.ce.Resolver()
 
     def fails(pillar, *refs):
-        return icp.check_measurement_scope(r3_led(pillar, *refs), res, only=[pillar])
+        with icp_sources(icp, frozen_file=frozen, ce_ledger=ledger):
+            return icp.check_measurement_scope(r3_led(pillar, *refs), res, only=[pillar])
     pair, alone, smk, wrong = fails("E", prim, second), fails("E", second), fails("E", smoke), fails("D", prim)
     ok = (shaped and pair == [] and len(alone) == 1 and alone[0].startswith("R3 E:")
           and len(smk) == 1 and smk[0].startswith("R3 E:") and len(wrong) == 1 and wrong[0].startswith("R3 D:"))
@@ -2357,11 +2391,13 @@ def g_r3_terminal_requires_primary():
     def fails(*refs):
         led = {"state": {"E": {"terminal": "RESEARCH_INSUFFICIENT_EVIDENCE", "evidence": [
             {"kind": "measurement", "ref": str(r), "sha256": "0" * 64} for r in refs]}}}
-        return icp.check_measurement_scope(led, res, only=["E"])
+        with icp_sources(icp, frozen_file=frozen):
+            return icp.check_measurement_scope(led, res, only=["E"])
     # the instrument's terminal claim is only believed when the file agrees with itself: a verdict-bearing,
     # reproduced primary on the frozen rule. (A UNMEASURED verdict file is terminal_evidence false by construction.)
     good, hand_f, forged_f = fails(prim), fails(hand), fails(forged)
-    table_eq = {k: list(v) for k, v in kp.RULE_DENOMINATORS.items()} == icp.FROZEN_RULE_DENOMINATORS
+    table_eq = ({k: list(v) for k, v in kp.RULE_DENOMINATORS.items()} == icp.FROZEN_RULE_DENOMINATORS
+                and icp.FROZEN_SOURCE_DEFAULTS == {"frozen_file": kp.DENOMS_REL, "ce_ledger": kp.CE_LEDGER_REL})
     ok = (fm0["terminal_evidence"] is True and good == [] and any("cites no kme_pillars primary" in x for x in hand_f)
           and any("claims terminal_evidence true but" in x for x in forged_f) and table_eq)
     return ok, f"primary_terminal={fm0['terminal_evidence']} good={good} hand={hand_f[:1]} forged={forged_f[:1]} table_eq={table_eq}"
@@ -2386,6 +2422,45 @@ def g_second_workload_needs_measured_verdict():
     return rows == want and unm["terminal_evidence"] is False, f"rows={rows} want={want}"
 
 
+def g_frozen_source_recorded():
+    """WR-07: the file records path + sha256 of the frozen source read, and anything but the committed default is not terminal."""
+    import hashlib
+    root = scratch("wr07")
+    tracer_fixture(root)
+    frozen = write_frozen(root / "frozen.json", **{"KME-L": TRACER_POP})
+    ledger = ce_ledger_exact(root / "ce.json", pdir(root))
+    want_sha = hashlib.sha256(Path(frozen).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    args = d_args(root, pdir(root), frozen, scratch("wr07-out"))
+    FOLLOW_DEFAULTS[0] = False
+    try:
+        rc_a, a, _o, _e = run_json(args)                                           # scratch file, committed default untouched
+        rc_b, b, _o, _e = run_json(d_args(root, pdir(root), frozen, scratch("wr07-out")) + ["--frozen-ce-ledger", ledger])
+        rc_d, d, _o3, _e3 = run_json(dw7_args("d", root, ledger, scratch("wr07-out")))
+    finally:
+        FOLLOW_DEFAULTS[0] = True
+    saved = kp.DENOMS_REL
+    kp.DENOMS_REL = frozen                                                          # the frozen file IS the default ...
+    try:
+        FOLLOW_DEFAULTS[0] = False
+        rc_c, c, _o, _e = run_json(args)                                            # ... so this one is terminal
+        rc_e, e, _o, _e = run_json(args + ["--frozen-ce-ledger", ledger])           # ... unless the CE ledger flag is off-default
+    finally:
+        FOLLOW_DEFAULTS[0] = True
+        kp.DENOMS_REL = saved
+    rc_f, f, _o, _e = run_json(other_args(pdir(root), scratch("wr07-out")))
+    fa = (a["frozen_source"] or {}).get("frozen_file", {})
+    ok = (rc_a in (0, 3) and a["terminal_evidence"] is False and fa.get("default") is False and fa.get("sha256") == want_sha
+          and fa.get("path") == str(frozen) and a["frozen_source"]["all_default"] is False
+          and b["terminal_evidence"] is False and b["frozen_source"]["ce_ledger"]["default"] is False
+          and d["terminal_evidence"] is False and d["frozen_source"]["ce_ledger"]["sha256"] and not d["frozen_source"]["all_default"]
+          and c["terminal_evidence"] is True and c["frozen_source"]["all_default"] is True
+          and e["terminal_evidence"] is False and e["frozen_source"]["all_default"] is False
+          and f.get("frozen_source") is None)
+    return ok, f"scratch file: terminal={a['terminal_evidence']} default={fa.get('default')} sha_ok={fa.get('sha256') == want_sha}; " \
+               f"scratch ce flag: {b['terminal_evidence']}; D-W7 scratch ledger: {d['terminal_evidence']}; default file: {c['terminal_evidence']}; " \
+               f"default file + off-default ce flag: {e['terminal_evidence']}; OTHER source={f.get('frozen_source')}"
+
+
 GATES_TRACER = [
     ("V-KMEP-TRACER-D-E2E", g_tracer_e2e),
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
@@ -2396,6 +2471,7 @@ GATES_REVIEW_FIX = [
     ("V-KMEP-SIGNATURE-NO-URL-TOKEN", g_signature_no_url_token),
     ("V-KMEP-R3-TERMINAL-REQUIRES-PRIMARY", g_r3_terminal_requires_primary),
     ("V-KMEP-SECOND-WORKLOAD-NEEDS-VERDICT", g_second_workload_needs_measured_verdict),
+    ("V-KMEP-FROZEN-SOURCE-RECORDED", g_frozen_source_recorded),
 ]
 GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_PLAN5_TRACER + GATES_PLAN5_BUNDLE + GATES_REAL + GATES_REAL_2 + GATES_REVIEW_FIX
 

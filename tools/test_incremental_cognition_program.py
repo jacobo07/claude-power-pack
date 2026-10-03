@@ -29,7 +29,8 @@ Added here:
       refused, never skipped; only a file with no kme_pillars mark at all is another instrument's and is left
       to the CE clauses. For pillars D..I a TERMINAL must cite at least one kme_pillars primary file whose
       terminal_evidence true agrees with its own fields (instrument mark, role primary, reproduced population,
-      measured verdict, denominator inside the frozen rule table kept here); a hand-written file cannot stand in.
+      measured verdict, denominator inside the frozen rule table kept here, and a `frozen_source` that records the
+      committed frozen file / CE ledger with its current sha256); a hand-written file cannot stand in.
       This is the mechanical form of "never substitute
       KME-G for KME-L".
   V-ICP-REBIND  the rebinding took: ledger.program must be "incremental-cognition", and a
@@ -206,6 +207,12 @@ KME_PILLARS = ("D", "E", "F", "G", "H", "I")
 FROZEN_RULE_DENOMINATORS = {"D": ["KME-L", "CPP-D-W7"], "E": ["KME-L"], "F": ["KME-L"], "G": ["KME-L"],
                             "H": ["KME-L"], "I": ["KME-L"]}
 MEASURED_VERDICTS = (">= 3 %", "< 3 %", "STRADDLES")
+# The committed frozen sources a terminal file must have been measured against (mirrors kme_pillars.DENOMS_REL /
+# CE_LEDGER_REL; test_kme_pillars pins the two equal). A file records the path and sha256 of the source it read.
+FROZEN_SOURCE_DEFAULTS = {
+    "frozen_file": "vault/programs/incremental-cognition/denominators/kme_audit_2026-10-03.json",
+    "ce_ledger": "vault/programs/cognitive-economy/ledger.json",
+}
 
 
 def terminal_claim_problems(pid: str, fm: dict) -> list:
@@ -230,6 +237,19 @@ def terminal_claim_problems(pid: str, fm: dict) -> list:
         bad.append(f"rule_denominators {fm.get('rule_denominators')!r} is not the frozen rule {rule!r}")
     if den not in rule:
         bad.append(f"denominator {den!r} is not in pillar {pid}'s frozen rule {rule!r}")
+    # WR-07: measured against the committed frozen source, whose recorded sha256 is still the committed file's
+    src = fm.get("frozen_source")
+    need = "ce_ledger" if den == "CPP-D-W7" else "frozen_file"
+    ent = src.get(need) if isinstance(src, dict) else None
+    if not isinstance(src, dict) or src.get("all_default") is not True or not isinstance(ent, dict):
+        bad.append("frozen_source is absent or says a non-default frozen source was read")
+    elif ent.get("default") is not True or ent.get("path") != FROZEN_SOURCE_DEFAULTS[need]:
+        bad.append(f"frozen_source {need} is {ent.get('path')!r}, not the committed {FROZEN_SOURCE_DEFAULTS[need]!r}")
+    else:
+        p = REPO / FROZEN_SOURCE_DEFAULTS[need]
+        now = ce.lf_sha256(p) if p.is_file() else None
+        if ent.get("sha256") != now:
+            bad.append(f"frozen_source {need} sha256 {ent.get('sha256')!r} is not the committed file's {now!r}")
     return bad
 
 
@@ -370,9 +390,13 @@ def selftest(verbose=True) -> bool:
         led_ = {"state": {pillar: {"evidence": [{"kind": "measurement", "ref": r, "sha256": "0" * 64} for r in refs]}}}
         return check_measurement_scope(led_, FakeText(table), only=[pillar])
 
+    def fsrc(key, **over):
+        rel = FROZEN_SOURCE_DEFAULTS[key]
+        ent = dict({"path": rel, "sha256": ce.lf_sha256(REPO / rel), "default": True}, **over)
+        return {key: ent, "all_default": ent["default"]}
     good_kv = dict(instrument=KMEP_INSTRUMENT, pillar="E", denominator="KME-L", rule_denominators=["KME-L"],
                    evidence_role="primary", terminal_evidence=True, population_match="exact", materiality=">= 3 %",
-                   second_workload_valid=None)
+                   second_workload_valid=None, frozen_source=fsrc("frozen_file"))
     prim = fm(**good_kv)
     prim_false = fm(pillar="E", evidence_role="primary", terminal_evidence=False,
                     terminal_evidence_reason="primary file but not terminal: population_match=drifted")
@@ -432,13 +456,19 @@ def selftest(verbose=True) -> bool:
         "foreign-instrument": dict(good_kv, instrument="hand/edited.py"),
         "referenced-on-E": dict(good_kv, population_match="referenced", denominator="CPP-D-W7",
                                 rule_denominators=["KME-L", "CPP-D-W7"], coverage=1.0),
+        # WR-07: the frozen source the file read
+        "no-frozen-source": {k: v for k, v in good_kv.items() if k != "frozen_source"},
+        "non-default-source": dict(good_kv, frozen_source=fsrc("frozen_file", default=False)),
+        "source-sha-stale": dict(good_kv, frozen_source=fsrc("frozen_file", sha256="0" * 64)),
+        "source-path-elsewhere": dict(good_kv, frozen_source=fsrc("frozen_file", path="/tmp/other.json")),
+        "wrong-source-kind": dict(good_kv, frozen_source=fsrc("ce_ledger")),
     }
     for name, kv in contradictions.items():
         got = r3t("E", {"c": fm(**kv)}, ["c"])
         say(any("claims terminal_evidence true but" in x for x in got),
             f"V-ICP-R3-MUT-{name} killed by R3 (terminal_evidence true contradicts its own fields)")
     d_ref = dict(good_kv, pillar="D", denominator="CPP-D-W7", rule_denominators=["KME-L", "CPP-D-W7"],
-                 population_match="referenced", coverage=1.0)
+                 population_match="referenced", coverage=1.0, frozen_source=fsrc("ce_ledger"))
     say(r3t("D", {"w": fm(**d_ref)}, ["w"], "FALSIFIED_OR_REJECTED_BY_EVIDENCE") == [],
         "V-ICP-R3-TERMINAL-DW7-REFERENCED-ACCEPTED (pillar D, CPP-D-W7 at coverage exactly 1)")
     say(any("claims terminal_evidence true but" in x for x in r3t(

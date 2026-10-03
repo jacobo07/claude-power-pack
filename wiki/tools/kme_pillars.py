@@ -99,7 +99,7 @@ FRONT_KEYS = ("instrument", "pillar", "denominator", "denominator_kind", "rule_d
               "until", "command", "population_match", "numerator", "share_interval", "share_measured_population",
               "threshold", "materiality", "materiality_reason", "observability", "second_workload_required",
               "estimate_model")
-FRONT_OPTIONAL = ("since", "until_located", "coverage", "second_workload_confirms")     # written only when the run has them
+FRONT_OPTIONAL = ("since", "until_located", "coverage", "second_workload_confirms", "frozen_source")     # written only when the run has them
 
 ESTIMATE_MODEL = (
     "chars -> tokens at 3.0..4.5 chars per token; an attachment is cache-written once (weight 2) and cache-read "
@@ -192,6 +192,25 @@ def frozen_specs(denoms_path=None, ce_ledger_path=None):
     if ce.exists():
         out[DW7_NAME] = dw7_spec(ce)
     return out
+
+
+def frozen_source_entry(path, default_path):
+    """{path, sha256, default} of a frozen source actually read: the repo-relative path (absolute outside the repo),
+    the LF-normalised sha256 of its bytes (null if unreadable) and whether it IS the repo's committed default."""
+    p = Path(path)
+    try:
+        is_default = p.resolve() == Path(default_path).resolve()
+    except OSError:
+        is_default = False
+    try:
+        shown = p.resolve().relative_to(REPO.resolve()).as_posix()
+    except (ValueError, OSError):
+        shown = str(p)
+    try:
+        sha = hashlib.sha256(p.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    except OSError:
+        sha = None
+    return {"path": shown, "sha256": sha, "default": is_default}
 
 
 def compare_population(measured, frozen):
@@ -1956,6 +1975,17 @@ def _prepare(a, pillars):
             return None, _fail(f"--project-filter {a.project_filter!r} is not a regex ({exc})")
 
     kind, frozen, select = "named_workload", None, a.select or "kme"
+    fsrc = None
+    if kme_kind or dw7:
+        # WR-07: record which frozen source the run read; a source other than the committed default (a flag pointing
+        # elsewhere) can never make a terminal file
+        denoms_default, ce_default = REPO / DENOMS_REL, REPO / CE_LEDGER_REL
+        entries = {}
+        if kme_kind or a.frozen_file:
+            entries["frozen_file"] = frozen_source_entry(a.frozen_file or denoms_default, denoms_default)
+        if dw7 or a.frozen_ce_ledger:
+            entries["ce_ledger"] = frozen_source_entry(a.frozen_ce_ledger or ce_default, ce_default)
+        fsrc = dict(entries, all_default=all(e["default"] for e in entries.values()))
     if kme_kind:
         fpath = a.frozen_file or str(REPO / DENOMS_REL)
         try:
@@ -1974,7 +2004,7 @@ def _prepare(a, pillars):
     host = a.host or (frozen["host"] if frozen else "local")
     return {"label": label, "den": den, "kind": kind, "frozen": frozen, "select": select, "host": host,
             "since": since, "until": until, "auto": auto, "freeze": freeze, "roots": a.root, "expand": a.expand,
-            "pf": pf, "role": role, "pillars": list(pillars)}, None
+            "pf": pf, "role": role, "pillars": list(pillars), "frozen_source": fsrc}, None
 
 
 def _measure(ctx, pillars, until, want_instants=False):
@@ -2073,7 +2103,9 @@ def _result(ctx, sc, pillar, loc, until, argv):
     in_rule = label in RULE_DENOMINATORS[pillar]
     role = "second_workload" if ctx["role"] == "second_workload" else ("primary" if in_rule else "smoke")
     full = match == "exact" or (match == "referenced" and ref_ok)
-    terminal = role == "primary" and full and verdict != "UNMEASURED"
+    fsrc = ctx.get("frozen_source")
+    src_default = fsrc is None or fsrc["all_default"]
+    terminal = role == "primary" and full and verdict != "UNMEASURED" and src_default
     # a second workload is VALID (usable as a measurement beside a primary) only when its population is reproduced (or
     # the workload is not frozen) AND the reading is measured: an UNMEASURED run is not a second workload at all.
     # Whether it CONFIRMS is a separate, narrower question: frozen rule E says "confirmed on a second workload", and
@@ -2088,8 +2120,10 @@ def _result(ctx, sc, pillar, loc, until, argv):
             t_reason = (f"primary file: {label} is in pillar {pillar}'s frozen rule {rule} and its population "
                         f"reproduced the frozen denominator{ref_note}")
         else:
-            t_reason = (f"primary file but not terminal: population_match={match}, materiality={verdict}{ref_note} "
-                        f"(a terminal needs an exact or fully covered population and a measured verdict)")
+            t_reason = (f"primary file but not terminal: population_match={match}, materiality={verdict}{ref_note}"
+                        f"{'' if src_default else ', frozen source is not the repo default'} "
+                        f"(a terminal needs an exact or fully covered population, a measured verdict and the "
+                        f"committed frozen source)")
     elif role == "second_workload":
         t_reason = (f"second_workload file: a measurement beside a primary file on {rule} (valid={sw_valid}, "
                     f"confirms={sw_confirms}, materiality={verdict}); never terminal itself{ref_note}")
@@ -2129,6 +2163,7 @@ def _result(ctx, sc, pillar, loc, until, argv):
         "since": fmt_instant(ctx["since"]) if ctx["since"] is not None else None,
         "until_located": _located_block(loc, until),
         "coverage": coverage,
+        "frozen_source": fsrc,
     }
     return res
 
