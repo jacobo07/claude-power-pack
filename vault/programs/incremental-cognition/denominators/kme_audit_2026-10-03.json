@@ -1,0 +1,50 @@
+{
+ "KME-G": {
+  "source": "wiki/tools/kme_token_audit.py + wiki/tools/kme_report.py (see module docstring)",
+  "sessions_active": 13,
+  "sessions_dead": 151,
+  "calls": 1322,
+  "input": 2644,
+  "cache_write": 6272100,
+  "cache_write_1h": 4339224,
+  "cache_write_5m": 1932876,
+  "cache_read": 381540448,
+  "output": 839734,
+  "usd_api_equivalent": 132.63,
+  "cost_split": {
+   "inp": 0.01,
+   "cw": 39.95,
+   "cr": 76.31,
+   "out": 16.37
+  },
+  "compactions": 1,
+  "calls_over_150k": 1272,
+  "max_ctx": 565608,
+  "classification": "KME_PATH or KME_STRONG (share of tool calls touching KME >= 0.30, or user mentions >= 2 with share >= 0.10); GEX44 a5/a7 env projects by path",
+  "caveat": "API-equivalent ESTIMATE at official per-MTok prices (cache write 1.25x / 2x input by TTL); not the Owner's subscription meter"
+ },
+ "KME-L": {
+  "source": "wiki/tools/kme_token_audit.py + wiki/tools/kme_report.py (see module docstring)",
+  "sessions_active": 102,
+  "sessions_dead": 0,
+  "calls": 34871,
+  "input": 69846,
+  "cache_write": 209909403,
+  "cache_write_1h": 122946732,
+  "cache_write_5m": 86963369,
+  "cache_read": 11549646300,
+  "output": 37878881,
+  "usd_api_equivalent": 5850.1,
+  "cost_split": {
+   "inp": 0.29,
+   "cw": 1440.77,
+   "cr": 3620.77,
+   "out": 788.28
+  },
+  "compactions": 74,
+  "calls_over_150k": 33655,
+  "max_ctx": 841972,
+  "classification": "KME_PATH or KME_STRONG (share of tool calls touching KME >= 0.30, or user mentions >= 2 with share >= 0.10); GEX44 a5/a7 env projects by path",
+  "caveat": "API-equivalent ESTIMATE at official per-MTok prices (cache write 1.25x / 2x input by TTL); not the Owner's subscription meter"
+ }
+}

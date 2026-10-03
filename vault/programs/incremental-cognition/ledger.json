@@ -1,0 +1,66 @@
+{
+ "schema": "cognitive-program-ledger/1 (verifier: tools/test_cognitive_economy_program.py via tools/test_incremental_cognition_program.py)",
+ "program": "incremental-cognition",
+ "plan": "vault/plans/incremental-cognition-program-2026-10-03.md",
+ "terminal_vocabulary": ["IMPLEMENTED_AND_VERIFIED", "MERGED_INTO_EXISTING_OWNER", "FALSIFIED_OR_REJECTED_BY_EVIDENCE", "DEFERRED_STRONGER_OWNER", "AUTHORIZATION_BOUND", "EXTERNAL_BLOCKED", "RESEARCH_INSUFFICIENT_EVIDENCE"],
+ "frozen": {
+  "frozen_note": "Pre-registration. Immutable after the P0 commit: the verifier compares this object with its copy at that commit. Moving a pillar away from a predicted IMPLEMENTED_AND_VERIFIED needs a falsification artifact in that pillar's evidence.",
+  "materiality": {
+   "rule": "a dedicated slice needs >= 3 % of a named weighted denominator (default KME-L weighted; CPP-D-W7 for CPP-corpus claims)",
+   "exceptions": "correctness, authority, security, horizontal primitive: argued separately in the pillar's evidence; an exception never lowers the threshold for another pillar",
+   "displacement": "a saving is realized only when displaced work is measured on the same denominator; otherwise it is an interval or UNKNOWN",
+   "transfer": "a performance guarantee promoted to CBR needs a second, materially independent workload"
+  },
+  "denominators": {
+   "KME-L": {
+    "file": "vault/programs/incremental-cognition/denominators/kme_audit_2026-10-03.json",
+    "source": "wiki/tools/kme_token_audit.py + wiki/tools/kme_report.py + wiki/tools/kme_denominators.py",
+    "calls": 34871,
+    "cache_read": 11549646300,
+    "cache_write": 209909403,
+    "output": 37878881,
+    "usd_api_equivalent": 5850.1,
+    "weighted_input_equivalent": 1764247687,
+    "weighting": "input 1 + cache_read 0.1 + cache_write 2 + output 5 (CE weighting). ESTIMATE of relative token burden, not price, not the Owner's meter.",
+    "attribution_range": "proportional attribution by KME tool-call share gives 3824.34 USD-eq over all 557 scanned local sessions; the true KME burden lies in [3824, 5850]"
+   },
+   "KME-G": {
+    "file": "vault/programs/incremental-cognition/denominators/kme_audit_2026-10-03.json",
+    "calls": 1322,
+    "cache_read": 381540448,
+    "usd_api_equivalent": 132.63,
+    "dead_sessions": 151,
+    "note": "151 a7 sessions with zero API calls = the Login-expired relaunch loop of 2026-10-02"
+   },
+   "CPP-D-W7": {
+    "file": "vault/programs/cognitive-economy/ledger.json",
+    "note": "CE frozen denominator D-W7 (CPP corpus 7 d to 2026-10-02), referenced, never re-measured here"
+   }
+  },
+  "consumes": {
+   "H": [{"ledger": "vault/programs/cognitive-economy/ledger.json", "pillar": "P"}, {"ledger": "vault/programs/cognitive-economy/ledger.json", "pillar": "G"}],
+   "I": [{"ledger": "vault/programs/cognitive-economy/ledger.json", "pillar": "B"}, {"ledger": "vault/programs/skill-capability/ledger.json", "pillar": "B"}],
+   "J": [{"ledger": "vault/programs/cognitive-economy/ledger.json", "pillar": "D"}, {"ledger": "vault/programs/cognitive-economy/ledger.json", "pillar": "E"}, {"ledger": "vault/programs/cognitive-economy/ledger.json", "pillar": "I"}],
+   "M": [{"ledger": "vault/programs/cognitive-economy/ledger.json", "pillar": "Q"}, {"ledger": "vault/programs/cognitive-economy/ledger.json", "pillar": "N"}, {"ledger": "vault/programs/cognitive-economy/ledger.json", "pillar": "O"}, {"ledger": "vault/programs/cognitive-economy/ledger.json", "pillar": "M"}]
+  },
+  "pillars": [
+   {"id": "A", "name": "mission relay in a shared checkout (worker worktree diverged from main)", "owner": ["tools/gsd_mission.py", "tools/test_gsd_mission_cwd_align.py", "vault/specs/mission-continuity.md"], "predicted": "IMPLEMENTED_AND_VERIFIED", "rule": "correctness exception. A red test first reproduces the measured hold (cwd and work_dir both carry commits); the fix relays without losing the worktree's commits and without any destructive git; PRG = a real held mission relays in the live sweep"},
+   {"id": "B", "name": "remote cognitive environment integrity (GEX44 a5/a7)", "owner": ["tools/gsd_mission.py", "tools/gsd_x_runtime_preflight.js"], "predicted": "IMPLEMENTED_AND_VERIFIED", "rule": "correctness exception. Preflight before a remote launch proves auth readiness, rules version, hook health and interpreters, or refuses with a typed reason; stale rules and broken hooks are repaired by a repeatable deploy, never hand copying; re-login itself is an Owner action"},
+   {"id": "C", "name": "persistent-failure retry classification", "owner": ["tools/gsd_mission.py"], "predicted": "IMPLEMENTED_AND_VERIFIED", "rule": "correctness exception. A worker that dies on an authorization-class failure (Login expired) parks the mission in a non-relaunching state until a qualifying precondition change; red test reproduces the 137-relaunch shape"},
+   {"id": "D", "name": "silent-success hooks (per-call additional context rent)", "owner": ["hooks/hook-dispatcher.js"], "predicted": "FALSIFIED_OR_REJECTED_BY_EVIDENCE", "rule": "measure hook_additional_context chars per tool call on KME-L and CPP-D-W7 sessions; a slice only at >= 3 % weighted; broken hook delivery is fixed under B regardless"},
+   {"id": "E", "name": "large-source read virtualization (KME heavy hitters)", "owner": ["modules/graphify", "vault/programs/cognitive-economy/ledger.json"], "predicted": "RESEARCH_INSUFFICIENT_EVIDENCE", "rule": "replay rereads of identical file versions on KME-L (same path, unchanged content between reads); build a query path in an existing owner only at >= 3 % weighted on KME-L AND confirmed on a second workload; never split source for size alone"},
+   {"id": "F", "name": "GSD operational projection", "owner": ["~/.claude/gsd-core/bin/gsd-tools.cjs"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "measure GSD workflow-doc residency (char x turns) on KME-L; if gsd-tools init already returns the compact state, hand the residency finding to the GSD owner; never fork GSD"},
+   {"id": "G", "name": "derived cognition, decision and negative-result reuse with invalidation", "owner": ["modules/graphify", "vault/knowledge_base/ukdl-universal.md"], "predicted": "RESEARCH_INSUFFICIENT_EVIDENCE", "rule": "count re-tested falsified hypotheses and re-litigated sealed decisions in the corpus (positive control: listing hiding C6 -> K4); one falsifiable slice on the existing owner only if the count clears materiality or a correctness exception"},
+   {"id": "H", "name": "proof reuse, singleflight, common cognitive subexpressions", "owner": ["vault/programs/cognitive-economy/ledger.json"], "predicted": "FALSIFIED_OR_REJECTED_BY_EVIDENCE", "rule": "consume CE P and G verdicts; one KME-specific check that verification share is below materiality"},
+   {"id": "I", "name": "startup floor and subagent bootstrap", "owner": ["vault/programs/cognitive-economy/ledger.json", "vault/plans/skill-capability-program-2026-10-03.md"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "add the measured subagent first-call context on KME-L to CE B / SC A-C; no move of a rule or skill here"},
+   {"id": "J", "name": "context lifetime, rollover, zero-transcript start, context images", "owner": ["vault/programs/cognitive-economy/ledger.json"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "consume CE D, E, I; the Ralph fresh worker with an 8 KB card is the zero-transcript path"},
+   {"id": "K", "name": "cognitive cost regression (startup floor ratchet)", "owner": ["wiki/tools/listing_floor_probe.py", "tools/baseline_ledger.py"], "predicted": "IMPLEMENTED_AND_VERIFIED", "rule": "a gate that measures the current startup floor by layer and fails on a material unexplained rise versus a committed reference; a 1K universal addition reported distinctly from project-local"},
+   {"id": "L", "name": "held-out efficiency benchmark, lower bound, regret", "owner": ["vault/programs/cognitive-economy/ledger.json"], "predicted": "RESEARCH_INSUFFICIENT_EVIDENCE", "rule": "offline replay of KME-L (late rollover, identical rereads, unchanged-precondition retries) ranks live experiments; live champion/challenger sessions spend quota and need an Owner decision"},
+   {"id": "M", "name": "optimizer, experiment compilation, negative capital, routing, events, reality model", "owner": ["vault/programs/cognitive-economy/ledger.json", "tools/baseline_ledger.py"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "dispositions only: CE Q/N/O/M and the pre-registration pattern of this verifier already own them; an unrestricted optimizer is rejected"},
+   {"id": "N", "name": "closeout: UKDL three levels, CBR, baseline, vault, institutional GC", "owner": ["vault/knowledge_base/ukdl-universal.md", "tools/baseline_ledger.py"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "candidates go to vault/programs/incremental-cognition/ukdl-candidates.md; promotion into ukdl-universal.md and CBR is reviewed, never silent"}
+  ]
+ },
+ "state": {"A": {}, "B": {}, "C": {}, "D": {}, "E": {}, "F": {}, "G": {}, "H": {}, "I": {}, "J": {}, "K": {}, "L": {}, "M": {}, "N": {}},
+ "reviews": {"ukdl": null, "cbr": null},
+ "deltas": {"product": [], "intelligence": []}
+}

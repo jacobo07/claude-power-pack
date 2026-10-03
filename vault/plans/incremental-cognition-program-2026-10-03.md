@@ -50,3 +50,27 @@ HANDOFF_DIR, PILLARS=A..N, SELF_REL; never edit the CE file. --selftest must kil
 ## Owner boundaries
 GEX44 /login (interactive OAuth); quota spend for KME champion/challenger sessions; global settings/rules edits
 (HR-001); arming only at >= 4 GB free RAM (SC boundary); no push while peer commits interleave.
+
+## Execution log
+- C0 `6d3113b8` this plan.
+- Phase-4 audit (general-purpose in the auditor role, sonnet): `vault/audits/incremental-cognition-phase4-audit.md`,
+  EXECUTE-WITH-FIXES, G1-G10. Dispositions:
+  - G1 (BLOCK) CE `V-CEP-REAL-HANDOFF` is stale since fa9ae2ed/8b62b6ce edited its probe file: CE selftest FAILS,
+    so CE `--final` is unpassable. Fixed in the wrapper exactly as SC does (poles read from history). A direct
+    edit to the CE file was made and REVERTED in this session (SC plan: never edit the CE file). Handoff to the
+    CE owner: `vault/programs/incremental-cognition/handoffs/ce-verifier-defect.md`.
+  - G2 rebind control: B1 checks every rebound global and `ledger.program`; mutants foreign-ledger and
+    rebound-global killed.
+  - G3 R2 clause: consuming pillars (frozen.consumes) need owner_ledger evidence read with git at a commit on
+    HEAD; 5 mutants + real owner read on both poles (CE A open at fa9ae2ed, IMPLEMENTED at 21671d6c).
+  - G4 pillar A design: new non-blocking status only when work_dir is a registered worktree of the same repo,
+    a merge-base exists, and the predecessor provably worked there; Brand #001 shape stays blocked.
+  - G5 three-relay scratch drill + mutation drill are Phase 1 success criteria.
+  - G6 deploy of the gsd_mission.py hunk only at >= 4 GB free RAM (it relaunches CE and ucep at once).
+  - G7 accepted: own worktree risk is what pillar A repairs; D/I/K never edit global settings (owner bundle).
+  - G8 every phase commits evidence; 12 cycles / 24 h caps.
+  - G9 accepted: E/H/I/J/M are dispositions; R2 makes them evidence-bound, not handoff-only.
+  - G10 corrected: SC P0 IS started (217d72b5, 28b27367; SC wrapper exists); phases/DAG/budget live in the
+    workstream ROADMAP.
+- P0 freeze: ledger + denominators (KME-L 34,871 calls / 11,549,646,300 cache read; KME-G 1,322 calls),
+  instruments in wiki/tools/kme_*.py, wrapper verifier `--selftest` PASS (11 own + full CE selftest).
