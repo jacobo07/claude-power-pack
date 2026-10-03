@@ -202,6 +202,41 @@ whose target is outside the store is a distinct store. Peer S1 (`2fc1a3c5`,
 duplicate files, tis --all-projects 152). Mutation-drilled: listing-order identity is
 KILLED by V-UXID-NO-ALIAS-PATH (`2a4b24f6`). #CROSS-PROJECT
 
+### T-DRILL-VERDICT-WITHOUT-CONTROL-001
+
+A mutation verdict is evidence only if the harness first showed the clean copy passing
+the named gate. Measured 2026-10-03 (`tools/mutation_drill.py`, before `94c55903`): a
+gate already failing read KILLED for every mutant, a misspelled gate read SURVIVED for
+every mutant, a test outside the subject's directory ran the LIVE subject (SURVIVED),
+and a test reading a repo sibling crashed in the flat copy (UNJUDGED: all 8 S3
+displacement drills). Two panes worked around it with private replicas
+(`vault/audits/ccp-c9/c9_replica_drill.py`, a scratch driver), so the harness never
+learned. Fix: control on its own copy (exit 0, summary, gate shown PASS) else
+CONTROL_INVALID; the mutant gets a fresh copy; the copy reproduces the layout the test
+imports through; a gate name never matches as a prefix (V-X vs V-X-2). Pinned by
+`test_mutation_drill` (6/11 red before, 13/13 after) and 2 self-drills KILLED.
+PR: control -> mutate -> named discriminator -> explicit verdict; a no-verdict run is
+neither PASS nor FAIL. #CROSS-PROJECT
+
+### T-PRIVATE-INDEX-PUBLISH-LEAVES-TREE-WITHOUT-FILE-001
+
+Committing through a private index from a scratchpad source publishes a blob that the
+working tree never received, so git shows the file DELETED and it reads as another
+writer's damage. Measured 2026-10-03: `6b61e29a` published
+`vault/audits/ccp-s14-s3-audit.md` from a scratchpad copy (blob `673ff92c` identical);
+the next session reported an "unexplained 18-line deletion". Hazard: a peer's
+`commit -a` would commit the deletion of a sealed audit. Fix: a private-index publish
+also materialises every NEW path it adds (create-only, blob re-verified). Diagnosis:
+compare the scratch blob with HEAD before calling it an unowned edit.
+
+### T-RESUME-FOCUS-IS-NOT-OWNERSHIP-001
+
+A rollover focus line is a pointer, not ownership. Measured 2026-10-03: `/kresume focus
+on c10` arrived in pane da's resume while c10 belonged to the §13 pane and had already
+landed (`47d2e93a`); the claimed capsule named a different first obligation. Fix:
+reconcile capsule identity, plan lanes and live writers before acting on a focus, and
+say why it was left.
+
 ### T-A-QUOTA-REFUSAL-IS-NOT-A-FINISHED-EPOCH-001
 
 A long-run supervisor that relays whenever a worker's turn ends will spend its
