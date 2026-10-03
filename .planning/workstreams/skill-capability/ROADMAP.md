@@ -34,6 +34,29 @@ result. UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is n
 - Never ask the Owner mid-run: Owner items go to `vault/programs/skill-capability/owner-bundle.md`, one line tagged
   `[<P>]`; that pillar is AUTHORIZATION_BOUND with an `owner_decision` evidence.
 
+## Host plane: this run executes on GEX44 (Owner "do it in GEX44", 2026-10-03)
+
+- Clone `/home/kobii/missions/skill-capability`, branch `mission/skill-capability`, origin = the bare repo
+  `/home/kobii/repos/claude-power-pack.git`. Push ONLY `mission/skill-capability` to that origin; never GitHub,
+  never another branch. The Owner fetches it back to the laptop.
+- GEX44 is NOT the laptop's live install. Its `~/.claude/` (settings, hooks, skills, transcripts) is a different
+  plane: never edit it, and never report a GEX44 reading as the laptop's. Every measurement names its host
+  (`host: gex44` or `host: laptop`). A claim that needs the laptop plane (live hook sync of
+  `hooks/doctrine_cards.js` to `~/.claude/hooks/`, a fresh laptop session listing, laptop transcripts beyond the
+  pack, R1 retained-settings at `--final`) goes to `vault/programs/skill-capability/owner-bundle.md` tagged `[<P>]`.
+- Pillar N (closeout) and the `--final` run are laptop-only: R1 reads the settings file of the host it runs on.
+  On GEX44, finish at "every pillar except N terminal, `--pillar <P>` PASS for each"; N stays open by design.
+- Laptop evidence shipped for pillar A, content-free (paths, timestamps, hunk headers, redacted truncated shell
+  commands; no file content): `/home/kobii/missions/skill-capability-data/card_evidence_pack.json` (20 card-ledger
+  rows, 7 sessions; built by `card_evidence_pack.py` beside it). Copy what a gate needs into
+  `vault/programs/skill-capability/` as a fixture and cite it with sha256.
+- Pillar A leads measured at hand-off (verify, do not trust): (1) D-CARD froze 5 denies; the live ledger now holds
+  6 (`4615e1d1`, Orca-X, after the freeze); report it beside the frozen figure, never fold it in. (2) 3 of the 6
+  `git exit 128` rows carry session `abcd1234`, the fixture id of `hooks/tests/test-capsule-mutation-guard.js`:
+  a test invoking the card without `DOCTRINE_CARDS_STATE_DIR` would write test rows into the live ledger.
+  (3) the other 3 are session `fce2689e`, cwd `C:\Users\User\Apps\io-mnb-w0`: a different checkout.
+- Model calls: subscription quota only, this mission's own work. No paid API, no new credentials.
+
 ## Phases
 
 - [ ] **Phase 1: Card precision** - pillar A
