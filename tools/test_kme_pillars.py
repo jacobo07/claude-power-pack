@@ -795,5 +795,99 @@ def run_all() -> int:
     return 0 if counted and all(r[0] == "PASS" for r in counted) else 1
 
 
+# --------------------------------------------------------------------------- mutation drill
+GATE_FN = dict(GATES)
+DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION]    # the -REAL gates are excluded for speed
+
+
+def _quiet(names) -> dict:
+    """Run the named gates with printing off; {gate: passed} for the ones that ran to PASS/FAIL."""
+    start = len(RESULTS)
+    QUIET[0] = True
+    try:
+        for n in names:
+            run_gate(n, GATE_FN[n])
+    finally:
+        QUIET[0] = False
+    return {g: st == "PASS" for st, g, _ in RESULTS[start:] if st in ("PASS", "FAIL")}
+
+
+def _patch(attr, value):
+    saved = getattr(kp, attr)
+    setattr(kp, attr, value)
+    return lambda: setattr(kp, attr, saved)
+
+
+def _m_unmeasured_to_below():
+    real = kp.materiality
+
+    def mutant(*a, **k):
+        v, r = real(*a, **k)
+        return ("< 3 %", r) if v == "UNMEASURED" else (v, r)
+    return _patch("materiality", mutant)
+
+
+def _m_always_exact():
+    return _patch("compare_population", lambda measured, frozen: ("exact", {}))
+
+
+def _m_resident_one():
+    return _patch("resident_calls", lambda idx, compact_points, n_order: 1)
+
+
+def _m_every_hook_type():
+    return _patch("counts_for_d", lambda atype: True)
+
+
+def _m_until_ignored():
+    return _patch("make_keep", lambda since, until: (lambda path, o: True))
+
+
+def _m_truncating_writer():
+    def mutant(out_dir, stem, text):
+        out_dir = Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        path = out_dir / f"{stem}.md"
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
+        return path
+    return _patch("write_measurement", mutant)
+
+
+MUTANTS = [
+    ("M1 materiality maps UNMEASURED to '< 3 %'", _m_unmeasured_to_below, ["V-KMEP-UNMEASURED-NOT-BELOW"]),
+    ("M2 compare_population always exact", _m_always_exact, ["V-KMEP-POPULATION-DRIFT"]),
+    ("M3 D resident calls forced to 1", _m_resident_one, ["V-KMEP-D-RESIDENCY"]),
+    ("M4 D counts every hook attachment type", _m_every_hook_type, ["V-KMEP-D-ONLY-ADDITIONAL-CONTEXT"]),
+    ("M5 make_keep ignores until", _m_until_ignored, ["V-KMEP-UNTIL-CUTOFF"]),
+    ("M6 writer truncates instead of suffixing", _m_truncating_writer, ["V-KMEP-NO-OVERWRITE"]),
+]
+
+
+def run_drill() -> int:
+    """Control first (all in-process gates green), each mutant applied and restored, then an unmutated rerun."""
+    control = _quiet(DRILL_GATES)
+    control_ok = len(control) == len(DRILL_GATES) and all(control.values())
+    print(f"{'PASS' if control_ok else 'FAIL'} DRILL-CONTROL unmutated run: {sum(control.values())}/{len(control)} gates green")
+    killed = 0
+    for label, apply, targets in MUTANTS:
+        restore = apply()
+        try:
+            seen = _quiet(targets)
+        finally:
+            restore()
+        by = [t for t in targets if seen.get(t) is False]
+        if len(by) == len(targets):
+            killed += 1
+            print(f"KILLED {label} by {', '.join(by)}")
+        else:
+            print(f"SURVIVED {label} (still green or absent: {', '.join(t for t in targets if seen.get(t) is not False)})")
+    after = _quiet(DRILL_GATES)
+    clean = len(after) == len(DRILL_GATES) and all(after.values())
+    print(f"{'PASS' if clean else 'FAIL'} DRILL-CLEAN-AFTER-MUTANTS unmutated rerun: {sum(after.values())}/{len(after)} gates green")
+    print(f"DRILL killed={killed}/{len(MUTANTS)}")
+    return 0 if (killed == len(MUTANTS) and control_ok and clean) else 1
+
+
 if __name__ == "__main__":
-    sys.exit(run_all())
+    sys.exit(run_drill() if "--drill" in sys.argv[1:] else run_all())
