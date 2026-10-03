@@ -199,3 +199,20 @@ Audit 2026-10-03 (oneshot-architect-auditor, EXECUTE-WITH-FIXES, 25 gaps). Each 
 ## 7. Rollback
 Every tranche is additive behind 3.1 and the kill switch. Guard rollback: remove its two dispatcher
 lines (canonical and live) or `CPP_CAPSULE_ROLLOVER=off`. `git revert` per tranche.
+
+## 9. T5 as built -- the seam T6 calls (status IMPLEMENTED: no production caller yet)
+
+| T6 call site (gsd_mission) | adapter call | guarantees / failure meaning |
+|---|---|---|
+| ROTATE decided, owner idle/done | `mc.compile_mission_capsule(rec, origin="worker_handoff", note=, transcript=, packet=, work_dir=)` | identity from rec (key `mission-<id>-e<epoch>`, lineage as `renew_mission`); obligations from `gsd_long_run.gsd_manager` NOW (G1/G2); gaps left absent, never filled. ValueError only for a record with no identity or an unknown origin (caller bug) |
+| right after | `mc.seal_mission(cap)` | `SAFE_TO_FORGET` / `REFUSED`(reasons) / `UNKNOWN` (seal row not written: treat as refused). Same `capsule_sealed` row as the interactive seal |
+| fallback past grace / dead owner | same with `origin="supervisor_fallback"` / `"recovery"` | degraded; eligibility IS `rollover.completeness` (children HOLD/UNKNOWN, unreadable repo, no obligations refuse). No readable transcript = custody UNKNOWN = refused, for every origin but `recovery` (G21: children named lost, custody stated unchecked). Transcript found by session id when not passed. The G5 first-refusal clock is T6 state |
+| immediately before `stop_owner` | `mc.gate_before_stop(key)` | exactly `rollover.gate` (bytes as sealed, fresh, not certified). No transcript re-check: G3 supersedes I2; T6 ledgers `outgoing_stop_authorized`. Anything but SAFE_TO_FORGET: do not stop |
+| before `launch_worker` spawns | `mc.arm_successor(rec)` | `rollover.precert_arm`: replaces any earlier marker (never inherits a certification). If it raises, do NOT spawn |
+| after `parse_launch` / at ack | `mc.bind_successor(mid, worker, bg_id=)` / `(owner_session=)` | merging update, only onto THIS worker's uncertified marker; refused when none is armed, it names another worker, or it is certified |
+| the successor itself | `python tools/mission_capsule.py resume|certify --mission <m>` | G12 identity (owner or bg-id prefix), GSD asked NOW, refused before claiming when GSD has no obligation; certify = `rollover.certify_flow`, which lifts the marker |
+
+T6 adds to the record: `rollover_protocol`, `capsule_key` (G6, the CLI refuses without it), `capsule_hold`
+(G4), the first-refused-seal time (G5). `mc.worker_name` mirrors `gsd_mission.worker_name` and is pinned
+to it by V-MCAP-IDENTITY. Gates: `tools/test_mission_capsule.py` (V-MCAP), `tools/test_rollover_capsule_v2.py`
+(V-CAP2), and G23 unchanged (`tools/test_gsd_mission_legacy_characterization.py`, never re-captured).
