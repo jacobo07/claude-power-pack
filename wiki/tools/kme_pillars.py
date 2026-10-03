@@ -40,7 +40,9 @@ import json
 import os
 import re
 import shlex
+import shutil
 import socket
+import subprocess
 import sys
 from pathlib import Path
 
@@ -769,6 +771,10 @@ def _decision_ids(sentence):
     return [f"{m.group(1)}-{int(m.group(2))}" for m in DECISION_ID_RE.finditer(sentence)]
 
 
+def _decision_ids_raw(sentence):
+    return [m.group(0) for m in DECISION_ID_RE.finditer(sentence)]
+
+
 def _subject(sentence, marker):
     """Last two content words before the marker, or the first two after it when the marker opens the sentence
     and is followed by ':'. May be one or no words (kept for loose matching only)."""
@@ -868,7 +874,8 @@ class GObserver(PillarObserver):
             elif SEALED_RE.search(s):
                 ids = _decision_ids(s)
                 subj = () if ids else _subject(s, SEALED_RE.search(s))
-                self._record("sealed", base, s, subj, ids[0] if ids else None, cw)
+                self._record("sealed", base, s, subj, ids[0] if ids else None, cw,
+                             _decision_ids_raw(s)[0] if ids else None)
             stripped = strip_negated(s)
             kinds = []
             if RETEST_RE.search(stripped):
@@ -881,8 +888,8 @@ class GObserver(PillarObserver):
                 self.cands.append(cand)
                 self._by_path[path].append(cand)
 
-    def _record(self, kind, base, s, subj, ident, cw):
-        self.records.append(dict(base, kind=kind, subject_raw=tuple(subj),
+    def _record(self, kind, base, s, subj, ident, cw, ident_raw=None):
+        self.records.append(dict(base, kind=kind, subject_raw=tuple(subj), ident_raw=ident_raw,
                                  subject=tuple(_norm_word(w) for w in subj), ident=ident, content=frozenset(cw)))
 
     def on_file_end(self, path, sess, order, calls, compact_points):
@@ -953,7 +960,7 @@ class GObserver(PillarObserver):
             if strict:
                 lower_calls[(cand["file"], cand["span"][0])] = True
                 r = recs[sorted(strict)[0]]
-                subj = " ".join(r["subject_raw"]) if len(r["subject_raw"]) == 2 else (r["ident"] or "")
+                subj = " ".join(r["subject_raw"]) if len(r["subject_raw"]) == 2 else (r["ident_raw"] or "")
                 sample_pool.append((cand["key"], {"kind": "falsification" if r["kind"] == "falsified" else "sealed",
                                                   "subject": subj, "session": cand["session"],
                                                   "call": cand["span"][0]}))
@@ -995,11 +1002,254 @@ class GObserver(PillarObserver):
         }
 
 
-OBSERVERS = {"D": DObserver, "E": EObserver, "F": FObserver, "G": GObserver}
+# --------------------------------------------------------------------------- pillar H
+CE_LEDGER_REL = "vault/programs/cognitive-economy/ledger.json"
+VERIFY_CMD_RE = re.compile(
+    r"\btest_[\w.-]*\.(?:py|js|cjs|mjs)\b|\bpytest\b|\bnpm\s+(?:run\s+)?test\b|\bnode\s+--test\b|\bmix\s+test\b"
+    r"|\bgo\s+test\b|\bcargo\s+test\b|--selftest\b|--final\b|--drill\b|\bverify\b|\btsc\b[^\n]*--noEmit", re.I)
+VERIFIER_AGENT_RE = re.compile(r"verif|checker|review|audit|arbiter|judge|\bqa\b|tester", re.I)
+# a command segment whose program only reads or moves files is not a verification run even when it names a test file
+NON_RUN_PROGRAMS = frozenset((
+    "cat ls head tail less more wc grep egrep fgrep rg git sed awk echo printf cp mv rm mkdir touch chmod stat file "
+    "diff find ln which type nl tee vim nano open code").split())
+WRAPPERS = frozenset(("timeout", "time", "env", "nice", "sudo", "nohup", "stdbuf", "command", "exec"))
+ASSIGN_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+SIG_TOKEN_RE = re.compile(r"[A-Za-z0-9./:_-]{1,80}")
+SEG_SPLIT_RE = re.compile(r"&&|\|\||[;|\n]")
+H_DEFINITION = ("verification: test/gate tool calls + output carriage (CE P definition) + verifier subagents")
+H_SENSITIVITY_LABEL = "full-call-cost sensitivity, not the frozen definition, not used for the verdict"
+
+
+def _program_tokens(seg):
+    toks = seg.split()
+    i = 0
+    while i < len(toks):
+        t = toks[i]
+        if ASSIGN_RE.match(t):
+            i += 1
+        elif t in WRAPPERS:
+            i += 1
+            if t == "timeout" and i < len(toks) and re.fullmatch(r"\d+[smhd]?", toks[i]):
+                i += 1
+        else:
+            break
+    return toks[i:]
+
+
+def verify_segment(command):
+    """The first command segment of a Bash command that is a verification run, else None."""
+    for seg in SEG_SPLIT_RE.split(command or ""):
+        seg = seg.strip()
+        if not seg or not VERIFY_CMD_RE.search(seg):
+            continue
+        toks = _program_tokens(seg)
+        if toks and os.path.basename(toks[0]) not in NON_RUN_PROGRAMS:
+            return seg
+    return None
+
+
+def cmd_signature(seg):
+    """Program and script tokens only, never flags, values or arguments: the first one or two whitespace tokens of
+    the segment (after env assignments and wrappers) made of letters, digits and ./:_-."""
+    toks = _program_tokens(seg.split("\n", 1)[0])
+    if not toks or not SIG_TOKEN_RE.fullmatch(toks[0]) or toks[0].startswith("-"):
+        return "(other)"
+    out = [toks[0]]
+    if len(toks) > 1 and SIG_TOKEN_RE.fullmatch(toks[1]) and not toks[1].startswith("-") \
+            and (re.fullmatch(r"[A-Za-z]{1,20}", toks[1]) or re.search(r"[./]", toks[1])):
+        out.append(toks[1])
+    return " ".join(out)
+
+
+def h_numerator_interval(lo, hi, sensitivity_weighted):
+    """The verdict interval of H: the frozen definition only. The full-call-cost sensitivity never enters."""
+    return lo, hi
+
+
+def ce_owner_verdicts(repo=REPO, ref=CE_LEDGER_REL, pillars=("P", "G")):
+    """The CE ledger's terminals for `pillars`, read with git at HEAD (the R2 owner_ledger form: commit + pillar +
+    terminal). A terminal is None while the pillar is open. Anything unreadable is UNMEASURABLE, never a terminal."""
+    exe = os.environ.get("CPP_GIT_EXE") or shutil.which("git")
+    if not exe:
+        return {"status": "UNMEASURABLE", "why": "git executable not found"}
+
+    def git(*args):
+        try:
+            return subprocess.run([exe, "-C", str(repo)] + list(args), capture_output=True, text=True, timeout=15)
+        except (OSError, subprocess.SubprocessError) as exc:
+            return exc
+
+    head = git("rev-parse", "HEAD")
+    if isinstance(head, Exception) or head.returncode != 0 or not re.fullmatch(r"[0-9a-f]{40}", head.stdout.strip()):
+        return {"status": "UNMEASURABLE", "why": "cannot resolve HEAD in the repository"}
+    commit = head.stdout.strip()
+    shown = git("show", f"HEAD:{ref}")
+    if isinstance(shown, Exception) or shown.returncode != 0:
+        return {"status": "UNMEASURABLE", "why": f"{ref} is not readable at HEAD {commit[:8]}"}
+    try:
+        led = json.loads(shown.stdout.lstrip("﻿"))
+        state = led["state"]
+        out = {}
+        for p in pillars:
+            if p not in state:
+                return {"status": "UNMEASURABLE", "why": f"pillar {p} is absent from the ledger state at {commit[:8]}"}
+            out[p] = (state[p] or {}).get("terminal")
+    except (ValueError, KeyError, TypeError, AttributeError):
+        return {"status": "UNMEASURABLE", "why": f"{ref} at {commit[:8]} is not a ledger with a state map"}
+    return {"ref": ref, "commit": commit, "pillars": out}
+
+
+class HObserver(PillarObserver):
+    """Pillar H: verification share, by CE pillar P's definition (test / gate tool calls + their output carriage)
+    plus verifier subagents (agentType from the subagent's meta.json) counted once at their measured weighted cost."""
+    pillar = "H"
+
+    def __init__(self):
+        self.events = []
+        self.agents = []
+        self._by_path = collections.defaultdict(list)
+        self._state = {}
+
+    def _st(self, path):
+        st = self._state.get(path)
+        if st is None:
+            st = {"tools": {}, "msg": {}}
+            self._state[path] = st
+        return st
+
+    def on_line(self, path, o, idx, sess):
+        if not isinstance(o, dict):
+            return
+        msg = o.get("message")
+        if not isinstance(msg, dict):
+            return
+        st = self._st(path)
+        content = msg.get("content")
+        if o.get("type") == "assistant":
+            key = None
+            if isinstance(msg.get("usage"), dict):
+                key = (msg.get("id") or o.get("uuid"), o.get("requestId"))
+                st["msg"].setdefault(key, idx)
+            for c in _blocks(content):
+                if not (isinstance(c, dict) and c.get("type") == "tool_use" and c.get("name") in ("Bash", "PowerShell")):
+                    continue
+                inp = c.get("input") if isinstance(c.get("input"), dict) else {}
+                seg = verify_segment(str(inp.get("command") or ""))
+                if seg is None:
+                    continue
+                ev = {"sid": id(sess), "file": path, "call_key": key,
+                      "in_chars": len(json.dumps(inp, ensure_ascii=False)), "sig": cmd_signature(seg),
+                      "res_chars": 0, "ridx": None, "resident": 0, "call_w": 0.0, "dropped": False}
+                st["tools"][c.get("id")] = ev
+                self.events.append(ev)
+                self._by_path[path].append(ev)
+        elif o.get("type") == "user":
+            for c in _blocks(content):
+                if isinstance(c, dict) and c.get("type") == "tool_result":
+                    ev = st["tools"].get(c.get("tool_use_id"))
+                    if ev is not None:
+                        ev["res_chars"] = len(kme_token_audit.text_of(c.get("content")))
+                        ev["ridx"] = idx
+
+    def on_file_end(self, path, sess, order, calls, compact_points):
+        evs = self._by_path.pop(path, [])
+        for ev in evs:
+            if ev["ridx"] is not None:
+                ev["resident"] = resident_calls(ev["ridx"], compact_points, len(order))
+            rec = calls.get(ev["call_key"]) if ev["call_key"] is not None else None
+            if rec is not None and rec.get("model") != "<synthetic>":
+                ev["call_w"] = call_weighted(rec)
+        if "/subagents/" not in path.replace("\\", "/"):
+            return
+        atype, absent = "unknown", True
+        if path.endswith(".jsonl"):
+            try:
+                with open(path[:-len(".jsonl")] + ".meta.json", "r", encoding="utf-8") as fh:
+                    meta = json.load(fh)
+                name = re.sub(r"[^A-Za-z0-9_.:-]", "", str(meta.get("agentType") or ""))[:40]
+                if name:
+                    atype, absent = name, False
+            except (OSError, ValueError, AttributeError):
+                pass
+        weighted_calls = [call_weighted(calls[k]) for k in order if calls[k].get("model") != "<synthetic>"]
+        verifier = (not absent) and bool(VERIFIER_AGENT_RE.search(atype))
+        self.agents.append({"sid": id(sess), "type": atype, "absent": absent, "verifier": verifier,
+                            "calls": len(weighted_calls), "weighted": sum(weighted_calls)})
+        if verifier:
+            for ev in evs:
+                ev["dropped"] = True
+
+    def result(self, selected, sessions, population):
+        evs = [e for e in self.events if e["sid"] in selected and not e["dropped"]]
+        agents = [a for a in self.agents if a["sid"] in selected]
+        lo = hi = 0.0
+        res_chars = 0
+        sigs = {}
+        for e in evs:
+            ilo, ihi = e["in_chars"] / CPT_HI * WEIGHTS["output"], e["in_chars"] / CPT_LO * WEIGHTS["output"]
+            blo, bhi = burden_interval(e["res_chars"], e["resident"]) if e["ridx"] is not None else (0.0, 0.0)
+            lo += ilo + blo
+            hi += ihi + bhi
+            res_chars += e["res_chars"]
+            g = sigs.setdefault(e["sig"], {"signature": e["sig"], "count": 0, "result_chars": 0,
+                                           "weighted_lo": 0.0, "weighted_hi": 0.0})
+            g["count"] += 1
+            g["result_chars"] += e["res_chars"]
+            g["weighted_lo"] += ilo + blo
+            g["weighted_hi"] += ihi + bhi
+        rows = sorted(sigs.values(), key=lambda x: (-x["result_chars"], x["signature"]))[:20]
+        for g in rows:
+            g["weighted_lo"] = round(g["weighted_lo"], 3)
+            g["weighted_hi"] = round(g["weighted_hi"], 3)
+        ver_types, other_types = {}, collections.Counter()
+        vw = 0.0
+        for a in agents:
+            if a["verifier"]:
+                t = ver_types.setdefault(a["type"], [0, 0, 0.0])
+                t[0] += 1
+                t[1] += a["calls"]
+                t[2] += a["weighted"]
+                vw += a["weighted"]
+            else:
+                other_types[a["type"]] += 1
+        carrying = {}
+        for e in evs:
+            if e["call_key"] is not None:
+                carrying[(e["file"], e["call_key"])] = e["call_w"]
+        sens_w = sum(carrying.values()) + vw
+        lo, hi = lo + vw, hi + vw
+        lo, hi = h_numerator_interval(lo, hi, sens_w)
+        w = population.get("weighted") or 0
+        return {
+            "numerator": {
+                "name": H_DEFINITION,
+                "definition": ("Bash / PowerShell tool calls whose command is a test or gate run (their input at "
+                               "the output weight 5, their result at its residency burden until the next "
+                               "compaction) plus every call of a subagent whose meta.json agentType names a "
+                               "verifier, at measured weighted cost, once (the tool calls inside a verifier "
+                               "subagent are not added again)"),
+                "kind": "verification share", "chars": res_chars,
+                "weighted_lo": lo, "weighted_hi": hi, "weighted_interval": [lo, hi],
+            },
+            "observability": 1.0,
+            "details": {
+                "verification_tool_calls": len(evs), "result_chars": res_chars, "cmd_signatures": rows,
+                "verifier_agent_types": {k: [v[0], v[1], v[2]] for k, v in sorted(ver_types.items())},
+                "other_agent_types": dict(sorted(other_types.items())),
+                "meta_absent": sum(1 for a in agents if a["absent"]),
+                "upper_sensitivity": {"share": (sens_w / w) if w > 0 else None, "weighted": sens_w,
+                                      "label": H_SENSITIVITY_LABEL},
+                "consumed_owner_verdicts": ce_owner_verdicts(),
+            },
+        }
+
+
+OBSERVERS = {"D": DObserver, "E": EObserver, "F": FObserver, "G": GObserver, "H": HObserver}
 PILLAR_HELP = {"D": "silent-success hooks: hook_additional_context rent per call",
                "E": "large-source read virtualization: rereads of identical file versions",
                "F": "GSD operational projection: workflow-doc residency beside the init JSON",
-               "G": "derived cognition: re-tested falsified hypotheses and re-litigated sealed decisions (interval)"}
+               "G": "derived cognition: re-tested falsified hypotheses and re-litigated sealed decisions (interval)",
+               "H": "proof reuse: verification share (test / gate runs, verifier subagents) + the CE P / G owner read"}
 
 
 # --------------------------------------------------------------------------- scan + population
@@ -1084,6 +1334,26 @@ def _pillar_details(p, det):
         out.append(f"- candidates: {json.dumps(det.get('candidates'))}")
         for m in det.get("samples", []):
             out.append(f"- sample: {m['kind']} subject={m['subject']} session={m['session']} call={m['call']}")
+    elif p == "H":
+        out.append(f"- verification tool calls: {det.get('verification_tool_calls')}, result chars: {det.get('result_chars')}")
+        for g in det.get("cmd_signatures", []):
+            out.append(f"- command {g['signature']}: {g['count']} calls, {g['result_chars']} result chars, "
+                       f"weighted {g['weighted_lo']}..{g['weighted_hi']}")
+        out.append(f"- verifier subagents [files, calls, weighted]: {json.dumps(det.get('verifier_agent_types'))}")
+        out.append(f"- other subagent types (names only): {json.dumps(det.get('other_agent_types'))}")
+        out.append(f"- subagent files without meta.json: {det.get('meta_absent')}")
+        out.append(f"- upper_sensitivity: {json.dumps(det.get('upper_sensitivity'))}")
+        ow = det.get("consumed_owner_verdicts") or {}
+        out.append(f"- consumed_owner_verdicts: {json.dumps(ow)}")
+        pil = ow.get("pillars")
+        if not pil:
+            out.append("- R2 (consume the CE P and G verdicts) is not satisfiable: the owner ledger could not be read.")
+        elif any(v is None for v in pil.values()):
+            out.append("- R2 (consume the CE P and G verdicts) is NOT satisfiable at this commit: the CE terminal of "
+                       + ", ".join(k for k, v in pil.items() if v is None)
+                       + " is null (open on this history). Recorded as open, not as a pass.")
+        else:
+            out.append("- CE owner terminals are present at this commit: " + json.dumps(pil))
     return out
 
 
@@ -1177,11 +1447,22 @@ G_CAVEATS = (
     "only assistant text blocks of the selected active sessions are read; user text, tool results and thinking "
     "are not",
 )
-CAVEATS_BY_PILLAR = {"G": G_CAVEATS}
+H_CAVEATS = CAVEATS[:2] + (
+    "verification = Bash / PowerShell commands matching a test or gate pattern (a segment whose program only reads "
+    "or moves files, e.g. cat, grep, git, is not a run), plus subagents whose meta.json agentType names a verifier; "
+    "a test run through another tool, a hook or a script wrapper that hides the pattern is not seen",
+    "a subagent transcript without a meta.json beside it has an unknown agent type and is never counted as a "
+    "verifier subagent (details.meta_absent counts them)",
+    "upper_sensitivity is the full cost of every call that issued a verification command, plus verifier subagents; "
+    "it is reported beside the verdict and never decides it",
+    "the CE P and G verdicts are read with git at HEAD (details.consumed_owner_verdicts); a null terminal means open, "
+    "and the consumption (R2) is then not satisfiable",
+)
+CAVEATS_BY_PILLAR = {"G": G_CAVEATS, "H": H_CAVEATS}
 ESTIMATE_MODEL_G = ("no char estimate: weighted cost of the carrying calls from their recorded usage "
                     "(input 1 + cache_read 0.1 + cache_write 2 + output 5); lower = calls with strict matches, "
                     "upper = their whole turns for loose matches; share = cost / weighted denominator")
-ESTIMATE_MODELS = {"G": ESTIMATE_MODEL_G}
+ESTIMATE_MODELS = {"G": ESTIMATE_MODEL_G}   # H keeps the default chars-per-token model
 
 
 # --------------------------------------------------------------------------- CLI

@@ -1205,6 +1205,302 @@ def g_c6_k4_positive():
 GATES_G_TRACER = [("V-KMEP-G-C6-K4-POSITIVE", g_c6_k4_positive)]
 
 
+# =========================================================================== gates (task 2: pillar G poles)
+G_CITE_TEXT = ("Listing hiding was already falsified in C6 and K4, so we do not re-test it; the plugin gateway is "
+               "the next lever.")
+
+
+def g_run_pair(first, second, **kw):
+    root = g_pair(first, second, **kw)
+    rc, res, _o, _e, _d = g_other(root)
+    return rc, res
+
+
+def g_citation_is_reuse():
+    rc, res = g_run_pair(C6_TEXT, G_CITE_TEXT)
+    rt, _s, det = g_det(res)
+    ok = rc == 0 and rt["strict"] == 0 and rt["loose"] == 0 and det["reuse_citations"] == 1 \
+        and det["candidates"]["retest"] == 0
+    return ok, f"rc={rc} strict={rt['strict']} loose={rt['loose']} reuse={det['reuse_citations']} cands={det['candidates']}"
+
+
+def g_negated_retest():
+    rc, res = g_run_pair(C6_TEXT, "We do not re-test listing hiding.")
+    rt, _s, det = g_det(res)
+    rc2, res2 = g_run_pair(C6_TEXT, "We will re-test listing hiding.")        # control: the same sentence, not negated
+    rt2, _s2, _d2 = g_det(res2)
+    neg = [bool(kp.RETEST_RE.search(kp.strip_negated(x))) for x in
+           ("do not re-test it", "don't retest it", "we never re-run this", "no need to try again", "re-test it")]
+    ok = rc == 0 and rt["strict"] == 0 and det["candidates"]["retest"] == 0 and rt2["strict"] == 1 \
+        and neg == [False, False, False, False, True]
+    return ok, f"negated strict={rt['strict']} cands={det['candidates']['retest']}; control strict={rt2['strict']}; strip={neg}"
+
+
+def g_unrelated():
+    rc, res = g_run_pair(C6_TEXT, "Re-run the arena drill with the new seed.")
+    rt, _s, det = g_det(res)
+    ok = rc == 0 and rt["strict"] == 0 and rt["loose"] == 0 and det["candidates"]["retest"] == 1 and det["samples"] == []
+    return ok, f"strict={rt['strict']} loose={rt['loose']} cands={det['candidates']}"
+
+
+def g_order():
+    rc, res = g_run_pair(C6_TEXT, K4_TEXT, t_first=-2 * 86400, t_second=-3 * 86400)    # the re-test comes FIRST in time
+    rt, _s, det = g_det(res)
+    rc2, res2 = g_run_pair(C6_TEXT, K4_TEXT)                                              # control: right order
+    rt2, _s2, _d2 = g_det(res2)
+    ok = rc == 0 and rt["strict"] == 0 and rt["loose"] == 0 and det["candidates"]["retest"] == 1 and rt2["strict"] == 1
+    return ok, f"retest before falsification: strict={rt['strict']} loose={rt['loose']}; control strict={rt2['strict']}"
+
+
+def g_sealed_relitigated():
+    rc, res = g_run_pair("D-03 sealed: commits use pathspec only.", "Reopen D-03: commit with git add -A instead.")
+    rt, sealed, det = g_det(res)
+    ok = rc == 0 and sealed["records"] == 1 and sealed["strict"] == 1 and rt["records"] == 0 and rt["strict"] == 0 \
+        and [m["subject"] for m in det["samples"]] == ["D-03"] and det["samples"][0]["kind"] == "sealed"
+    return ok, f"sealed={sealed} falsified={rt} samples={det['samples']}"
+
+
+def g_sealed_cited():
+    rc, res = g_run_pair("D-03 sealed: commits use pathspec only.", "Per sealed D-03 we commit by pathspec.")
+    _rt, sealed, det = g_det(res)
+    ok = rc == 0 and sealed["strict"] == 0 and sealed["loose"] == 0 and det["reuse_citations"] == 1
+    return ok, f"sealed={sealed} reuse={det['reuse_citations']}"
+
+
+def g_interval():
+    root = scratch("gint")
+    g_session(root, "sA", -4 * 86400, C6_TEXT)
+    g_session(root, "sB", -3 * 86400, "R1 result: cache warming FALSIFIED.")
+    g_session(root, "sC", -2 * 86400, K4_TEXT)                                              # strict on listing hiding
+    g_session(root, "sD", -1 * 86400, "Try again with warming of cache entries.")           # loose only on cache warming
+    rc, res, _o, _e, _d = g_other(root)
+    rt, _s, det = g_det(res)
+    lo, hi = res["numerator"]["weighted_interval"]
+    si = res["share_interval"]
+    ok = (rc == 0 and rt["records"] == 2 and rt["strict"] == 1 and rt["loose"] == 2 and rt["strict"] <= rt["loose"]
+          and si[0] <= si[1] and lo < hi and len(det["samples"]) == 1)
+    return ok, f"falsified={rt} weighted=[{lo}, {hi}] share={si} samples={len(det['samples'])}"
+
+
+def g_signature_safe():
+    root = g_pair("C6 result: listing hiding FALSIFIED " + CANARY + ".",
+                  "Re-test listing hiding with the key " + CANARY + " again.")
+    rc, res, out, err, out_dir = g_other(root, extra=["--json"])
+    written = "".join(p.read_text(encoding="utf-8") for p in out_dir.glob("*.md"))
+    subjects = [m["subject"] for m in res["details"]["samples"]]
+    import re as _re
+    shape = all(_re.fullmatch(r"[a-z]{3,20}( [a-z]{3,20})?|[A-Z]{1,3}-\d{1,3}", x) for x in subjects)
+    raw = "".join(p.read_text() for p in pdir(root, GP).glob("*.jsonl"))
+    ok = CANARY in raw and written != "" and CANARY not in written + out + err and "sk-ant" not in written \
+        and subjects == ["listing hiding"] and shape
+    return ok, f"canary in fixture={CANARY in raw} leaked={CANARY in written + out + err} subjects={subjects}"
+
+
+GATES_G_POLES = [
+    ("V-KMEP-G-CITATION-IS-REUSE", g_citation_is_reuse),
+    ("V-KMEP-G-NEGATED-RETEST", g_negated_retest),
+    ("V-KMEP-G-UNRELATED", g_unrelated),
+    ("V-KMEP-G-ORDER", g_order),
+    ("V-KMEP-G-SEALED-RELITIGATED", g_sealed_relitigated),
+    ("V-KMEP-G-SEALED-CITED", g_sealed_cited),
+    ("V-KMEP-G-INTERVAL", g_interval),
+    ("V-KMEP-G-SIGNATURE-SAFE", g_signature_safe),
+]
+
+
+# =========================================================================== gates (task 2: pillar H)
+def h_run(build, extra=(), project="-home-x-kme-fixture"):
+    root = scratch("h")
+    fx = Fx(root, project=project)
+    fx.human("go", ts(0))
+    build(fx)
+    rc, res, _o, _e, _d = pil_other("h", root, extra, project=project)
+    return rc, res
+
+
+TEST_CMD = "python3 tools/test_x.py"
+W135 = 135.0        # weight of one (10, 0, 1000, 5) call: 10 + 1000 x 0.1 + 5 x 5
+
+
+def g_h_bash_verify():
+    def build(fx):
+        call(fx, 0, [("t1", "Bash", {"command": TEST_CMD})])
+        fx.tool_result("t1", "T" * 2000, ts(11))
+        call(fx, 1)
+        call(fx, 2)
+    rc, res = h_run(build)
+    n, d = res["numerator"], res["details"]
+    in_chars = len(json.dumps({"command": TEST_CMD}, ensure_ascii=False))
+    exp_lo = in_chars / kp.CPT_HI * 5 + kp.burden(2000, 2, kp.CPT_HI)
+    exp_hi = in_chars / kp.CPT_LO * 5 + kp.burden(2000, 2, kp.CPT_LO)
+    sigs = [r["signature"] for r in d["cmd_signatures"]]
+    ok = (rc == 0 and d["verification_tool_calls"] == 1 and d["result_chars"] == 2000
+          and abs(n["weighted_lo"] - exp_lo) < 1e-6 and abs(n["weighted_hi"] - exp_hi) < 1e-6 and sigs == [TEST_CMD])
+    return ok, f"calls={d['verification_tool_calls']} result_chars={d['result_chars']} lo={n['weighted_lo']:.3f}/{exp_lo:.3f} sigs={sigs}"
+
+
+def g_h_non_verify():
+    def build(fx):
+        call(fx, 0, [("a", "Bash", {"command": "ls -la"})])
+        fx.tool_result("a", "x" * 500, ts(11))
+        call(fx, 1, [("b", "Bash", {"command": "git diff -- tools/test_x.py"})])
+        fx.tool_result("b", "y" * 500, ts(13))
+        call(fx, 2, [("c", "Bash", {"command": "cd /w && timeout 60 python3 tools/test_y.py --drill --token " + CANARY})])
+        fx.tool_result("c", "z" * 500, ts(15))
+        call(fx, 3)
+    rc, res = h_run(build)
+    d = res["details"]
+    sigs = [r["signature"] for r in d["cmd_signatures"]]
+    pos = ["pytest -q", "npm test", "npm run test", "node --test", "mix test", "go test ./...", "cargo test",
+           "tsc -p . --noEmit", "x --selftest", "x --final", "x --drill", "gsd verify", "python3 tools/test_a.py"]
+    neg = ["ls -la", "echo hello", "git status"]
+    ok = (rc == 0 and d["verification_tool_calls"] == 1 and sigs == ["python3 tools/test_y.py"]
+          and all(kp.VERIFY_CMD_RE.search(c) for c in pos) and not any(kp.VERIFY_CMD_RE.search(c) for c in neg)
+          and kp.cmd_signature("FOO=1 CI=true npm test --silent") == "npm test"
+          and kp.cmd_signature("curl -H x") == "curl")
+    return ok, f"calls={d['verification_tool_calls']} sigs={sigs}"
+
+
+def _sub_calls(sub, n_calls=3, with_test=False):
+    sub.human("task", ts(5))
+    for i in range(n_calls):
+        uses = [("st", "Bash", {"command": "python3 tools/test_z.py"})] if with_test and i == 0 else []
+        call(sub, i, uses)
+        if uses:
+            sub.tool_result("st", "R" * 5000, ts(10 + 2 * i + 1))
+
+
+def g_h_verifier_subagent():
+    def build(fx):
+        _sub_calls(fx.subagent("a1", "gsd-verifier"))
+    rc, res = h_run(build)
+    n, d = res["numerator"], res["details"]
+    ok = (rc == 0 and n["weighted_lo"] == 3 * W135 and n["weighted_hi"] == 3 * W135
+          and d["verifier_agent_types"] == {"gsd-verifier": [1, 3, 3 * W135]} and d["other_agent_types"] == {})
+
+    def build2(fx):
+        _sub_calls(fx.subagent("a1", "Explore"))
+    rc2, res2 = h_run(build2)
+    n2, d2 = res2["numerator"], res2["details"]
+    ok2 = rc2 == 0 and n2["weighted_hi"] == 0 and d2["verifier_agent_types"] == {} and d2["other_agent_types"] == {"Explore": 1}
+    return ok and ok2, f"verifier: lo={n['weighted_lo']} types={d['verifier_agent_types']}; Explore: hi={n2['weighted_hi']} other={d2['other_agent_types']}"
+
+
+def g_h_no_double_count():
+    def build(fx):
+        _sub_calls(fx.subagent("a1", "gsd-verifier"), with_test=True)
+    rc, res = h_run(build)
+    n, d = res["numerator"], res["details"]
+    once = rc == 0 and n["weighted_lo"] == n["weighted_hi"] == 3 * W135 and d["verification_tool_calls"] == 0
+
+    def build2(fx):                                      # control: the same test call in a non-verifier subagent
+        _sub_calls(fx.subagent("a1", "Explore"), with_test=True)
+    rc2, res2 = h_run(build2)
+    d2 = res2["details"]
+    ctl = rc2 == 0 and d2["verification_tool_calls"] == 1 and res2["numerator"]["weighted_lo"] > 0
+    return once and ctl, f"verifier file lo={n['weighted_lo']} (a)-calls={d['verification_tool_calls']}; control (a)-calls={d2['verification_tool_calls']}"
+
+
+def g_h_meta_absent():
+    def build(fx):
+        _sub_calls(fx.subagent("a1"), with_test=True)                    # no meta.json
+    rc, res = h_run(build)
+    d = res["details"]
+    ok = (rc == 0 and d["meta_absent"] == 1 and d["other_agent_types"] == {"unknown": 1} and d["verifier_agent_types"] == {}
+          and d["verification_tool_calls"] == 1 and any("meta.json" in c for c in res["caveats"]))
+    return ok, f"meta_absent={d['meta_absent']} other={d['other_agent_types']} (a)-calls={d['verification_tool_calls']}"
+
+
+def g_h_sensitivity_not_verdict():
+    def build(fx):
+        for i in range(20):
+            uses = [("t", "Bash", {"command": TEST_CMD})] if i == 0 else []
+            call(fx, i, uses, usage=(10, 0, 300000, 50))
+            if uses:
+                fx.tool_result("t", "ok" * 25, ts(10 + 2 * i + 1))
+    rc, res = h_run(build)
+    n, d = res["numerator"], res["details"]
+    sens = d["upper_sensitivity"]
+    ok = (rc == 0 and res["materiality"] == "< 3 %" and res["share_interval"][1] < 0.03 and sens["share"] >= 0.03
+          and "not used for the verdict" in sens["label"] and kp.h_numerator_interval(1.0, 2.0, 99.0) == (1.0, 2.0))
+    return ok, f"materiality={res['materiality']} share={res['share_interval']} upper_sensitivity={sens['share']:.4f}"
+
+
+def g_h_positive():
+    def build(fx):
+        for i in range(20):
+            call(fx, i, [(f"t{i}", "Bash", {"command": TEST_CMD})], usage=(10, 0, 300000, 50))
+            fx.tool_result(f"t{i}", "T" * 10000, ts(10 + 2 * i + 1))
+    rc, res = h_run(build)
+
+    def build2(fx):                                       # control: same shape, not a verification command
+        for i in range(20):
+            call(fx, i, [(f"t{i}", "Bash", {"command": "ls -la"})], usage=(10, 0, 300000, 50))
+            fx.tool_result(f"t{i}", "T" * 10000, ts(10 + 2 * i + 1))
+    rc2, res2 = h_run(build2)
+    ok = (rc == 0 and res["materiality"] == ">= 3 %" and res["second_workload_required"] is True
+          and rc2 == 0 and res2["materiality"] == "< 3 %" and res2["details"]["verification_tool_calls"] == 0)
+    return ok, f"verification-heavy -> {res['materiality']} share={res['share_interval']}; ls control -> {res2['materiality']}"
+
+
+def _git_exe():
+    import shutil
+    return os.environ.get("CPP_GIT_EXE") or shutil.which("git")
+
+
+def g_h_ce_owner_read_real():
+    git = _git_exe()
+    if not git or not (REPO / kp.CE_LEDGER_REL).exists():
+        return "SKIP", "git or the CE ledger is unavailable"
+    v = kp.ce_owner_verdicts()
+    head = subprocess.run([git, "-C", str(REPO), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    led = json.loads(subprocess.run([git, "-C", str(REPO), "show", f"HEAD:{kp.CE_LEDGER_REL}"], capture_output=True,
+                                    text=True).stdout.lstrip("\ufeff"))
+    want = {p: ((led.get("state") or {}).get(p) or {}).get("terminal") for p in ("P", "G")}
+    ok = v.get("commit") == head and len(v.get("commit", "")) == 40 and v.get("pillars") == want \
+        and v.get("ref") == kp.CE_LEDGER_REL
+    return ok, f"commit={str(v.get('commit'))[:8]} pillars={v.get('pillars')} independent_read={want}"
+
+
+def _tmp_repo(ledger_text):
+    git = _git_exe()
+    d = scratch("gitrepo")
+    env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
+    (d / "ledger.json").write_text(ledger_text)
+    for args in (["init", "-q"], ["add", "ledger.json"], ["commit", "-q", "-m", "x"]):
+        subprocess.run([git, "-C", str(d)] + args, capture_output=True, env=env, check=True)
+    return d
+
+
+def g_h_ce_owner_unreadable():
+    if not _git_exe():
+        return "SKIP", "git is unavailable"
+    missing = kp.ce_owner_verdicts(ref="vault/programs/none/ledger.json")
+    not_repo = kp.ce_owner_verdicts(repo=scratch("norepo"))
+    bad = kp.ce_owner_verdicts(repo=_tmp_repo("{not json"), ref="ledger.json")
+    nostate = kp.ce_owner_verdicts(repo=_tmp_repo('{"state": {"P": {"terminal": null}}}'), ref="ledger.json")
+    good = kp.ce_owner_verdicts(repo=_tmp_repo('{"state": {"P": {"terminal": "SHIPPED"}, "G": {"terminal": null}}}'),
+                                ref="ledger.json")
+    bad_all = all(v.get("status") == "UNMEASURABLE" and v.get("why") and "pillars" not in v
+                  for v in (missing, not_repo, bad, nostate))
+    ok = bad_all and good.get("pillars") == {"P": "SHIPPED", "G": None} and len(good.get("commit", "")) == 40
+    return ok, f"missing={missing.get('status')} not_repo={not_repo.get('status')} bad_json={bad.get('status')} " \
+               f"pillar_absent={nostate.get('status')} readable={good.get('pillars')}"
+
+
+GATES_H = [
+    ("V-KMEP-H-BASH-VERIFY", g_h_bash_verify),
+    ("V-KMEP-H-NON-VERIFY", g_h_non_verify),
+    ("V-KMEP-H-VERIFIER-SUBAGENT", g_h_verifier_subagent),
+    ("V-KMEP-H-NO-DOUBLE-COUNT", g_h_no_double_count),
+    ("V-KMEP-H-META-ABSENT", g_h_meta_absent),
+    ("V-KMEP-H-SENSITIVITY-NOT-VERDICT", g_h_sensitivity_not_verdict),
+    ("V-KMEP-H-POSITIVE", g_h_positive),
+    ("V-KMEP-H-CE-OWNER-READ-REAL", g_h_ce_owner_read_real),
+    ("V-KMEP-H-CE-OWNER-UNREADABLE", g_h_ce_owner_unreadable),
+]
+
+
 GATES_EXPANSION = [
     ("V-KMEP-POPULATION-DRIFT", g_population_drift),
     ("V-KMEP-VERDICT-TABLE", g_verdict_table),
@@ -1237,7 +1533,7 @@ GATES_TRACER = [
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
     ("V-KMEP-CLI-USAGE", g_cli_usage),
 ]
-GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_REAL
+GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_REAL
 
 
 def summary_line() -> str:
@@ -1259,7 +1555,7 @@ def run_all() -> int:
 
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
-DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER]    # the -REAL gates are excluded for speed
+DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H]    # the -REAL gates are excluded for speed
 
 
 def _quiet(names) -> dict:
