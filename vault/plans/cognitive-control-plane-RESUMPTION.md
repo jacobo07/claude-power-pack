@@ -102,7 +102,11 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
   recorded EXPERIMENTAL in plan §13 (status table), NOT in the tower -- the tower has no
   EXPERIMENTAL tier (CBR entries reviewed/auto/reverted are all injected + judged; FD deposits
   are broadcast). Four candidate laws stay candidates.
-- tools/mutation_drill.py debt: OWNED by peer pane (claude-power-pack-95 / da), pending Owner.
+- tools/mutation_drill.py debt CLOSED by peer `94c55903` (on origin): control run on its own
+  copy (CONTROL_INVALID exit 4), fresh copy per mutant, repo layout when the test sits outside
+  the subject dir. The c9 case (modules/* subject, tools/* test) should now drill via the
+  standard CLI; `c9_replica_drill.py` stays a frozen record.
+- Peer claude-power-pack-95 ACKED store identity `0f4a8796` (2026-10-03, by message).
 
 ## 4. Next three actions
 0. DONE this session (see `git log -3`): store identity has ONE producer,
@@ -112,8 +116,8 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
    (`vault/audits/ccp-c9/store-identity-review.md`); L1 (relative/linked base) DEFERRED with
    trigger. KV note `vault/lessons/ccp-c10-tower-tier-and-store-identity-2026-10-03.md`.
    Identity backup (sha256 167f16fe...) retained, out of every migration path.
-1. Tell peer claude-power-pack-95 the store-identity commit hash (they stayed off the files).
-2. Still open: `floor_probe.py probe` rent ranking -> C4.1; re-derivation detector (NEXT).
+1. DONE: peer acked `0f4a8796`.
+2. Next: `floor_probe.py probe` rent ranking -> C4.1; re-derivation detector (NEXT).
 
 ## 5. Start instruction
 `git log --oneline -5 -- tools/usage_index.py`, run the coherence anchor (+ `test_spawn_outcomes`
