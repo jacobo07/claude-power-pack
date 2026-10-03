@@ -269,6 +269,22 @@ def c_positive_control(planes):
 
 
 def c_class_total(planes):
+    """Review IN-01: on its own this check cannot fail (classify_plane emits one row per name from closed literals),
+    so it also drives two mutants that must be caught: an invented class, and a dropped row."""
+    bad = _class_total_bad(planes)
+    inv = copy.deepcopy(planes[:1])
+    inv[0]["rows"][0]["coverage"] = "invented"
+    drop = copy.deepcopy(planes[:1])
+    drop[0]["rows"].pop()
+    caught = (bool(_class_total_bad(inv)), bool(_class_total_bad(drop)))
+    if caught != (True, True):
+        bad.append(f"mutants not caught (invented class, dropped row) = {caught}")
+    return ("FAIL", "; ".join(bad)) if bad else ("ok", "every skill on every plane has one coverage and one "
+                                                       "criticality class; invented-class and dropped-row mutants "
+                                                       "caught")
+
+
+def _class_total_bad(planes):
     bad = []
     for p in planes:
         if "inconclusive" in p:
@@ -279,7 +295,7 @@ def c_class_total(planes):
                 bad.append(f"{p['plane']}/{r['skill']}: {r['coverage']}/{r['criticality']}")
         if sum(Counter(r["coverage"] for r in rows).values()) != len(p["names"]) or len(rows) != len(p["names"]):
             bad.append(f"plane {p['plane']}: class counts do not sum to the population")
-    return ("FAIL", "; ".join(bad)) if bad else ("ok", "every skill on every plane has one coverage and one criticality class")
+    return bad
 
 
 def c_evidence_current(planes):
