@@ -42,4 +42,14 @@ no discriminative power, record, no R/P spend. N fails -> R (rule appended) and 
 Skill allowed) x2. Pass = R passes, P passes AND a Skill tool_use or card ledger row precedes the
 protected action. Negative control = existing R2 tasks under P (already 4/4 for CWST).
 
-Full inline plan: chat message of this date (Owner approval pending).
+Full inline plan: chat message of this date (approved).
+
+## Evidence log
+- 2026-10-03 10:27 (natural CWST positive event, production, rule RESIDENT): this session committed
+  `21ca0c20` (`governance/KNOWN_FALSE_POSITIVES.md`, pathspec) and swept a peer's uncommitted hunk
+  (FP-CLOSER-COLON, 18 lines, measured 2026-09-15) under its own message. The session's prefix held
+  the full concurrent-writers rule (it started before Move 4) and the diff's two `@@` headers were
+  printed before the commit. Residency did not produce the behaviour. Not amended (live peers);
+  the content is intact, the title is wrong. => The commit-time card is a compile-out of this rule,
+  not only a paging fallback: it must show per-file hunk ranges at `git commit` and ask whether each
+  is yours.
