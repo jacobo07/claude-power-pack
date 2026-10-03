@@ -283,6 +283,50 @@ def main() -> int:
                and row13.get("unjudged_reason") == "na-no-reason",
                "blank reason -> UNJUDGED/na-no-reason", row13)
 
+        # -- WR-04: an N/A claim must not hide a failing runnable check -----------
+        # A valid, within-cap N/A claim is HONOURED (verdict NOT_APPLICABLE): the
+        # existing "declared N/A honoured" case (test_tower_donegate V-TDG-VERDICT-
+        # KINDS) is exactly an N/A over a `glob:` check that fails because the surface
+        # does not exist. What it may not do is make the failure invisible: the check
+        # is evaluated anyway and a failure is reported per row, in `counts` and in a
+        # named list.
+        fam_m = _family(gens, [_entry("mk0", "file:README.md", 0),
+                               _entry("mk1", "file:README.md", 1),
+                               _entry("mk2", "file:missing.txt", 2),
+                               _entry("mk3", "file:README.md", 3)])
+        rep_m = _judge(fam_m, repo, gens,
+                       not_applicable={"mk2": "platform-not-targeted: desktop only"})
+        row_m = _rows(rep_m).get("mk2", {})
+        _check("V-UCEP-WR04-NA-MASKS-FAILING-CHECK",
+               row_m.get("verdict") == dg.NOT_APPLICABLE
+               and row_m.get("na_masked_violation") is True
+               and row_m.get("check_outcome") == "FAIL"
+               and rep_m.get("na_masked_violations") == ["mk2"]
+               and rep_m.get("counts", {}).get("na_over_failing_check") == 1
+               and rep_m.get("would_block_on_masked_na") is True,
+               "N/A over a failing file: check -> still NOT_APPLICABLE but flagged: row "
+               "na_masked_violation, na_masked_violations=['mk2'], counts "
+               "na_over_failing_check=1, would_block_on_masked_na True",
+               {"row": row_m, "na_masked_violations": rep_m.get("na_masked_violations"),
+                "counts": rep_m.get("counts"),
+                "would_block_on_masked_na": rep_m.get("would_block_on_masked_na")})
+        rep_mc = _judge(fam_m, repo, gens,
+                        not_applicable={"mk0": "platform-not-targeted: desktop only"})
+        row_mc = _rows(rep_mc).get("mk0", {})
+        _check("V-UCEP-WR04-NA-OVER-PASSING-CONTROL",
+               row_mc.get("verdict") == dg.NOT_APPLICABLE
+               and row_mc.get("na_masked_violation") is False
+               and rep_mc.get("na_masked_violations") == []
+               and rep_mc.get("counts", {}).get("na_over_failing_check") == 0
+               and rep_mc.get("would_block_on_masked_na") is False
+               and _rows(rep_mc).get("mk2", {}).get("verdict") == dg.VIOLATED
+               and _rows(rep_mc).get("mk2", {}).get("na_masked_violation") is False,
+               "N/A over a passing check is not flagged; the unclaimed failing entry is "
+               "VIOLATED, not 'masked' (the flag means a CLAIM hid it)",
+               {"row": row_mc, "na_masked_violations": rep_mc.get("na_masked_violations"),
+                "counts": rep_mc.get("counts"),
+                "mk2": _rows(rep_mc).get("mk2")})
+
         # -- WR-03: the chain verdict must reach would_block ---------------------
         # Every entry PASSes, so only the chain can set would_block. The attack is a
         # TAMPERED chain (B0 edited after B1 anchored it); the control is the same

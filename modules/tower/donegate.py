@@ -37,6 +37,13 @@ which claims are legitimate would itself be gameable. A family of fewer than 4
 entries therefore admits no N/A at all: deliberate and fail-closed. The report
 carries `na_count`, `na_cap` and `na_over_cap`.
 
+An honoured N/A does not skip the entry's check (WR-04). The check is evaluated
+anyway, and when it FAILS the row keeps verdict NOT_APPLICABLE (a legitimate N/A is
+typically a check that the surface exists, failing because the surface does not)
+but carries `na_masked_violation`, and the report names it in `na_masked_violations`,
+counts it in `counts["na_over_failing_check"]` and states `would_block_on_masked_na`,
+so a claim can never make a failing runnable check invisible.
+
 Every entry is judged whether or not the selection compiler injected it into
 the prompt: the injection ceiling bounds what is shown, not what is
 constitutive (select.py). Each report and each finding is stamped with
@@ -98,7 +105,7 @@ NA_REASONS = (
 NA_SHARE_CAP_PERCENT = 30
 
 _COUNT_KEYS = ("applied", "violated", "delegated", "not_applicable", "unjudged",
-               "unjudged_tests")
+               "unjudged_tests", "na_over_failing_check")
 _COUNT_OF = {APPLIED_VERIFIED: "applied", VIOLATED: "violated", DELEGATED: "delegated",
              NOT_APPLICABLE: "not_applicable", UNJUDGED: "unjudged"}
 
@@ -123,6 +130,8 @@ def _counts(rows: list) -> dict:
         out[_COUNT_OF[x["verdict"]]] += 1
         if x["unjudged_reason"] == REASON_TEST_NOT_RUN:
             out["unjudged_tests"] += 1
+        if x.get("na_masked_violation"):
+            out["na_over_failing_check"] += 1
     return out
 
 
@@ -133,7 +142,8 @@ def judge(family: str, repo_root: str, registry: str | None = None,
         return {"family": family, "judged_under": None, "generation_sha256": None,
                 "chain_ok": None, "status": NO_BASELINE, "report_only": True,
                 "would_block": False, "would_block_on_violated": False,
-                "would_block_on_chain": False,
+                "would_block_on_chain": False, "would_block_on_masked_na": False,
+                "na_masked_violations": [],
                 "counts": _counts([]), "unjudged_tests": [],
                 "na_count": 0, "na_cap": 0, "na_over_cap": False,
                 "entries": [], "deferred_from_prompt": []}
@@ -151,6 +161,7 @@ def judge(family: str, repo_root: str, registry: str | None = None,
     for e in active:
         ident = e.get("id")
         why = None
+        masked = False
         if ident in na:
             outcome = None
             token, note = parse_na_reason(na[ident])
@@ -166,6 +177,16 @@ def judge(family: str, repo_root: str, registry: str | None = None,
             else:
                 verdict = NOT_APPLICABLE
                 detail = "%s: %s" % (token, note) if note else token
+                # The claim is honoured, but the check is still evaluated: a claim
+                # must not make a failing runnable check invisible (code review
+                # WR-04). The honoured claim stays NOT_APPLICABLE because that is
+                # the normal shape of a legitimate N/A (a check that the surface
+                # exists, failing because the surface does not).
+                r = ck.evaluate(e, repo_root, registry)
+                outcome = r.outcome
+                if r.outcome == ck.FAIL:
+                    masked = True
+                    detail += " [N/A claimed over a check that FAILS: %s]" % r.detail
         else:
             r = ck.evaluate(e, repo_root, registry)
             outcome = r.outcome
@@ -179,10 +200,11 @@ def judge(family: str, repo_root: str, registry: str | None = None,
                 if verdict == UNJUDGED:
                     why = _REASON_FROM_OUTCOME.get(r.outcome, REASON_OTHER)
         out.append({"entry_id": ident, "verdict": verdict, "check_outcome": outcome,
-                    "unjudged_reason": why,
+                    "unjudged_reason": why, "na_masked_violation": masked,
                     "detail": detail, "requirement": e.get("requirement"),
                     "injected": ident in injected, "source": SOURCE,
                     "judged_under": stamp})
+    masked_na = sorted(x["entry_id"] for x in out if x["na_masked_violation"])
     chain_ok = rt.verify_chain(family, root).ok
     # A chain that is not ok (TAMPERED, UNANCHORED, unrecorded regressions, missing
     # root) is a block on its own: the entries it carries are not trustworthy even
@@ -195,6 +217,10 @@ def judge(family: str, repo_root: str, registry: str | None = None,
             "would_block": would_block_on_chain
             or any(x["verdict"] in (VIOLATED, UNJUDGED) for x in out),
             "would_block_on_chain": would_block_on_chain,
+            # What blocking would be if N/A claims over a failing check were not
+            # trusted. Informational: an honoured N/A (see above) does not block.
+            "would_block_on_masked_na": bool(masked_na),
+            "na_masked_violations": masked_na,
             "would_block_on_violated": any(x["verdict"] == VIOLATED for x in out),
             "counts": _counts(out),
             "unjudged_tests": sorted(x["entry_id"] for x in out
