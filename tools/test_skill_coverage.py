@@ -159,6 +159,45 @@ def frozen_rule() -> str:
     return next(p["rule"] for p in d["frozen"]["pillars"] if p["id"] == "D")
 
 
+def unparsed_limit_line() -> str:
+    un = unparsed_registrations(sc.read_lf(REPO / sc.DISPATCHER_REL))
+    shaped = [s for _, s, d in un if d]
+    absent = [s for _, s, _ in un if not (s.startswith("./") and (REPO / "hooks" / s[2:]).is_file())]
+    return ("- Stated limit (review WR-07): the coverage parser reads only `script: '../skills/claude-power-pack/...'` "
+            f"registrations. {len(un)} other `script:` lines inside CHAIN_MAP (the `./<file>` form, e.g. "
+            f"{', '.join(sorted({s for _, s, _ in un})[:3]) or '-'}) are not parsed, so a deny card registered that "
+            f"way would read coverage `none` and its card-vs-source pair would not be discovered. Of those, "
+            f"{len(un) - len(absent)} resolve to a file under `hooks/` in this checkout, and {len(shaped)} of them emit "
+            f"a deny and name a backticked skill{' (' + ', '.join(shaped) + ')' if shaped else ''}; {len(absent)} have "
+            f"no file under `hooks/` here and cannot be judged"
+            f"{' (' + ', '.join(sorted(absent)) + ')' if absent else ''}. "
+            "V-SKC-REGISTRATIONS checks only that parsed entries exist; it does not reconcile this count.")
+
+
+def unparsed_registrations(disp_text: str) -> list:
+    """[(line, script, deny_card_shaped)] for every `script:` line inside CHAIN_MAP that registered_hooks does not
+    parse (review WR-07, a stated limit, not a behaviour change). Counted from an independent marker (the literal
+    `script:`), so the limit is a measured number in the evidence, never a silent gap. deny_card_shaped: the
+    `./<f>` form resolved to hooks/<f> on disk emits a deny and names a backticked skill."""
+    import re
+    parsed = {r["line"] for v in sc.registered_hooks(disp_text).values() for r in v}
+    out, inside = [], False
+    for n, line in enumerate(sc.lf(disp_text).split("\n"), 1):
+        if not inside:
+            inside = line.startswith("const CHAIN_MAP = {")
+            continue
+        if line.startswith("};"):
+            break
+        m = re.search(r"""\bscript:\s*['"]([^'"]+)['"]""", line)
+        if not m or line.lstrip().startswith("//") or n in parsed:
+            continue
+        f = REPO / "hooks" / m.group(1)[2:] if m.group(1).startswith("./") else None
+        text = sc.read_lf(f) if f and f.is_file() else ""
+        out.append((n, m.group(1), bool(text) and "permissionDecision" in text and "deny" in text
+                    and bool(sc.CARD_TOKEN.search(text))))
+    return out
+
+
 def render(planes) -> str:
     L = ["# [D] coverage + criticality -- evidence", "",
          "Frozen rule (ledger pillar D): " + frozen_rule(), "",
@@ -174,7 +213,8 @@ def render(planes) -> str:
          "skill-heat-map advisor). It is reported as a column and is never a coverage class: a keyword suggestion "
          "is neither a need-time opportunity judgement nor a deny card. `UNMEASURED` = the file could not be read.",
          "- The coverage class is a property of this checkout's dispatcher. Whether a host runs that dispatcher is "
-         "the pillar A live-sync item, not measured here.", "",
+         "the pillar A live-sync item, not measured here.",
+         unparsed_limit_line(), "",
          "## Planes", "",
          "Planes are reported separately; no figure sums across planes.", ""]
     for p in planes:
@@ -549,7 +589,9 @@ def uncommitted_sources(planes):
     evidence against an uncommitted world. Returns (paths, None) or (None, reason)."""
     cards = sc.discover_cards(REPO)
     paths = sorted({sc.DISPATCHER_REL, sc.CLAUDE_MD_REL, sc.HARD_RULES_REL, sc.HEAT_REL, "skills"}
-                   | {c["hook"] for c in cards} | {f for f, _ in sc.opportunity_adapters(REPO).values()})
+                   | {c["hook"] for c in cards} | {f for f, _ in sc.opportunity_adapters(REPO).values()}
+                   | {"hooks/" + s[2:] for _, s, _ in unparsed_registrations(sc.read_lf(REPO / sc.DISPATCHER_REL))
+                      if s.startswith("./") and (REPO / "hooks" / s[2:]).is_file()})
     out, why = smd.git_run(REPO, "status", "--porcelain", "-z", "--", *paths)
     if out is None:
         return None, why

@@ -9,6 +9,7 @@ Frozen rule (ledger pillar D): every installed skill gets a coverage class (oppo
 - Precedence: coverage and criticality are independent columns; a skill carries exactly one of each.
 - heat_map: membership of the skill in `vault/skills_heat_map.json` (keyword suggestion by the skill-heat-map advisor). It is reported as a column and is never a coverage class: a keyword suggestion is neither a need-time opportunity judgement nor a deny card. `UNMEASURED` = the file could not be read.
 - The coverage class is a property of this checkout's dispatcher. Whether a host runs that dispatcher is the pillar A live-sync item, not measured here.
+- Stated limit (review WR-07): the coverage parser reads only `script: '../skills/claude-power-pack/...'` registrations. 33 other `script:` lines inside CHAIN_MAP (the `./<file>` form, e.g. ./anti-thrash.js, ./bug-hunter-learning.js, ./closer-guard.js) are not parsed, so a deny card registered that way would read coverage `none` and its card-vs-source pair would not be discovered. Of those, 26 resolve to a file under `hooks/` in this checkout, and 0 of them emit a deny and name a backticked skill; 7 have no file under `hooks/` here and cannot be judged (./host-memory-floor.js, ./tests/fixtures/drill-fast-critical.js, ./tests/fixtures/drill-fast-critical.js, ./tests/fixtures/drill-pooled-fast.js, ./tests/fixtures/drill-slow-critical.js, ./tests/fixtures/drill-slow-straggler.js, ./tests/fixtures/drill-spawn-sentinel.js). V-SKC-REGISTRATIONS checks only that parsed entries exist; it does not reconcile this count.
 
 ## Planes
 
