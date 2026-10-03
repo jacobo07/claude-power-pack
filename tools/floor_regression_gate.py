@@ -10,6 +10,10 @@ transcript whose floor rose materially against that reference without an explana
     python3 tools/floor_regression_gate.py --write-reference OUT --transcript T.jsonl [--replace] [--json]
     python3 tools/floor_regression_gate.py --check --reference REF.json --transcript T.jsonl [--json]
 
+Measurement source (one of): --transcript T.jsonl | --project-dir DIR (the newest top-level *.jsonl) |
+--session SID (located by the owner's listing_floor_probe.transcript) | --probe [--cwd DIR] (one fresh headless
+session through listing_floor_probe.main; costs one session, never started from a test).
+
 Exit codes: 0 within bound, 1 material unexplained rise, 2 UNMEASURABLE (never 0 on anything not measured).
 
 Classification table (layer key / scope / chars):
@@ -54,11 +58,14 @@ assistant row, newline-joined), so a later check can say whether it measured the
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime
 import hashlib
+import io
 import json
 import os
 import re
+import shutil
 import socket
 import subprocess
 import sys
@@ -82,10 +89,11 @@ _USAGE_KEYS = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_
 class Unmeasurable(Exception):
     """A comparison that could not be made. Always mapped to exit 2 with a named reason."""
 
-    def __init__(self, reason, detail=""):
+    def __init__(self, reason, detail="", probe_error=None):
         super().__init__(reason)
         self.reason = reason
         self.detail = detail
+        self.probe_error = probe_error
 
 
 # --------------------------------------------------------------------------- helpers
@@ -550,6 +558,47 @@ def _install_home(path):
     return None
 
 
+def first_call_tokens(assistant):
+    """Model-visible tokens of the first assistant row, or None when that row is not a model call (absent, a
+    `<synthetic>` row such as "Login expired", or zero usage). The owner's analyse() cannot tell these from a zero."""
+    msg = (assistant or {}).get("message") or {}
+    usage = msg.get("usage") or {}
+    total = sum(_num(usage.get(k)) for k in _USAGE_KEYS)
+    if assistant is not None and msg.get("model") != "<synthetic>" and total > 0:
+        return total
+    return None
+
+
+def load_lfp():
+    """The owner's wiki/tools/listing_floor_probe module (imported, never copied or edited)."""
+    try:
+        import listing_floor_probe as lfp
+        return lfp
+    except ImportError:
+        pass
+    bases = [ROOT] + [Path(p) for p in os.environ.get("PYTHONPATH", "").split(os.pathsep) if p]
+    for base in bases:
+        tools = str(base / "wiki" / "tools")
+        if os.path.isfile(os.path.join(tools, "listing_floor_probe.py")):
+            if tools not in sys.path:
+                sys.path.insert(0, tools)
+            break
+    try:
+        import listing_floor_probe as lfp
+    except Exception as exc:  # noqa: BLE001 -- the class name is the whole detail
+        raise Unmeasurable("probe_unavailable", exc.__class__.__name__)
+    return lfp
+
+
+def probe_view(path):
+    """What the owner's analyse() says about the same transcript: startup_tokens and the initial listing."""
+    try:
+        row = load_lfp().analyse(str(path), [])
+    except Exception as exc:  # noqa: BLE001 -- a side view never fails the measurement
+        return {"unavailable": exc.__class__.__name__}
+    return {"startup_tokens": row.get("startup_tokens"), "listing": row.get("listing")}
+
+
 def measure(path):
     rows, assistant, raw = read_window(path)
     listing = _initial_listing(rows)
@@ -568,10 +617,8 @@ def measure(path):
             break
     install_home = _install_home(path)
     components, excluded, prompt_digest = classify(rows, AttributionContext(cwd, install_home))
-    msg = (assistant or {}).get("message") or {}
-    usage = msg.get("usage") or {}
-    total = sum(_num(usage.get(k)) for k in _USAGE_KEYS)
-    if assistant is not None and msg.get("model") != "<synthetic>" and total > 0:
+    total = first_call_tokens(assistant)
+    if total is not None:
         tokens = {"status": "measured", "first_call_total": total, "prompt_digest": prompt_digest}
     else:
         tokens = {"status": "no_model_call", "first_call_total": None, "prompt_digest": prompt_digest}
@@ -583,6 +630,7 @@ def measure(path):
         "tokens": tokens,
         "skill_listing": listing,
         "excluded": excluded,
+        "probe_view": probe_view(path),
         "provenance": {
             "plane": host_plane(), "platform": platform, "install_home": install_home, "cwd": cwd,
             "transcript": os.path.abspath(path), "session_id": Path(path).stem,
@@ -591,6 +639,50 @@ def measure(path):
             "window_sha256": sha, "window_rows": nrows,
         },
     }
+
+
+# --------------------------------------------------------------------------- measurement sources
+SESSION_ID_RE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z-]{2,63}$")
+
+
+def newest_transcript(directory):
+    """-> (the newest `*.jsonl` directly in `directory` by mtime, ties broken by name; the candidate count).
+    Sub-directories (sub-agent trees) and other extensions never count."""
+    d = Path(directory)
+    if not d.is_dir():
+        raise Unmeasurable("no_transcript", "no such directory")
+    stamped = []
+    try:
+        for p in d.glob("*.jsonl"):
+            if p.is_file():
+                stamped.append((p.stat().st_mtime_ns, p.name, p))
+    except OSError as exc:
+        raise Unmeasurable("unreadable", exc.__class__.__name__)
+    if not stamped:
+        raise Unmeasurable("no_transcript", "no *.jsonl directly in the directory")
+    best = max(stamped, key=lambda t: (t[0], t[1]))
+    return best[2], len(stamped)
+
+
+def session_transcript(sid):
+    """The transcript of session `sid`, located by the owner's own lookup. A malformed id is refused before any glob."""
+    if not isinstance(sid, str) or not SESSION_ID_RE.match(sid):
+        raise Unmeasurable("invalid_session_id", "the id must match [0-9A-Za-z][0-9A-Za-z-]{2,63}")
+    found = load_lfp().transcript(sid)
+    if not found:
+        raise Unmeasurable("no_transcript", "no transcript for that session id under ~/.claude/projects")
+    return found
+
+
+def resolve_source(args):
+    """-> (transcript path, source dict). The source dict is what the SOURCE line and provenance.source name."""
+    if args.transcript:
+        return args.transcript, {"kind": "transcript", "name": os.path.basename(str(args.transcript))}
+    if args.project_dir:
+        path, count = newest_transcript(args.project_dir)
+        return str(path), {"kind": "project_dir", "selected": Path(path).name, "candidates": count}
+    path = session_transcript(args.session)
+    return str(path), {"kind": "session", "id": args.session}
 
 
 # --------------------------------------------------------------------------- reference
@@ -649,6 +741,14 @@ def _refuse_target(target):
     under_root = t == root or root in t.parents
     if under_claude and not under_root:
         raise Unmeasurable("refused_path", "the target is under ~/.claude and outside the checkout")
+
+
+def precheck_write(out, replace):
+    """Refuse a doomed reference write BEFORE a source is resolved (a --probe source costs a session)."""
+    target = Path(out)
+    _refuse_target(target)
+    if target.exists() and not replace:
+        raise Unmeasurable("reference_exists", "the target exists; pass --replace to replace it")
 
 
 def write_reference(out, measured, argv=None, replace=False, redact=None):
@@ -841,8 +941,15 @@ def _s(n):
     return f"{n:+d}"
 
 
+def source_line(src):
+    rest = " ".join(f"{k}={v}" for k, v in src.items() if k != "kind")
+    return f"SOURCE {src['kind']} {rest}".rstrip()
+
+
 def render(r):
     lines = []
+    if r.get("source"):
+        lines.append(source_line(r["source"]))
     if r["verdict"] == "UNMEASURABLE":
         lines.append(f"UNMEASURABLE {r['reason']}: {r.get('detail', '')}".rstrip(": "))
     elif r["verdict"] == "REFERENCE_WRITTEN":
@@ -883,6 +990,8 @@ def build_parser():
     mode.add_argument("--write-reference", metavar="OUT", help="measure and write the reference JSON to OUT")
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument("--transcript", metavar="PATH", help="session transcript (jsonl)")
+    src.add_argument("--project-dir", metavar="DIR", help="the newest top-level *.jsonl of a project directory")
+    src.add_argument("--session", metavar="SID", help="a session id, located by listing_floor_probe.transcript")
     ap.add_argument("--reference", metavar="PATH", default=None)
     ap.add_argument("--replace", action="store_true")
     ap.add_argument("--json", action="store_true")
@@ -919,11 +1028,15 @@ def main(argv=None):
     except SystemExit as exc:
         return exc.code if isinstance(exc.code, int) else EXIT_UNMEASURABLE
     redact = None
+    src = None
     ref_path = Path(args.reference) if args.reference else ROOT / DEFAULT_REFERENCE_REL
     try:
         redact = load_redactor()
         if args.write_reference:
-            measured = measure(args.transcript)
+            precheck_write(args.write_reference, args.replace)
+            path, src = resolve_source(args)
+            measured = measure(path)
+            measured["provenance"]["source"] = src["kind"]
             write_reference(args.write_reference, measured, argv, replace=args.replace, redact=redact)
             prov = measured["provenance"]
             tok = measured["tokens"]["first_call_total"]
@@ -933,16 +1046,19 @@ def main(argv=None):
                       "provenance": prov, "reference": {"path": str(args.write_reference)}}
         else:
             ref = load_reference(ref_path)
-            now = measure(args.transcript)
+            path, src = resolve_source(args)
+            now = measure(path)
             result = compare(ref, now)
             rp = ref.get("provenance", {})
-            result["provenance"] = now["provenance"]
+            result["provenance"] = {**now["provenance"], "source": src["kind"], "probe_view": now["probe_view"]}
             result["reference"] = {"path": str(ref_path), "schema": ref.get("schema"), "total_chars": ref.get("total_chars"),
                                    "window_sha256": rp.get("window_sha256"), "window_rows": rp.get("window_rows")}
     except Unmeasurable as exc:
         result = {"verdict": "UNMEASURABLE", "reason": exc.reason, "detail": exc.detail}
     except Exception as exc:  # noqa: BLE001 -- a bug must read UNMEASURABLE, never a traceback and never exit 0
         result = {"verdict": "UNMEASURABLE", "reason": "internal_error", "detail": exc.__class__.__name__}
+    if src is not None:
+        result["source"] = src
     result["caveats"] = list(CAVEATS)
     result["exit"] = exit_code(result["verdict"])
     _emit(result, args.json, redact)

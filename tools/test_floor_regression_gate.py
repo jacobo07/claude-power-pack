@@ -1323,6 +1323,123 @@ def g_cli_usage():
     return (not why), "; ".join(why) or "usage errors exit 2"
 
 
+# --------------------------------------------------------------------------- gates: sources (plan 04-03)
+def home_env(root):
+    """HOME / USERPROFILE at <root>/home for a subprocess (the owner's lookup globs ~/.claude/projects)."""
+    return {"HOME": str(Path(root) / "home"), "USERPROFILE": str(Path(root) / "home")}
+
+
+def g_sources_e2e():
+    root = scratch("src")
+    ref_tx, now_tx = floor_pair(root, {}, {"g": 11024})
+    ref_json = root / "ref.json"
+    env = home_env(root)
+    rc, out, err = run_cli(["--write-reference", ref_json, "--transcript", ref_tx], env)
+    if rc != 0:
+        return False, f"setup write rc={rc} {out[-200:]!r}"
+    os.utime(ref_tx, (1_000_000_000, 1_000_000_000))
+    os.utime(now_tx, (1_000_000_100, 1_000_000_100))
+    why = []
+    rc, out, _ = run_cli(["--check", "--reference", ref_json, "--project-dir", ref_tx.parent], env)
+    if rc != 1 or "SOURCE project_dir selected=now.jsonl candidates=2" not in out.splitlines():
+        why.append(f"(a) rc={rc} source={find_lines(out, 'SOURCE ')}")
+    elif not out.startswith("SOURCE ") or out.index("SOURCE ") > out.index("FLOOR "):
+        why.append("(a) SOURCE is not printed before the FLOOR lines")
+    os.utime(ref_tx, (1_000_000_200, 1_000_000_200))
+    rc, out, _ = run_cli(["--check", "--reference", ref_json, "--project-dir", ref_tx.parent], env)
+    if rc != 0 or "SOURCE project_dir selected=ref.jsonl candidates=2" not in out.splitlines():
+        why.append(f"(b) rc={rc} source={find_lines(out, 'SOURCE ')}")
+    rc, out, _ = run_cli(["--check", "--reference", ref_json, "--session", "ref"], env)
+    if rc != 0 or "SOURCE session id=ref" not in out.splitlines():
+        why.append(f"(c) rc={rc} source={find_lines(out, 'SOURCE ')}")
+    rc, out, _ = run_cli(["--check", "--reference", ref_json, "--session", "now"], env)
+    if rc != 1 or "SOURCE session id=now" not in out.splitlines():
+        why.append(f"(c2) rc={rc} source={find_lines(out, 'SOURCE ')}")
+    rc, out, _ = run_cli(["--check", "--reference", ref_json, "--json", "--session", "ref"], env)
+    doc = json.loads(out)
+    if (doc.get("provenance") or {}).get("source") != "session":
+        why.append(f"(d) provenance.source={(doc.get('provenance') or {}).get('source')!r}")
+    rc, out, _ = run_cli(["--check", "--reference", ref_json, "--transcript", ref_tx, "--project-dir", ref_tx.parent], env)
+    if rc != 2:
+        why.append(f"(e) two sources must be a usage error: rc={rc}")
+    return (not why), "; ".join(why) or "project-dir picks the newest (now.jsonl red, then ref.jsonl green), --session ref green, now red"
+
+
+def g_project_dir_newest():
+    root = scratch("pdir")
+    d = root / "proj"
+    d.mkdir()
+    files = {}
+    for name, mt in (("a.jsonl", 1_000), ("b.jsonl", 3_000), ("c.jsonl", 2_000)):
+        (d / name).write_text("{}\n", encoding="utf-8")
+        os.utime(d / name, (mt, mt))
+        files[name] = d / name
+    (d / "nested").mkdir()
+    (d / "nested" / "z.jsonl").write_text("{}\n", encoding="utf-8")
+    os.utime(d / "nested" / "z.jsonl", (9_000, 9_000))
+    (d / "newest.txt").write_text("x", encoding="utf-8")
+    os.utime(d / "newest.txt", (9_500, 9_500))
+    why = []
+    picked, n = GATE.newest_transcript(d)
+    if Path(picked).name != "b.jsonl" or n != 3:
+        why.append(f"newest by mtime: {Path(picked).name} candidates={n} (want b.jsonl 3; nested and non-jsonl never count)")
+    for name in files:
+        os.utime(d / name, (5_000, 5_000))
+    picked, n = GATE.newest_transcript(d)
+    if Path(picked).name != "c.jsonl":
+        why.append(f"tie broken by name: {Path(picked).name} (want c.jsonl)")
+    empty = root / "empty"
+    empty.mkdir()
+    ref_root, ref_tx, now_tx, ref_json = good_ref("pdirref")
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--project-dir", empty])
+    if not unmeasurable(rc, out, "no_transcript"):
+        why.append(f"empty dir: rc={rc} last={last_line(out)!r}")
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--project-dir", root / "absent-dir"])
+    if not unmeasurable(rc, out, "no_transcript"):
+        why.append(f"absent dir: rc={rc} last={last_line(out)!r}")
+    # through main: the newest of the pair is what gets measured
+    os.utime(ref_tx, (1_000_000_000, 1_000_000_000))
+    os.utime(now_tx, (1_000_000_500, 1_000_000_500))
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--project-dir", ref_tx.parent])
+    if "SOURCE project_dir selected=now.jsonl candidates=2" not in out.splitlines():
+        why.append(f"main picked {find_lines(out, 'SOURCE ')}")
+    return (not why), "; ".join(why) or "newest by mtime, ties by name, nested / non-jsonl ignored, empty and absent dir -> no_transcript"
+
+
+def g_session_unknown():
+    root, ref_tx, now_tx, ref_json = good_ref("sunk")
+    home = root / "home"
+    import listing_floor_probe as lfp
+    saved = lfp.time.sleep
+    lfp.time.sleep = lambda *_a, **_k: None
+    try:
+        with with_home(home):
+            rc, out, _ = run_main(["--check", "--reference", ref_json, "--session", "no-such-session-0000"])
+    finally:
+        lfp.time.sleep = saved
+    ok = unmeasurable(rc, out, "no_transcript") and lfp.time.sleep is saved
+    return ok, f"rc={rc} last={last_line(out)!r}" if not ok else "an unknown session id -> exit 2 no_transcript (sleep patched, restored)"
+
+
+def g_session_id_refused():
+    root, ref_tx, now_tx, ref_json = good_ref("sref")
+    import listing_floor_probe as lfp
+    calls = []
+    saved = lfp.transcript
+    lfp.transcript = lambda sid: calls.append(sid) or None
+    why = []
+    try:
+        for bad in ("../x", "a/b", "ab", "x" * 65, "a b", "*", "a" + "\x00" + "b", ""):
+            rc, out, _ = run_main(["--check", "--reference", ref_json, "--session", bad])
+            if not unmeasurable(rc, out, "invalid_session_id"):
+                why.append(f"{bad!r}: rc={rc} last={last_line(out)!r}")
+    finally:
+        lfp.transcript = saved
+    if calls:
+        why.append(f"the owner's lookup was reached for {calls}")
+    return (not why), "; ".join(why) or "8 malformed ids -> exit 2 invalid_session_id before any glob"
+
+
 # --------------------------------------------------------------------------- run
 GATES_TRACER = [
     ("V-FLOOR-TRACER-E2E", g_tracer_e2e),
@@ -1372,7 +1489,13 @@ GATES_SAFETY = [
     ("V-FLOOR-JSON", g_json),
     ("V-FLOOR-CLI-USAGE", g_cli_usage),
 ]
-GATES = GATES_TRACER + GATES_RULES + GATES_ATTRIBUTION + GATES_SAFETY
+GATES_SOURCES = [
+    ("V-FLOOR-SOURCES-E2E", g_sources_e2e),
+    ("V-FLOOR-PROJECT-DIR-NEWEST", g_project_dir_newest),
+    ("V-FLOOR-SESSION-UNKNOWN", g_session_unknown),
+    ("V-FLOOR-SESSION-ID-REFUSED", g_session_id_refused),
+]
+GATES = GATES_TRACER + GATES_RULES + GATES_ATTRIBUTION + GATES_SAFETY + GATES_SOURCES
 
 
 def run_all() -> int:
@@ -1393,7 +1516,8 @@ def run_all() -> int:
 
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
-DRILL_GATES = [n for n, _ in GATES if n != "V-FLOOR-TRACER-E2E"]    # the tracer is a real subprocess: a monkeypatch cannot reach it
+SUBPROCESS_ONLY = ("V-FLOOR-TRACER-E2E", "V-FLOOR-SOURCES-E2E")   # real subprocesses: a monkeypatch cannot reach them
+DRILL_GATES = [n for n, _ in GATES if n not in SUBPROCESS_ONLY]
 
 
 def _quiet(names) -> dict:
