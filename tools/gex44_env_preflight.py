@@ -150,9 +150,9 @@ def check_auth(env: dict, now: float) -> dict:
     cred = provider_breaker.credentials_state(env["home"])
     detail = {"expires_at": _iso(cred.get("expires_at")), "refresh_expires_at": _iso(cred.get("refresh_expires_at")),
               "mtime": _iso(cred.get("mtime")), "refresh_token_present": bool(cred.get("refresh_token"))}
+    via = [n for n in AUTH_ENV_NAMES if n in env.get("env_var_names", ())]
     if not cred.get("readable"):
         if cred.get("why") == "missing":
-            via = [n for n in AUTH_ENV_NAMES if n in env.get("env_var_names", ())]
             if via:
                 return _result("auth", UNMEASURABLE, f"no credentials file; {', '.join(via)} is exported "
                                "(name only, the value is never read) so a login may exist that this cannot judge",
@@ -163,6 +163,12 @@ def check_auth(env: dict, now: float) -> dict:
     expired = provider_breaker.credentials_expired(cred, now)
     if expired is None:
         return _result("auth", UNMEASURABLE, "credentials carry no judgeable expiresAt", detail=detail)
+    if expired and via:
+        # the same stance as the missing-file branch: an exported key/token (name only) means the CLI may not use
+        # this OAuth file at all, so its expiry is not a measured reason to refuse a launch
+        return _result("auth", UNMEASURABLE, f"OAuth credentials file expired (expiresAt {detail['expires_at']}); "
+                       f"{', '.join(via)} is exported (name only, the value is never read) so which login the CLI "
+                       "uses cannot be judged here", detail=detail)
     if expired:
         return _result("auth", NOT_READY, "access token expired and not refreshable "
                        f"(expiresAt {detail['expires_at']})", reasons=["auth_expired"], detail=detail)
