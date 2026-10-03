@@ -1,14 +1,29 @@
 #!/usr/bin/env python
-"""test_skill_representation.py -- pillar F gate (skill-capability, SC-F, decision D-01), sweep half.
+"""test_skill_representation.py -- pillar F gate (skill-capability, SC-F, decision D-01): sweep + operations.
 
-    python3 tools/test_skill_representation.py                    # check (default mode)
-    python3 tools/test_skill_representation.py --recording PATH   # recording-scoped clauses on one file (red entrance)
-    python3 tools/test_skill_representation.py --json             # recordings summary + groups + listing effect
+    python3 tools/test_skill_representation.py                     # check (default mode)
+    python3 tools/test_skill_representation.py --recording PATH    # recording-scoped clauses on one file (red entrance)
+    python3 tools/test_skill_representation.py --operations PATH   # V-FO-FILE + V-FO-ENTRIES on one file (red entrance)
+    python3 tools/test_skill_representation.py --write-evidence    # render evidence/F-representation.md
+    python3 tools/test_skill_representation.py --json              # recordings summary + groups + listing effect
 
-What it judges: the dedup content-hash sweep of `tools/skill_dedup_sweep.py` (D-01 item 1). The default mode reads
-only committed repo files and git blobs: every recording discovered by `evidence/F-sweep-*.json`, the committed
-blobs at each recording's repo_commit, and nothing under any home directory, so the CE verifier can re-run it on
-another host at `--final`.
+What it judges:
+1. the dedup content-hash sweep of `tools/skill_dedup_sweep.py` (D-01 item 1, V-FD-*);
+2. the applied-operations ledger `vault/programs/skill-capability/f-operations.json` (D-01 item 2, V-FO-*), schema
+   `skill-capability/f-operations/1` = {schema, rule (the frozen F rule verbatim), note, operations: [entry]}.
+   An entry carries references, never figures:
+       {op: disclosure|fission|fusion|inline|dedup, skill,
+        before: {denominator: "D-LISTING", probe_label, session_id, command}, after: {same keys},
+        recall: {before: {window, command}, after: {window, command}}}
+   plus, for op dedup only, {sweep, group}. `window` and `sweep` are repo paths under
+   `vault/programs/skill-capability/evidence/` ending `.json`, no `..`. The gate derives startup tokens and listing
+   chars from the ONE probe row matching label AND session id, and recall num / n from the committed window docs;
+3. the rendered prg evidence `evidence/F-representation.md` (D-03, V-FR-EVIDENCE-CURRENT).
+
+The default mode reads only committed repo files and git blobs: every recording discovered by
+`evidence/F-sweep-*.json`, the committed blobs at each recording's repo_commit, the committed operations file, probe
+rows and lessons file, and nothing under any home directory, so the CE verifier can re-run it on another host at
+`--final`. An uncommitted input is INCONCLUSIVE, never judged.
 
 Output lines: `  ok   <ID> <evidence>` / `  FAIL <ID> <diagnostic>` / `  INCONCLUSIVE <ID> <reason>`, last line
 `SR_PASS=<passed>/<total>`. Exit codes: 0 every clause ok, 1 any FAIL or INCONCLUSIVE, 2 could not run.
@@ -22,6 +37,7 @@ import fnmatch
 import functools
 import hashlib
 import json
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -34,6 +50,7 @@ for _p in (str(_THIS_DIR), str(REPO)):
 
 import skill_dedup_sweep as sweep  # noqa: E402
 import skill_mirror_drift as smd  # noqa: E402
+import test_listing_floor_verdict as lfv  # noqa: E402
 
 EVIDENCE_DIR = "vault/programs/skill-capability/evidence/"
 SWEEP_GLOB = "F-sweep-*.json"
@@ -450,6 +467,20 @@ DRILLS = (("REPO-BODY", d_repo_body, {"V-FD-REPO-REPRODUCES"}),
           ("MEMBER-SHA", d_member_sha, {"V-FD-MEMBER-FILES"}))
 
 
+def tamper_drill_rows(name, rec):
+    """[(drill id, what was tampered, expected red set, observed red set or None when it could not be built)]."""
+    out = []
+    for did, fn, expect in DRILLS:
+        t = copy.deepcopy(rec)
+        try:
+            what = fn(t)
+        except (KeyError, TypeError, IndexError) as e:
+            out.append((did, f"could not be built: {type(e).__name__}: {e}", expect, None))
+            continue
+        out.append((did, what, expect, {c for c, (st, _) in judge_recording(name, t).items() if st != "ok"}))
+    return out
+
+
 def c_tamper_drills(name, rec):
     lines, all_ok = [], True
     clean = judge_recording(name, copy.deepcopy(rec))
@@ -457,15 +488,11 @@ def c_tamper_drills(name, rec):
     if bad:
         inconclusive(f"{name}: clean control does not pass ({bad}); drills cannot be judged")
     lines.append(f"ok   V-FD-DRILL-CLEAN untampered copy passes all {len(clean)} V-FD recording clauses")
-    for did, fn, expect in DRILLS:
-        t = copy.deepcopy(rec)
-        try:
-            what = fn(t)
-        except (KeyError, TypeError, IndexError) as e:
+    for did, what, expect, got in tamper_drill_rows(name, rec):
+        if got is None:
             all_ok = False
-            lines.append(f"FAIL V-FD-DRILL-{did} could not be built: {type(e).__name__}: {e}")
+            lines.append(f"FAIL V-FD-DRILL-{did} {what}")
             continue
-        got = {c for c, (st, _) in judge_recording(name, t).items() if st != "ok"}
         ok = got == expect
         all_ok &= ok
         lines.append(f"{'ok  ' if ok else 'FAIL'} V-FD-DRILL-{did} ({what}) "
@@ -475,6 +502,836 @@ def c_tamper_drills(name, rec):
     if not all_ok:
         fail(head + "\n" + "\n".join(lines))
     return head + "\n" + "\n".join(lines)
+
+
+# --------------------------------------------------------------------------- operations ledger (D-01 item 2)
+
+OPS_REL = "vault/programs/skill-capability/f-operations.json"
+OPS_SCHEMA = "skill-capability/f-operations/1"
+WINDOW_SCHEMA = "skill-delivery-window/1"
+OPS = ("disclosure", "fission", "fusion", "inline", "dedup")
+LISTING_DENOM = "D-LISTING"
+LISTING_HOSTS = ("laptop",)          # the D-LISTING plane: recall windows must be measured where the listing is
+LISTING_PLANES = ("repo", "laptop")  # sweep planes whose members the laptop listing can describe
+SIDES = ("before", "after")
+ENTRY_CLAUSES = ("V-FO-OP", "V-FO-BEFORE", "V-FO-AFTER", "V-FO-PAIR", "V-FO-RECALL", "V-FO-HELPED",
+                 "V-FO-RECALL-HELD", "V-FO-DEDUP-SWEEP", "V-FO-PLANE")
+GOOD = ("ok", "n/a")
+
+
+def _evidence_json_path(p) -> bool:
+    """A repo path under the evidence directory ending .json, with no `..` and no backslash."""
+    return (isinstance(p, str) and p.startswith(EVIDENCE_DIR) and p.endswith(".json") and "\\" not in p
+            and ".." not in Path(p).parts and len(p) > len(EVIDENCE_DIR) + len(".json"))
+
+
+def _nonempty(v) -> bool:
+    return isinstance(v, str) and bool(v.strip())
+
+
+def _side(entry, key, rows, denoms):
+    """(status, text, (row index, startup_tokens, listing_chars) or None) for entry[key] = before / after."""
+    s = entry.get(key)
+    if not isinstance(s, dict):
+        return "FAIL", f"UNMEASURED: {key} is {type(s).__name__}, not a D-LISTING row reference", None
+    d = s.get("denominator")
+    if d != LISTING_DENOM:
+        return "FAIL", f"{key}.denominator {d!r} is not {LISTING_DENOM} (the frozen rule names D-LISTING)", None
+    if d not in denoms:
+        return "FAIL", f"{key}.denominator {d!r} is not a frozen denominator of the ledger", None
+    if not _nonempty(s.get("command")):
+        return "FAIL", f"UNMEASURED: {key}.command is absent (a measurement records its command)", None
+    label, sid = s.get("probe_label"), s.get("session_id")
+    if not (_nonempty(label) and _nonempty(sid)):
+        return "FAIL", f"UNMEASURED: {key} names no probe_label AND session_id", None
+    hits = [i for i, r in enumerate(rows) if isinstance(r, dict) and r.get("label") == label
+            and r.get("session_id") == sid]
+    if len(hits) != 1:
+        return "FAIL", (f"UNMEASURED: {len(hits)} probe rows carry label {label!r} and session {sid!r} "
+                        "(need exactly 1)"), None
+    i = hits[0]
+    r = rows[i]
+    if not (lfv._is_int(r.get("rc")) and r["rc"] == 0 and r.get("result") == "OK"):
+        return "FAIL", f"UNMEASURED: {key} row #{i} rc={r.get('rc')!r} result={str(r.get('result'))[:60]!r}", None
+    tok = r.get("startup_tokens")
+    listing = r.get("listing")
+    chars = listing.get("chars") if isinstance(listing, dict) else None
+    for what, v in (("startup_tokens", tok), ("listing.chars", chars)):
+        if not lfv._is_int(v) or v <= 0:
+            return "FAIL", (f"UNMEASURED: {key} row #{i} {what}={v!r} (absent, zero or non-int is no "
+                            "measurement)"), None
+    return "ok", (f"{key} {label} session {sid[:8]} row #{i}: startup_tokens={tok}, listing_chars={chars}"), \
+        (i, tok, chars)
+
+
+def check_entry(entry, rows, docs, sweeps, noise, denoms):
+    """[(clause, status, text)] for one applied operation, in ENTRY_CLAUSES order. Pure. status is ok / FAIL /
+    INCONCLUSIVE / n/a / skipped; skipped = an upstream clause of this entry is not ok (the entry already fails), and
+    is never counted as ok. Every figure comes from `rows` / `docs` / `sweeps`, never from the entry."""
+    out = {}
+    if not isinstance(entry, dict):
+        return [(c, "FAIL", f"entry is {type(entry).__name__}, not an object") for c in ENTRY_CLAUSES]
+    op, skill = entry.get("op"), entry.get("skill")
+    if op not in OPS:
+        out["V-FO-OP"] = ("FAIL", f"op {op!r} not in {list(OPS)}")
+    elif not _nonempty(skill):
+        out["V-FO-OP"] = ("FAIL", f"skill {skill!r} is not a non-empty string")
+    else:
+        out["V-FO-OP"] = ("ok", f"op {op} on skill {skill}")
+    side = {}
+    for key, cid in (("before", "V-FO-BEFORE"), ("after", "V-FO-AFTER")):
+        st, text, data = _side(entry, key, rows, denoms)
+        out[cid] = (st, text)
+        side[key] = data
+    both = out["V-FO-BEFORE"][0] == "ok" and out["V-FO-AFTER"][0] == "ok"
+    if not both:
+        out["V-FO-PAIR"] = ("skipped", "before or after not ok")
+    else:
+        bi, ai = side["before"][0], side["after"][0]
+        if bi == ai:
+            out["V-FO-PAIR"] = ("FAIL", f"before and after resolve to the same row #{bi}")
+        elif bi > ai:
+            out["V-FO-PAIR"] = ("FAIL", f"before row #{bi} comes after the after row #{ai} in the append-only rows")
+        else:
+            out["V-FO-PAIR"] = ("ok", f"before row #{bi} precedes after row #{ai}")
+    st, text, rec = _recall(entry, docs)
+    out["V-FO-RECALL"] = (st, text)
+    if not both:
+        out["V-FO-HELPED"] = ("skipped", "before or after not ok")
+    elif not isinstance(noise, dict) or not lfv._is_int(noise.get("tokens")) or noise["tokens"] <= 0:
+        out["V-FO-HELPED"] = ("INCONCLUSIVE", "noise not sourced: whether the op helped cannot be judged")
+    else:
+        b, a, nz = side["before"][1], side["after"][1], noise["tokens"]
+        verdict = "ok" if a + nz < b else "FAIL"
+        out["V-FO-HELPED"] = (verdict, (f"after startup_tokens {a} + noise {nz} {'<' if verdict == 'ok' else '>='} "
+                                        f"before {b} (noise: {noise.get('source', 'sourced')} line "
+                                        f"{noise.get('line')})" + ("" if verdict == "ok" else
+                                                                   ": not measured to help")))
+    if st != "ok":
+        out["V-FO-RECALL-HELD"] = ("skipped", "recall not ok")
+    else:
+        (bn, bd), (an, ad) = rec["before"], rec["after"]
+        held = an * bd >= bn * ad
+        out["V-FO-RECALL-HELD"] = ("ok" if held else "FAIL",
+                                   f"recall after {an}/{ad} {'>=' if held else '<'} before {bn}/{bd}"
+                                   + ("" if held else ": recall dropped"))
+    if op != "dedup":
+        out["V-FO-DEDUP-SWEEP"] = ("n/a", f"op {op!r} is not dedup")
+        out["V-FO-PLANE"] = ("n/a", f"op {op!r} is not dedup")
+    else:
+        st, text, grp = _dedup_sweep(entry, sweeps)
+        out["V-FO-DEDUP-SWEEP"] = (st, text)
+        if st != "ok":
+            out["V-FO-PLANE"] = ("skipped", "dedup sweep not ok")
+        else:
+            planes = sorted({m["plane"] for m in grp["members"] if m["name"] == skill})
+            off = [p for p in planes if p not in LISTING_PLANES]
+            out["V-FO-PLANE"] = (("FAIL", f"member on plane {off[0]}: D-LISTING measures the laptop listing")
+                                 if off else ("ok", f"{skill} sits on plane(s) {planes}, all in {list(LISTING_PLANES)}"))
+    return [(c,) + out[c] for c in ENTRY_CLAUSES]
+
+
+def _recall(entry, docs):
+    """(status, text, {side: (num, n)} or None). Figures come from the committed window documents only."""
+    rc = entry.get("recall")
+    if not isinstance(rc, dict):
+        return "FAIL", "UNMEASURED: recall is absent (the frozen rule requires a recall check)", None
+    paths = {}
+    for k in SIDES:
+        s = rc.get(k)
+        if not isinstance(s, dict):
+            return "FAIL", f"UNMEASURED: recall.{k} is absent", None
+        if not _evidence_json_path(s.get("window")):
+            return "FAIL", f"recall.{k}.window {s.get('window')!r} is not a .json path under {EVIDENCE_DIR}", None
+        if not _nonempty(s.get("command")):
+            return "FAIL", f"UNMEASURED: recall.{k}.command is absent", None
+        paths[k] = s["window"]
+    if paths["before"] == paths["after"]:
+        return "FAIL", f"recall before and after name the same window {paths['before']}", None
+    got, hosts = {}, set()
+    for k in SIDES:
+        w = paths[k]
+        doc = docs.get(w)
+        if not isinstance(doc, dict):
+            return "FAIL", f"UNMEASURED: recall.{k} window {w} is not a committed window document", None
+        if doc.get("schema") != WINDOW_SCHEMA:
+            return "FAIL", f"{w} schema {doc.get('schema')!r} != {WINDOW_SCHEMA!r}", None
+        if doc.get("capability") != entry.get("skill"):
+            return "FAIL", f"{w} capability {doc.get('capability')!r} != skill {entry.get('skill')!r}", None
+        r = doc.get("recall")
+        if not isinstance(r, dict):
+            return "FAIL", f"UNMEASURED: {w} recall is {r!r}", None
+        num, n = r.get("num"), r.get("n")
+        if not (lfv._is_int(num) and lfv._is_int(n)) or n <= 0 or not 0 <= num <= n:
+            return "FAIL", f"UNMEASURED: {w} recall num={num!r} n={n!r} (n > 0 and 0 <= num <= n required)", None
+        got[k] = (num, n)
+        hosts.add(doc.get("host"))
+    if len(hosts) != 1:
+        return "FAIL", f"recall windows come from different hosts {sorted(map(str, hosts))}", None
+    host = hosts.pop()
+    if host not in LISTING_HOSTS:
+        return "FAIL", (f"recall windows host {host!r} is not the D-LISTING plane {list(LISTING_HOSTS)}: recall must "
+                        "be measured where the listing is"), None
+    return "ok", (f"recall before {got['before'][0]}/{got['before'][1]} ({paths['before']}), after "
+                  f"{got['after'][0]}/{got['after'][1]} ({paths['after']}), host {host}; n is reported per rate"), got
+
+
+def _dedup_sweep(entry, sweeps):
+    """(status, text, re-derived group or None). Only a group re-derived from an admitted recording counts."""
+    ref, grp_sha, skill = entry.get("sweep"), entry.get("group"), entry.get("skill")
+    if not isinstance(ref, str) or ref not in sweeps:
+        return "FAIL", (f"sweep {ref!r} is not a committed recording that passed every V-FD clause "
+                        f"(admitted: {sorted(sweeps)})"), None
+    if not (isinstance(grp_sha, str) and len(grp_sha) == 64 and set(grp_sha) <= HEX):
+        return "FAIL", f"group {grp_sha!r} is not 64-hex", None
+    grps, _ = sweep.groups(sweeps[ref]["planes"])
+    g = next((x for x in grps if x["body_sha"] == grp_sha), None)
+    if g is None:
+        return "FAIL", f"group {grp_sha[:12]} is not re-derived from {ref} ({len(grps)} groups there)", None
+    names = sorted({m["name"] for m in g["members"]})
+    if skill not in names:
+        return "FAIL", f"skill {skill!r} is not a member of group {grp_sha[:12]} {names}", None
+    return "ok", f"group {grp_sha[:12]} re-derived from {ref}: members {names}", g
+
+
+def parse_ops(raw: bytes, rule):
+    """The operations document from bytes, or raises Clause. `rule` = the frozen F rule (None skips that check)."""
+    try:
+        doc = json.loads(smd.lf_bytes(raw).decode("utf-8"))
+    except (ValueError, UnicodeDecodeError) as e:
+        fail(f"not JSON: {e}")
+    if not isinstance(doc, dict):
+        fail("not a JSON object")
+    if doc.get("schema") != OPS_SCHEMA:
+        fail(f"schema {doc.get('schema')!r} != {OPS_SCHEMA!r}")
+    if rule is not None and doc.get("rule") != rule:
+        fail("rule is not the frozen F rule of the ledger, verbatim")
+    if not _nonempty(doc.get("note")):
+        fail("note is absent")
+    ops = doc.get("operations")
+    if not isinstance(ops, list) or not all(isinstance(e, dict) for e in ops):
+        fail("operations is not a list of objects")
+    return doc
+
+
+def frozen_f():
+    """(frozen F rule text, set of frozen denominator keys, frozen denominators) from the ledger. Read only."""
+    fr = lfv.frozen()
+    rule = next((p.get("rule") for p in fr.get("pillars", []) if p.get("id") == "F"), None)
+    return rule, set(fr.get("denominators", {})), fr.get("denominators", {})
+
+
+def read_ops(path=None, rule=None):
+    """(doc, None) or raises Clause. Default: the COMMITTED file at HEAD (05-01 posture: an uncommitted copy is
+    INCONCLUSIVE, never judged). `path`: that file as it is on disk (the red entrance)."""
+    p = Path(path) if path else REPO / OPS_REL
+    if not p.is_file():
+        fail(f"{path or OPS_REL} absent: absent is not zero operations")
+    if path:
+        raw = p.read_bytes()
+    else:
+        raw, why = smd.committed_bytes(REPO, OPS_REL)
+        if raw is None:
+            inconclusive(why)
+    return parse_ops(raw, rule)
+
+
+def c_fo_file(path=None, rule=None):
+    doc = read_ops(path, rule)
+    return (f"{path or OPS_REL} schema {OPS_SCHEMA}, rule = frozen F rule, {len(doc['operations'])} entries"
+            + ("" if path else " (committed blob at HEAD)")), doc
+
+
+def committed_json(rel):
+    """(doc, None) or (None, reason) for a committed JSON file at HEAD."""
+    raw, why = smd.committed_bytes(REPO, rel)
+    if raw is None:
+        return None, why
+    try:
+        return json.loads(smd.lf_bytes(raw).decode("utf-8")), None
+    except (ValueError, UnicodeDecodeError) as e:
+        return None, f"{rel} is not JSON: {e}"
+
+
+def probe_rows():
+    """(rows, None) or (None, reason). The rows are the committed probe results (append-only)."""
+    raw, why = smd.committed_bytes(REPO, lfv.JSONL_REL)
+    if raw is None:
+        return None, why
+    try:
+        return lfv.load_rows(REPO / lfv.JSONL_REL), None
+    except (OSError, ValueError) as e:
+        return None, f"{lfv.JSONL_REL} unreadable: {e}"
+
+
+def window_docs(ops):
+    """{rel: committed window doc} for every window path the entries name that passes the path rule."""
+    docs = {}
+    for e in ops:
+        rc = e.get("recall") if isinstance(e, dict) else None
+        for k in SIDES:
+            w = (rc.get(k) or {}).get("window") if isinstance(rc, dict) and isinstance(rc.get(k), dict) else None
+            if _evidence_json_path(w) and w not in docs:
+                doc, _ = committed_json(w)
+                if doc is not None:
+                    docs[w] = doc
+    return docs
+
+
+def c_fo_entries(doc, inputs):
+    ops = doc["operations"]
+    if not ops:
+        host = " host gex44 per f-operations.json note" if "gex44" in doc.get("note", "") else ""
+        return f"0 operations applied (n=0,{host})".replace(",)", ")")
+    if inputs.get("rows") is None:
+        inconclusive(f"{len(ops)} entries, probe rows unreadable: {inputs.get('rows_why')}")
+    bad = []
+    for i, e in enumerate(ops):
+        res = check_entry(e, inputs["rows"], inputs["docs"], inputs["sweeps"], inputs["noise"], inputs["denoms"])
+        red = [f"{c} {st}: {t}" for c, st, t in res if st not in GOOD]
+        if red:
+            bad.append(f"entry #{i} ({e.get('op')!r}, {e.get('skill')!r}): " + "; ".join(red))
+    if bad:
+        fail(f"{len(bad)} of {len(ops)} entries refused\n" + "\n".join(bad))
+    return f"{len(ops)} operations applied, every clause ok or n/a"
+
+
+def sourced_noise():
+    """({tokens, line, source}, None) or (None, reason): the K4 noise of the committed lessons file, through the
+    parser phase 2 already sources (`lfv.bounds_parse`)."""
+    raw, why = smd.committed_bytes(REPO, lfv.LESSONS_REL)
+    if raw is None:
+        return None, why
+    noise = lfv.bounds_parse(None, smd.lf_bytes(raw).decode("utf-8"))[1]
+    if not noise or not lfv._is_int(noise.get("tokens")) or noise["tokens"] <= 0:
+        return None, f"{lfv.LESSONS_REL} carries no `noise +-<k>k` figure"
+    return dict(noise, source=lfv.LESSONS_REL), None
+
+
+def c_fo_noise_sourced():
+    noise, why = sourced_noise()
+    if noise is None:
+        inconclusive(f"{why}: V-FO-HELPED could not be evaluated for any future entry")
+    return f"noise {noise['tokens']} tokens from {noise['source']} line {noise['line']}"
+
+
+def operations_inputs(ops, sweeps):
+    rows, rows_why = probe_rows()
+    return {"rows": rows, "rows_why": rows_why, "docs": window_docs(ops), "sweeps": sweeps,
+            "noise": sourced_noise()[0], "denoms": frozen_f()[1]}
+
+
+# --------------------------------------------------------------------------- V-FO drills (fixtures + real data)
+
+DRILL_SKILL = "drill-skill"
+DRILL_W = {"before": EVIDENCE_DIR + "C-window-DRILL-before.json", "after": EVIDENCE_DIR + "C-window-DRILL-after.json"}
+DRILL_SWEEP = EVIDENCE_DIR + "F-sweep-laptop.json"
+DRILL_NOISE = {"tokens": 1500, "line": 0, "source": "drill fixture"}
+DRILL_SIDS = {"before": "00000000-0000-4000-8000-0000000000b0", "after": "00000000-0000-4000-8000-0000000000a0"}
+_DRILL_BODY = hashlib.sha256(b"drill body").hexdigest()
+_DRILL_OTHER = hashlib.sha256(b"drill other").hexdigest()
+
+
+def _drill_row(label, sid, tokens, chars):
+    return {"label": label, "session_id": sid, "rc": 0, "result": "OK", "startup_tokens": tokens,
+            "listing": {"chars": chars}}
+
+
+def _drill_window(num, n, cap=DRILL_SKILL, host="laptop"):
+    return {"schema": WINDOW_SCHEMA, "capability": cap, "host": host, "recall": {"num": num, "n": n}}
+
+
+def _drill_record(body_sha, fm):
+    return {"body_bytes": 10, "body_sha": body_sha, "dir_digest": body_sha, "files": 1, "fm_name": fm,
+            "has_frontmatter": True, "skill_md_sha": body_sha}
+
+
+def _side_ref(label, sid):
+    return {"denominator": LISTING_DENOM, "probe_label": label, "session_id": sid,
+            "command": "python wiki/tools/listing_floor_probe.py --label " + label}
+
+
+def base_fixture(denoms):
+    """A fully formed fabricated disclosure entry and the committed-looking inputs it references."""
+    entry = {"op": "disclosure", "skill": DRILL_SKILL,
+             "before": _side_ref("drill-before", DRILL_SIDS["before"]),
+             "after": _side_ref("drill-after", DRILL_SIDS["after"]),
+             "recall": {k: {"window": DRILL_W[k], "command": "python3 tools/test_skill_delivery.py --measure-live"}
+                        for k in SIDES}}
+    rows = [_drill_row("unrelated", "00000000-0000-4000-8000-000000000000", 70000, 25000),
+            _drill_row("drill-before", DRILL_SIDS["before"], 90000, 30000),
+            _drill_row("drill-after", DRILL_SIDS["after"], 80000, 29000)]
+    docs = {DRILL_W["before"]: _drill_window(4, 5), DRILL_W["after"]: _drill_window(5, 5)}
+    rec = {"planes": {"repo": {"records": {}},
+                      "laptop": {"records": {DRILL_SKILL: _drill_record(_DRILL_BODY, DRILL_SKILL),
+                                             DRILL_SKILL + "-copy": _drill_record(_DRILL_BODY, DRILL_SKILL),
+                                             "drill-other": _drill_record(_DRILL_OTHER, "drill-other")}}}}
+    return {"entry": entry, "rows": rows, "docs": docs, "sweeps": {DRILL_SWEEP: rec}, "noise": dict(DRILL_NOISE),
+            "denoms": set(denoms)}
+
+
+def _as_dedup(fx):
+    fx["entry"].update(op="dedup", sweep=DRILL_SWEEP, group=_DRILL_BODY)
+
+
+def _m_dedup_control(fx):
+    _as_dedup(fx)
+
+
+def _m_op_outside(fx):
+    fx["entry"]["op"] = "rename"
+
+
+def _m_missing_after(fx):
+    del fx["entry"]["after"]
+
+
+def _m_wrong_denom(fx):
+    fx["entry"]["before"]["denominator"] = "D-CARD"
+
+
+def _m_zero_tokens(fx):
+    fx["rows"][1]["startup_tokens"] = 0
+
+
+def _m_session_mismatch(fx):
+    fx["entry"]["after"]["session_id"] = DRILL_SIDS["before"]
+
+
+def _m_ambiguous(fx):
+    fx["rows"].append(copy.deepcopy(fx["rows"][1]))
+
+
+def _m_order(fx):
+    fx["rows"][1], fx["rows"][2] = fx["rows"][2], fx["rows"][1]
+
+
+def _m_missing_recall(fx):
+    del fx["entry"]["recall"]
+
+
+def _m_recall_null(fx):
+    fx["docs"][DRILL_W["after"]]["recall"] = None  # the C-window-G shape
+
+
+def _m_recall_n0(fx):
+    fx["docs"][DRILL_W["before"]]["recall"] = {"num": 0, "n": 0}
+
+
+def _m_recall_wrong_cap(fx):
+    fx["docs"][DRILL_W["after"]]["capability"] = "some-other-skill"
+
+
+def _m_recall_wrong_host(fx):
+    for k in SIDES:
+        fx["docs"][DRILL_W[k]]["host"] = "gex44"
+
+
+def _m_not_helped(fx):
+    fx["rows"][2]["startup_tokens"] = fx["rows"][1]["startup_tokens"] - fx["noise"]["tokens"]  # the boundary
+
+
+def _m_noise_absent(fx):
+    fx["noise"] = None
+
+
+def _m_recall_drop(fx):
+    fx["docs"][DRILL_W["after"]]["recall"] = {"num": 3, "n": 5}
+
+
+def _m_dedup_not_in_sweep(fx):
+    _as_dedup(fx)
+    fx["entry"]["group"] = "0" * 64
+
+
+def _m_dedup_not_member(fx):
+    _as_dedup(fx)
+    recs = fx["sweeps"][DRILL_SWEEP]["planes"]["laptop"]["records"]
+    recs[DRILL_SKILL + "-alt"] = recs.pop(DRILL_SKILL)
+
+
+def _m_dedup_gex44_real(fx, real):
+    """The committed gex44 recording and its real sleepy group, recast as a dedup of sleepy-skills."""
+    rec = real["sweeps"].get(EVIDENCE_DIR + GEX44_NAME)
+    if rec is None:
+        raise KeyError(f"{GEX44_NAME} is not an admitted recording")
+    g = next((x for x in sweep.groups(rec["planes"])[0] if "sleepy-skills" in x["names"]), None)
+    if g is None:
+        raise KeyError("the gex44 recording re-derives no group holding sleepy-skills")
+    fx["entry"].update(op="dedup", skill="sleepy-skills", sweep=EVIDENCE_DIR + GEX44_NAME, group=g["body_sha"])
+    fx["sweeps"] = {EVIDENCE_DIR + GEX44_NAME: rec}
+    for k in SIDES:
+        fx["docs"][DRILL_W[k]]["capability"] = "sleepy-skills"
+
+
+def _m_k4_real(fx, real):
+    """The committed K4 rows pinned by session id, recast as a disclosure op, with the sourced noise."""
+    if real["rows"] is None:
+        raise KeyError("committed probe rows unreadable")
+    fx["rows"] = real["rows"]
+    fx["noise"] = real["noise"]
+    fx["entry"]["before"] = _side_ref("champion-startup", sweep.K4_SESSIONS["champion"])
+    fx["entry"]["after"] = _side_ref("challenger-startup", sweep.K4_SESSIONS["challenger"])
+
+
+FO_DRILLS = (
+    ("POSITIVE-CONTROL", None, set()),
+    ("POSITIVE-CONTROL-DEDUP", _m_dedup_control, set()),
+    ("OP-OUTSIDE", _m_op_outside, {"V-FO-OP"}),
+    ("MISSING-AFTER", _m_missing_after, {"V-FO-AFTER"}),
+    ("WRONG-DENOM", _m_wrong_denom, {"V-FO-BEFORE"}),
+    ("ZERO-TOKENS", _m_zero_tokens, {"V-FO-BEFORE"}),
+    ("SESSION-MISMATCH", _m_session_mismatch, {"V-FO-AFTER"}),
+    ("AMBIGUOUS-LABEL", _m_ambiguous, {"V-FO-BEFORE"}),
+    ("ORDER", _m_order, {"V-FO-PAIR"}),
+    ("MISSING-RECALL", _m_missing_recall, {"V-FO-RECALL"}),
+    ("RECALL-NULL", _m_recall_null, {"V-FO-RECALL"}),
+    ("RECALL-N0", _m_recall_n0, {"V-FO-RECALL"}),
+    ("RECALL-WRONG-CAP", _m_recall_wrong_cap, {"V-FO-RECALL"}),
+    ("RECALL-WRONG-HOST", _m_recall_wrong_host, {"V-FO-RECALL"}),
+    ("NOT-HELPED", _m_not_helped, {"V-FO-HELPED"}),
+    ("NOISE-ABSENT", _m_noise_absent, {"V-FO-HELPED"}),
+    ("RECALL-DROP", _m_recall_drop, {"V-FO-RECALL-HELD"}),
+    ("DEDUP-NOT-IN-SWEEP", _m_dedup_not_in_sweep, {"V-FO-DEDUP-SWEEP"}),
+    ("DEDUP-NOT-MEMBER", _m_dedup_not_member, {"V-FO-DEDUP-SWEEP"}),
+    ("DEDUP-GEX44-REAL", _m_dedup_gex44_real, {"V-FO-PLANE"}),
+    ("K4-REAL", _m_k4_real, {"V-FO-HELPED"}),
+)
+_REAL_DRILLS = {"DEDUP-GEX44-REAL", "K4-REAL"}
+
+
+def fo_drill_rows(real):
+    """[(name, expected red set, observed red set or None, text)]. `real` = {rows, noise, sweeps, denoms} from the
+    committed inputs. A mutant passes when its FAIL/INCONCLUSIVE set is EXACTLY the expected one (skipped and n/a
+    are excluded); a positive control passes when that set is empty."""
+    out = []
+    for name, mutate, expect in FO_DRILLS:
+        fx = base_fixture(real["denoms"])
+        try:
+            if mutate is not None:
+                mutate(fx, real) if name in _REAL_DRILLS else mutate(fx)
+        except (KeyError, TypeError, IndexError) as e:
+            out.append((name, expect, None, f"could not be built: {type(e).__name__}: {e}"))
+            continue
+        res = check_entry(fx["entry"], fx["rows"], fx["docs"], fx["sweeps"], fx["noise"], fx["denoms"])
+        red = {c for c, st, _ in res if st in ("FAIL", "INCONCLUSIVE")}
+        text = "; ".join(t for c, st, t in res if c in red) if red else ""
+        out.append((name, expect, red, text))
+    return out
+
+
+def c_fo_drills(real):
+    lines, all_ok = [], True
+    for name, expect, got, text in fo_drill_rows(real):
+        ok = got is not None and got == expect
+        all_ok &= ok
+        if got is None:
+            lines.append(f"FAIL V-FO-DRILL-{name} {text}")
+        elif not expect:
+            lines.append(f"{'ok  ' if ok else 'FAIL'} V-FO-DRILL-{name} "
+                         + ("passes all clauses" if ok else f"red clauses {sorted(got)}: {text}"))
+        else:
+            lines.append(f"{'ok  ' if ok else 'FAIL'} V-FO-DRILL-{name} "
+                         + (f"killed by {', '.join(sorted(got))} ({text})" if ok else
+                            f"expected {sorted(expect)}, red clauses {sorted(got)}: {text}"))
+    head = f"{len(FO_DRILLS)} drills ({sum(1 for _, _, e in FO_DRILLS if not e)} positive controls)"
+    if not all_ok:
+        fail(head + "\n" + "\n".join(lines))
+    return head + "\n" + "\n".join(lines)
+
+
+SELF = Path(__file__).resolve()
+SUBPROCESS_TIMEOUT_S = 120
+
+
+def c_fo_subprocess_poles(real):
+    """The --operations entrance across a real process boundary: red on a fabricated entry without a recall check,
+    green on the committed file. --operations never runs drills or subprocesses (no recursion)."""
+    if real["rows"] is None:
+        inconclusive("committed probe rows unreadable: the red pole cannot reference real rows")
+    rule = frozen_f()[0]
+    fx = base_fixture(real["denoms"])
+    _m_k4_real(fx, real)
+    del fx["entry"]["recall"]
+    with tempfile.TemporaryDirectory() as tmp:
+        bad = Path(tmp) / "f-operations-no-recall.json"
+        bad.write_bytes((json.dumps({"schema": OPS_SCHEMA, "rule": rule, "note": "subprocess pole (fabricated)",
+                                     "operations": [fx["entry"]]}, indent=1) + "\n").encode("utf-8"))
+        runs = []
+        for path in (str(bad), OPS_REL):
+            try:
+                r = subprocess.run([sys.executable, str(SELF), "--operations", path], cwd=str(REPO),
+                                   capture_output=True, text=True, encoding="utf-8", errors="replace",
+                                   timeout=SUBPROCESS_TIMEOUT_S)
+            except (OSError, subprocess.TimeoutExpired) as e:
+                inconclusive(f"--operations {path} did not complete: {type(e).__name__}: {e}")
+            runs.append((r.returncode, r.stdout))
+    (rc_bad, out_bad), (rc_ok, out_ok) = runs
+    red_ok = rc_bad == 1 and "FAIL V-FO-ENTRIES" in out_bad and "V-FO-RECALL" in out_bad
+    green_ok = rc_ok == 0 and "ok   V-FO-ENTRIES" in out_ok
+    text = (f"red pole (K4 rows, recall deleted) rc={rc_bad} {'names' if red_ok else 'lacks'} FAIL V-FO-ENTRIES + "
+            f"V-FO-RECALL; green pole ({OPS_REL}) rc={rc_ok}")
+    if not (red_ok and green_ok):
+        fail(text + "\n" + out_bad[-800:] + "\n" + out_ok[-800:])
+    return text
+
+
+# --------------------------------------------------------------------------- rendered prg evidence (D-03)
+
+FR_EVIDENCE_REL = EVIDENCE_DIR + "F-representation.md"
+# D-01: this phase runs no fresh session (a statement about this phase, not a measurement).
+FRESH_SESSIONS_THIS_PHASE = 0
+LAPTOP_PROFILE = "C:\\Users\\User\\"
+# Render sources read from the working tree; a dirty one makes V-FR-EVIDENCE-CURRENT INCONCLUSIVE rather than judging
+# the committed evidence against an uncommitted world (phase 4 posture). The ledger is read for its frozen section
+# only, which the CE verifier pins, so it is not listed.
+RENDER_SOURCES = (OPS_REL, lfv.JSONL_REL, lfv.LESSONS_REL, EVIDENCE_DIR + SWEEP_GLOB)
+
+ENTRY_SCHEMA_LINES = (
+    "`op`: one of disclosure, fission, fusion, inline, dedup; `skill`: the skill name.",
+    "`before` / `after`: {`denominator`: \"D-LISTING\", `probe_label`, `session_id`, `command`}: a reference to ONE "
+    "row of the D-LISTING probe results, resolved by label AND session id. No figure is typed: startup_tokens and "
+    "listing chars are read from that row.",
+    "`recall`: {`before`: {`window`, `command`}, `after`: {`window`, `command`}}: committed skill-delivery windows "
+    "(`skill-delivery-window/1`) under the evidence directory; num and n are read from them.",
+    "dedup only: `sweep` (a committed `F-sweep-*.json` recording) and `group` (the 64-hex body_sha of a group "
+    "re-derived from it).",
+)
+
+FO_CLAUSE_DOC = (
+    ("V-FO-FILE", "an absent, malformed or other-schema operations file, or one whose rule is not the frozen F rule "
+                  "verbatim (absent is never zero operations)"),
+    ("V-FO-ENTRIES", "any entry with a clause that is not ok or n/a"),
+    ("V-FO-OP", "an op outside {disclosure, fission, fusion, inline, dedup}, or no skill"),
+    ("V-FO-BEFORE", "a before side that is missing, not D-LISTING or without its command, or that resolves to zero "
+                    "or several probe rows by label AND session id, or to a row with rc != 0, result != OK, or a "
+                    "zero / non-int figure (UNMEASURED)"),
+    ("V-FO-AFTER", "an after side with any defect V-FO-BEFORE refuses"),
+    ("V-FO-PAIR", "before and after resolving to one row, or the after row preceding the before row in the "
+                  "append-only rows"),
+    ("V-FO-RECALL", "a missing recall check; a window outside the evidence directory, uncommitted, of another schema "
+                    "or capability; a null recall, n = 0, num outside [0, n]; windows from two hosts, or from a host "
+                    "that is not the D-LISTING plane (laptop)"),
+    ("V-FO-HELPED", "after startup_tokens + sourced noise >= before startup_tokens (not measured to help); unsourced "
+                    "noise is INCONCLUSIVE"),
+    ("V-FO-RECALL-HELD", "after recall below before recall (integer cross-multiplication)"),
+    ("V-FO-DEDUP-SWEEP", "a dedup whose sweep is not a committed recording that passed every V-FD clause, whose "
+                         "group is not re-derived from it, or whose skill is not a member"),
+    ("V-FO-PLANE", "a dedup of a member on a plane D-LISTING does not measure (only repo and laptop are)"),
+    ("V-FO-NOISE-SOURCED", "the K4 noise figure absent from the committed lessons file"),
+    ("V-FO-DRILLS", "a drill whose red set is not exactly its expected clause, or a positive control that is not "
+                    "green"),
+    ("V-FO-SUBPROCESS-POLES", "the --operations entrance not exiting 1 on a fabricated entry without a recall check, "
+                              "or not exiting 0 on the committed file, across a real process"),
+    ("V-FR-EVIDENCE-CURRENT", "this file differing from a fresh render of committed inputs, or not committed"),
+)
+
+D01_REASONS = (
+    "Both halves of the frozen rule are implemented and checkable now. Dedup can only cite a group re-derived from a "
+    "committed content-hash sweep that is measured on real planes and holds a real group (05-01). An applied "
+    "operation can only be recorded with D-LISTING rows and recall windows, and the gate derives every figure from "
+    "those committed instrument outputs.",
+    "The ROADMAP goal is \"apply ... only where measured to help\". On gex44 nothing can be measured against "
+    "D-LISTING, and the one listing lever with evidence was falsified twice (C6, K4). Applying zero operations is "
+    "the goal's own answer on this plane. The frozen rule does not require that any operation be applied.",
+    "The gate is not one that cannot fire. Every clause has a fabricated red drill, both green poles are fully formed "
+    "entries, two drills use real committed data (the K4 rows, the gex44 group), and the entrance is driven red "
+    "across a real process boundary.",
+    "AUTHORIZATION_BOUND is rejected. It would state that the pillar waits on the Owner, but the pillar's rule is "
+    "satisfied without an Owner act. The L6 `falsification` file it needs (a pre-registered IMPLEMENT ending "
+    "otherwise) would assert a falsification that never happened: nothing pre-registered for F was falsified.",
+)
+
+
+def _row_plane(row):
+    """`laptop` when the row's cwd or settings_file sits under the laptop profile (the derivation of B), else
+    UNKNOWN. Never a host read."""
+    if not isinstance(row, dict):
+        return "UNKNOWN"
+    for k in ("cwd", "settings_file"):
+        v = row.get(k)
+        if isinstance(v, str) and v.startswith(LAPTOP_PROFILE):
+            return "laptop"
+    return "UNKNOWN"
+
+
+def evidence_state(found, real):
+    """Everything the render reads, from committed inputs (the operations file from disk, guarded by the dirty-source
+    check of V-FR-EVIDENCE-CURRENT)."""
+    rule, _, denoms = frozen_f()
+    try:
+        ops, ops_why = parse_ops((REPO / OPS_REL).read_bytes(), rule), None
+    except (OSError, Clause) as e:
+        ops, ops_why = None, str(e)
+    recs = [(n, r) for n, r, _ in found if r is not None and EVIDENCE_DIR + n in real["sweeps"]]
+    return {"rule": rule, "sessions": denoms.get("D-SESSIONS", {}), "listing": denoms.get("D-LISTING", {}),
+            "recordings": recs, "tamper": {n: tamper_drill_rows(n, r) for n, r in recs},
+            "ops": ops, "ops_why": ops_why, "rows": real["rows"],
+            "k4": sweep.k4_rows(real["rows"]) if real["rows"] is not None else {},
+            "noise": real["noise"], "fo_drills": fo_drill_rows(real)}
+
+
+def _red_text(s):
+    return ", ".join(sorted(s)) if s else "(none)"
+
+
+def render_evidence(state) -> str:
+    """Pure. No timestamp, no absolute host path, no interpreter version, no host read."""
+    L = ["# Pillar F -- representation operations (skill-capability)", "",
+         "Frozen pillar F rule (ledger, quoted):", "", f"> {state['rule']}", "",
+         "Rendered by `tools/test_skill_representation.py --write-evidence` from committed inputs only: the sweep "
+         "recordings `" + EVIDENCE_DIR + SWEEP_GLOB + "`, `" + OPS_REL + "`, the D-LISTING probe rows of `"
+         + lfv.JSONL_REL + "` (the two K4 rows pinned by session id), the noise line of `" + lfv.LESSONS_REL
+         + "` and the drill outcomes. No host is read and no timestamp is written, so a re-run on another host "
+         "renders the same bytes.", "", "## Planes", ""]
+    for n, r in state["recordings"]:
+        L.append(f"- host: {r['host']} -- sweep recording `{n}`, node `{r['node']}`, repo_commit `{r['repo_commit']}`,"
+                 f" live root `{r['live_root']}`")
+    for arm in ("champion", "challenger"):
+        row = state["k4"].get(arm)
+        if row is None:
+            L.append(f"- host: UNKNOWN -- D-LISTING K4 {arm} row: UNMEASURED (not found by session id)")
+            continue
+        L.append(f"- host: {_row_plane(row)} -- D-LISTING probe row `{row.get('label')}`, session "
+                 f"`{row.get('session_id')}`, ts {row.get('ts')} (derived: cwd or settings_file under the laptop "
+                 "profile, the derivation of B-listing-floor.md)")
+    L += ["", "The two planes are kept apart: the sweep describes the gex44 install, the D-LISTING rows describe the "
+          "laptop listing.", "", "## Commands", ""]
+    for n, r in state["recordings"]:
+        L.append(f"command: {r['command']}")
+        L.append(f"command: python3 tools/skill_dedup_sweep.py --compare {EVIDENCE_DIR}{n}")
+    L += ["command: python3 tools/test_skill_representation.py",
+          "command: python3 tools/test_skill_representation.py --write-evidence", "",
+          "## Population (per plane, per recording, never summed)", "",
+          "| recording | plane | entries | skills | no_skill_md | non_dir |", "|---|---|---|---|---|---|"]
+    for n, r in state["recordings"]:
+        for label in sorted(r["planes"]):
+            p = r["planes"][label]
+            nd = ", ".join(p["non_dir"]) if p["non_dir"] else "-"
+            L.append(f"| {n} | {label} | {p['entries']} | {p['skills']} | {len(p['no_skill_md'])} | "
+                     f"{len(p['non_dir'])} ({nd}) |")
+    L += ["", "## Dedup candidate groups", ""]
+    for n, r in state["recordings"]:
+        if not r["groups"]:
+            L.append(f"- `{n}`: 0 groups")
+        for g in r["groups"]:
+            L.append(f"### `{n}` group {g['body_sha'][:12]}")
+            L.append("")
+            L.append(f"- body_sha `{g['body_sha'][:12]}`, body_bytes {g['body_bytes']}")
+            L.append("- members: " + "; ".join(f"{m['plane']}/{m['name']} (fm_name {m['fm_name']}, files "
+                                               f"{m['files']})" for m in g["members"]))
+            L.append("- subset pairs: " + ("; ".join(f"{a} is a subset of {b}" for a, b in g.get("subset") or [])
+                                           or "none"))
+            L.append(f"- fm_name_collision: {g['fm_name_collision']}")
+            if state["rows"] is None:
+                L.append("- laptop listing status: UNMEASURED (probe rows unreadable)")
+                continue
+            eff = sweep.listing_effect(g, state["rows"])
+            for name in g["names"]:
+                st = eff["status"][name]
+                L.append(f"- laptop listing status of `{name}` per K4 row: champion {st.get('champion')}, "
+                         f"challenger {st.get('challenger')}")
+            L.append(f"- entries_upper_bound {eff['entries_upper_bound']}; listing_chars_upper_bound "
+                     f"{eff['listing_chars_upper_bound']}")
+            L.append(f"- cap note: {eff['cap_note']}")
+            L.append("- This is an upper bound, never a realized saving.")
+            L.append("")
+    ops = state["ops"]
+    L += ["## Operations applied", ""]
+    if ops is None:
+        L.append(f"- operations applied: UNREADABLE ({state['ops_why']})")
+    else:
+        note = ops.get("note", "")
+        words = note.split()
+        host = next((w for a, w in zip(words, words[1:]) if a.lower() == "host"), "UNSTATED")
+        L.append(f"- operations applied: {len(ops['operations'])} (`{OPS_REL}`; host: {host}, per its note)")
+        L.append(f"- note, quoted: \"{note}\"")
+    ses, lst, nz = state["sessions"], state["listing"], state["noise"]
+    L.append("- Why none were applied (D-01): a before/after measurement against D-LISTING needs fresh laptop "
+             f"sessions. D-SESSIONS: listing family {ses.get('listing_family_remaining')} of "
+             f"{ses.get('listing_family_total')} left; this phase consumed {FRESH_SESSIONS_THIS_PHASE} fresh sessions. "
+             "Listing hiding was falsified twice against D-LISTING (C6, K4: pillar B).")
+    L.append(f"- Frozen D-LISTING at K4: startup_tokens {lst.get('startup_tokens_before_K4')} -> "
+             f"{lst.get('startup_tokens_after_K4')}, listing chars cap {lst.get('listing_chars_cap')}, after "
+             f"{lst.get('listing_chars_after_K4')}; noise "
+             + (f"{nz['tokens']} tokens ({nz['source']} line {nz['line']})." if nz else "UNMEASURED (not sourced)."))
+    L.append("- Laptop applications go to the owner bundle as `[F]` lines with upper bounds, never as savings.")
+    L += ["", "## Entry schema", ""] + [f"- {x}" for x in ENTRY_SCHEMA_LINES]
+    L += ["", "## What each clause refuses", ""] + [f"- {c}: refuses {t}." for c, t in FO_CLAUSE_DOC]
+    L += ["", "## Operation drills (fabricated unless named REAL)", "", "| drill | expected | observed |",
+          "|---|---|---|"]
+    for name, expect, got, text in state["fo_drills"]:
+        if got is None:
+            obs = f"NOT BUILT: {text}"
+        elif got == expect:
+            obs = "passes all clauses" if not expect else f"killed by {_red_text(got)}"
+        else:
+            obs = f"WRONG: red clauses {_red_text(got)}"
+        L.append(f"| {name} | {_red_text(expect)} | {obs} |")
+    for n, rows in state["tamper"].items():
+        L += ["", f"## V-FD tamper drills (`{n}`)", "", "| drill | tampered | expected | observed |",
+              "|---|---|---|---|"]
+        for did, what, expect, got in rows:
+            obs = ("NOT BUILT" if got is None else
+                   f"killed by {_red_text(got)}" if got == expect else f"WRONG: red clauses {_red_text(got)}")
+            L.append(f"| {did} | {what} | {_red_text(expect)} | {obs} |")
+    L += ["", "## Decision D-01: IMPLEMENTED_AND_VERIFIED (not AUTHORIZATION_BOUND)", ""]
+    L += [f"{i}. {t}" for i, t in enumerate(D01_REASONS, 1)]
+    return "\n".join(L) + "\n"
+
+
+def dirty_sources():
+    """(paths, None) or (None, reason): render sources that differ from HEAD (untracked included)."""
+    out, why = smd.git_run(REPO, "status", "--porcelain", "-z", "--", *RENDER_SOURCES)
+    if out is None:
+        return None, why
+    return sorted({e[3:].decode("utf-8", "surrogateescape") for e in out.split(b"\0") if len(e) > 3}), None
+
+
+def c_fr_evidence_current(rendered):
+    try:
+        disk = (REPO / FR_EVIDENCE_REL).read_bytes()
+    except OSError:
+        fail(f"{FR_EVIDENCE_REL} is absent: run --write-evidence and commit it")
+    dirty, why = dirty_sources()
+    if dirty is None:
+        inconclusive(f"cannot check the render's sources against HEAD: {why}")
+    if dirty:
+        inconclusive(f"render sources differ from HEAD: {dirty[:5]}")
+    if smd.lf_bytes(disk) != rendered.encode("utf-8"):
+        fail(f"{FR_EVIDENCE_REL} differs from a fresh render: re-render with --write-evidence")
+    raw, why = smd.committed_bytes(REPO, FR_EVIDENCE_REL)
+    if raw is None:
+        inconclusive(why)
+    return f"{FR_EVIDENCE_REL} (committed) equals the render of committed inputs (line endings normalized)"
+
+
+def admitted_sweeps(found):
+    """{rel: recording} for every discovered recording that passed every V-FD recording clause."""
+    out = {}
+    for name, rec, _ in found:
+        if rec is not None and all(st == "ok" for st, _ in judge_recording(name, rec).values()):
+            out[EVIDENCE_DIR + name] = rec
+    return out
+
+
+def operations_run(path=None, found=None):
+    """{V-FO-FILE, V-FO-ENTRIES} on the committed file (default) or on `path` (the red entrance)."""
+    rule = frozen_f()[0]
+    results = {}
+    st, val = run_clause(c_fo_file, path, rule)
+    if st != "ok":
+        results["V-FO-FILE"] = (st, val)
+        results["V-FO-ENTRIES"] = ("INCONCLUSIVE", "operations file not admitted by V-FO-FILE")
+        return results, None
+    text, doc = val
+    results["V-FO-FILE"] = ("ok", text)
+    ops = doc["operations"]
+    needs_sweeps = any(isinstance(e, dict) and e.get("op") == "dedup" for e in ops)
+    sweeps = admitted_sweeps(found if found is not None else discover()) if needs_sweeps else {}
+    inputs = operations_inputs(ops, sweeps)
+    results["V-FO-ENTRIES"] = run_clause(c_fo_entries, doc, inputs)
+    return results, doc
 
 
 # --------------------------------------------------------------------------- runner
@@ -541,7 +1398,24 @@ def default_run():
         results["V-FD-TAMPER-DRILLS"] = ("INCONCLUSIVE", f"{GEX44_NAME} not admitted: no recording to tamper")
     else:
         results["V-FD-TAMPER-DRILLS"] = run_clause(c_tamper_drills, GEX44_NAME, gex44)
+    ops_results, _ = operations_run(found=found)
+    results.update(ops_results)
+    real = real_inputs(found)
+    results["V-FO-NOISE-SOURCED"] = run_clause(c_fo_noise_sourced)
+    results["V-FO-DRILLS"] = run_clause(c_fo_drills, real)
+    results["V-FO-SUBPROCESS-POLES"] = run_clause(c_fo_subprocess_poles, real)
+    try:
+        rendered = render_evidence(evidence_state(found, real))
+    except (KeyError, TypeError, AttributeError, ValueError, IndexError) as e:
+        results["V-FR-EVIDENCE-CURRENT"] = ("INCONCLUSIVE", f"cannot render: {type(e).__name__}: {e}")
+    else:
+        results["V-FR-EVIDENCE-CURRENT"] = run_clause(c_fr_evidence_current, rendered)
     return results, found
+
+
+def real_inputs(found):
+    rows, _ = probe_rows()
+    return {"rows": rows, "noise": sourced_noise()[0], "sweeps": admitted_sweeps(found), "denoms": frozen_f()[1]}
 
 
 def json_report(found):
@@ -571,7 +1445,20 @@ def main(argv=None) -> int:
     ap.add_argument("--recording", metavar="PATH", help="recording-scoped V-FD clauses on one file; exit 1 if any "
                     "is not ok (no drills, no discovery)")
     ap.add_argument("--json", action="store_true", help="recordings summary + groups + listing effect")
+    ap.add_argument("--operations", metavar="PATH", help="V-FO-FILE + V-FO-ENTRIES on that operations file only "
+                    "(read from disk; no drills, no subprocess); exit 1 if either is not ok")
+    ap.add_argument("--write-evidence", action="store_true", help=f"render {FR_EVIDENCE_REL} from committed inputs "
+                    "and write it (utf-8, LF)")
     a = ap.parse_args(argv)
+    if a.write_evidence:
+        found = discover()
+        text = render_evidence(evidence_state(found, real_inputs(found)))
+        with open(REPO / FR_EVIDENCE_REL, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
+        print(f"wrote {FR_EVIDENCE_REL} ({len(text.encode('utf-8'))} bytes)")
+        return 0
+    if a.operations:
+        return emit(operations_run(a.operations)[0])
     if a.recording:
         p = Path(a.recording)
         rec, why = sweep.load_recording(p)

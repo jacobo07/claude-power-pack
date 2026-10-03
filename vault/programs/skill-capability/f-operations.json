@@ -1,0 +1,6 @@
+{
+ "schema": "skill-capability/f-operations/1",
+ "rule": "each representation operation applied to a skill carries a before/after listing measurement against D-LISTING and a recall check; dedup decisions come from a content-hash sweep",
+ "note": "Host gex44 applied no representation operation (decision D-01): a before/after D-LISTING measurement needs fresh laptop sessions, and listing hiding was falsified twice (C6, K4).",
+ "operations": []
+}
