@@ -92,13 +92,13 @@ Plans:
   3. Intent-only traits carry fact state EXTRACTED and can yield at most CONDITIONAL, never REQUIRED [G16].
   4. `tools/test_capability_archetypes.py`: vocabulary-overlap negative control, intent-only control, trait-transition
      (ephemeral->persistent, local->distributed) recompiles differently, positive controls per archetype.
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 Plans:
 
 - [x] 02-01-PLAN.md — (wave 1) tracer: off-path trait cache -> read-only reader -> WORLD_MUTATION end to end; vocabulary (ten traits, three single-segment archetypes, Strength, N/A bridge); PLANNED registry rows + Owner queue
 - [x] 02-02-PLAN.md — (wave 2) single `ceiling()` [G16]: intent-only <= CONDITIONAL (EXTRACTED); bilingual verb-object intent; demoters; orthogonality + vocabulary-overlap negative control; drills
 - [x] 02-03-PLAN.md — (wave 3) producer detectors: declared-dependency parsers (8 ecosystems), markers, STRONG/WEAK, entitlement (truncated/budget/unreadable/blind -> UNJUDGED); e2e positives per archetype
-- [ ] 02-04-PLAN.md — (wave 4) reader contract [G4]: fingerprint + evidence re-stat + age staleness, malformed refusal, key normalization, zero-walk proof, producer skip; drills; `tools/capability_traits.py` CLI
+- [x] 02-04-PLAN.md — (wave 4) reader contract [G4]: fingerprint + evidence re-stat + age staleness, malformed refusal, key normalization, zero-walk proof, producer skip; drills; `tools/capability_traits.py` CLI
 - [ ] 02-05-PLAN.md — (wave 5) subject signature + modifiers (transitions recompile differently), UNJUDGED causes reachable, real-repo poles; phase gate; 02-EVIDENCE.md
 
 ### Phase 3: Promotion admission and scope contract
