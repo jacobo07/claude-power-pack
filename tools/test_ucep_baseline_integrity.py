@@ -34,6 +34,13 @@ behaviour. A diff kind is written as a string literal and every report field is
 read with a default, so the RED run fails on predicates and never on an
 AttributeError.
 
+UCEP-01 plan 01-04 adds `ratchet.reanchor`, the one operation that moves an
+ACTIVE entry's provenance (origin) without touching the rule: V-UCEP-REANCHOR-*
+gates run on a synthetic family under a temp root (a B0 whose cited file became a
+pointer stub, plus a "skill" file holding the same quotes lower down), and
+V-UCEP-REAL-REANCHORED reads the real tree to prove the 9 rotted citations were
+re-anchored through recorded generations.
+
 Run: python tools/test_ucep_baseline_integrity.py     (exit 0 = all gates pass)
 """
 from __future__ import annotations
@@ -313,6 +320,145 @@ def main() -> int:
                "unanchored rc=%s out=%r; anchored rc=%s out=%r"
                % (rc_unanchored, buf.getvalue(), rc_anchored, buf_ctl.getvalue()))
 
+        # --- reanchor: provenance moves on the record, rule text does not ----
+        # Synthetic family under a temp root: a B0 of three entries whose cited
+        # file was then rewritten as a pointer stub (every quote QUOTE_MISSING,
+        # the real situation of the 9 rotted citations) and a "skill" file that
+        # holds the same quotes five lines lower. Nothing here touches the real
+        # baselines.
+        sfam = "synth_family"
+        quotes = ("Rule alpha: a claim names the plane that observed it.",
+                  "Rule beta: every batch item is re-authorized on its own.",
+                  "Rule gamma: nothing converts without an authorized source.")
+        old_lines = ["# old rules", quotes[0], "", quotes[1], "", quotes[2]]
+        q_line = (2, 4, 6)
+
+        def synth(label, canon_rel="canon"):
+            base = os.path.join(tmp, label)
+            root = os.path.join(base, "root")
+            old = os.path.join(base, "old.md")
+            canon_dir = os.path.join(base, *canon_rel.split("/"))
+            os.makedirs(canon_dir)
+            canon = os.path.join(canon_dir, "SKILL.md")
+            with open(old, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write("\n".join(old_lines) + "\n")
+            with open(canon, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write("\n".join(["# skill", "f1", "f2", "f3", "f4"] + old_lines) + "\n")
+            ents = [{"id": "r%d" % (i + 1), "requirement": "requirement %d" % (i + 1),
+                     "why": "because %d" % (i + 1), "class": "D", "check": "",
+                     "status": "reviewed",
+                     "origin": {"file": old, "line": q_line[i], "quote": quotes[i]}}
+                    for i in range(3)]
+            bl.write_generation(sfam, ents, "B0 synth", root=root)
+            with open(old, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write("# pointer stub\nthe rules moved to their skill\n")
+            return {"root": root, "old": old, "canon": canon, "entries": ents}
+
+        def new_origin(s, i, **over):
+            o = {"file": s["canon"], "line": q_line[i] + 5, "quote": quotes[i]}
+            o.update(over)
+            return o
+
+        def attempt(fn):
+            """(refusal message or None, other exception text or None)."""
+            try:
+                fn()
+            except rt.RatchetRefusal as exc:
+                return str(exc), None
+            except Exception as exc:  # noqa: BLE001 -- RED must fail on predicates
+                return None, "%s: %s" % (type(exc).__name__, exc)
+            return None, None
+
+        def call(name, *a, **k):
+            fn = getattr(rt, name, None)
+            if fn is None:
+                raise AttributeError("ratchet.%s does not exist" % name)
+            return fn(*a, **k)
+
+        s = synth("ra-one")
+        try:
+            call("reanchor", sfam, {"r1": new_origin(s, 0), "r2": new_origin(s, 1)},
+                 reason="rule moved to its skill", authority="Owner", root=s["root"])
+            err1 = None
+        except Exception as exc:  # noqa: BLE001
+            err1 = "%s: %s" % (type(exc).__name__, exc)
+        gens = bl.generations(sfam, s["root"])
+        if gens == [0, 1] and err1 is None:
+            g0 = bl.load_generation(sfam, 0, s["root"])
+            g1 = bl.load_generation(sfam, 1, s["root"])
+            e0 = {e["id"]: e for e in g0["entries"]}
+            e1 = {e["id"]: e for e in g1["entries"]}
+            order_ok = [e["id"] for e in g1["entries"]] == [e["id"] for e in g0["entries"]]
+            moved_ok = all(e1[i]["origin"] == new_origin(s, n)
+                           and {k: v for k, v in e1[i].items() if k != "origin"}
+                           == {k: v for k, v in e0[i].items() if k != "origin"}
+                           for n, i in ((0, "r1"), (1, "r2")))
+            r3_ok = e1["r3"] == e0["r3"]
+            ch = g1.get("changes") or {}
+            rec_ok = sorted(ch) == ["r1", "r2"] and all(
+                ch[i].get("kind") == "REANCHORED"
+                and ch[i].get("reason") == "rule moved to its skill"
+                and ch[i].get("authority") == "Owner"
+                and ch[i].get("from") == e0[i]["origin"]
+                and ch[i].get("to") == e1[i]["origin"] for i in ch)
+            chain_ok = _ok(rt.verify_chain(sfam, root=s["root"])) is True
+            ver_ok = all(bl.verify_origin(e1[i]) == bl.VERIFIED for i in ("r1", "r2"))
+            one_ok = order_ok and moved_ok and r3_ok and rec_ok and chain_ok and ver_ok
+            one_diag = ("order=%s moved=%s r3=%s record=%s chain=%s verified=%s changes=%s"
+                        % (order_ok, moved_ok, r3_ok, rec_ok, chain_ok, ver_ok, ch))
+        else:
+            one_ok, one_diag = False, "generations=%s error=%s" % (gens, err1)
+        _check("V-UCEP-REANCHOR-ONE-GENERATION", one_ok,
+               "one call = exactly one generation; r1/r2 REANCHORED on the record, "
+               "ids/order/other fields and r3 unchanged, chain ok, both VERIFIED",
+               one_diag)
+
+        s = synth("ra-qm")
+        elsewhere = os.path.join(os.path.dirname(s["canon"]), "other.md")
+        with open(elsewhere, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write("\n".join(["# other", "nothing relevant", ""] * 4) + "\n")
+        msg, other = attempt(lambda: call(
+            "reanchor", sfam, {"r1": new_origin(s, 0, file=elsewhere, line=2)},
+            reason="rule moved", authority="Owner", root=s["root"]))
+        gens = bl.generations(sfam, s["root"])
+        _check("V-UCEP-REANCHOR-REFUSES-QUOTE-MISSING",
+               msg is not None and "r1" in msg and "QUOTE_MISSING" in msg and gens == [0],
+               "a new origin whose file lacks the quote is refused (names r1 and "
+               "QUOTE_MISSING), nothing written",
+               "refusal=%r other=%r generations=%s" % (msg, other, gens))
+
+        s = synth("ra-cli")
+        mpath = os.path.join(os.path.dirname(s["old"]), "map.json")
+        with open(mpath, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump({sfam: {"r1": new_origin(s, 0)}}, fh)
+        saved_dir = bl.BASELINES_DIR
+        argv = ["reanchor", sfam, "--map", mpath, "--reason", "rule moved",
+                "--authority", "Owner"]
+        out = io.StringIO()
+        try:
+            bl.BASELINES_DIR = s["root"]
+            with contextlib.redirect_stdout(out):
+                rc_dry = fb.main(argv + ["--dry-run"])
+            gens_dry = bl.generations(sfam)
+            with contextlib.redirect_stdout(out):
+                rc_real = fb.main(argv)
+            gens_real = bl.generations(sfam)
+            bad = synth("ra-cli-bad")
+            bl.BASELINES_DIR = bad["root"]
+            with contextlib.redirect_stdout(out):
+                rc_bad = fb.main(["reanchor", sfam, "--map", mpath, "--reason",
+                                  "rule moved", "--authority", "x"])
+            gens_bad = bl.generations(sfam)
+        finally:
+            bl.BASELINES_DIR = saved_dir
+        _check("V-UCEP-REANCHOR-CLI",
+               rc_dry == 0 and gens_dry == [0] and rc_real == 0 and gens_real == [0, 1]
+               and rc_bad == 2 and gens_bad == [0],
+               "--dry-run exits 0 and writes nothing; the real call adds one generation; "
+               "authority 'x' exits 2 and writes nothing",
+               "dry rc=%s gens=%s; real rc=%s gens=%s; bad rc=%s gens=%s; out=%r"
+               % (rc_dry, gens_dry, rc_real, gens_real, rc_bad, gens_bad, out.getvalue()))
+
         # --- control: ok is not "refuse everything" -------------------------
         root = b0_copy("clean")
         child(root)
@@ -325,7 +471,7 @@ def main() -> int:
 
         print()
         print("UCEP_BASELINE_INTEGRITY_PASS=%d/%d  threshold=%d/%d"
-              % (_PASS, _PASS + _FAIL, 14, 14))
+              % (_PASS, _PASS + _FAIL, 17, 17))
         return 0 if _FAIL == 0 else 1
     finally:
         for k, v in saved_env.items():

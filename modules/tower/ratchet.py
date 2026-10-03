@@ -238,3 +238,70 @@ def promote(family: str, new_entries: list, reason: str, authority: str,
         family, list((cur or {}).get("entries", [])) + added,
         "promote %s: %s" % (", ".join(a["id"] for a in added), reason), root=root,
         extra={"promoted_by": authority})
+
+
+def plan_reanchor(family: str, new_origins: dict, reason: str, authority: str,
+                  root: str | None = None) -> tuple:
+    """(entries, changes) for a reanchor, writing nothing; refuses as `reanchor` does.
+
+    Every failing id is collected into ONE refusal, so the call is all-or-nothing
+    by construction: nothing is written unless every requested id passes."""
+    _need(reason, authority)
+    cur = bl.latest(family, root)
+    if not cur:
+        raise RatchetRefusal("%s has no generation to reanchor from" % family)
+    if not isinstance(new_origins, dict) or not new_origins:
+        raise RatchetRefusal("reanchor needs a non-empty {id: new origin} mapping")
+    by_id = {e["id"]: e for e in cur["entries"]}
+    unknown = sorted(i for i in new_origins if i not in by_id)
+    if unknown:
+        raise RatchetRefusal("unknown ids %s in %s B%d" % (unknown, family, cur["generation"]))
+    active = _active(cur["entries"])
+    inactive = sorted(i for i in new_origins if i not in active)
+    if inactive:
+        raise RatchetRefusal("%s is not an active entry of %s B%d"
+                             % (inactive, family, cur["generation"]))
+    new_entries, changes, bad = {}, {}, []
+    for ident in sorted(new_origins):
+        old = by_id[ident]
+        new = new_origins[ident] if isinstance(new_origins[ident], dict) else {}
+        try:
+            line = int(new.get("line") or 0)
+        except (TypeError, ValueError):
+            line = 0
+        # The quote is used AS SUPPLIED: substituting the old one here would hide
+        # an attempt to launder a different rule text through a provenance move.
+        origin = {"file": new.get("file"), "line": line, "quote": new.get("quote")}
+        candidate = dict(old, origin=origin)
+        verdict = bl.verify_origin(candidate)
+        if verdict != bl.VERIFIED:
+            bad.append("%s: new origin is %s" % (ident, verdict))
+            continue
+        new_entries[ident] = candidate
+        changes[ident] = {"kind": REANCHORED, "reason": reason, "authority": authority,
+                          "from": old.get("origin"), "to": origin}
+    if bad:
+        raise RatchetRefusal("reanchor refused, nothing written: " + "; ".join(bad))
+    entries = [new_entries.get(e["id"], e) for e in cur["entries"]]
+    return entries, changes
+
+
+def reanchor(family: str, new_origins: dict, reason: str, authority: str,
+             root: str | None = None) -> str:
+    """Write ONE generation that moves the provenance of the named active entries.
+
+    Why this exists: a rule can keep its text and lose its home. When a rule moves
+    out of the file an entry cites (a rules file that became a pointer stub, a
+    section that moved to a skill), the entry's origin rots (QUOTE_MISSING) while
+    the rule is unchanged. `revert` + `promote` cannot express that: `promote`
+    rejects a reverted id, and `revert` takes one id per call. `reanchor` changes
+    only `origin`, keeps ids, order and every other field, and records
+    `changes[id] = {kind: REANCHORED, reason, authority, from, to}` so
+    `verify_chain` accepts the origin change as recorded.
+
+    Refuses (nothing written) unless every new origin is VERIFIED by
+    `baselines.verify_origin`; one bad id refuses the whole call."""
+    entries, changes = plan_reanchor(family, new_origins, reason, authority, root=root)
+    return bl.write_generation(
+        family, entries, "reanchor %s: %s" % (", ".join(sorted(changes)), reason),
+        root=root, extra={"changes": changes})

@@ -5,6 +5,12 @@
     python tools/family_baseline.py review <family>
     python tools/family_baseline.py verify <family>
     python tools/family_baseline.py revert <family> <id> --reason R --authority Owner[ (context)]
+    python tools/family_baseline.py reanchor <family> --map <json> --reason R --authority Owner[ (context)] [--dry-run]
+
+reanchor moves the provenance (origin) of active entries to a new, verified home in
+ONE recorded generation (ratchet.reanchor); <json> is {family: {id: {file, line,
+quote}}}. It refuses, writing nothing, unless every new origin verifies; --dry-run
+plans and prints one line per id and writes nothing.
 
 review lists the entries still `auto` and then verifies the chain. verify
 reports every unrecorded weakening between consecutive generations, every
@@ -144,7 +150,39 @@ def _opt(argv: list, name: str) -> str:
         else ""
 
 
+def reanchor_cmd(family: str, map_path: str, reason: str, authority: str,
+                 dry_run: bool) -> int:
+    from modules.tower import ratchet as rt
+    try:
+        with open(map_path, "r", encoding="utf-8-sig") as fh:
+            doc = json.load(fh)
+    except (OSError, ValueError) as exc:
+        print("REFUSED: cannot read map %s: %s" % (map_path, exc))
+        return 2
+    new_origins = doc.get(family) if isinstance(doc, dict) else None
+    if not isinstance(new_origins, dict):
+        print("REFUSED: map has no entry for %s" % family)
+        return 2
+    try:
+        if dry_run:
+            entries, changes = rt.plan_reanchor(family, new_origins, reason, authority)
+            for ident in sorted(changes):
+                frm, to = changes[ident]["from"] or {}, changes[ident]["to"]
+                print("  %s: %s:%s -> %s:%s VERIFIED"
+                      % (ident, frm.get("file"), frm.get("line"), to["file"], to["line"]))
+            return 0
+        path = rt.reanchor(family, new_origins, reason=reason, authority=authority)
+    except rt.RatchetRefusal as exc:
+        print("REFUSED: %s" % exc)
+        return 2
+    print("reanchored %s -> %s" % (", ".join(sorted(new_origins)), path))
+    return 0
+
+
 def main(argv: list) -> int:
+    if len(argv) >= 3 and argv[0] == "reanchor":
+        return reanchor_cmd(argv[1], _opt(argv, "--map"), _opt(argv, "--reason"),
+                            _opt(argv, "--authority"), "--dry-run" in argv)
     if len(argv) >= 3 and argv[0] == "build-b0":
         return build_b0(argv[1], argv[2])
     if len(argv) >= 2 and argv[0] == "show":
