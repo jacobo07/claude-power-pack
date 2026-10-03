@@ -1355,6 +1355,7 @@ def append_drills(all_rows, all_reg, cap, st):
     """WR-02: the owning workstream appends one run and its regrade row (as 713b02a7 did for N0/R/P):
     every clause must stay ok. A regrade row naming no row at all must still make V-CT-ROWS-PINNED fail."""
     info, out = st["info"], []
+    base_out = len(pinned_regrade_split(all_reg, info)[1])
     new = copy.deepcopy(all_rows[0])
     new.update(run_id="X-appended-C-r3", arm="C", rep=3, grade=PASS_GRADE)
     cases = (("append-row-and-regrade", all_rows + [new],
@@ -1367,7 +1368,7 @@ def append_drills(all_rows, all_reg, cap, st):
         results, _ = evaluate_core(inside, None, reg_in, cap, st)
         rp = clause_rows_pinned(rows2, reg_in, info, reg_out)
         bad = [f"{n} {s_}" for n, s_, _ in results if s_ != "ok"]
-        good = not bad and verdict_of(results) == "NOT_SEPARABLE" and rp[0] == want and len(reg_out) == 1
+        good = not bad and verdict_of(results) == "NOT_SEPARABLE" and rp[0] == want and len(reg_out) == base_out + 1
         out.append((name, f"{'verdict clauses all ok' if not bad else ','.join(bad)}, verdict {verdict_of(results)}; "
                           f"V-CT-ROWS-PINNED {rp[0]} (want {want}); outside: {len(outside)} rows, "
                           f"{len(reg_out)} regrade rows", good))
