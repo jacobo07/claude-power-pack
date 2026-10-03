@@ -150,3 +150,10 @@ designed. Agents: <= 2 per wave, solo, durable output.
   unchanged.
 - Baseline reproduced: CCP anchor exact (23,925 / 6,230,548,450 / 9,893); D-W7 frozen in the ledger.
 - Mission rotation stays legacy (no `--rollover-protocol capsule-v2`: peer spec, T8 held).
+- P0 freeze `fa9ae2ed`, FROZEN_AT `c7e9a82f`, workstream `3859cabf` (init.manager 7 phases; freshness
+  6/6 FRESH, foreign-terms control STALE).
+- ARMED 2026-10-03: mission `m-fdefb0fca0c0`, `/gsd-autonomous --ws cognitive-economy`, 12 cycles / 24 h,
+  permission auto, wall 35/40/30. Verified started: record RUNNING with owner session `4a7ee8bc`
+  (pid 42728, heartbeat), host lists `m-fdefb0fca0c0-e1` bg busy, worker transcript carries the
+  `--ws cognitive-economy` command. The arming pane does not run /gsd-autonomous (one writer).
+  Monitor: `python tools/gsd_mission.py status`; done-gate: `python tools/test_cognitive_economy_program.py --final`.
