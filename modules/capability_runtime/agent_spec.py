@@ -89,7 +89,7 @@ def _sha(b: bytes) -> str:
 
 
 def class_rank(c: str) -> int:
-    if c not in CLASS_TOOLS:
+    if not isinstance(c, str) or c not in CLASS_TOOLS:      # a list is unhashable: TypeError, untyped
         raise AgentSpecError("UNKNOWN_CLASS", f"{c!r} not in {CLASS_ORDER}")
     return CLASS_ORDER.index(c)
 
@@ -100,9 +100,11 @@ class AgentSpec:
         self.dir = spec_dir
         try:
             self.contract: CapabilityContract = from_dict(raw.get("contract") or {})
-        except (ContractError, TypeError) as e:
+        except (ContractError, TypeError, AttributeError, ValueError) as e:  # a string contract has no .items()
             raise AgentSpecError("INVALID_CONTRACT", str(e)) from e
         a = raw.get("agent") or {}
+        if not isinstance(a, dict):
+            raise AgentSpecError("INVALID_CONTRACT", f"{self.contract.id}: agent section is {type(a).__name__}")
         self.permission_class = a.get("permission_class", "")
         class_rank(self.permission_class)
         self.pages = a.get("pages") or []
@@ -275,20 +277,32 @@ def load(spec_id: str, specs_dir: Path | None = None) -> AgentSpec:
     f = d / "spec.json"
     if not f.is_file():
         raise AgentSpecError("UNKNOWN_SPEC", spec_id)
+    # ACV C4: only JSONDecodeError was caught, so a non-UTF-8 file, an OSError or a JSON array
+    # escaped catalog() and resolve() with no typed outcome at all.
     try:
         raw = json.loads(f.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as e:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as e:
         raise AgentSpecError("UNREADABLE_SPEC", f"{f}: {e}") from e
+    if not isinstance(raw, dict):
+        raise AgentSpecError("UNREADABLE_SPEC", f"{f}: top level is {type(raw).__name__}, not an object")
     return AgentSpec(raw, d)
 
 
 def catalog(specs_dir: Path | None = None) -> tuple[list[AgentSpec], list[dict]]:
-    """Every spec that loads, plus a typed record for every one that does not."""
+    """Every spec that loads, plus a typed record for every one that does not.
+
+    A directory with no spec.json is not a spec and is skipped: the resolver's fingerprint only
+    sees `*/spec.json`, so counting such a directory as broken made a cached answer and a fresh
+    one disagree (ACV C4 audit gap 4)."""
     root = specs_dir or SPECS_DIR
     ok, bad = [], []
     if not root.is_dir():
         return ok, [{"spec": str(root), "code": "NO_CATALOG"}]
-    for d in sorted(p for p in root.iterdir() if p.is_dir()):
+    try:
+        dirs = sorted(p for p in root.iterdir() if p.is_dir() and (p / "spec.json").exists())
+    except OSError as e:
+        return ok, [{"spec": str(root), "code": "NO_CATALOG", "detail": str(e)}]
+    for d in dirs:
         try:
             ok.append(load(d.name, root))
         except AgentSpecError as e:

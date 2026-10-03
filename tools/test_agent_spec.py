@@ -113,6 +113,33 @@ def main() -> int:
         check("V-SPEC-CATALOG-TYPED-BROKEN", any(b["spec"] == "broken" and b["code"] == "UNREADABLE_SPEC" for b in bad)
               and any(s.id == "oneshot-architect-auditor" for s in ok), f"ok={len(ok)} bad={[b['code'] for b in bad]}")
 
+        # ACV C4: every unreadable shape is a typed record, never an exception out of catalog().
+        # Measured 2026-10-03: only JSONDecodeError was caught, so these escaped resolve() untyped.
+        good = raw
+        shapes = {"non-utf8": b"\xff\xfe{ not text", "json-array": b"[1, 2]",
+                  "contract-string": json.dumps({**good, "contract": "x"}).encode(),
+                  "class-list": json.dumps({**good, "agent": {**good["agent"], "permission_class": ["w"]}}).encode()}
+        for name, data in shapes.items():
+            (root / name).mkdir()
+            (root / name / "spec.json").write_bytes(data)
+        try:
+            ok, bad = A.catalog(root)
+            got = {b["spec"]: b["code"] for b in bad}
+            err = None
+        except Exception as e:  # noqa: BLE001 -- the gate's subject is exactly an escaping exception
+            got, err = {}, f"{type(e).__name__}: {e}"
+        want = {"non-utf8": "UNREADABLE_SPEC", "json-array": "UNREADABLE_SPEC",
+                "contract-string": "INVALID_CONTRACT", "class-list": "UNKNOWN_CLASS"}
+        check("V-SPEC-CATALOG-UNREADABLE-SHAPES", err is None and all(got.get(k) == v for k, v in want.items())
+              and any(s.id == "oneshot-architect-auditor" for s in ok), err or got)
+
+        # A directory with no spec.json is not a spec: resolver.fingerprint() never sees it, so
+        # counting it as broken made a cached answer and a fresh one disagree (C4 audit gap 4).
+        (root / "scratch-notes").mkdir()
+        ok, bad = A.catalog(root)
+        check("V-SPEC-CATALOG-SKIPS-NON-SPEC-DIR", not any(b["spec"] == "scratch-notes" for b in bad),
+              [b["spec"] for b in bad])
+
     # state version: a real sha from this repo (the bare-`git` PATH gap returned 'none')
     sv = A.current_state_version(ROOT)
     check("V-SPEC-STATE-VERSION", bool(re.fullmatch(r"[0-9a-f]{40}", sv)), sv[:12])
