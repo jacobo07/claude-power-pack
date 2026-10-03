@@ -62,7 +62,7 @@ result. UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is n
 - [x] **Phase 1: Card precision** - pillar A (completed 2026-10-03)
 - [x] **Phase 2: Listing floor** - pillar B (completed 2026-10-03)
 - [x] **Phase 3: Opportunity and delivery measurement** - pillar C (completed 2026-10-03)
-- [ ] **Phase 4: Coverage, criticality and freshness** - pillars D, H
+- [x] **Phase 4: Coverage, criticality and freshness** - pillars D, H (completed 2026-10-03)
 - [ ] **Phase 5: Representation operations** - pillar F
 - [ ] **Phase 6: Compile-out lineage** - pillar G
 - [ ] **Phase 7: Contribution** - pillar E
@@ -126,14 +126,14 @@ Plans:
 **Success Criteria**: sweep with a population floor and a positive control; drift gate red on a mutated mirror;
 `--pillar D`, `--pillar H` PASS.
 
-**Plans:** 4 plans (wave 1: 04-01 || 04-02; wave 2: 04-03; wave 3: 04-04)
+**Plans:** 4/4 plans complete
 
 Plans:
 
-- [ ] 04-01-PLAN.md -- D: `tools/skill_coverage.py` + gate `tools/test_skill_coverage.py`, coverage/criticality derived from code, gex44 plane recorded in `evidence/D-live-gex44.json`, rendered `evidence/D-coverage.md`
-- [ ] 04-02-PLAN.md -- H: `tools/skill_mirror_drift.py` + gate `tools/test_skill_drift.py` (committed-blob, LF-normalized whole-dir compare), gex44 plane recorded in `evidence/H-live-gex44.json`, rendered `evidence/H-drift.md`
-- [ ] 04-03-PLAN.md -- H: card-vs-source digests `card_source_digests.json` + gate checks + wiring in `tools/router_freshness_gate.py`
-- [ ] 04-04-PLAN.md -- D/H closure: state.D, state.H, `[D]` + 2 `[H]` owner-bundle lines, `--pillar D/H` PASS, A/B/C stay PASS
+- [x] 04-01-PLAN.md -- D: `tools/skill_coverage.py` + gate `tools/test_skill_coverage.py`, coverage/criticality derived from code, gex44 plane recorded in `evidence/D-live-gex44.json`, rendered `evidence/D-coverage.md`
+- [x] 04-02-PLAN.md -- H: `tools/skill_mirror_drift.py` + gate `tools/test_skill_drift.py` (committed-blob, LF-normalized whole-dir compare), gex44 plane recorded in `evidence/H-live-gex44.json`, rendered `evidence/H-drift.md`
+- [x] 04-03-PLAN.md -- H: card-vs-source digests `card_source_digests.json` + gate checks + wiring in `tools/router_freshness_gate.py`
+- [x] 04-04-PLAN.md -- D/H closure: state.D, state.H, `[D]` + 2 `[H]` owner-bundle lines, `--pillar D/H` PASS, A/B/C stay PASS
 
 ### Phase 5: Representation operations
 
@@ -175,7 +175,7 @@ settings; `python tools/test_skill_capability_program.py --final` exits 0, outpu
 | 1. Card precision | 3/3 | Complete    | 2026-10-03 |
 | 2. Listing floor | 2/2 | Complete    | 2026-10-03 |
 | 3. Opportunity and delivery measurement | 3/3 | Complete    | 2026-10-03 |
-| 4. Coverage, criticality and freshness | 0/0 | Not started | - |
+| 4. Coverage, criticality and freshness | 4/4 | Complete    | 2026-10-03 |
 | 5. Representation operations | 0/0 | Not started | - |
 | 6. Compile-out lineage | 0/0 | Not started | - |
 | 7. Contribution | 0/0 | Not started | - |

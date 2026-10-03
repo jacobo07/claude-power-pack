@@ -21,7 +21,7 @@
     {
       "number": "4",
       "name": "Coverage, criticality and freshness",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "5",
@@ -51,8 +51,8 @@
   ],
   "next": {
     "command": "/gsd:progress --next",
-    "label": "Advance to the next step (plan phase 04)",
-    "reason": "Phase 04 of 9 — needs a plan"
+    "label": "Advance to the next step (plan phase 05)",
+    "reason": "Phase 05 of 9 — needs a plan"
   },
-  "updated_at": "2026-10-03T18:17:55.044Z"
+  "updated_at": "2026-10-03T19:28:05.479Z"
 }

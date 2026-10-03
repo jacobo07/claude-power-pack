@@ -1,23 +1,23 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-current_phase: 04 — Coverage, criticality and freshness
+current_phase: 05 — Representation operations
 current_plan: Not started
 status: planning
-stopped_at: Completed 04-04-PLAN.md
-last_updated: "2026-10-03T18:55:16.175Z"
+stopped_at: Phase 04 complete, ready to plan Phase 05
+last_updated: "2026-10-03T19:28:05.463Z"
 last_activity: 2026-10-03
-state_head: c552a293111de3a9b2b03ec922a1af8ad96d3109
+state_head: bec199a7cfabe83dc679ef4fc984a6dbbf9b881c
 progress:
   total_phases: 9
-  completed_phases: 3
-  total_plans: 17
+  completed_phases: 4
+  total_plans: 20
   completed_plans: 12
-  percent: 33
+  percent: 44
 milestone_name: skill-capability
 workstream: skill-capability
 created: 2026-10-03
-current_phase_name: Coverage, criticality and freshness
+current_phase_name: Representation operations
 ---
 
 # Project State
@@ -33,7 +33,7 @@ compile-out, capability-lifecycle. Availability without residency, proven by nee
 Current Plan: Not started
 Total Plans in Phase: 3
 **Status:** Ready to plan
-**Current Phase:** 04 — Coverage, criticality and freshness
+**Current Phase:** 05 — Representation operations
 **Last Activity:** 2026-10-03
 
 ## Sealed before the run (interactive pane, session c85f3eb9)
@@ -66,7 +66,7 @@ Total Plans in Phase: 3
 
 **Last session:** 2026-10-03T18:55:16.029Z
 
-**Stopped At:** Completed 04-04-PLAN.md (c552a293: D and H IMPLEMENTED_AND_VERIFIED, `--pillar A/B/C/D/H` PASS on gex44). Previous: HANDOFF epoch 2 -> 3, 2026-10-03T18:33Z (mission context wall, session stopped 18:40Z)
+**Stopped At:** Phase 04 complete, ready to plan Phase 05
 **Resume File:** None (the epoch 2 hand-off section below; its NEXT is now phase 4 code review + verification)
 
 ### Epoch 2 hand-off (verify against git, the repository wins)
