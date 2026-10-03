@@ -7,6 +7,17 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## ACV resolver CLI -- no command or agent names it yet (2026-10-03, ACV C5 R2)
+
+`modules/capability_runtime/agent_resolver_cli.py` is the only production entry to the agent
+resolver (and, from C5 commit 3, to its CO-12 telemetry), but it is reached only by hand:
+`python -m modules.capability_runtime.agent_resolver resolve "<task>"`. Liveness declares it
+PLANNED. Clears when ACV C6 (run accounting / dispatch) names the command in an agent or command
+body, so a real dispatch resolves through it. Nothing for the Owner to run today; this row exists
+so the PLANNED declaration has an owner and a reopen condition.
+
+---
+
 ## RESOLVED (2026-08-14) -- the two UKR wiring residues, both FIXED
 
 Eight consecutive audits produced 0/18 surviving dataset candidates. The residue

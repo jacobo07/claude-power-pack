@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import shutil
 import sys
 import tempfile
@@ -25,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from modules.capability_runtime import agent_spec as A  # noqa: E402
 from modules.capability_runtime import agent_resolver as R  # noqa: E402
+from modules.capability_runtime import agent_resolver_cli as CLI  # noqa: E402
 
 N_SYNTH = 1000
 DOMAINS = ["kubernetes rollout", "css grid layout", "postgres vacuum", "android gradle build",
@@ -193,18 +195,48 @@ def request_identity(t: Path) -> None:
     pkg.mkdir()
     for f in live.glob("*.py"):
         shutil.copy2(f, pkg / f.name)
-    tele = pkg / "agent_telemetry.py"
     base = R.policy_hash(pkg)
-    tele.write_text((tele.read_text(encoding="utf-8") if tele.is_file() else "") + "\n# edited\n",
-                    encoding="utf-8")
-    after_tele = R.policy_hash(pkg)
+    observational = {}
+    for name in ("agent_telemetry.py", "agent_resolver_cli.py"):     # R2: the CLI is presentation too
+        f = pkg / name
+        f.write_text((f.read_text(encoding="utf-8") if f.is_file() else "") + "\n# edited\n", encoding="utf-8")
+        observational[name] = R.policy_hash(pkg)
     res = pkg / "agent_resolver.py"
     res.write_text(res.read_text(encoding="utf-8") + "\n# edited\n", encoding="utf-8")
     after_res = R.policy_hash(pkg)
-    check("V-RES-POLICY-NOT-POLICY", base == R.policy_hash() and after_tele == base and after_res != base
-          and "agent_telemetry.py" in R.NOT_POLICY,
-          f"copy==live {base == R.policy_hash()}, telemetry edit {base}->{after_tele}, "
+    check("V-RES-POLICY-NOT-POLICY", base == R.policy_hash() and set(observational.values()) == {base}
+          and after_res != base and {"agent_telemetry.py", "agent_resolver_cli.py"} <= R.NOT_POLICY,
+          f"copy==live {base == R.policy_hash()}, observational edits {observational}, "
           f"resolver edit {base}->{after_res}")
+
+    # R2: the CLI moved to agent_resolver_cli; the documented `python -m ...agent_resolver resolve`
+    # still reaches it, in-process and as a real subprocess. --no-cache everywhere, and the
+    # subprocess gets a temp HOME/USERPROFILE: Path.home() drives the resolver cache and the CO-12
+    # state dir, so nothing this gate runs can write the live ones (R2 audit gap 1).
+    import contextlib
+    import io
+    import os
+    import subprocess
+    task = "compose a jingle for a pizza advert"
+
+    def first_line(text: str) -> str:
+        return re.sub(r"\s[\d.]+ms$", "", (text.splitlines() or [""])[0])
+
+    runs = {}
+    for name, fn in (("stub", R.main), ("cli", CLI.main)):
+        so = io.StringIO()
+        with contextlib.redirect_stdout(so):
+            runs[name] = (fn(["resolve", task, "--no-cache"]), first_line(so.getvalue()))
+    home = t / "cli-home"
+    home.mkdir()
+    proc = subprocess.run([sys.executable, "-m", "modules.capability_runtime.agent_resolver", "resolve", task,
+                           "--no-cache"], cwd=ROOT, capture_output=True, text=True, timeout=180,
+                          env={**os.environ, "USERPROFILE": str(home), "HOME": str(home),
+                               "PYTHONIOENCODING": "utf-8"})
+    runs["python -m"] = (proc.returncode, first_line(proc.stdout))
+    check("V-RES-CLI-DELEGATES", len(set(runs.values())) == 1 and runs["cli"][1].startswith(
+        "NO_CERTIFIED_SPECIALIST miss=") and not (home / ".claude").exists(),
+          f"{runs} stderr={proc.stderr.strip()[-120:]!r} home_writes={(home / '.claude').exists()}")
 
 
 def main() -> int:

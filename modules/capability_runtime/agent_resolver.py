@@ -41,7 +41,6 @@ the code's own hash. Only a COMPLETE catalog's answer is stored; `miss` travels 
 """
 from __future__ import annotations
 
-import argparse
 import hashlib
 import json
 import math
@@ -127,10 +126,10 @@ def fingerprint(specs_dir: Path | None = None) -> str | None:
 
 
 _POLICY: str | None = None
-# Modules in this package that never change an answer. agent_telemetry only serialises a result;
-# hashing it would make a telemetry edit read as a resolver version change and flush every cache
-# entry (ACV C5 audit gap 1).
-NOT_POLICY = frozenset({"agent_telemetry.py"})
+# Modules in this package that never change an answer. agent_telemetry only serialises a result
+# and agent_resolver_cli only parses arguments and prints one; hashing either would make an edit
+# there read as a resolver version change and flush every cache entry (ACV C5 audit gap 1, R2).
+NOT_POLICY = frozenset({"agent_telemetry.py", "agent_resolver_cli.py"})
 
 
 def policy_hash(root: Path | None = None) -> str:
@@ -283,34 +282,10 @@ def resolve(task: str, max_class: str = "verifier", k: int = 3,
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(prog="agent_resolver")
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    r = sub.add_parser("resolve"); r.add_argument("task")
-    r.add_argument("--max-class", default="verifier", choices=A.CLASS_ORDER)
-    r.add_argument("--k", type=int, default=3); r.add_argument("--json", action="store_true")
-    r.add_argument("--no-cache", action="store_true")
-    a = ap.parse_args(argv)
-    try:
-        res = resolve(a.task, a.max_class, a.k, use_cache=not a.no_cache)
-    except A.AgentSpecError as e:
-        print(f"AGENTSPEC_ERROR {e.code} {e}", file=sys.stderr)
-        return 2
-    if a.json:
-        print(json.dumps(res, indent=1))
-    else:
-        miss = f" miss={res['miss']} {res['miss_ids'] or ''}".rstrip() if res["miss"] else ""
-        print(f"{res['status']}{miss} catalog={res['catalog_size']} cache={res['cache']} {res['ms']}ms")
-        for c in res["candidates"]:
-            print(f"  {c['id']}  class={c['class']} verdict={c['verdict']} gate={c['gate_score']} bm25={c['bm25']}")
-            print(f"    compile: python -m modules.capability_runtime.agent_spec compile {c['id']} "
-                  f"--mission-file <file> --json   (dispatch to {c['carrier']})")
-        for n in res["near_misses"]:
-            print(f"  near-miss {n['id']}: {n['reason']}")
-        for e in res["excluded"]:
-            print(f"  excluded {e['id']}: {e['code']} {e['detail']}")
-        for b in res["broken"]:
-            print(f"  broken {b['spec']}: {b['code']}")
-    return 0 if res["status"] == "RESOLVED" else 1
+    """The CLI lives in agent_resolver_cli (outside policy_hash, ACV C5 R2); this stub keeps the
+    documented `python -m modules.capability_runtime.agent_resolver resolve ...` working."""
+    from modules.capability_runtime.agent_resolver_cli import main as cli_main
+    return cli_main(argv)
 
 
 if __name__ == "__main__":

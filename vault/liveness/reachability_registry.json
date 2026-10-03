@@ -19,6 +19,14 @@
       "class": "LIBRARY",
       "note": "The single bridge to vendor/genesis-suite. Production edge: tools/plan_graph_check.py:36, called from the tools/gsd_mission.py supervise pass. Proven by tools/test_plan_graph_check.py."
     },
+    "capability_runtime/agent_resolver": {
+      "class": "LIBRARY",
+      "note": "ACV resolver core; imported by capability_runtime/agent_resolver_cli (and agent_telemetry from C5 commit 3). Its main() is a delegating stub for `python -m`. Proven by tools/test_agent_resolver.py."
+    },
+    "capability_runtime/agent_resolver_cli": {
+      "class": "PLANNED",
+      "note": "ACV C5 R2: resolver CLI, an entrypoint (python -m) that no command or agent body names yet. Reopen when C6 dispatch names it. Owner queue: vault/OWNER_QUEUE.md 'ACV resolver CLI'. Proven by V-RES-CLI-DELEGATES."
+    },
     "autonomy_gate/__main__": {
       "class": "LIBRARY",
       "note": "Manual CLI (python -m modules.autonomy_gate classify). Production reads modules/autonomy_gate/rubric.json directly (gsd_mission successor card, Stop hook); proven by tools/test_autonomy_gate.py."
