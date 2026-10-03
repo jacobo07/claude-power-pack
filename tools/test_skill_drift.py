@@ -126,6 +126,20 @@ def c_pole_drift():
             cases.append(good)
             out.append(f"{label}: {r and (r['status'], r['missing_live'], r['extra_live'], r['changed'])}"
                        f"{'' if good else ' (expected ' + str((miss, extra, chg)) + ')'}")
+        # Review WR-03: a symlinked directory inside the live skill is never descended, and must still be an entry
+        # (hashed by its link text, like a symlinked file), or extra live content reads IDENTICAL.
+        sub = live / "symlinked_dir"
+        sub.mkdir()
+        put_live(sub, base)
+        target = live.parent / "outside"
+        target.mkdir()
+        (target / "evil.py").write_bytes(b"x = 1\n")
+        (sub / "a" / "extra").symlink_to(target, target_is_directory=True)
+        r = row_of(smd.live_report(repo, sub))
+        good = r and r["status"] == "DRIFT" and r["extra_live"] == ["extra"] and not r["missing_live"]
+        cases.append(good)
+        out.append(f"extra symlinked dir: {r and (r['status'], r['missing_live'], r['extra_live'], r['changed'])}"
+                   f"{'' if good else ' (expected DRIFT extra_live [extra])'}")
     verdict = OK if all(cases) else FAIL
     return [(verdict, "V-SKD-POLE-DRIFT", "; ".join(out))]
 
@@ -295,7 +309,8 @@ def render() -> str:
     L.append("- Unit: the whole skill directory `skills/<name>/`, reduced to a sha256 over the sorted lines "
              "`<relpath>\\0<lf_sha256>\\n`. Files are LF-normalized before hashing (the laptop clone runs "
              "core.autocrlf=true).")
-    L.append("- Live side: `<live-root>/<name>/` walked without following symlinked directories; `__pycache__/` and "
+    L.append("- Live side: `<live-root>/<name>/` walked without following symlinked directories; a symlinked file or "
+             "directory is an entry hashed by its link text (never descended, never omitted); `__pycache__/` and "
              "`*.pyc` are excluded and counted.")
     L.append("- Statuses: IDENTICAL (`eol_only` when only line endings differ), DRIFT (with `missing_live`, "
              "`extra_live`, `changed`), ABSENT_LIVE, INCONCLUSIVE.")

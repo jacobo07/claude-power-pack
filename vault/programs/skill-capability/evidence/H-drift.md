@@ -10,7 +10,7 @@ This file covers the live-vs-mirror half (decision D-02): repo-mirrored skills a
 
 - Repo side: COMMITTED blobs at a named commit (`git cat-file --batch` through the primitives of `tools/verify_global_mirrors.py`), never the working tree.
 - Unit: the whole skill directory `skills/<name>/`, reduced to a sha256 over the sorted lines `<relpath>\0<lf_sha256>\n`. Files are LF-normalized before hashing (the laptop clone runs core.autocrlf=true).
-- Live side: `<live-root>/<name>/` walked without following symlinked directories; `__pycache__/` and `*.pyc` are excluded and counted.
+- Live side: `<live-root>/<name>/` walked without following symlinked directories; a symlinked file or directory is an entry hashed by its link text (never descended, never omitted); `__pycache__/` and `*.pyc` are excluded and counted.
 - Statuses: IDENTICAL (`eol_only` when only line endings differ), DRIFT (with `missing_live`, `extra_live`, `changed`), ABSENT_LIVE, INCONCLUSIVE.
 - ABSENT_LIVE is reported and is not drift: not every repo skill is meant to be installed on every host.
 
