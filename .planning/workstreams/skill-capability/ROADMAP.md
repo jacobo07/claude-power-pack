@@ -84,13 +84,13 @@ result. UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is n
   3. The `git exit 128` x6 class is reproduced and named (cause + fix or explicit fail-open reason).
   4. `--pillar A` PASS.
 
-**Plans:** 2/3 plans executed (waves 1 -> 2 -> 3, sequential: shared `hooks/doctrine_cards.js` / `tools/test_card_precision.py`)
+**Plans:** 3/3 plans executed (waves 1 -> 2 -> 3, sequential: shared `hooks/doctrine_cards.js` / `tools/test_card_precision.py`)
 
 Plans:
 
 - [x] 01-01-PLAN.md -- D-01 mtime-window provenance in the card + D-02 replay gate (5 D-CARD denies allowed, pre-session + mutant denied, 6th deny beside)
 - [x] 01-02-PLAN.md -- D-03 `git exit 128` x6: stderr class per row, unborn-HEAD empty-tree fallback, capsule test hermetic + sweep
-- [ ] 01-03-PLAN.md -- D-04 ledger closure: prg evidence, state.A IMPLEMENTED_AND_VERIFIED, `[A]` owner-bundle line, `--pillar A` PASS
+- [x] 01-03-PLAN.md -- D-04 ledger closure: prg evidence, state.A IMPLEMENTED_AND_VERIFIED, `[A]` owner-bundle line, `--pillar A` PASS
 
 ### Phase 2: Listing floor
 
@@ -148,7 +148,7 @@ settings; `python tools/test_skill_capability_program.py --final` exits 0, outpu
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Card precision | 2/3 | In Progress|  |
+| 1. Card precision | 3/3 | In Progress|  |
 | 2. Listing floor | 0/0 | Not started | - |
 | 3. Opportunity and delivery measurement | 0/0 | Not started | - |
 | 4. Coverage, criticality and freshness | 0/0 | Not started | - |
