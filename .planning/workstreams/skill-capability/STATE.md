@@ -69,6 +69,20 @@ Total Plans in Phase: 3
 **Stopped At:** Phase 04 complete, ready to plan Phase 05
 **Resume File:** None (the epoch 2 hand-off section below; its NEXT is now phase 4 code review + verification)
 
+### Epoch 3 progress (verify against git, the repository wins)
+
+- Phase 4 COMPLETE and verified (dc65b432): 04-04 closed D/H (c552a293); review 1 CR / 8 WR / 4 IN all handled
+  (f51fef33..3b9ae2f0, 04-REVIEW-FIX.md); D/H reason figures refreshed (bec199a7).
+- Phase 5 executed: 05-01 (ec706ab8, cfe4c377), 05-02 (e4947f62), 05-03 closed F (03cd4730). `--status`: closed
+  A,B,C,D,F,H; open E,G,I-N; violations []. NEXT: phase 5 code review (05-REVIEW.md), fix, verify, mark complete.
+- Phase 6 plans committed and revised for the plan-check (04054323, 01f4182a); run 06-01 -> 06-02 -> 06-03 after phase 5
+  is verified (06-01 re-pins state.H; gates read INCONCLUSIVE until fresh evidence is committed).
+- Phase 7 plans fixed for the plan-check (aa0336bf); phase 7 runs only after phases 4-6 SUMMARYs are committed.
+- Mechanics: the isolation sentinel goes stale after 10 min (SENTINEL_STALE_MS); before each executor dispatch run
+  `node ~/.claude/gsd-core/bin/gsd-tools.cjs query dispatch-isolation --raw --force-isolation none --cwd .`.
+- Gates read committed blobs only (phase 4 WR-04): after --write-evidence / --record-cards / --measure-live a gate
+  reads INCONCLUSIVE until the output is committed.
+
 ### Epoch 2 hand-off (verify against git, the repository wins)
 
 - Phases 1-3 COMPLETE and verified: A IMPLEMENTED_AND_VERIFIED, B FALSIFIED_OR_REJECTED_BY_EVIDENCE,
