@@ -14,6 +14,10 @@ non-empty `reason` and `authority`:
   WEAKENED       its check dropped a rung: evaluable -> delegated -> prose/empty
   CHECK_CHANGED  its check string changed at the same or a higher rung
   REWORDED       its requirement text changed
+  WHY_CHANGED    its `why` (the rule's justification) changed
+  REANCHORED     its `origin` (file, line or quote) changed
+  CLASS_CHANGED  its `class` changed
+  SCOPE_CHANGED  its `propagation_scope` changed (absent equals absent)
 
 CHECK_CHANGED exists because a rung is a KIND, not a strength: swapping
 `regex:gate.py::must_refuse_stale` for `regex:gate.py::.` stays at rung 0 and
@@ -43,6 +47,14 @@ REVERTED = "REVERTED"
 WEAKENED = "WEAKENED"
 CHECK_CHANGED = "CHECK_CHANGED"
 REWORDED = "REWORDED"
+WHY_CHANGED = "WHY_CHANGED"
+CLASS_CHANGED = "CLASS_CHANGED"
+SCOPE_CHANGED = "SCOPE_CHANGED"
+# Origin-change kind, deliberately the name a later `reanchor` records, so a
+# recorded re-anchoring satisfies `_recorded` and an unrecorded origin rewrite
+# is a regression. verify_chain/diff never call bl.verify_origin: origin rot is
+# owned by the citations gate, not turned into chain regressions.
+REANCHORED = "REANCHORED"
 DUPLICATE_ID = "DUPLICATE_ID"
 
 
@@ -72,6 +84,14 @@ def _active(entries: list) -> dict:
     return {e["id"]: e for e in entries if e.get("status") != "reverted"}
 
 
+def _origin_key(origin) -> tuple:
+    """(file, line, quote) of an origin dict, squashed; ("", "", "") if not a dict."""
+    if not isinstance(origin, dict):
+        return ("", "", "")
+    return (_squash(origin.get("file")), str(origin.get("line") or ""),
+            _squash(origin.get("quote")))
+
+
 def diff(parent: dict, child: dict) -> list:
     """[(id, kind)] for every change to a parent-active entry in the child."""
     before = _active(parent.get("entries", []))
@@ -91,6 +111,14 @@ def diff(parent: dict, child: dict) -> list:
             out.append((ident, CHECK_CHANGED))
         if _squash(new.get("requirement")) != _squash(old.get("requirement")):
             out.append((ident, REWORDED))
+        if _squash(new.get("why")) != _squash(old.get("why")):
+            out.append((ident, WHY_CHANGED))
+        if _origin_key(new.get("origin")) != _origin_key(old.get("origin")):
+            out.append((ident, REANCHORED))
+        if _squash(new.get("class")) != _squash(old.get("class")):
+            out.append((ident, CLASS_CHANGED))
+        if _squash(new.get("propagation_scope")) != _squash(old.get("propagation_scope")):
+            out.append((ident, SCOPE_CHANGED))
     return out
 
 
