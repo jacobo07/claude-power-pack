@@ -349,12 +349,307 @@ def g_window_append_stable():
     return True, f"window_sha256={pa['window_sha256'][:12]} rows={pa['window_rows']} stable under 4 appended rows; pre-assistant edit -> {c['provenance']['window_sha256'][:12]}"
 
 
+# --------------------------------------------------------------------------- gates: rules (Task 2)
+def pair_check(ref_sizes, now_sizes, ref_edit=None, extra_args=()):
+    """Build a floor pair, write the reference in-process, optionally edit it, check the second transcript."""
+    root = scratch("c")
+    ref_tx, now_tx = floor_pair(root, ref_sizes, now_sizes)
+    ref_json = root / "ref.json"
+    rc, out, err = run_main(["--write-reference", ref_json, "--transcript", ref_tx])
+    if rc != 0:
+        raise AssertionError(f"reference write rc={rc} {out[-200:]!r} {err[-200:]!r}")
+    if ref_edit is not None:
+        doc = json.loads(ref_json.read_text(encoding="utf-8"))
+        ref_edit(doc)
+        ref_json.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    rc, out, err = run_main(["--check", "--reference", ref_json, "--transcript", now_tx, *extra_args])
+    return rc, out, err
+
+
+def find_lines(out, prefix):
+    return [ln for ln in out.splitlines() if ln.startswith(prefix)]
+
+
+def explain(layer, scope=None, unit="chars", bound=1100, reason="seeded", commit="abcdef1"):
+    e = {"layer": layer, "unit": unit, "delta_bound": bound, "reason": reason, "commit": commit}
+    if scope is not None:
+        e["scope"] = scope
+    return e
+
+
+def set_explanations(items):
+    def edit(doc):
+        doc["explanations"] = items
+    return edit
+
+
+def g_layer_table():
+    root = scratch("table")
+    tx = Tx(root, None, "table")
+    home, wd = tx.home, tx.cwd
+    tx.meta("last-prompt")
+    tx.user("a prompt")
+    tx.user("a slash expansion", meta=True)
+    tx.file(wd / "src" / "a.py", "x" * 777)
+    tx.hook_success("SessionStart", "SessionStart:startup", "node hook.js", additional_context="secret-ish stdout " * 20)
+    tx.instructions([
+        (home / ".claude" / "CLAUDE.md", "User", "u" * 101),
+        (wd / "CLAUDE.md", "Project", "p" * 202),
+        (home / ".claude" / "rules" / "a.md", "User", "a" * 303),
+        (wd / ".claude" / "rules" / "b.md", "Project", "b" * 404),
+        (wd / "notes" / "x.md", "Project", "x" * 505),
+        ("/etc/claude/managed.md", "Managed", "m" * 606),
+    ])
+    listing = "header line\n- alpha: first\n  continued here\n- beta: second\n- gamma\n"
+    tx.attachment("skill_listing", content=listing, names=["alpha", "beta", "gamma"], skillCount=3, isInitial=True)
+    tx.agent_listing([("Explore", "reads"), ("Plan", "plans a lot")])
+    tx.hook_context("SessionStart", "SessionStart:startup", ["e" * 11, "f" * 22])
+    tx.hook_system_message("SessionStart", "SessionStart:startup", "m" * 33)
+    tx.prompt_snapshot(["one " * 10, "two " * 20])
+    harness_payloads = {
+        "environment": {"snapshot": {"platform": "linux", "workingDirectory": str(wd)}},
+        "model": {"identity": "claude-opus-5-5", "text": "model text"},
+        "date": {"date": "2026-10-04"},
+        "auto_mode": {"bypass": False},
+        "command_permissions": {"allowedTools": ["Bash"]},
+        "credential_org": {"organizationUuid": "o-1"},
+        "remote_session_change": {"url": None, "commit": None},
+        "session_context": {"context": {"userEmail": "a@b.c", "gitStatus": "clean"}},
+    }
+    for at, payload in harness_payloads.items():
+        tx.attachment(at, **payload)
+    tx.attachment("deferred_tools_delta", addedNames=["t"], addedLines=["- t"])
+    tx.attachment("brand_new", payload="p" * 50)
+    tx.assistant()
+    m = GATE.measure(str(tx.write()))
+
+    def jl(payload):
+        return len(json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":")))
+    want = {
+        ("memory_global", "universal"): 101, ("memory_project", "project"): 202, ("rules", "universal"): 303,
+        ("rules", "project"): 404, ("other:instructions", "project"): 505, ("other:instructions", "unattributed"): 606,
+        ("skill_listing", "unattributed"): len(listing),
+        ("other:agent_listing_delta", "unattributed"): len("- Explore: reads") + len("- Plan: plans a lot"),
+        ("hook_context:SessionStart:SessionStart:startup", "unattributed"): 33,
+        ("hook_system_message:SessionStart:SessionStart:startup", "unattributed"): 33,
+        ("system_prompt", "unattributed"): len("one " * 10) + len("two " * 20),
+        ("other:deferred_tools_delta", "unattributed"): jl({"addedNames": ["t"], "addedLines": ["- t"]}),
+        ("other:brand_new", "unattributed"): jl({"payload": "p" * 50}),
+    }
+    for at, payload in harness_payloads.items():
+        want[(f"other:{at}", "harness")] = jl(payload)
+    got = {(r["layer"], r["scope"]): r["chars"] for r in m["layers"]}
+    why = []
+    for k in sorted(set(want) | set(got)):
+        if want.get(k) != got.get(k):
+            why.append(f"{k}: want {want.get(k)} got {got.get(k)}")
+    if m["total_chars"] != sum(want.values()):
+        why.append(f"total_chars {m['total_chars']} != {sum(want.values())}")
+    sk = [c for c in m["components"] if c["layer"] == "skill_listing"]
+    if sum(c["chars"] for c in sk) != len(listing):
+        why.append("skill entries do not sum to len(content)")
+    srcs = {c["source"]: c["chars"] for c in sk}
+    if srcs != {"listing:header": len("header line\n"), "alpha": len("- alpha: first\n") + len("  continued here\n"),
+                "beta": len("- beta: second\n"), "gamma": len("- gamma\n")}:
+        why.append(f"skill sources {srcs}")
+    parts = [c for c in m["components"] if c["layer"] == "system_prompt"]
+    if len(parts) != 2 or not all(re.fullmatch(r"part:[0-9a-f]{12}", c["source"]) and c["scope"] == "unattributed" for c in parts):
+        why.append(f"system prompt parts {parts}")
+    ex = m["excluded"]
+    if not (ex["prompt_chars"] > 0 and ex["file_chars"] > 0 and ex["hook_success_rows"] == 1):
+        why.append(f"excluded {ex}")
+    if m["skill_listing"]["entries"] != 3 or m["skill_listing"]["skill_count"] != 3:
+        why.append(f"skill_listing {m['skill_listing']}")
+    return (not why), ("; ".join(why) or f"{len(want)} (layer, scope) rows exact; total {m['total_chars']}")
+
+
+def g_positive_universal():
+    rc, out, _ = pair_check({}, {"g": 11024})
+    share = 1024 / 50000
+    risk = find_lines(out, "RISE memory_global scope=universal delta=+1024")
+    ok = share < 0.03 and rc == 1 and len(risk) == 1 and "universal_1k" in risk[0] and "layer_3pct" not in risk[0]
+    return ok, f"share={share:.4f} rc={rc} rise={risk}"
+
+
+def g_project_local():
+    rc, out, _ = pair_check({}, {"p": 11024})
+    scope = find_lines(out, "SCOPE ")
+    layer = find_lines(out, "LAYER memory_project scope=project")
+    ok = (rc == 0 and scope == ["SCOPE universal=+0 project=+1024 harness=+0 unattributed=+0"]
+          and len(layer) == 1 and layer[0].endswith("delta=+1024") and not find_lines(out, "RISE"))
+    return ok, f"rc={rc} scope={scope} layer={layer}"
+
+
+def g_scope_report():
+    why = []
+    for name, now, want in (("project", {"p": 11024}, {"universal": 0, "project": 1024, "harness": 0, "unattributed": 0}),
+                            ("universal", {"g": 11024}, {"universal": 1024, "project": 0, "harness": 0, "unattributed": 0})):
+        rc, out, _ = pair_check({}, now, extra_args=["--json"])
+        doc = json.loads(out)
+        if doc.get("scope_deltas") != want:
+            why.append(f"{name}: scope_deltas={doc.get('scope_deltas')}")
+    return (not why), "; ".join(why) or "JSON scope_deltas split universal/project for both pairs"
+
+
+def g_project_3pct():
+    rc, out, _ = pair_check({}, {"p": 11600})
+    risk = find_lines(out, "RISE memory_project scope=project")
+    ok = rc == 1 and len(risk) == 1 and "rules=layer_3pct" in risk[0]
+    return ok, f"rc={rc} rise={risk}"
+
+
+def g_boundary():
+    rc_lo, out_lo, _ = pair_check({}, {"g": 10999})
+    rc_hi, out_hi, _ = pair_check({}, {"g": 11000})
+    ok = rc_lo == 0 and rc_hi == 1 and bool(find_lines(out_hi, "RISE memory_global scope=universal delta=+1000"))
+    return ok, f"+999 rc={rc_lo}; +1000 rc={rc_hi}"
+
+
+def g_total_3pct():
+    rc, out, _ = pair_check({}, {"r": 8500, "g": 10500, "p": 10600})
+    rises = find_lines(out, "RISE ")
+    ok = rc == 1 and len(rises) == 1 and rises[0].startswith("RISE total scope=unattributed delta=+1600") and "rules=total_3pct" in rises[0]
+    return ok, f"rc={rc} rises={rises}"
+
+
+def g_system_prompt_new_part():
+    why = []
+    rc, out, _ = pair_check({}, {"sp": ["S" * 8000, "N" * 1024]})
+    risk = find_lines(out, "RISE system_prompt scope=unattributed delta=+1024")
+    if rc != 1 or len(risk) != 1 or "universal_1k" not in risk[0]:
+        why.append(f"new part: rc={rc} rise={risk}")
+    rc, out, _ = pair_check({"sp": ["A" * 4000, "B" * 4000]}, {"sp": ["B" * 4000, "A" * 4000]})
+    if rc != 0 or find_lines(out, "LAYER system_prompt"):
+        why.append(f"swapped order: rc={rc} {find_lines(out, 'LAYER system_prompt')}")
+    rc, out, _ = pair_check({}, {"sp": ["S" * 8000 + "E" * 200]})
+    lay = find_lines(out, "LAYER system_prompt scope=unattributed")
+    if rc != 0 or len(lay) != 1 or not lay[0].endswith("delta=+200"):
+        why.append(f"edited part: rc={rc} {lay}")
+    return (not why), "; ".join(why) or "new 1,024 part red (unattributed, universal_1k); swapped order green; edited part nets +200"
+
+
+def g_harness_not_1k():
+    sc = lambda n: ("session_context", {"context": {"userEmail": "a@b.c", "gitStatus": "g" * n}})
+    rc, out, _ = pair_check({"extra": [sc(100)]}, {"extra": [sc(1300)]})
+    scope = find_lines(out, "SCOPE ")
+    ok = rc == 0 and scope == ["SCOPE universal=+0 project=+0 harness=+1200 unattributed=+0"] and not find_lines(out, "RISE")
+    return ok, f"rc={rc} scope={scope}"
+
+
+def g_unattributed_1k():
+    rc, out, _ = pair_check({}, {"extra": [("brand_new", {"payload": "Z" * 1100})]})
+    risk = find_lines(out, "RISE other:brand_new scope=unattributed")
+    ok = rc == 1 and len(risk) == 1 and "rules=universal_1k" in risk[0]
+    return ok, f"rc={rc} rise={risk}"
+
+
+def g_fall_ratchet_hint():
+    rc, out, _ = pair_check({}, {"g": 8000}, extra_args=["--json"])
+    big = json.loads(out)
+    rc2, out2, _ = pair_check({}, {"g": 9500}, extra_args=["--json"])
+    small = json.loads(out2)
+    ok = rc == 0 and rc2 == 0 and big.get("ratchet_hint") is True and small.get("ratchet_hint") is False
+    return ok, f"-4%: rc={rc} hint={big.get('ratchet_hint')}; -1%: rc={rc2} hint={small.get('ratchet_hint')}"
+
+
+def g_explained_green():
+    why = []
+    rc, out, _ = pair_check({}, {"g": 11024}, ref_edit=set_explanations([explain("memory_global", "universal")]))
+    if rc != 0 or not find_lines(out, "EXPLAINED memory_global scope=universal delta=+1024 by=abcdef1"):
+        why.append(f"universal explained: rc={rc} last={last_line(out)!r}")
+    rc, out, _ = pair_check({}, {"sp": ["S" * 8000, "N" * 1024]},
+                            ref_edit=set_explanations([explain("system_prompt", "unattributed")]))
+    if rc != 0 or not find_lines(out, "EXPLAINED system_prompt scope=unattributed delta=+1024"):
+        why.append(f"system prompt explained: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "an explanation within its bound turns the red green and is printed"
+
+
+def g_explanation_bound():
+    why = []
+    rc, out, _ = pair_check({}, {"g": 11024}, ref_edit=set_explanations([explain("memory_global", "universal", bound=1024)]))
+    if rc != 0:
+        why.append(f"control: bound 1024 == delta 1024 must cover: rc={rc}")
+    rc, out, _ = pair_check({}, {"g": 11024}, ref_edit=set_explanations([explain("memory_global", "universal", bound=1000)]))
+    if rc != 1:
+        why.append(f"bound 1000 < delta 1024: rc={rc}")
+    rc, out, _ = pair_check({}, {"g": 11024}, ref_edit=set_explanations([explain("memory_global", "universal", unit="tokens")]))
+    if rc != 1:
+        why.append(f"unit tokens against a chars rise: rc={rc}")
+    rc, out, _ = pair_check({}, {"g": 11024}, ref_edit=set_explanations([explain("memory_global", "project")]))
+    if rc != 1:
+        why.append(f"explanation scope project against a universal rise: rc={rc}")
+    return (not why), "; ".join(why) or "bound, unit and scope each limit what an explanation covers"
+
+
+def g_explanation_empty_reason():
+    rc, out, _ = pair_check({}, {"g": 11024}, ref_edit=set_explanations([explain("memory_global", "universal", reason="   ")]))
+    ok = rc == 2 and last_line(out).startswith("FLOOR verdict=UNMEASURABLE exit=2 reason=explanation_refused")
+    return ok, f"rc={rc} last={last_line(out)!r}"
+
+
+def g_explanation_fields():
+    why = []
+    cases = {"commit xyz": explain("memory_global", "universal", commit="xyz"),
+             "delta_bound 0": explain("memory_global", "universal", bound=0),
+             "unit bytes": explain("memory_global", "universal", unit="bytes"),
+             "scope unknown": explain("memory_global", "everyone"),
+             "layer empty": explain("", "universal")}
+    for label, item in cases.items():
+        rc, out, _ = pair_check({}, {"g": 11024}, ref_edit=set_explanations([item]))
+        if rc != 2 or "reason=explanation_refused" not in last_line(out):
+            why.append(f"{label}: rc={rc} last={last_line(out)!r}")
+    # one bad entry refuses the whole reference even when another entry would cover the rise
+    rc, out, _ = pair_check({}, {"g": 11024}, ref_edit=set_explanations(
+        [explain("memory_global", "universal"), explain("rules", "universal", reason="")]))
+    if rc != 2:
+        why.append(f"one bad entry among good: rc={rc}")
+    return (not why), "; ".join(why) or "five malformed entries and a mixed list each refuse the reference (exit 2)"
+
+
+def g_tokens_rule():
+    why = []
+    rc, out, _ = pair_check({}, {"usage": (2, 30998, 0, 10)})
+    risk = find_lines(out, "RISE tokens scope=unattributed")
+    if rc != 1 or len(risk) != 1 or "unit=tokens" not in risk[0] or "rules=tokens_3pct" not in risk[0]:
+        why.append(f"+3.3% tokens: rc={rc} rise={risk}")
+    rc, out, _ = pair_check({}, {"usage": (2, 30998, 0, 10), "prompt": "A different prompt entirely."})
+    tl = find_lines(out, "TOKENS ")
+    if rc != 0 or len(tl) != 1 or "status=not_comparable" not in tl[0]:
+        why.append(f"different prompt: rc={rc} tokens={tl}")
+    rc, out, _ = pair_check({}, {"usage": (2, 30998, 0, 10)},
+                            ref_edit=set_explanations([explain("tokens", unit="tokens", bound=1000)]))
+    if rc != 0 or not find_lines(out, "EXPLAINED tokens scope=unattributed delta=+998"):
+        why.append(f"explained tokens: rc={rc} last={last_line(out)!r}")
+    rc, out, _ = pair_check({}, {"usage": (2, 30500, 0, 10)})
+    if rc != 0:
+        why.append(f"+1.6% tokens must stay green: rc={rc}")
+    return (not why), "; ".join(why) or "tokens: +3.3% red, different prompt not_comparable, explained green, +1.6% green"
+
+
 # --------------------------------------------------------------------------- run
 GATES_TRACER = [
     ("V-FLOOR-TRACER-E2E", g_tracer_e2e),
     ("V-FLOOR-WINDOW-APPEND-STABLE", g_window_append_stable),
 ]
-GATES = list(GATES_TRACER)
+GATES_RULES = [
+    ("V-FLOOR-LAYER-TABLE", g_layer_table),
+    ("V-FLOOR-POSITIVE-UNIVERSAL", g_positive_universal),
+    ("V-FLOOR-PROJECT-LOCAL", g_project_local),
+    ("V-FLOOR-SCOPE-REPORT", g_scope_report),
+    ("V-FLOOR-PROJECT-3PCT", g_project_3pct),
+    ("V-FLOOR-BOUNDARY", g_boundary),
+    ("V-FLOOR-TOTAL-3PCT", g_total_3pct),
+    ("V-FLOOR-SYSTEM-PROMPT-NEW-PART", g_system_prompt_new_part),
+    ("V-FLOOR-HARNESS-NOT-1K", g_harness_not_1k),
+    ("V-FLOOR-UNATTRIBUTED-1K", g_unattributed_1k),
+    ("V-FLOOR-FALL-RATCHET-HINT", g_fall_ratchet_hint),
+    ("V-FLOOR-EXPLAINED-GREEN", g_explained_green),
+    ("V-FLOOR-EXPLANATION-BOUND", g_explanation_bound),
+    ("V-FLOOR-EXPLANATION-EMPTY-REASON", g_explanation_empty_reason),
+    ("V-FLOOR-EXPLANATION-FIELDS", g_explanation_fields),
+    ("V-FLOOR-TOKENS-RULE", g_tokens_rule),
+]
+GATES = GATES_TRACER + GATES_RULES
 
 
 def run_all() -> int:
@@ -373,5 +668,105 @@ def run_all() -> int:
     return 0 if passes == m and m > 0 else 1
 
 
+# --------------------------------------------------------------------------- mutation drill
+GATE_FN = dict(GATES)
+DRILL_GATES = [n for n, _ in GATES if n != "V-FLOOR-TRACER-E2E"]    # the tracer is a real subprocess: a monkeypatch cannot reach it
+
+
+def _quiet(names) -> dict:
+    """Run the named gates with printing off; {gate: passed} for the ones that ran to PASS/FAIL."""
+    start = len(RESULTS)
+    QUIET[0] = True
+    try:
+        for n in names:
+            run_gate(n, GATE_FN[n])
+    finally:
+        QUIET[0] = False
+    return {g: st == "PASS" for st, g, _ in RESULTS[start:] if st in ("PASS", "FAIL")}
+
+
+def _patch(attr, replacement):
+    """Replace GATE.<attr>; returns the restore callable."""
+    original = getattr(GATE, attr)
+    setattr(GATE, attr, replacement)
+    return lambda: setattr(GATE, attr, original)
+
+
+def _m_scope_universal():
+    return _patch("scope_key", lambda component: "universal")
+
+
+def _m_scope_project():
+    return _patch("scope_key", lambda component: "project")
+
+
+def _m_universal_threshold_off():
+    return _patch("UNIVERSAL_MIN_CHARS", 10 ** 9)
+
+
+def _m_validate_always_ok():
+    return _patch("validate_explanations", lambda items: None)
+
+
+def _m_covering_ignores_bound_and_unit():
+    return _patch("covering_explanation",
+                  lambda finding, items: next((e for e in items if e.get("layer") == finding["layer"]), None))
+
+
+def _m_no_layer_3pct():
+    real = GATE.is_material
+    return _patch("is_material", lambda row, ref_total: [r for r in real(row, ref_total) if r != "layer_3pct"])
+
+
+def _m_system_prompt_harness():
+    return _patch("scope_for_system_prompt_part", lambda part_text: "harness")
+
+
+MUTANTS = [
+    ("M1 scope_key returns universal (the scope split is dropped)", _m_scope_universal,
+     ["V-FLOOR-PROJECT-LOCAL", "V-FLOOR-SCOPE-REPORT"]),
+    ("M2 scope_key returns project", _m_scope_project, ["V-FLOOR-POSITIVE-UNIVERSAL"]),
+    ("M3 UNIVERSAL_MIN_CHARS = 10**9 (the 1,000-char rule is off)", _m_universal_threshold_off,
+     ["V-FLOOR-POSITIVE-UNIVERSAL", "V-FLOOR-BOUNDARY"]),
+    ("M4 validate_explanations accepts everything", _m_validate_always_ok, ["V-FLOOR-EXPLANATION-EMPTY-REASON"]),
+    ("M5 covering_explanation ignores delta_bound and unit", _m_covering_ignores_bound_and_unit,
+     ["V-FLOOR-EXPLANATION-BOUND"]),
+    ("M7 is_material never returns layer_3pct", _m_no_layer_3pct, ["V-FLOOR-PROJECT-3PCT"]),
+    ("M8 scope_for_system_prompt_part returns harness (type-based harness for system prompt parts)",
+     _m_system_prompt_harness, ["V-FLOOR-SYSTEM-PROMPT-NEW-PART"]),
+]
+
+
+def run_drill() -> int:
+    """Control first (all in-process gates green), each mutant applied and restored, then an unmutated rerun."""
+    if GATE is None:
+        print(f"FAIL DRILL-CONTROL gate does not load: {GATE_LOAD_ERROR}")
+        return 1
+    before = sha256_file(GATE_FILE)
+    control = _quiet(DRILL_GATES)
+    control_ok = len(control) == len(DRILL_GATES) and all(control.values())
+    print(f"{'PASS' if control_ok else 'FAIL'} DRILL-CONTROL unmutated run: {sum(control.values())}/{len(control)} gates green")
+    killed = 0
+    for label, apply, targets in MUTANTS:
+        restore = apply()
+        try:
+            seen = _quiet(targets)
+        finally:
+            restore()
+        by = [t for t in targets if seen.get(t) is False]
+        if len(by) == len(targets):
+            killed += 1
+            print(f"KILLED {label} by {', '.join(by)}")
+        else:
+            print(f"SURVIVED {label} (still green or absent: {', '.join(t for t in targets if seen.get(t) is not False)})")
+    after = _quiet(DRILL_GATES)
+    clean = len(after) == len(DRILL_GATES) and all(after.values())
+    print(f"{'PASS' if clean else 'FAIL'} DRILL-CLEAN-AFTER-MUTANTS unmutated rerun: {sum(after.values())}/{len(after)} gates green")
+    restored = sha256_file(GATE_FILE) == before
+    print(f"{'PASS' if restored else 'FAIL'} DRILL-RESTORE gate file sha256 {before[:16]} before == after")
+    print(f"DRILL killed={killed}/{len(MUTANTS)}")
+    return 0 if (killed == len(MUTANTS) and control_ok and clean and restored) else 1
+
+
 if __name__ == "__main__":
-    sys.exit(run_all())
+    sys.exit(run_drill() if "--drill" in sys.argv[1:] else run_all())

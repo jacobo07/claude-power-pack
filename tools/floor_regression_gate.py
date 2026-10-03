@@ -317,7 +317,11 @@ def measure(path):
 # --------------------------------------------------------------------------- reference
 def load_reference(path):
     with open(path, encoding="utf-8") as fh:
-        return json.load(fh)
+        ref = json.load(fh)
+    err = validate_explanations(ref.get("explanations"))
+    if err:
+        raise Unmeasurable("explanation_refused", err)
+    return ref
 
 
 def _git_head(cwd):
@@ -353,6 +357,56 @@ def write_reference(out, measured, argv=None):
 
 
 # --------------------------------------------------------------------------- comparison
+_COMMIT_RE = re.compile(r"^[0-9a-f]{7,40}$")
+
+CAVEATS = [
+    "skill_listing is bounded by the harness listing budget (30,000 chars on both GEX44 sessions and the laptop "
+    "champion row): at the budget a new skill displaces descriptions instead of adding chars, so entries and "
+    "skill_count are reported beside chars",
+    "prompt-driven rows (user rows, file attachments) are excluded from the floor",
+    "tokens are comparable only when the excluded prompt digests are equal",
+    "scopes are computed on the measuring host",
+    "system prompt parts are compared by digest: a reference and a check of different session kinds (an "
+    "interactive session against a mission worker whose launcher appends a prompt) differ by that part and go red "
+    "unless explained",
+]
+
+
+def validate_explanations(items):
+    """None when every entry is well formed, else 'explanation_refused: <index> <field>' (one bad entry refuses all)."""
+    if not isinstance(items, list):
+        return "explanation_refused: - explanations"
+    for i, e in enumerate(items):
+        if not isinstance(e, dict):
+            return f"explanation_refused: {i} entry"
+        if not isinstance(e.get("layer"), str) or not e["layer"].strip():
+            return f"explanation_refused: {i} layer"
+        if "scope" in e and e["scope"] not in SCOPES:
+            return f"explanation_refused: {i} scope"
+        if e.get("unit") not in ("chars", "tokens"):
+            return f"explanation_refused: {i} unit"
+        bound = e.get("delta_bound")
+        if not isinstance(bound, int) or isinstance(bound, bool) or bound <= 0:
+            return f"explanation_refused: {i} delta_bound"
+        if not isinstance(e.get("reason"), str) or not e["reason"].strip():
+            return f"explanation_refused: {i} reason"
+        if not isinstance(e.get("commit"), str) or not _COMMIT_RE.match(e["commit"]):
+            return f"explanation_refused: {i} commit"
+    return None
+
+
+def covering_explanation(finding, items):
+    """First entry with the same layer, scope (when given) and unit whose delta_bound is >= the finding's delta."""
+    for e in items:
+        if e["layer"] != finding["layer"] or e["unit"] != finding["unit"]:
+            continue
+        if "scope" in e and e["scope"] != finding["scope"]:
+            continue
+        if finding["delta"] <= e["delta_bound"]:
+            return e
+    return None
+
+
 def is_material(row, ref_total):
     """Rules triggered by one (layer, scope) row {layer, scope, delta}."""
     rules = []
@@ -369,7 +423,19 @@ def exit_code(verdict):
             "REFERENCE_WRITTEN": EXIT_OK}.get(verdict, EXIT_UNMEASURABLE)
 
 
+def _tokens_axis(ref, now):
+    rt, nt = ref.get("tokens") or {}, now["tokens"]
+    if rt.get("status") != "measured" or nt.get("status") != "measured":
+        return {"status": "no_model_call", "ref": rt.get("first_call_total"), "now": nt.get("first_call_total"),
+                "delta": None}
+    if not rt.get("prompt_digest") or rt.get("prompt_digest") != nt.get("prompt_digest"):
+        return {"status": "not_comparable", "ref": rt["first_call_total"], "now": nt["first_call_total"], "delta": None}
+    return {"status": "measured", "ref": rt["first_call_total"], "now": nt["first_call_total"],
+            "delta": nt["first_call_total"] - rt["first_call_total"]}
+
+
 def compare(ref, now):
+    items = ref.get("explanations") or []
     ref_idx = {(c["layer"], c["source"]): c for c in ref["components"]}
     now_idx = {(c["layer"], c["source"]): c for c in now["components"]}
     acc = {}
@@ -382,14 +448,29 @@ def compare(ref, now):
     rows = [{"layer": k[0], "scope": k[1], "ref": v["ref"], "now": v["now"], "delta": v["now"] - v["ref"]}
             for k, v in sorted(acc.items())]
     ref_total = ref["total_chars"]
-    findings = []
+    findings, explained, unexplained_sum = [], [], 0
+
+    def settle(f, rules):
+        exp = covering_explanation(f, items)
+        if exp is not None:
+            explained.append({**f, "by": exp["commit"]})
+            return True
+        if rules:
+            findings.append({**f, "rules": rules})
+        return False
+
     for row in rows:
         if row["delta"] <= 0:
             continue
-        rules = is_material(row, ref_total)
-        if rules:
-            findings.append({"layer": row["layer"], "scope": row["scope"], "delta": row["delta"], "unit": "chars",
-                             "rules": rules})
+        f = {"layer": row["layer"], "scope": row["scope"], "delta": row["delta"], "unit": "chars"}
+        if not settle(f, is_material(row, ref_total)):
+            unexplained_sum += row["delta"]
+    if (unexplained_sum > 0 and unexplained_sum >= TOTAL_PCT * ref_total
+            and not any("layer_3pct" in f["rules"] for f in findings)):
+        settle({"layer": "total", "scope": "unattributed", "delta": unexplained_sum, "unit": "chars"}, ["total_3pct"])
+    axis = _tokens_axis(ref, now)
+    if axis["status"] == "measured" and axis["delta"] > 0 and axis["delta"] >= TOKENS_PCT * axis["ref"]:
+        settle({"layer": "tokens", "scope": "unattributed", "delta": axis["delta"], "unit": "tokens"}, ["tokens_3pct"])
     scope_deltas = {s: 0 for s in SCOPES}
     for row in rows:
         scope_deltas[row["scope"]] = scope_deltas.get(row["scope"], 0) + row["delta"]
@@ -397,7 +478,9 @@ def compare(ref, now):
     return {
         "verdict": "MATERIAL_RISE" if findings else "WITHIN_BOUND",
         "reason": "material_rise" if findings else "within_bound",
-        "rows": rows, "findings": findings, "explained": [], "scope_deltas": scope_deltas,
+        "rows": rows, "findings": findings, "explained": explained, "scope_deltas": scope_deltas,
+        "tokens_axis": axis,
+        "ratchet_hint": ref_total > 0 and (ref_total - now["total_chars"]) >= TOTAL_PCT * ref_total,
         "totals": {"ref": ref_total, "now": now["total_chars"], "delta": now["total_chars"] - ref_total},
         "window": {"ref_sha256": rp.get("window_sha256"), "now_sha256": np_["window_sha256"],
                    "ref_rows": rp.get("window_rows"), "now_rows": np_["window_rows"],
@@ -433,6 +516,13 @@ def render(r):
             lines.append(f"EXPLAINED {e['layer']} scope={e['scope']} delta=+{e['delta']} by={e['by']}")
         sd = r["scope_deltas"]
         lines.append("SCOPE " + " ".join(f"{s}={_s(sd.get(s, 0))}" for s in SCOPES))
+        sk = r["skills"]
+        lines.append(f"SKILLS ref_chars={(sk['ref'] or {}).get('chars')} now_chars={sk['now']['chars']} "
+                     f"ref_entries={(sk['ref'] or {}).get('entries')} now_entries={sk['now']['entries']} "
+                     f"ref_skill_count={(sk['ref'] or {}).get('skill_count')} now_skill_count={sk['now']['skill_count']}")
+        ta = r["tokens_axis"]
+        delta = _s(ta["delta"]) if ta["delta"] is not None else "na"
+        lines.append(f"TOKENS status={ta['status']} ref={ta['ref']} now={ta['now']} delta={delta}")
     lines.append(f"FLOOR verdict={r['verdict']} exit={r['exit']} reason={r['reason']}")
     return "\n".join(lines)
 
@@ -470,7 +560,14 @@ def main(argv=None):
     except Unmeasurable as exc:
         result = {"verdict": "UNMEASURABLE", "reason": exc.reason, "detail": exc.detail}
     result["exit"] = exit_code(result["verdict"])
-    print(render(result))
+    if args.json:
+        keys = ("verdict", "exit", "reason", "rows", "findings", "explained", "scope_deltas", "tokens_axis",
+                "ratchet_hint")
+        doc = {k: result.get(k) for k in keys}
+        doc["rows"], doc["findings"], doc["explained"] = (doc["rows"] or [], doc["findings"] or [], doc["explained"] or [])
+        print(json.dumps(doc, indent=1, sort_keys=True))
+    else:
+        print(render(result))
     return result["exit"]
 
 
