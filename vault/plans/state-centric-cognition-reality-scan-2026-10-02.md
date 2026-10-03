@@ -150,6 +150,9 @@ owner (no edit). Defaults: goal spine is the only state store; model-calling epo
    cache near the front, the same cold rewrite as F4. Fresh epochs pay a ~736 KB instructions floor.
    No new lever for interactive panes (that spec puts them out of scope); it corroborates the S6
    premise correction.
+   **A4 CLOSED** `de8735b7`: the "model switch" rebuilds were `<synthetic>` client rows (limit
+   notices) read as a model; there was 1 real switch ($5). Idle > 1 h re-measured as 252 / ~$611.
+   Remaining Owner picks: S3 goal intent; B1 hide never-invoked skills (settings.json, Owner step).
 4. **TOKEN-ECONOMY RESEARCH (Owner: "expand the research on token saving ... massive evolution",
    2026-10-02), IN PROGRESS.** Measured (7 d to 2026-10-02T20:48Z, `wiki/tools/token_economy_*.py`
    + `.out`): $8,312 API-equiv; cache read 54 %, cache WRITE 33 %, output 13 %; main thread 72 %
