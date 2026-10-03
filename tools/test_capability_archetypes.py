@@ -22,9 +22,11 @@ from __future__ import annotations
 import ast
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 # -- hermetic environment: BEFORE any import under modules/ ----------------------
@@ -60,6 +62,14 @@ try:
     _OB_ERR = ""
 except Exception as _exc:  # noqa: BLE001
     obligation, _OB_ERR = None, "%s: %s" % (type(_exc).__name__, _exc)
+try:
+    from modules.tower import families
+    from modules.tower.families import _fold, _match
+    from modules.capability_runtime.applicability import _hits
+    _FA_ERR = ""
+except Exception as _exc:  # noqa: BLE001
+    families = _fold = _match = _hits = None
+    _FA_ERR = "%s: %s" % (type(_exc).__name__, _exc)
 
 _PASS = 0
 _FAIL = 0
@@ -469,6 +479,334 @@ def pred_V_ARCH_INTENT_CONTROL():
     return not problems, "; ".join(problems) or "REQUIRED/structural+intent/OBSERVED for both: %s" % got
 
 
+# -- plan 02-02 Task 2: bilingual verb-object intent, demoters, orthogonality ----
+NO_INTENT = "cambia el color del botón del hero"
+EE_ES = "envía un correo de confirmación al cliente cuando pague"
+EE_EN = "send a webhook notification to Slack when an order ships"
+BJ_ES = "programa una tarea que sincronice el inventario cada noche"
+BJ_EN = "run a nightly cleanup job that purges expired sessions"
+DEMOTED_ES = "actualiza la tabla de saldos en modo dry run, sin escribir"
+DEMOTED_EN = "update the balances table as a dry run, read-only"
+ORTHO_B = "guarda las monedas de cada jugador cuando se desconecta"
+DESTR_ES = "borra todos los registros de usuarios inactivos"
+DESTR_EN = "delete all inactive user records"
+ORTHO_A = "¿qué es un schema de base de datos?"
+
+# archetype id -> (anchor trait, Spanish intent prompt, English intent prompt)
+ARCH_PROMPTS = {
+    "WORLD_MUTATION": ("persistent", WM_ES, WM_EN),
+    "EXTERNAL_EFFECT": ("external_effect", EE_ES, EE_EN),
+    "BACKGROUND_JOB": ("scheduled", BJ_ES, BJ_EN),
+}
+
+# The twelve strings of the predeclared table (02-02-PLAN.md `<context>`).
+SHAPE_PROMPTS = [WM_ES, WM_EN, EE_ES, EE_EN, BJ_ES, BJ_EN, NO_INTENT,
+                 DEMOTED_ES, DEMOTED_EN, ORTHO_B, DESTR_ES, DESTR_EN]
+
+NOUN_ONLY = ["schema", "database", "la tabla", "webhook", "email", "cron", "job",
+             "¿qué es un schema de base de datos?", "¿qué es un webhook?"]
+
+# Strings with accents, punctuation, apostrophes and mixed case for the parity corpus.
+PARITY_EXTRAS = [
+    "Añade una TABLA; Envía un CORREO!", "player's coins, don't DELETE", "¿Qué es un Webhook?",
+    "cron-job nightly (sync) y limpieza", "read-only: dry run", "SIN ESCRIBIR, por favor",
+    "Migración/migraciones del esquema", "all-in-one batch; todos los registros.",
+    "Borra TODAS LAS cuentas", "e-mail, e mail, email", "O'Brien's invoice: pay it", "",
+    "crea el informe diario y publícalo", "modo prueba: simulado, sin enviar", "one-off, una sola vez",
+]
+
+
+def _anchor_reading(state):
+    if state == "PRESENT":
+        return ar.reading(ar.PRESENT, ar.OBSERVED, ["fixture"], "injected")
+    if state == "WEAK":
+        return ar.reading(ar.WEAK, ar.OBSERVED, ["fixture"], "injected")
+    if state == "ABSENT":
+        return ar.reading(ar.ABSENT, ar.OBSERVED, [], "injected")
+    raise ValueError("unknown anchor state %r" % state)
+
+
+def _inj(anchor=None, state=None, anchors=None):
+    """Injected structural readings: the named anchor(s) at `state`, every other
+    trait UNJUDGED `no-structural-detector`. Tests the conjunction without
+    depending on any detector."""
+    traits = {t: ar.unjudged_reading("no-structural-detector") for t in ar.TRAITS}
+    names = anchors if anchors is not None else ([anchor] if anchor else [])
+    for name in names:
+        traits[name] = _anchor_reading(state)
+    return traits
+
+
+def _arch(traits, prompt, aid):
+    return _find(ar.assess(traits, prompt), aid)
+
+
+def _strip_phrases(text, phrases):
+    """`text` with every phrase removed (longest first), whitespace collapsed."""
+    out = text
+    for p in sorted(phrases, key=len, reverse=True):
+        out = re.sub(re.escape(p), " ", out, flags=re.I)
+    return " ".join(out.replace(",", " ").split())
+
+
+def make_docs_vocab_repo():
+    """Fixture kind `docs_vocab`: `.git/`, README.md and docs/design-notes.md whose
+    prose repeats the persistence vocabulary, with no manifest and no file or
+    directory a structural marker detector recognises."""
+    root = tempfile.mkdtemp(prefix="carch-repo-")
+    _TEMP_DIRS.append(root)
+    os.makedirs(os.path.join(root, ".git"))
+    os.makedirs(os.path.join(root, "docs"))
+    prose = ("The schema of the database defines every table, and each migration changes the "
+             "table. La tabla, el esquema y la base de datos: schema, database, table, migration, "
+             "tabla, esquema. ") * 60
+    with open(os.path.join(root, "README.md"), "w", encoding="utf-8") as fh:
+        fh.write("# Notes\n\n" + prose + "\n")
+    with open(os.path.join(root, "docs", "design-notes.md"), "w", encoding="utf-8") as fh:
+        fh.write("# Design notes\n\n" + prose + "\n")
+    return root
+
+
+def pred_V_ARCH_WEAK_CAP():
+    problems, n = [], 0
+    for aid, (anchor, es, en) in sorted(ARCH_PROMPTS.items()):
+        traits = _inj(anchor, "WEAK")
+        for prompt in (es, en):
+            a = _arch(traits, prompt, aid)
+            n += 1
+            if not (a["strength"] == ar.Strength.CONDITIONAL and a["basis"] == "structural+intent"):
+                problems.append("WEAK-INTENT[%s/%s]: strength=%s basis=%s" % (
+                    aid, prompt[:16], a["strength"], a["basis"]))
+        a = _arch(traits, NO_INTENT, aid)
+        n += 1
+        if not (a["strength"] == ar.Strength.CONDITIONAL and a["basis"] == "structural"):
+            problems.append("WEAK-NO-INTENT[%s]: strength=%s basis=%s" % (aid, a["strength"], a["basis"]))
+    return not problems, "; ".join(problems) or "%d WEAK-anchor assessments, all CONDITIONAL, never REQUIRED" % n
+
+
+def pred_V_ARCH_DEMOTE_NOT_VETO():
+    problems, n = [], 0
+    demoters = ar.ARCHETYPES["WORLD_MUTATION"]["demoters"]
+    traits = _inj("persistent", "PRESENT")
+    for prompt in (DEMOTED_ES, DEMOTED_EN):
+        a = _arch(traits, prompt, "WORLD_MUTATION")
+        n += 1
+        if not (a["strength"] == ar.Strength.CONDITIONAL and a["demoted_by"]):
+            problems.append("DEMOTED[%s]: strength=%s demoted_by=%s" % (prompt[:16], a["strength"], a["demoted_by"]))
+        # Control: every demoter phrase removed -> the same sentence is REQUIRED.
+        control = _strip_phrases(prompt, demoters)
+        left = _match(control, demoters)
+        a = _arch(traits, control, "WORLD_MUTATION")
+        n += 1
+        if left or a["strength"] != ar.Strength.REQUIRED:
+            problems.append("CONTROL[%r]: demoters_left=%s strength=%s" % (control, left, a["strength"]))
+    a = _arch(traits, NO_INTENT + ", dry run", "WORLD_MUTATION")
+    n += 1
+    if not (a["strength"] == ar.Strength.CONDITIONAL and a["demoted_by"]):
+        problems.append("DEMOTER-NO-INTENT: strength=%s demoted_by=%s (must stay CONDITIONAL, never NONE)" % (
+            a["strength"], a["demoted_by"]))
+    return not problems, "; ".join(problems) or \
+        "%d checks: demoted -> CONDITIONAL, demoters removed -> REQUIRED, no-intent+demoter -> CONDITIONAL" % n
+
+
+def pred_V_ARCH_STRUCTURE_ONLY_CONDITIONAL():
+    problems, n = [], 0
+    for aid, (anchor, _es, _en) in sorted(ARCH_PROMPTS.items()):
+        a = _arch(_inj(anchor, "PRESENT"), NO_INTENT, aid)
+        n += 1
+        if not (a["strength"] == ar.Strength.CONDITIONAL and a["basis"] == "structural"):
+            problems.append("PRESENT-NO-INTENT[%s]: strength=%s basis=%s" % (aid, a["strength"], a["basis"]))
+        a = _arch(_inj(anchor, "ABSENT"), NO_INTENT, aid)
+        n += 1
+        if a["strength"] != ar.Strength.NONE:
+            problems.append("ABSENT-NO-INTENT[%s]: strength=%s" % (aid, a["strength"]))
+        a = _arch(_inj(), NO_INTENT, aid)
+        n += 1
+        if not (a["strength"] == ar.Strength.NONE and anchor in a["unjudged"]):
+            problems.append("UNJUDGED-NO-INTENT[%s]: strength=%s unjudged=%s" % (aid, a["strength"], a["unjudged"]))
+    return not problems, "; ".join(problems) or \
+        "%d checks: structure alone -> CONDITIONAL/structural, ABSENT and UNJUDGED -> NONE" % n
+
+
+def _positive_pred(aid):
+    def pred():
+        anchor, es, en = ARCH_PROMPTS[aid]
+        problems, n = [], 0
+        for prompt in (es, en):
+            a = _arch(_inj(anchor, "PRESENT"), prompt, aid)
+            n += 1
+            if not (a["strength"] == ar.Strength.REQUIRED and a["basis"] == "structural+intent"
+                    and a["fact_state"] == ar.OBSERVED):
+                problems.append("PRESENT[%s]: strength=%s basis=%s fact_state=%s reason=%s" % (
+                    prompt[:16], a["strength"], a["basis"], a["fact_state"], a["reason"]))
+            a = _arch(_inj(anchor, "ABSENT"), prompt, aid)
+            n += 1
+            if not (a["strength"] == ar.Strength.CONDITIONAL and a["basis"] == "intent"
+                    and a["fact_state"] == ar.EXTRACTED):
+                problems.append("ABSENT[%s]: strength=%s basis=%s fact_state=%s" % (
+                    prompt[:16], a["strength"], a["basis"], a["fact_state"]))
+        a = _arch(_inj(anchor, "PRESENT"), NO_INTENT, aid)
+        n += 1
+        if a["strength"] == ar.Strength.REQUIRED:
+            problems.append("NO-INTENT-REQUIRED: a PRESENT anchor without intent reached REQUIRED")
+        return not problems, "; ".join(problems) or \
+            "%s: %d checks, REQUIRED over PRESENT, CONDITIONAL/intent over ABSENT, no-intent not REQUIRED" % (aid, n)
+    return pred
+
+
+pred_V_ARCH_POSITIVE_UNIT_WORLD_MUTATION = _positive_pred("WORLD_MUTATION")
+pred_V_ARCH_POSITIVE_UNIT_EXTERNAL_EFFECT = _positive_pred("EXTERNAL_EFFECT")
+pred_V_ARCH_POSITIVE_UNIT_BACKGROUND_JOB = _positive_pred("BACKGROUND_JOB")
+
+
+def pred_V_ARCH_NOUN_ONLY_NEG():
+    """D-04: a prompt that is only nouns makes no intent fact and no REQUIRED."""
+    anchors = ("persistent", "external_effect", "scheduled")
+    traits = _inj(anchors=anchors, state="PRESENT")
+    problems = []
+    for prompt in NOUN_ONLY:
+        facts = ar.intent_facts(prompt)
+        bad = [t for t in anchors if facts[t]["state"] == ar.PRESENT]
+        if bad:
+            problems.append("NOUN-ONLY-INTENT[%r]: PRESENT for %s" % (prompt, bad))
+        for a in ar.assess(traits, prompt):
+            if a["strength"] == ar.Strength.REQUIRED:
+                problems.append("NOUN-ONLY-REQUIRED[%r]: %s" % (prompt, a["id"]))
+    # Instrument control: the same machinery must be able to answer PRESENT.
+    control = ar.intent_facts("add a table")["persistent"]["state"] == ar.PRESENT
+    if not control:
+        problems.append("CONTROL: `add a table` did not read PRESENT, the detector is dead")
+    return not problems, "; ".join(problems) or \
+        "%d noun-only prompts: no PRESENT intent, no REQUIRED with every anchor PRESENT; control PRESENT=%s" % (
+            len(NOUN_ONLY), control)
+
+
+def pred_V_ARCH_VOCAB_OVERLAP_NEG():
+    """D-04, D-07: a repo whose docs are full of persistence prose, asked the bare
+    prompt `schema`, has no active archetype, while the family matcher DOES hit."""
+    if ar is None or ts is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    state, repo = new_state(), make_docs_vocab_repo()
+    res = ts.produce(repo, state_dir=state)
+    if res.get("outcome") != ts.WRITTEN:
+        return False, "docs_vocab produce outcome=%r reason=%r" % (res.get("outcome"), res.get("reason"))
+    subject = ar.resolve("schema", repo, state_dir=state)
+    active = ar.active_archetypes(subject)
+    persistent = subject["traits"]["persistent"]
+    fam_ids = [fid for fid, _fam_hits in families.classify_prompt("schema")]
+    problems = []
+    if active:
+        problems.append("VOCAB-ACTIVE-ARCHETYPE: %s active for the bare prompt `schema` over a docs-only repo" % active)
+    if persistent["state"] in (ar.PRESENT, ar.WEAK):
+        problems.append("VOCAB-PERSISTENT-READ: %s from prose alone" % persistent["state"])
+    if "persistent_state" not in fam_ids:
+        problems.append("CONTROL: classify_prompt('schema') = %s lacks persistent_state" % fam_ids)
+    return not problems, "; ".join(problems) or \
+        "active=%s persistent=%s AND classify_prompt('schema')=%s" % (active, persistent["state"], fam_ids)
+
+
+def pred_V_ARCH_ORTHOGONAL_A():
+    state, repo = new_state(), make_repo("ephemeral")
+    res = ts.produce(repo, state_dir=state)
+    if res.get("outcome") != ts.WRITTEN:
+        return False, "produce outcome=%r" % res.get("outcome")
+    subject = ar.resolve(ORTHO_A, repo, state_dir=state)
+    fam_ids = [f["id"] for f in subject["families"]]
+    active = ar.active_archetypes(subject)
+    return ("persistent_state" in fam_ids and active == []), \
+        "families=%s active_archetypes=%s (family hit, zero archetypes)" % (fam_ids, active)
+
+
+def pred_V_ARCH_ORTHOGONAL_B():
+    pre = families.classify_prompt(ORTHO_B)
+    if pre != []:
+        return False, "precondition broken: classify_prompt(%r) = %s" % (ORTHO_B, pre)
+    state, repo = new_state(), make_repo("persistent_prisma")
+    res = ts.produce(repo, state_dir=state)
+    if res.get("outcome") != ts.WRITTEN:
+        return False, "produce outcome=%r" % res.get("outcome")
+    subject = ar.resolve(ORTHO_B, repo, state_dir=state)
+    wm = _wm(subject)
+    ok = (wm is not None and wm["strength"] == ar.Strength.REQUIRED and subject["families"] == [])
+    return ok, "families=%s WORLD_MUTATION=%s (archetype REQUIRED, zero families)" % (
+        subject["families"], wm["strength"] if wm else None)
+
+
+def pred_V_ARCH_TRAIT_INTENT_SHAPE():
+    undetected = {"multi_actor", "distributed", "policy_layers", "ui"}
+    problems = []
+    for prompt in SHAPE_PROMPTS:
+        facts = ar.intent_facts(prompt)
+        if set(facts) != set(ar.TRAITS):
+            problems.append("KEYS[%s]: %s" % (prompt[:16], sorted(facts)))
+            continue
+        for trait, r in facts.items():
+            st = r["state"]
+            if st == ar.PRESENT:
+                if not (r["fact_state"] == ar.EXTRACTED and r["span"]):
+                    problems.append("PRESENT-SHAPE[%s/%s]: fact_state=%s span=%r" % (
+                        prompt[:12], trait, r["fact_state"], r["span"]))
+            elif st == ar.UNJUDGED:
+                if r["fact_state"] != ar.UNKNOWN or r["reason"] not in ("no-intent-match", "no-intent-detector"):
+                    problems.append("UNJUDGED-SHAPE[%s/%s]: fact_state=%s reason=%s" % (
+                        prompt[:12], trait, r["fact_state"], r["reason"]))
+            else:
+                problems.append("STATE[%s/%s]: %s (intent is PRESENT or UNJUDGED, never ABSENT)" % (
+                    prompt[:12], trait, st))
+        nd = {t for t, r in facts.items() if r["reason"] == "no-intent-detector"}
+        if nd != undetected:
+            problems.append("NO-DETECTOR-SET[%s]: %s" % (prompt[:12], sorted(nd)))
+    for prompt in (DESTR_ES, DESTR_EN):
+        facts = ar.intent_facts(prompt)
+        if not (facts["destructive"]["state"] == ar.PRESENT and facts["bulk"]["state"] == ar.PRESENT):
+            problems.append("DESTRUCTIVE-BULK[%s]: destructive=%s bulk=%s" % (
+                prompt[:16], facts["destructive"]["state"], facts["bulk"]["state"]))
+    return not problems, "; ".join(problems) or \
+        "%d prompts x 10 traits well-shaped; destructive+bulk PRESENT for both; no-detector set exact" % len(SHAPE_PROMPTS)
+
+
+def pred_V_ARCH_MATCHER_PARITY():
+    """D-01: the offsets helper must agree with `_hits` on presence, always."""
+    phrases = []
+    for spec in ar.TRAIT_INTENT.values():
+        phrases += list(spec["verbs"]) + list(spec["objects"])
+    for spec in ar.ARCHETYPES.values():
+        phrases += list(spec["demoters"])
+    corpus = list(SHAPE_PROMPTS) + list(NOUN_ONLY) + [ORTHO_A] + PARITY_EXTRAS
+    n = agree_true = agree_false = 0
+    mismatches = []
+    for text in corpus:
+        folded = _fold(text)
+        for phrase in phrases:
+            fp = _fold(phrase)
+            mine = bool(ar._spans(folded, fp))
+            theirs = bool(_hits(folded, [fp]))
+            n += 1
+            if mine != theirs:
+                mismatches.append("%r in %r: spans=%s hits=%s" % (phrase, text[:20], mine, theirs))
+            elif mine:
+                agree_true += 1
+            else:
+                agree_false += 1
+    ok = not mismatches and agree_true > 0 and agree_false > 0
+    return ok, "comparisons=%d agree_true=%d agree_false=%d mismatches=%s" % (
+        n, agree_true, agree_false, mismatches[:3])
+
+
+def pred_V_ARCH_INTENT_BOUNDED():
+    filler = ("alpha beta " * 3000)[:25000]
+    far = ar.intent_facts(filler + " add a table")["persistent"]["state"]
+    near = ar.intent_facts(("alpha beta " * 9)[:100] + " add a table")["persistent"]["state"]
+    big = "add table " * 20000
+    t0 = time.perf_counter()
+    ar.intent_facts(big)
+    ms = (time.perf_counter() - t0) * 1000.0
+    ok = (far == ar.UNJUDGED and near == ar.PRESENT and len(big) == 200000
+          and ms < 1000.0 and ar.INTENT_MAX_CHARS == 20000)
+    return ok, "200000-char prompt intent_facts=%.0f ms (limit 1000); pair at 25000 -> %s, at offset 100 -> %s; max_chars=%s" % (
+        ms, far, near, getattr(ar, "INTENT_MAX_CHARS", None))
+
+
 GATES = [
     ("V-ARCH-HERMETIC-HOME", pred_V_ARCH_HERMETIC_HOME),
     ("V-ARCH-TRACER-PRODUCE", pred_V_ARCH_TRACER_PRODUCE),
@@ -484,11 +822,24 @@ GATES = [
     ("V-ARCH-READER-NO-WALK-IMPORT", pred_V_ARCH_READER_NO_WALK_IMPORT),
     ("V-ARCH-INTENT-ONLY-CAP", pred_V_ARCH_INTENT_ONLY_CAP),
     ("V-ARCH-INTENT-CONTROL", pred_V_ARCH_INTENT_CONTROL),
+    ("V-ARCH-WEAK-CAP", pred_V_ARCH_WEAK_CAP),
+    ("V-ARCH-DEMOTE-NOT-VETO", pred_V_ARCH_DEMOTE_NOT_VETO),
+    ("V-ARCH-STRUCTURE-ONLY-CONDITIONAL", pred_V_ARCH_STRUCTURE_ONLY_CONDITIONAL),
+    ("V-ARCH-POSITIVE-UNIT-WORLD_MUTATION", pred_V_ARCH_POSITIVE_UNIT_WORLD_MUTATION),
+    ("V-ARCH-POSITIVE-UNIT-EXTERNAL_EFFECT", pred_V_ARCH_POSITIVE_UNIT_EXTERNAL_EFFECT),
+    ("V-ARCH-POSITIVE-UNIT-BACKGROUND_JOB", pred_V_ARCH_POSITIVE_UNIT_BACKGROUND_JOB),
+    ("V-ARCH-NOUN-ONLY-NEG", pred_V_ARCH_NOUN_ONLY_NEG),
+    ("V-ARCH-VOCAB-OVERLAP-NEG", pred_V_ARCH_VOCAB_OVERLAP_NEG),
+    ("V-ARCH-ORTHOGONAL-A", pred_V_ARCH_ORTHOGONAL_A),
+    ("V-ARCH-ORTHOGONAL-B", pred_V_ARCH_ORTHOGONAL_B),
+    ("V-ARCH-TRAIT-INTENT-SHAPE", pred_V_ARCH_TRAIT_INTENT_SHAPE),
+    ("V-ARCH-MATCHER-PARITY", pred_V_ARCH_MATCHER_PARITY),
+    ("V-ARCH-INTENT-BOUNDED", pred_V_ARCH_INTENT_BOUNDED),
 ]
 
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 14
+EXPECTED = 27
 
 
 def main() -> int:

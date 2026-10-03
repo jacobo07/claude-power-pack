@@ -24,10 +24,12 @@ because a later phase turns ABSENT into a justified NOT_APPLICABLE and an unread
 repository must never earn that. `read_traits` always returns all ten traits.
 
 INTENT IS CAPPED. A fact mined from the prompt alone is EXTRACTED, never
-OBSERVED, and (built in plan 02-02) can lift an archetype to CONDITIONAL at most.
-REQUIRED needs structural evidence AND intent: a verb acting on an object, never
-vocabulary alone (D-04). In this first slice only the `persistent` trait has an
-intent detector and only WORLD_MUTATION is judged end to end.
+OBSERVED, and lifts an archetype to CONDITIONAL at most. REQUIRED needs
+structural evidence AND intent: a verb acting on an object, never vocabulary alone
+(D-04). `ceiling` is the single function that decides every strength (audit G16).
+Six traits have a bilingual verb-object intent detector (`TRAIT_INTENT`); the rest
+read UNJUDGED `no-intent-detector`. A demoter phrase lowers REQUIRED to
+CONDITIONAL and never to NONE (D-03).
 
 Fact states are the vocabulary of `modules.gsd_x.mission.obligation`, imported and
 never re-spelled. Family classification (`modules.tower.families`) is reused for
@@ -36,6 +38,7 @@ its matcher and fold, and its result is reported as an independent output of
 """
 from __future__ import annotations
 
+import bisect
 import json
 import os
 import re
@@ -148,28 +151,113 @@ TRAIT_NA_REASON = {
     "ui": "no-user-interface",
 }
 
-_INTENT_MAX_CHARS = 20_000
-_INTENT_WINDOW = 60
+INTENT_MAX_CHARS = 20_000   # only this much of a prompt is ever read (V5: bounded input)
+INTENT_WINDOW = 60          # a verb and its object are at most this many characters apart
 _SPAN_MAX = 160
 _EVIDENCE_MAX = 5
 
-# Verb-object vocabulary for the `persistent` intent detector. English only in
-# this slice; the bilingual, complete detector arrives with plan 02-02.
-_PERSIST_VERBS = ("add", "adds", "adding", "added", "create", "creates", "creating",
-                  "created", "save", "saves", "saving", "saved", "store", "stores",
-                  "storing", "stored", "persist", "persists", "persisting",
-                  "write", "writes", "writing", "update", "updates", "updating",
-                  "updated", "delete", "deletes", "deleting", "deleted",
-                  "migrate", "migrates", "migrating", "migrated",
-                  # Spanish (matched on folded text, so accents are irrelevant)
-                  "añade", "añadir", "agrega", "agregar", "crea", "crear", "guarda",
-                  "guardar", "actualiza", "actualizar", "borra", "borrar", "elimina",
-                  "eliminar", "migra", "migrar", "persiste", "almacena")
-_PERSIST_OBJECTS = ("table", "tables", "migration", "migrations", "record", "records",
-                    "row", "rows", "schema", "column", "columns", "data", "coins",
-                    "tabla", "tablas", "migración", "registro", "registros", "fila",
-                    "filas", "esquema", "columna", "datos", "monedas", "saldo",
-                    "saldos", "inventario", "partida")
+# Verb-object vocabulary for the intent detectors, one entry per trait that HAS a
+# detector. THE LIST IS CLOSED AND FITTED: it is a lookup table wearing a rule's
+# name (the GSDX-M04 debt recorded in modules.gsd_x.mission.obligation), so a
+# wording outside it is missed. Structure-only CONDITIONAL (R-1, see `ceiling`)
+# compensates: an intent miss cannot let a naked verb escape. Traits with no entry
+# (multi_actor, distributed, policy_layers, ui) read `no-intent-detector`: a noun
+# bag for them would reopen the D7 defect at trait level. Phrases are matched on
+# folded text (accents irrelevant) and verbs carry their common inflections
+# (English base, third person, past, gerund; Spanish infinitive, imperative tu and
+# usted, first person plural, participle).
+_PERSIST_VERBS = (
+    "add", "adds", "adding", "added", "create", "creates", "creating", "created",
+    "save", "saves", "saving", "saved", "store", "stores", "storing", "stored",
+    "persist", "persists", "persisting", "persisted", "write", "writes", "writing",
+    "wrote", "written", "update", "updates", "updating", "updated", "delete",
+    "deletes", "deleting", "deleted", "migrate", "migrates", "migrating", "migrated",
+    "añade", "añadir", "añada", "añadimos", "añadido", "agrega", "agregar", "agregue",
+    "agregamos", "agregado", "crea", "crear", "cree", "creamos", "creado", "guarda",
+    "guardar", "guarde", "guardamos", "guardado", "actualiza", "actualizar",
+    "actualice", "actualizamos", "actualizado", "borra", "borrar", "borre", "borramos",
+    "borrado", "elimina", "eliminar", "elimine", "eliminamos", "eliminado", "migra",
+    "migrar", "migre", "migramos", "migrado", "persiste", "persistir", "persista",
+    "persistimos", "persistido", "almacena", "almacenar", "almacene", "almacenamos",
+    "almacenado")
+_PERSIST_OBJECTS = (
+    "table", "tables", "migration", "migrations", "record", "records", "row", "rows",
+    "schema", "schemas", "column", "columns", "data", "coins", "balance", "balances",
+    "inventory", "tabla", "tablas", "migración", "migraciones", "registro", "registros",
+    "fila", "filas", "esquema", "esquemas", "columna", "columnas", "datos", "monedas",
+    "saldo", "saldos", "inventario", "partida", "partidas")
+_DESTRUCT_OBJECTS = _PERSIST_OBJECTS + (
+    "user", "users", "account", "accounts", "file", "files", "session", "sessions",
+    "usuario", "usuarios", "cuenta", "cuentas", "archivo", "archivos", "sesión",
+    "sesiones")
+
+TRAIT_INTENT = {
+    "persistent": {"verbs": _PERSIST_VERBS, "objects": _PERSIST_OBJECTS},
+    "external_effect": {
+        "verbs": ("send", "sends", "sent", "sending", "post", "posts", "posted", "posting",
+                  "call", "calls", "called", "calling", "publish", "publishes", "published",
+                  "publishing", "notify", "notifies", "notified", "notifying", "email",
+                  "emails", "emailed", "emailing", "charge", "charges", "charged", "charging",
+                  "envía", "enviar", "envíe", "enviamos", "enviado", "manda", "mandar",
+                  "mande", "mandamos", "mandado", "notifica", "notificar", "notifique",
+                  "notificamos", "notificado", "publica", "publicar", "publique",
+                  "publicamos", "publicado", "llama", "llamar", "llame", "llamamos", "llamado"),
+        "objects": ("email", "emails", "mail", "mails", "webhook", "webhooks", "notification",
+                    "notifications", "message", "messages", "sms", "request", "requests", "api",
+                    "apis", "payment", "payments", "correo", "correos", "notificación",
+                    "notificaciones", "mensaje", "mensajes", "aviso", "avisos", "petición",
+                    "peticiones", "pago", "pagos")},
+    "scheduled": {
+        "verbs": ("schedule", "schedules", "scheduled", "scheduling", "run", "runs", "ran",
+                  "running", "execute", "executes", "executed", "executing", "trigger",
+                  "triggers", "triggered", "triggering", "programa", "programar", "programe",
+                  "programamos", "programado", "ejecuta", "ejecutar", "ejecute", "ejecutamos",
+                  "ejecutado", "lanza", "lanzar", "lance", "lanzamos", "lanzado"),
+        "objects": ("job", "jobs", "task", "tasks", "worker", "workers", "cron", "cronjob",
+                    "cronjobs", "backup", "backups", "sync", "cleanup", "report", "reports",
+                    "digest", "tarea", "tareas", "trabajo", "trabajos", "proceso", "procesos",
+                    "copia", "copias", "sincronización", "limpieza", "informe", "informes",
+                    "resumen")},
+    "destructive": {
+        "verbs": ("delete", "deletes", "deleted", "deleting", "remove", "removes", "removed",
+                  "removing", "drop", "drops", "dropped", "dropping", "purge", "purges",
+                  "purged", "purging", "truncate", "truncates", "truncated", "truncating",
+                  "wipe", "wipes", "wiped", "wiping", "erase", "erases", "erased", "erasing",
+                  "borra", "borrar", "borre", "borramos", "borrado", "elimina", "eliminar",
+                  "elimine", "eliminamos", "eliminado", "purga", "purgar", "purgue",
+                  "purgamos", "purgado", "vacía", "vaciar", "vacíe", "vaciamos", "vaciado"),
+        "objects": _DESTRUCT_OBJECTS},
+    # Bulk "verbs" are quantifiers: the structure is a quantifier over a destroyable object.
+    "bulk": {
+        "verbs": ("all", "every", "bulk", "batch", "todos los", "todas las", "en lote",
+                  "masivo", "masiva", "masivos", "masivas"),
+        "objects": _DESTRUCT_OBJECTS},
+    "money": {
+        "verbs": ("charge", "charges", "charged", "charging", "bill", "bills", "billed",
+                  "billing", "refund", "refunds", "refunded", "refunding", "pay", "pays",
+                  "paid", "paying", "invoice", "invoices", "invoiced", "invoicing", "cobra",
+                  "cobrar", "cobre", "cobramos", "cobrado", "factura", "facturar", "facture",
+                  "facturamos", "facturado", "reembolsa", "reembolsar", "reembolse",
+                  "reembolsamos", "reembolsado", "paga", "pagar", "pague", "pagamos", "pagado"),
+        "objects": ("customer", "customers", "card", "cards", "payment", "payments",
+                    "subscription", "subscriptions", "order", "orders", "invoice", "invoices",
+                    "cliente", "clientes", "tarjeta", "tarjetas", "pago", "pagos",
+                    "suscripción", "suscripciones", "pedido", "pedidos", "factura", "facturas")},
+}
+
+
+def _fold_unique(phrases):
+    seen = []
+    for p in phrases:
+        f = _fold(p).strip()
+        if f and f not in seen:
+            seen.append(f)
+    return tuple(seen)
+
+
+# Folded once at import; the detectors only ever see these.
+_FOLDED_INTENT = {t: {k: _fold_unique(v) for k, v in spec.items()}
+                  for t, spec in TRAIT_INTENT.items()}
 
 
 def reading(state, fact_state, evidence=(), reason=""):
@@ -292,47 +380,87 @@ def _intent_miss(reason):
     return {"state": UNJUDGED, "fact_state": UNKNOWN, "span": "", "reason": reason}
 
 
-def _phrase_positions(text, phrases):
-    out = []
-    for p in phrases:
-        for m in re.finditer(r"\b" + re.escape(p) + r"\b", text):
-            out.append((m.start(), m.end()))
-    return out
+def _spans(folded_text, folded_phrase):
+    """[(start, end)] of every occurrence of `folded_phrase` in `folded_text`.
+
+    The positional companion of `applicability._hits`, which returns presence only
+    and no offsets: this exists solely to measure the distance between a verb and
+    its object. It builds the pattern exactly as `_hits` does (lowercased text and
+    phrase, escaped phrase, word boundaries, no other quantifier), so it cannot
+    disagree on presence; `V-ARCH-MATCHER-PARITY` pins that. It is called only on
+    phrases that `families._match` (that is, `_hits`) has already confirmed."""
+    p = str(folded_phrase).strip().lower()
+    if not p:
+        return []
+    t = (folded_text or "").lower()
+    return [(m.start(), m.end()) for m in re.finditer(r"\b" + re.escape(p) + r"\b", t)]
 
 
-def _persistent_intent(prompt):
-    """A verb acting on a state object, either order, within a short window.
+def _present_spans(text, phrases, memo):
+    """Spans of the phrases of `phrases` that occur in `text`. Presence comes from
+    `_match` (once per phrase list per prompt, memoised); offsets only after it."""
+    present = memo.get(phrases)
+    if present is None:
+        present = memo[phrases] = tuple(_match(text, phrases))
+    spans = []
+    for phrase in present:
+        spans.extend(_spans(text, phrase))
+    return spans
 
-    Structure, not bag-of-words: a lone noun such as `schema` matches nothing."""
-    text = _fold(prompt)[:_INTENT_MAX_CHARS]
-    verbs = _match(text, _PERSIST_VERBS)
-    objects = _match(text, _PERSIST_OBJECTS)
+
+def _best_pair(verb_spans, object_spans):
+    """The earliest verb-object structure within `INTENT_WINDOW`, or None.
+
+    A verb span and a DIFFERENT, non-overlapping object span, in either order: one
+    word playing both roles (`email`) is not a structure. Near-linear: objects
+    sorted by start and by end, one bisect per verb for the nearest object on each
+    side, so a worst-case prompt cannot make this quadratic."""
+    verbs = sorted(set(verb_spans))
+    objects = sorted(set(object_spans))
     if not verbs or not objects:
-        return _intent_miss("no-intent-match")
+        return None
+    by_start = [s for s, _e in objects]
+    by_end = sorted(objects, key=lambda se: (se[1], se[0]))
+    ends = [e for _s, e in by_end]
     best = None
-    for vs, ve in _phrase_positions(text, verbs):
-        for os_, oe in _phrase_positions(text, objects):
-            if os_ >= ve:
-                gap = os_ - ve
-            elif vs >= oe:
-                gap = vs - oe
-            else:
-                continue
-            if gap <= _INTENT_WINDOW:
-                key = (min(vs, os_), gap)
-                if best is None or key < best[0]:
-                    best = (key, text[min(vs, os_):max(ve, oe)])
-    if best is None:
-        return _intent_miss("no-intent-match")
-    return _intent_hit(best[1][:_SPAN_MAX], "verb-object")
+    for vs, ve in verbs:
+        i = bisect.bisect_left(by_start, ve)               # nearest object starting at or after the verb
+        if i < len(objects):
+            os_, oe = objects[i]
+            if os_ - ve <= INTENT_WINDOW:
+                cand = ((min(vs, os_), os_ - ve), (min(vs, os_), max(ve, oe)))
+                if best is None or cand[0] < best[0]:
+                    best = cand
+        j = bisect.bisect_right(ends, vs) - 1              # nearest object ending at or before the verb
+        if j >= 0:
+            os_, oe = by_end[j]
+            if vs - oe <= INTENT_WINDOW:
+                cand = ((min(vs, os_), vs - oe), (min(vs, os_), max(ve, oe)))
+                if best is None or cand[0] < best[0]:
+                    best = cand
+    return best[1] if best else None
 
 
 def intent_facts(prompt):
     """Intent readings over all ten traits. Intent never yields ABSENT: a prompt
-    that does not mention a trait says nothing about the repository."""
+    that does not mention a trait says nothing about the repository.
+
+    Structure, not bag-of-words: a trait with a detector reads PRESENT (EXTRACTED,
+    with the span) only for a verb acting on an object within `INTENT_WINDOW`
+    characters; a lone noun such as `schema` matches nothing. A trait without a
+    detector reads UNJUDGED `no-intent-detector`. Only the first `INTENT_MAX_CHARS`
+    characters are read."""
     prompt = str(prompt or "")
+    text = _fold(prompt[:INTENT_MAX_CHARS])
     out = {t: _intent_miss("no-intent-detector") for t in TRAITS}
-    out["persistent"] = _persistent_intent(prompt)
+    memo = {}
+    for trait, spec in _FOLDED_INTENT.items():
+        pair = _best_pair(_present_spans(text, spec["verbs"], memo),
+                          _present_spans(text, spec["objects"], memo))
+        if pair is None:
+            out[trait] = _intent_miss("no-intent-match")
+        else:
+            out[trait] = _intent_hit(text[pair[0]:pair[1]][:_SPAN_MAX], "verb-object")
     return out
 
 
@@ -389,13 +517,16 @@ def assess(traits, prompt, trait_intent=None):
     `fact_state` is OBSERVED when the basis contains structural evidence, EXTRACTED
     for intent alone, UNKNOWN for none. `unjudged` lists the anchor when its
     structural reading is UNJUDGED, so a later phase can name the missing fact."""
+    prompt = str(prompt or "")
     intents = trait_intent if trait_intent is not None else intent_facts(prompt)
     out = []
     for aid in sorted(ARCHETYPES):
         anchor = ARCHETYPES[aid]["anchor"]
         structural = traits.get(anchor) or unjudged_reading("cache-malformed")
         intent = intents.get(anchor) or _intent_miss("no-intent-detector")
-        demoted_by = []
+        # A demoter is a phrase in the prompt (either language) that lowers REQUIRED to
+        # CONDITIONAL; it is reported next to the strength and never vetoes (D-03).
+        demoted_by = _match(prompt[:INTENT_MAX_CHARS], ARCHETYPES[aid]["demoters"])
         strength, basis = ceiling(structural["state"], intent["state"] == PRESENT,
                                   bool(demoted_by))
         if basis == BASIS_INTENT:
@@ -416,11 +547,20 @@ def assess(traits, prompt, trait_intent=None):
             "intent_state": intent["state"],
             "intent_fact_state": intent["fact_state"],
             "intent_span": intent.get("span", ""),
-            "demoted_by": [],
+            "demoted_by": list(demoted_by),
             "unjudged": [anchor] if structural["state"] == UNJUDGED else [],
             "reason": reason,
         })
     return out
+
+
+def active_archetypes(subject):
+    """Ids of the archetypes whose strength is REQUIRED or CONDITIONAL, sorted.
+
+    A family hit never makes an archetype active, and an archetype never implies a
+    family: the two outputs of `resolve` are independent (D-02)."""
+    return sorted(a["id"] for a in (subject or {}).get("archetypes", ())
+                  if a.get("strength") in (Strength.REQUIRED, Strength.CONDITIONAL))
 
 
 def resolve(prompt, root, *, state_dir=None, families=None):
