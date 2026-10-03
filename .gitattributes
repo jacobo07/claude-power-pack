@@ -33,3 +33,11 @@ modules/keos_qwen/goals/*.py       text eol=lf
 modules/keos_qwen/goals/*.exs      text eol=lf
 modules/keos_qwen/ledger/*.py      text eol=lf
 modules/keos_qwen/install/*.sh     text eol=lf
+
+# 2026-10-03 (UCEP-01): tower baseline generations are hash-anchored. bl.generation_sha256
+# hashes the ON-DISK bytes, and a child generation's `parent_sha256` anchors the LF blob
+# that git committed. A core.autocrlf=true checkout (this clone) hands the files back as
+# CRLF, so every child would read as TAMPERED (tools/test_tower_ratchet.py
+# V-TRAT-REAL-CHAINS failed 20/21 here for exactly this reason) and any generation
+# written from a CRLF tree would anchor a hash nobody else can reproduce.
+vault/tower/baselines/** text eol=lf
