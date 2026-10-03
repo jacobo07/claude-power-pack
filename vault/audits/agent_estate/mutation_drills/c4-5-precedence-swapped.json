@@ -1,0 +1,9 @@
+{
+  "why": "ACV C4 drill 5: BELOW_GATE placed above CLASS_EXCLUDED (the D5 list) hides the grant as the cause when both facts hold.",
+  "file": "modules/capability_runtime/agent_resolver.py",
+  "test": "tools/test_agent_resolver.py",
+  "gate": "V-RES-MISS-PRECEDENCE",
+  "old": "MISS_ORDER = (\"CATALOG_UNREADABLE\", \"CLASS_EXCLUDED\", \"BELOW_GATE\")",
+  "new": "MISS_ORDER = (\"CATALOG_UNREADABLE\", \"BELOW_GATE\", \"CLASS_EXCLUDED\")",
+  "copy_dirs": ["vault/capability_runtime", "vault/tower", "agents"]
+}

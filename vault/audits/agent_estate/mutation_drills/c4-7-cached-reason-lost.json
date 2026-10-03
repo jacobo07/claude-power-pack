@@ -1,0 +1,9 @@
+{
+  "why": "ACV C4 drill 7: the typed reason is stripped from the cached value, so a cache HIT degrades to an untyped miss.",
+  "file": "modules/capability_runtime/agent_resolver.py",
+  "test": "tools/test_agent_resolver.py",
+  "gate": "V-RES-MISS-CACHE-ROUNDTRIP",
+  "old": "if k2 not in (\"cache\", \"ms\")}",
+  "new": "if k2 not in (\"cache\", \"ms\", \"miss\")}",
+  "copy_dirs": ["vault/capability_runtime", "vault/tower", "agents"]
+}

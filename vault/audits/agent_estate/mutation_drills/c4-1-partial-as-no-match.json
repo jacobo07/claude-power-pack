@@ -1,0 +1,9 @@
+{
+  "why": "ACV C4 drill 1: broken specs stop counting as a fact, so a partial catalog answers NO_MATCH -- infrastructure failure laundered into capability absence.",
+  "file": "modules/capability_runtime/agent_resolver.py",
+  "test": "tools/test_agent_resolver.py",
+  "gate": "V-RES-MISS-CATALOG-PARTIAL",
+  "old": "facts = {\"CATALOG_UNREADABLE\": [b[\"spec\"] for b in broken],",
+  "new": "facts = {\"CATALOG_UNREADABLE\": [],",
+  "copy_dirs": ["vault/capability_runtime", "vault/tower", "agents"]
+}

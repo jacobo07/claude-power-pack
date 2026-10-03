@@ -1,0 +1,9 @@
+{
+  "why": "ACV C4 drill 3 (audit gap 1): an anti-trigger veto after a trigger hit is counted as BELOW_GATE ('the capability exists') instead of the spec disclaiming the request.",
+  "file": "modules/capability_runtime/agent_resolver.py",
+  "test": "tools/test_agent_resolver.py",
+  "gate": "V-RES-MISS-VETO-IS-NO-MATCH",
+  "old": "            if ap.verdict in BLOCKING:\n",
+  "new": "            if True:\n",
+  "copy_dirs": ["vault/capability_runtime", "vault/tower", "agents"]
+}

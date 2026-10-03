@@ -1,0 +1,9 @@
+{
+  "why": "ACV C4 drill 2: answers computed over a partial catalog are cached again, so a restored spec can stay invisible.",
+  "file": "modules/capability_runtime/agent_resolver.py",
+  "test": "tools/test_agent_resolver.py",
+  "gate": "V-RES-MISS-UNREADABLE-NOT-CACHED",
+  "old": "    if use_cache and not broken:\n",
+  "new": "    if use_cache:\n",
+  "copy_dirs": ["vault/capability_runtime", "vault/tower", "agents"]
+}

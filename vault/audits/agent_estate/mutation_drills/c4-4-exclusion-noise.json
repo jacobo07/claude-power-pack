@@ -1,0 +1,9 @@
+{
+  "why": "ACV C4 drill 4: every above-grant shortlisted spec counts as CLASS_EXCLUDED, gate-judged or not -- lexical overlap read as a policy exclusion.",
+  "file": "modules/capability_runtime/agent_resolver.py",
+  "test": "tools/test_agent_resolver.py",
+  "gate": "V-RES-MISS-EXCLUSION-NOT-NOISE",
+  "old": "            if would:\n",
+  "new": "            if True:\n",
+  "copy_dirs": ["vault/capability_runtime", "vault/tower", "agents"]
+}

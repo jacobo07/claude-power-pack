@@ -70,6 +70,16 @@ def code_of(fn):
         return e.code
 
 
+def attempt(fn) -> dict:
+    """resolve() for a gate whose subject is a typed outcome: an exception that escapes is turned
+    into a result that fails the gate, so the suite still reaches its _PASS= line."""
+    try:
+        return fn()
+    except Exception as e:  # noqa: BLE001 -- the escaping exception IS the defect under test
+        return {"status": f"RAISED {type(e).__name__}", "miss": None, "miss_ids": [], "cache": "-",
+                "catalog_size": -1, "candidates": []}
+
+
 def real_spec(cat: Path, sid: str, as_dir: str | None = None, evidence: list | None = None) -> None:
     """Copy a REAL spec into a temp catalog; `evidence` adds required_evidence the resolver
     never supplies, so gate 3 blocks it on the real path (C4: no real spec declares any)."""
@@ -114,20 +124,22 @@ def typed_misses(t: Path) -> None:
           and R.pick_miss({"BELOW_GATE": ["x"], "CATALOG_UNREADABLE": ["z"]}) == "CATALOG_UNREADABLE"
           and R.pick_miss({}) == "NO_MATCH", f"{got} table={table}")
 
-    # CATALOG_UNREADABLE, partial: one real spec loads, one spec.json is not JSON. Before C4 this
-    # answered NO_CERTIFIED_SPECIALIST and was CACHED, though the broken spec may be the match.
+    # CATALOG_UNREADABLE, partial: one real spec loads, one spec.json is not even UTF-8. Before C4
+    # a malformed spec answered NO_CERTIFIED_SPECIALIST and was CACHED (the broken spec may be the
+    # match), and this non-UTF-8 one crashed resolve() outright. An escaping exception is reported
+    # as this gate failing, never as a crashed suite: a crash is not a verdict.
     cat = t / "partial"
     real_spec(cat, SFH)
     (cat / "zz-broken").mkdir()
-    (cat / "zz-broken" / "spec.json").write_text("{not json", encoding="utf-8")
+    (cat / "zz-broken" / "spec.json").write_bytes(b"\xff\xfe{ not text")
     pc = t / "partial-cache.json"
-    r1 = R.resolve("write a haiku about the ocean", specs_dir=cat, cache_path=pc)
-    r2 = R.resolve("write a haiku about the ocean", specs_dir=cat, cache_path=pc)
+    r1 = attempt(lambda: R.resolve("write a haiku about the ocean", specs_dir=cat, cache_path=pc))
+    r2 = attempt(lambda: R.resolve("write a haiku about the ocean", specs_dir=cat, cache_path=pc))
     check("V-RES-MISS-CATALOG-PARTIAL", (r1["status"], r1["miss"], r1["miss_ids"]) == (
         "CATALOG_UNREADABLE", "CATALOG_UNREADABLE", ["zz-broken"]) and r1["catalog_size"] == 1,
           f"{r1['status']} {r1['miss']} {r1['miss_ids']}")
-    rr = R.resolve(SFH_TASK, max_class="investigator", specs_dir=cat, cache_path=pc)
-    rr2 = R.resolve(SFH_TASK, max_class="investigator", specs_dir=cat, cache_path=pc)
+    rr = attempt(lambda: R.resolve(SFH_TASK, max_class="investigator", specs_dir=cat, cache_path=pc))
+    rr2 = attempt(lambda: R.resolve(SFH_TASK, max_class="investigator", specs_dir=cat, cache_path=pc))
     check("V-RES-MISS-UNREADABLE-NOT-CACHED", r2["cache"] == "MISS" and rows(pc) == 0
           and top(rr) == [SFH] and rr2["cache"] == "MISS",
           f"miss twice: {r1['cache']}/{r2['cache']}, partial RESOLVED twice: {rr['cache']}/{rr2['cache']}, rows={rows(pc)}")
@@ -221,8 +233,8 @@ def main() -> int:
               f"same code -> {warm['cache']}, edited code -> {after['cache']}")
         # C4: the typed reason is part of the cached value, so a HIT reproduces it.
         check("V-RES-MISS-CACHE-ROUNDTRIP", (fresh["cache"], fresh["miss"]) == ("MISS", "NO_MATCH")
-              and (warm["cache"], warm["miss"], warm["miss_ids"]) == ("HIT", "NO_MATCH", []),
-              f"fresh {fresh['cache']}/{fresh['miss']} -> cached {warm['cache']}/{warm['miss']}")
+              and (warm["cache"], warm.get("miss"), warm.get("miss_ids")) == ("HIT", "NO_MATCH", []),
+              f"fresh {fresh['cache']}/{fresh['miss']} -> cached {warm['cache']}/{warm.get('miss', 'ABSENT')}")
         # C4 decision 3 (supersedes C3's V-RES-CACHE-NO-EMPTY-KEY): a task with no searchable
         # terms is not a search, so it is the typed EMPTY_TASK error and never touches the cache.
         n_before = rows(pcache)

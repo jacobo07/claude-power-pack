@@ -1,4 +1,5 @@
 {
+  "status": "SUPERSEDED 2026-10-03 by c4-6-empty-task-raise.json. KILLED at ee4461ac (C3). Since ACV C4 commit 016a5b6a an empty-token task raises EMPTY_TASK before any cache line, so this anchor and its gate (V-RES-CACHE-NO-EMPTY-KEY -> V-RES-EMPTY-QUERY-TYPED) no longer exist; running it now reads HARNESS by design. Kept as the record of the C3 run.",
   "why": "ACV S5a C3 drill 5: empty-token queries are cached again, so every symbol-only query shares one key.",
   "file": "modules/capability_runtime/agent_resolver.py",
   "test": "tools/test_agent_resolver.py",

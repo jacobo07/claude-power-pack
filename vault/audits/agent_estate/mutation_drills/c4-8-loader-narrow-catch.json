@@ -1,0 +1,9 @@
+{
+  "why": "ACV C4 drill 8: load() goes back to catching only JSONDecodeError, so a non-UTF-8 spec.json escapes catalog() and resolve() untyped. Judged through the resolver suite: tools/test_agent_spec.py cannot run in an isolated copy (V-SPEC-STATE-VERSION needs a git repo, so its control reads CONTROL_INVALID -- measured 2026-10-03).",
+  "file": "modules/capability_runtime/agent_spec.py",
+  "test": "tools/test_agent_resolver.py",
+  "gate": "V-RES-MISS-CATALOG-PARTIAL",
+  "old": "    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as e:\n",
+  "new": "    except json.JSONDecodeError as e:\n",
+  "copy_dirs": ["vault/capability_runtime", "vault/tower", "agents"]
+}
