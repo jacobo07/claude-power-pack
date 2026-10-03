@@ -313,6 +313,30 @@ def grp_apply() -> None:
         return rc == 0 and before == after and not leaked, f"rc={rc} identical={before == after} leaked={leaked}"
     guarded("V-DEPLOY-CREDENTIALS-UNTOUCHED", credentials_untouched)
 
+    def unmeasured_after_is_incomplete():
+        outcomes = {}
+        real_hooks, real_pp = ep.check_hooks, ep.check_pp_install
+        for label, attr in (("hooks", "check_hooks"), ("pp_install", "check_pp_install")):
+            e = make_scratch_env(scratch())
+            unmeasured = lambda *a, **k: ep._result(label, ep.UNMEASURABLE, "probe timed out")  # noqa: E731
+            if label == "hooks":       # the final run reaches here after the hook script was restored
+                ep.check_hooks = lambda env, _e=e: unmeasured() if _e.hook.is_file() else real_hooks(env)
+            else:                      # the final run reaches here after the checkout moved HEAD to the target
+                ep.check_pp_install = lambda env, floor=None, _e=e: \
+                    unmeasured() if _e.head() == repo_head() else real_pp(env, floor)
+            try:
+                res = dep.apply_deploy(e.root, REPO)
+            finally:
+                ep.check_hooks, ep.check_pp_install = real_hooks, real_pp
+            rendered = dep._render_apply(res)
+            outcomes[label] = (res.get("code"), "DEPLOY=APPLIED" in rendered, "code=7" in rendered)
+        control = make_scratch_env(scratch())
+        ctl = dep.apply_deploy(control.root, REPO)           # unmutated: the same deploy still reaches code 0
+        ok = (all(v == (7, False, True) for v in outcomes.values()) and ctl.get("code") == 0)
+        return ok, f"(code, rendered_APPLIED, rendered_code7)={outcomes} control_code={ctl.get('code')}"
+    guarded("V-DEPLOY-UNMEASURED-AFTER-IS-CODE-7", unmeasured_after_is_incomplete)
+
+
 
 def grp_refusals() -> None:
     def dirty():
@@ -527,6 +551,11 @@ def _m_prelock_plan():
     return _patch(dep, "plan_deploy", mutant)
 
 
+def _m_unmeasured_after_accepted():
+    return _patch(dep, "_unrepaired", lambda after: [r for r in ("pp_install_stale", "hooks_broken")
+                                                     if r in after["reasons"]])
+
+
 def _m_env_home_unchecked():
     return _patch(dep, "_env_home_problem", lambda root, env: None)
 
@@ -540,6 +569,8 @@ MUTANTS = [
     ("M6 apply uses the pre-lock plan", _m_prelock_plan, [grp_replan], ["V-DEPLOY-REPLAN-UNDER-LOCK"]),
     ("M7 env.sh HOME not checked against the env root", _m_env_home_unchecked, [grp_refusals],
      ["V-DEPLOY-ENV-HOME-OUTSIDE-ROOT-REFUSED"]),
+    ("M8 unmeasured post-deploy check accepted as repaired", _m_unmeasured_after_accepted, [grp_apply],
+     ["V-DEPLOY-UNMEASURED-AFTER-IS-CODE-7"]),
 ]
 
 

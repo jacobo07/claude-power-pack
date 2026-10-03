@@ -377,17 +377,25 @@ def _apply_locked(root: Path, source_repo, commit, now) -> dict:
     return _finish(root, res, env, now)
 
 
+def _unrepaired(after: dict) -> list[str]:
+    """What the deploy repairs and the final preflight does not show repaired: a measured pp_install_stale /
+    hooks_broken, or either repaired check that is not READY (an UNMEASURABLE probe is not evidence of repair)."""
+    named = [r for r in ("pp_install_stale", "hooks_broken") if r in after["reasons"]]
+    unproven = [f"{c['check']}:{c['state']}" for c in after["checks"]
+                if c["check"] in ("pp_install", "hooks") and c["state"] != ep.READY]
+    return named + unproven
+
+
 def _finish(root: Path, res: dict, env: dict, now) -> dict:
     """Final preflight, the log line, the exit code. A git failure keeps code 8; otherwise 0 only when the
-    post-deploy preflight no longer reports pp_install_stale or hooks_broken (else 7)."""
+    post-deploy preflight shows pp_install and hooks READY -- a measured reason OR an unmeasured probe is 7."""
     env = ep.env_from_root(root)
     after = ep.run(env, now)
     res["after"] = {"verdict": after["verdict"], "reasons": after["reasons"], "unmeasured": after["unmeasured"],
                     "findings": after["findings"],
                     "checks": [{"check": c["check"], "state": c["state"], "why": c["why"]} for c in after["checks"]]}
     res["backup_ref"] = res["backups"].get("ref")
-    still = [r for r in ("pp_install_stale", "hooks_broken") if r in after["reasons"]]
-    if res["code"] == EXIT_OK and still:
+    if res["code"] == EXIT_OK and _unrepaired(after):
         res["code"] = EXIT_STILL_STALE
     res["owner_actions"] = [OWNER_ACTIONS[r].format(env_sh=root / "env.sh") for r in after["reasons"]
                             if r in OWNER_ACTIONS]
