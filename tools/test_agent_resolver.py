@@ -144,9 +144,12 @@ def typed_misses(t: Path) -> None:
           and top(rr) == [SFH] and rr2["cache"] == "MISS",
           f"miss twice: {r1['cache']}/{r2['cache']}, partial RESOLVED twice: {rr['cache']}/{rr2['cache']}, rows={rows(pc)}")
 
+    # ACV C5: a missing catalog is not a spec; its path used to land in miss_ids as if it were a
+    # capability identity. The broken row still names it, for the operator.
     r = R.resolve("anything at all", specs_dir=t / "no-such-catalog", use_cache=False)
-    check("V-RES-MISS-NO-CATALOG", (r["status"], r["miss"]) == ("CATALOG_UNREADABLE", "CATALOG_UNREADABLE"),
-          f"{r['status']} {r['miss']} {r['broken']}")
+    check("V-RES-MISS-NO-CATALOG", (r["status"], r["miss"], r["miss_ids"]) == (
+        "CATALOG_UNREADABLE", "CATALOG_UNREADABLE", []) and [b["code"] for b in r["broken"]] == ["NO_CATALOG"],
+          f"{r['status']} {r['miss']} ids={r['miss_ids']} {r['broken']}")
 
     # fingerprint() is read before the catalog: a stat failure there disables the cache for the
     # call instead of crashing (C4 audit gap 5). Boundary stub: the filesystem's stat.
@@ -158,6 +161,50 @@ def typed_misses(t: Path) -> None:
     finally:
         pathlib.Path.stat = real_stat
     check("V-RES-FINGERPRINT-OSERROR", fp is None, f"fingerprint={fp}")
+
+
+def request_identity(t: Path) -> None:
+    print("\n[resolver] request identity + policy scope (ACV C5)")
+    # query_fp is computed once, before either return: the no-specs early return builds its own
+    # dict, so a field added only to the main result would be absent there (C5 audit gap 2).
+    task = "check this service for swallowed errors"
+    cat, empty, cache = t / "qfp-cat", t / "qfp-empty", t / "qfp-cache.json"
+    real_spec(cat, SFH)
+    empty.mkdir()
+    rs = [R.resolve(task, specs_dir=t / "qfp-none", use_cache=False),
+          R.resolve(task, specs_dir=empty, use_cache=False),
+          R.resolve(task, max_class="investigator", specs_dir=cat, cache_path=cache),
+          R.resolve(task, max_class="investigator", specs_dir=cat, cache_path=cache)]
+    fps = [r.get("query_fp") for r in rs]
+    check("V-RES-QUERY-FP-EVERY-RETURN", fps[0] is not None and len(set(fps)) == 1
+          and [r["miss"] for r in rs[:2]] == ["CATALOG_UNREADABLE", "NO_MATCH"]
+          and [r["cache"] for r in rs[2:]] == ["MISS", "HIT"],
+          f"no-catalog/empty/MISS/HIT -> {fps} {[r['cache'] for r in rs]}")
+    # Same normalised tokens -> same identity; a different request -> a different one. Without the
+    # inequality half, a constant would pass.
+    a = R.resolve("Review C++ code", specs_dir=empty, use_cache=False)["query_fp"]
+    b = R.resolve("review cpp code", specs_dir=empty, use_cache=False)["query_fp"]
+    c = R.resolve("review rust code", specs_dir=empty, use_cache=False)["query_fp"]
+    check("V-RES-QUERY-FP-NORMALISED", a == b and a != c, f"C++={a} cpp={b} rust={c}")
+
+    # policy_hash excludes NOT_POLICY by name (C5 audit gap 1): an adapter-only edit must not read
+    # as a resolver version change. Driven on a COPY of the package; the live one is never edited.
+    pkg, live = t / "pkg", Path(R.__file__).resolve().parent
+    pkg.mkdir()
+    for f in live.glob("*.py"):
+        shutil.copy2(f, pkg / f.name)
+    tele = pkg / "agent_telemetry.py"
+    base = R.policy_hash(pkg)
+    tele.write_text((tele.read_text(encoding="utf-8") if tele.is_file() else "") + "\n# edited\n",
+                    encoding="utf-8")
+    after_tele = R.policy_hash(pkg)
+    res = pkg / "agent_resolver.py"
+    res.write_text(res.read_text(encoding="utf-8") + "\n# edited\n", encoding="utf-8")
+    after_res = R.policy_hash(pkg)
+    check("V-RES-POLICY-NOT-POLICY", base == R.policy_hash() and after_tele == base and after_res != base
+          and "agent_telemetry.py" in R.NOT_POLICY,
+          f"copy==live {base == R.policy_hash()}, telemetry edit {base}->{after_tele}, "
+          f"resolver edit {base}->{after_res}")
 
 
 def main() -> int:
@@ -252,6 +299,7 @@ def main() -> int:
               "a bad grant is judged before the task's tokens")
 
         typed_misses(Path(t))
+        request_identity(Path(t))
 
     # Symbol-bearing names (S5a D1), on the REAL catalog: measured 2026-10-03, "C++" tokenised
     # to nothing and this request resolved to no specialist while "cpp" reached cpp-reviewer.

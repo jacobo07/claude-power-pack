@@ -127,22 +127,36 @@ def fingerprint(specs_dir: Path | None = None) -> str | None:
 
 
 _POLICY: str | None = None
+# Modules in this package that never change an answer. agent_telemetry only serialises a result;
+# hashing it would make a telemetry edit read as a resolver version change and flush every cache
+# entry (ACV C5 audit gap 1).
+NOT_POLICY = frozenset({"agent_telemetry.py"})
 
 
-def policy_hash() -> str:
-    """Version of the code that produces an answer: sha256 over every capability_runtime module.
+def policy_hash(root: Path | None = None) -> str:
+    """Version of the code that produces an answer: sha256 over every capability_runtime module
+    except NOT_POLICY.
 
     The cache key used to carry only the query, the grant and the catalog, so a miss cached
     before a matcher fix kept being served after it (measured 2026-10-03, S5a D2). The class
     order (agent_spec), contract defaults and scales (contract) and the gates (applicability)
-    all change answers, so the whole package is hashed, once per process."""
+    all change answers, so the whole package is hashed, once per process. `root` hashes another
+    directory, uncached, so a gate can edit a copy of the package instead of the live one."""
     global _POLICY
+    if root is not None:
+        return _hash_package(Path(root))
     if _POLICY is None:
-        h = hashlib.sha256()
-        for f in sorted(Path(__file__).resolve().parent.glob("*.py")):
-            h.update(f.name.encode() + b"\0" + f.read_bytes() + b"\0")
-        _POLICY = h.hexdigest()[:16]
+        _POLICY = _hash_package(Path(__file__).resolve().parent)
     return _POLICY
+
+
+def _hash_package(root: Path) -> str:
+    h = hashlib.sha256()
+    for f in sorted(root.glob("*.py")):
+        if f.name in NOT_POLICY:
+            continue
+        h.update(f.name.encode() + b"\0" + f.read_bytes() + b"\0")
+    return h.hexdigest()[:16]
 
 
 def _mission(task: str, s: "A.AgentSpec", qstems: set) -> MissionContext:
@@ -175,6 +189,10 @@ def resolve(task: str, max_class: str = "verifier", k: int = 3,
         # "!!! ???" is not a search: BM25 scores every spec 0, so any miss label would be false
         # evidence about the estate. Same typed error as a blank task (C4 decision 3).
         raise A.AgentSpecError("EMPTY_TASK", f"no searchable terms in {task.strip()[:40]!r}")
+    # Request identity (ACV C5): the normalised token sequence this resolver actually searched, so
+    # "Review C++ code" and "review cpp code" are one request. The normalisation lives in this
+    # package, which policy_hash covers, so (query_fp, policy) stays unambiguous across changes.
+    qfp = hashlib.sha256(" ".join(q).encode("utf-8")).hexdigest()[:16]
     fp = fingerprint(specs_dir)
     pol = policy_hash()
     use_cache = use_cache and fp is not None
@@ -196,10 +214,12 @@ def resolve(task: str, max_class: str = "verifier", k: int = 3,
         # NO_CATALOG / every spec broken -> the search never happened. An existing, empty
         # catalog is a complete search over nothing.
         miss = "CATALOG_UNREADABLE" if broken else "NO_MATCH"
+        # miss_ids name specs that failed to load; a missing catalog is not a spec, and its path
+        # is not a capability identity (ACV C5), so NO_CATALOG contributes no id.
         return {"status": "CATALOG_UNREADABLE" if broken else "NO_CERTIFIED_SPECIALIST",
-                "miss": miss, "miss_ids": sorted(b["spec"] for b in broken), "vetoed_by": [],
-                "candidates": [], "near_misses": [], "excluded": [], "broken": broken,
-                "catalog_size": 0, "fingerprint": fp, "policy": pol, "cache": "MISS",
+                "miss": miss, "miss_ids": sorted(b["spec"] for b in broken if b["code"] != "NO_CATALOG"),
+                "vetoed_by": [], "candidates": [], "near_misses": [], "excluded": [], "broken": broken,
+                "catalog_size": 0, "fingerprint": fp, "policy": pol, "query_fp": qfp, "cache": "MISS",
                 "ms": round((time.perf_counter() - t0) * 1000, 2)}
     index = BM25([_tokens(spec_text(s)) for s in specs])
     ranked = sorted(((index.score(q, i), s) for i, s in enumerate(specs)), key=lambda x: -x[0])
@@ -245,7 +265,8 @@ def resolve(task: str, max_class: str = "verifier", k: int = 3,
     out = {"status": status, "miss": miss, "miss_ids": miss_ids,
            "vetoed_by": sorted(vetoed) if miss == "NO_MATCH" else [],
            "candidates": candidates[:k], "near_misses": near[:k], "excluded": excluded,
-           "broken": broken, "catalog_size": len(specs), "fingerprint": fp, "policy": pol, "cache": "MISS",
+           "broken": broken, "catalog_size": len(specs), "fingerprint": fp, "policy": pol,
+           "query_fp": qfp, "cache": "MISS",
            "ms": round((time.perf_counter() - t0) * 1000, 2)}
     # Only a complete catalog's answer is reusable: a spec that failed to load may be the one
     # that matches, and restoring it need not change any spec.json the fingerprint sees.
