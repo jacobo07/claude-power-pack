@@ -37,6 +37,7 @@ import fnmatch
 import functools
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -1042,6 +1043,7 @@ def c_fo_drills(real):
 
 SELF = Path(__file__).resolve()
 SUBPROCESS_TIMEOUT_S = 120
+RECALL_ABSENT_RE = re.compile(r"(^|; |: )V-FO-RECALL FAIL: UNMEASURED: recall is absent", re.M)
 
 
 def c_fo_subprocess_poles(real):
@@ -1067,7 +1069,11 @@ def c_fo_subprocess_poles(real):
                 inconclusive(f"--operations {path} did not complete: {type(e).__name__}: {e}")
             runs.append((r.returncode, r.stdout))
     (rc_bad, out_bad), (rc_ok, out_ok) = runs
-    red_ok = rc_bad == 1 and "FAIL V-FO-ENTRIES" in out_bad and "V-FO-RECALL" in out_bad
+    # The recall clause must be the named reason, token-exact: a bare "V-FO-RECALL" substring is also matched by
+    # "V-FO-RECALL-HELD skipped: recall not ok", which a mutant that waves an absent recall through still prints
+    # (05-REVIEW WR-01). The K4 rows are refused by V-FO-HELPED too, so rc 1 alone proves nothing about recall.
+    red_ok = (rc_bad == 1 and "FAIL V-FO-ENTRIES" in out_bad
+              and RECALL_ABSENT_RE.search(out_bad) is not None)
     green_ok = rc_ok == 0 and "ok   V-FO-ENTRIES" in out_ok
     text = (f"red pole (K4 rows, recall deleted) rc={rc_bad} {'names' if red_ok else 'lacks'} FAIL V-FO-ENTRIES + "
             f"V-FO-RECALL; green pole ({OPS_REL}) rc={rc_ok}")
