@@ -53,7 +53,8 @@ Committed sources only: the audit, the residency plan, p3_runner.py, the phase S
 evidence files and the ledger's frozen object are read as their HEAD blobs (`git show HEAD:<path>`).
 An edit to a cited line, or a new phase 1-6 SUMMARY with a session statement, makes
 V-CT-EVIDENCE-CURRENT go red. That is the intended signal: re-render, and re-pin state.E's sha256
-in the same commit.
+in the same commit. The owner-bundle [E] line and state.E.reason are emitted by `--owner-texts` from
+the same figures; V-CT-OWNER-TEXTS requires the committed ones (working tree and HEAD) to equal them.
 
 The planes: the rows are laptop fresh-session readings (derived from their Windows transcript paths);
 this script's derivation is host-independent and runs no session.
@@ -1368,6 +1369,161 @@ def render(rows, regrade_rows, fro, st, outside=(), regrade_outside=()) -> str:
     return "\n".join(L)
 
 
+OWNER_REL = "vault/programs/skill-capability/owner-bundle.md"
+
+
+def owner_texts(rows, regrade_rows, fro, st) -> tuple:
+    """(the owner-bundle [E] line, state.E.reason), both derived from the same figures as the evidence
+    (07-REVIEW IN-04): the committed texts are checked against these by V-CT-OWNER-TEXTS, so a figure in
+    the bundle or the ledger cannot drift from the gate. Raises ValueError when a figure is unmeasured or
+    the verdict is not NOT_SEPARABLE (the texts below are the NOT_SEPARABLE disposition; another verdict
+    means state.E must be re-decided, never re-worded)."""
+    denoms = fro["denominators"]
+    cap = denoms["D-SESSIONS"]["new_benchmark_cap"]
+    results, ctx = evaluate_core(rows, None, regrade_rows, cap, st)
+    v = verdict_of(results)
+    if v != "NOT_SEPARABLE":
+        raise ValueError(f"verdict is {v}; the owner texts are written for NOT_SEPARABLE: re-decide state.E")
+    grades, counts, b = ctx["grades"], ctx["counts"], ctx["bound"]
+    stored = arm_counts(stored_grades(rows), rows)
+    e_auth, e_stored = max_effect(counts), max_effect(stored)
+    if e_auth is None or e_stored is None or b is None or st.get("regrade_commit") is None:
+        raise ValueError("an effect, the bound or the regrade commit is UNMEASURED")
+    arms = [a for a in arms_of(rows) if counts[a]["n"]]
+    ns = {counts[a]["n"] for a in arms}
+    n_text = f"n={next(iter(ns))} per arm" if len(ns) == 1 else "n per arm " + ", ".join(
+        f"{a} {counts[a]['n']}" for a in arms)
+    per = ", ".join(f"{a} {counts[a]['passes']}/{counts[a]['n']}" for a in arms)
+    flipped = [(r.get("arm"), grades[r["run_id"]][0]) for r in rows
+               if r.get("grade") == PASS_GRADE and grades[r["run_id"]][0] != PASS_GRADE
+               and is_measured(r, r.get("grade"))]
+    c8 = st["regrade_commit"][:8]
+    if flipped:
+        labels = sorted({g for _, g in flipped if isinstance(g, str)})
+        f_arms = sorted({a for a, _ in flipped})
+        flip_text = (f"The {len(flipped)} stored PASS in arm {', '.join(f_arms)} regrades {', '.join(labels)} "
+                     f"({c8}), so")
+    else:
+        flip_text = f"No stored PASS is regraded ({c8}), so"
+    k_eq = next((k for k, ms in b["equal"] if ms is not None and ms[0] == b["equal_floor"]), None)
+    eq_at = f" at {k_eq} vs {k_eq}" if k_eq else ""
+    tf, _ = topup_floor(counts, b["budget"])
+    nt_s, k_s = needed_total(e_stored), needed_k(e_stored)
+    if nt_s is None or k_s is None:
+        raise ValueError("no design up to NEEDED_K_MAX separates the stored-grade effect")
+    s_first = f"{nt_s[1][0][0]} vs {nt_s[1][0][1]}"
+    cf = c_fixed_frozen(denoms.get("D-CARD", {}).get("arm_c"), counts, b)
+    cons = ctx["consumption"]
+    consumed, nc = sum(c["consumed"] for c in cons.values()), sum(c["n"] for c in cons.values())
+    host = sessions_host(rows)
+    topup_r = f"; topping up the committed arms gives {frac(tf)} ({points(tf)} points)" if tf is not None else ""
+    reason = (
+        f"D-01: the committed CWST paired benchmark (host {host}, {n_text}, rows at {ROWS_PIN_COMMIT}) gives "
+        f"authoritative passes {per}. {flip_text} the largest effect between arms is {frac(e_auth)} "
+        f"({points(e_auth)} points) under the authoritative grades and {frac(e_stored)} ({points(e_stored)} points) "
+        f"under the stored grades. D-02: within the D-SESSIONS cap of {cap} new sessions ({ctx['consumed']} consumed "
+        f"as stated, {ctx['remaining']} remaining), the exact two-sided Fisher test at alpha {frac(ALPHA)} separates "
+        f"no effect below {frac(b['floor'])} ({points(b['floor'])} points) under any fresh allocation, and none below "
+        f"{frac(b['equal_floor'])} ({points(b['equal_floor'])} points){eq_at}{topup_r}. No such design can separate "
+        f"the committed effect, so no contribution is claimed on the committed rows; a benchmark that could separate "
+        f"the stored-grade effect needs a smallest total of {nt_s[0]} sessions ({s_first}; {2 * k_s} at equal "
+        f"allocation), {'above' if nt_s[0] > ctx['remaining'] else 'within'} the cap.")
+    line = (
+        f"[E] (host: {host}) Contribution is not claimed on the committed rows. The committed CWST paired benchmark "
+        f"gives an effect of {points(e_auth)} points between arms under the reflog-aware grades ({points(e_stored)} "
+        f"points under the stored grades), {n_text}. Within the D-SESSIONS cap of {cap} new sessions the smallest "
+        f"effect any allocation can separate is {points(b['floor'])} points ({points(b['equal_floor'])}{eq_at}). A "
+        f"separating benchmark for the stored-grade effect needs a smallest total of {nt_s[0]} sessions ({s_first}; "
+        f"{2 * k_s} at {k_s} per arm with equal allocation), a necessary condition and not a power calculation, "
+        f"{'above' if nt_s[0] > ctx['remaining'] else 'within'} the cap.")
+    options = []
+    if cf is not None:
+        kk, ntc = cf["needed_k"], needed_total(cf["effect"])
+        reason += (f" The frozen D-CARD.arm_c C-fixed figure {cf['passes']}/{cf['n']} PASS has no committed row; "
+                   f"judged by the same verdict rule against {CONTROL_ARM} {cf['control']['passes']}/"
+                   f"{cf['control']['n']} it is an effect of {frac(cf['effect'])} ({points(cf['effect'])} points)")
+        line += (f" The C-fixed card's \"{cf['passes']}/{cf['n']} PASS\" in frozen D-CARD.arm_c (and the C8 audit) "
+                 f"has no committed row; judged by the gate's own verdict rule against {CONTROL_ARM} "
+                 f"{cf['control']['passes']}/{cf['control']['n']} it is an effect of {points(cf['effect'])} points")
+        if cf["verdict"] == "SEPARABLE" and kk is not None and ntc is not None:
+            inside = 2 * kk <= ctx["remaining"]
+            where = f"inside the cap of {cap}" if inside else f"above the {ctx['remaining']} remaining"
+            reason += (f", which the budget could separate ({cf['verdict']}, {kk} per arm, {2 * kk} sessions; "
+                       f"smallest total {ntc[0]}), {'inside the cap' if inside else 'above the remaining budget'}, "
+                       f"so whether to run it is an Owner decision ([E] line).")
+            line += (f", which the budget CAN separate ({cf['verdict']}: {kk} per arm, {2 * kk} sessions; smallest "
+                     f"total {ntc[0]}; {where}). Its p={frac(cf['p_rows'])} at n={cf['n']} only says those few rows "
+                     f"are not significant on their own, which is not the question.")
+            if inside:
+                options.append(f"run about {2 * kk} fresh {host} sessions, C-fixed vs {CONTROL_ARM} at {kk} per arm, "
+                               f"inside the cap")
+        else:
+            reason += f", which the budget could not separate ({cf['verdict']})."
+            line += f", which the budget cannot separate ({cf['verdict']})."
+    options.append(f"raise the D-SESSIONS cap to at least {nt_s[0]} for a benchmark that could separate the "
+                   f"stored-grade effect")
+    options.append("keep E at RESEARCH_INSUFFICIENT_EVIDENCE")
+    letters = "abcdefgh"
+    opts = "; ".join(f"({letters[i]}) {o}" for i, o in enumerate(options[:-1]))
+    line += (f" Question (Owner-reserved; this run spends no session): {opts}; or ({letters[len(options) - 1]}) "
+             f"{options[-1]}.")
+    if cf is not None:
+        line += " Separately: if the C-fixed rows exist on the laptop, commit them to results-delivery.jsonl."
+    reason += (f" Result consumption: the skill was invoked in {consumed} of {nc} measured rows, and no rate is "
+               f"estimated at n < 5. D-03: {FRESH_SESSIONS_THIS_PHASE} sessions consumed in this phase. The rows "
+               f"come from host {host}, and the derivation is host-independent ({SELF_REL} --json emits this "
+               f"text). This pillar claims no saving.")
+    return line, reason
+
+
+def _bundle_e_lines(text):
+    return None if text is None else [ln for ln in text.replace("\r\n", "\n").split("\n") if ln.startswith("[E] ")]
+
+
+def _ledger_e_reason(text):
+    if text is None:
+        return None
+    try:
+        return json.loads(text)["state"]["E"]["reason"]
+    except (ValueError, KeyError, TypeError):
+        return None
+
+
+def clause_owner_texts(bundle_wt, bundle_head, ledger_wt, ledger_head, line, reason):
+    """The committed [E] line (exactly one) and state.E.reason equal the emitted texts, in the working tree
+    and at HEAD. A mismatch is FAIL: re-emit with --owner-texts and commit both with the evidence."""
+    for where, btext, ltext in (("working tree", bundle_wt, ledger_wt), ("HEAD", bundle_head, ledger_head)):
+        lines = _bundle_e_lines(btext)
+        if lines is None:
+            return "FAIL", f"{OWNER_REL} unreadable at {where}"
+        if len(lines) != 1:
+            return "FAIL", f"{OWNER_REL} at {where} has {len(lines)} [E] lines, want exactly 1"
+        if lines[0] != line:
+            return "FAIL", f"the [E] line of {OWNER_REL} at {where} differs from the emitted one (--owner-texts)"
+        got = _ledger_e_reason(ltext)
+        if got is None:
+            return "FAIL", f"state.E.reason unreadable in {LEDGER_REL} at {where}"
+        if got != reason:
+            return "FAIL", f"state.E.reason in {LEDGER_REL} at {where} differs from the emitted one (--owner-texts)"
+    return "ok", (f"the [E] line and state.E.reason equal the emitted texts in the working tree and at HEAD "
+                  f"(LF sha256 {lf_sha(line)[:12]} / {lf_sha(reason)[:12]})")
+
+
+def clause_owner_texts_drill(line, reason):
+    """Text drill: one digit of the committed [E] line changed must FAIL."""
+    m = re.search(r"\d", line)
+    mutated = line[:m.start()] + str((int(m.group(0)) + 1) % 10) + line[m.end():]
+    led = json.dumps({"state": {"E": {"reason": reason}}})
+    return clause_owner_texts(mutated, line, led, led, line, reason)
+
+
+def _owner_or_none(inp, fro):
+    try:
+        return owner_texts(inp["rows"], inp["regrade"], fro, inp["st"]), None
+    except (ValueError, KeyError, TypeError, ArithmeticError) as exc:
+        return None, str(exc)
+
+
 # --------------------------------------------------------------------------- main
 
 
@@ -1431,6 +1587,10 @@ def run_drills(inp, fro, cap, rendered, remaining, nested=False):
                                                                        inp["st"]["info"]),
         "evidence-one-digit-changed": lambda: clause_evidence_current_drill(rendered),
     }
+    texts, _ = _owner_or_none(inp, fro)
+    if texts is None:
+        return "refused", "the owner texts could not be emitted", []
+    text_drills["owner-line-one-digit-changed"] = lambda: clause_owner_texts_drill(*texts)
     all_reg = list(inp["regrade"]) + list(inp.get("regrade_outside", ()))
     return "ran", None, (drills(inp["rows"], inp["regrade"], cap, inp["st"], remaining, text_drills, fro)
                          + [needed_pins_drill()] + append_drills(inp["all_rows"], all_reg, cap, inp["st"])
@@ -1511,6 +1671,13 @@ def default_results(inp, fro, cap, nested=False):
     else:
         results.append(("V-CT-EVIDENCE-CURRENT",) + clause_evidence_current(
             _read_wt(EVIDENCE_REL), git_text(f"HEAD:{EVIDENCE_REL}"), rendered))
+    texts, owhy = _owner_or_none(inp, fro)
+    if texts is None:
+        results.append(("V-CT-OWNER-TEXTS", "INCONCLUSIVE", f"cannot emit: {owhy}"))
+    else:
+        results.append(("V-CT-OWNER-TEXTS",) + clause_owner_texts(
+            _read_wt(OWNER_REL), git_text(f"HEAD:{OWNER_REL}"), _read_wt(LEDGER_REL), git_text(f"HEAD:{LEDGER_REL}"),
+            *texts))
     status, why, d = run_drills(inp, fro, cap, rendered, ctx["remaining"], nested)
     subs = "".join(f"\n    drill {n}: {o}{'' if g else ' <-- WRONG'}" for n, o, g in d)
     if status == "refused":
@@ -1575,6 +1742,9 @@ def derived_json(inp, fro, cap) -> dict:
     out["pins"] = {"rows_commit": info["rows_commit"], "rows_blob_sha256": info["rows_sha"],
                    "regrade_add_commit": st["regrade_commit"], "regrade_blob_sha256": info["regrade_sha"]}
     out["sessions_host"] = sessions_host(rows)
+    texts, owhy = _owner_or_none(inp, fro)
+    out["owner_texts"] = ({"owner_bundle_e_line": texts[0], "state_e_reason": texts[1]} if texts
+                          else {"refused": owhy})
     return out
 
 
@@ -1585,6 +1755,8 @@ def main(argv=None) -> int:
     ap.add_argument("--drills", action="store_true", help="print the in-process mutant drills")
     ap.add_argument("--json", action="store_true", help="print the derived figures as JSON")
     ap.add_argument("--write-evidence", action="store_true", help=f"render {EVIDENCE_REL}")
+    ap.add_argument("--owner-texts", action="store_true",
+                    help="print the emitted [E] owner-bundle line and state.E.reason (V-CT-OWNER-TEXTS)")
     args = ap.parse_args(argv)
     try:
         fro = frozen()
@@ -1603,6 +1775,14 @@ def main(argv=None) -> int:
         dj = derived_json(inp, fro, cap)
         print(json.dumps(dj, indent=1, sort_keys=True))
         return 0 if dj["verdict"] == "NOT_SEPARABLE" else 1
+    if args.owner_texts:
+        texts, owhy = _owner_or_none(inp, fro)
+        if texts is None:
+            print(f"cannot emit: {owhy}")
+            return 1
+        print(texts[0])
+        print(texts[1])
+        return 0
     if args.drills:
         rendered, _ = _render_or_none(inp, fro)
         _, ctx = evaluate_core(inp["rows"], inp["refusal"], inp["regrade"], cap, inp["st"])
