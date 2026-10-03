@@ -58,6 +58,7 @@ const STATE_DIR = process.env.DOCTRINE_CARDS_STATE_DIR
   || path.join(os.homedir(), '.claude', 'state', 'doctrine-cards');
 const MODE = (process.env.CLAUDE_DOCTRINE_CARDS || 'ledger').toLowerCase();
 const GIT_TIMEOUT_MS = 2500;
+const GIT_BUDGET_MS = 4000;   // all git spawns of one invocation, under the dispatcher's 5 s
 const GIT_FALLBACK = 'C:\\Program Files\\Git\\cmd\\git.exe';
 // git is a literal or a PowerShell variable holding its path (`& $g -C $r commit`).
 const GITCMD = String.raw`(?:\bgit(?:\.exe)?['"]?|\$\w+)(?:\s+-C\s+(?:'[^']*'|"[^"]*"|\S+))?\s+`;
@@ -239,8 +240,17 @@ function plan(command, cwd) {
 }
 
 // The single spawn site for git. `input` (optional) is piped to stdin, so no /dev/null is ever named.
+// Every spawn of one invocation shares ONE deadline (review IN-03): the dispatcher kills the hook at 5 s, and a
+// kill fails open with no ledger row, so up to four 2.5 s spawns must not add up past it. LC_ALL=C pins git's
+// messages to English (review IN-02): classifyGitError reads them, and a localized git would never reach
+// `unborn_head`.
+let deadline = null;
 function spawnGit(full, input) {
-  const opts = { encoding: 'utf8', timeout: GIT_TIMEOUT_MS, windowsHide: true, ...(input === undefined ? {} : { input }) };
+  if (deadline === null) deadline = Date.now() + GIT_BUDGET_MS;
+  const left = Math.min(GIT_TIMEOUT_MS, deadline - Date.now());
+  if (left < 100) return { error: { code: 'ETIMEDOUT' }, status: null, stdout: '', stderr: '' };
+  const opts = { encoding: 'utf8', timeout: left, windowsHide: true, env: { ...process.env, LC_ALL: 'C', LANGUAGE: 'C' },
+    ...(input === undefined ? {} : { input }) };
   let r = spawnSync('git', full, opts);
   if (r.error && r.error.code === 'ENOENT' && fs.existsSync(GIT_FALLBACK)) {
     r = spawnSync(GIT_FALLBACK, full, opts);
@@ -249,7 +259,10 @@ function spawnGit(full, input) {
 }
 
 function git(repo, args) {
-  return spawnGit(['--no-optional-locks', '-C', repo, ...args, '-U0', '--no-color', '--no-ext-diff']);
+  // Diff options go right after the subcommand, never after the args (review WR-02): `diff HEAD -- a.md -U0`
+  // made `-U0 --no-color` pathspecs, so under color.diff=always the output carried ANSI codes, parseDiff
+  // matched no `diff --git` line and the card read every such commit as no_opportunity.
+  return spawnGit(['--no-optional-locks', '-C', repo, args[0], '-U0', '--no-color', '--no-ext-diff', ...args.slice(1)]);
 }
 
 // The empty tree's object id for this repo's hash algorithm, from git itself (sha1 or sha256 repos differ).
@@ -265,12 +278,16 @@ function emptyTree(repo) {
 // a repository does NOT die with 128, it falls into --no-index mode and exits 129, printing the
 // `Not a git repository` warning for `diff HEAD` but only `unknown option cached` + the no-index usage for
 // `diff --cached`; the usage banner is therefore the one stable not_a_repo marker for the index basis.
+// With the diff options placed before the revision (review WR-02), `diff ... HEAD -- f` outside a repo is a
+// no-index compare of the PATHS `HEAD` and `f`: exit 1, `error: Could not access 'HEAD'` (measured gex44).
+// Any non-zero exit is judged unknown before stdout is parsed, so a no-index diff is never read as a commit.
 function classifyGitError(stderr) {
   const s = String(stderr || '');
   if (/dubious ownership/i.test(s)) return 'dubious_ownership';
   if (/cannot change to/i.test(s)) return 'cannot_chdir';
   if (/not a git repository/i.test(s)) return 'not_a_repo';
   if (/usage: git diff --no-index/i.test(s)) return 'not_a_repo';
+  if (/Could not access 'HEAD'/.test(s)) return 'not_a_repo';
   if (/is outside repository/i.test(s)) return 'outside_repo';
   if (/(?:ambiguous argument|bad revision|unknown revision)[^\n]*HEAD|HEAD[^\n]*(?:ambiguous argument|unknown revision)/i.test(s)) return 'unborn_head';
   return 'other';
@@ -352,16 +369,26 @@ function ownership(transcriptPath) {
 
 const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 const WINDOW_SLACK_MS = 1000;
+// A window spans tool_use -> tool_result, so it includes permission waits and whole test runs. A peer write
+// landing inside such a window would read as unknown (review WR-01: windows covered ~25% of a real session).
+// Windows longer than this are not evidence of an own write. The five D-CARD writer windows are 12-82 s.
+const MAX_WINDOW_MS = 120000;
+
+// The window of this session that holds mtime m, or null.
+function windowFor(m, own) {
+  if (!Number.isFinite(m) || !own || !own.windows) return null;
+  return own.windows.find((w) => w.end - w.start <= MAX_WINDOW_MS
+    && w.start - WINDOW_SLACK_MS <= m && m <= w.end + WINDOW_SLACK_MS) || null;
+}
 
 // The window rule, in ONE declaration (the replay gate's mutant replaces exactly this body).
 function ownShellWindowHit(m, base, own) {
-  if (!Number.isFinite(m) || !own || !own.windows) return false;
-  if (!own.windows.some((w) => w.start - WINDOW_SLACK_MS <= m && m <= w.end + WINDOW_SLACK_MS)) return false;
+  if (!windowFor(m, own)) return false;
   return m > (own.lastOwnEdit && own.lastOwnEdit.has(base) ? own.lastOwnEdit.get(base) : -Infinity);
 }
 
 function judge(diff, own, mtimeOf) {
-  const foreign = []; const unknown = []; const unknownReasons = {};
+  const foreign = []; const unknown = []; const unknownReasons = {}; const windowHits = {};
   for (const f of diff) {
     const base = path.basename(f.file).toLowerCase();
     if (own.shell.has(base)) { unknown.push(f.file); unknownReasons[f.file] = 'shell-write-target'; continue; }
@@ -374,12 +401,16 @@ function judge(diff, own, mtimeOf) {
     if (!hunks.length) continue;
     // mtimeOf is optional (judge stays pure for callers without a filesystem) and is only asked about a file
     // that already has foreign hunks, and only when this session has at least one closed shell window.
-    if (typeof mtimeOf === 'function' && own.windows && own.windows.length && ownShellWindowHit(mtimeOf(f.file), base, own)) {
-      unknown.push(f.file); unknownReasons[f.file] = 'mtime-in-own-shell-window'; continue;
+    const m = typeof mtimeOf === 'function' && own.windows && own.windows.length ? mtimeOf(f.file) : null;
+    if (m !== null && ownShellWindowHit(m, base, own)) {
+      unknown.push(f.file); unknownReasons[f.file] = 'mtime-in-own-shell-window';
+      const w = windowFor(m, own);   // the row says which window, so the aperture is measurable afterwards
+      if (w) windowHits[f.file] = { mtime: new Date(m).toISOString(), window_start: new Date(w.start).toISOString(), window_ms: w.end - w.start };
+      continue;
     }
     foreign.push({ file: f.file, hunks });
   }
-  return { foreign, unknown, unknownReasons };
+  return { foreign, unknown, unknownReasons, windowHits };
 }
 
 function card(foreign) {
@@ -418,7 +449,8 @@ async function main() {
   if (p.unknown) { ledger({ decision: 'unknown', session, reason: p.unknown }); return emit({ continue: true }); }
   let r = git(p.repo, p.args);
   // First commit of a repo: HEAD does not exist yet, so `diff HEAD` dies. The commit is then judged against
-  // the empty tree (every line it adds is a hunk). Only on that one failure class, one extra bounded
+  // the empty tree (every line already in the index is a hunk; untracked files staged by `git add -A` in the
+  // same command are not seen, review IN-01). Only on that one failure class, one extra bounded
   // `hash-object` plus a re-run; if either fails the original failure below is recorded unchanged.
   let base;
   if (!r.error && typeof r.status === 'number' && r.status !== 0 && p.args[1] === 'HEAD'
@@ -447,8 +479,9 @@ async function main() {
     if (!top) return null;
     try { return fs.statSync(path.join(top, file)).mtimeMs; } catch (_) { return null; }
   };
-  const { foreign, unknown, unknownReasons } = judge(parseDiff(r.stdout || ''), own, mtimeOf);
+  const { foreign, unknown, unknownReasons, windowHits } = judge(parseDiff(r.stdout || ''), own, mtimeOf);
   const rec = { session, basis: p.basis, ...(base ? { base } : {}), aperture: p.aperture, unknown_files: unknown, unknown_reasons: unknownReasons,
+    ...(Object.keys(windowHits).length ? { window_hits: windowHits } : {}),
     foreign: foreign.map((f) => ({ file: f.file, hunks: f.hunks.map((h) => h.header) })) };
   if (!foreign.length) { ledger({ decision: unknown.length ? 'unknown' : 'no_opportunity', ...rec }); return emit({ continue: true }); }
   if (MODE !== 'deny') { ledger({ decision: 'opportunity', ...rec }); return emit({ continue: true }); }
@@ -469,4 +502,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(() => emit({ continue: true }));
-module.exports = { plan, parseDiff, judge, ownership, classifyGitError, COMMIT_RE };
+module.exports = { plan, parseDiff, judge, ownership, classifyGitError, COMMIT_RE, MAX_WINDOW_MS };

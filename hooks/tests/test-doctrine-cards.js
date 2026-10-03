@@ -243,7 +243,25 @@ function windowCase(tag, mtimeMs, opts) {
   const outSlack = windowCase('win-slack-out', T0 + 10000 + 1500);
   check('V-DC-MTIME-SLACK', !inSlack.denied && inSlack.last && inSlack.last.decision === 'unknown'
     && outSlack.denied && outSlack.last && outSlack.last.decision === 'deny-card',
-  `end+0.9s: ${inSlack.last && inSlack.last.decision}; end+1.5s: ${outSlack.last && outSlack.last.decision}`); }
+  `end+0.9s: ${inSlack.last && inSlack.last.decision}; end+1.5s: ${outSlack.last && outSlack.last.decision}`);
+  // Review WR-01: a window longer than MAX_WINDOW_MS (a test run, a permission wait) is no evidence of an own
+  // write; a peer write inside it stays foreign. Both poles: the same mtime in a 10 s window is unknown.
+  const { MAX_WINDOW_MS } = require(CARD);
+  const long = windowCase('win-long', T0 + 5000, { shellEnd: T0 + MAX_WINDOW_MS + 60000 });
+  check('V-DC-MTIME-LONG-WINDOW-IGNORED', long.denied && long.last && long.last.decision === 'deny-card'
+    && !inSlack.denied,
+  `window ${(MAX_WINDOW_MS + 60000) / 1000}s: denied=${long.denied} decision=${long.last && long.last.decision}; 10 s window: unknown`);
+  const hit = (r.last.window_hits || {})['pricing.py'] || {};
+  check('V-DC-MTIME-WINDOW-HIT-RECORDED', hit.mtime === iso(T0 + 5000) && hit.window_start === iso(T0) && hit.window_ms === 10000,
+    `window_hits=${JSON.stringify(r.last.window_hits)}`); }
+
+// Review WR-02: the diff options must precede `--`. With them after the pathspec, `color.diff=always` made the
+// output ANSI-colored, parseDiff found no file and a foreign hunk was recorded as no_opportunity.
+{ const s = scratch('color'); g(s.repo, 'config', 'color.diff', 'always'); g(s.repo, 'config', 'color.ui', 'always');
+  const t = transcript(s.root); writeOwnAndForeign(s);
+  const r = run(s, t, 'git commit -m fix -- pricing.py', 'deny');
+  check('V-DC-COLOR-ALWAYS-STILL-JUDGED', r.denied && r.last && r.last.decision === 'deny-card',
+    `color.diff=always: denied=${r.denied} decision=${r.last && r.last.decision}`); }
 
 // 12. git failures (skill-capability pillar A, D-03). A repo with NO commit yet: `diff HEAD` dies on the
 // missing HEAD, which used to end the first commit of every repo as an unknown. It is judged against the
@@ -276,13 +294,13 @@ function unbornScratch(tag) {
   const withc = path.join(root, 'withc'); fs.mkdirSync(withc); g(withc, 'init', '-q'); g(withc, 'config', 'user.email', 't@x.invalid');
   g(withc, 'config', 'user.name', 't'); fs.writeFileSync(path.join(withc, 'f'), 'a\nb\nc\n'); g(withc, 'add', 'f'); g(withc, 'commit', '-q', '-m', 'i');
   const outside = path.join(root, 'elsewhere.txt'); fs.writeFileSync(outside, 'x\n');
-  const tail = ['-U0', '--no-color', '--no-ext-diff'];
+  const opts = ['-U0', '--no-color', '--no-ext-diff'];   // the card's own order: options before revision and `--`
   const probes = [
-    ['cannot_chdir', real(none, ['diff', '--cached', ...tail])],
-    ['not_a_repo (diff HEAD)', real(plain, ['diff', 'HEAD', '--', 'f', ...tail], ceil)],
-    ['not_a_repo (diff --cached)', real(plain, ['diff', '--cached', ...tail], ceil)],
-    ['unborn_head', real(unb, ['diff', 'HEAD', '--', 'f', ...tail])],
-    ['outside_repo', real(withc, ['diff', 'HEAD', '--', outside, ...tail])],
+    ['cannot_chdir', real(none, ['diff', ...opts, '--cached'])],
+    ['not_a_repo (diff HEAD)', real(plain, ['diff', ...opts, 'HEAD', '--', 'f'], ceil)],
+    ['not_a_repo (diff --cached)', real(plain, ['diff', ...opts, '--cached'], ceil)],
+    ['unborn_head', real(unb, ['diff', ...opts, 'HEAD', '--', 'f'])],
+    ['outside_repo', real(withc, ['diff', ...opts, 'HEAD', '--', outside])],
   ];
   const want = (label) => label.replace(/ \(.*\)$/, '');
   const got = probes.map(([label, x]) => [label, x.rc, classifyGitError(x.err)]);
