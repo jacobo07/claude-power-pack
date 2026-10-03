@@ -105,6 +105,68 @@ def measure(proj: Path) -> dict:
             "miner_files": sm.STATS["files_total"]}
 
 
+def usage_index_gates(td: Path, aliased: Path, clean: Path) -> None:
+    """usage_index is a CONSUMER of store identity (2026-10-03): its alias map comes
+    from tis_observed.store_identity, and the destructive row rewrite follows it."""
+    import os
+    import re
+    import usage_index as ux
+
+    ext_link = aliased / "C--ext"
+    ext_real = Path(os.path.realpath(ext_link))
+    zreal = Path(os.path.realpath(aliased / "C--zreal"))
+    dirs, aliases = tob.store_identity(aliased)
+    ok("V-SIC-ALIAS-MAP", aliases == {str(aliased / "C--alias"): str(zreal),
+                                      str(ext_link): str(ext_real)}
+       and tob.store_dirs(aliased) == dirs,
+       f"aliases={aliases}; store_dirs == store_identity()[0]: {tob.store_dirs(aliased) == dirs}")
+
+    # Legacy rows recorded under the two link spellings, as an index built before the
+    # identity fix holds them; one call is id-less, so its key embeds the path.
+    con = ux.connect(td / "legacy.sqlite")
+    try:
+        legacy = {"in": aliased / "C--alias" / f"{S1}.jsonl", "out": ext_link / f"{S3}.jsonl"}
+        for tag, fp in legacy.items():
+            con.execute("INSERT INTO files(path, offset, size, mtime_ns, is_sub) VALUES(?,?,?,?,0)",
+                        (str(fp), 10, 10, 1))
+            con.execute("INSERT INTO calls(k, file, ts, is_sub, inp, cw, cr, out) "
+                        "VALUES(?,?,1.0,0,1,0,100,5)", (f"off|{fp}|0", str(fp)))
+        con.commit()
+        r = ux._canonicalize(con, aliased)
+        files = {row[0] for row in con.execute("SELECT path FROM files")}
+        keys = {row[0] for row in con.execute("SELECT k FROM calls")}
+        want_out, want_in = str(ext_real / f"{S3}.jsonl"), str(zreal / f"{S1}.jsonl")
+        ok("V-SIC-UX-CANON-IN-STORE", want_in in files and f"off|{want_in}|0" in keys,
+           f"in-store alias rows -> {want_in}: files={sorted(files)}")
+        ok("V-SIC-UX-CANON-OUT-OF-STORE", want_out in files and f"off|{want_out}|0" in keys
+           and not any(str(ext_link) in v for v in files | keys),
+           f"out-of-store link rows -> RESOLVED {want_out} (S1 decision); rewritten={r.get('rewritten')}")
+    finally:
+        con.close()
+
+    # Totals: an aliased store indexes exactly what the same store without aliases holds,
+    # id-less calls included (their key embeds the path, so a second spelling would add one).
+    totals = {}
+    for name, proj in (("clean", clean), ("aliased", aliased)):
+        c = ux.connect(td / f"{name}.sqlite")
+        try:
+            ux.refresh(c, proj, deadline_s=30)
+            totals[name] = c.execute("SELECT count(*), sum(cr) FROM calls").fetchone()
+        finally:
+            c.close()
+    ok("V-SIC-UX-TOTALS", totals["clean"] == totals["aliased"], f"{totals}")
+
+    src = (HERE / "usage_index.py").read_text(encoding="utf-8")
+    # Any local link inspection is a second producer (review 2026-10-03: the first
+    # version caught only the deleted copy's own tokens). Path(__file__).resolve() is
+    # module location, not store identity, so bare .resolve( is not listed.
+    local = re.findall(r"def _store_dirs|realpath|\.resolve\(strict|readlink|is_junction"
+                       r"|is_symlink|iterdir\(", src)
+    ok("V-SIC-UX-ONE-PRODUCER", not local and "store_identity(" in src,
+       f"usage_index resolves store paths itself: {local}; consumes store_identity: "
+       f"{'store_identity(' in src}")
+
+
 def main() -> int:
     saved_tis, saved_sm = tob.PROJECTS_DIR, sm.PROJECTS_DIR
     try:
@@ -131,6 +193,7 @@ def main() -> int:
                             ("co12_sessions", "V-SIC-CO12-SESSIONS"),
                             ("miner_files", "V-SIC-MINER-FILES")):
                 ok(gate, got[k] == want[k], f"{got[k]} vs {want[k]}")
+            usage_index_gates(Path(td), aliased, clean)
     finally:
         tob.PROJECTS_DIR, sm.PROJECTS_DIR = saved_tis, saved_sm
 

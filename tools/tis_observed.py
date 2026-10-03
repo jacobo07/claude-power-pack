@@ -346,24 +346,35 @@ def project_key(path: Path) -> str:
     return re.sub(r"[^A-Za-z0-9]", "-", str(path))
 
 
-def store_dirs(base=None) -> list[Path]:
-    """Each transcript store under `base` once, by resolved path, as that path.
+def store_identity(base=None) -> tuple[list[Path], dict[str, str]]:
+    """(each transcript store under `base` once, {listed spelling: resolved path}).
 
-    A directory junction aliases a project dir (projects/C--Users-User-Apps-
-    mcp-video-analyzer -> the PP dir): walked as listed, 152 transcripts were
-    read twice on 2026-10-02. The resolved path also makes a path-keyed
-    identity independent of listing order. A junction to a dir OUTSIDE `base`
-    is a distinct store and is kept. This is STORE identity: a reader that
-    counts sessions dedupes by session id instead."""
+    THE producer of store identity; `store_dirs` is its first half. A directory
+    junction aliases a project dir (projects/C--Users-User-Apps-mcp-video-analyzer
+    -> the PP dir): walked as listed, 152 transcripts were read twice on
+    2026-10-02. Identity is the RESOLVED path, so it never depends on listing
+    order. A junction to a dir OUTSIDE `base` is a distinct store, kept under its
+    resolved path, and its listed spelling is an alias of that path too. The
+    alias map is what a path-keyed consumer (usage_index) needs to move rows
+    recorded under a link spelling onto the store's identity. This is STORE
+    identity: a reader that counts sessions dedupes by session id instead."""
     base = Path(base or PROJECTS_DIR)
     if not base.is_dir():
-        return []
+        return [], {}
     seen: dict[str, Path] = {}
+    aliases: dict[str, str] = {}
     for sub in sorted(base.iterdir()):
         if sub.is_dir():
             real = Path(os.path.realpath(sub))
             seen.setdefault(os.path.normcase(str(real)), real)
-    return list(seen.values())
+            if os.path.normcase(str(sub)) != os.path.normcase(str(real)):
+                aliases[str(sub)] = str(real)
+    return list(seen.values()), aliases
+
+
+def store_dirs(base=None) -> list[Path]:
+    """Each transcript store under `base` once, by resolved path (store_identity)."""
+    return store_identity(base)[0]
 
 
 def _project_dirs(args) -> list[Path]:

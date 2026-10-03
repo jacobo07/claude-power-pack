@@ -117,8 +117,14 @@ def main() -> int:
            f"files under the real dir: {sum('C--zreal' in v for v in p['files'])} (main + subagent)")
         ok("V-UXID-DISTINCT-STAYS", sum("C--other" in v for v in p["files"]) == 2,
            "an unaliased sibling keeps its own identity (control)")
-        ok("V-UXID-OUTSIDE-KEPT", sum("C--outlink" in v for v in p["files"]) == 2,
-           "a junction whose target is outside the store is still indexed (audit G3)")
+        # Still indexed (audit G3), now under its RESOLVED path: store identity has one
+        # producer, tis_observed.store_identity, and its S1 decision is the resolved
+        # target (2026-10-03). The link's own spelling must not survive in any column.
+        ok("V-UXID-OUTSIDE-KEPT", sum("elsewhere" in v for v in p["files"]) == 2
+           and not any("C--outlink" in v for v in flat),
+           f"outside store files under its resolved path: "
+           f"{sum('elsewhere' in v for v in p['files'])}; link spellings left: "
+           f"{[v for v in flat if 'C--outlink' in v][:2]}")
         w = ux.window(con, T0, T0 + 10 * 3600)
         ok("V-UXID-TOTALS", w["calls"] == 9 and w["subagent_calls"] == 3,
            f"calls={w['calls']} sub={w['subagent_calls']} (3 dirs x (2 main + 1 subagent))")

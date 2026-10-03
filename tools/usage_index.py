@@ -237,43 +237,18 @@ def _backfill_spawns(con, t_end: float) -> int:
     return len(todo)
 
 
-def _is_link(p: Path) -> bool:
-    is_junction = getattr(p, "is_junction", None)          # Python >= 3.12
-    return p.is_symlink() or bool(is_junction and is_junction())
-
-
-def _store_dirs(proj: Path) -> tuple[list[Path], dict[str, str]]:
-    """(one directory per physical project dir, {alias dir: canonical dir}).
-
-    A junction or symlink in the store that resolves to a sibling is an ALIAS: its
-    transcripts are the sibling's bytes, so indexing both spellings gives one store
-    two identities (RCA s16: `C--Users-User-Apps-mcp-video-analyzer` -> the PP dir).
-    The canonical spelling is the one that is not a link; among links only, the
-    smallest. A link whose target lies outside the store has no sibling and is kept
-    under its own spelling (audit G3). Identity never depends on listing order."""
-    groups: dict[str, list[Path]] = {}
-    for sub in proj.iterdir():
-        if not sub.is_dir():
-            continue
-        try:
-            phys = os.path.normcase(str(sub.resolve(strict=True)))
-        except OSError:
-            phys = os.path.normcase(str(sub))
-        groups.setdefault(phys, []).append(sub)
-    dirs, aliases = [], {}
-    for subs in groups.values():
-        real = sorted((s for s in subs if not _is_link(s)), key=lambda s: str(s).lower())
-        canon = real[0] if real else min(subs, key=lambda s: str(s).lower())
-        dirs.append(canon)
-        aliases.update({str(s): str(canon) for s in subs if s != canon})
-    return sorted(dirs, key=lambda s: str(s).lower()), aliases
+# Store identity is CONSUMED, never derived here: `tis_observed.store_identity` is the
+# one producer (resolved path; a link's listed spelling is an alias of it, including a
+# link to a dir outside the store). Until 2026-10-03 this module carried its own copy,
+# which kept an out-of-store link under its own spelling while every other consumer
+# used the resolved path: one fact, two answers.
 
 
 def _iter_files(proj: Path):
-    """(path, is_subagent), one spelling per physical transcript (_store_dirs)."""
+    """(path, is_subagent), one spelling per physical transcript (store_identity)."""
     if not proj.is_dir():
         return
-    for sub in _store_dirs(proj)[0]:
+    for sub in _tis.store_identity(proj)[0]:
         for jf in sub.glob("*.jsonl"):
             yield jf, 0
         for jf in sub.glob("*/subagents/*.jsonl"):
@@ -330,14 +305,14 @@ def _canonicalize(con, proj: Path) -> dict:
     a transcript afterwards is idempotent, so a discarded alias offset loses nothing."""
     if not proj.is_dir():
         return {"aliases": 0, "rewritten": 0}
-    aliases = _store_dirs(proj)[1]
+    aliases = _tis.store_identity(proj)[1]
     todo = {a + os.sep: c + os.sep for a, c in aliases.items()
             if _alias_rows(con, a + os.sep)}
     if not todo:
         return {"aliases": len(aliases), "rewritten": 0}
     con.commit()
     bk = _backup(con)
-    now = _store_dirs(proj)[1]                     # re-authorize against the disk now
+    now = _tis.store_identity(proj)[1]             # re-authorize against the disk now
     todo = {a: c for a, c in todo.items() if now.get(a[:-1]) == c[:-1]}
     rewritten = 0
     con.execute("BEGIN IMMEDIATE")
