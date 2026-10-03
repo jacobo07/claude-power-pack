@@ -81,6 +81,12 @@ result. UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is n
      existing card tests and the destructive card suite stay green.
   3. The `git exit 128` x6 class is reproduced and named (cause + fix or explicit fail-open reason).
   4. `--pillar A` PASS.
+**Plans:** 3 plans (waves 1 -> 2 -> 3, sequential: shared `hooks/doctrine_cards.js` / `tools/test_card_precision.py`)
+
+Plans:
+- [ ] 01-01-PLAN.md -- D-01 mtime-window provenance in the card + D-02 replay gate (5 D-CARD denies allowed, pre-session + mutant denied, 6th deny beside)
+- [ ] 01-02-PLAN.md -- D-03 `git exit 128` x6: stderr class per row, unborn-HEAD empty-tree fallback, capsule test hermetic + sweep
+- [ ] 01-03-PLAN.md -- D-04 ledger closure: prg evidence, state.A IMPLEMENTED_AND_VERIFIED, `[A]` owner-bundle line, `--pillar A` PASS
 
 ### Phase 2: Listing floor
 **Goal**: Decide pillar B under its frozen rule; no third hiding attempt without a fresh-session D-LISTING measurement.
@@ -130,7 +136,7 @@ settings; `python tools/test_skill_capability_program.py --final` exits 0, outpu
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Card precision | 0/0 | Not started | - |
+| 1. Card precision | 0/3 | Planned | - |
 | 2. Listing floor | 0/0 | Not started | - |
 | 3. Opportunity and delivery measurement | 0/0 | Not started | - |
 | 4. Coverage, criticality and freshness | 0/0 | Not started | - |
