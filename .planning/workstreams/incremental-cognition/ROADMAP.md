@@ -118,7 +118,7 @@ Plans:
 **Depends on**: nothing (read-only on transcripts).
 **Success criteria**: per pillar one measurement file naming its denominator and `command:`; materiality applied
 exactly; a second workload sampled for any pillar that clears 3 %.
-**Plans:** 1/5 plans executed (sequential waves 1-5; all share wiki/tools/kme_pillars.py)
+**Plans:** 2/5 plans executed (sequential waves 1-5; all share wiki/tools/kme_pillars.py)
 
 Plans:
 **Wave 1**
@@ -127,7 +127,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — E (identical-version rereads) + F (GSD doc residency vs init JSON), KME-G smoke
+- [x] 03-02-PLAN.md — E (identical-version rereads) + F (GSD doc residency vs init JSON), KME-G smoke
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
