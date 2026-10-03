@@ -224,7 +224,7 @@ def main():
                            "estate_share_of_weighted": round(car_tok[k] * W["cr"] / den, 4)}
                        for k, v in sorted(agg.items(), key=lambda x: -car_tok[x[0]])}}
     blob = json.dumps(res, indent=1, sort_keys=True)
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ctx_admission_out.json"), "w", encoding="utf-8") as fh:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ctx_admission_out.json"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write(blob)
     print("sha256", hashlib.sha256(blob.encode()).hexdigest())
     print("files", len(files), "calls", calls, "weighted_den %.1fM" % (den / 1e6), "cache_read %.1fM" % (cr / 1e6),

@@ -218,7 +218,7 @@ def do_manifest():
     man.update({"population_n": len(pop), "quartiles": [q1, q2, q3], "seed": SEED, "sample": pick,
                 "rule": "S1-S3 of phase4_bc_gaps.md; population = top-level jsonl, >=20 model calls, excl 489739e3"})
     blob = json.dumps(man, indent=1, sort_keys=True)
-    open(MANIFEST, "w", encoding="utf-8").write(blob)
+    open(MANIFEST, "w", encoding="utf-8", newline="\n").write(blob)
     print("manifest sha256", hashlib.sha256(blob.encode()).hexdigest(), "files", len(rows), "population", len(pop))
     print("sample", pick)
 
@@ -293,7 +293,7 @@ def do_measure():
                       "tool_output_replaceable_read_share": round(sum(r["replaceable_read_share"] for r in tool_rows), 5),
                       "tool_output_repeat_read_share": round(sum(r["repeat_read_share"] for r in tool_rows), 5)}
     blob = json.dumps(out, indent=1, sort_keys=True)
-    open(os.path.join(HERE, "ctx_dead_out.json"), "w", encoding="utf-8").write(blob)
+    open(os.path.join(HERE, "ctx_dead_out.json"), "w", encoding="utf-8", newline="\n").write(blob)
     print("sha256", hashlib.sha256(blob.encode()).hexdigest())
     print("controls", json.dumps(ctrl))
     for scope in ("all", "excl"):
