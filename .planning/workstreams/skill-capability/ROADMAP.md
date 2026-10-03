@@ -60,7 +60,7 @@ result. UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is n
 ## Phases
 
 - [x] **Phase 1: Card precision** - pillar A (completed 2026-10-03)
-- [ ] **Phase 2: Listing floor** - pillar B
+- [x] **Phase 2: Listing floor** - pillar B (completed 2026-10-03)
 - [ ] **Phase 3: Opportunity and delivery measurement** - pillar C
 - [ ] **Phase 4: Coverage, criticality and freshness** - pillars D, H
 - [ ] **Phase 5: Representation operations** - pillar F
@@ -98,12 +98,12 @@ Plans:
 **Requirements**: SC-B
 **Success Criteria**: a measurement file naming D-LISTING with its `command:`; `--pillar B` PASS.
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 
-- [ ] 02-01-PLAN.md -- D-04 verdict gate `tools/test_listing_floor_verdict.py` (recomputes K4 from the jsonl, red on a fabricated lower floor, rows pinned to 4d1cfb83) + D-01 generated D-LISTING measurement `evidence/B-listing-floor.md`
-- [ ] 02-02-PLAN.md -- D-01..D-03 ledger closure: state.B FALSIFIED_OR_REJECTED_BY_EVIDENCE from `--json`, upper-bound saving over D-LISTING, one `[B]` owner-bundle line (plugin-paging gateway, laptop), `--pillar B` PASS
+- [x] 02-01-PLAN.md -- D-04 verdict gate `tools/test_listing_floor_verdict.py` (recomputes K4 from the jsonl, red on a fabricated lower floor, rows pinned to 4d1cfb83) + D-01 generated D-LISTING measurement `evidence/B-listing-floor.md`
+- [x] 02-02-PLAN.md -- D-01..D-03 ledger closure: state.B FALSIFIED_OR_REJECTED_BY_EVIDENCE from `--json`, upper-bound saving over D-LISTING, one `[B]` owner-bundle line (plugin-paging gateway, laptop), `--pillar B` PASS
 
 ### Phase 3: Opportunity and delivery measurement
 
@@ -156,7 +156,7 @@ settings; `python tools/test_skill_capability_program.py --final` exits 0, outpu
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Card precision | 3/3 | Complete    | 2026-10-03 |
-| 2. Listing floor | 0/0 | Not started | - |
+| 2. Listing floor | 2/2 | Complete    | 2026-10-03 |
 | 3. Opportunity and delivery measurement | 0/0 | Not started | - |
 | 4. Coverage, criticality and freshness | 0/0 | Not started | - |
 | 5. Representation operations | 0/0 | Not started | - |
