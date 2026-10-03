@@ -24,8 +24,10 @@ Added here:
       primary file (terminal_evidence true) supports a terminal; a second_workload file supports one
       only when it is valid (coverage reached) AND the same pillar also cites such a primary file
       (frozen rule E: "confirmed on a second workload"); a smoke file (KME-G on GEX44) never does; a
-      file measuring another pillar never does. A measurement file with neither field is another
-      instrument's and is left to the CE clauses. This is the mechanical form of "never substitute
+      file measuring another pillar never does. A kme_pillars file (its `instrument` line, its
+      json block marker or either role field; a leading BOM is ignored) without readable role fields is
+      refused, never skipped; only a file with no kme_pillars mark at all is another instrument's and is left
+      to the CE clauses. This is the mechanical form of "never substitute
       KME-G for KME-L".
   V-ICP-REBIND  the rebinding took: ledger.program must be "incremental-cognition", and a
       ledger read through any other program's path is refused.
@@ -162,7 +164,7 @@ def check_binding(led: dict) -> list:
 def front_matter_fields(text: str) -> dict:
     """The line-anchored `key: <json>` lines between the first two `---` lines. A value that is
     not valid JSON is absent. Text that does not open with `---` has no front matter."""
-    lines = [x.rstrip("\r") for x in (text or "").split("\n")]
+    lines = [x.rstrip("\r") for x in (text or "").lstrip("\ufeff").split("\n")]   # a BOM is not front matter
     if not lines or lines[0].strip() != "---":
         return {}
     try:
@@ -182,6 +184,16 @@ def front_matter_fields(text: str) -> dict:
 
 
 KNOWN_ROLES = ("primary", "second_workload", "smoke")
+KMEP_INSTRUMENT = "wiki/tools/kme_pillars.py"
+KMEP_BODY_MARKER = "<!-- kmep-json -->"
+
+
+def is_kmep_file(text: str, fm: dict) -> bool:
+    """A measurement written by kme_pillars: its `instrument` front-matter line, or the json block marker it always
+    appends, or either role field. Judged on the whole text, so a damaged or BOM-prefixed front matter does not hide it."""
+    t = (text or "").lstrip("\ufeff")
+    return (fm.get("instrument") == KMEP_INSTRUMENT or KMEP_BODY_MARKER in t
+            or f'"instrument": "{KMEP_INSTRUMENT}"' in t or "evidence_role" in fm or "terminal_evidence" in fm)
 
 
 def check_measurement_scope(led: dict, res, only=None) -> list:
@@ -193,9 +205,14 @@ def check_measurement_scope(led: dict, res, only=None) -> list:
             ref = e.get("ref")
             if e.get("kind") != "measurement" or not ref:
                 continue
-            fm = front_matter_fields(res.file_text(ref))
-            if "evidence_role" not in fm and "terminal_evidence" not in fm:
+            text = res.file_text(ref)
+            fm = front_matter_fields(text)
+            if not is_kmep_file(text, fm):
                 continue  # another instrument's measurement: the CE clauses judge it
+            if not isinstance(fm.get("evidence_role"), str) or not isinstance(fm.get("terminal_evidence"), bool):
+                f.append(f"R3 {pid}: {ref} is a kme_pillars measurement without readable evidence_role / "
+                         f"terminal_evidence front matter (absent, unparseable or hand-edited)")
+                continue
             files.append((ref, fm))
         on_pillar = [(r, fm) for r, fm in files if fm.get("pillar", pid) == pid]
         has_primary = any((fm.get("evidence_role") or "primary") == "primary" and fm.get("terminal_evidence") is True
@@ -333,6 +350,21 @@ def selftest(verbose=True) -> bool:
     quoted = "---\ndenominator: \"KME-L\"\n---\n\nThe words evidence_role: smoke appear in this body sentence.\n"
     say(r3("E", {"q": quoted}, ["q"]) == [] and front_matter_fields(quoted) == {"denominator": "KME-L"},
         "V-ICP-R3-QUOTED-NOT-FIELD (body words are not front matter)")
+    # WR-03: a kme_pillars file whose role fields are missing, damaged or hidden behind a BOM is refused, not skipped.
+    kmep_fm = fm(instrument=KMEP_INSTRUMENT, pillar="E", denominator="KME-G", command="x")
+    bom_smoke = "\ufeff" + fm(instrument=KMEP_INSTRUMENT, pillar="E", evidence_role="smoke", terminal_evidence=False)
+    marker_only = "no front matter at all\n\n" + KMEP_BODY_MARKER + "\n{}\n<!-- /kmep-json -->\n"
+    broken = fm(instrument=KMEP_INSTRUMENT, pillar="E", evidence_role="primary").replace(
+        "---\n\n", "terminal_evidence: tru\n---\n\n", 1)
+    say(any("smoke" in x for x in r3("E", {"b": bom_smoke}, ["b"])) and
+        front_matter_fields(bom_smoke).get("evidence_role") == "smoke",
+        "V-ICP-R3-BOM-READ (a UTF-8 BOM before the front matter no longer hides it: smoke refused)")
+    say(any("without readable" in x for x in r3("E", {"k": kmep_fm}, ["k"])),
+        "V-ICP-R3-KMEP-NO-ROLE-REFUSED (instrument line present, role fields absent)")
+    say(any("without readable" in x for x in r3("E", {"m": marker_only}, ["m"])),
+        "V-ICP-R3-KMEP-MARKER-ONLY-REFUSED (only the json block marker survives)")
+    say(any("without readable" in x for x in r3("E", {"u": broken}, ["u"])),
+        "V-ICP-R3-KMEP-UNPARSABLE-REFUSED (terminal_evidence: tru)")
     smoke_files = sorted((REPO / PROGRAM_DIR / "measurements").glob("D-KME-G-*.md"))
     if smoke_files:
         rel = smoke_files[0].relative_to(REPO).as_posix()
