@@ -108,6 +108,8 @@ Floor: 3/4 (75 points), attained at (4,5), (4,6), (5,4), (6,4); equal-allocation
 
 Floor per budget (non-increasing in the budget by construction, a subset minimum): 2: none, 3: none, 4: none, 5: none, 6: none, 7: 1, 8: 1, 9: 3/4, 10: 3/4
 
+Design space: the floor above is taken over fresh allocations. Topping up the committed arms (N0 and a treatment arm, as measured) with up to 10 new sessions of the same protocol gives floor 3/5 (60 points) at 5 vs 7, 5 vs 8, 5 vs 9, 7 vs 5, 8 vs 5, 9 vs 5 (N0 total vs treatment total); against it the authoritative effect 0 gives NOT_SEPARABLE, the stored effect 1/2 gives NOT_SEPARABLE.
+
 verdict: NOT_SEPARABLE (largest committed effect 0, floor 3/4; under the stored grades 1/2, also NOT_SEPARABLE)
 
 ## Result consumption (from the rows' `delivery` and `card_rows` fields)

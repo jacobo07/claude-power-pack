@@ -29,13 +29,16 @@ comparison). "Separates" means p <= ALPHA = 1/20.
 Bound: the budget is D-SESSIONS.new_benchmark_cap minus the session counts stated by phases 1-6
 (read from their committed SUMMARYs and evidence files). It covers the equal allocations
 k = 1..budget//2 per arm (D-01) and every allocation n1 + n2 <= budget, n1, n2 >= 1. Claude's
-discretion (recorded here): a "cannot separate" claim must hold for the most favourable design, so
+discretion (recorded here): a "cannot separate" claim must hold for the most favourable FRESH design, so
 the verdict floor is the minimum separable effect over ALL allocations, which is never above the
 equal-allocation floor. Unstated phases can only lower the true budget, and the floor never falls
 as the budget shrinks (by construction: a smaller budget's allocations are a subset of a larger
-one's, so its floor is a minimum over fewer tables; V-CT-BOUND re-checks the per-budget table and the
-bound-floors-fall drill proves only that comparator, not the property), so the stated budget is the
-most favourable one.
+one's, so its floor is a minimum over fewer tables; V-CT-BOUND prints that it holds and the
+bound-floors-fall drill proves only its comparator, not the property), so the stated budget is the
+most favourable one. Design space: fresh allocations only. Topping up the committed arms with new
+sessions of the same protocol is a different design; its floor is rendered beside the bound (and in
+--json as `topup`) with the verdict each committed effect gets against it, and it does not move the
+verdict floor (07-REVIEW IN-03).
 
 Verdict: NOT_SEPARABLE when every clause is ok (the largest committed effect is below the floor);
 SEPARABLE when V-CT-SEPARATION fails and every other clause is ok (per D-01: record an [E]
@@ -193,6 +196,26 @@ def bound(budget: int) -> dict:
     floors = {bb: _floor_over(allocs, bb)[0] for bb in range(2, budget + 1)}
     return {"budget": budget, "equal": equal, "allocs": allocs, "floor": floor,
             "floor_at": floor_at, "equal_floor": eq_floor, "floors": floors}
+
+
+def topup_floor(counts, budget):
+    """Design space beyond fresh allocations (07-REVIEW IN-03): top up the committed control and one
+    committed treatment arm with x + y <= budget new sessions of the same protocol. Returns
+    (floor, [(control total, treatment total)...]) over every measured treatment arm, or (None, [])."""
+    ctl = (counts or {}).get(CONTROL_ARM)
+    if not ctl or ctl["n"] == 0 or not _is_int(budget) or budget < 0:
+        return None, []
+    allocs = {}
+    for arm in TREATMENT_ARMS:
+        c = counts.get(arm)
+        if not c or c["n"] == 0:
+            continue
+        for x in range(budget + 1):
+            for y in range(budget - x + 1):
+                key = (ctl["n"] + x, c["n"] + y)
+                if key not in allocs:
+                    allocs[key] = min_separable(*key)
+    return _floor_over(allocs, 10 ** 9) if allocs else (None, [])
 
 
 def floors_monotone(floors) -> list:
@@ -1249,6 +1272,16 @@ def render(rows, regrade_rows, fro, st, outside=(), regrade_outside=()) -> str:
     L.append("Floor per budget (non-increasing in the budget by construction, a subset minimum): " + ", ".join(
         f"{bb}: {frac(f)}" for bb, f in sorted(b["floors"].items())))
     L.append("")
+    tf, tat = topup_floor(counts, b["budget"])
+    if tf is not None:
+        tv = ", ".join(f"the {w} effect {frac(e)} gives {separation_verdict(e, tf)}"
+                       for w, e in (("authoritative", e_auth), ("stored", e_stored)))
+        L.append(f"Design space: the floor above is taken over fresh allocations. Topping up the committed arms "
+                 f"({CONTROL_ARM} and a treatment arm, as measured) with up to {b['budget']} new sessions of the same "
+                 f"protocol gives floor {frac(tf)} ({points(tf)} points) at "
+                 f"{', '.join(f'{a} vs {t}' for a, t in tat)} ({CONTROL_ARM} total vs treatment total); against it "
+                 f"{tv}.")
+        L.append("")
     L.append(f"verdict: {verdict_of(results)} (largest committed effect {frac(e_auth)}, floor {frac(b['floor'])}; "
              f"under the stored grades {frac(e_stored)}, also {separation_verdict(e_stored, b['floor'])})")
     L.append("")
@@ -1458,6 +1491,12 @@ def needed_pins_drill():
     half = NEEDED_PINS[0]
     if 2 * half[3] == half[1]:
         bad.append("pin cannot tell the equal-only rule from the all-allocation rule")
+    # IN-03 pin (reviewer's factorial-form recomputation): 2 + 2 committed rows topped up within 10 sessions.
+    tf, tat = topup_floor({CONTROL_ARM: {"n": 2, "passes": 0}, "P": {"n": 2, "passes": 0}}, 10)
+    want_at = [(5, 7), (5, 8), (5, 9), (7, 5), (8, 5), (9, 5)]
+    if tf != Fraction(3, 5) or tat != want_at:
+        bad.append(f"topup 2+2 within 10: floor {frac(tf)} at {tat}, pinned 3/5 at {want_at}")
+    notes.append("topup 2+2 within 10 -> 3/5")
     obs = ("pins reproduced: " + "; ".join(notes)) if not bad else "WRONG " + "; ".join(bad)
     return ("needed-total-pins", obs, not bad)
 
@@ -1516,6 +1555,12 @@ def derived_json(inp, fro, cap) -> dict:
                           for a, c in sorted(ctx["consumption"].items())}
     ea, es = max_effect(counts) if counts else None, max_effect(stored)
     out["needed_k"] = {"authoritative": needed_k(ea), "stored": needed_k(es)}
+    if b is not None:
+        tf, tat = topup_floor(ctx["counts"], b["budget"])
+        out["topup"] = None if tf is None else {
+            "floor": frac(tf), "at": [list(k) for k in tat],
+            "authoritative_verdict": None if ea is None else separation_verdict(ea, tf),
+            "stored_verdict": None if es is None else separation_verdict(es, tf)}
 
     def _nt(e):
         nt = needed_total(e)
