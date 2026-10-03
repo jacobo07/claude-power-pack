@@ -31,16 +31,25 @@ The sequence is `/kclear` → (verdict SAFE_TO_FORGET) → `/clear` → `/kresum
    deleted goal file). Re-derive the next step from the goal file and `git log`, not from the
    capsule's obligation list.
 
-4. **Answer the exam** from what you just read, then certify:
+4. **Answer the exam from the tree, not from the capsule.** The bootstrap no longer prints branch
+   or HEAD: read them yourself in the capsule's repo (`git branch --show-current`,
+   `git rev-parse --short HEAD`) and take the next obligation from the goal file. Then certify:
 
    ```
    ... rollover.py certify --from <session> --goal <file name> --branch <b> --head <7 chars> --next "<first obligation>"
    ```
 
-   One flag per answer: PowerShell 5.1 strips the quotes out of a JSON argument. Only the session
-   that won the claim may certify (exit 5 otherwise). RESUME_CERTIFIED retires the capsule.
-   RESUME_FAILED lists what disagreed — re-read and retry. Exit 7 = answers unreadable, nothing judged.
-   **No file edit, commit or other mutation before RESUME_CERTIFIED.**
+   One flag per answer: PowerShell 5.1 strips the quotes out of a JSON argument (backticks and
+   markdown in `--next` are ignored when compared). Answers are judged against what `resume` saw
+   in this claim -- so after a RECOMPILE the current HEAD certifies and the sealed one does not.
+   Exit codes: 0 RESUME_CERTIFIED (capsule retired) · 5 not your claim, or no `resume` recorded in
+   it -- run step 1 again · 6 RESUME_FAILED, names the wrong keys only -- re-read and retry ·
+   7 answers unreadable, nothing judged · 8 the tree moved since your `resume` -- run it again.
+   A claim nobody certifies for 30 min (or whose session died) can be taken over by the next
+   `/kresume`. **No file edit, commit or other mutation before RESUME_CERTIFIED.** In an interactive
+   pane this is your discipline (status: no guard, by design -- a failed exam must not lock a pane
+   with a human in it). For capsule-v2 mission workers a guard enforces it -- status PLANNED until
+   the supervisor writes their pre-certification marker (spec `vault/specs/mission-capsule-rollover.md`, T4-T6).
 
 5. **Continue** with the first open obligation. Do not ask the Owner to paste a plan path, and do
    not ask what to focus on: the capsule already says.

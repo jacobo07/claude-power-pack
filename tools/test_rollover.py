@@ -192,9 +192,15 @@ def main() -> int:
         git(repo, "commit", "-q", "-am", "moved")
         rf = ro.refresh(cap, str(repo))
         check("V-ROLLOVER-REFRESH-HEAD-MOVED", rf["verdict"] == "RECOMPILE" and any(x.startswith("head") for x in rf["divergences"]), rf["divergences"])
-        good = {"goal": "goal.md", "branch": cap["repo"]["branch"], "head": cap["repo"]["head"][:7],
+        # The tree moved (commit above). The exam is judged against reality NOW (spec
+        # mission-capsule-rollover D2): the CURRENT head certifies, the SEALED head no longer does.
+        moved_head = rf["now"]["head"]
+        good = {"goal": "goal.md", "branch": cap["repo"]["branch"], "head": moved_head[:7],
                 "next": "wire the shadow observer"}
         check("V-ROLLOVER-EXAM-PASS", ro.certify(cap, good)["verdict"] == "RESUME_CERTIFIED", good)
+        stale = ro.certify(cap, {**good, "head": cap["repo"]["head"][:7]})
+        check("V-ROLLOVER-EXAM-STALE-HEAD-FAILS", stale["verdict"] == "RESUME_FAILED"
+              and [w["key"] for w in stale["wrong"]] == ["head"], stale["wrong"])
         bad = ro.certify(cap, {**good, "head": "0000000"})
         check("V-ROLLOVER-EXAM-FAIL", bad["verdict"] == "RESUME_FAILED" and bad["wrong"][0]["key"] == "head", bad["wrong"])
         check("V-ROLLOVER-EXAM-EMPTY-FAILS", ro.certify(cap, {})["verdict"] == "RESUME_FAILED", "no answers")
@@ -251,8 +257,15 @@ def main() -> int:
 
         print("certify through the CLI: fencing and shell-safe answers")
         ro.STATE_DIR = state                      # succ-A holds the claim on SID (above)
-        flags = ["--goal", "goal.md", "--branch", cap["repo"]["branch"], "--head", cap["repo"]["head"][:7],
+        flags = ["--goal", "goal.md", "--branch", cap["repo"]["branch"], "--head", moved_head[:7],
                  "--next", "Wire the shadow observer"]
+        # I4: a claim with no reality refresh recorded cannot certify, even with right answers.
+        rc_nr = ro.main(["certify", "--from", SID, "--claimant", "succ-A", *flags])
+        check("V-ROLLOVER-CERTIFY-NEEDS-REFRESH", rc_nr == 5 and not (state / "capsules" / f"{SID}.certified").exists(),
+              f"rc={rc_nr}")
+        rc_res = ro.main(["resume", "--cwd", str(repo), "--claimant", "succ-A", "--from", SID])
+        check("V-ROLLOVER-RESUME-RECORDS-REFRESH", rc_res == 0
+              and (ro.read_claim(SID, state) or {}).get("snapshot", {}).get("head") == moved_head, f"rc={rc_res}")
         rc_b = ro.main(["certify", "--from", SID, "--claimant", "succ-B", *flags])
         check("V-ROLLOVER-CERTIFY-FENCED", rc_b == 5 and not (state / "capsules" / f"{SID}.certified").exists(), f"rc={rc_b}")
         rc_bad = ro.main(["certify", "--from", SID, "--claimant", "succ-A", "--answers", "{goal:goal.md}"])

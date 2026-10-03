@@ -40,7 +40,16 @@ if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
 SCHEMA = "rollover-capsule-v1"
-STATE_DIR = Path(os.environ.get("CPP_ROLLOVER_STATE_DIR") or (Path.home() / ".claude" / "state" / "rollover"))
+# capsule-v2 (spec vault/specs/mission-capsule-rollover.md): a mission worker's handoff. Same seal,
+# gate, claim, refresh, exam and certify as v1 -- only the identity and the sources differ. Keyed
+# `mission-<mission_id>-e<epoch>` and stored in its OWN directory: the interactive hub card and the
+# autotype enumerate `capsules/` with no schema filter, so a worker's capsule there would tell an
+# ordinary pane in the same repo to /kresume it.
+SCHEMA_V2 = "rollover-capsule-v2"
+MISSION_PREFIX = "mission-"
+MISSION_SEAL_ORIGINS = ("worker_handoff", "supervisor_fallback", "recovery")
+CLAIM_LEASE_S = 30 * 60          # a claim nobody certified within this is recoverable (spec I3)
+STATE_DIR =Path(os.environ.get("CPP_ROLLOVER_STATE_DIR") or (Path.home() / ".claude" / "state" / "rollover"))
 UNKNOWN = "UNKNOWN"
 
 MIN_GROWTH_TOKENS = 150_000      # resident above floor+bootstrap worth discarding
@@ -396,7 +405,21 @@ def completeness(capsule: dict, now: Optional[float] = None) -> dict:
     if not capsule.get("obligations"):
         missing.append("obligations: no open item found in the goal file or handoff")
     h = capsule.get("handoff") or {}
-    if h.get("state") != "OK":
+    if capsule.get("kind") == "mission":
+        # A worker has no /kclear handoff file: its continuity sources are the mission record, GSD
+        # and its own note. What must be present instead is who it is and how it was sealed.
+        run = capsule.get("run") if isinstance(capsule.get("run"), dict) else {}
+        for k in ("mission_id", "epoch", "successor_epoch"):
+            if run.get(k) in (None, ""):
+                missing.append(f"run.{k}: absent")
+        origin = capsule.get("seal_origin")
+        if origin not in MISSION_SEAL_ORIGINS:
+            missing.append(f"seal_origin: {origin!r} is not one of {', '.join(MISSION_SEAL_ORIGINS)}")
+        elif origin == "worker_handoff" and not (capsule.get("note") or "").strip():
+            missing.append("note: the worker sealed no HANDOFF NOTE -- it is not a worker hand-off")
+        if origin in ("supervisor_fallback", "recovery") and not capsule.get("degraded"):
+            missing.append(f"degraded: a {origin} seal must be marked degraded")
+    elif h.get("state") != "OK":
         missing.append(f"handoff: {h.get('reason', 'absent')}")
     elif h.get("session") != capsule.get("session_id"):
         missing.append(f"handoff: written by session {str(h.get('session'))[:8]}, not this one -- run /kclear")
@@ -427,7 +450,14 @@ def _atomic_write(path: Path, data: bytes) -> None:
 
 def capsule_path(session_id: str, state_dir: Optional[Path] = None) -> Path:
     safe = re.sub(r"[^A-Za-z0-9_.-]", "_", session_id or "unknown")
-    return (state_dir or STATE_DIR) / "capsules" / f"{safe}.json"
+    sub = "mission-capsules" if safe.startswith(MISSION_PREFIX) else "capsules"
+    return (state_dir or STATE_DIR) / sub / f"{safe}.json"
+
+
+def mission_key(mission_id: str, epoch) -> str:
+    """The capsule key of the worker that ran `epoch` of `mission_id`. Session ids are uuids and
+    never start with MISSION_PREFIX, so the two key spaces cannot collide."""
+    return f"{MISSION_PREFIX}{mission_id}-e{int(epoch)}"
 
 
 def seal(capsule: dict, state_dir: Optional[Path] = None) -> dict:
@@ -533,14 +563,23 @@ def gate(session_id: str, state_dir: Optional[Path] = None, max_age_s: float = R
 
 
 def bootstrap(capsule: dict) -> str:
-    """The successor's first context: pointers and facts, never the transcript."""
+    """The successor's first context: pointers and facts, never the transcript.
+
+    Branch and HEAD are deliberately NOT printed (spec mission-capsule-rollover D3): the exam asks
+    for them, and they are judged against the tree NOW, so the successor must read them from git.
+    Printing the sealed values made the exam a copy test, and after a RECOMPILE a wrong one."""
     repo = capsule.get("repo") or {}
-    head = repo.get("head") if isinstance(repo.get("head"), str) else UNKNOWN
-    lines = [f"[rollover] Continuing from session {capsule.get('session_id', '?')[:8]} "
-             f"(sealed {capsule.get('created')}).",
+    run = capsule.get("run") if isinstance(capsule.get("run"), dict) else {}
+    origin = (f"mission {run.get('mission_id')} epoch {run.get('epoch')} -> {run.get('successor_epoch')}"
+              if capsule.get("kind") == "mission" else f"session {capsule.get('session_id', '?')[:8]}")
+    lines = [f"[rollover] Continuing from {origin} (sealed {capsule.get('created')}).",
              f"Goal file: {(capsule.get('goal') or {}).get('path', UNKNOWN)} -- read it before acting.",
-             f"Repo: {repo.get('root', UNKNOWN)} branch {repo.get('branch') if isinstance(repo.get('branch'), str) else UNKNOWN} "
-             f"HEAD {head[:12]}."]
+             f"Repo: {repo.get('root', UNKNOWN)} -- read its branch and HEAD from git yourself (the exam asks)."]
+    if capsule.get("degraded"):
+        lines.append(f"DEGRADED capsule ({capsule.get('seal_origin')}): the predecessor never handed off. "
+                     "RECOVERY first: read the tree, its uncommitted changes and the goal file before trusting anything here.")
+    if capsule.get("note"):
+        lines.append("Predecessor's note (a claim to verify, not a fact): " + str(capsule["note"])[:1200])
     if capsule.get("summary"):
         lines.append(f"Summary: {capsule['summary']}")
     obl = capsule.get("obligations") or []
@@ -645,20 +684,188 @@ def at_boundary(repo: dict, start_head: Optional[str]) -> bool:
 
 
 # ------------------------------------------------------------------------ successor
-def claim(session_id: str, claimant: str, state_dir: Optional[Path] = None) -> dict:
-    """One successor per capsule: O_EXCL create. A second claim names the holder."""
-    marker = capsule_path(session_id, state_dir).with_suffix(".claim")
+CLAIM_LOCK_TIMEOUT_S = 2.0
+CLAIM_TORN_S = 60                # an unreadable claim this old is a crash between create and write
+
+
+class _ClaimLock:
+    """Exclusive sidecar lock around every claim REWRITE (renew, takeover, refresh note). The first
+    claim is an O_EXCL create and needs none. Same idiom as ledger(): never deleted, released by the
+    OS if the holder dies. `ok` is False when it could not be taken in time -- callers refuse."""
+
+    def __init__(self, marker: Path):
+        self.path, self.fd, self.ok = marker.with_suffix(".claimlock"), None, False
+
+    def __enter__(self):
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.fd = os.open(str(self.path), os.O_RDWR | os.O_CREAT)
+            deadline = time.time() + CLAIM_LOCK_TIMEOUT_S
+            while not _lock_try(self.fd):
+                if time.time() > deadline:
+                    return self
+                time.sleep(0.005)
+            self.ok = True
+        except OSError:
+            self.ok = False
+        return self
+
+    def __exit__(self, *exc):
+        if self.fd is not None:
+            try:
+                if self.ok and sys.platform == "win32":
+                    import msvcrt
+                    os.lseek(self.fd, 0, os.SEEK_SET)
+                    msvcrt.locking(self.fd, msvcrt.LK_UNLCK, 1)
+            except OSError:
+                pass
+            os.close(self.fd)
+        return False
+
+
+def read_claim(session_id: str, state_dir: Optional[Path] = None) -> Optional[dict]:
+    """The claim record, or None when absent or unreadable. A pre-lease claim ({claimant, ts}) is
+    returned as written: its missing generation and lease are judged by _claim_stale."""
     try:
+        rec = json.loads(capsule_path(session_id, state_dir).with_suffix(".claim").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return rec if isinstance(rec, dict) else None
+
+
+def _holder_dead(host: Optional[dict], alive=None) -> Optional[bool]:
+    """True when the claimant's claude process is provably gone (pid dead, or the pid now belongs to
+    a process with another start time); None when that cannot be told. Never a false dead from an
+    unanswered question: None keeps the claim, only the lease then frees it."""
+    if not isinstance(host, dict) or not str(host.get("pid") or "").isdigit():
+        return None
+    pid = int(host["pid"])
+    if alive is None:
+        try:
+            import gsd_long_run as lr
+            alive = lr._pid_alive
+        except Exception:  # noqa: BLE001 -- no liveness reader: unknown, not dead
+            return None
+    state = alive(pid)
+    if state is False:
+        return True
+    if state is True and host.get("proc_start"):
+        d = Path(os.environ.get("CPP_CLAUDE_SESSIONS_DIR") or (Path.home() / ".claude" / "sessions"))
+        try:
+            rec = json.loads((d / f"{pid}.json").read_text(encoding="utf-8-sig"))
+            now_start = rec.get("procStart") if isinstance(rec, dict) else None
+        except (OSError, ValueError):
+            return None
+        if now_start and str(now_start) != str(host["proc_start"]):
+            return True          # the pid was recycled: the holder is gone
+        return False
+    return None
+
+
+def _claim_stale(cur: Optional[dict], marker: Path, now: float, alive=None) -> tuple[bool, str]:
+    try:
+        age = now - marker.stat().st_mtime
+    except OSError:
+        age = None
+    if cur is None:
+        return (age is not None and age > CLAIM_TORN_S), "claim record unreadable (torn create)"
+    lease = cur.get("lease_until")
+    if isinstance(lease, (int, float)):
+        if now > lease:
+            return True, f"lease expired {int(now - lease)}s ago"
+    elif age is not None and age > CLAIM_LEASE_S:
+        return True, f"pre-lease claim {int(age)}s old"
+    if _holder_dead(cur.get("host"), alive):
+        return True, "holder process is gone"
+    return False, ""
+
+
+def claim(session_id: str, claimant: str, state_dir: Optional[Path] = None, *,
+          host: Optional[dict] = None, now: Optional[float] = None, lease_s: float = CLAIM_LEASE_S,
+          alive=None) -> dict:
+    """One successor per capsule (spec I3). First claim: O_EXCL create. The holder renews its
+    lease by claiming again. Another claimant is refused, naming the holder -- unless the claim is
+    stale (lease expired, or its process provably dead), in which case it is TAKEN OVER under the
+    claim lock with generation + 1. The old holder is then fenced: certify checks the holder, so
+    a successor that died after claiming no longer bricks the transition (D5, 2026-10-03)."""
+    marker = capsule_path(session_id, state_dir).with_suffix(".claim")
+    now = _now() if now is None else now
+    fresh = {"claimant": claimant, "ts": _iso(now), "at": now, "generation": 1,
+             "lease_until": now + lease_s, "host": host}
+    try:
+        marker.parent.mkdir(parents=True, exist_ok=True)
         fd = os.open(str(marker), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     except FileExistsError:
-        try:
-            holder = json.loads(marker.read_text(encoding="utf-8")).get("claimant")
-        except (OSError, ValueError):
-            holder = UNKNOWN
-        return {"claimed": holder == claimant, "holder": holder}
-    with os.fdopen(fd, "w", encoding="utf-8") as fh:
-        json.dump({"claimant": claimant, "ts": _iso()}, fh)
-    return {"claimed": True, "holder": claimant}
+        fd = None
+    if fd is not None:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(fresh, fh)
+        return {"claimed": True, "holder": claimant, "generation": 1}
+    with _ClaimLock(marker) as lk:
+        if not lk.ok:
+            return {"claimed": False, "holder": UNKNOWN, "why": "claim lock busy"}
+        cur = read_claim(session_id, state_dir)
+        holder = (cur or {}).get("claimant", UNKNOWN)
+        gen = int((cur or {}).get("generation") or 1)
+        if holder == claimant:
+            _atomic_write(marker, json.dumps({**cur, "lease_until": now + lease_s}).encode("utf-8"))
+            return {"claimed": True, "holder": claimant, "generation": gen}
+        if marker.with_suffix(".certified").exists():
+            return {"claimed": False, "holder": holder, "generation": gen, "why": "already certified"}
+        stale, why = _claim_stale(cur, marker, now, alive)
+        if not stale:
+            return {"claimed": False, "holder": holder, "generation": gen}
+        _atomic_write(marker, json.dumps({**fresh, "generation": gen + 1, "took_over_from": holder,
+                                          "takeover_reason": why}).encode("utf-8"))
+        return {"claimed": True, "holder": claimant, "generation": gen + 1,
+                "took_over_from": holder, "takeover_reason": why}
+
+
+def note_refresh(session_id: str, claimant: str, verdict: str, state_dir: Optional[Path] = None,
+                 now: Optional[float] = None, snapshot: Optional[dict] = None) -> bool:
+    """Record on the claim that THIS generation's holder refreshed reality, and WHAT it saw. certify
+    requires it (spec I4) and judges the answers against that snapshot (audit G17): judging against
+    HEAD at certify time made a sibling pane's commit between the two steps fail a correct answer."""
+    marker = capsule_path(session_id, state_dir).with_suffix(".claim")
+    with _ClaimLock(marker) as lk:
+        if not lk.ok:
+            return False
+        cur = read_claim(session_id, state_dir)
+        if not cur or cur.get("claimant") != claimant:
+            return False
+        cur.update(refresh=verdict, refreshed_at=_now() if now is None else now,
+                   refreshed_generation=int(cur.get("generation") or 1), snapshot=snapshot)
+        _atomic_write(marker, json.dumps(cur).encode("utf-8"))
+        return True
+
+
+# ------------------------------------------------------------- pre-certification markers
+# One authority for "certified" (audit G25): this module creates the marker the mutation guard
+# (hooks/capsule_mutation_guard.js) reads, and flips it in certify_flow. One file per MISSION,
+# naming the worker the supervisor launched, so the guard can match a session whose bg id is not
+# bound yet by the host registry's `name` (audit G7).
+def precert_path(mission_id: str, state_dir: Optional[Path] = None) -> Path:
+    return (state_dir or STATE_DIR) / "precert" / f"{re.sub(r'[^A-Za-z0-9_.-]', '_', mission_id)}.json"
+
+
+def precert_write(mission_id: str, fields: dict, state_dir: Optional[Path] = None) -> dict:
+    """Create or update this mission's marker (atomic: the guard never reads a torn one)."""
+    p = precert_path(mission_id, state_dir)
+    try:
+        cur = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        cur = {}
+    rec = {**(cur if isinstance(cur, dict) else {}), **fields, "mission_id": mission_id, "updated_at": _now()}
+    _atomic_write(p, json.dumps(rec, sort_keys=True).encode("utf-8"))
+    return rec
+
+
+def precert_read(mission_id: str, state_dir: Optional[Path] = None) -> Optional[dict]:
+    try:
+        rec = json.loads(precert_path(mission_id, state_dir).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return rec if isinstance(rec, dict) else None
 
 
 def refresh(capsule: dict, cwd: str) -> dict:
@@ -691,25 +898,76 @@ def refresh(capsule: dict, cwd: str) -> dict:
     return {"verdict": "CONTINUE" if not div else "RECOMPILE", "divergences": div, "now": now}
 
 
-def exam(capsule: dict) -> list[dict]:
-    repo = capsule.get("repo") or {}
-    return [{"key": "goal", "q": "Which file is the goal?", "a": Path((capsule.get("goal") or {}).get("path") or "").name},
-            {"key": "branch", "q": "Which branch is authoritative?", "a": repo.get("branch")},
-            {"key": "head", "q": "Which HEAD was sealed (first 7)?", "a": str(repo.get("head") or "")[:7]},
-            {"key": "next", "q": "What is the next open obligation?", "a": (capsule.get("obligations") or [""])[0]}]
+def obligations_now(capsule: dict) -> list[str]:
+    """The open obligations as the durable sources say NOW (spec I4). An interactive capsule whose
+    obligations came from its goal file re-reads that file; one whose obligations were stated
+    explicitly or taken from its own handoff has no live source and keeps them. A mission capsule's
+    obligations come from GSD and are passed in by the adapter (`reality["obligations"]`)."""
+    if capsule.get("obligations_source") == "goal file":
+        return obligations_from((capsule.get("goal") or {}).get("path"))
+    return list(capsule.get("obligations") or [])
+
+
+def reality_now(capsule: dict, cwd: str = "") -> dict:
+    """What the exam is judged against: the capsule's own tree as it is now, and its obligations."""
+    root = (capsule.get("repo") or {}).get("root")
+    repo = repo_facts(root if isinstance(root, str) and Path(root).is_dir() else (cwd or "."))
+    return {"repo": repo, "obligations": obligations_now(capsule)}
+
+
+def exam(capsule: dict, reality: Optional[dict] = None) -> list[dict]:
+    """The questions, with the answer each is judged against. With `reality` (certify) the branch,
+    HEAD and next obligation are those of the tree NOW; without it (resumable) the sealed values.
+
+    Judging against the seal was D2: after a RECOMPILE, quoting the stale HEAD certified."""
+    repo = (reality or {}).get("repo") if reality is not None else (capsule.get("repo") or {})
+    repo = repo if isinstance(repo, dict) and (reality is None or repo.get("state") == "OK") else {}
+    obl = (reality or {}).get("obligations") if reality is not None else capsule.get("obligations")
+    head = repo.get("head") if isinstance(repo.get("head"), str) else ""
+    branch = repo.get("branch") if isinstance(repo.get("branch"), str) else ""
+    items = [{"key": "goal", "q": "Which file is the goal?", "a": Path((capsule.get("goal") or {}).get("path") or "").name},
+             {"key": "branch", "q": "Which branch is checked out in the capsule's repo NOW?", "a": branch},
+             {"key": "head", "q": "What is that repo's HEAD NOW (first 7)?", "a": head[:7]},
+             {"key": "next", "q": "What is the next open obligation, from the goal file?", "a": (obl or [""])[0]}]
+    if capsule.get("degraded"):
+        dirty = repo.get("dirty") if isinstance(repo.get("dirty"), list) else None
+        items.append({"key": "dirty", "q": "How many tracked paths are uncommitted in that repo NOW? (RECOVERY)",
+                      "a": "" if dirty is None and reality is not None else str(len(dirty or []))})
+    return items
 
 
 def _norm(s) -> str:
-    return re.sub(r"\s+", " ", str(s or "")).strip().lower()
+    """Compare what was meant, not how a shell delivered it (audit G16): obligations carry markdown
+    and backticks, and inside PowerShell double quotes a backtick is the escape character, so the
+    same text arrives altered. Backticks, asterisks and quotes are dropped; whitespace collapses."""
+    s = re.sub(r"[`*\"']", "", str(s or ""))
+    return re.sub(r"\s+", " ", s).strip().lower()
 
 
-def certify(capsule: dict, answers: dict) -> dict:
+NEXT_MIN_CHARS = 12
+
+
+def _matches(key: str, want: str, got: str) -> bool:
+    if not want or not got:
+        return False
+    if key == "head":
+        return len(got) >= 7 and got[:len(want)] == want
+    if key != "next":
+        return got == want
+    # D4: "any substring" passed on the answer "a". Containing the whole obligation is fine; a
+    # fragment of it must be a real fragment, not a letter.
+    return got == want or want in got or (got in want and len(got) >= max(NEXT_MIN_CHARS, len(want) // 3))
+
+
+def certify(capsule: dict, answers: dict, reality: Optional[dict] = None) -> dict:
+    """RESUME_CERTIFIED only when every answer matches reality NOW. `reality` defaults to a fresh
+    read of the capsule's tree; an unreadable tree fails the questions that need it."""
+    reality = reality_now(capsule) if reality is None else reality
     wrong = []
-    for item in exam(capsule):
+    for item in exam(capsule, reality):
         want, got = _norm(item["a"]), _norm(answers.get(item["key"]))
-        ok = bool(want) and (got == want if item["key"] != "next" else (got and (got in want or want in got)))
-        if not ok:
-            wrong.append({"key": item["key"], "expected": item["a"], "given": answers.get(item["key"])})
+        if not _matches(item["key"], want, got):
+            wrong.append({"key": item["key"], "expected": item["a"] or "UNREADABLE NOW", "given": answers.get(item["key"])})
     return {"verdict": "RESUME_CERTIFIED" if not wrong else "RESUME_FAILED", "wrong": wrong}
 
 
@@ -929,6 +1187,155 @@ def claim_holder(session_id: str, state_dir: Optional[Path] = None) -> Optional[
         return None
 
 
+def _key(cap: dict) -> str:
+    return cap.get("capsule_key") or cap.get("session_id") or ""
+
+
+def resume_flow(cap: dict, claimant: str, cwd: str, state_dir: Optional[Path] = None,
+                certify_cmd: Optional[str] = None, obligations: Optional[list] = None) -> int:
+    """Successor side, shared by /kresume and the mission adapter: refuse an uncertifiable capsule
+    BEFORE claiming it (I5), claim it (I3), refresh reality and record that refresh on the claim
+    (I4), then print the bootstrap and the questions -- never their answers (D3).
+    Exit 0 claimed, 4 not resumable, 5 claimed by another / lost the claim."""
+    key = _key(cap)
+    why = resumable(cap)
+    if why:
+        # Refused BEFORE the claim: a claim on an uncertifiable capsule only locks others out.
+        print(f"NOT RESUMABLE: capsule {key} cannot be certified -- {'; '.join(why)}.")
+        ledger("resume_not_resumable", state_dir, session_id=key, claimant=claimant, reasons=why)
+        return 4
+    cl = claim(key, claimant, state_dir, host=host_identity())
+    if not cl["claimed"]:
+        print(f"REFUSED: capsule {key[:40]} is already claimed by {cl['holder']}"
+              + (f" ({cl['why']})" if cl.get("why") else "") + ".")
+        ledger("claim_refused", state_dir, session_id=key, claimant=claimant, holder=cl["holder"],
+               why=cl.get("why"))
+        return 5
+    if cl.get("took_over_from"):
+        ledger("claim_taken_over", state_dir, session_id=key, claimant=claimant,
+               previous=cl["took_over_from"], reason=cl.get("takeover_reason"), generation=cl["generation"])
+    rf = refresh(cap, cwd)
+    now = rf.get("now") or {}
+    snapshot = {"state": now.get("state", UNKNOWN), "root": now.get("root"),
+                "branch": now.get("branch") if isinstance(now.get("branch"), str) else None,
+                "head": now.get("head") if isinstance(now.get("head"), str) else None,
+                "dirty": now.get("dirty") if isinstance(now.get("dirty"), list) else None,
+                "obligations": list(obligations) if obligations is not None else obligations_now(cap)}
+    if not note_refresh(key, claimant, rf["verdict"], state_dir, snapshot=snapshot):
+        print(f"REFUSED: the claim on {key[:40]} changed hands while refreshing (or its lock is busy). "
+              "Run resume again; do not mutate.")
+        ledger("claim_lost_during_refresh", state_dir, session_id=key, claimant=claimant)
+        return 5
+    ledger("successor_claimed", state_dir, session_id=key, claimant=claimant, generation=cl["generation"],
+           refresh=rf["verdict"], divergences=rf["divergences"])
+    print(bootstrap(cap))
+    print(f"\nReality refresh: {rf['verdict']}")
+    if rf["now"].get("elsewhere"):
+        print(f"  (checked the capsule's repo, not this cwd -- work there: {rf['now']['elsewhere']})")
+    for d in rf["divergences"]:
+        # Name WHAT moved, not its value: "head: sealed X -> now Y" printed the exam's answer
+        # (caught by V-CAP2-BOOTSTRAP-NO-HEAD). The values stay in the ledger row above.
+        k = d.split(":", 1)[0]
+        print(f"  - {k} moved since the seal" if k in ("root", "branch", "head") else f"  - {d}")
+    if rf["verdict"] != "CONTINUE":
+        print("RECOMPILE: the tree moved since the seal. Do not continue from the capsule as written: "
+              "re-derive the next step from the goal file and the tree; the exam is judged against them NOW.")
+    print("\nResume exam -- answer from the tree and the goal file, before any mutation, then run:")
+    print("  " + (certify_cmd or f"python {Path(__file__).as_posix()} certify --from {key} --claimant {claimant} "
+                  "--goal <file> --branch <b> --head <7> --next \"<first obligation>\""))
+    for item in exam(cap):
+        print(f"  [{item['key']}] {item['q']}")
+    return 0
+
+
+def _snapshot_reality(snap: dict) -> dict:
+    repo = {"state": "OK" if snap.get("head") else UNKNOWN, "root": snap.get("root"),
+            "branch": snap.get("branch"), "head": snap.get("head"), "dirty": snap.get("dirty")}
+    return {"repo": repo, "obligations": snap.get("obligations") or []}
+
+
+def _flip_precert(cap: dict, key: str, claimant: str, state_dir: Optional[Path]) -> Optional[str]:
+    """Lift the mutation guard for a mission successor -- only the marker naming THIS capsule.
+    Returns why it was not lifted, or None."""
+    if cap.get("kind") != "mission":
+        return None
+    mid = ((cap.get("run") or {}).get("mission_id")) or ""
+    mk = precert_read(mid, state_dir)
+    if not mk:
+        return None      # nothing was locked, so there is nothing to lift (the guard reads only markers)
+    if mk.get("capsule_key") != key:
+        return f"the marker names capsule {mk.get('capsule_key')}, not {key}"
+    precert_write(mid, {"certified_at": _now(), "certified_by": claimant}, state_dir)
+    return None
+
+
+def certify_flow(key: str, claimant: str, answers: Optional[dict], state_dir: Optional[Path] = None) -> tuple[int, dict]:
+    """Only the CURRENT generation's holder, after a refresh recorded in that generation, may
+    certify (I3, I4); all of it under the claim lock, so a takeover cannot interleave (G18).
+    Answers are judged against the refresh SNAPSHOT; if the tree moved since, exit 8 = refresh
+    again (G17). A failure names the wrong keys, never the expected values (G15). On success the
+    capsule is retired and, for a mission, the guard's marker is lifted (G25) -- idempotently, so
+    a crash between the two is healed by certifying again.
+    Exit 0 certified, 4 no capsule, 5 fenced / no refresh / lock busy, 6 RESUME_FAILED,
+    7 answers unreadable, 8 tree moved since the refresh."""
+    path = capsule_path(key, state_dir)
+    if not path.is_file():
+        print(f"No capsule {path}.")
+        return 4, {"verdict": "NO_CAPSULE"}
+    marker = path.with_suffix(".claim")
+    with _ClaimLock(marker) as lk:
+        if not lk.ok:
+            print("REFUSED: the claim lock is busy; certify again.")
+            return 5, {"verdict": "LOCK_BUSY"}
+        cur = read_claim(key, state_dir) or {}
+        gen = int(cur.get("generation") or 1)
+        if cur.get("claimant") != claimant:
+            # Fencing: only the successor that holds the claim NOW may take mutation authority.
+            print(f"REFUSED: capsule is claimed by {cur.get('claimant') or 'nobody'}, not {claimant}; run resume first.")
+            ledger("certify_refused", state_dir, session_id=key, claimant=claimant, holder=cur.get("claimant"))
+            return 5, {"verdict": "FENCED"}
+        cap = json.loads(path.read_text(encoding="utf-8"))
+        if cur.get("certified_generation") == gen and path.with_suffix(".certified").exists():
+            why = _flip_precert(cap, key, claimant, state_dir)     # heal a crash after the retire
+            print("RESUME_CERTIFIED (already) -- " + (why or "authority restored") + ".")
+            return (0 if why is None else 5), {"verdict": "RESUME_CERTIFIED", "wrong": [], "marker": why}
+        snap = cur.get("snapshot")
+        if not cur.get("refreshed_at") or cur.get("refreshed_generation") != gen or not isinstance(snap, dict):
+            print("REFUSED: no reality refresh is recorded for this claim; run resume first.")
+            ledger("certify_refused", state_dir, session_id=key, claimant=claimant, holder=claimant,
+                   why="no refresh in this claim generation")
+            return 5, {"verdict": "NO_REFRESH"}
+        if answers is None:
+            print("UNREADABLE: --answers is not a JSON object (PowerShell strips its quotes); "
+                  "pass --goal/--branch/--head/--next instead. Nothing judged.")
+            return 7, {"verdict": "UNREADABLE"}
+        # The tree is compared with the refresh BEFORE anything is judged (review MEDIUM, 2026-10-03):
+        # judged first, a successor that read the NEW head got exit 6 "re-read and retry" for ever,
+        # and a match on the old head wrote a resume_certified row that rollover_replay counts.
+        now = repo_facts(snap.get("root") or ".") if snap.get("root") else {}
+        if now.get("head") != snap.get("head") or now.get("branch") != snap.get("branch"):
+            print("REFRESH AGAIN: the tree moved since your resume (another commit or checkout). "
+                  "Run resume again and re-answer; nothing was judged or certified.")
+            ledger("certify_stale_refresh", state_dir, session_id=key, claimant=claimant, generation=gen)
+            return 8, {"verdict": "STALE_REFRESH"}
+        res = certify(cap, answers, _snapshot_reality(snap))
+        ledger(res["verdict"].lower(), state_dir, session_id=key, claimant=claimant, generation=gen,
+               wrong=[w["key"] for w in res["wrong"]])
+        if res["verdict"] != "RESUME_CERTIFIED":
+            print("RESUME_FAILED -- re-read the goal file and the tree; do not mutate yet. Wrong: "
+                  + ", ".join(w["key"] for w in res["wrong"]))
+            return 6, res
+        _atomic_write(marker, json.dumps({**cur, "certified_generation": gen}).encode("utf-8"))
+        _atomic_write(path.with_suffix(".certified"), _iso().encode("utf-8"))
+        why = _flip_precert(cap, key, claimant, state_dir)
+    if why:
+        ledger("precert_not_lifted", state_dir, session_id=key, claimant=claimant, why=why)
+        print(f"RESUME_CERTIFIED, but mutation authority was NOT restored: {why}.")
+        return 5, {**res, "marker": why}
+    print("RESUME_CERTIFIED -- the capsule is retired; continue with the first obligation.")
+    return 0, res
+
+
 def main(argv=None) -> int:
     for s in (sys.stdout, sys.stderr):
         try:
@@ -1018,61 +1425,9 @@ def main(argv=None) -> int:
                 print(f"  ({len(skipped)} capsule(s) here were skipped as not resumable: no goal or no "
                       f"obligation was recorded, e.g. {skipped[0]})")
             return 4
-        why = resumable(cap)
-        if why:
-            # Refused BEFORE the claim: a claim on an uncertifiable capsule only locks others out.
-            print(f"NOT RESUMABLE: capsule {cap['session_id']} cannot be certified -- {'; '.join(why)}.")
-            ledger("resume_not_resumable", session_id=cap["session_id"], claimant=a.claimant, reasons=why)
-            return 4
-        cl = claim(cap["session_id"], a.claimant)
-        if not cl["claimed"]:
-            print(f"REFUSED: capsule {cap['session_id'][:8]} is already claimed by {cl['holder']}.")
-            ledger("claim_refused", session_id=cap["session_id"], claimant=a.claimant, holder=cl["holder"])
-            return 5
-        rf = refresh(cap, a.cwd)
-        ledger("successor_claimed", session_id=cap["session_id"], claimant=a.claimant,
-               refresh=rf["verdict"], divergences=rf["divergences"])
-        print(bootstrap(cap))
-        print(f"\nReality refresh: {rf['verdict']}")
-        if rf["now"].get("elsewhere"):
-            print(f"  (checked the capsule's repo, not this cwd -- work there: {rf['now']['elsewhere']})")
-        for d in rf["divergences"]:
-            print(f"  - {d}")
-        if rf["verdict"] != "CONTINUE":
-            print("Do not continue from the capsule as written: re-read the goal file and the tree first.")
-        print("\nResume exam -- answer before any mutation, then run:")
-        print(f"  python {Path(__file__).as_posix()} certify --from {cap['session_id']} "
-              f"--claimant {a.claimant} --goal <file> --branch <b> --head <7> --next \"<first obligation>\"")
-        for item in exam(cap):
-            print(f"  [{item['key']}] {item['q']}")
-        return 0
+        return resume_flow(cap, a.claimant, a.cwd)
     if a.cmd == "certify":
-        path = capsule_path(a.from_session)
-        if not path.is_file():
-            print(f"No capsule {path}.")
-            return 4
-        holder = claim_holder(a.from_session)
-        if holder != a.claimant:
-            # Fencing: only the successor that won the claim may take mutation authority.
-            print(f"REFUSED: capsule is claimed by {holder or 'nobody'}, not {a.claimant}; run resume first.")
-            ledger("certify_refused", session_id=a.from_session, claimant=a.claimant, holder=holder)
-            return 5
-        answers = _answers(a)
-        if answers is None:
-            print("UNREADABLE: --answers is not a JSON object (PowerShell strips its quotes); "
-                  "pass --goal/--branch/--head/--next instead. Nothing judged.")
-            return 7
-        cap = json.loads(path.read_text(encoding="utf-8"))
-        res = certify(cap, answers)
-        ledger(res["verdict"].lower(), session_id=a.from_session, wrong=res["wrong"])
-        if res["verdict"] == "RESUME_CERTIFIED":
-            _atomic_write(path.with_suffix(".certified"), _iso().encode("utf-8"))
-            print("RESUME_CERTIFIED -- the capsule is retired; continue with the first obligation.")
-            return 0
-        print("RESUME_FAILED -- re-read the goal file; do not mutate yet.")
-        for w in res["wrong"]:
-            print(f"  {w['key']}: expected {w['expected']!r}, given {w['given']!r}")
-        return 6
+        return certify_flow(a.from_session, a.claimant, _answers(a))[0]
     if a.cmd == "status":
         path = STATE_DIR / "rollover-ledger.jsonl"
         rows = path.read_text(encoding="utf-8").splitlines()[-a.n:] if path.is_file() else []
