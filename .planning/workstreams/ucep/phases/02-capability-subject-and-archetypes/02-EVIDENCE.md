@@ -231,3 +231,11 @@ LIVE: 9f3f38a0 (branch ucep/mission, not pushed; the docs commit carrying this f
 NEXT: Phase 3 promotion admission and scope contract; Owner step O-1 after merge
 DEBT: O-1, O-2, L-1 open; A1 from Phase 1 open; bulk/destructive have no structural detector; KobiiSports calibration is Phase 7
 ```
+
+## Addendum 2026-10-03 (epoch 3): figures after the CR-01 fix
+
+The record above is left as it was measured. After fix `d61b5c23` (code review CR-01, see
+`02-REVIEW-FIX.md`), the current figures are: `CAPABILITY_TRAIT_SCAN_PASS=28/28` (was 27/27, new gate
+`V-TSCAN-PARTIAL-MANIFEST-UNJUDGED`) and `V-ARCH-CAUSES-REACHABLE` over 10 causes (was 9, new cause
+`manifest-unparsed`). `CAPABILITY_ARCHETYPES_PASS=59/59` is unchanged. Re-measured independently by the
+verifier for `02-VERIFICATION.md`.

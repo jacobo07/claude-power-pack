@@ -40,7 +40,7 @@ reusable maturity ratchets the baseline. UNKNOWN / UNJUDGED / DELEGATED / DEFERR
 ## Phases
 
 - [x] **Phase 1: Baseline integrity repair** - the chain is green and ratchet/gate holes are closed before new authority is built (completed 2026-10-03)
-- [ ] **Phase 2: Capability subject and archetypes** - traits from repo structure (cached) + intent; archetype orthogonal to family
+- [x] **Phase 2: Capability subject and archetypes** - traits from repo structure (cached) + intent; archetype orthogonal to family (completed 2026-10-03)
 - [ ] **Phase 3: Promotion admission and scope contract** - every entry added after the cutover carries an admission record
 - [ ] **Phase 4: Archetype maturity generations** - three archetype B0 generations on a second tower axis, admitted
 - [ ] **Phase 5: Envelope compiler** - subject -> surfaces as Obligations with dispositions, reasons, consequences
@@ -92,7 +92,7 @@ Plans:
   3. Intent-only traits carry fact state EXTRACTED and can yield at most CONDITIONAL, never REQUIRED [G16].
   4. `tools/test_capability_archetypes.py`: vocabulary-overlap negative control, intent-only control, trait-transition
      (ephemeral->persistent, local->distributed) recompiles differently, positive controls per archetype.
-**Plans:** 5/5 plans executed
+**Plans:** 5/5 plans complete
 Plans:
 
 - [x] 02-01-PLAN.md — (wave 1) tracer: off-path trait cache -> read-only reader -> WORLD_MUTATION end to end; vocabulary (ten traits, three single-segment archetypes, Strength, N/A bridge); PLANNED registry rows + Owner queue
