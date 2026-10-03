@@ -61,6 +61,7 @@ Total Plans in Phase: 3
 - [Run, epoch 3]: the isolation sentinel had gone stale, so the guard fell back to harness-worktree and refused the executor dispatch. Re-recorded with `query dispatch-isolation --force-isolation none` (internal, reversible); the dispatch then passed.
 - [Phase 5, epoch 3]: plan-check found 1 blocker (05-01 same-name drill could not fail exactly one clause), 1 warning and 1 info; all fixed in plan text by the orchestrator (ec16d6e1, report 05-PLAN-CHECK.md). No checker re-ran on the edited plans; the fixes are mechanical expected-set and precondition edits.
 - [Phase 7, epoch 3]: plan-check found 0 blockers, 5 warnings and 1 info; all fixed (aa0336bf, report 07-PLAN-CHECK.md). Consequence: phase 7 runs only after phases 4-6 have committed SUMMARYs, and its session scan is limited to phases below 7.
+- [Phase 7, epoch 3]: OWNER DECISION NEEDED -- pillar E closed RESEARCH_INSUFFICIENT_EVIDENCE (547cbf76): committed rows are NOT_SEPARABLE (authoritative effect 0, stored 1/2; with the 10 remaining D-SESSIONS the smallest separable effect is 3/4, and the stored effect needs 20 sessions). Question: raise the D-SESSIONS cap to fund a separating benchmark? Options (a) raise the cap to >= 20 and re-run E, (b) keep E as research-insufficient. Pick: (b) -- spending sessions is a resource decision reserved to the Owner, and the program closes honestly without it. Recorded in owner-bundle.md [E].
 
 ## Session Continuity
 
