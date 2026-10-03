@@ -1,0 +1,49 @@
+﻿window 1790410113..1791014913  files 501  model changes 116 in 58 files  of which rebuilds (>50k write) 37
+
+[pairs] all changes / rebuilds / est USD of rebuilds
+    63    0 $   0.00  claude-opus-5-5 -> <synthetic>
+    49   35 $  83.11  <synthetic> -> claude-opus-5-5
+     2    0 $   0.00  claude-opus-5 -> <synthetic>
+     2    2 $   7.07  <synthetic> -> claude-opus-5
+
+[between] events between the two calls -- all changes / rebuilds
+    63   25  attachment:hook_additional_context
+    58   23  attachment:total_tokens_reminder
+    57   26  user:prompt
+    53   24  system:turn_duration
+    50    4  attachment:hook_success
+    34   13  attachment:hook_cancelled
+    34   24  attachment:deferred_tools_delta
+    33   21  attachment:skill_listing
+    28    1  attachment:hook_system_message
+    25    0  system:stop_hook_summary
+    21   17  attachment:instructions
+    19    9  user:meta
+    18    0  (nothing recorded)
+    18   16  attachment:credential_org
+    17   12  attachment:mcp_instructions_delta
+    14   10  attachment:date
+    13   10  attachment:deferred_tools_record
+     9    5  system:informational
+     9    8  attachment:session_context
+     9    8  attachment:command_permissions
+     7    6  attachment:edited_text_file
+     7    3  attachment:environment
+     7    7  attachment:agent_listing_delta
+     5    3  attachment:prompt_snapshot
+     4    4  cmd:/restart
+     3    3  cmd:/rate-limit-options
+     3    3  cmd:/gsd-autonomous
+     2    0  attachment:queued_command
+     2    1  cmd:/kclear
+     2    2  attachment:file
+
+[examples] up to 4 per rebuild pair
+  <synthetic> -> claude-opus-5-5
+      ('05c497a1', '2026-09-28T19:01', ['attachment:deferred_tools_record', 'attachment:hook_additional_context', 'system:informational', 'system:turn_duration', 'user:meta'])
+      ('1420ab69', '2026-09-27T18:01', ['attachment:deferred_tools_record', 'attachment:hook_additional_context', 'system:informational', 'system:turn_duration', 'user:meta'])
+      ('8a4be44c', '2026-09-27T18:44', ['attachment:credential_org', 'attachment:date', 'attachment:deferred_tools_delta', 'attachment:deferred_tools_record', 'attachment:hook_cancelled', 'attachment:instructions'])
+      ('e4c2d161', '2026-10-02T17:55', ['attachment:credential_org', 'attachment:deferred_tools_delta', 'attachment:hook_additional_context', 'attachment:total_tokens_reminder', 'system:turn_duration', 'user:prompt'])
+  <synthetic> -> claude-opus-5
+      ('fd91d5ae', '2026-09-27T19:31', ['attachment:date', 'attachment:hook_cancelled', 'attachment:skill_listing', 'attachment:total_tokens_reminder', 'system:turn_duration', 'user:prompt'])
+      ('b56ffff2', '2026-09-28T11:57', ['attachment:command_permissions', 'attachment:deferred_tools_delta', 'attachment:hook_additional_context', 'attachment:hook_cancelled', 'attachment:hook_success', 'attachment:hook_system_message'])

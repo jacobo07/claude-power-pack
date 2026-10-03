@@ -105,7 +105,10 @@ for f in files:
         if t == "assistant":
             m = d.get("message") or {}
             mid = m.get("id")
-            if mid and mid not in seen:
+            # "<synthetic>" rows are client-made (usage-limit notices, "No response requested.",
+            # connection errors), not model calls. Counting them made every return from a limit
+            # wait read as a "model switch" (2026-10-03, token_economy_model_switch.py --synthetic).
+            if mid and mid not in seen and m.get("model") != "<synthetic>":
                 seen.add(mid)
                 u = m.get("usage") or {}
                 ctx = (u.get("input_tokens") or 0) + (u.get("cache_read_input_tokens") or 0) + (u.get("cache_creation_input_tokens") or 0)

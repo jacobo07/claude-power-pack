@@ -93,7 +93,7 @@ the 7 d window as a share of est. spend; "?" = unmeasured. Owner: who would buil
 | A1 | **Idle-return rollover**: on a > 1 h gap with context well above floor, start fresh from the capsule instead of rewriting | ≤ 6.5 % (the $541 rewrite; net of floor ~60 % of it) + smaller later reads | measured F4 | S-M | rollover owner (SPEC-ECON-ROLLOVER): proposal, this mission's S6 |
 | A2 | **Byte-stable start for worktree / mission epochs** (~550 sessions sharing 2.5k instead of 32k): find what differs (likely per-epoch text in the system prompt) and move it to the first user message | ~1.5 % | measured F2 | S | Ralph / `gsd_epoch` owner |
 | A3 | **Share the post-system prefix across sessions** (~80-95k per start): `--exclude-dynamic-system-prompt-sections` (CLI 2.1.288 has it), stable listings, no per-session text before CLAUDE.md | ≤ ~10 % | doc tier A ("improves prompt-cache reuse"); feasibility UNKNOWN | experiment first | none → [[cold-start-cache-sharing]] |
-| A4 | Stop mid-session model switches (find the source: advisor model, `opusplan`, skill `model:` frontmatter) | ~1 % | measured F4 | S | none |
+| A4 | ~~Stop mid-session model switches~~ **CLOSED 2026-10-03: instrument artifact.** 36 of 37 were `<synthetic>` client rows (limit notices) read as a model; there was 1 real switch, $5. Idle > 1 h re-measured as 252 rebuilds, ~$611 ([[mid-session-prefix-rebuilds]]) | ~0.06 % | measured, corrected | — | none |
 | A5 | Keep the 1 h TTL; do NOT set `CLAUDE_CODE_PROMPT_CACHE_TTL=5m` | avoids +15 % | measured F5 | none | — |
 | A6 | Compact while the cache is warm, never after a break (doc: warm compaction costs a fraction) | ? | doc tier A | S | rollover owner |
 

@@ -1,0 +1,98 @@
+﻿window 2026-09-26 08:08Z -> 2026-10-03 08:08Z; main transcripts=501; intervals fitted=54,103; R^2=0.663; runtime=52s
+
+[C] fitted reach: tokens reaching context per stored char (0 = not sent; ~0.25 = sent as text)
+  attach:hook_success                  coef=0.000 tok/char   stored=    78,706,571
+  attach:prompt_snapshot               coef=0.003 tok/char   stored=    71,118,571
+  asst:tool_use                        coef=0.437 tok/char   stored=    57,396,377
+  tool:Read(full)                      coef=0.350 tok/char   stored=    30,126,926
+  tool:PowerShell                      coef=0.480 tok/char   stored=    24,313,093
+  tool:Read(paged)                     coef=0.427 tok/char   stored=    21,151,739
+  attach:hook_cancelled                coef=0.140 tok/char   stored=    14,821,027
+  attach:hook_additional_context       coef=0.374 tok/char   stored=    14,060,995
+  user:text                            coef=0.315 tok/char   stored=    10,920,227
+  tool:Grep                            coef=0.502 tok/char   stored=     9,725,980
+  asst:text                            coef=0.517 tok/char   stored=     7,834,368
+  attach:total_tokens_reminder         coef=0.000 tok/char   stored=     4,956,620
+  attach:skill_listing                 coef=0.314 tok/char   stored=     4,033,160
+  attach:queued_command                coef=0.070 tok/char   stored=     3,986,942
+  attach:instructions                  coef=0.299 tok/char   stored=     3,863,322
+  asst:thinking                        coef=2.054 tok/char   stored=     3,457,626  CONFOUNDED (>0.6 tok/char is not text)
+  attach:deferred_tools_record         coef=0.322 tok/char   stored=     2,268,539
+  tool:Edit                            coef=0.000 tok/char   stored=     2,199,402
+  attach:edited_text_file              coef=0.529 tok/char   stored=     1,458,601
+  tool:Write                           coef=0.139 tok/char   stored=     1,409,570
+  attach:deferred_tools_delta          coef=0.449 tok/char   stored=     1,221,430
+  attach:hook_system_message           coef=0.000 tok/char   stored=     1,168,371
+  tool:Glob                            coef=0.542 tok/char   stored=       979,714
+  tool:Agent                           coef=0.208 tok/char   stored=       869,590
+  attach:environment                   coef=0.126 tok/char   stored=       775,788
+  attach:hook_blocking_error           coef=0.049 tok/char   stored=       610,492
+  attach:agent_listing_delta           coef=0.396 tok/char   stored=       464,549
+  attach:nested_memory                 coef=0.465 tok/char   stored=       404,665
+  tool:WebFetch                        coef=0.319 tok/char   stored=       373,717
+  attach:silent_turn_reminder          coef=0.634 tok/char   stored=       354,200  CONFOUNDED (>0.6 tok/char is not text)
+  attach:file                          coef=0.455 tok/char   stored=       346,710
+  attach:mcp_instructions_delta        coef=0.000 tok/char   stored=       320,915
+  tool:WebSearch                       coef=0.365 tok/char   stored=       220,401
+  tool:ListAgents                      coef=0.527 tok/char   stored=       104,345
+  attach:task_reminder                 coef=0.531 tok/char   stored=       103,992
+  tool:mcp__claude-in-chrome__computer coef=0.835 tok/char   stored=        67,704  CONFOUNDED (>0.6 tok/char is not text)
+  tool:TaskStop                        coef=0.391 tok/char   stored=        62,594
+  tool:AskUserQuestion                 coef=0.720 tok/char   stored=        61,318  CONFOUNDED (>0.6 tok/char is not text)
+  tool:SendMessage                     coef=0.000 tok/char   stored=        57,871
+  tool:Artifact                        coef=0.360 tok/char   stored=        51,177
+  _per_call_const                      coef=279.211 tok/call   stored=             0
+
+[R] lifetime cost by kind = write once (1h rate) + re-read on every later call (Opus 5.5 rates)
+  kind                                    items  ins Mtok  reread Btok  share     usd
+  attach:instructions                       574      36.9         3.79  24.8%   1,053
+  asst:tool_use                          61,036      25.1         2.04  13.4%     609
+  _per_call_const                        54,655      15.3         1.34   8.8%     390
+  tool:Read(full)                         4,661      10.5         1.10   7.2%     304
+  tool:PowerShell                        21,442      11.7         1.05   6.9%     304
+  attach:agent_listing_delta                606       8.8         0.92   6.0%     254
+  tool:Read(paged)                        6,737       9.0         0.86   5.6%     244
+  user:text                               4,607       6.2         0.66   4.3%     182
+  attach:skill_listing                    1,401       6.4         0.63   4.1%     178
+  attach:hook_additional_context         17,773       7.0         0.63   4.1%     182
+  asst:thinking                          13,945       7.1         0.60   4.0%     178
+  tool:Grep                               7,495       4.9         0.51   3.3%     141
+  asst:text                              20,651       4.1         0.32   2.1%      96
+  attach:deferred_tools_delta             1,182       1.9         0.19   1.3%      54
+  attach:hook_cancelled                  63,565       2.1         0.19   1.2%      54
+  attach:deferred_tools_record            9,144       1.0         0.10   0.6%      27
+  attach:edited_text_file                 1,275       0.8         0.06   0.4%      19
+  attach:file                               246       0.6         0.06   0.4%      17
+  tool:Glob                                 974       0.5         0.04   0.2%      11
+  attach:prompt_snapshot                  1,083       0.2         0.03   0.2%       7
+  attach:queued_command                   1,494       0.3         0.02   0.1%       7
+  attach:silent_turn_reminder             2,530       0.2         0.02   0.1%       6
+  TOTAL growth items: re-read 15.25 B tok, ~usd 4,344 (floor not included: it is not in the transcript as items)
+
+[R2] top 12 single items by lifetime re-read tokens
+     48.9 Mtok  attach:instructions      'instructions'                                               2aad6d8e-ed0
+     42.4 Mtok  attach:instructions      'instructions'                                               3b9e09b3-24d
+     32.1 Mtok  attach:instructions      'instructions'                                               72012a02-c6c
+     31.3 Mtok  attach:instructions      'instructions'                                               b0d83764-280
+     29.9 Mtok  attach:instructions      'instructions'                                               2ea09aa4-c93
+     29.5 Mtok  attach:instructions      'instructions'                                               23663287-132
+     29.2 Mtok  attach:instructions      'instructions'                                               d715742e-02e
+     28.8 Mtok  attach:instructions      'instructions'                                               26ff693c-b97
+     28.6 Mtok  attach:instructions      'instructions'                                               5aead561-4e0
+     28.4 Mtok  attach:instructions      'instructions'                                               2aad6d8e-ed0
+     27.5 Mtok  attach:instructions      'instructions'                                               e0e1a7a9-250
+     27.2 Mtok  attach:instructions      'instructions'                                               2ea09aa4-c93
+
+[P] mid-session prefix rebuilds (cw > 50k, not first call): n=301
+  idle > 1h (TTL expired)              n=  252  ~usd    611
+  after compaction                     n=   29  ~usd     35
+  full rebuild, gap <= 5m              n=    9  ~usd     24
+  partial rebuild, gap <= 5m           n=    9  ~usd      8
+  idle 5m-1h on 1h TTL (not TTL)       n=    1  ~usd      1
+  model switch                         n=    1  ~usd      5
+
+[T] output=44,981,387; thinking=12,374,308 (27.5% of output); effort: [('medium', 53892), ('high', 694), ('None', 69)]
+
+[S] Read calls=11,778; full=5,038 paged=6,740; re-read of an already-read path=3,552 (30.2%)
+
+[H] human prompts=2,726; API calls per prompt p50/p90/p99/max = 7/56/162/475; mean=20.0

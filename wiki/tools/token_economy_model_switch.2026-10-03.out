@@ -1,0 +1,26 @@
+﻿window 1790410113..1791014913  files 501  model changes 1 in 1 files  of which rebuilds (>50k write) 1
+
+[pairs] all changes / rebuilds / est USD of rebuilds
+     1    1 $   4.68  claude-opus-5-5 -> claude-opus-5
+
+[between] events between the two calls -- all changes / rebuilds
+     1    1  attachment:model
+     1    1  attachment:remote_session_change
+     1    1  attachment:hook_additional_context
+     1    1  system:turn_duration
+     1    1  attachment:hook_success
+     1    1  user:meta
+     1    1  cmd:/kclear
+     1    1  attachment:command_permissions
+     1    1  attachment:instructions
+     1    1  attachment:mcp_instructions_delta
+     1    1  attachment:hook_cancelled
+     1    1  user:prompt
+     1    1  attachment:hook_system_message
+     1    1  attachment:deferred_tools_delta
+     1    1  attachment:skill_listing
+     1    1  system:stop_hook_summary
+
+[examples] up to 4 per rebuild pair
+  claude-opus-5-5 -> claude-opus-5
+      ('b56ffff2', '2026-09-28T11:57', ['attachment:command_permissions', 'attachment:deferred_tools_delta', 'attachment:hook_additional_context', 'attachment:hook_cancelled', 'attachment:hook_success', 'attachment:hook_system_message'])

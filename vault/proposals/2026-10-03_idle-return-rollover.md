@@ -16,6 +16,13 @@ status: OPEN (owner decides)
 than 1 h idle, so the prompt cache had expired. The first call after the gap rewrote the whole
 context, about 300k at p50, at the cache-write price.
 
+**Re-measured the same day** (`token_economy_deep.2026-10-03.out` [P], after removing
+`<synthetic>` client rows that were being read as model switches): **252 idle rebuilds, ~$611.**
+Part of this class is returns from a usage limit. 25 of the 43 synthetic rows found right before
+a rebuild were limit notices. The Owner cannot shorten those waits. Once the notice appears, no model call can run, so `/kclear`
+cannot seal at that point. A warm seal would have to come earlier, from the usage meter nearing
+the limit. That is unchecked: it needs the meter to be readable from a hook.
+
 ## A correction to how the idea was first written
 
 The brainstorm says "the cache is already cold, so a fresh epoch is free." Measured against the

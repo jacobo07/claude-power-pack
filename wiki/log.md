@@ -113,3 +113,8 @@ Append-only. Newest at the bottom. `grep "^## \[" log.md` lists every entry.
 - notes: 'a fresh epoch is free' was wrong. A handoff older than 30 min fails SAFE_TO_FORGET, so
   /kclear after the gap is the cold rewrite. Sent to the rollover owner as S6:
   vault/proposals/2026-10-03_idle-return-rollover.md (pre-call block + handoff-less capsule = owner call).
+
+## [2026-10-03] query | A4 model switches were an instrument artifact
+- touched: [[mid-session-prefix-rebuilds]], [[token-economy-brainstorm]]
+- notes: deep.py read `<synthetic>` client rows (limit notices, 'No response requested.') as a model.
+  1 real switch ($5). Fixed and re-run: idle > 1 h 252 (~$611). A4 closed. New tool token_economy_model_switch.py.
