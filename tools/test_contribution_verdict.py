@@ -460,6 +460,25 @@ def max_effect(counts):
     return max(e for _, e, _ in ps) if ps else None
 
 
+CFIXED_RE = re.compile(r"^\s*(\d+)/(\d+) PASS\b")
+
+
+def c_fixed_frozen(arm_c, counts, b):
+    """The frozen D-CARD.arm_c figure ("a/n PASS ...", no committed row) judged by the SAME verdict rule as
+    the committed rows: its effect against the committed control, separation_verdict against the budget
+    floor, and the equal k it would need. None when the figure does not parse or nothing is measured."""
+    m = CFIXED_RE.match(arm_c) if isinstance(arm_c, str) else None
+    ctl = (counts or {}).get(CONTROL_ARM)
+    if m is None or not ctl or ctl["n"] == 0 or b is None:
+        return None
+    a, n = int(m.group(1)), int(m.group(2))
+    if n < 1 or a > n:
+        return None
+    eff = abs(Fraction(a, n) - rate(ctl))
+    return {"passes": a, "n": n, "control": ctl, "effect": eff, "verdict": separation_verdict(eff, b["floor"]),
+            "needed_k": needed_k(eff), "p_rows": fisher_two_sided(a, n, ctl["passes"], ctl["n"])}
+
+
 def consumption(rows) -> dict:
     """Per arm, from the rows' delivery / card_rows fields. A row is measured for consumption only when
     valid is True and delivery.state is MEASURED with boolean skill fields; otherwise UNMEASURED."""
@@ -896,6 +915,19 @@ def _drill_specs():
         n, unm = sum(a["n"] for a in c.values()), sum(a["unmeasured"] for a in c.values())
         return n == 7 and unm == 1, f"consumption measured {n}, UNMEASURED {unm}"
 
+    def set_c_pass(rows):
+        for r in rows:
+            if r.get("arm") == "C":
+                r["grade"] = PASS_GRADE
+
+    def c_fixed_rule(inp, ctx, results):
+        """CR-01: the frozen-figure judgement (c_fixed_frozen) must agree with the verdict on real rows."""
+        eff = max_effect(ctx["counts"])
+        cf = c_fixed_frozen("2/2 PASS", ctx["counts"], ctx["bound"])
+        good = eff == 1 and needed_k(eff) == 4 and cf is not None and cf["verdict"] == "SEPARABLE"
+        return good, (f"effect {frac(eff)}, needed equal k {needed_k(eff)}, frozen-figure judgement "
+                      f"{cf['verdict'] if cf else 'none'}")
+
     inc3 = {"V-CT-SOURCES": "INCONCLUSIVE", "V-CT-SEPARATION": "INCONCLUSIVE", "V-CT-GRADES-AGREE": "INCONCLUSIVE"}
     inc_budget = {"V-CT-SESSIONS": "INCONCLUSIVE", "V-CT-BOUND": "INCONCLUSIVE",
                   "V-CT-SEPARATION": "INCONCLUSIVE", "V-CT-GRADES-AGREE": "INCONCLUSIVE"}
@@ -909,6 +941,8 @@ def _drill_specs():
                                       regrade=[]), {"V-CT-SEPARATION": "FAIL"}, "SEPARABLE", None),
         ("edge-P3of5-vs-N0-0of5", upd(rows=lambda i: _fab(i["rows"], [("P", [P_] * 3 + [F] * 2), ("N0", [F] * 5)]),
                                       regrade=[]), {}, "NOT_SEPARABLE", None),
+        ("c-fixed-2of2-pass", upd(rows=rows_with(set_c_pass)), {"V-CT-SEPARATION": "FAIL"}, "SEPARABLE",
+         c_fixed_rule),
         ("no-N0-rows", upd(rows=lambda i: [r for r in i["rows"] if r.get("arm") != CONTROL_ARM],
                            regrade=lambda i: [g for g in i["regrade"] if not g["run_id"].startswith("D-cwst-N0-")]),
          inc3, "INCONCLUSIVE", unmeasured(CONTROL_ARM)),
@@ -1156,8 +1190,21 @@ def render(rows, regrade_rows, fro, st, outside=()) -> str:
     L.append(f"- C card fixed, deny mode: frozen `D-CARD.arm_c` = \"{arm_c}\"; `{AUDIT_REL}` line {cl}: \"{cq}\" "
              f"-- no committed row holds it (the {len(info['rows_blob'])} pinned rows hold only the pre-fix C arm); "
              f"not used by the verdict.")
-    L.append(f"  - fisher_two_sided(2, 2, 0, 2) = {frac(fisher_two_sided(2, 2, 0, 2))}: even the largest possible "
-             f"n=2 effect cannot separate, so these rows could not change the verdict.")
+    cf = c_fixed_frozen(arm_c, counts, b)
+    if cf is None:
+        L.append("  - `D-CARD.arm_c` states no `a/n PASS` figure against a measured control; nothing to judge.")
+    else:
+        kk = cf["needed_k"]
+        can = ("the budget could separate an effect of this size" if cf["verdict"] == "SEPARABLE"
+               else "the budget could not separate it")
+        L.append(f"  - judged by the verdict rule used for the committed rows: {cf['passes']}/{cf['n']} PASS against "
+                 f"{CONTROL_ARM} {cf['control']['passes']}/{cf['control']['n']} is an effect of {frac(cf['effect'])} "
+                 f"({points(cf['effect'])} points), floor {frac(b['floor'])}, so {cf['verdict']}: {can} "
+                 f"(equal k = {kk} per arm, {2 * kk if kk else 'none'} sessions, against new_benchmark_cap {cap}). "
+                 f"Rows like these, judged as committed rows, would give the verdict {cf['verdict']}.")
+        L.append(f"  - fisher_two_sided({cf['passes']}, {cf['n']}, {cf['control']['passes']}, {cf['control']['n']}) = "
+                 f"{frac(cf['p_rows'])}: whether these few rows are significant on their own, which is not what "
+                 f"pillar E asks (it asks whether the budget can separate an effect of this size).")
     sl, sq = _find_line(st["residency"], r"\d+/\d+ sessions used")
     L.append(f"- \"{sq}\" (`{RESIDENCY_REL}` line {sl}): the skill-residency program's own budget, not D-SESSIONS; "
              f"not used by the verdict.")
@@ -1303,6 +1350,11 @@ def derived_json(inp, fro, cap) -> dict:
                           for a, c in sorted(ctx["consumption"].items())}
     ea, es = max_effect(counts) if counts else None, max_effect(stored)
     out["needed_k"] = {"authoritative": needed_k(ea), "stored": needed_k(es)}
+    cf = c_fixed_frozen(fro["denominators"].get("D-CARD", {}).get("arm_c"), ctx["counts"], b)
+    out["c_fixed_frozen"] = None if cf is None else {
+        "passes": cf["passes"], "n": cf["n"], "control": f"{cf['control']['passes']}/{cf['control']['n']}",
+        "effect": frac(cf["effect"]), "verdict": cf["verdict"], "needed_k": cf["needed_k"],
+        "p_rows": frac(cf["p_rows"]), "committed_row": False}
     info = st["info"]
     out["pins"] = {"rows_commit": info["rows_commit"], "rows_blob_sha256": info["rows_sha"],
                    "regrade_add_commit": st["regrade_commit"], "regrade_blob_sha256": info["regrade_sha"]}

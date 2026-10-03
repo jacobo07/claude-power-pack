@@ -125,7 +125,8 @@ n < 5 per arm: no rate estimated, only counts.
 ## Figures not derivable from the committed rows (cited, not used by the verdict)
 
 - C card fixed, deny mode: frozen `D-CARD.arm_c` = "2/2 PASS (123c96cc)"; `vault/audits/cwst-representation-verdict-2026-10-03.md` line 21: "| **C card, fixed (123c96cc), deny mode** | 2 | **2/2 PASS**, 1 commit each |" -- no committed row holds it (the 8 pinned rows hold only the pre-fix C arm); not used by the verdict.
-  - fisher_two_sided(2, 2, 0, 2) = 1/3: even the largest possible n=2 effect cannot separate, so these rows could not change the verdict.
+  - judged by the verdict rule used for the committed rows: 2/2 PASS against N0 0/2 is an effect of 1 (100 points), floor 3/4, so SEPARABLE: the budget could separate an effect of this size (equal k = 4 per arm, 8 sessions, against new_benchmark_cap 10). Rows like these, judged as committed rows, would give the verdict SEPARABLE.
+  - fisher_two_sided(2, 2, 0, 2) = 1/3: whether these few rows are significant on their own, which is not what pillar E asks (it asks whether the budget can separate an effect of this size).
 - "10/40 sessions used" (`vault/plans/skill-residency-program-2026-10-03.md` line 93): the skill-residency program's own budget, not D-SESSIONS; not used by the verdict.
 - "R loaded the full body (proven by a body-only sentence)" (commit 713b02a7 message): no row field records it; not used by the verdict.
 
