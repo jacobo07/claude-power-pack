@@ -63,7 +63,32 @@ turn-advancement, compile-out, baseline-ratchet. Waste less intelligence, never 
   filled. `--final` CEP_VERDICT=PASS failures=0. CLOSE.md written.
 - [Epoch 3]: the campaign-dirty `vault/progress.md` (+10 lines, hook-written, not campaign-owned) left uncommitted.
 
+- [Epoch 4, 2026-10-03]: re-ran `--final` from a fresh process: `CEP_VERDICT=PASS failures=0`, exit 0; all 13
+  phase 3-7 pillars `--pillar` PASS.
+- [Epoch 4]: ROOT CAUSE of epochs 3-4 being launched into a finished run: GSD counted 2/7 phases (phases 3-7 closed in
+  the ledger had no SUMMARY/VERIFICATION; 4, 6, 7 had no directory), so the supervisor's `_supervise_gsd_status`
+  could never return ALL_COMPLETE. Wrote the missing PLAN (labelled "record of the plan as executed"), SUMMARY,
+  VERIFICATION and EVIDENCE files from the committed evidence; supervisor status now `ALL_COMPLETE 7/7`. Safe:
+  documentation only, campaign-owned paths, on the unmerged branch.
+- [Epoch 4]: GSD lifecycle (audit-milestone / complete-milestone / cleanup) deliberately NOT run. The workstream's
+  milestone is `v1` and `.planning/milestones/v1-MILESTONE-AUDIT.md` already belongs to the ROOT track's v1
+  (`continuation-proven-live`), so archiving would collide with another track's artifacts. The committed ledger +
+  `--final` is this campaign's authority (plan s10). Safe: nothing archived or deleted.
+- [Epoch 4]: phase 6 owner tests run: `test_baseline_generations.py` 15/16 on both trees (9 B0 citations
+  QUOTE_MISSING, pre-existing); `test_tower_ratchet.py` 20/21 on the branch vs 21/21 on main (`web_surface` gen 1
+  tampered; the branch touches only campaign paths). Named owner debt in `06-VERIFICATION.md`, not campaign-caused.
+- [Epoch 4]: the main checkout's copy of this workstream (STATE "Phase 1, not started") is stale only because the
+  branch is unmerged; it resolves with `[RUN]`. Not editable from a background session (harness isolation guard).
+
+**OWNER DECISION NEEDED** -- Integrate the campaign? Options: (a) `git -C <repo> merge --no-ff
+cognitive-economy/autonomous-run` into `feature/knowledge-acquisition` (the `[RUN]` bundle item); (b) keep the branch
+unmerged as a record. Pick: (a). The merge is reserved to the Owner (shared branch, peer panes, never-merge rule for
+workers). The other bundle items `[L]`, `[B]`, `[T]`, `[R] UC-04` are unchanged.
+
 ## Session Continuity
+
+**EPOCH 4 (2026-10-03): GSD now reports ALL_COMPLETE 7/7 in this worktree; `--final` PASS re-verified. A worker
+woken again should only re-run `--final` here and stop: there is no runnable phase.**
 
 **CAMPAIGN CLOSED (epoch 3, 2026-10-03).** All 20 pillars terminal; done-gate PASS on branch
 `cognitive-economy/autonomous-run`. Remaining work is the Owner bundle only (`[RUN]` merge, `[L]`, `[B]`, `[T]`,
