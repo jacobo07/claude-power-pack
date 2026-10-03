@@ -118,7 +118,7 @@ Plans:
 **Depends on**: nothing (read-only on transcripts).
 **Success criteria**: per pillar one measurement file naming its denominator and `command:`; materiality applied
 exactly; a second workload sampled for any pillar that clears 3 %.
-**Plans:** 4/5 plans executed (sequential waves 1-5; all share wiki/tools/kme_pillars.py)
+**Plans:** 5/5 plans executed (sequential waves 1-5; all share wiki/tools/kme_pillars.py)
 
 Plans:
 **Wave 1**
@@ -139,7 +139,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 03-05-PLAN.md — R3 done-gate guard (terminal_evidence false refused), [D]-[I] laptop owner-bundle lines, evidence/phase3.md
+- [x] 03-05-PLAN.md — R3 done-gate guard (terminal_evidence false refused), [D]-[I] laptop owner-bundle lines, evidence/phase3.md
 
 ### Phase 4: Cognitive cost regression gate
 
