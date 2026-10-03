@@ -1,0 +1,4 @@
+#!/bin/bash
+# fails every `git log`, everything else real
+for a in "$@"; do if [ "$a" = "log" ]; then echo "fatal: simulated" >&2; exit 128; fi; done
+exec /usr/bin/git "$@"

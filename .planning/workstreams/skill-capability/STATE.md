@@ -61,7 +61,7 @@ Total Plans in Phase: 3
 - [Run, epoch 3]: the isolation sentinel had gone stale, so the guard fell back to harness-worktree and refused the executor dispatch. Re-recorded with `query dispatch-isolation --force-isolation none` (internal, reversible); the dispatch then passed.
 - [Phase 5, epoch 3]: plan-check found 1 blocker (05-01 same-name drill could not fail exactly one clause), 1 warning and 1 info; all fixed in plan text by the orchestrator (ec16d6e1, report 05-PLAN-CHECK.md). No checker re-ran on the edited plans; the fixes are mechanical expected-set and precondition edits.
 - [Phase 7, epoch 3]: plan-check found 0 blockers, 5 warnings and 1 info; all fixed (aa0336bf, report 07-PLAN-CHECK.md). Consequence: phase 7 runs only after phases 4-6 have committed SUMMARYs, and its session scan is limited to phases below 7.
-- [Phase 7, epoch 3]: OWNER DECISION NEEDED -- pillar E closed RESEARCH_INSUFFICIENT_EVIDENCE (547cbf76): committed rows are NOT_SEPARABLE (authoritative effect 0, stored 1/2; with the 10 remaining D-SESSIONS the smallest separable effect is 3/4, and the stored effect needs 20 sessions). Question: raise the D-SESSIONS cap to fund a separating benchmark? Options (a) raise the cap to >= 20 and re-run E, (b) keep E as research-insufficient. Pick: (b) -- spending sessions is a resource decision reserved to the Owner, and the program closes honestly without it. Recorded in owner-bundle.md [E].
+- [Phase 7, epoch 3]: OWNER DECISION NEEDED (CORRECTED after 07-REVIEW CR-01) -- pillar E closed RESEARCH_INSUFFICIENT_EVIDENCE (547cbf76) on the committed rows (NOT_SEPARABLE: authoritative effect 0, stored 1/2, all-allocation floor 3/4 at 10 remaining D-SESSIONS). The earlier pick "(b) keep E" rested on a FALSE claim in E-contribution.md and owner-bundle [E] that the frozen D-CARD.arm_c "2/2 PASS" figure "could not change the verdict (p=1/3)": under the gate's effect-size rule a 2/2 vs 0/2 arm is effect 1, and 4 per arm (8 sessions, inside the cap of 10) would separate it. Also the stored-grade P effect needs 15 sessions at 6 vs 9 (not 20). Question: spend D-SESSIONS? Options (a) ~8 sessions on a C-fixed vs N0 benchmark the budget CAN separate, (b) raise the cap for the P effect (>= 15), (c) keep E research-insufficient. No pick: spending sessions is resource-reserved to the Owner; figures pending the 07 review fix (which must derive them in --json).
 
 ## Session Continuity
 
@@ -83,6 +83,28 @@ Total Plans in Phase: 3
   `node ~/.claude/gsd-core/bin/gsd-tools.cjs query dispatch-isolation --raw --force-isolation none --cwd .`.
 - Gates read committed blobs only (phase 4 WR-04): after --write-evidence / --record-cards / --measure-live a gate
   reads INCONCLUSIVE until the output is committed.
+
+### Epoch 3 -> 4 hand-off (mission context wall hit 2026-10-04; verify against git, the repository wins)
+
+- COMPLETE and verified: phases 1-6 (A,B,C,D,F,G,H IMPLEMENTED_AND_VERIFIED; B per its ledger line). Phase 7 executed:
+  07-01 (0ba8e820, gate CT_PASS=13/13 NOT_SEPARABLE), 07-02 closed E RESEARCH_INSUFFICIENT_EVIDENCE (547cbf76).
+  `--status` at c08c2509: closed A-H, open I-N, violations [].
+- NEXT 1 (phase 7): fix `07-REVIEW.md` (c08c2509: CR-01, WR-01..04, IN-01..04) -- NOT STARTED (fixer stopped by the
+  wall with zero edits). Ready-made RED inputs: `phases/07-contribution/review-drills/` (drill_cfixed.py -> CR-01,
+  mintotal.py -> WR-01 figure 15 = 6 vs 9, drill_append.py -> WR-02, drill_zero.py -> WR-03, fakebin/git -> WR-04,
+  fisher.py independent check). They call tools/test_contribution_verdict.py functions directly. Then rewrite the
+  owner-bundle [E] line and state.E reason FROM --json, re-pin E-contribution.md, then verify phase 7.
+- NEXT 2 (phase 8): no plans yet. Design + verified premises in `phases/08-*/08-DESIGN-HANDOFF.md` (bd213923); two
+  premises unchecked (modules/capability_runtime/retirement.py; skill-creator quick_validate.py allowed keys). Write
+  08-01..08-04 from it, plan-check, execute. Phase 9 (closeout) after.
+- Agents hit the mission wall too: keep each dispatch small (one plan / one fix set), and make it write to disk from
+  its first step. Two verifiers in this epoch ended without a report; read their file from disk and resume them.
+- Mechanics: isolation sentinel stale after 10 min -> `query dispatch-isolation --raw --force-isolation none` before
+  each gsd-executor dispatch. `verification.fingerprint` takes the PHASE DIR as its first argument; recompute the
+  covered_digest AFTER the last edit to any covered file (REQUIREMENTS.md and owner-bundle.md are covered), else
+  `phase complete` refuses as stale.
+- Owner items pending: push of mission/skill-capability-run (epoch 2), pillar E session spend (above), and the
+  owner-bundle.md lines [A]..[H].
 
 ### Epoch 2 hand-off (verify against git, the repository wins)
 
