@@ -11,6 +11,10 @@ expansion that follows a typed command (turnCompanion) or a Skill call (sourceTo
 (an aperture, not a zero). Subagent transcripts (<session>/subagents/*.jsonl) join their parent by
 the FILE's session id, never by a row's session_id field.
 
+Row-time bounds (optional): count_file(since=, until=) and scan(bound_rows=True) keep only candidate rows whose
+`timestamp` lies in [since, until] (epoch seconds). A candidate row with no parseable timestamp is counted in
+`untimed_rows` and on no channel: an aperture, never an invocation and never a zero. Unbounded output is unchanged.
+
 Not observable here at all: bodies a hook injects (SessionStart, JIT), doctrine cards. Those deliver
 a capability with no invocation event, so "no observed invocation" never means "never delivered".
 
@@ -24,6 +28,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime
 from collections import Counter
 from pathlib import Path
 
@@ -62,9 +67,22 @@ def session_of(path: Path) -> str:
     return path.stem
 
 
-def count_file(path: Path, installed: set[str], seen: set | None = None) -> dict:
+def row_epoch(d: dict) -> float | None:
+    """The row's ISO `timestamp` as epoch seconds, or None when missing or unparseable."""
+    ts = d.get("timestamp") if isinstance(d, dict) else None
+    if not isinstance(ts, str):
+        return None
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
+def count_file(path: Path, installed: set[str], seen: set | None = None,
+               since: float | None = None, until: float | None = None) -> dict:
     seen = seen if seen is not None else set()
-    model, typed, unknown = Counter(), Counter(), 0
+    model, typed, unknown, untimed = Counter(), Counter(), 0, 0
+    bounded = since is not None or until is not None
     with open(path, encoding="utf-8", errors="replace") as fh:
         for line in fh:
             if '"Skill"' not in line and "command-name" not in line:
@@ -73,6 +91,13 @@ def count_file(path: Path, installed: set[str], seen: set | None = None) -> dict
                 d = json.loads(line)
             except ValueError:
                 continue
+            if bounded:
+                ep = row_epoch(d)
+                if ep is None:
+                    untimed += 1
+                    continue
+                if (since is not None and ep < since) or (until is not None and ep > until):
+                    continue
             m = d.get("message") or {}
             if d.get("type") == "assistant":
                 for b in m.get("content") or []:
@@ -95,12 +120,15 @@ def count_file(path: Path, installed: set[str], seen: set | None = None) -> dict
                 elif isinstance(c, list) and any(isinstance(b, dict) and TAG.search(str(b.get("text", "")))
                                                  for b in c):
                     unknown += 1
-    return {"session": session_of(path), "model": model, "typed": typed, "unknown_rows": unknown}
+    return {"session": session_of(path), "model": model, "typed": typed, "unknown_rows": unknown,
+            "untimed_rows": untimed}
 
 
-def scan(root: Path, days: float, installed: set[str], now: float | None = None) -> dict:
-    cut = (now or time.time()) - days * 86400
-    model, typed, unknown, files, sessions = Counter(), Counter(), 0, 0, set()
+def scan(root: Path, days: float, installed: set[str], now: float | None = None,
+         bound_rows: bool = False) -> dict:
+    now_eff = now or time.time()
+    cut = now_eff - days * 86400
+    model, typed, unknown, files, sessions, untimed = Counter(), Counter(), 0, 0, set(), 0
     seen: set = set()
     for f in root.rglob("*.jsonl"):
         try:
@@ -109,12 +137,14 @@ def scan(root: Path, days: float, installed: set[str], now: float | None = None)
         except OSError:
             continue
         files += 1
-        r = count_file(f, installed, seen)
+        r = (count_file(f, installed, seen, since=cut, until=now_eff) if bound_rows
+             else count_file(f, installed, seen))
         model.update(r["model"]); typed.update(r["typed"]); unknown += r["unknown_rows"]
+        untimed += r["untimed_rows"]
         if r["model"] or r["typed"]:
             sessions.add(r["session"])
     return {"files": files, "sessions_with_calls": len(sessions), "model": model, "typed": typed,
-            "unknown_rows": unknown}
+            "unknown_rows": unknown, "untimed_rows": untimed}
 
 
 def main(argv=None) -> int:

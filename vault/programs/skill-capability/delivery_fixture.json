@@ -1,0 +1,357 @@
+{
+ "schema": "skill-delivery-fixture/1",
+ "capability": "concurrent-writers-shared-tree",
+ "installed": [
+  "concurrent-writers-shared-tree",
+  "kclear"
+ ],
+ "window": {
+  "name": "F",
+  "plane": "fixture",
+  "selection": "synthetic: every row authored for a known answer"
+ },
+ "card_rows": [
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000001",
+   "decision": "deny-card",
+   "ts": "2026-10-01T10:00:00.000Z",
+   "foreign": [
+    "src/f1_0.py"
+   ],
+   "needed": true
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000001",
+   "decision": "pass-after-card",
+   "ts": "2026-10-01T10:00:15.000Z",
+   "foreign": [
+    "src/f1_0.py"
+   ],
+   "needed": null
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000002",
+   "decision": "deny-card",
+   "ts": "2026-10-01T10:10:00.000Z",
+   "foreign": [
+    "src/f2_0.py",
+    "src/f2_1.py"
+   ],
+   "needed": false
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000002",
+   "decision": "no_opportunity",
+   "ts": "2026-10-01T10:20:00.000Z",
+   "foreign": [],
+   "needed": null
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000003",
+   "decision": "deny-card",
+   "ts": "2026-10-01T10:30:00.000Z",
+   "foreign": [
+    "src/f3_0.py"
+   ],
+   "needed": false
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000003",
+   "decision": "unknown",
+   "ts": "2026-10-01T10:35:00.000Z",
+   "foreign": [],
+   "needed": null,
+   "reason": "git exit 128"
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000004",
+   "decision": "opportunity",
+   "ts": "2026-10-01T11:00:00.000Z",
+   "foreign": [
+    "src/f4_0.py"
+   ],
+   "needed": false
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000005",
+   "decision": "opportunity",
+   "ts": "2026-10-01T11:10:00.000Z",
+   "foreign": [
+    "src/f5_0.py"
+   ],
+   "needed": false
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000005",
+   "decision": "timeout",
+   "ts": "2026-10-01T11:20:00.000Z",
+   "foreign": [
+    "src/f5_0.py"
+   ],
+   "needed": null
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000006",
+   "decision": "opportunity",
+   "ts": "2026-10-01T11:30:00.000Z",
+   "foreign": [
+    "src/f6_0.py"
+   ],
+   "needed": null
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000007",
+   "decision": "opportunity",
+   "ts": "2026-10-01T11:40:00.000Z",
+   "foreign": [
+    "src/f7_0.py"
+   ],
+   "needed": false
+  },
+  {
+   "card": "destructive",
+   "session": "f0000000-0000-4000-8000-000000000007",
+   "decision": "deny-card",
+   "ts": "2026-10-01T11:50:00.000Z",
+   "foreign": [
+    "src/f7_0.py"
+   ],
+   "needed": null
+  },
+  {
+   "card": "commit",
+   "session": "f0000000-0000-4000-8000-000000000008",
+   "decision": "opportunity",
+   "ts": "2026-10-01T12:00:00.000Z",
+   "foreign": [
+    "src/f8_0.py"
+   ],
+   "needed": false
+  }
+ ],
+ "transcripts": {
+  "f0000000-0000-4000-8000-000000000001": [
+   {
+    "type": "user",
+    "sessionId": "f0000000-0000-4000-8000-000000000001",
+    "uuid": "u-1-1",
+    "timestamp": "2026-10-01T09:58:00.000Z",
+    "isSidechain": false,
+    "message": {
+     "role": "user",
+     "content": "Please tidy the parser module"
+    }
+   }
+  ],
+  "f0000000-0000-4000-8000-000000000002": [
+   {
+    "type": "user",
+    "sessionId": "f0000000-0000-4000-8000-000000000002",
+    "uuid": "u-2-1",
+    "timestamp": "2026-10-01T10:05:00.000Z",
+    "isSidechain": false,
+    "message": {
+     "role": "user",
+     "content": "<command-message>concurrent-writers-shared-tree</command-message>\n<command-name>/concurrent-writers-shared-tree</command-name>"
+    }
+   }
+  ],
+  "f0000000-0000-4000-8000-000000000003": [
+   {
+    "type": "user",
+    "sessionId": "f0000000-0000-4000-8000-000000000003",
+    "uuid": "u-3-1",
+    "timestamp": "2026-10-01T10:29:00.000Z",
+    "isSidechain": false,
+    "message": {
+     "role": "user",
+     "content": "Run the formatter over the repo"
+    }
+   }
+  ],
+  "f0000000-0000-4000-8000-000000000004": [
+   {
+    "type": "assistant",
+    "sessionId": "f0000000-0000-4000-8000-000000000004",
+    "timestamp": "2026-10-01T10:59:00.000Z",
+    "message": {
+     "id": "msg_toolu_S4",
+     "content": [
+      {
+       "type": "tool_use",
+       "id": "toolu_S4",
+       "name": "Skill",
+       "input": {
+        "skill": "concurrent-writers-shared-tree"
+       }
+      }
+     ]
+    }
+   }
+  ],
+  "f0000000-0000-4000-8000-000000000005": [
+   {
+    "type": "attachment",
+    "sessionId": "f0000000-0000-4000-8000-000000000005",
+    "timestamp": "2026-10-01T11:00:00.000Z",
+    "attachment": {
+     "type": "skill_listing",
+     "content": "- concurrent-writers-shared-tree\n- kclear: Session checkpoint"
+    }
+   },
+   {
+    "type": "attachment",
+    "sessionId": "f0000000-0000-4000-8000-000000000005",
+    "timestamp": "2026-10-01T11:01:00.000Z",
+    "attachment": {
+     "type": "hook_additional_context",
+     "content": [
+      "<command-message>concurrent-writers-shared-tree</command-message><command-name>/concurrent-writers-shared-tree</command-name>"
+     ]
+    }
+   },
+   {
+    "type": "assistant",
+    "sessionId": "f0000000-0000-4000-8000-000000000005",
+    "timestamp": "2026-10-01T11:02:00.000Z",
+    "message": {
+     "id": "msg_toolu_B5",
+     "content": [
+      {
+       "type": "tool_use",
+       "id": "toolu_B5",
+       "name": "Bash",
+       "input": {
+        "command": "echo 'concurrent-writers-shared-tree'; grep '\"Skill\"' notes.txt"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "type": "user",
+    "sessionId": "f0000000-0000-4000-8000-000000000005",
+    "uuid": "u-5-1",
+    "timestamp": "2026-10-01T11:03:00.000Z",
+    "isSidechain": false,
+    "message": {
+     "role": "user",
+     "content": "Please run the concurrent-writers-shared-tree skill later"
+    }
+   },
+   {
+    "type": "assistant",
+    "sessionId": "f0000000-0000-4000-8000-000000000005",
+    "timestamp": "2026-10-01T11:10:30.000Z",
+    "message": {
+     "id": "msg_toolu_S5",
+     "content": [
+      {
+       "type": "tool_use",
+       "id": "toolu_S5",
+       "name": "Skill",
+       "input": {
+        "skill": "concurrent-writers-shared-tree"
+       }
+      }
+     ]
+    }
+   }
+  ],
+  "f0000000-0000-4000-8000-000000000007": [
+   {
+    "type": "assistant",
+    "sessionId": "f0000000-0000-4000-8000-000000000007",
+    "timestamp": "2026-10-01T11:35:00.000Z",
+    "message": {
+     "id": "msg_toolu_S7",
+     "content": [
+      {
+       "type": "tool_use",
+       "id": "toolu_S7",
+       "name": "Skill",
+       "input": {
+        "skill": "kclear"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "type": "user",
+    "sessionId": "f0000000-0000-4000-8000-000000000007",
+    "uuid": "u-7-1",
+    "timestamp": "2026-10-01T11:36:00.000Z",
+    "isSidechain": false,
+    "message": {
+     "role": "user",
+     "content": "<command-message>kclear</command-message>\n<command-name>/kclear</command-name>"
+    }
+   }
+  ],
+  "f0000000-0000-4000-8000-000000000008": [
+   {
+    "type": "user",
+    "sessionId": "f0000000-0000-4000-8000-000000000008",
+    "uuid": "u-8-1",
+    "timestamp": "2026-10-01T11:50:00.000Z",
+    "isSidechain": false,
+    "message": {
+     "role": "user",
+     "content": "Summarize the diff"
+    }
+   },
+   {
+    "type": "assistant",
+    "sessionId": "f0000000-0000-4000-8000-000000000008",
+    "message": {
+     "id": "msg_toolu_S8",
+     "content": [
+      {
+       "type": "tool_use",
+       "id": "toolu_S8",
+       "name": "Skill",
+       "input": {
+        "skill": "concurrent-writers-shared-tree"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "expected": {
+  "opportunities": 8,
+  "delivery_measured": 6,
+  "delivery_unmeasured": 2,
+  "delivered": 4,
+  "by_card": 3,
+  "by_invocation_only": 1,
+  "card_and_invocation": 1,
+  "recall": {
+   "num": 4,
+   "n": 6
+  },
+  "precision": {
+   "num": 1,
+   "n": 4
+  },
+  "recall_line": "4/6 = 0.667 (n=6)",
+  "precision_line": "n=4 (< 5, not estimated)",
+  "pass_after_card": 1,
+  "no_opportunity": 1,
+  "judgement_unknown": 2,
+  "ignored_non_commit": 1
+ }
+}
