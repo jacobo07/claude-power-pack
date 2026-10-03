@@ -15,7 +15,10 @@ Measurement source (one of): --transcript T.jsonl | --project-dir DIR (the newes
 session through listing_floor_probe.main; costs one session, never started from a test).
 
 Exit codes: 0 within bound, 1 material unexplained rise, 2 UNMEASURABLE (never 0 on anything not measured).
-UNMEASURABLE reasons include: window_line_unparseable (a startup-window line is not a JSON object), layer_absent:<layer>
+The tokens axis counts: when it could not be compared (the check has no model call, or its prompt differs from the
+reference's) a floor that is within bound on chars is exit 2 `tokens_unmeasured`, unless `--chars-only` is passed, which
+yields verdict WITHIN_BOUND_CHARS_ONLY (exit 0) and a CHARS_ONLY line saying the tokens axis was not compared.
+UNMEASURABLE reasons include: tokens_unmeasured, window_line_unparseable (a startup-window line is not a JSON object), layer_absent:<layer>
 (a reference layer of >= 1,000 chars has no component in the checked floor), not_comparable, reference_invalid.
 
 Classification table (layer key / scope / chars):
@@ -973,7 +976,7 @@ def is_material(row, ref_total):
 
 
 def exit_code(verdict):
-    return {"WITHIN_BOUND": EXIT_OK, "MATERIAL_RISE": EXIT_RISE, "UNMEASURABLE": EXIT_UNMEASURABLE,
+    return {"WITHIN_BOUND": EXIT_OK, "WITHIN_BOUND_CHARS_ONLY": EXIT_OK, "MATERIAL_RISE": EXIT_RISE, "UNMEASURABLE": EXIT_UNMEASURABLE,
             "REFERENCE_WRITTEN": EXIT_OK}.get(verdict, EXIT_UNMEASURABLE)
 
 
@@ -1003,7 +1006,16 @@ def absent_layers(ref, now):
     return sorted(layer for layer, chars in totals.items() if chars >= UNIVERSAL_MIN_CHARS and layer not in present)
 
 
-def compare(ref, now):
+def unmeasured_tokens_verdict(axis, chars_only):
+    """-> (verdict, reason, detail) for a floor within bound on chars whose tokens axis could not be compared (WR-03)."""
+    if chars_only:
+        return "WITHIN_BOUND_CHARS_ONLY", "within_bound_chars_only", ""
+    return ("UNMEASURABLE", "tokens_unmeasured",
+            f"the tokens axis was not compared (status={axis['status']}); the chars axis is within bound; "
+            "pass --chars-only to accept a chars-only comparison")
+
+
+def compare(ref, now, chars_only=False):
     rp0, np0 = ref.get("provenance", {}), now["provenance"]
     differing = [f for f in ("plane", "platform", "install_home", "cwd")
                  if _comparable_value(rp0.get(f)) != _comparable_value(np0.get(f))]
@@ -1054,9 +1066,17 @@ def compare(ref, now):
     for row in rows:
         scope_deltas[row["scope"]] = scope_deltas.get(row["scope"], 0) + row["delta"]
     rp, np_ = ref.get("provenance", {}), now["provenance"]
+    # WR-03: green on the chars axis alone is not green when the tokens axis was not compared. Only an explicit
+    # --chars-only turns that into an exit 0, under its own verdict; a measurable tokens axis is enforced either way.
+    verdict, reason, detail = "WITHIN_BOUND", "within_bound", ""
+    if findings:
+        verdict, reason = "MATERIAL_RISE", "material_rise"
+    elif axis["status"] != "measured":
+        verdict, reason, detail = unmeasured_tokens_verdict(axis, chars_only)
     return {
-        "verdict": "MATERIAL_RISE" if findings else "WITHIN_BOUND",
-        "reason": "material_rise" if findings else "within_bound",
+        "verdict": verdict,
+        "reason": reason,
+        "detail": detail,
         "rows": rows, "findings": findings, "explained": explained, "scope_deltas": scope_deltas,
         "tokens_axis": axis,
         "ratchet_hint": ref_total > 0 and (ref_total - now["total_chars"]) >= TOTAL_PCT * ref_total,
@@ -1094,7 +1114,7 @@ def render(r):
         lines.append(f"UNMEASURABLE {r['reason']}: {r.get('detail', '')}".rstrip(": "))
     elif r["verdict"] == "REFERENCE_WRITTEN":
         lines.append(r.get("detail", ""))
-    else:
+    if "totals" in r:   # a comparison was made (UNMEASURABLE tokens_unmeasured carries one too)
         t = r["totals"]
         lines.append(f"FLOOR total_chars ref={t['ref']} now={t['now']} delta={_s(t['delta'])}")
         w = r["window"]
@@ -1118,6 +1138,8 @@ def render(r):
         ta = r["tokens_axis"]
         delta = _s(ta["delta"]) if ta["delta"] is not None else "na"
         lines.append(f"TOKENS status={ta['status']} ref={ta['ref']} now={ta['now']} delta={delta}")
+        if r["verdict"] == "WITHIN_BOUND_CHARS_ONLY":
+            lines.append(f"CHARS_ONLY the tokens axis was not compared (status={ta['status']}); only the chars axis was checked")
     lines.append(f"FLOOR verdict={r['verdict']} exit={r['exit']} reason={r['reason']}")
     return "\n".join(lines)
 
@@ -1136,6 +1158,10 @@ def build_parser():
                      help="start ONE fresh headless session through listing_floor_probe (costs a session)")
     ap.add_argument("--cwd", metavar="DIR", default=None, help="working directory of the --probe session")
     ap.add_argument("--reference", metavar="PATH", default=None)
+    ap.add_argument("--chars-only", action="store_true",
+                    help="--check only: accept a comparison whose tokens axis could not be compared (no model call, or a "
+                         "different prompt) as WITHIN_BOUND_CHARS_ONLY exit 0; without it that is exit 2 tokens_unmeasured. "
+                         "A tokens axis that CAN be compared is still enforced")
     ap.add_argument("--replace", action="store_true")
     ap.add_argument("--json", action="store_true")
     return ap
@@ -1175,6 +1201,8 @@ def main(argv=None):
     ref_path = Path(args.reference) if args.reference else ROOT / DEFAULT_REFERENCE_REL
     try:
         redact = load_redactor()
+        if args.chars_only and not args.check:
+            raise Unmeasurable("chars_only_without_check", "--chars-only only applies to --check")
         if args.write_reference:
             precheck_write(args.write_reference, args.replace)
             path, src = resolve_source(args)
@@ -1191,7 +1219,7 @@ def main(argv=None):
             ref = load_reference(ref_path)
             path, src = resolve_source(args)
             now = measure(path)
-            result = compare(ref, now)
+            result = compare(ref, now, chars_only=args.chars_only)
             rp = ref.get("provenance", {})
             result["provenance"] = {**stamp_source(now["provenance"], src), "probe_view": now["probe_view"]}
             result["reference"] = {"path": str(ref_path), "schema": ref.get("schema"), "total_chars": ref.get("total_chars"),

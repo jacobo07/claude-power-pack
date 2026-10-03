@@ -248,10 +248,13 @@ tools/test_floor_regression_gate.py`); nothing below has been run on the laptop.
 
   Option A, recommended -- one headless session, spends quota: Owner decision. The probe's cwd defaults to the PP
   checkout, so universal AND project layers are measured. The self-check reads the newest session of that project
-  directory (expected exit 0):
+  directory. An ordinary session's first prompt differs from the probe's, so the tokens axis is not comparable and the
+  gate says so: without `--chars-only` that is exit 2 `tokens_unmeasured` (the gate working, never a pass); with
+  `--chars-only` the expected result is verdict `WITHIN_BOUND_CHARS_ONLY`, exit 0, with a `CHARS_ONLY` line stating
+  the tokens axis was not compared (expected, not measured on the laptop):
 
       python tools/floor_regression_gate.py --write-reference vault/programs/incremental-cognition/floor/reference.json --probe
-      python tools/floor_regression_gate.py --check --project-dir C:\Users\User\.claude\projects\C--Users-User--claude-skills-claude-power-pack
+      python tools/floor_regression_gate.py --check --project-dir C:\Users\User\.claude\projects\C--Users-User--claude-skills-claude-power-pack --chars-only
 
   Option B -- no quota, the champion-startup probe already on disk (session 8f983bc6, cwd
   `C:\Users\User\Apps\listing-probe\champion`, an empty probe directory: universal layers only, so every later check
@@ -267,11 +270,16 @@ tools/test_floor_regression_gate.py`); nothing below has been run on the laptop.
 
   **PRG** (closes K). It MUST be one real `--check` against the committed `floor/reference.json` (the default
   `--reference`) of a LATER session of the same kind and cwd as the reference, because nothing else will ever run that
-  check. Option A: the same `--check --project-dir` line after the next ordinary PP session (no quota). Option B: one
-  fresh probe session in the champion directory (one session, quota):
+  check. Option A: the same `--check --project-dir ... --chars-only` line after the next ordinary PP session (no quota);
+  record its verdict as `WITHIN_BOUND_CHARS_ONLY` (the tokens axis was not compared), never as plain `WITHIN_BOUND`.
+  Option B: one fresh probe session in the champion directory (one session, quota). Run it first without the flag: if
+  the probe prompt matches the champion session's the tokens axis is compared and the verdict is plain `WITHIN_BOUND`;
+  if it prints exit 2 `tokens_unmeasured` the prompts differed, so run the second line and record the chars-only
+  verdict as such (save both outputs):
 
-      python tools/floor_regression_gate.py --check --project-dir C:\Users\User\.claude\projects\C--Users-User--claude-skills-claude-power-pack
+      python tools/floor_regression_gate.py --check --project-dir C:\Users\User\.claude\projects\C--Users-User--claude-skills-claude-power-pack --chars-only
       python tools/floor_regression_gate.py --check --probe --cwd C:\Users\User\Apps\listing-probe\champion
+      python tools/floor_regression_gate.py --check --probe --cwd C:\Users\User\Apps\listing-probe\champion --chars-only
 
   Save its output, its exit code and the reference's sha256 as
   `vault/programs/incremental-cognition/evidence/K-prg.md`. A RISE in the PRG is the gate working, not a failure of the

@@ -1070,10 +1070,11 @@ def g_tokens_rule():
     risk = find_lines(out, "RISE tokens scope=unattributed")
     if rc != 1 or len(risk) != 1 or "unit=tokens" not in risk[0] or "rules=tokens_3pct" not in risk[0]:
         why.append(f"+3.3% tokens: rc={rc} rise={risk}")
-    rc, out, _ = pair_check({}, {"usage": (2, 30998, 0, 10), "prompt": "A different prompt entirely."})
-    tl = find_lines(out, "TOKENS ")
-    if rc != 0 or len(tl) != 1 or "status=not_comparable" not in tl[0]:
-        why.append(f"different prompt: rc={rc} tokens={tl}")
+    for extra, want_rc in ((("--chars-only",), 0), ((), 2)):   # WR-03: not comparable is exit 2 unless --chars-only
+        rc, out, _ = pair_check({}, {"usage": (2, 30998, 0, 10), "prompt": "A different prompt entirely."}, extra_args=extra)
+        tl = find_lines(out, "TOKENS ")
+        if rc != want_rc or len(tl) != 1 or "status=not_comparable" not in tl[0]:
+            why.append(f"different prompt {extra}: rc={rc} tokens={tl}")
     rc, out, _ = pair_check({}, {"usage": (2, 30998, 0, 10)},
                             ref_edit=set_explanations([explain("tokens", unit="tokens", bound=1000)]))
     if rc != 0 or not find_lines(out, "EXPLAINED tokens scope=unattributed delta=+998"):
@@ -1247,17 +1248,18 @@ def g_no_model_call():
     rc, out, _ = run_main(["--write-reference", target, "--transcript", syn_path])
     if not unmeasurable(rc, out, "no_model_call") or target.exists():
         why.append(f"write: rc={rc} last={last_line(out)!r} exists={target.exists()}")
-    rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", syn_path])
-    tl = find_lines(out, "TOKENS ")
-    if rc != 0 or len(tl) != 1 or "status=no_model_call" not in tl[0]:
-        why.append(f"check: rc={rc} tokens={tl}")
+    for extra, want_rc in (((), 2), (("--chars-only",), 0)):   # WR-03: no model call is exit 2 unless --chars-only
+        rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", syn_path, *extra])
+        tl = find_lines(out, "TOKENS ")
+        if rc != want_rc or len(tl) != 1 or "status=no_model_call" not in tl[0]:
+            why.append(f"check {extra}: rc={rc} tokens={tl}")
     noasst = build_floor(root, "noassistant", {})
     noasst.rows.pop()
-    rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", noasst.write()])
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", noasst.write(), "--chars-only"])
     tl = find_lines(out, "TOKENS ")
     if rc != 0 or len(tl) != 1 or "status=no_model_call" not in tl[0]:
         why.append(f"no assistant row: rc={rc} tokens={tl}")
-    return (not why), "; ".join(why) or "synthetic first call: write refused, check reports TOKENS no_model_call"
+    return (not why), "; ".join(why) or "synthetic first call: write refused, check reports TOKENS no_model_call (exit 2; --chars-only exit 0)"
 
 
 def g_no_secret():
@@ -2048,15 +2050,21 @@ def g_ref_gex44_green():
         return "SKIP", gone
     if not REF_GEX44.is_file():
         return False, f"the committed reference is missing: {REF_GEX44}"
+    # the interactive session's first prompt differs from the mission worker's, so the tokens axis is not comparable:
+    # without --chars-only that is exit 2 (WR-03), with it WITHIN_BOUND_CHARS_ONLY
     rc, out, err = run_cli(["--check", "--reference", REF_GEX44, "--transcript", REAL_A])
     why = []
-    if rc != 0 or not last_line(out).startswith("FLOOR verdict=WITHIN_BOUND exit=0"):
-        why.append(f"rc={rc} last={last_line(out)!r} rise={find_lines(out, 'RISE ')}")
-    rc, out, _ = run_cli(["--check", "--reference", REF_GEX44, "--transcript", REAL_A, "--json"])
-    sd = json.loads(out).get("scope_deltas") or {}
-    if sd.get("universal") != 0 or sd.get("project") != 0:
-        why.append(f"scope_deltas={sd}")
-    return (not why), "; ".join(why) or "today's interactive floor (607795c4) is within bound of the plane-gex44 reference: universal +0, project +0"
+    if not unmeasurable(rc, out, "tokens_unmeasured") or find_lines(out, "RISE "):
+        why.append(f"default: rc={rc} last={last_line(out)!r} rise={find_lines(out, 'RISE ')}")
+    rc, out, err = run_cli(["--check", "--reference", REF_GEX44, "--transcript", REAL_A, "--chars-only"])
+    if rc != 0 or not last_line(out).startswith("FLOOR verdict=WITHIN_BOUND_CHARS_ONLY exit=0") or len(find_lines(out, "CHARS_ONLY ")) != 1:
+        why.append(f"--chars-only: rc={rc} last={last_line(out)!r} rise={find_lines(out, 'RISE ')}")
+    rc, out, _ = run_cli(["--check", "--reference", REF_GEX44, "--transcript", REAL_A, "--chars-only", "--json"])
+    doc = json.loads(out)
+    sd = doc.get("scope_deltas") or {}
+    if sd.get("universal") != 0 or sd.get("project") != 0 or doc.get("verdict") != "WITHIN_BOUND_CHARS_ONLY":
+        why.append(f"scope_deltas={sd} verdict={doc.get('verdict')}")
+    return (not why), "; ".join(why) or "today's interactive floor (607795c4) vs the plane-gex44 reference: tokens not comparable -> exit 2 tokens_unmeasured; --chars-only -> WITHIN_BOUND_CHARS_ONLY, universal +0, project +0"
 
 
 def g_real_reference_pinned():
@@ -2463,7 +2471,68 @@ def GATE_MEASURE_HOME(root, path):
         return GATE.measure(str(path))
 
 
+def g_tokens_unmeasured():
+    """WR-03: an unmeasured / non-comparable tokens axis is never plain WITHIN_BOUND: exit 2 unless --chars-only says so."""
+    why = []
+    for cli in (True, False):
+        tag = "cli" if cli else "in-process"
+        run = run_cli if cli else run_main
+        root = scratch("wr03")
+        ref_tx, _ = floor_pair(root, {}, {})
+        ref_json = root / "ref.json"
+        rc, out, _ = run(["--write-reference", ref_json, "--transcript", ref_tx])
+        if rc != 0:
+            return False, f"{tag} setup rc={rc}"
+        syn = build_floor(root, "synthetic", {"usage": (0, 0, 0, 0)})
+        syn.rows[-1]["message"]["model"] = "<synthetic>"
+        variants = {
+            "not_comparable": build_floor(root, "other-prompt", {"prompt": "A different prompt entirely."}).write(),
+            "no_model_call": syn.write(),
+        }
+        for status, path in variants.items():
+            rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", path])
+            if not unmeasurable(rc, out, "tokens_unmeasured") or status not in out:
+                why.append(f"{tag} {status} default: rc={rc} last={last_line(out)!r}")
+            if "FLOOR verdict=WITHIN_BOUND " in out:
+                why.append(f"{tag} {status} default still prints a plain WITHIN_BOUND")
+            rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", path, "--chars-only"])
+            note = find_lines(out, "CHARS_ONLY ")
+            if (rc != 0 or not last_line(out).startswith("FLOOR verdict=WITHIN_BOUND_CHARS_ONLY exit=0 reason=within_bound_chars_only")
+                    or len(note) != 1 or "not compared" not in note[0] or status not in note[0]):
+                why.append(f"{tag} {status} --chars-only: rc={rc} note={note} last={last_line(out)!r}")
+            rc, jout, _ = run(["--check", "--reference", ref_json, "--transcript", path, "--chars-only", "--json"])
+            try:
+                doc = json.loads(jout)
+            except ValueError:
+                why.append(f"{tag} {status} --json: not JSON (rc={rc}) {jout[-120:]!r}")
+                continue
+            if doc["verdict"] != "WITHIN_BOUND_CHARS_ONLY" or doc["exit"] != 0 or doc["tokens_axis"]["status"] != status:
+                why.append(f"{tag} {status} --json: {doc['verdict']} {doc['exit']} {doc['tokens_axis']['status']}")
+        # a material chars rise is still red with tokens unmeasured, with or without the flag
+        bad = build_floor(root, "rise", {"prompt": "A different prompt entirely.", "g": 11500}).write()
+        for extra in ((), ("--chars-only",)):
+            rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", bad, *extra])
+            if rc != 1 or not find_lines(out, "RISE memory_global scope=universal"):
+                why.append(f"{tag} rise with tokens unmeasured {extra}: rc={rc} last={last_line(out)!r}")
+        # controls: a measured, comparable tokens axis is plain WITHIN_BOUND, and --chars-only does not loosen it
+        same = build_floor(root, "same", {}).write()
+        for extra in ((), ("--chars-only",)):
+            rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", same, *extra])
+            if rc != 0 or not last_line(out).startswith("FLOOR verdict=WITHIN_BOUND exit=0") or find_lines(out, "CHARS_ONLY "):
+                why.append(f"{tag} control measured {extra}: rc={rc} last={last_line(out)!r}")
+        up = build_floor(root, "tok-up", {"usage": (2, 30998, 0, 10)}).write()
+        rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", up, "--chars-only"])
+        if rc != 1 or not find_lines(out, "RISE tokens scope=unattributed"):
+            why.append(f"{tag} measured tokens +3.3% with --chars-only: rc={rc} last={last_line(out)!r}")
+        # --chars-only belongs to --check only
+        rc, out, _ = run(["--write-reference", root / "w.json", "--transcript", ref_tx, "--chars-only"])
+        if not unmeasurable(rc, out, "chars_only_without_check") or (root / "w.json").exists():
+            why.append(f"{tag} --write-reference --chars-only: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "tokens not_comparable / no_model_call: exit 2 tokens_unmeasured; --chars-only -> WITHIN_BOUND_CHARS_ONLY exit 0 with a CHARS_ONLY note; rises and a measured tokens axis stay enforced; CLI and in-process"
+
+
 GATES_REVIEWFIX = [
+    ("V-FLOOR-TOKENS-UNMEASURED", g_tokens_unmeasured),
     ("V-FLOOR-HOOK-UNCORRELATED-UNATTRIBUTED", g_hook_uncorrelated_unattributed),
     ("V-FLOOR-LAYER-ABSENT", g_layer_absent),
     ("V-FLOOR-HOOK-SOURCE-NO-COMMAND-TEXT", g_hook_source_no_command_text),
@@ -2671,6 +2740,10 @@ def _m_event_fallback_project():
     return _patch("uncorrelated_scope", legacy_uncorrelated_scope)
 
 
+def _m_tokens_gap_green():
+    return _patch("unmeasured_tokens_verdict", lambda axis, chars_only: ("WITHIN_BOUND", "within_bound", ""))
+
+
 def _m_synthetic_measured():
     real = GATE.first_call_tokens
     return _patch("first_call_tokens", lambda assistant: real(assistant) if real(assistant) is not None
@@ -2709,6 +2782,8 @@ MUTANTS = [
      _m_absent_layers_none, ["V-FLOOR-LAYER-ABSENT"]),
     ("M17 uncorrelated hook element filed by its event's registrations (WR-02: a plugin hook reads as project)",
      _m_event_fallback_project, ["V-FLOOR-HOOK-UNCORRELATED-UNATTRIBUTED", "V-FLOOR-HOOK-EVENT-FALLBACK"]),
+    ("M18 unmeasured_tokens_verdict returns plain WITHIN_BOUND (WR-03: a tokens axis nobody compared reads green)",
+     _m_tokens_gap_green, ["V-FLOOR-TOKENS-UNMEASURED", "V-FLOOR-NO-MODEL-CALL", "V-FLOOR-TOKENS-RULE"]),
 ]
 
 

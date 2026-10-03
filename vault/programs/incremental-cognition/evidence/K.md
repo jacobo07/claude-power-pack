@@ -38,7 +38,8 @@ Materiality (a rise is a positive delta of one (layer, scope) row against the re
 `LAYER_PCT = 0.03` (a row up by 3 % of the reference total), `TOTAL_PCT = 0.03` (the total up by 3 %),
 `UNIVERSAL_MIN_CHARS = 1000` (a universal or unattributed row up by 1,000 chars; project and harness rows are exempt
 from this one), `TOKENS_PCT = 0.03` (first-call tokens up by 3 %, only when both prompt digests are equal; otherwise
-`TOKENS status=not_comparable`). A material finding is cleared only by an entry in the reference `explanations`
+`TOKENS status=not_comparable`, which since the review fix WR-03 is exit 2 `tokens_unmeasured` unless `--chars-only` is
+passed, giving verdict `WITHIN_BOUND_CHARS_ONLY`). A material finding is cleared only by an entry in the reference `explanations`
 (layer, scope, unit, delta_bound, reason, commit) whose bound covers the delta.
 
 Exit codes: 0 within bound, 1 material unexplained rise, 2 UNMEASURABLE (never 0 for anything not measured).
@@ -87,11 +88,29 @@ project, M11 host_has always true, M12 newest_transcript returns the oldest, M13
 DRILL killed=13/13
 ```
 
-GEX44 within-bound check, today's interactive session against the committed plane-gex44 reference (the reference was
-written from the mission worker `34f03871`), exit 0:
+GEX44 check, today's interactive session against the committed plane-gex44 reference (the reference was written from
+the mission worker `34f03871`). **Re-run after the review fix WR-03 (2026-10-04, code HEAD at the time: see the commit
+list below); the first capture of this smoke, taken before the fix, printed `FLOOR verdict=WITHIN_BOUND exit=0` for the
+same inputs and is superseded: that exit 0 was green on chars alone while the tokens axis had not been compared.** The
+transcript's sha256 was identical before and after both runs.
 
 ```
 $ timeout 120 python3 tools/floor_regression_gate.py --check --reference vault/programs/incremental-cognition/floor/reference-gex44.json --transcript /home/kobii/.claude/projects/-home-kobii-missions-incremental-cognition--claude-worktrees-ic-run/607795c4-aa30-4fb8-886c-5b1e24a7a991.jsonl
+SOURCE transcript name=607795c4-aa30-4fb8-886c-5b1e24a7a991.jsonl
+UNMEASURABLE tokens_unmeasured: the tokens axis was not compared (status=not_comparable); the chars axis is within bound; pass --chars-only to accept a chars-only comparison
+FLOOR total_chars ref=207245 now=202803 delta=-4442
+WINDOW ref_sha256=dc6d23b90cac now_sha256=d5e2920263a0 ref_rows=34 now_rows=34 same=no
+LAYER other:session_context scope=harness ref=1180 now=1121 delta=-59
+LAYER system_prompt scope=unattributed ref=13830 now=9447 delta=-4383
+SCOPE universal=+0 project=+0 harness=-59 unattributed=-4383
+SKILLS ref_chars=30000 now_chars=30000 ref_entries=294 now_entries=294 ref_skill_count=294 now_skill_count=294
+TOKENS status=not_comparable ref=109021 now=107351 delta=na
+FLOOR verdict=UNMEASURABLE exit=2 reason=tokens_unmeasured
+```
+
+Exit 2. The same command with `--chars-only` appended, exit 0:
+
+```
 SOURCE transcript name=607795c4-aa30-4fb8-886c-5b1e24a7a991.jsonl
 FLOOR total_chars ref=207245 now=202803 delta=-4442
 WINDOW ref_sha256=dc6d23b90cac now_sha256=d5e2920263a0 ref_rows=34 now_rows=34 same=no
@@ -100,7 +119,8 @@ LAYER system_prompt scope=unattributed ref=13830 now=9447 delta=-4383
 SCOPE universal=+0 project=+0 harness=-59 unattributed=-4383
 SKILLS ref_chars=30000 now_chars=30000 ref_entries=294 now_entries=294 ref_skill_count=294 now_skill_count=294
 TOKENS status=not_comparable ref=109021 now=107351 delta=na
-FLOOR verdict=WITHIN_BOUND exit=0 reason=within_bound
+CHARS_ONLY the tokens axis was not compared (status=not_comparable); only the chars axis was checked
+FLOOR verdict=WITHIN_BOUND_CHARS_ONLY exit=0 reason=within_bound_chars_only
 ```
 
 Appended-prompt real red (reverse direction: a scratch reference from `607795c4`, checked against the mission worker
