@@ -14,6 +14,14 @@ in a different costume). Asking "is every STORE reachable" stays falsifiable: a
 new file that starts accumulating sealed rules is unreachable until the router
 gains a pointer to it.
 
+Skill mirror freshness (pillar H, D-02): V-ROUTER-SKILL-DRIFT compares every repo skill
+`skills/<name>/` (committed blobs at HEAD of the checkout being judged) with its live copy
+through tools/skill_mirror_drift.py. DRIFT, INCONCLUSIVE or an unreadable check fails the
+line; ABSENT_LIVE is reported and is not drift; a checkout with no skills is UNMEASURED and
+counts neither as a pass nor a failure. The line reads the HOST's live skills tree, so its
+verdict names the host plane it ran on: the same commit can pass on one host and fail on
+another.
+
 Exit 0 clean, exit 1 on any failed gate. Named ids and integers, never a ratio.
 """
 from __future__ import annotations
@@ -153,6 +161,54 @@ def discover_stores(repo_root: Path = REPO_ROOT) -> list[dict]:
     return stores
 
 
+def live_skills_root(repo_root: Path) -> Path:
+    """The live skills directory this checkout is judged against. Install shape
+    (`<x>/.claude/skills/claude-power-pack`) -> `<x>/.claude/skills`; any other
+    layout (a clone on a dev host) -> the current user's `~/.claude/skills`."""
+    top = canonical_repo_root(repo_root)
+    try:
+        if top.parents[1].name == ".claude":
+            return top.parents[1] / "skills"
+    except IndexError:
+        pass
+    return Path.home() / ".claude" / "skills"
+
+
+def skill_drift_check(repo_root: Path, live_root: Path | None = None) -> tuple[str, list[str]]:
+    """(verdict, lines): PASS / FAIL / UNMEASURED for repo skills against the live copy.
+
+    The blobs belong to `repo_root` (the checkout being judged); the worktree
+    arithmetic is only used to find the live root. Fails closed for this line:
+    any import, git or read error is FAIL with its reason, never a traceback."""
+    repo_root = Path(repo_root)
+    if not any(repo_root.glob("skills/*/SKILL.md")):
+        return "UNMEASURED", ["no skills/<name>/SKILL.md in this checkout; not counted as a pass"]
+    try:
+        here = str(Path(__file__).resolve().parent)
+        if here not in sys.path:
+            sys.path.insert(0, here)
+        import skill_mirror_drift as smd  # noqa: PLC0415
+        root = Path(live_root) if live_root is not None else live_skills_root(repo_root)
+        rep = smd.live_report(repo_root, root)
+    except Exception as e:  # noqa: BLE001 -- fail closed with the reason
+        return "FAIL", [f"skill drift check could not run: {type(e).__name__}: {e}"]
+    if rep.get("status") != "MEASURED":
+        return "FAIL", [f"INCONCLUSIVE: {rep.get('reason', 'unmeasured')}"]
+    c = rep["counts"]
+    bad = [r for r in rep["rows"] if r["status"] in ("DRIFT", "INCONCLUSIVE")]
+    head = (f"{len(rep['rows'])} repo skills vs {smd._tilde(root)}: IDENTICAL {c['IDENTICAL']}, "
+            f"DRIFT {c['DRIFT']}, INCONCLUSIVE {c['INCONCLUSIVE']}, ABSENT_LIVE {c['ABSENT_LIVE']} "
+            f"(reported, not drift)")
+    lines = [head]
+    for r in bad:
+        if r["status"] == "DRIFT":
+            lines.append(f"{r['skill']}: DRIFT missing_live={r['missing_live']} "
+                         f"extra_live={r['extra_live']} changed={r['changed']}")
+        else:
+            lines.append(f"{r['skill']}: INCONCLUSIVE {r.get('reason', '')}")
+    return ("FAIL" if bad else "PASS"), lines
+
+
 def run(repo_root: Path = REPO_ROOT) -> int:
     router = router_path(repo_root)
     failures: list[str] = []
@@ -185,6 +241,14 @@ def run(repo_root: Path = REPO_ROOT) -> int:
         failures.append("V-ROUTER-CANONICAL")
         print(f"V-ROUTER-CANONICAL  FAIL  linked={_linked_ok} "
               f"plain={_plain_ok}")
+
+    # V-ROUTER-SKILL-DRIFT -- repo-mirrored skills against this host's live copy.
+    _sv, _sl = skill_drift_check(repo_root)
+    print(f"V-ROUTER-SKILL-DRIFT {_sv:<10} {_sl[0]}")
+    for _l in _sl[1:]:
+        print(f"    {_l}")
+    if _sv == "FAIL":
+        failures.append("V-ROUTER-SKILL-DRIFT")
 
     if not router.exists():
         print("V-ROUTER-LINKS      FAIL  router absent")

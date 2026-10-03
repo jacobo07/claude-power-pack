@@ -6,8 +6,11 @@ asserts that it does -- not only that the clean repo passes.
 """
 from __future__ import annotations
 
+import contextlib
+import io
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -66,6 +69,22 @@ class Scenario:
 
     def run(self) -> int:
         return gate.run(self.repo)
+
+
+def _skill_repo(s: "Scenario", live_text: str) -> None:
+    """Make s.repo a git repo that commits skills/x/SKILL.md, with a live copy under <tmp>/.claude/skills/x."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import skill_mirror_drift as smd  # noqa: PLC0415
+    exe = smd.vgm._git_exe()
+    skill = s.repo / "skills" / "x" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text("---\nname: x\n---\nbody\n", encoding="utf-8")
+    live = s.claude / "skills" / "x" / "SKILL.md"
+    live.parent.mkdir(parents=True)
+    live.write_text(live_text, encoding="utf-8")
+    for args in (["init", "-q"], ["add", "skills/x/SKILL.md"], ["commit", "-q", "-m", "x"]):
+        subprocess.run([exe, "-C", str(s.repo), "-c", "user.name=gate", "-c", "user.email=gate@invalid",
+                        "-c", "core.autocrlf=false", *args], check=True, capture_output=True, timeout=30)
 
 
 def main() -> int:
@@ -138,6 +157,42 @@ def main() -> int:
             _ok("V-RFG-BUDGET", f"over {gate.ROUTER_MAX_LINES} lines exits 1")
         else:
             _fail("V-RFG-BUDGET", "over-budget router did not fail the gate")
+
+    # V-RFG-SKILL-DRIFT-GREEN -- a live copy identical to the committed skill passes.
+    with Scenario() as s:
+        _skill_repo(s, "---\nname: x\n---\nbody\n")
+        verdict, lines = gate.skill_drift_check(s.repo)
+        if verdict == "PASS":
+            _ok("V-RFG-SKILL-DRIFT-GREEN", lines[0])
+        else:
+            _fail("V-RFG-SKILL-DRIFT-GREEN", f"{verdict} {lines}")
+
+    # V-RFG-SKILL-DRIFT-RED -- one byte of drift fails the check and the gate run.
+    with Scenario() as s:
+        _skill_repo(s, "---\nname: x\n---\nbodz\n")
+        verdict, lines = gate.skill_drift_check(s.repo)
+        s.write_router("")
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = s.run()
+        out = buf.getvalue()
+        if verdict == "FAIL" and rc == 1 and "V-ROUTER-SKILL-DRIFT FAIL" in out and "x: DRIFT" in out:
+            _ok("V-RFG-SKILL-DRIFT-RED", "one-byte live drift: check FAIL, gate exits 1 naming x")
+        else:
+            _fail("V-RFG-SKILL-DRIFT-RED", f"verdict={verdict} rc={rc} out={out[:200]!r}")
+
+    # V-RFG-SKILL-DRIFT-UNMEASURED -- no skills in the checkout is neither pass nor fail, and does not read the
+    # real live tree (the Scenario live root is <tmp>/.claude/skills).
+    with Scenario() as s:
+        s.write_router("")
+        verdict, lines = gate.skill_drift_check(s.repo)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = s.run()
+        if verdict == "UNMEASURED" and rc == 0 and "V-ROUTER-SKILL-DRIFT UNMEASURED" in buf.getvalue():
+            _ok("V-RFG-SKILL-DRIFT-UNMEASURED", "no skills/: UNMEASURED, printed, gate result unchanged")
+        else:
+            _fail("V-RFG-SKILL-DRIFT-UNMEASURED", f"verdict={verdict} rc={rc}")
 
     total = len(PASSES) + len(FAILS)
     print(f"ROUTER_GATE_TESTS={len(PASSES)}/{total}  threshold={total}/{total}")
