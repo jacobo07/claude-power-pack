@@ -1,0 +1,407 @@
+#!/usr/bin/env python
+"""card_lineage.py -- the compile-out lineage gate (skill-capability, pillar G).
+
+    python3 tools/card_lineage.py                          # judge HEAD; exit 0 only on PASS
+    python3 tools/card_lineage.py --json                   # the full result as one JSON object
+    python3 tools/card_lineage.py --ref <commit>           # judge another commit of this checkout
+    python3 tools/card_lineage.py --trailer-for <skill>    # print the trailer line for a skill's committed SKILL.md
+
+The frozen G rule: a compiled-out card names the skill and commit it was compiled from, and a gate fails when the
+source skill changes without the card being re-derived. Pillar H's record (card_source_digests.json) alone does not
+satisfy it, because H can be re-recorded without anybody re-reading the skill. The lineage therefore lives INSIDE the
+card file, as its last line, and only rewriting that line clears a source change.
+
+Trailer grammar (one full line of the LF-normalized card text, comment-only, no backtick character):
+
+    // COMPILED-FROM: skill=<name> source=skills/<name>/SKILL.md sha256=<64 hex> commit=<40 hex>
+
+sha256 is the LF-normalized sha256 of the committed SKILL.md (identity); commit is the commit that last changed that
+SKILL.md when the card was derived (provenance). `--trailer-for` prints the line; it never writes a card, because the
+gate does not generate card text: a person or agent re-reads the skill, re-derives the card and pastes the line.
+
+Population, DISCOVERED (never listed): every top-level `hooks/*.js` tracked at the judged commit whose LF text holds a
+skill_coverage CARD_TOKEN match or a line starting with the marker. A member whose blob cannot be read makes the
+verdict INCONCLUSIVE; it is never dropped. Floor 2.
+
+Clauses (all 10 must be PASS for a PASS verdict; outcomes are PASS, FAIL or UNMEASURED):
+  per card  TRAILER          exactly one marker line, and it parses (absent, duplicate, unparseable: UNMEASURED;
+                             the other six per-card clauses are then UNMEASURED "no trailer")
+            SKILL            the trailer's skill is one the card text names in CARD_TOKEN form
+            SOURCE-PATH      the trailer's source is skills/<trailer skill>/SKILL.md
+            SOURCE-CURRENT   the committed source at the judged commit has the trailer's digest (an absent source,
+                             i.e. a skill that does not exist, is UNMEASURED)
+            COMMIT-ANCESTOR  the trailer commit resolves and is an ancestor of the judged commit
+            COMMIT-TOUCHES   the trailer commit changed the source path
+            COMMIT-DIGEST    the source blob at the trailer commit has the trailer's digest
+  gate      FLOOR            population size >= 2 (0 is UNMEASURED, 1 is FAIL)
+            DISPATCHER-COVERED  every card the dispatcher registers (skill_mirror_drift.committed_card_pairs) is a
+                             population member, so a registered card outside the sweep cannot escape it
+            H-RECORD-CURRENT pillar H's committed record agrees with the committed cards and sources
+                             (skill_mirror_drift.card_drift + card_verdict)
+
+Committed-blob rule (DG-03): every byte compared comes from git blobs at the resolved judged commit or at the trailer
+commit. No working-tree file is read, so a peer's uncommitted edit never stands in for a source, and a CRLF working
+tree (the laptop clone) judges the same as an LF one. `skill_mirror_drift.load_card_record` and `committed_bytes` are
+deliberately not used: at HEAD they read the working tree to refuse an uncommitted copy. Git access, blob reads,
+failure classification and the record comparison are the functions pillar H uses (one implementation).
+
+A git failure before or during discovery (unresolvable ref, git missing, nothing tracked, a member blob read failure)
+is INCONCLUSIVE, never PASS and never a traceback.
+
+Exit codes: 0 PASS, 1 FAIL or INCONCLUSIVE (or a refused --trailer-for), 2 bad arguments. This tool never writes a file.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+_THIS_DIR = Path(__file__).resolve().parent
+if str(_THIS_DIR) not in sys.path:
+    sys.path.insert(0, str(_THIS_DIR))
+
+import skill_coverage as sc  # noqa: E402
+import skill_mirror_drift as smd  # noqa: E402
+
+LINEAGE_MARKER = "// COMPILED-FROM:"
+TRAILER_RE = re.compile(
+    r"^// COMPILED-FROM: skill=(?P<skill>[A-Za-z0-9_-]+) source=(?P<source>\S+) "
+    r"sha256=(?P<sha256>[0-9a-f]{64}) commit=(?P<commit>[0-9a-f]{40})$")
+CARD_FILE_RE = re.compile(r"hooks/[^/]+\.js")
+SKILL_NAME_RE = re.compile(r"[A-Za-z0-9_-]+")
+POPULATION_FLOOR = 2
+CARD_CLAUSES = ("TRAILER", "SKILL", "SOURCE-PATH", "SOURCE-CURRENT", "COMMIT-ANCESTOR", "COMMIT-TOUCHES",
+                "COMMIT-DIGEST")
+GATE_CLAUSES = ("FLOOR", "DISPATCHER-COVERED", "H-RECORD-CURRENT")
+PASS, FAIL, UNMEASURED = "PASS", "FAIL", "UNMEASURED"
+
+
+def _out(outcome, reason=""):
+    return {"outcome": outcome, "reason": reason}
+
+
+def _source_rel(skill) -> str:
+    return f"skills/{skill}/SKILL.md"
+
+
+# --------------------------------------------------------------------------- trailer and population
+
+def _marker_lines(text) -> list:
+    return [line for line in sc.lf(text).split("\n") if line.startswith(LINEAGE_MARKER)]
+
+
+def parse_trailer(text):
+    """(dict skill/source/sha256/commit, None) or (None, "absent" | "duplicate" | "unparseable")."""
+    marks = _marker_lines(text)
+    if not marks:
+        return None, "absent"
+    if len(marks) > 1:
+        return None, "duplicate"
+    m = TRAILER_RE.match(marks[0])
+    if not m:
+        return None, "unparseable"
+    return m.groupdict(), None
+
+
+def population(repo, sha, tracked):
+    """([{card, text}] sorted by card, None) or (None, "<rel>: <reason>") when a candidate blob cannot be read.
+    Candidates are the tracked top-level hooks/*.js; a member holds a CARD_TOKEN match or a marker line."""
+    rels = sorted(t for t in tracked if CARD_FILE_RE.fullmatch(t))
+    blobs = smd.vgm.batch_blobs(str(repo), sha, rels)
+    members = []
+    for rel in rels:
+        data, why = blobs.get(rel, (None, "not returned"))
+        if data is None and why == "git-batch-empty":
+            data = b""
+        if data is None:
+            # Either a git failure (smd.is_git_failure) or git-batch-missing for a path ls-tree just listed: both
+            # mean the candidate was not read, and an unread candidate is never dropped.
+            kind = "git failure" if smd.is_git_failure(why) else "unreadable"
+            return None, f"{rel}: {kind}: {why}"
+        text = sc.lf(data.decode("utf-8", "replace"))
+        if sc.CARD_TOKEN.search(text) or _marker_lines(text):
+            members.append({"card": rel, "text": text})
+    return members, None
+
+
+def trailer_for(repo, skill, ref="HEAD"):
+    """(trailer line, None) for the committed skills/<skill>/SKILL.md at `ref`, or (None, reason). Print-only."""
+    if not SKILL_NAME_RE.fullmatch(skill or ""):
+        return None, f"bad skill name {skill!r}"
+    sha, why = smd.resolve_commit(repo, ref)
+    if sha is None:
+        return None, f"{ref} not resolvable: {why}"
+    source = _source_rel(skill)
+    data, why = smd.vgm.batch_blobs(str(repo), sha, [source]).get(source, (None, "not returned"))
+    if data is None and why == "git-batch-empty":
+        data = b""
+    if data is None:
+        return None, f"{source} not readable at {sha[:8]}: {why}"
+    log, why = smd.git_run(repo, "log", "-1", "--format=%H", sha, "--", source)
+    if log is None:
+        return None, f"git log for {source}: {why}"
+    commit = log.decode("utf-8", "replace").strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        return None, f"no commit changed {source} up to {sha[:8]}"
+    return (f"{LINEAGE_MARKER} skill={skill} source={source} sha256={smd.vgm._norm_sha(data)} "
+            f"commit={commit}"), None
+
+
+# --------------------------------------------------------------------------- clauses
+# Each clause takes (ctx, member=None, trailer=None) and returns {outcome, reason}. ctx holds repo, sha, members,
+# pairs and pairs_why. judge() looks every clause up in CLAUSES at call time.
+
+def c_floor(ctx, member=None, trailer=None):
+    n = len(ctx["members"])
+    if n >= POPULATION_FLOOR:
+        return _out(PASS, f"population={n}")
+    if n == 0:
+        return _out(UNMEASURED, "zero population")
+    return _out(FAIL, f"population={n} below floor {POPULATION_FLOOR}")
+
+
+def c_dispatcher_covered(ctx, member=None, trailer=None):
+    pairs = ctx["pairs"]
+    if pairs is None:
+        return _out(UNMEASURED, f"dispatcher card set unreadable: {ctx['pairs_why']}")
+    covered = {p["card"] for p in pairs}
+    if not covered:
+        return _out(UNMEASURED, "the dispatcher registers no card")
+    members = {m["card"] for m in ctx["members"]}
+    uncovered = sorted(covered - members)
+    if uncovered:
+        return _out(FAIL, "registered card outside the population: " + ", ".join(uncovered))
+    return _out(PASS, f"{len(covered)} registered card(s), all members")
+
+
+def c_h_record_current(ctx, member=None, trailer=None):
+    raw, why = smd.git_run(ctx["repo"], "cat-file", "blob", f"{ctx['sha']}:{smd.CARD_RECORD_REL}")
+    if raw is None:
+        return _out(UNMEASURED, f"{smd.CARD_RECORD_REL} not readable at {ctx['sha'][:8]}: {why}")
+    try:
+        record = json.loads(smd.lf_bytes(raw).decode("utf-8"))
+    except ValueError:
+        return _out(UNMEASURED, "record unparseable")
+    if ctx["pairs"] is None:
+        return _out(UNMEASURED, f"dispatcher card set unreadable: {ctx['pairs_why']}")
+    # The measured pair list is passed as-is: [] is a measured empty set, never None (None would re-discover).
+    rows = smd.card_drift(record, smd.card_source_state(ctx["repo"], ctx["sha"], ctx["pairs"]))
+    verdict = smd.card_verdict(rows)
+    if verdict == "CURRENT":
+        return _out(PASS, f"{len(rows)} pair(s) CURRENT")
+    bad = "; ".join(f"{r.get('card')}<-{r.get('skill')} {r['status']}"
+                    + (f" ({r['reason']})" if r.get("reason") else "")
+                    for r in rows if r["status"] != "CURRENT")
+    return _out(UNMEASURED if verdict == "INCONCLUSIVE" else FAIL, bad or verdict)
+
+
+def c_trailer(ctx, member=None, trailer=None):
+    t, why = parse_trailer(member["text"])
+    if t is None:
+        return _out(UNMEASURED, f"trailer {why}")
+    return _out(PASS, "one trailer")
+
+
+def c_skill(ctx, member=None, trailer=None):
+    names = set(sc.CARD_TOKEN.findall(member["text"]))
+    if trailer["skill"] in names:
+        return _out(PASS, trailer["skill"])
+    return _out(FAIL, f"trailer skill {trailer['skill']} not named by the card (names: {sorted(names)})")
+
+
+def c_source_path(ctx, member=None, trailer=None):
+    want = _source_rel(trailer["skill"])
+    if trailer["source"] == want:
+        return _out(PASS, want)
+    return _out(FAIL, f"source {trailer['source']} is not {want}")
+
+
+def c_source_current(ctx, member=None, trailer=None):
+    pair = {"card": member["card"], "skill": trailer["skill"], "source": trailer["source"]}
+    state = smd.card_source_state(ctx["repo"], ctx["sha"], [pair])
+    if state.get("status") != "MEASURED":
+        return _out(UNMEASURED, f"{trailer['source']}: {state.get('reason', 'unmeasured')}")
+    row = state["pairs"][0]
+    if row.get("status") in ("UNTRACKED", "INCONCLUSIVE"):
+        return _out(UNMEASURED, f"{trailer['source']} {row['status']}: {row.get('reason')}")
+    if row["source_sha256"] == trailer["sha256"]:
+        return _out(PASS, "source digest at the judged commit equals the trailer")
+    return _out(FAIL, f"{trailer['source']} at {ctx['sha'][:8]} is {row['source_sha256'][:12]}, "
+                      f"trailer says {trailer['sha256'][:12]}: re-derive the card")
+
+
+def _trailer_commit(ctx, trailer):
+    return smd.resolve_commit(ctx["repo"], trailer["commit"])
+
+
+def c_commit_ancestor(ctx, member=None, trailer=None):
+    commit, why = _trailer_commit(ctx, trailer)
+    if commit is None:
+        return _out(UNMEASURED, f"commit-not-readable: {why}")
+    out, why = smd.git_run(ctx["repo"], "merge-base", "--is-ancestor", commit, ctx["sha"])
+    if out is not None:
+        return _out(PASS, f"{commit[:8]} is an ancestor of {ctx['sha'][:8]}")
+    if " rc=1:" in (why or ""):
+        return _out(FAIL, f"{commit[:8]} is not an ancestor of {ctx['sha'][:8]}")
+    return _out(UNMEASURED, f"merge-base: {why}")
+
+
+def c_commit_touches(ctx, member=None, trailer=None):
+    commit, why = _trailer_commit(ctx, trailer)
+    if commit is None:
+        return _out(UNMEASURED, f"commit-not-readable: {why}")
+    out, why = smd.git_run(ctx["repo"], "diff-tree", "--no-commit-id", "--name-only", "-r", "--root", commit,
+                           "--", trailer["source"])
+    if out is None:
+        return _out(UNMEASURED, f"diff-tree: {why}")
+    names = out.decode("utf-8", "replace").split("\n")
+    if trailer["source"] in names:
+        return _out(PASS, f"{commit[:8]} changed {trailer['source']}")
+    return _out(FAIL, f"{commit[:8]} did not change {trailer['source']}")
+
+
+def c_commit_digest(ctx, member=None, trailer=None):
+    commit, why = _trailer_commit(ctx, trailer)
+    if commit is None:
+        return _out(UNMEASURED, f"commit-not-readable: {why}")
+    src = trailer["source"]
+    data, why = smd.vgm.batch_blobs(str(ctx["repo"]), commit, [src]).get(src, (None, "not returned"))
+    if data is None and why == "git-batch-empty":
+        data = b""
+    if data is not None:
+        got = smd.vgm._norm_sha(data)
+        if got == trailer["sha256"]:
+            return _out(PASS, f"{src} at {commit[:8]} carries the trailer digest")
+        return _out(FAIL, f"{src} at {commit[:8]} is {got[:12]}, trailer says {trailer['sha256'][:12]}")
+    if why == "git-batch-missing":
+        return _out(FAIL, f"no-blob-at-commit: {src} at {commit[:8]}")
+    if smd.is_git_failure(why):
+        return _out(UNMEASURED, f"git failure: {why}")
+    return _out(UNMEASURED, f"{src} at {commit[:8]}: {why}")
+
+
+CLAUSES = {
+    "TRAILER": c_trailer,
+    "SKILL": c_skill,
+    "SOURCE-PATH": c_source_path,
+    "SOURCE-CURRENT": c_source_current,
+    "COMMIT-ANCESTOR": c_commit_ancestor,
+    "COMMIT-TOUCHES": c_commit_touches,
+    "COMMIT-DIGEST": c_commit_digest,
+    "FLOOR": c_floor,
+    "DISPATCHER-COVERED": c_dispatcher_covered,
+    "H-RECORD-CURRENT": c_h_record_current,
+}
+
+
+# --------------------------------------------------------------------------- judge
+
+def _inconclusive(head, reason, result=None):
+    r = result or {"population": [], "cards": [], "gate": {}}
+    r.update({"verdict": "INCONCLUSIVE", "head": head, "reason": reason})
+    return r
+
+
+def judge(repo=smd.REPO, ref="HEAD") -> dict:
+    """{verdict PASS|FAIL|INCONCLUSIVE, head, reason, population [rels], cards [{card, trailer, clauses}], gate}."""
+    result = {"verdict": None, "head": None, "reason": "", "population": [], "cards": [], "gate": {}}
+    try:
+        sha, why = smd.resolve_commit(repo, ref)
+        if sha is None:
+            return _inconclusive(None, f"{ref} not resolvable: {why}", result)
+        result["head"] = sha
+        tracked, why = smd.tracked_paths(repo, sha)
+        if tracked is None:
+            return _inconclusive(sha, f"ls-tree: {why}", result)
+        if not tracked:
+            return _inconclusive(sha, "nothing tracked", result)
+        members, why = population(repo, sha, tracked)
+        if members is None:
+            return _inconclusive(sha, f"population read failed: {why}", result)
+        result["population"] = [m["card"] for m in members]
+        pairs, pairs_why = smd.committed_card_pairs(repo, sha)
+        ctx = {"repo": repo, "sha": sha, "members": members, "pairs": pairs, "pairs_why": pairs_why}
+
+        for m in members:
+            trailer, _ = parse_trailer(m["text"])
+            clauses = {"TRAILER": CLAUSES["TRAILER"](ctx, m, trailer)}
+            for cid in CARD_CLAUSES[1:]:
+                if clauses["TRAILER"]["outcome"] != PASS or trailer is None:
+                    clauses[cid] = _out(UNMEASURED, "no trailer")
+                else:
+                    clauses[cid] = CLAUSES[cid](ctx, m, trailer)
+            result["cards"].append({"card": m["card"], "trailer": trailer, "clauses": clauses})
+        for cid in GATE_CLAUSES:
+            result["gate"][cid] = CLAUSES[cid](ctx)
+
+        outcomes = [c["outcome"] for c in result["gate"].values()]
+        outcomes += [c["outcome"] for card in result["cards"] for c in card["clauses"].values()]
+        result["verdict"] = PASS if outcomes and all(o == PASS for o in outcomes) else FAIL
+        return result
+    except Exception as e:  # noqa: BLE001 -- a judge that crashes must say INCONCLUSIVE, never print a traceback
+        return _inconclusive(result.get("head"), f"exception {type(e).__name__}", result)
+
+
+def fail_set(result) -> set:
+    """{"<card>:<clause>"} for per-card and {"<clause>"} for gate clauses whose outcome is not PASS."""
+    out = {cid for cid, c in result.get("gate", {}).items() if c.get("outcome") != PASS}
+    for card in result.get("cards", []):
+        out |= {f"{card['card']}:{cid}" for cid, c in card["clauses"].items() if c.get("outcome") != PASS}
+    return out
+
+
+# --------------------------------------------------------------------------- CLI
+
+def render(result) -> list:
+    lines = []
+    for card in result["cards"]:
+        skill = (card["trailer"] or {}).get("skill", "?")
+        cl = " ".join(f"{cid}={card['clauses'][cid]['outcome']}" for cid in CARD_CLAUSES)
+        lines.append(f"{card['card']} skill={skill} {cl}")
+        for cid in CARD_CLAUSES:
+            c = card["clauses"][cid]
+            if c["outcome"] != PASS:
+                lines.append(f"  {cid}: {c['reason']}")
+    for cid in GATE_CLAUSES:
+        c = result["gate"].get(cid)
+        if c is None:
+            continue
+        lines.append(f"{cid}={c['outcome']}" + (f" ({c['reason']})" if c["reason"] else ""))
+    head = (result.get("head") or "none")[:8]
+    tail = f"CARD_LINEAGE {result['verdict']} population={len(result['population'])} head={head}"
+    if result["verdict"] == "INCONCLUSIVE":
+        tail += f" reason={result['reason']}"
+    lines.append(tail)
+    return lines
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description="compile-out card lineage gate (pillar G)")
+    ap.add_argument("--repo", default=str(smd.REPO))
+    ap.add_argument("--ref", default="HEAD")
+    ap.add_argument("--json", action="store_true")
+    ap.add_argument("--trailer-for", metavar="SKILL")
+    a = ap.parse_args(argv)
+    repo = Path(a.repo)
+    if a.trailer_for is not None:
+        if not SKILL_NAME_RE.fullmatch(a.trailer_for):
+            print(f"card_lineage: bad skill name {a.trailer_for!r}", file=sys.stderr)
+            return 2
+        line, why = trailer_for(repo, a.trailer_for, a.ref)
+        if line is None:
+            print(f"card_lineage: refused: {why}", file=sys.stderr)
+            return 1
+        print(line)
+        return 0
+    result = judge(repo, a.ref)
+    if a.json:
+        print(json.dumps(result, indent=1, sort_keys=True))
+    else:
+        print("\n".join(render(result)))
+    return 0 if result["verdict"] == PASS else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -139,3 +139,6 @@ async function main() {
 }
 
 main().catch(() => emit({ continue: true }));
+// LINEAGE (skill-capability pillar G): this card is compiled out of the skill named on the next line. When that
+// skill changes, re-read it and re-derive the card text and this line together; tools/card_lineage.py fails until then.
+// COMPILED-FROM: skill=destructive-state-authorization source=skills/destructive-state-authorization/SKILL.md sha256=2985bd97002abf0589a95080a7d29b447b7a703df9ccd319494dba45701cd0de commit=7f985799916ce6e12cbdc6e2495c47065366c14b
