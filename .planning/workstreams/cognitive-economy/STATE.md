@@ -1,21 +1,21 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-current_phase: 2 — Context lifetime and fresh-epoch economics
+current_phase: 3 — Turn advancement and non-convergence
 status: planning
-stopped_at: Phase 1 complete, ready to plan Phase 2
-last_updated: "2026-10-03T14:29:54.918Z"
+stopped_at: Phase 2 complete, ready to plan Phase 3
+last_updated: "2026-10-03T14:59:35.712Z"
 last_activity: 2026-10-03
 progress:
   total_phases: 7
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 14
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
+  percent: 29
 milestone_name: cognitive-economy
 workstream: cognitive-economy
 created: 2026-10-03
-current_phase_name: Context lifetime and fresh-epoch economics
+current_phase_name: Turn advancement and non-convergence
 current_plan: Not started
 last_activity_desc: Workstream created from the approved cognitive-economy program
 ---
@@ -31,7 +31,7 @@ turn-advancement, compile-out, baseline-ratchet. Waste less intelligence, never 
 ## Current Position
 
 **Status:** Ready to plan
-**Current Phase:** 2 — Context lifetime and fresh-epoch economics
+**Current Phase:** 3 — Turn advancement and non-convergence
 **Last Activity:** 2026-10-03
 
 ## Sealed before the run (interactive pane, session dc383770)
@@ -50,5 +50,5 @@ turn-advancement, compile-out, baseline-ratchet. Waste less intelligence, never 
 
 ## Session Continuity
 
-**Stopped At:** Phase 1 complete, ready to plan Phase 2
+**Stopped At:** Phase 2 complete, ready to plan Phase 3
 **Resume File:** None

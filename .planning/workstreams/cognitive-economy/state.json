@@ -11,7 +11,7 @@
     {
       "number": "2",
       "name": "Context lifetime and fresh-epoch economics",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "3",
@@ -41,8 +41,8 @@
   ],
   "next": {
     "command": "/gsd:progress --next",
-    "label": "Advance to the next step (plan phase 2)",
-    "reason": "Phase 2 of 7 — needs a plan"
+    "label": "Advance to the next step (plan phase 3)",
+    "reason": "Phase 3 of 7 — needs a plan"
   },
-  "updated_at": "2026-10-03T14:29:55.057Z"
+  "updated_at": "2026-10-03T14:59:35.759Z"
 }
