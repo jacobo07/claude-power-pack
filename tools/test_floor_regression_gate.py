@@ -1827,6 +1827,259 @@ def g_no_real_session():
     return (not why), "; ".join(why) or "run_cli / run_main refuse --probe without a stub under the scratch root; the fence cannot be switched off by a caller"
 
 
+# --------------------------------------------------------------------------- gates: the real GEX44 floor (plan 04-03)
+# Real transcripts are READ ONLY; every seeded variant is a scratch copy. Absolute paths: SKIP when absent.
+REAL_A = Path("/home/kobii/.claude/projects/-home-kobii-missions-incremental-cognition--claude-worktrees-ic-run/"
+              "607795c4-aa30-4fb8-886c-5b1e24a7a991.jsonl")      # interactive session, finished
+REAL_B = Path("/home/kobii/.claude/projects/-home-kobii-missions-incremental-cognition/"
+              "34f03871-4d33-4b7d-a52e-ec674b20a223.jsonl")      # mission worker: REAL_A's prompt plus one appended part
+REAL_A7 = Path("/home/kobii/a7-env/home/.claude/projects/-home-kobii-kobii-a7/"
+               "71e107ea-3171-4da7-b4bb-aedbc33d3f78.jsonl")     # first assistant row is <synthetic> "Login expired"
+REF_GEX44 = REPO / "vault" / "programs" / "incremental-cognition" / "floor" / "reference-gex44.json"
+REAL_B_SESSION = "34f03871-4d33-4b7d-a52e-ec674b20a223"
+REAL_SESSION_ARG = [None]
+if "--real-session" in sys.argv:
+    REAL_SESSION_ARG[0] = sys.argv[sys.argv.index("--real-session") + 1]
+
+
+def absent(*paths):
+    gone = [str(p) for p in paths if not Path(p).is_file()]
+    return f"UNMEASURABLE: not on this host: {', '.join(gone)}" if gone else None
+
+
+def on_gex44() -> bool:
+    return GATE.host_plane() == "gex44"
+
+
+def layer_sum(m, layer):
+    return sum(c["chars"] for c in m["components"] if c["layer"] == layer)
+
+
+def layer_sources(m, layer):
+    return [c for c in m["components"] if c["layer"] == layer]
+
+
+def g_real_gex44():
+    gone = absent(REAL_A)
+    if gone:
+        return "SKIP", gone
+    m = GATE.measure(str(REAL_A))
+    why = []
+
+    def want(label, got, expected):
+        if got != expected:
+            why.append(f"{label}={got} want {expected}")
+    want("memory_global", layer_sum(m, "memory_global"), 25037)
+    want("memory_global scopes", {c["scope"] for c in layer_sources(m, "memory_global")}, {"universal"})
+    want("memory_project", layer_sum(m, "memory_project"), 34478)
+    want("memory_project scopes", {c["scope"] for c in layer_sources(m, "memory_project")}, {"project"})
+    want("rules", layer_sum(m, "rules"), 63625)
+    want("rules sources", len(layer_sources(m, "rules")), 23)
+    want("rules scopes", {c["scope"] for c in layer_sources(m, "rules")}, {"universal"})
+    want("skill_listing chars", m["skill_listing"]["chars"], 30000)
+    want("skill_listing components", layer_sum(m, "skill_listing"), 30000)
+    ss = "hook_context:SessionStart:SessionStart"
+    want("SessionStart hook_context", layer_sum(m, ss), 7798)
+    want("SessionStart sources", len(layer_sources(m, ss)), 2)
+    if any(c["scope"] == "project" for c in layer_sources(m, ss)):
+        why.append("SessionStart hook_context holds a project source")
+    ups = "hook_context:UserPromptSubmit:UserPromptSubmit"
+    want("UserPromptSubmit hook_context", layer_sum(m, ups), 2299)
+    if any(c["scope"] == "project" for c in layer_sources(m, ups)):
+        why.append("UserPromptSubmit hook_context holds a project source")
+    sp = layer_sources(m, "system_prompt")
+    want("system_prompt", sum(c["chars"] for c in sp), 9447)
+    want("system_prompt parts", len(sp), 14)
+    if not all(c["source"].startswith("part:") and c["scope"] == "unattributed" for c in sp):
+        why.append("a system prompt part is not a digest-identified unattributed part")
+    want("agent listing", layer_sum(m, "other:agent_listing_delta"), 27062)
+    want("first call tokens", m["tokens"]["first_call_total"], 107351)
+    want("tokens status", m["tokens"]["status"], "measured")
+    want("probe_view startup_tokens", (m["probe_view"] or {}).get("startup_tokens"), 107351)
+    prov = m["provenance"]
+    want("install_home", prov["install_home"], "/home/kobii")
+    want("cwd", prov["cwd"], "/home/kobii/missions/incremental-cognition")
+    if on_gex44():
+        want("plane", prov["plane"], "gex44")
+    return (not why), "; ".join(why) or f"real GEX44 floor reproduced exactly: total={m['total_chars']} tokens=107351 window_rows={prov['window_rows']}"
+
+
+def g_real_a7_no_call():
+    gone = absent(REAL_A7)
+    if gone:
+        return "SKIP", gone
+    m = GATE.measure(str(REAL_A7))
+    why = []
+    if m["tokens"]["status"] != "no_model_call":
+        why.append(f"tokens.status={m['tokens']['status']}")
+    if (m["probe_view"] or {}).get("startup_tokens") != 0:
+        why.append(f"probe_view.startup_tokens={(m['probe_view'] or {}).get('startup_tokens')} (the owner reads a synthetic row as 0)")
+    if m["skill_listing"]["chars"] != 30003:
+        why.append(f"skill_listing chars={m['skill_listing']['chars']}")
+    hs = [c for c in m["components"] if c["layer"].startswith("hook_system_message:SessionStart")]
+    if sum(c["chars"] for c in hs) != 8332:
+        why.append(f"hook_system_message chars={sum(c['chars'] for c in hs)}")
+    if m["provenance"]["install_home"] != "/home/kobii/a7-env/home":
+        why.append(f"install_home={m['provenance']['install_home']}")
+    root = scratch("a7")
+    target = root / "a7.json"
+    rc, out, _ = run_cli(["--write-reference", target, "--transcript", REAL_A7])
+    if not unmeasurable(rc, out, "no_model_call") or target.exists():
+        why.append(f"write: rc={rc} last={last_line(out)!r} exists={target.exists()}")
+    return (not why), "; ".join(why) or "login-expired session: tokens no_model_call, owner startup_tokens 0, no reference written (exit 2)"
+
+
+def g_real_appended_prompt():
+    if not on_gex44():
+        return "SKIP", f"plane is {GATE.host_plane()!r}, not gex44"
+    gone = absent(REAL_A, REAL_B)
+    if gone:
+        return "SKIP", gone
+    root = scratch("appended")
+    ref = root / "ref-a.json"
+    rc, out, err = run_cli(["--write-reference", ref, "--transcript", REAL_A])
+    if rc != 0:
+        return False, f"write rc={rc} {out[-300:]!r}"
+    rc, out, _ = run_cli(["--check", "--reference", ref, "--transcript", REAL_B])
+    why = []
+    rise = [ln for ln in out.splitlines() if ln.startswith("RISE system_prompt scope=unattributed delta=+4383")]
+    if rc != 1 or len(rise) != 1 or "universal_1k" not in rise[0]:
+        why.append(f"rc={rc} rise={rise} out={out[-500:]!r}")
+    rc, out, _ = run_cli(["--check", "--reference", ref, "--transcript", REAL_B, "--json"])
+    sd = json.loads(out).get("scope_deltas") or {}
+    if sd.get("universal") != 0 or sd.get("project") != 0:
+        why.append(f"scope_deltas={sd} (universal and project must be +0: the worker differs by the appended prompt only)")
+    return (not why), "; ".join(why) or f"reference from the interactive session, check of the mission worker: {rise[0]}"
+
+
+def copy_window(src, dest):
+    """Rows of `src` through its first assistant row, parsed (a scratch copy; the source is only read)."""
+    rows = []
+    with open(src, "rb") as fh:
+        for line in fh:
+            if not line.strip():
+                continue
+            row = json.loads(line.decode("utf-8", errors="replace"))
+            rows.append(row)
+            if isinstance(row, dict) and row.get("type") == "assistant":
+                break
+    return rows
+
+
+def append_z(rows, kind, basename=None):
+    """+1,024 'Z' on the instructions file of `kind` (and, for User, basename CLAUDE.md); a new Project entry when none."""
+    for row in rows:
+        a = row.get("attachment") if isinstance(row, dict) else None
+        if not isinstance(a, dict) or a.get("type") != "instructions":
+            continue
+        for f in a.get("files") or []:
+            if f.get("type") == kind and (basename is None or str(f.get("path", "")).replace("\\", "/").endswith("/" + basename)):
+                f["content"] = (f.get("content") or "") + "Z" * 1024
+                return True
+    if kind == "Project":
+        for row in rows:
+            a = row.get("attachment") if isinstance(row, dict) else None
+            if isinstance(a, dict) and a.get("type") == "instructions":
+                cwd = row.get("cwd") or "/"
+                a.setdefault("files", []).append({"path": str(cwd).rstrip("/") + "/CLAUDE.md", "type": "Project", "content": "Z" * 1024})
+                return True
+    return False
+
+
+def g_seeded_real():
+    src = REAL_A
+    if REAL_SESSION_ARG[0]:
+        import listing_floor_probe as lfp
+        found = lfp.transcript(REAL_SESSION_ARG[0])
+        if not found:
+            return "SKIP", f"UNMEASURABLE: no transcript for --real-session {REAL_SESSION_ARG[0]}"
+        src = Path(found)
+    gone = absent(src)
+    if gone:
+        return "SKIP", gone
+    root = scratch("seeded")
+    pdir = root / "home" / ".claude" / "projects" / src.parent.name
+    pdir.mkdir(parents=True)
+    variants = {}
+    for name, edit in (("a", None), ("b", ("User", "CLAUDE.md")), ("c", ("Project", None))):
+        rows = copy_window(src, None)
+        if edit and not append_z(rows, *edit):
+            return False, f"variant {name}: no instructions entry of type {edit[0]} to extend"
+        out = pdir / f"{name}00.jsonl"
+        with open(out, "w", encoding="utf-8", newline="\n") as fh:
+            for r in rows:
+                fh.write(json.dumps(r, ensure_ascii=False) + "\n")
+        variants[name] = out
+    env = home_env(root)
+    ref = root / "ref.json"
+    rc, out, err = run_cli(["--write-reference", ref, "--transcript", variants["a"]], env)
+    if rc != 0:
+        return False, f"write rc={rc} {out[-300:]!r}"
+    why = []
+    rc, out, _ = run_cli(["--check", "--reference", ref, "--transcript", variants["a"]], env)
+    if rc != 0:
+        why.append(f"control (unchanged copy): rc={rc} last={last_line(out)!r}")
+    rc, out, _ = run_cli(["--check", "--reference", ref, "--transcript", variants["b"]], env)
+    rise = [ln for ln in out.splitlines() if ln.startswith("RISE memory_global scope=universal delta=+1024")]
+    if rc != 1 or not rise:
+        why.append(f"+1,024 in ~/.claude/CLAUDE.md: rc={rc} rise={rise} out={out[-400:]!r}")
+    rc, out, _ = run_cli(["--check", "--reference", ref, "--transcript", variants["c"]], env)
+    scope = [ln for ln in out.splitlines() if ln.startswith("SCOPE ")]
+    if rc != 0 or not scope or "project=+1024" not in scope[0] or "universal=+0" not in scope[0]:
+        why.append(f"+1,024 in the project CLAUDE.md: rc={rc} scope={scope}")
+    return (not why), "; ".join(why) or f"real transcript {src.name[:8]}: +1,024 user CLAUDE.md RED (memory_global universal), same bytes in the project CLAUDE.md green (project +1024)"
+
+
+def g_ref_gex44_green():
+    if not on_gex44():
+        return "SKIP", f"plane is {GATE.host_plane()!r}, not gex44"
+    gone = absent(REAL_A)
+    if gone:
+        return "SKIP", gone
+    if not REF_GEX44.is_file():
+        return False, f"the committed reference is missing: {REF_GEX44}"
+    rc, out, err = run_cli(["--check", "--reference", REF_GEX44, "--transcript", REAL_A])
+    why = []
+    if rc != 0 or not last_line(out).startswith("FLOOR verdict=WITHIN_BOUND exit=0"):
+        why.append(f"rc={rc} last={last_line(out)!r} rise={find_lines(out, 'RISE ')}")
+    rc, out, _ = run_cli(["--check", "--reference", REF_GEX44, "--transcript", REAL_A, "--json"])
+    sd = json.loads(out).get("scope_deltas") or {}
+    if sd.get("universal") != 0 or sd.get("project") != 0:
+        why.append(f"scope_deltas={sd}")
+    return (not why), "; ".join(why) or "today's interactive floor (607795c4) is within bound of the plane-gex44 reference: universal +0, project +0"
+
+
+def g_real_reference_pinned():
+    """R2-W1 item 3: the committed reference's window pin is re-derived from the real transcript it was written from."""
+    gone = absent(REAL_B)
+    if gone:
+        return "SKIP", gone
+    if not REF_GEX44.is_file():
+        return False, f"the committed reference is missing: {REF_GEX44}"
+    ref = json.loads(REF_GEX44.read_text(encoding="utf-8"))
+    prov = ref.get("provenance") or {}
+    why = []
+    if prov.get("plane") != "gex44" or prov.get("session_id") != REAL_B_SESSION or ref.get("explanations") != []:
+        why.append(f"identity plane={prov.get('plane')!r} session={prov.get('session_id')!r} explanations={ref.get('explanations')!r}")
+    if not (isinstance(prov.get("window_sha256"), str) and len(prov["window_sha256"]) == 64 and isinstance(prov.get("window_rows"), int)):
+        return False, f"the reference provenance carries no window_sha256 / window_rows: {sorted(prov)}"
+    _rows, _assistant, raw = GATE.read_window(str(REAL_B))
+    sha, nrows = GATE.window_digest(raw)
+    if sha != prov["window_sha256"]:
+        why.append(f"window_sha256 re-read {sha[:12]} != committed {prov['window_sha256'][:12]}")
+    if nrows != prov["window_rows"]:
+        why.append(f"window_rows re-read {nrows} != committed {prov['window_rows']}")
+    # positive control: another real window must NOT match, so this comparison can fail
+    if Path(REAL_A).is_file():
+        _r, _a, raw_a = GATE.read_window(str(REAL_A))
+        if GATE.window_digest(raw_a)[0] == prov["window_sha256"]:
+            why.append("control: a different real window produced the same digest")
+    # the file ends with no later row's influence: the digest equals what a fresh measure() records
+    if GATE.measure(str(REAL_B))["provenance"]["window_sha256"] != sha:
+        why.append("measure() and window_digest disagree on the same transcript")
+    return (not why), "; ".join(why) or f"committed reference window pinned to {REAL_B_SESSION[:8]}: sha256 {sha[:12]} rows={nrows} re-derived from disk"
+
+
 # --------------------------------------------------------------------------- run
 GATES_TRACER = [
     ("V-FLOOR-TRACER-E2E", g_tracer_e2e),
@@ -1890,6 +2143,12 @@ GATES_SOURCES = [
     ("V-FLOOR-PROBE-REFUSALS", g_probe_refusals),
     ("V-FLOOR-PROBE-VIEW", g_probe_view),
     ("V-FLOOR-NO-REAL-SESSION", g_no_real_session),
+    ("V-FLOOR-REAL-GEX44", g_real_gex44),
+    ("V-FLOOR-REAL-A7-NO-CALL", g_real_a7_no_call),
+    ("V-FLOOR-REAL-APPENDED-PROMPT", g_real_appended_prompt),
+    ("V-FLOOR-SEEDED-REAL", g_seeded_real),
+    ("V-FLOOR-REF-GEX44-GREEN", g_ref_gex44_green),
+    ("V-FLOOR-REAL-REFERENCE-PINNED", g_real_reference_pinned),
 ]
 GATES = GATES_TRACER + GATES_RULES + GATES_ATTRIBUTION + GATES_SAFETY + GATES_SOURCES
 
@@ -1913,12 +2172,17 @@ def run_all() -> int:
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
 SUBPROCESS_ONLY = ("V-FLOOR-TRACER-E2E", "V-FLOOR-SOURCES-E2E", "V-FLOOR-PROBE-STUB", "V-FLOOR-PROBE-BAD-EXIT",
-                   "V-FLOOR-PROBE-NOT-EXECUTABLE", "V-FLOOR-NO-REAL-SESSION")   # real subprocesses: a monkeypatch cannot reach them
+                   "V-FLOOR-PROBE-NOT-EXECUTABLE", "V-FLOOR-NO-REAL-SESSION", "V-FLOOR-REAL-A7-NO-CALL",
+                   "V-FLOOR-REAL-APPENDED-PROMPT", "V-FLOOR-SEEDED-REAL", "V-FLOOR-REF-GEX44-GREEN")   # real subprocesses: a monkeypatch cannot reach them
 DRILL_GATES = [n for n, _ in GATES if n not in SUBPROCESS_ONLY]
 
 
+QUIET_SKIPPED: list = []
+
+
 def _quiet(names) -> dict:
-    """Run the named gates with printing off; {gate: passed} for the ones that ran to PASS/FAIL."""
+    """Run the named gates with printing off; {gate: passed} for the ones that ran to PASS/FAIL (QUIET_SKIPPED holds
+    the ones that SKIPped: a host without the real transcripts)."""
     start = len(RESULTS)
     QUIET[0] = True
     try:
@@ -1926,6 +2190,7 @@ def _quiet(names) -> dict:
             run_gate(n, GATE_FN[n])
     finally:
         QUIET[0] = False
+    QUIET_SKIPPED[:] = [g for st, g, _ in RESULTS[start:] if st in ("SKIP", "INCONCLUSIVE")]
     return {g: st == "PASS" for st, g, _ in RESULTS[start:] if st in ("PASS", "FAIL")}
 
 
@@ -2038,8 +2303,10 @@ def run_drill() -> int:
         return 1
     before = sha256_file(GATE_FILE)
     control = _quiet(DRILL_GATES)
-    control_ok = len(control) == len(DRILL_GATES) and all(control.values())
-    print(f"{'PASS' if control_ok else 'FAIL'} DRILL-CONTROL unmutated run: {sum(control.values())}/{len(control)} gates green")
+    control_skipped = len(QUIET_SKIPPED)
+    control_ok = len(control) + control_skipped == len(DRILL_GATES) and all(control.values()) and len(control) > 0
+    print(f"{'PASS' if control_ok else 'FAIL'} DRILL-CONTROL unmutated run: {sum(control.values())}/{len(control)} gates green"
+          f" (skipped {control_skipped})")
     killed = 0
     for label, apply, targets in MUTANTS:
         restore = apply()
@@ -2054,8 +2321,9 @@ def run_drill() -> int:
         else:
             print(f"SURVIVED {label} (still green or absent: {', '.join(t for t in targets if seen.get(t) is not False)})")
     after = _quiet(DRILL_GATES)
-    clean = len(after) == len(DRILL_GATES) and all(after.values())
-    print(f"{'PASS' if clean else 'FAIL'} DRILL-CLEAN-AFTER-MUTANTS unmutated rerun: {sum(after.values())}/{len(after)} gates green")
+    clean = len(after) + len(QUIET_SKIPPED) == len(DRILL_GATES) and all(after.values()) and len(after) > 0
+    print(f"{'PASS' if clean else 'FAIL'} DRILL-CLEAN-AFTER-MUTANTS unmutated rerun: {sum(after.values())}/{len(after)} gates green"
+          f" (skipped {len(QUIET_SKIPPED)})")
     restored = sha256_file(GATE_FILE) == before
     print(f"{'PASS' if restored else 'FAIL'} DRILL-RESTORE gate file sha256 {before[:16]} before == after")
     print(f"DRILL killed={killed}/{len(MUTANTS)}")
