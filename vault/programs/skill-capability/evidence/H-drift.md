@@ -65,7 +65,7 @@ Drift found on this host is reported and never fixed here (no write under the ho
 Pairs are discovered: each deny card registered in `hooks/hook-dispatcher.js` names its skill, and the source is `skills/<skill>/SKILL.md`. The record pins the LF sha256 of both, read from committed blobs.
 
 - rule: Re-run `--record-cards` only after re-deriving each card from its current source; recording is the re-derivation act.
-- recorded_at_commit `ee645e0901571354af8e023eb5c641b19aa4ce08`
+- recorded_at_commit `7e689d28737d10c193ddc0c1c825de1c2a271fd3`
 
 | skill | card | status at HEAD |
 |---|---|---|

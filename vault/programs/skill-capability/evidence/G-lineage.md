@@ -33,11 +33,11 @@ verdict PASS, population 2
 
 | card | skill | source | sha256 | commit | TRAILER | SKILL | SOURCE-PATH | SOURCE-CURRENT | COMMIT-ANCESTOR | COMMIT-TOUCHES | COMMIT-DIGEST |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| hooks/destructive_doctrine_card.js | destructive-state-authorization | skills/destructive-state-authorization/SKILL.md | 2985bd97002abf0589a95080a7d29b447b7a703df9ccd319494dba45701cd0de | 7f985799916ce6e12cbdc6e2495c47065366c14b | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
-| hooks/doctrine_cards.js | concurrent-writers-shared-tree | skills/concurrent-writers-shared-tree/SKILL.md | f1f52de4c3115d0aafc39d69c67a2e1ae7936ae63b26ecc9263d89f1150e57c0 | 31e1e25ca20bdf1266aa48c832312ef983d5d1eb | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| hooks/destructive_doctrine_card.js | destructive-state-authorization | skills/destructive-state-authorization/SKILL.md | fb98f108cfc0cf129a9e3ab790b1f5f0593661083ea48244d906975f373f97a6 | 007f1d866bea62eb35a131936e9e92b1d98de9ab | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| hooks/doctrine_cards.js | concurrent-writers-shared-tree | skills/concurrent-writers-shared-tree/SKILL.md | 77f55d19fdf07a873b267c9d374bef25997aa7e754d67ea31b30a78c79e0ef11 | 007f1d866bea62eb35a131936e9e92b1d98de9ab | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
 
 Gate clauses: FLOOR PASS, DISPATCHER-COVERED PASS, H-RECORD-CURRENT PASS
-H record `vault/programs/skill-capability/card_source_digests.json` recorded_at_commit `ee645e0901571354af8e023eb5c641b19aa4ce08`
+H record `vault/programs/skill-capability/card_source_digests.json` recorded_at_commit `7e689d28737d10c193ddc0c1c825de1c2a271fd3`
 
 ## Drills
 
