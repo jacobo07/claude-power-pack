@@ -1,7 +1,7 @@
 ---
 id: PLAN-KSR-EPOCH-REHYDRATION
 date: 2026-10-03
-status: AWAITING OWNER APPROVAL (ultra phase 5 output; phase-4 audit EXECUTE-WITH-FIXES, 15 gaps injected)
+status: HALTED AT OWNER DECISION -- approved 2026-10-03; T1/T2 done (26e5cdf0) and falsified the s1 rank-3 lever (boot docs = 16.4% of boot reads, ~1.5-2.5% weighted, not ~10%); T8 pre-registered INCONCLUSIVE (N=1); C2+ not started. Options A-D: vault/audits/ksr_archaeology/2026-10-03-boot-rehydration.md s6
 covers: [ksr-epoch-rehydration, continuation-view, cognitive-archaeology-pilot]
 mode: ULTRA-PLAN for this reconciliation only; EXECUTION MODE from the first approved action
 promotion_ceiling: CANDIDATE (never BASELINE in this slice)
