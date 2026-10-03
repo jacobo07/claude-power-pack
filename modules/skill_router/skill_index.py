@@ -262,6 +262,27 @@ def build_index(force: bool = False) -> list[SkillEntry]:
     return entries
 
 
+def directory_rows(names, entries: list[SkillEntry] | None = None) -> tuple[list[dict], list[str]]:
+    """Rows of a capability directory for ``names``: name, one line, SKILL.md path.
+
+    Only a skill with a SKILL.md on disk can be paged by reading it, so a name the index cannot
+    resolve is returned in the second list and must stay in the native listing; it is never given
+    a row that points nowhere. Synthetic CLI cards are excluded (they have no SKILL.md).
+    """
+    if entries is None:
+        entries = build_index()
+    by_name = {e.name: e for e in entries if e.path.endswith("SKILL.md")}
+    rows, missing = [], []
+    for n in names:
+        e = by_name.get(n)
+        if e is None or not Path(e.path).is_file():
+            missing.append(n)
+            continue
+        line = re.split(r"(?<=[.!?])\s", " ".join(e.description.split()), maxsplit=1)[0]
+        rows.append({"name": n, "line": line[:160], "path": e.path})
+    return rows, missing
+
+
 def get_frontend_skills(force: bool = False) -> list[SkillEntry]:
     """Frontend-domain skills only (the pilot scope)."""
     return [e for e in build_index(force=force) if e.domain == "frontend"]
