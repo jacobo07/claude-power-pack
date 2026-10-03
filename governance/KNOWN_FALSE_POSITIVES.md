@@ -116,6 +116,20 @@
   proven script there), or let the program read `DATABASE_URL` from the sourced env file. Then
   nothing credential-shaped is written from the dev machine at all.
 
+## FP-AGENT-CONTRACT-RECORD-NOUN — "IMPOSSIBLE AGENT CONTRACT" on a read-only dispatch that asks for no file
+- What it really is: `agent-solo-guard.js` `DURABLE_OUTPUT` regex 1 (line 287) matches a write VERB
+  within 120 characters of a path ending `.md/.json/.txt/...`. "record" is in the verb list, so the
+  NOUN phrase "plan of record; audit gaps in `vault/plans/<x>.audit.md`" reads as a write demand.
+  The contract check then blocks any agent without Write/Edit (e.g. `gsd-plan-checker`).
+- Symptom: the block repeats unchanged after you apply its own fix (2) — delete the write clause,
+  say the parent persists the report — because the trigger was never that clause.
+- Measured 2026-10-03 (UCEP workstream, Phase 2 plan-checker dispatch, 2 identical blocks).
+- Response (≤2 min): grep your prompt for list verbs (record, store, produce, create...) near a
+  `.md` path and reword THAT phrase ("governing spec:" instead of "plan of record"), or use fix (1),
+  a general-purpose agent told to follow the specialist's agent file. Do not set
+  `CLAUDE_AGENT_CONTRACT_GUARD=off`. The detector fix (verb must govern the path, not merely precede
+  it) is open; it was not made here because it is outside the UCEP scope.
+
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
