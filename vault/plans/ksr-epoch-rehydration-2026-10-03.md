@@ -1,7 +1,7 @@
 ---
 id: PLAN-KSR-EPOCH-REHYDRATION
 date: 2026-10-03
-status: HALTED AT OWNER DECISION -- approved 2026-10-03; T1/T2 done (26e5cdf0) and falsified the s1 rank-3 lever (boot docs = 16.4% of boot reads, ~1.5-2.5% weighted, not ~10%); T8 pre-registered INCONCLUSIVE (N=1); C2+ not started. Options A-D: vault/audits/ksr_archaeology/2026-10-03-boot-rehydration.md s6
+status: CLOSED 2026-10-03 -- slice 1 falsified by T1/T2 (26e5cdf0; boot docs ~1.5-2.5% weighted, not ~10%); B done (KSR 9dcb68a); C done (99d76964, 7048bb31, 7e9a03ad): tool-I/O firewall NOT EARNED, lifetime dead carriage <= 6.3% is OWNER_EXISTS_ELSEWHERE. See s12 Closure.
 covers: [ksr-epoch-rehydration, continuation-view, cognitive-archaeology-pilot]
 mode: ULTRA-PLAN for this reconciliation only; EXECUTION MODE from the first approved action
 promotion_ceiling: CANDIDATE (never BASELINE in this slice)
@@ -145,3 +145,59 @@ pane-scoped RESUMPTION (T1/T3/T10), 7 obligations need real gates (T3), 8 rollba
 12 T9 endpoint under STOP (T9), 13 reconciled-at refusal (T3/T4), 14 MEMORY 4 KB + re-read (T7),
 15 autonomous OFF (T3). Gaps 1, 2, 4, 6, 8 re-verified by the parent against source lines.
 Full gap list: session scratchpad `phase4_gaps.md`.
+
+## 12. Continuation B + C (Owner-approved 2026-10-03, after T1/T2 falsification)
+
+The generated-continuation build (old C2-C5, T3-T10) is SUSPENDED. It reopens only through a new plan
+on new evidence. Failed hypothesis, the ~10% estimate and its falsification stay recorded above.
+
+### B -- state correctness (not an optimization)
+- Authority: `.ksr_vault/frontier/BACKLOG_OWNER_STOP_20261001.md` (commit 14f7840): 4 missions HALTED,
+  work in KSR-B-060..072, re-arm only on Owner instruction.
+- Stale signal: committed `.planning/STATE.md:20` "Milestone v3.0 page2-native-gameselect (active)".
+- Change: ONLY the parenthetical of that heading -> "(current milestone — work HALTED by Owner STOP
+  2026-10-01; resume only on Owner instruction: .ksr_vault/frontier/BACKLOG_OWNER_STOP_20261001.md)".
+  No banner, no other line, no RESUMPTION_FILE / VIS surface, no MEMORY/SESSION_STATE, no goal store.
+- Foreign uncommitted edits in STATE.md (+14/-3, GSD auto-write 2026-09-23, hunks at L4-17, L40, L87)
+  stay uncommitted and byte-identical: the commit is built in the index from HEAD's blob + my line.
+- Done-gate: `git show HEAD` = exactly that one line; post-commit `git diff` of STATE.md equals the
+  pre-commit foreign diff; the real file re-read shows no bare "(active)".
+
+### C -- causal context-admission forensics (read-only, deterministic, no agents)
+- Known instrument defect (bug contract): T2 `cls()` used raw strings like r"\memory\\" (two
+  backslashes) that never match a path, inflating "unclassified". Fixed in C1, regression-tested.
+- Stage 1 (whole corpus, aggregates): produced/admitted volume by source (Read, PowerShell by command
+  class, Grep, Agent, assistant text, hook/system injections) in two windows: pre-first-edit and
+  whole session. 489739e3 included here only.
+- Stage 2 (pre-registered sample, seed 20261004, 10 main sessions, 489739e3 excluded): 3 top-quartile,
+  3 median-band, 2 bottom-quartile by whole-session PowerShell share; 2 highest residual-unknown share
+  after the classifier fix.
+- Observable use (external proxy, never model attention): an identifier or distinctive line of a result
+  reappears later in assistant text or tool input. Otherwise NOT_OBSERVED (not "useless").
+- Durability: IMMEDIATE (<=3 model calls) / WORK_UNIT (to next edit cluster or commit) / LONGER.
+- Dead carriage: result tokens x model calls it stays resident after its last observable use, until
+  compaction or end (Semantic-GC precursor). Identical repeats: same path+range or same command with
+  identical output hash; unjustified only if no source change and no compaction in between.
+- Replaceable (candidates only): large + low used-fraction -> digest; identical repeat -> pointer;
+  file content via shell -> ranged Read. Miss cost recorded as later re-reads of the original.
+- Economics: every share carries its denominator; estate effect = carriage x 0.1 against the 758.8M
+  weighted total. Never a phase-local share as a saving.
+- Pre-registered decisions: a tool-output firewall becomes NEXT only if a class (or all) carries
+  NOT_OBSERVED/IMMEDIATE carriage >= 3% of weighted and no other pane owns it; Semantic GC outranks
+  admission if total dead carriage >= 2x admission-replaceable volume; nothing >= 3% ->
+  NO_MATERIAL_LEVER, C closes. Exception path (horizontal primitive or correctness) is argued
+  separately and never lowers the threshold.
+- Commits: B1 (KSR one line) -> C1 (classifier + instrumentation, `vault/audits/ksr_archaeology/scripts/`)
+  -> C2 (findings) -> C3 (decision, plan status, UKDL/CBR candidates). Push: none; stay local.
+
+### Closure (2026-10-03) -- s12 CLOSED
+- B: done, KSR `9dcb68a` (one line; foreign STATE.md edits kept, patch-id e4f2821c before = after).
+- C decision (pre-registered rule, unchanged): tool-output firewall **NOT EARNED** (max class < 1.3% carriage,
+  admission-replaceable 0.56%); lifetime dead carriage **<= 6.34%** of D-decision (upper bound) is material and
+  horizontal -> **OWNER_EXISTS_ELSEWHERE** (rollover / context-rent / CO-06 `cognitive_os/gc.py`), part of rank 2,
+  not additive. No new unowned lever >= 3%. Report: `vault/audits/ksr_archaeology/2026-10-03-context-admission.md`.
+- Reproducibility: fresh `ctx_dead.py --measure` rerun printed sha256 `117d042c...` = report `result_sha256`
+  (hash of LF content / git blob).
+- UKDL/CBR: candidates listed in report s8, NOT promoted; CBR EXPERIMENTAL. Nothing built, nothing ratcheted.
+- Open after closure: handoff of the lifetime finding to its owner (report s5 text); no push (branch carries
+  peer commit d9072185).
