@@ -4,7 +4,7 @@ Frozen pillar H rule (ledger, quoted):
 
 > drift between a skill's live copy and its repo mirror, and between a card and its source, is detected by a gate driven from both poles
 
-This file covers the live-vs-mirror half (decision D-02): repo-mirrored skills against their live copy. Card-vs-source drift is rendered further down when the card half is recorded.
+This file covers the live-vs-mirror half (decision D-02): repo-mirrored skills against their live copy. The card-vs-source half is rendered under 'Card vs source'.
 
 ## Method
 
@@ -60,8 +60,24 @@ This file covers the live-vs-mirror half (decision D-02): repo-mirrored skills a
 
 Drift found on this host is reported and never fixed here (no write under the home directory). Running `python3 tools/skill_mirror_drift.py --live` on the laptop plane is an Owner-bundle `[H]` item.
 
+## Card vs source
+
+Pairs are discovered: each deny card registered in `hooks/hook-dispatcher.js` names its skill, and the source is `skills/<skill>/SKILL.md`. The record pins the LF sha256 of both, read from committed blobs.
+
+- rule: Re-run `--record-cards` only after re-deriving each card from its current source; recording is the re-derivation act.
+- recorded_at_commit `0a2ab9eaafcfcd7f915d2d0908c53b240bbde2de`
+
+| skill | card | status at HEAD |
+|---|---|---|
+| concurrent-writers-shared-tree | hooks/doctrine_cards.js | CURRENT |
+| destructive-state-authorization | hooks/destructive_doctrine_card.js | CURRENT |
+
+Lineage fields inside a card (which source line each rule came from) belong to pillar G and are not recorded here; this record only makes a source change visible to a gate.
+
 ## Commands
 
+command: python3 tools/skill_mirror_drift.py --cards
+command: python3 tools/skill_mirror_drift.py --record-cards
 command: python3 tools/test_skill_drift.py
 command: python3 tools/test_skill_drift.py --write-evidence
 command: python3 tools/skill_mirror_drift.py --live

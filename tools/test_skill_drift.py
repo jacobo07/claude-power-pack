@@ -208,6 +208,34 @@ def render_plane(rec) -> list:
     return L
 
 
+def render_cards() -> list:
+    L = ["## Card vs source", ""]
+    record, why = smd.load_card_record(REPO)
+    L.append("Pairs are discovered: each deny card registered in `hooks/hook-dispatcher.js` names its skill, and the "
+             "source is `skills/<skill>/SKILL.md`. The record pins the LF sha256 of both, read from committed blobs.")
+    L.append("")
+    if record is None:
+        L.append(f"Record unreadable ({why}).")
+        L.append("")
+        return L
+    L.append(f"- rule: {record.get('rule')}")
+    L.append(f"- recorded_at_commit `{record.get('recorded_at_commit')}`")
+    L.append("")
+    L.append("| skill | card | status at HEAD |")
+    L.append("|---|---|---|")
+    try:
+        rows = card_state_rows(REPO, record)
+    except Exception as e:  # noqa: BLE001 -- a render must not traceback
+        rows = [{"skill": "?", "card": "?", "status": f"INCONCLUSIVE ({type(e).__name__})"}]
+    for r in rows:
+        L.append(f"| {r['skill']} | {r['card']} | {r['status']} |")
+    L.append("")
+    L.append("Lineage fields inside a card (which source line each rule came from) belong to pillar G and are not "
+             "recorded here; this record only makes a source change visible to a gate.")
+    L.append("")
+    return L
+
+
 def render() -> str:
     """Deterministic, LF, no timestamp / hostname / HEAD of this run."""
     try:
@@ -223,7 +251,7 @@ def render() -> str:
     L.append(f"> {rule}")
     L.append("")
     L.append("This file covers the live-vs-mirror half (decision D-02): repo-mirrored skills against their live copy. "
-             "Card-vs-source drift is rendered further down when the card half is recorded.")
+             "The card-vs-source half is rendered under 'Card vs source'.")
     L.append("")
     L.append("## Method")
     L.append("")
@@ -258,8 +286,11 @@ def render() -> str:
             L.append("")
         else:
             L.extend(render_plane(rec))
+    L.extend(render_cards())
     L.append("## Commands")
     L.append("")
+    L.append("command: python3 tools/skill_mirror_drift.py --cards")
+    L.append("command: python3 tools/skill_mirror_drift.py --record-cards")
     L.append("command: python3 tools/test_skill_drift.py")
     L.append("command: python3 tools/test_skill_drift.py --write-evidence")
     L.append("command: python3 tools/skill_mirror_drift.py --live")
@@ -545,10 +576,167 @@ def c_git_failure():
     return [(FAIL, "V-SKD-GIT-FAILURE", f"escaped={err}; commit={cm}; live_report={rep.get('status')}/{rep.get('reason')}")]
 
 
+# --------------------------------------------------------------------------- card vs source
+
+DISPATCHER_TMPL = ("const CHAIN_MAP = {\n  'PreToolUse-chain': [\n%s  ],\n};\n")
+ENTRY_TMPL = "    { script: '../skills/claude-power-pack/hooks/%s.js' },\n"
+CARD_TMPL = ("const r = { permissionDecision: 'deny', reason: 'read the `%s` skill first' };\n"
+             "process.stdout.write(JSON.stringify(r));\n")
+
+
+def card_state_rows(repo, record=None):
+    """card_drift rows of the repo at HEAD against `record` (default: the record file in that repo)."""
+    if record is None:
+        record, why = smd.load_card_record(repo)
+        if record is None:
+            return [{"card": None, "skill": None, "status": "INCONCLUSIVE", "reason": why}]
+    return smd.card_drift(record, smd.card_source_state(repo, "HEAD", smd.card_pairs(repo)))
+
+
+def statuses(rows):
+    return sorted(f"{r['skill']}:{r['status']}" for r in rows)
+
+
+@contextlib.contextmanager
+def card_repo():
+    """A temp git repo with a dispatcher registering one deny-card (hooks/card_a.js -> skill a). Yields
+    (repo, git, write) where write(rel, text) writes under the repo and git(*args) commits-or-runs."""
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td) / "repo"
+        repo.mkdir()
+        exe = smd.vgm._git_exe()
+
+        def git(*a):
+            subprocess.run([exe, "-C", str(repo), "-c", "user.name=gate", "-c", "user.email=gate@invalid",
+                            "-c", "core.autocrlf=false", *a], check=True, capture_output=True, timeout=30)
+
+        def write(rel, text):
+            p = repo / rel
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_bytes(text.encode("utf-8"))
+        git("init", "-q")
+        write("hooks/hook-dispatcher.js", DISPATCHER_TMPL % (ENTRY_TMPL % "card_a"))
+        write("hooks/card_a.js", CARD_TMPL % "a")
+        write("skills/a/SKILL.md", SKILL_MD)
+        git("add", "-A")
+        git("commit", "-q", "-m", "pole")
+        yield repo, git, write
+
+
+def c_card_source_current():
+    no = _need_git()
+    if no:
+        return [(INCONC, "V-SKD-CARD-SOURCE-CURRENT", f"git unavailable: {no}")]
+    record, why = smd.load_card_record(REPO)
+    if record is None:
+        return [(INCONC, "V-SKD-CARD-SOURCE-CURRENT", why)]
+    rows = card_state_rows(REPO, record)
+    found = smd.card_pairs(REPO)
+    desc = "; ".join(f"{r['skill']} <- {r['card']}: {r['status']}" for r in rows)
+    if not record.get("pairs") or not found:
+        return [(INCONC, "V-SKD-CARD-SOURCE-CURRENT", f"record holds {len(record.get('pairs') or [])} pairs, "
+                                                      f"{len(found)} discovered: unmeasured")]
+    if smd.card_verdict(rows) == "CURRENT" and len(rows) == len(found) == len(record["pairs"]):
+        return [(OK, "V-SKD-CARD-SOURCE-CURRENT",
+                 f"{len(rows)} discovered pairs equal the record at HEAD: {desc}")]
+    return [(FAIL, "V-SKD-CARD-SOURCE-CURRENT",
+             f"{desc}; re-derive each moved card from its source, then --record-cards")]
+
+
+def c_card_source_poles():
+    no = _need_git()
+    if no:
+        return [(INCONC, "V-SKD-CARD-SOURCE-POLES", f"git unavailable: {no}")]
+    out, ok = [], True
+
+    def expect(label, rows, want):
+        nonlocal ok
+        got = statuses(rows)
+        good = got == sorted(want)
+        ok = ok and good
+        out.append(f"{label}: {got}{'' if good else ' <-- expected ' + str(sorted(want))}")
+    with card_repo() as (repo, git, write):
+        rec, why = smd.record_cards(repo)
+        if rec is None:
+            return [(INCONC, "V-SKD-CARD-SOURCE-POLES", f"temp record failed: {why}")]
+        expect("unchanged", card_state_rows(repo), ["a:CURRENT"])
+        write("skills/a/SKILL.md", SKILL_MD + "new rule\n")
+        git("commit", "-q", "-am", "source edit")
+        expect("committed source edit", card_state_rows(repo), ["a:SOURCE_CHANGED"])
+        smd.record_cards(repo)
+        expect("re-recorded", card_state_rows(repo), ["a:CURRENT"])
+        write("hooks/card_a.js", CARD_TMPL % "a" + "// edit\n")
+        git("commit", "-q", "-am", "card edit")
+        expect("committed card edit", card_state_rows(repo), ["a:CARD_CHANGED"])
+        smd.record_cards(repo)
+        write("hooks/hook-dispatcher.js", DISPATCHER_TMPL % (ENTRY_TMPL % "card_a" + ENTRY_TMPL % "card_b"))
+        write("hooks/card_b.js", CARD_TMPL % "b")
+        write("skills/b/SKILL.md", SKILL_MD)
+        git("add", "-A")
+        git("commit", "-q", "-m", "second card")
+        expect("second registered card", card_state_rows(repo), ["a:CURRENT", "b:RECORD_STALE"])
+        smd.record_cards(repo)
+        write("hooks/hook-dispatcher.js", DISPATCHER_TMPL % (ENTRY_TMPL % "card_b"))
+        git("commit", "-q", "-am", "unregister a")
+        expect("recorded pair no longer discovered", card_state_rows(repo), ["a:RECORD_STALE", "b:CURRENT"])
+    return [(OK if ok else FAIL, "V-SKD-CARD-SOURCE-POLES", " | ".join(out))]
+
+
+def _flip(h):
+    return h[:-1] + ("0" if h[-1] != "0" else "1")
+
+
+def c_card_source_crlf():
+    no = _need_git()
+    if no:
+        return [(INCONC, "V-SKD-CARD-SOURCE-CRLF", f"git unavailable: {no}")]
+    path = REPO / smd.CARD_RECORD_REL
+    try:
+        raw = path.read_bytes()
+    except OSError as e:
+        return [(INCONC, "V-SKD-CARD-SOURCE-CRLF", f"record unreadable: {e}")]
+    lf_rec = json.loads(smd.lf_bytes(raw))
+    crlf_rec = json.loads(smd.lf_bytes(raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")))
+    state = smd.card_source_state(REPO, "HEAD", smd.card_pairs(REPO))
+    base = smd.card_verdict(smd.card_drift(lf_rec, state))
+    crlf = smd.card_verdict(smd.card_drift(crlf_rec, state))
+    mut = copy.deepcopy(lf_rec)
+    mut["pairs"][0]["source_sha256"] = _flip(mut["pairs"][0]["source_sha256"])
+    mrows = smd.card_drift(mut, state)
+    hit = [r["status"] for r in mrows if r["skill"] == mut["pairs"][0]["skill"]]
+    if base == "CURRENT" and crlf == "CURRENT" and hit == ["SOURCE_CHANGED"]:
+        return [(OK, "V-SKD-CARD-SOURCE-CRLF", "LF record CURRENT, CRLF re-encoding CURRENT, one source digit "
+                                               "changed -> SOURCE_CHANGED for that pair")]
+    return [(FAIL, "V-SKD-CARD-SOURCE-CRLF", f"lf={base} crlf={crlf} mutated={hit}")]
+
+
+def c_card_source_git_failure():
+    orig = smd.vgm._git_exe
+
+    def gone():
+        raise FileNotFoundError("git executable not found (drill)")
+    record, why = smd.load_card_record(REPO)
+    smd.vgm._git_exe = gone
+    try:
+        rows = card_state_rows(REPO, record) if record else []
+        err = None
+    except Exception as e:  # noqa: BLE001 -- the clause asserts that nothing escapes
+        rows, err = [], f"{type(e).__name__}: {e}"
+    finally:
+        smd.vgm._git_exe = orig
+    good = (err is None and len(rows) == 1 and rows[0]["status"] == "INCONCLUSIVE"
+            and "git not found" in str(rows[0].get("reason")) and smd.card_verdict(rows) == "INCONCLUSIVE")
+    if good:
+        return [(OK, "V-SKD-CARD-SOURCE-GIT-FAILURE", "git missing: card check INCONCLUSIVE ('git not found'), "
+                                                      "no exception escaped")]
+    return [(FAIL, "V-SKD-CARD-SOURCE-GIT-FAILURE", f"escaped={err}; rows={rows}; record={'ok' if record else why}")]
+
+
 # --------------------------------------------------------------------------- driver
 
 CLAUSES = [c_pole_identical, c_pole_drift, c_pole_absent, c_committed_not_worktree, c_record_reproduces,
-           c_record_drill, c_git_failure, c_evidence_current, c_evidence_drill]
+           c_record_drill, c_git_failure, c_card_source_current, c_card_source_poles, c_card_source_crlf,
+           c_card_source_git_failure, c_evidence_current, c_evidence_drill]
 
 
 def run(clauses) -> int:

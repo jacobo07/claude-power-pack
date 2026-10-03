@@ -1,0 +1,21 @@
+{
+ "pairs": [
+  {
+   "card": "hooks/doctrine_cards.js",
+   "card_sha256": "71fb4f2bda7bf6dccbecea0ced2335dd2ac962959479c916ae3b9e63cf0a0489",
+   "skill": "concurrent-writers-shared-tree",
+   "source": "skills/concurrent-writers-shared-tree/SKILL.md",
+   "source_sha256": "f1f52de4c3115d0aafc39d69c67a2e1ae7936ae63b26ecc9263d89f1150e57c0"
+  },
+  {
+   "card": "hooks/destructive_doctrine_card.js",
+   "card_sha256": "493ead690a709891142242c0ea6561f4e4263dd072e7d4374faa380338c0578b",
+   "skill": "destructive-state-authorization",
+   "source": "skills/destructive-state-authorization/SKILL.md",
+   "source_sha256": "2985bd97002abf0589a95080a7d29b447b7a703df9ccd319494dba45701cd0de"
+  }
+ ],
+ "recorded_at_commit": "0a2ab9eaafcfcd7f915d2d0908c53b240bbde2de",
+ "rule": "Re-run `--record-cards` only after re-deriving each card from its current source; recording is the re-derivation act.",
+ "schema": "card-source-digests/1"
+}

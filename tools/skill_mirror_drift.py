@@ -4,6 +4,8 @@
     python3 tools/skill_mirror_drift.py --live                     # one line per repo skill; exit 1 on DRIFT/INCONCLUSIVE
     python3 tools/skill_mirror_drift.py --json                     # the full report as one JSON object
     python3 tools/skill_mirror_drift.py --measure-live --host gex44   # record the plane to evidence/H-live-<host>.json
+    python3 tools/skill_mirror_drift.py --cards                    # card vs source status per discovered pair
+    python3 tools/skill_mirror_drift.py --record-cards             # re-derivation act: pin card and source digests
     python3 tools/skill_mirror_drift.py --compare PATH             # re-measure and name every row that moved (host-bound)
 
 What it compares: every repo skill `skills/<name>/` that holds a tracked SKILL.md against the live copy
@@ -46,6 +48,7 @@ _THIS_DIR = Path(__file__).resolve().parent
 if str(_THIS_DIR) not in sys.path:
     sys.path.insert(0, str(_THIS_DIR))
 
+import skill_coverage as sc  # noqa: E402
 import verify_global_mirrors as vgm  # noqa: E402
 
 # The checkout whose blobs are read is the one this file lives in. A linked worktree has its own HEAD, so no
@@ -238,6 +241,122 @@ def live_report(repo, live_root, ref="HEAD") -> dict:
             "counts": count_rows(rows)}
 
 
+# --------------------------------------------------------------------------- card vs source (D-02)
+
+CARD_RECORD_REL = "vault/programs/skill-capability/card_source_digests.json"
+CARD_SCHEMA = "card-source-digests/1"
+CARD_RULE = ("Re-run `--record-cards` only after re-deriving each card from its current source; "
+             "recording is the re-derivation act.")
+CARD_STATUSES = ("CURRENT", "SOURCE_CHANGED", "CARD_CHANGED", "RECORD_STALE", "UNTRACKED", "INCONCLUSIVE")
+
+
+def card_pairs(repo, dispatcher_text=None) -> list:
+    """[{card, skill, source}] DISCOVERED from the dispatcher registrations (never listed): each registered
+    deny-card hook names its skill, and the source is `skills/<skill>/SKILL.md`. Sorted, de-duplicated."""
+    seen = {}
+    for c in sc.discover_cards(Path(repo), dispatcher_text):
+        seen[(c["hook"], c["skill"])] = {"card": c["hook"], "skill": c["skill"],
+                                         "source": f"skills/{c['skill']}/SKILL.md"}
+    return [seen[k] for k in sorted(seen, key=lambda k: (k[1], k[0]))]
+
+
+def card_source_state(repo, ref, pairs) -> dict:
+    """{status: MEASURED, commit, pairs: [{card, skill, source, card_sha256, source_sha256} | + status UNTRACKED,
+    reason]} read from committed blobs at `ref` in one batch, LF-normalized; or {status: INCONCLUSIVE, reason}
+    for a git failure. Never raises."""
+    sha, why = resolve_commit(repo, ref)
+    if sha is None:
+        return {"status": "INCONCLUSIVE", "reason": why}
+    rels = sorted({p["card"] for p in pairs} | {p["source"] for p in pairs})
+    blobs = vgm.batch_blobs(str(repo), sha, rels)
+    out = []
+    for p in pairs:
+        row = {"card": p["card"], "skill": p["skill"], "source": p["source"]}
+        digests, bad = {}, None
+        for key, rel in (("card_sha256", p["card"]), ("source_sha256", p["source"])):
+            data, why = blobs.get(rel, (None, "not returned"))
+            if data is None and why == "git-batch-empty":
+                data, why = b"", None
+            if data is None:
+                bad = f"{rel}: {why}"
+                break
+            digests[key] = vgm._norm_sha(data)
+        if bad:
+            row.update({"status": "UNTRACKED", "reason": bad})
+        else:
+            row.update(digests)
+        out.append(row)
+    if out and all(r.get("status") == "UNTRACKED" and "git-batch-error" in r.get("reason", "") for r in out):
+        return {"status": "INCONCLUSIVE", "reason": out[0]["reason"]}
+    return {"status": "MEASURED", "commit": sha, "pairs": out}
+
+
+def card_drift(record, state) -> list:
+    """Per-pair rows [{card, skill, status, reason?}] comparing a committed record to a measured state by
+    (card, skill). Only CURRENT is a pass."""
+    if state.get("status") != "MEASURED":
+        return [{"card": None, "skill": None, "status": "INCONCLUSIVE", "reason": state.get("reason", "unmeasured")}]
+    if not isinstance(record, dict) or not isinstance(record.get("pairs"), list):
+        return [{"card": None, "skill": None, "status": "INCONCLUSIVE", "reason": "record has no pairs list"}]
+    try:
+        rec = {(p["card"], p["skill"]): p for p in record["pairs"]}
+    except (KeyError, TypeError):
+        return [{"card": None, "skill": None, "status": "INCONCLUSIVE", "reason": "malformed record pair"}]
+    rows, now = [], set()
+    for p in state["pairs"]:
+        k = (p["card"], p["skill"])
+        now.add(k)
+        row = {"card": p["card"], "skill": p["skill"]}
+        if p.get("status") == "UNTRACKED":
+            row.update({"status": "UNTRACKED", "reason": p["reason"]})
+        elif k not in rec:
+            row.update({"status": "RECORD_STALE", "reason": "discovered pair absent from the record"})
+        elif p["source_sha256"] != rec[k].get("source_sha256"):
+            row["status"] = "SOURCE_CHANGED"
+        elif p["card_sha256"] != rec[k].get("card_sha256"):
+            row["status"] = "CARD_CHANGED"
+        else:
+            row["status"] = "CURRENT"
+        rows.append(row)
+    for k in sorted(set(rec) - now):
+        rows.append({"card": k[0], "skill": k[1], "status": "RECORD_STALE",
+                     "reason": "recorded pair is no longer discovered"})
+    return rows
+
+
+def card_verdict(rows) -> str:
+    """CURRENT only when there is at least one row and every row is CURRENT."""
+    if not rows:
+        return "INCONCLUSIVE"
+    sts = {r["status"] for r in rows}
+    return "CURRENT" if sts == {"CURRENT"} else ("INCONCLUSIVE" if sts == {"INCONCLUSIVE"} else "DRIFT")
+
+
+def load_card_record(repo=REPO):
+    """(record, None) or (None, reason) from the working-tree file, CRLF->LF first."""
+    try:
+        return json.loads(lf_bytes((Path(repo) / CARD_RECORD_REL).read_bytes()).decode("utf-8")), None
+    except (OSError, ValueError) as e:
+        return None, f"{CARD_RECORD_REL} unreadable: {e}"
+
+
+def record_cards(repo, ref="HEAD"):
+    """Write the record from committed blobs at `ref`. (record, None) or (None, reason)."""
+    state = card_source_state(repo, ref, card_pairs(repo))
+    if state["status"] != "MEASURED":
+        return None, state.get("reason", "unmeasured")
+    bad = [p for p in state["pairs"] if p.get("status") == "UNTRACKED"]
+    if bad or not state["pairs"]:
+        return None, f"refusing to record: {bad[0]['reason'] if bad else 'no card pairs discovered'}"
+    rec = {"schema": CARD_SCHEMA, "recorded_at_commit": state["commit"], "rule": CARD_RULE,
+           "pairs": [{k: p[k] for k in ("card", "skill", "source", "card_sha256", "source_sha256")}
+                     for p in state["pairs"]]}
+    dest = Path(repo) / CARD_RECORD_REL
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes((json.dumps(rec, indent=1, sort_keys=True) + "\n").encode("utf-8"))
+    return rec, None
+
+
 # --------------------------------------------------------------------------- CLI
 
 def _tilde(p) -> str:
@@ -284,12 +403,31 @@ def main(argv=None) -> int:
     ap.add_argument("--host", help="label for --measure-live, ^[a-z0-9-]+$")
     ap.add_argument("--compare", metavar="PATH", help="re-measure and name rows that moved vs a recording; "
                     "host-bound: meaningful only on the host that recorded it")
+    ap.add_argument("--record-cards", action="store_true",
+                    help="re-derive the card/source digest record from committed blobs at --ref (explicit act)")
+    ap.add_argument("--cards", action="store_true", help="card-vs-source status per pair; exit 1 unless all CURRENT")
     ap.add_argument("--repo", default=str(REPO))
     ap.add_argument("--live-root", default=None)
     ap.add_argument("--ref", default="HEAD")
     a = ap.parse_args(argv)
     live_root = Path(a.live_root) if a.live_root else default_live_root()
     repo = Path(a.repo)
+
+    if a.record_cards:
+        rec, why = record_cards(repo, a.ref)
+        if rec is None:
+            print(f"INCONCLUSIVE {why}")
+            return 1
+        print(f"recorded {CARD_RECORD_REL} at {rec['recorded_at_commit'][:8]} pairs={len(rec['pairs'])}")
+        return 0
+
+    if a.cards:
+        record, why = load_card_record(repo)
+        rows = card_drift(record, card_source_state(repo, a.ref, card_pairs(repo))) if record else \
+            [{"card": None, "skill": None, "status": "INCONCLUSIVE", "reason": why}]
+        for r in rows:
+            print(f"{r['status']} {r['skill']} <- {r['card']}" + (f" ({r['reason']})" if r.get("reason") else ""))
+        return 0 if card_verdict(rows) == "CURRENT" else 1
 
     if a.measure_live:
         import re
