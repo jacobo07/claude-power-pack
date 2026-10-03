@@ -154,6 +154,81 @@ def worktree_only(rel, text):
     return m
 
 
+# ------------------------------------------------------------------ git failure vs absence (review WR-01)
+
+GIT_TIMEOUT_REASON = "git cat-file failed: Command '['git']' timed out after 30 seconds"
+
+
+def _probe_ctx(d, h):
+    ctx, bad = skh.load_ctx(d, h)
+    return "PASS" if ctx is not None else bad[0]
+
+
+def _probe_part(p, part):
+    def probe(d, h):
+        return skh.measure(d, p, h)["parts"].get(part, ["MISSING"])[0]
+    return probe
+
+
+# (site, committed path whose blob read is broken, probe(repo, head) -> outcome, outcome when the path is ABSENT)
+GIT_SITES = (
+    ("CTX", skh.FROZEN_AT_REL, _probe_ctx, "UNMEASURED"),
+    ("CONTRACT", skh.HANDOFF_DIR + "K.md", lambda d, h: skh.contract(d, "K", h)[0], "FAIL"),
+    ("K-CONTROL", skh.K_CONTROLS[0], _probe_part("K", "control"), "UNMEASURED"),
+    ("M-CONTROL", skh.M_CONTROL, _probe_part("M", "control"), "UNMEASURED"),
+    ("I-SKILLS", skh.EVIDENCE_REL + "D-coverage.md", _probe_part("I", "skills"), "UNMEASURED"),
+)
+
+
+def _with_blob_timeout(target, fn):
+    """Run fn() while every `git cat-file blob <sha>:<target>` through smd.git_run fails as a timeout does."""
+    real = smd.git_run
+
+    def git_run(repo, *args, **kw):
+        if args[:2] == ("cat-file", "blob") and len(args) > 2 and str(args[2]).endswith(":" + target):
+            return None, GIT_TIMEOUT_REASON
+        return real(repo, *args, **kw)
+
+    smd.git_run = git_run
+    try:
+        return fn()
+    finally:
+        smd.git_run = real
+
+
+def git_failure_drills(root, base):
+    """Per blob-reading site, both poles on one line: the blob read timing out is INCONCLUSIVE, and the same path
+    absent from the commit is the measured-absence outcome (FAIL or UNMEASURED), never INCONCLUSIVE."""
+    head = g(base, "rev-parse", "HEAD").strip()
+    for site, target, probe, absent in GIT_SITES:
+        timed = _with_blob_timeout(target, lambda: probe(base, head))
+        d = root / f"absent-{site}"
+        g(root, "clone", "-q", str(base), str(d))
+        for k, v in (("user.email", "drill@example.invalid"), ("user.name", "drill"), ("commit.gpgsign", "false")):
+            g(d, "config", k, v)
+        commit(d, f"remove {target}", rm=[target])
+        gone = probe(d, g(d, "rev-parse", "HEAD").strip())
+        record(f"V-SKH-GIT-TIMEOUT-{site}", timed == "INCONCLUSIVE" and gone == absent,
+               f"{target}: timeout -> {timed} (want INCONCLUSIVE); absent -> {gone} (want {absent})")
+    # The classifier on reasons git itself produced (positive and negative controls).
+    untracked = "tools/untracked_probe.py"
+    put(base, untracked, "VALUE = 1\n")
+    try:
+        reasons = {
+            "absent": (smd.git_run(base, "cat-file", "blob", f"{head}:tools/nope.py")[1], False),
+            "on-disk-not-committed": (smd.git_run(base, "cat-file", "blob", f"HEAD:{untracked}")[1], False),
+            "invalid-object": (smd.git_run(base, "cat-file", "blob", "deadbeef:tools/clean_tool.py")[1], True),
+            "timeout": (GIT_TIMEOUT_REASON, True),
+            "git-missing": ("git not found: [Errno 2] No such file or directory: 'git'", True),
+            "none": (None, False),
+        }
+    finally:
+        (Path(base) / untracked).unlink()
+    bad = {k: why for k, (why, want) in reasons.items() if skh.git_failed(why) != want}
+    record("V-SKH-GIT-FAILED-CLASSIFIER", not bad and all(w for k, (w, _) in reasons.items() if k != "none"),
+           f"{len(reasons)} reasons, misclassified {bad}")
+
+
 def main() -> int:
     t0 = time.monotonic()
     root = Path(tempfile.mkdtemp(prefix="skh-drills-"))
@@ -190,6 +265,7 @@ def main() -> int:
         # I has no sweep; its red branch: an export with neither scanner reads UNMEASURED, never PASS.
         drill(root, base, "I-NO-SCANNERS", None,
               {("I", "reachability"): "UNMEASURED", ("I", "retirement"): "UNMEASURED"}, pillars=("I",), contract=())
+        git_failure_drills(root, base)
         need = {("K", "router"), ("K", "control"), ("K", "aperture"), ("M", "cost"), ("M", "control"),
                 ("M", "aperture"), ("L", "writer"), ("L", "absence"), ("L", "control"), ("K", "contract"),
                 ("M", "contract")}

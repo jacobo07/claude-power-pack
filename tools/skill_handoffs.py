@@ -156,8 +156,21 @@ def _rc1(why: str | None, verb: str) -> bool:
     return str(why or "").startswith(f"git {verb} rc=1:")
 
 
+# The one `git cat-file blob <sha>:<path>` failure that is an ANSWER: the commit does not hold the path. git says
+# so with rc 128 and one of these two messages (the second when the path exists in the working tree).
+ABSENT_BLOB = re.compile(r"^git cat-file rc=128: fatal: path '.*' (does not exist in|exists on disk, but not in) '")
+
+
+def git_failed(why) -> bool:
+    """True when a blob() reason is a git failure (a timeout, a killed or missing git, a lock, an invalid object, any
+    other rc), so the caller reports INCONCLUSIVE. False for no reason and for an absent path, which is a measured
+    absence (FAIL or UNMEASURED at the caller). smd.is_git_failure knows only vgm.batch_blobs reasons and is False
+    for every git_run reason, so it cannot classify blob() (review WR-01)."""
+    return bool(why) and not ABSENT_BLOB.match(str(why))
+
+
 def blob(repo, sha, rel):
-    """(text, None) or (None, reason). LF-normalized committed blob."""
+    """(text, None) or (None, reason). LF-normalized committed blob. Classify a reason with git_failed()."""
     out, why = smd.git_run(repo, "cat-file", "blob", f"{sha}:{rel}")
     if out is None:
         return None, why
@@ -191,13 +204,16 @@ def load_ctx(repo, sha):
     """Freeze pointer and frozen pillars as committed at `sha`. (ctx, None) or (None, (outcome, reason))."""
     text, why = blob(repo, sha, FROZEN_AT_REL)
     if text is None:
-        return None, ("INCONCLUSIVE" if smd.is_git_failure(why) or "not found" in str(why) else "UNMEASURED",
-                      f"no freeze pointer {FROZEN_AT_REL} at {sha[:8]}: {why}")
+        if git_failed(why):
+            return None, ("INCONCLUSIVE", f"git failed reading {FROZEN_AT_REL} at {sha[:8]}: {why}")
+        return None, ("UNMEASURED", f"no freeze pointer {FROZEN_AT_REL} at {sha[:8]}: {why}")
     frozen, why = smd.resolve_commit(repo, text.strip())
     if frozen is None:
         return None, ("INCONCLUSIVE", f"freeze commit {text.strip()!r} not resolvable: {why}")
     led_text, why = blob(repo, sha, LEDGER_REL)
     if led_text is None:
+        if git_failed(why):
+            return None, ("INCONCLUSIVE", f"git failed reading {LEDGER_REL} at {sha[:8]}: {why}")
         return None, ("UNMEASURED", f"ledger not readable at {sha[:8]}: {why}")
     try:
         led = json.loads(led_text)
@@ -420,7 +436,7 @@ def measure_K(repo, ctx, host):
     ctl, dead = [], []
     for rel in K_CONTROLS:
         text, why = blob(repo, sha, rel)
-        if text is None and smd.is_git_failure(why):
+        if text is None and git_failed(why):
             parts["control"] = ["INCONCLUSIVE", f"git failed: {why}"]
             break
         hits = [h for h in router_hits(rel, text or "") if h[0] > 0]
@@ -502,7 +518,7 @@ def measure_M(repo, ctx, host):
     ctl = m_hits(text or "")
     kinds = {k for _, k, _ in ctl}
     missing = [k for k in M_CONTROL_KINDS if k not in kinds]
-    if text is None and smd.is_git_failure(why):
+    if text is None and git_failed(why):
         parts["control"] = ["INCONCLUSIVE", f"git failed: {why}"]
     elif missing:
         parts["control"] = ["UNMEASURED", f"{M_CONTROL} lacks marker kinds {missing}"]
@@ -620,15 +636,20 @@ def _run_json(script: Path, cwd: Path, home: Path):
 
 
 def _skill_candidates(repo, ctx):
-    """(rows, labels, None) or (None, None, reason). gex44 coverage plane rows with coverage `none`, minus
+    """(rows, labels, None) or (None, labels-or-None, reason). gex44 coverage plane rows with coverage `none`, minus
     skills invoked in window G. The coverage class is computed by pillar D's gate and rendered into
-    D-coverage.md; D-live-gex44.json carries the skill list, so the two are cross-checked."""
+    D-coverage.md; D-live-gex44.json carries the skill list, so the two are cross-checked. A reason that starts
+    with "git failed" is a git failure (INCONCLUSIVE at the caller); any other reason is UNMEASURED."""
     sha = ctx["sha"]
-    d_text, why = blob(repo, sha, EVIDENCE_REL + "D-live-gex44.json")
-    c_text, why2 = blob(repo, sha, EVIDENCE_REL + "C-window-G.json")
-    cov_text, why3 = blob(repo, sha, EVIDENCE_REL + "D-coverage.md")
-    if d_text is None or c_text is None or cov_text is None:
-        return None, None, f"source missing: {why or why2 or why3}"
+    srcs = ("D-live-gex44.json", "C-window-G.json", "D-coverage.md")
+    got = {n: blob(repo, sha, EVIDENCE_REL + n) for n in srcs}
+    failed = [f"{n}: {w}" for n, (_t, w) in got.items() if git_failed(w)]
+    if failed:
+        return None, None, f"git failed: {failed[0]}"
+    missing = [f"{n}: {w}" for n, (t, w) in got.items() if t is None]
+    if missing:
+        return None, None, f"source missing: {missing[0]}"
+    d_text, c_text, cov_text = (got[n][0] for n in srcs)
     try:
         d, c = json.loads(d_text), json.loads(c_text)
         live, host, node, at = list(d["skills"]), d["host"], d["node"], d["measured_at"]
@@ -755,7 +776,7 @@ def measure_I(repo, ctx, host):
     # skill candidates
     sk, labels, why = _skill_candidates(repo, ctx)
     if sk is None:
-        parts["skills"] = ["UNMEASURED", why]
+        parts["skills"] = ["INCONCLUSIVE" if why.startswith("git failed") else "UNMEASURED", why]
     else:
         parts["skills"] = ["PASS", f"{len(sk)} skill candidates"]
         w = labels["window"]
@@ -878,7 +899,7 @@ def contract(repo, p, head):
     owners = list(ctx["pillars"].get(p, {}).get("owner") or [])
     text, why = blob(repo, head, rel)
     if text is None:
-        return ("INCONCLUSIVE", f"git failed: {why}") if smd.is_git_failure(why) else ("FAIL", f"{rel} not committed")
+        return ("INCONCLUSIVE", f"git failed: {why}") if git_failed(why) else ("FAIL", f"{rel} not committed")
     wt = Path(repo) / rel
     if not wt.is_file() or smd.lf_bytes(wt.read_bytes()).decode("utf-8", "replace") != text:
         return "FAIL", f"{rel} working copy differs from the committed blob"
