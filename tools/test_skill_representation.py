@@ -497,12 +497,34 @@ def pole_git_unavailable(tmp):
     return ok, "; ".join(parts)
 
 
+def pole_discovery_links(tmp):
+    # The symlinked list, the dangling link that goes to non_dir, and the non-UTF-8 refusal of live_plane, each of
+    # which a mutant could break with every other pole green (05-REVIEW IN-06). POSIX only: named n/a elsewhere.
+    if os.name != "posix":
+        return True, "n/a (directory symlinks and non-UTF-8 names need POSIX)"
+    r = Path(tmp) / "links"
+    _skill(r, "real", FM_A + BODY)
+    os.symlink(r / "real", r / "link", target_is_directory=True)
+    os.symlink(r / "nowhere", r / "dangling")
+    p = _plane(r)
+    links_ok = (p["names"] == ["link", "real"] and p["symlinked"] == ["link"] and p["non_dir"] == ["dangling"]
+                and p["no_skill_md"] == [] and p["entries"] == 3)
+    bad_root = os.path.join(os.fsencode(Path(tmp) / "nonutf8"), b"bad\xff")
+    os.makedirs(bad_root)
+    with open(os.path.join(bad_root, b"SKILL.md"), "wb") as fh:
+        fh.write((FM_A + BODY).encode("utf-8"))
+    q = sweep.live_plane(Path(tmp) / "nonutf8")
+    utf8_ok = q["status"] == "INCONCLUSIVE" and "not UTF-8" in q.get("reason", "")
+    return links_ok and utf8_ok, (f"names={p['names']} symlinked={p['symlinked']} non_dir={p['non_dir']} "
+                                  f"no_skill_md={p['no_skill_md']}; non-UTF-8 entry: {q['status']}")
+
+
 POLES = (("SAME-BODY", pole_same_body), ("CRLF", pole_crlf), ("ONE-BYTE", pole_one_byte),
          ("NO-FRONTMATTER", pole_no_frontmatter), ("SAME-NAME-CROSS-PLANE", pole_same_name_cross_plane),
          ("CROSS-PLANE-RENAMED", pole_cross_plane_renamed), ("DISCOVERY", pole_discovery),
          ("EMPTY-BODY", pole_empty_body), ("LISTING-LINE-BOUND", pole_listing_line_bound),
          ("HOST-REPO-REFUSED", pole_host_repo_refused), ("UNREADABLE-INCONCLUSIVE", pole_unreadable_inconclusive),
-         ("GIT-UNAVAILABLE", pole_git_unavailable))
+         ("GIT-UNAVAILABLE", pole_git_unavailable), ("DISCOVERY-LINKS", pole_discovery_links))
 
 
 def _whole_file_hasher(skill_md_bytes):
