@@ -743,13 +743,37 @@ def _rule_reason(anchor, structural, intent, strength, basis, demoted_by):
     return "%s; %s; basis %s" % (a, i, basis)
 
 
+def modifiers_for(aid, traits, intents):
+    """-> (modifiers, modifier_basis) for one archetype: the traits of
+    `ARCHETYPES[aid]["modifiers"]` that are present in this subject, with why.
+
+    A modifier counts when its structural reading is PRESENT or WEAK, or when its intent
+    reading is PRESENT; its basis is `structural`, `intent` or `structural+intent`.
+    Modifiers RAISE CONSEQUENCE and are reported, nothing more: they never enter
+    `ceiling`, so they cannot create an archetype, lift or lower a strength, or change a
+    basis (D-02: consequence strengthens an envelope, complexity alone does not). An
+    intent-only modifier is an EXTRACTED fact, never an observed one. The list is sorted
+    so the subject signature does not depend on declaration order."""
+    mods, basis = [], {}
+    for trait in sorted(ARCHETYPES[aid]["modifiers"]):
+        structural = ((traits or {}).get(trait) or {}).get("state") in (PRESENT, WEAK)
+        from_intent = ((intents or {}).get(trait) or {}).get("state") == PRESENT
+        if structural or from_intent:
+            mods.append(trait)
+            basis[trait] = (BASIS_BOTH if structural and from_intent
+                            else BASIS_STRUCTURAL if structural else BASIS_INTENT)
+    return mods, basis
+
+
 def assess(traits, prompt, trait_intent=None):
     """One assessment per archetype id, in sorted order, every strength decided by
     `ceiling` (resolved by its module-global name at call time).
 
     `fact_state` is OBSERVED when the basis contains structural evidence, EXTRACTED
     for intent alone, UNKNOWN for none. `unjudged` lists the anchor when its
-    structural reading is UNJUDGED, so a later phase can name the missing fact."""
+    structural reading is UNJUDGED, so a later phase can name the missing fact.
+    `modifiers` and `modifier_basis` report consequence (`modifiers_for`) and play no
+    part in the strength."""
     prompt = str(prompt or "")
     intents = trait_intent if trait_intent is not None else intent_facts(prompt)
     out = []
@@ -769,6 +793,7 @@ def assess(traits, prompt, trait_intent=None):
         else:
             fact_state = UNKNOWN
         reason = _rule_reason(anchor, structural, intent, strength, basis, demoted_by)
+        modifiers, modifier_basis = modifiers_for(aid, traits, intents)
         out.append({
             "id": aid,
             "strength": strength,
@@ -783,6 +808,8 @@ def assess(traits, prompt, trait_intent=None):
             "demoted_by": list(demoted_by),
             "unjudged": [anchor] if structural["state"] == UNJUDGED else [],
             "reason": reason,
+            "modifiers": modifiers,
+            "modifier_basis": modifier_basis,
         })
     return out
 

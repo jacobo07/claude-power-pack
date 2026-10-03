@@ -176,6 +176,14 @@ def make_repo(kind: str) -> str:
     elif kind == "external_npm":
         with open(os.path.join(root, "package.json"), "w", encoding="utf-8") as fh:
             json.dump({"name": "fixture", "dependencies": {"resend": "^3.0.0", "stripe": "^14.0.0"}}, fh)
+    elif kind == "scheduled_cron":
+        # A scheduled workflow and one declared dependency that signals nothing else
+        # (plan 02-05): BACKGROUND_JOB is REQUIRED for a scheduling prompt, with no modifier.
+        os.makedirs(os.path.join(root, ".github", "workflows"))
+        with open(os.path.join(root, ".github", "workflows", "nightly.yml"), "w", encoding="utf-8") as fh:
+            fh.write('name: nightly\non:\n  schedule:\n    - cron: "0 3 * * *"\njobs: {}\n')
+        with open(os.path.join(root, "requirements.txt"), "w", encoding="utf-8") as fh:
+            fh.write("fastapi\n")
     elif kind == "zero_manifest":
         # RESEARCH F5: three real repos had no manifest any parser knows.
         os.makedirs(os.path.join(root, "src"))
@@ -2023,6 +2031,268 @@ GATES += [
     ("V-ARCH-TRANSITION-PERSISTENT", pred_V_ARCH_TRANSITION_PERSISTENT),
 ]
 
+# -- plan 02-05 Task 2: consequence modifiers, subject shape, reachable causes --------
+# A modifier raises the CONSEQUENCE of an archetype and never its strength: a scheduled
+# repository that gains a compose file is the same REQUIRED BACKGROUND_JOB, now flagged
+# `distributed`, and it compiles to a different subject (D-02, D-07).
+
+def pred_V_ARCH_TRANSITION_DISTRIBUTED():
+    if ar is None or ts is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    problems = []
+    state, repo = _produce_fixture("scheduled_cron")
+    before = ar.resolve(BJ_ES, repo, state_dir=state)
+    bj1 = _find(before["archetypes"], "BACKGROUND_JOB")
+    if bj1 is None or not (bj1["strength"] == ar.Strength.REQUIRED and bj1.get("modifiers") == []):
+        problems.append("PRECONDITION: scheduled_cron BACKGROUND_JOB=%s modifiers=%r (want REQUIRED, [])" % (
+            bj1 and bj1["strength"], bj1 and bj1.get("modifiers")))
+    with open(os.path.join(repo, "docker-compose.yml"), "w", encoding="utf-8") as fh:
+        fh.write("services: {}\n")
+    seen = ar.read_traits(repo, state_dir=state)
+    if seen["cache"]["state"] != ar.CACHE_STALE:
+        problems.append("TRANSITION-NOT-VISIBLE-TO-READER: cache=%s (want STALE)" % seen["cache"]["state"])
+    res = ts.produce(repo, state_dir=state)
+    if res.get("outcome") != ts.WRITTEN:
+        problems.append("REPRODUCE: outcome=%r reason=%r" % (res.get("outcome"), res.get("reason")))
+    after = ar.resolve(BJ_ES, repo, state_dir=state)
+    bj2 = _find(after["archetypes"], "BACKGROUND_JOB")
+    if bj2 is None or not (bj2["strength"] == ar.Strength.REQUIRED and bj2.get("modifiers") == ["distributed"]
+                           and bj2.get("modifier_basis") == {"distributed": "structural"}):
+        problems.append("DISTRIBUTED-NOT-REPORTED: BACKGROUND_JOB=%s modifiers=%r basis=%r (want REQUIRED, "
+                        "['distributed'], {'distributed': 'structural'})" % (
+                            bj2 and bj2["strength"], bj2 and bj2.get("modifiers"),
+                            bj2 and bj2.get("modifier_basis")))
+    if before.get("signature") is None or before.get("signature") == after.get("signature"):
+        problems.append("SIGNATURE-UNCHANGED: %r then %r" % (before.get("signature"), after.get("signature")))
+    # Intent-only modifiers are recorded as EXTRACTED facts and never change strength.
+    state_p, repo_p = _produce_fixture("persistent_prisma")
+    plain = _wm(ar.resolve(WM_ES, repo_p, state_dir=state_p))
+    destructive = ar.resolve(DESTR_ES, repo_p, state_dir=state_p)
+    wm = _wm(destructive)
+    mods = (wm or {}).get("modifiers") or []
+    basis = (wm or {}).get("modifier_basis") or {}
+    if wm is None or not ("destructive" in mods and "bulk" in mods
+                          and basis.get("destructive") == "intent" and basis.get("bulk") == "intent"):
+        problems.append("INTENT-MODIFIERS-MISSING: WORLD_MUTATION modifiers=%r basis=%r" % (mods, basis))
+    if wm is not None and plain is not None and (wm["strength"], wm["basis"]) != (plain["strength"], plain["basis"]):
+        problems.append("MODIFIER-CHANGED-STRENGTH: %s/%s versus %s/%s without the modifiers" % (
+            wm["strength"], wm["basis"], plain["strength"], plain["basis"]))
+    for t in ("destructive", "bulk"):
+        if destructive["trait_intent"][t]["fact_state"] != ar.EXTRACTED:
+            problems.append("INTENT-MODIFIER-NOT-EXTRACTED: %s fact_state=%s" % (
+                t, destructive["trait_intent"][t]["fact_state"]))
+    return not problems, "; ".join(problems) or \
+        "BACKGROUND_JOB REQUIRED %s -> REQUIRED %s after a compose file (STALE seen), sig %s -> %s; intent modifiers %s %s, strength unchanged" % (
+            bj1["modifiers"], bj2["modifiers"], before["signature"], after["signature"], mods, basis)
+
+
+_SHAPE_KEYS = {"schema", "root", "repo_key", "cache", "traits", "trait_intent",
+               "archetypes", "families", "signature"}
+_ASSESSMENT_KEYS = {"id", "strength", "basis", "fact_state", "anchor", "anchor_state",
+                    "anchor_fact_state", "intent_state", "intent_fact_state", "intent_span",
+                    "demoted_by", "unjudged", "reason", "modifiers", "modifier_basis"}
+
+
+def pred_V_ARCH_SUBJECT_SHAPE():
+    if ar is None or ts is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    state_f, repo_f = _produce_fixture("persistent_prisma")            # fresh
+    state_s, repo_s = _produce_fixture("prisma_marker_react")          # stale after the edit
+    _edit_file(os.path.join(repo_s, "package.json"),
+               json.dumps({"name": "fixture", "dependencies": {"react": "^18.0.0", "stripe": "^14.0.0"}}))
+    state_m, repo_m = new_state(), make_repo("persistent_prisma")      # missing: never produced
+    cases = [("fresh", repo_f, state_f, ar.CACHE_FRESH, WM_ES),
+             ("stale", repo_s, state_s, ar.CACHE_STALE, WM_ES),
+             ("missing", repo_m, state_m, ar.CACHE_MISSING, WM_ES),
+             ("fresh-no-intent", repo_f, state_f, ar.CACHE_FRESH, NO_INTENT)]
+    problems, none_listed = [], False
+    for label, repo, state, want_cache, prompt in cases:
+        subject = ar.resolve(prompt, repo, state_dir=state)
+        if subject["cache"]["state"] != want_cache:
+            problems.append("PRECONDITION[%s]: cache=%s (want %s)" % (label, subject["cache"]["state"], want_cache))
+        try:
+            json.dumps(subject)
+        except (TypeError, ValueError) as exc:
+            problems.append("NOT-JSON[%s]: %s" % (label, exc))
+        if set(subject) != _SHAPE_KEYS:
+            problems.append("KEYS[%s]: extra=%s missing=%s" % (
+                label, sorted(set(subject) - _SHAPE_KEYS), sorted(_SHAPE_KEYS - set(subject))))
+        if subject.get("schema") != ar.SUBJECT_SCHEMA:
+            problems.append("SCHEMA[%s]: %r" % (label, subject.get("schema")))
+        sig = subject.get("signature")
+        if not (isinstance(sig, str) and re.fullmatch(r"[0-9a-f]{16}", sig)):
+            problems.append("SIGNATURE-SHAPE[%s]: %r" % (label, sig))
+        ids = [a.get("id") for a in subject["archetypes"]]
+        if sorted(ids) != sorted(ar.ARCHETYPES):
+            problems.append("ARCHETYPE-IDS[%s]: %s (want one entry per %s, NONE listed never omitted)" % (
+                label, ids, sorted(ar.ARCHETYPES)))
+        for a in subject["archetypes"]:
+            gone = sorted(_ASSESSMENT_KEYS - set(a))
+            if gone:
+                problems.append("ENTRY-KEYS[%s/%s]: missing %s" % (label, a.get("id"), gone))
+                continue
+            if a["strength"] not in ar.Strength.ALL or a["fact_state"] not in ar.FACT_STATES:
+                problems.append("ENTRY-VOCABULARY[%s/%s]: %r %r" % (label, a["id"], a["strength"], a["fact_state"]))
+            if not (isinstance(a["modifiers"], list) and isinstance(a["modifier_basis"], dict)
+                    and set(a["modifier_basis"]) == set(a["modifiers"])
+                    and a["modifiers"] == sorted(a["modifiers"])
+                    and set(a["modifiers"]) <= set(ar.ARCHETYPES[a["id"]]["modifiers"])
+                    and all(v in ("structural", "intent", "structural+intent") for v in a["modifier_basis"].values())):
+                problems.append("MODIFIER-SHAPE[%s/%s]: %r %r" % (label, a["id"], a["modifiers"], a["modifier_basis"]))
+            if a["strength"] == ar.Strength.NONE:
+                none_listed = True
+    if not none_listed:
+        problems.append("CONTROL: no resolved subject listed a NONE entry, so the omission check saw none")
+    return not problems, "; ".join(problems) or \
+        "fresh, stale, missing and no-intent subjects: JSON-safe, nine keys, one entry per archetype (NONE listed), modifiers shaped"
+
+
+def _walk_with_unreadable_first():
+    """A `_walk` replacement that reports one unreadable subdirectory, then walks normally."""
+    original = ts._walk
+
+    def failing_first(top, topdown=True, onerror=None, followlinks=False):
+        if onerror is not None:
+            onerror(PermissionError(13, "Permission denied", os.path.join(top, "fabricated-subdir")))
+        return original(top, topdown=topdown, onerror=onerror, followlinks=followlinks)
+    return original, failing_first
+
+
+def _cause_readings(cause):
+    """The ten trait readings from a fixture this gate builds for `cause`, or None when the
+    gate has no fixture for it (an unknown cause is reported, never skipped)."""
+    if cause == "no-cache":
+        return ar.read_traits(make_repo("persistent_prisma"), state_dir=new_state())["traits"]
+    if cause == "stale":
+        state, repo = _produce_fixture("prisma_marker_react")
+        _edit_file(os.path.join(repo, "package.json"),
+                   json.dumps({"name": "fixture", "dependencies": {"react": "^18.0.0", "stripe": "^14.0.0"}}))
+        return ar.read_traits(repo, state_dir=state)["traits"]
+    if cause == "cache-malformed":
+        state, repo = _produce_fixture("persistent_prisma")
+        with open(ar.cache_path(repo, state_dir=state), "wb") as fh:
+            fh.write(b"\x00 this is not json \xff")
+        return ar.read_traits(repo, state_dir=state)["traits"]
+    if cause == "unresolvable-root":
+        return ar.read_traits("relative" + os.sep + "path", state_dir=new_state())["traits"]
+    if cause == "truncated":
+        return _produce_read(make_repo("truncated_far"), cap=10)[2]["traits"]
+    if cause == "budget-exhausted":
+        return _produce_read(make_repo("persistent_prisma"), budget_s=0)[2]["traits"]
+    if cause == "unreadable-subtree":
+        original, wrapper = _walk_with_unreadable_first()
+        ts._walk = wrapper
+        try:
+            return _produce_read(make_repo("ephemeral"))[2]["traits"]
+        finally:
+            ts._walk = original
+    if cause == "no-manifest-ecosystem":
+        return _produce_read(make_repo("zero_manifest"))[2]["traits"]
+    if cause == "no-structural-detector":
+        return _produce_read(make_repo("persistent_prisma"))[2]["traits"]
+    return None
+
+
+def _causes_predicate():
+    """-> (ok, unreachable): ok when every cause in `ar.UNJUDGED_CAUSES` (read at call time)
+    is carried by some trait reading of its own fixture."""
+    unreachable = []
+    for cause in ar.UNJUDGED_CAUSES:
+        traits = _cause_readings(cause)
+        if traits is None:
+            unreachable.append("%s (no fixture in this gate)" % cause)
+        elif not any(r["state"] == ar.UNJUDGED and r["reason"] == cause for r in traits.values()):
+            unreachable.append("%s (no trait read it; reasons %s)" % (
+                cause, sorted({r["reason"] for r in traits.values()})))
+    return not unreachable, unreachable
+
+
+def pred_V_ARCH_CAUSES_REACHABLE():
+    if ar is None or ts is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    problems = []
+    ok_real, unreachable = _causes_predicate()
+    if not ok_real:
+        problems.append("UNREACHABLE-CAUSE: %s" % "; ".join(unreachable))
+    # Instrument control: the same predicate over a set holding one cause nothing can reach
+    # must fail and must name it, or the predicate cannot tell reachable from unreachable.
+    original = ar.UNJUDGED_CAUSES
+    ar.UNJUDGED_CAUSES = tuple(original) + ("zz-unreachable",)
+    try:
+        ok_ctrl, ctrl_unreachable = _causes_predicate()
+    finally:
+        ar.UNJUDGED_CAUSES = original
+    if ar.UNJUDGED_CAUSES != original:
+        problems.append("RESTORE: UNJUDGED_CAUSES not restored")
+    if ok_ctrl or not any(m.startswith("zz-unreachable") for m in ctrl_unreachable):
+        problems.append("CONTROL: an added unreachable cause did not fail the predicate (ok=%s, named=%s)" % (
+            ok_ctrl, ctrl_unreachable))
+    return not problems, "; ".join(problems) or \
+        "all %d causes reachable (%s); control: an added cause 'zz-unreachable' fails the predicate and is named" % (
+            len(original), ", ".join(original))
+
+
+GATES += [
+    ("V-ARCH-TRANSITION-DISTRIBUTED", pred_V_ARCH_TRANSITION_DISTRIBUTED),
+    ("V-ARCH-SUBJECT-SHAPE", pred_V_ARCH_SUBJECT_SHAPE),
+    ("V-ARCH-CAUSES-REACHABLE", pred_V_ARCH_CAUSES_REACHABLE),
+]
+
+
+# -- plan 02-05 Task 2: the producer read on two real repositories (uncounted) --------
+# Read-only: `ts.scan` walks and opens manifests by name, writes nothing, takes no state
+# dir. A missing path reads UNJUDGED and is never counted as a PASS; only a contradicted
+# pole fails the run. KobiiSports Resort is deliberately absent (its walk is over 48 s and
+# its calibration is Phase 7, R-3).
+_REAL_POLES = (
+    ("InfinityOps", r"C:\Users\User\Desktop\Cursor Projects\InfinityOps"),
+    ("ABSW2-Wii", r"C:\Users\User\Desktop\Cursor Projects\Wii Projects\ABSW2-Wii"),
+)
+
+
+def _states_line(traits):
+    parts = []
+    for t in ar.TRAITS:
+        r = traits[t]
+        parts.append("%s=%s" % (t, r["state"]) + ("(%s)" % r["reason"] if r["reason"] else ""))
+    return " ".join(parts)
+
+
+def real_poles() -> str:
+    """Print one `V-ARCH-REAL-POLES` line and return PASS, FAIL or UNJUDGED."""
+    if ar is None or ts is None:
+        print("  UNJUDGED V-ARCH-REAL-POLES module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR))
+        return "UNJUDGED"
+    verdicts, details = [], []
+    for name, path in _REAL_POLES:
+        if not os.path.isdir(path):
+            verdicts.append("UNJUDGED")
+            details.append("%s: path missing (%s)" % (name, path))
+            continue
+        try:
+            res = ts.scan(path, budget_s=60)
+        except Exception as exc:  # noqa: BLE001
+            verdicts.append("FAIL")
+            details.append("%s: scan raised %s: %s" % (name, type(exc).__name__, exc))
+            continue
+        traits, walk = res["traits"], res["walk"]
+        if name == "InfinityOps":
+            held = traits["persistent"]["state"] == ar.PRESENT and traits["external_effect"]["state"] == ar.PRESENT
+            want = "persistent and external_effect PRESENT"
+        else:
+            held = traits["persistent"]["state"] != ar.ABSENT
+            want = "persistent not ABSENT"
+        cut = bool(walk.get("truncated") or walk.get("budget_hit"))
+        verdicts.append("PASS" if held else ("UNJUDGED" if cut else "FAIL"))
+        details.append("%s (%s; want %s; %s): files=%d seconds=%s truncated=%s budget_hit=%s ecosystems=%s | %s" % (
+            name, verdicts[-1], want, "held" if held else ("walk was cut" if cut else "CONTRADICTED"),
+            walk.get("files", 0), walk.get("seconds"), walk.get("truncated"), walk.get("budget_hit"),
+            ",".join(walk.get("ecosystems") or []) or "-", _states_line(traits)))
+    verdict = "FAIL" if "FAIL" in verdicts else ("PASS" if set(verdicts) == {"PASS"} else "UNJUDGED")
+    print("  %s V-ARCH-REAL-POLES %s" % (verdict, " || ".join(details)))
+    return verdict
+
+
 # Runs after every other gate, so its sweep sees every cache file this process produced.
 FINAL_GATES = [
     ("V-ARCH-CACHE-PATH-SAFE", pred_V_ARCH_CACHE_PATH_SAFE),
@@ -2030,16 +2300,22 @@ FINAL_GATES = [
 
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 56
+EXPECTED = 59
 
 
 def main() -> int:
     try:
         for name, pred in GATES + FINAL_GATES:
             run_gate(name, pred)
+        try:
+            poles = real_poles()
+        except Exception as exc:  # noqa: BLE001
+            print("  FAIL V-ARCH-REAL-POLES the real-pole check raised %s: %s" % (type(exc).__name__, exc))
+            poles = "FAIL"
+        print("CAPABILITY_ARCHETYPES_REAL_POLES=%s" % poles)
         print("CAPABILITY_ARCHETYPES_PASS=%d/%d  threshold=%d/%d" % (
             _PASS, _PASS + _FAIL, EXPECTED, EXPECTED))
-        return 0 if _FAIL == 0 and _PASS == EXPECTED else 1
+        return 0 if _FAIL == 0 and _PASS == EXPECTED and poles != "FAIL" else 1
     finally:
         for key, old in _SAVED_ENV.items():
             if old is None:
