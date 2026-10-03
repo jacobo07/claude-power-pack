@@ -352,7 +352,8 @@ def _first_difference(old: dict, new: dict):
         ro, rn = po.get("records", {}), pn.get("records", {})
         for n in sorted(set(ro) | set(rn)):
             if ro.get(n) != rn.get(n):
-                return f"{label}/{n}"
+                keys = sorted(k for k in RECORD_KEYS if (ro.get(n) or {}).get(k) != (rn.get(n) or {}).get(k))
+                return f"{label}/{n} {keys}"
     for k in ("groups", "drift_excluded", "member_files"):
         if old.get(k) != new.get(k):
             return k
@@ -413,7 +414,11 @@ def main(argv=None) -> int:
             return 1
         diff = _first_difference(old, new)
         if diff:
-            print(f"MOVED {diff}")
+            # A live skill directory can hold runtime state its own hooks append to (measured on gex44:
+            # claude-power-pack/vault/ceps/fires.jsonl), so its dir_digest moves between readings while its body does
+            # not. That is still a move: the recording is a snapshot, and --compare never hides one.
+            same = (old.get("groups") == new.get("groups") and old.get("drift_excluded") == new.get("drift_excluded"))
+            print(f"MOVED {diff}" + (" (groups and drift_excluded unchanged)" if same else ""))
             return 1
         print(f"reproduced {a.compare} at {ref[:8]}: planes, groups and member_files equal")
         return 0
