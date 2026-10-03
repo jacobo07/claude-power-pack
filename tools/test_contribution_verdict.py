@@ -477,8 +477,11 @@ def rate(c) -> Fraction:
 
 
 def pairs(counts):
-    """[(arm, effect, p)] for every measured treatment arm against the control. Control must be measured."""
-    ctl = counts[CONTROL_ARM]
+    """[(arm, effect, p)] for every measured treatment arm against the control. An UNMEASURED control
+    (absent or 0 measured rows) gives no pair, so max_effect is None, never a 0/0 rate (07-REVIEW WR-03)."""
+    ctl = (counts or {}).get(CONTROL_ARM)
+    if not ctl or ctl["n"] == 0:
+        return []
     out = []
     for arm in TREATMENT_ARMS:
         c = counts.get(arm)
@@ -963,6 +966,25 @@ def _drill_specs():
         n, unm = sum(a["n"] for a in c.values()), sum(a["unmeasured"] for a in c.values())
         return n == 7 and unm == 1, f"consumption measured {n}, UNMEASURED {unm}"
 
+    def set_n0_null(rows):
+        for r in rows:
+            if r.get("arm") == CONTROL_ARM:
+                r["grade"] = None
+
+    def render_refuses(inp, ctx, results):
+        """WR-03: stored control UNMEASURED while the regrade grades it -> the render refuses with a reason
+        (no ZeroDivisionError), and the stored effect is None, never a 0/0 rate."""
+        stored = arm_counts(stored_grades(inp["rows"]), inp["rows"])
+        if inp.get("fro") is None:
+            return False, "no frozen ledger passed to the drill"
+        try:
+            text, why = _render_or_none({"rows": inp["rows"], "regrade": inp["regrade"], "st": inp["st"],
+                                         "outside": []}, inp["fro"])
+        except ArithmeticError as exc:
+            return False, f"render raised {type(exc).__name__}"
+        good = text is None and why is not None and why.startswith("UNMEASURED") and max_effect(stored) is None
+        return good, f"render refused: {(why or 'it rendered')[:60]}"
+
     def set_c_pass(rows):
         for r in rows:
             if r.get("arm") == "C":
@@ -996,6 +1018,8 @@ def _drill_specs():
          inc3, "INCONCLUSIVE", unmeasured(CONTROL_ARM)),
         ("P-rows-invalid", upd(rows=rows_with(set_invalid_p)), {}, "NOT_SEPARABLE", p_out),
         ("C-r1-grade-empty", upd(rows=rows_with(set_c_empty)), {}, "NOT_SEPARABLE", c_n1),
+        ("N0-stored-null-regraded", upd(rows=rows_with(set_n0_null)), {"V-CT-GRADES-AGREE": "INCONCLUSIVE"},
+         "INCONCLUSIVE", render_refuses),
         ("regrade-unknown-run_id", upd(regrade=lambda i: list(i["regrade"]) + [{"run_id": "X-ghost-r1", "grade": F}]),
          inc3, "INCONCLUSIVE", None),
         ("grade-sources-disagree", upd(rows=lambda i: _fab(i["rows"], [("P", [P_] * 5), ("N0", [F] * 5)]),
@@ -1032,12 +1056,12 @@ PURE_CLAUSES = ("V-CT-SOURCES", "V-CT-FISHER-PINS", "V-CT-SESSIONS", "V-CT-BOUND
                 "V-CT-GRADES-AGREE", "V-CT-AUTH-COMMIT", "V-CT-AUTH-GRADER", "V-CT-AUTH-AUDIT", "V-CT-CONSUMPTION")
 
 
-def drills(rows, regrade_rows, cap, st, remaining, text_drills=None) -> list:
+def drills(rows, regrade_rows, cap, st, remaining, text_drills=None, fro=None) -> list:
     """[(name, observed, good)]. Each mutant declares its FULL non-ok clause set; every other evaluated
     clause must stay ok and the verdict must match. The clean case is the positive control."""
     out = []
     base = {"rows": rows, "regrade": regrade_rows, "st": st, "fn": fisher_two_sided, "floors": None,
-            "remaining": remaining}
+            "remaining": remaining, "fro": fro}
     for name, mut, want, want_v, chk in _drill_specs():
         try:
             inp = mut(base)
@@ -1099,6 +1123,10 @@ def render(rows, regrade_rows, fro, st, outside=(), regrade_outside=()) -> str:
     rule = next(p["rule"] for p in fro["pillars"] if p["id"] == "E")
     commit8 = st["regrade_commit"][:8]
     e_auth, e_stored = max_effect(counts), max_effect(stored)
+    for which, e in (("authoritative", e_auth), ("stored", e_stored)):
+        if e is None:
+            raise ValueError(f"UNMEASURED: the {which} grades leave {CONTROL_ARM} or every treatment arm with 0 "
+                             f"measured rows; the evidence states both grade sources, so nothing is rendered")
     L = []
     L.append("# [E] contribution + result consumption -- D-SESSIONS measurement")
     L.append("")
@@ -1334,7 +1362,7 @@ def _render_or_none(inp, fro):
     try:
         return render(inp["rows"], inp["regrade"], fro, inp["st"], inp["outside"],
                       inp.get("regrade_outside", ())), None
-    except (ValueError, KeyError, TypeError) as exc:
+    except (ValueError, KeyError, TypeError, ArithmeticError) as exc:
         return None, str(exc)
 
 
@@ -1347,7 +1375,7 @@ def run_drills(inp, fro, cap, rendered, remaining):
         "evidence-one-digit-changed": lambda: clause_evidence_current_drill(rendered),
     }
     all_reg = list(inp["regrade"]) + list(inp.get("regrade_outside", ()))
-    return (drills(inp["rows"], inp["regrade"], cap, inp["st"], remaining, text_drills)
+    return (drills(inp["rows"], inp["regrade"], cap, inp["st"], remaining, text_drills, fro)
             + [needed_pins_drill()] + append_drills(inp["all_rows"], all_reg, cap, inp["st"]))
 
 
@@ -1419,8 +1447,8 @@ def derived_json(inp, fro, cap) -> dict:
     out = {"verdict": verdict_of(results),
            "clauses": {n: s for n, s, _ in results},
            "arms": {a: {"authoritative": counts.get(a), "stored": stored.get(a)} for a in arms_of(rows)},
-           "effects": {"authoritative": frac(max_effect(counts)) if counts else None,
-                       "stored": frac(max_effect(stored))},
+           "effects": {k: ("UNMEASURED" if e is None else frac(e))
+                       for k, e in (("authoritative", max_effect(counts)), ("stored", max_effect(stored)))},
            "max_n2_effect_p": frac(fisher_two_sided(2, 2, 0, 2)),
            "alpha": frac(ALPHA)}
     if b is not None:
