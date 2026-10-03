@@ -9,8 +9,8 @@ Each requirement is satisfied when its pillar's ledger entry reaches a terminal 
 - [x] **CE-A**: Baseline cognitive economics -- re-runnable baseline gate; before/after snapshots on the same command.
 - [ ] **CE-B**: Resident context floor -- remaining rules->skills moves batched for the Owner (CCP / R2 / P3 own the moves).
 - [ ] **CE-C**: Capability virtualization -- skills/agents handed to their owners; tool-schema residency measured.
-- [ ] **CE-D**: Context lifetime -- realized savings of the live economic rollover trigger measured with displacement.
-- [ ] **CE-E**: Fresh-epoch economics -- continuation vs rotation measured from the epoch census.
+- [x] **CE-D**: Context lifetime -- realized savings of the live economic rollover trigger measured with displacement.
+- [x] **CE-E**: Fresh-epoch economics -- continuation vs rotation measured from the epoch census.
 - [ ] **CE-F**: Reread / materialized cognition -- sibling identical-dependency re-reads measured.
 - [ ] **CE-G**: Common cognitive subexpression elimination -- decided from F's identity evidence.
 - [ ] **CE-H**: Turns per verified advancement -- reproducible turn taxonomy with a gate.
@@ -42,8 +42,8 @@ Each requirement is satisfied when its pillar's ledger entry reaches a terminal 
 | CE-N | Phase 1 | Complete |
 | CE-O | Phase 1 | Complete |
 | CE-Q | Phase 1 | Complete |
-| CE-D | Phase 2 | Pending |
-| CE-E | Phase 2 | Pending |
+| CE-D | Phase 2 | Complete |
+| CE-E | Phase 2 | Complete |
 | CE-H | Phase 3 | Pending |
 | CE-J | Phase 3 | Pending |
 | CE-F | Phase 4 | Pending |
