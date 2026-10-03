@@ -20,10 +20,49 @@ This file covers the live-vs-mirror half (decision D-02): repo-mirrored skills a
 
 ## Planes
 
-No plane recorded yet.
+### Plane gex44
+
+- host `gex44`, node `kobicraft-gex44`, measured_at 2026-10-03T18:28:32Z, live root `~/.claude/skills`
+- repo_commit `97ded664c314857fb32f88576a41529380d060e7` (repo side = committed blobs at that commit)
+- command: python3 tools/skill_mirror_drift.py --measure-live --host gex44
+- counts: IDENTICAL 13 (of which eol_only 10), DRIFT 1, ABSENT_LIVE 10, INCONCLUSIVE 0; 24 repo skills
+
+| skill | status | eol_only | missing_live / extra_live / changed |
+|---|---|---|---|
+| agent-architecture-audit | ABSENT_LIVE | no |  |
+| agent-eval | ABSENT_LIVE | no |  |
+| agent-harness-construction | ABSENT_LIVE | no |  |
+| agent-introspection-debugging | ABSENT_LIVE | no |  |
+| agentic-os | ABSENT_LIVE | no |  |
+| android-reverse-engineering | DRIFT | no | missing_live scripts/check-deps.ps1, scripts/decompile.ps1, scripts/find-api-calls.ps1, scripts/install-dep.ps1; extra_live -; changed - |
+| autonomous-loops | ABSENT_LIVE | no |  |
+| concurrent-writers-shared-tree | IDENTICAL | yes |  |
+| destructive-state-authorization | IDENTICAL | yes |  |
+| develop-here-prove-there | IDENTICAL | yes |  |
+| eval-harness | ABSENT_LIVE | no |  |
+| evaluation-corpus-governance | IDENTICAL | yes |  |
+| guard-event-reachability | IDENTICAL | yes |  |
+| instrument-before-claim | IDENTICAL | yes |  |
+| intent-driven-development | ABSENT_LIVE | no |  |
+| mobile-app-ui-design | IDENTICAL | no |  |
+| mobile-game-wii-port | IDENTICAL | no |  |
+| monetary-quantity-integrity | IDENTICAL | yes |  |
+| motion-promo | IDENTICAL | no |  |
+| presence-is-not-residency | IDENTICAL | yes |  |
+| real-context-reachability | IDENTICAL | yes |  |
+| recurring-work-cardinality | IDENTICAL | yes |  |
+| recursive-decision-ledger | ABSENT_LIVE | no |  |
+| verification-loop | ABSENT_LIVE | no |  |
+
+#### Reconciliation with CONTEXT
+
+04-CONTEXT D-02 records "4 identical, 10 differ, 10 absent" for this plane. That is a raw-byte comparison of SKILL.md alone; recomputed here from the recording's raw shas it gives 4 identical, 10 differ, 10 absent. This gate compares the whole directory after LF normalization (the method named under Method), which gives IDENTICAL 13 (eol_only 10), DRIFT 1, ABSENT_LIVE 10: the 10 raw-byte "differ" are CRLF-versus-LF files whose content is equal, and the one real DRIFT is a missing set of files that a SKILL.md-only compare cannot see. Both are measurements of the same tree; they answer different questions.
+
+Drift found on this host is reported and never fixed here (no write under the home directory). Running `python3 tools/skill_mirror_drift.py --live` on the laptop plane is an Owner-bundle `[H]` item.
 
 ## Commands
 
 command: python3 tools/test_skill_drift.py
 command: python3 tools/test_skill_drift.py --write-evidence
 command: python3 tools/skill_mirror_drift.py --live
+command: python3 tools/skill_mirror_drift.py --measure-live --host gex44

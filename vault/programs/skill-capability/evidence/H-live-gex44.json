@@ -1,0 +1,661 @@
+{
+ "command": "python3 tools/skill_mirror_drift.py --measure-live --host gex44",
+ "counts": {
+  "ABSENT_LIVE": 10,
+  "DRIFT": 1,
+  "IDENTICAL": 13,
+  "INCONCLUSIVE": 0,
+  "eol_only": 10
+ },
+ "host": "gex44",
+ "live_root": "~/.claude/skills",
+ "measured_at": "2026-10-03T18:28:32Z",
+ "node": "kobicraft-gex44",
+ "repo_commit": "97ded664c314857fb32f88576a41529380d060e7",
+ "rows": [
+  {
+   "changed": [],
+   "eol_only": false,
+   "extra_live": [],
+   "live_digest": null,
+   "missing_live": [],
+   "repo_digest": "038880e16a79bd4f340ec3b7b18d390ef092fcfe36f8f0aa58228e4cc1fecc8f",
+   "repo_files": {
+    "SKILL.md": "6055b09e514e53e1627e524b021097ab069b7da8443c0c804677dc0b87b088b5"
+   },
+   "repo_raw": {
+    "SKILL.md": "6055b09e514e53e1627e524b021097ab069b7da8443c0c804677dc0b87b088b5"
+   },
+   "skill": "agent-architecture-audit",
+   "status": "ABSENT_LIVE"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "extra_live": [],
+   "live_digest": null,
+   "missing_live": [],
+   "repo_digest": "290e785213ed87aedbdee78f91c1e33bcd85f3da6520c4c07741f5e2827f3029",
+   "repo_files": {
+    "SKILL.md": "9f00769af0d556bfdebfd212ad989d7b996c4cb3fe3208b57ee2e7c80aa144d8"
+   },
+   "repo_raw": {
+    "SKILL.md": "9f00769af0d556bfdebfd212ad989d7b996c4cb3fe3208b57ee2e7c80aa144d8"
+   },
+   "skill": "agent-eval",
+   "status": "ABSENT_LIVE"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "extra_live": [],
+   "live_digest": null,
+   "missing_live": [],
+   "repo_digest": "e3cc985834b0675c55f70820e29ed5fd3d75879f853bca465579769826177adb",
+   "repo_files": {
+    "SKILL.md": "a86830e4946896e5a94e073c5bebef01ee088c2353191859ca607ddc6bd87cf1"
+   },
+   "repo_raw": {
+    "SKILL.md": "a86830e4946896e5a94e073c5bebef01ee088c2353191859ca607ddc6bd87cf1"
+   },
+   "skill": "agent-harness-construction",
+   "status": "ABSENT_LIVE"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "extra_live": [],
+   "live_digest": null,
+   "missing_live": [],
+   "repo_digest": "a3c1004a305edec7180d332e878f0c40f2b9120ece0e2757bbe2e52cddf50960",
+   "repo_files": {
+    "SKILL.md": "df1070344914da83e004335a21d8e1cd992dd218e5a9529a6db4675a526a3cdc"
+   },
+   "repo_raw": {
+    "SKILL.md": "df1070344914da83e004335a21d8e1cd992dd218e5a9529a6db4675a526a3cdc"
+   },
+   "skill": "agent-introspection-debugging",
+   "status": "ABSENT_LIVE"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "extra_live": [],
+   "live_digest": null,
+   "missing_live": [],
+   "repo_digest": "4230de5314bce12ff1c2dd9c95dc760699710c87078ea3d4413c4a3d71bb5d89",
+   "repo_files": {
+    "SKILL.md": "4472884be6f6d2534ab83d1182e0b2060cd1e155cdcb13a57a7a702f67170a2e"
+   },
+   "repo_raw": {
+    "SKILL.md": "4472884be6f6d2534ab83d1182e0b2060cd1e155cdcb13a57a7a702f67170a2e"
+   },
+   "skill": "agentic-os",
+   "status": "ABSENT_LIVE"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "213b1aac970538719fd3c0e2f53e25c64bacee7fa5e7d38dea7438fe5d34d094",
+   "live_files": {
+    "LICENSE": "dfe9d057673303add648c200d36d70815e28269f8b30ec42238347497a2782dc",
+    "NOTICE.md": "57d3b9e3d3f1b606b01203515dadee08e5c26f3c22b4f50dd5946c664c570c8e",
+    "SKILL.md": "5e67e189dfe2c9ad28b317eb2ec8259c645f95cfe14ce97caed5861e25269d99",
+    "core/fingerprint.py": "b73d937e99fd72f2192cebd73aaf6607631d600e3357f16c7c2f9f4ad4018fa2",
+    "core/lookup_name.py": "fac37013fdd41046ca6068fc2979d41918ab19fd33a2a0bf39c7f6fb1f4e6c02",
+    "core/recover_kotlin_names.py": "0697705988c258d947e59a0c0155fed31672408c88428933cefe133f9057921b",
+    "references/api-extraction-patterns.md": "5affe692c788c3672feeb0db313c042adc342de693923b7b0547f0e27d23a609",
+    "references/call-flow-analysis.md": "7a7cce334446aa14d6a188822c0fec49c76508ca2672dec737498f9ec69972f8",
+    "references/fernflower-usage.md": "d3c58117a88fbb00d9c97c06e985db28d4de77397dd33696e61b1a0bb5af0d40",
+    "references/jadx-usage.md": "fb382223f9a793957a3c23aa8aa46001eda724f475c54aa9e75b420c51f0cd3d",
+    "references/kotlin-name-recovery.md": "df53b438872d48daa0ba7cd5a9ddedd62486db7fddbf6e829bc00106da8b0f1c",
+    "references/setup-guide.md": "4a82098d41b8957dd25e2c37150121ce9f21f48367ab25394efbcd69538dbdc7",
+    "references/third_party_hosts.txt": "33e293d3e3d141ce3f0b139c86106553eb37cd975721403a6aba63290059a8b6",
+    "scripts/check-deps.sh": "58d90529d8a774c64d1b44ad1ac789db23726a1f1d34de3f01980a32195f5d3b",
+    "scripts/decompile.sh": "67ffa366fc414879fc1bbb36f637a9087ad814ecdb34e0ef4eab927fe51a037a",
+    "scripts/find-api-calls.sh": "a0d1539ab21a8192a9f33a6109157f17d677057cee86e725b634303d5e10b1dc",
+    "scripts/fingerprint.sh": "ce4757b9a0a03037e69f9734defbbc756507a473d6cf8d82269df315cb6bf3f7",
+    "scripts/install-dep.sh": "a7b92f97545e2acfb65a5595dac1decfa6c6f17dcbb754c4f271f3a8edce03c6",
+    "scripts/lookup-name.sh": "2ff2bfdd5cb89593f54fdbc93bc5ffc6c10971fc9191d385cb8b565d3c1c60a7",
+    "scripts/recover-kotlin-names.sh": "08d9072cde60112386af7b06155bfe9a33ad22792f53b8029acbda9301ecb558",
+    "upstream/SKILL.upstream.md": "8a0d1017d001755a181d2e1c4ca79bb52bbf085b8ac145aba5127d993815a63c",
+    "upstream/decompile-command.md": "f9bfcf1693e884ff6b061266d95a4352f347b4d1fad3006cd8774f30366b0212"
+   },
+   "live_raw": {
+    "LICENSE": "dfe9d057673303add648c200d36d70815e28269f8b30ec42238347497a2782dc",
+    "NOTICE.md": "57d3b9e3d3f1b606b01203515dadee08e5c26f3c22b4f50dd5946c664c570c8e",
+    "SKILL.md": "5e67e189dfe2c9ad28b317eb2ec8259c645f95cfe14ce97caed5861e25269d99",
+    "core/fingerprint.py": "b73d937e99fd72f2192cebd73aaf6607631d600e3357f16c7c2f9f4ad4018fa2",
+    "core/lookup_name.py": "fac37013fdd41046ca6068fc2979d41918ab19fd33a2a0bf39c7f6fb1f4e6c02",
+    "core/recover_kotlin_names.py": "0697705988c258d947e59a0c0155fed31672408c88428933cefe133f9057921b",
+    "references/api-extraction-patterns.md": "5affe692c788c3672feeb0db313c042adc342de693923b7b0547f0e27d23a609",
+    "references/call-flow-analysis.md": "7a7cce334446aa14d6a188822c0fec49c76508ca2672dec737498f9ec69972f8",
+    "references/fernflower-usage.md": "d3c58117a88fbb00d9c97c06e985db28d4de77397dd33696e61b1a0bb5af0d40",
+    "references/jadx-usage.md": "fb382223f9a793957a3c23aa8aa46001eda724f475c54aa9e75b420c51f0cd3d",
+    "references/kotlin-name-recovery.md": "df53b438872d48daa0ba7cd5a9ddedd62486db7fddbf6e829bc00106da8b0f1c",
+    "references/setup-guide.md": "4a82098d41b8957dd25e2c37150121ce9f21f48367ab25394efbcd69538dbdc7",
+    "references/third_party_hosts.txt": "33e293d3e3d141ce3f0b139c86106553eb37cd975721403a6aba63290059a8b6",
+    "scripts/check-deps.sh": "58d90529d8a774c64d1b44ad1ac789db23726a1f1d34de3f01980a32195f5d3b",
+    "scripts/decompile.sh": "67ffa366fc414879fc1bbb36f637a9087ad814ecdb34e0ef4eab927fe51a037a",
+    "scripts/find-api-calls.sh": "a0d1539ab21a8192a9f33a6109157f17d677057cee86e725b634303d5e10b1dc",
+    "scripts/fingerprint.sh": "ce4757b9a0a03037e69f9734defbbc756507a473d6cf8d82269df315cb6bf3f7",
+    "scripts/install-dep.sh": "a7b92f97545e2acfb65a5595dac1decfa6c6f17dcbb754c4f271f3a8edce03c6",
+    "scripts/lookup-name.sh": "2ff2bfdd5cb89593f54fdbc93bc5ffc6c10971fc9191d385cb8b565d3c1c60a7",
+    "scripts/recover-kotlin-names.sh": "08d9072cde60112386af7b06155bfe9a33ad22792f53b8029acbda9301ecb558",
+    "upstream/SKILL.upstream.md": "8a0d1017d001755a181d2e1c4ca79bb52bbf085b8ac145aba5127d993815a63c",
+    "upstream/decompile-command.md": "f9bfcf1693e884ff6b061266d95a4352f347b4d1fad3006cd8774f30366b0212"
+   },
+   "missing_live": [
+    "scripts/check-deps.ps1",
+    "scripts/decompile.ps1",
+    "scripts/find-api-calls.ps1",
+    "scripts/install-dep.ps1"
+   ],
+   "repo_digest": "2de93a44a983e1473771fa969324efc5e94b6e734eb90676c522175ca86b7c36",
+   "repo_files": {
+    "LICENSE": "dfe9d057673303add648c200d36d70815e28269f8b30ec42238347497a2782dc",
+    "NOTICE.md": "57d3b9e3d3f1b606b01203515dadee08e5c26f3c22b4f50dd5946c664c570c8e",
+    "SKILL.md": "5e67e189dfe2c9ad28b317eb2ec8259c645f95cfe14ce97caed5861e25269d99",
+    "core/fingerprint.py": "b73d937e99fd72f2192cebd73aaf6607631d600e3357f16c7c2f9f4ad4018fa2",
+    "core/lookup_name.py": "fac37013fdd41046ca6068fc2979d41918ab19fd33a2a0bf39c7f6fb1f4e6c02",
+    "core/recover_kotlin_names.py": "0697705988c258d947e59a0c0155fed31672408c88428933cefe133f9057921b",
+    "references/api-extraction-patterns.md": "5affe692c788c3672feeb0db313c042adc342de693923b7b0547f0e27d23a609",
+    "references/call-flow-analysis.md": "7a7cce334446aa14d6a188822c0fec49c76508ca2672dec737498f9ec69972f8",
+    "references/fernflower-usage.md": "d3c58117a88fbb00d9c97c06e985db28d4de77397dd33696e61b1a0bb5af0d40",
+    "references/jadx-usage.md": "fb382223f9a793957a3c23aa8aa46001eda724f475c54aa9e75b420c51f0cd3d",
+    "references/kotlin-name-recovery.md": "df53b438872d48daa0ba7cd5a9ddedd62486db7fddbf6e829bc00106da8b0f1c",
+    "references/setup-guide.md": "4a82098d41b8957dd25e2c37150121ce9f21f48367ab25394efbcd69538dbdc7",
+    "references/third_party_hosts.txt": "33e293d3e3d141ce3f0b139c86106553eb37cd975721403a6aba63290059a8b6",
+    "scripts/check-deps.ps1": "046939fa7cff3899e1dd7a12d3c1f00e067d8241d4b3c1137001f3f56baf1b28",
+    "scripts/check-deps.sh": "58d90529d8a774c64d1b44ad1ac789db23726a1f1d34de3f01980a32195f5d3b",
+    "scripts/decompile.ps1": "ee58dbb43703eefcfe7ce6fbd7fed2d5341e0a4ee24dcbaa56e6dc002af567d0",
+    "scripts/decompile.sh": "67ffa366fc414879fc1bbb36f637a9087ad814ecdb34e0ef4eab927fe51a037a",
+    "scripts/find-api-calls.ps1": "d142758cc01b522e47aad17befa770d755c2c9cb4dc3a17687892c4342d0e1c6",
+    "scripts/find-api-calls.sh": "a0d1539ab21a8192a9f33a6109157f17d677057cee86e725b634303d5e10b1dc",
+    "scripts/fingerprint.sh": "ce4757b9a0a03037e69f9734defbbc756507a473d6cf8d82269df315cb6bf3f7",
+    "scripts/install-dep.ps1": "97db564a744d8845cd85e1898e02ad08ce8c2957619c26db13f6735ef9a8446e",
+    "scripts/install-dep.sh": "a7b92f97545e2acfb65a5595dac1decfa6c6f17dcbb754c4f271f3a8edce03c6",
+    "scripts/lookup-name.sh": "2ff2bfdd5cb89593f54fdbc93bc5ffc6c10971fc9191d385cb8b565d3c1c60a7",
+    "scripts/recover-kotlin-names.sh": "08d9072cde60112386af7b06155bfe9a33ad22792f53b8029acbda9301ecb558",
+    "upstream/SKILL.upstream.md": "8a0d1017d001755a181d2e1c4ca79bb52bbf085b8ac145aba5127d993815a63c",
+    "upstream/decompile-command.md": "f9bfcf1693e884ff6b061266d95a4352f347b4d1fad3006cd8774f30366b0212"
+   },
+   "repo_raw": {
+    "LICENSE": "dfe9d057673303add648c200d36d70815e28269f8b30ec42238347497a2782dc",
+    "NOTICE.md": "57d3b9e3d3f1b606b01203515dadee08e5c26f3c22b4f50dd5946c664c570c8e",
+    "SKILL.md": "5e67e189dfe2c9ad28b317eb2ec8259c645f95cfe14ce97caed5861e25269d99",
+    "core/fingerprint.py": "b73d937e99fd72f2192cebd73aaf6607631d600e3357f16c7c2f9f4ad4018fa2",
+    "core/lookup_name.py": "fac37013fdd41046ca6068fc2979d41918ab19fd33a2a0bf39c7f6fb1f4e6c02",
+    "core/recover_kotlin_names.py": "0697705988c258d947e59a0c0155fed31672408c88428933cefe133f9057921b",
+    "references/api-extraction-patterns.md": "5affe692c788c3672feeb0db313c042adc342de693923b7b0547f0e27d23a609",
+    "references/call-flow-analysis.md": "7a7cce334446aa14d6a188822c0fec49c76508ca2672dec737498f9ec69972f8",
+    "references/fernflower-usage.md": "d3c58117a88fbb00d9c97c06e985db28d4de77397dd33696e61b1a0bb5af0d40",
+    "references/jadx-usage.md": "fb382223f9a793957a3c23aa8aa46001eda724f475c54aa9e75b420c51f0cd3d",
+    "references/kotlin-name-recovery.md": "df53b438872d48daa0ba7cd5a9ddedd62486db7fddbf6e829bc00106da8b0f1c",
+    "references/setup-guide.md": "4a82098d41b8957dd25e2c37150121ce9f21f48367ab25394efbcd69538dbdc7",
+    "references/third_party_hosts.txt": "33e293d3e3d141ce3f0b139c86106553eb37cd975721403a6aba63290059a8b6",
+    "scripts/check-deps.ps1": "046939fa7cff3899e1dd7a12d3c1f00e067d8241d4b3c1137001f3f56baf1b28",
+    "scripts/check-deps.sh": "58d90529d8a774c64d1b44ad1ac789db23726a1f1d34de3f01980a32195f5d3b",
+    "scripts/decompile.ps1": "ee58dbb43703eefcfe7ce6fbd7fed2d5341e0a4ee24dcbaa56e6dc002af567d0",
+    "scripts/decompile.sh": "67ffa366fc414879fc1bbb36f637a9087ad814ecdb34e0ef4eab927fe51a037a",
+    "scripts/find-api-calls.ps1": "d142758cc01b522e47aad17befa770d755c2c9cb4dc3a17687892c4342d0e1c6",
+    "scripts/find-api-calls.sh": "a0d1539ab21a8192a9f33a6109157f17d677057cee86e725b634303d5e10b1dc",
+    "scripts/fingerprint.sh": "ce4757b9a0a03037e69f9734defbbc756507a473d6cf8d82269df315cb6bf3f7",
+    "scripts/install-dep.ps1": "97db564a744d8845cd85e1898e02ad08ce8c2957619c26db13f6735ef9a8446e",
+    "scripts/install-dep.sh": "a7b92f97545e2acfb65a5595dac1decfa6c6f17dcbb754c4f271f3a8edce03c6",
+    "scripts/lookup-name.sh": "2ff2bfdd5cb89593f54fdbc93bc5ffc6c10971fc9191d385cb8b565d3c1c60a7",
+    "scripts/recover-kotlin-names.sh": "08d9072cde60112386af7b06155bfe9a33ad22792f53b8029acbda9301ecb558",
+    "upstream/SKILL.upstream.md": "8a0d1017d001755a181d2e1c4ca79bb52bbf085b8ac145aba5127d993815a63c",
+    "upstream/decompile-command.md": "f9bfcf1693e884ff6b061266d95a4352f347b4d1fad3006cd8774f30366b0212"
+   },
+   "skill": "android-reverse-engineering",
+   "status": "DRIFT"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "extra_live": [],
+   "live_digest": null,
+   "missing_live": [],
+   "repo_digest": "5877538f684b74e093a7fa596d3886c715e2d1e1ccf864c1f7d14202b6fd93a0",
+   "repo_files": {
+    "SKILL.md": "6577b83ca52b08bdabe569a1124a76344c3d6a948a53ae7c34d78fdfde03c978"
+   },
+   "repo_raw": {
+    "SKILL.md": "6577b83ca52b08bdabe569a1124a76344c3d6a948a53ae7c34d78fdfde03c978"
+   },
+   "skill": "autonomous-loops",
+   "status": "ABSENT_LIVE"
+  },
+  {
+   "changed": [],
+   "eol_only": true,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "d428c6b1f537d0d95ac4d3ded57e65da79ce96e89621bd4676e9ed4939916079",
+   "live_files": {
+    "SKILL.md": "f1f52de4c3115d0aafc39d69c67a2e1ae7936ae63b26ecc9263d89f1150e57c0"
+   },
+   "live_raw": {
+    "SKILL.md": "b1eda762a7a222405e1860d0d743897edf6f5d601b34d45f470ce8cc40e0c384"
+   },
+   "missing_live": [],
+   "repo_digest": "d428c6b1f537d0d95ac4d3ded57e65da79ce96e89621bd4676e9ed4939916079",
+   "repo_files": {
+    "SKILL.md": "f1f52de4c3115d0aafc39d69c67a2e1ae7936ae63b26ecc9263d89f1150e57c0"
+   },
+   "repo_raw": {
+    "SKILL.md": "f1f52de4c3115d0aafc39d69c67a2e1ae7936ae63b26ecc9263d89f1150e57c0"
+   },
+   "skill": "concurrent-writers-shared-tree",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": true,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "c17c2fc60c33f55bdb2406eefa00770b3fe5a76c9224549f7d703f9ae4f49da8",
+   "live_files": {
+    "SKILL.md": "2985bd97002abf0589a95080a7d29b447b7a703df9ccd319494dba45701cd0de"
+   },
+   "live_raw": {
+    "SKILL.md": "7c3fc5abaab7e1adaa6e7e1422ed26a63b64340da8fd7b024ed158c5cdb525f7"
+   },
+   "missing_live": [],
+   "repo_digest": "c17c2fc60c33f55bdb2406eefa00770b3fe5a76c9224549f7d703f9ae4f49da8",
+   "repo_files": {
+    "SKILL.md": "2985bd97002abf0589a95080a7d29b447b7a703df9ccd319494dba45701cd0de"
+   },
+   "repo_raw": {
+    "SKILL.md": "2985bd97002abf0589a95080a7d29b447b7a703df9ccd319494dba45701cd0de"
+   },
+   "skill": "destructive-state-authorization",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": true,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "55aace799b091691d008fe0e8e2dbf65ad10c88df9427a7d80ab4e8d2a6d62f7",
+   "live_files": {
+    "SKILL.md": "f649b72b6504f0d1b168e189a81514f9ad316825cbabeb9207dc7161d2538058"
+   },
+   "live_raw": {
+    "SKILL.md": "81013a01db6630e90f5e3d665ef8ffe8d7f5e0dd8dd1fb65458af6dc434beb1a"
+   },
+   "missing_live": [],
+   "repo_digest": "55aace799b091691d008fe0e8e2dbf65ad10c88df9427a7d80ab4e8d2a6d62f7",
+   "repo_files": {
+    "SKILL.md": "f649b72b6504f0d1b168e189a81514f9ad316825cbabeb9207dc7161d2538058"
+   },
+   "repo_raw": {
+    "SKILL.md": "f649b72b6504f0d1b168e189a81514f9ad316825cbabeb9207dc7161d2538058"
+   },
+   "skill": "develop-here-prove-there",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "extra_live": [],
+   "live_digest": null,
+   "missing_live": [],
+   "repo_digest": "a6f0fe8862dd9e56499d1c6a9ef2afc6b91c4493f52467e27fda93e0ef35928d",
+   "repo_files": {
+    "SKILL.md": "bf390ea52ece4e2027addb0f9b949af91b2e9065146c0179fabc2a5d05a31b4e"
+   },
+   "repo_raw": {
+    "SKILL.md": "bf390ea52ece4e2027addb0f9b949af91b2e9065146c0179fabc2a5d05a31b4e"
+   },
+   "skill": "eval-harness",
+   "status": "ABSENT_LIVE"
+  },
+  {
+   "changed": [],
+   "eol_only": true,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "0a5a73aae411b432a678ae4769f27d4d608b8061fbe1b58448ea2a6b703e68c8",
+   "live_files": {
+    "SKILL.md": "cc8550825cb4628e35ed483c2159c5957dbef1fe617d44b55515c0b7019d9eff"
+   },
+   "live_raw": {
+    "SKILL.md": "bf58b4fd397434b844e67d280d0969e2ba6b6fc2c8e7ff199c0fa84dc54f4ad9"
+   },
+   "missing_live": [],
+   "repo_digest": "0a5a73aae411b432a678ae4769f27d4d608b8061fbe1b58448ea2a6b703e68c8",
+   "repo_files": {
+    "SKILL.md": "cc8550825cb4628e35ed483c2159c5957dbef1fe617d44b55515c0b7019d9eff"
+   },
+   "repo_raw": {
+    "SKILL.md": "cc8550825cb4628e35ed483c2159c5957dbef1fe617d44b55515c0b7019d9eff"
+   },
+   "skill": "evaluation-corpus-governance",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": true,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "71d514071166c4f19932a3ba691a3399bd11a0142c69d27728f9e9c2d00b90d4",
+   "live_files": {
+    "SKILL.md": "960e476487bd4da5bb60c02b51dd2a5c1ae07e24cd401321b94c4bead37c1639"
+   },
+   "live_raw": {
+    "SKILL.md": "fc6daf7a21d158f039c937940f31d172a5fc3a087c0a6fa71e5704e2f17af70d"
+   },
+   "missing_live": [],
+   "repo_digest": "71d514071166c4f19932a3ba691a3399bd11a0142c69d27728f9e9c2d00b90d4",
+   "repo_files": {
+    "SKILL.md": "960e476487bd4da5bb60c02b51dd2a5c1ae07e24cd401321b94c4bead37c1639"
+   },
+   "repo_raw": {
+    "SKILL.md": "960e476487bd4da5bb60c02b51dd2a5c1ae07e24cd401321b94c4bead37c1639"
+   },
+   "skill": "guard-event-reachability",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": true,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "be8857924069ca2f132331d2ccc568f9a9431e6f3fdcb0efcdd6bffa67f05f5a",
+   "live_files": {
+    "SKILL.md": "92868f093ae326201b75b227baa667fbd2170e4c3c2c793784427c343dbf5893"
+   },
+   "live_raw": {
+    "SKILL.md": "0afde1163a146ef7731187050ba931c922ec0aed506ce352c050ce6df48b9733"
+   },
+   "missing_live": [],
+   "repo_digest": "be8857924069ca2f132331d2ccc568f9a9431e6f3fdcb0efcdd6bffa67f05f5a",
+   "repo_files": {
+    "SKILL.md": "92868f093ae326201b75b227baa667fbd2170e4c3c2c793784427c343dbf5893"
+   },
+   "repo_raw": {
+    "SKILL.md": "92868f093ae326201b75b227baa667fbd2170e4c3c2c793784427c343dbf5893"
+   },
+   "skill": "instrument-before-claim",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "extra_live": [],
+   "live_digest": null,
+   "missing_live": [],
+   "repo_digest": "9d526cd0dac8e1b09ee317154ff08882a655bed1ff4561e4e3395f0e9439cd05",
+   "repo_files": {
+    "SKILL.md": "c402849d47167fff7312ef7b62fe21209c2f0eb59e302c8f7671a39a5d3e2246"
+   },
+   "repo_raw": {
+    "SKILL.md": "c402849d47167fff7312ef7b62fe21209c2f0eb59e302c8f7671a39a5d3e2246"
+   },
+   "skill": "intent-driven-development",
+   "status": "ABSENT_LIVE"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "3944e2bdd675962f8c170c76ba5c9e4f1a9ba8593058048833aef25e2333442b",
+   "live_files": {
+    "SKILL.md": "3cad45b6f4db53da3f542f86a66dbbb206677f5a1729a55f1b6504be5edf0536"
+   },
+   "live_raw": {
+    "SKILL.md": "3cad45b6f4db53da3f542f86a66dbbb206677f5a1729a55f1b6504be5edf0536"
+   },
+   "missing_live": [],
+   "repo_digest": "3944e2bdd675962f8c170c76ba5c9e4f1a9ba8593058048833aef25e2333442b",
+   "repo_files": {
+    "SKILL.md": "3cad45b6f4db53da3f542f86a66dbbb206677f5a1729a55f1b6504be5edf0536"
+   },
+   "repo_raw": {
+    "SKILL.md": "3cad45b6f4db53da3f542f86a66dbbb206677f5a1729a55f1b6504be5edf0536"
+   },
+   "skill": "mobile-app-ui-design",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "1c4bbb70dcfd1cb9295c14d1db5739752601e329efa935430dbfb544cbd33db4",
+   "live_files": {
+    "NOTICE.md": "a90cee21a410333aebf172426f2743ce760b7559033c6344a95cc187cc66c68a",
+    "SKILL.md": "88c6539d5dabf2da9a197734c970fc78c5df3ebe179033a01af764bb5b945eef",
+    "core/cipher_probe.py": "789a72d4a5f5efab5505f76865e17348186acad17ef902676240eb1bc9a677ea",
+    "core/envelope_probe.py": "ac5677a6a2a8400d7d0eaf0f5f6bb3a06c17c70897ba9c26b17ee9416f01a482",
+    "core/fingerprint_game.py": "0a2c0d75b43cad89088e66e53f74d2f8466200a7bd4f6b10f524121cd0e6c86c",
+    "references/port-decision.md": "e7721f0fc6839ab65fce3a6f175b84dd49012bb400fb3bf4810900353f8996e4",
+    "references/retractions.md": "f71cff229fd477f9d5688125e6aa78cb550c85d1803d1404bfd44a8df8d611dc",
+    "references/wii-shipping.md": "83b0c481bd9d09747f1265b42749aab0d6312579d57218dd39a4b167948084a0"
+   },
+   "live_raw": {
+    "NOTICE.md": "a90cee21a410333aebf172426f2743ce760b7559033c6344a95cc187cc66c68a",
+    "SKILL.md": "88c6539d5dabf2da9a197734c970fc78c5df3ebe179033a01af764bb5b945eef",
+    "core/cipher_probe.py": "789a72d4a5f5efab5505f76865e17348186acad17ef902676240eb1bc9a677ea",
+    "core/envelope_probe.py": "ac5677a6a2a8400d7d0eaf0f5f6bb3a06c17c70897ba9c26b17ee9416f01a482",
+    "core/fingerprint_game.py": "0a2c0d75b43cad89088e66e53f74d2f8466200a7bd4f6b10f524121cd0e6c86c",
+    "references/port-decision.md": "e7721f0fc6839ab65fce3a6f175b84dd49012bb400fb3bf4810900353f8996e4",
+    "references/retractions.md": "f71cff229fd477f9d5688125e6aa78cb550c85d1803d1404bfd44a8df8d611dc",
+    "references/wii-shipping.md": "83b0c481bd9d09747f1265b42749aab0d6312579d57218dd39a4b167948084a0"
+   },
+   "missing_live": [],
+   "repo_digest": "1c4bbb70dcfd1cb9295c14d1db5739752601e329efa935430dbfb544cbd33db4",
+   "repo_files": {
+    "NOTICE.md": "a90cee21a410333aebf172426f2743ce760b7559033c6344a95cc187cc66c68a",
+    "SKILL.md": "88c6539d5dabf2da9a197734c970fc78c5df3ebe179033a01af764bb5b945eef",
+    "core/cipher_probe.py": "789a72d4a5f5efab5505f76865e17348186acad17ef902676240eb1bc9a677ea",
+    "core/envelope_probe.py": "ac5677a6a2a8400d7d0eaf0f5f6bb3a06c17c70897ba9c26b17ee9416f01a482",
+    "core/fingerprint_game.py": "0a2c0d75b43cad89088e66e53f74d2f8466200a7bd4f6b10f524121cd0e6c86c",
+    "references/port-decision.md": "e7721f0fc6839ab65fce3a6f175b84dd49012bb400fb3bf4810900353f8996e4",
+    "references/retractions.md": "f71cff229fd477f9d5688125e6aa78cb550c85d1803d1404bfd44a8df8d611dc",
+    "references/wii-shipping.md": "83b0c481bd9d09747f1265b42749aab0d6312579d57218dd39a4b167948084a0"
+   },
+   "repo_raw": {
+    "NOTICE.md": "a90cee21a410333aebf172426f2743ce760b7559033c6344a95cc187cc66c68a",
+    "SKILL.md": "88c6539d5dabf2da9a197734c970fc78c5df3ebe179033a01af764bb5b945eef",
+    "core/cipher_probe.py": "789a72d4a5f5efab5505f76865e17348186acad17ef902676240eb1bc9a677ea",
+    "core/envelope_probe.py": "ac5677a6a2a8400d7d0eaf0f5f6bb3a06c17c70897ba9c26b17ee9416f01a482",
+    "core/fingerprint_game.py": "0a2c0d75b43cad89088e66e53f74d2f8466200a7bd4f6b10f524121cd0e6c86c",
+    "references/port-decision.md": "e7721f0fc6839ab65fce3a6f175b84dd49012bb400fb3bf4810900353f8996e4",
+    "references/retractions.md": "f71cff229fd477f9d5688125e6aa78cb550c85d1803d1404bfd44a8df8d611dc",
+    "references/wii-shipping.md": "83b0c481bd9d09747f1265b42749aab0d6312579d57218dd39a4b167948084a0"
+   },
+   "skill": "mobile-game-wii-port",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": true,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "cf55ae3f0c8bb43ab866db8b64d69fc16647327ed35c428584e9b0f8ee9d469b",
+   "live_files": {
+    "SKILL.md": "34e63a8dca27c83fe018f8b9129612d50338eae0acb40f7d4a0f934d52bbe069"
+   },
+   "live_raw": {
+    "SKILL.md": "9842d9ff008f910060b4c5c6f3303ad1354a69debf8c4e9769b7da73fb23de40"
+   },
+   "missing_live": [],
+   "repo_digest": "cf55ae3f0c8bb43ab866db8b64d69fc16647327ed35c428584e9b0f8ee9d469b",
+   "repo_files": {
+    "SKILL.md": "34e63a8dca27c83fe018f8b9129612d50338eae0acb40f7d4a0f934d52bbe069"
+   },
+   "repo_raw": {
+    "SKILL.md": "34e63a8dca27c83fe018f8b9129612d50338eae0acb40f7d4a0f934d52bbe069"
+   },
+   "skill": "monetary-quantity-integrity",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "f962b1e7e7e121ba5d282c52c899646b1adcaa8c986718383641cb2f783978b8",
+   "live_files": {
+    "SKILL.md": "0aa467737f44ab982e8faf9bf00b4873ab03046f77cf5ff09807d95cb6068595",
+    "assets/film.template.html": "6289970e0f2b1254e1d9ca181080d8c1098fd44cf1dfc8dd7e4236853718afde",
+    "references/beat-sheet.md": "8edfe711b3750ee29d45004dd178fc9b9ec78a47c2ea2c4018e2e50ff001c34c",
+    "references/shot-library.md": "10698703c417ad3e3b1749615e7f30945bc1ae582560a0044126ff96b85297c3",
+    "references/visual-language.md": "d13f04a93e17f34834944c3f4a3dcaeab3d8cc34a92443a4f595cad712823233",
+    "scripts/check_toolchain.py": "e212edca2b092fb10056f0caf1aab838b3fda1e100808bb1c843af63eeebff66",
+    "scripts/contact_sheet.py": "7231d763fe66f0f230c4d1a44c03265120666b2093c1dd6cb93b8b06621c36ba",
+    "scripts/new_film.py": "fb07cd32b02ec68b67215331e7a6556f55d4c0c865606670ee19f164ca8963a6",
+    "scripts/render_film.py": "b804be65a3de03f59db97edd9a7b32033553dc94a566163564ac66e6ec090a25",
+    "tools/test_motion_promo.py": "647910c57457d86b8d52ed5854d7207c7ccb5e294372c9f35ff93ff5e747ea80"
+   },
+   "live_raw": {
+    "SKILL.md": "0aa467737f44ab982e8faf9bf00b4873ab03046f77cf5ff09807d95cb6068595",
+    "assets/film.template.html": "6289970e0f2b1254e1d9ca181080d8c1098fd44cf1dfc8dd7e4236853718afde",
+    "references/beat-sheet.md": "8edfe711b3750ee29d45004dd178fc9b9ec78a47c2ea2c4018e2e50ff001c34c",
+    "references/shot-library.md": "10698703c417ad3e3b1749615e7f30945bc1ae582560a0044126ff96b85297c3",
+    "references/visual-language.md": "d13f04a93e17f34834944c3f4a3dcaeab3d8cc34a92443a4f595cad712823233",
+    "scripts/check_toolchain.py": "e212edca2b092fb10056f0caf1aab838b3fda1e100808bb1c843af63eeebff66",
+    "scripts/contact_sheet.py": "7231d763fe66f0f230c4d1a44c03265120666b2093c1dd6cb93b8b06621c36ba",
+    "scripts/new_film.py": "fb07cd32b02ec68b67215331e7a6556f55d4c0c865606670ee19f164ca8963a6",
+    "scripts/render_film.py": "b804be65a3de03f59db97edd9a7b32033553dc94a566163564ac66e6ec090a25",
+    "tools/test_motion_promo.py": "647910c57457d86b8d52ed5854d7207c7ccb5e294372c9f35ff93ff5e747ea80"
+   },
+   "missing_live": [],
+   "repo_digest": "f962b1e7e7e121ba5d282c52c899646b1adcaa8c986718383641cb2f783978b8",
+   "repo_files": {
+    "SKILL.md": "0aa467737f44ab982e8faf9bf00b4873ab03046f77cf5ff09807d95cb6068595",
+    "assets/film.template.html": "6289970e0f2b1254e1d9ca181080d8c1098fd44cf1dfc8dd7e4236853718afde",
+    "references/beat-sheet.md": "8edfe711b3750ee29d45004dd178fc9b9ec78a47c2ea2c4018e2e50ff001c34c",
+    "references/shot-library.md": "10698703c417ad3e3b1749615e7f30945bc1ae582560a0044126ff96b85297c3",
+    "references/visual-language.md": "d13f04a93e17f34834944c3f4a3dcaeab3d8cc34a92443a4f595cad712823233",
+    "scripts/check_toolchain.py": "e212edca2b092fb10056f0caf1aab838b3fda1e100808bb1c843af63eeebff66",
+    "scripts/contact_sheet.py": "7231d763fe66f0f230c4d1a44c03265120666b2093c1dd6cb93b8b06621c36ba",
+    "scripts/new_film.py": "fb07cd32b02ec68b67215331e7a6556f55d4c0c865606670ee19f164ca8963a6",
+    "scripts/render_film.py": "b804be65a3de03f59db97edd9a7b32033553dc94a566163564ac66e6ec090a25",
+    "tools/test_motion_promo.py": "647910c57457d86b8d52ed5854d7207c7ccb5e294372c9f35ff93ff5e747ea80"
+   },
+   "repo_raw": {
+    "SKILL.md": "0aa467737f44ab982e8faf9bf00b4873ab03046f77cf5ff09807d95cb6068595",
+    "assets/film.template.html": "6289970e0f2b1254e1d9ca181080d8c1098fd44cf1dfc8dd7e4236853718afde",
+    "references/beat-sheet.md": "8edfe711b3750ee29d45004dd178fc9b9ec78a47c2ea2c4018e2e50ff001c34c",
+    "references/shot-library.md": "10698703c417ad3e3b1749615e7f30945bc1ae582560a0044126ff96b85297c3",
+    "references/visual-language.md": "d13f04a93e17f34834944c3f4a3dcaeab3d8cc34a92443a4f595cad712823233",
+    "scripts/check_toolchain.py": "e212edca2b092fb10056f0caf1aab838b3fda1e100808bb1c843af63eeebff66",
+    "scripts/contact_sheet.py": "7231d763fe66f0f230c4d1a44c03265120666b2093c1dd6cb93b8b06621c36ba",
+    "scripts/new_film.py": "fb07cd32b02ec68b67215331e7a6556f55d4c0c865606670ee19f164ca8963a6",
+    "scripts/render_film.py": "b804be65a3de03f59db97edd9a7b32033553dc94a566163564ac66e6ec090a25",
+    "tools/test_motion_promo.py": "647910c57457d86b8d52ed5854d7207c7ccb5e294372c9f35ff93ff5e747ea80"
+   },
+   "skill": "motion-promo",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": true,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "49a6b3a478edd52909fbbfb48ce76989dc7667e8d246650ebe3581ed4e5aa7a8",
+   "live_files": {
+    "SKILL.md": "f40dedff3afd86f967563d3619c513d6ba51473b9f755c62faac1415e104ccd7"
+   },
+   "live_raw": {
+    "SKILL.md": "23bad1ebf3fe16cd3a84a5726a52d01df88f2a453bdbf9c0d9e2781ccd06cabe"
+   },
+   "missing_live": [],
+   "repo_digest": "49a6b3a478edd52909fbbfb48ce76989dc7667e8d246650ebe3581ed4e5aa7a8",
+   "repo_files": {
+    "SKILL.md": "f40dedff3afd86f967563d3619c513d6ba51473b9f755c62faac1415e104ccd7"
+   },
+   "repo_raw": {
+    "SKILL.md": "f40dedff3afd86f967563d3619c513d6ba51473b9f755c62faac1415e104ccd7"
+   },
+   "skill": "presence-is-not-residency",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": true,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "e9c366be7f30871b767cc30f0d359317e638c2f987e6c3a41e634f7c523f28ca",
+   "live_files": {
+    "SKILL.md": "26139cdc8748c7650300f2fd0a5a863c351d19c2e743d3e88f54518847cfa1d9"
+   },
+   "live_raw": {
+    "SKILL.md": "46b2e2cc327decd439b8b7ff78b6d84dce85130437bc6a5c839989ece35ac443"
+   },
+   "missing_live": [],
+   "repo_digest": "e9c366be7f30871b767cc30f0d359317e638c2f987e6c3a41e634f7c523f28ca",
+   "repo_files": {
+    "SKILL.md": "26139cdc8748c7650300f2fd0a5a863c351d19c2e743d3e88f54518847cfa1d9"
+   },
+   "repo_raw": {
+    "SKILL.md": "26139cdc8748c7650300f2fd0a5a863c351d19c2e743d3e88f54518847cfa1d9"
+   },
+   "skill": "real-context-reachability",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": true,
+   "excluded": 0,
+   "extra_live": [],
+   "live_digest": "0c9f9d82ad313056eed1fb5c99cc891e966ddc31d59bd8f6d1b5f582d88a40d5",
+   "live_files": {
+    "SKILL.md": "e9ce591d14e7875807dfc5666e98b503c0777ca0b517c7485d32b066dcf9f67b"
+   },
+   "live_raw": {
+    "SKILL.md": "6618a9fca222a9d39855a28e7a307b2b32a5942a112278071a2afc3a162b9791"
+   },
+   "missing_live": [],
+   "repo_digest": "0c9f9d82ad313056eed1fb5c99cc891e966ddc31d59bd8f6d1b5f582d88a40d5",
+   "repo_files": {
+    "SKILL.md": "e9ce591d14e7875807dfc5666e98b503c0777ca0b517c7485d32b066dcf9f67b"
+   },
+   "repo_raw": {
+    "SKILL.md": "e9ce591d14e7875807dfc5666e98b503c0777ca0b517c7485d32b066dcf9f67b"
+   },
+   "skill": "recurring-work-cardinality",
+   "status": "IDENTICAL"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "extra_live": [],
+   "live_digest": null,
+   "missing_live": [],
+   "repo_digest": "7de13848e84c91cd842861a2e6fa0f3883ef782e0a422a42b50225869ddf6367",
+   "repo_files": {
+    "SKILL.md": "0faf4d7103409cbf5e501c947c08aaedeb03d6d51b636e88db164021c7dead1c"
+   },
+   "repo_raw": {
+    "SKILL.md": "0faf4d7103409cbf5e501c947c08aaedeb03d6d51b636e88db164021c7dead1c"
+   },
+   "skill": "recursive-decision-ledger",
+   "status": "ABSENT_LIVE"
+  },
+  {
+   "changed": [],
+   "eol_only": false,
+   "extra_live": [],
+   "live_digest": null,
+   "missing_live": [],
+   "repo_digest": "778c029a22ab2f0a3be02443de5f941f31a90f0251500d80613ebf4535fa7f79",
+   "repo_files": {
+    "SKILL.md": "120fbc698f421c028490723e69cd7a000e20bca1fda4ca0b95c6e491821c2137"
+   },
+   "repo_raw": {
+    "SKILL.md": "120fbc698f421c028490723e69cd7a000e20bca1fda4ca0b95c6e491821c2137"
+   },
+   "skill": "verification-loop",
+   "status": "ABSENT_LIVE"
+  }
+ ],
+ "schema": "skill-mirror-live/1"
+}
