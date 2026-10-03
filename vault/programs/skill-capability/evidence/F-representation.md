@@ -18,6 +18,7 @@ The two planes are kept apart: the sweep describes the gex44 install, the D-LIST
 
 command: python3 tools/skill_dedup_sweep.py --measure-live --host gex44 --out vault/programs/skill-capability/evidence/F-sweep-gex44.json
 command: python3 tools/skill_dedup_sweep.py --compare vault/programs/skill-capability/evidence/F-sweep-gex44.json
+note: on node `kobicraft-gex44` this --compare exits 1 (`MOVED <plane>/<skill> ['dir_digest', 'files'] (groups and drift_excluded unchanged)`) once a live skill's own hooks append to its directory; groups and drift_excluded unchanged is the expected reading. On any other node it is INCONCLUSIVE (host-bound).
 command: python3 tools/test_skill_representation.py
 command: python3 tools/test_skill_representation.py --write-evidence
 

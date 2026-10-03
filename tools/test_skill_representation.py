@@ -1490,6 +1490,10 @@ def render_evidence(state) -> str:
     for n, r in state["recordings"]:
         L.append(f"command: {r['command']}")
         L.append(f"command: python3 tools/skill_dedup_sweep.py --compare {EVIDENCE_DIR}{n}")
+        L.append(f"note: on node `{r['node']}` this --compare exits 1 (`MOVED <plane>/<skill> ['dir_digest', 'files'] "
+                 "(groups and drift_excluded unchanged)`) once a live skill's own hooks append to its directory; "
+                 "groups and drift_excluded unchanged is the expected reading. On any other node it is INCONCLUSIVE "
+                 "(host-bound).")
     L += ["command: python3 tools/test_skill_representation.py",
           "command: python3 tools/test_skill_representation.py --write-evidence", "",
           "## Population (per plane, per recording, never summed)", "",
