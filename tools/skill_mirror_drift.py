@@ -10,7 +10,7 @@
 
 What it compares: every repo skill `skills/<name>/` that holds a tracked SKILL.md against the live copy
 `<live-root>/<name>/`, whole directory at a time. The repo side is read from COMMITTED BLOBS at a ref (default
-HEAD) through the primitives of `tools/verify_global_mirrors.py` (`tracked_at`, `batch_blobs`, `_norm_sha`,
+HEAD) through `ls-tree -r -z` and the primitives of `tools/verify_global_mirrors.py` (`batch_blobs`, `_norm_sha`,
 `_git_exe`); the working tree is never the source, because a concurrent writer's uncommitted edit would stand in
 for the mirror. Each directory is reduced to a digest over the sorted lines `<relpath>\\0<lf_sha256>\\n`.
 
@@ -111,12 +111,21 @@ def dir_digest(files: dict) -> str:
     return h.hexdigest()
 
 
+def tracked_paths(repo, ref):
+    """(set of tracked paths at `ref`, None) or (None, reason). `ls-tree -z`: NUL-separated and never quoted, so a
+    non-ASCII path is not turned into `"skills/a/r\\303\\251f.md"` under the default core.quotePath and dropped
+    by every prefix match (review WR-06). Paths decode as UTF-8 with surrogateescape, as live names do."""
+    out, why = git_run(repo, "ls-tree", "-r", "-z", "--name-only", ref)
+    if out is None:
+        return None, why
+    return {b.decode("utf-8", "surrogateescape") for b in out.split(b"\0") if b}, None
+
+
 def repo_skills(repo, ref):
     """({skill: sorted file list relative to skills/<skill>/}, None), or (None, reason) when the ref cannot be
     read: an empty tracked set is UNMEASURED, never an empty population."""
-    tracked = vgm.tracked_at(str(repo), ref)
+    tracked, why = tracked_paths(repo, ref)
     if not tracked:
-        _, why = git_run(repo, "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}")
         return None, why or f"nothing tracked at {ref}"
     names = sorted({p.split("/")[1] for p in tracked if p.startswith("skills/") and p.count("/") >= 2
                     and p == f"skills/{p.split('/')[1]}/SKILL.md"})
@@ -136,9 +145,6 @@ def repo_side(repo, ref, skills: dict):
     for n, fl in skills.items():
         files, raw, err = {}, {}, None
         for r in fl:
-            if r.startswith('"'):
-                err = f"quoted path {r!r}"
-                break
             data, why = blobs.get(f"skills/{n}/{r}", (None, "not returned"))
             if data is None and why == "git-batch-empty":
                 data, why = b"", None

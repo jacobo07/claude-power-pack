@@ -97,9 +97,30 @@ def c_pole_identical():
     with temp_repo() as (repo, sha, live):
         put_live(live, {"SKILL.md": SKILL_MD, "core/x.py": X_PY}, crlf=True)
         r = row_of(smd.live_report(repo, live))
-    if r and r["status"] == "IDENTICAL" and r["eol_only"] is True:
-        return [(OK, "V-SKD-POLE-IDENTICAL", "committed skill vs CRLF live copy: IDENTICAL, eol_only True")]
-    return [(FAIL, "V-SKD-POLE-IDENTICAL", f"expected IDENTICAL eol_only, got {r and (r['status'], r['eol_only'])}")]
+    # Review WR-06: non-ASCII tracked paths. `ls-tree` without -z quotes them under the default core.quotePath, and
+    # a quoted path fell out of the repo side: a byte-identical live copy read DRIFT extra_live, and a skill whose
+    # directory name is non-ASCII had no row at all.
+    na_files = {"SKILL.md": SKILL_MD, "r\u00e9f.md": "accent\n"}
+    with temp_repo(na_files) as (repo, sha, live):
+        exe = smd.vgm._git_exe()
+        sk = repo / "skills" / "\u00e9t\u00e9"
+        sk.mkdir()
+        (sk / "SKILL.md").write_bytes(SKILL_MD.encode("utf-8"))
+        for args in (["add", "-A"], ["commit", "-q", "-m", "non-ascii skill"]):
+            subprocess.run([exe, "-C", str(repo), "-c", "user.name=gate", "-c", "user.email=gate@invalid", *args],
+                           check=True, capture_output=True, timeout=30)
+        put_live(live, na_files)
+        (live / "\u00e9t\u00e9").mkdir()
+        (live / "\u00e9t\u00e9" / "SKILL.md").write_bytes(SKILL_MD.encode("utf-8"))
+        rep = smd.live_report(repo, live)
+        na, nd = row_of(rep), row_of(rep, "\u00e9t\u00e9")
+    na_ok = (na and na["status"] == "IDENTICAL" and nd and nd["status"] == "IDENTICAL")
+    if r and r["status"] == "IDENTICAL" and r["eol_only"] is True and na_ok:
+        return [(OK, "V-SKD-POLE-IDENTICAL", "committed skill vs CRLF live copy: IDENTICAL, eol_only True; non-ASCII "
+                                             "file and non-ASCII skill directory, identical live: both IDENTICAL")]
+    return [(FAIL, "V-SKD-POLE-IDENTICAL", f"expected IDENTICAL eol_only, got {r and (r['status'], r['eol_only'])}; "
+                                           f"non-ASCII file row {na and (na['status'], na['extra_live'])}, non-ASCII "
+                                           f"skill row {nd and nd['status']}")]
 
 
 def c_pole_drift():
