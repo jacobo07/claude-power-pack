@@ -237,6 +237,44 @@ landed (`47d2e93a`); the claimed capsule named a different first obligation. Fix
 reconcile capsule identity, plan lanes and live writers before acting on a focus, and
 say why it was left.
 
+### T-HORIZON-CONSTANT-DECIDES-INSIDE-ITS-BAND-001
+
+A constant standing in for an unknown input is harmless only outside the band where the
+decision flips. Measured 2026-10-03 (plan ccp-s16): `rollover.decide` compares the
+break-even (p10/p50/p90 14.3/18.0/32.5 calls over 478 shadow rows) with `HORIZON_CALLS =
+30`, labelled ESTIMATE, so the constant sits inside the band and decides outcomes (latest
+economic row: 35.2 > 30 -> no rollover). The same policy prices a fresh epoch at floor +
+capsule/4 (~150 tokens) while certified successors carried 0.79M/1.86M/4.53M tokens before
+their first mutation (`7933ddc7`, n=129). Fix: replay the policy over a measured
+remaining-work prior and rehydration term (`tools/rollover_replay.py`, `704b5914`) before
+changing it; the change itself belongs to rollover.py's owner. Mutation-drilled: horizon
+ignored KILLED by V-RR-SHORT-HORIZON-CONTINUE (`736c0075`). PR: for every constant in a
+decision, check the measured distribution of the other side before trusting a verdict.
+#CROSS-PROJECT
+
+### T-SUCCESSOR-JOIN-CERTIFIED-ROW-NAMES-PREDECESSOR-001
+
+An event row describes the session that wrote it, not necessarily the session it is about.
+Measured 2026-10-03: `resume_certified` (`rollover.py:877`) carries only the PREDECESSOR in
+`session_id`; the successor that passed the exam appears only in the earlier
+`successor_claimed.claimant`. The first fresh-cost probe read `session_id` and measured the
+predecessors' context (300k-class floors) as the cost of a fresh epoch. Caught by reading
+the writer, not the row. Fix: join through `successor_claimed.claimant`; a certified row
+without a claim is reported, never guessed. Pinned by V-RR-SUCCESSOR-NOT-PREDECESSOR and
+V-RR-CERTIFIED-WITHOUT-CLAIM-REPORTED. PR: before aggregating an event log, read the line
+that writes it and name whose identity each field holds.
+
+### T-TORN-APPEND-CONCURRENT-JSONL-001
+
+A buffered text-mode append is not atomic across processes: concurrent writers interleave
+large rows. Measured 2026-10-03: 6 torn rows in `state/rollover/rollover-ledger.jsonl`
+(1,113 rows), e.g. a line beginning `hars": 805}`; the writer is `rollover.ledger`
+(`open(path, "a")` + one `write`). Readers that `json.loads` every line crash or silently
+drop the tail. Reader fix (live): count torn lines, never repair or guess
+(`rollover_replay.read_ledger`, V-RR-TORN-COUNTED). Writer fix (deferred: rollover.py holds
+unowned hunks): one `os.write` of the encoded row on an O_APPEND fd, or a lock. Diagnosis:
+a JSON fragment starting mid-key is interleaving, not corruption. #CROSS-PROJECT
+
 ### T-A-QUOTA-REFUSAL-IS-NOT-A-FINISHED-EPOCH-001
 
 A long-run supervisor that relays whenever a worker's turn ends will spend its
