@@ -456,9 +456,42 @@
    "savings": []
   },
   "K": {
-   "terminal": null,
-   "evidence": [],
-   "savings": []
+   "terminal": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+   "reason": "Frozen rule: a tool-output firewall needs ONE class with >= 3 % dead (NOT_OBSERVED/IMMEDIATE) carriage on a replication of the KSR instrument over the CPP corpus. Replicated with the original pre-registration (manifest frozen at 36db0ff8 before measuring, controls valid): all tool-output dead carriage <= 6.93 % of the corpus (upper bound, ~1.16 % of D-W7), largest class read:~/.claude skills/PP <= 2.67 %, next tool:Grep 0.97 %. No class reaches 3 %, so no firewall is built.",
+   "evidence": [
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/K-tool-output-admission.md",
+     "sha256": "6e400e11cecd0f6cb6d4ee7567500c8c37d8b541333096654c7f4345ffc0359a"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/ksr_cpp/ctx_dead_stdout.txt",
+     "sha256": "fb2495f477133a2236af9387cffea949b677925e43117386ee33563e9d6a5e39"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/ksr_cpp/ctx_manifest.json",
+     "sha256": "d729f28d1ebaf2da091033be4e1dafe812f04344c185e06b318ad3e5dc719469"
+    }
+   ],
+   "savings": [],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/measure/ksr_cpp/ctx_dead.py",
+      "vault/programs/cognitive-economy/measure/ksr_cpp/ctx_admission.py",
+      "vault/programs/cognitive-economy/evidence/K-tool-output-admission.md"
+     ],
+     "lines_added": 606,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
   },
   "L": {
    "terminal": null,
