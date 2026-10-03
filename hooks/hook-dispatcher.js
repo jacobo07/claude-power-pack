@@ -129,20 +129,30 @@ const EVENT_MAP = {
 // `timeoutMs` is real milliseconds (Claude Code's per-hook `timeout` was
 // authored inconsistently in settings.json; canonicalised here).
 const NODE_EXE = process.execPath; // the very node.exe running this — Win path, no bash
-// Portable Python fallback (gap 2 fix, audit 2026-05-19): the prior
-// `C:/Users/User/AppData/Local/...` literal broke every host whose
-// Windows username is not "User" and every POSIX host. Honest contract:
-// derive from os.homedir() if a Windows-style Python install is present;
-// otherwise fall back to the PATH-resolved `python3`/`python` so the
-// hook fails at registration (settings_merger checks isfile) rather
-// than silently at runtime. Explicit CLAUDE_PY_EXE always wins.
-const PY_EXE = process.env.CLAUDE_PY_EXE || (function () {
-  const winFallback = path.join(os.homedir(), 'AppData', 'Local',
-    'Programs', 'Python', 'Python312', 'python.exe');
-  try { fs.accessSync(winFallback, fs.constants.X_OK); return winFallback; }
-  catch (_) { /* not present — defer to PATH-resolved interpreter */ }
-  return process.platform === 'win32' ? 'python.exe' : 'python3';
-})();
+// Portable Python resolution. Explicit CLAUDE_PY_EXE always wins; then a
+// Windows-style install under the home dir; then the interpreter found on
+// PATH, returned as an ABSOLUTE path. runChain gates every step on
+// fs.existsSync(step.exe), and existsSync('python3') is a relative-path check
+// that is false wherever the cwd holds no such file -- so the bare-name
+// fallback this replaced skipped EVERY Python step on every POSIX host
+// (measured 2026-10-03 on GEX44: "interpreter missing: python3" on each
+// UserPromptSubmit, and the critical context-watchdog.py never ran). The bare
+// name is returned only when PATH holds no interpreter, and then the
+// "interpreter missing" line is the truth.
+function resolvePyExe({ env = process.env, platform = process.platform, home = os.homedir() } = {}) {
+  if (env.CLAUDE_PY_EXE) return env.CLAUDE_PY_EXE;
+  const executable = (p) => { try { fs.accessSync(p, fs.constants.X_OK); return fs.statSync(p).isFile(); } catch (_) { return false; } };
+  const winFallback = path.join(home, 'AppData', 'Local', 'Programs', 'Python', 'Python312', 'python.exe');
+  if (executable(winFallback)) return winFallback;
+  const name = platform === 'win32' ? 'python.exe' : 'python3';
+  for (const dir of String(env.PATH || env.Path || '').split(path.delimiter)) {
+    if (!dir) continue;
+    const candidate = path.join(dir, name);
+    if (executable(candidate)) return path.resolve(candidate);
+  }
+  return name;
+}
+const PY_EXE = resolvePyExe();
 
 const CHAIN_MAP = {
   'Stop-chain': [
@@ -1452,7 +1462,7 @@ function readStdin(timeoutMs) {
 // failure mode is SILENT AND FAIL-OPEN -- a false return runs the full chain,
 // which is exactly what a working filter looks like from the outside on a
 // starved host, so only a direct assertion on the predicate can tell them apart.
-module.exports = { sanitizeForSchema, familyOf, mergeOutputs, stderrIsSafeToSurface, runChain, isScratchTarget,
+module.exports = { sanitizeForSchema, familyOf, mergeOutputs, stderrIsSafeToSurface, runChain, isScratchTarget, resolvePyExe,
   deriveEventFromPayload, NO_EVENT_ROUTES, CHAIN_MAP, CHAIN_NAMES: Object.keys(CHAIN_MAP), EVENT_NAMES: Object.keys(EVENT_MAP) };
 
 // --- Main (CLI path only — skipped when required as a module) ---
