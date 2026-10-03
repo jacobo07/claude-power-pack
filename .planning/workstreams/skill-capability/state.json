@@ -1,0 +1,58 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1",
+  "phases": [
+    {
+      "number": "1",
+      "name": "Card precision",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "Listing floor",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "Opportunity and delivery measurement",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "Coverage, criticality and freshness",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "Representation operations",
+      "status": "pending"
+    },
+    {
+      "number": "6",
+      "name": "Compile-out lineage",
+      "status": "pending"
+    },
+    {
+      "number": "7",
+      "name": "Contribution",
+      "status": "pending"
+    },
+    {
+      "number": "8",
+      "name": "Owner reconciliation and creation governance",
+      "status": "pending"
+    },
+    {
+      "number": "9",
+      "name": "Closeout",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step (plan phase 02)",
+    "reason": "Phase 02 of 9 — needs a plan"
+  },
+  "updated_at": "2026-10-03T17:07:59.324Z"
+}

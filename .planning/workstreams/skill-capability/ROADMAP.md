@@ -59,7 +59,7 @@ result. UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is n
 
 ## Phases
 
-- [ ] **Phase 1: Card precision** - pillar A
+- [x] **Phase 1: Card precision** - pillar A (completed 2026-10-03)
 - [ ] **Phase 2: Listing floor** - pillar B
 - [ ] **Phase 3: Opportunity and delivery measurement** - pillar C
 - [ ] **Phase 4: Coverage, criticality and freshness** - pillars D, H
@@ -84,7 +84,7 @@ result. UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is n
   3. The `git exit 128` x6 class is reproduced and named (cause + fix or explicit fail-open reason).
   4. `--pillar A` PASS.
 
-**Plans:** 3/3 plans executed (waves 1 -> 2 -> 3, sequential: shared `hooks/doctrine_cards.js` / `tools/test_card_precision.py`)
+**Plans:** 3/3 plans complete
 
 Plans:
 
@@ -148,7 +148,7 @@ settings; `python tools/test_skill_capability_program.py --final` exits 0, outpu
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Card precision | 3/3 | In Progress|  |
+| 1. Card precision | 3/3 | Complete    | 2026-10-03 |
 | 2. Listing floor | 0/0 | Not started | - |
 | 3. Opportunity and delivery measurement | 0/0 | Not started | - |
 | 4. Coverage, criticality and freshness | 0/0 | Not started | - |
