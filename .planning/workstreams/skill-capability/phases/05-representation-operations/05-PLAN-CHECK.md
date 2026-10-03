@@ -1,0 +1,11 @@
+# Phase 05 plan check (skill-capability, pillar F)
+
+References verified by grep on gex44: smd.{lf_bytes,git_run,dir_digest,repo_skills,repo_side,live_side}; skill_index._FM_RE/_FM_HEAD_BYTES=4000; lfv.{JSONL_REL,LESSONS_REL,load_rows,_is_int (excludes bool),_read_rel,NOISE_RE,bounds_parse,clause_evidence_current@365}; vgm.{_norm_sha,_git_exe,tracked_at,batch_blobs}; ce.{REPO,lf_sha256,Resolver,_check_evidence(pid,e,res,owners,denoms),DEFERRAL_PROSE,REQUIRED_KINDS IMPLEMENTED->(gate,prg)}; CE L5 runs argv[0]=="python" via sys.executable (python absent on gex44 PATH is fine). K4 rows idx2 champion 87739/30000, idx3 challenger 89844/29795, rc0 OK (order before<after holds). Noise line 12 "+-1.5k". Repo skills 24, live 186, sleepy pair present, predicting-market-opportunities present. ledger state.F line 104 null. Commit refs short-sha style matches state.C. SC-F claimed by all 3 plans. Deps 01->02->03 acyclic, waves 1/2/3 consistent.
+
+## Issues
+
+1. BLOCKER 05-01 Task 2 (V-FD-TAMPER-DRILLS): drill "same-name-only group injected -> V-FD-PLANES-APART" must fail EXACTLY that clause, but injecting any group into recorded `groups` also makes V-FD-GROUPS-REPRODUCE fail (groups() never derives a same-name group, so recorded != re-derived). Requirement is unsatisfiable as written; executor will be forced to weaken a clause. Fix: declare the expected failing set for that drill as {V-FD-PLANES-APART, V-FD-GROUPS-REPRODUCE}, OR drive PLANES-APART alone via a mutant of `groups()` (e.g. a monkeypatched grouper that keys by body only) in V-FD-HASH-POLES, and state PLANES-APART is the independent-red clause there.
+2. WARNING 05-01 Task 2: drill "gex44 record body_sha changed -> V-FD-GROUPS-REPRODUCE only" also trips V-FD-REAL-GROUP if the altered record is a sleepy member (group vanishes on re-derivation). Fix: specify the tampered record is a NON-member skill (or define REAL-GROUP over recorded groups) so the exact-set rule holds.
+3. INFO 05-02 V-FO-RECALL: checks both windows share a host but not that host is the laptop plane (D-LISTING plane); a gex44 window pair would pass recall for a laptop listing op. Fix (optional): require window host in LISTING plane set ("laptop").
+
+VERDICT: ISSUES FOUND
