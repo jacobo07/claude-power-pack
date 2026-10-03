@@ -19,6 +19,7 @@ Run: python tools/test_capability_archetypes.py     (exit 0 = all gates pass)
 """
 from __future__ import annotations
 
+import ast
 import json
 import os
 import shutil
@@ -49,6 +50,16 @@ try:
     _TS_ERR = ""
 except Exception as _exc:  # noqa: BLE001
     ts, _TS_ERR = None, "%s: %s" % (type(_exc).__name__, _exc)
+try:
+    from modules.tower import donegate
+    _DG_ERR = ""
+except Exception as _exc:  # noqa: BLE001
+    donegate, _DG_ERR = None, "%s: %s" % (type(_exc).__name__, _exc)
+try:
+    from modules.gsd_x.mission import obligation
+    _OB_ERR = ""
+except Exception as _exc:  # noqa: BLE001
+    obligation, _OB_ERR = None, "%s: %s" % (type(_exc).__name__, _exc)
 
 _PASS = 0
 _FAIL = 0
@@ -233,17 +244,176 @@ def pred_V_ARCH_LIVENESS_DECLARED():
     return not problems, "; ".join(problems) or "both rows PLANNED with a resolvable Owner queue"
 
 
+_TEN = ("persistent", "multi_actor", "bulk", "destructive", "distributed",
+        "external_effect", "scheduled", "money", "policy_layers", "ui")
+_ARCH_PATH = os.path.join(_PP_ROOT, "modules", "capability_runtime", "archetypes.py")
+_TS_PATH = os.path.join(_PP_ROOT, "modules", "capability_runtime", "trait_scan.py")
+
+
+def _read_src(path: str) -> str:
+    with open(path, "r", encoding="utf-8-sig") as fh:
+        return fh.read()
+
+
+def _traits_ok(t) -> bool:
+    return tuple(t) == _TEN and len(set(t)) == len(_TEN)
+
+
+def pred_V_ARCH_TRAITS_TEN():
+    ok = _traits_ok(ar.TRAITS)
+    # Instrument control: the same predicate must reject a reordered and a
+    # duplicated tuple, so a green here is not a predicate that accepts anything.
+    control = (not _traits_ok(tuple(reversed(_TEN)))) and (not _traits_ok(_TEN[:9] + (_TEN[0],)))
+    return ok and control, "TRAITS=%s control_rejects_mutants=%s" % (tuple(ar.TRAITS), control)
+
+
+def pred_V_ARCH_ID_SHAPE():
+    rx = ar.ARCHETYPE_ID_RE
+    bad = [k for k in ar.ARCHETYPES if not rx.match(k)]
+    # Instrument control (R-5, Pitfall 11): the pattern must reject the shapes it exists to refuse.
+    rejects = [s for s in ("WORLD_MUTATION/persistent-state", "world_mutation", "", "WORLD_MUTATION\n")
+               if rx.match(s) is None]
+    control = len(rejects) == 4 and rx.match("WORLD_MUTATION") is not None
+    return (not bad) and bool(ar.ARCHETYPES) and control, \
+        "ids=%s bad=%s control=%s" % (sorted(ar.ARCHETYPES), bad, control)
+
+
+def pred_V_ARCH_ARCHETYPES_THREE():
+    want = {"WORLD_MUTATION", "EXTERNAL_EFFECT", "BACKGROUND_JOB"}
+    if set(ar.ARCHETYPES) != want:
+        return False, "archetype ids %s != %s" % (sorted(ar.ARCHETYPES), sorted(want))
+    problems = []
+    for aid, spec in sorted(ar.ARCHETYPES.items()):
+        anchor, mods = spec.get("anchor"), spec.get("modifiers")
+        dem, desc = spec.get("demoters"), spec.get("description")
+        if anchor not in ar.TRAITS:
+            problems.append("%s anchor %r not a trait" % (aid, anchor))
+        if not isinstance(mods, tuple) or any(m not in ar.TRAITS for m in mods) or anchor in mods:
+            problems.append("%s modifiers %r" % (aid, mods))
+        if not isinstance(dem, tuple) or not dem or any(not isinstance(d, str) or not d for d in dem):
+            problems.append("%s demoters %r" % (aid, dem))
+        if not isinstance(desc, str) or not desc.strip():
+            problems.append("%s description empty" % aid)
+    return not problems, "; ".join(problems) or "three archetypes, well-formed conjunctions"
+
+
+def _imports_from(src: str, module: str, names) -> bool:
+    """True when `src` has `from <module> import ...` naming every one of `names`."""
+    found = set()
+    for node in ast.walk(ast.parse(src)):
+        if isinstance(node, ast.ImportFrom) and node.module == module:
+            found.update(a.name for a in node.names)
+    return set(names) <= found
+
+
+def pred_V_ARCH_VOCAB_SHARED():
+    ob = "modules.gsd_x.mission.obligation"
+    same = (ar.EXTRACTED is obligation.EXTRACTED and ar.OBSERVED is obligation.OBSERVED
+            and ar.UNKNOWN is obligation.UNKNOWN and ar.FACT_STATES is obligation.FACT_STATES)
+    # Identity of interned strings cannot prove a name was imported rather than
+    # re-spelled, so the source is checked too, with a control on trait_scan.py
+    # (which does not import them) to show the detector can answer False.
+    imported = _imports_from(_read_src(_ARCH_PATH), ob, ("OBSERVED", "EXTRACTED", "UNKNOWN", "FACT_STATES"))
+    control = not _imports_from(_read_src(_TS_PATH), ob, ("EXTRACTED",))
+    bad = [c for c in ar.UNJUDGED_CAUSES if ar.unjudged_reading(c)["fact_state"] not in obligation.FACT_STATES]
+    return same and imported and control and not bad and bool(ar.UNJUDGED_CAUSES), \
+        "same=%s imported=%s control=%s bad_causes=%s" % (same, imported, control, bad)
+
+
+def _na_bridge_problems(mapping) -> list:
+    problems = []
+    if set(mapping) != set(ar.TRAITS):
+        problems.append("keys %s" % sorted(mapping))
+    values = list(mapping.values())
+    if len(set(values)) != len(values):
+        problems.append("values not distinct")
+    if not set(values) <= set(donegate.NA_REASONS):
+        problems.append("values outside donegate.NA_REASONS: %s" % sorted(set(values) - set(donegate.NA_REASONS)))
+    return problems
+
+
+def pred_V_ARCH_NA_BRIDGE():
+    problems = _na_bridge_problems(ar.TRAIT_NA_REASON)
+    dup = dict(ar.TRAIT_NA_REASON)
+    dup["ui"] = dup["persistent"]
+    bogus = dict(ar.TRAIT_NA_REASON)
+    bogus["ui"] = "no-such-reason"
+    control = bool(_na_bridge_problems(dup)) and bool(_na_bridge_problems(bogus))
+    # The module bridges by value only: it must not import the donegate module.
+    no_import = not any(
+        "donegate" in (getattr(n, "module", None) or "") or any("donegate" in a.name for a in n.names)
+        for n in ast.walk(ast.parse(_read_src(_ARCH_PATH)))
+        if isinstance(n, (ast.Import, ast.ImportFrom)))
+    return (not problems) and control and no_import, \
+        "problems=%s control=%s no_donegate_import=%s" % (problems, control, no_import)
+
+
+def pred_V_ARCH_NO_BARE_REQUIRED():
+    s = ar.Strength
+    ok = (not hasattr(ar, "REQUIRED") and s.REQUIRED == "REQUIRED" and s.CONDITIONAL == "CONDITIONAL"
+          and s.NONE == "NONE" and tuple(s.ALL) == ("REQUIRED", "CONDITIONAL", "NONE"))
+    # Control: the sibling namespace this exists to avoid really does expose REQUIRED.
+    from modules.tower import baselines
+    control = hasattr(baselines, "REQUIRED")
+    return ok and control, "bare_REQUIRED=%s strengths=%s baselines.REQUIRED_exists=%s" % (
+        hasattr(ar, "REQUIRED"), tuple(s.ALL), control)
+
+
+def _reach_findings(src: str) -> list:
+    """References that would let a reader reach the walk: an import of trait_scan, a
+    from-import of os.walk, or any `os.walk` attribute reference (call or alias)."""
+    found = []
+    for node in ast.walk(ast.parse(src)):
+        if isinstance(node, ast.Import):
+            found += ["import %s" % a.name for a in node.names if a.name.split(".")[-1] == "trait_scan"]
+        elif isinstance(node, ast.ImportFrom):
+            mod = node.module or ""
+            if mod.split(".")[-1] == "trait_scan":
+                found.append("from %s" % mod)
+            for a in node.names:
+                if a.name == "trait_scan":
+                    found.append("from %s import trait_scan" % mod)
+                if mod == "os" and a.name == "walk":
+                    found.append("from os import walk")
+        elif isinstance(node, ast.Attribute):
+            if node.attr == "walk" and isinstance(node.value, ast.Name) and node.value.id == "os":
+                found.append("os.walk reference")
+    return found
+
+
+def pred_V_ARCH_READER_NO_WALK_IMPORT():
+    reader = _reach_findings(_read_src(_ARCH_PATH))
+    # Instrument controls: the detector must fire on the producer, and on each
+    # synthetic shape it exists to catch (including the alias form 02-03 will use).
+    producer = _reach_findings(_read_src(_TS_PATH))
+    controls = {
+        "producer_walk": "os.walk reference" in producer,
+        "alias": "os.walk reference" in _reach_findings("import os\n_walk = os.walk\n"),
+        "import_trait_scan": bool(_reach_findings("from modules.capability_runtime import trait_scan\n")),
+        "from_os_walk": bool(_reach_findings("from os import walk\n")),
+    }
+    ok = not reader and all(controls.values())
+    return ok, "reader_findings=%s controls=%s" % (reader, controls)
+
+
 GATES = [
     ("V-ARCH-HERMETIC-HOME", pred_V_ARCH_HERMETIC_HOME),
     ("V-ARCH-TRACER-PRODUCE", pred_V_ARCH_TRACER_PRODUCE),
     ("V-ARCH-TRACER-WORLD_MUTATION", pred_V_ARCH_TRACER_WORLD_MUTATION),
     ("V-ARCH-TRACER-MISS", pred_V_ARCH_TRACER_MISS),
     ("V-ARCH-LIVENESS-DECLARED", pred_V_ARCH_LIVENESS_DECLARED),
+    ("V-ARCH-TRAITS-TEN", pred_V_ARCH_TRAITS_TEN),
+    ("V-ARCH-ID-SHAPE", pred_V_ARCH_ID_SHAPE),
+    ("V-ARCH-ARCHETYPES-THREE", pred_V_ARCH_ARCHETYPES_THREE),
+    ("V-ARCH-VOCAB-SHARED", pred_V_ARCH_VOCAB_SHARED),
+    ("V-ARCH-NA-BRIDGE", pred_V_ARCH_NA_BRIDGE),
+    ("V-ARCH-NO-BARE-REQUIRED", pred_V_ARCH_NO_BARE_REQUIRED),
+    ("V-ARCH-READER-NO-WALK-IMPORT", pred_V_ARCH_READER_NO_WALK_IMPORT),
 ]
 
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 5
+EXPECTED = 12
 
 
 def main() -> int:

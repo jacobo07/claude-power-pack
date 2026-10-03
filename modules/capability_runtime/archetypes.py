@@ -95,18 +95,57 @@ CACHE_STALE = "STALE"
 CACHE_MALFORMED = "MALFORMED"
 CACHE_UNRESOLVABLE = "UNRESOLVABLE"
 
-# Archetypes are declarative conjunctions: the `anchor` trait must be structurally
-# PRESENT for REQUIRED, `modifiers` raise the consequence but never create the
-# archetype, `demoters` (intent phrases) lower REQUIRED to CONDITIONAL and never
-# veto. This slice defines the first entry; the table is completed by the next
-# task of this plan.
+# An archetype id is ONE path segment: `archetype/<ID>` becomes a directory name
+# that the baseline subject discovery walks, so a slash inside an id would invent
+# a three-level axis (R-5, RESEARCH Pitfall 11). The `\Z` anchor (not `$`) keeps a
+# trailing newline from slipping through.
+ARCHETYPE_ID_RE = re.compile(r"^[A-Z][A-Z0-9_]*\Z")
+
+# Archetypes are declarative conjunctions, and this table is the sole authority
+# for them (R-2): the `anchor` trait must be structurally PRESENT for REQUIRED;
+# `modifiers` raise the consequence but never create the archetype (consequence
+# strengthens an envelope, complexity alone does not); `demoters` are intent
+# phrases, in both languages, that lower REQUIRED to CONDITIONAL and never veto.
 ARCHETYPES = {
     "WORLD_MUTATION": {
         "anchor": "persistent",
-        "modifiers": (),
-        "demoters": (),
-        "description": "mutation of durable state (the plan's persistent-state archetype)",
+        "modifiers": ("destructive", "bulk", "multi_actor", "distributed", "money"),
+        "demoters": ("read-only", "read only", "solo lectura", "dry run",
+                     "sin escribir", "simulacion"),
+        "description": ('mutation of durable state: the governing spec\'s '
+                        '"WORLD_MUTATION/persistent-state" archetype, where '
+                        '"persistent-state" describes it and is not part of the id'),
     },
+    "EXTERNAL_EFFECT": {
+        "anchor": "external_effect",
+        "modifiers": ("money", "scheduled", "distributed", "multi_actor"),
+        "demoters": ("sandbox", "dry run", "test mode", "modo prueba",
+                     "simulado", "sin enviar"),
+        "description": "acting on the outside world: sending, posting, calling or charging through a runtime dependency",
+    },
+    "BACKGROUND_JOB": {
+        "anchor": "scheduled",
+        "modifiers": ("distributed", "persistent", "external_effect"),
+        "demoters": ("one-off", "one off", "una sola vez", "manualmente", "dry run"),
+        "description": "work that runs unattended on a schedule, in a loop or from a queue",
+    },
+}
+
+# Bridge from a trait to the closed N/A vocabulary of the done gate, by VALUE: this
+# module never imports the done-gate module, and a gate checks every value is a
+# member of its vocabulary. A later phase may justify NOT_APPLICABLE only from a
+# trait judged ABSENT, never from UNJUDGED.
+TRAIT_NA_REASON = {
+    "persistent": "no-persistent-state",
+    "multi_actor": "single-actor",
+    "bulk": "no-bulk-operation",
+    "destructive": "no-destructive-operation",
+    "distributed": "not-distributed",
+    "external_effect": "no-external-effect",
+    "scheduled": "not-scheduled",
+    "money": "no-money",
+    "policy_layers": "single-policy-layer",
+    "ui": "no-user-interface",
 }
 
 _INTENT_MAX_CHARS = 20_000
