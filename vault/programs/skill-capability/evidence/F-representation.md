@@ -53,9 +53,9 @@ command: python3 tools/test_skill_representation.py --write-evidence
 
 ## Entry schema
 
-- `op`: one of disclosure, fission, fusion, inline, dedup; `skill`: the skill name.
+- `op`: one of disclosure, fission, fusion, inline, dedup; `skill`: the skill name; `applied_commit`: the commit (7-40 hex, an ancestor of HEAD) that applied the operation.
 - `before` / `after`: {`denominator`: "D-LISTING", `probe_label`, `session_id`, `command`}: a reference to ONE row of the D-LISTING probe results, resolved by label AND session id. No figure is typed: startup_tokens and listing chars are read from that row.
-- `recall`: {`before`: {`window`, `command`}, `after`: {`window`, `command`}}: committed skill-delivery windows (`skill-delivery-window/1`) under the evidence directory; num and n are read from them, and their `start` / `end` order them (the before window ends by the after window's start).
+- `recall`: {`before`: {`window`, `command`}, `after`: {`window`, `command`}}: committed skill-delivery windows (`skill-delivery-window/1`) under the evidence directory; num and n are read from them, and their `start` / `end` order them: the before window ends by the committer time of `applied_commit` (git `%cI`), and the after window starts no earlier than it.
 - dedup only: `sweep` (a committed `F-sweep-*.json` recording) and `group` (the 64-hex body_sha of a group re-derived from it).
 
 ## What each clause refuses
@@ -66,7 +66,7 @@ command: python3 tools/test_skill_representation.py --write-evidence
 - V-FO-BEFORE: refuses a before side that is missing, not D-LISTING or without its command, or that resolves to zero or several probe rows by label AND session id, or to a row with rc != 0, result != OK, a row not derived to the laptop plane (cwd or settings_file under the laptop profile), or a zero / non-int figure (UNMEASURED).
 - V-FO-AFTER: refuses an after side with any defect V-FO-BEFORE refuses.
 - V-FO-PAIR: refuses before and after resolving to one row, or the after row preceding the before row in the append-only rows.
-- V-FO-RECALL: refuses a missing recall check; a window outside the evidence directory, absent, of another schema or capability (one present but uncommitted is INCONCLUSIVE, never judged); a null recall, n = 0, num outside [0, n]; a window without timezone-bearing start < end, or a before window that does not end by the after window's start (one window twice, or reversed); windows from two hosts, or from a host that is not the D-LISTING plane (laptop).
+- V-FO-RECALL: refuses a missing recall check; a window outside the evidence directory, absent, of another schema or capability (one present but uncommitted is INCONCLUSIVE, never judged); a null recall, n = 0, num outside [0, n]; a window without timezone-bearing start < end, or a before window that does not end by the after window's start (one window twice, or reversed); windows from two hosts, or from a host that is not the D-LISTING plane (laptop); an applied_commit that is absent, not 7-40 hex, not a commit or not an ancestor of HEAD (UNMEASURED; git unable to answer is INCONCLUSIVE), or whose committer time is before the before window's end or after the after window's start (both windows on one side of the operation).
 - V-FO-HELPED: refuses after startup_tokens + sourced noise >= before startup_tokens (not measured to help); unsourced noise is INCONCLUSIVE.
 - V-FO-RECALL-HELD: refuses after recall below before recall (integer cross-multiplication).
 - V-FO-DEDUP-SWEEP: refuses a dedup whose sweep is not a committed recording that passed every V-FD clause, whose group is not re-derived from it, or whose skill is not a member.
@@ -82,29 +82,35 @@ command: python3 tools/test_skill_representation.py --write-evidence
 |---|---|---|
 | POSITIVE-CONTROL | (none) | passes all clauses |
 | POSITIVE-CONTROL-DEDUP | (none) | passes all clauses |
-| OP-OUTSIDE | V-FO-OP | killed by V-FO-OP |
-| MISSING-AFTER | V-FO-AFTER | killed by V-FO-AFTER |
-| WRONG-DENOM | V-FO-BEFORE | killed by V-FO-BEFORE |
-| ZERO-TOKENS | V-FO-BEFORE | killed by V-FO-BEFORE |
-| SESSION-MISMATCH | V-FO-AFTER | killed by V-FO-AFTER |
-| AMBIGUOUS-LABEL | V-FO-BEFORE | killed by V-FO-BEFORE |
-| ROW-PLANE | V-FO-AFTER | killed by V-FO-AFTER |
-| ORDER | V-FO-PAIR | killed by V-FO-PAIR |
-| MISSING-RECALL | V-FO-RECALL | killed by V-FO-RECALL |
-| RECALL-NULL | V-FO-RECALL | killed by V-FO-RECALL |
-| RECALL-N0 | V-FO-RECALL | killed by V-FO-RECALL |
-| RECALL-WRONG-CAP | V-FO-RECALL | killed by V-FO-RECALL |
-| RECALL-WRONG-HOST | V-FO-RECALL | killed by V-FO-RECALL |
-| RECALL-DUPLICATE | V-FO-RECALL | killed by V-FO-RECALL |
-| RECALL-ORDER | V-FO-RECALL | killed by V-FO-RECALL |
-| RECALL-UNTIMED | V-FO-RECALL | killed by V-FO-RECALL |
-| NOT-HELPED | V-FO-HELPED | killed by V-FO-HELPED |
-| NOISE-ABSENT | V-FO-HELPED | killed by V-FO-HELPED |
-| RECALL-DROP | V-FO-RECALL-HELD | killed by V-FO-RECALL-HELD |
-| DEDUP-NOT-IN-SWEEP | V-FO-DEDUP-SWEEP | killed by V-FO-DEDUP-SWEEP |
-| DEDUP-NOT-MEMBER | V-FO-DEDUP-SWEEP | killed by V-FO-DEDUP-SWEEP |
-| DEDUP-GEX44-REAL | V-FO-PLANE | killed by V-FO-PLANE |
-| K4-REAL | V-FO-HELPED | killed by V-FO-HELPED |
+| OP-OUTSIDE | V-FO-OP (FAIL) | killed by V-FO-OP (FAIL) |
+| MISSING-AFTER | V-FO-AFTER (FAIL) | killed by V-FO-AFTER (FAIL) |
+| WRONG-DENOM | V-FO-BEFORE (FAIL) | killed by V-FO-BEFORE (FAIL) |
+| ZERO-TOKENS | V-FO-BEFORE (FAIL) | killed by V-FO-BEFORE (FAIL) |
+| SESSION-MISMATCH | V-FO-AFTER (FAIL) | killed by V-FO-AFTER (FAIL) |
+| AMBIGUOUS-LABEL | V-FO-BEFORE (FAIL) | killed by V-FO-BEFORE (FAIL) |
+| ROW-PLANE | V-FO-AFTER (FAIL) | killed by V-FO-AFTER (FAIL) |
+| ORDER | V-FO-PAIR (FAIL) | killed by V-FO-PAIR (FAIL) |
+| MISSING-RECALL | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| RECALL-NULL | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| RECALL-N0 | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| RECALL-WRONG-CAP | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| RECALL-WRONG-HOST | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| RECALL-DUPLICATE | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| RECALL-ORDER | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| RECALL-UNTIMED | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| RECALL-BOTH-PRE-OP | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| RECALL-BOTH-POST-OP | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| MISSING-APPLIED-COMMIT | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| APPLIED-COMMIT-REAL | (none) | passes all clauses |
+| APPLIED-COMMIT-UNRESOLVED | V-FO-RECALL (FAIL) | killed by V-FO-RECALL (FAIL) |
+| APPLIED-COMMIT-GIT-FAILURE | V-FO-RECALL (INCONCLUSIVE) | killed by V-FO-RECALL (INCONCLUSIVE) |
+| NOT-HELPED | V-FO-HELPED (FAIL) | killed by V-FO-HELPED (FAIL) |
+| NOISE-ABSENT | V-FO-HELPED (INCONCLUSIVE) | killed by V-FO-HELPED (INCONCLUSIVE) |
+| RECALL-DROP | V-FO-RECALL-HELD (FAIL) | killed by V-FO-RECALL-HELD (FAIL) |
+| DEDUP-NOT-IN-SWEEP | V-FO-DEDUP-SWEEP (FAIL) | killed by V-FO-DEDUP-SWEEP (FAIL) |
+| DEDUP-NOT-MEMBER | V-FO-DEDUP-SWEEP (FAIL) | killed by V-FO-DEDUP-SWEEP (FAIL) |
+| DEDUP-GEX44-REAL | V-FO-PLANE (FAIL) | killed by V-FO-PLANE (FAIL) |
+| K4-REAL | V-FO-HELPED (FAIL) | killed by V-FO-HELPED (FAIL) |
 
 ## V-FD tamper drills (`F-sweep-gex44.json`)
 
@@ -122,5 +128,5 @@ command: python3 tools/test_skill_representation.py --write-evidence
 
 1. Both halves of the frozen rule are implemented and checkable now. Dedup can only cite a group re-derived from a committed content-hash sweep that is measured on real planes and holds a real group (05-01). An applied operation can only be recorded with D-LISTING rows and recall windows, and the gate derives every figure from those committed instrument outputs.
 2. The ROADMAP goal is "apply ... only where measured to help". On gex44 nothing can be measured against D-LISTING, and the one listing lever with evidence was falsified twice (C6, K4). Applying zero operations is the goal's own answer on this plane. The frozen rule does not require that any operation be applied.
-3. The gate is not one that cannot fire. Every clause has a fabricated red drill, both green poles are fully formed entries, two drills use real committed data (the K4 rows, the gex44 group), and the entrance is driven red across a real process boundary.
+3. The gate is not one that cannot fire. Every clause has a fabricated red drill, every green pole is a fully formed entry, three drills use real committed data (the K4 rows, the gex44 group, a real ancestor commit as the applied_commit anchor), and the entrance is driven red across a real process boundary.
 4. AUTHORIZATION_BOUND is rejected. It would state that the pillar waits on the Owner, but the pillar's rule is satisfied without an Owner act. The L6 `falsification` file it needs (a pre-registered IMPLEMENT ending otherwise) would assert a falsification that never happened: nothing pre-registered for F was falsified.

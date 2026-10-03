@@ -12,12 +12,14 @@ What it judges:
 2. the applied-operations ledger `vault/programs/skill-capability/f-operations.json` (D-01 item 2, V-FO-*), schema
    `skill-capability/f-operations/1` = {schema, rule (the frozen F rule verbatim), note, operations: [entry]}.
    An entry carries references, never figures:
-       {op: disclosure|fission|fusion|inline|dedup, skill,
+       {op: disclosure|fission|fusion|inline|dedup, skill, applied_commit,
         before: {denominator: "D-LISTING", probe_label, session_id, command}, after: {same keys},
         recall: {before: {window, command}, after: {window, command}}}
    plus, for op dedup only, {sweep, group}. `window` and `sweep` are repo paths under
    `vault/programs/skill-capability/evidence/` ending `.json`, no `..`. The gate derives startup tokens and listing
-   chars from the ONE probe row matching label AND session id, and recall num / n from the committed window docs;
+   chars from the ONE probe row matching label AND session id, recall num / n from the committed window docs, and
+   the anchor between the windows from git: `applied_commit` (7-40 hex, an ancestor of HEAD) is the commit that
+   applied the operation, and its committer time (`git log -1 --format=%cI`) must lie in [before.end, after.start];
 3. the rendered prg evidence `evidence/F-representation.md` (D-03, V-FR-EVIDENCE-CURRENT).
 
 The default mode reads only committed repo files and git blobs: every recording discovered by
@@ -802,10 +804,11 @@ def _side(entry, key, rows, denoms):
         (i, tok, chars)
 
 
-def check_entry(entry, rows, docs, sweeps, noise, denoms):
+def check_entry(entry, rows, docs, sweeps, noise, denoms, commits=None):
     """[(clause, status, text)] for one applied operation, in ENTRY_CLAUSES order. Pure. status is ok / FAIL /
     INCONCLUSIVE / n/a / skipped; skipped = an upstream clause of this entry is not ok (the entry already fails), and
-    is never counted as ok. Every figure comes from `rows` / `docs` / `sweeps`, never from the entry."""
+    is never counted as ok. Every figure comes from `rows` / `docs` / `sweeps` / `commits` (resolve_applied_commits),
+    never from the entry."""
     out = {}
     if not isinstance(entry, dict):
         return [(c, "FAIL", f"entry is {type(entry).__name__}, not an object") for c in ENTRY_CLAUSES]
@@ -832,7 +835,7 @@ def check_entry(entry, rows, docs, sweeps, noise, denoms):
             out["V-FO-PAIR"] = ("FAIL", f"before row #{bi} comes after the after row #{ai} in the append-only rows")
         else:
             out["V-FO-PAIR"] = ("ok", f"before row #{bi} precedes after row #{ai}")
-    st, text, rec = _recall(entry, docs)
+    st, text, rec = _recall(entry, docs, commits)
     out["V-FO-RECALL"] = (st, text)
     if not both:
         out["V-FO-HELPED"] = ("skipped", "before or after not ok")
@@ -880,6 +883,41 @@ def _utc_epoch(v):
     return t.timestamp() if t.tzinfo is not None else None
 
 
+COMMIT_RE = re.compile(r"[0-9a-f]{7,40}")
+
+
+def resolve_applied_commits(refs, repo=REPO):
+    """{ref: ("ok", committer epoch, %cI) | ("FAIL", reason) | ("INCONCLUSIVE", reason)} for every 7-40 hex ref. A
+    ref git does not know, or one that is not an ancestor of HEAD, is UNMEASURED (FAIL); git itself failing is
+    INCONCLUSIVE, never a judgement (05-VERIFICATION WR-02)."""
+    refs = sorted({r for r in refs if isinstance(r, str) and COMMIT_RE.fullmatch(r)})
+    if not refs:
+        return {}
+    head, why = smd.resolve_commit(repo, "HEAD")
+    if head is None:
+        return {r: ("INCONCLUSIVE", f"git cannot resolve HEAD: {why}") for r in refs}
+    out = {}
+    for r in refs:
+        sha, why = smd.resolve_commit(repo, r)
+        if sha is None:
+            out[r] = (("FAIL", f"UNMEASURED: applied_commit {r} is not a commit of this repository")
+                      if str(why).startswith("git rev-parse rc=1:") else
+                      ("INCONCLUSIVE", f"git cannot resolve applied_commit {r}: {why}"))
+            continue
+        _, why = smd.git_run(repo, "merge-base", "--is-ancestor", sha, head)
+        if why is not None:
+            out[r] = (("FAIL", f"UNMEASURED: applied_commit {r} is not an ancestor of HEAD {head[:8]}")
+                      if why.startswith("git merge-base rc=1:") else
+                      ("INCONCLUSIVE", f"git cannot test applied_commit {r} against HEAD: {why}"))
+            continue
+        raw, why = smd.git_run(repo, "log", "-1", "--format=%cI", sha)
+        iso = raw.decode("utf-8", "replace").strip() if raw is not None else ""
+        t = _utc_epoch(iso)
+        out[r] = ("ok", t, iso) if t is not None else (
+            "INCONCLUSIVE", f"git gave no timezone-bearing committer time for {r}: {why or repr(iso)}")
+    return out
+
+
 class Unjudged:
     """A window the entry names that exists in the working tree but is not committed (as committed): never judged,
     so the recall clause reads INCONCLUSIVE, not FAIL (05-REVIEW IN-05)."""
@@ -888,8 +926,9 @@ class Unjudged:
         self.why = why
 
 
-def _recall(entry, docs):
-    """(status, text, {side: (num, n)} or None). Figures come from the committed window documents only."""
+def _recall(entry, docs, commits=None):
+    """(status, text, {side: (num, n)} or None). Figures come from the committed window documents only; the anchor
+    between them is the committer time of the entry's applied_commit, resolved by resolve_applied_commits."""
     rc = entry.get("recall")
     if not isinstance(rc, dict):
         return "FAIL", "UNMEASURED: recall is absent (the frozen rule requires a recall check)", None
@@ -942,8 +981,28 @@ def _recall(entry, docs):
     if host not in LISTING_HOSTS:
         return "FAIL", (f"recall windows host {host!r} is not the D-LISTING plane {list(LISTING_HOSTS)}: recall must "
                         "be measured where the listing is"), None
+    # Two ordered windows can both precede (or both follow) the operation: only the commit that applied it says which
+    # side of the operation each window measured (05-VERIFICATION WR-02).
+    ac = entry.get("applied_commit")
+    if not (isinstance(ac, str) and COMMIT_RE.fullmatch(ac)):
+        return "FAIL", (f"UNMEASURED: applied_commit {ac!r} is not the 7-40 hex commit that applied the operation "
+                        "(the anchor between the recall windows)"), None
+    res = (commits or {}).get(ac)
+    if res is None:
+        return "INCONCLUSIVE", f"applied_commit {ac} was not resolved against git", None
+    if res[0] != "ok":
+        return res[0], res[1], None
+    t, iso = res[1], res[2]
+    b_end, a_start = docs[paths["before"]].get("end"), docs[paths["after"]].get("start")
+    if t < spans["before"][1]:
+        return "FAIL", (f"applied_commit {ac[:12]} committed {iso}, before the before window ends ({b_end}): the "
+                        "before window does not precede the operation"), None
+    if t > spans["after"][0]:
+        return "FAIL", (f"applied_commit {ac[:12]} committed {iso}, after the after window starts ({a_start}): the "
+                        "after window does not follow the operation"), None
     return "ok", (f"recall before {got['before'][0]}/{got['before'][1]} ({paths['before']}), after "
-                  f"{got['after'][0]}/{got['after'][1]} ({paths['after']}), host {host}; n is reported per rate"), got
+                  f"{got['after'][0]}/{got['after'][1]} ({paths['after']}), host {host}, applied_commit {ac[:12]} "
+                  f"committed {iso} between them; n is reported per rate"), got
 
 
 def _dedup_sweep(entry, sweeps):
@@ -1060,7 +1119,8 @@ def c_fo_entries(doc, inputs):
         inconclusive(f"{len(ops)} entries, probe rows unreadable: {inputs.get('rows_why')}")
     bad, statuses = [], set()
     for i, e in enumerate(ops):
-        res = check_entry(e, inputs["rows"], inputs["docs"], inputs["sweeps"], inputs["noise"], inputs["denoms"])
+        res = check_entry(e, inputs["rows"], inputs["docs"], inputs["sweeps"], inputs["noise"], inputs["denoms"],
+                          inputs.get("commits"))
         red = [f"{c} {st}: {t}" for c, st, t in res if st not in GOOD]
         statuses |= {st for _, st, _ in res if st not in GOOD + ("skipped",)}
         if red:
@@ -1095,7 +1155,8 @@ def c_fo_noise_sourced():
 def operations_inputs(ops, sweeps):
     rows, rows_why = probe_rows()
     return {"rows": rows, "rows_why": rows_why, "docs": window_docs(ops), "sweeps": sweeps,
-            "noise": sourced_noise()[0], "denoms": frozen_f()[1]}
+            "noise": sourced_noise()[0], "denoms": frozen_f()[1],
+            "commits": resolve_applied_commits(e.get("applied_commit") for e in ops if isinstance(e, dict))}
 
 
 # --------------------------------------------------------------------------- V-FO drills (fixtures + real data)
@@ -1116,6 +1177,11 @@ def _drill_row(label, sid, tokens, chars):
 
 DRILL_SPANS = {"before": ("2026-09-01T00:00:00Z", "2026-09-08T00:00:00Z"),
                "after": ("2026-09-10T00:00:00Z", "2026-09-17T00:00:00Z")}
+# The fabricated commit that applied the drill operation, and its committer time: between the two windows (the +02:00
+# offset is the `%cI` shape git prints). Fabricated drills carry a fabricated resolution; the REAL commit drills go
+# through resolve_applied_commits and git.
+DRILL_COMMIT = "d" * 40
+DRILL_APPLIED_AT = "2026-09-09T02:00:00+02:00"
 
 
 def _drill_window(num, n, cap=DRILL_SKILL, host="laptop", span=DRILL_SPANS["before"]):
@@ -1135,7 +1201,7 @@ def _side_ref(label, sid):
 
 def base_fixture(denoms):
     """A fully formed fabricated disclosure entry and the committed-looking inputs it references."""
-    entry = {"op": "disclosure", "skill": DRILL_SKILL,
+    entry = {"op": "disclosure", "skill": DRILL_SKILL, "applied_commit": DRILL_COMMIT,
              "before": _side_ref("drill-before", DRILL_SIDS["before"]),
              "after": _side_ref("drill-after", DRILL_SIDS["after"]),
              "recall": {k: {"window": DRILL_W[k], "command": "python3 tools/test_skill_delivery.py --measure-live"}
@@ -1149,8 +1215,9 @@ def base_fixture(denoms):
                       "laptop": {"records": {DRILL_SKILL: _drill_record(_DRILL_BODY, DRILL_SKILL),
                                              DRILL_SKILL + "-copy": _drill_record(_DRILL_BODY, DRILL_SKILL),
                                              "drill-other": _drill_record(_DRILL_OTHER, "drill-other")}}}}
+    commits = {DRILL_COMMIT: ("ok", _utc_epoch(DRILL_APPLIED_AT), DRILL_APPLIED_AT)}
     return {"entry": entry, "rows": rows, "docs": docs, "sweeps": {DRILL_SWEEP: rec}, "noise": dict(DRILL_NOISE),
-            "denoms": set(denoms)}
+            "denoms": set(denoms), "commits": commits}
 
 
 def _as_dedup(fx):
@@ -1227,6 +1294,54 @@ def _m_recall_untimed(fx):
     del fx["docs"][DRILL_W["after"]]["start"]
 
 
+def _m_recall_both_pre_op(fx):
+    # Two ordered, disjoint windows, both measured before the commit that applied the operation (05-VERIFICATION
+    # WR-02): recall "held" across an operation neither window saw.
+    at = "2026-09-20T00:00:00Z"
+    fx["commits"][DRILL_COMMIT] = ("ok", _utc_epoch(at), at)
+
+
+def _m_recall_both_post_op(fx):
+    at = "2026-08-20T00:00:00Z"
+    fx["commits"][DRILL_COMMIT] = ("ok", _utc_epoch(at), at)
+
+
+def _m_missing_applied_commit(fx):
+    del fx["entry"]["applied_commit"]
+
+
+def _m_applied_commit_real(fx, real):
+    """A real ancestor of HEAD (the commit that added the operations file) resolved by git, with the two windows
+    placed one day either side of its real committer time: the anchor's green branch on real git output."""
+    raw, why = smd.git_run(REPO, "log", "--diff-filter=A", "--format=%H", "--", OPS_REL)
+    sha = raw.decode("utf-8", "replace").split()[-1] if raw and raw.split() else None
+    if sha is None:
+        raise KeyError(f"no commit added {OPS_REL}: {why}")
+    res = resolve_applied_commits([sha])[sha]
+    if res[0] != "ok":
+        raise KeyError(f"{sha[:8]} did not resolve: {res[1]}")
+    day = 86400
+
+    def iso(t):
+        return datetime.datetime.fromtimestamp(t, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    t = int(res[1])
+    for k, (a, b) in (("before", (t - 8 * day, t - day)), ("after", (t + day, t + 8 * day))):
+        fx["docs"][DRILL_W[k]]["start"], fx["docs"][DRILL_W[k]]["end"] = iso(a), iso(b)
+    fx["entry"]["applied_commit"] = sha
+    fx["commits"] = {sha: res}
+
+
+def _m_applied_commit_unresolved(fx, real):
+    ref = "0" * 40  # no such commit: resolved by git, not by the fixture
+    fx["entry"]["applied_commit"] = ref
+    fx["commits"] = resolve_applied_commits([ref])
+
+
+def _m_applied_commit_git_failure(fx, real):
+    with tempfile.TemporaryDirectory() as tmp:
+        fx["commits"] = resolve_applied_commits([DRILL_COMMIT], repo=Path(tmp) / "absent")  # git cannot run there
+
+
 def _m_not_helped(fx):
     fx["rows"][2]["startup_tokens"] = fx["rows"][1]["startup_tokens"] - fx["noise"]["tokens"]  # the boundary
 
@@ -1293,6 +1408,12 @@ FO_DRILLS = (
     ("RECALL-DUPLICATE", _m_recall_duplicate, {"V-FO-RECALL"}),
     ("RECALL-ORDER", _m_recall_order, {"V-FO-RECALL"}),
     ("RECALL-UNTIMED", _m_recall_untimed, {"V-FO-RECALL"}),
+    ("RECALL-BOTH-PRE-OP", _m_recall_both_pre_op, {"V-FO-RECALL"}),
+    ("RECALL-BOTH-POST-OP", _m_recall_both_post_op, {"V-FO-RECALL"}),
+    ("MISSING-APPLIED-COMMIT", _m_missing_applied_commit, {"V-FO-RECALL"}),
+    ("APPLIED-COMMIT-REAL", _m_applied_commit_real, set()),
+    ("APPLIED-COMMIT-UNRESOLVED", _m_applied_commit_unresolved, {"V-FO-RECALL"}),
+    ("APPLIED-COMMIT-GIT-FAILURE", _m_applied_commit_git_failure, {"V-FO-RECALL"}),
     ("NOT-HELPED", _m_not_helped, {"V-FO-HELPED"}),
     ("NOISE-ABSENT", _m_noise_absent, {"V-FO-HELPED"}),
     ("RECALL-DROP", _m_recall_drop, {"V-FO-RECALL-HELD"}),
@@ -1301,13 +1422,25 @@ FO_DRILLS = (
     ("DEDUP-GEX44-REAL", _m_dedup_gex44_real, {"V-FO-PLANE"}),
     ("K4-REAL", _m_k4_real, {"V-FO-HELPED"}),
 )
-_REAL_DRILLS = {"DEDUP-GEX44-REAL", "K4-REAL"}
+_REAL_DRILLS = {"DEDUP-GEX44-REAL", "K4-REAL", "APPLIED-COMMIT-REAL", "APPLIED-COMMIT-UNRESOLVED",
+                "APPLIED-COMMIT-GIT-FAILURE"}
+# Drills whose red clause must read INCONCLUSIVE (could not judge), not FAIL; every other mutant must read FAIL.
+_INCONCLUSIVE_DRILLS = {"NOISE-ABSENT", "APPLIED-COMMIT-GIT-FAILURE"}
+ENTRY_STATUS_EXPECT = (("UNCOMMITTED-WINDOW", "INCONCLUSIVE"), ("NOISE-UNSOURCED", "INCONCLUSIVE"),
+                       ("UNCOMMITTED-AND-DROP", "FAIL"))
+
+
+def expected_kind(name, expect):
+    """The status the red clauses of drill `name` must read: none for a positive control, else INCONCLUSIVE for the
+    could-not-judge drills and FAIL for every other."""
+    return None if not expect else ("INCONCLUSIVE" if name in _INCONCLUSIVE_DRILLS else "FAIL")
 
 
 def fo_drill_rows(real):
-    """[(name, expected red set, observed red set or None, text)]. `real` = {rows, noise, sweeps, denoms} from the
-    committed inputs. A mutant passes when its FAIL/INCONCLUSIVE set is EXACTLY the expected one (skipped and n/a
-    are excluded); a positive control passes when that set is empty."""
+    """[(name, expected red set, observed red set or None, text, observed statuses of the red clauses)]. `real` =
+    {rows, noise, sweeps, denoms} from the committed inputs. A mutant passes when its FAIL/INCONCLUSIVE set is EXACTLY
+    the expected one (skipped and n/a are excluded) and every red clause reads expected_kind; a positive control
+    passes when that set is empty."""
     out = []
     for name, mutate, expect in FO_DRILLS:
         fx = base_fixture(real["denoms"])
@@ -1315,13 +1448,20 @@ def fo_drill_rows(real):
             if mutate is not None:
                 mutate(fx, real) if name in _REAL_DRILLS else mutate(fx)
         except (KeyError, TypeError, IndexError) as e:
-            out.append((name, expect, None, f"could not be built: {type(e).__name__}: {e}"))
+            out.append((name, expect, None, f"could not be built: {type(e).__name__}: {e}", set()))
             continue
-        res = check_entry(fx["entry"], fx["rows"], fx["docs"], fx["sweeps"], fx["noise"], fx["denoms"])
+        res = check_entry(fx["entry"], fx["rows"], fx["docs"], fx["sweeps"], fx["noise"], fx["denoms"],
+                          fx["commits"])
         red = {c for c, st, _ in res if st in ("FAIL", "INCONCLUSIVE")}
+        kinds = {st for c, st, _ in res if c in red}
         text = "; ".join(t for c, st, t in res if c in red) if red else ""
-        out.append((name, expect, red, text))
+        out.append((name, expect, red, text, kinds))
     return out
+
+
+def drill_passes(name, expect, got, kinds) -> bool:
+    k = expected_kind(name, expect)
+    return got is not None and got == expect and kinds == ({k} if k else set())
 
 
 def fo_entries_status_rows(real):
@@ -1331,8 +1471,7 @@ def fo_entries_status_rows(real):
     global committed_json
     out = []
     real_cj = committed_json
-    for name, expect in (("UNCOMMITTED-WINDOW", "INCONCLUSIVE"), ("NOISE-UNSOURCED", "INCONCLUSIVE"),
-                         ("UNCOMMITTED-AND-DROP", "FAIL")):
+    for name, expect in ENTRY_STATUS_EXPECT:
         fx = base_fixture(real["denoms"])
         if name == "NOISE-UNSOURCED":
             fx["noise"] = None
@@ -1346,7 +1485,7 @@ def fo_entries_status_rows(real):
             if name == "UNCOMMITTED-AND-DROP":
                 fx["rows"][2]["startup_tokens"] = fx["rows"][1]["startup_tokens"]  # also not measured to help
         inputs = {"rows": fx["rows"], "docs": docs, "sweeps": fx["sweeps"], "noise": fx["noise"],
-                  "denoms": fx["denoms"]}
+                  "denoms": fx["denoms"], "commits": fx["commits"]}
         st, text = run_clause(c_fo_entries, {"operations": [fx["entry"]], "note": "pole"}, inputs)
         out.append((name, expect, st, str(text).split("\n")[-1][:160]))
     return out
@@ -1358,8 +1497,8 @@ def c_fo_drills(real):
         ok = got == expect
         all_ok &= ok
         lines.append(f"{'ok  ' if ok else 'FAIL'} V-FO-ENTRIES-STATUS-{name} expected {expect}, got {got} ({text})")
-    for name, expect, got, text in fo_drill_rows(real):
-        ok = got is not None and got == expect
+    for name, expect, got, text, kinds in fo_drill_rows(real):
+        ok = drill_passes(name, expect, got, kinds)
         all_ok &= ok
         if got is None:
             lines.append(f"FAIL V-FO-DRILL-{name} {text}")
@@ -1367,10 +1506,15 @@ def c_fo_drills(real):
             lines.append(f"{'ok  ' if ok else 'FAIL'} V-FO-DRILL-{name} "
                          + ("passes all clauses" if ok else f"red clauses {sorted(got)}: {text}"))
         else:
+            k = expected_kind(name, expect)
             lines.append(f"{'ok  ' if ok else 'FAIL'} V-FO-DRILL-{name} "
-                         + (f"killed by {', '.join(sorted(got))} ({text})" if ok else
-                            f"expected {sorted(expect)}, red clauses {sorted(got)}: {text}"))
-    head = f"{len(FO_DRILLS)} drills ({sum(1 for _, _, e in FO_DRILLS if not e)} positive controls)"
+                         + (f"killed by {', '.join(sorted(got))} {k} ({text})" if ok else
+                            f"expected {sorted(expect)} {k}, red clauses {sorted(got)} {sorted(kinds)}: {text}"))
+    kinds = [expected_kind(n, e) for n, _, e in FO_DRILLS]
+    st = [e for _, e in ENTRY_STATUS_EXPECT]
+    head = (f"{len(FO_DRILLS)} drills ({kinds.count(None)} positive controls, {kinds.count('FAIL')} refusals red by "
+            f"FAIL, {kinds.count('INCONCLUSIVE')} INCONCLUSIVE expectations) + {len(st)} entry-status lines "
+            f"({st.count('INCONCLUSIVE')} INCONCLUSIVE, {st.count('FAIL')} FAIL)")
     if not all_ok:
         fail(head + "\n" + "\n".join(lines))
     return head + "\n" + "\n".join(lines)
@@ -1429,13 +1573,15 @@ LAPTOP_PROFILE = "C:\\Users\\User\\"
 RENDER_SOURCES = (OPS_REL, lfv.JSONL_REL, lfv.LESSONS_REL, EVIDENCE_DIR + SWEEP_GLOB)
 
 ENTRY_SCHEMA_LINES = (
-    "`op`: one of disclosure, fission, fusion, inline, dedup; `skill`: the skill name.",
+    "`op`: one of disclosure, fission, fusion, inline, dedup; `skill`: the skill name; `applied_commit`: the commit "
+    "(7-40 hex, an ancestor of HEAD) that applied the operation.",
     "`before` / `after`: {`denominator`: \"D-LISTING\", `probe_label`, `session_id`, `command`}: a reference to ONE "
     "row of the D-LISTING probe results, resolved by label AND session id. No figure is typed: startup_tokens and "
     "listing chars are read from that row.",
     "`recall`: {`before`: {`window`, `command`}, `after`: {`window`, `command`}}: committed skill-delivery windows "
     "(`skill-delivery-window/1`) under the evidence directory; num and n are read from them, and their `start` / "
-    "`end` order them (the before window ends by the after window's start).",
+    "`end` order them: the before window ends by the committer time of `applied_commit` (git `%cI`), and the after "
+    "window starts no earlier than it.",
     "dedup only: `sweep` (a committed `F-sweep-*.json` recording) and `group` (the 64-hex body_sha of a group "
     "re-derived from it).",
 )
@@ -1456,7 +1602,11 @@ FO_CLAUSE_DOC = (
     ("V-FO-RECALL", "a missing recall check; a window outside the evidence directory, absent, of another schema "
                     "or capability (one present but uncommitted is INCONCLUSIVE, never judged); a null recall, n = 0, num outside [0, n]; a window without timezone-bearing start < end, or a "
                     "before window that does not end by the after window's start (one window twice, or reversed); "
-                    "windows from two hosts, or from a host that is not the D-LISTING plane (laptop)"),
+                    "windows from two hosts, or from a host that is not the D-LISTING plane (laptop); an "
+                    "applied_commit that is absent, not 7-40 hex, not a commit or not an ancestor of HEAD "
+                    "(UNMEASURED; git unable to answer is INCONCLUSIVE), or whose committer time is before the "
+                    "before window's end or after the after window's start (both windows on one side of the "
+                    "operation)"),
     ("V-FO-HELPED", "after startup_tokens + sourced noise >= before startup_tokens (not measured to help); unsourced "
                     "noise is INCONCLUSIVE"),
     ("V-FO-RECALL-HELD", "after recall below before recall (integer cross-multiplication)"),
@@ -1479,9 +1629,9 @@ D01_REASONS = (
     "The ROADMAP goal is \"apply ... only where measured to help\". On gex44 nothing can be measured against "
     "D-LISTING, and the one listing lever with evidence was falsified twice (C6, K4). Applying zero operations is "
     "the goal's own answer on this plane. The frozen rule does not require that any operation be applied.",
-    "The gate is not one that cannot fire. Every clause has a fabricated red drill, both green poles are fully formed "
-    "entries, two drills use real committed data (the K4 rows, the gex44 group), and the entrance is driven red "
-    "across a real process boundary.",
+    "The gate is not one that cannot fire. Every clause has a fabricated red drill, every green pole is a fully "
+    "formed entry, three drills use real committed data (the K4 rows, the gex44 group, a real ancestor commit as "
+    "the applied_commit anchor), and the entrance is driven red across a real process boundary.",
     "AUTHORIZATION_BOUND is rejected. It would state that the pillar waits on the Owner, but the pillar's rule is "
     "satisfied without an Owner act. The L6 `falsification` file it needs (a pre-registered IMPLEMENT ending "
     "otherwise) would assert a falsification that never happened: nothing pre-registered for F was falsified.",
@@ -1609,14 +1759,15 @@ def render_evidence(state) -> str:
     L += ["", "## What each clause refuses", ""] + [f"- {c}: refuses {t}." for c, t in FO_CLAUSE_DOC]
     L += ["", "## Operation drills (fabricated unless named REAL)", "", "| drill | expected | observed |",
           "|---|---|---|"]
-    for name, expect, got, text in state["fo_drills"]:
+    for name, expect, got, text, kinds in state["fo_drills"]:
+        k = expected_kind(name, expect)
         if got is None:
             obs = f"NOT BUILT: {text}"
-        elif got == expect:
-            obs = "passes all clauses" if not expect else f"killed by {_red_text(got)}"
+        elif drill_passes(name, expect, got, kinds):
+            obs = "passes all clauses" if not expect else f"killed by {_red_text(got)} ({k})"
         else:
-            obs = f"WRONG: red clauses {_red_text(got)}"
-        L.append(f"| {name} | {_red_text(expect)} | {obs} |")
+            obs = f"WRONG: red clauses {_red_text(got)} ({_red_text(kinds)})"
+        L.append(f"| {name} | {_red_text(expect)}{f' ({k})' if k else ''} | {obs} |")
     for n, rows in state["tamper"].items():
         L += ["", f"## V-FD tamper drills (`{n}`)", "", "| drill | tampered | expected | observed |",
               "|---|---|---|---|"]
