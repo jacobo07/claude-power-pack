@@ -1,0 +1,2036 @@
+{
+ "command": "python3 tools/skill_dedup_sweep.py --measure-live --host gex44 --out vault/programs/skill-capability/evidence/F-sweep-gex44.json",
+ "drift_excluded": [
+  "android-reverse-engineering",
+  "concurrent-writers-shared-tree",
+  "destructive-state-authorization",
+  "develop-here-prove-there",
+  "evaluation-corpus-governance",
+  "guard-event-reachability",
+  "instrument-before-claim",
+  "mobile-app-ui-design",
+  "mobile-game-wii-port",
+  "monetary-quantity-integrity",
+  "motion-promo",
+  "presence-is-not-residency",
+  "real-context-reachability",
+  "recurring-work-cardinality"
+ ],
+ "groups": [
+  {
+   "body_bytes": 155,
+   "body_sha": "01e535170bf2a2a01b6bcd0d0d429cbece48c258176ac57cd7f9e76b71271205",
+   "distinct_names": 2,
+   "fm_name_collision": true,
+   "members": [
+    {
+     "dir_digest": "441f119027fa085b199d611d12ee233488e53550f61325da3417caa4e433bc0f",
+     "files": 2,
+     "fm_name": "managing-sleepy-skills",
+     "name": "managing-sleepy-skills",
+     "plane": "gex44",
+     "skill_md_sha": "2bb85025bf67cd2ff26c1467556ddbdccd95c22b2e6cde23dff7a8bf7dabe3b2"
+    },
+    {
+     "dir_digest": "dde7b903db289fed89757f9408bf22ae71ffc5758c687479c383857ea2fa66f4",
+     "files": 12,
+     "fm_name": "managing-sleepy-skills",
+     "name": "sleepy-skills",
+     "plane": "gex44",
+     "skill_md_sha": "2bb85025bf67cd2ff26c1467556ddbdccd95c22b2e6cde23dff7a8bf7dabe3b2"
+    }
+   ],
+   "names": [
+    "managing-sleepy-skills",
+    "sleepy-skills"
+   ],
+   "skill_md_identical": true,
+   "subset": [
+    [
+     "gex44/managing-sleepy-skills",
+     "gex44/sleepy-skills"
+    ]
+   ]
+  }
+ ],
+ "host": "gex44",
+ "live_root": "~/.claude/skills",
+ "member_files": {
+  "gex44/managing-sleepy-skills": [
+   [
+    "SKILL.md",
+    "2bb85025bf67cd2ff26c1467556ddbdccd95c22b2e6cde23dff7a8bf7dabe3b2"
+   ],
+   [
+    "instructions.md",
+    "dd973ccacfaad603bed30c21a394c144e042d478aef62c38687d5182143f82c5"
+   ]
+  ],
+  "gex44/sleepy-skills": [
+   [
+    "PRD_SLEEPY_SKILLS_v1.0.md",
+    "34a95e67c54d5cc529c5c54291191567ac594668b5d1770b554dbd296805f358"
+   ],
+   [
+    "SKILL.md",
+    "2bb85025bf67cd2ff26c1467556ddbdccd95c22b2e6cde23dff7a8bf7dabe3b2"
+   ],
+   [
+    "governance/SKILL_ACTIVATION_ROUTER.md",
+    "4930b48fc12745f873a74903f12f16cfb1b4f6ecaf064c40b44d4de35df9ac94"
+   ],
+   [
+    "governance/SLEEPY_SKILLS_ARCHITECTURE.md",
+    "49adb044676965a638bf75ea79055e2c60d19e465535b18116723b47e998ddff"
+   ],
+   [
+    "governance/TOKEN_EFFICIENCY_RULES.md",
+    "4c00bfb0a0b99a34cb3c016a8bf04c6d5408708b862b602b8b8bf2c35fc19a9e"
+   ],
+   [
+    "instructions.md",
+    "dd973ccacfaad603bed30c21a394c144e042d478aef62c38687d5182143f82c5"
+   ],
+   [
+    "reference-repo-analysis.json",
+    "5800d3eec1b592a591b0a3faac294719a240bfd538ad9fb4994ea213b25f915a"
+   ],
+   [
+    "registry/conversion-audit.jsonl",
+    "8cca90554099dfdba4893e6712ba540305071e0e1fac93b6bd4db4e14fa20ab5"
+   ],
+   [
+    "skill-activation-router.json",
+    "e737166c2b06baf549b96e48ddb1b89e1059b1e3edff8b58b492a5f091be4c4b"
+   ],
+   [
+    "tools/analyze-reference-repo.js",
+    "d8fd6caaeac81f17b302a9c789c6b6f730ba5675ebeb27283e11629e8966b1ae"
+   ],
+   [
+    "tools/convert-skill.js",
+    "efe63165296525b50242dbf180cadbc97b406d8974e49084846c48f9571b00b8"
+   ],
+   [
+    "tools/validate-token-budget.js",
+    "904726a6a32207ec91dbb7057f7aecadad0abc93041a11743137c01679706e67"
+   ]
+  ]
+ },
+ "method": {
+  "body": "sha256 of the LF-normalized SKILL.md after skill_index._FM_RE strips the frontmatter",
+  "dir": "skill_mirror_drift.dir_digest over sorted <relpath>\\0<lf_sha256> lines of every file in the directory",
+  "group": "one body_sha shared by >= 2 distinct skill names; same-name cross-plane copies are drift_excluded"
+ },
+ "node": "kobicraft-gex44",
+ "planes": {
+  "gex44": {
+   "entries": 186,
+   "names": [
+    "adversarial-longevity",
+    "agent-reach",
+    "android-reverse-engineering",
+    "anydesign",
+    "autofix",
+    "autoresearch",
+    "carl-manager",
+    "claude-power-pack",
+    "claude-power-pack.pre-clone-2026-09-27",
+    "code-auditor",
+    "code-review",
+    "code-reviewer",
+    "composition-patterns",
+    "compound-learnings",
+    "concurrent-writers-shared-tree",
+    "copywriting",
+    "cpp-pro",
+    "debugging-wizard",
+    "design-taste-frontend",
+    "destructive-state-authorization",
+    "develop-here-prove-there",
+    "dios-segun-buda",
+    "elevenlabs-music-generation",
+    "elixir-phoenix-patterns",
+    "embedded-systems",
+    "evaluation-corpus-governance",
+    "fix",
+    "frontend-design",
+    "game-feel-codex",
+    "github-actions-templates",
+    "governance-overlay",
+    "gsd-add-tests",
+    "gsd-ai-integration-phase",
+    "gsd-audit-fix",
+    "gsd-audit-milestone",
+    "gsd-audit-uat",
+    "gsd-autonomous",
+    "gsd-capture",
+    "gsd-cleanup",
+    "gsd-code-review",
+    "gsd-complete-milestone",
+    "gsd-config",
+    "gsd-debug",
+    "gsd-discuss-phase",
+    "gsd-docs-update",
+    "gsd-eval-review",
+    "gsd-execute-phase",
+    "gsd-explore",
+    "gsd-extract-learnings",
+    "gsd-fast",
+    "gsd-forensics",
+    "gsd-graphify",
+    "gsd-health",
+    "gsd-help",
+    "gsd-import",
+    "gsd-inbox",
+    "gsd-ingest-docs",
+    "gsd-manager",
+    "gsd-map-codebase",
+    "gsd-mempalace-capture",
+    "gsd-mempalace-recall",
+    "gsd-milestone-summary",
+    "gsd-mvp-phase",
+    "gsd-new-milestone",
+    "gsd-new-project",
+    "gsd-next",
+    "gsd-ns-context",
+    "gsd-ns-ideate",
+    "gsd-ns-manage",
+    "gsd-ns-project",
+    "gsd-ns-review",
+    "gsd-ns-workflow",
+    "gsd-onboard",
+    "gsd-pause-work",
+    "gsd-phase",
+    "gsd-plan-phase",
+    "gsd-plan-review-convergence",
+    "gsd-pr-branch",
+    "gsd-profile-user",
+    "gsd-progress",
+    "gsd-quick",
+    "gsd-quick-batch",
+    "gsd-resume-work",
+    "gsd-review",
+    "gsd-review-backlog",
+    "gsd-secure-phase",
+    "gsd-settings",
+    "gsd-ship",
+    "gsd-sketch",
+    "gsd-spec-phase",
+    "gsd-spike",
+    "gsd-stats",
+    "gsd-surface",
+    "gsd-thread",
+    "gsd-ui-phase",
+    "gsd-ui-review",
+    "gsd-ultraplan-phase",
+    "gsd-undo",
+    "gsd-update",
+    "gsd-validate-phase",
+    "gsd-verify-work",
+    "gsd-workspace",
+    "gsd-workstreams",
+    "guard-event-reachability",
+    "humanizer",
+    "image-calco",
+    "image-to-video",
+    "instrument-before-claim",
+    "java-architect",
+    "kobiicraft-debug",
+    "kobiicraft-dev",
+    "kobiicraft-execution",
+    "kobiicraft-ops",
+    "kobiicraft-prd",
+    "kobiicraft-product",
+    "kobiicraft-review",
+    "kobiicraft-testing",
+    "lateral-thinking",
+    "leverage-research",
+    "managing-sleepy-skills",
+    "marketing-psychology",
+    "mcp-builder",
+    "minecraft-android-renderer-stack",
+    "minecraft-mod-jar-patcher",
+    "mobile-app-ui-design",
+    "mobile-game-wii-port",
+    "monetary-quantity-integrity",
+    "motion-promo",
+    "on-device-verification-loop",
+    "pojavlauncher-headless-driver",
+    "presence-is-not-residency",
+    "project-bootstrapper",
+    "project-pulse",
+    "prompt-engineering-patterns",
+    "python-best-practices",
+    "python-pro",
+    "react-best-practices",
+    "real-context-reachability",
+    "recurring-work-cardinality",
+    "remotion-best-practices",
+    "remotion-discovery-trap",
+    "remotion-foundation",
+    "remotion-kobii-templates",
+    "secrets-management",
+    "session-handoff-protocol",
+    "skill-creator",
+    "skill-prompt-efficiency-001",
+    "sleepy-skills",
+    "social-content",
+    "software-best-practices",
+    "spanish-mc-menus",
+    "stripe-best-practices",
+    "test-master",
+    "video-analyzer",
+    "vision-video",
+    "voice-spec-lock",
+    "web-design-guidelines",
+    "webapp-testing",
+    "wii-dev-best-practices",
+    "wii-disc-reconstruction",
+    "wii-power-pack"
+   ],
+   "no_skill_md": [
+    "ads",
+    "algorithmic-art",
+    "artifacts-builder",
+    "bmad",
+    "brand-guidelines",
+    "building-ai-saas-products",
+    "canvas-design",
+    "carl-help",
+    "competitive-ads-extractor",
+    "content-research-writer",
+    "custom skills",
+    "doc-coauthoring",
+    "generating-hook-matrix",
+    "internal-comms",
+    "ll-revenue-reinforcing",
+    "meeting-insights-analyzer",
+    "seo",
+    "skill-share",
+    "slack-gif-creator",
+    "social-media",
+    "synced",
+    "theme-factory",
+    "vault",
+    "wii-dev-skills"
+   ],
+   "non_dir": [
+    "predicting-market-opportunities"
+   ],
+   "plane": "gex44",
+   "records": {
+    "adversarial-longevity": {
+     "body_bytes": 4366,
+     "body_sha": "171f25c8a5765b089ac839714b4c3cfcbb8e12e7234a8b100031994a83110a95",
+     "dir_digest": "ffb6531de8c14ef22f0342406256eedf8102aa0f0dc9208bb2caf145f0915343",
+     "files": 1,
+     "fm_name": "adversarial-longevity",
+     "has_frontmatter": true,
+     "skill_md_sha": "0048587fce4d10902720958687eb9806867d23c743941ef2976caba069032c41"
+    },
+    "agent-reach": {
+     "body_bytes": 4362,
+     "body_sha": "674082056e0e11d0bf1c4dbdaafc6817d57fa6ed33913634988ac20c4ed96c30",
+     "dir_digest": "a0daeb66252ca865da62dbfb8355e0cd66fb063076409c8306735f8b27cdc3ca",
+     "files": 7,
+     "fm_name": "agent-reach",
+     "has_frontmatter": true,
+     "skill_md_sha": "7f7da09f52b8f88d1c438725e94c7335a04a6af45bdf33cae637456f2b1a321a"
+    },
+    "android-reverse-engineering": {
+     "body_bytes": 10260,
+     "body_sha": "237a83c3c8686b410cf7cdb4bbc49865c00086487f5000aaf4db18b64054d67d",
+     "dir_digest": "213b1aac970538719fd3c0e2f53e25c64bacee7fa5e7d38dea7438fe5d34d094",
+     "files": 22,
+     "fm_name": "android-reverse-engineering",
+     "has_frontmatter": true,
+     "skill_md_sha": "5e67e189dfe2c9ad28b317eb2ec8259c645f95cfe14ce97caed5861e25269d99"
+    },
+    "anydesign": {
+     "body_bytes": 10567,
+     "body_sha": "29dd533f8f90aa400f9846ce0bf2ee11581749faf901ddb1bffe8c55e5f75840",
+     "dir_digest": "7080a99c7344ce76bac6dc8cfc9ca7520d513864a7b81c8be01a20d3fce51586",
+     "files": 34,
+     "fm_name": "anydesign",
+     "has_frontmatter": true,
+     "skill_md_sha": "b52bd677572b6e485d2fa53f3823f2fa113dbfa9914d08f2cce038f1338e30a1"
+    },
+    "autofix": {
+     "body_bytes": 11070,
+     "body_sha": "1d15deda044bb8acc642db1b7a1c90fec3bc43a01d88d7579f0d3a5217b261f9",
+     "dir_digest": "8d31f2dd3beef73ea1d8abca3d119042186166d43660408790a24d0d9fda0718",
+     "files": 2,
+     "fm_name": "autofix",
+     "has_frontmatter": true,
+     "skill_md_sha": "09430a914debe143f646dd369b56c9bca27704c159aebf28c07e41f411046acf"
+    },
+    "autoresearch": {
+     "body_bytes": 280,
+     "body_sha": "3d263972f2f874ed27899ece702df2ccc313956a64655fb62b1d900d1f743188",
+     "dir_digest": "29fdaae905f43225db2cfb2606c2bf50d70745d41569074fc0f10e098fadb41f",
+     "files": 2,
+     "fm_name": "autoresearch",
+     "has_frontmatter": true,
+     "skill_md_sha": "b7f422b0258d44e90af5be93c784b4088b137f6c3e8b1adf262e970da56986b2"
+    },
+    "carl-manager": {
+     "body_bytes": 117,
+     "body_sha": "931b73be848bd67b73fd81bacc04ecf6b80d6a5a1a5fd0fb22f5bc9af1d2c3d7",
+     "dir_digest": "88072f5702b5d14c3a00cd8f36bd6aa778afe25fc0c30d9b7a3b18e1e47d5fd2",
+     "files": 8,
+     "fm_name": "carl-manager",
+     "has_frontmatter": true,
+     "skill_md_sha": "611de4b1bc2264e6451db44584a766713f237047d905f362330e6a1adf1735da"
+    },
+    "claude-power-pack": {
+     "body_bytes": 5825,
+     "body_sha": "3c76c5674f4ea150c058a706c3076e584cb8e1ad6d0855f18d8d137122bb9862",
+     "dir_digest": "1cd5a132e9edb0854251c4a72ea44eb6b1d000ca930c0a7650a17beb58387578",
+     "files": 4273,
+     "fm_name": "claude-power-pack",
+     "has_frontmatter": true,
+     "skill_md_sha": "bb369ed71476250284e1f7f125312b812ab8980ad6fe9e783f33ac9bd2d00f96"
+    },
+    "claude-power-pack.pre-clone-2026-09-27": {
+     "body_bytes": 2791,
+     "body_sha": "6b9bc3ecf4ded0db4d33dd0e45bd79065abb433368595c86f5cf917ac2ed1aa6",
+     "dir_digest": "bc742af005202c9f470119c91c784da994bc88ddac60a0dee15e7b0ca1dc2d04",
+     "files": 171,
+     "fm_name": "claude-power-pack",
+     "has_frontmatter": true,
+     "skill_md_sha": "43d8a3c6eb2dba8ea3fce804cf3d2d6ef655908a1b3e2f536b33c4001665b161"
+    },
+    "code-auditor": {
+     "body_bytes": 113,
+     "body_sha": "e35612d16dab4883f4b6c6fe13ef6d1f322db56b75124006db0fccbf8acf73e7",
+     "dir_digest": "356d7ff8dbb389c4e1ecc118f49925bef99ef87bdb8a1ff71d3e4a9632d1cf7e",
+     "files": 3,
+     "fm_name": "code-auditor",
+     "has_frontmatter": true,
+     "skill_md_sha": "c4d8e7a4b695b3469ea821af70a13f9d175e6bdf42144343c1a237877017f285"
+    },
+    "code-review": {
+     "body_bytes": 7087,
+     "body_sha": "6645a16f77897a245971ceb56a16696a78fbfaf5304526afccf2f79f51ff669c",
+     "dir_digest": "9d05edd549274f0568c286099d99533963ba8832aa911e917cf6e6d19a9a92f9",
+     "files": 2,
+     "fm_name": "code-review",
+     "has_frontmatter": true,
+     "skill_md_sha": "ddf2f46827c93eb888b5397ba4f579678dc233574da1476dc5d68ca0dcc43989"
+    },
+    "code-reviewer": {
+     "body_bytes": 154,
+     "body_sha": "b3c200bb44e67a1dabed2fdb73b41600cbb3fac3e1cfa6694774ebf63fd63eed",
+     "dir_digest": "ac741e825a79df5e9694dc0633e2396fbeb9d631fc079f228b9c03c509710f1f",
+     "files": 2,
+     "fm_name": "code-reviewer",
+     "has_frontmatter": true,
+     "skill_md_sha": "b8373a52166be588cd92e0479fbdfa85cb407791bef332cd95805ffbe0236146"
+    },
+    "composition-patterns": {
+     "body_bytes": 2450,
+     "body_sha": "5dbf3b725742b40fe54d1b65ddbfe46b23650d328c0fd8483be3be6297207d7a",
+     "dir_digest": "8b67145fc3996d42af07ddf710c9900eb80b7bcad3aaecf008127782509006e1",
+     "files": 14,
+     "fm_name": "vercel-composition-patterns",
+     "has_frontmatter": true,
+     "skill_md_sha": "e38e0eaa609316b10423a9a138ed95e35099accd3f735585295c8a8f165c28a3"
+    },
+    "compound-learnings": {
+     "body_bytes": 13239,
+     "body_sha": "f55ba5f751028607220e46350658076b7def934f699b9f4fc65bd231a10413c7",
+     "dir_digest": "5541aebfd9caf19e44a982ad5ae29f5206391c5c8dd532e409f3f31c7da2a2dd",
+     "files": 1,
+     "fm_name": "compound-learnings",
+     "has_frontmatter": true,
+     "skill_md_sha": "1e2604481f47bdb0683b2a183182ea571bcfc03a77324c315f8d290e92a5d711"
+    },
+    "concurrent-writers-shared-tree": {
+     "body_bytes": 6986,
+     "body_sha": "1751c2cf67d142380fc2364089c4f7aace0cb8261d034291c512af450d71439a",
+     "dir_digest": "d428c6b1f537d0d95ac4d3ded57e65da79ce96e89621bd4676e9ed4939916079",
+     "files": 1,
+     "fm_name": "concurrent-writers-shared-tree",
+     "has_frontmatter": true,
+     "skill_md_sha": "f1f52de4c3115d0aafc39d69c67a2e1ae7936ae63b26ecc9263d89f1150e57c0"
+    },
+    "copywriting": {
+     "body_bytes": 6804,
+     "body_sha": "7486d025d79e4a31f23827ece31362ce1f0f4e9b78fa5fdf143b8ee1257057aa",
+     "dir_digest": "63ad6e4613f1a54d3bc243c0de295204923fb26dd476f22504340f6e26018feb",
+     "files": 4,
+     "fm_name": "copywriting",
+     "has_frontmatter": true,
+     "skill_md_sha": "fd5e039eea8b4e47f92ee8adbf47dd56e6a1da12d70789ca05386604a3c062a8"
+    },
+    "cpp-pro": {
+     "body_bytes": 142,
+     "body_sha": "e7363009c7ea60e4a5e572c04ab85e98a686ab6e426843f7b790bf921df5ab28",
+     "dir_digest": "c1a599b69c17f791dcf845f3e59fb3e4abcf9717957fcf7beb942d20173020cb",
+     "files": 2,
+     "fm_name": "cpp-pro",
+     "has_frontmatter": true,
+     "skill_md_sha": "d5b9f81ba9aefd2bab50eeac030b33c305fffa5ca4879df5b95ab214b39cb2cf"
+    },
+    "debugging-wizard": {
+     "body_bytes": 170,
+     "body_sha": "2b0f89f004a08f1534e522529459cf7762c55a49981d3ec4d6c4d4dc5543b2a5",
+     "dir_digest": "d1435e2151b3e29b0b2a14cfcb1643f6b76a675515a3968355a6a699366c1023",
+     "files": 2,
+     "fm_name": "debugging-wizard",
+     "has_frontmatter": true,
+     "skill_md_sha": "5a6e7229a994fdfe88b2db20bcc0d60bd6e2b9c198ff35fb70d0785cfadb063d"
+    },
+    "design-taste-frontend": {
+     "body_bytes": 86933,
+     "body_sha": "10d590ccb2ebf0a06a231d697fe4d403b738319319e1c066709cc5caf4a00930",
+     "dir_digest": "40ef50925b446e08a4ad5cead8edeb98f48982eb498b0073fe6a0b27ea736769",
+     "files": 1,
+     "fm_name": "design-taste-frontend",
+     "has_frontmatter": true,
+     "skill_md_sha": "aa194351b246b8b4799099d4ed7b033d29eab6e6e3d58d8d2172978be7b3ec89"
+    },
+    "destructive-state-authorization": {
+     "body_bytes": 24128,
+     "body_sha": "12be3d3636bc80b0db03b67230a2a99974b1a36f9a066aee40ecb5dd22365510",
+     "dir_digest": "c17c2fc60c33f55bdb2406eefa00770b3fe5a76c9224549f7d703f9ae4f49da8",
+     "files": 1,
+     "fm_name": "destructive-state-authorization",
+     "has_frontmatter": true,
+     "skill_md_sha": "2985bd97002abf0589a95080a7d29b447b7a703df9ccd319494dba45701cd0de"
+    },
+    "develop-here-prove-there": {
+     "body_bytes": 8426,
+     "body_sha": "55df52bf9e0aaa776ffae3f57895cdb3c8863efd0911fae68c7915fb26ba8e82",
+     "dir_digest": "55aace799b091691d008fe0e8e2dbf65ad10c88df9427a7d80ab4e8d2a6d62f7",
+     "files": 1,
+     "fm_name": "develop-here-prove-there",
+     "has_frontmatter": true,
+     "skill_md_sha": "f649b72b6504f0d1b168e189a81514f9ad316825cbabeb9207dc7161d2538058"
+    },
+    "dios-segun-buda": {
+     "body_bytes": 10428,
+     "body_sha": "eb74998b382e4767e0dcca67685ac8d34e9cdfb84d40ce998a803116622bc063",
+     "dir_digest": "0931452c9e888ffc52992a87be3b1f6648566d0a5eebf926a48cbad827d79e50",
+     "files": 15,
+     "fm_name": "dios-segun-buda",
+     "has_frontmatter": true,
+     "skill_md_sha": "bbe39a5c7417534ec85cbcecb89881798016b53f669a869158a7d7c5d61db356"
+    },
+    "elevenlabs-music-generation": {
+     "body_bytes": 10229,
+     "body_sha": "ff098901a45be0eaa027ec6e659ca0a5b8dd76f7684a054265c96e6e6a3e0a60",
+     "dir_digest": "46a726aa3669ad3dad13378448fe7821660a440c3664125f6d022ad553872795",
+     "files": 1,
+     "fm_name": "elevenlabs-music-generation",
+     "has_frontmatter": true,
+     "skill_md_sha": "b98501a1bfc76fd6f17da5b6361f262907c30f060889621d48fafc05c115d83b"
+    },
+    "elixir-phoenix-patterns": {
+     "body_bytes": 6391,
+     "body_sha": "e4d50bc23cd1e4a44c9493819a7d9aa9b91aac9287d67cca81d9ce6c652caed0",
+     "dir_digest": "ba3febda7f791a6bb29d2c61b7958cd8d7014275486ec20eae212e82d1dff9b6",
+     "files": 1,
+     "fm_name": "elixir-phoenix-patterns",
+     "has_frontmatter": true,
+     "skill_md_sha": "0e028394a71685b979282859e62cafe46e817fe1a9bfc0d26cc510cc4ea7b29f"
+    },
+    "embedded-systems": {
+     "body_bytes": 167,
+     "body_sha": "403707b4ac700d406fea03f0f702bcc25c32c2ded9661d01084d0b24897b52e8",
+     "dir_digest": "24e6bca0fce64557f12437bd2bc88b05daea6a419a56e66a81e4b391f94ff04c",
+     "files": 2,
+     "fm_name": "embedded-systems",
+     "has_frontmatter": true,
+     "skill_md_sha": "f50b97f26556c50fc10ad762b2970b2e33253e3e6d18c4b147a4e946aea492df"
+    },
+    "evaluation-corpus-governance": {
+     "body_bytes": 8553,
+     "body_sha": "2c09538f3868d2df19f9f58cf832553506ab17e53e452438627ab0e593120252",
+     "dir_digest": "0a5a73aae411b432a678ae4769f27d4d608b8061fbe1b58448ea2a6b703e68c8",
+     "files": 1,
+     "fm_name": "evaluation-corpus-governance",
+     "has_frontmatter": true,
+     "skill_md_sha": "cc8550825cb4628e35ed483c2159c5957dbef1fe617d44b55515c0b7019d9eff"
+    },
+    "fix": {
+     "body_bytes": 95,
+     "body_sha": "469e183b61b318bc582997477668026792394d1014cfec3f1b2fac0324a772b1",
+     "dir_digest": "51188aaf631c9ba37be9b3b010d686b9f86c3a609137da20bfabae049ceaae60",
+     "files": 4,
+     "fm_name": "fix",
+     "has_frontmatter": true,
+     "skill_md_sha": "34e7879437b28d3303ff43601798e451f82bcd6e110cc66858405813fdbb82f4"
+    },
+    "frontend-design": {
+     "body_bytes": 3957,
+     "body_sha": "ad97d32d89e4f0d0c0a686fba11be2d63a9cb53029d29eaca585337c3955af97",
+     "dir_digest": "2bb2891e39413facb74f218832078ab0414e4fa7954243d6486920d557b248c4",
+     "files": 2,
+     "fm_name": "frontend-design",
+     "has_frontmatter": true,
+     "skill_md_sha": "b81e2ff87ed8fa4d6c377ccb127a7254c9e6a77e3ae94f21e6b514f7bb2945a0"
+    },
+    "game-feel-codex": {
+     "body_bytes": 4631,
+     "body_sha": "8cc98a32e2380c9cc3f6d33a19d697b21b611c1cb7ee8b4076f061c450c33527",
+     "dir_digest": "6f30141563fd2495ced8539d3f469290b09600eccb136192f3722e1da6ec3d6d",
+     "files": 1,
+     "fm_name": "game-feel-codex",
+     "has_frontmatter": true,
+     "skill_md_sha": "40d925ef541d234d703ebfe6b00bfba666e5afd5a6f3ccb2a351fa1146ae1904"
+    },
+    "github-actions-templates": {
+     "body_bytes": 6933,
+     "body_sha": "7e06fca5db7a959568e607c8224f94cd0d2041ef1c87320535dfb9192edc76dc",
+     "dir_digest": "0993f0d8d81ec50162fa91151f0ebecde6925833daf91e82d8f02ae6fd0b3642",
+     "files": 1,
+     "fm_name": "github-actions-templates",
+     "has_frontmatter": true,
+     "skill_md_sha": "a280b280bd57708d6ed834c37253605d169c7a6f0214b64789c70de73f17ea69"
+    },
+    "governance-overlay": {
+     "body_bytes": 649,
+     "body_sha": "885707cfde330dd7c6a274a6eeb7e0a5e36722c0252a2018db2ea39ae5a6b614",
+     "dir_digest": "b2b9bd8c49cf157b215f82d7e208e210b89048378f9cd1d256ddee1e5c0db823",
+     "files": 2,
+     "fm_name": "governance-overlay",
+     "has_frontmatter": true,
+     "skill_md_sha": "2434e6fd811bfaae7f3caa128ae0c43431b49d90347999153a10de09f1c1952d"
+    },
+    "gsd-add-tests": {
+     "body_bytes": 1067,
+     "body_sha": "d79bddffbfaf4b821fcb4fa0b82096d33543fc2355d6b502547c1339c80f12f7",
+     "dir_digest": "4f1e3e0fc1702c0ca0e1fc132972b8ac282825ddf2eecf9936b733efb9eaa536",
+     "files": 1,
+     "fm_name": "gsd-add-tests",
+     "has_frontmatter": true,
+     "skill_md_sha": "ab2fd0556fc57117bbc7778e7cb944ca8963bf82a5d6e582b131f9267c92f448"
+    },
+    "gsd-ai-integration-phase": {
+     "body_bytes": 1145,
+     "body_sha": "357183bf5d78e8e7836489749ab740a56b82f3cc836db5cf26d713d4de6ede98",
+     "dir_digest": "3414d1b0a242b6236a1177a6fbdc2ed6174cc1c3e2e6b203d8efc3d9e92127f6",
+     "files": 1,
+     "fm_name": "gsd-ai-integration-phase",
+     "has_frontmatter": true,
+     "skill_md_sha": "95b4a9804dbea78bc2a25d13d976ad8dfcfd1d73d4407847ad4583d9fa9a07da"
+    },
+    "gsd-audit-fix": {
+     "body_bytes": 880,
+     "body_sha": "78a5ed6ed1b7b27df424fd1b4bb9065adf69dbc42e484556df565b782c9a5c37",
+     "dir_digest": "9291372ea116f0b7ceb403f66e3527f995eb0f676ce60f33905b92f62118519d",
+     "files": 1,
+     "fm_name": "gsd-audit-fix",
+     "has_frontmatter": true,
+     "skill_md_sha": "f7910ba42d3d58d4df694519d387abf21143a50cbbb116eaa9f9ceac4b39da6d"
+    },
+    "gsd-audit-milestone": {
+     "body_bytes": 1210,
+     "body_sha": "ce4bb2f0a0101fd06fce5ff882087e2bc7941c23b1e03c64b50d5b4d3c59849c",
+     "dir_digest": "ca690eb0a273f363dc0f0c4b0b6cb2c429ebbad01d49a2bb4f66f60e82574593",
+     "files": 1,
+     "fm_name": "gsd-audit-milestone",
+     "has_frontmatter": true,
+     "skill_md_sha": "7055810f85f52b251d9b8ecd709975ef0df5e0511e998b029b4ba6d43234d0d9"
+    },
+    "gsd-audit-uat": {
+     "body_bytes": 741,
+     "body_sha": "722526a7aae7c0d5212066f1b4bf432282e1f9cc66df552c69962d672766e1fb",
+     "dir_digest": "c723939e0157194b297e624e54d21b5b6024ac5496b2769a69853a9f2df2b792",
+     "files": 1,
+     "fm_name": "gsd-audit-uat",
+     "has_frontmatter": true,
+     "skill_md_sha": "9e038608e7d125ae98bce938adc8176605233194e3cdf90b8fe4e47629e4e75a"
+    },
+    "gsd-autonomous": {
+     "body_bytes": 2324,
+     "body_sha": "5c72c8ed06eea707013e8b4a93d28d73f325afd73fde78f2291cb2331b4f546e",
+     "dir_digest": "9a2379d90c38744ea3891c2290404c3274f68e5ddebffd2629b0bafb059c416b",
+     "files": 1,
+     "fm_name": "gsd-autonomous",
+     "has_frontmatter": true,
+     "skill_md_sha": "3f1d0a7edc728f04b83c243dd8f625ce86886228282296668db9322ebb91379b"
+    },
+    "gsd-capture": {
+     "body_bytes": 4086,
+     "body_sha": "a37aa2658d2e2c27bf179165f8d4618054a7082ad1bbb9686dad2374754fd8c0",
+     "dir_digest": "a7e2b6067466efdd957a71434cb8fe60811f8845d35124dfe37942ccf62ab246",
+     "files": 1,
+     "fm_name": "gsd-capture",
+     "has_frontmatter": true,
+     "skill_md_sha": "f0244d8929d65d38905149aa6dc3ce3e38fb28bcccc64bc51bc6bcbd8283e82c"
+    },
+    "gsd-cleanup": {
+     "body_bytes": 700,
+     "body_sha": "e6b2bb4c57ce6b1be84e35bac0210932b7824b5778870212e6e79ac518b0114a",
+     "dir_digest": "f0ab9cc6887aa11d4ce8b4f71ac556c210cf90028402a1304cd39a387be05fdd",
+     "files": 1,
+     "fm_name": "gsd-cleanup",
+     "has_frontmatter": true,
+     "skill_md_sha": "b5bac05210fe6d23cba37b42f288702bf569417bf60aacf9a9f996e92cc0a309"
+    },
+    "gsd-code-review": {
+     "body_bytes": 3287,
+     "body_sha": "60ace15d5907dd66f97a38329e2b4d52bcc03ecba0dff6115575487c77f085b8",
+     "dir_digest": "bf2ab3e41ce13b31f2c8265fbaa6c72d621bfe4fd28ee54a35ea5ef003ce4423",
+     "files": 1,
+     "fm_name": "gsd-code-review",
+     "has_frontmatter": true,
+     "skill_md_sha": "842090777f4d2b9924d96d4baf390d6497d7268cc75d4a1b5f0a8d982ab7be1b"
+    },
+    "gsd-complete-milestone": {
+     "body_bytes": 4707,
+     "body_sha": "f1f7bfad3e617f5fe6070542e2fa28c79a7460ed386fd87c00802416b828dc2a",
+     "dir_digest": "295ca916bcd0519704dba4e20d959659e69f4a2cfa96e06157f1191ceeaa6c42",
+     "files": 1,
+     "fm_name": "gsd-complete-milestone",
+     "has_frontmatter": true,
+     "skill_md_sha": "9309e79460af8945af42c0731d62db07105a304ac226c11dd3682dc677800153"
+    },
+    "gsd-config": {
+     "body_bytes": 3064,
+     "body_sha": "619f07d398851e0e1e25dc49538e8a4ed202c1ee113b2b808504ffb1c8ef199c",
+     "dir_digest": "a6195bf7a5a53c3168ffd931abaf8be4d70c98b46d84887bc4c7a20e3da4c511",
+     "files": 1,
+     "fm_name": "gsd-config",
+     "has_frontmatter": true,
+     "skill_md_sha": "d7c4165ab530d249192d568ea3b77499f63cb68c117d735502e8df96447ac45e"
+    },
+    "gsd-debug": {
+     "body_bytes": 1732,
+     "body_sha": "3a80497fd15083821085986d35a3f8e029ebfa234c93c045617781e42f0a2cad",
+     "dir_digest": "29b406658c144ce598bdd04db759d3a8624eb73b58e71a96b2f72b8dd2b245c1",
+     "files": 1,
+     "fm_name": "gsd-debug",
+     "has_frontmatter": true,
+     "skill_md_sha": "5edbbbef168f404f5b11cd87b5a4d20f418710e2dc260df45288dea0cec7c2fe"
+    },
+    "gsd-discuss-phase": {
+     "body_bytes": 3441,
+     "body_sha": "36e4c942a1ec2637644265c145974ed1734c025de46941c777aecb43c84563b7",
+     "dir_digest": "fd87f83d951a01fbece4d35e22f650ae651aee594e11f11c7379da85307fa49b",
+     "files": 1,
+     "fm_name": "gsd-discuss-phase",
+     "has_frontmatter": true,
+     "skill_md_sha": "7b4d58a0c7da6f11fbf9c3a5425b908bbaf3c6649fc50581dc06085c42bcd0e5"
+    },
+    "gsd-docs-update": {
+     "body_bytes": 2204,
+     "body_sha": "76f10812fea5e78deaa04c671793459087f454265892299c0d6dd6454c5837f8",
+     "dir_digest": "c82015b445a7aaa7461bd336f1e4a40b83e6ca8a43f16ec678b982ca8eae862c",
+     "files": 1,
+     "fm_name": "gsd-docs-update",
+     "has_frontmatter": true,
+     "skill_md_sha": "0ec788b40f4d1b73592a4026f7cf3d50a40bec8a4fd4e90d39ade576037eb131"
+    },
+    "gsd-eval-review": {
+     "body_bytes": 826,
+     "body_sha": "6a446ba9e72125d355feb73c2b6e1787d06ee19ead6b374f0abebdc3964302a7",
+     "dir_digest": "874d79afd91d738acc68d697accd9ba00931936527bc35bcabad12e4424efb86",
+     "files": 1,
+     "fm_name": "gsd-eval-review",
+     "has_frontmatter": true,
+     "skill_md_sha": "d1839c65a8ead751b40a883c5c1c5e3c1fbe86f4226710da216070efde67f47b"
+    },
+    "gsd-execute-phase": {
+     "body_bytes": 2643,
+     "body_sha": "43f08e567412fb0c54fb103da918e3c054de9eeae5111d4ac0845bdfee4bcdeb",
+     "dir_digest": "1f33ea384683330a0f92c6630907524e1e1bb7cbbe52f40dc69b93a9fabaeef8",
+     "files": 1,
+     "fm_name": "gsd-execute-phase",
+     "has_frontmatter": true,
+     "skill_md_sha": "273d6ce035b66c2256096fff4744051ca9aff384d1e50baad1fde005de97199a"
+    },
+    "gsd-explore": {
+     "body_bytes": 777,
+     "body_sha": "6de62fbf27d3f79c125dcd8010bcdc68c4e6ca56e4e5be4a5a12ae579295ae48",
+     "dir_digest": "39fb1bcaac3c96649249cb325b330acb8534b281756528ba378f1acd4434df17",
+     "files": 1,
+     "fm_name": "gsd-explore",
+     "has_frontmatter": true,
+     "skill_md_sha": "df4d33721d6002499f3b8071539899eeabb8fbad9859a9b8d0d9c32bdc2629b8"
+    },
+    "gsd-extract-learnings": {
+     "body_bytes": 758,
+     "body_sha": "c22d3e210193b34c261c17926b1e4c09981a7100b1faac4099c141de54796e3e",
+     "dir_digest": "f0d273da749862514661de5c4977a63d9a42f24db86248e49bcf7f8bdcaeadff",
+     "files": 1,
+     "fm_name": "gsd-extract-learnings",
+     "has_frontmatter": true,
+     "skill_md_sha": "ff442d4e9e2aa4d1fcc18965019aa9d55426ef275763be14cb37698b1facdfeb"
+    },
+    "gsd-fast": {
+     "body_bytes": 900,
+     "body_sha": "ce1761b432fd6b059f2b243748cd5972b86d7eb34dd5f973a49143ae56dd7f5a",
+     "dir_digest": "f27a4219a67bb8b9626ddada4beb9c5d5a02b3afcd253b7b26199a781c961735",
+     "files": 1,
+     "fm_name": "gsd-fast",
+     "has_frontmatter": true,
+     "skill_md_sha": "a9f8f523512f73f93c59220772b67f425864bd87c7d38fd2e5399f69ce6129a1"
+    },
+    "gsd-forensics": {
+     "body_bytes": 2297,
+     "body_sha": "d5a9b92a643917eae071f33cd49ad9ef7edbfe207faa526c5108a876046687da",
+     "dir_digest": "eebc171b8ebae7068ca2db02fe85bed94398d2582a61c40048fb1355a1cb30a1",
+     "files": 1,
+     "fm_name": "gsd-forensics",
+     "has_frontmatter": true,
+     "skill_md_sha": "12a1efebef0f07187b595d4315cb5ec6666643e6b92a3b653600179769c1c83c"
+    },
+    "gsd-graphify": {
+     "body_bytes": 28432,
+     "body_sha": "edd14ccb81f9a59902a0108343ae1aa72061dddde6131ec7abbc7f668de3343c",
+     "dir_digest": "9bbc39d738780aa81331b1a36199a0755d31c7d2d4ff83de76f8904646a02d1c",
+     "files": 1,
+     "fm_name": "gsd-graphify",
+     "has_frontmatter": true,
+     "skill_md_sha": "5fb93464a48d076645e49b453ea7cfe16596d16e0c2c69dca62dc045bfacde2d"
+    },
+    "gsd-health": {
+     "body_bytes": 1317,
+     "body_sha": "e91256ef1d0da614dc2052114c9ab727d8270026af31b830b215484bd062c7c8",
+     "dir_digest": "baa51d08620c58310d97b2c6ac19ba1f2e20def1fda255d269db0e40818f8fdd",
+     "files": 1,
+     "fm_name": "gsd-health",
+     "has_frontmatter": true,
+     "skill_md_sha": "1dbb8e98a3aec90bf04d9e6be167128091b97256c767bfa28705b719897ce300"
+    },
+    "gsd-help": {
+     "body_bytes": 953,
+     "body_sha": "e607872971e442112e0b06d62aef82f42a167252f3270caf26d9ba388252fc47",
+     "dir_digest": "0ee4479e0d34ef4f39a80923a0f12d594fbd550e8becb39a7d22d764f1539255",
+     "files": 1,
+     "fm_name": "gsd-help",
+     "has_frontmatter": true,
+     "skill_md_sha": "d45914e7713c5757e3f6febd29c9347633fd926157d89be8927bf6576a9ca32f"
+    },
+    "gsd-import": {
+     "body_bytes": 5403,
+     "body_sha": "22169ad2a3fcd4af1fba5c6462fdc4dfa116cc14233cc8035d23da7c039ee5f2",
+     "dir_digest": "a7234c700f4cc020ce948ec0a3933a7e75d7e4133fe15848e344c37b67e58f9b",
+     "files": 1,
+     "fm_name": "gsd-import",
+     "has_frontmatter": true,
+     "skill_md_sha": "9886501dc6902a33f11698aeb167c09008e2fad32541bcb503e107cc95be528b"
+    },
+    "gsd-inbox": {
+     "body_bytes": 1353,
+     "body_sha": "8f748166ea27e1de621ba625853effebb4c6c1df9446e1b22e9c44f661d34c44",
+     "dir_digest": "0345736f54119151508f6c103b8b04d50e35c32c0e6a00236a805cf98b7f5bf0",
+     "files": 1,
+     "fm_name": "gsd-inbox",
+     "has_frontmatter": true,
+     "skill_md_sha": "e25b8cfd5a7cad585670ecb823f2b072595d9d620ca0f31f9601f2583579ca67"
+    },
+    "gsd-ingest-docs": {
+     "body_bytes": 2052,
+     "body_sha": "e3580d07b86efe73bdb2feb1d667bbac1097734f96c7c6c6bfc32c91bcd28ac2",
+     "dir_digest": "8aa54f85ed1fd3f78ec28960643d1f12cf6c722c70f11ad69fa254b22f1379d4",
+     "files": 1,
+     "fm_name": "gsd-ingest-docs",
+     "has_frontmatter": true,
+     "skill_md_sha": "ae295d9b6881346388e88c6f0a1e16b0eeeec4ee3f44ba75e634f26723f7e003"
+    },
+    "gsd-manager": {
+     "body_bytes": 1675,
+     "body_sha": "5588ddd56da69f93ca3ae9f8ae9a34fcbaa1def9df852d9483b51250e3c98f7d",
+     "dir_digest": "7905e2b911a56082bf55bcc8ed749e88b84c01c7bfc0bed3993f66657ef97edc",
+     "files": 1,
+     "fm_name": "gsd-manager",
+     "has_frontmatter": true,
+     "skill_md_sha": "9ca4d09bbc3f7420500a00e5d71988ac434b5aabca9448baf30962f4c0164b29"
+    },
+    "gsd-map-codebase": {
+     "body_bytes": 3649,
+     "body_sha": "a122dc226c629338e7076a9befdb67aa738411000c24c6d6432e7386e78676d3",
+     "dir_digest": "1e20b433f0491a83f3feb8f3a08a22a36581e670d8d2f9aa75f41c03004fbfe3",
+     "files": 1,
+     "fm_name": "gsd-map-codebase",
+     "has_frontmatter": true,
+     "skill_md_sha": "d34c10af5afd5d57b47c096881bca86cf053dbd9de97fb2e5b7f0d0285164005"
+    },
+    "gsd-mempalace-capture": {
+     "body_bytes": 5667,
+     "body_sha": "d4239736c0be2192c55997151aff9772c516403c4145b4310aac625ec945e269",
+     "dir_digest": "b19725f997da24ea20b03ef9f9a920a2cbe48229df537a0fd56dc0803a5f7c51",
+     "files": 1,
+     "fm_name": "gsd-mempalace-capture",
+     "has_frontmatter": true,
+     "skill_md_sha": "c6e375dea3bb00706c83e63f4f418b3f797dc5a29271bef8cc5bcb6ef6610c9c"
+    },
+    "gsd-mempalace-recall": {
+     "body_bytes": 5432,
+     "body_sha": "360b6a596a26cb5848c51bd1fe3d7643d9e2208f7d83a35674809fceb374c35f",
+     "dir_digest": "2a13c8076d0edcb185d33fdf773e1f6be32f0462d9fc3f20f87b5a3537f1cc9b",
+     "files": 1,
+     "fm_name": "gsd-mempalace-recall",
+     "has_frontmatter": true,
+     "skill_md_sha": "b756396ab44017b23909505d85e4e3c72de66c1c322e61f0032a003edae68dbf"
+    },
+    "gsd-milestone-summary": {
+     "body_bytes": 1876,
+     "body_sha": "d9f672091662257cbe3d87857b79b1f4c9a2ed1b7dbdd21b6b43f249b4e46e83",
+     "dir_digest": "28952baed2cdffd4a0cc4b123fa63041a7f32f8ee1752c85b178f2f690227d9e",
+     "files": 1,
+     "fm_name": "gsd-milestone-summary",
+     "has_frontmatter": true,
+     "skill_md_sha": "a8e570be919f15693156d9a0ba7c2a2e172108c540a6f99cb730d762a39ce0fe"
+    },
+    "gsd-mvp-phase": {
+     "body_bytes": 1711,
+     "body_sha": "354560757381f3ca6ac3c539a0e4393ce61647036b17c35c7e9ea0a0e6c0ba44",
+     "dir_digest": "648b92321e9073c0e36b41c2ee82c766a75a2f78a5cf2bacc7cb4dffe4747483",
+     "files": 1,
+     "fm_name": "gsd-mvp-phase",
+     "has_frontmatter": true,
+     "skill_md_sha": "0cdb360a5dde62ac36b577969509f366b93133212511c88999a13b7543041b3a"
+    },
+    "gsd-new-milestone": {
+     "body_bytes": 1645,
+     "body_sha": "0a68f5f3fa15d7b67ffcbe157bd32a67c78b8ce57e85736282a2d9d86c73d46a",
+     "dir_digest": "760faa91a0a3faaf942c168294553496f2ee0ffa0af99f3a489b7bdba7ab27b8",
+     "files": 1,
+     "fm_name": "gsd-new-milestone",
+     "has_frontmatter": true,
+     "skill_md_sha": "d4db488ac42df6fe7bab08617b2b68d193616188bd2837d281d102614bbe94a5"
+    },
+    "gsd-new-project": {
+     "body_bytes": 1382,
+     "body_sha": "8481e711cf685c7ccc5fc0d881bf5ecfdcd0c33f3b44d16a84b83eb9545deb3b",
+     "dir_digest": "147c973a72d3f67479d183bd23d135159d90dca9157d014d377a765b0a8c2fe2",
+     "files": 1,
+     "fm_name": "gsd-new-project",
+     "has_frontmatter": true,
+     "skill_md_sha": "95050ac86df7f9556fa44452b8df4266be7ac2197961ee0592e3da249232bc26"
+    },
+    "gsd-next": {
+     "body_bytes": 1029,
+     "body_sha": "b3723fd1e54ce1fa5546cf965d9e0074521d6d30b7120c61955ed826c519d85a",
+     "dir_digest": "b9d61e1d4e573ab13225b572d4b99b1731d1363551e8cbbb7d2edb3ec0e2852f",
+     "files": 1,
+     "fm_name": "gsd-next",
+     "has_frontmatter": true,
+     "skill_md_sha": "c3ae55d57bb765a13245ac0a38c5ddf452dc76c7ebb98f32a0410a591ced7ef7"
+    },
+    "gsd-ns-context": {
+     "body_bytes": 742,
+     "body_sha": "b551dcc549c6a23f054b6eef0e1faa5ea994156913d89ea2b82c621f56068ac9",
+     "dir_digest": "f3793968618f06bb8cf7afa0574b9129e10f4e22be2a31880843bdafe3b104c7",
+     "files": 1,
+     "fm_name": "gsd-ns-context",
+     "has_frontmatter": true,
+     "skill_md_sha": "3102e7ad9b60f1823e2feb444de85e537fff7927ed7a5083698216ffe6d42480"
+    },
+    "gsd-ns-ideate": {
+     "body_bytes": 645,
+     "body_sha": "32f561de74b1bc7be67281d180ca0815624189ffbcb78acd0c827e0643a473e0",
+     "dir_digest": "633950e0067118f5dfa293f70e75f2f1e9c24fb947ab20c5d20d9d2d048d21e4",
+     "files": 1,
+     "fm_name": "gsd-ns-ideate",
+     "has_frontmatter": true,
+     "skill_md_sha": "c2c129408a046d224d1afc3b989a5e67021651fca81a75b2769d65af48a312d1"
+    },
+    "gsd-ns-manage": {
+     "body_bytes": 1196,
+     "body_sha": "24445a84bd817c5bd857a25ad3fe80f6d273ab516ddd0184a496d04bd450e83e",
+     "dir_digest": "f006d340361f4f12ab3d5706d0d37dd959ed962dd26975415a92ddf8241ff8ed",
+     "files": 1,
+     "fm_name": "gsd-ns-manage",
+     "has_frontmatter": true,
+     "skill_md_sha": "8d786e01fa28a7bb084dc0f2b10234d99d967417a1451fd74bc133fb3194d002"
+    },
+    "gsd-ns-project": {
+     "body_bytes": 814,
+     "body_sha": "525f84d73f5c51e903c770e0c77460a6792edd216043861ddd8441e3c1407778",
+     "dir_digest": "8bc7351fdf594862a05c634440c3a701bb3d946bf75bca63c7502a27349238af",
+     "files": 1,
+     "fm_name": "gsd-ns-project",
+     "has_frontmatter": true,
+     "skill_md_sha": "76c77b121ad68b6caa786d644a681fe7d11d9edaa248872ffb9a60c9218ee606"
+    },
+    "gsd-ns-review": {
+     "body_bytes": 879,
+     "body_sha": "c8550463fbab5e76139f507f5190e1e05e12126806c6b3d4b6d673e73e698416",
+     "dir_digest": "d4b5279b0179ede5ea001e35845ce31b8ddf2c6f0729944325dcaf29f3d712e5",
+     "files": 1,
+     "fm_name": "gsd-ns-review",
+     "has_frontmatter": true,
+     "skill_md_sha": "4111ea56e820479f5d9ccc9546d10ed2d1496916105f7d8bd1e2cb84f4770e4c"
+    },
+    "gsd-ns-workflow": {
+     "body_bytes": 1435,
+     "body_sha": "e2952220c8df070eb48522165514588824b5cfc756f7c55015e8735913b6a124",
+     "dir_digest": "fdc55d9780ebd6ef9f2dea23532aca064d60257ee73d3eb754f5042f1de20435",
+     "files": 1,
+     "fm_name": "gsd-ns-workflow",
+     "has_frontmatter": true,
+     "skill_md_sha": "df8f9c316f7b48535ca423869f95f56b62639199511b5f10f057dc3cd19a3f6b"
+    },
+    "gsd-onboard": {
+     "body_bytes": 1607,
+     "body_sha": "10803149e3083153f80cf7bc3ced7ecc7c36a9d6eb7bf7cff2b3dc477b5fbf4f",
+     "dir_digest": "64437b8bbbd20bad37ce141a87d31245d2f30edd3eaf12240720b84034647566",
+     "files": 1,
+     "fm_name": "gsd-onboard",
+     "has_frontmatter": true,
+     "skill_md_sha": "51e2cddc0d7de62079648b6b8743293097342f31c3699448a2a39e4a27132ef0"
+    },
+    "gsd-pause-work": {
+     "body_bytes": 1246,
+     "body_sha": "466a914f0edba74cec0eabddd03d02a21a8f15eec0c051e4ac7b9c35026dca22",
+     "dir_digest": "495ac6a2abaa8d420667943eefc10ec2b27aef042f7bd62e31b4ee2d4995865f",
+     "files": 1,
+     "fm_name": "gsd-pause-work",
+     "has_frontmatter": true,
+     "skill_md_sha": "c193a9142520102a01044be4d08af2a29f3682e5035fb21bf8cd392dbeab8ed9"
+    },
+    "gsd-phase": {
+     "body_bytes": 3059,
+     "body_sha": "2fddba5fddb19368773e591894ff7706c6dadabbf0b38d017dab27fe3ca30fa7",
+     "dir_digest": "ae6d484add361f0424867bfc104324135343f24d1fdec1cbc2898d4d0d265acd",
+     "files": 1,
+     "fm_name": "gsd-phase",
+     "has_frontmatter": true,
+     "skill_md_sha": "ed52cba4fd18648eb762d3b717f1a79772cf05d0077fcfa12c3ba8e10961c1ad"
+    },
+    "gsd-plan-phase": {
+     "body_bytes": 4185,
+     "body_sha": "990cf32ae5954a7604463d7b77a981a169b6aaa9f2190cb7fb4a1dcb2220c5cb",
+     "dir_digest": "12862e4125957332e181cce2f46dde050c128bea51e1b056cae98d76fdf75841",
+     "files": 1,
+     "fm_name": "gsd-plan-phase",
+     "has_frontmatter": true,
+     "skill_md_sha": "46366ac745fda97e01d011895187dfb5a09151810814aa04861516b2a965129f"
+    },
+    "gsd-plan-review-convergence": {
+     "body_bytes": 3417,
+     "body_sha": "4b316cf22fd1c7d543f759938a86e9dd68ed7010cf3511618fba9a7857c0917b",
+     "dir_digest": "6993e064b2082dab7257f5e00fce6745f9237334a37319697c564442d5b193a3",
+     "files": 1,
+     "fm_name": "gsd-plan-review-convergence",
+     "has_frontmatter": true,
+     "skill_md_sha": "680d5a62aa5df3792b3a7de5c77e1875bcde89047f5b45745d30b352c895f122"
+    },
+    "gsd-pr-branch": {
+     "body_bytes": 747,
+     "body_sha": "9b569183b50bd506aacd9fb00d07c3a7046578ad4b2e69993d9180d7620f8e29",
+     "dir_digest": "c87edae7f24f12f3076d7b700f0110cbef14bb4158e148dcccfddb66f48331bf",
+     "files": 1,
+     "fm_name": "gsd-pr-branch",
+     "has_frontmatter": true,
+     "skill_md_sha": "ed2563aa2a25acb8aa5c25d62643940ade8d591ac8401dc985414406c7ee806e"
+    },
+    "gsd-profile-user": {
+     "body_bytes": 1649,
+     "body_sha": "3541f8e423ec5ac3cc47271b62d5efb27a726ee64574cf86507caa1ccbffd996",
+     "dir_digest": "f45f494bf6698f5cd4696498f6523ad762e1b8b10f473c11a0948518ceb3d3f8",
+     "files": 1,
+     "fm_name": "gsd-profile-user",
+     "has_frontmatter": true,
+     "skill_md_sha": "a077f13131bdbc844873ca11ba38c9c56b550bf48929c603a5f046f94aec73e5"
+    },
+    "gsd-progress": {
+     "body_bytes": 3543,
+     "body_sha": "2c95dbf7c68832db85c433818992a5ae00cdd59fea132aae53aae56e2728476f",
+     "dir_digest": "94c08117cd5763b4f64b0a9c0209b4118f82e3bf6d89be4324dedc39ce92a351",
+     "files": 1,
+     "fm_name": "gsd-progress",
+     "has_frontmatter": true,
+     "skill_md_sha": "b10ac8a466d947b77e7eee009b040f18207e53d8768186ba7edf1906a66a4d16"
+    },
+    "gsd-quick": {
+     "body_bytes": 6699,
+     "body_sha": "9835ccc2f0faa4142979d5f62e501c57e1ea43f35fba28e9d1192e81df25f9e5",
+     "dir_digest": "e86808abd970816ae093364e64c47f46b51da3425138e363edc08fb435c3ac98",
+     "files": 1,
+     "fm_name": "gsd-quick",
+     "has_frontmatter": true,
+     "skill_md_sha": "2e5ced62d70d86de6c9222bf229d8d5a923ea8f65556c489715623c0d5715f71"
+    },
+    "gsd-quick-batch": {
+     "body_bytes": 4875,
+     "body_sha": "1c3194b99f21fb7fcdf3505a8f78856c1686797b54dcdbb17cb61775a0387573",
+     "dir_digest": "02be5e6ee700d3e9598c99de6835f6b677baab8e2f282d0a81d51e133d4accf2",
+     "files": 1,
+     "fm_name": "gsd-quick-batch",
+     "has_frontmatter": true,
+     "skill_md_sha": "955af206305cb4fa205fe949e4a91600d771864c4c647963e432e3a84998f362"
+    },
+    "gsd-resume-work": {
+     "body_bytes": 799,
+     "body_sha": "9fd63c43fec901a1530534837dee20cd6ac511e3708ebc04b6d15083ca270788",
+     "dir_digest": "2ac84bcff454189d64556a42c90317f442456f663c5df2d38a7125d4e18bcd70",
+     "files": 1,
+     "fm_name": "gsd-resume-work",
+     "has_frontmatter": true,
+     "skill_md_sha": "d470b4a7231d1b06aa6fc128b7c5b44a88ef7dd1db4ef54303905a8d8c878e82"
+    },
+    "gsd-review": {
+     "body_bytes": 1722,
+     "body_sha": "e16e6d2686a0f5c41f2563442366d838bfbd60063e1a78088ce22306c47bcf18",
+     "dir_digest": "3c54967a505ee1d744f54d2f1d3bdee2ac3b2c78eef32828a14e3e62dee8a0b9",
+     "files": 1,
+     "fm_name": "gsd-review",
+     "has_frontmatter": true,
+     "skill_md_sha": "ebe4b665dcb7344bfcf77eeaac9b1b363457c352be14f308a166f2a9b508c356"
+    },
+    "gsd-review-backlog": {
+     "body_bytes": 1775,
+     "body_sha": "55bb32abf973668d783b8d5064232fea82cedec79850ffc9a439dae68a5a8bc7",
+     "dir_digest": "6e61b8baf9cd4099f2a95bfeeb1c6e4209874dfeb2ade74ef68a39566b307bfb",
+     "files": 1,
+     "fm_name": "gsd-review-backlog",
+     "has_frontmatter": true,
+     "skill_md_sha": "82166eabf8a728818df1ea1effd4e5589da6f424b16cfde62dc3bfa10eed79de"
+    },
+    "gsd-secure-phase": {
+     "body_bytes": 844,
+     "body_sha": "2d7801b5f267c7c738059cc71ef95a5038a2fe633b888d2c8f7203b52446e180",
+     "dir_digest": "716c92be8409905542605bb98427c4e697891afdb3143cccae974e7465712357",
+     "files": 1,
+     "fm_name": "gsd-secure-phase",
+     "has_frontmatter": true,
+     "skill_md_sha": "146cd608b0fbf325b005193c775b27b2a98cdc57a09a99ff43e4814ca50951d3"
+    },
+    "gsd-settings": {
+     "body_bytes": 976,
+     "body_sha": "ff1e0a735f650783e328579be8cb0385560aaa5043003c36ccc33f400f7efcd2",
+     "dir_digest": "353a3f2b6de99342ee117159fbe0a957c226ce9d18d9636ad518005062e0ffa6",
+     "files": 1,
+     "fm_name": "gsd-settings",
+     "has_frontmatter": true,
+     "skill_md_sha": "6f271b6b64c40eead1b3315ce1d9f1fc56de253ee156c53a2947a4dad695ee50"
+    },
+    "gsd-ship": {
+     "body_bytes": 711,
+     "body_sha": "65c4d6e1a77270a61602d2e2ba5597887bb1239a42eabdbe9eda36d664083a3c",
+     "dir_digest": "d80a1717423d29b746856c480f36d196ae6e42c8d2f95294f1badf45c81f6881",
+     "files": 1,
+     "fm_name": "gsd-ship",
+     "has_frontmatter": true,
+     "skill_md_sha": "eefbe1ac7e53bad1bc0527711601f637572f97a84ed96206019cd7fa663040ae"
+    },
+    "gsd-sketch": {
+     "body_bytes": 2344,
+     "body_sha": "db4ba083e994f19fb7228372c56b22b8cc37317d704bc44c51ab4736a7322983",
+     "dir_digest": "2a8cb7056e897d5ae305db5d9fa8d0a80c17dd2346dace60290eba85d686725a",
+     "files": 1,
+     "fm_name": "gsd-sketch",
+     "has_frontmatter": true,
+     "skill_md_sha": "f814a95fbad25ebab6ab793a157a24588659cc6b00815c3b8ab12d5024ec11e9"
+    },
+    "gsd-spec-phase": {
+     "body_bytes": 2320,
+     "body_sha": "9bbc21117a10095f2f65c3abe98a8c8d76418a0ee61473ca84dbe484d1a8bcdb",
+     "dir_digest": "7defa8f320663cf5ce4e5ae2687752ee91b2b662c9a44c228915288011489682",
+     "files": 1,
+     "fm_name": "gsd-spec-phase",
+     "has_frontmatter": true,
+     "skill_md_sha": "2a9a066ee38185b1c01bd4c0f3545869ea55f76e334b9a13c383c28264c19f3d"
+    },
+    "gsd-spike": {
+     "body_bytes": 2164,
+     "body_sha": "dc56b0c57f907e255f615656d15cc249299716da41b65c21676659b5224f8285",
+     "dir_digest": "724c97749d37036ba4bda553e49e00db567270efd6ee133980f0f3c6af964c33",
+     "files": 1,
+     "fm_name": "gsd-spike",
+     "has_frontmatter": true,
+     "skill_md_sha": "60ed2c8fad47c323e932961e970d2021fdb80777303bc1c4170e7c8d322258fa"
+    },
+    "gsd-stats": {
+     "body_bytes": 593,
+     "body_sha": "21e59f099e57f407f5b8699c83fcfdf174abae977e6d9352f7669aae1f9b0634",
+     "dir_digest": "0ae7ea56ac3c58fb3024c370a59c0a5e6206514cf39ec99017e359d7bfe82e3d",
+     "files": 1,
+     "fm_name": "gsd-stats",
+     "has_frontmatter": true,
+     "skill_md_sha": "6944472369edacfb9812b952395598028bd20c741c7f302afa3dacbf3f28419d"
+    },
+    "gsd-surface": {
+     "body_bytes": 5824,
+     "body_sha": "6cd68e04b19bf52adf9a23c1fd98d307fe7490b75835381550984e64a1319998",
+     "dir_digest": "cce92909f7ef497b8898d7d0ba346d7755577dec55f89f7f51677b2b45264da5",
+     "files": 1,
+     "fm_name": "gsd-surface",
+     "has_frontmatter": true,
+     "skill_md_sha": "a01adb87a011c61fe1f2b75c419620518c06bf6fd443008226cea3be35fa3bb3"
+    },
+    "gsd-thread": {
+     "body_bytes": 632,
+     "body_sha": "8a0d020f000ec716e35cdcbd07b34f4b5f8c2a98632613b1e5925072e9241be1",
+     "dir_digest": "9fd42d65fa92f73b6b61fa1e0ac5b6d46d83010c58c67d26e7381a5718b2f7a2",
+     "files": 1,
+     "fm_name": "gsd-thread",
+     "has_frontmatter": true,
+     "skill_md_sha": "b1b487aebeca525bf560fbddc115d755d47a7248731e99256f3fcf2d2af79b90"
+    },
+    "gsd-ui-phase": {
+     "body_bytes": 794,
+     "body_sha": "aaf5f9ac9ef2f1e193cce53cbbdb54e98fdabb6f5cc77d4842f8c4f1fd54e36e",
+     "dir_digest": "22c3b1a2da7786ff57e116b2adda89af694ab23b9d175d984289a391cbfc0ba6",
+     "files": 1,
+     "fm_name": "gsd-ui-phase",
+     "has_frontmatter": true,
+     "skill_md_sha": "ba2b789b8e9e8547a256e600c615af46eb2f553f1b9a4cb0de2c4f701c46ce04"
+    },
+    "gsd-ui-review": {
+     "body_bytes": 767,
+     "body_sha": "ab6df8a66d02abfa630474647d9b7963b085f6955d54152737d89e237982ebff",
+     "dir_digest": "3907c131e5b59530edb83b9014b1536d7e1770a6061a15f96a2f36236cc4ecab",
+     "files": 1,
+     "fm_name": "gsd-ui-review",
+     "has_frontmatter": true,
+     "skill_md_sha": "d86bfa1de50f6ed0444cd342cbc98d768d0a8508ad3cbed57a7a4d65f246ed5b"
+    },
+    "gsd-ultraplan-phase": {
+     "body_bytes": 978,
+     "body_sha": "62131823ec6ebe85ed6c2ad3add541fcee5713c2afe521751ec8a8bdc18f1a36",
+     "dir_digest": "8dbe991e9521b4eeb64d936fc5b345c2b5a01cd090011fee5e706471a12a01f7",
+     "files": 1,
+     "fm_name": "gsd-ultraplan-phase",
+     "has_frontmatter": true,
+     "skill_md_sha": "c084815dfc8d6d4df904ec0ed477040ac1bb255f8369292fb0bf1af66b70f906"
+    },
+    "gsd-undo": {
+     "body_bytes": 922,
+     "body_sha": "b395698057e0986d17421aa29eb66781b8dd3ec5656399c0b73776532f3023e9",
+     "dir_digest": "8fb362ebb62d7a168d2f6fc09aa96683a1ab9c2197099a0e347972427f6237ba",
+     "files": 1,
+     "fm_name": "gsd-undo",
+     "has_frontmatter": true,
+     "skill_md_sha": "baaf6a9dab80c9b1b848023d6ed047cecaa33de194f25f4cd5f7ff5234da84b7"
+    },
+    "gsd-update": {
+     "body_bytes": 2823,
+     "body_sha": "8bf510fd412c7978cdc3c3c9fc0f9307953d0bfd8036f8012456386f26af03a0",
+     "dir_digest": "e08dbe3849ea9d985b5cc0adfa4d9f7d6c2a756e8fe633e0fd22ac001f1cf3b3",
+     "files": 1,
+     "fm_name": "gsd-update",
+     "has_frontmatter": true,
+     "skill_md_sha": "f89b1d4ba291c86e7a9e8385979cbe217219642c1c3621a623e476880fdffe13"
+    },
+    "gsd-validate-phase": {
+     "body_bytes": 869,
+     "body_sha": "3887990166aceb15fda45e090cbb2e1aa2d3fc88e0071d913cc5ffc2869f5f92",
+     "dir_digest": "8bb14f2443fe4717d8b171f60e8140e66d44e741273335bfd2f06c1ab7e6427f",
+     "files": 1,
+     "fm_name": "gsd-validate-phase",
+     "has_frontmatter": true,
+     "skill_md_sha": "8b2a71bca5574790fff5c314c22ac2cb5a6038fa8a70d10024eb586341666588"
+    },
+    "gsd-verify-work": {
+     "body_bytes": 1303,
+     "body_sha": "146cb5f3ecea9f66270a35f2c7e534e323e9e5d091b3db599af3785ae7b40ffb",
+     "dir_digest": "43fd6b5f26bda577d38ecb25b9b5521066cba325f4996e5d1f8c15c3ba274d5f",
+     "files": 1,
+     "fm_name": "gsd-verify-work",
+     "has_frontmatter": true,
+     "skill_md_sha": "2e43aa2667782f2dd22de90d7b455013c9cc8d7349aa4271c1bd8c952d05218f"
+    },
+    "gsd-workspace": {
+     "body_bytes": 2551,
+     "body_sha": "65b68d04536aea9b95e7f85e538e4883e407376fe629cd64daf3783572e2dc8f",
+     "dir_digest": "ae34fbf0748e70b81e6ca81293b8c5abb20b368af0f638c3668a7976db0aa9d5",
+     "files": 1,
+     "fm_name": "gsd-workspace",
+     "has_frontmatter": true,
+     "skill_md_sha": "a06f9664fb0c94cf896183980a08a38c144867cb20ab5ba976c2c2b82e3862a1"
+    },
+    "gsd-workstreams": {
+     "body_bytes": 2041,
+     "body_sha": "112660ceb663c7506d921dca172db8f29a275f48c3118244ce4aeab8e21d8088",
+     "dir_digest": "ec07ab4e2a4f6ee347b2dcfa25680c4908a931df4538d875ce8ece59ee1682c9",
+     "files": 1,
+     "fm_name": "gsd-workstreams",
+     "has_frontmatter": true,
+     "skill_md_sha": "1fb8b97642e8e58272e97192f550162edaeb64b0177ef135eeaf0fae92dc9f73"
+    },
+    "guard-event-reachability": {
+     "body_bytes": 17884,
+     "body_sha": "9101d544d659f9a63258b582af9f747c8cac4e1e8136718b0d4b0368a6ec8279",
+     "dir_digest": "71d514071166c4f19932a3ba691a3399bd11a0142c69d27728f9e9c2d00b90d4",
+     "files": 1,
+     "fm_name": "guard-event-reachability",
+     "has_frontmatter": true,
+     "skill_md_sha": "960e476487bd4da5bb60c02b51dd2a5c1ae07e24cd401321b94c4bead37c1639"
+    },
+    "humanizer": {
+     "body_bytes": 119,
+     "body_sha": "be597f90abf71e095c2731042ad8fc702869d24d6c08d311a6ed5c6800afcd1b",
+     "dir_digest": "8cb6f9e2c52af4b52ff964beccc3972a56515780bd6230ab1de2c73ef552e8b8",
+     "files": 4,
+     "fm_name": "humanizer",
+     "has_frontmatter": true,
+     "skill_md_sha": "5284313089f2a7d3a9f7332e4ecc9764fb29ee96e35a65ec4ac5746711a5e9b7"
+    },
+    "image-calco": {
+     "body_bytes": 3697,
+     "body_sha": "1abcc9e496762e91f3965c0ed05b502e481ecef64af31db85cf3e8924ee6be2f",
+     "dir_digest": "f760f72c3c7fc251de8f58b0430102ebd54e9b76e0a7f1e0fa5f718d8191c96f",
+     "files": 8,
+     "fm_name": "image-calco",
+     "has_frontmatter": true,
+     "skill_md_sha": "8ab0cb47063ac28e7ab663fd61dfa44e9bf5785b73728e3be00b8d4b9212506b"
+    },
+    "image-to-video": {
+     "body_bytes": 10847,
+     "body_sha": "2891869cbda31b1e7e54d6b671152204955279894c9e7b4d95b8d6191afa7d97",
+     "dir_digest": "d16a01f5faa44464eb4b1450d505fc1d790de519b45fe723f07be6a0e8927a13",
+     "files": 1,
+     "fm_name": "image-to-video",
+     "has_frontmatter": true,
+     "skill_md_sha": "7a97ff688209d3cad39a9d84b284b209c3b3cdcc775fb91b4711b2eb1555ad7b"
+    },
+    "instrument-before-claim": {
+     "body_bytes": 45285,
+     "body_sha": "f60732983aa822fe30160a0f012b4f4e36188fda64fbd1050888cf6ce67d646e",
+     "dir_digest": "be8857924069ca2f132331d2ccc568f9a9431e6f3fdcb0efcdd6bffa67f05f5a",
+     "files": 1,
+     "fm_name": "instrument-before-claim",
+     "has_frontmatter": true,
+     "skill_md_sha": "92868f093ae326201b75b227baa667fbd2170e4c3c2c793784427c343dbf5893"
+    },
+    "java-architect": {
+     "body_bytes": 166,
+     "body_sha": "d63a93c31b2e661e6b3470fc261663b48171ecb90c195f1f5695d7b1cda1546c",
+     "dir_digest": "37b4e78d1a5e30ca4a614405afa95e0183871bc737406aec0b139429ca332157",
+     "files": 2,
+     "fm_name": "java-architect",
+     "has_frontmatter": true,
+     "skill_md_sha": "df8912133b205f49633b7884ec46b990fdebc97a0f9908b6ea443cb216457daf"
+    },
+    "kobiicraft-debug": {
+     "body_bytes": 176,
+     "body_sha": "d31d101a9b951f007cb13cb065431492b4d90e73e3541d8b7de12f8b594f8d16",
+     "dir_digest": "35536086b250912e16940f154e3949a25d34432942f06ed7ff6a8c1768671018",
+     "files": 2,
+     "fm_name": "kobiicraft-debug",
+     "has_frontmatter": true,
+     "skill_md_sha": "f8d044554f8f331764b72fca2f0583e4fab6b7029475a236005eb915847d9f8e"
+    },
+    "kobiicraft-dev": {
+     "body_bytes": 212,
+     "body_sha": "709838677414b7018ccc5247e84b42d3a8d2b596277030d3bd275521ce81cf39",
+     "dir_digest": "156152c123da1c3c1792d46f3062fb17e548a9df051cb0951b3d652ad9518cd2",
+     "files": 2,
+     "fm_name": "kobiicraft-dev",
+     "has_frontmatter": true,
+     "skill_md_sha": "f665ed63f73872d427575b2d85d19d7b98ee286de831136d8105584ce603465a"
+    },
+    "kobiicraft-execution": {
+     "body_bytes": 215,
+     "body_sha": "12974211b3b751818324d1de4504cd4153730fe0d07bf9cc668a8806becfb51d",
+     "dir_digest": "942fa5ceffe6901424e11026b9975222a0a52e437887e30334bbb2285297a72c",
+     "files": 2,
+     "fm_name": "kobiicraft-execution",
+     "has_frontmatter": true,
+     "skill_md_sha": "0141e29124fba74679b2dce1a1505973b2baa45063d099b3cac87f0d0cbcb8d3"
+    },
+    "kobiicraft-ops": {
+     "body_bytes": 216,
+     "body_sha": "36ddf446866dcf5a9a39e43c57558078d361cac91df18783c26fcf2643270378",
+     "dir_digest": "871be253d04f2fbe5bed3153b26f394350a934ac20f6e65761fb2045d1c661df",
+     "files": 2,
+     "fm_name": "kobiicraft-ops",
+     "has_frontmatter": true,
+     "skill_md_sha": "b5e68770968b88611dad7d74a200c1ef7d1ffbb6a98e99af26c6569f74ae3656"
+    },
+    "kobiicraft-prd": {
+     "body_bytes": 157,
+     "body_sha": "197443045d454b58f4bb50f0608117035249bb9aa9e0519d3d94f14d841eb532",
+     "dir_digest": "26e67bb89241741325ede83158b37a1bbe35da370ea8aacdefd3e090d0d90459",
+     "files": 2,
+     "fm_name": "kobiicraft-prd",
+     "has_frontmatter": true,
+     "skill_md_sha": "5257bc0aef3ee6f9e8b82c2b3efbb2786984a4ea73a66243982455bdc64ebee6"
+    },
+    "kobiicraft-product": {
+     "body_bytes": 248,
+     "body_sha": "9b0c12c2d07aa4398557e75608da8e77273e3d0e280ffcbad9f3d1ec1a794205",
+     "dir_digest": "9ec3922cb4f54a5bbd7a83527beefeecf2a18ff25e3a725bbad83cb6ca081a8b",
+     "files": 2,
+     "fm_name": "kobiicraft-product",
+     "has_frontmatter": true,
+     "skill_md_sha": "81398ad35c2f80484643c4154572b417a8c9b66379d0608057887cb449978881"
+    },
+    "kobiicraft-review": {
+     "body_bytes": 173,
+     "body_sha": "b556e5f352dbabe6471cfac79a540b2d0b579428df1d8ddc805f5bd8832a2a2f",
+     "dir_digest": "b4a35403adcd4b838b43f381194a927ce664d15bb9b9c3b6e5af1ac81aa29313",
+     "files": 2,
+     "fm_name": "kobiicraft-review",
+     "has_frontmatter": true,
+     "skill_md_sha": "cbd7abf865d4d83f03b498e626ba9f7fcbe585d5ec827270177ec025dd746244"
+    },
+    "kobiicraft-testing": {
+     "body_bytes": 2191,
+     "body_sha": "beebc1cd5a590df7e55eff00d2fc4d0a24e28aa5e0adabd06f6dc9c84be330aa",
+     "dir_digest": "b29afae774fc3e65eb09cf68e48b3db3a7e7a94ba3140b491bbfa3233a5ce012",
+     "files": 2,
+     "fm_name": "kobiicraft-testing",
+     "has_frontmatter": true,
+     "skill_md_sha": "6b3ed3d5d3dffbf03b351b76ddc1e06ca757a1d9390146d1b45dd6f577a89e02"
+    },
+    "lateral-thinking": {
+     "body_bytes": 10424,
+     "body_sha": "cb9aa79fd395dd9d0c1e9948fba91f7eca5f6dc8db831d0b439c3feb424b7d72",
+     "dir_digest": "115b4a5663891781918ffc0d64d632b0534f4a570a3a36096f6090bf91cb8bfe",
+     "files": 6,
+     "fm_name": "lateral-thinking",
+     "has_frontmatter": true,
+     "skill_md_sha": "d42f2098a2b56cabb57dbca5db7c7e59609e9d26a68469736d8089b6e9f080ac"
+    },
+    "leverage-research": {
+     "body_bytes": 7987,
+     "body_sha": "3d4d963026026572f846cc730aa2c05e1ccb00f535d92dd65bd51d81fb57ba12",
+     "dir_digest": "999bad2372eed0ce47c3cc62ab81683dce479e3e77b38b5aa58425f449c8eb27",
+     "files": 4,
+     "fm_name": "leverage-research",
+     "has_frontmatter": true,
+     "skill_md_sha": "b1154ead48ae7aafdfd39db18923da8b0f7bf7d78c268191690b8b9b09780c33"
+    },
+    "managing-sleepy-skills": {
+     "body_bytes": 155,
+     "body_sha": "01e535170bf2a2a01b6bcd0d0d429cbece48c258176ac57cd7f9e76b71271205",
+     "dir_digest": "441f119027fa085b199d611d12ee233488e53550f61325da3417caa4e433bc0f",
+     "files": 2,
+     "fm_name": "managing-sleepy-skills",
+     "has_frontmatter": true,
+     "skill_md_sha": "2bb85025bf67cd2ff26c1467556ddbdccd95c22b2e6cde23dff7a8bf7dabe3b2"
+    },
+    "marketing-psychology": {
+     "body_bytes": 21205,
+     "body_sha": "cc54113bd1a459006635eae7c4c08437c7316360001b9dbbb4bb24eeb2e35853",
+     "dir_digest": "55c265bd45fd09fa962365ad7aab9810700603dd7ccecd167385d8fc52bcc28a",
+     "files": 2,
+     "fm_name": "marketing-psychology",
+     "has_frontmatter": true,
+     "skill_md_sha": "573bbe4f6e300e7fb75299e314f56e26382d284782caa2ae0e0f33eb2e646548"
+    },
+    "mcp-builder": {
+     "body_bytes": 117,
+     "body_sha": "81f1db612ab5194f9a50110fced764b4a84e8653803ec34c909562f9d2d3ff97",
+     "dir_digest": "8c54e5b9eb245b4d1516a8b4f916b521c12c4ff86f21546181cd3c92aeff5824",
+     "files": 12,
+     "fm_name": "mcp-builder",
+     "has_frontmatter": true,
+     "skill_md_sha": "7eb58edeb009818c0700a1b82bc373757dbd45cccc1338a27634810ba39c1fcb"
+    },
+    "minecraft-android-renderer-stack": {
+     "body_bytes": 9802,
+     "body_sha": "89b8088ee47749f467eb74e3aa688258449f5063c9fc3c1933d928ce9cf721eb",
+     "dir_digest": "e70f6b220c656a20cd9c9c13734d61e61ae5e6ba3ad744e347b96a007f7bbf88",
+     "files": 1,
+     "fm_name": "minecraft-android-renderer-stack",
+     "has_frontmatter": true,
+     "skill_md_sha": "94ababd5c13b7a630ef11e47a285a218651ecd314905d89a4f31121108007d62"
+    },
+    "minecraft-mod-jar-patcher": {
+     "body_bytes": 13595,
+     "body_sha": "276e37ed8bc0fce8960e75133c20fad97fb53e62c1d243e95f844a5fe03ee55a",
+     "dir_digest": "9ebd9bf5dc3d60aec4423ef92041a29467f0e070951f1377bad6a2dd4890a313",
+     "files": 1,
+     "fm_name": "minecraft-mod-jar-patcher",
+     "has_frontmatter": true,
+     "skill_md_sha": "e8ed8e3774a403630aee522575751755c970faecf4784a30aa048fd69b82991c"
+    },
+    "mobile-app-ui-design": {
+     "body_bytes": 4962,
+     "body_sha": "e03fd8e6369cf2cd9ebbf40c6ec6e731d5cdd149b767e7ef07834e5aeea6998d",
+     "dir_digest": "3944e2bdd675962f8c170c76ba5c9e4f1a9ba8593058048833aef25e2333442b",
+     "files": 1,
+     "fm_name": "mobile-app-ui-design",
+     "has_frontmatter": true,
+     "skill_md_sha": "3cad45b6f4db53da3f542f86a66dbbb206677f5a1729a55f1b6504be5edf0536"
+    },
+    "mobile-game-wii-port": {
+     "body_bytes": 10919,
+     "body_sha": "e214a65654ea8f49db61b8fd68d649bbe6aeaf6f3a5861f3b79a044bbd591ec6",
+     "dir_digest": "1c4bbb70dcfd1cb9295c14d1db5739752601e329efa935430dbfb544cbd33db4",
+     "files": 8,
+     "fm_name": "mobile-game-wii-port",
+     "has_frontmatter": true,
+     "skill_md_sha": "88c6539d5dabf2da9a197734c970fc78c5df3ebe179033a01af764bb5b945eef"
+    },
+    "monetary-quantity-integrity": {
+     "body_bytes": 13222,
+     "body_sha": "728e994d1bf17201d82bf59825bf54515ddd6f193c9927744b26fdb956c446da",
+     "dir_digest": "cf55ae3f0c8bb43ab866db8b64d69fc16647327ed35c428584e9b0f8ee9d469b",
+     "files": 1,
+     "fm_name": "monetary-quantity-integrity",
+     "has_frontmatter": true,
+     "skill_md_sha": "34e63a8dca27c83fe018f8b9129612d50338eae0acb40f7d4a0f934d52bbe069"
+    },
+    "motion-promo": {
+     "body_bytes": 7304,
+     "body_sha": "371484cb6c9bd5380a3f916c845e8873c104621f886a2e6010e510745b7ea04a",
+     "dir_digest": "f962b1e7e7e121ba5d282c52c899646b1adcaa8c986718383641cb2f783978b8",
+     "files": 10,
+     "fm_name": "motion-promo",
+     "has_frontmatter": true,
+     "skill_md_sha": "0aa467737f44ab982e8faf9bf00b4873ab03046f77cf5ff09807d95cb6068595"
+    },
+    "on-device-verification-loop": {
+     "body_bytes": 7607,
+     "body_sha": "87105b68a4cc9345f45b00c2e74dceda4471b09a7148fcc7c960b137e2c8952b",
+     "dir_digest": "af1e91196de58583580e6fe4661ee047e1c45f769a7b7ee8100f91303dd05718",
+     "files": 1,
+     "fm_name": "on-device-verification-loop",
+     "has_frontmatter": true,
+     "skill_md_sha": "23e818a19ad0f15bd2fb7d7cd2aa83a91672289034e6375d41acc9fa1ad936a7"
+    },
+    "pojavlauncher-headless-driver": {
+     "body_bytes": 8971,
+     "body_sha": "832b8816ed9961bf5afab47185d5e4a4f170cf24a1209fdf30fd41fa07ee50c8",
+     "dir_digest": "637bbf332655a65297ad288a1574a58bb3fb48824fcefd8bd74b5584359635af",
+     "files": 1,
+     "fm_name": "pojavlauncher-headless-driver",
+     "has_frontmatter": true,
+     "skill_md_sha": "8ac1a7675d0284e8a4205da8b86933768ce5a95d584efd26ed24a43bf4aa429b"
+    },
+    "presence-is-not-residency": {
+     "body_bytes": 9104,
+     "body_sha": "c3dded2dbe4f2712132ef117e2454fab08cc704e2dafa466bb1949c462f2dd26",
+     "dir_digest": "49a6b3a478edd52909fbbfb48ce76989dc7667e8d246650ebe3581ed4e5aa7a8",
+     "files": 1,
+     "fm_name": "presence-is-not-residency",
+     "has_frontmatter": true,
+     "skill_md_sha": "f40dedff3afd86f967563d3619c513d6ba51473b9f755c62faac1415e104ccd7"
+    },
+    "project-bootstrapper": {
+     "body_bytes": 122,
+     "body_sha": "634b3888afdcf2e47c0d619e059c6e870eb1bb78ef1fdf683c57cde5b1a7e105",
+     "dir_digest": "e7f58627906026e18c662adfa0828583f15acfe366227419f4e5f80ada628f71",
+     "files": 3,
+     "fm_name": "project-bootstrapper",
+     "has_frontmatter": true,
+     "skill_md_sha": "fad27458f94c90aaa5e8d526de1e02524e4e5440fec59534ec43376a4b6a254b"
+    },
+    "project-pulse": {
+     "body_bytes": 132,
+     "body_sha": "7cd8bbfb2cda04e476bf6755036fb903069cff69c96b1d8cae99133bce0ea741",
+     "dir_digest": "11e6d60175b6d81310c4fbd9b3ea302df4057c34d5f3663e236e1d4bf56a2158",
+     "files": 3,
+     "fm_name": "project-pulse",
+     "has_frontmatter": true,
+     "skill_md_sha": "02a0b96c626e0850b59f8f2f42b58692a6d65a8a42be6efdb57b5500af0de50e"
+    },
+    "prompt-engineering-patterns": {
+     "body_bytes": 4819,
+     "body_sha": "53beb557d196a7e15e6f3e218796471b8a97278dd73c34d21a694bbfcd18617a",
+     "dir_digest": "2e812830f7125cddcf9bed4be08a3bf32ca5ea2f988b1d73371497f2956e5077",
+     "files": 10,
+     "fm_name": "prompt-engineering-patterns",
+     "has_frontmatter": true,
+     "skill_md_sha": "5326e0c249ca472045b38adc7f65ef09eda60fc58d13387c91b93aca2a17df4f"
+    },
+    "python-best-practices": {
+     "body_bytes": 308,
+     "body_sha": "eef06498403084d6224489fed3368a088c83ce722008723bf38206038a207e14",
+     "dir_digest": "c8632bd4848fc9f4a834826c54b49d5a452fdced64c2c8a444698b37d55a5f3e",
+     "files": 10,
+     "fm_name": "python-best-practices",
+     "has_frontmatter": true,
+     "skill_md_sha": "ef533be1501140a8d579695fc13e08f1ed230f64fdcbd65a06593072c9228433"
+    },
+    "python-pro": {
+     "body_bytes": 149,
+     "body_sha": "fe84fa490d9cdd82c8d29a1211bf9f6902f5d4a526c96c7f7353bd09da48ead3",
+     "dir_digest": "0ef25099032526bfbb08ceca0d7a9583945fbbbd9354d0fe29eb2567dd5d324c",
+     "files": 2,
+     "fm_name": "python-pro",
+     "has_frontmatter": true,
+     "skill_md_sha": "22977cbe63d010353980718a09ca9dc7740f0f2c2cca240da644ae9ea134a7c2"
+    },
+    "react-best-practices": {
+     "body_bytes": 6806,
+     "body_sha": "315f5c4b6e65a9cb8fdec6d383f5723edeec891af6074387a17fe72060301cfd",
+     "dir_digest": "741c320ab924f3d033c763574c1a166e4318454937dce6e10015f0230830a6bf",
+     "files": 76,
+     "fm_name": "vercel-react-best-practices",
+     "has_frontmatter": true,
+     "skill_md_sha": "71ed7794962fa6e803ee83030517b5b93a9f70fbfeb431ec4535c5480a8d8355"
+    },
+    "real-context-reachability": {
+     "body_bytes": 22003,
+     "body_sha": "c1eef009ec045bbc760121b9b77c52c37229152f03e9754ea7cf771240b0f9aa",
+     "dir_digest": "e9c366be7f30871b767cc30f0d359317e638c2f987e6c3a41e634f7c523f28ca",
+     "files": 1,
+     "fm_name": "real-context-reachability",
+     "has_frontmatter": true,
+     "skill_md_sha": "26139cdc8748c7650300f2fd0a5a863c351d19c2e743d3e88f54518847cfa1d9"
+    },
+    "recurring-work-cardinality": {
+     "body_bytes": 7848,
+     "body_sha": "d1232bc926a6abfcf2196fad70f729104def97c8a6bc0acc19875599962ed90b",
+     "dir_digest": "0c9f9d82ad313056eed1fb5c99cc891e966ddc31d59bd8f6d1b5f582d88a40d5",
+     "files": 1,
+     "fm_name": "recurring-work-cardinality",
+     "has_frontmatter": true,
+     "skill_md_sha": "e9ce591d14e7875807dfc5666e98b503c0777ca0b517c7485d32b066dcf9f67b"
+    },
+    "remotion-best-practices": {
+     "body_bytes": 9505,
+     "body_sha": "35d7c78bad7bec7f1772e93c9ec4c41934e915cf42b08c77bce7ac8090a231f7",
+     "dir_digest": "5ddad26631886c15de9a65df929f3a446f434b49404a32c9e43a476fb49c90a4",
+     "files": 39,
+     "fm_name": "remotion-best-practices",
+     "has_frontmatter": true,
+     "skill_md_sha": "829d9e0b1c5a73699f527ba1d3e4e10edb5bf66052a83d488617d9ebf255a332"
+    },
+    "remotion-discovery-trap": {
+     "body_bytes": 5361,
+     "body_sha": "60784f800c6c542c192572d508e48b54e8a5dbd9dc27627f09baba62ef2028ef",
+     "dir_digest": "df0c73a4e4f1c738f8f28a373b264eafc2d14439276fb93af7567257808fb2f4",
+     "files": 1,
+     "fm_name": "remotion-discovery-trap",
+     "has_frontmatter": true,
+     "skill_md_sha": "3140ec6c87d15ca77406af6a4d8738187223d1a92385c4f01d6b929c9e2f32a9"
+    },
+    "remotion-foundation": {
+     "body_bytes": 4715,
+     "body_sha": "b04d052b03ae495122f36859e83b7e8b3e57bd4dcf4fd6ed4377197fce6892ba",
+     "dir_digest": "7f453af29f6687e82f72cf173ec517e9c87fad1bf2bb3aa2fa3461baea97cdc0",
+     "files": 1,
+     "fm_name": "remotion-foundation",
+     "has_frontmatter": true,
+     "skill_md_sha": "085891faaa8b0c0500d71d2d600f8feb57121837bf77d5aaf6c558ac5ac4f392"
+    },
+    "remotion-kobii-templates": {
+     "body_bytes": 5255,
+     "body_sha": "038c19b6e11c1f9921b73343f1a0af277cbd7ff077c509786f609eacc1cce01f",
+     "dir_digest": "99d29da6e355374029e0632a19cc144742bab4f1012f96d26cd4d8d6e9adc781",
+     "files": 1,
+     "fm_name": "remotion-kobii-templates",
+     "has_frontmatter": true,
+     "skill_md_sha": "453f17f1ee0909457feac8c9a20a43f7b5021c0914b6415ae7d6990b591fab1e"
+    },
+    "secrets-management": {
+     "body_bytes": 7378,
+     "body_sha": "6114aba7e5a2f77b2c3302713801f49469566024db63b1ee6292bbeb07ded5ca",
+     "dir_digest": "d3970e8e59de65a3c379d49ed384f847dbb60b1ca9150112982cd2a1c747682b",
+     "files": 1,
+     "fm_name": "secrets-management",
+     "has_frontmatter": true,
+     "skill_md_sha": "da14565446a404c0a3ca2cf4363f755dc06a351c4b588be453ea73680d5658d0"
+    },
+    "session-handoff-protocol": {
+     "body_bytes": 8791,
+     "body_sha": "4258c4634b7dc0043b8bfa652dfbb29bcff05b61bde6c45e92337e17f686f875",
+     "dir_digest": "40c661673f5933347c094e1fa2db71a78521e912e3b88b71e5ee8bcab25d6145",
+     "files": 1,
+     "fm_name": "session-handoff-protocol",
+     "has_frontmatter": true,
+     "skill_md_sha": "463fc8e4f2f2ae5753a1d991a544e962933006a01b337d43dec711ba287bbe39"
+    },
+    "skill-creator": {
+     "body_bytes": 115,
+     "body_sha": "4bf68f301963f4f928a134aef4545f3aeac29d93e7113f467f95d2afea585eeb",
+     "dir_digest": "1ab23b7b8b69e2ee986e44a6b1877c274eb4a0c859dd81e370849eedeb94c264",
+     "files": 7,
+     "fm_name": "skill-creator",
+     "has_frontmatter": true,
+     "skill_md_sha": "1638a1458cf4af3619c4a4ff033178a623e223deb2609b316ebc4f174d86d7e2"
+    },
+    "skill-prompt-efficiency-001": {
+     "body_bytes": 125,
+     "body_sha": "401bf90327dd95ef841e2e684d675b66661ae27a009334e5c6379face818dd63",
+     "dir_digest": "331166237e7dcec7571ec72eb13c624036f9eb0df53e7e33626f38a33df555c1",
+     "files": 3,
+     "fm_name": "skill-prompt-efficiency-001",
+     "has_frontmatter": true,
+     "skill_md_sha": "0adf0d5b5bcbb064e1a54a37b2a95444d39749556503a6c449f8cbe9b1069b0f"
+    },
+    "sleepy-skills": {
+     "body_bytes": 155,
+     "body_sha": "01e535170bf2a2a01b6bcd0d0d429cbece48c258176ac57cd7f9e76b71271205",
+     "dir_digest": "dde7b903db289fed89757f9408bf22ae71ffc5758c687479c383857ea2fa66f4",
+     "files": 12,
+     "fm_name": "managing-sleepy-skills",
+     "has_frontmatter": true,
+     "skill_md_sha": "2bb85025bf67cd2ff26c1467556ddbdccd95c22b2e6cde23dff7a8bf7dabe3b2"
+    },
+    "social-content": {
+     "body_bytes": 13204,
+     "body_sha": "c13516c14fd4c81890bc73d5885ae8feeecfbf6a0d83a71265058a2b7dec0b50",
+     "dir_digest": "ea138ea185de53edb927623fdcc73d816bb877cab33cdb2673e8c18bf93c8611",
+     "files": 7,
+     "fm_name": "social",
+     "has_frontmatter": true,
+     "skill_md_sha": "7a7a43a82cde2c0819b5e2530953b0bb6da1ddc20a74281afede587a7ba92461"
+    },
+    "software-best-practices": {
+     "body_bytes": 215,
+     "body_sha": "5bad071b1dcd065237adb6c9987eab0f891992931c8a4ee6264e50199a613c17",
+     "dir_digest": "232c73d5cf0ef37db84f93f861ebfec6a3463c2a2d070a58da0d2ba44724b4c4",
+     "files": 2,
+     "fm_name": "software-best-practices",
+     "has_frontmatter": true,
+     "skill_md_sha": "e6cc4e5c7af34378fc3bd664457e726259bac6050efd7b76bdccb01d5cec4be9"
+    },
+    "spanish-mc-menus": {
+     "body_bytes": 7714,
+     "body_sha": "b69d93647578b5828360affb1b6b324d2238d8bf40070a02c1bd92dcc84c8ae4",
+     "dir_digest": "cdf0b371fbb47424a494685c3827049e9fd275477403865c0807b3f1337bbc5f",
+     "files": 1,
+     "fm_name": "spanish-mc-menus",
+     "has_frontmatter": true,
+     "skill_md_sha": "2d25b2160262dae5e2f5ea35ee1b838f2df01b0ada8cca8cac326b101c7e7837"
+    },
+    "stripe-best-practices": {
+     "body_bytes": 3007,
+     "body_sha": "0fcfcf73dfab87719cb4b1f779d4ad07cb2a36790fae5d151654cb72e6254de5",
+     "dir_digest": "671c1b80bd4a5ea9b9575630a4faa36cd003a7ba1e40e94fa9a447651c6f3a84",
+     "files": 7,
+     "fm_name": "stripe-best-practices",
+     "has_frontmatter": true,
+     "skill_md_sha": "091258db2c3ce6aafdfd0601ccba8853e0e25f24751ddee5a4ea537af068b5c9"
+    },
+    "test-master": {
+     "body_bytes": 185,
+     "body_sha": "37f6b12d0283139c4be60181255c2a2ecddc06ea4e87d277d423fd85f4155bcf",
+     "dir_digest": "cdb133d9f3a717a318671b5674256704657aa9cdfaafb17271777e4401fd30e0",
+     "files": 2,
+     "fm_name": "test-master",
+     "has_frontmatter": true,
+     "skill_md_sha": "e3e0f8320a99773a18146c1475cbcd87ec9774e3f21b65bbb2a31b7e2fd7d0fa"
+    },
+    "video-analyzer": {
+     "body_bytes": 110,
+     "body_sha": "edbd56b2c29ccbc16a924e820a0f0c7672831b8594822cba6c71cfc9e0e7385a",
+     "dir_digest": "aacc05cfd05fd7fee0a7dadbfc4c0d72e9162a597db62a79230d079f103abdfd",
+     "files": 4,
+     "fm_name": "video-analyzer",
+     "has_frontmatter": true,
+     "skill_md_sha": "1726e4a70d5f4b7d47dbd519e5de7e55e8637c8d2b6412a376705e0d70603b22"
+    },
+    "vision-video": {
+     "body_bytes": 7801,
+     "body_sha": "06a021ab2c45e98dac109a80193d099b82d4cd0d4bb87765eeb424b8f89c5069",
+     "dir_digest": "c28ffd464b8463210510f3f2839ac28781876f40d72a4b69e25a59d39475fd02",
+     "files": 11,
+     "fm_name": "vision-video",
+     "has_frontmatter": true,
+     "skill_md_sha": "3cd3eb0868e7c9c9618e4ad974e272f530ba0992837699f536a98367b7969cde"
+    },
+    "voice-spec-lock": {
+     "body_bytes": 3843,
+     "body_sha": "c7855868fe778ba86193037a9605ccfcddbb5ce82c9ce8c3792bb62f8486afaa",
+     "dir_digest": "407c0cd971d3f4da73c5be513d642f19635bf0b60619996e330bed97c3a19702",
+     "files": 1,
+     "fm_name": "voice-spec-lock",
+     "has_frontmatter": true,
+     "skill_md_sha": "45fa06f51ac45a89c54b236d7b79e315b60ee7ffdf68b88c094b7346475a32b9"
+    },
+    "web-design-guidelines": {
+     "body_bytes": 915,
+     "body_sha": "719bba3833259bd6a340906ce16c3e00a4047dbed7cc04b39f14be2a460c8240",
+     "dir_digest": "f910cd9c88f04e87d03b2b7829b56fcf50b3be4582965f12bc163e3f6b5b59d2",
+     "files": 1,
+     "fm_name": "web-design-guidelines",
+     "has_frontmatter": true,
+     "skill_md_sha": "f4647ca866a3accf763777f83e7682954f0187cd6bea7eea0399796652414e8f"
+    },
+    "webapp-testing": {
+     "body_bytes": 3626,
+     "body_sha": "830bd54146bc08d43e6fb986bd3a189490fb34c76109bc2d0bfa6a852e46ae53",
+     "dir_digest": "7dd9eedc497fbf8b5634a293190b11f93cf4b80f7cd6c1a775def12deadeebb9",
+     "files": 6,
+     "fm_name": "webapp-testing",
+     "has_frontmatter": true,
+     "skill_md_sha": "51b7349e77ec63b7744a6f63647e7566a0b4d2e301121cc10e8c2113af6556a2"
+    },
+    "wii-dev-best-practices": {
+     "body_bytes": 1266,
+     "body_sha": "0a9423ea5b3366c72559faf02eb044cfa800734734c30797e3e0e719695e4fc3",
+     "dir_digest": "46a26166c5538458383469d0fca645cd7ae6b482fd81a9f368bbd0f53d6e8ab6",
+     "files": 17,
+     "fm_name": "wii-dev-best-practices",
+     "has_frontmatter": true,
+     "skill_md_sha": "15d1907b6f0493f7e2f020de4b3cb6c2d2e13ca0b095ce9136869d4370faa8d1"
+    },
+    "wii-disc-reconstruction": {
+     "body_bytes": 3332,
+     "body_sha": "a73d464e2c37aa638d1541d641439a66fca4241d0440379e3d260504a74d4237",
+     "dir_digest": "323480c643847befea36b50c700db0ef45a75da849c6b9d817e16f98b4ee18ae",
+     "files": 5,
+     "fm_name": "wii-disc-reconstruction",
+     "has_frontmatter": true,
+     "skill_md_sha": "854744e0f970d06a4e448ee819a770bb0ba2f7fc4b4d0ae0171ca8351605b1f4"
+    },
+    "wii-power-pack": {
+     "body_bytes": 4981,
+     "body_sha": "02129f87377c52d74ec9924c274c0e226ea37532770a92caa19bb1f6bef2b406",
+     "dir_digest": "21714da79501c56fbfbac5eb6979dd6f19535d0dabf57d059aa38af92580a778",
+     "files": 7,
+     "fm_name": "wii-power-pack",
+     "has_frontmatter": true,
+     "skill_md_sha": "7fc286c5f83d38973152d526607d20880a31ebea195b5c9ef985368ba807b2ed"
+    }
+   },
+   "root": "~/.claude/skills",
+   "skills": 161,
+   "status": "MEASURED",
+   "symlinked": []
+  },
+  "repo": {
+   "commit": "01f4182a1afd5060fcb009c6cdf79b740cd6a2ff",
+   "entries": 24,
+   "names": [
+    "agent-architecture-audit",
+    "agent-eval",
+    "agent-harness-construction",
+    "agent-introspection-debugging",
+    "agentic-os",
+    "android-reverse-engineering",
+    "autonomous-loops",
+    "concurrent-writers-shared-tree",
+    "destructive-state-authorization",
+    "develop-here-prove-there",
+    "eval-harness",
+    "evaluation-corpus-governance",
+    "guard-event-reachability",
+    "instrument-before-claim",
+    "intent-driven-development",
+    "mobile-app-ui-design",
+    "mobile-game-wii-port",
+    "monetary-quantity-integrity",
+    "motion-promo",
+    "presence-is-not-residency",
+    "real-context-reachability",
+    "recurring-work-cardinality",
+    "recursive-decision-ledger",
+    "verification-loop"
+   ],
+   "no_skill_md": [],
+   "non_dir": [],
+   "plane": "repo",
+   "records": {
+    "agent-architecture-audit": {
+     "body_bytes": 9955,
+     "body_sha": "af2bf8170bdc96796eba08fc102cd8d8887c7aa15ce1fcba116ec92c8a9451d2",
+     "dir_digest": "038880e16a79bd4f340ec3b7b18d390ef092fcfe36f8f0aa58228e4cc1fecc8f",
+     "files": 1,
+     "fm_name": "agent-architecture-audit",
+     "has_frontmatter": true,
+     "skill_md_sha": "6055b09e514e53e1627e524b021097ab069b7da8443c0c804677dc0b87b088b5"
+    },
+    "agent-eval": {
+     "body_bytes": 4571,
+     "body_sha": "3acc3c1dc36a7f89712d18287804230f44967fc0040b2fb3e63b2be66f967cbb",
+     "dir_digest": "290e785213ed87aedbdee78f91c1e33bcd85f3da6520c4c07741f5e2827f3029",
+     "files": 1,
+     "fm_name": "agent-eval",
+     "has_frontmatter": true,
+     "skill_md_sha": "9f00769af0d556bfdebfd212ad989d7b996c4cb3fe3208b57ee2e7c80aa144d8"
+    },
+    "agent-harness-construction": {
+     "body_bytes": 2097,
+     "body_sha": "cf774355919e9a15a71d75a66b882884eb425aac5de233743c203c5531051a53",
+     "dir_digest": "e3cc985834b0675c55f70820e29ed5fd3d75879f853bca465579769826177adb",
+     "files": 1,
+     "fm_name": "agent-harness-construction",
+     "has_frontmatter": true,
+     "skill_md_sha": "a86830e4946896e5a94e073c5bebef01ee088c2353191859ca607ddc6bd87cf1"
+    },
+    "agent-introspection-debugging": {
+     "body_bytes": 5611,
+     "body_sha": "51c3cc0b1ac8f721ee7c3fc354c55a011b536365f8f641cdcaa56b29737a06b7",
+     "dir_digest": "a3c1004a305edec7180d332e878f0c40f2b9120ece0e2757bbe2e52cddf50960",
+     "files": 1,
+     "fm_name": "agent-introspection-debugging",
+     "has_frontmatter": true,
+     "skill_md_sha": "df1070344914da83e004335a21d8e1cd992dd218e5a9529a6db4675a526a3cdc"
+    },
+    "agentic-os": {
+     "body_bytes": 12240,
+     "body_sha": "e30053a93709ee73ae1a7e4cd24527a25ff4eb0a766968c1fab7311bbb3e829b",
+     "dir_digest": "4230de5314bce12ff1c2dd9c95dc760699710c87078ea3d4413c4a3d71bb5d89",
+     "files": 1,
+     "fm_name": "agentic-os",
+     "has_frontmatter": true,
+     "skill_md_sha": "4472884be6f6d2534ab83d1182e0b2060cd1e155cdcb13a57a7a702f67170a2e"
+    },
+    "android-reverse-engineering": {
+     "body_bytes": 10260,
+     "body_sha": "237a83c3c8686b410cf7cdb4bbc49865c00086487f5000aaf4db18b64054d67d",
+     "dir_digest": "2de93a44a983e1473771fa969324efc5e94b6e734eb90676c522175ca86b7c36",
+     "files": 26,
+     "fm_name": "android-reverse-engineering",
+     "has_frontmatter": true,
+     "skill_md_sha": "5e67e189dfe2c9ad28b317eb2ec8259c645f95cfe14ce97caed5861e25269d99"
+    },
+    "autonomous-loops": {
+     "body_bytes": 24813,
+     "body_sha": "66a0935c511c4b1c8436ae141747cd3dac9da85830739bd746cb3f3826caaa26",
+     "dir_digest": "5877538f684b74e093a7fa596d3886c715e2d1e1ccf864c1f7d14202b6fd93a0",
+     "files": 1,
+     "fm_name": "autonomous-loops",
+     "has_frontmatter": true,
+     "skill_md_sha": "6577b83ca52b08bdabe569a1124a76344c3d6a948a53ae7c34d78fdfde03c978"
+    },
+    "concurrent-writers-shared-tree": {
+     "body_bytes": 6986,
+     "body_sha": "1751c2cf67d142380fc2364089c4f7aace0cb8261d034291c512af450d71439a",
+     "dir_digest": "d428c6b1f537d0d95ac4d3ded57e65da79ce96e89621bd4676e9ed4939916079",
+     "files": 1,
+     "fm_name": "concurrent-writers-shared-tree",
+     "has_frontmatter": true,
+     "skill_md_sha": "f1f52de4c3115d0aafc39d69c67a2e1ae7936ae63b26ecc9263d89f1150e57c0"
+    },
+    "destructive-state-authorization": {
+     "body_bytes": 24128,
+     "body_sha": "12be3d3636bc80b0db03b67230a2a99974b1a36f9a066aee40ecb5dd22365510",
+     "dir_digest": "c17c2fc60c33f55bdb2406eefa00770b3fe5a76c9224549f7d703f9ae4f49da8",
+     "files": 1,
+     "fm_name": "destructive-state-authorization",
+     "has_frontmatter": true,
+     "skill_md_sha": "2985bd97002abf0589a95080a7d29b447b7a703df9ccd319494dba45701cd0de"
+    },
+    "develop-here-prove-there": {
+     "body_bytes": 8426,
+     "body_sha": "55df52bf9e0aaa776ffae3f57895cdb3c8863efd0911fae68c7915fb26ba8e82",
+     "dir_digest": "55aace799b091691d008fe0e8e2dbf65ad10c88df9427a7d80ab4e8d2a6d62f7",
+     "files": 1,
+     "fm_name": "develop-here-prove-there",
+     "has_frontmatter": true,
+     "skill_md_sha": "f649b72b6504f0d1b168e189a81514f9ad316825cbabeb9207dc7161d2538058"
+    },
+    "eval-harness": {
+     "body_bytes": 6573,
+     "body_sha": "64384176c48603846955840c42151a52b67501ff78b457ba5f2578b5c146a5ae",
+     "dir_digest": "a6f0fe8862dd9e56499d1c6a9ef2afc6b91c4493f52467e27fda93e0ef35928d",
+     "files": 1,
+     "fm_name": "eval-harness",
+     "has_frontmatter": true,
+     "skill_md_sha": "bf390ea52ece4e2027addb0f9b949af91b2e9065146c0179fabc2a5d05a31b4e"
+    },
+    "evaluation-corpus-governance": {
+     "body_bytes": 8553,
+     "body_sha": "2c09538f3868d2df19f9f58cf832553506ab17e53e452438627ab0e593120252",
+     "dir_digest": "0a5a73aae411b432a678ae4769f27d4d608b8061fbe1b58448ea2a6b703e68c8",
+     "files": 1,
+     "fm_name": "evaluation-corpus-governance",
+     "has_frontmatter": true,
+     "skill_md_sha": "cc8550825cb4628e35ed483c2159c5957dbef1fe617d44b55515c0b7019d9eff"
+    },
+    "guard-event-reachability": {
+     "body_bytes": 17884,
+     "body_sha": "9101d544d659f9a63258b582af9f747c8cac4e1e8136718b0d4b0368a6ec8279",
+     "dir_digest": "71d514071166c4f19932a3ba691a3399bd11a0142c69d27728f9e9c2d00b90d4",
+     "files": 1,
+     "fm_name": "guard-event-reachability",
+     "has_frontmatter": true,
+     "skill_md_sha": "960e476487bd4da5bb60c02b51dd2a5c1ae07e24cd401321b94c4bead37c1639"
+    },
+    "instrument-before-claim": {
+     "body_bytes": 45285,
+     "body_sha": "f60732983aa822fe30160a0f012b4f4e36188fda64fbd1050888cf6ce67d646e",
+     "dir_digest": "be8857924069ca2f132331d2ccc568f9a9431e6f3fdcb0efcdd6bffa67f05f5a",
+     "files": 1,
+     "fm_name": "instrument-before-claim",
+     "has_frontmatter": true,
+     "skill_md_sha": "92868f093ae326201b75b227baa667fbd2170e4c3c2c793784427c343dbf5893"
+    },
+    "intent-driven-development": {
+     "body_bytes": 16861,
+     "body_sha": "f7137139edc3970b7277ba09940d35a59f56ad19ffd844a3e68e39dc6123f06a",
+     "dir_digest": "9d526cd0dac8e1b09ee317154ff08882a655bed1ff4561e4e3395f0e9439cd05",
+     "files": 1,
+     "fm_name": "intent-driven-development",
+     "has_frontmatter": true,
+     "skill_md_sha": "c402849d47167fff7312ef7b62fe21209c2f0eb59e302c8f7671a39a5d3e2246"
+    },
+    "mobile-app-ui-design": {
+     "body_bytes": 4962,
+     "body_sha": "e03fd8e6369cf2cd9ebbf40c6ec6e731d5cdd149b767e7ef07834e5aeea6998d",
+     "dir_digest": "3944e2bdd675962f8c170c76ba5c9e4f1a9ba8593058048833aef25e2333442b",
+     "files": 1,
+     "fm_name": "mobile-app-ui-design",
+     "has_frontmatter": true,
+     "skill_md_sha": "3cad45b6f4db53da3f542f86a66dbbb206677f5a1729a55f1b6504be5edf0536"
+    },
+    "mobile-game-wii-port": {
+     "body_bytes": 10919,
+     "body_sha": "e214a65654ea8f49db61b8fd68d649bbe6aeaf6f3a5861f3b79a044bbd591ec6",
+     "dir_digest": "1c4bbb70dcfd1cb9295c14d1db5739752601e329efa935430dbfb544cbd33db4",
+     "files": 8,
+     "fm_name": "mobile-game-wii-port",
+     "has_frontmatter": true,
+     "skill_md_sha": "88c6539d5dabf2da9a197734c970fc78c5df3ebe179033a01af764bb5b945eef"
+    },
+    "monetary-quantity-integrity": {
+     "body_bytes": 13222,
+     "body_sha": "728e994d1bf17201d82bf59825bf54515ddd6f193c9927744b26fdb956c446da",
+     "dir_digest": "cf55ae3f0c8bb43ab866db8b64d69fc16647327ed35c428584e9b0f8ee9d469b",
+     "files": 1,
+     "fm_name": "monetary-quantity-integrity",
+     "has_frontmatter": true,
+     "skill_md_sha": "34e63a8dca27c83fe018f8b9129612d50338eae0acb40f7d4a0f934d52bbe069"
+    },
+    "motion-promo": {
+     "body_bytes": 7304,
+     "body_sha": "371484cb6c9bd5380a3f916c845e8873c104621f886a2e6010e510745b7ea04a",
+     "dir_digest": "f962b1e7e7e121ba5d282c52c899646b1adcaa8c986718383641cb2f783978b8",
+     "files": 10,
+     "fm_name": "motion-promo",
+     "has_frontmatter": true,
+     "skill_md_sha": "0aa467737f44ab982e8faf9bf00b4873ab03046f77cf5ff09807d95cb6068595"
+    },
+    "presence-is-not-residency": {
+     "body_bytes": 9104,
+     "body_sha": "c3dded2dbe4f2712132ef117e2454fab08cc704e2dafa466bb1949c462f2dd26",
+     "dir_digest": "49a6b3a478edd52909fbbfb48ce76989dc7667e8d246650ebe3581ed4e5aa7a8",
+     "files": 1,
+     "fm_name": "presence-is-not-residency",
+     "has_frontmatter": true,
+     "skill_md_sha": "f40dedff3afd86f967563d3619c513d6ba51473b9f755c62faac1415e104ccd7"
+    },
+    "real-context-reachability": {
+     "body_bytes": 22003,
+     "body_sha": "c1eef009ec045bbc760121b9b77c52c37229152f03e9754ea7cf771240b0f9aa",
+     "dir_digest": "e9c366be7f30871b767cc30f0d359317e638c2f987e6c3a41e634f7c523f28ca",
+     "files": 1,
+     "fm_name": "real-context-reachability",
+     "has_frontmatter": true,
+     "skill_md_sha": "26139cdc8748c7650300f2fd0a5a863c351d19c2e743d3e88f54518847cfa1d9"
+    },
+    "recurring-work-cardinality": {
+     "body_bytes": 7848,
+     "body_sha": "d1232bc926a6abfcf2196fad70f729104def97c8a6bc0acc19875599962ed90b",
+     "dir_digest": "0c9f9d82ad313056eed1fb5c99cc891e966ddc31d59bd8f6d1b5f582d88a40d5",
+     "files": 1,
+     "fm_name": "recurring-work-cardinality",
+     "has_frontmatter": true,
+     "skill_md_sha": "e9ce591d14e7875807dfc5666e98b503c0777ca0b517c7485d32b066dcf9f67b"
+    },
+    "recursive-decision-ledger": {
+     "body_bytes": 2471,
+     "body_sha": "62ab08118fc8546feeb735202dc91083aa94e420cd67560e95b375f5a11de707",
+     "dir_digest": "7de13848e84c91cd842861a2e6fa0f3883ef782e0a422a42b50225869ddf6367",
+     "files": 1,
+     "fm_name": "recursive-decision-ledger",
+     "has_frontmatter": true,
+     "skill_md_sha": "0faf4d7103409cbf5e501c947c08aaedeb03d6d51b636e88db164021c7dead1c"
+    },
+    "verification-loop": {
+     "body_bytes": 2651,
+     "body_sha": "a60daf38695212b07bd22b0f4e18eab48828f97074b6cadbe223015f86aea7a6",
+     "dir_digest": "778c029a22ab2f0a3be02443de5f941f31a90f0251500d80613ebf4535fa7f79",
+     "files": 1,
+     "fm_name": "verification-loop",
+     "has_frontmatter": true,
+     "skill_md_sha": "120fbc698f421c028490723e69cd7a000e20bca1fda4ca0b95c6e491821c2137"
+    }
+   },
+   "root": "skills/ @ 01f4182a1afd5060fcb009c6cdf79b740cd6a2ff",
+   "skills": 24,
+   "status": "MEASURED",
+   "symlinked": []
+  }
+ },
+ "repo_commit": "01f4182a1afd5060fcb009c6cdf79b740cd6a2ff",
+ "schema": "skill-dedup-sweep/1"
+}
