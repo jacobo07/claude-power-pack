@@ -15,8 +15,9 @@ Frozen rule (ledger pillar D): every installed skill gets a coverage class (oppo
 Planes are reported separately; no figure sums across planes.
 
 - plane repo: 24 skills, discovered from `skills/*/SKILL.md`
-- plane gex44: 185 skills, recorded live; node kobicraft-gex44, measured_at 2026-10-03T18:28:57Z, command: python3 tools/skill_coverage.py --measure-live --host gex44
-  counts: commands_excluded 86, dangling_symlinks 1, dirs_without_skill_md 24, entries 186, skill_dirs 185
+- plane gex44: 161 skills, recorded live; node kobicraft-gex44, measured_at 2026-10-03T19:13:14Z, command: python3 tools/skill_coverage.py --measure-live --host gex44
+  counts: commands_excluded 86, dangling_symlinks 1, dirs_without_skill_md 24, entries 186, skill_dirs 161
+  non_skill_dirs (no SKILL.md; reported, never classified): ads, algorithmic-art, artifacts-builder, bmad, brand-guidelines, building-ai-saas-products, canvas-design, carl-help, competitive-ads-extractor, content-research-writer, custom skills, doc-coauthoring, generating-hook-matrix, internal-comms, ll-revenue-reinforcing, meeting-insights-analyzer, seo, skill-share, slack-gif-creator, social-media, synced, theme-factory, vault, wii-dev-skills
 
 ## Plane repo
 
@@ -59,52 +60,40 @@ High criticality, coverage none (0): (none)
 
 ## Plane gex44
 
-Coverage: opportunity_detector 1, card 1, none 183. Criticality: high 11, medium 5, low 169.
+Coverage: opportunity_detector 1, card 1, none 159. Criticality: high 11, medium 5, low 145.
 
 | criticality \ coverage | opportunity_detector | card | none |
 |---|---|---|---|
 | high | 1 | 1 | 9 |
 | medium | 0 | 0 | 5 |
-| low | 0 | 0 | 169 |
+| low | 0 | 0 | 145 |
 
 High criticality, coverage none (9): claude-power-pack, develop-here-prove-there, evaluation-corpus-governance, guard-event-reachability, instrument-before-claim, monetary-quantity-integrity, presence-is-not-residency, real-context-reachability, recurring-work-cardinality
 
 | skill | coverage | coverage evidence | criticality | criticality evidence | heat_map |
 |---|---|---|---|---|---|
-| ads | none |  | low |  | no |
 | adversarial-longevity | none |  | low |  | yes |
 | agent-reach | none |  | low |  | no |
-| algorithmic-art | none |  | low |  | no |
 | android-reverse-engineering | none |  | medium | activation@repo CLAUDE.md:41; activation@repo CLAUDE.md:46; activation@repo CLAUDE.md:47; activation@repo CLAUDE.md:58 | no |
 | anydesign | none |  | low |  | no |
-| artifacts-builder | none |  | low |  | yes |
 | autofix | none |  | low |  | no |
 | autoresearch | none |  | low |  | yes |
-| bmad | none |  | low |  | no |
-| brand-guidelines | none |  | low |  | yes |
-| building-ai-saas-products | none |  | low |  | yes |
-| canvas-design | none |  | low |  | yes |
-| carl-help | none |  | low |  | no |
 | carl-manager | none |  | low |  | yes |
 | claude-power-pack | none |  | high | hard_rule@gex44 ~/.claude/CLAUDE.md:15; activation@gex44 ~/.claude/CLAUDE.md:101 | yes |
 | claude-power-pack.pre-clone-2026-09-27 | none |  | low |  | no |
 | code-auditor | none |  | low |  | yes |
 | code-review | none |  | low |  | no |
 | code-reviewer | none |  | low |  | yes |
-| competitive-ads-extractor | none |  | low |  | no |
 | composition-patterns | none |  | low |  | no |
 | compound-learnings | none |  | low |  | no |
 | concurrent-writers-shared-tree | opportunity_detector | hooks/doctrine_cards.js:428 (PreToolUse-Bash-chain @ hooks/hook-dispatcher.js:433); tools/skill_opportunity_signals.py:29 | high | rule_stub@gex44 ~/.claude/rules/concurrent-writers-shared-tree.md:3 | no |
-| content-research-writer | none |  | low |  | no |
 | copywriting | none |  | low |  | no |
 | cpp-pro | none |  | low |  | yes |
-| custom skills | none |  | low |  | no |
 | debugging-wizard | none |  | low |  | yes |
 | design-taste-frontend | none |  | low |  | no |
 | destructive-state-authorization | card | hooks/destructive_doctrine_card.js:61 (PreToolUse-Bash-chain @ hooks/hook-dispatcher.js:427) | high | rule_stub@gex44 ~/.claude/rules/destructive-state-authorization.md:3 | no |
 | develop-here-prove-there | none |  | high | rule_stub@gex44 ~/.claude/rules/develop-here-prove-there.md:3 | no |
 | dios-segun-buda | none |  | low |  | no |
-| doc-coauthoring | none |  | low |  | no |
 | elevenlabs-music-generation | none |  | low |  | no |
 | elixir-phoenix-patterns | none |  | low |  | no |
 | embedded-systems | none |  | low |  | yes |
@@ -112,7 +101,6 @@ High criticality, coverage none (9): claude-power-pack, develop-here-prove-there
 | fix | none |  | low |  | yes |
 | frontend-design | none |  | low |  | yes |
 | game-feel-codex | none |  | low |  | yes |
-| generating-hook-matrix | none |  | low |  | no |
 | github-actions-templates | none |  | low |  | no |
 | governance-overlay | none |  | low |  | yes |
 | gsd-add-tests | none |  | low |  | no |
@@ -192,7 +180,6 @@ High criticality, coverage none (9): claude-power-pack, develop-here-prove-there
 | image-calco | none |  | low |  | no |
 | image-to-video | none |  | low |  | no |
 | instrument-before-claim | none |  | high | rule_stub@gex44 ~/.claude/rules/instrument-before-claim.md:3 | no |
-| internal-comms | none |  | low |  | no |
 | java-architect | none |  | low |  | yes |
 | kobiicraft-debug | none |  | low |  | yes |
 | kobiicraft-dev | none |  | low |  | yes |
@@ -204,11 +191,9 @@ High criticality, coverage none (9): claude-power-pack, develop-here-prove-there
 | kobiicraft-testing | none |  | low |  | yes |
 | lateral-thinking | none |  | low |  | no |
 | leverage-research | none |  | low |  | no |
-| ll-revenue-reinforcing | none |  | low |  | no |
 | managing-sleepy-skills | none |  | low |  | yes |
 | marketing-psychology | none |  | low |  | no |
 | mcp-builder | none |  | low |  | yes |
-| meeting-insights-analyzer | none |  | low |  | no |
 | minecraft-android-renderer-stack | none |  | low |  | no |
 | minecraft-mod-jar-patcher | none |  | low |  | no |
 | mobile-app-ui-design | none |  | medium | activation@repo CLAUDE.md:36 | no |
@@ -231,29 +216,21 @@ High criticality, coverage none (9): claude-power-pack, develop-here-prove-there
 | remotion-foundation | none |  | low |  | no |
 | remotion-kobii-templates | none |  | low |  | no |
 | secrets-management | none |  | low |  | no |
-| seo | none |  | low |  | no |
 | session-handoff-protocol | none |  | low |  | no |
 | skill-creator | none |  | low |  | yes |
 | skill-prompt-efficiency-001 | none |  | low |  | yes |
-| skill-share | none |  | low |  | no |
-| slack-gif-creator | none |  | low |  | no |
 | sleepy-skills | none |  | low |  | no |
 | social-content | none |  | low |  | no |
-| social-media | none |  | low |  | no |
 | software-best-practices | none |  | low |  | yes |
 | spanish-mc-menus | none |  | low |  | no |
 | stripe-best-practices | none |  | low |  | no |
-| synced | none |  | low |  | no |
 | test-master | none |  | low |  | yes |
-| theme-factory | none |  | low |  | no |
-| vault | none |  | low |  | no |
 | video-analyzer | none |  | low |  | yes |
 | vision-video | none |  | low |  | no |
 | voice-spec-lock | none |  | low |  | yes |
 | web-design-guidelines | none |  | low |  | no |
 | webapp-testing | none |  | low |  | no |
 | wii-dev-best-practices | none |  | medium | activation@repo CLAUDE.md:59 | yes |
-| wii-dev-skills | none |  | low |  | no |
 | wii-disc-reconstruction | none |  | low |  | no |
 | wii-power-pack | none |  | low |  | no |
 

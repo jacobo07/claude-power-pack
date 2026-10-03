@@ -152,6 +152,9 @@ def render(planes) -> str:
             L.append(f"- plane {r['host']}: {len(p['rows'])} skills, recorded live; node {r['node']}, "
                      f"measured_at {r['measured_at']}, command: {r['command']}")
             L.append("  counts: " + ", ".join(f"{k} {v}" for k, v in sorted(r["counts"].items())))
+            if "non_skill_dirs" in r:
+                L.append(f"  non_skill_dirs (no SKILL.md; reported, never classified): "
+                         f"{', '.join(r['non_skill_dirs']) or '(none)'}")
     L.append("")
     for p in planes:
         if "inconclusive" in p:
@@ -475,6 +478,29 @@ def c_unmeasured(disp_text, recs):
     return "FAIL", f"rec {rec is not None}, plane {sorted(p)}, schema-mismatch {rec2 is not None}"
 
 
+def c_live_skill_definition(disp_text, recs):
+    """Review WR-08: the live plane uses the repo plane's definition of a skill, a directory holding SKILL.md.
+    A container or a parked directory (no SKILL.md) is reported in counts and `non_skill_dirs`, never classified."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td) / ".claude"
+        for rel, text in (("skills/real/SKILL.md", "---\nname: real\n---\n"),
+                          ("skills/container/inner/SKILL.md", "---\nname: inner\n---\n"),
+                          ("skills/parked/SKILL.md.disabled", "x\n"),
+                          ("rules/parked.md", "# Parked (moved to a skill)\nThe full rule is the `parked` skill.\n")):
+            f = home / rel
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(text, encoding="utf-8")
+        rec = sc.measure_live("synthetic", home)
+    c = rec["counts"]
+    got = (rec["skills"], c.get("skill_dirs"), c.get("dirs_without_skill_md"), rec.get("non_skill_dirs"),
+           [e["skill"] for e in rec["evidence"]])
+    want = (["real"], 1, 2, ["container", "parked"], [])
+    if got == want:
+        return "ok", ("synthetic home: real (SKILL.md) classified; container and parked (no SKILL.md) reported as "
+                      "non_skill_dirs, never classified, and a stub naming `parked` yields no evidence item")
+    return "FAIL", f"(skills, skill_dirs, dirs_without_skill_md, non_skill_dirs, evidence skills) = {got}, want {want}"
+
+
 # ------------------------------------------------------------------ run
 
 
@@ -502,7 +528,8 @@ def clauses(disp_text, recs):
            ("V-SKC-DRILL-STUBS-REMOVED", c_drill_stubs(disp_text, recs)),
            ("V-SKC-SYNTHETIC-PATHS", c_synthetic(disp_text, recs)),
            ("V-SKC-RECORDING-CRLF", c_recording_crlf(disp_text, recs)),
-           ("V-SKC-UNMEASURED-NOT-NONE", c_unmeasured(disp_text, recs))]
+           ("V-SKC-UNMEASURED-NOT-NONE", c_unmeasured(disp_text, recs)),
+           ("V-SKC-LIVE-SKILL-DEFINITION", c_live_skill_definition(disp_text, recs))]
     return planes, res
 
 

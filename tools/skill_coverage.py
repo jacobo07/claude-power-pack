@@ -3,8 +3,9 @@
 
 The population is DISCOVERED, never listed:
   repo plane  every skills/*/SKILL.md directory of this checkout
-  live plane  the skill directories inside tools/skill_invocations.installed_names() of one host, recorded on
-              that host by --measure-live into vault/programs/skill-capability/evidence/D-live-<host>.json
+  live plane  the directories of one host's ~/.claude/skills that hold a SKILL.md (the repo plane's definition),
+              recorded on that host by --measure-live into vault/programs/skill-capability/evidence/D-live-<host>.json;
+              a directory without SKILL.md is reported in `non_skill_dirs`, never classified
 Planes are reported separately; no figure sums across them, and one live plane's evidence never applies to another.
 
 Coverage class (derived from code at gate time, never typed per skill):
@@ -274,13 +275,18 @@ def measure_live(host: str, home: Path | None = None) -> dict:
     sk = home / "skills"
     entries = sorted(sk.iterdir()) if sk.is_dir() else []
     installed = si.installed_names(home)
-    dirs = sorted(p.name for p in entries if p.is_dir() and p.name in installed)
+    # The repo plane's definition of a skill on both planes (review WR-08): a directory holding SKILL.md. A
+    # directory without one (a container such as bmad/, a parked SKILL.md.disabled, a vault) is reported by name in
+    # `non_skill_dirs` and never classified, so it cannot inflate the none/low totals or meet the population floor.
+    all_dirs = {p.name for p in entries if p.is_dir()}
+    dirs = sorted(p.name for p in entries if p.is_dir() and (p / "SKILL.md").is_file() and p.name in installed)
+    non_skill = sorted(n for n in all_dirs if n not in dirs)
     counts = {
         "entries": len(entries),
         "skill_dirs": len(dirs),
         "dangling_symlinks": sum(1 for p in entries if p.is_symlink() and not p.exists()),
-        "dirs_without_skill_md": sum(1 for p in entries if p.is_dir() and not (p / "SKILL.md").is_file()),
-        "commands_excluded": len(installed) - len(dirs),
+        "dirs_without_skill_md": len(non_skill),
+        "commands_excluded": len(installed - all_dirs),
     }
     ev = []
     rules = home / "rules"
@@ -294,7 +300,7 @@ def measure_live(host: str, home: Path | None = None) -> dict:
         "schema": LIVE_SCHEMA, "host": host, "node": platform.node(),
         "measured_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "command": f"python3 tools/skill_coverage.py --measure-live --host {host}",
-        "skills": dirs, "counts": counts, "evidence": ev,
+        "skills": dirs, "counts": counts, "evidence": ev, "non_skill_dirs": non_skill,
     }
 
 
