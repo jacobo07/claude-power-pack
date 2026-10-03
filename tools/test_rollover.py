@@ -181,6 +181,13 @@ def main() -> int:
         c3 = ro.claim(SID, "succ-A", state)
         check("V-ROLLOVER-ONE-CLAIM", c1["claimed"] and not c2["claimed"] and c2["holder"] == "succ-A" and c3["claimed"], (c1, c2, c3))
         check("V-ROLLOVER-REFRESH-CONTINUE", ro.refresh(cap, str(repo))["verdict"] == "CONTINUE", "unchanged tree")
+        # f3b5ff1d: successor opened in another directory; the capsule's own repo is what is judged.
+        away = ro.refresh(cap, str(tmp))
+        check("V-ROLLOVER-REFRESH-FROM-ELSEWHERE", away["verdict"] == "CONTINUE" and away["now"].get("elsewhere"),
+              away["divergences"])
+        gone = ro.refresh({**cap, "repo": {**cap["repo"], "root": str(tmp / "no-such-repo")}}, str(repo))
+        check("V-ROLLOVER-REFRESH-ROOT-GONE", gone["verdict"] == "RECOMPILE" and gone["divergences"][0].startswith("root gone"),
+              gone["divergences"])
         (repo / "a.txt").write_text("two\n", encoding="utf-8")
         git(repo, "commit", "-q", "-am", "moved")
         rf = ro.refresh(cap, str(repo))

@@ -562,9 +562,19 @@ def claim(session_id: str, claimant: str, state_dir: Optional[Path] = None) -> d
 
 
 def refresh(capsule: dict, cwd: str) -> dict:
-    """Reality before authority: the successor compares the capsule with the tree NOW."""
-    now = repo_facts(cwd)
+    """Reality before authority: the successor compares the capsule with the tree NOW.
+
+    The tree is the capsule's recorded repo root, not the successor's cwd: a session that opened
+    in one checkout and `cd`-ed into a worktree is matched by session_cwd, and reading the cwd then
+    compared the worktree's capsule against the other checkout (f3b5ff1d, 2026-09-30: a false
+    RECOMPILE on root/branch/head/dirty while the worktree was exactly as sealed)."""
     then = capsule.get("repo") or {}
+    sealed_root = then.get("root") if isinstance(then.get("root"), str) else ""
+    if sealed_root and not Path(sealed_root).is_dir():
+        return {"verdict": "RECOMPILE", "divergences": [f"root gone: {sealed_root}"], "now": {}}
+    now = repo_facts(sealed_root or cwd)
+    if sealed_root and _pathkey(cwd) != _pathkey(sealed_root):
+        now["elsewhere"] = sealed_root
     if now.get("state") != "OK" or then.get("state") != "OK":
         return {"verdict": UNKNOWN, "divergences": ["repo unreadable now or at seal"], "now": now}
     div = []
@@ -834,6 +844,8 @@ def main(argv=None) -> int:
                refresh=rf["verdict"], divergences=rf["divergences"])
         print(bootstrap(cap))
         print(f"\nReality refresh: {rf['verdict']}")
+        if rf["now"].get("elsewhere"):
+            print(f"  (checked the capsule's repo, not this cwd -- work there: {rf['now']['elsewhere']})")
         for d in rf["divergences"]:
             print(f"  - {d}")
         if rf["verdict"] != "CONTINUE":
