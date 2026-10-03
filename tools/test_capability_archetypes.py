@@ -396,6 +396,79 @@ def pred_V_ARCH_READER_NO_WALK_IMPORT():
     return ok, "reader_findings=%s controls=%s" % (reader, controls)
 
 
+# -- plan 02-02: the strength ceiling (audit G16) --------------------------------
+# Predeclared prompts, fixed before implementation (02-02-PLAN.md `<context>`).
+WM_ES = "añade una tabla de suscripciones con su migración al backend de InfinityOps"
+WM_EN = "save each player's coins when they disconnect"
+
+
+def _wm(subject):
+    return _find(subject["archetypes"], "WORLD_MUTATION")
+
+
+def pred_V_ARCH_INTENT_ONLY_CAP():
+    """A mutate intent with NO structural anchor is at most CONDITIONAL, stamped
+    EXTRACTED, in both languages. Builds and produces its own fixtures, so a drill
+    that mutates the ceiling reaches producer and reader alike."""
+    if ar is None or ts is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    state_a, repo_a = new_state(), make_repo("persistent_prisma")      # never produced
+    state_b, repo_b = new_state(), make_repo("ephemeral")
+    res = ts.produce(repo_b, state_dir=state_b)                        # produced, no persistent PRESENT
+    if res.get("outcome") != ts.WRITTEN:
+        return False, "ephemeral produce outcome=%r reason=%r" % (res.get("outcome"), res.get("reason"))
+    subjects = [("cache-miss", repo_a, state_a), ("produced-ephemeral", repo_b, state_b)]
+    seen, problems = [], []
+    for label, repo, state in subjects:
+        for prompt in (WM_ES, WM_EN):
+            tag = "%s/%s" % (label, prompt[:24])
+            subject = ar.resolve(prompt, repo, state_dir=state)
+            seen.extend((tag, a) for a in subject["archetypes"])
+            wm = _wm(subject)
+            if wm is None:
+                problems.append("%s: no WORLD_MUTATION entry" % tag)
+                continue
+            if wm["anchor_state"] == ar.PRESENT:
+                problems.append("%s: precondition broken, anchor is PRESENT" % tag)
+            span = wm.get("intent_span") or ""
+            good = (wm["strength"] == ar.Strength.CONDITIONAL and wm["basis"] == "intent"
+                    and wm["fact_state"] == ar.EXTRACTED and wm["intent_fact_state"] == ar.EXTRACTED
+                    and 0 < len(span) <= 160)
+            if not good:
+                problems.append("INTENT-ONLY-NOT-CAPPED[%s]: strength=%s basis=%s fact_state=%s "
+                                "intent_fact_state=%s span_len=%d" % (
+                                    tag, wm["strength"], wm["basis"], wm["fact_state"],
+                                    wm["intent_fact_state"], len(span)))
+    leaks = ["%s/%s" % (tag, a["id"]) for tag, a in seen
+             if a["basis"] == "intent" and a["strength"] == ar.Strength.REQUIRED]
+    if leaks:
+        problems.append("INTENT-BASIS-REQUIRED: %s" % leaks)
+    return not problems, "; ".join(problems) or \
+        "%d assessments over 2 intent-only subjects x 2 prompts: all CONDITIONAL/intent/EXTRACTED, no basis=intent REQUIRED" % len(seen)
+
+
+def pred_V_ARCH_INTENT_CONTROL():
+    """Control for the cap: the same two prompts over real persistent structure."""
+    if ar is None or ts is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    state, repo = new_state(), make_repo("persistent_prisma")
+    res = ts.produce(repo, state_dir=state)
+    if res.get("outcome") != ts.WRITTEN:
+        return False, "produce outcome=%r reason=%r" % (res.get("outcome"), res.get("reason"))
+    problems, got = [], []
+    for prompt in (WM_ES, WM_EN):
+        wm = _wm(ar.resolve(prompt, repo, state_dir=state))
+        if wm is None:
+            problems.append("%s: no WORLD_MUTATION entry" % prompt[:24])
+            continue
+        got.append("%s=%s/%s" % (prompt[:12], wm["strength"], wm["basis"]))
+        if not (wm["strength"] == ar.Strength.REQUIRED and wm["basis"] == "structural+intent"
+                and wm["anchor_fact_state"] == ar.OBSERVED):
+            problems.append("CONTROL-NOT-REQUIRED[%s]: strength=%s basis=%s anchor_fact_state=%s reason=%s" % (
+                prompt[:24], wm["strength"], wm["basis"], wm["anchor_fact_state"], wm["reason"]))
+    return not problems, "; ".join(problems) or "REQUIRED/structural+intent/OBSERVED for both: %s" % got
+
+
 GATES = [
     ("V-ARCH-HERMETIC-HOME", pred_V_ARCH_HERMETIC_HOME),
     ("V-ARCH-TRACER-PRODUCE", pred_V_ARCH_TRACER_PRODUCE),
@@ -409,11 +482,13 @@ GATES = [
     ("V-ARCH-NA-BRIDGE", pred_V_ARCH_NA_BRIDGE),
     ("V-ARCH-NO-BARE-REQUIRED", pred_V_ARCH_NO_BARE_REQUIRED),
     ("V-ARCH-READER-NO-WALK-IMPORT", pred_V_ARCH_READER_NO_WALK_IMPORT),
+    ("V-ARCH-INTENT-ONLY-CAP", pred_V_ARCH_INTENT_ONLY_CAP),
+    ("V-ARCH-INTENT-CONTROL", pred_V_ARCH_INTENT_CONTROL),
 ]
 
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 12
+EXPECTED = 14
 
 
 def main() -> int:

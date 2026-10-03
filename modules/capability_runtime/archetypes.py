@@ -160,9 +160,16 @@ _PERSIST_VERBS = ("add", "adds", "adding", "added", "create", "creates", "creati
                   "storing", "stored", "persist", "persists", "persisting",
                   "write", "writes", "writing", "update", "updates", "updating",
                   "updated", "delete", "deletes", "deleting", "deleted",
-                  "migrate", "migrates", "migrating", "migrated")
+                  "migrate", "migrates", "migrating", "migrated",
+                  # Spanish (matched on folded text, so accents are irrelevant)
+                  "añade", "añadir", "agrega", "agregar", "crea", "crear", "guarda",
+                  "guardar", "actualiza", "actualizar", "borra", "borrar", "elimina",
+                  "eliminar", "migra", "migrar", "persiste", "almacena")
 _PERSIST_OBJECTS = ("table", "tables", "migration", "migrations", "record", "records",
-                    "row", "rows", "schema", "column", "columns", "data", "coins")
+                    "row", "rows", "schema", "column", "columns", "data", "coins",
+                    "tabla", "tablas", "migración", "registro", "registros", "fila",
+                    "filas", "esquema", "columna", "datos", "monedas", "saldo",
+                    "saldos", "inventario", "partida")
 
 
 def reading(state, fact_state, evidence=(), reason=""):
@@ -329,34 +336,75 @@ def intent_facts(prompt):
     return out
 
 
-def assess(traits, prompt, trait_intent=None):
-    """One assessment per archetype id, in sorted order.
+def ceiling(anchor_state, intent_hit, demoted):
+    """The ONLY place an archetype strength is decided -> (strength, basis).
 
-    First slice: REQUIRED with basis `structural+intent` iff the anchor trait is
-    structurally PRESENT and its intent is PRESENT; otherwise NONE with a reason
-    naming what was missing. `fact_state` is OBSERVED when the basis contains
-    structural evidence, EXTRACTED for intent alone, UNKNOWN for none. The full
-    ceiling (CONDITIONAL, demoters) is built test-first in plan 02-02."""
+    This is where audit gap [G16] is enforced: a word must never be able to make
+    an archetype REQUIRED. Rules, in this order:
+
+      anchor PRESENT, intent, not demoted -> (REQUIRED,    structural+intent)
+      anchor PRESENT, intent, demoted     -> (CONDITIONAL, structural+intent)
+      anchor PRESENT, no intent           -> (CONDITIONAL, structural)   [R-1]
+      anchor WEAK, intent                 -> (CONDITIONAL, structural+intent)
+      anchor WEAK, no intent              -> (CONDITIONAL, structural)
+      anchor ABSENT or UNJUDGED, intent   -> (CONDITIONAL, intent)       [D-06]
+      anything else                       -> (NONE, none)
+
+    REQUIRED needs structure that is PRESENT AND an intent fact AND no demoter. A
+    WEAK anchor never reaches REQUIRED. Intent without a PRESENT anchor is at most
+    CONDITIONAL, and the caller stamps its fact state EXTRACTED. A demoter lowers
+    REQUIRED to CONDITIONAL and never produces NONE (D-03): the intent vocabulary
+    is closed and fitted (GSDX-M04), so a miss must not let a naked verb escape.
+    """
+    intent_hit, demoted = bool(intent_hit), bool(demoted)
+    if anchor_state == PRESENT:
+        if intent_hit:
+            if demoted:
+                return Strength.CONDITIONAL, BASIS_BOTH
+            return Strength.REQUIRED, BASIS_BOTH
+        return Strength.CONDITIONAL, BASIS_STRUCTURAL
+    if anchor_state == WEAK:
+        return Strength.CONDITIONAL, (BASIS_BOTH if intent_hit else BASIS_STRUCTURAL)
+    if anchor_state in (ABSENT, UNJUDGED) and intent_hit:
+        return Strength.CONDITIONAL, BASIS_INTENT
+    return Strength.NONE, BASIS_NONE
+
+
+def _rule_reason(anchor, structural, intent, strength, basis, demoted_by):
+    """Name the rule that fired, so a reader of the assessment can audit it."""
+    a = "anchor %s %s" % (anchor, structural["state"])
+    i = "intent %s" % ("PRESENT" if intent["state"] == PRESENT
+                       else "%s (%s)" % (intent["state"], intent.get("reason") or "no intent"))
+    if strength == Strength.NONE:
+        return "%s (%s); %s" % (a, structural.get("reason") or "no evidence", i)
+    if demoted_by:
+        return "%s; %s; demoted by %s: REQUIRED lowered to CONDITIONAL" % (a, i, demoted_by)
+    return "%s; %s; basis %s" % (a, i, basis)
+
+
+def assess(traits, prompt, trait_intent=None):
+    """One assessment per archetype id, in sorted order, every strength decided by
+    `ceiling` (resolved by its module-global name at call time).
+
+    `fact_state` is OBSERVED when the basis contains structural evidence, EXTRACTED
+    for intent alone, UNKNOWN for none. `unjudged` lists the anchor when its
+    structural reading is UNJUDGED, so a later phase can name the missing fact."""
     intents = trait_intent if trait_intent is not None else intent_facts(prompt)
     out = []
     for aid in sorted(ARCHETYPES):
         anchor = ARCHETYPES[aid]["anchor"]
         structural = traits.get(anchor) or unjudged_reading("cache-malformed")
         intent = intents.get(anchor) or _intent_miss("no-intent-detector")
-        s_present = structural["state"] == PRESENT
-        i_present = intent["state"] == PRESENT
-        if s_present and i_present:
-            strength, basis, fact_state = Strength.REQUIRED, BASIS_BOTH, OBSERVED
-            reason = "anchor %s PRESENT and intent PRESENT" % anchor
+        demoted_by = []
+        strength, basis = ceiling(structural["state"], intent["state"] == PRESENT,
+                                  bool(demoted_by))
+        if basis == BASIS_INTENT:
+            fact_state = EXTRACTED
+        elif BASIS_STRUCTURAL in basis:
+            fact_state = OBSERVED
         else:
-            strength, basis, fact_state = Strength.NONE, BASIS_NONE, UNKNOWN
-            missing = []
-            if not s_present:
-                missing.append("anchor %s %s (%s)" % (
-                    anchor, structural["state"], structural.get("reason") or "no evidence"))
-            if not i_present:
-                missing.append("intent %s (%s)" % (anchor, intent.get("reason") or "no intent"))
-            reason = "; ".join(missing)
+            fact_state = UNKNOWN
+        reason = _rule_reason(anchor, structural, intent, strength, basis, demoted_by)
         out.append({
             "id": aid,
             "strength": strength,
