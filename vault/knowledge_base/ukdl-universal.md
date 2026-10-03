@@ -275,6 +275,17 @@ drop the tail. Reader fix (live): count torn lines, never repair or guess
 unowned hunks): one `os.write` of the encoded row on an O_APPEND fd, or a lock. Diagnosis:
 a JSON fragment starting mid-key is interleaving, not corruption. #CROSS-PROJECT
 
+AMENDED 2026-10-03 (same day, plan ccp-s16 §16.1 F6) -- the mechanism and the writer fix above are
+WRONG; the original text is kept as the falsified claim. Each of the 6 fragments follows a COMPLETE,
+valid row and is the tail of a different, longer row: two writers seek to the same end and the second
+OVERWRITES the first (the Windows CRT implements append as seek-to-end + write, not atomically). So a
+fragment marks one whole LOST event, and an overwrite by an equal-or-longer row leaves no trace at
+all: the torn count is a lower bound on loss. Measured (scratch, 6 processes x 400 rows): open("a")
+lost 676-701 rows with 318-329 fragments; `os.open(O_APPEND)` + one `os.write` lost 748 -- the
+suggested fix does not work on Windows; an exclusive lock around the append lost 0. Diagnosis: read
+the row BEFORE a fragment; if it parses whole, the fragment is an overwrite remainder, not an
+interleave. Count rows lost, not lines torn.
+
 ### T-A-QUOTA-REFUSAL-IS-NOT-A-FINISHED-EPOCH-001
 
 A long-run supervisor that relays whenever a worker's turn ends will spend its
