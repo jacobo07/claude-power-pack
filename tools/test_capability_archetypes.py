@@ -1134,15 +1134,59 @@ def pred_V_ARCH_POSITIVE_BACKGROUND_JOB():
     return _archetype_positive("BACKGROUND_JOB", "scheduled_pip", "pip_fastapi", "requirements.txt:apscheduler")
 
 
+def make_rich_repo():
+    """Fixture kind `rich`: prisma schema and client, resend, apscheduler, a compose
+    file and 25 UI files, so five traits can be judged PRESENT on one repository."""
+    root = make_repo("persistent_prisma")
+    with open(os.path.join(root, "package.json"), "w", encoding="utf-8") as fh:
+        json.dump({"name": "fixture", "dependencies": {"@prisma/client": "^5.0.0", "resend": "^3.0.0"}}, fh)
+    with open(os.path.join(root, "requirements.txt"), "w", encoding="utf-8") as fh:
+        fh.write("apscheduler==3.10.4\n")
+    with open(os.path.join(root, "docker-compose.yml"), "w", encoding="utf-8") as fh:
+        fh.write("services: {}\n")
+    os.makedirs(os.path.join(root, "src", "ui"))
+    for i in range(25):
+        with open(os.path.join(root, "src", "ui", "c%02d.tsx" % i), "w", encoding="utf-8") as fh:
+            fh.write("export {}\n")
+    return root
+
+
+def pred_V_ARCH_NO_STRUCTURAL_DETECTOR():
+    """RESEARCH F5 finding 4: a trait nothing can detect (bulk, destructive) reads
+    UNJUDGED `no-structural-detector` on every repository, even a rich one. The
+    control shows the scan did judge: five detected traits read PRESENT on the same
+    produced cache. This gate has held since 02-01 by design; its control is what
+    makes the green informative."""
+    if ar is None or ts is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    state, repo = new_state(), make_rich_repo()
+    res = ts.produce(repo, state_dir=state)
+    if res.get("outcome") != ts.WRITTEN:
+        return False, "produce outcome=%r reason=%r" % (res.get("outcome"), res.get("reason"))
+    traits = ar.read_traits(repo, state_dir=state)["traits"]
+    problems = []
+    for t in ("bulk", "destructive"):
+        r = traits[t]
+        if not (r["state"] == ar.UNJUDGED and r["reason"] == "no-structural-detector"):
+            problems.append("%s read %s/%s (want UNJUDGED/no-structural-detector)" % (t, r["state"], r["reason"]))
+    judged = {t: traits[t]["state"] for t in ("persistent", "external_effect", "scheduled", "distributed", "ui")}
+    not_present = {t: s for t, s in judged.items() if s != ar.PRESENT}
+    if not_present:
+        problems.append("CONTROL: the scan did not judge these PRESENT on the rich fixture: %s" % not_present)
+    return not problems, "; ".join(problems) or \
+        "bulk and destructive UNJUDGED/no-structural-detector; control judged %s" % judged
+
+
 GATES += [
     ("V-ARCH-POSITIVE-WORLD_MUTATION", pred_V_ARCH_POSITIVE_WORLD_MUTATION),
     ("V-ARCH-POSITIVE-EXTERNAL_EFFECT", pred_V_ARCH_POSITIVE_EXTERNAL_EFFECT),
     ("V-ARCH-POSITIVE-BACKGROUND_JOB", pred_V_ARCH_POSITIVE_BACKGROUND_JOB),
+    ("V-ARCH-NO-STRUCTURAL-DETECTOR", pred_V_ARCH_NO_STRUCTURAL_DETECTOR),
 ]
 
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 36
+EXPECTED = 37
 
 
 def main() -> int:

@@ -72,11 +72,142 @@ SKIPPED = "SKIPPED"
 UNRESOLVABLE = "UNRESOLVABLE"
 FAILED = "FAILED"
 
-# Persistent marker class. The Elixir path priv/repo/migrations is covered by the
+# Marker classes: names and directory shapes, matched exactly (never as substrings).
+# Content is read only for the decisive token of a file selected by name or by
+# directory, bounded to MANIFEST_READ_MAX, and never by searching source for trait
+# words (RESEARCH F5.2). The Elixir path priv/repo/migrations is covered by the
 # directory name `migrations`.
-_MARKER_FILES = frozenset({"schema.prisma", "schema.sql"})
-_MARKER_DIRS = frozenset({"migrations", "alembic"})
-_MARKER_TRAITS = frozenset({"persistent"})
+MARKER_SIGNALS = {
+    "persistent": {
+        "strong_files": frozenset({"schema.prisma", "schema.sql"}),
+        "strong_dirs": frozenset({"migrations", "alembic"}),
+        # Data files are not code (RESEARCH F5.3): WEAK, never PRESENT.
+        "weak_extensions": (".db", ".sqlite", ".sqlite3", ".mca"),
+        "weak_files": frozenset({"level.dat"}),
+        "weak_dirs": frozenset({"playerdata"}),
+        "ignored_files": frozenset({"thumbs.db"}),    # a Windows thumbnail cache is not a database
+    },
+    "distributed": {
+        "strong_files": frozenset({"docker-compose.yml", "docker-compose.yaml", "compose.yml",
+                                   "compose.yaml", "fly.toml"}),
+        "weak_files": frozenset({"dockerfile"}),
+        "workload_dirs": frozenset({"k8s", "kubernetes", "deploy", "helm"}),
+        "workload_kinds": ("Deployment", "StatefulSet", "DaemonSet", "CronJob"),
+    },
+    "scheduled": {
+        "workflow_parts": (".github", "workflows"),
+        "json_files": frozenset({"vercel.json"}),
+        "json_key": "crons",
+    },
+    "multi_actor": {"strong_files": frozenset({"plugin.yml", "paper-plugin.yml"})},
+    "policy_layers": {"weak_dirs": frozenset({"policies", "rls"})},
+}
+
+# A source module under one of these directory segments is WEAK evidence of persistence.
+# PROVISIONAL (R-3): the class ships WEAK and its calibration against KobiiSports Resort
+# is Phase 7, not planned here.
+CODE_MODULE_SEGMENTS = ("save", "saves", "savegame", "savedata", "persistence", "persist", "storage")
+CODE_MODULE_EXTENSIONS = (".c", ".cpp", ".h", ".hpp", ".cs", ".java", ".py", ".ex", ".exs",
+                          ".rs", ".go", ".kt", ".ts", ".js")
+
+# ui is judged by counting files: at least UI_PRESENT_MIN is PRESENT, one to fewer is WEAK (A8).
+UI_EXTENSIONS = (".tsx", ".jsx", ".vue", ".svelte", ".html", ".css", ".scss", ".astro",
+                 ".cshtml", ".razor", ".xaml", ".uxml", ".uss")
+UI_PRESENT_MIN = 20
+
+_MARKER_TRAITS = frozenset(MARKER_SIGNALS) | {"ui"}   # traits with a marker or count detector
+_FOUND_CAP = 50                                        # evidence kept per trait and class while walking
+_YAML_EXTENSIONS = (".yml", ".yaml")
+_WORKLOAD_RE = re.compile(r"^[ \t]*kind:[ \t]*(?:%s)[ \t\r]*$" % "|".join(
+    MARKER_SIGNALS["distributed"]["workload_kinds"]), re.M)
+_CRON_RE = re.compile(r"^[ \t]*(?:-[ \t]*)?cron:", re.M)
+
+
+def _is_secret_name(fn):
+    """A file this producer must never open, whatever selected it."""
+    low = fn.lower()
+    return low.startswith(".env") or low.endswith((".key", ".pem")) or low.startswith("id_rsa")
+
+
+def _is_link(path):
+    """A symlink or, on Windows, a directory junction: pruned, never followed (A10:
+    os.walk(followlinks=False) still descends a junction on this host)."""
+    isjunction = getattr(os.path, "isjunction", None)
+    return os.path.islink(path) or (isjunction is not None and isjunction(path))
+
+
+def _read_bounded(path, walk):
+    """The text of one file selected by name, at most MANIFEST_READ_MAX bytes, or None."""
+    if _is_secret_name(os.path.basename(path)):
+        return None
+    try:
+        with open(path, "rb") as fh:
+            return fh.read(MANIFEST_READ_MAX).decode("utf-8-sig", errors="replace")
+    except OSError:
+        walk["unreadable"] += 1       # a file we could not read is a place we could not see
+        return None
+
+
+def _add(found, trait, cls, evidence, kind):
+    bucket = found[trait]
+    if sum(1 for c, _e, _k in bucket if c == cls) < _FOUND_CAP:
+        bucket.append((cls, evidence, kind))
+
+
+def _dir_markers(rel_dir, parts, dirnames, filenames, found):
+    """Directory-shaped markers: child directories by name, and the directory itself."""
+    persistent = MARKER_SIGNALS["persistent"]
+    for d in dirnames:
+        low = d.lower()
+        rel = d if rel_dir == "." else rel_dir + "/" + d
+        if low in persistent["strong_dirs"]:
+            _add(found, "persistent", STRONG, rel, "marker")
+        elif low in persistent["weak_dirs"]:
+            _add(found, "persistent", WEAK, rel, "data-file")
+    if parts and filenames and parts[-1] in MARKER_SIGNALS["policy_layers"]["weak_dirs"]:
+        _add(found, "policy_layers", WEAK, rel_dir, "marker")
+
+
+def _file_markers(dirpath, rel, rel_dir, parts, fn, walk, found, ui):
+    """File-shaped markers for one file, selected by exact name, extension or directory."""
+    low = fn.lower()
+    ext = os.path.splitext(low)[1]
+    persistent = MARKER_SIGNALS["persistent"]
+    if low in persistent["strong_files"]:
+        _add(found, "persistent", STRONG, rel, "marker")
+    elif low not in persistent["ignored_files"] and (
+            ext in persistent["weak_extensions"] or low in persistent["weak_files"]):
+        _add(found, "persistent", WEAK, rel, "data-file")
+    if ext in CODE_MODULE_EXTENSIONS and any(seg in CODE_MODULE_SEGMENTS for seg in parts):
+        _add(found, "persistent", WEAK, rel, "code-module")
+    distributed = MARKER_SIGNALS["distributed"]
+    if low in distributed["strong_files"]:
+        _add(found, "distributed", STRONG, rel, "marker")
+    elif low in distributed["weak_files"]:
+        _add(found, "distributed", WEAK, rel, "marker")
+    elif ext in _YAML_EXTENSIONS and any(seg in distributed["workload_dirs"] for seg in parts):
+        text = _read_bounded(os.path.join(dirpath, fn), walk)
+        if text is not None and _WORKLOAD_RE.search(text):
+            _add(found, "distributed", STRONG, rel, "marker")
+    scheduled = MARKER_SIGNALS["scheduled"]
+    if ext in _YAML_EXTENSIONS and tuple(parts[-2:]) == scheduled["workflow_parts"]:
+        text = _read_bounded(os.path.join(dirpath, fn), walk)
+        if text is not None and _CRON_RE.search(text):
+            _add(found, "scheduled", STRONG, rel, "marker")
+    elif low in scheduled["json_files"]:
+        text = _read_bounded(os.path.join(dirpath, fn), walk)
+        try:
+            doc = json.loads(text) if text is not None else None
+        except ValueError:
+            doc = None
+        if isinstance(doc, dict) and doc.get(scheduled["json_key"]):
+            _add(found, "scheduled", STRONG, rel, "marker")
+    if low in MARKER_SIGNALS["multi_actor"]["strong_files"]:
+        _add(found, "multi_actor", STRONG, rel, "marker")
+    if ext in UI_EXTENSIONS:
+        ui["count"] += 1
+        if len(ui["samples"]) < EVIDENCE_MAX:
+            ui["samples"].append(rel)
 
 
 # -- manifest parsers: declared names only, never text ------------------------------
@@ -452,6 +583,7 @@ def scan(root, *, cap=DEFAULT_CAP, budget_s=DEFAULT_BUDGET_S):
             "ecosystems": [], "unreadable": 0, "manifest_errors": []}
     found = {t: [] for t in archetypes.TRAITS}
     parsed, ecosystems = [], set()
+    ui = {"count": 0, "samples": []}
 
     def onerror(_exc):          # a directory that could not be listed: counted, never raised
         walk["unreadable"] += 1
@@ -460,22 +592,24 @@ def scan(root, *, cap=DEFAULT_CAP, budget_s=DEFAULT_BUDGET_S):
         if time.perf_counter() - start >= budget_s:
             walk["budget_hit"] = True
             break
-        dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS)
+        # Skipped trees, symlinks and junctions are pruned before the walk descends.
+        dirnames[:] = sorted(d for d in dirnames
+                             if d not in SKIP_DIRS and not _is_link(os.path.join(dirpath, d)))
         filenames.sort()
-        for d in dirnames:
-            if d in _MARKER_DIRS:
-                rel = _safe_rel(root, os.path.join(dirpath, d))
-                if rel is not None:
-                    found["persistent"].append((STRONG, rel, "marker"))
+        rel_dir = _safe_rel(root, dirpath)
+        if rel_dir is None:
+            continue
+        parts = [] if rel_dir == "." else [p.lower() for p in rel_dir.split("/")]
+        _dir_markers(rel_dir, parts, dirnames, filenames, found)
         for fn in filenames:
             if walk["files"] >= cap:
                 walk["truncated"] = True
                 break
             walk["files"] += 1
-            if fn in _MARKER_FILES:
-                rel = _safe_rel(root, os.path.join(dirpath, fn))
-                if rel is not None:
-                    found["persistent"].append((STRONG, rel, "marker"))
+            if _is_secret_name(fn):         # counted, never opened, never named in evidence
+                continue
+            rel = fn if rel_dir == "." else rel_dir + "/" + fn
+            _file_markers(dirpath, rel, rel_dir, parts, fn, walk, found, ui)
             if fn.lower() in PARSERS:
                 _read_manifest(root, dirpath, fn, walk, parsed, ecosystems)
         if walk["truncated"]:
@@ -483,6 +617,10 @@ def scan(root, *, cap=DEFAULT_CAP, budget_s=DEFAULT_BUDGET_S):
     walk["ecosystems"] = sorted(ecosystems)
     walk["seconds"] = round(time.perf_counter() - start, 3)
     _dependency_evidence(parsed, found)
+    if ui["count"]:
+        cls = STRONG if ui["count"] >= UI_PRESENT_MIN else WEAK
+        for sample in ui["samples"]:
+            found["ui"].append((cls, sample, "%d ui files" % ui["count"]))
     traits = {t: _entitle(t, found[t], walk) for t in archetypes.TRAITS}
     return {"walk": walk, "traits": traits}
 
