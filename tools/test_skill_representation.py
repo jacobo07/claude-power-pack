@@ -32,7 +32,9 @@ INCONCLUSIVE is never a pass.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import copy
+import io
 import datetime
 import fnmatch
 import functools
@@ -131,6 +133,8 @@ def c_recordings(name, rec, suffix_rule=True):
         fail(f"{name}: schema {rec['schema']!r} != {sweep.SCHEMA!r}")
     if not (isinstance(rec["host"], str) and sweep.HOST_RE.fullmatch(rec["host"])):
         fail(f"{name}: host {rec['host']!r} is not ^[a-z0-9-]+$")
+    if not sweep.host_ok(rec["host"]):
+        fail(f"{name}: host {rec['host']!r} collides with the {sweep.REPO_LABEL!r} plane label")
     if suffix_rule and name != f"F-sweep-{rec['host']}.json":
         fail(f"{name}: host {rec['host']!r} does not match the filename suffix")
     rc = rec["repo_commit"]
@@ -396,10 +400,30 @@ def pole_listing_line_bound(tmp):
     return ok, f"listing_chars_upper_bound={bound} chars freed per removal={freed}"
 
 
+def pole_host_repo_refused(tmp):
+    # `repo` is the repo plane's label: as a host it collapses {"repo": rp, host: lp} to the live plane alone, which
+    # V-FD-RECORDINGS admitted because {"repo", "repo"} == {"repo"} (05-REVIEW WR-06). Refused at all three doors.
+    live, out = Path(tmp) / "live", Path(tmp) / "F-sweep-repo.json"
+    _skill(live, "real", FM_A + BODY)
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+        rc = sweep.main(["--measure-live", "--host", "repo", "--out", str(out), "--live-root", str(live)])
+    rec_b, why_b = sweep.build_recording(REPO, "HEAD", live, "repo")
+    p = sweep.public(_plane(live, "repo"))
+    rec = {"schema": sweep.SCHEMA, "host": "repo", "node": "n", "repo_commit": "0" * 40, "live_root": str(live),
+           "command": "", "method": sweep.METHOD, "planes": {"repo": p}, "groups": [], "drift_excluded": [],
+           "member_files": {}}
+    st, text = run_clause(c_recordings, out.name, rec)
+    ok = rc == 2 and not out.exists() and rec_b is None and st == "FAIL"
+    return ok, (f"--measure-live --host repo rc={rc} wrote={out.exists()}; build_recording "
+                f"{'refused' if rec_b is None else 'built'}; V-FD-RECORDINGS {st}")
+
+
 POLES = (("SAME-BODY", pole_same_body), ("CRLF", pole_crlf), ("ONE-BYTE", pole_one_byte),
          ("NO-FRONTMATTER", pole_no_frontmatter), ("SAME-NAME-CROSS-PLANE", pole_same_name_cross_plane),
          ("CROSS-PLANE-RENAMED", pole_cross_plane_renamed), ("DISCOVERY", pole_discovery),
-         ("EMPTY-BODY", pole_empty_body), ("LISTING-LINE-BOUND", pole_listing_line_bound))
+         ("EMPTY-BODY", pole_empty_body), ("LISTING-LINE-BOUND", pole_listing_line_bound),
+         ("HOST-REPO-REFUSED", pole_host_repo_refused))
 
 
 def _whole_file_hasher(skill_md_bytes):

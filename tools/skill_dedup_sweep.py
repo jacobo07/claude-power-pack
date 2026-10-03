@@ -63,6 +63,11 @@ REPO = _REPO
 SCHEMA = "skill-dedup-sweep/1"
 DEFAULT_LIVE_ROOT = "~/.claude/skills"
 HOST_RE = re.compile(r"[a-z0-9-]+")
+REPO_LABEL = "repo"  # the repo plane's label: never a host, or {"repo": rp, host: lp} keeps only the live plane
+
+
+def host_ok(host) -> bool:
+    return isinstance(host, str) and HOST_RE.fullmatch(host) is not None and host != REPO_LABEL
 # The two K4 D-LISTING probe rows (wiki/tools/listing_floor_probe.results.jsonl), pinned by session id so that a row
 # appended later can never be read in their place.
 K4_SESSIONS = {"champion": "8f983bc6-d760-4440-938d-aeed86a548ae",
@@ -322,7 +327,9 @@ def load_probe_rows(repo=REPO):
 # --------------------------------------------------------------------------- recording
 
 def build_recording(repo, ref, live_root, host, command=""):
-    """(recording, None) or (None, reason). Refuses on any INCONCLUSIVE plane."""
+    """(recording, None) or (None, reason). Refuses on any INCONCLUSIVE plane, and a host that is not a plane label."""
+    if not host_ok(host):
+        return None, f"host {host!r} is not ^[a-z0-9-]+$ or collides with the {REPO_LABEL!r} plane label"
     rp = repo_plane(repo, ref)
     if rp["status"] != "MEASURED":
         return None, f"repo plane: {rp['reason']}"
@@ -375,7 +382,7 @@ def _first_difference(old: dict, new: dict):
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--measure-live", action="store_true", help="record the repo + live planes (needs --host --out)")
-    ap.add_argument("--host", help="plane label, ^[a-z0-9-]+$ (a laptop run must say laptop)")
+    ap.add_argument("--host", help="plane label, ^[a-z0-9-]+$, never 'repo' (a laptop run must say laptop)")
     ap.add_argument("--out", help="recording path for --measure-live")
     ap.add_argument("--live-root", default=DEFAULT_LIVE_ROOT)
     ap.add_argument("--ref", default="HEAD")
@@ -386,8 +393,9 @@ def main(argv=None) -> int:
     repo = Path(a.repo)
 
     if a.measure_live:
-        if not a.host or not HOST_RE.fullmatch(a.host) or not a.out:
-            print("--measure-live needs --host matching ^[a-z0-9-]+$ and --out PATH", file=sys.stderr)
+        if not host_ok(a.host) or not a.out:
+            print(f"--measure-live needs --host matching ^[a-z0-9-]+$ (not {REPO_LABEL!r}, the repo plane label) and "
+                  "--out PATH", file=sys.stderr)
             return 2
         cmd = f"python3 tools/skill_dedup_sweep.py --measure-live --host {a.host} --out {a.out}"
         if a.live_root != DEFAULT_LIVE_ROOT:
