@@ -134,6 +134,32 @@ def make_repo(kind: str) -> str:
             json.dump({"name": "fixture", "dependencies": {"react": "^18.0.0"}}, fh)
         with open(os.path.join(root, "src", "App.jsx"), "w", encoding="utf-8") as fh:
             fh.write("export default function App() { return null }\n")
+    elif kind in ("truncated_near", "truncated_far"):
+        # A bulk directory of 60 small files next to a schema file. The walk visits
+        # directories in sorted name order, so `00_models` comes before `zz_bulk`
+        # (near: the marker is reached before a cap of 10 cuts the walk) and `zz_models`
+        # comes after `aa_bulk` (far: the cap cuts the walk first).
+        near = kind == "truncated_near"
+        model_dir, bulk_dir = ("00_models", "zz_bulk") if near else ("zz_models", "aa_bulk")
+        with open(os.path.join(root, "package.json"), "w", encoding="utf-8") as fh:
+            json.dump({"name": "fixture", "dependencies": {"react": "^18.0.0"}}, fh)
+        os.makedirs(os.path.join(root, model_dir))
+        os.makedirs(os.path.join(root, bulk_dir))
+        with open(os.path.join(root, model_dir, "schema.prisma"), "w", encoding="utf-8") as fh:
+            fh.write("model Thing {\n  id Int @id\n}\n")
+        for i in range(60):
+            with open(os.path.join(root, bulk_dir, "n%02d.txt" % i), "w", encoding="utf-8") as fh:
+                fh.write("x\n")
+    elif kind == "zero_manifest":
+        # RESEARCH F5: three real repos had no manifest any parser knows.
+        os.makedirs(os.path.join(root, "src"))
+        os.makedirs(os.path.join(root, "include"))
+        with open(os.path.join(root, "src", "main.c"), "w", encoding="utf-8") as fh:
+            fh.write("int main(void) { return 0; }\n")
+        with open(os.path.join(root, "include", "game.h"), "w", encoding="utf-8") as fh:
+            fh.write("#define GAME 1\n")
+        with open(os.path.join(root, "Makefile"), "w", encoding="utf-8") as fh:
+            fh.write("all:\n\tcc src/main.c\n")
     else:
         raise ValueError("unknown fixture kind: %s" % kind)
     return root
@@ -878,6 +904,137 @@ def pred_V_ARCH_DRILL_NOUN_LIST():
         ok_v, ok_n, counter.calls, named, ok_vr, ok_nr, ev_v)
 
 
+# -- plan 02-03 Task 1: honest absence (RESEARCH F5, D-05) ------------------------
+# A trait with no positive evidence reads ABSENT only when the walk was complete.
+# A cut, starved, blind or partly unreadable walk reads UNJUDGED with the cause.
+
+def _produce_read(repo, **kw):
+    """Produce into a fresh state dir -> (state, produce result, read_traits result)."""
+    state = new_state()
+    res = ts.produce(repo, state_dir=state, **kw)
+    return state, res, ar.read_traits(repo, state_dir=state)
+
+
+def pred_V_ARCH_TRUNCATED():
+    if ts is None or ar is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    problems, notes = [], []
+    # (a) the schema file is reached before the cap: the positive is kept.
+    repo_a = make_repo("truncated_near")
+    state_a, res_a, read_a = _produce_read(repo_a, cap=10)
+    walk_a = (res_a.get("doc") or {}).get("walk") or {}
+    pa = read_a["traits"]["persistent"]
+    if not walk_a.get("truncated"):
+        problems.append("near: walk.truncated=%r" % walk_a.get("truncated"))
+    if not (pa["state"] == ar.PRESENT and "00_models/schema.prisma" in pa["evidence"]):
+        problems.append("near: persistent=%s/%s evidence=%s" % (pa["state"], pa["reason"], pa["evidence"]))
+    wm_a = _wm(ar.resolve(WM_ES, repo_a, state_dir=state_a))
+    if wm_a is None or wm_a["strength"] != ar.Strength.REQUIRED:
+        problems.append("near: WORLD_MUTATION=%s" % (wm_a and (wm_a["strength"], wm_a["basis"])))
+    # (b) the cap cuts the walk before the schema file: the trait is UNJUDGED truncated.
+    repo_b = make_repo("truncated_far")
+    state_b, res_b, read_b = _produce_read(repo_b, cap=10)
+    walk_b = (res_b.get("doc") or {}).get("walk") or {}
+    pb = read_b["traits"]["persistent"]
+    if not walk_b.get("truncated"):
+        problems.append("far: walk.truncated=%r" % walk_b.get("truncated"))
+    if not (pb["state"] == ar.UNJUDGED and pb["reason"] == "truncated"):
+        problems.append("far: persistent=%s/%s (want UNJUDGED/truncated, never ABSENT or no-structural-detector)"
+                        % (pb["state"], pb["reason"]))
+    wm_b = _wm(ar.resolve(WM_ES, repo_b, state_dir=state_b))
+    if wm_b is None or not (wm_b["strength"] == ar.Strength.CONDITIONAL and wm_b["basis"] == "intent"
+                            and "persistent" in wm_b["unjudged"]):
+        problems.append("far: WORLD_MUTATION=%s" % (wm_b and (wm_b["strength"], wm_b["basis"], wm_b["unjudged"])))
+    notes.append("near persistent=%s %s; far persistent=%s/%s" % (pa["state"], pa["evidence"], pb["state"], pb["reason"]))
+    return not problems, "; ".join(problems) or "; ".join(notes)
+
+
+def pred_V_ARCH_BUDGET():
+    if ts is None or ar is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    problems = []
+    # budget_s=0 must cut on every run: the scan compares time.perf_counter() with >=
+    # before each directory (time.monotonic ticks at 15.6 ms on this host).
+    repo = make_repo("persistent_prisma")
+    _state, res, read = _produce_read(repo, budget_s=0)
+    walk = (res.get("doc") or {}).get("walk") or {}
+    traits = read["traits"]
+    absent = [t for t, r in traits.items() if r["state"] == ar.ABSENT]
+    reasons = sorted({r["reason"] for r in traits.values() if r["state"] == ar.UNJUDGED})
+    p = traits["persistent"]
+    if walk.get("budget_hit") is not True:
+        problems.append("budget_hit=%r" % walk.get("budget_hit"))
+    if absent:
+        problems.append("ABSENT under a cut walk: %s" % absent)
+    if not (p["state"] == ar.PRESENT or (p["state"] == ar.UNJUDGED and p["reason"] == "budget-exhausted")):
+        problems.append("persistent=%s/%s" % (p["state"], p["reason"]))
+    if "budget-exhausted" not in reasons:
+        problems.append("no trait carries budget-exhausted (reasons=%s)" % reasons)
+    # Control: the same repo with the default budget is not cut.
+    repo2 = make_repo("persistent_prisma")
+    _s2, res2, _r2 = _produce_read(repo2)
+    walk2 = (res2.get("doc") or {}).get("walk") or {}
+    if walk2.get("budget_hit") is not False:
+        problems.append("CONTROL: default budget budget_hit=%r" % walk2.get("budget_hit"))
+    return not problems, "; ".join(problems) or \
+        "budget_s=0 -> budget_hit, persistent=%s/%s, reasons=%s, no ABSENT; default budget not cut" % (
+            p["state"], p["reason"], reasons)
+
+
+def pred_V_ARCH_BLIND_ECOSYSTEM():
+    if ts is None or ar is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    problems = []
+    _s, _res, read = _produce_read(make_repo("zero_manifest"))
+    p = read["traits"]["persistent"]
+    if not (p["state"] == ar.UNJUDGED and p["reason"] == "no-manifest-ecosystem"):
+        problems.append("zero_manifest persistent=%s/%s (want UNJUDGED/no-manifest-ecosystem)" % (p["state"], p["reason"]))
+    # Control: a repo with a parsed manifest and a complete walk can read ABSENT.
+    _s2, _res2, read2 = _produce_read(make_repo("ephemeral"))
+    c = read2["traits"]["persistent"]
+    if not (c["state"] == ar.ABSENT and c["fact_state"] == ar.OBSERVED):
+        problems.append("CONTROL: ephemeral persistent=%s/%s fact_state=%s (want ABSENT/OBSERVED)" % (
+            c["state"], c["reason"], c["fact_state"]))
+    return not problems, "; ".join(problems) or \
+        "zero_manifest persistent=UNJUDGED/no-manifest-ecosystem; control ephemeral persistent=ABSENT/%s (%s)" % (
+            c["fact_state"], c["reason"])
+
+
+def pred_V_ARCH_UNREADABLE_SUBTREE():
+    if ts is None or ar is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    original = ts._walk
+
+    def failing_first(top, topdown=True, onerror=None, followlinks=False):
+        if onerror is not None:
+            onerror(PermissionError(13, "Permission denied", os.path.join(top, "fabricated-subdir")))
+        return original(top, topdown=topdown, onerror=onerror, followlinks=followlinks)
+
+    counter = Counting(failing_first)
+    problems = []
+    ts._walk = counter
+    try:
+        _s, res, read = _produce_read(make_repo("ephemeral"))
+        _s2, res2, read2 = _produce_read(make_repo("persistent_prisma"))
+    finally:
+        ts._walk = original
+    walk = (res.get("doc") or {}).get("walk") or {}
+    p, p2 = read["traits"]["persistent"], read2["traits"]["persistent"]
+    if counter.calls < 2:
+        problems.append("the wrapper was reached %d times, wanted 2" % counter.calls)
+    if not (p["state"] == ar.UNJUDGED and p["reason"] == "unreadable-subtree"):
+        problems.append("ephemeral persistent=%s/%s (want UNJUDGED/unreadable-subtree)" % (p["state"], p["reason"]))
+    if walk.get("unreadable") != 1:
+        problems.append("walk.unreadable=%r" % walk.get("unreadable"))
+    if p2["state"] != ar.PRESENT:
+        problems.append("positive lost under the same wrapper: persistent=%s/%s" % (p2["state"], p2["reason"]))
+    if ts._walk is not original:
+        problems.append("ts._walk not restored")
+    return not problems, "; ".join(problems) or \
+        "ephemeral persistent=UNJUDGED/unreadable-subtree unreadable=1; persistent_prisma still %s; wrapper calls=%d" % (
+            p2["state"], counter.calls)
+
+
 GATES = [
     ("V-ARCH-HERMETIC-HOME", pred_V_ARCH_HERMETIC_HOME),
     ("V-ARCH-TRACER-PRODUCE", pred_V_ARCH_TRACER_PRODUCE),
@@ -908,11 +1065,15 @@ GATES = [
     ("V-ARCH-INTENT-BOUNDED", pred_V_ARCH_INTENT_BOUNDED),
     ("V-ARCH-DRILL-CEILING", pred_V_ARCH_DRILL_CEILING),
     ("V-ARCH-DRILL-NOUN-LIST", pred_V_ARCH_DRILL_NOUN_LIST),
+    ("V-ARCH-TRUNCATED", pred_V_ARCH_TRUNCATED),
+    ("V-ARCH-BUDGET", pred_V_ARCH_BUDGET),
+    ("V-ARCH-BLIND-ECOSYSTEM", pred_V_ARCH_BLIND_ECOSYSTEM),
+    ("V-ARCH-UNREADABLE-SUBTREE", pred_V_ARCH_UNREADABLE_SUBTREE),
 ]
 
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 29
+EXPECTED = 33
 
 
 def main() -> int:
