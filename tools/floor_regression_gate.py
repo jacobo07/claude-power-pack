@@ -896,9 +896,15 @@ def write_reference(out, measured, argv=None, replace=False, redact=None):
         target.parent.mkdir(parents=True, exist_ok=True)
         if replace:
             tmp = target.with_name(target.name + f".tmp{os.getpid()}")
-            with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
-                fh.write(text)
-            os.replace(tmp, target)
+            try:
+                with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
+                    fh.write(text)
+                os.replace(tmp, target)
+            finally:
+                # a failed write or replace must not leave `<target>.tmp<pid>` in a committed directory (IN-01)
+                with contextlib.suppress(OSError):
+                    if tmp.exists():
+                        tmp.unlink()
         else:
             with open(target, "x", encoding="utf-8", newline="\n") as fh:
                 fh.write(text)

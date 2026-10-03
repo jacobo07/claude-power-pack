@@ -2531,7 +2531,35 @@ def g_tokens_unmeasured():
     return (not why), "; ".join(why) or "tokens not_comparable / no_model_call: exit 2 tokens_unmeasured; --chars-only -> WITHIN_BOUND_CHARS_ONLY exit 0 with a CHARS_ONLY note; rises and a measured tokens axis stay enforced; CLI and in-process"
 
 
+def g_replace_failure_no_stray_tmp():
+    """IN-01: a failed --replace write leaves no `<target>.tmp<pid>` behind (the reference directory is committed)."""
+    why = []
+    for cli in (True, False):
+        tag = "cli" if cli else "in-process"
+        run = run_cli if cli else run_main
+        root = scratch("in01")
+        ref_tx, _ = floor_pair(root, {}, {})
+        # os.replace(tmp, <a directory>) fails for real: the failure comes after the temp file was written
+        target = root / "out" / "ref.json"
+        target.mkdir(parents=True)
+        rc, out, _ = run(["--write-reference", target, "--transcript", ref_tx, "--replace"])
+        stray = sorted(p.name for p in target.parent.iterdir() if p.name != "ref.json")
+        if not unmeasurable(rc, out, "write_failed") or stray:
+            why.append(f"{tag} failed replace: rc={rc} last={last_line(out)!r} stray={stray}")
+        if not target.is_dir():
+            why.append(f"{tag} the target directory is gone")
+        # control: a successful --replace leaves exactly the target
+        good = root / "good" / "ref.json"
+        rc, out, _ = run(["--write-reference", good, "--transcript", ref_tx])
+        rc2, out2, _ = run(["--write-reference", good, "--transcript", ref_tx, "--replace"])
+        left = sorted(p.name for p in good.parent.iterdir())
+        if rc != 0 or rc2 != 0 or left != ["ref.json"]:
+            why.append(f"{tag} control: rc={rc}/{rc2} left={left}")
+    return (not why), "; ".join(why) or "failed --replace: exit 2 write_failed and no temp file left; successful --replace leaves only the target; CLI and in-process"
+
+
 GATES_REVIEWFIX = [
+    ("V-FLOOR-REPLACE-FAILURE-NO-STRAY-TMP", g_replace_failure_no_stray_tmp),
     ("V-FLOOR-TOKENS-UNMEASURED", g_tokens_unmeasured),
     ("V-FLOOR-HOOK-UNCORRELATED-UNATTRIBUTED", g_hook_uncorrelated_unattributed),
     ("V-FLOOR-LAYER-ABSENT", g_layer_absent),
