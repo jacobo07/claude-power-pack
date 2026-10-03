@@ -1272,19 +1272,55 @@ def verify_segment(command):
     return None
 
 
+SIG_PATH_RE = re.compile(r"[./]?[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*/?")
+SIG_URLISH_RE = re.compile(r"://|^//|[?@#=]|%[0-9A-Fa-f]{2}")
+SIG_RUN_RE = re.compile(r"[A-Za-z0-9]{20,}")
+_SIG_REDACT = []
+
+
+def _opaque_run(tok):
+    """True when `tok` holds a long opaque run (a key, a hash, a token): 20+ letters/digits mixing both, or 32+ of
+    either. Such a run is never written: it is a secret candidate however it is shaped."""
+    for m in SIG_RUN_RE.finditer(tok):
+        run = m.group(0)
+        if len(run) >= 32 or (re.search(r"[A-Za-z]", run) and re.search(r"[0-9]", run)):
+            return True
+    return False
+
+
+def _sig_redact(text):
+    """The Secret Firewall's redact() over a signature. Unavailable means the signature is dropped (fail closed)."""
+    if not _SIG_REDACT:
+        try:
+            _SIG_REDACT.append(_load_redact())
+        except Exception:  # noqa: BLE001 -- no redaction available: write nothing of the command
+            _SIG_REDACT.append(None)
+    fn = _SIG_REDACT[0]
+    return "(other)" if fn is None else fn(text)
+
+
 def cmd_signature(seg):
-    """Program and script tokens only, never flags, values or arguments: the first one or two whitespace tokens of
-    the segment (after env assignments and wrappers) made of letters, digits and ./:_-."""
+    """Program name and at most one non-URL subcommand or script token, never flags, values or arguments (WR-02).
+    The program must be a bare name or a plain path; the second token is kept only as a short lowercase word, `-m
+    <module>`, or a plain path; a URL (scheme, query, userinfo, fragment) becomes `<url>` and a long opaque run
+    becomes `<opaque>`. The result then goes through redact()."""
     toks = _program_tokens(seg.split("\n", 1)[0])
-    if not toks or not SIG_TOKEN_RE.fullmatch(toks[0]) or toks[0].startswith("-"):
+    if not toks or toks[0].startswith("-") or not SIG_PATH_RE.fullmatch(toks[0]) or len(toks[0]) > 80 \
+            or _opaque_run(toks[0]):
         return "(other)"
     out = [os.path.basename(toks[0]) if toks[0].startswith("/") and os.path.basename(toks[0]) else toks[0]]
-    if len(toks) > 2 and toks[1] == "-m" and re.fullmatch(r"[A-Za-z0-9_.]{1,40}", toks[2]):
+    if len(toks) > 2 and toks[1] == "-m" and re.fullmatch(r"[A-Za-z0-9_.]{1,40}", toks[2]) \
+            and not _opaque_run(toks[2]):
         out += ["-m", toks[2]]
-    elif len(toks) > 1 and SIG_TOKEN_RE.fullmatch(toks[1]) and not toks[1].startswith("-") \
-            and (re.fullmatch(r"[A-Za-z]{1,20}", toks[1]) or re.search(r"[./]", toks[1])):
-        out.append(toks[1])
-    return " ".join(out)
+    elif len(toks) > 1 and not toks[1].startswith("-"):
+        t = toks[1]
+        if SIG_URLISH_RE.search(t):
+            out.append("<url>")
+        elif _opaque_run(t) and re.fullmatch(r"[A-Za-z0-9_.:/-]+", t):
+            out.append("<opaque>")
+        elif len(t) <= 80 and SIG_PATH_RE.fullmatch(t) and (re.fullmatch(r"[A-Za-z]{1,20}", t) or re.search(r"[./]", t)):
+            out.append(t)
+    return _sig_redact(" ".join(out))
 
 
 def h_numerator_interval(lo, hi, sensitivity_weighted):

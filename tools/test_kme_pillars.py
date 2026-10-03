@@ -2281,6 +2281,31 @@ def g_out_dir_inside_root():
                         f"control_rc={rc_ok} control_files={wrote}"
 
 
+def g_signature_no_url_token():
+    """WR-02: a verification command carrying a URL or an opaque token in its arguments never reaches the file."""
+    tok = "ghp1234567890abcdefghijklmnopqrstuv"
+    cmds = {"url": f"curl https://api.example.com/verify/{tok}",
+            "query": f"curl https://api.example.com/verify?access={tok}&x=1",
+            "userinfo": f"curl https://user:{tok}@host.example.com/verify",
+            "bare-path": f"curl api.example.com/verify/{tok}"}
+    root = scratch("wr02")
+    fx = Fx(root)
+    fx.human("go", ts(0))
+    for i, c in enumerate(list(cmds.values()) + [TEST_CMD]):
+        call(fx, i, [(f"t{i}", "Bash", {"command": c})])
+        fx.tool_result(f"t{i}", "ok" * 50, ts(11 + i))
+    call(fx, 9)
+    rc, res, out, err, out_dir = pil_other("h", root)
+    written = "".join(p.read_text(encoding="utf-8") for p in out_dir.glob("*.md"))
+    sigs = sorted(r["signature"] for r in res["details"]["cmd_signatures"])
+    unit = {k: kp.cmd_signature(v) for k, v in cmds.items()}
+    leaked = tok in written + out + err or "api.example.com" in written + out
+    ok = (rc in (0, 3) and not leaked and TEST_CMD in sigs and unit["url"] == "curl <url>"
+          and unit["query"] == "curl <url>" and unit["userinfo"] == "curl <url>"
+          and unit["bare-path"] == "curl <opaque>" and kp.cmd_signature("python3 tools/test_x.py") == TEST_CMD)
+    return ok, f"rc={rc} leaked={leaked} unit={unit} sigs={sigs}"
+
+
 GATES_TRACER = [
     ("V-KMEP-TRACER-D-E2E", g_tracer_e2e),
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
@@ -2288,6 +2313,7 @@ GATES_TRACER = [
 ]
 GATES_REVIEW_FIX = [
     ("V-KMEP-OUT-DIR-INSIDE-ROOT", g_out_dir_inside_root),
+    ("V-KMEP-SIGNATURE-NO-URL-TOKEN", g_signature_no_url_token),
 ]
 GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_PLAN5_TRACER + GATES_PLAN5_BUNDLE + GATES_REAL + GATES_REAL_2 + GATES_REVIEW_FIX
 
