@@ -807,6 +807,77 @@ def pred_V_ARCH_INTENT_BOUNDED():
         ms, far, near, getattr(ar, "INTENT_MAX_CHARS", None))
 
 
+# -- plan 02-02 Task 3: falsification drills --------------------------------------
+# A control that has never been seen to go red proves nothing. Each drill installs a
+# mutation of the code under test, re-runs the target predicate(s), and requires: the
+# predicate went RED, the counting wrapper was reached (so a pass is not an unreached
+# seam), the red evidence names the sub-assertion being drilled (so it did not go red
+# for an unrelated setup reason), and, after the restore in `finally`, the same
+# predicate is GREEN again on real code. Every target builds its own fixtures inside
+# the predicate, so producer and reader run under the same mutation.
+
+def _drill_report(label, results):
+    for name, ok, evidence in results:
+        print("    [drill %s] mutated %s ok=%s evidence: %s" % (label, name, ok, str(evidence)[:700]))
+
+
+def pred_V_ARCH_DRILL_CEILING():
+    """RESEARCH drill 1: a ceiling that lets any intent reach REQUIRED must turn the
+    intent-only cap red."""
+    original = ar.ceiling
+
+    def weakened(anchor_state, intent_hit, demoted):
+        if intent_hit:
+            return ar.Strength.REQUIRED, "intent"
+        return original(anchor_state, intent_hit, demoted)
+
+    counter = Counting(weakened)
+    ar.ceiling = counter
+    try:
+        ok_m, ev_m = pred_V_ARCH_INTENT_ONLY_CAP()
+    finally:
+        ar.ceiling = original
+    restored_is_original = ar.ceiling is original
+    ok_r, ev_r = pred_V_ARCH_INTENT_ONLY_CAP()
+    _drill_report("ceiling", [("V-ARCH-INTENT-ONLY-CAP", ok_m, ev_m)])
+    named = "INTENT-ONLY-NOT-CAPPED" in ev_m and "strength=REQUIRED" in ev_m and "INTENT-BASIS-REQUIRED" in ev_m
+    ok = ok_m is False and counter.calls > 0 and named and restored_is_original and ok_r is True
+    return ok, "mutated ok=%s calls=%d named_sub_assertion=%s restored ok=%s | %s" % (
+        ok_m, counter.calls, named, ok_r, ev_m)
+
+
+def pred_V_ARCH_DRILL_NOUN_LIST():
+    """RESEARCH drill 5: an intent detector degraded to a bag of persistence nouns
+    must turn the vocabulary-overlap and noun-only controls red."""
+    original = ar.intent_facts
+    nouns = tuple(ar.TRAIT_INTENT["persistent"]["objects"])
+
+    def noun_bag(prompt):
+        out = original(prompt)
+        hit = _match(str(prompt or "")[:ar.INTENT_MAX_CHARS], nouns)
+        if hit:   # no verb required: any persistence noun is "intent"
+            out["persistent"] = {"state": ar.PRESENT, "fact_state": ar.EXTRACTED,
+                                 "span": hit[0], "reason": "noun-only"}
+        return out
+
+    counter = Counting(noun_bag)
+    ar.intent_facts = counter
+    try:
+        ok_v, ev_v = pred_V_ARCH_VOCAB_OVERLAP_NEG()
+        ok_n, ev_n = pred_V_ARCH_NOUN_ONLY_NEG()
+    finally:
+        ar.intent_facts = original
+    restored_is_original = ar.intent_facts is original
+    ok_vr, _ev_vr = pred_V_ARCH_VOCAB_OVERLAP_NEG()
+    ok_nr, _ev_nr = pred_V_ARCH_NOUN_ONLY_NEG()
+    _drill_report("noun-list", [("V-ARCH-VOCAB-OVERLAP-NEG", ok_v, ev_v), ("V-ARCH-NOUN-ONLY-NEG", ok_n, ev_n)])
+    named = "VOCAB-ACTIVE-ARCHETYPE" in ev_v and "NOUN-ONLY-INTENT" in ev_n and "NOUN-ONLY-REQUIRED" in ev_n
+    ok = (ok_v is False and ok_n is False and counter.calls > 0 and named
+          and restored_is_original and ok_vr is True and ok_nr is True)
+    return ok, "mutated vocab ok=%s noun-only ok=%s calls=%d named_sub_assertions=%s restored ok=%s/%s | %s" % (
+        ok_v, ok_n, counter.calls, named, ok_vr, ok_nr, ev_v)
+
+
 GATES = [
     ("V-ARCH-HERMETIC-HOME", pred_V_ARCH_HERMETIC_HOME),
     ("V-ARCH-TRACER-PRODUCE", pred_V_ARCH_TRACER_PRODUCE),
@@ -835,11 +906,13 @@ GATES = [
     ("V-ARCH-TRAIT-INTENT-SHAPE", pred_V_ARCH_TRAIT_INTENT_SHAPE),
     ("V-ARCH-MATCHER-PARITY", pred_V_ARCH_MATCHER_PARITY),
     ("V-ARCH-INTENT-BOUNDED", pred_V_ARCH_INTENT_BOUNDED),
+    ("V-ARCH-DRILL-CEILING", pred_V_ARCH_DRILL_CEILING),
+    ("V-ARCH-DRILL-NOUN-LIST", pred_V_ARCH_DRILL_NOUN_LIST),
 ]
 
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 27
+EXPECTED = 29
 
 
 def main() -> int:
