@@ -119,9 +119,16 @@ class Fx:
                                     "usage": {"input_tokens": i, "cache_creation_input_tokens": cw,
                                               "cache_read_input_tokens": cr, "output_tokens": o}}})
 
-    def tool_result(self, tool_use_id, text, t):
-        return self._w({"type": "user", "timestamp": t, "message": {"role": "user", "content": [
-            {"type": "tool_result", "tool_use_id": tool_use_id, "content": text}]}})
+    def tool_result(self, tool_use_id, text, t, is_error=False):
+        block = {"type": "tool_result", "tool_use_id": tool_use_id, "content": text}
+        if is_error:
+            block["is_error"] = True
+        return self._w({"type": "user", "timestamp": t, "message": {"role": "user", "content": [block]}})
+
+    def meta_text(self, text, t):
+        """A harness-injected user line (isMeta) whose content is a list of text blocks, as skill bodies are."""
+        return self._w({"type": "user", "timestamp": t, "isMeta": True, "message": {"role": "user", "content": [
+            {"type": "text", "text": text}]}})
 
     def attachment(self, atype, t, **fields):
         return self._w({"type": "attachment", "timestamp": t, "attachment": dict({"type": atype}, **fields)})
@@ -808,6 +815,335 @@ def g_e_tracer_e2e():
 GATES_E_TRACER = [("V-KMEP-E-E2E", g_e_tracer_e2e)]
 
 
+# =========================================================================== gates (task 2: pillar E expansion)
+def e_run(build, extra=(), project="-home-x-kme-fixture"):
+    """build(fx) writes one main-thread transcript; returns (rc, result)."""
+    root = scratch("e")
+    fx = Fx(root, project=project)
+    fx.human("go", ts(0))
+    build(fx)
+    rc, res, _o, _e, _d = pil_other("e", root, extra, project=project)
+    return rc, res
+
+
+def g_e_after_compaction():
+    def build(fx):
+        rd(fx, 0, "a", "/w/f.py", E_BODY)
+        call(fx, 1)
+        fx.compact(ts(10 + 2 * 1 + 1))
+        rd(fx, 2, "b", "/w/f.py", E_BODY)
+        call(fx, 3)
+    rc, res = e_run(build)
+    n = res["numerator"]
+    c = klass(res, "identical_after_compaction")
+    ok = (c["count"] == 1 and klass(res, "identical_same_segment")["count"] == 0 and n["weighted_lo"] == 0
+          and n["weighted_hi"] > 0 and n["chars"] == 3000)
+    return ok, f"after_compaction={c} lo={n['weighted_lo']} hi={n['weighted_hi']}"
+
+
+def g_e_intervening_edit():
+    def build(fx):
+        rd(fx, 0, "a", "/w/f.py", E_BODY)
+        call(fx, 1, [("ed", "Edit", {"file_path": "/w/f.py", "old_string": "x", "new_string": "y"})])
+        fx.tool_result("ed", "edited", ts(10 + 2 + 1))
+        rd(fx, 2, "b", "/w/f.py", E_BODY)
+        call(fx, 3)
+        # control: an Edit of ANOTHER path does not excuse the reread
+        rd(fx, 4, "c", "/w/g.py", E_BODY)
+        call(fx, 5, [("ed2", "Write", {"file_path": "/w/other.py", "content": "z"})])
+        rd(fx, 6, "d", "/w/g.py", E_BODY)
+        call(fx, 7)
+    rc, res = e_run(build)
+    n = res["numerator"]
+    rw, same = klass(res, "rewritten_identical"), klass(res, "identical_same_segment")
+    ok = rw["count"] == 1 and same["count"] == 1 and n["chars"] == 3000 and n["weighted_lo"] > 0
+    return ok, f"rewritten_identical={rw} same_segment={same} numerator_chars={n['chars']}"
+
+
+def g_e_changed_content():
+    def build(fx):
+        rd(fx, 0, "a", "/w/f.py", E_BODY)
+        rd(fx, 1, "b", "/w/f.py", E_BODY + "!")                     # changed outside any tool write
+        call(fx, 2, [("ed", "MultiEdit", {"file_path": "/w/f.py", "edits": []})])
+        fx.tool_result("ed", "ok", ts(10 + 4 + 1))
+        rd(fx, 3, "c", "/w/f.py", E_BODY + "!!")                    # changed after a write
+        call(fx, 4)
+    rc, res = e_run(build)
+    ok = (klass(res, "changed_outside_tools")["count"] == 1 and klass(res, "changed_after_write")["count"] == 1
+          and res["numerator"]["chars"] == 0)
+    return ok, f"outside={klass(res, 'changed_outside_tools')['count']} after_write={klass(res, 'changed_after_write')['count']} " \
+               f"numerator_chars={res['numerator']['chars']}"
+
+
+def g_e_stub():
+    stub = "File unchanged since last read. The content from the earlier Read tool_result is still current."
+    def build(fx):
+        rd(fx, 0, "a", "/w/f.py", E_BODY)
+        rd(fx, 1, "b", "/w/f.py", stub)
+        call(fx, 2)
+    rc, res = e_run(build)
+    st = klass(res, "stub")
+    ok = (st["count"] == 1 and st["chars"] == len(stub) and klass(res, "identical_same_segment")["count"] == 0
+          and res["numerator"]["chars"] == 0 and res["numerator"]["weighted_hi"] == 0)
+    return ok, f"stub={st} identical={klass(res, 'identical_same_segment')['count']} numerator={res['numerator']['chars']}"
+
+
+def g_e_range():
+    def build(fx):
+        rd(fx, 0, "a", "/w/f.py", E_BODY, offset=0, limit=100)
+        rd(fx, 1, "b", "/w/f.py", E_BODY, offset=200, limit=100)    # other range: not a reread
+        rd(fx, 2, "c", "/w/f.py", E_BODY, offset=0, limit=100)      # same range: a reread
+        call(fx, 3)
+    rc, res = e_run(build)
+    ok = (klass(res, "first")["count"] == 2 and klass(res, "identical_same_segment")["count"] == 1)
+    return ok, f"first={klass(res, 'first')['count']} identical={klass(res, 'identical_same_segment')['count']}"
+
+
+def g_e_thread_scope():
+    root = scratch("ethr")
+    fx = Fx(root)
+    fx.human("go", ts(0))
+    rd(fx, 0, "a", "/w/f.py", E_BODY)
+    call(fx, 1)
+    sub = fx.subagent("ag1", "Explore")
+    sub.human("sub", ts(5))
+    rd(sub, 2, "sa", "/w/f.py", E_BODY)
+    call(sub, 3)
+    rc, res, _o, _e, _d = pil_other("e", root)
+    ok = (klass(res, "first")["count"] == 2 and klass(res, "identical_same_segment")["count"] == 0
+          and res["numerator"]["chars"] == 0)
+    return ok, f"first={klass(res, 'first')['count']} identical={klass(res, 'identical_same_segment')['count']}"
+
+
+def g_e_error_ignored():
+    def build(fx):
+        rd(fx, 0, "a", "/w/f.py", E_BODY)
+        call(fx, 1, [("bad", "Read", {"file_path": "/w/f.py"})])
+        fx.tool_result("bad", E_BODY, ts(10 + 2 + 1), is_error=True)
+        rd(fx, 2, "c", "/w/f.py", E_BODY)
+        call(fx, 3)
+    rc, res = e_run(build)
+    total = sum(c["count"] for c in res["details"]["classes"].values())
+    ok = total == 2 and klass(res, "identical_same_segment")["count"] == 1
+    return ok, f"events={total} identical={klass(res, 'identical_same_segment')['count']}"
+
+
+BIG = "".join(f"line {i:05d} of a large source file\n" for i in range(700))[:20000]
+
+
+def g_e_positive():
+    root = scratch("epos")
+    fx = Fx(root)
+    fx.human("go", ts(0))
+    for i in range(12):
+        call(fx, i, [(f"t{i}", "Read", {"file_path": "/w/big.py"})], usage=(10, 0, 300000, 50))
+        fx.tool_result(f"t{i}", BIG, ts(10 + 2 * i + 1))
+    rc, res, _o, _e, _d = pil_other("e", root)
+    ctl = scratch("eposctl")
+    fx2 = Fx(ctl)
+    fx2.human("go", ts(0))
+    for i in range(12):          # same reads, but the file differs every time: no identical version
+        call(fx2, i, [(f"t{i}", "Read", {"file_path": "/w/big.py"})], usage=(10, 0, 300000, 50))
+        fx2.tool_result(f"t{i}", BIG[:-10] + f"{i:010d}", ts(10 + 2 * i + 1))
+    rc2, res2, _o2, _e2, _d2 = pil_other("e", ctl)
+    ok = (res["materiality"] == ">= 3 %" and res["second_workload_required"] is True
+          and klass(res, "identical_same_segment")["count"] == 11
+          and res2["materiality"] == "< 3 %" and res2["numerator"]["chars"] == 0)
+    return ok, f"identical rereads -> {res['materiality']} share={res['share_interval']}; changing file -> {res2['materiality']}"
+
+
+def g_e_absent():
+    root = scratch("eabs")
+    fx = Fx(root)
+    fx.human("go", ts(0))
+    call(fx, 0, [("b", "Bash", {"command": "ls"})])
+    fx.tool_result("b", "x", ts(11))
+    call(fx, 1)
+    rc, res, _o, _e, _d = pil_other("e", root)
+    n = res["numerator"]
+    ok = (rc == 0 and n["chars"] == 0 and n["weighted_hi"] == 0 and res["materiality"] == "< 3 %"
+          and res["observability"] == 1.0 and res["details"]["reads_total"] == 0)
+    return ok, f"rc={rc} chars={n['chars']} verdict={res['materiality']} reads={res['details']['reads_total']}"
+
+
+# =========================================================================== gates (task 2: pillar F)
+DOC12K = "D" * 12000
+H_CLAUDE = "/h/.claude"
+
+
+def f_run(build, extra=()):
+    root = scratch("f")
+    fx = Fx(root)
+    fx.human("go", ts(0))
+    build(fx)
+    rc, res, _o, _e, _d = pil_other("f", root, extra)
+    return rc, res
+
+
+def kind(res, k):
+    return res["details"]["by_kind"].get(k, {"count": 0, "chars": 0})
+
+
+def g_f_read_workflow():
+    def build(fx):
+        rd(fx, 0, "a", f"{H_CLAUDE}/gsd-core/workflows/execute-phase.md", DOC12K)
+        call(fx, 1)
+    rc, res = f_run(build)
+    kinds = {kp.gsd_doc_kind(p): p for p in (f"{H_CLAUDE}/gsd-core/workflows/x.md", f"{H_CLAUDE}/get-shit-done/templates/y.md",
+                                            f"{H_CLAUDE}\\gsd-core\\references\\z.md", f"{H_CLAUDE}/skills/gsd-autonomous/SKILL.md",
+                                            f"{H_CLAUDE}/commands/gsd/plan-phase.md")}
+    unit_ok = set(kinds) == {"workflow", "template", "reference", "skill", "command"}
+    ok = unit_ok and kind(res, "workflow")["count"] == 1 and kind(res, "workflow")["chars"] == 12000
+    return ok, f"kinds={sorted(k for k in kinds if k)} workflow={kind(res, 'workflow')}"
+
+
+def g_f_file_attachment():
+    def build(fx):
+        fx.attachment("file", ts(5), filename=f"{H_CLAUDE}/gsd-core/references/ui-brand.md",
+                      content={"type": "text", "file": {"filePath": f"{H_CLAUDE}/gsd-core/references/ui-brand.md",
+                                                        "content": "R" * 5000, "numLines": 10}})
+        fx.attachment("file", ts(5.5), filename=f"{H_CLAUDE}/gsd-core/templates/t.md", content="T" * 700)
+        call(fx, 0)
+    rc, res = f_run(build)
+    ok = kind(res, "reference")["chars"] == 5000 and kind(res, "template")["chars"] == len("T" * 700)
+    return ok, f"reference={kind(res, 'reference')} template={kind(res, 'template')}"
+
+
+def g_f_skill_body():
+    body = f"Base directory for this skill: {H_CLAUDE}/skills/gsd-autonomous\n\n" + "S" * 2400
+    def build(fx):
+        fx.meta_text(body, ts(5))
+        call(fx, 0)
+    rc, res = f_run(build)
+    ok = kind(res, "skill_body")["count"] == 1 and kind(res, "skill_body")["chars"] == len(body)
+    return ok, f"skill_body={kind(res, 'skill_body')} want chars={len(body)}"
+
+
+def g_f_invoked_skills():
+    def build(fx):
+        fx.attachment("invoked_skills", ts(5), skills=[
+            {"name": "gsd-plan-phase", "path": "userSettings:gsd-plan-phase", "content": "P" * 2000},
+            {"name": "humanizer", "path": "userSettings:humanizer", "content": "H" * 900}])
+        call(fx, 0)
+    rc, res = f_run(build)
+    ok = kind(res, "invoked_skill")["count"] == 1 and kind(res, "invoked_skill")["chars"] == 2000
+    return ok, f"invoked_skill={kind(res, 'invoked_skill')}"
+
+
+def g_f_command_body():
+    body = "<command-name>/gsd:plan-phase</command-name>\n<objective>Create the plan</objective>\n" + "C" * 1500
+    def build(fx):
+        fx.human(body, ts(5))
+        call(fx, 0)
+    rc, res = f_run(build)
+    ok = kind(res, "command_body")["count"] == 1 and kind(res, "command_body")["chars"] == len(body)
+    return ok, f"command_body={kind(res, 'command_body')}"
+
+
+def g_f_non_gsd():
+    def build(fx):
+        rd(fx, 0, "a", "/h/README.md", "R" * 4000)
+        fx.meta_text("Base directory for this skill: /h/.claude/skills/humanizer\n\n" + "H" * 3000, ts(5))
+        fx.attachment("file", ts(6), filename="/h/proj/README.md", content="Q" * 2000)
+        fx.human("<command-name>/other</command-name>\n<objective>not gsd</objective>", ts(7))
+        rd(fx, 1, "b", "/h/.claude/skills/humanizer/SKILL.md", "Z" * 900)
+        call(fx, 2)
+    rc, res = f_run(build)
+    n = res["numerator"]
+    ok = n["chars"] == 0 and res["details"]["by_kind"] == {} and n["weighted_hi"] == 0 and rc == 0
+    return ok, f"chars={n['chars']} by_kind={res['details']['by_kind']}"
+
+
+INIT_CMD = "node /h/.claude/gsd-core/bin/gsd-tools.cjs query init.plan-phase 3"
+
+
+def g_f_init_paired():
+    def build(fx):
+        rd(fx, 0, "a", f"{H_CLAUDE}/gsd-core/workflows/plan-phase.md", DOC12K)
+        call(fx, 1, [("i1", "Bash", {"command": INIT_CMD})])
+        fx.tool_result("i1", "J" * 900, ts(10 + 2 + 1))
+        call(fx, 2)
+        fx.human("next turn", ts(40))                       # a later turn: doc only, no init
+        rd(fx, 3, "b", f"{H_CLAUDE}/gsd-core/workflows/execute-phase.md", "E" * 5000)
+        call(fx, 4)
+    rc, res = f_run(build)
+    d = res["details"]
+    pt = d["paired_turns"]
+    inits = [INIT_CMD, 'gsd_run query init.execute-phase "${PHASE}"', 'node "/x/gsd-tools" init plan-phase',
+             "node gsd-tools.cjs init-something", "node gsd-tools.cjs query state.load", "ls gsd-tools"]
+    matches = [bool(kp.INIT_RE.search(c)) for c in inits]
+    ok = (pt["count"] == 1 and pt["doc_chars"] == 12000 and pt["init_chars"] == 900 and pt["ratio"] == 13.33
+          and d["init_json_present"] is True and d["init"]["count"] == 1
+          and matches == [True, True, True, False, False, False])
+    return ok, f"paired={pt} init_json_present={d['init_json_present']} init={d['init']['count']} regex={matches}"
+
+
+def g_f_init_absent():
+    def build(fx):
+        rd(fx, 0, "a", f"{H_CLAUDE}/gsd-core/workflows/plan-phase.md", DOC12K)
+        call(fx, 1, [("s", "Bash", {"command": "node gsd-tools.cjs query state.load"})])
+        fx.tool_result("s", "J" * 900, ts(10 + 3))
+        call(fx, 2)
+    rc, res = f_run(build)
+    d = res["details"]
+    pt = d["paired_turns"]
+    # control: an init call exists but its turn carries no workflow doc -> still no ratio, never 0
+    def build2(fx):
+        call(fx, 0, [("i1", "Bash", {"command": INIT_CMD})])
+        fx.tool_result("i1", "J" * 900, ts(11))
+        call(fx, 1)
+    rc2, res2 = f_run(build2)
+    d2 = res2["details"]
+    ok = (d["init_json_present"] is False and pt["ratio"] is None and pt["count"] == 0
+          and res["numerator"]["chars"] == 12000
+          and d2["init_json_present"] is True and d2["paired_turns"]["ratio"] is None)
+    return ok, f"no init: present={d['init_json_present']} ratio={pt['ratio']}; init without doc: " \
+               f"present={d2['init_json_present']} ratio={d2['paired_turns']['ratio']}"
+
+
+def g_f_positive():
+    root = scratch("fpos")
+    fx = Fx(root)
+    fx.human("go", ts(0))
+    for i in range(12):
+        call(fx, i, [(f"t{i}", "Read", {"file_path": f"{H_CLAUDE}/gsd-core/workflows/execute-phase.md"})],
+             usage=(10, 0, 300000, 50))
+        fx.tool_result(f"t{i}", "G" * 20000, ts(10 + 2 * i + 1))
+    rc, res, _o, _e, _d = pil_other("f", root)
+    ctl = scratch("fposctl")
+    fx2 = Fx(ctl)
+    fx2.human("go", ts(0))
+    for i in range(12):
+        call(fx2, i, [(f"t{i}", "Read", {"file_path": f"/h/proj/notes{i}.md"})], usage=(10, 0, 300000, 50))
+        fx2.tool_result(f"t{i}", "G" * 20000, ts(10 + 2 * i + 1))
+    rc2, res2, _o2, _e2, _d2 = pil_other("f", ctl)
+    ok = (res["materiality"] == ">= 3 %" and res["second_workload_required"] is True
+          and res2["materiality"] == "< 3 %" and res2["numerator"]["chars"] == 0)
+    return ok, f"gsd doc every turn -> {res['materiality']} share={res['share_interval']}; non-gsd reads -> {res2['materiality']}"
+
+
+GATES_PILLAR_EF = [
+    ("V-KMEP-E-AFTER-COMPACTION", g_e_after_compaction),
+    ("V-KMEP-E-INTERVENING-EDIT", g_e_intervening_edit),
+    ("V-KMEP-E-CHANGED-CONTENT", g_e_changed_content),
+    ("V-KMEP-E-STUB", g_e_stub),
+    ("V-KMEP-E-RANGE", g_e_range),
+    ("V-KMEP-E-THREAD-SCOPE", g_e_thread_scope),
+    ("V-KMEP-E-ERROR-IGNORED", g_e_error_ignored),
+    ("V-KMEP-E-POSITIVE", g_e_positive),
+    ("V-KMEP-E-ABSENT", g_e_absent),
+    ("V-KMEP-F-READ-WORKFLOW", g_f_read_workflow),
+    ("V-KMEP-F-FILE-ATTACHMENT", g_f_file_attachment),
+    ("V-KMEP-F-SKILL-BODY", g_f_skill_body),
+    ("V-KMEP-F-INVOKED-SKILLS", g_f_invoked_skills),
+    ("V-KMEP-F-COMMAND-BODY", g_f_command_body),
+    ("V-KMEP-F-NON-GSD", g_f_non_gsd),
+    ("V-KMEP-F-INIT-PAIRED", g_f_init_paired),
+    ("V-KMEP-F-INIT-ABSENT", g_f_init_absent),
+    ("V-KMEP-F-POSITIVE", g_f_positive),
+]
+
+
 GATES_EXPANSION = [
     ("V-KMEP-POPULATION-DRIFT", g_population_drift),
     ("V-KMEP-VERDICT-TABLE", g_verdict_table),
@@ -840,7 +1176,7 @@ GATES_TRACER = [
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
     ("V-KMEP-CLI-USAGE", g_cli_usage),
 ]
-GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_REAL
+GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_REAL
 
 
 def summary_line() -> str:
@@ -862,7 +1198,7 @@ def run_all() -> int:
 
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
-DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER]    # the -REAL gates are excluded for speed
+DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF]    # the -REAL gates are excluded for speed
 
 
 def _quiet(names) -> dict:

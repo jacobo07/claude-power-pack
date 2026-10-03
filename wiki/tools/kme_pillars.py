@@ -490,9 +490,227 @@ class EObserver(PillarObserver):
         }
 
 
-OBSERVERS = {"D": DObserver, "E": EObserver}
+# --------------------------------------------------------------------------- pillar F
+_GSD_ROOTS = ("gsd-core", "get-shit-done")
+_GSD_DIRS = {"workflows": "workflow", "references": "reference", "templates": "template"}
+INIT_RE = re.compile(r"""(?:gsd-tools(?:\.cjs)?|gsd_run|\$\{?GSD_TOOLS\}?)['"]?\s+(?:query\s+)?init[. ]""")
+SKILL_BODY_PREFIX = "Base directory for this skill:"
+
+
+def gsd_doc_kind(path):
+    """workflow / reference / template / skill / command for a GSD document path, else None. Three shapes:
+    <gsd-core|get-shit-done>/<workflows|references|templates>/**.md ; skills/gsd-<name>/SKILL.md ;
+    commands/gsd/<name>.md (either path separator)."""
+    if not isinstance(path, str) or not path:
+        return None
+    parts = [x for x in re.split(r"[\\/]+", path) if x]
+    if not parts or not parts[-1].lower().endswith(".md"):
+        return None
+    for i in range(len(parts) - 2):
+        if parts[i] in _GSD_ROOTS and parts[i + 1] in _GSD_DIRS:
+            return _GSD_DIRS[parts[i + 1]]
+    if len(parts) >= 3 and parts[-1] == "SKILL.md" and parts[-2].startswith("gsd-") and parts[-3] == "skills":
+        return "skill"
+    if len(parts) >= 3 and parts[-2] == "gsd" and parts[-3] == "commands":
+        return "command"
+    return None
+
+
+def _basename(path):
+    parts = [x for x in re.split(r"[\\/]+", str(path)) if x]
+    return parts[-1] if parts else ""
+
+
+def _user_text(content):
+    """(text, has_tool_result) of a user message's content."""
+    if isinstance(content, str):
+        return content, False
+    texts, tr = [], False
+    for c in _blocks(content):
+        if isinstance(c, dict):
+            if c.get("type") == "tool_result":
+                tr = True
+            elif c.get("type") == "text":
+                texts.append(c.get("text", ""))
+        elif isinstance(c, str):
+            texts.append(c)
+    return "\n".join(texts), tr
+
+
+class FObserver(PillarObserver):
+    """Pillar F: residency (chars x resident calls) of GSD workflow docs, from every channel they arrive by, beside
+    the size of the `gsd-tools ... init.*` JSON that exists for the same step (same human-prompt turn)."""
+    pillar = "F"
+
+    def __init__(self):
+        self.docs = []
+        self.inits = []
+        self._by_path = collections.defaultdict(list)
+        self._state = {}
+
+    def _st(self, path):
+        st = self._state.get(path)
+        if st is None:
+            st = {"reads": {}, "inits": set(), "turn": 0}
+            self._state[path] = st
+        return st
+
+    def _doc(self, path, st, sess, idx, chars, kind, name):
+        ev = {"sid": id(sess), "file": path, "turn": st["turn"], "idx": idx, "chars": chars, "kind": kind,
+              "name": name, "resident": 0}
+        self.docs.append(ev)
+        self._by_path[path].append(ev)
+
+    def on_line(self, path, o, idx, sess):
+        if not isinstance(o, dict):
+            return
+        st = self._st(path)
+        t = o.get("type")
+        if t == "attachment":
+            a = o.get("attachment")
+            if isinstance(a, dict):
+                self._on_attachment(path, st, a, idx, sess)
+            return
+        msg = o.get("message")
+        if not isinstance(msg, dict):
+            return
+        content = msg.get("content")
+        if t == "assistant":
+            for c in _blocks(content):
+                if not (isinstance(c, dict) and c.get("type") == "tool_use"):
+                    continue
+                inp = c.get("input") if isinstance(c.get("input"), dict) else {}
+                name = c.get("name")
+                if name == "Read" and inp.get("file_path"):
+                    k = gsd_doc_kind(str(inp["file_path"]))
+                    if k:
+                        st["reads"][c.get("id")] = (str(inp["file_path"]), k)
+                elif name in ("Bash", "PowerShell") and INIT_RE.search(str(inp.get("command") or "")):
+                    st["inits"].add(c.get("id"))
+        elif t == "user":
+            text, has_result = _user_text(content)
+            for c in _blocks(content):
+                if isinstance(c, dict) and c.get("type") == "tool_result" and not c.get("is_error"):
+                    self._on_result(path, st, c, idx, sess)
+            if has_result:
+                return
+            if not o.get("isMeta") and not text.startswith(SKILL_BODY_PREFIX):
+                st["turn"] += 1                      # a human prompt starts a new turn
+            if text.startswith(SKILL_BODY_PREFIX):
+                first = text[len(SKILL_BODY_PREFIX):].strip().split("\n", 1)[0].strip()
+                base = _basename(first)
+                if base.startswith("gsd-"):
+                    self._doc(path, st, sess, idx, len(text), "skill_body", base)
+            elif "<command-name>/gsd" in text and "<objective>" in text:
+                m = re.search(r"<command-name>/([^<\s]+)", text)
+                self._doc(path, st, sess, idx, len(text), "command_body", m.group(1) if m else "gsd")
+
+    def _on_result(self, path, st, block, idx, sess):
+        tid = block.get("tool_use_id")
+        text = kme_token_audit.text_of(block.get("content"))
+        rec = st["reads"].get(tid)
+        if rec is not None:
+            self._doc(path, st, sess, idx, len(text), rec[1], _basename(rec[0]))
+        if tid in st["inits"]:
+            ev = {"sid": id(sess), "file": path, "turn": st["turn"], "idx": idx, "chars": len(text), "resident": 0}
+            self.inits.append(ev)
+            self._by_path[path].append(ev)
+
+    def _on_attachment(self, path, st, a, idx, sess):
+        atype = a.get("type")
+        if atype == "file":
+            content = a.get("content")
+            inner = content.get("file") if isinstance(content, dict) else None
+            fname = a.get("filename") or (inner.get("filePath") if isinstance(inner, dict) else None) \
+                or a.get("displayPath")
+            k = gsd_doc_kind(str(fname)) if fname else None
+            if k:
+                body = inner.get("content") if isinstance(inner, dict) and "content" in inner else content
+                chars = len(body) if isinstance(body, str) else len(str(body))
+                self._doc(path, st, sess, idx, chars, k, _basename(fname))
+        elif atype == "invoked_skills":
+            for sk in a.get("skills") if isinstance(a.get("skills"), list) else []:
+                if not isinstance(sk, dict):
+                    continue
+                name = str(sk.get("name") or "")
+                spath = str(sk.get("path") or "").replace("\\", "/")
+                if name.startswith("gsd-") or "skills/gsd-" in spath:
+                    body = sk.get("content")
+                    chars = len(body) if isinstance(body, str) else len(str(body))
+                    self._doc(path, st, sess, idx, chars, "invoked_skill", name or _basename(spath))
+
+    def on_file_end(self, path, sess, order, calls, compact_points):
+        for ev in self._by_path.pop(path, []):
+            ev["resident"] = resident_calls(ev["idx"], compact_points, len(order))
+
+    def result(self, selected, sessions, population):
+        docs = [e for e in self.docs if e["sid"] in selected]
+        inits = [e for e in self.inits if e["sid"] in selected]
+        lo = hi = 0.0
+        by_kind, by_name = {}, {}
+        for e in docs:
+            blo, bhi = burden_interval(e["chars"], e["resident"])
+            lo += blo
+            hi += bhi
+            k = by_kind.setdefault(e["kind"], {"count": 0, "chars": 0, "char_x_calls": 0,
+                                               "weighted_lo": 0.0, "weighted_hi": 0.0})
+            k["count"] += 1
+            k["chars"] += e["chars"]
+            k["char_x_calls"] += e["chars"] * e["resident"]
+            k["weighted_lo"] += blo
+            k["weighted_hi"] += bhi
+            n = by_name.setdefault((e["kind"], e["name"]), {"doc": e["name"], "kind": e["kind"], "count": 0,
+                                                            "chars": 0, "char_x_calls": 0})
+            n["count"] += 1
+            n["chars"] += e["chars"]
+            n["char_x_calls"] += e["chars"] * e["resident"]
+        for k in by_kind.values():
+            k["weighted_lo"] = round(k["weighted_lo"], 3)
+            k["weighted_hi"] = round(k["weighted_hi"], 3)
+        top = sorted(by_name.values(), key=lambda x: (-x["char_x_calls"], x["doc"]))[:20]
+        ilo = ihi = 0.0
+        for e in inits:
+            blo, bhi = burden_interval(e["chars"], e["resident"])
+            ilo += blo
+            ihi += bhi
+        chars_total = sum(e["chars"] for e in inits)
+        doc_turns, init_turns = collections.Counter(), collections.Counter()
+        for e in docs:
+            doc_turns[(e["file"], e["turn"])] += e["chars"]
+        for e in inits:
+            init_turns[(e["file"], e["turn"])] += e["chars"]
+        paired = [k for k in init_turns if k in doc_turns]
+        p_doc = sum(doc_turns[k] for k in paired)
+        p_init = sum(init_turns[k] for k in paired)
+        ratio = round(p_doc / p_init, 2) if paired and p_init > 0 else None
+        chars = sum(e["chars"] for e in docs)
+        return {
+            "numerator": {
+                "name": "GSD workflow-doc residency",
+                "definition": ("chars x resident calls of GSD workflow / reference / template docs, skill bodies, "
+                               "invoked_skills re-injections and gsd command bodies, from Read results, file "
+                               "attachments, skill-body user text and command bodies; residency = calls until the "
+                               "next compaction in the same transcript file"),
+                "kind": "GSD workflow-doc residency", "chars": chars,
+                "weighted_lo": lo, "weighted_hi": hi, "weighted_interval": [lo, hi],
+            },
+            "observability": 1.0,
+            "details": {
+                "by_kind": by_kind, "top_docs": top,
+                "init": {"count": len(inits), "chars_total": chars_total,
+                         "chars_mean": (chars_total / len(inits)) if inits else None,
+                         "weighted_lo": round(ilo, 3), "weighted_hi": round(ihi, 3)},
+                "paired_turns": {"count": len(paired), "doc_chars": p_doc, "init_chars": p_init, "ratio": ratio},
+                "init_json_present": bool(inits),
+                "docs_total": len(docs),
+            },
+        }
+
+
+OBSERVERS = {"D": DObserver, "E": EObserver, "F": FObserver}
 PILLAR_HELP = {"D": "silent-success hooks: hook_additional_context rent per call",
-               "E": "large-source read virtualization: rereads of identical file versions"}
+               "E": "large-source read virtualization: rereads of identical file versions",
+               "F": "GSD operational projection: workflow-doc residency beside the init JSON"}
 
 
 # --------------------------------------------------------------------------- scan + population
@@ -560,6 +778,16 @@ def _pillar_details(p, det):
             out.append(f"- class {k}: {c['count']} reads, {c['chars']} chars, {c['char_x_calls']} char x calls")
         for t in det.get("top_paths", []):
             out.append(f"- reread path {t['path']}: {t['count']} rereads, {t['chars']} chars")
+    elif p == "F":
+        for k, c in det.get("by_kind", {}).items():
+            out.append(f"- kind {k}: {c['count']} docs, {c['chars']} chars, {c['char_x_calls']} char x calls, "
+                       f"weighted {c['weighted_lo']}..{c['weighted_hi']}")
+        for t in det.get("top_docs", []):
+            out.append(f"- doc {t['doc']} ({t['kind']}): {t['count']} deliveries, {t['chars']} chars, "
+                       f"{t['char_x_calls']} char x calls")
+        out.append(f"- gsd-tools init calls: {json.dumps(det.get('init'))}")
+        out.append(f"- paired turns (doc and init in the same human-prompt turn): {json.dumps(det.get('paired_turns'))}")
+        out.append(f"- init_json_present: {det.get('init_json_present')}")
     return out
 
 
