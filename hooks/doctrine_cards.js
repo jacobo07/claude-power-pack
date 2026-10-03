@@ -96,37 +96,94 @@ function tokens(s) {
   return out;
 }
 
-function psVars(cmd) {
-  const vars = {};
-  const re = /\$(\w+)\s*=\s*(?:'([^']*)'|"([^"$]*)")/g;
+// Variables a commit can rely on (audit G1-G3, 2026-10-03). `text` is the here-string-elided command
+// BEFORE the commit. A variable resolves only when it is assigned exactly once, at brace depth 0, by `=`,
+// to a literal, a comma list of literals or @(literals) that ENDS at `;`, a newline or the end. Anything
+// else -- reassigned, `+=`, inside a block, concatenated, a method call, a pipeline -- maps to null, so it
+// stays unknown instead of being half-resolved (`$p='a','b'` used to bind 'a' alone and judge b unseen).
+function psVars(text) {
+  const seen = {};
+  const re = /\$(\w+)\s*(\+?=)(?!=)/g;
   let m;
-  while ((m = re.exec(cmd))) vars[m[1].toLowerCase()] = m[2] ?? m[3];
-  return vars;
+  while ((m = re.exec(text))) {
+    const name = m[1].toLowerCase();
+    const prefix = text.slice(0, m.index);
+    const depth = (prefix.match(/\{/g) || []).length - (prefix.match(/\}/g) || []).length;
+    const value = m[2] === '=' && depth === 0 ? literalValue(text.slice(re.lastIndex), seen) : null;
+    seen[name] = name in seen ? null : value;   // a second assignment makes the value unknowable
+  }
+  return seen;
 }
 
+function literalValue(rest, vars) {
+  let s = rest.replace(/^[ \t]*/, '');
+  const array = s.startsWith('@(');
+  if (array) s = s.slice(2);
+  const out = [];
+  for (;;) {
+    s = s.replace(array ? /^\s*/ : /^[ \t]*/, '');
+    const m = /^'([^']*)'|^"([^"]*)"/.exec(s);
+    if (!m) return null;
+    const v = m[1] != null ? m[1] : expand(m[2], vars);
+    if (v == null) return null;
+    out.push(v);
+    s = s.slice(m[0].length).replace(array ? /^\s*/ : /^[ \t]*/, '');
+    if (s.startsWith(',')) { s = s.slice(1); continue; }
+    if (array) { if (!s.startsWith(')')) return null; s = s.slice(1).replace(/^[ \t]*/, ''); }
+    return /^(?:;|\r?\n|$)/.test(s) ? out : null;
+  }
+}
+
+// "$d/x" with $d a single literal; $env:, $(...) and lists stay unknown.
+function expand(str, vars) {
+  if (/\$\(|\$\{|\$env:/i.test(str)) return null;
+  let ok = true;
+  const v = str.replace(/\$(\w+)/g, (_, n) => {
+    const val = vars[n.toLowerCase()];
+    if (!val || val.length !== 1) { ok = false; return ''; }
+    return val[0];
+  });
+  return ok ? v : null;
+}
+
+// A token resolves to a list of literal values, or null when it cannot be known.
 function resolve(tok, vars) {
   if (tok == null) return null;
-  const m = /^\$(\w+)$/.exec(tok);
-  if (m) return vars[m[1].toLowerCase()] ?? null;
-  return tok.includes('$') ? null : tok;
+  const m = /^[$@](\w+)$/.exec(tok);          // `$p`, or `@p` = PowerShell splatting of the array $p
+  if (m) return vars[m[1].toLowerCase()] || null;
+  if (!tok.includes('$')) return [tok];
+  const v = expand(tok, vars);
+  return v == null ? null : [v];
+}
+
+// Redirections are not pathspecs: `2>$null`, `2>&1`, `>out.txt`, `*> log`, `> out.txt` (audit G4).
+function dropRedirects(t) {
+  const out = [];
+  for (let i = 0; i < t.length; i++) {
+    if (/^(?:\d|\*)?>>?(?:&\d)?$/.test(t[i])) { if (!/&\d$/.test(t[i])) i++; continue; }
+    if (/^(?:\d|\*)?>>?\S/.test(t[i])) continue;
+    out.push(t[i]);
+  }
+  return out;
 }
 
 // What will this commit contain? Returns {repo, args} for one `git diff`, or {unknown: reason}.
 function plan(command, cwd) {
   const cmd = elideLiteralBodies(command);
-  const vars = psVars(command);
   if (/\bGIT_INDEX_FILE\b/.test(cmd)) return { unknown: 'GIT_INDEX_FILE' };
   const cm = COMMIT_RE.exec(cmd);
   const before = cmd.slice(0, cm.index);
+  const vars = psVars(before);   // only what is bound before the commit runs (G2), here-strings elided (G3)
   const seg = cmd.slice(cm.index).split(/;|&&|\|\||\||\n/)[0];
   // Repository: -C on the commit, else the last cd/Set-Location before it, else the hook's cwd.
+  const one = (tok) => { const v = resolve(tok, vars); return v && v.length === 1 ? v[0] : null; };
   let repo = cwd;
   const cl = [...before.matchAll(/(?:\bSet-Location|\bcd|\bPush-Location)\s+(?:-(?:Literal)?Path\s+)?('[^']*'|"[^"]*"|[^\s;]+)/gi)].pop();
-  if (cl) repo = resolve(tokens(cl[1])[0], vars);
+  if (cl) repo = one(tokens(cl[1])[0]);
   const cflag = /\s-C\s+('[^']*'|"[^"]*"|\S+)/.exec(seg);
-  if (cflag) repo = resolve(tokens(cflag[1])[0], vars);
+  if (cflag) repo = one(tokens(cflag[1])[0]);
   if (!repo) return { unknown: 'repository path is an unresolved variable' };
-  const t = tokens(seg.replace(/^[\s\S]*?commit/, ''));
+  const t = dropRedirects(tokens(seg.replace(/^[\s\S]*?commit/, '')));
   let all = false; const paths = [];
   for (let i = 0; i < t.length; i++) {
     const a = t[i];
@@ -143,17 +200,21 @@ function plan(command, cwd) {
     if (a.startsWith('-')) continue;
     paths.push(a);
   }
-  const rp = paths.map((p) => resolve(p, vars));
-  if (rp.some((p) => p == null)) return { unknown: 'pathspec is an unresolved variable' };
-  const add = ADD_RE.exec(before);
-  if (add) {                               // `git add X; git commit` in ONE call: nothing staged yet
-    const at = tokens(add[1]).filter((a) => !a.startsWith('-') || a === '-A' || a === '--all');
-    const addAll = at.length === 0 || at.some((a) => a === '-A' || a === '--all' || a === '.');
-    const ap = addAll ? [] : at.map((p) => resolve(p, vars));
-    if (ap.some((p) => p == null)) return { unknown: 'add pathspec is an unresolved variable' };
+  const rv = paths.map((p) => resolve(p, vars));
+  if (rv.some((p) => p == null)) return { unknown: 'pathspec is an unresolved variable' };
+  const rp = rv.flat();
+  // A commit pathspec commits exactly those paths' working-tree state (--only), whatever was added before
+  // it: judge the pathspec. `git add X; git commit -- Y` used to diff X and never look at Y.
+  if (rp.length) return { repo, args: ['diff', 'HEAD', '--', ...rp], basis: 'only-paths' };
+  const adds = [...before.matchAll(new RegExp(ADD_RE.source, 'g'))];   // every `git add` before it (G4)
+  if (adds.length) {                       // `git add X; git commit` in ONE call: nothing staged yet
+    const each = adds.map((a) => dropRedirects(tokens(a[1])).filter((x) => !x.startsWith('-') || x === '-A' || x === '--all'));
+    const addAll = each.some((at) => at.length === 0 || at.some((x) => x === '-A' || x === '--all' || x === '.'));
+    const av = addAll ? [] : each.flat().map((p) => resolve(p, vars));
+    if (av.some((p) => p == null)) return { unknown: 'add pathspec is an unresolved variable' };
+    const ap = av.flat();
     return { repo, args: ['diff', 'HEAD', ...(ap.length ? ['--', ...ap] : [])], basis: 'add-then-commit', aperture: 'untracked not checked' };
   }
-  if (rp.length) return { repo, args: ['diff', 'HEAD', '--', ...rp], basis: 'only-paths' };
   if (all) return { repo, args: ['diff', 'HEAD'], basis: 'all-tracked' };
   return { repo, args: ['diff', '--cached'], basis: 'index' };
 }

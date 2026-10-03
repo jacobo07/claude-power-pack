@@ -141,5 +141,67 @@ const writeOwnAndForeign = (s) => { writeOwn(s); fs.appendFileSync(path.join(s.r
   const no = ['git commit-tree abc', 'git log --grep commit', 'echo committed', 'git show HEAD'];
   check('V-DC-COMMIT-RE', yes.every((c) => COMMIT_RE.test(c)) && no.every((c) => !COMMIT_RE.test(c)), `${yes.length}+${no.length} cases`); }
 
+// 9. plan() resolution, audit G1-G4 (2026-10-03). Pure: plan() does no I/O. Oracle cases are written by
+// hand from live shapes; a case that cannot be resolved exactly must stay UNKNOWN, never be half-resolved.
+{ const { plan } = require(CARD);
+  const P = (c) => plan(c, 'C:/repo');
+  const paths = (p) => (p.args ? p.args.slice(p.args.indexOf('--') + 1) : null);
+  const is = (c, want) => { const p = P(c); return JSON.stringify(paths(p)) === JSON.stringify(want) ? '' : `${c} -> ${JSON.stringify(p)}`; };
+  const unk = (c) => (P(c).unknown ? '' : `${c} -> ${JSON.stringify(P(c))}`);
+  const report = (errs) => errs.filter(Boolean).join(' | ') || 'all cases';
+  // G1: today `$paths='a','b'` binds only 'a' -- a WRONG judgement, not an unknown one.
+  const lists = [
+    is("$g='git'; $paths='a.md','b.md'; & $g commit -q -F $f -- $paths", ['a.md', 'b.md']),
+    is("$p=@('a.md','b.md'); git commit -F m.txt -- $p", ['a.md', 'b.md']),
+    is("$p=@(\n  'a.md',\n  'b.md'\n); git commit -m x -- $p", ['a.md', 'b.md']),
+  ];
+  check('V-DC-PLAN-LISTS', lists.every((e) => !e), report(lists));
+  const notLiteral = [
+    unk("$p='a.md' + 'b.md'; git commit -m x -- $p"),
+    unk("$p='a.md'.Replace('a','b'); git commit -m x -- $p"),
+    unk('$p="$env:TEMP/a.md"; git commit -m x -- $p'),
+    unk('$p = Get-ChildItem x | ForEach-Object Name; git commit -m x -- $p'),
+  ];
+  check('V-DC-PLAN-NOT-LITERAL', notLiteral.every((e) => !e), report(notLiteral));
+  const redirects = [
+    is('git commit -q -F m.txt -- a.md 2>$null', ['a.md']),
+    is('git commit -m x -- a.md 2>&1 > out.txt', ['a.md']),
+    is("$p=@('a.md'); git commit -m x -- $p *> log.txt", ['a.md']),
+  ];
+  check('V-DC-PLAN-REDIRECTS', redirects.every((e) => !e), report(redirects));
+  // G2/G3: one top-level assignment before the commit; here-string bodies never assign.
+  const once = [
+    unk("$p='a.md'; $p='b.md'; git commit -m x -- $p"),
+    unk("$p=@('a.md'); $p+='b.md'; git commit -m x -- $p"),
+    unk("foreach ($x in 1) { $p='a.md' }; git commit -m x -- $p"),
+    is("$p='a.md'; git commit -m x -- $p; $p='b.md'", ['a.md']),
+    is("$m=@'\n$p='evil.md'\n'@; $p='a.md'; git commit -m $m -- $p", ['a.md']),
+  ];
+  check('V-DC-PLAN-ONE-ASSIGNMENT', once.every((e) => !e), report(once));
+  const interp = [is('$d=\'docs\'; $p=@("$d/a.md","$d/b.md"); git commit -m x -- $p', ['docs/a.md', 'docs/b.md'])];
+  check('V-DC-PLAN-INTERPOLATION', interp.every((e) => !e), report(interp));
+  // G4: every `git add` before the commit counts, redirects included.
+  const adds = P('git add a.md; git add b.md 2>$null; git commit -m x');
+  check('V-DC-PLAN-ALL-ADDS', adds.basis === 'add-then-commit' && JSON.stringify(paths(adds)) === '["a.md","b.md"]', JSON.stringify(adds));
+  // `git add X; git commit -- Y` commits exactly Y (pathspec = --only): judge Y, not X. `@files` splats $files.
+  const scope = [
+    is('git add a.md; git commit -m x -- a.md b.md', ['a.md', 'b.md']),
+    is("$files=@('a.md','b.md'); git add @files; git commit -m x -- @files 2>$null", ['a.md', 'b.md']),
+    unk('git commit -m x -- @files'),
+  ];
+  check('V-DC-PLAN-COMMIT-PATHSPEC-WINS', scope.every((e) => !e), report(scope));
+  const repo = [unk("$r=@('C:/a','C:/b'); git -C $r commit -m x"), unk('Set-Location $somewhere; git commit -m x')];
+  check('V-DC-PLAN-REPO-ONE', repo.every((e) => !e), report(repo)); }
+
+// 10. Replay gate (audit G6): real commit commands from the sessions behind the live `unknown` rows,
+// anonymised by shape. Each row pins the EXPECTED plan; exact equality, so a wrong resolution fails
+// even when the unknown count improves.
+{ const { plan } = require(CARD);
+  const fx = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'doctrine-cards-replay.json'), 'utf8'));
+  const bad = fx.cases.filter((c) => !c.expect || JSON.stringify(plan(c.command, 'C:/x')) !== JSON.stringify(c.expect));
+  const unknown = fx.cases.filter((c) => c.expect && c.expect.unknown).length;
+  check('V-DC-REPLAY', fx.cases.length >= 50 && bad.length === 0,
+    `${fx.cases.length} cases, ${unknown} expected unknown, mismatches: ${bad.map((c) => c.id).join(',') || 'none'}`); }
+
 console.log(`DOCTRINE_CARDS_PASS=${pass}/${pass + fail}`);
 process.exit(fail ? 1 : 0);

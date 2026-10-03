@@ -1,0 +1,939 @@
+{
+ "source": "live ledger unknown rows 2026-10-03, sessions anonymised by shape",
+ "cases": [
+  {
+   "id": "r01",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $r='C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; & $g -C $r commit -F $m -- bare6/f6.txt bare7/f7.txt; \"exit_$LASTEXITCODE\"; & $g -C $r log -1 --format='text5'; & $g -C $r show --stat --format= HEAD",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare6/f6.txt",
+     "bare7/f7.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r02",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $r='C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; & $g -C $r add -- bare6/f6.txt; & $g -C $r commit -q -F $m -- bare7/f7.txt bare8/f8.txt bare9/f9.txt bare10/f10.txt bare11/f11.txt; \"exit_$LASTEXITCODE\"; & $g -C $r log -1 --format='text5'; & $g -C $r show --stat --format= HEAD",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare7/f7.txt",
+     "bare8/f8.txt",
+     "bare9/f9.txt",
+     "bare10/f10.txt",
+     "bare11/f11.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r03",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $r='C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; & $g -C $r commit -q -F $m -- bare6/f6.txt 2>$null; \"exit_$LASTEXITCODE\"; & $g -C $r log -2 --format='text5'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare6/f6.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r04",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $r='C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; & $g -C $r add -- bare6/f6.txt bare7/f7.txt 2>$null; & $g -C $r commit -q -F $m -- bare8/f8.txt bare9/f9.txt bare10/f10.txt bare11/f11.txt bare12/f12.txt bare13/f13.txt 2>$null; \"exit_$LASTEXITCODE\"; & $g -C $r log -1 --format='text5'; & $g -C $r show --stat --format= HEAD",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare8/f8.txt",
+     "bare9/f9.txt",
+     "bare10/f10.txt",
+     "bare11/f11.txt",
+     "bare12/f12.txt",
+     "bare13/f13.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r05",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $r='C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; $specs = Get-ChildItem \"$r\\vault\\audits\\agent_estate\\mutation_drills\\bare9/f9.txt\" | ForEach-Object { \"vault/seg/seg/seg/$_$_.Name_\" }; & $g -C $r add -- $specs 2>$null; & $g -C $r commit -q -F $m -- bare8/f8.txt $specs 2>$null; \"exit_$LASTEXITCODE\"; & $g -C $r log -1 --format='text7'; & $g -C $r show --stat --format= HEAD | Select-Object -Last 2",
+   "expect": {
+    "unknown": "pathspec is an unresolved variable"
+   }
+  },
+  {
+   "id": "r06",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $r='C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; & $g -C $r add -- bare6/f6.txt 2>$null; & $g -C $r commit -q -F $m -- bare7/f7.txt bare8/f8.txt bare9/f9.txt 2>$null; \"exit_$LASTEXITCODE\"; & $g -C $r log -1 --format='text5'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare7/f7.txt",
+     "bare8/f8.txt",
+     "bare9/f9.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r07",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; & $g add -- bare5/f5.txt bare9/f9.txt bare6/f6.txt; & $g commit -F 'C:/fx/abs3.txt' -- bare7/f7.txt bare10/f10.txt bare8/f8.txt; & $g log -1 --format='text4'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare7/f7.txt",
+     "bare10/f10.txt",
+     "bare8/f8.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r08",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $p=@('bare11/f11.txt','bare12/f12.txt','bare13/f13.txt','bare14/f14.txt','bare15/f15.txt','bare16/f16.txt'); & $g add -- $p; & $g commit -q -F 'C:/fx/abs9.txt' -- $p; & $g log -1 --format='text10' --stat",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare11/f11.txt",
+     "bare12/f12.txt",
+     "bare13/f13.txt",
+     "bare14/f14.txt",
+     "bare15/f15.txt",
+     "bare16/f16.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r09",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $p=@('bare9/f9.txt','bare10/f10.txt','bare11/f11.txt','bare12/f12.txt'); & $g add -- $p 2>$null; & $g commit -q -F 'C:/fx/abs7.txt' -- $p 2>$null; & $g log -1 --format='text8'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare9/f9.txt",
+     "bare10/f10.txt",
+     "bare11/f11.txt",
+     "bare12/f12.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r10",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $r='C:/fx/abs2.txt'; $p='bare9/f9.txt'; & $g -C $r diff --cached --name-only | ForEach-Object { \"PRE-STAGED_BY_OTHERS:_$_\" }; & $g -C $r add -- $p; & $g -C $r commit -F 'C:/fx/abs5.txt' --only -- $p; \"exit_$LASTEXITCODE\"; & $g -C $r log -1 --format='text7'; & $g -C $r show --stat --format='text8' HEAD",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare9/f9.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r11",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $r='C:/fx/abs2.txt'; $p='bare8/f8.txt'; & $g -C $r diff --stat -- $p; & $g -C $r commit -F 'C:/fx/abs4.txt' --only -- $p; \"exit_$LASTEXITCODE\"; & $g -C $r log -2 --format='text6'; & $g -C $r show --stat --format='text7' HEAD",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare8/f8.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r12",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $r='C:/fx/abs2.txt'; $ps=@('bare10/f10.txt','bare11/f11.txt','bare12/f12.txt'); & $g -C $r add -- $ps; & $g -C $r commit -F 'C:/fx/abs6.txt' --only -- $ps; \"exit_$LASTEXITCODE\"; & $g -C $r log -1 --format='text8'; & $g -C $r show --stat --format='text9' HEAD",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare10/f10.txt",
+     "bare11/f11.txt",
+     "bare12/f12.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r13",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $r='C:/fx/abs2.txt'; $p='bare8/f8.txt'; $mf='C:/fx/abs4.txt'; [IO.File]::WriteAllText($mf,\"bare9/f9.txt\",(New-Object Text.UTF8Encoding($false))); & $g -C $r commit -F $mf --only -- $p; \"exit_$LASTEXITCODE\"; & $g -C $r log -3 --format='text7'; & $g -C $r status --porcelain -- bare10/f10.txt bare11/f11.txt bare12/f12.txt",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare8/f8.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r14",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; & $g add -- 'bare9/f9.txt' 'bare10/f10.txt'; & $g commit -F 'C:/fx/abs5.txt' -- 'bare11/f11.txt' 'bare12/f12.txt'; & $g log -1 --format='text8'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare11/f11.txt",
+     "bare12/f12.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r15",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $p='bare6/f6.txt'; & $g add -- $p; & $g commit -F 'C:/fx/abs4.txt' -- $p; & $g log -1 --format='text5'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare6/f6.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r16",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $p=@('bare8/f8.txt','bare9/f9.txt','bare10/f10.txt'); & $g add -- $p; & $g commit -q -F 'C:/fx/abs6.txt' -- $p; & $g log -1 --stat --format='text7'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare8/f8.txt",
+     "bare9/f9.txt",
+     "bare10/f10.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r17",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $p=@('bare7/f7.txt','bare8/f8.txt'); & $g add -- $p; & $g commit -q -F 'C:/fx/abs5.txt' -- $p; & $g log -1 --format='text6'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare7/f7.txt",
+     "bare8/f8.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r18",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $p=@('bare9/f9.txt','bare10/f10.txt','bare11/f11.txt','bare12/f12.txt'); & $g add -- $p; & $g commit -q -F 'C:/fx/abs7.txt' -- $p; & $g log -1 --stat --format='text8'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare9/f9.txt",
+     "bare10/f10.txt",
+     "bare11/f11.txt",
+     "bare12/f12.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r19",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $p=@('bare11/f11.txt','bare12/f12.txt','bare13/f13.txt','bare14/f14.txt','bare15/f15.txt','bare16/f16.txt'); & $g add -- $p; & $g commit -q -F 'C:/fx/abs9.txt' -- $p; & $g log -1 --format='text10'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare11/f11.txt",
+     "bare12/f12.txt",
+     "bare13/f13.txt",
+     "bare14/f14.txt",
+     "bare15/f15.txt",
+     "bare16/f16.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r20",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $p=@('bare8/f8.txt','bare9/f9.txt','bare10/f10.txt'); & $g add -- $p; & $g commit -q -F 'C:/fx/abs6.txt' -- $p; & $g log -1 --format='text7'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare8/f8.txt",
+     "bare9/f9.txt",
+     "bare10/f10.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r21",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $p=@('bare10/f10.txt','bare11/f11.txt','bare12/f12.txt','bare13/f13.txt','bare14/f14.txt'); & $g add -- $p; & $g commit -q -F 'C:/fx/abs8.txt' -- $p; & $g log -1 --format='text9'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare10/f10.txt",
+     "bare11/f11.txt",
+     "bare12/f12.txt",
+     "bare13/f13.txt",
+     "bare14/f14.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r22",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; [System.IO.File]::WriteAllText($m,\"bare8/f8.txt\",(New-Object System.Text.UTF8Encoding($false))); $p=@('bare9/f9.txt','bare10/f10.txt'); & $g add -- $p; & $g commit -q -F $m -- $p; & $g log -1 --format='text7'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare9/f9.txt",
+     "bare10/f10.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r23",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; [System.IO.File]::WriteAllText($m,\"text4\"send`\"bare9/f9.txt\",(New-Object System.Text.UTF8Encoding($false))); $p=@('bare10/f10.txt','bare11/f11.txt'); & $g add -- $p; & $g commit -q -F $m -- $p; & $g log -1 --format='text8'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare10/f10.txt",
+     "bare11/f11.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r24",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; [System.IO.File]::WriteAllText($m,\"bare9/f9.txt\",(New-Object System.Text.UTF8Encoding($false))); $p=@('bare10/f10.txt','bare11/f11.txt','bare12/f12.txt'); & $g add -- $p; & $g commit -q -F $m -- $p; & $g log -1 --format='text8'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare10/f10.txt",
+     "bare11/f11.txt",
+     "bare12/f12.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r25",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; [System.IO.File]::WriteAllText($m,\"text4\"publish`\"bare11/f11.txt\",(New-Object System.Text.UTF8Encoding($false))); $p=@('bare12/f12.txt','bare13/f13.txt','bare14/f14.txt','bare15/f15.txt'); & $g add -- $p; & $g commit -q -F $m -- $p; & $g log -1 --format='text10'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare12/f12.txt",
+     "bare13/f13.txt",
+     "bare14/f14.txt",
+     "bare15/f15.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r26",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; [System.IO.File]::WriteAllText($m,\"bare11/f11.txt\",(New-Object System.Text.UTF8Encoding($false))); $p=@('bare12/f12.txt','bare13/f13.txt','bare14/f14.txt','bare15/f15.txt','bare16/f16.txt'); & $g add -- $p; & $g commit -q -F $m -- $p; & $g log -1 --format='text10'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare12/f12.txt",
+     "bare13/f13.txt",
+     "bare14/f14.txt",
+     "bare15/f15.txt",
+     "bare16/f16.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r27",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; [System.IO.File]::WriteAllText($m,\"bare9/f9.txt\"go ahead`\"bare10/f10.txt\",(New-Object System.Text.UTF8Encoding($false))); $p=@('bare11/f11.txt','bare12/f12.txt'); & $g add -- $p; & $g commit -q -F $m -- $p; & $g log -1 --format='text8'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare11/f11.txt",
+     "bare12/f12.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r28",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; [System.IO.File]::WriteAllText($m,\"text4\"email them`\"bare10/f10.txt\",(New-Object System.Text.UTF8Encoding($false))); $p=@('bare11/f11.txt','bare12/f12.txt','bare13/f13.txt'); & $g add -- $p; & $g commit -q -F $m -- $p; & $g log -1 --format='text9'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare11/f11.txt",
+     "bare12/f12.txt",
+     "bare13/f13.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r29",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; [System.IO.File]::WriteAllText($m,\"bare12/f12.txt\",(New-Object System.Text.UTF8Encoding($false))); $p=@('bare13/f13.txt','bare14/f14.txt','bare15/f15.txt','bare16/f16.txt','bare17/f17.txt','bare18/f18.txt'); & $g add -- $p; & $g commit -q -F $m -- $p; & $g log -1 --format='text11'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare13/f13.txt",
+     "bare14/f14.txt",
+     "bare15/f15.txt",
+     "bare16/f16.txt",
+     "bare17/f17.txt",
+     "bare18/f18.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r30",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; [System.IO.File]::WriteAllText($m,\"bare11/f11.txt\"y`\"bare12/f12.txt\",(New-Object System.Text.UTF8Encoding($false))); $p=@('bare13/f13.txt','bare14/f14.txt'); $bk = Get-ChildItem 'bare15/f15.txt' | ForEach-Object { 'bare16/f16.txt' + $_.Name }; $p += $bk; & $g add -- $p; & $g commit -q -F $m -- $p; & $g log -1 --format='text10'",
+   "expect": {
+    "unknown": "pathspec is an unresolved variable"
+   }
+  },
+  {
+   "id": "r31",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $m='C:/fx/abs3.txt'; [System.IO.File]::WriteAllText($m,\"bare7/f7.txt\",(New-Object System.Text.UTF8Encoding($false))); $p='bare8/f8.txt'; & $g add -- $p; & $g commit -q -F $m -- $p; & $g log -1 --format='text6'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare8/f8.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r32",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; & $g add -- 'bare22/f22.txt'; & $g commit -q -m \"text4\" -m \"bare23/f23.txt\" -- 'bare24/f24.txt'; & $g log -1 --format='text7'; $OutputEncoding = New-Object System.Text.UTF8Encoding($false); $env:PYTHONIOENCODING='text8'; $j = @{ session_id = $env:CLAUDE_CODE_SESSION_ID; date='text9'; summary='bare25/f25.txt'; pending=@('bare26/f26.txt','text12','text13'); insights=@(@{category='text14';title='bare27/f27.txt';body='bare28/f28.txt';path=$null;tags=@('text17')}); lesson='bare29/f29.txt'; goal='bare30/f30.txt' } | ConvertTo-Json -Depth 5 -Compress; $j | & 'C:/fx/abs20.txt' \"$env:TEMP/fx21.txt\" record --stdin",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare24/f24.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r33",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location C:\\Users\\User\\Apps\\orca-convergence-wt\n$msg = @'text2'@\n$f = Join-Path $env:TEMP 'bare7/f7.txt'; [IO.File]::WriteAllText($f, ($msg -replace \"text4\",\"text5\"), (New-Object Text.UTF8Encoding($false)))\n& $g commit -q -F $f -- bare8/f8.txt; & $g log -1 --format='text6'",
+   "expect": {
+    "repo": "C:\\Users\\User\\Apps\\orca-convergence-wt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare8/f8.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r34",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location C:\\Users\\User\\Apps\\orca-convergence-wt\n$files='bare16/f16.txt','bare17/f17.txt','bare18/f18.txt','bare19/f19.txt','bare20/f20.txt','bare21/f21.txt','bare22/f22.txt','bare23/f23.txt'\n$msg = @'text10'@\n$f = Join-Path $env:TEMP 'bare24/f24.txt'; [IO.File]::WriteAllText($f, ($msg -replace \"text12\",\"text13\"), (New-Object Text.UTF8Encoding($false)))\n& $g add -- 'bare25/f25.txt'\n& $g commit -q -F $f -- @files 2>$null; & $g log -1 --format='text15'; & $g status --short",
+   "expect": {
+    "repo": "C:\\Users\\User\\Apps\\orca-convergence-wt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare16/f16.txt",
+     "bare17/f17.txt",
+     "bare18/f18.txt",
+     "bare19/f19.txt",
+     "bare20/f20.txt",
+     "bare21/f21.txt",
+     "bare22/f22.txt",
+     "bare23/f23.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r35",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location C:\\Users\\User\\Apps\\orca-convergence-wt\n$msg = @'text2'@\n$f = Join-Path $env:TEMP 'bare7/f7.txt'; [IO.File]::WriteAllText($f, ($msg -replace \"text4\",\"text5\"), (New-Object Text.UTF8Encoding($false)))\n& $g add -f -- bare8/f8.txt 2>$null\n& $g commit -q -F $f -- bare9/f9.txt 2>$null; & $g log -1 --format='text6'",
+   "expect": {
+    "repo": "C:\\Users\\User\\Apps\\orca-convergence-wt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare9/f9.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r36",
+   "tool": "PowerShell",
+   "command": "Set-Location C:\\Users\\User\\Apps\\orca-convergence-wt; $g='C:/fx/abs1.txt'; $d='C:/fx/abs2.txt'\n$t=[IO.File]::ReadAllText((Resolve-Path 'bare20/f20.txt')) -replace \"text4\",\"text5\"; [IO.File]::WriteAllText(\"$d\\bare26/f26.txt\",$t,(New-Object Text.UTF8Encoding($false))); [IO.File]::WriteAllText(\"$d\\bare27/f27.txt\",'text8',(New-Object Text.UTF8Encoding($false)))\n& node_modules\\.bin\\oxfmt.cmd --check -c .oxfmtrc.json \"$d\\bare28/f28.txt\" \"$d\\bare29/f29.txt\" \"$d\\bare30/f30.txt\" *> \"$env:TEMP/fx12.txt\"; \"LF_FMT_$LASTEXITCODE\"\n& node_modules\\.bin\\oxlint.cmd bare21/f21.txt; \"LINT_$LASTEXITCODE\"\n$msg = @'text15'@\n$f = Join-Path $env:TEMP 'bare22/f22.txt'; [IO.File]::WriteAllText($f, ($msg -replace \"text17\",\"text18\"), (New-Object Text.UTF8Encoding($false)))\n& $g commit -q -F $f -- bare23/f23.txt bare24/f24.txt bare25/f25.txt 2>$null; & $g log -1 --format='text19'",
+   "expect": {
+    "repo": "C:\\Users\\User\\Apps\\orca-convergence-wt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare23/f23.txt",
+     "bare24/f24.txt",
+     "bare25/f25.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r37",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $p=@('bare9/f9.txt','bare10/f10.txt','bare11/f11.txt','bare12/f12.txt'); & $g add -- $p; & $g commit -F 'C:/fx/abs7.txt' -- $p; & $g log -1 --format='text8'; & $g show --stat --format= HEAD",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare9/f9.txt",
+     "bare10/f10.txt",
+     "bare11/f11.txt",
+     "bare12/f12.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r38",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; & $g status --porcelain; $msg = @'text3'@; $f=\"$env:TEMP/fx4.txt\"; [System.IO.File]::WriteAllText($f,$msg,(New-Object System.Text.UTF8Encoding($false))); & $g add -- bare6/f6.txt bare7/f7.txt bare8/f8.txt bare9/f9.txt bare10/f10.txt bare11/f11.txt bare12/f12.txt; & $g commit -F $f -- bare13/f13.txt bare14/f14.txt bare15/f15.txt bare16/f16.txt bare17/f17.txt bare18/f18.txt bare19/f19.txt; & $g log -1 --format='text5'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare13/f13.txt",
+     "bare14/f14.txt",
+     "bare15/f15.txt",
+     "bare16/f16.txt",
+     "bare17/f17.txt",
+     "bare18/f18.txt",
+     "bare19/f19.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r39",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; & $g status --porcelain; $msg = @'text3'@; $f=\"$env:TEMP/fx4.txt\"; [System.IO.File]::WriteAllText($f,$msg,(New-Object System.Text.UTF8Encoding($false))); $paths='bare8/f8.txt','bare9/f9.txt'; & $g add -- $paths; & $g commit -q -F $f -- $paths; & $g log -1 --format='text7'; & $g status --porcelain",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare8/f8.txt",
+     "bare9/f9.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r40",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; & $g status --porcelain; $msg = @'text3'@; $f=\"$env:TEMP/fx4.txt\"; [System.IO.File]::WriteAllText($f,$msg,(New-Object System.Text.UTF8Encoding($false))); $paths='bare9/f9.txt','bare10/f10.txt','bare11/f11.txt'; & $g add -- $paths 2>$null; & $g commit -q -F $f -- $paths 2>$null; & $g log -1 --format='text8'; & $g status --porcelain",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare9/f9.txt",
+     "bare10/f10.txt",
+     "bare11/f11.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r41",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; node bare12/f12.txt; \"prov_$LASTEXITCODE\"; & $g status --porcelain; $msg = @'text4'@; $f=\"$env:TEMP/fx5.txt\"; [System.IO.File]::WriteAllText($f,$msg,(New-Object System.Text.UTF8Encoding($false))); $paths='bare13/f13.txt','bare14/f14.txt','bare15/f15.txt','bare16/f16.txt','bare17/f17.txt'; & $g add -- $paths 2>$null; & $g commit -q -F $f -- $paths 2>$null; & $g log -1 --format='text11'; & $g status --porcelain",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare13/f13.txt",
+     "bare14/f14.txt",
+     "bare15/f15.txt",
+     "bare16/f16.txt",
+     "bare17/f17.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r42",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; & $g status --porcelain; $msg = @'text3'@; $f=\"$env:TEMP/fx4.txt\"; [System.IO.File]::WriteAllText($f,$msg,(New-Object System.Text.UTF8Encoding($false))); $paths='bare8/f8.txt','bare9/f9.txt'; & $g add -- $paths 2>$null; & $g commit -q -F $f -- $paths 2>$null; & $g log -1 --format='text7'; & $g status --porcelain",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare8/f8.txt",
+     "bare9/f9.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r43",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\sidecar_host_install_protocol.ps1; \"install_$LASTEXITCODE\"; $msg = @'text4'@; $f=\"$env:TEMP/fx5.txt\"; [System.IO.File]::WriteAllText($f,$msg,(New-Object System.Text.UTF8Encoding($false))); $paths='bare9/f9.txt','bare10/f10.txt'; & $g add -- $paths 2>$null; & $g commit -q -F $f -- $paths 2>$null; & $g log -1 --format='text8'; & $g status --porcelain",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare9/f9.txt",
+     "bare10/f10.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r44",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; & $g commit -q -m \"text3\" -m \"bare6/f6.txt\" -- bare7/f7.txt; & $g log -2 --format='text5'; & $g status --porcelain",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare7/f7.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r45",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; & $g add -- bare7/f7.txt bare8/f8.txt 2>$null; & $g commit -q -m \"text3\" -m \"bare9/f9.txt\" -m \"bare10/f10.txt\" -- bare11/f11.txt bare12/f12.txt 2>$null; & $g log -1 --format='text6'; & $g status --porcelain",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare11/f11.txt",
+     "bare12/f12.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r46",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; & $g commit -q -m \"text3\" -m \"bare7/f7.txt\" -m \"bare8/f8.txt\" -- bare9/f9.txt; & $g log -1 --format='text6'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare9/f9.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r47",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; Set-Location 'C:/fx/abs2.txt'; $f='bare10/f10.txt'; $t=[System.IO.File]::ReadAllText($f); $t=$t.Replace('text4', \"bare11/f11.txt\"); [System.IO.File]::WriteAllText($f,$t,(New-Object System.Text.UTF8Encoding($false))); & $g commit -q -m \"text6\" -m \"bare12/f12.txt\" -m \"bare13/f13.txt\" -- bare14/f14.txt bare15/f15.txt 2>$null; & $g log -1 --format='text9'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare14/f14.txt",
+     "bare15/f15.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r48",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $root='C:/fx/abs2.txt'; $f=\"$root\\vault\\odr\\bare17/f17.txt\"; $t=[System.IO.File]::ReadAllText($f); if(-not $t.Contains('text4')){ 'text5' }; $t=$t.Replace('text6', \"bare12/f12.txt\"); [System.IO.File]::WriteAllText($f,$t,(New-Object System.Text.UTF8Encoding($false))); & $g -C $root commit -q -m \"text8\" -m \"bare13/f13.txt\" -m \"bare14/f14.txt\" -- bare15/f15.txt bare16/f16.txt 2>$null; & $g -C $root log -1 --format='text11'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare15/f15.txt",
+     "bare16/f16.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r49",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $root='C:/fx/abs2.txt'; & $g -C $root add -- bare7/f7.txt bare8/f8.txt 2>$null; & $g -C $root commit -q -m \"text3\" -m \"bare9/f9.txt\" -m \"bare10/f10.txt\" -- bare11/f11.txt bare12/f12.txt 2>$null; & $g -C $root log -1 --format='text6'",
+   "expect": {
+    "repo": "C:/fx/abs2.txt",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare11/f11.txt",
+     "bare12/f12.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r50",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $p=@('bare7/f7.txt','bare8/f8.txt','bare9/f9.txt'); & $g add -- $p; & $g commit -q -F 'C:/fx/abs5.txt' -- $p; & $g log -1 --format='text6'",
+   "expect": {
+    "repo": "C:/x",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare7/f7.txt",
+     "bare8/f8.txt",
+     "bare9/f9.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r51",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $p=@('bare11/f11.txt','bare12/f12.txt','bare13/f13.txt','bare14/f14.txt','bare15/f15.txt','bare16/f16.txt','bare17/f17.txt'); & $g add -- $p 2>$null; & $g commit -q -F 'C:/fx/abs9.txt' -- $p; & $g log -1 --format='text10'; & $g show --stat --format= HEAD | Select-Object -Last 1",
+   "expect": {
+    "repo": "C:/x",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare11/f11.txt",
+     "bare12/f12.txt",
+     "bare13/f13.txt",
+     "bare14/f14.txt",
+     "bare15/f15.txt",
+     "bare16/f16.txt",
+     "bare17/f17.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r52",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $m='C:/fx/abs2.txt'; [IO.File]::WriteAllText($m, \"bare6/f6.txt\", (New-Object Text.UTF8Encoding($false))); $p='bare7/f7.txt'; & $g add -- $p; & $g commit -q -F $m -- $p; & $g log -1 --format='text5'",
+   "expect": {
+    "repo": "C:/x",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare7/f7.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r53",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $m='C:/fx/abs2.txt'; [IO.File]::WriteAllText($m, \"bare10/f10.txt\", (New-Object Text.UTF8Encoding($false))); $d='bare11/f11.txt'; $p=@(\"$d/seg\",\"$d/seg\",\"$d/seg\",\"$d/seg\"); & $g add -- $p 2>$null; & $g commit -q -F $m -- $p; & $g log -1 --format='text9'",
+   "expect": {
+    "repo": "C:/x",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare11/f11.txt/seg",
+     "bare11/f11.txt/seg",
+     "bare11/f11.txt/seg",
+     "bare11/f11.txt/seg"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r54",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $m='C:/fx/abs2.txt'; [IO.File]::WriteAllText($m, \"bare7/f7.txt\", (New-Object Text.UTF8Encoding($false))); $p=@('bare8/f8.txt','bare9/f9.txt'); & $g add -- $p 2>$null; & $g commit -q -F $m -- $p; & $g log -1 --format='text6'",
+   "expect": {
+    "repo": "C:/x",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare8/f8.txt",
+     "bare9/f9.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r55",
+   "tool": "PowerShell",
+   "command": "$g='C:/fx/abs1.txt'; $m='C:/fx/abs2.txt'; [IO.File]::WriteAllText($m, \"bare9/f9.txt\", (New-Object Text.UTF8Encoding($false))); $p=@('bare10/f10.txt','bare11/f11.txt','bare12/f12.txt','bare13/f13.txt'); & $g add -- $p 2>$null; & $g commit -q -F $m -- $p 2>$null; & $g log -1 --format='text8'; & $g show --stat --format= HEAD | Select-Object -Last 1",
+   "expect": {
+    "repo": "C:/x",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare10/f10.txt",
+     "bare11/f11.txt",
+     "bare12/f12.txt",
+     "bare13/f13.txt"
+    ],
+    "basis": "only-paths"
+   }
+  },
+  {
+   "id": "r56",
+   "tool": "PowerShell",
+   "command": "& 'C:/fx/abs1.txt' -m py_compile scripts\\bare10/f10.txt; \"compile_exit_$LASTEXITCODE\"; $g='C:/fx/abs3.txt'; $m='C:/fx/abs4.txt'; [IO.File]::WriteAllText($m, \"bare7/f7.txt\", (New-Object Text.UTF8Encoding($false))); & $g add -- bare8/f8.txt 2>$null; & $g commit -q -F $m -- bare9/f9.txt 2>$null; & $g log -1 --format='text6'",
+   "expect": {
+    "repo": "C:/x",
+    "args": [
+     "diff",
+     "HEAD",
+     "--",
+     "bare9/f9.txt"
+    ],
+    "basis": "only-paths"
+   }
+  }
+ ],
+ "expect_note": "expect = plan(command, \"C:/x\") after K1, reviewed row by row against the pre-K1 verdicts (2026-10-03): 38 unknown->judged, 2 stay unknown (dynamic Get-ChildItem, +=), r39 comma list now both paths, add+pathspec judged on the pathspec"
+}

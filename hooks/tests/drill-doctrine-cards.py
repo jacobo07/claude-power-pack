@@ -24,6 +24,14 @@ MUTANTS = [  # (gate that must FAIL, anchor, replacement) -- one invariant each
      "{ const c = String(i.command || ''); if (/>/.test(c) && /pricing\\.py/i.test(c)) shell.add('pricing.py'); }"),
     ("V-DC-SUBAGENT-OWN", "if (f.endsWith('.jsonl')) files.push(path.join(sub, f));", "void f;"),  # G'9
     ("V-DC-LEDGER-NEVER-DENIES", "if (MODE !== 'deny')", "if (MODE === 'never')"),           # G'3
+    # K1 (audit G1-G6, 2026-10-03): each resolution rule, removed alone, must turn its gate red.
+    ("V-DC-PLAN-LISTS", "if (s.startsWith(',')) { s = s.slice(1); continue; }", ""),       # G1 comma lists
+    ("V-DC-PLAN-NOT-LITERAL", "return /^(?:;|\\r?\\n|$)/.test(s) ? out : null;", "return out;"),  # G1 terminator
+    ("V-DC-PLAN-ONE-ASSIGNMENT", "seen[name] = name in seen ? null : value;", "seen[name] = value;"),  # G2
+    ("V-DC-PLAN-REDIRECTS", "const t = dropRedirects(tokens(seg.replace(", "const t = (tokens(seg.replace("),  # G4
+    ("V-DC-PLAN-ALL-ADDS", "'g'))];   // every", "'g'))].slice(0, 1);   // every"),        # G4 every add
+    ("V-DC-PLAN-INTERPOLATION", "return ok ? v : null;", "return null;"),
+    ("V-DC-PLAN-COMMIT-PATHSPEC-WINS", "  if (rp.length) return { repo, args: ['diff', 'HEAD', '--', ...rp], basis: 'only-paths' };\n", ""),
 ]
 
 
@@ -38,6 +46,7 @@ def fresh(src: str) -> Path:
     (d / "tests").mkdir(parents=True)
     (d / "doctrine_cards.js").write_text(src, encoding="utf-8")
     shutil.copyfile(TEST, d / "tests" / "test-doctrine-cards.js")
+    shutil.copytree(HOOKS / "tests" / "fixtures", d / "tests" / "fixtures")   # the K1 replay gate reads it
     return d
 
 
