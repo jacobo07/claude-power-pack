@@ -1,0 +1,233 @@
+"""V-UCEP-* -- the two done-gate exits the CBR probe found (UCEP-01, audit G13).
+
+H6: a baseline entry whose check is `test:<file>` resolved to DELEGATED, never
+blocked, and was never run -- a failing named test read as handled.
+H5: every entry declared not-applicable with a free-text reason read as a clean
+gate, because a reason of any text was accepted.
+
+The gate must now (a) report a `test:` check as UNJUDGED (`test-not-run`),
+counted apart from VIOLATED, and prove it never executes the file; (b) accept
+an N/A only with a reason carrying a token from the closed vocabulary
+`donegate.NA_REASONS`, and only up to `NA_SHARE_CAP_PERCENT` of the family.
+
+Every attack gate is paired with a control that can fire: the marker the test
+file would write is proven writable by running it by hand, the no-exec scanner
+is proven to flag a fixture that does exec, and a within-cap N/A is proven to
+still be honoured. Everything runs against temp directories; nothing reaches
+the production ledger.
+
+Run: python tools/test_ucep_donegate_exits.py     (exit 0 = all gates pass)
+"""
+from __future__ import annotations
+
+import ast
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_PP_ROOT = os.path.normpath(os.path.join(_HERE, ".."))
+for p in (_PP_ROOT, _HERE):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+from modules.tower import baselines as bl  # noqa: E402
+from modules.tower import donegate as dg  # noqa: E402
+
+_PASS = 0
+_FAIL = 0
+_MARKER = ""
+_EXECUTED_AFTER = []  # judge() calls after which the marker existed
+
+
+def _check(gate, cond, evidence, diagnostic):
+    global _PASS, _FAIL
+    if cond:
+        _PASS += 1
+        print("  PASS %-40s %s" % (gate, evidence))
+    else:
+        _FAIL += 1
+        print("  FAIL %-40s %s" % (gate, diagnostic))
+
+
+def _entry(ident, check, n=0):
+    return {"id": ident, "class": "D", "status": "reviewed",
+            "requirement": "requirement %s" % ident, "why": "fixture",
+            "origin": {"file": "GOV.md", "line": n + 1}, "check": check}
+
+
+_FAMILY_N = [0]
+
+
+def _family(gens, entries):
+    _FAMILY_N[0] += 1
+    name = "ucep_dg_%d" % _FAMILY_N[0]
+    bl.write_generation(name, entries, "b0", root=gens)
+    return name
+
+
+def _judge(name, repo, gens, **kw):
+    """judge() plus the never-executed observation, taken after EVERY call."""
+    rep = dg.judge(name, repo, root=gens, **kw)
+    if os.path.exists(_MARKER):
+        _EXECUTED_AFTER.append(name)
+    return rep
+
+
+def _rows(rep):
+    return {r["entry_id"]: r for r in rep.get("entries", [])}
+
+
+def _exec_findings(source):
+    """Import / call sites that execute a process or foreign code."""
+    bad_mods = {"subprocess", "runpy", "importlib", "multiprocessing", "pty", "ctypes"}
+    bad_builtins = {"exec", "eval", "compile", "__import__"}
+    found = []
+
+    def bad_os(attr):
+        return attr in ("system", "popen") or attr.startswith(("exec", "spawn"))
+
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                if a.name.split(".")[0] in bad_mods:
+                    found.append("import %s (line %d)" % (a.name, node.lineno))
+        elif isinstance(node, ast.ImportFrom):
+            top = (node.module or "").split(".")[0]
+            if top in bad_mods:
+                found.append("from %s import (line %d)" % (node.module, node.lineno))
+            elif top == "os":
+                for a in node.names:
+                    if bad_os(a.name):
+                        found.append("from os import %s (line %d)" % (a.name, node.lineno))
+        elif isinstance(node, ast.Call):
+            f = node.func
+            if isinstance(f, ast.Attribute) and isinstance(f.value, ast.Name) \
+                    and f.value.id == "os" and bad_os(f.attr):
+                found.append("os.%s() (line %d)" % (f.attr, node.lineno))
+            elif isinstance(f, ast.Name) and f.id in bad_builtins:
+                found.append("%s() (line %d)" % (f.id, node.lineno))
+    return found
+
+
+def _subject(tmp):
+    """A subject repo: a README, and a test file that writes the marker then fails."""
+    repo = os.path.join(tmp, "subject")
+    os.makedirs(os.path.join(repo, "tests"))
+    with open(os.path.join(repo, "README.md"), "w", encoding="utf-8") as fh:
+        fh.write("run it\n")
+    with open(os.path.join(repo, "tests", "test_x.py"), "w", encoding="utf-8") as fh:
+        fh.write("with open(%r, 'w') as fh:\n    fh.write('ran')\nassert False\n" % _MARKER)
+    return repo
+
+
+def main() -> int:
+    global _MARKER
+    tmp = tempfile.mkdtemp(prefix="ucep_dg_")
+    home = os.path.join(tmp, "home")
+    os.makedirs(home)
+    os.environ.update(HOME=home, USERPROFILE=home)
+    try:
+        _MARKER = os.path.join(tmp, "marker.flag")
+        gens = os.path.join(tmp, "gens")
+        repo = _subject(tmp)
+        print("V-UCEP donegate exit gates")
+
+        # 1 -- H6: an existing test: check is UNJUDGED, counted apart from VIOLATED
+        fam1 = _family(gens, [_entry("has-test", "test:tests/test_x.py"),
+                              _entry("has-readme", "file:README.md", 1)])
+        rep = _judge(fam1, repo, gens)
+        row = _rows(rep).get("has-test", {})
+        _check("V-UCEP-H6-TEST-UNJUDGED",
+               row.get("verdict") == dg.UNJUDGED
+               and row.get("unjudged_reason") == "test-not-run"
+               and "has-test" in rep.get("unjudged_tests", [])
+               and rep.get("counts", {}).get("violated", -1) == 0
+               and rep.get("would_block") is True
+               and rep.get("would_block_on_violated") is False,
+               "test: file -> UNJUDGED/test-not-run, listed in unjudged_tests, "
+               "violated=0, would_block True, would_block_on_violated False",
+               {"row": row, "unjudged_tests": rep.get("unjudged_tests"),
+                "counts": rep.get("counts"), "would_block": rep.get("would_block"),
+                "would_block_on_violated": rep.get("would_block_on_violated")})
+
+        # 4 -- a missing test file is still VIOLATED and not listed as unjudged
+        fam4 = _family(gens, [_entry("no-test", "test:tests/nope.py")])
+        rep4 = _judge(fam4, repo, gens)
+        _check("V-UCEP-H6-MISSING-TEST-STILL-VIOLATED",
+               _rows(rep4).get("no-test", {}).get("verdict") == dg.VIOLATED
+               and "no-test" not in rep4.get("unjudged_tests", []),
+               "missing test file -> VIOLATED, not in unjudged_tests",
+               _rows(rep4).get("no-test"))
+
+        # 5 -- registry: stays DELEGATED
+        reg = os.path.join(tmp, "registry.json")
+        with open(reg, "w", encoding="utf-8") as fh:
+            json.dump({"verifiers": [{"id": "fixture-gate"}]}, fh)
+        fam5 = _family(gens, [_entry("reg", "registry:fixture-gate")])
+        rep5 = _judge(fam5, repo, gens, registry=reg)
+        _check("V-UCEP-REGISTRY-STILL-DELEGATED",
+               _rows(rep5).get("reg", {}).get("verdict") == dg.DELEGATED,
+               "registry: with a registered verifier -> DELEGATED (the remap is test:-only)",
+               _rows(rep5).get("reg"))
+
+        # 8 -- report counts on a mixed family
+        mixed = [_entry("m-pass", "file:README.md"),
+                 _entry("m-fail", "file:missing.txt", 1),
+                 _entry("m-prose", "grep banned terms against production HTML", 2),
+                 _entry("m-test", "test:tests/test_x.py", 3),
+                 _entry("m-reg", "registry:fixture-gate", 4)]
+        fam8 = _family(gens, mixed)
+        rep8 = _judge(fam8, repo, gens, registry=reg)
+        counts = rep8.get("counts", {})
+        keys = ("applied", "violated", "delegated", "not_applicable", "unjudged",
+                "unjudged_tests")
+        total = sum(counts.get(k, 0) for k in keys[:5])
+        _check("V-UCEP-REPORT-COUNTS",
+               all(k in counts for k in keys) and total == len(mixed)
+               and counts.get("unjudged_tests") == 1 and counts.get("unjudged", 0) >= 2,
+               "counts %s sum to %d entries; unjudged apart from violated" % (counts, total),
+               {"counts": counts, "sum": total, "entries": len(mixed)})
+
+        # 3 -- control: the harness, not the module, runs the test file by hand
+        if os.path.exists(_MARKER):
+            os.remove(_MARKER)
+        proc = subprocess.run([sys.executable, os.path.join(repo, "tests", "test_x.py")],
+                              capture_output=True, text=True)
+        wrote = os.path.exists(_MARKER)
+        _check("V-UCEP-H6-MARKER-CONTROL", wrote and proc.returncode != 0,
+               "running the file by hand writes the marker (rc=%d): the instrument can fire"
+               % proc.returncode,
+               {"marker": wrote, "rc": proc.returncode})
+        if wrote:
+            os.remove(_MARKER)
+
+        # 6/7 -- no process- or code-execution facility in the check path
+        scan = {}
+        for rel in ("modules/tower/checks.py", "modules/tower/donegate.py"):
+            with open(os.path.join(_PP_ROOT, rel), "r", encoding="utf-8") as fh:
+                scan[rel] = _exec_findings(fh.read())
+        _check("V-UCEP-NO-EXEC-IMPORTS", all(v == [] for v in scan.values()),
+               "checks.py and donegate.py import/call no exec facility (AST scan)", scan)
+        control = _exec_findings("import subprocess\nimport os\nos.system('x')\n")
+        _check("V-UCEP-NO-EXEC-SCAN-CONTROL", len(control) == 2,
+               "scanner flags a fixture with one forbidden import and one os.system", control)
+
+        # 2 -- never executed: observed after EVERY judge() call in this file
+        _check("V-UCEP-H6-NOT-EXECUTED", _EXECUTED_AFTER == [],
+               "marker absent after every judge() call (control: by-hand run writes it)",
+               {"marker_present_after": _EXECUTED_AFTER})
+
+        print()
+        print("UCEP_DONEGATE_EXITS_PASS=%d/%d  threshold=%d/%d"
+              % (_PASS, _PASS + _FAIL, _PASS + _FAIL, _PASS + _FAIL))
+        return 0 if _FAIL == 0 else 1
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

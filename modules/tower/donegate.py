@@ -9,11 +9,20 @@ Per entry, one verdict:
 
   APPLIED_VERIFIED  an evaluable check (file/glob/regex) passed
   VIOLATED          an evaluable check failed
-  DELEGATED         a registered verifier / test owns the verdict (the repo's)
+  DELEGATED         a registered verifier owns the verdict (the repo's)
   NOT_APPLICABLE    declared by the caller WITH a reason
-  UNJUDGED          prose or empty check, an N/A without a reason, an
+  UNJUDGED          prose or empty check, a `test:` check (the file exists but
+                    is never executed here), an N/A without a reason, an
                     unreadable registry, or the instrument's own failure --
                     never counted as applied
+
+A `test:` check whose file exists is UNJUDGED with `unjudged_reason`
+"test-not-run", not DELEGATED: nothing on this path runs it, so a failing named
+test must not read as handled (audit G13). `registry:` checks keep DELEGATED.
+Every row carries `unjudged_reason` (None unless the verdict is UNJUDGED), and
+the report's `counts` keeps UNJUDGED apart from VIOLATED, with `unjudged_tests`
+naming the `test:` entries. `would_block` is unchanged (VIOLATED or UNJUDGED);
+`would_block_on_violated` is the VIOLATED-only reading.
 
 Every entry is judged whether or not the selection compiler injected it into
 the prompt: the injection ceiling bounds what is shown, not what is
@@ -41,6 +50,32 @@ JUDGED = "JUDGED"
 
 _FROM_CHECK = {ck.PASS: APPLIED_VERIFIED, ck.FAIL: VIOLATED, ck.DELEGATED: DELEGATED}
 
+# Machine-readable `unjudged_reason` of an UNJUDGED row.
+REASON_PROSE = "prose"
+REASON_EMPTY = "empty"
+REASON_TEST_NOT_RUN = "test-not-run"
+REASON_NA_NO_REASON = "na-no-reason"
+REASON_NA_NOT_IN_VOCABULARY = "na-not-in-vocabulary"
+REASON_NA_OVER_CAP = "na-over-cap"
+REASON_UNREADABLE = "unreadable"
+REASON_OTHER = "other"
+_REASON_FROM_OUTCOME = {ck.UNRUNNABLE_PROSE: REASON_PROSE, ck.EMPTY: REASON_EMPTY,
+                        ck.UNREADABLE: REASON_UNREADABLE}
+
+_COUNT_KEYS = ("applied", "violated", "delegated", "not_applicable", "unjudged",
+               "unjudged_tests")
+_COUNT_OF = {APPLIED_VERIFIED: "applied", VIOLATED: "violated", DELEGATED: "delegated",
+             NOT_APPLICABLE: "not_applicable", UNJUDGED: "unjudged"}
+
+
+def _counts(rows: list) -> dict:
+    out = {k: 0 for k in _COUNT_KEYS}
+    for x in rows:
+        out[_COUNT_OF[x["verdict"]]] += 1
+        if x["unjudged_reason"] == REASON_TEST_NOT_RUN:
+            out["unjudged_tests"] += 1
+    return out
+
 
 def judge(family: str, repo_root: str, registry: str | None = None,
           root: str | None = None, not_applicable: dict | None = None) -> dict:
@@ -48,7 +83,9 @@ def judge(family: str, repo_root: str, registry: str | None = None,
     if not gens:
         return {"family": family, "judged_under": None, "generation_sha256": None,
                 "chain_ok": None, "status": NO_BASELINE, "report_only": True,
-                "would_block": False, "entries": [], "deferred_from_prompt": []}
+                "would_block": False, "would_block_on_violated": False,
+                "counts": _counts([]), "unjudged_tests": [],
+                "entries": [], "deferred_from_prompt": []}
     n = gens[-1]
     stamp = "%s/B%d" % (family, n)
     active = bl.active_entries(family, root)
@@ -58,16 +95,26 @@ def judge(family: str, repo_root: str, registry: str | None = None,
     for e in active:
         ident = e.get("id")
         reason = na.get(ident)
+        why = None
         if ident in na and str(reason or "").strip():
             verdict, detail, outcome = NOT_APPLICABLE, str(reason).strip(), None
         elif ident in na:
             verdict, detail, outcome = UNJUDGED, "declared not applicable with no reason", None
+            why = REASON_NA_NO_REASON
         else:
             r = ck.evaluate(e, repo_root, registry)
             outcome = r.outcome
-            verdict = _FROM_CHECK.get(r.outcome, UNJUDGED)
-            detail = r.detail
+            if r.kind == "test" and r.outcome == ck.DELEGATED:
+                # Nothing on this path runs the file: it must not read as handled.
+                verdict, why = UNJUDGED, REASON_TEST_NOT_RUN
+                detail = "test exists; never run on this path - judged UNJUDGED, not DELEGATED"
+            else:
+                verdict = _FROM_CHECK.get(r.outcome, UNJUDGED)
+                detail = r.detail
+                if verdict == UNJUDGED:
+                    why = _REASON_FROM_OUTCOME.get(r.outcome, REASON_OTHER)
         out.append({"entry_id": ident, "verdict": verdict, "check_outcome": outcome,
+                    "unjudged_reason": why,
                     "detail": detail, "requirement": e.get("requirement"),
                     "injected": ident in injected, "source": SOURCE,
                     "judged_under": stamp})
@@ -76,5 +123,9 @@ def judge(family: str, repo_root: str, registry: str | None = None,
             "chain_ok": rt.verify_chain(family, root).ok, "status": JUDGED,
             "report_only": True,
             "would_block": any(x["verdict"] in (VIOLATED, UNJUDGED) for x in out),
+            "would_block_on_violated": any(x["verdict"] == VIOLATED for x in out),
+            "counts": _counts(out),
+            "unjudged_tests": sorted(x["entry_id"] for x in out
+                                     if x["unjudged_reason"] == REASON_TEST_NOT_RUN),
             "entries": out,
             "deferred_from_prompt": sorted(x["entry_id"] for x in out if not x["injected"])}
