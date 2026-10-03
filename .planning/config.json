@@ -4,6 +4,7 @@
     "context_critical_threshold": 8
   },
   "workflow": {
-    "skip_discuss": true
+    "skip_discuss": true,
+    "use_worktrees": false
   }
 }
