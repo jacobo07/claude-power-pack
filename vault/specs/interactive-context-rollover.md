@@ -84,6 +84,20 @@ Break-even future calls `N* = (F+B)(w-r) / ((R-F-B) r)` with w/r = cache write/r
 the book, UNKNOWN when absent. WOULD_ROLLOVER when `R-F-B >= 150k` at a boundary and N* is known
 and <= 20, or when used_pct >= Tier 2 (pressure). Everything recorded, including why not.
 
+REWRITTEN 2026-10-03 (plan ccp-s16 §16.1 D1). The paragraph above is history: the code shipped
+`HORIZON_CALLS = 30`, not 20, and that ESTIMATE sat inside the measured break-even band (n* p10/p50/p90
+14.3/18.0/36.9, n=383), deciding 64 of 74 rollover-yes rows. Now the live callers (`rollover_econ.py`,
+`observe`) pass EVIDENCE to `decide`:
+- horizon: `calls after a commit` from interactive sessions that ended in the 14 days before now - 6 h,
+  rolled sessions censored (`rollover_replay.py prior --write`, artifact `horizon-prior.json`, 24 h
+  expiry, refreshed by `rollover_econ.refresh_prior` when a decision needed it and found it stale);
+- rehydration C: context a certified successor carried before its first mutation, p50 (an UPPER bound).
+Verdict: ROBUST_ROLLOVER iff >= 75 % of the prior pays back even at `N* + C/G`; ROBUST_CONTINUE iff
+<= 25 % reaches even `N*`; else UNDETERMINED; no usable prior = UNKNOWN. Only ROBUST_ROLLOVER at a
+boundary asks; pressure and the 150k growth gate are unchanged. The int horizon remains for replay.
+Known limit (R2, 302 real boundaries): this prior is not conditioned on the session and never yields
+CONTINUE; a state-conditioned prior (open obligations at the boundary) is the next stage.
+
 ## 6. Shadow mode (this phase)
 
 Nothing is destroyed. Each Tier1/Tier2 crossing spawns `rollover.py shadow` detached; it records

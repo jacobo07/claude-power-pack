@@ -378,8 +378,8 @@ def replay(session_id: str, ledger_path: Optional[Path] = None, find: Optional[C
 
 
 # ------------------------------------------------------------------- live prior (plan ccp-s16 §16.1 R1)
-PRIOR_SCHEMA = "rollover-horizon-prior-v1"
-PRIOR_FILE = "horizon-prior.json"
+PRIOR_SCHEMA = rollover.PRIOR_SCHEMA        # one spelling: rollover.horizon_evidence reads what this writes
+PRIOR_FILE = rollover.PRIOR_FILE
 PRIOR_TTL_S = 24 * 3600      # a prior older than this is UNKNOWN to its readers, never "about right"
 LIVE_GUARD_S = 6 * 3600      # a session active in the last 6 h may still be running: its tail is unknown
 

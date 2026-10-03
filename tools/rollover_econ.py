@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -52,19 +53,46 @@ def evaluate(session_id: str, cwd: str, transcript: Optional[str], used_pct: Opt
     boot = len(ro.bootstrap(cap))
     ratio = (ro.price_ratio(usage.get("model", "")) if usage.get("state") == "OK"
              else ro._unknown("no usage"))
-    dec = ro.decide(usage, boot, ro.at_boundary(cap["repo"], start_head), used_pct, ratio)
+    ev, reh = ro.horizon_evidence(state_dir)
+    dec = ro.decide(usage, boot, ro.at_boundary(cap["repo"], start_head), used_pct, ratio,
+                    horizon=ev, rehydration=reh)
     head = (cap.get("repo") or {}).get("head")
     row = {"session_id": session_id, "cwd": cwd, "tier": "econ", "mode": "economic",
            "start_head": start_head, "head": head, "decision": dec, "capsule": receipt,
            "completeness": comp, "safe_to_forget": stf["verdict"], "refusals": stf["reasons"],
-           "bootstrap_chars": boot}
+           "obligations": len(cap.get("obligations") or []), "bootstrap_chars": boot}
     ro.ledger("shadow_candidate", state_dir, **row)
     out = {"session_id": session_id, "head": head, "start_head": start_head,
            "ts": time.time(), "decision": dec}
     p = decision_path(session_id, state_dir)
     p.parent.mkdir(parents=True, exist_ok=True)
     ro._atomic_write(p, json.dumps(out).encode("utf-8"))
+    if dec.get("economics") == ro.UNKNOWN:      # the horizon was NEEDED and missing/expired, not merely absent
+        out["prior_refresh"] = refresh_prior(state_dir)    # after the decision is on disk: never delays it
     return out
+
+
+def refresh_prior(state_dir: Optional[Path] = None) -> str:
+    """THE refresher of the horizon prior (audit ccp-s16-1 G4): run here, detached, when a decision
+    found it missing or expired. One builder at a time (non-blocking lock; a busy lock means another
+    evaluation is already building); the build reads the usage index and transcripts (~3 min)."""
+    ro = _rollover()
+    base = Path(state_dir or ro.STATE_DIR)
+    fd = None
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+        fd = os.open(base / "horizon-prior.lock", os.O_RDWR | os.O_CREAT)
+        if not ro._lock_try(fd):
+            return "busy"
+        sys.path.insert(0, str(_HERE))
+        import rollover_replay
+        rollover_replay.write_prior(base)
+        return "written"
+    except Exception as exc:  # detached: report in the row, never crash
+        return f"failed: {type(exc).__name__}: {exc}"[:200]
+    finally:
+        if fd is not None:
+            os.close(fd)
 
 
 def main(argv=None) -> int:

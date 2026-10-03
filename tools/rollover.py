@@ -869,13 +869,39 @@ def observe(session_id: str, cwd: str, transcript: Optional[str], used_pct: Opti
     comp = completeness(cap)
     stf = safe_to_forget(receipt, comp)
     usage = cap["usage"]
+    ev, reh = horizon_evidence(state_dir)
     dec = decide(usage, len(bootstrap(cap)), at_boundary(cap["repo"], start_head), used_pct,
-                 price_ratio(usage.get("model", "")) if usage.get("state") == "OK" else _unknown("no usage"))
+                 price_ratio(usage.get("model", "")) if usage.get("state") == "OK" else _unknown("no usage"),
+                 horizon=ev, rehydration=reh)
     row = {"session_id": session_id, "cwd": cwd, "tier": tier, "mode": "shadow",
            "decision": dec, "capsule": receipt, "completeness": comp, "safe_to_forget": stf["verdict"],
-           "refusals": stf["reasons"], "bootstrap_chars": len(bootstrap(cap))}
+           "refusals": stf["reasons"], "obligations": len(cap.get("obligations") or []),
+           "bootstrap_chars": len(bootstrap(cap))}
     ledger("shadow_candidate", state_dir, **row)
     return row
+
+
+PRIOR_FILE = "horizon-prior.json"           # written by tools/rollover_replay.py prior --write
+PRIOR_SCHEMA = "rollover-horizon-prior-v1"
+
+
+def horizon_evidence(state_dir: Optional[Path] = None, now: Optional[float] = None) -> tuple[dict, Optional[dict]]:
+    """(horizon evidence, rehydration evidence) for decide(). Missing, unreadable, foreign-schema or
+    expired priors are UNKNOWN with the reason -- decide then never asks (plan ccp-s16 §16.1 D1b);
+    the old constant is never substituted. The artifact is refreshed by rollover_econ.py."""
+    p = (state_dir or STATE_DIR) / PRIOR_FILE
+    try:
+        ev = json.loads(p.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {"basis": UNKNOWN, "reason": "no prior artifact"}, None
+    except (OSError, ValueError) as exc:
+        return {"basis": UNKNOWN, "reason": f"prior unreadable: {exc.__class__.__name__}"}, None
+    if not isinstance(ev, dict) or ev.get("schema") != PRIOR_SCHEMA:
+        return {"basis": UNKNOWN, "reason": "prior has a foreign schema"}, None
+    exp = ev.get("expires_at")
+    if not isinstance(exp, (int, float)) or exp < (_now() if now is None else now):
+        return {"basis": UNKNOWN, "reason": "prior expired", "stale": True}, None
+    return ev, ev.get("rehydration")
 
 
 def _answers(a) -> Optional[dict]:
