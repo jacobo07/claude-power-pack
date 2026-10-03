@@ -164,6 +164,23 @@ def grp_auth() -> None:
             f"state={r['state']} reasons={r['reasons']} findings={r['findings']} why={r['why']}"
     guarded("V-ENVPF-AUTH-LAPSED-REFRESH-EXPIRY-UNKNOWN", lapsed_refresh_expiry_unknown)
 
+    def expired_with_exported_key():
+        # WR-05: the missing-file branch treats an exported auth variable as "a login may exist that this cannot
+        # judge"; an expired OAuth file beside one must read the same way, never as a measured refusal
+        got = {}
+        for label, kw in (("expiresAt0", dict(expires_at_ms=0, refresh_expires_ms=REFRESH_OK_MS)),
+                          ("lapsed-no-refresh", dict(expires_at_ms=PAST_MS, refresh=False))):
+            for var in ep.AUTH_ENV_NAMES:
+                tmp = make_env(scratch(), extra_env_lines=[f"export {var}={CANARY_ENVVAR}"], **kw)
+                r = auth_of(tmp)
+                got[(label, var)] = (r["state"], r["reasons"], var in r["why"], CANARY_ENVVAR in json.dumps(r))
+            ctl = auth_of(make_env(scratch(), **kw))                 # control: same file, no variable -> still refuses
+            got[(label, "control")] = (ctl["state"], ctl["reasons"], False, False)
+        ok = (all(v == (ep.UNMEASURABLE, [], True, False) for k, v in got.items() if k[1] != "control")
+              and all(v == (ep.NOT_READY, ["auth_expired"], False, False) for k, v in got.items() if k[1] == "control"))
+        return ok, "; ".join(f"{k[0]}/{k[1]}={v[0]}" for k, v in got.items())
+    guarded("V-ENVPF-AUTH-EXPIRED-WITH-EXPORTED-KEY-UNMEASURABLE", expired_with_exported_key)
+
     def lapsed_unrefreshable():
         tmp = make_env(scratch(), expires_at_ms=PAST_MS, refresh=False)
         r = auth_of(tmp)
