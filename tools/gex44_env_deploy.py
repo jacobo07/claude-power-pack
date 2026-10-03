@@ -102,6 +102,20 @@ def _guard(env_root) -> tuple[Path | None, str | None]:
     return resolved, None
 
 
+def _env_home_problem(root: Path, env: dict) -> str | None:
+    """The deploy writes through env.sh's HOME (install checkout, installer, hooks, settings.json), not through the
+    env root. A HOME that is not strictly inside the root -- the user's own HOME, an ancestor of it, or any other
+    directory -- would retarget a live ~/.claude, so it is refused."""
+    try:
+        env_home = Path(env["home"]).expanduser().resolve()
+        own = Path.home().resolve()
+    except (RuntimeError, OSError):
+        return "env.sh HOME could not be resolved"
+    if env_home == own or env_home in own.parents or root not in env_home.parents:
+        return f"env.sh HOME {env_home} is outside the env root {root} (or is the user's own HOME)"
+    return None
+
+
 def _modified_paths(git_exe, install, path) -> list[str] | None:
     """Tracked files the install has modified (the paths), [] when clean, None when git could not say."""
     rc, st, _ = _run([git_exe, "--no-optional-locks", "status", "--porcelain", "--untracked-files=no"], install,
@@ -132,6 +146,9 @@ def plan_deploy(env_root, source_repo, commit=None, now=None) -> dict:
         env = ep.env_from_root(root)
     except ValueError as exc:
         return _refuse(plan, EXIT_GUARD, str(exc))
+    bad_home = _env_home_problem(root, env)
+    if bad_home:
+        return _refuse(plan, EXIT_GUARD, bad_home)
     install = env["install"]
     plan["install"] = install
     igit, sgit = env.get("git") or _source_git(), _source_git()

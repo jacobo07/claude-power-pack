@@ -350,6 +350,27 @@ def grp_refusals() -> None:
         return ok, f"code={res.get('code')} head={e.head()[:8]} unchanged={before == after}"
     guarded("V-DEPLOY-LOCK-HELD", lock_held)
 
+    def home_outside_root():
+        victim = make_scratch_env(scratch())                 # stands in for a live ~/.claude the deploy must not reach
+        e = make_scratch_env(scratch())
+        e.env_sh.write_text(f"export HOME={victim.home}\nexport CPP_GIT_EXE={GIT}\n", encoding="utf-8")
+        before_v, before_e = fingerprint(victim), fingerprint(e)
+        res = dep.apply_deploy(e.root, REPO)
+        plan = dep.plan_deploy(e.root, REPO)
+        e2 = scratch("realhome")                              # env.sh pointing at the process HOME itself (plan only)
+        (e2 / "home").mkdir()
+        (e2 / "env.sh").write_text(f"export HOME={Path.home()}\n", encoding="utf-8")
+        own = dep.plan_deploy(e2, REPO)
+        ok = (res.get("code") == 3 and plan["refusal"] and plan["refusal"]["code"] == 3
+              and "outside" in res["refusal"]["why"] and victim.head() == A7_HEAD
+              and fingerprint(victim) == before_v and fingerprint(e) == before_e
+              and own["refusal"] and own["refusal"]["code"] == 3 and "outside" in own["refusal"]["why"])
+        return ok, (f"apply={res.get('code')} plan={(plan['refusal'] or {}).get('code')} victim_head={victim.head()[:8]} "
+                    f"victim_unchanged={fingerprint(victim) == before_v} own_home_refusal={(own['refusal'] or {}).get('code')} "
+                    f"why={(res.get('refusal') or {}).get('why', '')[:70]}")
+    guarded("V-DEPLOY-ENV-HOME-OUTSIDE-ROOT-REFUSED", home_outside_root)
+
+
 
 def grp_replan() -> None:
     def replan():
@@ -506,6 +527,10 @@ def _m_prelock_plan():
     return _patch(dep, "plan_deploy", mutant)
 
 
+def _m_env_home_unchecked():
+    return _patch(dep, "_env_home_problem", lambda root, env: None)
+
+
 MUTANTS = [
     ("M1 dirty check skipped", _m_dirty_skipped, [grp_refusals], ["V-DEPLOY-DIRTY-REFUSED"]),
     ("M2 ancestry check skipped", _m_ancestry_skipped, [grp_refusals], ["V-DEPLOY-NOT-ANCESTOR-REFUSED"]),
@@ -513,6 +538,8 @@ MUTANTS = [
     ("M4 env.sh/pp.head written without backup", _m_no_backup, [grp_apply], ["V-DEPLOY-APPLY"]),
     ("M5 lock failure ignored", _m_lock_ignored, [grp_refusals], ["V-DEPLOY-LOCK-HELD"]),
     ("M6 apply uses the pre-lock plan", _m_prelock_plan, [grp_replan], ["V-DEPLOY-REPLAN-UNDER-LOCK"]),
+    ("M7 env.sh HOME not checked against the env root", _m_env_home_unchecked, [grp_refusals],
+     ["V-DEPLOY-ENV-HOME-OUTSIDE-ROOT-REFUSED"]),
 ]
 
 
