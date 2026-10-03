@@ -19,7 +19,8 @@
 // --pathspec-from-file, GIT_INDEX_FILE, an unresolved variable), a git timeout, or a file the session
 // wrote through the shell (its lines are invisible to the transcript) is recorded as unknown. A git failure
 // records its stderr CLASS in the row (`git_error`: not_a_repo, cannot_chdir, unborn_head, outside_repo,
-// dubious_ownership, other), never the raw stderr, so a row can say why it judged nothing.
+// dubious_ownership, other), never the raw stderr, so a row can say why it judged nothing. The first commit
+// of a repo (no HEAD yet) is judged against the empty tree instead (row field `base: empty-tree`).
 //
 // WINDOW RULE (skill-capability pillar A, D-01). A file with foreign hunks is ALSO recorded as unknown
 // (reason `mtime-in-own-shell-window`, listed in the ledger row's `unknown_reasons`) when its current mtime
@@ -237,16 +238,26 @@ function plan(command, cwd) {
   return { repo, args: ['diff', '--cached'], basis: 'index' };
 }
 
-function spawnGit(full) {
-  let r = spawnSync('git', full, { encoding: 'utf8', timeout: GIT_TIMEOUT_MS, windowsHide: true });
+// The single spawn site for git. `input` (optional) is piped to stdin, so no /dev/null is ever named.
+function spawnGit(full, input) {
+  const opts = { encoding: 'utf8', timeout: GIT_TIMEOUT_MS, windowsHide: true, ...(input === undefined ? {} : { input }) };
+  let r = spawnSync('git', full, opts);
   if (r.error && r.error.code === 'ENOENT' && fs.existsSync(GIT_FALLBACK)) {
-    r = spawnSync(GIT_FALLBACK, full, { encoding: 'utf8', timeout: GIT_TIMEOUT_MS, windowsHide: true });
+    r = spawnSync(GIT_FALLBACK, full, opts);
   }
   return r;
 }
 
 function git(repo, args) {
   return spawnGit(['--no-optional-locks', '-C', repo, ...args, '-U0', '--no-color', '--no-ext-diff']);
+}
+
+// The empty tree's object id for this repo's hash algorithm, from git itself (sha1 or sha256 repos differ).
+// `hash-object` without -w writes nothing. null on any failure: the caller keeps the original failure.
+function emptyTree(repo) {
+  const t = spawnGit(['--no-optional-locks', '-C', repo, 'hash-object', '-t', 'tree', '--stdin'], '');
+  const oid = !t.error && t.status === 0 ? String(t.stdout || '').trim() : '';
+  return /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/.test(oid) ? oid : null;
 }
 
 // The class of a failed git call, from its stderr only (pure; the row stores this enum, never the text:
@@ -405,7 +416,17 @@ async function main() {
   const session = String(req.session_id || 'unknown').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80);
   const p = plan(command, req.cwd || process.cwd());
   if (p.unknown) { ledger({ decision: 'unknown', session, reason: p.unknown }); return emit({ continue: true }); }
-  const r = git(p.repo, p.args);
+  let r = git(p.repo, p.args);
+  // First commit of a repo: HEAD does not exist yet, so `diff HEAD` dies. The commit is then judged against
+  // the empty tree (every line it adds is a hunk). Only on that one failure class, one extra bounded
+  // `hash-object` plus a re-run; if either fails the original failure below is recorded unchanged.
+  let base;
+  if (!r.error && typeof r.status === 'number' && r.status !== 0 && p.args[1] === 'HEAD'
+      && classifyGitError(r.stderr) === 'unborn_head') {
+    const oid = emptyTree(p.repo);
+    const r2 = oid ? git(p.repo, [p.args[0], oid, ...p.args.slice(2)]) : null;
+    if (r2 && !r2.error && r2.status === 0) { r = r2; base = 'empty-tree'; }
+  }
   if (r.error || r.status !== 0) {
     // A numeric non-zero status carries a stderr CLASS (never the raw text, HR-SECRET-002); a spawn error
     // (timeout, ENOENT) keeps its code as the reason and has no git_error.
@@ -427,7 +448,7 @@ async function main() {
     try { return fs.statSync(path.join(top, file)).mtimeMs; } catch (_) { return null; }
   };
   const { foreign, unknown, unknownReasons } = judge(parseDiff(r.stdout || ''), own, mtimeOf);
-  const rec = { session, basis: p.basis, aperture: p.aperture, unknown_files: unknown, unknown_reasons: unknownReasons,
+  const rec = { session, basis: p.basis, ...(base ? { base } : {}), aperture: p.aperture, unknown_files: unknown, unknown_reasons: unknownReasons,
     foreign: foreign.map((f) => ({ file: f.file, hunks: f.hunks.map((h) => h.header) })) };
   if (!foreign.length) { ledger({ decision: unknown.length ? 'unknown' : 'no_opportunity', ...rec }); return emit({ continue: true }); }
   if (MODE !== 'deny') { ledger({ decision: 'opportunity', ...rec }); return emit({ continue: true }); }

@@ -296,6 +296,139 @@ def check_128_abcd1234() -> None:
         shutil.rmtree(sd, ignore_errors=True)
 
 
+def commit_payload(session: str, cwd: str, command: str, transcript: str | None = None) -> dict:
+    p = {"tool_name": "PowerShell", "session_id": session, "cwd": cwd, "hook_event_name": "PreToolUse",
+         "tool_input": {"command": command}}
+    if transcript:
+        p["transcript_path"] = transcript
+    return p
+
+
+def init_repo(repo: str) -> None:
+    os.makedirs(repo, exist_ok=True)
+    git(repo, "init", "-q")
+    git(repo, "config", "user.email", "t@x.invalid")
+    git(repo, "config", "user.name", "t")
+    git(repo, "config", "core.autocrlf", "false")
+
+
+def node_classify(stderr: str) -> str:
+    """The card's own classifyGitError, called through node (stderr on stdin)."""
+    code = ("const {classifyGitError}=require(process.argv[1]);"
+            "process.stdout.write(classifyGitError(require('fs').readFileSync(0,'utf8')))")
+    r = subprocess.run([NODE, "-e", code, CARD], input=stderr, capture_output=True, text=True, timeout=60)
+    return r.stdout.strip() if r.returncode == 0 else f"node-rc={r.returncode}"
+
+
+def own_edit_transcript(path: str, new_string: str) -> None:
+    row = {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "t1", "name": "Edit", "input": {
+        "file_path": "pricing.py", "old_string": "    return amount - pct", "new_string": new_string}}]}}
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(json.dumps(row, separators=(",", ":")) + "\n")
+
+
+def write_unborn_pricing(repo: str) -> None:
+    body = ('"""Order pricing."""\n\nTAX_RATE = 0.21\n\n\ndef apply_discount(amount, pct):\n'
+            '    return amount * (1 - pct / 100)\n\n\ndef shipping(weight_kg):\n'
+            '    return 4.95 if weight_kg <= 2 else 4.95 + 1.1 * (weight_kg - 2)\n')
+    with open(os.path.join(repo, "pricing.py"), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(body)
+    git(repo, "add", "pricing.py")
+
+
+def check_128_classes() -> None:
+    root = tempfile.mkdtemp(prefix="sca-128-classes-")
+    host = socket.gethostname()
+    try:
+        ver = git(root, "--version").stdout.strip()
+        print(f"INFO git={ver} host={host}")
+        # not_a_repo: an empty dir; the ceiling stops git walking into a repo that holds the temp dir
+        plain = os.path.join(root, "plain")
+        os.makedirs(plain)
+        ceil = {"GIT_CEILING_DIRECTORIES": root}
+        rows = {}
+        for tag, cmd in (("index", "git commit -m x"), ("pathspec", "git commit -m x -- f")):
+            sd = os.path.join(root, f"state-nar-{tag}")
+            r = run_card(commit_payload("sca-nar", plain, cmd), sd, "deny", extra_env=ceil)
+            rows[tag] = r["last"] or {}
+        good = all(l.get("git_error") == "not_a_repo" and str(l.get("reason", "")).startswith("git exit ")
+                   and l.get("decision") == "unknown" for l in rows.values())
+        check("V-SCA-128-NOT-A-REPO", good,
+              " | ".join(f"{t}: {row_fields(l)}" for t, l in rows.items())
+              + " (observed on this git: outside a repo `git diff` exits 129 via --no-index, not 128)")
+
+        # outside_repo: a repo with one commit, commit pathspec naming a file in a second directory
+        repo = os.path.join(root, "withc")
+        init_repo(repo)
+        with open(os.path.join(repo, "f"), "w", encoding="utf-8", newline="\n") as fh:
+            fh.write("a\nb\nc\n")
+        git(repo, "add", "f")
+        git(repo, "commit", "-q", "-m", "i")
+        elsewhere = os.path.join(root, "elsewhere")
+        os.makedirs(elsewhere)
+        outside = os.path.join(elsewhere, "o.txt")
+        with open(outside, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write("x\n")
+        r = run_card(commit_payload("sca-out", repo, f"git commit -m x -- {outside}"),
+                     os.path.join(root, "state-out"), "deny")
+        l = r["last"] or {}
+        check("V-SCA-128-OUTSIDE-REPO", l.get("git_error") == "outside_repo" and l.get("reason") == G128
+              and l.get("decision") == "unknown", row_fields(l))
+
+        # unborn HEAD: real stderr captured by the gate, classified by the card's own function through node
+        unb = os.path.join(root, "unb")
+        init_repo(unb)
+        write_unborn_pricing(unb)
+        cap = git(unb, "diff", "HEAD", "--", "pricing.py", "-U0", "--no-color", "--no-ext-diff")
+        cls = node_classify(cap.stderr)
+        check("V-SCA-128-UNBORN-HEAD-CLASSIFIED", cap.returncode == 128 and cls == "unborn_head",
+              f"real git rc={cap.returncode} stderr={cap.stderr.strip()!r} -> {cls}")
+
+        # unborn HEAD is judged, not a git-128 unknown: the commit diffs against the empty tree
+        tp = os.path.join(root, "unborn-session.jsonl")
+        own_edit_transcript(tp, "    return amount * (1 - pct / 100)")
+        r = run_card(commit_payload("sca-unb", unb, "git commit -m first -- pricing.py", tp),
+                     os.path.join(root, "state-unb"), "deny")
+        l = r["last"] or {}
+        check("V-SCA-UNBORN-HEAD-JUDGED", r["denied"] and l.get("decision") == "deny-card" and l.get("base") == "empty-tree"
+              and l.get("reason") != G128, f"denied={r['denied']} {row_fields(l)} base={l.get('base')}")
+
+        # dubious_ownership: git's test seam. Not honoured, or honoured without the named stderr, is reported as such.
+        drepo = os.path.join(root, "dub")
+        init_repo(drepo)
+        with open(os.path.join(drepo, "f"), "w", encoding="utf-8", newline="\n") as fh:
+            fh.write("a\n")
+        git(drepo, "add", "f")
+        git(drepo, "commit", "-q", "-m", "i")
+        with open(os.path.join(drepo, "f"), "a", encoding="utf-8", newline="\n") as fh:
+            fh.write("b\nc\nd\n")
+        git(drepo, "add", "f")
+        r = run_card(commit_payload("sca-dub", drepo, "git commit -m x"), os.path.join(root, "state-dub"), "deny",
+                     extra_env={"GIT_TEST_ASSUME_DIFFERENT_OWNER": "1"})
+        l = r["last"] or {}
+        if l.get("git_error") == "dubious_ownership" and str(l.get("reason", "")).startswith("git exit "):
+            ok("V-SCA-128-DUBIOUS-OWNERSHIP", row_fields(l))
+        else:
+            print(f"NOT-REPRODUCED V-SCA-128-DUBIOUS-OWNERSHIP host={host}: {row_fields(l)} "
+                  f"(git test seam GIT_TEST_ASSUME_DIFFERENT_OWNER did not produce the dubious-ownership stderr here)")
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def info_fce2689e(pack: dict) -> list:
+    """Count the pack's tool calls of the fce2689e session in the 120 s before each of its 128 rows."""
+    sess = next(v for k, v in pack["sessions"].items() if k.startswith("fce2689e"))
+    starts = [ms_of(c["start"]) for c in sess["tool_calls"]]
+    stamps = [r["ts"] for r in pack["rows"] if r.get("reason") == G128 and r["session"].startswith("fce2689e")]
+    counts = [sum(1 for s in starts if ms_of(ts) - 120_000 <= s <= ms_of(ts)) for ts in stamps]
+    first = min(sess["tool_calls"], key=lambda c: ms_of(c["start"]))["start"]
+    last = max(sess["tool_calls"], key=lambda c: ms_of(c["start"]))["start"]
+    print(f"INFO fce2689e: pack tool_calls={len(starts)} first_start={first} last_start={last} "
+          f"rows={stamps} calls_in_120s_before_row={counts[0]},{counts[1]},{counts[2]} "
+          f"(the exact command is not in the pack and cannot be reproduced from it)")
+    return counts
+
+
 def main() -> int:
     print(f"host={socket.gethostname()}")
     if not NODE or not GIT:
@@ -348,8 +481,15 @@ def main() -> int:
     print(f"D-CARD frozen_denies=5 replayed_allowed={allowed}/5 presession_denied={presession}/5 "
           f"mutant_denied={mutant_denied}/5 | beside: {b['id']} (after freeze) denied={beside_denied} class={b['class']}")
 
+    fails_before_128 = fails
     check_128_split(pack)
     check_128_abcd1234()
+    check_128_classes()
+    counts = info_fce2689e(pack)
+    if fails == fails_before_128:
+        print("D-CARD unknown_git_exit_128=6: abcd1234 x3 -> cannot_chdir (reproduced; capsule-guard e2e ran the card "
+              "without a private state dir); fce2689e x3 -> cause not recoverable from the pack (rows carry no stderr; "
+              f"calls_in_window={counts[0]},{counts[1]},{counts[2]}); classes now recorded per row: git_error")
 
     check_suites()
 

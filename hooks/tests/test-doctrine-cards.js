@@ -51,8 +51,8 @@ function transcript(root, { sub = false, shellWrite = false } = {}) {
   return { sid, tp };
 }
 
-function run(s, t, command, mode = 'ledger', cwd = s.repo) {
-  const env = { ...process.env, DOCTRINE_CARDS_STATE_DIR: s.state, CLAUDE_DOCTRINE_CARDS: mode };
+function run(s, t, command, mode = 'ledger', cwd = s.repo, extraEnv = {}) {
+  const env = { ...process.env, ...extraEnv, DOCTRINE_CARDS_STATE_DIR: s.state, CLAUDE_DOCTRINE_CARDS: mode };
   const r = spawnSync(process.execPath, [CARD], { input: JSON.stringify({ tool_name: 'PowerShell', session_id: t.sid,
     transcript_path: t.tp, cwd, tool_input: { command } }), encoding: 'utf8', env, timeout: 20000 });
   let out = {};
@@ -244,6 +244,55 @@ function windowCase(tag, mtimeMs, opts) {
   check('V-DC-MTIME-SLACK', !inSlack.denied && inSlack.last && inSlack.last.decision === 'unknown'
     && outSlack.denied && outSlack.last && outSlack.last.decision === 'deny-card',
   `end+0.9s: ${inSlack.last && inSlack.last.decision}; end+1.5s: ${outSlack.last && outSlack.last.decision}`); }
+
+// 12. git failures (skill-capability pillar A, D-03). A repo with NO commit yet: `diff HEAD` dies on the
+// missing HEAD, which used to end the first commit of every repo as an unknown. It is judged against the
+// empty tree instead. And classifyGitError names each failure from stderr captured from REAL git.
+function unbornScratch(tag) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), `dc-${tag}-`));
+  const repo = path.join(root, 'repo');
+  fs.mkdirSync(repo);
+  g(repo, 'init', '-q'); g(repo, 'config', 'user.email', 't@x.invalid'); g(repo, 'config', 'user.name', 't');
+  g(repo, 'config', 'core.autocrlf', 'false');
+  return { root, repo, state: path.join(root, 'state') };
+}
+{ const s = unbornScratch('unborn'); const t = transcript(s.root);
+  fs.writeFileSync(path.join(s.repo, 'pricing.py'), BASE.replace('    return amount - pct\n', '    return amount * (1 - pct / 100)\n') + FOREIGN);
+  g(s.repo, 'add', 'pricing.py');
+  const r = run(s, t, 'git commit -m first -- pricing.py', 'deny');
+  const l = r.last || {};
+  check('V-DC-UNBORN-HEAD', r.denied && l.decision === 'deny-card' && l.base === 'empty-tree' && l.reason !== 'git exit 128',
+    `denied=${r.denied} decision=${l.decision} base=${l.base} reason=${l.reason} git_error=${l.git_error}`);
+  const rawStderr = r.rows.some((x) => Object.keys(x).some((k) => /stderr/i.test(k)));
+  check('V-DC-GIT-ERROR-NO-RAW-STDERR', !rawStderr, 'no ledger row carries a stderr field'); }
+{ const { classifyGitError } = require(CARD);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dc-classes-'));
+  const real = (repo, args, env = {}) => { const x = spawnSync(GIT, ['-C', repo, ...args], { encoding: 'utf8', env: { ...process.env, ...env } });
+    return { rc: x.status, err: x.stderr || '' }; };
+  const none = path.join(root, 'does-not-exist');
+  const plain = path.join(root, 'plain'); fs.mkdirSync(plain);
+  const ceil = { GIT_CEILING_DIRECTORIES: root };
+  const unb = path.join(root, 'unb'); fs.mkdirSync(unb); g(unb, 'init', '-q'); fs.writeFileSync(path.join(unb, 'f'), 'a\nb\nc\n');
+  const withc = path.join(root, 'withc'); fs.mkdirSync(withc); g(withc, 'init', '-q'); g(withc, 'config', 'user.email', 't@x.invalid');
+  g(withc, 'config', 'user.name', 't'); fs.writeFileSync(path.join(withc, 'f'), 'a\nb\nc\n'); g(withc, 'add', 'f'); g(withc, 'commit', '-q', '-m', 'i');
+  const outside = path.join(root, 'elsewhere.txt'); fs.writeFileSync(outside, 'x\n');
+  const tail = ['-U0', '--no-color', '--no-ext-diff'];
+  const probes = [
+    ['cannot_chdir', real(none, ['diff', '--cached', ...tail])],
+    ['not_a_repo (diff HEAD)', real(plain, ['diff', 'HEAD', '--', 'f', ...tail], ceil)],
+    ['not_a_repo (diff --cached)', real(plain, ['diff', '--cached', ...tail], ceil)],
+    ['unborn_head', real(unb, ['diff', 'HEAD', '--', 'f', ...tail])],
+    ['outside_repo', real(withc, ['diff', 'HEAD', '--', outside, ...tail])],
+  ];
+  const want = (label) => label.replace(/ \(.*\)$/, '');
+  const got = probes.map(([label, x]) => [label, x.rc, classifyGitError(x.err)]);
+  const wrong = got.filter(([label, , c]) => c !== want(label));
+  check('V-DC-GIT-CLASSES', wrong.length === 0 && probes.every(([, x]) => x.rc !== 0)
+    && classifyGitError('fatal: something new') === 'other' && classifyGitError('') === 'other' && classifyGitError(undefined) === 'other',
+  got.map(([label, rc, c]) => `${label}: rc=${rc} -> ${c}`).join(' | ') + ' | unknown text and empty -> other');
+  check('V-DC-GIT-DUBIOUS-TEXT', classifyGitError("fatal: detected dubious ownership in repository at '/x'") === 'dubious_ownership',
+    'synthetic stderr text (not produced by real git here): dubious_ownership');
+  fs.rmSync(root, { recursive: true, force: true }); }
 
 console.log(`DOCTRINE_CARDS_PASS=${pass}/${pass + fail}`);
 process.exit(fail ? 1 : 0);
