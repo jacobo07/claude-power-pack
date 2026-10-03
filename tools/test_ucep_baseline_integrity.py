@@ -739,17 +739,126 @@ def main() -> int:
                "with no argument it reads bl.BASELINES_DIR at call time (monkeypatched)",
                "got=%s err=%s (want ['only'])" % (got_call, err_e))
 
-        subjects, err_f = discover()
+        # --- WR-05: a subject the walk cannot read must be LOUD, never absent ----
+        # `os.walk` swallows a listing error and skips the directory; a discovery
+        # that returns a shorter list says nothing. The unreadable directory is
+        # simulated by wrapping os.scandir (chmod does not deny a directory on
+        # Windows) and a symlinked directory by wrapping os.path.islink.
+        report_fn = getattr(bl, "discover_report", None)
+        err_cls = getattr(bl, "SubjectDiscoveryError", None)
+
+        def two_subjects(label):
+            r = os.path.join(tmp, label)
+            bl.write_generation("a", [{"id": "e1"}], "b0", root=r)
+            bl.write_generation("b", [{"id": "e1"}], "b0", root=r)
+            return r
+
+        def run_faulted(root, patch):
+            """(report or None, raised-name or None, discover_subjects result) while
+            `patch()` is applied; always restored."""
+            undo = patch()
+            try:
+                rep = report_fn(root) if callable(report_fn) else None
+                try:
+                    listed, raised = disc(root), None
+                except Exception as exc:  # noqa: BLE001 -- the gate inspects it
+                    listed, raised = None, type(exc).__name__
+            finally:
+                undo()
+            return rep, raised, listed
+
+        r_unread = two_subjects("disc_unreadable")
+        b_dir = os.path.join(r_unread, "b")
+
+        def patch_scandir():
+            real = os.scandir
+
+            def faulty(path="."):
+                if os.path.normpath(str(path)) == os.path.normpath(b_dir):
+                    raise PermissionError(13, "simulated unreadable", str(path))
+                return real(path)
+            os.scandir = faulty
+            return lambda: setattr(os, "scandir", real)
+
+        rep_u, raised_u, listed_u = run_faulted(r_unread, patch_scandir)
+        got_clean, _e = discover(r_unread)
+        unread = (rep_u or {}).get("unreadable") or []
+        _check("V-UCEP-DISCOVER-UNREADABLE",
+               callable(report_fn) and (rep_u or {}).get("subjects") == ["a"]
+               and len(unread) == 1 and "b" in str(unread[0].get("path"))
+               and raised_u is not None and raised_u == getattr(err_cls, "__name__", None)
+               and got_clean == ["a", "b"],
+               "an unreadable subject directory is reported (discover_report.unreadable "
+               "names it) and discover_subjects raises SubjectDiscoveryError instead of "
+               "returning a shorter list; the same root unfaulted lists ['a', 'b']",
+               "report=%s raised=%s listed=%s unfaulted=%s" % (rep_u, raised_u, listed_u, got_clean))
+
+        r_link = two_subjects("disc_symlink")
+        link_dir = os.path.join(r_link, "b")
+
+        def patch_islink():
+            real = os.path.islink
+
+            def faulty(path):
+                return True if os.path.normpath(str(path)) == os.path.normpath(link_dir) \
+                    else real(path)
+            os.path.islink = faulty
+            return lambda: setattr(os.path, "islink", real)
+
+        rep_l, raised_l, listed_l = run_faulted(r_link, patch_islink)
+        unread_l = (rep_l or {}).get("unreadable") or []
+        _check("V-UCEP-DISCOVER-SYMLINK",
+               callable(report_fn) and len(unread_l) == 1 and "b" in str(unread_l[0].get("path"))
+               and raised_l is not None and raised_l == getattr(err_cls, "__name__", None),
+               "a symlinked directory os.walk would not descend is reported unreadable and "
+               "discover_subjects raises, never silently dropped",
+               "report=%s raised=%s listed=%s" % (rep_l, raised_l, listed_l))
+
+        # --- WR-05: the real population is cross-checked, not just floored -------
+        # The static floor (4 subjects / 60 entries) equals today's population, so by
+        # itself it is satisfied by coincidence and says nothing about a Phase 4
+        # `archetype/<ID>` subject the walk skipped. The independent enumerators of
+        # tools/baseline_population.py (family registry, git index, a glob, the raw
+        # JSON entry total) must AGREE with the walk; the floor stays only as a lower
+        # bound.
+        import baseline_population as bp
+        cc_root = os.path.join(tmp, "cc")
+        bl.write_generation("x", [{"id": "e1"}], "b0", root=cc_root)
+        bl.write_generation("y", [{"id": "e1"}], "b0", root=cc_root)
+        cc_full = bp.cross_check(["x", "y"], cc_root, families=["x", "y"], git=False)
+        cc_drop = bp.cross_check(["x"], cc_root, families=["x", "y"], git=False)
+        cc_extra = bp.cross_check(["x", "y", "z"], cc_root, families=["x", "y"], git=False)
+        _check("V-UCEP-DISCOVER-CROSSCHECK-CONTROL",
+               not cc_full["missing"] and not cc_full["extra"]
+               and cc_drop["missing"].get("families") == ["y"]
+               and cc_drop["missing"].get("disk") == ["y"]
+               and cc_extra["extra"].get("disk") == ["z"],
+               "the cross-check agrees on a complete discovery and FIRES on a dropped "
+               "subject (families + disk) and on an invented one (disk)",
+               "full=%s drop=%s extra=%s" % (cc_full, cc_drop, cc_extra))
+
+        rep_real = report_fn() if callable(report_fn) else None
+        subjects = (rep_real or {}).get("subjects")
+        real_unreadable = (rep_real or {}).get("unreadable")
+        cc_real = (bp.cross_check(subjects, bl.BASELINES_DIR) if subjects is not None
+                   else {"missing": {"?": "discover_report missing"}, "extra": {},
+                         "unavailable": []})
         total = 0
         starts_at_zero = bool(subjects)
         for s in subjects or []:
             total += len(bl.active_entries(s))
             starts_at_zero = starts_at_zero and bl.generations(s)[:1] == [0]
+        indep_total = bp.active_entry_total(bl.BASELINES_DIR, subjects or [])
         _check("V-UCEP-DISCOVER-REAL",
-               subjects is not None and len(subjects) >= 4 and starts_at_zero and total >= 60,
-               "%d subjects, %d active entries, floor 4/60" % (len(subjects or []), total),
-               "subjects=%s total_active=%d starts_at_zero=%s err=%s"
-               % (subjects, total, starts_at_zero, err_f))
+               subjects is not None and real_unreadable == [] and len(subjects) >= 4
+               and starts_at_zero and total >= 60 and total == indep_total
+               and not cc_real["missing"] and not cc_real["extra"],
+               "%d subjects, %d active entries (raw-JSON count %d), no unreadable dir, "
+               "cross-check agrees (unavailable routes: %s); floor 4/60 is only a lower bound"
+               % (len(subjects or []), total, indep_total, cc_real["unavailable"] or "none"),
+               "subjects=%s unreadable=%s total_active=%d independent=%d starts_at_zero=%s "
+               "cross_check=%s" % (subjects, real_unreadable, total, indep_total,
+                                   starts_at_zero, cc_real))
 
         # --- control: ok is not "refuse everything" -------------------------
         root = b0_copy("clean")

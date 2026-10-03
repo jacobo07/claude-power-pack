@@ -199,18 +199,29 @@ def main() -> int:
 
         # --- the REAL B0s: every stored citation still stands -------------
         # Subjects are DISCOVERED from disk (nested axes included), never listed.
-        subjects = bl.discover_subjects()
+        # WR-05: an unreadable directory fails the gate by name, and the discovered
+        # set must agree with the independent enumerators (family registry, git
+        # index, glob) and with a raw-JSON entry count; the floor (4/60) equals
+        # today's population, so it is only a lower bound, never the check.
+        import baseline_population as bp
+        report = bl.discover_report()
+        subjects = report["subjects"]
+        cc = bp.cross_check(subjects, bl.BASELINES_DIR)
         real = {}
         for fam in subjects:
             for e in bl.active_entries(fam):
                 real[e["id"]] = bl.verify_origin(e)
+        indep_total = bp.active_entry_total(bl.BASELINES_DIR, subjects)
         broken = {k: v for k, v in real.items() if v not in (bl.VERIFIED, bl.MOVED)}
         moved = sorted(k for k, v in real.items() if v == bl.MOVED)
         _check("V-BGEN-REAL-B0-CITATIONS-HOLD",
-               len(subjects) >= 4 and len(real) >= 60 and not broken,
-               "%d stored entries over %d discovered subjects hold (floor 4/60; %d moved: %s)"
-               % (len(real), len(subjects), len(moved), moved[:3]),
-               "subjects=%s population=%d broken=%s" % (subjects, len(real), broken))
+               len(subjects) >= 4 and len(real) >= 60 and not broken
+               and not report["unreadable"] and not cc["missing"] and not cc["extra"],
+               "%d stored entries over %d discovered subjects hold (floor 4/60; %d moved: %s; "
+               "no unreadable dir; cross-check agrees, unavailable routes: %s)"
+               % (len(real), len(subjects), len(moved), moved[:3], cc["unavailable"] or "none"),
+               "subjects=%s population=%d broken=%s unreadable=%s cross_check=%s"
+               % (subjects, len(real), broken, report["unreadable"], cc))
 
         print()
         print("BASELINE_GENERATIONS_PASS=%d/%d  threshold=%d/%d"

@@ -124,16 +124,49 @@ def discover_subjects(root: str | None = None) -> list:
     memory, not reality, and a subject added later (the Phase 4 `archetype/<ID>`
     axis) is verified with no test edit. `BASELINES_DIR` is read at CALL time so a
     test that monkeypatches it is honoured. A missing root gives [].
+
+    A directory that cannot be listed, or a symlinked directory the walk does not
+    descend, would be skipped without a word by `os.walk` and the subject would
+    simply be absent from the list (code review WR-05: absence read as health).
+    `discover_report` records every such directory in `unreadable`;
+    `discover_subjects` raises SubjectDiscoveryError instead of returning a list it
+    knows is short.
     """
+    rep = discover_report(root)
+    if rep["unreadable"]:
+        raise SubjectDiscoveryError(
+            "baseline subject discovery is incomplete, %d unreadable: %s"
+            % (len(rep["unreadable"]),
+               "; ".join("%s (%s)" % (u["path"], u["error"]) for u in rep["unreadable"])))
+    return rep["subjects"]
+
+
+class SubjectDiscoveryError(OSError):
+    """The baselines tree could not be fully enumerated; the result would be short."""
+
+
+def discover_report(root: str | None = None) -> dict:
+    """{"subjects": [...], "unreadable": [{"path", "error"}]} -- never raises on a
+    directory it cannot list; it names it. Gates FAIL on a non-empty `unreadable`."""
     base = root or BASELINES_DIR
     if not os.path.isdir(base):
-        return []
-    found = []
-    for dirpath, dirnames, filenames in os.walk(base):
+        return {"subjects": [], "unreadable": []}
+    found, unreadable = [], []
+
+    def _onerror(exc):
+        unreadable.append({"path": str(getattr(exc, "filename", None) or "?"),
+                           "error": "%s: %s" % (type(exc).__name__, exc)})
+
+    for dirpath, dirnames, filenames in os.walk(base, onerror=_onerror):
         dirnames.sort()
+        for d in dirnames:
+            link = os.path.join(dirpath, d)
+            if os.path.islink(link):
+                unreadable.append({"path": link,
+                                   "error": "symlinked directory is not descended"})
         if dirpath != base and any(_GEN.match(f) for f in filenames):
             found.append(os.path.relpath(dirpath, base).replace(os.sep, "/"))
-    return sorted(found)
+    return {"subjects": sorted(found), "unreadable": unreadable}
 
 
 def load_generation(family: str, n: int, root: str | None = None) -> dict:

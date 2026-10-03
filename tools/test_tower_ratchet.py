@@ -234,15 +234,28 @@ def main() -> int:
         # --- the real subjects: discovered from disk, chain verified, population
         # floored. Never a hand-written list: a subject added later is judged
         # with no edit here (nested axes such as archetype/<ID> included).
-        subjects = bl.discover_subjects()
+        # WR-05: a directory the walk could not read fails the gate by name, and the
+        # discovered set must agree with the independent enumerators (family
+        # registry, git index, glob) so a skipped subject is a DIFFERENCE, not
+        # silence. The floor (4) is only a lower bound: it equals today's population,
+        # so alone it would be satisfied by coincidence.
+        import baseline_population as bp
+        report = bl.discover_report()
+        subjects = report["subjects"]
+        cc = bp.cross_check(subjects, bl.BASELINES_DIR)
         bad = {}
         for f in subjects:
             r = rt.verify_chain(f)
             if not r.ok:
                 bad[f] = r.as_dict()
-        _check("V-TRAT-REAL-CHAINS", len(subjects) >= 4 and not bad,
-               "%d discovered subjects verified clean (floor 4): %s" % (len(subjects), subjects),
-               "subjects=%s bad=%s" % (subjects, bad))
+        _check("V-TRAT-REAL-CHAINS",
+               len(subjects) >= 4 and not bad and not report["unreadable"]
+               and not cc["missing"] and not cc["extra"],
+               "%d discovered subjects verified clean (floor 4; no unreadable dir; "
+               "cross-check agrees, unavailable routes: %s): %s"
+               % (len(subjects), cc["unavailable"] or "none", subjects),
+               "subjects=%s bad=%s unreadable=%s cross_check=%s"
+               % (subjects, bad, report["unreadable"], cc))
 
         print()
         print("TOWER_RATCHET_PASS=%d/%d  threshold=%d/%d"
