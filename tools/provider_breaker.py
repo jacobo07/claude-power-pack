@@ -161,7 +161,8 @@ def credentials_state(home=None) -> dict:
 
 
 def credentials_expired(cred: dict, now: float) -> bool | None:
-    """True / False when the login can be judged, None when it cannot (unreadable, no expiresAt).
+    """True / False when the login can be judged, None when it cannot (unreadable, no expiresAt, or a lapsed
+    access token whose refresh token carries no known expiry).
     The access token lapses every few hours and the CLI refreshes it with the refresh token, so a
     past expiresAt alone is NOT expired (a preflight refusing it would deadlock an idle env);
     expiresAt 0 is the measured a7 mark of an invalidated login."""
@@ -177,7 +178,9 @@ def credentials_expired(cred: dict, now: float) -> bool | None:
     if not cred.get("refresh_token"):
         return True
     rexp = cred.get("refresh_expires_at")
-    return bool(rexp is not None and rexp <= now)
+    if rexp is None:
+        return None          # lapsed access token + refresh token of unknown validity: cannot judge, never "usable"
+    return rexp <= now
 
 
 def _iso(ts: float) -> str:

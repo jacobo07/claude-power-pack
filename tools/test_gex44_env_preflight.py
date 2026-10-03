@@ -157,6 +157,13 @@ def grp_auth() -> None:
             f"state={r['state']} findings={r['findings']}"
     guarded("V-ENVPF-AUTH-LAPSED-REFRESHABLE", lapsed_refreshable)
 
+    def lapsed_refresh_expiry_unknown():
+        tmp = make_env(scratch(), expires_at_ms=PAST_MS, refresh=True)       # no refreshTokenExpiresAt
+        r = auth_of(tmp)
+        return r["state"] == ep.UNMEASURABLE and r["reasons"] == [] and "access_token_lapsed_refreshable" not in r["findings"], \
+            f"state={r['state']} reasons={r['reasons']} findings={r['findings']} why={r['why']}"
+    guarded("V-ENVPF-AUTH-LAPSED-REFRESH-EXPIRY-UNKNOWN", lapsed_refresh_expiry_unknown)
+
     def lapsed_unrefreshable():
         tmp = make_env(scratch(), expires_at_ms=PAST_MS, refresh=False)
         r = auth_of(tmp)

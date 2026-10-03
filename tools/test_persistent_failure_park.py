@@ -287,9 +287,22 @@ def grp_cred_reader() -> None:
     guarded("V-PFP-CRED-EXPIRED-ZERO", expired_zero)
 
     def lapsed_refreshable():
-        st = pb.credentials_state(home=_home_with(expires_ms=ms_past))
-        return pb.credentials_expired(st, NOW) is False, "past access token, refresh token present, no refresh expiry -> not expired"
+        st = pb.credentials_state(home=_home_with(expires_ms=ms_past, refresh_expires_ms=ms_future))
+        return pb.credentials_expired(st, NOW) is False, "past access token, refresh token present with a FUTURE refresh expiry -> not expired"
     guarded("V-PFP-CRED-LAPSED-REFRESHABLE", lapsed_refreshable)
+
+    def lapsed_refresh_expiry_unknown():
+        # WR-04: a lapsed access token whose refresh token has no known expiry is unknown, never "usable"
+        none_key = pb.credentials_state(home=_home_with(expires_ms=ms_past, mtime=NOW - 60))
+        non_numeric = pb.credentials_state(home=_home_with(
+            raw=json.dumps({"claudeAiOauth": {"refreshToken": CANARY_REFRESH, "expiresAt": ms_past,
+                                              "refreshTokenExpiresAt": "soon"}})))
+        released = pb.auth_released(NOW - 7200, none_key, NOW)
+        ok = (pb.credentials_expired(none_key, NOW) is None and pb.credentials_expired(non_numeric, NOW) is None
+              and released is None)
+        return ok, (f"no-key expired={pb.credentials_expired(none_key, NOW)!r} non-numeric expired="
+                    f"{pb.credentials_expired(non_numeric, NOW)!r} auth_released={released!r}")
+    guarded("V-PFP-CRED-LAPSED-REFRESH-EXPIRY-UNKNOWN", lapsed_refresh_expiry_unknown)
 
     def refresh_expired():
         st = pb.credentials_state(home=_home_with(expires_ms=ms_past, refresh_expires_ms=ms_past))
