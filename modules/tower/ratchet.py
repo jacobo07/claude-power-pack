@@ -31,8 +31,10 @@ Each child anchors its parent's exact bytes (`parent_sha256`), so an older
 generation edited after the fact reads TAMPERED at the child. A child with NO
 `parent_sha256` is UNANCHORED and the chain is not ok: hollowing both
 generations and dropping the anchor (H3b) left nothing to diff and nothing
-that pinned the parent. The newest generation has no child to anchor it; its
-integrity is the repo's history.
+that pinned the parent. The chain must also start at B0 and be contiguous, and
+each child's `parent` field must be its predecessor (MISSING_ROOT / GAP /
+PARENT_MISMATCH): deleting B0 and hollowing B1 left no pair to diff. The newest
+generation has no child to anchor it; its integrity is the repo's history.
 """
 from __future__ import annotations
 
@@ -58,6 +60,10 @@ SCOPE_CHANGED = "SCOPE_CHANGED"
 # owned by the citations gate, not turned into chain regressions.
 REANCHORED = "REANCHORED"
 DUPLICATE_ID = "DUPLICATE_ID"
+# Chain-shape kinds (WR-02), recorded with id "*": there is no entry to name.
+MISSING_ROOT = "MISSING_ROOT"        # the lowest listed generation is not B0
+GAP = "GAP"                          # a generation number is missing between two listed
+PARENT_MISMATCH = "PARENT_MISMATCH"  # a child's `parent` field is not its predecessor
 
 
 class RatchetRefusal(ValueError):
@@ -187,8 +193,18 @@ def verify_chain(family: str, root: str | None = None) -> ChainReport:
     for n, doc in docs.items():
         for ident in duplicate_ids(doc.get("entries", [])):
             rep.regressions.append({"generation": n, "id": ident, "kind": DUPLICATE_ID})
-    for prev, cur in zip(rep.generations, rep.generations[1:]):
+    # The chain must start at its origin and be contiguous (WR-02): a pair-wise
+    # walk over whatever generations happen to be listed reads ok when the root
+    # (or a middle generation) was deleted, because there is then no pair to diff.
+    gens = rep.generations
+    if gens and gens[0] != 0:
+        rep.regressions.append({"generation": gens[0], "id": "*", "kind": MISSING_ROOT})
+    for prev, cur in zip(gens, gens[1:]):
         parent, child = docs[prev], docs[cur]
+        if cur != prev + 1:
+            rep.regressions.append({"generation": cur, "id": "*", "kind": GAP})
+        if child.get("parent") != prev:
+            rep.regressions.append({"generation": cur, "id": "*", "kind": PARENT_MISMATCH})
         anchor = child.get("parent_sha256")
         if not anchor:
             rep.unanchored.append(cur)

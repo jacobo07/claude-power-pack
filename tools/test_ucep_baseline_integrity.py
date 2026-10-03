@@ -271,6 +271,66 @@ def main() -> int:
                "the same hollowing with the anchor intact reads TAMPERED at B1",
                _dict(rep))
 
+        # --- WR-02: a missing ROOT is not a chain (delete B0 instead of nulling) --
+        def _write_doc(path, mutate):
+            with open(path, "r", encoding="utf-8") as fh:
+                doc = json.load(fh)
+            mutate(doc)
+            with open(path, "w", encoding="utf-8", newline="\n") as fh:
+                json.dump(doc, fh, indent=2, ensure_ascii=False)
+                fh.write("\n")
+
+        def regress_kinds(rep):
+            return sorted({r["kind"] for r in getattr(rep, "regressions", [])})
+
+        root = b0_copy("wr02-delete-b0")
+        child(root)                                       # B1, anchored to B0
+        os.remove(os.path.join(root, FAMILY, "B0.json"))  # the root is gone
+        _write_doc(os.path.join(root, FAMILY, "B1.json"),
+                   lambda d: d.update(entries=d["entries"][:3]))   # hollow B1, keep parent 0
+        rep = rt.verify_chain(FAMILY, root=root)
+        _check("V-UCEP-H3B-DELETE-B0",
+               _ok(rep) is False and "MISSING_ROOT" in regress_kinds(rep)
+               and getattr(rep, "generations", None) == [1],
+               "B0 deleted + B1 hollowed (generations=[1]) is not ok: MISSING_ROOT",
+               "WR-02 attack accepted: %s" % _dict(rep))
+
+        root = b0_copy("wr02-gap")
+        child(root)                                       # B1
+        child(root)                                       # B2, anchored to B1
+        os.remove(os.path.join(root, FAMILY, "B1.json"))  # the middle is gone
+        sha_b0 = bl.generation_sha256(FAMILY, 0, root)
+        _write_doc(os.path.join(root, FAMILY, "B2.json"),
+                   lambda d: d.update(parent_sha256=sha_b0))       # re-anchor B2 on B0
+        rep = rt.verify_chain(FAMILY, root=root)
+        _check("V-UCEP-H3B-GAP",
+               _ok(rep) is False and "GAP" in regress_kinds(rep)
+               and getattr(rep, "generations", None) == [0, 2],
+               "B1 deleted and B2 re-anchored on B0 (generations=[0, 2]) is not ok: GAP",
+               "WR-02 gap attack accepted: %s" % _dict(rep))
+
+        root = b0_copy("wr02-parent-field")
+        child(root)
+        _write_doc(os.path.join(root, FAMILY, "B1.json"),
+                   lambda d: d.update(parent=7))                   # a parent that is not B0
+        rep = rt.verify_chain(FAMILY, root=root)
+        _check("V-UCEP-H3B-PARENT-FIELD",
+               _ok(rep) is False and "PARENT_MISMATCH" in regress_kinds(rep),
+               "B1 claiming parent 7 over a B0 predecessor is not ok: PARENT_MISMATCH",
+               "WR-02 parent attack accepted: %s" % _dict(rep))
+
+        root = b0_copy("wr02-control-b0only")
+        rep_b0 = rt.verify_chain(FAMILY, root=root)
+        root = b0_copy("wr02-control-b2")
+        child(root)
+        child(root)
+        rep_b2 = rt.verify_chain(FAMILY, root=root)
+        _check("V-UCEP-H3B-ROOT-CONTROL",
+               _ok(rep_b0) is True and _ok(rep_b2) is True
+               and getattr(rep_b2, "generations", None) == [0, 1, 2],
+               "an intact B0-only chain and an intact B0..B2 chain are still ok",
+               "b0only=%s b2=%s" % (_dict(rep_b0), _dict(rep_b2)))
+
         # --- the allowlist itself, with a control from the real family -------
         is_auth = getattr(rt, "is_authorized", None)
         accepted = ("Owner", "Owner (approved 'both', 2026-10-01)",
