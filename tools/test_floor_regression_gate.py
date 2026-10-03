@@ -8,9 +8,11 @@ it is never a PASS and never part of the n/m denominator.
     python3 tools/test_floor_regression_gate.py                       run every gate
     python3 tools/test_floor_regression_gate.py --drill               mutation drill (each mutant must be killed)
     python3 tools/test_floor_regression_gate.py --gate-path <file>    run the gates against another copy of the gate
+    python3 tools/test_floor_regression_gate.py --real-session SID    seed a real session's transcript (laptop plane)
 """
 from __future__ import annotations
 
+import argparse
 import atexit
 import contextlib
 import datetime
@@ -2080,6 +2082,96 @@ def g_real_reference_pinned():
     return (not why), "; ".join(why) or f"committed reference window pinned to {REAL_B_SESSION[:8]}: sha256 {sha[:12]} rows={nrows} re-derived from disk"
 
 
+# --------------------------------------------------------------------------- the [K] owner-bundle item
+BUNDLE = REPO / "vault" / "programs" / "incremental-cognition" / "owner-bundle.md"
+BUNDLE_GATE_PREFIX = "python tools/floor_regression_gate.py "
+BUNDLE_TEST_PREFIX = "python tools/test_floor_regression_gate.py"
+
+
+def build_test_parser():
+    """The argument set of THIS test file. The module reads sys.argv directly at import (--gate-path, --real-session,
+    --drill); this parser is the declared grammar the owner-bundle command lines are checked against."""
+    ap = argparse.ArgumentParser(prog="test_floor_regression_gate.py", add_help=False)
+    ap.add_argument("--drill", action="store_true")
+    ap.add_argument("--gate-path", metavar="FILE")
+    ap.add_argument("--real-session", metavar="SID")
+    return ap
+
+
+def _parse_quiet(parser, argv):
+    """None if argv parses, else argparse's complaint (SystemExit is a failure, never an abort)."""
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            parser.parse_args(argv)
+    except SystemExit:
+        return err.getvalue().strip().splitlines()[-1] if err.getvalue().strip() else "argparse exited"
+    return None
+
+
+def bundle_section(text, header_prefix="## Phase 4"):
+    """The lines of the section whose header starts with header_prefix, up to the next `## ` header; None if absent."""
+    lines = text.splitlines()
+    for i, ln in enumerate(lines):
+        if ln.startswith(header_prefix):
+            out = []
+            for nxt in lines[i + 1:]:
+                if nxt.startswith("## "):
+                    break
+                out.append(nxt)
+            return out
+    return None
+
+
+def bundle_argv_report(text):
+    """(gate_lines, test_lines, problems): every command line of the Phase 4 section parsed by the owner's own parser."""
+    section = bundle_section(text)
+    if section is None:
+        return 0, 0, ["no `## Phase 4` section"]
+    problems, n_gate, n_test = [], 0, 0
+    for raw in section:
+        ln = raw.strip()
+        if ln.startswith(BUNDLE_GATE_PREFIX):
+            n_gate += 1
+            if "<" in ln or ">" in ln:
+                problems.append(f"placeholder / redirection token in: {ln}")
+            why = _parse_quiet(GATE.build_parser(), ln[len(BUNDLE_GATE_PREFIX):].split())
+            if why:
+                problems.append(f"gate line does not parse ({why}): {ln}")
+        elif ln == BUNDLE_TEST_PREFIX or ln.startswith(BUNDLE_TEST_PREFIX + " "):
+            n_test += 1
+            if "<" in ln or ">" in ln:
+                problems.append(f"placeholder / redirection token in: {ln}")
+            why = _parse_quiet(build_test_parser(), ln[len(BUNDLE_TEST_PREFIX):].split())
+            if why:
+                problems.append(f"test line does not parse ({why}): {ln}")
+    return n_gate, n_test, problems
+
+
+def g_bundle_argv_parses():
+    """The [K] item's command lines are proven only to parse: each one goes through the tool's own argparse."""
+    if not BUNDLE.is_file():
+        return False, f"owner bundle missing: {BUNDLE}"
+    n_gate, n_test, problems = bundle_argv_report(BUNDLE.read_text(encoding="utf-8"))
+    # controls: the checker must be able to fail, and to pass
+    bad = ("## Phase 4 -- x\n    python tools/floor_regression_gate.py --check --no-such-flag --transcript t.jsonl\n"
+           "    python tools/test_floor_regression_gate.py --bogus\n"
+           "    python tools/floor_regression_gate.py --check --transcript <t>\n")
+    _g, _t, bad_problems = bundle_argv_report(bad)
+    if len(bad_problems) != 3:
+        problems.append(f"control: a bundle with an unknown gate flag, an unknown test flag and a placeholder raised {len(bad_problems)} problems, expected 3")
+    good = ("## Phase 4 -- x\n    python tools/floor_regression_gate.py --check --session abc\n"
+            "    python tools/test_floor_regression_gate.py --real-session abc\n")
+    g2, t2, good_problems = bundle_argv_report(good)
+    if good_problems or (g2, t2) != (1, 1):
+        problems.append(f"control: a valid bundle read as gate={g2} test={t2} problems={good_problems}")
+    if n_gate < 6 or n_test < 2:
+        problems.append(f"the Phase 4 section holds {n_gate} gate lines and {n_test} test lines; needs at least 6 and 2")
+    if len(re.findall(r"^- \*\*\[K\]\*\*", BUNDLE.read_text(encoding="utf-8"), flags=re.M)) != 1:
+        problems.append("exactly one `- **[K]**` item is required")
+    return (not problems), "; ".join(problems) or f"{n_gate} gate lines and {n_test} test lines of the Phase 4 [K] item parse with their own argparse (controls: bad bundle raises 3 problems, good bundle none)"
+
+
 # --------------------------------------------------------------------------- run
 GATES_TRACER = [
     ("V-FLOOR-TRACER-E2E", g_tracer_e2e),
@@ -2149,6 +2241,7 @@ GATES_SOURCES = [
     ("V-FLOOR-SEEDED-REAL", g_seeded_real),
     ("V-FLOOR-REF-GEX44-GREEN", g_ref_gex44_green),
     ("V-FLOOR-REAL-REFERENCE-PINNED", g_real_reference_pinned),
+    ("V-FLOOR-BUNDLE-ARGV-PARSES", g_bundle_argv_parses),
 ]
 GATES = GATES_TRACER + GATES_RULES + GATES_ATTRIBUTION + GATES_SAFETY + GATES_SOURCES
 

@@ -212,3 +212,73 @@ denominator, plane and exact `command:`.
   Writes `I-KME-L-<date>.md`. Then the measured subagent first-call context goes to CE B / SC A-C as a handoff
   ("no move of a rule or skill here"); R2 needs `owner_ledger` evidence of the CE B and SC B terminals. Pillar stays
   open until its file lands; ledger state.I is not written by this mission run.
+
+## Phase 4 -- floor reference (laptop plane)
+
+Status of every command below: **NOT RUNNABLE HERE** (laptop paths and the laptop install). They are proven only to
+parse with the gate's own argument parser (gate `V-FLOOR-BUNDLE-ARGV-PARSES`, `python3
+tools/test_floor_regression_gate.py`); nothing below has been run on the laptop.
+
+- **[K]** laptop reference floor and PRG for pillar K. The gate (`tools/floor_regression_gate.py`) is built and
+  smoke-proven on GEX44 against real GEX44 transcripts, with a plane-gex44 reference
+  (`floor/reference-gex44.json`, `provenance.window_sha256` dc6d23b90cac... over `window_rows` 34, pinned to the mission
+  worker transcript 34f03871 and re-derived from disk by gate `V-FLOOR-REAL-REFERENCE-PINNED`). The frozen rule needs the
+  reference to come from the laptop install, which only the Owner can write. Expects: the laptop PP checkout
+  `C:\Users\User\.claude\skills\claude-power-pack`, Python is `python`, and (option A only) the project directory
+  `C:\Users\User\.claude\projects\C--Users-User--claude-skills-claude-power-pack` exists (`dir` it first; that path is
+  inferred from the harness's path sanitization and has not been verified on the laptop). **Action,** in the PP
+  checkout, in this order. First fetch and cherry-pick the eight K code commits, oldest first (the commits that add this
+  bundle text, its parse gate and `evidence/K.md` are not needed on the laptop):
+
+      git fetch kobii@kobicraft-gex44:/home/kobii/missions/incremental-cognition mission/incremental-cognition-run
+      git cherry-pick 7fdef637db297983496bd137d85e695ffdc27f46 e445939387f3d1747a76ba2aa0fac9ea2bc17716 8422eb2d704f510ba37a89d47ba6eafa3ebf6a55 13f3bffe619b340470ac8970fe1a0aa56ff49a8c 11686c8d33795da5e6eccc02b40fa621656c40d5 f065ac8eeb47d1ae594a2790590e426485e873d8 17228d2f025ef524dd82467030136b36d4812874 09bb91427cddd1963d6b567e8e3146b5f3636710
+
+  Then the fixture suite and the seeded positive control on a real laptop transcript (the control seeds scratch copies,
+  so any real laptop session serves it; the champion-startup probe session is used here). Expected, not measured:
+  exit 0; the GEX44 `-REAL` gates print SKIP on the laptop, and the gates that need POSIX file modes or a script as
+  the owner's argv[0] SKIP on Windows (a SKIP is never a PASS and is outside the n/m count);
+  `PASS V-FLOOR-SEEDED-REAL` appears on the second line:
+
+      python tools/test_floor_regression_gate.py
+      python tools/test_floor_regression_gate.py --real-session 8f983bc6-d760-4440-938d-aeed86a548ae
+
+  Then write the laptop reference, ONE of two options. Note for both: `--probe` without env `CPP_FLOOR_PROBE_RESULTS`
+  appends one row to the TRACKED `wiki/tools/listing_floor_probe.results.jsonl` (the probe's documented behaviour);
+  commit that row with the reference or discard it deliberately, never by a blanket checkout.
+
+  Option A, recommended -- one headless session, spends quota: Owner decision. The probe's cwd defaults to the PP
+  checkout, so universal AND project layers are measured. The self-check reads the newest session of that project
+  directory (expected exit 0):
+
+      python tools/floor_regression_gate.py --write-reference vault/programs/incremental-cognition/floor/reference.json --probe
+      python tools/floor_regression_gate.py --check --project-dir C:\Users\User\.claude\projects\C--Users-User--claude-skills-claude-power-pack
+
+  Option B -- no quota, the champion-startup probe already on disk (session 8f983bc6, cwd
+  `C:\Users\User\Apps\listing-probe\champion`, an empty probe directory: universal layers only, so every later check
+  must be a session with that same cwd). The self-check below is a SANITY PARSE ONLY: it checks the reference against
+  the very session it was written from, so it proves the file loads and is comparable, never that the floor held
+  (expected exit 0):
+
+      python tools/floor_regression_gate.py --write-reference vault/programs/incremental-cognition/floor/reference.json --session 8f983bc6-d760-4440-938d-aeed86a548ae
+      python tools/floor_regression_gate.py --check --session 8f983bc6-d760-4440-938d-aeed86a548ae
+
+  Then commit the reference by pathspec: `git add -- vault/programs/incremental-cognition/floor/reference.json`, then
+  `git commit -F` a message file you wrote first, restricted to that same path.
+
+  **PRG** (closes K). It MUST be one real `--check` against the committed `floor/reference.json` (the default
+  `--reference`) of a LATER session of the same kind and cwd as the reference, because nothing else will ever run that
+  check. Option A: the same `--check --project-dir` line after the next ordinary PP session (no quota). Option B: one
+  fresh probe session in the champion directory (one session, quota):
+
+      python tools/floor_regression_gate.py --check --project-dir C:\Users\User\.claude\projects\C--Users-User--claude-skills-claude-power-pack
+      python tools/floor_regression_gate.py --check --probe --cwd C:\Users\User\Apps\listing-probe\champion
+
+  Save its output, its exit code and the reference's sha256 as
+  `vault/programs/incremental-cognition/evidence/K-prg.md`. A RISE in the PRG is the gate working, not a failure of the
+  step: the Owner either explains it in `reference.json` `explanations` (layer, scope, unit, delta_bound, reason,
+  commit) or re-baselines with `--write-reference ... --replace`. Pillar K then closes IMPLEMENTED_AND_VERIFIED with gate
+  `["python","tools/test_floor_regression_gate.py"]` + `K-prg.md`; until then the pillar stays open and ledger
+  state.K is not written by this mission run. **Named debt:** `tools/` is outside the liveness scanner and the closing
+  gate argv is the fixture suite, so after K closes no hook, CI job or `--final` run executes `--check` against
+  `reference.json`; that single PRG check is the only real one until someone wires a surface, and its absence afterwards
+  is silence, not health.
