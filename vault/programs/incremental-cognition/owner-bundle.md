@@ -20,12 +20,12 @@ Run plane: GEX44 clone `~/missions/incremental-cognition`, branch `mission/incre
   gate `["python","tools/test_gsd_mission_cwd_align.py"]` + that prg file.
 - **[C]** laptop deploy of the auth-refusal park and the pre-launch gate, then the PRG for pillar C. Expects: the
   ic-run worktree `/home/kobii/missions/incremental-cognition/.claude/worktrees/ic-run` on branch
-  `mission/incremental-cognition-run` at or after `60e7947dcf3cf0f9c660e412ec6276a8b2922f99`. **Action,** on the
+  `mission/incremental-cognition-run` at or after `9a26750271991b080547eb6d8c1bbade5be52fef`. **Action,** on the
   laptop with at least 4 GB free, in the laptop's PP checkout (only the ssh host alias may differ if the laptop
   reaches GEX44 by another name; the repository path and branch are exact):
 
       git fetch kobii@kobicraft-gex44:/home/kobii/missions/incremental-cognition mission/incremental-cognition-run
-      git cherry-pick 5962571c840943ae0a3aa901efb08e69a04434da 60e7947dcf3cf0f9c660e412ec6276a8b2922f99
+      git cherry-pick 5962571c840943ae0a3aa901efb08e69a04434da 4c31bb0a504ddaaa6b601d6477374fdb8dc67f43 60e7947dcf3cf0f9c660e412ec6276a8b2922f99 7259ccb0da6d7183310aa0717e58859f07a6436e a1c593f2e8db2eb04983ae3348db660b2178323d c6dd2087469c6ca77beb464482417d27b9448805 9a26750271991b080547eb6d8c1bbade5be52fef
       python tools/test_persistent_failure_park.py
       python tools/test_mission_launch_gate.py
       python tools/test_provider_breaker.py
@@ -33,7 +33,7 @@ Run plane: GEX44 clone `~/missions/incremental-cognition`, branch `mission/incre
       python tools/test_gsd_epoch.py
       python tools/test_gsd_mission_cwd_align.py
 
-  (`5962571c...` is plan 02-01, the park; `60e7947d...` is plan 02-03, the launch gate.) **PRG:** after the a7 env
+  (`5962571c...` is plan 02-01, the park; `4c31bb0a...` is plan 02-02, the env preflight the gate imports; `60e7947d...` is plan 02-03, the launch gate; `7259ccb0`/`a1c593f2`/`c6dd2087`/`9a267502` are the review fixes WR-04/05/06/07. Expected after the picks: PFP 28/28, LG 20/20, BREAKER 18/18. `tools/test_gex44_env_preflight.py` is a GEX44 tool and is not part of this laptop check: after a cherry-pick its `V-ENVPF-PP-REAL-READY` reads red because the hard-coded `PP_COMMIT_FLOOR` hash does not exist in the laptop history -- see the WR-08 note.) **PRG:** after the a7 env
   deploy below, a7's mission shows `provider_held` (class auth, quarantine true, no launch) until the re-login, then
   `provider_released` and one relay. Save those ledger rows as `vault/programs/incremental-cognition/evidence/C-prg.md`.
   Pillar C then closes IMPLEMENTED_AND_VERIFIED with gate `["python3","tools/test_persistent_failure_park.py"]` +
