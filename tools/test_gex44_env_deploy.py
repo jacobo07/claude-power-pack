@@ -438,6 +438,21 @@ def grp_cli() -> None:
             f"rc={rc} head_ok={e.head() == repo_head()} last={last[:90]!r} rollback_lines={len(rb)}"
     guarded("V-DEPLOY-CLI-APPLY", cli_apply)
 
+    def relative_source_repo():
+        e = make_scratch_env(scratch(), shared=False)         # standalone history: the fetch must really find the repo
+        rc, out, err = cli(["--env-root", e.root, "--source-repo", ".", "--commit", "HEAD", "--apply", "--json"],
+                           cwd=REPO)
+        try:
+            res = json.loads(out)
+        except ValueError:
+            res = {}
+        failed = [s_ for s_ in res.get("steps", []) if not s_["ok"]]
+        ok = (rc == 0 and e.head() == repo_head() and res.get("source_repo") == str(REPO.resolve()) and not failed)
+        return ok, (f"rc={rc} head==target={e.head() == repo_head()} plan_source_repo={res.get('source_repo')} "
+                    f"failed_steps={[(f['step'], f['detail'][:60]) for f in failed]}")
+    guarded("V-DEPLOY-RELATIVE-SOURCE-REPO", relative_source_repo)
+
+
     def source_text():
         src = SCRIPT.read_text(encoding="utf-8")
         bad = [t for t in ("shell=True", "os.system(", "os.popen(", ".credentials.json") if t in src]

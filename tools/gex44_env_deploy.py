@@ -134,7 +134,8 @@ def plan_deploy(env_root, source_repo, commit=None, now=None) -> dict:
     refuses. A refusal is a field of the plan, never an exception. `now` is only the instant the preflight judges
     credential expiry against (a test seam); backup names always carry the real UTC time of the run."""
     ts = _utc_stamp()
-    plan: dict = {"mode": "dry-run", "env_root": str(env_root), "source_repo": str(source_repo),
+    src = Path(source_repo).expanduser().resolve()     # once, against the caller's cwd: the apply step runs in the install
+    plan: dict = {"mode": "dry-run", "env_root": str(env_root), "source_repo": str(src),
                   "target_ref": commit or "HEAD", "ts": ts, "refusal": None, "env_head": None, "target": None,
                   "ancestry": None, "already_at_target": None, "modified": [], "hooks_repair": None,
                   "plane_marker": None, "before": None, "rollback": [], "backups": {}}
@@ -168,7 +169,6 @@ def plan_deploy(env_root, source_repo, commit=None, now=None) -> dict:
         return _refuse(plan, EXIT_GUARD, "git could not read the install's status")
     plan["modified"] = modified
     ref = commit or "HEAD"
-    src = Path(source_repo)
     if ref.startswith("-") or not src.is_dir():
         return _refuse(plan, EXIT_GUARD, f"bad source repo or revision: {source_repo} {ref}")
     rc, tgt, _ = _run([sgit, "rev-parse", "--verify", f"{ref}^{{commit}}"], src)
@@ -319,7 +319,7 @@ def _apply_locked(root: Path, source_repo, commit, now) -> dict:
     env = ep.env_from_root(root)
     install, ts, old, target = env["install"], plan["ts"], plan["env_head"], plan["target"]
     igit, path = env.get("git") or _source_git(), env.get("path")
-    env_sh, pp_head, src = root / "env.sh", root / "pp.head", Path(source_repo)
+    env_sh, pp_head, src = root / "env.sh", root / "pp.head", Path(plan["source_repo"])
     res["rollback"] = list(plan["rollback"])
 
     def step(name: str, ok: bool, detail: str = "", fatal: bool = True) -> bool:
