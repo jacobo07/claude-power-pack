@@ -148,13 +148,15 @@ def redact_obj(obj, redact):
 
 # --------------------------------------------------------------------------- reading the window
 def read_window(path):
-    """-> (rows before the first assistant row, that assistant row or None, raw window lines as bytes)."""
+    """-> (rows before the first assistant row, that assistant row or None, raw window lines as bytes). A line inside the
+    window that is not a JSON object is UNMEASURABLE (window_line_unparseable): a floor read around a missing line is
+    undercounted, and the window hash would still move. Lines after the first assistant row are never read."""
     p = Path(path)
     if not p.exists():
         raise Unmeasurable("no_transcript", "no such file")
     if not p.is_file():
         raise Unmeasurable("unreadable", "not a regular file")
-    rows, raw_lines, assistant, parsed = [], [], None, 0
+    rows, raw_lines, assistant, parsed, bad = [], [], None, 0, 0
     try:
         with open(p, "rb") as fh:
             for line in fh:
@@ -171,11 +173,17 @@ def read_window(path):
                         assistant = row
                         break
                     rows.append(row)
+                else:
+                    bad += 1   # a line the floor cannot be read from: counted, never dropped silently (CR-01)
                 raw_lines.append(raw)
     except OSError as exc:
         raise Unmeasurable("unreadable", exc.__class__.__name__)
     if parsed == 0:
         raise Unmeasurable("unreadable", "no parseable JSON line")
+    if bad:
+        raise Unmeasurable("window_line_unparseable",
+                           f"{bad} line(s) before the first assistant row are not JSON objects; the floor read from "
+                           "this window would be undercounted")
     return rows, assistant, raw_lines
 
 

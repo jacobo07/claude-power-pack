@@ -2172,6 +2172,92 @@ def g_bundle_argv_parses():
     return (not problems), "; ".join(problems) or f"{n_gate} gate lines and {n_test} test lines of the Phase 4 [K] item parse with their own argparse (controls: bad bundle raises 3 problems, good bundle none)"
 
 
+# --------------------------------------------------------------------------- gates: review fixes (phase 4 code review)
+def cut_line(path, atype, keep=50):
+    """Truncate to `keep` bytes the first transcript line whose attachment.type == atype (a copy cut mid-write)."""
+    lines = Path(path).read_bytes().split(b"\n")
+    for i, raw in enumerate(lines):
+        if raw.strip() and (json.loads(raw).get("attachment") or {}).get("type") == atype:
+            lines[i] = raw[:keep]
+            break
+    else:
+        raise AssertionError(f"no {atype} line to cut")
+    Path(path).write_bytes(b"\n".join(lines))
+    return path
+
+
+def legacy_read_window(path):
+    """read_window before CR-01: a line that does not parse is kept in the digest and dropped from the rows."""
+    rows, raw_lines, assistant, parsed = [], [], None, 0
+    for line in open(path, "rb"):
+        raw = line[:-1] if line.endswith(b"\n") else line
+        if not raw.strip():
+            continue
+        try:
+            row = json.loads(raw.decode("utf-8", errors="replace"))
+        except ValueError:
+            row = None
+        if isinstance(row, dict):
+            parsed += 1
+            if row.get("type") == "assistant":
+                assistant = row
+                break
+            rows.append(row)
+        raw_lines.append(raw)
+    if parsed == 0:
+        raise GATE.Unmeasurable("unreadable", "no parseable JSON line")
+    return rows, assistant, raw_lines
+
+
+def g_window_line_unparseable():
+    """CR-01: an unparseable line inside the startup window is UNMEASURABLE (exit 2), never a silently shorter floor."""
+    why = []
+    for cli in (True, False):
+        tag = "cli" if cli else "in-process"
+        run = run_cli if cli else run_main
+        root = scratch("cr01")
+        ref_tx, now_tx = floor_pair(root, {}, {})
+        ref_json = root / "ref.json"
+        rc, out, err = run(["--write-reference", ref_json, "--transcript", ref_tx])
+        if rc != 0:
+            return False, f"{tag} setup rc={rc} {out[-200:]!r}"
+        # positive control: the intact check transcript is green
+        rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", now_tx])
+        if rc != 0 or "reason=within_bound" not in last_line(out):
+            why.append(f"{tag} control: rc={rc} last={last_line(out)!r}")
+        # the check transcript with its `instructions` line cut to 50 bytes
+        cut = cut_line(build_floor(root, "cut", {}).write(), "instructions")
+        rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", cut])
+        if not unmeasurable(rc, out, "window_line_unparseable") or "1 " not in out:
+            why.append(f"{tag} cut instructions: rc={rc} last={last_line(out)!r}")
+        # a valid JSON line that is not an object is as unreadable as a truncated one
+        scalar = build_floor(root, "scalar", {}).write()
+        lines = scalar.read_bytes().split(b"\n")
+        lines.insert(2, b"[1, 2, 3]")
+        scalar.write_bytes(b"\n".join(lines))
+        rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", scalar])
+        if not unmeasurable(rc, out, "window_line_unparseable"):
+            why.append(f"{tag} non-object line: rc={rc} last={last_line(out)!r}")
+        # a reference is never written from a window with an unreadable line
+        target = root / "cut-ref.json"
+        rc, out, _ = run(["--write-reference", target, "--transcript", cut])
+        if not unmeasurable(rc, out, "window_line_unparseable") or target.exists():
+            why.append(f"{tag} write: rc={rc} last={last_line(out)!r} exists={target.exists()}")
+        # control: damage AFTER the first assistant row is outside the window and does not matter
+        late = build_floor(root, "late", {}).write()
+        with open(late, "ab") as fh:
+            fh.write(b'{"type": "attachment", "attachment": {"type": "ins\n')
+        rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", late])
+        if rc != 0 or "reason=within_bound" not in last_line(out):
+            why.append(f"{tag} damage after the window: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "cut / non-object line in the window -> exit 2 window_line_unparseable (check and write, CLI and in-process); intact and after-window damage stay green"
+
+
+GATES_REVIEWFIX = [
+    ("V-FLOOR-WINDOW-LINE-UNPARSEABLE", g_window_line_unparseable),
+]
+
+
 # --------------------------------------------------------------------------- run
 GATES_TRACER = [
     ("V-FLOOR-TRACER-E2E", g_tracer_e2e),
@@ -2243,7 +2329,7 @@ GATES_SOURCES = [
     ("V-FLOOR-REAL-REFERENCE-PINNED", g_real_reference_pinned),
     ("V-FLOOR-BUNDLE-ARGV-PARSES", g_bundle_argv_parses),
 ]
-GATES = GATES_TRACER + GATES_RULES + GATES_ATTRIBUTION + GATES_SAFETY + GATES_SOURCES
+GATES = GATES_TRACER + GATES_RULES + GATES_ATTRIBUTION + GATES_SAFETY + GATES_SOURCES + GATES_REVIEWFIX
 
 
 def run_all() -> int:
@@ -2356,6 +2442,10 @@ def _m_newest_oldest():
     return _patch("newest_transcript", oldest)
 
 
+def _m_window_drop_unparseable():
+    return _patch("read_window", legacy_read_window)
+
+
 def _m_synthetic_measured():
     real = GATE.first_call_tokens
     return _patch("first_call_tokens", lambda assistant: real(assistant) if real(assistant) is not None
@@ -2386,6 +2476,8 @@ MUTANTS = [
      _m_newest_oldest, ["V-FLOOR-PROJECT-DIR-NEWEST"]),
     ("M13 first_call_tokens accepts a <synthetic> first call as measured (a login-expired session writes a reference)",
      _m_synthetic_measured, ["V-FLOOR-NO-MODEL-CALL"]),
+    ("M14 read_window drops an unparseable window line silently (CR-01: a truncated floor reads WITHIN_BOUND)",
+     _m_window_drop_unparseable, ["V-FLOOR-WINDOW-LINE-UNPARSEABLE"]),
 ]
 
 
