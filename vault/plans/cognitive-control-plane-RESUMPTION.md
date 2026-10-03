@@ -116,8 +116,11 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
    (`vault/audits/ccp-c9/store-identity-review.md`); L1 (relative/linked base) DEFERRED with
    trigger. KV note `vault/lessons/ccp-c10-tower-tier-and-store-identity-2026-10-03.md`.
    Identity backup (sha256 167f16fe...) retained, out of every migration path.
-1. DONE: peer acked `0f4a8796`.
-2. Next: `floor_probe.py probe` rent ranking -> C4.1; re-derivation detector (NEXT).
+1. DONE: peer acked `0f4a8796`. DONE: C4.1 ranking (plan §14; `floor_probe.py probe` key
+   `c41`, `test_floor_probe` 9/9; floor total unchanged 2,719,590,330). Global rules 17.9 % +
+   global CLAUDE.md 9.7 % of the floor lead. PENDING OWNER: which lever first (recommended:
+   rules -> skills one at a time, each with ablation after the 10-07 reset).
+2. Next: re-derivation detector (first compile-out candidate).
 
 ## 5. Start instruction
 `git log --oneline -5 -- tools/usage_index.py`, run the coherence anchor (+ `test_spawn_outcomes`

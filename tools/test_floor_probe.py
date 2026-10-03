@@ -63,6 +63,50 @@ def main() -> int:
         ok("V-FLOOR-SYNTHETIC-SKIPPED", fp.startup_components(s) is None,
            "a refused (synthetic) first row is not a startup measurement")
 
+        # C4.1 detail: per-file instructions and named former other_attachments types.
+        home = Path(td) / "home"
+        g, rule, mem = (str(home / ".claude" / "CLAUDE.md"),
+                        str(home / ".claude" / "rules" / "x.md"),
+                        str(home / ".claude" / "projects" / "p" / "memory" / "MEMORY.md"))
+        d = Path(td) / "detail.jsonl"
+        d.write_text("".join(json.dumps(x) + "\n" for x in [
+            {"type": "attachment", "attachment": {"type": "instructions", "files": [
+                {"path": g, "content": "G" * 4000}, {"path": rule, "content": "R" * 2000},
+                {"path": mem, "content": "M" * 500}]}},
+            {"type": "attachment", "attachment": {"type": "agent_listing_delta", "addedTypes": ["a"] * 50}},
+            {"type": "attachment", "attachment": {"type": "brand_new_kind", "content": "N" * 80}},
+            {"type": "assistant", "message": {"model": "m", "usage": {"input_tokens": 9000}}},
+        ]), encoding="utf-8")
+        detail: dict = {}
+        comp, _ = fp.startup_components(d, detail)
+        fsum = sum(v for k, v in detail.items() if k.startswith("file:"))
+        ok("V-FLOOR-DETAIL-FILES",
+           len([k for k in detail if k.startswith("file:")]) == 3
+           and 0 < fsum <= comp["instructions"] and detail[f"file:{g}"] > detail[f"file:{rule}"],
+           f"3 files, sum {fsum} <= instructions {comp['instructions']}")
+        ok("V-FLOOR-NAMED-TYPES",
+           comp.get("agent_listing_delta", 0) > 0 and "type:agent_listing_delta" not in detail
+           and detail.get("type:brand_new_kind", 0) > 0
+           and comp["other_attachments"] == detail["type:brand_new_kind"],
+           "agent listing is its own component; an unknown type stays in other and is named")
+        cls = [fp.instruction_class(p, home) for p in (g, rule, mem, str(Path(td) / "repo" / "CLAUDE.md"))]
+        ok("V-FLOOR-INSTR-CLASS",
+           cls == ["GLOBAL_CLAUDE_MD", "GLOBAL_RULE", "MEMORY", "PROJECT_CONTEXT"], f"{cls}")
+
+        rows = [{"calls": 10, "detail": detail}]
+        ranked = [("instructions", 1000.0), ("environment", 500.0), ("hook_success", 400.0),
+                  ("skill_listing", 300.0)]
+        rd = fp.rank_detail(rows, 1.0, 10_000.0, ranked, home)
+        names = [x["component"] for x in rd["controllable_ranked"]]
+        ok("V-FLOOR-RANK-CONTROLLABLE", names == ["instructions", "skill_listing"]
+           and rd["controllable_ranked"][0]["share"] == 0.1,
+           f"{names}: PROVIDER and UNKNOWN never ranked as levers; share is of the whole floor")
+        bc = rd["instructions_by_class"]
+        ok("V-FLOOR-RANK-CLASSES", list(bc)[0] == "GLOBAL_CLAUDE_MD"
+           and abs(sum(v["tokens"] for v in bc.values()) - fsum * 10) <= 3
+           and rd["unmapped_attachment_types"][0]["type"] == "brand_new_kind",
+           f"classes {list(bc)} sum to the per-file rent")
+
     total = PASS + FAIL
     print(f"FLOOR_PROBE_PASS={PASS}/{total}  threshold={total}/{total}")
     return 0 if FAIL == 0 else 1

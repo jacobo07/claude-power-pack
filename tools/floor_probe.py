@@ -49,13 +49,39 @@ COMPONENTS = {
     "environment": ("OTHER_RUNTIME", "PROVIDER"),
     "model": ("OTHER_RUNTIME", "PROVIDER"),
     "session_context": ("OTHER_RUNTIME", "PROVIDER"),
-    "other_attachments": ("HOOK_INJECTION/OTHER", "UNKNOWN"),
+    # C4.1: the four largest former other_attachments types, named (window 09-30..10-02:
+    # agent_listing_delta 64 %, hook records 13 %, SessionStart context 11 %, MCP 4 %).
+    "agent_listing_delta": ("AGENT_DIRECTORY", "CPP_NOW"),
+    "hook_additional_context": ("HOOK_INJECTION", "CPP_NOW"),
+    "mcp_instructions_delta": ("TOOLS/MCP", "CPP_WITH_ADAPTER"),
+    # The hook's stdout as recorded; whether the harness sends it to the model as well as
+    # the hook_additional_context it carries is not verified, so it is not called CPP_NOW.
+    "hook_success": ("HOOK_RECORD (injection unverified)", "UNKNOWN"),
+    "hook_cancelled": ("HOOK_RECORD (injection unverified)", "UNKNOWN"),
+    "other_attachments": ("OTHER", "UNKNOWN"),
 }
 
+CONTROLLABLE = ("CPP_NOW", "CPP_WITH_ADAPTER")
 
-def startup_components(path: Path):
-    """(components chars, first_call_context, agentType-or-None) for one transcript,
-    or None when it has no real call. Reads only up to the first usage line."""
+
+def instruction_class(path: str, home: Path | None = None) -> str:
+    """Which owner an `instructions` file belongs to, by where it lives."""
+    h = str(home or Path.home()).replace("\\", "/").rstrip("/").lower()
+    p = path.replace("\\", "/").lower()
+    if p == f"{h}/.claude/claude.md":
+        return "GLOBAL_CLAUDE_MD"
+    if p.startswith(f"{h}/.claude/rules/"):
+        return "GLOBAL_RULE"
+    if p.endswith("/memory.md"):
+        return "MEMORY"
+    return "PROJECT_CONTEXT"
+
+
+def startup_components(path: Path, detail: dict | None = None):
+    """(components chars, first_call_context) for one transcript, or None when it has
+    no real call. Reads only up to the first usage line. When `detail` is given it also
+    receives chars per `instructions` file ("file:<path>") and per unmapped attachment
+    type ("type:<t>"); its file entries sum to at most comp["instructions"]."""
     comp = defaultdict(int)
     with open(path, encoding="utf-8", errors="replace") as fh:
         for ln in fh:
@@ -76,6 +102,15 @@ def startup_components(path: Path):
                 t = a.get("type") or "unknown"
                 key = t if t in COMPONENTS else "other_attachments"
                 comp[key] += len(json.dumps(a, ensure_ascii=False))
+                if detail is not None:
+                    if t == "instructions" and isinstance(a.get("files"), list):
+                        for it in a["files"]:
+                            if isinstance(it, dict) and it.get("path"):
+                                detail[f"file:{it['path']}"] = detail.get(f"file:{it['path']}", 0) \
+                                    + len(json.dumps(it, ensure_ascii=False))
+                    elif key == "other_attachments":
+                        detail[f"type:{t}"] = detail.get(f"type:{t}", 0) \
+                            + len(json.dumps(a, ensure_ascii=False))
             elif o.get("type") == "user" and msg is not None:
                 comp["opening_message"] += len(json.dumps(msg.get("content"), ensure_ascii=False))
     return None
@@ -116,8 +151,9 @@ def probe(con, since: float, until: float, proj: Path = ux.DEFAULT_PROJ) -> dict
         "GROUP BY f.path", (since, until)).fetchall()
     rows, skipped = [], 0
     for path, is_sub, atype, ncalls in files:
+        detail: dict = {}
         try:
-            res = startup_components(Path(path))
+            res = startup_components(Path(path), detail)
         except OSError:
             res = None
         if res is None:
@@ -126,7 +162,7 @@ def probe(con, since: float, until: float, proj: Path = ux.DEFAULT_PROJ) -> dict
         comp, ctx = res
         t = (atype or "UNKNOWN_AGENT") if is_sub else "MAIN_SESSION"
         rows.append({"path": path, "type": t, "comp": comp, "ctx": ctx, "calls": ncalls,
-                     "chars": sum(comp.values())})
+                     "chars": sum(comp.values()), "detail": detail})
     f = fit(rows)
     if f.get("rate") is None:
         return {"verdict": "UNMEASURED", **f, "transcripts": len(rows)}
@@ -170,6 +206,44 @@ def probe(con, since: float, until: float, proj: Path = ux.DEFAULT_PROJ) -> dict
                                 "class": "PROVIDER_OPAQUE (system prompt, tool schemas, agent body)",
                                 "control": "PARTIAL (agent body is CPP)", "tokens": round(rent_opaque),
                                 "share": round(rent_opaque / total_rent, 3)}]},
+        "c41": rank_detail(rows, rate, total_rent, ranked),
+    }
+
+
+def rank_detail(rows: list[dict], rate: float, total_rent: float, ranked,
+                home: Path | None = None) -> dict:
+    """C4.1: where the controllable rent lives. Shares are of the WHOLE startup floor,
+    so they compare directly with by_component. Rent is token-calls of resident context,
+    mostly served as cache reads: it ranks levers, it is not a price."""
+    files, unmapped = defaultdict(float), defaultdict(float)
+    seen = defaultdict(int)
+    for r in rows:
+        for k, chars in (r.get("detail") or {}).items():
+            v = chars * rate * r["calls"]
+            if k.startswith("file:"):
+                files[k[5:]] += v
+                seen[k[5:]] += 1
+            else:
+                unmapped[k[5:]] += v
+    by_class = defaultdict(float)
+    for p, v in files.items():
+        by_class[instruction_class(p, home)] += v
+
+    def share(v):
+        return round(v / total_rent, 4)
+    return {
+        "controllable_ranked": [
+            {"component": k, "control": COMPONENTS[k][1], "tokens": round(v), "share": share(v)}
+            for k, v in ranked if COMPONENTS.get(k, ("", ""))[1] in CONTROLLABLE],
+        "instructions_by_class": {c: {"tokens": round(v), "share": share(v)}
+                                  for c, v in sorted(by_class.items(), key=lambda kv: -kv[1])},
+        "instructions_top_files": [
+            {"path": p, "class": instruction_class(p, home), "transcripts": seen[p],
+             "tokens": round(v), "share": share(v)}
+            for p, v in sorted(files.items(), key=lambda kv: -kv[1])[:25]],
+        "unmapped_attachment_types": [
+            {"type": t, "tokens": round(v), "share": share(v)}
+            for t, v in sorted(unmapped.items(), key=lambda kv: -kv[1])[:10]],
     }
 
 

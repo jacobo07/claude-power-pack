@@ -277,3 +277,35 @@ Kill criterion: if v2 adds no would-defer over v1 with protected_deferred=0 acro
 verdict NO_CHANGE and the extra features are retired.
 NEXT/LATER/RESEARCH/REJECT: see the inline plan of this date; NEXT = singleflight observer,
 re-derivation detector (first compile-out candidate), C4.1 rent ranking, rollover-timing shadow.
+
+## 14. C4.1 -- controllable lifetime rent, ranked (2026-10-03, offline, zero model calls)
+
+Command: `python tools/floor_probe.py probe` (window 09-30T17Z..10-02T09:40Z, key `c41`).
+351 transcripts, 0 skipped; fit 0.2746 tok/char, |residual| median 928 / p90 5,304.
+Total startup floor rent 2,719,590,330 token-calls, IDENTICAL to C4.0 (reclassification only).
+Rent = resident tokens x calls, mostly served as cache reads: it RANKS levers, it is not a price.
+Named this pass: `agent_listing_delta`, `hook_additional_context`, `mcp_instructions_delta`,
+`hook_success`/`hook_cancelled` (injection unverified, kept UNKNOWN). Unmapped fell 8.5 % -> 0.27 %.
+
+| rank | lever | share of floor | where | control |
+|---|---|---|---|---|
+| 1 | global rules (`~/.claude/rules/*.md`, 13 bodies still always-loaded) | 17.9 % | all 346 transcripts incl. every subagent | CPP_NOW, Owner (HR-001 path) |
+| 2 | global `~/.claude/CLAUDE.md` | 9.7 % | all 346 | CPP_NOW, Owner |
+| 3 | skill listing (~9.9k tok each) | 8.2 % | main + most subagent types | CPP_NOW (disable unused skill sets) |
+| 4 | agent directory listing | 5.5 % | main sessions | CPP_NOW (agent count) |
+| 5 | project context (`~/CLAUDE.md` 1.5 %, PP CLAUDE.md, AGENTS.md) | 4.7 % | per project | CPP_NOW |
+| 6 | MEMORY.md (InfinityOps 1.1 %, Orca-X 1.0 % lead) | 4.1 % | per project | CPP_NOW |
+| 7 | mission payload (prompt_snapshot + opening) | 5.5 % | gsd-* ~14k each | CPP_NOW, per workflow |
+| - | provider/runtime remainder | 39.6 % | system prompt, tool schemas, agent body | PARTIAL |
+
+Reading: levers 1+2 are 27.6 % of the whole floor and travel into EVERY subagent (~40k
+instructions tokens each; Explore carries none -- agent type is the switch, RCA §13 P0). The
+rules move (rule -> skill + card hook) already exists as a pattern; four moves since 09-30 carry
+NO ablation of their own. On disk now: rules 70,023 B in 23 files, CLAUDE.md 40,117 B.
+
+Decision (Owner): which lever first. Each edits `~/.claude` (Owner-side, HR-001) and a quality
+check needs model calls, so measurement waits for the weekly reset (2026-10-07 17:00Z) unless
+"spend now". Recommendation: lever 1, one rule at a time, ranked by its own share (top:
+concurrent-writers 1.78 %, technical-failure 1.76 %, scoped-side-effect 1.66 %), each with the
+P3 ablation the first three moves had. Gates: `test_floor_probe` 9/9 (V-FLOOR-DETAIL-FILES,
+-NAMED-TYPES, -INSTR-CLASS, -RANK-CONTROLLABLE, -RANK-CLASSES; RANK-CLASSES seen red first).
