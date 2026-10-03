@@ -402,13 +402,32 @@
    }
   },
   "F": {
-   "terminal": null,
-   "evidence": [],
+   "terminal": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+   "reason": "Frozen rule: a lever only if identical-dependency re-reads across sibling subagents are >= 3 % of D-W7 weighted. Measured with the KSR carriage construction over all 75,969 D-W7 calls (pre-registered at 73d97127, selftest 6/6): Read results in a subagent identical in path, offset, limit and content sha256 to an earlier-spawned sibling's cost 1.88 % of D-W7 (1,124 re-reads, 183 sibling groups). Path-only 2.23 %. Below 3 %, and an upper bound on any saving since a sibling given shared content still carries it.",
+   "evidence": [
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/F-G-P-C-carriage.md",
+     "sha256": "d3dc5eb25df84a121ec13488f538a92ae5bf7965c07c3bb98b12d440b78c7abd"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/carriage_out.json",
+     "sha256": "a73745337c5251503a0859ce57a34456c8ff58d2734e4d1b74596f9e3d98ddbf"
+    }
+   ],
    "savings": []
   },
   "G": {
-   "terminal": null,
-   "evidence": [],
+   "terminal": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+   "reason": "Frozen rule: reopened only if F finds recurrence with a valid identity boundary (same inputs, same dependency hashes). F measured exactly that boundary (path, offset, limit, content sha256) and found 1.88 % of D-W7, below F's own 3 % threshold, so G is not reopened.",
+   "evidence": [
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/F-G-P-C-carriage.md",
+     "sha256": "d3dc5eb25df84a121ec13488f538a92ae5bf7965c07c3bb98b12d440b78c7abd"
+    }
+   ],
    "savings": []
   },
   "H": {
@@ -695,8 +714,20 @@
    }
   },
   "P": {
-   "terminal": null,
-   "evidence": [],
+   "terminal": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+   "reason": "Frozen rule: build only if verification (test/gate tool calls + their output carriage) >= 3 % of D-W7 weighted. Measured: test/gate result carriage 0.30 % + issuing tool_use tokens 0.20 % = 0.50 % of D-W7 (pre-registered at 73d97127, tests tagged by H's classifier rule). The proof-class whole-turn weight (6.13 %) prices each turn's prefix, which reused verdicts would not remove.",
+   "evidence": [
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/F-G-P-C-carriage.md",
+     "sha256": "d3dc5eb25df84a121ec13488f538a92ae5bf7965c07c3bb98b12d440b78c7abd"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/carriage_out.json",
+     "sha256": "a73745337c5251503a0859ce57a34456c8ff58d2734e4d1b74596f9e3d98ddbf"
+    }
+   ],
    "savings": []
   },
   "Q": {

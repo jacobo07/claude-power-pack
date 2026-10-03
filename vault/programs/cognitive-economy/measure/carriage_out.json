@@ -1,0 +1,53 @@
+{
+ "C_tools_toolsearch_schema_pct_DW7": 0.002,
+ "F_parts": {
+  "identity_rereads": 1124,
+  "parent_to_child_identical_pct": 0.3584,
+  "path_only_pct": 2.2314
+ },
+ "F_sibling_identity_reread_pct_DW7": 1.8793,
+ "P_parts": {
+  "issuing_tool_use_pct": 0.1966,
+  "result_carriage_pct": 0.3041
+ },
+ "P_verification_pct_DW7": 0.5007,
+ "all_tool_output_carriage_pct_DW7": 25.7107,
+ "by_tool_pct_DW7": {
+  "Agent": 0.056,
+  "Artifact": 0.0036,
+  "AskUserQuestion": 0.0058,
+  "Bash": 0.1904,
+  "Edit": 0.2008,
+  "ExitPlanMode": 0.005,
+  "Glob": 0.1355,
+  "Grep": 1.2566,
+  "ListAgents": 0.0065,
+  "Monitor": 0.0034,
+  "PowerShell": 2.1803,
+  "Read": 21.0165,
+  "SendMessage": 0.0031,
+  "TaskStop": 0.005,
+  "ToolSearch": 0.002,
+  "WebFetch": 0.0555,
+  "WebSearch": 0.0534,
+  "Write": 0.1221,
+  "mcp__claude-in-chrome__computer": 0.2582,
+  "mcp__claude-in-chrome__get_page_text": 0.0009,
+  "mcp__claude-in-chrome__navigate": 0.0009,
+  "mcp__gex44-browser__browser_evaluate": 0.0027,
+  "mcp__gex44-browser__browser_run_code_unsafe": 0.0011,
+  "mcp__gex44-browser__browser_take_screenshot": 0.1373,
+  "mcp__plugin_context7_context7__query-docs": 0.0021
+ },
+ "control": {
+  "dw7_calls": 75969,
+  "files": 1541,
+  "positioned_calls": 75969,
+  "positioned_equals_dw7": true,
+  "sibling_groups": 183,
+  "subagent_files_grouped": 566,
+  "unreadable": 0
+ },
+ "denominator_weighted": 3325101725,
+ "window": "D-W7"
+}
