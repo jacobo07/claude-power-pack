@@ -99,6 +99,30 @@ def _num(value):
     return value if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
+def load_redactor():
+    """modules.secret_firewall.redact, or Unmeasurable: nothing may leave the process unredacted (HR-SECRET-002)."""
+    try:
+        try:
+            from modules.secret_firewall import redact
+        except ImportError:
+            sys.path.insert(0, str(ROOT))
+            from modules.secret_firewall import redact
+    except Exception as exc:  # noqa: BLE001 -- any import failure refuses; the class name is the whole detail
+        raise Unmeasurable("secret_firewall_unavailable", exc.__class__.__name__)
+    return redact
+
+
+def redact_obj(obj, redact):
+    """redact() applied to every string leaf and key; structure and numbers are untouched."""
+    if isinstance(obj, str):
+        return redact(obj)
+    if isinstance(obj, list):
+        return [redact_obj(v, redact) for v in obj]
+    if isinstance(obj, dict):
+        return {redact_obj(k, redact) if isinstance(k, str) else k: redact_obj(v, redact) for k, v in obj.items()}
+    return obj
+
+
 # --------------------------------------------------------------------------- reading the window
 def read_window(path):
     """-> (rows before the first assistant row, that assistant row or None, raw window lines as bytes)."""
@@ -315,10 +339,34 @@ def measure(path):
 
 
 # --------------------------------------------------------------------------- reference
+def _invalid(detail):
+    return Unmeasurable("reference_invalid", detail)
+
+
 def load_reference(path):
-    with open(path, encoding="utf-8") as fh:
-        ref = json.load(fh)
-    err = validate_explanations(ref.get("explanations"))
+    p = Path(path)
+    if not p.is_file():
+        raise Unmeasurable("reference_missing", "no such reference file")
+    try:
+        with open(p, encoding="utf-8") as fh:
+            ref = json.load(fh)
+    except (OSError, ValueError):
+        raise _invalid("not readable JSON")
+    if not isinstance(ref, dict) or ref.get("schema") != SCHEMA:
+        raise _invalid(f"schema is not {SCHEMA}")
+    for key, typ in (("provenance", dict), ("components", list), ("tokens", dict), ("explanations", list)):
+        if not isinstance(ref.get(key), typ):
+            raise _invalid(f"{key} missing or of the wrong type")
+    total = 0
+    for c in ref["components"]:
+        if (not isinstance(c, dict) or not isinstance(c.get("layer"), str) or not isinstance(c.get("source"), str)
+                or c.get("scope") not in SCOPES or not isinstance(c.get("chars"), int) or isinstance(c.get("chars"), bool)
+                or c["chars"] < 0):
+            raise _invalid("a component is malformed")
+        total += c["chars"]
+    if ref.get("total_chars") != total:
+        raise _invalid("total_chars does not equal the sum of the components")
+    err = validate_explanations(ref["explanations"])
     if err:
         raise Unmeasurable("explanation_refused", err)
     return ref
@@ -334,7 +382,28 @@ def _git_head(cwd):
     return out if p.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", out) else None
 
 
-def write_reference(out, measured, argv=None):
+def _refuse_target(target):
+    """HR-001: nothing under ~/.claude except the checkout itself (the laptop's checkout lives there)."""
+    t = Path(target).expanduser().resolve()
+    try:
+        claude = (Path.home() / ".claude").resolve()
+    except (RuntimeError, OSError):
+        return
+    root = Path(ROOT).resolve()
+    under_claude = t == claude or claude in t.parents
+    under_root = t == root or root in t.parents
+    if under_claude and not under_root:
+        raise Unmeasurable("refused_path", "the target is under ~/.claude and outside the checkout")
+
+
+def write_reference(out, measured, argv=None, replace=False, redact=None):
+    redact = redact or load_redactor()
+    target = Path(out)
+    _refuse_target(target)
+    if measured["tokens"]["status"] != "measured":
+        raise Unmeasurable("no_model_call", "the first assistant row is not a model call; no reference without tokens")
+    if target.exists() and not replace:
+        raise Unmeasurable("reference_exists", "the target exists; pass --replace to replace it")
     prov = dict(measured["provenance"])
     home = prov.get("install_home")
     install = _git_head(Path(home) / ".claude" / "skills" / "claude-power-pack") if home else None
@@ -347,12 +416,23 @@ def write_reference(out, measured, argv=None):
         "schema": SCHEMA, "provenance": prov, "components": measured["components"], "layers": measured["layers"],
         "total_chars": measured["total_chars"], "tokens": measured["tokens"],
         "skill_listing": measured["skill_listing"], "excluded": measured["excluded"], "explanations": [],
-        "caveats": [],
+        "caveats": list(CAVEATS),
     }
-    target = Path(out)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    with open(target, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(json.dumps(ref, indent=1, sort_keys=True) + "\n")
+    text = json.dumps(redact_obj(ref, redact), indent=1, sort_keys=True) + "\n"
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if replace:
+            tmp = target.with_name(target.name + f".tmp{os.getpid()}")
+            with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(text)
+            os.replace(tmp, target)
+        else:
+            with open(target, "x", encoding="utf-8", newline="\n") as fh:
+                fh.write(text)
+    except FileExistsError:
+        raise Unmeasurable("reference_exists", "the target appeared during the write")
+    except OSError as exc:
+        raise Unmeasurable("write_failed", exc.__class__.__name__)
     return ref
 
 
@@ -434,7 +514,16 @@ def _tokens_axis(ref, now):
             "delta": nt["first_call_total"] - rt["first_call_total"]}
 
 
+def _comparable_value(v):
+    return None if v is None else str(v).replace("\\", "/").rstrip("/")
+
+
 def compare(ref, now):
+    rp0, np0 = ref.get("provenance", {}), now["provenance"]
+    differing = [f for f in ("plane", "platform", "install_home", "cwd")
+                 if _comparable_value(rp0.get(f)) != _comparable_value(np0.get(f))]
+    if differing:
+        raise Unmeasurable("not_comparable", "fields differ: " + ", ".join(differing))
     items = ref.get("explanations") or []
     ref_idx = {(c["layer"], c["source"]): c for c in ref["components"]}
     now_idx = {(c["layer"], c["source"]): c for c in now["components"]}
@@ -541,33 +630,63 @@ def build_parser():
     return ap
 
 
+JSON_KEYS = ("verdict", "exit", "reason", "rows", "findings", "explained", "scope_deltas", "tokens_axis",
+             "ratchet_hint", "reference", "provenance", "caveats")
+
+
+def _ascii(text):
+    return text.encode("ascii", "backslashreplace").decode("ascii")
+
+
+def _emit(result, as_json, redact):
+    """Everything that leaves the process passes redact() first; without a redactor only fixed tokens are printed."""
+    if redact is None:
+        result = {"verdict": result["verdict"], "reason": result["reason"], "exit": result["exit"], "detail": ""}
+        redact = lambda s: s  # noqa: E731 -- nothing but fixed tokens can reach it
+    if as_json:
+        doc = {k: result.get(k) for k in JSON_KEYS}
+        for k in ("rows", "findings", "explained", "caveats"):
+            doc[k] = doc[k] or []
+        print(json.dumps(redact_obj(doc, redact), indent=1, sort_keys=True))
+    else:
+        for line in render(result).split("\n"):
+            print(_ascii(redact(line)))
+
+
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     try:
         args = build_parser().parse_args(argv)
     except SystemExit as exc:
         return exc.code if isinstance(exc.code, int) else EXIT_UNMEASURABLE
+    redact = None
+    ref_path = Path(args.reference) if args.reference else ROOT / DEFAULT_REFERENCE_REL
     try:
+        redact = load_redactor()
         if args.write_reference:
             measured = measure(args.transcript)
-            write_reference(args.write_reference, measured, argv)
+            write_reference(args.write_reference, measured, argv, replace=args.replace, redact=redact)
+            prov = measured["provenance"]
+            tok = measured["tokens"]["first_call_total"]
             result = {"verdict": "REFERENCE_WRITTEN", "reason": "written",
-                      "detail": f"FLOOR reference written path={args.write_reference} total_chars={measured['total_chars']}"}
+                      "detail": f"FLOOR reference written path={args.write_reference} total_chars={measured['total_chars']} "
+                                f"tokens={tok} window_sha256={prov['window_sha256'][:12]} window_rows={prov['window_rows']}",
+                      "provenance": prov, "reference": {"path": str(args.write_reference)}}
         else:
-            ref_path = Path(args.reference) if args.reference else ROOT / DEFAULT_REFERENCE_REL
             ref = load_reference(ref_path)
-            result = compare(ref, measure(args.transcript))
+            now = measure(args.transcript)
+            result = compare(ref, now)
+            rp = ref.get("provenance", {})
+            result["provenance"] = now["provenance"]
+            result["reference"] = {"path": str(ref_path), "schema": ref.get("schema"), "total_chars": ref.get("total_chars"),
+                                   "window_sha256": rp.get("window_sha256"), "window_rows": rp.get("window_rows")}
     except Unmeasurable as exc:
         result = {"verdict": "UNMEASURABLE", "reason": exc.reason, "detail": exc.detail}
+    except Exception as exc:  # noqa: BLE001 -- a bug must read UNMEASURABLE, never a traceback and never exit 0
+        result = {"verdict": "UNMEASURABLE", "reason": "internal_error", "detail": exc.__class__.__name__}
+    result["caveats"] = list(CAVEATS)
     result["exit"] = exit_code(result["verdict"])
-    if args.json:
-        keys = ("verdict", "exit", "reason", "rows", "findings", "explained", "scope_deltas", "tokens_axis",
-                "ratchet_hint")
-        doc = {k: result.get(k) for k in keys}
-        doc["rows"], doc["findings"], doc["explained"] = (doc["rows"] or [], doc["findings"] or [], doc["explained"] or [])
-        print(json.dumps(doc, indent=1, sort_keys=True))
-    else:
-        print(render(result))
+    _emit(result, args.json, redact)
     return result["exit"]
 
 

@@ -312,7 +312,7 @@ def g_window_append_stable():
     tx.hook_context("Stop", "Stop:late", ["L" * 3000])
     tx.attachment("brand_new_late", payload="Z" * 5000)
     tx.assistant(usage=(5, 99999, 0, 7))
-    appended_path = tx.write(root / "appended.jsonl")
+    appended_path = tx.write(tx.path.with_name("appended.jsonl"))   # same project dir: same install_home and cwd
     a, b = GATE.measure(str(base_path)), GATE.measure(str(appended_path))
     why = []
     if a["components"] != b["components"]:
@@ -626,6 +626,287 @@ def g_tokens_rule():
     return (not why), "; ".join(why) or "tokens: +3.3% red, different prompt not_comparable, explained green, +1.6% green"
 
 
+# --------------------------------------------------------------------------- gates: safety (Task 3)
+REFERENCE_KEYS = {"schema", "provenance", "components", "layers", "total_chars", "tokens", "skill_listing",
+                  "excluded", "explanations", "caveats"}
+JSON_KEYS = {"verdict", "exit", "reason", "rows", "findings", "explained", "scope_deltas", "tokens_axis",
+             "ratchet_hint", "reference", "provenance", "caveats"}
+
+
+@contextlib.contextmanager
+def with_home(home):
+    saved = {k: os.environ.get(k) for k in ("HOME", "USERPROFILE")}
+    os.environ["HOME"] = os.environ["USERPROFILE"] = str(home)
+    try:
+        yield
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
+def edit_json(path, fn):
+    doc = json.loads(Path(path).read_text(encoding="utf-8"))
+    fn(doc)
+    Path(path).write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def unmeasurable(rc, out, reason):
+    return rc == 2 and last_line(out).startswith(f"FLOOR verdict=UNMEASURABLE exit=2 reason={reason}")
+
+
+def good_ref(prefix="u"):
+    root = scratch(prefix)
+    ref_tx, now_tx = floor_pair(root, {}, {})
+    ref_json = root / "ref.json"
+    rc, out, err = run_main(["--write-reference", ref_json, "--transcript", ref_tx])
+    if rc != 0:
+        raise AssertionError(f"reference write rc={rc} {out[-200:]!r}")
+    return root, ref_tx, now_tx, ref_json
+
+
+def g_unmeasurable_table():
+    root, ref_tx, now_tx, ref_json = good_ref("unm")
+    why = []
+
+    def case(label, args, reason):
+        rc, out, _ = run_main(args)
+        if not unmeasurable(rc, out, reason):
+            why.append(f"{label}: rc={rc} last={last_line(out)!r} want reason={reason}")
+
+    check = ["--check", "--reference", ref_json, "--transcript"]
+    rc, out, _ = run_main([*check, now_tx])
+    if rc != 0:
+        why.append(f"control: valid pair rc={rc}")
+    case("missing transcript", [*check, root / "absent.jsonl"], "no_transcript")
+    (root / "empty.jsonl").write_bytes(b"")
+    case("empty file", [*check, root / "empty.jsonl"], "unreadable")
+    (root / "junk.jsonl").write_text("not json\nstill not json\n", encoding="utf-8")
+    case("non-JSON lines", [*check, root / "junk.jsonl"], "unreadable")
+    nl = Tx(root, None, "nolisting")
+    nl.user("x")
+    nl.instructions([(nl.home / ".claude" / "CLAUDE.md", "User", "g" * 10)])
+    nl.assistant()
+    case("no skill_listing", [*check, nl.write()], "no_skill_listing")
+    nl2 = Tx(root, None, "noninitial")
+    nl2.skill_listing([("a", "b")], initial=False)
+    nl2.assistant()
+    case("only a non-initial skill_listing", [*check, nl2.write()], "no_skill_listing")
+    case("missing reference", ["--check", "--reference", root / "nope.json", "--transcript", now_tx], "reference_missing")
+    (root / "notjson.json").write_text("{nope", encoding="utf-8")
+    case("reference not JSON", ["--check", "--reference", root / "notjson.json", "--transcript", now_tx], "reference_invalid")
+    for label, edit in (("schema != floor-reference/1", lambda d: d.update(schema="floor-reference/0")),
+                        ("components missing", lambda d: d.pop("components")),
+                        ("total_chars not matching the components", lambda d: d.update(total_chars=1))):
+        bad = root / "bad.json"
+        bad.write_text(ref_json.read_text(encoding="utf-8"), encoding="utf-8")
+        edit_json(bad, edit)
+        case(label, ["--check", "--reference", bad, "--transcript", now_tx], "reference_invalid")
+    other = root / "other.json"
+    other.write_text(ref_json.read_text(encoding="utf-8"), encoding="utf-8")
+    edit_json(other, lambda d: d["provenance"].update(plane="elsewhere"))
+    case("plane edited", ["--check", "--reference", other, "--transcript", now_tx], "not_comparable")
+    saved = GATE.DEFAULT_REFERENCE_REL
+    GATE.DEFAULT_REFERENCE_REL = str(root / "absent-default.json")
+    try:
+        case("default reference absent", ["--check", "--transcript", now_tx], "reference_missing")
+    finally:
+        GATE.DEFAULT_REFERENCE_REL = saved
+    return (not why), "; ".join(why) or "12 refusals each exit 2 with a named reason; the valid pair is exit 0"
+
+
+def g_not_comparable():
+    root, ref_tx, now_tx, ref_json = good_ref("nc")
+    why = []
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", now_tx])
+    if rc != 0:
+        why.append(f"control: unedited reference rc={rc}")
+    for fields in (("plane",), ("cwd",), ("platform",), ("install_home",), ("plane", "cwd")):
+        bad = root / ("bad-" + "-".join(fields) + ".json")
+        bad.write_text(ref_json.read_text(encoding="utf-8"), encoding="utf-8")
+
+        def edit(d, fields=fields):
+            for f in fields:
+                d["provenance"][f] = "elsewhere"
+        edit_json(bad, edit)
+        rc, out, _ = run_main(["--check", "--reference", bad, "--transcript", now_tx])
+        detail = "\n".join(find_lines(out, "UNMEASURABLE"))
+        if not unmeasurable(rc, out, "not_comparable") or not all(f in detail for f in fields):
+            why.append(f"{fields}: rc={rc} detail={detail!r} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "plane / cwd / platform / install_home each refuse and are named"
+
+
+def g_write_safety():
+    root, ref_tx, now_tx, ref_json = good_ref("ws")
+    why = []
+    home = root / "home"
+    with with_home(home):
+        before = ref_json.read_bytes()
+        rc, out, _ = run_main(["--write-reference", ref_json, "--transcript", now_tx])
+        if not unmeasurable(rc, out, "reference_exists") or ref_json.read_bytes() != before:
+            why.append(f"existing target: rc={rc} last={last_line(out)!r} unchanged={ref_json.read_bytes() == before}")
+        rc, out, _ = run_main(["--write-reference", ref_json, "--transcript", now_tx, "--replace"])
+        doc = json.loads(ref_json.read_text(encoding="utf-8"))
+        if rc != 0 or ref_json.read_bytes() == before or doc["provenance"]["session_id"] != "now":
+            why.append(f"--replace: rc={rc} session={doc['provenance'].get('session_id')}")
+        leftovers = [f.name for f in root.iterdir() if f.name.startswith("ref.json") and f.name != "ref.json"]
+        if leftovers:
+            why.append(f"--replace left temp files {leftovers}")
+        if doc.get("explanations") != []:
+            why.append(f"explanations={doc.get('explanations')}")
+        target = home / ".claude" / "floor-ref.json"
+        rc, out, _ = run_main(["--write-reference", target, "--transcript", ref_tx])
+        if not unmeasurable(rc, out, "refused_path") or target.exists():
+            why.append(f"target under ~/.claude: rc={rc} exists={target.exists()} last={last_line(out)!r}")
+        # the checkout itself may live under ~/.claude (the laptop): ROOT stays writable, a sibling does not
+        saved_root = GATE.ROOT
+        GATE.ROOT = home / ".claude" / "skills" / "claude-power-pack"
+        try:
+            inside = GATE.ROOT / "vault" / "floor" / "reference.json"
+            rc, out, _ = run_main(["--write-reference", inside, "--transcript", ref_tx])
+            if rc != 0 or not inside.is_file():
+                why.append(f"target under ROOT inside ~/.claude: rc={rc} last={last_line(out)!r}")
+            rc, out, _ = run_main(["--write-reference", home / ".claude" / "projects" / "x.json", "--transcript", ref_tx])
+            if not unmeasurable(rc, out, "refused_path"):
+                why.append(f"sibling of ROOT under ~/.claude: rc={rc} last={last_line(out)!r}")
+        finally:
+            GATE.ROOT = saved_root
+    return (not why), "; ".join(why) or "exists refused and bytes unchanged; --replace atomic; ~/.claude refused except under ROOT"
+
+
+def g_no_model_call():
+    root = scratch("nmc")
+    ref_tx, now_tx = floor_pair(root, {}, {})
+    ref_json = root / "ref.json"
+    rc, out, _ = run_main(["--write-reference", ref_json, "--transcript", ref_tx])
+    why = [] if rc == 0 else [f"setup rc={rc}"]
+    syn = build_floor(root, "synthetic", {"usage": (0, 0, 0, 0)})
+    syn.rows[-1]["message"]["model"] = "<synthetic>"
+    syn_path = syn.write()
+    target = root / "syn-ref.json"
+    rc, out, _ = run_main(["--write-reference", target, "--transcript", syn_path])
+    if not unmeasurable(rc, out, "no_model_call") or target.exists():
+        why.append(f"write: rc={rc} last={last_line(out)!r} exists={target.exists()}")
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", syn_path])
+    tl = find_lines(out, "TOKENS ")
+    if rc != 0 or len(tl) != 1 or "status=no_model_call" not in tl[0]:
+        why.append(f"check: rc={rc} tokens={tl}")
+    noasst = build_floor(root, "noassistant", {})
+    noasst.rows.pop()
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", noasst.write()])
+    tl = find_lines(out, "TOKENS ")
+    if rc != 0 or len(tl) != 1 or "status=no_model_call" not in tl[0]:
+        why.append(f"no assistant row: rc={rc} tokens={tl}")
+    return (not why), "; ".join(why) or "synthetic first call: write refused, check reports TOKENS no_model_call"
+
+
+def g_no_secret():
+    canary = "sk-ant-" + "A" * 50
+    root = scratch("sec")
+
+    def build(session):
+        tx = Tx(root, None, session)
+        home, wd = tx.home, tx.cwd
+        tx.meta("last-prompt")
+        tx.user("prompt carrying " + canary)
+        tx.hook_success("SessionStart", "SessionStart:startup", "node hook.js --token " + canary, additional_context=canary)
+        tx.instructions([
+            (home / ".claude" / "CLAUDE.md", "User", "G" * 500 + canary),
+            (wd / "CLAUDE.md", "Project", "P" * 500),
+            (home / ".claude" / "rules" / (canary + ".md"), "User", "R" * 400),
+        ])
+        tx.skill_listing(listing_entries(1200, 10))
+        tx.hook_context("SessionStart", "SessionStart:startup", ["H" * 100 + canary])
+        tx.prompt_snapshot(["S" * 300 + canary])
+        tx.attachment("session_context", context={"userEmail": "a@b.c", "gitStatus": "g" * 40 + canary})
+        tx.assistant()
+        return tx.write()
+
+    ref_t, now_t = build("ref"), build("now")
+    ref_json = root / "ref.json"
+    why = []
+    outputs = []
+    rc, out, err = run_main(["--write-reference", ref_json, "--transcript", ref_t])
+    outputs += [out, err]
+    if rc != 0:
+        return False, f"write rc={rc} {out[-200:]!r}"
+    for extra in ([], ["--json"]):
+        rc, out, err = run_main(["--check", "--reference", ref_json, "--transcript", now_t, *extra])
+        outputs += [out, err]
+        if rc != 0:
+            why.append(f"check {extra} rc={rc} {out[-200:]!r}")
+    ref_text = ref_json.read_text(encoding="utf-8")
+    for label, text in (("stdout/stderr", "\n".join(outputs)), ("reference", ref_text)):
+        if canary in text or "A" * 50 in text:
+            why.append(f"canary found in {label}")
+    keys = set(json.loads(ref_text).keys())
+    if keys != REFERENCE_KEYS:
+        why.append(f"reference keys {sorted(keys ^ REFERENCE_KEYS)}")
+    if "[REDACTED" not in ref_text:
+        why.append("control: the rules file name carrying the canary was not redacted in the reference")
+    return (not why), "; ".join(why) or "canary in 7 places never leaves the process; reference keys exact; the rules path is [REDACTED]"
+
+
+def g_read_only():
+    if os.name == "nt":
+        return "SKIP", "chmod a-w does not make a tree read-only on nt"
+    root, ref_tx, now_tx, ref_json = good_ref("ro")
+
+    def snapshot():
+        snap = {}
+        for dp, _, fns in os.walk(root):
+            for fn in fns:
+                f = Path(dp) / fn
+                st = f.stat()
+                snap[str(f.relative_to(root))] = (st.st_size, st.st_mtime_ns, sha256_file(f))
+        return snap
+    for dp, dns, fns in os.walk(root):
+        for n in dns + fns:
+            os.chmod(os.path.join(dp, n), 0o555 if os.path.isdir(os.path.join(dp, n)) else 0o444)
+    before = snapshot()
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", now_tx])
+    after = snapshot()
+    return (rc == 0 and before == after and len(before) >= 3), f"rc={rc} files={len(before)} unchanged={before == after}"
+
+
+def g_json():
+    root, ref_tx, now_tx, ref_json = good_ref("js")
+    why = []
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", now_tx, "--json"])
+    doc = json.loads(out)
+    if set(doc) != JSON_KEYS:
+        why.append(f"keys differ: {sorted(set(doc) ^ JSON_KEYS)}")
+    if doc.get("verdict") != "WITHIN_BOUND" or doc.get("exit") != 0 or rc != 0:
+        why.append(f"verdict={doc.get('verdict')} exit={doc.get('exit')} rc={rc}")
+    for k in ("rows", "findings", "explained", "caveats"):
+        if not isinstance(doc.get(k), list):
+            why.append(f"{k} is not a list")
+    if not (doc.get("caveats") or []):
+        why.append("caveats empty")
+    if "window_sha256" not in (doc.get("provenance") or {}):
+        why.append("provenance carries no window_sha256")
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", root / "absent.jsonl", "--json"])
+    doc = json.loads(out)
+    if set(doc) != JSON_KEYS or doc.get("verdict") != "UNMEASURABLE" or doc.get("exit") != 2 or doc.get("reason") != "no_transcript":
+        why.append(f"unmeasurable doc: keys={sorted(doc)} verdict={doc.get('verdict')} reason={doc.get('reason')}")
+    return (not why), "; ".join(why) or "one JSON document with the 12 keys, for a verdict and for UNMEASURABLE"
+
+
+def g_cli_usage():
+    root, ref_tx, now_tx, ref_json = good_ref("cu")
+    why = []
+    for label, args in (("no source", ["--check", "--reference", ref_json]),
+                        ("both modes", ["--check", "--write-reference", root / "x.json", "--transcript", now_tx]),
+                        ("no mode", ["--transcript", now_tx]),
+                        ("write without source", ["--write-reference", root / "y.json"])):
+        rc, out, err = run_main(args)
+        if rc != 2:
+            why.append(f"{label}: rc={rc}")
+    return (not why), "; ".join(why) or "usage errors exit 2"
+
+
 # --------------------------------------------------------------------------- run
 GATES_TRACER = [
     ("V-FLOOR-TRACER-E2E", g_tracer_e2e),
@@ -649,7 +930,17 @@ GATES_RULES = [
     ("V-FLOOR-EXPLANATION-FIELDS", g_explanation_fields),
     ("V-FLOOR-TOKENS-RULE", g_tokens_rule),
 ]
-GATES = GATES_TRACER + GATES_RULES
+GATES_SAFETY = [
+    ("V-FLOOR-UNMEASURABLE-TABLE", g_unmeasurable_table),
+    ("V-FLOOR-NOT-COMPARABLE", g_not_comparable),
+    ("V-FLOOR-WRITE-SAFETY", g_write_safety),
+    ("V-FLOOR-NO-MODEL-CALL", g_no_model_call),
+    ("V-FLOOR-NO-SECRET", g_no_secret),
+    ("V-FLOOR-READ-ONLY", g_read_only),
+    ("V-FLOOR-JSON", g_json),
+    ("V-FLOOR-CLI-USAGE", g_cli_usage),
+]
+GATES = GATES_TRACER + GATES_RULES + GATES_SAFETY
 
 
 def run_all() -> int:
@@ -718,6 +1009,11 @@ def _m_no_layer_3pct():
     return _patch("is_material", lambda row, ref_total: [r for r in real(row, ref_total) if r != "layer_3pct"])
 
 
+def _m_exit_unmeasurable_zero():
+    real = GATE.exit_code
+    return _patch("exit_code", lambda verdict: 0 if verdict == "UNMEASURABLE" else real(verdict))
+
+
 def _m_system_prompt_harness():
     return _patch("scope_for_system_prompt_part", lambda part_text: "harness")
 
@@ -731,6 +1027,8 @@ MUTANTS = [
     ("M4 validate_explanations accepts everything", _m_validate_always_ok, ["V-FLOOR-EXPLANATION-EMPTY-REASON"]),
     ("M5 covering_explanation ignores delta_bound and unit", _m_covering_ignores_bound_and_unit,
      ["V-FLOOR-EXPLANATION-BOUND"]),
+    ("M6 exit_code maps UNMEASURABLE to 0 (a comparison that could not be made reads green)", _m_exit_unmeasurable_zero,
+     ["V-FLOOR-UNMEASURABLE-TABLE"]),
     ("M7 is_material never returns layer_3pct", _m_no_layer_3pct, ["V-FLOOR-PROJECT-3PCT"]),
     ("M8 scope_for_system_prompt_part returns harness (type-based harness for system prompt parts)",
      _m_system_prompt_harness, ["V-FLOOR-SYSTEM-PROMPT-NEW-PART"]),
