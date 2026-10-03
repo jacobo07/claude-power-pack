@@ -118,7 +118,7 @@ Plans:
 **Depends on**: nothing (read-only on transcripts).
 **Success criteria**: per pillar one measurement file naming its denominator and `command:`; materiality applied
 exactly; a second workload sampled for any pillar that clears 3 %.
-**Plans:** 3/5 plans executed (sequential waves 1-5; all share wiki/tools/kme_pillars.py)
+**Plans:** 4/5 plans executed (sequential waves 1-5; all share wiki/tools/kme_pillars.py)
 
 Plans:
 **Wave 1**
@@ -135,7 +135,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 03-04-PLAN.md — I (subagent first-call floor) + one-scan `all`, `--until auto` locator, CPP-D-W7 window, population proof, KME-G smoke
+- [x] 03-04-PLAN.md — I (subagent first-call floor) + one-scan `all`, `--until auto` locator, CPP-D-W7 window, population proof, KME-G smoke
 
 **Wave 5** *(blocked on Wave 4 completion)*
 

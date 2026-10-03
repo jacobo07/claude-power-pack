@@ -4,14 +4,14 @@ milestone: v1
 current_phase: 2
 current_plan: 4
 status: verifying
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-10-03T21:25:13.289Z"
-state_head: a85752b1cb7eeac5553e5771e1bd77c47cbb91a0
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-10-03T21:40:15.756Z"
+state_head: 3e5fd0d788e5778cbd5ed71edafac895f5a45a97
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
 milestone_name: incremental-cognition
 last_activity: 2026-10-03
 workstream: incremental-cognition
@@ -61,12 +61,18 @@ Total Plans in Phase: 4
 - [Phase 3]: [03-03] G matches any candidate kind (re-test or relitigation) against any record kind (falsified or sealed); sealed samples show the id as written (D-03), matching normalizes it (D-3)
 - [Phase 3]: [03-03] H blanks heredoc bodies and quoted strings and skips file-reading programs and package installs before matching VERIFY_CMD_RE; H details split the CE P definition part from the verifier-subagent part
 - [Phase 3]: [03-03] KME-G smoke: G strict 0 / loose 0 (corpus has no falsification statements, 0 samples for the hand precision check); H share 7.3-7.4 percent, driven by verifier subagents (CE P definition part 0.2-0.3 percent); second workload GEX44-B001 H 8.7-9.1 percent; neither is a terminal
+- [Phase 3]: [03-04] total scans of a run never exceed 24: locator 23 (the freeze scan counts as one) plus one reserved for the final measuring scan at a located cutoff; exact-at-freeze reuses the first scan (one scan in total)
+- [Phase 3]: [03-04] the locator tries two candidates at the smallest call instant reaching the frozen call count: the instant itself, then the instant just before the next call (a later prompt-only session changes sessions_dead without adding a call); both only on an every-field match
+- [Phase 3]: [03-04] a located cutoff keeps sub-second precision (fmt_instant); truncating to whole seconds would drop the lines of the located second
+- [Phase 3]: [03-04] CPP-D-W7 is referenced: share judged against the CE ledger weighted figure, observability = min(1, coverage) x the pillar's own, primary file terminal only at coverage >= 1 and a measured verdict; its window and selection are fixed (--select/--since/--until/--freeze-instant/--label refused)
+- [Phase 3]: [03-04] population exits 0 when the frozen population is reproduced, a referenced one is fully covered, or the workload is unfrozen; 3 otherwise; per_project rows come from the KME-selected sessions only; it writes nothing
+- [Phase 3]: [03-04] I on KME-G (smoke, plane gex44, not terminal): 8.26 % of the weighted denominator, second workload B001 17.25 %; ledger state.I stays empty, IC-I/IC-D/IC-E not ticked, requirements.mark-complete not called
 
 ## Session Continuity
 
-**Last session:** 2026-10-03T21:25:13.185Z
+**Last session:** 2026-10-03T21:40:15.691Z
 
-**Stopped At:** Completed 03-03-PLAN.md
+**Stopped At:** Completed 03-04-PLAN.md
 `tools/test_gsd_mission_cwd_align.py` has 4 NEW uncommitted cases (V-MCA-DIVERGED-FOLLOWED / -UNPROVEN /
 -STALE-ROADMAP / -THREE-RELAYS) calling `gm.align_cwd(cwd, wt, proven_workstream="ws")`; the
 `threshold=9/9` line still needs 13/13. Not yet run (expected RED: align_cwd has no proven_workstream).
@@ -110,6 +116,7 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 | Phase 3 P01 | n/m (session interrupted) | 3 tasks | 5 files |
 | Phase 03 P02 | 40min | 3 tasks | 4 files |
 | Phase 03 P03 | 40min | 3 tasks | 5 files |
+| Phase 3 P04 | 10min | 3 tasks | 4 files |
 
 ## Session Continuity (GEX44 run, 2026-10-03 ~19:00Z, session 607795c4)
 
