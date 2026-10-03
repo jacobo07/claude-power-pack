@@ -2297,8 +2297,45 @@ def provider_hold(rec: dict, now: float) -> dict | None:
     except Exception as exc:  # noqa: BLE001 -- degrade to the previous behaviour, visibly
         lr.ledger_append(rec.get("mission_id"), "provider_breaker_unavailable",
                          mission_id=rec.get("mission_id"), error=f"{exc.__class__.__name__}: {exc}"[:200])
-        h = quota_hold_from_transcript((rec.get("owner") or {}).get("session_id"), now)
-        return None if h is None else {**h, "class": "quota"}
+        sid = (rec.get("owner") or {}).get("session_id")
+        h = quota_hold_from_transcript(sid, now)
+        return _auth_hold_without_breaker(sid, now) if h is None else {**h, "class": "quota"}
+
+
+# Copy of provider_breaker.AUTH_RE for the degraded path (the breaker is what cannot be imported
+# there). V-PFP-AUTH-PARITY pins pattern and flags equal, so the two cannot drift apart silently.
+AUTH_FALLBACK_RE = re.compile(r"invalid api key|please run /login|not logged in|oauth token (?:has )?expired|"
+                              r"authentication[_ ](?:error|failed)|\b401\b|unauthori[sz]ed|credit balance is too low",
+                              re.I)
+
+
+def _auth_hold_without_breaker(session_id: str | None, now: float) -> dict | None:
+    """Breaker-less park of an authorization refusal. Only a HOST-written reply (model "<synthetic>")
+    is evidence, never a model quoting it. The qualifying precondition change in this degraded mode is a
+    credentials file rewritten after the refusal (stat only: this path never opens the file; the expiry
+    judgement lives in provider_breaker). No evidence of a refusal is not a refusal -> None."""
+    try:
+        t = lr.find_transcript(session_id) if session_id else None
+        if not t:
+            return None
+        for row in reversed(lr._tail_rows(t)):
+            if row.get("type") != "assistant":
+                continue
+            msg = row.get("message") if isinstance(row.get("message"), dict) else {}
+            text = " ".join(lr._text_of(msg).split())
+            if msg.get("model") != "<synthetic>" or not AUTH_FALLBACK_RE.search(text):
+                return None
+            evidence_at = lr._parse_iso(row.get("timestamp")) or os.path.getmtime(t)
+            try:
+                if (Path.home() / ".claude" / ".credentials.json").stat().st_mtime > evidence_at:
+                    return None
+            except OSError:
+                pass  # no credentials file to compare: the refusal stands
+            return {"until": None, "reason": "QUARANTINE (credentials; breaker unavailable) -- auth: " + text[:200],
+                    "class": "auth", "streak": 1, "quarantine": True}
+        return None
+    except Exception:  # noqa: BLE001 -- no evidence of a refusal is not a refusal
+        return None
 
 
 def last_assistant_at(transcript) -> float | None:
