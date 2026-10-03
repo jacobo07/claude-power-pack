@@ -38,9 +38,31 @@ upper bound is never a realized saving; a deterministic replay is never behavior
 - Every phase commits EVIDENCE.md (with Product Delta and Intelligence Delta) and its ledger rows before ending,
   so no_progress can see it (audit G8). Budget per epoch: 12 cycles / 24 h.
 
+## Run plane: GEX44 (Owner decision 2026-10-03)
+
+The mission runs on GEX44 in its own clone (`~/missions/incremental-cognition`), not in the laptop's shared
+checkout: the laptop's free RAM swung 0.6-8 GB during arming. Read every constraint above with that in mind:
+
+- **The clone is not shared and not live.** Editing `tools/gsd_mission.py` in it deploys nothing (GEX44's sweep
+  loads its own install). B and C still edit it in one minimal hunk each, red test first; they reach the laptop's
+  live file only by an Owner-run fetch + deploy at >= 4 GB free (audit G6) -- record that as a `[B]`/`[C]` line in
+  the owner bundle. Never push; the Owner fetches `mission/incremental-cognition-run` back.
+- **Pillar A is code-complete on the laptop** (d2505df6: 16/16 cwd_align, 7 mutants killed). Its PRG (a real held
+  mission relays in the laptop's live sweep) is laptop-plane: owner-bundle line `[A]`, do not re-implement A.
+- **KME-L is laptop-plane.** D, E, F, G, I and L measure the laptop's transcripts, which are not on GEX44. Never
+  substitute GEX44's corpus for KME-L: measure the KME-G share where the frozen rule names KME-G, build the
+  measuring tool and its tests here, and record the KME-L run as one `[<P>]` owner-bundle line with the exact
+  command. The pillar stays open (no terminal) until that run lands.
+- **K's reference floor is laptop-plane.** Build and test the gate here (positive control on a seeded rise);
+  the committed reference must come from the laptop install -> `[K]` owner-bundle line.
+- **Anything reading `~/.claude/` judges GEX44's install**, not the laptop's: label such evidence `plane: gex44`.
+- **Laptop-independent work:** B (GEX44 preflight is native here), C, H, J, M (CE/SC ledgers in the repo), N.
+
 ## Phases
 
-- [ ] **Phase 1: Mission relay in a shared checkout** - pillar A (correctness repair, red test first)
+- [ ] **Phase 1: Mission relay in a shared checkout** - pillar A (correctness repair, red test first).
+  CODE-COMPLETE d2505df6 (criteria 1-3 met); only criterion 4 (PRG, laptop-plane) remains -> owner bundle `[A]`;
+  start the GEX44 run at Phase 2.
 - [ ] **Phase 2: Persistent failures and remote integrity** - pillars C, B
 - [ ] **Phase 3: KME corpus measurements** - pillars D, E, F, G, H, I (measured on frozen KME-L / KME-G)
 - [ ] **Phase 4: Cognitive cost regression gate** - pillar K
