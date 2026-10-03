@@ -343,15 +343,22 @@ def gates_watchdog():
         # (Owner-authorized, ON by default) asks for `/kclear` there instead and only
         # reaches `/clear` once rollover.py has judged the capsule. The diff between this
         # assertion and the one it replaced IS the evidence the default changed.
-        check("V-GSDLR-WD-ROLLOVER-ASKS-KCLEAR",
-              rec and rec[-1].get("kind") == "kclear" and rec[-1].get("expect_prefix") == "/kclear",
-              f"kwargs={rec[-1] if rec else None}")
-        # C4: the text states the route that will actually be used, and no
-        # longer promises an Enter delivered by whichever window has focus.
+        # INVERTED AGAIN 2026-10-03, following 118e5994 (2026-09-29): /kclear is work the MODEL
+        # does (the kclear skill), never a keystroke -- measured on TUA-X, a dispatched `/kclear`
+        # line had no owning terminal and sat unexecuted across three walls. So the wall asks
+        # for it in the block reason, ledgers `rollover_kclear_asked` route=self, and dispatches
+        # nothing at all.
         reason = out.get("reason", "")
+        check("V-GSDLR-WD-ROLLOVER-ASKS-KCLEAR",
+              "rollover_kclear_asked" in events(s) and "invoke the `kclear` skill" in reason
+              and not any(r.get("kind") == "kclear" for r in rec),
+              f"events={events(s)} dispatched={rec}")
+        # C4: the text names the route that will actually be used (the model itself) and
+        # promises no keystroke from any window, focused or otherwise.
         check("V-GSDLR-WD-TEXT-NAMES-ROUTE",
-              "Delivery: MANUAL" in reason and "focused window" not in reason and not legacy,
-              f"route sentence present={('Delivery:' in reason)} legacy_calls={legacy}")
+              "Do NOT end on a trailing `/kclear` line" in reason and "focused window" not in reason
+              and not rec and not legacy,
+              f"self-route sentence present={('trailing `/kclear`' in reason)} dispatched={rec} legacy_calls={legacy}")
         # The kill switch must restore the OLD crossing exactly. Without this control,
         # "rollover is on by default" and "the /compact path has been deleted" are the
         # same observable, and CPP_ROLLOVER_ACTIVE=0 would be a switch that disables
