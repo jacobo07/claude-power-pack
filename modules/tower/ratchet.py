@@ -66,8 +66,17 @@ class RatchetRefusal(ValueError):
 
 # Who may put a change to a constitutive baseline on the record. In code, not a
 # data file: tests stay hermetic via `root=`, and a data file would be writable by
-# the same party that writes generations. Residual: whoever can edit THIS file
-# controls the allowlist; repo history is the root of trust.
+# the same party that writes generations.
+#
+# REAL RESIDUAL (code review 2026-10-03, WR-01): the authority is a SELF-DECLARED
+# token. The caller of revert / promote / reanchor (the API, or the CLI's
+# `--authority`) supplies the string itself, so any caller can type "Owner" and
+# pass; the first-token rule also admits "Owner; acting alone" and "Owner (not
+# asked)". This allowlist raises the cost of a typo, NOT of a forgery, and nothing
+# in this module can tell an Owner-approved change from an unapproved one that
+# says it was. The root of trust is repo history plus the Owner reviewing the
+# commit that adds a generation. Binding the authority to something a caller
+# cannot type (admission records) is deferred to Phase 3 (ROADMAP Phase 3 item 3).
 AUTHORITIES = ("Owner",)
 
 
