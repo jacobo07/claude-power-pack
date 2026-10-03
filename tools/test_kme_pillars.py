@@ -2461,6 +2461,35 @@ def g_frozen_source_recorded():
                f"default file + off-default ce flag: {e['terminal_evidence']}; OTHER source={f.get('frozen_source')}"
 
 
+def g_d_needs_hook_attachment():
+    """IN-01: D is observed only where a hook_* attachment was seen; file / todo_reminder attachments alone are UNMEASURED."""
+    def only_other(root, session, hook):
+        fx = two_call_session(root, session=session)
+        fx.attachment("file", ts(1), filename="/x/a.py", content="C" * 50)
+        fx.attachment("todo_reminder", ts(1), content=["t"])
+        if hook:
+            fx.attachment("hook_success", ts(1), hookName="SessionStart:startup", stdout="{}", content="")
+        fx.assistant(f"m1{session}", f"r1{session}", (10, 100, 0, 5), ts(2))
+        fx.assistant(f"m2{session}", f"r2{session}", (10, 0, 100, 5), ts(3))
+    r1 = scratch("in01a")
+    only_other(r1, "s1", False)
+    rc1, res1, _o, _e, _d = d_other(pdir(r1))
+    r2 = scratch("in01b")
+    only_other(r2, "s1", True)
+    rc2, res2, _o, _e, _d = d_other(pdir(r2))
+    r3 = scratch("in01c")
+    only_other(r3, "s1", True)
+    only_other(r3, "s2", False)
+    rc3, res3, _o, _e, _d = d_other(pdir(r3))
+    ok = (res1["observability"] == 0.0 and res1["materiality"] == "UNMEASURED" and rc1 == 3
+          and res2["observability"] == 1.0 and res2["materiality"] == "< 3 %" and rc2 == 0
+          and res3["observability"] == 0.5 and res3["materiality"] == "UNMEASURED"
+          and res3["details"]["sessions_with_hook_attachments"] == 1
+          and res3["details"]["sessions_with_attachment_lines"] == 2)
+    return ok, f"non-hook attachments only: obs={res1['observability']} {res1['materiality']} rc={rc1}; plus hook_success: " \
+               f"obs={res2['observability']} {res2['materiality']}; mixed: obs={res3['observability']} {res3['materiality']}"
+
+
 GATES_TRACER = [
     ("V-KMEP-TRACER-D-E2E", g_tracer_e2e),
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
@@ -2472,6 +2501,7 @@ GATES_REVIEW_FIX = [
     ("V-KMEP-R3-TERMINAL-REQUIRES-PRIMARY", g_r3_terminal_requires_primary),
     ("V-KMEP-SECOND-WORKLOAD-NEEDS-VERDICT", g_second_workload_needs_measured_verdict),
     ("V-KMEP-FROZEN-SOURCE-RECORDED", g_frozen_source_recorded),
+    ("V-KMEP-D-NEEDS-HOOK-ATTACHMENT", g_d_needs_hook_attachment),
 ]
 GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_PLAN5_TRACER + GATES_PLAN5_BUNDLE + GATES_REAL + GATES_REAL_2 + GATES_REVIEW_FIX
 

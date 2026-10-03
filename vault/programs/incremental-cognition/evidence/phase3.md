@@ -73,7 +73,7 @@ I file used `--until auto`, which located it as `exact_at_freeze`, one scan). Ro
 
 | pillar | file | LF sha256 | population_match | until | share_interval | materiality | second_workload_required | second-workload file |
 |---|---|---|---|---|---|---|---|---|
-| D | `measurements/D-KME-G-2026-10-03.md` | `b1ad9164126d579a5e6cfb205a069f18d133c30b8b4835f58700331939639378` | exact | 2026-10-03T16:13:37Z | [2.6388 %, 3.9582 %] | STRADDLES | true | `D-GEX44-B001-2026-10-03.md` (smoke sample, not_frozen, [0.0015 %, 0.0022 %], `< 3 %`; sha `7f9da08dfe60f993aad942b6836ec50709d6ecd1ff6c4703e54176a47bf0affd`) |
+| D | `measurements/D-KME-G-2026-10-03.md` | `e8d7c24d005217d69dc4073232f47c3017333af2114f6baa255409443cf88fc3` | exact | 2026-10-03T16:13:37Z | [2.6388 %, 3.9582 %] | STRADDLES | true | `D-GEX44-B001-2026-10-03.md` (smoke sample, not_frozen, [0.0015 %, 0.0022 %], **UNMEASURED** since the review-fix regeneration: observability 0.855, only 7 of its 10 sessions carry a `hook_*` attachment, so the earlier `< 3 %` was an unobserved-as-zero reading (03-REVIEW IN-01); sha `22527425a4f53ae90a4f3e690f0ae3d063d6142eb070073a345d62df8dec4e56`) |
 | E | `measurements/E-KME-G-2026-10-03.md` | `c984c288aab49733f5d3f2e6227bf0b002f0b5e7dcc684638d4485bb9086af0c` | exact | 2026-10-03T16:13:37Z | [0.0, 0.0] | < 3 % | false | not required |
 | F | `measurements/F-KME-G-2026-10-03.md` | `9977d194cf7ac952d69095580813f4341e1d9b08041ce846279be85f02c5cf60` | exact | 2026-10-03T16:13:37Z | [0.6880 %, 1.0320 %] | < 3 % | false | not required |
 | G | `measurements/G-KME-G-2026-10-03.md` | `ae95ba7459167e593a8b46ea124e2861b976671e1411df8bfcd886fe9fcccb9a` | exact | 2026-10-03T16:13:37Z | [0.0, 0.0] | < 3 % | false | not required |
@@ -128,13 +128,13 @@ ICP_PILLAR_D=FAIL
 ## Artifacts (LF sha256 of each committed file the evidence relies on)
 
 ```
-d1347b140b7dbd88058c7d7278ae00812dc2ee93f490c9938229d85d25d17a37  wiki/tools/kme_pillars.py
+f2d40f9b261331048a6f35ef151f3555ef97b07bf5fedcfb9d172f8ad33c36c7  wiki/tools/kme_pillars.py
 e7a74a9423724a406be8f52407975248ce030f467e237218b4fe7f177e6f9682  wiki/tools/kme_token_audit.py
-3ad0b93ff4c33e7fd41f13e78399f8c28e5dce98cda3b981e5b79172d778198d  tools/test_kme_pillars.py
+4e65cf6382b110a0411c56bbfeb2c4f08b9ebce290944b286133541110b387ef  tools/test_kme_pillars.py
 78aacabdaf57f3100c2b091f59762071ab3ef22b6f2acd05b2fd7419cde928d8  tools/test_incremental_cognition_program.py
 a242f05a575b1add67250775f7138f5e3001df8879489e1eecc8e07d42bec39c  vault/programs/incremental-cognition/owner-bundle.md
-b1ad9164126d579a5e6cfb205a069f18d133c30b8b4835f58700331939639378  vault/programs/incremental-cognition/measurements/D-KME-G-2026-10-03.md
-7f9da08dfe60f993aad942b6836ec50709d6ecd1ff6c4703e54176a47bf0affd  vault/programs/incremental-cognition/measurements/D-GEX44-B001-2026-10-03.md
+e8d7c24d005217d69dc4073232f47c3017333af2114f6baa255409443cf88fc3  vault/programs/incremental-cognition/measurements/D-KME-G-2026-10-03.md
+22527425a4f53ae90a4f3e690f0ae3d063d6142eb070073a345d62df8dec4e56  vault/programs/incremental-cognition/measurements/D-GEX44-B001-2026-10-03.md
 c984c288aab49733f5d3f2e6227bf0b002f0b5e7dcc684638d4485bb9086af0c  vault/programs/incremental-cognition/measurements/E-KME-G-2026-10-03.md
 9977d194cf7ac952d69095580813f4341e1d9b08041ce846279be85f02c5cf60  vault/programs/incremental-cognition/measurements/F-KME-G-2026-10-03.md
 ae95ba7459167e593a8b46ea124e2861b976671e1411df8bfcd886fe9fcccb9a  vault/programs/incremental-cognition/measurements/G-KME-G-2026-10-03.md
@@ -164,8 +164,10 @@ What the system now knows, each figure about the **KME-G / GEX44 corpus** and it
 
 - **D (hook rent).** `hook_additional_context` is 740,326 chars over 1,105 attachments on KME-G: weighted share
   [2.64 %, 3.96 %], so the 3 % bar sits **inside** the interval (STRADDLES) and KME-G cannot decide D. On the
-  GEX44-B001 workload the same measure is about 0.002 %. The two workloads differ by three orders of magnitude, and the
-  CPP-D-W7 leg (the other half of D's rule) cannot run on this host. Caveat: the D-W7 parser difference above.
+  GEX44-B001 workload the same chars are about 0.002 % of its weighted denominator, but that run is **UNMEASURED**
+  (observability 0.855: 3 of its 10 sessions carry no hook attachment, so their silence says nothing; an earlier
+  version of this file read it as `< 3 %`, corrected by IN-01 and regenerated), so no comparison between the two
+  workloads is drawn. The CPP-D-W7 leg (the other half of D's rule) cannot run on this host. Caveat: the D-W7 parser difference above.
 - **E (rereads).** 142 Read results, 140 first reads, 2 unhashable (images), **0 identical rereads of any class**:
   nothing to virtualize in this corpus, consistent with E's predicted RESEARCH_INSUFFICIENT_EVIDENCE. Whether the
   harness already deduplicates rereads cannot be told from this: the stub count is also 0, so there is no stubbed reread

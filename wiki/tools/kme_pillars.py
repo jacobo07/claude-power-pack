@@ -465,6 +465,7 @@ class DObserver(PillarObserver):
         self._by_path = collections.defaultdict(list)
         self.others = []
         self.attach_sessions = set()
+        self.hook_sessions = set()
 
     def on_line(self, path, o, idx, sess):
         if not isinstance(o, dict) or o.get("type") != "attachment":
@@ -474,6 +475,11 @@ class DObserver(PillarObserver):
             a = {}
         self.attach_sessions.add(id(sess))
         atype = a.get("type")
+        if isinstance(atype, str) and atype.startswith("hook_"):
+            # IN-01: a session is OBSERVED for D only when a hook attachment (any hook_* type) was seen in it. A
+            # transcript format that records only file / todo_reminder attachments cannot show hook delivery, so
+            # its silence is not evidence of zero additional context.
+            self.hook_sessions.add(id(sess))
         hook = str(a.get("hookName") or a.get("hookEvent") or "?")[:60]
         if counts_for_d(atype):
             rec = {"sid": id(sess), "path": path, "idx": idx, "chars": context_chars(a), "hook": hook,
@@ -518,7 +524,7 @@ class DObserver(PillarObserver):
         tool_uses = sum(s["tool_uses"] for s in sessions if id(s) in selected)
         calls = population["calls"]
         att_calls = sum(s["main"].get("calls", 0) + s["sub"].get("calls", 0)
-                        for s in sessions if id(s) in selected and id(s) in self.attach_sessions)
+                        for s in sessions if id(s) in selected and id(s) in self.hook_sessions)
         return {
             "numerator": {
                 "kind": "hook_additional_context chars", "attachments": len(recs), "chars": chars,
@@ -534,6 +540,8 @@ class DObserver(PillarObserver):
                 "hook_errors": dict(errors),
                 "sessions_with_attachment_lines": sum(1 for s in sessions
                                                       if id(s) in selected and id(s) in self.attach_sessions),
+                "sessions_with_hook_attachments": sum(1 for s in sessions
+                                                      if id(s) in selected and id(s) in self.hook_sessions),
             },
         }
 
