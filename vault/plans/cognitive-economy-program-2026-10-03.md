@@ -120,4 +120,33 @@ designed. Agents: <= 2 per wave, solo, durable output.
 
 ## 10. Execution log
 
-(appended per sealed unit)
+- C0 `1cabd117` this plan.
+- Phase-4 audit (general-purpose in the auditor role; `oneshot-architect-auditor` was refused by the
+  agent-contract guard because it has no Write tool): `vault/audits/cognitive-economy-phase4-audit.md`,
+  EXECUTE-WITH-FIXES, 11 gaps. Dispositions:
+  - G1-G4, G11 (bind deadlock, whole-tree verdict pin, missing `obligations` key, plane machinery,
+    double driver): the Goal spine is NOT the closure judge. The done-gate re-runs each IMPLEMENTED
+    pillar's declared gate argv in one pass; the committed ledger is the campaign's authority; no
+    goal is bound or marked autonomous. Finding handed to the spine owner via pillar O.
+  - G2 fix (a) own-branch worktree REJECTED on measured evidence: the live `ucep` mission
+    (`m-876f8b5a904a`) is held right now with "cwd not aligned with work_dir (diverged)" -- a worktree
+    on its own branch blocks every fresh-worker relay once main moves. The mission runs in the main
+    checkout like every other CPP mission.
+  - G5 (no_progress blind in a shared checkout): ACCEPTED risk; bounds are --max-cycles 12 /
+    --max-hours 24, and every phase (measurement included) commits its evidence. Recorded under J.
+  - G6: compound repair narrowed to a new campaign module proven on a temp state copy; live apply
+    and call-site switch are Owner items (pillar L rule).
+  - G7: verifier hardened -- MERGED/DEFERRED need a per-pillar handoff file committed AFTER the freeze
+    and naming the owner; sha256 mandatory on file evidence; measurements must name a frozen
+    denominator and their command; owner evidence must be a frozen owner.
+  - G8: L/R owner paths corrected; L1 now checks every frozen owner exists.
+  - G9: workstream uses the precedent format (ROADMAP `### Phase N:`, STATE, REQUIREMENTS) and
+    `init.manager` must list every phase before arming.
+  - G10: UKDL/CBR candidates go to `vault/programs/cognitive-economy/ukdl-candidates.md`; promotion
+    into `ukdl-universal.md` is an Owner item.
+- Verifier `tools/test_cognitive_economy_program.py --selftest`: 30/30 (25 ledger mutants each
+  killed by its intended clause, gate-red, unfrozen, real subprocess runner both poles, allowlist,
+  real-git handoff both poles). Scratch mutation drill (L6 disabled) -> selftest FAIL, live file
+  unchanged.
+- Baseline reproduced: CCP anchor exact (23,925 / 6,230,548,450 / 9,893); D-W7 frozen in the ledger.
+- Mission rotation stays legacy (no `--rollover-protocol capsule-v2`: peer spec, T8 held).
