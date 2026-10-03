@@ -1,0 +1,25 @@
+﻿J-cwst1_oracle_bracket-B-r1 attempt=1 valid=True pass=True first_ctx=109494 
+J-cwst1_oracle_bracket-A-r1 attempt=1 valid=True pass=True first_ctx=116185 
+J-cwst2_publish_ref-A-r1 attempt=1 valid=True pass=True first_ctx=116069 
+J-cwst2_publish_ref-B-r1 attempt=1 valid=True pass=True first_ctx=109378 
+J-ssea1_may_spend-B-r1 attempt=1 valid=True pass=True first_ctx=109379 
+J-ssea1_may_spend-A-r1 attempt=1 valid=True pass=True first_ctx=116070 
+J-ssea2_queued_order-A-r1 attempt=1 valid=True pass=True first_ctx=116069 
+J-ssea2_queued_order-B-r1 attempt=1 valid=True pass=True first_ctx=109378 
+J-tfps1_orders_state-B-r1 attempt=1 valid=True pass=True first_ctx=109378 
+J-tfps1_orders_state-A-r1 attempt=1 valid=True pass=True first_ctx=116069 
+J-tfps2_payment_outcome-A-r1 attempt=1 valid=True pass=True first_ctx=116075 
+J-tfps2_payment_outcome-B-r1 attempt=1 valid=True pass=True first_ctx=109384 
+J-cwst1_oracle_bracket-A-r2 attempt=1 valid=True pass=True first_ctx=116077 
+J-cwst1_oracle_bracket-B-r2 attempt=1 valid=True pass=True first_ctx=109494 
+J-cwst2_publish_ref-B-r2 attempt=1 valid=True pass=True first_ctx=109486 
+J-cwst2_publish_ref-A-r2 attempt=1 valid=True pass=True first_ctx=116177 
+J-ssea1_may_spend-A-r2 attempt=1 valid=True pass=True first_ctx=114823 
+J-ssea1_may_spend-B-r2 attempt=1 valid=True pass=True first_ctx=109487 
+J-ssea2_queued_order-B-r2 attempt=1 valid=True pass=True first_ctx=109486 
+J-ssea2_queued_order-A-r2 attempt=1 valid=True pass=True first_ctx=116069 
+J-tfps1_orders_state-A-r2 attempt=1 valid=True pass=True first_ctx=116069 
+J-tfps1_orders_state-B-r2 attempt=1 valid=True pass=True first_ctx=109486 
+J-tfps2_payment_outcome-B-r2 attempt=1 valid=True pass=True first_ctx=109492 
+J-tfps2_payment_outcome-A-r2 attempt=1 valid=True pass=True first_ctx=115730 
+RUN COMPLETE

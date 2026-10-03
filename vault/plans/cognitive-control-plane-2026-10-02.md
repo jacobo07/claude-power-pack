@@ -310,6 +310,8 @@ concurrent-writers 1.78 %, technical-failure 1.76 %, scoped-side-effect 1.66 %),
 P3 ablation the first three moves had. Gates: `test_floor_probe` 9/9 (V-FLOOR-DETAIL-FILES,
 -NAMED-TYPES, -INSTR-CLASS, -RANK-CONTROLLABLE, -RANK-CLASSES; RANK-CLASSES seen red first).
 Owner "y" + "spend now" (2026-10-03): lever 1 via P3 set R2 (`ADDENDUM-R2.md`, frozen `6f5c3cf9`).
+Result (P3 REPORT.md §R2): 24/24 valid, every check passed in both arms; all three files stay
+relocation candidates (ceiling: no loss observed, not "no effect"). Moves pending, Owner-side.
 
 ## 15. Re-derivation, first measurement (2026-10-03, prototype, read-only, zero model calls)
 

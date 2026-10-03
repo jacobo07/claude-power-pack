@@ -141,3 +141,37 @@ Always-loaded rule bytes 92,851 -> 1,956 (three pointers). First-call context ~1
 tokens at every session start, every repository). Quality: every task passed in every arm and after
 every move (32 + 24 + 12 runs). Auto-activation of the moved skills: 1/12; the destructive rule is the
 only one also delivered by event. Revert any move by copying its backup over the pointer.
+
+## R2. Judgement tasks for the three highest-rent rules (ADDENDUM-R2.md, 2026-10-03)
+Set chosen by CCP plan §14 (lifetime rent). Owner "spend now". `p3_runner.py run-j --set R2 --reps 2`,
+BASE `bad37268`, claude 2.1.x, `claude-opus-5-5`, every run `sdk-cli`. Raw: `results-j-r2.jsonl`, `run-j-r2.log`.
+**24/24 valid on the first attempt, 0 replacements.**
+
+Positive control: first-call context A 114,823–116,185, B 109,378–109,494. Per-file diff of the startup
+attachments (A-r1 vs B-r2, ssea1): the instructions differ by exactly the three R2 files (7,405 + 7,299 +
+6,917 chars) and nothing else. The one low A value (114,823, ssea1 A-r2) came from SessionStart hook text
+(−2.9k chars in `hook_additional_context`), not from the rules: instructions were 172,120 chars in both A runs.
+
+| task (rule) | A r1 | A r2 | B r1 | B r2 |
+|---|---|---|---|---|
+| J-cwst1_oracle_bracket (CWST) | 5/5 | 5/5 | 5/5 | 5/5 |
+| J-cwst2_publish_ref (CWST) | 3/3 | 3/3 | 3/3 | 3/3 |
+| J-tfps1_orders_state (TFPS) | 5/5 | 5/5 | 5/5 | 5/5 |
+| J-tfps2_payment_outcome (TFPS) | 5/5 | 5/5 | 5/5 | 5/5 |
+| J-ssea1_may_spend (SSEA) | 5/5 | 5/5 | 5/5 | 5/5 |
+| J-ssea2_queued_order (SSEA) | 5/5 | 5/5 | 5/5 | 5/5 |
+
+**Verdict per file (ADDENDUM-R2 decision table): concurrent-writers-shared-tree,
+technical-failure-to-product-state and scoped-side-effect-authority each stay relocation candidates** —
+B passed every task A passed, 2/2. Each moves only as B-prime (skill loadable on demand), one file per
+commit, its two tasks re-run after the move (`run-jprime --set R2 --only <cwst|tfps|ssea>`).
+
+Bank-access audit: 133 tool calls across the 24 transcripts searched for the bank, grader, results and
+addendum names and `git log --all`: 0 hits. Skill calls: 0.
+
+Secondary (never a tie-breaker): total context mean A 708,838 / B 680,370 (−4.0 %); wall mean A 77.2 s /
+B 75.6 s.
+
+Same limits as J, stated before the run: a ceiling (every check passed in every run) means no loss was
+OBSERVED, not that the rules do nothing; two tasks per file, n=2; the concurrency of CWST is compressed into
+one function whose docstring states it; one host, one model, this repository only.

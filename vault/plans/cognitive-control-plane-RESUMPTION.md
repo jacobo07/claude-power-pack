@@ -123,15 +123,11 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
 1c. DONE offline: P3 set R2 prepared and FROZEN (`.planning/workstreams/cognitive-resource-os/
    phases/06-p3-ablation/ADDENDUM-R2.md`, bank `judgement-r2/`, runner `--set R2`).
    `validate-j --set R2` 6/6, R1 re-validated 6/6.
-1d. RUNNING (Owner "spend now" 2026-10-03): `run-j --set R2 --reps 2`, log `run-j-r2.log`, rows
-   `results-j-r2.jsonl` (same phase dir). At seal: 23/24 valid + pass in BOTH arms; last =
-   J-tfps2_payment_outcome-A-r2. CWST and SSEA already 2/2 per arm -> relocation candidates.
-   Positive control: B lacks exactly the 3 R2 files (-21,627 chars); A-r2 ssea1 dip of ~1.25k tok
-   was SessionStart hook text, not the rules (scratch `r2_drift.py`). If the run died, re-run the
-   same command: it resumes and skips valid rows. NO rule moved yet.
-   THEN: tally results-j-r2.jsonl, write REPORT.md section "R2" with the per-file verdict, record
-   it in plan §14, ask the Owner to do the B-prime moves (Owner-side `~/.claude` edit, HR-001),
-   then `run-jprime --set R2 --only <cwst|tfps|ssea>` after each move.
+1d. DONE (Owner "spend now" 2026-10-03): R2 ablation 24/24 valid, 24/24 pass in BOTH arms;
+   bank audit 0/133; REPORT.md section "R2". All three R2 files stay relocation candidates.
+   NO rule moved yet. NEXT (Owner-side `~/.claude` edit, HR-001): move ONE file as B-prime
+   (rule body -> skill, pointer + backup, as moves 1-3), then
+   `python p3_runner.py run-jprime --set R2 --only <cwst|tfps|ssea>` (4 runs) before the next.
 2. DONE: re-derivation measured (plan §15 + §15.1, `51789871`): Read 19.6 % re-derived, ~188M
    rent; same-root half is siblings (gp 55 %, gsd 31 %), parent->child 8 %. No tool promoted.
 
