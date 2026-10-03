@@ -72,10 +72,9 @@ Total Plans in Phase: 3
   C IMPLEMENTED_AND_VERIFIED; `--pillar A/B/C` PASS on gex44 (last observed at 8b0137aa).
 - Phase 4 (D, H): plans committed 2dd5ab6c (revised for checker blockers, re-check passed). 04-01 committed
   (1ad9ee71, 8313c340, 0a2ab9ea; SKC_PASS=15/15). 04-02 committed (97ded664, a94256e6, 94109552; SKD_PASS=9/9).
-  **04-03 executor was IN FLIGHT at hand-off**: uncommitted edits to tools/skill_mirror_drift.py,
-  tools/test_skill_drift.py, evidence/H-drift.md and a new card_source_digests.json. FIRST: check whether
-  04-03-SUMMARY.md and its commits landed. If not, read those edits (never discard them unread), re-dispatch 04-03
-  telling it the files already exist, then 04-04, then phase 4 code review + verification.
+  04-03 committed at hand-off (06dae4b0, a98f883c, 211e136c; SKD_PASS=13/13, router tests 10/11 with only the
+  pre-existing V-RFG-CLEAN FAIL; skill_drift_check max 0.054 s). NEXT: run 04-04 (state.D/H closure), then phase 4
+  code review + verification.
 - Phase 5: 05-01..05-03-PLAN.md committed at hand-off, NOT yet plan-checked (run the checker before executing; 05-01 reuses 04-02/04-03 functions in tools/skill_mirror_drift.py: repo_skills, repo_side, live_side, dir_digest, lf_bytes -- confirm they exist after 04-03 lands). Planner chose IMPLEMENTED (sweep + operation gate, 0 ops applied).
 - Phase 6: planner stopped at the wall, no plans; re-plan after 04-03 lands (reuse its card-vs-source record).
 - Phase 7: planner in flight at hand-off; look for 07-0x-PLAN.md (uncommitted, unchecked).
