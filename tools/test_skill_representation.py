@@ -803,6 +803,14 @@ def _utc_epoch(v):
     return t.timestamp() if t.tzinfo is not None else None
 
 
+class Unjudged:
+    """A window the entry names that exists in the working tree but is not committed (as committed): never judged,
+    so the recall clause reads INCONCLUSIVE, not FAIL (05-REVIEW IN-05)."""
+
+    def __init__(self, why):
+        self.why = why
+
+
 def _recall(entry, docs):
     """(status, text, {side: (num, n)} or None). Figures come from the committed window documents only."""
     rc = entry.get("recall")
@@ -824,6 +832,8 @@ def _recall(entry, docs):
     for k in SIDES:
         w = paths[k]
         doc = docs.get(w)
+        if isinstance(doc, Unjudged):
+            return "INCONCLUSIVE", f"recall.{k} window {w}: {doc.why} (an uncommitted input is never judged)", None
         if not isinstance(doc, dict):
             return "FAIL", f"UNMEASURED: recall.{k} window {w} is not a committed window document", None
         if doc.get("schema") != WINDOW_SCHEMA:
@@ -948,16 +958,19 @@ def probe_rows():
 
 
 def window_docs(ops):
-    """{rel: committed window doc} for every window path the entries name that passes the path rule."""
+    """{rel: committed window doc, or Unjudged(reason) for one present but not committed as is} for every window path
+    the entries name that passes the path rule."""
     docs = {}
     for e in ops:
         rc = e.get("recall") if isinstance(e, dict) else None
         for k in SIDES:
             w = (rc.get(k) or {}).get("window") if isinstance(rc, dict) and isinstance(rc.get(k), dict) else None
             if _evidence_json_path(w) and w not in docs:
-                doc, _ = committed_json(w)
+                doc, why = committed_json(w)
                 if doc is not None:
                     docs[w] = doc
+                elif str(why).startswith("uncommitted") or (REPO / w).is_file():
+                    docs[w] = Unjudged(why)  # present but not committed as is; an absent window stays FAIL
     return docs
 
 
@@ -968,12 +981,16 @@ def c_fo_entries(doc, inputs):
         return f"0 operations applied (n=0,{host})".replace(",)", ")")
     if inputs.get("rows") is None:
         inconclusive(f"{len(ops)} entries, probe rows unreadable: {inputs.get('rows_why')}")
-    bad = []
+    bad, statuses = [], set()
     for i, e in enumerate(ops):
         res = check_entry(e, inputs["rows"], inputs["docs"], inputs["sweeps"], inputs["noise"], inputs["denoms"])
         red = [f"{c} {st}: {t}" for c, st, t in res if st not in GOOD]
+        statuses |= {st for _, st, _ in res if st not in GOOD + ("skipped",)}
         if red:
             bad.append(f"entry #{i} ({e.get('op')!r}, {e.get('skill')!r}): " + "; ".join(red))
+    if bad and statuses == {"INCONCLUSIVE"}:
+        # Every refusal is "could not judge" (an uncommitted window, unsourced noise): the entry is not malformed.
+        inconclusive(f"{len(bad)} of {len(ops)} entries not judged\n" + "\n".join(bad))
     if bad:
         fail(f"{len(bad)} of {len(ops)} entries refused\n" + "\n".join(bad))
     return f"{len(ops)} operations applied, every clause ok or n/a"
@@ -1230,8 +1247,40 @@ def fo_drill_rows(real):
     return out
 
 
+def fo_entries_status_rows(real):
+    """[(name, expected V-FO-ENTRIES status, observed status, text)]: the entry-level status, driven through
+    window_docs + c_fo_entries (05-REVIEW IN-05). An uncommitted window, or unsourced noise, is INCONCLUSIVE (an
+    uncommitted input is never judged); a real refusal next to it stays FAIL."""
+    global committed_json
+    out = []
+    real_cj = committed_json
+    for name, expect in (("UNCOMMITTED-WINDOW", "INCONCLUSIVE"), ("NOISE-UNSOURCED", "INCONCLUSIVE"),
+                         ("UNCOMMITTED-AND-DROP", "FAIL")):
+        fx = base_fixture(real["denoms"])
+        if name == "NOISE-UNSOURCED":
+            fx["noise"] = None
+            docs = fx["docs"]
+        else:
+            committed_json = lambda rel: (None, f"uncommitted: working-tree {rel} differs from HEAD (pole)")
+            try:
+                docs = window_docs([fx["entry"]])
+            finally:
+                committed_json = real_cj
+            if name == "UNCOMMITTED-AND-DROP":
+                fx["rows"][2]["startup_tokens"] = fx["rows"][1]["startup_tokens"]  # also not measured to help
+        inputs = {"rows": fx["rows"], "docs": docs, "sweeps": fx["sweeps"], "noise": fx["noise"],
+                  "denoms": fx["denoms"]}
+        st, text = run_clause(c_fo_entries, {"operations": [fx["entry"]], "note": "pole"}, inputs)
+        out.append((name, expect, st, str(text).split("\n")[-1][:160]))
+    return out
+
+
 def c_fo_drills(real):
     lines, all_ok = [], True
+    for name, expect, got, text in fo_entries_status_rows(real):
+        ok = got == expect
+        all_ok &= ok
+        lines.append(f"{'ok  ' if ok else 'FAIL'} V-FO-ENTRIES-STATUS-{name} expected {expect}, got {got} ({text})")
     for name, expect, got, text in fo_drill_rows(real):
         ok = got is not None and got == expect
         all_ok &= ok
@@ -1317,7 +1366,8 @@ ENTRY_SCHEMA_LINES = (
 FO_CLAUSE_DOC = (
     ("V-FO-FILE", "an absent, malformed or other-schema operations file, or one whose rule is not the frozen F rule "
                   "verbatim (absent is never zero operations)"),
-    ("V-FO-ENTRIES", "any entry with a clause that is not ok or n/a"),
+    ("V-FO-ENTRIES", "any entry with a clause that is not ok or n/a (INCONCLUSIVE when every such clause is "
+                     "INCONCLUSIVE)"),
     ("V-FO-OP", "an op outside {disclosure, fission, fusion, inline, dedup}, or no skill"),
     ("V-FO-BEFORE", "a before side that is missing, not D-LISTING or without its command, or that resolves to zero "
                     "or several probe rows by label AND session id, or to a row with rc != 0, result != OK, a row "
@@ -1326,8 +1376,8 @@ FO_CLAUSE_DOC = (
     ("V-FO-AFTER", "an after side with any defect V-FO-BEFORE refuses"),
     ("V-FO-PAIR", "before and after resolving to one row, or the after row preceding the before row in the "
                   "append-only rows"),
-    ("V-FO-RECALL", "a missing recall check; a window outside the evidence directory, uncommitted, of another schema "
-                    "or capability; a null recall, n = 0, num outside [0, n]; a window without timezone-bearing start < end, or a "
+    ("V-FO-RECALL", "a missing recall check; a window outside the evidence directory, absent, of another schema "
+                    "or capability (one present but uncommitted is INCONCLUSIVE, never judged); a null recall, n = 0, num outside [0, n]; a window without timezone-bearing start < end, or a "
                     "before window that does not end by the after window's start (one window twice, or reversed); "
                     "windows from two hosts, or from a host that is not the D-LISTING plane (laptop)"),
     ("V-FO-HELPED", "after startup_tokens + sourced noise >= before startup_tokens (not measured to help); unsourced "
