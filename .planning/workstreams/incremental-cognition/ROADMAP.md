@@ -146,7 +146,7 @@ Plans:
 **Goal**: a material rise in startup floor by layer is visible in review.
 **Depends on**: nothing.
 **Success criteria**: gate green on today's floor, red on a seeded rise (positive control), layer and scope reported.
-**Plans:** 2/4 plans executed (sequential waves 1-4; all share tools/floor_regression_gate.py and its test)
+**Plans:** 3/4 plans executed (sequential waves 1-4; all share tools/floor_regression_gate.py and its test)
 
 Plans:
 **Wave 1**
@@ -159,7 +159,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 04-03-PLAN.md — K sources + real floor: --project-dir / --session / --probe (owner probe reused, stub-proven), GEX44 smoke green, seeded real rise red, plane-gex44 reference committed
+- [x] 04-03-PLAN.md — K sources + real floor: --project-dir / --session / --probe (owner probe reused, stub-proven), GEX44 smoke green, seeded real rise red, plane-gex44 reference committed
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
