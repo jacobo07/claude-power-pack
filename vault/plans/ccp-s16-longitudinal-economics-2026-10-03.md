@@ -68,8 +68,12 @@ Changing `decide` itself (a horizon range, a rehydration term) is a later commit
   NO_CHANGE is shown only on the fixture. Open: find a real short-horizon, high-growth boundary.
 - FALSIFIED (RCA §17 "7 git commit commands"): the golden session has 5 successful commits; the other 2 matches
   are handoff texts ("Committed: ..."). RCA text kept; correction lives here.
-- Mutants (C5) NOT yet run. NEXT EPOCH: run C5 drills on rollover_replay through tools/mutation_drill.py
-  (horizon ignored, rehydration dropped, boundary reads the future, exposure summed as saving), then UKDL.
+- C5 drills (tools/mutation_drill.py, isolated copy + control, 2026-10-03): m1 horizon ignored KILLED by
+  V-RR-SHORT-HORIZON-CONTINUE; m2 rehydration dropped KILLED by V-RR-REHYDRATION-COUNTS; m3 boundary reads the
+  future (resident = max ctx) KILLED by V-RR-BOUNDARY-NO-FUTURE; m4 exposure as saving (no premium, no C, label)
+  KILLED by V-RR-EXPOSURE-NOT-A-SAVING. Each 26/27, only the named gate red. Extra probe m5 write premium dropped
+  SURVIVED (27/27: the gate checked label + interval only) -> new V-RR-EXPOSURE-CARRIES-WRITE-PREMIUM pins the value;
+  m5 re-drilled KILLED (27/28). NEXT: UKDL (horizon-constant, successor-join, torn-append traps).
 
 ## Not now
 NEXT: the `decide` horizon/rehydration change (owner rollover.py); `gsd_epoch` 300k static threshold (c2/e9 lane);

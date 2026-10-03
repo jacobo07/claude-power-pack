@@ -162,6 +162,13 @@ def main() -> int:
     ev = rr.exposure(big, 200, rr.judge(big, 4000, many, [0.0]), [0.0, 1_000_000.0])
     ok("V-RR-EXPOSURE-NOT-A-SAVING", ev and "NOT a saving" in ev["label"]
        and ev["mechanical_exposure_read_eq"][0] < ev["mechanical_exposure_read_eq"][1], str(ev))
+    # the write premium a fresh epoch pays (audit fold) must be in the number, not only in the prose:
+    # a mutant dropping it kept the label and the interval and passed (C5 drill m5, 2026-10-03)
+    g = rr.judge(big, 4000, many, [0.0])["growth_above_fresh"]
+    prem = (big["resident"] - g) * (price["write"] - price["read"]) / price["read"]
+    want = [round(g * 150 - prem - 1_000_000), round(g * 150 - prem)]
+    ok("V-RR-EXPOSURE-CARRIES-WRITE-PREMIUM", prem > 0 and ev and ev["mechanical_exposure_read_eq"] == want,
+       f"premium={prem:.0f} want={want} got={ev and ev['mechanical_exposure_read_eq']}")
 
     print(f"ROLLOVER_REPLAY_PASS={PASS}/{PASS + FAIL}")
     return 0 if FAIL == 0 else 1
