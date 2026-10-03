@@ -171,6 +171,22 @@ shadow/econ seal() overwrites a /kclear capsule (G12, predates this plan); hooks
 NEXT: Stage 2 -- condition the prior on open obligations at the boundary (goal file at the boundary commit),
 replay it hindsight-free, and look for the first real horizon-driven CONTINUE.
 
+## §16.2 Stage 2 -- state-conditioned horizon (Owner "y" 2026-10-03; pre-registered before the data)
+
+Hypothesis: open obligations in the session's goal file at a commit predict the calls left after it.
+Reconstruction (hindsight-free): goal = last plan/spec/RESUMPTION file the session wrote at or before
+the boundary call; content = the version COMMITTED at or before the boundary time (git log --before);
+count = rollover.obligations_from (the same parser the live capsule uses, capped at 10).
+Pre-registered falsification -- Stage 2 is NOT built if any holds:
+- F-a coverage < 30 % of real boundaries (the evidence is too rare to condition a live decision on);
+- F-b remaining-call distributions do not separate: the "0 or 1 obligation" bucket p50 is not below
+  the 4+ bucket p25 (the count carries no usable signal);
+- F-c the conditioned prior still yields 0 CONTINUE among growth-gate-passing boundaries.
+If all pass: a conditioned prior (leave-own-session-out, sessions ended before T, same censoring as R1)
+replays R2 hindsight-free; any CONTINUE found is HISTORICAL_REAL evidence, and live wiring waits for one.
+Known bias: a plan committed with progress lags the working copy at T; a session that never commits its
+plan is UNKNOWN, never zero obligations.
+
 ## Not now
 NEXT: the `decide` horizon/rehydration change (owner rollover.py); `gsd_epoch` 300k static threshold (c2/e9 lane);
 the torn-append fix. LATER: live shadow on new sessions, bounded live experiment. RESEARCH: context live-range
