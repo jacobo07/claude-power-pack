@@ -115,6 +115,7 @@ command: python3 tools/test_skill_representation.py --write-evidence
 | POP-ZERO | gex44 | V-FD-POP-FLOOR | killed by V-FD-POP-FLOOR |
 | SAME-NAME-INJECT | android-reverse-engineering | V-FD-GROUPS-REPRODUCE, V-FD-PLANES-APART | killed by V-FD-GROUPS-REPRODUCE, V-FD-PLANES-APART |
 | MEMBER-SHA | gex44/managing-sleepy-skills:instructions.md | V-FD-MEMBER-FILES | killed by V-FD-MEMBER-FILES |
+| DISTINCT-NAMES | group managing-sleepy-skills+sleepy-skills distinct_names | V-FD-GROUPS-REPRODUCE, V-FD-PLANES-APART | killed by V-FD-GROUPS-REPRODUCE, V-FD-PLANES-APART |
 
 ## Decision D-01: IMPLEMENTED_AND_VERIFIED (not AUTHORIZATION_BOUND)
 

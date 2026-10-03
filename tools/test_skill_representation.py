@@ -256,8 +256,11 @@ def c_planes_apart(name, rec):
         if len(names) < 2 or g.get("distinct_names", 0) < 2:
             fail(f"{name}: group {sorted(names)} carries fewer than 2 distinct names (same-name copies are drift, "
                  f"pillar H)")
-        if len(names) == 1 and names <= drift:
-            fail(f"{name}: drift_excluded {sorted(names)} is the only name of a group")
+        # (The former "drift name as the only name of a group" branch could not fire: fewer than 2 names already
+        # fails above, 05-REVIEW IN-01.) The group's three name counts must agree with each other.
+        if not g.get("distinct_names") == len(names) == len(g.get("names", ())) == len(set(g.get("names", ()))):
+            fail(f"{name}: group {sorted(names)} distinct_names {g.get('distinct_names')!r} != its {len(names)} member "
+                 f"names / names list {g.get('names')}")
     return f"{name} {len(rec['groups'])} groups each >= 2 distinct names; drift_excluded={len(drift)} kept apart"
 
 
@@ -519,6 +522,13 @@ def d_same_name_inject(rec):
     return n
 
 
+def d_distinct_names(rec):
+    # The recorded count disagrees with the group's own names: a group whose shape no longer says what it holds.
+    g = rec["groups"][0]
+    g["distinct_names"] = len(g["names"]) + 1
+    return f"group {'+'.join(g['names'])} distinct_names"
+
+
 def d_member_sha(rec):
     mid = sorted(rec["member_files"])[0]
     lines = rec["member_files"][mid]
@@ -532,7 +542,8 @@ DRILLS = (("REPO-BODY", d_repo_body, {"V-FD-REPO-REPRODUCES"}),
           ("GROUPS-EMPTIED", d_groups_emptied, {"V-FD-GROUPS-REPRODUCE"}),
           ("POP-ZERO", d_pop_zero, {"V-FD-POP-FLOOR"}),
           ("SAME-NAME-INJECT", d_same_name_inject, {"V-FD-PLANES-APART", "V-FD-GROUPS-REPRODUCE"}),
-          ("MEMBER-SHA", d_member_sha, {"V-FD-MEMBER-FILES"}))
+          ("MEMBER-SHA", d_member_sha, {"V-FD-MEMBER-FILES"}),
+          ("DISTINCT-NAMES", d_distinct_names, {"V-FD-PLANES-APART", "V-FD-GROUPS-REPRODUCE"}))
 
 
 def tamper_drill_rows(name, rec):
