@@ -73,7 +73,11 @@ Changing `decide` itself (a horizon range, a rehydration term) is a later commit
   future (resident = max ctx) KILLED by V-RR-BOUNDARY-NO-FUTURE; m4 exposure as saving (no premium, no C, label)
   KILLED by V-RR-EXPOSURE-NOT-A-SAVING. Each 26/27, only the named gate red. Extra probe m5 write premium dropped
   SURVIVED (27/27: the gate checked label + interval only) -> new V-RR-EXPOSURE-CARRIES-WRITE-PREMIUM pins the value;
-  m5 re-drilled KILLED (27/28). NEXT: UKDL (horizon-constant, successor-join, torn-append traps).
+  m5 re-drilled KILLED (27/28) `736c0075`.
+- UKDL SEALED `63908e7f`: T-HORIZON-CONSTANT-DECIDES-INSIDE-ITS-BAND-001,
+  T-SUCCESSOR-JOIN-CERTIFIED-ROW-NAMES-PREDECESSOR-001, T-TORN-APPEND-CONCURRENT-JSONL-001.
+  OPEN: a real horizon-driven CONTINUE (negative control PARTIAL); decide change + torn-append writer fix
+  wait on the orphan rollover.py hunks (Owner call).
 
 ## Not now
 NEXT: the `decide` horizon/rehydration change (owner rollover.py); `gsd_epoch` 300k static threshold (c2/e9 lane);
