@@ -309,3 +309,28 @@ check needs model calls, so measurement waits for the weekly reset (2026-10-07 1
 concurrent-writers 1.78 %, technical-failure 1.76 %, scoped-side-effect 1.66 %), each with the
 P3 ablation the first three moves had. Gates: `test_floor_probe` 9/9 (V-FLOOR-DETAIL-FILES,
 -NAMED-TYPES, -INSTR-CLASS, -RANK-CONTROLLABLE, -RANK-CLASSES; RANK-CLASSES seen red first).
+Owner "y" + "spend now" (2026-10-03): lever 1 via P3 set R2 (`ADDENDUM-R2.md`, frozen `6f5c3cf9`).
+
+## 15. Re-derivation, first measurement (2026-10-03, prototype, read-only, zero model calls)
+
+Same window, 351 transcripts, 13,173 Read/Grep/Glob calls paired with their results. A
+re-derivation = same tool + same canonical input + same result bytes already seen in an EARLIER,
+DIFFERENT transcript (a changed file is not one). Script: session scratchpad `rederive_proto.py`
+(not in the repo; promote only with a consumer).
+
+| tool | calls | re-derived | share of result chars |
+|---|---|---|---|
+| Read | 7,708 | 855 (11.1 %) | 19.6 % (8.56M chars, ~2.35M tok at read time) |
+| Grep | 4,707 | 10 | 0.2 % |
+| Glob | 758 | 11 | 0.2 % |
+
+Resident rent of re-derived results (tokens x later calls in that transcript) ~188M token-calls,
+~6.9 % of the startup-floor size; split evenly: same root (a subagent re-reading what its own
+root session read: 473 reads, ~94M) and other roots (403, ~94M). Top inputs: `.planning` phase
+docs in worktrees (orca-dws, recon_work), GEO-audit client context, `gsd-core/workflows/autonomous.md`.
+
+Limits: rent ignores compaction (over-estimate); a fresh subagent MUST read what it needs, so
+this is spend, not waste (RCA §18). The controllable part is the same-root half, where the parent
+already held the bytes; the lever there is what the spawn prompt carries, not a cache. Grep/Glob
+re-derivation is negligible: a detector for them would measure nothing. NEXT if pursued: per-
+workflow attribution of the same-root half (gsd planner -> executor -> verifier re-reading PLAN).
