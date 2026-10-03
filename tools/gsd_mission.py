@@ -2326,11 +2326,37 @@ AUTH_FALLBACK_RE = re.compile(r"invalid api key|please run /login|not logged in|
                               re.I)
 
 
+def _credentials_usable_without_breaker(now: float) -> bool:
+    """The degraded-mode twin of `provider_breaker.credentials_expired(...) is False`: True only when the
+    credentials file shows a usable login -- an access token still valid, or a lapsed one whose refresh token
+    has a KNOWN future expiry. Reads the expiry keys and the mere presence of `refreshToken`, never a token.
+    Unreadable, absent, expiresAt 0, a lapsed token with no refresh token, or an unknown refresh expiry are all
+    False: unmeasurable never releases a park. V-PFP-FALLBACK-CRED-PARITY pins it equal to the breaker's judgement."""
+    try:
+        oauth = json.loads((Path.home() / ".claude" / ".credentials.json").read_text(encoding="utf-8"))["claudeAiOauth"]
+
+        def secs(value):
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                return None
+            return value / 1000.0 if value > 1e11 else float(value)
+        exp = secs(oauth.get("expiresAt"))
+        if exp is None or exp <= 0:
+            return False
+        if exp > now:
+            return True
+        if "refreshToken" not in oauth:
+            return False
+        rexp = secs(oauth.get("refreshTokenExpiresAt"))
+        return rexp is not None and rexp > now
+    except Exception:  # noqa: BLE001 -- unreadable is unmeasured, and unmeasured keeps the park
+        return False
+
+
 def _auth_hold_without_breaker(session_id: str | None, now: float) -> dict | None:
     """Breaker-less park of an authorization refusal. Only a HOST-written reply (model "<synthetic>")
     is evidence, never a model quoting it. The qualifying precondition change in this degraded mode is a
-    credentials file rewritten after the refusal (stat only: this path never opens the file; the expiry
-    judgement lives in provider_breaker). No evidence of a refusal is not a refusal -> None."""
+    credentials file rewritten after the refusal AND showing a usable login (the same evidence the breaker
+    path requires; see _credentials_usable_without_breaker). No evidence of a refusal is not a refusal -> None."""
     try:
         t = lr.find_transcript(session_id) if session_id else None
         if not t:
@@ -2344,7 +2370,8 @@ def _auth_hold_without_breaker(session_id: str | None, now: float) -> dict | Non
                 return None
             evidence_at = lr._parse_iso(row.get("timestamp")) or os.path.getmtime(t)
             try:
-                if (Path.home() / ".claude" / ".credentials.json").stat().st_mtime > evidence_at:
+                if (Path.home() / ".claude" / ".credentials.json").stat().st_mtime > evidence_at \
+                        and _credentials_usable_without_breaker(now):
                     return None
             except OSError:
                 pass  # no credentials file to compare: the refusal stands

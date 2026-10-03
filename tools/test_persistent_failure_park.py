@@ -237,6 +237,45 @@ def grp_fallback() -> None:
         out = drive(1, mid="m-pfp-rel")
     check("V-PFP-FALLBACK-RELEASES-ON-RELOGIN", out["launches"] == 1, f"launches={out['launches']}")
 
+    # WR-07: a rewrite that leaves the login dead (or unjudgeable) must not un-park the mission
+    dead = {"expiresAt 0": dict(expires_ms=0, refresh_expires_ms=int((NOW + 86400) * 1000)),
+            "lapsed, refresh expiry unknown": dict(expires_ms=int((NOW - 3600) * 1000)),
+            "lapsed, no refresh token": dict(expires_ms=int((NOW - 3600) * 1000), refresh=False),
+            "no expiresAt": dict()}
+    got = {}
+    for label, kw in dead.items():
+        h_dead = Path(tempfile.mkdtemp(prefix="pfp-home-dead-"))
+        write_credentials(h_dead, mtime=EVIDENCE_AT + 120, **kw)
+        with scenario(syn, h_dead, breaker=False):
+            got[label] = drive(1, mid="m-pfp-dead")["launches"]
+    check("V-PFP-FALLBACK-DEAD-REWRITE-KEEPS-PARK", all(v == 0 for v in got.values()), f"launches by rewrite shape={got}")
+
+    h_raw = Path(tempfile.mkdtemp(prefix="pfp-home-raw-"))
+    write_credentials(h_raw, raw="{not json", mtime=EVIDENCE_AT + 120)
+    with scenario(syn, h_raw, breaker=False):
+        out = drive(1, mid="m-pfp-rawcred")
+    check("V-PFP-FALLBACK-UNREADABLE-REWRITE-KEEPS-PARK", out["launches"] == 0,
+          f"launches={out['launches']} (credentials rewritten but unparseable)")
+
+    shapes = {"future": dict(expires_ms=int((NOW + 3600) * 1000)), "zero": dict(expires_ms=0),
+              "lapsed+refresh future": dict(expires_ms=int((NOW - 3600) * 1000), refresh_expires_ms=int((NOW + 3600) * 1000)),
+              "lapsed+refresh past": dict(expires_ms=int((NOW - 3600) * 1000), refresh_expires_ms=int((NOW - 60) * 1000)),
+              "lapsed+refresh unknown": dict(expires_ms=int((NOW - 3600) * 1000)),
+              "lapsed, none": dict(expires_ms=int((NOW - 3600) * 1000), refresh=False), "no expiry": dict()}
+    diffs = {}
+    for label, kw in shapes.items():
+        h = Path(tempfile.mkdtemp(prefix="pfp-home-par-"))
+        write_credentials(h, **kw)
+        try:
+            with scenario(syn, h, breaker=True):
+                mine = gm._credentials_usable_without_breaker(NOW)
+        except Exception as exc:  # noqa: BLE001 -- a missing reader reads as a failing gate, not a crash
+            mine = f"{exc.__class__.__name__}: {exc}"
+        theirs = pb.credentials_expired(pb.credentials_state(home=h), NOW) is False
+        if mine != theirs:
+            diffs[label] = (mine, theirs)
+    check("V-PFP-FALLBACK-CRED-PARITY", not diffs, f"degraded reader disagrees with provider_breaker on: {diffs}")
+
 
 def grp_parity() -> None:
     try:
@@ -494,6 +533,10 @@ def _m_fallback_ignores_synthetic():
     return _patch(gm, "_auth_hold_without_breaker", mutant)
 
 
+def _m_fallback_any_rewrite_releases():
+    return _patch(gm, "_credentials_usable_without_breaker", lambda now: True)
+
+
 MUTANTS = [
     ("M1 AUTH_FALLBACK_RE never matches", _m_auth_re_never_matches, [grp_fallback],
      ["V-PFP-137-FALLBACK-PARKS"]),
@@ -504,6 +547,8 @@ MUTANTS = [
      ["V-PFP-HOLD-RELOGIN-STILL-EXPIRED"]),
     ("M5 fallback ignores the synthetic check", _m_fallback_ignores_synthetic, [grp_fallback],
      ["V-PFP-FALLBACK-QUOTED-NOT-PARKED"]),
+    ("M6 fallback releases on any credentials rewrite", _m_fallback_any_rewrite_releases, [grp_fallback],
+     ["V-PFP-FALLBACK-DEAD-REWRITE-KEEPS-PARK", "V-PFP-FALLBACK-UNREADABLE-REWRITE-KEEPS-PARK"]),
 ]
 
 
