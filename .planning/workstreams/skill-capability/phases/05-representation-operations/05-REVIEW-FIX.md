@@ -211,3 +211,122 @@ their pins. `frozen` and every other state entry are byte-identical.
 _Fixed: 2026-10-03_
 _Fixer: Claude (gsd-code-fixer)_
 _Iteration: 1_
+
+## Verification gap closure
+
+Source: `05-VERIFICATION.md` (gaps_found 17/18, HEAD 78ca9cac). Worktree sc-run, host gex44, python3 3.12.3. Edits and
+commits in this checkout directly (no worktree). Every gate run below ran in this checkout. Each item was RED first on
+the code as it was, then GREEN, and went in as its own pathspec commit.
+
+### Gap 1 (WR-05): `listing_chars_upper_bound` is a true bound or UNMEASURED
+
+**Status:** fixed: requires human verification (arithmetic of the bound)
+**Files modified:** `tools/skill_dedup_sweep.py`, `tools/test_skill_representation.py`
+**Commit:** 8a8ffb8d
+**RED:** two new poles build a listing, run it through the probe's own `analyse` (`wiki/tools/listing_floor_probe.py`,
+loaded from the tree, not edited) on a synthetic transcript, and require the bound to be UNMEASURED or >= the
+characters the member's own entry frees. On the old code: `V-FD-POLE-LISTING-MULTILINE listing_chars_upper_bound=108
+freed={'aa': 420, ...}` and `V-FD-POLE-LISTING-NAME-COLLISION listing_chars_upper_bound=49 freed={'code-review': 316,
+...}` (the `- code-review:code-review: ...` line overwrote the skill's key), SR_PASS=14/15.
+**GREEN:** a member counts only when the challenger row carries `watch_shape[name] = {lines, keys, chars}` with
+lines 1, keys 1 and chars == len(name) + LINE_OVERHEAD (5) + N. Anything else is UNMEASURED with a `chars_why`.
+`sweep.entry_shape(listing, name)` is the reference shape: it splits the way the probe does (`splitlines()`, `- `
+lines, key before the first ':'). The frozen probe writes no `watch_shape`, so every figure from its rows now reads
+UNMEASURED. Both poles check two cases: the probe's rows as written, and the same rows given the true shape. Both read
+UNMEASURED (`entry spans 2 listing lines`, `2 listing lines parse to this name`). LISTING-LINE-BOUND is the positive
+control: UNMEASURED without a shape, and 108 == the largest figure freed with one. `CHARS_BASIS` now says + 5.
+Result: SR_PASS=15/15 (15 poles + 2 mutants). The gex44 group still renders UNMEASURED (its `chars_why`: both members
+`not in watch set`), so the evidence bytes did not change.
+**Real-listing check (gex44 transcript 88cfe52b, 30000 chars, 294 `- ` lines, 213 keys):** 121 keys pass the proof,
+and for each of them the figure equals the entry's block length. agent-reach (4 lines, 845 chars), claude-api (3 lines,
+1083) and code-review (2 keyed lines) are refused.
+**Residual:** a continuation line of a description that itself starts with `- ` counts as an entry in the probe's
+grammar, so the probe and `entry_shape` both end the block there. This is written in the `entry_shape` docstring.
+
+### Gap 2 (WR-02 anchor): recall windows tied to the commit that applied the operation
+
+**Status:** fixed: requires human verification (logic: the anchor rule)
+**Files modified:** `tools/test_skill_representation.py`, `evidence/F-representation.md` (re-rendered), `ledger.json`
+(state.F prg sha `a2c0fc2b...` -> `40141784e8fcf82a4049e4ad681a6e65c515f0d326f9ff85f835a3eb8c640303`, F line only)
+**Commit:** 76d5cac5
+**RED:** the fixture entry gained `applied_commit` (fabricated, resolved by the fixture at 2026-09-09T02:00:00+02:00,
+between the windows), and three drills were added. On the old `_recall`, all three read
+`expected ['V-FO-RECALL'], red clauses []` (SR_PASS=13/15):
+- RECALL-BOTH-PRE-OP: both windows end before a commit at 2026-09-20.
+- RECALL-BOTH-POST-OP: both windows start after a commit at 2026-08-20.
+- MISSING-APPLIED-COMMIT: the field is deleted.
+**GREEN:** `resolve_applied_commits(refs, repo)` asks git three questions for each 7-40 hex ref: is it a commit
+(`rev-parse --verify`), is it an ancestor of HEAD (`merge-base --is-ancestor`), and what is its committer time
+(`log -1 --format=%cI`, parsed timezone-aware). `operations_inputs` passes the result to `check_entry(..., commits)`.
+`_recall` checks the anchor last and requires before.end <= commit time <= after.start. The outcomes:
+- missing or malformed field, unknown commit, or a commit that is not an ancestor: UNMEASURED (FAIL);
+- git unable to answer: INCONCLUSIVE.
+Each of the three RED drills is now killed by V-FO-RECALL FAIL. Three more drills go through real git:
+- APPLIED-COMMIT-REAL: the commit that added `f-operations.json`, with the windows one day either side of its real
+  `%cI`. It passes every clause. This is a third positive control.
+- APPLIED-COMMIT-UNRESOLVED: 40 zeros. FAIL.
+- APPLIED-COMMIT-GIT-FAILURE: `git -C` on an absent directory. INCONCLUSIVE.
+The two fabricated positive controls pass with the fabricated anchor. Drills now also pin the status of their red
+clauses: FAIL, or INCONCLUSIVE for NOISE-ABSENT and APPLIED-COMMIT-GIT-FAILURE. The evidence drill table shows that
+status.
+**Mutants:** each of these was run on a copy and the copy deleted afterwards. Each turned V-FO-DRILLS red:
+- time comparisons disabled: BOTH-PRE-OP and BOTH-POST-OP FAIL;
+- a missing field defaulted to the drill commit: MISSING-APPLIED-COMMIT FAIL;
+- unsourced noise flipped from INCONCLUSIVE to FAIL: NOISE-ABSENT and ENTRIES-STATUS-NOISE-UNSOURCED FAIL.
+**Schema:** the entry schema text (gate docstring, `ENTRY_SCHEMA_LINES`, the V-FO-RECALL clause doc, all rendered into
+the evidence) names `applied_commit`. `f-operations.json` holds 0 entries, and its `rule` is the frozen text verbatim,
+so it was not changed (pin `a19b06cf...` unchanged). The schema id stays `/1` because no entry was ever written under
+the old shape.
+**Follow-up commit f349cbcb:** this adds the APPLIED-COMMIT-NOT-ANCESTOR drill. It builds a throwaway repository,
+never this one, with HEAD detached on its first commit and a second commit on a side branch. The windows are placed
+around the side commit's real committer time, so the only check that can refuse it is ancestry. The drill is killed
+by V-FO-RECALL FAIL (`is not an ancestor of HEAD`). In a mutant without `merge-base --is-ancestor` it reads
+`red clauses []`. Evidence re-rendered; prg sha `40141784...` ->
+`7183cb5945f06530b936592f5674b9cd5a2e5e9692322da755ea72ed7baec1ba`, F line only. The gate now gives SR_PASS=15/15,
+`V-FO-DRILLS 32 drills`.
+
+### Gap 3: state.F reason states the counts the gate prints
+
+**Status:** fixed
+**Files modified:** `ledger.json` (state.F `reason` only)
+**Commit:** 27867eb1
+**RED:** a throwaway script, `/tmp/sc_reason_check.py`, not committed, compared two strings. One was the drill
+clause of the reason. The other was the `V-FO-DRILLS` head of a gate run.
+- The ledger said `25 drills (23 refusals, 2 positive controls)`.
+- The gate printed `32 drills (3 positive controls, 27 refusals red by FAIL, 2 INCONCLUSIVE expectations) + 3
+  entry-status lines (2 INCONCLUSIVE, 1 FAIL)`.
+Result: MISMATCH. NOISE-ABSENT had always been an INCONCLUSIVE expectation, not a red refusal, and the old head never
+printed the split at all.
+**GREEN:** the reason now quotes the printed head verbatim, and the script reads MATCH. The reason also says what each
+group does:
+- each refusal is red by FAIL on its own clause;
+- each INCONCLUSIVE expectation (unsourced noise, git unable to answer) reads INCONCLUSIVE on its own clause;
+- each positive control (one of them on a real ancestor commit) passes every clause.
+The operation-gate sentence now names the applied_commit anchor. These counts come from the drill tables that every
+drill is checked against, so a green run prints observed counts.
+
+## Ledger coupling (gap closure)
+
+All four ledger edits are on line 104, the `"F":` line. `git diff 78ca9cac HEAD -- vault/programs/skill-capability/ledger.json`
+has one hunk, `@@ -104 +104 @@`. A JSON comparison against the pre-edit file shows these parts identical:
+- `frozen`;
+- every other state entry;
+- all F evidence entries except the prg sha.
+The changes:
+- prg sha of `evidence/F-representation.md`: `a2c0fc2b...` -> `40141784...` (76d5cac5) -> `7183cb5945f06530b936592f5674b9cd5a2e5e9692322da755ea72ed7baec1ba` (f349cbcb);
+- the reason text (27867eb1).
+`F-sweep-gex44.json` (`8b17edc5...`) and `f-operations.json` (`a19b06cf...`) did not change, and neither did their pins.
+The owner bundle was not edited. No new Owner action results. The existing `[F]` laptop procedure (line 11) is
+narrower now: the operation has to be committed between the two windows, and the entry has to name that commit as
+`applied_commit`. An entry without it is refused with `applied_commit None is not the 7-40 hex commit that applied
+the operation`.
+
+## Verification (gap closure, run in this checkout, sc-run, on gex44, HEAD 27867eb1)
+
+- `timeout 600 python3 tools/test_skill_representation.py`: SR_PASS=15/15, rc 0. The parts: V-FD 15 poles + 2 mutants
+  and 7 tamper drills + clean control; V-FO 32 drills + 3 entry-status lines; subprocess poles ok; V-FR-EVIDENCE-CURRENT ok.
+- `python3 tools/test_skill_representation.py --recording vault/programs/skill-capability/evidence/F-sweep-gex44.json`: SR_PASS=7/7.
+- `timeout 1900 python3 tools/test_skill_capability_program.py --pillar X`: CEP_PILLAR_A=PASS, B=PASS, C=PASS,
+  D=PASS, F=PASS, H=PASS.
+- `python3 tools/test_skill_capability_program.py --status`: violations [], rc 0.
+
