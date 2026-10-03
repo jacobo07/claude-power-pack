@@ -76,7 +76,7 @@ Total Plans in Phase: 3
   tools/test_skill_drift.py, evidence/H-drift.md and a new card_source_digests.json. FIRST: check whether
   04-03-SUMMARY.md and its commits landed. If not, read those edits (never discard them unread), re-dispatch 04-03
   telling it the files already exist, then 04-04, then phase 4 code review + verification.
-- Phase 5: 05-01/05-02-PLAN.md written by a planner, UNCOMMITTED, not plan-checked yet.
+- Phase 5: 05-01..05-03-PLAN.md committed at hand-off, NOT yet plan-checked (run the checker before executing; 05-01 reuses 04-02/04-03 functions in tools/skill_mirror_drift.py: repo_skills, repo_side, live_side, dir_digest, lf_bytes -- confirm they exist after 04-03 lands). Planner chose IMPLEMENTED (sweep + operation gate, 0 ops applied).
 - Phase 6: planner stopped at the wall, no plans; re-plan after 04-03 lands (reuse its card-vs-source record).
 - Phase 7: planner in flight at hand-off; look for 07-0x-PLAN.md (uncommitted, unchecked).
 - Contexts for phases 5-9 are committed. Recurring review lessons to pass to every planner/executor: verdict
