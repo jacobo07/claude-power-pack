@@ -16,11 +16,11 @@ Mission terms: skill-capability, card-precision, skill-delivery, skill-listing, 
 - [x] **SC-F**: Disclosure / fission / fusion / inline / dedup -- each operation with before/after D-LISTING and a recall check.
 - [x] **SC-G**: Compile-out + lineage -- a card names its source skill + commit; a gate fails on unre-derived source change.
 - [x] **SC-H**: Freshness / drift / recert -- live-vs-mirror and card-vs-source drift gate, driven from both poles.
-- [ ] **SC-I**: Lifecycle / GC -- merged into cognitive-economy pillar T by handoff; nothing deleted.
-- [ ] **SC-J**: Creation governance -- a new skill declares its opportunity detector or why it has none; gated.
-- [ ] **SC-K**: Capability routing + ACV -- merged into ACV by handoff; no second router.
-- [ ] **SC-L**: CO-12 + Context Compiler -- Context Compiler deferred to cognitive-economy by handoff.
-- [ ] **SC-M**: Economics / model / goal relativity -- merged into `tools/usage_index.py` windows by handoff.
+- [x] **SC-I**: Lifecycle / GC -- merged into cognitive-economy pillar T by handoff; nothing deleted.
+- [x] **SC-J**: Creation governance -- a new skill declares its opportunity detector or why it has none; gated.
+- [x] **SC-K**: Capability routing + ACV -- merged into ACV by handoff; no second router.
+- [x] **SC-L**: CO-12 + Context Compiler -- Context Compiler deferred to cognitive-economy by handoff.
+- [x] **SC-M**: Economics / model / goal relativity -- merged into `tools/usage_index.py` windows by handoff.
 - [ ] **SC-N**: Closeout -- UKDL + CBR reviews, deltas, retained settings == declared, push rule honoured.
 
 ## Out of Scope
@@ -41,9 +41,9 @@ Mission terms: skill-capability, card-precision, skill-delivery, skill-listing, 
 | SC-F | Phase 5 | Complete |
 | SC-G | Phase 6 | Complete |
 | SC-E | Phase 7 | Complete |
-| SC-I | Phase 8 | Pending |
-| SC-J | Phase 8 | Pending |
-| SC-K | Phase 8 | Pending |
-| SC-L | Phase 8 | Pending |
-| SC-M | Phase 8 | Pending |
+| SC-I | Phase 8 | Complete |
+| SC-J | Phase 8 | Complete |
+| SC-K | Phase 8 | Complete |
+| SC-L | Phase 8 | Complete |
+| SC-M | Phase 8 | Complete |
 | SC-N | Phase 9 | Pending |
