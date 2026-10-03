@@ -420,6 +420,12 @@ const CHAIN_MAP = {
     // doctrine card. Pure node, no spawn. Proof: hooks/tests/test-destructive-doctrine-card.js
     // (15/15 alone, + --e2e through this dispatcher; never-deny mutant 11/15).
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/destructive_doctrine_card.js', timeoutMs: 5000 },
+    // concurrent-writers-shared-tree commit card (PLAN-SKILL-RESIDENCY C4b, 2026-10-03, Owner go). At a
+    // `git commit` it lists staged hunks this session did not write. Mode by CLAUDE_DOCTRINE_CARDS:
+    // ledger (default here: records, never denies) | deny | off. Returns before any I/O unless the
+    // commit regex matches; one bounded git spawn otherwise. Evidence for deny: p3_delivery arm C
+    // 2/2 PASS vs 0/2 in N0/R/P. Proof: hooks/tests/test-doctrine-cards.js (16/16).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/doctrine_cards.js', timeoutMs: 5000 },
   ],
   'PreToolUse-Edit-chain': [
     // SECURITY FIX (2026-06-04, Owner-authorized "Wire firewall + fix
