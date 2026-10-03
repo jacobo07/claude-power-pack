@@ -38,6 +38,10 @@ if "--gate-path" in sys.argv:
 
 TMP_ROOT = Path(tempfile.mkdtemp(prefix="floor-test-"))
 SCRATCH_HOME = TMP_ROOT / "home0"
+# The test fence: with these set the gate refuses any --probe executable outside the scratch root, so no test in this
+# process (in-process or subprocess) can start a real `claude` session.
+os.environ["CPP_FLOOR_GATE_TEST"] = "1"
+os.environ["CPP_FLOOR_GATE_TEST_ROOT"] = str(TMP_ROOT)
 _COUNTER = [0]
 RESULTS: list[tuple[str, str, str]] = []   # (status, gate, evidence)
 QUIET = [False]
@@ -255,14 +259,39 @@ def floor_pair(root, ref_sizes, now_sizes):
 
 
 # --------------------------------------------------------------------------- runners
-def run_cli(args, env_extra=None):
-    """The real CLI as a subprocess: [sys.executable, <gate file>, *args], cwd = repo root, HOME = scratch home."""
+def under_root(path) -> bool:
+    try:
+        p, r = Path(path).resolve(), TMP_ROOT.resolve()
+    except (OSError, RuntimeError):
+        return False
+    return r in p.parents
+
+
+def cli_env(env_extra=None) -> dict:
+    """The environment of a gate subprocess: scratch HOME, repo on PYTHONPATH, the test fence ALWAYS on."""
     env = dict(os.environ)
     SCRATCH_HOME.mkdir(parents=True, exist_ok=True)
     env["HOME"] = str(SCRATCH_HOME)
     env["USERPROFILE"] = str(SCRATCH_HOME)
     env["PYTHONPATH"] = str(REPO) + os.pathsep + env.get("PYTHONPATH", "")
     env.update(env_extra or {})
+    env["CPP_FLOOR_GATE_TEST"] = "1"
+    env["CPP_FLOOR_GATE_TEST_ROOT"] = str(TMP_ROOT)
+    return env
+
+
+def refuse_real_probe(args, env) -> None:
+    """V-FLOOR-NO-REAL-SESSION's guard: a --probe run from a test must name a stub executable under the scratch root."""
+    if "--probe" in [str(a) for a in args]:
+        exe = env.get("CPP_CLAUDE_EXE")
+        if not exe or not under_root(exe):
+            raise AssertionError("--probe from a test needs CPP_CLAUDE_EXE = a stub executable under the scratch root")
+
+
+def run_cli(args, env_extra=None):
+    """The real CLI as a subprocess: [sys.executable, <gate file>, *args], cwd = repo root, HOME = scratch home."""
+    env = cli_env(env_extra)
+    refuse_real_probe(args, env)
     p = subprocess.run([sys.executable, str(GATE_FILE), *[str(a) for a in args]], cwd=str(REPO), env=env,
                        capture_output=True, text=True, timeout=120)
     return p.returncode, p.stdout, p.stderr
@@ -270,6 +299,9 @@ def run_cli(args, env_extra=None):
 
 def run_main(args):
     """In-process GATE.main with stdout and stderr captured, so a drill's monkeypatch reaches it."""
+    if "--probe" in [str(a) for a in args] and (os.environ.get("CPP_FLOOR_GATE_TEST") != "1"
+                                                or os.environ.get("CPP_FLOOR_GATE_TEST_ROOT") != str(TMP_ROOT)):
+        raise AssertionError("--probe in-process needs the test fence on")
     out, err = io.StringIO(), io.StringIO()
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
         rc = GATE.main([str(a) for a in args])
@@ -1440,6 +1472,361 @@ def g_session_id_refused():
     return (not why), "; ".join(why) or "8 malformed ids -> exit 2 invalid_session_id before any glob"
 
 
+# --------------------------------------------------------------------------- gates: --probe (stubs only)
+STUB_BODY = """#!{python}
+import json, os, re, sys, time, uuid
+marker = os.environ.get("STUB_MARKER")
+if marker:
+    with open(marker, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(sys.argv) + "\\n")
+cwd = os.getcwd()
+sid = str(uuid.uuid4())
+home = os.path.expanduser("~")
+d = os.path.join(home, ".claude", "projects", re.sub(r"[^A-Za-z0-9]", "-", cwd))
+os.makedirs(d, exist_ok=True)
+def row(n, **kw):
+    kw["timestamp"] = "2026-10-04T10:00:%02d.000Z" % n
+    kw["sessionId"] = sid
+    return kw
+def att(n, atype, **f):
+    return row(n, type="attachment", cwd=cwd, attachment=dict(type=atype, **f))
+rows = [
+    row(1, type="user", cwd=cwd, isMeta=False, message={{"role": "user", "content": "Reply with the single word OK."}}),
+    att(2, "instructions", files=[
+        {{"path": os.path.join(home, ".claude", "CLAUDE.md"), "type": "User", "content": "G" * 10000}},
+        {{"path": os.path.join(cwd, "CLAUDE.md"), "type": "Project", "content": "P" * 10000}}]),
+    att(3, "skill_listing", content="- alpha: first skill\\n- beta: second skill\\n", names=["alpha", "beta"],
+        skillCount=2, isInitial=True),
+    att(4, "prompt_snapshot", systemPrompt=["S" * 800]),
+    row(5, type="assistant", cwd=cwd, message={{"role": "assistant", "model": "claude-opus-5-5",
+        "content": [{{"type": "text", "text": "OK"}}],
+        "usage": {{"input_tokens": 2, "cache_creation_input_tokens": 30000, "cache_read_input_tokens": 0,
+                  "output_tokens": 10}}}}),
+]
+with open(os.path.join(d, sid + ".jsonl"), "w", encoding="utf-8") as fh:
+    for r in rows:
+        fh.write(json.dumps(r) + "\\n")
+{tail}
+"""
+STUB_TAIL_OK = 'print(json.dumps({"session_id": sid, "total_cost_usd": 0.0, "num_turns": 1, "result": "OK"}))'
+STUB_TAIL_NOSID = 'print(json.dumps({"total_cost_usd": 0.0, "num_turns": 1, "result": "OK"}))'
+
+
+def write_stubs(root):
+    """Stub executables under <root>/bin: good, bad-exit, no-session-id, and a non-executable copy of the good one."""
+    root = Path(root)
+    b = root / "bin"
+    b.mkdir(parents=True, exist_ok=True)
+    good = b / "claude-stub"
+    good.write_text(STUB_BODY.format(python=sys.executable, tail=STUB_TAIL_OK), encoding="utf-8")
+    good.chmod(0o755)
+    bad = b / "claude-bad"
+    bad.write_text(f"#!{sys.executable}\nimport sys\nsys.exit(3)\n", encoding="utf-8")
+    bad.chmod(0o755)
+    nosid = b / "claude-nosid"
+    nosid.write_text(STUB_BODY.format(python=sys.executable, tail=STUB_TAIL_NOSID), encoding="utf-8")
+    nosid.chmod(0o755)
+    noexec = b / "claude-noexec"
+    noexec.write_text(good.read_text(encoding="utf-8"), encoding="utf-8")
+    noexec.chmod(0o644)
+    return {"good": good, "bad": bad, "nosid": nosid, "noexec": noexec}
+
+
+def probe_env(root, exe, extra=None):
+    root = Path(root)
+    env = {"CPP_CLAUDE_EXE": str(exe), "CPP_FLOOR_PROBE_RESULTS": str(root / "probe-results.jsonl"),
+           "STUB_MARKER": str(root / "marker.jsonl"), **home_env(root)}
+    env.update(extra or {})
+    return env
+
+
+@contextlib.contextmanager
+def env_set(**kv):
+    """os.environ keys set (or unset with None) for the block and restored after it."""
+    saved = {k: os.environ.get(k) for k in kv}
+    for k, v in kv.items():
+        if v is None:
+            os.environ.pop(k, None)
+        else:
+            os.environ[k] = str(v)
+    try:
+        yield
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
+@contextlib.contextmanager
+def patched(obj, attr, value):
+    saved = getattr(obj, attr)
+    setattr(obj, attr, value)
+    try:
+        yield
+    finally:
+        setattr(obj, attr, saved)
+
+
+def probe_root(prefix):
+    root = scratch(prefix)
+    (root / "repo").mkdir()
+    (root / "home").mkdir()
+    return root, write_stubs(root)
+
+
+TRACKED_RESULTS = REPO / "wiki" / "tools" / "listing_floor_probe.results.jsonl"
+
+
+def tracked_results_sha() -> str:
+    return sha256_file(TRACKED_RESULTS) if TRACKED_RESULTS.exists() else "absent"
+
+
+def g_probe_stub():
+    if os.name == "nt":
+        return "SKIP", "a script cannot be the owner's argv[0] on nt"
+    root, stubs = probe_root("pstub")
+    env = probe_env(root, stubs["good"])
+    before = tracked_results_sha()
+    ref_json = root / "ref.json"
+    rc, out, err = run_cli(["--write-reference", ref_json, "--probe", "--cwd", root / "repo"], env)
+    why = []
+    if rc != 0 or not ref_json.is_file():
+        return False, f"write rc={rc} out={out[-300:]!r} err={err[-300:]!r}"
+    marker = (root / "marker.jsonl").read_text(encoding="utf-8").splitlines()
+    if len(marker) != 1:
+        why.append(f"marker holds {len(marker)} argv lines after the write")
+    else:
+        argv = json.loads(marker[0])
+        for want in ("-p", "Reply with the single word OK.", "--model"):
+            if want not in argv:
+                why.append(f"argv lacks {want!r}: {argv}")
+    rows = [json.loads(ln) for ln in (root / "probe-results.jsonl").read_text(encoding="utf-8").splitlines() if ln.strip()]
+    if len(rows) != 1 or not str(rows[0].get("label", "")).startswith("floor-gate-"):
+        why.append(f"probe-results.jsonl rows={[r.get('label') for r in rows]}")
+    if tracked_results_sha() != before:
+        why.append("the tracked listing_floor_probe.results.jsonl changed")
+    if not any(ln.startswith("SOURCE probe ") for ln in out.splitlines()) or not any(ln.startswith("PROBE exe=") for ln in out.splitlines()):
+        why.append(f"no SOURCE probe / PROBE line: {out[:300]!r}")
+    ref = json.loads(ref_json.read_text(encoding="utf-8"))
+    prov = ref.get("provenance", {})
+    if prov.get("source") != "probe" or not str((prov.get("probe") or {}).get("label", "")).startswith("floor-gate-"):
+        why.append(f"reference provenance source={prov.get('source')!r} probe={prov.get('probe')!r}")
+    if ref.get("total_chars") is None or (ref.get("tokens") or {}).get("first_call_total") != 30002:
+        why.append(f"reference tokens={ref.get('tokens')}")
+    rc, out, err = run_cli(["--check", "--reference", ref_json, "--probe", "--cwd", root / "repo"], env)
+    if rc != 0 or not last_line(out).startswith("FLOOR verdict=WITHIN_BOUND"):
+        why.append(f"check rc={rc} last={last_line(out)!r} err={err[-200:]!r}")
+    marker = (root / "marker.jsonl").read_text(encoding="utf-8").splitlines()
+    if len(marker) != 2:
+        why.append(f"marker holds {len(marker)} lines after the check (want 2)")
+    if tracked_results_sha() != before:
+        why.append("the tracked results file changed after the check")
+    return (not why), "; ".join(why) or "stub ran twice (marker 2), write+check green, results rebound to scratch, tracked results sha unchanged"
+
+
+def g_probe_bad_exit():
+    if os.name == "nt":
+        return "SKIP", "a script cannot be the owner's argv[0] on nt"
+    root, stubs = probe_root("pbad")
+    target = root / "x.json"
+    rc, out, err = run_cli(["--write-reference", target, "--probe", "--cwd", root / "repo"], probe_env(root, stubs["bad"]))
+    ok = unmeasurable(rc, out, "probe_failed") and not target.exists() and "Traceback" not in err
+    return ok, f"rc={rc} last={last_line(out)!r} exists={target.exists()} err={err[-200:]!r}" if not ok else "stub exit 3 with no output -> exit 2 probe_failed, nothing written"
+
+
+def g_probe_not_executable():
+    if os.name == "nt":
+        return "SKIP", "file modes do not decide executability on nt"
+    root, stubs = probe_root("pnx")
+    target = root / "x.json"
+    rc, out, err = run_cli(["--write-reference", target, "--probe", "--cwd", root / "repo"], probe_env(root, stubs["noexec"]))
+    ok = unmeasurable(rc, out, "probe_failed") and not target.exists() and "Traceback" not in err and "PermissionError" in out
+    return ok, f"rc={rc} out={out[-300:]!r} err={err[-200:]!r}" if not ok else "mode 0o644 stub -> exit 2 probe_failed (PermissionError named, no message)"
+
+
+def g_probe_timeout():
+    import listing_floor_probe as lfp
+    root, stubs = probe_root("ptmo")
+    ref_json = good_ref("ptref")[3]
+    why = []
+    args = ["--check", "--reference", ref_json, "--probe", "--cwd", root / "repo"]
+
+    def raiser(*a, **k):
+        raise subprocess.TimeoutExpired(a[0] if a else "claude", 900)
+
+    def run_pole(label, patch_obj, patch_attr, patch_value):
+        before = (lfp.CLAUDE, lfp.OUT, list(sys.argv))
+        with env_set(CPP_CLAUDE_EXE=stubs["good"], CPP_FLOOR_PROBE_RESULTS=root / "r.jsonl", **home_env(root)):
+            with patched(patch_obj, patch_attr, patch_value):
+                rc, out, err = run_main(args)
+        after = (lfp.CLAUDE, lfp.OUT, list(sys.argv))
+        if not unmeasurable(rc, out, "probe_failed"):
+            why.append(f"{label}: rc={rc} last={last_line(out)!r}")
+        if "Traceback" in err or "Traceback" in out:
+            why.append(f"{label}: traceback printed")
+        if before != after:
+            why.append(f"{label}: owner globals not restored {before} -> {after}")
+        return out
+    out = run_pole("timeout", lfp.subprocess, "run", raiser)
+    if "TimeoutExpired" not in out:
+        why.append(f"timeout: probe_error class not named: {out[-200:]!r}")
+
+    def exits(*a, **k):
+        raise SystemExit(2)
+    run_pole("systemexit", lfp, "main", exits)
+
+    def oserr(*a, **k):
+        raise FileNotFoundError(2, "gone")
+    run_pole("oserror", lfp.subprocess, "run", oserr)
+    return (not why), "; ".join(why) or "TimeoutExpired / SystemExit / OSError -> exit 2 probe_failed, no traceback, lfp.CLAUDE / OUT / sys.argv restored"
+
+
+def g_probe_no_exe():
+    import listing_floor_probe as lfp
+    root, stubs = probe_root("pnoexe")
+    ref_json = good_ref("pnoref")[3]
+    calls = []
+    why = []
+    with env_set(CPP_CLAUDE_EXE=None, **home_env(root)):
+        with patched(lfp, "CLAUDE", str(root / "no-such-claude")), patched(shutil, "which", lambda *_a, **_k: None), \
+                patched(lfp.subprocess, "run", lambda *a, **k: calls.append(a) or None):
+            rc, out, _ = run_main(["--check", "--reference", ref_json, "--probe", "--cwd", root / "repo"])
+    if not unmeasurable(rc, out, "claude_exe_not_found"):
+        why.append(f"unset exe: rc={rc} last={last_line(out)!r}")
+    # an env path to a file that does not exist is the same refusal
+    with env_set(CPP_CLAUDE_EXE=root / "bin" / "absent", **home_env(root)):
+        with patched(lfp.subprocess, "run", lambda *a, **k: calls.append(a) or None):
+            rc, out, _ = run_main(["--check", "--reference", ref_json, "--probe", "--cwd", root / "repo"])
+    if not unmeasurable(rc, out, "claude_exe_not_found"):
+        why.append(f"absent env exe: rc={rc} last={last_line(out)!r}")
+    if calls:
+        why.append(f"subprocess.run reached {len(calls)} time(s)")
+    return (not why), "; ".join(why) or "no executable (env unset / env path absent) -> exit 2 claude_exe_not_found, zero subprocess calls"
+
+
+def g_probe_fence():
+    import listing_floor_probe as lfp
+    root, stubs = probe_root("pfence")
+    ref_json = good_ref("pfref")[3]
+    calls = []
+    why = []
+    with env_set(CPP_CLAUDE_EXE=sys.executable, **home_env(root)):
+        with patched(lfp.subprocess, "run", lambda *a, **k: calls.append(a) or None):
+            rc, out, _ = run_main(["--check", "--reference", ref_json, "--probe", "--cwd", root / "repo"])
+    if not unmeasurable(rc, out, "probe_fenced") or calls:
+        why.append(f"outside the root: rc={rc} last={last_line(out)!r} calls={len(calls)}")
+    with env_set(CPP_FLOOR_GATE_TEST_ROOT=None, CPP_CLAUDE_EXE=stubs["good"]):
+        try:
+            GATE.resolve_probe_exe(lfp)
+            why.append("fence on with no root did not refuse")
+        except GATE.Unmeasurable as exc:
+            if exc.reason != "probe_fenced":
+                why.append(f"fence without root: {exc.reason}")
+    with env_set(CPP_CLAUDE_EXE=stubs["good"]):
+        try:
+            if str(GATE.resolve_probe_exe(lfp)) != str(stubs["good"]):
+                why.append("the stub inside the root was not returned")
+        except GATE.Unmeasurable as exc:
+            why.append(f"stub inside the root refused: {exc.reason}")
+    # the fence only restricts: unset, an executable outside the root is accepted (the production path)
+    with env_set(CPP_FLOOR_GATE_TEST=None, CPP_CLAUDE_EXE=sys.executable):
+        try:
+            GATE.resolve_probe_exe(lfp)
+        except GATE.Unmeasurable as exc:
+            why.append(f"fence off still refused: {exc.reason}")
+    return (not why), "; ".join(why) or "fence on: outside root and rootless refused before spawn, stub inside accepted; fence off changes nothing"
+
+
+def g_probe_refusals():
+    import listing_floor_probe as lfp
+    root, stubs = probe_root("pref")
+    ref_json = good_ref("prref")[3]
+    calls = []
+    why = []
+    with env_set(CPP_CLAUDE_EXE=stubs["good"], **home_env(root)):
+        with patched(lfp.subprocess, "run", lambda *a, **k: calls.append(a) or None):
+            rc, out, _ = run_main(["--check", "--reference", ref_json, "--probe", "--cwd", root / "no-such-dir"])
+    if not unmeasurable(rc, out, "probe_cwd_missing") or calls:
+        why.append(f"missing cwd: rc={rc} last={last_line(out)!r} calls={len(calls)}")
+    ref_tx = good_ref("prref2")[1]
+    for flag, val in (("--transcript", ref_tx), ("--project-dir", Path(ref_tx).parent), ("--session", "abc-123")):
+        rc, out, _ = run_main(["--check", "--reference", ref_json, flag, val, "--cwd", root / "repo"])
+        if not unmeasurable(rc, out, "cwd_without_probe"):
+            why.append(f"--cwd with {flag}: rc={rc} last={last_line(out)!r}")
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--probe", "--transcript", ref_tx])
+    if rc != 2:
+        why.append(f"--probe with --transcript must be a usage error: rc={rc}")
+    if os.name != "nt":
+        saved = lfp.time.sleep
+        lfp.time.sleep = lambda *_a, **_k: None
+        try:
+            with env_set(CPP_CLAUDE_EXE=stubs["nosid"], CPP_FLOOR_PROBE_RESULTS=root / "r.jsonl", **home_env(root)):
+                rc, out, _ = run_main(["--check", "--reference", ref_json, "--probe", "--cwd", root / "repo"])
+        finally:
+            lfp.time.sleep = saved
+        if not unmeasurable(rc, out, "probe_failed"):
+            why.append(f"no session_id: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "missing cwd, --cwd without --probe, --probe with another source, output without session_id -> refused"
+
+
+def g_probe_view():
+    why = []
+    root = scratch("pview")
+    path = build_floor(root, "real", {}).write()
+    import listing_floor_probe as lfp
+    owner = lfp.analyse(str(path), [])
+    m = GATE.measure(str(path))
+    if m["probe_view"] != {"startup_tokens": owner["startup_tokens"], "listing": owner["listing"]}:
+        why.append(f"probe_view {m['probe_view']} != owner {owner}")
+    if m["tokens"]["first_call_total"] != m["probe_view"]["startup_tokens"] or m["tokens"]["first_call_total"] != 30002:
+        why.append(f"tokens {m['tokens']['first_call_total']} vs probe_view {m['probe_view']['startup_tokens']}")
+    ref_json = root / "ref.json"
+    rc, out, _ = run_main(["--write-reference", ref_json, "--transcript", path])
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", path, "--json"])
+    doc = json.loads(out)
+    if (doc.get("provenance") or {}).get("probe_view") != m["probe_view"]:
+        why.append(f"--json provenance.probe_view={(doc.get('provenance') or {}).get('probe_view')}")
+    syn = build_floor(root, "synthetic", {"usage": (0, 0, 0, 0)})
+    syn.rows[-1]["message"]["model"] = "<synthetic>"
+    sm = GATE.measure(str(syn.write()))
+    if sm["probe_view"]["startup_tokens"] != 0 or sm["tokens"]["status"] != "no_model_call":
+        why.append(f"synthetic: probe_view={sm['probe_view']['startup_tokens']} tokens={sm['tokens']['status']}")
+    return (not why), "; ".join(why) or "probe_view == the owner's analyse (real call 30002); synthetic: probe_view 0 while tokens no_model_call"
+
+
+def g_no_real_session():
+    root, stubs = probe_root("pnrs")
+    why = []
+    ref_json = good_ref("pnrref")[3]
+    for label, extra in (("no exe env", {}), ("exe outside the root", {"CPP_CLAUDE_EXE": sys.executable})):
+        try:
+            run_cli(["--check", "--reference", ref_json, "--probe"], extra)
+            why.append(f"run_cli accepted --probe with {label}")
+        except AssertionError:
+            pass
+    try:
+        rc, out, _ = run_cli(["--check", "--reference", ref_json, "--probe", "--cwd", root / "repo"],
+                             {"CPP_CLAUDE_EXE": str(stubs["bad"]), **home_env(root)})
+        if rc != 2:
+            why.append(f"stub env: rc={rc}")
+    except AssertionError as exc:
+        why.append(f"run_cli refused a stub under the root: {exc}")
+    env = cli_env({"CPP_FLOOR_GATE_TEST": "0", "CPP_FLOOR_GATE_TEST_ROOT": "/"})
+    if env.get("CPP_FLOOR_GATE_TEST") != "1" or env.get("CPP_FLOOR_GATE_TEST_ROOT") != str(TMP_ROOT):
+        why.append("cli_env lets a caller switch the fence off")
+    if os.environ.get("CPP_FLOOR_GATE_TEST") != "1":
+        why.append("the process-wide fence is off")
+    try:
+        with env_set(CPP_FLOOR_GATE_TEST=None):
+            run_main(["--check", "--reference", ref_json, "--probe"])
+        why.append("run_main accepted --probe with the fence off")
+    except AssertionError:
+        pass
+    return (not why), "; ".join(why) or "run_cli / run_main refuse --probe without a stub under the scratch root; the fence cannot be switched off by a caller"
+
+
 # --------------------------------------------------------------------------- run
 GATES_TRACER = [
     ("V-FLOOR-TRACER-E2E", g_tracer_e2e),
@@ -1494,6 +1881,15 @@ GATES_SOURCES = [
     ("V-FLOOR-PROJECT-DIR-NEWEST", g_project_dir_newest),
     ("V-FLOOR-SESSION-UNKNOWN", g_session_unknown),
     ("V-FLOOR-SESSION-ID-REFUSED", g_session_id_refused),
+    ("V-FLOOR-PROBE-STUB", g_probe_stub),
+    ("V-FLOOR-PROBE-BAD-EXIT", g_probe_bad_exit),
+    ("V-FLOOR-PROBE-NOT-EXECUTABLE", g_probe_not_executable),
+    ("V-FLOOR-PROBE-TIMEOUT", g_probe_timeout),
+    ("V-FLOOR-PROBE-NO-EXE", g_probe_no_exe),
+    ("V-FLOOR-PROBE-FENCE", g_probe_fence),
+    ("V-FLOOR-PROBE-REFUSALS", g_probe_refusals),
+    ("V-FLOOR-PROBE-VIEW", g_probe_view),
+    ("V-FLOOR-NO-REAL-SESSION", g_no_real_session),
 ]
 GATES = GATES_TRACER + GATES_RULES + GATES_ATTRIBUTION + GATES_SAFETY + GATES_SOURCES
 
@@ -1516,7 +1912,8 @@ def run_all() -> int:
 
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
-SUBPROCESS_ONLY = ("V-FLOOR-TRACER-E2E", "V-FLOOR-SOURCES-E2E")   # real subprocesses: a monkeypatch cannot reach them
+SUBPROCESS_ONLY = ("V-FLOOR-TRACER-E2E", "V-FLOOR-SOURCES-E2E", "V-FLOOR-PROBE-STUB", "V-FLOOR-PROBE-BAD-EXIT",
+                   "V-FLOOR-PROBE-NOT-EXECUTABLE", "V-FLOOR-NO-REAL-SESSION")   # real subprocesses: a monkeypatch cannot reach them
 DRILL_GATES = [n for n, _ in GATES if n not in SUBPROCESS_ONLY]
 
 
@@ -1591,6 +1988,22 @@ def _m_host_has_always():
     return _patch("host_has", lambda path: True)
 
 
+def _m_newest_oldest():
+    def oldest(directory):
+        d = Path(directory)
+        cands = sorted((p for p in d.glob("*.jsonl") if p.is_file()), key=lambda p: (p.stat().st_mtime_ns, p.name))
+        if not cands:
+            raise GATE.Unmeasurable("no_transcript", "no *.jsonl directly in the directory")
+        return cands[0], len(cands)
+    return _patch("newest_transcript", oldest)
+
+
+def _m_synthetic_measured():
+    real = GATE.first_call_tokens
+    return _patch("first_call_tokens", lambda assistant: real(assistant) if real(assistant) is not None
+                  else (0 if assistant is not None else None))
+
+
 MUTANTS = [
     ("M1 scope_key returns universal (the scope split is dropped)", _m_scope_universal,
      ["V-FLOOR-PROJECT-LOCAL", "V-FLOOR-SCOPE-REPORT"]),
@@ -1611,6 +2024,10 @@ MUTANTS = [
      ["V-FLOOR-SKILL-PROJECT"]),
     ("M11 host_has treats an absent cwd as available (a foreign transcript is attributed from this host)",
      _m_host_has_always, ["V-FLOOR-CWD-ABSENT-UNATTRIBUTED"]),
+    ("M12 newest_transcript returns the OLDEST session (the project dir source measures a stale floor)",
+     _m_newest_oldest, ["V-FLOOR-PROJECT-DIR-NEWEST"]),
+    ("M13 first_call_tokens accepts a <synthetic> first call as measured (a login-expired session writes a reference)",
+     _m_synthetic_measured, ["V-FLOOR-NO-MODEL-CALL"]),
 ]
 
 

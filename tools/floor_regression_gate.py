@@ -674,8 +674,87 @@ def session_transcript(sid):
     return found
 
 
+PROBE_PROMPT = "Reply with the single word OK."
+
+
+def _under(root, path):
+    try:
+        r, p = Path(root).resolve(), Path(path).resolve()
+    except (OSError, RuntimeError):
+        return False
+    return r in p.parents
+
+
+def resolve_probe_exe(lfp):
+    """The claude executable --probe may start: env CPP_CLAUDE_EXE, else the owner's CLAUDE when it is a file, else
+    `claude` on PATH. With the test fence on (CPP_FLOOR_GATE_TEST == "1") an executable outside
+    CPP_FLOOR_GATE_TEST_ROOT is refused before anything is spawned: the fence only restricts, so it can never let a
+    real claude run from a test."""
+    exe = os.environ.get("CPP_CLAUDE_EXE")
+    if exe:
+        if not os.path.isfile(exe):
+            raise Unmeasurable("claude_exe_not_found", "CPP_CLAUDE_EXE is not a file")
+    elif os.path.isfile(lfp.CLAUDE):
+        exe = lfp.CLAUDE
+    else:
+        exe = shutil.which("claude")
+        if not exe:
+            raise Unmeasurable("claude_exe_not_found", "no CPP_CLAUDE_EXE, no usable listing_floor_probe.CLAUDE, no claude on PATH")
+    if os.environ.get("CPP_FLOOR_GATE_TEST") == "1":
+        fence = os.environ.get("CPP_FLOOR_GATE_TEST_ROOT")
+        if not fence or not _under(fence, exe):
+            raise Unmeasurable("probe_fenced", "the test fence refuses an executable outside CPP_FLOOR_GATE_TEST_ROOT")
+    return exe
+
+
+def probe_transcript(cwd):
+    """Start ONE fresh headless session through the owner's listing_floor_probe.main and return (transcript path,
+    {label, session_id, cost_usd, exe}). The owner's CLAUDE / OUT globals and sys.argv are rebound for the call and
+    restored in a finally; every way the probe can fail is Unmeasurable("probe_failed") naming the exception CLASS only
+    (a message can carry argv or output)."""
+    lfp = load_lfp()
+    wd = str(cwd) if cwd else str(lfp.REPO)
+    if not os.path.isdir(wd):
+        raise Unmeasurable("probe_cwd_missing", "the probe working directory is not a directory")
+    exe = resolve_probe_exe(lfp)
+    label = "floor-gate-" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    saved = (lfp.CLAUDE, lfp.OUT, list(sys.argv))
+    out_buf, err_buf = io.StringIO(), io.StringIO()
+    try:
+        lfp.CLAUDE = exe
+        if os.environ.get("CPP_FLOOR_PROBE_RESULTS"):
+            lfp.OUT = os.environ["CPP_FLOOR_PROBE_RESULTS"]
+        sys.argv = ["listing_floor_probe.py", "--label", label, "--prompt", PROBE_PROMPT, "--cwd", wd, "--max-turns", "1"]
+        try:
+            with contextlib.redirect_stdout(out_buf), contextlib.redirect_stderr(err_buf):
+                rc = lfp.main()
+        except (SystemExit, OSError, subprocess.SubprocessError) as exc:
+            raise Unmeasurable("probe_failed", exc.__class__.__name__, probe_error=exc.__class__.__name__)
+    finally:
+        lfp.CLAUDE, lfp.OUT = saved[0], saved[1]
+        sys.argv = saved[2]
+    if rc != 0:
+        raise Unmeasurable("probe_failed", f"the probe returned {rc}")
+    try:
+        doc = json.loads(out_buf.getvalue())
+    except ValueError:
+        raise Unmeasurable("probe_failed", "the probe output is not one JSON document")
+    sid = doc.get("session_id") if isinstance(doc, dict) else None
+    if not isinstance(sid, str) or not sid:
+        raise Unmeasurable("probe_failed", "the probe output carries no session_id")
+    path = lfp.transcript(sid)
+    if not path:
+        raise Unmeasurable("no_transcript", "the probe session left no transcript under ~/.claude/projects")
+    return path, {"label": label, "session_id": sid, "cost_usd": doc.get("cost_usd"), "exe": exe}
+
+
 def resolve_source(args):
     """-> (transcript path, source dict). The source dict is what the SOURCE line and provenance.source name."""
+    if args.cwd and not args.probe:
+        raise Unmeasurable("cwd_without_probe", "--cwd only applies to --probe")
+    if args.probe:
+        path, info = probe_transcript(args.cwd)
+        return str(path), {"kind": "probe", "session": info["session_id"], "probe": info}
     if args.transcript:
         return args.transcript, {"kind": "transcript", "name": os.path.basename(str(args.transcript))}
     if args.project_dir:
@@ -741,6 +820,14 @@ def _refuse_target(target):
     under_root = t == root or root in t.parents
     if under_claude and not under_root:
         raise Unmeasurable("refused_path", "the target is under ~/.claude and outside the checkout")
+
+
+def stamp_source(prov, src):
+    """provenance.source (and the probe's label / session_id / cost_usd) from the resolved source."""
+    prov["source"] = src["kind"]
+    if src.get("probe"):
+        prov["probe"] = {k: src["probe"].get(k) for k in ("label", "session_id", "cost_usd")}
+    return prov
 
 
 def precheck_write(out, replace):
@@ -942,14 +1029,23 @@ def _s(n):
 
 
 def source_line(src):
-    rest = " ".join(f"{k}={v}" for k, v in src.items() if k != "kind")
+    rest = " ".join(f"{k}={v}" for k, v in src.items() if k != "kind" and not isinstance(v, dict))
     return f"SOURCE {src['kind']} {rest}".rstrip()
+
+
+def probe_line(src):
+    p = src.get("probe")
+    if not p:
+        return None
+    return f"PROBE exe={p.get('exe')} session={p.get('session_id')} label={p.get('label')} cost_usd={p.get('cost_usd')}"
 
 
 def render(r):
     lines = []
     if r.get("source"):
         lines.append(source_line(r["source"]))
+        if probe_line(r["source"]):
+            lines.append(probe_line(r["source"]))
     if r["verdict"] == "UNMEASURABLE":
         lines.append(f"UNMEASURABLE {r['reason']}: {r.get('detail', '')}".rstrip(": "))
     elif r["verdict"] == "REFERENCE_WRITTEN":
@@ -992,6 +1088,9 @@ def build_parser():
     src.add_argument("--transcript", metavar="PATH", help="session transcript (jsonl)")
     src.add_argument("--project-dir", metavar="DIR", help="the newest top-level *.jsonl of a project directory")
     src.add_argument("--session", metavar="SID", help="a session id, located by listing_floor_probe.transcript")
+    src.add_argument("--probe", action="store_true",
+                     help="start ONE fresh headless session through listing_floor_probe (costs a session)")
+    ap.add_argument("--cwd", metavar="DIR", default=None, help="working directory of the --probe session")
     ap.add_argument("--reference", metavar="PATH", default=None)
     ap.add_argument("--replace", action="store_true")
     ap.add_argument("--json", action="store_true")
@@ -1036,7 +1135,7 @@ def main(argv=None):
             precheck_write(args.write_reference, args.replace)
             path, src = resolve_source(args)
             measured = measure(path)
-            measured["provenance"]["source"] = src["kind"]
+            stamp_source(measured["provenance"], src)
             write_reference(args.write_reference, measured, argv, replace=args.replace, redact=redact)
             prov = measured["provenance"]
             tok = measured["tokens"]["first_call_total"]
@@ -1050,11 +1149,13 @@ def main(argv=None):
             now = measure(path)
             result = compare(ref, now)
             rp = ref.get("provenance", {})
-            result["provenance"] = {**now["provenance"], "source": src["kind"], "probe_view": now["probe_view"]}
+            result["provenance"] = {**stamp_source(now["provenance"], src), "probe_view": now["probe_view"]}
             result["reference"] = {"path": str(ref_path), "schema": ref.get("schema"), "total_chars": ref.get("total_chars"),
                                    "window_sha256": rp.get("window_sha256"), "window_rows": rp.get("window_rows")}
     except Unmeasurable as exc:
         result = {"verdict": "UNMEASURABLE", "reason": exc.reason, "detail": exc.detail}
+        if exc.probe_error:
+            result["probe_error"] = exc.probe_error
     except Exception as exc:  # noqa: BLE001 -- a bug must read UNMEASURABLE, never a traceback and never exit 0
         result = {"verdict": "UNMEASURABLE", "reason": "internal_error", "detail": exc.__class__.__name__}
     if src is not None:
