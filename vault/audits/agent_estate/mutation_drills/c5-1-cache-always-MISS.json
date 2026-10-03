@@ -1,0 +1,11 @@
+{
+  "why": "ACV C5 drill 1: every signal claims a fresh computation, so cache reuse would be counted as new evidence.",
+  "file": "modules/capability_runtime/agent_telemetry.py",
+  "test": "tools/test_agent_telemetry.py",
+  "gate": "V-TEL-CACHE",
+  "old": "\"cache\": result[\"cache\"],",
+  "new": "\"cache\": \"MISS\",",
+  "copy_dirs": [
+    "vault/capability_runtime"
+  ]
+}

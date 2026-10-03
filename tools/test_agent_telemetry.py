@@ -74,6 +74,11 @@ def strip(res: dict) -> dict:
     return {k: v for k, v in res.items() if k != "ms"}
 
 
+def payloads(cap: "Capture", n: int) -> list:
+    """The first n payloads the sink actually received (fewer if it received fewer)."""
+    return [c[1] for c in cap.calls[:n]]
+
+
 def rr(task, sink, **kw):
     rec = T.resolve_and_record(task, sink=sink, **kw)
     SUITE_QFPS.add(rec.result.get("query_fp"))
@@ -151,20 +156,23 @@ def cache_and_identity(t: Path) -> None:
     cap = Capture()
     a = rr(NOMATCH_TASK, cap, specs_dir=cat, cache_path=cpath)
     b = rr(NOMATCH_TASK, cap, specs_dir=cat, cache_path=cpath)
-    p1, p2 = cap.calls[0][1], cap.calls[1][1]
-    check("V-TEL-CACHE", (p1["cache"], p2["cache"]) == ("MISS", "HIT") == (a.result["cache"], b.result["cache"])
-          and p1["query_fp"] == p2["query_fp"] and p1["miss"] == p2["miss"] == "NO_MATCH"
-          and p1["resolution_id"] != p2["resolution_id"],
-          f"{p1['cache']}->{p2['cache']} qfp {p1['query_fp']}=={p2['query_fp']}")
+    # A sink that received fewer payloads than expected must FAIL these gates, not crash the
+    # suite before its verdict line (C5 drill injected-sink-ignored read UNJUDGED on an IndexError).
+    p1, p2 = (payloads(cap, 2) + [{}, {}])[:2]
+    check("V-TEL-CACHE", len(cap.calls) == 2 and (p1.get("cache"), p2.get("cache")) == ("MISS", "HIT")
+          == (a.result["cache"], b.result["cache"]) and p1.get("query_fp") == p2.get("query_fp")
+          and p1.get("miss") == p2.get("miss") == "NO_MATCH" and p1.get("resolution_id") != p2.get("resolution_id"),
+          f"{len(cap.calls)} payloads: {p1.get('cache')}->{p2.get('cache')} qfp {p1.get('query_fp')}=={p2.get('query_fp')}")
     cap = Capture()
     x = rr(f"Review C++ code {NONCE}", cap, specs_dir=cat, use_cache=False)
     y = rr(f"review cpp code {NONCE}", cap, specs_dir=cat, use_cache=False)
     z = rr(f"review rust code {NONCE}", cap, specs_dir=cat, use_cache=False)
-    q = [c[1]["query_fp"] for c in cap.calls]
+    q = [p.get("query_fp") for p in payloads(cap, 3)]
     check("V-TEL-QUERY-FP", q == [x.result["query_fp"], y.result["query_fp"], z.result["query_fp"]]
           and q[0] == q[1] != q[2], f"payload qfps {q}")
-    check("V-TEL-POLICY", all(c[1]["policy"] == R.policy_hash() for c in cap.calls),
-          f"payload policy {cap.calls[0][1]['policy']} == policy_hash() {R.policy_hash()}")
+    pols = [p.get("policy") for p in payloads(cap, 3)]
+    check("V-TEL-POLICY", len(pols) == 3 and set(pols) == {R.policy_hash()},
+          f"payload policies {pols} == policy_hash() {R.policy_hash()}")   # all() over [] would pass
 
 
 def failure_and_cardinality(t: Path) -> None:

@@ -1,0 +1,11 @@
+{
+  "why": "ACV C5 drill 4: telemetry mints its own request identity, so one request no longer recurs under one query_fp.",
+  "file": "modules/capability_runtime/agent_telemetry.py",
+  "test": "tools/test_agent_telemetry.py",
+  "gate": "V-TEL-QUERY-FP",
+  "old": "\"query_fp\": result[\"query_fp\"],",
+  "new": "\"query_fp\": uuid.uuid4().hex[:16],",
+  "copy_dirs": [
+    "vault/capability_runtime"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "why": "ACV C5 drill 3: the typed miss never reaches the signal, so every resolution reads as RESOLVED.",
+  "file": "modules/capability_runtime/agent_telemetry.py",
+  "test": "tools/test_agent_telemetry.py",
+  "gate": "V-TEL-MISS-TYPES",
+  "old": "\"miss\": result[\"miss\"],",
+  "new": "\"miss\": None,",
+  "copy_dirs": [
+    "vault/capability_runtime"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "why": "ACV C5 drill 11: readiness_report answers a metrics failure with a count of 0 instead of measured=False.",
+  "file": "modules/cognitive_os/co_12_telemetry.py",
+  "test": "tools/test_agent_telemetry.py",
+  "gate": "V-TEL-CO12-REPORT",
+  "old": "agent_resolution = {\"measured\": False, \"status\": \"error\", \"reason\": type(e).__name__}",
+  "new": "agent_resolution = {\"measured\": False, \"status\": \"error\", \"resolutions\": 0}",
+  "copy_dirs": [
+    "vault/capability_runtime"
+  ]
+}

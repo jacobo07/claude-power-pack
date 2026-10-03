@@ -1,0 +1,11 @@
+{
+  "why": "ACV C5 drill 12: the CLI re-enters policy_hash, so a presentation edit flushes every cached resolver answer.",
+  "file": "modules/capability_runtime/agent_resolver.py",
+  "test": "tools/test_agent_resolver.py",
+  "gate": "V-RES-POLICY-NOT-POLICY",
+  "old": "NOT_POLICY = frozenset({\"agent_telemetry.py\", \"agent_resolver_cli.py\"})",
+  "new": "NOT_POLICY = frozenset({\"agent_telemetry.py\"})",
+  "copy_dirs": [
+    "vault/capability_runtime"
+  ]
+}

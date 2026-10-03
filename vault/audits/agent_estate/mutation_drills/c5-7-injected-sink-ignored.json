@@ -1,0 +1,11 @@
+{
+  "why": "ACV C5 drill 7: an injected sink is bypassed for the default CO-12 writer, so tests could reach the live corpus.",
+  "file": "modules/capability_runtime/agent_telemetry.py",
+  "test": "tools/test_agent_telemetry.py",
+  "gate": "V-TEL-MISS-TYPES",
+  "old": "write = sink if sink is not None else CO12.record_signal",
+  "new": "write = CO12.record_signal",
+  "copy_dirs": [
+    "vault/capability_runtime"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "why": "ACV C5 drill 13: record_signal appends without its lock, so concurrent producers overwrite rows again.",
+  "file": "modules/cognitive_os/co_12_telemetry.py",
+  "test": "tools/test_co12_signal_race.py",
+  "gate": "V-CO12-RACE-NO-LOST-ROWS",
+  "old": "while not _lock_try(fd):",
+  "new": "while False:",
+  "copy_dirs": [
+    "vault/capability_runtime"
+  ]
+}

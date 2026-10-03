@@ -1,0 +1,11 @@
+{
+  "why": "ACV C5 drill 8: one resolution emits two signals, doubling every count.",
+  "file": "modules/capability_runtime/agent_telemetry.py",
+  "test": "tools/test_agent_telemetry.py",
+  "gate": "V-TEL-ONE-SIGNAL",
+  "old": "recorded = write(KIND, payload) is True",
+  "new": "write(KIND, payload)\n        recorded = write(KIND, payload) is True",
+  "copy_dirs": [
+    "vault/capability_runtime"
+  ]
+}

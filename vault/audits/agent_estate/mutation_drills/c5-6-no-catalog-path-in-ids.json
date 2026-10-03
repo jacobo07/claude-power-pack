@@ -1,0 +1,11 @@
+{
+  "why": "ACV C5 drill 6: a missing catalog's filesystem path is recorded as a capability id again.",
+  "file": "modules/capability_runtime/agent_resolver.py",
+  "test": "tools/test_agent_telemetry.py",
+  "gate": "V-TEL-MISS-TYPES",
+  "old": "sorted(b[\"spec\"] for b in broken if b[\"code\"] != \"NO_CATALOG\")",
+  "new": "sorted(b[\"spec\"] for b in broken)",
+  "copy_dirs": [
+    "vault/capability_runtime"
+  ]
+}
