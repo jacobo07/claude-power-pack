@@ -445,9 +445,17 @@ def m_dispatcher_uncovered_dotslash(fx, repo):
 
 
 def m_card_edit_unrecorded(fx, repo):
-    fx.write(repo, CW, fx.read(repo, CW) + "// appended after the trailer (drill)\n")
-    fx.commit(repo, "CW edited after the trailer")
+    lines = sc.lf(fx.read(repo, CW)).split("\n")
+    i = next(k for k, ln in enumerate(lines) if ln.startswith(LINEAGE_COMMENT))
+    lines.insert(i, "// a card-body comment added above the lineage block (drill)")
+    fx.write(repo, CW, "\n".join(lines))
+    fx.commit(repo, "CW body edited")
     return None
+
+
+def m_trailer_not_last(fx, repo):
+    fx.write(repo, CW, fx.read(repo, CW) + "// appended after the trailer (drill)\n")
+    return _rerecorded(fx, repo, "CW line after the trailer")
 
 
 def m_record_unparseable(fx, repo):
@@ -599,6 +607,7 @@ def _drill_table():
         ("DISPATCHER-UNCOVERED-DOTSLASH", m_dispatcher_uncovered_dotslash, {"DISPATCHER-COVERED"}, "FAIL"),
         ("SUBDIR-CARD-DOTSLASH", m_subdir_card_dotslash, ALL7(SUB_CARD), "FAIL"),
         ("CARD-EDIT-UNRECORDED", m_card_edit_unrecorded, {"H-RECORD-CURRENT"}, "FAIL"),
+        ("TRAILER-NOT-LAST", m_trailer_not_last, ALL7(CW), "FAIL"),
         ("RECORD-UNPARSEABLE", m_record_unparseable, {"H-RECORD-CURRENT"}, "FAIL"),
         ("CRLF", m_crlf, set(), "PASS"),
         ("WORKTREE-ONLY", m_worktree_only, set(), "PASS"),
@@ -913,7 +922,8 @@ def c_every_clause(st):
 CLAUSE_TEXT = {
     "TRAILER": "at least one `// COMPILED-FROM:` line in the card, every one parses, and no skill has two; absent, "
                "a duplicate skill or an unparseable line is UNMEASURED and the other six per-card clauses are then "
-               "UNMEASURED (\"no trailer\").",
+               "UNMEASURED (\"no trailer\"). The marker lines must be the last lines of the card: content after "
+               "them is FAIL.",
     "SKILL": "the set of trailer skills EQUALS the set of skills the card text names in CARD_TOKEN form (`<name>` "
              "skill): a named skill without a trailer, or a trailer for an unnamed skill, is FAIL. The five clauses "
              "below are judged per trailer and folded (any FAIL is FAIL, else any UNMEASURED is UNMEASURED).",
@@ -969,7 +979,8 @@ DRILL_TEXT = {
                                      "`./tests/fixtures/dot_card.js` shape (H's parser does not read it, no re-record)",
     "SUBDIR-CARD-DOTSLASH": "hooks/_shared/sub_card.js = copy of CW with its marker defused, registered with the "
                             "`./_shared/sub_card.js` shape (no re-record)",
-    "CARD-EDIT-UNRECORDED": "one comment line appended to CW after its trailer, H not re-recorded",
+    "CARD-EDIT-UNRECORDED": "one comment line added to CW's body above its lineage block, H not re-recorded",
+    "TRAILER-NOT-LAST": "one comment line appended to CW after its trailer; H re-recorded",
     "RECORD-UNPARSEABLE": "H record replaced by a lone `{`",
     "CRLF": "CW's SKILL.md, both cards, the dispatcher and the record committed with CRLF line ends",
     "WORKTREE-ONLY": "CW source byte changed and DS trailer deleted in the working tree only, not committed",

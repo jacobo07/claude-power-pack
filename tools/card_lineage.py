@@ -28,7 +28,8 @@ verdict INCONCLUSIVE; it is never dropped. Floor 2.
 
 Clauses (all 10 must be PASS for a PASS verdict; outcomes are PASS, FAIL or UNMEASURED):
   per card  TRAILER          at least one marker line, every one parses, no skill twice (absent, duplicate skill,
-                             unparseable: UNMEASURED; the other six per-card clauses are then UNMEASURED "no trailer")
+                             unparseable: UNMEASURED; the other six per-card clauses are then UNMEASURED "no trailer"),
+                             and the marker lines are the last lines of the card (content after them: FAIL)
             SKILL            the trailer skills EQUAL the set of skills the card text names in CARD_TOKEN form: a
                              named skill without a trailer, or a trailer for a skill the card does not name, is FAIL
   The five clauses below SKILL are judged per trailer and folded: FAIL if any trailer FAILs, else UNMEASURED if any is
@@ -131,9 +132,19 @@ def _marker_lines(text) -> list:
     return [line for line in sc.lf(text).split("\n") if line.startswith(LINEAGE_MARKER)]
 
 
+def _not_at_end(text) -> bool:
+    """True when a non-marker line follows a marker line (one trailing newline is not a line)."""
+    lines = sc.lf(text).split("\n")
+    if lines and lines[-1] == "":
+        lines = lines[:-1]
+    idx = [i for i, line in enumerate(lines) if line.startswith(LINEAGE_MARKER)]
+    return bool(idx) and idx != list(range(len(lines) - len(idx), len(lines)))
+
+
 def parse_trailers(text):
-    """([dict skill/source/sha256/commit, ...] in file order, None) or (None, "absent" | "unparseable" |
-    "duplicate skill <name>")."""
+    """(trailers, None) or (None, "absent" | "unparseable" | "duplicate skill <name>"), or (trailers, "not at end of
+    file") when every marker line parses but other content follows the lineage block: the trailers are returned so
+    the other clauses can still be judged, and TRAILER is a measured FAIL (06 review IN-01)."""
     marks = _marker_lines(text)
     if not marks:
         return None, "absent"
@@ -148,13 +159,15 @@ def parse_trailers(text):
         if t["skill"] in seen:
             return None, f"duplicate skill {t['skill']}"
         seen.add(t["skill"])
+    if _not_at_end(text):
+        return out, "not at end of file"
     return out, None
 
 
 def parse_trailer(text):
     """(the one trailer, None) or (None, reason): parse_trailers for a text that must carry exactly one."""
     ts, why = parse_trailers(text)
-    if ts is None:
+    if ts is None or why:
         return None, why
     if len(ts) != 1:
         return None, f"{len(ts)} trailers"
@@ -296,7 +309,9 @@ def c_trailer(ctx, member=None, trailers=None):
     ts, why = parse_trailers(member["text"])
     if ts is None:
         return _out(UNMEASURED, f"trailer {why}")
-    return _out(PASS, f"{len(ts)} trailer(s)")
+    if why:
+        return _out(FAIL, f"{len(ts)} trailer(s), {why}: the lineage block must be the last lines of the card")
+    return _out(PASS, f"{len(ts)} trailer(s) ending the card")
 
 
 def c_skill(ctx, member=None, trailers=None):
