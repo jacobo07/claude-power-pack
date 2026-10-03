@@ -57,4 +57,13 @@ same repo and `_worktree_carries_workstream(work_dir, cwd, proven_workstream)`; 
 `proven_workstream=rec.get("workstream") if ew and ew != rec["cwd"] else None`, ledger event
 `cwd_diverged_followed`. Run cwd_align + test_gsd_mission + test_gsd_epoch + legacy golden; mutation drill;
 deploy into the live file only at >= 4 GB free RAM (audit G6).
+**Update 2026-10-03 (session c47b1f78):** RED confirmed (TypeError on proven_workstream). Fix written in a
+SCRATCH copy only (`%TEMP%\claude\...\c47b1f78-...\scratchpad\droot\tools\gsd_mission.py`; live file sha256
+D5324568... untouched): align_cwd(proven_workstream) -> `diverged_followed`; supervise splits `ew`, sets
+`proven_ws` only when `ew and ew != rec["cwd"]`, ledgers `cwd_diverged_followed`. Gap found: nothing tested the
+supervise wiring -> 3 new gates V-MCA-SUP-PROVEN-PASSED / -RECORDED-NOT-PROOF / -BASE-NOT-PROOF (repo test file
+now 16/16 threshold; RED against the live module until deploy). Against scratch: cwd_align 16/16,
+test_gsd_mission 213/213, test_gsd_epoch 82/82, legacy golden 32/32; mutation drills m1-m7 all KILLED (controls valid; specs in scratchpad\drills).
+**Next:** Owner go for the deploy (copy scratch gsd_mission.py over tools/gsd_mission.py; free RAM was 7.1 GB),
+then rerun the four suites on the live tree and commit gsd_mission.py hunk + test by pathspec.
 **Resume File:** this STATE.md + vault/plans/incremental-cognition-program-2026-10-03.md

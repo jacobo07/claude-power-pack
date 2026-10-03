@@ -1012,7 +1012,7 @@ def _worktree_carries_workstream(worktree: str, base_cwd: str, workstream: str) 
 CWD_ALIGN_BLOCKING = ("behind_dirty", "diverged", "unreadable")
 
 
-def align_cwd(cwd: str, work_dir: str | None) -> dict:
+def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = None) -> dict:
     """Make the mission cwd carry the work before a worker is launched in it.
 
     The worker is LAUNCHED in the cwd (workspace trust is exact-path) and /gsd-autonomous reads
@@ -1024,7 +1024,13 @@ def align_cwd(cwd: str, work_dir: str | None) -> dict:
     Statuses: same / aligned / ahead (cwd already contains the work) / unrelated (different
     repository: not ours to judge) -> no action; fast_forwarded (cwd was a clean ancestor:
     `merge --ff-only`, nothing can be lost); behind_dirty / diverged / unreadable -> the caller
-    must NOT launch (CWD_ALIGN_BLOCKING)."""
+    must NOT launch (CWD_ALIGN_BLOCKING).
+
+    diverged_followed (not blocking): the caller PROVED the work_dir (`proven_workstream`: the
+    predecessor worked there, on that workstream), it is a worktree top of the cwd's repository,
+    and it contains the cwd's latest commit to that workstream. The divergence is then a peer's
+    history in a shared checkout, not a stale roadmap; nothing is moved. Measured 2026-10-03:
+    m-fdefb0fca0c0 and m-876f8b5a904a HELD for good because peers committed to the main checkout."""
     import subprocess
     if not work_dir or os.path.normcase(str(Path(work_dir).resolve())) == os.path.normcase(str(Path(cwd).resolve())):
         return {"status": "same", "detail": ""}
@@ -1051,6 +1057,12 @@ def align_cwd(cwd: str, work_dir: str | None) -> dict:
         if git(cwd, "merge-base", "--is-ancestor", hw, hc).returncode == 0:
             return {"status": "ahead", "detail": "cwd already contains the work_dir head", **facts}
         if git(cwd, "merge-base", "--is-ancestor", hc, hw).returncode != 0:
+            if (proven_workstream
+                    and there[0] == os.path.normcase(str(Path(work_dir).resolve()))
+                    and _worktree_carries_workstream(work_dir, cwd, proven_workstream)):
+                return {"status": "diverged_followed", "detail": f"cwd {hc[:12]} and work_dir {hw[:12]}"
+                        f" have diverged, but the work_dir is a proven worktree carrying"
+                        f" {proven_workstream}'s latest roadmap; following it, nothing moved", **facts}
             return {"status": "diverged", "detail": f"cwd {hc[:12]} and work_dir {hw[:12]} have diverged;"
                     " a worker launched here would branch from a lineage without the work", **facts}
         dirty = git(cwd, "status", "--porcelain", "--untracked-files=no").stdout.strip()
@@ -1455,6 +1467,7 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 # host `done` (W8), which plans a REPLACE, not a relay -- and a worker that just
                 # completed the milestone must not be followed by another one.
                 work_dir = None
+                proven_ws = None
                 if act in ("relay", "replace") and rec.get("owner"):
                     hold = provider_hold(rec, now)
                     if hold:
@@ -1478,9 +1491,13 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     # Judge (and brief) where the predecessor actually worked. Measured M6: the
                     # run lived in a git worktree while the mission's cwd kept a reset roadmap,
                     # so asking GSD there would read 1/8 for ever and never complete.
-                    work_dir = (effective_workdir(rec["owner"]["session_id"], rec["cwd"],
-                                                  rec.get("workstream"))
-                                or rec.get("work_dir"))
+                    ew = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream"))
+                    work_dir = ew or rec.get("work_dir")
+                    # A worktree effective_workdir followed is PROVEN (the predecessor acted on this
+                    # workstream there and it carries the roadmap): align_cwd may follow a diverged
+                    # cwd then. A recorded work_dir alone proves nothing.
+                    if ew and ew != rec["cwd"]:
+                        proven_ws = rec.get("workstream")
                     if work_dir:
                         row["work_dir"] = work_dir
                 if act in ("relay", "replace") and rec["resume_command"].startswith("/gsd-autonomous"):
@@ -1580,10 +1597,13 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     continue
                 # The successor is launched in the cwd and reads its roadmap there: the cwd must
                 # carry the work first (align_cwd; measured Brand #001 2026-09-30).
-                aligned = align_cwd(rec["cwd"], work_dir or rec.get("work_dir"))
+                aligned = align_cwd(rec["cwd"], work_dir or rec.get("work_dir"), proven_workstream=proven_ws)
                 row["cwd_align"] = aligned["status"]
                 if aligned["status"] == "fast_forwarded":
                     lr.ledger_append(mid, "cwd_fast_forwarded", mission_id=mid, epoch=rec["epoch"],
+                                     detail=aligned["detail"])
+                elif aligned["status"] == "diverged_followed":
+                    lr.ledger_append(mid, "cwd_diverged_followed", mission_id=mid, epoch=rec["epoch"],
                                      detail=aligned["detail"])
                 elif aligned["status"] in CWD_ALIGN_BLOCKING:
                     why = f"launch held: cwd not aligned with work_dir ({aligned['status']}): {aligned['detail']}"
