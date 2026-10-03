@@ -293,7 +293,155 @@ def _rerecorded(fx, repo, msg):
     return None if rec is not None else f"re-record refused: {why}"
 
 
-DRILLS = []  # (id, mutation, declared fail set, declared verdict); filled by _drill_table()
+def m_trailer_sha_digit(fx, repo):
+    sha = fx.trailer(repo, CW)["sha256"]
+    fx.set_trailer(repo, CW, sha256=("0" if sha[0] != "0" else "1") + sha[1:])
+    return _rerecorded(fx, repo, "CW trailer sha digit")
+
+
+def m_trailer_absent(fx, repo):
+    fx.replace_marker(repo, DS, [])
+    return _rerecorded(fx, repo, "DS trailer deleted")
+
+
+def m_trailer_duplicate(fx, repo):
+    (line,) = fx.marker_lines(repo, DS)
+    fx.replace_marker(repo, DS, [line, line])
+    return _rerecorded(fx, repo, "DS trailer duplicated")
+
+
+def m_trailer_unparseable(fx, repo):
+    sha = fx.trailer(repo, DS)["sha256"]
+    fx.set_trailer(repo, DS, sha256=sha[:63])
+    return _rerecorded(fx, repo, "DS trailer sha 63 hex")
+
+
+def m_skill_mismatch(fx, repo):
+    line, why = cl.trailer_for(repo, fx.skill(DS))
+    if line is None:
+        return f"trailer_for refused: {why}"
+    fx.replace_marker(repo, CW, [line])
+    return _rerecorded(fx, repo, "CW trailer names DS skill")
+
+
+def m_source_path(fx, repo):
+    ds = fx.trailer(repo, DS)
+    fx.set_trailer(repo, CW, skill=fx.skill(CW), source=fx.source(DS), sha256=ds["sha256"], commit=fx.info["A"])
+    return _rerecorded(fx, repo, "CW trailer source path of DS")
+
+
+def m_ghost_skill(fx, repo):
+    text = fx.read(repo, CW)
+    pat = re.compile(r"`" + re.escape(fx.skill(CW)) + r"`(\s+skill\b)")
+    new, n = pat.subn(r"`ghost-skill`\1", text, count=1)
+    if n != 1:
+        return f"CARD_TOKEN occurrence of {fx.skill(CW)} not found"
+    fx.write(repo, CW, new)
+    fx.set_trailer(repo, CW, skill="ghost-skill", source="skills/ghost-skill/SKILL.md")
+    fx.commit(repo, "CW renamed to ghost-skill")
+    rec, why = smd.record_cards(repo)
+    return None if rec is None else "re-record was expected to be refused, but it recorded"
+
+
+def m_commit_unknown(fx, repo):
+    fx.set_trailer(repo, CW, commit="deadbeef" * 5)
+    return _rerecorded(fx, repo, "CW trailer commit unknown")
+
+
+def m_commit_not_ancestor(fx, repo):
+    src = fx.source(CW)
+    data = (Path(repo) / src).read_bytes()
+    fx.git(repo, "checkout", "-q", "-b", "side", fx.info["R"])
+    fx.write(repo, src, None, raw=data)
+    S = fx.commit(repo, "S: source on a side branch")
+    fx.git(repo, "checkout", "-q", "-")
+    fx.set_trailer(repo, CW, commit=S)
+    return _rerecorded(fx, repo, "CW trailer commit on a side branch")
+
+
+def m_commit_not_touching(fx, repo):
+    fx.set_trailer(repo, CW, commit=fx.info["C"])
+    return _rerecorded(fx, repo, "CW trailer commit = record commit")
+
+
+def m_commit_wrong_digest(fx, repo):
+    new = fx.change_source_first_byte(repo, CW)
+    fx.commit(repo, "V: source changed")
+    fx.set_trailer(repo, CW, sha256=smd.vgm._norm_sha(new), commit=fx.info["A"])
+    return _rerecorded(fx, repo, "CW trailer new digest, commit A")
+
+
+def m_floor_one(fx, repo):
+    (Path(repo) / DS).unlink()
+    fx.commit(repo, "DS removed")
+    rec, why = fx.rerecord(repo)
+    if rec is None:
+        return f"re-record refused: {why}"
+    return None if len(rec["pairs"]) == 1 else f"re-record holds {len(rec['pairs'])} pairs, not 1"
+
+
+def m_floor_zero(fx, repo):
+    (Path(repo) / DS).unlink()
+    (Path(repo) / CW).unlink()
+    fx.commit(repo, "both cards removed")
+    rec, why = smd.record_cards(repo)
+    return None if rec is None else "re-record was expected to be refused, but it recorded"
+
+
+NEW_CARD = "hooks/new_card.js"
+DEEP_CARD = "hooks/sub/deep_card.js"
+
+
+def m_unlineaged_card(fx, repo):
+    fx.write(repo, NEW_CARD, f"// read the `{fx.skill(CW)}` skill before committing (unlineaged drill card)\n")
+    fx.commit(repo, "unlineaged card")
+    return None
+
+
+def m_dispatcher_uncovered(fx, repo):
+    fx.write(repo, DEEP_CARD, fx.read(repo, CW))
+    text = fx.read(repo, sc.DISPATCHER_REL)
+    lines = text.split("\n")
+    idx = [i for i, ln in enumerate(lines) if f"{CW}'" in ln]
+    if len(idx) != 1:
+        return f"dispatcher lines registering {CW}: {len(idx)}, expected 1"
+    lines.insert(idx[0] + 1, lines[idx[0]].replace(CW, DEEP_CARD))
+    fx.write(repo, sc.DISPATCHER_REL, "\n".join(lines))
+    fx.commit(repo, "deep card registered")
+    rec, why = fx.rerecord(repo)
+    if rec is None:
+        return f"re-record refused: {why}"
+    return None if len(rec["pairs"]) == 3 else f"re-record holds {len(rec['pairs'])} pairs, not 3"
+
+
+def m_card_edit_unrecorded(fx, repo):
+    fx.write(repo, CW, fx.read(repo, CW) + "// appended after the trailer (drill)\n")
+    fx.commit(repo, "CW edited after the trailer")
+    return None
+
+
+def m_record_unparseable(fx, repo):
+    fx.write(repo, smd.CARD_RECORD_REL, "{")
+    fx.commit(repo, "record unparseable")
+    return None
+
+
+def m_crlf(fx, repo):
+    for rel in (fx.source(CW), CW, DS, sc.DISPATCHER_REL, smd.CARD_RECORD_REL):
+        p = Path(repo) / rel
+        p.write_bytes(smd.lf_bytes(p.read_bytes()).replace(b"\n", b"\r\n"))
+    fx.commit(repo, "CRLF")
+    blob, why = smd.git_run(repo, "cat-file", "blob", f"HEAD:{fx.source(CW)}")
+    if blob is None:
+        return f"committed source unreadable: {why}"
+    return None if b"\r\n" in blob else "committed CW SKILL.md blob carries no CR LF"
+
+
+def m_worktree_only(fx, repo):
+    fx.change_source_first_byte(repo, CW)
+    fx.replace_marker(repo, DS, [])
+    st = fx.git(repo, "status", "--porcelain")
+    return None if st.strip() else "working tree is clean (the edit did not land)"
 
 
 def _drill_table():
@@ -302,7 +450,57 @@ def _drill_table():
         ("SOURCE-CHANGED-RERECORDED", m_source_changed_rerecorded, {f"{CW}:SOURCE-CURRENT"}, "FAIL"),
         ("SOURCE-CHANGED-RAW", m_source_changed_raw, {f"{CW}:SOURCE-CURRENT", "H-RECORD-CURRENT"}, "FAIL"),
         ("REDERIVED", m_rederived, set(), "PASS"),
+        ("TRAILER-SHA-DIGIT", m_trailer_sha_digit, {f"{CW}:SOURCE-CURRENT", f"{CW}:COMMIT-DIGEST"}, "FAIL"),
+        ("TRAILER-ABSENT", m_trailer_absent, ALL7(DS), "FAIL"),
+        ("TRAILER-DUPLICATE", m_trailer_duplicate, ALL7(DS), "FAIL"),
+        ("TRAILER-UNPARSEABLE", m_trailer_unparseable, ALL7(DS), "FAIL"),
+        ("SKILL-MISMATCH", m_skill_mismatch, {f"{CW}:SKILL"}, "FAIL"),
+        ("SOURCE-PATH", m_source_path, {f"{CW}:SOURCE-PATH"}, "FAIL"),
+        ("GHOST-SKILL", m_ghost_skill, {f"{CW}:SOURCE-CURRENT", f"{CW}:COMMIT-TOUCHES", f"{CW}:COMMIT-DIGEST",
+                                        "H-RECORD-CURRENT"}, "FAIL"),
+        ("COMMIT-UNKNOWN", m_commit_unknown, {f"{CW}:COMMIT-ANCESTOR", f"{CW}:COMMIT-TOUCHES",
+                                              f"{CW}:COMMIT-DIGEST"}, "FAIL"),
+        ("COMMIT-NOT-ANCESTOR", m_commit_not_ancestor, {f"{CW}:COMMIT-ANCESTOR"}, "FAIL"),
+        ("COMMIT-NOT-TOUCHING", m_commit_not_touching, {f"{CW}:COMMIT-TOUCHES"}, "FAIL"),
+        ("COMMIT-WRONG-DIGEST", m_commit_wrong_digest, {f"{CW}:COMMIT-DIGEST"}, "FAIL"),
+        ("FLOOR-ONE", m_floor_one, {"FLOOR"}, "FAIL"),
+        ("FLOOR-ZERO", m_floor_zero, {"FLOOR", "DISPATCHER-COVERED", "H-RECORD-CURRENT"}, "FAIL"),
+        ("UNLINEAGED-CARD", m_unlineaged_card, ALL7(NEW_CARD), "FAIL"),
+        ("DISPATCHER-UNCOVERED", m_dispatcher_uncovered, {"DISPATCHER-COVERED"}, "FAIL"),
+        ("CARD-EDIT-UNRECORDED", m_card_edit_unrecorded, {"H-RECORD-CURRENT"}, "FAIL"),
+        ("RECORD-UNPARSEABLE", m_record_unparseable, {"H-RECORD-CURRENT"}, "FAIL"),
+        ("CRLF", m_crlf, set(), "PASS"),
+        ("WORKTREE-ONLY", m_worktree_only, set(), "PASS"),
     ]
+
+
+# Singleton drill per clause (V-CLG-EVERY-CLAUSE). TRAILER has none by construction: its failure leaves the other
+# six per-card clauses unmeasurable, so its proof is the marker-only population on UNLINEAGED-CARD.
+SINGLETON = {
+    "SOURCE-CURRENT": "SOURCE-CHANGED-RERECORDED",
+    "SKILL": "SKILL-MISMATCH",
+    "SOURCE-PATH": "SOURCE-PATH",
+    "COMMIT-ANCESTOR": "COMMIT-NOT-ANCESTOR",
+    "COMMIT-TOUCHES": "COMMIT-NOT-TOUCHING",
+    "COMMIT-DIGEST": "COMMIT-WRONG-DIGEST",
+    "FLOOR": "FLOOR-ONE",
+    "DISPATCHER-COVERED": "DISPATCHER-UNCOVERED",
+    "H-RECORD-CURRENT": "CARD-EDIT-UNRECORDED",
+}
+TRAILER_DRILL = "UNLINEAGED-CARD"
+
+# Clauses that must be UNMEASURED (not a measured FAIL) in a drill: an absent, duplicate or unparseable trailer, a
+# zero population and empty dispatcher card set, an unreadable record, and a missing source.
+UNMEASURED_EXPECT = {
+    "TRAILER-ABSENT": ALL7(DS),
+    "TRAILER-DUPLICATE": ALL7(DS),
+    "TRAILER-UNPARSEABLE": ALL7(DS),
+    "UNLINEAGED-CARD": ALL7(NEW_CARD),
+    "FLOOR-ZERO": {"FLOOR", "DISPATCHER-COVERED"},
+    "RECORD-UNPARSEABLE": {"H-RECORD-CURRENT"},
+    "GHOST-SKILL": {f"{CW}:SOURCE-CURRENT"},
+    "COMMIT-UNKNOWN": {f"{CW}:COMMIT-ANCESTOR", f"{CW}:COMMIT-TOUCHES", f"{CW}:COMMIT-DIGEST"},
+}
 
 
 def run_drills(fx):
@@ -323,9 +521,24 @@ def run_drills(fx):
     return out
 
 
-def drill_ok(row) -> bool:
+def outcomes(result) -> dict:
+    """{"<card>:<CLAUSE>" | "<CLAUSE>": outcome} in fail_set notation."""
+    out = {cid: c.get("outcome") for cid, c in (result or {}).get("gate", {}).items()}
+    for card in (result or {}).get("cards", []):
+        out.update({f"{card['card']}:{cid}": c.get("outcome") for cid, c in card["clauses"].items()})
+    return out
+
+
+def unmeasured_mismatch(did, row) -> list:
+    """Members of UNMEASURED_EXPECT[did] whose outcome is not UNMEASURED (a measured FAIL where the judge could not
+    measure would be a different defect wearing the same fail set)."""
+    got = outcomes(row["result"])
+    return sorted(k for k in UNMEASURED_EXPECT.get(did, set()) if got.get(k) != cl.UNMEASURED)
+
+
+def drill_ok(row, did=None) -> bool:
     return (row["error"] is None and row["pre"] is None and row["verdict"] == row["declared_verdict"]
-            and row["fail_set"] == row["declared"])
+            and row["fail_set"] == row["declared"] and not (did and unmeasured_mismatch(did, row)))
 
 
 def _fmt(s) -> str:
@@ -384,8 +597,11 @@ def c_drills(st):
             out.append((FAIL, cid, f"drill did not build: {row['error']}"))
         elif row["pre"] is not None:
             out.append((FAIL, cid, f"precondition: {row['pre']}"))
-        elif drill_ok(row):
+        elif drill_ok(row, did):
             out.append((OK, cid, f"{row['verdict']} {_fmt(row['fail_set'])}"))
+        elif row["fail_set"] == row["declared"] and row["verdict"] == row["declared_verdict"]:
+            out.append((FAIL, cid, f"fail set matches but not UNMEASURED: {unmeasured_mismatch(did, row)} | "
+                                   f"{_reasons(row['result'])}"))
         else:
             out.append((FAIL, cid, f"declared {row['declared_verdict']} {_fmt(row['declared'])} | observed "
                                    f"{row['verdict']} {_fmt(row['fail_set'])} | {_reasons(row['result'])}"))
@@ -415,7 +631,92 @@ def c_subprocess_red(st):
                                            f"clause={'SOURCE-CURRENT=FAIL' in out_r}; clean rc={rc_c} last={last_c!r}")]
 
 
-CLAUSES = [c_live_clean, c_positive_control, c_drills, c_subprocess_red]
+def c_git_failure(st):
+    clean = st["drills"].get("CLEAN")
+    if not clean or clean["repo"] is None:
+        return [(FAIL, "V-CLG-GIT-FAILURE", "CLEAN drill repo missing")]
+    orig = smd.vgm._git_exe
+
+    def gone():
+        raise FileNotFoundError("git executable not found (drill)")
+    err, live, fixture = None, {}, {}
+    smd.vgm._git_exe = gone
+    try:
+        live, fixture = cl.judge(REPO), cl.judge(clean["repo"])
+    except Exception as e:  # noqa: BLE001 -- the clause asserts that nothing escapes
+        err = f"{type(e).__name__}: {e}"
+    finally:
+        smd.vgm._git_exe = orig
+    after = cl.judge(clean["repo"])["verdict"]
+    both = [(r.get("verdict"), "git not found" in str(r.get("reason"))) for r in (live, fixture)]
+    st["git_failure"] = {"live": live.get("verdict"), "fixture": fixture.get("verdict"), "restored": after}
+    if err is None and both == [("INCONCLUSIVE", True)] * 2 and after == PASS:
+        return [(OK, "V-CLG-GIT-FAILURE", "git missing: live and fixture judge INCONCLUSIVE ('git not found'), no "
+                                          "exception escaped; restored judge PASS")]
+    return [(FAIL, "V-CLG-GIT-FAILURE", f"escaped={err}; live={live.get('verdict')}/{live.get('reason')}; "
+                                        f"fixture={fixture.get('verdict')}/{fixture.get('reason')}; restored={after}")]
+
+
+def _forced(ctx, member=None, trailer=None):
+    return {"outcome": "PASS", "reason": "forced (drill)"}
+
+
+def c_every_clause(st):
+    drills = st["drills"]
+    table = {did: (declared, dv) for did, _, declared, dv in _drill_table()}
+    ids = set(cl.CARD_CLAUSES) | set(cl.GATE_CLAUSES)
+    union = {d.split(":")[-1] for declared, _ in table.values() for d in declared}
+    problems = []
+    if union != ids or len(ids) != 10:
+        problems.append(f"coverage: declared union {sorted(union)} vs clauses {sorted(ids)}")
+    flips = []
+    for cid, did in SINGLETON.items():
+        row = drills.get(did)
+        declared = table.get(did, (set(), None))[0]
+        if {d.split(":")[-1] for d in declared} != {cid} or len(declared) != 1:
+            problems.append(f"{cid}: drill {did} is not a singleton for it ({_fmt(declared)})")
+            continue
+        if not row or not drill_ok(row, did):
+            problems.append(f"{cid}: drill {did} itself is not ok")
+            continue
+        orig = cl.CLAUSES[cid]
+        cl.CLAUSES[cid] = _forced
+        try:
+            forced = cl.judge(row["repo"])["verdict"]
+        finally:
+            cl.CLAUSES[cid] = orig
+        restored = cl.judge(row["repo"])["verdict"]
+        flips.append((cid, did, forced, restored))
+        if forced != PASS or restored != "FAIL":
+            problems.append(f"{cid}: forced PASS gave {did}={forced}, restored gave {restored} (not load-bearing)")
+    row = drills.get(TRAILER_DRILL)
+    if not row or not drill_ok(row, TRAILER_DRILL):
+        problems.append(f"TRAILER: drill {TRAILER_DRILL} itself is not ok")
+    else:
+        orig_pop = cl.population
+
+        def marker_only(repo, sha, tracked):
+            members, why = orig_pop(repo, sha, tracked)
+            if members is None:
+                return members, why
+            return [m for m in members if cl.LINEAGE_MARKER in m["text"]], why
+        cl.population = marker_only
+        try:
+            forced = cl.judge(row["repo"])["verdict"]
+        finally:
+            cl.population = orig_pop
+        restored = cl.judge(row["repo"])["verdict"]
+        flips.append(("TRAILER", TRAILER_DRILL, forced, restored))
+        if forced != PASS or restored != "FAIL":
+            problems.append(f"TRAILER: marker-only population gave {forced}, restored gave {restored}")
+    st["flips"] = flips
+    if problems:
+        return [(FAIL, "V-CLG-EVERY-CLAUSE", "; ".join(problems))]
+    return [(OK, "V-CLG-EVERY-CLAUSE", f"declared sets cover all {len(ids)} clauses; {len(flips)} forced passes "
+                                       f"flipped their drill FAIL->PASS and back on restore")]
+
+
+CLAUSES = [c_live_clean, c_positive_control, c_drills, c_subprocess_red, c_git_failure, c_every_clause]
 
 
 # --------------------------------------------------------------------------- driver
