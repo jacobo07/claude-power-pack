@@ -50,6 +50,7 @@ BACKOFF_BASE_S = 300
 BACKOFF_CAP_S = 3600
 QUARANTINE_AFTER = 4
 STREAK_WINDOW = 8
+MAX_LINEAGE_HOPS = 4
 AUTH_RE = re.compile(r"invalid api key|please run /login|not logged in|oauth token (?:has )?expired|"
                      r"authentication[_ ](?:error|failed)|\b401\b|unauthori[sz]ed|credit balance is too low", re.I)
 
@@ -264,6 +265,44 @@ def hold_for(rec: dict, now: float) -> dict | None:
         lr.ledger_append(rec.get("mission_id"), "provider_released", mission_id=rec.get("mission_id"),
                          reason=trace["released"])
     return hold
+
+
+def lineage_hold(rec: dict, now: float, load=None) -> dict | None:
+    """The hold a RENEWED successor inherits from the lineage it continues, or None.
+
+    hold_for needs an owner, and a PREPARED successor has none: its `launch` action never reaches
+    the relay-only provider hold. Measured on the a7 install: the lineage was renewed after its dead
+    iterations -- plan_next halts a mission at its hours budget before any provider hold is read,
+    GSD answers OK, the renewal is permitted, and each fresh successor launched one worker into the
+    same `Login expired` refusal. A budget renewal must not launder a quarantine.
+
+    The NEAREST predecessor (walking `renewed_from`) that has an owner decides, through hold_for, so a
+    healthy nearest predecessor means nothing to inherit and a re-login after the refusal still
+    releases. The walk is bounded: a seen-set and at most MAX_LINEAGE_HOPS records, so records that
+    point at each other, or a missing or unreadable one, end it with None (an unmeasured lineage is
+    not a quarantine; the relay path stays the backstop). A record that has an owner is the relay
+    path's case, and a disabled breaker inherits nothing."""
+    if not enabled() or rec.get("owner"):
+        return None
+    load = load or _gm().load
+    seen = {rec.get("mission_id")}
+    cur = rec
+    for _ in range(MAX_LINEAGE_HOPS):
+        pid = cur.get("renewed_from")
+        if not pid or pid in seen:
+            return None
+        seen.add(pid)
+        try:
+            pred = load(pid)
+        except Exception:  # noqa: BLE001 -- an unreadable record is unmeasured, not a hold
+            return None
+        if not isinstance(pred, dict):
+            return None
+        if pred.get("owner"):
+            h = hold_for(pred, now)
+            return None if h is None else {**h, "inherited_from": pred.get("mission_id") or pid}
+        cur = pred
+    return None
 
 
 def _cli(argv=None) -> int:

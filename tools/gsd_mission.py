@@ -1852,6 +1852,23 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                                                 else "gsd_hold_cleared"),
                                          now=now, state=RUNNING, gsd_hold=None,
                                          reason=f"gsd OK: {st.get('reason')}")
+                # The single pre-launch gate (tools/mission_launch_gate.py): a renewed successor
+                # inherits its predecessor's provider hold, and on a declared mission plane a
+                # measured NOT_READY env refuses. Asked before anything below stops, continues or
+                # launches, so a refusal spends no epoch and stops nothing. A gate that cannot run
+                # proceeds as before, visibly.
+                try:
+                    import mission_launch_gate as mlg
+                    gate = mlg.refusal(rec, act, now)
+                except Exception as exc:  # noqa: BLE001
+                    gate = None
+                    lr.ledger_append(mid, "launch_gate_unavailable", mission_id=mid,
+                                     error=f"{exc.__class__.__name__}: {exc}"[:200])
+                if gate:
+                    row["launch_gate"] = gate.get("verdict")
+                    if gate.get("refuse"):
+                        row["held"] = gate.get("reason")
+                        continue
                 turn_end = None
                 import gsd_epoch as ge
                 if rec.get("owner") and (act == "relay" or (
