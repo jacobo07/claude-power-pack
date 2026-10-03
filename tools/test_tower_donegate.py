@@ -95,7 +95,7 @@ def main() -> int:
         _repo(fixed, wired=True)
 
         rep = dg.judge("web_fixture", broken, root=gens,
-                       not_applicable={"web-mobile": "desktop-only admin tool"})
+                       not_applicable={"web-mobile": "platform-not-targeted: desktop-only admin tool"})
         v = _verdicts(rep)
         finding = next((x for x in rep["entries"] if x["entry_id"] == WIRED), {})
         _check("V-TDG-DISCRIMINATING-VIOLATION",
@@ -118,7 +118,7 @@ def main() -> int:
                "declared N/A honoured", v)
 
         rep_fixed = dg.judge("web_fixture", fixed, root=gens,
-                             not_applicable={"web-mobile": "desktop-only admin tool"})
+                             not_applicable={"web-mobile": "platform-not-targeted: desktop-only admin tool"})
         _check("V-TDG-CONTROL-WIRED",
                _verdicts(rep_fixed).get(WIRED) == dg.APPLIED_VERIFIED,
                "the same rule on a wired button is APPLIED_VERIFIED",

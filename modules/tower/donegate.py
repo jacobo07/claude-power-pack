@@ -10,10 +10,11 @@ Per entry, one verdict:
   APPLIED_VERIFIED  an evaluable check (file/glob/regex) passed
   VIOLATED          an evaluable check failed
   DELEGATED         a registered verifier owns the verdict (the repo's)
-  NOT_APPLICABLE    declared by the caller WITH a reason
+  NOT_APPLICABLE    declared by the caller WITH a reason from NA_REASONS,
+                    within NA_SHARE_CAP_PERCENT of the family
   UNJUDGED          prose or empty check, a `test:` check (the file exists but
-                    is never executed here), an N/A without a reason, an
-                    unreadable registry, or the instrument's own failure --
+                    is never executed here), an N/A without a usable reason,
+                    an unreadable registry, or the instrument's own failure --
                     never counted as applied
 
 A `test:` check whose file exists is UNJUDGED with `unjudged_reason`
@@ -23,6 +24,16 @@ Every row carries `unjudged_reason` (None unless the verdict is UNJUDGED), and
 the report's `counts` keeps UNJUDGED apart from VIOLATED, with `unjudged_tests`
 naming the `test:` entries. `would_block` is unchanged (VIOLATED or UNJUDGED);
 `would_block_on_violated` is the VIOLATED-only reading.
+
+Declaring an entry not applicable is a claim by the caller, so it is bounded
+twice. The reason must carry a token from the closed vocabulary `NA_REASONS`
+(`token` or `token: free-text note`); any other text is UNJUDGED
+("na-not-in-vocabulary"). And the number of valid claims may not exceed
+`(NA_SHARE_CAP_PERCENT * n) // 100` for n active entries (integer arithmetic);
+over the cap EVERY claim is voided to UNJUDGED ("na-over-cap"), because choosing
+which claims are legitimate would itself be gameable. A family of fewer than 4
+entries therefore admits no N/A at all: deliberate and fail-closed. The report
+carries `na_count`, `na_cap` and `na_over_cap`.
 
 Every entry is judged whether or not the selection compiler injected it into
 the prompt: the injection ceiling bounds what is shown, not what is
@@ -62,10 +73,46 @@ REASON_OTHER = "other"
 _REASON_FROM_OUTCOME = {ck.UNRUNNABLE_PROSE: REASON_PROSE, ck.EMPTY: REASON_EMPTY,
                         ck.UNREADABLE: REASON_UNREADABLE}
 
+# Closed vocabulary for a not-applicable claim: one token per trait a baseline
+# entry can be absent for (the traits of the capability surface), plus two
+# structural ones. Deliberately absent: any reason that only defers the work to
+# later or to someone else. A deferral is not non-applicability, and admitting
+# one would reopen the excuse this vocabulary exists to close.
+NA_REASONS = (
+    "no-persistent-state",
+    "single-actor",
+    "no-bulk-operation",
+    "no-destructive-operation",
+    "not-distributed",
+    "no-external-effect",
+    "not-scheduled",
+    "no-money",
+    "single-policy-layer",
+    "no-user-interface",
+    "platform-not-targeted",
+    "superseded-by-entry",
+)
+# At most this share of a family's active entries may be declared N/A.
+NA_SHARE_CAP_PERCENT = 30
+
 _COUNT_KEYS = ("applied", "violated", "delegated", "not_applicable", "unjudged",
                "unjudged_tests")
 _COUNT_OF = {APPLIED_VERIFIED: "applied", VIOLATED: "violated", DELEGATED: "delegated",
              NOT_APPLICABLE: "not_applicable", UNJUDGED: "unjudged"}
+
+
+def parse_na_reason(reason) -> tuple:
+    """(token, note) when the reason leads with a NA_REASONS token, else (None, text).
+
+    The text is split on the first ":"; only the stripped head is matched, so
+    `no-money` and `no-money: internal tool has no billing` both yield the token.
+    """
+    text = str(reason or "").strip()
+    head, _, note = text.partition(":")
+    head = head.strip()
+    if head in NA_REASONS:
+        return (head, note.strip())
+    return (None, text)
 
 
 def _counts(rows: list) -> dict:
@@ -85,22 +132,37 @@ def judge(family: str, repo_root: str, registry: str | None = None,
                 "chain_ok": None, "status": NO_BASELINE, "report_only": True,
                 "would_block": False, "would_block_on_violated": False,
                 "counts": _counts([]), "unjudged_tests": [],
+                "na_count": 0, "na_cap": 0, "na_over_cap": False,
                 "entries": [], "deferred_from_prompt": []}
     n = gens[-1]
     stamp = "%s/B%d" % (family, n)
     active = bl.active_entries(family, root)
     injected = {e.get("id") for e in sel.select_for_injection(active).injected}
     na = not_applicable or {}
+    n_active = len(active)
+    na_cap = (NA_SHARE_CAP_PERCENT * n_active) // 100
+    na_count = sum(1 for e in active
+                   if e.get("id") in na and parse_na_reason(na[e.get("id")])[0])
+    na_over_cap = na_count > na_cap
     out = []
     for e in active:
         ident = e.get("id")
-        reason = na.get(ident)
         why = None
-        if ident in na and str(reason or "").strip():
-            verdict, detail, outcome = NOT_APPLICABLE, str(reason).strip(), None
-        elif ident in na:
-            verdict, detail, outcome = UNJUDGED, "declared not applicable with no reason", None
-            why = REASON_NA_NO_REASON
+        if ident in na:
+            outcome = None
+            token, note = parse_na_reason(na[ident])
+            if not str(na[ident] or "").strip():
+                verdict, why = UNJUDGED, REASON_NA_NO_REASON
+                detail = "declared not applicable with no reason"
+            elif token is None:
+                verdict, why = UNJUDGED, REASON_NA_NOT_IN_VOCABULARY
+                detail = "N/A reason %r carries no token from NA_REASONS" % note
+            elif na_over_cap:
+                verdict, why = UNJUDGED, REASON_NA_OVER_CAP
+                detail = "N/A share %d/%d over cap %d" % (na_count, n_active, na_cap)
+            else:
+                verdict = NOT_APPLICABLE
+                detail = "%s: %s" % (token, note) if note else token
         else:
             r = ck.evaluate(e, repo_root, registry)
             outcome = r.outcome
@@ -127,5 +189,6 @@ def judge(family: str, repo_root: str, registry: str | None = None,
             "counts": _counts(out),
             "unjudged_tests": sorted(x["entry_id"] for x in out
                                      if x["unjudged_reason"] == REASON_TEST_NOT_RUN),
+            "na_count": na_count, "na_cap": na_cap, "na_over_cap": na_over_cap,
             "entries": out,
             "deferred_from_prompt": sorted(x["entry_id"] for x in out if not x["injected"])}

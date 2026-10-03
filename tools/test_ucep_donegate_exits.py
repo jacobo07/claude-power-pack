@@ -216,6 +216,73 @@ def main() -> int:
         _check("V-UCEP-NO-EXEC-SCAN-CONTROL", len(control) == 2,
                "scanner flags a fixture with one forbidden import and one os.system", control)
 
+        # -- H5: N/A needs a closed-vocabulary reason, within a share cap ------------
+        # 10 entries whose file: check PASSes: only the N/A handling can set would_block.
+        ids = ["n%d" % i for i in range(10)]
+        fam10 = _family(gens, [_entry(i, "file:README.md", k) for k, i in enumerate(ids)])
+        TOKEN = "no-money"
+
+        # 9 -- free text is not a reason
+        rep9 = _judge(fam10, repo, gens, not_applicable={i: "n/a" for i in ids})
+        r9 = _rows(rep9)
+        _check("V-UCEP-H5-FREE-TEXT",
+               len(r9) == 10
+               and all(r["verdict"] == dg.UNJUDGED
+                       and r.get("unjudged_reason") == "na-not-in-vocabulary"
+                       for r in r9.values())
+               and rep9.get("would_block") is True,
+               "10/10 declared N/A with free text -> all UNJUDGED/na-not-in-vocabulary, "
+               "would_block True",
+               {"verdicts": sorted({(r["verdict"], r.get("unjudged_reason"))
+                                    for r in r9.values()}),
+                "would_block": rep9.get("would_block")})
+
+        # 10 -- every entry N/A with valid tokens is over the cap
+        rep10 = _judge(fam10, repo, gens, not_applicable={i: TOKEN for i in ids})
+        r10 = _rows(rep10)
+        _check("V-UCEP-H5-OVER-CAP",
+               rep10.get("na_cap") == 3 and rep10.get("na_over_cap") is True
+               and len(r10) == 10
+               and all(r["verdict"] == dg.UNJUDGED and r.get("unjudged_reason") == "na-over-cap"
+                       for r in r10.values())
+               and rep10.get("would_block") is True,
+               "10/10 valid-token N/A: cap 3, over cap -> every claim voided "
+               "(UNJUDGED/na-over-cap), would_block True",
+               {"na_cap": rep10.get("na_cap"), "na_over_cap": rep10.get("na_over_cap"),
+                "verdicts": sorted({(r["verdict"], r.get("unjudged_reason"))
+                                    for r in r10.values()}),
+                "would_block": rep10.get("would_block")})
+
+        # 11 -- control: a within-cap N/A is still honoured
+        three = ids[:3]
+        rep11 = _judge(fam10, repo, gens, not_applicable={i: TOKEN for i in three})
+        r11 = _rows(rep11)
+        _check("V-UCEP-H5-WITHIN-CAP-CONTROL",
+               all(r11[i]["verdict"] == dg.NOT_APPLICABLE for i in three)
+               and all(r11[i]["verdict"] == dg.APPLIED_VERIFIED for i in ids[3:])
+               and rep11.get("would_block") is False,
+               "3/10 valid-token N/A -> NOT_APPLICABLE, other 7 APPLIED_VERIFIED, would_block "
+               "False (na_count=%s na_cap=%s)" % (rep11.get("na_count"), rep11.get("na_cap")),
+               {"verdicts": {i: r["verdict"] for i, r in r11.items()},
+                "would_block": rep11.get("would_block")})
+
+        # 12 -- control: a token may carry a free-text note
+        note = "internal tool has no billing"
+        rep12 = _judge(fam10, repo, gens, not_applicable={ids[0]: "%s: %s" % (TOKEN, note)})
+        row12 = _rows(rep12).get(ids[0], {})
+        _check("V-UCEP-H5-TOKEN-WITH-NOTE-CONTROL",
+               row12.get("verdict") == dg.NOT_APPLICABLE
+               and TOKEN in str(row12.get("detail")) and note in str(row12.get("detail")),
+               "token plus note -> NOT_APPLICABLE; detail keeps both", row12)
+
+        # 13 -- a blank reason names no reason at all
+        rep13 = _judge(fam10, repo, gens, not_applicable={ids[0]: "  "})
+        row13 = _rows(rep13).get(ids[0], {})
+        _check("V-UCEP-H5-NO-REASON",
+               row13.get("verdict") == dg.UNJUDGED
+               and row13.get("unjudged_reason") == "na-no-reason",
+               "blank reason -> UNJUDGED/na-no-reason", row13)
+
         # 2 -- never executed: observed after EVERY judge() call in this file
         _check("V-UCEP-H6-NOT-EXECUTED", _EXECUTED_AFTER == [],
                "marker absent after every judge() call (control: by-hand run writes it)",
