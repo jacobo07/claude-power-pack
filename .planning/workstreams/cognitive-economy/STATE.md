@@ -1,21 +1,21 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-current_phase: 3 — Turn advancement and non-convergence
+current_phase: 4 — Re-derivation, admission, proof reuse and tool-schema residency
 status: planning
-stopped_at: Phase 2 complete, ready to plan Phase 3
+stopped_at: Phases 3 and 5 complete (H, J, L) and K closed; next Phase 4 (F, G, P, C-tools)
 last_updated: "2026-10-03T14:59:35.712Z"
 last_activity: 2026-10-03
 progress:
   total_phases: 7
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
-  percent: 29
+  completed_phases: 4
+  total_plans: 4
+  completed_plans: 4
+  percent: 57
 milestone_name: cognitive-economy
 workstream: cognitive-economy
 created: 2026-10-03
-current_phase_name: Turn advancement and non-convergence
+current_phase_name: Re-derivation, admission, proof reuse and tool-schema residency
 current_plan: Not started
 last_activity_desc: Workstream created from the approved cognitive-economy program
 ---
@@ -31,7 +31,7 @@ turn-advancement, compile-out, baseline-ratchet. Waste less intelligence, never 
 ## Current Position
 
 **Status:** Ready to plan
-**Current Phase:** 3 — Turn advancement and non-convergence
+**Current Phase:** 4 — Re-derivation, admission, proof reuse and tool-schema residency
 **Last Activity:** 2026-10-03
 
 ## Sealed before the run (interactive pane, session dc383770)
@@ -57,5 +57,5 @@ turn-advancement, compile-out, baseline-ratchet. Waste less intelligence, never 
 
 ## Session Continuity
 
-**Stopped At:** Phase 2 complete, ready to plan Phase 3
+**Stopped At:** Phases 3, 5 complete; K closed. Next: Phase 4 F, G, P, C(tools); then 6 (S, T); then 7
 **Resume File:** None

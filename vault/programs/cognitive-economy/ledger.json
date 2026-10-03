@@ -412,9 +412,54 @@
    "savings": []
   },
   "H": {
-   "terminal": null,
-   "evidence": [],
-   "savings": []
+   "terminal": "IMPLEMENTED_AND_VERIFIED",
+   "reason": "A reproducible turn taxonomy over usage_index joined to git: every one of D-W7's 75,969 calls classified into recovery/repeat/proof/bookkeeping/advancing/non_convergent/coordination or UNSETTLED by written first-match rules, with turns per commit and per green test for the 40 costliest roots via tools/root_progress.py (imported, never edited). Blind-label agreement 0.875 vs shuffled 0.45. gate_turns.py re-runs the classifier on a frozen 3,000-row sample and checks its label hash; it holds green and goes red under a perturbed class order. By the 3 % rule no optimization it suggests is a lever of its own: bookkeeping (12.93 %) has no measured removable share, recovery (5.80 %) is handed to J.",
+   "evidence": [
+    {
+     "kind": "gate",
+     "argv": [
+      "python",
+      "vault/programs/cognitive-economy/gates/gate_turns.py"
+     ]
+    },
+    {
+     "kind": "prg",
+     "ref": "vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md",
+     "sha256": "299ceca7bf1a21bef93b643b18ae6d769b273b914cbf7718d7d81ead13fce37a"
+    },
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md",
+     "sha256": "299ceca7bf1a21bef93b643b18ae6d769b273b914cbf7718d7d81ead13fce37a"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/turns_frozen_sample.json",
+     "sha256": "21871b21af29dd8eaf0ea0aafae79602f78a98c524268b6436b0cd0dcd6ce455"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/turns_out.json",
+     "sha256": "fb0cffc14ac5f1658bd32002604d07319ab98837e54c5c2670681e72bd46b1fc"
+    }
+   ],
+   "savings": [],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/measure/turns.py",
+      "vault/programs/cognitive-economy/gates/gate_turns.py",
+      "vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md"
+     ],
+     "lines_added": 640,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none",
+     "gate_seconds": 1,
+     "model_calls_per_run": 0
+    }
+   }
   },
   "I": {
    "terminal": "MERGED_INTO_EXISTING_OWNER",
@@ -451,9 +496,48 @@
    }
   },
   "J": {
-   "terminal": null,
-   "evidence": [],
-   "savings": []
+   "terminal": "DEFERRED_STRONGER_OWNER",
+   "reason": "Decided from H by the frozen rule: HUMAN-rooted recovery + repeat + non_convergent = 3.51 % of D-W7 >= 3 %, so a detector proposal is earned (pre-registered input, commit 8f7b6caf). 88 % of it is recovery. The proposal is a handoff to tools/gsd_mission.py's owner: scope the progress fingerprint to the mission's own work (audit G5 verified at gsd_mission.py:1649-1671: HEAD + whole-tree porcelain + diff, so peer churn in a shared checkout reads as progress and the no_progress halt cannot fire) and count consecutive recovery turns; the interactive half needs a host other than the mission supervisor.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "tools/gsd_mission.py"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/J.md",
+     "sha256": "31a3b00388769582583144ffd796b11011fc54e4dd96da8b35ea8b309138ddc3"
+    },
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md",
+     "sha256": "299ceca7bf1a21bef93b643b18ae6d769b273b914cbf7718d7d81ead13fce37a"
+    }
+   ],
+   "savings": [
+    {
+     "lever": "non-convergence detector (proposed, not built)",
+     "status": "upper_bound",
+     "displacement": "unknown",
+     "denominator": "D-W7",
+     "value_pct": 3.5075,
+     "measurement": "vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md"
+    }
+   ],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/handoffs/J.md"
+     ],
+     "lines_added": 40,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
   },
   "K": {
    "terminal": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",

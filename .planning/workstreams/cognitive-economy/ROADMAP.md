@@ -45,11 +45,12 @@ INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is never a realized s
 
 ## Phases
 
-- [x] **Phase 1: Baseline gate and owner reconciliation** - pillar A gate; handoffs for I, N, O, Q (completed 2026-10-03)
+- [x] **Phase 1: Baseline gate and owner reconciliation** - pillar A gate; handoffs for I, N, O, Q
+ (completed 2026-10-03)
 - [x] **Phase 2: Context lifetime and fresh-epoch economics** - pillars D, E measured with displacement (completed 2026-10-03)
-- [ ] **Phase 3: Turn advancement and non-convergence** - pillars H, J turn taxonomy archaeology
+- [x] **Phase 3: Turn advancement and non-convergence** - pillars H, J turn taxonomy archaeology (completed 2026-10-03)
 - [ ] **Phase 4: Re-derivation, admission, proof reuse and tool-schema residency** - pillars F, G, K, P, C(tools)
-- [ ] **Phase 5: Compile-out of compound steps 7 and 8** - pillar L module proven on a temp state copy
+- [x] **Phase 5: Compile-out of compound steps 7 and 8** - pillar L module proven on a temp state copy (completed 2026-10-03)
 - [ ] **Phase 6: Baseline compiler audit and institutional GC** - pillars S, T
 - [ ] **Phase 7: Owner bundle, baseline-ratchet review and close** - pillars B, C, M, R; deltas; done-gate
 
@@ -182,8 +183,8 @@ record Product Delta and Intelligence Delta, and pass the done-gate.
 |-------|----------------|--------|-----------|
 | 1. Baseline gate and owner reconciliation | 1/1 | Complete    | 2026-10-03 |
 | 2. Context lifetime and fresh-epoch economics | 1/1 | Complete    | 2026-10-03 |
-| 3. Turn advancement and non-convergence | 0/0 | Not started | - |
-| 4. Re-derivation, admission, proof reuse and tool-schema residency | 0/0 | Not started | - |
-| 5. Compile-out of compound steps 7 and 8 | 0/0 | Not started | - |
+| 3. Turn advancement and non-convergence | 1/1 | Complete    | 2026-10-03 |
+| 4. Re-derivation, admission, proof reuse and tool-schema residency | 0/1 | In progress (K closed) | - |
+| 5. Compile-out of compound steps 7 and 8 | 1/1 | Complete    | 2026-10-03 |
 | 6. Baseline compiler audit and institutional GC | 0/0 | Not started | - |
 | 7. Owner bundle, baseline-ratchet review and close | 0/0 | Not started | - |
