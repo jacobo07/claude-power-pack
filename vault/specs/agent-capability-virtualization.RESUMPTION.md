@@ -99,9 +99,24 @@ worktree = repo root. Plan + Owner decisions: `vault/specs/agent-capability-virt
    Gates: S4 44/44, V-ACR 19/19, V-PATCH 9/9 (real miscounted patch + plain-rejects control),
    spec 26/26, resolver 14/14, bundle 14/14, bench 16/16. S4 CLOSED. No spec in the catalog
    is writer class now; the writer path stays proven by the synthetic e2e (f6a18ae).
-3. NEXT: S5 telemetry, then S6 foundry, S7 closure (UKDL, liveness, agent-creation gate).
-   Debt: "C++" alone never routes to cpp-reviewer (tokenizer); hermetic runs load no user
-   hooks; GEX44 lacks carrier_bash_guard; hub rolloverFocus picks newest capsule per dir.
+3. S5a DONE (C0-C4, 2026-10-03, pushed). C1 cec43401 symbol names in shared _hits + lexicon
+   ("C++" now routes to cpp-reviewer); C2 83efad9f cache key carries the code's policy hash;
+   C3 ee4461ac five drills KILLED; C4 typed misses (plan vault/plans/acv-c4-typed-misses-
+   2026-10-03.md, audited READY-WITH-FIXES, 6 gaps applied): b34dbeec loader types every
+   unreadable shape; 016a5b6a resolver `miss` = CATALOG_UNREADABLE > CLASS_EXCLUDED > BELOW_GATE
+   > NO_MATCH (Owner-approved deviation from D5), partial catalog never cached, unsearchable
+   task = EMPTY_TASK; 7faf70be drill detail shows indented FAIL lines; 16976909 eight C4 drills
+   KILLED (c3-5 superseded by c4-6). Gates: resolver 29/29, spec 28/28, s4 44/44, capability
+   33/33, bundle 14/14, bench 16/16, ACR 19/19, patch 9/9, MD 14/14.
+   Do not re-litigate: near_misses / excluded rows are lexical noise, never causes; an
+   anti-trigger veto is NO_MATCH (`vetoed_by`), not BELOW_GATE; tools/test_agent_spec.py cannot
+   be mutation-drilled in a copy (V-SPEC-STATE-VERSION needs .git) -- drill via the resolver.
+   NEXT: C5 agent_telemetry.py -> CO-12 record_signal (emit `miss`, `miss_ids`, `cache`,
+   `policy`, `fingerprint`; injectable sink; live signals.jsonl untouched), then C6 run
+   accounting, C7 portable guards, C8 GEX44 PRG (weekly reset or Owner go), then S6/S7.
+   Debt: hermetic runs load no user hooks; GEX44 lacks carrier_bash_guard; hub rolloverFocus
+   picks newest capsule per dir; test_surface_architecture 35/36 (V-SA-NO-DERIVATIVE-IN-
+   CONTRACTS on surface_architecture_design_md.json, committed 2026-09-22, not ours, pre-C4).
 
 Start: read the spec, run `python tools/test_agent_spec.py`, `test_agent_resolver.py`,
 `test_agent_bundle.py` (all green at this commit), then action 1.

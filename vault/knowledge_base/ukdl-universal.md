@@ -252,6 +252,26 @@ ignored KILLED by V-RR-SHORT-HORIZON-CONTINUE (`736c0075`). PR: for every consta
 decision, check the measured distribution of the other side before trusting a verdict.
 #CROSS-PROJECT
 
+### T-RANKER-RESIDUE-READ-AS-CAUSE-001
+
+A list a retriever happened to rank is not a causal fact about why nothing was selected.
+Measured 2026-10-03 (ACV C4, real catalog of 11 agent specs): "write a haiku about the ocean"
+carried a near-miss (one shared word, no trigger hit) and "review this code for bugs" at an
+investigator grant listed 7 reviewers as class-excluded that no gate had judged. Reading
+"near_misses non-empty" as BELOW_GATE or "excluded non-empty" as CLASS_EXCLUDED would have made
+NO_MATCH -- the only miss that can signal a real capability gap -- almost unreachable, and a
+future Foundry would have learned "a specialist exists" from lexical overlap. A third shape hid
+in the same place: every real anti-trigger veto ("write the fix") would have read as BELOW_GATE,
+claiming a capability exists exactly when none does. Fix: a miss reason is a fact the gate
+itself produced (would_activate for an exclusion; trigger hit AND blocking verdict for a gate
+refusal), collected over the whole shortlist before any top-k cut; the ranker's lists stay as
+diagnostics. Same pass: a partial catalog (one spec unloadable) answered "no specialist" and was
+cached -- the inherited rule "a negative result is not evidence unless the observer could have
+seen the object" applied, not a new one. Pinned by V-RES-MISS-* and drills c4-1..c4-8
+(vault/audits/agent_estate/mutation_drills/). PR: before typing a negative outcome, list which
+component PRODUCED each candidate fact; a fact the decider never judged cannot name its cause.
+#CROSS-PROJECT
+
 ### T-SUCCESSOR-JOIN-CERTIFIED-ROW-NAMES-PREDECESSOR-001
 
 An event row describes the session that wrote it, not necessarily the session it is about.

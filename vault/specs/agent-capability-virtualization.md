@@ -145,7 +145,8 @@ through what the parent observes.
 |---|---|
 | S0-S4 (carriers, AgentSpec, paging, resolver, bundle, benchmark v2 NON_INFERIOR, 11 specs) | LIVE -- evidence in RESUMPTION + vault/audits/agent_estate/real_boundary/; suites re-measured green @ fa0babac (2026-10-03): spec 26/26, resolver 14/14, bundle 14/14, s4 44/44, bench 16/16, ACR 19/19, patch 9/9. Benchmark v2 is n=1 per arm: a non-inferiority signal, not equivalence |
 | scoped writer grant (hermetic dontAsk run) | LIVE, proven on a synthetic spec only; no catalog spec is writer class |
-| S5 (a-e) symbol lexicon, cache policy key, telemetry, run accounting, typed misses, portable guards | APPROVED 2026-10-03, READY FOR EXECUTION -- see "S5-S7 decisions" below |
+| S5a symbol lexicon (C1), cache policy key (C2), drills (C3), typed misses (C4) | LIVE 2026-10-03 -- C1 cec43401, C2 83efad9f, C3 ee4461ac, C4 b34dbeec/016a5b6a/7faf70be/16976909; resolver 29/29, 13 mutation drills KILLED (vault/audits/agent_estate/mutation_drills/). C4 subsumes the 10-01 S5d "typed negative cache + invalidation"; S5d's replay and gap-recurrence records move to the S6 recorder |
+| S5 telemetry (C5), run accounting (C6), portable guards (C7) | APPROVED 2026-10-03, READY FOR EXECUTION -- see "S5-S7 decisions" below |
 | S5f real GEX44 PRG | APPROVED, gated on S5a-e green AND (weekly reset passed OR Owner go) |
 | S6 foundry (recorder -> challenger -> active), S7 closure | PLANNED, entry gates below |
 | instance leases / TTL beyond runtime subagent lifetime | PLANNED, no slice |
@@ -190,6 +191,12 @@ agent_spec, not agent_resolver; agent_resolver has test callers only.
   first_pass = validated with 0 repairs. One agent_run row per dispatch. consumed = UNKNOWN.
 - **D5 typed misses** (lands before resolver emission): NO_MATCH, BELOW_GATE, CLASS_EXCLUDED,
   CATALOG_UNREADABLE; precedence CATALOG_UNREADABLE > BELOW_GATE > CLASS_EXCLUDED > NO_MATCH.
+  **Amended by C4 (Owner-approved 2026-10-03):** precedence CATALOG_UNREADABLE > CLASS_EXCLUDED >
+  BELOW_GATE > NO_MATCH -- an above-grant spec that WOULD pass the same gate is the exact
+  counterfactual cause and must not hide behind an in-grant block. Definitions, as built:
+  CLASS_EXCLUDED needs would_activate; BELOW_GATE needs a trigger hit AND a BLOCKING verdict; an
+  anti-trigger veto is NO_MATCH (`vetoed_by`); a partial catalog is CATALOG_UNREADABLE and never
+  cached; an unsearchable task is EMPTY_TASK. Contract: vault/plans/acv-c4-typed-misses-2026-10-03.md.
 - **D6 portable guards.** Repo template -> per-run settings via `--settings` on every carrier run;
   required set {carrier_bash_guard}; heartbeat tagged with its registration source (only
   run-settings lines count); shell = Bash|PowerShell; states FIRED / NOT_EXERCISED / UNPROTECTED /
