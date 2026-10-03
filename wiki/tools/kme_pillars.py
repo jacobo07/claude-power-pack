@@ -717,6 +717,39 @@ class FObserver(PillarObserver):
         }
 
 
+# --------------------------------------------------------------------------- subagent meta (H and I)
+_META_CACHE = {}
+
+
+def read_subagent_meta(path):
+    """The `<name>.meta.json` beside a subagent transcript `<name>.jsonl` as a dict, read-only and once per path
+    within a scan (the cache is cleared by scan()); {} on absence, bad JSON or a non-object."""
+    path = str(path)
+    if path in _META_CACHE:
+        return _META_CACHE[path]
+    meta = {}
+    if path.endswith(".jsonl"):
+        try:
+            with open(path[:-len(".jsonl")] + ".meta.json", "r", encoding="utf-8") as fh:
+                got = json.load(fh)
+            if isinstance(got, dict):
+                meta = got
+        except (OSError, ValueError):
+            meta = {}
+    _META_CACHE[path] = meta
+    return meta
+
+
+def subagent_type(path):
+    """(agent type name, absent): the sanitized agentType of the subagent's meta.json, else ("unknown", True)."""
+    name = re.sub(r"[^A-Za-z0-9_.:-]", "", str(read_subagent_meta(path).get("agentType") or ""))[:40]
+    return (name, False) if name else ("unknown", True)
+
+
+def is_subagent_path(path):
+    return "/subagents/" in str(path).replace("\\", "/")
+
+
 # --------------------------------------------------------------------------- pillar G
 # Heuristic text markers (English only). Every pattern is a module constant so the gates and drills can drive it.
 FALSIFY_RE = re.compile(
@@ -1182,18 +1215,9 @@ class HObserver(PillarObserver):
             rec = calls.get(ev["call_key"]) if ev["call_key"] is not None else None
             if rec is not None and rec.get("model") != "<synthetic>":
                 ev["call_w"] = call_weighted(rec)
-        if "/subagents/" not in path.replace("\\", "/"):
+        if not is_subagent_path(path):
             return
-        atype, absent = "unknown", True
-        if path.endswith(".jsonl"):
-            try:
-                with open(path[:-len(".jsonl")] + ".meta.json", "r", encoding="utf-8") as fh:
-                    meta = json.load(fh)
-                name = re.sub(r"[^A-Za-z0-9_.:-]", "", str(meta.get("agentType") or ""))[:40]
-                if name:
-                    atype, absent = name, False
-            except (OSError, ValueError, AttributeError):
-                pass
+        atype, absent = subagent_type(path)
         weighted_calls = [call_weighted(calls[k]) for k in order if calls[k].get("model") != "<synthetic>"]
         verifier = (not absent) and bool(VERIFIER_AGENT_RE.search(atype))
         self.agents.append({"sid": id(sess), "type": atype, "absent": absent, "verifier": verifier,
@@ -1269,17 +1293,102 @@ class HObserver(PillarObserver):
         }
 
 
-OBSERVERS = {"D": DObserver, "E": EObserver, "F": FObserver, "G": GObserver, "H": HObserver}
+# --------------------------------------------------------------------------- pillar I
+def distribution(values):
+    """{n, min, p10, median, p90, max, total} of a list of numbers; percentiles are nearest-rank, the median of an
+    even count is the mean of the two middle values. An empty list has n 0 and None elsewhere (total 0)."""
+    v = sorted(values)
+    n = len(v)
+    if n == 0:
+        return {"n": 0, "min": None, "p10": None, "median": None, "p90": None, "max": None, "total": 0}
+
+    def rank(p):
+        return v[max(0, min(n - 1, -(-p * n // 100) - 1))]
+    med = v[n // 2] if n % 2 else (v[n // 2 - 1] + v[n // 2]) / 2
+    return {"n": n, "min": v[0], "p10": rank(10), "median": med, "p90": rank(90), "max": v[-1], "total": sum(v)}
+
+
+class IObserver(PillarObserver):
+    """Pillar I: the bootstrap cost of each subagent. Per subagent transcript file: its first non-synthetic call's
+    context (input + cache_write + cache_read), that call's weighted cost, and the floor's rent, i.e. that first-call
+    context re-read at the cache-read weight on each of the file's later calls. Beside it the main thread's own
+    first-call context. A session whose main file carries inline sidechain lines (`isSidechain: true`) holds
+    subagent calls this observer cannot separate, so it is unobserved for I (absent is not zero)."""
+    pillar = "I"
+
+    def __init__(self):
+        self.subs = []
+        self.mains = []
+        self.inline = collections.Counter()
+
+    def on_line(self, path, o, idx, sess):
+        if isinstance(o, dict) and o.get("isSidechain") is True and not is_subagent_path(path):
+            self.inline[id(sess)] += 1
+
+    def on_file_end(self, path, sess, order, calls, compact_points):
+        real = [k for k in order if calls[k].get("model") != "<synthetic>"]
+        if not real:
+            return
+        first = calls[real[0]]
+        ctx = first["inp"] + first["cw"] + first["cr"]
+        if not is_subagent_path(path):
+            self.mains.append({"sid": id(sess), "first_ctx": ctx})
+            return
+        atype, _absent = subagent_type(path)
+        self.subs.append({"sid": id(sess), "type": atype, "first_ctx": ctx, "first_weighted": call_weighted(first),
+                          "calls": len(real), "floor_rent": ctx * WEIGHTS["cache_read"] * (len(real) - 1),
+                          "cold": first["cw"] > first["cr"]})
+
+    def result(self, selected, sessions, population):
+        subs = [e for e in self.subs if e["sid"] in selected]
+        mains = [e for e in self.mains if e["sid"] in selected]
+        total = sum(e["first_weighted"] + e["floor_rent"] for e in subs)
+        by_type = {}
+        for e in subs:
+            t = by_type.setdefault(e["type"], {"files": 0, "first_ctx_total": 0, "weighted": 0.0})
+            t["files"] += 1
+            t["first_ctx_total"] += e["first_ctx"]
+            t["weighted"] += e["first_weighted"] + e["floor_rent"]
+        calls = population["calls"]
+        seen = sum(s["main"].get("calls", 0) + s["sub"].get("calls", 0)
+                   for s in sessions if id(s) in selected and id(s) not in self.inline)
+        return {
+            "numerator": {
+                "name": "subagent first-call context: first-call weighted + floor rent (measured tokens)",
+                "definition": ("per subagent transcript file: the weighted cost of its first non-synthetic call "
+                               "(input 1 + cache_read 0.1 + cache_write 2 + output 5) plus the floor rent, that "
+                               "first call's context (input + cache_write + cache_read) read at weight 0.1 on each "
+                               "of the file's later calls; measured usage, no chars-per-token estimate"),
+                "kind": "subagent bootstrap", "chars": 0,
+                "weighted_lo": total, "weighted_hi": total, "weighted_interval": [total, total],
+            },
+            "observability": (seen / calls) if calls else None,
+            "details": {
+                "subagent_files": len(subs), "first_ctx": distribution([e["first_ctx"] for e in subs]),
+                "main_first_ctx": distribution([e["first_ctx"] for e in mains]),
+                "by_agent_type": {k: {"files": v["files"], "first_ctx_total": v["first_ctx_total"],
+                                      "weighted": round(v["weighted"], 3)} for k, v in sorted(by_type.items())},
+                "first_weighted_total": sum(e["first_weighted"] for e in subs),
+                "floor_rent_total": sum(e["floor_rent"] for e in subs),
+                "cold_files": sum(1 for e in subs if e["cold"]),
+                "sessions_with_inline_sidechain": sum(1 for s in sessions if id(s) in selected and self.inline[id(s)]),
+            },
+        }
+
+
+OBSERVERS = {"D": DObserver, "E": EObserver, "F": FObserver, "G": GObserver, "H": HObserver, "I": IObserver}
 PILLAR_HELP = {"D": "silent-success hooks: hook_additional_context rent per call",
                "E": "large-source read virtualization: rereads of identical file versions",
                "F": "GSD operational projection: workflow-doc residency beside the init JSON",
                "G": "derived cognition: re-tested falsified hypotheses and re-litigated sealed decisions (interval)",
-               "H": "proof reuse: verification share (test / gate runs, verifier subagents) + the CE P / G owner read"}
+               "H": "proof reuse: verification share (test / gate runs, verifier subagents) + the CE P / G owner read",
+               "I": "startup floor + subagent bootstrap: first-call context of every subagent file, beside the main thread's"}
 
 
 # --------------------------------------------------------------------------- scan + population
 def scan(roots, expand, host, observers, keep):
     """Frozen-parser scan of every root; returns (sessions, fanout, dirs)."""
+    _META_CACHE.clear()
     dirs = []
     for r in roots:
         if expand:
@@ -1381,6 +1490,15 @@ def _pillar_details(p, det):
                        + " is null (open on this history). Recorded as open, not as a pass.")
         else:
             out.append("- CE owner terminals are present at this commit: " + json.dumps(pil))
+    elif p == "I":
+        out.append(f"- subagent files: {det.get('subagent_files')}, cold first calls: {det.get('cold_files')}, "
+                   f"sessions with inline sidechain lines (unobserved): {det.get('sessions_with_inline_sidechain')}")
+        out.append(f"- subagent first-call context distribution: {json.dumps(det.get('first_ctx'))}")
+        out.append(f"- main-thread first-call context distribution: {json.dumps(det.get('main_first_ctx'))}")
+        out.append(f"- weighted split: first calls {det.get('first_weighted_total')}, floor rent {det.get('floor_rent_total')}")
+        for k, v in det.get("by_agent_type", {}).items():
+            out.append(f"- agent type {k}: {v['files']} files, first-call context total {v['first_ctx_total']}, "
+                       f"weighted {v['weighted']}")
     return out
 
 
@@ -1486,11 +1604,25 @@ H_CAVEATS = CAVEATS[:2] + (
     "the CE P and G verdicts are read with git at HEAD (details.consumed_owner_verdicts); a null terminal means open, "
     "and the consumption (R2) is then not satisfiable",
 )
-CAVEATS_BY_PILLAR = {"G": G_CAVEATS, "H": H_CAVEATS}
+I_CAVEATS = CAVEATS[:2] + (
+    "subagent first-call context = input + cache_write + cache_read of the first non-synthetic call of each "
+    "subagent transcript file; the floor rent assumes that context stays cached and unchanged for the file's later "
+    "calls (read at weight 0.1 each); a cache expiry would re-write it, so the rent under-states",
+    "a cold first call (cache_write > cache_read) is a cache write a later subagent may have reused; reported as "
+    "details.cold_files, not removed from the numerator",
+    "a session whose main file carries inline sidechain lines (isSidechain true) holds subagent calls this "
+    "observer cannot separate: it is unobserved for I and lowers the observability, never read as zero",
+    "frozen rule I: the measured subagent first-call context is added to CE B / SC A-C; no rule or skill is moved "
+    "here, and the share is a measurement, not a saving",
+)
+CAVEATS_BY_PILLAR = {"G": G_CAVEATS, "H": H_CAVEATS, "I": I_CAVEATS}
 ESTIMATE_MODEL_G = ("no char estimate: weighted cost of the carrying calls from their recorded usage "
                     "(input 1 + cache_read 0.1 + cache_write 2 + output 5); lower = calls with strict matches, "
                     "upper = their whole turns for loose matches; share = cost / weighted denominator")
-ESTIMATE_MODELS = {"G": ESTIMATE_MODEL_G}   # H keeps the default chars-per-token model
+ESTIMATE_MODEL_I = ("no char estimate: measured usage only; per subagent file = first-call weighted cost + first-call "
+                    "context x 0.1 x (later calls); share = sum over the selected population / weighted denominator "
+                    "(input 1 + cache_read 0.1 + cache_write 2 + output 5)")
+ESTIMATE_MODELS = {"G": ESTIMATE_MODEL_G, "I": ESTIMATE_MODEL_I}   # H keeps the default chars-per-token model
 
 
 # --------------------------------------------------------------------------- CLI

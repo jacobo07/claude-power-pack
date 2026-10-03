@@ -1516,6 +1516,58 @@ GATES_H = [
 ]
 
 
+# =========================================================================== gates (plan 03-04, task 1: pillar I tracer)
+I_FIX_POP = {"sessions_active": 1, "sessions_dead": 0, "calls": 6, "input": 21, "cache_write": 50000,
+             "cache_read": 110000, "output": 260}
+
+
+def i_tracer_fixture(root, project="-home-x-kme-i"):
+    """Main file: 2 calls, first (5, 30000, 0, 100). agent-aa (Explore): 3 calls, first (3, 20000, 5000, 40).
+    agent-bb (gsd-planner): 1 call (2, 0, 25000, 10)."""
+    fx = Fx(root, project=project)
+    fx.human("start", ts(0))
+    fx.assistant("m1", "r1", (5, 30000, 0, 100), ts(1))
+    fx.assistant("m2", "r2", (5, 0, 30000, 50), ts(2))
+    aa = fx.subagent("aa", "Explore")
+    aa.human("task", ts(3))
+    aa.assistant("a1", "ra1", (3, 20000, 5000, 40), ts(4))
+    aa.assistant("a2", "ra2", (3, 0, 25000, 30), ts(5))
+    aa.assistant("a3", "ra3", (3, 0, 25000, 30), ts(6))
+    bb = fx.subagent("bb", "gsd-planner")
+    bb.human("task", ts(3))
+    bb.assistant("b1", "rb1", (2, 0, 25000, 10), ts(4))
+    return fx
+
+
+def g_i_e2e():
+    root = scratch("itracer")
+    i_tracer_fixture(root)
+    frozen = write_frozen(root / "frozen.json", **{"KME-L": I_FIX_POP})
+    outd = root / "m"
+    rc, out, err = run_main(["i", "--denominator", "KME-L", "--frozen-file", frozen, "--root",
+                             str(pdir(root, "-home-x-kme-i")), "--out-dir", str(outd)])[0:3]
+    files = sorted(outd.glob("I-KME-L-*.md")) if outd.is_dir() else []
+    if rc != 0 or len(files) != 1:
+        return False, f"rc={rc} files={[f.name for f in files]} err={err[-200:]}"
+    front, res = parse_measurement(files[0].read_text(encoding="utf-8"))
+    d, n = res["details"], res["numerator"]
+    want = 40703 + 25003 * 0.1 * 2 + 2552
+    types = d["by_agent_type"]
+    ok = (front["pillar"] == "I" and front["population_match"] == "exact" and d["subagent_files"] == 2
+          and d["first_ctx"]["n"] == 2 and d["first_ctx"]["min"] == 25002 and d["first_ctx"]["max"] == 25003
+          and d["first_ctx"]["total"] == 50005 and d["main_first_ctx"]["n"] == 1
+          and d["main_first_ctx"]["min"] == d["main_first_ctx"]["max"] == 30005
+          and abs(n["weighted_lo"] - want) < 1e-6 and n["weighted_lo"] == n["weighted_hi"]
+          and set(types) == {"Explore", "gsd-planner"}
+          and abs(types["Explore"]["weighted"] - (40703 + 5000.6)) < 1e-6 and types["gsd-planner"]["weighted"] == 2552
+          and types["Explore"]["first_ctx_total"] == 25003 and d["cold_files"] == 1)
+    return ok, f"rc={rc} sub_files={d['subagent_files']} first_ctx={d['first_ctx']} main={d['main_first_ctx']} " \
+               f"weighted={n['weighted_lo']}/{want} types={sorted(types)}"
+
+
+GATES_I_TRACER = [("V-KMEP-I-E2E", g_i_e2e)]
+
+
 GATES_EXPANSION = [
     ("V-KMEP-POPULATION-DRIFT", g_population_drift),
     ("V-KMEP-VERDICT-TABLE", g_verdict_table),
@@ -1548,7 +1600,7 @@ GATES_TRACER = [
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
     ("V-KMEP-CLI-USAGE", g_cli_usage),
 ]
-GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_REAL
+GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_REAL
 
 
 def summary_line() -> str:
@@ -1570,7 +1622,7 @@ def run_all() -> int:
 
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
-DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H]    # the -REAL gates are excluded for speed
+DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER]    # the -REAL gates are excluded for speed
 
 
 def _quiet(names) -> dict:
