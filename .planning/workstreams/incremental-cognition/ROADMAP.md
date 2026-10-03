@@ -76,6 +76,7 @@ checkout: the laptop's free RAM swung 0.6-8 GB during arming. Read every constra
 **Goal**: a mission whose worker entered its own worktree keeps relaying when peers commit to the main checkout.
 **Depends on**: nothing.
 **Success criteria**:
+
 1. A red test reproduces the measured hold (cwd and work_dir both ahead of their merge-base) before the fix.
 2. The Brand #001 shape (a worker that never worked in the worktree) STAYS blocked (V-MCA-DIVERGED unchanged).
 3. A scratch-repo drill relays three times while main advances between relays, with no lost commit and no
@@ -88,15 +89,27 @@ checkout: the laptop's free RAM swung 0.6-8 GB during arming. Read every constra
 environment first.
 **Depends on**: Phase 1 (same file, sequential hunks).
 **Success criteria**:
+
 1. Red test of the 137-relaunch shape (worker dies on `Login expired` before any API call) -> fix -> green.
 2. GEX44 a5/a7: rules version, hook health and interpreters checked by a repeatable preflight; broken hooks and
    stale rules repaired by a deploy script; re-login recorded in the owner bundle, never bypassed.
 **Plans:** 4 plans (sequential waves 1-4)
 
 Plans:
+**Wave 1**
+
 - [ ] 02-01-PLAN.md — C: 137-relaunch shape red through supervise; auth fallback parks without the breaker (C's one gsd_mission hunk); re-login releases a quarantine
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 02-02-PLAN.md — B: read-only GEX44 env preflight (auth, rules version, hooks, interpreters; READY/NOT_READY/UNMEASURABLE); evidence on a5/a7
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 02-03-PLAN.md — B+C: one pre-launch gate (B's one gsd_mission hunk): renewals inherit a quarantine; declared planes refuse on measured NOT_READY
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 02-04-PLAN.md — B: repeatable git deploy for envs (dry-run default, locked, backed up); C.md/B.md evidence; [B]/[C] owner-bundle lines
 
 ### Phase 3: KME corpus measurements

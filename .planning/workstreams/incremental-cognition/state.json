@@ -1,0 +1,43 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1",
+  "phases": [
+    {
+      "number": "1",
+      "name": "Mission relay in a shared checkout",
+      "status": "in_progress"
+    },
+    {
+      "number": "2",
+      "name": "Persistent failures and remote integrity",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "KME corpus measurements",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "Cognitive cost regression gate",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "Offline replay and owner bundle",
+      "status": "pending"
+    },
+    {
+      "number": "6",
+      "name": "Consume owners and close",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 1 of 6 · executing"
+  },
+  "updated_at": "2026-10-03T18:04:47.169Z"
+}
