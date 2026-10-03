@@ -39,10 +39,12 @@ its matcher and fold, and its result is reported as an independent output of
 from __future__ import annotations
 
 import bisect
+import hashlib
 import json
 import os
 import re
 import sys
+import time
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _PP_ROOT = os.path.normpath(os.path.join(_HERE, "..", ".."))
@@ -52,7 +54,8 @@ if _PP_ROOT not in sys.path:
 from modules.gsd_x.mission.obligation import (  # noqa: E402
     EXTRACTED, FACT_STATES, OBSERVED, UNKNOWN)
 from modules.repo_identity.identity import canonical_repo, repo_key  # noqa: E402
-from modules.tower.families import _fold, _match, classify_prompt  # noqa: E402
+from modules.tower.families import (  # noqa: E402
+    _SKIP_DIRS as _FAMILY_SKIP_DIRS, _fold, _match, classify_prompt)
 
 SCHEMA = "ucep-traits/1"
 SUBJECT_SCHEMA = "ucep-subject/1"
@@ -97,6 +100,26 @@ CACHE_MISSING = "NO_CACHE"
 CACHE_STALE = "STALE"
 CACHE_MALFORMED = "MALFORMED"
 CACHE_UNRESOLVABLE = "UNRESOLVABLE"
+
+# Root-level files whose size or mtime joins the cheap fingerprint. Lower-cased
+# basenames: every manifest the producer parses plus the root markers it reads. The
+# list is written out here because this module must never import `trait_scan`
+# (a gate ties the two lists). NTFS moves a directory's mtime only when a direct
+# child is created, deleted or renamed, never when a file is edited in place, so a
+# manifest edit is invisible to a listing and each manifest is stat'ed on its own.
+MANIFEST_NAMES = frozenset({
+    "package.json", "requirements.txt", "pyproject.toml", "mix.exs", "pom.xml",
+    "build.gradle", "build.gradle.kts", "cargo.toml", "go.mod",
+    "docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml",
+    "dockerfile", "fly.toml", "vercel.json", "schema.prisma", "plugin.yml",
+    "paper-plugin.yml"})
+
+# At most this many evidence files are recorded for re-stat, and at most this many
+# are re-stat'ed: the reader's cost is bounded whatever a document claims.
+EVIDENCE_FILES_MAX = 32
+
+# Depth-2 fingerprints do not descend into trees the producer never walks.
+_FP_SKIP_DIRS = frozenset(_FAMILY_SKIP_DIRS)
 
 # An archetype id is ONE path segment: `archetype/<ID>` becomes a directory name
 # that the baseline subject discovery walks, so a slash inside an id would invent
@@ -309,9 +332,11 @@ def cache_path(root, state_dir=None):
                         "traits_%s.json" % repo_key(sroot))
 
 
-def _cache_info(state, path=None, produced_at=None, reason="", walk=None):
+def _cache_info(state, path=None, produced_at=None, reason="", walk=None, last_known=None):
+    """`last_known` is set only for a STALE cache: the readings the document held
+    when it was produced, kept for display and never judged."""
     return {"state": state, "path": path, "produced_at": produced_at,
-            "reason": reason, "walk": walk}
+            "reason": reason, "walk": walk, "last_known": last_known}
 
 
 def _valid_reading(r):
@@ -319,7 +344,158 @@ def _valid_reading(r):
             and r.get("fact_state") in FACT_STATES)
 
 
-def _read_traits(root, state_dir):
+# -- freshness: a cheap fingerprint, never a walk -----------------------------------
+
+def _utf8(text):
+    return text.encode("utf-8", "surrogatepass")
+
+
+def _list_dir(path):
+    """Entries of one directory sorted by name, or None when it cannot be listed."""
+    try:
+        with os.scandir(path) as it:
+            return sorted(it, key=lambda e: e.name)
+    except OSError:
+        return None
+
+
+def _entry_stat(entry):
+    """`name|size|mtime_ns` of a directory entry, or `name|<error type>`. On Windows the
+    values come from the directory listing itself, so this costs no extra call."""
+    try:
+        st = entry.stat()
+    except OSError as exc:
+        return "%s|%s" % (entry.name, type(exc).__name__)
+    return "%s|%d|%d" % (entry.name, st.st_size, st.st_mtime_ns)
+
+
+def _is_linked_dir(entry):
+    try:
+        if entry.is_symlink():
+            return True
+        is_junction = getattr(entry, "is_junction", None)
+        return bool(is_junction()) if is_junction else False
+    except OSError:
+        return True
+
+
+def fingerprint(root, depth=1):
+    """16 hex characters naming the cheap observable state of `root`, by `os.scandir`
+    only (never a walk, so it costs about a millisecond on a real repository).
+
+    Depth 1 hashes the sorted names of the root's direct entries and the
+    `name|size|mtime_ns` of every root entry whose lower-cased name is in
+    `MANIFEST_NAMES` (read as a module global at call time). Depth 2 additionally
+    hashes, for each root child directory the producer would walk, its mtime, its
+    sorted entry names and the stats of its manifest-named entries. Depth 2 is what
+    the producer's skip rule compares; the prompt path only ever pays depth 1. A
+    root that cannot be listed fingerprints as `unreadable`."""
+    top = _list_dir(root)
+    if top is None:
+        return "unreadable"
+    h = hashlib.sha256()
+    for entry in top:
+        h.update(_utf8("n|%s\n" % entry.name))
+        if entry.name.lower() in MANIFEST_NAMES:
+            h.update(_utf8("m|%s\n" % _entry_stat(entry)))
+    if depth >= 2:
+        for entry in top:
+            if entry.name in _FP_SKIP_DIRS or _is_linked_dir(entry):
+                continue
+            try:
+                if not entry.is_dir(follow_symlinks=False):
+                    continue
+                mtime = entry.stat().st_mtime_ns
+            except OSError:
+                continue
+            kids = _list_dir(entry.path)
+            h.update(_utf8("d|%s|%d\n" % (entry.name, mtime)))
+            if kids is None:
+                h.update(b"unreadable\n")
+                continue
+            for kid in kids:
+                h.update(_utf8("c|%s\n" % kid.name))
+                if kid.name.lower() in MANIFEST_NAMES:
+                    h.update(_utf8("m|%s\n" % _entry_stat(kid)))
+    return h.hexdigest()[:16]
+
+
+def root_manifest_stats(root):
+    """[{name, size, mtime_ns}] for the root's manifest-named files, sorted by name.
+    Stored in the cache so a STALE reason can name which manifest moved."""
+    out = []
+    for entry in _list_dir(root) or ():
+        if entry.name.lower() not in MANIFEST_NAMES:
+            continue
+        try:
+            st = entry.stat()
+            if entry.is_dir():
+                continue
+        except OSError:
+            continue
+        out.append({"name": entry.name, "size": st.st_size, "mtime_ns": st.st_mtime_ns})
+    return out
+
+
+def _join_inside(root, rel):
+    """`root` joined with the forward-slash relative path `rel`, or None when `rel` is
+    empty, absolute, has a drive or a backslash, or climbs out with `..`."""
+    if not isinstance(rel, str) or not rel or "\\" in rel or os.path.isabs(rel):
+        return None
+    parts = rel.split("/")
+    if any(p in ("", "..") for p in parts) or ":" in parts[0]:
+        return None
+    return os.path.join(root, *parts)
+
+
+def evidence_stats(root, rel_paths):
+    """For at most `EVIDENCE_FILES_MAX` relative paths: `{path, size, mtime_ns}`, or
+    `{path, missing: true}` when the file is gone, unreadable or outside `root`."""
+    out = []
+    for rel in list(rel_paths)[:EVIDENCE_FILES_MAX]:
+        full = _join_inside(root, rel)
+        try:
+            st = os.stat(full) if full is not None else None
+        except OSError:
+            st = None
+        if st is None:
+            out.append({"path": rel, "missing": True})
+        else:
+            out.append({"path": rel, "size": st.st_size, "mtime_ns": st.st_mtime_ns})
+    return out
+
+
+def _int(v):
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def _valid_evidence_entry(sroot, e):
+    if not isinstance(e, dict) or _join_inside(sroot, e.get("path")) is None:
+        return False
+    return e.get("missing") is True or (_int(e.get("size")) and _int(e.get("mtime_ns")))
+
+
+def _moved_manifests(sroot, stored):
+    """Names of the root manifests that differ between the stored list and now."""
+    now = {m["name"]: m for m in root_manifest_stats(sroot)}
+    old = {m["name"]: m for m in (stored or ()) if isinstance(m, dict) and "name" in m}
+    return sorted(n for n in set(now) | set(old) if now.get(n) != old.get(n))
+
+
+def _stale_reason(sroot, stored_fp):
+    """Why the stored fingerprint no longer describes the repository, or ''."""
+    if fingerprint(sroot, 1) != stored_fp["fp1"]:
+        moved = _moved_manifests(sroot, stored_fp.get("root_manifests"))
+        return "root listing or manifest changed since produced (%s)" % (
+            ", ".join(moved) if moved else "directory listing")
+    stored = stored_fp["evidence_files"]
+    for old, new in zip(stored, evidence_stats(sroot, [e["path"] for e in stored])):
+        if old != new:
+            return "evidence file changed since produced: %s" % old["path"]
+    return ""
+
+
+def _read_traits(root, state_dir, now=None):
     sroot = subject_root(root)
     if sroot is None:
         return {"cache": _cache_info(CACHE_UNRESOLVABLE, reason="unresolvable-root"),
@@ -355,17 +531,32 @@ def _read_traits(root, state_dir):
     except (TypeError, ValueError):
         produced_at = None
     walk = doc.get("walk") if isinstance(doc.get("walk"), dict) else None
+    fp = doc.get("fingerprint")
+    if not isinstance(fp, dict) or not isinstance(fp.get("fp1"), str):
+        return malformed("fingerprint")
+    evidence = fp.get("evidence_files")
+    if (not isinstance(evidence, list) or len(evidence) > EVIDENCE_FILES_MAX
+            or not all(_valid_evidence_entry(sroot, e) for e in evidence)):
+        return malformed("evidence files")
+    why = _stale_reason(sroot, fp)
+    if why:
+        return {"cache": _cache_info(CACHE_STALE, path=path, produced_at=produced_at,
+                                     reason="stale: " + why, walk=walk, last_known=traits),
+                "traits": _all_unjudged("stale")}
     return {"cache": _cache_info(CACHE_FRESH, path=path, produced_at=produced_at, walk=walk),
             "traits": traits}
 
 
-def read_traits(root, *, state_dir=None):
-    """What the prompt path sees: one file read, never a walk.
+def read_traits(root, *, state_dir=None, now=None):
+    """What the prompt path sees: one validated file read, a depth-1 `scandir` and at
+    most `EVIDENCE_FILES_MAX` stats, never a walk.
 
-    Never raises and never returns fewer than ten traits. Freshness by
-    fingerprint and age is added in plan 02-04, test first."""
+    Never raises and never returns fewer than ten traits. A cache is FRESH only while
+    the root fingerprint and every recorded evidence file are unchanged; otherwise it
+    reads STALE, every trait UNJUDGED `stale`, and the old readings survive only as
+    `cache["last_known"]`, for display."""
     try:
-        return _read_traits(root, state_dir)
+        return _read_traits(root, state_dir, now)
     except Exception as exc:  # noqa: BLE001 -- a reader that raises drops the whole chain
         return {"cache": _cache_info(CACHE_MALFORMED,
                                      reason="cache-malformed: %s" % type(exc).__name__),
@@ -563,14 +754,15 @@ def active_archetypes(subject):
                   if a.get("strength") in (Strength.REQUIRED, Strength.CONDITIONAL))
 
 
-def resolve(prompt, root, *, state_dir=None, families=None):
+def resolve(prompt, root, *, state_dir=None, now=None, families=None):
     """The capability subject for `prompt` in the repository at `root`.
 
     Reads the trait cache and the prompt; computes nothing walk-shaped. The result
-    is JSON-serializable, and `families` is an independent output (D-02)."""
+    is JSON-serializable, and `families` is an independent output (D-02). `now`
+    (epoch seconds) is passed to the cache reader's age check."""
     prompt = str(prompt or "")
     sroot = subject_root(root)
-    cached = read_traits(root, state_dir=state_dir)
+    cached = read_traits(root, state_dir=state_dir, now=now)
     intents = intent_facts(prompt)
     return {
         "schema": SUBJECT_SCHEMA,

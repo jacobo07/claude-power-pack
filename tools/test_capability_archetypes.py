@@ -128,6 +128,15 @@ def make_repo(kind: str) -> str:
             json.dump({"name": "fixture", "dependencies": {"@prisma/client": "^5.0.0"}}, fh)
         with open(os.path.join(root, "src", "index.js"), "w", encoding="utf-8") as fh:
             fh.write("console.log('fixture');\n")
+    elif kind == "prisma_marker_react":
+        # The persistent evidence is the schema marker; the root package.json declares only
+        # react, so it produces NO evidence and is not in the cache's evidence-file list. Only
+        # the root fingerprint can see an edit to it (plan 02-04 V-ARCH-STALE-MANIFEST).
+        os.makedirs(os.path.join(root, "prisma"))
+        with open(os.path.join(root, "prisma", "schema.prisma"), "w", encoding="utf-8") as fh:
+            fh.write("model Subscription {\n  id Int @id\n}\n")
+        with open(os.path.join(root, "package.json"), "w", encoding="utf-8") as fh:
+            json.dump({"name": "fixture", "dependencies": {"react": "^18.0.0"}}, fh)
     elif kind == "ephemeral":
         os.makedirs(os.path.join(root, "src"))
         with open(os.path.join(root, "package.json"), "w", encoding="utf-8") as fh:
@@ -1184,9 +1193,75 @@ GATES += [
     ("V-ARCH-NO-STRUCTURAL-DETECTOR", pred_V_ARCH_NO_STRUCTURAL_DETECTOR),
 ]
 
+
+# -- plan 02-04 Task 1: freshness by fingerprint (D-05, audit G4) -------------------
+# A cache is evidence about the tree as it was when produced. The reader judges it fresh
+# with a cheap fingerprint (root listing plus root manifest stats) and a re-stat of the
+# evidence files, and reads STALE (every trait UNJUDGED `stale`) when any of them moved.
+
+def _edit_file(path, text):
+    """Rewrite `path` and set an explicit, distinct mtime: a coarse filesystem timestamp
+    must never be what hides a change (RESEARCH F6)."""
+    before = os.stat(path)
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(text)
+    os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns + 7_000_000_000))
+
+
+def pred_V_ARCH_STALE_MANIFEST():
+    """Builds and produces its own fixtures, so a drill that mutates the fingerprint
+    reaches producer and reader alike."""
+    if ar is None or ts is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    state, repo = new_state(), make_repo("prisma_marker_react")
+    res = ts.produce(repo, state_dir=state)
+    if res.get("outcome") != ts.WRITTEN:
+        return False, "produce outcome=%r reason=%r" % (res.get("outcome"), res.get("reason"))
+    problems = []
+    before = ar.read_traits(repo, state_dir=state)
+    wm0 = _wm(ar.resolve(WM_ES, repo, state_dir=state))
+    if before["cache"]["state"] != ar.CACHE_FRESH or wm0 is None or wm0["strength"] != ar.Strength.REQUIRED:
+        problems.append("PRECONDITION: before the edit cache=%s WORLD_MUTATION=%s" % (
+            before["cache"]["state"], wm0 and wm0["strength"]))
+    # Same filename, different size, distinct mtime: only a root-manifest stat can see this.
+    _edit_file(os.path.join(repo, "package.json"),
+               json.dumps({"name": "fixture", "dependencies": {"react": "^18.0.0", "stripe": "^14.0.0"}}))
+    after = ar.read_traits(repo, state_dir=state)
+    subject = ar.resolve(WM_ES, repo, state_dir=state)
+    wm1 = _wm(subject)
+    reasons = sorted({r["reason"] for r in after["traits"].values()})
+    if after["cache"]["state"] != ar.CACHE_STALE:
+        problems.append("STALE-MANIFEST-NOT-DETECTED: after the edit cache=%s (want STALE)" % after["cache"]["state"])
+    if not (set(after["traits"]) == set(ar.TRAITS)
+            and all(r["state"] == ar.UNJUDGED and r["fact_state"] == ar.UNKNOWN
+                    for r in after["traits"].values()) and reasons == ["stale"]):
+        problems.append("STALE-TRAITS-NOT-UNJUDGED: states=%s reasons=%s" % (
+            sorted({r["state"] for r in after["traits"].values()}), reasons))
+    last_known = (after["cache"].get("last_known") or {})
+    if not (set(last_known) == set(ar.TRAITS) and last_known["persistent"]["state"] == ar.PRESENT):
+        problems.append("LAST-KNOWN-MISSING: %s" % sorted(last_known))
+    if wm1 is None or not (wm1["strength"] == ar.Strength.CONDITIONAL and wm1["basis"] == "intent"):
+        problems.append("STALE-STILL-REQUIRED: WORLD_MUTATION=%s" % ((wm1 and (wm1["strength"], wm1["basis"])),))
+    # Control: a separate fixture with no edit is FRESH and REQUIRED.
+    state_c, repo_c = new_state(), make_repo("prisma_marker_react")
+    ts.produce(repo_c, state_dir=state_c)
+    ctrl = ar.read_traits(repo_c, state_dir=state_c)
+    wmc = _wm(ar.resolve(WM_ES, repo_c, state_dir=state_c))
+    if ctrl["cache"]["state"] != ar.CACHE_FRESH or wmc is None or wmc["strength"] != ar.Strength.REQUIRED:
+        problems.append("CONTROL: unedited fixture cache=%s WORLD_MUTATION=%s" % (
+            ctrl["cache"]["state"], wmc and wmc["strength"]))
+    return not problems, "; ".join(problems) or \
+        "root package.json edited -> STALE, ten traits UNJUDGED/stale, last_known kept, WORLD_MUTATION REQUIRED -> %s/%s; control FRESH/REQUIRED" % (
+            wm1["strength"], wm1["basis"])
+
+
+GATES += [
+    ("V-ARCH-STALE-MANIFEST", pred_V_ARCH_STALE_MANIFEST),
+]
+
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 37
+EXPECTED = 38
 
 
 def main() -> int:

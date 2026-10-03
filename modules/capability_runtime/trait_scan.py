@@ -622,7 +622,20 @@ def scan(root, *, cap=DEFAULT_CAP, budget_s=DEFAULT_BUDGET_S):
         for sample in ui["samples"]:
             found["ui"].append((cls, sample, "%d ui files" % ui["count"]))
     traits = {t: _entitle(t, found[t], walk) for t in archetypes.TRAITS}
-    return {"walk": walk, "traits": traits}
+    return {"walk": walk, "traits": traits, "evidence_paths": _evidence_paths(found)}
+
+
+def _evidence_paths(found):
+    """Relative paths of the files that produced positive evidence, shallowest first,
+    at most `archetypes.EVIDENCE_FILES_MAX`. These are what the reader re-stats: an
+    edit to one of them moves a reading without moving any directory listing. A
+    dependency item reads `<manifest path>:<name>`, so its path is cut at the last
+    colon. Beyond the cap the remainder is covered only by the age bound."""
+    paths = set()
+    for items in found.values():
+        for _cls, evidence, kind in items:
+            paths.add(evidence.rsplit(":", 1)[0] if kind == "dependency" else evidence)
+    return sorted(paths, key=lambda p: (p.count("/"), p))[:archetypes.EVIDENCE_FILES_MAX]
 
 
 def produce(root, *, state_dir=None, cap=DEFAULT_CAP, budget_s=DEFAULT_BUDGET_S):
@@ -630,17 +643,27 @@ def produce(root, *, state_dir=None, cap=DEFAULT_CAP, budget_s=DEFAULT_BUDGET_S)
 
     Returns {"outcome": WRITTEN, "path", "doc"}, or UNRESOLVABLE (nothing
     written) for a root that is not an absolute existing directory, or FAILED
-    with the reason when anything goes wrong (nothing published)."""
+    with the reason when anything goes wrong (nothing published).
+
+    The document carries a `fingerprint` block that the reader compares: depth-1 and
+    depth-2 fingerprints and the root manifest stats, all taken BEFORE the walk so a
+    change made during the walk reads STALE on the next read instead of being
+    absorbed; and the stats of the evidence files, taken right after it."""
     sroot = archetypes.subject_root(root)
     if sroot is None:
         return {"outcome": UNRESOLVABLE, "reason": "unresolvable-root"}
     tmp = None
     try:
+        fingerprint = {"fp1": archetypes.fingerprint(sroot, 1),
+                       "fp2": archetypes.fingerprint(sroot, 2),
+                       "root_manifests": archetypes.root_manifest_stats(sroot)}
         result = scan(sroot, cap=cap, budget_s=budget_s)
+        fingerprint["evidence_files"] = archetypes.evidence_stats(sroot, result["evidence_paths"])
         path = archetypes.cache_path(sroot, state_dir=state_dir)
         doc = {"schema": archetypes.SCHEMA, "repo_key": repo_key(sroot), "repo": sroot,
                "produced_at": time.time(), "producer": "trait_scan/1",
-               "walk": result["walk"], "traits": result["traits"]}
+               "walk": result["walk"], "fingerprint": fingerprint,
+               "traits": result["traits"]}
         directory = os.path.dirname(path)
         os.makedirs(directory, exist_ok=True)
         fd, tmp = tempfile.mkstemp(dir=directory, prefix=".traits_", suffix=".tmp")
