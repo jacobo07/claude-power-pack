@@ -58,6 +58,9 @@ Total Plans in Phase: 3
 - [Run, epoch 2]: a PostToolUse hook auto-writes `docs/{arch,changelog,constitution,prd}/tools__*.md` stubs and modifies `vault/progress.md` whenever an executor writes a tool. Not this program's artifacts: left untracked/unstaged, never committed, never deleted (no authorization to destroy). Every commit is pathspec-scoped so they cannot ride along.
 - [Run, epoch 2]: executor isolation resolves `harness-worktree` but `worktree.base-check` degrades it (fork-ref-unknown: origin/HEAD unresolved), so each phase writes `--force-isolation none` to the sentinel and runs sequentially in this worktree, matching phase 1.
 - [Phase 2, epoch 2]: research skipped (unattended; CONTEXT.md already carries the evidence read and the work is one verdict script + one measurement file). Reversible: `/gsd-plan-phase 2 --research`.
+- [Run, epoch 3]: the isolation sentinel had gone stale, so the guard fell back to harness-worktree and refused the executor dispatch. Re-recorded with `query dispatch-isolation --force-isolation none` (internal, reversible); the dispatch then passed.
+- [Phase 5, epoch 3]: plan-check found 1 blocker (05-01 same-name drill could not fail exactly one clause), 1 warning and 1 info; all fixed in plan text by the orchestrator (ec16d6e1, report 05-PLAN-CHECK.md). No checker re-ran on the edited plans; the fixes are mechanical expected-set and precondition edits.
+- [Phase 7, epoch 3]: plan-check found 0 blockers, 5 warnings and 1 info; all fixed (aa0336bf, report 07-PLAN-CHECK.md). Consequence: phase 7 runs only after phases 4-6 have committed SUMMARYs, and its session scan is limited to phases below 7.
 
 ## Session Continuity
 
