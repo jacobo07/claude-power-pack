@@ -38,6 +38,22 @@ GSDLR 2 reds (stale test vs regression vs concurrent owner); the liveness tools/
 class (production-critical executables discoverable regardless of directory), not a "scan tools/" patch.
 Verified at seal time: HEAD a5debf2d, 44 ahead of origin, 0 behind, nothing new since a5debf2d.
 
+**T6 entry gate RESULT (2026-10-03, read-only, HEAD 6957e82e). Verdict: MIGRATE FIRST, then CONTINUE.**
+- G-a d2505df6: CONTINUE. Adds non-blocking `diverged_followed` to align_cwd + `proven_ws` in supervise
+  relay/replace; no field/card/argv/stop change. T6 constraint: arm_successor goes AFTER align_cwd passes.
+- G-b golden: witness != current (CRLF sha d53245.. @1b0b929d vs a217654f.. now; blob 6074504D->8F9BE83D,
+  100 % attributable to d2505df6; file clean, autocrlf). Behaviour 32/32. Do not re-capture.
+- G-c pp-mission-fix = FOUR commits, not three. 1b27fbf6 (bare host `blocked` read as idle -> relayed 48x)
+  LEGACY BUG, still live at gsd_mission.py:1161, LOAD-BEARING for T6 (owner_idle is the seal trigger).
+  01567f16 (adopt pass surfaces blocked; needs host_job_needs) and 1a8dabfc (UNKNOWN != BLOCKED) LEGACY
+  BUGS, merge clean. 216e39e9 SUPERSEDED by HEAD's progress_origin fingerprint refusal (the only conflict).
+  G23 effect of the 3 migrations UNMEASURED (needs an isolated tree).
+- G-d GSDLR 2 reds: STALE TEST. 118e5994 (09-29) made /kclear self-invoked (`rollover_kclear_asked
+  route=self`, watchdog:1763); test last touched 09-28 still expects a kclear dispatch + "Delivery: MANUAL".
+- G-e liveness: aperture is STATED (reachability.py:256), not hidden; a capability-class follow-up
+  (entrypoint-evidenced executables, any dir, ratchet), not T6 scope.
+- Missions: 89 records, 0 carry `rollover_protocol` (raw grep).
+
 **Next 3 actions.**
 1. T6 entry gate: run the 5 gates above; list live missions (`~/.claude/state/gsd-mission-*.json`) and
    confirm none carries `rollover_protocol`; check `git log` and pp-mission-fix for gsd_mission.py moves.
