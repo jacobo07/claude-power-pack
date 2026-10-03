@@ -111,6 +111,14 @@ Plans:
 **Requirements**: SC-C
 **Success Criteria**: the gate is driven red once; n is reported per rate; `--pillar C` PASS.
 
+**Plans:** 3 plans (waves 1 -> 2 -> 3, sequential: shared `tools/test_skill_delivery.py` / `evidence/C-delivery.md`)
+
+Plans:
+
+- [ ] 03-01-PLAN.md -- D-01/D-03 gate `tools/test_skill_delivery.py` over committed fixture window F, owner row-time bounds in `tools/skill_invocations.py`, mutant drills, subprocess red run, rendered prg `evidence/C-delivery.md`
+- [ ] 03-02-PLAN.md -- D-02 windows: L = pinned laptop pack (selection-bound recall, invocation UNMEASURED), G = `--measure-live` recorded on gex44 into `evidence/C-window-G.json` (`--compare` reproduces it), V-SD-PLANES
+- [ ] 03-03-PLAN.md -- D-04 closure: state.C IMPLEMENTED_AND_VERIFIED, one `[C]` owner-bundle line, `--pillar C` PASS, A and B stay PASS
+
 ### Phase 4: Coverage, criticality and freshness
 
 **Goal**: Every installed skill gets a coverage and criticality class (discovered, not curated); drift is gated.
