@@ -515,6 +515,206 @@ def ts_drill(fx: dict) -> tuple:
             if (killed and control) else f"killed={killed}, control ok={control}")
 
 
+# --------------------------------------------------------------------------- live measurement (--measure-live)
+
+
+def _utc(ep: float) -> str:
+    from datetime import datetime, timezone
+    return datetime.fromtimestamp(ep, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def default_card_ledger() -> Path:
+    """Mirrors tools/skill_opportunity_signals.py card_state_dir(): env override, else ~/.claude/state/doctrine-cards."""
+    d = os.environ.get("DOCTRINE_CARDS_STATE_DIR")
+    base = Path(d) if d else Path.home() / ".claude" / "state" / "doctrine-cards"
+    return base / "ledger.jsonl"
+
+
+def measure_live(root, days, end_iso, *, root_label=None, card_ledger=None, installed=None, host=None,
+                 window="live", command=None) -> dict:
+    """One named live window, content-free (counts and skill names only). The defaults for installed, host and
+    card_ledger are read only here, never in the gate's default mode."""
+    end = si.row_epoch({"timestamp": end_iso})
+    if end is None:
+        raise ValueError(f"--end {end_iso!r} is not an ISO timestamp")
+    start = end - days * 86400
+    installed = set(installed) if installed is not None else si.installed_names()
+    host = host or socket.gethostname()
+    ledger = Path(card_ledger) if card_ledger is not None else default_card_ledger()
+    rootp = Path(os.path.expanduser(str(root)))
+    inv = si.scan(rootp, days, installed, now=end, bound_rows=True)
+    names = sorted(set(inv["model"]) | set(inv["typed"]))
+    rec = {
+        "schema": WINDOW_RECORD_SCHEMA, "window": window, "host": host,
+        "root": root_label if root_label is not None else str(root), "days": days,
+        "start": _utc(start), "end": _utc(end),
+        "selection": ("transcript files with mtime >= start under root; transcript rows with timestamp in "
+                      "[start, end]; card rows with ts in [start, end]"),
+        "installed_count": len(installed),
+        "opportunity_detectors": {CAPABILITY: "commit card ledger"},
+        "capability": CAPABILITY,
+        "capability_invocations": {"model": inv["model"][CAPABILITY], "typed": inv["typed"][CAPABILITY]},
+        "skills": {n: {"model": inv["model"][n], "typed": inv["typed"][n]} for n in names},
+        "totals": {"model": sum(inv["model"].values()), "typed": sum(inv["typed"].values()),
+                   "unknown_rows": inv["unknown_rows"], "untimed_rows": inv["untimed_rows"],
+                   "sessions_with_calls": inv["sessions_with_calls"], "files_scanned": inv["files"]},
+        "other_skills_opportunity": "UNMEASURED (no detector)",
+        "command": command or "",
+    }
+    if not ledger.is_file():
+        rec.update({"card_ledger": "ABSENT", "opportunities": "UNMEASURED", "recall": None, "precision": None,
+                    "delivery": None})
+        return rec
+    rows = []
+    with open(ledger, encoding="utf-8") as fh:
+        for line in fh:
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if not is_commit_row(row):
+                continue
+            ep = judged_at(row)
+            if ep is None or start <= ep <= end:  # an unparseable ts is kept: it prints UNMEASURED, never dropped
+                rows.append(row)
+    d_needed = dcard_labels(rows, frozen_dcard())[0]
+    rep = compute_window(rows, transcript_index(rootp), installed,
+                         lambda row: row["needed"] if "needed" in row else d_needed(row),
+                         window=window, plane=host, selection=rec["selection"])
+    keep = ("opportunities", "delivery_measured", "delivery_unmeasured", "delivered", "by_card",
+            "by_invocation_only", "card_and_invocation", "pass_after_card", "no_opportunity", "judgement_unknown",
+            "unlabelled_delivered", "unparseable_ts", "recall_line", "precision_line")
+    rec.update({"card_ledger": "PRESENT", "opportunities": rep["opportunities"], "recall": rep["recall"],
+                "precision": rep["precision"], "delivery": {k: rep[k] for k in keep}})
+    return rec
+
+
+def compare_records(a: dict, b: dict) -> list:
+    """Every field except totals.files_scanned and command (new files appear after `end`)."""
+    def strip(r):
+        r = json.loads(json.dumps(r))
+        r.get("totals", {}).pop("files_scanned", None)
+        r.pop("command", None)
+        return r
+    a, b = strip(a), strip(b)
+    return [f"{k}: recorded {a.get(k)!r}, re-measured {b.get(k)!r}" for k in sorted(set(a) | set(b))
+            if a.get(k) != b.get(k)]
+
+
+def write_record(rec: dict, path: Path) -> None:
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(json.dumps(rec, sort_keys=True, indent=1) + "\n")
+
+
+def live_path_clause(fx: dict) -> tuple:
+    """V-SD-LIVE-PATH: measure_live over the fixture materialised as a fake root plus a card ledger reproduces
+    window F's expected figures, so the laptop `[C]` run executes tested code."""
+    name = "V-SD-LIVE-PATH"
+    exp = fx["expected"]
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td) / "projects"
+        base = root / "fixture-window-F"
+        base.mkdir(parents=True)
+        for session, rows in fx["transcripts"].items():
+            with open(base / f"{session}.jsonl", "w", encoding="utf-8", newline="\n") as fh:
+                for r in rows:
+                    fh.write(json.dumps(r) + "\n")
+        ledger = Path(td) / "ledger.jsonl"
+        with open(ledger, "w", encoding="utf-8", newline="\n") as fh:
+            for r in fx["card_rows"]:
+                fh.write(json.dumps(r) + "\n")
+        rec = measure_live(root, 2, "2026-10-02T00:00:00Z", card_ledger=ledger, installed=set(fx["installed"]),
+                           host="fixture-host", window="F-live")
+    d = rec.get("delivery") or {}
+    bad = [f"{k}: live {d.get(k)!r}, window F {exp[k]!r}" for k in
+           ("opportunities", "delivery_measured", "delivery_unmeasured", "delivered", "by_card",
+            "by_invocation_only", "card_and_invocation", "pass_after_card", "no_opportunity",
+            "judgement_unknown", "recall_line", "precision_line") if d.get(k) != exp[k]]
+    if (rec.get("recall") or {}).get("num") != exp["recall"]["num"] or (rec.get("recall") or {}).get("n") != exp["recall"]["n"]:
+        bad.append(f"recall {rec.get('recall')!r}, window F {exp['recall']!r}")
+    if (rec.get("precision") or {}).get("num") != exp["precision"]["num"] or (rec.get("precision") or {}).get("n") != exp["precision"]["n"]:
+        bad.append(f"precision {rec.get('precision')!r}, window F {exp['precision']!r}")
+    return (name, "FAIL" if bad else "ok",
+            "; ".join(bad) if bad else f"live path on the fixture reproduces window F: recall {d['recall_line']}, "
+            f"precision {d['precision_line']}, opportunities {d['opportunities']}")
+
+
+def g_record_clause(rec: dict | None) -> tuple:
+    name = "V-SD-G-RECORD"
+    if rec is None:
+        return (name, "INCONCLUSIVE", f"{G_RECORD_REL} absent: window G was not recorded")
+    bad = []
+    if rec.get("schema") != WINDOW_RECORD_SCHEMA:
+        bad.append(f"schema {rec.get('schema')!r}")
+    if "gex44" not in str(rec.get("host")):
+        bad.append(f"host {rec.get('host')!r} does not name gex44")
+    if rec.get("card_ledger") != "ABSENT":
+        bad.append(f"card_ledger {rec.get('card_ledger')!r}, expected ABSENT on gex44")
+    if rec.get("opportunities") != "UNMEASURED":
+        bad.append(f"opportunities {rec.get('opportunities')!r}, expected the string 'UNMEASURED' (never 0)")
+    if rec.get("recall") is not None or rec.get("precision") is not None:
+        bad.append("recall/precision must be null with no opportunity source")
+    tot = rec.get("totals") or {}
+    for k in ("model", "typed", "unknown_rows", "untimed_rows", "sessions_with_calls", "files_scanned"):
+        if not (isinstance(tot.get(k), int) and not isinstance(tot.get(k), bool) and tot[k] >= 0):
+            bad.append(f"totals.{k} {tot.get(k)!r} is not a non-negative int")
+    cmd = str(rec.get("command"))
+    if "--end" not in cmd or "--days" not in cmd:
+        bad.append("command carries no --end/--days")
+    if str(rec.get("root")).startswith("/"):
+        bad.append(f"root {rec.get('root')!r} is an expanded path (A-2: store the literal ~/.claude/projects)")
+    return (name, "FAIL" if bad else "ok",
+            "; ".join(bad) if bad else f"host {rec['host']}, {rec['start']} .. {rec['end']}, card ledger ABSENT, "
+            f"opportunities UNMEASURED, model {tot['model']} typed {tot['typed']}")
+
+
+def planes_clause(text: str) -> tuple:
+    """V-SD-PLANES: every non-empty line of a `## Window X` section starts with `[X] `; no line carries two tags."""
+    name = "V-SD-PLANES"
+    bad, cur = [], None
+    for i, line in enumerate(text.split("\n"), 1):
+        if line.startswith("## "):
+            m = re.match(r"## Window (\w+)", line)
+            cur = m.group(1) if m else None
+            continue
+        if cur and line.strip() and not line.startswith(f"[{cur}] "):
+            bad.append(f"line {i} in Window {cur} lacks the [{cur}] prefix")
+        tags = {t for t in ("[F]", "[L]", "[G]") if t in line}
+        if len(tags) > 1:
+            bad.append(f"line {i} carries two window tags {sorted(tags)}")
+    return (name, "FAIL" if bad else "ok", "; ".join(bad[:3]) if bad else "every window line carries exactly its own tag")
+
+
+def g_record_load():
+    path = REPO / G_RECORD_REL
+    return load_json(path) if path.is_file() else None
+
+
+def _g_opportunity_zero(rec):
+    rec = json.loads(json.dumps(rec))
+    rec["opportunities"] = 0
+    return rec
+
+
+def g_drills(rec, text: str) -> list:
+    out = []
+    if rec is not None:
+        killed = g_record_clause(_g_opportunity_zero(rec))[1] == "FAIL"
+        control = g_record_clause(rec)[1] == "ok"
+        out.append(("V-SD-DRILL-G-OPPORTUNITY-ZERO", "ok" if (killed and control) else "FAIL",
+                    "killed by V-SD-G-RECORD (opportunities 0 with the card ledger ABSENT); the real record stays ok"
+                    if (killed and control) else f"killed={killed}, control ok={control}"))
+    else:
+        out.append(("V-SD-DRILL-G-OPPORTUNITY-ZERO", "INCONCLUSIVE", "no window G record to mutate"))
+    summed = text.rstrip("\n") + "\n[L] 6 delivered plus [G] 3 invoked = 9 total\n"
+    killed = planes_clause(summed)[1] == "FAIL"
+    control = planes_clause(text)[1] == "ok"
+    out.append(("V-SD-DRILL-PLANE-SUM", "ok" if (killed and control) else "FAIL",
+                "killed by V-SD-PLANES (a line summing two planes); the real render stays ok"
+                if (killed and control) else f"killed={killed}, control ok={control}"))
+    return out
+
+
 # --------------------------------------------------------------------------- evidence render
 
 
@@ -533,23 +733,46 @@ def _render_l() -> list:
     sel = r["selection_detail"]
     return [f"## Window L (plane: {r['plane']}, selection: {len(pack['rows'])} of {sel['source_ledger_rows']} "
             "ledger rows picked by the builder rule)", "",
-            f"- [L] pack: {PACK_REL}, LF sha256 {PACK_SHA256}",
-            f"- [L] selection rule: {sel['rule']}",
-            f"- [L] selection: {sel['rows']} of {sel['source_ledger_rows']} ledger rows; by decision {sel['by_decision']}",
-            f"- [L] opportunities: {r['opportunities']} (n={r['opportunities']})",
-            f"- [L] delivery measured: {r['delivery_measured']}, UNMEASURED: {r['delivery_unmeasured']}",
-            f"- [L] delivered: {r['delivered']} (by card {r['by_card']}, invocation-only {r['by_invocation_only']})",
-            f"- [L] card and invocation: {r['card_and_invocation']} (the pack ships {r['skill_calls_without_name']} "
+            f"[L] pack: {PACK_REL}, LF sha256 {PACK_SHA256}",
+            f"[L] selection rule: {sel['rule']}",
+            f"[L] selection: {sel['rows']} of {sel['source_ledger_rows']} ledger rows; by decision {sel['by_decision']}",
+            f"[L] opportunities: {r['opportunities']} (n={r['opportunities']})",
+            f"[L] delivery measured: {r['delivery_measured']}, UNMEASURED: {r['delivery_unmeasured']}",
+            f"[L] delivered: {r['delivered']} (by card {r['by_card']}, invocation-only {r['by_invocation_only']})",
+            f"[L] card and invocation: {r['card_and_invocation']} (the pack ships {r['skill_calls_without_name']} "
             "Skill tool calls with no skill name, so the invocation channel is UNMEASURED, never 0 and never "
             f"{r['skill_calls_without_name']})",
-            f"- [L] recall: {r['recall_line']} -- {r['recall_label']}",
-            f"- [L] population recall: {r['population_recall']}",
-            f"- [L] precision (card channel): {r['precision_line']}, labels from frozen D-CARD "
+            f"[L] recall: {r['recall_line']} -- {r['recall_label']}",
+            f"[L] population recall: {r['population_recall']}",
+            f"[L] precision (card channel): {r['precision_line']}, labels from frozen D-CARD "
             f"(live_denies {dcard['live_denies']}, true_positives {dcard['true_positives']})",
-            f"- [L] unlabelled delivered beside D-CARD, never folded in: {r['unlabelled_delivered']} "
+            f"[L] unlabelled delivered beside D-CARD, never folded in: {r['unlabelled_delivered']} "
             f"({', '.join(r['beside_dcard'])})",
-            f"- [L] pass-after-card rows (not opportunities): {r['pass_after_card']}",
-            f"- [L] judgement unknown (git exit 128), beside and never counted: {r['judgement_unknown']}", ""]
+            f"[L] pass-after-card rows (not opportunities): {r['pass_after_card']}",
+            f"[L] judgement unknown (git exit 128), beside and never counted: {r['judgement_unknown']}", ""]
+
+
+def _render_g() -> list:
+    rec = g_record_load()
+    if rec is None:
+        return []
+    t, cap = rec["totals"], rec["capability_invocations"]
+    redo = (f"python3 tools/test_skill_delivery.py --measure-live --window {rec['window']} --root {rec['root']} "
+            f"--days {rec['days']:g} --end {rec['end']} --compare {G_RECORD_REL}")
+    L = [f"## Window G (plane: {rec['host']}, recorded measurement)", "",
+         f"[G] host: {rec['host']}; root {rec['root']}; days {rec['days']:g}; start {rec['start']}; end {rec['end']}",
+         f"[G] selection: {rec['selection']}",
+         f"[G] {rec['capability']} invocations: model {cap['model']}, typed {cap['typed']} (measured); "
+         f"opportunity UNMEASURED (card ledger {rec['card_ledger']} on this host)",
+         "[G] recall and precision: UNMEASURED (no opportunity source on this plane)",
+         f"[G] totals: model {t['model']}, typed {t['typed']}, unknown_rows {t['unknown_rows']}, "
+         f"untimed_rows {t['untimed_rows']}, sessions with calls {t['sessions_with_calls']}",
+         f"[G] files scanned (informational, excluded from --compare): {t['files_scanned']}",
+         f"[G] installed names: {rec['installed_count']}; other skills: {rec['other_skills_opportunity']}"]
+    for n, v in rec["skills"].items():
+        L.append(f"[G] skill {n}: model {v['model']}, typed {v['typed']}, opportunity UNMEASURED")
+    L += [f"[G] command: {rec['command']}", f"[G] command: {redo}", ""]
+    return L
 
 
 def render(fx: dict | None = None) -> str:
@@ -563,24 +786,35 @@ def render(fx: dict | None = None) -> str:
           "- Window F is the fixture plane: synthetic rows authored for a known answer, host-independent.",
           "- Window L is the laptop plane: the committed content-free evidence pack (a selection of the laptop's "
           "card ledger), pinned by its LF sha256.",
+          "- Window G is this host's own transcripts (plane: the host named in its record), a recorded measurement: "
+          "invocation delivery is measured there, opportunity is UNMEASURED because the host has no card ledger.",
+          "- Window G is a recorded measurement, not an L5 input: the gate's default mode reads only committed files, "
+          "because `--final` re-runs it on the laptop where this host's transcripts do not exist. This host's "
+          "transcripts also keep growing while the run writes them, and Claude Code prunes old ones, so a fixed "
+          "window can vanish.",
+          "- Re-measuring on gex44 stays pinned: the window is named by --root + --days + --end, rows are bounded "
+          "by their own timestamps, and --compare shows that a re-run reproduces the record.",
+          "- Laptop owner command shape: python tools/test_skill_delivery.py --measure-live --window laptop --root "
+          "~/.claude/projects --days 7 --end <ISO> --out vault/programs/skill-capability/evidence/C-window-laptop.json",
           "- No figure in this file sums across windows. Each figure line carries its window prefix and its n.", "",
           f"## Window {rep['window']}", "",
-          f"- [F] plane: {rep['plane']}",
-          f"- [F] selection: {rep['selection']}",
-          f"- [F] opportunities: {rep['opportunities']}",
-          f"- [F] delivery measured: {rep['delivery_measured']}",
-          f"- [F] delivery UNMEASURED: {rep['delivery_unmeasured']} (outside the recall n): "
+          f"[F] plane: {rep['plane']}",
+          f"[F] selection: {rep['selection']}",
+          f"[F] opportunities: {rep['opportunities']}",
+          f"[F] delivery measured: {rep['delivery_measured']}",
+          f"[F] delivery UNMEASURED: {rep['delivery_unmeasured']} (outside the recall n): "
           + "; ".join(rep["unmeasured"]),
-          f"- [F] delivered: {rep['delivered']} (card {rep['by_card']}, invocation-only "
+          f"[F] delivered: {rep['delivered']} (card {rep['by_card']}, invocation-only "
           f"{rep['by_invocation_only']}, card and invocation {rep['card_and_invocation']})",
-          f"- [F] recall: {rep['recall_line']}",
-          f"- [F] precision: {rep['precision_line']}",
-          f"- [F] pass-after-card rows (not opportunities): {rep['pass_after_card']}",
-          f"- [F] no_opportunity rows: {rep['no_opportunity']}",
-          f"- [F] judgement unknown or timeout rows: {rep['judgement_unknown']}",
-          f"- [F] non-commit rows ignored: {rep['ignored_non_commit']}",
-          f"- [F] unparseable card ts (UNMEASURED, counted): {rep['unparseable_ts']}", ""]
+          f"[F] recall: {rep['recall_line']}",
+          f"[F] precision: {rep['precision_line']}",
+          f"[F] pass-after-card rows (not opportunities): {rep['pass_after_card']}",
+          f"[F] no_opportunity rows: {rep['no_opportunity']}",
+          f"[F] judgement unknown or timeout rows: {rep['judgement_unknown']}",
+          f"[F] non-commit rows ignored: {rep['ignored_non_commit']}",
+          f"[F] unparseable card ts (UNMEASURED, counted): {rep['unparseable_ts']}", ""]
     L += _render_l()
+    L += _render_g()
     L += ["## Commands", "",
           "- command: python3 tools/test_skill_delivery.py",
           "- command: python3 tools/test_skill_delivery.py --write-evidence", "",
@@ -703,6 +937,7 @@ def drills(fx: dict) -> list:
     pack, dcard = load_json(REPO / PACK_REL), frozen_dcard()
     out += l_drills(pack, dcard)
     text = render(fx)
+    out += g_drills(g_record_load(), text)
     digit = next(i for i, ch in enumerate(text) if ch.isdigit())
     stale = text[:digit] + str((int(text[digit]) + 1) % 10) + text[digit + 1:]
     killed, control = evidence_current(stale)[1] != "ok", evidence_current(text)[1] == "ok"
@@ -725,12 +960,48 @@ def _print(results) -> int:
     return 0 if ok == len(results) else 1
 
 
+def _cli_measure(a) -> int:
+    if not a.end:
+        print("REFUSED --end is required: a live window is named by its end", file=sys.stderr)
+        return 2
+    cmd = (f"{Path(sys.executable).name} tools/test_skill_delivery.py --measure-live --window {a.window} "
+           f"--root {a.root} --days {a.days:g} --end {a.end}")
+    try:
+        rec = measure_live(a.root, a.days, a.end, root_label=a.root, card_ledger=a.card_ledger, window=a.window,
+                           command=cmd)
+    except (ValueError, OSError) as exc:
+        print(f"cannot measure: {exc}", file=sys.stderr)
+        return 2
+    if a.compare:
+        diff = compare_records(load_json(Path(a.compare)), rec)
+        for d in diff:
+            print(f"DIFF {d}")
+        print("compare: identical" if not diff else f"compare: {len(diff)} field(s) differ")
+        return 1 if diff else 0
+    if a.out:
+        write_record(rec, Path(a.out))
+        print(f"wrote {a.out}")
+    else:
+        print(json.dumps(rec, sort_keys=True, indent=1))
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--fixture", help="evaluate the window-F clauses on this fixture only")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--write-evidence", action="store_true")
+    ap.add_argument("--measure-live", action="store_true", help="measure one named live window (see --root/--days/--end)")
+    ap.add_argument("--root", default="~/.claude/projects")
+    ap.add_argument("--days", type=float, default=7)
+    ap.add_argument("--end", help="ISO end of the window (required with --measure-live)")
+    ap.add_argument("--window", default="live")
+    ap.add_argument("--card-ledger")
+    ap.add_argument("--out")
+    ap.add_argument("--compare")
     a = ap.parse_args(argv)
+    if a.measure_live:
+        return _cli_measure(a)
     fpath = Path(a.fixture) if a.fixture else REPO / FIXTURE_REL
     try:
         fx = load_fixture(fpath)
@@ -750,6 +1021,9 @@ def main(argv=None) -> int:
     if not a.fixture:
         pack, dcard = load_json(REPO / PACK_REL), frozen_dcard()
         results += l_clauses(pack_window(pack, dcard), pack, dcard)
+        results.append(live_path_clause(fx))
+        results.append(g_record_clause(g_record_load()))
+        results.append(planes_clause(render(fx)))
         results.append(evidence_current())
         results += drills(fx)
         results.append(red_subprocess(fx))

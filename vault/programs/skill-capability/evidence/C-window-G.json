@@ -1,0 +1,52 @@
+{
+ "capability": "concurrent-writers-shared-tree",
+ "capability_invocations": {
+  "model": 0,
+  "typed": 0
+ },
+ "card_ledger": "ABSENT",
+ "command": "python3 tools/test_skill_delivery.py --measure-live --window G --root ~/.claude/projects --days 7 --end 2026-10-03T18:05:00Z",
+ "days": 7.0,
+ "delivery": null,
+ "end": "2026-10-03T18:05:00Z",
+ "host": "kobicraft-gex44",
+ "installed_count": 271,
+ "opportunities": "UNMEASURED",
+ "opportunity_detectors": {
+  "concurrent-writers-shared-tree": "commit card ledger"
+ },
+ "other_skills_opportunity": "UNMEASURED (no detector)",
+ "precision": null,
+ "recall": null,
+ "root": "~/.claude/projects",
+ "schema": "skill-delivery-window/1",
+ "selection": "transcript files with mtime >= start under root; transcript rows with timestamp in [start, end]; card rows with ts in [start, end]",
+ "skills": {
+  "gsd-autonomous": {
+   "model": 3,
+   "typed": 23
+  },
+  "gsd-code-review": {
+   "model": 5,
+   "typed": 0
+  },
+  "gsd-execute-phase": {
+   "model": 12,
+   "typed": 0
+  },
+  "gsd-plan-phase": {
+   "model": 11,
+   "typed": 0
+  }
+ },
+ "start": "2026-09-26T18:05:00Z",
+ "totals": {
+  "files_scanned": 189,
+  "model": 31,
+  "sessions_with_calls": 23,
+  "typed": 23,
+  "unknown_rows": 0,
+  "untimed_rows": 0
+ },
+ "window": "G"
+}
