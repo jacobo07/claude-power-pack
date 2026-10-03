@@ -258,14 +258,25 @@ def main() -> int:
         t0 = time.perf_counter()
         r = q("check this service for swallowed errors")
         first_ms = (time.perf_counter() - t0) * 1000
-        t0 = time.perf_counter()
-        r = q("check this service for swallowed errors")
-        warm_ms = (time.perf_counter() - t0) * 1000
+        # Steady state = median of 3 warm uncached runs, against the same 2000 ms bar. One sample
+        # read 2,884 ms at 100% CPU with ~30 claude processes and 932 ms on the rerun (2026-10-03);
+        # a median absorbs one descheduled run without lowering the bar. CPU time is recorded
+        # beside wall time as a diagnostic only: wall far above CPU says the host was contended,
+        # it never turns a FAIL into a PASS.
+        walls, cpus = [], []
+        for _ in range(3):
+            t0, c0 = time.perf_counter(), time.process_time()
+            r = q("check this service for swallowed errors")
+            walls.append((time.perf_counter() - t0) * 1000)
+            cpus.append((time.process_time() - c0) * 1000)
+        warm_ms, cpu_ms = sorted(walls)[1], sorted(cpus)[1]
+        contended = " CONTENDED (wall > 2x cpu)" if warm_ms > 2 * max(cpu_ms, 1.0) else ""
         check("V-RES-OBVIOUS", top(r)[:1] == ["silent-failure-hunter"], top(r))
         check("V-RES-SCALE-CATALOG", r["catalog_size"] == N_SYNTH + 2 and not r["broken"],
               f"catalog={r['catalog_size']} broken={len(r['broken'])}")
         check("V-RES-LATENCY", warm_ms < 2000,
-              f"uncached resolve over {r['catalog_size']} specs: {warm_ms:.0f} ms "
+              f"uncached resolve over {r['catalog_size']} specs: median {warm_ms:.0f} ms of "
+              f"{[round(w) for w in walls]} (max {max(walls):.0f}), cpu median {cpu_ms:.0f} ms{contended} "
               f"(first touch of fresh files: {first_ms:.0f} ms, info)")
         r = q("does this code fail silently anywhere")
         check("V-RES-PARAPHRASE", "silent-failure-hunter" in top(r), top(r))
