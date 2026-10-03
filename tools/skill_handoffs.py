@@ -432,7 +432,7 @@ def measure_K(repo, ctx, host):
                  f"{len(ctl)} of {len(K_CONTROLS)} hit by content"])
     rep = _report_rows()
     r["info"]["rows"] = rep
-    cmds.append(["python3 tools/skill_opportunity_signals.py report  (in-process `report()`; never `sync`)",
+    cmds.append(["python3 tools/skill_opportunity_signals.py report  (in-process report(); never sync)",
                  json.dumps(rep.get("report")) if rep.get("report") is not None else rep["reason"]])
     r["aperture"] = [
         f"Population: every file ADDED between the freeze {ctx['frozen'][:8]} and the measured commit under "
@@ -514,7 +514,7 @@ def measure_M(repo, ctx, host):
     for pid, st in sorted((ctx["ledger"].get("state") or {}).items()):
         for s in (st or {}).get("savings") or []:
             savings.append((pid, s))
-    cmds.append([f"ledger `state.<P>.savings[]` at {sha[:8]} ({LEDGER_REL})", f"{len(savings)} entries"])
+    cmds.append([f"ledger state.<P>.savings[] at {sha[:8]} ({LEDGER_REL})", f"{len(savings)} entries"])
     deltas = []
     for name in ("B-listing-floor.md", "E-contribution.md"):
         t, why = blob(repo, sha, EVIDENCE_REL + name)
@@ -561,7 +561,8 @@ def measure_M(repo, ctx, host):
         "a cost.",
     ]
     r["not_done"] = [
-        "Owns no cost model: the sweep above found no price, pricing or cost marker in any added file.",
+        f"Owns no cost model: the sweep above found no open cost-model marker hit in any added file "
+        f"({len(used)} hit(s) read and adjudicated not a cost model, listed above).",
         "Converted no token or turn figure to money.",
     ]
     return r
@@ -759,8 +760,8 @@ def measure_I(repo, ctx, host):
         parts["skills"] = ["PASS", f"{len(sk)} skill candidates"]
         w = labels["window"]
         r["info"]["skills"] = {"candidates": len(sk), "none": labels["none"], "skills": labels["skills"]}
-        cmds.append([f"coverage `none` rows of evidence/D-coverage.md `## Plane {labels['host']}` at {sha[:8]}, "
-                     "cross-checked against evidence/D-live-gex44.json, minus evidence/C-window-G.json `skills`",
+        cmds.append([f"coverage none rows of evidence/D-coverage.md section '## Plane {labels['host']}' at {sha[:8]}, "
+                     "cross-checked against evidence/D-live-gex44.json, minus evidence/C-window-G.json key skills",
                      f"{labels['skills']} skills, {labels['none']} none, {len(labels['invoked'])} invoked, "
                      f"{len(sk)} candidates"])
         ev += ["", f"### Skill candidates (host {labels['host']} / node {labels['node']}, coverage recorded "
@@ -782,8 +783,8 @@ def measure_I(repo, ctx, host):
     r["aperture"] = [
         "Modules: the reachability scanner's own population (packages under `modules/`), run on a `git archive` "
         "export of the measured commit with HOME set to an empty directory, so live ~/.claude seeds are not "
-        "merged (plan-check W1). The live install would mark more modules reachable; this list is the "
-        "committed-blobs plane only.",
+        "merged (plan-check W1). A host's live install adds seeds, so a module listed here can be reachable on "
+        "that host; this list is the committed-blobs plane only.",
         "Skills: the coverage plane recorded on one host and the invocation window of pillar C on that host, "
         "both committed evidence. A skill invoked only outside the window, or on another host, is listed.",
     ]
