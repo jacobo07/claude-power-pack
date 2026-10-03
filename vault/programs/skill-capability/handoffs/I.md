@@ -8,7 +8,7 @@ Frozen rule (ledger `frozen.pillars`):
 
 Frozen owners: `modules/liveness/reachability.py`, `vault/programs/cognitive-economy/ledger.json`.
 
-- measured_at_commit: d0f7bab78458471956fa7b9c005f73c77185e35b
+- measured_at_commit: 1e32ae7a3a6404070cb8e5ff6fa9c983ace8c5d6
 - freeze: 217d72b5944a664fbc0baa1060c04617ff10f481
 - host: kobicraft-gex44
 - plane: committed blobs at measured_at_commit (git grep / cat-file / diff / archive), never the working tree
@@ -19,11 +19,11 @@ Frozen owners: `modules/liveness/reachability.py`, `vault/programs/cognitive-eco
 
 | command | observed |
 |---|---|
-| `git archive --format=tar d0f7bab7  (extracted to a temporary directory)` | 72908800 bytes, 5000 members, 0 refused by the data filter |
+| `git archive --format=tar 1e32ae7a  (extracted to a temporary directory)` | 72939520 bytes, 5004 members, 0 refused by the data filter |
 | `HOME=<empty tmp> python3 modules/liveness/reachability.py --json  (cwd = export)` | rc=1, rows 490, offenders 75 |
 | `HOME=<empty tmp> python3 modules/capability_runtime/retirement.py --json  (cwd = export; never --record)` | rc=0, verdicts 13 |
 | `git status --porcelain -- vault/capability_runtime vault/liveness vault/programs/cognitive-economy  (before == after); export tree and HOME compared` | watched paths, export tree and HOME unchanged |
-| `coverage none rows of evidence/D-coverage.md section '## Plane gex44' at d0f7bab7, cross-checked against evidence/D-live-gex44.json, minus evidence/C-window-G.json key skills` | 161 skills, 159 none, 4 invoked, 155 candidates |
+| `coverage none rows of evidence/D-coverage.md section '## Plane gex44' at 1e32ae7a, cross-checked against evidence/D-live-gex44.json, minus evidence/C-window-G.json key skills` | 161 skills, 159 none, 4 invoked, 155 candidates |
 
 ## Claim parts
 
@@ -41,7 +41,7 @@ Frozen owners: `modules/liveness/reachability.py`, `vault/programs/cognitive-eco
 
 ## Evidence
 
-### Module candidates (plane: committed export of d0f7bab7, HOME empty)
+### Module candidates (plane: committed export of 1e32ae7a, HOME empty)
 
 Rows 490; by status ORPHAN 191, REACHABLE 299; gate offenders 75; gate passed False.
 Not REACHABLE, counted by declared class (declared rows are alive by declaration and not listed): LIBRARY 56, PLANNED 52, undeclared 83.

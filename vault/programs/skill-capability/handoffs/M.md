@@ -8,7 +8,7 @@ Frozen rule (ledger `frozen.pillars`):
 
 Frozen owners: `tools/usage_index.py`.
 
-- measured_at_commit: d0f7bab78458471956fa7b9c005f73c77185e35b
+- measured_at_commit: 1e32ae7a3a6404070cb8e5ff6fa9c983ace8c5d6
 - freeze: 217d72b5944a664fbc0baa1060c04617ff10f481
 - host: kobicraft-gex44
 - plane: committed blobs at measured_at_commit (git grep / cat-file / diff / archive), never the working tree
@@ -19,18 +19,18 @@ Frozen owners: `tools/usage_index.py`.
 
 | command | observed |
 |---|---|
-| `git diff --name-only --diff-filter=A 217d72b5 d0f7bab7 -- modules tools` | 15 added files |
+| `git diff --name-only --diff-filter=A 217d72b5 1e32ae7a -- modules tools` | 16 added files |
 | `cost-model marker over each added file (each line)` | 2 hits: 0 open, 2 adjudicated not a cost model |
 | `cost-model marker over the control tools/usage_index.py` | 3 hits, kinds ['def', 'import'] |
-| `ledger state.<P>.savings[] at d0f7bab7 (vault/programs/skill-capability/ledger.json)` | 2 entries |
+| `ledger state.<P>.savings[] at 1e32ae7a (vault/programs/skill-capability/ledger.json)` | 2 entries |
 | `delta lines of evidence/B-listing-floor.md and evidence/E-contribution.md (pattern `(?i)\bdelta [+-]\d\|\bmoved\b.*[+-]\d\|\blargest effect\b`; denominator from line 1)` | 4 lines |
 
 ## Claim parts
 
 | part | outcome | reason |
 |---|---|---|
-| aperture | PASS | 15 added files |
-| cost | PASS | 0 open hits in 15 files (2 adjudicated) |
+| aperture | PASS | 16 added files |
+| cost | PASS | 0 open hits in 16 files (2 adjudicated) |
 | control | PASS | tools/usage_index.py: 3 hits |
 
 ## Aperture
@@ -59,7 +59,7 @@ Frozen owners: `tools/usage_index.py`.
 
 E reports no turn or token delta. Its only effect figure is a pass-rate difference against arm N0, denominator D-SESSIONS.
 
-### Cost-model sweep at d0f7bab7
+### Cost-model sweep at 1e32ae7a
 
 | added file | cost-model hits | hit lines |
 |---|---|---|
@@ -77,6 +77,7 @@ E reports no turn or token delta. Its only effect figure is a pass-rate differen
 | tools/test_skill_creation_gate.py | 0 | - |
 | tools/test_skill_delivery.py | 0 | - |
 | tools/test_skill_drift.py | 0 | - |
+| tools/test_skill_handoffs.py | 0 | - |
 | tools/test_skill_representation.py | 0 | - |
 
 ### Marker hits adjudicated not a cost model: 2

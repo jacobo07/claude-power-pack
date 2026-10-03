@@ -8,7 +8,7 @@ Frozen rule (ledger `frozen.pillars`):
 
 Frozen owners: `vault/specs/agent-capability-virtualization.md`, `modules/capability_runtime/agent_spec.py`.
 
-- measured_at_commit: d0f7bab78458471956fa7b9c005f73c77185e35b
+- measured_at_commit: 1e32ae7a3a6404070cb8e5ff6fa9c983ace8c5d6
 - freeze: 217d72b5944a664fbc0baa1060c04617ff10f481
 - host: kobicraft-gex44
 - plane: committed blobs at measured_at_commit (git grep / cat-file / diff / archive), never the working tree; plus the host-state row count named below
@@ -19,7 +19,7 @@ Frozen owners: `vault/specs/agent-capability-virtualization.md`, `modules/capabi
 
 | command | observed |
 |---|---|
-| `git diff --name-only --diff-filter=A 217d72b5 d0f7bab7 -- modules tools` | 15 added files |
+| `git diff --name-only --diff-filter=A 217d72b5 1e32ae7a -- modules tools` | 16 added files |
 | `router marker over each added file (basename, then each line)` | 0 hits |
 | `router marker over the controls modules/cost_collapse/router.py, modules/cognitive_os/router.py, modules/knowledge_acquisition/routing.py` | 3 of 3 hit by content |
 | `python3 tools/skill_opportunity_signals.py report  (in-process report(); never sync)` | {"rows": 0, "by_decision": {}, "opportunities": 0, "delivered_by_card": 0, "unknown": 0} |
@@ -28,8 +28,8 @@ Frozen owners: `vault/specs/agent-capability-virtualization.md`, `modules/capabi
 
 | part | outcome | reason |
 |---|---|---|
-| aperture | PASS | 15 added files |
-| router | PASS | 0 hits in 15 files |
+| aperture | PASS | 16 added files |
+| router | PASS | 0 hits in 16 files |
 | control | PASS | modules/cost_collapse/router.py:65; modules/cognitive_os/router.py:75; modules/knowledge_acquisition/routing.py:189 |
 
 ## Aperture
@@ -40,7 +40,7 @@ Frozen owners: `vault/specs/agent-capability-virtualization.md`, `modules/capabi
 
 ## Evidence
 
-### Router sweep at d0f7bab7
+### Router sweep at 1e32ae7a
 
 | added file | router hits | hit lines |
 |---|---|---|
@@ -58,6 +58,7 @@ Frozen owners: `vault/specs/agent-capability-virtualization.md`, `modules/capabi
 | tools/test_skill_creation_gate.py | 0 | - |
 | tools/test_skill_delivery.py | 0 | - |
 | tools/test_skill_drift.py | 0 | - |
+| tools/test_skill_handoffs.py | 0 | - |
 | tools/test_skill_representation.py | 0 | - |
 
 ### Router controls (must hit by content)
