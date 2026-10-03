@@ -6,12 +6,14 @@ status: draft
 nyquist_compliant: false
 wave_0_complete: false
 created: "2026-10-03"
+revised: "2026-10-03 (plan-check pass 1: W1-W5)"
 ---
 
 # Phase 3 — Validation Strategy
 
 > Per-phase validation contract. Sources: ROADMAP Phase 3 success criteria 1-5, `03-CONTEXT.md` decisions A1-E4,
-> plan of record `vault/plans/ucep-naked-verb-2026-10-02.md` S4 items 8-9, audit gaps G5, G6, G15.
+> plan of record `vault/plans/ucep-naked-verb-2026-10-02.md` S4 items 8-9, audit gaps G5, G6, G15, and the
+> orchestrator's D4 correction (offender SET must not grow; `tower/admission` must not be an offender).
 
 ## Test Infrastructure
 
@@ -20,20 +22,21 @@ created: "2026-10-03"
 | **Framework** | plain Python scripts printing `<NAME>_PASS=n/m  threshold=n/m`, exit 0 iff all pass; the new suite holds a literal `EXPECTED` so a deleted or skipped gate cannot print a satisfied n/n |
 | **Config file** | none |
 | **Quick run command** | `Set-Location 'C:\Users\User\.claude\skills\claude-power-pack\.claude\worktrees\ucep'; $env:PYTHONIOENCODING='utf-8'; & 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe' tools\test_tower_admission.py; exit $LASTEXITCODE` |
-| **Full suite command** | the new file plus the fifteen Phase 1/2 suites, run with `HOME`, `USERPROFILE` and `CLAUDE_STATE_DIR` on a fresh `$env:TEMP` directory (03-04 Task 3 verify command) |
-| **Estimated runtime** | new file < 30 s (temp roots, one `copytree` of the real baselines); full suite about 120 s |
+| **Regression loop** (every suite-running verify) | creates a fresh `$env:TEMP` directory, points `HOME`, `USERPROFILE` and `CLAUDE_STATE_DIR` at it, runs each suite, parses its LAST `_PASS=n/m`, and marks it `OK` only when rc is 0, no line starts with whitespace plus `FAIL `, `n == m` and `n >= floor` (the `$floor` table in the command = the Floors table below); prints one `OK`/`BELOW` line per suite and `FLOORS_BAD=<count>`, which is also its exit code. A suite whose `EXPECTED` was lowered or that lost gates fails even when it exits 0. |
+| **Full suite command** | the 03-04 Task 3 first verify (sixteen suites through the regression loop) |
+| **Estimated runtime** | new file < 30 s (temp roots, one `copytree` of the real baselines); full loop about 120 s; liveness verify about 25 s |
 
-Failure = non-zero exit OR a `FAIL` line OR `PASS=n/m` with n < m OR a count below its floor. A run whose sorted
-dirty-path SET changed between start and end is INCONCLUSIVE, never green.
+Failure = non-zero exit OR a `BELOW` line OR `FLOORS_BAD` above 0. A run whose sorted dirty-path SET changed between
+start and end is INCONCLUSIVE, never green.
 
 ## Sampling Rate
 
-- **After every task commit:** `tools/test_tower_admission.py` plus the Phase 1 suites that task's plan names in its `<verify>`.
-- **After every plan:** the plan's `<verification>` block (the suites it touched, at their floors).
-- **Before verify (03-04 Task 3):** the full suite in one bracketed run; the F0 three-way check; the liveness offender SET compared by name.
+- **After every task commit:** the task's `<verify>` commands (regression loop over the new suite plus the Phase 1 suites that task touches, at their floors).
+- **After every plan:** the plan's `<verification>` block.
+- **Before verify (03-04 Task 3):** the sixteen-suite loop in one bracketed run; `F0_THREE_WAY`; `LIVENESS_GATE`; `BASELINES_UNTOUCHED`; `EVIDENCE_SECTIONS`.
 - **Max feedback latency:** 120 seconds.
 
-## Floors (measured in 03-01 Task 1 Step 0; a lower count at any later point is a regression)
+## Floors (measured in 03-01 Task 1 by its regression loop; a lower count at any later point is a regression)
 
 | suite | pass line | floor |
 |---|---|---|
@@ -52,39 +55,53 @@ dirty-path SET changed between start and end is INCONCLUSIVE, never green.
 | test_capability_archetypes | CAPABILITY_ARCHETYPES_PASS | 59 |
 | test_capability_trait_scan | CAPABILITY_TRAIT_SCAN_PASS | 28 |
 | test_gsd_x_heartbeat_path | GSD_X_HEARTBEAT_PATH_PASS | 7 |
-| test_tower_admission (new) | TOWER_ADMISSION_PASS | 30 at phase end (6, 9, 15, 19, 20, 21, 25, 27, 30 after each task) |
+| test_tower_admission (new) | TOWER_ADMISSION_PASS | 30 at phase end (6, 9, 15, 19, 20, 21, 25, 27, 30 after each code task) |
+
+## Committed pass/fail commands outside the suites
+
+| name | where | printed pass line | what it checks |
+|---|---|---|---|
+| `F0_START` | 03-01 T1 | `F0_START=EQUAL rows=7` | raw sha256 of the seven files equals 03-F0-REFERENCE.md, no CR byte, before any code |
+| `START_RECORDS` | 03-01 T1 | `START_RECORDS=PASS offenders=<n>` | `03-liveness-before.json` has a 40-hex `head`, a non-empty offender list without `tower/admission`, `admission_row` null; 03-EVIDENCE.md sections 1-5 exist |
+| `LIVENESS_GATE` | 03-01 T2, 03-04 T3 | `LIVENESS_GROWN=[]` ... `LIVENESS_GATE=PASS` | `reachability.gate()` offender names minus `03-liveness-before.json` is empty; `tower/admission` row is ORPHAN + PLANNED, not an offender, Owner-queue path exists |
+| `BASELINES_UNTOUCHED` | 03-01 T2, 03-04 T2, 03-04 T3 | `BASELINES_UNTOUCHED=True base=<PHASE3_BASE>` | empty `git log`, empty `git diff --stat` and empty `git status --porcelain` over `vault/tower/baselines` since PHASE3_BASE (the `head` of `03-liveness-before.json`) |
+| `CLI_USAGE_DOCUMENTS_AUTHORITY` | 03-04 T1 | `...=True` | the `family_baseline.py` usage documents `build-b0 ... --authority` |
+| `F0_THREE_WAY` | 03-04 T3 | `F0_THREE_WAY=EQUAL rows=7` | per file: 03-F0-REFERENCE.md = `baselines.LEGACY_GENERATIONS` = fresh `lf_sha256` = fresh raw sha256 |
+| `EVIDENCE_SECTIONS` | 03-04 T3 | `EVIDENCE_SECTIONS=PASS missing=[] proven_cells=0 summary=True` | 03-EVIDENCE.md sections 1-14, no PROVEN verdict cell in section 13, F0 and liveness lines copied, 03-04-SUMMARY.md present |
 
 ## Criterion Verification Map (Nyquist)
 
 | Criterion | Requirement | Automated command | Passing output | Status |
 |---|---|---|---|---|
-| SC1 evidence bar: origin VERIFIED and not under a worktree or a rules pointer file [G15]; runnable check or explicit MANUAL do-confirm; evidence ref; production evidence ref; negative applicability; counterfactual; status provisional (C5, C6, C7, B2) | UCEP-03 | `tools/test_tower_admission.py` | `PASS` on V-ADM-TRACER-ARCHETYPE (record `status` provisional), V-ADM-TRACER-REFUSED-ORIGIN, V-ADM-REFUSE-WORKTREE-ORIGIN, V-ADM-REFUSE-RULES-POINTER, V-ADM-REFUSE-ORIGIN-NOT-VERIFIED, V-ADM-REFUSE-MATCH-ALL-CHECK, V-ADM-REFUSE-CHECK-NOT-RUNNABLE, V-ADM-REFUSE-EVIDENCE-REFS, V-ADM-REFUSE-NO-NEGATIVE-APPLICABILITY, V-ADM-REFUSE-COUNTERFACTUAL-INSTANCE, V-ADM-ALL-REASONS; every refusal gate also asserts its admitted control | pending |
+| SC1 evidence bar: origin VERIFIED and not under a worktree or a rules pointer file [G15]; runnable check or explicit MANUAL do-confirm; evidence ref; production evidence ref; negative applicability; counterfactual; status provisional (C5, C6, C7, B2) | UCEP-03 | `tools/test_tower_admission.py` (through the regression loop) | `PASS` on V-ADM-TRACER-ARCHETYPE (record `status` provisional), V-ADM-TRACER-REFUSED-ORIGIN, V-ADM-REFUSE-WORKTREE-ORIGIN, V-ADM-REFUSE-RULES-POINTER, V-ADM-REFUSE-ORIGIN-NOT-VERIFIED, V-ADM-REFUSE-MATCH-ALL-CHECK, V-ADM-REFUSE-CHECK-NOT-RUNNABLE, V-ADM-REFUSE-EVIDENCE-REFS, V-ADM-REFUSE-NO-NEGATIVE-APPLICABILITY, V-ADM-REFUSE-COUNTERFACTUAL-INSTANCE, V-ADM-ALL-REASONS (executed last; every token of every `admit`/`validate_record` call of the whole run is in `REASONS`); every refusal gate also asserts its admitted control | pending |
 | SC2 scope DERIVED from write location + applicability; declared narrower refused [G6]; family/archetype AUTO_ADMITTED; cross-family/universal/constitutive PENDING_OWNER, never written (C1-C4) | UCEP-03 | `tools/test_tower_admission.py` | `PASS` on V-ADM-SCOPE-FROM-LOCATION, V-ADM-SCOPE-APPLICABILITY-WIDENS, V-ADM-REFUSE-NARROW-SCOPE, V-ADM-PENDING-OWNER-NOT-WRITTEN (directory listing unchanged) | pending |
 | SC3 `promote` and archetype B0 creation require a record [G5]; `verify_chain` refuses any entry added outside the grandfathered set without one; grandfathering pinned by identity (A1, A2, B1, B3, B4, D1, D2) | UCEP-03 | `tools/test_tower_admission.py`; `tools/test_tower_ratchet.py` (V-TRAT-REAL-CHAINS) | `PASS` on V-ADM-TRACER-ARCHETYPE, V-ADM-TRACER-RECORD-INVALID, V-ADM-LEGACY-IDENTITY, V-ADM-UNADMITTED-RAW-WRITE, V-ADM-LEGACY-IS-THE-ONLY-SWITCH, V-ADM-DONEGATE-CHAIN-UNADMITTED, V-ADM-REVERT-REANCHOR-NEED-NO-ADMISSION, V-ADM-BUILD-B0-ADMITS; `V-TRAT-REAL-CHAINS PASS` | pending |
 | SC4 `baselines.propagation_scope(entry, gen)` projects grandfathered entries as LEGACY_UNSPECIFIED; C/D gain no meaning; unrecorded -> UNADMITTED, never a guess (D3) | UCEP-03 | `tools/test_tower_admission.py` | `PASS` on V-ADM-TRACER-ARCHETYPE (projection arm), V-ADM-PROPAGATION-LEGACY (both classes present in the population), V-ADM-PROPAGATION-ADMITTED (carried entry, C/D pair, bogus scope, legacy carry) | pending |
 | SC5 bad origin, `glob:**`, self-declared narrow scope and unadmitted raw `write_generation` all refused; fully evidenced archetype entry admitted (E2, E3) | UCEP-03 | `tools/test_tower_admission.py` | `PASS` on V-ADM-TRACER-REFUSED-ORIGIN, V-ADM-REFUSE-MATCH-ALL-CHECK, V-ADM-REFUSE-NARROW-SCOPE, V-ADM-UNADMITTED-RAW-WRITE, V-ADM-TRACER-ARCHETYPE | pending |
-| E4 real tree by discovery + mutation drill (record removed / scope widened in a copy turns it red) | UCEP-03 | `tools/test_tower_admission.py` | `PASS V-ADM-REAL-CHAINS-ADMITTED` (floor 4 subjects; grandfathered generations = 7; drill arms a-c red, arm d ok) | pending |
-| A3 no default switches the requirement off for the real tree | UCEP-03 | `tools/test_tower_admission.py` | `PASS` on V-ADM-LEGACY-REFUSED-ON-REAL-TREE and V-ADM-DONEGATE-LEGACY-PASSTHROUGH (ValueError for root=None and any `vault/tower/baselines` path) | pending |
-| A4 the seven grandfathered generation files keep their exact bytes | UCEP-03 | 03-04 Task 3 second verify (`F0_THREE_WAY`), plus `git log --format=%h <PHASE3_BASE>..HEAD -- <seven paths>` | `F0_THREE_WAY=EQUAL rows=7`; empty `git log`; `V-ADM-LEGACY-IDENTITY PASS` throughout | pending |
-| D4 liveness (as corrected by the orchestrator): offender SET does not grow; `tower/admission` is not an offender | UCEP-03 | throwaway `reachability.gate()` script before (03-01 Step 0 -> `03-liveness-before.json`) and after (03-04 Task 3); `V-ADM-LIVENESS-DECLARED` | after-minus-before offender names = empty set; `tower/admission` row ORPHAN + PLANNED with an existing Owner-queue path | pending |
-| Phase 1/2 suites keep or grow their counts (A3) | UCEP-01, UCEP-02 (regression) | 03-04 Task 3 first verify (bracketed, temp HOME) | every line in the Floors table at or above its floor; equal dirty-path SETs | pending |
-| Documented CLI matches what runs | UCEP-03 | 03-04 Task 1 second verify; `V-ADM-CLI-VERIFY-NAMES-ADMISSION` | usage documents `build-b0 ... --authority`; UNADMITTED / ADMISSION_INVALID lines carry admission reasons | pending |
-| No side effects on the real tree or home | UCEP-03 | `git diff --stat <PHASE3_BASE>..HEAD -- vault/tower/baselines`; `V-ADM-HERMETIC-HOME` | empty diff; hermetic gate PASS | pending |
+| E4 real tree by discovery + mutation drill (record removed / scope widened in a copy turns it red) | UCEP-03 | `tools/test_tower_admission.py`; `BASELINES_UNTOUCHED` (03-04 T2) | `PASS V-ADM-REAL-CHAINS-ADMITTED` (floor 4 subjects; grandfathered generations = 7; drill arms a-c red, arm d ok); `BASELINES_UNTOUCHED=True` | pending |
+| A3 no default switches the requirement off for the real tree, under any spelling of its path | UCEP-03 | `tools/test_tower_admission.py` | `PASS` on V-ADM-LEGACY-REFUSED-ON-REAL-TREE (ValueError for None, `""`, trailing `\` and `/`, forward slashes, other case, relative paths, `x\..` forms, a clone, a junction to a copy when `_winapi.CreateJunction` works; otherwise `JUNCTION_ARM=UNJUDGED` is printed and recorded, never counted) and V-ADM-DONEGATE-LEGACY-PASSTHROUGH | pending |
+| A4 the seven grandfathered generation files keep their exact bytes | UCEP-03 | `F0_START` (03-01 T1), `F0_THREE_WAY` and `BASELINES_UNTOUCHED` (03-04 T3) | `F0_START=EQUAL rows=7`; `F0_THREE_WAY=EQUAL rows=7`; `BASELINES_UNTOUCHED=True`; `V-ADM-LEGACY-IDENTITY PASS` throughout | pending |
+| D4 liveness (as corrected by the orchestrator): offender SET does not grow; `tower/admission` is not an offender | UCEP-03 | `START_RECORDS` (03-01 T1, before snapshot); `LIVENESS_GATE` (03-01 T2 and 03-04 T3); `V-ADM-LIVENESS-DECLARED` | `LIVENESS_GROWN=[]`; `ADMISSION_ROW={'status': 'ORPHAN', 'klass': 'PLANNED', 'via': ''}`; `LIVENESS_GATE=PASS` | pending |
+| Phase 1/2 suites keep or grow their counts (A3) | UCEP-01, UCEP-02 (regression) | 03-04 Task 3 first verify (bracketed, temp HOME, floors compared) | sixteen `OK` lines, `FLOORS_BAD=0`; equal dirty-path SETs | pending |
+| Documented CLI matches what runs | UCEP-03 | `CLI_USAGE_DOCUMENTS_AUTHORITY` (03-04 T1); `V-ADM-CLI-VERIFY-NAMES-ADMISSION` | `CLI_USAGE_DOCUMENTS_AUTHORITY=True`; UNADMITTED / ADMISSION_INVALID lines carry admission reasons | pending |
+| No side effects on the real tree or home | UCEP-03 | `BASELINES_UNTOUCHED`; `V-ADM-HERMETIC-HOME`; the regression loop's temp HOME | `BASELINES_UNTOUCHED=True`; hermetic gate PASS | pending |
+| Phase evidence complete, no upgraded verdict | UCEP-03 | `EVIDENCE_SECTIONS` (03-04 T3) | `EVIDENCE_SECTIONS=PASS missing=[] proven_cells=0 summary=True` | pending |
 
 ## Per-Task Verification Map
 
 | Plan / Task | Gates added (cumulative EXPECTED) | RED expected first | Automated verify |
 |---|---|---|---|
-| 03-01 T1 (tracer) | 1-6: HERMETIC-HOME, TRACER-ARCHETYPE, TRACER-REFUSED-ORIGIN, TRACER-RECORD-INVALID, LEGACY-IDENTITY, LIVENESS-DECLARED (6) | `TOWER_ADMISSION_PASS=1/6` | new suite + ratchet, integrity, generations, donegate, donegate-exits, archetypes |
-| 03-01 T2 | 7-9: REFUSE-WORKTREE-ORIGIN, REFUSE-RULES-POINTER, REFUSE-ORIGIN-NOT-VERIFIED (9) | `7/9` | new suite + ratchet |
-| 03-02 T1 | 10-15: REFUSE-MATCH-ALL-CHECK, REFUSE-CHECK-NOT-RUNNABLE, REFUSE-EVIDENCE-REFS, REFUSE-NO-NEGATIVE-APPLICABILITY, REFUSE-COUNTERFACTUAL-INSTANCE, ALL-REASONS (15) | `9/15` | new suite + ratchet |
-| 03-02 T2 | 16-19: SCOPE-FROM-LOCATION, SCOPE-APPLICABILITY-WIDENS, REFUSE-NARROW-SCOPE, PENDING-OWNER-NOT-WRITTEN (19) | `16/19` | new suite + ratchet, integrity |
-| 03-03 T1 | 20: LEGACY-REFUSED-ON-REAL-TREE (20) | `19/20` | new suite + ratchet, integrity, generations |
-| 03-03 T2 | 21: DONEGATE-LEGACY-PASSTHROUGH (21) | `20/21` | new suite + donegate, donegate-exits |
-| 03-03 T3 | 22-25: UNADMITTED-RAW-WRITE, LEGACY-IS-THE-ONLY-SWITCH, DONEGATE-CHAIN-UNADMITTED, REVERT-REANCHOR-NEED-NO-ADMISSION (25) | `21/25` (the E1 case: raw adds pass on the unchanged chain check) | new suite + seven regression suites, temp HOME |
-| 03-04 T1 | 26-27: BUILD-B0-ADMITS, CLI-VERIFY-NAMES-ADMISSION (27) | `25/27` | new suite + generations, ratchet, integrity; CLI usage check |
-| 03-04 T2 | 28-30: PROPAGATION-LEGACY, PROPAGATION-ADMITTED, REAL-CHAINS-ADMITTED (30) | `29/30` | new suite + ratchet, generations, family baselines |
-| 03-04 T3 (phase gate) | none (30) | n/a | full suite bracketed; `F0_THREE_WAY=EQUAL rows=7`; liveness by name |
+| 03-01 T1 (start records, no code) | none | n/a | regression loop over the fifteen Phase 1/2 suites at their floors; `F0_START`; `START_RECORDS` |
+| 03-01 T2 (tracer) | 1-6: HERMETIC-HOME, TRACER-ARCHETYPE, TRACER-REFUSED-ORIGIN, TRACER-RECORD-INVALID, LEGACY-IDENTITY, LIVENESS-DECLARED (6) | `TOWER_ADMISSION_PASS=1/6` | loop {admission 6, ratchet 21, integrity 40, generations 18, donegate 10, donegate-exits 17, archetypes 59}; `LIVENESS_GATE`; `BASELINES_UNTOUCHED` |
+| 03-01 T3 | 7-9: REFUSE-WORKTREE-ORIGIN, REFUSE-RULES-POINTER, REFUSE-ORIGIN-NOT-VERIFIED (9) | `7/9` | loop {admission 9, ratchet 21} |
+| 03-02 T1 | 10-15: REFUSE-MATCH-ALL-CHECK, REFUSE-CHECK-NOT-RUNNABLE, REFUSE-EVIDENCE-REFS, REFUSE-NO-NEGATIVE-APPLICABILITY, REFUSE-COUNTERFACTUAL-INSTANCE, ALL-REASONS (executed last from here on, with the whole-run token collector) (15) | `9/15` | loop {admission 15, ratchet 21} |
+| 03-02 T2 | 16-19: SCOPE-FROM-LOCATION, SCOPE-APPLICABILITY-WIDENS, REFUSE-NARROW-SCOPE, PENDING-OWNER-NOT-WRITTEN (19) | `16/19` | loop {admission 19, ratchet 21, integrity 40} |
+| 03-03 T1 | 20: LEGACY-REFUSED-ON-REAL-TREE, twelve path spellings (20) | `19/20` | loop {admission 20, ratchet 21, integrity 40, generations 18} |
+| 03-03 T2 | 21: DONEGATE-LEGACY-PASSTHROUGH (21) | `20/21` | loop {admission 21, donegate 10, donegate-exits 17} |
+| 03-03 T3 | 22-25: UNADMITTED-RAW-WRITE, LEGACY-IS-THE-ONLY-SWITCH, DONEGATE-CHAIN-UNADMITTED (`would_block_on_violated` at donegate.py:144 and :224), REVERT-REANCHOR-NEED-NO-ADMISSION (25) | `21/25` (the E1 case: raw adds pass on the unchanged chain check) | loop {admission 25, ratchet 21, integrity 40, donegate 10, donegate-exits 17, generations 18, family baselines 20, archetypes 59} |
+| 03-04 T1 | 26-27: BUILD-B0-ADMITS, CLI-VERIFY-NAMES-ADMISSION (27) | `25/27` | loop {admission 27, generations 18, ratchet 21, integrity 40}; `CLI_USAGE_DOCUMENTS_AUTHORITY` |
+| 03-04 T2 | 28-30: PROPAGATION-LEGACY, PROPAGATION-ADMITTED, REAL-CHAINS-ADMITTED (30) | `29/30` | loop {admission 30, ratchet 21, generations 18, family baselines 20}; `BASELINES_UNTOUCHED` |
+| 03-04 T3 (phase gate) | none (30) | n/a | loop over all sixteen suites; `F0_THREE_WAY`; `LIVENESS_GATE`; `BASELINES_UNTOUCHED`; `EVIDENCE_SECTIONS` |
 
 Every task has an automated verify; no three consecutive tasks lack one. Each RED line is recorded verbatim in
 `03-EVIDENCE.md` section 5 with its HEAD hash. A gate that already passes when written is recorded as such, and only
@@ -93,9 +110,8 @@ control).
 
 ## Wave 0 Requirements
 
-- [ ] `tools/test_tower_admission.py` (NEW, 03-01 Task 1 Step 1) — hermetic header before any `modules` import, guarded admission import, literal `EXPECTED`, `evidenced()` fixture builder that is fully evidenced from the first task; RED recorded in 03-EVIDENCE.md before any admission code exists
-- [ ] `03-EVIDENCE.md` (NEW, 03-01 Task 1 Step 0) — start state, F0 at phase start, suite floors, liveness before, RED records table
-- [ ] `03-liveness-before.json` (NEW, 03-01 Task 1 Step 0) — offender names before the module exists
+- [ ] `03-EVIDENCE.md` and `03-liveness-before.json` (NEW, 03-01 Task 1) — start state, F0 at phase start, suite floors, liveness offender names, RED records table; verified by `F0_START`, `START_RECORDS` and the fifteen-suite loop
+- [ ] `tools/test_tower_admission.py` (NEW, 03-01 Task 2 Step 1) — hermetic header before any `modules` import, guarded admission import, literal `EXPECTED`, `evidenced()` fixture builder that is fully evidenced from the first task; RED recorded in 03-EVIDENCE.md before any admission code exists
 - [ ] Framework install: none
 
 ## Manual-Only Verifications
