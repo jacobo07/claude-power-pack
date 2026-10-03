@@ -156,7 +156,9 @@ skill name, 1 for a refused trailer). Names are as the plan specified.
 - `python3 modules/liveness/reachability.py` exits 1 on pre-existing ORPHAN debt under modules/ (for example
   tower/donegate and tower/ratchet). tools/card_lineage.py is not in its population or its output. Wiring the tool as G
   gate evidence is 06-03's job (the G closure). Not fixed here.
-- I-02 from the plan check (state.H's reason text saying "16/16 clauses") belongs to phase 4 and was not touched.
+- I-02 from the plan check (a stale "13/13 clauses" in state.H's reason) was already fixed by phase 4: the reason now
+  says "16/16 clauses", which matches the live `SKD_PASS=16/16`. The reason was not touched here.
+- STATE.md and ROADMAP.md were not updated. The caller forbids STATE.md edits, so the orchestrator owns both.
 
 ## Known Stubs
 
