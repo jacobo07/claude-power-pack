@@ -373,6 +373,11 @@ const CHAIN_MAP = {
     // `critical`: this guard timing out is the Owner's cross-repo MSYS2 freeze.
     // It failed open 12,237-timeouts-deep into a log nobody reads. Priority lane.
     { exe: NODE_EXE, script: './windows-bash-bridge-guard.js', timeoutMs: 8000, block: true, critical: true },
+    // capsule-v2 pre-certification guard (spec vault/specs/mission-capsule-rollover.md I1, 2026-10-03,
+    // Owner go): a mission successor runs observe commands only until RESUME_CERTIFIED. Critical
+    // because its silent failure is UNSAFE (a mutation lands uncertified). Pure node; non-mission
+    // sessions cost one readdir. Proof: hooks/tests/test-capsule-mutation-guard.js (+ --e2e).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/capsule_mutation_guard.js', timeoutMs: 4000, block: true, critical: true },
     // Blocks launching a packaged desktop build as a child of this shell. The app then inherits
     // the Owner's console and prints its diagnostics into their working pane for as long as it
     // runs -- Orca's (already rate-limited) `[pty] hidden-delivery gate ...` line landed there on
@@ -453,6 +458,9 @@ const CHAIN_MAP = {
     // are noisy; these two and the two anti-hang guards are unsafe.
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/secret_firewall_gate.js', timeoutMs: 8000, critical: true },
     { exe: NODE_EXE, script: './secret-scanner.js', timeoutMs: 8000, critical: true },
+    // capsule-v2 pre-certification guard: no Write/Edit by a mission successor before RESUME_CERTIFIED
+    // (see the Bash-chain entry; same script, same proof).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/capsule_mutation_guard.js', timeoutMs: 4000, block: true, critical: true },
     { exe: NODE_EXE, script: './quality-gate.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: './anti-thrash.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: './readonly-prompts-guard.js', timeoutMs: 3000 },
