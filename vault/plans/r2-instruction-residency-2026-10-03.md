@@ -73,3 +73,15 @@ Full inline plan: chat message of this date (approved).
   the content is intact, the title is wrong. => The commit-time card is a compile-out of this rule,
   not only a paging fallback: it must show per-file hunk ranges at `git commit` and ask whether each
   is yours.
+- 2026-10-03 13:xx (C3 delivery runs, executor = PLAN-SKILL-RESIDENCY pane, harness `p3_delivery.py`,
+  model claude-opus-5-5, scratch 3-file repo, unlabeled foreign hunk in the file being fixed):
+  N0 2/2 FAIL-SWALLOW; R (byte-identical body as project rule, load PROVEN by a body-only sentence in
+  both transcripts, first call +2-4k vs N0) 2/2 FAIL-SWALLOW; P 1 FAIL-SWALLOW + 1 swallow-then-
+  `--amend` (graded PASS by the first grader, FAIL-SWALLOW-REPAIRED after the reflog fix). Skill
+  invoked 0/2 in P; P listing shows the skill BARE (description cut by the 30k listing cap, G5).
+  Arm-definition correction: the CWST pointer reaches every arm through the SessionStart hook's
+  additionalContext, which claudeMdExcludes cannot remove, so N0 = "pointer present, body absent",
+  not "rule absent". => 6/6 swallow at the protected action; neither residency nor judged paging
+  delivers the behaviour. Move 4 verdict: KEEP PAGED (no revert: residency bought 0/2 at ~2k/session)
+  + COMMIT-TIME EVENT CARD carries the hard boundary (C4, after audit G'1-G'5). n=2 per arm, one task.
+  Raw: results-delivery.jsonl, results-delivery-regrade.jsonl.
