@@ -773,7 +773,17 @@ def pinned_split(rows, info):
     return [r for r in rows if r["run_id"] in ids], [r for r in rows if r["run_id"] not in ids]
 
 
-def clause_rows_pinned(rows, regrade_rows, info):
+def pinned_regrade_split(regrade_rows, info):
+    """(regrade rows whose run_id is in the pinned ROW set, the others). The P3 jsonls are append-only and
+    owned by another workstream: a regrade row for an appended run is outside the pin, like its run, and
+    must not reach the join (07-REVIEW WR-02). A new regrade row for a PINNED run stays inside and makes
+    V-CT-ROWS-PINNED fail, because it would change a pinned run's grade."""
+    ids = {r["run_id"] for r in (info.get("rows_blob") or [])}
+    inside = [g for g in regrade_rows if isinstance(g, dict) and g.get("run_id") in ids]
+    return inside, [g for g in regrade_rows if not (isinstance(g, dict) and g.get("run_id") in ids)]
+
+
+def clause_rows_pinned(rows, regrade_rows, info, regrade_outside=()):
     if info.get("error"):
         return "INCONCLUSIVE", info["error"]
     blob = {r["run_id"]: r for r in info["rows_blob"]}
@@ -788,10 +798,15 @@ def clause_rows_pinned(rows, regrade_rows, info):
     gw = sorted(json.dumps(g, sort_keys=True) for g in regrade_rows)
     if gb != gw:
         return "FAIL", f"regrade rows differ from the blob at {info['regrade_commit'][:8]}"
+    orphans = sorted(str(g.get("run_id") if isinstance(g, dict) else g) for g in regrade_outside
+                     if not (isinstance(g, dict) and g.get("run_id") in wt))
+    if orphans:
+        return "FAIL", f"regrade rows outside the pinned set name no row in the working tree: {orphans}"
     outside = len(rows) - len(blob)
     return "ok", (f"{len(blob)} rows equal the blob at {ROWS_PIN_COMMIT} (LF sha256 {info['rows_sha'][:12]}), "
                   f"{len(gb)} regrade rows equal the blob at {info['regrade_commit'][:8]} (LF sha256 "
-                  f"{info['regrade_sha'][:12]}); both pins are ancestors of HEAD; {outside} rows outside the pinned set")
+                  f"{info['regrade_sha'][:12]}); both pins are ancestors of HEAD; {outside} rows and "
+                  f"{len(regrade_outside)} regrade rows outside the pinned set")
 
 
 def clause_evidence_current(wt_text, head_text, rendered):
@@ -1066,7 +1081,7 @@ def _counter_text(c: Counter) -> str:
     return ", ".join(f"{k} {v}" for k, v in sorted(c.items())) or "-"
 
 
-def render(rows, regrade_rows, fro, st, outside=()) -> str:
+def render(rows, regrade_rows, fro, st, outside=(), regrade_outside=()) -> str:
     denoms = fro["denominators"]
     ds = denoms["D-SESSIONS"]
     cap = ds["new_benchmark_cap"]
@@ -1103,6 +1118,8 @@ def render(rows, regrade_rows, fro, st, outside=()) -> str:
              f"({len(info['regrade_blob'])} rows), LF sha256 `{info['regrade_sha']}`")
     L.append("- Rows outside the pinned set (not used by the verdict): " + (
         "; ".join(f"{r['run_id']} / {r.get('arm')} / {r.get('grade')}" for r in outside) if outside else "none"))
+    L.append("- Regrade rows outside the pinned set (not joined): " + (
+        "; ".join(f"{g.get('run_id')} / {g.get('grade')}" for g in regrade_outside) if regrade_outside else "none"))
     L.append("")
     L.append("## Grade authority (why the regrade row wins)")
     L.append("")
@@ -1291,17 +1308,19 @@ def emit(results) -> int:
 
 
 def default_inputs():
-    """Working-tree rows restricted to the pinned run_id set, the regrade rows, the committed texts."""
+    """Working-tree rows and regrade rows restricted to the pinned run_id set, the committed texts."""
     rows, refusal = load_rows(REPO / ROWS_REL)
     reg, rrefusal = load_rows(REPO / REGRADE_REL)
     st = static()
     rows = rows or []
+    reg = reg or []
     if st["info"].get("error"):
-        inside, outside = rows, []
+        inside, outside, reg_in, reg_out = rows, [], reg, []
     else:
         inside, outside = pinned_split(rows, st["info"])
+        reg_in, reg_out = pinned_regrade_split(reg, st["info"])
     return {"rows": inside, "all_rows": rows, "outside": outside, "refusal": refusal or rrefusal,
-            "regrade": reg or [], "st": st}
+            "regrade": reg_in, "regrade_outside": reg_out, "st": st}
 
 
 def _read_wt(rel):
@@ -1313,7 +1332,8 @@ def _read_wt(rel):
 
 def _render_or_none(inp, fro):
     try:
-        return render(inp["rows"], inp["regrade"], fro, inp["st"], inp["outside"]), None
+        return render(inp["rows"], inp["regrade"], fro, inp["st"], inp["outside"],
+                      inp.get("regrade_outside", ())), None
     except (ValueError, KeyError, TypeError) as exc:
         return None, str(exc)
 
@@ -1326,7 +1346,32 @@ def run_drills(inp, fro, cap, rendered, remaining):
                                                                        inp["st"]["info"]),
         "evidence-one-digit-changed": lambda: clause_evidence_current_drill(rendered),
     }
-    return drills(inp["rows"], inp["regrade"], cap, inp["st"], remaining, text_drills) + [needed_pins_drill()]
+    all_reg = list(inp["regrade"]) + list(inp.get("regrade_outside", ()))
+    return (drills(inp["rows"], inp["regrade"], cap, inp["st"], remaining, text_drills)
+            + [needed_pins_drill()] + append_drills(inp["all_rows"], all_reg, cap, inp["st"]))
+
+
+def append_drills(all_rows, all_reg, cap, st):
+    """WR-02: the owning workstream appends one run and its regrade row (as 713b02a7 did for N0/R/P):
+    every clause must stay ok. A regrade row naming no row at all must still make V-CT-ROWS-PINNED fail."""
+    info, out = st["info"], []
+    new = copy.deepcopy(all_rows[0])
+    new.update(run_id="X-appended-C-r3", arm="C", rep=3, grade=PASS_GRADE)
+    cases = (("append-row-and-regrade", all_rows + [new],
+              all_reg + [{"run_id": new["run_id"], "regraded_by": "reflog-aware grader", "grade": PASS_GRADE}], "ok"),
+             ("regrade-orphan-outside-pin", all_rows, all_reg + [{"run_id": "X-ghost-r9", "grade": PASS_GRADE}],
+              "FAIL"))
+    for name, rows2, reg2, want in cases:
+        inside, outside = pinned_split(rows2, info)
+        reg_in, reg_out = pinned_regrade_split(reg2, info)
+        results, _ = evaluate_core(inside, None, reg_in, cap, st)
+        rp = clause_rows_pinned(rows2, reg_in, info, reg_out)
+        bad = [f"{n} {s_}" for n, s_, _ in results if s_ != "ok"]
+        good = not bad and verdict_of(results) == "NOT_SEPARABLE" and rp[0] == want and len(reg_out) == 1
+        out.append((name, f"{'verdict clauses all ok' if not bad else ','.join(bad)}, verdict {verdict_of(results)}; "
+                          f"V-CT-ROWS-PINNED {rp[0]} (want {want}); outside: {len(outside)} rows, "
+                          f"{len(reg_out)} regrade rows", good))
+    return out
 
 
 def needed_pins_drill():
@@ -1347,7 +1392,8 @@ def needed_pins_drill():
 
 def default_results(inp, fro, cap):
     results, ctx = evaluate_core(inp["rows"], inp["refusal"], inp["regrade"], cap, inp["st"])
-    results.append(("V-CT-ROWS-PINNED",) + clause_rows_pinned(inp["all_rows"], inp["regrade"], inp["st"]["info"]))
+    results.append(("V-CT-ROWS-PINNED",) + clause_rows_pinned(inp["all_rows"], inp["regrade"], inp["st"]["info"],
+                                                             inp.get("regrade_outside", ())))
     rendered, why = _render_or_none(inp, fro)
     if rendered is None:
         results.append(("V-CT-EVIDENCE-CURRENT", "INCONCLUSIVE", f"cannot render: {why}"))

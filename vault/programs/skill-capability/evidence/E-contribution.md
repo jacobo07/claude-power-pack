@@ -11,6 +11,7 @@ Frozen pillar E rule (ledger `frozen.pillars[E].rule`):
 - rows: `.planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/results-delivery.jsonl`, the run_id set of its blob at 123c96cc (the commit that brought it to 8 rows), LF sha256 `90f3e94810d6883ca0f2fb3fca9c6a1b2dfafe7d8f98eb720ad620b64c1a021d`
 - regrade: `.planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/results-delivery-regrade.jsonl`, blob at its add commit 713b02a7 (6 rows), LF sha256 `07792b9862814703a7e9d57269bebb9ed48257b01ac70395fa0997b84ee78620`
 - Rows outside the pinned set (not used by the verdict): none
+- Regrade rows outside the pinned set (not joined): none
 
 ## Grade authority (why the regrade row wins)
 
