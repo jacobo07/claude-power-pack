@@ -26,7 +26,8 @@ The keys live under `metadata:` because the official skill-creator validator whi
 description, license, allowed-tools, metadata, compatibility) and excludes keys nested under metadata; a top-level
 `opportunity_detector:` would add a new refusal there, so this gate refuses it (FORM). The reason text matches
 REASON_RE: no colon and no `#`, so it is always a valid YAML plain scalar and can never carry a `name:` or
-`description:` substring that a first-match frontmatter regex could pick up.
+`description:` substring that a first-match frontmatter regex could pick up. It must also not match YAML_NON_STRING
+(null, booleans, numbers, dates), so a YAML reader always reads it as a string.
 
 Population, DISCOVERED (never listed): every distinct `<name>` among the paths `skills/<name>/...` tracked at the
 judged commit. A directory with no tracked SKILL.md is a member and fails DECLARED. Floor 2.
@@ -35,7 +36,7 @@ Clauses (all 7 must be PASS for a PASS verdict; outcomes PASS, FAIL or UNMEASURE
   per skill  DECLARED         a tracked SKILL.md whose frontmatter holds exactly one opportunity_detector line
              FORM             every opportunity_detector and opportunity_detector_reason line is a metadata child;
                               every detector value is `none` or a plain relative path (PATH_RE, no `//`, no `..`
-                              segment); every reason matches REASON_RE
+                              segment); every reason matches REASON_RE and is not a YAML non-string scalar
              TARGET           a path value (normalized) is tracked at the judged commit; `none` has a non-blank reason
              COVERAGE-AGREES  checked against pillar D's coverage class, computed from the committed dispatcher, hooks
                               and tools/*.py through skill_coverage: class opportunity_detector agrees only with a path
@@ -102,6 +103,14 @@ METADATA_LINE = re.compile(r"^metadata:\s*$")
 METADATA_CHILD = re.compile(r"^  \S")
 PATH_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_./-]*$")
 REASON_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ,.;()/_'-]{0,299}$")
+# A plain scalar that a YAML reader resolves to something other than a string (core schema and YAML 1.1, which
+# PyYAML and the official skill-creator validator use): null, a boolean, an int (with `_`, 0x / 0o / 0b forms), a
+# float, a date or timestamp. REASON_RE admits several of them (`null`, `no`, `off`, `0`, `2026-10-04`), and a
+# reason a YAML reader takes as absent or as a number must never read as present (review WR-04).
+YAML_NON_STRING = re.compile(
+    r"(?i)^(?:null|~|true|false|yes|no|on|off|y|n)$"
+    r"|^[-+]?(?:0b[01_]+|0o?[0-7_]+|0x[0-9a-f_]+|[0-9][0-9_]*(?:\.[0-9_]*)?(?:e[-+]?[0-9]+)?|\.[0-9_]+(?:e[-+]?[0-9]+)?)$"
+    r"|^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$")
 MISSING = "git-batch-missing"
 EMPTY = "git-batch-empty"
 
@@ -139,6 +148,11 @@ def parse_declaration(text: str) -> dict:
     return {"frontmatter": True, "detector": detector, "reason": reason, "count": len(detector)}
 
 
+def reason_form_ok(value: str) -> bool:
+    """The DJ-02 reason grammar: REASON_RE, and never a YAML non-string scalar."""
+    return bool(REASON_RE.match(value)) and not YAML_NON_STRING.match(value)
+
+
 def _value_form_ok(value: str) -> bool:
     if value == NONE_VALUE:
         return True
@@ -173,7 +187,7 @@ def declaration_lines(skill: str, klass: str, evidence) -> list:
         text = "coverage class none; no registered card hook and no CO-12 adapter names this skill"
     else:
         raise ValueError(f"{skill}: unknown coverage class {klass!r}")
-    if not REASON_RE.match(text):
+    if not reason_form_ok(text):
         raise ValueError(f"{skill}: generated reason violates the reason grammar: {text!r}")
     return ["metadata:", f"  {DETECTOR_KEY}: {NONE_VALUE}", f"  {REASON_KEY}: {text}"]
 
@@ -227,6 +241,8 @@ def c_form(ctx, member):
             bad.append(f"line {r['line']}: {REASON_KEY} is not a metadata child")
         if not REASON_RE.match(r["value"]):
             bad.append(f"line {r['line']}: reason violates the reason grammar")
+        elif YAML_NON_STRING.match(r["value"]):
+            bad.append(f"line {r['line']}: reason {r['value']!r} is a YAML null, boolean, number or date, not text")
     return _out(FAIL, "; ".join(bad)) if bad else _out(PASS)
 
 

@@ -16,6 +16,8 @@ What each V-SCG line proves:
   V-SCG-FLIP-<id>       for a singleton row, forcing that one clause PASS turns the verdict PASS and restoring it
                         restores the row: the clause is load-bearing
   V-SCG-EVERY-CLAUSE    the singleton rows cover all 7 clauses
+  V-SCG-REASON-YAML-SCALARS  the reason grammar refuses YAML null / bool / number / date literals and admits text,
+                        including every generated reason (cross-checked with PyYAML when it is importable)
   V-SCG-GIT-MISSING     the CLI under PATH=/nonexistent exits 1 with `SKILL_CREATION INCONCLUSIVE` naming `not found`
                         and no traceback; the same CLI with git on PATH says PASS on the same fixture
   V-SCG-LIVE            the gate on this checkout's HEAD; its fail set is printed (before 08-02 declares the repo
@@ -304,6 +306,12 @@ def drill_table(seed, originals):
             return "precondition: no reason line to remove"
         _replace_md(fx, repo, s, out, "S none without reason")
 
+    def m_reason_null(fx, repo):
+        t = read_md(repo, s)
+        if s_reason not in t:
+            return "precondition: S reason not found"
+        _replace_md(fx, repo, s, t.replace(s_reason, "null", 1), "S reason is the YAML null literal")
+
     def m_untracked_path(fx, repo):
         write(repo, UNTRACKED_PROBE, "# present on disk, never committed\n")
         lines = ["metadata:", f"  {scg.DETECTOR_KEY}: {UNTRACKED_PROBE}"]
@@ -371,6 +379,7 @@ def drill_table(seed, originals):
         ("DOTSLASH-CWST", m_dotslash, {f"{cw}:FORM": F}, True),
         ("TOPLEVEL-S", m_toplevel, {f"{s}:FORM": F}, True),
         ("NONE-NO-REASON-S", m_no_reason, {f"{s}:TARGET": F}, True),
+        ("REASON-NULL-S", m_reason_null, {f"{s}:FORM": F}, True),
         ("UNTRACKED-PATH-S", m_untracked_path, {f"{s}:TARGET": F, f"{s}:COVERAGE-AGREES": F}, True),
         ("DSA-DECLARES-CARD", m_dsa_card, {f"{ds}:COVERAGE-AGREES": F}, True),
         ("CWST-DECLARES-NONE", m_cwst_none, {f"{cw}:COVERAGE-AGREES": F}, True),
@@ -463,6 +472,36 @@ def no_self_enrol(seed):
                                       f"control enrols {sorted(control)}")
 
 
+# Plain scalars a YAML 1.1 / core-schema reader resolves to null, bool, int, float or date (refused as a reason), and
+# texts it reads as strings (admitted). PyYAML, when importable, cross-checks the literals it resolves itself.
+YAML_REFUSED = ("null", "Null", "NULL", "no", "No", "off", "OFF", "false", "True", "yes", "on", "y", "n", "0", "12",
+                "-1", "1_000", "0x1F", "0o17", "0b101", "1.5", ".5", "0.", "1e3", "2026-10-04")
+YAML_ADMITTED = ("none of these", "nothing", "2 hooks", "yesterday", "node 18", "v1.2", "no card hook names it")
+
+
+def reason_yaml_scalars(seed):
+    gate_bad = [v for v in YAML_REFUSED if scg.reason_form_ok(v)] + [v for v in YAML_ADMITTED if not scg.reason_form_ok(v)]
+    generated = [scg.declaration_lines(n, r["class"], r["evidence"])[2].split(": ", 1)[1]
+                 for n, r in seed.rows.items() if r["class"] in ("card", "none") and r["tracked"]]
+    gate_bad += [v for v in generated if not scg.reason_form_ok(v)]
+    try:
+        import yaml  # noqa: PLC0415
+    except ImportError:
+        cross = "pyyaml absent, not cross-checked"
+        yaml_bad = []
+    else:
+        def kind(v):
+            return type(yaml.safe_load(f"k: {v}")["k"]).__name__
+        resolved = [v for v in YAML_REFUSED if kind(v) != "str"]
+        yaml_bad = [v for v in YAML_ADMITTED + tuple(generated) if kind(v) != "str"]
+        cross = f"pyyaml resolves {len(resolved)}/{len(YAML_REFUSED)} refused literals to non-str"
+        if len(resolved) < 15:  # positive control: the refused list really is YAML non-strings
+            yaml_bad.append(f"only {len(resolved)} refused literals resolve to non-str")
+    report(not gate_bad and not yaml_bad and bool(generated), "V-SCG-REASON-YAML-SCALARS",
+           f"refused {len(YAML_REFUSED)}, admitted {len(YAML_ADMITTED)} + {len(generated)} generated reasons; "
+           f"gate misjudged {gate_bad}; {cross}; yaml disagrees {yaml_bad}")
+
+
 def git_missing(base):
     py = "/usr/bin/python3" if Path("/usr/bin/python3").is_file() else sys.executable
     env = {"PATH": "/nonexistent", "HOME": os.environ.get("HOME", ""), "LANG": "C.UTF-8"}
@@ -494,6 +533,7 @@ def main() -> int:
                   f"adapters={seed.adapter_rels}")
             tracer(fx, seed)
             no_self_enrol(seed)
+            reason_yaml_scalars(seed)
             base, originals = build_base(fx, seed)
             flipped = run_drills(fx, base, seed, originals)
             all7 = set(scg.SKILL_CLAUSES) | set(scg.GATE_CLAUSES)
