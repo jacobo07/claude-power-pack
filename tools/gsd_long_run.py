@@ -570,30 +570,9 @@ def gsd_status(project, timeout: int = 45, workstream: str | None = None) -> dic
     forced = os.environ.get("_TEST_GSD_STATUS")
     if forced:
         return json.loads(forced)
-    node = shutil.which("node")
-    if not node or not GSD_TOOLS.is_file():
-        return {"outcome": "UNAVAILABLE", "reason": "node or gsd-tools.cjs not found"}
-    argv = [node, str(GSD_TOOLS), "query", "init.manager"]
-    if workstream:
-        argv += ["--ws", str(workstream)]
-    try:
-        # stdin=DEVNULL is load-bearing: with an inherited pipe gsd-tools waits on
-        # stdin and the call times out (measured: 20 s from Python, instant from a TTY).
-        r = subprocess.run(argv, cwd=str(project),
-                           stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout,
-                           encoding="utf-8", errors="replace")
-    except Exception as exc:
-        return {"outcome": "UNAVAILABLE", "reason": f"{exc.__class__.__name__}: {exc}"}
-    out = (r.stdout or "").strip()
-    if out.startswith("@file:"):
-        try:
-            out = Path(out[6:]).read_text(encoding="utf-8")
-        except OSError as exc:
-            return {"outcome": "UNAVAILABLE", "reason": f"cannot read {out[6:]}: {exc}"}
-    try:
-        data = json.loads(out)
-    except Exception:
-        return {"outcome": "UNAVAILABLE", "reason": f"gsd-tools rc={r.returncode}: {(r.stderr or out)[:200]}"}
+    data, why = gsd_manager(project, timeout=timeout, workstream=workstream)
+    if data is None:
+        return {"outcome": "UNAVAILABLE", "reason": why}
     total = int(data.get("phase_count") or 0)
     done = int(data.get("completed_count") or 0)
     base = {"phase_count": total, "completed": done, "incomplete": max(0, total - done),
@@ -609,6 +588,39 @@ def gsd_status(project, timeout: int = 45, workstream: str | None = None) -> dic
     if base["all_complete"] or base["incomplete"] == 0:
         return dict(base, outcome="ALL_COMPLETE", reason=f"{done}/{total} phases complete")
     return dict(base, outcome="OK", reason=f"{done}/{total} phases complete")
+
+
+def gsd_manager(project, timeout: int = 45, workstream: str | None = None) -> tuple[dict | None, str]:
+    """GSD's own `init.manager` answer for `project`, parsed: (data, "") or (None, why it could not
+    be asked). The one reader of that query: gsd_status interprets it into an outcome, and the
+    mission capsule (tools/mission_capsule.py) takes its state_path, phases and recommended_actions."""
+    node = shutil.which("node")
+    if not node or not GSD_TOOLS.is_file():
+        return None, "node or gsd-tools.cjs not found"
+    argv = [node, str(GSD_TOOLS), "query", "init.manager"]
+    if workstream:
+        argv += ["--ws", str(workstream)]
+    try:
+        # stdin=DEVNULL is load-bearing: with an inherited pipe gsd-tools waits on
+        # stdin and the call times out (measured: 20 s from Python, instant from a TTY).
+        r = subprocess.run(argv, cwd=str(project),
+                           stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout,
+                           encoding="utf-8", errors="replace")
+    except Exception as exc:
+        return None, f"{exc.__class__.__name__}: {exc}"
+    out = (r.stdout or "").strip()
+    if out.startswith("@file:"):
+        try:
+            out = Path(out[6:]).read_text(encoding="utf-8")
+        except OSError as exc:
+            return None, f"cannot read {out[6:]}: {exc}"
+    try:
+        data = json.loads(out)
+    except Exception:
+        return None, f"gsd-tools rc={r.returncode}: {(r.stderr or out)[:200]}"
+    if not isinstance(data, dict):
+        return None, f"gsd-tools answered a {type(data).__name__}, not an object"
+    return data, ""
 
 
 # --------------------------------------------------------------------------- arm / resume gates
