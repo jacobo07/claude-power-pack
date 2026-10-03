@@ -1335,15 +1335,19 @@ def emit(results) -> int:
     return 0 if passed == len(results) else 1
 
 
-def default_inputs():
-    """Working-tree rows and regrade rows restricted to the pinned run_id set, the committed texts."""
+def default_inputs(git=_git):
+    """Working-tree rows and regrade rows restricted to the pinned run_id set, the committed texts.
+    When the pins are unreadable no row is judged: the rows cannot be restricted to the pinned set, so
+    the verdict clauses read INCONCLUSIVE instead of judging every working-tree row (07-REVIEW WR-04)."""
     rows, refusal = load_rows(REPO / ROWS_REL)
     reg, rrefusal = load_rows(REPO / REGRADE_REL)
-    st = static()
+    st = static(git)
     rows = rows or []
     reg = reg or []
     if st["info"].get("error"):
-        inside, outside, reg_in, reg_out = rows, [], reg, []
+        inside, outside, reg_in, reg_out = [], rows, [], reg
+        refusal = refusal or rrefusal or (f"pins unreadable ({st['info']['error']}); the rows cannot be "
+                                          f"restricted to the pinned set, so none is judged")
     else:
         inside, outside = pinned_split(rows, st["info"])
         reg_in, reg_out = pinned_regrade_split(reg, st["info"])
@@ -1366,17 +1370,43 @@ def _render_or_none(inp, fro):
         return None, str(exc)
 
 
-def run_drills(inp, fro, cap, rendered, remaining):
-    if inp["refusal"] or inp["st"]["info"].get("error") or rendered is None or remaining is None:
-        return [("sources", "real sources, pins or budget refused; no drill can run", False)]
+def run_drills(inp, fro, cap, rendered, remaining, nested=False):
+    """(status, why, [(name, observed, good)]). status "refused" when the real sources, the pins, the budget
+    or the render are unavailable: the drills did not run, which is INCONCLUSIVE, never FAIL (WR-04)."""
+    why = (inp["refusal"] and f"sources refused: {inp['refusal']}") or (
+        inp["st"]["info"].get("error") and f"pins unreadable: {inp['st']['info']['error']}") or (
+        remaining is None and "no session budget") or (rendered is None and "the evidence could not be rendered")
+    if why:
+        return "refused", why, []
+    if nested:
+        return "refused", "nested drill run (a drill re-entered the default path with readable sources)", []
     text_drills = {
         "rows-pinned-wall_s-changed": lambda: clause_rows_pinned_drill(inp["all_rows"], inp["regrade"],
                                                                        inp["st"]["info"]),
         "evidence-one-digit-changed": lambda: clause_evidence_current_drill(rendered),
     }
     all_reg = list(inp["regrade"]) + list(inp.get("regrade_outside", ()))
-    return (drills(inp["rows"], inp["regrade"], cap, inp["st"], remaining, text_drills, fro)
-            + [needed_pins_drill()] + append_drills(inp["all_rows"], all_reg, cap, inp["st"]))
+    return "ran", None, (drills(inp["rows"], inp["regrade"], cap, inp["st"], remaining, text_drills, fro)
+                         + [needed_pins_drill()] + append_drills(inp["all_rows"], all_reg, cap, inp["st"])
+                         + [git_fails_end_to_end_drill(fro, cap)])
+
+
+def git_fails_end_to_end_drill(fro, cap):
+    """WR-04: the whole default path with a git whose every `git log` fails. Required: V-CT-DRILLS reads
+    INCONCLUSIVE "drills not run: ... pins unreadable ...", the verdict clauses read INCONCLUSIVE (no unpinned row is
+    judged), no clause reads FAIL, and the verdict is INCONCLUSIVE."""
+    inp = default_inputs(_git_fails_log)
+    results, _ = default_results(inp, fro, cap, nested=True)
+    st = {n: (s, t) for n, s, t in results}
+    dr = st.get("V-CT-DRILLS", ("missing", ""))
+    fails = [n for n, (s, _) in st.items() if s == "FAIL"]
+    verdict_inc = all(st[c][0] == "INCONCLUSIVE" for c in ("V-CT-SOURCES", "V-CT-SEPARATION", "V-CT-GRADES-AGREE"))
+    good = (dr[0] == "INCONCLUSIVE" and dr[1].startswith("drills not run: ") and "pins unreadable" in dr[1]
+            and not fails and verdict_inc
+            and verdict_of(results) == "INCONCLUSIVE")
+    return ("git-log-fails-end-to-end", f"V-CT-DRILLS {dr[0]}, FAIL lines {fails or 'none'}, verdict clauses "
+                                        f"{'INCONCLUSIVE' if verdict_inc else 'judged'}, verdict {verdict_of(results)}",
+            good)
 
 
 def append_drills(all_rows, all_reg, cap, st):
@@ -1419,7 +1449,7 @@ def needed_pins_drill():
     return ("needed-total-pins", obs, not bad)
 
 
-def default_results(inp, fro, cap):
+def default_results(inp, fro, cap, nested=False):
     results, ctx = evaluate_core(inp["rows"], inp["refusal"], inp["regrade"], cap, inp["st"])
     results.append(("V-CT-ROWS-PINNED",) + clause_rows_pinned(inp["all_rows"], inp["regrade"], inp["st"]["info"],
                                                              inp.get("regrade_outside", ())))
@@ -1429,9 +1459,11 @@ def default_results(inp, fro, cap):
     else:
         results.append(("V-CT-EVIDENCE-CURRENT",) + clause_evidence_current(
             _read_wt(EVIDENCE_REL), git_text(f"HEAD:{EVIDENCE_REL}"), rendered))
-    d = run_drills(inp, fro, cap, rendered, ctx["remaining"])
+    status, why, d = run_drills(inp, fro, cap, rendered, ctx["remaining"], nested)
     subs = "".join(f"\n    drill {n}: {o}{'' if g else ' <-- WRONG'}" for n, o, g in d)
-    if all(g for *_, g in d):
+    if status == "refused":
+        results.append(("V-CT-DRILLS", "INCONCLUSIVE", f"drills not run: {why}"))
+    elif all(g for *_, g in d):
         results.append(("V-CT-DRILLS", "ok", f"{len(d)} drills, clean case all ok, each mutant moved exactly "
                                              f"its declared clauses" + subs))
     else:
@@ -1516,7 +1548,10 @@ def main(argv=None) -> int:
     if args.drills:
         rendered, _ = _render_or_none(inp, fro)
         _, ctx = evaluate_core(inp["rows"], inp["refusal"], inp["regrade"], cap, inp["st"])
-        d = run_drills(inp, fro, cap, rendered, ctx["remaining"])
+        status, why, d = run_drills(inp, fro, cap, rendered, ctx["remaining"])
+        if status == "refused":
+            print(f"  INCONCLUSIVE drills not run: {why}")
+            return 1
         for name, obs, good in d:
             print(f"    drill {name}: {obs}{'' if good else ' <-- WRONG'}")
         return 0 if all(g for *_, g in d) else 1
