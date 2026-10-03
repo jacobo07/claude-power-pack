@@ -4,13 +4,15 @@
     python tools/family_baseline.py show <family>
     python tools/family_baseline.py review <family>
     python tools/family_baseline.py verify <family>
-    python tools/family_baseline.py revert <family> <id> --reason R --authority A
+    python tools/family_baseline.py revert <family> <id> --reason R --authority Owner[ (context)]
 
 review lists the entries still `auto` and then verifies the chain. verify
-reports every unrecorded weakening between consecutive generations and every
-generation whose parent changed after it was written (modules/tower/ratchet).
+reports every unrecorded weakening between consecutive generations, every
+generation whose parent changed after it was written, and every child with no
+parent anchor (modules/tower/ratchet).
 revert writes B<n+1> with the entry reverted and the change on the record; it
-refuses an empty reason or authority, and an id that is not active.
+refuses an empty reason, an empty authority or one not on the allowlist
+(ratchet.AUTHORITIES), and an id that is not active.
 
 build-b0 re-reads every candidate's cited line (baselines.verify_origin) and
 writes B0 from the VERIFIED ones only. WEAK, LINE_MISSING, FILE_MISSING and

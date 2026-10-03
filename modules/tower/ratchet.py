@@ -7,7 +7,7 @@ change to it must be named.
 
 Between two consecutive generations, a change to an entry that was ACTIVE in
 the parent is a regression unless the child's `changes[<id>]` records it with a
-non-empty `reason` and `authority`:
+non-empty `reason` and an allowlisted `authority` (AUTHORITIES):
 
   WITHDRAWN      the entry is gone
   REVERTED       its status became `reverted`
@@ -36,6 +36,7 @@ integrity is the repo's history.
 """
 from __future__ import annotations
 
+import re
 from collections import Counter
 from dataclasses import dataclass, field
 
@@ -60,6 +61,28 @@ DUPLICATE_ID = "DUPLICATE_ID"
 
 class RatchetRefusal(ValueError):
     """A promote/revert that cannot be justified; nothing was written."""
+
+
+# Who may put a change to a constitutive baseline on the record. In code, not a
+# data file: tests stay hermetic via `root=`, and a data file would be writable by
+# the same party that writes generations. Residual: whoever can edit THIS file
+# controls the allowlist; repo history is the root of trust.
+AUTHORITIES = ("Owner",)
+
+
+def is_authorized(authority) -> bool:
+    """True when the first token of `authority` is on the allowlist.
+
+    The first token is what precedes the first whitespace, ':', '(', ',' or ';',
+    so "Owner (approved 'both', 2026-10-01)" and "Owner: plan of record" pass
+    while "x", "", None, "owner" (case), "Ownerx", "Owner's cat" and
+    "Bot Owner" do not."""
+    if not isinstance(authority, str):
+        return False
+    s = authority.strip()
+    if not s:
+        return False
+    return re.split(r"[\s:(,;]", s, maxsplit=1)[0] in AUTHORITIES
 
 
 def check_rung(check: str) -> int:
@@ -127,7 +150,7 @@ def _recorded(child: dict, ident: str, kind: str) -> bool:
     kinds = rec.get("kind")
     kinds = kinds if isinstance(kinds, list) else [kinds]
     return (kind in kinds and str(rec.get("reason") or "").strip() != ""
-            and str(rec.get("authority") or "").strip() != "")
+            and is_authorized(rec.get("authority")))
 
 
 @dataclass
@@ -172,6 +195,9 @@ def _need(reason: str, authority: str) -> None:
         raise RatchetRefusal("a reason is required")
     if not str(authority or "").strip():
         raise RatchetRefusal("an authority is required")
+    if not is_authorized(authority):
+        raise RatchetRefusal("authority %r is not on the allowlist %s"
+                             % (authority, AUTHORITIES))
 
 
 def revert(family: str, entry_id: str, reason: str, authority: str,

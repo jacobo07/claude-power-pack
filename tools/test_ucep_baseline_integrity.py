@@ -18,14 +18,18 @@ the attack" from "refuses everything".
 Subject. Every gate runs on a B0-ONLY copy of the real web_surface family,
 under a temp root. The real family now has a B1 as well; copying the whole
 directory (as the original probe does) makes the next generation drop B1's two
-additions, which turns every attack red for the wrong reason. This file never
-reads or copies the real second generation. All writes happen under
-tempfile.mkdtemp; nothing under vault/tower/baselines is written.
+additions, which turns every attack red for the wrong reason. No attack gate
+reads or copies the real second generation; the one exception is the
+V-UCEP-ALLOWLIST control, which only READS the real web_surface B1 `promoted_by`
+to prove the allowlist accepts the authority form the real family uses. All
+writes happen under tempfile.mkdtemp; nothing under vault/tower/baselines is
+written.
 
 RED then GREEN. Against the ratchet as it stood before UCEP-01 the seven attack
 gates FAIL (the attack returns ok=True, so the hole is real) and the five
-controls PASS: UCEP_BASELINE_INTEGRITY_PASS=5/12. Plan 01-03 closes the holes
-and every gate then passes. The predicates below already state the fixed
+controls PASS: UCEP_BASELINE_INTEGRITY_PASS=5/12 (5/13 once V-UCEP-CLI-UNANCHORED
+exists). Plan 01-03 closes the holes and every gate then passes (14/14 with
+V-UCEP-ALLOWLIST). The predicates below already state the fixed
 behaviour. A diff kind is written as a string literal and every report field is
 read with a default, so the RED run fails on predicates and never on an
 AttributeError.
@@ -254,6 +258,28 @@ def main() -> int:
                "the same hollowing with the anchor intact reads TAMPERED at B1",
                _dict(rep))
 
+        # --- the allowlist itself, with a control from the real family -------
+        is_auth = getattr(rt, "is_authorized", None)
+        accepted = ("Owner", "Owner (approved 'both', 2026-10-01)",
+                    "Owner: plan of record")
+        refused = ("x", "", "   ", None, "owner", "Ownerx", "Owner's cat",
+                   "Bot Owner")
+        real_b1 = bl.load_generation(FAMILY, 1)
+        real_authority = (real_b1 or {}).get("promoted_by")
+        if callable(is_auth):
+            wrong_accept = [a for a in accepted if is_auth(a) is not True]
+            wrong_refuse = [a for a in refused if is_auth(a) is not False]
+            real_ok = is_auth(real_authority) is True
+        else:
+            wrong_accept, wrong_refuse, real_ok = list(accepted), list(refused), False
+        _check("V-UCEP-ALLOWLIST",
+               callable(is_auth) and not wrong_accept and not wrong_refuse and real_ok,
+               "is_authorized accepts Owner forms (incl. the real B1 promoted_by), "
+               "refuses x, blank, None, wrong case and look-alikes",
+               "is_authorized=%s wrongly refused=%r wrongly accepted=%r real %r ok=%s"
+               % (callable(is_auth), wrong_accept, wrong_refuse, real_authority,
+                  real_ok))
+
         # --- the CLI reports an unanchored child and exits 1 ----------------
         import family_baseline as fb
         saved_dir = bl.BASELINES_DIR
@@ -299,7 +325,7 @@ def main() -> int:
 
         print()
         print("UCEP_BASELINE_INTEGRITY_PASS=%d/%d  threshold=%d/%d"
-              % (_PASS, _PASS + _FAIL, 13, 13))
+              % (_PASS, _PASS + _FAIL, 14, 14))
         return 0 if _FAIL == 0 else 1
     finally:
         for k, v in saved_env.items():
