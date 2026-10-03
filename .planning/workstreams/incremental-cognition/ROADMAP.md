@@ -93,7 +93,7 @@ environment first.
 1. Red test of the 137-relaunch shape (worker dies on `Login expired` before any API call) -> fix -> green.
 2. GEX44 a5/a7: rules version, hook health and interpreters checked by a repeatable preflight; broken hooks and
    stale rules repaired by a deploy script; re-login recorded in the owner bundle, never bypassed.
-**Plans:** 3/4 plans executed (sequential waves 1-4)
+**Plans:** 4/4 plans executed (sequential waves 1-4)
 
 Plans:
 **Wave 1**
@@ -110,7 +110,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 02-04-PLAN.md — B: repeatable git deploy for envs (dry-run default, locked, backed up); C.md/B.md evidence; [B]/[C] owner-bundle lines
+- [x] 02-04-PLAN.md — B: repeatable git deploy for envs (dry-run default, locked, backed up); C.md/B.md evidence; [B]/[C] owner-bundle lines
 
 ### Phase 3: KME corpus measurements
 

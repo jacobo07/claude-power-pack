@@ -3,15 +3,15 @@ gsd_state_version: "1.0"
 milestone: v1
 current_phase: 2
 current_plan: 4
-status: executing
-stopped_at: Completed 02-03-PLAN.md (code commit 60e7947d: launch gate, B+C)
-last_updated: "2026-10-03T18:42:27.590Z"
-state_head: 60e7947dcf3cf0f9c660e412ec6276a8b2922f99
+status: verifying
+stopped_at: Completed 02-04-PLAN.md (phase 2 plans done; B and C evidenced, OPEN pending Owner PRGs)
+last_updated: "2026-10-03T19:01:16.411Z"
+state_head: f6a40285c02b0282536f06d78b556df5c74e0bc3
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 milestone_name: incremental-cognition
 last_activity: 2026-10-03
 workstream: incremental-cognition
@@ -30,7 +30,7 @@ invalidation, cognitive-compiler, baseline-ratchet.
 
 ## Current Position
 
-**Status:** Ready to execute
+**Status:** Phase complete — ready for verification
 **Current Phase:** 2
 Current Plan: 4
 Total Plans in Phase: 4
@@ -50,12 +50,14 @@ Total Plans in Phase: 4
   CPP_ENV_PREFLIGHT not off). Only a MEASURED NOT_READY refuses; UNMEASURABLE, a raising preflight and an unknown verdict
   launch and are ledgered `launch_preflight_unmeasurable` (never READY). Kill switches CPP_LAUNCH_GATE=off / CPP_ENV_PREFLIGHT=off.
   `gsd_mission.py arm` stays ungated (named debt, 02-04 records it).
+- [Phase 2]: [02-04] Hook scripts are restored by the deploy itself (registered-but-missing only, own hooks dir, never overwrite): install_global_core.py does not copy hooks
+- [Phase 2]: [02-04] A dirty install or non-ancestor env head is a refusal result; real a5 (1024 modified) and a7 (1 modified) both refuse exit 4, the Owner decides; ledger state.B/state.C and IC-B/IC-C stay open (PRGs Owner-run)
 
 ## Session Continuity
 
-**Last session:** 2026-10-03T18:42:27.569Z
+**Last session:** 2026-10-03T19:01:16.389Z
 
-**Stopped At:** Completed 02-03-PLAN.md (code commit 60e7947d: launch gate, B+C)
+**Stopped At:** Completed 02-04-PLAN.md (phase 2 plans done; B and C evidenced, OPEN pending Owner PRGs)
 `tools/test_gsd_mission_cwd_align.py` has 4 NEW uncommitted cases (V-MCA-DIVERGED-FOLLOWED / -UNPROVEN /
 -STALE-ROADMAP / -THREE-RELAYS) calling `gm.align_cwd(cwd, wt, proven_workstream="ws")`; the
 `threshold=9/9` line still needs 13/13. Not yet run (expected RED: align_cwd has no proven_workstream).
@@ -94,6 +96,7 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 |------|----------|-------|-------|
 | Phase 2 P01 | 35min | 3 tasks | 3 files |
 | Phase 02 P03 | 40min | 3 tasks | 4 files |
+| Phase 02 P04 | 1h | 3 tasks | 7 files |
 
 ## Session Continuity (GEX44 run, 2026-10-03 ~19:00Z, session 607795c4)
 
