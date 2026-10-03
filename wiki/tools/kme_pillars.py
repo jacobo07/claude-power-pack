@@ -2049,20 +2049,30 @@ def _result(ctx, sc, pillar, loc, until, argv):
     w = measured["weighted"]
     share_meas = [wlo / w, whi / w] if w > 0 else None
     pobs = pres["observability"]
+    # A referenced denominator (CPP-D-W7) is judged against the CE ledger's frozen figures. Coverage < 1: the measured
+    # numerator is a subset, so numerator / frozen weighted is a conservative LOWER bound (dividing by the measured
+    # weighted would overstate it), and the verdict is UNMEASURED unless that lower bound alone clears 3 %. Coverage
+    # exactly 1 with all five usage fields equal: reproduced. Anything else at coverage >= 1 (more calls than the frozen
+    # window, or the same count with different usage) is a different population: its numerator cannot be divided by the
+    # frozen denominator, so the judged share is withheld (UNMEASURED); share_measured_population still reports the
+    # share over the measured denominator.
+    ref_ok = kind == "referenced" and coverage == 1.0 and not deltas
+    ref_over = kind == "referenced" and coverage >= 1.0 and not ref_ok
     if kind == "referenced":
         wf = ctx["frozen"]["weighted"]
-        share = [wlo / wf, whi / wf] if wf > 0 else None
+        share = None if ref_over else ([wlo / wf, whi / wf] if wf > 0 else None)
         obs = None if pobs is None else pobs * min(1.0, coverage)
     else:
         share = share_meas if match in ("exact", "not_frozen") else None
         obs = pobs
-    verdict, reason = materiality(share, match, obs)
+    verdict, reason = materiality(share, "drifted" if ref_over else match, obs)
+    if ref_over:
+        reason = f"referenced_population_not_reproduced (coverage {coverage:.4f}, fields differing: {sorted(deltas)})"
     if loc is not None and loc["method"] == "not_found":
         reason = "cutoff_not_found"
     in_rule = label in RULE_DENOMINATORS[pillar]
     role = "second_workload" if ctx["role"] == "second_workload" else ("primary" if in_rule else "smoke")
-    cov_ok = coverage is not None and coverage >= 1.0
-    full = match == "exact" or (match == "referenced" and cov_ok)
+    full = match == "exact" or (match == "referenced" and ref_ok)
     terminal = role == "primary" and full and verdict != "UNMEASURED"
     # a second workload is VALID (usable as a measurement beside a primary) only when its population is reproduced (or
     # the workload is not frozen) AND the reading is measured: an UNMEASURED run is not a second workload at all.
@@ -2091,8 +2101,9 @@ def _result(ctx, sc, pillar, loc, until, argv):
         caveats.append("CPP-D-W7 is a REFERENCED denominator read from the CE ledger and never re-measured: its calls "
                        "were deduplicated across files keeping the last copy (tools/usage_index.py) while this "
                        "instrument deduplicates per file and max-merges, so coverage >= 1 does not prove the same "
-                       "call set, and coverage < 1 makes the upper bound unknown (UNMEASURED unless the lower bound "
-                       "alone clears 3 %)")
+                       "call set, so a terminal needs coverage exactly 1 AND all five usage fields equal; coverage > 1 or "
+                       "differing fields withhold the share (UNMEASURED); coverage < 1 makes the upper bound unknown "
+                       "(UNMEASURED unless the lower bound, over the frozen denominator, alone clears 3 %)")
     if loc is not None:
         caveats.append(f"the cutoff was located by --until auto ({loc['method']}, {loc['scans']} scans): "
                        f"{loc['why']}")
@@ -2133,7 +2144,7 @@ def _population_report(ctx, sc, loc, until):
            "population_match": match, "deltas": deltas, "coverage": coverage, "per_project": rows,
            "corpus": {"roots": len(ctx["roots"]), "project_dirs": len(sc["dirs"]),
                       "sessions_scanned": len(sc["sessions"]), "project_filter": ctx["pf"].pattern if ctx["pf"] else None}}
-    ok = match in ("exact", "not_frozen") or (match == "referenced" and coverage >= 1.0)
+    ok = match in ("exact", "not_frozen") or (match == "referenced" and coverage == 1.0 and not deltas)
     return rep, ok
 
 

@@ -128,9 +128,9 @@ ICP_PILLAR_D=FAIL
 ## Artifacts (LF sha256 of each committed file the evidence relies on)
 
 ```
-9e377d133e7dd5c10b548c5fa092f5cd2d8f656f4d69e332c5515ff98f99a1ad  wiki/tools/kme_pillars.py
+e56448a7a1ebd186eb0c939b7ad2e0e9a1f95d08e6c315e688d1ceec4ef49e63  wiki/tools/kme_pillars.py
 e7a74a9423724a406be8f52407975248ce030f467e237218b4fe7f177e6f9682  wiki/tools/kme_token_audit.py
-1c53e943ad6c21e618c6a2b8ebb67dd90c9cdd4465595e51c37dd34d7ed77347  tools/test_kme_pillars.py
+11ac9c0e246d562ebff58d4360462696ee752e0870889b1d38f7f53aaa9a0621  tools/test_kme_pillars.py
 6b9572848c46ea6476f23362c444ee7add6d2eb0f95d48237a9794e8d96f632f  tools/test_incremental_cognition_program.py
 a242f05a575b1add67250775f7138f5e3001df8879489e1eecc8e07d42bec39c  vault/programs/incremental-cognition/owner-bundle.md
 b1ad9164126d579a5e6cfb205a069f18d133c30b8b4835f58700331939639378  vault/programs/incremental-cognition/measurements/D-KME-G-2026-10-03.md

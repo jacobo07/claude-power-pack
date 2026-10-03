@@ -1925,6 +1925,18 @@ def ce_ledger_file(path, calls, window="2026-10-03T09:00:00Z 2026-10-03T12:00:00
     return str(path)
 
 
+def ce_ledger_exact(path, project_dir, **over):
+    """A CE ledger whose D-W7 entry equals the population measured over `project_dir` in the ledger's own window
+    (a reproduced referenced population: coverage exactly 1 and all five usage fields equal)."""
+    rc, out, err = run_main(["population", "--denominator", "OTHER", "--label", "PROBE", "--select", "all",
+                             "--since", "2026-10-03T09:00:00Z", "--until", "2026-10-03T12:00:00Z",
+                             "--root", str(project_dir)])
+    m = json.loads(out)["population"]
+    fields = {k: m[k] for k in ("input", "cache_write", "cache_read", "output")}
+    fields.update(over)
+    return ce_ledger_file(path, m["calls"], **fields)
+
+
 def dw7_args(pillar, root, ledger, out_dir, extra=()):
     return [pillar, "--denominator", "CPP-D-W7", "--frozen-ce-ledger", ledger, "--root", str(pdir(root)),
             "--out-dir", str(out_dir)] + list(extra)
@@ -1956,22 +1968,30 @@ def g_dw7_coverage():
     tracer_fixture(root)                                   # 4 calls, 900 hook chars
     out = {}
 
-    def run(name, calls, **over):
-        led = ce_ledger_file(root / f"{name}.json", calls, **over)
+    def run(name, led):
         rc, res, _o, _e = run_json(dw7_args("d", root, led, scratch("out")))
         out[name] = (rc, res)
         return rc, res
-    rc_a, a = run("partial", 8)                           # measured 4 of 8 calls
-    rc_b, b = run("equal", 4)
-    rc_c, c = run("above", 3)
-    rc_d, d = run("partial-clears", 8, cache_read=3000, cache_write=100)
+    rc_a, a = run("partial", ce_ledger_file(root / "partial.json", 8))                 # measured 4 of 8 calls
+    rc_b, b = run("equal", ce_ledger_exact(root / "equal.json", pdir(root)))           # calls and all five fields equal
+    rc_c, c = run("above", ce_ledger_file(root / "above.json", 3))                     # measured 4 of 3 calls: > 1
+    rc_e, e = run("same-calls-other-usage", ce_ledger_file(root / "other.json", 4))    # coverage 1, usage fields differ
+    rc_d, d = run("partial-clears", ce_ledger_file(root / "pc.json", 8, cache_read=3000, cache_write=100))
     ok = (rc_a == 3 and a["population_match"] == "referenced" and a["coverage"] == 0.5 and a["observability"] == 0.5
-          and a["materiality"] == "UNMEASURED" and a["share_interval"][0] < 0.03
-          and rc_b == 0 and b["coverage"] == 1.0 and b["observability"] == 1.0 and b["materiality"] == "< 3 %"
-          and rc_c == 0 and c["coverage"] > 1 and c["observability"] == 1.0 and c["materiality"] == "< 3 %"
-          and rc_d == 0 and d["observability"] == 0.5 and d["materiality"] == ">= 3 %")
+          and a["materiality"] == "UNMEASURED" and a["share_interval"][0] < 0.03 and a["terminal_evidence"] is False
+          and rc_b == 0 and b["coverage"] == 1.0 and b["observability"] == 1.0 and b["materiality"] != "UNMEASURED"
+          and b["terminal_evidence"] is True and not b["population_deltas"]
+          and all(abs(x - y) < 1e-6 for x, y in zip(b["share_interval"], b["share_measured_population"]))
+          and rc_c == 3 and c["coverage"] > 1 and c["materiality"] == "UNMEASURED" and c["share_interval"] is None
+          and c["terminal_evidence"] is False and c["materiality_reason"].startswith("referenced_population_not_reproduced")
+          and c["share_measured_population"] is not None
+          and rc_e == 3 and e["coverage"] == 1.0 and e["materiality"] == "UNMEASURED" and e["share_interval"] is None
+          and e["terminal_evidence"] is False and "cache_read" in e["population_deltas"] and "calls" not in e["population_deltas"]
+          and rc_d == 0 and d["observability"] == 0.5 and d["materiality"] == ">= 3 %" and d["terminal_evidence"] is False)
     return ok, f"partial: rc={rc_a} cov={a['coverage']} obs={a['observability']} verdict={a['materiality']} lo={a['share_interval'][0]:.4f}; " \
-               f"equal: {b['materiality']}; above: cov={c['coverage']:.2f} {c['materiality']}; partial but lo clears: {d['materiality']}"
+               f"equal: {b['materiality']} terminal={b['terminal_evidence']}; above: cov={c['coverage']:.2f} {c['materiality']} " \
+               f"terminal={c['terminal_evidence']}; same calls other usage: {e['materiality']} terminal={e['terminal_evidence']}; " \
+               f"partial but lo clears: {d['materiality']}"
 
 
 def g_dw7_window_fixed():
@@ -1992,7 +2012,7 @@ def g_dw7_window_fixed():
 def g_dw7_roles():
     root = scratch("dw7role")
     tracer_fixture(root)
-    full = ce_ledger_file(root / "full.json", 4)
+    full = ce_ledger_exact(root / "full.json", pdir(root))
     part = ce_ledger_file(root / "part.json", 8)
 
     def get(pillar, led, extra=()):
@@ -2145,7 +2165,7 @@ def g_r3_e_pair():
     outd = root / "m"
     rc1, o1, e1 = run_main(["e", "--denominator", "KME-L", "--frozen-file", frozen, "--root", str(proj),
                             "--out-dir", str(outd)])
-    ledger = ce_ledger_file(root / "ce.json", 5)
+    ledger = ce_ledger_exact(root / "ce.json", proj)
     rc2, o2, e2 = run_main(["e", "--denominator", "CPP-D-W7", "--role", "second_workload", "--frozen-ce-ledger",
                             ledger, "--root", str(proj), "--out-dir", str(outd)])
     rc3, o3, e3 = run_main(["e", "--denominator", "KME-G", "--frozen-file", frozen, "--root", str(proj),
