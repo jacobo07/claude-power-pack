@@ -207,3 +207,99 @@ def gate_before_stop(key: str, transcript: Optional[str] = None, sd=None, now: O
         elif cur != sealed:
             reasons.append("the outgoing transcript moved since the seal")
     return {**g, "verdict": "SAFE_TO_FORGET" if not reasons else "REFUSED", "reasons": reasons}
+
+
+# --------------------------------------------------------------------------- pre-certification marker
+def arm_successor(rec: dict, sd=None, now: Optional[float] = None) -> dict:
+    """The marker for the worker about to run epoch+1, written BEFORE it is spawned (spec 3.3): from
+    its first tool call it has no mutation authority until it certifies the capsule of `rec["epoch"]`.
+    Created by rollover.precert_arm (G25), which replaces any earlier epoch's marker -- a merge would
+    have inherited that epoch's certification."""
+    mid, epoch = rec["mission_id"], int(rec["epoch"])
+    fields = {"worker": worker_name(mid, epoch + 1), "epoch": epoch + 1, "capsule_key": ro.mission_key(mid, epoch),
+              "cwd": rec.get("cwd"), "resume_cmd": rec.get("resume_command")}
+    if now is not None:
+        fields["created_at"] = now
+    return ro.precert_arm(mid, fields, state_dir(sd))
+
+
+def bind_successor(mission_id: str, *, bg_id: Optional[str] = None, owner_session: Optional[str] = None,
+                   sd=None) -> dict:
+    """Name the armed worker as the host reported it (bg id after the spawn, session at its ack).
+    An update of the existing marker, so it goes through the merging writer."""
+    fields = {k: v for k, v in (("bg_id", bg_id), ("owner_session", owner_session)) if v}
+    if not fields:
+        raise ValueError("bind_successor needs a bg_id or an owner_session")
+    if ro.precert_read(mission_id, state_dir(sd)) is None:
+        raise ValueError(f"no armed marker for {mission_id}: arm before binding")
+    return ro.precert_write(mission_id, fields, state_dir(sd))
+
+
+# --------------------------------------------------------------------------- successor CLI
+def _worker_of(mission_id: str, session_id: str) -> tuple[Optional[dict], str]:
+    """G12: only the mission's CURRENT worker may resume or certify for it -- the acked owner, or
+    while LAUNCHING the session whose id starts with the bg id the host printed for this launch."""
+    import gsd_mission as gm
+    rec = gm.load(mission_id)
+    if rec is None:
+        return None, f"no mission {mission_id}"
+    owner = (rec.get("owner") or {}).get("session_id")
+    bg = (rec.get("pending") or {}).get("bg_id")
+    if session_id == owner or (bg and session_id.startswith(bg)):
+        return rec, ""
+    return None, f"session {session_id[:8]} is not the current worker of {mission_id}"
+
+
+def _cli(argv=None) -> int:
+    import argparse
+    p = argparse.ArgumentParser(prog="mission_capsule.py", description="capsule-v2 successor side for a mission worker")
+    p.add_argument("cmd", choices=("resume", "certify", "status"))
+    p.add_argument("--mission", required=True)
+    p.add_argument("--state-dir", default=None)
+    for k in ("goal", "branch", "head", "next", "dirty"):
+        p.add_argument(f"--{k}", default=None)
+    a = p.parse_args(argv)
+    sd = state_dir(a.state_dir)
+    if a.cmd == "status":
+        mk = ro.precert_read(a.mission, sd)
+        print(json.dumps({"marker": mk, "gate": ro.gate(mk["capsule_key"], sd) if mk else None,
+                          "claim": ro.claim_holder(mk["capsule_key"], sd) if mk else None}, indent=1, default=str))
+        return 0
+    sid = os.environ.get("CLAUDE_CODE_SESSION_ID") or ""
+    if not sid:
+        # No ppid or cwd fallback (G12): a guessed identity could certify for another worker.
+        print("REFUSED: CLAUDE_CODE_SESSION_ID is unset; only the mission's worker session may run this.")
+        return 2
+    rec, why = _worker_of(a.mission, sid)
+    if rec is None:
+        print(f"REFUSED: {why}.")
+        return 5
+    key = rec.get("capsule_key")
+    if not key:
+        print(f"NOT RESUMABLE: mission {a.mission} records no capsule_key (it was not rotated under capsule-v2).")
+        return 4
+    if a.cmd == "certify":
+        answers = {k: getattr(a, k) for k in ("goal", "branch", "head", "next", "dirty") if getattr(a, k)}
+        rc, _res = ro.certify_flow(key, sid, answers, sd)
+        return rc
+    try:
+        cap = json.loads(ro.capsule_path(key, sd).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print(f"NOT RESUMABLE: capsule {key} unreadable ({exc.__class__.__name__}).")
+        return 4
+    data, gwhy = ask_gsd(cap.get("cwd") or rec.get("cwd"), rec.get("workstream"))
+    items, _src = render_obligations(data)
+    if not items:
+        # I4 judges `next` against GSD NOW; with no answer there is nothing to judge it against.
+        # Refused before the claim, so a later attempt is not locked out.
+        print(f"NOT RESUMABLE NOW: GSD gives no open obligation ({gwhy or 'none recommended'}); retry.")
+        return 4
+    me = Path(__file__).as_posix()
+    cmd = (f"python {me} certify --mission {a.mission} --goal <file> --branch <b> --head <7> "
+           f"--next \"<first obligation>\"" + (" --dirty <n>" if cap.get("degraded") else ""))
+    return ro.resume_flow(cap, sid, cap.get("cwd") or rec.get("cwd"), sd, certify_cmd=cmd, obligations=items)
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(_cli())

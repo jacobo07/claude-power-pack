@@ -358,8 +358,145 @@ CHECKS = [("V-MCAP-OBLIG-RECOMMENDED", c_oblig_recommended), ("V-MCAP-OBLIG-PART
           ("V-MCAP-ROUNDTRIP-CERTIFY", c_roundtrip_certify), ("V-MCAP-ROUNDTRIP-STALE-NEXT-REFUSED", c_roundtrip_wrong_next),
           ("V-MCAP-STATE-DIR-CALL-TIME", c_state_dir_call_time)]
 
+
+# --------------------------------------------------------------------------- markers, guard, CLI
+REG = TMP / "sessions-registry"
+GUARD = HERE.parent / "hooks" / "capsule_mutation_guard.js"
+
+
+def guard_denies(session_id: str) -> bool:
+    """The REAL guard process, hermetic: our state dir and our session registry only."""
+    payload = {"session_id": session_id, "cwd": str(REPO), "tool_name": "Edit", "hook_event_name": "PreToolUse",
+               "tool_input": {"file_path": str(TMP / "x.txt"), "old_string": "a", "new_string": "b"}}
+    env = {**os.environ, "CPP_ROLLOVER_STATE_DIR": str(STATE), "CPP_CLAUDE_SESSIONS_DIR": str(REG),
+           "CPP_CAPSULE_ROLLOVER": ""}
+    r = subprocess.run([shutil.which("node") or "node", str(GUARD)], input=json.dumps(payload), capture_output=True,
+                       text=True, timeout=60, env=env, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    last = ((r.stdout or "").strip().splitlines() or ["{}"])[-1]
+    return (json.loads(last).get("hookSpecificOutput") or {}).get("permissionDecision") == "deny"
+
+
+def cli(m, args, session_id=None, manager=MANAGER):
+    saved_sid, saved_ask = os.environ.pop("CLAUDE_CODE_SESSION_ID", None), m.ask_gsd
+    if session_id:
+        os.environ["CLAUDE_CODE_SESSION_ID"] = session_id
+    m.ask_gsd = lambda wd, ws: (manager, "" if manager else "gsd down")
+    try:
+        return quiet(m._cli, [*args, "--state-dir", str(STATE)])
+    finally:
+        m.ask_gsd = saved_ask
+        os.environ.pop("CLAUDE_CODE_SESSION_ID", None)
+        if saved_sid:
+            os.environ["CLAUDE_CODE_SESSION_ID"] = saved_sid
+
+
+def mission_record(mid, *, owner_sid=None, capsule_key=True, epoch=4):
+    """A real record in the isolated mission state, as T6 will leave it after a v2 rotation."""
+    import gsd_mission as gm
+    assert str(TMP) in str(gm.mission_path(mid)), "mission state is not isolated"
+    gm.mission_path(mid).parent.mkdir(parents=True, exist_ok=True)
+    gm.mission_path(mid).unlink(missing_ok=True)   # checks re-run against mutants with the same id
+    gm.create(str(REPO), "/gsd-autonomous", mission_id=mid)
+    fields = {"owner": {"session_id": owner_sid, "kind": "background"}} if owner_sid else {}
+    if capsule_key:
+        fields["capsule_key"] = ro.mission_key(mid, epoch - 1)
+    return gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t", state=gm.RUNNING,
+                         epoch=epoch, **fields)
+
+
+def c_arm_marker(m):
+    m.arm_successor(record(mid="m-mcaparm00001"), STATE)
+    mk = ro.precert_read("m-mcaparm00001", STATE) or {}
+    return (mk.get("worker") == "m-mcaparm00001-e4" and mk.get("epoch") == 4
+            and mk.get("capsule_key") == "mission-m-mcaparm00001-e3" and mk.get("cwd") == str(REPO)
+            and not mk.get("certified_at")), mk
+
+
+def c_arm_over_certified(m):
+    ro.precert_write("m-mcaparm00002", {"certified_at": 1.0, "certified_by": "epoch-3-worker",
+                                        "capsule_key": "mission-m-mcaparm00002-e2"}, STATE)
+    m.arm_successor(record(mid="m-mcaparm00002"), STATE)
+    mk = ro.precert_read("m-mcaparm00002", STATE) or {}
+    return not mk.get("certified_at") and not mk.get("certified_by"), mk
+
+
+def c_bind(m):
+    try:
+        m.bind_successor("m-mcapnoarm001", bg_id="abcd1234", sd=STATE)
+        return False, "bound a marker that was never armed"
+    except ValueError:
+        pass
+    m.arm_successor(record(mid="m-mcapbind0001"), STATE)
+    mk = m.bind_successor("m-mcapbind0001", bg_id="abcd1234", sd=STATE)
+    return (mk.get("bg_id") == "abcd1234" and mk.get("worker") == "m-mcapbind0001-e4"
+            and not mk.get("certified_at")), mk
+
+
+def c_guard_chain(m):
+    """seal -> arm -> the real guard denies the worker -> resume (claim) -> certify -> marker lifted
+    -> the real guard allows. Certify before resume is refused and keeps the worker denied."""
+    mid, sid = "m-mcapchain001", "chainsess-0001-4a4a-8b8b"
+    cap = compile_(m, rec=record(mid=mid, epoch=3), origin="worker_handoff", note="phase 2 half done",
+                   transcript=str(transcript("chain.jsonl")))
+    m.seal_mission(cap, STATE)
+    m.arm_successor(record(mid=mid, epoch=3), STATE)
+    REG.mkdir(exist_ok=True)
+    (REG / "4242.json").write_text(json.dumps({"pid": 4242, "sessionId": sid, "name": f"{mid}-e4", "kind": "bg",
+                                               "cwd": str(REPO)}), encoding="utf-8")
+    mission_record(mid, owner_sid=sid)
+    steps = {"denied_armed": guard_denies(sid)}
+    ans = answers(cap, m.render_obligations(MANAGER)[0])
+    early, _ = cli(m, ["certify", "--mission", mid] + [x for k, v in ans.items() for x in (f"--{k}", v)], sid)
+    steps["early_certify_refused"] = early != 0 and guard_denies(sid)
+    steps["resume"], _out = cli(m, ["resume", "--mission", mid], sid)
+    steps["certify"], _ = cli(m, ["certify", "--mission", mid] + [x for k, v in ans.items() for x in (f"--{k}", v)], sid)
+    steps["marker_certified"] = bool((ro.precert_read(mid, STATE) or {}).get("certified_at"))
+    steps["allowed_after"] = not guard_denies(sid)
+    ok = (steps["denied_armed"] and steps["early_certify_refused"] and steps["resume"] == 0
+          and steps["certify"] == 0 and steps["marker_certified"] and steps["allowed_after"])
+    return ok, steps
+
+
+def c_cli_requires_session(m):
+    rc, out = cli(m, ["resume", "--mission", "m-mcapchain001"], None)
+    return rc == 2 and "CLAUDE_CODE_SESSION_ID" in out, rc
+
+
+def c_cli_wrong_session(m):
+    mission_record("m-mcapintrude1", owner_sid="realworker-0001")
+    rc, out = cli(m, ["resume", "--mission", "m-mcapintrude1"], "intruder-0002-ffff")
+    return rc == 5 and "not the current worker" in out, (rc, out.strip()[-80:])
+
+
+def c_cli_no_capsule_key(m):
+    mission_record("m-mcapnokey001", owner_sid="nokeyworker-01", capsule_key=False)
+    rc, out = cli(m, ["resume", "--mission", "m-mcapnokey001"], "nokeyworker-01")
+    return rc == 4 and "capsule_key" in out, rc
+
+
+def c_cli_gsd_down_refused_before_claim(m):
+    mid, sid = "m-mcapgsddown1", "gsddownworker-01"
+    cap = compile_(m, rec=record(mid=mid, epoch=3), origin="worker_handoff", note="n", transcript=str(transcript()))
+    m.seal_mission(cap, STATE)
+    mission_record(mid, owner_sid=sid)
+    rc, _out = cli(m, ["resume", "--mission", mid], sid, manager=None)
+    return rc == 4 and ro.claim_holder(cap["session_id"], STATE) is None, rc
+
+
+CHECKS += [("V-MCAP-ARM-MARKER", c_arm_marker), ("V-MCAP-ARM-OVER-CERTIFIED", c_arm_over_certified),
+           ("V-MCAP-BIND", c_bind), ("V-MCAP-GUARD-CHAIN", c_guard_chain),
+           ("V-MCAP-CLI-REQUIRES-SESSION", c_cli_requires_session), ("V-MCAP-CLI-WRONG-SESSION", c_cli_wrong_session),
+           ("V-MCAP-CLI-NO-CAPSULE-KEY", c_cli_no_capsule_key),
+           ("V-MCAP-CLI-GSD-DOWN-NO-CLAIM", c_cli_gsd_down_refused_before_claim)]
+
 # Each mutant is a textual edit of the REAL file; the named check must go red against it.
 MUTANTS = [
+    ("ARM-MERGES", "return ro.precert_arm(mid, fields, state_dir(sd))",
+     "return ro.precert_write(mid, fields, state_dir(sd))", "V-MCAP-ARM-OVER-CERTIFIED"),
+    ("ANY-SESSION-IS-THE-WORKER", "if session_id == owner or (bg and session_id.startswith(bg)):", "if True:",
+     "V-MCAP-CLI-WRONG-SESSION"),
+    ("RESUME-WITHOUT-GSD", "    if not items:\n        # I4", "    if False:\n        # I4",
+     "V-MCAP-CLI-GSD-DOWN-NO-CLAIM"),
     ("RECOVERY-LENIENCY-FOR-ALL", 'if origin == "recovery" and children.get', 'if children.get',
      "V-MCAP-FALLBACK-CHILDREN-UNKNOWN-REFUSED"),
     ("SEAL-IGNORES-LEDGER", 'verdict = stf["verdict"] if recorded else ro.UNKNOWN', 'verdict = stf["verdict"]',
@@ -386,12 +523,18 @@ def load_mutant(name: str, old: str, new: str):
     return mod
 
 
+class Crashed(str):
+    """A check that raised. Red against the real module; NOT a kill against a mutant -- measured
+    2026-10-03: two mutants read as killed when their check crashed on a missing fixture dir, i.e.
+    the check never judged the mutated line."""
+
+
 def run(m, fn):
     try:
         ok, ev = fn(m)
         return bool(ok), ev
     except Exception as exc:  # noqa: BLE001 -- a crash is a red check, reported with its type
-        return False, f"{type(exc).__name__}: {exc}"
+        return False, Crashed(f"{type(exc).__name__}: {exc}")
 
 
 def main() -> int:
@@ -409,7 +552,9 @@ def main() -> int:
                 check(f"V-MCAP-MUTANT-{name}", False, "mutation site not found exactly once: the mutant is stale")
                 continue
             ok, ev = run(mod, by_name[target])
-            check(f"V-MCAP-MUTANT-{name}", not ok, f"{target} red under the mutant: {str(ev)[:100]}")
+            check(f"V-MCAP-MUTANT-{name}", not ok and not isinstance(ev, Crashed),
+                  f"{target} {'CRASHED (not a kill)' if isinstance(ev, Crashed) else 'red'} under the mutant: "
+                  f"{str(ev)[:100]}")
         print("G24 isolation")
         trap_files = [p.name for p in TRAP.rglob("*")] if TRAP.exists() else []
         check("V-MCAP-NO-IMPORT-TIME-STATE", not trap_files, f"trap dir holds {trap_files[:3]}")
