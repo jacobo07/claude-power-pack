@@ -305,8 +305,10 @@ def test_symbols() -> None:
     import re
     from modules.capability_runtime import applicability as AP
     print("\n[applicability] symbol-bearing names (S5a D1)")
+    # ".env" is NOT in the lexicon: it is the case that proves the boundary change on its own,
+    # since the lexicon would otherwise mask a reverted boundary for the other four.
     cases = [("review this C++ code", "c++"), ("fix the C# service", "c#"),
-             ("an F# script", "f#"), ("port it to .NET 8", ".net")]
+             ("an F# script", "f#"), ("port it to .NET 8", ".net"), ("edit the .env file", ".env")]
     got = {p: AP._hits(t, [p]) for t, p in cases}
     (_ok("V-CAPRT-SYMBOL-HITS", f"{sorted(got)} all hit")
      if all(got[p] == [p] for _, p in cases)
