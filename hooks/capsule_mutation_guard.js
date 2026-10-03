@@ -71,7 +71,9 @@ const SAFE_REDIRECTS = /\s*\d?>&\d|\s*\*?\d?>\s*(\$null|\/dev\/null|nul)\b/gi;
 function unwrapCall(seg) {
   const m = seg.match(/^&\s*(['"])([^'"]+)\1\s*(.*)$/);
   if (!m) return seg;
-  return `${path.basename(m[2]).replace(/\.exe$/i, '')} ${m[3]}`.trim();
+  // win32 basename on purpose: the quoted exe is a Windows path (`C:\Program Files\Git\cmd\git.exe`), and the
+  // host's own basename leaves it whole on POSIX, so `& '...git.exe' log` read as unknown there. Identical on Windows.
+  return `${path.win32.basename(m[2]).replace(/\.exe$/i, '')} ${m[3]}`.trim();
 }
 
 function splitSegments(cmd) {
