@@ -187,6 +187,15 @@ replays R2 hindsight-free; any CONTINUE found is HISTORICAL_REAL evidence, and l
 Known bias: a plan committed with progress lags the working copy at T; a session that never commits its
 plan is UNKNOWN, never zero obligations.
 
+Instrument check (10:45, before the feasibility result): `rollover.obligations_from` parses 0 items from 33 of
+the 40 most recent vault/plans files -- most plans keep open work in prose ("NEXT:", "Open:") rather than
+under a next/pending heading. So a count of 0 cannot mean "nothing left": 0 must be split from
+"no heading found" before any bucket is trusted, or F-a/F-b will read a parser gap as a signal.
+In flight at the rollover: scratchpad `s2_feasibility.py` (output `s2_summary.txt`, rows `s2_rows.jsonl`)
+and the prepared `s2_replay.py`; both under the session scratchpad of cf503730. NEXT: read s2_summary,
+judge F-a/F-b with the parser caveat; if the parser is the limit, measure obligations with a parser that
+reports NO_HEADING separately (do not change the live capsule parser without its own gate).
+
 ## Not now
 NEXT: the `decide` horizon/rehydration change (owner rollover.py); `gsd_epoch` 300k static threshold (c2/e9 lane);
 the torn-append fix. LATER: live shadow on new sessions, bounded live experiment. RESEARCH: context live-range
