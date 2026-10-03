@@ -45,5 +45,16 @@ invalidation, cognitive-compiler, baseline-ratchet.
 
 ## Session Continuity
 
-**Stopped At:** P0 freeze
-**Resume File:** None
+**Stopped At:** Phase 1 (pillar A), RED step. P0 committed 18e928af, FROZEN_AT d4d35059.
+`tools/test_gsd_mission_cwd_align.py` has 4 NEW uncommitted cases (V-MCA-DIVERGED-FOLLOWED / -UNPROVEN /
+-STALE-ROADMAP / -THREE-RELAYS) calling `gm.align_cwd(cwd, wt, proven_workstream="ws")`; the
+`threshold=9/9` line still needs 13/13. Not yet run (expected RED: align_cwd has no proven_workstream).
+**Next exact action:** run `python tools/test_gsd_mission_cwd_align.py` -> confirm RED; then in a SCRATCH copy
+of tools/gsd_mission.py add `proven_workstream=None` to align_cwd: in the diverged branch return
+`diverged_followed` (NOT in CWD_ALIGN_BLOCKING) iff proven_workstream and work_dir is a worktree top of the
+same repo and `_worktree_carries_workstream(work_dir, cwd, proven_workstream)`; at supervise ~1481 split
+`ew = effective_workdir(...)`, `work_dir = ew or rec.get("work_dir")`, pass
+`proven_workstream=rec.get("workstream") if ew and ew != rec["cwd"] else None`, ledger event
+`cwd_diverged_followed`. Run cwd_align + test_gsd_mission + test_gsd_epoch + legacy golden; mutation drill;
+deploy into the live file only at >= 4 GB free RAM (audit G6).
+**Resume File:** this STATE.md + vault/plans/incremental-cognition-program-2026-10-03.md
