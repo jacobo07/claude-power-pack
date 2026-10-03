@@ -78,8 +78,12 @@ CAP_NOTE = ("upper bound only: the 30,000-char listing cap binds and refills (C6
             "listing saving may be 0")
 DESCRIBED_RE = re.compile(r"described \((\d+)\)")
 LINE_OVERHEAD = len("- ") + len(": ") + len("\n")  # the listing line shape the probe parses: `- <name>: <desc>\n`
-CHARS_BASIS = ("per counted member len(name) + 4 + described N (the `- <name>: <desc>` line the probe parses, newline "
-               "included); whitespace the probe strips is not counted")
+SHAPE_KEY = "watch_shape"  # {name: {lines, keys, chars}} beside `watch`, per entry_shape(); the frozen probe writes none
+CHARS_BASIS = ("per counted member len(name) + 5 (LINE_OVERHEAD: `- `, `: `, newline) + described N, counted only when "
+               "the row's watch_shape proves the entry is one listing line (lines 1), exactly one `- ` line parses to its "
+               "name (keys 1) and the line is exactly `- <name>: <desc>\\n` (chars equal to the formula, so no "
+               "whitespace the probe strips); else UNMEASURED. The frozen probe records no watch_shape, so every "
+               "figure from its rows is UNMEASURED")
 METHOD = {
     "body": "sha256 of the LF-normalized SKILL.md after skill_index._FM_RE strips the frontmatter",
     "dir": "skill_mirror_drift.dir_digest over sorted <relpath>\\0<lf_sha256> lines of every file in the directory",
@@ -297,11 +301,53 @@ def k4_rows(rows) -> dict:
     return out
 
 
+def entry_shape(listing: str, name: str) -> dict:
+    """{lines, keys, chars} of `name`'s entry in a skill_listing text, split the way the probe splits it
+    (`listing_floor_probe.analyse`: `splitlines()`, an entry line starts `- `, its key is the text before the first
+    `:`, stripped). keys = the `- ` lines whose key is `name` (the probe's dict keeps the last); lines / chars = the
+    last such line plus the lines after it up to the next `- ` line (what removing that entry frees, newlines
+    included). This is what a probe row's `watch_shape` must record; listing_effect reads the shape from the row and
+    never derives one itself (the K4 rows carry no listing text). Residual: a description continuation line that
+    itself starts `- ` is an entry in the probe's grammar, so the probe and this function both end the block there."""
+    keys, last, cur = 0, [], None
+    for ln in listing.splitlines(keepends=True):
+        if ln.startswith("- "):
+            cur = None
+            if ln[2:].partition(":")[0].strip() == name:
+                keys += 1
+                cur = last = [ln]
+        elif cur is not None:
+            cur.append(ln)
+    return {"lines": len(last), "keys": keys, "chars": sum(len(x) for x in last)}
+
+
+def _line_cost(name, status, shape):
+    """(int, None) when the probe row proves `name`'s removal frees exactly len(name) + LINE_OVERHEAD + N, else
+    (None, reason). Integer arithmetic only."""
+    m = DESCRIBED_RE.fullmatch(str(status))
+    if not m:
+        return None, f"{name}: challenger status {status!r} is not `described (N)`"
+    cost = len(name) + LINE_OVERHEAD + int(m.group(1))
+    if not isinstance(shape, dict):
+        return None, f"{name}: no {SHAPE_KEY} in the challenger row (one line, no name collision, unproven)"
+    lines, keys, chars = (shape.get(k) for k in ("lines", "keys", "chars"))
+    if not all(isinstance(v, int) and not isinstance(v, bool) for v in (lines, keys, chars)):
+        return None, f"{name}: {SHAPE_KEY} {shape!r} is not three integers"
+    if keys != 1:
+        return None, f"{name}: {keys} listing lines parse to this name (the probe keeps the last)"
+    if lines != 1:
+        return None, f"{name}: the entry spans {lines} listing lines (the probe reads the first)"
+    if chars != cost:
+        return None, f"{name}: the entry line is {chars} chars, not `- <name>: <desc>\\n` = {cost}"
+    return cost, None
+
+
 def listing_effect(group: dict, probe_rows) -> dict:
     """Per member name, the status it has in the `watch` map of the two K4 rows, else UNWATCHED; plus the upper
-    bounds. Integer arithmetic only."""
+    bounds. Integer arithmetic only. listing_chars_upper_bound is a true bound or UNMEASURED: a member counts only
+    when the challenger row proves its entry is one canonical line with no name collision (05-VERIFICATION WR-05)."""
     arms = k4_rows(probe_rows)
-    status = {}
+    status, shapes = {}, {}
     for name in group["names"]:
         st = {}
         for arm, row in arms.items():
@@ -311,16 +357,22 @@ def listing_effect(group: dict, probe_rows) -> dict:
             watch = row.get("watch") if isinstance(row.get("watch"), dict) else {}
             st[arm] = watch.get(name, UNWATCHED)
         status[name] = st
+        row = arms.get("challenger")
+        shape_map = row.get(SHAPE_KEY) if isinstance(row, dict) else None
+        shapes[name] = shape_map.get(name) if isinstance(shape_map, dict) else None
     k = group["distinct_names"] - 1
-    # `described (N)` is the description length only; removing the line `- <name>: <desc>\n` frees
-    # len(name) + LINE_OVERHEAD + N, so the per-line cost is what is summed over the k largest (05-REVIEW WR-05).
-    lines = []
+    # `described (N)` is the first-line description length only. Removing the line `- <name>: <desc>\n` frees
+    # len(name) + LINE_OVERHEAD + N, but only for a one-line entry the probe keyed to this name alone.
+    lines, why = [], []
     for name in group["names"]:
-        m = DESCRIBED_RE.fullmatch(str(status[name].get("challenger", "")))
-        lines.append(len(name) + LINE_OVERHEAD + int(m.group(1)) if m else None)
-    chars = sum(sorted(lines, reverse=True)[:k]) if lines and None not in lines else "UNMEASURED"
+        cost, reason = _line_cost(name, status[name].get("challenger", ""), shapes[name])
+        lines.append(cost)
+        if reason:
+            why.append(reason)
+    chars = sum(sorted(lines, reverse=True)[:k]) if lines and not why else "UNMEASURED"
     return {"label": LISTING_LABEL, "status": status, "entries_upper_bound": k,
-            "listing_chars_upper_bound": chars, "chars_basis": CHARS_BASIS, "cap_note": CAP_NOTE}
+            "listing_chars_upper_bound": chars, "chars_why": "; ".join(why) or None, "chars_basis": CHARS_BASIS,
+            "cap_note": CAP_NOTE}
 
 
 def load_probe_rows(repo=REPO):

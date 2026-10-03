@@ -39,6 +39,7 @@ import datetime
 import fnmatch
 import functools
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -399,16 +400,69 @@ def pole_empty_body(tmp):
 def pole_listing_line_bound(tmp):
     # listing_chars_upper_bound must bound the characters a removal frees from the listing text the probe parses
     # (`- <name>: <desc>` lines, `described (N)` = len(desc.strip())), not the description characters alone
-    # (05-REVIEW WR-05). Built in memory; `tmp` is unused.
+    # (05-REVIEW WR-05). The rows are the probe's own `analyse` of the listing. Without a watch_shape proving each
+    # entry is one canonical line the figure is UNMEASURED; with it, it equals the largest figure freed.
     descs = {"aa": "d" * 100, "bbb": "e" * 100}
     listing = "".join(f"- {n}: {d}\n" for n, d in descs.items())
-    watch = {n: f"described ({len(d)})" for n, d in descs.items()}
-    rows = [{"session_id": sid, "watch": watch} for sid in sweep.K4_SESSIONS.values()]
     g = {"names": sorted(descs), "distinct_names": len(descs)}
+    rows = _probe_rows(tmp, listing, sorted(descs))
+    bare = sweep.listing_effect(g, rows)["listing_chars_upper_bound"]
+    for r in rows:
+        r[sweep.SHAPE_KEY] = {n: sweep.entry_shape(listing, n) for n in descs}
     bound = sweep.listing_effect(g, rows)["listing_chars_upper_bound"]
     freed = [len(listing) - len(listing.replace(f"- {n}: {d}\n", "")) for n, d in descs.items()]
-    ok = isinstance(bound, int) and bound >= max(freed) and bound == max(freed)
-    return ok, f"listing_chars_upper_bound={bound} chars freed per removal={freed}"
+    ok = bare == "UNMEASURED" and isinstance(bound, int) and bound == max(freed)
+    return ok, f"without watch_shape {bare}; listing_chars_upper_bound={bound} chars freed per removal={freed}"
+
+
+def _probe_rows(tmp, listing, watch):
+    """The two K4 rows as the probe itself would write them for `listing`: `analyse` of
+    wiki/tools/listing_floor_probe.py (the frozen owner of the listing format, loaded from the tree, never edited) on a
+    synthetic transcript holding `listing` as the initial skill_listing, pinned to the K4 session ids."""
+    spec = importlib.util.spec_from_file_location("_lf_probe_pole", REPO / lfv.PROBE_REL)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    tr = Path(tmp) / "transcript.jsonl"
+    tr.write_text(json.dumps({"attachment": {"type": "skill_listing", "isInitial": True, "content": listing}}) + "\n",
+                  encoding="utf-8")
+    row = mod.analyse(str(tr), watch)
+    return [dict(row, session_id=sid) for sid in sweep.K4_SESSIONS.values()]
+
+
+def _bound_or_unmeasured(blocks, names, tmp):
+    """(ok, evidence) for a listing built from `blocks` [(skill or None, text)]: the bound over `names` is either
+    UNMEASURED or >= the characters the removal of each member's own block frees, both for the probe's rows as
+    written and for those rows given the true watch_shape of entry_shape (05-VERIFICATION WR-05)."""
+    listing = "".join(t for _, t in blocks)
+    freed = {n: sum(len(t) for s, t in blocks if s == n) for n in names}
+    rows = _probe_rows(tmp, listing, names)
+    g = {"names": sorted(names), "distinct_names": len(names)}
+    got = []
+    for shaped in (False, True):
+        if shaped:
+            for r in rows:
+                r[sweep.SHAPE_KEY] = {n: sweep.entry_shape(listing, n) for n in names}
+        eff = sweep.listing_effect(g, rows)
+        got.append((eff["listing_chars_upper_bound"], eff.get("chars_why")))
+    ok = all(b == "UNMEASURED" or (isinstance(b, int) and b >= max(freed.values())) for b, _ in got)
+    return ok, (f"listing_chars_upper_bound={got[0][0]} (probe rows), {got[1][0]} with watch_shape ({got[1][1]}); "
+                f"freed={freed} watch={rows[0]['watch']}")
+
+
+def pole_listing_multiline(tmp):
+    # A description that runs onto a second listing line: the probe's `described (N)` sees only the first line
+    # (real gex44 shape: agent-reach bound 221, 845 freed).
+    blocks = [("aa", "- aa: " + "d" * 100 + "\n"), ("aa", "  continued " + "c" * 300 + "\n"),
+              ("bbb", "- bbb: " + "e" * 100 + "\n")]
+    return _bound_or_unmeasured(blocks, ["aa", "bbb"], tmp)
+
+
+def pole_listing_name_collision(tmp):
+    # A plugin-namespaced line `- code-review:code-review: ...` parses to the key `code-review` and overwrites the
+    # skill's own entry in the probe's dict (real gex44 shape: code-review bound 27, 375 freed).
+    blocks = [("code-review", "- code-review: " + "r" * 300 + "\n"),
+              (None, "- code-review:code-review: " + "s" * 20 + "\n"), ("zz", "- zz: " + "z" * 10 + "\n")]
+    return _bound_or_unmeasured(blocks, ["code-review", "zz"], tmp)
 
 
 def pole_host_repo_refused(tmp):
@@ -523,6 +577,7 @@ POLES = (("SAME-BODY", pole_same_body), ("CRLF", pole_crlf), ("ONE-BYTE", pole_o
          ("NO-FRONTMATTER", pole_no_frontmatter), ("SAME-NAME-CROSS-PLANE", pole_same_name_cross_plane),
          ("CROSS-PLANE-RENAMED", pole_cross_plane_renamed), ("DISCOVERY", pole_discovery),
          ("EMPTY-BODY", pole_empty_body), ("LISTING-LINE-BOUND", pole_listing_line_bound),
+         ("LISTING-MULTILINE", pole_listing_multiline), ("LISTING-NAME-COLLISION", pole_listing_name_collision),
          ("HOST-REPO-REFUSED", pole_host_repo_refused), ("UNREADABLE-INCONCLUSIVE", pole_unreadable_inconclusive),
          ("GIT-UNAVAILABLE", pole_git_unavailable), ("DISCOVERY-LINKS", pole_discovery_links))
 
