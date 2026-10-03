@@ -1,0 +1,9 @@
+{
+  "why": "ACV S5a C3 drill 2: canonical_text applies no lexicon entry, so C++ no longer meets cpp and .net no longer meets dotnet.",
+  "file": "modules/capability_runtime/applicability.py",
+  "test": "tools/test_capability_runtime.py",
+  "gate": "V-CAPRT-SYMBOL-LEXICON",
+  "old": "    for rx, word in _LEXICON:\n",
+  "new": "    for rx, word in ():\n",
+  "copy_dirs": ["vault/capability_runtime", "vault/tower", "agents"]
+}

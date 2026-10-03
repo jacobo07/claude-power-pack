@@ -1,0 +1,9 @@
+{
+  "why": "ACV S5a C3 drill 1: revert the lookaround edges in _hits to \\b. '.env' is outside the lexicon, so only the boundary change makes it match.",
+  "file": "modules/capability_runtime/applicability.py",
+  "test": "tools/test_capability_runtime.py",
+  "gate": "V-CAPRT-SYMBOL-HITS",
+  "old": "r\"(?<!\\w)\" + re.escape(canonical_text(p)) + r\"(?!\\w)\"",
+  "new": "r\"\\b\" + re.escape(canonical_text(p)) + r\"\\b\"",
+  "copy_dirs": ["vault/capability_runtime", "vault/tower", "agents"]
+}

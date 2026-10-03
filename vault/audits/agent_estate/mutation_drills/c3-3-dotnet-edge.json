@@ -1,0 +1,9 @@
+{
+  "why": "ACV S5a C3 drill 3: drop the leading edge of the .net entry, so 'asp.net' is rewritten to 'aspdotnet' (ordinary text corrupted).",
+  "file": "modules/capability_runtime/applicability.py",
+  "test": "tools/test_capability_runtime.py",
+  "gate": "V-CAPRT-SYMBOL-NO-CORRUPTION",
+  "old": "r\"(?<![\\w.])\\.net(?![\\w.])\"",
+  "new": "r\"\\.net(?![\\w.])\"",
+  "copy_dirs": ["vault/capability_runtime", "vault/tower", "agents"]
+}

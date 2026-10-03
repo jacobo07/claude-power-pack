@@ -1,0 +1,9 @@
+{
+  "why": "ACV S5a C3 drill 5: empty-token queries are cached again, so every symbol-only query shares one key.",
+  "file": "modules/capability_runtime/agent_resolver.py",
+  "test": "tools/test_agent_resolver.py",
+  "gate": "V-RES-CACHE-NO-EMPTY-KEY",
+  "old": "use_cache = use_cache and bool(q)",
+  "new": "use_cache = use_cache",
+  "copy_dirs": ["vault/capability_runtime", "vault/tower", "agents"]
+}
