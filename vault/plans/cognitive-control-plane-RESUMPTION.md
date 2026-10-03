@@ -105,14 +105,14 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
 - tools/mutation_drill.py debt: OWNED by peer pane (claude-power-pack-95 / da), pending Owner.
 
 ## 4. Next three actions
-1. Store identity, one producer (peer-approved, they stay off both files): add
-   `tis_observed.store_identity(base) -> (dirs, aliases)` (canonical = RESOLVED path, alias map
-   to that same path incl. out-of-store), `store_dirs = store_identity()[0]` byte-compatible;
-   alias cases + a RED-FIRST out-of-store `_canonicalize` fixture in
-   `test_store_identity_consumers.py`; then usage_index consumes it and `_store_dirs` is deleted.
-   PRG: live set/alias equality (298 dirs, 3 junctions all in-store), refresh rewrites 0 rows,
-   anchor 23,925 / 6,230,548,450, async 200/1/39. Identity backup (sha256 167f16fe...) stays
-   out of every migration/cleanup path.
+0. DONE this session (see `git log -3`): store identity has ONE producer,
+   `tis_observed.store_identity -> (dirs, aliases)`; usage_index consumes it, its copy deleted.
+   Red-first 10/12 -> 12/12; PRG live: 295 stores identical, 0 rows rewritten, no new backup,
+   anchor 23,925 / 6,230,548,450 / 9,893, async 200/1/39. Review APPROVE
+   (`vault/audits/ccp-c9/store-identity-review.md`); L1 (relative/linked base) DEFERRED with
+   trigger. KV note `vault/lessons/ccp-c10-tower-tier-and-store-identity-2026-10-03.md`.
+   Identity backup (sha256 167f16fe...) retained, out of every migration path.
+1. Tell peer claude-power-pack-95 the store-identity commit hash (they stayed off the files).
 2. Still open: `floor_probe.py probe` rent ranking -> C4.1; re-derivation detector (NEXT).
 
 ## 5. Start instruction
