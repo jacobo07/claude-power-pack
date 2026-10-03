@@ -487,6 +487,13 @@ def measure_floor(root, sizes, session="m"):
         return GATE.measure(str(path))
 
 
+def hook_src(cmd):
+    """The component source a hook command is filed under: the contract key, with the first script file name of the command."""
+    found = re.search(r"([A-Za-z0-9._-]+\.(?:js|py|cmd|sh))(?![A-Za-z0-9._-])", cmd)
+    key = "hook:" + hashlib.sha256(cmd.encode("utf-8")).hexdigest()[:16]
+    return key + (":" + found.group(1) if found else "")
+
+
 def comp(m, layer, source):
     """(scope, scope_basis) of one component, or None."""
     for c in m["components"]:
@@ -522,7 +529,7 @@ def g_hook_plugin():
     cmd = "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd session-start"
     sizes = lambda n: {"hookrows": [(cmd, "x" * n)], "hook_name": "SessionStart"}
     m = measure_floor(root, sizes(2000))
-    got = comp(m, "hook_context:SessionStart:SessionStart", cmd)
+    got = comp(m, "hook_context:SessionStart:SessionStart", hook_src(cmd))
     rc, out, _ = attr_check(sizes(2000), sizes(3024))
     risk = find_lines(out, "RISE hook_context:SessionStart:SessionStart scope=universal")
     ok = got == ("universal", "plugin") and rc == 1 and len(risk) == 1
@@ -590,7 +597,7 @@ def g_settings_unreadable():
         rc, out, _ = attr_check(sizes("u" * 2000, "p" * 2000), sizes("u" * 2000, "p" * 3024), user_regs=user,
                                 project_regs=proj, root=root)
         m = measure_floor(root, sizes("u" * 2000, "p" * 2000))
-        got = comp(m, layer, P)
+        got = comp(m, layer, hook_src(P))
         risk = find_lines(out, f"RISE {layer} scope=unattributed")
         if rc != 1 or len(risk) != 1 or got != ("unattributed", "unknown_settings"):
             why.append(f"{label}: rc={rc} rise={risk} component={got}")
@@ -627,8 +634,8 @@ def g_cwd_absent_unattributed():
         with with_home(root / "home"):
             m, mu = GATE.measure(str(path)), GATE.measure(str(up))
         want = {
-            "hook P": (comp(m, layer, P), ("project", "project_settings") if present else ("unattributed", "not_on_this_host")),
-            "hook U": (comp(m, layer, U), ("universal", "user_settings") if present else ("unattributed", "not_on_this_host")),
+            "hook P": (comp(m, layer, hook_src(P)), ("project", "project_settings") if present else ("unattributed", "not_on_this_host")),
+            "hook U": (comp(m, layer, hook_src(U)), ("universal", "user_settings") if present else ("unattributed", "not_on_this_host")),
             "event fallback": (comp(mu, "hook_context:UserPromptSubmit:UserPromptSubmit", "event:UserPromptSubmit"),
                                ("universal", "event_fallback") if present else ("unattributed", "not_on_this_host")),
             "skill ps": (comp(m, "skill_listing", "ps"), ("project", "project_file") if present else ("unattributed", "not_on_this_host")),
@@ -792,7 +799,7 @@ def g_relabel_no_rise():
     ref_scope = {(c["layer"], c["source"]): c["scope"] for c in ref["components"]}
     now_scope = {(c["layer"], c["source"]): c["scope"] for c in now_m["components"]}
     layer = "hook_context:SessionStart:SessionStart"
-    relabeled = (ref_scope.get((layer, P)), now_scope.get((layer, P)), ref_scope.get(("skill_listing", "ps")),
+    relabeled = (ref_scope.get((layer, hook_src(P))), now_scope.get((layer, hook_src(P))), ref_scope.get(("skill_listing", "ps")),
                  now_scope.get(("skill_listing", "ps")))
     ok = (rc0 == 0 and rc == 0 and relabeled == ("unattributed", "project", "unattributed", "project")
           and not find_lines(out, "RISE") and not find_lines(out, "LAYER "))
@@ -2253,7 +2260,74 @@ def g_window_line_unparseable():
     return (not why), "; ".join(why) or "cut / non-object line in the window -> exit 2 window_line_unparseable (check and write, CLI and in-process); intact and after-window damage stay green"
 
 
+def expect_hook_key(cmd, base=None):
+    """The component source a hook command must be filed under (CR-02): hook:<sha256(command)[:16]> and, at most, the
+    script basename. Computed here from the contract, never from the gate's own helper."""
+    key = "hook:" + hashlib.sha256(cmd.encode("utf-8")).hexdigest()[:16]
+    return key + (":" + base if base else "")
+
+
+HOOK_KEY_RE = re.compile(r"^hook:[0-9a-f]{16}(:[A-Za-z0-9._-]{1,64})?$")
+
+
+def hook_source_case(run, tag):
+    """CR-02 through one runner (the real CLI or in-process); -> list of problems."""
+    why = []
+    root = scratch("cr02")
+    secret_a, secret_b = "Sup3rS3cretValue12", "hunter2hunter2xx"
+    cmd_u = f'DB_PASS={secret_b} node "{root}/home/.claude/hooks/u.js" --password={secret_a} --event=SessionStart'
+    cmd_p = f'python3 {root}/repo/hooks/p.py --token \'{secret_a}Zq\''
+    text = lambda ch, n: ch * n   # distinct filler per hook: identical text would be two producers of one element
+    sizes = lambda a, b: {"hookrows": [(cmd_u, text("u", a)), (cmd_p, text("p", b))], "hook_name": "SessionStart"}
+    write_settings(root / "home", {"SessionStart": [cmd_u]})
+    write_settings(root / "repo", {"SessionStart": [cmd_p]})
+    ref_tx, now_same = floor_pair(root, sizes(2000, 2000), sizes(2000, 2000))
+    now_up = build_floor(root, "up", sizes(3024, 2000)).write()
+    ref_json = root / "ref.json"
+    rc, out, err = run(["--write-reference", ref_json, "--transcript", ref_tx])
+    if rc != 0:
+        return [f"{tag} write rc={rc} {out[-200:]!r}"]
+    raw = ref_json.read_text(encoding="utf-8")
+    for needle in (secret_a, secret_b, "--password", "DB_PASS", "--token", "--event=SessionStart", cmd_u, cmd_p):
+        if needle in raw:
+            why.append(f"{tag}: reference holds hook command text {needle[:24]!r}")
+    doc = json.loads(raw)
+    layer = "hook_context:SessionStart:SessionStart"
+    srcs = sorted(c["source"] for c in doc["components"] if c["layer"] == layer)
+    want = sorted([expect_hook_key(cmd_u, "u.js"), expect_hook_key(cmd_p, "p.py")])
+    if srcs != want:
+        why.append(f"{tag}: hook sources {srcs} want {want}")
+    if not all(HOOK_KEY_RE.match(x) for x in srcs):
+        why.append(f"{tag}: hook source outside the key grammar: {srcs}")
+    # matching survives the key: the same floor is green, +1024 in the user-registered hook is red, universal
+    rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", now_same])
+    if rc != 0 or "reason=within_bound" not in last_line(out):
+        why.append(f"{tag}: same floor: rc={rc} last={last_line(out)!r}")
+    rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", now_up])
+    risk = find_lines(out, f"RISE {layer} scope=universal")
+    if rc != 1 or len(risk) != 1:
+        why.append(f"{tag}: +1024 user hook: rc={rc} rise={risk} last={last_line(out)!r}")
+    rc, jout, _ = run(["--check", "--reference", ref_json, "--transcript", now_up, "--json"])
+    for needle in (secret_a, secret_b, "--password", cmd_u):
+        if needle in jout or needle in out:
+            why.append(f"{tag}: check output holds hook command text {needle[:24]!r}")
+    # control: a command whose hash differs is another source (matching is on the key, so this can go red)
+    other = build_floor(root, "other", {"hookrows": [(cmd_u + " --x", text("u", 2000)), (cmd_p, text("p", 2000))],
+                                        "hook_name": "SessionStart"}).write()
+    rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", other])
+    if rc != 1 or not find_lines(out, f"RISE {layer} "):
+        why.append(f"{tag}: control, command changed: rc={rc} last={last_line(out)!r}")
+    return why
+
+
+def g_hook_source_no_command_text():
+    """CR-02: the component source of a hook is a stable key; no hook command text reaches a written reference."""
+    why = hook_source_case(run_cli, "cli") + hook_source_case(run_main, "in-process")
+    return (not why), "; ".join(why) or "reference + check output carry hook:<sha256[:16]>[:basename] only (no argument, no env assignment, no secret); same floor green, +1024 user hook red (universal); CLI and in-process"
+
+
 GATES_REVIEWFIX = [
+    ("V-FLOOR-HOOK-SOURCE-NO-COMMAND-TEXT", g_hook_source_no_command_text),
     ("V-FLOOR-WINDOW-LINE-UNPARSEABLE", g_window_line_unparseable),
 ]
 
@@ -2446,6 +2520,10 @@ def _m_window_drop_unparseable():
     return _patch("read_window", legacy_read_window)
 
 
+def _m_hook_source_raw_command():
+    return _patch("hook_source_key", lambda cmd: cmd)
+
+
 def _m_synthetic_measured():
     real = GATE.first_call_tokens
     return _patch("first_call_tokens", lambda assistant: real(assistant) if real(assistant) is not None
@@ -2478,6 +2556,8 @@ MUTANTS = [
      _m_synthetic_measured, ["V-FLOOR-NO-MODEL-CALL"]),
     ("M14 read_window drops an unparseable window line silently (CR-01: a truncated floor reads WITHIN_BOUND)",
      _m_window_drop_unparseable, ["V-FLOOR-WINDOW-LINE-UNPARSEABLE"]),
+    ("M15 hook_source_key stores the raw hook command as the component source (CR-02: argument text reaches the reference)",
+     _m_hook_source_raw_command, ["V-FLOOR-HOOK-SOURCE-NO-COMMAND-TEXT"]),
 ]
 
 

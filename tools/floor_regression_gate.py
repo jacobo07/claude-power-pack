@@ -36,7 +36,8 @@ a component whose origin cannot be proved is `unattributed` and stays under the 
 
 Hook / skill / agent attribution (every lookup is a read; the basis is recorded as `scope_basis`):
   hook element -> the hook_success row of the same hookEvent whose stdout JSON carries the element
-     (hookSpecificOutput.additionalContext, or systemMessage) names the command (the source key).
+     (hookSpecificOutput.additionalContext, or systemMessage) names the command. The component source is the stable key
+     `hook:<sha256(command)[:16]>[:<script basename>]`; the command text is never stored or printed.
      `${CLAUDE_PLUGIN_ROOT}` in the command: universal (plugin). Else the settings file REGISTERING the command
      decides, never where its script lives: only <cwd>/.claude/settings[.local].json -> project, only
      <install_home>/.claude/settings[.local].json -> universal, both or neither -> unattributed.
@@ -65,6 +66,7 @@ import io
 import json
 import os
 import re
+import shlex
 import shutil
 import socket
 import subprocess
@@ -195,7 +197,6 @@ def window_digest(raw_lines):
 # --------------------------------------------------------------------------- attribution (reads only)
 PLUGIN_ROOT_TOKEN = "${CLAUDE_PLUGIN_ROOT}"
 _SETTINGS_FILES = ("settings.json", "settings.local.json")
-_LABEL_MAX = 200
 
 
 def host_has(path):
@@ -297,11 +298,33 @@ def _ctx(ctx):
     return ctx if isinstance(ctx, AttributionContext) else UNAVAILABLE
 
 
-def command_label(cmd):
-    """A stable, short source key for a hook command: long one-liners keep 120 chars and a digest of the whole."""
-    if len(cmd) <= _LABEL_MAX:
-        return cmd
-    return cmd[:120] + "...#" + hashlib.sha256(cmd.encode("utf-8")).hexdigest()[:12]
+_SCRIPT_EXTS = (".js", ".mjs", ".cjs", ".ts", ".py", ".sh", ".bash", ".cmd", ".bat", ".ps1", ".rb", ".pl")
+_BASENAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
+
+
+def _script_basename(cmd):
+    """The basename of the first script-looking token of a hook command (an extension from _SCRIPT_EXTS), or None.
+    Flags and `NAME=value` tokens are skipped; nothing but a plain file name can come back (no argument, no path)."""
+    try:
+        tokens = shlex.split(cmd)
+    except ValueError:
+        tokens = cmd.split()
+    for tok in tokens:
+        if tok.startswith("-") or ("=" in tok and "/" not in tok.split("=", 1)[0]):
+            continue
+        base = _norm_path(tok).rstrip("/").rsplit("/", 1)[-1]
+        if base.lower().endswith(_SCRIPT_EXTS) and _BASENAME_RE.match(base):
+            return base
+    return None
+
+
+def hook_source_key(cmd):
+    """The component source of a hook (CR-02): `hook:` + sha256(command)[:16] and, at most, the script basename. The
+    command text itself is NEVER stored: it can carry credentials the redactor does not recognise (env assignments,
+    quoted flags), and matching between a reference and a check needs only a stable key."""
+    key = "hook:" + hashlib.sha256(cmd.encode("utf-8")).hexdigest()[:16]
+    base = _script_basename(cmd)
+    return f"{key}:{base}" if base else key
 
 
 def command_scope(cmd, ctx):
@@ -375,7 +398,7 @@ def hook_scope(element, event, field, ctx, window_rows):
     if len(cmds) == 1:
         cmd = next(iter(cmds))
         scope, basis = command_scope(cmd, ctx)
-        return scope, command_label(cmd), basis
+        return scope, hook_source_key(cmd), basis
     if len(cmds) > 1:
         return "unattributed", f"ambiguous:{event}", "ambiguous"
     scope, basis = _event_scope(event, ctx)

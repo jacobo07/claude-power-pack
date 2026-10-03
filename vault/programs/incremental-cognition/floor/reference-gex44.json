@@ -13,14 +13,14 @@
    "layer": "hook_context:SessionStart:SessionStart",
    "scope": "universal",
    "scope_basis": "plugin",
-   "source": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start"
+   "source": "hook:12d079e1117bd6db:run-hook.cmd"
   },
   {
    "chars": 4393,
    "layer": "hook_context:SessionStart:SessionStart",
    "scope": "universal",
    "scope_basis": "user_settings",
-   "source": "node \"/home/kobii/.claude/hooks/hook-dispatcher.js\" --event=SessionStart-chain"
+   "source": "hook:7a7d1b92604d969b:hook-dispatcher.js"
   },
   {
    "chars": 220,
@@ -3037,15 +3037,15 @@
   }
  ],
  "provenance": {
-  "command": "python3 tools/floor_regression_gate.py --write-reference vault/programs/incremental-cognition/floor/reference-gex44.json --transcript /home/kobii/.claude/projects/-home-kobii-missions-incremental-cognition/34f03871-4d33-4b7d-a52e-ec674b20a223.jsonl",
+  "command": "python3 tools/floor_regression_gate.py --write-reference vault/programs/incremental-cognition/floor/reference-gex44.json --transcript /home/kobii/.claude/projects/-home-kobii-missions-incremental-cognition/34f03871-4d33-4b7d-a52e-ec674b20a223.jsonl --replace",
   "cwd": "/home/kobii/missions/incremental-cognition",
   "first_call_at": "2026-10-03T18:35:00.714Z",
   "install_commit": "339ccaa91ee040e81e6171ea27e855b1f108aed0",
   "install_home": "/home/kobii",
-  "measured_at": "2026-10-03T23:31:43Z",
+  "measured_at": "2026-10-03T23:47:58Z",
   "plane": "gex44",
   "platform": "linux",
-  "repo_commit": "17228d2f025ef524dd82467030136b36d4812874",
+  "repo_commit": "19792a95f6a798d74a5b918de0f5115422ec8f4f",
   "session_id": "34f03871-4d33-4b7d-a52e-ec674b20a223",
   "source": "transcript",
   "transcript": "/home/kobii/.claude/projects/-home-kobii-missions-incremental-cognition/34f03871-4d33-4b7d-a52e-ec674b20a223.jsonl",
