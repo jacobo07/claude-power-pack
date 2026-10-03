@@ -787,6 +787,32 @@ def assess(traits, prompt, trait_intent=None):
     return out
 
 
+def subject_signature(subject):
+    """16 hex characters naming what a subject IS, so a structural transition compiles to
+    a different value and the same structure compiles to the same value on any host.
+
+    Inside the signature: the state of each of the ten traits, the state of each of the
+    ten intent readings, one `[id, strength, basis, sorted modifiers]` row per archetype
+    assessment, and the sorted family ids. Deliberately outside it: the repository root,
+    the cache path and its state, `produced_at`, every timestamp, every evidence string
+    and every span or reason text. Those describe where and when the reading was taken,
+    not what it concluded, and keeping them out is what makes two directories with equal
+    structure sign equal. The digest is sha256 over canonical JSON (sorted keys, compact
+    separators)."""
+    subject = subject or {}
+    body = {
+        "traits": {t: (r or {}).get("state") for t, r in sorted((subject.get("traits") or {}).items())},
+        "trait_intent": {t: (r or {}).get("state")
+                         for t, r in sorted((subject.get("trait_intent") or {}).items())},
+        "archetypes": [[a.get("id"), a.get("strength"), a.get("basis"),
+                        sorted(a.get("modifiers") or [])]
+                       for a in subject.get("archetypes") or ()],
+        "families": sorted(str(f.get("id")) for f in subject.get("families") or ()),
+    }
+    blob = json.dumps(body, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
+
+
 def active_archetypes(subject):
     """Ids of the archetypes whose strength is REQUIRED or CONDITIONAL, sorted.
 
@@ -806,7 +832,7 @@ def resolve(prompt, root, *, state_dir=None, now=None, families=None):
     sroot = subject_root(root)
     cached = read_traits(root, state_dir=state_dir, now=now)
     intents = intent_facts(prompt)
-    return {
+    subject = {
         "schema": SUBJECT_SCHEMA,
         "root": sroot,
         "repo_key": repo_key(sroot) if sroot else None,
@@ -817,3 +843,5 @@ def resolve(prompt, root, *, state_dir=None, now=None, families=None):
         "families": [{"id": fid, "hits": hits}
                      for fid, hits in classify_prompt(prompt, families)],
     }
+    subject["signature"] = subject_signature(subject)
+    return subject

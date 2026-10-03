@@ -1947,6 +1947,82 @@ GATES += [
     ("V-ARCH-CLI-ALL-INJECTED", pred_V_ARCH_CLI_ALL_INJECTED),
 ]
 
+# -- plan 02-05 Task 1: a trait transition is a different compiled subject (D-07) ------
+# The subject `signature` is what Phase 8's challenge 3 will attack: adding persistent
+# structure to a repository must show up first as STALE to the reader and then, after the
+# producer runs, as a REQUIRED archetype and a different signature.
+
+def _add_prisma(repo):
+    """ephemeral -> persistent: a prisma schema file plus the client dependency, with an
+    explicit distinct mtime on the edited manifest (RESEARCH F6)."""
+    os.makedirs(os.path.join(repo, "prisma"))
+    with open(os.path.join(repo, _SCHEMA_REL), "w", encoding="utf-8") as fh:
+        fh.write("model Subscription {\n  id Int @id\n}\n")
+    _edit_file(os.path.join(repo, "package.json"),
+               json.dumps({"name": "fixture", "dependencies": {"react": "^18.0.0", "@prisma/client": "^5.0.0"}}))
+
+
+def _sig(subject):
+    return subject.get("signature")
+
+
+def pred_V_ARCH_TRANSITION_PERSISTENT():
+    if ar is None or ts is None:
+        return False, "module import failed: ar=%s ts=%s" % (_AR_ERR, _TS_ERR)
+    problems = []
+    state, repo = _produce_fixture("ephemeral")
+    f1 = _stored_doc(repo, state)["fingerprint"]["fp1"]
+    before = {lang: ar.resolve(p, repo, state_dir=state) for lang, p in (("es", WM_ES), ("en", WM_EN))}
+    for lang, subj in before.items():
+        wm = _wm(subj)
+        if wm is None or not (wm["strength"] == ar.Strength.CONDITIONAL and wm["basis"] == "intent"):
+            problems.append("PRECONDITION[%s]: ephemeral WORLD_MUTATION=%s (want CONDITIONAL/intent)" % (
+                lang, wm and (wm["strength"], wm["basis"])))
+    s1 = _sig(before["es"])
+    _add_prisma(repo)
+    seen = ar.read_traits(repo, state_dir=state)
+    if seen["cache"]["state"] != ar.CACHE_STALE:
+        problems.append("TRANSITION-NOT-VISIBLE-TO-READER: before re-producing cache=%s (want STALE)" % seen["cache"]["state"])
+    res = ts.produce(repo, state_dir=state)
+    if res.get("outcome") != ts.WRITTEN:
+        problems.append("REPRODUCE: outcome=%r reason=%r (the fingerprint changed, so no skip)" % (
+            res.get("outcome"), res.get("reason")))
+    f2 = _stored_doc(repo, state)["fingerprint"]["fp1"]
+    after = {lang: ar.resolve(p, repo, state_dir=state) for lang, p in (("es", WM_ES), ("en", WM_EN))}
+    for lang, subj in after.items():
+        wm = _wm(subj)
+        if wm is None or not (wm["strength"] == ar.Strength.REQUIRED and wm["basis"] == "structural+intent"):
+            problems.append("PERSISTENT-NOT-REQUIRED[%s]: WORLD_MUTATION=%s (want REQUIRED/structural+intent)" % (
+                lang, wm and (wm["strength"], wm["basis"])))
+    s2 = _sig(after["es"])
+    if not (isinstance(s1, str) and isinstance(s2, str) and len(s1) == 16 and len(s2) == 16):
+        problems.append("SIGNATURE-MISSING: s1=%r s2=%r" % (s1, s2))
+    elif s1 == s2:
+        problems.append("SIGNATURE-UNCHANGED: ephemeral and persistent both sign %s" % s1)
+    if f1 == f2:
+        problems.append("FP1-UNCHANGED: stored fp1 is %s before and after" % f1)
+    # Determinism: a repeat resolve of the same state, then the same final structure in a
+    # different directory (no path, timestamp or evidence text may be inside the signature).
+    again = _sig(ar.resolve(WM_ES, repo, state_dir=state))
+    if again != s2:
+        problems.append("SIGNATURE-NOT-REPEATABLE: %s then %s" % (s2, again))
+    state2, repo2 = _produce_fixture("ephemeral")
+    _add_prisma(repo2)
+    ts.produce(repo2, state_dir=state2)
+    twin = _sig(ar.resolve(WM_ES, repo2, state_dir=state2))
+    if os.path.normcase(repo2) == os.path.normcase(repo):
+        problems.append("PRECONDITION: the twin is the same directory")
+    if twin != s2:
+        problems.append("SIGNATURE-NOT-HOST-INDEPENDENT: same structure in two directories signs %s and %s" % (s2, twin))
+    return not problems, "; ".join(problems) or \
+        "CONDITIONAL/intent->REQUIRED/structural+intent sig=%s->%s fp1=%s->%s STALE seen; twin dir %s" % (
+            s1, s2, f1, f2, "equal" if twin == s2 else "DIFFERS")
+
+
+GATES += [
+    ("V-ARCH-TRANSITION-PERSISTENT", pred_V_ARCH_TRANSITION_PERSISTENT),
+]
+
 # Runs after every other gate, so its sweep sees every cache file this process produced.
 FINAL_GATES = [
     ("V-ARCH-CACHE-PATH-SAFE", pred_V_ARCH_CACHE_PATH_SAFE),
@@ -1954,7 +2030,7 @@ FINAL_GATES = [
 
 # A literal, enforced by the exit code (01-REVIEW IN-01): a count that satisfies
 # itself would let a dropped gate read as green.
-EXPECTED = 55
+EXPECTED = 56
 
 
 def main() -> int:
