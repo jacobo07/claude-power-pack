@@ -16,6 +16,9 @@ What each V-SCG line proves:
   V-SCG-FLIP-<id>       for a singleton row, forcing that one clause PASS turns the verdict PASS and restoring it
                         restores the row: the clause is load-bearing
   V-SCG-EVERY-CLAUSE    the singleton rows cover all 7 clauses
+  V-SCG-ROUTER-DESCRIPTION  inserting the declaration leaves skill_index._read_frontmatter's (name, description)
+                        unchanged on block-scalar, plain, reordered and CRLF frontmatter and on every repo skill; the
+                        old append-at-end placement is the positive control that changes it
   V-SCG-REASON-YAML-SCALARS  the reason grammar refuses YAML null / bool / number / date literals and admits text,
                         including every generated reason (cross-checked with PyYAML when it is importable)
   V-SCG-GIT-MISSING     the CLI under PATH=/nonexistent exits 1 with `SKILL_CREATION INCONCLUSIVE` naming `not found`
@@ -48,6 +51,7 @@ sys.path.insert(0, str(_THIS.parent))
 import skill_coverage as sc  # noqa: E402
 import skill_creation_gate as scg  # noqa: E402
 import skill_mirror_drift as smd  # noqa: E402
+from modules.skill_router import skill_index as si  # noqa: E402  (scg put the repo root on sys.path)
 
 REPO = smd.REPO
 GATE = _THIS.parent / "skill_creation_gate.py"
@@ -519,6 +523,65 @@ def reason_yaml_scalars(seed):
            f"gate misjudged {gate_bad}; {cross}; yaml disagrees {yaml_bad}")
 
 
+# Frontmatter shapes the declaration must not change the router's (name, description) for (review WR-06).
+_DESC = "Use when reviewing frontend react components."
+FM_SHAPES = {
+    "folded": f"---\nname: demo-skill\ndescription: >\n  {_DESC}\n---\n# body\n",
+    "literal-chomp": "---\nname: demo-skill\ndescription: |-\n  Use when reviewing\n  frontend react components.\n---\nb\n",
+    "folded-then-key": f"---\nname: demo-skill\ndescription: >-\n  {_DESC}\nlicense: MIT\n---\nb\n",
+    "plain": f"---\nname: demo-skill\ndescription: {_DESC}\n---\nb\n",
+    "description-first": f"---\ndescription: >\n  {_DESC}\nname: demo-skill\n---\nb\n",
+    "no-description": "---\nname: demo-skill\n---\nb\n",
+    "crlf-folded": f"---\r\nname: demo-skill\r\ndescription: >\r\n  {_DESC}\r\n---\r\nb\r\n",
+}
+
+
+def router_view(text: str, tmp: Path, tag: str):
+    """(name, description) as the skill router's own reader returns them for `text`."""
+    p = tmp / tag / "demo-skill" / scg.SKILL_MD
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_bytes(text.encode("utf-8"))
+    return si._read_frontmatter(p)
+
+
+def router_description(seed):
+    """insert_declaration never changes skill_index._read_frontmatter's (name, description): on every shape, both
+    declaration kinds, and every repo skill at HEAD (undeclared vs declared, and vs the committed text). Positive
+    control: appending the block at the end of a folded description DOES change it, so the comparison can see it."""
+    kinds = {"none": scg.declaration_lines("demo-skill", "none", []),
+             "path": ["metadata:", f"  {scg.DETECTOR_KEY}: {seed.cwst_path}"]}
+    bad, n = [], 0
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        for shape, src in FM_SHAPES.items():
+            for kind, lines in kinds.items():
+                out = scg.insert_declaration(src, lines)
+                d = scg.parse_declaration(out)
+                n += 1
+                if router_view(src, tmp, f"{shape}-{kind}-a") != router_view(out, tmp, f"{shape}-{kind}-b"):
+                    bad.append(f"{shape}/{kind}: router description changed")
+                if d["count"] != 1 or not all(x["metadata_child"] for x in d["detector"] + d["reason"]):
+                    bad.append(f"{shape}/{kind}: declaration not one metadata child set")
+        for skill, row in sorted(seed.rows.items()):
+            if not row["tracked"]:
+                continue
+            head = head_blob(md_rel(skill)).decode("utf-8")
+            plain = undeclared(head)
+            views = {router_view(t, tmp, f"repo-{skill}-{i}") for i, t in enumerate((plain, seed.declared(skill, plain),
+                                                                                       head))}
+            n += 1
+            if len(views) != 1:
+                bad.append(f"{skill}: router description differs across undeclared / inserted / committed")
+        src = FM_SHAPES["folded"]
+        m = scg._FM_RE.match(src)
+        end = m.start(1) + len(m.group(1))
+        appended = src[:end] + "".join(f"{ln}\n" for ln in kinds["none"]) + src[end:]
+        control = router_view(src, tmp, "ctl-a") != router_view(appended, tmp, "ctl-b")
+    report(not bad and control, "V-SCG-ROUTER-DESCRIPTION",
+           f"{n} insertions compared, changed {bad[:4]}; control (append after a folded description) "
+           f"{'changes' if control else 'DOES NOT change'} the description")
+
+
 def git_missing(base):
     py = "/usr/bin/python3" if Path("/usr/bin/python3").is_file() else sys.executable
     env = {"PATH": "/nonexistent", "HOME": os.environ.get("HOME", ""), "LANG": "C.UTF-8"}
@@ -551,6 +614,7 @@ def main() -> int:
             tracer(fx, seed)
             no_self_enrol(seed)
             reason_yaml_scalars(seed)
+            router_description(seed)
             base, originals = build_base(fx, seed)
             flipped = run_drills(fx, base, seed, originals)
             all7 = set(scg.SKILL_CLAUSES) | set(scg.GATE_CLAUSES)

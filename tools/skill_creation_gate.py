@@ -192,9 +192,18 @@ def declaration_lines(skill: str, klass: str, evidence) -> list:
     return ["metadata:", f"  {DETECTOR_KEY}: {NONE_VALUE}", f"  {REASON_KEY}: {text}"]
 
 
+DESCRIPTION_LINE = re.compile(r"^description:")
+
+
 def insert_declaration(text: str, lines) -> str:
-    """`text` with `lines` appended at the end of its frontmatter. Keeps CRLF when the text uses it. Refuses (ValueError)
-    a text without frontmatter, one that already has a top-level `metadata:` key, or one that already declares."""
+    """`text` with `lines` inserted in its frontmatter, immediately BEFORE the top-level `description:` line (at the
+    end of the frontmatter when there is none). Keeps CRLF when the text uses it. Refuses (ValueError) a text without
+    frontmatter, one that already has a top-level `metadata:` key, or one that already declares.
+
+    Why before `description:` (review WR-06): the skill router's reader (modules/skill_router/skill_index.py
+    `_read_frontmatter`) ends a block-scalar description only at a `key: value` line, and a bare `metadata:` line
+    is not one, so a declaration placed after a block-scalar description is swallowed into the router's description
+    (and so into classify_domain / _extract_keywords). Placed before it, the declaration never follows it."""
     crlf = "\r\n" in text
     body = sc.lf(text)
     m = _FM_RE.match(body)
@@ -205,8 +214,13 @@ def insert_declaration(text: str, lines) -> str:
         raise ValueError("frontmatter already has a metadata key; merge by hand")
     if parse_declaration(body)["count"] or parse_declaration(body)["reason"]:
         raise ValueError("frontmatter already declares an opportunity detector")
-    end = m.start(1) + len(fm)
-    out = body[:end] + "".join(f"{ln}\n" for ln in lines) + body[end:]
+    at, off = m.start(1) + len(fm), m.start(1)
+    for ln in fm.split("\n"):
+        if DESCRIPTION_LINE.match(ln):
+            at = off
+            break
+        off += len(ln) + 1
+    out = body[:at] + "".join(f"{ln}\n" for ln in lines) + body[at:]
     return out.replace("\n", "\r\n") if crlf else out
 
 
