@@ -1335,7 +1335,8 @@ def g_h_bash_verify():
     exp_hi = in_chars / kp.CPT_LO * 5 + kp.burden(2000, 2, kp.CPT_LO)
     sigs = [r["signature"] for r in d["cmd_signatures"]]
     ok = (rc == 0 and d["verification_tool_calls"] == 1 and d["result_chars"] == 2000
-          and abs(n["weighted_lo"] - exp_lo) < 1e-6 and abs(n["weighted_hi"] - exp_hi) < 1e-6 and sigs == [TEST_CMD])
+          and abs(n["weighted_lo"] - exp_lo) < 1e-6 and abs(n["weighted_hi"] - exp_hi) < 1e-6 and sigs == [TEST_CMD]
+          and d["weighted_verifier_subagents"] == 0 and d["weighted_tool_calls"] == [n["weighted_lo"], n["weighted_hi"]])
     return ok, f"calls={d['verification_tool_calls']} result_chars={d['result_chars']} lo={n['weighted_lo']:.3f}/{exp_lo:.3f} sigs={sigs}"
 
 
@@ -1347,14 +1348,27 @@ def g_h_non_verify():
         fx.tool_result("b", "y" * 500, ts(13))
         call(fx, 2, [("c", "Bash", {"command": "cd /w && timeout 60 python3 tools/test_y.py --drill --token " + CANARY})])
         fx.tool_result("c", "z" * 500, ts(15))
-        call(fx, 3)
+        # text that only mentions a test run: a heredoc body, inline -c code, an install, a version probe
+        call(fx, 3, [("d", "Bash", {"command": "python3 - <<'PY'\nprint('verify the pytest run')\nPY"})])
+        fx.tool_result("d", "d" * 400, ts(17))
+        call(fx, 4, [("e", "Bash", {"command": 'python3 -c "import pytest; verify = 1"'})])
+        fx.tool_result("e", "e" * 400, ts(19))
+        call(fx, 5, [("f", "Bash", {"command": "pip install pytest && python3 -m pip show pytest"})])
+        fx.tool_result("f", "f" * 400, ts(21))
+        call(fx, 6, [("g", "Bash", {"command": "/x/venv/bin/python -m pytest -q tests/test_a.py 2>&1 | tail -5"})])
+        fx.tool_result("g", "g" * 300, ts(23))
+        # a real run AFTER a heredoc is still a run
+        call(fx, 7, [("h", "Bash", {"command": "python3 - <<'PY'\nx = 1\nPY\npython3 tools/test_w.py"})])
+        fx.tool_result("h", "h" * 200, ts(25))
+        call(fx, 8)
     rc, res = h_run(build)
     d = res["details"]
     sigs = [r["signature"] for r in d["cmd_signatures"]]
     pos = ["pytest -q", "npm test", "npm run test", "node --test", "mix test", "go test ./...", "cargo test",
            "tsc -p . --noEmit", "x --selftest", "x --final", "x --drill", "gsd verify", "python3 tools/test_a.py"]
     neg = ["ls -la", "echo hello", "git status"]
-    ok = (rc == 0 and d["verification_tool_calls"] == 1 and sigs == ["python3 tools/test_y.py"]
+    ok = (rc == 0 and d["verification_tool_calls"] == 3
+          and sigs == ["python3 tools/test_y.py", "python -m pytest", "python3 tools/test_w.py"]
           and all(kp.VERIFY_CMD_RE.search(c) for c in pos) and not any(kp.VERIFY_CMD_RE.search(c) for c in neg)
           and kp.cmd_signature("FOO=1 CI=true npm test --silent") == "npm test"
           and kp.cmd_signature("curl -H x") == "curl")
@@ -1376,7 +1390,8 @@ def g_h_verifier_subagent():
     rc, res = h_run(build)
     n, d = res["numerator"], res["details"]
     ok = (rc == 0 and n["weighted_lo"] == 3 * W135 and n["weighted_hi"] == 3 * W135
-          and d["verifier_agent_types"] == {"gsd-verifier": [1, 3, 3 * W135]} and d["other_agent_types"] == {})
+          and d["verifier_agent_types"] == {"gsd-verifier": [1, 3, 3 * W135]} and d["other_agent_types"] == {}
+          and d["weighted_verifier_subagents"] == 3 * W135 and d["weighted_tool_calls"] == [0.0, 0.0])
 
     def build2(fx):
         _sub_calls(fx.subagent("a1", "Explore"))
@@ -1635,6 +1650,28 @@ def _m_f_ratio_zero():
     return _patch("pair_ratio", lambda doc, init, n: 0.0 if n < 1 else real(doc, init, n))
 
 
+def _m_g_cite_never():
+    import re as _re
+    return _patch("CITE_RE", _re.compile(r"(?!x)x"))
+
+
+def _m_g_order_ignored():
+    return _patch("is_earlier", lambda rec_key, cand_key: True)
+
+
+def _m_g_negation_kept():
+    return _patch("strip_negated", lambda sentence: sentence)
+
+
+def _m_h_verifier_never():
+    import re as _re
+    return _patch("VERIFIER_AGENT_RE", _re.compile(r"(?!x)x"))
+
+
+def _m_h_verdict_on_sensitivity():
+    return _patch("h_numerator_interval", lambda lo, hi, sens: (sens, sens))
+
+
 MUTANTS = [
     ("M1 materiality maps UNMEASURED to '< 3 %'", _m_unmeasured_to_below, ["V-KMEP-UNMEASURED-NOT-BELOW"]),
     ("M2 compare_population always exact", _m_always_exact, ["V-KMEP-POPULATION-DRIFT"]),
@@ -1648,6 +1685,13 @@ MUTANTS = [
     ("M9 E writes never mark a path", _m_e_writes_ignored, ["V-KMEP-E-INTERVENING-EDIT"]),
     ("M10 F gsd_doc_kind always None", _m_f_kind_none, ["V-KMEP-F-READ-WORKFLOW", "V-KMEP-F-POSITIVE"]),
     ("M11 F paired ratio reads 0 when no init was seen", _m_f_ratio_zero, ["V-KMEP-F-INIT-ABSENT"]),
+    ("M12 G CITE_RE never matches (a citation becomes a record, reuse reads 0)", _m_g_cite_never,
+     ["V-KMEP-G-CITATION-IS-REUSE"]),
+    ("M13 G matching ignores timestamp order", _m_g_order_ignored, ["V-KMEP-G-ORDER"]),
+    ("M14 G negated phrases are not removed", _m_g_negation_kept, ["V-KMEP-G-NEGATED-RETEST"]),
+    ("M15 H VERIFIER_AGENT_RE never matches", _m_h_verifier_never, ["V-KMEP-H-VERIFIER-SUBAGENT"]),
+    ("M16 H verdict computed on upper_sensitivity", _m_h_verdict_on_sensitivity,
+     ["V-KMEP-H-SENSITIVITY-NOT-VERDICT"]),
 ]
 
 

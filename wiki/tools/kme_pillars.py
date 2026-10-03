@@ -1036,11 +1036,32 @@ def _program_tokens(seg):
     return toks[i:]
 
 
+HEREDOC_RE = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
+QUOTED_RE = re.compile(r"\"(?:[^\"\\]|\\.){0,2000}\"|'[^']{0,2000}'", re.S)
+INSTALL_RE = re.compile(r"\b(?:pip3?|pipx|conda|apt|apt-get|brew)\b|\bnpm\s+(?:i|install|ci)\b|\buv\s+(?:pip|add|sync)\b")
+
+
+def _code_only(command):
+    """The command without heredoc bodies and quoted strings: text that merely mentions a test is not a test run
+    (the cost is a run hidden inside `bash -c "..."`, which is not seen; the caveat says so)."""
+    kept, end = [], None
+    for line in (command or "").split("\n"):
+        if end is not None:
+            if line.strip() == end:
+                end = None
+            continue
+        m = HEREDOC_RE.search(line)
+        if m:
+            end = m.group(2)
+        kept.append(line)
+    return QUOTED_RE.sub('""', "\n".join(kept))
+
+
 def verify_segment(command):
     """The first command segment of a Bash command that is a verification run, else None."""
-    for seg in SEG_SPLIT_RE.split(command or ""):
+    for seg in SEG_SPLIT_RE.split(_code_only(command)):
         seg = seg.strip()
-        if not seg or not VERIFY_CMD_RE.search(seg):
+        if not seg or not VERIFY_CMD_RE.search(seg) or INSTALL_RE.search(seg):
             continue
         toks = _program_tokens(seg)
         if toks and os.path.basename(toks[0]) not in NON_RUN_PROGRAMS:
@@ -1054,8 +1075,10 @@ def cmd_signature(seg):
     toks = _program_tokens(seg.split("\n", 1)[0])
     if not toks or not SIG_TOKEN_RE.fullmatch(toks[0]) or toks[0].startswith("-"):
         return "(other)"
-    out = [toks[0]]
-    if len(toks) > 1 and SIG_TOKEN_RE.fullmatch(toks[1]) and not toks[1].startswith("-") \
+    out = [os.path.basename(toks[0]) if toks[0].startswith("/") and os.path.basename(toks[0]) else toks[0]]
+    if len(toks) > 2 and toks[1] == "-m" and re.fullmatch(r"[A-Za-z0-9_.]{1,40}", toks[2]):
+        out += ["-m", toks[2]]
+    elif len(toks) > 1 and SIG_TOKEN_RE.fullmatch(toks[1]) and not toks[1].startswith("-") \
             and (re.fullmatch(r"[A-Za-z]{1,20}", toks[1]) or re.search(r"[./]", toks[1])):
         out.append(toks[1])
     return " ".join(out)
@@ -1217,6 +1240,7 @@ class HObserver(PillarObserver):
             if e["call_key"] is not None:
                 carrying[(e["file"], e["call_key"])] = e["call_w"]
         sens_w = sum(carrying.values()) + vw
+        tool_part = [lo, hi]
         lo, hi = lo + vw, hi + vw
         lo, hi = h_numerator_interval(lo, hi, sens_w)
         w = population.get("weighted") or 0
@@ -1234,6 +1258,7 @@ class HObserver(PillarObserver):
             "observability": 1.0,
             "details": {
                 "verification_tool_calls": len(evs), "result_chars": res_chars, "cmd_signatures": rows,
+                "weighted_tool_calls": tool_part, "weighted_verifier_subagents": vw,
                 "verifier_agent_types": {k: [v[0], v[1], v[2]] for k, v in sorted(ver_types.items())},
                 "other_agent_types": dict(sorted(other_types.items())),
                 "meta_absent": sum(1 for a in agents if a["absent"]),
@@ -1336,6 +1361,8 @@ def _pillar_details(p, det):
             out.append(f"- sample: {m['kind']} subject={m['subject']} session={m['session']} call={m['call']}")
     elif p == "H":
         out.append(f"- verification tool calls: {det.get('verification_tool_calls')}, result chars: {det.get('result_chars')}")
+        out.append(f"- weighted split: tool calls + carriage (CE P definition) {json.dumps(det.get('weighted_tool_calls'))}, "
+                   f"verifier subagents {det.get('weighted_verifier_subagents')}")
         for g in det.get("cmd_signatures", []):
             out.append(f"- command {g['signature']}: {g['count']} calls, {g['result_chars']} result chars, "
                        f"weighted {g['weighted_lo']}..{g['weighted_hi']}")
@@ -1448,9 +1475,10 @@ G_CAVEATS = (
     "are not",
 )
 H_CAVEATS = CAVEATS[:2] + (
-    "verification = Bash / PowerShell commands matching a test or gate pattern (a segment whose program only reads "
-    "or moves files, e.g. cat, grep, git, is not a run), plus subagents whose meta.json agentType names a verifier; "
-    "a test run through another tool, a hook or a script wrapper that hides the pattern is not seen",
+    "verification = Bash / PowerShell commands matching a test or gate pattern; heredoc bodies and quoted strings "
+    "are blanked first, a segment whose program only reads or moves files (cat, grep, git ...) or installs a "
+    "package is not a run; plus subagents whose meta.json agentType names a verifier; a test run hidden inside "
+    "bash -c \"...\", a hook or a script wrapper is not seen",
     "a subagent transcript without a meta.json beside it has an unknown agent type and is never counted as a "
     "verifier subagent (details.meta_absent counts them)",
     "upper_sensitivity is the full cost of every call that issued a verification command, plus verifier subagents; "
