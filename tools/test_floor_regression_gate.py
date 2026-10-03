@@ -2326,7 +2326,87 @@ def g_hook_source_no_command_text():
     return (not why), "; ".join(why) or "reference + check output carry hook:<sha256[:16]>[:basename] only (no argument, no env assignment, no secret); same floor green, +1024 user hook red (universal); CLI and in-process"
 
 
+def drop_instruction_row(path):
+    """Remove the whole `instructions` attachment row from a transcript (a resumed or wrong session)."""
+    out = []
+    for raw in Path(path).read_bytes().split(b"\n"):
+        if raw.strip() and (json.loads(raw).get("attachment") or {}).get("type") == "instructions":
+            continue
+        out.append(raw)
+    Path(path).write_bytes(b"\n".join(out))
+    return path
+
+
+def g_layer_absent():
+    """WR-01: a reference layer of >= 1,000 chars that is wholly absent from the check is UNMEASURABLE, not a fall."""
+    why = []
+    for cli in (True, False):
+        tag = "cli" if cli else "in-process"
+        run = run_cli if cli else run_main
+
+        def case(label, ref_sizes, edit, want):
+            root = scratch("wr01")
+            ref_tx, now_tx = floor_pair(root, ref_sizes, {})
+            ref_json = root / "ref.json"
+            rc, out, _ = run(["--write-reference", ref_json, "--transcript", ref_tx])
+            if rc != 0:
+                why.append(f"{tag} {label}: setup rc={rc}")
+                return
+            edit(now_tx)
+            rc, out, _ = run(["--check", "--reference", ref_json, "--transcript", now_tx])
+            if want is None:
+                if rc != 0 or "reason=within_bound" not in last_line(out):
+                    why.append(f"{tag} {label}: want within_bound, rc={rc} last={last_line(out)!r}")
+            elif not unmeasurable(rc, out, f"layer_absent:{want}"):
+                why.append(f"{tag} {label}: rc={rc} last={last_line(out)!r} want reason=layer_absent:{want}")
+            return out
+
+        # the reviewer's repro: the instructions attachment is gone altogether (a resumed / wrong session)
+        out = case("instructions row gone", {"g": 100000}, drop_instruction_row, "memory_global")
+        if out is not None and "memory_project" not in out:
+            why.append(f"{tag} instructions row gone: detail does not name every absent layer: {out[-300:]!r}")
+        case("user CLAUDE.md gone", {}, _drop_user_claude, "memory_global")
+        # controls: the layer is still there (shrunk to nothing much) -> a fall, green
+        case("layer shrunk, still present", {"g": 100000},
+             lambda p: _set_user_claude(p, "G"), None)
+        # boundary: 1,000 chars absent -> refused; 999 -> green; a small layer vanishing is not a reason to refuse
+        case("rules 1000 chars gone", {"r": 1000}, lambda p: _drop_rules(p), "rules")
+        case("rules 999 chars gone", {"r": 999}, lambda p: _drop_rules(p), None)
+    return (not why), "; ".join(why) or "a >= 1,000-char reference layer wholly absent -> exit 2 layer_absent:<layer> (names every absent layer); shrunk layer, 999-char layer absent -> green; CLI and in-process"
+
+
+def _edit_files(path, fn):
+    out = []
+    for raw in Path(path).read_bytes().split(b"\n"):
+        if raw.strip():
+            row = json.loads(raw)
+            att = row.get("attachment") or {}
+            if att.get("type") == "instructions":
+                att["files"] = fn(att["files"])
+                raw = json.dumps(row, ensure_ascii=False).encode("utf-8")
+        out.append(raw)
+    Path(path).write_bytes(b"\n".join(out))
+
+
+def _drop_user_claude(path):
+    _edit_files(path, lambda fs: [f for f in fs if not (f["type"] == "User" and f["path"].endswith("/CLAUDE.md"))])
+
+
+def _set_user_claude(path, text):
+    def edit(fs):
+        for f in fs:
+            if f["type"] == "User" and f["path"].endswith("/CLAUDE.md"):
+                f["content"] = text
+        return fs
+    _edit_files(path, edit)
+
+
+def _drop_rules(path):
+    _edit_files(path, lambda fs: [f for f in fs if "/.claude/rules/" not in f["path"].replace("\\", "/")])
+
+
 GATES_REVIEWFIX = [
+    ("V-FLOOR-LAYER-ABSENT", g_layer_absent),
     ("V-FLOOR-HOOK-SOURCE-NO-COMMAND-TEXT", g_hook_source_no_command_text),
     ("V-FLOOR-WINDOW-LINE-UNPARSEABLE", g_window_line_unparseable),
 ]
@@ -2524,6 +2604,10 @@ def _m_hook_source_raw_command():
     return _patch("hook_source_key", lambda cmd: cmd)
 
 
+def _m_absent_layers_none():
+    return _patch("absent_layers", lambda ref, now: [])
+
+
 def _m_synthetic_measured():
     real = GATE.first_call_tokens
     return _patch("first_call_tokens", lambda assistant: real(assistant) if real(assistant) is not None
@@ -2558,6 +2642,8 @@ MUTANTS = [
      _m_window_drop_unparseable, ["V-FLOOR-WINDOW-LINE-UNPARSEABLE"]),
     ("M15 hook_source_key stores the raw hook command as the component source (CR-02: argument text reaches the reference)",
      _m_hook_source_raw_command, ["V-FLOOR-HOOK-SOURCE-NO-COMMAND-TEXT"]),
+    ("M16 absent_layers finds nothing (WR-01: a floor that lost a whole layer reads as a fall, WITHIN_BOUND)",
+     _m_absent_layers_none, ["V-FLOOR-LAYER-ABSENT"]),
 ]
 
 

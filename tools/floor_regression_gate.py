@@ -15,6 +15,8 @@ Measurement source (one of): --transcript T.jsonl | --project-dir DIR (the newes
 session through listing_floor_probe.main; costs one session, never started from a test).
 
 Exit codes: 0 within bound, 1 material unexplained rise, 2 UNMEASURABLE (never 0 on anything not measured).
+UNMEASURABLE reasons include: window_line_unparseable (a startup-window line is not a JSON object), layer_absent:<layer>
+(a reference layer of >= 1,000 chars has no component in the checked floor), not_comparable, reference_invalid.
 
 Classification table (layer key / scope / chars):
   instructions file, basename CLAUDE.md, type User ........ memory_global   / universal / len(content)
@@ -995,12 +997,28 @@ def _comparable_value(v):
     return None if v is None else str(v).replace("\\", "/").rstrip("/")
 
 
+def absent_layers(ref, now):
+    """The reference layers holding >= UNIVERSAL_MIN_CHARS (1,000) chars in total that have no component at all in the
+    checked floor. A floor missing a whole layer is a different kind of session (resumed, compacted, a wrong
+    transcript), not a fall in size: the comparison cannot be made (WR-01)."""
+    present = {c["layer"] for c in now["components"]}
+    totals = {}
+    for c in ref["components"]:
+        totals[c["layer"]] = totals.get(c["layer"], 0) + c["chars"]
+    return sorted(layer for layer, chars in totals.items() if chars >= UNIVERSAL_MIN_CHARS and layer not in present)
+
+
 def compare(ref, now):
     rp0, np0 = ref.get("provenance", {}), now["provenance"]
     differing = [f for f in ("plane", "platform", "install_home", "cwd")
                  if _comparable_value(rp0.get(f)) != _comparable_value(np0.get(f))]
     if differing:
         raise Unmeasurable("not_comparable", "fields differ: " + ", ".join(differing))
+    gone = absent_layers(ref, now)
+    if gone:
+        raise Unmeasurable(f"layer_absent:{gone[0]}",
+                           f"{len(gone)} reference layer(s) of >= {UNIVERSAL_MIN_CHARS} chars are absent from the checked "
+                           f"floor: {', '.join(gone)}; this is not the same kind of session")
     items = ref.get("explanations") or []
     ref_idx = {(c["layer"], c["source"]): c for c in ref["components"]}
     now_idx = {(c["layer"], c["source"]): c for c in now["components"]}
