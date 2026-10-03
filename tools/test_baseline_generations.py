@@ -40,6 +40,18 @@ def _entry(src, line, req="Deploy returns HTTP 200 on the real domain before don
             "origin": {"file": src, "line": line}}
 
 
+def _citation_verdicts(subjects, root=None):
+    """{(subject, id): verify_origin verdict} for every active entry of every subject.
+
+    Keyed by the PAIR: entry ids are unique within a generation, not across
+    subjects, so an id-only key lets a later subject overwrite an earlier verdict."""
+    real = {}
+    for fam in subjects:
+        for e in bl.active_entries(fam, root):
+            real[(fam, e["id"])] = bl.verify_origin(e)
+    return real
+
+
 def main() -> int:
     tmp = tempfile.mkdtemp(prefix="bgen_gate_")
     try:
@@ -197,6 +209,43 @@ def main() -> int:
                bool(g0) and "blocking animation" in g0["entries"][0]["origin"].get("quote", ""),
                "B0 stores the literal cited line", "no quote stored: %s" % g0)
 
+        # --- WR-06: two subjects may share an entry id; a broken one stays visible --
+        # Nested subjects (archetype/<ID>) need not keep the `<family>-...` id
+        # convention. Keyed by id alone, the later subject's VERIFIED verdict
+        # overwrote the earlier subject's broken one and `len(real)` counted
+        # distinct ids instead of entries.
+        dup_root = os.path.join(tmp, "dup_ids")
+        good_src = os.path.join(tmp, "dup_good.md")
+        with open(good_src, "w", encoding="utf-8") as fh:
+            fh.write("# rules\nA shared rule: every claim names its plane.\n")
+
+        def dup_entry(origin):
+            return {"id": "shared-id", "requirement": "every claim names its plane",
+                    "why": "fixture", "class": "D", "origin": origin}
+
+        good_origin = {"file": good_src, "line": 2,
+                       "quote": "A shared rule: every claim names its plane."}
+        gone_origin = {"file": os.path.join(tmp, "no_such_file.md"), "line": 1,
+                       "quote": "A shared rule: every claim names its plane."}
+        bl.write_generation("sa", [dup_entry(gone_origin)], "b0", root=dup_root)
+        bl.write_generation("sb", [dup_entry(good_origin)], "b0", root=dup_root)
+        v_dup = _citation_verdicts(["sa", "sb"], dup_root)
+        broken_dup = {k: v for k, v in v_dup.items()
+                      if v not in (bl.VERIFIED, bl.MOVED)}
+        _check("V-BGEN-REAL-KEY-NOT-MASKED",
+               len(v_dup) == 2 and broken_dup == {("sa", "shared-id"): bl.FILE_MISSING},
+               "two subjects sharing an entry id are two entries (len 2) and the broken "
+               "one is reported by (subject, id): FILE_MISSING in sa is not hidden by "
+               "sb's VERIFIED",
+               "population=%d verdicts=%s broken=%s" % (len(v_dup), v_dup, broken_dup))
+        bl.write_generation("sc", [dup_entry(good_origin)], "b0", root=dup_root)
+        v_ctl = _citation_verdicts(["sb", "sc"], dup_root)
+        _check("V-BGEN-REAL-KEY-CONTROL",
+               len(v_ctl) == 2 and all(v == bl.VERIFIED for v in v_ctl.values()),
+               "two subjects sharing an id and both verified: population 2, nothing broken "
+               "(the keying is not 'report everything')",
+               "population=%d verdicts=%s" % (len(v_ctl), v_ctl))
+
         # --- the REAL B0s: every stored citation still stands -------------
         # Subjects are DISCOVERED from disk (nested axes included), never listed.
         # WR-05: an unreadable directory fails the gate by name, and the discovered
@@ -207,15 +256,13 @@ def main() -> int:
         report = bl.discover_report()
         subjects = report["subjects"]
         cc = bp.cross_check(subjects, bl.BASELINES_DIR)
-        real = {}
-        for fam in subjects:
-            for e in bl.active_entries(fam):
-                real[e["id"]] = bl.verify_origin(e)
+        real = _citation_verdicts(subjects)
         indep_total = bp.active_entry_total(bl.BASELINES_DIR, subjects)
         broken = {k: v for k, v in real.items() if v not in (bl.VERIFIED, bl.MOVED)}
-        moved = sorted(k for k, v in real.items() if v == bl.MOVED)
+        moved = sorted("%s/%s" % k for k, v in real.items() if v == bl.MOVED)
         _check("V-BGEN-REAL-B0-CITATIONS-HOLD",
                len(subjects) >= 4 and len(real) >= 60 and not broken
+               and len(real) == indep_total
                and not report["unreadable"] and not cc["missing"] and not cc["extra"],
                "%d stored entries over %d discovered subjects hold (floor 4/60; %d moved: %s; "
                "no unreadable dir; cross-check agrees, unavailable routes: %s)"
