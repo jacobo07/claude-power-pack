@@ -40,6 +40,7 @@ import fnmatch
 import functools
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -422,11 +423,57 @@ def pole_host_repo_refused(tmp):
                 f"{'refused' if rec_b is None else 'built'}; V-FD-RECORDINGS {st}")
 
 
+def pole_unreadable_inconclusive(tmp):
+    # An unreadable live skill directory, or a tracked skills/ path that is not UTF-8, must read INCONCLUSIVE, never a
+    # traceback (05-REVIEW IN-02).
+    parts, ok = [], True
+    live = Path(tmp) / "live"
+    _skill(live, "real", FM_A + BODY)
+    _skill(live, "locked", FM_B + BODY)
+    locked = live / "locked"
+    os.chmod(locked, 0)
+    try:
+        if os.access(locked / "SKILL.md", os.R_OK):
+            parts.append("live: n/a (mode 000 does not deny this user, e.g. root)")
+        else:
+            try:
+                st = sweep.live_plane(live)["status"]
+            except Exception as e:  # noqa: BLE001 -- the defect under test is that this raises
+                st = f"RAISED {type(e).__name__}"
+            ok &= st == "INCONCLUSIVE"
+            parts.append(f"live mode-000 skill: {st}")
+    finally:
+        os.chmod(locked, 0o755)
+    if os.name != "posix":
+        return ok, "; ".join(parts + ["repo: n/a (non-UTF-8 file names need POSIX)"])
+    repo = Path(tmp) / "repo"
+    bad = os.path.join(os.fsencode(repo), b"skills", b"bad\xff")
+    os.makedirs(bad)
+    with open(os.path.join(bad, b"SKILL.md"), "wb") as fh:
+        fh.write((FM_A + BODY).encode("utf-8"))
+    for n in range(REPO_FLOOR):
+        _skill(repo / "skills", f"s{n}", FM_A + BODY + str(n))
+    git = ["git", "-C", str(repo), "-c", "user.name=pole", "-c", "user.email=pole@example.invalid",
+           "-c", "commit.gpgsign=false"]
+    try:
+        for argv in (["init", "-q"], ["add", "-A"], ["commit", "-q", "-m", "pole"]):
+            subprocess.run(git + argv, check=True, capture_output=True, timeout=SUBPROCESS_TIMEOUT_S)
+    except (OSError, subprocess.SubprocessError) as e:
+        return False, "; ".join(parts + [f"repo: could not build the git fixture: {type(e).__name__}"])
+    try:
+        st = sweep.repo_plane(repo, "HEAD")["status"]
+    except Exception as e:  # noqa: BLE001 -- the defect under test is that this raises
+        st = f"RAISED {type(e).__name__}"
+    ok &= st == "INCONCLUSIVE"
+    parts.append(f"repo non-UTF-8 tracked path: {st}")
+    return ok, "; ".join(parts)
+
+
 POLES = (("SAME-BODY", pole_same_body), ("CRLF", pole_crlf), ("ONE-BYTE", pole_one_byte),
          ("NO-FRONTMATTER", pole_no_frontmatter), ("SAME-NAME-CROSS-PLANE", pole_same_name_cross_plane),
          ("CROSS-PLANE-RENAMED", pole_cross_plane_renamed), ("DISCOVERY", pole_discovery),
          ("EMPTY-BODY", pole_empty_body), ("LISTING-LINE-BOUND", pole_listing_line_bound),
-         ("HOST-REPO-REFUSED", pole_host_repo_refused))
+         ("HOST-REPO-REFUSED", pole_host_repo_refused), ("UNREADABLE-INCONCLUSIVE", pole_unreadable_inconclusive))
 
 
 def _whole_file_hasher(skill_md_bytes):

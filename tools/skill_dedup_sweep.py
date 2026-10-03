@@ -152,6 +152,11 @@ def repo_plane(repo, ref="HEAD") -> dict:
         return {"status": "INCONCLUSIVE", "reason": why}
     if not skills:
         return {"status": "INCONCLUSIVE", "reason": f"no tracked skills/<name>/SKILL.md at {sha[:8]} (UNMEASURED)"}
+    for n in skills:  # git paths decode with surrogateescape; batch_blobs would raise on encode (05-REVIEW IN-02)
+        try:
+            n.encode("utf-8")
+        except UnicodeEncodeError:
+            return {"status": "INCONCLUSIVE", "reason": f"tracked name {n!r} is not UTF-8: cannot be recorded"}
     under = [p[len("skills/"):] for p in tracked if p.startswith("skills/")]
     dirs = {p.split("/")[0] for p in under if "/" in p}
     non_dir = sorted(p for p in under if "/" not in p)
@@ -192,14 +197,16 @@ def live_plane(live_root, label="live") -> dict:
         except UnicodeEncodeError:
             return {"status": "INCONCLUSIVE", "reason": f"entry name {name!r} is not UTF-8: cannot be recorded"}
         p = root / name
-        if not p.is_dir():  # a file, or a symlink whose target does not resolve to a directory
-            non_dir.append(name)
-            continue
         md = p / "SKILL.md"
-        if not md.is_file():
-            no_skill_md.append(name)
-            continue
         try:
+            # Inside the try: on Python 3.12 is_file() raises PermissionError (EACCES is not an ignored errno) on a
+            # directory this user cannot search (05-REVIEW IN-02).
+            if not p.is_dir():  # a file, or a symlink whose target does not resolve to a directory
+                non_dir.append(name)
+                continue
+            if not md.is_file():
+                no_skill_md.append(name)
+                continue
             with open(md, "rb") as fh:
                 data = fh.read()
             side = smd.live_side(p)
