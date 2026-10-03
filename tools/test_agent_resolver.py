@@ -213,20 +213,28 @@ def request_identity(t: Path) -> None:
     # still reaches it, in-process and as a real subprocess. --no-cache everywhere, and the
     # subprocess gets a temp HOME/USERPROFILE: Path.home() drives the resolver cache and the CO-12
     # state dir, so nothing this gate runs can write the live ones (R2 audit gap 1).
+    # From C5 commit 3 the CLI records one CO-12 signal per resolve: in-process the writer is
+    # redirected to a temp state dir; the subprocess must leave exactly one agent_resolution row in
+    # its temp home and no resolver cache there -- a real-boundary proof, not only an absence.
     import contextlib
     import io
     import os
     import subprocess
+    from modules.cognitive_os import co_12_telemetry as CO12
     task = "compose a jingle for a pizza advert"
 
     def first_line(text: str) -> str:
-        return re.sub(r"\s[\d.]+ms$", "", (text.splitlines() or [""])[0])
+        return re.sub(r"\s[\d.]+ms resolution_id=[0-9a-f]+$", "", (text.splitlines() or [""])[0])
 
-    runs = {}
-    for name, fn in (("stub", R.main), ("cli", CLI.main)):
-        so = io.StringIO()
-        with contextlib.redirect_stdout(so):
-            runs[name] = (fn(["resolve", task, "--no-cache"]), first_line(so.getvalue()))
+    runs, cli_state, real_record = {}, t / "cli-state", CO12.record_signal
+    CO12.record_signal = lambda kind, payload, **kw: real_record(kind, payload, state_dir=cli_state)
+    try:
+        for name, fn in (("stub", R.main), ("cli", CLI.main)):
+            so = io.StringIO()
+            with contextlib.redirect_stdout(so):
+                runs[name] = (fn(["resolve", task, "--no-cache"]), first_line(so.getvalue()))
+    finally:
+        CO12.record_signal = real_record
     home = t / "cli-home"
     home.mkdir()
     proc = subprocess.run([sys.executable, "-m", "modules.capability_runtime.agent_resolver", "resolve", task,
@@ -234,9 +242,14 @@ def request_identity(t: Path) -> None:
                           env={**os.environ, "USERPROFILE": str(home), "HOME": str(home),
                                "PYTHONIOENCODING": "utf-8"})
     runs["python -m"] = (proc.returncode, first_line(proc.stdout))
+    kinds = lambda d: [s.get("kind") for s in CO12.load_signals(state_dir=d)]  # noqa: E731
+    sub_rows = kinds(home / ".claude" / "state" / "co12_readiness")
+    sub_cache = (home / R.CACHE.relative_to(Path.home())).exists()
     check("V-RES-CLI-DELEGATES", len(set(runs.values())) == 1 and runs["cli"][1].startswith(
-        "NO_CERTIFIED_SPECIALIST miss=") and not (home / ".claude").exists(),
-          f"{runs} stderr={proc.stderr.strip()[-120:]!r} home_writes={(home / '.claude').exists()}")
+        "NO_CERTIFIED_SPECIALIST miss=") and kinds(cli_state) == ["agent_resolution"] * 2
+          and sub_rows == ["agent_resolution"] and not sub_cache,
+          f"{runs} in-process rows={kinds(cli_state)} subprocess rows={sub_rows} cache_written={sub_cache} "
+          f"stderr={proc.stderr.strip()[-120:]!r}")
 
 
 def main() -> int:

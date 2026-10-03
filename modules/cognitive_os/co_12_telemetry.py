@@ -125,8 +125,14 @@ def record_signal(kind: str, payload: dict, *, state_dir=None,
             os.close(fd)                                      # closing releases the lock everywhere
 
 
-def load_signals(*, state_dir=None) -> list:
-    """All recorded signals (fail-open -> [])."""
+def load_signals(*, state_dir=None, strict: bool = False, stats: dict | None = None) -> list:
+    """All recorded signals (fail-open -> []).
+
+    strict=True is for readers that must not report UNREADABLE as EMPTY (ACV C5): an absent file
+    is still [] (nothing recorded), but a file that exists and cannot be read raises OSError.
+    `stats`, when given, receives {"unparseable": n} -- torn or invalid lines are skipped either
+    way, and a reader that counts rows can now say how many it could not count."""
+    unparseable = 0
     try:
         p = (Path(state_dir) if state_dir else _default_state_dir()) / "signals.jsonl"
         if not p.is_file():
@@ -139,10 +145,15 @@ def load_signals(*, state_dir=None) -> list:
             try:
                 out.append(json.loads(line))
             except (json.JSONDecodeError, ValueError):
-                continue
+                unparseable += 1
         return out
     except OSError:
+        if strict:
+            raise
         return []
+    finally:
+        if stats is not None:
+            stats["unparseable"] = unparseable
 
 
 # --------------------------------------------------------------------------- #
@@ -351,6 +362,13 @@ def readiness_report(proj_base=None, *, state_dir=None) -> dict:
         recall = {"kb_injection_count": 0, "distinct_lessons": 0,
                   "ceps_recurrent_concepts": 0, "measured": False,
                   "status": "instrument-pending"}
+    # ACV C5 resolver telemetry. Lazy import (agent_telemetry imports this module). Unlike the
+    # fallbacks above, a failure here carries NO counts: an error must not read as 0 resolutions.
+    try:
+        from modules.capability_runtime import agent_telemetry as _agent_tel
+        agent_resolution = _agent_tel.agent_metrics(state_dir=state_dir)
+    except Exception as e:  # noqa: BLE001 -- fail-open, but never a fabricated zero
+        agent_resolution = {"measured": False, "status": "error", "reason": type(e).__name__}
     pending = ["dedup_hit"]
     if not fd.get("measured"):
         pending.append("fd_distillation")
@@ -362,6 +380,7 @@ def readiness_report(proj_base=None, *, state_dir=None) -> dict:
         "cdio": cdio,                      # REAL data once reviews record
         "fd_distillation": fd,             # REAL data once the FD loop runs live
         "recall_roi": recall,              # REAL data from the JIT usage log (D3)
+        "agent_resolution": agent_resolution,  # resolver telemetry (ACV C5); measured=False on error
         "dedup_hit": {"status": "instrument-pending",
                       "reason": "PM-03 consume wired (Hook 13, C73); "
                                 "RedundancyTax hit-producer is agent-driven, "
@@ -395,6 +414,19 @@ def main(argv=None) -> int:
             print(f"opus-avoided: {oa['opus_avoided']}/{oa['opportunities']} "
                   f"({oa['status']})")
             print(f"dedup-hit: {out['dedup_hit']['status']}")
+        if "agent_resolution" in out:
+            ar = out["agent_resolution"]
+            if not ar.get("measured"):
+                print(f"agent-resolution: NOT MEASURED ({ar.get('status')}: {ar.get('reason')})")
+            else:
+                print(f"agent-resolution: {ar['resolutions']} resolutions ({ar['status']}): "
+                      f"{ar['fresh']} computed fresh, {ar['cached']} cache reuses, "
+                      f"{ar['cache_unknown']} with an unknown cache value, "
+                      f"{ar['distinct_fresh_observations']} distinct fresh observations; "
+                      f"schemas {ar['schemas_seen']}; "
+                      f"{ar['unparseable_lines']} unparseable signal lines not counted")
+                for miss, c in sorted(ar["by_miss"].items()):
+                    print(f"  {miss}: {c['fresh']} fresh, {c['cached']} cached")
     return 0
 
 
