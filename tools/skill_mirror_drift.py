@@ -289,23 +289,80 @@ def is_git_failure(reason) -> bool:
     return str(reason or "").startswith(BATCH_FAILURES)
 
 
-def card_pairs(repo, dispatcher_text=None) -> list:
-    """[{card, skill, source}] DISCOVERED from the dispatcher registrations (never listed): each registered
-    deny-card hook names its skill, and the source is `skills/<skill>/SKILL.md`. Sorted, de-duplicated."""
+def committed_bytes(repo, rel, ref="HEAD"):
+    """(bytes, None) of the committed blob `<ref>:<rel>`, or (None, reason). Records and rendered evidence are judged
+    as COMMITTED blobs, because the commit is what the ledger pins (review WR-04). At HEAD a working-tree copy that is
+    missing or differs after LF normalization is refused as "uncommitted": a gate must never pass on a file that
+    exists only in the working tree. Never raises."""
+    out, why = git_run(repo, "cat-file", "blob", f"{ref}:{rel}")
+    if out is None:
+        return None, f"{rel} not readable at {ref}: {why}"
+    if ref == "HEAD":
+        wt = Path(repo) / rel
+        try:
+            disk = wt.read_bytes()
+        except OSError:
+            return None, f"uncommitted: working-tree {rel} missing, committed at HEAD"
+        if lf_bytes(disk) != lf_bytes(out):
+            return None, f"uncommitted: working-tree {rel} differs from HEAD (commit it, or restore it)"
+    return out, None
+
+
+def _dedupe_pairs(cards) -> list:
     seen = {}
-    for c in sc.discover_cards(Path(repo), dispatcher_text):
+    for c in cards:
         seen[(c["hook"], c["skill"])] = {"card": c["hook"], "skill": c["skill"],
                                          "source": f"skills/{c['skill']}/SKILL.md"}
     return [seen[k] for k in sorted(seen, key=lambda k: (k[1], k[0]))]
 
 
-def card_source_state(repo, ref, pairs) -> dict:
+def committed_card_pairs(repo, sha):
+    """([{card, skill, source}], None) DISCOVERED from the dispatcher and hook blobs at `sha` (never listed, never
+    the working tree, so discovery and hashing share one plane: review WR-04), or (None, reason) for a git failure.
+    A registered hook that is not committed at `sha` is not a pair."""
+    disp, why = git_run(repo, "cat-file", "blob", f"{sha}:{sc.DISPATCHER_REL}")
+    if disp is None:
+        return None, f"{sc.DISPATCHER_REL} at {sha[:8]}: {why}"
+    text = sc.lf(disp.decode("utf-8", "replace"))
+    pre = sorted(rel for rel, regs in sc.registered_hooks(text).items()
+                 if any(r["chain"].startswith("PreToolUse-") for r in regs))
+    blobs = vgm.batch_blobs(str(repo), sha, pre)
+    texts = {}
+    for rel in pre:
+        data, w = blobs.get(rel, (None, "not returned"))
+        if data is None and w == "git-batch-empty":
+            data = b""
+        if data is None:
+            if is_git_failure(w):
+                return None, f"{rel}: {w}"
+            continue
+        texts[rel] = data.decode("utf-8", "replace")
+    return _dedupe_pairs(sc.discover_cards(Path(repo), text, hook_texts=texts, read_disk=False)), None
+
+
+def card_pairs(repo, dispatcher_text=None, ref="HEAD") -> list:
+    """[{card, skill, source}] DISCOVERED from the dispatcher registrations (never listed): each registered
+    deny-card hook names its skill, and the source is `skills/<skill>/SKILL.md`. Sorted, de-duplicated. Read from
+    the committed blobs at `ref` unless an explicit dispatcher_text is given (drills); [] when git fails."""
+    if dispatcher_text is not None:
+        return _dedupe_pairs(sc.discover_cards(Path(repo), dispatcher_text))
+    sha, _ = resolve_commit(repo, ref)
+    pairs, _ = committed_card_pairs(repo, sha) if sha else (None, None)
+    return pairs or []
+
+
+def card_source_state(repo, ref, pairs=None) -> dict:
     """{status: MEASURED, commit, pairs: [{card, skill, source, card_sha256, source_sha256} | + status UNTRACKED,
     reason]} read from committed blobs at `ref` in one batch, LF-normalized; or {status: INCONCLUSIVE, reason}
-    for a git failure. Never raises."""
+    for a git failure. pairs=None discovers them from the committed dispatcher and hooks at the same commit.
+    Never raises."""
     sha, why = resolve_commit(repo, ref)
     if sha is None:
         return {"status": "INCONCLUSIVE", "reason": why}
+    if pairs is None:
+        pairs, why = committed_card_pairs(repo, sha)
+        if pairs is None:
+            return {"status": "INCONCLUSIVE", "reason": why}
     rels = sorted({p["card"] for p in pairs} | {p["source"] for p in pairs})
     blobs = vgm.batch_blobs(str(repo), sha, rels)
     out = []
@@ -375,16 +432,20 @@ def card_verdict(rows) -> str:
 
 
 def load_card_record(repo=REPO):
-    """(record, None) or (None, reason) from the working-tree file, CRLF->LF first."""
+    """(record, None) or (None, reason) from the COMMITTED blob at HEAD (an uncommitted re-record is refused, review
+    WR-04), CRLF->LF first."""
+    raw, why = committed_bytes(repo, CARD_RECORD_REL)
+    if raw is None:
+        return None, why
     try:
-        return json.loads(lf_bytes((Path(repo) / CARD_RECORD_REL).read_bytes()).decode("utf-8")), None
-    except (OSError, ValueError) as e:
+        return json.loads(lf_bytes(raw).decode("utf-8")), None
+    except ValueError as e:
         return None, f"{CARD_RECORD_REL} unreadable: {e}"
 
 
 def record_cards(repo, ref="HEAD"):
     """Write the record from committed blobs at `ref`. (record, None) or (None, reason)."""
-    state = card_source_state(repo, ref, card_pairs(repo))
+    state = card_source_state(repo, ref)
     if state["status"] != "MEASURED":
         return None, state.get("reason", "unmeasured")
     bad = [p for p in state["pairs"] if p.get("status") in ("UNTRACKED", "INCONCLUSIVE")]
@@ -467,7 +528,7 @@ def main(argv=None) -> int:
 
     if a.cards:
         record, why = load_card_record(repo)
-        rows = card_drift(record, card_source_state(repo, a.ref, card_pairs(repo))) if record else \
+        rows = card_drift(record, card_source_state(repo, a.ref)) if record else \
             [{"card": None, "skill": None, "status": "INCONCLUSIVE", "reason": why}]
         for r in rows:
             print(f"{r['status']} {r['skill']} <- {r['card']}" + (f" ({r['reason']})" if r.get("reason") else ""))

@@ -6,8 +6,9 @@
     python3 tools/test_skill_coverage.py --dispatcher PATH     # evaluate with that dispatcher text (red entrance)
     python3 tools/test_skill_coverage.py --recording PATH      # evaluate with that live recording (red entrance)
 
-Default mode reads only repo files and the committed live recordings (evidence/D-live-*.json): no home-directory
-read, no git, no network. So the CE verifier can re-run it at `--final` on another host. The skill population of
+Default mode reads only repo files, and the COMMITTED blobs at HEAD of the live recordings (evidence/D-live-*.json)
+and of evidence/D-coverage.md (review WR-04: an uncommitted copy is INCONCLUSIVE, never read): no home-directory
+read, no network; git is read-only. So the CE verifier can re-run it at `--final` on another host. The skill population of
 every plane is discovered (tools/skill_coverage.py); a coverage class is derived from the dispatcher registrations
 and the adapter source, a criticality class from plane-labelled evidence. Nothing is typed per skill except the two
 positive controls below, which exist to prove the derivation can find a known answer.
@@ -28,6 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import skill_coverage as sc  # noqa: E402
+import skill_mirror_drift as smd  # noqa: E402 -- committed-blob reads (review WR-04)
 
 REPO = sc.REPO
 SELF_REL = "tools/test_skill_coverage.py"
@@ -47,11 +49,21 @@ REC_KEYS = ("schema", "host", "node", "measured_at", "command", "skills", "count
 
 
 def load_recording(path: Path):
+    """(record, None) or (None, reason) from a file (the --recording red entrance and the drills)."""
+    try:
+        raw = Path(path).read_bytes()
+    except OSError as exc:
+        return None, f"{Path(path).name}: unreadable ({exc})"
+    return load_recording_bytes(raw, Path(path).name)
+
+
+def load_recording_bytes(raw: bytes, name: str):
     """(record, None) or (None, reason). Bytes go through the same CRLF normalization before json.loads."""
     try:
-        d = json.loads(sc.read_lf(Path(path)))
-    except (OSError, ValueError) as exc:
-        return None, f"{Path(path).name}: unreadable ({exc})"
+        d = json.loads(sc.lf(raw.decode("utf-8", errors="replace")))
+    except ValueError as exc:
+        return None, f"{name}: unreadable ({exc})"
+    path = Path(name)
     if not isinstance(d, dict):
         return None, f"{Path(path).name}: not an object"
     miss = [k for k in REC_KEYS if k not in d]
@@ -67,7 +79,30 @@ def load_recording(path: Path):
 
 
 def discover_recordings(repo: Path = REPO) -> list:
-    return [load_recording(p) + (p.name,) for p in sorted((repo / sc.EVIDENCE_DIR_REL).glob("D-live-*.json"))]
+    """[(record | None, reason | None, name)] for every D-live-*.json, read as COMMITTED blobs at HEAD (review
+    WR-04). A recording edited in the working tree, or written and never committed, is refused as uncommitted."""
+    repo = Path(repo)
+    glob = f"{sc.EVIDENCE_DIR_REL}/D-live-*.json"
+    tracked, why = smd.tracked_paths(repo, "HEAD")
+    if tracked is None:
+        return [(None, f"cannot list HEAD: {why}", "D-live-*.json")]
+    import fnmatch
+    rels = {p for p in tracked if fnmatch.fnmatch(p, glob)} | {p.relative_to(repo).as_posix() for p in repo.glob(glob)}
+    out = []
+    for rel in sorted(rels):
+        name = rel.rsplit("/", 1)[-1]
+        if rel not in tracked:
+            out.append((None, f"{name}: uncommitted recording, not in HEAD", name))
+            continue
+        raw, why = smd.committed_bytes(repo, rel)
+        out.append(((None, f"{name}: {why}") if raw is None else load_recording_bytes(raw, name)) + (name,))
+    return out
+
+
+def committed_recording(name="D-live-gex44.json"):
+    """(raw LF bytes, None) of a committed recording, or (None, reason)."""
+    raw, why = smd.committed_bytes(REPO, f"{sc.EVIDENCE_DIR_REL}/{name}")
+    return (None, why) if raw is None else (raw.replace(b"\r\n", b"\n"), None)
 
 
 # ------------------------------------------------------------------ planes
@@ -248,12 +283,17 @@ def c_class_total(planes):
 
 
 def c_evidence_current(planes):
-    path = REPO / EVIDENCE_REL
-    if not path.is_file():
-        return "FAIL", f"{EVIDENCE_REL} missing (run --write-evidence)"
-    if not evidence_current(path.read_bytes(), render(planes)):
+    raw, why = evidence_bytes()
+    if raw is None:
+        return "INCONCLUSIVE", f"{why} (run --write-evidence and commit it)"
+    dirty, why = uncommitted_sources(planes)
+    if dirty is None:
+        return "INCONCLUSIVE", f"cannot check the render's sources against HEAD: {why}"
+    if dirty:
+        return "INCONCLUSIVE", f"render sources differ from HEAD: {dirty[:5]}"
+    if not evidence_current(raw, render(planes)):
         return "FAIL", f"{EVIDENCE_REL} is not the current render (run --write-evidence)"
-    return "ok", f"{EVIDENCE_REL} equals the render (line endings normalized)"
+    return "ok", f"{EVIDENCE_REL} (committed) equals the render of committed sources (line endings normalized)"
 
 
 def c_evidence_drill(planes):
@@ -438,10 +478,9 @@ def c_recording_crlf(disp_text, recs):
     gate is a raw-bytes compare, V-SKC-EVIDENCE-DRILL (the rendered .md). The clause asserts that boundary: the raw
     CRLF bytes parsed WITHOUT normalization equal the LF parse; if a recording ever carries CR inside a value, that
     assertion goes red and normalization has become load-bearing here."""
-    committed = REPO / sc.EVIDENCE_DIR_REL / "D-live-gex44.json"
-    if not committed.is_file():
-        return "INCONCLUSIVE", "no committed gex44 recording"
-    raw = committed.read_bytes().replace(b"\r\n", b"\n")
+    raw, why = committed_recording()
+    if raw is None:
+        return "INCONCLUSIVE", f"no committed gex44 recording: {why}"
     cr = raw.replace(b"\n", b"\r\n")
     base, w0 = with_recording_text(raw)
     crl, w1 = with_recording_text(cr)
@@ -462,20 +501,81 @@ def c_recording_crlf(disp_text, recs):
 
 
 def c_unmeasured(disp_text, recs):
-    committed = REPO / sc.EVIDENCE_DIR_REL / "D-live-gex44.json"
-    if not committed.is_file():
-        return "INCONCLUSIVE", "no committed gex44 recording"
-    d = json.loads(sc.read_lf(committed))
+    raw, why = committed_recording()
+    if raw is None:
+        return "INCONCLUSIVE", f"no committed gex44 recording: {why}"
+    d = json.loads(raw)
     d["skills"] = []
     rec, why = with_recording_text(json.dumps(d).encode("utf-8"))
     pl = compute(REPO, disp_text, [(rec, why, "gex44")])
     p = pl[1]
-    d2 = json.loads(sc.read_lf(committed))
+    d2 = json.loads(raw)
     d2["schema"] = "other/9"
     rec2, why2 = with_recording_text(json.dumps(d2).encode("utf-8"))
     if rec is None and "inconclusive" in p and "rows" not in p and rec2 is None and why2:
         return "ok", f"empty skills -> INCONCLUSIVE ({why}); schema mismatch -> INCONCLUSIVE; no rows, never all none"
     return "FAIL", f"rec {rec is not None}, plane {sorted(p)}, schema-mismatch {rec2 is not None}"
+
+
+def evidence_bytes(repo=REPO):
+    """(bytes, None) or (None, reason) of the rendered evidence file as committed at HEAD (review WR-04)."""
+    return smd.committed_bytes(repo, EVIDENCE_REL)
+
+
+def uncommitted_sources(planes):
+    """Paths the render reads from the working tree that differ from HEAD (git status). The classification sources
+    stay working-tree reads; a dirty one makes EVIDENCE-CURRENT INCONCLUSIVE rather than judging the committed
+    evidence against an uncommitted world. Returns (paths, None) or (None, reason)."""
+    cards = sc.discover_cards(REPO)
+    paths = sorted({sc.DISPATCHER_REL, sc.CLAUDE_MD_REL, sc.HARD_RULES_REL, sc.HEAT_REL, "skills"}
+                   | {c["hook"] for c in cards} | {f for f, _ in sc.opportunity_adapters(REPO).values()})
+    out, why = smd.git_run(REPO, "status", "--porcelain", "-z", "--", *paths)
+    if out is None:
+        return None, why
+    return sorted({e[3:].decode("utf-8", "surrogateescape") for e in out.split(b"\0") if len(e) > 3}), None
+
+
+def c_committed_records(disp_text, recs):
+    """Review WR-04: the live recordings and the rendered evidence this gate judges are the COMMITTED blobs. A
+    recording edited in the working tree, or written and never committed, and a re-rendered evidence file that was
+    never committed, are INCONCLUSIVE ("uncommitted"), never read."""
+    import subprocess
+    try:
+        exe = smd.vgm._git_exe()
+    except FileNotFoundError as exc:
+        return "INCONCLUSIVE", f"git unavailable: {exc}"
+    raw, why = committed_recording()
+    if raw is None:
+        return "INCONCLUSIVE", f"no committed gex44 recording: {why}"
+    base = json.loads(raw)
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td)
+
+        def git(*a):
+            subprocess.run([exe, "-C", str(repo), "-c", "user.name=gate", "-c", "user.email=gate@invalid", *a],
+                           check=True, capture_output=True, timeout=30)
+        ev = repo / sc.EVIDENCE_DIR_REL
+        ev.mkdir(parents=True)
+        (ev / "D-live-x.json").write_text(json.dumps(base), encoding="utf-8")
+        (repo / EVIDENCE_REL).write_text("# committed\n", encoding="utf-8")
+        git("init", "-q")
+        git("add", "-A")
+        git("commit", "-q", "-m", "rec")
+        clean = [(lab, r is not None) for r, _, lab in discover_recordings(repo)]
+        ev_clean = evidence_bytes(repo)
+        edited = dict(base, host="edited")
+        (ev / "D-live-x.json").write_text(json.dumps(edited), encoding="utf-8")
+        (ev / "D-live-y.json").write_text(json.dumps(base), encoding="utf-8")
+        (repo / EVIDENCE_REL).write_text("# re-rendered, not committed\n", encoding="utf-8")
+        dirty = [(lab, r is None and "uncommitted" in str(w)) for r, w, lab in discover_recordings(repo)]
+        ev_dirty = evidence_bytes(repo)
+    good = (clean == [("D-live-x.json", True)] and ev_clean[0] == b"# committed\n"
+            and dirty == [("D-live-x.json", True), ("D-live-y.json", True)]
+            and ev_dirty[0] is None and "uncommitted" in str(ev_dirty[1]))
+    if good:
+        return "ok", ("clean: committed recording and evidence read; edited recording, untracked recording and "
+                      "re-rendered evidence -> uncommitted, never read")
+    return "FAIL", f"clean {clean} ev {ev_clean[0]!r}; dirty {dirty} ev {ev_dirty}"
 
 
 def c_live_skill_definition(disp_text, recs):
@@ -529,7 +629,8 @@ def clauses(disp_text, recs):
            ("V-SKC-SYNTHETIC-PATHS", c_synthetic(disp_text, recs)),
            ("V-SKC-RECORDING-CRLF", c_recording_crlf(disp_text, recs)),
            ("V-SKC-UNMEASURED-NOT-NONE", c_unmeasured(disp_text, recs)),
-           ("V-SKC-LIVE-SKILL-DEFINITION", c_live_skill_definition(disp_text, recs))]
+           ("V-SKC-LIVE-SKILL-DEFINITION", c_live_skill_definition(disp_text, recs)),
+           ("V-SKC-COMMITTED-RECORDS", c_committed_records(disp_text, recs))]
     return planes, res
 
 

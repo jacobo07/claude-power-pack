@@ -6,7 +6,8 @@
     python3 tools/test_skill_drift.py --write-evidence         # render evidence/H-drift.md
 
 Default mode builds its own poles in temporary git repos (committed skill + identical, mutated, truncated,
-extended or absent live copy) and reads the committed recordings `evidence/H-live-*.json`; it NEVER reads the
+extended or absent live copy) and reads the COMMITTED blobs of the recordings `evidence/H-live-*.json`, the card
+record and `evidence/H-drift.md` (an uncommitted copy is INCONCLUSIVE, never read); it NEVER reads the
 host's live skills tree, so the cognitive-economy verifier can re-run it on a host whose live tree differs.
 The host's real red pole is `python3 tools/skill_mirror_drift.py --live` (exit 1 on DRIFT).
 
@@ -218,13 +219,29 @@ def load_recording(raw: bytes):
 
 
 def recordings(repo=REPO):
-    """[(path, dict | None, reason | None)] for every committed H-live-*.json, sorted by name."""
+    """[(path, dict | None, reason | None)] for every H-live-*.json, sorted by name, read as COMMITTED blobs at
+    HEAD (review WR-04): a recording edited in the working tree, or written and never committed, carries reason
+    "uncommitted ..." and is never read."""
+    import fnmatch
+    repo = Path(repo)
+    tracked, why = smd.tracked_paths(repo, "HEAD")
+    if tracked is None:
+        return [(repo / RECORDING_GLOB, None, f"cannot list HEAD: {why}")]
+    rels = {p for p in tracked if fnmatch.fnmatch(p, RECORDING_GLOB)}
+    rels |= {p.relative_to(repo).as_posix() for p in repo.glob(RECORDING_GLOB)}
     out = []
-    for p in sorted(Path(repo).glob(RECORDING_GLOB)):
+    for rel in sorted(rels):
+        if rel not in tracked:
+            out.append((repo / rel, None, "uncommitted recording: not in HEAD"))
+            continue
+        raw, why = smd.committed_bytes(repo, rel)
+        if raw is None:
+            out.append((repo / rel, None, why))
+            continue
         try:
-            out.append((p, load_recording(p.read_bytes()), None))
-        except (OSError, ValueError) as e:
-            out.append((p, None, f"unreadable: {e}"))
+            out.append((repo / rel, load_recording(raw), None))
+        except ValueError as e:
+            out.append((repo / rel, None, f"unreadable: {e}"))
     return out
 
 
@@ -370,16 +387,20 @@ def render() -> str:
     return "\n".join(L)
 
 
+def evidence_bytes(repo=REPO):
+    """(bytes, None) or (None, reason) of the rendered evidence file as committed at HEAD (review WR-04)."""
+    return smd.committed_bytes(repo, EVIDENCE_REL)
+
+
 def evidence_current(raw: bytes, rendered: str):
     """(ok, diagnostic). Compared after CRLF->LF: the laptop checkout hands the committed file back CRLF."""
     return smd.lf_bytes(raw) == rendered.encode("utf-8")
 
 
 def c_evidence_current():
-    try:
-        raw = (REPO / EVIDENCE_REL).read_bytes()
-    except OSError as e:
-        return [(FAIL, "V-SKD-EVIDENCE-CURRENT", f"{EVIDENCE_REL} unreadable ({e}); run --write-evidence")]
+    raw, why = evidence_bytes()
+    if raw is None:
+        return [(INCONC, "V-SKD-EVIDENCE-CURRENT", f"{why}; run --write-evidence and commit it")]
     if evidence_current(raw, render()):
         return [(OK, "V-SKD-EVIDENCE-CURRENT", f"{EVIDENCE_REL} equals the render (after CRLF->LF)")]
     return [(FAIL, "V-SKD-EVIDENCE-CURRENT", f"{EVIDENCE_REL} differs from the render; run --write-evidence")]
@@ -395,6 +416,42 @@ def c_evidence_drill():
     if ctrl and crlf and not digit:
         return [(OK, "V-SKD-EVIDENCE-DRILL", "render ok, CRLF copy ok, one-character change FAIL")]
     return [(FAIL, "V-SKD-EVIDENCE-DRILL", f"control={ctrl} crlf={crlf} mutated_accepted={digit}")]
+
+
+def c_committed_records():
+    """Review WR-04: the recordings and the rendered evidence a gate judges are the COMMITTED blobs. A recording
+    edited in the working tree, or written and never committed, is INCONCLUSIVE ("uncommitted"), never read."""
+    no = _need_git()
+    if no:
+        return [(INCONC, "V-SKD-COMMITTED-RECORDS", f"git unavailable: {no}")]
+    rel = RECORDING_GLOB.replace("*", "x")
+    with temp_repo() as (repo, sha, live):
+        exe = smd.vgm._git_exe()
+        f = repo / rel
+        f.parent.mkdir(parents=True)
+        f.write_bytes(b'{"host": "x", "rows": []}\n')
+        (repo / EVIDENCE_REL).write_bytes(b"# committed\n")
+        for args in (["add", "-A"], ["commit", "-q", "-m", "recording"]):
+            subprocess.run([exe, "-C", str(repo), "-c", "user.name=gate", "-c", "user.email=gate@invalid", *args],
+                           check=True, capture_output=True, timeout=30)
+        clean = [(p.name, r, w) for p, r, w in recordings(repo)]
+        ev_clean = evidence_bytes(repo)
+        f.write_bytes(b'{"host": "x", "rows": [{"skill": "edited"}]}\n')
+        (repo / RECORDING_GLOB.replace("*", "y")).write_bytes(b'{"host": "y", "rows": []}\n')
+        (repo / EVIDENCE_REL).write_bytes(b"# re-rendered, not committed\n")
+        dirty = [(p.name, r, w) for p, r, w in recordings(repo)]
+        ev_dirty = evidence_bytes(repo)
+    got_clean = [(n, r is not None) for n, r, _ in clean]
+    got_dirty = [(n, r is None and "uncommitted" in str(w)) for n, r, w in dirty]
+    good = (got_clean == [("H-live-x.json", True)] and ev_clean[0] == b"# committed\n"
+            and got_dirty == [("H-live-x.json", True), ("H-live-y.json", True)]
+            and ev_dirty[0] is None and "uncommitted" in str(ev_dirty[1]))
+    if good:
+        return [(OK, "V-SKD-COMMITTED-RECORDS", "clean: committed recording and evidence read; edited recording, "
+                                                "untracked recording and re-rendered evidence -> uncommitted, "
+                                                "never read")]
+    return [(FAIL, "V-SKD-COMMITTED-RECORDS", f"clean {got_clean} ev {ev_clean[0]!r}; dirty {got_dirty} "
+                                              f"ev {ev_dirty}")]
 
 
 # --------------------------------------------------------------------------- committed-not-worktree
@@ -661,7 +718,7 @@ def card_state_rows(repo, record=None):
         record, why = smd.load_card_record(repo)
         if record is None:
             return [{"card": None, "skill": None, "status": "INCONCLUSIVE", "reason": why}]
-    return smd.card_drift(record, smd.card_source_state(repo, "HEAD", smd.card_pairs(repo)))
+    return smd.card_drift(record, smd.card_source_state(repo, "HEAD"))
 
 
 def statuses(rows):
@@ -727,26 +784,39 @@ def c_card_source_poles():
         ok = ok and good
         out.append(f"{label}: {got}{'' if good else ' <-- expected ' + str(sorted(want))}")
     with card_repo() as (repo, git, write):
-        rec, why = smd.record_cards(repo)
+        def record_and_commit():
+            r, w = smd.record_cards(repo)
+            git("add", "-A")
+            git("commit", "-q", "-m", "record")
+            return r, w
+        rec, why = record_and_commit()
         if rec is None:
             return [(INCONC, "V-SKD-CARD-SOURCE-POLES", f"temp record failed: {why}")]
         expect("unchanged", card_state_rows(repo), ["a:CURRENT"])
         write("skills/a/SKILL.md", SKILL_MD + "new rule\n")
         git("commit", "-q", "-am", "source edit")
         expect("committed source edit", card_state_rows(repo), ["a:SOURCE_CHANGED"])
+        # Review WR-04: a record re-written in the working tree and never committed must not read CURRENT; the
+        # committed record is the one the ledger pins.
         smd.record_cards(repo)
+        expect("re-recorded, not committed", card_state_rows(repo), ["None:INCONCLUSIVE"])
+        git("add", "-A")
+        git("commit", "-q", "-m", "record")
         expect("re-recorded", card_state_rows(repo), ["a:CURRENT"])
         write("hooks/card_a.js", CARD_TMPL % "a" + "// edit\n")
         git("commit", "-q", "-am", "card edit")
         expect("committed card edit", card_state_rows(repo), ["a:CARD_CHANGED"])
-        smd.record_cards(repo)
+        record_and_commit()
         write("hooks/hook-dispatcher.js", DISPATCHER_TMPL % (ENTRY_TMPL % "card_a" + ENTRY_TMPL % "card_b"))
         write("hooks/card_b.js", CARD_TMPL % "b")
         write("skills/b/SKILL.md", SKILL_MD)
+        # Review WR-04: discovery shares the hashing plane. A card registered only in the working tree is not a
+        # committed pair, so it is not discovered (it would otherwise read b:UNTRACKED against blobs).
+        expect("second card registered, not committed", card_state_rows(repo), ["a:CURRENT"])
         git("add", "-A")
         git("commit", "-q", "-m", "second card")
         expect("second registered card", card_state_rows(repo), ["a:CURRENT", "b:RECORD_STALE"])
-        smd.record_cards(repo)
+        record_and_commit()
         write("hooks/hook-dispatcher.js", DISPATCHER_TMPL % (ENTRY_TMPL % "card_b"))
         git("commit", "-q", "-am", "unregister a")
         expect("recorded pair no longer discovered", card_state_rows(repo), ["a:RECORD_STALE", "b:CURRENT"])
@@ -771,6 +841,8 @@ def c_card_source_crlf():
         rec, why = smd.record_cards(repo)
         if rec is None:
             return [(INCONC, "V-SKD-CARD-SOURCE-CRLF", f"temp record failed: {why}")]
+        git("add", "-A")
+        git("commit", "-q", "-m", "record")
         write("hooks/card_a.js", (CARD_TMPL % "a").replace("\n", "\r\n"))
         write("skills/a/SKILL.md", SKILL_MD.replace("\n", "\r\n"))
         git("commit", "-q", "-am", "crlf re-encoding")
@@ -846,7 +918,7 @@ def c_card_source_git_failure():
 
 # --------------------------------------------------------------------------- driver
 
-CLAUSES = [c_pole_identical, c_pole_drift, c_pole_absent, c_no_live_root, c_committed_not_worktree, c_record_reproduces,
+CLAUSES = [c_pole_identical, c_pole_drift, c_pole_absent, c_no_live_root, c_committed_not_worktree, c_committed_records, c_record_reproduces,
            c_record_drill, c_git_failure, c_card_source_current, c_card_source_poles, c_card_source_crlf,
            c_card_source_git_failure, c_evidence_current, c_evidence_drill]
 

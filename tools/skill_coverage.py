@@ -120,10 +120,13 @@ def registered_hooks(dispatcher_text: str) -> dict:
     return out
 
 
-def discover_cards(repo: Path = REPO, dispatcher_text: str | None = None, *, hook_texts: dict | None = None) -> list:
+def discover_cards(repo: Path = REPO, dispatcher_text: str | None = None, *, hook_texts: dict | None = None,
+                   read_disk: bool = True) -> list:
     """Card sources: registered PreToolUse hooks whose text emits a deny and names `<skill>` skill.
 
-    hook_texts (rel -> text) overlays disk reads, for drills. Returns dicts sorted by (skill, hook)."""
+    hook_texts (rel -> text) overlays disk reads, for drills. read_disk=False uses the overlay alone (a caller that
+    read the dispatcher and hooks from committed blobs, so discovery and hashing share one plane). Returns dicts
+    sorted by (skill, hook)."""
     repo = Path(repo)
     if dispatcher_text is None:
         dispatcher_text = read_lf(repo / DISPATCHER_REL)
@@ -135,7 +138,7 @@ def discover_cards(repo: Path = REPO, dispatcher_text: str | None = None, *, hoo
             continue
         if rel in overlay:
             text = overlay[rel]
-        elif (repo / rel).is_file():
+        elif read_disk and (repo / rel).is_file():
             text = read_lf(repo / rel)
         else:
             continue
