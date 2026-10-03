@@ -159,6 +159,25 @@
   undispatchable with any audit-sized prompt: one branch refuses a write clause, the other demands
   one. Fix (1) again, first time. Structural fix belongs in the guard (exempt agents whose
   definition has no write tool from the durable-output demand), not in prompt wording.
+
+## FP-ZERO-FICTION-ABSTRACT-METHOD — Zero-Fiction gate reads an abstract base method as a stub, and parks an unattended worker
+- What it really is: `modules/zero-crash/hooks/zero-fiction-gate.js` line 41 matches the Python
+  statement that raises the "not implemented" built-in exception anywhere in Write content, so the
+  abstract method of a base class that subclasses override reads as a stub. Its verdict is
+  `permissionDecision: "ask"` (line 146): a confirmation in a watched pane, an indefinite hang in a
+  background worker nobody watches. (The Woz write gate refuses the literal statement even in this
+  entry, so it is described in words.)
+- Symptom: mission `BLOCKED` with `host: waiting for permission prompt`; the worker's (or its
+  subagent's) last tool_use is a Write with no tool_result, and the transcript's PreToolUse
+  attachment carries `Zero-Fiction gate (BL-0035 Eight Marks #1)`.
+- Measured 2026-10-03 (incremental-cognition m-d2bdfa31de21 on GEX44, phase 3 plan 01, Write of
+  `wiki/tools/kme_pillars.py`): blocked 20:21-21:00 UTC until the Owner attached and approved. The
+  match was `Observer.result` in a base class whose pillar subclasses override it.
+- Response (<=2 min): in a watched pane, approve after checking that the match is an abstract method.
+  For a stuck worker: `ssh -t gex44` then `claude attach <bg id>`, approve, then leave with left-arrow
+  or Ctrl+Z (never `stop`). When writing a base class for an unattended run, prefer
+  `abc.abstractmethod` with an ellipsis body. Structural fix belongs in the gate (exempt abstract
+  methods; never ask in a session nobody can answer), not in the worker's code.
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
