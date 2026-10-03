@@ -287,14 +287,119 @@
    "savings": []
   },
   "D": {
-   "terminal": null,
-   "evidence": [],
-   "savings": []
+   "terminal": "MERGED_INTO_EXISTING_OWNER",
+   "reason": "Measured on D-W7 with rehydration displacement: the live economic trigger produced 3 claimed crossings, rehydration 0.0475 %, carried context avoided <= 0.2346 %, net interval [-0.05 %, +0.19 %]; 124 of 127 crossings came via the wall route. KSR's <= 6.34 % dead carriage stays an upper bound. Result and a measurement suggestion handed to the trigger owner; no peer file edited.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "vault/specs/economic-rollover-trigger.md"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/D.md",
+     "sha256": "94d0c81fa3a4d40aa3aa9faa06a54ee3b2e78d753dd3cfafafad160d302fd24a"
+    },
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md",
+     "sha256": "81c46ef4af14a19dd30e3fa53811171f5c2e45d553a72f4028edf1ca8fa11315"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/context_lifetime.py",
+     "sha256": "8e3bcd171e0c42d8f3bb5da219c4c023edc567a74cbe42baea29478215249349"
+    }
+   ],
+   "savings": [
+    {
+     "lever": "economic rollover trigger, 3 crossings",
+     "status": "upper_bound",
+     "displacement": "unknown",
+     "denominator": "D-W7",
+     "value_pct": 0.1871,
+     "interval_pct": [
+      -0.0475,
+      0.1871
+     ],
+     "measurement": "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md"
+    },
+    {
+     "lever": "all interactive crossings vs never crossing",
+     "status": "upper_bound",
+     "displacement": "unknown",
+     "denominator": "D-W7",
+     "value_pct": 17.1637,
+     "interval_pct": [
+      -2.1287,
+      17.1637
+     ],
+     "measurement": "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md"
+    }
+   ],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/measure/context_lifetime.py",
+      "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md",
+      "vault/programs/cognitive-economy/handoffs/D.md"
+     ],
+     "lines_added": 420,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none; the script is re-runnable on demand (~60 s, zero model calls)",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
   },
   "E": {
-   "terminal": null,
-   "evidence": [],
-   "savings": []
+   "terminal": "MERGED_INTO_EXISTING_OWNER",
+   "reason": "Continuation vs rotation measured from the epoch census and D-W7 transcripts: 49 measured mission rotations, net [-0.91 %, +2.41 %]; the ceiling for any threshold change is <= 2.78 % (earlier, net of the cheapest rehydration) and <= 0.91 % (later), both below the frozen 3 %, so no threshold change is proposed. Result handed to the rotation owner.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "vault/specs/parent-context-epoch-rotation.md"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/E.md",
+     "sha256": "a53b1e68ae61a6e5cb9cba37728d2152003a419002716d106bfae285c10b7c38"
+    },
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md",
+     "sha256": "81c46ef4af14a19dd30e3fa53811171f5c2e45d553a72f4028edf1ca8fa11315"
+    }
+   ],
+   "savings": [
+    {
+     "lever": "mission context rotation",
+     "status": "upper_bound",
+     "displacement": "unknown",
+     "denominator": "D-W7",
+     "value_pct": 2.4113,
+     "interval_pct": [
+      -0.9063,
+      2.4113
+     ],
+     "measurement": "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md"
+    }
+   ],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/handoffs/E.md"
+     ],
+     "lines_added": 35,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
   },
   "F": {
    "terminal": null,
