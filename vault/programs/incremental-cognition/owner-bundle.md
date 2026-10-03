@@ -85,6 +85,7 @@ Run plane: GEX44 clone `~/missions/incremental-cognition`, branch `mission/incre
   tracked `hooks/` directory, never overwriting; say if you want the installer itself changed instead. (3) The Windows-only
   "bare git is not on PowerShell PATH" trap in `modules/cascade_prevention/dangerous_cmds.py` fires on Linux for every
   plain `git` command: a rule defect for its owner, not staleness.
+- **[B]** NOTE (merge strategy, Owner decision): `PP_COMMIT_FLOOR=60e7947d` (tools/gex44_env_preflight.py) exists only on `mission/incremental-cognition-run`, so merge that branch preserving the commit (no squash, no rebase) or re-point the floor in the same merge; otherwise every declared-plane env reads `pp_install_stale` and the deploy ends in code 7 (review WR-08).
 - **[B]** DEBT, shrink-only, NOT closed by either PRG: `gsd_mission.py arm` launches its first worker through
   `launch_worker` without the pre-launch gate, so on a declared plane an arm can still start a worker into a
   NOT_READY env. What closes it: a later change that calls `mission_launch_gate.refusal` on the arm path before
