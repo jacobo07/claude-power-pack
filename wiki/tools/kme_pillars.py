@@ -99,7 +99,7 @@ FRONT_KEYS = ("instrument", "pillar", "denominator", "denominator_kind", "rule_d
               "until", "command", "population_match", "numerator", "share_interval", "share_measured_population",
               "threshold", "materiality", "materiality_reason", "observability", "second_workload_required",
               "estimate_model")
-FRONT_OPTIONAL = ("since", "until_located", "coverage")     # written only when the run has them
+FRONT_OPTIONAL = ("since", "until_located", "coverage", "second_workload_confirms")     # written only when the run has them
 
 ESTIMATE_MODEL = (
     "chars -> tokens at 3.0..4.5 chars per token; an attachment is cache-written once (weight 2) and cache-read "
@@ -2064,6 +2064,13 @@ def _result(ctx, sc, pillar, loc, until, argv):
     cov_ok = coverage is not None and coverage >= 1.0
     full = match == "exact" or (match == "referenced" and cov_ok)
     terminal = role == "primary" and full and verdict != "UNMEASURED"
+    # a second workload is VALID (usable as a measurement beside a primary) only when its population is reproduced (or
+    # the workload is not frozen) AND the reading is measured: an UNMEASURED run is not a second workload at all.
+    # Whether it CONFIRMS is a separate, narrower question: frozen rule E says "confirmed on a second workload", and
+    # only a lower bound at or above 3 % confirms; "< 3 %" is a valid measurement that disconfirms, STRADDLES
+    # is valid but undecided (second_workload_confirms stays false for both).
+    sw_valid = ((full or match == "not_frozen") and verdict != "UNMEASURED") if role == "second_workload" else None
+    sw_confirms = (sw_valid and verdict == ">= 3 %") if role == "second_workload" else None
     rule = list(RULE_DENOMINATORS[pillar])
     ref_note = f" (referenced from the CE ledger, coverage {coverage:.4f})" if kind == "referenced" else ""
     if role == "primary":
@@ -2074,11 +2081,11 @@ def _result(ctx, sc, pillar, loc, until, argv):
             t_reason = (f"primary file but not terminal: population_match={match}, materiality={verdict}{ref_note} "
                         f"(a terminal needs an exact or fully covered population and a measured verdict)")
     elif role == "second_workload":
-        t_reason = f"second_workload file: confirms a primary file on {rule}; never terminal itself{ref_note}"
+        t_reason = (f"second_workload file: a measurement beside a primary file on {rule} (valid={sw_valid}, "
+                    f"confirms={sw_confirms}, materiality={verdict}); never terminal itself{ref_note}")
     else:
         t_reason = (f"smoke: {label} is outside pillar {pillar}'s frozen rule {rule} (the rule names KME-L and "
                     f"CPP-D-W7); evidence about the instrument, not a pillar terminal")
-    sw_valid = full or match == "not_frozen" if role == "second_workload" else None
     caveats = list(CAVEATS_BY_PILLAR.get(pillar, CAVEATS))
     if kind == "referenced":
         caveats.append("CPP-D-W7 is a REFERENCED denominator read from the CE ledger and never re-measured: its calls "
@@ -2093,7 +2100,7 @@ def _result(ctx, sc, pillar, loc, until, argv):
         "instrument": INSTRUMENT, "pillar": pillar, "denominator": label,
         "denominator_kind": kind, "rule_denominators": rule,
         "evidence_role": role, "terminal_evidence": terminal, "terminal_evidence_reason": t_reason,
-        "second_workload_valid": sw_valid, "plane": plane_name(),
+        "second_workload_valid": sw_valid, "second_workload_confirms": sw_confirms, "plane": plane_name(),
         "measured_at": _utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "until": fmt_instant(until) if until is not None else None,
         "command": command_string(argv), "population_match": match,

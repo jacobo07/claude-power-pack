@@ -2347,6 +2347,25 @@ def g_r3_terminal_requires_primary():
     return ok, f"primary_terminal={fm0['terminal_evidence']} good={good} hand={hand_f[:1]} forged={forged_f[:1]} table_eq={table_eq}"
 
 
+def g_second_workload_needs_measured_verdict():
+    """WR-05: a second_workload file is valid only when its verdict is measured, and confirms only at '>= 3 %'."""
+    def sw(build):
+        root = scratch("wr05")
+        build(root)
+        rc, res, _o, _e = run_json(other_args(pdir(root), scratch("wr05-out"), extra=["--role", "second_workload"]))
+        return rc, res
+    rc_u, unm = sw(lambda r: (lambda fx: (fx.assistant("m1", "r1", (10, 100, 0, 5), ts(2)),
+                                          fx.assistant("m2", "r2", (10, 0, 100, 5), ts(3))))(two_call_session(r)))
+    rc_b, below = sw(lambda r: heavy_session(r, 1))
+    rc_a, above = sw(lambda r: heavy_session(r, 4000))
+    rows = {"unmeasured": (unm["materiality"], unm["second_workload_valid"], unm["second_workload_confirms"]),
+            "below": (below["materiality"], below["second_workload_valid"], below["second_workload_confirms"]),
+            "above": (above["materiality"], above["second_workload_valid"], above["second_workload_confirms"])}
+    want = {"unmeasured": ("UNMEASURED", False, False), "below": ("< 3 %", True, False),
+            "above": (">= 3 %", True, True)}
+    return rows == want and unm["terminal_evidence"] is False, f"rows={rows} want={want}"
+
+
 GATES_TRACER = [
     ("V-KMEP-TRACER-D-E2E", g_tracer_e2e),
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
@@ -2356,6 +2375,7 @@ GATES_REVIEW_FIX = [
     ("V-KMEP-OUT-DIR-INSIDE-ROOT", g_out_dir_inside_root),
     ("V-KMEP-SIGNATURE-NO-URL-TOKEN", g_signature_no_url_token),
     ("V-KMEP-R3-TERMINAL-REQUIRES-PRIMARY", g_r3_terminal_requires_primary),
+    ("V-KMEP-SECOND-WORKLOAD-NEEDS-VERDICT", g_second_workload_needs_measured_verdict),
 ]
 GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_PLAN5_TRACER + GATES_PLAN5_BUNDLE + GATES_REAL + GATES_REAL_2 + GATES_REVIEW_FIX
 

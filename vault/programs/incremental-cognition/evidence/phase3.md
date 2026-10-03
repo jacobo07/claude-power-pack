@@ -128,10 +128,10 @@ ICP_PILLAR_D=FAIL
 ## Artifacts (LF sha256 of each committed file the evidence relies on)
 
 ```
-a6ba9574ac23215cf651d5da10f9d311eeb437e2fd7be61eca7e354bf6985c93  wiki/tools/kme_pillars.py
+9e377d133e7dd5c10b548c5fa092f5cd2d8f656f4d69e332c5515ff98f99a1ad  wiki/tools/kme_pillars.py
 e7a74a9423724a406be8f52407975248ce030f467e237218b4fe7f177e6f9682  wiki/tools/kme_token_audit.py
-888c38f5a28f3560dd2b4e412d80e2674a703ef10949e5cbbfe54aaa7f19ccb5  tools/test_kme_pillars.py
-b6cffce946f2dc350d6a9d1ec37d5c2648b5820fee011a3a742630497d26e361  tools/test_incremental_cognition_program.py
+1c53e943ad6c21e618c6a2b8ebb67dd90c9cdd4465595e51c37dd34d7ed77347  tools/test_kme_pillars.py
+6b9572848c46ea6476f23362c444ee7add6d2eb0f95d48237a9794e8d96f632f  tools/test_incremental_cognition_program.py
 a242f05a575b1add67250775f7138f5e3001df8879489e1eecc8e07d42bec39c  vault/programs/incremental-cognition/owner-bundle.md
 b1ad9164126d579a5e6cfb205a069f18d133c30b8b4835f58700331939639378  vault/programs/incremental-cognition/measurements/D-KME-G-2026-10-03.md
 7f9da08dfe60f993aad942b6836ec50709d6ecd1ff6c4703e54176a47bf0affd  vault/programs/incremental-cognition/measurements/D-GEX44-B001-2026-10-03.md

@@ -271,6 +271,9 @@ def check_measurement_scope(led: dict, res, only=None) -> list:
                 if fm.get("second_workload_valid") is not True:
                     f.append(f"R3 {pid}: {ref} is a second_workload file with second_workload_valid "
                              f"{fm.get('second_workload_valid')!r} (coverage not reached)")
+                elif fm.get("materiality") == "UNMEASURED":
+                    f.append(f"R3 {pid}: {ref} is a second_workload file whose own verdict is UNMEASURED "
+                             f"(an unmeasured run confirms nothing)")
                 elif not has_primary:
                     f.append(f"R3 {pid}: {ref} is a second_workload file cited without a primary file with "
                              f"terminal_evidence true for pillar {pid}")
@@ -397,6 +400,15 @@ def selftest(verbose=True) -> bool:
     quoted = "---\ndenominator: \"KME-L\"\n---\n\nThe words evidence_role: smoke appear in this body sentence.\n"
     say(r3("E", {"q": quoted}, ["q"]) == [] and front_matter_fields(quoted) == {"denominator": "KME-L"},
         "V-ICP-R3-QUOTED-NOT-FIELD (body words are not front matter)")
+    # WR-05: a second workload whose own verdict is UNMEASURED is refused even beside a terminal primary.
+    sec_unm = fm(pillar="E", evidence_role="second_workload", terminal_evidence=False, second_workload_valid=True,
+                 materiality="UNMEASURED")
+    sec_below = fm(pillar="E", evidence_role="second_workload", terminal_evidence=False, second_workload_valid=True,
+                   materiality="< 3 %")
+    say(any("UNMEASURED" in x for x in r3("E", {"p": prim, "w": sec_unm}, ["p", "w"])),
+        "V-ICP-R3-SECOND-UNMEASURED-REFUSED")
+    say(r3("E", {"p": prim, "w": sec_below}, ["p", "w"]) == [],
+        "V-ICP-R3-SECOND-BELOW-3-ACCEPTED (a valid measurement; whether it confirms is second_workload_confirms)")
     # WR-04: a pillar D..I with a terminal needs a cited kme_pillars primary file, and a file's terminal claim must
     # agree with its own fields.
     def r3t(pillar, table, refs, terminal="RESEARCH_INSUFFICIENT_EVIDENCE"):
