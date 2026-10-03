@@ -29,6 +29,7 @@ nothing here is a GEX44 listing measurement.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import math
 import sys
@@ -117,16 +118,38 @@ def clause_cap(arms, denoms):
     return "FAIL", text + ": listing is meaningfully below the cap"
 
 
+def clause_denom_match(arms, denoms):
+    d = denoms["D-LISTING"]
+    want = (("challenger chars", arms["challenger"]["listing"]["chars"], d["listing_chars_after_K4"]),
+            ("champion startup_tokens", arms["champion"]["startup_tokens"], d["startup_tokens_before_K4"]),
+            ("challenger startup_tokens", arms["challenger"]["startup_tokens"], d["startup_tokens_after_K4"]))
+    bad = [f"{n} row {got} != frozen {exp}" for n, got, exp in want if got != exp]
+    if bad:
+        return "FAIL", "rows no longer equal frozen D-LISTING: " + "; ".join(bad)
+    return "ok", "rows equal frozen D-LISTING (" + ", ".join(f"{n} {got}" for n, got, _ in want) + ")"
+
+
+def clause_evidence_current(text, rendered):
+    """text = the committed evidence file (None when absent); rendered = a fresh render()."""
+    if text is None:
+        return "FAIL", f"{EVIDENCE_REL} is absent: re-render with --write-evidence"
+    if text.replace("\r\n", "\n") != rendered:
+        return "FAIL", f"{EVIDENCE_REL} differs from a fresh render: re-render with --write-evidence"
+    return "ok", f"{EVIDENCE_REL} is byte-equal to a fresh render"
+
+
 def evaluate_core(rows, denoms):
     """V-LF-SOURCES, V-LF-TOKENS, V-LF-CAP. Returns (results, arms)."""
     arms, refusal = k4_arms(rows)
     if refusal:
         return [("V-LF-SOURCES", "INCONCLUSIVE", refusal),
                 ("V-LF-TOKENS", "INCONCLUSIVE", "no arms"),
-                ("V-LF-CAP", "INCONCLUSIVE", "no arms")], None
+                ("V-LF-CAP", "INCONCLUSIVE", "no arms"),
+                ("V-LF-DENOM-MATCH", "INCONCLUSIVE", "no arms")], None
     res = [("V-LF-SOURCES", "ok", "champion-startup and challenger-startup resolved, one row each")]
     res.append(("V-LF-TOKENS",) + clause_tokens(arms))
     res.append(("V-LF-CAP",) + clause_cap(arms, denoms))
+    res.append(("V-LF-DENOM-MATCH",) + clause_denom_match(arms, denoms))
     return res, arms
 
 
@@ -206,6 +229,84 @@ def render(rows, denoms, fro) -> str:
     return "\n".join(L)
 
 
+# --------------------------------------------------------------------------- drills
+# Each mutant must die by ITS clause, the other named clause must stay ok, and the clean case must be
+# all ok (a drill that cannot pass the clean case proves nothing).
+
+
+def _arms_of(rows):
+    return (next(r for r in rows if r.get("label") == "champion-startup"),
+            next(r for r in rows if r.get("label") == "challenger-startup"))
+
+
+def _m_clean(rows, denoms):
+    pass
+
+
+def _m_tokens_lowered(rows, denoms):
+    champ, chall = _arms_of(rows)
+    chall["startup_tokens"] = champ["startup_tokens"] - 1
+
+
+def _m_chars_lowered(rows, denoms):
+    cap = denoms["D-LISTING"]["listing_chars_cap"]
+    _arms_of(rows)[1]["listing"]["chars"] = cap - band_of(cap) - 1
+
+
+def _m_chars_boundary(rows, denoms):
+    cap = denoms["D-LISTING"]["listing_chars_cap"]
+    _arms_of(rows)[1]["listing"]["chars"] = cap - band_of(cap)
+
+
+def _m_unmeasured(rows, denoms):
+    _arms_of(rows)[1]["listing"] = "UNMEASURED (no initial skill_listing in transcript)"
+
+
+def _m_duplicate(rows, denoms):
+    rows.append(copy.deepcopy(_arms_of(rows)[0]))
+
+
+def _m_denom_changed(rows, denoms):
+    _arms_of(rows)[1]["startup_tokens"] += 1
+
+
+# (name, mutator, clause that must die, expected status, {other clause: expected status})
+VERDICT_DRILLS = [
+    ("clean", _m_clean, "V-LF-SOURCES", "ok",
+     {"V-LF-TOKENS": "ok", "V-LF-CAP": "ok", "V-LF-DENOM-MATCH": "ok"}),
+    ("tokens-lowered", _m_tokens_lowered, "V-LF-TOKENS", "FAIL", {"V-LF-CAP": "ok"}),
+    ("chars-lowered", _m_chars_lowered, "V-LF-CAP", "FAIL", {"V-LF-TOKENS": "ok"}),
+    ("chars-at-band-edge", _m_chars_boundary, "V-LF-CAP", "ok", {"V-LF-TOKENS": "ok"}),
+    ("listing-unmeasured", _m_unmeasured, "V-LF-SOURCES", "INCONCLUSIVE", {}),
+    ("duplicate-champion-row", _m_duplicate, "V-LF-SOURCES", "INCONCLUSIVE", {}),
+    ("challenger-tokens-changed", _m_denom_changed, "V-LF-DENOM-MATCH", "FAIL", {"V-LF-TOKENS": "ok"}),
+]
+
+
+def statuses_for(rows, denoms) -> dict:
+    results, _ = evaluate_core(rows, denoms)
+    return {n: s for n, s, _ in results}
+
+
+def drills(rows, denoms, fro) -> list:
+    """Returns [(name, clause, observed, ok)]."""
+    out = []
+    for name, mut, clause, want, others in VERDICT_DRILLS:
+        mrows = copy.deepcopy(rows)
+        mut(mrows, denoms)
+        st = statuses_for(mrows, denoms)
+        good = st.get(clause) == want and all(st.get(c) == w for c, w in others.items())
+        out.append((name, clause, st.get(clause), good))
+    rendered = render(rows, denoms, fro)
+    digit = next(i for i, c in enumerate(rendered) if c.isdigit())
+    mutated = rendered[:digit] + str((int(rendered[digit]) + 1) % 10) + rendered[digit + 1:]
+    clean = clause_evidence_current(rendered, rendered)[0]
+    obs = clause_evidence_current(mutated, rendered)[0]
+    out.append(("evidence-clean", "V-LF-EVIDENCE-CURRENT", clean, clean == "ok"))
+    out.append(("evidence-digit-changed", "V-LF-EVIDENCE-CURRENT", obs, obs == "FAIL"))
+    return out
+
+
 # --------------------------------------------------------------------------- driver
 
 
@@ -220,11 +321,25 @@ def emit(results) -> int:
 
 def default_results(rows, denoms, fro):
     results, arms = evaluate_core(rows, denoms)
+    if arms is None:
+        return results
+    try:
+        ev = (REPO / EVIDENCE_REL).read_text(encoding="utf-8")
+    except OSError:
+        ev = None
+    results.append(("V-LF-EVIDENCE-CURRENT",) + clause_evidence_current(ev, render(rows, denoms, fro)))
+    d = drills(rows, denoms, fro)
+    subs = "".join(f"\n    drill {n}: {c} {o}" for n, c, o, _ in d)
+    if all(g for *_, g in d):
+        results.append(("V-LF-DRILLS", "ok", f"{len(d)} drills, clean case all ok, each mutant died by its own clause" + subs))
+    else:
+        results.append(("V-LF-DRILLS", "FAIL", "a drill did not behave as required" + subs))
     return results
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--drills", action="store_true", help="print the in-process mutant drills")
     ap.add_argument("--jsonl", help="evaluate the verdict clauses on this jsonl only")
     ap.add_argument("--json", action="store_true", help="print the derived figures as JSON")
     ap.add_argument("--write-evidence", action="store_true", help=f"render {EVIDENCE_REL}")
@@ -241,6 +356,11 @@ def main(argv=None) -> int:
         rows = load_rows(path)
     except (OSError, ValueError) as exc:
         return emit([("V-LF-SOURCES", "INCONCLUSIVE", str(exc))])
+    if args.drills:
+        d = drills(rows, denoms, fro)
+        for name, clause, obs, good in d:
+            print(f"    drill {name}: {clause} {obs}{'' if good else ' <-- WRONG'}")
+        return 0 if all(g for *_, g in d) else 1
     if args.write_evidence:
         try:
             text = render(rows, denoms, fro)

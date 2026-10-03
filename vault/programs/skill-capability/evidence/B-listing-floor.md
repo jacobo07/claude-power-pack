@@ -18,6 +18,7 @@ Frozen pillar B rule (ledger, quoted):
 - ok V-LF-SOURCES: champion-startup and challenger-startup resolved, one row each
 - ok V-LF-TOKENS: challenger startup_tokens 89844 vs champion 87739 (delta +2105): not below champion
 - ok V-LF-CAP: challenger listing chars 29795, cap 30000, gap 205 chars (0.68% of cap), band 300: still cap-bound
+- ok V-LF-DENOM-MATCH: rows equal frozen D-LISTING (challenger chars 29795, champion startup_tokens 87739, challenger startup_tokens 89844)
 - verdict: FALSIFIED (frozen cap 30000, band 300)
 
 ## Commands
