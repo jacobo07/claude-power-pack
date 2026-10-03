@@ -516,6 +516,14 @@ def gsd_doc_kind(path):
     return None
 
 
+def pair_ratio(doc_chars, init_chars, n_paired):
+    """doc chars per init-JSON char over the paired turns; None (never 0) when no turn holds both an init call and
+    a doc: the absence of the compact state is not proof that it is small."""
+    if n_paired < 1 or init_chars <= 0:
+        return None
+    return round(doc_chars / init_chars, 2)
+
+
 def _basename(path):
     parts = [x for x in re.split(r"[\\/]+", str(path)) if x]
     return parts[-1] if parts else ""
@@ -682,7 +690,7 @@ class FObserver(PillarObserver):
         paired = [k for k in init_turns if k in doc_turns]
         p_doc = sum(doc_turns[k] for k in paired)
         p_init = sum(init_turns[k] for k in paired)
-        ratio = round(p_doc / p_init, 2) if paired and p_init > 0 else None
+        ratio = pair_ratio(p_doc, p_init, len(paired))
         chars = sum(e["chars"] for e in docs)
         return {
             "numerator": {

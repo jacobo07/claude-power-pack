@@ -1255,6 +1255,29 @@ def _m_truncating_writer():
     return _patch("write_measurement", mutant)
 
 
+def _m_e_ignores_compaction():
+    real = kp.classify_read
+    return _patch("classify_read", lambda prev, h, wcount, seg: real(prev, h, wcount, prev[2] if prev else seg))
+
+
+def _m_e_stub_never():
+    return _patch("is_stub_text", lambda text: False)
+
+
+def _m_e_writes_ignored():
+    real = kp.classify_read
+    return _patch("classify_read", lambda prev, h, wcount, seg: real(prev, h, prev[1] if prev else wcount, seg))
+
+
+def _m_f_kind_none():
+    return _patch("gsd_doc_kind", lambda path: None)
+
+
+def _m_f_ratio_zero():
+    real = kp.pair_ratio
+    return _patch("pair_ratio", lambda doc, init, n: 0.0 if n < 1 else real(doc, init, n))
+
+
 MUTANTS = [
     ("M1 materiality maps UNMEASURED to '< 3 %'", _m_unmeasured_to_below, ["V-KMEP-UNMEASURED-NOT-BELOW"]),
     ("M2 compare_population always exact", _m_always_exact, ["V-KMEP-POPULATION-DRIFT"]),
@@ -1262,6 +1285,12 @@ MUTANTS = [
     ("M4 D counts every hook attachment type", _m_every_hook_type, ["V-KMEP-D-ONLY-ADDITIONAL-CONTEXT"]),
     ("M5 make_keep ignores until", _m_until_ignored, ["V-KMEP-UNTIL-CUTOFF"]),
     ("M6 writer truncates instead of suffixing", _m_truncating_writer, ["V-KMEP-NO-OVERWRITE"]),
+    ("M7 E ignores compaction boundaries (every identical reread is same-segment)", _m_e_ignores_compaction,
+     ["V-KMEP-E-AFTER-COMPACTION"]),
+    ("M8 E stub test never matches", _m_e_stub_never, ["V-KMEP-E-STUB"]),
+    ("M9 E writes never mark a path", _m_e_writes_ignored, ["V-KMEP-E-INTERVENING-EDIT"]),
+    ("M10 F gsd_doc_kind always None", _m_f_kind_none, ["V-KMEP-F-READ-WORKFLOW", "V-KMEP-F-POSITIVE"]),
+    ("M11 F paired ratio reads 0 when no init was seen", _m_f_ratio_zero, ["V-KMEP-F-INIT-ABSENT"]),
 ]
 
 
