@@ -63,8 +63,27 @@ Total Plans in Phase: 3
 
 **Last session:** 2026-10-03T16:53:11.686Z
 
-**Stopped At:** Phase 3 complete, ready to plan Phase 04
-**Resume File:** None
+**Stopped At:** HANDOFF epoch 2 -> 3, 2026-10-03T18:33Z (mission context wall, session stopped 18:40Z)
+**Resume File:** None (this section is the hand-off)
+
+### Epoch 2 hand-off (verify against git, the repository wins)
+
+- Phases 1-3 COMPLETE and verified: A IMPLEMENTED_AND_VERIFIED, B FALSIFIED_OR_REJECTED_BY_EVIDENCE,
+  C IMPLEMENTED_AND_VERIFIED; `--pillar A/B/C` PASS on gex44 (last observed at 8b0137aa).
+- Phase 4 (D, H): plans committed 2dd5ab6c (revised for checker blockers, re-check passed). 04-01 committed
+  (1ad9ee71, 8313c340, 0a2ab9ea; SKC_PASS=15/15). 04-02 committed (97ded664, a94256e6, 94109552; SKD_PASS=9/9).
+  **04-03 executor was IN FLIGHT at hand-off**: uncommitted edits to tools/skill_mirror_drift.py,
+  tools/test_skill_drift.py, evidence/H-drift.md and a new card_source_digests.json. FIRST: check whether
+  04-03-SUMMARY.md and its commits landed. If not, read those edits (never discard them unread), re-dispatch 04-03
+  telling it the files already exist, then 04-04, then phase 4 code review + verification.
+- Phase 5: 05-01/05-02-PLAN.md written by a planner, UNCOMMITTED, not plan-checked yet.
+- Phase 6: planner stopped at the wall, no plans; re-plan after 04-03 lands (reuse its card-vs-source record).
+- Phase 7: planner in flight at hand-off; look for 07-0x-PLAN.md (uncommitted, unchecked).
+- Contexts for phases 5-9 are committed. Recurring review lessons to pass to every planner/executor: verdict
+  depends on every provenance clause, each with its own red mutant; absent/zero/unparseable is UNMEASURED;
+  LF-normalized compares (laptop clone runs core.autocrlf=true); gate argv reads only committed files, git
+  failure -> INCONCLUSIVE; never mark a proven delivery UNMEASURED.
+- Resume: `/gsd-autonomous --ws skill-capability` from this worktree.
 
 ## Performance Metrics
 
