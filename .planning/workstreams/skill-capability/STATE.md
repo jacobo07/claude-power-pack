@@ -69,6 +69,8 @@ Total Plans in Phase: 3
 
 - [Phase 8, epoch 4]: executed 08-03 (a9177a05..a00e8361, SKH_PASS=23/23, handoffs I/K/L/M), 08-02 (007f1d86..73770627: 24 skills declare `metadata.opportunity_detector`, SCG_PASS=32/32, G/H pins moved; accepted deviation: fixture helper `undeclared()` in tools/test_skill_creation_gate.py, neutral -- a clone at a00e8361 still gives 31/32 fail_set 97), 08-04 (844ea42a..b3c89f3e). `--status`: closed A-M, open N, violations []; --pillar A-M PASS re-run by the orchestrator. Expected red until the Owner syncs ~/.claude/skills ([J] line): test_cdio_mobile 5/6, live mirror DRIFT 14. NEXT: 08-REVIEW, fix, verify phase 8; finish phase 7 verification; phase 9 closeout (N stays open on gex44 by design: --final is laptop-only).
 
+- [Phase 8, epoch 4]: 08-REVIEW 0 CR / 6 WR / 4 IN (46f2b5ca); 9 fixed (fa8e85f8..419d35ac, SCG_PASS=48/48, SKH_PASS=41/41, --pillar A-M PASS re-run by the orchestrator). IN-04 NOT fixed (decision): 7 of 24 SKILL.md frontmatters were already invalid YAML before phase 8; rewriting them is out of phase scope and would widen the Owner's live-mirror sync. Safe because it is reversible and pre-existing; the limit goes to phase 9 deltas. Phase 7 verified passed by the orchestrator (dispatched verifier stalled) and completed (1e5a7a80).
+
 ## Session Continuity
 
 **Last session:** 2026-10-03T18:55:16.029Z
