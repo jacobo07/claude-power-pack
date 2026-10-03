@@ -21,7 +21,7 @@ Clauses:
 - SOURCE-PATH (per card): the trailer's source is `skills/<trailer skill>/SKILL.md`.
 - SOURCE-CURRENT (per card): the committed source at the judged commit has the trailer's LF sha256; an absent source is UNMEASURED. This is the clause a re-record of H alone cannot clear.
 - COMMIT-ANCESTOR (per card): the trailer commit resolves and is an ancestor of the judged commit (unresolvable: UNMEASURED, and so are the next two).
-- COMMIT-TOUCHES (per card): the trailer commit changed the source path.
+- COMMIT-TOUCHES (per card): the trailer commit changed the source path, by the definition `--trailer-for` prints: the last commit up to it that changed the source (path-limited `git log -1`) is itself, so a merge that resolved the source counts.
 - COMMIT-DIGEST (per card): the source blob at the trailer commit has the trailer's digest.
 - FLOOR (gate): population size >= 2 (0 is UNMEASURED, 1 is FAIL).
 - DISPATCHER-COVERED (gate): every card the dispatcher registers, in either CHAIN_MAP shape (`../skills/claude-power-pack/<rel>` and `./<rel>`, skill_mirror_drift.committed_card_pairs with dotslash), is a population member, so a registered card outside the sweep (a test directory) cannot escape it.
@@ -49,6 +49,7 @@ Each drill starts from a copy of a clean temporary git repo seeded from the HEAD
 | SOURCE-CHANGED-RERECORDED | first byte of CW's SKILL.md changed and committed; trailer untouched; H re-recorded | FAIL {hooks/doctrine_cards.js:SOURCE-CURRENT} | FAIL {hooks/doctrine_cards.js:SOURCE-CURRENT} | ok |
 | SOURCE-CHANGED-RAW | the same source change, H not re-recorded | FAIL {H-RECORD-CURRENT, hooks/doctrine_cards.js:SOURCE-CURRENT} | FAIL {H-RECORD-CURRENT, hooks/doctrine_cards.js:SOURCE-CURRENT} | ok |
 | REDERIVED | SOURCE-CHANGED-RAW, then CW's trailer re-derived with trailer_for and H re-recorded | PASS {} | PASS {} | ok |
+| MERGE-REDERIVED | CW's SKILL.md edited on two branches, the conflict resolved inside the merge commit; trailer re-derived with trailer_for (it names the merge) and H re-recorded | PASS {} | PASS {} | ok |
 | MULTI-SKILL-LINEAGED | CW also names `third-skill` (a see-also line) and carries a second trailer for it; H re-recorded with 3 pairs | PASS {} | PASS {} | ok |
 | MULTI-SKILL-RERECORDED | MULTI-SKILL-LINEAGED (judged PASS first), then third-skill's SKILL.md changed and committed, card untouched, H re-recorded | FAIL {hooks/doctrine_cards.js:SOURCE-CURRENT} | FAIL {hooks/doctrine_cards.js:SOURCE-CURRENT} | ok |
 | MULTI-SKILL-UNLINEAGED | CW also names `third-skill` with no trailer for it; H re-recorded with 3 pairs | FAIL {hooks/doctrine_cards.js:SKILL} | FAIL {hooks/doctrine_cards.js:SKILL} | ok |
@@ -94,7 +95,7 @@ Each clause was forced PASS (its CLAUSES entry replaced) and its singleton drill
 
 Git unavailable (`vgm._git_exe` raising): live INCONCLUSIVE, fixture INCONCLUSIVE, after restoration PASS.
 
-Git failing inside a clause on the clean fixture (one subcommand stubbed): merge-base: INCONCLUSIVE 2 clause(s); diff-tree: INCONCLUSIVE 2 clause(s); cat-file: INCONCLUSIVE 2 clause(s).
+Git failing inside a clause on the clean fixture (one subcommand stubbed): merge-base: INCONCLUSIVE 2 clause(s); log: INCONCLUSIVE 2 clause(s); cat-file: INCONCLUSIVE 2 clause(s).
 
 ## Re-derivation
 

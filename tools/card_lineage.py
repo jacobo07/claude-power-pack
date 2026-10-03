@@ -37,7 +37,8 @@ Clauses (all 10 must be PASS for a PASS verdict; outcomes are PASS, FAIL or UNME
             SOURCE-CURRENT   the committed source at the judged commit has the trailer's digest (an absent source,
                              i.e. a skill that does not exist, is UNMEASURED)
             COMMIT-ANCESTOR  the trailer commit resolves and is an ancestor of the judged commit
-            COMMIT-TOUCHES   the trailer commit changed the source path
+            COMMIT-TOUCHES   the trailer commit changed the source path: last_change(commit, source) == commit, the
+                             same definition trailer_for prints (a merge that resolved the source counts)
             COMMIT-DIGEST    the source blob at the trailer commit has the trailer's digest
   gate      FLOOR            population size >= 2 (0 is UNMEASURED, 1 is FAIL)
             DISPATCHER-COVERED  every card the dispatcher registers, in either CHAIN_MAP shape
@@ -182,6 +183,20 @@ def population(repo, sha, tracked):
     return members, None
 
 
+def last_change(repo, rev, source):
+    """(sha of the last commit up to `rev` that changed `source`, or "" when none did, None) or (None, reason).
+
+    The ONE definition of "the commit that changed the source", used by both trailer_for (the generator) and
+    COMMIT-TOUCHES (the judge), so the judge can never refuse a commit the generator printed (06 review WR-03).
+    Path-limited `git log` with default history simplification: a merge counts when it differs from every parent
+    (e.g. a conflict resolved inside the source), which `git diff-tree` without -m/--cc never reports."""
+    log, why = smd.git_run(repo, "log", "-1", "--format=%H", rev, "--", source)
+    if log is None:
+        return None, f"git log for {source}: {why}"
+    commit = log.decode("utf-8", "replace").strip()
+    return (commit if re.fullmatch(r"[0-9a-f]{40}", commit) else ""), None
+
+
 def trailer_for(repo, skill, ref="HEAD"):
     """(trailer line, None) for the committed skills/<skill>/SKILL.md at `ref`, or (None, reason). Print-only."""
     if not SKILL_NAME_RE.fullmatch(skill or ""):
@@ -195,11 +210,10 @@ def trailer_for(repo, skill, ref="HEAD"):
         data = b""
     if data is None:
         return None, f"{source} not readable at {sha[:8]}: {why}"
-    log, why = smd.git_run(repo, "log", "-1", "--format=%H", sha, "--", source)
-    if log is None:
-        return None, f"git log for {source}: {why}"
-    commit = log.decode("utf-8", "replace").strip()
-    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+    commit, why = last_change(repo, sha, source)
+    if commit is None:
+        return None, why
+    if not commit:
         return None, f"no commit changed {source} up to {sha[:8]}"
     return (f"{LINEAGE_MARKER} skill={skill} source={source} sha256={smd.vgm._norm_sha(data)} "
             f"commit={commit}"), None
@@ -363,14 +377,13 @@ def c_commit_touches(ctx, member=None, trailer=None):
     commit, why, kind = _trailer_commit(ctx, trailer)
     if commit is None:
         return _commit_unreadable(why, kind)
-    out, why = smd.git_run(ctx["repo"], "diff-tree", "--no-commit-id", "--name-only", "-r", "--root", commit,
-                           "--", trailer["source"])
-    if out is None:
-        return _out(UNMEASURED, f"diff-tree: {why}", git=True)
-    names = out.decode("utf-8", "replace").split("\n")
-    if trailer["source"] in names:
+    last, why = last_change(ctx["repo"], commit, trailer["source"])
+    if last is None:
+        return _out(UNMEASURED, why, git=True)
+    if last == commit:
         return _out(PASS, f"{commit[:8]} changed {trailer['source']}")
-    return _out(FAIL, f"{commit[:8]} did not change {trailer['source']}")
+    return _out(FAIL, f"{commit[:8]} did not change {trailer['source']} (the last commit up to it that did: "
+                      f"{last[:8] if last else 'none'})")
 
 
 @_per_trailer

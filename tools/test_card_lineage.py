@@ -19,7 +19,7 @@ What each V-CLG clause proves:
                             clean one
   V-CLG-GIT-FAILURE         git unavailable (vgm._git_exe raising) is INCONCLUSIVE with no exception escaping, and
                             the judge returns PASS again after restoration
-  V-CLG-GIT-FAILURE-MIDJUDGE  one git subcommand failing inside a clause (merge-base, diff-tree, cat-file; timeout,
+  V-CLG-GIT-FAILURE-MIDJUDGE  one git subcommand failing inside a clause (merge-base, log, cat-file; timeout,
                             rc and OS-error forms) is INCONCLUSIVE with every non-PASS clause git-tagged, never FAIL;
                             the same failure on a red fixture still reads FAIL
   V-CLG-EVERY-CLAUSE        the declared fail sets cover all 10 clauses; forcing each clause PASS flips its
@@ -520,6 +520,42 @@ def m_multi_skill_unlineaged(fx, repo):
     return _add_third(fx, repo, trailer=False)
 
 
+def m_merge_rederived(fx, repo):
+    """CW's SKILL.md edited on two branches and the conflict resolved inside the merge, so the merge commit is the only
+    commit carrying the merged blob; the trailer is then re-derived with trailer_for (which names the merge) and H
+    re-recorded. The tool's own trailer must be accepted."""
+    src = fx.source(CW)
+    p = Path(repo) / src
+    main = fx.git(repo, "rev-parse", "--abbrev-ref", "HEAD").strip()
+    fx.git(repo, "checkout", "-q", "-b", "side")
+    p.write_bytes(b"side\n" + p.read_bytes())
+    fx.commit(repo, "side edit")
+    fx.git(repo, "checkout", "-q", main)
+    base = p.read_bytes()
+    p.write_bytes(b"main\n" + base)
+    fx.commit(repo, "main edit")
+    try:
+        fx.git(repo, "merge", "-q", "--no-ff", "side", "-m", "merge")
+        return "the merge did not conflict"
+    except FixtureError:
+        pass
+    p.write_bytes(b"resolved\n" + base)
+    fx.git(repo, "add", src)
+    fx.git(repo, "commit", "-q", "-m", "merge resolved in SKILL.md")
+    merge = fx.head(repo)
+    if len(fx.git(repo, "log", "-1", "--format=%P").split()) != 2:
+        return "HEAD is not a merge"
+    line, why = cl.trailer_for(repo, fx.skill(CW))
+    if line is None:
+        return f"trailer_for refused: {why}"
+    if not line.endswith(f"commit={merge}"):
+        return f"trailer_for did not name the merge {merge[:8]}: {line.split('commit=')[-1][:8]}"
+    fx.replace_marker(repo, CW, [line])
+    fx.commit(repo, "re-derive CW trailer (merge)")
+    rec, why = fx.rerecord(repo)
+    return None if rec is not None else f"re-record refused: {why}"
+
+
 def m_shallow_clone(fx, repo):
     """The judged checkout is a depth-1 clone of the clean fixture: the trailer commits are real ancestors that the
     clone does not hold. Missing history is not drift."""
@@ -536,6 +572,7 @@ def _drill_table():
         ("SOURCE-CHANGED-RERECORDED", m_source_changed_rerecorded, {f"{CW}:SOURCE-CURRENT"}, "FAIL"),
         ("SOURCE-CHANGED-RAW", m_source_changed_raw, {f"{CW}:SOURCE-CURRENT", "H-RECORD-CURRENT"}, "FAIL"),
         ("REDERIVED", m_rederived, set(), "PASS"),
+        ("MERGE-REDERIVED", m_merge_rederived, set(), "PASS"),
         ("MULTI-SKILL-LINEAGED", m_multi_skill_lineaged, set(), "PASS"),
         ("MULTI-SKILL-RERECORDED", m_multi_skill_rerecorded, {f"{CW}:SOURCE-CURRENT"}, "FAIL"),
         ("MULTI-SKILL-UNLINEAGED", m_multi_skill_unlineaged, {f"{CW}:SKILL"}, "FAIL"),
@@ -763,7 +800,7 @@ def c_git_failure(st):
 
 MIDJUDGE_STUBS = (
     ("merge-base", "git merge-base failed: timed out after 30 seconds"),
-    ("diff-tree", "git diff-tree rc=128: fatal: unable to read tree (drill)"),
+    ("log", "git log rc=128: fatal: unable to read tree (drill)"),
     ("cat-file", "git cat-file failed: [Errno 5] Input/output error (drill)"),
 )
 
@@ -885,7 +922,9 @@ CLAUSE_TEXT = {
                       "UNMEASURED. This is the clause a re-record of H alone cannot clear.",
     "COMMIT-ANCESTOR": "the trailer commit resolves and is an ancestor of the judged commit (unresolvable: "
                        "UNMEASURED, and so are the next two).",
-    "COMMIT-TOUCHES": "the trailer commit changed the source path.",
+    "COMMIT-TOUCHES": "the trailer commit changed the source path, by the definition `--trailer-for` prints: the "
+                      "last commit up to it that changed the source (path-limited `git log -1`) is itself, so a merge "
+                      "that resolved the source counts.",
     "COMMIT-DIGEST": "the source blob at the trailer commit has the trailer's digest.",
     "FLOOR": "population size >= 2 (0 is UNMEASURED, 1 is FAIL).",
     "DISPATCHER-COVERED": "every card the dispatcher registers, in either CHAIN_MAP shape "
@@ -901,6 +940,8 @@ DRILL_TEXT = {
     "SOURCE-CHANGED-RERECORDED": "first byte of CW's SKILL.md changed and committed; trailer untouched; H re-recorded",
     "SOURCE-CHANGED-RAW": "the same source change, H not re-recorded",
     "REDERIVED": "SOURCE-CHANGED-RAW, then CW's trailer re-derived with trailer_for and H re-recorded",
+    "MERGE-REDERIVED": "CW's SKILL.md edited on two branches, the conflict resolved inside the merge commit; trailer "
+                       "re-derived with trailer_for (it names the merge) and H re-recorded",
     "MULTI-SKILL-LINEAGED": "CW also names `third-skill` (a see-also line) and carries a second trailer for it; H "
                             "re-recorded with 3 pairs",
     "MULTI-SKILL-RERECORDED": "MULTI-SKILL-LINEAGED (judged PASS first), then third-skill's SKILL.md changed and "
