@@ -11,7 +11,7 @@ baseline-ratchet.
 
 - [ ] **IC-A**: Mission relay in a shared checkout -- held missions relay without losing worktree commits.
 - [ ] **IC-B**: Remote environment integrity -- GEX44 preflight; rules and hooks repaired by a repeatable deploy.
-- [x] **IC-C**: Persistent-failure retry classification -- auth-expired parks, never relaunches unchanged.
+- [ ] **IC-C**: Persistent-failure retry classification -- auth-expired parks, never relaunches unchanged.
 - [ ] **IC-D**: Silent-success hooks -- per-call additional-context rent measured; slice only if material.
 - [ ] **IC-E**: Large-source read virtualization -- identical-version rereads replayed on KME-L.
 - [ ] **IC-F**: GSD operational projection -- workflow-doc residency measured; handed to the GSD owner.
