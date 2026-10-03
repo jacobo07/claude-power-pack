@@ -98,6 +98,13 @@ Plans:
 **Requirements**: SC-B
 **Success Criteria**: a measurement file naming D-LISTING with its `command:`; `--pillar B` PASS.
 
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 02-01-PLAN.md -- D-04 verdict gate `tools/test_listing_floor_verdict.py` (recomputes K4 from the jsonl, red on a fabricated lower floor, rows pinned to 4d1cfb83) + D-01 generated D-LISTING measurement `evidence/B-listing-floor.md`
+- [ ] 02-02-PLAN.md -- D-01..D-03 ledger closure: state.B FALSIFIED_OR_REJECTED_BY_EVIDENCE from `--json`, upper-bound saving over D-LISTING, one `[B]` owner-bundle line (plugin-paging gateway, laptop), `--pillar B` PASS
+
 ### Phase 3: Opportunity and delivery measurement
 
 **Goal**: One gate computes opportunity, delivery, recall and precision over a named transcript window.

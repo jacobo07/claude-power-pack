@@ -53,6 +53,9 @@ Total Plans in Phase: 3
 - [Plan]: Owner items are batched into `vault/programs/skill-capability/owner-bundle.md`; never asked mid-run.
 - [Phase 1]: [Phase 1 P01-01]: window rule lives in one declaration ownShellWindowHit; only 3a05f288 mtime is measured, other four replays placed and labelled placed; 6th deny 4615e1d1 reported beside D-CARD (class rollover-predecessor-lines)
 - [Phase 1]: [Phase 1 P01-02]: card ledger rows carry a stderr class field (never raw stderr); unborn HEAD judged against the empty tree; outside a repo diff exits 129 not 128; dubious ownership NOT-REPRODUCED on gex44; capsule_mutation_guard unwrapCall uses win32 basename (pre-existing POSIX defect, own commit eadc0fd5)
+- [Phase 1, epoch 2]: review fixes WR-01 (120 s window cap + window_hits), WR-02 (diff options before `--`, drilled red 36/37), IN-01..03 landed in db19cb00; phase verified passed 4/4 (678841b7). WR-01 residual aperture (peer write inside a <=120 s own window) is advisory, recorded in 01-VERIFICATION.md.
+- [Run, epoch 2]: push of HEAD to origin mission/skill-capability (fast-forward, 0 behind) was refused by the ovo-push-gate PreToolUse hook (stderr withheld). Not retried (Regla 12). Work stays committed on local branch mission/skill-capability-run in worktree .claude/worktrees/sc-run; safe because nothing is lost and the Owner fetches from this host. OWNER DECISION NEEDED: push the run branch? options: (a) Owner runs `git -C <worktree> push origin mission/skill-capability-run:mission/skill-capability`, (b) leave local. Pick: (a).
+- [Phase 2, epoch 2]: research skipped (unattended; CONTEXT.md already carries the evidence read and the work is one verdict script + one measurement file). Reversible: `/gsd-plan-phase 2 --research`.
 
 ## Session Continuity
 
