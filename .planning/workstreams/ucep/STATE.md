@@ -34,18 +34,18 @@ Total Plans in Phase: 5
 **Stopped at:** Phase 2 complete, ready to plan Phase 03
 **Resume file:** None
 
-**Next exact action (epoch 2 -> 3):** Phase 2 executed 5/5, orchestrator re-runs green (59/59,
-27/27, 20/20, 24/24, 40/40, 17/17; vault/tower unchanged since 409dca89; 0 real traits files).
-Remaining tail, in order: (1) code review via `gsd-code-review 2` -- dispatch gsd-code-reviewer
-(model sonnet, depth standard) with `--files` = the 6 Phase 2 code paths ONLY:
-modules/capability_runtime/archetypes.py, modules/capability_runtime/trait_scan.py,
-tools/capability_traits.py, tools/test_capability_archetypes.py,
-tools/test_capability_trait_scan.py, vault/liveness/reachability_registry.json. Do NOT use the
-git-diff tier: the phase dir was first added at 5ee83003 (during Phase 1), so that base drags in
-13 Phase 1 files already reviewed in 01-REVIEW.md. (2) regression gate over Phase 1 suites;
-(3) gsd-verifier for Phase 2 -> 02-VERIFICATION.md; (4) if passed: `phase.complete 2`, commit,
-push; (5) security step skipped per Phase 1 precedent (no 01-SECURITY.md); (6) Phase 3 via
-/gsd-autonomous loop (discuss -> plan -> execute).
+**Next exact action (epoch 3):** Phase 2 is COMPLETE (0fe8a73e, verification passed 4/4; CR-01
+fixed in d61b5c23). Phase 3: context 9fd8c079, F0 reference 0b2953af, plans aeec9efd, plan check
+pass 1 b2815e16 (0 blockers, 5 warnings W1-W5, see 03-PLAN-CHECK.md). In order: (1) planner
+revision of 03-0N-PLAN.md for W1-W5 (in flight in epoch 3; if the files are unchanged since
+aeec9efd, the revision never landed -- re-dispatch gsd-planner with 03-PLAN-CHECK.md);
+(2) commit the revision, re-check (one pass, the checker returns text and the orchestrator
+writes the file -- gsd-plan-checker has no Write tool, the agent-contract guard blocks a
+"write as you go" clause for it); (3) execute 03-01..03-04 sequentially with gsd-executor
+(sonnet), isolation none, running `query dispatch-isolation --raw --phase 03 --plan 03-0M
+--force-isolation none --ws ucep` before each dispatch, and re-running each plan's gates in the
+orchestrator before the next; (4) code review on the Phase 3 code paths only, regression gate,
+gsd-verifier, `phase.complete 3`, commit, push; (5) Phase 4.
 
 Read, in order: `vault/plans/ucep-naked-verb-2026-10-02.md` (plan of record + Owner answers),
 `vault/plans/ucep-naked-verb-2026-10-02.audit.md` (18 gaps), this workstream's `ROADMAP.md`.
