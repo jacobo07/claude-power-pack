@@ -130,6 +130,21 @@
   `CLAUDE_AGENT_CONTRACT_GUARD=off`. The detector fix (verb must govern the path, not merely precede
   it) is open; it was not made here because it is outside the UCEP scope.
 
+## FP-ISOLATION-MARKER-HYPHEN — "missing isolation=worktree" although a fresh `none` sentinel exists
+- What it really is: `gsd-agent-isolation-guard.js` matches the sentinel to the dispatch through a
+  marker parsed by `hooks/lib/dispatch-identity.js` `MARKER_RE`, which accepts ONLY
+  `[gsd:dispatch phase="…" plan="…"]` (colon). The guard's own comment (line ~485) spells it
+  `[gsd-dispatch …]` (hyphen). A hyphen marker is ignored, the prose fallback reads
+  "plan 03-01 of Phase 3" as `phase="3" plan=(none)`, and that disagrees with the sentinel's
+  `phase="03"`, so the sentinel "does not apply" and the guard demands a harness worktree.
+- Symptom: the block names `sentinel phase="03" plan="03-01"; dispatch phase="3" plan="(none)"`, and
+  it repeats unchanged after a fresh `query dispatch-isolation` and after adding the hyphen marker.
+- Measured 2026-10-03 (UCEP workstream, Phase 3 plan 03-01 executor dispatch, 2 identical blocks).
+- Response (≤2 min): put `[gsd:dispatch phase="<padded phase>" plan="<plan id>"]` (COLON) as the
+  first line of the prompt, with the same values passed to `query dispatch-isolation --phase/--plan`.
+  Do not add `isolation="worktree"` to get past it, since the sentinel already decided `none`. The stale
+  comment lives in a global hook under `~/.claude/hooks`; it was not edited here (HR-001).
+
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).

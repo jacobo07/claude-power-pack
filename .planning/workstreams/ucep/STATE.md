@@ -53,6 +53,15 @@ Base commit at creation: `a9c603f` on `feature/knowledge-acquisition`.
 
 ## Decisions (unattended run)
 
+- 2026-10-03, epoch 3: Phase 3 plans are executed INLINE by the orchestrator, not by gsd-executor
+  subagents. Reason: the PowerShell tool is disabled for subagents in this session, and the host
+  rules (windows-bash-bridge-guard) block python/git/node in Bash; the 03-01 executor stopped
+  BLOCKED with nothing changed and correctly refused the Bash-guard bypass, which would need the
+  Owner's consent. Inline execution runs the same plan text and the same committed verify
+  commands, so it bypasses no guard. Reversible: a later epoch whose subagents have PowerShell
+  may go back to executors. Also: the isolation guard's marker is `[gsd:dispatch ...]` (colon);
+  see governance/KNOWN_FALSE_POSITIVES.md FP-ISOLATION-MARKER-HYPHEN.
+
 - 2026-10-03, epoch 3: the security step (`gsd-secure-phase`) is skipped for Phase 2, following
   Phase 1's precedent (no `01-SECURITY.md` exists). Reason: Phase 2 adds offline read-only
   scanners over the repo with no network, auth or secret surface; skipping is reversible, since
