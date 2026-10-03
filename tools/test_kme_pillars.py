@@ -321,12 +321,461 @@ def g_cli_usage():
     return rc == 2, f"main(['d']) rc={rc}"
 
 
+# =========================================================================== gates (task 2: expansion)
+def other_args(project_dir, out_dir, label="FX-A", extra=()):
+    return ["d", "--denominator", "OTHER", "--label", label, "--select", "all", "--until", "none",
+            "--root", str(project_dir), "--out-dir", str(out_dir)] + list(extra)
+
+
+def d_other(project_dir, extra=(), label="FX-A"):
+    out_dir = scratch("out")
+    rc, res, out, err = run_json(other_args(project_dir, out_dir, label, extra))
+    return rc, res, out, err, out_dir
+
+
+def pdir(root, project="-home-x-kme-fixture"):
+    return Path(root) / "projects" / project
+
+
+def g_population_drift():
+    root = scratch("drift")
+    tracer_fixture(root)
+    drifted = dict(TRACER_POP, calls=TRACER_POP["calls"] + 1)
+    frozen = write_frozen(root / "frozen.json", **{"KME-L": drifted})
+    out_dir = root / "m"
+    rc, res, _o, _e = run_json(d_args(root, pdir(root), frozen, out_dir))
+    ok = (rc == 3 and res["population_match"] == "drifted" and "calls" in res["population_deltas"]
+          and res["materiality"] == "UNMEASURED" and res["terminal_evidence"] is False
+          and res["share_interval"] is None and res["share_measured_population"] is not None
+          and len(list(out_dir.glob("D-KME-L-*.md"))) == 1)
+    return ok, f"rc={rc} match={res['population_match']} deltas={res['population_deltas']} " \
+               f"verdict={res['materiality']} share_measured={res['share_measured_population']}"
+
+
+TABLE = [
+    (([0.01, 0.02], "exact", 1.0), "< 3 %"),
+    (([0.03, 0.05], "exact", 1.0), ">= 3 %"),
+    (([0.02, 0.04], "exact", 1.0), "STRADDLES"),
+    ((None, "exact", 1.0), "UNMEASURED"),
+    (([0.01, 0.02], "drifted", 1.0), "UNMEASURED"),
+    (([0.01, 0.02], "exact", 0.5), "UNMEASURED"),
+    (([0.04, 0.06], "exact", 0.5), ">= 3 %"),
+]
+
+
+def g_verdict_table():
+    bad = []
+    for args, want in TABLE:
+        got = kp.materiality(*args)[0]
+        if got != want or got not in kp.VERDICTS:
+            bad.append((args, want, got))
+    return not bad, f"{len(TABLE)} rows, mismatches={bad}"
+
+
+def g_unmeasured_not_below():
+    inputs = [(None, "exact", 1.0), ([], "not_frozen", 1.0), ([0.01, 0.02], "drifted", 1.0),
+              ([0.0, 0.0], "drifted", 1.0), ([0.01, 0.02], "exact", 0.5), ([0.0, 0.0], "exact", 0.0),
+              ([0.01, 0.02], "not_frozen", None), ([0.0, 0.0], "exact", 0.999)]
+    got = [kp.materiality(*a)[0] for a in inputs]
+    bad = [(a, g) for a, g in zip(inputs, got) if g != "UNMEASURED"]
+    return not bad, f"{len(inputs)} UNMEASURED-producing inputs, not UNMEASURED: {bad}"
+
+
+def g_burden_model():
+    a, b = kp.burden(400, 5, 4.0), kp.burden(400, 0, 4.0)
+    return a == 240.0 and b == 0.0, f"burden(400,5,4.0)={a} burden(400,0,4.0)={b}"
+
+
+def g_weighted_ledger():
+    ledger = json.loads((REPO / kp.LEDGER_REL).read_text(encoding="utf-8"))
+    want = ledger["frozen"]["denominators"]["KME-L"]["weighted_input_equivalent"]
+    specs = kp.frozen_specs(REPO / kp.DENOMS_REL)
+    got = round(kp.weighted(specs["KME-L"]["fields"]))
+    return got == want == 1764247687, f"weighted={got} ledger={want}"
+
+
+def g_population_equals_pipeline():
+    base = scratch("pipe")
+    projects = rich_fixture(base / "fx")
+    out = run_pipeline(REPO / "wiki" / "tools", base / "w", ["--host", "local", "--expand", str(projects)])
+    entry = json.loads(out["denom.json"])["KME-L"]
+    sessions, fan, _d = kp.scan([str(projects)], True, "local", [], None)
+    pop = kp.population(sessions, {"select": "kme"}, fan.kept, False)
+    mine = {f: pop[f] for f in kp.POP_FIELDS}
+    match, deltas = kp.compare_population(mine, {f: entry[f] for f in kp.POP_FIELDS})
+    return match == "exact" and mine["sessions_dead"] == 1 and mine["sessions_active"] == 2, \
+        f"match={match} deltas={deltas} mine={mine}"
+
+
+def g_d_residency():
+    root = scratch("resid")
+    tracer_fixture(root)
+    rc, res, _o, _e, _d = d_other(pdir(root))
+    n = res["numerator"]
+    want_lo = sum(300 / kp.CPT_HI * (2 + 0.1 * (r - 1)) for r in (2, 1, 1))
+    want_hi = sum(300 / kp.CPT_LO * (2 + 0.1 * (r - 1)) for r in (2, 1, 1))
+    lo, hi = n["weighted_interval"]
+    ok = (abs(lo - want_lo) < 1e-9 and abs(hi - want_hi) < 1e-9 and n["chars_per_tool_use"] == 900 / 1
+          and n["chars_per_call"] == 900 / 4)
+    return ok, f"lo={lo:.6f}/{want_lo:.6f} hi={hi:.6f}/{want_hi:.6f} per_tool_use={n['chars_per_tool_use']} " \
+               f"per_call={n['chars_per_call']}"
+
+
+def two_call_session(root, project="-home-x-kme-fixture", session="s1"):
+    fx = Fx(root, project=project, session=session)
+    fx.human("go", ts(0))
+    return fx
+
+
+def g_d_only_additional_context():
+    root = scratch("only")
+    fx = two_call_session(root)
+    hook_ctx(fx, ts(1), 300)
+    fx.attachment("hook_success", ts(1), hookName="SessionStart:startup", stdout="X" * 5000, content="")
+    fx.attachment("hook_system_message", ts(1), hookName="SessionStart:startup", content="Y" * 700)
+    fx.attachment("hook_non_blocking_error", ts(1), hookName="Stop", stderr="boom")
+    fx.assistant("m1", "r1", (10, 100, 0, 5), ts(2))
+    fx.assistant("m2", "r2", (10, 0, 100, 5), ts(3))
+    rc, res, _o, _e, _d = d_other(pdir(root))
+    det = res["details"]
+    oth = det["other_hook_attachments"]
+    ok = (res["numerator"]["chars"] == 300 and oth.get("hook_success", [0, 0])[1] >= 5000
+          and oth.get("hook_system_message", [0, 0])[0] == 1 and det["hook_errors"] == {"Stop": 1})
+    return ok, f"chars={res['numerator']['chars']} other={oth} errors={det['hook_errors']}"
+
+
+def g_d_unobserved():
+    root = scratch("unobs")
+    fx = two_call_session(root)
+    fx.assistant("m1", "r1", (10, 100, 0, 5), ts(2))
+    fx.assistant("m2", "r2", (10, 0, 100, 5), ts(3))
+    rc, res, _o, _e, _d = d_other(pdir(root))
+    return res["observability"] == 0.0 and res["materiality"] == "UNMEASURED" and rc == 3, \
+        f"rc={rc} observability={res['observability']} verdict={res['materiality']}"
+
+
+def g_d_silent():
+    root = scratch("silent")
+    fx = two_call_session(root)
+    fx.attachment("hook_success", ts(1), hookName="SessionStart:startup", stdout="Z" * 4000, content="")
+    fx.assistant("m1", "r1", (10, 100, 0, 5), ts(2))
+    fx.assistant("m2", "r2", (10, 0, 100, 5), ts(3))
+    rc, res, _o, _e, _d = d_other(pdir(root))
+    return (res["numerator"]["chars"] == 0 and res["observability"] == 1.0 and res["materiality"] == "< 3 %"
+            and rc == 0), f"rc={rc} chars={res['numerator']['chars']} obs={res['observability']} " \
+                          f"verdict={res['materiality']}"
+
+
+def g_d_subagent_scope():
+    root = scratch("subscope")
+    fx = two_call_session(root)
+    hook_ctx(fx, ts(1), 300, ch="M")
+    for i in range(1, 5):
+        fx.assistant(f"m{i}", f"r{i}", (10, 0, 100, 5), ts(1 + i))
+    sub = fx.subagent("ag1", "Explore")
+    sub.human("sub", ts(1.5))
+    hook_ctx(sub, ts(1.6), 300, ch="S")
+    sub.assistant("s1", "rs1", (10, 0, 100, 5), ts(1.7))
+    sub.assistant("s2", "rs2", (10, 0, 100, 5), ts(1.8))
+    rc, res, _o, _e, _d = d_other(pdir(root))
+    want_lo = 300 / kp.CPT_HI * (2 + 0.1 * 3) + 300 / kp.CPT_HI * (2 + 0.1 * 1)   # main: 4 calls, sub: 2 calls
+    lo = res["numerator"]["weighted_interval"][0]
+    return abs(lo - want_lo) < 1e-9, f"lo={lo:.6f} want={want_lo:.6f} (session-wide residency would be " \
+                                     f"{300 / kp.CPT_HI * 2.5 * 2:.6f})"
+
+
+def heavy_session(root, per_call_chars, n=10):
+    fx = two_call_session(root)
+    for i in range(n):
+        hook_ctx(fx, ts(1 + 2 * i), per_call_chars)
+        fx.assistant(f"m{i}", f"r{i}", (10, 0, 100000, 50), ts(2 + 2 * i))
+    return fx
+
+
+def g_d_positive():
+    root = scratch("pos")
+    heavy_session(root, 4000)
+    rc, res, _o, _e, _d = d_other(pdir(root))
+    ctl = scratch("posctl")
+    heavy_session(ctl, 1)
+    rc2, res2, _o2, _e2, _d2 = d_other(pdir(ctl))
+    ok = (res["materiality"] == ">= 3 %" and res["second_workload_required"] is True
+          and res2["materiality"] == "< 3 %" and res2["second_workload_required"] is False)
+    return ok, f"4000 chars/call -> {res['materiality']} share={res['share_interval']} second={res['second_workload_required']}; " \
+               f"1 char/call -> {res2['materiality']}"
+
+
+def g_until_cutoff():
+    root = scratch("cut")
+    s1 = Fx(root)
+    s1.human("go", ts(0))
+    s1.assistant("m1", "r1", (10, 100, 0, 5), ts(2))
+    s1.assistant("m2", "r2", (10, 0, 100, 5), ts(5))
+    s1.meta()
+    s1.assistant("m3", "r3", (10, 0, 100, 5), ts(9))
+    s1.meta()
+    Fx(root, session="s2").human("late", ts(12))
+    cut = ts(6)
+    rc, res, _o, _e, _d = d_other(pdir(root), ["--until", cut])
+    rc0, res0, _o0, _e0, _d0 = d_other(pdir(root), ["--until", "none"])
+    p, p0 = res["population"], res0["population"]
+    # keep() unit rows: trailing meta lines inherit the previous timestamp; leading ones take the file's first
+    lines = scratch("keepunit") / "f.jsonl"
+    f = Fx(root, path=lines)
+    f.meta()
+    f.human("a", ts(8))
+    f.meta()
+    f.human("b", ts(20))
+    f.meta()
+    rows = [json.loads(x) for x in lines.read_text().splitlines()]
+    k_cut = kp.make_keep(None, kp.parse_instant(ts(10)))
+    got = [k_cut(str(lines), o) for o in rows]
+    k_no_ts = kp.make_keep(None, kp.parse_instant(ts(10)))
+    nots = scratch("nots") / "g.jsonl"
+    Fx(root, path=nots).meta().meta()
+    got_no_ts = [k_no_ts(str(nots), json.loads(x)) for x in nots.read_text().splitlines()]
+    ok = (p["calls"] == 2 and p["sessions_active"] == 1 and p["sessions_dead"] == 0
+          and p0["calls"] == 3 and p0["sessions_dead"] == 1
+          and got == [True, True, True, False, False] and got_no_ts == [False, False])
+    return ok, f"until: calls={p['calls']} dead={p['sessions_dead']}; none: calls={p0['calls']} " \
+               f"dead={p0['sessions_dead']}; keep rows={got} no-ts file={got_no_ts}"
+
+
+def g_no_overwrite():
+    root = scratch("noov")
+    tracer_fixture(root)
+    out_dir = scratch("noov-out")
+    args = other_args(pdir(root), out_dir)
+    rc1, _o1, _e1 = run_main(args)
+    first = sorted(out_dir.glob("D-FX-A-*.md"))
+    h1 = first[0].read_bytes() if first else b""
+    rc2, _o2, _e2 = run_main(args)
+    rc3, _o3, _e3 = run_main(args)
+    names = sorted(x.name for x in out_dir.glob("D-FX-A-*.md"))
+    ok = (rc1 == rc2 == rc3 == 0 and len(names) == 3 and first[0].read_bytes() == h1
+          and any(n.endswith("-2.md") for n in names) and any(n.endswith("-3.md") for n in names))
+    return ok, f"files={names}"
+
+
+def g_other_label():
+    root = scratch("lab")
+    tracer_fixture(root)
+    out_dir = scratch("lab-out")
+    bad = {}
+    for lab in ("KME-L", "KME-G", "CPP-D-W7", "lower-case", "X"):
+        rc, _o, _e = run_main(other_args(pdir(root), out_dir, lab))
+        bad[lab] = rc
+    rc_nolabel, _o, _e = run_main(["d", "--denominator", "OTHER", "--select", "all", "--until", "none", "--root",
+                                   str(pdir(root)), "--out-dir", str(out_dir)])
+    wrote_on_refusal = list(out_dir.glob("*.md"))
+    rc_ok, res, _o2, _e2 = run_json(other_args(pdir(root), out_dir, "GEX44-B001"))
+    files = sorted(x.name for x in out_dir.glob("*.md"))
+    ok = (all(v == 2 for v in bad.values()) and rc_nolabel == 2 and not wrote_on_refusal and rc_ok == 0
+          and res["denominator_kind"] == "named_workload" and res["denominator"] == "GEX44-B001"
+          and files == [f"D-GEX44-B001-{utc_date()}.md"])
+    return ok, f"refusals={bad} nolabel={rc_nolabel} files={files} kind={res['denominator_kind']}"
+
+
+def g_role_table():
+    root = scratch("roles")
+    tracer_fixture(root)
+    exact = write_frozen(root / "f_exact.json", **{"KME-L": TRACER_POP, "KME-G": TRACER_POP})
+    drift = write_frozen(root / "f_drift.json", **{"KME-L": dict(TRACER_POP, calls=5),
+                                                   "KME-G": dict(TRACER_POP, calls=5)})
+    pd = pdir(root)
+    rows = []
+
+    def run(extra, frozen, den):
+        return run_json(d_args(root, pd, frozen, scratch("rt-out"), denominator=den, extra=extra))
+
+    def row(name, rc, res, want):
+        got = None if res is None else (res["evidence_role"], res["terminal_evidence"], res["second_workload_valid"])
+        rows.append((name, rc, got, want, got == want))
+
+    rc, res, _o, _e = run([], exact, "KME-L")
+    row("KME-L exact", rc, res, ("primary", True, None))
+    rc, res, _o, _e = run([], drift, "KME-L")
+    row("KME-L drifted", rc, res, ("primary", False, None))
+    rc, res, _o, _e = run([], exact, "KME-G")
+    row("KME-G", rc, res, ("smoke", False, None))
+    rc, res, _o, _e = run_json(other_args(pd, scratch("rt-out")))
+    row("OTHER", rc, res, ("smoke", False, None))
+    rc, res, _o, _e = run_json(other_args(pd, scratch("rt-out"), extra=["--role", "second_workload"]))
+    row("OTHER second_workload", rc, res, ("second_workload", False, True))
+    rc, _o, _e = run_main(d_args(root, pd, exact, scratch("rt-out"), extra=["--role", "second_workload"]))
+    rows.append(("KME-L second_workload", rc, rc, 2, rc == 2))
+    rc, res, _o, _e = run(["--role", "second_workload"], drift, "KME-G")
+    row("KME-G second_workload drifted", rc, res, ("second_workload", False, False))
+    bad = [r[0] for r in rows if not r[4]]
+    return not bad, f"{len(rows)} rows, wrong={bad} got={[(r[0], r[2]) for r in rows if not r[4]]}"
+
+
+CANARY = "sk-ant-" + "A" * 50
+
+
+def g_no_secret():
+    root = scratch("sec")
+    fx = two_call_session(root)
+    fx.attachment("hook_additional_context", ts(1), content=["ctx " + CANARY], hookName="PreToolUse:" + CANARY,
+                  hookEvent="PreToolUse")
+    fx.assistant("m1", "r1", (10, 100, 0, 5), ts(2), text="said " + CANARY,
+                 tool_uses=[("tu1", "Bash", {"command": "echo " + CANARY})])
+    fx.tool_result("tu1", "out " + CANARY, ts(3))
+    fx.assistant("m2", "r2", (10, 0, 100, 5), ts(4))
+    raw = fx.path.read_text()
+    out_dir = scratch("sec-out")
+    rc, out, err = run_main(other_args(pdir(root), out_dir, extra=["--json"]))
+    written = "".join(p.read_text(encoding="utf-8") for p in out_dir.glob("*.md"))
+    present = [n for n, t in (("file", written), ("stdout", out), ("stderr", err)) if CANARY in t]
+    return CANARY in raw and written != "" and not present and rc in (0, 3), \
+        f"fixture holds canary={CANARY in raw}; leaked into {present}; rc={rc}"
+
+
+def tree_state(root):
+    import hashlib
+    st = {}
+    for dp, dns, fns in os.walk(root):
+        for n in dns + fns:
+            full = os.path.join(dp, n)
+            sx = os.lstat(full)
+            h = hashlib.sha256(open(full, "rb").read()).hexdigest() if stat.S_ISREG(sx.st_mode) else ""
+            st[os.path.relpath(full, root)] = (sx.st_size, sx.st_mtime_ns, h)
+    return st
+
+
+def g_read_only():
+    root = scratch("ro")
+    tracer_fixture(root)
+    tree = root / "projects"
+    for dp, dns, fns in os.walk(tree):
+        for n in fns:
+            os.chmod(os.path.join(dp, n), 0o444)
+    for dp, dns, fns in os.walk(tree, topdown=False):
+        os.chmod(dp, 0o555)
+    before = tree_state(tree)
+    rc, _o, _e = run_main(other_args(pdir(root), scratch("ro-out")))
+    after = tree_state(tree)
+    return rc == 0 and before == after and len(before) >= 2, f"rc={rc} entries={len(before)} unchanged={before == after}"
+
+
+def g_freeze_instant():
+    try:
+        p = subprocess.run(["git", "show", "-s", "--format=%cI", FROZEN_SHA], cwd=str(REPO), capture_output=True,
+                           text=True, timeout=30)
+    except OSError:
+        return "SKIP", "git unavailable"
+    if p.returncode != 0:
+        return "SKIP", f"git show failed rc={p.returncode}"
+    t = datetime.datetime.fromisoformat(p.stdout.strip()).astimezone(datetime.timezone.utc)
+    got = t.strftime("%Y-%m-%dT%H:%M:%SZ")
+    pinned = (REPO / "vault/programs/incremental-cognition/FROZEN_AT").read_text().strip()
+    return got == kp.FREEZE_INSTANT and pinned == FROZEN_SHA, f"git={got} FREEZE_INSTANT={kp.FREEZE_INSTANT}"
+
+
+# --------------------------------------------------------------------------- real-corpus gates (read-only)
+ENV_ROOTS = ["/home/kobii/a5-env/home/.claude/projects", "/home/kobii/a7-env/home/.claude/projects",
+             "/home/kobii/b001-env/home/.claude/projects"]
+MAIN_ROOT = "/home/kobii/.claude/projects"
+
+
+def stat_snapshot(roots):
+    snap = {}
+    for r in roots:
+        for dp, _dns, fns in os.walk(r):
+            for n in fns:
+                full = os.path.join(dp, n)
+                try:
+                    sx = os.stat(full)
+                except OSError:
+                    continue
+                snap[full] = (sx.st_size, sx.st_mtime_ns)
+    return snap
+
+
+def copy_pinned(roots, dest):
+    """Real copies (never hardlinks) pinned by a (relpath, size, mtime_ns) snapshot of the originals before and
+    after copying. Returns (copied roots, 'ok' | 'moved')."""
+    for attempt in range(2):
+        before = stat_snapshot(roots)
+        out = []
+        for i, r in enumerate(roots):
+            target = dest / f"try{attempt}" / f"r{i}"
+            shutil.copytree(r, target)
+            out.append(str(target))
+        if stat_snapshot(roots) == before:
+            return out, "ok"
+    return [], "moved"
+
+
+def g_audit_byte_identical_real():
+    if not all(os.path.isdir(r) for r in ENV_ROOTS):
+        return "SKIP", "env roots absent"
+    need = max(300 * 1024 * 1024, 1)
+    tmp = tempfile.gettempdir()
+    free = shutil.disk_usage(tmp).free
+    if free < need:
+        return "SKIP", f"free disk {free // 2**20} MB in {tmp} < 300 MB"
+    with tempfile.TemporaryDirectory(prefix="kmep-real-", dir=tmp) as td:
+        td = Path(td)
+        copies, state = copy_pinned(ENV_ROOTS, td)
+        if state != "ok":
+            return "INCONCLUSIVE", "originals moved during both copies"
+        old = old_tooldir(td)
+        args = ["--host", "gex44", "--expand"] + copies
+        a = run_pipeline(old, td / "o", args)
+        b = run_pipeline(REPO / "wiki" / "tools", td / "n", args)
+        diff = [k for k in sorted(a) if a[k] != b.get(k)]
+        n_sess = len(json.loads(a["audit.json"]))
+        return not diff and n_sess > 100, f"sessions={n_sess} files={len(a)} differing={diff} audit_bytes={len(a['audit.json'])}"
+
+
+def g_kmeg_frozen_real():
+    roots = ENV_ROOTS + [MAIN_ROOT]
+    if not all(os.path.isdir(r) for r in roots):
+        return "SKIP", "corpus roots absent"
+    out_dir = scratch("kmeg-out")
+    args = ["d", "--denominator", "KME-G", "--until", kp.FREEZE_INSTANT, "--expand", "--out-dir", str(out_dir)]
+    for r in roots:
+        args += ["--root", r]
+    rc, res, _o, _e = run_json(args)
+    frozen = kp.frozen_specs(REPO / kp.DENOMS_REL)["KME-G"]["fields"]
+    mine = {f: res["population"][f] for f in kp.POP_FIELDS}
+    return mine == frozen and res["population_match"] == "exact", f"rc={rc} measured={mine} frozen_equal={mine == frozen}"
+
+
+GATES_EXPANSION = [
+    ("V-KMEP-POPULATION-DRIFT", g_population_drift),
+    ("V-KMEP-VERDICT-TABLE", g_verdict_table),
+    ("V-KMEP-UNMEASURED-NOT-BELOW", g_unmeasured_not_below),
+    ("V-KMEP-BURDEN-MODEL", g_burden_model),
+    ("V-KMEP-WEIGHTED-LEDGER", g_weighted_ledger),
+    ("V-KMEP-POPULATION-EQUALS-PIPELINE", g_population_equals_pipeline),
+    ("V-KMEP-D-RESIDENCY", g_d_residency),
+    ("V-KMEP-D-ONLY-ADDITIONAL-CONTEXT", g_d_only_additional_context),
+    ("V-KMEP-D-UNOBSERVED", g_d_unobserved),
+    ("V-KMEP-D-SILENT", g_d_silent),
+    ("V-KMEP-D-SUBAGENT-SCOPE", g_d_subagent_scope),
+    ("V-KMEP-D-POSITIVE", g_d_positive),
+    ("V-KMEP-UNTIL-CUTOFF", g_until_cutoff),
+    ("V-KMEP-NO-OVERWRITE", g_no_overwrite),
+    ("V-KMEP-OTHER-LABEL", g_other_label),
+    ("V-KMEP-ROLE-TABLE", g_role_table),
+    ("V-KMEP-NO-SECRET", g_no_secret),
+    ("V-KMEP-READ-ONLY", g_read_only),
+    ("V-KMEP-FREEZE-INSTANT", g_freeze_instant),
+]
+GATES_REAL = [
+    ("V-KMEP-AUDIT-BYTE-IDENTICAL-REAL", g_audit_byte_identical_real),
+    ("V-KMEP-KMEG-FROZEN-REAL", g_kmeg_frozen_real),
+]
+
+
 GATES_TRACER = [
     ("V-KMEP-TRACER-D-E2E", g_tracer_e2e),
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
     ("V-KMEP-CLI-USAGE", g_cli_usage),
 ]
-GATES = list(GATES_TRACER)
+GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_REAL
 
 
 def summary_line() -> str:
