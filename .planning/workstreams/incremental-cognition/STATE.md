@@ -71,3 +71,9 @@ deploy (relaunched 16:10 / 17:01 UTC on "owner dead"); the fix applies from thei
 **Next:** obligation 5 -- arm `gsd_mission.py arm --workstream incremental-cognition` (12/24h), needs Owner go
 on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 **Resume File:** this STATE.md + vault/plans/incremental-cognition-program-2026-10-03.md
+
+## Deferred Verification
+
+| Phase | State | Resume |
+|-------|-------|--------|
+| 1 | verification_deferred_human | owner bundle [A] (laptop PRG), then /gsd-verify-work 1 |
