@@ -869,11 +869,31 @@
   }
  },
  "reviews": {
-  "ukdl": null,
-  "cbr": null
+  "ukdl": {
+   "file": "vault/programs/cognitive-economy/ukdl-candidates.md",
+   "summary": "7 candidates at 3 levels (4 trap, 3 process, 0 hard): 1 promote (Owner item [R] UC-04), 2 reject as already owned, 4 keep-candidate; gate_ukdl_candidates.py"
+  },
+  "cbr": {
+   "file": "vault/programs/cognitive-economy/ukdl-candidates.md",
+   "summary": "CBR maturity per finding is the cbr: line of each block; all 7 EXPERIMENTAL (plan s4: until earned; none re-observed in an independent run)"
+  }
  },
  "deltas": {
-  "product": [],
-  "intelligence": []
+  "product": [
+   "A: gates/gate_baseline.py re-runs the frozen anchor and D-W7 windows; green, and red under a perturbed expected value.",
+   "H: measure/turns.py turn taxonomy over all 75,969 D-W7 calls plus gates/gate_turns.py, a frozen 3,000-row label hash, red under a perturbed class order.",
+   "L: compound/steps78.py implements /cpp-compound steps 7+8 (mutex, backup, tmp+rename, unlink, rollback), proven on temp copies by gates/gate_compound78.py. The live switch is Owner item [L].",
+   "R: ukdl-candidates.md plus gates/gate_ukdl_candidates.py, which proves five mutants red on every run.",
+   "Done-gate: selftest V-CEP-REAL-HANDOFF derives its poles from git history instead of a pole that went stale.",
+   "Nothing live changed: every campaign commit sits on the unmerged branch cognitive-economy/autonomous-run (Owner item [RUN])."
+  ],
+  "intelligence": [
+   "Of the levers measured on D-W7 under the frozen 3 % rule, only J cleared it (HUMAN-rooted recovery + repeat + non-convergent 3.51 %). Below it: F 1.88 %, K 2.67 %, P 0.50 %, C-tools 0.002 %, E <= 2.78 %, D economic trigger <= +0.19 % net.",
+   "Context crossings avoided at most 17.16 % of D-W7 in carried rent relative to never crossing. Displacement is unknown because compaction, the real alternative, was not measured, so this is an upper bound and not a saving.",
+   "51.97 % of D-W7 calls are UNSETTLED: no observable outcome classifies them. This is the largest unknown the campaign leaves, and it is not waste.",
+   "Tool-output carriage is 25.71 % of D-W7 (Read alone 21.02 %), the largest measured carriage class. No identity-bounded lever inside it reached 3 %.",
+   "gsd_mission progress_fingerprint hashes the whole shared tree, so its no-progress halt cannot fire while peers write (audit G5, verified in source; handoff J, candidate UC-04).",
+   "18 of 20 pillars ended at their pre-registered terminal. F (predicted insufficient evidence) was measured and falsified; J (predicted insufficient evidence) cleared its rule and was handed to its owner."
+  ]
  }
 }
