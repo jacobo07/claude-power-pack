@@ -101,3 +101,6 @@ C9 KV + UKDL (only earned entries) + resumption.
   initial listing before (bfe97833) vs after (fresh a5df8940): 29,991 -> 30,002 chars (still capped);
   overridden-and-described 21 -> 1; kept-but-name-only 19 -> 11. CWST and guard-event-reachability now
   described; presence-is-not-residency still name-only. Recall improved, cap still binds.
+- C8 DONE `4b488da6`: SPLIT REPRESENTATION (card + paged skill + pointer), EXPERIMENTAL; card aperture fixed
+  first (K1 `bf3d526a`). Post-C8 listing experiment (K4 `4d1cfb83`): gateway for 133 skills did NOT lower the
+  floor (plugin descriptions refill); detail and next hypothesis in vault/plans/skill-virtualization-k-slice-2026-10-03.md.

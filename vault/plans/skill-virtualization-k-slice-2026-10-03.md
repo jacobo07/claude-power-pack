@@ -95,6 +95,21 @@ K5 results into both plans; lessons file (vault/lessons/, UKDL is foreign-dirty)
 - Finding for K2 (not K1): 300ac3a1 deny-card = probable FALSE POSITIVE -- ROADMAP/STATE written by the
   session's own `node gsd-tools.cjs`, invisible to write attribution; one extra turn, then pass-after-card.
 
+## Execution record (2026-10-03)
+- K0 card -> ledger (settings snapshot settings.pre-K0-ledger-20261003.json), live row mode=ledger.
+- K1 bf3d526a: plan() exact-or-unknown; suite 25/25, drill 16/16, replay 56 pinned (38 of 40 unknowns
+  judged); PRG: real `$p=@(...)` + `2>$null` commit judged only-paths.
+- K1b card -> deny (snapshot settings.pre-K1b-deny-20261003.json); PRG: K2 commit judged only-paths, mode=deny.
+- K2 4b488da6: C8 verdict SPLIT REPRESENTATION, EXPERIMENTAL (vault/audits/cwst-representation-verdict-2026-10-03.md).
+- K3/K4 4d1cfb83: probe + directory_rows + builder. R2 merge YES, R1 name removed YES, R3 Skill REFUSED.
+  Challenger: listing 30,000 -> 29,795 chars, startup 87,739 -> 89,844 tokens => FLOOR NOT BROKEN
+  (plugin descriptions refilled). Stopped at 4/12 sessions (decisive falsification); positive/negative
+  discovery controls NOT run. Discovery gain: described 87 -> 103, name-only 179 -> 32.
+- K5: lessons vault/lessons/2026-10-03-capped-listing-and-card-aperture.md; UKDL untouched (foreign-dirty).
+- NEXT hypothesis (needs Owner): gateway that also pages plugin skills (paths in the plugin cache), sized so
+  full latent demand < cap; only then is a floor reduction possible, bounded by ~listing size (~9k tokens),
+  minus gateway reads (~4k tokens each).
+
 ## Reject
 More blind hiding; never-invoked cleaner; new skill ledger; client patching; automatic deletion; migrating
 TFPS/SSEA (rule residency, separate program).
