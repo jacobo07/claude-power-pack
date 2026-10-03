@@ -44,6 +44,33 @@ Changing `decide` itself (a horizon range, a rehydration term) is a later commit
 - C5 Mutants via the standard harness: horizon ignored, rehydration dropped, a boundary reading the future, exposure
   summed as saving. Then KV + UKDL (horizon-constant trap, successor-join trap, torn-append trap).
 
+## Results (2026-10-03, Owner "y")
+- C1 SEALED `7933ddc7` fresh-cost (n=129): first call 118,744/127,876/147,781; calls to first mutation 7/14/28;
+  carried before it 0.79M/1.86M/4.53M (UPPER bound on rehydration).
+- C2+C3 audit `vault/audits/ccp-s16-c3-audit.md` EXECUTE-WITH-FIXES, folded: prior = 878 index sessions ended
+  before T (rolled ones excluded and counted, own capsule chain out), price book in force at T, capsule median
+  before T, used_pct None (pressure NOT evaluated), model at call i, hook-denied / dry-run commits not boundaries,
+  every verdict a `decide` call (survival share >= .75 / <= .25), exposure carries the write premium.
+  `test_rollover_replay` 27/27 incl. positive control WOULD and short-horizon CONTINUE.
+- C4 real index (read-only):
+  | session | calls | boundaries | shipped would | prior W/C/I | +rehydration W/C/I |
+  |---|---|---|---|---|---|
+  | GOLDEN 8b2c7516 | 214 | 5 | 5 | 5/0/0 | 2/0/3 (first WOULD call 168) |
+  | DEEP 26ff693c | 594 | 23 | 12 | 14/3/6 | 9/3/11 |
+  | DEEP-FAST eace25b0 | 488 | 16 | 3 | 4/9/3 | 2/9/5 |
+  | WIDE 5151270e | 194 | 7 | 4 | 6/1/0 | 1/1/5 |
+  | SHORT b620e9e2 | 27 | 2 | 0 | 0/2/0 | 0/2/0 |
+  | SHORT c69c0ac3 | 46 | 0 | - | - | - |
+  Golden: first commit at call 96 (resident 353,751, n*=25.6); mechanical exposure if rolled there 17.5M-19.7M
+  read-token eq (hindsight, NOT a saving; total excess 46.3M); at call 168: 5.9M-8.1M.
+- NEGATIVE CONTROL: PARTIAL. Every CONTINUE in the set comes from decide's 150k growth gate; no CONTINUE was
+  produced by the remaining-work prior (its shares stayed >= .71 at every gated boundary). A horizon-driven
+  NO_CHANGE is shown only on the fixture. Open: find a real short-horizon, high-growth boundary.
+- FALSIFIED (RCA §17 "7 git commit commands"): the golden session has 5 successful commits; the other 2 matches
+  are handoff texts ("Committed: ..."). RCA text kept; correction lives here.
+- Mutants (C5) NOT yet run. NEXT EPOCH: run C5 drills on rollover_replay through tools/mutation_drill.py
+  (horizon ignored, rehydration dropped, boundary reads the future, exposure summed as saving), then UKDL.
+
 ## Not now
 NEXT: the `decide` horizon/rehydration change (owner rollover.py); `gsd_epoch` 300k static threshold (c2/e9 lane);
 the torn-append fix. LATER: live shadow on new sessions, bounded live experiment. RESEARCH: context live-range

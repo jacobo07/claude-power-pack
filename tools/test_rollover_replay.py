@@ -98,6 +98,71 @@ def main() -> int:
         got = rr.is_commit_command(cmd)
         ok(f"V-RR-COMMIT-DETECT[{cmd[:24]}]", got is want, f"got {got}")
 
+    ok("V-RR-DRY-RUN-NOT-COMMIT", not rr.is_commit_command("git commit --dry-run -m x"))
+
+    # ---- C2 boundaries: a successful commit only, and only what was known at that call.
+    def use(mid, tid, ctx, cmd):
+        return json.dumps({"type": "assistant", "requestId": f"r-{mid}", "timestamp": "2026-10-01T12:00:00Z",
+                           "message": {"id": f"m-{mid}", "model": "claude-opus-5-5",
+                                       "content": [{"type": "tool_use", "id": tid, "name": "PowerShell",
+                                                    "input": {"command": cmd}}],
+                                       "usage": {"input_tokens": 10, "cache_read_input_tokens": ctx - 10}}})
+
+    def result(tid, err=False):
+        return json.dumps({"type": "user", "message": {"role": "user", "content": [
+            {"type": "tool_result", "tool_use_id": tid, "is_error": err, "content": "x"}]}})
+
+    b_lines = [call("b1", 100_000), use("b2", "t-ok", 200_000, "git commit -m a"), result("t-ok"),
+               use("b3", "t-hook", 300_000, "git commit -m b"), result("t-hook", err=True),
+               use("b4", "t-open", 350_000, "git commit -m c"),                 # no result: unknown
+               call("b5", 900_000)]
+    bt = rr.session_trace(transcript(d, "B", b_lines))
+    ok("V-RR-ONLY-SUCCESSFUL-COMMITS", bt["commit_calls"] == [2], str(bt["commit_calls"]))
+    bnd = rr.boundaries(bt)
+    trunc = rr.boundaries(rr.session_trace(transcript(d, "B2", b_lines[:3])))
+    ok("V-RR-BOUNDARY-NO-FUTURE", bnd == trunc and bnd[0]["resident"] == 200_000,
+       f"full={bnd} truncated={trunc}")
+
+    # ---- prior: ended-before-T only, own capsule chain and rolled sessions out (censored, counted).
+    T = 1_790_000_000.0
+    for name, n in (("E1", 50), ("E2", 50), ("LATE", 50), ("ROLLED", 50), ("CHAIN", 50)):
+        transcript(d, name, [use(f"{name}{k}", f"{name}t{k}", 100_000, "git commit -m x") if k == 10
+                             else call(f"{name}{k}", 100_000) for k in range(n)] +
+                   [result(f"{name}t10")])
+    sessions = [("E1", d / "E1.jsonl", T - 100), ("E2", d / "E2.jsonl", T - 200),
+                ("LATE", d / "LATE.jsonl", T + 100), ("ROLLED", d / "ROLLED.jsonl", T - 100),
+                ("CHAIN", d / "CHAIN.jsonl", T - 100)]
+    chain = rr.capsule_chain([{"event": "successor_claimed", "session_id": "ROOT", "claimant": "CHAIN"}], "ROOT")
+    pri = rr.Prior(sessions, chain, rolled={"ROLLED"}).at(T)
+    ok("V-RR-PRIOR-ENDED-BEFORE-T", pri["values"] == [39, 39] and pri["sessions"] == 2,
+       f"values={pri['values']} sessions={pri['sessions']}")
+    ok("V-RR-PRIOR-CENSORED-COUNTED", pri["censored_excluded"] == 1, str(pri))
+
+    # ---- judge: every verdict is rollover.decide; both poles reachable (audit G11).
+    price = rr.price_at("claude-opus-5-5", T)
+    ok("V-RR-PRICED", price.get("state") == "OK", str(price))
+    big = {"call": 50, "ts": T, "model": "claude-opus-5-5", "floor": 130_000, "resident": 600_000}
+    many = {"values": [200] * 10, "sessions": 5, "censored_excluded": 0}
+    few_left = {"values": [1] * 10, "sessions": 5, "censored_excluded": 0}
+    j = rr.judge(big, 4000, many, [0.0])
+    ok("V-RR-POSITIVE-CONTROL-WOULD", j["prior"]["verdict"] == "WOULD_ROLLOVER", str(j["prior"]))
+    j = rr.judge(big, 4000, few_left, [0.0])
+    ok("V-RR-SHORT-HORIZON-CONTINUE", j["prior"]["verdict"] == "CONTINUE", str(j["prior"]))
+    small = {**big, "resident": 200_000}
+    j = rr.judge(small, 4000, many, [0.0])
+    ok("V-RR-GROWTH-GATE-IS-DECIDES", j["prior"]["verdict"] == "CONTINUE" and "growth" in j["reason"], j["reason"])
+    j = rr.judge(big, 4000, {"values": [200] * 3, "sessions": 1, "censored_excluded": 0}, [0.0])
+    ok("V-RR-FEW-PRIOR-INSUFFICIENT", j["prior"]["verdict"] == "INSUFFICIENT_EVIDENCE", str(j["prior"]))
+    # rehydration flips a borderline horizon: C=0 says WOULD, a large C says no -> not a clean verdict
+    edge = {"values": [int(rr.judge(big, 4000, many, [0.0])["breakeven_calls"]) + 2] * 10,
+            "sessions": 5, "censored_excluded": 0}
+    j = rr.judge(big, 4000, edge, [0.0, 20_000_000.0])
+    ok("V-RR-REHYDRATION-COUNTS", j["prior"]["verdict"] == "WOULD_ROLLOVER"
+       and j["rehydrated"] == "INSUFFICIENT_EVIDENCE", f"{j['prior']} rehydrated={j['rehydrated']}")
+    ev = rr.exposure(big, 200, rr.judge(big, 4000, many, [0.0]), [0.0, 1_000_000.0])
+    ok("V-RR-EXPOSURE-NOT-A-SAVING", ev and "NOT a saving" in ev["label"]
+       and ev["mechanical_exposure_read_eq"][0] < ev["mechanical_exposure_read_eq"][1], str(ev))
+
     print(f"ROLLOVER_REPLAY_PASS={PASS}/{PASS + FAIL}")
     return 0 if FAIL == 0 else 1
 
