@@ -2615,8 +2615,8 @@
   {
    "chars": 2299,
    "layer": "hook_context:UserPromptSubmit:UserPromptSubmit",
-   "scope": "universal",
-   "scope_basis": "event_fallback",
+   "scope": "unattributed",
+   "scope_basis": "event_uncorrelated",
    "source": "event:UserPromptSubmit"
   },
   {
@@ -2943,7 +2943,7 @@
   {
    "chars": 2299,
    "layer": "hook_context:UserPromptSubmit:UserPromptSubmit",
-   "scope": "universal"
+   "scope": "unattributed"
   },
   {
    "chars": 25037,
@@ -3042,10 +3042,10 @@
   "first_call_at": "2026-10-03T18:35:00.714Z",
   "install_commit": "339ccaa91ee040e81e6171ea27e855b1f108aed0",
   "install_home": "/home/kobii",
-  "measured_at": "2026-10-03T23:47:58Z",
+  "measured_at": "2026-10-03T23:50:41Z",
   "plane": "gex44",
   "platform": "linux",
-  "repo_commit": "19792a95f6a798d74a5b918de0f5115422ec8f4f",
+  "repo_commit": "b7adc31f47b56156319df4e1ff4debf1a4640f98",
   "session_id": "34f03871-4d33-4b7d-a52e-ec674b20a223",
   "source": "transcript",
   "transcript": "/home/kobii/.claude/projects/-home-kobii-missions-incremental-cognition/34f03871-4d33-4b7d-a52e-ec674b20a223.jsonl",

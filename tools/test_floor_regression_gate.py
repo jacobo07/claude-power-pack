@@ -537,14 +537,15 @@ def g_hook_plugin():
 
 
 def g_hook_event_fallback():
+    """No producing row: the event's registrations never decide the scope (WR-02 supersedes the event fallback)."""
     why = []
     layer, src = "hook_context:UserPromptSubmit:UserPromptSubmit", "event:UserPromptSubmit"
     U, P = "node user.js", "node project.js"
-    for label, user, proj, want in (("user only", {"UserPromptSubmit": [U]}, None, ("universal", "event_fallback")),
-                                    ("project only", None, {"UserPromptSubmit": [P]}, ("project", "event_fallback")),
-                                    ("both", {"UserPromptSubmit": [U]}, {"UserPromptSubmit": [P]}, ("unattributed", "ambiguous")),
-                                    ("user registers another event", {"SessionStart": [U]}, {"SessionStart": [P]},
-                                     ("universal", "event_fallback"))):
+    want = ("unattributed", "event_uncorrelated")
+    for label, user, proj in (("user only", {"UserPromptSubmit": [U]}, None),
+                              ("project only", None, {"UserPromptSubmit": [P]}),
+                              ("both", {"UserPromptSubmit": [U]}, {"UserPromptSubmit": [P]}),
+                              ("user registers another event", {"SessionStart": [U]}, {"SessionStart": [P]})):
         root = scratch("evfb")
         if user is not None:
             write_settings(root / "home", user)
@@ -556,9 +557,9 @@ def g_hook_event_fallback():
             why.append(f"{label}: {got} want {want}")
     sizes = lambda n: {"hook_event": "UserPromptSubmit", "hook_name": "UserPromptSubmit", "hook": n}
     rc, out, _ = attr_check(sizes(2000), sizes(3024), project_regs={"UserPromptSubmit": [P]})
-    if rc != 0 or not find_lines(out, f"LAYER {layer} scope=project"):
+    if rc != 1 or not find_lines(out, f"LAYER {layer} scope=unattributed") or find_lines(out, f"LAYER {layer} scope=project"):
         why.append(f"project-only +1024: rc={rc} last={last_line(out)!r}")
-    return (not why), "; ".join(why) or "no producing row: project-only event -> project, user-only/neither -> universal, both -> unattributed"
+    return (not why), "; ".join(why) or "no producing row: unattributed whatever the registrations (user / project / both / other event); project-only +1024 red"
 
 
 def g_hook_ambiguous():
@@ -636,8 +637,8 @@ def g_cwd_absent_unattributed():
         want = {
             "hook P": (comp(m, layer, hook_src(P)), ("project", "project_settings") if present else ("unattributed", "not_on_this_host")),
             "hook U": (comp(m, layer, hook_src(U)), ("universal", "user_settings") if present else ("unattributed", "not_on_this_host")),
-            "event fallback": (comp(mu, "hook_context:UserPromptSubmit:UserPromptSubmit", "event:UserPromptSubmit"),
-                               ("universal", "event_fallback") if present else ("unattributed", "not_on_this_host")),
+            "event uncorrelated": (comp(mu, "hook_context:UserPromptSubmit:UserPromptSubmit", "event:UserPromptSubmit"),
+                                   ("unattributed", "event_uncorrelated")),
             "skill ps": (comp(m, "skill_listing", "ps"), ("project", "project_file") if present else ("unattributed", "not_on_this_host")),
             "skill us": (comp(m, "skill_listing", "us"), ("universal", "install_file") if present else ("unattributed", "not_on_this_host")),
             "agent pa": (comp(m, "other:agent_listing_delta", "pa"), ("project", "project_file") if present else ("unattributed", "not_on_this_host")),
@@ -887,8 +888,8 @@ def g_layer_table():
         ("rules", "project"): 404, ("other:instructions", "project"): 505, ("other:instructions", "unattributed"): 606,
         ("skill_listing", "unattributed"): len(listing),
         ("other:agent_listing_delta", "unattributed"): len("- Explore: reads") + len("- Plan: plans a lot"),
-        ("hook_context:SessionStart:SessionStart:startup", "universal"): 33,    # no producing row, nobody registers it: event fallback
-        ("hook_system_message:SessionStart:SessionStart:startup", "universal"): 33,
+        ("hook_context:SessionStart:SessionStart:startup", "unattributed"): 33,    # no producing row: never attributed from the event (WR-02)
+        ("hook_system_message:SessionStart:SessionStart:startup", "unattributed"): 33,
         ("system_prompt", "unattributed"): len("one " * 10) + len("two " * 20),
         ("other:deferred_tools_delta", "unattributed"): jl({"addedNames": ["t"], "addedLines": ["- t"]}),
         ("other:brand_new", "unattributed"): jl({"payload": "p" * 50}),
@@ -2405,7 +2406,65 @@ def _drop_rules(path):
     _edit_files(path, lambda fs: [f for f in fs if "/.claude/rules/" not in f["path"].replace("\\", "/")])
 
 
+def legacy_uncorrelated_scope(event, ctx):
+    """The pre-WR-02 fallback: an element no hook_success row produced was filed by who registers its event."""
+    if not ctx.available:
+        return "unattributed", "not_on_this_host"
+    proj, user = ctx.project_regs(), ctx.user_regs()
+    if proj is None or user is None:
+        return "unattributed", "unknown_settings"
+    in_proj, in_user = bool(proj.get(event)), bool(user.get(event))
+    if in_proj and in_user:
+        return "unattributed", "ambiguous"
+    return ("project", "event_fallback") if in_proj else ("universal", "event_fallback")
+
+
+def g_hook_uncorrelated_unattributed():
+    """WR-02: a hook element with no producing row is `unattributed` (never project on the event alone); plain-text stdout correlates."""
+    why = []
+    layer = "hook_context:SessionStart:SessionStart"
+    src = "event:SessionStart"
+    P, U = "node project.js", "node user.js"
+    for cli in (True, False):
+        tag = "cli" if cli else "in-process"
+        # the reviewer's repro: project settings register the event, user settings nothing, 1,200 chars, no producer row
+        rc, out, _ = attr_check({"hook": 1, "hook_name": "SessionStart"}, {"hook": 1200, "hook_name": "SessionStart"}, project_regs={"SessionStart": [P]}, cli=cli)
+        risk = find_lines(out, f"RISE {layer} scope=unattributed")
+        if rc != 1 or len(risk) != 1 or "universal_1k" not in risk[0] or find_lines(out, f"LAYER {layer} scope=project"):
+            why.append(f"{tag} project-only +1199: rc={rc} rise={risk} last={last_line(out)!r}")
+    # every registration shape files an uncorrelated element as unattributed
+    for label, user, proj in (("user only", {"SessionStart": [U]}, None), ("project only", None, {"SessionStart": [P]}),
+                              ("both", {"SessionStart": [U]}, {"SessionStart": [P]}), ("neither", None, None)):
+        root = scratch("wr02")
+        if user is not None:
+            write_settings(root / "home", user)
+        if proj is not None:
+            write_settings(root / "repo", proj)
+        got = comp(measure_floor(root, {"hook_name": "SessionStart"}), layer, src)
+        if got != ("unattributed", "event_uncorrelated"):
+            why.append(f"{label}: {got} want ('unattributed', 'event_uncorrelated')")
+    # a hook that prints plain text is correlated by its stdout (so it is attributed, not left uncorrelated)
+    root = scratch("wr02")
+    write_settings(root / "home", {"SessionStart": [U]})
+    write_settings(root / "repo", {"SessionStart": [P]})
+    tx = build_floor(root, "plain", {"hook": 1200, "hook_name": "SessionStart"})
+    asst = tx.rows.pop()
+    tx.attachment("hook_success", hookEvent="SessionStart", hookName="SessionStart", command=P, stdout="H" * 1200 + "\n",
+                  content="ok", toolUseID="tu1", exitCode=0)
+    tx.rows.append(asst)
+    got = comp(GATE_MEASURE_HOME(root, tx.write()), layer, hook_src(P))
+    if got != ("project", "project_settings"):
+        why.append(f"plain-text stdout: {got} want ('project', 'project_settings')")
+    return (not why), "; ".join(why) or "uncorrelated element: unattributed for user-only / project-only / both / neither, project-only +1199 red (universal_1k); plain-text stdout correlates"
+
+
+def GATE_MEASURE_HOME(root, path):
+    with with_home(Path(root) / "home"):
+        return GATE.measure(str(path))
+
+
 GATES_REVIEWFIX = [
+    ("V-FLOOR-HOOK-UNCORRELATED-UNATTRIBUTED", g_hook_uncorrelated_unattributed),
     ("V-FLOOR-LAYER-ABSENT", g_layer_absent),
     ("V-FLOOR-HOOK-SOURCE-NO-COMMAND-TEXT", g_hook_source_no_command_text),
     ("V-FLOOR-WINDOW-LINE-UNPARSEABLE", g_window_line_unparseable),
@@ -2608,6 +2667,10 @@ def _m_absent_layers_none():
     return _patch("absent_layers", lambda ref, now: [])
 
 
+def _m_event_fallback_project():
+    return _patch("uncorrelated_scope", legacy_uncorrelated_scope)
+
+
 def _m_synthetic_measured():
     real = GATE.first_call_tokens
     return _patch("first_call_tokens", lambda assistant: real(assistant) if real(assistant) is not None
@@ -2644,6 +2707,8 @@ MUTANTS = [
      _m_hook_source_raw_command, ["V-FLOOR-HOOK-SOURCE-NO-COMMAND-TEXT"]),
     ("M16 absent_layers finds nothing (WR-01: a floor that lost a whole layer reads as a fall, WITHIN_BOUND)",
      _m_absent_layers_none, ["V-FLOOR-LAYER-ABSENT"]),
+    ("M17 uncorrelated hook element filed by its event's registrations (WR-02: a plugin hook reads as project)",
+     _m_event_fallback_project, ["V-FLOOR-HOOK-UNCORRELATED-UNATTRIBUTED", "V-FLOOR-HOOK-EVENT-FALLBACK"]),
 ]
 
 

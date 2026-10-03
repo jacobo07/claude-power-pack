@@ -38,13 +38,14 @@ a component whose origin cannot be proved is `unattributed` and stays under the 
 
 Hook / skill / agent attribution (every lookup is a read; the basis is recorded as `scope_basis`):
   hook element -> the hook_success row of the same hookEvent whose stdout JSON carries the element
-     (hookSpecificOutput.additionalContext, or systemMessage) names the command. The component source is the stable key
+     (hookSpecificOutput.additionalContext, or systemMessage; for additionalContext also plain-text stdout equal to
+     the element) names the command. The component source is the stable key
      `hook:<sha256(command)[:16]>[:<script basename>]`; the command text is never stored or printed.
      `${CLAUDE_PLUGIN_ROOT}` in the command: universal (plugin). Else the settings file REGISTERING the command
      decides, never where its script lives: only <cwd>/.claude/settings[.local].json -> project, only
      <install_home>/.claude/settings[.local].json -> universal, both or neither -> unattributed.
-  no producing row -> the event's registrations: project only -> project, project settings known and not registering it
-     -> universal, both -> unattributed. Several producing commands -> unattributed.
+  no producing row -> unattributed (basis event_uncorrelated): the event's registrations never prove who produced the
+     element. A hook that prints plain text is correlated by its stdout. Several producing commands -> unattributed.
   skill / agent entry -> a file under <cwd>/.claude (skills/<n>/SKILL.md, commands/<n>.md, commands/<ns>/<rest>.md,
      agents/**/<n>.md) -> project; under <install_home>/.claude -> universal; both -> unattributed; neither: a `ns:rest`
      plugin name -> universal, anything else (a harness built-in) -> unattributed. A name that could leave its
@@ -364,6 +365,9 @@ def correlate_hook(element, event, field, window_rows):
         try:
             doc = json.loads(stdout)
         except ValueError:
+            # a hook that prints plain text: for additionalContext the whole stdout is the added context
+            if field == "additionalContext" and isinstance(element, str) and stdout.strip() == element.strip():
+                found.add(cmd)
             continue
         if not isinstance(doc, dict):
             continue
@@ -377,20 +381,11 @@ def correlate_hook(element, event, field, window_rows):
     return found
 
 
-def _event_scope(event, ctx):
-    """Fallback when no hook_success row produced the element: who registers this event."""
-    ctx = _ctx(ctx)
-    if not ctx.available:
-        return "unattributed", "not_on_this_host"
-    proj, user = ctx.project_regs(), ctx.user_regs()
-    if proj is None or user is None:
-        return "unattributed", "unknown_settings"
-    in_proj, in_user = bool(proj.get(event)), bool(user.get(event))
-    if in_proj and in_user:
-        return "unattributed", "ambiguous"
-    if in_proj:
-        return "project", "event_fallback"
-    return "universal", "event_fallback"
+def uncorrelated_scope(event, ctx):
+    """-> (scope, basis) for a hook element no hook_success row produced. Always unattributed (WR-02): which settings
+    file registers the EVENT says nothing about who produced THIS element (a plugin hook is registered in neither), so the
+    event alone can never prove project or universal; the element stays under the 1,000-char rule."""
+    return "unattributed", "event_uncorrelated"
 
 
 def hook_scope(element, event, field, ctx, window_rows):
@@ -403,7 +398,7 @@ def hook_scope(element, event, field, ctx, window_rows):
         return scope, hook_source_key(cmd), basis
     if len(cmds) > 1:
         return "unattributed", f"ambiguous:{event}", "ambiguous"
-    scope, basis = _event_scope(event, ctx)
+    scope, basis = uncorrelated_scope(event, ctx)
     return scope, f"event:{event}", basis
 
 
