@@ -1,0 +1,51 @@
+{
+  "persistent_state": {
+    "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\skills\\destructive-state-authorization\\SKILL.md",
+      "line": 13,
+      "quote": "> **What exact state did the user authorize destroying, and is it still there?**"
+    },
+    "persistent_state-destructive-identity-falsification-test": {
+      "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\skills\\destructive-state-authorization\\SKILL.md",
+      "line": 26,
+      "quote": "**The test is a falsification, and it is cheap:** construct one case where the destructive target"
+    },
+    "persistent_state-absence-of-identity-refuses": {
+      "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\skills\\destructive-state-authorization\\SKILL.md",
+      "line": 42,
+      "quote": "**Absence of an identity is never \"unchanged\".** A missing value means the caller could not say, and"
+    },
+    "persistent_state-precondition-window-must-be-closed": {
+      "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\skills\\destructive-state-authorization\\SKILL.md",
+      "line": 82,
+      "quote": "## The check is authoritative for the effect only if nothing can move in between"
+    },
+    "persistent_state-batch-reauthorize-per-item": {
+      "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\skills\\destructive-state-authorization\\SKILL.md",
+      "line": 109,
+      "quote": "**A batch cannot share one authorization moment.** Authorize every item in one pass and then destroy"
+    },
+    "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\skills\\monetary-quantity-integrity\\SKILL.md",
+      "line": 15,
+      "quote": "**An amount travels with its qualifiers as fields, or it cannot be combined with"
+    },
+    "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\skills\\monetary-quantity-integrity\\SKILL.md",
+      "line": 26,
+      "quote": "- **Two known qualifiers that disagree → refuse.** There is nothing to go and"
+    },
+    "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\skills\\monetary-quantity-integrity\\SKILL.md",
+      "line": 37,
+      "quote": "Conversion needs a rate, a rate date, a provider and provenance. Without all"
+    }
+  },
+  "wii_homebrew": {
+    "wii_homebrew-claim-must-name-observing-plane": {
+      "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\skills\\develop-here-prove-there\\SKILL.md",
+      "line": 14,
+      "quote": "> every runtime verdict. A claim names the plane that observed it, or it is not a claim.**"
+    }
+  }
+}
