@@ -2,20 +2,20 @@
  "pairs": [
   {
    "card": "hooks/doctrine_cards.js",
-   "card_sha256": "ac24965fd7684dd399e8d7e88f9e9ba71d7c9d87a467b401882a9f7fbbfe453a",
+   "card_sha256": "61983b0165b44c324b2ed09327af93a28ea474c1d50382508a63623c3d64b208",
    "skill": "concurrent-writers-shared-tree",
    "source": "skills/concurrent-writers-shared-tree/SKILL.md",
-   "source_sha256": "f1f52de4c3115d0aafc39d69c67a2e1ae7936ae63b26ecc9263d89f1150e57c0"
+   "source_sha256": "77f55d19fdf07a873b267c9d374bef25997aa7e754d67ea31b30a78c79e0ef11"
   },
   {
    "card": "hooks/destructive_doctrine_card.js",
-   "card_sha256": "5f25260ff8ae0bfd43b5859546907f881aa2e3283745ec6de012a6faddcf09a0",
+   "card_sha256": "a76d674cbaa276cfb1c883b54edc1f2961af112672d717419c84a45fa9e70b74",
    "skill": "destructive-state-authorization",
    "source": "skills/destructive-state-authorization/SKILL.md",
-   "source_sha256": "2985bd97002abf0589a95080a7d29b447b7a703df9ccd319494dba45701cd0de"
+   "source_sha256": "fb98f108cfc0cf129a9e3ab790b1f5f0593661083ea48244d906975f373f97a6"
   }
  ],
- "recorded_at_commit": "ee645e0901571354af8e023eb5c641b19aa4ce08",
+ "recorded_at_commit": "7e689d28737d10c193ddc0c1c825de1c2a271fd3",
  "rule": "Re-run `--record-cards` only after re-deriving each card from its current source; recording is the re-derivation act.",
  "schema": "card-source-digests/1"
 }
