@@ -74,6 +74,9 @@ FAMILY = "web_surface"
 
 _PASS = 0
 _FAIL = 0
+# The gate count is a literal: deleting a gate (or one that never runs) must not
+# print a satisfied N/N. Update it in the same commit that adds or removes a gate.
+EXPECTED = 40
 
 
 def _check(gate, cond, evidence, diagnostic):
@@ -872,8 +875,8 @@ def main() -> int:
 
         print()
         print("UCEP_BASELINE_INTEGRITY_PASS=%d/%d  threshold=%d/%d"
-              % (_PASS, _PASS + _FAIL, 33, 33))
-        return 0 if _FAIL == 0 else 1
+              % (_PASS, _PASS + _FAIL, EXPECTED, EXPECTED))
+        return 0 if _FAIL == 0 and _PASS == EXPECTED else 1
     finally:
         for k, v in saved_env.items():
             if v is None:

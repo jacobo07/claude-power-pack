@@ -39,6 +39,9 @@ from modules.tower import donegate as dg  # noqa: E402
 
 _PASS = 0
 _FAIL = 0
+# The gate count is a literal: deleting a gate (or one that never runs) must not
+# print a satisfied N/N. Update it in the same commit that adds or removes a gate.
+EXPECTED = 17
 _MARKER = ""
 _EXECUTED_AFTER = []  # judge() calls after which the marker existed
 
@@ -129,6 +132,7 @@ def main() -> int:
     tmp = tempfile.mkdtemp(prefix="ucep_dg_")
     home = os.path.join(tmp, "home")
     os.makedirs(home)
+    saved_env = {k: os.environ.get(k) for k in ("HOME", "USERPROFILE")}
     os.environ.update(HOME=home, USERPROFILE=home)
     try:
         _MARKER = os.path.join(tmp, "marker.flag")
@@ -207,11 +211,15 @@ def main() -> int:
 
         # 6/7 -- no process- or code-execution facility in the check path
         scan = {}
-        for rel in ("modules/tower/checks.py", "modules/tower/donegate.py"):
+        # every module judge() runs: checks, donegate, and (IN-03) the chain, the
+        # baseline reader and the selector it calls
+        for rel in ("modules/tower/checks.py", "modules/tower/donegate.py",
+                    "modules/tower/ratchet.py", "modules/tower/baselines.py",
+                    "modules/tower/select.py"):
             with open(os.path.join(_PP_ROOT, rel), "r", encoding="utf-8") as fh:
                 scan[rel] = _exec_findings(fh.read())
         _check("V-UCEP-NO-EXEC-IMPORTS", all(v == [] for v in scan.values()),
-               "checks.py and donegate.py import/call no exec facility (AST scan)", scan)
+               "the 5 modules judge() runs import/call no exec facility (AST scan)", scan)
         control = _exec_findings("import subprocess\nimport os\nos.system('x')\n")
         _check("V-UCEP-NO-EXEC-SCAN-CONTROL", len(control) == 2,
                "scanner flags a fixture with one forbidden import and one os.system", control)
@@ -379,9 +387,14 @@ def main() -> int:
 
         print()
         print("UCEP_DONEGATE_EXITS_PASS=%d/%d  threshold=%d/%d"
-              % (_PASS, _PASS + _FAIL, _PASS + _FAIL, _PASS + _FAIL))
-        return 0 if _FAIL == 0 else 1
+              % (_PASS, _PASS + _FAIL, EXPECTED, EXPECTED))
+        return 0 if _FAIL == 0 and _PASS == EXPECTED else 1
     finally:
+        for k, v in saved_env.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
         shutil.rmtree(tmp, ignore_errors=True)
 
 
