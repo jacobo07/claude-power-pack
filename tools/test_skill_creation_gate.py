@@ -312,6 +312,18 @@ def drill_table(seed, originals):
             return "precondition: S reason not found"
         _replace_md(fx, repo, s, t.replace(s_reason, "null", 1), "S reason is the YAML null literal")
 
+    def m_reason_toplevel(fx, repo):
+        lines = ["metadata:", f"  {scg.DETECTOR_KEY}: none", f"{scg.REASON_KEY}: {s_reason}"]
+        _replace_md(fx, repo, s, scg.insert_declaration(originals[s], lines), "S reason outside metadata")
+
+    def reason_edit(text, msg):
+        def m(fx, repo):
+            t = read_md(repo, s)
+            if s_reason not in t:
+                return "precondition: S reason not found"
+            _replace_md(fx, repo, s, t.replace(s_reason, text, 1), msg)
+        return m
+
     def m_untracked_path(fx, repo):
         write(repo, UNTRACKED_PROBE, "# present on disk, never committed\n")
         lines = ["metadata:", f"  {scg.DETECTOR_KEY}: {UNTRACKED_PROBE}"]
@@ -380,6 +392,11 @@ def drill_table(seed, originals):
         ("TOPLEVEL-S", m_toplevel, {f"{s}:FORM": F}, True),
         ("NONE-NO-REASON-S", m_no_reason, {f"{s}:TARGET": F}, True),
         ("REASON-NULL-S", m_reason_null, {f"{s}:FORM": F}, True),
+        ("REASON-TOPLEVEL-S", m_reason_toplevel, {f"{s}:FORM": F}, True),
+        ("REASON-COLON-S", reason_edit("coverage class none: no card hook", "S reason with a colon"), {f"{s}:FORM": F},
+         True),
+        ("REASON-HASH-S", reason_edit("coverage class none # no card hook", "S reason with a hash"), {f"{s}:FORM": F},
+         True),
         ("UNTRACKED-PATH-S", m_untracked_path, {f"{s}:TARGET": F, f"{s}:COVERAGE-AGREES": F}, True),
         ("DSA-DECLARES-CARD", m_dsa_card, {f"{ds}:COVERAGE-AGREES": F}, True),
         ("CWST-DECLARES-NONE", m_cwst_none, {f"{cw}:COVERAGE-AGREES": F}, True),
