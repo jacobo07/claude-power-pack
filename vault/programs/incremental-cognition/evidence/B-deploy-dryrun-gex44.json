@@ -1,0 +1,214 @@
+{
+  "plane": "gex44",
+  "measured_at": "2026-10-03T18:54Z",
+  "instrument": "tools/gex44_env_deploy.py (plan 02-04, commit 37a8b5187985500fd82e73be8baeab6dd6bde673), dry-run only, never --apply; PP_COMMIT_FLOOR 60e7947dcf3cf0f9c660e412ec6276a8b2922f99",
+  "commands": [
+    "python3 /home/kobii/missions/incremental-cognition/.claude/worktrees/ic-run/tools/gex44_env_deploy.py --env-root /home/kobii/a7-env --source-repo /home/kobii/missions/incremental-cognition/.claude/worktrees/ic-run --commit mission/incremental-cognition-run --json",
+    "python3 /home/kobii/missions/incremental-cognition/.claude/worktrees/ic-run/tools/gex44_env_deploy.py --env-root /home/kobii/a5-env --source-repo /home/kobii/missions/incremental-cognition/.claude/worktrees/ic-run --commit mission/incremental-cognition-run --json"
+  ],
+  "exit_codes": {
+    "a7": 4,
+    "a5": 4
+  },
+  "plans": {
+    "a7": {
+      "mode": "dry-run",
+      "env_root": "/home/kobii/a7-env",
+      "source_repo": "/home/kobii/missions/incremental-cognition/.claude/worktrees/ic-run",
+      "target_ref": "mission/incremental-cognition-run",
+      "ts": "20261003T185440Z",
+      "refusal": {
+        "code": 4,
+        "why": "the install has 1 modified tracked file(s): vault/terminal_slots.json"
+      },
+      "env_head": "01199995c7d15a9540dc4180c8f3a50d6e1244b3",
+      "target": "37a8b5187985500fd82e73be8baeab6dd6bde673",
+      "ancestry": "ancestor",
+      "already_at_target": false,
+      "hooks_repair": false,
+      "plane_marker": "will add",
+      "before": {
+        "verdict": "NOT_READY",
+        "reasons": [
+          "auth_expired",
+          "pp_install_stale"
+        ],
+        "unmeasured": [
+          {
+            "check": "interpreters",
+            "why": "engine range unreadable (/home/kobii/a7-env/home/.claude/skills/claude-power-pack/vendor/genesis-suite/package.json)"
+          }
+        ],
+        "findings": [
+          "install_modified",
+          "hooks_foreign_env"
+        ],
+        "checks": [
+          {
+            "check": "auth",
+            "state": "NOT_READY",
+            "why": "access token expired and not refreshable (expiresAt 1970-01-01T00:00:00+00:00)"
+          },
+          {
+            "check": "pp_install",
+            "state": "NOT_READY",
+            "why": "floor 60e7947d is not in this install's history (head 01199995); required files missing: tools/provider_breaker.py, tools/mission_launch_gate.py"
+          },
+          {
+            "check": "hooks",
+            "state": "READY",
+            "why": "50 hook(s) judged healthy"
+          },
+          {
+            "check": "interpreters",
+            "state": "UNMEASURABLE",
+            "why": "engine range unreadable (/home/kobii/a7-env/home/.claude/skills/claude-power-pack/vendor/genesis-suite/package.json)"
+          }
+        ]
+      },
+      "rollback": [
+        "git -C /home/kobii/a7-env/home/.claude/skills/claude-power-pack checkout --detach 01199995c7d15a9540dc4180c8f3a50d6e1244b3",
+        "cp /home/kobii/a7-env/env.sh.bak-20261003T185440Z /home/kobii/a7-env/env.sh",
+        "cp /home/kobii/a7-env/pp.head.bak-20261003T185440Z /home/kobii/a7-env/pp.head"
+      ],
+      "backups": {
+        "ref": "refs/pp-deploy/backup-20261003T185440Z",
+        "env_sh": "/home/kobii/a7-env/env.sh.bak-20261003T185440Z",
+        "pp_head": "/home/kobii/a7-env/pp.head.bak-20261003T185440Z"
+      },
+      "install": "/home/kobii/a7-env/home/.claude/skills/claude-power-pack",
+      "modified": {
+        "count": 1,
+        "first": [
+          "vault/terminal_slots.json"
+        ]
+      }
+    },
+    "a5": {
+      "mode": "dry-run",
+      "env_root": "/home/kobii/a5-env",
+      "source_repo": "/home/kobii/missions/incremental-cognition/.claude/worktrees/ic-run",
+      "target_ref": "mission/incremental-cognition-run",
+      "ts": "20261003T185441Z",
+      "refusal": {
+        "code": 4,
+        "why": "the install has 1024 modified tracked file(s): .claude/commands/osa.md, .gitattributes, .gitignore, .planning/config.json, .specify/memory/constitution.md, ARCHITECTURE.md, README.md, SKILL.md, SKILLBANK.md, SSOT.md, agents/comment-analyzer.md, agents/cpp-reviewer.md, agents/go-reviewer.md, agents/harness-optimizer.md, agents/java-reviewer.md, agents/python-reviewer.md, agents/rust-reviewer.md, agents/silent-failure-hunter.md, agents/type-design-analyzer.md, agents/typescript-reviewer.md"
+      },
+      "env_head": "192390b909689d8f07e87855076df0971ac1ff6f",
+      "target": "37a8b5187985500fd82e73be8baeab6dd6bde673",
+      "ancestry": "ancestor",
+      "already_at_target": false,
+      "hooks_repair": false,
+      "plane_marker": "will add",
+      "before": {
+        "verdict": "NOT_READY",
+        "reasons": [
+          "pp_install_stale"
+        ],
+        "unmeasured": [
+          {
+            "check": "interpreters",
+            "why": "engine range unreadable (/home/kobii/a5-env/home/.claude/skills/claude-power-pack/vendor/genesis-suite/package.json)"
+          }
+        ],
+        "findings": [
+          "install_modified"
+        ],
+        "checks": [
+          {
+            "check": "auth",
+            "state": "READY",
+            "why": "access token valid until 2026-10-03T20:06:41+00:00"
+          },
+          {
+            "check": "pp_install",
+            "state": "NOT_READY",
+            "why": "floor 60e7947d is not in this install's history (head 192390b9); required files missing: tools/provider_breaker.py, tools/mission_launch_gate.py"
+          },
+          {
+            "check": "hooks",
+            "state": "READY",
+            "why": "50 hook(s) judged healthy"
+          },
+          {
+            "check": "interpreters",
+            "state": "UNMEASURABLE",
+            "why": "engine range unreadable (/home/kobii/a5-env/home/.claude/skills/claude-power-pack/vendor/genesis-suite/package.json)"
+          }
+        ]
+      },
+      "rollback": [
+        "git -C /home/kobii/a5-env/home/.claude/skills/claude-power-pack checkout --detach 192390b909689d8f07e87855076df0971ac1ff6f",
+        "cp /home/kobii/a5-env/env.sh.bak-20261003T185441Z /home/kobii/a5-env/env.sh"
+      ],
+      "backups": {
+        "ref": "refs/pp-deploy/backup-20261003T185441Z",
+        "env_sh": "/home/kobii/a5-env/env.sh.bak-20261003T185441Z",
+        "pp_head": null
+      },
+      "install": "/home/kobii/a5-env/home/.claude/skills/claude-power-pack",
+      "modified": {
+        "count": 1024,
+        "first": [
+          ".claude/commands/osa.md",
+          ".gitattributes",
+          ".gitignore",
+          ".planning/config.json",
+          ".specify/memory/constitution.md",
+          "ARCHITECTURE.md",
+          "README.md",
+          "SKILL.md",
+          "SKILLBANK.md",
+          "SSOT.md"
+        ]
+      }
+    }
+  },
+  "result": "BOTH REFUSED, exit 4: each install carries modified tracked files. A refusal is a result: nothing was overwritten, and what to discard is the Owner's decision (owner-bundle [B] env deploys line).",
+  "install_local_changes_intel": {
+    "how": "read-only `git --no-optional-locks diff --stat` (and -w) in each install; see the disclosure below",
+    "a7": "1 file, vault/terminal_slots.json, +21 lines (runtime state)",
+    "a5": "1024 files, +295868/-275849 lines; ignoring whitespace and line endings 43 files, +20463/-444; so about 981 files differ only in line endings and 43 carry real content changes (a5_linux.patch is the candidate)"
+  },
+  "no_write_proof": {
+    "files": [
+      "/home/kobii/a5-env/env.sh",
+      "/home/kobii/a7-env/env.sh",
+      "/home/kobii/a5-env/home/.claude/settings.json",
+      "/home/kobii/a7-env/home/.claude/settings.json",
+      "/home/kobii/a5-env/home/.claude/skills/claude-power-pack/.git/index",
+      "/home/kobii/a7-env/home/.claude/skills/claude-power-pack/.git/index",
+      "/home/kobii/a5-env/home/.claude/skills/claude-power-pack/.git/HEAD",
+      "/home/kobii/a7-env/home/.claude/skills/claude-power-pack/.git/HEAD",
+      "/home/kobii/a7-env/pp.head"
+    ],
+    "method": "stat -c '%n %s %Y' on the 9 files (the 8 of plan 02-02 plus a7-env/pp.head; a5-env has no pp.head) before the two dry-runs, and after the dry-runs AND after the owner-bundle read-only commands were run verbatim from cwd /tmp (2 deploy dry-runs, 2 preflights, 1 preflight --json); credentials files deliberately excluded (a live worker may refresh them)",
+    "diff": "empty",
+    "stat_before": [
+      "/home/kobii/a5-env/env.sh 341 1790286113",
+      "/home/kobii/a7-env/env.sh 452 1790372162",
+      "/home/kobii/a5-env/home/.claude/settings.json 32536 1790362496",
+      "/home/kobii/a7-env/home/.claude/settings.json 32536 1790362496",
+      "/home/kobii/a5-env/home/.claude/skills/claude-power-pack/.git/index 337079 1791053631",
+      "/home/kobii/a7-env/home/.claude/skills/claude-power-pack/.git/index 349398 1790545171",
+      "/home/kobii/a5-env/home/.claude/skills/claude-power-pack/.git/HEAD 46 1787747983",
+      "/home/kobii/a7-env/home/.claude/skills/claude-power-pack/.git/HEAD 41 1790545171",
+      "/home/kobii/a7-env/pp.head 40 1790545171"
+    ]
+  },
+  "disclosure": {
+    "what": "The first attempt at this proof was invalid and was redone. Between the first before-stat and its after-stat, a5's install .git/index mtime moved (1790281507 -> 1791053631). The moving command was an ad-hoc `git --no-optional-locks diff --stat` / `diff -w` that I ran in a5's install to describe the 1024 modified files, NOT the deploy dry-run: the index mtime (20:53:51) is after the a5 dry-run finished (20:53:39) and no cron sweep fired in between, and a fresh before/after bracket around only the dry-runs shows the index unchanged. Effect: git's own stat cache was refreshed; no tracked content, ref or HEAD changed. The clean proof above is the second one, with no ad-hoc git run inside either env between its two stats.",
+    "lesson": "the intel above should have been taken from a copy or with a bracketed stat; it is recorded as measured, with how it was obtained."
+  },
+  "runs_as_written": {
+    "cwd": "/tmp",
+    "note": "the five read-only owner-bundle commands extracted from the bundle file and run verbatim; none printed 'No such file or directory' or \"can't open file\"",
+    "rows": [
+      "[1] rc=1 missing_file_msgs=0 :: python3 IC/tools/gex44_env_preflight.py --env-root /home/kobii/a7-env",
+      "[2] rc=4 missing_file_msgs=0 :: python3 IC/tools/gex44_env_deploy.py --env-root /home/kobii/a7-env --source-repo IC --commit mission/incremental-cognition-run",
+      "[3] rc=4 missing_file_msgs=0 :: python3 IC/tools/gex44_env_deploy.py --env-root /home/kobii/a5-env --source-repo IC --commit mission/incremental-cognition-run",
+      "[4] rc=1 missing_file_msgs=0 :: python3 IC/tools/gex44_env_preflight.py --env-root /home/kobii/a5-env",
+      "[5] rc=1 missing_file_msgs=0 :: python3 IC/tools/gex44_env_preflight.py --env-root /home/kobii/a7-env --json"
+    ]
+  }
+}
