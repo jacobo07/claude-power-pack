@@ -4,14 +4,14 @@ milestone: v1
 current_phase: 2
 current_plan: 4
 status: verifying
-stopped_at: Completed 02-04-PLAN.md (phase 2 plans done; B and C evidenced, OPEN pending Owner PRGs)
-last_updated: "2026-10-03T19:01:16.411Z"
-state_head: f6a40285c02b0282536f06d78b556df5c74e0bc3
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-10-03T21:05:00.348Z"
+state_head: aa17339b92aaf5fac26e0eabeabe4c3e40d16095
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 9
+  completed_plans: 5
 milestone_name: incremental-cognition
 last_activity: 2026-10-03
 workstream: incremental-cognition
@@ -54,12 +54,14 @@ Total Plans in Phase: 4
   `gsd_mission.py arm` stays ungated (named debt, 02-04 records it).
 - [Phase 2]: [02-04] Hook scripts are restored by the deploy itself (registered-but-missing only, own hooks dir, never overwrite): install_global_core.py does not copy hooks
 - [Phase 2]: [02-04] A dirty install or non-ancestor env head is a refusal result; real a5 (1024 modified) and a7 (1 modified) both refuse exit 4, the Owner decides; ledger state.B/state.C and IC-B/IC-C stay open (PRGs Owner-run)
+- [Phase 3]: [03-01] --until defaults to the freeze instant (16:13:37Z) for frozen denominators KME-L/KME-G; live corpora grow, so only the window reproduces the frozen population (unwindowed GEX44 scan already reads 14 active / 1679 calls vs frozen 13 / 1322)
+- [Phase 3]: [03-01] terminal_evidence requires primary role AND exact population AND a measured (non-UNMEASURED) verdict; KME-G smoke is evidence_role smoke, never terminal. D on KME-G STRADDLES 2.6-4.0 %, B001 sample < 3 %; IC-D stays open pending the laptop KME-L run
 
 ## Session Continuity
 
-**Last session:** 2026-10-03T19:01:16.389Z
+**Last session:** 2026-10-03T21:05:00.284Z
 
-**Stopped At:** Completed 02-04-PLAN.md (phase 2 plans done; B and C evidenced, OPEN pending Owner PRGs)
+**Stopped At:** Completed 03-01-PLAN.md
 `tools/test_gsd_mission_cwd_align.py` has 4 NEW uncommitted cases (V-MCA-DIVERGED-FOLLOWED / -UNPROVEN /
 -STALE-ROADMAP / -THREE-RELAYS) calling `gm.align_cwd(cwd, wt, proven_workstream="ws")`; the
 `threshold=9/9` line still needs 13/13. Not yet run (expected RED: align_cwd has no proven_workstream).
@@ -100,6 +102,7 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 | Phase 2 P01 | 35min | 3 tasks | 3 files |
 | Phase 02 P03 | 40min | 3 tasks | 4 files |
 | Phase 02 P04 | 1h | 3 tasks | 7 files |
+| Phase 3 P01 | n/m (session interrupted) | 3 tasks | 5 files |
 
 ## Session Continuity (GEX44 run, 2026-10-03 ~19:00Z, session 607795c4)
 
