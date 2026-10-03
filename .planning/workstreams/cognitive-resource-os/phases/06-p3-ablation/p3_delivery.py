@@ -202,7 +202,10 @@ def one_run(arm: str, rep: int) -> dict:
     card_dir = pr.RUNS / f"{run_id}-card"
     shutil.rmtree(card_dir, ignore_errors=True)
     env = pr.child_env()
-    env.update(CLAUDE_DESTRUCTIVE_CARD="off", DESTRUCTIVE_CARD_STATE_DIR=str(card_dir))
+    # G'6: the commit card (C4) must not fire into, or write rows from, benchmark sessions; set its
+    # switch and state dir now so arms run after it lands stay comparable with arms run before.
+    env.update(CLAUDE_DESTRUCTIVE_CARD="off", DESTRUCTIVE_CARD_STATE_DIR=str(card_dir),
+               CLAUDE_DOCTRINE_CARDS="off", DOCTRINE_CARDS_STATE_DIR=str(card_dir))
     t0 = time.time()
     try:
         r = subprocess.run(arm_cmd(arm, wt), cwd=wt, capture_output=True, text=True, encoding="utf-8",

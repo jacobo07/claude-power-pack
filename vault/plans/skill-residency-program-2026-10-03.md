@@ -1,7 +1,19 @@
 ---
 id: PLAN-SKILL-RESIDENCY
 title: Skill residency program -- availability without residency, proven by need-time delivery
-status: PROPOSED (awaiting one Owner approval; /ultra phase 1 + phase 2 questions inline)
+status: APPROVED (Owner "y" 2026-10-03, six defaults) + phase-4 EXECUTE-WITH-FIXES (vault/audits/skill-residency-audit.md)
+defaults: C3 runs now (<=40 sessions); card LEDGER-ONLY first; Owner applies wiki/tools/skill_overrides.final.json (134, kobiicraft-* kept); this pane executes PLAN-R2-RESIDENCY; telemetry via CO-12 record_signal, converge with ACV C5 later; no push, no CLAUDE.md
+harness: .planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/p3_delivery.py (C2, 755e857a)
+fixes_injected: |
+  G'1 opportunity = LINE-level ownership (Edit old/new_string, Write content, structuredPatch); shell write -> basis unknown.
+  G'2 commit-plan parser + fixture table per commit form; unparsed = UNKNOWN, never "no opportunity".
+  G'3 ledger-only card is never delivery; delivered_by=card only for deny-card before a later commit; Skill window = since previous commit, else session start.
+  G'4 hook is pure node + one bounded git spawn; C5 = OFFLINE adapter card-ledger -> record_signal (CO-12 file is under a live peer edit: never a second writer).
+  G'5 C4b = live dispatcher registration (Owner-visible, HR-001) + mirror sync + G9 procedure; liveness = own-session ledger row.
+  G'6 card honours CLAUDE_DOCTRINE_CARDS / DOCTRINE_CARDS_STATE_DIR; runner sets both; rows carry source; C4 frozen until C3 ends.
+  G'7 kind capability_opportunity; C8 report is its named consumer (positive control); foreign_custody reference dropped.
+  G'8/G'9 C1 fixtures: order-agnostic command regex, installed-set filter, isMeta expansions count 0, dedupe, subagent dir joined by file sessionId.
+  G'11 card returns before any I/O unless the commit regex matches; non-commit median measured.
 covers: [skill-residency, skill-opportunity, skill-delivery, skill-invocation-telemetry, skill-listing-rent, never-invoked-triage, r2-residency]
 children: [vault/plans/r2-instruction-residency-2026-10-03.md]   # adopted as slice 1, not duplicated
 date: 2026-10-03
