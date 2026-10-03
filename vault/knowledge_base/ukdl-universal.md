@@ -286,6 +286,31 @@ suggested fix does not work on Windows; an exclusive lock around the append lost
 the row BEFORE a fragment; if it parses whole, the fragment is an overwrite remainder, not an
 interleave. Count rows lost, not lines torn.
 
+### T-CHECKPOINT-CUSTODY-SCOPED-TO-CWD-REPO-001
+
+A checkpoint that judges "safe to forget" from the session's own repo misses the edits that session
+made in ANOTHER repo; once the context is cleared nobody holds them. Measured 2026-10-03 (plan
+ccp-s16 F7): session a4849588 resumed in an Orca-X worktree, fixed the Power Pack's
+tools/rollover.py (52/52), sealed SAFE_TO_FORGET and was cleared; the hunks sat uncommitted 3 days,
+3 peer commits had to hunk-isolate around them, and the capsule summary even said "Fixed". Causes:
+the capsule kept the last 15 written paths, and dirty state was read for the cwd repo only. At fix
+time 4 of the last 40 sealed sessions held the same shape. Fix: from the session's FULL write list,
+one path-scoped `git status --untracked-files=all -- <own paths>` per foreign repo; own
+uncommitted paths refuse, peers' dirt is never judged (`d34a0b4d`, test_rollover_custody, 2
+drills KILLED). Shell-written files stay invisible -- declare it. #CROSS-PROJECT
+
+### T-UNCONDITIONED-PRIOR-CANNOT-SAY-CONTINUE-001
+
+A remaining-work prior pooled from other sessions cannot recognise that THIS session is near its
+end, so an economic stop/continue rule fed by it can only ever say "go on" or "unsure". Measured
+2026-10-03 (plan ccp-s16 R2): 80 real sessions, 471 commit boundaries, 302 judged by the prior of
+`calls after a commit` -> 0 CONTINUE (225 WOULD, 77 INSUFFICIENT); adding measured rehydration
+moved 113 WOULD to INSUFFICIENT and still produced no CONTINUE. Every real CONTINUE came from a
+separate growth gate. Trap: reading "no CONTINUE observed" as "the policy never needs one", or
+weakening thresholds until a CONTINUE appears. Fix: keep the negative control PARTIAL and condition
+the prior on the session's own state (open obligations at the boundary) before claiming the
+controller knows when not to act. `rollover_replay.py search` re-runs it. #CROSS-PROJECT
+
 ### T-A-QUOTA-REFUSAL-IS-NOT-A-FINISHED-EPOCH-001
 
 A long-run supervisor that relays whenever a worker's turn ends will spend its
