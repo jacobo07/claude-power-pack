@@ -109,6 +109,29 @@ def main() -> int:
         miss = R.resolve("check this service for swallowed errors", specs_dir=cat, cache_path=cache)
         check("V-RES-CACHE-INVALIDATES", miss["cache"] == "MISS", "catalog change -> MISS")
 
+        # S5a D2: a cached answer must not survive a change to the code that produced it.
+        # Measured 2026-10-03: the key was tokens|class|k|catalog metadata, so a miss cached
+        # before a matcher fix kept being served after it. The policy is a hash of every
+        # capability_runtime module; changing it here stands in for editing one of them.
+        pcache = Path(t) / "policy-cache.json"
+        R.resolve("compose a jingle for a pizza advert", specs_dir=cat, cache_path=pcache)
+        warm = R.resolve("compose a jingle for a pizza advert", specs_dir=cat, cache_path=pcache)
+        real_policy = R.policy_hash()
+        R._POLICY = "edited-" + real_policy
+        try:
+            after = R.resolve("compose a jingle for a pizza advert", specs_dir=cat, cache_path=pcache)
+        finally:
+            R._POLICY = real_policy
+        check("V-RES-CACHE-POLICY", warm["cache"] == "HIT" and after["cache"] == "MISS"
+              and warm.get("policy") == real_policy,
+              f"same code -> {warm['cache']}, edited code -> {after['cache']}")
+        n_before = len(json.loads(pcache.read_text(encoding="utf-8")))
+        R.resolve("!!! ???", specs_dir=cat, cache_path=pcache)
+        again = R.resolve("!!! ???", specs_dir=cat, cache_path=pcache)
+        n_after = len(json.loads(pcache.read_text(encoding="utf-8")))
+        check("V-RES-CACHE-NO-EMPTY-KEY", again["cache"] == "MISS" and n_after == n_before,
+              f"empty-token query: second call {again['cache']}, cache rows {n_before}->{n_after}")
+
         empty = Path(t) / "empty"
         empty.mkdir()
         r = R.resolve("anything", specs_dir=empty, use_cache=False)

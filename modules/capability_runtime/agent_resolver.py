@@ -107,6 +107,25 @@ def fingerprint(specs_dir: Path | None = None) -> str:
     return h.hexdigest()[:16]
 
 
+_POLICY: str | None = None
+
+
+def policy_hash() -> str:
+    """Version of the code that produces an answer: sha256 over every capability_runtime module.
+
+    The cache key used to carry only the query, the grant and the catalog, so a miss cached
+    before a matcher fix kept being served after it (measured 2026-10-03, S5a D2). The class
+    order (agent_spec), contract defaults and scales (contract) and the gates (applicability)
+    all change answers, so the whole package is hashed, once per process."""
+    global _POLICY
+    if _POLICY is None:
+        h = hashlib.sha256()
+        for f in sorted(Path(__file__).resolve().parent.glob("*.py")):
+            h.update(f.name.encode() + b"\0" + f.read_bytes() + b"\0")
+        _POLICY = h.hexdigest()[:16]
+    return _POLICY
+
+
 def resolve(task: str, max_class: str = "verifier", k: int = 3,
             specs_dir: Path | None = None, use_cache: bool = True, cache_path: Path | None = None) -> dict:
     t0 = time.perf_counter()
@@ -114,7 +133,11 @@ def resolve(task: str, max_class: str = "verifier", k: int = 3,
     if not (task or "").strip():
         raise A.AgentSpecError("EMPTY_TASK", "a capability request needs a task")
     fp = fingerprint(specs_dir)
-    key = hashlib.sha256(f"{' '.join(_tokens(task))}|{max_class}|{k}|{fp}".encode()).hexdigest()[:24]
+    pol = policy_hash()
+    q = _tokens(task)
+    # A query with no tokens has no identity of its own: every such query would share one key.
+    use_cache = use_cache and bool(q)
+    key = hashlib.sha256(f"{' '.join(q)}|{max_class}|{k}|{fp}|{pol}".encode()).hexdigest()[:24]
     cpath = cache_path or CACHE
     cache = {}
     if use_cache and cpath.is_file():
@@ -131,9 +154,8 @@ def resolve(task: str, max_class: str = "verifier", k: int = 3,
     if not specs:
         return {"status": "CATALOG_UNREADABLE" if broken else "NO_CERTIFIED_SPECIALIST",
                 "candidates": [], "near_misses": [], "excluded": [], "broken": broken,
-                "catalog_size": 0, "fingerprint": fp, "cache": "MISS",
+                "catalog_size": 0, "fingerprint": fp, "policy": pol, "cache": "MISS",
                 "ms": round((time.perf_counter() - t0) * 1000, 2)}
-    q = _tokens(task)
     index = BM25([_tokens(spec_text(s)) for s in specs])
     ranked = sorted(((index.score(q, i), s) for i, s in enumerate(specs)), key=lambda x: -x[0])
     shortlist = [(sc, s) for sc, s in ranked[:SHORTLIST] if sc > 0]
@@ -161,7 +183,7 @@ def resolve(task: str, max_class: str = "verifier", k: int = 3,
     candidates.sort(key=lambda r: (order[r["verdict"]], -r["gate_score"], -r["bm25"]))
     out = {"status": "RESOLVED" if candidates else "NO_CERTIFIED_SPECIALIST",
            "candidates": candidates[:k], "near_misses": near[:k], "excluded": excluded,
-           "broken": broken, "catalog_size": len(specs), "fingerprint": fp, "cache": "MISS",
+           "broken": broken, "catalog_size": len(specs), "fingerprint": fp, "policy": pol, "cache": "MISS",
            "ms": round((time.perf_counter() - t0) * 1000, 2)}
     if use_cache:
         try:
