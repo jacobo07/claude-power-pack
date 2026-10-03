@@ -11,6 +11,7 @@ import json
 import re
 import sys
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -120,6 +121,31 @@ def main():
                      uuid="l1")])
         rl = si.count_file(lf, INSTALLED)
         check("V-SKINV-LISTFORM-UNKNOWN", rl["unknown_rows"] == 1 and not rl["typed"], f"unknown_rows={rl['unknown_rows']}")
+
+        # Row-time bounds (D-01, skill-capability pillar C): since/until keep timed rows in [since, until]; a
+        # candidate row with no timestamp is `untimed_rows` and counts on no channel; unbounded is unchanged.
+        T = 1790000000.0
+
+        def iso(ep):
+            return datetime.fromtimestamp(ep, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+        bf = root / "44444444-bounds.jsonl"
+        write(bf, [dict(tool("Skill", {"skill": "kclear"}, "toolu_T1"), timestamp=iso(T)),
+                   dict(u("<command-message>kresume</command-message>\n<command-name>/kresume</command-name>",
+                          uuid="b1"), timestamp=iso(T + 60)),
+                   tool("Skill", {"skill": "cpp-gsd-long"}, "toolu_T3")])
+        r_until = si.count_file(bf, INSTALLED, set(), until=T + 30)
+        r_since = si.count_file(bf, INSTALLED, set(), since=T + 30)
+        r_all = si.count_file(bf, INSTALLED, set())
+        check("V-SKINV-ROW-BOUNDS",
+              sum(r_until["model"].values()) == 1 and sum(r_until["typed"].values()) == 0
+              and sum(r_since["typed"].values()) == 1 and sum(r_since["model"].values()) == 0
+              and r_until["untimed_rows"] == 1 and r_since["untimed_rows"] == 1
+              and sum(r_all["model"].values()) == 2 and sum(r_all["typed"].values()) == 1
+              and r_all["untimed_rows"] == 0,
+              f"until: model {dict(r_until['model'])} typed {dict(r_until['typed'])} untimed {r_until['untimed_rows']}; "
+              f"since: model {dict(r_since['model'])} typed {dict(r_since['typed'])} untimed {r_since['untimed_rows']}; "
+              f"unbounded: model {dict(r_all['model'])} typed {dict(r_all['typed'])} untimed {r_all['untimed_rows']}")
 
     # Real positive control: this program's own session typed /kresume and never called Skill for it.
     real = list((Path.home() / ".claude" / "projects").glob("*/6d128db5-0b16-415e-9a38-367d870ee525.jsonl"))

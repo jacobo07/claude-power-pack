@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -319,6 +320,124 @@ def render(fx: dict | None = None) -> str:
     return "\n".join(L)
 
 
+# --------------------------------------------------------------------------- evidence + subprocess clauses
+
+
+def evidence_current(text: str | None = None) -> tuple:
+    """V-SD-EVIDENCE-CURRENT: the committed evidence file (LF-normalised) equals a fresh render()."""
+    name = "V-SD-EVIDENCE-CURRENT"
+    if text is None:
+        try:
+            with open(REPO / EVIDENCE_REL, encoding="utf-8", newline="") as fh:
+                text = fh.read()
+        except OSError as exc:
+            return (name, "FAIL", f"{EVIDENCE_REL} unreadable ({exc}); re-render with --write-evidence")
+    text = text.replace("\r\n", "\n")
+    if text != render():
+        return (name, "FAIL", f"{EVIDENCE_REL} differs from a fresh render; re-render with --write-evidence")
+    return (name, "ok", f"{EVIDENCE_REL} equals a fresh render ({len(text)} chars, LF)")
+
+
+def red_subprocess(fx: dict) -> tuple:
+    """V-SD-RED-SUBPROCESS: move S4's Skill call after its judgement in a temp copy; the gate, run in a
+    subprocess on that copy, must exit 1 and print `FAIL V-SD-DELIVERY` (ROADMAP Phase 3 criterion 1)."""
+    name = "V-SD-RED-SUBPROCESS"
+    mut = json.loads(json.dumps(fx))
+    moved = 0
+    for row in mut["transcripts"].get("f0000000-0000-4000-8000-000000000004", []):
+        if row.get("timestamp") == "2026-10-01T10:59:00.000Z":
+            row["timestamp"] = "2026-10-01T11:00:30.000Z"
+            moved += 1
+    if moved != 1:
+        return (name, "FAIL", f"could not position the S4 Skill row (moved {moved})")
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td) / "mutated_fixture.json"
+        with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump(mut, fh)
+        try:
+            r = subprocess.run([sys.executable, str(REPO / SELF_REL), "--fixture", str(tmp)],
+                               capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+        except subprocess.TimeoutExpired:
+            return (name, "FAIL", "subprocess timed out after 60 s")
+    if r.returncode == 1 and "FAIL V-SD-DELIVERY" in r.stdout:
+        return (name, "ok", "mutated copy exited 1 and printed `FAIL V-SD-DELIVERY`")
+    return (name, "FAIL", f"rc={r.returncode}, FAIL V-SD-DELIVERY in output: {'FAIL V-SD-DELIVERY' in r.stdout}")
+
+
+# --------------------------------------------------------------------------- red drills
+
+
+def _mention_detector(paths, capability, installed, until):
+    """Mutant: a mention counter. Promotes a measured 'no' to 'yes' when the name appears in the text."""
+    r = invoked_before(paths, capability, installed, until)
+    if r is False:
+        for p in paths:
+            with open(p, encoding="utf-8", errors="replace") as fh:
+                if capability in fh.read():
+                    return True
+    return r
+
+
+def _no_until_detector(paths, capability, installed, until):
+    """Mutant: the join without the judgement-time bound (an effectively infinite `until`)."""
+    return invoked_before(paths, capability, installed, 1e12)
+
+
+def _untimed_as_none_detector(paths, capability, installed, until):
+    """Mutant (A-1): a session that has transcripts but no timed hit is 'not delivered', untimed or not."""
+    r = invoked_before(paths, capability, installed, until)
+    return False if (r is None and paths) else r
+
+
+def _pass_after_opportunity(row):
+    """Mutant: the re-issued commit after a deny-card counts as a second opportunity."""
+    return is_opportunity(row) or (is_commit_row(row) and row.get("decision") == "pass-after-card"
+                                   and len(row.get("foreign") or []) >= 1)
+
+
+def _always_ratio(r):
+    return f"{r['num']}/{r['n']} = {r['num'] / r['n']:.3f} (n={r['n']})"
+
+
+# (name, compute_window kwargs, clause that must go red, clauses that must stay ok)
+MUTANTS = (
+    ("MENTION", {"detector": _mention_detector}, "V-SD-DELIVERY", ("V-SD-OPPORTUNITY", "V-SD-UNMEASURED-NOT-ZERO")),
+    ("NO-UNTIL", {"detector": _no_until_detector}, "V-SD-DELIVERY", ("V-SD-OPPORTUNITY",)),
+    ("ABSENT-AS-NONE", {"absent_policy": "none"}, "V-SD-UNMEASURED-NOT-ZERO", ("V-SD-OPPORTUNITY", "V-SD-DELIVERY")),
+    ("UNTIMED-AS-NONE", {"detector": _untimed_as_none_detector}, "V-SD-UNMEASURED-NOT-ZERO",
+     ("V-SD-OPPORTUNITY", "V-SD-DELIVERY")),
+    ("PASS-AFTER", {"opportunity": _pass_after_opportunity}, "V-SD-OPPORTUNITY", ("V-SD-DELIVERY",)),
+    ("SMALL-N-RATIO", {"fmt": _always_ratio}, "V-SD-SMALL-N", ("V-SD-RECALL",)),
+)
+
+
+def drills(fx: dict) -> list:
+    """Each mutant must die on its named clause while its control clauses stay ok; the clean fixture is
+    all ok (positive control, so a drill that cannot pass the clean case proves nothing)."""
+    out = []
+    clean = f_clauses(fixture_window(fx), fx)
+    bad = [n for n, st, _ in clean if st != "ok"]
+    out.append(("V-SD-DRILL-CLEAN", "FAIL" if bad else "ok",
+                f"clean fixture red on {bad}" if bad else f"clean fixture: all {len(clean)} F clauses ok"))
+    for name, kw, kill, controls in MUTANTS:
+        res = {n: st for n, st, _ in f_clauses(fixture_window(fx, **kw), fx)}
+        survived = res.get(kill) == "ok"
+        broken = [c for c in controls if res.get(c) != "ok"]
+        if survived or broken:
+            why = f"{kill} stayed ok (mutant survived)" if survived else f"control clauses went red: {broken}"
+            out.append((f"V-SD-DRILL-{name}", "FAIL", why))
+        else:
+            out.append((f"V-SD-DRILL-{name}", "ok", f"killed by {kill}; controls ok: {', '.join(controls)}"))
+    text = render(fx)
+    digit = next(i for i, ch in enumerate(text) if ch.isdigit())
+    stale = text[:digit] + str((int(text[digit]) + 1) % 10) + text[digit + 1:]
+    killed, control = evidence_current(stale)[1] != "ok", evidence_current(text)[1] == "ok"
+    out.append(("V-SD-DRILL-STALE-EVIDENCE", "ok" if (killed and control) else "FAIL",
+                "killed by V-SD-EVIDENCE-CURRENT; a fresh render stays ok" if (killed and control)
+                else f"stale text killed={killed}, fresh render ok={control}"))
+    return out
+
+
 # --------------------------------------------------------------------------- CLI
 
 
@@ -354,6 +473,10 @@ def main(argv=None) -> int:
         print(f"wrote {EVIDENCE_REL}")
         return 0
     results = f_clauses(rep, fx)
+    if not a.fixture:
+        results.append(evidence_current())
+        results += drills(fx)
+        results.append(red_subprocess(fx))
     return _print(results)
 
 
