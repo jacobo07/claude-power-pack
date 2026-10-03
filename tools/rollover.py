@@ -556,11 +556,51 @@ def bootstrap(capsule: dict) -> str:
 
 
 # -------------------------------------------------------------------------- policy
+SHARE_WOULD, SHARE_CONTINUE = 0.75, 0.25   # declared policy parameters (plan ccp-s16 Q5), not quantities
+
+
+def _share(values: list, x: float) -> float:
+    """Share of observed remaining-work values that still pay back a fresh epoch at break-even x."""
+    import bisect
+    return (len(values) - bisect.bisect_left(values, x)) / len(values)
+
+
+def _economics(n_star: float, growth: int, ev: dict, reh: Optional[dict]) -> dict:
+    """Interval judgement (plan ccp-s16 §16.1 D1). Robust only when the WHOLE plausible range agrees:
+    ROLLOVER needs the share >= SHARE_WOULD even at the pessimistic break-even n* + C/G (C = measured
+    rehydration, an upper bound); CONTINUE needs the share <= SHARE_CONTINUE even at the optimistic n*.
+    Anything between is UNDETERMINED, and an unknown horizon is UNKNOWN -- never the old 30."""
+    vals = ev.get("values") if ev.get("basis") == "MEASURED_PRIOR" else None
+    if not vals:
+        return {"economics": UNKNOWN, "reason": f"horizon unknown ({ev.get('reason') or ev.get('basis')})"}
+    c = reh.get("tokens") if isinstance(reh, dict) and str(reh.get("basis", "")).startswith("UPPER_BOUND") else None
+    n_hi = round(n_star + c / growth, 1) if isinstance(c, (int, float)) else None
+    s_lo = round(_share(vals, n_star), 3)
+    s_hi = round(_share(vals, n_hi), 3) if n_hi is not None else None
+    out = {"horizon_n": len(vals), "share_at_breakeven": s_lo, "breakeven_calls_hi": n_hi,
+           "share_at_breakeven_hi": s_hi, "rehydration_basis": (reh or {}).get("basis", UNKNOWN),
+           "rehydration_tokens": c}
+    if s_hi is not None and s_hi >= SHARE_WOULD:
+        return {**out, "economics": "ROBUST_ROLLOVER",
+                "reason": f"robust: {s_hi:.0%} of the prior pays back even at {n_hi} calls (rehydration incl.)"}
+    if s_lo <= SHARE_CONTINUE:
+        return {**out, "economics": "ROBUST_CONTINUE",
+                "reason": f"continue: only {s_lo:.0%} of the prior reaches break-even {n_star} calls"}
+    why = "rehydration unknown" if n_hi is None else f"{s_hi:.0%} at {n_hi} .. {s_lo:.0%} at {n_star} calls"
+    return {**out, "economics": "UNDETERMINED", "reason": f"economics undetermined: {why}"}
+
+
 def decide(usage: dict, capsule_bytes: int, boundary: bool, used_pct: Optional[float],
-           ratio: dict, pressure_pct: float = 70.0, horizon: int = HORIZON_CALLS) -> dict:
-    """Deterministic, explainable. Tokens only; N* in future calls, UNKNOWN when unpriced."""
+           ratio: dict, pressure_pct: float = 70.0, horizon=HORIZON_CALLS,
+           rehydration: Optional[dict] = None) -> dict:
+    """Deterministic, explainable. Tokens only; N* in future calls, UNKNOWN when unpriced.
+
+    `horizon` is either an int (the ESTIMATE constant, or one value of a replay sweep) or an
+    evidence dict from rollover_replay.build_prior; with evidence, only ROBUST_ROLLOVER rolls
+    (plan ccp-s16 §16.1 Q2: undetermined or unknown economics never ask). Pure: callers load."""
     if usage.get("state") != "OK":
         return {"would_rollover": False, "reason": f"usage {usage.get('reason')}", "breakeven_calls": None}
+    ev = horizon if isinstance(horizon, dict) else None
     boot = max(1, capsule_bytes // 4)          # ESTIMATE: ~4 chars per token
     fresh = usage["floor"] + boot
     growth = usage["resident"] - fresh
@@ -568,15 +608,26 @@ def decide(usage: dict, capsule_bytes: int, boundary: bool, used_pct: Optional[f
     if ratio.get("state") == "OK" and growth > 0:
         n_star = round(fresh * (ratio["write"] - ratio["read"]) / (growth * ratio["read"]), 1)
     out = {"resident": usage["resident"], "floor": usage["floor"], "bootstrap_est": boot,
-           "growth_above_fresh": growth, "breakeven_calls": n_star, "horizon_calls": horizon,
-           "horizon_basis": "ESTIMATE", "boundary": boundary, "used_pct": used_pct,
-           "saving_per_call_tokens": max(0, growth)}
+           "growth_above_fresh": growth, "breakeven_calls": n_star,
+           "horizon_calls": None if ev else horizon,
+           "horizon_basis": ev.get("basis", UNKNOWN) if ev else "ESTIMATE", "boundary": boundary,
+           "used_pct": used_pct, "saving_per_call_tokens": max(0, growth)}
+    if ev:
+        out["horizon_computed_at"] = ev.get("computed_at")
     if used_pct is not None and used_pct >= pressure_pct:
         return {**out, "would_rollover": True, "reason": f"pressure: {used_pct}% >= {pressure_pct}%"}
     if growth < MIN_GROWTH_TOKENS:
         return {**out, "would_rollover": False, "reason": f"growth {growth:,} < {MIN_GROWTH_TOKENS:,}"}
     if n_star is None:
         return {**out, "would_rollover": False, "reason": f"break-even unknown ({ratio.get('reason')})"}
+    if ev:
+        econ = _economics(n_star, growth, ev, rehydration)
+        out.update(econ)
+        if econ["economics"] != "ROBUST_ROLLOVER":
+            return {**out, "would_rollover": False}
+        if not boundary:
+            return {**out, "would_rollover": False, "reason": "robust, but not at a work boundary"}
+        return {**out, "would_rollover": True, "reason": econ["reason"] + " at a boundary"}
     if n_star > horizon:
         return {**out, "would_rollover": False, "reason": f"break-even {n_star} calls > horizon {horizon}"}
     if not boundary:
