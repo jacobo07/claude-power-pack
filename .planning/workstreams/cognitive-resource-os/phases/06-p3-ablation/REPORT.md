@@ -175,3 +175,14 @@ B 75.6 s.
 Same limits as J, stated before the run: a ceiling (every check passed in every run) means no loss was
 OBSERVED, not that the rules do nothing; two tasks per file, n=2; the concurrency of CWST is compressed into
 one function whose docstring states it; one host, one model, this repository only.
+
+## Move 4: concurrent-writers-shared-tree -> PP skill (2026-10-03, Owner "y", auto mode off)
+Body byte-identical (sha256 0c86aa17...), `skills/concurrent-writers-shared-tree/SKILL.md` + live copy
+(both sha256 b1eda762...), pointer in rules/ (was 7,094 B), backup `~/.claude/backups/rules-20261003-090729/`.
+The skill appeared in the live skill list of the session that made the move.
+
+B-prime (`run-jprime --set R2 --only cwst`, arm P = the prefix as it now is, 2 tasks x 2 reps): 4/4 valid,
+4/4 pass (5/5, 3/3). first-call 113,640–114,093 against arm A 116,069–116,185 before the move:
+**about −2.0k to −2.5k tokens per session start.** Skill auto-activation 0/4: no Skill tool_use and no
+tool input naming the rule or skill in 18 tool calls (counted on tool_use blocks; a raw text count reads
+the skill listing and the pointer, 2 and 30 in every run, and is not an activation measure).

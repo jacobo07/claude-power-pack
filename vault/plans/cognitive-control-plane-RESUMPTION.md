@@ -125,9 +125,12 @@ Coherence anchor: `test_usage_index` 22/22, `test_fanout_ledger` 17/17, `test_es
    `validate-j --set R2` 6/6, R1 re-validated 6/6.
 1d. DONE (Owner "spend now" 2026-10-03): R2 ablation 24/24 valid, 24/24 pass in BOTH arms;
    bank audit 0/133; REPORT.md section "R2". All three R2 files stay relocation candidates.
-   NO rule moved yet. NEXT (Owner-side `~/.claude` edit, HR-001): move ONE file as B-prime
-   (rule body -> skill, pointer + backup, as moves 1-3), then
-   `python p3_runner.py run-jprime --set R2 --only <cwst|tfps|ssea>` (4 runs) before the next.
+   Move 4 DONE: concurrent-writers-shared-tree -> skill (REPORT.md "Move 4"; backup
+   `~/.claude/backups/rules-20261003-090729/`); B-prime cwst 4/4 pass, ~-2.0..2.5k tok/session,
+   auto-activation 0/4. NEXT (Owner "y" needed per move, auto mode off): technical-failure-to-
+   product-state, then scoped-side-effect-authority, same procedure (scratch `move_cwst.py`
+   pattern: backup, byte-identical body, PP == live), then
+   `python p3_runner.py run-jprime --set R2 --only <tfps|ssea>` (4 runs) before the next.
 2. DONE: re-derivation measured (plan §15 + §15.1, `51789871`): Read 19.6 % re-derived, ~188M
    rent; same-root half is siblings (gp 55 %, gsd 31 %), parent->child 8 %. No tool promoted.
 
