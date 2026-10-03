@@ -62,7 +62,7 @@ command: python3 tools/test_skill_representation.py --write-evidence
 - V-FO-FILE: refuses an absent, malformed or other-schema operations file, or one whose rule is not the frozen F rule verbatim (absent is never zero operations).
 - V-FO-ENTRIES: refuses any entry with a clause that is not ok or n/a.
 - V-FO-OP: refuses an op outside {disclosure, fission, fusion, inline, dedup}, or no skill.
-- V-FO-BEFORE: refuses a before side that is missing, not D-LISTING or without its command, or that resolves to zero or several probe rows by label AND session id, or to a row with rc != 0, result != OK, or a zero / non-int figure (UNMEASURED).
+- V-FO-BEFORE: refuses a before side that is missing, not D-LISTING or without its command, or that resolves to zero or several probe rows by label AND session id, or to a row with rc != 0, result != OK, a row not derived to the laptop plane (cwd or settings_file under the laptop profile), or a zero / non-int figure (UNMEASURED).
 - V-FO-AFTER: refuses an after side with any defect V-FO-BEFORE refuses.
 - V-FO-PAIR: refuses before and after resolving to one row, or the after row preceding the before row in the append-only rows.
 - V-FO-RECALL: refuses a missing recall check; a window outside the evidence directory, uncommitted, of another schema or capability; a null recall, n = 0, num outside [0, n]; a window without timezone-bearing start < end, or a before window that does not end by the after window's start (one window twice, or reversed); windows from two hosts, or from a host that is not the D-LISTING plane (laptop).
@@ -87,6 +87,7 @@ command: python3 tools/test_skill_representation.py --write-evidence
 | ZERO-TOKENS | V-FO-BEFORE | killed by V-FO-BEFORE |
 | SESSION-MISMATCH | V-FO-AFTER | killed by V-FO-AFTER |
 | AMBIGUOUS-LABEL | V-FO-BEFORE | killed by V-FO-BEFORE |
+| ROW-PLANE | V-FO-AFTER | killed by V-FO-AFTER |
 | ORDER | V-FO-PAIR | killed by V-FO-PAIR |
 | MISSING-RECALL | V-FO-RECALL | killed by V-FO-RECALL |
 | RECALL-NULL | V-FO-RECALL | killed by V-FO-RECALL |

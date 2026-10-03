@@ -555,6 +555,12 @@ def _side(entry, key, rows, denoms):
     r = rows[i]
     if not (lfv._is_int(r.get("rc")) and r["rc"] == 0 and r.get("result") == "OK"):
         return "FAIL", f"UNMEASURED: {key} row #{i} rc={r.get('rc')!r} result={str(r.get('result'))[:60]!r}", None
+    # A row appended from another host resolves by label and session id just as well; only a row derived to the
+    # D-LISTING plane measures the listing the frozen rule names (05-REVIEW WR-03).
+    plane = _row_plane(r)
+    if plane not in LISTING_HOSTS:
+        return "FAIL", (f"UNMEASURED: {key} row #{i} plane {plane} is not the D-LISTING plane {list(LISTING_HOSTS)} "
+                        "(cwd or settings_file under the laptop profile)"), None
     tok = r.get("startup_tokens")
     listing = r.get("listing")
     chars = listing.get("chars") if isinstance(listing, dict) else None
@@ -858,7 +864,7 @@ _DRILL_OTHER = hashlib.sha256(b"drill other").hexdigest()
 
 def _drill_row(label, sid, tokens, chars):
     return {"label": label, "session_id": sid, "rc": 0, "result": "OK", "startup_tokens": tokens,
-            "listing": {"chars": chars}}
+            "listing": {"chars": chars}, "cwd": LAPTOP_PROFILE + "drill"}
 
 
 DRILL_SPANS = {"before": ("2026-09-01T00:00:00Z", "2026-09-08T00:00:00Z"),
@@ -926,6 +932,10 @@ def _m_zero_tokens(fx):
 
 def _m_session_mismatch(fx):
     fx["entry"]["after"]["session_id"] = DRILL_SIDS["before"]
+
+
+def _m_row_plane(fx):
+    fx["rows"][2]["cwd"] = "/home/x"  # an after row appended from another host: not a D-LISTING measurement
 
 
 def _m_ambiguous(fx):
@@ -1026,6 +1036,7 @@ FO_DRILLS = (
     ("ZERO-TOKENS", _m_zero_tokens, {"V-FO-BEFORE"}),
     ("SESSION-MISMATCH", _m_session_mismatch, {"V-FO-AFTER"}),
     ("AMBIGUOUS-LABEL", _m_ambiguous, {"V-FO-BEFORE"}),
+    ("ROW-PLANE", _m_row_plane, {"V-FO-AFTER"}),
     ("ORDER", _m_order, {"V-FO-PAIR"}),
     ("MISSING-RECALL", _m_missing_recall, {"V-FO-RECALL"}),
     ("RECALL-NULL", _m_recall_null, {"V-FO-RECALL"}),
@@ -1156,7 +1167,8 @@ FO_CLAUSE_DOC = (
     ("V-FO-ENTRIES", "any entry with a clause that is not ok or n/a"),
     ("V-FO-OP", "an op outside {disclosure, fission, fusion, inline, dedup}, or no skill"),
     ("V-FO-BEFORE", "a before side that is missing, not D-LISTING or without its command, or that resolves to zero "
-                    "or several probe rows by label AND session id, or to a row with rc != 0, result != OK, or a "
+                    "or several probe rows by label AND session id, or to a row with rc != 0, result != OK, a row "
+                    "not derived to the laptop plane (cwd or settings_file under the laptop profile), or a "
                     "zero / non-int figure (UNMEASURED)"),
     ("V-FO-AFTER", "an after side with any defect V-FO-BEFORE refuses"),
     ("V-FO-PAIR", "before and after resolving to one row, or the after row preceding the before row in the "
