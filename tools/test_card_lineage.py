@@ -444,12 +444,61 @@ def m_worktree_only(fx, repo):
     return None if st.strip() else "working tree is clean (the edit did not land)"
 
 
+THIRD = "third-skill"
+
+
+def _add_third(fx, repo, trailer):
+    """A second skill the CW card names in CARD_TOKEN form (a "see also" pointer above the lineage block), with its
+    own trailer appended to the lineage block when `trailer`; committed and H re-recorded. None or a precondition."""
+    fx.write(repo, f"skills/{THIRD}/SKILL.md", f"---\nname: {THIRD}\n---\nrule v1\n")
+    fx.commit(repo, "third skill")
+    lines = sc.lf(fx.read(repo, CW)).split("\n")
+    i = next(k for k, ln in enumerate(lines) if ln.startswith(LINEAGE_COMMENT))
+    lines.insert(i, f"// see also the `{THIRD}` skill for the companion rule (drill)")
+    if trailer:
+        line, why = cl.trailer_for(repo, THIRD)
+        if line is None:
+            return f"trailer_for {THIRD} refused: {why}"
+        j = max(k for k, ln in enumerate(lines) if ln.startswith(cl.LINEAGE_MARKER))
+        lines.insert(j + 1, line)
+    fx.write(repo, CW, "\n".join(lines))
+    fx.commit(repo, f"CW names {THIRD}" + (" with its trailer" if trailer else ""))
+    rec, why = fx.rerecord(repo)
+    if rec is None:
+        return f"re-record refused: {why}"
+    return None if len(rec["pairs"]) == 3 else f"re-record holds {len(rec['pairs'])} pairs, not 3"
+
+
+def m_multi_skill_lineaged(fx, repo):
+    return _add_third(fx, repo, trailer=True)
+
+
+def m_multi_skill_rerecorded(fx, repo):
+    pre = _add_third(fx, repo, trailer=True)
+    if pre is not None:
+        return pre
+    v, fs, _ = observed(repo)
+    if v != PASS:
+        return f"before the {THIRD} change the card judges {v} {_fmt(fs)}, not PASS"
+    fx.write(repo, f"skills/{THIRD}/SKILL.md", f"---\nname: {THIRD}\n---\nrule v2, changed\n")
+    fx.commit(repo, f"{THIRD} changed")
+    rec, why = fx.rerecord(repo)
+    return None if rec is not None else f"re-record refused: {why}"
+
+
+def m_multi_skill_unlineaged(fx, repo):
+    return _add_third(fx, repo, trailer=False)
+
+
 def _drill_table():
     return [
         ("CLEAN", m_clean, set(), "PASS"),
         ("SOURCE-CHANGED-RERECORDED", m_source_changed_rerecorded, {f"{CW}:SOURCE-CURRENT"}, "FAIL"),
         ("SOURCE-CHANGED-RAW", m_source_changed_raw, {f"{CW}:SOURCE-CURRENT", "H-RECORD-CURRENT"}, "FAIL"),
         ("REDERIVED", m_rederived, set(), "PASS"),
+        ("MULTI-SKILL-LINEAGED", m_multi_skill_lineaged, set(), "PASS"),
+        ("MULTI-SKILL-RERECORDED", m_multi_skill_rerecorded, {f"{CW}:SOURCE-CURRENT"}, "FAIL"),
+        ("MULTI-SKILL-UNLINEAGED", m_multi_skill_unlineaged, {f"{CW}:SKILL"}, "FAIL"),
         ("TRAILER-SHA-DIGIT", m_trailer_sha_digit, {f"{CW}:SOURCE-CURRENT", f"{CW}:COMMIT-DIGEST"}, "FAIL"),
         ("TRAILER-ABSENT", m_trailer_absent, ALL7(DS), "FAIL"),
         ("TRAILER-DUPLICATE", m_trailer_duplicate, ALL7(DS), "FAIL"),
@@ -574,19 +623,21 @@ def c_positive_control(st):
     for c in sc.discover_cards(REPO, disp.decode("utf-8", "replace"), hook_texts=texts, read_disk=False):
         found.setdefault(c["hook"], set()).add(c["skill"])
     pop = set(r["population"])
-    trailers = {c["card"]: (c["trailer"] or {}).get("skill") for c in r["cards"]}
+    trailers = {c["card"]: {t["skill"] for t in (c["trailers"] or [])} for c in r["cards"]}
     bad = []
     if len(pop) < 2:
         bad.append(f"population size {len(pop)} < 2")
     for rel in (CW, DS):
         if rel not in pop:
             bad.append(f"{rel} not a population member")
-        elif found.get(rel) != {trailers.get(rel)}:
-            bad.append(f"{rel}: trailer skill {trailers.get(rel)} vs discovered {sorted(found.get(rel, set()))}")
+        elif not found.get(rel) or found.get(rel) != trailers.get(rel):
+            bad.append(f"{rel}: trailer skills {sorted(trailers.get(rel) or [])} vs discovered "
+                       f"{sorted(found.get(rel, set()))}")
     if bad:
         return [(FAIL, "V-CLG-POSITIVE-CONTROL", "; ".join(bad))]
     return [(OK, "V-CLG-POSITIVE-CONTROL", f"population={len(pop)} holds both known cards; trailer skills "
-                                           f"{trailers[CW]}, {trailers[DS]} equal discover_cards")]
+                                           f"{','.join(sorted(trailers[CW]))}, {','.join(sorted(trailers[DS]))} "
+                                           f"equal discover_cards")]
 
 
 def c_drills(st):
@@ -719,9 +770,12 @@ def c_every_clause(st):
 # --------------------------------------------------------------------------- evidence (G-lineage.md)
 
 CLAUSE_TEXT = {
-    "TRAILER": "exactly one `// COMPILED-FROM:` line in the card, and it parses; absent, duplicate or unparseable "
-               "is UNMEASURED and the other six per-card clauses are then UNMEASURED (\"no trailer\").",
-    "SKILL": "the trailer's skill is one the card text names in CARD_TOKEN form (`<name>` skill).",
+    "TRAILER": "at least one `// COMPILED-FROM:` line in the card, every one parses, and no skill has two; absent, "
+               "a duplicate skill or an unparseable line is UNMEASURED and the other six per-card clauses are then "
+               "UNMEASURED (\"no trailer\").",
+    "SKILL": "the set of trailer skills EQUALS the set of skills the card text names in CARD_TOKEN form (`<name>` "
+             "skill): a named skill without a trailer, or a trailer for an unnamed skill, is FAIL. The five clauses "
+             "below are judged per trailer and folded (any FAIL is FAIL, else any UNMEASURED is UNMEASURED).",
     "SOURCE-PATH": "the trailer's source is `skills/<trailer skill>/SKILL.md`.",
     "SOURCE-CURRENT": "the committed source at the judged commit has the trailer's LF sha256; an absent source is "
                       "UNMEASURED. This is the clause a re-record of H alone cannot clear.",
@@ -741,6 +795,11 @@ DRILL_TEXT = {
     "SOURCE-CHANGED-RERECORDED": "first byte of CW's SKILL.md changed and committed; trailer untouched; H re-recorded",
     "SOURCE-CHANGED-RAW": "the same source change, H not re-recorded",
     "REDERIVED": "SOURCE-CHANGED-RAW, then CW's trailer re-derived with trailer_for and H re-recorded",
+    "MULTI-SKILL-LINEAGED": "CW also names `third-skill` (a see-also line) and carries a second trailer for it; H "
+                            "re-recorded with 3 pairs",
+    "MULTI-SKILL-RERECORDED": "MULTI-SKILL-LINEAGED (judged PASS first), then third-skill's SKILL.md changed and "
+                              "committed, card untouched, H re-recorded",
+    "MULTI-SKILL-UNLINEAGED": "CW also names `third-skill` with no trailer for it; H re-recorded with 3 pairs",
     "TRAILER-SHA-DIGIT": "one hex digit of CW's trailer sha256 changed",
     "TRAILER-ABSENT": "DS trailer line deleted (its two LINEAGE comment lines kept)",
     "TRAILER-DUPLICATE": "DS trailer line duplicated",
@@ -793,8 +852,10 @@ def render(st) -> str:
     L += ["This file is rendered by `tools/test_card_lineage.py --write-evidence` from the gate's own results, and "
           "V-CLG-EVIDENCE-CURRENT compares the committed copy with a fresh render.", ""]
     L += ["## Method", "",
-          "- Trailer grammar: the last line of each card is one comment line, "
+          "- Trailer grammar: the last lines of each card are one comment line per skill the card names, "
           "`// COMPILED-FROM: skill=<name> source=skills/<name>/SKILL.md sha256=<64 hex> commit=<40 hex>`. "
+          "A card naming two skills carries two lines, so a change to either skill's SKILL.md fails SOURCE-CURRENT "
+          "until that line is re-derived (drill MULTI-SKILL-RERECORDED). "
           "sha256 is the LF-normalized digest of the committed SKILL.md; commit is the commit that last changed it "
           "when the card was derived.",
           "- Population, discovered: every top-level `hooks/*.js` tracked at the judged commit whose LF text holds a "
@@ -819,10 +880,10 @@ def render(st) -> str:
     L.append("| card | skill | source | sha256 | commit | " + " | ".join(cl.CARD_CLAUSES) + " |")
     L.append("|" + "---|" * (5 + len(cl.CARD_CLAUSES)))
     for card in live["cards"]:
-        t = card["trailer"] or {}
-        L.append(f"| {card['card']} | {t.get('skill', '-')} | {t.get('source', '-')} | {t.get('sha256', '-')} | "
-                 f"{t.get('commit', '-')} | " + " | ".join(card["clauses"][c]["outcome"] for c in cl.CARD_CLAUSES)
-                 + " |")
+        for t in (card["trailers"] or [{}]):
+            L.append(f"| {card['card']} | {t.get('skill', '-')} | {t.get('source', '-')} | {t.get('sha256', '-')} | "
+                     f"{t.get('commit', '-')} | " + " | ".join(card["clauses"][c]["outcome"] for c in cl.CARD_CLAUSES)
+                     + " |")
     L.append("")
     L.append("Gate clauses: " + ", ".join(f"{cid} {live['gate'].get(cid, {}).get('outcome', '-')}"
                                           for cid in cl.GATE_CLAUSES))

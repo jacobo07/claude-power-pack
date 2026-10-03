@@ -9,9 +9,11 @@
 The frozen G rule: a compiled-out card names the skill and commit it was compiled from, and a gate fails when the
 source skill changes without the card being re-derived. Pillar H's record (card_source_digests.json) alone does not
 satisfy it, because H can be re-recorded without anybody re-reading the skill. The lineage therefore lives INSIDE the
-card file, as its last line, and only rewriting that line clears a source change.
+card file, one trailer line per skill the card names, and only rewriting that line clears a source change.
 
-Trailer grammar (one full line of the LF-normalized card text, comment-only, no backtick character):
+Trailer grammar (one full line of the LF-normalized card text, comment-only, no backtick character). A card that names
+several skills in CARD_TOKEN form (pillar H records one pair per named skill) carries one trailer per named skill, so a
+change to ANY named skill's SKILL.md fails SOURCE-CURRENT until that skill's line is re-derived:
 
     // COMPILED-FROM: skill=<name> source=skills/<name>/SKILL.md sha256=<64 hex> commit=<40 hex>
 
@@ -24,9 +26,12 @@ skill_coverage CARD_TOKEN match or a line starting with the marker. A member who
 verdict INCONCLUSIVE; it is never dropped. Floor 2.
 
 Clauses (all 10 must be PASS for a PASS verdict; outcomes are PASS, FAIL or UNMEASURED):
-  per card  TRAILER          exactly one marker line, and it parses (absent, duplicate, unparseable: UNMEASURED;
-                             the other six per-card clauses are then UNMEASURED "no trailer")
-            SKILL            the trailer's skill is one the card text names in CARD_TOKEN form
+  per card  TRAILER          at least one marker line, every one parses, no skill twice (absent, duplicate skill,
+                             unparseable: UNMEASURED; the other six per-card clauses are then UNMEASURED "no trailer")
+            SKILL            the trailer skills EQUAL the set of skills the card text names in CARD_TOKEN form: a
+                             named skill without a trailer, or a trailer for a skill the card does not name, is FAIL
+  The five clauses below SKILL are judged per trailer and folded: FAIL if any trailer FAILs, else UNMEASURED if any is
+  UNMEASURED, else PASS.
             SOURCE-PATH      the trailer's source is skills/<trailer skill>/SKILL.md
             SOURCE-CURRENT   the committed source at the judged commit has the trailer's digest (an absent source,
                              i.e. a skill that does not exist, is UNMEASURED)
@@ -92,17 +97,34 @@ def _marker_lines(text) -> list:
     return [line for line in sc.lf(text).split("\n") if line.startswith(LINEAGE_MARKER)]
 
 
-def parse_trailer(text):
-    """(dict skill/source/sha256/commit, None) or (None, "absent" | "duplicate" | "unparseable")."""
+def parse_trailers(text):
+    """([dict skill/source/sha256/commit, ...] in file order, None) or (None, "absent" | "unparseable" |
+    "duplicate skill <name>")."""
     marks = _marker_lines(text)
     if not marks:
         return None, "absent"
-    if len(marks) > 1:
-        return None, "duplicate"
-    m = TRAILER_RE.match(marks[0])
-    if not m:
-        return None, "unparseable"
-    return m.groupdict(), None
+    out = []
+    for line in marks:
+        m = TRAILER_RE.match(line)
+        if not m:
+            return None, "unparseable"
+        out.append(m.groupdict())
+    seen = set()
+    for t in out:
+        if t["skill"] in seen:
+            return None, f"duplicate skill {t['skill']}"
+        seen.add(t["skill"])
+    return out, None
+
+
+def parse_trailer(text):
+    """(the one trailer, None) or (None, reason): parse_trailers for a text that must carry exactly one."""
+    ts, why = parse_trailers(text)
+    if ts is None:
+        return None, why
+    if len(ts) != 1:
+        return None, f"{len(ts)} trailers"
+    return ts[0], None
 
 
 def population(repo, sha, tracked):
@@ -150,8 +172,29 @@ def trailer_for(repo, skill, ref="HEAD"):
 
 
 # --------------------------------------------------------------------------- clauses
-# Each clause takes (ctx, member=None, trailer=None) and returns {outcome, reason}. ctx holds repo, sha, members,
-# pairs and pairs_why. judge() looks every clause up in CLAUSES at call time.
+# Each clause takes (ctx, member=None, trailers=None) and returns {outcome, reason}; trailers is the card's parsed
+# trailer list. ctx holds repo, sha, members, pairs and pairs_why. judge() looks every clause up in CLAUSES at call time.
+
+
+def _fold(rows):
+    """One outcome from [(skill, {outcome, reason})] judged per trailer: FAIL > UNMEASURED > PASS. The reason names the
+    skill when the card carries more than one trailer."""
+    if not rows:
+        return _out(UNMEASURED, "no trailer")
+    for want in (FAIL, UNMEASURED):
+        bad = [(sk, o) for sk, o in rows if o["outcome"] == want]
+        if bad:
+            return _out(want, "; ".join(o["reason"] if len(rows) == 1 else f"{sk}: {o['reason']}" for sk, o in bad))
+    return _out(PASS, "; ".join(o["reason"] if len(rows) == 1 else f"{sk}: {o['reason']}" for sk, o in rows))
+
+
+def _per_trailer(fn):
+    """A per-card clause judged once per trailer and folded (_fold)."""
+    def clause(ctx, member=None, trailers=None):
+        return _fold([(t["skill"], fn(ctx, member, t)) for t in (trailers or [])])
+    clause.__name__ = fn.__name__
+    clause.__doc__ = fn.__doc__
+    return clause
 
 def c_floor(ctx, member=None, trailer=None):
     n = len(ctx["members"])
@@ -197,20 +240,28 @@ def c_h_record_current(ctx, member=None, trailer=None):
     return _out(UNMEASURED if verdict == "INCONCLUSIVE" else FAIL, bad or verdict)
 
 
-def c_trailer(ctx, member=None, trailer=None):
-    t, why = parse_trailer(member["text"])
-    if t is None:
+def c_trailer(ctx, member=None, trailers=None):
+    ts, why = parse_trailers(member["text"])
+    if ts is None:
         return _out(UNMEASURED, f"trailer {why}")
-    return _out(PASS, "one trailer")
+    return _out(PASS, f"{len(ts)} trailer(s)")
 
 
-def c_skill(ctx, member=None, trailer=None):
+def c_skill(ctx, member=None, trailers=None):
     names = set(sc.CARD_TOKEN.findall(member["text"]))
-    if trailer["skill"] in names:
-        return _out(PASS, trailer["skill"])
-    return _out(FAIL, f"trailer skill {trailer['skill']} not named by the card (names: {sorted(names)})")
+    have = {t["skill"] for t in (trailers or [])}
+    missing, extra = sorted(names - have), sorted(have - names)
+    if not missing and not extra and names:
+        return _out(PASS, ", ".join(sorted(names)))
+    bad = []
+    if missing:
+        bad.append(f"card names skill(s) with no lineage trailer: {missing}")
+    if extra:
+        bad.append(f"trailer skill(s) not named by the card: {extra} (names: {sorted(names)})")
+    return _out(FAIL, "; ".join(bad) or "the card names no skill")
 
 
+@_per_trailer
 def c_source_path(ctx, member=None, trailer=None):
     want = _source_rel(trailer["skill"])
     if trailer["source"] == want:
@@ -218,6 +269,7 @@ def c_source_path(ctx, member=None, trailer=None):
     return _out(FAIL, f"source {trailer['source']} is not {want}")
 
 
+@_per_trailer
 def c_source_current(ctx, member=None, trailer=None):
     pair = {"card": member["card"], "skill": trailer["skill"], "source": trailer["source"]}
     state = smd.card_source_state(ctx["repo"], ctx["sha"], [pair])
@@ -236,6 +288,7 @@ def _trailer_commit(ctx, trailer):
     return smd.resolve_commit(ctx["repo"], trailer["commit"])
 
 
+@_per_trailer
 def c_commit_ancestor(ctx, member=None, trailer=None):
     commit, why = _trailer_commit(ctx, trailer)
     if commit is None:
@@ -248,6 +301,7 @@ def c_commit_ancestor(ctx, member=None, trailer=None):
     return _out(UNMEASURED, f"merge-base: {why}")
 
 
+@_per_trailer
 def c_commit_touches(ctx, member=None, trailer=None):
     commit, why = _trailer_commit(ctx, trailer)
     if commit is None:
@@ -262,6 +316,7 @@ def c_commit_touches(ctx, member=None, trailer=None):
     return _out(FAIL, f"{commit[:8]} did not change {trailer['source']}")
 
 
+@_per_trailer
 def c_commit_digest(ctx, member=None, trailer=None):
     commit, why = _trailer_commit(ctx, trailer)
     if commit is None:
@@ -305,7 +360,7 @@ def _inconclusive(head, reason, result=None):
 
 
 def judge(repo=smd.REPO, ref="HEAD") -> dict:
-    """{verdict PASS|FAIL|INCONCLUSIVE, head, reason, population [rels], cards [{card, trailer, clauses}], gate}."""
+    """{verdict PASS|FAIL|INCONCLUSIVE, head, reason, population [rels], cards [{card, trailers, clauses}], gate}."""
     result = {"verdict": None, "head": None, "reason": "", "population": [], "cards": [], "gate": {}}
     try:
         sha, why = smd.resolve_commit(repo, ref)
@@ -325,14 +380,14 @@ def judge(repo=smd.REPO, ref="HEAD") -> dict:
         ctx = {"repo": repo, "sha": sha, "members": members, "pairs": pairs, "pairs_why": pairs_why}
 
         for m in members:
-            trailer, _ = parse_trailer(m["text"])
-            clauses = {"TRAILER": CLAUSES["TRAILER"](ctx, m, trailer)}
+            trailers, _ = parse_trailers(m["text"])
+            clauses = {"TRAILER": CLAUSES["TRAILER"](ctx, m, trailers)}
             for cid in CARD_CLAUSES[1:]:
-                if clauses["TRAILER"]["outcome"] != PASS or trailer is None:
+                if clauses["TRAILER"]["outcome"] != PASS or trailers is None:
                     clauses[cid] = _out(UNMEASURED, "no trailer")
                 else:
-                    clauses[cid] = CLAUSES[cid](ctx, m, trailer)
-            result["cards"].append({"card": m["card"], "trailer": trailer, "clauses": clauses})
+                    clauses[cid] = CLAUSES[cid](ctx, m, trailers)
+            result["cards"].append({"card": m["card"], "trailers": trailers, "clauses": clauses})
         for cid in GATE_CLAUSES:
             result["gate"][cid] = CLAUSES[cid](ctx)
 
@@ -357,7 +412,7 @@ def fail_set(result) -> set:
 def render(result) -> list:
     lines = []
     for card in result["cards"]:
-        skill = (card["trailer"] or {}).get("skill", "?")
+        skill = ",".join(t["skill"] for t in (card["trailers"] or [])) or "?"
         cl = " ".join(f"{cid}={card['clauses'][cid]['outcome']}" for cid in CARD_CLAUSES)
         lines.append(f"{card['card']} skill={skill} {cl}")
         for cid in CARD_CLAUSES:
