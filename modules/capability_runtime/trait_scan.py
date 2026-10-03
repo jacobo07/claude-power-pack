@@ -528,7 +528,14 @@ def _entitle(trait, found, walk):
       4. a directory could not be listed                  -> UNJUDGED unreadable-subtree
       5. a dependency-class detector and no manifest was
          parsed                                           -> UNJUDGED no-manifest-ecosystem
-      6. otherwise                                        -> ABSENT, OBSERVED
+      6. a dependency-class detector and some manifest
+         failed to read or parse                          -> UNJUDGED manifest-unparsed
+      7. otherwise                                        -> ABSENT, OBSERVED
+
+    Step 6 (code review CR-01): one good manifest beside one that could not be read
+    is not a complete walk for a dependency-class trait, since the unread manifest
+    may be the one that declares it. ABSENT is the reading a later phase turns into
+    a justified NOT_APPLICABLE, so it must never come from a partial read.
     """
     for cls, state in ((STRONG, archetypes.PRESENT), (WEAK, archetypes.WEAK)):
         evidence = sorted({e for c, e, _k in found if c == cls})
@@ -545,7 +552,9 @@ def _entitle(trait, found, walk):
         return archetypes.unjudged_reading("unreadable-subtree")
     if _has_dependency_detector(trait) and walk["manifests_parsed"] == 0:
         return archetypes.unjudged_reading("no-manifest-ecosystem")
-    seen = ", ".join(walk["ecosystems"]) or "none"
+    if _has_dependency_detector(trait) and walk["manifest_errors"]:
+        return archetypes.unjudged_reading("manifest-unparsed")
+    seen =", ".join(walk["ecosystems"]) or "none"
     return archetypes.reading(archetypes.ABSENT, archetypes.OBSERVED, (),
                               "no %s evidence in a complete walk (ecosystems seen: %s)" % (trait, seen))
 

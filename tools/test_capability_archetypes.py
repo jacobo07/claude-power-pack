@@ -2188,6 +2188,14 @@ def _cause_readings(cause):
             ts._walk = original
     if cause == "no-manifest-ecosystem":
         return _produce_read(make_repo("zero_manifest"))[2]["traits"]
+    if cause == "manifest-unparsed":
+        # One parsed manifest (package.json) beside one that cannot parse (code review CR-01).
+        repo = make_repo("ephemeral")
+        with open(os.path.join(repo, "requirements.txt"), "wb") as fh:
+            fh.write(b"\xff\xfe not utf-8 \x00\n")
+        with open(os.path.join(repo, "pyproject.toml"), "w", encoding="utf-8") as fh:
+            fh.write("[[[ not toml\n")
+        return _produce_read(repo)[2]["traits"]
     if cause == "no-structural-detector":
         return _produce_read(make_repo("persistent_prisma"))[2]["traits"]
     return None

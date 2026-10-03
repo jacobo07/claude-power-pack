@@ -59,6 +59,16 @@ Base commit at creation: `a9c603f` on `feature/knowledge-acquisition`.
   Phase 1's precedent (no `01-SECURITY.md` exists). Reason: Phase 2 adds offline read-only
   scanners over the repo with no network, auth or secret surface; skipping is reversible, since
   the step can be run later against the same files. Decided in epoch 2, written down in epoch 3.
+- 2026-10-03, epoch 3: Phase 2 regression gate over Phase 1's 12 suites run before verify: all
+  exit 0 at n/n (40, 17, 18, 21, 10, 20, 15, 23, 16, 17, 24, 7). The runner's `\bFAIL\b` grep
+  matched 7 lines, all `PASS` lines whose gate names contain "FAIL"; the only dirty path that
+  moved during the run was `02-REVIEW.md`, written by the concurrent reviewer and read by no suite.
+- 2026-10-03, epoch 3: Phase 3 planning skips the separate research step (no 03-RESEARCH.md).
+  Reason: the phase is internal to `modules/tower`, every API it touches was read during
+  discuss and is cited in 03-CONTEXT.md `<code_context>`. Reversible: research can be added
+  if the plan checker finds a gap.
+- 2026-10-03, epoch 3: Phase 3 planned while the Phase 2 review was still running. Reason:
+  Phase 3 depends only on Phase 1, and the Phase 2 review covers files Phase 3 does not touch.
 
 - 2026-10-03, epoch 2: the Phase 9 live-observation feed now lives at
   `.planning/workstreams/ucep/LIVE-OBSERVATIONS.md` (copied from job 300ac3a1's tmp dir, which
@@ -83,6 +93,14 @@ Base commit at creation: `a9c603f` on `feature/knowledge-acquisition`.
 
 - A1 (from Phase 1): the agent-typed "Owner" authority on the two re-anchor generations — see
   `phases/01-baseline-integrity-repair/01-EVIDENCE.md`.
+- A2 (from the Phase 2 review, epoch 3): three warnings were deferred. Each fails safe; see
+  `phases/02-capability-subject-and-archetypes/02-REVIEW-FIX.md`. WR-01: generic intent phrases
+  plus a PRESENT anchor read REQUIRED (over-obligation). WR-02: a worktree root never finds the
+  main repo's trait cache, so it reads NO_CACHE/UNJUDGED. Question: should a worktree read its
+  main repo's cache? Options: (a) yes, re-stat evidence against the worktree; (b) produce
+  per-worktree caches; (c) keep as is. Recommended: (a). WR-03: the mission's own first edit
+  to a name-only evidence file turns the cache STALE. This is pinned as intended by a gate.
+  CR-01 (critical) was fixed test-first in the same pass.
 
 ## Performance Metrics
 

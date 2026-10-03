@@ -401,6 +401,26 @@ def pred_V_TSCAN_MANIFEST_BOUNDED():
         len(big), ts.MANIFEST_READ_MAX, state_of(res, "external_effect"), errs, state_of(ctl, "external_effect"))
 
 
+def pred_V_TSCAN_PARTIAL_MANIFEST_UNJUDGED():
+    """Code review CR-01: one parsed manifest beside one that failed must not read ABSENT
+    for a dependency-class trait. The unread manifest may be the one that declares it, and
+    ABSENT is what a later phase turns into a justified NOT_APPLICABLE."""
+    pad = " " * (ts.MANIFEST_READ_MAX + 2000)
+    big = '{"name": "x", "description": "%s", "dependencies": {"pg": "1"}}' % pad
+    reqs = "flask==3.0\n"
+    res = scan_files({"package.json": big, "requirements.txt": reqs})
+    walk, p = res["walk"], res["traits"]["persistent"]
+    # Control: the same repo with the oversized manifest removed reads ABSENT, so the
+    # verdict above comes from the failed manifest and not from some other cut.
+    ctl = scan_files({"requirements.txt": reqs})["traits"]["persistent"]
+    ok = (walk["manifests_parsed"] == 1 and [e["path"] for e in walk["manifest_errors"]] == ["package.json"]
+          and p["state"] == ar.UNJUDGED and p["reason"] == "manifest-unparsed"
+          and ctl["state"] == ar.ABSENT)
+    return ok, "one parsed + one oversized: persistent=%s/%s parsed=%s errors=%s; control without it: %s" % (
+        p["state"], p["reason"], walk["manifests_parsed"],
+        [e["path"] for e in walk["manifest_errors"]], ctl["state"])
+
+
 # -- plan 02-03 Task 3: marker classes, weak evidence, skips, secrets ---------------
 # Every marker fixture also carries a neutral manifest (a parsed `react` package.json),
 # so "nothing found" reads ABSENT and a missing detector shows as ABSENT, not as a
@@ -724,6 +744,7 @@ GATES = [
     ("V-TSCAN-DEV-ONLY-WEAK", pred_V_TSCAN_DEV_ONLY_WEAK),
     ("V-TSCAN-DEP-POLES", pred_V_TSCAN_DEP_POLES),
     ("V-TSCAN-MANIFEST-BOUNDED", pred_V_TSCAN_MANIFEST_BOUNDED),
+    ("V-TSCAN-PARTIAL-MANIFEST-UNJUDGED", pred_V_TSCAN_PARTIAL_MANIFEST_UNJUDGED),
     ("V-TSCAN-MARKER-PERSISTENT", pred_V_TSCAN_MARKER_PERSISTENT),
     ("V-TSCAN-DATAFILE-WEAK", pred_V_TSCAN_DATAFILE_WEAK),
     ("V-TSCAN-CODE-MODULE-WEAK", pred_V_TSCAN_CODE_MODULE_WEAK),
@@ -741,7 +762,7 @@ GATES = [
 
 # A literal, enforced by the exit code: a count that satisfies itself would let a
 # dropped gate read as green.
-EXPECTED = 27
+EXPECTED = 28
 
 
 def main() -> int:

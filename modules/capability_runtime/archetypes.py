@@ -92,7 +92,7 @@ BASIS_NONE = "none"
 # producer causes; each is made reachable by a gate before Phase 2 ends.
 UNJUDGED_CAUSES = ("no-cache", "stale", "cache-malformed", "unresolvable-root",
                    "truncated", "budget-exhausted", "unreadable-subtree",
-                   "no-manifest-ecosystem", "no-structural-detector")
+                   "no-manifest-ecosystem", "manifest-unparsed", "no-structural-detector")
 
 # State of the cache document itself.
 CACHE_FRESH = "FRESH"
