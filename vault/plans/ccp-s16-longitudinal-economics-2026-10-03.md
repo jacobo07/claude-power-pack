@@ -79,6 +79,76 @@ Changing `decide` itself (a horizon range, a rehydration term) is a later commit
   OPEN: a real horizon-driven CONTINUE (negative control PARTIAL); decide change + torn-append writer fix
   wait on the orphan rollover.py hunks (Owner call).
 
+## §16.1 C6-C9 -- revised plan (Owner "y" to Q1-Q6, 2026-10-03)
+
+Reality scan (read-only, 2026-10-03 ~09:40 local, HEAD `fa0babac`, 15 ahead of origin, 769 dirty):
+- OWNERSHIP. rollover.py refresh() hunks (~562-580, ~844) + 2 tests in test_rollover.py were written by session
+  `a4849588` (Orca-X, Edit 2026-09-30T08:06Z, 52/52), never committed in PP; its chain a4849588 -> 7e4bd310 ->
+  b5a94e97 is silent since 10-01 and no open obligation carries the change; 3 peer commits hunk-isolated around it.
+  Owner RELEASED them to this pane (Q1). `hooks/rollover_autotype.js` hunk (stdin budget 45 s): author not traced,
+  NOT released, stays untouched.
+- F5 AUTHORITY. decide() is live: rollover_econ.py writes decisions/<sid>.json, the watchdog asks /kclear on
+  would_rollover. The ledger is CONTROL state: `_last_seal` (rollover.py:422) reads capsule_sealed rows for the gate.
+- F6 MECHANISM (corrects T-TORN-APPEND in 63908e7f). Every fragment follows a COMPLETE shadow row and is the tail of
+  another, longer row: two writers seek to the same end, the second overwrites the first. One fragment = one whole
+  lost event; an overwrite by an equal-or-longer row leaves no trace. Scratch reproducer (6 procs x 400 rows):
+  open("a") lost 676-701 / 318-329 fragments; os.open(O_APPEND)+os.write lost 748 (NOT a fix on Windows); exclusive
+  lock lost 0. A lost capsule_sealed row fails CLOSED at the gate (availability, not safety).
+- F7 CUSTODY LEAK (new). a4849588 sealed SAFE_TO_FORGET with uncommitted edits in another repo: capsule `writes`
+  keeps the last 15 paths (rollover.py:328) and dirty state is read for the cwd repo only.
+- F8 the 14.3-36.9 band (n=383 priced shadow rows) is the spread of n* ACROSS states, not one decision's
+  uncertainty. One decision is uncertain by rehydration (C/G, C measured p50 1.86M upper bound) and by horizon.
+- Fresh cost re-measured (correct successor join, n=134): first call 119,188/128,099/147,972; calls to first
+  mutation 7/14/28; carried 0.87M/1.86M/4.53M.
+- Same-path constants: MIN_GROWTH 150k (operational, unmeasured default; produced every CONTINUE), chars/4
+  (estimate), pressure 70 % (safety default), HORIZON_CALLS 30 (unmeasured default). Only HORIZON changes now.
+
+Decisions: Q2 UNDETERMINED/UNKNOWN -> no economic ask (45 % wall stays); Q3 custody leak REFUSES safe-to-forget;
+Q4 lock timeout drops the row and reports it; Q5 0.75/0.25 survival shares kept as declared policy parameters;
+Q6 historical replay is evidence level HISTORICAL_REAL, closure still needs a live shadow.
+
+Commits (EXECUTION):
+- K1 UKDL dated amendment to T-TORN-APPEND (mechanism + wrong O_APPEND fix), hunk-isolated.
+- R1 rollover_replay `prior --write`: artifact {values, n, sessions, censored, window, computed_at, expires,
+  rehydration p50/p90, source} under the rollover state dir; tests + drills.
+- R2 historical negative-control search (all index sessions with commits, hindsight-free) -> vault/audits.
+- H0 the released refresh() hunks committed as-is, attributed to a4849588, after test_rollover passes.
+- W1 ledger(): exclusive lock around the append (reuse an existing lock idiom), bounded wait; on timeout or OSError
+  the row is dropped and reported (stderr + `ledger_write_failed` sidecar count), never written torn. Multi-process
+  race gate (old shape red as control); drill lock-removed -> KILLED.
+- D1 decide(): horizon/rehydration as evidence (basis MEASURED / UPPER_BOUND / UNKNOWN). ROBUST_ROLLOVER iff share
+  >= .75 at n*+C/G; ROBUST_CONTINUE iff share <= .25 at n*; else UNDETERMINED. would_rollover True only for
+  ROBUST_ROLLOVER at a boundary (pressure/growth unchanged). An int horizon (replay sweep) stays accepted, labelled.
+  Rows record obligations count (Stage-2 evidence only). Drills: UNKNOWN coerced to 30, range ignored, C dropped.
+- S1 custody: safe_to_forget refuses when any session-written path outside the capsule repo is dirty in its repo;
+  writes no longer truncated for the check.
+- P1 Production Reality: live ledger fragment count unchanged after W1 over real concurrent sessions + one real
+  shadow receipt carrying the new evidence fields.
+- V1 plan / KV / UKDL / CBR review.
+
+Audit `vault/audits/ccp-s16-1-audit.md`: EXECUTE-WITH-FIXES, 12 gaps (3 HIGH). Folded:
+- G1 decide() stays PURE: callers (observe, rollover_econ.evaluate) load the evidence and pass it; decide's
+  default int horizon and V-ROLLOVER-BREAKEVEN unchanged. Missing artifact -> UNKNOWN, never 30.
+- G2/G3 G >= 150k after the growth gate caps C/G at 12.4 (p50) / 30.2 (p90) calls; ROBUST_ROLLOVER stays
+  reachable (C4 set: 14 WOULD vs 29). Basis label `UPPER_BOUND_P50`. No ROBUST_CONTINUE claimed.
+- G4 the prior artifact needs a named refresher and records the usage-index freshness.
+- G5/G6/G11 folded into W1 (callers check ledger's return; 2 s; docstring cites gsd_mission._Lock,
+  sealed_receipt -- `_last_seal` above was a wrong name).
+- G7 S1 amends interactive-context-rollover.md §4 ("dirty recorded, not refused"); D1b rewrites §5 (horizon).
+- G8 S1 predicate: the session's FULL write list; for paths in a repo other than the capsule's, one path-scoped
+  `git status --porcelain --untracked-files=all -- <paths>` sealed into the capsule and judged in completeness();
+  non-repo paths warn, git failure refuses; Bash-written files are invisible (declared).
+- G9 P1 states a window and expected count (baseline ~0.56 % torn rows/row) or reads INCONCLUSIVE; the race
+  gate with its old-shape control is the primary evidence.
+- G10 new order: W1 -> S1 -> R1 -> D1a (pure, evidence in) -> D1b (loader + refresher + spec §5).
+- G12 debt: shadow/econ seal() overwrites a /kclear capsule (predates this plan); W1 writes LF rows.
+
+Progress: K1 `455c3514`, H0 `1703e609`, W1 `38fc418c` (race gate 6/6, 3 drills KILLED, rollover 52/52,
+econ 19/19, replay 28/28). R2 `vault/audits/ccp-s16-r2-negative-control.md`: 80 real sessions, 471
+boundaries, 169 growth-gated, 302 judged by the prior -> 0 CONTINUE (prior or rehydrated); rehydration
+moves 113/225 WOULD to INSUFFICIENT. Negative check stays PARTIAL; Stage 2 (state-conditioned prior) is
+the evidence-earning step.
+
 ## Not now
 NEXT: the `decide` horizon/rehydration change (owner rollover.py); `gsd_epoch` 300k static threshold (c2/e9 lane);
 the torn-append fix. LATER: live shadow on new sessions, bounded live experiment. RESEARCH: context live-range
