@@ -1905,6 +1905,13 @@ def _prepare(a, pillars):
     for r in a.root:
         if not os.path.isdir(r):
             return None, _fail(f"--root {r} is not a directory")
+    if pillars:     # a measuring run writes a file: never into a scanned corpus (a5 / a7 / b001 are read-only trees)
+        out_real = os.path.realpath(a.out_dir if getattr(a, "out_dir", None) else str(REPO / MEASUREMENTS_REL))
+        for r in a.root:
+            root_real = os.path.realpath(r)
+            if out_real == root_real or os.path.commonpath([out_real, root_real]) == root_real:
+                return None, _fail(f"--out-dir {a.out_dir or MEASUREMENTS_REL} resolves inside --root {r}: the "
+                                   f"instrument never writes into a scanned corpus; nothing written")
     pf = None
     if a.project_filter is not None:
         try:

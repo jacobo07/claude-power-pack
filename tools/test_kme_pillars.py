@@ -2257,12 +2257,39 @@ GATES_REAL = [
 ]
 
 
+# --------------------------------------------------------------------------- review-fix gates (03-REVIEW WR-01..WR-07, IN-01)
+def g_out_dir_inside_root():
+    """WR-01: an --out-dir that resolves inside any --root is refused with rc 2 and nothing is written."""
+    root = scratch("wr01")
+    tracer_fixture(root)
+    pd = pdir(root)
+    before = tree_state(root / "projects")
+    inside = pd / "out"
+    rc_in, _o, err_in = run_main(other_args(pd, inside))
+    link = scratch("wr01-link") / "lnk"
+    link.symlink_to(pd, target_is_directory=True)
+    rc_ln, _o2, err_ln = run_main(other_args(pd, link / "viasym"))
+    rc_ex, _o3, err_ex = run_main(other_args(root / "projects", root / "projects" / "deeper" / "out") + ["--expand"])
+    rc_eq, _o4, _e4 = run_main(other_args(pd, pd))
+    after = tree_state(root / "projects")
+    out_ok = scratch("wr01-ok")
+    rc_ok, _o5, _e5 = run_main(other_args(pd, out_ok))
+    wrote = len(list(out_ok.glob("*.md")))
+    refused = rc_in == rc_ln == rc_ex == rc_eq == 2
+    return refused and before == after and not inside.exists() and "inside --root" in err_in and rc_ok in (0, 3) \
+        and wrote == 1, f"inside={rc_in} symlink={rc_ln} expand={rc_ex} equal={rc_eq} tree_unchanged={before == after} " \
+                        f"control_rc={rc_ok} control_files={wrote}"
+
+
 GATES_TRACER = [
     ("V-KMEP-TRACER-D-E2E", g_tracer_e2e),
     ("V-KMEP-AUDIT-BYTE-IDENTICAL", g_audit_byte_identical),
     ("V-KMEP-CLI-USAGE", g_cli_usage),
 ]
-GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_PLAN5_TRACER + GATES_PLAN5_BUNDLE + GATES_REAL + GATES_REAL_2
+GATES_REVIEW_FIX = [
+    ("V-KMEP-OUT-DIR-INSIDE-ROOT", g_out_dir_inside_root),
+]
+GATES = list(GATES_TRACER) + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_PLAN5_TRACER + GATES_PLAN5_BUNDLE + GATES_REAL + GATES_REAL_2 + GATES_REVIEW_FIX
 
 
 def summary_line() -> str:
@@ -2284,7 +2311,7 @@ def run_all() -> int:
 
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
-DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2]    # the -REAL gates are excluded for speed
+DRILL_GATES = [n for n, _ in GATES_TRACER + GATES_EXPANSION + GATES_E_TRACER + GATES_PILLAR_EF + GATES_G_TRACER + GATES_G_POLES + GATES_H + GATES_I_TRACER + GATES_EXPANSION_2 + GATES_REVIEW_FIX]    # the -REAL gates are excluded for speed
 
 
 def _quiet(names) -> dict:
