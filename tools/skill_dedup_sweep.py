@@ -72,6 +72,9 @@ LISTING_LABEL = "laptop listing, D-LISTING probe rows: describes the laptop inst
 CAP_NOTE = ("upper bound only: the 30,000-char listing cap binds and refills (C6, K4: B FALSIFIED), so a realized "
             "listing saving may be 0")
 DESCRIBED_RE = re.compile(r"described \((\d+)\)")
+LINE_OVERHEAD = len("- ") + len(": ") + len("\n")  # the listing line shape the probe parses: `- <name>: <desc>\n`
+CHARS_BASIS = ("per counted member len(name) + 4 + described N (the `- <name>: <desc>` line the probe parses, newline "
+               "included); whitespace the probe strips is not counted")
 METHOD = {
     "body": "sha256 of the LF-normalized SKILL.md after skill_index._FM_RE strips the frontmatter",
     "dir": "skill_mirror_drift.dir_digest over sorted <relpath>\\0<lf_sha256> lines of every file in the directory",
@@ -297,13 +300,15 @@ def listing_effect(group: dict, probe_rows) -> dict:
             st[arm] = watch.get(name, UNWATCHED)
         status[name] = st
     k = group["distinct_names"] - 1
-    described = []
+    # `described (N)` is the description length only; removing the line `- <name>: <desc>\n` frees
+    # len(name) + LINE_OVERHEAD + N, so the per-line cost is what is summed over the k largest (05-REVIEW WR-05).
+    lines = []
     for name in group["names"]:
         m = DESCRIBED_RE.fullmatch(str(status[name].get("challenger", "")))
-        described.append(int(m.group(1)) if m else None)
-    chars = sum(sorted(described, reverse=True)[:k]) if described and None not in described else "UNMEASURED"
+        lines.append(len(name) + LINE_OVERHEAD + int(m.group(1)) if m else None)
+    chars = sum(sorted(lines, reverse=True)[:k]) if lines and None not in lines else "UNMEASURED"
     return {"label": LISTING_LABEL, "status": status, "entries_upper_bound": k,
-            "listing_chars_upper_bound": chars, "cap_note": CAP_NOTE}
+            "listing_chars_upper_bound": chars, "chars_basis": CHARS_BASIS, "cap_note": CAP_NOTE}
 
 
 def load_probe_rows(repo=REPO):

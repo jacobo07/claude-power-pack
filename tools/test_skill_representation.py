@@ -381,10 +381,25 @@ def pole_empty_body(tmp):
     return ok, f"body_bytes={sizes} groups={len(g)}"
 
 
+def pole_listing_line_bound(tmp):
+    # listing_chars_upper_bound must bound the characters a removal frees from the listing text the probe parses
+    # (`- <name>: <desc>` lines, `described (N)` = len(desc.strip())), not the description characters alone
+    # (05-REVIEW WR-05). Built in memory; `tmp` is unused.
+    descs = {"aa": "d" * 100, "bbb": "e" * 100}
+    listing = "".join(f"- {n}: {d}\n" for n, d in descs.items())
+    watch = {n: f"described ({len(d)})" for n, d in descs.items()}
+    rows = [{"session_id": sid, "watch": watch} for sid in sweep.K4_SESSIONS.values()]
+    g = {"names": sorted(descs), "distinct_names": len(descs)}
+    bound = sweep.listing_effect(g, rows)["listing_chars_upper_bound"]
+    freed = [len(listing) - len(listing.replace(f"- {n}: {d}\n", "")) for n, d in descs.items()]
+    ok = isinstance(bound, int) and bound >= max(freed) and bound == max(freed)
+    return ok, f"listing_chars_upper_bound={bound} chars freed per removal={freed}"
+
+
 POLES = (("SAME-BODY", pole_same_body), ("CRLF", pole_crlf), ("ONE-BYTE", pole_one_byte),
          ("NO-FRONTMATTER", pole_no_frontmatter), ("SAME-NAME-CROSS-PLANE", pole_same_name_cross_plane),
          ("CROSS-PLANE-RENAMED", pole_cross_plane_renamed), ("DISCOVERY", pole_discovery),
-         ("EMPTY-BODY", pole_empty_body))
+         ("EMPTY-BODY", pole_empty_body), ("LISTING-LINE-BOUND", pole_listing_line_bound))
 
 
 def _whole_file_hasher(skill_md_bytes):
