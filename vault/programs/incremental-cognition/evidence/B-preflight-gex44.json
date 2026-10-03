@@ -1,0 +1,269 @@
+{
+  "plane": "gex44",
+  "measured_at": "2026-10-03T18:26:35Z",
+  "instrument": "tools/gex44_env_preflight.py (plan 02-02), read-only; PP_COMMIT_FLOOR 5962571c840943ae0a3aa901efb08e69a04434da",
+  "commands": [
+    "timeout 300 python3 tools/gex44_env_preflight.py --env-root /home/kobii/a7-env --json > /tmp/ic-p2-02-a7.json",
+    "timeout 300 python3 tools/gex44_env_preflight.py --env-root /home/kobii/a5-env --json > /tmp/ic-p2-02-a5.json"
+  ],
+  "exit_codes": {
+    "a5": 1,
+    "a7": 1
+  },
+  "results": {
+    "a5": {
+      "verdict": "NOT_READY",
+      "reasons": [
+        "pp_install_stale"
+      ],
+      "unmeasured": [
+        {
+          "check": "interpreters",
+          "why": "engine range unreadable (/home/kobii/a5-env/home/.claude/skills/claude-power-pack/vendor/genesis-suite/package.json)"
+        }
+      ],
+      "findings": [
+        "install_modified"
+      ],
+      "checks": [
+        {
+          "check": "auth",
+          "state": "READY",
+          "reasons": [],
+          "why": "access token valid until 2026-10-03T20:06:41+00:00",
+          "findings": [],
+          "detail": {
+            "expires_at": "2026-10-03T20:06:41+00:00",
+            "refresh_expires_at": null,
+            "mtime": "2026-10-03T16:15:48+00:00",
+            "refresh_token_present": true
+          }
+        },
+        {
+          "check": "pp_install",
+          "state": "NOT_READY",
+          "reasons": [
+            "pp_install_stale"
+          ],
+          "why": "floor 5962571c is not in this install's history (head 192390b9); required files missing: tools/provider_breaker.py",
+          "findings": [
+            "install_modified"
+          ],
+          "detail": {
+            "install": "/home/kobii/a5-env/home/.claude/skills/claude-power-pack",
+            "floor": "5962571c840943ae0a3aa901efb08e69a04434da",
+            "head": "192390b909689d8f07e87855076df0971ac1ff6f",
+            "branch": "feature/knowledge-acquisition",
+            "modified_count": 1024,
+            "modified_first": [
+              ".claude/commands/osa.md",
+              ".gitattributes",
+              ".gitignore",
+              ".planning/config.json",
+              ".specify/memory/constitution.md"
+            ]
+          }
+        },
+        {
+          "check": "hooks",
+          "state": "READY",
+          "reasons": [],
+          "why": "50 hook(s) judged healthy",
+          "findings": [],
+          "detail": {
+            "settings": "/home/kobii/a5-env/home/.claude/settings.json",
+            "entries": 50,
+            "judged": 50,
+            "unjudged": 0,
+            "scripts_distinct": 38,
+            "scripts_checked": 34,
+            "script_cap_hit": false,
+            "interpreters": [
+              "/home/kobii/a5-env/node/bin/node",
+              "/usr/bin/bash"
+            ],
+            "broken": [],
+            "broken_count": 0,
+            "foreign_roots": [],
+            "unmeasured": []
+          }
+        },
+        {
+          "check": "interpreters",
+          "state": "UNMEASURABLE",
+          "reasons": [],
+          "why": "engine range unreadable (/home/kobii/a5-env/home/.claude/skills/claude-power-pack/vendor/genesis-suite/package.json)",
+          "findings": [],
+          "detail": {
+            "node_range": null,
+            "versions": {
+              "node": "v24.15.0",
+              "python": "Python 3.12.3"
+            },
+            "refusals": [],
+            "unmeasured": [
+              "engine range unreadable (/home/kobii/a5-env/home/.claude/skills/claude-power-pack/vendor/genesis-suite/package.json)"
+            ]
+          }
+        }
+      ],
+      "host": "kobicraft-gex44",
+      "plane": "gex44",
+      "checked_at": "2026-10-03T18:26:37+00:00",
+      "env": {
+        "source": "env.sh",
+        "env_root": "/home/kobii/a5-env",
+        "home": "/home/kobii/a5-env/home",
+        "install": "/home/kobii/a5-env/home/.claude/skills/claude-power-pack",
+        "node": "/home/kobii/a5-env/node/bin/node",
+        "python": "/usr/bin/python3",
+        "git": "/usr/bin/git",
+        "claude": "/home/kobii/a5-env/npm/bin/claude"
+      }
+    },
+    "a7": {
+      "verdict": "NOT_READY",
+      "reasons": [
+        "auth_expired",
+        "pp_install_stale"
+      ],
+      "unmeasured": [
+        {
+          "check": "interpreters",
+          "why": "engine range unreadable (/home/kobii/a7-env/home/.claude/skills/claude-power-pack/vendor/genesis-suite/package.json)"
+        }
+      ],
+      "findings": [
+        "install_modified",
+        "hooks_foreign_env"
+      ],
+      "checks": [
+        {
+          "check": "auth",
+          "state": "NOT_READY",
+          "reasons": [
+            "auth_expired"
+          ],
+          "why": "access token expired and not refreshable (expiresAt 1970-01-01T00:00:00+00:00)",
+          "findings": [],
+          "detail": {
+            "expires_at": "1970-01-01T00:00:00+00:00",
+            "refresh_expires_at": "2026-10-27T14:14:54+00:00",
+            "mtime": "2026-10-01T20:45:02+00:00",
+            "refresh_token_present": true
+          }
+        },
+        {
+          "check": "pp_install",
+          "state": "NOT_READY",
+          "reasons": [
+            "pp_install_stale"
+          ],
+          "why": "floor 5962571c is not in this install's history (head 01199995); required files missing: tools/provider_breaker.py",
+          "findings": [
+            "install_modified"
+          ],
+          "detail": {
+            "install": "/home/kobii/a7-env/home/.claude/skills/claude-power-pack",
+            "floor": "5962571c840943ae0a3aa901efb08e69a04434da",
+            "head": "01199995c7d15a9540dc4180c8f3a50d6e1244b3",
+            "branch": "HEAD",
+            "modified_count": 1,
+            "modified_first": [
+              "vault/terminal_slots.json"
+            ]
+          }
+        },
+        {
+          "check": "hooks",
+          "state": "READY",
+          "reasons": [],
+          "why": "50 hook(s) judged healthy",
+          "findings": [
+            "hooks_foreign_env"
+          ],
+          "detail": {
+            "settings": "/home/kobii/a7-env/home/.claude/settings.json",
+            "entries": 50,
+            "judged": 50,
+            "unjudged": 0,
+            "scripts_distinct": 38,
+            "scripts_checked": 34,
+            "script_cap_hit": false,
+            "interpreters": [
+              "/home/kobii/a5-env/node/bin/node",
+              "/usr/bin/bash"
+            ],
+            "broken": [],
+            "broken_count": 0,
+            "foreign_roots": [
+              "/home/kobii/a5-env/home/.claude/hooks",
+              "/home/kobii/a5-env/home/.claude/skills/claude-power-pack/hooks",
+              "/home/kobii/a5-env/home/.claude/skills/claude-power-pack/modules/governance-overlay/hooks",
+              "/home/kobii/a5-env/home/.claude/skills/claude-power-pack/modules/zero-crash/hooks",
+              "/home/kobii/a5-env/node/bin"
+            ],
+            "unmeasured": []
+          }
+        },
+        {
+          "check": "interpreters",
+          "state": "UNMEASURABLE",
+          "reasons": [],
+          "why": "engine range unreadable (/home/kobii/a7-env/home/.claude/skills/claude-power-pack/vendor/genesis-suite/package.json)",
+          "findings": [],
+          "detail": {
+            "node_range": null,
+            "versions": {
+              "node": "v24.15.0",
+              "python": "Python 3.12.3"
+            },
+            "refusals": [],
+            "unmeasured": [
+              "engine range unreadable (/home/kobii/a7-env/home/.claude/skills/claude-power-pack/vendor/genesis-suite/package.json)"
+            ]
+          }
+        }
+      ],
+      "host": "kobicraft-gex44",
+      "plane": "gex44",
+      "checked_at": "2026-10-03T18:26:36+00:00",
+      "env": {
+        "source": "env.sh",
+        "env_root": "/home/kobii/a7-env",
+        "home": "/home/kobii/a7-env/home",
+        "install": "/home/kobii/a7-env/home/.claude/skills/claude-power-pack",
+        "node": "/home/kobii/a7-env/node/bin/node",
+        "python": "/usr/bin/python3",
+        "git": "/usr/bin/git",
+        "claude": "/home/kobii/a7-env/npm/bin/claude"
+      }
+    }
+  },
+  "no_write_proof": {
+    "files": [
+      "/home/kobii/a5-env/env.sh",
+      "/home/kobii/a7-env/env.sh",
+      "/home/kobii/a5-env/home/.claude/settings.json",
+      "/home/kobii/a7-env/home/.claude/settings.json",
+      "/home/kobii/a5-env/home/.claude/skills/claude-power-pack/.git/index",
+      "/home/kobii/a7-env/home/.claude/skills/claude-power-pack/.git/index",
+      "/home/kobii/a5-env/home/.claude/skills/claude-power-pack/.git/HEAD",
+      "/home/kobii/a7-env/home/.claude/skills/claude-power-pack/.git/HEAD"
+    ],
+    "method": "stat -c '%n %s %Y' on the 8 files before and after both runs (credentials files deliberately excluded: a live worker may refresh them)",
+    "diff": "empty"
+  },
+  "secret_scan": {
+    "token_key_names_and_canaries_in_outputs": 0,
+    "note": "the only 40+ character runs in the outputs are commit ids and path fragments"
+  },
+  "prediction_before_run": {
+    "a7": "NOT_READY [auth_expired, pp_install_stale], finding hooks_foreign_env",
+    "a5": "NOT_READY [pp_install_stale]"
+  },
+  "prediction_vs_measured": {
+    "a7": "reasons and the hooks_foreign_env finding as predicted; also measured: finding install_modified, interpreters UNMEASURABLE (the install predates vendor/genesis-suite, so there is no engine range to judge node against)",
+    "a5": "reasons as predicted; also measured: finding install_modified, interpreters UNMEASURABLE (same cause)"
+  }
+}
