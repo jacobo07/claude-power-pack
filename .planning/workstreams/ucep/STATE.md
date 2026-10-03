@@ -36,6 +36,19 @@ Total Plans in Phase: 5
 **Stopped at:** Completed 02-05-PLAN.md
 **Resume file:** None
 
+**Next exact action (epoch 2 -> 3):** Phase 2 executed 5/5, orchestrator re-runs green (59/59,
+27/27, 20/20, 24/24, 40/40, 17/17; vault/tower unchanged since 409dca89; 0 real traits files).
+Remaining tail, in order: (1) code review via `gsd-code-review 2` -- dispatch gsd-code-reviewer
+(model sonnet, depth standard) with `--files` = the 6 Phase 2 code paths ONLY:
+modules/capability_runtime/archetypes.py, modules/capability_runtime/trait_scan.py,
+tools/capability_traits.py, tools/test_capability_archetypes.py,
+tools/test_capability_trait_scan.py, vault/liveness/reachability_registry.json. Do NOT use the
+git-diff tier: the phase dir was first added at 5ee83003 (during Phase 1), so that base drags in
+13 Phase 1 files already reviewed in 01-REVIEW.md. (2) regression gate over Phase 1 suites;
+(3) gsd-verifier for Phase 2 -> 02-VERIFICATION.md; (4) if passed: `phase.complete 2`, commit,
+push; (5) security step skipped per Phase 1 precedent (no 01-SECURITY.md); (6) Phase 3 via
+/gsd-autonomous loop (discuss -> plan -> execute).
+
 Read, in order: `vault/plans/ucep-naked-verb-2026-10-02.md` (plan of record + Owner answers),
 `vault/plans/ucep-naked-verb-2026-10-02.audit.md` (18 gaps), this workstream's `ROADMAP.md`.
 Base commit at creation: `a9c603f` on `feature/knowledge-acquisition`.
