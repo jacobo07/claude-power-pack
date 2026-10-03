@@ -166,7 +166,16 @@ admits a declared one; each `--pillar` PASS.
 **Requirements**: SC-N
 **Success Criteria**: `reviews.ukdl` / `reviews.cbr` files exist; deltas filled; `retained.settings` matches live
 settings; `python tools/test_skill_capability_program.py --final` exits 0, output pasted in
-`vault/programs/skill-capability/CLOSE.md`.
+`vault/programs/skill-capability/CLOSE.md`. On gex44 the phase ends at the laptop hand-off; `--final` and state.N are
+the Owner's laptop step.
+
+**Plans:** 0/3 plans executed
+
+Plans:
+
+- [ ] 09-01-PLAN.md -- D-03 pre-final gate `tools/test_skill_capability_prefinal.py` (A-M PASS, N open, `--closeout`, selftest)
+- [ ] 09-02-PLAN.md -- D-01 reviews (ukdl.md, cbr.md) and ledger `reviews` / `deltas`
+- [ ] 09-03-PLAN.md -- D-02 LAPTOP-CLOSEOUT.md + D-03 record `evidence/pre-final-gex44.md`
 
 ## Progress
 
