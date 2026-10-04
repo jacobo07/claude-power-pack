@@ -42,6 +42,7 @@ both GEX44 preflights before every arm (row 19).
 | 22 | read `tools/test_kme_pillars.py` in full before that sign-off | AUTHORIZED, REQUIRED |
 | 28 | close as STALE/RESOLVED: the mission is armed on GEX44; update durable state | AUTHORIZED |
 | 29-30 | keep BLOCKED_BY_DEPENDENCY; re-evaluate when `cpp-cognitive-economy` lands a reachable commit, without asking again | DECIDED |
+| 31 | APPROVED by the Owner ("y", 2026-10-04 ~22:20) the recommendation in `N-PROMOTION-RECOMMENDATION-2026-10-04.md` (commit d1a8d714): promote IC-U-01, IC-U-04, IC-U-06 into `ukdl-universal.md` and IC-D-01 into `ukdl-cognitive-resource-os.md`; append IC-U-02 as an instance of `T-COMMIT-IS-NOT-INSTALL-WHEN-THE-INSTALL-IS-A-WORKING-TREE-001`; nothing into CBR; the rest held as listed there | APPROVED, PENDING_GATE: execute on the synced mission branch (after row 1), entry + `## Promotions recorded` line in the matching review in ONE commit, then `python tools/test_ic_closeout.py` must exit 0; insert entries in their section, never at the UKDL tail (automated writer) |
 
 ## Row 16 notes (reality scan, 2026-10-04 21:2x CEST)
 
