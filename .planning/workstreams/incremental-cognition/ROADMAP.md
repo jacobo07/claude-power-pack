@@ -169,7 +169,7 @@ Plans:
 
 **Goal**: offline replay ranks the live experiments; every Owner item is in one bundle.
 **Depends on**: Phase 3.
-**Plans:** 3/4 plans executed (sequential waves 1-4; all share tools/test_kme_replay.py, 05-03 / 05-04 the owner bundle)
+**Plans:** 4/4 plans executed (sequential waves 1-4; all share tools/test_kme_replay.py, 05-03 / 05-04 the owner bundle)
 
 Plans:
 **Wave 1**
@@ -186,7 +186,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 05-04-PLAN.md — owner-bundle summary table (every Owner item of phases 1-5, coverage discovered and gated), evidence/L.md Status OPEN, final laptop-sync replay
+- [x] 05-04-PLAN.md — owner-bundle summary table (every Owner item of phases 1-5, coverage discovered and gated), evidence/L.md Status OPEN, final laptop-sync replay
 
 ### Phase 6: Consume owners and close
 
