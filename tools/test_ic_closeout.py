@@ -15,6 +15,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import posixpath
 import re
 import subprocess
 import sys
@@ -122,6 +123,18 @@ def blob_at(commit: str, path: str) -> bytes | None:
     listing with rc 0, which made a directory read as a file."""
     r = git("cat-file", "blob", f"{commit}:{path}", binary=True)
     return r.stdout if r.returncode == 0 else None
+
+
+def noncanonical_path(path) -> str | None:
+    """None when `path` is a canonical repo-relative POSIX path; otherwise why not. Identity must not depend on spelling:
+    `./a/b`, `a//b`, `a/../a/b` and `a\\b` all name one file, and a rule keyed on a prefix of the spelling is bypassed."""
+    if not isinstance(path, str) or not path:
+        return "is not a non-empty path"
+    if path.startswith("/") or "\\" in path or ".." in path.split("/"):
+        return "is absolute, uses a backslash or escapes the repository"
+    if path != posixpath.normpath(path):
+        return f"is not a canonical path (normalizes to {posixpath.normpath(path)})"
+    return None
 
 
 def commit_reachable(sha: str) -> bool:
@@ -898,6 +911,10 @@ def delta_entry_problems(kind: str, e, pillar_ids: list, seen: set) -> list:
             probs.append(f"{tag}: an evidence item is not {{ref, sha256}}")
             continue
         ref = item["ref"]
+        why = noncanonical_path(ref)       # the smoke-label rule below keys on a prefix of the spelling
+        if why:
+            probs.append(f"{tag}: evidence {ref} {why}")
+            continue
         data = blob_at("HEAD", ref)
         if data is None:
             probs.append(f"{tag}: evidence {ref} is not a file at HEAD")
@@ -1032,6 +1049,12 @@ def g_ledger_deltas():
             one(evidence=[_ev(SMOKE_EVIDENCE)], statement="a measured ranking"), "smoke measurement"),
         "a smoke measurement cited with the word is accepted": one(
             evidence=[_ev(SMOKE_EVIDENCE)], statement="a smoke ranking on KME-G") == [],
+        "a smoke measurement spelled ./, // or via .. is reported, not waved through the label rule": all(
+            has(one(evidence=[_ev(spelled)], statement="a measured ranking"), "evidence")
+            for spelled in (f"./{SMOKE_EVIDENCE}", SMOKE_EVIDENCE.replace("/measurements/", "//measurements/"),
+                            SMOKE_EVIDENCE.replace("/measurements/", "/evidence/../measurements/"))),
+        "a ./-spelled evidence ref is reported as not canonical even with the word smoke": has(
+            one(evidence=[_ev(f"./{SMOKE_EVIDENCE}")], statement="a smoke ranking on KME-G"), "not a canonical path"),
         "an unknown plane is reported": has(one(plane="mars"), "plane"),
         "an unknown pillar is reported": has(one(pillars=["Z"]), "pillar ids"),
         "a phase outside 1..6 is reported": has(one(phase=7), "phase 7"),
@@ -1189,6 +1212,10 @@ def _m_program_path_rule_skipped():
     return _patch("program_commit_problem", lambda subject, paths: orig(subject, [PROG + "/x"]))
 
 
+def _m_canonical_path_unchecked():
+    return _patch("noncanonical_path", lambda path: None)
+
+
 MUTANTS = [
     ("M1 review_problems ignores missing rows", _m_coverage_blind, ["V-ICN-REVIEW-COVERAGE"]),
     ("M2 ref_resolves accepts every ref", _m_refs_always, ["V-ICN-EVIDENCE-RESOLVES"]),
@@ -1202,6 +1229,7 @@ MUTANTS = [
     ("M10 delta_problems skips the terminal-name rule", _m_terminal_name_ok, ["V-ICN-LEDGER-DELTAS"]),
     ("M11 coverage_problems returns nothing", _m_coverage_blind_phases, ["V-ICN-LEDGER-DELTAS-COVER-PHASES"]),
     ("M12 program_commit_problem skips the program-path rule", _m_program_path_rule_skipped, ["V-ICN-LEDGER-DELTAS"]),
+    ("M13 noncanonical_path accepts every spelling", _m_canonical_path_unchecked, ["V-ICN-LEDGER-DELTAS"]),
 ]
 
 
