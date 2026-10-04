@@ -32,7 +32,7 @@ both GEX44 preflights before every arm (row 19).
 | 13 | a7 dry-run; apply only if dry-run/preflight clean and no unexpected diff | AUTHORIZED, CONDITIONAL |
 | 14 | a7 `/login` is the Owner's; sole interactive boundary of a7 | OWNER_ACTION |
 | 15 | a5 dry-run + apply: clean preflight, drift understood, evidence saved | AUTHORIZED, CONDITIONAL |
-| 16 | upgrade GEX44 Node to 24.14.0 (22.23.2 only on a concrete compatibility finding); reversible, validated, no other runtime broken | AUTHORIZED |
+| 16 | upgrade GEX44 Node to 24.14.0 (22.23.2 only on a concrete compatibility finding); reversible, validated, no other runtime broken | INSTALLED + PROVEN; WIRING PENDING_GATE (see Row 16 notes) |
 | 17a | FIX: a7 hooks must resolve against a7's own owner/manifest, never a5's tree | AUTHORIZED (T2) |
 | 17b | FIX: installer deploys every hook script a declared hook needs; contract/regression test | AUTHORIZED (T2) |
 | 17c | SCOPE: the bare-git trap rule applies on Windows only; keep the universal pattern only in its correct envelope | AUTHORIZED (T2) |
@@ -42,6 +42,21 @@ both GEX44 preflights before every arm (row 19).
 | 22 | read `tools/test_kme_pillars.py` in full before that sign-off | AUTHORIZED, REQUIRED |
 | 28 | close as STALE/RESOLVED: the mission is armed on GEX44; update durable state | AUTHORIZED |
 | 29-30 | keep BLOCKED_BY_DEPENDENCY; re-evaluate when `cpp-cognitive-economy` lands a reachable commit, without asking again | DECIDED |
+
+## Row 16 notes (reality scan, 2026-10-04 21:2x CEST)
+
+- System `/usr/bin/node` is Ubuntu apt `nodejs 18.19.1+dfsg-6ubuntu5`, and five live services under `/opt` run on it
+  (kobii-sentinel bounty-verify + phash-worker, kobii-hive orchestrator + narrative-watcher, sentinel-watcher).
+  Replacing it would move them to v24 at their next restart, so the upgrade is scoped instead of system-wide.
+- Node 24.14.0 installed isolated at `/opt/node-v24.14.0` (tarball sha256 checked against nodejs.org SHASUMS256.txt:
+  OK). System node still v18.19.1. Rollback = remove that directory and the `CPP_NODE_EXE` lines.
+- The three main-plane reds reach node only through `modules/external_assimilation/node_bridge.py`, which reads
+  `CPP_NODE_EXE` before PATH. Proof on the GEX44 staging copy: default node -> MC 212/213 + HPKT 2 FAIL with
+  `engine: node v18.19.1 outside ^22.23.2 || ^24.14`; `CPP_NODE_EXE=/opt/node-v24.14.0/bin/node` -> MC 213/213,
+  HPKT 15/15.
+- Remaining (after the gate, the agora sweep supervises the running mission): set
+  `CPP_NODE_EXE=/opt/node-v24.14.0/bin/node` in the agora/b001 sweep units' environment and in a5/a7 `env.sh`
+  (with the row 13/15 deploys), then rerun MC + HPKT through the real sweep environment.
 
 ## Owner text (verbatim, 2026-10-04)
 
