@@ -169,7 +169,7 @@ Plans:
 
 **Goal**: offline replay ranks the live experiments; every Owner item is in one bundle.
 **Depends on**: Phase 3.
-**Plans:** 1/4 plans executed (sequential waves 1-4; all share tools/test_kme_replay.py, 05-03 / 05-04 the owner bundle)
+**Plans:** 2/4 plans executed (sequential waves 1-4; all share tools/test_kme_replay.py, 05-03 / 05-04 the owner bundle)
 
 Plans:
 **Wave 1**
@@ -178,7 +178,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-02-PLAN.md — L ranking contract and safety gates (order, ties, one denominator, drift, labels, terminal_evidence, no secret, read-only), drill 13/13, KME-G smoke (plane gex44, never terminal)
+- [x] 05-02-PLAN.md — L ranking contract and safety gates (order, ties, one denominator, drift, labels, terminal_evidence, no secret, read-only), drill 13/13, KME-G smoke (plane gex44, never terminal)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
