@@ -46,6 +46,13 @@ with a named reason and is listed under unranked with no number; a candidate obs
 zero and is ranked.
 
 Exit codes: 0 every candidate measured, 3 any UNMEASURED (the file is still written), 2 usage / refusal.
+
+WHICH L DISPOSITIONS NEED A RANKING FILE. The program done-gate (tools/test_incremental_cognition_program.py, R3) asks
+for a primary KME-L ranking file from this tool only when pillar L closes as a measurement terminal:
+RESEARCH_INSUFFICIENT_EVIDENCE or FALSIFIED_OR_REJECTED_BY_EVIDENCE. It asks for none, and stays silent, for
+AUTHORIZATION_BOUND, IMPLEMENTED_AND_VERIFIED, MERGED_INTO_EXISTING_OWNER, DEFERRED_STRONGER_OWNER and EXTERNAL_BLOCKED
+(the CE clause L4 still demands each one's own evidence kinds; AUTHORIZATION_BOUND needs the Owner's own decision file,
+never a ranking). A file is terminal evidence only at the frozen rollover growth (ROLLOVER_GROWTH).
 """
 from __future__ import annotations
 

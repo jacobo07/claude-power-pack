@@ -37,11 +37,20 @@ Added here:
       only when its own fields agree (instrument, role primary, exact population, denominator KME-L and the rule table
       kept here, `unranked_ids` an empty list, the committed frozen file with its current sha256); a smoke file
       (KME-G) is refused; and an L terminal of a measurement kind (RESEARCH_INSUFFICIENT_EVIDENCE,
-      FALSIFIED_OR_REJECTED_BY_EVIDENCE) must cite such a primary file. An AUTHORIZATION_BOUND L needs no ranking file.
-  R4  owner decisions (--final and --pillar X): an `owner_decision` evidence whose ref is the owner bundle
-      (vault/programs/incremental-cognition/owner-bundle.md) is refused for every pillar. The bundle is the
-      mission's request, and it names [L] and the other pillar tags, so the CE clause L4 alone would accept it;
-      only a file the Owner wrote in their own words counts as the Owner's decision.
+      FALSIFIED_OR_REJECTED_BY_EVIDENCE) must cite such a primary file. Exactly these L dispositions need NO ranking
+      file from R3 and R3 stays silent for them: AUTHORIZATION_BOUND, IMPLEMENTED_AND_VERIFIED,
+      MERGED_INTO_EXISTING_OWNER, DEFERRED_STRONGER_OWNER, EXTERNAL_BLOCKED (the CE clause L4 still demands each one's
+      own evidence kinds; V-ICP-R3-L-NEEDS-RANKING-TABLE pins this list against the CE terminals). A terminal file is
+      also believed only at the frozen rollover growth, 100000, and only when its ranking is internally consistent.
+  R4  owner decisions (--final and --pillar X): an `owner_decision` evidence is refused for every pillar when its ref
+      names the owner bundle (vault/programs/incremental-cognition/owner-bundle.md), is a byte copy of it, or is a file
+      the mission wrote (anything under the program's evidence/ except L-owner-decision*.md, anything under
+      measurements/). Identity is judged, never spelling: the ref is resolved the way the CE evidence reader resolves it
+      (`~` expanded, absolute paths accepted) and compared with os.path.samefile, then by its spelled tail under
+      vault/programs/incremental-cognition/ (a second checkout, a Windows drive / backslash / mixed-case form), by its
+      sha256, and by where a symlink really points. The bundle is the mission's request and names [L] and the other
+      pillar tags, so the CE clause L4 alone would accept it; only a file the Owner wrote in their own words counts as
+      the Owner's decision.
   V-ICP-REBIND  the rebinding took: ledger.program must be "incremental-cognition", and a
       ledger read through any other program's path is refused.
 
@@ -968,6 +977,15 @@ def selftest(verbose=True) -> bool:
         "V-ICP-R3-L-AUTH-ONLY-SILENT (an owner-decision terminal needs no ranking file; R3 does not speak)")
     say(any("without readable" in x for x in r3("L", {"k": "---\ninstrument: \"" + KMER_INSTRUMENT + "\"\n---\n"}, ["k"])),
         "V-ICP-R3-L-KMER-NO-ROLE-REFUSED (a kme_replay file without role fields is refused, not skipped)")
+    # IN-03: the documented list of terminals that need no ranking file is executed, not just stated
+    exempt = sorted(ce.TERMINALS - set(MEASUREMENT_TERMINALS))
+    silent = [t for t in exempt if r3t("L", {}, [], t) == []]
+    loud = [t for t in MEASUREMENT_TERMINALS if any("cites no kme_replay primary" in x for x in r3t("L", {}, [], t))]
+    doc = " ".join((__doc__ or "").split())
+    undocumented = [t for t in exempt if t not in doc]
+    say(silent == exempt and sorted(loud) == sorted(MEASUREMENT_TERMINALS) and not undocumented and len(exempt) == 5,
+        f"V-ICP-R3-L-NEEDS-RANKING-TABLE (no ranking file needed for {exempt}; needed for {list(MEASUREMENT_TERMINALS)}; "
+        f"silent={silent} loud={loud} not named in the docstring: {undocumented})")
     l_smokes = sorted((REPO / PROGRAM_DIR / "measurements").glob("L-KME-G-*.md"))
     if l_smokes:
         rel = l_smokes[0].relative_to(REPO).as_posix()
