@@ -32,11 +32,18 @@ The run's commits are on branch `mission/skill-capability-run` in the gex44 work
 (`/home/kobii/repos/claude-power-pack.git`, branch `mission/skill-capability`) was refused by the ovo-push-gate hook
 and not retried. The recorded pick is (a): you run the push.
 
-**gex44** (fast-forward of `mission/skill-capability`, which is an ancestor of the run HEAD):
+**gex44** (fast-forward of `mission/skill-capability`, which is an ancestor of the run HEAD). Check first, then push:
 
 ```
+git -C /home/kobii/missions/skill-capability/.claude/worktrees/sc-run fetch origin mission/skill-capability
+git -C /home/kobii/missions/skill-capability/.claude/worktrees/sc-run merge-base --is-ancestor origin/mission/skill-capability mission/skill-capability-run
+git -C /home/kobii/missions/skill-capability/.claude/worktrees/sc-run log --format="%h %an %s" origin/mission/skill-capability..mission/skill-capability-run
 git -C /home/kobii/missions/skill-capability/.claude/worktrees/sc-run push origin mission/skill-capability-run:mission/skill-capability
 ```
+
+Push only if `merge-base --is-ancestor` exits 0 (nothing on the target is rewritten) and every line of the `log`
+is a run commit. This push is exempt from the laptop check below: the run branch holds only the run's own commits,
+so a fast-forward to it cannot interleave foreign ones. Never add `--force`.
 
 The alternative is to fetch `mission/skill-capability-run` straight from the gex44 clone instead of from the bare repo.
 
@@ -44,23 +51,48 @@ The alternative is to fetch `mission/skill-capability-run` straight from the gex
 
 ```
 git remote -v
-git fetch <the remote that points at the gex44 bare repo> mission/skill-capability
+git fetch <gex44-remote> mission/skill-capability
+git rev-parse FETCH_HEAD
 ```
 
-The remote name for the gex44 bare repo cannot be observed from gex44, so `git remote -v` finds it.
+`<gex44-remote>` is the remote that points at the gex44 bare repo. Its name cannot be observed from gex44, so
+`git remote -v` finds it. Write down the hash `git rev-parse FETCH_HEAD` prints: it is `<run-tip>` below. Record the
+hash, not the name `FETCH_HEAD`, because any later fetch (bundle item 6 asks for one) overwrites `FETCH_HEAD`.
 
 ### Owner boundary 4 and pillar N's push rule
 
-Before you bring the run into the shared checkout, and before any push:
+Before you bring the run into the shared checkout:
 
 ```
-git log --oneline FETCH_HEAD..HEAD
-git log --oneline HEAD..FETCH_HEAD
+git log --oneline <run-tip>..HEAD
+git log --oneline HEAD..<run-tip>
 ```
 
-The first command lists commits on the checkout that the run does not have. These are foreign commits that would
-interleave. The second lists the run's commits. A push happens only once no foreign commits interleave. Whether you
-merge or check out the run is your choice.
+The first lists commits on the checkout that the run does not have. The second lists the run's commits. Whether you
+merge or check out the run is your choice. A commit the first command lists is foreign only if it reaches the push,
+and the push check below is what decides that.
+
+The push target is `<gex44-remote>` (the same remote as above), branch `mission/skill-capability`. Immediately before
+pushing, fetch the target and list what the push would add that is neither the run's nor already on the target:
+
+```
+git fetch <gex44-remote> mission/skill-capability
+git log --oneline HEAD --not <run-tip> FETCH_HEAD
+git log --oneline HEAD --not <run-tip> FETCH_HEAD -- . ":(exclude)vault/programs/skill-capability"
+```
+
+The first `log` must list only this closeout's own commits: the state.N commit (step 7 of "Close pillar N"), the
+CLOSE.md commit (step 11), and any commit you made for a numbered bundle item above. Any other line is a foreign
+commit, and the push does not happen. The second `log` shows which of those commits touch anything outside the
+program directory. Expected: no output, or only a commit you made on purpose for a bundle item (for example item 8's
+`LISTING_HOSTS` edit). Then push without force, so a target that moved meanwhile is refused instead of overwritten:
+
+```
+git push <gex44-remote> HEAD:mission/skill-capability
+```
+
+If the push is refused as non-fast-forward, someone pushed to the target after your fetch. Run the fetch and both
+`log` commands again before anything else. Never add `--force`.
 
 ## Owner bundle, in order
 
@@ -196,9 +228,19 @@ Run these in the laptop checkout, after section 1 and the bundle. Each step give
     command: python tools/test_skill_capability_program.py --final
     ```
 
-11. Commit CLOSE.md by pathspec, then push under boundary 4 (section 1: no foreign commits interleave):
+11. Commit CLOSE.md by pathspec, then push under boundary 4. Run the push check from section 1 ("Owner boundary 4
+    and pillar N's push rule") immediately before the push, with the `<run-tip>` hash you wrote down there. CLOSE.md
+    is a new file, so it is added before the pathspec commit:
 
     ```
+    git add -- vault/programs/skill-capability/CLOSE.md
     git commit -m "docs(skill-capability): CLOSE.md with the laptop --final output" -- vault/programs/skill-capability/CLOSE.md
     git log -1 --format=%s
+    git fetch <gex44-remote> mission/skill-capability
+    git log --oneline HEAD --not <run-tip> FETCH_HEAD
+    git log --oneline HEAD --not <run-tip> FETCH_HEAD -- . ":(exclude)vault/programs/skill-capability"
+    git push <gex44-remote> HEAD:mission/skill-capability
     ```
+
+    Push only when the first `log` lists nothing but this closeout's own commits (state.N, CLOSE.md, and commits
+    made for bundle items), as section 1 says. Never add `--force`.
