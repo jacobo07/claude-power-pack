@@ -21,6 +21,11 @@ What each V-SCG line proves:
                         old append-at-end placement is the positive control that changes it
   V-SCG-REASON-YAML-SCALARS  the reason grammar refuses YAML null / bool / number / date literals and admits text,
                         including every generated reason (cross-checked with PyYAML when it is importable)
+  V-SCG-AUTOCRLF-PLANE  09-REVIEW CR-01: in a clone configured core.autocrlf=true (the laptop's plane) a plain
+                        `git archive` of skills/ hands SKILL.md back CRLF (positive control: the plane is real), the
+                        pinned archive build_base takes is byte-identical to this checkout's and to the HEAD blobs, and
+                        undeclared() strips the declaration from the CRLF text, keeps CRLF, and insert_declaration
+                        accepts it (before the fix it raised "frontmatter already has a metadata key")
   V-SCG-GIT-MISSING     the CLI under PATH=/nonexistent exits 1 with `SKILL_CREATION INCONCLUSIVE` naming `not found`
                         and no traceback; the same CLI with git on PATH says PASS on the same fixture
   V-SCG-LIVE            the gate on this checkout's HEAD; its fail set is printed (before 08-02 declares the repo
@@ -132,9 +137,17 @@ def undeclared(text: str) -> str:
     """`text` without the gate-grammar declaration block, so fixtures start from an undeclared skill whether or not
     HEAD already declares it (08-02 declared every repo skill). Removes a top-level `metadata:` line inside the
     frontmatter only when every child under it is an opportunity_detector / opportunity_detector_reason line;
-    any other metadata shape is left alone, and insert_declaration then refuses it loudly."""
-    m = scg._FM_RE.match(sc.lf(text))
-    if m is None or "\r" in text:
+    any other metadata shape is left alone, and insert_declaration then refuses it loudly.
+
+    CRLF (09-REVIEW CR-01): a text whose every line ends CRLF is stripped on its LF form and handed back CRLF, the way
+    insert_declaration keeps CRLF. Before, any CR returned the text unchanged, so on a core.autocrlf=true clone the
+    declaration survived and insert_declaration raised. Mixed or lone-CR endings are still left alone."""
+    crlf = "\r\n" in text
+    body = sc.lf(text)
+    if "\r" in text and (not crlf or body.replace("\n", "\r\n") != text):
+        return text
+    m = scg._FM_RE.match(body)
+    if m is None:
         return text
     lines = m.group(1).split("\n")
     out, i = [], 0
@@ -149,10 +162,22 @@ def undeclared(text: str) -> str:
                 continue
         out.append(lines[i])
         i += 1
-    stripped = text[:m.start(1)] + "\n".join(out) + text[m.end(1):]
+    stripped = body[:m.start(1)] + "\n".join(out) + body[m.end(1):]
     if scg.parse_declaration(stripped)["count"] or scg.parse_declaration(stripped)["reason"]:
         raise FixtureError("declaration left after stripping")
-    return stripped
+    return stripped.replace("\n", "\r\n") if crlf else stripped
+
+
+def skills_archive(src, head):
+    """(tar bytes, None) or (None, reason): `git archive` of skills/ at `head`, with core.autocrlf and core.eol pinned
+    so the members are the committed blob bytes whatever the clone's own config says. `git archive` applies the
+    clone's checkout conversion; on the laptop (core.autocrlf=true) an unpinned archive is CRLF (09-REVIEW CR-01)."""
+    return smd.git_run(src, "-c", "core.autocrlf=false", "-c", "core.eol=lf", "archive", "--format=tar", head, "skills")
+
+
+def tar_members(tar: bytes) -> dict:
+    with tarfile.open(fileobj=io.BytesIO(tar)) as tf:
+        return {m.name: tf.extractfile(m).read() for m in tf.getmembers() if m.isfile()}
 
 
 def render_evidence(fx, repo, msg="render evidence"):
@@ -245,7 +270,7 @@ def tracer(fx, seed):
 def build_base(fx, seed) -> tuple:
     base = fx.root / "base"
     fx.init(base)
-    tar, why = smd.git_run(REPO, "archive", "--format=tar", seed.live["head"], "skills")
+    tar, why = skills_archive(REPO, seed.live["head"])
     if tar is None:
         raise FixtureError(f"git archive: {why}")
     with tarfile.open(fileobj=io.BytesIO(tar)) as tf:
@@ -601,6 +626,59 @@ def router_description(seed):
            f"{'changes' if control else 'DOES NOT change'} the description")
 
 
+def autocrlf_plane(fx, seed):
+    """09-REVIEW CR-01, measured on the plane it names: a clone of this repository configured core.autocrlf=true."""
+    head = seed.live["head"]
+    clone = fx.root / "autocrlf-clone"
+    bad = []
+    _, why = smd.git_run(fx.root, "clone", "-q", "--no-checkout", "--shared", str(REPO), str(clone))
+    if why is None:
+        _, why = smd.git_run(clone, "config", "core.autocrlf", "true")
+    if why is not None:
+        report(False, "V-SCG-AUTOCRLF-PLANE", f"fixture: {why}")
+        return
+    raw, why_raw = smd.git_run(clone, "archive", "--format=tar", head, "skills")
+    pinned, why_pin = skills_archive(clone, head)
+    ref, why_ref = skills_archive(REPO, head)
+    if raw is None or pinned is None or ref is None:
+        report(False, "V-SCG-AUTOCRLF-PLANE", f"archive: {why_raw or why_pin or why_ref}")
+        return
+    raw_m, pin_m, ref_m = tar_members(raw), tar_members(pinned), tar_members(ref)
+    mds = sorted(r for r in raw_m if r.endswith(f"/{scg.SKILL_MD}"))
+    crlf_raw = [r for r in mds if b"\r\n" in raw_m[r]]
+    if pin_m != ref_m:
+        bad.append(f"pinned archive differs from this checkout's on {sorted(set(pin_m) ^ set(ref_m) | {r for r in pin_m if pin_m.get(r) != ref_m.get(r)})[:3]}")
+    off_head = [r for r in mds if pin_m.get(r) != head_blob(r)]
+    if off_head:
+        bad.append(f"pinned SKILL.md differs from its HEAD blob: {off_head[:3]}")
+    stripped = 0
+    for r in crlf_raw:
+        skill = r.split("/")[1]
+        row = seed.rows.get(skill)
+        text = raw_m[r].decode("utf-8")
+        try:
+            plain = undeclared(text)
+            if row is not None and row["tracked"]:
+                got = scg.insert_declaration(plain, scg.declaration_lines(skill, row["class"], row["evidence"]))
+                want = scg.insert_declaration(undeclared(sc.lf(text)), scg.declaration_lines(skill, row["class"],
+                                                                                              row["evidence"]))
+                if sc.lf(got) != want or "\r\n" not in got:
+                    bad.append(f"{skill}: CRLF insert differs from the LF insert")
+        except (ValueError, FixtureError) as e:
+            bad.append(f"{skill}: {type(e).__name__}: {e}")
+            continue
+        d = scg.parse_declaration(plain)
+        if d["count"] or d["reason"] or "\r\n" not in plain:
+            bad.append(f"{skill}: undeclared() left a declaration or dropped CRLF")
+        else:
+            stripped += 1
+    control = len(crlf_raw) > 0
+    report(control and not bad, "V-SCG-AUTOCRLF-PLANE",
+           f"control: plain archive in the autocrlf=true clone is CRLF on {len(crlf_raw)}/{len(mds)} SKILL.md; "
+           f"pinned archive == checkout == HEAD blobs on {len(mds) - len(off_head)}/{len(mds)}; "
+           f"CRLF texts stripped and re-declared {stripped}/{len(crlf_raw)}; problems {bad[:3]}")
+
+
 def git_missing(base):
     py = "/usr/bin/python3" if Path("/usr/bin/python3").is_file() else sys.executable
     env = {"PATH": "/nonexistent", "HOME": os.environ.get("HOME", ""), "LANG": "C.UTF-8"}
@@ -634,6 +712,7 @@ def main() -> int:
             no_self_enrol(seed)
             reason_yaml_scalars(seed)
             router_description(seed)
+            autocrlf_plane(fx, seed)
             base, originals = build_base(fx, seed)
             flipped = run_drills(fx, base, seed, originals)
             all7 = set(scg.SKILL_CLAUSES) | set(scg.GATE_CLAUSES)
