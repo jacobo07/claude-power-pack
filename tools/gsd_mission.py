@@ -765,6 +765,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         return {"ok": False, "epoch": epoch, "bg_id": bg_id, "why": why, "detail": detail}
     rec = transition(mission_id, expect_epoch=epoch, expect_state=LAUNCHING, event="launched",
                      now=now, pending={**rec["pending"], "bg_id": bg_id})
+    _record_launch_account(bg_id)
     if rec.get("capsule_key") and capsule_v2(rec):
         _capsule_bind(rec, bg_id=bg_id)
     return {"ok": True, "epoch": epoch, "bg_id": bg_id}
@@ -2209,13 +2210,90 @@ def quota_hold(text: str | None, replied_at: float | None, now: float) -> dict |
     return {"until": until, "reason": " ".join(text.split())[:200]}
 
 
+LAUNCH_ACCOUNTS_KEEP = 500
+
+
+def _account_id() -> str | None:
+    """The logged-in Claude account (`oauthAccount.accountUuid` in .claude.json), or None.
+    CPP_CLAUDE_ACCOUNT_FILE overrides the path (tests). Unreadable is None, never a guess."""
+    try:
+        p = os.environ.get("CPP_CLAUDE_ACCOUNT_FILE")
+        if not p:
+            cfg = os.environ.get("CLAUDE_CONFIG_DIR")
+            p = os.path.join(cfg, ".claude.json") if cfg else os.path.join(os.path.expanduser("~"), ".claude.json")
+        with open(p, encoding="utf-8-sig") as fh:
+            uuid = (json.load(fh).get("oauthAccount") or {}).get("accountUuid")
+        return str(uuid) if uuid else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _launch_accounts_path() -> Path:
+    return lr.state_dir() / "launch-accounts.json"
+
+
+def _record_launch_account(bg_id: str) -> None:
+    """Which account a worker was launched as, keyed by its host id (a renewal inherits the
+    previous mission's worker, so the mission id would not find it). Best effort: a lost write
+    only means the quota hold behaves as before."""
+    acct = _account_id()
+    if not bg_id or not acct:
+        return
+    try:
+        p = _launch_accounts_path()
+        try:
+            seen = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            seen = {}
+        seen.pop(bg_id, None)
+        seen[bg_id] = acct
+        seen = dict(list(seen.items())[-LAUNCH_ACCOUNTS_KEEP:])
+        p.parent.mkdir(parents=True, exist_ok=True)
+        tmp = p.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(seen), encoding="utf-8")
+        os.replace(tmp, p)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _launched_as(session_id: str | None) -> str | None:
+    if not session_id:
+        return None
+    try:
+        seen = json.loads(_launch_accounts_path().read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+    for bg, acct in seen.items():
+        if session_id.startswith(bg):
+            return acct
+    return None
+
+
+def _quota_released_by_relogin(rec: dict, hold: dict | None) -> bool:
+    """A quota hold is evidence about the account the refused worker ran as. Measured 2026-10-04
+    (GEX44 m-a828e0f4feb9): after the Owner logged in with another account, the hold re-read
+    the old refusal and would have held three days. Release only on a KNOWN different account;
+    a credentials timestamp would not do, token refreshes rewrite that file every few hours."""
+    if not hold or hold.get("class", "quota") != "quota":
+        return False
+    sid = (rec.get("owner") or {}).get("session_id")
+    was, now_acct = _launched_as(sid), _account_id()
+    if not was or not now_acct or was == now_acct:
+        return False
+    lr.ledger_append(rec.get("mission_id"), "quota_hold_released", mission_id=rec.get("mission_id"),
+                     reason="a different account is logged in than the refused worker ran as",
+                     refused_session=sid, until=hold.get("until"))
+    return True
+
+
 def provider_hold(rec: dict, now: float) -> dict | None:
     """The hold for this mission's next successor (tools/provider_breaker.py). If the breaker
     itself cannot run, fall back to the pre-breaker quota check -- and say so in the ledger:
     a missing breaker must not read as a provider that is fine."""
     try:
         import provider_breaker as pb
-        return pb.hold_for(rec, now)
+        hold = pb.hold_for(rec, now)
+        return None if _quota_released_by_relogin(rec, hold) else hold
     except Exception as exc:  # noqa: BLE001 -- degrade to the previous behaviour, visibly
         lr.ledger_append(rec.get("mission_id"), "provider_breaker_unavailable",
                          mission_id=rec.get("mission_id"), error=f"{exc.__class__.__name__}: {exc}"[:200])
