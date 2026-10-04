@@ -128,13 +128,70 @@ def run_cli(args):
 
 
 # --------------------------------------------------------------------------- gates: real repository
+def owner_terminals(spec: str, pairs, cwd=REPO) -> list:
+    """Independent read (plain `git show`, never the helper): [("unreadable", None) | ("ok", terminal-or-None)] per pair."""
+    out = []
+    for ref, pillar in pairs:
+        r = git("show", f"{spec}:{ref}", cwd=cwd)
+        try:
+            led = json.loads(r.stdout.lstrip("\ufeff")) if r.returncode == 0 else None
+        except json.JSONDecodeError:
+            led = None
+        if not isinstance(led, dict):
+            out.append(("unreadable", None))
+            continue
+        state = led.get("state")
+        entry = state.get(pillar) if isinstance(state, dict) else None
+        out.append(("ok", entry.get("terminal") if isinstance(entry, dict) else None))
+    return out
+
+
+def tracer_problems(rc, out: str, sha: str, pairs, reads, pid: str = "J") -> list:
+    """What the printer's (rc, stdout) must be, given the owner ledgers as read independently. Not hardcoded to any
+    owner state: all pairs closed -> READY lines, one row each, rc 0; otherwise OPEN / UNREADABLE lines, no row, rc 1."""
+    lines, short, problems = out.splitlines(), sha[:8], []
+    closed = [kind == "ok" and isinstance(t, str) and t in ce.TERMINALS for kind, t in reads]
+    for (ref, pillar), (kind, t), is_closed in zip(pairs, reads, closed):
+        if kind == "unreadable":
+            want = f"UNREADABLE {ref} at {short}"
+        elif is_closed:
+            want = f"READY {ref}#{pillar} at {short}: {t}"
+        else:
+            want = f"OPEN {ref}#{pillar} at {short}:"
+        if sum(1 for x in lines if x.startswith(want)) != 1:
+            problems.append(f"no single line {want!r}")
+    if all(closed):
+        rows = [{"kind": "owner_ledger", "ref": ref, "commit": sha, "pillar": pillar, "terminal": t}
+                for (ref, pillar), (_, t) in zip(pairs, reads)]
+        if rc != 0 or parse_rows(out) != rows or not lines or lines[-1] != f"ICR2_READY={pid} commit={sha}":
+            problems.append(f"closed world: rc={rc} rows_match={parse_rows(out) == rows}")
+    elif rc != 1 or "ROWS" in lines or '"kind"' in out or "ICR2_READY=NO" not in out:
+        problems.append(f"open world: rc={rc} rows_printed={'ROWS' in lines}")
+    return problems
+
+
 def g_tracer_real_head():
-    sha8 = head()[:8]
+    """The real HEAD, judged against the owner ledgers read independently at HEAD: valid while the owner is open
+    AND once it closes (the program's success state must not turn this gate red). Both poles are driven on a scratch repo."""
+    sha = head()
     rc, out, err = run_cli(["--pillar", "J", "--commit", "HEAD"])
-    want = [f"OPEN {CE_LEDGER}#{p} at {sha8}: no terminal" for p in ("D", "E", "I")]
-    miss = [w for w in want if not any(x.startswith(w) for x in out.splitlines())]
-    good = (rc == 1 and not miss and "ICR2_READY=NO" in out and '"kind": "owner_ledger"' not in out)
-    return good, f"rc={rc} missing={miss} ready_no={'ICR2_READY=NO' in out} stderr={err.strip()[:80]!r}"
+    pairs = [(w["ledger"], w["pillar"]) for w in program_ledger()["frozen"]["consumes"]["J"]]
+    reads = owner_terminals(sha, pairs)
+    problems = tracer_problems(rc, out, sha, pairs, reads)
+    s = scratch_repo()
+    controls = {}
+    for label, spec in (("open", s["c1"]), ("partial", s["c3"]), ("closed", s["c2"])):
+        rc_s, out_s = scratch_main(spec)
+        exp = owner_terminals(spec, PAIRS, cwd=s["dir"])
+        flipped = [("ok", None if t else CLOSED["D"]) for _, t in exp]
+        controls[f"{label} world accepted"] = tracer_problems(rc_s, out_s, spec, PAIRS, exp) == []
+        controls[f"{label} world with the opposite expectation refused"] = bool(
+            tracer_problems(rc_s, out_s, spec, PAIRS, flipped))
+    if not all(controls.values()):
+        return False, f"controls failed: {[k for k, v in controls.items() if not v]}"
+    world = "closed" if all(k == "ok" and isinstance(t, str) and t in ce.TERMINALS for k, t in reads) else "open"
+    return not problems, (f"HEAD world={world} rc={rc} problems={problems[:2]} stderr={err.strip()[:60]!r} "
+                          f"{len(controls)} controls report")
 
 
 def g_real_freeze_pole():
