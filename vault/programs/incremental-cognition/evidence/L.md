@@ -64,14 +64,14 @@ All from the worktree root on GEX44, foreground, bounded.
 
 ```
 $ python3 tools/test_kme_replay.py                                  (exit 0)
-KMER_PASS=41/41  threshold=41/41  skipped=0  inconclusive=0
+KMER_PASS=45/45  threshold=45/45  skipped=0  inconclusive=0
 PASS V-KMER-BUNDLE-SUMMARY-ITEMS 19 item key(s) incl. sync (>= 19), 24 row(s), problems=[], controls report: {'removed row': True, 'stale row': True, 'unknown command': True, 'removed header': True}
 PASS V-KMER-BUNDLE-SUMMARY-UAT 11 pending UAT key(s) (>= 11) and 1 VER key(s) (>= 1) each have a row, problems=[], 7 controls report
 
 $ python3 tools/test_kme_replay.py --drill                          (exit 0)
-PASS DRILL-CONTROL unmutated run: 38/38 gates green
-PASS DRILL-CLEAN-AFTER-MUTANTS unmutated rerun: 38/38 gates green
-DRILL killed=13/13
+PASS DRILL-CONTROL unmutated run: 42/42 gates green
+PASS DRILL-CLEAN-AFTER-MUTANTS unmutated rerun: 42/42 gates green
+DRILL killed=19/19
 
 $ timeout 300 python3 tools/test_kme_pillars.py                     (exit 0)
 KMEP_PASS=89/89  threshold=89/89  skipped=0  inconclusive=0
@@ -188,11 +188,11 @@ the KME-L file's own fields). No hook, CI job or `--final` run executes the rank
 ## Artifacts (LF sha256)
 
 ```
-13807e21fdc8833fa8fd950f95662c40d72432da76c5c2a98675c7274ce346d2  wiki/tools/kme_replay.py
-b417a31bc105d32222684009e44bfb48b98f8af7680e3f0d8c0dda3f291dad54  tools/test_kme_replay.py
-ab89c9b4c642d2296c384f33184e537eb5773bf04eecf4a7f387b5e357a27af9  vault/programs/incremental-cognition/measurements/L-KME-G-2026-10-04.md
+a4ecf18c12129812433e265c137e1b07b428405a98b7d250794954e29e46a33a  wiki/tools/kme_replay.py
+481a80a32d2c5fe90f8a013c072b0c8cc18ce701dc87be0a530df62e09e0712f  tools/test_kme_replay.py
+575781ed5f8722f268cb13f86f22cd3d549f3df3c5be64b08430c4aee67f1e92  vault/programs/incremental-cognition/measurements/L-KME-G-2026-10-04.md
 29d8685f302be575221210ae47fcd643e961781368e3eb01566316e440f2b10f  vault/programs/incremental-cognition/owner-bundle.md
-f4c70aa7d252c67a456f87750574995d8a54541b10ae78a2760f6436868ba83c  tools/test_incremental_cognition_program.py
+0d439f2b6fc24bfe19dd55dd40d7702c56908d425b19116e49d99763ef3c30d4  tools/test_incremental_cognition_program.py
 3a005629aa093e044c2d3760d3180a4a138ea228edf8a6736af70fb8d00e8270  wiki/tools/kme_pillars.py
 ```
 
@@ -227,6 +227,17 @@ Measured facts, each with its source:
 - What the KME-G smoke can say about KME-L: that the instrument runs end to end on a real corpus, reproduces its
   population exactly and ranks. What it cannot: any KME-L figure, any realized saving, or whether a live experiment is
   worth its quota. The corpora differ (GEX44 mission workers against the laptop's sessions).
+
+## Code-review fixes (05-REVIEW-FIX.md, 2026-10-04)
+
+The figures above are unchanged by the review fixes (the smoke was regenerated with the command recorded in it; the a5, a7
+and b001 trees are byte- and mtime-identical before and after). What changed: the ranked entries carry the upper bound
+only (no `weighted_lo` / `weighted_interval`), values rounded to 6 decimals; equal figures share a rank; retries and
+rereads are keyed per thread; a terminal ranking must be at rollover growth 100000 and be internally consistent
+(ids, json block, frozen source); `top_paths` are digests; R4 judges the identity of an `owner_decision` ref (the bundle
+under any spelling, a byte copy, any mission-written file) instead of its spelling. Counts now: `test_kme_replay.py`
+45/45, drill 19/19; `test_kme_pillars.py` 89/89; `test_floor_regression_gate.py` 67/67; program selftest PASS;
+`--pillar L` still exits 1 (no terminal).
 
 ## Named debts
 
