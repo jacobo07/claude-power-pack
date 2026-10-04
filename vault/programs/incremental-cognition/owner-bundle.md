@@ -51,6 +51,7 @@ commit.
 | 28 | A | [A]#2 "WHERE to arm" | Say where the mission is armed (12/24h): on the laptop (RAM swings 0.6-8 GB; arming waits for pillar A and at least 4 GB free) or in the GEX44 own clone, or that it stays in the interactive pane | none -- an Owner decision on where to arm, written by the Owner (see the item) | the open "needs Owner go on WHERE" line of STATE.md Session Continuity; no arm happens before it |
 | 29 | J | [J]#1 "Pillar J consumes" | After CE lands D, E and I on a commit reachable from this branch, print the R2 rows, add them as owner_ledger evidence with the owner and handoff evidence, then run the per-pillar check | `python3 tools/ic_r2_evidence.py --pillar J --commit HEAD` ; `python3 tools/test_incremental_cognition_program.py --pillar J` | pillar J MERGED_INTO_EXISTING_OWNER with an owner, handoffs/J.md and three owner_ledger rows; ICP_PILLAR_J=PASS |
 | 30 | M | [M]#1 "Pillar M consumes" | After CE lands Q, N, O and M on a commit reachable from this branch, print the R2 rows, add them as owner_ledger evidence with the owner and handoff evidence, then run the per-pillar check | `python3 tools/ic_r2_evidence.py --pillar M --commit HEAD` ; `python3 tools/test_incremental_cognition_program.py --pillar M` | pillar M MERGED_INTO_EXISTING_OWNER with an owner, handoffs/M.md and four owner_ledger rows; ICP_PILLAR_M=PASS |
+| 31 | N | [N]#1 "Promotion decisions for" | Read the PROMOTE-PROPOSED rows of the two candidate reviews, decide which to promote into the UKDL or a CBR family, write each promotion yourself and record it with its commit under Promotions recorded of the matching review, then run the closeout gate | `python3 tools/test_ic_closeout.py` | every PROMOTE-PROPOSED candidate carries the Owner's decision and no candidate id sits in the UKDL or under vault/tower without a recorded promotion; N closes by its frozen rule, institutional GC owned by CE T (external) |
 
 ## Laptop code sync (do this first for [D]..[I], [K] and [L])
 
@@ -492,3 +493,21 @@ outputs) and to parse with the printer's own argument parser (gate `V-ICR2-BUNDL
 
   What closes: pillar M `MERGED_INTO_EXISTING_OWNER` with an owner, `handoffs/M.md` and four `owner_ledger` rows. Until
   then `state.M` is not written by this mission run and IC-M stays open.
+- **[N]** Promotion decisions for this run's UKDL and CBR candidates (pillar N closeout; Owner only, the mission never
+  promotes). Expects: `vault/programs/incremental-cognition/ukdl-candidates.md` holds the candidates at three levels
+  (universal, domain, project), each with its evidence refs, and the two reviews
+  `vault/programs/incremental-cognition/reviews/ukdl.md` and `vault/programs/incremental-cognition/reviews/cbr.md` give each
+  one a verdict (PROMOTE-PROPOSED, HOLD, REJECT) with its reason. **Action:** read the PROMOTE-PROPOSED rows and decide, in
+  your own words, which to promote. A UKDL entry is written by you in the candidate's own `target:` file (mind the automated
+  writer that appends to the tail of `vault/knowledge_base/ukdl-universal.md`, which is why domain candidates target a
+  separate file). A CBR promotion is a new generation written through `modules.tower.ratchet.promote` (family, entries,
+  reason, authority), which has no CLI caller today. Record each promotion you make, with its commit, as a line
+  `- IC-<U|D|P>-<NN> promoted to <file> in commit <sha>` under `## Promotions recorded` of the matching review; a candidate id
+  that shows up in the UKDL or under `vault/tower/` without that line turns the closeout gate red. Then run:
+
+      python3 tools/test_ic_closeout.py
+
+  What closes: every PROMOTE-PROPOSED candidate carries your decision (promoted and recorded, or declined in the review);
+  pillar N closes by its frozen rule (candidates in the program's file, promotion reviewed and never silent), with
+  institutional garbage collection owned by CE pillar T, which is external. Until then `state.N` is not written by this
+  mission run and IC-N stays open.
