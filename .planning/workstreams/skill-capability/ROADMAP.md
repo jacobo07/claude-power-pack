@@ -169,13 +169,13 @@ settings; `python tools/test_skill_capability_program.py --final` exits 0, outpu
 `vault/programs/skill-capability/CLOSE.md`. On gex44 the phase ends at the laptop hand-off; `--final` and state.N are
 the Owner's laptop step.
 
-**Plans:** 0/3 plans executed
+**Plans:** 3/3 plans executed (gex44 part verified; laptop `--final` pending, 09-VERIFICATION human_needed)
 
 Plans:
 
-- [ ] 09-01-PLAN.md -- D-03 pre-final gate `tools/test_skill_capability_prefinal.py` (A-M PASS, N open, `--closeout`, selftest)
-- [ ] 09-02-PLAN.md -- D-01 reviews (ukdl.md, cbr.md) and ledger `reviews` / `deltas`
-- [ ] 09-03-PLAN.md -- D-02 LAPTOP-CLOSEOUT.md + D-03 record `evidence/pre-final-gex44.md`
+- [x] 09-01-PLAN.md -- D-03 pre-final gate `tools/test_skill_capability_prefinal.py` (A-M PASS, N open, `--closeout`, selftest)
+- [x] 09-02-PLAN.md -- D-01 reviews (ukdl.md, cbr.md) and ledger `reviews` / `deltas`
+- [x] 09-03-PLAN.md -- D-02 LAPTOP-CLOSEOUT.md + D-03 record `evidence/pre-final-gex44.md`
 
 ## Progress
 
