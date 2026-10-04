@@ -207,6 +207,61 @@ def g_tracer_e2e():
                 f"stdout_last={out.strip().splitlines()[-1][:120] if out.strip() else ''}")
 
 
+def sidechain_line(fx, t=40):
+    """One usage-bearing inline sidechain assistant line (usage 1 / 100 / 0 / 1) in the main file."""
+    return fx._w({"type": "assistant", "isSidechain": True, "timestamp": ts(t), "uuid": "u-sc", "requestId": "rsc",
+                  "message": {"id": "sc", "model": "claude-opus-5-5", "role": "assistant", "content": [],
+                              "usage": {"input_tokens": 1, "cache_creation_input_tokens": 100,
+                                        "cache_read_input_tokens": 0, "output_tokens": 1}}})
+
+
+def g_contract_e2e():
+    # The tracer fixture plus ONE usage-bearing inline sidechain line (1 / 100 / 0 / 1) after call 5. Hand derivation:
+    #   W = 3,879.0 (tracer) + input 1 x 1 + cache_write 100 x 2 + output 1 x 5 = 3,879 + 1 + 200 + 5 = 4,085.0 (the
+    #   sidechain line is a call of the main bucket: it is IN the population).
+    #   identical_rereads: t2's result (3,000 chars) is at call index 2 of 6 calls now: resident 4 ->
+    #     (3000 / 3.0) x (2 + 0.1 x 4) = 1000 x 2.3 = 2,300.0.
+    #   unchanged_precondition_retries: t4's 300-char result at call index 4 of 6: resident 2 ->
+    #     (300 / 3.0) x (2 + 0.1 x 2) = 100 x 2.1 = 210.0 + the issuing message's output 5 / 1 x 5 = 25.0 -> 235.0.
+    #   late_rollover: the only session carries an inline sidechain line, so its thread cannot be separated: observability
+    #     0.0, UNMEASURED, unranked with no number.
+    # Expected: exit 3, one file, ranked = identical_rereads (2,300.0) then unchanged_precondition_retries (235.0),
+    # unranked = [late_rollover].
+    root = scratch("ce2e")
+    fx = tracer_fixture(root)
+    sidechain_line(fx)
+    out_dir = scratch("out")
+    rc, out, err = run_cli(rank_args(root, out_dir, ["--rollover-growth", "2000"], label="FX-C"))
+    files = sorted(out_dir.glob("L-FX-C-*.md"))
+    if rc != 3 or len(files) != 1:
+        return False, f"rc={rc} files={[f.name for f in files]} err={err[-300:]}"
+    text = files[0].read_text(encoding="utf-8")
+    front, res = parse_rank(text)
+    ranked, unranked = res["ranked"], res["unranked"]
+    w = 4085.0
+    want = {"identical_rereads": 2300.0, "unchanged_precondition_retries": 235.0}
+    u = unranked[0] if unranked else {}
+    table_rows = [ln for ln in text.split("## Ranking")[1].split("## Unranked")[0].splitlines()
+                  if ln.startswith("| ") and not ln.startswith("| rank") and not ln.startswith("|---")]
+    unranked_section = text.split("## Unranked")[1].split("## Candidate details")[0]
+    last = out.strip().splitlines()[-1] if out.strip() else ""
+    ok = (close(front.get("weighted_denominator"), w) and close(res["weighted_denominator"], w)
+          and [e["candidate"] for e in ranked] == ["identical_rereads", "unchanged_precondition_retries"]
+          and [e["rank"] for e in ranked] == [1, 2]
+          and all(close(e["upper_bound_weighted"], want[e["candidate"]]) for e in ranked)
+          and all(abs(e["upper_bound_share"] * w - e["upper_bound_weighted"]) <= 1e-9 * max(1.0, w) for e in ranked)
+          and [x["candidate"] for x in unranked] == ["late_rollover"] and u.get("status") == "UNMEASURED"
+          and "observability" in u.get("reason", "") and u.get("upper_bound_weighted") is None
+          and not any("upper" in k or "weighted" in k for k in u)
+          and len(table_rows) == 2 and "late_rollover" not in "".join(table_rows)
+          and "late_rollover" in unranked_section and "UNMEASURED" in unranked_section
+          and front.get("ranked_ids") == res["ranked_ids"] == ["identical_rereads", "unchanged_precondition_retries"]
+          and front.get("unranked_ids") == res["unranked_ids"] == ["late_rollover"]
+          and last.startswith("KMER ranked=identical_rereads,unchanged_precondition_retries unranked=late_rollover "
+                              "denominator=FX-C"))
+    return bool(ok), (f"rc={rc} unranked=late_rollover W={front.get('weighted_denominator')} "
+                      f"ranked={[(e['candidate'], e['upper_bound_weighted']) for e in ranked]} rows={len(table_rows)} "
+                      f"stdout_last={last[:110]}")
 
 
 # =========================================================================== task 2: late_rollover and identical_rereads
@@ -611,7 +666,7 @@ GATES_RETRY = [
 ]
 
 
-GATES_TRACER = [("V-KMER-TRACER-E2E", g_tracer_e2e)]
+GATES_TRACER = [("V-KMER-TRACER-E2E", g_tracer_e2e), ("V-KMER-CONTRACT-E2E", g_contract_e2e)]
 GATES = list(GATES_TRACER) + GATES_ROLLOVER + GATES_RETRY
 
 
@@ -634,7 +689,7 @@ def run_all() -> int:
 
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
-DRILL_GATES = [n for n, _ in GATES if n != "V-KMER-TRACER-E2E"]    # the subprocess tracer is excluded (patches cannot reach it)
+DRILL_GATES = [n for n, _ in GATES if n not in ("V-KMER-TRACER-E2E", "V-KMER-CONTRACT-E2E")]    # the subprocess tracer is excluded (patches cannot reach it)
 
 
 def _quiet(names) -> dict:
