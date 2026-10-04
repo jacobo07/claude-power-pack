@@ -3,7 +3,7 @@ gsd_state_version: "1.0"
 milestone: v1
 current_phase: 6
 current_plan: 4
-status: executing
+status: verifying
 stopped_at: Completed 06-04-PLAN.md
 last_updated: "2026-10-04T19:38:58.719Z"
 state_head: b9645df1c801c14c26f640e52adf3be36f3f3e30
@@ -30,7 +30,7 @@ invalidation, cognitive-compiler, baseline-ratchet.
 
 ## Current Position
 
-**Status:** Ready to execute
+**Status:** Phase 6 executed -- verification deferred (human_needed)
 **Current Phase:** 6
 Current Plan: 4
 Total Plans in Phase: 4
@@ -55,6 +55,7 @@ Total Plans in Phase: 4
 - [Phase 5 execute+review, unattended 2026-10-04]: 4 plans executed sequentially, each re-verified by the orchestrator (KMER 20 -> 36 -> 39 -> 41/41, KMEP 89/89, FLOOR 67/67, selftest PASS; bundle insert-only +215/-0). 05-REVIEW (89109cb0): 1 critical + 5 warning + 3 info. Fix decisions (reversible, internal): R4 judges identity not spelling (samefile / Windows-normalised / bundle sha256 / program-written evidence and measurements refused; only an L-owner-decision*.md can carry the decision); R3-L requires ranked+unranked == the three candidates and json == front matter; rollover growth pinned at 100000 for a terminal; candidate entries carry upper_bound only (smoke file regenerated); retries/rereads keyed per thread, parallel identical calls not a retry; dense ranks; L files carry path digests only. The same id-set weakness in the D..I gate is named debt.
 - [Phase 5 review-fix, 2026-10-04]: all 10 fixed (6cf619dd..083efdc7), orchestrator re-run KMER 45/45, drill 19/19, KMEP 89/89, FLOOR 67/67, selftest PASS, --pillar L exit 1; smoke figures unchanged. NAMED DEBT: (1) the D..I terminal gate trusts self-asserted front matter (terminal_claim_problems never parses the kmep-json block) -- same class as 05 WR-03; (2) R4's L-owner-decision*.md exemption is by name; (3) retry top_signatures (Phase 3 cmd_signature) can keep a plain path token. Windows path forms of R4 proven only as strings on Linux.
 - [Phase 5 close, unattended 2026-10-04]: verification human_needed (15/15, no blocking gap; verifier made the bundle summary gate go red 4 ways) -> verification_deferred_human; close-out commit adds 05-VERIFICATION + 05-UAT + insert-only summary rows together (the gate is red at any commit that has one without the other), fixes the gate's multi-key VER blind spot (verifier W2). Run continues at Phase 6 (J/M externally blocked; N runnable).
+- [Phase 6 execute+review+close, unattended 2026-10-04, mission m-7a8e9ac0b451 epoch 1]: 4 plans executed sequentially in ic-run, each re-verified by the orchestrator (ICR2 12 -> 14/14, ICN 8 -> 11/11, KMER/KMEP/FLOOR/selftest green throughout; bundle insert-only). 06-REVIEW (d0844ab6): 0 critical / 9 warning / 5 info; all 9 warnings fixed (7e651ab9..ca966032; decisions WR-03 tracer follows the owner ledger, WR-07 INCONCLUSIVE on foreign-only moves, WR-08 quoted lines re-derived by the printer), one delta-sha re-pin (cc08be63, state/frozen untouched). Orchestrator re-run after fixes: ICR2 16/16 drill 10/10, ICN 11/11 drill 15/15, KMER 45/45, KMEP 89/89, FLOOR 67/67, selftest PASS; --final rc 1 on exactly 14 FAIL L3 / 0 FAIL L8. Verification human_needed (11/11 must-haves; goal "J and M closed by R2" NOT met -- CE/SC ledgers carry no terminal on this line of history, measured) -> verification_deferred_human; close-out commit adds 06-VERIFICATION + 06-UAT + summary rows 32-34 together. IC-J/IC-M/IC-N unticked, state.J/M/N OPEN. Every phase is now deferred-human: the milestone lifecycle (audit/complete) does not run.
 - [02-03]: a renewed successor inherits the hold of its nearest predecessor that has an owner (`provider_breaker.lineage_hold`,
   bounded by a seen-set and MAX_LINEAGE_HOPS=4); a re-login after the refusal still releases it.
 - [02-03]: the env preflight gates launches only on a declared plane (CPP_ENV_PREFLIGHT=on, or CPP_MISSION_PLANE set and
@@ -130,6 +131,7 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 | 3 | verification_deferred_human | owner bundle [D]..[I] (KME-L laptop runs, population proof first), then /gsd-verify-work 3 |
 | 4 | verification_deferred_human | owner bundle [K] (laptop reference + PRG; WR-01..03 policy judgement), then /gsd-verify-work 4 |
 | 5 | verification_deferred_human | owner bundle [L] (KME-L ranking run, Owner quota decision file), review-fix judgement, then /gsd-verify-work 5 |
+| 6 | verification_deferred_human | owner bundle [J]/[M] (after CE lands its terminals on this line of history) and [N] (promotion decisions), review-fix judgement (rows 32-34), then /gsd-verify-work 6 |
 
 ## Performance Metrics
 
