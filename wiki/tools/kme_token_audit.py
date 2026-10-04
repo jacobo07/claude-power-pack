@@ -59,8 +59,12 @@ def tool_key(name, inp):
     return name
 
 
-def scan_file(path, sess):
+def scan_file(path, sess, observer=None, keep=None):
     """Accumulate one jsonl file into session dict `sess`."""
+    # observer / keep are the additive hooks of kme_pillars (default None = the P0 behaviour, pinned byte-identical
+    # by V-KMEP-AUDIT-BYTE-IDENTICAL): keep(path, o) -> False drops the line before anything reads it;
+    # observer.on_line(path, o, call_index, sess) sees each kept line with the call index the residency loop uses;
+    # observer.on_file_end(path, sess, order, calls, compact_points) runs once the file is fully accumulated.
     calls = {}          # dedupe key -> record
     order = []          # dedupe keys in order (main thread residency)
     tools = {}          # tool_use_id -> (name, key)
@@ -74,6 +78,10 @@ def scan_file(path, sess):
             except Exception:
                 sess['bad_lines'] += 1
                 continue
+            if keep is not None and not keep(path, o):
+                continue
+            if observer is not None:
+                observer.on_line(path, o, len(order), sess)
             t = o.get('type')
             ts = o.get('timestamp')
             if ts:
@@ -186,6 +194,8 @@ def scan_file(path, sess):
             sess['calls_over_150k'] += 1
     if is_sub:
         sess['subagent_files'] += 1
+    if observer is not None:
+        observer.on_file_end(path, sess, order, calls, compact_points)
 
 
 def new_sess(proj, sid):
@@ -199,7 +209,8 @@ def new_sess(proj, sid):
                 subagent_files=0, bad_lines=0, tool_uses=0, tool_uses_kme=0, user_kme_hits=0)
 
 
-def scan_project(pdir):
+def scan_project(pdir, observer=None, keep=None):
+    """Scan one project dir; observer / keep are passed to scan_file (default None = P0 behaviour)."""
     proj = os.path.basename(pdir.rstrip('/\\'))
     sessions = {}
     for root, _dirs, files in os.walk(pdir):
@@ -212,7 +223,7 @@ def scan_project(pdir):
             s = sessions.get(sid) or new_sess(proj, sid)
             sessions[sid] = s
             try:
-                scan_file(full, s)
+                scan_file(full, s, observer=observer, keep=keep)
             except Exception as e:
                 s['bad_lines'] += 1
                 print(f"WARN {full}: {e}", file=sys.stderr)
@@ -231,6 +242,15 @@ def classify(s):
     return 'NONE', share
 
 
+def finish_session(s, host):
+    """Per-session finishing of main(), verbatim: class/share, host, residency top-40, reads >= 2, attach dict."""
+    s['class'], s['kme_share'] = classify(s)
+    s['host'] = host
+    s['residency'] = sorted(s['residency'], key=lambda x: -x[4])[:40]
+    s['reads'] = {k: v for k, v in s['reads'].items() if v >= 2}
+    s['attach'] = {k: v for k, v in s['attach'].items()}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--host', required=True)
@@ -247,11 +267,7 @@ def main():
     out = []
     for d in dirs:
         for s in scan_project(d):
-            s['class'], s['kme_share'] = classify(s)
-            s['host'] = a.host
-            s['residency'] = sorted(s['residency'], key=lambda x: -x[4])[:40]
-            s['reads'] = {k: v for k, v in s['reads'].items() if v >= 2}
-            s['attach'] = {k: v for k, v in s['attach'].items()}
+            finish_session(s, a.host)
             out.append(s)
     with open(a.out, 'w', encoding='utf-8') as fh:
         json.dump(out, fh, default=lambda x: dict(x) if isinstance(x, collections.Counter) else str(x))
