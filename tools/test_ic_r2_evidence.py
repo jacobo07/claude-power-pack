@@ -16,6 +16,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -701,7 +702,26 @@ def g_bundle_argv_parses():
                           f"{len(controls)} controls report")
 
 
-def jm_blocked_problems(text: str, led: dict, required) -> list:
+_NO_LINE_CACHE: dict = {}
+
+
+def rederive_no_line(pid: str, sha: str):
+    """The `ICR2_READY=NO ...` line the printer itself prints for (pid, sha) now, or None when it prints none (a commit that
+    does not resolve or is not an ancestor of HEAD, a ready result)."""
+    key = (pid, sha)
+    if key not in _NO_LINE_CACHE:
+        _, out = run_main(["--pillar", pid, "--commit", sha])
+        _NO_LINE_CACHE[key] = next((x for x in out.splitlines() if x.startswith("ICR2_READY=NO ")), None)
+    return _NO_LINE_CACHE[key]
+
+
+MEASURED_RE = re.compile(r"ICR2_READY=NO pillar=(?P<pid>[A-Z]) commit=(?P<sha>[0-9a-f]{40}) open=\[.*\]")
+
+
+def jm_blocked_problems(text: str, led: dict, required, rederive=None) -> list:
+    """Coverage of the evidence file. Every quoted `ICR2_READY=NO pillar=P ...` line for a required pillar is RE-DERIVED: the
+    printer is run on the quoted commit and must print exactly the quoted line (same commit, same open list)."""
+    rederive = rederive or rederive_no_line
     problems = []
     rules = {p["id"]: p for p in led["frozen"]["pillars"]}
     for pid in required:
@@ -710,8 +730,18 @@ def jm_blocked_problems(text: str, led: dict, required) -> list:
                 problems.append(f"{pid}: input {pair['ledger']}#{pair['pillar']} not named")
         if rules[pid]["rule"] not in text:
             problems.append(f"{pid}: frozen rule not quoted verbatim")
-        if not any(x.startswith(f"ICR2_READY=NO pillar={pid} ") for x in text.splitlines()):
+        quoted = [x.strip() for x in text.splitlines() if x.startswith(f"ICR2_READY=NO pillar={pid} ")]
+        if not quoted:
             problems.append(f"{pid}: no measured ICR2_READY=NO line")
+        for line in quoted:
+            m = MEASURED_RE.fullmatch(line)
+            if not m:
+                problems.append(f"{pid}: measured line is malformed: {line[:70]}")
+                continue
+            got = rederive(pid, m.group("sha"))
+            if got != line:
+                problems.append(f"{pid}: measured line not reproduced by the printer at {m.group('sha')[:8]}: "
+                                f"quoted {line[-40:]!r}, printer says {(got or 'no NO line')[-40:]!r}")
     if "## Status: OPEN" not in text.splitlines():
         problems.append("no `## Status: OPEN` line")
     return problems
@@ -737,6 +767,19 @@ def g_jm_blocked_covers():
         "a missing measured line is reported": any("ICR2_READY=NO" in x for x in
                                                    jm_blocked_problems(text.replace("ICR2_READY=NO", "ICR2_READY_NO"), led, REQUIRED_JM)),
     }
+    j_line = next(x for x in text.splitlines() if x.startswith(f"ICR2_READY=NO pillar={lead} "))
+    j_sha = MEASURED_RE.fullmatch(j_line.strip()).group("sha")
+    controls.update({
+        "a fabricated commit in a quoted line is reported": any("not reproduced" in x for x in jm_blocked_problems(
+            text.replace(j_line, j_line.replace(j_sha, "0" * 40), 1), led, REQUIRED_JM)),
+        "a hand-typed open list is reported": any("not reproduced" in x for x in jm_blocked_problems(
+            text.replace(j_line, j_line[:j_line.index("open=")] + "open=['D']", 1), led, REQUIRED_JM)),
+        "a malformed measured line is reported": any("malformed" in x for x in jm_blocked_problems(
+            text.replace(j_line, f"ICR2_READY=NO pillar={lead} commit=HEAD open=[]", 1), led, REQUIRED_JM)),
+        "a line the printer reproduces is accepted (injected re-derivation)": not any(
+            "not reproduced" in x for x in jm_blocked_problems(text, led, REQUIRED_JM, rederive=lambda pid, sha: next(
+                x.strip() for x in text.splitlines() if x.startswith(f"ICR2_READY=NO pillar={pid} commit={sha} ")))),
+    })
     if not all(controls.values()):
         return False, f"controls failed: {[k for k, v in controls.items() if not v]}"
     problems = jm_blocked_problems(text, led, REQUIRED_JM)
@@ -840,6 +883,15 @@ def _m_read_only_blind():
     return _patch(sys.modules[__name__], "read_only_verdict", lambda before, after: (True, "mutant: always clean"))
 
 
+def _m_measured_trusted():
+    mod = sys.modules[__name__]
+    orig = mod.jm_blocked_problems
+
+    def mutant(*a, **k):
+        return [p for p in orig(*a, **k) if "not reproduced" not in p]
+    return _patch(mod, "jm_blocked_problems", mutant)
+
+
 MUTANTS = [
     ("M1 OwnerLedgers.reachable always True (a side-branch commit is accepted)", _m_reachable_always,
      ["V-ICR2-UNREACHABLE"]),
@@ -851,6 +903,7 @@ MUTANTS = [
     ("M7 valid_terminal accepts anything (a junk owner terminal prints a row)", _m_any_terminal,
      ["V-ICR2-BAD-TERMINAL"]),
     ("M8 read_only_verdict never reports a change", _m_read_only_blind, ["V-ICR2-READ-ONLY"]),
+    ("M9 a quoted measured line is trusted, not re-derived", _m_measured_trusted, ["V-ICR2-JM-BLOCKED-COVERS"]),
 ]
 
 
