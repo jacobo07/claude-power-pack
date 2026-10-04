@@ -44,6 +44,7 @@ the GEX44 items, then the judgement checks that exist only as pending UAT tests.
 | 25 | L (phase 5 UAT) | UAT 05#1 | The two laptop [L] items, as one pending phase 5 check: the KME-L ranking run (row 10) and the Owner's live-quota decision file (row 11) | `/gsd-verify-work 5` | phase 5 UAT test 1 |
 | 26 | L (phase 5 UAT) | UAT 05#2 | Accept or amend the Phase 5 review-fix decisions: the R4 identity rule (CR-01, WR-01, WR-02), the R3-L front matter cross-check (WR-03), terminal only at rollover growth 100000 (WR-04), per-thread retries and rereads (WR-06), dense ranks for equal figures (IN-01) | `/gsd-verify-work 5` | phase 5 UAT test 2 |
 | 27 | L (phase 5 UAT) | UAT 05#3 | Confirm the IC-L judgment-tier prohibitions held (verifier verdicts are non-authoritative) | `/gsd-verify-work 5` | phase 5 UAT test 3 |
+| 28 | A | [A]#2 "WHERE to arm" | Say where the mission is armed (12/24h): on the laptop (RAM swings 0.6-8 GB; arming waits for pillar A and at least 4 GB free) or in the GEX44 own clone, or that it stays in the interactive pane | none -- an Owner decision on where to arm, written by the Owner (see the item) | the open "needs Owner go on WHERE" line of STATE.md Session Continuity; no arm happens before it |
 
 ## Laptop code sync (do this first for [D]..[I], [K] and [L])
 
@@ -437,3 +438,12 @@ proven only to parse with the replay's own argument parser (gate `V-KMER-BUNDLE-
   pathspec. That file, never this bundle, is the `owner_decision` evidence (the program done-gate refuses the bundle
   as a decision); with it L can close AUTHORIZATION_BOUND. The design of an approved live run is a later step, not
   specified here.
+- **[A]** WHERE to arm the mission (Owner decision; this mission never arms itself). `gsd_mission.py arm
+  --workstream incremental-cognition` (12/24h) has never been run: STATE.md Session Continuity ends with "arm ... needs
+  Owner go on WHERE", and the plan says arming waits for pillar A and at least 4 GB free, until then phases run in the
+  interactive pane. Expects: you know which of two places you want. The laptop (local RAM swings 0.6-8 GB, so the
+  4 GB floor is not a given) or the GEX44 own clone `~/missions/incremental-cognition` (where this run already
+  executes). On a declared plane the arm path is still ungated (see the [B] debt item above), so run both preflights
+  first and arm only on exit 0. **Action:** tell the orchestrator one of: arm on the laptop, arm on GEX44, or keep the
+  interactive pane; the mission records the answer, it does not choose. What closes: that answer exists in your own
+  words (the mission then removes the STATE line). This item runs no command and nothing is armed by writing it.
