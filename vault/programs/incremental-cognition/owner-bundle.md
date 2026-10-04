@@ -80,6 +80,12 @@ status output empty, checkout and commit exit 0), the four suites each exit 0 wi
     FLOOR_PASS=67/67  threshold=67/67  skipped=0  inconclusive=0
     ICP_SELFTEST=PASS
 
+Phase 5 update (plan 05-04): the block above was measured before the `## Summary (every Owner item, phases 1-5)` table
+existed. With the table and its two coverage gates in the bundle, the replay at `18e928af` prints `KMER_PASS=40/40` with
+`skipped=1` for the second suite (V-KMER-BUNDLE-SUMMARY-UAT prints SKIP there: the phase files it cites do not exist at
+the freeze; a SKIP is never a PASS) and the GEX44 worktree prints `KMER_PASS=41/41  skipped=0`. The other three lines are
+unchanged. On the laptop the same SKIP is expected, for the same reason (not measured there).
+
 ## Items
 
 - **[A]** PRG for pillar A (laptop-plane). Code is complete at `d2505df6`, already deployed into the laptop's live
