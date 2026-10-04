@@ -52,6 +52,7 @@ from __future__ import annotations
 
 import contextlib
 import copy
+import hashlib
 import io
 import json
 import os
@@ -407,10 +408,68 @@ def names_the_bundle(ref) -> bool:
     return spelled == OWNER_BUNDLE_REL.casefold() or tail == "owner-bundle.md"
 
 
+DECISION_FILE = re.compile(r"^l-owner-decision.*\.md$", re.IGNORECASE)   # the name the bundle tells the Owner to use
+MISSION_WRITTEN_WHY = ("is a file the mission wrote (under evidence/ or measurements/ of the program directory; only "
+                       "evidence/L-owner-decision*.md can be the Owner's decision, in their own words)")
+COPY_WHY = "is a byte copy of the owner bundle: the mission's request is never the Owner's answer"
+
+
+def _mission_written_rel(rel) -> bool:
+    """rel = a path below the program directory (case-folded, posix), or None."""
+    if rel is None:
+        return False
+    if rel.startswith("measurements/"):
+        return True
+    return rel.startswith("evidence/") and not DECISION_FILE.match(posixpath.basename(rel))
+
+
+def is_mission_written(ref) -> bool:
+    """True when the ref is a program-written file: by its spelled tail, or by where it really resolves (a symlink
+    named like a decision file that points into evidence/ is still the mission's file)."""
+    if _mission_written_rel(_spelled_tail(ref)[1]):
+        return True
+    try:
+        prog = Path(os.path.realpath(REPO / PROGRAM_DIR))
+    except OSError:
+        return False
+    for p in _resolved_paths(ref):
+        try:
+            rel = Path(os.path.realpath(p)).relative_to(prog).as_posix().casefold()
+        except (OSError, ValueError):
+            continue
+        if _mission_written_rel(rel):
+            return True
+    return False
+
+
+def _digests(path: Path) -> set:
+    raw = path.read_bytes()
+    return {hashlib.sha256(raw).hexdigest(), hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()}
+
+
+def same_bytes_as_bundle(ref) -> bool:
+    """True when a file the ref reads as has the bundle's content (raw or line-ending-normalised sha256)."""
+    bundle = REPO / OWNER_BUNDLE_REL
+    if not bundle.is_file():
+        return False
+    want = _digests(bundle)
+    for p in _resolved_paths(ref):
+        try:
+            if p.is_file() and _digests(p) & want:
+                return True
+        except OSError:
+            continue
+    return False
+
+
 def owner_decision_problem(ref):
     """Why an owner_decision evidence ref cannot be the Owner's answer, or None."""
     if names_the_bundle(ref):
         return BUNDLE_WHY
+    if same_bytes_as_bundle(ref):
+        return COPY_WHY
+    if is_mission_written(ref):
+        return MISSION_WRITTEN_WHY
     return None
 
 
@@ -478,6 +537,28 @@ def r4_identity_poles() -> dict:
     poles["relative-case-variant"] = ("Vault/Programs/Incremental-Cognition/OWNER-BUNDLE.md", True)
     poles["windows-forward-slash-drive"] = ("c:/repo/" + OWNER_BUNDLE_REL, True)
     poles["unrelated-windows-path"] = ("C:\\Users\\User\\Desktop\\my-decision.md", False)
+    # WR-02: a verbatim copy of the bundle, and files the mission wrote, are never the Owner's own words
+    copy_ = td / "decision-copy.md"
+    copy_.write_bytes(raw)
+    poles["byte-copy-of-bundle"] = (str(copy_), True)
+    crlf = td / "decision-copy-crlf.md"
+    crlf.write_bytes(raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
+    poles["byte-copy-of-bundle-crlf"] = (str(crlf), True)
+    poles["mission-evidence-file"] = (PROGRAM_DIR + "evidence/L.md", True)
+    poles["mission-evidence-file-absolute"] = (str(REPO / PROGRAM_DIR / "evidence" / "L.md"), True)
+    poles["mission-evidence-file-case"] = ("Vault/Programs/Incremental-Cognition/Evidence/l.md", True)
+    meas = sorted((REPO / PROGRAM_DIR / "measurements").glob("*.md"))
+    if meas:
+        poles["mission-measurement-file"] = (meas[0].relative_to(REPO).as_posix(), True)
+    poles["mission-evidence-in-second-checkout"] = (str(td / "checkout2" / PROGRAM_DIR / "evidence" / "L.md"), True)
+    decoy = td / "checkout2" / PROGRAM_DIR / "evidence" / "L-owner-decision-decoy.md"
+    if not decoy.exists():
+        try:
+            os.symlink(str(REPO / PROGRAM_DIR / "evidence" / "L.md"), str(decoy))
+        except (OSError, NotImplementedError):
+            pass
+    if decoy.is_symlink():
+        poles["decision-named-symlink-to-evidence"] = (str(decoy), True)
     # accepted shape: the Owner's own decision file, in scratch (never in the repo)
     dec = td / "checkout2" / PROGRAM_DIR / "evidence" / "L-owner-decision.md"
     dec.parent.mkdir(parents=True, exist_ok=True)
@@ -518,6 +599,8 @@ def _spelled_tail_case_sensitive(ref: str):
 
 
 R4_MUTANTS = {
+    "r4-no-byte-compare": lambda: _patch_attr("same_bytes_as_bundle", lambda ref: False),
+    "r4-mission-files-accepted": lambda: _patch_attr("is_mission_written", lambda ref: False),
     "r4-case-sensitive-spelling": lambda: _patch_attr("_spelled_tail", _spelled_tail_case_sensitive),
     "r4-string-compare": lambda: _patch_attr("owner_decision_problem",
                                              lambda ref: "the owner bundle" if _old_string_bundle_ref(ref) else None),
