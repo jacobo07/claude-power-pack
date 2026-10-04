@@ -1341,6 +1341,7 @@ def h_run(build, extra=(), project="-home-x-kme-fixture"):
 
 
 TEST_CMD = "python3 tools/test_x.py"
+TEST_SIG = "python3 test_x.py"      # a signature keeps a path token's basename only (STATE debt 3)
 W135 = 135.0        # weight of one (10, 0, 1000, 5) call: 10 + 1000 x 0.1 + 5 x 5
 
 
@@ -1357,7 +1358,7 @@ def g_h_bash_verify():
     exp_hi = in_chars / kp.CPT_LO * 5 + kp.burden(2000, 2, kp.CPT_LO)
     sigs = [r["signature"] for r in d["cmd_signatures"]]
     ok = (rc == 0 and d["verification_tool_calls"] == 1 and d["result_chars"] == 2000
-          and abs(n["weighted_lo"] - exp_lo) < 1e-6 and abs(n["weighted_hi"] - exp_hi) < 1e-6 and sigs == [TEST_CMD]
+          and abs(n["weighted_lo"] - exp_lo) < 1e-6 and abs(n["weighted_hi"] - exp_hi) < 1e-6 and sigs == [TEST_SIG]
           and d["weighted_verifier_subagents"] == 0 and d["weighted_tool_calls"] == [n["weighted_lo"], n["weighted_hi"]])
     return ok, f"calls={d['verification_tool_calls']} result_chars={d['result_chars']} lo={n['weighted_lo']:.3f}/{exp_lo:.3f} sigs={sigs}"
 
@@ -1390,7 +1391,7 @@ def g_h_non_verify():
            "tsc -p . --noEmit", "x --selftest", "x --final", "x --drill", "gsd verify", "python3 tools/test_a.py"]
     neg = ["ls -la", "echo hello", "git status"]
     ok = (rc == 0 and d["verification_tool_calls"] == 3
-          and sigs == ["python3 tools/test_y.py", "python -m pytest", "python3 tools/test_w.py"]
+          and sigs == ["python3 test_y.py", "python -m pytest", "python3 test_w.py"]   # basenames (STATE debt 3)
           and all(kp.VERIFY_CMD_RE.search(c) for c in pos) and not any(kp.VERIFY_CMD_RE.search(c) for c in neg)
           and kp.cmd_signature("FOO=1 CI=true npm test --silent") == "npm test"
           and kp.cmd_signature("curl -H x") == "curl")
@@ -2354,10 +2355,19 @@ def g_signature_no_url_token():
     sigs = sorted(r["signature"] for r in res["details"]["cmd_signatures"])
     unit = {k: kp.cmd_signature(v) for k, v in cmds.items()}
     leaked = tok in written + out + err or "api.example.com" in written + out
-    ok = (rc in (0, 3) and not leaked and TEST_CMD in sigs and unit["url"] == "curl <url>"
+    # STATE debt (3): a path token keeps its basename, never the directories (customer names, home dirs) around it.
+    dirs = {"python3 /home/u/customer-acme/run.py": "python3 run.py",
+            "../../customer-acme/bin/deploy.sh --x": "deploy.sh",
+            "./customer-acme/run": "run",
+            "cat customer-acme/notes/plan.md": "cat plan.md",
+            "python3 -m pytest customer-acme/tests": "python3 -m pytest",
+            "git status": "git status", "npm test": "npm test"}
+    dunit = {k: kp.cmd_signature(k) for k in dirs}
+    ok = (rc in (0, 3) and not leaked and TEST_SIG in sigs and unit["url"] == "curl <url>"
           and unit["query"] == "curl <url>" and unit["userinfo"] == "curl <url>"
-          and unit["bare-path"] == "curl <opaque>" and kp.cmd_signature("python3 tools/test_x.py") == TEST_CMD)
-    return ok, f"rc={rc} leaked={leaked} unit={unit} sigs={sigs}"
+          and unit["bare-path"] == "curl <opaque>" and kp.cmd_signature("python3 tools/test_x.py") == TEST_SIG
+          and dunit == dirs and not any("customer-acme" in v for v in dunit.values()))
+    return ok, f"rc={rc} leaked={leaked} unit={unit} sigs={sigs} dirs={dunit}"
 
 
 def g_r3_terminal_requires_primary():
