@@ -1081,6 +1081,49 @@ def selftest() -> bool:
     mutant("STATUS violations", lambda: judge_status(1, json.dumps({"open": ["N"], "closed": CLOSED,
                                                                     "violations": ["L4 C: x"]})))
     mutant("STATUS unparseable", lambda: judge_status(0, "Traceback (most recent call last):\n"))
+    # ---- one red mutant per clause (09-REVIEW WR-04): each must be refused by ITS clause,
+    # named by `expect`, so deleting that one clause leaves this mutant alive and the selftest red.
+    rec = F["record"]
+    yes = lambda s: True  # noqa: E731
+    mutant("RECORD host line removed", lambda: judge_record(
+        rec.replace("host: gex44 (hostname kobicraft-gex44)\n", ""), yes), expect="host: gex44")
+    mutant("RECORD date line removed", lambda: judge_record(
+        rec.replace("date: 2026-10-04T00:00:00Z\n", ""), yes), expect="'date:'")
+    mutant("RECORD command line removed", lambda: judge_record(
+        rec.replace("command: python3 tools/test_skill_capability_prefinal.py --write-evidence\n", ""), yes),
+           expect="'command:'")
+    mutant("RECORD PF_MODE line removed", lambda: judge_record(rec.replace("PF_MODE=gex44\n", ""), yes),
+           expect="PF_MODE=gex44")
+    mutant("RECORD PF_TERMINAL=A,B", lambda: judge_record(
+        rec.replace(f"PF_TERMINAL={','.join(CLOSED)}", "PF_TERMINAL=A,B"), yes), expect="PF_TERMINAL=")
+    mutant("RECORD PF_OPEN line removed", lambda: judge_record(rec.replace(OPEN_LINE + "\n", ""), yes),
+           expect="PF_OPEN=N")
+    mutant("RECORD shows CEP_PILLAR_N=PASS", lambda: judge_record(
+        rec.replace("PF_MODE=gex44\n", "PF_MODE=gex44\nCEP_PILLAR_N=PASS\n"), yes), expect="N reported PASS")
+    for needle, repl in (("CLOSE.md", "the close file"), ("state.N", "the N state"),
+                         ("mission/skill-capability-run", "the run")):
+        mutant(f"COMMANDS without {needle!r}", lambda n=needle, r=repl: check_commands(cl.replace(n, r)),
+               expect=f"does not contain {needle!r}")
+    mutant("COMMANDS argv escapes tools/ (refused by CE)", lambda: check_commands(
+        cl.replace(CLOSEOUT_ARGV_TEXT, json.dumps(["python", "tools/../x.py", "--closeout"]))), expect="refused by CE")
+    mutant("CBR predicted differs from frozen", lambda: check_cbr(F["cbr"].replace(
+        "| F | IMPLEMENTED_AND_VERIFIED |", "| F | MERGED_INTO_EXISTING_OWNER |", 1), F["led"], ex), expect="!= frozen")
+    mutant("CBR empty 'what surprised us'", lambda: check_cbr(F["cbr"].replace("surprise G |", " |", 1), F["led"], ex),
+           expect="'what surprised us' is empty")
+    mutant("CBR evidence cell without a backticked path", lambda: check_cbr(F["cbr"].replace(
+        "| `ev/N.md` `src/x.py:4` |", "| ev/N.md |", 1), F["led"], ex), expect="holds no backticked path")
+    mutant("UKDL entry without Trap", lambda: check_ukdl(F["ukdl"].replace("- Trap: symptom 2\n", "", 1), ex),
+           expect="'- Trap:'")
+    mutant("UKDL entry without Source", lambda: check_ukdl(F["ukdl"].replace(
+        "- Source: `src/x.py:4-6` and `src/y.md`\n", "", 1), ex), expect="'- Source:'")
+    mutant("DECISIONS section without Options", lambda: check_decisions(
+        F["state"], cl.replace("Options: (a) x, (b) y\n", "", 1)), expect="'Options:'")
+    mutant("STATUS closed short by one", lambda: judge_status(0, json.dumps(
+        {"open": ["N"], "closed": CLOSED[:-1], "violations": []})), expect="closed ")
+    mutant("N-OPEN rc 2 with the right fail line", lambda: judge_n_open(2, n_good), expect="expected 1")
+    mutant("DELTAS pillar Z", lambda: check_deltas(led_with(
+        lambda l: l["deltas"]["intelligence"].append({"pillar": "Z", "change": "rule z", "evidence": ["ev/A.md"]})),
+        ex), expect="not in A..N")
     # ---- NO-FINAL: the refusal pole and the other pole (argument check only, no process)
     mutant("NO-FINAL --final refused", lambda: _wrapper_args_ok(["--final"]))
     mutant("NO-FINAL abbreviation --fin refused", lambda: _wrapper_args_ok(["--fin"]))
