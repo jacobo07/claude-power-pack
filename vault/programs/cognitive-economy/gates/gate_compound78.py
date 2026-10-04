@@ -13,7 +13,15 @@ Cases (each must hold):
                original, marker still there, lock released
   busy         a fresh lock held by someone else: nothing written, state byte-identical
   stale        a lock older than STALE_S is recovered and the advance succeeds
+  read_failed  unreadable state: typed action, marker kept, lock released
+  write_failed every replace refused: state byte-identical, no tmp left, marker kept, lock released
+  pid_parity   the id derived from --cwd equals the sentinel's rule, and the live state holds this checkout's id
+  wired        compound.md step 7 calls steps78 with every flag and keeps no hand-done cursor/marker procedure
+  wired_mutants_red  the call removed, or the old procedure kept beside it: both refused
   live_intact  live state sha256 identical before and after the gate
+
+The marker comes from the live checkout when present, else a synthetic stand-in (finalize never reads
+it); the source is printed. `--compound-md` judges a candidate copy before it replaces the live file.
 
 `--break-rollback` makes the rollback case skip restoring (by patching `write_atomic` to a no-op on its
 second call); it exists only to drive the red branch.
@@ -37,13 +45,30 @@ LIVE = Path.home() / ".claude" / "state" / "compound-learnings.json"
 PP_MAIN = Path.home() / ".claude" / "skills" / "claude-power-pack"   # the checkout the learnings belong to
 
 
+COMPOUND_MD = PP_MAIN / "commands" / "compound.md"           # the only step-7 call site (the shim reads it)
+WIRED_FLAGS = ("steps78.py", "--state", "--cwd", "--marker", "--timeout 35")
+HAND_DONE = ("Acquire mkdir-mutex", "atomicWriteJson", "fs.unlinkSync", "fs.renameSync")
+
+
 def sha(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def wired(text: str) -> bool:
+    """Step 7 of compound.md invokes steps78 with every flag, and none of the hand-done procedure remains."""
+    head = text.find("## Step 7")
+    if head < 0:
+        return False
+    nxt = text.find("\n## ", head + 1)
+    section = text[head: nxt if nxt > 0 else len(text)]
+    return all(f in section for f in WIRED_FLAGS) and not any(h in section for h in HAND_DONE)
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
     ap.add_argument("--break-rollback", action="store_true")
+    ap.add_argument("--compound-md", default=str(COMPOUND_MD),
+                    help="judge this copy of commands/compound.md (a candidate is tested before it goes live)")
     a = ap.parse_args(argv)
     import steps78
 
@@ -145,6 +170,52 @@ def main(argv=None) -> int:
         old = time.time() - steps78.STALE_S - 5
         os.utime(lk, (old, old))
         results["stale"] = steps78.finalize(st, target, mk, timeout=1.0)["ok"] and not mk.exists()
+        # read_failed: the state path is unreadable (a directory): typed action, nothing else touched
+        t = Path(td) / "readfail"; t.mkdir()
+        st, mk = t / "compound-learnings.json", t / "LEARNINGS_PENDING.md"
+        st.mkdir()
+        mk.write_bytes(marker_bytes)
+        r = steps78.finalize(st, target, mk)
+        results["read_failed"] = (r["action"] == "read_failed" and mk.exists()
+                                  and not (t / "compound-learnings.json.lock").exists())
+        # write_failed: every os.replace is refused (a Windows sharing violation, retried then given up):
+        # state byte-identical, no tmp left behind, marker kept, lock released
+        t = Path(td) / "writefail"; t.mkdir()
+        st, mk = fresh(t)
+        real_replace = steps78.os.replace
+
+        def refuse(src, dst):
+            raise PermissionError(13, "sharing violation (gate)")
+        steps78.os.replace = refuse
+        try:
+            r = steps78.finalize(st, target, mk)
+        finally:
+            steps78.os.replace = real_replace
+        results["write_failed"] = (r["action"] == "write_failed" and st.read_bytes() == original and mk.exists()
+                                   and not list(t.glob("compound-learnings.json.tmp*"))
+                                   and not (t / "compound-learnings.json.lock").exists())
+
+    # pid_parity: the id steps78 derives from a cwd is the sentinel's (learning-sentinel.js resolveProject).
+    # Positive evidence from the producer: the sentinel already wrote this checkout's id into the live state.
+    expected = {
+        r"c:\Users\User\.claude\skills\claude-power-pack": "C--Users-User--claude-skills-claude-power-pack",
+        r"C:\Users\User\Desktop\Cursor Projects\TUA-X": "C--Users-User-Desktop-Cursor-Projects-TUA-X",
+        "/home/kobii/missions/ic-run": "-home-kobii-missions-ic-run",
+    }
+    results["pid_parity"] = (all(steps78.pid_for(k) == v for k, v in expected.items())
+                             and steps78.pid_for(str(PP_MAIN)) in doc["projects"])
+
+    # wired: /cpp-compound step 7 calls steps78 with every flag, and no hand-done cursor/marker procedure
+    # survives beside it (two procedures = two writers for one cursor). Both mutants must be refused.
+    step7_text = Path(a.compound_md).read_text(encoding="utf-8")
+    results["wired"] = wired(step7_text)
+    mut_no_call = step7_text.replace("steps78.py", "steps78_removed.py")
+    mut_old_kept = step7_text.replace(
+        "2. **Commit cursor and marker with ONE call**",
+        "2. **Acquire mkdir-mutex** then use `atomicWriteJson` and `fs.unlinkSync`.\n"
+        "3. **Commit cursor and marker with ONE call**", 1)
+    results["wired_mutants_red"] = (mut_no_call != step7_text and mut_old_kept != step7_text
+                                    and not wired(mut_no_call) and not wired(mut_old_kept))
 
     results["live_intact"] = sha(LIVE) == live_before
     for k, v in results.items():

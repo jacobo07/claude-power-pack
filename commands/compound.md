@@ -68,20 +68,29 @@ Without it an unattended write is anonymous, and anonymous global writes cannot
 be audited or reverted — which is the objection to running unattended at all,
 answered rather than accepted.
 
-Steps 7 (cursor advance under mkdir-mutex) and 8 (delete marker) run normally;
-they are what stops the next timer from reprocessing the same corpus.
+Step 7 item 2 (the `steps78.py` call that advances the cursor and deletes the marker) runs
+normally; it is what stops the next timer from reprocessing the same corpus. On Windows it runs
+through the **PowerShell** tool (the Bash bridge guard blocks `python`), which is why the driver
+allows `PowerShell` in its narrowed tool set.
 
 ---
 
 ## Identifiers (must match the sentinel — single source of truth)
 
-```javascript
-const cwd = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-const pid = cwd.replace(/[^a-zA-Z0-9-]/g, '-');
+`<cwd>` is the session's working directory. Never slug it by hand: the project id `pid` comes from
+the same code that writes the cursor, which applies the sentinel's rule (drive letter upper-cased,
+then every character outside `[a-zA-Z0-9-]` becomes `-`). A hand-made `c:\` or dotted-path slug
+advances a second cursor entry that no producer reads (2026-09-10: 60 runs reported success while
+nothing moved). Get it with one PowerShell-tool call (POSIX: `python3 ... --cwd "<cwd>" --print-pid`):
+
+```powershell
+& 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe' "$env:USERPROFILE\.claude\skills\claude-power-pack\vault\programs\cognitive-economy\compound\steps78.py" --cwd "<cwd>" --print-pid
 ```
 
+It prints `{"ok": true, "action": "pid", "project": "<pid>"}`.
+
 State file: `~/.claude/state/compound-learnings.json`
-Lock file: `~/.claude/state/compound-learnings.json.lock` (mkdir-mutex)
+Lock file: `~/.claude/state/compound-learnings.json.lock` (taken and released by `steps78.py` only)
 Marker file: `<cwd>/LEARNINGS_PENDING.md`
 
 ---
@@ -189,21 +198,47 @@ Then invoke AskUserQuestion **per artifact** (or batched for ≥4 artifacts):
 
 Track each accepted artifact's chosen scope. Default-global means `Approve global` is option 1.
 
-## Step 7 — Create Approved Artifacts (Transactional Order)
+## Step 7 — Create Approved Artifacts, then Commit the Cursor (Transactional Order)
 
 **MANDATORY ORDER — do not reorder:**
 
-1. **Acquire mkdir-mutex** on `~/.claude/state/compound-learnings.json.lock`. Stale-lock recovery: if EEXIST and dir mtime > 30 s old, `rmdir` + retry. Bail if not acquired in 5 s (do not write any artifact, surface error).
-2. **Write each approved artifact sequentially** via the Write tool (no parallel writes — Windows harness drops parallel payloads, see `feedback_sequential_writes_per_turn` in MEMORY).
+1. **Write each approved artifact sequentially** via the Write tool (no parallel writes — Windows harness drops parallel payloads, see `feedback_sequential_writes_per_turn` in MEMORY).
    - Rule: write the rule body (see shape below).
    - Skill: write `SKILL.md` (frontmatter + body).
    - Hook: write the single `.js` file using the Windows-native pattern (mirror `~/.claude/hooks/session-summary.js`); register in `~/.claude/settings.json` as a separate Edit (atomic backup-and-rename).
    - Agent update: Edit the existing agent file at `~/.claude/agents/<name>.md`.
-3. **Advance cursor (MERGE, never replace)**: read state file, then `state.projects[pid] = { ...state.projects[pid], last_run_iso: nowIso(), directive_count: 0 }`. The spread is mandatory — a bare `= { last_run_iso }` would WIPE the sentinel's `auto_prompt` opt-out flag and the GAP-7 `directive_count` runaway guard. Resetting `directive_count` to 0 is the canonical signal that consolidation succeeded (the sentinel's L1 auto-prompt re-arms; the STUCK-degrade clears). Write atomically via `atomicWriteJson` from `~/.claude/skills/claude-power-pack/lib/atomic_write.js` (fsync + EBUSY retry; falls back to `<state>.tmp`+`fs.renameSync` if the lib is unresolvable).
-4. **Release lock** (`rmdir` lockdir).
-5. **Delete marker** `<cwd>/LEARNINGS_PENDING.md` if present (use `fs.unlinkSync`, ignore ENOENT).
+2. **Commit cursor and marker with ONE call** -- `steps78.py` is the only writer of
+   `compound-learnings.json` and the only deleter of the marker. It takes the mutex, keeps the exact
+   previous bytes in `compound-learnings.json.bak`, MERGES the project entry (every existing key kept,
+   `last_run_iso` set, `directive_count` reset to 0 so the sentinel's auto-prompt re-arms and the
+   STUCK-degrade clears), writes atomically, deletes the marker, and rolls the cursor back if the marker
+   cannot be deleted. Windows, through the **PowerShell** tool (never Bash: the bridge guard blocks
+   `python`):
 
-**On any step-2 failure: STOP.** Do NOT advance the cursor. Do NOT delete the marker. The next session's sentinel keeps surfacing the marker, and the operator can re-run `/cpp-compound`.
+   ```powershell
+   & 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe' "$env:USERPROFILE\.claude\skills\claude-power-pack\vault\programs\cognitive-economy\compound\steps78.py" --state "$env:USERPROFILE\.claude\state\compound-learnings.json" --cwd "<cwd>" --marker "<cwd>\LEARNINGS_PENDING.md" --timeout 35
+   ```
+
+   Linux / macOS, through Bash:
+
+   ```bash
+   python3 ~/.claude/skills/claude-power-pack/vault/programs/cognitive-economy/compound/steps78.py --state ~/.claude/state/compound-learnings.json --cwd "<cwd>" --marker "<cwd>/LEARNINGS_PENDING.md" --timeout 35
+   ```
+
+3. **Read the one JSON line it prints** and act on `action`:
+   - `advanced` -- done; use its `last_run_iso` in the Step 8 report.
+   - `busy` -- another run holds the mutex. Run the same line once more. Still `busy`: STOP and report
+     the artifacts already written in item 1; cursor and marker are unchanged, so the next run
+     re-proposes them.
+   - anything else (`bad_state`, `read_failed`, `write_failed`, `rolled_back`, `rollback_failed`), a
+     non-zero exit with no JSON, or output that does not parse: STOP and report `action` and `detail`
+     verbatim. The marker stays, so the next session surfaces it again.
+
+   Never edit `compound-learnings.json` or delete `LEARNINGS_PENDING.md` by any other means, not even
+   to repair a failed call: two writers for one cursor is the failure this step exists to remove.
+
+**On any item-1 failure: STOP.** Do NOT run item 2: the cursor does not advance and the marker stays.
+The next session's sentinel keeps surfacing the marker, and the operator can re-run `/cpp-compound`.
 
 ### Rule shape
 
@@ -324,7 +359,7 @@ Emit a final summary block:
 ### Skipped (insufficient signal):
 - [Pattern X] (1 occurrence)
 
-**Marker cleared.** Setup permanently improved.
+**Marker cleared** (only when Step 7 printed `action: advanced`). Setup permanently improved.
 ```
 
 If `--dry-run` was passed, emit the proposals without performing Step 7. Make the dry-run state explicit in the summary.
@@ -336,7 +371,7 @@ If `--dry-run` was passed, emit the proposals without performing Step 7. Make th
 - Zero stub-language tokens in artifact bodies — validator can reject any forbidden-token hit outside code fences. Forbidden-token enumeration is the same as `/cpp-distill` Reality Contract; see `~/.claude/skills/claude-power-pack/commands/distill.md` Reality Contract section for the canonical list.
 - Per-artifact scope toggle is mandatory — never silently default to project when the user expects global, or vice versa.
 - Cursor advance is transactional with artifact write. Partial writes leave both unchanged.
-- Marker deletion is the LAST step and only happens on full success — partial failure leaves marker intact for retry.
+- Marker deletion is the LAST step, done only by `steps78.py`, and only after the cursor write succeeded; a failed deletion rolls the cursor back.
 - Sentinel never advances cursor; only this command does.
 
 ## Reference

@@ -643,7 +643,7 @@
     {
      "kind": "file",
      "ref": "vault/programs/cognitive-economy/compound/steps78.py",
-     "sha256": "0749958f134e0ed0a92f4d5b674414f8f9f729abaeeceac95fb08bb4c365665b"
+     "sha256": "5261c582dd5ab39aa87561729811547ef589f9da22a9f955bcc6c2d5c1cf4ef7"
     }
    ],
    "savings": [
@@ -670,6 +670,33 @@
      "gate_seconds": 2,
      "model_calls_per_run": 0
     }
+   },
+   "owner_decision": {
+    "item": "[L]",
+    "decision": "ACTIVATE",
+    "date": "2026-10-04",
+    "owner_text": "DECISION 2 -- PILLAR L ACTIVATION: YES, conditional on Reality Scan confirming that the described steps78 path remains the current intended implementation",
+    "reality_scan": "commands/compound.md step 7 is the only call site; tools/compound_unattended.py spawns `claude -p /cpp-compound --unattended` and inherits it (the bundle's 'switch compound_unattended.py' was a false premise)"
+   },
+   "activation": {
+    "status": "WIRED",
+    "call_site": "commands/compound.md step 7 item 2 (live through ~/.claude/commands/cpp-compound.md shim)",
+    "active_when": "a real (not gate) run's receipt says ADVANCED AND ~/.claude/state/compound-learnings.json.bak has an mtime inside that run's window (steps78 is the only writer of .bak)",
+    "observed_baseline": {
+     "kind": "observational",
+     "source": "~/.claude/state/compound-unattended.log",
+     "window": "2026-09-01T14:27:55Z..2026-10-04T01:36:02Z",
+     "runs": 77,
+     "verdicts": {
+      "ADVANCED": 43,
+      "FAILED": 12,
+      "RAN_NO_ADVANCE": 9,
+      "TIMEOUT": 4,
+      "NOT_RUN": 1,
+      "none": 8
+     }
+    },
+    "challenger": "the same verdict counts over unattended runs after the activation commit; observational, not causal (corpus and model vary run to run)"
    }
   },
   "M": {
