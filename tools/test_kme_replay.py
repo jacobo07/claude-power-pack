@@ -430,8 +430,189 @@ GATES_ROLLOVER = [
 ]
 
 
+# =========================================================================== task 3: unchanged_precondition_retries
+CMD_X = {"command": "python3 tools/test_x.py", "description": "run"}
+
+
+def bash_pair(fx, n, tid, inp, text, usage=(10, 0, 1000, 5)):
+    """Assistant call n carrying one Bash use, followed by its tool_result."""
+    call(fx, n, [(tid, "Bash", inp)], usage=usage)
+    fx.tool_result(tid, text, ts(10 + 2 * n + 1))
+
+
+def g_retry_positive():
+    # c1 Bash X (600-char result), c2 Read of another file, c3 Bash X again (600-char result), c4 plain. The retry's result
+    # sits at call index 3 of 4 calls: resident 1. Upper = (600 / 3.0) x (2 + 0.1 x 0) = 400.0 + the issuing message's
+    # output 5 / 1 tool_use x 5 = 25.0 -> 425.0. Strict lower = (600 / 4.5) x 2 = 266.667 (nothing between the two runs).
+    def build(fx):
+        bash_pair(fx, 1, "b1", CMD_X, "A" * 600)
+        call(fx, 2, [("rd", "Read", {"file_path": "/x/b.py"})])
+        fx.tool_result("rd", "body", ts(15))
+        bash_pair(fx, 3, "b2", CMD_X, "B" * 600)
+        call(fx, 4)
+    rc, res, _ = rk(build)
+    e = entry(res, "unchanged_precondition_retries")
+    d = e["details"] if e else {}
+    lo = e["numerator"]["weighted_interval"][0] if e else None
+    ok = (rc == 0 and e is not None and close(e["upper_bound_weighted"], 425.0) and close(lo, 266.666667)
+          and d.get("retries") == 1 and d.get("strict") == 1 and d.get("loose_only") == 0)
+    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} strict_lo={lo} details={ {k: d.get(k) for k in ('retries', 'strict', 'loose_only')} }"
+
+
+def g_retry_intervening_write():
+    def build(fx):
+        bash_pair(fx, 1, "b1", CMD_X, "A" * 600)
+        call(fx, 2, [("ed", "Edit", {"file_path": "/x/a.py", "old_string": "x", "new_string": "y"})])
+        fx.tool_result("ed", "ok", ts(15))
+        bash_pair(fx, 3, "b2", CMD_X, "B" * 600)
+        call(fx, 4)
+    rc, res, _ = rk(build)
+    e = entry(res, "unchanged_precondition_retries")
+    ok = rc == 0 and e is not None and e["upper_bound_weighted"] == 0.0 and e["details"]["retries"] == 0
+    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} ranked={res['ranked_ids']}"
+
+
+def g_retry_intervening_bash():
+    # Bash X, Bash Y, Bash X: no write tool between, so it is a loose retry (counted in the upper bound, 425.0 as in the
+    # positive case); another Bash ran between, so it is not strict: the strict lower bound is 0.0.
+    def build(fx):
+        bash_pair(fx, 1, "b1", CMD_X, "A" * 600)
+        bash_pair(fx, 2, "b2", {"command": "ls /x"}, "files")
+        bash_pair(fx, 3, "b3", CMD_X, "B" * 600)
+        call(fx, 4)
+    rc, res, _ = rk(build)
+    e = entry(res, "unchanged_precondition_retries")
+    d = e["details"] if e else {}
+    lo = e["numerator"]["weighted_interval"][0] if e else None
+    ok = (rc == 0 and e is not None and close(e["upper_bound_weighted"], 425.0) and lo == 0.0
+          and d.get("strict") == 0 and d.get("loose_only") == 1 and d.get("retries") == 1)
+    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} strict_lo={lo} strict={d.get('strict')} loose_only={d.get('loose_only')}"
+
+
+def g_retry_command_key():
+    def count(build):
+        rc, res, _ = rk(build)
+        e = entry(res, "unchanged_precondition_retries")
+        return rc, (e["details"]["retries"] if e else None)
+
+    def bash_desc(fx):
+        bash_pair(fx, 1, "b1", {"command": "make test", "description": "a"}, "A" * 100)
+        bash_pair(fx, 2, "b2", {"command": "make test", "description": "b"}, "A" * 100)
+        call(fx, 3)
+
+    def bash_other(fx):
+        bash_pair(fx, 1, "b1", {"command": "make test"}, "A" * 100)
+        bash_pair(fx, 2, "b2", {"command": "make lint"}, "A" * 100)
+        call(fx, 3)
+
+    def grep_same(fx):
+        for n, tid in ((1, "g1"), (2, "g2")):
+            call(fx, n, [(tid, "Grep", {"pattern": "foo", "path": "/x"})])
+            fx.tool_result(tid, "hits", ts(10 + 2 * n + 1))
+        call(fx, 3)
+
+    def grep_other(fx):
+        for n, tid, path in ((1, "g1", "/x"), (2, "g2", "/y")):
+            call(fx, n, [(tid, "Grep", {"pattern": "foo", "path": path})])
+            fx.tool_result(tid, "hits", ts(10 + 2 * n + 1))
+        call(fx, 3)
+    got = [count(b) for b in (bash_desc, bash_other, grep_same, grep_other)]
+    ok = [n for _, n in got] == [1, 0, 1, 0] and all(rc == 0 for rc, _ in got)
+    return ok, f"retries (desc differs, other command, grep identical, grep other path) = {[n for _, n in got]}"
+
+
+def g_retry_exclusions():
+    # An identical Read pair is E's identical reread, an identical Write pair is a write: neither is a retry. An identical
+    # Agent pair is outside the candidate (counted beside only).
+    def build(fx):
+        n = 0
+        for tid in ("r1", "r2"):
+            n += 1
+            call(fx, n, [(tid, "Read", {"file_path": "/x/a.py"})])
+            fx.tool_result(tid, "body", ts(10 + 2 * n + 1))
+        for tid in ("w1", "w2"):
+            n += 1
+            call(fx, n, [(tid, "Write", {"file_path": "/x/n.py", "content": "a"})])
+            fx.tool_result(tid, "ok", ts(10 + 2 * n + 1))
+        for tid in ("a1", "a2"):
+            n += 1
+            call(fx, n, [(tid, "Agent", {"description": "d", "prompt": "p", "subagent_type": "Explore"})])
+            fx.tool_result(tid, "done", ts(10 + 2 * n + 1))
+        call(fx, n + 1)
+    rc, res, _ = rk(build)
+    e = entry(res, "unchanged_precondition_retries")
+    d = e["details"] if e else {}
+    ok = rc == 0 and e is not None and d.get("retries") == 0 and d.get("agent_redispatches") == 1 \
+        and e["upper_bound_weighted"] == 0.0
+    return ok, f"rc={rc} retries={d.get('retries')} agent_redispatches={d.get('agent_redispatches')} upper={e and e['upper_bound_weighted']}"
+
+
+def g_retry_output_share():
+    # c2 issues two tool uses (Bash X again and Bash Z) in one message with output_tokens 10: the retry's output share is
+    # 10 / 2 = 5 (not 10). Its 300-char result sits at call index 2 of 3: resident 1. Upper = (300 / 3.0) x 2 = 200.0 +
+    # 5 x 5 = 25.0 -> 225.0 (an undivided output would read 250.0).
+    def build(fx):
+        bash_pair(fx, 1, "b1", CMD_X, "A" * 300)
+        call(fx, 2, [("b2", "Bash", CMD_X), ("bz", "Bash", {"command": "ls /z"})], usage=(10, 0, 1000, 10))
+        fx.tool_result("b2", "A" * 300, ts(15))
+        fx.tool_result("bz", "Z", ts(15))
+        call(fx, 3)
+    rc, res, _ = rk(build)
+    e = entry(res, "unchanged_precondition_retries")
+    return rc == 0 and e is not None and close(e["upper_bound_weighted"], 225.0), \
+        f"rc={rc} upper={e and e['upper_bound_weighted']} (undivided output would read 250.0)"
+
+
+def g_retry_after_error():
+    # The first run errored (is_error): the identical rerun still counts, flagged after_error. 100-char result at index 2
+    # of 3 calls, resident 1: (100 / 3.0) x 2 = 66.667 + 25.0 = 91.667.
+    def build(fx):
+        call(fx, 1, [("b1", "Bash", CMD_X)])
+        fx.tool_result("b1", "boom", ts(13), is_error=True)
+        bash_pair(fx, 2, "b2", CMD_X, "O" * 100)
+        call(fx, 3)
+    rc, res, _ = rk(build)
+    e = entry(res, "unchanged_precondition_retries")
+    d = e["details"] if e else {}
+    ok = rc == 0 and e is not None and close(e["upper_bound_weighted"], 91.666667) and d.get("after_error") == 1 \
+        and d.get("retries") == 1
+    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} after_error={d.get('after_error')}"
+
+
+def g_retry_unpaired_unmeasured():
+    def build(with_result):
+        def b(fx):
+            bash_pair(fx, 1, "b1", CMD_X, "A" * 300)
+            call(fx, 2, [("b2", "Bash", CMD_X)])
+            if with_result:
+                fx.tool_result("b2", "A" * 300, ts(15))
+            call(fx, 3)
+        return b
+    rc1, r1, _ = rk(build(False))
+    rc0, r0, _ = rk(build(True))
+    u = entry(r1, "unchanged_precondition_retries", "unranked")
+    ok = (rc1 == 3 and u is not None and u["status"] == "UNMEASURED" and "no tool_result" in u["reason"]
+          and not any("upper" in k or "weighted" in k for k in u)
+          and entry(r1, "unchanged_precondition_retries") is None
+          and sorted(r1["ranked_ids"]) == ["identical_rereads", "late_rollover"]
+          and rc0 == 0 and entry(r0, "unchanged_precondition_retries") is not None)
+    return bool(ok), f"unpaired: rc={rc1} unranked={r1['unranked']} ranked={r1['ranked_ids']}; paired: rc={rc0} ranked={r0['ranked_ids']}"
+
+
+GATES_RETRY = [
+    ("V-KMER-RETRY-POSITIVE", g_retry_positive),
+    ("V-KMER-RETRY-INTERVENING-WRITE", g_retry_intervening_write),
+    ("V-KMER-RETRY-INTERVENING-BASH", g_retry_intervening_bash),
+    ("V-KMER-RETRY-COMMAND-KEY", g_retry_command_key),
+    ("V-KMER-RETRY-EXCLUSIONS", g_retry_exclusions),
+    ("V-KMER-RETRY-OUTPUT-SHARE", g_retry_output_share),
+    ("V-KMER-RETRY-AFTER-ERROR", g_retry_after_error),
+    ("V-KMER-RETRY-UNPAIRED-UNMEASURED", g_retry_unpaired_unmeasured),
+]
+
+
 GATES_TRACER = [("V-KMER-TRACER-E2E", g_tracer_e2e)]
-GATES = list(GATES_TRACER) + GATES_ROLLOVER
+GATES = list(GATES_TRACER) + GATES_ROLLOVER + GATES_RETRY
 
 
 def summary_line() -> str:
@@ -486,11 +667,39 @@ def _m_upper_is_lower():
     return _patch(kr, "upper_bound_of", lambda result: result["numerator"]["weighted_interval"][0])
 
 
+def _m_write_epoch_ignored():
+    def mutant(prev, now):
+        if prev is None:
+            return None
+        return "strict" if now[1] == prev[1] else "loose"
+    return _patch(kr, "retry_kind", mutant)
+
+
+def _m_bash_full_json_key():
+    import hashlib
+
+    def mutant(name, inp):
+        return (name, hashlib.sha256(json.dumps(inp, sort_keys=True, ensure_ascii=False).encode()).hexdigest())
+    return _patch(kr, "retry_key", mutant)
+
+
+def _m_status_ignores_observability():
+    return _patch(kr, "candidate_status", lambda denominator_ok, observability: "MEASURED" if denominator_ok
+                  else "UNMEASURED")
+
+
 MUTANTS = [
     ("M1 rollover_avoided ignores the thread floor (avoids the whole cut)", _m_floor_ignored,
      ["V-KMER-ROLLOVER-FLOOR"]),
     ("M2 rollover_segments ignores actual compactions (one segment)", _m_one_segment, ["V-KMER-ROLLOVER-SEGMENT"]),
+    ("M3 retry_kind ignores the write epoch (a rerun after an Edit is a retry)", _m_write_epoch_ignored,
+     ["V-KMER-RETRY-INTERVENING-WRITE"]),
+    ("M4 retry_key keys a Bash call by its full input JSON (a changed description hides the retry)",
+     _m_bash_full_json_key, ["V-KMER-RETRY-COMMAND-KEY"]),
     ("M5 upper_bound_of returns weighted_interval[0]", _m_upper_is_lower, ["V-KMER-REREADS-EQUALS-E"]),
+    ("M9 candidate_status ignores observability (a partly observed candidate is ranked)",
+     _m_status_ignores_observability,
+     ["V-KMER-RETRY-UNPAIRED-UNMEASURED", "V-KMER-ROLLOVER-INLINE-SIDECHAIN-UNMEASURED"]),
 ]
 
 

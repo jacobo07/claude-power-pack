@@ -267,17 +267,26 @@ class RolloverObserver(kp.PillarObserver):
 
 
 class RetryObserver(kp.PillarObserver):
-    """unchanged_precondition_retries: the same tool call repeated with no intervening write, per transcript file."""
+    """unchanged_precondition_retries: the same tool call repeated with no intervening state change, per transcript file.
+
+    Two epoch counters per file: the write epoch (bumped by Edit / Write / MultiEdit / NotebookEdit) and the mutating
+    epoch (bumped by every tool call outside READ_ONLY_TOOLS, writes and Agent / Task included). A call whose key was
+    issued before is a retry: "strict" when neither epoch moved since that previous call, "loose" when only the mutating
+    epoch moved (no write in between), nothing when a write came between. Read (pillar E's) and the write tools are
+    never retries; an Agent / Task re-dispatch is counted beside only. A retry is paired with its tool_result; one whose
+    result never appears is unobserved (the candidate is then UNMEASURED)."""
     pillar = "L"
 
     def __init__(self):
         self.events = []
+        self.agents = []
         self._state = {}
 
     def _st(self, path):
         st = self._state.get(path)
         if st is None:
-            st = {"w": 0, "last": {}, "tid_key": {}, "ev_by_tid": {}, "msgs": {}, "events": []}
+            st = {"w": 0, "m": 0, "last": {}, "agent_last": {}, "tid_key": {}, "ev_by_tid": {}, "seen": set(),
+                  "msgs": {}, "events": []}
             self._state[path] = st
         return st
 
@@ -297,34 +306,60 @@ class RetryObserver(kp.PillarObserver):
             if isinstance(usage, dict):
                 m["out"] = max(m["out"], usage.get("output_tokens") or 0)
             for c in blocks:
-                if not (isinstance(c, dict) and c.get("type") == "tool_use"):
-                    continue
-                m["tools"] += 1
-                name = c.get("name")
-                inp = c.get("input") if isinstance(c.get("input"), dict) else {}
-                if name == "Read" or name in AGENT_TOOLS:
-                    continue
-                if name in kp.WRITE_TOOLS:
-                    st["w"] += 1
-                    continue
-                key = retry_key(name, inp)
-                kind = retry_kind(st["last"].get(key), (st["w"], 0))
-                st["tid_key"][c.get("id")] = key
-                st["last"][key] = (st["w"], 0)
-                if kind:
-                    ev = {"sid": id(sess), "tid": c.get("id"), "mid": mid, "kind": kind, "tool": name,
-                          "sig": kp.cmd_signature(str(inp.get("command") or "")) if name in ("Bash", "PowerShell")
-                          else name, "chars": None, "idx": None, "resident": 0, "share": 0.0}
-                    st["ev_by_tid"][c.get("id")] = ev
-                    st["events"].append(ev)
+                if isinstance(c, dict) and c.get("type") == "tool_use":
+                    self._on_tool_use(st, c, mid, m, sess)
         elif o.get("type") == "user":
             for c in blocks:
-                if not (isinstance(c, dict) and c.get("type") == "tool_result"):
-                    continue
-                ev = st["ev_by_tid"].get(c.get("tool_use_id"))
-                if ev is not None:
-                    ev["chars"] = len(kme_token_audit.text_of(c.get("content")))
-                    ev["idx"] = idx
+                if isinstance(c, dict) and c.get("type") == "tool_result":
+                    self._on_result(st, c, idx)
+
+    def _on_tool_use(self, st, c, mid, m, sess):
+        tid = c.get("id")
+        if tid is not None:
+            if tid in st["seen"]:       # a streamed duplicate of a block already seen
+                return
+            st["seen"].add(tid)
+        m["tools"] += 1
+        name = c.get("name")
+        inp = c.get("input") if isinstance(c.get("input"), dict) else {}
+        if name == "Read":
+            return
+        if name in kp.WRITE_TOOLS:
+            st["w"] += 1
+            st["m"] += 1
+            return
+        key = retry_key(name, inp)
+        if name in AGENT_TOOLS:
+            if retry_kind(st["agent_last"].get(key), (st["w"], st["m"])):
+                self.agents.append(id(sess))
+            st["m"] += 1
+            st["agent_last"][key] = (st["w"], st["m"])
+            return
+        prev = st["last"].get(key)
+        kind = retry_kind(prev, (st["w"], st["m"]))
+        after_error = bool(prev[2]) if prev else False
+        if name not in READ_ONLY_TOOLS:
+            st["m"] += 1
+        st["last"][key] = [st["w"], st["m"], False, tid]
+        st["tid_key"][tid] = key
+        if kind:
+            sig = kp.cmd_signature(str(inp.get("command") or "")) if name in ("Bash", "PowerShell") else name
+            ev = {"sid": id(sess), "tid": tid, "mid": mid, "kind": kind, "tool": name, "sig": sig,
+                  "after_error": after_error, "chars": None, "idx": None, "resident": 0, "share": 0.0}
+            st["ev_by_tid"][tid] = ev
+            st["events"].append(ev)
+
+    def _on_result(self, st, c, idx):
+        tid = c.get("tool_use_id")
+        key = st["tid_key"].get(tid)
+        if key is not None:
+            entry_ = st["last"].get(key)
+            if entry_ is not None and entry_[3] == tid:
+                entry_[2] = bool(c.get("is_error"))
+        ev = st["ev_by_tid"].get(tid)
+        if ev is not None:
+            ev["chars"] = len(kme_token_audit.text_of(c.get("content")))
+            ev["idx"] = idx
 
     def on_file_end(self, path, sess, order, calls, compact_points):
         st = self._state.pop(path, None)
@@ -342,6 +377,15 @@ class RetryObserver(kp.PillarObserver):
         paired = [e for e in evs if e["chars"] is not None]
         lo = sum(kp.burden(e["chars"], e["resident"], kp.CPT_HI) for e in paired if e["kind"] == "strict")
         hi = sum(retry_weighted(e["chars"], e["resident"], e["share"]) for e in paired)
+        by_sig = {}
+        for e in paired:
+            row = by_sig.setdefault((e["tool"], e["sig"]), {"tool": e["tool"], "signature": e["sig"], "count": 0,
+                                                              "weighted": 0.0})
+            row["count"] += 1
+            row["weighted"] += retry_weighted(e["chars"], e["resident"], e["share"])
+        top = sorted(by_sig.values(), key=lambda x: (-x["weighted"], x["tool"], x["signature"]))[:10]
+        for row in top:
+            row["weighted"] = round(row["weighted"], ROUND)
         return {
             "numerator": {"name": NAMES["unchanged_precondition_retries"],
                           "definition": DEFINITIONS["unchanged_precondition_retries"],
@@ -350,7 +394,11 @@ class RetryObserver(kp.PillarObserver):
             "observability": (len(paired) / len(evs)) if evs else 1.0,
             "details": {"retries": len(evs), "strict": sum(1 for e in evs if e["kind"] == "strict"),
                         "loose_only": sum(1 for e in evs if e["kind"] == "loose"),
-                        "results_unobserved": len(evs) - len(paired)},
+                        "after_error": sum(1 for e in evs if e["after_error"]),
+                        "results_unobserved": len(evs) - len(paired),
+                        "agent_redispatches": sum(1 for sid in self.agents if in_selection(sid, selected)),
+                        "by_tool": dict(sorted(collections.Counter(e["tool"] for e in evs).items())),
+                        "top_signatures": top},
         }
 
 
@@ -397,7 +445,7 @@ def terminal_ok(role, match, frozen_source, unranked):
 
 
 def _r(x):
-    return None if x is None else round(x, ROUND)
+    return None if x is None else round(float(x), ROUND)
 
 
 def _events_of(cid, pres):
