@@ -31,7 +31,7 @@ Modes
       wrapper runs:   V-PF-SELFTEST, V-PF-STATUS (open == ["N"]), V-PF-PILLARS (A..M PASS),
                       V-PF-N-OPEN (`--pillar N` FAILS with exactly the L3 N clause; a PASS
                       on N turns this check red).
-      V-PF-COMMITTED-AFTER  the dirty set did not move while the wrapper ran.
+      V-PF-DIRTY-SET-STABLE  the dirty set did not move while the wrapper ran.
   --closeout (PF_MODE=closeout)   the gate state.N cites on the laptop. V-PF-COMMITTED
       narrowed to the three code files it executes, the same static checks without the two
       gex44-only protections, V-PF-L8 expecting `[]` (state.N committed), and
@@ -513,6 +513,12 @@ def dirty_paths(porcelain_text, own_outputs) -> list:
     return out
 
 
+def judge_stable(before, after) -> list:
+    """The wrapper reads the working tree: if the dirty set moved while it ran, its
+    verdicts describe a tree nobody can name (INCONCLUSIVE, never PASS)."""
+    return [] if list(before) == list(after) else [f"dirty set moved during the run: {list(after)[:5]}"]
+
+
 # ---------------------------------------------------------------- wrapper subprocess
 
 def _wrapper_args_ok(args) -> list:
@@ -770,12 +776,11 @@ def run_gex44(rep) -> int:
         rep.judge("V-PF-N-OPEN", lambda: judge_n_open(rc, out),
                   f"--pillar N rc 1, CEP_PILLAR_N=FAIL on exactly {N_CLAUSE!r}")
         try:
-            after = dirty_paths(_porcelain(scope), {RECORD_REL})
-            rep.add("V-PF-COMMITTED-AFTER", "ok" if after == before else "INCONCLUSIVE",
-                    "dirty set unchanged while the wrapper ran" if after == before
-                    else f"dirty set moved during the run: {after[:5]}")
+            moved = judge_stable(before, dirty_paths(_porcelain(scope), {RECORD_REL}))
+            rep.add("V-PF-DIRTY-SET-STABLE", "INCONCLUSIVE" if moved else "ok",
+                    "; ".join(moved) or "dirty set unchanged while the wrapper ran")
         except GitUnavailable as exc:
-            rep.add("V-PF-COMMITTED-AFTER", "INCONCLUSIVE", str(exc))
+            rep.add("V-PF-DIRTY-SET-STABLE", "INCONCLUSIVE", str(exc))
     rep.line(f"PF_TERMINAL={terminal}")
     rep.line(open_line)
     return rep.finish()
@@ -1004,6 +1009,9 @@ def selftest() -> bool:
                                                           lambda s: True))
     mutant("RECORD commit unreachable", lambda: judge_record(F["record"], lambda s: False))
     mutant("COMMITTED ledger dirty", lambda: dirty_paths(f" M {PROGRAM_DIR}ledger.json\n", {RECORD_REL}))
+    green("DIRTY-SET-STABLE", judge_stable([], []))
+    mutant("DIRTY-SET-STABLE a path turned dirty during the run",
+           lambda: judge_stable([], [f"{PROGRAM_DIR}evidence/D-live-gex44.json"]))
     # ---- wrapper judges (fixture outputs, no subprocess)
     good = {p: (0, f"CEP_PILLAR_{p}=PASS\n") for p in CLOSED}
     green("PILLARS", judge_pillars(good))
