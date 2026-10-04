@@ -24,7 +24,7 @@ both GEX44 preflights before every arm (row 19).
 | row | decision | status |
 |---|---|---|
 | 1 | laptop sync after the mission ends and >= 4 GB free | DONE 2026-10-04 ~22:40 (Owner "sync now"): tip 95ac9c3b, sync 850ebc0e, Windows test fixes ea311c07 (port back to the mission branch); KMEP 86/86, KMER 43/43, FLOOR 57/57, ICP_SELFTEST=PASS with `C:\Program Files\Git\cmd` on PATH (without it the git gates SKIP) |
-| 2 | 7 cherry-picks + 6 suites + post-deploy check after the sync, >= 4 GB; own commits/hunks only | AUTHORIZED, PENDING_GATE |
+| 2 | 7 cherry-picks + 6 suites + post-deploy check after the sync, >= 4 GB; own commits/hunks only | PICKS + SUITES DONE 2026-10-04 ~22:50 at 6.45 GB free: 25a10ce5..c0042b05 (`-x`, auto-merged with 18b539cf), Windows HOME/USERPROFILE test fix 3aaf838e (port back); PFP 28/28, LG 20/20, BREAKER 18/18, MC 220/220, EPOCH 82/82, MCA 16/16 (+ G23 32/32, MQR 7/7). PRG (C-prg.md) waits for the a7 deploy (row 13) and the Owner's a7 /login (row 14) |
 | 3 | capture the real held-mission relay in the laptop live sweep | AUTHORIZED, OPPORTUNISTIC |
 | 4-10 | run D-I (+L ranking) in full when the laptop is free; skip a measurement still valid with unchanged dependencies | AUTHORIZED, PENDING_GATE |
 | 11 | live champion/challenger: DECLINED for now | DEFERRED_BY_OWNER_QUOTA (not failed, not cancelled; reopen after the next quota reset) |
