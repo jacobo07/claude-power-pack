@@ -481,6 +481,16 @@ def _r(x):
     return None if x is None else round(float(x), ROUND)
 
 
+def entry_figures(pres, upper, share):
+    """The figures a ranked entry carries: the upper bound and its share of the denominator, rounded to ROUND decimals,
+    and the numerator's identity (name, kind, chars). Never a `weighted_lo` / `weighted_interval`: the observer's low side
+    is the gross cost of the avoided tokens, not a lower bound on a saving, and a consumer reading a ranked entry as a
+    kme_pillars interval would take it for one."""
+    num = pres["numerator"]
+    return {"upper_bound_weighted": _r(upper), "upper_bound_share": _r(share),
+            "numerator": {"name": num["name"], "kind": num["kind"], "chars": num["chars"]}}
+
+
 def _events_of(cid, pres):
     d = pres["details"]
     if cid == "late_rollover":
@@ -532,11 +542,11 @@ def rank_result(ctx, sc, loc, until, argv, growth):
         den = denominator_for(cid, sc)
         share = upper / den
         bound = bound_label(upper, den)
-        results[cid] = {"candidate": cid, "name": NAMES[cid], "definition": DEFINITIONS[cid],
-                        "upper_bound_weighted": _r(upper), "upper_bound_share": share, "bound_vs_threshold": bound,
-                        "bound_reading": BOUND_READINGS[bound], "saving_status": "upper_bound",
-                        "displacement": "unknown", "events": _events_of(cid, pres), "numerator": pres["numerator"],
-                        "details": pres["details"]}
+        results[cid] = dict({"candidate": cid, "name": NAMES[cid], "definition": DEFINITIONS[cid]},
+                            **entry_figures(pres, upper, share),
+                            **{"bound_vs_threshold": bound, "bound_reading": BOUND_READINGS[bound],
+                               "saving_status": "upper_bound", "displacement": "unknown",
+                               "events": _events_of(cid, pres), "details": pres["details"]})
     ranked, unranked = split_ranking(results)
     for i, e in enumerate(ranked, 1):
         e["rank"] = i

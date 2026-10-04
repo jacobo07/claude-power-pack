@@ -200,7 +200,7 @@ def g_tracer_e2e():
           and [e["rank"] for e in ranked] == [1, 2, 3] and res["unranked"] == []
           and all(close(e["upper_bound_weighted"], want[e["candidate"]]) for e in ranked)
           and all(e["saving_status"] == "upper_bound" for e in ranked)
-          and all(abs(e["upper_bound_share"] - e["upper_bound_weighted"] / 3879.0) <= 1e-9 for e in ranked)
+          and all(abs(e["upper_bound_share"] - e["upper_bound_weighted"] / 3879.0) <= 5e-7 + 1e-12 for e in ranked)
           and "KMER ranked=identical_rereads,late_rollover,unchanged_precondition_retries unranked=none" in out)
     return ok, (f"rc={rc} file={files[0].name} order={order} uppers={[e['upper_bound_weighted'] for e in ranked]} "
                 f"W={front.get('weighted_denominator')} role={front.get('evidence_role')} "
@@ -249,7 +249,7 @@ def g_contract_e2e():
           and [e["candidate"] for e in ranked] == ["identical_rereads", "unchanged_precondition_retries"]
           and [e["rank"] for e in ranked] == [1, 2]
           and all(close(e["upper_bound_weighted"], want[e["candidate"]]) for e in ranked)
-          and all(abs(e["upper_bound_share"] * w - e["upper_bound_weighted"]) <= 1e-9 * max(1.0, w) for e in ranked)
+          and all(abs(e["upper_bound_share"] * w - e["upper_bound_weighted"]) <= 5e-7 * w + 1e-9 for e in ranked)
           and [x["candidate"] for x in unranked] == ["late_rollover"] and u.get("status") == "UNMEASURED"
           and "observability" in u.get("reason", "") and u.get("upper_bound_weighted") is None
           and not any("upper" in k or "weighted" in k for k in u)
@@ -498,7 +498,8 @@ def bash_pair(fx, n, tid, inp, text, usage=(10, 0, 1000, 5)):
 def g_retry_positive():
     # c1 Bash X (600-char result), c2 Read of another file, c3 Bash X again (600-char result), c4 plain. The retry's result
     # sits at call index 3 of 4 calls: resident 1. Upper = (600 / 3.0) x (2 + 0.1 x 0) = 400.0 + the issuing message's
-    # output 5 / 1 tool_use x 5 = 25.0 -> 425.0. Strict lower = (600 / 4.5) x 2 = 266.667 (nothing between the two runs).
+    # output 5 / 1 tool_use x 5 = 25.0 -> 425.0. Nothing between the two runs: strict (the ranked entry carries the upper
+    # bound only, WR-05; the strict class is checked by its count).
     def build(fx):
         bash_pair(fx, 1, "b1", CMD_X, "A" * 600)
         call(fx, 2, [("rd", "Read", {"file_path": "/x/b.py"})])
@@ -508,10 +509,9 @@ def g_retry_positive():
     rc, res, _ = rk(build)
     e = entry(res, "unchanged_precondition_retries")
     d = e["details"] if e else {}
-    lo = e["numerator"]["weighted_interval"][0] if e else None
-    ok = (rc == 0 and e is not None and close(e["upper_bound_weighted"], 425.0) and close(lo, 266.666667)
+    ok = (rc == 0 and e is not None and close(e["upper_bound_weighted"], 425.0)
           and d.get("retries") == 1 and d.get("strict") == 1 and d.get("loose_only") == 0)
-    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} strict_lo={lo} details={ {k: d.get(k) for k in ('retries', 'strict', 'loose_only')} }"
+    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} details={ {k: d.get(k) for k in ('retries', 'strict', 'loose_only')} }"
 
 
 def g_retry_intervening_write():
@@ -529,7 +529,7 @@ def g_retry_intervening_write():
 
 def g_retry_intervening_bash():
     # Bash X, Bash Y, Bash X: no write tool between, so it is a loose retry (counted in the upper bound, 425.0 as in the
-    # positive case); another Bash ran between, so it is not strict: the strict lower bound is 0.0.
+    # positive case); another Bash ran between, so it is not strict: the strict count is 0.
     def build(fx):
         bash_pair(fx, 1, "b1", CMD_X, "A" * 600)
         bash_pair(fx, 2, "b2", {"command": "ls /x"}, "files")
@@ -538,10 +538,9 @@ def g_retry_intervening_bash():
     rc, res, _ = rk(build)
     e = entry(res, "unchanged_precondition_retries")
     d = e["details"] if e else {}
-    lo = e["numerator"]["weighted_interval"][0] if e else None
-    ok = (rc == 0 and e is not None and close(e["upper_bound_weighted"], 425.0) and lo == 0.0
+    ok = (rc == 0 and e is not None and close(e["upper_bound_weighted"], 425.0)
           and d.get("strict") == 0 and d.get("loose_only") == 1 and d.get("retries") == 1)
-    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} strict_lo={lo} strict={d.get('strict')} loose_only={d.get('loose_only')}"
+    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} strict={d.get('strict')} loose_only={d.get('loose_only')}"
 
 
 def g_retry_command_key():
@@ -808,7 +807,7 @@ def g_same_denominator():
     rc, res, _o, _e = run_json(rank_args(root, scratch("out"), ["--rollover-growth", "2000"]))
     w = 7614.0
     ranked = res["ranked"]
-    shares_ok = all(abs(e["upper_bound_share"] * w - e["upper_bound_weighted"]) <= 1e-9 * w for e in ranked)
+    shares_ok = all(abs(e["upper_bound_share"] * w - e["upper_bound_weighted"]) <= 5e-7 * w + 1e-9 for e in ranked)
     nonzero = sorted(e["candidate"] for e in ranked if e["upper_bound_weighted"] > 0)
     ok = (rc == 0 and res["population"]["calls"] == 6 and close(res["weighted_denominator"], w, 1e-9)
           and len(ranked) == 3 and shares_ok and len(nonzero) == 3)
@@ -869,6 +868,45 @@ def g_upper_bound_labels():
           and all(e["bound_vs_threshold"] == (">= 3 %" if e["upper_bound_share"] >= 0.03 else "< 3 %")
                   for e in res["ranked"]) and not bad_keys)
     return bool(ok), f"30/1000 -> {hi}; 29.999/1000 -> {lo}; cli rc={rc} forbidden keys={bad_keys}"
+
+
+def walk_floats(x):
+    if isinstance(x, dict):
+        for v in x.values():
+            yield from walk_floats(v)
+    elif isinstance(x, list):
+        for v in x:
+            yield from walk_floats(v)
+    elif isinstance(x, float):
+        yield x
+
+
+def g_upper_only():
+    # WR-05: a ranked entry carries ONE figure, the upper bound. No `weighted_lo` / `weighted_hi` / `weighted_interval`
+    # (a "lower" side that is the gross cost of the avoided tokens, not a lower bound on any saving), and every float is
+    # rounded to 6 decimals (float noise is not a measurement). Read from the result, the file front matter's json block
+    # and the rendered text.
+    root = scratch("uo")
+    tracer_fixture(root)
+    outd = scratch("out")
+    rc, res, _o, _e = run_json(rank_args(root, outd, ["--rollover-growth", "2000"]))
+    f = next(iter(outd.glob("L-FX-R-*.md")), None)
+    if rc != 0 or f is None:
+        return False, f"rc={rc}"
+    text = f.read_text(encoding="utf-8")
+    _front, block = parse_rank(text)
+    forbidden = ("weighted_lo", "weighted_hi", "weighted_interval")
+    seen = {}
+    for name, doc in (("result", res), ("file json", block)):
+        keys = set(walk_keys(doc["ranked"]))
+        floats = list(walk_floats(doc["ranked"]))
+        seen[name] = (sorted(k for k in keys if k in forbidden), [x for x in floats if round(x, 6) != x],
+                      "upper_bound_weighted" in keys, len(floats))
+    control = all(v[2] and v[3] > 0 for v in seen.values())          # the walkers do see keys and floats
+    noise_free = all(not v[0] and not v[1] for v in seen.values())
+    shares = [e["upper_bound_share"] for e in res["ranked"]]
+    return bool(control and noise_free and not any(w in text.split("<!-- kmer-json -->")[0] for w in forbidden)), (
+        f"forbidden/noisy per source = { {k: v[:2] for k, v in seen.items()} } control={control} shares={shares}")
 
 
 def g_terminal_evidence():
@@ -1071,6 +1109,7 @@ GATES_CONTRACT = [
     ("V-KMER-SELECTED-ONLY", g_selected_only),
     ("V-KMER-DRIFT-ALL-UNMEASURED", g_drift_all_unmeasured),
     ("V-KMER-UPPER-BOUND-LABELS", g_upper_bound_labels),
+    ("V-KMER-UPPER-ONLY", g_upper_only),
     ("V-KMER-TERMINAL-EVIDENCE", g_terminal_evidence),
     ("V-KMER-ROLLOVER-GROWTH-PINNED", g_rollover_growth_pinned),
     ("V-KMER-NO-SECRET", g_no_secret),
@@ -1556,6 +1595,12 @@ def _m_terminal_ignores_growth():
                   and bool(frozen_source.get("all_default")) and not unranked)
 
 
+def _m_interval_back():
+    """The pre-fix entry: unrounded share and the observer's full numerator (weighted_lo / weighted_interval)."""
+    return _patch(kr, "entry_figures", lambda pres, upper, share: {
+        "upper_bound_weighted": kr._r(upper), "upper_bound_share": share, "numerator": pres["numerator"]})
+
+
 MUTANTS = [
     ("M1 rollover_avoided ignores the thread floor (avoids the whole cut)", _m_floor_ignored,
      ["V-KMER-ROLLOVER-FLOOR"]),
@@ -1582,6 +1627,8 @@ MUTANTS = [
     ("M13 terminal_ok ignores unranked candidates", _m_terminal_ignores_unranked, ["V-KMER-TERMINAL-EVIDENCE"]),
     ("M14 terminal_ok ignores the rollover growth (a ranking at any G is terminal)", _m_terminal_ignores_growth,
      ["V-KMER-ROLLOVER-GROWTH-PINNED"]),
+    ("M15 a ranked entry carries the observer's weighted_lo / weighted_interval and an unrounded share",
+     _m_interval_back, ["V-KMER-UPPER-ONLY"]),
 ]
 
 
