@@ -71,6 +71,8 @@ Total Plans in Phase: 3
 
 - [Phase 8, epoch 4]: 08-REVIEW 0 CR / 6 WR / 4 IN (46f2b5ca); 9 fixed (fa8e85f8..419d35ac, SCG_PASS=48/48, SKH_PASS=41/41, --pillar A-M PASS re-run by the orchestrator). IN-04 NOT fixed (decision): 7 of 24 SKILL.md frontmatters were already invalid YAML before phase 8; rewriting them is out of phase scope and would widen the Owner's live-mirror sync. Safe because it is reversible and pre-existing; the limit goes to phase 9 deltas. Phase 7 verified passed by the orchestrator (dispatched verifier stalled) and completed (1e5a7a80).
 
+- [Phase 9, epoch 4]: plans 09-01..03 (ce9e7a25), plan-check 0 blockers / 1 warning / 3 info with binding amendments (829332c3). 09-01 pre-final gate tools/test_skill_capability_prefinal.py (fcbc4347..c13cec89, PF selftest kills=45/45; refuses --final and its prefixes). 09-02 reviews ukdl.md (12 candidates) + cbr.md (14 rows) + ledger reviews/deltas (9653c922..16ebabfd); PF_PASS=13/16 with only the 3 LAPTOP-CLOSEOUT checks open. Phase 8 complete (18417fa2).
+
 ## Session Continuity
 
 **Last session:** 2026-10-03T18:55:16.029Z
