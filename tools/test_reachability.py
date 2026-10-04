@@ -175,6 +175,45 @@ def main() -> int:
             else:
                 _fail("V-REACH-TASK-XML", "non-Windows host produced task seeds")
 
+        # V-REACH-TASK-WSCRIPT: the zero-flash launcher shape every PP task uses since the
+        # wscript migration -- `wscript.exe //B //Nologo "<hidden_launch.vbs>" "<script>" args`.
+        # The .vbs ends in an extension the matcher did not know, so the non-greedy match ran
+        # from the .vbs path through `&quot; &quot;` into the next argument and produced one
+        # unresolvable "path": every scheduled edge in the estate went dark (found 2026-10-04,
+        # PP-Hibernation firing every 5 min with rc 0 while hibernate_runner read ORPHAN).
+        launcher = repo / "tools" / "hidden_launch.vbs"
+        launcher.write_text("' synthetic launcher\n", encoding="utf-8")
+        wscript_xml = (
+            "<?xml version='1.0'?>\n<!-- \\SYNTH-Wscript -->\n"
+            '<Task version="1.2">\n  <Settings><Enabled>true</Enabled></Settings>\n'
+            "  <Actions>\n    <Exec>\n      <Command>wscript.exe</Command>\n"
+            f"      <Arguments>//B //Nologo &quot;{launcher}&quot; &quot;{daemon}&quot; -Mode dry</Arguments>\n"
+            "    </Exec>\n  </Actions>\n</Task>\n")
+        seeds = [p.name for p in R.scheduled_task_seeds(repo, xml=wscript_xml)]
+        if not (daemon.is_absolute() and daemon.drive):
+            if seeds == []:
+                _ok("V-REACH-TASK-WSCRIPT", "non-Windows host: producer correctly yields nothing")
+            else:
+                _fail("V-REACH-TASK-WSCRIPT", "non-Windows host produced task seeds")
+        elif "daemon.ps1" in seeds and "hidden_launch.vbs" in seeds:
+            _ok("V-REACH-TASK-WSCRIPT", f"wscript launcher task seeds {sorted(seeds)}")
+        else:
+            _fail("V-REACH-TASK-WSCRIPT", f"wscript launcher task seeded {seeds}, expected daemon.ps1 + the .vbs")
+
+        # V-REACH-TASK-DECODE: the live query's bytes are UTF-16 on some hosts and the ANSI
+        # code page on others (measured 2026-10-04: cp1252 on a Spanish-locale host, which
+        # utf-16 decodes to garbage WITHOUT error and utf-8 refuses at the first accent).
+        # The injected-xml cases above cannot see this layer: they never decode bytes.
+        sample = '<Tasks>\n<!-- \\Tarea programación -->\n<Task version="1.2"><Actions/></Task>\n</Tasks>\n'
+        ansi, wide = sample.encode("cp1252"), sample.encode("utf-16")
+        got_ansi, got_wide = R.decode_schtasks(ansi), R.decode_schtasks(wide)
+        none_ = R.decode_schtasks("<Tasks></Tasks>".encode("cp1252"))
+        if (got_ansi and "programación" in got_ansi and got_wide and "<Task " in got_wide
+                and none_ is None):
+            _ok("V-REACH-TASK-DECODE", "cp1252 and utf-16 streams decode; a stream with no task yields None")
+        else:
+            _fail("V-REACH-TASK-DECODE", f"ansi={bool(got_ansi)} wide={bool(got_wide)} empty={none_!r}")
+
         # V-REACH-TASK-FAILOPEN: an empty or unavailable query is silence, never a crash.
         if R.scheduled_task_seeds(repo, xml="") == []:
             _ok("V-REACH-TASK-FAILOPEN", "empty schtasks output yields no seeds")

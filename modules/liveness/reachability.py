@@ -33,6 +33,7 @@ Three design constraints, each paid for by a real bug:
 """
 from __future__ import annotations
 
+import html
 import json
 import re
 import subprocess
@@ -394,11 +395,16 @@ def _unit_path(repo_root: Path, unit: str) -> Path:
 _TASK_SPLIT = "<Task "
 _TASK_DISABLED = "<Enabled>false</Enabled>"
 _TASK_CMD_RE = re.compile(r"<(?:Command|Arguments)>([^<]*)</(?:Command|Arguments)>")
-# A drive-anchored path ending in a script extension. Quotes are not required: inside
-# <Arguments> they arrive XML-escaped (&quot;), so a quote-delimited pattern matches
-# nothing. Non-greedy, so the shortest path ending in an extension wins and a match
-# cannot run past its own filename into the next argument.
-_TASK_SCRIPT_RE = re.compile(r"[A-Za-z]:[\\/][^\"'<>|]+?\.(?:py|ps1|js|cmd|bat)")
+# A drive-anchored path ending in a script extension. Each field is XML-UNESCAPED before
+# matching, so `&quot;` becomes a real quote, which the character class refuses: a match
+# cannot run past a quoted argument into the next one, whatever extension that argument
+# has. Unquoted paths still match. Non-greedy, so the shortest path ending in an extension
+# wins. `vbs` is listed because every PP task launches through `wscript.exe //B //Nologo
+# "<tools/hidden_launch.vbs>" "<script>"` (zero-flash). Before both fixes the non-greedy
+# match started at the .vbs, could not stop on an unknown extension, crossed `&quot; &quot;`
+# and returned one unresolvable path, so every scheduled edge in the estate read as absent
+# (2026-10-04: PP-Hibernation firing every 5 min, rc 0, hibernate_runner ORPHAN).
+_TASK_SCRIPT_RE = re.compile(r"[A-Za-z]:[\\/][^\"'<>|]+?\.(?:py|ps1|js|cmd|bat|vbs)")
 _XML_MEMO: list = []   # single slot: [] = never queried, [x] = queried (x may be None)
 
 
@@ -420,16 +426,31 @@ def _schtasks_xml(*, timeout: float = 20.0) -> str | None:
     except (OSError, subprocess.SubprocessError):
         proc = None
     if proc is not None and proc.returncode == 0 and proc.stdout:
-        for enc in ("utf-16", "utf-8-sig", "utf-8"):
-            try:
-                candidate = proc.stdout.decode(enc)
-            except (UnicodeDecodeError, LookupError):
-                continue
-            if _TASK_SPLIT in candidate:
-                text = candidate
-                break
+        text = decode_schtasks(proc.stdout)
     _XML_MEMO.append(text)
     return text
+
+
+def decode_schtasks(raw: bytes) -> str | None:
+    """The schtasks XML as text, or None when no encoding yields a `<Task ` element.
+
+    The stream is UTF-16 on some hosts and the ANSI code page on others. Measured
+    2026-10-04 on a Spanish-locale Windows 11: 387 KB of cp1252, on which utf-16 decodes
+    to garbage without error and utf-8 raises on the first accented byte, so a probe
+    list without the locale code page returned None and the scanner saw ZERO scheduled
+    tasks (232 registered). Every decode is judged by finding a `<Task ` element, never
+    by the absence of an exception, because utf-16 accepts almost any even-length input.
+    """
+    import locale
+    encodings = ["utf-16", "utf-8-sig", "utf-8", locale.getpreferredencoding(False), "mbcs", "cp1252"]
+    for enc in dict.fromkeys(e for e in encodings if e):
+        try:
+            candidate = raw.decode(enc)
+        except (UnicodeDecodeError, LookupError):
+            continue
+        if _TASK_SPLIT in candidate:
+            return candidate
+    return None
 
 
 def scheduled_task_seeds(repo_root: Path | None = None,
@@ -455,7 +476,7 @@ def scheduled_task_seeds(repo_root: Path | None = None,
         if _TASK_DISABLED in chunk:
             continue
         for field in _TASK_CMD_RE.findall(chunk):
-            for raw in _TASK_SCRIPT_RE.findall(field):
+            for raw in _TASK_SCRIPT_RE.findall(html.unescape(field)):
                 path = Path(raw.strip())
                 try:
                     inside = any(path.is_relative_to(r) for r in roots)
