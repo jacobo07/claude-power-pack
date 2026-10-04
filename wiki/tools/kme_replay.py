@@ -194,52 +194,75 @@ def in_selection(sid, selected):
 
 # --------------------------------------------------------------------------- observers
 class RolloverObserver(kp.PillarObserver):
-    """late_rollover: replays P(G) over each transcript file's calls (one thread = one context)."""
+    """late_rollover: replays P(G) over each transcript file's calls (one thread = one context), for the run's G and
+    every G of ROLLOVER_SENSITIVITY. A session whose main file carries usage-bearing inline sidechain lines
+    (`isSidechain: true`) holds subagent calls this observer cannot separate from the main thread: it is unobserved,
+    so the observability drops below 1 and the candidate is UNMEASURED (the IObserver rule)."""
     pillar = "L"
 
     def __init__(self, growth=ROLLOVER_GROWTH):
         self.growth = growth
+        self.growths = sorted(set(ROLLOVER_SENSITIVITY) | {growth})
         self.threads = []
+        self.inline = collections.Counter()
 
-    def on_file_end(self, path, sess, order, calls, compact_points):
-        real = [i for i, k in enumerate(order)]
-        if not real:
-            return
-        first = calls[order[real[0]]]
-        floor = first["inp"] + first["cw"] + first["cr"]
+    def on_line(self, path, o, idx, sess):
+        if isinstance(o, dict) and o.get("isSidechain") is True and not kp.is_subagent_path(path) \
+                and o.get("type") == "assistant" and isinstance(o.get("message"), dict) \
+                and isinstance(o["message"].get("usage"), dict):
+            self.inline[id(sess)] += 1
+
+    def _replay(self, growth, floor, order, calls, compact_points):
         lo = hi = 0.0
-        avoided_total = 0
-        rollovers = 0
+        avoided_total = rollovers = 0
         for start, end in rollover_segments(len(order), compact_points):
             cut = floor
             for i in range(start, end):
                 r = calls[order[i]]
+                if r.get("model") == "<synthetic>":
+                    continue
                 ctx = r["inp"] + r["cw"] + r["cr"]
                 av = rollover_avoided(cut, ctx, floor)
                 avoided_total += av
                 lo += av * kp.WEIGHTS["cache_read"]
                 hi += rollover_weighted(av, r["cr"])
-                if (ctx - (cut - floor)) - floor >= self.growth:
+                if (ctx - (cut - floor)) - floor >= growth:
                     cut = ctx
                     rollovers += 1
-        self.threads.append({"sid": id(sess), "floor": floor, "lo": lo, "hi": hi, "avoided": avoided_total,
-                             "rollovers": rollovers})
+        return {"lo": lo, "hi": hi, "avoided": avoided_total, "rollovers": rollovers}
+
+    def on_file_end(self, path, sess, order, calls, compact_points):
+        real = [k for k in order if calls[k].get("model") != "<synthetic>"]
+        if not real:
+            return
+        first = calls[real[0]]
+        floor = first["inp"] + first["cw"] + first["cr"]
+        self.threads.append({"sid": id(sess), "floor": floor,
+                             "by_g": {g: self._replay(g, floor, order, calls, compact_points) for g in self.growths}})
 
     def result(self, selected, sessions, population):
         ths = [t for t in self.threads if in_selection(t["sid"], selected)]
-        lo = sum(t["lo"] for t in ths)
-        hi = sum(t["hi"] for t in ths)
+
+        def total(g, field):
+            return sum(t["by_g"][g][field] for t in ths)
+        lo, hi = total(self.growth, "lo"), total(self.growth, "hi")
         calls = population["calls"]
+        seen = sum(s["main"].get("calls", 0) + s["sub"].get("calls", 0)
+                   for s in sessions if id(s) in selected and not self.inline[id(s)])
         return {
             "numerator": {"name": NAMES["late_rollover"], "definition": DEFINITIONS["late_rollover"],
                           "kind": "late rollover", "chars": 0, "weighted_lo": lo, "weighted_hi": hi,
                           "weighted_interval": [lo, hi]},
-            "observability": 1.0 if calls else None,
+            "observability": (seen / calls) if calls else None,
             "details": {"growth": self.growth, "threads": len(ths),
-                        "threads_crossing": sum(1 for t in ths if t["rollovers"]),
-                        "rollovers": sum(t["rollovers"] for t in ths),
-                        "avoided_tokens": sum(t["avoided"] for t in ths),
-                        "floor": kp.distribution([t["floor"] for t in ths])},
+                        "threads_crossing": sum(1 for t in ths if t["by_g"][self.growth]["rollovers"]),
+                        "rollovers": int(total(self.growth, "rollovers")),
+                        "avoided_tokens": int(total(self.growth, "avoided")),
+                        "floor": kp.distribution([t["floor"] for t in ths]),
+                        "sensitivity": [{"growth": g, "upper_bound_weighted": _r(total(g, "hi")),
+                                         "rollovers": int(total(g, "rollovers"))} for g in self.growths],
+                        "sessions_with_inline_sidechain": sum(1 for s in sessions
+                                                              if id(s) in selected and self.inline[id(s)])},
         }
 
 

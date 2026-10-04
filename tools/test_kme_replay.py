@@ -207,8 +207,231 @@ def g_tracer_e2e():
                 f"stdout_last={out.strip().splitlines()[-1][:120] if out.strip() else ''}")
 
 
+
+
+# =========================================================================== task 2: late_rollover and identical_rereads
+def rk(build, extra=(), project="-home-x-kme-fixture", label="FX-R"):
+    """build(fx) writes one main-thread transcript after a human line; returns (rc, result, stdout)."""
+    root = scratch("rk")
+    fx = Fx(root, project=project)
+    fx.human("go", ts(0))
+    build(fx)
+    rc, res, out, _err = run_json(rank_args(root, scratch("out"), extra, label=label, project=project))
+    return rc, res, out
+
+
+def seq_calls(fx, usages, start=1):
+    """Plain calls (no tool use) c<start>.. with the given usage tuples."""
+    for i, u in enumerate(usages):
+        call(fx, start + i, usage=u)
+
+
+TRACER_USAGES = [(10, 1000, 0, 5), (10, 0, 3010, 5), (10, 0, 4010, 5), (10, 0, 5010, 5), (10, 0, 5010, 5)]
+
+
+def g_rollover_positive():
+    # The tracer's call sequence alone, G = 2,000: floor 1,010; rollover after call 2 (growth 2,010, cut 3,020); calls 3
+    # and 4 avoid 2,010 each (x 0.1 = 201.0 each); rollover after call 4 (simulated growth 2,000, cut 5,020); call 5
+    # avoids 4,010 (401.0). 201 + 201 + 401 = 803.0, 2 rollovers, 1 thread.
+    rc, res, _ = rk(lambda fx: seq_calls(fx, TRACER_USAGES), ["--rollover-growth", "2000"])
+    e = entry(res, "late_rollover")
+    ok = (rc == 0 and e is not None and close(e["upper_bound_weighted"], 803.0)
+          and e["details"]["rollovers"] == 2 and e["details"]["threads"] == 1)
+    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} details={e and {k: e['details'][k] for k in ('rollovers', 'threads')}}"
+
+
+def g_rollover_below_threshold():
+    # Same file at G = 10,000: the largest growth above the floor is 5,020 - 1,010 = 4,010 < 10,000: never a rollover,
+    # a MEASURED zero that ranks (never unranked).
+    rc, res, _ = rk(lambda fx: seq_calls(fx, TRACER_USAGES), ["--rollover-growth", "10000"])
+    e = entry(res, "late_rollover")
+    ok = (rc == 0 and e is not None and e["upper_bound_weighted"] == 0.0 and e["details"]["rollovers"] == 0
+          and entry(res, "late_rollover", "unranked") is None)
+    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} ranked={res['ranked_ids']} unranked={res['unranked_ids']}"
+
+
+def g_rollover_floor():
+    # Floor F = 50,010 (call 1 = 10 + 50,000 + 0). Call 2: context 52,020, growth 2,010 >= 2,000 -> rollover, cut 52,020
+    # (call 2's own avoided = cut(F) - F = 0). Call 3: context 53,020 -> avoided = min(52,020 - 50,010, 53,020 - 50,010)
+    # = 2,010, wholly cache-read (cache_read 53,010) -> 201.0. A floor-blind model avoids the whole cut (52,020) on calls
+    # 2 and 3 and reads a figure about fifty times larger.
+    rc, res, _ = rk(lambda fx: seq_calls(fx, [(10, 50000, 0, 5), (10, 0, 52010, 5), (10, 0, 53010, 5)]),
+                    ["--rollover-growth", "2000"])
+    e = entry(res, "late_rollover")
+    return rc == 0 and e is not None and close(e["upper_bound_weighted"], 201.0), \
+        f"rc={rc} upper={e and e['upper_bound_weighted']} (floor-blind would read about 10,000)"
+
+
+def g_rollover_segment():
+    # Call 1 (10,1000,0,5): F 1,010. Call 2 (10,0,3010,5): context 3,020, growth 2,010 -> rollover, cut 3,020. Then a real
+    # compaction; calls 3 and 4 = (10,0,1500,5), context 1,510 each. The policy restarts at the compaction (cut = F):
+    # avoided 0, upper 0.0. A segment-blind model keeps cut 3,020 and avoids min(2,010, 500) = 500 x 0.1 = 50 on each of
+    # calls 3 and 4 = 100.0.
+    def build(fx):
+        call(fx, 1, usage=(10, 1000, 0, 5))
+        call(fx, 2, usage=(10, 0, 3010, 5))
+        fx.compact(ts(15))
+        call(fx, 3, usage=(10, 0, 1500, 5))
+        call(fx, 4, usage=(10, 0, 1500, 5))
+    rc, res, _ = rk(build, ["--rollover-growth", "2000"])
+    e = entry(res, "late_rollover")
+    return rc == 0 and e is not None and e["upper_bound_weighted"] == 0.0 and e["details"]["rollovers"] == 1, \
+        f"rc={rc} upper={e and e['upper_bound_weighted']} rollovers={e and e['details']['rollovers']} (segment-blind reads 100.0)"
+
+
+def g_rollover_synthetic_skipped():
+    # A first assistant row with model <synthetic> and zero usage, then the tracer's calls: the floor is the first REAL
+    # call (1,010), so the figure is the tracer's 803.0 (a synthetic floor of 0 would read a growth of 3,020 at call 2 and
+    # a very different figure).
+    def build(fx):
+        fx.assistant("m0", "r0", (0, 0, 0, 0), ts(10), model="<synthetic>")
+        seq_calls(fx, TRACER_USAGES)
+    rc, res, _ = rk(build, ["--rollover-growth", "2000"])
+    e = entry(res, "late_rollover")
+    return rc == 0 and e is not None and close(e["upper_bound_weighted"], 803.0), \
+        f"rc={rc} upper={e and e['upper_bound_weighted']}"
+
+
+def g_rollover_subagent_thread():
+    # Main thread = the tracer sequence (803.0 at G = 2,000). A subagent file is its own thread with its own floor: calls
+    # (10,2000,0,5) F 2,010; (10,0,4010,5) context 4,020 growth 2,010 -> rollover, cut 4,020; (10,0,5010,5) context 5,020
+    # avoids min(4,020 - 2,010, 5,020 - 2,010) = 2,010 x 0.1 = 201.0. Total 803 + 201 = 1,004.0, 3 rollovers, 2 threads.
+    def build(fx):
+        seq_calls(fx, TRACER_USAGES)
+        sub = fx.subagent("a1", "Explore")
+        sub.human("t", ts(60))
+        sub.assistant("x1", "rx1", (10, 2000, 0, 5), ts(61))
+        sub.assistant("x2", "rx2", (10, 0, 4010, 5), ts(62))
+        sub.assistant("x3", "rx3", (10, 0, 5010, 5), ts(63))
+    rc, res, _ = rk(build, ["--rollover-growth", "2000"])
+    e = entry(res, "late_rollover")
+    d = e["details"] if e else {}
+    ok = rc == 0 and e is not None and close(e["upper_bound_weighted"], 1004.0) and d.get("threads") == 2 \
+        and d.get("rollovers") == 3
+    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} threads={d.get('threads')} rollovers={d.get('rollovers')}"
+
+
+def g_rollover_inline_sidechain_unmeasured():
+    def build(inline):
+        def b(fx):
+            seq_calls(fx, TRACER_USAGES)
+            if inline:
+                fx._w({"type": "assistant", "isSidechain": True, "timestamp": ts(40), "uuid": "u-sc",
+                       "requestId": "rsc", "message": {"id": "sc", "model": "claude-opus-5-5", "role": "assistant",
+                                                       "content": [], "usage": {"input_tokens": 1,
+                                                                                "cache_creation_input_tokens": 100,
+                                                                                "cache_read_input_tokens": 0,
+                                                                                "output_tokens": 1}}})
+        return b
+    rc1, r1, out1 = rk(build(True), ["--rollover-growth", "2000"])
+    rc0, r0, _ = rk(build(False), ["--rollover-growth", "2000"])
+    u = entry(r1, "late_rollover", "unranked")
+    ok = (rc1 == 3 and u is not None and u["status"] == "UNMEASURED" and "observability" in u["reason"]
+          and not any("upper" in k or "weighted" in k for k in u)
+          and entry(r1, "late_rollover") is None
+          and r1["ranked_ids"] == ["identical_rereads", "unchanged_precondition_retries"]
+          and "late_rollover" not in "".join(l for l in out1.splitlines() if l.startswith("KMER rank="))
+          and rc0 == 0 and entry(r0, "late_rollover") is not None)
+    return ok, f"inline: rc={rc1} unranked={r1['unranked']} ranked={r1['ranked_ids']}; clean: rc={rc0} ranked={r0['ranked_ids']}"
+
+
+def g_rollover_sensitivity():
+    # G = 2,000 on the tracer sequence: 803.0 with 2 rollovers; every other G of the sensitivity set (50,000, 100,000,
+    # 200,000) exceeds the largest growth (4,010): 0.0 and 0 rollovers.
+    rc, res, _ = rk(lambda fx: seq_calls(fx, TRACER_USAGES), ["--rollover-growth", "2000"])
+    e = entry(res, "late_rollover")
+    sens = e["details"]["sensitivity"] if e else []
+    by_g = {x["growth"]: x for x in sens}
+    ok = (rc == 0 and sorted(by_g) == sorted(set(kr.ROLLOVER_SENSITIVITY) | {2000}) and len(sens) == len(by_g)
+          and close(by_g[2000]["upper_bound_weighted"], 803.0) and by_g[2000]["rollovers"] == 2
+          and all(by_g[g]["upper_bound_weighted"] == 0.0 and by_g[g]["rollovers"] == 0 for g in kr.ROLLOVER_SENSITIVITY)
+          and close(e["upper_bound_weighted"], by_g[2000]["upper_bound_weighted"]))
+    return ok, f"rc={rc} sensitivity={[(x['growth'], x['upper_bound_weighted'], x['rollovers']) for x in sens]}"
+
+
+def reread_build(fx, second_body=None, edit_between=False):
+    call(fx, 1, [("r1", "Read", {"file_path": "/w/f.py"})])
+    fx.tool_result("r1", E_BODY, ts(13))
+    nxt = 2
+    if edit_between:
+        call(fx, 2, [("ed", "Edit", {"file_path": "/w/f.py", "old_string": "x", "new_string": "y"})])
+        fx.tool_result("ed", "ok", ts(15))
+        nxt = 3
+    call(fx, nxt, [("r2", "Read", {"file_path": "/w/f.py"})])
+    fx.tool_result("r2", second_body if second_body is not None else E_BODY, ts(10 + 2 * nxt + 1))
+    call(fx, nxt + 1)
+
+
+def g_rereads_positive():
+    # Read, Read of the same file, one more call: the second result (3,000 chars) is at call index 2 of 3 calls, resident
+    # 1; upper = (3000 / 3.0) x (2 + 0.1 x 0) = 2,000.0 (one same-segment identical reread).
+    rc, res, _ = rk(lambda fx: reread_build(fx))
+    e = entry(res, "identical_rereads")
+    ok = rc == 0 and e is not None and close(e["upper_bound_weighted"], 2000.0) \
+        and e["events"]["identical_same_segment"] == 1
+    return ok, f"rc={rc} upper={e and e['upper_bound_weighted']} events={e and e['events']}"
+
+
+def g_rereads_negative():
+    changed = ("CHANGED-BODY\n" + E_BODY)[:3000]
+    rc1, r1, _ = rk(lambda fx: reread_build(fx, second_body=changed))
+    rc2, r2, _ = rk(lambda fx: reread_build(fx, edit_between=True))
+    e1, e2 = entry(r1, "identical_rereads"), entry(r2, "identical_rereads")
+    ok = (rc1 == 0 and rc2 == 0 and e1 is not None and e2 is not None and e1["upper_bound_weighted"] == 0.0
+          and e2["upper_bound_weighted"] == 0.0 and entry(r1, "identical_rereads", "unranked") is None)
+    return ok, (f"changed content: rc={rc1} upper={e1 and e1['upper_bound_weighted']}; after an Edit: rc={rc2} "
+                f"upper={e2 and e2['upper_bound_weighted']}")
+
+
+def g_rereads_equals_e():
+    # One file read, reread in the same segment, a real compaction, reread again: kme_pillars' E reports an interval
+    # whose low bound keeps only the same-segment reread and whose high bound adds the after-compaction one. The rank's
+    # identical_rereads upper bound is that high bound (6 decimals), not the low one.
+    root = scratch("eq")
+    fx = Fx(root)
+    fx.human("go", ts(0))
+    call(fx, 1, [("r1", "Read", {"file_path": "/w/f.py"})])
+    fx.tool_result("r1", E_BODY, ts(13))
+    call(fx, 2, [("r2", "Read", {"file_path": "/w/f.py"})])
+    fx.tool_result("r2", E_BODY, ts(15))
+    call(fx, 3)
+    fx.compact(ts(17))
+    call(fx, 4, [("r3", "Read", {"file_path": "/w/f.py"})])
+    fx.tool_result("r3", E_BODY, ts(19))
+    call(fx, 5)
+    common = ["--denominator", "OTHER", "--label", "FX-E", "--select", "all", "--until", "none", "--root",
+              str(pdir(root)), "--json"]
+    out, err = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        rc_e = kp.main(["e"] + common + ["--out-dir", str(scratch("oute"))])
+    e_json = [json.loads(l) for l in out.getvalue().splitlines() if l.startswith("{")]
+    rc_r, res, _o, _e = run_json(["rank"] + common[:-1] + ["--out-dir", str(scratch("outr"))])
+    if rc_e != 0 or not e_json or rc_r != 0:
+        return False, f"rc_e={rc_e} rc_r={rc_r} err={err.getvalue()[-200:]}"
+    lo, hi = e_json[0]["numerator"]["weighted_interval"]
+    e = entry(res, "identical_rereads")
+    ok = e is not None and e["upper_bound_weighted"] == round(hi, 6) and e["upper_bound_weighted"] != round(lo, 6) \
+        and hi > lo
+    return ok, f"E interval=[{lo}, {hi}] rank upper={e and e['upper_bound_weighted']}"
+
+
+GATES_ROLLOVER = [
+    ("V-KMER-ROLLOVER-POSITIVE", g_rollover_positive),
+    ("V-KMER-ROLLOVER-BELOW-THRESHOLD", g_rollover_below_threshold),
+    ("V-KMER-ROLLOVER-FLOOR", g_rollover_floor),
+    ("V-KMER-ROLLOVER-SEGMENT", g_rollover_segment),
+    ("V-KMER-ROLLOVER-SYNTHETIC-SKIPPED", g_rollover_synthetic_skipped),
+    ("V-KMER-ROLLOVER-SUBAGENT-THREAD", g_rollover_subagent_thread),
+    ("V-KMER-ROLLOVER-INLINE-SIDECHAIN-UNMEASURED", g_rollover_inline_sidechain_unmeasured),
+    ("V-KMER-ROLLOVER-SENSITIVITY", g_rollover_sensitivity),
+    ("V-KMER-REREADS-POSITIVE", g_rereads_positive),
+    ("V-KMER-REREADS-NEGATIVE", g_rereads_negative),
+    ("V-KMER-REREADS-EQUALS-E", g_rereads_equals_e),
+]
+
+
 GATES_TRACER = [("V-KMER-TRACER-E2E", g_tracer_e2e)]
-GATES = list(GATES_TRACER)
+GATES = list(GATES_TRACER) + GATES_ROLLOVER
 
 
 def summary_line() -> str:
@@ -228,5 +451,73 @@ def run_all() -> int:
     return 0 if counted and all(r[0] == "PASS" for r in counted) else 1
 
 
+# --------------------------------------------------------------------------- mutation drill
+GATE_FN = dict(GATES)
+DRILL_GATES = [n for n, _ in GATES if n != "V-KMER-TRACER-E2E"]    # the subprocess tracer is excluded (patches cannot reach it)
+
+
+def _quiet(names) -> dict:
+    """Run the named gates with printing off; {gate: passed} for the ones that ran to PASS/FAIL."""
+    start = len(RESULTS)
+    QUIET[0] = True
+    try:
+        for n in names:
+            run_gate(n, GATE_FN[n])
+    finally:
+        QUIET[0] = False
+    return {g: st == "PASS" for st, g, _ in RESULTS[start:] if st in ("PASS", "FAIL")}
+
+
+def _patch(module, attr, value):
+    saved = getattr(module, attr)
+    setattr(module, attr, value)
+    return lambda: setattr(module, attr, saved)
+
+
+def _m_floor_ignored():
+    return _patch(kr, "rollover_avoided", lambda cut, ctx, floor: cut)
+
+
+def _m_one_segment():
+    return _patch(kr, "rollover_segments", lambda n_order, compact_points: [(0, n_order)])
+
+
+def _m_upper_is_lower():
+    return _patch(kr, "upper_bound_of", lambda result: result["numerator"]["weighted_interval"][0])
+
+
+MUTANTS = [
+    ("M1 rollover_avoided ignores the thread floor (avoids the whole cut)", _m_floor_ignored,
+     ["V-KMER-ROLLOVER-FLOOR"]),
+    ("M2 rollover_segments ignores actual compactions (one segment)", _m_one_segment, ["V-KMER-ROLLOVER-SEGMENT"]),
+    ("M5 upper_bound_of returns weighted_interval[0]", _m_upper_is_lower, ["V-KMER-REREADS-EQUALS-E"]),
+]
+
+
+def run_drill() -> int:
+    """Control first (all in-process gates green), each mutant applied and restored, then an unmutated rerun."""
+    control = _quiet(DRILL_GATES)
+    control_ok = len(control) == len(DRILL_GATES) and all(control.values())
+    print(f"{'PASS' if control_ok else 'FAIL'} DRILL-CONTROL unmutated run: {sum(control.values())}/{len(control)} gates green")
+    killed = 0
+    for label, apply, targets in MUTANTS:
+        restore = apply()
+        try:
+            seen = _quiet(targets)
+        finally:
+            restore()
+        by = [t for t in targets if seen.get(t) is False]
+        if len(by) == len(targets):
+            killed += 1
+            print(f"KILLED {label} by {', '.join(by)}")
+        else:
+            print(f"SURVIVED {label} (still green or absent: {', '.join(t for t in targets if seen.get(t) is not False)})")
+    after = _quiet(DRILL_GATES)
+    clean = len(after) == len(DRILL_GATES) and all(after.values())
+    print(f"{'PASS' if clean else 'FAIL'} DRILL-CLEAN-AFTER-MUTANTS unmutated rerun: {sum(after.values())}/{len(after)} gates green")
+    print(f"DRILL killed={killed}/{len(MUTANTS)}")
+    return 0 if (killed == len(MUTANTS) and control_ok and clean) else 1
+
+
 if __name__ == "__main__":
-    sys.exit(run_all())
+    sys.exit(run_drill() if "--drill" in sys.argv[1:] else run_all())
