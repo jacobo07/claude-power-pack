@@ -14,7 +14,7 @@ findings:
   warning: 9
   info: 5
   total: 14
-status: issues_found
+status: fixed
 ---
 
 # Phase 6: Code Review Report
@@ -22,7 +22,7 @@ status: issues_found
 **Reviewed:** 2026-10-04
 **Depth:** standard
 **Files Reviewed:** 5
-**Status:** issues_found
+**Status:** fixed (WR-01..WR-09; Info findings out of scope)
 
 ## Summary
 
@@ -60,6 +60,8 @@ elif terminal not in ce.TERMINALS:      # str membership; also rejects "", 0, {}
 ```
 Add a scratch gate (and a drill mutant) where the owner ledger carries `""` / an unknown name and no row is printed.
 
+**Fix:** 7e651ab9 -- valid_terminal() (str in ce.TERMINALS) gates the READY branch; a junk terminal prints `OPEN ... is not a known terminal` and no row; V-ICR2-BAD-TERMINAL + drill mutant M7.
+
 ### WR-02: A malformed ledger raises an uncaught AttributeError, and the traceback exit code (1) collides with "not ready"
 
 **File:** `tools/ic_r2_evidence.py:33-36, 145-154`
@@ -73,6 +75,8 @@ commit is oddly shaped.
 error. Wrap the `owner_rows` call and map any unexpected exception to `ICR2_COULD_NOT_RUN` with exit 2. In `predicted_at`,
 guard `isinstance(frozen, dict)` and `isinstance(pillars, list)`.
 
+**Fix:** 5fdbf849 -- main reads with (OSError, ValueError), refuses a non-object ledger, catches AttributeError, maps any compute-path exception to ICR2_COULD_NOT_RUN exit 2; predicted_at returns UNREADABLE for a mis-shaped owner ledger; V-ICR2-MALFORMED-LEDGER.
+
 ### WR-03: V-ICR2-TRACER-REAL-HEAD becomes permanently red once the owner closes D, E and I
 
 **File:** `tools/test_ic_r2_evidence.py:131-137`
@@ -85,6 +89,8 @@ real-HEAD check.
 printer's verdict agrees with what `git show HEAD:<owner ledger>` says: `rc == 0` and rows iff all pairs have a terminal,
 otherwise OPEN lines. Do not hardcode D, E and I as open.
 
+**Fix:** 4b719325 -- V-ICR2-TRACER-REAL-HEAD derives its expectation from an independent `git show HEAD:<owner ledger>` read (open world: OPEN lines, rc 1; closed world: READY rows, rc 0), with open/partial/closed scratch controls and opposite-expectation refusals. Also re-pinned the ledger delta sha in cc08be63 (WR-01..03 changed ic_r2_evidence.py).
+
 ### WR-04: Evidence and ref resolution accept a directory as "a file at HEAD"
 
 **File:** `tools/test_ic_closeout.py:120-122, 136-141, 262-264, 897-899`
@@ -94,6 +100,8 @@ evidence item `{"ref": "tools", "sha256": <sha of the listing>}` both pass as "r
 "is not a file at HEAD" is therefore false for directories. The line-count check is applied to the tree text.
 **Fix:** Resolve with `git cat-file -t HEAD:<path>` and require `blob`, or use `git cat-file blob HEAD:<path>` in
 `blob_at`. Add a control: a directory ref is refused.
+
+**Fix:** 83d4019c -- blob_at uses `git cat-file blob`, so a directory is no longer a file at HEAD; controls in V-ICN-EVIDENCE-RESOLVES and V-ICN-LEDGER-DELTAS.
 
 ### WR-05: The smoke-measurement label rule is bypassed by `./`-prefixed evidence refs
 
@@ -106,6 +114,8 @@ and a different spelling defeats it. This is the same identity-by-spelling class
 **Fix:** Normalize before comparing: `ref = posixpath.normpath(ref)`, and refuse any ref that is absolute, starts with `..`
 or contains `//`. Better, require `ref == posixpath.normpath(ref)` as a shape check. Add a control for `./`-prefixed refs.
 
+**Fix:** d27abaf7 -- noncanonical_path() refuses ./, //, .. and backslash spellings of a delta evidence ref before the smoke-label prefix test; drill mutant M13.
+
 ### WR-06: Domain-candidate target check is bypassable with `..` segments
 
 **File:** `tools/test_ic_closeout.py:225-232`
@@ -114,6 +124,8 @@ disk and `git ls-files --error-unmatch` succeeds. `vault/knowledge_base/../../CL
 normalizes the path and returns rc 0 (observed), and `(REPO / rel).is_file()` resolves it. So a "domain" candidate can
 target any tracked file in the repo, including CLAUDE.md or a governance file.
 **Fix:** Reject any target where `posixpath.normpath(tgt) != tgt` or `".." in tgt.split("/")`, as `ref_resolves` already does for evidence paths.
+
+**Fix:** 718ed25f -- the domain-candidate target also requires noncanonical_path(tgt) is None; controls for .. , ./ and // spellings; M13 now kills V-ICN-CANDIDATES-SHAPE too.
 
 ### WR-07: V-ICR2-READ-ONLY compares whole-repo state and will false-FAIL under any concurrent writer
 
@@ -127,6 +139,8 @@ a wide oracle whose dirty set moved is INCONCLUSIVE, not FAIL.
 `"INCONCLUSIVE"` when the only differing key is `status` and the diff is confined to untracked paths the printer cannot have
 written. Alternatively run the printer in a subprocess against a scratch clone and diff that.
 
+**Fix:** 0506bf82 -- read_only_verdict(): ledger/index/HEAD/refs change is FAIL, a status-only change outside the three ledgers is INCONCLUSIVE; snapshot adds the .git index hash and uses --no-optional-locks; drill mutant M8.
+
 ### WR-08: V-ICR2-JM-BLOCKED-COVERS accepts a hand-typed "measured" line; it never re-derives it
 
 **File:** `tools/test_ic_r2_evidence.py:505-518` (evidence file `vault/programs/incremental-cognition/evidence/JM-blocked.md:81,93,154,166`)
@@ -136,6 +150,8 @@ A fabricated line passes. The file's claim is that these lines are "measured". I
 the current printer output.
 **Fix:** Parse `commit=<sha> open=[...]` from each line. For each, require the commit to be reachable and re-run the printer
 (`ev.main(["--pillar", pid, "--commit", sha])`) in the gate, comparing the open list. This is cheap, as the gate already runs the printer in-process elsewhere.
+
+**Fix:** 54427edb -- every quoted `ICR2_READY=NO pillar=P commit=<sha> open=[...]` line is re-derived by running the printer on the quoted commit and must match exactly; fabricated commit / hand-typed open list / malformed line controls; drill mutant M9.
 
 ### WR-09: Controls are silently omitted, and the drill has no mutant for several gates
 
@@ -149,6 +165,8 @@ integrated `commit_subject` / `commit_paths` path against real foreign commits. 
 drill cannot show that those gates' controls bite. The printer's drill likewise has no mutant for `resolve_commit` (the `-x` guard) or the `terminal is None` branch.
 **Fix:** Return `"INCONCLUSIVE"` naming the missing control commits. Build the "absent commit" control from a synthetic 40-hex that cannot exist.
 Add `_without(duplicate_problems, "no such id")`, `_without(bundle_n_problems, "exactly one")` and a `resolve_commit` mutant, each with its targeted gate.
+
+**Fix:** dffab473 -- missing control commits make V-ICN-LEDGER-DELTAS INCONCLUSIVE (named), the absent-commit control uses a probed-absent 40-hex, drill mutants M14/M15 (closeout) and M10 (printer, None-branch conflation). The resolve_commit `-` guard mutant is an equivalent mutant (git itself rejects every option-like spec because of the ^{commit} suffix) and is documented, not added.
 
 ## Info
 
