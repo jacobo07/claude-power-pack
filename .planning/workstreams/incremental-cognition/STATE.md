@@ -169,3 +169,12 @@ clone root stays on `mission/incremental-cognition`). `.planning/config.json` ha
 then phase verification; then `/gsd-autonomous --ws
 incremental-cognition` continues at Phase 3 (plan from its CONTEXT). Note for 02-03: every deployed a5/a7 install
 reports `interpreters` UNMEASURABLE (no vendored engine range) -- must not churn launches.
+
+## Session Continuity (GEX44 run, 2026-10-04, worker epoch 3)
+
+Phases 4 and 5 executed, reviewed, fixed and verified in ic-run (branch mission/incremental-cognition-run, never pushed);
+both closed verification_deferred_human. Gates at 23979ec2: FLOOR 67/67, KMER 45/45 (drill 19/19), KMEP 89/89, ICP selftest PASS.
+Owner bundle summary table: 28 rows, gate-checked (V-KMER-BUNDLE-SUMMARY-*); a new bundle item or pending UAT/VER key needs its
+row in the same commit. Phase 6 planning dispatched (planner prompt in the job tmp dir; J/M externally blocked, N runnable).
+**Next exact action:** if 06-0N-PLAN.md files exist uncommitted -> run gsd-plan-checker on them, commit, then execute phase 6
+sequentially; else re-run `/gsd-plan-phase 6 --ws incremental-cognition --skip-research`.
