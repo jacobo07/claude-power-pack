@@ -61,6 +61,13 @@
   ]
  },
  "state": {"A": {}, "B": {}, "C": {}, "D": {}, "E": {}, "F": {}, "G": {}, "H": {}, "I": {}, "J": {}, "K": {}, "L": {}, "M": {}, "N": {}},
- "reviews": {"ukdl": null, "cbr": null},
- "deltas": {"product": [], "intelligence": []}
+ "reviews": {"ukdl": {"file": "vault/programs/incremental-cognition/reviews/ukdl.md", "sha256": "596bc6edde3e74695c8ac190d43d0e91018b1d79479b880cfd2f29e51dc23acd"}, "cbr": {"file": "vault/programs/incremental-cognition/reviews/cbr.md", "sha256": "7de41a07004b4f1ae3a316fa2324892dcf75e1e0cb8c37788f9bc96e456c24bd"}},
+ "deltas": {
+  "product": [
+   {"id": "product-2-C-park-and-resume", "phase": 2, "pillars": ["C"], "statement": "A worker that meets an expired login (host-written refusal, zero usage) is parked as provider_held instead of being relaunched, with or without the provider breaker present, and the mission resumes by itself (provider_released, one relay) after a re-login; a budget renewal can no longer launch a fresh successor into a quarantined lineage. Built and tested on GEX44; the laptop run is pending.", "plane": "gex44", "commits": ["5962571c840943ae0a3aa901efb08e69a04434da", "60e7947dcf3cf0f9c660e412ec6276a8b2922f99", "9a26750271991b080547eb6d8c1bbade5be52fef"], "evidence": [{"ref": "vault/programs/incremental-cognition/evidence/C.md", "sha256": "19aab5b7001b70f39ea36e4b9237ad571688c932bcad312e812bc5d5d5b5d25a"}]}
+  ],
+  "intelligence": [
+   {"id": "intelligence-2-C-classification-and-inheritance", "phase": 2, "pillars": ["C"], "statement": "An auth-class refusal is classified without the breaker module by judging only host-written replies, so a model that merely quotes 'Please run /login' is not parked; a credentials rewrite after the refusal releases the park only when judged usable (unreadable or still-expired keeps it); a lineage inherits its predecessor's hold, a missing predecessor record inherits nothing, and the walk is bounded (MAX_LINEAGE_HOPS = 4).", "plane": "gex44", "commits": ["5962571c840943ae0a3aa901efb08e69a04434da", "60e7947dcf3cf0f9c660e412ec6276a8b2922f99", "9a26750271991b080547eb6d8c1bbade5be52fef"], "evidence": [{"ref": "vault/programs/incremental-cognition/evidence/C.md", "sha256": "19aab5b7001b70f39ea36e4b9237ad571688c932bcad312e812bc5d5d5b5d25a"}]}
+  ]
+ }
 }

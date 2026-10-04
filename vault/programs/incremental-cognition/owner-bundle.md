@@ -507,6 +507,11 @@ outputs) and to parse with the printer's own argument parser (gate `V-ICR2-BUNDL
 
       python3 tools/test_ic_closeout.py
 
+  Since plan 06-04 the ledger pins each review by sha256, and recording a promotion edits a review file, which changes its
+  sha256. After recording a promotion, set `reviews.<ukdl|cbr>.sha256` in
+  `vault/programs/incremental-cognition/ledger.json` to the value the closeout gate prints (the failing line names the file
+  and its current LF sha256), then run it again.
+
   What closes: every PROMOTE-PROPOSED candidate carries your decision (promoted and recorded, or declined in the review);
   pillar N closes by its frozen rule (candidates in the program's file, promotion reviewed and never silent), with
   institutional garbage collection owned by CE pillar T, which is external. Until then `state.N` is not written by this

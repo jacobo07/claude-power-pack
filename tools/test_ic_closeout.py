@@ -12,15 +12,19 @@ in-gate controls on synthetic text: a control that reports nothing is a FAIL.
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
+sys.path.insert(0, str(HERE))
+import test_cognitive_economy_program as ce  # noqa: E402  (TERMINALS: the seven terminal names)
 
 PROG = "vault/programs/incremental-cognition"
 CAND_REL = f"{PROG}/ukdl-candidates.md"
@@ -36,6 +40,36 @@ SUMMARY_HEAD = "## Summary (every Owner item, phases 1-5)"
 DUP_SECTION = "## Duplicate sweep"
 PROMO_SECTION = "## Promotions recorded"
 SELF_CMD = "python3 tools/test_ic_closeout.py"
+PHASES_DIR = ".planning/workstreams/incremental-cognition/phases"
+PLANES = ("gex44", "laptop", "repo")
+DELTA_KINDS = ("product", "intelligence")
+REVIEW_KEYS = {"ukdl": UKDL_REVIEW_REL, "cbr": CBR_REVIEW_REL}
+# A commit is a PROGRAM commit only when BOTH hold: its subject names the program or carries a phase-number scope, AND it
+# touches at least one of these paths (a prefix ends with "/", anything else is an exact file). Neither half alone is
+# enough: other GSD workstreams use phase-number scopes too, and peers also write under tools/.
+PROGRAM_PATHS = (
+    ".planning/workstreams/incremental-cognition/",
+    "vault/programs/incremental-cognition/",
+    "tools/test_incremental_cognition_program.py",
+    "wiki/tools/kme_pillars.py",
+    "wiki/tools/kme_replay.py",
+    "tools/test_kme_pillars.py",
+    "tools/test_kme_replay.py",
+    "tools/floor_regression_gate.py",
+    "tools/test_floor_regression_gate.py",
+    "tools/gex44_env_preflight.py",
+    "tools/test_gex44_env_preflight.py",
+    "tools/gex44_env_deploy.py",
+    "tools/test_gex44_env_deploy.py",
+    "tools/mission_launch_gate.py",
+    "tools/test_mission_launch_gate.py",
+    "tools/test_persistent_failure_park.py",
+    "tools/gsd_mission.py",
+    "tools/test_gsd_mission_cwd_align.py",
+    "tools/ic_r2_evidence.py",
+    "tools/test_ic_r2_evidence.py",
+    "tools/test_ic_closeout.py",
+)
 
 MIN_PER_LEVEL = 3
 LEVELS = {"U": "universal", "D": "domain", "P": "project"}
@@ -749,6 +783,241 @@ def g_bundle_n():
     return not probs, f"{BUNDLE_REL}: one [N] item in the Phase 6 section, problems={probs[:4]}, {len(ctl)} controls report"
 
 
+# --------------------------------------------------------------------------- ledger reviews and deltas (plan 06-04)
+def current_lf_sha256(rel: str) -> str | None:
+    p = REPO / rel
+    return lf_sha256(p.read_bytes()) if p.is_file() else None
+
+
+def reviews_problems(led: dict) -> list:
+    """Each of reviews.ukdl / reviews.cbr must be exactly {file, sha256}: the review file and its CURRENT LF sha256."""
+    revs = led.get("reviews")
+    if not isinstance(revs, dict):
+        return ["ledger `reviews` is not an object"]
+    probs = []
+    for key, rel in REVIEW_KEYS.items():
+        r = revs.get(key)
+        if not isinstance(r, dict) or set(r) != {"file", "sha256"}:
+            probs.append(f"reviews.{key}: must be exactly {{file, sha256}}, got {str(r)[:60]}")
+            continue
+        if r["file"] != rel:
+            probs.append(f"reviews.{key}: file is {r['file']!r}, must name {rel}")
+            continue
+        now = current_lf_sha256(rel)
+        if now is None:
+            probs.append(f"reviews.{key}: {rel} is not a file")
+        elif r["sha256"] != now:
+            probs.append(f"reviews.{key}: recorded sha256 {str(r['sha256'])[:12]}, but the current LF sha256 of {rel} "
+                         f"is {now}")
+    return probs
+
+
+def program_commit_problem(subject: str, paths: list) -> str | None:
+    """None for a program commit: its subject names the program or carries a phase-number scope AND it touches a program path."""
+    subj_ok = "incremental-cognition" in subject or re.match(r"^[a-z]+\((?:\d{2}(?:-\d{2})?)\)", subject) is not None
+    path_ok = any((p.startswith(x) if x.endswith("/") else p == x) for p in paths for x in PROGRAM_PATHS)
+    if not subj_ok:
+        return f"subject {subject[:60]!r} names neither the program nor a phase-number scope"
+    if not path_ok:
+        return "touches no program-owned path"
+    return None
+
+
+_COMMITS: dict = {}
+
+
+def commit_subject(sha: str) -> str:
+    key = ("s", sha)
+    if key not in _COMMITS:
+        _COMMITS[key] = git("log", "-1", "--format=%s", sha).stdout.strip()
+    return _COMMITS[key]
+
+
+def commit_paths(sha: str) -> list:
+    key = ("p", sha)
+    if key not in _COMMITS:
+        _COMMITS[key] = [x for x in git("show", "--name-only", "--format=", sha).stdout.split("\n") if x.strip()]
+    return _COMMITS[key]
+
+
+def is_smoke(data: bytes) -> bool:
+    return re.search(rb'^evidence_role:[ \t]*"?smoke"?[ \t]*$', data, re.M) is not None
+
+
+def delta_entry_problems(kind: str, e, pillar_ids: list, seen: set) -> list:
+    if not isinstance(e, dict):
+        return [f"deltas.{kind}: an entry is not an object"]
+    tag = f"deltas.{kind}[{e.get('id')}]"
+    probs = []
+    ident = e.get("id")
+    if not isinstance(ident, str) or not ident.strip():
+        probs.append(f"{tag}: no id")
+    elif ident in seen:
+        probs.append(f"{tag}: id used twice")
+    else:
+        seen.add(ident)
+    ph = e.get("phase")
+    if not isinstance(ph, int) or isinstance(ph, bool) or not 1 <= ph <= 6:
+        probs.append(f"{tag}: phase {ph!r} is not an int 1..6")
+    pil = e.get("pillars")
+    if not isinstance(pil, list) or not pil or any(p not in pillar_ids for p in pil):
+        probs.append(f"{tag}: pillars {pil!r} is not a non-empty list of ledger pillar ids")
+    st = e.get("statement")
+    if not isinstance(st, str) or not st.strip():
+        probs.append(f"{tag}: empty statement")
+        st = ""
+    named = [t for t in sorted(ce.TERMINALS) if t in st]
+    if named:
+        probs.append(f"{tag}: the statement names a terminal name {named}")
+    if e.get("plane") not in PLANES:
+        probs.append(f"{tag}: plane {e.get('plane')!r} is not one of {list(PLANES)}")
+    commits = e.get("commits")
+    if not isinstance(commits, list) or not commits:
+        probs.append(f"{tag}: no commits")
+        commits = []
+    for sha in commits:
+        if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha):
+            probs.append(f"{tag}: commit {str(sha)[:12]!r} is not 40 hex")
+            continue
+        if not commit_reachable(sha):
+            probs.append(f"{tag}: commit {sha[:12]} is not reachable from HEAD")
+            continue
+        why = program_commit_problem(commit_subject(sha), commit_paths(sha))
+        if why:
+            probs.append(f"{tag}: commit {sha[:12]} is not a program commit: {why}")
+    ev_ = e.get("evidence")
+    if not isinstance(ev_, list) or not ev_:
+        probs.append(f"{tag}: no evidence")
+        ev_ = []
+    for item in ev_:
+        if not isinstance(item, dict) or not isinstance(item.get("ref"), str) or not isinstance(item.get("sha256"), str):
+            probs.append(f"{tag}: an evidence item is not {{ref, sha256}}")
+            continue
+        ref = item["ref"]
+        data = blob_at("HEAD", ref)
+        if data is None:
+            probs.append(f"{tag}: evidence {ref} is not a file at HEAD")
+            continue
+        if lf_sha256(data) != item["sha256"]:
+            probs.append(f"{tag}: evidence {ref} sha256 is stale, current LF sha256 {lf_sha256(data)[:12]}")
+        if ref.startswith(f"{PROG}/measurements/") and is_smoke(data) and "smoke" not in st.lower():
+            probs.append(f"{tag}: cites a smoke measurement ({ref}) but the statement never says smoke")
+    return probs
+
+
+def delta_problems(led: dict) -> list:
+    d = led.get("deltas")
+    if not isinstance(d, dict):
+        return ["ledger `deltas` is not an object"]
+    pillar_ids = [p.get("id") for p in (led.get("frozen") or {}).get("pillars", [])]
+    probs: list = []
+    seen: set = set()
+    for kind in DELTA_KINDS:
+        lst = d.get(kind)
+        if not isinstance(lst, list) or not lst:
+            probs.append(f"deltas.{kind}: empty or not a list")
+            continue
+        for e in lst:
+            probs += delta_entry_problems(kind, e, pillar_ids, seen)
+    return probs
+
+
+GOOD_COMMIT = "143eaca5cccf798d231e8a5caab0dcb6952a8930"     # feat(06-01) R2 printer: a program commit
+GOOD_EVIDENCE = f"{PROG}/evidence/C.md"
+SMOKE_EVIDENCE = f"{PROG}/measurements/L-KME-G-2026-10-04.md"
+
+
+def _ev(ref: str) -> dict:
+    return {"ref": ref, "sha256": lf_sha256(blob_at("HEAD", ref) or b"")}
+
+
+def syn_delta(ident: str, **over) -> dict:
+    e = {"id": ident, "phase": 2, "pillars": ["C"], "statement": "a synthetic delta", "plane": "gex44",
+         "commits": [GOOD_COMMIT], "evidence": [_ev(GOOD_EVIDENCE)]}
+    e.update(over)
+    return e
+
+
+def syn_ledger(led: dict, product=None, intelligence=None) -> dict:
+    out = copy.deepcopy(led)
+    out["deltas"] = {"product": product if product is not None else [syn_delta("SYN-P")],
+                     "intelligence": intelligence if intelligence is not None else [syn_delta("SYN-I")]}
+    return out
+
+
+def _full_sha(short: str) -> str | None:
+    r = git("rev-parse", "--verify", "--quiet", f"{short}^{{commit}}")
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+# --------------------------------------------------------------------------- ledger gates
+def g_ledger_reviews_pinned():
+    base = {"reviews": {k: {"file": rel, "sha256": current_lf_sha256(rel)} for k, rel in REVIEW_KEYS.items()}}
+
+    def mut(fn):
+        d = copy.deepcopy(base)
+        fn(d)
+        return reviews_problems(d)
+    ctl = {
+        "pins naming the current files are accepted": reviews_problems(base) == [],
+        "a flipped sha is reported with the current sha": has(mut(lambda d: d["reviews"]["ukdl"].__setitem__("sha256", "0" * 64)),
+                                                           "current LF sha256"),
+        "a review naming another file is reported": has(mut(lambda d: d["reviews"]["cbr"].__setitem__("file", UKDL_REVIEW_REL)),
+                                                       "must name"),
+        "a null review is reported": has(mut(lambda d: d["reviews"].__setitem__("ukdl", None)), "must be exactly"),
+        "a missing review is reported": has(mut(lambda d: d["reviews"].pop("cbr")), "must be exactly"),
+    }
+    if not all(ctl.values()):
+        return False, f"controls failed: {[k for k, v in ctl.items() if not v]}"
+    probs = reviews_problems(json.loads(read_text(LEDGER_REL)))
+    return not probs, f"ledger reviews pin {sorted(REVIEW_KEYS)} to their current LF sha256; problems={probs[:3]}, {len(ctl)} controls report"
+
+
+def g_ledger_deltas():
+    led = json.loads(read_text(LEDGER_REL))
+    peer = _full_sha("5cdd7d9f")
+    foreign_phase = _full_sha("d5d5fa0581223e8388225bce556e23543bb7602a")
+
+    def one(**over):
+        return delta_problems(syn_ledger(led, product=[syn_delta("SYN-P", **over)]))
+    ctl = {
+        "a clean synthetic entry is accepted": delta_problems(syn_ledger(led)) == [],
+        "an empty list is reported": has(delta_problems({**syn_ledger(led), "deltas": {"product": [], "intelligence": [
+            syn_delta("SYN-I")]}}), "empty or not a list"),
+        "a duplicate id is reported": has(delta_problems(syn_ledger(led, product=[syn_delta("SYN-P")],
+                                                                    intelligence=[syn_delta("SYN-P")])), "used twice"),
+        "a 7-hex commit is reported": has(one(commits=[GOOD_COMMIT[:7]]), "not 40 hex"),
+        "an unreachable commit is reported": has(one(commits=["a" * 40]), "not reachable from HEAD"),
+        "a forged subject with a foreign path is refused by the pure rule": program_commit_problem(
+            "fix(incremental-cognition): x", ["tools/mission_capsule.py"]) is not None,
+        "a foreign subject with a program path is refused by the pure rule": program_commit_problem(
+            "feat(mission_capsule): x", ["tools/test_kme_replay.py"]) is not None,
+        "a phase scope with a program path is accepted by the pure rule": program_commit_problem(
+            "docs(05): x", [f"{PROG}/evidence/L.md"]) is None,
+        "a missing evidence ref is reported": has(one(evidence=[{"ref": f"{PROG}/evidence/no-such.md", "sha256": "0" * 64}]),
+                                                  "not a file at HEAD"),
+        "a stale evidence sha is reported": has(one(evidence=[{"ref": GOOD_EVIDENCE, "sha256": "0" * 64}]), "sha256 is stale"),
+        "a terminal name in a statement is reported": has(one(statement="closed as IMPLEMENTED_AND_VERIFIED"), "terminal name"),
+        "a smoke measurement cited without the word smoke is reported": has(
+            one(evidence=[_ev(SMOKE_EVIDENCE)], statement="a measured ranking"), "smoke measurement"),
+        "a smoke measurement cited with the word is accepted": one(
+            evidence=[_ev(SMOKE_EVIDENCE)], statement="a smoke ranking on KME-G") == [],
+        "an unknown plane is reported": has(one(plane="mars"), "plane"),
+        "an unknown pillar is reported": has(one(pillars=["Z"]), "pillar ids"),
+        "a phase outside 1..6 is reported": has(one(phase=7), "phase 7"),
+    }
+    if peer and commit_reachable(peer):
+        ctl["a reachable peer commit (foreign subject and paths) is reported"] = has(one(commits=[peer]), "not a program commit")
+    if foreign_phase and commit_reachable(foreign_phase):
+        ctl["a reachable foreign phase-scoped commit (another workstream) is reported"] = has(
+            one(commits=[foreign_phase]), "not a program commit")
+    if not all(ctl.values()):
+        return False, f"controls failed: {[k for k, v in ctl.items() if not v]}"
+    probs = delta_problems(led)
+    n = {k: len((led.get("deltas") or {}).get(k) or []) for k in DELTA_KINDS}
+    return not probs, f"deltas {n}; every commit a reachable program commit, every evidence ref at HEAD with its current sha; problems={probs[:3]}, {len(ctl)} controls report"
+
+
 GATES = [
     ("V-ICN-CANDIDATES-SHAPE", g_candidates_shape),
     ("V-ICN-EVIDENCE-RESOLVES", g_evidence_resolves),
@@ -758,6 +1027,8 @@ GATES = [
     ("V-ICN-CBR-TRANSFER-RULE", g_cbr_transfer_rule),
     ("V-ICN-PROMOTION-NEVER-SILENT", g_promotion_never_silent),
     ("V-ICN-BUNDLE-N", g_bundle_n),
+    ("V-ICN-LEDGER-REVIEWS-PINNED", g_ledger_reviews_pinned),
+    ("V-ICN-LEDGER-DELTAS", g_ledger_deltas),
 ]
 
 
