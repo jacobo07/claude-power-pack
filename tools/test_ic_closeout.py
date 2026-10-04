@@ -922,6 +922,29 @@ def delta_problems(led: dict) -> list:
     return probs
 
 
+def discover_phases(root: Path):
+    """Phase numbers of the `NN-*` directories holding a *-SUMMARY.md or a *-VERIFICATION.md; None when root is absent."""
+    if not root.is_dir():
+        return None
+    out = []
+    for d in sorted(root.iterdir()):
+        m = re.match(r"^(\d{2})-", d.name)
+        if m and d.is_dir() and (any(d.glob("*-SUMMARY.md")) or any(d.glob("*-VERIFICATION.md"))):
+            out.append(int(m.group(1)))
+    return out
+
+
+def coverage_problems(led: dict, phases: list) -> list:
+    d = led.get("deltas") if isinstance(led.get("deltas"), dict) else {}
+    probs = []
+    for ph in phases:
+        for kind in DELTA_KINDS:
+            lst = d.get(kind) if isinstance(d.get(kind), list) else []
+            if not any(isinstance(e, dict) and e.get("phase") == ph for e in lst):
+                probs.append(f"phase {ph:02d} shipped but has no {kind} delta")
+    return probs
+
+
 GOOD_COMMIT = "143eaca5cccf798d231e8a5caab0dcb6952a8930"     # feat(06-01) R2 printer: a program commit
 GOOD_EVIDENCE = f"{PROG}/evidence/C.md"
 SMOKE_EVIDENCE = f"{PROG}/measurements/L-KME-G-2026-10-04.md"
@@ -1018,6 +1041,36 @@ def g_ledger_deltas():
     return not probs, f"deltas {n}; every commit a reachable program commit, every evidence ref at HEAD with its current sha; problems={probs[:3]}, {len(ctl)} controls report"
 
 
+def g_ledger_deltas_cover_phases():
+    led = json.loads(read_text(LEDGER_REL))
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "01-one").mkdir()
+        (root / "01-one" / "01-01-SUMMARY.md").write_text("x", encoding="utf-8")
+        (root / "02-two").mkdir()
+        (root / "02-two" / "02-VERIFICATION.md").write_text("x", encoding="utf-8")
+        (root / "03-planned-only").mkdir()
+        (root / "03-planned-only" / "03-01-PLAN.md").write_text("x", encoding="utf-8")
+        found = discover_phases(root)
+    syn = {"deltas": {"product": [{"phase": 1}], "intelligence": [{"phase": 1}]}}
+    ctl = {
+        "a summary or a verification makes a phase shipped, a plan alone does not": found == [1, 2],
+        "a shipped phase without deltas is reported": has(coverage_problems(syn, found), "phase 02 shipped"),
+        "a phase with both deltas is not reported": not has(coverage_problems(syn, found), "phase 01"),
+        "a missing product list is reported": has(coverage_problems({"deltas": {"intelligence": [{"phase": 1}]}}, [1]), "no product delta"),
+        "an absent phases directory is None": discover_phases(root / "absent") is None,
+    }
+    if not all(ctl.values()):
+        return False, f"controls failed: {[k for k, v in ctl.items() if not v]}"
+    phases = discover_phases(REPO / PHASES_DIR)
+    if phases is None:
+        return "SKIP", f"{PHASES_DIR} is absent in this clone; coverage is not measured, never passed"
+    if not phases:
+        return False, f"no shipped phase discovered under {PHASES_DIR}"
+    probs = coverage_problems(led, phases)
+    return not probs, f"shipped phases {phases} each carry a product and an intelligence delta; problems={probs[:4]}, {len(ctl)} controls report"
+
+
 GATES = [
     ("V-ICN-CANDIDATES-SHAPE", g_candidates_shape),
     ("V-ICN-EVIDENCE-RESOLVES", g_evidence_resolves),
@@ -1029,6 +1082,7 @@ GATES = [
     ("V-ICN-BUNDLE-N", g_bundle_n),
     ("V-ICN-LEDGER-REVIEWS-PINNED", g_ledger_reviews_pinned),
     ("V-ICN-LEDGER-DELTAS", g_ledger_deltas),
+    ("V-ICN-LEDGER-DELTAS-COVER-PHASES", g_ledger_deltas_cover_phases),
 ]
 
 
@@ -1103,6 +1157,31 @@ def _m_sha_unchecked():
     return _patch("against_problems", _without(against_problems, "recorded"))
 
 
+def _m_review_sha_unchecked():
+    return _patch("reviews_problems", _without(reviews_problems, "current LF sha256"))
+
+
+def _m_reachability_unchecked():
+    return _patch("delta_problems", _without(delta_problems, "not reachable from HEAD"))
+
+
+def _m_smoke_unlabelled_ok():
+    return _patch("delta_problems", _without(delta_problems, "smoke measurement"))
+
+
+def _m_terminal_name_ok():
+    return _patch("delta_problems", _without(delta_problems, "terminal name"))
+
+
+def _m_coverage_blind_phases():
+    return _patch("coverage_problems", lambda *a, **k: [])
+
+
+def _m_program_path_rule_skipped():
+    orig = program_commit_problem
+    return _patch("program_commit_problem", lambda subject, paths: orig(subject, [PROG + "/x"]))
+
+
 MUTANTS = [
     ("M1 review_problems ignores missing rows", _m_coverage_blind, ["V-ICN-REVIEW-COVERAGE"]),
     ("M2 ref_resolves accepts every ref", _m_refs_always, ["V-ICN-EVIDENCE-RESOLVES"]),
@@ -1110,6 +1189,12 @@ MUTANTS = [
     ("M4 promotion_problems returns nothing", _m_promotion_blind, ["V-ICN-PROMOTION-NEVER-SILENT"]),
     ("M5 candidate_problems skips the id-letter / level check", _m_level_unchecked, ["V-ICN-CANDIDATES-SHAPE"]),
     ("M6 against_problems skips the sha256 comparison", _m_sha_unchecked, ["V-ICN-REVIEW-AGAINST-TRUTHFUL"]),
+    ("M7 reviews_problems skips the sha256 comparison", _m_review_sha_unchecked, ["V-ICN-LEDGER-REVIEWS-PINNED"]),
+    ("M8 delta_problems skips the reachability rule", _m_reachability_unchecked, ["V-ICN-LEDGER-DELTAS"]),
+    ("M9 delta_problems skips the smoke-label rule", _m_smoke_unlabelled_ok, ["V-ICN-LEDGER-DELTAS"]),
+    ("M10 delta_problems skips the terminal-name rule", _m_terminal_name_ok, ["V-ICN-LEDGER-DELTAS"]),
+    ("M11 coverage_problems returns nothing", _m_coverage_blind_phases, ["V-ICN-LEDGER-DELTAS-COVER-PHASES"]),
+    ("M12 program_commit_problem skips the program-path rule", _m_program_path_rule_skipped, ["V-ICN-LEDGER-DELTAS"]),
 ]
 
 
