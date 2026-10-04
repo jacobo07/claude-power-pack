@@ -178,9 +178,39 @@ def candidate_status(denominator_ok, observability):
     return "UNMEASURED"
 
 
-def rank_candidates(measured):
-    """measured = [{"candidate", "upper_bound_weighted"}]; sorted by (-upper bound, CANDIDATES order)."""
-    return sorted(measured, key=lambda e: (-e["upper_bound_weighted"], CANDIDATES.index(e["candidate"])))
+def rank_candidates(entries):
+    """entries = [{"candidate", "upper_bound_weighted": number | None}]; None means UNMEASURED. Only an entry carrying a
+    number ranks (a missing figure is never read as 0): sorted by (-upper bound, CANDIDATES order), so a tie falls in
+    the fixed candidate order whatever order the entries arrive in."""
+    have = [e for e in entries if e.get("upper_bound_weighted") is not None]
+    return sorted(have, key=lambda e: (-e["upper_bound_weighted"], CANDIDATES.index(e["candidate"])))
+
+
+def split_ranking(results):
+    """results = {candidate id: a MEASURED entry (carries upper_bound_weighted) | an UNMEASURED entry (status
+    UNMEASURED, reason) | None (no observer result)} -> (ranked, unranked). Every candidate not ranked is listed under
+    unranked with a reason and no number."""
+    entries, notes = [], {}
+    for cid in CANDIDATES:
+        r = results.get(cid)
+        if r is None:
+            notes[cid] = {"candidate": cid, "status": "UNMEASURED", "reason": "input missing: no observer result",
+                          "observability": None}
+            entries.append({"candidate": cid, "upper_bound_weighted": None})
+        elif r.get("status") == "UNMEASURED":
+            notes[cid] = r
+            entries.append({"candidate": cid, "upper_bound_weighted": None})
+        else:
+            entries.append(r)
+    ranked = rank_candidates(entries)
+    done = {e["candidate"] for e in ranked}
+    return ranked, [notes[cid] for cid in CANDIDATES if cid in notes and cid not in done]
+
+
+def bound_label(upper, weighted):
+    """An upper bound read against the materiality threshold on that bound: >= 3 % could clear it (a live experiment
+    needs the Owner's quota decision), < 3 % cannot even if fully realized."""
+    return ">= 3 %" if upper / weighted >= kp.THRESHOLD else "< 3 %"
 
 
 def denominator_for(cid, scan):
@@ -439,9 +469,9 @@ def command_string(argv):
 
 def terminal_ok(role, match, frozen_source, unranked):
     """A ranking file is terminal evidence only for a primary run whose population reproduced the frozen one, read from
-    the committed frozen source, with every candidate measured."""
-    src_default = frozen_source is None or frozen_source.get("all_default")
-    return role == "primary" and match == "exact" and bool(src_default) and not unranked
+    the committed frozen source (a missing record is not the committed source), with every candidate measured."""
+    src_default = bool(frozen_source) and bool(frozen_source.get("all_default"))
+    return role == "primary" and match == "exact" and src_default and not unranked
 
 
 def _r(x):
@@ -480,30 +510,31 @@ def rank_result(ctx, sc, loc, until, argv, growth):
     match, deltas, frozen_pop, _coverage = kp._match(ctx, sc, loc)
     w = sc["measured"]["weighted"]
     den_reason = None
-    if match not in ("exact", "not_frozen"):
-        den_reason = f"population_match={match}: the run's population is not the named denominator"
-    elif loc is not None and loc["method"] == "not_found":
-        den_reason = "cutoff_not_found: the freeze-time cutoff could not be located"
+    if loc is not None and loc["method"] == "not_found":
+        den_reason = "cutoff_not_found: the freeze-time cutoff could not be located, so the population is not reproduced"
+    elif match not in ("exact", "not_frozen"):
+        den_reason = (f"population_not_reproduced: population_match={match}, the run's population is not the named "
+                      f"denominator")
     elif not w > 0:
         den_reason = "empty denominator (weighted 0)"
-    measured, unranked, cands = [], [], []
+    results = {}
     for cid in CANDIDATES:
         pres = sc["obs"][cid].result(sc["selected"], sc["sessions"], sc["pop"])
-        status = candidate_status(den_reason is None, pres["observability"])
-        if status != "MEASURED":
-            unranked.append({"candidate": cid, "status": "UNMEASURED",
-                             "reason": _unmeasured_reason(cid, den_reason, pres),
-                             "observability": _r(pres["observability"])})
+        if candidate_status(den_reason is None, pres["observability"]) != "MEASURED":
+            results[cid] = {"candidate": cid, "status": "UNMEASURED",
+                            "reason": _unmeasured_reason(cid, den_reason, pres),
+                            "observability": _r(pres["observability"])}
             continue
         upper = upper_bound_of(pres)
-        share = upper / denominator_for(cid, sc)
-        bound = ">= 3 %" if share >= kp.THRESHOLD else "< 3 %"
-        e = {"candidate": cid, "name": NAMES[cid], "definition": DEFINITIONS[cid],
-             "upper_bound_weighted": _r(upper), "upper_bound_share": share, "bound_vs_threshold": bound,
-             "bound_reading": BOUND_READINGS[bound], "saving_status": "upper_bound", "displacement": "unknown",
-             "events": _events_of(cid, pres), "numerator": pres["numerator"], "details": pres["details"]}
-        measured.append(e)
-    ranked = rank_candidates(measured)
+        den = denominator_for(cid, sc)
+        share = upper / den
+        bound = bound_label(upper, den)
+        results[cid] = {"candidate": cid, "name": NAMES[cid], "definition": DEFINITIONS[cid],
+                        "upper_bound_weighted": _r(upper), "upper_bound_share": share, "bound_vs_threshold": bound,
+                        "bound_reading": BOUND_READINGS[bound], "saving_status": "upper_bound",
+                        "displacement": "unknown", "events": _events_of(cid, pres), "numerator": pres["numerator"],
+                        "details": pres["details"]}
+    ranked, unranked = split_ranking(results)
     for i, e in enumerate(ranked, 1):
         e["rank"] = i
     in_rule = label in RULE_DENOMINATORS
@@ -511,9 +542,13 @@ def rank_result(ctx, sc, loc, until, argv, growth):
     fsrc = ctx.get("frozen_source")
     terminal = terminal_ok(role, match, fsrc, unranked)
     if role == "primary":
+        src = "the committed frozen source" if (fsrc and fsrc.get("all_default")) else \
+            "NOT the committed frozen source (a frozen source flag points elsewhere)"
+        un = ",".join(u["candidate"] for u in unranked) or "none"
         t_reason = ("primary file: the label is in rule L's denominators "
                     f"{list(RULE_DENOMINATORS)}; terminal only with an exact population, the committed frozen source "
-                    f"and every candidate measured (population_match={match}, unranked={len(unranked)})")
+                    f"and every candidate measured (population_match={match}, frozen source: {src}, "
+                    f"unranked={un})")
     else:
         t_reason = (f"smoke: {label} is outside rule L's denominators {list(RULE_DENOMINATORS)}; evidence about the "
                     f"instrument, not a pillar terminal")

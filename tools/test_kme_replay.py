@@ -147,9 +147,9 @@ def close(a, b, tol=1e-6):
 
 
 # =========================================================================== fixtures
-def tracer_fixture(root):
+def tracer_fixture(root, project="-home-x-kme-fixture"):
     """The plan's tracer fixture: one thread, five calls, a reread, a retried Bash command."""
-    fx = Fx(root)
+    fx = Fx(root, project=project)
     fx.human("go", ts(0))
     call(fx, 1, [("t1", "Read", {"file_path": "/x/a.py"})], usage=(10, 1000, 0, 5))
     fx.tool_result("t1", E_BODY, ts(13))
@@ -666,8 +666,399 @@ GATES_RETRY = [
 ]
 
 
+# =========================================================================== task 2: contract and safety gates
+CMD_C = {"command": "python3 tools/test_x.py", "description": "run"}
+KR_CANARY = "sk-ant-" + "A" * 50
+# The tracer fixture's population by hand: 5 calls, input 5 x 10 = 50, cache_write 1,000, cache_read 0 + 3,010 + 4,010 +
+# 5,010 + 5,010 = 17,040, output 5 x 5 = 25 (weighted 3,879.0).
+POP_KR = {"sessions_active": 1, "sessions_dead": 0, "calls": 5, "input": 50, "cache_write": 1000, "cache_read": 17040,
+          "output": 25}
+
+
+def mk(cid, upper):
+    return {"candidate": cid, "upper_bound_weighted": upper, "name": cid}
+
+
+def walk_keys(x):
+    if isinstance(x, dict):
+        for k, v in x.items():
+            yield k
+            yield from walk_keys(v)
+    elif isinstance(x, list):
+        for v in x:
+            yield from walk_keys(v)
+
+
+def klr_args(root, out_dir, frozen, denominator="KME-L", extra=(), project="-home-x-kme-fixture"):
+    return ["rank", "--denominator", denominator, "--frozen-file", str(frozen), "--root", str(pdir(root, project)),
+            "--out-dir", str(out_dir)] + list(extra)
+
+
+def g_rank_order():
+    unit = kr.rank_candidates([mk("late_rollover", 5.0), mk("identical_rereads", 9.0),
+                               mk("unchanged_precondition_retries", 1.0)])
+    unit_order = [e["candidate"] for e in unit]
+    # CLI: the tracer sequence at G = 2,000: identical_rereads 2,200.0 > late_rollover 803.0 > retries 225.0
+    root = scratch("ord")
+    tracer_fixture(root)
+    rc, res, _o, _e = run_json(rank_args(root, scratch("out"), ["--rollover-growth", "2000"]))
+    cli = [(e["rank"], e["candidate"], e["upper_bound_weighted"]) for e in res["ranked"]]
+    ok = (unit_order == ["identical_rereads", "late_rollover", "unchanged_precondition_retries"]
+          and [e["upper_bound_weighted"] for e in unit] == [9.0, 5.0, 1.0] and rc == 0
+          and cli == [(1, "identical_rereads", 2200.0), (2, "late_rollover", 803.0),
+                      (3, "unchanged_precondition_retries", 225.0)])
+    return ok, f"unit={unit_order} cli={cli}"
+
+
+def g_rank_tie_deterministic():
+    entries = [mk("late_rollover", 4.0), mk("identical_rereads", 4.0), mk("unchanged_precondition_retries", 4.0)]
+    fwd = [e["candidate"] for e in kr.rank_candidates(list(entries))]
+    rev = [e["candidate"] for e in kr.rank_candidates(list(reversed(entries)))]
+    want = ["late_rollover", "identical_rereads", "unchanged_precondition_retries"]
+
+    def build(fx):      # three measured zeros: distinct reads, no repeated call, growth below G -> a three-way tie
+        call(fx, 1, [("r1", "Read", {"file_path": "/x/a.py"})])
+        fx.tool_result("r1", E_BODY, ts(13))
+        call(fx, 2, [("r2", "Read", {"file_path": "/x/b.py"})])
+        fx.tool_result("r2", "B" + E_BODY[1:], ts(15))
+        call(fx, 3)
+    rc1, r1, _ = rk(build)
+    rc2, r2, _ = rk(build)
+    ok = (fwd == want and rev == want and rc1 == rc2 == 0 and r1["ranked_ids"] == r2["ranked_ids"] == want
+          and r1["ranked"] == r2["ranked"] and all(e["upper_bound_weighted"] == 0.0 for e in r1["ranked"]))
+    return ok, f"unit fwd={fwd} rev={rev}; cli ids={r1['ranked_ids']} same_json={r1['ranked'] == r2['ranked']}"
+
+
+def g_unmeasured_never_zero():
+    results = {"late_rollover": mk("late_rollover", 5.0),
+               "identical_rereads": None,
+               "unchanged_precondition_retries": mk("unchanged_precondition_retries", 1.0)}
+    ranked, unranked = kr.split_ranking(results)
+    u = unranked[0] if unranked else {}
+    unit_ok = ([e["candidate"] for e in ranked] == ["late_rollover", "unchanged_precondition_retries"]
+               and [x["candidate"] for x in unranked] == ["identical_rereads"] and u.get("status") == "UNMEASURED"
+               and u.get("reason") == "input missing: no observer result"
+               and not any("upper" in k or "weighted" in k for k in u))
+    # through the renderer: a real result with the identical_rereads entry removed
+    root = scratch("unz")
+    tracer_fixture(root)
+    rc, res, _o, _e = run_json(rank_args(root, scratch("out"), ["--rollover-growth", "2000"]))
+    by = {e["candidate"]: e for e in res["ranked"]}
+    by["identical_rereads"] = None
+    rk2, un2 = kr.split_ranking(by)
+    for i, e in enumerate(rk2, 1):
+        e["rank"] = i
+    res2 = dict(res, ranked=rk2, unranked=un2, ranked_ids=[e["candidate"] for e in rk2],
+                unranked_ids=[x["candidate"] for x in un2])
+    text = kr.render_rank(res2)
+    front, js = parse_rank(text)
+    rows = [ln for ln in text.split("## Ranking")[1].split("## Unranked")[0].splitlines()
+            if ln.startswith("| ") and not ln.startswith("| rank") and not ln.startswith("|---")]
+    sect = text.split("## Unranked")[1].split("## Candidate details")[0]
+    render_ok = (len(rows) == 2 and "identical_rereads" not in "".join(rows) and "identical_rereads" in sect
+                 and "UNMEASURED" in sect and js["unranked"][0].get("upper_bound_weighted") is None
+                 and front["unranked_ids"] == ["identical_rereads"])
+    # the CLI path: a session with an inline sidechain line leaves late_rollover unobserved
+    root2 = scratch("unz2")
+    fx = tracer_fixture(root2)
+    sidechain_line(fx)
+    rc3, r3, _o3, _e3 = run_json(rank_args(root2, scratch("out"), ["--rollover-growth", "2000"]))
+    cli_ok = (rc3 == 3 and r3["unranked_ids"] == ["late_rollover"] and "late_rollover" not in r3["ranked_ids"]
+              and all(e["upper_bound_weighted"] != 0.0 for e in r3["ranked"]))
+    return bool(unit_ok and render_ok and cli_ok), (f"unit={unit_ok} render={render_ok} cli={cli_ok} "
+                                                     f"(rows={len(rows)} unranked={[x['candidate'] for x in unranked]})")
+
+
+def g_measured_zero_ranked():
+    def build(fx):
+        call(fx, 1, [("r1", "Read", {"file_path": "/x/a.py"})])
+        fx.tool_result("r1", E_BODY, ts(13))
+        call(fx, 2, [("r2", "Read", {"file_path": "/x/b.py"})])
+        fx.tool_result("r2", "B" + E_BODY[1:], ts(15))
+        call(fx, 3)
+    rc, res, _ = rk(build)
+    ok = (rc == 0 and sorted(res["ranked_ids"]) == sorted(["late_rollover", "identical_rereads",
+                                                           "unchanged_precondition_retries"])
+          and res["unranked"] == [] and all(e["upper_bound_weighted"] == 0.0 for e in res["ranked"])
+          and all(e["bound_vs_threshold"] == "< 3 %" for e in res["ranked"]))
+    return bool(ok), f"rc={rc} ranked={[(e['candidate'], e['upper_bound_weighted'], e['bound_vs_threshold']) for e in res['ranked']]}"
+
+
+def g_same_denominator():
+    # main: c1 Read f (10,1000,0,5), c2 Read f again (10,0,3010,5), c3 plain (10,0,3010,5)
+    #   input 30, cache_write 1,000, cache_read 6,020, output 15 -> 30 + 2,000 + 602 + 75 = 2,707.0
+    # subagent a1: s1 Bash X (10,2000,0,5), s2 Bash X again (10,0,4010,5), s3 plain (10,0,4010,5)
+    #   input 30, cache_write 2,000, cache_read 8,020, output 15 -> 30 + 4,000 + 802 + 75 = 4,907.0
+    # W = 7,614.0 over 6 calls, the subagent calls included; one W divides every share.
+    root = scratch("sd")
+    fx = Fx(root)
+    fx.human("go", ts(0))
+    call(fx, 1, [("r1", "Read", {"file_path": "/w/f.py"})], usage=(10, 1000, 0, 5))
+    fx.tool_result("r1", E_BODY, ts(13))
+    call(fx, 2, [("r2", "Read", {"file_path": "/w/f.py"})], usage=(10, 0, 3010, 5))
+    fx.tool_result("r2", E_BODY, ts(15))
+    call(fx, 3, usage=(10, 0, 3010, 5))
+    sub = fx.subagent("a1", "Explore")
+    sub.human("t", ts(60))
+    sub.assistant("x1", "rx1", (10, 2000, 0, 5), ts(61), tool_uses=[("sb1", "Bash", CMD_C)])
+    sub.tool_result("sb1", "A" * 300, ts(62))
+    sub.assistant("x2", "rx2", (10, 0, 4010, 5), ts(63), tool_uses=[("sb2", "Bash", CMD_C)])
+    sub.tool_result("sb2", "A" * 300, ts(64))
+    sub.assistant("x3", "rx3", (10, 0, 4010, 5), ts(65))
+    rc, res, _o, _e = run_json(rank_args(root, scratch("out"), ["--rollover-growth", "2000"]))
+    w = 7614.0
+    ranked = res["ranked"]
+    shares_ok = all(abs(e["upper_bound_share"] * w - e["upper_bound_weighted"]) <= 1e-9 * w for e in ranked)
+    nonzero = sorted(e["candidate"] for e in ranked if e["upper_bound_weighted"] > 0)
+    ok = (rc == 0 and res["population"]["calls"] == 6 and close(res["weighted_denominator"], w, 1e-9)
+          and len(ranked) == 3 and shares_ok and len(nonzero) == 3)
+    fake = {"measured": {"weighted": 100.0}}
+    unit = [kr.denominator_for(c, fake) for c in kr.CANDIDATES]
+    return bool(ok and unit == [100.0, 100.0, 100.0]), (f"rc={rc} W={res['weighted_denominator']} calls="
+                                                        f"{res['population']['calls']} shares_ok={shares_ok} "
+                                                        f"nonzero={nonzero} unit={unit}")
+
+
+def g_selected_only():
+    root = scratch("sel")
+    tracer_fixture(root)
+    tracer_fixture(root, project="-home-x-other")
+    # the other project's cwd is /home/x/work and its name carries no kme / mapengine: not selected under `kme`
+    out1 = scratch("out")
+    rc1, r1, _o1, _e1 = run_json(["rank", "--denominator", "OTHER", "--label", "FX-S", "--until", "none", "--expand",
+                                  "--root", str(root / "projects"), "--out-dir", str(out1),
+                                  "--rollover-growth", "2000"])
+    rc0, r0, _o0, _e0 = run_json(rank_args(root, scratch("out"), ["--rollover-growth", "2000"], label="FX-S0"))
+    up1 = {e["candidate"]: e["upper_bound_weighted"] for e in r1["ranked"]}
+    up0 = {e["candidate"]: e["upper_bound_weighted"] for e in r0["ranked"]}
+    ok = (rc1 == 0 and rc0 == 0 and up1 == up0 and len(up0) == 3 and all(v > 0 for v in up0.values())
+          and r1["corpus"]["sessions_scanned"] == 2 and r1["corpus"]["sessions_selected_active"] == 1
+          and close(r1["weighted_denominator"], r0["weighted_denominator"], 1e-9))
+    return bool(ok), (f"rc={rc1}/{rc0} scanned={r1['corpus']['sessions_scanned']} selected="
+                      f"{r1['corpus']['sessions_selected_active']} uppers expand={up1} alone={up0}")
+
+
+def g_drift_all_unmeasured():
+    root = scratch("dr")
+    tracer_fixture(root)
+    exact = write_frozen(root / "f_exact.json", **{"KME-L": POP_KR})
+    off = write_frozen(root / "f_off.json", **{"KME-L": dict(POP_KR, calls=POP_KR["calls"] + 1)})
+    out_off, out_ok = scratch("out"), scratch("out")
+    rc, res, _o, _e = run_json(klr_args(root, out_off, off, extra=["--rollover-growth", "2000"]))
+    rc_ok, r_ok, _o2, _e2 = run_json(klr_args(root, out_ok, exact, extra=["--rollover-growth", "2000"]))
+    ok = (rc == 3 and res["population_match"] == "drifted" and res["ranked"] == [] and res["ranked_ids"] == []
+          and sorted(res["unranked_ids"]) == sorted(kr.CANDIDATES) and len(res["unranked"]) == 3
+          and all("population_not_reproduced" in u["reason"] and u["status"] == "UNMEASURED"
+                  and not any("upper" in k for k in u) for u in res["unranked"])
+          and res["terminal_evidence"] is False and len(list(out_off.glob("L-KME-L-*.md"))) == 1
+          and rc_ok == 0 and r_ok["population_match"] == "exact" and len(r_ok["ranked"]) == 3)
+    return bool(ok), (f"drift: rc={rc} match={res['population_match']} unranked={res['unranked_ids']} "
+                      f"deltas={res['population_deltas']}; control: rc={rc_ok} match={r_ok['population_match']} "
+                      f"ranked={len(r_ok['ranked'])}")
+
+
+def g_upper_bound_labels():
+    hi, lo = kr.bound_label(30.0, 1000.0), kr.bound_label(29.999, 1000.0)
+    root = scratch("lab")
+    tracer_fixture(root)
+    rc, res, _o, _e = run_json(rank_args(root, scratch("out"), ["--rollover-growth", "2000"]))
+    bad_keys = sorted({k for k in walk_keys(res) if k in ("saving", "realized", "realized_saving")})
+    ok = (hi == ">= 3 %" and lo == "< 3 %" and rc == 0 and len(res["ranked"]) == 3
+          and "saving_status" in set(walk_keys(res))      # positive control: the walker does see keys
+          and all(e["saving_status"] == "upper_bound" and e["displacement"] == "unknown" for e in res["ranked"])
+          and all(e["bound_vs_threshold"] == (">= 3 %" if e["upper_bound_share"] >= 0.03 else "< 3 %")
+                  for e in res["ranked"]) and not bad_keys)
+    return bool(ok), f"30/1000 -> {hi}; 29.999/1000 -> {lo}; cli rc={rc} forbidden keys={bad_keys}"
+
+
+def g_terminal_evidence():
+    # unit truth table of the seam
+    d, nd = {"all_default": True}, {"all_default": False}
+    unit = [kr.terminal_ok("primary", "exact", d, []), kr.terminal_ok("primary", "exact", d, [{"candidate": "x"}]),
+            kr.terminal_ok("primary", "exact", nd, []), kr.terminal_ok("smoke", "exact", d, []),
+            kr.terminal_ok("primary", "drifted", d, []), kr.terminal_ok("primary", "exact", None, [])]
+    unit_ok = unit == [True, False, False, False, False, False]
+    root = scratch("te")
+    tracer_fixture(root)
+    exact = write_frozen(root / "f_exact.json", **{"KME-L": POP_KR, "KME-G": POP_KR})
+    rc1, a, _o, _e = run_json(klr_args(root, scratch("out"), exact))
+    primary_ok = (rc1 == 0 and a["evidence_role"] == "primary" and a["terminal_evidence"] is True)
+    # the same fixture plus an inline sidechain line (frozen file regenerated to match): late_rollover unranked
+    root2 = scratch("te2")
+    fx = tracer_fixture(root2)
+    sidechain_line(fx)
+    pop_sc = dict(POP_KR, calls=6, input=51, cache_write=1100, output=26)
+    frozen_sc = write_frozen(root2 / "f_sc.json", **{"KME-L": pop_sc})
+    rc2, b, _o2, _e2 = run_json(klr_args(root2, scratch("out"), frozen_sc))
+    unranked_ok = (rc2 == 3 and b["population_match"] == "exact" and b["terminal_evidence"] is False
+                   and b["unranked_ids"] == ["late_rollover"] and "late_rollover" in b["terminal_evidence_reason"])
+    rc3, g, _o3, _e3 = run_json(klr_args(root, scratch("out"), exact, denominator="KME-G"))
+    rc4, o, _o4, _e4 = run_json(rank_args(root, scratch("out")))
+    smoke_ok = (g["evidence_role"] == "smoke" and g["terminal_evidence"] is False and o["evidence_role"] == "smoke"
+                and o["terminal_evidence"] is False and rc3 == 0 and rc4 == 0)
+    FOLLOW_DEFAULTS[0] = False
+    try:
+        rc5, h, _o5, _e5 = run_json(klr_args(root, scratch("out"), exact))
+    finally:
+        FOLLOW_DEFAULTS[0] = True
+    src_ok = (rc5 == 0 and h["evidence_role"] == "primary" and h["terminal_evidence"] is False
+              and "NOT the committed frozen source" in h["terminal_evidence_reason"] and h["frozen_source"]["all_default"] is False)
+    return bool(unit_ok and primary_ok and unranked_ok and smoke_ok and src_ok), (
+        f"unit={unit} primary={primary_ok} unranked={unranked_ok} smoke={smoke_ok} src={src_ok}")
+
+
+def secret_fixture(root):
+    fx = Fx(root)
+    fx.human("go " + KR_CANARY, ts(0))
+    fx.attachment("hook_additional_context", ts(1), content=["ctx " + KR_CANARY], hookName="PreToolUse:Bash",
+                  hookEvent="PreToolUse")
+    call(fx, 1, [("b1", "Bash", {"command": "echo " + KR_CANARY, "description": "d"})], usage=(10, 1000, 0, 5))
+    fx.tool_result("b1", "out " + KR_CANARY * 3, ts(13))
+    call(fx, 2, [("b2", "Bash", {"command": "echo " + KR_CANARY, "description": "d"})], usage=(10, 0, 3010, 5))
+    fx.tool_result("b2", "out " + KR_CANARY * 3, ts(15))
+    call(fx, 3, [("r1", "Read", {"file_path": "/x/" + KR_CANARY + ".py"})], usage=(10, 0, 4010, 5))
+    fx.tool_result("r1", KR_CANARY + E_BODY, ts(17))
+    call(fx, 4, [("r2", "Read", {"file_path": "/x/" + KR_CANARY + ".py"})], usage=(10, 0, 5010, 5))
+    fx.tool_result("r2", KR_CANARY + E_BODY, ts(19))
+    fx.assistant("m5", "r5", (10, 0, 5010, 5), ts(21), text="said " + KR_CANARY)
+    return fx
+
+
+def g_no_secret():
+    root = scratch("sec")
+    fx = secret_fixture(root)
+    raw = fx.path.read_text()
+    out_dir = scratch("out")
+    rc, out, err = run_main(rank_args(root, out_dir, ["--json", "--rollover-growth", "2000"]))
+    written = "".join(p.read_text(encoding="utf-8") for p in out_dir.glob("*.md"))
+    present = [n for n, t in (("file", written), ("stdout", out), ("stderr", err)) if KR_CANARY in t]
+    exercised = '"signature"' in written and "unchanged_precondition_retries" in written   # the retried command reached the file as a signature
+    return (KR_CANARY in raw and written != "" and out != "" and exercised and not present and rc in (0, 3)), \
+        f"fixture holds canary={KR_CANARY in raw}; leaked into {present}; rc={rc}; file bytes={len(written)}; command signature path exercised={exercised}"
+
+
+def g_read_only():
+    if os.name == "nt":
+        return "SKIP", "chmod a-w is not a read-only fence on nt"
+    root = scratch("ro")
+    tracer_fixture(root)
+    tree = root / "projects"
+    for dp, dns, fns in os.walk(tree):
+        for n in fns:
+            os.chmod(os.path.join(dp, n), 0o444)
+    for dp, dns, fns in os.walk(tree, topdown=False):
+        os.chmod(dp, 0o555)
+    before = tree_state(tree)
+    rc, _o, err = run_main(rank_args(root, scratch("out")))
+    after = tree_state(tree)
+    return rc == 0 and before == after and len(before) >= 2, f"rc={rc} entries={len(before)} unchanged={before == after} err={err[-120:]}"
+
+
+def g_out_dir_inside_root():
+    root = scratch("oir")
+    tracer_fixture(root)
+    pd = pdir(root)
+    before = tree_state(root / "projects")
+    inside = pd / "out"
+    rc_in, _o, err_in = run_main(rank_args(root, inside))
+    link = scratch("oir-link") / "lnk"
+    link.symlink_to(pd, target_is_directory=True)
+    rc_ln, _o2, _e2 = run_main(rank_args(root, link / "viasym"))
+    rc_ex, _o3, _e3 = run_main(["rank", "--denominator", "OTHER", "--label", "FX-R", "--until", "none", "--expand",
+                                "--root", str(root / "projects"), "--out-dir", str(root / "projects" / "deeper" / "out")])
+    rc_eq, _o4, _e4 = run_main(rank_args(root, pd))
+    after = tree_state(root / "projects")
+    out_ok = scratch("oir-ok")
+    rc_ok, _o5, _e5 = run_main(rank_args(root, out_ok))
+    wrote = len(list(out_ok.glob("*.md")))
+    refused = rc_in == rc_ln == rc_ex == rc_eq == 2
+    return refused and before == after and not inside.exists() and "inside --root" in err_in and rc_ok in (0, 3) \
+        and wrote == 1, f"inside={rc_in} symlink={rc_ln} expand={rc_ex} equal={rc_eq} unchanged={before == after} control_rc={rc_ok} files={wrote}"
+
+
+def g_no_overwrite():
+    root = scratch("noov")
+    tracer_fixture(root)
+    out_dir = scratch("out")
+    args = rank_args(root, out_dir, label="FX-N")
+    rc1, _o1, _e1 = run_main(args)
+    first = sorted(out_dir.glob("L-FX-N-*.md"))
+    h1 = first[0].read_bytes() if first else b""
+    rc2, _o2, _e2 = run_main(args)
+    names = sorted(x.name for x in out_dir.glob("L-FX-N-*.md"))
+    ok = (rc1 == rc2 == 0 and len(first) == 1 and len(names) == 2 and first[0].read_bytes() == h1
+          and sum(1 for n in names if n.endswith("-2.md")) == 1)
+    return bool(ok), f"rc={rc1}/{rc2} files={names}"
+
+
+def g_until_auto():
+    # The tracer fixture (5 calls, last line at ts(20)) plus one later call 6 at ts(22) that REPEATS the Bash command: a
+    # third identical run, so counted it would be a second retry. The frozen population is the 5-call one, the freeze
+    # instant lies after the last line: the locator must find a cutoff between ts(20) and ts(22) by bisect, and the late
+    # call's retry is not in the result (retries stays 1, the 300-char t4 retry: 225.0).
+    root = scratch("ua")
+    fx = tracer_fixture(root)
+    call(fx, 6, [("t6", "Bash", CMD_C)], usage=(10, 0, 5010, 5))
+    fx.tool_result("t6", "F" * 300, ts(23))
+    frozen = write_frozen(root / "f.json", **{"KME-L": POP_KR})
+    out_dir = scratch("out")
+    rc, res, _o, _e = run_json(klr_args(root, out_dir, frozen, extra=["--until", "auto", "--freeze-instant", ts(30),
+                                                                      "--rollover-growth", "2000"]))
+    ul = res.get("until_located") or {}
+    until = kp.parse_instant(res["until"]) if res else None
+    e = entry(res, "unchanged_precondition_retries") if res else None
+    ok = (rc == 0 and res["population_match"] == "exact" and ul.get("method") == "bisect"
+          and until is not None and kp.parse_instant(ts(20)) <= until < kp.parse_instant(ts(22))
+          and res["population"]["calls"] == 5 and e is not None and e["events"]["retries"] == 1
+          and close(e["upper_bound_weighted"], 225.0))
+    return bool(ok), (f"rc={rc} match={res['population_match']} until={res['until']} located={ul} "
+                      f"retries={e and e['events']['retries']} upper={e and e['upper_bound_weighted']}")
+
+
+def g_cli_usage():
+    root = scratch("cu")
+    tracer_fixture(root)
+    out_dir = scratch("out")
+    pd = pdir(root)
+    frozen = write_frozen(root / "f.json", **{"KME-L": POP_KR})
+    base = ["--root", str(pd), "--out-dir", str(out_dir)]
+    cases = {
+        "growth 0": ["rank", "--denominator", "OTHER", "--label", "FX-U", "--select", "all", "--until", "none",
+                     "--rollover-growth", "0"] + base,
+        "CPP-D-W7": ["rank", "--denominator", "CPP-D-W7"] + base,
+        "select all with KME-L": ["rank", "--denominator", "KME-L", "--select", "all", "--frozen-file", frozen] + base,
+        "OTHER without label": ["rank", "--denominator", "OTHER", "--select", "all", "--until", "none"] + base,
+        "root not a directory": ["rank", "--denominator", "OTHER", "--label", "FX-U", "--select", "all", "--until",
+                                 "none", "--root", str(root / "nope"), "--out-dir", str(out_dir)],
+    }
+    rcs = {k: run_main(v)[0] for k, v in cases.items()}
+    wrote = list(out_dir.glob("*.md"))
+    rc_ok, _o, _e = run_main(rank_args(root, out_dir, label="FX-U"))
+    return all(v == 2 for v in rcs.values()) and not wrote and rc_ok == 0 and len(list(out_dir.glob("*.md"))) == 1, \
+        f"rcs={rcs} wrote_on_refusal={len(wrote)} control_rc={rc_ok}"
+
+
+GATES_CONTRACT = [
+    ("V-KMER-RANK-ORDER", g_rank_order),
+    ("V-KMER-RANK-TIE-DETERMINISTIC", g_rank_tie_deterministic),
+    ("V-KMER-UNMEASURED-NEVER-ZERO", g_unmeasured_never_zero),
+    ("V-KMER-MEASURED-ZERO-RANKED", g_measured_zero_ranked),
+    ("V-KMER-SAME-DENOMINATOR", g_same_denominator),
+    ("V-KMER-SELECTED-ONLY", g_selected_only),
+    ("V-KMER-DRIFT-ALL-UNMEASURED", g_drift_all_unmeasured),
+    ("V-KMER-UPPER-BOUND-LABELS", g_upper_bound_labels),
+    ("V-KMER-TERMINAL-EVIDENCE", g_terminal_evidence),
+    ("V-KMER-NO-SECRET", g_no_secret),
+    ("V-KMER-READ-ONLY", g_read_only),
+    ("V-KMER-OUT-DIR-INSIDE-ROOT", g_out_dir_inside_root),
+    ("V-KMER-NO-OVERWRITE", g_no_overwrite),
+    ("V-KMER-UNTIL-AUTO", g_until_auto),
+    ("V-KMER-CLI-USAGE", g_cli_usage),
+]
+
+
 GATES_TRACER = [("V-KMER-TRACER-E2E", g_tracer_e2e), ("V-KMER-CONTRACT-E2E", g_contract_e2e)]
-GATES = list(GATES_TRACER) + GATES_ROLLOVER + GATES_RETRY
+GATES = list(GATES_TRACER) + GATES_ROLLOVER + GATES_RETRY + GATES_CONTRACT
 
 
 def summary_line() -> str:
@@ -743,6 +1134,46 @@ def _m_status_ignores_observability():
                   else "UNMEASURED")
 
 
+def _m_ascending():
+    def mutant(entries):
+        have = [e for e in entries if e.get("upper_bound_weighted") is not None]
+        return sorted(have, key=lambda e: (e["upper_bound_weighted"], kr.CANDIDATES.index(e["candidate"])))
+    return _patch(kr, "rank_candidates", mutant)
+
+
+def _m_unmeasured_as_zero():
+    def mutant(entries):
+        have = [dict(e, upper_bound_weighted=0.0 if e.get("upper_bound_weighted") is None
+                     else e["upper_bound_weighted"]) for e in entries]
+        return sorted(have, key=lambda e: (-e["upper_bound_weighted"], kr.CANDIDATES.index(e["candidate"])))
+    return _patch(kr, "rank_candidates", mutant)
+
+
+def _m_tie_reversed():
+    def mutant(entries):
+        have = [e for e in entries if e.get("upper_bound_weighted") is not None]
+        return sorted(have, key=lambda e: (-e["upper_bound_weighted"], -kr.CANDIDATES.index(e["candidate"])))
+    return _patch(kr, "rank_candidates", mutant)
+
+
+def _m_half_denominator():
+    return _patch(kr, "denominator_for", lambda cid, scan: scan["measured"]["weighted"]
+                  / (2 if cid == "unchanged_precondition_retries" else 1))
+
+
+def _m_select_all():
+    return _patch(kr, "in_selection", lambda sid, selected: True)
+
+
+def _m_compare_always_exact():
+    return _patch(kp, "compare_population", lambda measured, frozen: ("exact", {}))
+
+
+def _m_terminal_ignores_unranked():
+    return _patch(kr, "terminal_ok", lambda role, match, frozen_source, unranked: role == "primary"
+                  and match == "exact" and bool(frozen_source) and bool(frozen_source.get("all_default")))
+
+
 MUTANTS = [
     ("M1 rollover_avoided ignores the thread floor (avoids the whole cut)", _m_floor_ignored,
      ["V-KMER-ROLLOVER-FLOOR"]),
@@ -752,9 +1183,21 @@ MUTANTS = [
     ("M4 retry_key keys a Bash call by its full input JSON (a changed description hides the retry)",
      _m_bash_full_json_key, ["V-KMER-RETRY-COMMAND-KEY"]),
     ("M5 upper_bound_of returns weighted_interval[0]", _m_upper_is_lower, ["V-KMER-REREADS-EQUALS-E"]),
+    ("M6 rank_candidates sorts ascending (lowest upper bound first)", _m_ascending, ["V-KMER-RANK-ORDER"]),
+    ("M7 rank_candidates ranks an UNMEASURED candidate as 0.0", _m_unmeasured_as_zero,
+     ["V-KMER-UNMEASURED-NEVER-ZERO"]),
+    ("M8 rank_candidates breaks a tie in reverse candidate order", _m_tie_reversed,
+     ["V-KMER-RANK-TIE-DETERMINISTIC"]),
     ("M9 candidate_status ignores observability (a partly observed candidate is ranked)",
      _m_status_ignores_observability,
      ["V-KMER-RETRY-UNPAIRED-UNMEASURED", "V-KMER-ROLLOVER-INLINE-SIDECHAIN-UNMEASURED"]),
+    ("M10 denominator_for halves the weighted for unchanged_precondition_retries", _m_half_denominator,
+     ["V-KMER-SAME-DENOMINATOR"]),
+    ("M11 in_selection selects every session (an unselected project enters the figures)", _m_select_all,
+     ["V-KMER-SELECTED-ONLY"]),
+    ("M12 kp.compare_population always answers exact (a drifted population ranks)", _m_compare_always_exact,
+     ["V-KMER-DRIFT-ALL-UNMEASURED"]),
+    ("M13 terminal_ok ignores unranked candidates", _m_terminal_ignores_unranked, ["V-KMER-TERMINAL-EVIDENCE"]),
 ]
 
 
