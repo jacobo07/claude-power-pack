@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import atexit
 import contextlib
+import hashlib
 import io
 import json
 import os
@@ -530,16 +531,62 @@ def g_seam_restored():
     return not problems, f"problems={problems}"
 
 
+LEDGER_PATHS = (ce.LEDGER_REL, CE_LEDGER, SC_LEDGER)       # the printer's domain among working-tree paths
+
+
 def snapshot() -> dict:
+    index = Path(git("rev-parse", "--git-path", "index").stdout.strip())
+    index = index if index.is_absolute() else REPO / index
     return {
-        "ledgers": {r: ce.lf_sha256(REPO / r) for r in (ce.LEDGER_REL, CE_LEDGER, SC_LEDGER)},
-        "status": git("status", "--porcelain").stdout,
+        "ledgers": {r: ce.lf_sha256(REPO / r) for r in LEDGER_PATHS},
+        "index": hashlib.sha256(index.read_bytes()).hexdigest() if index.exists() else "absent",
+        "status": git("--no-optional-locks", "status", "--porcelain").stdout,
         "head": git("rev-parse", "HEAD").stdout,
         "refs": git("for-each-ref").stdout,
     }
 
 
+def status_moved_paths(before: str, after: str) -> set:
+    """Paths whose `git status --porcelain` line appears in only one of the two snapshots."""
+    moved = set(before.splitlines()) ^ set(after.splitlines())
+    return {ln[3:].split(" -> ")[-1].strip('"') for ln in moved if len(ln) > 3}
+
+
+def read_only_verdict(before: dict, after: dict):
+    """(True | False | 'INCONCLUSIVE', why). The printer's domain is the three ledgers, the index, HEAD and the refs: a
+    change there is a FAIL. A `status` change confined to OTHER paths (an untracked doc written by a hook, a peer editing
+    its own files) is a wide oracle whose dirty set moved: INCONCLUSIVE, never FAIL and never PASS."""
+    changed = [k for k in before if before[k] != after[k]]
+    domain = [k for k in changed if k != "status"]
+    if domain:
+        return False, f"changed={domain}"
+    if "status" in changed:
+        moved = status_moved_paths(before["status"], after["status"])
+        inside = sorted(moved & set(LEDGER_PATHS))
+        if inside:
+            return False, f"changed=['status'] on printer-domain paths {inside}"
+        return "INCONCLUSIVE", (f"the working-tree dirty set moved outside the printer's domain "
+                                f"({sorted(moved)[:3]}); another writer is active, nothing is proven")
+    return True, "no change"
+
+
 def g_read_only():
+    snap = {"ledgers": {p: "h" for p in LEDGER_PATHS}, "index": "i", "status": " M a.py\n", "head": "H", "refs": "R"}
+    peer = dict(snap, status=" M a.py\n?? docs/arch/new.md\n")
+    ctl = {
+        "an unchanged snapshot passes": read_only_verdict(snap, dict(snap))[0] is True,
+        "an untracked file appearing outside the domain is INCONCLUSIVE, not FAIL":
+            read_only_verdict(snap, peer)[0] == "INCONCLUSIVE",
+        "a ledger path moving in status is FAIL": read_only_verdict(snap, dict(snap, status=f" M {CE_LEDGER}\n"))[0] is False,
+        "a ledger hash change is FAIL": read_only_verdict(
+            snap, dict(snap, ledgers=dict(snap["ledgers"], **{CE_LEDGER: "x"})))[0] is False,
+        "a moved HEAD is FAIL": read_only_verdict(snap, dict(snap, head="H2"))[0] is False,
+        "a changed index is FAIL": read_only_verdict(snap, dict(snap, index="i2"))[0] is False,
+        "a changed ref is FAIL even when status also moved": read_only_verdict(
+            snap, dict(peer, refs="R2"))[0] is False,
+    }
+    if not all(ctl.values()):
+        return False, f"controls failed: {[k for k, v in ctl.items() if not v]}"
     led = program_ledger()
     before = snapshot()
     ran = 0
@@ -550,8 +597,10 @@ def g_read_only():
             run_main(["--pillar", pid, "--commit", spec])
             ran += 1
     after = snapshot()
-    diff = [k for k in before if before[k] != after[k]]
-    return ran >= len(led["frozen"]["consumes"]) and not diff, f"runs={ran} changed={diff}"
+    verdict, why = read_only_verdict(before, after)
+    if ran < len(led["frozen"]["consumes"]):
+        return False, f"runs={ran}: the printer did not run"
+    return verdict, f"runs={ran} {why}, {len(ctl)} controls report"
 
 
 # --------------------------------------------------------------------------- plan 06-02: bundle lines and the J / M evidence file
@@ -787,6 +836,10 @@ def _m_any_terminal():
     return _patch(ev, "valid_terminal", lambda terminal: True)
 
 
+def _m_read_only_blind():
+    return _patch(sys.modules[__name__], "read_only_verdict", lambda before, after: (True, "mutant: always clean"))
+
+
 MUTANTS = [
     ("M1 OwnerLedgers.reachable always True (a side-branch commit is accepted)", _m_reachable_always,
      ["V-ICR2-UNREACHABLE"]),
@@ -797,6 +850,7 @@ MUTANTS = [
     ("M6 predicted_at never answers UNREADABLE", _m_never_unreadable, ["V-ICR2-REAL-UNREADABLE-POLE"]),
     ("M7 valid_terminal accepts anything (a junk owner terminal prints a row)", _m_any_terminal,
      ["V-ICR2-BAD-TERMINAL"]),
+    ("M8 read_only_verdict never reports a change", _m_read_only_blind, ["V-ICR2-READ-ONLY"]),
 ]
 
 
