@@ -290,6 +290,40 @@ def g_unreachable():
     return good and rc2 == 0, f"side rc={rc} unreachable_lines={len(unreach)} rows={'ROWS' in lines} | control rc={rc2}"
 
 
+def one_commit_repo(terminals: dict) -> dict:
+    """A scratch repo with ONE commit holding a CE-shaped owner ledger whose D/E/I terminals are `terminals` verbatim."""
+    d = scratch("onecommit")
+    env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t",
+               GIT_COMMITTER_EMAIL="t@t")
+
+    def g(*args):
+        return subprocess.run(["git", "-C", str(d), *args], capture_output=True, text=True, env=env, check=True)
+
+    g("init", "-q", "-b", "main")
+    p = d / CE_LEDGER
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(ce_shaped_ledger(terminals, "one"), encoding="utf-8")
+    g("add", "--", CE_LEDGER)
+    g("commit", "-q", "-m", "one")
+    return {"dir": d, "sha": g("rev-parse", "HEAD").stdout.strip()}
+
+
+def g_bad_terminal():
+    """WR-01: a terminal that is not one of ce.TERMINALS (empty, non-string, unknown name) is OPEN, never a pasteable row."""
+    bad = {}
+    for label, junk in (("empty-string", ""), ("zero", 0), ("false", False), ("dict", {}), ("typo", "DONE")):
+        r = one_commit_repo({"D": CLOSED["D"], "E": CLOSED["E"], "I": junk})
+        with bound_repo(r["dir"]):
+            rc, out = run_main(["--pillar", "J", "--commit", r["sha"]])
+        opens = [x for x in out.splitlines() if x.startswith(f"OPEN {CE_LEDGER}#I ")]
+        bad[label] = rc == 1 and len(opens) == 1 and '"kind"' not in out and "ROWS" not in out.splitlines()
+    r = one_commit_repo(CLOSED)                     # control: the same shape with real terminals is READY
+    with bound_repo(r["dir"]):
+        rc, out = run_main(["--pillar", "J", "--commit", r["sha"]])
+    ok_ctl = rc == 0 and len(parse_rows(out)) == 3
+    return all(bad.values()) and ok_ctl, f"refused={bad} control_ready={ok_ctl}"
+
+
 def synth_ledger(rows, pid="J"):
     return {"frozen": {"consumes": {pid: [{"ledger": r, "pillar": p} for r, p in PAIRS]}},
             "state": {pid: {"terminal": "MERGED_INTO_EXISTING_OWNER", "evidence": rows}}}
@@ -551,6 +585,7 @@ GATES = [
     ("V-ICR2-CONSUMES-DISCOVERED", g_consumes_discovered),
     ("V-ICR2-SCRATCH-CLOSED", g_scratch_closed),
     ("V-ICR2-PARTIAL-NO-PASTE", g_partial_no_paste),
+    ("V-ICR2-BAD-TERMINAL", g_bad_terminal),
     ("V-ICR2-UNREACHABLE", g_unreachable),
     ("V-ICR2-ROUNDTRIP-R2", g_roundtrip_r2),
     ("V-ICR2-BAD-COMMIT", g_bad_commit),
@@ -631,6 +666,10 @@ def _m_never_unreadable():
     return _patch(ev, "predicted_at", mutant)
 
 
+def _m_any_terminal():
+    return _patch(ev, "valid_terminal", lambda terminal: True)
+
+
 MUTANTS = [
     ("M1 OwnerLedgers.reachable always True (a side-branch commit is accepted)", _m_reachable_always,
      ["V-ICR2-UNREACHABLE"]),
@@ -639,6 +678,8 @@ MUTANTS = [
     ("M4 consumed returns only the first pair", _m_first_pair_only, ["V-ICR2-CONSUMES-DISCOVERED"]),
     ("M5 roundtrip_problems is always empty", _m_roundtrip_blind, ["V-ICR2-ROUNDTRIP-R2"]),
     ("M6 predicted_at never answers UNREADABLE", _m_never_unreadable, ["V-ICR2-REAL-UNREADABLE-POLE"]),
+    ("M7 valid_terminal accepts anything (a junk owner terminal prints a row)", _m_any_terminal,
+     ["V-ICR2-BAD-TERMINAL"]),
 ]
 
 

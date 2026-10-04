@@ -74,6 +74,12 @@ def ready_when(flags) -> bool:
     return bool(flags) and all(flags)
 
 
+def valid_terminal(terminal) -> bool:
+    """True only for a str naming one of ce.TERMINALS; rejects "", 0, False, {} and an unknown name (an unhashable
+    value must not raise on the set test)."""
+    return isinstance(terminal, str) and terminal in ce.TERMINALS
+
+
 def owner_rows(pid: str, sha: str, wanted, owners):
     """(rows, lines) for the consumed pairs `wanted` at commit `sha`. Rows only when every pair is READY."""
     short = sha[:8]
@@ -89,6 +95,11 @@ def owner_rows(pid: str, sha: str, wanted, owners):
         terminal = owners.terminal_at(sha, ref, pillar)
         if terminal is None:
             lines.append(f"OPEN {ref}#{pillar} at {short}: no terminal (owner predicted {predicted})")
+            flags.append(False)
+            continue
+        if not valid_terminal(terminal):
+            lines.append(f"OPEN {ref}#{pillar} at {short}: terminal {terminal!r} is not a known terminal "
+                         f"(owner predicted {predicted})")
             flags.append(False)
             continue
         lines.append(f"READY {ref}#{pillar} at {short}: {terminal}")
