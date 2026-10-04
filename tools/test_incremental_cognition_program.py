@@ -54,9 +54,11 @@ import contextlib
 import copy
 import io
 import json
+import os
 import posixpath
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -360,9 +362,122 @@ def check_measurement_scope(led: dict, res, only=None) -> list:
     return f
 
 
-def _bundle_ref(ref) -> bool:
-    """True when an evidence ref names the owner bundle, however it is spelled: backslashes, a leading ./, a ./ or
-    // inside the path, or the absolute path of this checkout."""
+BUNDLE_WHY = "is the owner bundle: the mission's request is never the Owner's answer (only the Owner's own words count)"
+
+
+def _spelled_tail(ref: str):
+    """The ref as a posix-normalised string, and the part after the program directory when it has one
+    (`vault/programs/incremental-cognition/` anywhere in it, so a second checkout's absolute path counts)."""
+    s = posixpath.normpath(ref.replace("\\", "/"))
+    probe = "/" + s.lstrip("/")
+    i = probe.find("/" + PROGRAM_DIR)
+    return s, (probe[i + 1 + len(PROGRAM_DIR):] if i >= 0 else None)
+
+
+def _resolved_paths(ref: str) -> list:
+    """The existing files the ref reads as, resolved the way the CE evidence reader (L4) resolves it: `~` expanded,
+    absolute paths accepted, otherwise relative to this checkout."""
+    out = []
+    for cand in (ref, ref.replace("\\", "/")):
+        try:
+            p = ce.Resolver._path(cand)
+            if p.exists() and p not in out:
+                out.append(p)
+        except (OSError, RuntimeError, ValueError):
+            continue
+    return out
+
+
+def names_the_bundle(ref) -> bool:
+    """Identity, not spelling: True when the ref is the owner bundle however it is written. Resolved through the same
+    reader the gate uses (so `~`, absolute paths and symlinks land on the real file, compared with os.path.samefile),
+    and by its spelled tail (a second checkout of this repository, whose file is a different file)."""
+    if not isinstance(ref, str) or not ref.strip():
+        return False
+    bundle = REPO / OWNER_BUNDLE_REL
+    for p in _resolved_paths(ref):
+        try:
+            if bundle.exists() and os.path.samefile(p, bundle):
+                return True
+        except OSError:
+            continue
+    spelled, tail = _spelled_tail(ref)
+    return spelled == OWNER_BUNDLE_REL or tail == "owner-bundle.md"
+
+
+def owner_decision_problem(ref):
+    """Why an owner_decision evidence ref cannot be the Owner's answer, or None."""
+    if names_the_bundle(ref):
+        return BUNDLE_WHY
+    return None
+
+
+def check_owner_decisions(led: dict, only=None) -> list:
+    """R4: the owner bundle is the mission's request, never the Owner's answer."""
+    f = []
+    for pid in (list(only) if only is not None else list((led.get("state") or {}))):
+        for e in ((led.get("state") or {}).get(pid) or {}).get("evidence") or []:
+            if e.get("kind") == "owner_decision":
+                why = owner_decision_problem(e.get("ref"))
+                if why:
+                    f.append(f"R4 {pid}: owner_decision {e.get('ref')} {why}")
+    return f
+
+
+# ---------------------------------------------------------------- R4 poles (selftest helpers)
+@contextlib.contextmanager
+def _home(path):
+    saved = {k: os.environ.get(k) for k in ("HOME", "USERPROFILE")}
+    os.environ["HOME"] = os.environ["USERPROFILE"] = str(path)
+    try:
+        yield
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
+_R4_SCRATCH = []
+
+
+def r4_identity_poles() -> dict:
+    """{name: (ref, expected refused)}: refs that name the bundle (or a mission-written file) in another spelling, and the
+    accepted shapes (expected False). Built in a scratch directory; the repo is never written."""
+    if not _R4_SCRATCH:
+        _R4_SCRATCH.append(tempfile.TemporaryDirectory(prefix="icp-r4-"))
+    td = Path(_R4_SCRATCH[0].name)
+    bundle = REPO / OWNER_BUNDLE_REL
+    raw = bundle.read_bytes()
+    poles = {}
+    # a second checkout of the same repository: the same repo-relative path under another root, different bytes
+    second = td / "checkout2" / OWNER_BUNDLE_REL
+    second.parent.mkdir(parents=True, exist_ok=True)
+    second.write_bytes(raw + b"\nedited in the second checkout\n")
+    poles["second-checkout-abs"] = (str(second), True)
+    poles["main-checkout-abs"] = (str(REPO.parent / OWNER_BUNDLE_REL), True)
+    poles["absolute-this-checkout"] = (str(bundle), True)
+    poles["tilde"] = ("~/" + REPO.relative_to(REPO.parent).as_posix() + "/" + OWNER_BUNDLE_REL, True)
+    link = td / "link-to-bundle.md"
+    if not link.exists():
+        try:
+            os.symlink(str(bundle), str(link))
+        except (OSError, NotImplementedError):
+            pass
+    if link.is_symlink():
+        poles["symlink"] = (str(link), True)
+    # accepted shape: the Owner's own decision file, in scratch (never in the repo)
+    dec = td / "checkout2" / PROGRAM_DIR / "evidence" / "L-owner-decision.md"
+    dec.parent.mkdir(parents=True, exist_ok=True)
+    dec.write_text("# Decision\n\nIn my own words: decline [L] live sessions.\n", encoding="utf-8")
+    poles["accepted-owner-decision-fixture"] = (str(dec), False)
+    poles["accepted-owner-decision-relative"] = (PROGRAM_DIR + "evidence/L-owner-decision.md", False)
+    return poles
+
+
+def _old_string_bundle_ref(ref) -> bool:
+    """The pre-fix R4 identity: spelling only (backslashes, ./, the absolute path of THIS checkout)."""
     if not isinstance(ref, str) or not ref:
         return False
     r = posixpath.normpath(ref.replace("\\", "/"))
@@ -374,15 +489,19 @@ def _bundle_ref(ref) -> bool:
     return r == OWNER_BUNDLE_REL
 
 
-def check_owner_decisions(led: dict, only=None) -> list:
-    """R4: the owner bundle is the mission's request, never the Owner's answer."""
-    f = []
-    for pid in (list(only) if only is not None else list((led.get("state") or {}))):
-        for e in ((led.get("state") or {}).get(pid) or {}).get("evidence") or []:
-            if e.get("kind") == "owner_decision" and _bundle_ref(e.get("ref")):
-                f.append(f"R4 {pid}: owner_decision {e.get('ref')} is the owner bundle: the mission's request is "
-                         f"never the Owner's answer (only the Owner's own words count)")
-    return f
+def _patch_attr(name, fn):
+    saved = globals()[name]
+    globals()[name] = fn
+
+    def restore():
+        globals()[name] = saved
+    return restore
+
+
+R4_MUTANTS = {
+    "r4-string-compare": lambda: _patch_attr("owner_decision_problem",
+                                             lambda ref: "the owner bundle" if _old_string_bundle_ref(ref) else None),
+}
 
 
 class FakeOwners(OwnerLedgers):
@@ -630,10 +749,15 @@ def selftest(verbose=True) -> bool:
     else:
         ok = False
         print("  INCONCLUSIVE V-ICP-R3-L-REAL: no L-KME-G smoke file")
-    # R4: the mission's own bundle is never an owner_decision.
+    # R4: the mission's own bundle is never an owner_decision. Identity, not spelling (CR-01): every pole below names
+    # the same file as the bundle, or a file the mission wrote, in a different spelling.
     def r4_led(pillar, ref):
         return {"state": {pillar: {"terminal": "AUTHORIZATION_BOUND", "evidence": [
             {"kind": "owner_decision", "ref": ref, "sha256": "0" * 64}]}}}
+
+    def r4_refused(ref, pillars=("L",)):
+        return all(len(g) == 1 and g[0].startswith("R4 ") for g in
+                   (check_owner_decisions(r4_led(p_, ref), only=[p_]) for p_ in pillars))
     bundle_forms = [OWNER_BUNDLE_REL, "./" + OWNER_BUNDLE_REL, OWNER_BUNDLE_REL.replace("/", "\\"),
                     "vault/programs/./incremental-cognition/owner-bundle.md", str(REPO / OWNER_BUNDLE_REL)]
     refused = [check_owner_decisions(r4_led(p_, f_), only=[p_]) for p_ in ("L", "B") for f_ in bundle_forms]
@@ -644,6 +768,19 @@ def selftest(verbose=True) -> bool:
         and check_owner_decisions({"state": {"L": {"evidence": [
             {"kind": "measurement", "ref": OWNER_BUNDLE_REL, "sha256": "0" * 64}]}}}, only=["L"]) == [],
         "V-ICP-R4-OTHER-DECISION-SILENT (the Owner's own decision file, and a non-decision evidence kind, are not refused)")
+    with _home(REPO.parent):       # the ~ pole expands against the checkout's parent
+        poles = r4_identity_poles()
+        off = [name for name, (ref, expect) in poles.items() if r4_refused(ref) != expect]
+    say(not off, f"V-ICP-R4-IDENTITY ({len(poles)} spellings / identities of the bundle and of mission-written files "
+                 f"refused, the accepted shapes silent; off: {off})")
+    for mname, patcher in R4_MUTANTS.items():
+        restore = patcher()
+        try:
+            with _home(REPO.parent):
+                off_m = [name for name, (ref, expect) in r4_identity_poles().items() if r4_refused(ref) != expect]
+        finally:
+            restore()
+        say(bool(off_m), f"V-ICP-MUT-{mname} killed by V-ICP-R4-IDENTITY (the poles it leaves open: {off_m[:3]})")
     return ok
 
 
