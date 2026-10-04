@@ -192,7 +192,7 @@ Plans:
 
 **Goal**: J and M closed by R2 against CE/SC ledgers on HEAD; UKDL 3-level and CBR reviews; deltas; done-gate.
 **Depends on**: CE and SC landing their ledger commits on this line of history.
-**Plans:** 1/4 plans executed (sequential waves 1-4; J and M externally blocked on GEX44, so no terminal is written; `--final` is
+**Plans:** 2/4 plans executed (sequential waves 1-4; J and M externally blocked on GEX44, so no terminal is written; `--final` is
 expected to fail on the open pillars and is recorded verbatim)
 
 Plans:
@@ -202,7 +202,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 06-02-PLAN.md — J/M: evidence/JM-blocked.md (exact R2 inputs, measured blocker), [J]/[M] bundle items + summary rows 29-30, pending-check discovery over every phase directory
+- [x] 06-02-PLAN.md — J/M: evidence/JM-blocked.md (exact R2 inputs, measured blocker), [J]/[M] bundle items + summary rows 29-30, pending-check discovery over every phase directory
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
