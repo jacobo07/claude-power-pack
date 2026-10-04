@@ -169,6 +169,24 @@ Plans:
 
 **Goal**: offline replay ranks the live experiments; every Owner item is in one bundle.
 **Depends on**: Phase 3.
+**Plans:** 4 plans (sequential waves 1-4; all share tools/test_kme_replay.py, 05-03 / 05-04 the owner bundle)
+
+Plans:
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — L ranker core: wiki/tools/kme_replay.py `rank` (late-rollover policy replay, identical rereads = the E observer, unchanged-precondition retries) on one denominator as upper bounds, UNMEASURED never 0; additive observer_factories keyword in kme_pillars; drill 6/6
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-02-PLAN.md — L ranking contract and safety gates (order, ties, one denominator, drift, labels, terminal_evidence, no secret, read-only), drill 13/13, KME-G smoke (plane gex44, never terminal)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-03-PLAN.md — [L] bundle items (KME-L rank, live-session quota decision), done-gate R3-L + R4 (the bundle is never a decision), one replay-proven laptop code sync replacing the stale Phase 3 / [K] transfer lists
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 05-04-PLAN.md — owner-bundle summary table (every Owner item of phases 1-5, coverage discovered and gated), evidence/L.md Status OPEN, final laptop-sync replay
 
 ### Phase 6: Consume owners and close
 
