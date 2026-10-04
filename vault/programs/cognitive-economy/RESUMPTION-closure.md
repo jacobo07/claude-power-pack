@@ -18,21 +18,20 @@ another pane's; never touch it. Repo `~/.claude/skills/claude-power-pack`, branc
   done_gate/architectural_truth (doctrine names it "Grader", nothing invokes it),
   fable_distillation/fd_04_acceleration, sqi/ratchet (only tools/run_sqi.py, manual). No registry edits.
 - W5 2e2bc149: FIOS token_irr reads session tokens read-only from usage_index.
+- W6 ecb5977a: UC-08..12 appended (12 candidates, gate PASS, 5/5 mutants red); UC-04 promoted as
+  T-A-WHOLE-TREE-PROGRESS-FINGERPRINT-CANNOT-SEE-A-STALL-IN-A-SHARED-CHECKOUT-001 (new last section of
+  ukdl-universal.md, own hunk only; foreign +292 incl. CEPS auto-appends left unstaged); handoffs/R-cbr.md;
+  ledger state.R ALREADY re-pinned via ledger_write.py. --final PASS after the commit.
 
 ## Next (in order)
-1. W6: append UKDL candidates to ukdl-candidates.md (resolved != built; gate coupled to transient
-   residue; status-surface drift; schtasks ANSI/wscript blind discovery; live code uncommitted) via
-   gates/gate_ukdl_candidates.py. Promote UC-04 into vault/knowledge_base/ukdl-universal.md in its
-   section (Owner decision 6 = the go; cite it). That file has FOREIGN uncommitted hunks: stage own
-   hunk from the index blob (scratchpad pattern stage_own_hunk.py: hash-object + update-index).
-   Write handoffs/R-cbr.md (guarantees, evidence, applicability, limits; donegate.judge orphan = CBR debt).
-2. W7: owner-bundle.md close items ([RUN] done, [L] WIRED, [B] deferred, [T] result, [R] done);
-   ledger: state.T owner_decision + result, re-pin sha256 of owner-bundle (B :286, T :855) and
-   ukdl-candidates (R :821), LF-normalized; dated CLOSE.md section; --selftest + --final PASS.
-3. Push #2: fetch, FF check, secret-scan range, push the exact verified sha.
+1. W7: owner-bundle.md close items ([RUN] done, [L] WIRED, [B] deferred, [T] result, [R] done --
+   UC-04 promoted in ecb5977a on decision 6); ledger: state.T owner_decision + result, re-pin
+   owner-bundle sha256 in B and T (R needs no re-pin unless ukdl-candidates/R-cbr change again), via
+   ledger_write.py; dated CLOSE.md section; --selftest + --final PASS.
+2. Push #2: fetch, FF check, secret-scan range, push the exact verified sha.
 
 ## Findings to record (not ours to fix)
 - tools/compound_unattended.py live code uncommitted since ~2026-09-10.
 - V-FIOS-LIVE-PATH-WIRED red: tools/kclaude.ps1 lacks session_compiler --preflight since e58b6afe.
 
-Start: read this file, `git log --oneline -6`, then W6 item 1.
+Start: read this file, `git log --oneline -6`, then Next item 1 (W7).
