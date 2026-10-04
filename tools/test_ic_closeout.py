@@ -613,7 +613,7 @@ def g_evidence_resolves():
         "a missing path is refused": ref_resolves("tools/no_such_file_icn.py") is not None,
         "an escaping path is refused": ref_resolves("../outside.md") is not None,
         "a reachable commit is accepted": ref_resolves(f"commit:{h}") is None,
-        "an absent commit (21671d6c) is refused": ref_resolves("commit:21671d6c") is not None,
+        "an absent commit (probed absent in this clone) is refused": ref_resolves(f"commit:{absent_commit()}") is not None,
         "a zero commit is refused": ref_resolves("commit:0000000") is not None,
         "a directory is refused (git show lists a tree with rc 0)": has(
             [ref_resolves("tools") or "", ref_resolves("tools/") or ""], "not a file at HEAD"),
@@ -998,6 +998,14 @@ def syn_ledger(led: dict, product=None, intelligence=None) -> dict:
     return out
 
 
+def absent_commit() -> str:
+    """A 40-hex id this clone does not hold: probed, never assumed (a fixed 8-hex went red the day it was fetched)."""
+    n = 1
+    while git("rev-parse", "--verify", "--quiet", f"{n:040x}^{{commit}}").returncode == 0:
+        n += 1
+    return f"{n:040x}"
+
+
 def _full_sha(short: str) -> str | None:
     r = git("rev-parse", "--verify", "--quiet", f"{short}^{{commit}}")
     return r.stdout.strip() if r.returncode == 0 else None
@@ -1068,15 +1076,23 @@ def g_ledger_deltas():
         "an unknown pillar is reported": has(one(pillars=["Z"]), "pillar ids"),
         "a phase outside 1..6 is reported": has(one(phase=7), "phase 7"),
     }
+    missing = []        # a control that cannot run is named, never silently dropped (the gate is then INCONCLUSIVE)
     if peer and commit_reachable(peer):
         ctl["a reachable peer commit (foreign subject and paths) is reported"] = has(one(commits=[peer]), "not a program commit")
+    else:
+        missing.append("5cdd7d9f (peer commit)")
     if foreign_phase and commit_reachable(foreign_phase):
         ctl["a reachable foreign phase-scoped commit (another workstream) is reported"] = has(
             one(commits=[foreign_phase]), "not a program commit")
+    else:
+        missing.append("d5d5fa05 (foreign phase-scoped commit)")
     if not all(ctl.values()):
         return False, f"controls failed: {[k for k, v in ctl.items() if not v]}"
     probs = delta_problems(led)
     n = {k: len((led.get("deltas") or {}).get(k) or []) for k in DELTA_KINDS}
+    if not probs and missing:
+        return "INCONCLUSIVE", (f"control commit(s) {missing} are not reachable in this clone, so commit_subject / commit_paths "
+                                f"were not driven against real foreign commits; the other {len(ctl)} controls report")
     return not probs, f"deltas {n}; every commit a reachable program commit, every evidence ref at HEAD with its current sha; problems={probs[:3]}, {len(ctl)} controls report"
 
 
@@ -1225,6 +1241,14 @@ def _m_canonical_path_unchecked():
     return _patch("noncanonical_path", lambda path: None)
 
 
+def _m_duplicate_cited_unchecked():
+    return _patch("duplicate_problems", _without(duplicate_problems, "no such id"))
+
+
+def _m_bundle_n_unchecked():
+    return _patch("bundle_n_problems", _without(bundle_n_problems, "exactly one"))
+
+
 MUTANTS = [
     ("M1 review_problems ignores missing rows", _m_coverage_blind, ["V-ICN-REVIEW-COVERAGE"]),
     ("M2 ref_resolves accepts every ref", _m_refs_always, ["V-ICN-EVIDENCE-RESOLVES"]),
@@ -1240,6 +1264,8 @@ MUTANTS = [
     ("M12 program_commit_problem skips the program-path rule", _m_program_path_rule_skipped, ["V-ICN-LEDGER-DELTAS"]),
     ("M13 noncanonical_path accepts every spelling", _m_canonical_path_unchecked,
      ["V-ICN-LEDGER-DELTAS", "V-ICN-CANDIDATES-SHAPE"]),
+    ("M14 duplicate_problems skips the cited-id existence check", _m_duplicate_cited_unchecked, ["V-ICN-DUPLICATE-CITED"]),
+    ("M15 bundle_n_problems skips the exactly-one-[N] rule", _m_bundle_n_unchecked, ["V-ICN-BUNDLE-N"]),
 ]
 
 

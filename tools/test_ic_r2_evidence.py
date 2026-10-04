@@ -323,7 +323,8 @@ def g_scratch_closed():
     rc1, out1 = scratch_main(s["c1"])
     opens = [x for x in out1.splitlines() if x.startswith("OPEN ")]
     neg = (rc1 == 1 and len(opens) == 3 and not parse_rows(out1) and '"kind"' not in out1
-           and all(f"owner predicted {PREDICTED[p]}" in o for p, o in zip(("D", "E", "I"), opens)))
+           and all(f"owner predicted {PREDICTED[p]}" in o for p, o in zip(("D", "E", "I"), opens))
+           and all(": no terminal (" in o for o in opens))      # an absent terminal is not a junk one (WR-01 branch)
     return pos and neg, f"closed rc={rc} rows_ok={rows == want} ready={len(ready)} | open rc={rc1} open_lines={len(opens)}"
 
 
@@ -883,6 +884,12 @@ def _m_read_only_blind():
     return _patch(sys.modules[__name__], "read_only_verdict", lambda before, after: (True, "mutant: always clean"))
 
 
+def _m_absent_as_junk():
+    orig = icp.OwnerLedgers.terminal_at
+    return _patch(icp.OwnerLedgers, "terminal_at", lambda self, sha, ref, pillar: (
+        "" if orig(self, sha, ref, pillar) is None else orig(self, sha, ref, pillar)))
+
+
 def _m_measured_trusted():
     mod = sys.modules[__name__]
     orig = mod.jm_blocked_problems
@@ -904,7 +911,12 @@ MUTANTS = [
      ["V-ICR2-BAD-TERMINAL"]),
     ("M8 read_only_verdict never reports a change", _m_read_only_blind, ["V-ICR2-READ-ONLY"]),
     ("M9 a quoted measured line is trusted, not re-derived", _m_measured_trusted, ["V-ICR2-JM-BLOCKED-COVERS"]),
+    ("M10 an absent owner terminal is reported as a junk terminal (None branch conflated)", _m_absent_as_junk,
+     ["V-ICR2-SCRATCH-CLOSED"]),
 ]
+# Not mutated, by measurement: resolve_commit's leading-"-" guard. `git rev-parse --verify --quiet -x^{commit}` (and --all, -h,
+# --end-of-options, --abbrev-ref, ...) fail in git itself because of the `^{commit}` suffix, so removing the guard changes no
+# observable result: an equivalent mutant, kept as defence in depth against an option reaching git.
 
 
 def run_drill() -> int:
