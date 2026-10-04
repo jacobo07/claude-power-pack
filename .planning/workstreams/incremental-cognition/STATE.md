@@ -177,8 +177,8 @@ both closed verification_deferred_human. Gates at 23979ec2: FLOOR 67/67, KMER 45
 Owner bundle summary table: 28 rows, gate-checked (V-KMER-BUNDLE-SUMMARY-*); a new bundle item or pending UAT/VER key needs its
 row in the same commit. Phase 6 planning dispatched (planner prompt in the job tmp dir; J/M externally blocked, N runnable).
 **Next exact action:** phase 6 plans 06-01..04 are COMMITTED (revision 1, for checker round-1 W1 subject+path program-commit rule and W2
-own-commit protected-path checks; round 1 had 0 blockers). Checker round 2 was dispatched but its verdict was lost at the context wall:
-re-run gsd-plan-checker on the revised plans (scope: 06-04 T1 program_commit_problem, per-plan PB + /tmp/ic-p6-0N-commits.txt checks in
-06-01 T3 / 06-03 T1-T2 / 06-04 T3); if it passes, execute phase 6 sequentially (`/gsd-execute-phase 6 --no-transition --ws incremental-cognition`;
+own-commit protected-path checks; round 1 had 0 blockers). Checker round 2 PASSED (0 blockers, 0 warnings; verified d5d5fa05 refused by the path rule, own-commit logic by hand;
+info: PROGRAM_PATHS is a closed list -- a program change to an unlisted file fails V-ICN-LEDGER-DELTAS loudly, fix = add the path).
+Next: execute phase 6 sequentially (`/gsd-execute-phase 6 --no-transition --ws incremental-cognition`;
 executor prompt template is reproducible from the phase-5 dispatch shape: workstream.set first, pin guard, commit each task when green,
 SUMMARY before narration, J/M/N never terminal, --final expected to FAIL and recorded verbatim).
