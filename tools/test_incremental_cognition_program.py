@@ -366,11 +366,13 @@ BUNDLE_WHY = "is the owner bundle: the mission's request is never the Owner's an
 
 
 def _spelled_tail(ref: str):
-    """The ref as a posix-normalised string, and the part after the program directory when it has one
-    (`vault/programs/incremental-cognition/` anywhere in it, so a second checkout's absolute path counts)."""
-    s = posixpath.normpath(ref.replace("\\", "/"))
+    """The ref as a posix-normalised, case-folded string with any Windows drive letter dropped (`C:\\Users\\...` and
+    `c:/...` are the laptop's spellings; NTFS names are case-insensitive), and the part after the program directory when
+    it has one (`vault/programs/incremental-cognition/` anywhere in it, so a second checkout's absolute path counts)."""
+    s = re.sub(r"^[A-Za-z]:", "", ref.strip().replace("\\", "/"))
+    s = posixpath.normpath(s).casefold()
     probe = "/" + s.lstrip("/")
-    i = probe.find("/" + PROGRAM_DIR)
+    i = probe.find("/" + PROGRAM_DIR.casefold())
     return s, (probe[i + 1 + len(PROGRAM_DIR):] if i >= 0 else None)
 
 
@@ -402,7 +404,7 @@ def names_the_bundle(ref) -> bool:
         except OSError:
             continue
     spelled, tail = _spelled_tail(ref)
-    return spelled == OWNER_BUNDLE_REL or tail == "owner-bundle.md"
+    return spelled == OWNER_BUNDLE_REL.casefold() or tail == "owner-bundle.md"
 
 
 def owner_decision_problem(ref):
@@ -467,6 +469,15 @@ def r4_identity_poles() -> dict:
             pass
     if link.is_symlink():
         poles["symlink"] = (str(link), True)
+    # the laptop's spellings: a Windows drive path with backslashes, and NTFS's case-insensitive names
+    win = "C:\\Users\\User\\repo\\" + OWNER_BUNDLE_REL.replace("/", "\\")
+    poles["windows-drive-backslash"] = (win, True)
+    poles["windows-drive-case-variant"] = (win.replace("vault", "VAULT").replace("owner-bundle", "Owner-Bundle")
+                                           .replace("programs", "Programs").replace("incremental-cognition",
+                                                                                    "Incremental-Cognition"), True)
+    poles["relative-case-variant"] = ("Vault/Programs/Incremental-Cognition/OWNER-BUNDLE.md", True)
+    poles["windows-forward-slash-drive"] = ("c:/repo/" + OWNER_BUNDLE_REL, True)
+    poles["unrelated-windows-path"] = ("C:\\Users\\User\\Desktop\\my-decision.md", False)
     # accepted shape: the Owner's own decision file, in scratch (never in the repo)
     dec = td / "checkout2" / PROGRAM_DIR / "evidence" / "L-owner-decision.md"
     dec.parent.mkdir(parents=True, exist_ok=True)
@@ -498,7 +509,16 @@ def _patch_attr(name, fn):
     return restore
 
 
+def _spelled_tail_case_sensitive(ref: str):
+    """The pre-fix tail: no drive-letter strip, no case folding."""
+    s = posixpath.normpath(ref.strip().replace("\\", "/"))
+    probe = "/" + s.lstrip("/")
+    i = probe.find("/" + PROGRAM_DIR)
+    return s, (probe[i + 1 + len(PROGRAM_DIR):] if i >= 0 else None)
+
+
 R4_MUTANTS = {
+    "r4-case-sensitive-spelling": lambda: _patch_attr("_spelled_tail", _spelled_tail_case_sensitive),
     "r4-string-compare": lambda: _patch_attr("owner_decision_problem",
                                              lambda ref: "the owner bundle" if _old_string_bundle_ref(ref) else None),
 }
