@@ -2321,7 +2321,13 @@ def g_out_dir_inside_root():
     inside = pd / "out"
     rc_in, _o, err_in = run_main(other_args(pd, inside))
     link = scratch("wr01-link") / "lnk"
-    link.symlink_to(pd, target_is_directory=True)
+    try:
+        link.symlink_to(pd, target_is_directory=True)
+    except OSError as exc:  # Windows without the symlink privilege: a junction resolves the same way
+        if os.name != "nt" or getattr(exc, "winerror", None) != 1314:
+            raise
+        import _winapi
+        _winapi.CreateJunction(str(pd), str(link))
     rc_ln, _o2, err_ln = run_main(other_args(pd, link / "viasym"))
     rc_ex, _o3, err_ex = run_main(other_args(root / "projects", root / "projects" / "deeper" / "out") + ["--expand"])
     rc_eq, _o4, _e4 = run_main(other_args(pd, pd))

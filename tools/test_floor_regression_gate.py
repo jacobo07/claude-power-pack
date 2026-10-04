@@ -2397,14 +2397,19 @@ def _edit_files(path, fn):
     Path(path).write_bytes(b"\n".join(out))
 
 
+def _is_user_claude(f) -> bool:
+    # separators normalised like _drop_rules: on Windows the fixture path ends "\.claude\CLAUDE.md"
+    return f["type"] == "User" and f["path"].replace("\\", "/").endswith("/CLAUDE.md")
+
+
 def _drop_user_claude(path):
-    _edit_files(path, lambda fs: [f for f in fs if not (f["type"] == "User" and f["path"].endswith("/CLAUDE.md"))])
+    _edit_files(path, lambda fs: [f for f in fs if not _is_user_claude(f)])
 
 
 def _set_user_claude(path, text):
     def edit(fs):
         for f in fs:
-            if f["type"] == "User" and f["path"].endswith("/CLAUDE.md"):
+            if _is_user_claude(f):
                 f["content"] = text
         return fs
     _edit_files(path, edit)

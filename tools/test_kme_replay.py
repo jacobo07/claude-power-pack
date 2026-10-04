@@ -1166,7 +1166,13 @@ def g_out_dir_inside_root():
     inside = pd / "out"
     rc_in, _o, err_in = run_main(rank_args(root, inside))
     link = scratch("oir-link") / "lnk"
-    link.symlink_to(pd, target_is_directory=True)
+    try:
+        link.symlink_to(pd, target_is_directory=True)
+    except OSError as exc:  # Windows without the symlink privilege: a junction resolves the same way
+        if os.name != "nt" or getattr(exc, "winerror", None) != 1314:
+            raise
+        import _winapi
+        _winapi.CreateJunction(str(pd), str(link))
     rc_ln, _o2, _e2 = run_main(rank_args(root, link / "viasym"))
     rc_ex, _o3, _e3 = run_main(["rank", "--denominator", "OTHER", "--label", "FX-R", "--until", "none", "--expand",
                                 "--root", str(root / "projects"), "--out-dir", str(root / "projects" / "deeper" / "out")])
