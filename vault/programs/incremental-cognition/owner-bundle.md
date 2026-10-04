@@ -7,6 +7,44 @@ open until the action lands, unless its line says AUTHORIZATION_BOUND.
 Run plane: GEX44 clone `~/missions/incremental-cognition`, branch `mission/incremental-cognition-run`
 (never pushed; fetch it back).
 
+## Laptop code sync (do this first for [D]..[I], [K] and [L])
+
+One step brings every program-owned tool file the laptop-plane items need, at the fetched branch tip. It replaces the
+Phase 3 cherry-pick list and the `[K]` cherry-pick / tree-state steps (see the `Phase 5 correction` paragraphs under
+those two headers). It moves no live-loaded file: `[C]` keeps its own procedure (at least 4 GB free), and `[A]` and
+`[B]` are unchanged.
+
+Expects: the laptop PP checkout `C:\Users\User\.claude\skills\claude-power-pack`, Python is `python`, every line run
+from its root; only the ssh host alias may differ (the repository path and branch are exact). Order and stop
+conditions: fetch; print the fetched tip with `git rev-parse FETCH_HEAD` and record it; `git merge-base --is-ancestor`
+must exit 0 (the fetched tip holds the pinned phase-5 commit; any other exit: stop); the status line must print
+nothing (if it prints anything, stop: the checkout below would overwrite those local edits, and deciding what to keep
+is yours); then the checkout.
+
+    git fetch kobii@kobicraft-gex44:/home/kobii/missions/incremental-cognition mission/incremental-cognition-run
+    git rev-parse FETCH_HEAD
+    git merge-base --is-ancestor f3cdc79b1b961075e5a7bbd451be6569faf6c405 FETCH_HEAD
+    git status --short -- "wiki/tools/kme_*.py" "tools/test_kme_*.py" tools/test_incremental_cognition_program.py tools/floor_regression_gate.py tools/test_floor_regression_gate.py vault/programs/incremental-cognition/floor/reference-gex44.json vault/programs/incremental-cognition/measurements vault/programs/incremental-cognition/owner-bundle.md vault/programs/incremental-cognition/FROZEN_AT
+    git checkout FETCH_HEAD -- "wiki/tools/kme_*.py" "tools/test_kme_*.py" tools/test_incremental_cognition_program.py tools/floor_regression_gate.py tools/test_floor_regression_gate.py vault/programs/incremental-cognition/floor/reference-gex44.json vault/programs/incremental-cognition/measurements vault/programs/incremental-cognition/owner-bundle.md vault/programs/incremental-cognition/FROZEN_AT
+
+Then commit those paths only, by pathspec: write a message file first, then `git commit -F` that file restricted to
+the same paths as the checkout line. Then the four suites, in this order:
+
+    python tools/test_kme_pillars.py
+    python tools/test_kme_replay.py
+    python tools/test_floor_regression_gate.py
+    python tools/test_incremental_cognition_program.py --selftest
+
+Expected, not measured on the laptop: each exits 0; GEX44 `-REAL` gates print SKIP there and POSIX-mode gates SKIP on
+Windows (a SKIP is never a PASS). Proven on GEX44 only, by replaying these lines in a scratch clone at the P0 freeze
+`18e928af` with the fetch URL replaced by the local path (fetched tip equal to the branch tip, ancestor check exit 0,
+status output empty, checkout and commit exit 0), the four suites each exit 0 with:
+
+    KMEP_PASS=89/89  threshold=89/89  skipped=0  inconclusive=0
+    KMER_PASS=39/39  threshold=39/39  skipped=0  inconclusive=0
+    FLOOR_PASS=67/67  threshold=67/67  skipped=0  inconclusive=0
+    ICP_SELFTEST=PASS
+
 ## Items
 
 - **[A]** PRG for pillar A (laptop-plane). Code is complete at `d2505df6`, already deployed into the laptop's live
@@ -106,6 +144,14 @@ Run plane: GEX44 clone `~/missions/incremental-cognition`, branch `mission/incre
       python3 /home/kobii/missions/incremental-cognition/.claude/worktrees/ic-run/tools/gex44_env_preflight.py --env-root /home/kobii/a7-env --json
 
 ## Phase 3 -- KME-L measurements (laptop plane)
+
+**Phase 5 correction (supersedes the cherry-pick list below):** replaying that list literally in a scratch clone at
+the P0 freeze `18e928af` on GEX44 (the `FROZEN_AT` pointer pick, then the fourteen picks; all applied) gave an
+instrument whose `wiki/tools/kme_pillars.py` holds `frozen_source` 0 times. The fourteen picks predate the eight
+phase-3 review fixes `d241bb5e` .. `326da74c`, and `frozen_source` was added by `a4d09a24` (WR-07). The program
+done-gate's R3 (WR-07) refuses a terminal claim from a file without it (selftest
+`V-ICP-R3-MUT-no-frozen-source`), so no KME-L file made along that list could close D..I. `## Laptop code sync` at the
+top of this file replaces the picks; the population proof and the `[D]`..`[I]` commands below stay as written.
 
 Status of every command below: **NOT RUNNABLE HERE** (laptop paths, the KME-L corpus is not on GEX44). They are
 proven only to parse with the instrument's own argument parser (gate `V-KMEP-BUNDLE-ARGV-PARSES`,
@@ -214,6 +260,14 @@ denominator, plane and exact `command:`.
   open until its file lands; ledger state.I is not written by this mission run.
 
 ## Phase 4 -- floor reference (laptop plane)
+
+**Phase 5 correction:** the `[K]` cherry-pick and tree-state steps below are covered by `## Laptop code sync` (its
+paths include the three tree-state files and the `[K]` tool files). Replaying the old path literally in a scratch clone
+at the P0 freeze `18e928af` (the eight `[K]` picks, then the `ef336ec7` tree-state checkout of the three paths) left
+this bundle file absent there, and `python tools/test_floor_regression_gate.py` exited 1 with `FAIL
+V-FLOOR-BUNDLE-ARGV-PARSES owner bundle missing` (`FLOOR_PASS=66/67`): on that path the fixture suite cannot exit 0,
+because its own parse gate reads this bundle and that path does not bring it. The fixture suite, the seeded control,
+the reference write, its commit and the PRG below stay as written.
 
 Status of every command below: **NOT RUNNABLE HERE** (laptop paths and the laptop install). They are proven only to
 parse with the gate's own argument parser (gate `V-FLOOR-BUNDLE-ARGV-PARSES`, `python3
