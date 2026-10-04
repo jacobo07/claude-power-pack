@@ -243,8 +243,9 @@ def candidate_problems(cands: list, min_per_level: int, exists=None, is_tracked=
         elif c["letter"] == "P":
             ok_t = tgt == CAND_REL and exists(tgt)
         else:
-            ok_t = (tgt.startswith("vault/knowledge_base/") and tgt != UKDL_UNIVERSAL and exists(tgt)
-                    and is_tracked(tgt))
+            # a `..` or `./` spelling passes startswith, exists and ls-files yet names another tracked file (CLAUDE.md)
+            ok_t = (noncanonical_path(tgt) is None and tgt.startswith("vault/knowledge_base/") and tgt != UKDL_UNIVERSAL
+                    and exists(tgt) and is_tracked(tgt))
         if not ok_t:
             probs.append(f"{cid}: target {tgt!r} is not a valid {LEVELS[c['letter']]} target")
         if not f.get("statement"):
@@ -582,6 +583,14 @@ def g_candidates_shape():
             syn_block("U", "01", target="vault/knowledge_base/ukdl-cognitive-resource-os.md")), 0), "not a valid universal"),
         "no evidence reported": has(cp(parse_candidates(syn_block("U", "01", evidence=None)), 0),
                                     "no evidence ref"),
+        "a domain target escaping through .. is reported": has(cp(parse_candidates(syn_block(
+            "D", "01", target="vault/knowledge_base/../../CLAUDE.md")), 0), "not a valid domain"),
+        "a domain target spelled ./ or // is reported": all(has(cp(parse_candidates(syn_block("D", "01", target=t)), 0),
+                                                              "not a valid domain")
+                                                          for t in ("vault/knowledge_base/./ukdl-cognitive-resource-os.md",
+                                                                    "vault/knowledge_base//ukdl-cognitive-resource-os.md")),
+        "a canonical domain target is accepted": cp(parse_candidates(syn_block(
+            "D", "01", target="vault/knowledge_base/ukdl-cognitive-resource-os.md")), 0) == [],
         "a target file that is absent is reported": has(candidate_problems(syn, 1, exists=lambda r: False), "not a valid"),
         "malformed header reported": has(cp(parse_candidates("### IC-X-1 -- nope\nlevel: x\n"), 0),
                                          "malformed header"),
@@ -1229,7 +1238,8 @@ MUTANTS = [
     ("M10 delta_problems skips the terminal-name rule", _m_terminal_name_ok, ["V-ICN-LEDGER-DELTAS"]),
     ("M11 coverage_problems returns nothing", _m_coverage_blind_phases, ["V-ICN-LEDGER-DELTAS-COVER-PHASES"]),
     ("M12 program_commit_problem skips the program-path rule", _m_program_path_rule_skipped, ["V-ICN-LEDGER-DELTAS"]),
-    ("M13 noncanonical_path accepts every spelling", _m_canonical_path_unchecked, ["V-ICN-LEDGER-DELTAS"]),
+    ("M13 noncanonical_path accepts every spelling", _m_canonical_path_unchecked,
+     ["V-ICN-LEDGER-DELTAS", "V-ICN-CANDIDATES-SHAPE"]),
 ]
 
 
