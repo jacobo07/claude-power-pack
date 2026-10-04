@@ -2397,10 +2397,33 @@ def g_r3_terminal_requires_primary():
     # reproduced primary on the frozen rule. (A UNMEASURED verdict file is terminal_evidence false by construction.)
     good, hand_f, forged_f = fails(prim), fails(hand), fails(forged)
     table_eq = ({k: list(v) for k, v in kp.RULE_DENOMINATORS.items()} == icp.FROZEN_RULE_DENOMINATORS
-                and icp.FROZEN_SOURCE_DEFAULTS == {"frozen_file": kp.DENOMS_REL, "ce_ledger": kp.CE_LEDGER_REL})
+                and icp.FROZEN_SOURCE_DEFAULTS == {"frozen_file": kp.DENOMS_REL, "ce_ledger": kp.CE_LEDGER_REL}
+                and icp.KMEP_AGREE_KEYS == tuple(kp.FRONT_KEYS) + tuple(kp.FRONT_OPTIONAL)
+                and icp.KMEP_THRESHOLD == kp.THRESHOLD)
+    # STATE debt (1): the json block is cross-checked. A self-consistent forgery (front matter alone, block alone,
+    # both with the verdict flipped, block removed) is refused; the real file above is accepted.
+    v0 = fm0["materiality"]
+    v1 = "< 3 %" if v0 != "< 3 %" else ">= 3 %"
+    fm_line, blk_line = f'materiality: "{v0}"', f'"materiality": "{v0}"'
+    m0, m1 = text.index(icp.KMEP_BODY_MARKER), text.index(icp.KMEP_BODY_END) + len(icp.KMEP_BODY_END)
+    forgeries = {"fm-only": text.replace(fm_line, f'materiality: "{v1}"', 1),
+                 "block-only": text.replace(blk_line, f'"materiality": "{v1}"', 1),
+                 "both": text.replace(fm_line, f'materiality: "{v1}"', 1).replace(blk_line, f'"materiality": "{v1}"', 1),
+                 "no-block": text[:m0] + text[m1:],
+                 "two-blocks": text + "\n" + text[m0:m1] + "\n"}
+    forged_ok = {}
+    for name, t in forgeries.items():
+        fp = outd / f"E-FORGED-{name}.md"
+        fp.write_text(t, encoding="utf-8")
+        forged_ok[name] = t != text and any("claims terminal_evidence true but" in x for x in fails(fp))
+    grid = [(si, pm, ob) for si in ([0.01, 0.02], [0.02, 0.04], [0.031, 0.05], [0.03, 0.03], None, [])
+            for pm in ("exact", "referenced", "drifted") for ob in (1.0, 0.5, 0.0)]
+    mirror = [g for g in grid if icp.kmep_verdict(g[0], g[1], g[2]) != kp.materiality(g[0], g[1], g[2])[0]]
     ok = (fm0["terminal_evidence"] is True and good == [] and any("cites no kme_pillars primary" in x for x in hand_f)
-          and any("claims terminal_evidence true but" in x for x in forged_f) and table_eq)
-    return ok, f"primary_terminal={fm0['terminal_evidence']} good={good} hand={hand_f[:1]} forged={forged_f[:1]} table_eq={table_eq}"
+          and any("claims terminal_evidence true but" in x for x in forged_f) and table_eq
+          and all(forged_ok.values()) and not mirror)
+    return ok, (f"primary_terminal={fm0['terminal_evidence']} good={good} hand={hand_f[:1]} forged={forged_f[:1]} "
+                f"table_eq={table_eq} block_forgeries={forged_ok} verdict_mirror_off={mirror}")
 
 
 def g_second_workload_needs_measured_verdict():
