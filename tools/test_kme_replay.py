@@ -1396,6 +1396,8 @@ def g_r3_table_pinned():
     pairs = {"REPLAY_RULE_DENOMINATORS": (icp.REPLAY_RULE_DENOMINATORS, {kr.PILLAR: list(kr.RULE_DENOMINATORS)}),
              "KMER_INSTRUMENT": (icp.KMER_INSTRUMENT, kr.INSTRUMENT),
              "KMER_BODY_MARKER": (icp.KMER_BODY_MARKER, kr.KMER_BODY_MARKER),
+             "KMER_BODY_END": (icp.KMER_BODY_END, kr.KMER_BODY_END),
+             "KMER_CANDIDATES": (tuple(icp.KMER_CANDIDATES), tuple(kr.CANDIDATES)),
              "REPLAY_PILLARS": (tuple(icp.REPLAY_PILLARS), (kr.PILLAR,))}
     off = [k for k, (a, b) in pairs.items() if a != b]
     return not off, f"equal: {sorted(k for k in pairs if k not in off)}; differ: {off}"

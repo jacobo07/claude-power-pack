@@ -225,6 +225,8 @@ KME_PILLARS = ("D", "E", "F", "G", "H", "I")
 # the tables equal (V-KMER-R3-TABLE-PINNED).
 KMER_INSTRUMENT = "wiki/tools/kme_replay.py"
 KMER_BODY_MARKER = "<!-- kmer-json -->"
+KMER_BODY_END = "<!-- /kmer-json -->"
+KMER_CANDIDATES = ("late_rollover", "identical_rereads", "unchanged_precondition_retries")
 REPLAY_PILLARS = ("L",)
 REPLAY_RULE_DENOMINATORS = {"L": ["KME-L"]}
 MEASUREMENT_TERMINALS = ("RESEARCH_INSUFFICIENT_EVIDENCE", "FALSIFIED_OR_REJECTED_BY_EVIDENCE")
@@ -262,7 +264,48 @@ def frozen_source_problems(den, fm: dict) -> list:
     return bad
 
 
-def terminal_claim_problems(pid: str, fm: dict) -> list:
+# The fields a kme_replay file states twice, in its front matter and in its json block: the two must agree.
+KMER_AGREE_KEYS = ("instrument", "pillar", "denominator", "evidence_role", "terminal_evidence", "population_match",
+                   "weighted_denominator", "rollover_growth", "ranked_ids", "unranked_ids", "frozen_source")
+
+
+def kmer_ranking_problems(fm: dict, text) -> list:
+    """WR-03: why a kme_replay file's ranking contradicts itself. ranked_ids and unranked_ids must be lists that are
+    disjoint and together exactly the three candidates; the file carries exactly one parseable json block, and the
+    block agrees with the front matter on every field both state."""
+    bad = []
+    r, u = fm.get("ranked_ids"), fm.get("unranked_ids")
+    if not (isinstance(r, list) and isinstance(u, list)):
+        bad.append(f"ranked_ids / unranked_ids are {r!r} / {u!r}, not two lists")
+    elif (set(r) & set(u) or len(set(r)) != len(r) or len(set(u)) != len(u)
+          or set(r) | set(u) != set(KMER_CANDIDATES) or len(r) + len(u) != len(KMER_CANDIDATES)):
+        bad.append(f"ranked_ids {r!r} and unranked_ids {u!r} are not disjoint and exactly the three candidates "
+                   f"{list(KMER_CANDIDATES)}")
+    wd = fm.get("weighted_denominator")
+    if isinstance(wd, bool) or not isinstance(wd, (int, float)) or not wd > 0:
+        bad.append(f"weighted_denominator is {wd!r}, not a positive number")
+    t = (text or "").lstrip("\ufeff")
+    if t.count(KMER_BODY_MARKER) != 1 or t.count(KMER_BODY_END) != 1:
+        return bad + [f"the file does not carry exactly one {KMER_BODY_MARKER} json block"]
+    a = t.index(KMER_BODY_MARKER) + len(KMER_BODY_MARKER)
+    b = t.index(KMER_BODY_END)
+    try:
+        block = json.loads(t[a:b]) if a <= b else None
+    except json.JSONDecodeError:
+        block = None
+    if not isinstance(block, dict):
+        return bad + ["the json block is not a parseable object"]
+    for k in KMER_AGREE_KEYS:
+        if block.get(k) != fm.get(k):
+            bad.append(f"json block {k} {block.get(k)!r} disagrees with the front matter {fm.get(k)!r}")
+    ranked = block.get("ranked")
+    if isinstance(r, list) and (not isinstance(ranked, list) or
+                                [e.get("candidate") if isinstance(e, dict) else None for e in ranked] != r):
+        bad.append("json block ranked entries are not the front matter's ranked_ids, in order")
+    return bad
+
+
+def terminal_claim_problems(pid: str, fm: dict, text=None) -> list:
     """Why a measurement file that says `terminal_evidence: true` contradicts itself. A claim is believed only when
     the file's own fields agree with it. Pillars D..I (kme_pillars): role primary, the instrument's own mark, a
     population that reproduced the frozen denominator (a referenced CPP-D-W7 only at coverage exactly 1), a measured
@@ -287,7 +330,7 @@ def terminal_claim_problems(pid: str, fm: dict) -> list:
             bad.append(f"denominator {den!r} is not in pillar {pid}'s frozen rule {rule!r}")
         if fm.get("unranked_ids") != []:
             bad.append(f"unranked_ids is {fm.get('unranked_ids')!r}, not [] (every candidate must be measured)")
-        return bad + frozen_source_problems(den, fm)
+        return bad + kmer_ranking_problems(fm, text) + frozen_source_problems(den, fm)
     if fm.get("instrument") != KMEP_INSTRUMENT:
         bad.append(f"instrument is {fm.get('instrument')!r}, not {KMEP_INSTRUMENT!r}")
     if fm.get("evidence_role") != "primary":
@@ -309,6 +352,7 @@ def check_measurement_scope(led: dict, res, only=None) -> list:
     for pid in (list(only) if only is not None else list(ce.PILLARS)):
         st = (led.get("state") or {}).get(pid) or {}
         files = []
+        texts = {}
         for e in st.get("evidence") or []:
             ref = e.get("ref")
             if e.get("kind") != "measurement" or not ref:
@@ -322,12 +366,13 @@ def check_measurement_scope(led: dict, res, only=None) -> list:
                          f"terminal_evidence front matter (absent, unparseable or hand-edited)")
                 continue
             files.append((ref, fm))
+            texts[ref] = text
         on_pillar = [(r, fm) for r, fm in files if fm.get("pillar", pid) == pid]
         has_primary = any((fm.get("evidence_role") or "primary") == "primary" and fm.get("terminal_evidence") is True
-                          and not terminal_claim_problems(pid, fm) for _r, fm in on_pillar)
+                          and not terminal_claim_problems(pid, fm, texts.get(_r)) for _r, fm in on_pillar)
         needs_primary = (pid in KME_PILLARS or (pid in REPLAY_PILLARS and st.get("terminal") in MEASUREMENT_TERMINALS))
         if st.get("terminal") and needs_primary and not has_primary and not any(
-                fm.get("pillar", pid) != pid or terminal_claim_problems(pid, fm) for _r, fm in files):
+                fm.get("pillar", pid) != pid or terminal_claim_problems(pid, fm, texts.get(_r)) for _r, fm in files):
             if pid in REPLAY_PILLARS:
                 f.append(f"R3 {pid}: terminal {st.get('terminal')} cites no kme_replay primary ranking file with "
                          f"terminal_evidence true (a smoke, hand-written or other-instrument file cannot stand in "
@@ -358,7 +403,7 @@ def check_measurement_scope(led: dict, res, only=None) -> list:
                 f.append(f"R3 {pid}: {ref} is not terminal evidence: "
                          f"{fm.get('terminal_evidence_reason') or 'terminal_evidence is not true'}")
             else:
-                for why in terminal_claim_problems(pid, fm):
+                for why in terminal_claim_problems(pid, fm, texts.get(ref)):
                     f.append(f"R3 {pid}: {ref} claims terminal_evidence true but {why}")
     return f
 
@@ -803,9 +848,22 @@ def selftest(verbose=True) -> bool:
         print("  INCONCLUSIVE V-ICP-R3-REAL: no KME-G smoke file")
     # Pillar L: a kme_replay ranking file (plan 05-03). The same poles as D..I, read against the L rule table.
     good_l_kv = dict(instrument=KMER_INSTRUMENT, pillar="L", denominator="KME-L", rule_denominators=["KME-L"],
-                     evidence_role="primary", terminal_evidence=True, population_match="exact", unranked_ids=[],
-                     frozen_source=fsrc("frozen_file"))
-    l_prim = fm(**good_l_kv)
+                     evidence_role="primary", terminal_evidence=True, population_match="exact",
+                     weighted_denominator=3879.0, rollover_growth=100000, ranked_ids=list(KMER_CANDIDATES),
+                     unranked_ids=[], frozen_source=fsrc("frozen_file"))
+
+    def l_block(kv, **over):
+        """The json block a real kme_replay file carries: kv's fields plus the ranked entries."""
+        ids = kv.get("ranked_ids")
+        return dict(kv, ranked=[{"candidate": c} for c in ids] if isinstance(ids, list) else [], **over)
+
+    def l_file(kv, block=None, raw_block=None):
+        """A kme_replay-shaped file: the front matter of kv and the json block (kv's own fields unless `block` / `raw_block`
+        says otherwise)."""
+        body = raw_block if raw_block is not None else KMER_BODY_MARKER + "\n" + json.dumps(
+            block if block is not None else l_block(kv)) + "\n" + KMER_BODY_END + "\n"
+        return fm(**kv) + "\n" + body
+    l_prim = l_file(good_l_kv)
     l_smoke = fm(instrument=KMER_INSTRUMENT, pillar="L", denominator="KME-G", rule_denominators=["KME-L"],
                  evidence_role="smoke", terminal_evidence=False, population_match="exact", unranked_ids=[])
     say(r3t("L", {"p": l_prim}, ["p"]) == [] and r3("L", {"p": l_prim}, ["p"]) == [],
@@ -825,9 +883,45 @@ def selftest(verbose=True) -> bool:
         "source-path-elsewhere": dict(good_l_kv, frozen_source=fsrc("frozen_file", path="/tmp/other.json")),
     }
     for name, kv in l_contradictions.items():
-        got = r3t("L", {"c": fm(**kv)}, ["c"])
+        got = r3t("L", {"c": l_file(kv)}, ["c"])
         say(any(x.startswith("R3 L:") and "claims terminal_evidence true but" in x for x in got),
             f"V-ICP-R3-L-MUT-{name} killed by R3 (terminal_evidence true contradicts its own fields)")
+    # WR-03: the ranking itself is checked, not only the self-asserted front matter
+    forged = fm(instrument=KMER_INSTRUMENT, pillar="L", denominator="KME-L", rule_denominators=["KME-L"],
+                evidence_role="primary", terminal_evidence=True, population_match="exact", ranked_ids=[],
+                unranked_ids=[], frozen_source=fsrc("frozen_file"), command="hand typed") + "\nKME-L [L]\n"
+    wr03 = {
+        "forged-empty-ranking": forged,
+        "ranked-two-of-three": l_file(dict(good_l_kv, ranked_ids=["late_rollover", "identical_rereads"])),
+        "ranked-foreign-id": l_file(dict(good_l_kv, ranked_ids=["late_rollover", "identical_rereads", "made_up"])),
+        "ranked-duplicate": l_file(dict(good_l_kv, ranked_ids=["late_rollover", "late_rollover", "identical_rereads"])),
+        "ranked-not-a-list": l_file(dict(good_l_kv, ranked_ids="late_rollover")),
+        "json-block-absent": l_file(good_l_kv, raw_block="no block here\n"),
+        "json-block-malformed": l_file(good_l_kv, raw_block=KMER_BODY_MARKER + "\n{not json\n" + KMER_BODY_END + "\n"),
+        "json-block-twice": l_file(good_l_kv) + "\n" + KMER_BODY_MARKER + "\n" + json.dumps(l_block(good_l_kv)) + "\n"
+                            + KMER_BODY_END + "\n",
+        "json-ids-disagree": l_file(good_l_kv, block=l_block(good_l_kv, ranked_ids=["identical_rereads"])),
+        "json-unranked-disagree": l_file(good_l_kv, block=l_block(good_l_kv, unranked_ids=["late_rollover"])),
+        "json-frozen-sha-disagrees": l_file(good_l_kv, block=l_block(good_l_kv, frozen_source=fsrc(
+            "frozen_file", sha256="0" * 64))),
+        "json-growth-disagrees": l_file(good_l_kv, block=l_block(good_l_kv, rollover_growth=50000)),
+        "json-denominator-disagrees": l_file(good_l_kv, block=l_block(good_l_kv, weighted_denominator=1.0)),
+        "json-ranked-entries-disagree": l_file(good_l_kv, block=dict(l_block(good_l_kv), ranked=[])),
+        "json-instrument-disagrees": l_file(good_l_kv, block=l_block(good_l_kv, instrument="hand/edited.py")),
+    }
+    def wr03_off():
+        return [n for n, t in wr03.items() if not any(
+            x.startswith("R3 L:") and "claims terminal_evidence true but" in x for x in r3t("L", {"c": t}, ["c"]))]
+    off03 = wr03_off()
+    say(not off03, f"V-ICP-R3-L-RANKING-CHECKED ({len(wr03)} forged / inconsistent ranking files refused; off: {off03})")
+    restore = _patch_attr("kmer_ranking_problems", lambda fm_, text_: [])
+    try:
+        off03_m = wr03_off()
+    finally:
+        restore()
+    say(len(off03_m) == len(wr03), f"V-ICP-MUT-r3l-ranking-unchecked killed by V-ICP-R3-L-RANKING-CHECKED "
+                                   f"(it leaves {len(off03_m)} of {len(wr03)} forged files accepted)")
+    say(r3t("L", {"c": l_prim}, ["c"]) == [], "V-ICP-R3-L-RANKING-CONSISTENT-ACCEPTED (the consistent control is silent)")
     got = r3t("L", {"c": fm(**dict(good_l_kv, evidence_role="smoke"))}, ["c"])
     say(any(x.startswith("R3 L:") and "is a smoke measurement" in x for x in got),
         "V-ICP-R3-L-MUT-smoke-role-claims-terminal killed by R3 (a file that calls itself smoke is never terminal)")
