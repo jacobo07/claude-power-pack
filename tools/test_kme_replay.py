@@ -1057,8 +1057,80 @@ GATES_CONTRACT = [
 ]
 
 
+# --------------------------------------------------------------------------- plan 05-03: the owner bundle's [L] lines
+BUNDLE_REL = "vault/programs/incremental-cognition/owner-bundle.md"
+REPLAY_TOKEN = "wiki/tools/kme_replay.py"
+
+
+def bundle_replay_commands(text):
+    """(item tag or None, the line, argv after the script token, placeholder tokens) for every indented kme_replay line.
+
+    Same grammar as test_kme_pillars.bundle_commands: an item tag is the nearest preceding `- **[X]**`, a `#` / `##`
+    header resets it, tokens come from shlex posix=False with quotes stripped."""
+    import re
+    import shlex
+    tag, rows = None, []
+    for ln in text.split("\n"):
+        m = re.match(r"^- \*\*\[([A-Z])\]\*\*", ln)
+        if m:
+            tag = m.group(1)
+        elif re.match(r"^(## |# )", ln):
+            tag = None
+        if not re.match(r"^ {4,}\S", ln) or REPLAY_TOKEN not in ln:
+            continue
+        toks = [t.strip("\"'") for t in shlex.split(ln.strip(), posix=False)]
+        i = next((k for k, t in enumerate(toks) if t.endswith(REPLAY_TOKEN)), None)
+        if i is None:
+            continue
+        rows.append((tag, ln.strip(), toks[i + 1:], [t for t in toks if "<" in t or ">" in t]))
+    return rows
+
+
+def bundle_replay_check(text):
+    """(problems, parsed rows [(tag, namespace, line)]) of a bundle text through kme_replay's own parser."""
+    ap = kr.build_parser()
+    problems, parsed = [], []
+    for tag, line, argv, placeholders in bundle_replay_commands(text):
+        if placeholders:
+            problems.append(f"placeholder {placeholders} in: {line[:80]}")
+            continue
+        try:
+            with contextlib.redirect_stderr(io.StringIO()):
+                parsed.append((tag, ap.parse_args(argv), line))
+        except SystemExit:
+            problems.append(f"unparsable: {line[:80]}")
+    return problems, parsed
+
+
+def g_bundle_argv_parses():
+    import re
+    text = (REPO / BUNDLE_REL).read_text(encoding="utf-8")
+    problems, parsed = bundle_replay_check(text)
+    rank_l = [a for t, a, _l in parsed if t == "L" and a.cmd == "rank" and a.denominator == "KME-L"
+              and a.until == "auto" and a.expand is True]
+    l_items = len(re.findall(r"^- \*\*\[L\]\*\*", text, re.M))
+    head = text.split("## Phase 5", 1)
+    sec = head[1].split("\n## ", 1)[0] if len(head) == 2 else ""
+    status_ok = "NOT RUNNABLE HERE" in sec
+    # controls inside the gate: an unknown flag and a placeholder are both refused, a good line is not
+    bad_text = ("- **[L]** x\n\n    python wiki/tools/kme_replay.py rank --denominator KME-L --no-such-flag --root R\n"
+                "    python wiki/tools/kme_replay.py rank --denominator KME-L --root <projects-dir>\n")
+    good_text = ("- **[L]** x\n\n    python wiki/tools/kme_replay.py rank --denominator KME-L --until auto --expand "
+                 "--root C:\\Users\\User\\.claude\\projects\n")
+    ctl_bad, _p = bundle_replay_check(bad_text)
+    ctl_good, ctl_rows = bundle_replay_check(good_text)
+    controls = len(ctl_bad) == 2 and ctl_good == [] and len(ctl_rows) == 1
+    ok = not problems and len(rank_l) >= 1 and l_items >= 2 and status_ok and controls
+    return ok, (f"{len(parsed)} replay line(s) parsed, problems={problems}, rank lines tagged L (KME-L, until auto, "
+                f"expand)={len(rank_l)} (>= 1), [L] items={l_items} (>= 2), Phase 5 NOT RUNNABLE HERE={status_ok}, "
+                f"controls(bad={len(ctl_bad)}/2, good={len(ctl_good)}/0)={controls}")
+
+
+GATES_BUNDLE = [("V-KMER-BUNDLE-ARGV-PARSES", g_bundle_argv_parses)]
+
+
 GATES_TRACER = [("V-KMER-TRACER-E2E", g_tracer_e2e), ("V-KMER-CONTRACT-E2E", g_contract_e2e)]
-GATES = list(GATES_TRACER) + GATES_ROLLOVER + GATES_RETRY + GATES_CONTRACT
+GATES = list(GATES_TRACER) + GATES_ROLLOVER + GATES_RETRY + GATES_CONTRACT + GATES_BUNDLE
 
 
 def summary_line() -> str:

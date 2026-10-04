@@ -298,3 +298,37 @@ tools/test_floor_regression_gate.py`); nothing below has been run on the laptop.
   gate argv is the fixture suite, so after K closes no hook, CI job or `--final` run executes `--check` against
   `reference.json`; that single PRG check is the only real one until someone wires a surface, and its absence afterwards
   is silence, not health.
+
+## Phase 5 -- offline replay ranking and the live-experiment decision (laptop plane)
+
+Status of every command below: **NOT RUNNABLE HERE** (laptop paths; the KME-L corpus is not on GEX44). They are
+proven only to parse with the replay's own argument parser (gate `V-KMER-BUNDLE-ARGV-PARSES`,
+`python3 tools/test_kme_replay.py`); nothing below has been run on the laptop.
+
+- **[L]** KME-L offline replay ranking (laptop plane). Expects: the `## Laptop code sync` step at the top of this
+  file done with its four suites at exit 0 (that section is added by the same phase), and the Phase 3 population
+  proof printed `"population_match": "exact"`; its roots are used here too. **Action:**
+
+      python wiki/tools/kme_replay.py rank --denominator KME-L --until auto --expand --root C:\Users\User\.claude\projects
+
+  It writes `L-KME-L-<date>.md` under `vault/programs/incremental-cognition/measurements/`, naming its denominator,
+  its plane and its exact `command:`. Exit 0 = every candidate measured. Exit 3 = a candidate is UNMEASURED with its
+  reason in the file (that is a result: commit it). Exit 2 = a refusal, nothing written. Commit only that file, by
+  pathspec, as the Phase 3 section describes (`git add --` the printed file, then `git commit -F <msgfile> --` the
+  same path). What it gives: the frozen rule's ranking of the three live experiments (late rollover, identical
+  rereads, unchanged-precondition retries) on KME-L, each figure an UPPER BOUND and never a realized saving, with its
+  reading against 3 %. The KME-G reading from the GEX44 run is a smoke, to be quoted only as "smoke, plane gex44,
+  never terminal" (`vault/programs/incremental-cognition/measurements/L-KME-G-2026-10-04.md`): on it only late rollover
+  could clear 3 % on its bound, as an optimistic ceiling; it says nothing about KME-L, and KME-L decides. Pillar L
+  stays open until the KME-L file lands; ledger state.L is not written by this mission run; L takes the terminal its
+  frozen rule gives at close time, citing this file and, if the Owner decided on live sessions, the decision file of
+  the next item.
+- **[L]** decision on live champion / challenger sessions (spends quota; Owner only). Expects: the KME-L ranking
+  file above (decide on KME-L, never on the KME-G smoke). This mission never starts a live session and never takes
+  this decision. A candidate whose upper bound reads `>= 3 %` is the only kind a live experiment could make material;
+  one reading `< 3 %` cannot clear materiality even if fully realized. **Action:** write the decision in your own
+  words (approve live sessions for the named candidates with a session count, or decline) as
+  `vault/programs/incremental-cognition/evidence/L-owner-decision.md`, naming `[L]` in it, and commit it by
+  pathspec. That file, never this bundle, is the `owner_decision` evidence (the program done-gate refuses the bundle
+  as a decision); with it L can close AUTHORIZATION_BOUND. The design of an approved live run is a later step, not
+  specified here.
