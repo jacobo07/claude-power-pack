@@ -98,6 +98,35 @@ def owner_rows(pid: str, sha: str, wanted, owners):
     return (rows if ready_when(flags) else []), lines
 
 
+def roundtrip_problems(pid: str, wanted, rows, owners) -> list:
+    """What R2 itself says about a program ledger holding exactly `rows` as pid's owner_ledger evidence."""
+    synthetic = {
+        "frozen": {"consumes": {pid: [{"ledger": ref, "pillar": p} for ref, p in wanted]}},
+        "state": {pid: {"terminal": "MERGED_INTO_EXISTING_OWNER", "evidence": list(rows)}},
+    }
+    return icp.check_consumed(synthetic, owners)
+
+
+def needs_lines(led: dict, pid: str) -> list:
+    """The OTHER evidence kinds the CE clause L4 demands for pid's own frozen prediction (derived, not listed)."""
+    entry = next((p for p in (led.get("frozen") or {}).get("pillars") or [] if p.get("id") == pid), None)
+    if not entry:
+        return []
+    predicted = entry.get("predicted")
+    kinds = (ce.REQUIRED_KINDS.get(predicted) or [()])[0]
+    out = []
+    for kind in kinds:
+        head = f"NEEDS {pid} {predicted}: {kind}"
+        if kind == "owner":
+            out.append(f"{head} (one of {', '.join(entry.get('owner') or [])})")
+        elif kind == "handoff":
+            out.append(f"{head} ({icp.PROGRAM_DIR}handoffs/{pid}.md naming [{pid}] and one owner, "
+                       f"committed after the freeze)")
+        else:
+            out.append(head)
+    return out
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="ic_r2_evidence.py", description=__doc__.split("\n\n")[0])
     ap.add_argument("--pillar", required=True, help="the consuming program pillar (a key of frozen.consumes)")
@@ -127,12 +156,20 @@ def main(argv=None) -> int:
     if sha is None:
         print(f"ICR2_COULD_NOT_RUN commit {args.commit} does not resolve")
         return 2
-    rows, lines = owner_rows(pid, sha, wanted, icp.OwnerLedgers())
+    owners = icp.OwnerLedgers()
+    rows, lines = owner_rows(pid, sha, wanted, owners)
+    if rows:
+        problems = roundtrip_problems(pid, wanted, rows, owners)
+        if problems:      # the rows as printed must pass R2 as pasted; otherwise nothing is printed
+            print(f"ICR2_COULD_NOT_RUN rows fail R2: {problems[0]}")
+            return 2
     for x in lines:
         print(x)
     if rows:
         print("ROWS")
         print(json.dumps(rows, indent=1))
+        for x in needs_lines(led, pid):
+            print(x)
         print(f"ICR2_READY={pid} commit={sha}")
         return 0
     print(f"ICR2_READY=NO pillar={pid} commit={sha} open={_open_pillars(wanted, lines)}")
