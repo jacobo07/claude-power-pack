@@ -33,6 +33,8 @@ FULL_SHA = re.compile(r"[0-9a-f]{40}")
 def consumed(led: dict, pid: str) -> list:
     """[(owner ledger ref, owner pillar)] in file order from frozen.consumes[pid]; KeyError when pid consumes nothing."""
     wanted = ((led.get("frozen") or {})["consumes"])[pid]
+    if not all(isinstance(w, dict) for w in wanted):
+        raise TypeError(f"frozen.consumes[{pid}] holds an entry that is not an object")
     return [(w.get("ledger"), w.get("pillar")) for w in wanted]
 
 
@@ -62,7 +64,11 @@ def predicted_at(sha: str, ref: str, pillar: str):
         return UNREADABLE
     if not isinstance(led, dict):
         return UNREADABLE
-    for p in (led.get("frozen") or {}).get("pillars") or []:
+    frozen = led.get("frozen") or {}
+    pillars = frozen.get("pillars") or [] if isinstance(frozen, dict) else UNREADABLE
+    if not isinstance(pillars, list):      # a ledger of the wrong shape is unreadable, not "no prediction"
+        return UNREADABLE
+    for p in pillars:
         if isinstance(p, dict) and p.get("id") == pillar:
             return p.get("predicted")
     return None
@@ -149,24 +155,41 @@ def _open_pillars(wanted, lines) -> list:
     return [p for ref, p in wanted if not any(x.startswith(f"READY {ref}#{p} ") for x in lines)]
 
 
+def _consume_keys(led) -> list:
+    """The frozen.consumes keys, or [] when the ledger's shape cannot say (never raises)."""
+    frozen = led.get("frozen") if isinstance(led, dict) else None
+    consumes = frozen.get("consumes") if isinstance(frozen, dict) else None
+    return sorted(str(k) for k in consumes) if isinstance(consumes, dict) else []
+
+
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
     pid = args.pillar
     try:
         led = json.loads((icp.REPO / ce.LEDGER_REL).read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError) as exc:        # ValueError covers JSONDecodeError and UnicodeDecodeError
         print(f"ICR2_COULD_NOT_RUN ledger unreadable: {exc}")
+        return 2
+    if not isinstance(led, dict):
+        print(f"ICR2_COULD_NOT_RUN ledger is not a JSON object (got {type(led).__name__})")
         return 2
     try:
         wanted = consumed(led, pid)
-    except (KeyError, TypeError):
-        keys = sorted(((led.get("frozen") or {}).get("consumes") or {}).keys())
-        print(f"ICR2_COULD_NOT_RUN pillar {pid} consumes no owner (frozen.consumes keys: {keys})")
+    except (KeyError, TypeError, AttributeError):
+        print(f"ICR2_COULD_NOT_RUN pillar {pid} consumes no owner (frozen.consumes keys: {_consume_keys(led)})")
         return 2
     sha = resolve_commit(args.commit)
     if sha is None:
         print(f"ICR2_COULD_NOT_RUN commit {args.commit} does not resolve")
         return 2
+    try:
+        return _run(led, pid, sha, wanted)
+    except Exception as exc:  # noqa: BLE001 -- exit 1 means "not ready"; an uncaught traceback must not borrow it
+        print(f"ICR2_COULD_NOT_RUN unexpected {exc.__class__.__name__}: {exc}")
+        return 2
+
+
+def _run(led: dict, pid: str, sha: str, wanted) -> int:
     owners = icp.OwnerLedgers()
     rows, lines = owner_rows(pid, sha, wanted, owners)
     if rows:

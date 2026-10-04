@@ -290,7 +290,7 @@ def g_unreachable():
     return good and rc2 == 0, f"side rc={rc} unreachable_lines={len(unreach)} rows={'ROWS' in lines} | control rc={rc2}"
 
 
-def one_commit_repo(terminals: dict) -> dict:
+def one_commit_repo(terminals: dict, raw=None) -> dict:
     """A scratch repo with ONE commit holding a CE-shaped owner ledger whose D/E/I terminals are `terminals` verbatim."""
     d = scratch("onecommit")
     env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t",
@@ -302,10 +302,69 @@ def one_commit_repo(terminals: dict) -> dict:
     g("init", "-q", "-b", "main")
     p = d / CE_LEDGER
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(ce_shaped_ledger(terminals, "one"), encoding="utf-8")
+    p.write_text(ce_shaped_ledger(terminals, "one") if raw is None else raw, encoding="utf-8")
     g("add", "--", CE_LEDGER)
     g("commit", "-q", "-m", "one")
     return {"dir": d, "sha": g("rev-parse", "HEAD").stdout.strip()}
+
+
+@contextlib.contextmanager
+def bound_program(ledger_text: str):
+    """Rebind icp.REPO to a scratch directory whose program ledger holds `ledger_text` verbatim; restored in finally."""
+    d = scratch("prog")
+    p = d / ce.LEDGER_REL
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(ledger_text, encoding="utf-8")
+    saved = icp.REPO
+    icp.REPO = d
+    try:
+        yield d
+    finally:
+        icp.REPO = saved
+
+
+def run_main_safe(argv):
+    """(rc, stdout) from run_main, or ('RAISED', 'ClassName: msg') when the printer let an exception escape."""
+    try:
+        return run_main(argv)
+    except Exception as exc:  # noqa: BLE001 -- an escaped exception is the defect this gate pins
+        return "RAISED", f"{exc.__class__.__name__}: {exc}"
+
+
+def g_malformed_ledger():
+    """WR-02: a ledger of the wrong SHAPE is exit 2 (could not run) with ICR2_COULD_NOT_RUN, never a traceback (exit 1)."""
+    consumes_ok = {"J": [{"ledger": CE_LEDGER, "pillar": p} for p in ("D", "E", "I")]}
+    prog = {
+        "top-level list": json.dumps([1, 2]),
+        "consumes entry is a string": json.dumps({"frozen": {"consumes": {"J": ["x"]}}}),
+        "consumes is a list": json.dumps({"frozen": {"consumes": ["J"]}}),
+        "frozen is a string": json.dumps({"frozen": "x"}),
+    }
+    r_ok = one_commit_repo(CLOSED)
+    bad = {}
+    for label, text in prog.items():
+        with bound_program(text), bound_repo(r_ok["dir"]):
+            rc, out = run_main_safe(["--pillar", "J", "--commit", r_ok["sha"]])
+        bad[label] = rc == 2 and "ICR2_COULD_NOT_RUN" in str(out) and "ICR2_READY" not in str(out)
+        if not bad[label]:
+            bad[label] = f"rc={rc} {str(out)[:60]!r}"
+    owner = {      # a well-formed program ledger, but an owner ledger of the wrong shape at the resolved commit
+        "state is a list": json.dumps({"frozen": {"pillars": [{"id": "D", "predicted": "x"}]}, "state": []}),
+        "pillars is a string": json.dumps({"frozen": {"pillars": "DEI"}, "state": {}}),
+        "frozen is a list": json.dumps({"frozen": [1], "state": {}}),
+        "top-level list": json.dumps([1]),
+    }
+    for label, raw in owner.items():
+        r = one_commit_repo({}, raw=raw)
+        with bound_program(json.dumps({"frozen": {"consumes": consumes_ok}, "state": {}})), bound_repo(r["dir"]):
+            rc, out = run_main_safe(["--pillar", "J", "--commit", r["sha"]])
+        bad["owner " + label] = rc in (1, 2) and "ICR2_READY=J" not in str(out) and '"kind"' not in str(out)
+        if not bad["owner " + label]:
+            bad["owner " + label] = f"rc={rc} {str(out)[:60]!r}"
+    with bound_program(json.dumps({"frozen": {"consumes": consumes_ok}, "state": {}})), bound_repo(r_ok["dir"]):
+        rc, out = run_main_safe(["--pillar", "J", "--commit", r_ok["sha"]])    # control: a well-formed pair runs to READY
+    ctl = rc == 0 and len(parse_rows(out)) == 3
+    return all(v is True for v in bad.values()) and ctl, f"shapes={ {k: v for k, v in bad.items() if v is not True} or 'all refused'} control_ready={ctl}"
 
 
 def g_bad_terminal():
@@ -586,6 +645,7 @@ GATES = [
     ("V-ICR2-SCRATCH-CLOSED", g_scratch_closed),
     ("V-ICR2-PARTIAL-NO-PASTE", g_partial_no_paste),
     ("V-ICR2-BAD-TERMINAL", g_bad_terminal),
+    ("V-ICR2-MALFORMED-LEDGER", g_malformed_ledger),
     ("V-ICR2-UNREACHABLE", g_unreachable),
     ("V-ICR2-ROUNDTRIP-R2", g_roundtrip_r2),
     ("V-ICR2-BAD-COMMIT", g_bad_commit),
