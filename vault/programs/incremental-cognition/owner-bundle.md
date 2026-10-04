@@ -45,6 +45,7 @@ the GEX44 items, then the judgement checks that exist only as pending UAT tests.
 | 26 | L (phase 5 UAT) | UAT 05#2 | Accept or amend the Phase 5 review-fix decisions: the R4 identity rule (CR-01, WR-01, WR-02), the R3-L front matter cross-check (WR-03), terminal only at rollover growth 100000 (WR-04), per-thread retries and rereads (WR-06), dense ranks for equal figures (IN-01) | `/gsd-verify-work 5` | phase 5 UAT test 2 |
 | 27 | L (phase 5 UAT) | UAT 05#3 | Confirm the IC-L judgment-tier prohibitions held (verifier verdicts are non-authoritative) | `/gsd-verify-work 5` | phase 5 UAT test 3 |
 | 28 | A | [A]#2 "WHERE to arm" | Say where the mission is armed (12/24h): on the laptop (RAM swings 0.6-8 GB; arming waits for pillar A and at least 4 GB free) or in the GEX44 own clone, or that it stays in the interactive pane | none -- an Owner decision on where to arm, written by the Owner (see the item) | the open "needs Owner go on WHERE" line of STATE.md Session Continuity; no arm happens before it |
+| 29 | J | [J]#1 "Pillar J consumes" | After CE lands D, E and I on a commit reachable from this branch, print the R2 rows, add them as owner_ledger evidence with the owner and handoff evidence, then run the per-pillar check | `python3 tools/ic_r2_evidence.py --pillar J --commit HEAD` ; `python3 tools/test_incremental_cognition_program.py --pillar J` | pillar J MERGED_INTO_EXISTING_OWNER with an owner, handoffs/J.md and three owner_ledger rows; ICP_PILLAR_J=PASS |
 
 ## Laptop code sync (do this first for [D]..[I], [K] and [L])
 
@@ -447,3 +448,26 @@ proven only to parse with the replay's own argument parser (gate `V-KMER-BUNDLE-
   first and arm only on exit 0. **Action:** tell the orchestrator one of: arm on the laptop, arm on GEX44, or keep the
   interactive pane; the mission records the answer, it does not choose. What closes: that answer exists in your own
   words (the mission then removes the STATE line). This item runs no command and nothing is armed by writing it.
+
+## Phase 6 -- consumed owners (R2) and closeout
+
+Status of every command below: **RUNNABLE HERE** on GEX44 (`python3`, from the worktree root
+`/home/kobii/missions/incremental-cognition/.claude/worktrees/ic-run`); on the laptop the same lines run with `python`.
+They are proven by running them on GEX44 (`vault/programs/incremental-cognition/evidence/JM-blocked.md` quotes the
+outputs) and to parse with the printer's own argument parser (gate `V-ICR2-BUNDLE-ARGV-PARSES`,
+`python3 tools/test_ic_r2_evidence.py`).
+
+- **[J]** Pillar J consumes CE pillars D, E and I (R2: the program's frozen rule "consume CE D, E, I"). Expects: CE's
+  ledger commit that gives D, E and I their terminals is reachable from `mission/incremental-cognition-run` (merged into
+  this line of history, never rebased or squashed, because R2 cites that commit's sha). Measured now: the printer prints
+  `ICR2_READY=NO` at HEAD (no terminal for D, E or I) and CE's phase-1 commit `21671d6c` is not in this clone
+  (`evidence/JM-blocked.md`). **Action:** after CE lands D, E, I (J) on a commit reachable from this branch, run the first
+  command; when it prints `ICR2_READY=J`, add its printed rows as `owner_ledger` evidence to ledger `state.J`, with the
+  `owner` and `handoff` evidence its `NEEDS` lines name, then run the second command (it checks R2 since plan 06-01) and
+  expect `ICP_PILLAR_J=PASS`:
+
+      python3 tools/ic_r2_evidence.py --pillar J --commit HEAD
+      python3 tools/test_incremental_cognition_program.py --pillar J
+
+  What closes: pillar J `MERGED_INTO_EXISTING_OWNER` with an owner, `handoffs/J.md` and three `owner_ledger` rows. Until
+  then `state.J` is not written by this mission run and IC-J stays open.

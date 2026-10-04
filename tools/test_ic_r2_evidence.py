@@ -404,6 +404,146 @@ def g_read_only():
     return ran >= len(led["frozen"]["consumes"]) and not diff, f"runs={ran} changed={diff}"
 
 
+# --------------------------------------------------------------------------- plan 06-02: bundle lines and the J / M evidence file
+BUNDLE_REL = "vault/programs/incremental-cognition/owner-bundle.md"
+JM_REL = "vault/programs/incremental-cognition/evidence/JM-blocked.md"
+SUMMARY_HEAD = "## Summary (every Owner item, phases 1-5)"
+REQUIRED_JM = ("J",)
+PER_PILLAR_CHECK = "python3 tools/test_incremental_cognition_program.py --pillar {p}"
+
+
+def strip_summary(text: str) -> str:
+    """The bundle with its summary section removed (header to the next `## `): the table repeats the command lines."""
+    import re
+    m = re.search(r"^" + re.escape(SUMMARY_HEAD) + r"[ \t]*$", text, re.M)
+    if not m:
+        return text
+    end = text.find("\n## ", m.end())
+    end = len(text) if end < 0 else end + 1
+    return text[:m.start()] + text[end:]
+
+
+def bundle_r2_problems(text: str, consumes: dict, required) -> tuple:
+    """(problems, pillars found): every indented line running tools/ic_r2_evidence.py, parsed with the printer's own parser."""
+    import re
+    import shlex
+    body = strip_summary(text).split("\n")
+    problems, found = [], set()
+    item = None
+    items: dict = {}          # item tag -> indented lines under it
+    for ln in body:
+        m = re.match(r"^- \*\*\[([A-Z])\]\*\*", ln)
+        if m:
+            item = m.group(1)
+            items.setdefault(item, [])
+        elif re.match(r"^## ", ln):
+            item = None
+        elif item and re.match(r"^ {4,}\S", ln):
+            items[item].append(ln.strip())
+    for tag, lines in items.items():
+        for line in lines:
+            if "tools/ic_r2_evidence.py" not in line:
+                continue
+            if "<" in line or ">" in line:
+                problems.append(f"placeholder in {line[:70]}")
+                continue
+            try:
+                toks = shlex.split(line)
+            except ValueError:
+                problems.append(f"unsplittable: {line[:70]}")
+                continue
+            at = next((i for i, t in enumerate(toks) if t.endswith("tools/ic_r2_evidence.py")), None)
+            if at is None:
+                problems.append(f"not a run of the printer: {line[:70]}")
+                continue
+            err = io.StringIO()
+            try:
+                with contextlib.redirect_stderr(err):
+                    args = ev.build_parser().parse_args(toks[at + 1:])
+            except SystemExit:
+                problems.append(f"unparsable ({(err.getvalue().strip().splitlines() or ['?'])[-1]}): {line[:70]}")
+                continue
+            if args.pillar not in consumes:
+                problems.append(f"pillar {args.pillar} is not in frozen.consumes: {line[:70]}")
+                continue
+            if tag != args.pillar:
+                problems.append(f"line for {args.pillar} is filed under [{tag}]: {line[:70]}")
+                continue
+            if PER_PILLAR_CHECK.format(p=args.pillar) not in lines:
+                problems.append(f"item [{tag}] has no per-pillar check line")
+                continue
+            found.add(args.pillar)
+    if found != set(required):
+        problems.append(f"pillars with a printer line {sorted(found)} != required {sorted(required)}")
+    return problems, found
+
+
+def g_bundle_argv_parses():
+    led = program_ledger()
+    consumes = led["frozen"]["consumes"]
+    text = (REPO / BUNDLE_REL).read_text(encoding="utf-8")
+    problems, found = bundle_r2_problems(text, consumes, REQUIRED_JM)
+    good = ("- **[J]** x\n\n    python3 tools/ic_r2_evidence.py --pillar J --commit HEAD\n"
+            "    python3 tools/test_incremental_cognition_program.py --pillar J\n")
+    controls = {
+        "good J item accepted": bundle_r2_problems(good, consumes, ("J",))[0] == [],
+        "unknown flag refused": bool(bundle_r2_problems(good.replace("--commit HEAD", "--no-such HEAD"), consumes, ("J",))[0]),
+        "placeholder refused": bool(bundle_r2_problems(good.replace("HEAD", "<commit>"), consumes, ("J",))[0]),
+        "pillar outside frozen.consumes refused": any("not in frozen.consumes" in x for x in bundle_r2_problems(
+            good.replace("--pillar J --commit", "--pillar A --commit"), consumes, ("J",))[0]),
+        "J line under [M] refused": any("filed under [M]" in x for x in
+                                        bundle_r2_problems(good.replace("[J]", "[M]"), consumes, ("J",))[0]),
+        "missing per-pillar check refused": any("no per-pillar check" in x for x in bundle_r2_problems(
+            good.replace("test_incremental_cognition_program.py --pillar J", "true"), consumes, ("J",))[0]),
+    }
+    if not all(controls.values()):
+        return False, f"controls failed: {[k for k, v in controls.items() if not v]}"
+    return not problems, (f"printer lines for {sorted(found)} (required {list(REQUIRED_JM)}), problems={problems[:3]}, "
+                          f"{len(controls)} controls report")
+
+
+def jm_blocked_problems(text: str, led: dict, required) -> list:
+    problems = []
+    rules = {p["id"]: p for p in led["frozen"]["pillars"]}
+    for pid in required:
+        for pair in led["frozen"]["consumes"][pid]:
+            if f"{pair['ledger']}#{pair['pillar']}" not in text:
+                problems.append(f"{pid}: input {pair['ledger']}#{pair['pillar']} not named")
+        if rules[pid]["rule"] not in text:
+            problems.append(f"{pid}: frozen rule not quoted verbatim")
+        if not any(x.startswith(f"ICR2_READY=NO pillar={pid} ") for x in text.splitlines()):
+            problems.append(f"{pid}: no measured ICR2_READY=NO line")
+    if "## Status: OPEN" not in text.splitlines():
+        problems.append("no `## Status: OPEN` line")
+    return problems
+
+
+def g_jm_blocked_covers():
+    led = program_ledger()
+    path = REPO / JM_REL
+    if not path.exists():
+        return False, f"{JM_REL} does not exist"
+    text = path.read_text(encoding="utf-8")
+    consumes = led["frozen"]["consumes"]
+    lead = REQUIRED_JM[0]
+    first = f"{consumes[lead][0]['ledger']}#{consumes[lead][0]['pillar']}"
+    rule = next(p for p in led["frozen"]["pillars"] if p["id"] == lead)["rule"]
+    controls = {
+        "a blanked input is reported": any("not named" in x for x in
+                                           jm_blocked_problems(text.replace(first, "x#y"), led, REQUIRED_JM)),
+        "a removed status line is reported": any("Status: OPEN" in x for x in
+                                                 jm_blocked_problems(text.replace("## Status: OPEN", "## Status"), led, REQUIRED_JM)),
+        "an unquoted rule is reported": any("frozen rule" in x for x in
+                                            jm_blocked_problems(text.replace(rule, "x"), led, REQUIRED_JM)),
+        "a missing measured line is reported": any("ICR2_READY=NO" in x for x in
+                                                   jm_blocked_problems(text.replace("ICR2_READY=NO", "ICR2_READY_NO"), led, REQUIRED_JM)),
+    }
+    if not all(controls.values()):
+        return False, f"controls failed: {[k for k, v in controls.items() if not v]}"
+    problems = jm_blocked_problems(text, led, REQUIRED_JM)
+    return not problems, f"{JM_REL} covers {list(REQUIRED_JM)}: problems={problems[:3]}, {len(controls)} controls report"
+
+
 GATES = [
     ("V-ICR2-TRACER-REAL-HEAD", g_tracer_real_head),
     ("V-ICR2-REAL-FREEZE-POLE", g_real_freeze_pole),
@@ -417,6 +557,8 @@ GATES = [
     ("V-ICR2-NEEDS-DERIVED", g_needs_derived),
     ("V-ICR2-SEAM-RESTORED", g_seam_restored),
     ("V-ICR2-READ-ONLY", g_read_only),
+    ("V-ICR2-BUNDLE-ARGV-PARSES", g_bundle_argv_parses),
+    ("V-ICR2-JM-BLOCKED-COVERS", g_jm_blocked_covers),
 ]
 
 
