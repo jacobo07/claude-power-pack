@@ -2,16 +2,16 @@
 gsd_state_version: "1.0"
 milestone: v1
 current_phase: 5
-current_plan: 3
+current_plan: 4
 status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-10-04T00:55:40.224Z"
-state_head: dca53f6553b73d1576ff111bb1ef342382bf134f
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-10-04T01:04:07.490Z"
+state_head: 3d80e329c7ac5a0bc079d289cd19ebbb8342cda0
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 17
-  completed_plans: 15
+  completed_plans: 16
 milestone_name: incremental-cognition
 last_activity: 2026-10-03
 workstream: incremental-cognition
@@ -32,7 +32,7 @@ invalidation, cognitive-compiler, baseline-ratchet.
 
 **Status:** Ready to execute
 **Current Phase:** 5
-Current Plan: 3
+Current Plan: 4
 Total Plans in Phase: 4
 
 ## Decisions
@@ -83,12 +83,13 @@ Total Plans in Phase: 4
 - [Phase 4]: 04-04: pillar K stays OPEN (state.K {}, IC-K unticked); [K] bundle item carries laptop reference + PRG; R2-W1 pin of reference-gex44.json named in evidence/K.md
 - [Phase 5]: 05-01: replay ranker is a separate module kme_replay.py (kme_pillars gets only the additive observer_factories keyword); late_rollover threshold is growth above the thread floor, G=100000 default, 50k/100k/200k sensitivity beside; figures rounded at 6 decimals
 - [Phase 5]: 05-02: rank_candidates ranks only entries that carry a number (UNMEASURED = None never ranked); split_ranking lists unranked with reason, no number; terminal_ok strict; KME-G smoke L-KME-G-2026-10-04.md committed (plane gex44, smoke, late_rollover upper 8,773,728.0 = 0.1598 of weighted, >= 3 %); pillar L open
+- [Phase 5]: 05-03: R3-L requires a kme_replay primary only for a measurement-kind L terminal; R4 refuses the owner bundle as an owner_decision by normalised path; the laptop code sync pins f3cdc79b and replaces the Phase 3 / [K] cherry-pick lists (replay-proven at 18e928af)
 
 ## Session Continuity
 
-**Last session:** 2026-10-04T00:55:40.143Z
+**Last session:** 2026-10-04T01:04:07.416Z
 
-**Stopped At:** Completed 05-02-PLAN.md
+**Stopped At:** Completed 05-03-PLAN.md
 `tools/test_gsd_mission_cwd_align.py` has 4 NEW uncommitted cases (V-MCA-DIVERGED-FOLLOWED / -UNPROVEN /
 -STALE-ROADMAP / -THREE-RELAYS) calling `gm.align_cwd(cwd, wt, proven_workstream="ws")`; the
 `threshold=9/9` line still needs 13/13. Not yet run (expected RED: align_cwd has no proven_workstream).
@@ -142,6 +143,7 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 | Phase 04 P04-04 | 20m | 2 tasks | 3 files |
 | Phase 05 P01 | 7min | 3 tasks | 3 files |
 | Phase 05 P02 | 25min | 3 tasks | 3 files |
+| Phase 05 P03 | 15min | 3 tasks | 3 files |
 
 ## Session Continuity (GEX44 run, 2026-10-03 ~19:00Z, session 607795c4)
 

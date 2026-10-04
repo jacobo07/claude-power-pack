@@ -169,7 +169,7 @@ Plans:
 
 **Goal**: offline replay ranks the live experiments; every Owner item is in one bundle.
 **Depends on**: Phase 3.
-**Plans:** 2/4 plans executed (sequential waves 1-4; all share tools/test_kme_replay.py, 05-03 / 05-04 the owner bundle)
+**Plans:** 3/4 plans executed (sequential waves 1-4; all share tools/test_kme_replay.py, 05-03 / 05-04 the owner bundle)
 
 Plans:
 **Wave 1**
@@ -182,7 +182,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-03-PLAN.md — [L] bundle items (KME-L rank, live-session quota decision), done-gate R3-L + R4 (the bundle is never a decision), one replay-proven laptop code sync replacing the stale Phase 3 / [K] transfer lists
+- [x] 05-03-PLAN.md — [L] bundle items (KME-L rank, live-session quota decision), done-gate R3-L + R4 (the bundle is never a decision), one replay-proven laptop code sync replacing the stale Phase 3 / [K] transfer lists
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
