@@ -819,11 +819,21 @@ def g_rank_tie_deterministic():
         call(fx, 2, [("r2", "Read", {"file_path": "/x/b.py"})])
         fx.tool_result("r2", "B" + E_BODY[1:], ts(15))
         call(fx, 3)
-    rc1, r1, _ = rk(build)
+    rc1, r1, out1 = rk(build)
     rc2, r2, _ = rk(build)
+    # IN-01: equal figures share a rank (dense ranking: 4,4,4 -> 1,1,1; 9,4,4 -> 1,2,2; 9,5,1 -> 1,2,3), the order inside a
+    # tie stays the fixed candidate order, and stdout labels the share as the bound it is
+    def ranks(figs):
+        es = kr.rank_candidates([mk(c, f) for c, f in zip(kr.CANDIDATES, figs)])
+        return [(e["candidate"], r) for e, r in zip(es, kr.dense_ranks(es))]
+    dense = [[r for _c, r in ranks(f)] for f in ((4.0, 4.0, 4.0), (4.0, 9.0, 4.0), (1.0, 5.0, 9.0), (0.0, 0.0, 0.0))]
+    lines = [ln for ln in out1.splitlines() if ln.startswith("KMER rank=")]
+    tie_ok = (dense == [[1, 1, 1], [1, 2, 2], [1, 2, 3], [1, 1, 1]] and [e["rank"] for e in r1["ranked"]] == [1, 1, 1]
+              and len(lines) == 3 and all(" upper_bound_share=" in ln and " share=" not in ln for ln in lines))
     ok = (fwd == want and rev == want and rc1 == rc2 == 0 and r1["ranked_ids"] == r2["ranked_ids"] == want
-          and r1["ranked"] == r2["ranked"] and all(e["upper_bound_weighted"] == 0.0 for e in r1["ranked"]))
-    return ok, f"unit fwd={fwd} rev={rev}; cli ids={r1['ranked_ids']} same_json={r1['ranked'] == r2['ranked']}"
+          and r1["ranked"] == r2["ranked"] and all(e["upper_bound_weighted"] == 0.0 for e in r1["ranked"]) and tie_ok)
+    return ok, (f"unit fwd={fwd} rev={rev}; cli ids={r1['ranked_ids']} same_json={r1['ranked'] == r2['ranked']} "
+                f"dense={dense} cli ranks={[e['rank'] for e in r1['ranked']]} stdout={lines[:1]}")
 
 
 def g_unmeasured_never_zero():
@@ -1668,6 +1678,10 @@ def _m_tie_reversed():
     return _patch(kr, "rank_candidates", mutant)
 
 
+def _m_distinct_ranks():
+    return _patch(kr, "dense_ranks", lambda entries: list(range(1, len(entries) + 1)))
+
+
 def _m_half_denominator():
     return _patch(kr, "denominator_for", lambda cid, scan: scan["measured"]["weighted"]
                   / (2 if cid == "unchanged_precondition_retries" else 1))
@@ -1735,6 +1749,7 @@ MUTANTS = [
      ["V-KMER-ROLLOVER-GROWTH-PINNED"]),
     ("M15 a ranked entry carries the observer's weighted_lo / weighted_interval and an unrounded share",
      _m_interval_back, ["V-KMER-UPPER-ONLY"]),
+    ("M18 dense_ranks gives equal figures distinct ranks", _m_distinct_ranks, ["V-KMER-RANK-TIE-DETERMINISTIC"]),
     ("M16 thread_of keys every line to the main thread (a subagent's call pairs with the main thread's)",
      _m_one_thread, ["V-KMER-THREAD-KEYED"]),
     ("M17 same_message never matches (parallel identical tool uses in one message count as a retry)",

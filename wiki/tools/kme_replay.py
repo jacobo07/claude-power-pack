@@ -195,6 +195,20 @@ def rank_candidates(entries):
     return sorted(have, key=lambda e: (-e["upper_bound_weighted"], CANDIDATES.index(e["candidate"])))
 
 
+def dense_ranks(ranked):
+    """Dense rank per entry of an already sorted list: equal figures (the rounded upper bound shown) share a rank, the
+    next distinct figure takes the next integer. A three-way tie of measured zeros reads rank 1 / 1 / 1, never an order
+    of preference; the order inside a tie stays the fixed candidate order."""
+    out, last, r = [], object(), 0
+    for e in ranked:
+        fig = _r(e["upper_bound_weighted"])
+        if fig != last:
+            r += 1
+            last = fig
+        out.append(r)
+    return out
+
+
 def split_ranking(results):
     """results = {candidate id: a MEASURED entry (carries upper_bound_weighted) | an UNMEASURED entry (status
     UNMEASURED, reason) | None (no observer result)} -> (ranked, unranked). Every candidate not ranked is listed under
@@ -612,8 +626,8 @@ def rank_result(ctx, sc, loc, until, argv, growth):
                                "saving_status": "upper_bound", "displacement": "unknown",
                                "events": _events_of(cid, pres), "details": pres["details"]})
     ranked, unranked = split_ranking(results)
-    for i, e in enumerate(ranked, 1):
-        e["rank"] = i
+    for e, r in zip(ranked, dense_ranks(ranked)):
+        e["rank"] = r
     in_rule = label in RULE_DENOMINATORS
     role = "primary" if in_rule else "smoke"
     fsrc = ctx.get("frozen_source")
@@ -718,7 +732,7 @@ def main(argv=None):
         print(redact(json.dumps(res, ensure_ascii=True)))
     for e in res["ranked"]:
         print(f"KMER rank={e['rank']} candidate={e['candidate']} upper_bound={e['upper_bound_weighted']} "
-              f"share={e['upper_bound_share']:.6f} vs_threshold={e['bound_vs_threshold'].replace(' ', '')}")
+              f"upper_bound_share={e['upper_bound_share']:.6f} vs_threshold={e['bound_vs_threshold'].replace(' ', '')}")
     for u in res["unranked"]:
         print(f"KMER unranked candidate={u['candidate']} status=UNMEASURED reason={u['reason']}")
     ids = ",".join(res["ranked_ids"]) or "none"
