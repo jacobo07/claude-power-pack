@@ -118,7 +118,9 @@ def lf_sha256(data: bytes) -> str:
 
 
 def blob_at(commit: str, path: str) -> bytes | None:
-    r = git("show", f"{commit}:{path}", binary=True)
+    """The bytes of the FILE `path` at `commit`, or None. `cat-file blob` refuses a tree: `git show` prints a directory
+    listing with rc 0, which made a directory read as a file."""
+    r = git("cat-file", "blob", f"{commit}:{path}", binary=True)
     return r.stdout if r.returncode == 0 else None
 
 
@@ -591,6 +593,8 @@ def g_evidence_resolves():
         "a reachable commit is accepted": ref_resolves(f"commit:{h}") is None,
         "an absent commit (21671d6c) is refused": ref_resolves("commit:21671d6c") is not None,
         "a zero commit is refused": ref_resolves("commit:0000000") is not None,
+        "a directory is refused (git show lists a tree with rc 0)": has(
+            [ref_resolves("tools") or "", ref_resolves("tools/") or ""], "not a file at HEAD"),
     }
     if not all(ctl.values()):
         return False, f"controls failed: {[k for k, v in ctl.items() if not v]}"
@@ -1019,6 +1023,9 @@ def g_ledger_deltas():
             "docs(05): x", [f"{PROG}/evidence/L.md"]) is None,
         "a missing evidence ref is reported": has(one(evidence=[{"ref": f"{PROG}/evidence/no-such.md", "sha256": "0" * 64}]),
                                                   "not a file at HEAD"),
+        "a directory as an evidence ref is reported": has(
+            one(evidence=[{"ref": "tools", "sha256": lf_sha256(git("show", "HEAD:tools", binary=True).stdout)}]),
+            "not a file at HEAD"),
         "a stale evidence sha is reported": has(one(evidence=[{"ref": GOOD_EVIDENCE, "sha256": "0" * 64}]), "sha256 is stale"),
         "a terminal name in a statement is reported": has(one(statement="closed as IMPLEMENTED_AND_VERIFIED"), "terminal name"),
         "a smoke measurement cited without the word smoke is reported": has(
