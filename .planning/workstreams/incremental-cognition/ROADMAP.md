@@ -169,12 +169,12 @@ Plans:
 
 **Goal**: offline replay ranks the live experiments; every Owner item is in one bundle.
 **Depends on**: Phase 3.
-**Plans:** 4 plans (sequential waves 1-4; all share tools/test_kme_replay.py, 05-03 / 05-04 the owner bundle)
+**Plans:** 1/4 plans executed (sequential waves 1-4; all share tools/test_kme_replay.py, 05-03 / 05-04 the owner bundle)
 
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — L ranker core: wiki/tools/kme_replay.py `rank` (late-rollover policy replay, identical rereads = the E observer, unchanged-precondition retries) on one denominator as upper bounds, UNMEASURED never 0; additive observer_factories keyword in kme_pillars; drill 6/6
+- [x] 05-01-PLAN.md — L ranker core: wiki/tools/kme_replay.py `rank` (late-rollover policy replay, identical rereads = the E observer, unchanged-precondition retries) on one denominator as upper bounds, UNMEASURED never 0; additive observer_factories keyword in kme_pillars; drill 6/6
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
