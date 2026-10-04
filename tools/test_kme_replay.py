@@ -30,7 +30,7 @@ for _p in (str(REPO), str(REPO / "wiki" / "tools"), str(HERE)):
         sys.path.insert(0, _p)
 import kme_pillars as kp  # noqa: E402
 import kme_replay as kr  # noqa: E402
-from test_kme_pillars import E_BODY, Fx, call, pdir, tree_state, ts, write_frozen  # noqa: E402,F401
+from test_kme_pillars import E_BODY, Fx, call, pdir, rd, tree_state, ts, write_frozen  # noqa: E402,F401
 
 SCRIPT = REPO / "wiki" / "tools" / "kme_replay.py"
 TMP_ROOT = Path(tempfile.mkdtemp(prefix="kmer-test-"))
@@ -617,6 +617,103 @@ def g_retry_output_share():
         f"rc={rc} upper={e and e['upper_bound_weighted']} (undivided output would read 250.0)"
 
 
+def sc_call(fx, n, tool_uses, agent="a1", usage=(10, 0, 1000, 5)):
+    """An inline sidechain assistant call (isSidechain true, agentId) in the main transcript file."""
+    i, cw, cr, o = usage
+    content = [{"type": "tool_use", "id": tid, "name": name, "input": inp} for tid, name, inp in tool_uses]
+    return fx._w({"type": "assistant", "isSidechain": True, "agentId": agent, "timestamp": ts(10 + 2 * n),
+                  "uuid": f"u-sc{n}", "requestId": f"rsc{n}",
+                  "message": {"id": f"sc{n}", "model": "claude-opus-5-5", "role": "assistant", "content": content,
+                              "usage": {"input_tokens": i, "cache_creation_input_tokens": cw,
+                                        "cache_read_input_tokens": cr, "output_tokens": o}}})
+
+
+def sc_result(fx, tid, text, t, agent="a1"):
+    return fx._w({"type": "user", "isSidechain": True, "agentId": agent, "timestamp": t,
+                  "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": tid,
+                                                             "content": text}]}})
+
+
+def g_thread_keyed():
+    # WR-06: retries and rereads are keyed per thread (main vs each inline sidechain), so a subagent's call never pairs
+    # with the main thread's; two identical tool uses issued in ONE assistant message are not a retry (the first result
+    # was not seen when the second was issued).
+    def retries(build):
+        rc, res, _ = rk(build)
+        e = entry(res, "unchanged_precondition_retries")
+        return e["details"]["retries"] if e else None
+
+    def rereads(build):
+        rc, res, _ = rk(build)
+        e = entry(res, "identical_rereads")
+        return (e["events"]["identical_same_segment"] + e["events"]["identical_after_compaction"]) if e else None
+
+    def bash_main_then_side(fx):
+        bash_pair(fx, 1, "b1", CMD_X, "A" * 300)
+        sc_call(fx, 2, [("sb1", "Bash", CMD_X)])
+        sc_result(fx, "sb1", "A" * 300, ts(15))
+        call(fx, 3)
+
+    def bash_side_pair(fx):
+        sc_call(fx, 1, [("sb1", "Bash", CMD_X)])
+        sc_result(fx, "sb1", "A" * 300, ts(13))
+        sc_call(fx, 2, [("sb2", "Bash", CMD_X)])
+        sc_result(fx, "sb2", "A" * 300, ts(15))
+        call(fx, 3)
+
+    def bash_two_agents(fx):
+        sc_call(fx, 1, [("sb1", "Bash", CMD_X)], agent="a1")
+        sc_result(fx, "sb1", "A" * 300, ts(13), agent="a1")
+        sc_call(fx, 2, [("sb2", "Bash", CMD_X)], agent="a2")
+        sc_result(fx, "sb2", "A" * 300, ts(15), agent="a2")
+        call(fx, 3)
+
+    def bash_main_pair(fx):
+        bash_pair(fx, 1, "b1", CMD_X, "A" * 300)
+        bash_pair(fx, 2, "b2", CMD_X, "A" * 300)
+        sc_call(fx, 3, [], agent="a1")
+        call(fx, 4)
+
+    def bash_parallel(fx):
+        call(fx, 1, [("b1", "Bash", CMD_X), ("b2", "Bash", CMD_X)])
+        fx.tool_result("b1", "A" * 300, ts(13))
+        fx.tool_result("b2", "A" * 300, ts(13))
+        call(fx, 2)
+
+    def bash_serial(fx):
+        bash_pair(fx, 1, "b1", CMD_X, "A" * 300)
+        bash_pair(fx, 2, "b2", CMD_X, "A" * 300)
+        call(fx, 3)
+
+    def read_main_then_side(fx):
+        rd(fx, 1, "r1", "/x/a.py", E_BODY)
+        sc_call(fx, 2, [("sr1", "Read", {"file_path": "/x/a.py"})])
+        sc_result(fx, "sr1", E_BODY, ts(15))
+        call(fx, 3)
+
+    def read_side_pair(fx):
+        sc_call(fx, 1, [("sr1", "Read", {"file_path": "/x/a.py"})])
+        sc_result(fx, "sr1", E_BODY, ts(13))
+        sc_call(fx, 2, [("sr2", "Read", {"file_path": "/x/a.py"})])
+        sc_result(fx, "sr2", E_BODY, ts(15))
+        call(fx, 3)
+
+    def read_main_pair(fx):
+        rd(fx, 1, "r1", "/x/a.py", E_BODY)
+        rd(fx, 2, "r2", "/x/a.py", E_BODY)
+        sc_call(fx, 3, [], agent="a1")
+        call(fx, 4)
+    got = {"retry main+side": retries(bash_main_then_side), "retry side pair": retries(bash_side_pair),
+           "retry two agents": retries(bash_two_agents), "retry main pair": retries(bash_main_pair),
+           "retry parallel": retries(bash_parallel), "retry serial": retries(bash_serial),
+           "reread main+side": rereads(read_main_then_side), "reread side pair": rereads(read_side_pair),
+           "reread main pair": rereads(read_main_pair)}
+    want = {"retry main+side": 0, "retry side pair": 1, "retry two agents": 0, "retry main pair": 1,
+            "retry parallel": 0, "retry serial": 1, "reread main+side": 0, "reread side pair": 1,
+            "reread main pair": 1}
+    return got == want, f"got={got} want={want}"
+
+
 def g_retry_after_error():
     # The first run errored (is_error): the identical rerun still counts, flagged after_error. 100-char result at index 2
     # of 3 calls, resident 1: (100 / 3.0) x 2 = 66.667 + 25.0 = 91.667.
@@ -662,6 +759,7 @@ GATES_RETRY = [
     ("V-KMER-RETRY-OUTPUT-SHARE", g_retry_output_share),
     ("V-KMER-RETRY-AFTER-ERROR", g_retry_after_error),
     ("V-KMER-RETRY-UNPAIRED-UNMEASURED", g_retry_unpaired_unmeasured),
+    ("V-KMER-THREAD-KEYED", g_thread_keyed),
 ]
 
 
@@ -1601,6 +1699,14 @@ def _m_interval_back():
         "upper_bound_weighted": kr._r(upper), "upper_bound_share": share, "numerator": pres["numerator"]})
 
 
+def _m_one_thread():
+    return _patch(kr, "thread_of", lambda o: "main")
+
+
+def _m_parallel_is_retry():
+    return _patch(kr, "same_message", lambda prev, mid: False)
+
+
 MUTANTS = [
     ("M1 rollover_avoided ignores the thread floor (avoids the whole cut)", _m_floor_ignored,
      ["V-KMER-ROLLOVER-FLOOR"]),
@@ -1629,6 +1735,10 @@ MUTANTS = [
      ["V-KMER-ROLLOVER-GROWTH-PINNED"]),
     ("M15 a ranked entry carries the observer's weighted_lo / weighted_interval and an unrounded share",
      _m_interval_back, ["V-KMER-UPPER-ONLY"]),
+    ("M16 thread_of keys every line to the main thread (a subagent's call pairs with the main thread's)",
+     _m_one_thread, ["V-KMER-THREAD-KEYED"]),
+    ("M17 same_message never matches (parallel identical tool uses in one message count as a retry)",
+     _m_parallel_is_retry, ["V-KMER-THREAD-KEYED"]),
 ]
 
 

@@ -29,12 +29,14 @@ cache_read 0.1 + cache_write 2 + output 5).
                   GEX44 the main-thread first-call floor is 172,753 .. 194,591 tokens (03-04 I smoke), above P0's
                   150,000 large-context mark, so an absolute threshold would "cross" on every first call: it would
                   measure the floor, not lateness.
-  identical_rereads  the Phase 3 pillar E numerator: kme_pillars.EObserver itself (imported); the upper bound is its
-                  weighted_interval[1] (rereads of an identical file version in one thread, residency-weighted).
+  identical_rereads  the Phase 3 pillar E numerator: kme_pillars.EObserver (imported) with its state split per thread
+                  (main and each inline sidechain; identical to it without inline sidechain lines); the upper bound is
+                  its weighted_interval[1] (rereads of an identical file version in one thread, residency-weighted).
   unchanged_precondition_retries  the same tool with the same key (Bash / PowerShell: the stripped command text; any
-                  other tool: canonical JSON of its input) repeated in one transcript file with no intervening Edit /
-                  Write / MultiEdit / NotebookEdit (loose, the upper bound) or no intervening tool call outside
-                  READ_ONLY_TOOLS (strict, reported beside). Read (pillar E's) and the write tools are excluded;
+                  other tool: canonical JSON of its input) repeated in one thread of a transcript file (main, or one
+                  inline sidechain; two identical tool uses in ONE assistant message are not a retry) with no
+                  intervening Edit / Write / MultiEdit / NotebookEdit (loose, the upper bound) or no intervening tool
+                  call outside READ_ONLY_TOOLS (strict, reported beside). Read (pillar E's) and the write tools are excluded;
                   Agent / Task re-dispatches are counted beside only. Upper weighted per retry = burden(result chars,
                   residency, 3.0 chars per token) + (issuing message output tokens / its tool_use count) x 5.
 
@@ -118,7 +120,8 @@ CAVEATS = (
     "commit` between two `git log -1`), and a poll whose precondition is the outside world, which is why it is the "
     "UPPER bound and strict is reported beside; Agent / Task re-dispatches are outside the candidate because their "
     "cost lives in subagent files the replay cannot link to the parent call; tool execution time is not a token cost",
-    "identical_rereads is kme_pillars.EObserver itself: its upper bound adds rereads after a compaction",
+    "identical_rereads is kme_pillars.EObserver with its state split per thread: its upper bound adds rereads after a "
+    "compaction; a sidechain event's residency counts the calls of the whole file, so it is an upper figure too",
 )
 
 
@@ -158,6 +161,12 @@ def retry_kind(prev, now):
     if now[0] != prev[0]:
         return None
     return "strict" if now[1] == prev[1] else "loose"
+
+
+def same_message(prev, mid):
+    """True when the previous identical call (a `last` / `agent_last` record whose final field is its assistant message
+    id) was issued in the SAME assistant message: parallel tool uses are not a retry of each other."""
+    return prev is not None and mid is not None and len(prev) >= 3 and prev[-1] == mid and mid != ""
 
 
 def retry_weighted(chars, resident, share):
@@ -223,6 +232,54 @@ def in_selection(sid, selected):
 
 
 # --------------------------------------------------------------------------- observers
+def thread_of(o):
+    """The thread a transcript line belongs to inside one file: "main", or one inline sidechain (`isSidechain: true`,
+    told apart by its agentId). A subagent's calls and the main thread's are separate contexts, so the retry and reread
+    candidates never pair across them."""
+    if isinstance(o, dict) and o.get("isSidechain") is True:
+        aid = o.get("agentId")
+        return "side:" + (aid if isinstance(aid, str) else "")
+    return "main"
+
+
+class RereadObserver(kp.EObserver):
+    """identical_rereads: kme_pillars.EObserver with its per-file state split per THREAD (WR-06): main and each inline
+    sidechain keep their own read / write / last-hash state, so a subagent's Read of a file never makes the main
+    thread's next Read an "identical reread". Without inline sidechain lines it is EObserver exactly (V-KMER-REREADS-
+    EQUALS-E); pillar E's own instrument is untouched. A tool_result is routed to the thread that issued its tool_use,
+    whatever flag the result row carries."""
+
+    def __init__(self):
+        super().__init__()
+        self._keys = collections.defaultdict(set)
+        self._tid_key = {}
+
+    def on_line(self, path, o, idx, sess):
+        key = path
+        if isinstance(o, dict):
+            t = thread_of(o)
+            key = path if t == "main" else f"{path}\0{t}"
+            msg = o.get("message")
+            content = msg.get("content") if isinstance(msg, dict) else None
+            for c in kp._blocks(content):
+                if not isinstance(c, dict):
+                    continue
+                if o.get("type") == "assistant" and c.get("type") == "tool_use":
+                    self._tid_key[(path, c.get("id"))] = key
+                elif o.get("type") == "user" and c.get("type") == "tool_result" \
+                        and (path, c.get("tool_use_id")) in self._tid_key:
+                    key = self._tid_key[(path, c.get("tool_use_id"))]
+                    break
+        self._keys[path].add(key)
+        super().on_line(key, o, idx, sess)
+
+    def on_file_end(self, path, sess, order, calls, compact_points):
+        for key in sorted(self._keys.pop(path, {path})):
+            super().on_file_end(key, sess, order, calls, compact_points)
+        for k in [k for k in self._tid_key if k[0] == path]:
+            del self._tid_key[k]
+
+
 class RolloverObserver(kp.PillarObserver):
     """late_rollover: replays P(G) over each transcript file's calls (one thread = one context), for the run's G and
     every G of ROLLOVER_SENSITIVITY. A session whose main file carries usage-bearing inline sidechain lines
@@ -311,19 +368,20 @@ class RetryObserver(kp.PillarObserver):
         self.events = []
         self.agents = []
         self._state = {}
+        self._owner = {}
 
-    def _st(self, path):
-        st = self._state.get(path)
+    def _st(self, path, thread="main"):
+        st = self._state.get((path, thread))
         if st is None:
             st = {"w": 0, "m": 0, "last": {}, "agent_last": {}, "tid_key": {}, "ev_by_tid": {}, "seen": set(),
                   "msgs": {}, "events": []}
-            self._state[path] = st
+            self._state[(path, thread)] = st
         return st
 
     def on_line(self, path, o, idx, sess):
         if not isinstance(o, dict):
             return
-        st = self._st(path)
+        st = self._st(path, thread_of(o))
         msg = o.get("message")
         if not isinstance(msg, dict):
             return
@@ -337,11 +395,13 @@ class RetryObserver(kp.PillarObserver):
                 m["out"] = max(m["out"], usage.get("output_tokens") or 0)
             for c in blocks:
                 if isinstance(c, dict) and c.get("type") == "tool_use":
+                    self._owner[(path, c.get("id"))] = st
                     self._on_tool_use(st, c, mid, m, sess)
         elif o.get("type") == "user":
             for c in blocks:
                 if isinstance(c, dict) and c.get("type") == "tool_result":
-                    self._on_result(st, c, idx)
+                    # a result belongs to the thread that issued its tool_use, whatever flag its own row carries
+                    self._on_result(self._owner.get((path, c.get("tool_use_id")), st), c, idx)
 
     def _on_tool_use(self, st, c, mid, m, sess):
         tid = c.get("id")
@@ -360,17 +420,20 @@ class RetryObserver(kp.PillarObserver):
             return
         key = retry_key(name, inp)
         if name in AGENT_TOOLS:
-            if retry_kind(st["agent_last"].get(key), (st["w"], st["m"])):
+            pa = st["agent_last"].get(key)
+            if retry_kind(pa, (st["w"], st["m"])) and not same_message(pa, mid):
                 self.agents.append(id(sess))
             st["m"] += 1
-            st["agent_last"][key] = (st["w"], st["m"])
+            st["agent_last"][key] = (st["w"], st["m"], mid)
             return
         prev = st["last"].get(key)
         kind = retry_kind(prev, (st["w"], st["m"]))
+        if same_message(prev, mid):
+            kind = None         # issued together with the earlier call: its result had not been seen
         after_error = bool(prev[2]) if prev else False
         if name not in READ_ONLY_TOOLS:
             st["m"] += 1
-        st["last"][key] = [st["w"], st["m"], False, tid]
+        st["last"][key] = [st["w"], st["m"], False, tid, mid]
         st["tid_key"][tid] = key
         if kind:
             sig = kp.cmd_signature(str(inp.get("command") or "")) if name in ("Bash", "PowerShell") else name
@@ -392,15 +455,16 @@ class RetryObserver(kp.PillarObserver):
             ev["idx"] = idx
 
     def on_file_end(self, path, sess, order, calls, compact_points):
-        st = self._state.pop(path, None)
-        if st is None:
-            return
-        for ev in st["events"]:
-            m = st["msgs"].get(ev["mid"], {"out": 0, "tools": 1})
-            ev["share"] = m["out"] / max(1, m["tools"])
-            if ev["chars"] is not None:
-                ev["resident"] = kp.resident_calls(ev["idx"], compact_points, len(order))
-            self.events.append(ev)
+        for key in sorted(k for k in self._state if k[0] == path):
+            st = self._state.pop(key)
+            for ev in st["events"]:
+                m = st["msgs"].get(ev["mid"], {"out": 0, "tools": 1})
+                ev["share"] = m["out"] / max(1, m["tools"])
+                if ev["chars"] is not None:
+                    ev["resident"] = kp.resident_calls(ev["idx"], compact_points, len(order))
+                self.events.append(ev)
+        for k in [k for k in self._owner if k[0] == path]:
+            del self._owner[k]
 
     def result(self, selected, sessions, population):
         evs = [e for e in self.events if in_selection(e["sid"], selected)]
@@ -434,7 +498,7 @@ class RetryObserver(kp.PillarObserver):
 
 def factories(growth):
     """{candidate id: zero-argument constructor}; identical_rereads is the Phase 3 E observer class itself."""
-    return {"late_rollover": lambda: RolloverObserver(growth), "identical_rereads": kp.EObserver,
+    return {"late_rollover": lambda: RolloverObserver(growth), "identical_rereads": RereadObserver,
             "unchanged_precondition_retries": RetryObserver}
 
 
