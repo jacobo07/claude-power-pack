@@ -19,7 +19,7 @@ Added here:
       owner ledger is read AT that commit with git (the commit must be reachable from HEAD,
       so the owner's work has to be on this line of history) and must show that pillar in
       that terminal. A handoff file alone cannot close a consuming pillar.
-  R3  measurement scope (--final and --pillar X): a kme_pillars measurement file carries
+  R3  measurement scope (--final and --pillar X): a kme_pillars (or, for pillar L, a kme_replay) measurement file carries
       `evidence_role` and `terminal_evidence` as line-anchored front-matter fields. Only a reproduced
       primary file (terminal_evidence true) supports a terminal; a second_workload file supports one
       only when it is valid (coverage reached) AND the same pillar also cites such a primary file
@@ -32,7 +32,16 @@ Added here:
       measured verdict, denominator inside the frozen rule table kept here, and a `frozen_source` that records the
       committed frozen file / CE ledger with its current sha256); a hand-written file cannot stand in.
       This is the mechanical form of "never substitute
-      KME-G for KME-L".
+      KME-G for KME-L". Pillar L is covered the same way for the offline replay ranking (wiki/tools/kme_replay.py,
+      marked by its `instrument` line or its `<!-- kmer-json -->` block): a file's `terminal_evidence: true` is believed
+      only when its own fields agree (instrument, role primary, exact population, denominator KME-L and the rule table
+      kept here, `unranked_ids` an empty list, the committed frozen file with its current sha256); a smoke file
+      (KME-G) is refused; and an L terminal of a measurement kind (RESEARCH_INSUFFICIENT_EVIDENCE,
+      FALSIFIED_OR_REJECTED_BY_EVIDENCE) must cite such a primary file. An AUTHORIZATION_BOUND L needs no ranking file.
+  R4  owner decisions (--final and --pillar X): an `owner_decision` evidence whose ref is the owner bundle
+      (vault/programs/incremental-cognition/owner-bundle.md) is refused for every pillar. The bundle is the
+      mission's request, and it names [L] and the other pillar tags, so the CE clause L4 alone would accept it;
+      only a file the Owner wrote in their own words counts as the Owner's decision.
   V-ICP-REBIND  the rebinding took: ledger.program must be "incremental-cognition", and a
       ledger read through any other program's path is refused.
 
@@ -45,6 +54,7 @@ import contextlib
 import copy
 import io
 import json
+import posixpath
 import re
 import sys
 from pathlib import Path
@@ -200,7 +210,22 @@ def is_kmep_file(text: str, fm: dict) -> bool:
             or f'"instrument": "{KMEP_INSTRUMENT}"' in t or "evidence_role" in fm or "terminal_evidence" in fm)
 
 
+def is_kmer_file(text: str, fm: dict) -> bool:
+    """A ranking written by kme_replay: its `instrument` front-matter line, its json block marker, or the instrument
+    line inside the json block. Judged on the whole text, so a damaged or BOM-prefixed front matter does not hide it."""
+    t = (text or "").lstrip("\ufeff")
+    return fm.get("instrument") == KMER_INSTRUMENT or KMER_BODY_MARKER in t or f'"instrument": "{KMER_INSTRUMENT}"' in t
+
+
 KME_PILLARS = ("D", "E", "F", "G", "H", "I")
+# Pillar L's instrument (plan 05-03): the offline replay ranker. Mirrors wiki/tools/kme_replay.py; test_kme_replay pins
+# the tables equal (V-KMER-R3-TABLE-PINNED).
+KMER_INSTRUMENT = "wiki/tools/kme_replay.py"
+KMER_BODY_MARKER = "<!-- kmer-json -->"
+REPLAY_PILLARS = ("L",)
+REPLAY_RULE_DENOMINATORS = {"L": ["KME-L"]}
+MEASUREMENT_TERMINALS = ("RESEARCH_INSUFFICIENT_EVIDENCE", "FALSIFIED_OR_REJECTED_BY_EVIDENCE")
+OWNER_BUNDLE_REL = PROGRAM_DIR + "owner-bundle.md"
 # The frozen rule's denominators per pillar (ledger frozen.pillars rule text; mirrors kme_pillars.RULE_DENOMINATORS,
 # and test_kme_pillars pins the two equal). A file's own `rule_denominators` is checked against THIS table, never
 # trusted alone.
@@ -215,29 +240,10 @@ FROZEN_SOURCE_DEFAULTS = {
 }
 
 
-def terminal_claim_problems(pid: str, fm: dict) -> list:
-    """Why a kme_pillars file that says `terminal_evidence: true` contradicts itself (pillars D..I only). A claim
-    is believed only when the file's own fields agree with it: role primary, the instrument's own mark, a population
-    that reproduced the frozen denominator (a referenced CPP-D-W7 only at coverage exactly 1), a measured verdict,
-    and a denominator inside this pillar's frozen rule."""
-    if pid not in KME_PILLARS or fm.get("terminal_evidence") is not True:
-        return []
+def frozen_source_problems(den, fm: dict) -> list:
+    """WR-07: the file was measured against the committed frozen source, whose recorded sha256 is still the committed
+    file's."""
     bad = []
-    if fm.get("instrument") != KMEP_INSTRUMENT:
-        bad.append(f"instrument is {fm.get('instrument')!r}, not {KMEP_INSTRUMENT!r}")
-    if fm.get("evidence_role") != "primary":
-        bad.append(f"evidence_role is {fm.get('evidence_role')!r}, not 'primary'")
-    pm, den = fm.get("population_match"), fm.get("denominator")
-    if not (pm == "exact" or (pm == "referenced" and den == "CPP-D-W7" and fm.get("coverage") == 1.0)):
-        bad.append(f"population_match is {pm!r} (coverage {fm.get('coverage')!r}), not a reproduced population")
-    if fm.get("materiality") not in MEASURED_VERDICTS:
-        bad.append(f"materiality is {fm.get('materiality')!r}, not a measured verdict")
-    rule = FROZEN_RULE_DENOMINATORS[pid]
-    if fm.get("rule_denominators") != rule:
-        bad.append(f"rule_denominators {fm.get('rule_denominators')!r} is not the frozen rule {rule!r}")
-    if den not in rule:
-        bad.append(f"denominator {den!r} is not in pillar {pid}'s frozen rule {rule!r}")
-    # WR-07: measured against the committed frozen source, whose recorded sha256 is still the committed file's
     src = fm.get("frozen_source")
     need = "ce_ledger" if den == "CPP-D-W7" else "frozen_file"
     ent = src.get(need) if isinstance(src, dict) else None
@@ -253,6 +259,48 @@ def terminal_claim_problems(pid: str, fm: dict) -> list:
     return bad
 
 
+def terminal_claim_problems(pid: str, fm: dict) -> list:
+    """Why a measurement file that says `terminal_evidence: true` contradicts itself. A claim is believed only when
+    the file's own fields agree with it. Pillars D..I (kme_pillars): role primary, the instrument's own mark, a
+    population that reproduced the frozen denominator (a referenced CPP-D-W7 only at coverage exactly 1), a measured
+    verdict, a denominator inside this pillar's frozen rule, the committed frozen source. Pillar L (kme_replay): the
+    same, with an exact population, denominator KME-L, nothing unranked, and no verdict field (it ranks, it does not
+    give a verdict)."""
+    if fm.get("terminal_evidence") is not True or (pid not in KME_PILLARS and pid not in REPLAY_PILLARS):
+        return []
+    bad = []
+    pm, den = fm.get("population_match"), fm.get("denominator")
+    if pid in REPLAY_PILLARS:
+        rule = REPLAY_RULE_DENOMINATORS[pid]
+        if fm.get("instrument") != KMER_INSTRUMENT:
+            bad.append(f"instrument is {fm.get('instrument')!r}, not {KMER_INSTRUMENT!r}")
+        if fm.get("evidence_role") != "primary":
+            bad.append(f"evidence_role is {fm.get('evidence_role')!r}, not 'primary'")
+        if pm != "exact":
+            bad.append(f"population_match is {pm!r}, not an exact reproduction of the frozen population")
+        if fm.get("rule_denominators") != rule:
+            bad.append(f"rule_denominators {fm.get('rule_denominators')!r} is not the frozen rule {rule!r}")
+        if den not in rule:
+            bad.append(f"denominator {den!r} is not in pillar {pid}'s frozen rule {rule!r}")
+        if fm.get("unranked_ids") != []:
+            bad.append(f"unranked_ids is {fm.get('unranked_ids')!r}, not [] (every candidate must be measured)")
+        return bad + frozen_source_problems(den, fm)
+    if fm.get("instrument") != KMEP_INSTRUMENT:
+        bad.append(f"instrument is {fm.get('instrument')!r}, not {KMEP_INSTRUMENT!r}")
+    if fm.get("evidence_role") != "primary":
+        bad.append(f"evidence_role is {fm.get('evidence_role')!r}, not 'primary'")
+    if not (pm == "exact" or (pm == "referenced" and den == "CPP-D-W7" and fm.get("coverage") == 1.0)):
+        bad.append(f"population_match is {pm!r} (coverage {fm.get('coverage')!r}), not a reproduced population")
+    if fm.get("materiality") not in MEASURED_VERDICTS:
+        bad.append(f"materiality is {fm.get('materiality')!r}, not a measured verdict")
+    rule = FROZEN_RULE_DENOMINATORS[pid]
+    if fm.get("rule_denominators") != rule:
+        bad.append(f"rule_denominators {fm.get('rule_denominators')!r} is not the frozen rule {rule!r}")
+    if den not in rule:
+        bad.append(f"denominator {den!r} is not in pillar {pid}'s frozen rule {rule!r}")
+    return bad + frozen_source_problems(den, fm)
+
+
 def check_measurement_scope(led: dict, res, only=None) -> list:
     f = []
     for pid in (list(only) if only is not None else list(ce.PILLARS)):
@@ -264,20 +312,26 @@ def check_measurement_scope(led: dict, res, only=None) -> list:
                 continue
             text = res.file_text(ref)
             fm = front_matter_fields(text)
-            if not is_kmep_file(text, fm):
+            if not (is_kmep_file(text, fm) or is_kmer_file(text, fm)):
                 continue  # another instrument's measurement: the CE clauses judge it
             if not isinstance(fm.get("evidence_role"), str) or not isinstance(fm.get("terminal_evidence"), bool):
-                f.append(f"R3 {pid}: {ref} is a kme_pillars measurement without readable evidence_role / "
+                f.append(f"R3 {pid}: {ref} is a kme_pillars / kme_replay measurement without readable evidence_role / "
                          f"terminal_evidence front matter (absent, unparseable or hand-edited)")
                 continue
             files.append((ref, fm))
         on_pillar = [(r, fm) for r, fm in files if fm.get("pillar", pid) == pid]
         has_primary = any((fm.get("evidence_role") or "primary") == "primary" and fm.get("terminal_evidence") is True
                           and not terminal_claim_problems(pid, fm) for _r, fm in on_pillar)
-        if st.get("terminal") and pid in KME_PILLARS and not has_primary and not any(
+        needs_primary = (pid in KME_PILLARS or (pid in REPLAY_PILLARS and st.get("terminal") in MEASUREMENT_TERMINALS))
+        if st.get("terminal") and needs_primary and not has_primary and not any(
                 fm.get("pillar", pid) != pid or terminal_claim_problems(pid, fm) for _r, fm in files):
-            f.append(f"R3 {pid}: terminal {st.get('terminal')} cites no kme_pillars primary measurement file with "
-                     f"terminal_evidence true (a hand-written or other-instrument file cannot stand in for it)")
+            if pid in REPLAY_PILLARS:
+                f.append(f"R3 {pid}: terminal {st.get('terminal')} cites no kme_replay primary ranking file with "
+                         f"terminal_evidence true (a smoke, hand-written or other-instrument file cannot stand in "
+                         f"for the KME-L ranking)")
+            else:
+                f.append(f"R3 {pid}: terminal {st.get('terminal')} cites no kme_pillars primary measurement file "
+                         f"with terminal_evidence true (a hand-written or other-instrument file cannot stand in for it)")
         for ref, fm in files:
             if fm.get("pillar", pid) != pid:
                 f.append(f"R3 {pid}: {ref} measures pillar {fm.get('pillar')}")
@@ -303,6 +357,31 @@ def check_measurement_scope(led: dict, res, only=None) -> list:
             else:
                 for why in terminal_claim_problems(pid, fm):
                     f.append(f"R3 {pid}: {ref} claims terminal_evidence true but {why}")
+    return f
+
+
+def _bundle_ref(ref) -> bool:
+    """True when an evidence ref names the owner bundle, however it is spelled: backslashes, a leading ./, a ./ or
+    // inside the path, or the absolute path of this checkout."""
+    if not isinstance(ref, str) or not ref:
+        return False
+    r = posixpath.normpath(ref.replace("\\", "/"))
+    if r.startswith("/"):
+        try:
+            r = Path(r).relative_to(REPO).as_posix()
+        except ValueError:
+            return False
+    return r == OWNER_BUNDLE_REL
+
+
+def check_owner_decisions(led: dict, only=None) -> list:
+    """R4: the owner bundle is the mission's request, never the Owner's answer."""
+    f = []
+    for pid in (list(only) if only is not None else list((led.get("state") or {}))):
+        for e in ((led.get("state") or {}).get(pid) or {}).get("evidence") or []:
+            if e.get("kind") == "owner_decision" and _bundle_ref(e.get("ref")):
+                f.append(f"R4 {pid}: owner_decision {e.get('ref')} is the owner bundle: the mission's request is "
+                         f"never the Owner's answer (only the Owner's own words count)")
     return f
 
 
@@ -500,6 +579,71 @@ def selftest(verbose=True) -> bool:
     else:
         ok = False
         print("  INCONCLUSIVE V-ICP-R3-REAL: no KME-G smoke file")
+    # Pillar L: a kme_replay ranking file (plan 05-03). The same poles as D..I, read against the L rule table.
+    good_l_kv = dict(instrument=KMER_INSTRUMENT, pillar="L", denominator="KME-L", rule_denominators=["KME-L"],
+                     evidence_role="primary", terminal_evidence=True, population_match="exact", unranked_ids=[],
+                     frozen_source=fsrc("frozen_file"))
+    l_prim = fm(**good_l_kv)
+    l_smoke = fm(instrument=KMER_INSTRUMENT, pillar="L", denominator="KME-G", rule_denominators=["KME-L"],
+                 evidence_role="smoke", terminal_evidence=False, population_match="exact", unranked_ids=[])
+    say(r3t("L", {"p": l_prim}, ["p"]) == [] and r3("L", {"p": l_prim}, ["p"]) == [],
+        "V-ICP-R3-L-PRIMARY-ACCEPTED (an exact KME-L primary ranking with the committed frozen source, no unranked)")
+    sm = r3("L", {"s": l_smoke}, ["s"])
+    say(len(sm) == 1 and sm[0].startswith("R3 L:") and "smoke" in sm[0], "V-ICP-R3-L-SMOKE-REFUSED")
+    l_contradictions = {
+        "denominator-KME-G": dict(good_l_kv, denominator="KME-G"),
+        "population-drifted": dict(good_l_kv, population_match="drifted"),
+        "unranked-late-rollover": dict(good_l_kv, unranked_ids=["late_rollover"]),
+        "unranked-absent": {k: v for k, v in good_l_kv.items() if k != "unranked_ids"},
+        "rule-widened": dict(good_l_kv, rule_denominators=["KME-L", "KME-G"]),
+        "foreign-instrument": dict(good_l_kv, instrument=KMEP_INSTRUMENT),
+        "no-frozen-source": {k: v for k, v in good_l_kv.items() if k != "frozen_source"},
+        "non-default-source": dict(good_l_kv, frozen_source=fsrc("frozen_file", default=False)),
+        "source-sha-stale": dict(good_l_kv, frozen_source=fsrc("frozen_file", sha256="0" * 64)),
+        "source-path-elsewhere": dict(good_l_kv, frozen_source=fsrc("frozen_file", path="/tmp/other.json")),
+    }
+    for name, kv in l_contradictions.items():
+        got = r3t("L", {"c": fm(**kv)}, ["c"])
+        say(any(x.startswith("R3 L:") and "claims terminal_evidence true but" in x for x in got),
+            f"V-ICP-R3-L-MUT-{name} killed by R3 (terminal_evidence true contradicts its own fields)")
+    got = r3t("L", {"c": fm(**dict(good_l_kv, evidence_role="smoke"))}, ["c"])
+    say(any(x.startswith("R3 L:") and "is a smoke measurement" in x for x in got),
+        "V-ICP-R3-L-MUT-smoke-role-claims-terminal killed by R3 (a file that calls itself smoke is never terminal)")
+    l_hand = ("---\ndenominator: \"KME-G\"\ncommand: \"python3 x --denominator KME-G\"\n---\n\n"
+              "late rollover, identical rereads and retries measured by hand.\n")
+    no_primary = [r3t("L", {"h": l_hand}, ["h"], t) for t in MEASUREMENT_TERMINALS] + [
+        r3t("L", {}, [], t) for t in MEASUREMENT_TERMINALS] + [r3t("L", {"s": l_smoke}, ["s"])]
+    say(all(any(x.startswith("R3 L:") and "cites no kme_replay primary" in x for x in got) for got in no_primary),
+        "V-ICP-R3-L-NO-PRIMARY-REFUSED (hand-written, absent and smoke-only evidence, both measurement terminals)")
+    say(r3t("L", {}, [], "AUTHORIZATION_BOUND") == [] and r3t("L", {"h": l_hand}, ["h"], "AUTHORIZATION_BOUND") == [],
+        "V-ICP-R3-L-AUTH-ONLY-SILENT (an owner-decision terminal needs no ranking file; R3 does not speak)")
+    say(any("without readable" in x for x in r3("L", {"k": "---\ninstrument: \"" + KMER_INSTRUMENT + "\"\n---\n"}, ["k"])),
+        "V-ICP-R3-L-KMER-NO-ROLE-REFUSED (a kme_replay file without role fields is refused, not skipped)")
+    l_smokes = sorted((REPO / PROGRAM_DIR / "measurements").glob("L-KME-G-*.md"))
+    if l_smokes:
+        rel = l_smokes[0].relative_to(REPO).as_posix()
+        real_l = {"state": {"L": {"terminal": "RESEARCH_INSUFFICIENT_EVIDENCE", "evidence": [
+            {"kind": "measurement", "ref": rel, "sha256": ce.lf_sha256(REPO / rel)}]}}}
+        got = check_measurement_scope(real_l, ce.Resolver(), only=["L"])
+        say(len(got) >= 1 and all(x.startswith("R3 L:") for x in got) and any("is a smoke measurement" in x for x in got),
+            f"V-ICP-R3-L-REAL (committed KME-G smoke file {rel} refused for an L terminal: {got[:1]})")
+    else:
+        ok = False
+        print("  INCONCLUSIVE V-ICP-R3-L-REAL: no L-KME-G smoke file")
+    # R4: the mission's own bundle is never an owner_decision.
+    def r4_led(pillar, ref):
+        return {"state": {pillar: {"terminal": "AUTHORIZATION_BOUND", "evidence": [
+            {"kind": "owner_decision", "ref": ref, "sha256": "0" * 64}]}}}
+    bundle_forms = [OWNER_BUNDLE_REL, "./" + OWNER_BUNDLE_REL, OWNER_BUNDLE_REL.replace("/", "\\"),
+                    "vault/programs/./incremental-cognition/owner-bundle.md", str(REPO / OWNER_BUNDLE_REL)]
+    refused = [check_owner_decisions(r4_led(p_, f_), only=[p_]) for p_ in ("L", "B") for f_ in bundle_forms]
+    say(all(len(g) == 1 and g[0].startswith("R4 ") and "owner bundle" in g[0] for g in refused),
+        "V-ICP-R4-BUNDLE-REFUSED (the bundle as an owner_decision, five spellings, pillars L and B)")
+    own = PROGRAM_DIR + "evidence/L-owner-decision.md"
+    say(check_owner_decisions(r4_led("L", own), only=["L"]) == []
+        and check_owner_decisions({"state": {"L": {"evidence": [
+            {"kind": "measurement", "ref": OWNER_BUNDLE_REL, "sha256": "0" * 64}]}}}, only=["L"]) == [],
+        "V-ICP-R4-OTHER-DECISION-SILENT (the Owner's own decision file, and a non-decision evidence kind, are not refused)")
     return ok
 
 
@@ -528,6 +672,7 @@ def main(argv=None) -> int:
             return 2
         fails += check_binding(led) + check_consumed(led, OwnerLedgers())
         fails += check_measurement_scope(led, ce.Resolver())
+        fails += check_owner_decisions(led)
         for x in fails:
             print("  FAIL", x)
         print(f"ICP_VERDICT={'PASS' if not fails else 'FAIL'} failures={len(fails)}")
@@ -545,7 +690,7 @@ def main(argv=None) -> int:
         except (OSError, json.JSONDecodeError) as exc:
             print(f"ICP_VERDICT=COULD_NOT_RUN ledger unreadable: {exc}")
             return 2
-        r3 = check_measurement_scope(led, ce.Resolver(), only=[pid])
+        r3 = check_measurement_scope(led, ce.Resolver(), only=[pid]) + check_owner_decisions(led, only=[pid])
         for x in r3:
             print("  FAIL", x)
         print(f"ICP_PILLAR_{pid}={'PASS' if rc == 0 and not r3 else 'FAIL'}")

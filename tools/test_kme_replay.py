@@ -1129,8 +1129,66 @@ def g_bundle_argv_parses():
 GATES_BUNDLE = [("V-KMER-BUNDLE-ARGV-PARSES", g_bundle_argv_parses)]
 
 
+# --------------------------------------------------------------------------- plan 05-03: the program done-gate reads the ranking
+def _icp_pair_tools():
+    """test_kme_pillars' own helpers for the done-gate pair gate (imported lazily: the wrapper rebinds CE globals)."""
+    import test_kme_pillars as tkp
+    return tkp._icp(), tkp.icp_sources, tkp.r3_led
+
+
+def g_r3_pair():
+    """The instrument's own KME-L primary, its KME-G smoke, and the pillar fences, through the wrapper's R3."""
+    icp, icp_sources, r3_led = _icp_pair_tools()
+    root = scratch("r3l")
+    tracer_fixture(root)
+    frozen = write_frozen(root / "frozen.json", **{"KME-L": POP_KR, "KME-G": POP_KR})
+    outd = scratch("r3lo")
+    rc1, o1, e1 = run_main(klr_args(root, outd, frozen))
+    rc2, o2, e2 = run_main(klr_args(root, outd, frozen, denominator="KME-G"))
+    prim, smoke = (next(iter(outd.glob(f"L-{d}-*.md")), None) for d in ("KME-L", "KME-G"))
+    if rc1 != 0 or rc2 != 0 or not (prim and smoke):
+        return False, f"rc={rc1},{rc2} files={sorted(f.name for f in outd.glob('*.md'))} err={(e1 + e2)[-200:]}"
+    fp, fk = (icp.front_matter_fields(f.read_text(encoding="utf-8")) for f in (prim, smoke))
+    shaped = (fp["evidence_role"] == "primary" and fp["terminal_evidence"] is True and fp["pillar"] == "L"
+              and fk["evidence_role"] == "smoke" and fk["terminal_evidence"] is False and fp["unranked_ids"] == [])
+    res = icp.ce.Resolver()
+
+    def fails(pillar, refs, terminal=None):
+        led = r3_led(pillar, *refs)
+        if terminal:
+            led["state"][pillar]["terminal"] = terminal
+        with icp_sources(icp, frozen_file=frozen):
+            return icp.check_measurement_scope(led, res, only=[pillar])
+    meas = "RESEARCH_INSUFFICIENT_EVIDENCE"
+    accepted = fails("L", [prim], meas)
+    smk = fails("L", [smoke])
+    smk_term = fails("L", [smoke], meas)
+    none = fails("L", [], meas)
+    wrong = fails("E", [prim])
+    ok = (shaped and accepted == [] and len(smk) == 1 and smk[0].startswith("R3 L:") and "smoke" in smk[0]
+          and any("cites no kme_replay primary" in x for x in smk_term)
+          and len(none) == 1 and "cites no kme_replay primary" in none[0]
+          and len(wrong) == 1 and wrong[0].startswith("R3 E:") and "measures pillar L" in wrong[0])
+    return ok, (f"front shaped={shaped} primary accepted={accepted == []} smoke={smk} smoke-as-terminal={len(smk_term)} "
+                f"line(s) no-primary={none} L-file-cited-by-E={wrong}")
+
+
+def g_r3_table_pinned():
+    """The wrapper's copy of the instrument's marks and rule table equals the instrument's own (no silent drift)."""
+    icp, _s, _r = _icp_pair_tools()
+    pairs = {"REPLAY_RULE_DENOMINATORS": (icp.REPLAY_RULE_DENOMINATORS, {kr.PILLAR: list(kr.RULE_DENOMINATORS)}),
+             "KMER_INSTRUMENT": (icp.KMER_INSTRUMENT, kr.INSTRUMENT),
+             "KMER_BODY_MARKER": (icp.KMER_BODY_MARKER, kr.KMER_BODY_MARKER),
+             "REPLAY_PILLARS": (tuple(icp.REPLAY_PILLARS), (kr.PILLAR,))}
+    off = [k for k, (a, b) in pairs.items() if a != b]
+    return not off, f"equal: {sorted(k for k in pairs if k not in off)}; differ: {off}"
+
+
+GATES_R3 = [("V-KMER-R3-PAIR", g_r3_pair), ("V-KMER-R3-TABLE-PINNED", g_r3_table_pinned)]
+
+
 GATES_TRACER = [("V-KMER-TRACER-E2E", g_tracer_e2e), ("V-KMER-CONTRACT-E2E", g_contract_e2e)]
-GATES = list(GATES_TRACER) + GATES_ROLLOVER + GATES_RETRY + GATES_CONTRACT + GATES_BUNDLE
+GATES = list(GATES_TRACER) + GATES_ROLLOVER + GATES_RETRY + GATES_CONTRACT + GATES_BUNDLE + GATES_R3
 
 
 def summary_line() -> str:
