@@ -34,4 +34,8 @@ another pane's; never touch it. Repo `~/.claude/skills/claude-power-pack`, branc
 - tools/compound_unattended.py live code uncommitted since ~2026-09-10.
 - V-FIOS-LIVE-PATH-WIRED red: tools/kclaude.ps1 lacks session_compiler --preflight since e58b6afe.
 
+Owner decisions 1-7 verbatim (needed for state.T owner_text in W7; push conditions = decision 7):
+`~/.claude/projects/C--Users-User--claude-skills-claude-power-pack/0f1368ee-6071-4212-b648-34a9cb38b2be.jsonl`,
+search `DECISION 4 — PILLAR T` (em dash). Never paraphrase into owner_text.
+
 Start: read this file, `git log --oneline -6`, then Next item 1 (W7).
