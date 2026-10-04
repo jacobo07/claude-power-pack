@@ -41,6 +41,9 @@ the GEX44 items, then the judgement checks that exist only as pending UAT tests.
 | 22 | D-I (phase 3 UAT) | UAT 03#4 | Read tools/test_kme_pillars.py in full (03-REVIEW only skimmed it) | `/gsd-verify-work 3` | phase 3 UAT test 4 |
 | 23 | K (phase 4 UAT) | UAT 04#2 | Accept or amend the review-fix policies WR-01 / WR-02 / WR-03 (layer_absent exit 2, uncorrelated hook element unattributed, uncompared tokens axis exit 2 unless --chars-only) | `/gsd-verify-work 4` | phase 4 UAT test 2 |
 | 24 | K (phase 4 UAT) | UAT 04#3 | Confirm the three IC-K judgment-tier prohibitions held (verifier verdicts are non-authoritative) | `/gsd-verify-work 4` | phase 4 UAT test 3 |
+| 25 | L (phase 5 UAT) | UAT 05#1 | The two laptop [L] items, as one pending phase 5 check: the KME-L ranking run (row 10) and the Owner's live-quota decision file (row 11) | `/gsd-verify-work 5` | phase 5 UAT test 1 |
+| 26 | L (phase 5 UAT) | UAT 05#2 | Accept or amend the Phase 5 review-fix decisions: the R4 identity rule (CR-01, WR-01, WR-02), the R3-L front matter cross-check (WR-03), terminal only at rollover growth 100000 (WR-04), per-thread retries and rereads (WR-06), dense ranks for equal figures (IN-01) | `/gsd-verify-work 5` | phase 5 UAT test 2 |
+| 27 | L (phase 5 UAT) | UAT 05#3 | Confirm the IC-L judgment-tier prohibitions held (verifier verdicts are non-authoritative) | `/gsd-verify-work 5` | phase 5 UAT test 3 |
 
 ## Laptop code sync (do this first for [D]..[I], [K] and [L])
 
@@ -85,6 +88,13 @@ existed. With the table and its two coverage gates in the bundle, the replay at 
 `skipped=1` for the second suite (V-KMER-BUNDLE-SUMMARY-UAT prints SKIP there: the phase files it cites do not exist at
 the freeze; a SKIP is never a PASS) and the GEX44 worktree prints `KMER_PASS=41/41  skipped=0`. The other three lines are
 unchanged. On the laptop the same SKIP is expected, for the same reason (not measured there).
+
+Phase 5 correction (review fixes, gates 42-45): the counts in the two paragraphs above are stale. The replay at `18e928af` now
+prints `KMER_PASS=44/44  threshold=44/44  skipped=1` for the second suite (the SKIP is V-KMER-BUNDLE-SUMMARY-UAT, as before; a
+SKIP is never a PASS), measured in a scratch clone under /tmp with the fetch URL replaced by the local repository path, and the
+GEX44 worktree prints `KMER_PASS=45/45  threshold=45/45  skipped=0`. The other three lines (`KMEP_PASS=89/89`,
+`FLOOR_PASS=67/67`, `ICP_SELFTEST=PASS`) are unchanged, and every exit code is 0. On the laptop expect the same 44/44 with one
+SKIP, not measured there.
 
 ## Items
 
