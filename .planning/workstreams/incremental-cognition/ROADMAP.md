@@ -192,3 +192,22 @@ Plans:
 
 **Goal**: J and M closed by R2 against CE/SC ledgers on HEAD; UKDL 3-level and CBR reviews; deltas; done-gate.
 **Depends on**: CE and SC landing their ledger commits on this line of history.
+**Plans:** 4 plans (sequential waves 1-4; J and M externally blocked on GEX44, so no terminal is written; `--final` is
+expected to fail on the open pillars and is recorded verbatim)
+
+Plans:
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — J/M: read-only R2 evidence printer tools/ic_r2_evidence.py (owner ledger at a commit via OwnerLedgers, rows only when every consumed pillar is closed, round trip through check_consumed); `--pillar` runs R2; V-ICR2-* + drill
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 06-02-PLAN.md — J/M: evidence/JM-blocked.md (exact R2 inputs, measured blocker), [J]/[M] bundle items + summary rows 29-30, pending-check discovery over every phase directory
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 06-03-PLAN.md — N: ukdl-candidates.md (three levels), reviews/ukdl.md and reviews/cbr.md (verdict per candidate), [N] item + row 31, closeout gate V-ICN-* (promotion never silent) + drill
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 06-04-PLAN.md — N: ledger reviews {file, sha256} and deltas for every shipped phase (gated), --status / --final run and recorded verbatim in evidence/N.md, Status OPEN
