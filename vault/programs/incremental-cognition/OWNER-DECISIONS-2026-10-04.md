@@ -23,7 +23,7 @@ both GEX44 preflights before every arm (row 19).
 
 | row | decision | status |
 |---|---|---|
-| 1 | laptop sync after the mission ends and >= 4 GB free | AUTHORIZED, PENDING_GATE |
+| 1 | laptop sync after the mission ends and >= 4 GB free | DONE 2026-10-04 ~22:40 (Owner "sync now"): tip 95ac9c3b, sync 850ebc0e, Windows test fixes ea311c07 (port back to the mission branch); KMEP 86/86, KMER 43/43, FLOOR 57/57, ICP_SELFTEST=PASS with `C:\Program Files\Git\cmd` on PATH (without it the git gates SKIP) |
 | 2 | 7 cherry-picks + 6 suites + post-deploy check after the sync, >= 4 GB; own commits/hunks only | AUTHORIZED, PENDING_GATE |
 | 3 | capture the real held-mission relay in the laptop live sweep | AUTHORIZED, OPPORTUNISTIC |
 | 4-10 | run D-I (+L ranking) in full when the laptop is free; skip a measurement still valid with unchanged dependencies | AUTHORIZED, PENDING_GATE |
