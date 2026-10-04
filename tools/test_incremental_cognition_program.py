@@ -13,13 +13,14 @@ V-CEP-REAL-HANDOFF line, replaced by the same two poles read from the probe file
 current history (as the SC wrapper does; CE defect handed to its owner, not edited here).
 
 Added here:
-  R2  consumed owners (--final): this is a delta program; pillars that close by consuming a
+  R2  consumed owners (--final and --pillar X): this is a delta program; pillars that close by consuming a
       CE / SC pillar (ledger.frozen.consumes) must cite, for each consumed pillar, an
       `owner_ledger` evidence {ref: <owner ledger path>, commit, pillar, terminal}. The
       owner ledger is read AT that commit with git (the commit must be reachable from HEAD,
       so the owner's work has to be on this line of history) and must show that pillar in
-      that terminal. A handoff file alone cannot close a consuming pillar.
-  R3  measurement scope (--final and --pillar X): a kme_pillars (or, for pillar L, a kme_replay) measurement file carries
+      that terminal. A handoff file alone cannot close a consuming pillar. `--pillar X` checks
+      only X's consumed owners; `--final` checks every consuming pillar.
+  R3 measurement scope (--final and --pillar X): a kme_pillars (or, for pillar L, a kme_replay) measurement file carries
       `evidence_role` and `terminal_evidence` as line-anchored front-matter fields. Only a reproduced
       primary file (terminal_evidence true) supports a terminal; a second_workload file supports one
       only when it is valid (coverage reached) AND the same pillar also cites such a primary file
@@ -147,10 +148,18 @@ class OwnerLedgers:
         return ((led.get("state") or {}).get(pillar) or {}).get("terminal")
 
 
-def check_consumed(led: dict, owners: OwnerLedgers) -> list:
+def load_ledger() -> dict:
+    """The program ledger as `--final` and `--pillar` read it (OSError / JSONDecodeError reach the caller)."""
+    return json.loads((REPO / ce.LEDGER_REL).read_text(encoding="utf-8"))
+
+
+def check_consumed(led: dict, owners: OwnerLedgers, only=None) -> list:
+    """R2. `only` limits the check to those consuming pillars (--pillar X); None checks every one (--final)."""
     f = []
     consumes = (led.get("frozen") or {}).get("consumes") or {}
     for pid, wanted in consumes.items():
+        if only is not None and pid not in only:
+            continue
         st = (led.get("state") or {}).get(pid) or {}
         if not st.get("terminal"):
             continue  # an open pillar is L3's failure, not R2's
@@ -725,6 +734,53 @@ def selftest(verbose=True) -> bool:
     for name, (l_, o_) in mutants.items():
         say(any(x.startswith("R2") for x in check_consumed(l_, o_)), f"V-ICP-MUT-{name} killed by R2")
 
+    # R2 in `--pillar X`: `only` scopes the check, and the per-pillar command executes it (an R2 that ran only under
+    # --final let a J terminal with a misquoted owner terminal print ICP_PILLAR_J=PASS).
+    bad_ho = mutants["handoff-only"][0]
+    scoped_j = check_consumed(bad_ho, good, only=["J"])
+    scoped_h = check_consumed(bad_ho, good, only=["H"])
+    say(bool(scoped_j) and all(x.startswith("R2 J:") for x in scoped_j) and scoped_h == []
+        and check_consumed(bad_ho, good, only=None) == check_consumed(bad_ho, good) == scoped_j,
+        "V-ICP-R2-ONLY-SCOPED (only=['J'] -> R2 J lines, only=['H'] -> none, only=None -> as before)")
+
+    owners_j = [("D", "MERGED_INTO_EXISTING_OWNER"), ("E", "MERGED_INTO_EXISTING_OWNER"),
+                ("I", "FALSIFIED_OR_REJECTED_BY_EVIDENCE")]
+    pm_ok = {"frozen": {"consumes": {"J": [{"ledger": CE, "pillar": p} for p, _ in owners_j]}},
+             "state": {"J": {"terminal": "MERGED_INTO_EXISTING_OWNER", "evidence": [
+                 {"kind": "owner_ledger", "ref": CE, "commit": "c" * 40, "pillar": p, "terminal": t}
+                 for p, t in owners_j]}}}
+    pm_bad = copy.deepcopy(pm_ok)
+    pm_bad["state"]["J"]["evidence"] = []
+    pm_owners = FakeOwners({("c" * 40, CE, p): t for p, t in owners_j})
+
+    def pillar_mode(ledger):
+        """main(['--pillar', 'J']) with the ledger, owners and CE verifier replaced; globals restored in finally."""
+        saved_ce_main = ce.main
+        undo = [_patch_attr("load_ledger", lambda: ledger), _patch_attr("OwnerLedgers", lambda: pm_owners)]
+        ce.main = lambda argv: 0
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf):
+                rc = main(["--pillar", "J"])
+        finally:
+            ce.main = saved_ce_main
+            for restore in reversed(undo):
+                restore()
+        return rc, buf.getvalue()
+
+    rc_bad, out_bad = pillar_mode(pm_bad)
+    rc_ok, out_ok = pillar_mode(pm_ok)
+    say(rc_bad == 1 and "FAIL R2 J:" in out_bad and "ICP_PILLAR_J=FAIL" in out_bad
+        and rc_ok == 0 and "ICP_PILLAR_J=PASS" in out_ok and "R2" not in out_ok,
+        "V-ICP-R2-PILLAR-MODE (--pillar J reads the owner ledger: missing evidence FAIL, correct rows PASS)")
+    undo_r2 = _patch_attr("check_consumed", lambda led, owners, only=None: [])
+    try:
+        rc_mut, out_mut = pillar_mode(pm_bad)
+    finally:
+        undo_r2()
+    say("ICP_PILLAR_J=PASS" in out_mut and rc_mut == 0 and "ICP_PILLAR_J=FAIL" in pillar_mode(pm_bad)[1],
+        "V-ICP-MUT-r2-absent-from-pillar-mode killed by V-ICP-R2-PILLAR-MODE")
+
     # R2 on REAL git, one green pole: CE ledger at its freeze commit shows pillar A open, at
     # the worker branch head it is closed -- the reader must tell them apart.
     real = OwnerLedgers()
@@ -1051,7 +1107,7 @@ def main(argv=None) -> int:
         if rc != 0:
             fails.append(f"CE clauses failed (rc {rc})")
         try:
-            led = json.loads((REPO / ce.LEDGER_REL).read_text(encoding="utf-8"))
+            led = load_ledger()
         except (OSError, json.JSONDecodeError) as exc:
             print(f"ICP_VERDICT=COULD_NOT_RUN ledger unreadable: {exc}")
             return 2
@@ -1071,11 +1127,12 @@ def main(argv=None) -> int:
     if pid in ce.PILLARS:
         rc = ce.main(argv)
         try:
-            led = json.loads((REPO / ce.LEDGER_REL).read_text(encoding="utf-8"))
+            led = load_ledger()
         except (OSError, json.JSONDecodeError) as exc:
             print(f"ICP_VERDICT=COULD_NOT_RUN ledger unreadable: {exc}")
             return 2
-        r3 = check_measurement_scope(led, ce.Resolver(), only=[pid]) + check_owner_decisions(led, only=[pid])
+        r3 = (check_consumed(led, OwnerLedgers(), only=[pid])
+              + check_measurement_scope(led, ce.Resolver(), only=[pid]) + check_owner_decisions(led, only=[pid]))
         for x in r3:
             print("  FAIL", x)
         print(f"ICP_PILLAR_{pid}={'PASS' if rc == 0 and not r3 else 'FAIL'}")
