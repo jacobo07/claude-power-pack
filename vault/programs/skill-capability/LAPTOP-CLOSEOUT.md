@@ -3,8 +3,9 @@
 Every step below runs on the laptop unless it is marked **gex44**. The laptop shared checkout is
 `C:\Users\User\.claude\skills\claude-power-pack`.
 
-What gex44 already did: every pillar except N is terminal, and `--pillar A` .. `--pillar M` pass on committed blobs.
-The gex44 pre-final record is `vault/programs/skill-capability/evidence/pre-final-gex44.md`
+What gex44 already did: every pillar except N is terminal, and `--pillar A` .. `--pillar M` pass on committed blobs:
+the whole working tree, untracked files included, was clean apart from the hook-written stubs that `HOOK_STUB_PATHS`
+in `tools/test_skill_capability_prefinal.py` lists (V-PF-COMMITTED). The gex44 pre-final record is `vault/programs/skill-capability/evidence/pre-final-gex44.md`
 (`PF_TERMINAL=A..M`, `PF_OPEN=N (expected ...)`, `PF_VERDICT=PASS`). Pillar N is open by design: `--final` and its R1
 check read the settings file of the host they run on, so N closes only here.
 

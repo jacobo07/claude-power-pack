@@ -16,9 +16,11 @@ refuses that argument) and never writes state.N.
 
 Modes
   default (PF_MODE=gex44)
-      V-PF-COMMITTED  the program dir and tools/ are clean in the working tree (else
-                      INCONCLUSIVE, and the wrapper subprocesses are skipped: they read
-                      the working tree, not HEAD).
+      V-PF-COMMITTED  the WHOLE working tree is clean, untracked files included, except the
+                      hook-written stubs named in HOOK_STUB_PATHS (else INCONCLUSIVE, and the
+                      wrapper subprocesses are skipped: they read the working tree, not HEAD,
+                      and their gates execute hooks/, skills/, modules/ and more, so a scope of
+                      tools/ + the program dir could not see what they run: 09-REVIEW WR-03).
       static checks on COMMITTED blobs (`git show HEAD:<path>`, never the working tree):
                       V-PF-L8 (CE check_ledger final, gates not re-run, must fail ONLY on
                       `L3 N: no terminal disposition`), V-PF-UKDL, V-PF-CBR, V-PF-DELTAS,
@@ -31,7 +33,8 @@ Modes
       wrapper runs:   V-PF-SELFTEST, V-PF-STATUS (open == ["N"]), V-PF-PILLARS (A..M PASS),
                       V-PF-N-OPEN (`--pillar N` FAILS with exactly the L3 N clause; a PASS
                       on N turns this check red).
-      V-PF-DIRTY-SET-STABLE  the dirty set did not move while the wrapper ran.
+      V-PF-DIRTY-SET-STABLE  the dirty set (same whole-tree scope) did not move while the
+                      wrapper ran.
   --closeout (PF_MODE=closeout)   the gate state.N cites on the laptop. V-PF-COMMITTED
       narrowed to the three code files it executes, the same static checks without the
       gex44-only V-PF-UKDL-UNTOUCHED, V-PF-LEDGER-INVARIANT with only its state.N clause
@@ -93,6 +96,10 @@ WRAPPER_TIMEOUT_S = 1900
 DECISION_RE = re.compile(r"OWNER DECISION|\(decision\)")
 PATH_SUFFIX = re.compile(r":\d+(-\d+)?$")
 OPEN_LINE = "PF_OPEN=N (expected: state.N and --final are laptop-only)"
+# Paths the session hooks write on their own (progress log, per-file doc stubs, GSD state). They are
+# the only dirty paths V-PF-COMMITTED tolerates; each is matched exactly or, ending in "/", as a prefix.
+# No pillar gate reads them. Anything else dirty, anywhere in the tree, makes the run INCONCLUSIVE.
+HOOK_STUB_PATHS = ("vault/progress.md", ".gsd/", "docs/arch/", "docs/changelog/", "docs/constitution/", "docs/prd/")
 
 
 class GitUnavailable(Exception):
@@ -519,6 +526,18 @@ def dirty_paths(porcelain_text, own_outputs) -> list:
     return out
 
 
+def outside_hook_stubs(paths) -> list:
+    """`paths` minus the HOOK_STUB_PATHS entries (exact, or prefix for a "/"-ending entry)."""
+    return [p for p in paths
+            if not any(p == s or (s.endswith("/") and p.startswith(s)) for s in HOOK_STUB_PATHS)]
+
+
+def committed_scope_dirty(porcelain_text) -> list:
+    """V-PF-COMMITTED's dirty set: every dirty or untracked path in the whole tree except
+    the gex44 record (this file's own output) and the hook-written stubs."""
+    return outside_hook_stubs(dirty_paths(porcelain_text, {RECORD_REL}))
+
+
 def judge_stable(before, after) -> list:
     """The wrapper reads the working tree: if the dirty set moved while it ran, its
     verdicts describe a tree nobody can name (INCONCLUSIVE, never PASS)."""
@@ -656,8 +675,9 @@ class Report:
         return {"PASS": 0, "FAIL": 1, "INCONCLUSIVE": 2}[verdict]
 
 
-def _porcelain(paths):
-    r = _git_bytes("status", "--porcelain", "--", *paths)
+def _porcelain(paths=()):
+    """`git status --porcelain -uall`, limited to `paths` when given, else the whole tree."""
+    r = _git_bytes("status", "--porcelain", "--untracked-files=all", "--", *paths)
     if r.returncode != 0:
         raise GitUnavailable("git status failed")
     return r.stdout.decode("utf-8", errors="replace")
@@ -729,12 +749,11 @@ def run_gex44(rep) -> int:
         rep.add("V-PF-COMMITTED", "INCONCLUSIVE", str(exc))
         return rep.finish()
     rep.line(f"PF_HEAD={res.head}")
-    scope = [PROGRAM_DIR.rstrip("/"), "tools"]
     try:
-        before = dirty_paths(_porcelain(scope), {RECORD_REL})
+        before = committed_scope_dirty(_porcelain())
         clean = not before
         rep.add("V-PF-COMMITTED", "ok" if clean else "INCONCLUSIVE",
-                "program dir and tools/ clean in the working tree" if clean
+                "whole working tree clean except the hook-written stubs" if clean
                 else f"dirty paths {before[:5]}; the wrapper reads the working tree")
     except GitUnavailable as exc:
         before, clean = None, False
@@ -787,7 +806,7 @@ def run_gex44(rep) -> int:
         rep.judge("V-PF-N-OPEN", lambda: judge_n_open(rc, out),
                   f"--pillar N rc 1, CEP_PILLAR_N=FAIL on exactly {N_CLAUSE!r}")
         try:
-            moved = judge_stable(before, dirty_paths(_porcelain(scope), {RECORD_REL}))
+            moved = judge_stable(before, committed_scope_dirty(_porcelain()))
             rep.add("V-PF-DIRTY-SET-STABLE", "INCONCLUSIVE" if moved else "ok",
                     "; ".join(moved) or "dirty set unchanged while the wrapper ran")
         except GitUnavailable as exc:
@@ -1032,6 +1051,14 @@ def selftest() -> bool:
                                                           lambda s: True))
     mutant("RECORD commit unreachable", lambda: judge_record(F["record"], lambda s: False))
     mutant("COMMITTED ledger dirty", lambda: dirty_paths(f" M {PROGRAM_DIR}ledger.json\n", {RECORD_REL}))
+    stubs = " M vault/progress.md\n?? .gsd/state.json\n?? docs/arch/tools__x.py.md\n?? docs/prd/tools__x.py.md\n"
+    green("COMMITTED whole tree, hook stubs only", committed_scope_dirty(stubs + f"?? {RECORD_REL}\n"))
+    mutant("COMMITTED a dirty hook outside tools/ (WR-03)", lambda: committed_scope_dirty(
+        stubs + " M hooks/doctrine_cards.js\n"), expect="hooks/doctrine_cards.js")
+    mutant("COMMITTED an untracked skill file (WR-03)", lambda: committed_scope_dirty(
+        stubs + "?? skills/new-skill/SKILL.md\n"), expect="skills/new-skill/SKILL.md")
+    mutant("COMMITTED a stub-looking path outside the list", lambda: committed_scope_dirty(
+        " M docs/INSTALL.md\n"), expect="docs/INSTALL.md")
     green("DIRTY-SET-STABLE", judge_stable([], []))
     mutant("DIRTY-SET-STABLE a path turned dirty during the run",
            lambda: judge_stable([], [f"{PROGRAM_DIR}evidence/D-live-gex44.json"]))
