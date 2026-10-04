@@ -1,0 +1,880 @@
+{
+ "aggregate": {
+  "J_broad_non_advancing_pct_DW7": 42.9483,
+  "J_decision_input_pct_DW7": 3.5075,
+  "calls": 75969,
+  "classes": {
+   "advancing": {
+    "calls": 9709,
+    "weighted_pct_DW7": 12.5256
+   },
+   "bookkeeping": {
+    "calls": 8642,
+    "weighted_pct_DW7": 12.9315
+   },
+   "coordination": {
+    "calls": 5048,
+    "weighted_pct_DW7": 9.3767
+   },
+   "non_convergent": {
+    "calls": 356,
+    "weighted_pct_DW7": 0.4846
+   },
+   "proof": {
+    "calls": 4776,
+    "weighted_pct_DW7": 6.1287
+   },
+   "recovery": {
+    "calls": 5170,
+    "weighted_pct_DW7": 5.7975
+   },
+   "repeat": {
+    "calls": 617,
+    "weighted_pct_DW7": 0.7819
+   },
+   "unsettled": {
+    "calls": 41651,
+    "weighted_pct_DW7": 51.9734
+   }
+  },
+  "human_rooted": {
+   "advancing": {
+    "calls": 5274,
+    "weighted_pct_DW7": 7.2015
+   },
+   "bookkeeping": {
+    "calls": 3455,
+    "weighted_pct_DW7": 5.3335
+   },
+   "coordination": {
+    "calls": 2515,
+    "weighted_pct_DW7": 3.8092
+   },
+   "non_convergent": {
+    "calls": 218,
+    "weighted_pct_DW7": 0.3066
+   },
+   "proof": {
+    "calls": 2511,
+    "weighted_pct_DW7": 3.2232
+   },
+   "recovery": {
+    "calls": 2743,
+    "weighted_pct_DW7": 3.1043
+   },
+   "repeat": {
+    "calls": 70,
+    "weighted_pct_DW7": 0.0965
+   },
+   "unsettled": {
+    "calls": 21572,
+    "weighted_pct_DW7": 27.075
+   }
+  },
+  "weighted": 3325101725,
+  "weighted_pct_DW7": 100.0
+ },
+ "control": {
+  "dw7_calls": 75969,
+  "featureless": 0,
+  "files": 1541,
+  "population_calls": 75969,
+  "population_equals_dw7": true,
+  "repos": 95,
+  "repos_log_failed": {}
+ },
+ "frozen": {
+  "labels_sha256": "f83bf3fe5bcbb56408b661a5fcd60302447c7494278ac49e57fa4f6b354605a5",
+  "path": "turns_frozen_sample.json"
+ },
+ "per_root": {
+  "advanced_roots": 40,
+  "coverage_weighted_pct_DW7": 16.2313,
+  "median_turns_per_commit": 27.6,
+  "roots_judged": 40,
+  "roots_total": 2910,
+  "rows": [
+   {
+    "classes": {
+     "advancing": 55,
+     "bookkeeping": 40,
+     "coordination": 6,
+     "proof": 9,
+     "recovery": 34,
+     "repeat": 7,
+     "unsettled": 483
+    },
+    "commits_in_span": 19,
+    "green_tests": 1,
+    "root": "b0d1a8b0-4e59-4f1e-b565-32cc7c91517e",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 634,
+    "turns_per_commit": 33.4,
+    "turns_per_green_test": 634.0,
+    "weighted_pct_DW7": 0.7986
+   },
+   {
+    "classes": {
+     "advancing": 49,
+     "bookkeeping": 77,
+     "coordination": 3,
+     "proof": 8,
+     "recovery": 36,
+     "unsettled": 305
+    },
+    "commits_in_span": 4,
+    "green_tests": 4,
+    "root": "e98d843c-f5f3-4625-9ba0-6d6da2c94111",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 478,
+    "turns_per_commit": 119.5,
+    "turns_per_green_test": 119.5,
+    "weighted_pct_DW7": 0.6977
+   },
+   {
+    "classes": {
+     "advancing": 88,
+     "bookkeeping": 72,
+     "coordination": 4,
+     "proof": 59,
+     "recovery": 58,
+     "repeat": 1,
+     "unsettled": 205
+    },
+    "commits_in_span": 8,
+    "green_tests": 20,
+    "root": "b23d4d65-d24b-429f-90c7-3c6e59606a4e",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 487,
+    "turns_per_commit": 60.9,
+    "turns_per_green_test": 24.4,
+    "weighted_pct_DW7": 0.5729
+   },
+   {
+    "classes": {
+     "advancing": 85,
+     "bookkeeping": 30,
+     "coordination": 3,
+     "non_convergent": 1,
+     "proof": 35,
+     "recovery": 21,
+     "unsettled": 190
+    },
+    "commits_in_span": 15,
+    "green_tests": 18,
+    "root": "fcd2515f-7138-4f9a-b30a-00578f12389f",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 365,
+    "turns_per_commit": 24.3,
+    "turns_per_green_test": 20.3,
+    "weighted_pct_DW7": 0.5705
+   },
+   {
+    "classes": {
+     "advancing": 102,
+     "bookkeeping": 29,
+     "coordination": 4,
+     "non_convergent": 1,
+     "proof": 39,
+     "recovery": 30,
+     "repeat": 1,
+     "unsettled": 171
+    },
+    "commits_in_span": 17,
+    "green_tests": 17,
+    "root": "af0592c7-fdeb-4750-a1a6-d6cf2136e69f",
+    "root_class": "CONTINUATION",
+    "state": "ADVANCED",
+    "turns": 377,
+    "turns_per_commit": 22.2,
+    "turns_per_green_test": 22.2,
+    "weighted_pct_DW7": 0.5614
+   },
+   {
+    "classes": {
+     "advancing": 46,
+     "bookkeeping": 24,
+     "coordination": 1,
+     "proof": 34,
+     "recovery": 19,
+     "repeat": 2,
+     "unsettled": 97
+    },
+    "commits_in_span": 6,
+    "green_tests": 8,
+    "root": "bc36e3b2-1c77-411e-bf15-58d14223175e",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 223,
+    "turns_per_commit": 37.2,
+    "turns_per_green_test": 27.9,
+    "weighted_pct_DW7": 0.5548
+   },
+   {
+    "classes": {
+     "advancing": 2,
+     "bookkeeping": 53,
+     "coordination": 4,
+     "recovery": 45,
+     "repeat": 139,
+     "unsettled": 184
+    },
+    "commits_in_span": 2,
+    "green_tests": 0,
+    "root": "3514c9c9-0bec-42cf-a665-2a7212b90dd4",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 427,
+    "turns_per_commit": 213.5,
+    "turns_per_green_test": null,
+    "weighted_pct_DW7": 0.549
+   },
+   {
+    "classes": {
+     "advancing": 148,
+     "bookkeeping": 9,
+     "coordination": 10,
+     "non_convergent": 1,
+     "proof": 19,
+     "recovery": 20,
+     "unsettled": 170
+    },
+    "commits_in_span": 16,
+    "green_tests": 7,
+    "root": "6ea18abb-ba41-4966-ac8a-4e226ffd0b8f",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 377,
+    "turns_per_commit": 23.6,
+    "turns_per_green_test": 53.9,
+    "weighted_pct_DW7": 0.5465
+   },
+   {
+    "classes": {
+     "advancing": 17,
+     "bookkeeping": 35,
+     "coordination": 3,
+     "non_convergent": 11,
+     "proof": 15,
+     "recovery": 17,
+     "repeat": 148,
+     "unsettled": 159
+    },
+    "commits_in_span": 3,
+    "green_tests": 4,
+    "root": "9bac9c10-8a24-4bdb-bcd6-0d95bd3665da",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 405,
+    "turns_per_commit": 135.0,
+    "turns_per_green_test": 101.2,
+    "weighted_pct_DW7": 0.5436
+   },
+   {
+    "classes": {
+     "advancing": 41,
+     "bookkeeping": 17,
+     "coordination": 2,
+     "proof": 18,
+     "recovery": 19,
+     "unsettled": 180
+    },
+    "commits_in_span": 3,
+    "green_tests": 5,
+    "root": "540bae60-5306-42e3-b467-f50cd17ca667",
+    "root_class": "CONTINUATION",
+    "state": "ADVANCED",
+    "turns": 277,
+    "turns_per_commit": 92.3,
+    "turns_per_green_test": 55.4,
+    "weighted_pct_DW7": 0.54
+   },
+   {
+    "classes": {
+     "advancing": 32,
+     "bookkeeping": 18,
+     "coordination": 4,
+     "non_convergent": 2,
+     "proof": 16,
+     "recovery": 28,
+     "repeat": 14,
+     "unsettled": 183
+    },
+    "commits_in_span": 4,
+    "green_tests": 5,
+    "root": "553b3431-e732-4d51-becc-ebf8bf14abfd",
+    "root_class": "SYSTEM",
+    "state": "ADVANCED",
+    "turns": 297,
+    "turns_per_commit": 74.2,
+    "turns_per_green_test": 59.4,
+    "weighted_pct_DW7": 0.5359
+   },
+   {
+    "classes": {
+     "advancing": 86,
+     "bookkeeping": 12,
+     "coordination": 5,
+     "proof": 14,
+     "recovery": 25,
+     "unsettled": 170
+    },
+    "commits_in_span": 9,
+    "green_tests": 7,
+    "root": "8c9c17ad-dd80-4430-9dbc-8f01c16b3f57",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 312,
+    "turns_per_commit": 34.7,
+    "turns_per_green_test": 44.6,
+    "weighted_pct_DW7": 0.5202
+   },
+   {
+    "classes": {
+     "advancing": 67,
+     "bookkeeping": 22,
+     "coordination": 15,
+     "proof": 15,
+     "recovery": 16,
+     "unsettled": 161
+    },
+    "commits_in_span": 9,
+    "green_tests": 5,
+    "root": "b99c9b9a-e738-4c8c-a9a1-b63ce0b9feff",
+    "root_class": "SYSTEM",
+    "state": "ADVANCED",
+    "turns": 296,
+    "turns_per_commit": 32.9,
+    "turns_per_green_test": 59.2,
+    "weighted_pct_DW7": 0.5134
+   },
+   {
+    "classes": {
+     "advancing": 53,
+     "bookkeeping": 12,
+     "coordination": 12,
+     "non_convergent": 3,
+     "proof": 51,
+     "recovery": 22,
+     "unsettled": 145
+    },
+    "commits_in_span": 13,
+    "green_tests": 28,
+    "root": "7e8d14c2-94c0-4556-ad37-14d91e965a4d",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 298,
+    "turns_per_commit": 22.9,
+    "turns_per_green_test": 10.6,
+    "weighted_pct_DW7": 0.4865
+   },
+   {
+    "classes": {
+     "advancing": 85,
+     "bookkeeping": 29,
+     "coordination": 2,
+     "proof": 8,
+     "recovery": 11,
+     "repeat": 3,
+     "unsettled": 105
+    },
+    "commits_in_span": 16,
+    "green_tests": 2,
+    "root": "d89271d9-7d74-48b7-a505-1ad8682d4fbf",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 243,
+    "turns_per_commit": 15.2,
+    "turns_per_green_test": 121.5,
+    "weighted_pct_DW7": 0.4522
+   },
+   {
+    "classes": {
+     "advancing": 58,
+     "bookkeeping": 18,
+     "coordination": 3,
+     "proof": 29,
+     "recovery": 12,
+     "unsettled": 123
+    },
+    "commits_in_span": 13,
+    "green_tests": 12,
+    "root": "b29d6b94-d4ec-4ead-9155-309c12eafe33",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 243,
+    "turns_per_commit": 18.7,
+    "turns_per_green_test": 20.2,
+    "weighted_pct_DW7": 0.4101
+   },
+   {
+    "classes": {
+     "advancing": 50,
+     "bookkeeping": 8,
+     "coordination": 6,
+     "proof": 7,
+     "recovery": 13,
+     "unsettled": 128
+    },
+    "commits_in_span": 5,
+    "green_tests": 2,
+    "root": "8aed9945-1cff-41a6-ad72-bd99449262c5",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 212,
+    "turns_per_commit": 42.4,
+    "turns_per_green_test": 106.0,
+    "weighted_pct_DW7": 0.3878
+   },
+   {
+    "classes": {
+     "advancing": 6,
+     "bookkeeping": 86,
+     "coordination": 5,
+     "proof": 2,
+     "recovery": 8,
+     "repeat": 1,
+     "unsettled": 148
+    },
+    "commits_in_span": 2,
+    "green_tests": 0,
+    "root": "962a46c6-0698-4090-bb20-a03e63c23ec3",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 256,
+    "turns_per_commit": 128.0,
+    "turns_per_green_test": null,
+    "weighted_pct_DW7": 0.3856
+   },
+   {
+    "classes": {
+     "advancing": 23,
+     "bookkeeping": 88,
+     "coordination": 3,
+     "non_convergent": 6,
+     "proof": 2,
+     "recovery": 19,
+     "unsettled": 129
+    },
+    "commits_in_span": 2,
+    "green_tests": 1,
+    "root": "9e5a590a-0e36-443b-a607-5553de6a2fa1",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 270,
+    "turns_per_commit": 135.0,
+    "turns_per_green_test": 270.0,
+    "weighted_pct_DW7": 0.376
+   },
+   {
+    "classes": {
+     "bookkeeping": 98,
+     "coordination": 2,
+     "recovery": 1,
+     "unsettled": 118
+    },
+    "commits_in_span": 5,
+    "green_tests": 0,
+    "root": "ee470a2d-8016-44c5-bba3-c4bff2dcf972",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 219,
+    "turns_per_commit": 43.8,
+    "turns_per_green_test": null,
+    "weighted_pct_DW7": 0.3755
+   },
+   {
+    "classes": {
+     "advancing": 28,
+     "bookkeeping": 16,
+     "coordination": 4,
+     "proof": 13,
+     "recovery": 14,
+     "repeat": 10,
+     "unsettled": 130
+    },
+    "commits_in_span": 5,
+    "green_tests": 4,
+    "root": "880a38fa-fd60-47a6-a61c-6852b25be691",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 215,
+    "turns_per_commit": 43.0,
+    "turns_per_green_test": 53.8,
+    "weighted_pct_DW7": 0.3535
+   },
+   {
+    "classes": {
+     "advancing": 39,
+     "bookkeeping": 15,
+     "coordination": 2,
+     "proof": 18,
+     "recovery": 35,
+     "unsettled": 56
+    },
+    "commits_in_span": 7,
+    "green_tests": 7,
+    "root": "60678e07-b372-44f5-a6f9-cd923ab0398f",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 165,
+    "turns_per_commit": 23.6,
+    "turns_per_green_test": 23.6,
+    "weighted_pct_DW7": 0.3523
+   },
+   {
+    "classes": {
+     "advancing": 42,
+     "bookkeeping": 11,
+     "proof": 17,
+     "recovery": 16,
+     "unsettled": 76
+    },
+    "commits_in_span": 10,
+    "green_tests": 7,
+    "root": "b57d8ded-6532-4ead-9346-41c2625a888b",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 162,
+    "turns_per_commit": 16.2,
+    "turns_per_green_test": 23.1,
+    "weighted_pct_DW7": 0.3328
+   },
+   {
+    "classes": {
+     "advancing": 60,
+     "bookkeeping": 13,
+     "coordination": 2,
+     "proof": 5,
+     "recovery": 13,
+     "unsettled": 106
+    },
+    "commits_in_span": 6,
+    "green_tests": 0,
+    "root": "b3aa4302-a16f-48b1-9277-8aa360324007",
+    "root_class": "CONTINUATION",
+    "state": "ADVANCED",
+    "turns": 199,
+    "turns_per_commit": 33.2,
+    "turns_per_green_test": null,
+    "weighted_pct_DW7": 0.3281
+   },
+   {
+    "classes": {
+     "advancing": 34,
+     "bookkeeping": 15,
+     "coordination": 2,
+     "proof": 15,
+     "recovery": 16,
+     "unsettled": 76
+    },
+    "commits_in_span": 11,
+    "green_tests": 7,
+    "root": "d21eec3d-dacc-4221-9d1f-b7ddd14e5173",
+    "root_class": "CONTINUATION",
+    "state": "ADVANCED",
+    "turns": 158,
+    "turns_per_commit": 14.4,
+    "turns_per_green_test": 22.6,
+    "weighted_pct_DW7": 0.3244
+   },
+   {
+    "classes": {
+     "advancing": 73,
+     "bookkeeping": 21,
+     "coordination": 9,
+     "proof": 20,
+     "recovery": 11,
+     "repeat": 3,
+     "unsettled": 102
+    },
+    "commits_in_span": 4,
+    "green_tests": 1,
+    "root": "f319ce75-15cd-4795-8a41-08ea481affa0",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 239,
+    "turns_per_commit": 59.8,
+    "turns_per_green_test": 239.0,
+    "weighted_pct_DW7": 0.3132
+   },
+   {
+    "classes": {
+     "advancing": 53,
+     "bookkeeping": 8,
+     "proof": 20,
+     "recovery": 25,
+     "unsettled": 53
+    },
+    "commits_in_span": 8,
+    "green_tests": 2,
+    "root": "588e1a03-2d97-41cd-bec6-ff9dd17f3fd2",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 159,
+    "turns_per_commit": 19.9,
+    "turns_per_green_test": 79.5,
+    "weighted_pct_DW7": 0.3111
+   },
+   {
+    "classes": {
+     "advancing": 15,
+     "bookkeeping": 23,
+     "coordination": 3,
+     "proof": 5,
+     "recovery": 15,
+     "repeat": 9,
+     "unsettled": 113
+    },
+    "commits_in_span": 3,
+    "green_tests": 0,
+    "root": "5ce7413e-459d-42dc-bd12-1ebd252f18f7",
+    "root_class": "CONTINUATION",
+    "state": "ADVANCED",
+    "turns": 183,
+    "turns_per_commit": 61.0,
+    "turns_per_green_test": null,
+    "weighted_pct_DW7": 0.3101
+   },
+   {
+    "classes": {
+     "advancing": 30,
+     "bookkeeping": 8,
+     "coordination": 9,
+     "proof": 19,
+     "recovery": 13,
+     "unsettled": 108
+    },
+    "commits_in_span": 8,
+    "green_tests": 0,
+    "root": "876575e2-d7f9-4cc4-99a5-1d536977871e",
+    "root_class": "CONTINUATION",
+    "state": "ADVANCED",
+    "turns": 187,
+    "turns_per_commit": 23.4,
+    "turns_per_green_test": null,
+    "weighted_pct_DW7": 0.2915
+   },
+   {
+    "classes": {
+     "advancing": 44,
+     "bookkeeping": 20,
+     "coordination": 10,
+     "proof": 17,
+     "recovery": 8,
+     "unsettled": 90
+    },
+    "commits_in_span": 18,
+    "green_tests": 7,
+    "root": "dc288566-b9d5-426c-8f6e-2bf3064850c8",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 189,
+    "turns_per_commit": 10.5,
+    "turns_per_green_test": 27.0,
+    "weighted_pct_DW7": 0.2872
+   },
+   {
+    "classes": {
+     "advancing": 32,
+     "bookkeeping": 4,
+     "coordination": 2,
+     "proof": 20,
+     "recovery": 2,
+     "unsettled": 107
+    },
+    "commits_in_span": 8,
+    "green_tests": 2,
+    "root": "a48cf382-9ac8-4a60-b1ae-54840cf7ce7a",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 167,
+    "turns_per_commit": 20.9,
+    "turns_per_green_test": 83.5,
+    "weighted_pct_DW7": 0.2819
+   },
+   {
+    "classes": {
+     "advancing": 43,
+     "bookkeeping": 9,
+     "coordination": 11,
+     "proof": 31,
+     "recovery": 14,
+     "unsettled": 91
+    },
+    "commits_in_span": 16,
+    "green_tests": 12,
+    "root": "33a37ca9-7837-4e81-8992-416ddc73252f",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 199,
+    "turns_per_commit": 12.4,
+    "turns_per_green_test": 16.6,
+    "weighted_pct_DW7": 0.2803
+   },
+   {
+    "classes": {
+     "advancing": 62,
+     "bookkeeping": 24,
+     "coordination": 13,
+     "proof": 4,
+     "recovery": 12,
+     "unsettled": 112
+    },
+    "commits_in_span": 10,
+    "green_tests": 0,
+    "root": "9bc8c490-bb20-4572-8e8d-d07ed1a2f7d1",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 227,
+    "turns_per_commit": 22.7,
+    "turns_per_green_test": null,
+    "weighted_pct_DW7": 0.2734
+   },
+   {
+    "classes": {
+     "advancing": 32,
+     "bookkeeping": 27,
+     "coordination": 4,
+     "proof": 10,
+     "recovery": 12,
+     "unsettled": 172
+    },
+    "commits_in_span": 11,
+    "green_tests": 6,
+    "root": "850c9153-a0d8-446c-9cec-f03fc03ec82b",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 257,
+    "turns_per_commit": 23.4,
+    "turns_per_green_test": 42.8,
+    "weighted_pct_DW7": 0.2659
+   },
+   {
+    "classes": {
+     "advancing": 37,
+     "bookkeeping": 5,
+     "coordination": 3,
+     "non_convergent": 1,
+     "proof": 22,
+     "recovery": 11,
+     "unsettled": 59
+    },
+    "commits_in_span": 5,
+    "green_tests": 11,
+    "root": "7580f260-c3bd-4e4e-bf4b-4d2fc4d6e694",
+    "root_class": "HUMAN",
+    "state": "ADVANCED",
+    "turns": 138,
+    "turns_per_commit": 27.6,
+    "turns_per_green_test": 12.5,
+    "weighted_pct_DW7": 0.2639
+   },
+   {
+    "classes": {
+     "advancing": 39,
+     "bookkeeping": 14,
+     "coordination": 2,
+     "proof": 11,
+     "recovery": 7,
+     "repeat": 1,
+     "unsettled": 66
+    },
+    "commits_in_span": 6,
+    "green_tests": 3,
+    "root": "d81563fd-9e8d-4655-a847-413e118d7482",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 140,
+    "turns_per_commit": 23.3,
+    "turns_per_green_test": 46.7,
+    "weighted_pct_DW7": 0.2629
+   },
+   {
+    "classes": {
+     "advancing": 19,
+     "bookkeeping": 7,
+     "coordination": 2,
+     "proof": 18,
+     "recovery": 11,
+     "repeat": 2,
+     "unsettled": 50
+    },
+    "commits_in_span": 4,
+    "green_tests": 5,
+    "root": "91986f2f-db67-4940-8a91-cfcece4edd09",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 109,
+    "turns_per_commit": 27.2,
+    "turns_per_green_test": 21.8,
+    "weighted_pct_DW7": 0.2582
+   },
+   {
+    "classes": {
+     "bookkeeping": 58,
+     "coordination": 16,
+     "non_convergent": 8,
+     "proof": 34,
+     "recovery": 7,
+     "unsettled": 73
+    },
+    "commits_in_span": 0,
+    "green_tests": 20,
+    "root": "1a4d673a-8e7c-418c-919b-5e9e03dbf59e",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 196,
+    "turns_per_commit": null,
+    "turns_per_green_test": 9.8,
+    "weighted_pct_DW7": 0.2561
+   },
+   {
+    "classes": {
+     "advancing": 17,
+     "bookkeeping": 22,
+     "coordination": 2,
+     "proof": 6,
+     "recovery": 8,
+     "unsettled": 151
+    },
+    "commits_in_span": 9,
+    "green_tests": 2,
+    "root": "45bb8504-4a45-4d3c-90b4-38df22b8fbf1",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 206,
+    "turns_per_commit": 22.9,
+    "turns_per_green_test": 103.0,
+    "weighted_pct_DW7": 0.2548
+   },
+   {
+    "classes": {
+     "advancing": 18,
+     "bookkeeping": 11,
+     "coordination": 45,
+     "recovery": 9,
+     "repeat": 30,
+     "unsettled": 129
+    },
+    "commits_in_span": 3,
+    "green_tests": 0,
+    "root": "1a7acb70-68a2-41fa-b7cf-66179abc98d3",
+    "root_class": "MISSION",
+    "state": "ADVANCED",
+    "turns": 242,
+    "turns_per_commit": 80.7,
+    "turns_per_green_test": null,
+    "weighted_pct_DW7": 0.2515
+   }
+  ],
+  "states": {
+   "ADVANCED": 40
+  }
+ },
+ "window": "D-W7"
+}

@@ -1,0 +1,37 @@
+﻿=== case: port ===
+intent: Port Angry Birds Star Wars II from the Android APK to the Nintendo Wii: extract the asset corpus, reimplement the runtime natively, and ship a boot.dol that runs on real hardware.
+source   : prose
+facts    : 1
+  reconstruction_relation      [intent] 'Port Angry Birds Star Wars II from the Android APK to'
+
+derived  : 0
+
+coverage : every required gating fact is dispositioned
+
+stored   : C:\Users\User\.claude\jobs\f12cbb46\tmp\s_demo\port\.gsd-x\obligations.json
+rc=0
+=== case: faithful-port ===
+intent: Port Angry Birds Star Wars II from the Android APK to the Nintendo Wii as a faithful port: gameplay must be identical to the original, which still runs on the phone.
+source   : prose
+facts    : 2
+  reconstruction_relation      [intent] 'Port Angry Birds Star Wars II from the Android APK to'
+  fidelity_requirement         [intent] 'faithful'
+
+derived  : 1
+  DO-4  UNFALSIFIABLE_PARITY_CONSEQUENCE ACCEPTED
+
+coverage : every required gating fact is dispositioned
+
+stored   : C:\Users\User\.claude\jobs\f12cbb46\tmp\s_demo\faithful-port\.gsd-x\obligations.json
+rc=0
+=== case: cosmetic ===
+intent: Fix a typo in the README heading.
+source   : prose
+facts    : 0
+
+derived  : 0
+
+coverage : every required gating fact is dispositioned
+
+stored   : C:\Users\User\.claude\jobs\f12cbb46\tmp\s_demo\cosmetic\.gsd-x\obligations.json
+rc=0

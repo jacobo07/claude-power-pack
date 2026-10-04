@@ -47,50 +47,853 @@
    "displacement": "a saving is realized only when displaced work is measured on the same denominator; otherwise it is an interval or UNKNOWN"
   },
   "pillars": [
-   {"id": "A", "name": "baseline cognitive economics", "owner": ["tools/usage_index.py", "tools/tis_observed.py"], "predicted": "IMPLEMENTED_AND_VERIFIED", "rule": "gate vault/programs/cognitive-economy/gates/gate_baseline.py: the CCP anchor reproduces exactly (23925 calls / 6230548450 cache read / 9893 subagent calls) and the D-W7 raw figures reproduce within 0.5 %; the after-snapshot is taken at the final phase with the same command and reported beside, never folded into, the before"},
-   {"id": "B", "name": "resident context floor", "owner": ["vault/plans/cognitive-control-plane-2026-10-02.md", "vault/plans/r2-instruction-residency-2026-10-03.md", ".planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/REPORT.md"], "predicted": "AUTHORIZATION_BOUND", "rule": "each rules->skills move needs an Owner y per move (CCP RESUMPTION s4); the campaign batches the remaining moves into P5 and never executes one"},
-   {"id": "C", "name": "skill/agent/tool capability virtualization", "owner": ["vault/plans/skill-residency-program-2026-10-03.md", "vault/plans/skill-virtualization-k-slice-2026-10-03.md", "vault/specs/agent-capability-virtualization.md"], "predicted": "DEFERRED_STRONGER_OWNER", "rule": "skills/agents consumed from their owners; tool schemas: build lazy loading only if MCP/tool schema residency >= 3 % of D-W7 weighted"},
-   {"id": "D", "name": "context lifetime / dead context", "owner": ["vault/specs/economic-rollover-trigger.md", "modules/cognitive_os/gc.py"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "measure realized savings of the live economic trigger with rehydration displacement; hand result to owner; no edit of rollover.py or context-watchdog.py"},
-   {"id": "E", "name": "fresh-epoch economics", "owner": ["vault/specs/parent-context-epoch-rotation.md", "vault/specs/interactive-context-rollover.md"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "measure continuation vs rotation from tools/gsd_epoch.py census; propose to owner only if a threshold change is worth >= 3 % of D-W7"},
-   {"id": "F", "name": "reread / materialized cognition", "owner": ["vault/plans/cognitive-control-plane-2026-10-02.md"], "predicted": "RESEARCH_INSUFFICIENT_EVIDENCE", "rule": "sibling re-derivation is a lever only if identical-dependency re-reads across sibling subagents are >= 3 % of D-W7 weighted"},
-   {"id": "G", "name": "common cognitive subexpression elimination", "owner": [], "predicted": "FALSIFIED_OR_REJECTED_BY_EVIDENCE", "rule": "reopened only if F finds recurrence with a valid identity boundary (same inputs, same dependency hashes)"},
-   {"id": "H", "name": "turns per verified advancement", "owner": ["tools/root_progress.py", "modules/gsd_x/goal/"], "predicted": "IMPLEMENTED_AND_VERIFIED", "rule": "deliver a reproducible turn taxonomy (advancing/coordination/bookkeeping/recovery/proof/repeat/non-convergent) over usage_index joined to git; any optimization it suggests faces the 3 % rule"},
-   {"id": "I", "name": "one-shot work packet", "owner": ["modules/gsd_x/goal/brief.py", "tools/gsd_mission.py"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "exists (epoch brief + Ralph card); no build"},
-   {"id": "J", "name": "non-convergence detection", "owner": ["tools/gsd_mission.py"], "predicted": "RESEARCH_INSUFFICIENT_EVIDENCE", "rule": "decided from H: non-advancing turns of interactive roots >= 3 % of D-W7 earns a detector proposal; also record (audit G5) that Ralph no_progress fingerprints the whole work dir, so in a shared checkout peer churn reads as progress"},
-   {"id": "K", "name": "tool output admission", "owner": ["vault/audits/ksr_archaeology/2026-10-03-context-admission.md"], "predicted": "FALSIFIED_OR_REJECTED_BY_EVIDENCE", "rule": "one replication on the CPP corpus with the same instrument; a firewall needs one class >= 3 % NOT_OBSERVED/IMMEDIATE carriage"},
-   {"id": "L", "name": "capability compile-out", "owner": ["tools/compound_unattended.py", "~/.claude/commands/cpp-compound.md"], "predicted": "IMPLEMENTED_AND_VERIFIED", "rule": "compound steps 7+8 owned by a NEW campaign module (never tools/compound_unattended.py: foreign uncommitted diff; never hook-dispatcher.js: live global) with mutex, backup, atomic rename and rollback, proven by its own gate against a TEMP copy of the state and real learning files; applying it to the live global state and the call-site switch are Owner items, not part of this terminal (audit G6)"},
-   {"id": "M", "name": "model / processor allocation", "owner": ["vault/plans/cognitive-control-plane-2026-10-02.md", "modules/cost_collapse/"], "predicted": "DEFERRED_STRONGER_OWNER", "rule": "CCP C4 owns model policy; any routing experiment spends quota and needs Owner"},
-   {"id": "N", "name": "event-driven cognition", "owner": ["tools/goal_sweep.ps1", "tools/gsd_long_run_sweep.ps1"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "zero-LLM scheduled sweeps exist; no build"},
-   {"id": "O", "name": "cognitive IR / state normalization", "owner": ["modules/gsd_x/goal/"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "Goal spine stays the canonical durable-goal store (generated KSR view falsified); this campaign's authority is the committed ledger because the spine pins every verdict to the whole HEAD^{tree} when the scope is clean, so closure is unreachable in a shared checkout (audit G1-G4) -- that finding is handed to the spine's owner; no edit of modules/gsd_x/goal"},
-   {"id": "P", "name": "proof reuse / incremental verification", "owner": ["modules/gsd_x/goal/judge.py"], "predicted": "FALSIFIED_OR_REJECTED_BY_EVIDENCE", "rule": "build only if verification (test/gate tool calls + their output carriage) >= 3 % of D-W7 weighted"},
-   {"id": "Q", "name": "technical capital accounting", "owner": ["vault/programs/cognitive-economy/ledger.json"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "CAPEX/OPEX recorded per pillar in this ledger; no dashboard"},
-   {"id": "R", "name": "institutionalization / UKDL", "owner": ["vault/knowledge_base/ukdl-universal.md", "~/.claude/commands/cpp-compound.md"], "predicted": "IMPLEMENTED_AND_VERIFIED", "rule": "UKDL 3-level (hard/process/trap) and CBR review written to the campaign-owned vault/programs/cognitive-economy/ukdl-candidates.md, each entry evidence-cited with a promote/reject/keep-candidate verdict and reason; promotion INTO ukdl-universal.md (peer-hot, audit G10) is an Owner item"},
-   {"id": "S", "name": "universal baseline compiler", "owner": ["tools/baseline_ledger.py", "tools/family_baseline.py"], "predicted": "MERGED_INTO_EXISTING_OWNER", "rule": "audit trait->obligation derivation; extend only on a measured gap"},
-   {"id": "T", "name": "institutional GC / simplification", "owner": ["modules/liveness/reachability.py"], "predicted": "AUTHORIZATION_BOUND", "rule": "liveness sweep + retire proposals; settings.json and skill removal need Owner"}
+   {
+    "id": "A",
+    "name": "baseline cognitive economics",
+    "owner": [
+     "tools/usage_index.py",
+     "tools/tis_observed.py"
+    ],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "gate vault/programs/cognitive-economy/gates/gate_baseline.py: the CCP anchor reproduces exactly (23925 calls / 6230548450 cache read / 9893 subagent calls) and the D-W7 raw figures reproduce within 0.5 %; the after-snapshot is taken at the final phase with the same command and reported beside, never folded into, the before"
+   },
+   {
+    "id": "B",
+    "name": "resident context floor",
+    "owner": [
+     "vault/plans/cognitive-control-plane-2026-10-02.md",
+     "vault/plans/r2-instruction-residency-2026-10-03.md",
+     ".planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/REPORT.md"
+    ],
+    "predicted": "AUTHORIZATION_BOUND",
+    "rule": "each rules->skills move needs an Owner y per move (CCP RESUMPTION s4); the campaign batches the remaining moves into P5 and never executes one"
+   },
+   {
+    "id": "C",
+    "name": "skill/agent/tool capability virtualization",
+    "owner": [
+     "vault/plans/skill-residency-program-2026-10-03.md",
+     "vault/plans/skill-virtualization-k-slice-2026-10-03.md",
+     "vault/specs/agent-capability-virtualization.md"
+    ],
+    "predicted": "DEFERRED_STRONGER_OWNER",
+    "rule": "skills/agents consumed from their owners; tool schemas: build lazy loading only if MCP/tool schema residency >= 3 % of D-W7 weighted"
+   },
+   {
+    "id": "D",
+    "name": "context lifetime / dead context",
+    "owner": [
+     "vault/specs/economic-rollover-trigger.md",
+     "modules/cognitive_os/gc.py"
+    ],
+    "predicted": "MERGED_INTO_EXISTING_OWNER",
+    "rule": "measure realized savings of the live economic trigger with rehydration displacement; hand result to owner; no edit of rollover.py or context-watchdog.py"
+   },
+   {
+    "id": "E",
+    "name": "fresh-epoch economics",
+    "owner": [
+     "vault/specs/parent-context-epoch-rotation.md",
+     "vault/specs/interactive-context-rollover.md"
+    ],
+    "predicted": "MERGED_INTO_EXISTING_OWNER",
+    "rule": "measure continuation vs rotation from tools/gsd_epoch.py census; propose to owner only if a threshold change is worth >= 3 % of D-W7"
+   },
+   {
+    "id": "F",
+    "name": "reread / materialized cognition",
+    "owner": [
+     "vault/plans/cognitive-control-plane-2026-10-02.md"
+    ],
+    "predicted": "RESEARCH_INSUFFICIENT_EVIDENCE",
+    "rule": "sibling re-derivation is a lever only if identical-dependency re-reads across sibling subagents are >= 3 % of D-W7 weighted"
+   },
+   {
+    "id": "G",
+    "name": "common cognitive subexpression elimination",
+    "owner": [],
+    "predicted": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+    "rule": "reopened only if F finds recurrence with a valid identity boundary (same inputs, same dependency hashes)"
+   },
+   {
+    "id": "H",
+    "name": "turns per verified advancement",
+    "owner": [
+     "tools/root_progress.py",
+     "modules/gsd_x/goal/"
+    ],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "deliver a reproducible turn taxonomy (advancing/coordination/bookkeeping/recovery/proof/repeat/non-convergent) over usage_index joined to git; any optimization it suggests faces the 3 % rule"
+   },
+   {
+    "id": "I",
+    "name": "one-shot work packet",
+    "owner": [
+     "modules/gsd_x/goal/brief.py",
+     "tools/gsd_mission.py"
+    ],
+    "predicted": "MERGED_INTO_EXISTING_OWNER",
+    "rule": "exists (epoch brief + Ralph card); no build"
+   },
+   {
+    "id": "J",
+    "name": "non-convergence detection",
+    "owner": [
+     "tools/gsd_mission.py"
+    ],
+    "predicted": "RESEARCH_INSUFFICIENT_EVIDENCE",
+    "rule": "decided from H: non-advancing turns of interactive roots >= 3 % of D-W7 earns a detector proposal; also record (audit G5) that Ralph no_progress fingerprints the whole work dir, so in a shared checkout peer churn reads as progress"
+   },
+   {
+    "id": "K",
+    "name": "tool output admission",
+    "owner": [
+     "vault/audits/ksr_archaeology/2026-10-03-context-admission.md"
+    ],
+    "predicted": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+    "rule": "one replication on the CPP corpus with the same instrument; a firewall needs one class >= 3 % NOT_OBSERVED/IMMEDIATE carriage"
+   },
+   {
+    "id": "L",
+    "name": "capability compile-out",
+    "owner": [
+     "tools/compound_unattended.py",
+     "~/.claude/commands/cpp-compound.md"
+    ],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "compound steps 7+8 owned by a NEW campaign module (never tools/compound_unattended.py: foreign uncommitted diff; never hook-dispatcher.js: live global) with mutex, backup, atomic rename and rollback, proven by its own gate against a TEMP copy of the state and real learning files; applying it to the live global state and the call-site switch are Owner items, not part of this terminal (audit G6)"
+   },
+   {
+    "id": "M",
+    "name": "model / processor allocation",
+    "owner": [
+     "vault/plans/cognitive-control-plane-2026-10-02.md",
+     "modules/cost_collapse/"
+    ],
+    "predicted": "DEFERRED_STRONGER_OWNER",
+    "rule": "CCP C4 owns model policy; any routing experiment spends quota and needs Owner"
+   },
+   {
+    "id": "N",
+    "name": "event-driven cognition",
+    "owner": [
+     "tools/goal_sweep.ps1",
+     "tools/gsd_long_run_sweep.ps1"
+    ],
+    "predicted": "MERGED_INTO_EXISTING_OWNER",
+    "rule": "zero-LLM scheduled sweeps exist; no build"
+   },
+   {
+    "id": "O",
+    "name": "cognitive IR / state normalization",
+    "owner": [
+     "modules/gsd_x/goal/"
+    ],
+    "predicted": "MERGED_INTO_EXISTING_OWNER",
+    "rule": "Goal spine stays the canonical durable-goal store (generated KSR view falsified); this campaign's authority is the committed ledger because the spine pins every verdict to the whole HEAD^{tree} when the scope is clean, so closure is unreachable in a shared checkout (audit G1-G4) -- that finding is handed to the spine's owner; no edit of modules/gsd_x/goal"
+   },
+   {
+    "id": "P",
+    "name": "proof reuse / incremental verification",
+    "owner": [
+     "modules/gsd_x/goal/judge.py"
+    ],
+    "predicted": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+    "rule": "build only if verification (test/gate tool calls + their output carriage) >= 3 % of D-W7 weighted"
+   },
+   {
+    "id": "Q",
+    "name": "technical capital accounting",
+    "owner": [
+     "vault/programs/cognitive-economy/ledger.json"
+    ],
+    "predicted": "MERGED_INTO_EXISTING_OWNER",
+    "rule": "CAPEX/OPEX recorded per pillar in this ledger; no dashboard"
+   },
+   {
+    "id": "R",
+    "name": "institutionalization / UKDL",
+    "owner": [
+     "vault/knowledge_base/ukdl-universal.md",
+     "~/.claude/commands/cpp-compound.md"
+    ],
+    "predicted": "IMPLEMENTED_AND_VERIFIED",
+    "rule": "UKDL 3-level (hard/process/trap) and CBR review written to the campaign-owned vault/programs/cognitive-economy/ukdl-candidates.md, each entry evidence-cited with a promote/reject/keep-candidate verdict and reason; promotion INTO ukdl-universal.md (peer-hot, audit G10) is an Owner item"
+   },
+   {
+    "id": "S",
+    "name": "universal baseline compiler",
+    "owner": [
+     "tools/baseline_ledger.py",
+     "tools/family_baseline.py"
+    ],
+    "predicted": "MERGED_INTO_EXISTING_OWNER",
+    "rule": "audit trait->obligation derivation; extend only on a measured gap"
+   },
+   {
+    "id": "T",
+    "name": "institutional GC / simplification",
+    "owner": [
+     "modules/liveness/reachability.py"
+    ],
+    "predicted": "AUTHORIZATION_BOUND",
+    "rule": "liveness sweep + retire proposals; settings.json and skill removal need Owner"
+   }
   ]
  },
  "state": {
-  "A": {"terminal": null, "evidence": [], "savings": []},
-  "B": {"terminal": null, "evidence": [], "savings": []},
-  "C": {"terminal": null, "evidence": [], "savings": []},
-  "D": {"terminal": null, "evidence": [], "savings": []},
-  "E": {"terminal": null, "evidence": [], "savings": []},
-  "F": {"terminal": null, "evidence": [], "savings": []},
-  "G": {"terminal": null, "evidence": [], "savings": []},
-  "H": {"terminal": null, "evidence": [], "savings": []},
-  "I": {"terminal": null, "evidence": [], "savings": []},
-  "J": {"terminal": null, "evidence": [], "savings": []},
-  "K": {"terminal": null, "evidence": [], "savings": []},
-  "L": {"terminal": null, "evidence": [], "savings": []},
-  "M": {"terminal": null, "evidence": [], "savings": []},
-  "N": {"terminal": null, "evidence": [], "savings": []},
-  "O": {"terminal": null, "evidence": [], "savings": []},
-  "P": {"terminal": null, "evidence": [], "savings": []},
-  "Q": {"terminal": null, "evidence": [], "savings": []},
-  "R": {"terminal": null, "evidence": [], "savings": []},
-  "S": {"terminal": null, "evidence": [], "savings": []},
-  "T": {"terminal": null, "evidence": [], "savings": []}
+  "A": {
+   "terminal": "IMPLEMENTED_AND_VERIFIED",
+   "reason": "gate_baseline.py re-runs usage_index window for both frozen windows: anchor reproduces exactly (23925 / 6230548450 / 9893) and D-W7 raw figures at 0.0000% drift; driven red by two perturbed expected values (rc 1, each killed by its own line) and a 0.30% tolerance control stayed green. The after-snapshot is phase 7's, reported beside this one.",
+   "evidence": [
+    {
+     "kind": "gate",
+     "argv": [
+      "python",
+      "vault/programs/cognitive-economy/gates/gate_baseline.py"
+     ]
+    },
+    {
+     "kind": "prg",
+     "ref": "vault/programs/cognitive-economy/evidence/A-prg.md",
+     "sha256": "a305baf0751ba884eaa87ca5dcd8d2b7ebdb501fe07a15b97fe9354a9061451c"
+    }
+   ],
+   "savings": [],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/gates/gate_baseline.py",
+      "vault/programs/cognitive-economy/evidence/A-prg.md"
+     ],
+     "lines_added": 160,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "re-run by the done-gate --final and --pillar A",
+     "gate_seconds": 4,
+     "model_calls_per_run": 0
+    }
+   }
+  },
+  "B": {
+   "terminal": "AUTHORIZATION_BOUND",
+   "reason": "By the frozen rule, every rules->skills move needs an Owner yes per move, and the campaign executes none. 13 global rules (56,861 B) are still resident in full. Their moves are batched into the owner bundle as one [B] item; the bytes are a ceiling, not a saving.",
+   "evidence": [
+    {
+     "kind": "owner_decision",
+     "ref": "vault/programs/cognitive-economy/owner-bundle.md",
+     "sha256": "46f46172ca66dd886c62a97a630fd907d0b8e8990ebc9e1d866b503253479d7f"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/evidence/B-T-floor-and-gc.md",
+     "sha256": "7226675925015d55938a5f39895080a68aa755e5559ee0caf9378291d627c8a9"
+    }
+   ],
+   "savings": []
+  },
+  "C": {
+   "terminal": "DEFERRED_STRONGER_OWNER",
+   "reason": "Tool half measured below the frozen 3 % rule (ToolSearch-loaded schema carriage 0.0020 % of D-W7 weighted; lazy loading already exists in the harness), so nothing is built. Skill and agent residency belong to the skill-residency program, the K-slice and agent-capability-virtualization; the campaign's per-skill invocation count for D-W7 is handed to them.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "vault/plans/skill-residency-program-2026-10-03.md"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/C.md",
+     "sha256": "a92ef536483147bcd626394a919057441040aea627bfcd14b16a296d82fce29a"
+    },
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/F-G-P-C-carriage.md",
+     "sha256": "d3dc5eb25df84a121ec13488f538a92ae5bf7965c07c3bb98b12d440b78c7abd"
+    }
+   ],
+   "savings": []
+  },
+  "D": {
+   "terminal": "MERGED_INTO_EXISTING_OWNER",
+   "reason": "Measured on D-W7 with rehydration displacement: the live economic trigger produced 3 claimed crossings, rehydration 0.0475 %, carried context avoided <= 0.2346 %, net interval [-0.05 %, +0.19 %]; 124 of 127 crossings came via the wall route. KSR's <= 6.34 % dead carriage stays an upper bound. Result and a measurement suggestion handed to the trigger owner; no peer file edited.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "vault/specs/economic-rollover-trigger.md"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/D.md",
+     "sha256": "94d0c81fa3a4d40aa3aa9faa06a54ee3b2e78d753dd3cfafafad160d302fd24a"
+    },
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md",
+     "sha256": "81c46ef4af14a19dd30e3fa53811171f5c2e45d553a72f4028edf1ca8fa11315"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/context_lifetime.py",
+     "sha256": "8e3bcd171e0c42d8f3bb5da219c4c023edc567a74cbe42baea29478215249349"
+    }
+   ],
+   "savings": [
+    {
+     "lever": "economic rollover trigger, 3 crossings",
+     "status": "upper_bound",
+     "displacement": "unknown",
+     "denominator": "D-W7",
+     "value_pct": 0.1871,
+     "interval_pct": [
+      -0.0475,
+      0.1871
+     ],
+     "measurement": "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md"
+    },
+    {
+     "lever": "all interactive crossings vs never crossing",
+     "status": "upper_bound",
+     "displacement": "unknown",
+     "denominator": "D-W7",
+     "value_pct": 17.1637,
+     "interval_pct": [
+      -2.1287,
+      17.1637
+     ],
+     "measurement": "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md"
+    }
+   ],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/measure/context_lifetime.py",
+      "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md",
+      "vault/programs/cognitive-economy/handoffs/D.md"
+     ],
+     "lines_added": 420,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none; the script is re-runnable on demand (~60 s, zero model calls)",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
+  },
+  "E": {
+   "terminal": "MERGED_INTO_EXISTING_OWNER",
+   "reason": "Continuation vs rotation measured from the epoch census and D-W7 transcripts: 49 measured mission rotations, net [-0.91 %, +2.41 %]; the ceiling for any threshold change is <= 2.78 % for a lowered threshold (net of the cheapest rehydration) and <= 0.91 % for a raised one, both below the frozen 3 %, so no threshold change is proposed. Result handed to the rotation owner.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "vault/specs/parent-context-epoch-rotation.md"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/E.md",
+     "sha256": "a53b1e68ae61a6e5cb9cba37728d2152003a419002716d106bfae285c10b7c38"
+    },
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md",
+     "sha256": "81c46ef4af14a19dd30e3fa53811171f5c2e45d553a72f4028edf1ca8fa11315"
+    }
+   ],
+   "savings": [
+    {
+     "lever": "mission context rotation",
+     "status": "upper_bound",
+     "displacement": "unknown",
+     "denominator": "D-W7",
+     "value_pct": 2.4113,
+     "interval_pct": [
+      -0.9063,
+      2.4113
+     ],
+     "measurement": "vault/programs/cognitive-economy/evidence/D-E-context-lifetime.md"
+    }
+   ],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/handoffs/E.md"
+     ],
+     "lines_added": 35,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
+  },
+  "F": {
+   "terminal": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+   "reason": "Frozen rule: a lever only if identical-dependency re-reads across sibling subagents are >= 3 % of D-W7 weighted. Measured with the KSR carriage construction over all 75,969 D-W7 calls (pre-registered at 73d97127, selftest 6/6): Read results in a subagent identical in path, offset, limit and content sha256 to an earlier-spawned sibling's cost 1.88 % of D-W7 (1,124 re-reads, 183 sibling groups). Path-only 2.23 %. Below 3 %, and an upper bound on any saving since a sibling given shared content still carries it.",
+   "evidence": [
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/F-G-P-C-carriage.md",
+     "sha256": "d3dc5eb25df84a121ec13488f538a92ae5bf7965c07c3bb98b12d440b78c7abd"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/carriage_out.json",
+     "sha256": "a73745337c5251503a0859ce57a34456c8ff58d2734e4d1b74596f9e3d98ddbf"
+    }
+   ],
+   "savings": []
+  },
+  "G": {
+   "terminal": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+   "reason": "Frozen rule: reopened only if F finds recurrence with a valid identity boundary (same inputs, same dependency hashes). F measured exactly that boundary (path, offset, limit, content sha256) and found 1.88 % of D-W7, below F's own 3 % threshold, so G is not reopened.",
+   "evidence": [
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/F-G-P-C-carriage.md",
+     "sha256": "d3dc5eb25df84a121ec13488f538a92ae5bf7965c07c3bb98b12d440b78c7abd"
+    }
+   ],
+   "savings": []
+  },
+  "H": {
+   "terminal": "IMPLEMENTED_AND_VERIFIED",
+   "reason": "A reproducible turn taxonomy over usage_index joined to git: every one of D-W7's 75,969 calls classified into recovery/repeat/proof/bookkeeping/advancing/non_convergent/coordination or UNSETTLED by written first-match rules, with turns per commit and per green test for the 40 costliest roots via tools/root_progress.py (imported, never edited). Blind-label agreement 0.875 vs shuffled 0.45. gate_turns.py re-runs the classifier on a frozen 3,000-row sample and checks its label hash; it holds green and goes red under a perturbed class order. By the 3 % rule no optimization it suggests is a lever of its own: bookkeeping (12.93 %) has no measured removable share, recovery (5.80 %) is handed to J.",
+   "evidence": [
+    {
+     "kind": "gate",
+     "argv": [
+      "python",
+      "vault/programs/cognitive-economy/gates/gate_turns.py"
+     ]
+    },
+    {
+     "kind": "prg",
+     "ref": "vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md",
+     "sha256": "299ceca7bf1a21bef93b643b18ae6d769b273b914cbf7718d7d81ead13fce37a"
+    },
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md",
+     "sha256": "299ceca7bf1a21bef93b643b18ae6d769b273b914cbf7718d7d81ead13fce37a"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/turns_frozen_sample.json",
+     "sha256": "21871b21af29dd8eaf0ea0aafae79602f78a98c524268b6436b0cd0dcd6ce455"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/turns_out.json",
+     "sha256": "fb0cffc14ac5f1658bd32002604d07319ab98837e54c5c2670681e72bd46b1fc"
+    }
+   ],
+   "savings": [],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/measure/turns.py",
+      "vault/programs/cognitive-economy/gates/gate_turns.py",
+      "vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md"
+     ],
+     "lines_added": 640,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none",
+     "gate_seconds": 1,
+     "model_calls_per_run": 0
+    }
+   }
+  },
+  "I": {
+   "terminal": "MERGED_INTO_EXISTING_OWNER",
+   "reason": "The epoch brief (modules/gsd_x/goal/brief.py:48 compile_brief, 20/20 incl. V-BRIEF-*) and the Ralph card (tools/gsd_mission.py:882 render_card, 213/213) already are the one-shot work packet; this campaign itself runs on them. Nothing built.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "modules/gsd_x/goal/brief.py"
+    },
+    {
+     "kind": "owner",
+     "ref": "tools/gsd_mission.py"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/I.md",
+     "sha256": "3562828c0bfc2bf73d5285a87ddff9eeb641854d709c0ae0399be9fb3d563b3d"
+    }
+   ],
+   "savings": [],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/handoffs/I.md"
+     ],
+     "lines_added": 30,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none for the campaign; the owner pays it",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
+  },
+  "J": {
+   "terminal": "DEFERRED_STRONGER_OWNER",
+   "reason": "Decided from H by the frozen rule: HUMAN-rooted recovery + repeat + non_convergent = 3.51 % of D-W7 >= 3 %, so a detector proposal is earned (pre-registered input, commit 8f7b6caf). 88 % of it is recovery. The proposal is a handoff to tools/gsd_mission.py's owner: scope the progress fingerprint to the mission's own work (audit G5 verified at gsd_mission.py:1649-1671: HEAD + whole-tree porcelain + diff, so peer churn in a shared checkout reads as progress and the no_progress halt cannot fire) and count consecutive recovery turns; the interactive half needs a host other than the mission supervisor.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "tools/gsd_mission.py"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/J.md",
+     "sha256": "31a3b00388769582583144ffd796b11011fc54e4dd96da8b35ea8b309138ddc3"
+    },
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md",
+     "sha256": "299ceca7bf1a21bef93b643b18ae6d769b273b914cbf7718d7d81ead13fce37a"
+    }
+   ],
+   "savings": [
+    {
+     "lever": "non-convergence detector (proposed, not built)",
+     "status": "upper_bound",
+     "displacement": "unknown",
+     "denominator": "D-W7",
+     "value_pct": 3.5075,
+     "measurement": "vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md"
+    }
+   ],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/handoffs/J.md"
+     ],
+     "lines_added": 40,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
+  },
+  "K": {
+   "terminal": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+   "reason": "Frozen rule: a tool-output firewall needs ONE class with >= 3 % dead (NOT_OBSERVED/IMMEDIATE) carriage on a replication of the KSR instrument over the CPP corpus. Replicated with the original pre-registration (manifest frozen at 36db0ff8 before measuring, controls valid): all tool-output dead carriage <= 6.93 % of the corpus (upper bound, ~1.16 % of D-W7), largest class read:~/.claude skills/PP <= 2.67 %, next tool:Grep 0.97 %. No class reaches 3 %, so no firewall is built.",
+   "evidence": [
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/K-tool-output-admission.md",
+     "sha256": "6e400e11cecd0f6cb6d4ee7567500c8c37d8b541333096654c7f4345ffc0359a"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/ksr_cpp/ctx_dead_stdout.txt",
+     "sha256": "fb2495f477133a2236af9387cffea949b677925e43117386ee33563e9d6a5e39"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/ksr_cpp/ctx_manifest.json",
+     "sha256": "d729f28d1ebaf2da091033be4e1dafe812f04344c185e06b318ad3e5dc719469"
+    }
+   ],
+   "savings": [],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/measure/ksr_cpp/ctx_dead.py",
+      "vault/programs/cognitive-economy/measure/ksr_cpp/ctx_admission.py",
+      "vault/programs/cognitive-economy/evidence/K-tool-output-admission.md"
+     ],
+     "lines_added": 606,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
+  },
+  "L": {
+   "terminal": "IMPLEMENTED_AND_VERIFIED",
+   "reason": "Compound steps 7+8 compiled into a new campaign module (compound/steps78.py: mkdir mutex with stale recovery and timeout, byte backup, case-sensitive merge of the project entry, sibling tmp + fsync + os.replace, marker unlink with rollback to the backup bytes). Its gate runs every case on temp copies of the live state with the real marker and 224 real learning files, holds green, goes red when the rollback restore is disabled, and leaves the live state's sha256 unchanged. The live apply and call-site switch are in the Owner bundle as [L], per the frozen rule (audit G6).",
+   "evidence": [
+    {
+     "kind": "gate",
+     "argv": [
+      "python",
+      "vault/programs/cognitive-economy/gates/gate_compound78.py"
+     ]
+    },
+    {
+     "kind": "prg",
+     "ref": "vault/programs/cognitive-economy/evidence/L-prg.md",
+     "sha256": "db559d92b08e010e23fc5e8955b3fc96ec74c8157ce7f03901dfa608c0a9eda8"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/compound/steps78.py",
+     "sha256": "0749958f134e0ed0a92f4d5b674414f8f9f729abaeeceac95fb08bb4c365665b"
+    }
+   ],
+   "savings": [
+    {
+     "lever": "compound steps 7+8 compiled out",
+     "status": "unknown",
+     "displacement": "not_applicable",
+     "denominator": "D-W7",
+     "measurement": "vault/programs/cognitive-economy/evidence/L-prg.md"
+    }
+   ],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/compound/steps78.py",
+      "vault/programs/cognitive-economy/gates/gate_compound78.py",
+      "vault/programs/cognitive-economy/evidence/L-prg.md"
+     ],
+     "lines_added": 330,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none until the Owner switches the call site",
+     "gate_seconds": 2,
+     "model_calls_per_run": 0
+    }
+   }
+  },
+  "M": {
+   "terminal": "DEFERRED_STRONGER_OWNER",
+   "reason": "Model policy is owned by CCP C4 and modules/cost_collapse; a routing experiment spends quota outside the mission's authorization, so none was run. The measured turn-class weights and the 0.50 % verification cost are handed to the owner.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "vault/plans/cognitive-control-plane-2026-10-02.md"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/M.md",
+     "sha256": "d1f58c93741012e5688ae8d6bb4db6976c9f3260ae77b06ea1edf535021eb3b7"
+    }
+   ],
+   "savings": []
+  },
+  "N": {
+   "terminal": "MERGED_INTO_EXISTING_OWNER",
+   "reason": "PP-GoalSweep and PP-GsdLongRun-Sweep are registered, ran at 16:10/16:11 with result 0, and their heartbeats show completed bounded passes with zero model calls in the sweep itself; goal sweep suite 14/14. Nothing built.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "tools/goal_sweep.ps1"
+    },
+    {
+     "kind": "owner",
+     "ref": "tools/gsd_long_run_sweep.ps1"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/N.md",
+     "sha256": "470395bd6be5c3577019e5d3ba13a9f6519d51caadaeaccd7751e69ee634fee8"
+    }
+   ],
+   "savings": [],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/handoffs/N.md"
+     ],
+     "lines_added": 30,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none for the campaign; the owner pays it",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
+  },
+  "O": {
+   "terminal": "MERGED_INTO_EXISTING_OWNER",
+   "reason": "The Goal spine stays the canonical durable-goal store (live sweep, 14/14, brief 20/20). The audit G1-G4 finding, a whole-tree verdict pin at git_state.py:132-133 that makes closure unreachable in a shared checkout, is handed to the spine owner with a suggested direction; the campaign's authority is the committed ledger.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "modules/gsd_x/goal/"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/O.md",
+     "sha256": "a0fd7e6313143cc9c3f1c4a0fb2211525be5a4b1a50a883b78d99c87cadc1f3b"
+    }
+   ],
+   "savings": [],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/handoffs/O.md"
+     ],
+     "lines_added": 45,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "none for the campaign; the owner pays it",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
+  },
+  "P": {
+   "terminal": "FALSIFIED_OR_REJECTED_BY_EVIDENCE",
+   "reason": "Frozen rule: build only if verification (test/gate tool calls + their output carriage) >= 3 % of D-W7 weighted. Measured: test/gate result carriage 0.30 % + issuing tool_use tokens 0.20 % = 0.50 % of D-W7 (pre-registered at 73d97127, tests tagged by H's classifier rule). The proof-class whole-turn weight (6.13 %) prices each turn's prefix, which reused verdicts would not remove.",
+   "evidence": [
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/cognitive-economy/evidence/F-G-P-C-carriage.md",
+     "sha256": "d3dc5eb25df84a121ec13488f538a92ae5bf7965c07c3bb98b12d440b78c7abd"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/carriage_out.json",
+     "sha256": "a73745337c5251503a0859ce57a34456c8ff58d2734e4d1b74596f9e3d98ddbf"
+    }
+   ],
+   "savings": []
+  },
+  "Q": {
+   "terminal": "MERGED_INTO_EXISTING_OWNER",
+   "reason": "CAPEX/OPEX is recorded per pillar in the ledger itself as state.<P>.capital (contract in handoffs/Q.md); model spend is stated as the mission epoch share because usage_index attributes calls to sessions, not pillars. No dashboard: the ledger already is the single committed authority.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "vault/programs/cognitive-economy/ledger.json"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/Q.md",
+     "sha256": "422e4b76020a71bb1a2300a1fcea98406d9c6277b4dc87a225ff9ba1fc74b549"
+    }
+   ],
+   "savings": [],
+   "capital": {
+    "capex": {
+     "files_created": [
+      "vault/programs/cognitive-economy/handoffs/Q.md",
+      "vault/programs/cognitive-economy/ledger_write.py"
+     ],
+     "lines_added": 110,
+     "model_calls": "mission epoch share, not separately metered"
+    },
+    "opex": {
+     "recurring": "one capital object per pillar, written at close",
+     "gate_seconds": 0,
+     "model_calls_per_run": 0
+    }
+   }
+  },
+  "R": {
+   "terminal": "IMPLEMENTED_AND_VERIFIED",
+   "reason": "The UKDL 3-level and CBR review is written to ukdl-candidates.md: 7 candidates, each evidence-cited with a verdict and reason (1 promote sent to the Owner as [R] UC-04, 2 reject as already owned, 4 keep-candidate), all CBR EXPERIMENTAL. gate_ukdl_candidates.py checks the format and on every run proves five mutants of the real file red.",
+   "evidence": [
+    {
+     "kind": "gate",
+     "argv": [
+      "python",
+      "vault/programs/cognitive-economy/gates/gate_ukdl_candidates.py"
+     ]
+    },
+    {
+     "kind": "prg",
+     "ref": "vault/programs/cognitive-economy/evidence/R-prg.md",
+     "sha256": "0052ebd4d1a9d3f4cc193b8fccb389af9cc37a45b8a132c3e2fe6c1e4b2b343b"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/ukdl-candidates.md",
+     "sha256": "36e0136101fbab5eae5b1981ac5192ca89d15c80e391fd4bef6112a9fda074ce"
+    }
+   ],
+   "savings": []
+  },
+  "S": {
+   "terminal": "MERGED_INTO_EXISTING_OWNER",
+   "reason": "Audit of trait->obligation derivation: neither frozen owner derives obligations (baseline_ledger.py is a version ratchet, family_baseline.py a cited-generation ratchet). The derivation already exists in modules/gsd_x/mission/obligation.py via tools/gsd_x_mission.py derive, and was demonstrated on a real project's README (ABSW2-Wii, temp roots): a faithful-port intent derives DO-4 ACCEPTED, the same port without a fidelity premise derives nothing, a cosmetic intent derives nothing. It is ORPHAN to the PP reachability scanner (its edge is an opt-in GSD ship:pre capability). No measured gap justifies a second derivation, so nothing is extended; the finding is handed to the baseline owners.",
+   "evidence": [
+    {
+     "kind": "owner",
+     "ref": "tools/baseline_ledger.py"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/S.md",
+     "sha256": "a1fe7b43300ac02477db6b77b302e95bf5098b57b879ad0d2536f69511589016"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/s_demo/derive_stdout.txt",
+     "sha256": "e4d0becf48533fac194eabdd75bc006caccee7285571e274503254076253f207"
+    }
+   ],
+   "savings": []
+  },
+  "T": {
+   "terminal": "AUTHORIZATION_BOUND",
+   "reason": "The liveness sweep (490 modules, 64 gate offenders) proposes no deletion: 0 RETIRE_CANDIDATE once the matcher handles from-package and relative sibling imports (controls recorded). 14 DORMANT_TESTED modules need a declare-or-wire decision in the registry, which is the Owner's. The 142 skills not invoked in D-W7 go to the C owners, not to removal.",
+   "evidence": [
+    {
+     "kind": "owner_decision",
+     "ref": "vault/programs/cognitive-economy/owner-bundle.md",
+     "sha256": "46f46172ca66dd886c62a97a630fd907d0b8e8990ebc9e1d866b503253479d7f"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/evidence/B-T-floor-and-gc.md",
+     "sha256": "7226675925015d55938a5f39895080a68aa755e5559ee0caf9378291d627c8a9"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/t_sweep_out.json",
+     "sha256": "2465e6eb265049976bb1aa6ade035a68356d5e2f09f0686a99527dd011842f6c"
+    }
+   ],
+   "savings": []
+  }
  },
- "reviews": {"ukdl": null, "cbr": null},
- "deltas": {"product": [], "intelligence": []}
+ "reviews": {
+  "ukdl": {
+   "file": "vault/programs/cognitive-economy/ukdl-candidates.md",
+   "summary": "7 candidates at 3 levels (4 trap, 3 process, 0 hard): 1 promote (Owner item [R] UC-04), 2 reject as already owned, 4 keep-candidate; gate_ukdl_candidates.py"
+  },
+  "cbr": {
+   "file": "vault/programs/cognitive-economy/ukdl-candidates.md",
+   "summary": "CBR maturity per finding is the cbr: line of each block; all 7 EXPERIMENTAL (plan s4: until earned; none re-observed in an independent run)"
+  }
+ },
+ "deltas": {
+  "product": [
+   "A: gates/gate_baseline.py re-runs the frozen anchor and D-W7 windows; green, and red under a perturbed expected value.",
+   "H: measure/turns.py turn taxonomy over all 75,969 D-W7 calls plus gates/gate_turns.py, a frozen 3,000-row label hash, red under a perturbed class order.",
+   "L: compound/steps78.py implements /cpp-compound steps 7+8 (mutex, backup, tmp+rename, unlink, rollback), proven on temp copies by gates/gate_compound78.py. The live switch is Owner item [L].",
+   "R: ukdl-candidates.md plus gates/gate_ukdl_candidates.py, which proves five mutants red on every run.",
+   "Done-gate: selftest V-CEP-REAL-HANDOFF derives its poles from git history instead of a pole that went stale.",
+   "Nothing live changed: every campaign commit sits on the unmerged branch cognitive-economy/autonomous-run (Owner item [RUN])."
+  ],
+  "intelligence": [
+   "Of the levers measured on D-W7 under the frozen 3 % rule, only J cleared it (HUMAN-rooted recovery + repeat + non-convergent 3.51 %). Below it: F 1.88 %, K 2.67 %, P 0.50 %, C-tools 0.002 %, E <= 2.78 %, D economic trigger <= +0.19 % net.",
+   "Context crossings avoided at most 17.16 % of D-W7 in carried rent relative to never crossing. Displacement is unknown because compaction, the real alternative, was not measured, so this is an upper bound and not a saving.",
+   "51.97 % of D-W7 calls are UNSETTLED: no observable outcome classifies them. This is the largest unknown the campaign leaves, and it is not waste.",
+   "Tool-output carriage is 25.71 % of D-W7 (Read alone 21.02 %), the largest measured carriage class. No identity-bounded lever inside it reached 3 %.",
+   "gsd_mission progress_fingerprint hashes the whole shared tree, so its no-progress halt cannot fire while peers write (audit G5, verified in source; handoff J, candidate UC-04).",
+   "18 of 20 pillars ended at their pre-registered terminal. F (predicted insufficient evidence) was measured and falsified; J (predicted insufficient evidence) cleared its rule and was handed to its owner."
+  ]
+ }
 }

@@ -488,17 +488,23 @@ def selftest(verbose=True) -> bool:
     say(gate_argv_problem(REAL_GATE) is None and gate_argv_problem(["python", SELF_REL]) is not None,
         "V-CEP-REAL-ALLOWLIST (real script admitted, the verifier itself refused)")
 
-    # handoff_landed on REAL git, both poles. The plan file's only commit is C0 1cabd117:
-    # frozen AT that commit -> the commit is an ancestor -> not landed after the freeze;
-    # frozen at its parent 4d1cfb83 -> landed after. Skipped (INCONCLUSIVE, not PASS)
-    # where that history is absent, e.g. a shallow clone.
+    # handoff_landed on REAL git, both poles, with the poles DERIVED from the plan file's
+    # own history (C0 1cabd117 first; later commits such as the P0 freeze and the execution
+    # log touched it too, which is what turned a hardcoded "only commit is C0" pole red):
+    # frozen AT its newest commit -> every touching commit is an ancestor -> not landed;
+    # frozen at the parent of its oldest commit -> landed after. Skipped (INCONCLUSIVE,
+    # not PASS) where that history is absent, e.g. a shallow clone.
     plan = "vault/plans/cognitive-economy-program-2026-10-03.md"
     if _git("cat-file", "-e", "1cabd117^{commit}").returncode == 0:
         def at(sha):
             return type("R", (Resolver,), {"frozen_sha": lambda self: sha})()
-        before, after = at("1cabd117").handoff_landed(plan), at("4d1cfb83").handoff_landed(plan)
-        say(before is False and after is True,
-            f"V-CEP-REAL-HANDOFF (frozen at C0 -> {before}, frozen before C0 -> {after})")
+        touching = _git("log", "--format=%H", "HEAD", "--", plan).stdout.split()
+        newest, oldest = touching[0], touching[-1]
+        before = at(newest).handoff_landed(plan)
+        after = at(oldest + "^").handoff_landed(plan)
+        say(oldest.startswith("1cabd117") and before is False and after is True,
+            f"V-CEP-REAL-HANDOFF (frozen at newest {newest[:8]} -> {before}, "
+            f"frozen before C0 -> {after}, oldest {oldest[:8]})")
     else:
         print("  INCONCLUSIVE V-CEP-REAL-HANDOFF: commit 1cabd117 not in this clone")
     return ok
