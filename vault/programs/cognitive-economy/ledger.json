@@ -291,7 +291,18 @@
      "sha256": "7226675925015d55938a5f39895080a68aa755e5559ee0caf9378291d627c8a9"
     }
    ],
-   "savings": []
+   "savings": [],
+   "owner_decision": {
+    "item": "[B]",
+    "decision": "DEFERRED_BY_OWNER_QUOTA",
+    "date": "2026-10-04",
+    "owner_text": "DECISION 3 -- PILLAR B: DEFER the thirteen rule moves that still lack ablation evidence. Disposition: DEFERRED_BY_OWNER_QUOTA",
+    "packet": {
+     "ref": "vault/programs/cognitive-economy/post-reset-packet.json",
+     "sha256": "b6b104bb523d147377d13f752fe7d13b31cc66728164eb6bdf5b6e2c1c5522ba"
+    },
+    "note": "terminal AUTHORIZATION_BOUND is the frozen rule's and stays; this field records the Owner's answer to it and the experiment that would reopen it"
+   }
   },
   "C": {
    "terminal": "DEFERRED_STRONGER_OWNER",

@@ -256,6 +256,7 @@ def check_ledger(led: dict, res: Resolver, final: bool, only=None, run_gates=Tru
         for key in ("product", "intelligence"):
             if not (led.get("deltas") or {}).get(key):
                 f.append(f"L8 delta {key}: empty")
+        f.extend(check_disposition(led, res))
     return f
 
 
@@ -317,6 +318,112 @@ def _check_saving(pid: str, s: dict) -> list:
     return out
 
 
+# ------------------------------------------------- disposition truth (X clauses, 2026-10-04)
+#
+# A terminal says how a pillar's OBLIGATION closed. It does not say whether a capability is built,
+# running, or measured. These clauses keep the three apart (Owner decision 5, 2026-10-04):
+#   X1  an Owner quota deferral carries a pinned, resumable experiment packet and claims nothing built
+#       or realized;
+#   X2  the REQUIREMENTS traceability row of every closed pillar names the ledger terminal, so a
+#       "Complete" label cannot hide a DEFERRED or FALSIFIED disposition (the 2026-10-04 drift: CE-J
+#       checked while DEFERRED_STRONGER_OWNER, CE-R unchecked while IMPLEMENTED_AND_VERIFIED);
+#   X3  an activation record exists only on a built pillar; ACTIVE needs a pinned real-run receipt.
+REQS_REL = ".planning/workstreams/cognitive-economy/REQUIREMENTS.md"
+PACKET_KEYS = ("champion", "challenger", "quality_floor", "stop_conditions", "spend_cap",
+               "reopen_trigger", "invalidation")
+ACTIVATION = ("WIRED", "ACTIVE")
+REQ_ROW = re.compile(r"^\|\s*CE-([A-T])\s*\|[^|\n]*\|([^|\n]*)\|\s*$", re.M)
+
+
+def _pinned(res: "Resolver", pin: dict):
+    """The pinned file's current sha256 when the pin holds, else None."""
+    ref = (pin or {}).get("ref") or ""
+    sha = res.file_sha(ref) if ref else None
+    return sha if sha is not None and (pin or {}).get("sha256") == sha else None
+
+
+def check_disposition(led: dict, res: "Resolver") -> list:
+    f = []
+    state = led.get("state") or {}
+    for pid in PILLARS:
+        st = state.get(pid) or {}
+        od = st.get("owner_decision") or {}
+        if od.get("decision") == "DEFERRED_BY_OWNER_QUOTA":
+            if st.get("terminal") == "IMPLEMENTED_AND_VERIFIED":
+                f.append(f"X1 {pid}: deferred by Owner quota, yet its terminal claims IMPLEMENTED_AND_VERIFIED")
+            if any(s.get("status") == "realized" for s in st.get("savings") or []):
+                f.append(f"X1 {pid}: deferred by Owner quota, yet it reports a realized saving")
+            pk = od.get("packet") or {}
+            if _pinned(res, pk) is None:
+                f.append(f"X1 {pid}: deferral packet {pk.get('ref')!r} missing, unpinned, or changed since cited")
+            else:
+                text = res.file_text(pk["ref"])
+                missing = [k for k in PACKET_KEYS if k not in text]
+                if f"[{pid}]" not in text or missing:
+                    f.append(f"X1 {pid}: deferral packet {pk['ref']} lacks [{pid}] or keys {missing}")
+        act = st.get("activation")
+        if act is not None:
+            status = (act or {}).get("status")
+            if status not in ACTIVATION:
+                f.append(f"X3 {pid}: activation status {status!r} not in {ACTIVATION}")
+            elif st.get("terminal") != "IMPLEMENTED_AND_VERIFIED":
+                f.append(f"X3 {pid}: activation recorded on a pillar whose terminal is {st.get('terminal')}")
+            elif status == "ACTIVE" and _pinned(res, act.get("receipt")) is None:
+                f.append(f"X3 {pid}: ACTIVE without a pinned real-run receipt")
+    rows = {m.group(1): m.group(2) for m in REQ_ROW.finditer(res.file_text(REQS_REL))}
+    for pid in PILLARS:
+        term = (state.get(pid) or {}).get("terminal")
+        if not term:
+            continue
+        if pid not in rows:
+            f.append(f"X2 {pid}: {REQS_REL} has no traceability row for CE-{pid}")
+        elif term not in rows[pid]:
+            f.append(f"X2 {pid}: {REQS_REL} row reads {rows[pid].strip()!r}, the ledger terminal is {term}")
+    return f
+
+
+def disposition_matrix(led: dict, res: "Resolver") -> dict:
+    """Per pillar: how the obligation closed (terminal) kept apart from built / running / measured,
+    plus one program status that cannot read as certified while nothing is realized."""
+    from modules.done_gate.strength_ladder import highest_supported
+    state = led.get("state") or {}
+    rows, parts = {}, []
+    for pid in PILLARS:
+        st = state.get(pid) or {}
+        term = st.get("terminal")
+        built = term == "IMPLEMENTED_AND_VERIFIED"
+        act = (st.get("activation") or {}).get("status")
+        savings = sorted({s.get("status") for s in st.get("savings") or []})
+        od = (st.get("owner_decision") or {}).get("decision")
+        rung = None
+        if built:
+            files = [e for e in st.get("evidence") or [] if e.get("kind") in FILE_KINDS]
+            wired = act in ACTIVATION
+            ran = act == "ACTIVE" and _pinned(res, st["activation"].get("receipt")) is not None
+            rung, _ = highest_supported({
+                "spec_exists": res.path_exists(led.get("plan") or ""),   # the frozen pre-registration
+                "artifact_on_disk": bool(files) and all(res.file_sha(e.get("ref") or "") for e in files),
+                "has_caller": wired, "reachable_from_entrypoint": wired, "activation_path_exists": wired,
+                "ran_at_least_once": ran,
+            })
+        rows[pid] = {"terminal": term, "built": built, "ladder": rung, "activation": act,
+                     "owner_decision": od, "savings": savings}
+        if act:
+            parts.append(f"{pid}_{act}")
+        if od == "DEFERRED_BY_OWNER_QUOTA":
+            parts.append(f"{pid}_DEFERRED_BY_OWNER_QUOTA")
+    open_ = [p for p in PILLARS if not rows[p]["terminal"]]
+    realized = [p for p in PILLARS if "realized" in rows[p]["savings"]]
+    up = _git("rev-parse", "--abbrev-ref", "@{u}").stdout.strip()
+    last = _git("log", "-1", "--format=%H", "--", LEDGER_REL).stdout.strip()
+    landed = bool(up and last) and _git("merge-base", "--is-ancestor", last, up).returncode == 0
+    head = "IMPLEMENTATION_CLOSED" if not open_ else f"OPEN({','.join(open_)})"
+    eff = (f"EFFECTIVENESS_MEASURED({','.join(realized)})" if realized
+           else "EFFECTIVENESS_NOT_CERTIFIED(realized=0)")
+    status = " · ".join([head, *parts, eff, "LANDED" if landed else "LOCAL_ONLY"])
+    return {"program_status": status, "pillars": rows}
+
+
 # ---------------------------------------------------------------- selftest
 
 SHA = "f" * 64
@@ -326,15 +433,19 @@ OWNER = "ok/owner.md"
 class FakeResolver(Resolver):
     """Files exist under ok/ and the handoff dir. Their text names every pillar, the
     D-W7 denominator, a command and the owner -- except files whose name says otherwise
-    (nodenom / noowner / other), so each mutant removes exactly one property."""
+    (nodenom / noowner / other), so each mutant removes exactly one property. A file named
+    *packet* also carries every PACKET_KEYS key. The REQUIREMENTS surface is `reqs`: the
+    selftest's run() fills it from the ledger under test unless a mutant set it first."""
 
-    def __init__(self, frozen, gate_rc=0):
-        self.frozen, self.gate_rc, self.gate_calls = frozen, gate_rc, 0
+    def __init__(self, frozen, gate_rc=0, reqs=None):
+        self.frozen, self.gate_rc, self.gate_calls, self.reqs = frozen, gate_rc, 0, reqs
 
     def commit_reachable(self, ref):
         return ref == "abc1234"
 
     def _exists(self, rel):
+        if rel == REQS_REL:
+            return self.reqs is not None
         return rel.startswith("ok/") or rel.startswith(HANDOFF_DIR)
 
     def file_sha(self, rel):
@@ -346,6 +457,8 @@ class FakeResolver(Resolver):
     def file_text(self, rel):
         if not self._exists(rel):
             return ""
+        if rel == REQS_REL:
+            return self.reqs
         base = "decision " + " ".join(f"[{p}]" for p in PILLARS) + f" D-W7 command: python x {OWNER}"
         if "nodenom" in rel:
             return base.replace("D-W7", "")
@@ -353,6 +466,8 @@ class FakeResolver(Resolver):
             return base.replace(OWNER, "")
         if "other" in rel:
             return "a falsification about something else"
+        if "packet" in rel:
+            return base + " " + " ".join(PACKET_KEYS)
         return base
 
     def handoff_landed(self, rel):
@@ -373,6 +488,13 @@ def _merged(pid, handoff=None, **ev):
     return {"terminal": "MERGED_INTO_EXISTING_OWNER", "reason": "owner holds it", "savings": [],
             "evidence": [{"kind": "owner", "ref": OWNER},
                          {"kind": "handoff", "ref": handoff or f"{HANDOFF_DIR}{pid}.md", "sha256": SHA, **ev}]}
+
+
+def _reqs_for(led, override=None):
+    """A REQUIREMENTS traceability table whose rows name each pillar's ledger terminal."""
+    rows = {p: f"Complete -- {(led['state'][p] or {}).get('terminal')}" for p in PILLARS}
+    rows.update(override or {})
+    return "\n".join(f"| CE-{p} | Phase 1 | {s} |" for p, s in rows.items() if s is not None)
 
 
 def _clean_fixture():
@@ -406,7 +528,10 @@ def selftest(verbose=True) -> bool:
             print(f"  ok   {label}")
 
     def run(led, res=None):
-        return check_ledger(led, res or FakeResolver(clean["frozen"]), final=True)
+        res = res or FakeResolver(clean["frozen"])
+        if res.reqs is None:
+            res.reqs = _reqs_for(led)
+        return check_ledger(led, res, final=True)
 
     def m(fn):
         led = copy.deepcopy(clean)
@@ -471,6 +596,47 @@ def selftest(verbose=True) -> bool:
         got = run(led, res)
         say(any(x.startswith(clause) for x in got), f"V-CEP-MUT-{name} killed by {clause}")
 
+    # X clauses. Control first: a valid quota deferral on B and a WIRED activation on built A
+    # are GREEN, so a clause that refused every deferral or activation would fail here.
+    good_packet = {"ref": "ok/packet-B.json", "sha256": SHA}
+
+    def deferral(pid, packet=good_packet):
+        return lambda l: l["state"][pid].__setitem__(
+            "owner_decision", {"decision": "DEFERRED_BY_OWNER_QUOTA", "packet": dict(packet)})
+
+    def activation(pid, **kw):
+        return lambda l: l["state"][pid].__setitem__("activation", {"status": "WIRED", **kw})
+
+    def both(*fns):
+        def fn(led):
+            for g in fns:
+                g(led)
+        return fn
+
+    x_clean = m(both(deferral("B"), activation("A")))
+    say(not run(x_clean), "V-CEP-X-CLEAN (valid quota deferral + WIRED activation: green)")
+    x_mutants = {
+        "deferred-but-built": (m(deferral("A", {"ref": "ok/packet-A.json", "sha256": SHA})), "X1"),
+        "deferral-packet-missing": (m(deferral("B", {"ref": "gone/packet.json", "sha256": SHA})), "X1"),
+        "deferral-packet-unpinned": (m(deferral("B", {"ref": "ok/packet-B.json"})), "X1"),
+        "deferral-packet-incomplete": (m(deferral("B", {"ref": "ok/other-packet.json", "sha256": SHA})), "X1"),
+        "deferral-with-realized-saving": (m(both(deferral("B"), lambda l: l["state"]["B"].__setitem__(
+            "savings", [{"status": "realized", "displacement": "settled", "denominator": "D-W7",
+                         "measurement": "ok/m"}]))), "X1"),
+        "active-without-receipt": (m(activation("A", status="ACTIVE")), "X3"),
+        "activation-on-unbuilt": (m(activation("B")), "X3"),
+        "activation-unknown-status": (m(activation("A", status="LIVE")), "X3"),
+    }
+    for name, (led, clause) in x_mutants.items():
+        say(any(x.startswith(clause) for x in run(led)), f"V-CEP-MUT-{name} killed by {clause}")
+    drift = FakeResolver(clean["frozen"], reqs=_reqs_for(clean, {"B": "Complete"}))
+    say(any(x.startswith("X2 B") for x in run(clean, drift)), "V-CEP-MUT-requirements-drift killed by X2")
+    norow = FakeResolver(clean["frozen"], reqs=_reqs_for(clean, {"C": None}))
+    say(any(x.startswith("X2 C") for x in run(clean, norow)), "V-CEP-MUT-requirements-row-missing killed by X2")
+    nofile = FakeResolver(clean["frozen"], reqs="")
+    say(sum(x.startswith("X2") for x in run(clean, nofile)) == len(PILLARS),
+        "V-CEP-MUT-requirements-empty killed by X2 for every pillar")
+
     failing_gate = FakeResolver(clean["frozen"], gate_rc=1)
     say(any(x.startswith("L5") for x in run(clean, failing_gate)), "V-CEP-MUT-gate-red killed by L5")
     unfrozen = type("R", (FakeResolver,), {"frozen_at_commit": lambda self: None})(clean["frozen"])
@@ -530,10 +696,13 @@ def main(argv=None) -> int:
         return 2
     res = Resolver()
     if a.status:
-        fails = check_ledger(led, res, final=False, run_gates=False)
+        fails = check_ledger(led, res, final=False, run_gates=False) + check_disposition(led, res)
         open_ = [p for p in PILLARS if not (led["state"][p] or {}).get("terminal")]
+        if str(REPO) not in sys.path:
+            sys.path.insert(0, str(REPO))
         print(json.dumps({"open": open_, "closed": [p for p in PILLARS if p not in open_],
-                          "violations": fails}, indent=1))
+                          "violations": fails, **disposition_matrix(led, res)}, indent=1,
+                         ensure_ascii=False))
         return 1 if fails else 0
     if a.pillar:
         fails = check_ledger(led, res, final=True, only=[a.pillar])

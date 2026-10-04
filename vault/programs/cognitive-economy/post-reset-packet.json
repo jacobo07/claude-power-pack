@@ -1,0 +1,137 @@
+{
+ "packet": "cognitive-economy post-reset live measurement",
+ "pillars": "[B]",
+ "status": "DEFERRED_BY_OWNER_QUOTA",
+ "owner_text": "DECISION 3 -- PILLAR B: DEFER the thirteen rule moves that still lack ablation evidence. Disposition: DEFERRED_BY_OWNER_QUOTA (2026-10-04)",
+ "reopen_trigger": "after the next weekly quota reset, ONE Owner yes for E1 at or under spend_cap; never started by a timer, a mission or a session on its own",
+ "measured_at": "2026-10-04",
+ "experiments": [
+  {
+   "id": "E1",
+   "pillar": "[B]",
+   "question": "For each still-resident global rule: does moving it out of the per-call prefix (a skill stub) lose any verified task outcome, and how many prefix bytes does it remove?",
+   "candidates": [
+    {
+     "rule": "~/.claude/rules/technical-failure-to-product-state.md",
+     "bytes": 6932,
+     "resident": true,
+     "sha256_lf": "b9ba87293fa84d36dada997fbe887d669879a070f58062d88aa3004d245af08b"
+    },
+    {
+     "rule": "~/.claude/rules/scoped-side-effect-authority.md",
+     "bytes": 6602,
+     "resident": true,
+     "sha256_lf": "cb133f55609810f2b601318af6cee9fa36e78ad30f88bcde14240d6debbf7d05"
+    },
+    {
+     "rule": "~/.claude/rules/generated-content-needs-an-evidence-gate.md",
+     "bytes": 6284,
+     "resident": true,
+     "sha256_lf": "8f5de045a7b75630cc077ef53698ba1776489706a8640af8e8fb6e4d6f10ea1c"
+    },
+    {
+     "rule": "~/.claude/rules/effect-authority-across-transports.md",
+     "bytes": 6106,
+     "resident": true,
+     "sha256_lf": "e1d11c9744a02adcb6f428adba3f803c74574ce2254d47e39e5d5e503afe7074"
+    },
+    {
+     "rule": "~/.claude/rules/human-facing-external-effects.md",
+     "bytes": 5520,
+     "resident": true,
+     "sha256_lf": "f56914f38ee727840aec17c862f65dc13e04d0dc6d7d5b3ece78577c0d06bfdb"
+    },
+    {
+     "rule": "~/.claude/rules/documented-capability-must-be-executable.md",
+     "bytes": 5045,
+     "resident": true,
+     "sha256_lf": "776b985fd3d5aaea8fb9eef0ac0aa003c327143d185b105efb4b8b269cab5136"
+    },
+    {
+     "rule": "~/.claude/rules/validation-planes-do-not-transfer.md",
+     "bytes": 3656,
+     "resident": true,
+     "sha256_lf": "f7ac1415e3d40175828a96d7299c1d7b33c67302a8c0b6b4309840e3df745139"
+    },
+    {
+     "rule": "~/.claude/rules/capability-preserving-compaction.md",
+     "bytes": 3335,
+     "resident": true,
+     "sha256_lf": "328a088e78ac4d7a47362e1c2814969bc075e560eea39943de0cd1713e5283f1"
+    },
+    {
+     "rule": "~/.claude/rules/state-lifetime-and-incarnation.md",
+     "bytes": 3137,
+     "resident": true,
+     "sha256_lf": "fa5d6222f5ec57f915a1673d6f9fd8355428a85b19f5bc2b1466dd4a1eb72df0"
+    },
+    {
+     "rule": "~/.claude/rules/post-effect-resource-truth.md",
+     "bytes": 3126,
+     "resident": true,
+     "sha256_lf": "4ffa7549ab80336cd7a6fd2988d9c4cefa336e3070594604e4176998b68e8248"
+    },
+    {
+     "rule": "~/.claude/rules/durable-exit-transaction.md",
+     "bytes": 2830,
+     "resident": true,
+     "sha256_lf": "cb6f17aa3b4d7f790675f65c41c31f4bba6fd6a6fca01b1a74a07d2c491529e4"
+    },
+    {
+     "rule": "~/.claude/rules/python/testing.md",
+     "bytes": 2516,
+     "resident": true,
+     "sha256_lf": "2ae141c9eaf5543034127fc33ec057efde849ea3151bf47ec85e4563f9f897bf"
+    },
+    {
+     "rule": "~/.claude/rules/common/code-review.md",
+     "bytes": 1772,
+     "resident": true,
+     "sha256_lf": "befb119ebee31c378acad1a8fa8e815c600073c1d7924462f430ec01775b8002"
+    }
+   ],
+   "candidates_missing_now": [],
+   "champion": "arm A: the current prefix, rule resident (P3 method)",
+   "challenger": "arm B: the same prefix with --settings claudeMdExcludes naming the rule file(s)",
+   "harness": ".planning/workstreams/cognitive-resource-os/phases/06-p3-ablation/p3_runner.py",
+   "design": "per set of up to 3 rule files: 6 judgement tasks x 2 arms x 2 replicates = 24 runs, arm order alternating, one model; tasks exercise each rule's judgement and are frozen in an ADDENDUM committed before any counted run (as ADDENDUM-R2.md)",
+   "sets_needed": 5,
+   "quality_floor": "arm B task_pass >= arm A on the same tasks, every run valid; ANY judgement-check loss in arm B keeps that rule resident",
+   "metrics": [
+    "task_pass",
+    "valid",
+    "first_call_context",
+    "total_context",
+    "output_tokens",
+    "calls",
+    "wall_s"
+   ],
+   "spend_cap": {
+    "basis": "P3 R2 set, measured: 24 runs = 16,670,492 context tokens, 61,886 output tokens, 1,834 s wall (results-j-r2.jsonl, all 24 valid)",
+    "request": "at most 5 sets = 120 runs, about 83 M context and 0.31 M output tokens",
+    "unit": "logical transcript tokens; the weekly account meter's weighting is UNKNOWN and is not derived from these numbers"
+   },
+   "stop_conditions": [
+    "spend_cap reached: stop, report the sets completed",
+    "a run invalid (precondition or harness failure): rerun once; a second invalid run stops the set",
+    "a ceiling (every run passes in both arms) is recorded as 'no loss observed', never 'no effect'"
+   ],
+   "invalidation": [
+    "a candidate rule's sha256_lf differs from this packet (re-measure bytes, refreeze tasks)",
+    "the model id or the claude CLI major version differs from the ADDENDUM",
+    "a task file edited after its ADDENDUM commit"
+   ],
+   "success": "per rule MOVE (no loss observed, bytes removed) or KEEP_RESIDENT (a loss observed); each MOVE still needs its own Owner yes before ~/.claude/rules is edited",
+   "failure": "the set is inconclusive (invalid runs, cap reached): no rule moves on it",
+   "expected_evidence": "results-<set>.jsonl, ADDENDUM-<set>.md, a REPORT.md section per set",
+   "provenance": {
+    "repo": "claude-power-pack",
+    "host": "laptop (Windows)",
+    "model": "claude-opus-5-5 (as P3; restate in the ADDENDUM)"
+   }
+  }
+ ],
+ "not_in_this_packet": {
+  "program_champion_challenger": "Only [L] is active and it acts on the background compound pipeline, whose effect is read from ~/.claude/state/compound-unattended.log at no extra spend (ledger state.L.activation). No mechanism with a per-call effect is ACTIVE, so a program-wide live A/B has nothing to compare yet; it becomes a packet entry when one is."
+ }
+}
