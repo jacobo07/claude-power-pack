@@ -42,7 +42,7 @@ inside one campaign: no finding was re-observed in an independent run or project
 - verdict: promote
 - cbr: EXPERIMENTAL
 - evidence: vault/programs/cognitive-economy/handoffs/J.md, vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md
-- reason: Verified in source (audit G5). `tools/gsd_mission.py` progress_fingerprint hashes HEAD, the whole-tree porcelain status and the shortstat of the work dir. In a checkout other panes write to, any peer commit or dirty file changes that hash, so a stalled mission reads as progressing and the no_progress halt cannot fire. This is a structural blindness in a live supervisor, and no current UKDL entry names it. The fix belongs to the mission owner (handoff J); the entry belongs to the Owner's promotion.
+- reason: Verified in source (audit G5). `tools/gsd_mission.py` progress_fingerprint hashes HEAD, the whole-tree porcelain status and the shortstat of the work dir. In a checkout other panes write to, any peer commit or dirty file changes that hash, so a stalled mission reads as progressing and the no_progress halt cannot fire. This is a structural blindness in a live supervisor, and no current UKDL entry names it. The fix belongs to the mission owner (handoff J); the entry belongs to the Owner's promotion. Promoted 2026-10-04 on Owner decision 6 as T-A-WHOLE-TREE-PROGRESS-FINGERPRINT-CANNOT-SEE-A-STALL-IN-A-SHARED-CHECKOUT-001 in a new section, "Cognitive Economy Program, pillar R promotion", at the end of ukdl-universal.md. Re-checked in source at 37d1940d (`tools/gsd_mission.py:2022` and `:1897`). Still unfixed.
 
 ### UC-05 Measure a lever against frozen materiality before building it
 - level: process
@@ -64,3 +64,43 @@ inside one campaign: no finding was re-observed in an independent run or project
 - cbr: EXPERIMENTAL
 - evidence: vault/programs/cognitive-economy/evidence/L-prg.md
 - reason: `ConvertFrom-Json` on PowerShell 5.1 rejects keys that differ only in case, and compound-learnings.json carries such a pair. The steps78 module writes case-sensitive keys and was proven on temp copies. The live switch is Owner item [L]. The pair's share of the STUCK counter was not measured, so the candidate's weight is unknown.
+
+## Closure candidates (W6, 2026-10-04)
+
+Added after the 2026-10-04 closure work on `feature/knowledge-acquisition` (commits d1876ce1, acbaabcf, a1d00a66,
+f207585b). Same format and the same bar: one occurrence each, so none is promoted.
+
+### UC-08 A closed terminal is read as a built, running capability
+- level: process
+- verdict: keep-candidate
+- cbr: EXPERIMENTAL
+- evidence: tools/test_cognitive_economy_program.py, vault/programs/cognitive-economy/ledger.json
+- reason: Pillar L closed at IMPLEMENTED_AND_VERIFIED while its module had only ever run on temp copies and no live call site reached it. A terminal records how an obligation closed; it says nothing about whether the capability is built, running or measured, and the status surfaces read it as all three. Clauses X1 and X3 (d1876ce1) now keep terminal, built, activation (WIRED, and ACTIVE only with a pinned real-run receipt) and owner decision apart, and `--status` prints them as separate columns. The nearest owner, documented-capability-must-be-executable, gives documents a LIVE / PLANNED / ABSENT status; it does not cover a ledger's terminal vocabulary. Seen once.
+
+### UC-09 A gate whose precondition is a transient live artifact fails on correct code
+- level: trap
+- verdict: keep-candidate
+- cbr: EXPERIMENTAL
+- evidence: vault/programs/cognitive-economy/gates/gate_compound78.py, vault/programs/cognitive-economy/CLOSE.md
+- reason: The first `--final` after the [RUN] merge failed pillar L because gate_compound78 refused to run without the live `LEARNINGS_PENDING.md`. That marker is residue: a successful `/cpp-compound` deletes it and the sentinel recreates it, so the gate judged what the last run left behind, not the module. Fix acbaabcf: the module only unlinks the marker, so with no live marker the gate judges a synthetic one and prints `marker=live|synthetic`, and the synthetic `--break-rollback` run still goes red. Seen once.
+
+### UC-10 A second status surface drifts from the ledger it summarizes
+- level: process
+- verdict: keep-candidate
+- cbr: EXPERIMENTAL
+- evidence: tools/test_cognitive_economy_program.py, .planning/workstreams/cognitive-economy/REQUIREMENTS.md
+- reason: REQUIREMENTS.md traceability rows read "Complete" for pillars whose ledger terminal was DEFERRED or FALSIFIED. The table was hand-maintained beside the ledger and nothing compared them. Clause X2 (d1876ce1) requires every closed pillar's row to name its ledger terminal, and two mutants (row drifted, row missing) each go red. PR-COVERAGE-BY-CONSTRUCTION-001 is about which subjects an audit enrolls, not about a hand-kept copy of a status that already exists elsewhere. Seen once.
+
+### UC-11 A text decode judged successful because it raised nothing
+- level: trap
+- verdict: keep-candidate
+- cbr: EXPERIMENTAL
+- evidence: modules/liveness/reachability.py, tools/test_reachability.py
+- reason: On this Spanish-locale host `schtasks /query /xml` emits the ANSI code page (387 KB cp1252, 232 tasks). Decoding it as utf-16 produces garbage with no error, utf-8 raises on the first accent, and the probe list held nothing else, so discovery returned "no scheduled tasks" and hibernate_runner read ORPHAN while PP-Hibernation ran it every 5 minutes. The suite stayed green because it only injected a hand-made XML string. A second defect hid behind the first: the wscript `.vbs` launcher was not a known extension, so the path match ran into the next argument. Fix a1d00a66 judges each decode by finding a `<Task ` element; task seeds went 0 -> 14. instrument-before-claim owns the general question. This specific shape is not in the UKDL: a successful decode is not evidence of the right encoding, and a fixture written by hand is not the producer's output. The cp1252 lesson in session_lessons is about `subprocess text=True` mojibake, which is a different mechanism. Seen once.
+
+### UC-12 Live code runs from an uncommitted working tree in a shared checkout
+- level: trap
+- verdict: keep-candidate
+- cbr: EXPERIMENTAL
+- evidence: tools/compound_unattended.py
+- reason: The unattended compound driver runs from the working tree of a checkout that several panes share. Since about 2026-09-10 that file has carried a foreign uncommitted diff (+118 / -13 at 2026-10-04), so no commit records the code the scheduled run executes. A reviewer reading HEAD reviews different code, and a checkout or stash by any pane changes production behaviour without a trace. f207585b staged its one-line change from the committed blob so that the foreign diff stayed out of the commit. The defect is recorded as a finding; fixing it belongs to that file's owner. Seen once.

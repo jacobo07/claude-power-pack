@@ -840,7 +840,7 @@
   },
   "R": {
    "terminal": "IMPLEMENTED_AND_VERIFIED",
-   "reason": "The UKDL 3-level and CBR review is written to ukdl-candidates.md: 7 candidates, each evidence-cited with a verdict and reason (1 promote sent to the Owner as [R] UC-04, 2 reject as already owned, 4 keep-candidate), all CBR EXPERIMENTAL. gate_ukdl_candidates.py checks the format and on every run proves five mutants of the real file red.",
+   "reason": "The UKDL 3-level and CBR review is written to ukdl-candidates.md: 12 candidates (UC-01..07 from the 2026-10-03 run, UC-08..12 from the 2026-10-04 closure), each evidence-cited with a verdict and reason. 1 promote: UC-04, written into ukdl-universal.md on Owner decision 6 (2026-10-04) as T-A-WHOLE-TREE-PROGRESS-FINGERPRINT-CANNOT-SEE-A-STALL-IN-A-SHARED-CHECKOUT-001. 2 reject as already owned, 9 keep-candidate, all CBR EXPERIMENTAL. gate_ukdl_candidates.py checks the format and on every run proves five mutants of the real file red. The CBR half is handed to modules/tower in handoffs/R-cbr.md, with its debt: donegate.judge and ratchet.promote have no live caller.",
    "evidence": [
     {
      "kind": "gate",
@@ -857,7 +857,12 @@
     {
      "kind": "file",
      "ref": "vault/programs/cognitive-economy/ukdl-candidates.md",
-     "sha256": "36e0136101fbab5eae5b1981ac5192ca89d15c80e391fd4bef6112a9fda074ce"
+     "sha256": "fa0bfa6a61d9c7e4bd771fb4d773857659b23d63217f2c7d06731334e6ed386b"
+    },
+    {
+     "kind": "handoff",
+     "ref": "vault/programs/cognitive-economy/handoffs/R-cbr.md",
+     "sha256": "e15f28e72f171126a8a4e3cda664b0d2714b9e4a009f9c98d747c9857b74df4e"
     }
    ],
    "savings": []

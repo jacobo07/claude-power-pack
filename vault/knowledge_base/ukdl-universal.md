@@ -15258,3 +15258,28 @@ Hard-rule candidates with one migration of evidence each, below the bar for a Ha
 characterization witness before replacing a supported durable protocol; no silent golden recapture;
 tests never fall back to live state; an adapter keeps the canonical identity domain. They stay
 candidates until T6 and the T8 Production Reality run add evidence.
+
+## Cognitive Economy Program, pillar R promotion (2026-10-04)
+
+Source: `vault/programs/cognitive-economy/ukdl-candidates.md` UC-04 (audit G5, verified in source).
+Promoted on Owner decision 6 of the 2026-10-04 closure plan, which closes owner-bundle item `[R] UC-04`.
+Status: OBSERVED once, verified in source, NOT fixed. The fix belongs to the mission supervisor's owner
+(`vault/programs/cognitive-economy/handoffs/J.md`). CBR maturity EXPERIMENTAL.
+
+### Traps
+
+### T-A-WHOLE-TREE-PROGRESS-FINGERPRINT-CANNOT-SEE-A-STALL-IN-A-SHARED-CHECKOUT-001
+
+A no-progress halt is only as good as the fingerprint it compares. `tools/gsd_mission.py`
+`progress_fingerprint` hashes `rev-parse HEAD`, the whole-tree `status --porcelain` and
+`diff HEAD --shortstat` of the work dir. The relay halts a mission after `NO_PROGRESS_EPOCHS`
+unchanged epochs. In a checkout other panes write to, any peer commit or peer-dirtied file changes that
+hash. A mission that has stopped producing anything therefore reads as progressing, and the halt cannot
+fire. The supervisor is blind in exactly the setting where missions usually run, and its own
+tests stay green because they drive a tree that no one else writes. Fingerprint inputs a peer cannot
+move: commits carrying the mission's own session, or the tip of the mission's branch when it runs in its
+own worktree. Keep UNMEASURED distinct from unchanged. Prove the halt with a drill in which a peer
+writes while the worker stalls, and require the halt to fire. Evidence: `tools/gsd_mission.py:2006-2030`
+(fingerprint) and `:1893-1907` (halt), read at `37d1940d`; `vault/programs/cognitive-economy/handoffs/J.md`;
+`vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md`. Sibling of
+T-AN-MTIME-SENTINEL-OVER-STATE-OTHER-WRITERS-OWN-001: a test sentinel has the same blindness.
