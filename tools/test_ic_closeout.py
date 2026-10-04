@@ -37,7 +37,7 @@ DUP_SECTION = "## Duplicate sweep"
 PROMO_SECTION = "## Promotions recorded"
 SELF_CMD = "python3 tools/test_ic_closeout.py"
 
-MIN_PER_LEVEL = 1
+MIN_PER_LEVEL = 3
 LEVELS = {"U": "universal", "D": "domain", "P": "project"}
 KINDS = ("hard-rule", "process-rule", "trap", "performance")
 VERDICTS = ("PROMOTE-PROPOSED", "HOLD", "REJECT")
@@ -777,5 +777,95 @@ def run_all() -> int:
     return 0 if counted and all(r[0] == "PASS" for r in counted) else 1
 
 
+# --------------------------------------------------------------------------- mutation drill
+GATE_FN = dict(GATES)
+DRILL_GATES = [n for n, _ in GATES]
+
+
+def _quiet(names) -> dict:
+    """Run the named gates with printing off; {gate: passed} for the ones that ran to PASS/FAIL."""
+    start = len(RESULTS)
+    QUIET[0] = True
+    try:
+        for n in names:
+            run_gate(n, GATE_FN[n])
+    finally:
+        QUIET[0] = False
+    return {g: st == "PASS" for st, g, _ in RESULTS[start:] if st in ("PASS", "FAIL")}
+
+
+def _patch(name: str, value):
+    """Rebind a module-level function (the gates resolve it at call time); the returned callable restores it."""
+    saved = globals()[name]
+    globals()[name] = value
+    return lambda: globals().__setitem__(name, saved)
+
+
+def _without(orig, needle: str):
+    """A mutant of a *_problems function that silently drops the problems naming `needle`."""
+    def mutant(*a, **k):
+        return [p for p in orig(*a, **k) if needle not in p]
+    return mutant
+
+
+def _m_coverage_blind():
+    return _patch("review_problems", _without(review_problems, "no verdict row"))
+
+
+def _m_refs_always():
+    return _patch("ref_resolves", lambda ref: None)
+
+
+def _m_transfer_blind():
+    return _patch("transfer_problems", lambda *a, **k: [])
+
+
+def _m_promotion_blind():
+    return _patch("promotion_problems", lambda *a, **k: [])
+
+
+def _m_level_unchecked():
+    return _patch("candidate_problems", _without(candidate_problems, "id letter"))
+
+
+def _m_sha_unchecked():
+    return _patch("against_problems", _without(against_problems, "recorded"))
+
+
+MUTANTS = [
+    ("M1 review_problems ignores missing rows", _m_coverage_blind, ["V-ICN-REVIEW-COVERAGE"]),
+    ("M2 ref_resolves accepts every ref", _m_refs_always, ["V-ICN-EVIDENCE-RESOLVES"]),
+    ("M3 transfer_problems returns nothing", _m_transfer_blind, ["V-ICN-CBR-TRANSFER-RULE"]),
+    ("M4 promotion_problems returns nothing", _m_promotion_blind, ["V-ICN-PROMOTION-NEVER-SILENT"]),
+    ("M5 candidate_problems skips the id-letter / level check", _m_level_unchecked, ["V-ICN-CANDIDATES-SHAPE"]),
+    ("M6 against_problems skips the sha256 comparison", _m_sha_unchecked, ["V-ICN-REVIEW-AGAINST-TRUTHFUL"]),
+]
+
+
+def run_drill() -> int:
+    """Control first (every gate green), each mutant applied and restored, then an unmutated rerun."""
+    control = _quiet(DRILL_GATES)
+    control_ok = len(control) == len(DRILL_GATES) and all(control.values())
+    print(f"{'PASS' if control_ok else 'FAIL'} DRILL-CONTROL unmutated run: {sum(control.values())}/{len(control)} gates green")
+    killed = 0
+    for label, apply, targets in MUTANTS:
+        restore = apply()
+        try:
+            seen = _quiet(targets)
+        finally:
+            restore()
+        by = [t for t in targets if seen.get(t) is False]
+        if len(by) == len(targets):
+            killed += 1
+            print(f"KILLED {label} by {', '.join(by)}")
+        else:
+            print(f"SURVIVED {label} (still green or absent: {', '.join(t for t in targets if seen.get(t) is not False)})")
+    after = _quiet(DRILL_GATES)
+    clean = len(after) == len(DRILL_GATES) and all(after.values())
+    print(f"{'PASS' if clean else 'FAIL'} DRILL-CLEAN-AFTER-MUTANTS unmutated rerun: {sum(after.values())}/{len(after)} gates green")
+    print(f"DRILL killed={killed}/{len(MUTANTS)}")
+    return 0 if (killed == len(MUTANTS) and control_ok and clean) else 1
+
+
 if __name__ == "__main__":
-    sys.exit(run_all())
+    sys.exit(run_drill() if "--drill" in sys.argv[1:] else run_all())
