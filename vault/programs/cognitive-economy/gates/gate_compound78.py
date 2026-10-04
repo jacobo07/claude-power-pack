@@ -65,13 +65,19 @@ def main(argv=None) -> int:
     results, fails = {}, []
 
     # Real learning files and the real marker of the main checkout (read only, copied into the temp dir).
+    # The marker is transient: a successful /cpp-compound deletes it and the sentinel recreates it later.
+    # finalize() only unlinks it and never reads its content, so when it is absent a synthetic marker
+    # tests the same transaction. The source is reported so a reader knows which one was judged.
     learn = sorted(PP_MAIN.glob(".claude/cache/learnings/*.md"))
     real_marker = PP_MAIN / "LEARNINGS_PENDING.md"
-    marker_bytes = real_marker.read_bytes() if real_marker.is_file() else None
-    if not learn or marker_bytes is None:
-        print(f"GATE_COMPOUND78=FAIL real inputs missing: learnings={len(learn)} marker={marker_bytes is not None}")
+    if real_marker.is_file():
+        marker_bytes, marker_src = real_marker.read_bytes(), "live"
+    else:
+        marker_bytes, marker_src = b"# Compound Learnings -- Pending Consolidation (synthetic, gate_compound78)\n", "synthetic"
+    if not learn:
+        print("GATE_COMPOUND78=FAIL real inputs missing: learnings=0")
         return 1
-    print(f"  real inputs: {len(learn)} learning files, marker {len(marker_bytes)} bytes")
+    print(f"  real inputs: {len(learn)} learning files, marker {len(marker_bytes)} bytes (source={marker_src})")
 
     def fresh(tmp: Path, marker: bool = True):
         st = tmp / "compound-learnings.json"
@@ -146,7 +152,7 @@ def main(argv=None) -> int:
         if not v:
             fails.append(k)
     print(f"  target project {target!r}; case-variant id pairs in live state: {len(case_pairs)}")
-    print(f"GATE_COMPOUND78={'PASS' if not fails else 'FAIL'} failures={len(fails)}")
+    print(f"GATE_COMPOUND78={'PASS' if not fails else 'FAIL'} failures={len(fails)} marker={marker_src}")
     return 0 if not fails else 1
 
 
