@@ -15,6 +15,10 @@ not listed: `python3 tools/test_kme_replay.py` (V-KMER-BUNDLE-SUMMARY-ITEMS, V-K
 item or a pending check has no row, or a row cites something that no longer exists. Order: the code sync, the laptop items,
 the GEX44 items, then the judgement checks that exist only as pending UAT tests.
 
+Rows from 29 on were added by phase 6, and since plan 06-02 the pending checks are discovered in every phase directory, so
+the header's "phases 1-5" predates both: a phase 6 UAT or VERIFICATION file with a pending check needs its row in the same
+commit.
+
 | # | pillar | source | action | exact command | what closes when it lands |
 |---|---|---|---|---|---|
 | 1 | laptop: D-I, K, L code | sync | Fetch the branch tip, check the ancestor and an empty status, check out the program tool files, commit them by pathspec, then run the four suites | `git fetch kobii@kobicraft-gex44:/home/kobii/missions/incremental-cognition mission/incremental-cognition-run` | the four suites each exit 0 on the laptop (expected, not measured there) |
@@ -46,6 +50,7 @@ the GEX44 items, then the judgement checks that exist only as pending UAT tests.
 | 27 | L (phase 5 UAT) | UAT 05#3 | Confirm the IC-L judgment-tier prohibitions held (verifier verdicts are non-authoritative) | `/gsd-verify-work 5` | phase 5 UAT test 3 |
 | 28 | A | [A]#2 "WHERE to arm" | Say where the mission is armed (12/24h): on the laptop (RAM swings 0.6-8 GB; arming waits for pillar A and at least 4 GB free) or in the GEX44 own clone, or that it stays in the interactive pane | none -- an Owner decision on where to arm, written by the Owner (see the item) | the open "needs Owner go on WHERE" line of STATE.md Session Continuity; no arm happens before it |
 | 29 | J | [J]#1 "Pillar J consumes" | After CE lands D, E and I on a commit reachable from this branch, print the R2 rows, add them as owner_ledger evidence with the owner and handoff evidence, then run the per-pillar check | `python3 tools/ic_r2_evidence.py --pillar J --commit HEAD` ; `python3 tools/test_incremental_cognition_program.py --pillar J` | pillar J MERGED_INTO_EXISTING_OWNER with an owner, handoffs/J.md and three owner_ledger rows; ICP_PILLAR_J=PASS |
+| 30 | M | [M]#1 "Pillar M consumes" | After CE lands Q, N, O and M on a commit reachable from this branch, print the R2 rows, add them as owner_ledger evidence with the owner and handoff evidence, then run the per-pillar check | `python3 tools/ic_r2_evidence.py --pillar M --commit HEAD` ; `python3 tools/test_incremental_cognition_program.py --pillar M` | pillar M MERGED_INTO_EXISTING_OWNER with an owner, handoffs/M.md and four owner_ledger rows; ICP_PILLAR_M=PASS |
 
 ## Laptop code sync (do this first for [D]..[I], [K] and [L])
 
@@ -471,3 +476,19 @@ outputs) and to parse with the printer's own argument parser (gate `V-ICR2-BUNDL
 
   What closes: pillar J `MERGED_INTO_EXISTING_OWNER` with an owner, `handoffs/J.md` and three `owner_ledger` rows. Until
   then `state.J` is not written by this mission run and IC-J stays open.
+- **[M]** Pillar M consumes CE pillars Q, N, O and M (R2: the program's frozen rule "dispositions only: CE Q/N/O/M ...
+  an unrestricted optimizer is rejected"). This program does NOT build an optimizer, an experiment compiler or a router:
+  M closes by disposition to the owners that already hold that work. Expects: CE's ledger commit that gives Q, N, O and M
+  their terminals is reachable from `mission/incremental-cognition-run` (merged into this line of history, never rebased
+  or squashed, because R2 cites that commit's sha); CE pillar M's own prediction is `DEFERRED_STRONGER_OWNER`, so R2 cites
+  whatever terminal it ends at. Measured now: the printer prints `ICR2_READY=NO` at HEAD (no terminal for Q, N, O or M)
+  (`evidence/JM-blocked.md`). **Action:** after CE lands Q, N, O, M (M) on a commit reachable from this branch, run the
+  first command; when it prints `ICR2_READY=M`, add its printed rows as `owner_ledger` evidence to ledger `state.M`, with
+  the `owner` and `handoff` evidence its `NEEDS` lines name, then run the second command (it checks R2 since plan 06-01)
+  and expect `ICP_PILLAR_M=PASS`:
+
+      python3 tools/ic_r2_evidence.py --pillar M --commit HEAD
+      python3 tools/test_incremental_cognition_program.py --pillar M
+
+  What closes: pillar M `MERGED_INTO_EXISTING_OWNER` with an owner, `handoffs/M.md` and four `owner_ledger` rows. Until
+  then `state.M` is not written by this mission run and IC-M stays open.

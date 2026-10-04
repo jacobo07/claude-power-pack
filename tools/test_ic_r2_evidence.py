@@ -408,7 +408,7 @@ def g_read_only():
 BUNDLE_REL = "vault/programs/incremental-cognition/owner-bundle.md"
 JM_REL = "vault/programs/incremental-cognition/evidence/JM-blocked.md"
 SUMMARY_HEAD = "## Summary (every Owner item, phases 1-5)"
-REQUIRED_JM = ("J",)
+REQUIRED_JM = ("J", "M")
 PER_PILLAR_CHECK = "python3 tools/test_incremental_cognition_program.py --pillar {p}"
 
 

@@ -1485,9 +1485,9 @@ def ver_entries(text, nn):
 
 
 def uat_keys(phases_dir):
-    """Pending human checks DISCOVERED from phase directories 01..05; {NN: has any UAT/VERIFICATION file} beside them."""
+    """Pending human checks DISCOVERED from every phase directory NN-*; {NN: has any UAT/VERIFICATION file} beside them."""
     keys, have = [], {}
-    for d in sorted(Path(phases_dir).glob("0[1-5]-*")):
+    for d in sorted(Path(phases_dir).glob("[0-9][0-9]-*")):
         if not d.is_dir():
             continue
         nn = d.name[:2]
@@ -1547,6 +1547,11 @@ def g_summary_uat():
     ctl["removed row is reported"] = check_uat(lacking, pd)[1] == ["missing row for UAT 05#3"]
     ctl["row for an answered check is stale"] = check_uat(extra, pd)[1] == ["stale row cites UAT 05#2"]
     ctl["a cited phase without files is a SKIP"] = check_uat(gone, pd)[0] == "SKIP"
+    pd6 = scratch("ph6")                     # its own tree: phase 6 (and any later NN-*) is discovered, never listed
+    (pd6 / "06-z").mkdir()
+    (pd6 / "06-z" / "06-UAT.md").write_text("---\nstatus: testing\n---\n\n## Tests\n\n### 1. a\nexpected: x\nresult: [pending]\n",
+                                            encoding="utf-8")
+    ctl["a phase 06 directory is discovered"] = uat_keys(pd6)[0] == ["UAT 06#1"]
     if not all(ctl.values()):
         return False, f"controls failed: {[k for k, v in ctl.items() if not v]}"
     text = (REPO / BUNDLE_REL).read_text(encoding="utf-8")
