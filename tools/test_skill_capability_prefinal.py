@@ -33,8 +33,10 @@ Modes
                       on N turns this check red).
       V-PF-DIRTY-SET-STABLE  the dirty set did not move while the wrapper ran.
   --closeout (PF_MODE=closeout)   the gate state.N cites on the laptop. V-PF-COMMITTED
-      narrowed to the three code files it executes, the same static checks without the two
-      gex44-only protections, V-PF-L8 expecting `[]` (state.N committed), and
+      narrowed to the three code files it executes, the same static checks without the
+      gex44-only V-PF-UKDL-UNTOUCHED, V-PF-LEDGER-INVARIANT with only its state.N clause
+      relaxed (every other key, `retained` included, must still equal the FROZEN_AT ledger:
+      09-REVIEW WR-01), V-PF-L8 expecting `[]` (state.N committed), and
       V-PF-GEX44-RECORD (the committed gex44 record says PF_VERDICT=PASS at a commit
       reachable from HEAD). It starts no wrapper subprocess and so cannot recurse into
       `--final`. V-PF-CLOSEOUT-DECISIONS reads STATE.md as of the commit that last touched
@@ -449,7 +451,11 @@ def check_commands(closeout_text) -> list:
     return out
 
 
-def check_invariant(ledger, frozen_ledger) -> list:
+def check_invariant(ledger, frozen_ledger, allow_state_n=False) -> list:
+    """Every key but state/reviews/deltas equals its FROZEN_AT copy. state.N must also be
+    unchanged unless `allow_state_n` (closeout mode, where state.N is the laptop's own write).
+    Relaxing state.N never relaxes the rest: emptying `retained` would turn R1 green while
+    deleting the very declaration R1 reads (09-REVIEW WR-01)."""
     out = []
     for k in sorted(set(ledger) | set(frozen_ledger)):
         if k in ("state", "reviews", "deltas"):
@@ -458,7 +464,7 @@ def check_invariant(ledger, frozen_ledger) -> list:
             out.append(f"ledger key {k!r} differs from its FROZEN_AT copy")
     n_now = (ledger.get("state") or {}).get("N")
     n_then = (frozen_ledger.get("state") or {}).get("N")
-    if json.dumps(n_now, sort_keys=True) != json.dumps(n_then, sort_keys=True):
+    if not allow_state_n and json.dumps(n_now, sort_keys=True) != json.dumps(n_then, sort_keys=True):
         out.append("state.N differs from its FROZEN_AT copy (state.N is laptop-only)")
     return out
 
@@ -698,6 +704,23 @@ def _static_checks(rep, mode, res):
     return led
 
 
+def _judge_invariant(rep, res, led, mode):
+    """V-PF-LEDGER-INVARIANT in both modes; closeout relaxes only the state.N clause."""
+    def invariant():
+        fa = res.frozen_sha()
+        if not fa:
+            raise Inconclusive("FROZEN_AT missing at HEAD")
+        t = text_at(fa, ce.LEDGER_REL)
+        if t is None:
+            raise Inconclusive(f"ledger unreadable at FROZEN_AT {fa[:12]}")
+        if not isinstance(led, dict):
+            return ["ledger unreadable at HEAD"]
+        return check_invariant(led, json.loads(t), allow_state_n=(mode == "closeout"))
+    rep.judge("V-PF-LEDGER-INVARIANT", invariant,
+              "all keys but state/reviews/deltas" + (" (state.N is the laptop's write)" if mode == "closeout"
+                                                     else " and state.N") + " equal the FROZEN_AT ledger")
+
+
 def run_gex44(rep) -> int:
     rep.line("PF_MODE=gex44")
     try:
@@ -718,19 +741,7 @@ def run_gex44(rep) -> int:
         rep.add("V-PF-COMMITTED", "INCONCLUSIVE", str(exc))
 
     led = _static_checks(rep, "gex44", res)
-
-    def invariant():
-        fa = res.frozen_sha()
-        if not fa:
-            raise Inconclusive("FROZEN_AT missing at HEAD")
-        t = text_at(fa, ce.LEDGER_REL)
-        if t is None:
-            raise Inconclusive(f"ledger unreadable at FROZEN_AT {fa[:12]}")
-        if not isinstance(led, dict):
-            return ["ledger unreadable at HEAD"]
-        return check_invariant(led, json.loads(t))
-    rep.judge("V-PF-LEDGER-INVARIANT", invariant,
-              "all keys but state/reviews/deltas and state.N equal the FROZEN_AT ledger")
+    _judge_invariant(rep, res, led, "gex44")
 
     def untouched():
         fa = res.frozen_sha()
@@ -797,7 +808,8 @@ def run_closeout(rep) -> int:
     except GitUnavailable as exc:
         rep.add("V-PF-COMMITTED", "INCONCLUSIVE", str(exc))
         return rep.finish()
-    _static_checks(rep, "closeout", res)
+    led = _static_checks(rep, "closeout", res)
+    _judge_invariant(rep, res, led, "closeout")
 
     def reachable(sha):
         return _git_bytes("merge-base", "--is-ancestor", sha, res.head).returncode == 0
@@ -845,7 +857,8 @@ def _fixture():
                       "evidence": [{"kind": "gate", "argv": ["python", "tools/x.py"]},
                                    {"kind": "prg", "ref": f"ev/{p}.md", "sha256": "0" * 64}]}
                   for p in CLOSED},
-        "retained": {"settings": {"file": "~/.claude/settings.json", "keys": []}},
+        "retained": {"settings": {"file": "~/.claude/settings.json",
+                                  "keys": [{"pointer": "/env/CLAUDE_DOCTRINE_CARDS", "value": "deny"}]}},
         "reviews": {"ukdl": {"file": "r/ukdl.md"}, "cbr": {"file": "r/cbr.md"}},
         "deltas": {"product": [{"pillar": p, "change": f"product change {p}", "evidence": [f"ev/{p}.md:3"]}
                                for p in CLOSED[:7]],
@@ -899,7 +912,9 @@ def selftest() -> bool:
             greens += 1
             print(f"  ok   V-PF-SELF-GREEN {name}")
 
-    def mutant(name, fn):
+    def mutant(name, fn, expect=None):
+        """Killed only when the check reports a problem; with `expect`, only when one of
+        the problems names it (the clause under test, not some other clause, said no)."""
         nonlocal ok, kills, total
         total += 1
         try:
@@ -907,6 +922,8 @@ def selftest() -> bool:
             killed = bool(probs)
         except (ValueError, Inconclusive) as exc:
             probs, killed = [f"raised {type(exc).__name__}: {exc}"], True
+        if killed and expect is not None and not any(expect in x for x in probs):
+            probs, killed = [f"red, but not on {expect!r}: {probs[:2]}"], False
         if killed:
             kills += 1
             print(f"  ok   V-PF-SELF-MUT {name} killed ({probs[0][:90]})")
@@ -1004,6 +1021,12 @@ def selftest() -> bool:
         lambda l: l["retained"]["settings"]["keys"].append({"pointer": "/x"})), F["frozen_led"]))
     mutant("INVARIANT state.N given a terminal", lambda: check_invariant(led_with(
         lambda l: l["state"]["N"].__setitem__("terminal", "IMPLEMENTED_AND_VERIFIED")), F["frozen_led"]))
+    n_set = led_with(lambda l: l["state"]["N"].__setitem__("terminal", "IMPLEMENTED_AND_VERIFIED"))
+    green("INVARIANT closeout with state.N written", check_invariant(n_set, F["frozen_led"], allow_state_n=True))
+    mutant("INVARIANT closeout: retained emptied (WR-01)", lambda: check_invariant(led_with(
+        lambda l: (l["state"]["N"].__setitem__("terminal", "IMPLEMENTED_AND_VERIFIED"),
+                   l["retained"]["settings"].__setitem__("keys", []))), F["frozen_led"], allow_state_n=True),
+           expect="'retained' differs")
     mutant("UNTOUCHED commit touches ukdl-universal", lambda: judge_untouched("b" * 40 + "\n"))
     mutant("RECORD PF_VERDICT=FAIL", lambda: judge_record(F["record"].replace("PF_VERDICT=PASS", "PF_VERDICT=FAIL"),
                                                           lambda s: True))

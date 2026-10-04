@@ -182,7 +182,10 @@ Run these in the laptop checkout, after section 1 and the bundle. Each step give
 
    Expected: `SCP_VERDICT=PASS`. If R1 fails, the live laptop `~/.claude/settings.json` differs from the
    P0-declared `retained.settings` (`/skillOverrides` sha256 `ffbedf71cbcc8e4d3c178ed1c4a31b48acd6a6049dfb548191685dac67843e5f`,
-   `/env/CLAUDE_DOCTRINE_CARDS` = `deny`). Restoring the settings or re-declaring them is your decision.
+   `/env/CLAUDE_DOCTRINE_CARDS` = `deny`). Restoring the settings is your decision. Re-declaring them is not a
+   closeout edit: `retained` must equal its FROZEN_AT copy, so a ledger that empties or changes it turns
+   `--closeout` red (V-PF-LEDGER-INVARIANT), and with it the gate state.N cites. Changing the declaration needs its
+   own, separately reviewed change to the program, outside this closeout.
 
 10. Write `vault/programs/skill-capability/CLOSE.md` with these lines, then the `--final` output pasted verbatim:
 
