@@ -569,6 +569,22 @@ def entry_figures(pres, upper, share):
             "numerator": {"name": num["name"], "kind": num["kind"], "chars": num["chars"]}}
 
 
+def scrub_details(cid, details):
+    """A ranking file never carries the absolute paths the transcripts read (IN-02): identical_rereads' top_paths becomes
+    {path_sha256_12, ext, count, chars}, order kept. A digest tells two files apart and the extension what kind they
+    are; the path itself (a customer name, an .env.production) is something no regex redactor can know is sensitive."""
+    if cid != "identical_rereads" or not isinstance(details, dict) or "top_paths" not in details:
+        return details
+    out = []
+    for t in details["top_paths"]:
+        raw = str(t.get("path", ""))
+        ext = os.path.splitext(os.path.basename(raw))[1].lower()
+        out.append({"path_sha256_12": hashlib.sha256(raw.encode("utf-8", "replace")).hexdigest()[:12],
+                    "ext": ext if ext and len(ext) <= 12 and all(ch.isalnum() or ch == "." for ch in ext) else "",
+                    "count": t.get("count"), "chars": t.get("chars")})
+    return dict(details, top_paths=out)
+
+
 def _events_of(cid, pres):
     d = pres["details"]
     if cid == "late_rollover":
@@ -624,7 +640,7 @@ def rank_result(ctx, sc, loc, until, argv, growth):
                             **entry_figures(pres, upper, share),
                             **{"bound_vs_threshold": bound, "bound_reading": BOUND_READINGS[bound],
                                "saving_status": "upper_bound", "displacement": "unknown",
-                               "events": _events_of(cid, pres), "details": pres["details"]})
+                               "events": _events_of(cid, pres), "details": scrub_details(cid, pres["details"])})
     ranked, unranked = split_ranking(results)
     for e, r in zip(ranked, dense_ranks(ranked)):
         e["rank"] = r

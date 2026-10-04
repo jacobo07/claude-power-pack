@@ -1077,6 +1077,40 @@ def g_rollover_growth_pinned():
                       f"terminal={r2['terminal_evidence']}")
 
 
+def g_no_raw_paths():
+    # IN-02: a ranking file never carries the absolute paths the transcripts read. top_paths is sha256[:12] digests plus the
+    # extension (enough to tell two files apart and what kind they are), with the count and chars kept. The path is
+    # something a redactor's regex cannot know is sensitive (a customer name, an .env.production).
+    import hashlib
+    secret = "/home/u/customer-acme/.env.production"
+    plain = "/home/u/work/notes.md"
+
+    def build(fx):
+        rd(fx, 1, "r1", secret, E_BODY)
+        rd(fx, 2, "r2", secret, E_BODY)
+        rd(fx, 3, "r3", plain, "N" * 400)
+        rd(fx, 4, "r4", plain, "N" * 400)
+        call(fx, 5)
+    root = scratch("np")
+    fx = Fx(root)
+    fx.human("go", ts(0))
+    build(fx)
+    outd = scratch("out")
+    rc, res, out, _e = run_json(rank_args(root, outd))
+    f = next(iter(outd.glob("L-FX-R-*.md")), None)
+    text = f.read_text(encoding="utf-8") if f else ""
+    e = entry(res, "identical_rereads")
+    tp = e["details"]["top_paths"] if e else []
+    dig = lambda p_: hashlib.sha256(p_.encode("utf-8")).hexdigest()[:12]
+    want = {dig(secret): ".production", dig(plain): ".md"}
+    got = {t.get("path_sha256_12"): t.get("ext") for t in tp}
+    leaked = [x for x in ("customer-acme", ".env.production", "/home/u", "notes.md") if x in text or x in out]
+    ok = (rc == 0 and len(tp) == 2 and got == want and all(set(t) == {"path_sha256_12", "ext", "count", "chars"}
+                                                           for t in tp)
+          and all(t["count"] == 1 for t in tp) and not leaked and "path_sha256_12" in text)
+    return bool(ok), f"rc={rc} top_paths={tp} want={want} leaked={leaked}"
+
+
 def secret_fixture(root):
     fx = Fx(root)
     fx.human("go " + KR_CANARY, ts(0))
@@ -1221,6 +1255,7 @@ GATES_CONTRACT = [
     ("V-KMER-TERMINAL-EVIDENCE", g_terminal_evidence),
     ("V-KMER-ROLLOVER-GROWTH-PINNED", g_rollover_growth_pinned),
     ("V-KMER-NO-SECRET", g_no_secret),
+    ("V-KMER-NO-RAW-PATHS", g_no_raw_paths),
     ("V-KMER-READ-ONLY", g_read_only),
     ("V-KMER-OUT-DIR-INSIDE-ROOT", g_out_dir_inside_root),
     ("V-KMER-NO-OVERWRITE", g_no_overwrite),
@@ -1678,6 +1713,10 @@ def _m_tie_reversed():
     return _patch(kr, "rank_candidates", mutant)
 
 
+def _m_raw_paths():
+    return _patch(kr, "scrub_details", lambda cid, details: details)
+
+
 def _m_distinct_ranks():
     return _patch(kr, "dense_ranks", lambda entries: list(range(1, len(entries) + 1)))
 
@@ -1749,6 +1788,7 @@ MUTANTS = [
      ["V-KMER-ROLLOVER-GROWTH-PINNED"]),
     ("M15 a ranked entry carries the observer's weighted_lo / weighted_interval and an unrounded share",
      _m_interval_back, ["V-KMER-UPPER-ONLY"]),
+    ("M19 scrub_details keeps the raw read paths in a ranking file", _m_raw_paths, ["V-KMER-NO-RAW-PATHS"]),
     ("M18 dense_ranks gives equal figures distinct ranks", _m_distinct_ranks, ["V-KMER-RANK-TIE-DETERMINISTIC"]),
     ("M16 thread_of keys every line to the main thread (a subagent's call pairs with the main thread's)",
      _m_one_thread, ["V-KMER-THREAD-KEYED"]),
