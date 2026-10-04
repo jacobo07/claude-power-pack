@@ -166,6 +166,9 @@ class CommittedResolver(ce.Resolver):
         rel = rel.rstrip("/")
         if _git_bytes("cat-file", "-e", f"{self.head}:{rel}").returncode == 0:
             return True
+        # 09-REVIEW IN-01: a git that cannot read HEAD is not "the path does not exist".
+        if _git_bytes("rev-parse", "--verify", f"{self.head}^{{commit}}").returncode != 0:
+            raise GitUnavailable(f"revision {self.head} does not resolve")
         return False
 
     def file_sha(self, rel: str):
@@ -635,12 +638,14 @@ def judge_status(rc, out) -> list:
 # ---------------------------------------------------------------- report
 
 class Report:
-    def __init__(self, sink=None):
+    def __init__(self, sink=None, echo=True):
         self.rows = []
         self.sink = sink
+        self.echo = echo
 
     def line(self, s=""):
-        print(s, flush=True)
+        if self.echo:
+            print(s, flush=True)
         if self.sink is not None:
             self.sink.append(s)
 
@@ -652,12 +657,19 @@ class Report:
             self.line(f"  {status} {name}: {detail}")
 
     def judge(self, name, fn, ok_detail):
-        """fn() -> list of failures. GitUnavailable / Inconclusive -> INCONCLUSIVE."""
+        """fn() -> list of failures. GitUnavailable / Inconclusive -> INCONCLUSIVE; a
+        RuntimeError (e.g. FROZEN_AT naming a commit without the ledger) -> FAIL with its
+        message, never a traceback. `ok_detail` may be a callable, evaluated here so its
+        own git reads fall under the same rule (09-REVIEW IN-01)."""
         try:
             probs = fn()
+            if not probs and callable(ok_detail):
+                ok_detail = ok_detail()
         except (GitUnavailable, Inconclusive) as exc:
             self.add(name, "INCONCLUSIVE", str(exc))
             return None
+        except RuntimeError as exc:
+            probs = [f"{type(exc).__name__}: {exc}"]
         if probs:
             self.add(name, "FAIL", "; ".join(probs))
         else:
@@ -686,12 +698,17 @@ def _porcelain(paths=()):
 def _static_checks(rep, mode, res):
     """The checks on committed blobs, common to both modes."""
     head = res.head
+    led, led_err = None, None
     try:
         led = json.loads(text_at(head, ce.LEDGER_REL) or "null")
+    except GitUnavailable as exc:
+        led_err = str(exc)
     except json.JSONDecodeError as exc:
-        led = None
         rep.line(f"  (ledger at HEAD is not JSON: {exc})")
-    if not isinstance(led, dict):
+    if led_err is not None:
+        for n in ("V-PF-L8", "V-PF-CBR", "V-PF-DELTAS"):
+            rep.add(n, "INCONCLUSIVE", f"{ce.LEDGER_REL} unreadable: {led_err}")
+    elif not isinstance(led, dict):
         for n in ("V-PF-L8", "V-PF-CBR", "V-PF-DELTAS"):
             rep.add(n, "FAIL", f"{ce.LEDGER_REL} missing or unreadable at HEAD")
     else:
@@ -705,9 +722,10 @@ def _static_checks(rep, mode, res):
         rep.judge("V-PF-DELTAS", lambda: check_deltas(led, res.path_exists),
                   f"product {len((led.get('deltas') or {}).get('product') or [])}, "
                   f"intelligence {len((led.get('deltas') or {}).get('intelligence') or [])}, A..M named")
-    closeout = text_at(head, CLOSEOUT_REL)
-    rep.judge("V-PF-CLOSEOUT-BUNDLE", lambda: check_bundle(text_at(head, BUNDLE_REL), closeout),
-              f"{len(bundle_items(text_at(head, BUNDLE_REL)))} owner-bundle lines numbered in order")
+    def closeout():
+        return text_at(head, CLOSEOUT_REL)
+    rep.judge("V-PF-CLOSEOUT-BUNDLE", lambda: check_bundle(text_at(head, BUNDLE_REL), closeout()),
+              lambda: f"{len(bundle_items(text_at(head, BUNDLE_REL)))} owner-bundle lines numbered in order")
 
     def decisions():
         last = None
@@ -716,10 +734,10 @@ def _static_checks(rep, mode, res):
             if r.returncode != 0:
                 raise Inconclusive(f"git log of {CLOSEOUT_REL} failed")
             last = r.stdout.decode().strip() or None
-        return run_decisions(mode, closeout, lambda rev: text_at(rev, STATE_REL), last)
+        return run_decisions(mode, closeout(), lambda rev: text_at(rev, STATE_REL), last)
     rep.judge("V-PF-CLOSEOUT-DECISIONS", decisions,
               "every STATE decision line has a ### Q section with Options: and Recorded pick:")
-    rep.judge("V-PF-CLOSEOUT-COMMANDS", lambda: check_commands(closeout),
+    rep.judge("V-PF-CLOSEOUT-COMMANDS", lambda: check_commands(closeout()),
               "--final, CLOSE.md, state.N, run branch and the --closeout gate argv present")
     return led
 
@@ -734,7 +752,7 @@ def _judge_invariant(rep, res, led, mode):
         if t is None:
             raise Inconclusive(f"ledger unreadable at FROZEN_AT {fa[:12]}")
         if not isinstance(led, dict):
-            return ["ledger unreadable at HEAD"]
+            raise Inconclusive("ledger unread at HEAD (V-PF-L8 says why)")
         return check_invariant(led, json.loads(t), allow_state_n=(mode == "closeout"))
     rep.judge("V-PF-LEDGER-INVARIANT", invariant,
               "all keys but state/reviews/deltas" + (" (state.N is the laptop's write)" if mode == "closeout"
@@ -1124,6 +1142,46 @@ def selftest() -> bool:
     mutant("DELTAS pillar Z", lambda: check_deltas(led_with(
         lambda l: l["deltas"]["intelligence"].append({"pillar": "Z", "change": "rule z", "evidence": ["ev/A.md"]})),
         ex), expect="not in A..N")
+    # ---- IN-01: a git that fails mid-run reads INCONCLUSIVE (exit 2), never a traceback or a FAIL
+    global _git_bytes
+    real_git = _git_bytes
+    try:
+        def no_git(*a):
+            raise GitUnavailable("git could not start (selftest)")
+        _git_bytes = no_git
+        r = Report(echo=False)
+        fake = type("R", (), {"head": "0" * 40, "path_exists": lambda self, rel: CommittedResolver.path_exists(self, rel)})()
+        try:
+            _static_checks(r, "closeout", fake)
+            _judge_invariant(r, type("F", (), {"frozen_sha": lambda self: text_at("HEAD", ce.FROZEN_AT_REL)})(),
+                             None, "closeout")
+            in01 = [f"{n}={st}" for n, st in r.rows if st != "INCONCLUSIVE"]
+            if not r.rows:
+                in01.append("no rows (dead drill)")
+        except Exception as exc:  # noqa: BLE001  (the drill reports any escape as its failure)
+            in01 = [f"escaped {type(exc).__name__}: {exc}"]
+        green(f"IN-01 git unavailable -> {len(r.rows)} rows INCONCLUSIVE, no traceback", in01)
+
+        def rc128(*a):
+            return subprocess.CompletedProcess(a, 128, b"", b"fatal")
+        _git_bytes = rc128
+        res_bad = CommittedResolver.__new__(CommittedResolver)
+        res_bad.head = "0" * 40
+        def path_exists_broken():
+            try:
+                res_bad.path_exists("tools/x.py")
+            except GitUnavailable as exc:
+                return [f"raised GitUnavailable: {exc}"]
+            return []  # answered "absent" from a git that could not read HEAD: the IN-01 defect
+        mutant("IN-01 path_exists with git broken raises, not 'absent'", path_exists_broken, expect="GitUnavailable")
+        r2 = Report(echo=False)
+
+        def boom():
+            raise RuntimeError("FROZEN_AT names 'x' but git cannot show the ledger there")
+        r2.judge("V-X", boom, "ok")
+        green("IN-01 RuntimeError -> FAIL row, no traceback", [] if r2.rows == [("V-X", "FAIL")] else [str(r2.rows)])
+    finally:
+        _git_bytes = real_git
     # ---- NO-FINAL: the refusal pole and the other pole (argument check only, no process)
     mutant("NO-FINAL --final refused", lambda: _wrapper_args_ok(["--final"]))
     mutant("NO-FINAL abbreviation --fin refused", lambda: _wrapper_args_ok(["--fin"]))
