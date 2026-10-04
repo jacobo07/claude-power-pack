@@ -33,7 +33,11 @@ const path = require('path');
 
 const STATE_DIR = path.join(os.homedir(), '.claude', 'state', 'graphify');
 const GLOBAL_FILE = path.join(STATE_DIR, 'graphify_global.json');
-const THROTTLE_MS = 15 * 60 * 1000; // one nudge per repo per session per 15 min
+// One nudge per repo per session per 2 h (was 15 min). The advisory stays resident once sent, so a
+// repeat only re-bills it: 5 identical nudges in one session (census 2026-10-04,
+// wiki/improvements/hook-injection-diet.md). 2 h = the JIT dedupe bound, so a session long enough
+// to have compacted the first nudge away still gets another.
+const THROTTLE_MS = 2 * 60 * 60 * 1000;
 
 // Shell tokens that mean "search / list the filesystem" — a Bash/PowerShell
 // command containing one of these is an exploration op for GK-12 purposes.

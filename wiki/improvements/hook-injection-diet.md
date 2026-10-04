@@ -1,12 +1,29 @@
 ---
 type: improvement
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-04
 sources: [2026-10-02-token-economy-internal-inventory]
-status: IDEA
+status: IN-PROGRESS
 effort: S
-graduated_to:
+graduated_to: tools/jit_skill_loader.py, hooks/graph_first_gate.js, hooks/advisory_once.js, hooks/cascade_check_bash.js
 ---
+
+## Done 2026-10-04 (Owner "yes")
+
+Census of one 2.9 MB session (session c47b1f78, scratchpad `hook_census.py`): 34 injections, 65.5k
+chars (~28k tok fitted). Top: JIT active spec 27.6 % (the same 6.8 KB, 3x), per-prompt composite
+(tier + Tower + SDD-OS + AKOS) ~35 %, cascade-aperture 12x, Graph-First 5x.
+
+- **JIT spec** (LIVE): keyed by content hash in the existing per-session state; repeat = one-line
+  pointer, edited spec = re-injected, new session = full (`tools/jit_skill_loader.py`).
+- **Graph-First** (LIVE): cooldown 15 min -> 2 h, the JIT dedupe bound (`hooks/graph_first_gate.js`).
+- **cascade-aperture** (LIVE, uncommitted): full sentence once per session, then a per-command tag via
+  new `hooks/advisory_once.js`; the sink note never shortened. Sits on another session's uncommitted
+  elision feature, so it ships with that commit.
+- **Tower baseline: NOT changed.** `modules/gsd_x/cli.py:34-38` offers it on the first 3 prompts on
+  purpose: the chain can abandon stdout and the child cannot see delivery. Already bounded.
+- Gates: `tools/test_hook_injection_diet.py` (DIET 14/14; 6 red on the old code, controls green).
+- **Open:** re-run the census on a fresh session to measure the real delta (step 3).
 
 # Advisory-text diet for PP hooks
 

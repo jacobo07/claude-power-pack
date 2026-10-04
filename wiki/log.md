@@ -124,3 +124,9 @@ Append-only. Newest at the bottom. `grep "^## \[" log.md` lists every entry.
 - notes: 134 name-only overrides live. Listing stays at the ~30k cap; kept skills cut to name-only 19 -> 11
   (CWST, guard-event-reachability recovered; presence-is-not-residency did not). Not a token saving: a
   recall gain. New tool skill_listing_visibility.py. Detail: vault/plans/skill-residency-program-2026-10-03.md.
+
+## [2026-10-04] query | Hook injection diet applied (JIT spec, Graph-First, cascade-aperture, Zero-Fiction)
+- touched: [[hook-injection-diet]]
+- notes: census of one session = 65.5k chars / ~28k tok resident. JIT spec once per content hash, Graph-First 2 h,
+  aperture note once per session; Tower left at 3 offers by design. DIET 14/14. Zero-Fiction: abstract methods exempt,
+  deny instead of ask when CLAUDE_CODE_SESSION_KIND=bg. Real delta not yet re-measured on a fresh session.

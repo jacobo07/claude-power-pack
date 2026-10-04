@@ -35,10 +35,38 @@ if (process.env.ZERO_FICTION_GATE === 'off') {
 
 const TARGETS = new Set(['Edit', 'Write', 'MultiEdit']);
 
+const NIE_WHY = 'raise NotImplementedError stub';
+
+// An abstract method is not a stub: a base class raises it so every subclass must override.
+// Measured 2026-10-04 (GEX44, kme_pillars.py Observer.result). Exempt only when EVERY raise sits
+// in a def that is decorated @abstractmethod, or whose name is defined again in the same text
+// (base + override). An Edit carrying only the base method stays flagged -- conservative.
+function allNotImplementedAreAbstract(text) {
+  const lines = text.split(/\r?\n/);
+  let found = 0;
+  for (let i = 0; i < lines.length; i++) {
+    if (!/\braise\s+NotImplementedError\b/.test(lines[i])) continue;
+    found++;
+    let j = i - 1;
+    while (j >= 0 && !/^\s*(async\s+)?def\s+\w+\s*\(/.test(lines[j])) j--;
+    if (j < 0) return false;
+    const name = lines[j].match(/def\s+(\w+)/)[1];
+    let k = j - 1;
+    let abstract = false;
+    while (k >= 0 && /^\s*@/.test(lines[k])) {
+      if (/abstractmethod\b/.test(lines[k])) abstract = true;
+      k--;
+    }
+    const defs = (text.match(new RegExp(`(^|\\n)\\s*(async\\s+)?def\\s+${name}\\s*\\(`, 'g')) || []).length;
+    if (!abstract && defs < 2) return false;
+  }
+  return found > 0;
+}
+
 // HARD-FAIL: tight patterns. Only literal user-visible placeholders + clearly stub-only code.
 const HARD_PATTERNS = [
   { re: /\bComing\s+Soon\b/i,                  why: 'literal "Coming Soon" UI copy' },
-  { re: /\braise\s+NotImplementedError\b/,     why: 'raise NotImplementedError stub' },
+  { re: /\braise\s+NotImplementedError\b/,     why: NIE_WHY },
   { re: /pass\s*#\s*TODO\b/,                   why: 'pass # TODO stub body' },
   { re: /\bLorem\s+ipsum/i,                    why: 'Lorem ipsum placeholder' },
   { re: /\bPLACEHOLDER\b/,                     why: 'literal PLACEHOLDER token' },
@@ -132,18 +160,29 @@ function readStdin() {
     return;
   }
 
-  const hardHits = HARD_PATTERNS.filter(p => p.re.test(text)).map(p => p.why);
+  const hardHits = HARD_PATTERNS
+    .filter(p => p.re.test(text))
+    .filter(p => !(p.why === NIE_WHY && allNotImplementedAreAbstract(text)))
+    .map(p => p.why);
   const softHits = SOFT_PATTERNS.filter(p => p.re.test(text)).map(p => p.why);
 
   if (hardHits.length > 0) {
+    // A background session has nobody to answer "ask": it waits forever (measured 2026-10-04,
+    // GEX44 m-d2bdfa31de21, 39 min). There the verdict is deny, so the agent reads the reason
+    // and rewrites. Interactive sessions keep the confirm.
+    const unattended = process.env.CLAUDE_CODE_SESSION_KIND === 'bg';
     const reason =
-      `Zero-Fiction gate (BL-0035 Eight Marks #1): write blocked pending user confirm. ` +
+      `Zero-Fiction gate (BL-0035 Eight Marks #1): write ` +
+      (unattended ? 'refused (background session: nobody can confirm). '
+                  : 'blocked pending user confirm. ') +
       `Detected: ${hardHits.join('; ')}. ` +
-      `Either replace with real implementation or override (set env ZERO_FICTION_GATE=off in this session).`;
+      (unattended
+        ? 'Replace it with a real implementation; for an abstract method use abc.abstractmethod with an ellipsis body.'
+        : 'Either replace with real implementation or override (set env ZERO_FICTION_GATE=off in this session).');
     process.stdout.write(JSON.stringify({
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',
-        permissionDecision: 'ask',
+        permissionDecision: unattended ? 'deny' : 'ask',
         permissionDecisionReason: reason,
       },
     }));

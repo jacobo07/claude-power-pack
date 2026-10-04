@@ -1760,6 +1760,7 @@ def run(data) -> dict:
         total = 0
 
         spec_injected_size = 0
+        spec_pointer = ""
         if spec is not None:
             spec_path, spec_body = spec
             try:
@@ -1767,6 +1768,16 @@ def run(data) -> dict:
             except Exception:
                 rel = spec_path
             spec_bytes = spec_body.encode("utf-8")
+            # Hook diet (wiki/improvements/hook-injection-diet.md): the spec stays resident once
+            # injected, so re-sending it on every prompt only re-bills it. Keyed by content hash:
+            # an edited spec is a different key and is injected again.
+            spec_key = "__spec__:" + hashlib.sha256(spec_bytes).hexdigest()[:12]
+            if spec_key in state:
+                spec_pointer = (f"Active project spec {rel} unchanged since it was injected "
+                                f"earlier this session; re-read the file if it is no longer in context.")
+                spec = None
+        if spec is not None:
+            state[spec_key] = now
             if len(spec_bytes) > SPEC_CAP_BYTES:
                 spec_body = spec_bytes[:SPEC_CAP_BYTES].decode(
                     "utf-8", "ignore") + "\n\n[... spec truncated at " \
@@ -1817,7 +1828,7 @@ def run(data) -> dict:
 
         if not injected and spec_injected_size == 0:
             extras = "\n\n".join(
-                b for b in (arch_block, vague_block, lt_block, pp_block) if b)
+                b for b in (spec_pointer, arch_block, vague_block, lt_block, pp_block) if b)
             if extras:
                 return {"continue": True, "additionalContext": extras}
             return {"continue": True}
@@ -1850,7 +1861,7 @@ def run(data) -> dict:
             )
         ctx = header + "\n\n" + "\n\n".join(blocks)
         extras = "\n\n".join(
-            b for b in (arch_block, vague_block, lt_block) if b)
+            b for b in (spec_pointer, arch_block, vague_block, lt_block) if b)
         if extras:
             ctx = ctx + "\n\n" + extras
         _log(f"sid={sid} tier={tier} injected={injected} bytes={total} "

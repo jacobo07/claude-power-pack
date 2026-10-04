@@ -178,6 +178,10 @@
   or Ctrl+Z (never `stop`). When writing a base class for an unattended run, prefer
   `abc.abstractmethod` with an ellipsis body. Structural fix belongs in the gate (exempt abstract
   methods; never ask in a session nobody can answer), not in the worker's code.
+- **Fixed 2026-10-04 (LIVE on the laptop):** the gate exempts a raise whose def is decorated
+  `abstractmethod` or is defined again in the same text, and answers `deny` instead of `ask` when
+  `CLAUDE_CODE_SESSION_KIND=bg`. Gates V-DIET-ZF-* in `tools/test_hook_injection_diet.py`. GEX44 has
+  it only after its install is synced.
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
