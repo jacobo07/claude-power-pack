@@ -50,6 +50,7 @@ Total Plans in Phase: 4
 - [Phase 4 plan, unattended 2026-10-04]: research skipped (04-CONTEXT carries the pre-research). Checker: round 1 5 warnings (W1 harness-by-type scope hole) fixed by revision; round 2 passed except R2-W1 (reference not content-pinned) -> carried as an explicit orchestrator requirement into the 04-01 / 04-03 executor dispatch (window_sha256 + window_rows in provenance, append-after-first-assistant gate, REAL re-read gate) instead of a third revision round.
 - [Phase 4 execute, unattended 2026-10-04]: 4 plans run sequentially in ic-run (use_worktrees=false), each verified by the orchestrator re-running tools/test_floor_regression_gate.py (26 -> 40 -> 59 -> 60/60, drill 13/13). R2-W1 applied: window_sha256/window_rows in provenance (04-01), V-FLOOR-WINDOW-APPEND-STABLE (04-01), V-FLOOR-REAL-REFERENCE-PINNED vs transcript 34f03871 (04-03, PASS on GEX44). The 04-02 executor ended once without a report with task 2 uncommitted but green (40/40): reconciled from git log + disk and resumed the same agent (no re-dispatch). The begin-phase pointer was still phase 2: fixed in 15f70abe. IC-K addressed, not satisfied; state.K OPEN.
 - [Phase 4 review, unattended 2026-10-04]: 04-REVIEW 2 critical / 3 warning / 2 info (f5be1ec6). Fix decisions (reversible, internal): CR-01 unparseable window line -> exit 2; CR-02 hook source stored as sha256 key + basename, reference-gex44.json regenerated from 34f03871 (committed copy scanned: no credential-shaped value, only 2 benign hook commands); WR-01 wholly absent large layer -> exit 2; WR-02 uncorrelated hook element -> unattributed; WR-03 unmeasured tokens axis -> exit 2 unless explicit --chars-only (WITHIN_BOUND_CHARS_ONLY), owner-bundle [K] and evidence/K.md follow.
+- [Phase 4 close, unattended 2026-10-04]: verification human_needed (8/8, no gaps; review fixes re-verified 67/67, drill 18/18) -> verification_deferred_human, run continues at Phase 5 (depends on Phase 3 only; safe, reversible, internal). IC-K unticked, state.K OPEN.
 - [02-03]: a renewed successor inherits the hold of its nearest predecessor that has an owner (`provider_breaker.lineage_hold`,
   bounded by a seen-set and MAX_LINEAGE_HOPS=4); a re-login after the refusal still releases it.
 - [02-03]: the env preflight gates launches only on a declared plane (CPP_ENV_PREFLIGHT=on, or CPP_MISSION_PLANE set and
@@ -118,6 +119,7 @@ on WHERE (local RAM swings 0.6-8 GB; GEX44 own clone is the alternative).
 | 1 | verification_deferred_human | owner bundle [A] (laptop PRG), then /gsd-verify-work 1 |
 | 2 | verification_deferred_human | owner bundle [B]/[C] (a7 re-login, env deploys, laptop PRG), then /gsd-verify-work 2 |
 | 3 | verification_deferred_human | owner bundle [D]..[I] (KME-L laptop runs, population proof first), then /gsd-verify-work 3 |
+| 4 | verification_deferred_human | owner bundle [K] (laptop reference + PRG; WR-01..03 policy judgement), then /gsd-verify-work 4 |
 
 ## Performance Metrics
 
