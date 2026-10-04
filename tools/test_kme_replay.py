@@ -1129,6 +1129,223 @@ def g_bundle_argv_parses():
 GATES_BUNDLE = [("V-KMER-BUNDLE-ARGV-PARSES", g_bundle_argv_parses)]
 
 
+# --------------------------------------------------------------------------- plan 05-04: the owner bundle's summary table
+SUMMARY_HEAD = "## Summary (every Owner item, phases 1-5)"
+PHASES_REL = ".planning/workstreams/incremental-cognition/phases"
+CMD_STARTS = ("python", "python3", "git", "bash", "cp")
+
+
+def split_summary(text):
+    """(the summary section's text or '', the file text with that section removed)."""
+    import re
+    m = re.search(r"^" + re.escape(SUMMARY_HEAD) + r"[ \t]*$", text, re.M)
+    if not m:
+        return "", text
+    end = text.find("\n## ", m.end())
+    end = len(text) if end < 0 else end + 1
+    return text[m.start():end], text[:m.start()] + text[end:]
+
+
+def bundle_items(text):
+    """Keys of every Owner item, DISCOVERED from the file: `[X]#k "<first three words>"` for each `- **[X]**` line
+    outside the summary (k = ordinal among that tag's items), plus `sync` when the `## Laptop code sync` header exists."""
+    import re
+    _s, body = split_summary(text)
+    n, keys = {}, []
+    for ln in body.split("\n"):
+        m = re.match(r"^- \*\*\[([A-Z])\]\*\*\s+(.*)", ln)
+        if m:
+            n[m.group(1)] = n.get(m.group(1), 0) + 1
+            keys.append(f'[{m.group(1)}]#{n[m.group(1)]} "{" ".join(m.group(2).split()[:3])}"')
+    if re.search(r"^## Laptop code sync", body, re.M):
+        keys.append("sync")
+    return keys
+
+
+def summary_rows(text):
+    """Data rows of the first table of the summary section, each as its list of stripped cells."""
+    import re
+    sec, _b = split_summary(text)
+    rows = [ln for ln in sec.split("\n") if ln.startswith("|")]
+    out = []
+    for ln in rows[1:]:
+        if re.match(r"^\|[\s:\-|]+$", ln):
+            continue
+        out.append([c.strip() for c in ln.strip().strip("|").split("|")])
+    return out
+
+
+def source_tokens(cell):
+    return [t.strip() for t in cell.split(";") if t.strip()]
+
+
+def check_items(text):
+    """Problems of the summary table against the items of the same file; [] when it covers them exactly."""
+    import re
+    sec, body = split_summary(text)
+    if not sec:
+        return ["no summary section"]
+    rows = summary_rows(text)
+    if not rows:
+        return ["summary section holds no table rows"]
+    probs = []
+    for i, r in enumerate(rows, 1):
+        if len(r) != 6:
+            probs.append(f"row {i} has {len(r)} cells, not 6")
+            continue
+        for name, idx in (("pillar", 1), ("source", 2), ("action", 3), ("command", 4), ("closes", 5)):
+            if not r[idx]:
+                probs.append(f"row {i} has an empty {name} cell")
+    rows = [r for r in rows if len(r) == 6]
+    items = bundle_items(text)
+    toks = [t for r in rows for t in source_tokens(r[2])]
+    for k in items:
+        if k not in toks:
+            probs.append(f"missing row for {k}")
+    for t in toks:
+        if re.match(r"^(UAT|VER) \d{2}#\d+$", t):
+            continue
+        if t not in items:
+            probs.append(f"stale or unknown source {t}")
+    lines = {ln.strip() for ln in body.split("\n") if re.match(r"^ {4,}\S", ln)}
+    for i, r in enumerate(rows, 1):
+        for span in re.findall(r"`([^`]+)`", r[4]):
+            if span.split()[0] in CMD_STARTS and span.strip() not in lines:
+                probs.append(f"unknown command in row {i}: {span[:70]}")
+    return probs
+
+
+def g_summary_items():
+    text = (REPO / BUNDLE_REL).read_text(encoding="utf-8")
+    probs = check_items(text)
+    items = bundle_items(text)
+    lines = text.split("\n")
+    # controls: each check must be able to go red on the real text
+    sep = next((i for i, ln in enumerate(lines) if ln.startswith("|") and set(ln) <= set("|-: ")), None)
+    e_row = next((i for i, ln in enumerate(lines) if ln.startswith("|") and '[E]#1 ' in ln), None)
+    ctl = {}
+    if e_row is not None:
+        ctl["removed row"] = any(p.startswith("missing row for [E]#1") for p in check_items("\n".join(lines[:e_row] + lines[e_row + 1:])))
+    if sep is not None:
+        row = '| 99 | Z | [Z]#9 "no such item" | do it | none -- nothing | nothing |'
+        ctl["stale row"] = any(p.startswith("stale or unknown source [Z]#9") for p in check_items("\n".join(lines[:sep + 1] + [row] + lines[sep + 1:])))
+    cmd = "`python wiki/tools/kme_replay.py rank"
+    mutated = text.replace(cmd, cmd.replace("rank", "rankx"), 1)
+    ctl["unknown command"] = mutated != text and any(p.startswith("unknown command") for p in check_items(mutated))
+    ctl["removed header"] = check_items(text.replace(SUMMARY_HEAD, "## Not the summary")) == ["no summary section"]
+    ctl_ok = len(ctl) == 4 and all(ctl.values())
+    ok = not probs and len(items) >= 19 and ctl_ok
+    return ok, (f"{len(items)} item key(s) incl. sync (>= 19), {len(summary_rows(text))} row(s), problems={probs[:4]}, "
+                f"controls report: {ctl}")
+
+
+def uat_pending(text, nn):
+    """`UAT <NN>#<n>` for every `### <n>.` block under `## Tests` whose result is [pending]."""
+    import re
+    m = re.search(r"^## Tests[ \t]*$", text, re.M)
+    if not m:
+        return []
+    end = text.find("\n## ", m.end())
+    sec = text[m.end():end if end >= 0 else len(text)]
+    out = []
+    for blk in re.split(r"^(?=### \d+\. )", sec, flags=re.M):
+        h = re.match(r"^### (\d+)\. ", blk)
+        if h and re.search(r"^result:[ \t]*\[pending\][ \t]*$", blk, re.M):
+            out.append(f"UAT {nn}#{h.group(1)}")
+    return out
+
+
+def ver_entries(text, nn):
+    """`VER <NN>#<k>` for each human_verification entry of a human_needed VERIFICATION front matter."""
+    import re
+    fm = re.match(r"^---\n(.*?)\n---", text, re.S)
+    if not fm or not re.search(r"^status:[ \t]*human_needed[ \t]*$", fm.group(1), re.M):
+        return []
+    out, inside = [], False
+    for ln in fm.group(1).split("\n"):
+        if re.match(r"^human_verification:[ \t]*$", ln):
+            inside = True
+        elif inside and re.match(r"^\s+- \S", ln):
+            out.append(f"VER {nn}#{len(out) + 1}")
+        elif inside:
+            break
+    return out
+
+
+def uat_keys(phases_dir):
+    """Pending human checks DISCOVERED from phase directories 01..05; {NN: has any UAT/VERIFICATION file} beside them."""
+    keys, have = [], {}
+    for d in sorted(Path(phases_dir).glob("0[1-5]-*")):
+        if not d.is_dir():
+            continue
+        nn = d.name[:2]
+        uats, vers = sorted(d.glob("*-UAT.md")), sorted(d.glob("*-VERIFICATION.md"))
+        have[nn] = have.get(nn, False) or bool(uats or vers)
+        for f in uats:
+            keys += uat_pending(f.read_text(encoding="utf-8"), nn)
+        if not uats:
+            for f in vers:
+                keys += ver_entries(f.read_text(encoding="utf-8"), nn)
+    return keys, have
+
+
+def check_uat(text, phases_dir):
+    """(status, problems): status is 'SKIP' when a cited phase has no files here, else 'OK'."""
+    import re
+    rows = [r for r in summary_rows(text) if len(r) == 6]
+    cited = [t for r in rows for t in source_tokens(r[2]) if re.match(r"^(UAT|VER) \d{2}#\d+$", t)]
+    keys, have = uat_keys(phases_dir)
+    absent = sorted({t.split()[1][:2] for t in cited if not have.get(t.split()[1][:2])})
+    if absent:
+        return "SKIP", [f"phase(s) {absent} cited by a row have no UAT or VERIFICATION file on this checkout"]
+    probs = [f"missing row for {k}" for k in keys if k not in cited]
+    probs += [f"stale row cites {t}" for t in cited if t not in keys]
+    return "OK", probs
+
+
+def g_summary_uat():
+    import re
+    # controls on synthetic trees, run before anything is judged from the real files
+    uat_txt = ("---\nstatus: testing\n---\n\n## Current Test\n\nnumber: 1\n\n## Tests\n\n### 1. a\nexpected: x\nresult: [pending]\n\n"
+               "### 2. b\nexpected: x\nresult: pass\n\n### 3. c\nexpected: x\nresult: [pending]\n\n## Summary\n\ntotal: 3\n")
+    got_uat = uat_pending(uat_txt, "05")
+    ver_txt = "---\nphase: x\nstatus: human_needed\nhuman_verification:\n  - \"one thing\"\nscore: 1/1\n---\n\n# body\n"
+    got_ver = ver_entries(ver_txt, "05")
+    got_none = ver_entries(ver_txt.replace("human_needed", "passed"), "05")
+    ctl = {"two pending of three": got_uat == ["UAT 05#1", "UAT 05#3"], "one human_verification entry": got_ver == ["VER 05#1"],
+           "passed verification yields none": got_none == []}
+    pd = scratch("ph")
+    (pd / "05-x").mkdir()
+    (pd / "05-x" / "05-UAT.md").write_text(uat_txt, encoding="utf-8")
+    (pd / "01-y").mkdir()
+    (pd / "01-y" / "01-VERIFICATION.md").write_text(ver_txt, encoding="utf-8")
+    head = f"{SUMMARY_HEAD}\n\n| # | pillar | source | action | exact command | what closes when it lands |\n|---|---|---|---|---|---|\n"
+    full = head + "| 1 | P | UAT 05#1 ; UAT 05#3 ; VER 01#1 | a | none -- x | y |\n"
+    lacking = head + "| 1 | P | UAT 05#1 ; VER 01#1 | a | none -- x | y |\n"
+    extra = full + "| 2 | P | UAT 05#2 | a | none -- x | y |\n"
+    gone = full.replace("VER 01#1", "VER 04#1")
+    ctl["complete synthetic table is clean"] = check_uat(full, pd) == ("OK", [])
+    ctl["removed row is reported"] = check_uat(lacking, pd)[1] == ["missing row for UAT 05#3"]
+    ctl["row for an answered check is stale"] = check_uat(extra, pd)[1] == ["stale row cites UAT 05#2"]
+    ctl["a cited phase without files is a SKIP"] = check_uat(gone, pd)[0] == "SKIP"
+    if not all(ctl.values()):
+        return False, f"controls failed: {[k for k, v in ctl.items() if not v]}"
+    text = (REPO / BUNDLE_REL).read_text(encoding="utf-8")
+    real = REPO / PHASES_REL
+    status, probs = check_uat(text, real)
+    if status == "SKIP":
+        return "SKIP", probs[0]
+    keys, _have = uat_keys(real)
+    n_uat = sum(1 for k in keys if k.startswith("UAT"))
+    n_ver = sum(1 for k in keys if k.startswith("VER"))
+    ok = not probs and n_uat >= 11 and n_ver >= 1
+    return ok, (f"{n_uat} pending UAT key(s) (>= 11) and {n_ver} VER key(s) (>= 1) each have a row, problems={probs[:4]}, "
+                f"{len(ctl)} controls report")
+
+
+GATES_SUMMARY = [("V-KMER-BUNDLE-SUMMARY-ITEMS", g_summary_items), ("V-KMER-BUNDLE-SUMMARY-UAT", g_summary_uat)]
+
+
 # --------------------------------------------------------------------------- plan 05-03: the program done-gate reads the ranking
 def _icp_pair_tools():
     """test_kme_pillars' own helpers for the done-gate pair gate (imported lazily: the wrapper rebinds CE globals)."""
@@ -1188,7 +1405,7 @@ GATES_R3 = [("V-KMER-R3-PAIR", g_r3_pair), ("V-KMER-R3-TABLE-PINNED", g_r3_table
 
 
 GATES_TRACER = [("V-KMER-TRACER-E2E", g_tracer_e2e), ("V-KMER-CONTRACT-E2E", g_contract_e2e)]
-GATES = list(GATES_TRACER) + GATES_ROLLOVER + GATES_RETRY + GATES_CONTRACT + GATES_BUNDLE + GATES_R3
+GATES = list(GATES_TRACER) + GATES_ROLLOVER + GATES_RETRY + GATES_CONTRACT + GATES_BUNDLE + GATES_R3 + GATES_SUMMARY
 
 
 def summary_line() -> str:
@@ -1210,7 +1427,7 @@ def run_all() -> int:
 
 # --------------------------------------------------------------------------- mutation drill
 GATE_FN = dict(GATES)
-DRILL_GATES = [n for n, _ in GATES if n not in ("V-KMER-TRACER-E2E", "V-KMER-CONTRACT-E2E")]    # the subprocess tracer is excluded (patches cannot reach it)
+DRILL_GATES = [n for n, _ in GATES if n not in ("V-KMER-TRACER-E2E", "V-KMER-CONTRACT-E2E", "V-KMER-BUNDLE-SUMMARY-UAT")]    # the subprocess tracer is excluded (patches cannot reach it)
 
 
 def _quiet(names) -> dict:
