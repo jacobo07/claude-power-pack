@@ -108,3 +108,28 @@ CEP_SELFTEST=PASS
 ```
 
 The gate passes on this branch. It passes on `feature/knowledge-acquisition` only after the `[RUN]` merge.
+
+## 2026-10-04 rerun on `feature/knowledge-acquisition` (supersedes nothing above)
+
+The 2026-10-03 record above describes a run that happened and is kept as written. This section adds a later run.
+
+- `[RUN]` merge landed as `11470e92` (24 mission commits, campaign paths only).
+- The first `--final` after the merge FAILED 1 clause: pillar L. `gates/gate_compound78.py` refused to run because
+  the live `LEARNINGS_PENDING.md` was absent. The marker is transient (a successful `/cpp-compound` deletes it,
+  the sentinel recreates it), and the live state had been rewritten at 10-04 18:45Z outside the mission.
+  This was a defect in the gate's inputs. The step 7+8 module was not at fault.
+- Fix `acbaabcf`: `finalize()` only unlinks the marker and never reads it. When the live marker is absent, the
+  gate now judges a synthetic one and prints `marker=live|synthetic`. Observed: live PASS `marker=live`;
+  synthetic PASS `marker=synthetic` (PP_MAIN pointed at a temp copy of the 235 learnings, no marker);
+  synthetic `--break-rollback` FAIL `failures=1` (rollback). The red branch still fires.
+
+command: `python tools/test_cognitive_economy_program.py --final` (`feature/knowledge-acquisition`, after `acbaabcf`)
+
+```
+CEP_VERDICT=PASS failures=0
+exit=0
+```
+
+`--pillar <P>` printed `CEP_PILLAR_<P>=PASS` for all 20 pillars, and `--status` reported `open=[]`
+`violations=[]`. `.planning/workstreams/cognitive-economy/REQUIREMENTS.md` checkboxes now match the ledger.
+Not pushed. Owner items `[L] [B] [T] [R]` in `owner-bundle.md` are still pending.
