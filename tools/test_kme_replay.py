@@ -907,6 +907,30 @@ def g_terminal_evidence():
         f"unit={unit} primary={primary_ok} unranked={unranked_ok} smoke={smoke_ok} src={src_ok}")
 
 
+def g_rollover_growth_pinned():
+    # WR-04: a primary ranking is terminal only at the frozen default G (100,000). Any other G is sensitivity / smoke,
+    # whatever the population, the frozen source and the measured candidates say.
+    d = {"all_default": True}
+    unit = [kr.terminal_ok("primary", "exact", d, [], growth=kr.ROLLOVER_GROWTH),
+            kr.terminal_ok("primary", "exact", d, [], growth=1000000000),
+            kr.terminal_ok("primary", "exact", d, [], growth=50000),
+            kr.terminal_ok("primary", "exact", d, [], growth=True)]
+    root = scratch("gp")
+    tracer_fixture(root)
+    exact = write_frozen(root / "f_exact.json", **{"KME-L": POP_KR})
+    rc0, r0, _o0, _e0 = run_json(klr_args(root, scratch("out"), exact))
+    rc1, r1, _o1, _e1 = run_json(klr_args(root, scratch("out"), exact, extra=["--rollover-growth", "1000000000"]))
+    rc2, r2, _o2, _e2 = run_json(klr_args(root, scratch("out"), exact, extra=["--rollover-growth", "2000"]))
+    ok = (unit == [True, False, False, False]
+          and rc0 == 0 and r0["terminal_evidence"] is True and r0["rollover_growth"] == kr.ROLLOVER_GROWTH
+          and rc1 == 0 and r1["evidence_role"] == "primary" and r1["terminal_evidence"] is False
+          and "rollover_growth" in r1["terminal_evidence_reason"] and r1["rollover_growth"] == 1000000000
+          and r1["ranked_ids"] and rc2 == 0 and r2["terminal_evidence"] is False)
+    return bool(ok), (f"unit={unit} default: rc={rc0} terminal={r0['terminal_evidence']}; G=1e9: rc={rc1} "
+                      f"terminal={r1['terminal_evidence']} reason={r1['terminal_evidence_reason'][-120:]}; G=2000 "
+                      f"terminal={r2['terminal_evidence']}")
+
+
 def secret_fixture(root):
     fx = Fx(root)
     fx.human("go " + KR_CANARY, ts(0))
@@ -1048,6 +1072,7 @@ GATES_CONTRACT = [
     ("V-KMER-DRIFT-ALL-UNMEASURED", g_drift_all_unmeasured),
     ("V-KMER-UPPER-BOUND-LABELS", g_upper_bound_labels),
     ("V-KMER-TERMINAL-EVIDENCE", g_terminal_evidence),
+    ("V-KMER-ROLLOVER-GROWTH-PINNED", g_rollover_growth_pinned),
     ("V-KMER-NO-SECRET", g_no_secret),
     ("V-KMER-READ-ONLY", g_read_only),
     ("V-KMER-OUT-DIR-INSIDE-ROOT", g_out_dir_inside_root),
@@ -1397,6 +1422,7 @@ def g_r3_table_pinned():
              "KMER_INSTRUMENT": (icp.KMER_INSTRUMENT, kr.INSTRUMENT),
              "KMER_BODY_MARKER": (icp.KMER_BODY_MARKER, kr.KMER_BODY_MARKER),
              "KMER_BODY_END": (icp.KMER_BODY_END, kr.KMER_BODY_END),
+             "KMER_ROLLOVER_GROWTH": (icp.KMER_ROLLOVER_GROWTH, kr.ROLLOVER_GROWTH),
              "KMER_CANDIDATES": (tuple(icp.KMER_CANDIDATES), tuple(kr.CANDIDATES)),
              "REPLAY_PILLARS": (tuple(icp.REPLAY_PILLARS), (kr.PILLAR,))}
     off = [k for k, (a, b) in pairs.items() if a != b]
@@ -1519,8 +1545,15 @@ def _m_compare_always_exact():
 
 
 def _m_terminal_ignores_unranked():
-    return _patch(kr, "terminal_ok", lambda role, match, frozen_source, unranked: role == "primary"
-                  and match == "exact" and bool(frozen_source) and bool(frozen_source.get("all_default")))
+    return _patch(kr, "terminal_ok", lambda role, match, frozen_source, unranked, growth=kr.ROLLOVER_GROWTH:
+                  role == "primary" and match == "exact" and bool(frozen_source)
+                  and bool(frozen_source.get("all_default")) and growth == kr.ROLLOVER_GROWTH)
+
+
+def _m_terminal_ignores_growth():
+    return _patch(kr, "terminal_ok", lambda role, match, frozen_source, unranked, growth=kr.ROLLOVER_GROWTH:
+                  role == "primary" and match == "exact" and bool(frozen_source)
+                  and bool(frozen_source.get("all_default")) and not unranked)
 
 
 MUTANTS = [
@@ -1547,6 +1580,8 @@ MUTANTS = [
     ("M12 kp.compare_population always answers exact (a drifted population ranks)", _m_compare_always_exact,
      ["V-KMER-DRIFT-ALL-UNMEASURED"]),
     ("M13 terminal_ok ignores unranked candidates", _m_terminal_ignores_unranked, ["V-KMER-TERMINAL-EVIDENCE"]),
+    ("M14 terminal_ok ignores the rollover growth (a ranking at any G is terminal)", _m_terminal_ignores_growth,
+     ["V-KMER-ROLLOVER-GROWTH-PINNED"]),
 ]
 
 

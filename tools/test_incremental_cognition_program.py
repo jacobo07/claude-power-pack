@@ -227,6 +227,7 @@ KMER_INSTRUMENT = "wiki/tools/kme_replay.py"
 KMER_BODY_MARKER = "<!-- kmer-json -->"
 KMER_BODY_END = "<!-- /kmer-json -->"
 KMER_CANDIDATES = ("late_rollover", "identical_rereads", "unchanged_precondition_retries")
+KMER_ROLLOVER_GROWTH = 100000     # the frozen late_rollover threshold; any other G is sensitivity / smoke only
 REPLAY_PILLARS = ("L",)
 REPLAY_RULE_DENOMINATORS = {"L": ["KME-L"]}
 MEASUREMENT_TERMINALS = ("RESEARCH_INSUFFICIENT_EVIDENCE", "FALSIFIED_OR_REJECTED_BY_EVIDENCE")
@@ -305,6 +306,15 @@ def kmer_ranking_problems(fm: dict, text) -> list:
     return bad
 
 
+def rollover_growth_problems(fm: dict) -> list:
+    """WR-04: a terminal ranking is the one at the frozen rollover growth, recorded in the file; the late_rollover figure at
+    any other G (a CLI flag) is a statement about that G."""
+    g = fm.get("rollover_growth")
+    if type(g) is not int or g != KMER_ROLLOVER_GROWTH:
+        return [f"rollover_growth is {g!r}, not the frozen {KMER_ROLLOVER_GROWTH} (another G is sensitivity / smoke only)"]
+    return []
+
+
 def terminal_claim_problems(pid: str, fm: dict, text=None) -> list:
     """Why a measurement file that says `terminal_evidence: true` contradicts itself. A claim is believed only when
     the file's own fields agree with it. Pillars D..I (kme_pillars): role primary, the instrument's own mark, a
@@ -330,7 +340,7 @@ def terminal_claim_problems(pid: str, fm: dict, text=None) -> list:
             bad.append(f"denominator {den!r} is not in pillar {pid}'s frozen rule {rule!r}")
         if fm.get("unranked_ids") != []:
             bad.append(f"unranked_ids is {fm.get('unranked_ids')!r}, not [] (every candidate must be measured)")
-        return bad + kmer_ranking_problems(fm, text) + frozen_source_problems(den, fm)
+        return bad + rollover_growth_problems(fm) + kmer_ranking_problems(fm, text) + frozen_source_problems(den, fm)
     if fm.get("instrument") != KMEP_INSTRUMENT:
         bad.append(f"instrument is {fm.get('instrument')!r}, not {KMEP_INSTRUMENT!r}")
     if fm.get("evidence_role") != "primary":
@@ -889,7 +899,8 @@ def selftest(verbose=True) -> bool:
     # WR-03: the ranking itself is checked, not only the self-asserted front matter
     forged = fm(instrument=KMER_INSTRUMENT, pillar="L", denominator="KME-L", rule_denominators=["KME-L"],
                 evidence_role="primary", terminal_evidence=True, population_match="exact", ranked_ids=[],
-                unranked_ids=[], frozen_source=fsrc("frozen_file"), command="hand typed") + "\nKME-L [L]\n"
+                unranked_ids=[], rollover_growth=100000, weighted_denominator=1.0, frozen_source=fsrc("frozen_file"),
+                command="hand typed") + "\nKME-L [L]\n"
     wr03 = {
         "forged-empty-ranking": forged,
         "ranked-two-of-three": l_file(dict(good_l_kv, ranked_ids=["late_rollover", "identical_rereads"])),
@@ -921,6 +932,28 @@ def selftest(verbose=True) -> bool:
         restore()
     say(len(off03_m) == len(wr03), f"V-ICP-MUT-r3l-ranking-unchecked killed by V-ICP-R3-L-RANKING-CHECKED "
                                    f"(it leaves {len(off03_m)} of {len(wr03)} forged files accepted)")
+    growth_poles = {
+        "growth-1e9": l_file(dict(good_l_kv, rollover_growth=1000000000)),
+        "growth-50000": l_file(dict(good_l_kv, rollover_growth=50000)),
+        "growth-string": l_file(dict(good_l_kv, rollover_growth="100000")),
+        "growth-float": l_file(dict(good_l_kv, rollover_growth=100000.0)),
+        "growth-true": l_file(dict(good_l_kv, rollover_growth=True)),
+        "growth-absent": l_file({k: v for k, v in good_l_kv.items() if k != "rollover_growth"}),
+    }
+
+    def growth_off():
+        return [n for n, t in growth_poles.items() if not any(
+            x.startswith("R3 L:") and "rollover_growth" in x for x in r3t("L", {"c": t}, ["c"]))]
+    goff = growth_off()
+    say(not goff, f"V-ICP-R3-L-GROWTH-PINNED ({len(growth_poles)} rollover_growth values other than the frozen "
+                  f"{KMER_ROLLOVER_GROWTH} refused; off: {goff})")
+    restore = _patch_attr("rollover_growth_problems", lambda fm_: [])
+    try:
+        goff_m = growth_off()
+    finally:
+        restore()
+    say(len(goff_m) == len(growth_poles), f"V-ICP-MUT-r3l-growth-unpinned killed by V-ICP-R3-L-GROWTH-PINNED "
+                                          f"(it leaves {len(goff_m)} of {len(growth_poles)} accepted)")
     say(r3t("L", {"c": l_prim}, ["c"]) == [], "V-ICP-R3-L-RANKING-CONSISTENT-ACCEPTED (the consistent control is silent)")
     got = r3t("L", {"c": fm(**dict(good_l_kv, evidence_role="smoke"))}, ["c"])
     say(any(x.startswith("R3 L:") and "is a smoke measurement" in x for x in got),

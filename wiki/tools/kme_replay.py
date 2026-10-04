@@ -467,11 +467,14 @@ def command_string(argv):
     return shlex.join([os.path.basename(sys.executable) or "python3"] + parts)
 
 
-def terminal_ok(role, match, frozen_source, unranked):
+def terminal_ok(role, match, frozen_source, unranked, growth=ROLLOVER_GROWTH):
     """A ranking file is terminal evidence only for a primary run whose population reproduced the frozen one, read from
-    the committed frozen source (a missing record is not the committed source), with every candidate measured."""
+    the committed frozen source (a missing record is not the committed source), with every candidate measured, at the
+    frozen rollover growth (ROLLOVER_GROWTH): a late_rollover figure at any other G is a statement about that G, so
+    another G is sensitivity / smoke only."""
     src_default = bool(frozen_source) and bool(frozen_source.get("all_default"))
-    return role == "primary" and match == "exact" and src_default and not unranked
+    pinned = type(growth) is int and growth == ROLLOVER_GROWTH
+    return role == "primary" and match == "exact" and src_default and not unranked and pinned
 
 
 def _r(x):
@@ -540,15 +543,17 @@ def rank_result(ctx, sc, loc, until, argv, growth):
     in_rule = label in RULE_DENOMINATORS
     role = "primary" if in_rule else "smoke"
     fsrc = ctx.get("frozen_source")
-    terminal = terminal_ok(role, match, fsrc, unranked)
+    terminal = terminal_ok(role, match, fsrc, unranked, growth=growth)
     if role == "primary":
         src = "the committed frozen source" if (fsrc and fsrc.get("all_default")) else \
             "NOT the committed frozen source (a frozen source flag points elsewhere)"
         un = ",".join(u["candidate"] for u in unranked) or "none"
         t_reason = ("primary file: the label is in rule L's denominators "
-                    f"{list(RULE_DENOMINATORS)}; terminal only with an exact population, the committed frozen source "
-                    f"and every candidate measured (population_match={match}, frozen source: {src}, "
-                    f"unranked={un})")
+                    f"{list(RULE_DENOMINATORS)}; terminal only with an exact population, the committed frozen source, "
+                    f"every candidate measured and rollover_growth {ROLLOVER_GROWTH} (population_match={match}, "
+                    f"frozen source: {src}, unranked={un}, rollover_growth={growth}"
+                    + ("" if growth == ROLLOVER_GROWTH else f": not the frozen {ROLLOVER_GROWTH}, sensitivity only")
+                    + ")")
     else:
         t_reason = (f"smoke: {label} is outside rule L's denominators {list(RULE_DENOMINATORS)}; evidence about the "
                     f"instrument, not a pillar terminal")
