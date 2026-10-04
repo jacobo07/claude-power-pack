@@ -103,21 +103,25 @@ def write_credentials(home: Path, *, expires_ms=None, refresh_expires_ms=None, r
 def scenario(transcript: Path | None, home: Path, breaker: bool):
     """Every session id resolves to `transcript` (every successor also dies on the same refusal);
     HOME is the scratch dir; the breaker import is made to fail when breaker is False (the a7 condition)."""
-    saved_find, saved_home = gm.lr.find_transcript, os.environ.get("HOME")
+    # Path.home() reads USERPROFILE on Windows and HOME elsewhere: redirect both, restore both.
+    saved_find = gm.lr.find_transcript
+    saved_homes = {k: os.environ.get(k) for k in ("HOME", "USERPROFILE")}
     had_pb = "provider_breaker" in sys.modules
     saved_pb = sys.modules.get("provider_breaker")
     gm.lr.find_transcript = lambda sid: transcript
-    os.environ["HOME"] = str(home)
+    for k in saved_homes:
+        os.environ[k] = str(home)
     if not breaker:
         sys.modules["provider_breaker"] = None
     try:
         yield
     finally:
         gm.lr.find_transcript = saved_find
-        if saved_home is None:
-            os.environ.pop("HOME", None)
-        else:
-            os.environ["HOME"] = saved_home
+        for k, v in saved_homes.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
         if had_pb:
             sys.modules["provider_breaker"] = saved_pb
         else:

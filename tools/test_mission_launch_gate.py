@@ -130,21 +130,25 @@ def fresh_home(**cred) -> Path:
 def scenario(transcript: Path | None, home: Path, env: dict | None = None):
     """Every session id resolves to `transcript`; HOME is the scratch dir; `env` is set for the scenario
     and everything touched (env vars, HOME, find_transcript) is restored in `finally`."""
-    saved_find, saved_home = gm.lr.find_transcript, os.environ.get("HOME")
+    # Path.home() reads USERPROFILE on Windows and HOME elsewhere: redirect both, restore both.
+    saved_find = gm.lr.find_transcript
+    saved_homes = {k: os.environ.get(k) for k in ("HOME", "USERPROFILE")}
     env = env or {}
     saved_env = {k: os.environ.get(k) for k in env}
     gm.lr.find_transcript = lambda sid: transcript
-    os.environ["HOME"] = str(home)
+    for k in saved_homes:
+        os.environ[k] = str(home)
     for k, v in env.items():
         os.environ[k] = v
     try:
         yield
     finally:
         gm.lr.find_transcript = saved_find
-        if saved_home is None:
-            os.environ.pop("HOME", None)
-        else:
-            os.environ["HOME"] = saved_home
+        for k, v in saved_homes.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
         for k, v in saved_env.items():
             if v is None:
                 os.environ.pop(k, None)
