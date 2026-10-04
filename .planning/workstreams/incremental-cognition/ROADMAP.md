@@ -192,7 +192,7 @@ Plans:
 
 **Goal**: J and M closed by R2 against CE/SC ledgers on HEAD; UKDL 3-level and CBR reviews; deltas; done-gate.
 **Depends on**: CE and SC landing their ledger commits on this line of history.
-**Plans:** 3/4 plans executed (sequential waves 1-4; J and M externally blocked on GEX44, so no terminal is written; `--final` is
+**Plans:** 4/4 plans executed (sequential waves 1-4; J and M externally blocked on GEX44, so no terminal is written; `--final` is
 expected to fail on the open pillars and is recorded verbatim)
 
 Plans:
@@ -210,4 +210,4 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 06-04-PLAN.md — N: ledger reviews {file, sha256} and deltas for every shipped phase (gated), --status / --final run and recorded verbatim in evidence/N.md, Status OPEN
+- [x] 06-04-PLAN.md — N: ledger reviews {file, sha256} and deltas for every shipped phase (gated), --status / --final run and recorded verbatim in evidence/N.md, Status OPEN
