@@ -1468,14 +1468,19 @@ def ver_entries(text, nn):
     fm = re.match(r"^---\n(.*?)\n---", text, re.S)
     if not fm or not re.search(r"^status:[ \t]*human_needed[ \t]*$", fm.group(1), re.M):
         return []
-    out, inside = [], False
+    out, inside, base = [], False, None
     for ln in fm.group(1).split("\n"):
         if re.match(r"^human_verification:[ \t]*$", ln):
             inside = True
-        elif inside and re.match(r"^\s+- \S", ln):
-            out.append(f"VER {nn}#{len(out) + 1}")
         elif inside:
-            break
+            item = re.match(r"^([ \t]*)-(?:[ \t]|$)", ln)
+            if item:
+                if base is None:
+                    base = len(item.group(1))
+                if len(item.group(1)) == base:       # one list entry, whatever its shape (a string, or `test:`/`expected:` keys)
+                    out.append(f"VER {nn}#{len(out) + 1}")
+            elif ln.strip() and not ln[0].isspace():  # an unindented non-item line ends the list; indented lines continue an entry
+                break
     return out
 
 
@@ -1521,6 +1526,13 @@ def g_summary_uat():
     got_none = ver_entries(ver_txt.replace("human_needed", "passed"), "05")
     ctl = {"two pending of three": got_uat == ["UAT 05#1", "UAT 05#3"], "one human_verification entry": got_ver == ["VER 05#1"],
            "passed verification yields none": got_none == []}
+    multi_txt = ("---\nphase: x\nstatus: human_needed\nhuman_verification:\n"
+                 "  - test: \"first\"\n    expected: \"e1\"\n    why_human: \"w1\"\n"
+                 "  - test: \"second\"\n    expected: \"e2\"\n    why_human: \"w2\"\n"
+                 "  - test: \"third\"\n    expected: \"e3\"\n    why_human: \"w3\"\nscore: 1/1\n---\n\n# body\n")
+    flat_txt = ("---\nstatus: human_needed\nhuman_verification:\n- \"a\"\n- \"b\"\n- \"c\"\nscore: 1/1\n---\n")
+    ctl["three multi-key entries count three"] = ver_entries(multi_txt, "05") == ["VER 05#1", "VER 05#2", "VER 05#3"]
+    ctl["three unindented one-string entries count three"] = ver_entries(flat_txt, "05") == ["VER 05#1", "VER 05#2", "VER 05#3"]
     pd = scratch("ph")
     (pd / "05-x").mkdir()
     (pd / "05-x" / "05-UAT.md").write_text(uat_txt, encoding="utf-8")
