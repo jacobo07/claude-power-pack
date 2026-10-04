@@ -192,13 +192,13 @@ Plans:
 
 **Goal**: J and M closed by R2 against CE/SC ledgers on HEAD; UKDL 3-level and CBR reviews; deltas; done-gate.
 **Depends on**: CE and SC landing their ledger commits on this line of history.
-**Plans:** 4 plans (sequential waves 1-4; J and M externally blocked on GEX44, so no terminal is written; `--final` is
+**Plans:** 1/4 plans executed (sequential waves 1-4; J and M externally blocked on GEX44, so no terminal is written; `--final` is
 expected to fail on the open pillars and is recorded verbatim)
 
 Plans:
 **Wave 1**
 
-- [ ] 06-01-PLAN.md — J/M: read-only R2 evidence printer tools/ic_r2_evidence.py (owner ledger at a commit via OwnerLedgers, rows only when every consumed pillar is closed, round trip through check_consumed); `--pillar` runs R2; V-ICR2-* + drill
+- [x] 06-01-PLAN.md — J/M: read-only R2 evidence printer tools/ic_r2_evidence.py (owner ledger at a commit via OwnerLedgers, rows only when every consumed pillar is closed, round trip through check_consumed); `--pillar` runs R2; V-ICR2-* + drill
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
