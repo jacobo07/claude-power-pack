@@ -2015,9 +2015,9 @@ def _prepare(a, pillars):
             "pf": pf, "role": role, "pillars": list(pillars), "frozen_source": fsrc}, None
 
 
-def _measure(ctx, pillars, until, want_instants=False):
+def _measure(ctx, pillars, until, want_instants=False, observer_factories=None):
     """ONE scan with the named pillar observers (plus the call-instant observer on request) truncated at `until`."""
-    obs = {p: OBSERVERS[p]() for p in pillars}
+    obs = {p: (OBSERVERS if observer_factories is None else observer_factories)[p]() for p in pillars}
     inst = InstantObserver(ctx["freeze"] - datetime.timedelta(hours=LOCATE_WINDOW_H)) if want_instants else None
     keep = make_keep(ctx["since"], until) if (ctx["since"] is not None or until is not None) else None
     sessions, fan, dirs = scan(ctx["roots"], ctx["expand"], ctx["host"], list(obs.values()) + ([inst] if inst else []),
@@ -2030,13 +2030,13 @@ def _measure(ctx, pillars, until, want_instants=False):
             "instants": inst.for_selected(selected) if inst else None, "until": until}
 
 
-def _resolve(ctx, pillars):
+def _resolve(ctx, pillars, observer_factories=None):
     """The measuring scan for the run: at the fixed cutoff, or at the located one for --until auto.
     Returns (scan, until, located) where located is None or the locator's verdict."""
     if not ctx["auto"]:
-        return _measure(ctx, pillars, ctx["until"]), ctx["until"], None
+        return _measure(ctx, pillars, ctx["until"], observer_factories=observer_factories), ctx["until"], None
     frozen = ctx["frozen"]["fields"]
-    first = _measure(ctx, pillars, ctx["freeze"], want_instants=True)
+    first = _measure(ctx, pillars, ctx["freeze"], want_instants=True, observer_factories=observer_factories)
 
     def probe(until, want):
         sc = _measure(ctx, [], until, want)
@@ -2046,7 +2046,7 @@ def _resolve(ctx, pillars):
     if loc["method"] == "exact_at_freeze":
         return first, ctx["freeze"], loc
     if loc["method"] == "bisect":
-        final = _measure(ctx, pillars, loc["until"])
+        final = _measure(ctx, pillars, loc["until"], observer_factories=observer_factories)
         loc["scans"] += 1
         if compare_population(final["measured"], frozen)[0] == "exact":
             return final, loc["until"], loc
