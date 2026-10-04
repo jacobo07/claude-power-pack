@@ -131,6 +131,42 @@ def compute_irr(repo: str, tokens_spent: int, *, state_dir=None,
                          note=f"irr error (fail-open): {e}")
 
 
+_USAGE_DB = Path(os.environ.get("CPP_USAGE_INDEX")
+                 or Path.home() / ".claude" / "state" / "usage_index" / "index.sqlite")
+
+
+def session_tokens(session_id, *, db=None) -> tuple:
+    """(tokens or None, provenance). The session's transcript tokens, all categories
+    (input + cache write + cache read + output), read from tools/usage_index.py's index.
+
+    Read-only by construction, because it runs inside an 8 s Stop budget: a `mode=ro`
+    URI and a 1 s busy timeout, never usage_index.connect() (which creates the file,
+    applies the schema and can start a full backfill). Every miss is None with its
+    reason, never 0: a session the index has not reached yet is UNMEASURED, not free.
+    The unit is logical transcript tokens; it is not the weekly account meter."""
+    import sqlite3
+    if not session_id:
+        return None, "no session_id in the Stop payload"
+    path = Path(db) if db else _USAGE_DB
+    if not path.is_file():
+        return None, "usage index absent"
+    try:
+        con = sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True, timeout=1.0)
+        try:
+            total, n = con.execute(
+                "SELECT SUM(COALESCE(inp,0)+COALESCE(cw,0)+COALESCE(cr,0)+COALESCE(out,0)), COUNT(*) "
+                "FROM calls WHERE session=?", (str(session_id),)).fetchone()
+            row = con.execute("SELECT v FROM meta WHERE k='last_ok_at'").fetchone()
+        finally:
+            con.close()
+    except sqlite3.Error as exc:
+        return None, f"usage index unreadable ({type(exc).__name__}: {exc})"
+    as_of = row[0] if row else "unknown"
+    if not n:
+        return None, f"session not in the usage index yet (index as of {as_of})"
+    return int(total or 0), f"usage_index as of {as_of}, {n} calls"
+
+
 def record_irr(report: IRRReport, *, state_dir=None) -> bool:
     """Feed the IRR to CO-12 (the single instrument) as one producer signal. NEVER
     a parallel accountant -- CO-12 owns the corpus; this appends to it. Fail-open."""
@@ -157,12 +193,16 @@ def _is_frontier_session() -> bool:
     return str(os.environ.get("PP_FRONTIER_SESSION", "")).strip() in ("1", "true", "yes")
 
 
-def _stop_line(rep: "IRRReport") -> str:
-    """The one-line IRR readout the Stop emits (honest: never a fake token number)."""
+def _stop_line(rep: "IRRReport", provenance: str = "") -> str:
+    """The one-line IRR readout the Stop emits (honest: never a fake token number).
+    `provenance` says where the number came from, or why there is none."""
     if not rep.assets:
         return "FIOS IRR: 0 assets tracked -- populate the FD-07 ledger for a real IRR"
     net = rep.balance_sheet.get("net_portable_assets", 0)
-    tok = f"{rep.tokens_spent} tok" if rep.tokens_spent else "tokens unmeasured"
+    if rep.tokens_spent:
+        tok = f"{rep.tokens_spent} tok" + (f" ({provenance})" if provenance else "")
+    else:
+        tok = "tokens unmeasured" + (f": {provenance}" if provenance else "")
     return (f"FIOS IRR: {rep.assets} assets / {tok} / immediate {rep.immediate_roi}/1k "
             f"/ reuse x{rep.reuse_multiplier} / FDI {rep.frontier_dependence_index} "
             f"/ net portable {net}")
@@ -189,13 +229,20 @@ def stop_entry() -> int:
         return 0
     try:
         cwd = data.get("cwd") or os.getcwd()
-        try:                                 # optional honest token source; else 0
+        # Token source: an explicit PP_SESSION_TOKENS wins; otherwise the usage index,
+        # read-only, by this Stop's session_id. Nothing set that env var anywhere, so for
+        # its whole life this line printed "tokens unmeasured" (2026-10-04).
+        try:
             tokens = int(os.environ.get("PP_SESSION_TOKENS", "0") or 0)
         except (TypeError, ValueError):
             tokens = 0
+        provenance = "PP_SESSION_TOKENS" if tokens else ""
+        if not tokens:
+            found, provenance = session_tokens(data.get("session_id"))
+            tokens = found or 0
         rep = compute_irr(cwd, tokens)
         record_irr(rep)                      # feed CO-12 (one producer, never a fork)
-        msg = _stop_line(rep)
+        msg = _stop_line(rep, provenance)
         try:                                 # D2: nudge a non-PP repo with 0 deposits
             from modules.fable_distillation.federated_ledger import fdi_advisory
             adv = fdi_advisory(cwd)

@@ -192,6 +192,51 @@ def gate_irr() -> None:
     else:
         _fail("V-FIOS-IRR-FAILOPEN", f"assets={z.assets} measured={z.measured}")
 
+    # V-FIOS-IRR-SESSION-TOKENS: the Stop line's token number comes from the usage index,
+    # read-only, by session id; every miss is None WITH a reason, never 0. Until 2026-10-04
+    # the only source was an env var nothing set, so every Stop said "tokens unmeasured".
+    import sqlite3
+    import time as _time
+    st = _tmp("fios_usage_")
+    db = st / "index.sqlite"
+    con = sqlite3.connect(str(db))
+    con.executescript("CREATE TABLE calls(k TEXT PRIMARY KEY, session TEXT, inp INTEGER, cw INTEGER,"
+                      " cr INTEGER, out INTEGER); CREATE TABLE meta(k TEXT PRIMARY KEY, v TEXT);")
+    con.executemany("INSERT INTO calls VALUES(?,?,?,?,?,?)",
+                    [("a", "S1", 10, 100, 1000, 5), ("b", "S1", 1, None, 9, 2), ("c", "S2", 7, 0, 0, 1)])
+    con.execute("INSERT INTO meta VALUES('last_ok_at', '2026-10-04T21:00:00Z')")
+    con.commit()
+    con.close()
+    before = db.read_bytes()
+    got, why = IRR.session_tokens("S1", db=db)
+    miss, why_miss = IRR.session_tokens("NOPE", db=db)
+    absent, why_absent = IRR.session_tokens("S1", db=st / "missing.sqlite")
+    junk = st / "junk.sqlite"
+    junk.write_bytes(b"not a database at all, just bytes" * 8)
+    bad, why_bad = IRR.session_tokens("S1", db=junk)
+    nosid, _ = IRR.session_tokens("", db=db)
+    holder = sqlite3.connect(str(db), isolation_level=None)
+    holder.execute("BEGIN EXCLUSIVE")
+    t0 = _time.monotonic()
+    locked, why_locked = IRR.session_tokens("S1", db=db)
+    waited = _time.monotonic() - t0
+    holder.execute("ROLLBACK")
+    holder.close()
+    line = IRR._stop_line(IRR.compute_irr("R", got or 0, deposits=[{"portability_target": "deterministic"}]), why)
+    if (got == 1127 and "2026-10-04T21:00:00Z" in why and "2 calls" in why
+            and miss is None and "not in the usage index" in why_miss
+            and absent is None and "absent" in why_absent
+            and bad is None and "unreadable" in why_bad and nosid is None
+            and locked is None and "unreadable" in why_locked and waited < 3.0
+            and db.read_bytes() == before and "1127 tok (usage_index" in line):
+        _ok("V-FIOS-IRR-SESSION-TOKENS",
+            f"S1=1127 ({why}); miss/absent/junk/locked -> None with reason; locked gave up in "
+            f"{waited:.1f}s; index bytes unchanged")
+    else:
+        _fail("V-FIOS-IRR-SESSION-TOKENS",
+              f"got={got} miss={miss} absent={absent} bad={bad} locked={locked} waited={waited:.1f} "
+              f"unchanged={db.read_bytes() == before} line={line!r}")
+
 
 def _make_kb(base: Path) -> dict:
     """A synthetic knowledge_base that trips each mutation signal. Returns the
