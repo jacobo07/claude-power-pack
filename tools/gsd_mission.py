@@ -2224,20 +2224,27 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     row["action"] = "halt"
                     continue
                 continuing = turn_end is not None and turn_end["decision"] == "continue"
-                if v2 and act in ("relay", "replace") and rec.get("owner") and not continuing:
+                # T7 C12 (capsule-v2 only): a same-session continuation that failed leaves LAUNCHING with
+                # `owner` None on purpose (continue_worker); the session it tried to resume is still the
+                # worker of this epoch. Skipping the seal for it armed the replacement with the OLD key --
+                # possibly a capsule already certified, which no successor can ever certify again.
+                v2_owner = (rec.get("owner") or _halt_owner(rec)) if v2 else None
+                if v2 and act in ("relay", "replace") and v2_owner and not continuing:
                     # capsule-v2 ROTATE: seal, gate, authorize -- or hold with nothing stopped. Same-
                     # session continuation hands nothing over and takes no capsule (spec 3.6).
-                    rotated = _capsule_rotate(rec, row, act, sessions, pid_alive, now, work_dir, capsule_io)
+                    rotated = _capsule_rotate({**rec, "owner": v2_owner}, row, act, sessions, pid_alive, now,
+                                              work_dir, capsule_io)
                     if rotated is None:
                         if row.pop("capsule_note_request", None):
-                            _capsule_ask_note(rec, row, sessions, pid_alive, runner, stop_runner, now,
-                                              progress, work_dir)
+                            _capsule_ask_note({**rec, "owner": v2_owner}, row, sessions, pid_alive, runner,
+                                              stop_runner, now, progress, work_dir)
                         continue
                     rec = rotated
-                if act in ("relay", "replace") and rec.get("owner"):
+                stop_target = rec.get("owner") or v2_owner
+                if act in ("relay", "replace") and stop_target:
                     # A replaced owner is DEAD by the host's word, and its pid can still outlive
                     # that word (W0 E13): wait for it too, or the successor overlaps it.
-                    ok, why = stop_owner(rec.get("owner"), sessions, pid_alive=pid_alive,
+                    ok, why = stop_owner(stop_target, sessions, pid_alive=pid_alive,
                                          runner=stop_runner)
                     row["stop"] = why
                     if not ok:

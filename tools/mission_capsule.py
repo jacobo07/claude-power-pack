@@ -264,16 +264,184 @@ def _worker_of(mission_id: str, session_id: str) -> tuple[Optional[dict], str]:
     return None, f"session {session_id[:8]} is not the current worker of {mission_id}"
 
 
+# --------------------------------------------------------------------------- chain audit (T7, spec 11.6)
+def _rollover_rows(sd: Path) -> Optional[list]:
+    """Every row of the rollover ledger, or None when it cannot be read (absent file = no rows)."""
+    path = sd / "rollover-ledger.jsonl"
+    if not path.exists():
+        return []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    rows = []
+    for line in lines:
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue          # a torn tail row is the ledger's own known shape, not a broken chain
+        if isinstance(r, dict):
+            rows.append(r)
+    return rows
+
+
+def _lineage(mission_id: str, load, events) -> list:
+    """The lineage in order: `renewed_from` back to the root, then `mission_renewed` rows forward.
+    Bounded, so a cycle in damaged records cannot hang the audit."""
+    chain, cur = [], mission_id
+    for _ in range(64):
+        rec = load(cur)
+        if rec is None or cur in chain:
+            break
+        chain.insert(0, cur)
+        cur = rec.get("renewed_from")
+        if not cur:
+            break
+    cur = mission_id
+    for _ in range(64):
+        nxt = next((e.get("successor") for e in events(cur) if e.get("event") == "mission_renewed"), None)
+        if not nxt or nxt in chain or load(nxt) is None:
+            break
+        chain.append(nxt)
+        cur = nxt
+    return chain
+
+
+def audit_mission(mission_id: str, sd=None, load=None, events=None) -> dict:
+    """Read-only chain audit of a capsule-v2 lineage (spec 11.6): INTACT | BROKEN | UNREADABLE, every
+    link checked, and the FIRST broken link by name. A step a live mission has not reached yet is OPEN,
+    never broken -- the audit judges history, it does not predict it."""
+    import gsd_mission as gm
+    import gsd_long_run as lr
+    sd = state_dir(sd)
+    load = load or gm.load
+    events = events or lr.ledger_events
+    try:
+        if load(mission_id) is None:
+            return {"verdict": "UNREADABLE", "reason": f"no mission {mission_id}", "links": []}
+        chain = _lineage(mission_id, load, events)
+        recs = {m: load(m) or {} for m in chain}
+        evs_of = {m: events(m) for m in chain}
+    except Exception as exc:  # noqa: BLE001 -- a malformed record or ledger is unreadable, never "intact"
+        return {"verdict": "UNREADABLE", "reason": f"{type(exc).__name__}: {exc}", "links": []}
+    # Every mission ledgers at least `mission_prepared`: a v2 mission with no rows is history the audit
+    # cannot see, and judging nothing must not read as INTACT.
+    blind = [m for m in chain if recs[m].get("rollover_protocol") == PROTOCOL and not evs_of[m]]
+    if blind:
+        return {"verdict": "UNREADABLE", "reason": f"no ledger rows for v2 mission(s) {', '.join(blind)}",
+                "links": []}
+    rows = _rollover_rows(sd)
+    if rows is None:
+        return {"verdict": "UNREADABLE", "reason": "rollover ledger unreadable", "links": []}
+    by_key: dict = {}
+    for r in rows:
+        by_key.setdefault(str(r.get("session_id") or ""), []).append(r)
+    links: list = []
+
+    def link(name, ok, mission, detail, open_=False):
+        links.append({"link": name, "mission": mission, "detail": detail,
+                      "state": "OK" if ok else ("OPEN" if open_ else "BROKEN")})
+
+    for mid in chain:
+        rec = recs[mid]
+        live = rec.get("state") not in gm.TERMINAL
+        if rec.get("rollover_protocol") != PROTOCOL:
+            links.append({"link": "protocol", "mission": mid, "state": "SKIPPED",
+                          "detail": "legacy record: no capsule chain to audit"})
+            continue
+        evs = evs_of[mid]
+        names = [e.get("event") for e in evs]
+        # every rotation: sealed SAFE -> authorized before the launch -> the successor's own chain
+        for i, e in enumerate(evs):
+            if e.get("event") != "outgoing_stop_authorized":
+                continue
+            # transition() ledgers only epoch/state/seq, never the record's capsule_key; the
+            # authorization does not move the epoch, so the key is the row's own epoch (capsule_key()).
+            key = e.get("capsule_key") or (ro.mission_key(mid, e["epoch"]) if e.get("epoch") is not None else "")
+            seals = [r for r in by_key.get(key, []) if r.get("event") == "capsule_sealed"]
+            link(f"sealed {key}", any(r.get("safe_to_forget") == "SAFE_TO_FORGET" for r in seals), mid,
+                 f"{len(seals)} seal row(s)" if seals else "no capsule_sealed row for the authorized key")
+            later = names[i + 1:]
+            if "launch_claimed" not in later:
+                if "mission_halted" in later:
+                    continue        # a halt's own seal: the renewal carries it (checked below)
+                link(f"launched after {key}", False, mid, "authorized, no successor launch", open_=live)
+                continue
+            link(f"authorized before launch {key}", True, mid, "outgoing_stop_authorized precedes launch_claimed")
+            _successor_links(link, mid, key, evs[i + 1:], by_key, live)
+        # a v2 halt: continuity present and consistent with the renewal
+        if "mission_halted" in names:
+            cont = rec.get("continuity")
+            renewed = [x for x in evs if x.get("event") == "mission_renewed"]
+            if not isinstance(cont, dict) or not cont.get("kind"):
+                link("halt continuity", False, mid, "v2 HALTED record carries no continuity")
+            elif cont["kind"] in ("handoff", "recovery", "inherited"):
+                ok = any(x.get("capsule_key") == cont.get("capsule_key") for x in renewed)
+                link(f"halt {cont['kind']} renewed with {cont.get('capsule_key')}", ok, mid,
+                     "mission_renewed carries the continuity key" if ok else "renewal missing or carries another key")
+                if cont["kind"] == "handoff":
+                    ok = ("outgoing_stop_authorized" in names
+                          and names.index("outgoing_stop_authorized") < names.index("mission_halted"))
+                    link("halt handoff sealed before the stop", ok, mid, "authorization precedes the halt")
+                if cont["kind"] == "recovery":
+                    seals = [r for r in by_key.get(cont.get("capsule_key") or "", [])
+                             if r.get("event") == "capsule_sealed" and r.get("seal_origin") == "recovery"]
+                    link("halt recovery sealed after the stop", bool(seals) and "continuity_recovery" in names, mid,
+                         f"{len(seals)} recovery seal row(s)")
+            elif cont["kind"] == "refused":
+                link("halt refused: nothing renewed", not renewed and "renewal_refused_no_capsule" in names, mid,
+                     "refusal ledgered, nothing renewed" if not renewed else "a refused continuity was renewed")
+            else:
+                link(f"halt {cont['kind']}", True, mid, cont.get("reason") or "")
+        # a renewal's first worker certifies the capsule its predecessor left
+        if rec.get("renewed_from") and rec.get("capsule_key") and "launch_claimed" in names:
+            idx = names.index("launch_claimed")
+            _successor_links(link, mid, rec["capsule_key"], evs[idx:], by_key, live)
+    broken = next((x for x in links if x["state"] == "BROKEN"), None)
+    return {"verdict": "BROKEN" if broken else "INTACT", "lineage": chain, "links": links, "first_broken": broken}
+
+
+def _successor_links(link, mid: str, key: str, evs_after: list, by_key: dict, live: bool) -> None:
+    """acked -> claimed with a refresh -> certified -> marker lifted, for the successor of `key`."""
+    if not any(e.get("event") in ("worker_acked", "worker_adopted") for e in evs_after):
+        link(f"acked {key}", False, mid, "successor never acknowledged", open_=live)
+        return
+    link(f"acked {key}", True, mid, "successor acknowledged")
+    rows = by_key.get(key, [])
+    claimed = [r for r in rows if r.get("event") == "successor_claimed"]
+    if not claimed:
+        link(f"claimed {key}", False, mid, "no successor_claimed row", open_=live)
+        return
+    link(f"claimed+refreshed {key}", all(r.get("refresh") for r in claimed), mid,
+         f"{len(claimed)} claim(s), last refresh {claimed[-1].get('refresh')}")
+    certified = [r for r in rows if r.get("event") == "resume_certified"]
+    if not certified:
+        link(f"certified {key}", False, mid, "no resume_certified row", open_=live)
+        return
+    link(f"certified {key}", True, mid, f"by {certified[-1].get('claimant')}")
+    lifted = not any(r.get("event") == "precert_not_lifted" for r in rows)
+    link(f"marker lifted {key}", lifted, mid, "no precert_not_lifted row" if lifted else "precert_not_lifted recorded")
+
+
 def _cli(argv=None) -> int:
     import argparse
     p = argparse.ArgumentParser(prog="mission_capsule.py", description="capsule-v2 successor side for a mission worker")
-    p.add_argument("cmd", choices=("resume", "certify", "status"))
+    p.add_argument("cmd", choices=("resume", "certify", "status", "audit"))
     p.add_argument("--mission", required=True)
     p.add_argument("--state-dir", default=None)
     for k in ("goal", "branch", "head", "next", "dirty"):
         p.add_argument(f"--{k}", default=None)
     a = p.parse_args(argv)
     sd = state_dir(a.state_dir)
+    if a.cmd == "audit":
+        # Read-only, any session (T8's out-of-process judge): exit 0 INTACT, 1 BROKEN, 2 UNREADABLE.
+        res = audit_mission(a.mission, sd)
+        for x in res.get("links") or []:
+            print(f"  {x['state']:8} {x['mission']}  {x['link']} -- {x['detail']}")
+        fb = res.get("first_broken")
+        print(f"AUDIT {res['verdict']}" + (f" -- first broken: {fb['link']} ({fb['mission']})" if fb else "")
+              + (f" -- {res['reason']}" if res.get("reason") else ""))
+        return {"INTACT": 0, "BROKEN": 1}.get(res["verdict"], 2)
     if a.cmd == "status":
         mk = ro.precert_read(a.mission, sd)
         print(json.dumps({"marker": mk, "gate": ro.gate(mk["capsule_key"], sd) if mk else None,

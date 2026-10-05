@@ -1,6 +1,6 @@
 ---
 covers: [mission-capsule-rollover, capsule-v2, cpp-gsd-long, kresume, kclear, safe-to-forget, resume-certified, mutation-gate, successor-claim, rollover-protocol, halt-continuity, renewal-continuity, seal-refusal-backoff, certify-deadline, capsule-fault-matrix, capsule-chain-audit]
-status: SPEC (T0). T1-T6 built; section 11 (M2/L1/L2/no-note/guard/T7) in progress; T8 Production Reality HELD by Owner (2026-10-03, Q5)
+status: SPEC (T0). T1-T6 built; section 11 (M2/L1/L2/no-note/guard/T7) LIVE in code S1-S7 (T7 partial, see 11.6); T8 Production Reality HELD by Owner (2026-10-03, Q5)
 date: 2026-10-03
 mode: ULTRA-PLAN for ownership (this document), EXECUTION for every tranche
 parents: vault/specs/interactive-context-rollover.md (P3 interactive), vault/specs/parent-context-epoch-rotation.md (mission epochs)
@@ -343,7 +343,22 @@ from one constant (`mission_capsule.TOOL`), which the card lines also use. The g
 `<PP>/tools/mission_capsule.py` path. It never prints `resume_cmd` (the mission's slash command). Test in
 hooks/tests/test-capsule-mutation-guard.js that goes red on the old text; live hook copy synced by hash.
 
-### 11.6 T7 -- fault matrix and chain audit (S7)
+### 11.6 T7 -- fault matrix and chain audit (S7) -- status LIVE in code (no real mission yet; T8 held)
+Built: `audit_mission` / `_successor_links` / `_lineage` / `_rollover_rows` + CLI verb `audit` in
+tools/mission_capsule.py; tools/test_mission_capsule_faults.py MCF 18/18 (9 audit checks from both poles
+incl. legacy SKIPPED and UNREADABLE; fault rows C2, C3, C6, C7, C10, C11, C12 + a legacy C12 control + a
+live-state trap). Found while building: (1) **C12** -- a failed same-session continuation leaves LAUNCHING
+with `owner` None, so the v2 rotate skipped the seal and armed the replacement with the OLD (possibly
+already certified) key; supervise now rotates and stops `_halt_owner(rec)` for v2 only (G23 32/32
+unchanged). (2) transition() ledgers epoch/state/seq but never the record's `capsule_key`, so the audit
+derives an authorization's key from the row's epoch (`ro.mission_key`); reading the field alone judged
+every rotation "no seal" (V-MCF-AUDIT-INTACT-ROTATION red until fixed). (3) A v2 mission with no ledger
+rows judged zero links and read INTACT; it is now UNREADABLE (every mission ledgers `mission_prepared`),
+and a raising ledger read is UNREADABLE instead of a crash (V-MCF-AUDIT-BLIND-*, legacy twin stays SKIPPED).
+**Not built (named, not hidden):** fault rows C1, C4, C5, C8, C9 and the full halt-shape x owner-state
+cross product (partly held by V-MV2-HALT-*); the audit does not yet check "marker armed before the launch
+-> bound" (no ledger row records the arm); source mutants for the 11.x branches are DEFERRED with the
+S2-S6 drill debt (host memory; Owner's go required).
 - `tools/test_mission_capsule_faults.py` (V-MCF-*): every halt shape x owner state (idle, busy, busy past
   bound, dead, UNKNOWN, WAITING_HUMAN), seal refused, recovery refused, certify deadline below and at the
   cap, no note, claim takeover, crash between each pair of effects (seal / authorize / halt / reap /
