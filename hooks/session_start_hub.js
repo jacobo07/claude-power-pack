@@ -1148,6 +1148,26 @@ function hookOwnerQueueIngest() {
 // UNCHANGED -- only the way the input arrives moved. The surrounding try/catch
 // still works here because the await is INSIDE it, so a rejection from the read
 // is caught exactly as a throw was.
+// Owner-facing lines (incremental-cognition pillar K, 2026-10-05). The recovery verdict, the OWNER_QUEUE digest
+// and the AutoResearch digest address the Owner ("run /lazarus", "run the exact command"). A headless session --
+// a mission worker or a probe, entrypoint sdk-cli -- has no Owner watching, and the K probe measured those three
+// at 2,405 chars of its startup window. Only a POSITIVE headless reading omits them; an absent or unknown
+// entrypoint keeps today's behaviour. The hooks still RUN (hookRecoveryEpoch pins crash evidence): only the
+// emitted line is scoped. Evidence: vault/programs/incremental-cognition/evidence/K-sessionstart-attribution.md.
+function ownerFacingAllowed(entrypoint) {
+  return entrypoint !== 'sdk-cli';
+}
+
+// A digest that positively reports zero accepted and zero cross-project signals says nothing a session can act
+// on. Anything else -- a non-zero count, or a format these patterns do not recognise -- is kept.
+function digestHasSignal(text) {
+  const t = String(text || '');
+  const accepted = /Signals accepted[^\n:]*:\**\s*(\d+)/i.exec(t);
+  const cross = /Cross-project signals found[^\n:]*:\**\s*(\d+)/i.exec(t);
+  if (!accepted || !cross) return true;
+  return Number(accepted[1]) > 0 || Number(cross[1]) > 0;
+}
+
 async function main() {
   const t0 = Date.now();
   let additionalContext = null;
@@ -1195,8 +1215,9 @@ async function main() {
     // ACTIVE beacon: that beacon is what proves the PREVIOUS session died without
     // closing, and overwriting it before reading it would destroy the evidence of
     // the very crash we are recovering from. Order is load-bearing, not cosmetic.
+    const ownerFacing = ownerFacingAllowed(process.env.CLAUDE_CODE_ENTRYPOINT);
     const recoveryLine = hookRecoveryEpoch();
-    if (recoveryLine) {
+    if (recoveryLine && ownerFacing) {
       additionalContext = additionalContext
         ? (additionalContext + '\n' + recoveryLine)
         : recoveryLine;
@@ -1212,7 +1233,7 @@ async function main() {
 
     // 12. AutoResearch VPS digest -- inline read of the local cache.
     const digestLine = hookAutoResearchDigest();
-    if (digestLine) {
+    if (digestLine && ownerFacing && digestHasSignal(digestLine)) {
       additionalContext = additionalContext
         ? (additionalContext + '\n' + digestLine)
         : digestLine;
@@ -1228,7 +1249,7 @@ async function main() {
 
     // 14. OWNER_QUEUE digest -- inline read of the materialized pending view (D4).
     const ownerQueueLine = hookOwnerQueue();
-    if (ownerQueueLine) {
+    if (ownerQueueLine && ownerFacing) {
       additionalContext = additionalContext
         ? (additionalContext + '\n' + ownerQueueLine)
         : ownerQueueLine;
@@ -1301,4 +1322,4 @@ if (require.main === module) {
 }
 
 module.exports = { missionNamesSession, hookMissionStart, hookRolloverResume, armKresumeAutotype,
-  rolloverFocus, getStdinPayload, note };
+  rolloverFocus, getStdinPayload, note, ownerFacingAllowed, digestHasSignal };
