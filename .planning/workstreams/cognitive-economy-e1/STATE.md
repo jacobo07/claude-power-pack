@@ -59,3 +59,19 @@ rules can leave the startup prefix without a judgement loss. Each one costs ~19.
   the largest single run seen so far would pass 17,000,000 (amendment in 02-02/02-04 PLAN). Reason: ADDENDUM-E1
   clause 6 makes going past 17M an Owner decision; a check-before-start-only rule lets the last run overshoot
   without it. Safe: it can only stop the campaign sooner and never changes a per-rule decision.
+- 2026-10-05 (epoch 2) VALIDITY READINGS (02-01 review, ADDENDUM-E1 clause 3 unchanged):
+  (a) the frozen jgrade's own timeout result (rc 124, "grade timeout") means the grade RAN and failed -> valid
+  run, task fail (not a rerun); (b) "the session ran" requires the CLI result not to be an error, except
+  subtype error_max_turns (the session ran to its turn bound) -> an API/usage-limit abort is invalid and gets the
+  one rerun; (c) a run whose arm does not match its exclude list (A=0, B=13 paths) is refused before launch;
+  (d) git reachability of the bank from a run worktree (shared object store, same as R2) is NOT a validity
+  condition in the contract: each run records bank-access markers found in its transcript tool calls, and the
+  Phase 4 report audits them (a hit is reported against that pair). Safe: (a)-(c) only make records truer; (d)
+  adds evidence, changes no decision rule.
+- 2026-10-05 (epoch 2) SPEND_UNMEASURED (02-02 review F1): a launched run whose transcript cannot be found or is
+  ambiguous has UNKNOWN spend; the runner then stops SPEND_UNMEASURED (all undecided rules stay) instead of
+  clause 3's rerun. Reason: with an unmeasured run the 17M cap (clause 6) can no longer be enforced, and the
+  contract ranks the cap as a hard stop. Safe direction: it can only end the campaign early. Recovery needs a
+  human/next worker to measure that run and re-drive; record it in OWNER.md if it fires.
+- 2026-10-05 (epoch 2) 02-02 review F2 fixed: replay refuses a non-object record and any run recorded after a
+  stop record (V-E1-ONE-PAIR cases non_object, run_after_stop; drill red without the check).
