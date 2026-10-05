@@ -25,8 +25,10 @@
 //
 // Incremental: the state file keeps a byte offset; each call reads only the complete lines
 // appended since. Coverage is the dispatcher's PreToolUse lanes (Bash, PowerShell, Write, Edit,
-// MultiEdit, NotebookEdit, Read, Grep); Agent/WebFetch calls are COUNTED (they are in the
-// transcript) but not themselves gated -- the next gated call is.
+// MultiEdit, NotebookEdit, Read, Grep). Gen3 T3 (2026-10-05): the meter is the whole TREE -- the
+// session transcript plus every subagents/agent-*.jsonl -- because a child's events carry the
+// parent's session id; running children are reserved pre-call; `per_child_stop` judges a child
+// on its own spend; Agent dispatch is gated through agent-solo-guard.js with `child_reserve`.
 'use strict';
 const fs = require('fs');
 const os = require('os');
@@ -39,6 +41,11 @@ const EXEMPT_CMD = /rollover\.py|mission_spend\.py|session-budget-/;
 const MAX_IDS = 20000;
 const DEFAULT_CALL_RATIO = 1.5;
 const DEFAULT_NOPROGRESS = 25;
+// A child whose transcript moved this recently is treated as running (in flight).
+const ACTIVE_CHILD_MS = 120000;
+// Processed tokens reserved for a NEW child at Agent dispatch when the envelope declares none:
+// ~20 calls at the ~104k worker floor measured on every T2 executor (gen3_t2/README.md).
+const DEFAULT_CHILD_RESERVE = 2000000;
 
 function stateDir() {
   return process.env.GSD_LONG_RUN_STATE_DIR || path.join(os.homedir(), '.claude', 'state');
@@ -49,23 +56,31 @@ function readJson(p) {
 }
 
 function fresh(since) {
-  return { since: since || null, offset: 0, tokens: 0, calls: 0, context: 0, progress_at: 0, ids: [], grace: false };
+  return { since: since || null, offset: 0, tokens: 0, calls: 0, context: 0, progress_at: 0, ids: [], grace: false,
+    files: {}, root_context: 0 };
 }
 
-// Fold the complete lines appended since st.offset into st. Mirrors mission_spend.session_tokens.
-function advance(st, transcript) {
+// Fold the complete lines appended since slot.offset into st. Mirrors mission_spend.session_tokens.
+// `slot` is the per-file cursor: st itself for the session's own transcript (the legacy fields),
+// a st.files[path] entry for a subagent transcript, whose tokens are also kept apart so a child
+// envelope can be judged on its own spend.
+function advance(st, transcript, slot) {
+  slot = slot || st;
   const size = fs.statSync(transcript).size;
-  if (size < st.offset) Object.assign(st, fresh(st.since), { grace: st.grace });   // truncated/rotated
-  if (size === st.offset) return;
+  if (size < slot.offset) {                                       // truncated/rotated
+    if (slot !== st) throw Object.assign(new Error('a child transcript shrank'), { code: 'TRUNCATED' });
+    Object.assign(st, fresh(st.since), { grace: st.grace });
+  }
+  if (size === slot.offset) return;
   const fd = fs.openSync(transcript, 'r');
   let buf;
   try {
-    buf = Buffer.alloc(size - st.offset);
-    fs.readSync(fd, buf, 0, buf.length, st.offset);
+    buf = Buffer.alloc(size - slot.offset);
+    fs.readSync(fd, buf, 0, buf.length, slot.offset);
   } finally { fs.closeSync(fd); }
   const end = buf.lastIndexOf(0x0a);
   if (end < 0) return;                       // only a partial line so far
-  st.offset += end + 1;
+  slot.offset += end + 1;
   const seen = new Set(st.ids);
   for (const line of buf.subarray(0, end).toString('utf8').split('\n')) {
     if (!line) continue;
@@ -89,10 +104,61 @@ function advance(st, transcript) {
     if (seen.has(mid)) continue;
     seen.add(mid);
     st.ids.push(mid);
-    st.tokens += UK.reduce((s, k) => s + (Number(u[k]) || 0), 0);
-    st.context = UK.slice(0, 3).reduce((s, k) => s + (Number(u[k]) || 0), 0);
+    const n = UK.reduce((s, k) => s + (Number(u[k]) || 0), 0);
+    st.tokens += n;
+    if (slot !== st) slot.tokens = (Number(slot.tokens) || 0) + n;
+    slot.context = UK.slice(0, 3).reduce((s, k) => s + (Number(u[k]) || 0), 0);
+    if (slot === st) st.root_context = st.context;
   }
   if (st.ids.length > MAX_IDS) st.ids = st.ids.slice(-MAX_IDS);
+}
+
+// A subagent writes <dir>/<sid>/subagents/agent-*.jsonl beside the parent's <dir>/<sid>.jsonl, and
+// its hook events carry the PARENT's session id. Reading only event.transcript_path left every
+// child unmetered: the TOK-18 Gen3 T2 canary passed its cap while this guard saw only the parent
+// (2026-10-05, T2-0.5-guard-subagent.md). Whichever file the event names, the tree is the same.
+function treeOf(transcript) {
+  const dir = path.dirname(transcript);
+  const root = path.basename(dir) === 'subagents'
+    ? path.join(path.dirname(path.dirname(dir)), path.basename(path.dirname(dir)) + '.jsonl')
+    : transcript;
+  const subDir = path.join(root.replace(/\.jsonl$/, ''), 'subagents');
+  let kids = [];
+  try { kids = fs.readdirSync(subDir).filter(f => f.endsWith('.jsonl')).map(f => path.join(subDir, f)); }
+  catch (e) { /* no child has started */ }
+  return { root, kids };
+}
+
+// Fold the whole tree into st, then derive what the judge needs: the caller's own context and
+// spend, and a RESERVE for children that are running right now -- each can finish one more model
+// call before its next gated tool call, so that call is counted before it happens. The overshoot
+// past `stop` is then bounded by the caller's one call, not by every child's unobserved run.
+function advanceTree(st, transcript) {
+  const { root, kids } = treeOf(transcript);
+  const fold = () => {
+    if (!st.files || typeof st.files !== 'object') st.files = {};
+    advance(st, root);
+    for (const k of kids) advance(st, k, st.files[k] || (st.files[k] = { offset: 0, tokens: 0, context: 0 }));
+  };
+  try { fold(); } catch (e) {
+    if (e.code !== 'TRUNCATED') throw e;
+    Object.assign(st, fresh(st.since), { grace: st.grace, files: {} });
+    fold();
+  }
+  const caller = transcript === root ? null : st.files[transcript];
+  st.caller = caller ? path.basename(transcript) : 'root';
+  st.caller_tokens = caller ? caller.tokens : null;
+  st.context = caller ? caller.context : (Number(st.root_context) || 0);
+  const now = Date.now();
+  let reserve = 0, active = 0;
+  for (const k of kids) {
+    if (k === transcript) continue;
+    try {
+      if (now - fs.statSync(k).mtimeMs < ACTIVE_CHILD_MS) { reserve += Number(st.files[k].context) || 0; active += 1; }
+    } catch (e) { /* vanished: nothing in flight */ }
+  }
+  st.reserve = reserve;
+  st.active_children = active;
 }
 
 function fmt(n) { return Number(n).toLocaleString('en-US'); }
@@ -111,6 +177,18 @@ function advise(text) {
 function judge(budget, st) {
   if (st.tokens > budget.stop) {
     return deny(`processed ${fmt(st.tokens)} > stop ${fmt(budget.stop)} (target ${fmt(budget.target)}).`);
+  }
+  // Pre-call: what is already in flight (running children) and, at Agent dispatch, the new child.
+  const inflight = Number(st.reserve) || 0;
+  const dispatch = Number(st.dispatch_reserve) || 0;
+  if (inflight + dispatch > 0 && st.tokens + inflight + dispatch > budget.stop) {
+    return deny(`processed ${fmt(st.tokens)} + reserve ${fmt(inflight)} for ${st.active_children || 0} running ` +
+      `child(ren)${dispatch ? ` + ${fmt(dispatch)} for the child being dispatched` : ''} > stop ${fmt(budget.stop)}.`);
+  }
+  const childStop = Number(budget.per_child_stop) || 0;
+  if (childStop > 0 && st.caller_tokens != null && st.caller_tokens > childStop) {
+    return deny(`CHILD ENVELOPE: ${st.caller} processed ${fmt(st.caller_tokens)} > per-child stop ${fmt(childStop)}. ` +
+      'Return what you have to the parent now.');
   }
   const est = Number(budget.calls_estimate) || 0;
   const ratio = Number(budget.call_ratio) || DEFAULT_CALL_RATIO;
@@ -132,7 +210,9 @@ function judge(budget, st) {
   return null;
 }
 
-function decide(event) {
+// opts.dispatch: the event is an Agent dispatch (called from agent-solo-guard.js, because Agent
+// has no dispatcher lane); the new child's reserve is added before it is allowed to start.
+function decide(event, opts) {
   const sid = event && event.session_id;
   if (!sid || !SID_RE.test(sid)) return null;
   const sw = String(process.env.CPP_SESSION_BUDGET || '').trim().toLowerCase();
@@ -147,13 +227,15 @@ function decide(event) {
   let st = prev && typeof prev === 'object' && Array.isArray(prev.ids) ? prev : null;
   const since = budget && budget.since ? String(budget.since) : null;
   if (!st || st.since !== since) st = Object.assign(fresh(since), { grace: !!(st && st.grace) });
+  st.dispatch_reserve = opts && opts.dispatch && budget
+    ? (Number(budget.child_reserve) || DEFAULT_CHILD_RESERVE) : 0;
 
   let unreadable = null;
   const okBudget = budget && [budget.target, budget.warn, budget.stop].every(v => Number.isFinite(Number(v)) && Number(v) > 0);
   if (!okBudget) unreadable = 'the budget file is unreadable or incomplete';
   else if (!event.transcript_path) unreadable = 'the event carries no transcript_path';
   else {
-    try { advance(st, event.transcript_path); } catch (e) { unreadable = `the transcript cannot be read (${e.code || e.message})`; }
+    try { advanceTree(st, event.transcript_path); } catch (e) { unreadable = `the transcript cannot be read (${e.code || e.message})`; }
   }
   let verdict;
   if (unreadable) {
@@ -179,4 +261,5 @@ async function run(event) {
   try { return decide(event); } catch (e) { return null; }  // a bug in the guard never breaks a tool call
 }
 
-module.exports = { run, decide, advance, fresh, judge, DEFAULT_CALL_RATIO, DEFAULT_NOPROGRESS };
+module.exports = { run, decide, advance, advanceTree, treeOf, fresh, judge, DEFAULT_CALL_RATIO, DEFAULT_NOPROGRESS,
+  DEFAULT_CHILD_RESERVE, ACTIVE_CHILD_MS };

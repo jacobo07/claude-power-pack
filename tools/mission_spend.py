@@ -183,11 +183,18 @@ def session_tokens(transcript: Path, since_iso: str | None = None) -> dict:
 
 def declare(sid: str, target: int, warn: int, stop: int, calls_estimate: int | None = None,
             context_ceiling: int | None = None, noprogress_calls: int = DEFAULT_NOPROGRESS_CALLS,
-            call_ratio: float = DEFAULT_CALL_RATIO, since_iso: str | None = None) -> Path:
+            call_ratio: float = DEFAULT_CALL_RATIO, since_iso: str | None = None,
+            per_child_stop: int | None = None, child_reserve: int | None = None) -> Path:
+    """All amounts are PROCESSED tokens (the unit above). per_child_stop judges one subagent on its
+    own transcript; child_reserve is held for a new child at Agent dispatch (guard default 2M)."""
     if not (0 < target <= warn <= stop):
         raise ValueError("need 0 < target <= warn <= stop")
+    for name, v in (("per_child_stop", per_child_stop), ("child_reserve", child_reserve)):
+        if v is not None and not 0 < v <= stop:
+            raise ValueError(f"need 0 < {name} <= stop")
     import datetime as dt
-    rec = {"session_id": sid, "target": target, "warn": warn, "stop": stop,
+    rec = {"session_id": sid, "unit": "processed_tokens", "target": target, "warn": warn, "stop": stop,
+           "per_child_stop": per_child_stop, "child_reserve": child_reserve,
            "calls_estimate": calls_estimate, "call_ratio": call_ratio,
            "context_ceiling": context_ceiling, "noprogress_calls": noprogress_calls,
            "since": since_iso,
@@ -213,13 +220,15 @@ def _main(argv: list[str]) -> int:
     d.add_argument("--context-ceiling", type=int)
     d.add_argument("--noprogress-calls", type=int, default=DEFAULT_NOPROGRESS_CALLS)
     d.add_argument("--since", help="ISO timestamp; count only from here (default: whole transcript)")
+    d.add_argument("--per-child-stop", type=int, help="processed tokens one subagent may spend")
+    d.add_argument("--child-reserve", type=int, help="processed tokens held for a new child at dispatch")
     s = sub.add_parser("session-status")
     s.add_argument("--transcript", required=True)
     s.add_argument("--since")
     a = ap.parse_args(argv)
     if a.cmd == "session-declare":
         print(declare(a.session, a.target, a.warn, a.stop, a.calls_estimate, a.context_ceiling,
-                      a.noprogress_calls, since_iso=a.since))
+                      a.noprogress_calls, since_iso=a.since, per_child_stop=a.per_child_stop, child_reserve=a.child_reserve))
         return 0
     print(json.dumps(session_tokens(Path(a.transcript), a.since)))
     return 0
