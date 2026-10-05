@@ -345,7 +345,7 @@ hooks/tests/test-capsule-mutation-guard.js that goes red on the old text; live h
 
 ### 11.6 T7 -- fault matrix and chain audit (S7) -- status LIVE in code (no real mission yet; T8 held)
 Built: `audit_mission` / `_successor_links` / `_lineage` / `_rollover_rows` + CLI verb `audit` in
-tools/mission_capsule.py; tools/test_mission_capsule_faults.py MCF 18/18 (9 audit checks from both poles
+tools/mission_capsule.py; tools/test_mission_capsule_faults.py MCF 19/19 (9 audit checks from both poles
 incl. legacy SKIPPED and UNREADABLE; fault rows C2, C3, C6, C7, C10, C11, C12 + a legacy C12 control + a
 live-state trap). Found while building: (1) **C12** -- a failed same-session continuation leaves LAUNCHING
 with `owner` None, so the v2 rotate skipped the seal and armed the replacement with the OLD (possibly
@@ -357,8 +357,18 @@ rows judged zero links and read INTACT; it is now UNREADABLE (every mission ledg
 and a raising ledger read is UNREADABLE instead of a crash (V-MCF-AUDIT-BLIND-*, legacy twin stays SKIPPED).
 **Not built (named, not hidden):** fault rows C1, C4, C5, C8, C9 and the full halt-shape x owner-state
 cross product (partly held by V-MV2-HALT-*); the audit does not yet check "marker armed before the launch
--> bound" (no ledger row records the arm); source mutants for the 11.x branches are DEFERRED with the
-S2-S6 drill debt (host memory; Owner's go required).
+-> bound" (no ledger row records the arm).
+**Drills 2026-10-05 (Owner go, tools/mutation_drill.py on isolated copies):** S2 (the 4 deferred) + S3 + S4 +
+S5 + S7 = 16 mutants, first pass 12 KILLED. The four others: one stale S2 anchor (the inherited branch gained a
+retired-key guard; re-anchored, plus a mutant of that guard); one HARNESS because a peer pane edited
+gsd_mission.py mid-drill (re-run); one UNJUDGED -- V-MV2-L2-DEADLINE-AT-CAP-BLOCKS printed FAIL, then the
+next step crashed on the mutant's state, so the suite never summarised (test now builds its own at-cap
+state); one SURVIVED -- C10 only injected a stop that RAISES, so dropping `if not ok` (count an unconfirmed
+stop) went unseen (new V-MCF-C10-STOP-UNCONFIRMED-NOT-COUNTED, MCF 19/19). Test fixes `ab61c628`.
+Re-run of those five: 1 KILLED (V-MV2-HALT-INHERITED, re-anchored); the batch was then stopped by Claude
+Code under host memory pressure, so 4 are NOT JUDGED: retired-key guard, L2 at-cap (test fixed), C10
+unconfirmed stop (new twin), S5 fallback. Re-run needs the Owner's go. Totals: 13 of 17 KILLED, 4 not
+judged; the C10 survivor has a test (green) whose kill is among the 4 still unproven.
 - `tools/test_mission_capsule_faults.py` (V-MCF-*): every halt shape x owner state (idle, busy, busy past
   bound, dead, UNKNOWN, WAITING_HUMAN), seal refused, recovery refused, certify deadline below and at the
   cap, no note, claim takeover, crash between each pair of effects (seal / authorize / halt / reap /

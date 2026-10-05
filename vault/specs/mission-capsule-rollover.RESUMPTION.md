@@ -122,16 +122,24 @@ scratchpad `gates.ps1` (11 suites: MV2, G23, MC, MCAP, CAP2, ROLLOVER, EPOCH, MQ
   at 12:38:08-09 (36/36 alone, same code). Named NOT built: C1/C4/C5/C8/C9, arm->bound audit link,
   11.x source mutants. Pre-commit review was inline (pp-code-reviewer dispatch blocked by a peer's agent).
   T8 stays HELD.
-- PEER REQUEST (pane claude-power-pack-4a, 2026-10-05), NOT in the approved plan, NOT acted on: stop_owner
-  treats a pooled `claude bg-spare` pid (host session done/stopped, argv without --session-id) as "not
-  terminated" and blocks relay forever (GEX44 m-f011d7fdebc9); proposal + 3 tests in
-  vault/programs/cognitive-economy/gen2/handoffs/W2-gsd-mission-bg-spare.md (fa135b6b); then update the
-  GEX44 clone (DEPLOY hard-rule class). Needs the Owner's own go -- a peer's "Owner-approved" is not it.
-  Reply to claude-power-pack-4a with the fix hash if done.
+- 2026-10-05 Owner "1. go 2. yes":
+  - DRILLS: 16 mutants S2-S7, first pass 12 KILLED; 2 test defects found and fixed in `ab61c628` (C10
+    unconfirmed-stop twin, crash-proof cap test; MCF 19/19, MV2 72/72); re-run of the 5 open ones: see
+    spec 11.6 "Re-run". Specs: session e3839dd3 scratchpad s2_s7_mutants.json + redo_mutants.json.
+  - BG-SPARE: `b2b28818` (stop_owner releases a daemon pooled pid after host done; V-MC-STOP-POOLED-* x5),
+    merged as `876be2e4`. DEPLOYED to GEX44 install (~/.claude/skills/claude-power-pack) 339ccaa9 ->
+    b2b28818 by ff; backup ~/.claude/backups/pp-predeploy-20261005T110759Z; first try auto-rolled back on
+    smoke red, cause measured (below), second try DEPLOY OK; sweeps 13:13/13:18 exit 0. Peer replied.
+  - E1 m-f011d7fdebc9 relayed to epoch 3 at 10:57Z BEFORE the deploy (old spare exited by itself); its
+    epoch-3 pid 4168684 is itself a bg-spare, so the fix applies to its next rotation.
+  - GEX44 env debt (not regressions): V-MC-PLAN-FACTS-REFUSES-OVERLAP red there at 339ccaa9 too
+    (unexplained); G23 capped card is cut before <TMP> masking, so it depends on the temp-root length
+    (laptop: 12 chars shorter -> +36 B; GEX44 32/32 with a 32-char TMPDIR). Fixing it changes the golden
+    = re-capture = Owner decision.
 
 **Next 3 actions.**
-1. Ask the Owner for the go to re-run the deferred mutation drills (S2-S7) when host memory allows.
-2. Ask the Owner whether to act on the peer bg-spare stop_owner fix + GEX44 clone update (not approved).
-3. Optional T7 tail if the Owner wants it: fault rows C1/C4/C5/C8/C9 + an arm ledger row for the audit.
+1. Ask the Owner: fix G23's temp-length dependence (needs a golden re-capture) or keep the matched-TMPDIR rule.
+2. Optional T7 tail: fault rows C1/C4/C5/C8/C9 + an arm ledger row for the audit.
+3. Investigate V-MC-PLAN-FACTS-REFUSES-OVERLAP on GEX44 (environment, pre-existing).
 
-**Start.** `git log --oneline -8` (confirm 4f150d0e), then ask action 1 and 2 as one question.
+**Start.** `git log --oneline -8` (confirm 876be2e4 + ab61c628), then ask action 1.
