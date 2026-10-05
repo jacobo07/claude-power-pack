@@ -155,6 +155,30 @@ def main() -> int:
         else:
             _fail("V-REACH-EXEMPTION", "exemption handling is not honest")
 
+        # V-REACH-DORMANT: tested, kept on purpose, called by nothing. The declaration
+        # is only an exemption while the test its note names exists, and it turns into an
+        # offender the moment the module becomes reachable (stale declaration = drift).
+        (repo / "tools" / "test_arbiter.py").write_text("", encoding="utf-8")
+        proven = {"modules": {"dead/arbiter": {"class": R.DORMANT,
+                                               "note": "kept; proven by tools/test_arbiter.py"}},
+                  "known_orphans": []}
+        unproven = {"modules": {"dead/arbiter": {"class": R.DORMANT,
+                                                 "note": "kept; proven by tools/test_gone.py"}},
+                    "known_orphans": []}
+        stale = {"modules": {"wired/helper": {"class": R.DORMANT,
+                                              "note": "proven by tools/test_arbiter.py"}},
+                 "known_orphans": []}
+        o_proven = R.offenders(R.scan(repo, registry=proven), registry=proven, repo_root=repo)
+        o_unproven = R.offenders(R.scan(repo, registry=unproven), registry=unproven, repo_root=repo)
+        o_stale = R.offenders(R.scan(repo, registry=stale), registry=stale, repo_root=repo)
+        got = (not any(o["unit"] == "dead/arbiter" for o in o_proven),
+               any(o["unit"] == "dead/arbiter" for o in o_unproven),
+               any(o["unit"] == "wired/helper" and o["status"] == R.REACHABLE for o in o_stale))
+        if all(got):
+            _ok("V-REACH-DORMANT", "proven DORMANT exempts; missing test does not; reachable DORMANT is stale")
+        else:
+            _fail("V-REACH-DORMANT", f"proven_exempt/unproven_offends/stale_offends = {got}")
+
         # --- the scheduled-task surface (sealed 2026-07-27) ---------------------
         daemon = repo / "tools" / "daemon.ps1"
 

@@ -54,7 +54,23 @@ LIBRARY = "LIBRARY"        # imported by siblings only; never an entrypoint
 DEPRECATED = "DEPRECATED"  # dead on purpose, retained for history
 PLANNED = "PLANNED"        # wiring pending; MUST carry an OWNER_QUEUE row
 SCHEDULED = "SCHEDULED"    # driven by a scheduled task, not by the harness
-VALID_CLASSES = (LIBRARY, DEPRECATED, PLANNED, SCHEDULED)
+DORMANT = "DORMANT"        # tested, kept on purpose, no live caller; note names its test
+VALID_CLASSES = (LIBRARY, DEPRECATED, PLANNED, SCHEDULED, DORMANT)
+
+# A DORMANT declaration is only honest while the test that keeps the module alive
+# exists; a note naming none, or naming a deleted one, is not an exemption.
+_DORMANT_TEST = re.compile(r"\btools/test_\w+\.py\b")
+
+
+def _declared_class(entry: dict | None, root: Path) -> str | None:
+    """The exemption class a registry entry really grants, or None."""
+    klass = (entry or {}).get("class")
+    if klass not in VALID_CLASSES:
+        return None  # a malformed exemption is not an exemption
+    if klass == DORMANT and not any(
+            (root / t).is_file() for t in _DORMANT_TEST.findall((entry or {}).get("note", ""))):
+        return None
+    return klass
 
 REGISTRY_REL = "vault/liveness/reachability_registry.json"
 
@@ -577,9 +593,7 @@ def scan(repo_root: Path | None = None, registry: dict | None = None) -> list[di
     rows: list[dict] = []
     for unit in sorted(known):
         declared = reg["modules"].get(unit) or {}
-        klass = declared.get("class")
-        if klass is not None and klass not in VALID_CLASSES:
-            klass = None  # a malformed exemption is not an exemption
+        klass = _declared_class(declared, root)
         if unit in via:
             status = REACHABLE
         elif not _unit_path(root, unit).is_file():
@@ -608,19 +622,21 @@ def offenders(rows: list[dict], registry: dict | None = None,
     reg = registry if registry is not None else load_registry(repo_root)
     baseline = set(reg.get("known_orphans", []))
     declared = reg.get("modules", {})
+    root = Path(repo_root or _repo_root())
 
     def _klass(r: dict) -> str | None:
         """The registry HANDED TO THIS CALL wins over whatever scan() baked into the row.
         Otherwise passing a registry here would silently do half the job -- exemptions
         ignored, debt honoured -- and a caller would never see the difference."""
-        k = (declared.get(r["unit"]) or {}).get("class", r["klass"])
-        return k if k in VALID_CLASSES else None
+        entry = declared.get(r["unit"])
+        return _declared_class(entry, root) if entry is not None else r["klass"]
 
+    # A DORMANT module that became reachable carries a stale declaration: the registry
+    # now says something false about it, so it fails the gate until the row is removed.
     return [
         r for r in rows
-        if r["status"] != REACHABLE
-        and _klass(r) is None
-        and r["unit"] not in baseline
+        if (r["status"] != REACHABLE and _klass(r) is None and r["unit"] not in baseline)
+        or (r["status"] == REACHABLE and _klass(r) == DORMANT)
     ]
 
 
@@ -679,6 +695,10 @@ def _report_md(rows: list[dict], offs: list[dict]) -> str:
         "|---|---|---|",
     ]
     lines += [f"| {r['unit']} | {r['status']} | {r['via'] or '-'} |" for r in dead]
+    stale = [r for r in offs if r["status"] == REACHABLE]
+    if stale:
+        lines += ["", "## Stale DORMANT declarations (now reachable: remove the row)", ""]
+        lines += [f"- {r['unit']} via {r['via']}" for r in stale]
     return "\n".join(lines) + "\n"
 
 

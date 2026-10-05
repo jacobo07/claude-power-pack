@@ -11,6 +11,26 @@
     "session_resilience/ui_state"
   ],
   "modules": {
+    "craif/oier": {
+      "class": "DORMANT",
+      "note": "DORMANT by Owner decision 4 (2026-10-04, cognitive-economy pillar T): kept on purpose, no live caller. Proven by tools/test_efaif_residues.py."
+    },
+    "dataset_first/transduction": {
+      "class": "DORMANT",
+      "note": "DORMANT by Owner decision 4 (2026-10-04, cognitive-economy pillar T): kept on purpose, no live caller. Wiring awaits OWNER_QUEUE item (c). Proven by tools/test_transduction.py."
+    },
+    "done_gate/architectural_truth": {
+      "class": "DORMANT",
+      "note": "DORMANT by Owner decision 4 (2026-10-04, cognitive-economy pillar T): kept on purpose, no live caller. Doctrine names it the Grader; nothing invokes it. Proven by tools/test_architectural_truth.py."
+    },
+    "fable_distillation/fd_04_acceleration": {
+      "class": "DORMANT",
+      "note": "DORMANT by Owner decision 4 (2026-10-04, cognitive-economy pillar T): kept on purpose, no live caller. Proven by tools/test_fd04_acceleration.py."
+    },
+    "sqi/ratchet": {
+      "class": "DORMANT",
+      "note": "DORMANT by Owner decision 4 (2026-10-04, cognitive-economy pillar T): kept on purpose, no live caller. Reached only by the manual tools/run_sqi.py. Proven by tools/test_sqi_ratchet.py."
+    },
     "external_assimilation/__init__": {
       "class": "LIBRARY",
       "note": "Package marker for the one vendored-code bridge. Reached in production through tools/gsd_mission.py -> tools/plan_graph_check.py -> node_bridge, a tool->tool hop this scanner does not follow (red team R2)."
