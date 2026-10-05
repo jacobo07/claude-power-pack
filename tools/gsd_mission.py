@@ -1560,6 +1560,26 @@ def _capsule_certify_check(rec: dict, row: dict, now: float, sessions=None, pid_
     return False
 
 
+def _capsule_note_request() -> str:
+    """Spec 11.4: the one question asked of an idle owner that left no note (NOTE_TAG is defined below)."""
+    return ("capsule-v2: this worker is about to be rotated and left no hand-off note. Do not start new work. "
+            f"End this reply with a line starting `{NOTE_TAG}` followed by: what you finished, what is half "
+            "done (files, uncommitted changes, background tasks), and the next concrete step.")
+
+
+def _owner_note(src: dict) -> tuple[str, dict | None]:
+    """(note, packet) the owner of `src` left: an explicit `handoff --note` -- while in HANDOFF, or while
+    `pending` still names THIS owner's hand-off (a refused seal moves the mission to BLOCKED and must not
+    lose the note it was refused for; spec 11.4) -- else its transcript's last hand-off note."""
+    owner_sid = (src.get("owner") or {}).get("session_id")
+    pend = src.get("pending") or {}
+    explicit = src["state"] == HANDOFF or (pend.get("kind") == "handoff" and owner_sid
+                                           and pend.get("from") == owner_sid)
+    note = ((src.get("note") if explicit else "")
+            or (handoff_note_from_transcript(owner_sid) if owner_sid else "") or "")
+    return note, (src.get("packet") if explicit else None)
+
+
 def _capsule_seal(rec: dict, origins: list[str], *, work_dir: str, capsule_io: dict | None = None,
                   gate: bool = True, note_rec: dict | None = None) -> tuple[str | None, dict | None, list[str]]:
     """Seal the capsule of `rec`'s epoch, trying `origins` in order: (origin, seal, reasons) for the
@@ -1567,11 +1587,7 @@ def _capsule_seal(rec: dict, origins: list[str], *, work_dir: str, capsule_io: d
     reasons). The note and packet are the predecessor's own (`note_rec`, default `rec`): an explicit
     `handoff --note` only while THIS owner is in HANDOFF, else its transcript's last hand-off."""
     import mission_capsule as mc
-    src = note_rec or rec
-    owner_sid = (src.get("owner") or {}).get("session_id")
-    note = ((src.get("note") if src["state"] == HANDOFF else "")
-            or (handoff_note_from_transcript(owner_sid) if owner_sid else "") or "")
-    packet = src.get("packet") if src["state"] == HANDOFF else None
+    note, packet = _owner_note(note_rec or rec)
     key = mc.capsule_key(rec)
     reasons: list[str] = []
     for origin in origins:
@@ -1696,6 +1712,29 @@ def _halt_recover(halted: dict, pre: dict, cont: dict, halt_wd: str, now: float,
     return new
 
 
+def _capsule_ask_note(rec: dict, row: dict, sessions, pid_alive, runner, stop_runner, now: float,
+                      progress: dict | None, work_dir: str | None) -> None:
+    """Spec 11.4: continue the SAME session once with the hand-off question. The asked-flag is written
+    FIRST, so a stop or wake that fails falls through to the degraded fallback on the next turn end
+    instead of asking again for ever. A same-session continuation hands nothing over (spec 3.6)."""
+    import gsd_epoch as ge
+    mid = rec["mission_id"]
+    rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="capsule_note_asked",
+                     now=now, capsule_note_asked={"epoch": rec["epoch"], "at": now},
+                     reason="capsule-v2: no hand-off note at the turn end; asking the worker once")
+    ok, how = stop_owner(rec.get("owner"), sessions, pid_alive=pid_alive, runner=stop_runner)
+    row["stop"] = how
+    if not ok:
+        row["held"] = f"capsule-v2 note request: the owner did not stop ({how}); fallback at its next turn end"
+        return
+    row["continue"] = ge.continue_worker(
+        mid, rec, prompt=_capsule_note_request(),
+        decision={"decision": ge.CONTINUE, "cause": ge.TURN_CONTINUATION,
+                  "reason": "capsule-v2: hand-off note requested before rotation"},
+        runner=runner, stop_runner=stop_runner, now=now, progress=progress, work_dir=work_dir)
+    row["action"] = "capsule_note_requested"
+
+
 def _seal_refusal_fp(work_dir: str) -> str | None:
     """Spec 11.2: what a re-judge could see differently -- HEAD and the dirty-path count, from git
     alone (no GSD query). None when git cannot answer: unmeasured, never "unchanged"."""
@@ -1777,6 +1816,17 @@ def _capsule_rotate(rec: dict, row: dict, act: str, sessions, pid_alive, now: fl
     overdue = first is not None and now - float(first) >= grace
     if idle or done:
         origins = ["worker_handoff"] + (["supervisor_fallback"] if overdue else [])
+        if not _owner_note(rec)[0]:
+            # Spec 11.4: a turn that ended with no note is asked for one ONCE per epoch, in the same
+            # session (nothing sealed, nothing handed over); still none at its next turn end -> the
+            # degraded fallback at once, not after a 30-minute grace that cannot produce a note.
+            asked = (rec.get("capsule_note_asked") or {}).get("epoch") == rec["epoch"]
+            if not asked and ge.continuation_enabled():
+                row["capsule_note_request"] = True
+                row["held"] = "capsule-v2: the worker left no hand-off note; asking it once (same session)"
+                return None
+            if asked:
+                origins = ["supervisor_fallback"]
     elif verdict == DEAD:
         origins = ["recovery"]                       # G21: a crashed predecessor, degraded
     else:
@@ -2178,6 +2228,9 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     # session continuation hands nothing over and takes no capsule (spec 3.6).
                     rotated = _capsule_rotate(rec, row, act, sessions, pid_alive, now, work_dir, capsule_io)
                     if rotated is None:
+                        if row.pop("capsule_note_request", None):
+                            _capsule_ask_note(rec, row, sessions, pid_alive, runner, stop_runner, now,
+                                              progress, work_dir)
                         continue
                     rec = rotated
                 if act in ("relay", "replace") and rec.get("owner"):

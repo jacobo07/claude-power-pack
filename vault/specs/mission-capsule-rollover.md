@@ -240,7 +240,7 @@ the seal), so the supervisor passes no `now` to compile or gate. Gate: `tools/te
 one" -- such a worker's handoff seal is refused and the fallback takes over after the grace; (b) the guard's
 deny message prints `python <marker.resume_cmd> resume`, but `resume_cmd` is the mission command
 (`/gsd-autonomous`), not the script path -- a T4/T5 seam defect in the instruction text, the deny itself is
-correct; (c) T7 fault matrix + chain audit; (d) T8 real run (held).
+correct; (c) T7 fault matrix + chain audit; (d) T8 real run (held). **(a) BUILT 2026-10-05, see 11.4.**
 
 **Review 2026-10-03 (pp-code-reviewer, APPROVE with notes, 0 CRITICAL/HIGH).** M1 FIXED: `capsule_v2(rec)`
 ran outside supervise's per-mission isolation, so one undecidable v2 record ended the pass for every later
@@ -321,7 +321,13 @@ cleared so one deadline counts once; a stop that is not confirmed is retried, no
   path; at the cap the mission goes BLOCKED `resume_not_certified` for a human. The new successor's claim
   takes over by rollover's T2 lease (30 min = the deadline). Tests V-MV2-L2-*.
 
-### 11.4 No-note (S5)
+### 11.4 No-note (S5) -- status LIVE in code
+Built as `_owner_note` (shared by the seal), the ask in `_capsule_rotate`, and `_capsule_ask_note` in
+supervise (asked-flag first, then stop_owner + continue_worker). With continuation OFF
+(`CPP_MISSION_CONTINUATION=off`) nobody can be asked, and T6's grace path stands (control V-MV2-NO-NOTE-
+HANDOFF-REFUSED). Found while building: an explicit note was readable only in state HANDOFF, so a refused
+seal (-> BLOCKED) lost the note it was refused for; it now counts while `pending` names this owner's hand-off.
+The second turn end waits for gsd_epoch's continuation deadline like any continuation.
 A v2 ROTATE of a LIVE idle owner with no note (explicit or transcript) asks ONCE per epoch: the same
 session is continued with the handoff instruction (`gsd_epoch.continue_worker`, ledger
 `capsule_note_asked` {epoch}); nothing is sealed or stopped that pass. At its next turn end a note ->

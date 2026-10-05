@@ -502,6 +502,58 @@ def deadline_section() -> None:
     check("V-MV2-L2-CONTROL-NO-BUDGET-HOLDS", p["action"] == "none" and "capsule hold" in p["reason"], str(p))
 
 
+def note_section() -> None:
+    """Spec 11.4 (S5): an idle owner with no note is asked ONCE per epoch (same session, nothing sealed);
+    still none at its next turn end -> the degraded fallback at once. An explicit note survives BLOCKED.
+    The continuation-off control is m-fb in main (T6's grace path)."""
+    resumed = []
+
+    def resume_run(argv, cwd):
+        if "--resume" in argv:
+            resumed.append(argv)
+            sid = argv[argv.index("--resume") + 1]
+            return R(f"resumed · {sid[:8]} · {sid}")
+        return launch_run(argv, cwd)
+
+    def sup_n(now, mid):
+        return gm.supervise(now=now, sessions=host(mid), gsd_status=GSD_OK, runner=resume_run,
+                            stop_runner=stop_run, pid_alive=gone, capsule_io=io())
+
+    wipe()
+    mission("m-nn")
+    n_s, n_l = len(stops), len(launches)
+    rows = sup_n(NOW, "m-nn")
+    rec = gm.load("m-nn")
+    check("V-MV2-NOTE-ASKED-ONCE",
+          len(resumed) == 1 and gm.NOTE_TAG in resumed[-1][-1] and (rec.get("capsule_note_asked") or {}).get("epoch") == 1
+          and len(launches) == n_l and sealed("mission-m-nn-e1") is None and rec["state"] == gm.LAUNCHING
+          and "capsule_note_asked" in events("m-nn"),
+          f"resumed={len(resumed)} asked={rec.get('capsule_note_asked')} state={rec['state']} "
+          f"action={row_of(rows, 'm-nn').get('action')} held={row_of(rows, 'm-nn').get('held')}")
+    # the resumed session acks; its next turn end STILL has no note -> fallback at once (no 30-min wait)
+    gm.ack_session("s-m-nn", now=NOW + 5)
+    # Past the continuation deadline: a turn end is held until the resumed turn shows in the transcript
+    # or that deadline passes, and this harness has no transcript. Still well inside the 30-min grace.
+    import gsd_epoch as ge
+    rows = sup_n(NOW + 5 + ge.CONTINUATION_DEADLINE_S + 1, "m-nn")
+    rec = gm.load("m-nn")
+    check("V-MV2-NOTE-STILL-NONE-FALLBACK-AT-ONCE",
+          (rec.get("capsule_stop_authorized") or {}).get("origin") == "supervisor_fallback" and len(resumed) == 1
+          and len(launches) == n_l + 1, f"auth={rec.get('capsule_stop_authorized')} resumed={len(resumed)} "
+                                        f"row={row_of(rows, 'm-nn').get('action')}/{row_of(rows, 'm-nn').get('held')}")
+    # an explicit note written in HANDOFF still counts after the mission went BLOCKED (no question asked)
+    wipe()
+    mission("m-nb", note="phase 2: the gate is wired, tests next")
+    gm.transition("m-nb", expect_epoch=1, expect_state=gm.HANDOFF, event="t", now=NOW, state=gm.BLOCKED,
+                  capsule_hold={"kind": "seal_refused", "reason": "x", "since": NOW})
+    n_r = len(resumed)
+    sup_n(NOW + 10, "m-nb")
+    rec = gm.load("m-nb")
+    check("V-MV2-NOTE-EXPLICIT-SURVIVES-BLOCKED",
+          len(resumed) == n_r and (rec.get("capsule_stop_authorized") or {}).get("origin") == "worker_handoff",
+          f"auth={rec.get('capsule_stop_authorized')} resumed={len(resumed) - n_r}")
+
+
 def main() -> int:
     # --- arm: G11 + field absent on legacy ------------------------------------------------------
     try:
@@ -629,13 +681,18 @@ def main() -> int:
           rec["state"] == gm.BLOCKED and (rec.get("capsule_hold") or {}).get("kind") == "seal_refused"
           and len(stops) == n_s and len(launches) == n_l, f"{rec['state']} hold={rec.get('capsule_hold')}")
 
-    # control twin: no note -> handoff refused, clock; past grace the degraded fallback seals and stops
+    # control twin: no note -> handoff refused, clock; past grace the degraded fallback seals and stops.
+    # With same-session continuation OFF: nobody can be asked for a note (spec 11.4), so T6's grace path stands.
     wipe()
     mission("m-fb")
     n_s, n_l = len(stops), len(launches)
-    run(host("m-fb"))
-    check("V-MV2-NO-NOTE-HANDOFF-REFUSED", len(stops) == n_s and gm.load("m-fb").get("capsule_first_refused_at"))
-    run(host("m-fb"), now=NOW + 1800 + 1)
+    os.environ["CPP_MISSION_CONTINUATION"] = "off"
+    try:
+        run(host("m-fb"))
+        check("V-MV2-NO-NOTE-HANDOFF-REFUSED", len(stops) == n_s and gm.load("m-fb").get("capsule_first_refused_at"))
+        run(host("m-fb"), now=NOW + 1800 + 1)
+    finally:
+        os.environ.pop("CPP_MISSION_CONTINUATION", None)
     rec = gm.load("m-fb")
     cap = json.loads(ro.capsule_path("mission-m-fb-e1", STATE).read_text(encoding="utf-8")) \
         if ro.capsule_path("mission-m-fb-e1", STATE).is_file() else {}
@@ -735,6 +792,7 @@ def main() -> int:
     halt_section()
     backoff_section()
     deadline_section()
+    note_section()
     trap_hits = list(TRAP.rglob("*")) if TRAP.exists() else []
     check("V-MV2-TRAP-UNTOUCHED", not trap_hits, str(trap_hits[:3]))
     print(f"MV2_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
