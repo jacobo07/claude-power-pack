@@ -1,0 +1,288 @@
+{
+  "generated_at": "2026-10-05T21:19:39Z",
+  "window_days": 14,
+  "scope": [
+    "InfinityOps",
+    "io-liveqa"
+  ],
+  "samples_scanned": 1173,
+  "skipped": 2,
+  "skipped_detail": {
+    "no_usage": 2,
+    "no_meta": 0
+  },
+  "excluded_old": 443,
+  "excluded_out_of_scope": 1070,
+  "truncated_by_max_files": 0,
+  "unit": "first-call context = input_tokens + cache_creation_input_tokens + cache_read_input_tokens",
+  "by_agent_type": {
+    "Explore": {
+      "n": 14,
+      "min": 24428,
+      "p50": 25226,
+      "p90": 26309,
+      "max": 26380
+    },
+    "general-purpose": {
+      "n": 21,
+      "min": 85040,
+      "p50": 96831,
+      "p90": 159345,
+      "max": 159916
+    },
+    "gsd-code-reviewer": {
+      "n": 1,
+      "min": 82911,
+      "p50": 82911,
+      "p90": 82911,
+      "max": 82911
+    },
+    "gsd-executor": {
+      "n": 21,
+      "min": 85084,
+      "p50": 97700,
+      "p90": 98285,
+      "max": 163090
+    },
+    "gsd-phase-researcher": {
+      "n": 3,
+      "min": 95908,
+      "p50": 96311,
+      "p90": 96690,
+      "max": 96690
+    },
+    "gsd-plan-checker": {
+      "n": 3,
+      "min": 95807,
+      "p50": 96078,
+      "p90": 159209,
+      "max": 159209
+    },
+    "gsd-planner": {
+      "n": 5,
+      "min": 85569,
+      "p50": 99228,
+      "p90": 159455,
+      "max": 159455
+    },
+    "gsd-verifier": {
+      "n": 2,
+      "min": 97231,
+      "p50": 97231,
+      "p90": 97527,
+      "max": 97527
+    },
+    "oneshot-architect-auditor": {
+      "n": 8,
+      "min": 77486,
+      "p50": 78340,
+      "p90": 141768,
+      "max": 141768
+    },
+    "pp-code-reviewer": {
+      "n": 23,
+      "min": 62682,
+      "p50": 65473,
+      "p90": 129328,
+      "max": 130039
+    }
+  },
+  "by_agent_type_all_projects": {
+    "Explore": {
+      "n": 58,
+      "min": 16827,
+      "p50": 25574,
+      "p90": 26175,
+      "max": 28380
+    },
+    "bash-probe": {
+      "n": 1,
+      "min": 36152,
+      "p50": 36152,
+      "p90": 36152,
+      "max": 36152
+    },
+    "cdio-reviewer": {
+      "n": 4,
+      "min": 74836,
+      "p50": 74836,
+      "p90": 75136,
+      "max": 75136
+    },
+    "claude-code-guide": {
+      "n": 5,
+      "min": 117213,
+      "p50": 126544,
+      "p90": 126663,
+      "max": 126663
+    },
+    "code-reviewer": {
+      "n": 1,
+      "min": 98313,
+      "p50": 98313,
+      "p90": 98313,
+      "max": 98313
+    },
+    "collide-probe": {
+      "n": 1,
+      "min": 33542,
+      "p50": 33542,
+      "p90": 33542,
+      "max": 33542
+    },
+    "cpp-carrier-investigator": {
+      "n": 2,
+      "min": 47432,
+      "p50": 47432,
+      "p90": 47432,
+      "max": 47432
+    },
+    "cpp-carrier-verifier": {
+      "n": 13,
+      "min": 49009,
+      "p50": 49017,
+      "p90": 49020,
+      "max": 49033
+    },
+    "general-purpose": {
+      "n": 449,
+      "min": 81555,
+      "p50": 104919,
+      "p90": 157866,
+      "max": 169947
+    },
+    "gsd-code-fixer": {
+      "n": 9,
+      "min": 89530,
+      "p50": 111246,
+      "p90": 159413,
+      "max": 159413
+    },
+    "gsd-code-reviewer": {
+      "n": 26,
+      "min": 78453,
+      "p50": 90029,
+      "p90": 134332,
+      "max": 147674
+    },
+    "gsd-executor": {
+      "n": 134,
+      "min": 85084,
+      "p50": 106723,
+      "p90": 163090,
+      "max": 166770
+    },
+    "gsd-integration-checker": {
+      "n": 1,
+      "min": 81393,
+      "p50": 81393,
+      "p90": 81393,
+      "max": 81393
+    },
+    "gsd-pattern-mapper": {
+      "n": 8,
+      "min": 64383,
+      "p50": 103085,
+      "p90": 142230,
+      "max": 142230
+    },
+    "gsd-phase-researcher": {
+      "n": 37,
+      "min": 91160,
+      "p50": 104916,
+      "p90": 163822,
+      "max": 165153
+    },
+    "gsd-plan-checker": {
+      "n": 50,
+      "min": 90143,
+      "p50": 112730,
+      "p90": 161290,
+      "max": 162568
+    },
+    "gsd-planner": {
+      "n": 72,
+      "min": 85569,
+      "p50": 119015,
+      "p90": 161828,
+      "max": 163903
+    },
+    "gsd-roadmapper": {
+      "n": 2,
+      "min": 80259,
+      "p50": 80259,
+      "p90": 80398,
+      "max": 80398
+    },
+    "gsd-ui-checker": {
+      "n": 2,
+      "min": 78177,
+      "p50": 78177,
+      "p90": 127968,
+      "max": 127968
+    },
+    "gsd-ui-researcher": {
+      "n": 3,
+      "min": 82111,
+      "p50": 133140,
+      "p90": 133244,
+      "max": 133244
+    },
+    "gsd-verifier": {
+      "n": 32,
+      "min": 91727,
+      "p50": 113674,
+      "p90": 159021,
+      "max": 162814
+    },
+    "kcoo-g1": {
+      "n": 18,
+      "min": 71473,
+      "p50": 73603,
+      "p90": 135405,
+      "max": 135471
+    },
+    "kme-g1-ownership-arbiter": {
+      "n": 35,
+      "min": 71317,
+      "p50": 134370,
+      "p90": 135462,
+      "max": 135769
+    },
+    "kme-g2-production-reality": {
+      "n": 11,
+      "min": 75540,
+      "p50": 139773,
+      "p90": 140210,
+      "max": 140575
+    },
+    "kme-r1-evaluator-redteam": {
+      "n": 1,
+      "min": 138833,
+      "p50": 138833,
+      "p90": 138833,
+      "max": 138833
+    },
+    "kseip-c-capability-ownership-arbiter": {
+      "n": 3,
+      "min": 73324,
+      "p50": 119945,
+      "p90": 135359,
+      "max": 135359
+    },
+    "oneshot-architect-auditor": {
+      "n": 88,
+      "min": 63192,
+      "p50": 124040,
+      "p90": 148338,
+      "max": 151277
+    },
+    "pp-code-reviewer": {
+      "n": 105,
+      "min": 52758,
+      "p50": 73725,
+      "p90": 135558,
+      "max": 136926
+    }
+  }
+}

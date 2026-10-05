@@ -49,6 +49,16 @@ def main() -> int:
     check("V-RADM-TABLE-SANE", all(p["floor"] <= p["p50"] for p in profiles.values())
           and profiles["Explore"]["floor"] < profiles["gsd-executor"]["floor"] < profiles[ra.TOP_LEVEL]["floor"],
           "floor <= p50 everywhere; Explore < executor < top-level")
+    # The table is derived from the measured snapshot (tools/subagent_floor.py); a hand edit that drifts
+    # from the measurement goes red. top-level-worker is not a subagent and is not in the snapshot.
+    snap = json.loads((HERE.parent / "vault" / "config" / "subagent-floor.json").read_text(encoding="utf-8"))
+    measured = snap["by_agent_type"]
+    drift = {k: (v["floor"], (measured.get(k) or {}).get("min")) for k, v in profiles.items()
+             if k != ra.TOP_LEVEL and (v["floor"], v["p50"], v["n"]) != ((measured.get(k) or {}).get("min"),
+                                                                          (measured.get(k) or {}).get("p50"),
+                                                                          (measured.get(k) or {}).get("n"))}
+    check("V-RADM-TABLE-MATCHES-SNAPSHOT", not drift and set(measured) <= set(profiles),
+          f"drift {drift}; unlisted {sorted(set(measured) - set(profiles))}")
 
     heavy = {"envelope": W0R_ENV, "workers": [
         {"name": "orchestrator", "profile": ra.TOP_LEVEL, "calls": 40, "packet": 5_000},
