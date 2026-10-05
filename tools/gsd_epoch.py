@@ -398,6 +398,17 @@ def decide_turn_end(rec: dict, now: float | None = None, *, events: list[dict] |
                                   f"within {CONTINUATION_DEADLINE_S} s", "evidence": ev}
             return {"decision": HOLD, "cause": None, "mechanism": None, "evidence": ev,
                     "reason": "continuation in flight: its turn has not appeared in the transcript yet"}
+    # A packet set at an epoch >= the owner's is a work unit the owner predates (a worker launched for
+    # it bumps the epoch past it). Its context carries none of the new unit's working set; resuming only
+    # pays it on every call (C23b: m-3a1a8b1f7fed resumed a 256k WU-A session for WU-C under the ceiling).
+    pkt_epoch, own_epoch = rec.get("wu_packet_epoch"), owner.get("epoch")
+    if rec.get("wu_packet") and pkt_epoch is not None and own_epoch is not None \
+            and int(pkt_epoch) >= int(own_epoch):
+        return {"decision": ROTATE, "cause": TURN_CONTINUATION, "mechanism": FRESH,
+                "reason": f"new work unit: fresh worker (packet set at epoch {pkt_epoch}, "
+                          f"owner epoch {own_epoch})",
+                "evidence": {**ev, "trigger": "new_work_unit", "wu_packet_epoch": pkt_epoch,
+                             "owner_epoch": own_epoch}}
     n = tokens(sid) if sid else None
     ev["context_tokens"] = n
     ceiling = int(rec.get("continue_max_tokens") or CONTINUE_MAX_TOKENS)

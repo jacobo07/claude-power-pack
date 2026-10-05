@@ -155,6 +155,37 @@ def main() -> int:
           and c.get("autocompact") == "300k", str(rc))
     check("V-ENV-CLI-BARE-REFUSED", refused(lambda: gm._cli(["envelope", "--mission", "m-cli"])))
 
+    # 6. C23b: a CHANGED packet records the epoch it was set at; the same packet again does not move it.
+    _running("m-wu")
+    a = Path(TMP) / "WU-1.md"
+    a.write_text("# WU-1\n", encoding="utf-8")
+    r1 = gm.set_envelope("m-wu", wu_packet=str(a), now=NOW)
+    check("V-ENV-PACKET-EPOCH-RECORDED", r1.get("wu_packet_epoch") == 1, str(r1.get("wu_packet_epoch")))
+    gm.transition("m-wu", expect_epoch=1, expect_state=gm.RUNNING, event="t_bump", now=NOW, epoch=3)
+    r2 = gm.set_envelope("m-wu", wu_packet=str(a), now=NOW + 1)
+    check("V-ENV-SAME-PACKET-KEEPS-EPOCH", r2.get("wu_packet_epoch") == 1, str(r2.get("wu_packet_epoch")))
+    a.write_text("# WU-1 edited\n", encoding="utf-8")
+    r3 = gm.set_envelope("m-wu", wu_packet=str(a), now=NOW + 2)
+    check("V-ENV-CHANGED-SHA-MOVES-EPOCH", r3.get("wu_packet_epoch") == 3, str(r3.get("wu_packet_epoch")))
+    b = Path(TMP) / "WU-2.md"
+    b.write_text("# WU-1 edited\n", encoding="utf-8")
+    gm.transition("m-wu", expect_epoch=3, expect_state=gm.RUNNING, event="t_bump", now=NOW, epoch=4)
+    r4 = gm.set_envelope("m-wu", wu_packet=str(b), now=NOW + 3)
+    check("V-ENV-CHANGED-PATH-MOVES-EPOCH", r4.get("wu_packet_epoch") == 4, str(r4.get("wu_packet_epoch")))
+    r5 = gm.set_envelope("m-wu", model="sonnet", now=NOW + 4)
+    check("V-ENV-NO-PACKET-KEEPS-EPOCH", r5.get("wu_packet_epoch") == 4, str(r5.get("wu_packet_epoch")))
+
+    # 7. C23b: continue_max_tokens setter, same refusals as the other counts, and its CLI flag.
+    r6 = gm.set_envelope("m-wu", continue_max_tokens="170k", now=NOW + 5)
+    check("V-ENV-CONTINUE-MAX-SET", r6.get("continue_max_tokens") == 170_000, str(r6.get("continue_max_tokens")))
+    seq = gm.load("m-wu")["seq"]
+    for name, val in {"ZERO": "0", "NEGATIVE": "-5", "GARBAGE": "abc"}.items():
+        check(f"V-ENV-CONTINUE-MAX-REFUSE-{name}",
+              refused(lambda v=val: gm.set_envelope("m-wu", continue_max_tokens=v, now=NOW)))
+    check("V-ENV-CONTINUE-MAX-REFUSAL-WRITES-NOTHING", gm.load("m-wu")["seq"] == seq)
+    rc = gm._cli(["envelope", "--mission", "m-cli", "--continue-max-tokens", "250k"])
+    check("V-ENV-CLI-CONTINUE-MAX", rc == 0 and gm.load("m-cli").get("continue_max_tokens") == 250_000, str(rc))
+
     print(f"ENVELOPE_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
