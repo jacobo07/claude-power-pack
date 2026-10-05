@@ -39,3 +39,20 @@ Isolation: shared checkout refuses background edits; work in linked worktree
   MISSING-PACKET-REFUSES); M2 drop empty-field refusal -> 3 red (REFUSE-NO-FIELD, REFUSAL-WRITES-NOTHING,
   CLI-BARE-REFUSED). First drill run showed LAUNCH-SENDS-PACKET self-agreeing with the mutant; gate tightened
   to judge against the packet path, re-drilled red.
+
+## Landed
+- Worktree branch `cwops/c23` 51518fe4; shared checkout `feature/knowledge-acquisition` 908902dd (path-scoped,
+  4 paths, subject verified; HEAD had moved to 7ea78fa3 but none of the 4 paths changed since b23e94f1).
+
+## Mission m-3a1a8b1f7fed (live, ~/.claude/state)
+- Before: BLOCKED e1, owner_hold "Compiled execution ... resumes on the compiled packet path (CPP c3)",
+  envelope empty, no wu_packet. Measured spend since created_at: 6,078,711 processed (1 transcript dir).
+- `python tools/gsd_mission.py envelope --mission m-3a1a8b1f7fed --token-estimate 16M --model sonnet
+  --autocompact 300k` -> ENVELOPE SET; after: BLOCKED e1 seq 12, hold intact, created_at unchanged,
+  ledger `envelope_set` "token_estimate None -> 16000000; autocompact None -> 300k; model None -> sonnet".
+- Hold NOT released (decision, within authority): the mission has no work-unit packet. Phase 1 is done and
+  the next unit (WU-A, P2+P3) is plan Next item 2 (t2), not built yet. Released without a packet, the
+  supervisor would relaunch `/gsd-autonomous`, the overhead the hold exists to avoid.
+- To release, once the WU-A packet exists:
+  `python tools/gsd_mission.py envelope --mission m-3a1a8b1f7fed --wu-packet <abs path to WU-A packet>`
+  then `python tools/gsd_mission.py release --mission m-3a1a8b1f7fed`.
