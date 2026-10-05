@@ -25,10 +25,10 @@ UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS.
 
 ## Phases
 
-- [ ] **Phase 1: Judgement task bank for 11 rules** - one task per rule, validated without model calls, frozen
-- [ ] **Phase 2: E1 runner with the stopping contract as tested code** - GEX44 port of the P3 judgement path
-- [ ] **Phase 3: Counted runs** - pairs in contract order until a stop condition
-- [ ] **Phase 4: Report** - per-rule decisions, measured tokens, limits; no ~/.claude change
+- [x] **Phase 1: Judgement task bank for 11 rules** - one task per rule, validated without model calls, frozen (completed 2026-10-05)
+- [x] **Phase 2: E1 runner with the stopping contract as tested code** - GEX44 port of the P3 judgement path (completed 2026-10-05)
+- [x] **Phase 3: Counted runs** - pairs in contract order until a stop condition (completed 2026-10-05)
+- [x] **Phase 4: Report** - per-rule decisions, measured tokens, limits; no ~/.claude change (completed 2026-10-05)
 
 ## Phase Details
 
@@ -42,11 +42,34 @@ bank: a stub module with `...` bodies and a docstring naming the caller and what
 **Depends on**: Nothing
 **Requirements**: E1-BANK
 **Success Criteria** (what must be TRUE):
+
   1. Every task's judgement checks test the decision its rule governs, and its rule is named in the bank index.
   2. Validation with no model calls: each selftest is OK, and a naive solution fails ONLY its judgement
      checks. The log is committed beside the bank.
   3. No grader is reachable from a session's working tree. Proven by listing the run tree a session would see.
   4. The bank is frozen by one commit whose hash is recorded in `e1/BANK_FROZEN_AT`.
+
+**Plans:** 5/5 plans complete
+
+Plans:
+**Wave 1**
+
+- [x] 01-01-PLAN.md — tracer: driver `_e1_common.py`, POSIX `validate_bank.py`, its V-E1BANK tests, index builder; gceg + eaat tasks validated in fresh BASE worktrees (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [x] 01-02-PLAN.md — hfee, dcme, vpdt judgement tasks (wave 2)
+- [x] 01-03-PLAN.md — cpc, slai, pert judgement tasks (wave 2)
+- [x] 01-04-PLAN.md — det, pyt, cr judgement tasks (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [x] 01-05-PLAN.md — move bank-draft/ to bank/, freeze-check, index.json, VALIDATE-E1 11/11 log, single freeze commit, BANK_FROZEN_AT (wave 3)
+
+**Cross-cutting constraints:**
+
+- `validate_bank.py validate --only <id>` prints VALIDATE-E1 1/1 for each, with bank_in_tree=none and worktree_removed=True
+- Every judgement check in these files tests the decision its rule governs, recorded in JUDGES
 
 ### Phase 2: E1 runner with the stopping contract as tested code
 
@@ -56,6 +79,7 @@ transcript). Arm B = `--settings {"claudeMdExcludes": [the 13 absolute paths und
 **Depends on**: Phase 1
 **Requirements**: E1-RUNNER
 **Success Criteria** (what must be TRUE):
+
   1. Every stopping-contract clause is code: order by rule bytes, alternation, one pair per rule, the rerun-once
      validity rule, per-rule decision, harm stop (4 losses in the first 8 valid pairs), spend stop (17M summed
      counted context), and the gate-1 positive control on the first pair (B at least 15,000 below A).
@@ -63,12 +87,37 @@ transcript). Arm B = `--settings {"claudeMdExcludes": [the 13 absolute paths und
   3. Before the first counted run, the runner re-checks the 13 LF sha256 pins against the packet and refuses
      on any mismatch.
 
+**Plans:** 4/4 plans complete
+
+Plans:
+**Wave 1**
+
+- [x] 02-01-PLAN.md — tracer: one counted run of J-gceg_product_page end to end with a fake CLI process (worktree at BASE, scrub + stub, red precondition, session argv, grade, transcript metrics, validity); e1_contract.py validity/spend; no-model guard (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [x] 02-02-PLAN.md — stopping contract as pure code: order, alternation, decision table, positive control, harm, spend, replay/next_action state machine, pair and stop records (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [x] 02-03-PLAN.md — preflight refusals: pins, CLI path/version, bank drift vs BANK_FROZEN_AT, freeze_check, BASE, index order, results; `preflight` subcommand (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [x] 02-04-PLAN.md — durable campaign loop: drive, reconcile, commit per pair, resume; `plan` and `run` subcommands; E1_PASS=60/60 (wave 4)
+
+**Cross-cutting constraints:**
+
+- Plans are sequential: all four write `vault/programs/cognitive-economy/e1/test_e1_runner.py` (one phase gate, `E1_PASS=n/n`)
+- No model call in any test; `e1_runner.py run` is never invoked in Phase 2 (only `plan` and `preflight` from a shell)
+
 ### Phase 3: Counted runs
 
 **Goal**: Run `e1_runner.py run` to its contract stop. Results go to `e1/results.jsonl`, one commit per pair.
 **Depends on**: Phase 2
 **Requirements**: E1-RUNS
 **Success Criteria** (what must be TRUE):
+
   1. Every counted run is recorded with validity, grade, first-call context, total context and output tokens.
   2. The run ended on a contract condition (all 11 decided, harm stop, spend stop or positive-control stop), and
      that condition is named in the last record.
@@ -82,5 +131,6 @@ ADDENDUM-E1.
 **Depends on**: Phase 3
 **Requirements**: E1-REPORT
 **Success Criteria** (what must be TRUE):
+
   1. Each decision cites its pair's run ids. No decision uses tokens as a tie-break.
   2. The report proposes the move list for the Owner and changes nothing under `~/.claude`.

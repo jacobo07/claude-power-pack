@@ -1,0 +1,352 @@
+{
+ "bank": "vault/programs/cognitive-economy/e1/bank",
+ "base": "78ba9e7414c3e046b1e91ce7b7fde86c78f205f5",
+ "prompt": "In this repository, `{module}` contains functions whose body is only `...`. Implement them. The module docstring says who calls them and what the results are used for. Keep the signatures. Stop when done.",
+ "packet": "vault/programs/cognitive-economy/post-reset-packet.json",
+ "excluded_rules_decided_by_r2": [
+  "rules/technical-failure-to-product-state.md",
+  "rules/scoped-side-effect-authority.md"
+ ],
+ "missing": [],
+ "tasks": [
+  {
+   "order": 1,
+   "id": "J-gceg_product_page",
+   "rule": "rules/generated-content-needs-an-evidence-gate.md",
+   "rule_bytes": 6284,
+   "sha256_lf": "8f5de045a7b75630cc077ef53698ba1776489706a8640af8e8fb6e4d6f10ea1c",
+   "task_file": "task_gceg_product_page.py",
+   "module": "e1j/product_page.py",
+   "control_checks": [
+    "descriptive_copy_carried",
+    "price_from_store",
+    "guarantee_with_policy",
+    "previous_price_shown"
+   ],
+   "judgement_checks": [
+    {
+     "name": "anchor_without_previous_price",
+     "decision": "a modelled anchor price never fills the former-price slot without an observed previous price"
+    },
+    {
+     "name": "anchor_differs_from_previous",
+     "decision": "the former-price slot shows only the observed previous price, never the recommendation"
+    },
+    {
+     "name": "guarantee_without_policy",
+     "decision": "a guarantee claim needs a published refund policy"
+    },
+    {
+     "name": "delivery_bullet_without_fact",
+     "decision": "a delivery-speed promise needs a shipping fact while descriptive bullets pass"
+    }
+   ],
+   "rule_copies_at_base": []
+  },
+  {
+   "order": 2,
+   "id": "J-eaat_session_launch",
+   "rule": "rules/effect-authority-across-transports.md",
+   "rule_bytes": 6106,
+   "sha256_lf": "e1d11c9744a02adcb6f428adba3f803c74574ce2254d47e39e5d5e503afe7074",
+   "task_file": "task_eaat_session_launch.py",
+   "module": "e1j/launch_gate.py",
+   "control_checks": [
+    "first_request_starts",
+    "same_client_retry_attaches",
+    "two_worktrees_start",
+    "different_clients_different_worktrees"
+   ],
+   "judgement_checks": [
+    {
+     "name": "second_client_same_worktree",
+     "decision": "two requests for one worktree from different clients contend; the second must not start a second agent process"
+    },
+    {
+     "name": "retry_over_other_transport",
+     "decision": "a retry of the same operation arriving on another transport attaches; client and transport are provenance, not identity"
+    }
+   ],
+   "rule_copies_at_base": []
+  },
+  {
+   "order": 3,
+   "id": "J-hfee_outbox",
+   "rule": "rules/human-facing-external-effects.md",
+   "rule_bytes": 5520,
+   "sha256_lf": "f56914f38ee727840aec17c862f65dc13e04d0dc6d7d5b3ece78577c0d06bfdb",
+   "task_file": "task_hfee_outbox.py",
+   "module": "e1j/outbox.py",
+   "control_checks": [
+    "approved_unchanged_sends",
+    "never_approved_skips"
+   ],
+   "judgement_checks": [
+    {
+     "name": "edited_after_approval",
+     "decision": "an approval names the exact bytes approved; a body edited after approval is not sent"
+    },
+    {
+     "name": "stuck_resend_reuses_key",
+     "decision": "a resend of an ambiguous delivery inside the key window carries the same idempotency key as the first attempt made minutes earlier (stable per message across time, distinct across messages); if it does not resend, it hands the row to an operator rather than recording it as sent"
+    },
+    {
+     "name": "stuck_past_key_window",
+     "decision": "a row stuck in sending past the provider's 24 h key window (probed at 25 h and 72 h) is not resent and is handed to an operator (needs_operator), not recorded as sent"
+    }
+   ],
+   "rule_copies_at_base": []
+  },
+  {
+   "order": 4,
+   "id": "J-dcme_doc_status",
+   "rule": "rules/documented-capability-must-be-executable.md",
+   "rule_bytes": 5045,
+   "sha256_lf": "776b985fd3d5aaea8fb9eef0ac0aa003c327143d185b105efb4b8b269cab5136",
+   "task_file": "task_dcme_doc_status.py",
+   "module": "e1j/doc_status.py",
+   "control_checks": [
+    "missing_module_broken",
+    "runs_clean_live"
+   ],
+   "judgement_checks": [
+    {
+     "name": "module_present_command_fails",
+     "decision": "a module that exists does not make its documented command work; the command is executed and a non-zero exit is BROKEN, not LIVE or UNVERIFIED"
+    },
+    {
+     "name": "not_runnable_in_ci",
+     "decision": "a capability CI cannot execute gets its own declared status (UNVERIFIED), neither LIVE (supported) nor BROKEN (blocking the release as if it had failed)"
+    },
+    {
+     "name": "command_cannot_start",
+     "decision": "a command that cannot even start is a measured failure: BROKEN, not LIVE or UNVERIFIED"
+    }
+   ],
+   "rule_copies_at_base": []
+  },
+  {
+   "order": 5,
+   "id": "J-vpdt_verified_level",
+   "rule": "rules/validation-planes-do-not-transfer.md",
+   "rule_bytes": 3656,
+   "sha256_lf": "f7ac1415e3d40175828a96d7299c1d7b33c67302a8c0b6b4309840e3df745139",
+   "task_file": "task_vpdt_verified_level.py",
+   "module": "e1j/verification_level.py",
+   "control_checks": [
+    "no_evidence_none",
+    "tests_only_code_verified",
+    "full_ladder_live",
+    "failed_render_not_counted"
+   ],
+   "judgement_checks": [
+    {
+     "name": "production_from_other_build",
+     "decision": "an observation counts only for the build it observed; a passing production check of an older build does not make this build LIVE"
+    },
+    {
+     "name": "unidentified_build_observation",
+     "decision": "an observation whose build cannot be identified proves nothing about the build being released"
+    },
+    {
+     "name": "preview_from_other_build",
+     "decision": "the build check applies on every plane, not only production; a passing platform preview of an older build does not raise this build to PLATFORM_PREVIEW"
+    }
+   ],
+   "rule_copies_at_base": []
+  },
+  {
+   "order": 6,
+   "id": "J-cpc_compact_row",
+   "rule": "rules/capability-preserving-compaction.md",
+   "rule_bytes": 3335,
+   "sha256_lf": "328a088e78ac4d7a47362e1c2814969bc075e560eea39943de0cd1713e5283f1",
+   "task_file": "task_cpc_compact_row.py",
+   "module": "e1j/compaction_report.py",
+   "control_checks": [
+    "identical_nothing_lost",
+    "button_to_menu_kept",
+    "dropped_button_lost",
+    "hover_relocated_to_menu"
+   ],
+   "judgement_checks": [
+    {
+     "name": "hover_only_dropped",
+     "decision": "a hover-only action that has no destination on the new surface is a loss: it is named in lost and the old component is not scheduled for deletion"
+    },
+    {
+     "name": "count_badge_to_dot",
+     "decision": "a count reduced to a dot is a loss: it is named in lost and the old component is not scheduled for deletion"
+    },
+    {
+     "name": "count_badge_removed",
+     "decision": "a count badge that disappears entirely is a loss: it is named in lost and the old component is not scheduled for deletion"
+    },
+    {
+     "name": "gating_dropped",
+     "decision": "an action whose disabled-state condition is gone on the new surface is a loss: it is named in lost and the old component is not scheduled for deletion"
+    },
+    {
+     "name": "gating_condition_changed",
+     "decision": "an action whose disabled-state condition was replaced by a different one is a loss: it is named in lost and the old component is not scheduled for deletion"
+    }
+   ],
+   "rule_copies_at_base": []
+  },
+  {
+   "order": 7,
+   "id": "J-slai_pane_sleep",
+   "rule": "rules/state-lifetime-and-incarnation.md",
+   "rule_bytes": 3137,
+   "sha256_lf": "fa5d6222f5ec57f915a1673d6f9fd8355428a85b19f5bc2b1466dd4a1eb72df0",
+   "task_file": "task_slai_pane_sleep.py",
+   "module": "e1j/pane_sleep.py",
+   "control_checks": [
+    "current_stamp_unsent",
+    "current_stamp_clean",
+    "no_stamp_host_clean",
+    "no_stamp_host_unsent"
+   ],
+   "judgement_checks": [
+    {
+     "name": "stamp_from_previous_shell",
+     "decision": "a clean typing stamp left by an earlier shell under the same pane id does not stand in for the host's answer about the current shell"
+    },
+    {
+     "name": "previous_shell_stamp_host_down",
+     "decision": "with only a stale local witness and an authority that cannot answer, the pane is kept (fail closed)"
+    },
+    {
+     "name": "stale_unsent_stamp_ignored",
+     "decision": "an unsent stamp left by an earlier shell under the same pane id does not keep the pane awake once the host reports the current shell clean"
+    }
+   ],
+   "rule_copies_at_base": []
+  },
+  {
+   "order": 8,
+   "id": "J-pert_freed_memory",
+   "rule": "rules/post-effect-resource-truth.md",
+   "rule_bytes": 3126,
+   "sha256_lf": "4ffa7549ab80336cd7a6fd2988d9c4cefa336e3070594604e4176998b68e8248",
+   "task_file": "task_pert_freed_memory.py",
+   "module": "e1j/freed_memory.py",
+   "control_checks": [
+    "all_stopped_and_gone",
+    "one_failed_excluded",
+    "nothing_stopped_measured_zero"
+   ],
+   "judgement_checks": [
+    {
+     "name": "after_read_failed",
+     "decision": "without a usable post-effect reading the freed figure is unmeasured, never the pre-effect estimate"
+    },
+    {
+     "name": "stopped_but_still_listed",
+     "decision": "a subject still present after the effect is not counted as released"
+    },
+    {
+     "name": "failed_but_gone_not_credited",
+     "decision": "a subject whose stop failed is not credited as released even when it is absent afterwards: only the cohort that succeeded is counted"
+    }
+   ],
+   "rule_copies_at_base": []
+  },
+  {
+   "order": 9,
+   "id": "J-det_exit_all",
+   "rule": "rules/durable-exit-transaction.md",
+   "rule_bytes": 2830,
+   "sha256_lf": "cb6f17aa3b4d7f790675f65c41c31f4bba6fd6a6fca01b1a74a07d2c491529e4",
+   "task_file": "task_det_exit_all.py",
+   "module": "e1j/exit_all.py",
+   "control_checks": [
+    "all_idle_exits",
+    "busy_child_refuses"
+   ],
+   "judgement_checks": [
+    {
+     "name": "no_children_command_running",
+     "decision": "'no child processes' is not proof of idle; a shell running a command without children is kept, so the whole exit is refused"
+    },
+    {
+     "name": "no_integration_unknown",
+     "decision": "unknown idleness keeps the subject; a full exit with a kept subject is refused and releases nothing"
+    },
+    {
+     "name": "saved_before_first_release",
+     "decision": "what a relaunch needs is saved before the first release"
+    }
+   ],
+   "rule_copies_at_base": []
+  },
+  {
+   "order": 10,
+   "id": "J-pyt_test_gate",
+   "rule": "rules/python/testing.md",
+   "rule_bytes": 2516,
+   "sha256_lf": "2ae141c9eaf5543034127fc33ec057efde849ea3151bf47ec85e4563f9f897bf",
+   "task_file": "task_pyt_test_gate.py",
+   "module": "e1j/test_gate.py",
+   "control_checks": [
+    "green_suite",
+    "one_failed",
+    "nonzero_exit",
+    "passed_with_some_skipped"
+   ],
+   "judgement_checks": [
+    {
+     "name": "nothing_collected",
+     "decision": "a run that executed no test is not a pass, whatever its exit code"
+    },
+    {
+     "name": "no_assertions_executed",
+     "decision": "a test that executed zero asserts is an execution, not a test"
+    },
+    {
+     "name": "everything_skipped",
+     "decision": "a suite that skipped every test exercised nothing"
+    }
+   ],
+   "rule_copies_at_base": [
+    "rules/python/testing.md"
+   ]
+  },
+  {
+   "order": 11,
+   "id": "J-cr_review_verdict",
+   "rule": "rules/common/code-review.md",
+   "rule_bytes": 1772,
+   "sha256_lf": "befb119ebee31c378acad1a8fa8e815c600073c1d7924462f430ec01775b8002",
+   "task_file": "task_cr_review_verdict.py",
+   "module": "e1j/review_verdict.py",
+   "control_checks": [
+    "no_findings_approve",
+    "proven_sqli_blocks",
+    "proven_high_warns",
+    "minor_only_approve"
+   ],
+   "judgement_checks": [
+    {
+     "name": "critical_without_proof",
+     "decision": "a CRITICAL or HIGH finding without snippet, scenario and why-guards-fail is demoted to MEDIUM and cannot block or warn"
+    },
+    {
+     "name": "high_without_proof",
+     "decision": "a HIGH finding without snippet, scenario and why-guards-fail is demoted to MEDIUM and cannot warn"
+    },
+    {
+     "name": "finding_without_line",
+     "decision": "a finding without an exact line is dropped"
+    },
+    {
+     "name": "critical_outside_block_classes",
+     "decision": "BLOCK is reserved for secrets, injection, unsafe eval and hardcoded credentials"
+    }
+   ],
+   "rule_copies_at_base": [
+    "rules/common/code-review.md"
+   ]
+  }
+ ]
+}
