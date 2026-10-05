@@ -1,0 +1,63 @@
+=== python tools/cep_gen2.py selftest
+  ok   V-CEP2-CLEAN (positive control green) 
+  ok   V-CEP2-MUT-open-unit killed
+  ok   V-CEP2-MUT-unknown-terminal killed
+  ok   V-CEP2-MUT-no-evidence killed
+  ok   V-CEP2-MUT-missing-evidence-file killed
+  ok   V-CEP2-MUT-implemented-without-command killed
+  ok   V-CEP2-MUT-premature-tier3 killed
+  ok   V-CEP2-MUT-realized-without-displacement killed
+  ok   V-CEP2-MUT-over-budget killed
+  ok   V-CEP2-MUT-untyped-budget killed
+  ok   V-CEP2-MUT-weighted-budget killed
+  ok   V-CEP2-MUT-empty-ledger killed
+CEP2_SELFTEST=PASS
+exit=0
+=== python tools/cep_gen2.py --selftest
+CEP2_OBLIGATIONS=UNASSESSED
+  FAIL W3 open: no terminal
+  FAIL W4 open: no terminal
+  FAIL W5 open: no terminal
+  FAIL W6 open: no terminal
+  FAIL W7 open: no terminal
+  FAIL W8 open: no terminal
+  FAIL W9 open: no terminal
+  FAIL R open: no terminal
+CEP2_VERDICT=FAIL failures=8
+exit=1
+=== python tools/cep_gen2.py final
+CEP2_OBLIGATIONS=UNASSESSED
+  FAIL W3 open: no terminal
+  FAIL W4 open: no terminal
+  FAIL W5 open: no terminal
+  FAIL W6 open: no terminal
+  FAIL W7 open: no terminal
+  FAIL W8 open: no terminal
+  FAIL W9 open: no terminal
+  FAIL R open: no terminal
+CEP2_VERDICT=FAIL failures=8
+exit=1
+=== python tools/cep_gen2.py status
+{
+ "open": [
+  "W3",
+  "W4",
+  "W5",
+  "W6",
+  "W7",
+  "W8",
+  "W9",
+  "R"
+ ],
+ "violations": [
+  "W3 open: no terminal",
+  "W4 open: no terminal",
+  "W5 open: no terminal",
+  "W6 open: no terminal",
+  "W7 open: no terminal",
+  "W8 open: no terminal",
+  "W9 open: no terminal",
+  "R open: no terminal"
+ ]
+}
+exit=1

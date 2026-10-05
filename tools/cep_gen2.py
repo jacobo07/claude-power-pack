@@ -66,7 +66,61 @@ def check(led: dict, root: Path, now: dt.datetime | None = None) -> list:
     spent, cap = b.get("spent_measured"), b.get("authorization_boundary")
     if spent is not None and cap is not None and spent > cap and not b.get("owner_extension"):
         fails.append(f"spend {spent:,} over boundary {cap:,} without an Owner extension")
+    fails.extend(check_obligations(led, root)[1])
     return fails
+
+
+# Scope conservation (D3, optional). ledger.obligations_declared (bool) + ledger.obligations [{id, source, terminal, evidence|execution}].
+# Absent / false / null -> UNASSESSED (never PASS by vacuity, never FAIL). True -> every obligation needs a valid terminal and
+# an execution mapping or evidence: EXECUTE needs `execution`; SATISFIED needs `evidence`; the rest need either.
+OBL_TERMINALS = {"SATISFIED", "EXECUTE", "REUSE", "MERGED", "OWNED_ELSEWHERE", "CONDITIONAL", "SUPERSEDED", "OWNER_REMOVED"}
+
+
+def check_obligations(led: dict, root: Path) -> tuple:
+    """Return (status, fails); status is UNASSESSED, PASS or FAIL."""
+    decl = led.get("obligations_declared")
+    if decl is None or decl is False:
+        return "UNASSESSED", []
+    if decl is not True:
+        return "FAIL", [f"obligations_declared must be a bool, got {decl!r}"]
+    obs = led.get("obligations")
+    if not isinstance(obs, list) or not obs:
+        return "FAIL", ["obligations_declared is true but the obligations list is empty or missing (a vacuous pass)"]
+    fails, ids = [], set()
+    for k, o in enumerate(obs):
+        if not isinstance(o, dict):
+            fails.append(f"obligation #{k} is not an object")
+            continue
+        oid = o.get("id")
+        tag = f"obligation {oid!r}" if oid else f"obligation #{k}"
+        if not oid:
+            fails.append(f"{tag} has no id")
+        elif oid in ids:
+            fails.append(f"{tag} duplicate id")
+        ids.add(oid)
+        if not o.get("source"):
+            fails.append(f"{tag} has no source")
+        term = o.get("terminal")
+        if not term:
+            fails.append(f"{tag} open: no terminal")
+        elif term not in OBL_TERMINALS:
+            fails.append(f"{tag} unknown terminal {term!r}")
+        ev, ex = o.get("evidence") or [], o.get("execution")
+        has_ex = bool(ex)
+        if not isinstance(ev, list):
+            fails.append(f"{tag} evidence must be a list")
+            ev = []
+        for e in ev:
+            p = root / (e.get("path", "") if isinstance(e, dict) else "")
+            if not isinstance(e, dict) or not e.get("path") or not p.is_file() or p.stat().st_size == 0:
+                fails.append(f"{tag} evidence missing or empty: {e.get('path') if isinstance(e, dict) else e!r}")
+        if not ev and not has_ex:
+            fails.append(f"{tag} has neither an execution mapping nor evidence")
+        elif term == "EXECUTE" and not has_ex:
+            fails.append(f"{tag} EXECUTE without an execution mapping")
+        elif term == "SATISFIED" and not ev:
+            fails.append(f"{tag} SATISFIED without evidence")
+    return ("FAIL" if fails else "PASS"), fails
 
 
 # processed = input + cache_write + cache_read + output, deduplicated by message id.
@@ -135,6 +189,7 @@ def main(mode: str) -> int:
         return 1 if fails else 0
     if not selftest(verbose=False):
         fails.insert(0, "S0 selftest failed: the verifier cannot be trusted")
+    print(f"CEP2_OBLIGATIONS={check_obligations(led, REPO)[0]}")
     for x in fails:
         print("  FAIL", x)
     print(f"CEP2_VERDICT={'PASS' if not fails else 'FAIL'} failures={len(fails)}")

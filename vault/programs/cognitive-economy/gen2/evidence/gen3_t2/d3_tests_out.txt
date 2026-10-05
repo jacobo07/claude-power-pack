@@ -1,0 +1,11 @@
+  ok   V-OBL-CASES (17 cases) 
+  ok   V-OBL-MUT-vacuous-pass killed
+  ok   V-OBL-MUT-missing-terminal-accepted killed
+  ok   V-OBL-MUT-unknown-terminal-accepted killed
+  ok   V-OBL-MUT-unassessed-becomes-pass killed
+  ok   V-OBL-MUT-unassessed-becomes-fail killed
+  ok   V-OBL-INTEGRATION-absent-no-change
+  ok   V-OBL-INTEGRATION-declared-invalid-fails-check
+  ok   V-OBL-INTEGRATION-declared-valid-passes-check
+  ok   V-OBL-LIVE-LEDGER-unassessed (status UNASSESSED, declared=False)
+OBL_TEST=PASS
