@@ -445,6 +445,63 @@ def backoff_section() -> None:
     check("V-MV2-L1-CONTROL-PRE-11-2-HOLD-REJUDGED", len(asked) == n_asked + 1, f"gsd_calls={len(asked) - n_asked}")
 
 
+def deadline_section() -> None:
+    """Spec 11.3 (S4): the budget binds before a capsule hold; at the certify deadline the uncertified
+    successor is stopped and replaced (same capsule) below the cap, BLOCKED at it."""
+    key = "mission-m-l2-e1"
+    succ = "9e9e9e9e-0000-4000-8000-0000000000l2"
+
+    def srow(**kw):
+        return [{"sessionId": succ, "status": "busy", "state": "working", "kind": "background",
+                 "id": "9e9e9e9e", "pid": 999, "name": "m-l2-e2", **kw}]
+
+    def successor(**extra):
+        wipe()
+        mission("m-l2", epoch=2, capsule_key=key, capsule_acked_at=NOW, **extra)
+        rec = gm.load("m-l2")
+        gm.transition("m-l2", expect_epoch=2, expect_state=rec["state"], event="t", now=NOW,
+                      owner={"session_id": succ, "pid": 999, "kind": "background"})
+        ro.precert_arm("m-l2", {"worker": "m-l2-e2", "epoch": 2, "capsule_key": key, "cwd": str(REPO),
+                                "resume_cmd": "/gsd-autonomous"}, STATE)
+
+    # below the cap: stopped, counted, NOT blocked; the next pass replaces it on the same capsule
+    successor()
+    n_s, n_l = len(stops), len(launches)
+    rows = run(srow(), now=NOW + gm.CAPSULE_CERTIFY_DEADLINE_S + 1)
+    rec = gm.load("m-l2")
+    check("V-MV2-L2-DEADLINE-STOPS-BELOW-CAP",
+          rec["state"] == gm.RUNNING and (rec.get("capsule_attempts") or {}).get(key) == 1
+          and len(stops) == n_s + 1 and not rec.get("capsule_hold") and not rec.get("capsule_acked_at"),
+          f"{rec['state']} attempts={rec.get('capsule_attempts')} stops={len(stops) - n_s} "
+          f"action={row_of(rows, 'm-l2').get('action')}")
+    rows = run(srow(state="stopped", status=None), now=NOW + gm.CAPSULE_CERTIFY_DEADLINE_S + 60)
+    mk = ro.precert_read("m-l2", STATE) or {}
+    check("V-MV2-L2-REPLACED-SAME-CAPSULE",
+          len(launches) == n_l + 1 and mk.get("worker") == "m-l2-e3" and mk.get("capsule_key") == key
+          and not mk.get("certified_at"), f"mk={mk} row={row_of(rows, 'm-l2').get('action')}")
+    # at the cap: BLOCKED for a human, as before 11.3
+    successor(capsule_attempts={key: gm.MAX_SUCCESSOR_ATTEMPTS - 1})
+    n_s = len(stops)
+    run(srow(), now=NOW + gm.CAPSULE_CERTIFY_DEADLINE_S + 1)
+    rec = gm.load("m-l2")
+    check("V-MV2-L2-DEADLINE-AT-CAP-BLOCKS",
+          rec["state"] == gm.BLOCKED and (rec.get("capsule_hold") or {}).get("kind") == "resume_not_certified"
+          and len(stops) == n_s, f"{rec['state']} hold={rec.get('capsule_hold')}")
+    # budget before hold: the blocked uncertified successor is halted by budget (inherited), not held for ever
+    gm.transition("m-l2", expect_epoch=rec["epoch"], expect_state=gm.BLOCKED, event="t", now=NOW, **SPENT)
+    p = gm.plan_next(gm.load("m-l2"), NOW + 4000, srow(), gone, v2=True)
+    check("V-MV2-L2-BUDGET-BEFORE-HOLD", p["action"] == "halt" and "budget:" in p["reason"], str(p))
+    rows = run(srow(), now=NOW + 4000)
+    h = gm.load("m-l2")
+    new = gm.load(row_of(rows, "m-l2")["renewed_as"]) if row_of(rows, "m-l2").get("renewed_as") else {}
+    check("V-MV2-L2-BUDGET-HALT-INHERITS",
+          h["state"] == gm.HALTED and (h.get("continuity") or {}).get("kind") == "inherited"
+          and new.get("capsule_key") == key, f"cont={h.get('continuity')} new={new.get('capsule_key')}")
+    # control: without budget the hold still sticks over the live owner (T6 G4 unchanged)
+    p = gm.plan_next({**h, "state": gm.BLOCKED, "iterations": 0}, NOW + 4000, srow(), gone, v2=True)
+    check("V-MV2-L2-CONTROL-NO-BUDGET-HOLDS", p["action"] == "none" and "capsule hold" in p["reason"], str(p))
+
+
 def main() -> int:
     # --- arm: G11 + field absent on legacy ------------------------------------------------------
     try:
@@ -520,6 +577,10 @@ def main() -> int:
     r = row_of(rows, "m-hap")
     check("V-MV2-UNCERTIFIED-NOT-ROTATED", "has not certified" in (r.get("held") or "")
           and len(stops) == n_s and len(launches) == n_l, f"{r.get('action')} held={r.get('held')}")
+    # At the per-capsule cap (spec 11.3; below it the successor is stopped and replaced, deadline_section).
+    rec = gm.load("m-hap")
+    gm.transition("m-hap", expect_epoch=rec["epoch"], expect_state=rec["state"], event="t", now=NOW + 60,
+                  capsule_attempts={key: gm.MAX_SUCCESSOR_ATTEMPTS - 1})
     rows = run(busy, now=NOW + 10 + gm.CAPSULE_CERTIFY_DEADLINE_S + 1)
     rec = gm.load("m-hap")
     check("V-MV2-CERTIFY-DEADLINE-BLOCKS",
@@ -673,6 +734,7 @@ def main() -> int:
 
     halt_section()
     backoff_section()
+    deadline_section()
     trap_hits = list(TRAP.rglob("*")) if TRAP.exists() else []
     check("V-MV2-TRAP-UNTOUCHED", not trap_hits, str(trap_hits[:3]))
     print(f"MV2_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")

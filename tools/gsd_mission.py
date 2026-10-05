@@ -94,6 +94,7 @@ WAITING_HUMAN = "BLOCKED"
 CAPSULE_V2 = "capsule-v2"
 CAPSULE_V2_MODES = ("auto", "bypassPermissions")   # G11: the successor must run its exam in a shell
 CAPSULE_CERTIFY_DEADLINE_S = 1800                  # spec 3.5: successor ack -> RESUME_CERTIFIED
+MAX_SUCCESSOR_ATTEMPTS = 3                         # spec 11.3: uncertified successors per capsule, then a human
 
 
 def capsule_v2(rec: dict | None) -> bool:
@@ -572,10 +573,17 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
             # G4: a capsule hold sticks like gsd_hold -- a live owner is not an answer to it. A refused
             # seal is re-judged once the owner's turn has ended (the relay path seals again); an
             # uncertified successor is lifted only by its certification (supervise checks the marker).
+            if spent and chold.get("kind") == "resume_not_certified":
+                # Spec 11.3 (L2): the budget is asked BEFORE the hold. The uncertified successor never had
+                # mutation authority, so the halt inherits its capsule; held, it waited for a human for ever.
+                return {"action": "halt", "reason": f"budget: {spent}; successor never certified"}
             if chold.get("kind") == "seal_refused" and verdict == LIVE and owner_idle(rec.get("owner"), sessions):
                 if spent:
                     return {"action": "halt", "reason": f"turn ended and budget: {spent}"}
                 return {"action": "relay", "reason": f"capsule hold: re-judging the seal ({chold.get('reason')})"}
+            forced = _budget_forced(rec, now, spent, verdict)
+            if forced:
+                return {"action": "halt", "reason": forced}
             return {"action": "none", "reason": f"capsule hold {chold.get('kind')}: {chold.get('reason')}"}
         hold = rec.get("gsd_hold") or {}
         if verdict == LIVE and state == BLOCKED and hold and owner_idle(rec.get("owner"), sessions):
@@ -594,18 +602,25 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
             if spent:
                 return {"action": "halt", "reason": f"turn ended and budget: {spent}"}
             return {"action": "relay", "reason": f"owner's turn ended without completion: {why}"}
-        if v2 and spent and verdict == LIVE and rec.get("budget_spent_at"):
-            # Spec 11.1 busy-owner bound (capsule-v2 only): the budget is soft until the turn ends, but
-            # not for ever. Past the wall grace after the pass that first saw it spent, the budget
-            # overrides the busy owner -- the halt enters RECOVERY, never SAFE_TO_FORGET.
-            import gsd_epoch as ge
-            grace = float((rec.get("wall") or {}).get("grace_s") or ge.WALL_GRACE_S)
-            over = now - float(rec["budget_spent_at"])
-            if over > grace:
-                return {"action": "halt", "reason": f"budget: {spent}; owner still busy {int(over)} s after it "
-                                                    f"(grace {int(grace)} s): forced"}
+        forced = _budget_forced(rec, now, spent, verdict) if v2 else None
+        if forced:
+            return {"action": "halt", "reason": forced}
         return {"action": "none", "reason": f"owner {verdict}: {why}"}
     return {"action": "none", "reason": f"unhandled state {state}"}
+
+
+def _budget_forced(rec: dict, now: float, spent: str | None, verdict: str) -> str | None:
+    """Spec 11.1 busy-owner bound (capsule-v2 only; callers gate on v2): the budget is soft until the
+    turn ends, but not for ever. Past the wall grace after the pass that first saw it spent, the budget
+    overrides the busy owner -- the halt enters RECOVERY, never SAFE_TO_FORGET."""
+    if not (spent and verdict == LIVE and rec.get("budget_spent_at")):
+        return None
+    import gsd_epoch as ge
+    grace = float((rec.get("wall") or {}).get("grace_s") or ge.WALL_GRACE_S)
+    over = now - float(rec["budget_spent_at"])
+    if over <= grace:
+        return None
+    return f"budget: {spent}; owner still busy {int(over)} s after it (grace {int(grace)} s): forced"
 
 
 # --------------------------------------------------------------------------- effects
@@ -1499,9 +1514,12 @@ def _capsule_marker(rec: dict) -> dict | None:
     return mk if mk and mk.get("worker") == worker_name(rec) else None
 
 
-def _capsule_certify_check(rec: dict, row: dict, now: float) -> bool:
-    """Spec 3.5: a successor that has not certified within CAPSULE_CERTIFY_DEADLINE_S of its ack
-    parks the mission BLOCKED (`resume_not_certified`, a G4 hold); its certification lifts it.
+def _capsule_certify_check(rec: dict, row: dict, now: float, sessions=None, pid_alive=lr._pid_alive,
+                           stop_runner=None) -> bool:
+    """Spec 3.5 + 11.3: a successor that has not certified within CAPSULE_CERTIFY_DEADLINE_S of its ack
+    is STOPPED (it never had mutation authority, so there is nothing to seal) and the next pass replaces
+    it on the SAME capsule -- up to MAX_SUCCESSOR_ATTEMPTS per capsule; at the cap the mission parks
+    BLOCKED (`resume_not_certified`, a G4 hold) for a human. Certification lifts the hold.
     True when this pass acted for the mission."""
     mid = rec["mission_id"]
     hold = rec.get("capsule_hold") or {}
@@ -1517,10 +1535,25 @@ def _capsule_certify_check(rec: dict, row: dict, now: float) -> bool:
     acked = rec.get("capsule_acked_at")
     if (rec["state"] == RUNNING and acked and mk and not mk.get("certified_at")
             and now - float(acked) > CAPSULE_CERTIFY_DEADLINE_S):
+        key = rec.get("capsule_key")
         why = (f"resume_not_certified: worker {worker_name(rec)} acked {int(now - float(acked))} s ago "
-               f"and has not certified {rec.get('capsule_key')}")
+               f"and has not certified {key}")
+        attempts = dict(rec.get("capsule_attempts") or {})
+        n = int(attempts.get(key) or 0) + 1
+        attempts[key] = n
+        if n < MAX_SUCCESSOR_ATTEMPTS:
+            ok, how = stop_owner(rec.get("owner"), sessions, pid_alive=pid_alive, runner=stop_runner)
+            if not ok:
+                # Not counted: the next pass retries the stop of the same successor.
+                row["held"] = f"{why}; stop not confirmed ({how}), retried next pass"
+                return True
+            transition(mid, expect_epoch=rec["epoch"], expect_state=RUNNING, event="capsule_successor_stopped",
+                       now=now, capsule_attempts=attempts, capsule_acked_at=None,
+                       reason=f"{why}; stopped ({how}), successor {n} of {MAX_SUCCESSOR_ATTEMPTS} on this capsule")
+            row["action"], row["reason"], row["stop"] = "capsule_successor_stopped", why, how
+            return True
         transition(mid, expect_epoch=rec["epoch"], expect_state=RUNNING, event="mission_blocked",
-                   now=now, state=BLOCKED, reason=why,
+                   now=now, state=BLOCKED, reason=why, capsule_attempts=attempts,
                    capsule_hold={"kind": "resume_not_certified", "reason": why, "since": now})
         row["action"], row["reason"] = "capsule_blocked", why
         return True
@@ -1867,7 +1900,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             reap(rec, row)
             if row.get("orphans_stopped"):
                 row["action"] = "reaped" if plan["action"] in ("none", "await") else plan["action"]
-            if v2 and rec.get("capsule_key") and _capsule_certify_check(rec, row, now):
+            if v2 and rec.get("capsule_key") and _capsule_certify_check(rec, row, now, sessions, pid_alive,
+                                                                        stop_runner):
                 continue
             if (v2 and plan["action"] == "none" and rec["state"] in (RUNNING, BLOCKED)
                     and not rec.get("budget_spent_at") and budget_exhausted(rec, now)

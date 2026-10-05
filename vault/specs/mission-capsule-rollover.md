@@ -309,7 +309,10 @@ when the fingerprint changed OR `now >= next_at`; backoff = min(300 * 2^(n-1), 3
 provider_breaker model); after 4 refusals on one fingerprint it is quarantined and re-judged on a
 fingerprint change only. A held pass writes no ledger row (the row says why). Tests V-MV2-L1-*.
 
-### 11.3 L2 -- budget before hold, certify deadline (S4)
+### 11.3 L2 -- budget before hold, certify deadline (S4) -- status LIVE in code
+Built in `plan_next` (hold block; the busy bound became `_budget_forced`, shared with the end of the
+RUNNING branch) and `_capsule_certify_check` (stop below `MAX_SUCCESSOR_ATTEMPTS`, `capsule_acked_at`
+cleared so one deadline counts once; a stop that is not confirmed is retried, not counted).
 - `plan_next(v2)` checks the budget BEFORE a capsule hold returns `none`: `resume_not_certified` +
   budget spent -> halt (continuity `inherited`); `seal_refused` + budget -> the 11.1 rules.
 - At the certify deadline the uncertified worker is STOPPED (it never had mutation authority: nothing
