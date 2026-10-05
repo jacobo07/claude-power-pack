@@ -815,8 +815,13 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
             except Exception:
                 pass
         return {"ok": False, "epoch": epoch, "bg_id": bg_id, "why": why, "detail": detail}
+    adm = rec.get("admission") or {}
+    # An admission pays for ONE launch (review F3): a successor would otherwise get the full envelope
+    # again every epoch, with `remaining` measured only at admit time. The next launch re-admits.
+    used = ({"admission": {**adm, "consumed_epoch": epoch}}
+            if rec.get("wu_packet") and adm.get("verdict") == "ADMISSIBLE" else {})
     rec = transition(mission_id, expect_epoch=epoch, expect_state=LAUNCHING, event="launched",
-                     now=now, pending={**rec["pending"], "bg_id": bg_id})
+                     now=now, pending={**rec["pending"], "bg_id": bg_id}, **used)
     _record_launch_account(bg_id)
     if rec.get("capsule_key") and capsule_v2(rec):
         _capsule_bind(rec, bg_id=bg_id)
@@ -1130,9 +1135,11 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
                       reason=f"route {res['verdict']}: " + ("; ".join(res["reasons"]) or "fits")[:280])
 
 
-def admission_refusal(rec: dict) -> str | None:
-    """Why launch_worker must not start this mission's compiled work unit, or None. A mission
-    without a packet (the GSD resume route) is not judged here."""
+def admission_refusal(rec: dict, *, for_launch: bool = True) -> str | None:
+    """Why this mission's compiled work unit must not be sent, or None. A mission without a packet
+    (the GSD resume route) is not judged here. `for_launch` (a new worker) also requires an UNUSED
+    admission; continuing the session that admission already launched does not (it runs inside the
+    envelope it was declared at ack), but its verdict, packet and route are checked all the same."""
     pkt = rec.get("wu_packet")
     if not pkt or _admission_switch_off():
         return None
@@ -1140,6 +1147,9 @@ def admission_refusal(rec: dict) -> str | None:
     if adm.get("verdict") != "ADMISSIBLE":
         return (f"work unit not admitted (verdict {adm.get('verdict') or 'none'}): run "
                 f"`gsd_mission.py admit --mission {rec['mission_id']} --route <route.json>`")
+    if for_launch and adm.get("consumed_epoch") is not None:
+        return (f"the admission was used by epoch {adm['consumed_epoch']}: admit again so the remaining "
+                f"budget is re-measured (`gsd_mission.py admit --mission {rec['mission_id']} --route ...`)")
     if adm.get("packet_sha256") != _packet_digest(pkt["path"]):
         return "the packet changed since it was admitted: admit it again"
     if adm.get("route_file_sha256") != _packet_digest(adm.get("route_path") or ""):
@@ -2546,6 +2556,15 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         continue  # the next pass retries; nothing launched beside a live worker
                 if turn_end is not None and turn_end["decision"] == "continue":
                     import gsd_epoch as ge
+                    # Review F2: the continuation sends the packet too. A packet edited in place, or a
+                    # re-admit that recorded RECOMPILE/DEFER, stops here; no launch either (it would be
+                    # refused for the same reason, after align_cwd had already moved the cwd).
+                    cwhy = admission_refusal(rec, for_launch=False)
+                    if cwhy:
+                        lr.ledger_append(mid, "continue_refused_admission", mission_id=mid,
+                                         epoch=rec["epoch"], why=cwhy[:300])
+                        row["action"], row["why"] = "continue_refused_admission", cwhy
+                        continue
                     row["continue"] = ge.continue_worker(
                         mid, rec, prompt=launch_prompt(rec),
                         decision=turn_end, runner=runner, stop_runner=stop_runner, now=now,

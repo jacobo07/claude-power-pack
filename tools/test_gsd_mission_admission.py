@@ -192,6 +192,27 @@ def main() -> int:
     gm.adopt_launched(gm.load("m-adopt"), {"sessionId": asid, "pid": 3}, now=NOW + 6)
     check("V-ADM-ADOPT-DECLARES-ENVELOPE", ms.budget_path(asid).is_file())
 
+    # 9b. review F3: one admission pays for ONE launch; the successor re-admits (remaining re-measured)
+    thin_rec = gm.load("m-thin")
+    check("V-ADM-LAUNCH-CONSUMES", (thin_rec.get("admission") or {}).get("consumed_epoch") == 2,
+          str((thin_rec.get("admission") or {}).get("consumed_epoch")))
+    ok, why = refused_launch("m-thin")
+    check("V-ADM-SECOND-LAUNCH-REFUSED", ok and "used by epoch 2" in why, why)
+    check("V-ADM-CONTINUATION-NOT-CONSUMED", gm.admission_refusal(gm.load("m-thin"), for_launch=False) is None,
+          "the session that admission launched may continue")
+    re = admit("m-thin", "thin-again.json", measure=lambda r: None)["admission"]
+    check("V-ADM-READMIT-AFTER-USE-LAUNCHES", re.get("consumed_epoch") is None and launch("m-thin").get("ok") is True)
+    mission("m-unused")
+    admit("m-unused", "unused.json")
+    gm.transition("m-unused", expect_epoch=1, expect_state=gm.RUNNING, event="t_fail", now=NOW)
+    n = len(calls)
+    failing = lambda argv, cwd: (calls.append(argv), SimpleNamespace(stdout="", stderr="refused", returncode=1))[1]
+    cur = gm.load("m-unused")
+    gm.launch_worker("m-unused", expect_epoch=cur["epoch"], expect_state=cur["state"], reason="t", runner=failing, now=NOW)
+    check("V-ADM-FAILED-LAUNCH-KEEPS-ADMISSION", len(calls) == n + 1
+          and (gm.load("m-unused").get("admission") or {}).get("consumed_epoch") is None,
+          "a launch the host refused started nothing and does not use the admission up")
+
     # 10. CLI: admitted exit 0, rejected exit 3
     mission("m-cli")
     rc_ok = gm._cli(["admit", "--mission", "m-cli", "--route", write("cli-thin.json", THIN), "--floors", FLOORS])

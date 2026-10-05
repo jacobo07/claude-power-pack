@@ -402,6 +402,39 @@ def main() -> int:
     check("V-EPOCH-SUP-STOPS-BEFORE-RESUME", calls["stop"] and calls["stop"][0][-1] == sid[:8], calls["stop"])
     check("V-EPOCH-SUP-CONTINUATION-COUNTED-BY-PROGRESS", (after.get("progress") or {}).get("fp") == "fp-A")
 
+    # --- route admission on the continuation (review F2, 2026-10-06) ----------------------------
+    # The continuation sends the compiled packet too. Its admitted session may continue (the admission
+    # is already consumed by the launch that started it: control); a packet edited in place since
+    # admission must not be sent, and nothing is launched instead.
+    wu, rt = Path(TMP) / "WU-F2.md", Path(TMP) / "route-F2.json"
+    wu.write_text("# F2\n", encoding="utf-8")
+    rt.write_text("{}", encoding="utf-8")
+    dg = gm._packet_digest
+    adm = {"verdict": "ADMISSIBLE", "packet_sha256": dg(str(wu)), "route_path": str(rt),
+           "route_file_sha256": dg(str(rt)), "consumed_epoch": 1,
+           "envelope": {"target": 1, "warn": 1, "stop": 1, "calls": 1}}
+    pk = {"path": str(wu), "sha256": dg(str(wu)), "bytes": 5, "set_at": NOW - 50}
+    for mid_, sid_ in (("m-f2", "bbbb2222-0000-0000-0000-000000000000"),
+                       ("m-f2e", "cccc3333-0000-0000-0000-000000000000")):
+        for m in gm.all_missions():
+            if m["state"] not in gm.TERMINAL:
+                gm.transition(m["mission_id"], expect_epoch=m["epoch"], expect_state=m["state"],
+                              event="t_retire", state=gm.HALTED, now=NOW)
+        if mid_ == "m-f2e":
+            wu.write_text("# F2 edited in place, never admitted\n", encoding="utf-8")
+        running(mid_, sid_, epoch=2, wu_packet=pk, wu_packet_epoch=1, admission=adm)
+        transcript(sid_, [asst(NOW - 100, small)])
+        rows, calls = sup(sid_)
+        r = next(x for x in rows if x["mission_id"] == mid_)
+        if mid_ == "m-f2":
+            check("V-EPOCH-ADMITTED-PACKET-CONTINUES", r.get("action") == "continue" and calls["run"]
+                  and "--resume" in calls["run"][0], (r.get("action"), r.get("why")))
+        else:
+            check("V-EPOCH-EDITED-PACKET-NOT-CONTINUED", r.get("action") == "continue_refused_admission"
+                  and not calls["run"] and gm.load(mid_)["epoch"] == 2
+                  and any(e.get("event") == "continue_refused_admission" for e in lr.ledger_events(mid_)),
+                  (r.get("action"), r.get("why"), calls["run"][:1]))
+
     sid = "bbbb2222-0000-0000-0000-000000000000"
     running("m-s2", sid, epoch=1)
     transcript(sid, [asst(NOW - 100, small)])

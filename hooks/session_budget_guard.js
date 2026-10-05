@@ -56,7 +56,59 @@ function readJson(p) {
 }
 
 function fresh(since) {
-  return { since: since || null, offset: 0, tokens: 0, calls: 0, context: 0, progress_at: 0, ids: [], grace: false };
+  return { since: since || null, offset: 0, tokens: 0, calls: 0, context: 0, progress_at: 0, ids: [], grace: false,
+    sub_tokens: 0, subs: {} };
+}
+
+// Fold this session's SUBAGENT transcripts (<transcript minus .jsonl>/subagents/agent-*.jsonl) into
+// st.tokens (review F1, 2026-10-06): the parent transcript never carries their usage -- worker 0c64c3e7
+// held 10.69M in its own file and 47.0M in subagents/. Tokens only: a subagent's tool calls are not
+// this session's calls, its context is not this session's context. Same unit and since filter as the
+// parent; per-file offset and message-id dedupe, as tools/mission_spend.processed_tokens counts them.
+// No subagents directory = nothing spawned; any other read error throws to the caller's grace rule.
+function advanceSubagents(st, transcript) {
+  if (!st.subs || typeof st.subs !== 'object') st.subs = {};
+  if (!Number.isFinite(st.sub_tokens)) st.sub_tokens = 0;
+  const dir = path.join(transcript.replace(/\.jsonl$/i, ''), 'subagents');
+  let names;
+  try { names = fs.readdirSync(dir); } catch (e) { if (e.code === 'ENOENT') return; throw e; }
+  for (const name of names) {
+    if (!/^agent-.*\.jsonl$/.test(name)) continue;
+    const file = path.join(dir, name);
+    const sub = st.subs[name] && typeof st.subs[name] === 'object' ? st.subs[name] : { offset: 0, ids: [] };
+    const size = fs.statSync(file).size;
+    if (size < sub.offset) { sub.offset = 0; sub.ids = []; }   // rotated: re-read (over-counts, never under)
+    if (size > sub.offset) {
+      const fd = fs.openSync(file, 'r');
+      let buf;
+      try {
+        buf = Buffer.alloc(size - sub.offset);
+        fs.readSync(fd, buf, 0, buf.length, sub.offset);
+      } finally { fs.closeSync(fd); }
+      const end = buf.lastIndexOf(0x0a);
+      if (end >= 0) {
+        sub.offset += end + 1;
+        const seen = new Set(sub.ids);
+        for (const line of buf.subarray(0, end).toString('utf8').split('\n')) {
+          if (!line || line.indexOf('"usage"') < 0) continue;
+          let r;
+          try { r = JSON.parse(line); } catch (e) { continue; }
+          const m = r && typeof r === 'object' ? r.message : null;
+          if (!m || typeof m !== 'object' || !m.usage || m.model === '<synthetic>') continue;
+          if (st.since && String(r.timestamp || '') < st.since) continue;
+          const mid = m.id || r.uuid;
+          if (seen.has(mid)) continue;
+          seen.add(mid);
+          sub.ids.push(mid);
+          const n = UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+          st.tokens += n;
+          st.sub_tokens += n;
+        }
+        if (sub.ids.length > MAX_IDS) sub.ids = sub.ids.slice(-MAX_IDS);
+      }
+    }
+    st.subs[name] = sub;
+  }
 }
 
 // Fold the complete lines appended since st.offset into st. Mirrors mission_spend.session_tokens.
@@ -190,7 +242,7 @@ function decide(event) {
   if (!okBudget) unreadable = 'the budget file is unreadable or incomplete';
   else if (!event.transcript_path) unreadable = 'the event carries no transcript_path';
   else {
-    try { advance(st, event.transcript_path); } catch (e) { unreadable = `the transcript cannot be read (${e.code || e.message})`; }
+    try { advance(st, event.transcript_path); advanceSubagents(st, event.transcript_path); } catch (e) { unreadable = `the transcript cannot be read (${e.code || e.message})`; }
   }
   let verdict;
   if (unreadable) {
@@ -221,7 +273,7 @@ async function run(event) {
   try { return decide(event); } catch (e) { return null; }  // a bug in the guard never breaks a tool call
 }
 
-module.exports = { run, decide, advance, fresh, judge, judgeAgent, agentFloor, DEFAULT_CALL_RATIO, DEFAULT_NOPROGRESS };
+module.exports = { run, decide, advance, advanceSubagents, fresh, judge, judgeAgent, agentFloor, DEFAULT_CALL_RATIO, DEFAULT_NOPROGRESS };
 
 // Standalone entry, for the one event the dispatcher has no lane for: register as a PreToolUse
 // command hook on `Agent|Task` (`node <PP>/hooks/session_budget_guard.js`). Same decide(), same

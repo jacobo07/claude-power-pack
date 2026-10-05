@@ -119,6 +119,36 @@ def main() -> int:
     rc, out = b.call(raw="{not json")
     check("V-SBGA-ENTRY-FAILS-OPEN", rc == 0 and out is None, f"rc {rc}")
 
+    # --- review F1: subagent spend lives in <transcript>/subagents/, never in the parent file ---------
+    def usage_row(mid, n, model="claude-sonnet-5-5", ts="2026-10-06T10:01:00Z"):
+        return json.dumps({"type": "assistant", "timestamp": ts, "message": {"id": mid, "model": model,
+                           "usage": {"input_tokens": 0, "cache_creation_input_tokens": 0,
+                                     "cache_read_input_tokens": n, "output_tokens": 0}}}) + "\n"
+
+    ctl = Box(100_000)
+    rc, out = ctl.call(tool_input={"subagent_type": "gsd-executor"})
+    check("V-SBGA-SUB-CONTROL", kind(out) == "allow", "parent 100k, no subagents: 900k left -> allow")
+    s = Box(100_000)
+    sd = s.root / "t" / "subagents"
+    sd.mkdir(parents=True)
+    (sd / "agent-a.jsonl").write_text(usage_row("a1", 700_000) + usage_row("a1", 700_000)       # streamed dup
+                                      + usage_row("syn", 999_999, model="<synthetic>"), encoding="utf-8")
+    (sd / "agent-a.meta.json").write_text('{"agentType": "gsd-executor"}', encoding="utf-8")   # not a transcript
+    rc, out = s.call(tool_input={"subagent_type": "gsd-executor"})
+    st = json.loads((s.state / f"session-budget-{SID}.state.json").read_text(encoding="utf-8"))
+    ref = ms._file_tokens(s.tx, None) + ms._file_tokens(sd / "agent-a.jsonl", None)
+    check("V-SBGA-SUB-SPEND-COUNTED", kind(out) == "deny" and st["tokens"] == ref == 800_000 and st["sub_tokens"] == 700_000,
+          f"js {st['tokens']:,} (sub {st.get('sub_tokens')}) py {ref:,}: {reason(out)[:90]}")
+    with open(sd / "agent-a.jsonl", "a", encoding="utf-8") as fh:
+        fh.write(usage_row("a2", 50_000))
+    s.call(tool="Bash", tool_input={"command": "echo"})
+    st2 = json.loads((s.state / f"session-budget-{SID}.state.json").read_text(encoding="utf-8"))
+    check("V-SBGA-SUB-INCREMENTAL", st2["tokens"] == 850_000, f"{st2['tokens']:,} after +50k (no re-count)")
+    (sd / "agent-b.jsonl").write_text(usage_row("b1", 200_000), encoding="utf-8")
+    rc, out = s.call(tool="Bash", tool_input={"command": "echo"})
+    check("V-SBGA-SUB-STOP-BREAKER", kind(out) == "deny" and "1,050,000" in reason(out),
+          f"a second subagent pushes processed past stop for a NON-agent call: {reason(out)[:80]}")
+
     print(f"SBGA_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 
