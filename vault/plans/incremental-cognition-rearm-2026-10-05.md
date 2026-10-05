@@ -66,3 +66,7 @@ A step past 2x its planned calls with no new evidence stops and is re-planned. R
   explained green), test_floor_regression_gate 57/57 (10 skipped). Evidence `evidence/K-reference.md`. ~10 calls.
   BLOCKED on the PRG: no later champion-cwd session exists, and the Option B PRG is a fresh probe session (quota);
   row 12 said no quota -> Owner question. K stays open; state.K not written.
+- Step 2 PRG (Owner "y" to one probe session, $0.54): `--check --probe --cwd champion` -> MATERIAL_RISE exit 1
+  (SessionStart hook context +6,436, deferred tools +3,378, both unattributed) while the floor fell overall
+  (-18,254 chars, -4,624 tokens). Evidence `evidence/K-prg.md`. Gate working; explain-or-rebaseline is the Owner's.
+  K not closed until that choice; state.K not written.
