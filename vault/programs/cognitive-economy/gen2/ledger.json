@@ -12,7 +12,7 @@
   "W1": {"title": "compile mission card, gen-2 ledger, gate", "tier": 1, "terminal": "IMPLEMENTED_AND_VERIFIED", "evidence": [{"path": "vault/programs/cognitive-economy/gen2/evidence/W1.md", "command": "python tools/test_cognitive_economy_program.py --generation 2 --selftest"}, {"path": "vault/programs/cognitive-economy/gen2/MISSION.md"}]},
   "W2": {"title": "GEX44 supervisor: E1 stuck replace + held-mission relay cost", "tier": 1, "terminal": "DEFERRED_STRONGER_OWNER", "evidence": [{"path": "vault/programs/cognitive-economy/gen2/evidence/W2.md"}, {"path": "vault/programs/cognitive-economy/gen2/handoffs/W2-gsd-mission-bg-spare.md"}], "findings": {"W2a_held_relay_model_calls": 0, "W2a_held_sweeps": 275, "W2b": "pooled bg-spare pid blocks relay; fix handed to gsd_mission owner"}},
   "W3": {"title": "E1 resident floor (Owner-authorized separately)", "tier": 2, "terminal": null, "evidence": []},
-  "W4": {"title": "offline replay of admission / waiting / model mix over usage_index", "tier": 2, "terminal": null, "evidence": []},
+  "W4": {"title": "offline replay of admission / waiting / model mix over usage_index", "tier": 2, "not_before": "2026-10-11T18:00:00Z", "owner_decision": "2026-10-05: '2. after the 11th'", "terminal": null, "evidence": []},
   "W5": {"title": "envelope canary champion vs lean challenger on a real backlog task", "tier": 3, "not_before": "2026-10-11T18:00:00Z", "terminal": null, "evidence": []},
   "W6": {"title": "zero-transcript continuation proof (capsule-v2 T8)", "tier": 3, "terminal": null, "evidence": []},
   "W7": {"title": "conditional primitives earned by W2/W4", "tier": 4, "terminal": null, "evidence": []},
