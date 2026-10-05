@@ -53,7 +53,8 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const STATE_DIR = path.join(os.homedir(), ".claude", "state");
+// Overridable so the test suite never deletes the LIVE tracker other panes are using.
+const STATE_DIR = process.env.AGENT_SOLO_STATE_DIR || path.join(os.homedir(), ".claude", "state");
 const TRACKER_PATH = path.join(STATE_DIR, "agent-solo-tracker.json");
 const LOG_PATH = path.join(STATE_DIR, "agent-solo-guard.log");
 const WINDOW_MS = 30_000; // 30s window = "same batch"
@@ -208,10 +209,16 @@ async function main() {
 
   const now = Date.now();
   const tracker = gc(readTracker(), now);
+  // The rule is per message, so only THIS session's dispatches can make a batch. The tracker is
+  // estate-wide (one file for every pane): judged globally, another pane's Explore blocked the
+  // TOK-18 Gen3 T2 canary twice (2026-10-05). An entry or event without a session id cannot be
+  // attributed, so it still counts -- unknown keeps the old, stricter behaviour.
+  const sid = typeof payload.session_id === "string" && payload.session_id ? payload.session_id : null;
+  const mine = tracker.filter((e) => !sid || !e.session_id || e.session_id === sid);
 
-  if (tracker.length > 0) {
-    // Hard block — there's already an Agent inflight within the same batch window
-    const recent = tracker[tracker.length - 1];
+  if (mine.length > 0) {
+    // Hard block — this session already has an Agent inflight within the same batch window
+    const recent = mine[mine.length - 1];
     const ageS = ((now - recent.ts) / 1000).toFixed(1);
     const reason = [
       "AGENT-SOLO GUARD blocked a parallel Agent dispatch on Windows.",
@@ -423,6 +430,7 @@ async function main() {
 
   const entry = {
     ts: now,
+    session_id: sid,
     subagent_type: subagentType,
     prompt_head: prompt.slice(0, 60).replace(/\s+/g, " ").trim(),
   };

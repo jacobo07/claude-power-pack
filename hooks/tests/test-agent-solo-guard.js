@@ -25,7 +25,11 @@ const os = require('os');
 const path = require('path');
 
 const GUARD = path.join(__dirname, '..', 'agent-solo-guard.js');
-const TRACKER = path.join(os.homedir(), '.claude', 'state', 'agent-solo-tracker.json');
+// A private state dir: the suite used to unlink the LIVE estate-wide tracker on every case,
+// silently clearing other panes' inflight entries while it ran.
+const STATE = fs.mkdtempSync(path.join(os.tmpdir(), 'aguard-state-'));
+const TRACKER = path.join(STATE, 'agent-solo-tracker.json');
+const ENV = Object.assign({}, process.env, { AGENT_SOLO_STATE_DIR: STATE });
 
 const BLOCK = 2;
 const ALLOW = 0;
@@ -56,6 +60,7 @@ function run(payload, fresh) {
   const r = spawnSync(process.execPath, [GUARD], {
     input: typeof payload === 'string' ? payload : JSON.stringify(payload),
     encoding: 'utf8',
+    env: ENV,
   });
   return r.status;
 }
@@ -109,6 +114,25 @@ const CASES = [
   ['second Agent within the window', () => {
     run(dispatch(BOUNDED));                 // fresh: records an inflight entry
     return run(dispatch(BOUNDED), false);   // keep tracker: must block
+  }, BLOCK],
+
+  // --- 2026-10-05 cross-pane false positive (TOK-18 Gen3 T2) ----------------
+  // The tracker is one file for every pane; the rule is per message. Another session's inflight
+  // dispatch must not block this one. The pre-fix guard returns BLOCK here.
+  ['another session inflight does not block this one', () => {
+    run(Object.assign(dispatch(BOUNDED), { session_id: 'pane-A' }));
+    return run(Object.assign(dispatch(BOUNDED), { session_id: 'pane-B' }), false);
+  }, ALLOW],
+  // ...while the same session's second dispatch still does (the rule itself is unchanged).
+  ['same session inflight still blocks', () => {
+    run(Object.assign(dispatch(BOUNDED), { session_id: 'pane-A' }));
+    return run(Object.assign(dispatch(BOUNDED), { session_id: 'pane-A' }), false);
+  }, BLOCK],
+  // An entry written before entries carried a session id cannot be attributed: it still counts.
+  ['unattributable legacy entry still blocks', () => {
+    resetTracker();
+    fs.writeFileSync(TRACKER, JSON.stringify([{ ts: Date.now(), subagent_type: 'x', prompt_head: 'y' }]));
+    return run(Object.assign(dispatch(BOUNDED), { session_id: 'pane-B' }), false);
   }, BLOCK],
 
   // --- fail-open is absolute ----------------------------------------------
@@ -183,8 +207,8 @@ for (const [label, fn, expected] of CASES) {
   }
 }
 
-resetTracker();
 try { fs.rmSync(FIXROOT, { recursive: true, force: true }); } catch (_) { /* tmp only */ }
+try { fs.rmSync(STATE, { recursive: true, force: true }); } catch (_) { /* tmp only */ }
 console.log(
   `AGENT_SOLO_GUARD=${pass}/${pass + fail}  ` +
   `(blocks: ${CASES.filter((c) => c[2] === BLOCK).length}, ` +
