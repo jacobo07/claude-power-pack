@@ -1,0 +1,18 @@
+{
+  "schema": "insights-v1",
+  "entries": [
+    {
+      "id": "insight_f3ce37ac7f947c7c",
+      "session_id": "a5fafaa2-6f7d-4ce6-a146-a8104c44edf9",
+      "date": "2026-10-05",
+      "category": "feedback",
+      "title": "Orchestrating from a long-lived pane costs as much as the work",
+      "body": "Gen3 T2-0: worker 3.38M vs ~2.5-3.5M orchestration from a pane at ~385k/call. Roll over to a fresh session before dispatching measured work.",
+      "path": null,
+      "tags": [
+        "tok18",
+        "cost"
+      ]
+    }
+  ]
+}

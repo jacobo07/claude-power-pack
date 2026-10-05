@@ -185,3 +185,6 @@
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
+
+## agent-solo-guard: cross-pane block (2026-10-05, TOK-18 Gen3 T2)
+The guard's tracker (~/.claude/state/agent-solo-tracker.json) is estate-wide, so an Agent dispatched by ANOTHER pane within ~30 s blocks this pane's solo Agent call (observed twice: another pane's Explore 'READ-ONLY reality scan of the InfinityOps Sidecar'). The rule it enforces is per-message. Do not delete another session's tracker; do one useful non-Agent call, then dispatch again.

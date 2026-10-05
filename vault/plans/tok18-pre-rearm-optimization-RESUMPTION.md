@@ -94,3 +94,6 @@ mission token breaker; stop at 90 calls or 13.35M processed (gen3_t2/T2-0.5-READ
 point D-01..D-04 + one fresh-context independent review on the founder-authority seam. Before launch: resolve the missing
 D-05 in gen3_t1/OBLIGATIONS-io-phase4.md, declare obligations (cep_gen2 obligations_declared=true for this canary), then
 the Owner-only release of hold m-608c8d8d761f is covered by this 'y' only at launch time. KSR/KME stay held.
+## Gen3 T2 DONE (Owner 'carry on' + cap 42M; evidence gen2/evidence/gen3_t2/README.md)
+- 44.25M measured (2.25M over cap). Canary branch canary/odr-p4-packets in C:\Users\User\Apps\io-odr-p4-canary, HEAD 312e0db5, not pushed. Review APPROVE + 1 LOW open.
+- Next (Owner): merge/deploy decision for InfinityOps Phase 4 (OWNER-GATED), the LOW fix, and whether to build an external spend breaker for agents before any further canary.
