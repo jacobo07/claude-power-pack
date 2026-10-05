@@ -80,3 +80,10 @@ T2-0 true cost: worker 3,383,129 measured + pane a5fafaa2 orchestration ~2.5-3.5
 State at approval: HEAD 64406cfc; holds on KSR m-a128e03c7419, InfinityOps m-608c8d8d761f, E1 m-f011d7fdebc9 (GEX44); KME HALTED.
 Online breakers already exist (ccd134e6 mission_spend session scope, edcb4ad7 session_budget_guard): connect, do not rebuild.
 Next 3 actions: (1) `mission_spend.py session-declare` for the orchestrating session (stop 4.5M); (2) dispatch W-a then W-b, one at a time, each with the packet only; (3) verify their controls yourself, write T2-0.5-README.md, report the T2-1 budget for the Owner's go after 2026-10-11T18:00Z.
+
+## T2-0.5 (2026-10-05)
+- Done: a (eeb1e94c), g/j (9187e329), h (31e09b81: E1 state.B IMPLEMENTED_AND_VERIFIED, --final PASS), e/b/c/d/f (readout gen3_t2/T2-0.5-README.md); i UNKNOWN (sessions after 2026-10-05T12:34Z: KSR 0, InfinityOps 0, KME 3).
+- Revised combined CEILING -53..-70% (workers x packets x transaction), -56..-76% with recurrence; workers alone -39% is the defensible one; not a saving.
+- T2-1 for the Owner's go after 2026-10-11T18:00Z: 4 decision points + 1 fresh review; budget 5.73M / 10.68M / 18.46M, call breaker 90, run as a supervised mission (guard cannot cap subagents).
+- Spend: W-a 3,374,974; W-a2 1,718,594; final worker in README; orchestrator pane not separately metered (~0.4M/call).
+- Not done: haircut variant of the transaction lever; item i; a real-session pilot of any lever.

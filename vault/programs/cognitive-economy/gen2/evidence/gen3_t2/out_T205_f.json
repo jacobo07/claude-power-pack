@@ -1,0 +1,75 @@
+{
+ "blind_contract": "labels assigned from the printed tool list (name, path basename, command head) and agent type only; the automated OTHER sub-stratum and every automated label were not shown; 75 items = 60 + 15 duplicates in shuffled order; one pass; categories N new durable content or decision, C control or evidence read, O orchestration or dispatch or task mgmt, Z no tool or no determinable content",
+ "labels_by_position": "ZCONOZCONCCCCOCCOCOCZOOCCCCCCCCCCCOONCCNCOCCNCCOCCCCCCZOZCNCCCCOCNNCOOCCOOC",
+ "pooled": {
+  "n": 60,
+  "new": 7,
+  "new_pct": 11.7,
+  "wilson95": [
+   5.8,
+   22.2
+  ],
+  "dup_pairs": 15,
+  "dup_agree": 15,
+  "dup_agree_pct": 100.0
+ },
+ "per_workload": {
+  "KSR": {
+   "n": 20,
+   "counts": {
+    "N": 2,
+    "C": 12,
+    "O": 5,
+    "Z": 1
+   },
+   "new_in_other_pct": 10.0,
+   "wilson95": [
+    2.8,
+    30.1
+   ],
+   "floor_new_proc_pct_point": 8.4,
+   "floor_range": [
+    6.9,
+    12.5
+   ]
+  },
+  "InfinityOps": {
+   "n": 20,
+   "counts": {
+    "N": 2,
+    "C": 15,
+    "O": 2,
+    "Z": 1
+   },
+   "new_in_other_pct": 10.0,
+   "wilson95": [
+    2.8,
+    30.1
+   ],
+   "floor_new_proc_pct_point": 9.9,
+   "floor_range": [
+    7.8,
+    15.8
+   ]
+  },
+  "KME": {
+   "n": 20,
+   "counts": {
+    "N": 3,
+    "C": 7,
+    "O": 8,
+    "Z": 2
+   },
+   "new_in_other_pct": 15.0,
+   "wilson95": [
+    5.2,
+    36.0
+   ],
+   "floor_new_proc_pct_point": 11.5,
+   "floor_range": [
+    10.4,
+    13.8
+   ]
+  }
+ }
+}

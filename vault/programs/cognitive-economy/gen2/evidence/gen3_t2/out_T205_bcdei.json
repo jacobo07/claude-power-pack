@@ -1,0 +1,327 @@
+{
+ "instrument": "T2-0.5 b,c,d,e,i",
+ "workloads": {
+  "KSR": {
+   "c": {
+    "runs": 200,
+    "calls_pct": {
+     "EVIDENCE": 44.13,
+     "INTERPRETATION": 6.48,
+     "SCHEDULING": 49.39
+    },
+    "proc_pct": {
+     "EVIDENCE": 44.32,
+     "INTERPRETATION": 7.1,
+     "SCHEDULING": 48.57
+    },
+    "proc_pct_of_workload": {
+     "EVIDENCE": 20.09,
+     "INTERPRETATION": 3.22,
+     "SCHEDULING": 22.02
+    },
+    "evidence_runs_pct_real": 46.0,
+    "evidence_runs_pct_shuffled_null": [
+     25.97,
+     1.51
+    ],
+    "mutant_dir_match_evidence_calls_pct": 55.67,
+    "mutant_thr0_scheduling_calls_pct": 0.0
+   },
+   "d": {
+    "base_check": [
+     274581880.0,
+     274581880,
+     true
+    ],
+    "processed": {
+     "historical": 274581880.0,
+     "workers only": 168507797.0,
+     "packets only": 225677992.0,
+     "transaction only": 163340442.45000002,
+     "workers+packets": 133374773.0,
+     "packets+transaction": 119026246.83500001,
+     "full": 81928470.12199993
+    },
+    "pct_vs_historical": {
+     "historical": 0.0,
+     "workers only": -38.63,
+     "packets only": -17.81,
+     "transaction only": -40.51,
+     "workers+packets": -51.43,
+     "packets+transaction": -56.65,
+     "full": -70.16
+    },
+    "pct_S5k": {
+     "workers S=5k": -40.49,
+     "full S=5k": -71.0
+    },
+    "interaction_tokens": {
+     "workers x packets": 13770864.0,
+     "packets x transaction": 4589692.38499999,
+     "full minus sum of singles": 73565998.6719999
+    },
+    "naive_product_pct": -70.0,
+    "naive_sum_pct": -96.95
+   },
+   "b": {
+    "recurrence_nonfirst_share_of_base_pct": 18.92,
+    "sequence_full_then_recurrence_pct": {
+     "0.25": -71.57,
+     "0.5": -72.99,
+     "1.0": -75.81
+    },
+    "full_pct": -70.16,
+    "naive_independent_product_with_rho0.5_pct": -72.83
+   },
+   "e_in": {
+    "f_main": 122927,
+    "growth_per_call": 3207.1954022988507,
+    "calls_per_delta": 4.02,
+    "episodes": 284,
+    "meta_transcripts": 12
+   }
+  },
+  "InfinityOps": {
+   "c": {
+    "runs": 223,
+    "calls_pct": {
+     "EVIDENCE": 37.75,
+     "INTERPRETATION": 5.01,
+     "SCHEDULING": 57.25
+    },
+    "proc_pct": {
+     "EVIDENCE": 38.69,
+     "INTERPRETATION": 5.96,
+     "SCHEDULING": 55.35
+    },
+    "proc_pct_of_workload": {
+     "EVIDENCE": 14.06,
+     "INTERPRETATION": 2.17,
+     "SCHEDULING": 20.11
+    },
+    "evidence_runs_pct_real": 42.15,
+    "evidence_runs_pct_shuffled_null": [
+     16.04,
+     1.28
+    ],
+    "mutant_dir_match_evidence_calls_pct": 42.75,
+    "mutant_thr0_scheduling_calls_pct": 0.0
+   },
+   "d": {
+    "base_check": [
+     374549194.0,
+     374549194,
+     true
+    ],
+    "processed": {
+     "historical": 374549194.0,
+     "workers only": 227659794.0,
+     "packets only": 291171615.0,
+     "transaction only": 249031801.75200003,
+     "workers+packets": 180088329.0,
+     "packets+transaction": 184347807.72900003,
+     "full": 127290018.38400003
+    },
+    "pct_vs_historical": {
+     "historical": 0.0,
+     "workers only": -39.22,
+     "packets only": -22.26,
+     "transaction only": -33.51,
+     "workers+packets": -51.92,
+     "packets+transaction": -50.78,
+     "full": -66.02
+    },
+    "pct_S5k": {
+     "workers S=5k": -41.06,
+     "full S=5k": -66.95
+    },
+    "interaction_tokens": {
+     "workers x packets": 35806114.0,
+     "packets x transaction": 18693584.976999998,
+     "full minus sum of singles": 108525195.632
+    },
+    "naive_product_pct": -68.58,
+    "naive_sum_pct": -94.99
+   },
+   "b": {
+    "recurrence_nonfirst_share_of_base_pct": 20.46,
+    "sequence_full_then_recurrence_pct": {
+     "0.25": -67.75,
+     "0.5": -69.49,
+     "1.0": -72.97
+    },
+    "full_pct": -66.02,
+    "naive_independent_product_with_rho0.5_pct": -71.8
+   },
+   "e_in": {
+    "f_main": 128412.0,
+    "growth_per_call": 2421.3657810352724,
+    "calls_per_delta": 3.79,
+    "episodes": 404,
+    "meta_transcripts": 10
+   }
+  },
+  "KME": {
+   "c": {
+    "runs": 76,
+    "calls_pct": {
+     "EVIDENCE": 31.76,
+     "INTERPRETATION": 26.47,
+     "SCHEDULING": 41.76
+    },
+    "proc_pct": {
+     "EVIDENCE": 32.92,
+     "INTERPRETATION": 24.24,
+     "SCHEDULING": 42.83
+    },
+    "proc_pct_of_workload": {
+     "EVIDENCE": 14.65,
+     "INTERPRETATION": 10.79,
+     "SCHEDULING": 19.06
+    },
+    "evidence_runs_pct_real": 44.74,
+    "evidence_runs_pct_shuffled_null": [
+     9.76,
+     1.83
+    ],
+    "mutant_dir_match_evidence_calls_pct": 38.24,
+    "mutant_thr0_scheduling_calls_pct": 0.0
+   },
+   "d": {
+    "base_check": [
+     107758442.0,
+     107758442,
+     true
+    ],
+    "processed": {
+     "historical": 107758442.0,
+     "workers only": 66035250.0,
+     "packets only": 107758442.0,
+     "transaction only": 77580037.229,
+     "workers+packets": 66035250.0,
+     "packets+transaction": 77580037.229,
+     "full": 50605715.19500003
+    },
+    "pct_vs_historical": {
+     "historical": 0.0,
+     "workers only": -38.72,
+     "packets only": 0.0,
+     "transaction only": -28.01,
+     "workers+packets": -38.72,
+     "packets+transaction": -28.01,
+     "full": -53.04
+    },
+    "pct_S5k": {
+     "workers S=5k": -40.51,
+     "full S=5k": -54.36
+    },
+    "interaction_tokens": {
+     "workers x packets": 0.0,
+     "packets x transaction": 0.0,
+     "full minus sum of singles": 14748869.966000028
+    },
+    "naive_product_pct": -55.88,
+    "naive_sum_pct": -66.72
+   },
+   "b": {
+    "recurrence_nonfirst_share_of_base_pct": 24.47,
+    "sequence_full_then_recurrence_pct": {
+     "0.25": -55.91,
+     "0.5": -58.78,
+     "1.0": -64.53
+    },
+    "full_pct": -53.04,
+    "naive_independent_product_with_rho0.5_pct": -61.28
+   },
+   "e_in": {
+    "f_main": 137061,
+    "growth_per_call": 2176.336,
+    "calls_per_delta": 2.66,
+    "episodes": 148,
+    "meta_transcripts": 0
+   }
+  }
+ },
+ "controls": {
+  "planted_classes": [
+   "EVIDENCE",
+   "INTERPRETATION",
+   "SCHEDULING"
+  ],
+  "planted_ok": true,
+  "mutant_dir_match_changes_class": true,
+  "base_checks": {
+   "KSR": [
+    274581880.0,
+    274581880,
+    true
+   ],
+   "InfinityOps": [
+    374549194.0,
+    374549194,
+    true
+   ],
+   "KME": [
+    107758442.0,
+    107758442,
+    true
+   ]
+  }
+ },
+ "e": {
+  "LOW": {
+   "calls_per_point": 8,
+   "points": 4,
+   "review_calls": 8,
+   "calls": 40,
+   "subtotal": 5475471,
+   "repair_reserve": 256824,
+   "total": 5732295
+  },
+  "CENTRAL": {
+   "calls_per_point": 15,
+   "points": 4,
+   "review_calls": 12,
+   "calls": 72,
+   "subtotal": 10422448,
+   "repair_reserve": 256824,
+   "total": 10679272
+  },
+  "HIGH": {
+   "calls_per_point": 24,
+   "points": 4,
+   "review_calls": 20,
+   "calls": 116,
+   "subtotal": 18029039,
+   "repair_reserve": 434500,
+   "total": 18463539
+  },
+  "breaker_calls": 90,
+  "inputs": {
+   "floor_main_median": 128412.0,
+   "growth_per_call": 2421.3657810352724,
+   "calls_per_delta_episode": {
+    "LOW": 2.66,
+    "CENTRAL": 3.79,
+    "HIGH": 4.02
+   }
+  }
+ },
+ "i": {
+  "KSR": {
+   "dirs": 1,
+   "main_sessions_total": 260,
+   "started_after_cutoff": 0
+  },
+  "InfinityOps": {
+   "dirs": 1,
+   "main_sessions_total": 8,
+   "started_after_cutoff": 0
+  },
+  "KME": {
+   "dirs": 1,
+   "main_sessions_total": 569,
+   "started_after_cutoff": 3
+  }
+ }
+}
