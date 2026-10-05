@@ -1,0 +1,42 @@
+{
+ "claude_version": "2.1.289 (Claude Code)",
+ "model": "claude-opus-5-5",
+ "pins": {
+  "rules/technical-failure-to-product-state.md": "MATCH",
+  "rules/scoped-side-effect-authority.md": "MATCH",
+  "rules/generated-content-needs-an-evidence-gate.md": "MATCH",
+  "rules/effect-authority-across-transports.md": "MATCH",
+  "rules/human-facing-external-effects.md": "MATCH",
+  "rules/documented-capability-must-be-executable.md": "MATCH",
+  "rules/validation-planes-do-not-transfer.md": "MATCH",
+  "rules/capability-preserving-compaction.md": "MATCH",
+  "rules/state-lifetime-and-incarnation.md": "MATCH",
+  "rules/post-effect-resource-truth.md": "MATCH",
+  "rules/durable-exit-transaction.md": "MATCH",
+  "rules/python/testing.md": "MATCH",
+  "rules/common/code-review.md": "MATCH"
+ },
+ "pinned_bytes": 56861,
+ "A": {
+  "state": "MEASURED",
+  "session_id": "d348d4e2-8007-4ca0-8dee-6ade85f488be",
+  "num_turns": 1,
+  "context": 91878,
+  "input_tokens": 2,
+  "cache_read_input_tokens": 15665,
+  "cache_creation_input_tokens": 76211,
+  "output_tokens": 4
+ },
+ "B": {
+  "state": "MEASURED",
+  "session_id": "f9326789-9e8f-4f5a-8cea-d82f56a1685a",
+  "num_turns": 1,
+  "context": 72827,
+  "input_tokens": 2,
+  "cache_read_input_tokens": 15665,
+  "cache_creation_input_tokens": 57160,
+  "output_tokens": 4
+ },
+ "delta_context_tokens": 19051,
+ "verdict": "MEASURED"
+}
