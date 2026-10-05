@@ -51,7 +51,11 @@ Added here:
       vault/programs/incremental-cognition/ (a second checkout, a Windows drive / backslash / mixed-case form), by its
       sha256, and by where a symlink really points. The bundle is the mission's request and names [L] and the other
       pillar tags, so the CE clause L4 alone would accept it; only a file the Owner wrote in their own words counts as
-      the Owner's decision.
+      the Owner's decision. And a name is not authorship (STATE debt (2), Owner decision (c), 2026-10-05): every
+      other owner_decision ref is accepted only when its bytes (raw or line-ending-normalised sha256) appear in an
+      `attest <sha256> <file>` line of vault/programs/incremental-cognition/OWNER-ATTESTATIONS.md; an absent or
+      unreadable attestation file accepts nothing. On a shared host this binds the decision to exact bytes; it does
+      not prove who wrote the attestation line.
   V-ICP-REBIND  the rebinding took: ledger.program must be "incremental-cognition", and a
       ledger read through any other program's path is refused.
 
@@ -534,6 +538,9 @@ DECISION_FILE = re.compile(r"^l-owner-decision.*\.md$", re.IGNORECASE)   # the n
 MISSION_WRITTEN_WHY = ("is a file the mission wrote (under evidence/ or measurements/ of the program directory; only "
                        "evidence/L-owner-decision*.md can be the Owner's decision, in their own words)")
 COPY_WHY = "is a byte copy of the owner bundle: the mission's request is never the Owner's answer"
+# STATE debt (2), Owner decision (c) 2026-10-05: an owner_decision counts only for bytes the Owner attested, one
+# `attest <sha256> <file>` line each. A list so the selftest can point it at scratch; the repo file is never written here.
+ATTESTATIONS_FILE = [REPO / PROGRAM_DIR / "OWNER-ATTESTATIONS.md"]
 
 
 def _mission_written_rel(rel) -> bool:
@@ -584,6 +591,32 @@ def same_bytes_as_bundle(ref) -> bool:
     return False
 
 
+UNATTESTED_WHY = ("has no Owner attestation of these exact bytes (an `attest <sha256> <file>` line in "
+                  f"{PROGRAM_DIR}OWNER-ATTESTATIONS.md; STATE debt (2), Owner decision (c), 2026-10-05)")
+
+
+def attested_digests() -> set:
+    """The sha256 values the Owner attested. Unreadable or absent file: none, so nothing is accepted."""
+    try:
+        text = Path(ATTESTATIONS_FILE[0]).read_text(encoding="utf-8-sig")
+    except OSError:
+        return set()
+    return {m.group(1).lower() for m in re.finditer(r"(?m)^attest\s+([0-9a-fA-F]{64})\b", text)}
+
+
+def unattested_problem(ref):
+    """None only when a file the ref reads as has attested bytes (raw or line-ending-normalised sha256): the name of
+    a file says nothing about who wrote it, its bytes bound to an attestation do."""
+    want = attested_digests()
+    for p in (_resolved_paths(ref) if want else []):
+        try:
+            if p.is_file() and _digests(p) & want:
+                return None
+        except OSError:
+            continue
+    return UNATTESTED_WHY
+
+
 def owner_decision_problem(ref):
     """Why an owner_decision evidence ref cannot be the Owner's answer, or None."""
     if names_the_bundle(ref):
@@ -592,7 +625,7 @@ def owner_decision_problem(ref):
         return COPY_WHY
     if is_mission_written(ref):
         return MISSION_WRITTEN_WHY
-    return None
+    return unattested_problem(ref)
 
 
 def check_owner_decisions(led: dict, only=None) -> list:
@@ -658,7 +691,7 @@ def r4_identity_poles() -> dict:
                                                                                     "Incremental-Cognition"), True)
     poles["relative-case-variant"] = ("Vault/Programs/Incremental-Cognition/OWNER-BUNDLE.md", True)
     poles["windows-forward-slash-drive"] = ("c:/repo/" + OWNER_BUNDLE_REL, True)
-    poles["unrelated-windows-path"] = ("C:\\Users\\User\\Desktop\\my-decision.md", False)
+    poles["unrelated-windows-path-unattested"] = ("C:\\Users\\User\\Desktop\\my-decision.md", True)
     # WR-02: a verbatim copy of the bundle, and files the mission wrote, are never the Owner's own words
     copy_ = td / "decision-copy.md"
     copy_.write_bytes(raw)
@@ -681,13 +714,43 @@ def r4_identity_poles() -> dict:
             pass
     if decoy.is_symlink():
         poles["decision-named-symlink-to-evidence"] = (str(decoy), True)
-    # accepted shape: the Owner's own decision file, in scratch (never in the repo)
+    # debt (2), Owner decision (c): only attested bytes are the Owner's decision. The attestation file lives in scratch
+    # (r4_attestations_path), written here with the LF-normalised sha256 of the accepted fixture only.
     dec = td / "checkout2" / PROGRAM_DIR / "evidence" / "L-owner-decision.md"
     dec.parent.mkdir(parents=True, exist_ok=True)
-    dec.write_text("# Decision\n\nIn my own words: decline [L] live sessions.\n", encoding="utf-8")
-    poles["accepted-owner-decision-fixture"] = (str(dec), False)
-    poles["accepted-owner-decision-relative"] = (PROGRAM_DIR + "evidence/L-owner-decision.md", False)
+    dec.write_bytes(b"# Decision\n\nIn my own words: decline [L] live sessions.\n")
+    edited = td / "checkout2" / PROGRAM_DIR / "evidence" / "L-owner-decision-edited.md"
+    edited.write_bytes(b"# Decision\n\nIn my own words: approve [L] live sessions.\n")
+    unattested = td / "checkout2" / PROGRAM_DIR / "evidence" / "L-owner-decision-unattested.md"
+    unattested.write_bytes(b"# Decision\n\nWritten by someone, attested by nobody.\n")
+    crlf_dec = td / "decision-crlf.md"
+    crlf_dec.write_bytes(dec.read_bytes().replace(b"\n", b"\r\n"))
+    lf = hashlib.sha256(dec.read_bytes()).hexdigest()
+    was = hashlib.sha256(b"# Decision\n\nIn my own words: decline [L] live sessions.\n").hexdigest()
+    r4_attestations_path().write_text(f"attest {lf} {dec.name}\n" f"attest {was} {edited.name}\n", encoding="utf-8")
+    poles["accepted-owner-decision-attested"] = (str(dec), False)
+    poles["accepted-owner-decision-attested-crlf"] = (str(crlf_dec), False)
+    poles["decision-edited-after-attestation"] = (str(edited), True)
+    poles["decision-named-but-unattested"] = (str(unattested), True)
+    poles["decision-relative-not-attested"] = (PROGRAM_DIR + "evidence/L-owner-decision.md", True)
     return poles
+
+
+def r4_attestations_path() -> Path:
+    """The scratch attestation file the R4 poles are judged against (never the repo's OWNER-ATTESTATIONS.md)."""
+    if not _R4_SCRATCH:
+        _R4_SCRATCH.append(tempfile.TemporaryDirectory(prefix="icp-r4-"))
+    return Path(_R4_SCRATCH[0].name) / "OWNER-ATTESTATIONS.md"
+
+
+@contextlib.contextmanager
+def _attestations(path):
+    saved = ATTESTATIONS_FILE[0]
+    ATTESTATIONS_FILE[0] = Path(path)
+    try:
+        yield
+    finally:
+        ATTESTATIONS_FILE[0] = saved
 
 
 def _old_string_bundle_ref(ref) -> bool:
@@ -726,6 +789,8 @@ R4_MUTANTS = {
     "r4-case-sensitive-spelling": lambda: _patch_attr("_spelled_tail", _spelled_tail_case_sensitive),
     "r4-string-compare": lambda: _patch_attr("owner_decision_problem",
                                              lambda ref: "the owner bundle" if _old_string_bundle_ref(ref) else None),
+    # debt (2) before decision (c): a decision-named file was accepted by its name alone
+    "r4-attestation-ignored": lambda: _patch_attr("unattested_problem", lambda ref: None),
 }
 
 
@@ -1145,23 +1210,42 @@ def selftest(verbose=True) -> bool:
     refused = [check_owner_decisions(r4_led(p_, f_), only=[p_]) for p_ in ("L", "B") for f_ in bundle_forms]
     say(all(len(g) == 1 and g[0].startswith("R4 ") and "owner bundle" in g[0] for g in refused),
         "V-ICP-R4-BUNDLE-REFUSED (the bundle as an owner_decision, five spellings, pillars L and B)")
-    own = PROGRAM_DIR + "evidence/L-owner-decision.md"
-    say(check_owner_decisions(r4_led("L", own), only=["L"]) == []
-        and check_owner_decisions({"state": {"L": {"evidence": [
-            {"kind": "measurement", "ref": OWNER_BUNDLE_REL, "sha256": "0" * 64}]}}}, only=["L"]) == [],
-        "V-ICP-R4-OTHER-DECISION-SILENT (the Owner's own decision file, and a non-decision evidence kind, are not refused)")
-    with _home(REPO.parent):       # the ~ pole expands against the checkout's parent
+    # the ~ pole expands against the checkout's parent; every R4 judgement below reads the scratch attestation file
+    with _home(REPO.parent), _attestations(r4_attestations_path()):
         poles = r4_identity_poles()
+        own = poles["accepted-owner-decision-attested"][0]
+        say(check_owner_decisions(r4_led("L", own), only=["L"]) == []
+            and check_owner_decisions({"state": {"L": {"evidence": [
+                {"kind": "measurement", "ref": OWNER_BUNDLE_REL, "sha256": "0" * 64}]}}}, only=["L"]) == [],
+            "V-ICP-R4-OTHER-DECISION-SILENT (the Owner's attested decision file, and a non-decision evidence kind, are "
+            "not refused)")
+        trio = {k: r4_refused(poles[k][0]) for k in ("accepted-owner-decision-attested",
+                                                      "decision-edited-after-attestation", "decision-named-but-unattested")}
+        say(trio == {"accepted-owner-decision-attested": False, "decision-edited-after-attestation": True,
+                     "decision-named-but-unattested": True},
+            f"V-ICP-R4-ATTESTED-BYTES-ONLY (debt 2, Owner decision (c): attested bytes accepted; the same name with "
+            f"edited bytes, or with no attestation, refused: {trio})")
         off = [name for name, (ref, expect) in poles.items() if r4_refused(ref) != expect]
     say(not off, f"V-ICP-R4-IDENTITY ({len(poles)} spellings / identities of the bundle and of mission-written files "
                  f"refused, the accepted shapes silent; off: {off})")
-    for mname, patcher in R4_MUTANTS.items():
-        restore = patcher()
+    # The attestation wall refuses everything unattested, so it would also refuse what a broken identity wall lets
+    # through and hide that breakage. Each older wall is therefore judged with the attestation wall held open: a
+    # mutant is killed only by poles it opens BEYOND the ones the open attestation wall opens on its own.
+    def off_under(patchers):
+        restores = [p() for p in patchers]
         try:
-            with _home(REPO.parent):
-                off_m = [name for name, (ref, expect) in r4_identity_poles().items() if r4_refused(ref) != expect]
+            with _home(REPO.parent), _attestations(r4_attestations_path()):
+                return {name for name, (ref, expect) in r4_identity_poles().items() if r4_refused(ref) != expect}
         finally:
-            restore()
+            for r in reversed(restores):
+                r()
+    open_attest = R4_MUTANTS["r4-attestation-ignored"]
+    held_by_attestation = off_under([open_attest])
+    for mname, patcher in R4_MUTANTS.items():
+        if patcher is open_attest:
+            off_m = sorted(held_by_attestation)
+        else:
+            off_m = sorted(off_under([open_attest, patcher]) - held_by_attestation)
         say(bool(off_m), f"V-ICP-MUT-{mname} killed by V-ICP-R4-IDENTITY (the poles it leaves open: {off_m[:3]})")
     return ok
 
