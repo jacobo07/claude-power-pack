@@ -82,11 +82,23 @@ TUA-X clock-a worktree: t1 P1 closure · t2 obligation graph + packets. Product:
 - Owner approved CJ Phase 2 budget <=30 calls ("yes", directive #2, backlog 085fece7af5c).
 - Pane 8d714d99 orchestration: ~11M cumulative (calls now ~250k each) -> rotate; do not execute from it.
 
+- **c2+c3 DONE** 908902dd (+ae390423 progress): `gsd_mission.py envelope --mission ID [--token-estimate] [--model]
+  [--autocompact] [--wu-packet PATH]`; a mission with wu_packet launches a compiled prompt (path + sha256 + 3 lessons,
+  no /gsd- command). ENVELOPE 28/28, MC 225/225, MV2 72/72, G23 32/32, hold 12/12, MSPEND 20/20; 2 mutants red.
+- **t2 DONE** 80cf3132 (clock-a): OBLIGATIONS.md (R1 FX, R2 hero frontier, R3 founder) + WU-A-PACKET.md (P2+P3).
+- **CLOCK A REARMED** 2026-10-05: envelope 16M / sonnet / 300k + wu_packet WU-A; cec68800 stopped (daemon up);
+  hold released; supervise -> replace "owner dead" -> epoch 2 worker ddd4103e RUNNING, intent = compiled packet
+  (sha e6d5acf7c23c), flags --model sonnet --autocompact 300k. Spend before epoch 2: 6,078,711 since created_at.
+- **Peak PK1 DONE** b43bcea9: prior-price rule VERIFIED (LOCM art. 20.1, 30 days, first-offer exemption; EU 6a);
+  **PK1b** 07edecb7: owner ALREADY EXISTS on GEX44 (582303ab `brand_price_observations`, 25 passed, mutation 8/8),
+  0 rows (no ACTIVE_PUBLISHED product). Gap: no read-back scheduler (backlog c765574ee73a). BF window needs first
+  published product + read-back every <=7d before ~2026-10-28. No previous-price claim until 30 days covered.
+
 ## Next (successor: read this section only)
-1. c2+c3 in CPP (bounded worker, spec first): mission envelope setter (token_estimate, model, autocompact) + compiled-WU
-   launch path (packet file instead of /gsd-autonomous, carrying the 3 packet lessons above), red/green tests,
-   path-scoped commits. Then set m-3a1a8b1f7fed envelope (token_estimate 16M, model sonnet, autocompact 300k) and
-   release the compiled-execution hold.
-2. t2: Clock A obligation graph P2-9 from ROADMAP SCs (reuse g3_k5_obligations.py) -> WU-A packet (P2+P3, CJ <=30).
-3. Peak: price-history WU first (verify the 30-day prior-price claim against primary legal text before any copy;
-   window ~2026-10-28), then event model on commercial_moment_events, T0 compiler, applicability table, BF fixture.
+1. Clock A: watch epoch 2 (ddd4103e) -> read phases/02-real-ships-from-evidence/02-VERIFY.md; measure its cost vs
+   WU-A expected 25 calls; then compile the WU-B/WU-C packet (R1 FX read + P5 decision) and attach with
+   `envelope --wu-packet` (the supervisor relaunches on it).
+2. Peak builder WU: event model on commercial_moment_events (read its schema first) -> T0-relative compiler ->
+   maturity/clock applicability table from CLAIMS.md checklist -> BF 2026 fixture -> no-regression drill
+   (TEST READY never needs BF READY). Control room + post-event writeback stay DEFERRED.
+3. c4 floor variants, c5 CBR candidate once WU-A actuals exist.
