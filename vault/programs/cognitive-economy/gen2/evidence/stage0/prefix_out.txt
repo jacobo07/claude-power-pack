@@ -1,0 +1,18 @@
+﻿TRANSCRIPTS 24  CALLS 1141
+CONTROL context=273,912,110 expected=273,912,110 delta=+0 (+0.00%)
+OUTPUT 669,770
+PER_CALL_CONTEXT median=228,955 p90=369,443
+FIRST_CALL_PREFIX main sessions (unexplained by tally) n=7 median=59,881
+CLASS instructions             40,180,512   14.7%
+CLASS system_prompt            35,756,985   13.1%
+CLASS file_text                33,475,649   12.2%
+CLASS listings                 18,985,311    6.9%
+CLASS assistant_output         15,897,645    5.8%
+CLASS tool_text                14,155,359    5.2%
+CLASS hook_context              5,023,844    1.8%
+CLASS user_text                 2,346,366    0.9%
+CLASS image                             0    0.0%
+CLASS compaction_summary                0    0.0%
+CLASS unattributed            108,090,439   39.5%
+UNTALLIED_ATTACHMENTS {'hook_success': 3627, 'deferred_tools_record': 176, 'task_reminder': 97, 'environment': 35, 'silent_turn_reminder': 28, 'date': 26, 'model': 24, 'session_context': 24}
+INSTRUCTION_FILES (largest, chars)
