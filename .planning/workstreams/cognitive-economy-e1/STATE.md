@@ -55,3 +55,7 @@ rules can leave the startup prefix without a judgement loss. Each one costs ~19.
   byte-identical to the committed blob, remove it, `git fetch ../e1-commitclone <branch>` and
   `git merge --ff-only FETCH_HEAD`. 01-02/03/04 agents wrote to /tmp when blocked; the orchestrator placed
   their files in e1 and ran the real validator (VALIDATE-E1 11/11 base=78ba9e7414 pins=13/13).
+- 2026-10-05 (epoch 2) SPEND GUARD: the runner's spend check is predictive -- no run starts if summed spend plus
+  the largest single run seen so far would pass 17,000,000 (amendment in 02-02/02-04 PLAN). Reason: ADDENDUM-E1
+  clause 6 makes going past 17M an Owner decision; a check-before-start-only rule lets the last run overshoot
+  without it. Safe: it can only stop the campaign sooner and never changes a per-rule decision.
