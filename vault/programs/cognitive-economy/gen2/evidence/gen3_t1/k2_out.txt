@@ -1,0 +1,55 @@
+sessions 237 calls 22905 sum ctx 6,434,795,277
+HOOK_ADDITIONAL_CONTEXT (model-visible): n=5199 rent=188,882,493 tok = 2.94% of main context
+by emitter cluster (n | total chars | median chars | rent tok | share of ctx | host-frame chars):
+  superpowers                                    199 1,920,978  10,777    58,483,789  0.91%   15,101
+  tower-baseline                                 155   587,409   3,710    23,920,472  0.37%   12,245
+  other:["ExecutionOS Lite tier: FORENSIC \u#    255   717,078   2,516    16,365,702  0.25%   20,145
+  other:["ExecutionOS Lite tier: DEEP \u# MEA    281   500,635   1,103    12,839,497  0.20%   22,199
+  woz                                           1575   435,663     235    10,480,219  0.16%  132,224
+  other:["Graph-First (GK-#, level-# advisory    846   369,281     424     9,970,796  0.15%   69,096
+  cross-project-baseline                         195   163,774     817     6,268,829  0.10%   16,380
+  persisted-output                               112   259,154   2,326     5,924,492  0.09%    8,848
+  skill-advisor                                  327   182,674     619     5,852,539  0.09%   25,734
+  other:["## JIT Aggressive Activation \u# ac     34   215,671   6,180     5,178,078  0.08%    2,686
+  other:["=== SDD-OS \u# Spec First. Executio    115   199,937     897     4,699,806  0.07%    9,085
+  other:["POWER PACK ACTIVE (reminder only \u#    63   135,576   2,152     4,549,156  0.07%    4,977
+  other:["FRONTERA DE TURNO \u# tu turno ante     53   134,666   1,263     3,636,588  0.06%    4,187
+  other:["ROLLOVER \u# the session that was w      6    72,490  11,702     3,403,480  0.05%      456
+by hook name (n | chars | rent):
+  UserPromptSubmit                    1679 3,164,746    84,748,632
+  SessionStart                         257 2,394,887    69,448,086
+  PreToolUse:PowerShell               2154   778,289    21,068,345
+  PreToolUse:Write                     315   158,764     4,874,632
+  PreToolUse:Grep                      328   136,224     4,284,190
+  PreToolUse:Edit                      168    80,615     2,393,718
+  PostToolUse:Edit                     131    39,542       988,581
+  PostToolUse:PowerShell                99    27,822       712,946
+  PostToolUse:Read                      64    28,559       263,822
+  PostToolUse:Write                      4     3,014        99,540
+HOOK_SUCCESS (NOT model-visible: no 'rendered', regression coefficient ~0.03): n=75168 stdout chars=6,743,139 counterfactual rent if it WERE context=182,371,868 tok = 2.83%  [Stage0 claim 11-13% REFUTED as context]
+hook_system_message n/with-rendered: [1526, 0]
+host framing in rendered hac: 420,785 chars over 5199 events (6.2% of rendered chars)
+ORIGIN (files under ~/.claude/hooks containing the anchor literal):
+  tower-baseline           -> []
+  correction-R6            -> ['correction-guard.js']
+  cross-project-baseline   -> ['hook-dispatcher.js']
+  woz                      -> ['research-intent-detector.js']
+  skill-advisor            -> []
+  compound-learnings       -> ['learning-sentinel.js']
+dispatcher copies: ['C:\\Users\\User\\.claude\\hooks\\hook-dispatcher.js', 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\hook-dispatcher.js']
+  hooks/hook-dispatcher.js lines=1613 emit-lines=62
+     (28, '*   - additionalContext: concatenated with "\\n\\n" separator.')
+     (29, '*   - hookSpecificOutput: shallow-merged (later hooks override same keys).')
+     (424, "// hookSpecificOutput.permissionDecision:'deny' -- the SAME shape this file")
+     (494, '// uqf_pre_edit_gate = advisory only (.py AST hints via additionalContext);')
+     (495, '// claude_md_firewall = DENY via hookSpecificOutput.permissionDecision when a')
+     (595, '// drill travels the same additionalContext routing the production chain uses.')
+     (597, '// systemMessage, which is not the claim.')
+  hooks/hook-dispatcher.js lines=1613 emit-lines=62
+     (28, '*   - additionalContext: concatenated with "\\n\\n" separator.')
+     (29, '*   - hookSpecificOutput: shallow-merged (later hooks override same keys).')
+     (424, "// hookSpecificOutput.permissionDecision:'deny' -- the SAME shape this file")
+     (494, '// uqf_pre_edit_gate = advisory only (.py AST hints via additionalContext);')
+     (495, '// claude_md_firewall = DENY via hookSpecificOutput.permissionDecision when a')
+     (595, '// drill travels the same additionalContext routing the production chain uses.')
+     (597, '// systemMessage, which is not the claim.')

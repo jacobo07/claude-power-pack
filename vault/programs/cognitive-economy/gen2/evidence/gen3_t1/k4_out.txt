@@ -1,0 +1,85 @@
+=== KSR (call-level ts>=2026-10-03T19:40Z, all transcripts): transcripts=24 (main 7) calls=1141 ctx=273,912,110 out=669,770 processed=274,581,880
+    CONTROL ctx expected 273,912,110 -> EXACT MATCH
+    BASE (measured)                                                    274.58M    +0.0%
+    (a) floor-only, -3,705/call (measured n=1)  [CEILING]              270.35M    -1.5%
+    (a) floor-only, -8,966/call (instructions-implied)  [CEILING]      264.35M    -3.7%
+    (b) hook-only: remove hook_additional_context rent (main calls)  [CEILING]     270.18M    -1.6%
+    (b') hook_success rent IF it were context (REFUTED, NOT a saving)     270.01M    -1.7%
+    subagent runs by type: {'gsd-plan-checker': 5, 'gsd-planner': 5, 'general-purpose': 3, 'gsd-phase-researcher': 2, 'gsd-code-reviewer': 1, 'gsd-verifier': 1}; meta runs=12 (processed 49.71M) unclassified=0
+    (c) meta-work-only: drop planner/researcher/checker runs, +c=0M/run  [CEILING]     224.87M   -18.1%
+    (c) meta-work-only: drop planner/researcher/checker runs, +c=2M/run  [CEILING]     248.87M    -9.4%
+    (c) meta-work-only: drop planner/researcher/checker runs, +c=5M/run  [CEILING]     284.87M    +3.7%
+    (d) bounded workers N=10 S=10k on measured  [CEILING]              155.90M   -43.2%
+    (d) bounded workers N=10 S=30k on measured  [CEILING]              174.22M   -36.6%
+    (d) bounded workers N=20 S=10k on measured  [CEILING]              171.95M   -37.4%
+    (d) bounded workers N=20 S=30k on measured  [CEILING]              186.87M   -31.9%
+    (d) bounded workers N=40 S=10k on measured  [CEILING]              201.73M   -26.5%
+    (d) bounded workers N=40 S=30k on measured  [CEILING]              211.59M   -22.9%
+    (e) combined a(meas)>b>c(c=0M)>d(N=20,S=10k)  [CEILING]            126.07M   -54.1%
+    (e) combined a(meas)>b>c(c=0M)>d(N=40,S=30k)  [CEILING]            155.73M   -43.3%
+    (e) combined a(meas)>b>c(c=2M)>d(N=20,S=10k)  [CEILING]            150.07M   -45.3%
+    (e) combined a(meas)>b>c(c=2M)>d(N=40,S=30k)  [CEILING]            179.73M   -34.5%
+    (e) combined a(meas)>b>c(c=5M)>d(N=20,S=10k)  [CEILING]            186.07M   -32.2%
+    (e) combined a(meas)>b>c(c=5M)>d(N=40,S=30k)  [CEILING]            215.73M   -21.4%
+    (e) combined a(impl)>b>c(c=0M)>d(N=20,S=10k)  [CEILING]            121.46M   -55.8%
+    (e) combined a(impl)>b>c(c=0M)>d(N=40,S=30k)  [CEILING]            151.12M   -45.0%
+    (e) combined a(impl)>b>c(c=2M)>d(N=20,S=10k)  [CEILING]            145.46M   -47.0%
+    (e) combined a(impl)>b>c(c=2M)>d(N=40,S=30k)  [CEILING]            175.12M   -36.2%
+    (e) combined a(impl)>b>c(c=5M)>d(N=20,S=10k)  [CEILING]            181.46M   -33.9%
+    (e) combined a(impl)>b>c(c=5M)>d(N=40,S=30k)  [CEILING]            211.12M   -23.1%
+=== InfinityOps odr-device-trust (8 workers + subagents): transcripts=31 (main 8) calls=1531 ctx=373,740,097 out=809,097 processed=374,549,194
+    BASE (measured)                                                    374.55M    +0.0%
+    (a) floor-only, -3,705/call (measured n=1)  [CEILING]              368.88M    -1.5%
+    (a) floor-only, -8,966/call (instructions-implied)  [CEILING]      360.82M    -3.7%
+    (b) hook-only: remove hook_additional_context rent (main calls)  [CEILING]     368.53M    -1.6%
+    (b') hook_success rent IF it were context (REFUTED, NOT a saving)     369.57M    -1.3%
+    subagent runs by type: {'gsd-phase-researcher': 4, 'gsd-planner': 3, 'gsd-plan-checker': 3, 'gsd-code-reviewer': 3, 'gsd-verifier': 3, 'gsd-pattern-mapper': 2, 'gsd-executor': 2, 'gsd-ui-researcher': 1}; meta runs=10 (processed 84.59M) unclassified=0
+    (c) meta-work-only: drop planner/researcher/checker runs, +c=0M/run  [CEILING]     289.96M   -22.6%
+    (c) meta-work-only: drop planner/researcher/checker runs, +c=2M/run  [CEILING]     309.96M   -17.2%
+    (c) meta-work-only: drop planner/researcher/checker runs, +c=5M/run  [CEILING]     339.96M    -9.2%
+    (d) bounded workers N=10 S=10k on measured  [CEILING]              210.77M   -43.7%
+    (d) bounded workers N=10 S=30k on measured  [CEILING]              235.65M   -37.1%
+    (d) bounded workers N=20 S=10k on measured  [CEILING]              235.54M   -37.1%
+    (d) bounded workers N=20 S=30k on measured  [CEILING]              255.82M   -31.7%
+    (d) bounded workers N=40 S=10k on measured  [CEILING]              279.10M   -25.5%
+    (d) bounded workers N=40 S=30k on measured  [CEILING]              291.96M   -22.1%
+    (e) combined a(meas)>b>c(c=0M)>d(N=20,S=10k)  [CEILING]            171.08M   -54.3%
+    (e) combined a(meas)>b>c(c=0M)>d(N=40,S=30k)  [CEILING]            208.78M   -44.3%
+    (e) combined a(meas)>b>c(c=2M)>d(N=20,S=10k)  [CEILING]            191.08M   -49.0%
+    (e) combined a(meas)>b>c(c=2M)>d(N=40,S=30k)  [CEILING]            228.78M   -38.9%
+    (e) combined a(meas)>b>c(c=5M)>d(N=20,S=10k)  [CEILING]            221.08M   -41.0%
+    (e) combined a(meas)>b>c(c=5M)>d(N=40,S=30k)  [CEILING]            258.78M   -30.9%
+    (e) combined a(impl)>b>c(c=0M)>d(N=20,S=10k)  [CEILING]            164.91M   -56.0%
+    (e) combined a(impl)>b>c(c=0M)>d(N=40,S=30k)  [CEILING]            202.61M   -45.9%
+    (e) combined a(impl)>b>c(c=2M)>d(N=20,S=10k)  [CEILING]            184.91M   -50.6%
+    (e) combined a(impl)>b>c(c=2M)>d(N=40,S=30k)  [CEILING]            222.61M   -40.6%
+    (e) combined a(impl)>b>c(c=5M)>d(N=20,S=10k)  [CEILING]            214.91M   -42.6%
+    (e) combined a(impl)>b>c(c=5M)>d(N=40,S=30k)  [CEILING]            252.61M   -32.6%
+=== KME KobiiCraft (3 workers + subagents): transcripts=6 (main 3) calls=393 ctx=107,407,089 out=351,353 processed=107,758,442
+    BASE (measured)                                                    107.76M    +0.0%
+    (a) floor-only, -3,705/call (measured n=1)  [CEILING]              106.30M    -1.4%
+    (a) floor-only, -8,966/call (instructions-implied)  [CEILING]      104.23M    -3.3%
+    (b) hook-only: remove hook_additional_context rent (main calls)  [CEILING]     105.35M    -2.2%
+    (b') hook_success rent IF it were context (REFUTED, NOT a saving)     105.13M    -2.4%
+    subagent runs by type: {'kme-g1-ownership-arbiter': 3}; meta runs=0 (processed 0.00M) unclassified=0
+    (c) meta-work-only: drop planner/researcher/checker runs, +c=0M/run  [CEILING]     107.76M    +0.0%
+    (c) meta-work-only: drop planner/researcher/checker runs, +c=2M/run  [CEILING]     107.76M    +0.0%
+    (c) meta-work-only: drop planner/researcher/checker runs, +c=5M/run  [CEILING]     107.76M    +0.0%
+    (d) bounded workers N=10 S=10k on measured  [CEILING]               60.72M   -43.7%
+    (d) bounded workers N=10 S=30k on measured  [CEILING]               67.72M   -37.2%
+    (d) bounded workers N=20 S=10k on measured  [CEILING]               64.37M   -40.3%
+    (d) bounded workers N=20 S=30k on measured  [CEILING]               70.77M   -34.3%
+    (d) bounded workers N=40 S=10k on measured  [CEILING]               71.05M   -34.1%
+    (d) bounded workers N=40 S=30k on measured  [CEILING]               76.25M   -29.2%
+    (e) combined a(meas)>b>c(c=0M)>d(N=20,S=10k)  [CEILING]             61.17M   -43.2%
+    (e) combined a(meas)>b>c(c=0M)>d(N=40,S=30k)  [CEILING]             72.96M   -32.3%
+    (e) combined a(meas)>b>c(c=2M)>d(N=20,S=10k)  [CEILING]             61.17M   -43.2%
+    (e) combined a(meas)>b>c(c=2M)>d(N=40,S=30k)  [CEILING]             72.96M   -32.3%
+    (e) combined a(meas)>b>c(c=5M)>d(N=20,S=10k)  [CEILING]             61.17M   -43.2%
+    (e) combined a(meas)>b>c(c=5M)>d(N=40,S=30k)  [CEILING]             72.96M   -32.3%
+    (e) combined a(impl)>b>c(c=0M)>d(N=20,S=10k)  [CEILING]             59.10M   -45.2%
+    (e) combined a(impl)>b>c(c=0M)>d(N=40,S=30k)  [CEILING]             70.89M   -34.2%
+    (e) combined a(impl)>b>c(c=2M)>d(N=20,S=10k)  [CEILING]             59.10M   -45.2%
+    (e) combined a(impl)>b>c(c=2M)>d(N=40,S=30k)  [CEILING]             70.89M   -34.2%
+    (e) combined a(impl)>b>c(c=5M)>d(N=20,S=10k)  [CEILING]             59.10M   -45.2%
+    (e) combined a(impl)>b>c(c=5M)>d(N=40,S=30k)  [CEILING]             70.89M   -34.2%
