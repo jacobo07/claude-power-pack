@@ -23,12 +23,28 @@ another pane's; never touch it. Repo `~/.claude/skills/claude-power-pack`, branc
   ukdl-universal.md, own hunk only; foreign +292 incl. CEPS auto-appends left unstaged); handoffs/R-cbr.md;
   ledger state.R ALREADY re-pinned via ledger_write.py. --final PASS after the commit.
 
+## REARM (Owner prompt 2026-10-05): continue to economic certification, not just W7
+- T 0ea53eef: DORMANT class in reachability.py (note must name an existing tools/test_*.py; reachable
+  DORMANT = stale offender); 5 modules declared; offenders 66 -> 61; V-REACH-DORMANT + 2 mutants red.
+- W7 e4a35e5f: owner-bundle dispositions; ledger T owner_decision (decision 4 verbatim) + result;
+  B owner_decision.e1_authorization. --final PASS, --selftest PASS.
+- E1 gate 1 8b5e1602: excluding the 13 rules cuts billed first-call context 19,051 (laptop) /
+  19,038 (GEX44) tokens. Gate 2: 17M/19k = ~890 calls. Probe bug fixed: zero-usage = UNMEASURED.
+- ADDENDUM-E1 bc70934b (frozen before any run): 11 rules (tfps/ssea decided by R2), max 22 runs,
+  harm stop 4/8, spend stop 17M, positive control >= 15k.
+- Published 78ba9e74 to origin (FF from fd148f6c, 16 commits incl. 3 IC, secret scan 0 hits + control).
+- E1 RUNNING on GEX44: mission m-f011d7fdebc9, clone ~/missions/cognitive-economy-e1, workstream
+  cognitive-economy-e1, base branch mission/cognitive-economy-e1-base. Never poll it from a model turn.
+
 ## Next (in order)
-1. W7: owner-bundle.md close items ([RUN] done, [L] WIRED, [B] deferred, [T] result, [R] done --
-   UC-04 promoted in ecb5977a on decision 6); ledger: state.T owner_decision + result, re-pin
-   owner-bundle sha256 in B and T (R needs no re-pin unless ukdl-candidates/R-cbr change again), via
-   ledger_write.py; dated CLOSE.md section; --selftest + --final PASS.
-2. Push #2: fetch, FF check, secret-scan range, push the exact verified sha.
+1. When m-f011d7fdebc9 is COMPLETED/HALTED (status on GEX44 needs CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude):
+   fetch the worker's branch back (`git fetch ssh://kobii@gex44/home/kobii/missions/cognitive-economy-e1
+   <its mission/... branch>`), read e1/REPORT.md, check the results against ADDENDUM-E1 yourself.
+2. Owner: yes on the exact relocation list (HR-001: ~/.claude/rules write). Then move, rerun e1_mechanical.py
+   on the moved state, and write ledger state.B via ledger_write.py (terminal from the frozen rule; evidence).
+3. L: pin the first real compound receipt when one exists (ADVANCED + .bak in window); else stays WIRED.
+4. Close: UC-11 has a 2nd instance (e1_mechanical judged "MEASURED" on all-zero usage from a refused
+   call) -> evaluate promotion; status matrix; meta-analysis; final handoff.
 
 ## Findings to record (not ours to fix)
 - tools/compound_unattended.py live code uncommitted since ~2026-09-10.
@@ -36,6 +52,6 @@ another pane's; never touch it. Repo `~/.claude/skills/claude-power-pack`, branc
 
 Owner decisions 1-7 verbatim (needed for state.T owner_text in W7; push conditions = decision 7):
 `~/.claude/projects/C--Users-User--claude-skills-claude-power-pack/0f1368ee-6071-4212-b648-34a9cb38b2be.jsonl`,
-search `DECISION 4 — PILLAR T` (em dash). Never paraphrase into owner_text.
+search `DECISION 4 â€” PILLAR T` (em dash). Never paraphrase into owner_text.
 
-Start: read this file, `git log --oneline -6`, then Next item 1 (W7).
+Start: read this file, `git log --oneline -6`, then Next item 1.
