@@ -221,6 +221,15 @@ def front_matter_fields(text: str) -> dict:
 KNOWN_ROLES = ("primary", "second_workload", "smoke")
 KMEP_INSTRUMENT = "wiki/tools/kme_pillars.py"
 KMEP_BODY_MARKER = "<!-- kmep-json -->"
+KMEP_BODY_END = "<!-- /kmep-json -->"
+# The fields kme_pillars writes into the front matter (mirrors kme_pillars.FRONT_KEYS + FRONT_OPTIONAL; test_kme_pillars
+# pins the two equal). Its json block carries the same result object, so each must agree with the block.
+KMEP_AGREE_KEYS = ("instrument", "pillar", "denominator", "denominator_kind", "rule_denominators", "evidence_role",
+                   "terminal_evidence", "terminal_evidence_reason", "second_workload_valid", "plane", "measured_at",
+                   "until", "command", "population_match", "numerator", "share_interval", "share_measured_population",
+                   "threshold", "materiality", "materiality_reason", "observability", "second_workload_required",
+                   "estimate_model", "since", "until_located", "coverage", "second_workload_confirms", "frozen_source")
+KMEP_THRESHOLD = 0.03
 
 
 def is_kmep_file(text: str, fm: dict) -> bool:
@@ -324,6 +333,46 @@ def kmer_ranking_problems(fm: dict, text) -> list:
     return bad
 
 
+def kmep_verdict(share_interval, population_match, observability):
+    """The verdict kme_pillars.materiality gives these fields (mirrored; V-ICP-R3-KMEP-VERDICT-MIRROR drives both)."""
+    if population_match == "drifted" or not (isinstance(share_interval, list) and len(share_interval) == 2):
+        return "UNMEASURED"
+    lo, hi = share_interval
+    if not all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in (lo, hi)):
+        return "UNMEASURED"
+    obs = observability if isinstance(observability, (int, float)) and not isinstance(observability, bool) else 0.0
+    if lo >= KMEP_THRESHOLD:
+        return ">= 3 %"
+    if obs < 1.0:
+        return "UNMEASURED"
+    return "< 3 %" if hi < KMEP_THRESHOLD else "STRADDLES"
+
+
+def kmep_block_problems(fm: dict, text) -> list:
+    """STATE named debt (1) / 05 WR-03 class: a kme_pillars terminal claim is believed only when the file carries exactly
+    one parseable json block that agrees with the front matter on every field the instrument writes, and the stated
+    verdict is the one its own share interval gives. Hand-editing the front matter alone is caught by the block; editing
+    both consistently is caught by the verdict recomputation."""
+    t = (text or "").lstrip("\ufeff")
+    if t.count(KMEP_BODY_MARKER) != 1 or t.count(KMEP_BODY_END) != 1:
+        return [f"the file does not carry exactly one {KMEP_BODY_MARKER} json block"]
+    a = t.index(KMEP_BODY_MARKER) + len(KMEP_BODY_MARKER)
+    b = t.index(KMEP_BODY_END)
+    try:
+        block = json.loads(t[a:b]) if a <= b else None
+    except json.JSONDecodeError:
+        block = None
+    if not isinstance(block, dict):
+        return ["the json block is not a parseable object"]
+    bad = [f"json block {k} {block.get(k)!r} disagrees with the front matter {fm.get(k)!r}"
+           for k in KMEP_AGREE_KEYS if block.get(k) != fm.get(k)]
+    want = kmep_verdict(fm.get("share_interval"), fm.get("population_match"), fm.get("observability"))
+    if fm.get("materiality") != want:
+        bad.append(f"materiality {fm.get('materiality')!r} is not the verdict its share_interval "
+                   f"{fm.get('share_interval')!r} gives ({want!r})")
+    return bad
+
+
 def rollover_growth_problems(fm: dict) -> list:
     """WR-04: a terminal ranking is the one at the frozen rollover growth, recorded in the file; the late_rollover figure at
     any other G (a CLI flag) is a statement about that G."""
@@ -372,7 +421,7 @@ def terminal_claim_problems(pid: str, fm: dict, text=None) -> list:
         bad.append(f"rule_denominators {fm.get('rule_denominators')!r} is not the frozen rule {rule!r}")
     if den not in rule:
         bad.append(f"denominator {den!r} is not in pillar {pid}'s frozen rule {rule!r}")
-    return bad + frozen_source_problems(den, fm)
+    return bad + frozen_source_problems(den, fm) + kmep_block_problems(fm, text)
 
 
 def check_measurement_scope(led: dict, res, only=None) -> list:
@@ -815,10 +864,15 @@ def selftest(verbose=True) -> bool:
         rel = FROZEN_SOURCE_DEFAULTS[key]
         ent = dict({"path": rel, "sha256": ce.lf_sha256(REPO / rel), "default": True}, **over)
         return {key: ent, "all_default": ent["default"]}
+    def kmep_file(kv, block=None):
+        """A kme_pillars file as the instrument writes it: front matter plus the json block of the same result."""
+        b = dict(kv) if block is None else block
+        return fm(**kv) + "\n" + KMEP_BODY_MARKER + "\n" + json.dumps(b, indent=1) + "\n" + KMEP_BODY_END + "\n"
     good_kv = dict(instrument=KMEP_INSTRUMENT, pillar="E", denominator="KME-L", rule_denominators=["KME-L"],
                    evidence_role="primary", terminal_evidence=True, population_match="exact", materiality=">= 3 %",
+                   share_interval=[0.04, 0.05], observability=1.0,
                    second_workload_valid=None, frozen_source=fsrc("frozen_file"))
-    prim = fm(**good_kv)
+    prim = kmep_file(good_kv)
     prim_false = fm(pillar="E", evidence_role="primary", terminal_evidence=False,
                     terminal_evidence_reason="primary file but not terminal: population_match=drifted")
     sec = fm(pillar="E", evidence_role="second_workload", terminal_evidence=False, second_workload_valid=True)
@@ -884,16 +938,40 @@ def selftest(verbose=True) -> bool:
         "source-path-elsewhere": dict(good_kv, frozen_source=fsrc("frozen_file", path="/tmp/other.json")),
         "wrong-source-kind": dict(good_kv, frozen_source=fsrc("ce_ledger")),
     }
+    # STATE debt (1): the json block. Hand-edit one side, or both consistently with a verdict its interval does not give.
+    contradictions.update({
+        "block-absent": None,
+        "block-disagrees-verdict": ("block", dict(good_kv, materiality="< 3 %")),
+        "fm-edited-denominator": ("block", dict(good_kv, denominator="KME-G")),
+        "verdict-not-interval": ("both", dict(good_kv, materiality=">= 3 %", share_interval=[0.01, 0.02])),
+        "straddles-called-above": ("both", dict(good_kv, share_interval=[0.02, 0.04])),
+        "partial-observability-below": ("both", dict(good_kv, materiality="< 3 %", share_interval=[0.01, 0.02],
+                                                     observability=0.5)),
+        "block-unparseable": ("raw", "{not json"),
+        "two-blocks": ("twice", good_kv),
+    })
     for name, kv in contradictions.items():
-        got = r3t("E", {"c": fm(**kv)}, ["c"])
+        if kv is None:
+            text_c = fm(**good_kv)
+        elif isinstance(kv, tuple) and kv[0] == "block":
+            text_c = kmep_file(good_kv, block=kv[1])
+        elif isinstance(kv, tuple) and kv[0] == "both":
+            text_c = kmep_file(kv[1])
+        elif isinstance(kv, tuple) and kv[0] == "raw":
+            text_c = fm(**good_kv) + KMEP_BODY_MARKER + "\n" + kv[1] + "\n" + KMEP_BODY_END + "\n"
+        elif isinstance(kv, tuple) and kv[0] == "twice":
+            text_c = kmep_file(kv[1]) + KMEP_BODY_MARKER + "\n{}\n" + KMEP_BODY_END + "\n"
+        else:
+            text_c = kmep_file(kv)
+        got = r3t("E", {"c": text_c}, ["c"])
         say(any("claims terminal_evidence true but" in x for x in got),
             f"V-ICP-R3-MUT-{name} killed by R3 (terminal_evidence true contradicts its own fields)")
     d_ref = dict(good_kv, pillar="D", denominator="CPP-D-W7", rule_denominators=["KME-L", "CPP-D-W7"],
                  population_match="referenced", coverage=1.0, frozen_source=fsrc("ce_ledger"))
-    say(r3t("D", {"w": fm(**d_ref)}, ["w"], "FALSIFIED_OR_REJECTED_BY_EVIDENCE") == [],
+    say(r3t("D", {"w": kmep_file(d_ref)}, ["w"], "FALSIFIED_OR_REJECTED_BY_EVIDENCE") == [],
         "V-ICP-R3-TERMINAL-DW7-REFERENCED-ACCEPTED (pillar D, CPP-D-W7 at coverage exactly 1)")
     say(any("claims terminal_evidence true but" in x for x in r3t(
-        "D", {"w": fm(**dict(d_ref, coverage=1.5))}, ["w"], "FALSIFIED_OR_REJECTED_BY_EVIDENCE")),
+        "D", {"w": kmep_file(dict(d_ref, coverage=1.5))}, ["w"], "FALSIFIED_OR_REJECTED_BY_EVIDENCE")),
         "V-ICP-R3-TERMINAL-DW7-COVERAGE-REFUSED (coverage 1.5)")
     # WR-03: a kme_pillars file whose role fields are missing, damaged or hidden behind a BOM is refused, not skipped.
     kmep_fm = fm(instrument=KMEP_INSTRUMENT, pillar="E", denominator="KME-G", command="x")

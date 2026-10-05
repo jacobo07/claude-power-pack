@@ -1111,6 +1111,29 @@ def g_no_raw_paths():
     return bool(ok), f"rc={rc} top_paths={tp} want={want} leaked={leaked}"
 
 
+def g_retry_sig_no_path_dirs():
+    # STATE debt (3) / 05 IN-02 residual: a retried command's signature keeps the script's basename, never the
+    # directories around it (a customer name, a home directory), in the ranking file or on stdout.
+    cmd = "python3 /home/u/customer-acme/run_checks.py --env prod"
+    root = scratch("sigdir")
+    fx = Fx(root)
+    fx.human("go", ts(0))
+    call(fx, 1, [("t1", "Bash", {"command": cmd, "description": "run"})], usage=(10, 1000, 0, 5))
+    fx.tool_result("t1", "F" * 300, ts(13))
+    call(fx, 2, [("t2", "Bash", {"command": cmd, "description": "again"})], usage=(10, 0, 3010, 5))
+    fx.tool_result("t2", "F" * 300, ts(15))
+    call(fx, 3, (), usage=(10, 0, 3010, 5))
+    outd = scratch("sigdir-out")
+    rc, res, out, _e = run_json(rank_args(root, outd))
+    f = next(iter(outd.glob("L-FX-R-*.md")), None)
+    text = f.read_text(encoding="utf-8") if f else ""
+    e = entry(res, "unchanged_precondition_retries") or entry(res, "unchanged_precondition_retries", "unranked")
+    sigs = [t.get("signature") for t in ((e or {}).get("details") or {}).get("top_signatures") or []]
+    leaked = [x for x in ("customer-acme", "/home/u") if x in text or x in out]
+    ok = rc == 0 and f is not None and "python3 run_checks.py" in sigs and not leaked
+    return bool(ok), f"rc={rc} sigs={sigs} leaked={leaked}"
+
+
 def secret_fixture(root):
     fx = Fx(root)
     fx.human("go " + KR_CANARY, ts(0))
@@ -1262,6 +1285,7 @@ GATES_CONTRACT = [
     ("V-KMER-ROLLOVER-GROWTH-PINNED", g_rollover_growth_pinned),
     ("V-KMER-NO-SECRET", g_no_secret),
     ("V-KMER-NO-RAW-PATHS", g_no_raw_paths),
+    ("V-KMER-RETRY-SIG-NO-PATH-DIRS", g_retry_sig_no_path_dirs),
     ("V-KMER-READ-ONLY", g_read_only),
     ("V-KMER-OUT-DIR-INSIDE-ROOT", g_out_dir_inside_root),
     ("V-KMER-NO-OVERWRITE", g_no_overwrite),

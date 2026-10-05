@@ -1326,16 +1326,23 @@ def _sig_redact(text):
     return "(other)" if fn is None else fn(text)
 
 
+def _sig_base(tok):
+    """A path token's last segment: the directories around a script (a customer name, a home directory) never reach a
+    signature (STATE debt 3 / 05 IN-02 residual). A token without a slash is returned unchanged."""
+    t = tok.rstrip("/")
+    return os.path.basename(t) if "/" in t and os.path.basename(t) else tok
+
+
 def cmd_signature(seg):
     """Program name and at most one non-URL subcommand or script token, never flags, values or arguments (WR-02).
     The program must be a bare name or a plain path; the second token is kept only as a short lowercase word, `-m
     <module>`, or a plain path; a URL (scheme, query, userinfo, fragment) becomes `<url>` and a long opaque run
-    becomes `<opaque>`. The result then goes through redact()."""
+    becomes `<opaque>`. Any path keeps its basename only. The result then goes through redact()."""
     toks = _program_tokens(seg.split("\n", 1)[0])
     if not toks or toks[0].startswith("-") or not SIG_PATH_RE.fullmatch(toks[0]) or len(toks[0]) > 80 \
             or _opaque_run(toks[0]):
         return "(other)"
-    out = [os.path.basename(toks[0]) if toks[0].startswith("/") and os.path.basename(toks[0]) else toks[0]]
+    out = [_sig_base(toks[0])]
     if len(toks) > 2 and toks[1] == "-m" and re.fullmatch(r"[A-Za-z0-9_.]{1,40}", toks[2]) \
             and not _opaque_run(toks[2]):
         out += ["-m", toks[2]]
@@ -1346,7 +1353,7 @@ def cmd_signature(seg):
         elif _opaque_run(t) and re.fullmatch(r"[A-Za-z0-9_.:/-]+", t):
             out.append("<opaque>")
         elif len(t) <= 80 and SIG_PATH_RE.fullmatch(t) and (re.fullmatch(r"[A-Za-z]{1,20}", t) or re.search(r"[./]", t)):
-            out.append(t)
+            out.append(_sig_base(t))
     return _sig_redact(" ".join(out))
 
 
