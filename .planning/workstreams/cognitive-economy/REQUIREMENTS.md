@@ -60,6 +60,6 @@ Synced 2026-10-04 from `ledger.json` `state` after `--pillar <P>` printed PASS f
 | CE-L | Phase 5 | Complete -- IMPLEMENTED_AND_VERIFIED |
 | CE-S | Phase 6 | Complete -- MERGED_INTO_EXISTING_OWNER |
 | CE-T | Phase 6 | Complete -- AUTHORIZATION_BOUND (retirements in owner-bundle) |
-| CE-B | Phase 7 | Complete -- AUTHORIZATION_BOUND (moves in owner-bundle) |
+| CE-B | Phase 7 | Complete -- IMPLEMENTED_AND_VERIFIED (E1: Owner approved all 8 moves, 17b3188a) |
 | CE-M | Phase 7 | Complete -- DEFERRED_STRONGER_OWNER |
 | CE-R | Phase 7 | Complete -- IMPLEMENTED_AND_VERIFIED |

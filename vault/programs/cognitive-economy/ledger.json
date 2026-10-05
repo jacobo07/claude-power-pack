@@ -277,40 +277,71 @@
    }
   },
   "B": {
-   "terminal": "AUTHORIZATION_BOUND",
-   "reason": "By the frozen rule, every rules->skills move needs an Owner yes per move, and the campaign executes none. 13 global rules (56,861 B) are still resident in full. Their moves are batched into the owner bundle as one [B] item; the bytes are a ceiling, not a saving.",
+   "terminal": "IMPLEMENTED_AND_VERIFIED",
+   "reason": "E1 ran: the Owner approved all 8 rule moves and the 8 rules were moved out of the always-loaded prefix to skills. e1/REPORT.md records the result (A and B arms both passed; decided by R2 for the rest); test_e1_report.py re-derives it, k1_out.txt is the fixed-context re-measure. The remaining resident-rule bytes are the frozen ceiling, not a saving.",
    "evidence": [
     {
-     "kind": "owner_decision",
-     "ref": "vault/programs/cognitive-economy/owner-bundle.md",
-     "sha256": "0ab1a8a83ef6d7441dbd48933f5697a28a5e2d18caf3b37e9ce2ba1c74e0a6c8"
+     "kind": "gate",
+     "argv": [
+      "python",
+      "vault/programs/cognitive-economy/e1/test_e1_report.py"
+     ]
+    },
+    {
+     "kind": "prg",
+     "ref": "vault/programs/cognitive-economy/e1/ADDENDUM-E1.md",
+     "sha256": "4a6ee85b3f4919928a5218df529ca17487987554c815587f1e02557bbb467607"
     },
     {
      "kind": "file",
-     "ref": "vault/programs/cognitive-economy/evidence/B-T-floor-and-gc.md",
-     "sha256": "7226675925015d55938a5f39895080a68aa755e5559ee0caf9378291d627c8a9"
+     "ref": "vault/programs/cognitive-economy/e1/REPORT.md",
+     "sha256": "03e3cfb04f05556faad14322a78a41c07e732be19d06ccdd2d7ca7f84e28b3fc"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/gen2/evidence/gen3_t1/k1_out.txt",
+     "sha256": "72904d85b22d9acb1f0da02f7c31a6f92f29302abd0e411c923548ace4525025"
+    },
+    {
+     "kind": "commit",
+     "ref": "17b3188a"
+    },
+    {
+     "kind": "commit",
+     "ref": "223612e9"
     }
    ],
    "savings": [],
    "owner_decision": {
     "item": "[B]",
-    "decision": "DEFERRED_BY_OWNER_QUOTA",
-    "date": "2026-10-04",
-    "owner_text": "DECISION 3 -- PILLAR B: DEFER the thirteen rule moves that still lack ablation evidence. Disposition: DEFERRED_BY_OWNER_QUOTA",
-    "packet": {
-     "ref": "vault/programs/cognitive-economy/post-reset-packet.json",
-     "sha256": "b6b104bb523d147377d13f752fe7d13b31cc66728164eb6bdf5b6e2c1c5522ba"
-    },
-    "note": "terminal AUTHORIZATION_BOUND is the frozen rule's and stays; this field records the Owner's answer to it and the experiment that would reopen it",
-    "e1_authorization": {
-     "date": "2026-10-05",
-     "owner_text": [
-      "Approve, E1 after reset",
-      "do the 17M tokens thing now by the way, but on GEX44"
-     ],
-     "design": "grouped first: all 13 rule files excluded together vs resident; split only on a quality loss; never past spend_cap",
-     "host": "GEX44"
-    }
+    "decision": "APPROVED_ALL_8_MOVES",
+    "date": "2026-10-05",
+    "owner_text": "approve all 8 moves",
+    "hosts": "Laptop and GEX44",
+    "commit": "17b3188a",
+    "history": [
+     {
+      "item": "[B]",
+      "decision": "DEFERRED_BY_OWNER_QUOTA",
+      "date": "2026-10-04",
+      "owner_text": "DECISION 3 -- PILLAR B: DEFER the thirteen rule moves that still lack ablation evidence. Disposition: DEFERRED_BY_OWNER_QUOTA",
+      "packet": {
+       "ref": "vault/programs/cognitive-economy/post-reset-packet.json",
+       "sha256": "b6b104bb523d147377d13f752fe7d13b31cc66728164eb6bdf5b6e2c1c5522ba"
+      },
+      "note": "terminal AUTHORIZATION_BOUND is the frozen rule's and stays; this field records the Owner's answer to it and the experiment that would reopen it",
+      "e1_authorization": {
+       "date": "2026-10-05",
+       "owner_text": [
+        "Approve, E1 after reset",
+        "do the 17M tokens thing now by the way, but on GEX44"
+       ],
+       "design": "grouped first: all 13 rule files excluded together vs resident; split only on a quality loss; never past spend_cap",
+       "host": "GEX44"
+      },
+      "superseded_by": "current_owner_decision (2026-10-05, E1 moves executed; commit 17b3188a)"
+     }
+    ]
    }
   },
   "C": {
