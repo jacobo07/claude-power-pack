@@ -75,14 +75,47 @@ def main() -> int:
     (root / (enc + "0") / "s3.jsonl").write_text(_row("z", "2027-01-15T08:03:00Z", cr=10**9) + "\n",
                                                  encoding="utf-8")
     rec = {"work_dir": wd, "created_at": 1_800_000_000.0}   # 2027-01-15T08:00:00Z
+    own = ({"s1", "s2", "s3"}, set())     # s3 is named on purpose: the sibling is excluded by DIRECTORY
     cache = {}
-    got = ms.processed_tokens(rec, root=root, cache=cache)
+    got = ms.processed_tokens(rec, root=root, cache=cache, sessions=own)
     check("V-MSPEND-EXACT-SUM", got == 116 + 1000 + 7, f"got {got}")
     check("V-MSPEND-SIBLING-EXCLUDED", got < 10**9, "a ...-e10 style sibling is not this mission")
-    check("V-MSPEND-UNKNOWN-NOT-ZERO", ms.processed_tokens({"work_dir": "/nope"}, root=root) is None)
+    check("V-MSPEND-UNKNOWN-NOT-ZERO", ms.processed_tokens({"work_dir": "/nope"}, root=root, sessions=own) is None)
     with open(root / enc / "s1.jsonl", "a", encoding="utf-8") as fh:
         fh.write(_row("d", "2027-01-15T08:05:00Z", out=3) + "\n")
-    check("V-MSPEND-CACHE-SEES-GROWTH", ms.processed_tokens(rec, root=root, cache=cache) == got + 3)
+    check("V-MSPEND-CACHE-SEES-GROWTH", ms.processed_tokens(rec, root=root, cache=cache, sessions=own) == got + 3)
+    got += 3
+
+    # --- attribution: the directory is not the mission (m-8bbdf725cd52, 70.7M read vs 53.7M own) ---
+    (root / enc / "foreign.jsonl").write_text(_row("f", "2027-01-15T08:04:00Z", cr=17 * M) + "\n", encoding="utf-8")
+    (root / enc / "s1" / "subagents").mkdir(parents=True)
+    (root / enc / "s1" / "subagents" / "agent-x.jsonl").write_text(_row("g", "2027-01-15T08:04:00Z", out=40) + "\n",
+                                                                     encoding="utf-8")
+    att = ms.processed_tokens(rec, root=root, sessions=own)
+    check("V-MSPEND-FOREIGN-SESSION-EXCLUDED", att == got + 40, f"got {att}, own {got} + subagent 40")
+    check("V-MSPEND-FOREIGN-CONTROL-COUNTED",
+          ms.processed_tokens(rec, root=root, sessions=(own[0] | {"foreign"}, set())) == got + 40 + 17 * M,
+          "the same file IS counted once its session is the mission's: exclusion is by attribution")
+    check("V-MSPEND-SUBAGENT-ATTRIBUTED",
+          ms.processed_tokens(rec, root=root, sessions=({"s2", "s3"}, set())) == 7,
+          "without s1, neither s1 nor its subagent counts")
+    check("V-MSPEND-PREFIX-PENDING-WORKER",
+          ms.processed_tokens(rec, root=root, sessions=(set(), {"forei"})) == 17 * M,
+          "an unacked launch is measured by its bg_id prefix")
+    check("V-MSPEND-UNATTRIBUTED-IS-UNKNOWN",
+          ms.processed_tokens(rec, root=root, sessions=(set(), set())) is None,
+          "no session to attribute -> None, never 0 and never the whole directory")
+
+    # derivation from the record and the mission's OWN ledger rows
+    gm.lr.ledger_append("m-attr", "worker_acked", mission_id="m-attr", worker="s1")
+    gm.lr.ledger_append("m-attr", "worker_adopted", mission_id="m-attr", worker="s2")
+    gm.lr.ledger_append("m-other", "worker_acked", mission_id="m-other", worker="foreign")
+    ids, px = ms.mission_sessions({"mission_id": "m-attr", "owner": {"session_id": "s3"},
+                                   "pending": {"bg_id": "abc1"}})
+    check("V-MSPEND-SESSIONS-DERIVED", ids == {"s1", "s2", "s3"} and px == {"abc1"}, f"{ids} {px}")
+    check("V-MSPEND-OTHER-MISSION-WORKER-EXCLUDED", "foreign" not in ids)
+    derived = ms.processed_tokens({**rec, "mission_id": "m-attr", "owner": {"session_id": "s3"}}, root=root)
+    check("V-MSPEND-DERIVED-END-TO-END", derived == got + 40, f"got {derived}")
 
     # --- judge: every trip has a control -------------------------------------------------------
     e1 = {"token_estimate": 17 * M}

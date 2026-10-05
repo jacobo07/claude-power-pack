@@ -72,15 +72,61 @@ def _file_tokens(path: Path, since_iso: str | None) -> int:
     return total
 
 
-def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = None) -> int | None:
-    """Processed tokens the mission has spent, or None when no transcript directory exists.
-    `cache` maps a file path to {size, mtime, tokens}; unchanged files are not re-read."""
+def mission_sessions(rec: dict, ledger: Path | None = None) -> tuple[set[str], set[str]]:
+    """(session ids, session-id prefixes) the mission spent through: the current owner, every
+    worker its own ledger rows name (worker_acked / worker_adopted / ...), and -- prefix only -- the
+    pending `bg_id` of a launch the worker has not acked yet.
+
+    The directory alone is not the mission (2026-10-05, m-8bbdf725cd52): an interactive session
+    planning in the same cwd landed in the same project directory and the meter read 70.7M for a
+    mission whose own sessions had spent 53.7M."""
+    ids = set()
+    owner_sid = (rec.get("owner") or {}).get("session_id")
+    if owner_sid:
+        ids.add(owner_sid)
+    mid = rec.get("mission_id")
+    if mid:
+        if ledger is None:
+            import gsd_long_run as lr
+            ledger = lr.ledger_path()
+        if ledger.is_file():
+            needle = f'"session_id": "{mid}"'
+            with open(ledger, encoding="utf-8-sig", errors="replace") as fh:
+                for line in fh:
+                    if needle not in line or '"worker"' not in line:
+                        continue
+                    try:
+                        r = json.loads(line)
+                    except ValueError:
+                        continue
+                    if isinstance(r, dict) and r.get("session_id") == mid and r.get("worker"):
+                        ids.add(str(r["worker"]))
+    bg = (rec.get("pending") or {}).get("bg_id")
+    return ids, ({str(bg)} if bg else set())
+
+
+def _attributed(path: Path, base: Path, ids: set[str], prefixes: set[str]) -> bool:
+    """A transcript belongs to a session when its own stem, or a directory between the project
+    directory and it (`<sid>/subagents/agent-*.jsonl`), is that session."""
+    names = [path.stem] + [p.name for p in path.relative_to(base).parents if p.name]
+    return any(n in ids or any(n.startswith(px) for px in prefixes) for n in names)
+
+
+def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = None,
+                     sessions: tuple[set[str], set[str]] | None = None) -> int | None:
+    """Processed tokens the mission's OWN sessions have spent, or None when it cannot be measured:
+    no transcript directory, or no session attributable to the mission (absence is not zero).
+    `sessions` overrides `mission_sessions(rec)`. `cache` maps a file path to {size, mtime, tokens};
+    unchanged files are not re-read."""
     root = root or projects_root()
     work_dir = rec.get("work_dir") or rec.get("cwd")
     if not work_dir:
         return None
     dirs = mission_dirs(work_dir, root)
     if not dirs:
+        return None
+    ids, prefixes = sessions if sessions is not None else mission_sessions(rec)
+    if not ids and not prefixes:
         return None
     since = None
     if rec.get("created_at"):
@@ -89,6 +135,8 @@ def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = N
     total = 0
     for d in dirs:
         for p in d.rglob("*.jsonl"):
+            if not _attributed(p, d, ids, prefixes):
+                continue
             st = p.stat()
             key = str(p)
             hit = cache.get(key) if cache is not None else None
