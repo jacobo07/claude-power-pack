@@ -47,6 +47,14 @@ bank: a stub module with `...` bodies and a docstring naming the caller and what
      checks. The log is committed beside the bank.
   3. No grader is reachable from a session's working tree. Proven by listing the run tree a session would see.
   4. The bank is frozen by one commit whose hash is recorded in `e1/BANK_FROZEN_AT`.
+**Plans:** 5 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — tracer: driver `_e1_common.py`, POSIX `validate_bank.py`, its V-E1BANK tests, index builder; gceg + eaat tasks validated in fresh BASE worktrees (wave 1)
+- [ ] 01-02-PLAN.md — hfee, dcme, vpdt judgement tasks (wave 2)
+- [ ] 01-03-PLAN.md — cpc, slai, pert judgement tasks (wave 2)
+- [ ] 01-04-PLAN.md — det, pyt, cr judgement tasks (wave 2)
+- [ ] 01-05-PLAN.md — move bank-draft/ to bank/, freeze-check, index.json, VALIDATE-E1 11/11 log, single freeze commit, BANK_FROZEN_AT (wave 3)
 
 ### Phase 2: E1 runner with the stopping contract as tested code
 
