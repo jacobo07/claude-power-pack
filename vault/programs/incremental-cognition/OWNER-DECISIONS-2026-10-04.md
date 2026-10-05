@@ -43,6 +43,7 @@ both GEX44 preflights before every arm (row 19).
 | 28 | close as STALE/RESOLVED: the mission is armed on GEX44; update durable state | AUTHORIZED |
 | 29-30 | keep BLOCKED_BY_DEPENDENCY; re-evaluate when `cpp-cognitive-economy` lands a reachable commit, without asking again | DECIDED |
 | 31 | APPROVED by the Owner ("y", 2026-10-04 ~22:20) the recommendation in `N-PROMOTION-RECOMMENDATION-2026-10-04.md` (commit d1a8d714): promote IC-U-01, IC-U-04, IC-U-06 into `ukdl-universal.md` and IC-D-01 into `ukdl-cognitive-resource-os.md`; append IC-U-02 as an instance of `T-COMMIT-IS-NOT-INSTALL-WHEN-THE-INSTALL-IS-A-WORKING-TREE-001`; nothing into CBR; the rest held as listed there | APPROVED, PENDING_GATE: execute on the synced mission branch (after row 1), entry + `## Promotions recorded` line in the matching review in ONE commit, then `python tools/test_ic_closeout.py` must exit 0; insert entries in their section, never at the UKDL tail (automated writer) |
+| STATE debt (2) | R4 owner-decision file identity (mission fe2db57c, STATE.md "OWNER DECISION NEEDED"): Owner chose **(c)** ("rec", 2026-10-05 ~09:15) -- the gate accepts the pillar-L decision file only when an Owner-only line in `owner-bundle.md` names that file's sha256; name alone (a) and git identity (b) rejected (all GEX44 commits run as `kobii`) | DECIDED; implement in R4 with a red-first test: name match + no sha line -> refused; sha line + edited bytes -> refused; sha line + exact bytes -> accepted |
 
 ## Row 16 notes (reality scan, 2026-10-04 21:2x CEST)
 
