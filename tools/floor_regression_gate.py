@@ -992,32 +992,67 @@ DISPATCHER_LOG_ENV = "CPP_DISPATCHER_ERROR_LOG"
 _ABANDON_MARK = "[SessionStart-chain] CHAIN-DEADLINE-ABANDONED"
 
 
-def window_health(session_id):
+UNNAMED_WINDOW_S = 120   # an unnamed abandonment this long before the first call may be this session's start
+
+
+def _log_time(line):
+    try:
+        return datetime.datetime.strptime(line[:23], "%Y-%m-%dT%H:%M:%S.%f").replace(tzinfo=datetime.timezone.utc)
+    except ValueError:
+        return None
+
+
+def window_health(session_id, first_call_at=None):
     """'degraded' when the dispatcher's error log records that it abandoned the SessionStart chain of THIS session
-    (hook-dispatcher.js names the session since 2026-10-05), 'settled' when the log is readable and does not, and
-    'unknown' when there is no readable log on this host. An abandoned hub leaves `{"continue":true}` in the transcript,
-    exactly like a hub with nothing to say, so the window alone cannot tell them apart (evidence/K-prg-2.md)."""
+    (hook-dispatcher.js names the session since 2026-10-05). 'unknown' when there is no readable log on this host, OR
+    when an abandonment line that names NO session (written before that change) falls within UNNAMED_WINDOW_S before
+    this session's first call, or the first call's time is unknown: such a line may be this session's and cannot be
+    attributed. 'settled' only when the log is readable and neither holds. An abandoned hub leaves `{"continue":true}`
+    in the transcript, exactly like a hub with nothing to say, so the window alone cannot tell them apart
+    (evidence/K-prg-2.md; probe 6eba7a1f read "settled" from an unnamed line before this rule)."""
     path = os.environ.get(DISPATCHER_LOG_ENV) or str(Path.home() / ".claude" / "logs" / "hook-dispatcher-errors.log")
     needle = f"session={session_id};"
     try:
+        first = datetime.datetime.fromisoformat(str(first_call_at).replace("Z", "+00:00")) if first_call_at else None
+    except ValueError:
+        first = None
+    ambiguous = False
+    try:
         with open(path, encoding="utf-8", errors="replace") as fh:
             for line in fh:
-                if _ABANDON_MARK in line and needle in line:
+                if _ABANDON_MARK not in line:
+                    continue
+                if needle in line:
                     return "degraded"
+                if "session=" in line:
+                    continue          # another, named session
+                t = _log_time(line)
+                if first is None or t is None or 0 <= (first - t).total_seconds() <= UNNAMED_WINDOW_S:
+                    ambiguous = True
     except OSError:
         return "unknown"
-    return "settled"
+    return "unknown" if ambiguous else "settled"
 
 
-def refuse_degraded(session_id, what):
+def refuse_degraded(session_id, what, first_call_at=None):
     """-> the window's health; a degraded window is UNMEASURABLE (window_degraded): it is never a floor, neither a
     checked one (a failed hub would read as a saving) nor a reference (a failure would become the champion)."""
-    health = window_health(session_id)
+    health = window_health(session_id, first_call_at)
     if health == "degraded":
         raise Unmeasurable("window_degraded",
                            f"the dispatcher abandoned the SessionStart chain of session {session_id} at its deadline; "
                            f"{what} cannot be measured from a window its producers did not finish")
     return health
+
+
+def unverified_green(result, health):
+    """A floor whose window health is not 'settled' cannot be green: an abandoned hub only ever makes a floor look
+    smaller, so 'within bound' from such a window could be the failure itself. A RISE stays a rise (exit 1)."""
+    if health != "settled" and result["verdict"] in ("WITHIN_BOUND", "WITHIN_BOUND_CHARS_ONLY"):
+        result["verdict"], result["reason"] = "UNMEASURABLE", "window_unverified"
+        result["detail"] = (f"window health is {health}: the SessionStart chain cannot be shown to have settled, so a "
+                            "floor within bound may be a hub that did not run")
+    return result
 
 
 def covering_explanation(finding, items):
@@ -1286,7 +1321,11 @@ def main(argv=None):
             path, src = resolve_source(args)
             measured = measure(path)
             stamp_source(measured["provenance"], src)
-            refuse_degraded(measured["provenance"]["session_id"], "a reference")
+            health = refuse_degraded(measured["provenance"]["session_id"], "a reference",
+                                     measured["provenance"].get("first_call_at"))
+            if health != "settled":
+                raise Unmeasurable("window_unverified", f"window health is {health}: a champion is written only from a "
+                                                        "window whose SessionStart chain is shown to have settled")
             write_reference(args.write_reference, measured, argv, replace=args.replace, redact=redact)
             prov = measured["provenance"]
             tok = measured["tokens"]["first_call_total"]
@@ -1298,8 +1337,9 @@ def main(argv=None):
             ref = load_reference(ref_path)
             path, src = resolve_source(args)
             now = measure(path)
-            health = refuse_degraded(now["provenance"]["session_id"], "the checked floor")
-            result = compare(ref, now, chars_only=args.chars_only)
+            health = refuse_degraded(now["provenance"]["session_id"], "the checked floor",
+                                     now["provenance"].get("first_call_at"))
+            result = unverified_green(compare(ref, now, chars_only=args.chars_only), health)
             result["window_health"] = health
             rp = ref.get("provenance", {})
             result["provenance"] = {**stamp_source(now["provenance"], src), "probe_view": now["probe_view"]}

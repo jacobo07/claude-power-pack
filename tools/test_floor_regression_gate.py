@@ -44,6 +44,10 @@ SCRATCH_HOME = TMP_ROOT / "home0"
 # process (in-process or subprocess) can start a real `claude` session.
 os.environ["CPP_FLOOR_GATE_TEST"] = "1"
 os.environ["CPP_FLOOR_GATE_TEST_ROOT"] = str(TMP_ROOT)
+# Hermetic dispatcher log (window health): an EXISTING empty log reads "settled", so the real host log -- whose
+# pre-2026-10-05 lines name no session -- can never make a synthetic window "unknown". g_window_degraded overrides it.
+(TMP_ROOT / "dispatcher-errors.log").write_text("", encoding="utf-8")
+os.environ["CPP_DISPATCHER_ERROR_LOG"] = str(TMP_ROOT / "dispatcher-errors.log")
 _COUNTER = [0]
 RESULTS: list[tuple[str, str, str]] = []   # (status, gate, evidence)
 QUIET = [False]
@@ -1153,12 +1157,36 @@ def g_window_degraded():
         rc, out, _ = run_main(["--write-reference", ref2, "--transcript", ref_tx])
         if rc != 2 or "reason=window_degraded" not in last_line(out) or ref2.exists():
             why.append(f"degraded reference written: rc={rc} exists={ref2.exists()} last={last_line(out)!r}")
+        # A line written before the dispatcher named sessions cannot be attributed: near this session's first call it
+        # makes the window UNKNOWN, never settled (measured: probe 6eba7a1f read "settled" from exactly such a line).
+        first = next(json.loads(ln)["timestamp"] for ln in Path(now_tx).read_text(encoding="utf-8").splitlines()
+                     if ln.strip() and json.loads(ln).get("type") == "assistant")
+        t0 = datetime.datetime.strptime(first, "%Y-%m-%dT%H:%M:%S.%fZ")
+        # ... and an unknown window is never green (exit 2 window_unverified), while a far-off line leaves it settled.
+        for offset, want, want_rc in ((10, "unknown", 2), (3600, "settled", 0)):
+            stamp = (t0 - datetime.timedelta(seconds=offset)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+            log.write_text(f"{stamp} [SessionStart-chain] CHAIN-DEADLINE-ABANDONED after 4000ms Error: still running: "
+                           "../skills/claude-power-pack/hooks/session_start_hub.js; host free=1MB\n", encoding="utf-8")
+            rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", now_tx])
+            if rc != want_rc or not find_lines(out, f"WINDOW_HEALTH {want}"):
+                why.append(f"unnamed line {offset}s before first call: rc={rc} health={find_lines(out, 'WINDOW_HEALTH')} want {want}")
+            if want_rc == 2 and "reason=window_unverified" not in last_line(out):
+                why.append(f"unknown window not refused as window_unverified: {last_line(out)!r}")
+        # an unknown window cannot become a champion either
+        ref3 = root / "ref3.json"
+        rc, out, _ = run_main(["--write-reference", ref3, "--transcript", ref_tx])
+        if rc != 0:   # the ref window's first call is the same second as now's here; the unnamed line is 3600 s away
+            why.append(f"settled reference refused: rc={rc} {last_line(out)!r}")
     with env_set(CPP_DISPATCHER_ERROR_LOG=root / "absent.log"):
         rc, out, _ = run_main(["--check", "--reference", root / "ref.json", "--transcript", now_tx])
-        if rc != 0 or not find_lines(out, "WINDOW_HEALTH unknown"):
-            why.append(f"absent log: rc={rc} health={find_lines(out, 'WINDOW_HEALTH')}")
-    return (not why), "; ".join(why) or ("abandoned checked window exit 2, abandoned reference refused, other session "
-                                         "ignored, settled reported, absent log unknown")
+        if rc != 2 or not find_lines(out, "WINDOW_HEALTH unknown") or "reason=window_unverified" not in last_line(out):
+            why.append(f"absent log: rc={rc} health={find_lines(out, 'WINDOW_HEALTH')} last={last_line(out)!r}")
+        rc, out, _ = run_main(["--write-reference", root / "ref4.json", "--transcript", ref_tx])
+        if rc != 2 or "reason=window_unverified" not in last_line(out) or (root / "ref4.json").exists():
+            why.append(f"reference from an unverifiable window: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or ("abandoned window exit 2 (check and reference), other session ignored, unnamed "
+                                         "line near start -> unknown exit 2, far -> settled, absent log -> unknown, "
+                                         "never green, never a champion")
 
 
 def g_tokens_rule():
