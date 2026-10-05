@@ -1482,7 +1482,8 @@ def _capsule_card_lines(rec: dict) -> list[str]:
     (`capsule_key`): the first worker of a mission has nothing to certify."""
     if rec.get("rollover_protocol") != CAPSULE_V2 or not rec.get("capsule_key"):
         return []
-    tool = (Path(__file__).resolve().parent / "mission_capsule.py").as_posix()
+    import mission_capsule as mc
+    tool = mc.TOOL   # spec 11.5: the same constant the precert marker carries for the guard's deny text
     return ["",
             f"CAPSULE-V2 SUCCESSOR: your predecessor sealed capsule {rec['capsule_key']}. Until you certify",
             "  it, a guard refuses every edit, write and mutating command. Do this FIRST:",

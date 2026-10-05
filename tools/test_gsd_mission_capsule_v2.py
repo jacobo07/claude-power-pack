@@ -612,6 +612,12 @@ def main() -> int:
     check("V-MV2-CARD-HAS-V2-BLOCK", "CAPSULE-V2 SUCCESSOR" in card and key in card
           and "mission_capsule.py resume --mission m-hap" in card, card[:200])
     check("V-MV2-SUCCESSOR-ARGV-STRIPS-MCP", "--strict-mcp-config" in (launches[-1] if launches else []))
+    # spec 11.5: the marker the guard reads names the runnable script (one constant, also on the card)
+    check("V-MV2-MARKER-NAMES-TOOL",
+          spawned_mk is not None and spawned_mk.get("tool") == mc.TOOL and Path(mc.TOOL).is_file()
+          and mc.TOOL.endswith("/mission_capsule.py") and f"python {mc.TOOL} resume" in card
+          and spawned_mk.get("tool") != spawned_mk.get("resume_cmd"),
+          f"tool={(spawned_mk or {}).get('tool')} resume_cmd={(spawned_mk or {}).get('resume_cmd')}")
 
     # ack: the successor's own hook binds its session and starts the certification clock
     succ = "9e9e9e9e-0000-4000-8000-000000000001"

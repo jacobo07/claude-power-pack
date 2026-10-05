@@ -240,7 +240,7 @@ the seal), so the supervisor passes no `now` to compile or gate. Gate: `tools/te
 one" -- such a worker's handoff seal is refused and the fallback takes over after the grace; (b) the guard's
 deny message prints `python <marker.resume_cmd> resume`, but `resume_cmd` is the mission command
 (`/gsd-autonomous`), not the script path -- a T4/T5 seam defect in the instruction text, the deny itself is
-correct; (c) T7 fault matrix + chain audit; (d) T8 real run (held). **(a) BUILT 2026-10-05, see 11.4.**
+correct; (c) T7 fault matrix + chain audit; (d) T8 real run (held). **(a) BUILT 2026-10-05, see 11.4. (b) FIXED 2026-10-05, see 11.5.**
 
 **Review 2026-10-03 (pp-code-reviewer, APPROVE with notes, 0 CRITICAL/HIGH).** M1 FIXED: `capsule_v2(rec)`
 ran outside supervise's per-mission isolation, so one undecidable v2 record ended the pass for every later
@@ -333,7 +333,10 @@ session is continued with the handoff instruction (`gsd_epoch.continue_worker`, 
 `capsule_note_asked` {epoch}); nothing is sealed or stopped that pass. At its next turn end a note ->
 `worker_handoff`; still none -> `supervisor_fallback` at once, with no 30-minute wait. Tests V-MV2-NOTE-*.
 
-### 11.5 Guard deny text (S6)
+### 11.5 Guard deny text (S6) -- status LIVE in code
+Gates: V-CMG-DENY-NAMES-TOOL + V-CMG-DENY-NO-TOOL-GENERIC (both red on the old text, drilled on an isolated
+copy -- the guard is loaded live, never mutated in place), V-MV2-MARKER-NAMES-TOOL. No copy to sync: both
+live dispatchers run `skills/claude-power-pack/hooks/capsule_mutation_guard.js` by path.
 The precert marker carries `tool` = mission_capsule.py's resolved path, written by `arm_successor`
 from one constant (`mission_capsule.TOOL`), which the card lines also use. The guard prints
 `python <tool> resume --mission <m>`; a marker without `tool` prints the generic

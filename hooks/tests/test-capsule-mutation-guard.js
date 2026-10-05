@@ -119,6 +119,18 @@ let o = run(GUARD, { ...EDIT('abcd1234-ffff-0000'), hook_event_name: 'PreToolUse
 check('V-CMG-WIRE-DENY', denied(o) && /PRE-CERTIFICATION/.test(o.hookSpecificOutput.permissionDecisionReason), JSON.stringify(o).slice(0, 160));
 o = run(GUARD, { ...EDIT('sess-legacy-0002'), hook_event_name: 'PreToolUse' });
 check('V-CMG-WIRE-ALLOW', !denied(o) && o.continue === true, JSON.stringify(o).slice(0, 120));
+// spec 11.5: the deny names the runnable script, never the mission's slash command (`resume_cmd`)
+marker({ bg_id: 'abcd1234', resume_cmd: '/gsd-autonomous', tool: 'C:/PP/tools/mission_capsule.py' });
+o = run(GUARD, { ...EDIT('abcd1234-ffff-0000'), hook_event_name: 'PreToolUse' });
+let why = (o.hookSpecificOutput || {}).permissionDecisionReason || '';
+check('V-CMG-DENY-NAMES-TOOL', why.includes('python C:/PP/tools/mission_capsule.py resume --mission m-abc123def456')
+  && !why.includes('/gsd-autonomous'), why.slice(0, 220));
+marker({ bg_id: 'abcd1234', resume_cmd: '/gsd-autonomous' });
+o = run(GUARD, { ...EDIT('abcd1234-ffff-0000'), hook_event_name: 'PreToolUse' });
+why = (o.hookSpecificOutput || {}).permissionDecisionReason || '';
+check('V-CMG-DENY-NO-TOOL-GENERIC', why.includes('python <PP>/tools/mission_capsule.py resume --mission m-abc123def456')
+  && !why.includes('/gsd-autonomous'), why.slice(0, 220));
+marker({ bg_id: 'abcd1234' });
 
 // 4. end to end through the real dispatcher (G9: the deny must survive mergeOutputs)
 const e2e = process.argv.indexOf('--e2e');

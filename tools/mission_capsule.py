@@ -29,6 +29,9 @@ import rollover as ro
 
 PROTOCOL = "capsule-v2"
 NOTE_MAX_CHARS = 2000
+# Spec 11.5: the one place the successor's script path comes from -- the precert marker (read by the
+# mutation guard's deny text) and the successor card both name THIS file, never the mission's command.
+TOOL = Path(__file__).resolve().as_posix()
 PACKET_REF_KEYS = ("verdict", "path", "sha256", "bytes", "root", "files")
 
 
@@ -221,7 +224,7 @@ def arm_successor(rec: dict, sd=None, now: Optional[float] = None, capsule_key: 
     mid, epoch = rec["mission_id"], int(rec["epoch"])
     fields = {"worker": worker_name(mid, epoch + 1), "epoch": epoch + 1,
               "capsule_key": capsule_key or ro.mission_key(mid, epoch),
-              "cwd": rec.get("cwd"), "resume_cmd": rec.get("resume_command")}
+              "cwd": rec.get("cwd"), "resume_cmd": rec.get("resume_command"), "tool": TOOL}
     if now is not None:
         fields["created_at"] = now
     return ro.precert_arm(mid, fields, state_dir(sd))

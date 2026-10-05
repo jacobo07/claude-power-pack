@@ -190,7 +190,9 @@ async function main() {
       permissionDecision: 'deny',
       permissionDecisionReason: `PRE-CERTIFICATION -- mission ${m.mission_id} worker ${m.worker || '?'}: ${v.reason}. `
         + 'You have no mutation authority until RESUME_CERTIFIED. Read-only until then: run '
-        + `\`python ${m.resume_cmd || '<PP>/tools/mission_capsule.py'} resume --mission ${m.mission_id}\`, read the goal file `
+        // `tool` is mission_capsule.py's own path, written into the marker by arm_successor (spec 11.5).
+        // Never `resume_cmd`: that is the mission's slash command, not a script python can run.
+        + `\`python ${m.tool || '<PP>/tools/mission_capsule.py'} resume --mission ${m.mission_id}\`, read the goal file `
         + 'and the tree, answer the exam with `... certify ...` as printed, then continue.',
     },
   });
