@@ -66,6 +66,13 @@ never PASS; a predicted saving is never a realized one; a challenger is allowed 
 3. `modules/spec_gate` novelty check recorded: classification EXTEND_EXISTING_OWNER with file:line evidence from a
    discovered sweep, or the slice stops.
 4. Champion numbers frozen with their commands (zero-rescan plan, Run 5 and Run 6).
+5. Instrument fix found while arming (first opportunity of this programme, recorded as an opportunity row):
+   `tools/gex44_env_preflight.py` judges `pp_install` by commit-hash ancestry of `PP_COMMIT_FLOOR`, so a `-x`
+   cherry-pick of the floor reads `pp_install_stale` although the code is present (live install 4856b50d holds
+   25a10ce5 / 308da56b = picks of 5962571c / 60e7947d; PFP 28/28, LG 20/20 on GEX44). Fix: accept the floor when
+   HEAD contains it OR a commit carrying `(cherry picked from commit <floor>)` OR an equal patch-id. Red test first
+   (pick-only history -> READY; unrelated history -> still NOT_READY; mutant dropping the hash path -> red).
+   The live GEX44 install is updated only through its normal fast-forward sync, never by hand.
 
 ### Phase 1: usage_index v5 substrate
 

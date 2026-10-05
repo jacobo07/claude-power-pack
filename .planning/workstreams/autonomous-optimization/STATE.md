@@ -39,6 +39,13 @@ first proving incident; a second workload must be taken by the loop itself.
 - [Plan]: new pillars live in an IC gen2 ledger because the gen1 `frozen` object is immutable.
 - [Plan]: champion/challenger is offline replay on the corpus copy; no extra model sessions (IC rows 11/12).
 - [Plan]: TOK-18 Gen3 (T2-1 canary from 2026-10-11) is not touched by this programme.
+- [Owner 2026-10-05, ONE-ARM WAIVER of IC row 19]: "Arm now, default env". Preflights at arm time: a7 NOT_READY
+  (auth_expired, pp_install_stale), a5 NOT_READY (pp_install_stale), default env with
+  CPP_NODE_EXE=/opt/node-v24.14.0/bin/node NOT_READY on pp_install_stale only = hash-floor false positive (picks
+  25a10ce5/308da56b in live 4856b50d; PFP 28/28, LG 20/20 on GEX44). The default env is undeclared, so the relay
+  launch gate does not run the preflight. The waiver covers this arm only; a re-arm needs exit 0 or a new waiver.
+  Relays launched by agora-mission-sweep run with system node v18 (row 16 wiring still pending): only
+  node_bridge consumers are affected; do not judge MC/HPKT gates on this plane without CPP_NODE_EXE.
 
 ## Session Continuity
 
