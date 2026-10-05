@@ -1,6 +1,6 @@
 ---
-covers: [mission-capsule-rollover, capsule-v2, cpp-gsd-long, kresume, kclear, safe-to-forget, resume-certified, mutation-gate, successor-claim, rollover-protocol]
-status: SPEC (T0). Implementation T1-T7 in progress; T8 Production Reality HELD by Owner (2026-10-03, Q5)
+covers: [mission-capsule-rollover, capsule-v2, cpp-gsd-long, kresume, kclear, safe-to-forget, resume-certified, mutation-gate, successor-claim, rollover-protocol, halt-continuity, renewal-continuity, seal-refusal-backoff, certify-deadline, capsule-fault-matrix, capsule-chain-audit]
+status: SPEC (T0). T1-T6 built; section 11 (M2/L1/L2/no-note/guard/T7) in progress; T8 Production Reality HELD by Owner (2026-10-03, Q5)
 date: 2026-10-03
 mode: ULTRA-PLAN for ownership (this document), EXECUTION for every tranche
 parents: vault/specs/interactive-context-rollover.md (P3 interactive), vault/specs/parent-context-epoch-rotation.md (mission epochs)
@@ -254,3 +254,83 @@ mission; now fail-closed for that mission only (V-MV2-UNDECIDABLE-*, mutant KILL
   only by budget; wants a backoff or a change fingerprint.
 - **L2** a LIVE uncertified successor under `resume_not_certified` is never halted by budget
   (plan_next returns none before the budget check); it holds until a human acts.
+
+## 11. Halt/renewal continuity, refusal backoff, certify deadline, no-note, guard text, T7 (2026-10-05)
+
+Status: SPEC (S1). Binding for S2-S7; each subsection flips to LIVE in the commit that builds it.
+**Owner decision 2026-10-05 (M2):** a resumable halt is a continuity transition -- seal BEFORE the
+planned destruction. A hard budget/safety stop may override that, but then it enters explicit RECOVERY,
+never SAFE_TO_FORGET. A renewal is never silently legacy.
+Every branch below sits behind `capsule_v2(rec)`; a legacy halt, renewal and launch stay byte-identical
+(G23 unchanged, never re-captured). Peer suites added to every gate run because gsd_mission.py is
+co-owned: test_gsd_mission_quota_relogin, test_persistent_failure_park, test_mission_launch_gate.
+
+### 11.1 M2 -- the halt is a transition (S2)
+A v2 HALTED record carries `continuity` {kind, reason, capsule_key?, origin?}. Kinds:
+
+| kind | when | order of effects |
+|---|---|---|
+| `handoff` | budget halt, renewal due, owner LIVE and its turn ended | seal `worker_handoff`, else `supervisor_fallback` at once (the budget is the override: no grace wait) -> `gate_before_stop` -> `outgoing_stop_authorized` -> HALTED -> reap -> renewal carries `capsule_key` |
+| `recovery` | budget halt, renewal due, the budget overrode the owner (busy past the bound, HANDOFF forced, WAITING_HUMAN, DEAD, or both handoff seals refused) | HALTED -> reap -> seal `recovery` from the halted record's durable state -> renewal carries `capsule_key`. The mission ledger calls this RECOVERY; rollover's SAFE_TO_FORGET is read as eligibility only and is never reported for it; no `gate_before_stop` (nothing is left to stop) |
+| `inherited` | the current worker holds an uncertified marker, or the record is PREPARED/LAUNCHING with a `capsule_key` | nothing sealed; the renewal carries the same `capsule_key` |
+| `none` | no renewal is due (halt not for budget, GSD not OK, renewal cap, unchanged tree, launches never acked, `no_progress`), or no worker of this mission ever ran | nothing sealed; stated, so "no capsule" is never silent |
+| `refused` | a renewal was due and no capsule can carry it: the recovery seal refused, or the owner is UNKNOWN (a recovery successor could run beside a live worker -- section 5) | HALTED, renewal REFUSED, ledger `renewal_refused_no_capsule` with the reasons |
+
+- The renewal decision (renewal_refusal + the progress fingerprint) is taken BEFORE anything is sealed,
+  on the pre-halt record, so no capsule is sealed for a lineage that will not renew.
+- `renew_mission(rec, capsule_key=)` writes `capsule_key` and `continuity_from` {mission_id, kind} on the
+  PREPARED successor. A v2 renewal without `capsule_key` exists only for kind `none` "no worker ran".
+- Launch: `_capsule_arm` also runs for act `launch` when the record carries `capsule_key` -- the
+  renewal's first worker is a successor and certifies like one.
+- **Certify across the mission boundary (defect found reading code at bbcb3297).** `_flip_precert` read
+  the marker of `cap.run.mission_id`, the PREDECESSOR mission; a renewed successor's marker lives under
+  the new mission id, so certify printed RESUME_CERTIFIED and the guard stayed locked. Fix:
+  `certify_flow(..., mission_id=)` names the marker's mission; the mission CLI passes `--mission`.
+- **Busy-owner bound.** The first pass that finds the budget spent with the owner LIVE and busy records
+  `budget_spent_at`; `plan_next(v2)` halts `budget: <spent>; forced after grace` once `now -
+  budget_spent_at > wall.grace_s` (default WALL_GRACE_S). This is the recovery path.
+- `no_progress` stays terminal (Invariant 9: renewal refuses it); v2 records `continuity: none`.
+- Tests: V-MV2-HALT-{HANDOFF,FALLBACK,RECOVERY,INHERITED,NONE,REFUSED,UNKNOWN,NOPROGRESS,COMPLETE},
+  V-MV2-RENEW-{KEY,ARM,CERTIFY-CROSS}, V-MV2-BUSY-BOUND, each refusal with an admitted twin, legacy
+  control per branch; V-CAP2 for the certify mission_id.
+
+### 11.2 L1 -- seal-refusal backoff (S3)
+The `seal_refused` hold gains `retries`, `next_at`, `quarantined` and `fingerprint` = sha256 of (HEAD,
+dirty-path count) read with git only (no GSD query). An idle owner under the hold is re-judged only
+when the fingerprint changed OR `now >= next_at`; backoff = min(300 * 2^(n-1), 3600) s (the
+provider_breaker model); after 4 refusals on one fingerprint it is quarantined and re-judged on a
+fingerprint change only. A held pass writes no ledger row (the row says why). Tests V-MV2-L1-*.
+
+### 11.3 L2 -- budget before hold, certify deadline (S4)
+- `plan_next(v2)` checks the budget BEFORE a capsule hold returns `none`: `resume_not_certified` +
+  budget spent -> halt (continuity `inherited`); `seal_refused` + budget -> the 11.1 rules.
+- At the certify deadline the uncertified worker is STOPPED (it never had mutation authority: nothing
+  to seal, section 5 holds), `capsule_key` is kept and `capsule_attempts` {key: n} counts successors per
+  capsule. Below MAX_SUCCESSOR_ATTEMPTS (3) the next pass replaces it through the existing `inherited`
+  path; at the cap the mission goes BLOCKED `resume_not_certified` for a human. The new successor's claim
+  takes over by rollover's T2 lease (30 min = the deadline). Tests V-MV2-L2-*.
+
+### 11.4 No-note (S5)
+A v2 ROTATE of a LIVE idle owner with no note (explicit or transcript) asks ONCE per epoch: the same
+session is continued with the handoff instruction (`gsd_epoch.continue_worker`, ledger
+`capsule_note_asked` {epoch}); nothing is sealed or stopped that pass. At its next turn end a note ->
+`worker_handoff`; still none -> `supervisor_fallback` at once, with no 30-minute wait. Tests V-MV2-NOTE-*.
+
+### 11.5 Guard deny text (S6)
+The precert marker carries `tool` = mission_capsule.py's resolved path, written by `arm_successor`
+from one constant (`mission_capsule.TOOL`), which the card lines also use. The guard prints
+`python <tool> resume --mission <m>`; a marker without `tool` prints the generic
+`<PP>/tools/mission_capsule.py` path. It never prints `resume_cmd` (the mission's slash command). Test in
+hooks/tests/test-capsule-mutation-guard.js that goes red on the old text; live hook copy synced by hash.
+
+### 11.6 T7 -- fault matrix and chain audit (S7)
+- `tools/test_mission_capsule_faults.py` (V-MCF-*): every halt shape x owner state (idle, busy, busy past
+  bound, dead, UNKNOWN, WAITING_HUMAN), seal refused, recovery refused, certify deadline below and at the
+  cap, no note, claim takeover, crash between each pair of effects (seal / authorize / halt / reap /
+  renew / arm / launch / certify / flip) -- each resolves to exactly one owner per section 5; a legacy
+  twin per row; source mutants for each 11.x branch KILLED.
+- `mission_capsule.py audit --mission <m>` walks the lineage (`renewed_from`) and, per rotation and per
+  halt, checks the chain: seal row SAFE -> `outgoing_stop_authorized` before the stop -> marker armed
+  before the launch -> bound -> acked -> claimed -> refreshed -> certified -> marker lifted; for a halt,
+  `continuity` present and consistent with the renewal. Exit 0 intact, 1 names the first broken link,
+  2 unreadable. Read-only.
