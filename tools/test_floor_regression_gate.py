@@ -856,10 +856,17 @@ def find_lines(out, prefix):
     return [ln for ln in out.splitlines() if ln.startswith(prefix)]
 
 
-def explain(layer, scope=None, unit="chars", bound=1100, reason="seeded", commit="abcdef1"):
-    e = {"layer": layer, "unit": unit, "delta_bound": bound, "reason": reason, "commit": commit}
+def explain(layer, scope=None, unit="chars", bound=1100, reason="seeded", commit="abcdef1", drop=(), **over):
+    """An evidenced budget entry. Since 2026-10-05 an explanation is not prose: it names its producer, the consumer
+    that needs the bytes resident, an evidence file that exists in the repo, and when it is reviewed (pillar K)."""
+    e = {"layer": layer, "unit": unit, "delta_bound": bound, "reason": reason, "commit": commit,
+         "producer": "seeded-producer", "consumer": "seeded-consumer",
+         "evidence": "tools/floor_regression_gate.py", "review_when": "seeded review condition"}
     if scope is not None:
         e["scope"] = scope
+    e.update(over)
+    for k in drop:
+        e.pop(k, None)
     return e
 
 
@@ -1079,7 +1086,12 @@ def g_explanation_fields():
              "delta_bound 0": explain("memory_global", "universal", bound=0),
              "unit bytes": explain("memory_global", "universal", unit="bytes"),
              "scope unknown": explain("memory_global", "everyone"),
-             "layer empty": explain("", "universal")}
+             "layer empty": explain("", "universal"),
+             "producer missing": explain("memory_global", "universal", drop=("producer",)),
+             "consumer blank": explain("memory_global", "universal", consumer="  "),
+             "review_when missing": explain("memory_global", "universal", drop=("review_when",)),
+             "evidence not a repo file": explain("memory_global", "universal", evidence="vault/no/such/evidence.md"),
+             "evidence escapes the repo": explain("memory_global", "universal", evidence="../outside.md")}
     for label, item in cases.items():
         rc, out, _ = pair_check({}, {"g": 11024}, ref_edit=set_explanations([item]))
         if rc != 2 or "reason=explanation_refused" not in last_line(out):
@@ -1089,7 +1101,64 @@ def g_explanation_fields():
         [explain("memory_global", "universal"), explain("rules", "universal", reason="")]))
     if rc != 2:
         why.append(f"one bad entry among good: rc={rc}")
-    return (not why), "; ".join(why) or "five malformed entries and a mixed list each refuse the reference (exit 2)"
+    return (not why), "; ".join(why) or "ten malformed entries and a mixed list each refuse the reference (exit 2)"
+
+
+def g_explanation_is_debt():
+    """An accepted rise stays visible: the EXPLAINED line names producer and evidence, and a DEBT line sums it."""
+    rc, out, _ = pair_check({}, {"g": 11024}, ref_edit=set_explanations([explain("memory_global", "universal")]))
+    exp = find_lines(out, "EXPLAINED memory_global scope=universal delta=+1024 by=abcdef1")
+    debt = find_lines(out, "DEBT ")
+    ok = (rc == 0 and len(exp) == 1 and "producer=seeded-producer" in exp[0]
+          and "evidence=tools/floor_regression_gate.py" in exp[0]
+          and debt == ["DEBT accepted_rises=1 chars=+1024 tokens=+0"])
+    # control: with nothing explained there is no debt line claiming zero debt from a rise that went red
+    rc2, out2, _ = pair_check({}, {"g": 11024})
+    ok = ok and rc2 == 1 and not find_lines(out2, "DEBT ")
+    return ok, f"rc={rc} explained={exp} debt={debt} | unexplained rc={rc2}"
+
+
+def g_window_degraded():
+    """A window whose SessionStart chain the dispatcher abandoned (its log names the session) is never measured as a
+    floor: a failed hub reads exactly like a smaller one. Checked windows refuse, references refuse, another session's
+    abandonment does not count, and a missing log is reported as unknown, never as settled."""
+    why = []
+    root = scratch("deg")
+    ref_tx, now_tx = floor_pair(root, {}, {})
+    log = root / "dispatcher-errors.log"
+
+    def line(sid):
+        return ("2026-10-05T21:37:48.854Z [SessionStart-chain] CHAIN-DEADLINE-ABANDONED after 4000ms Error: still "
+                f"running: ../skills/claude-power-pack/hooks/session_start_hub.js; session={sid}; host free=1MB\n")
+
+    with env_set(CPP_DISPATCHER_ERROR_LOG=log):
+        log.write_text("", encoding="utf-8")
+        ref_json = root / "ref.json"
+        rc, out, _ = run_main(["--write-reference", ref_json, "--transcript", ref_tx])
+        if rc != 0:
+            return False, f"clean reference write rc={rc} {last_line(out)!r}"
+        rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", now_tx])
+        if rc != 0 or not find_lines(out, "WINDOW_HEALTH settled"):
+            why.append(f"settled control: rc={rc} health={find_lines(out, 'WINDOW_HEALTH')}")
+        log.write_text(line("other-session-0001"), encoding="utf-8")
+        rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", now_tx])
+        if rc != 0:
+            why.append(f"another session's abandonment degraded this one: rc={rc}")
+        log.write_text(line(Path(now_tx).stem), encoding="utf-8")
+        rc, out, _ = run_main(["--check", "--reference", ref_json, "--transcript", now_tx])
+        if rc != 2 or "reason=window_degraded" not in last_line(out):
+            why.append(f"degraded checked window: rc={rc} last={last_line(out)!r}")
+        log.write_text(line(Path(ref_tx).stem), encoding="utf-8")
+        ref2 = root / "ref2.json"
+        rc, out, _ = run_main(["--write-reference", ref2, "--transcript", ref_tx])
+        if rc != 2 or "reason=window_degraded" not in last_line(out) or ref2.exists():
+            why.append(f"degraded reference written: rc={rc} exists={ref2.exists()} last={last_line(out)!r}")
+    with env_set(CPP_DISPATCHER_ERROR_LOG=root / "absent.log"):
+        rc, out, _ = run_main(["--check", "--reference", root / "ref.json", "--transcript", now_tx])
+        if rc != 0 or not find_lines(out, "WINDOW_HEALTH unknown"):
+            why.append(f"absent log: rc={rc} health={find_lines(out, 'WINDOW_HEALTH')}")
+    return (not why), "; ".join(why) or ("abandoned checked window exit 2, abandoned reference refused, other session "
+                                         "ignored, settled reported, absent log unknown")
 
 
 def g_tokens_rule():
@@ -2641,6 +2710,8 @@ GATES_TRACER = [
     ("V-FLOOR-TRACER-E2E", g_tracer_e2e),
     ("V-FLOOR-WINDOW-APPEND-STABLE", g_window_append_stable),
     ("V-FLOOR-HOOK-CORRELATED", g_hook_correlated),
+    ("V-FLOOR-EXPLANATION-IS-DEBT", g_explanation_is_debt),
+    ("V-FLOOR-WINDOW-DEGRADED", g_window_degraded),
 ]
 GATES_RULES = [
     ("V-FLOOR-LAYER-TABLE", g_layer_table),

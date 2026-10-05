@@ -966,7 +966,58 @@ def validate_explanations(items):
             return f"explanation_refused: {i} reason"
         if not isinstance(e.get("commit"), str) or not _COMMIT_RE.match(e["commit"]):
             return f"explanation_refused: {i} commit"
+        # 2026-10-05 (pillar K): an explanation is an evidenced budget, not prose. It names who produces the bytes,
+        # which consumer needs them resident, an evidence file in this repo, and when the budget is reviewed.
+        for field in ("producer", "consumer", "review_when"):
+            if not isinstance(e.get(field), str) or not e[field].strip():
+                return f"explanation_refused: {i} {field}"
+        if not _repo_file(e.get("evidence")):
+            return f"explanation_refused: {i} evidence"
     return None
+
+
+def _repo_file(rel):
+    """True when `rel` is a relative path naming an existing file inside this checkout (never outside it)."""
+    if not isinstance(rel, str) or not rel.strip() or os.path.isabs(rel):
+        return False
+    try:
+        root = Path(ROOT).resolve()
+        p = (root / rel).resolve()
+    except (OSError, RuntimeError, ValueError):
+        return False
+    return root in p.parents and p.is_file()
+
+
+DISPATCHER_LOG_ENV = "CPP_DISPATCHER_ERROR_LOG"
+_ABANDON_MARK = "[SessionStart-chain] CHAIN-DEADLINE-ABANDONED"
+
+
+def window_health(session_id):
+    """'degraded' when the dispatcher's error log records that it abandoned the SessionStart chain of THIS session
+    (hook-dispatcher.js names the session since 2026-10-05), 'settled' when the log is readable and does not, and
+    'unknown' when there is no readable log on this host. An abandoned hub leaves `{"continue":true}` in the transcript,
+    exactly like a hub with nothing to say, so the window alone cannot tell them apart (evidence/K-prg-2.md)."""
+    path = os.environ.get(DISPATCHER_LOG_ENV) or str(Path.home() / ".claude" / "logs" / "hook-dispatcher-errors.log")
+    needle = f"session={session_id};"
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                if _ABANDON_MARK in line and needle in line:
+                    return "degraded"
+    except OSError:
+        return "unknown"
+    return "settled"
+
+
+def refuse_degraded(session_id, what):
+    """-> the window's health; a degraded window is UNMEASURABLE (window_degraded): it is never a floor, neither a
+    checked one (a failed hub would read as a saving) nor a reference (a failure would become the champion)."""
+    health = window_health(session_id)
+    if health == "degraded":
+        raise Unmeasurable("window_degraded",
+                           f"the dispatcher abandoned the SessionStart chain of session {session_id} at its deadline; "
+                           f"{what} cannot be measured from a window its producers did not finish")
+    return health
 
 
 def covering_explanation(finding, items):
@@ -1061,7 +1112,7 @@ def compare(ref, now, chars_only=False):
     def settle(f, rules):
         exp = covering_explanation(f, items)
         if exp is not None:
-            explained.append({**f, "by": exp["commit"]})
+            explained.append({**f, "by": exp["commit"], "producer": exp.get("producer"), "evidence": exp.get("evidence")})
             return True
         if rules:
             findings.append({**f, "rules": rules})
@@ -1145,7 +1196,13 @@ def render(r):
             lines.append(f"RISE {f['layer']} scope={f['scope']} delta=+{f['delta']} unit={f['unit']} "
                          f"rules={','.join(f['rules'])}")
         for e in r["explained"]:
-            lines.append(f"EXPLAINED {e['layer']} scope={e['scope']} delta=+{e['delta']} by={e['by']}")
+            lines.append(f"EXPLAINED {e['layer']} scope={e['scope']} delta=+{e['delta']} by={e['by']} "
+                         f"producer={e.get('producer')} evidence={e.get('evidence')}")
+        if r["explained"]:
+            # Accepted is not erased: the champion keeps its numbers and every accepted rise is summed as debt.
+            dc = sum(e["delta"] for e in r["explained"] if e["unit"] == "chars")
+            dt = sum(e["delta"] for e in r["explained"] if e["unit"] == "tokens")
+            lines.append(f"DEBT accepted_rises={len(r['explained'])} chars=+{dc} tokens=+{dt}")
         sd = r["scope_deltas"]
         lines.append("SCOPE " + " ".join(f"{s}={_s(sd.get(s, 0))}" for s in SCOPES))
         sk = r["skills"]
@@ -1157,6 +1214,8 @@ def render(r):
         lines.append(f"TOKENS status={ta['status']} ref={ta['ref']} now={ta['now']} delta={delta}")
         if r["verdict"] == "WITHIN_BOUND_CHARS_ONLY":
             lines.append(f"CHARS_ONLY the tokens axis was not compared (status={ta['status']}); only the chars axis was checked")
+    if r.get("window_health"):
+        lines.append(f"WINDOW_HEALTH {r['window_health']}")
     lines.append(f"FLOOR verdict={r['verdict']} exit={r['exit']} reason={r['reason']}")
     return "\n".join(lines)
 
@@ -1227,6 +1286,7 @@ def main(argv=None):
             path, src = resolve_source(args)
             measured = measure(path)
             stamp_source(measured["provenance"], src)
+            refuse_degraded(measured["provenance"]["session_id"], "a reference")
             write_reference(args.write_reference, measured, argv, replace=args.replace, redact=redact)
             prov = measured["provenance"]
             tok = measured["tokens"]["first_call_total"]
@@ -1238,7 +1298,9 @@ def main(argv=None):
             ref = load_reference(ref_path)
             path, src = resolve_source(args)
             now = measure(path)
+            health = refuse_degraded(now["provenance"]["session_id"], "the checked floor")
             result = compare(ref, now, chars_only=args.chars_only)
+            result["window_health"] = health
             rp = ref.get("provenance", {})
             result["provenance"] = {**stamp_source(now["provenance"], src), "probe_view": now["probe_view"]}
             result["reference"] = {"path": str(ref_path), "schema": ref.get("schema"), "total_chars": ref.get("total_chars"),
