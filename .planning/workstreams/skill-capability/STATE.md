@@ -1,24 +1,38 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-current_phase: 09 — Closeout
+current_phase: 10 — Gen 1 gex44 remainder
 current_plan: Not started
 status: planning
-stopped_at: Phase 8 complete, ready to plan Phase 09
-last_updated: "2026-10-03T23:41:31.153Z"
-last_activity: 2026-10-04
+stopped_at: Rearmed 2026-10-05 (Owner brief); Phase 9 gex44 part complete, ready to plan Phase 10
+last_updated: "2026-10-05T12:00:00.000Z"
+last_activity: 2026-10-05
 state_head: a8c2f8486900eb439b7217e263715e23244ece85
 progress:
-  total_phases: 9
-  completed_phases: 8
-  total_plans: 24
-  completed_plans: 24
-  percent: 89
+  total_phases: 11
+  completed_phases: 9
+  total_plans: 27
+  completed_plans: 27
+  percent: 82
 milestone_name: skill-capability
 workstream: skill-capability
 created: 2026-10-03
-current_phase_name: Closeout
+current_phase_name: Gen 1 gex44 remainder
 ---
+
+## REARM 2026-10-05 (read first)
+
+- Contract: `vault/programs/skill-capability/gen2/OWNER-BRIEF-2026-10-05.md` (verbatim Owner brief + 2 amendments) and
+  `vault/plans/skill-capability-gen2-2026-10-05.md` (approved plan, reality scan, token estimate, planes).
+- Owner decisions now recorded (supersede the open questions in LAPTOP-CLOSEOUT "Owner decisions"):
+  Q1 laptop fetches the run branch straight from this clone (refs only; no force, no squash) -- done by the laptop pane.
+  Q2 pillar E: YES, <= 8 fresh sessions, pre-registered; run on gex44 by amendment 1 (gex44 rows = own plane).
+  Q3 laptop live-skill sync: YES where safe (laptop pane); gex44 `~/.claude` is still never edited by this run.
+  Q4 the 7 invalid-YAML skills: classify each; repair where byte-identical description is provable, else legacy debt.
+- Planes: this mission = phases 10, 11 and the Gen 2 phases 11 adds. Laptop pane afterwards = fetch, laptop-plane bundle
+  measurements, pillar N (`--closeout`, `--final` + R1, CLOSE.md), boundary-4 push to the bare repo, merge, laptop sync.
+- Budget: armed 2026-10-11T18:15Z after the weekly reset (Owner amendment 2), --max-cycles 16 --max-hours 48; estimate
+  ~0.8 B tokens processed. Prefer telemetry / replay / shadow over fresh sessions; no open-ended agent loops.
 
 # Project State
 
@@ -31,10 +45,10 @@ compile-out, capability-lifecycle. Availability without residency, proven by nee
 ## Current Position
 
 Current Plan: Not started
-Total Plans in Phase: 3
+Total Plans in Phase: 0
 **Status:** Ready to plan
-**Current Phase:** 09 — Closeout
-**Last Activity:** 2026-10-04
+**Current Phase:** 10 — Gen 1 gex44 remainder
+**Last Activity:** 2026-10-05
 
 ## Sealed before the run (interactive pane, session c85f3eb9)
 

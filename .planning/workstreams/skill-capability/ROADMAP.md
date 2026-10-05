@@ -67,7 +67,9 @@ result. UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. An upper bound is n
 - [x] **Phase 6: Compile-out lineage** - pillar G (completed 2026-10-03)
 - [x] **Phase 7: Contribution** - pillar E (completed 2026-10-04)
 - [x] **Phase 8: Owner reconciliation and creation governance** - pillars I, J, K, L, M (completed 2026-10-04)
-- [ ] **Phase 9: Closeout** - pillar N; reviews, deltas, done-gate
+- [x] **Phase 9: Closeout (gex44 part)** - reviews, deltas, pre-final, LAPTOP-CLOSEOUT (completed 2026-10-04; state.N + `--final` are the laptop step, tracked in LAPTOP-CLOSEOUT.md, never a mission phase)
+- [ ] **Phase 10: Gen 1 gex44 remainder** - pillar E bounded experiment on gex44 (<= 8 sessions), Q4 YAML repair of 7 skills + CWST card re-derivation, LAPTOP-CLOSEOUT refresh
+- [ ] **Phase 11: Gen 2 Reality Scan and successor ledger** - 20 frontier items mapped to existing owners, gen2 ledger pre-registered and frozen, Gen 2 phases added from the scan
 
 ## Phase Details
 
@@ -177,6 +179,50 @@ Plans:
 - [x] 09-02-PLAN.md -- D-01 reviews (ukdl.md, cbr.md) and ledger `reviews` / `deltas`
 - [x] 09-03-PLAN.md -- D-02 LAPTOP-CLOSEOUT.md + D-03 record `evidence/pre-final-gex44.md`
 
+### Phase 10: Gen 1 gex44 remainder
+
+**Goal**: Everything of Gen 1 that gex44 can honestly close is closed: pillar E gets its bounded, pre-registered
+experiment, the 7 invalid SKILL.md frontmatters are repaired or classified, and the laptop hand-off is current.
+**Contract**: `vault/programs/skill-capability/gen2/OWNER-BRIEF-2026-10-05.md` (Q2, Q4, Gen 1 truthfulness) and
+`vault/plans/skill-capability-gen2-2026-10-05.md` (Pillar E on GEX44, Q4). Read both before planning.
+**Depends on**: Phase 9
+**Requirements**: SC-E, SC-J, SC-G, SC-H
+**Success Criteria**:
+
+  1. Pillar E: a pre-registration (arms, n <= 4 per arm and <= 8 total, grade rule, decision rule, stop conditions,
+     per-row environment record) is committed BEFORE the first counted session; the harness's host-path port is
+     proven on a fixture dry-run first; gex44 rows are a plane of their own and are never pooled with the laptop rows
+     (reported beside them). state.E ends at the terminal the pre-registered rule gives -- RESEARCH_INSUFFICIENT_EVIDENCE
+     is valid -- and if it changes, the E rows of `reviews/cbr.md` and ledger `deltas` change in the same commit.
+  2. Q4: each of the 7 skills is classified individually; a repair keeps the parsed description byte-identical to
+     what the host reads today; an unrepaired one is recorded as legacy debt and excluded from any health or benchmark
+     figure that treats it as valid. The CWST repair follows owner-bundle item 12 in the same unit (card + trailer,
+     `--record-cards`, re-render G and H, move the state.G / state.H pins).
+  3. `--pillar A` .. `--pillar M` PASS, `tools/test_skill_capability_prefinal.py` PASS with N open, the J gate PASS.
+  4. LAPTOP-CLOSEOUT.md reflects the new state (state.N hashes follow any change of reviews/cbr.md; the pillar E
+     owner-bundle item is updated to its result; the 7-skill outcome is listed for the laptop live sync).
+
+### Phase 11: Gen 2 Reality Scan and successor ledger
+
+**Goal**: Decide, against what actually exists, how each of the brief's 20 Gen 2 frontier items is owned
+(ADOPT / EXTEND / MERGE / CONNECT / MINE / BENCHMARK / REJECT / BUILD), and pre-register Gen 2 as a versioned successor
+of this same program.
+**Contract**: OWNER-BRIEF "AFTER GEN 1 CLOSE", "GEN 2 DONE-GATE" and frontiers 1-20; the plan's "Gen 2" section.
+**Depends on**: Phase 10
+**Success Criteria**:
+
+  1. A scan report under `vault/programs/skill-capability/gen2/` maps every frontier item to an existing owner or to a
+     justified BUILD, from a DISCOVERED sweep (`/d2a-family`, `vault/audits/apir/NON_DUPLICATION_LEDGER.md`, the
+     HR-NOVELTY-001 13-question proof for any BUILD), with file:line evidence. Pillar B's falsification is carried as
+     negative knowledge (no retry of the same listing mechanism).
+  2. One independent `oneshot-architect-auditor` pass over the mapping; its gaps are fixed or answered in the report.
+  3. `vault/programs/skill-capability/gen2/ledger.json` pre-registers the Gen 2 items with predicted terminals and
+     existing owners, names its lineage (Gen 1 ledger + FROZEN_AT), is frozen at a commit, and a wrapper verifier in the
+     Gen 1 wrapper's pattern passes `--selftest` and `--status`.
+  4. The Gen 2 execution phases are added to this roadmap from the scan (one phase per coherent wave, each naming its
+     items, its evidence order -- telemetry, replay, shadow, natural experiments before fresh sessions -- and its
+     gate), plus a final Gen 2 close phase whose laptop-plane proofs go to a laptop hand-off file.
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -189,4 +235,6 @@ Plans:
 | 6. Compile-out lineage | 3/3 | Complete    | 2026-10-03 |
 | 7. Contribution | 2/2 | Complete    | 2026-10-04 |
 | 8. Owner reconciliation and creation governance | 4/4 | Complete    | 2026-10-04 |
-| 9. Closeout | 0/0 | Not started | - |
+| 9. Closeout (gex44 part) | 3/3 | Complete    | 2026-10-04 |
+| 10. Gen 1 gex44 remainder | 0/0 | Not started | - |
+| 11. Gen 2 Reality Scan and successor ledger | 0/0 | Not started | - |
