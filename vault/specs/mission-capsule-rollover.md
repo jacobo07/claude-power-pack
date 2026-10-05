@@ -249,7 +249,7 @@ mission; now fail-closed for that mission only (V-MV2-UNDECIDABLE-*, mutant KILL
   its live owner as an orphan (`orphan_workers` on a terminal record) with no capsule, and `renew_mission`
   starts a mission carrying the protocol but no `capsule_key`, i.e. a legacy rotation across the renewal.
   Needs an Owner decision: seal before a v2 halt and carry `capsule_key` into the renewal, or declare
-  halt/renewal out of v2 scope.
+  halt/renewal out of v2 scope. **RESOLVED 2026-10-05: Owner decided (section 11), LIVE per 11.1.**
 - **L1** an idle `seal_refused` owner is re-judged every pass (one GSD query + two ledger rows), bounded
   only by budget; wants a backoff or a change fingerprint.
 - **L2** a LIVE uncertified successor under `resume_not_certified` is never halted by budget
@@ -265,7 +265,12 @@ Every branch below sits behind `capsule_v2(rec)`; a legacy halt, renewal and lau
 (G23 unchanged, never re-captured). Peer suites added to every gate run because gsd_mission.py is
 co-owned: test_gsd_mission_quota_relogin, test_persistent_failure_park, test_mission_launch_gate.
 
-### 11.1 M2 -- the halt is a transition (S2)
+### 11.1 M2 -- the halt is a transition (S2) -- status LIVE in code (no real mission yet; T8 held)
+Built as `_halt_continuity` (before the HALTED write), `_halt_recover` (after the reap), the shared
+`_capsule_seal` / `_capsule_authorize_stop` (also what `_capsule_rotate` now calls) and
+`_renewal_why_not` (the legacy halt asks the same helper, after its HALTED write, as before). Found while
+building: a renewal's first worker had no note and no older card, so its certify instruction rode only the
+SessionStart hook W8 measured failing; for a v2 record with `capsule_key` the card now rides the launch.
 A v2 HALTED record carries `continuity` {kind, reason, capsule_key?, origin?}. Kinds:
 
 | kind | when | order of effects |

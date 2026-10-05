@@ -594,6 +594,16 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
             if spent:
                 return {"action": "halt", "reason": f"turn ended and budget: {spent}"}
             return {"action": "relay", "reason": f"owner's turn ended without completion: {why}"}
+        if v2 and spent and verdict == LIVE and rec.get("budget_spent_at"):
+            # Spec 11.1 busy-owner bound (capsule-v2 only): the budget is soft until the turn ends, but
+            # not for ever. Past the wall grace after the pass that first saw it spent, the budget
+            # overrides the busy owner -- the halt enters RECOVERY, never SAFE_TO_FORGET.
+            import gsd_epoch as ge
+            grace = float((rec.get("wall") or {}).get("grace_s") or ge.WALL_GRACE_S)
+            over = now - float(rec["budget_spent_at"])
+            if over > grace:
+                return {"action": "halt", "reason": f"budget: {spent}; owner still busy {int(over)} s after it "
+                                                    f"(grace {int(grace)} s): forced"}
         return {"action": "none", "reason": f"owner {verdict}: {why}"}
     return {"action": "none", "reason": f"unhandled state {state}"}
 
@@ -714,7 +724,9 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         extra["progress"] = progress
         if not rec.get("progress_origin") and progress.get("measured"):
             extra["progress_origin"] = progress["fp"]   # the tree this mission started from
-    if note is not None or rec.get("card"):
+    if note is not None or rec.get("card") or (rec.get("capsule_key") and capsule_v2(rec)):
+        # A capsule-v2 renewal's first worker has no note and no older card, yet it is a successor:
+        # its certify instruction must ride the launch, not the SessionStart hook W8 saw fail.
         # Pre-render the successor's card NOW: this runs out of band with no deadline, and
         # the git facts are exactly those of the hand-off moment the card claims to show --
         # read where the work IS, not where the worker was launched.
@@ -1396,9 +1408,28 @@ def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None) -> str
     return None
 
 
-def renew_mission(rec: dict, now: float | None = None) -> dict:
+def _renewal_why_not(rec: dict, halt_reason: str, st: dict, halt_wd: str, fingerprint=None) -> str | None:
+    """renewal_refusal plus T5's unchanged-tree refusal: the one renewal decision, asked by the legacy
+    halt after the HALTED write and by capsule-v2 before anything is sealed (spec 11.1)."""
+    why_not = renewal_refusal(rec, halt_reason, st.get("outcome"))
+    origin = rec.get("progress_origin")
+    if not why_not and origin:
+        # T5: all 18 renewals of the 6 capped lineages produced 0 commits. A
+        # mission whose tree never moved does not earn a fresh budget. A tree
+        # that cannot be measured is not "unchanged": it still renews.
+        fp_now = (fingerprint or progress_fingerprint)(halt_wd)
+        if fp_now is not None and fp_now == origin:
+            why_not = "no progress in this mission (work tree unchanged since its first launch)"
+    return why_not
+
+
+def renew_mission(rec: dict, now: float | None = None, capsule_key: str | None = None,
+                  continuity_from: dict | None = None) -> dict:
     """A PREPARED successor of a budget-halted mission: same work, fresh budget, every Owner
-    directive carried. The normal launch path starts it on the next pass."""
+    directive carried. The normal launch path starts it on the next pass.
+
+    capsule-v2 (spec 11.1): `capsule_key` is the capsule the halted mission left, so the renewal's
+    first worker is a successor that certifies it -- a renewal is never silently legacy."""
     now = time.time() if now is None else now
     new = create(rec["cwd"], rec["resume_command"], workstream=rec.get("workstream"),
                  max_cycles=rec.get("max_cycles"), max_hours=rec.get("max_hours"),
@@ -1413,10 +1444,16 @@ def renew_mission(rec: dict, now: float | None = None) -> dict:
                "directives": list(rec.get("directives") or [])}
     if rec.get("work_dir"):
         carried["work_dir"] = rec["work_dir"]
+    v2_carry = {}
+    if capsule_key:
+        v2_carry["capsule_key"] = capsule_key
+    if continuity_from:
+        v2_carry["continuity_from"] = continuity_from
     new = transition(new["mission_id"], expect_epoch=new["epoch"], expect_state=PREPARED,
-                     event="mission_renewed", now=now, **carried)
+                     event="mission_renewed", now=now, **carried, **v2_carry)
     lr.ledger_append(rec["mission_id"], "mission_renewed", mission_id=rec["mission_id"],
-                     successor=new["mission_id"], renewal=carried["renewal"])
+                     successor=new["mission_id"], renewal=carried["renewal"],
+                     **({"capsule_key": capsule_key} if capsule_key else {}))
     return new
 
 
@@ -1490,6 +1527,142 @@ def _capsule_certify_check(rec: dict, row: dict, now: float) -> bool:
     return False
 
 
+def _capsule_seal(rec: dict, origins: list[str], *, work_dir: str, capsule_io: dict | None = None,
+                  gate: bool = True, note_rec: dict | None = None) -> tuple[str | None, dict | None, list[str]]:
+    """Seal the capsule of `rec`'s epoch, trying `origins` in order: (origin, seal, reasons) for the
+    first SAFE_TO_FORGET -- re-judged by `gate_before_stop` when a stop follows -- else (None, None,
+    reasons). The note and packet are the predecessor's own (`note_rec`, default `rec`): an explicit
+    `handoff --note` only while THIS owner is in HANDOFF, else its transcript's last hand-off."""
+    import mission_capsule as mc
+    src = note_rec or rec
+    owner_sid = (src.get("owner") or {}).get("session_id")
+    note = ((src.get("note") if src["state"] == HANDOFF else "")
+            or (handoff_note_from_transcript(owner_sid) if owner_sid else "") or "")
+    packet = src.get("packet") if src["state"] == HANDOFF else None
+    key = mc.capsule_key(rec)
+    reasons: list[str] = []
+    for origin in origins:
+        # The capsule's times are rollover's own: the seal row is stamped by its ledger's wall clock,
+        # and the gate's freshness is judged against that same clock. Passing this pass's `now`
+        # mixed two clocks -- harmless only while they happen to agree (measured in T6's suite: an
+        # injected now read a fresh seal as 103 days old).
+        cap = mc.compile_mission_capsule(rec, origin=origin, note=note, work_dir=work_dir, packet=packet,
+                                         **(capsule_io or {}))
+        seal = mc.seal_mission(cap)
+        if seal["verdict"] != "SAFE_TO_FORGET":
+            reasons.append(f"{origin} {seal['verdict']}: {'; '.join(seal.get('reasons') or [])}")
+            continue
+        if gate:
+            # Re-judged immediately before the stop (section 9): the bytes as sealed, fresh, uncertified.
+            g = mc.gate_before_stop(key)
+            if g["verdict"] != "SAFE_TO_FORGET":
+                reasons.append(f"{origin} gate {g['verdict']}: {'; '.join(g.get('reasons') or [])}")
+                continue
+        return origin, seal, reasons
+    return None, None, reasons
+
+
+def _capsule_authorize_stop(rec: dict, origin: str, seal: dict, now: float) -> dict:
+    """G3: the one row that licenses stopping the outgoing worker, bound to the capsule's sha."""
+    import mission_capsule as mc
+    key = mc.capsule_key(rec)
+    return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      event="outgoing_stop_authorized", now=now, capsule_key=key,
+                      capsule_stop_authorized={"epoch": rec["epoch"], "origin": origin, "at": now,
+                                               "sha256": (seal.get("receipt") or {}).get("sha256")},
+                      capsule_first_refused_at=None, capsule_hold=None,
+                      reason=f"capsule {key} sealed ({origin}): SAFE_TO_FORGET")
+
+
+def _halt_continuity(rec: dict, reason: str, st: dict | None, halt_wd: str, sessions, pid_alive,
+                     now: float, fingerprint=None, capsule_io: dict | None = None) -> tuple[dict, dict, bool]:
+    """Spec 11.1, BEFORE the HALTED write of a capsule-v2 mission: (rec, continuity, renew).
+
+    The Owner's rule (2026-10-05): a resumable halt is a continuity transition, so the outgoing
+    worker is sealed before the planned stop; when the budget overrides it the halt enters RECOVERY
+    (sealed after the stop, from durable state), never SAFE_TO_FORGET; and a renewal is never
+    silently legacy. The renewal decision comes first, so nothing is sealed for a lineage that will
+    not renew."""
+    import mission_capsule as mc
+    why_not = (_renewal_why_not(rec, reason, st, halt_wd, fingerprint) if st is not None
+               else f"halt was not for budget: {reason}")
+    if why_not:
+        return rec, {"kind": "none", "reason": f"no renewal: {why_not}"}, False
+    key = rec.get("capsule_key")
+    mk = _capsule_marker(rec)
+    if (key and not _capsule_retired(key)
+            and ((mk is not None and not mk.get("certified_at")) or rec["state"] in (PREPARED, LAUNCHING))):
+        # The worker in hand never certified (or never started): nothing of its own to seal. The
+        # capsule its predecessor left is still the one to certify -- only while it is NOT retired: a
+        # certified key handed on would ask the renewal's successor to certify what can no longer be
+        # certified (a budget halt during a same-session continuation, review 2026-10-05).
+        return rec, {"kind": "inherited", "capsule_key": key,
+                     "reason": f"no certified worker since {key}: the renewal inherits it"}, True
+    owner = _halt_owner(rec)
+    if not owner:
+        return rec, {"kind": "none", "reason": "no worker of this mission ever ran: nothing to carry"}, True
+    verdict, why = liveness(owner, sessions, pid_alive)
+    if verdict == UNKNOWN:
+        # Spec 5: a recovery successor beside a worker that may still run would be two with authority.
+        return rec, {"kind": "refused", "reason": f"owner UNKNOWN ({why}): a successor could run beside it"}, False
+    if verdict == LIVE and owner_idle(owner, sessions):
+        # The turn ended: the hand-off is sealable now, and the budget is the override -- no grace
+        # wait before the degraded fallback.
+        origin, seal, reasons = _capsule_seal({**rec, "owner": owner}, ["worker_handoff", "supervisor_fallback"],
+                                              work_dir=halt_wd, capsule_io=capsule_io)
+        if origin:
+            rec = _capsule_authorize_stop(rec, origin, seal, now)
+            return rec, {"kind": "handoff", "origin": origin, "capsule_key": mc.capsule_key(rec),
+                         "reason": f"sealed {origin} before the halt"}, True
+        return rec, {"kind": "recovery", "reason": "budget overrides; hand-off seals refused: "
+                                                   + " | ".join(reasons)[:400]}, True
+    return rec, {"kind": "recovery", "reason": f"budget overrides owner {verdict}: {why}"[:400]}, True
+
+
+def _capsule_retired(key: str) -> bool:
+    """True once rollover has certified (retired) this capsule: it can never be certified again."""
+    import mission_capsule as mc
+    import rollover as ro
+    return ro.capsule_path(key, mc.state_dir()).with_suffix(".certified").exists()
+
+
+def _halt_owner(rec: dict) -> dict | None:
+    """The worker a halt acts on: the owner, or -- while a same-session continuation is LAUNCHING --
+    the session being resumed (`previous_owner`; continue_worker clears `owner` on purpose)."""
+    if rec.get("owner"):
+        return rec["owner"]
+    if (rec.get("pending") or {}).get("kind") == "turn_continuation":
+        return rec.get("previous_owner")
+    return None
+
+
+def _halt_recover(halted: dict, pre: dict, cont: dict, halt_wd: str, now: float,
+                  capsule_io: dict | None = None) -> dict:
+    """Spec 11.1 `recovery`, AFTER the stop: a degraded capsule from the halted record's durable
+    state. The mission records RECOVERY; rollover's verdict is read as eligibility only. Refused ->
+    `refused`, and the renewal is refused with it."""
+    import mission_capsule as mc
+    mid = halted["mission_id"]
+    src = halted if halted.get("owner") else {**halted, "owner": _halt_owner(pre)}
+    try:
+        origin, seal, reasons = _capsule_seal(src, ["recovery"], work_dir=halt_wd, capsule_io=capsule_io,
+                                              gate=False, note_rec=pre)
+    except Exception as exc:  # noqa: BLE001 -- the record is already terminal: no later pass revisits it,
+        # so an exception left as `recovery` with no key and no renewal would be silent for ever.
+        origin, seal, reasons = None, None, [f"recovery seal raised {type(exc).__name__}: {exc}"]
+    if origin:
+        new = {**cont, "origin": "recovery", "capsule_key": mc.capsule_key(halted),
+               "sha256": (seal.get("receipt") or {}).get("sha256")}
+        transition(mid, expect_epoch=halted["epoch"], expect_state=HALTED, event="continuity_recovery",
+                   now=now, continuity=new, capsule_key=new["capsule_key"],
+                   reason=f"RECOVERY capsule {new['capsule_key']} sealed after the halt")
+        return new
+    new = {"kind": "refused", "reason": f"recovery seal refused: {' | '.join(reasons)}"[:600]}
+    transition(mid, expect_epoch=halted["epoch"], expect_state=HALTED, event="continuity_refused",
+               now=now, continuity=new, reason=new["reason"])
+    return new
+
+
 def _capsule_rotate(rec: dict, row: dict, act: str, sessions, pid_alive, now: float,
                     work_dir: str | None, capsule_io: dict | None = None) -> dict | None:
     """The v2 gate between ROTATE and stop_owner (spec 3.3; G3/G5/G6/G21). Returns the record to
@@ -1533,34 +1706,12 @@ def _capsule_rotate(rec: dict, row: dict, act: str, sessions, pid_alive, now: fl
         # G3: a busy owner's turn has not ended, so no hand-off seal. G5: past the grace, counted
         # from the FIRST refusal, a degraded capsule from durable state stops it anyway.
         origins = ["supervisor_fallback"] if overdue else []
-    owner_sid = (rec.get("owner") or {}).get("session_id")
-    note = ((rec.get("note") if rec["state"] == HANDOFF else "")
-            or (handoff_note_from_transcript(owner_sid) if owner_sid else "") or "")
-    packet = rec.get("packet") if rec["state"] == HANDOFF else None
     wd = work_dir or rec.get("work_dir") or rec["cwd"]
-    reasons = [] if origins else [f"owner {verdict} and its turn has not ended: {why}"]
-    for origin in origins:
-        # The capsule's times are rollover's own: the seal row is stamped by its ledger's wall clock,
-        # and the gate's freshness is judged against that same clock. Passing this pass's `now`
-        # mixed two clocks -- harmless only while they happen to agree (measured in T6's suite: an
-        # injected now read a fresh seal as 103 days old).
-        cap = mc.compile_mission_capsule(rec, origin=origin, note=note, work_dir=wd, packet=packet,
-                                         **(capsule_io or {}))
-        seal = mc.seal_mission(cap)
-        if seal["verdict"] != "SAFE_TO_FORGET":
-            reasons.append(f"{origin} {seal['verdict']}: {'; '.join(seal.get('reasons') or [])}")
-            continue
-        # Re-judged immediately before the stop (section 9): the bytes as sealed, fresh, uncertified.
-        gate = mc.gate_before_stop(key)
-        if gate["verdict"] != "SAFE_TO_FORGET":
-            reasons.append(f"{origin} gate {gate['verdict']}: {'; '.join(gate.get('reasons') or [])}")
-            continue
-        rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                         event="outgoing_stop_authorized", now=now, capsule_key=key,
-                         capsule_stop_authorized={"epoch": rec["epoch"], "origin": origin, "at": now,
-                                                  "sha256": (seal.get("receipt") or {}).get("sha256")},
-                         capsule_first_refused_at=None, capsule_hold=None,
-                         reason=f"capsule {key} sealed ({origin}): SAFE_TO_FORGET")
+    origin, seal, reasons = _capsule_seal(rec, origins, work_dir=wd, capsule_io=capsule_io)
+    if not origins:
+        reasons = [f"owner {verdict} and its turn has not ended: {why}"]
+    if origin:
+        rec = _capsule_authorize_stop(rec, origin, seal, now)
         row["capsule"] = f"sealed {key} ({origin})"
         return rec
     reason = " | ".join(reasons)[:600]
@@ -1669,6 +1820,14 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 row["action"] = "reaped" if plan["action"] in ("none", "await") else plan["action"]
             if v2 and rec.get("capsule_key") and _capsule_certify_check(rec, row, now):
                 continue
+            if (v2 and plan["action"] == "none" and rec["state"] in (RUNNING, BLOCKED)
+                    and not rec.get("budget_spent_at") and budget_exhausted(rec, now)
+                    and liveness(rec.get("owner"), sessions, pid_alive)[0] == LIVE):
+                # Spec 11.1 busy-owner bound: the first pass that sees the budget spent under a busy
+                # owner starts the clock plan_next halts on after the wall grace.
+                rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                 event="budget_spent_noted", now=now, budget_spent_at=now,
+                                 reason=f"budget spent ({budget_exhausted(rec, now)}) under a busy owner")
             if plan["action"] == "none" and rec["state"] == RUNNING:
                 # The wall is enforced, not requested. Measured 2026-09-28 (m-916e905e23d4): a worker
                 # asked once at 31 % worked on in the same turn for 3.5 h to 49 %. Past the grace after
@@ -1721,20 +1880,35 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         reap(done, row)
                         row["action"] = "completed"
                         continue
+                if v2:
+                    # Spec 11.1 (M2): the halt is a continuity transition, decided BEFORE the stop.
+                    pre = rec
+                    rec, cont, renew = _halt_continuity(rec, plan["reason"], st, halt_wd, sessions, pid_alive,
+                                                        now, fingerprint, capsule_io)
+                    halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                        event="mission_halted", now=now, state=HALTED, pending=None,
+                                        reason=plan["reason"], continuity=cont)
+                    reap(halted, row)  # a halt changes the record; stop the world to match it
+                    if cont["kind"] == "recovery":
+                        cont = _halt_recover(halted, pre, cont, halt_wd, now, capsule_io)
+                        renew = cont["kind"] == "recovery"
+                    if cont["kind"] == "refused":
+                        lr.ledger_append(mid, "renewal_refused_no_capsule", mission_id=mid, epoch=halted["epoch"],
+                                         reason=cont["reason"])
+                    row["continuity"] = cont["kind"]
+                    if renew:
+                        row["renewed_as"] = renew_mission(
+                            halted, now=now, capsule_key=cont.get("capsule_key"),
+                            continuity_from={"mission_id": mid, "kind": cont["kind"]})["mission_id"]
+                    elif st is not None:
+                        row["renewal"] = f"not renewed: {cont['reason']}"
+                    continue
                 halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                     event="mission_halted", now=now, state=HALTED, pending=None,
                                     reason=plan["reason"])
                 reap(halted, row)  # a halt changes the record; stop the world to match it
                 if st is not None:
-                    why_not = renewal_refusal(halted, plan["reason"], st.get("outcome"))
-                    origin = rec.get("progress_origin")
-                    if not why_not and origin:
-                        # T5: all 18 renewals of the 6 capped lineages produced 0 commits. A
-                        # mission whose tree never moved does not earn a fresh budget. A tree
-                        # that cannot be measured is not "unchanged": it still renews.
-                        fp_now = (fingerprint or progress_fingerprint)(halt_wd)
-                        if fp_now is not None and fp_now == origin:
-                            why_not = "no progress in this mission (work tree unchanged since its first launch)"
+                    why_not = _renewal_why_not(halted, plan["reason"], st, halt_wd, fingerprint)
                     if why_not:
                         row["renewal"] = f"not renewed: {why_not}"
                     else:
@@ -1902,7 +2076,10 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                                         event="mission_halted", now=now, state=HALTED, pending=None,
                                         progress=progress,
                                         reason=f"no_progress: {NO_PROGRESS_EPOCHS} consecutive epochs "
-                                               f"ended with no commit or work-tree change")
+                                               f"ended with no commit or work-tree change",
+                                        # Spec 11.1: terminal (Invariant 9), and stated as such for v2.
+                                        **({"continuity": {"kind": "none", "reason": "no_progress is terminal: "
+                                                           "no renewal, nothing carried"}} if v2 else {}))
                     reap(halted, row)
                     row["action"] = "halt"
                     continue
@@ -1959,8 +2136,11 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     packet = rec.get("packet") if rec["state"] == HANDOFF else None
                     note = explicit or handoff_note_from_transcript(rec["owner"]["session_id"]) or ""
                     row["note_chars"] = len(note)
-                if v2 and rec.get("capsule_key") and act in ("relay", "replace") and not _capsule_arm(rec, row):
-                    continue   # spec 3.3: no marker, no spawn
+                if (v2 and rec.get("capsule_key") and act in ("relay", "replace", "launch")
+                        and not _capsule_arm(rec, row)):
+                    # spec 3.3: no marker, no spawn. `launch` too (spec 11.1): a renewal that carries a
+                    # capsule starts its first worker as that capsule's successor.
+                    continue
                 row["launch"] = launch_worker(mid, expect_epoch=rec["epoch"],
                                               expect_state=rec["state"], reason=plan["reason"],
                                               runner=runner, now=now, note=note,

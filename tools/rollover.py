@@ -1273,12 +1273,17 @@ def _snapshot_reality(snap: dict) -> dict:
     return {"repo": repo, "obligations": snap.get("obligations") or []}
 
 
-def _flip_precert(cap: dict, key: str, claimant: str, state_dir: Optional[Path]) -> Optional[str]:
+def _flip_precert(cap: dict, key: str, claimant: str, state_dir: Optional[Path],
+                  mission_id: Optional[str] = None) -> Optional[str]:
     """Lift the mutation guard for a mission successor -- only the marker naming THIS capsule.
-    Returns why it was not lifted, or None."""
+    Returns why it was not lifted, or None.
+
+    `mission_id` names the mission whose marker to lift. A renewal's first worker certifies the
+    capsule its PREDECESSOR mission sealed, so the capsule's own run.mission_id is the wrong marker:
+    read there, nothing was found, nothing was lifted, and RESUME_CERTIFIED still printed (spec 11.1)."""
     if cap.get("kind") != "mission":
         return None
-    mid = ((cap.get("run") or {}).get("mission_id")) or ""
+    mid = mission_id or ((cap.get("run") or {}).get("mission_id")) or ""
     mk = precert_read(mid, state_dir)
     if not mk:
         return None      # nothing was locked, so there is nothing to lift (the guard reads only markers)
@@ -1288,7 +1293,8 @@ def _flip_precert(cap: dict, key: str, claimant: str, state_dir: Optional[Path])
     return None
 
 
-def certify_flow(key: str, claimant: str, answers: Optional[dict], state_dir: Optional[Path] = None) -> tuple[int, dict]:
+def certify_flow(key: str, claimant: str, answers: Optional[dict], state_dir: Optional[Path] = None,
+                 mission_id: Optional[str] = None) -> tuple[int, dict]:
     """Only the CURRENT generation's holder, after a refresh recorded in that generation, may
     certify (I3, I4); all of it under the claim lock, so a takeover cannot interleave (G18).
     Answers are judged against the refresh SNAPSHOT; if the tree moved since, exit 8 = refresh
@@ -1315,7 +1321,7 @@ def certify_flow(key: str, claimant: str, answers: Optional[dict], state_dir: Op
             return 5, {"verdict": "FENCED"}
         cap = json.loads(path.read_text(encoding="utf-8"))
         if cur.get("certified_generation") == gen and path.with_suffix(".certified").exists():
-            why = _flip_precert(cap, key, claimant, state_dir)     # heal a crash after the retire
+            why = _flip_precert(cap, key, claimant, state_dir, mission_id)   # heal a crash after the retire
             print("RESUME_CERTIFIED (already) -- " + (why or "authority restored") + ".")
             return (0 if why is None else 5), {"verdict": "RESUME_CERTIFIED", "wrong": [], "marker": why}
         snap = cur.get("snapshot")
@@ -1346,7 +1352,7 @@ def certify_flow(key: str, claimant: str, answers: Optional[dict], state_dir: Op
             return 6, res
         _atomic_write(marker, json.dumps({**cur, "certified_generation": gen}).encode("utf-8"))
         _atomic_write(path.with_suffix(".certified"), _iso().encode("utf-8"))
-        why = _flip_precert(cap, key, claimant, state_dir)
+        why = _flip_precert(cap, key, claimant, state_dir, mission_id)
     if why:
         ledger("precert_not_lifted", state_dir, session_id=key, claimant=claimant, why=why)
         print(f"RESUME_CERTIFIED, but mutation authority was NOT restored: {why}.")

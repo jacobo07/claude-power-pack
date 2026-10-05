@@ -291,7 +291,8 @@ def _cli(argv=None) -> int:
         return 4
     if a.cmd == "certify":
         answers = {k: getattr(a, k) for k in ("goal", "branch", "head", "next", "dirty") if getattr(a, k)}
-        rc, _res = ro.certify_flow(key, sid, answers, sd)
+        # The marker to lift is THIS mission's: after a renewal the capsule names its predecessor.
+        rc, _res = ro.certify_flow(key, sid, answers, sd, mission_id=a.mission)
         return rc
     try:
         cap = json.loads(ro.capsule_path(key, sd).read_text(encoding="utf-8"))

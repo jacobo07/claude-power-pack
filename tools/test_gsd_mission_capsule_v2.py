@@ -151,6 +151,238 @@ def wipe():
         p.unlink()
 
 
+SPENT = {"max_cycles": 1, "iterations": 5}
+GSD_DONE = lambda c, workstream=None: {"outcome": "ALL_COMPLETE", "reason": "milestone done"}  # noqa: E731
+
+
+def halt_run(sessions, now=NOW, children=CLEAR, transcript=True, gsd=GSD_OK, alive=gone, fp=None):
+    return gm.supervise(now=now, sessions=sessions, gsd_status=gsd, runner=launch_run, stop_runner=stop_run,
+                        pid_alive=alive, fingerprint=fp, capsule_io=io(children, transcript))
+
+
+def sealed(key):
+    p = ro.capsule_path(key, STATE)
+    return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else None
+
+
+def quiet(fn, *a, **k):
+    import contextlib
+    import io as _io
+    with contextlib.redirect_stdout(_io.StringIO()):
+        return fn(*a, **k)
+
+
+def halt_section() -> None:
+    """Spec 11.1 (S2): a v2 halt is a continuity transition. Every kind with its order of effects, every
+    refusal with an admitted twin, and the legacy halt untouched."""
+    # --- handoff: idle owner, seal BEFORE the stop, renewal carries the key -------------------------
+    wipe()
+    mission("m-hh", note="phase 2 half done: wire the gate next", **SPENT)
+    n_s = len(stops)
+    rows = halt_run(host("m-hh", name="m-hh-e1"))
+    r, h, ev = row_of(rows, "m-hh"), gm.load("m-hh"), events("m-hh")
+    cont = h.get("continuity") or {}
+    check("V-MV2-HALT-HANDOFF",
+          h["state"] == gm.HALTED and cont.get("kind") == "handoff" and cont.get("origin") == "worker_handoff"
+          and "outgoing_stop_authorized" in ev and "mission_halted" in ev
+          and ev.index("outgoing_stop_authorized") < ev.index("mission_halted") and len(stops) == n_s + 1,
+          f"cont={cont} ev={ev[-5:]} stops={len(stops) - n_s}")
+    nid = r.get("renewed_as")
+    new = gm.load(nid) if nid else {}
+    check("V-MV2-RENEW-KEY",
+          new.get("capsule_key") == "mission-m-hh-e1" and (new.get("continuity_from") or {}).get("kind") == "handoff"
+          and new.get("rollover_protocol") == gm.CAPSULE_V2 and new.get("state") == gm.PREPARED,
+          f"renewed={nid} key={new.get('capsule_key')} from={new.get('continuity_from')}")
+    # the renewal's first worker is a successor: armed before spawn, card block, certifies
+    n_l = len(launches)
+    halt_run([])
+    mk = armed_at_spawn[-1] if len(launches) == n_l + 1 else None
+    # A missing card is this gate's FAIL, never a crash: a crash is not a verdict (mutation_drill UNJUDGED).
+    argv = launches[-1] if len(launches) == n_l + 1 else []
+    card = argv[argv.index("--append-system-prompt") + 1] if "--append-system-prompt" in argv else ""
+    check("V-MV2-RENEW-ARM",
+          mk is not None and mk.get("worker") == f"{nid}-e1" and mk.get("capsule_key") == "mission-m-hh-e1"
+          and not mk.get("certified_at") and "CAPSULE-V2 SUCCESSOR" in card and "mission-m-hh-e1" in card,
+          f"mk={mk}")
+    key = "mission-m-hh-e1"
+    claimant = "9e9e9e9e-0000-4000-8000-0000000000aa"
+    rc0 = quiet(ro.resume_flow, sealed(key), claimant, str(REPO), STATE, obligations=["execute phase 2: Wire it"])
+    facts = ro.repo_facts(str(REPO))
+    ans = {"goal": "STATE.md", "branch": facts.get("branch"), "head": (facts.get("head") or "")[:7],
+           "next": "execute phase 2: Wire it"}
+    rc1, res = quiet(ro.certify_flow, key, claimant, ans, STATE, mission_id=nid)
+    mk = ro.precert_read(nid, STATE) or {}
+    check("V-MV2-RENEW-CERTIFY-CROSS", rc0 == 0 and rc1 == 0 and bool(mk.get("certified_at")),
+          f"rc={rc0},{rc1} verdict={res.get('verdict')} wrong={res.get('wrong')} mk={mk}")
+    # control: the capsule's own mission id names the PREDECESSOR -- read there, the successor's marker stays locked
+    ro.precert_arm("m-x2", {"worker": "m-x2-e1", "epoch": 1, "capsule_key": key, "cwd": str(REPO),
+                            "resume_cmd": "/gsd-autonomous"}, STATE)
+    ro._flip_precert(sealed(key), key, claimant, STATE)
+    without = bool((ro.precert_read("m-x2", STATE) or {}).get("certified_at"))
+    ro._flip_precert(sealed(key), key, claimant, STATE, "m-x2")
+    with_id = bool((ro.precert_read("m-x2", STATE) or {}).get("certified_at"))
+    check("V-MV2-RENEW-CERTIFY-CROSS-CONTROL", not without and with_id, f"without={without} with={with_id}")
+
+    # --- handoff refused (no note) -> the degraded fallback at once, no grace wait --------------------
+    wipe()
+    mission("m-hf", **SPENT)
+    rows = halt_run(host("m-hf", name="m-hf-e1"))
+    cont = gm.load("m-hf").get("continuity") or {}
+    check("V-MV2-HALT-FALLBACK", cont.get("kind") == "handoff" and cont.get("origin") == "supervisor_fallback"
+          and bool(row_of(rows, "m-hf").get("renewed_as")), f"cont={cont}")
+
+    # --- recovery: the budget overrides a busy HANDOFF owner; sealed AFTER the stop ------------------
+    wipe()
+    mission("m-hr", note="n", **SPENT)
+    n_s = len(stops)
+    rows = halt_run(host("m-hr", name="m-hr-e1", status="busy"))
+    r, h, ev = row_of(rows, "m-hr"), gm.load("m-hr"), events("m-hr")
+    cont = h.get("continuity") or {}
+    cap = sealed("mission-m-hr-e1") or {}
+    new = gm.load(r["renewed_as"]) if r.get("renewed_as") else {}
+    check("V-MV2-HALT-RECOVERY",
+          cont.get("kind") == "recovery" and cont.get("capsule_key") == "mission-m-hr-e1"
+          and "outgoing_stop_authorized" not in ev and "continuity_recovery" in ev
+          and ev.index("mission_halted") < ev.index("continuity_recovery") and len(stops) == n_s + 1
+          and cap.get("seal_origin") == "recovery" and cap.get("degraded") is True
+          and new.get("capsule_key") == "mission-m-hr-e1",
+          f"cont={cont} ev={ev[-4:]} origin={cap.get('seal_origin')} renewed_key={new.get('capsule_key')}")
+    check("V-MV2-HALT-RECOVERY-NEVER-SAFE-TO-FORGET",
+          not any("SAFE_TO_FORGET" in str(e.get("reason") or "") for e in gm.lr.ledger_events("m-hr")
+                  if e.get("event") in ("mission_halted", "continuity_recovery")),
+          "a RECOVERY halt must not be reported SAFE_TO_FORGET")
+
+    # --- refused: recovery seal impossible -> no renewal, named; twin = RECOVERY above ---------------
+    wipe()
+    mission("m-hx", note="n", **SPENT)
+    rows = halt_run(host("m-hx", name="m-hx-e1", status="busy"), children=HOLD)
+    r, h = row_of(rows, "m-hx"), gm.load("m-hx")
+    check("V-MV2-HALT-REFUSED",
+          (h.get("continuity") or {}).get("kind") == "refused" and not r.get("renewed_as")
+          and "renewal_refused_no_capsule" in events("m-hx") and h["state"] == gm.HALTED,
+          f"cont={h.get('continuity')} renewed={r.get('renewed_as')}")
+
+    # --- UNKNOWN owner: never a successor beside it --------------------------------------------------
+    wipe()
+    mission("m-hu", **SPENT)
+    n_s = len(stops)
+    rows = halt_run([], alive=lambda pid: True)
+    r, h = row_of(rows, "m-hu"), gm.load("m-hu")
+    check("V-MV2-HALT-UNKNOWN",
+          (h.get("continuity") or {}).get("kind") == "refused" and "UNKNOWN" in (h.get("continuity") or {}).get("reason", "")
+          and not r.get("renewed_as") and sealed("mission-m-hu-e1") is None and len(stops) == n_s,
+          f"plan={r.get('reason')} cont={h.get('continuity')}")
+
+    # --- inherited: an uncertified worker has nothing to seal; the renewal keeps its capsule ---------
+    wipe()
+    mission("m-hi", epoch=2, capsule_key="mission-m-hi-e1", **SPENT)
+    ro.precert_arm("m-hi", {"worker": "m-hi-e2", "epoch": 2, "capsule_key": "mission-m-hi-e1",
+                            "cwd": str(REPO), "resume_cmd": "/gsd-autonomous"}, STATE)
+    rows = halt_run(host("m-hi", state="stopped", status=None))
+    r, h = row_of(rows, "m-hi"), gm.load("m-hi")
+    new = gm.load(r["renewed_as"]) if r.get("renewed_as") else {}
+    check("V-MV2-HALT-INHERITED",
+          (h.get("continuity") or {}).get("kind") == "inherited" and new.get("capsule_key") == "mission-m-hi-e1"
+          and sealed("mission-m-hi-e2") is None,
+          f"cont={h.get('continuity')} renewed_key={new.get('capsule_key')}")
+
+    # --- a halt during a same-session continuation: a RETIRED key is never inherited ----------------
+    for gate, retired in (("V-MV2-HALT-CONTINUATION-RETIRED-KEY", True),
+                          ("V-MV2-HALT-CONTINUATION-CONTROL-UNRETIRED", False)):
+        wipe()
+        mission("m-hk", epoch=2, capsule_key="mission-m-hk-e1", **SPENT)
+        rec = gm.load("m-hk")
+        gm.transition("m-hk", expect_epoch=2, expect_state=rec["state"], event="t", now=NOW, state=gm.LAUNCHING,
+                      owner=None, previous_owner=rec["owner"],
+                      pending={"kind": "turn_continuation", "epoch": 2, "bg_id": "s-m-hk"[:8],
+                               "session_id": "s-m-hk", "deadline": NOW + 600})
+        side = ro.capsule_path("mission-m-hk-e1", STATE).with_suffix(".certified")
+        side.parent.mkdir(parents=True, exist_ok=True)
+        if retired:
+            side.write_text("2026-10-05T00:00:00Z", encoding="utf-8")
+        elif side.exists():
+            side.unlink()
+        rows = halt_run(host("m-hk", name="m-hk-e2", status="busy"))
+        cont = gm.load("m-hk").get("continuity") or {}
+        if retired:
+            check(gate, cont.get("kind") == "recovery" and cont.get("capsule_key") == "mission-m-hk-e2",
+                  f"cont={cont} plan={row_of(rows, 'm-hk').get('reason')}")
+            side.unlink()
+        else:
+            check(gate, cont.get("kind") == "inherited" and cont.get("capsule_key") == "mission-m-hk-e1", f"cont={cont}")
+
+    # --- none: no renewal due -> nothing sealed; a first worker that never ran -> renewal, no key ----
+    wipe()
+    mission("m-hn", note="n", renewal=gm.MAX_RENEWALS, **SPENT)
+    rows = halt_run(host("m-hn", name="m-hn-e1"))
+    r, h = row_of(rows, "m-hn"), gm.load("m-hn")
+    check("V-MV2-HALT-NONE",
+          (h.get("continuity") or {}).get("kind") == "none" and not r.get("renewed_as")
+          and sealed("mission-m-hn-e1") is None and "not renewed" in (r.get("renewal") or ""),
+          f"cont={h.get('continuity')} renewal={r.get('renewal')}")
+    wipe()
+    gm.create(str(REPO), "/gsd-autonomous", mission_id="m-hp", now=NOW - 7200, max_hours=1,
+              permission_mode="auto", rollover_protocol=gm.CAPSULE_V2)
+    rows = halt_run([])
+    r, h = row_of(rows, "m-hp"), gm.load("m-hp")
+    new = gm.load(r["renewed_as"]) if r.get("renewed_as") else {}
+    check("V-MV2-HALT-NONE-FIRST-WORKER",
+          (h.get("continuity") or {}).get("kind") == "none" and bool(new) and not new.get("capsule_key")
+          and (new.get("continuity_from") or {}).get("kind") == "none",
+          f"cont={h.get('continuity')} new_from={new.get('continuity_from')}")
+
+    # --- complete at budget: no capsule, no renewal ---------------------------------------------------
+    wipe()
+    mission("m-hc", note="n", **SPENT)
+    rows = halt_run(host("m-hc", name="m-hc-e1"), gsd=GSD_DONE)
+    check("V-MV2-HALT-COMPLETE", gm.load("m-hc")["state"] == gm.COMPLETED and sealed("mission-m-hc-e1") is None
+          and not row_of(rows, "m-hc").get("renewed_as"), str(row_of(rows, "m-hc").get("action")))
+
+    # --- no_progress: terminal, stated ----------------------------------------------------------------
+    wipe()
+    mission("m-np", note="n", progress={"fp": "X", "stalls": gm.NO_PROGRESS_EPOCHS - 1})
+    rows = halt_run(host("m-np", name="m-np-e1"), fp=lambda wd: "X")
+    h = gm.load("m-np")
+    check("V-MV2-HALT-NOPROGRESS",
+          h["state"] == gm.HALTED and (h.get("continuity") or {}).get("kind") == "none"
+          and "no_progress" in (h.get("continuity") or {}).get("reason", "") and not row_of(rows, "m-np").get("renewed_as"),
+          f"{h['state']} cont={h.get('continuity')} row={row_of(rows, 'm-np').get('reason')}")
+
+    # --- busy-owner bound: clock on the first spent pass, forced RECOVERY past the grace --------------
+    wipe()
+    mission("m-bb", **SPENT)
+    mission("m-bl", v2=False, **SPENT)
+    busy = host("m-bb", name="m-bb-e1", status="busy") + host("m-bl", name="m-bl-e1", status="busy")
+    n_s = len(stops)
+    halt_run(busy)
+    b1 = gm.load("m-bb")
+    check("V-MV2-BUSY-BOUND-CLOCK", b1.get("budget_spent_at") == NOW and b1["state"] == gm.RUNNING
+          and len(stops) == n_s, f"{b1['state']} spent_at={b1.get('budget_spent_at')}")
+    rows = halt_run(busy, now=NOW + 600)
+    check("V-MV2-BUSY-BOUND-WITHIN-GRACE", gm.load("m-bb")["state"] == gm.RUNNING, row_of(rows, "m-bb").get("reason") or "")
+    rows = halt_run(busy, now=NOW + 1800 + 1)
+    b2 = gm.load("m-bb")
+    check("V-MV2-BUSY-BOUND",
+          b2["state"] == gm.HALTED and (b2.get("continuity") or {}).get("kind") == "recovery"
+          and "forced" in (row_of(rows, "m-bb").get("reason") or ""),
+          f"{b2['state']} cont={b2.get('continuity')} reason={row_of(rows, 'm-bb').get('reason')}")
+    lg = gm.load("m-bl")
+    check("V-MV2-BUSY-BOUND-CONTROL-LEGACY", lg["state"] == gm.RUNNING and "budget_spent_at" not in lg,
+          f"legacy {lg['state']} spent_at={lg.get('budget_spent_at')}")
+
+    # --- legacy halt: none of it ------------------------------------------------------------------
+    wipe()
+    mission("m-hl", v2=False, note="n", **SPENT)
+    rows = halt_run(host("m-hl", name="m-hl-e1"))
+    r, h = row_of(rows, "m-hl"), gm.load("m-hl")
+    new = gm.load(r["renewed_as"]) if r.get("renewed_as") else {}
+    check("V-MV2-HALT-LEGACY-CONTROL",
+          h["state"] == gm.HALTED and "continuity" not in h and bool(new) and "capsule_key" not in new
+          and "continuity_from" not in new and sealed("mission-m-hl-e1") is None
+          and "outgoing_stop_authorized" not in events("m-hl"),
+          f"cont={h.get('continuity')} new_keys={sorted(k for k in new if 'capsule' in k or 'contin' in k)}")
+
+
 def main() -> int:
     # --- arm: G11 + field absent on legacy ------------------------------------------------------
     try:
@@ -377,6 +609,7 @@ def main() -> int:
     check("V-MV2-UNDECIDABLE-CONTROL-OTHERS-SUPERVISED",
           (r_oth.get("launch") or {}).get("ok") is True, f"other={r_oth.get('action')} launch={r_oth.get('launch')}")
 
+    halt_section()
     trap_hits = list(TRAP.rglob("*")) if TRAP.exists() else []
     check("V-MV2-TRAP-UNTOUCHED", not trap_hits, str(trap_hits[:3]))
     print(f"MV2_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
