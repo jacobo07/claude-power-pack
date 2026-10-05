@@ -487,8 +487,14 @@ def deadline_section() -> None:
     check("V-MV2-L2-DEADLINE-AT-CAP-BLOCKS",
           rec["state"] == gm.BLOCKED and (rec.get("capsule_hold") or {}).get("kind") == "resume_not_certified"
           and len(stops) == n_s, f"{rec['state']} hold={rec.get('capsule_hold')}")
-    # budget before hold: the blocked uncertified successor is halted by budget (inherited), not held for ever
-    gm.transition("m-l2", expect_epoch=rec["epoch"], expect_state=gm.BLOCKED, event="t", now=NOW, **SPENT)
+    # budget before hold: the blocked uncertified successor is halted by budget (inherited), not held for ever.
+    # Built on its OWN at-cap BLOCKED state, never on the outcome above: a broken cap must fail its own gate,
+    # not crash the suite (drill 2026-10-05: the CasConflict here left the whole run UNJUDGED).
+    successor(capsule_attempts={key: gm.MAX_SUCCESSOR_ATTEMPTS})
+    rec = gm.load("m-l2")
+    gm.transition("m-l2", expect_epoch=rec["epoch"], expect_state=rec["state"], event="t", now=NOW,
+                  state=gm.BLOCKED, capsule_hold={"kind": "resume_not_certified", "reason": "at the cap", "since": NOW},
+                  **SPENT)
     p = gm.plan_next(gm.load("m-l2"), NOW + 4000, srow(), gone, v2=True)
     check("V-MV2-L2-BUDGET-BEFORE-HOLD", p["action"] == "halt" and "budget:" in p["reason"], str(p))
     rows = run(srow(), now=NOW + 4000)

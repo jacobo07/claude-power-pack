@@ -223,6 +223,31 @@ def main() -> int:
     second = (gm.load("m-c10").get("capsule_attempts") or {}).get(key)
     check("V-MCF-C10-DEADLINE-STOP-FAILS-NOT-COUNTED", first is None and second == 1,
           f"after fault={first} after clean={second}")
+    # C10 twin: the stop RETURNS unconfirmed (pid outlives it) instead of raising -- the branch the raise
+    # never reaches (drill 2026-10-05: removing `if not ok` SURVIVED the raising row alone)
+    h.wipe()
+    h.mission("m-c10b", epoch=2, capsule_key="mission-m-c10b-e1", capsule_acked_at=NOW)
+    rec = gm.load("m-c10b")
+    gm.transition("m-c10b", expect_epoch=2, expect_state=rec["state"], event="t", now=NOW,
+                  owner={"session_id": succ, "pid": 999, "kind": "background"})
+    ro.precert_arm("m-c10b", {"worker": "m-c10b-e2", "epoch": 2, "capsule_key": "mission-m-c10b-e1",
+                              "cwd": str(REPO), "resume_cmd": "/gsd-autonomous"}, STATE)
+    srow_b = [{**srow[0], "name": "m-c10b-e2"}]
+    real_wait = gm.STOP_WAIT_S
+    gm.STOP_WAIT_S = 0
+    try:
+        rows = gm.supervise(now=NOW + gm.CAPSULE_CERTIFY_DEADLINE_S + 1, sessions=srow_b, gsd_status=h.GSD_OK,
+                            runner=h.launch_run, stop_runner=h.stop_run, pid_alive=lambda p: True,
+                            capsule_io=h.io())
+    finally:
+        gm.STOP_WAIT_S = real_wait
+    unconfirmed = (gm.load("m-c10b").get("capsule_attempts") or {}).get("mission-m-c10b-e1")
+    held = h.row_of(rows, "m-c10b").get("held") or ""
+    h.run(srow_b, now=NOW + gm.CAPSULE_CERTIFY_DEADLINE_S + 60)
+    confirmed = (gm.load("m-c10b").get("capsule_attempts") or {}).get("mission-m-c10b-e1")
+    check("V-MCF-C10-STOP-UNCONFIRMED-NOT-COUNTED",
+          unconfirmed is None and "stop not confirmed" in held and confirmed == 1,
+          f"after unconfirmed={unconfirmed} held={held[:80]!r} after clean={confirmed}")
 
     # C11: the note request's stop raises -> asked flag already set; the next turn end falls back at once
     h.wipe()
