@@ -1663,6 +1663,50 @@ def _halt_recover(halted: dict, pre: dict, cont: dict, halt_wd: str, now: float,
     return new
 
 
+def _seal_refusal_fp(work_dir: str) -> str | None:
+    """Spec 11.2: what a re-judge could see differently -- HEAD and the dirty-path count, from git
+    alone (no GSD query). None when git cannot answer: unmeasured, never "unchanged"."""
+    import hashlib
+    import rollover as ro
+    try:
+        f = ro.repo_facts(work_dir)
+    except Exception:  # noqa: BLE001 -- unmeasured; the time backoff still bounds the re-judges
+        return None
+    if f.get("state") != "OK" or not f.get("head"):
+        return None
+    return hashlib.sha256(f"{f['head']}|{len(f.get('dirty') or [])}".encode("utf-8")).hexdigest()[:16]
+
+
+def _seal_refused_hold(prev: dict, why: str, now: float, work_dir: str) -> dict:
+    """The `seal_refused` hold after one more refusal: provider_breaker's backoff model (one source for
+    the numbers), counted per fingerprint -- a changed tree starts the count again."""
+    import provider_breaker as pb
+    fp = _seal_refusal_fp(work_dir)
+    n = int(prev.get("retries") or 0) + 1 if fp is not None and prev.get("fingerprint") == fp else 1
+    return {"kind": "seal_refused", "reason": why[:300], "since": prev.get("since") or now,
+            "retries": n, "next_at": now + min(pb.BACKOFF_BASE_S * 2 ** (n - 1), pb.BACKOFF_CAP_S),
+            "quarantined": n >= pb.QUARANTINE_AFTER, "fingerprint": fp, "fp_dir": work_dir}
+
+
+def _seal_rejudge_wait(rec: dict, now: float) -> str | None:
+    """Why an idle owner under a `seal_refused` hold is NOT re-judged on this pass, or None when it is.
+    A hold written before 11.2 (no `retries`) is re-judged as T6 did."""
+    hold = rec.get("capsule_hold") or {}
+    if hold.get("kind") != "seal_refused" or "retries" not in hold:
+        return None
+    fp = _seal_refusal_fp(hold.get("fp_dir") or rec.get("work_dir") or rec["cwd"])
+    if fp is not None and fp != hold.get("fingerprint"):
+        return None                                    # the tree moved: what refused may be gone
+    n = hold.get("retries")
+    if hold.get("quarantined"):
+        return (f"capsule-v2 seal re-judge QUARANTINED after {n} refusals on an unchanged tree; "
+                f"re-judged when the tree changes: {hold.get('reason')}")
+    wait = float(hold.get("next_at") or 0) - now
+    if wait > 0:
+        return f"capsule-v2 seal re-judge backed off {int(wait)} s more (refusal {n}): {hold.get('reason')}"
+    return None
+
+
 def _capsule_rotate(rec: dict, row: dict, act: str, sessions, pid_alive, now: float,
                     work_dir: str | None, capsule_io: dict | None = None) -> dict | None:
     """The v2 gate between ROTATE and stop_owner (spec 3.3; G3/G5/G6/G21). Returns the record to
@@ -1719,12 +1763,17 @@ def _capsule_rotate(rec: dict, row: dict, act: str, sessions, pid_alive, now: fl
     if "supervisor_fallback" in origins or "recovery" in origins:
         # Spec 3.5: not even a capsule from durable state is sealable -- BLOCKED, worker NOT stopped.
         why_b = f"capsule-v2 seal impossible for {key}: {reason}"
-        if rec["state"] == BLOCKED and (rec.get("capsule_hold") or {}).get("kind") == "seal_refused":
-            lr.ledger_append(mid, "capsule_seal_refused", mission_id=mid, epoch=rec["epoch"], reason=reason)
+        prev = rec.get("capsule_hold") or {}
+        held = rec["state"] == BLOCKED and prev.get("kind") == "seal_refused"
+        # Spec 11.2: the hold carries its own backoff, so the next re-judge waits for a tree change
+        # or the backoff instead of costing a GSD query and ledger rows on every pass.
+        hold = _seal_refused_hold(prev if held else {}, why_b, now, wd)
+        if held:
+            transition(mid, expect_epoch=rec["epoch"], expect_state=BLOCKED, event="capsule_seal_refused",
+                       now=now, capsule_hold=hold, reason=reason)
         else:
             transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="mission_blocked",
-                       now=now, state=BLOCKED, reason=why_b,
-                       capsule_hold={"kind": "seal_refused", "reason": why_b[:300], "since": now})
+                       now=now, state=BLOCKED, reason=why_b, capsule_hold=hold)
         row["blocked"] = why_b
     elif first is None:
         transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="capsule_seal_refused",
@@ -1845,6 +1894,12 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             if plan["action"] in ("none", "await"):
                 continue
             act = plan["action"]
+            if v2 and act == "relay" and rec["state"] == BLOCKED:
+                # Spec 11.2 (L1): asked BEFORE GSD, so a backed-off re-judge costs no query and no row.
+                wait = _seal_rejudge_wait(rec, now)
+                if wait:
+                    row["held"] = wait
+                    continue
             if act == "halt":
                 st = None
                 # Where the work IS, resolved exactly as the relay path does (adversarial review

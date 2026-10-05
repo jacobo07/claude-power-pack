@@ -299,7 +299,10 @@ A v2 HALTED record carries `continuity` {kind, reason, capsule_key?, origin?}. K
   V-MV2-RENEW-{KEY,ARM,CERTIFY-CROSS}, V-MV2-BUSY-BOUND, each refusal with an admitted twin, legacy
   control per branch; V-CAP2 for the certify mission_id.
 
-### 11.2 L1 -- seal-refusal backoff (S3)
+### 11.2 L1 -- seal-refusal backoff (S3) -- status LIVE in code
+Built as `_seal_refusal_fp` / `_seal_refused_hold` / `_seal_rejudge_wait`; the wait is asked in supervise
+before GSD. Tracked dirt only (an untracked file does not move it), the same signal progress_fingerprint
+reads. The hold records `fp_dir` so the re-check reads the tree the refusal saw.
 The `seal_refused` hold gains `retries`, `next_at`, `quarantined` and `fingerprint` = sha256 of (HEAD,
 dirty-path count) read with git only (no GSD query). An idle owner under the hold is re-judged only
 when the fingerprint changed OR `now >= next_at`; backoff = min(300 * 2^(n-1), 3600) s (the

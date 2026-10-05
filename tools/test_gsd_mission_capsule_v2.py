@@ -383,6 +383,68 @@ def halt_section() -> None:
           f"cont={h.get('continuity')} new_keys={sorted(k for k in new if 'capsule' in k or 'contin' in k)}")
 
 
+def sup(now, sessions, gsd, children=CLEAR):
+    return gm.supervise(now=now, sessions=sessions, gsd_status=gsd, runner=launch_run, stop_runner=stop_run,
+                        pid_alive=gone, capsule_io=io(children))
+
+
+def backoff_section() -> None:
+    """Spec 11.2 (S3): a seal_refused hold is re-judged on a tree change or after its backoff, never
+    every pass; quarantined after 4 refusals on one tree. A hold written before 11.2 is re-judged as before."""
+    wipe()
+    mission("m-l1", note="n", max_hours=1000)   # the passes span a day: the budget must not be what halts it
+    run(host("m-l1"), children=HOLD)                               # first refusal: the G5 clock
+    run(host("m-l1"), now=NOW + 1800 + 1, children=HOLD)           # the fallback refuses too: BLOCKED
+    h = gm.load("m-l1").get("capsule_hold") or {}
+    check("V-MV2-L1-HOLD-BACKOFF-FIELDS",
+          h.get("kind") == "seal_refused" and h.get("retries") == 1 and h.get("next_at") == NOW + 1801 + 300
+          and bool(h.get("fingerprint")) and h.get("quarantined") is False, str(h))
+    asked = []
+
+    def gsd_spy(c, workstream=None):
+        asked.append(c)
+        return {"outcome": "OK", "reason": "work remains"}
+
+    n_ev = len(events("m-l1"))
+    rows = sup(NOW + 1801 + 60, host("m-l1"), gsd_spy, HOLD)
+    check("V-MV2-L1-WITHIN-BACKOFF-HELD-SILENT",
+          "backed off" in (row_of(rows, "m-l1").get("held") or "") and not asked and len(events("m-l1")) == n_ev,
+          f"held={row_of(rows, 'm-l1').get('held')} gsd_calls={len(asked)} new_rows={len(events('m-l1')) - n_ev}")
+    sup(NOW + 1801 + 301, host("m-l1"), gsd_spy, HOLD)
+    h = gm.load("m-l1").get("capsule_hold") or {}
+    check("V-MV2-L1-AFTER-BACKOFF-REJUDGED", len(asked) == 1 and h.get("retries") == 2
+          and h.get("next_at") == NOW + 1801 + 301 + 600, f"gsd_calls={len(asked)} hold={h}")
+    # a tree change is re-judged at once, inside the backoff, and the count starts again on the new tree
+    # (a TRACKED file: the fingerprint is HEAD + tracked dirt, as progress_fingerprint reads the tree)
+    change = REPO / ".planning" / "STATE.md"
+    change.write_text("# State\nmoved\n", encoding="utf-8")
+    try:
+        sup(NOW + 1801 + 400, host("m-l1"), gsd_spy, HOLD)
+    finally:
+        git(REPO, "checkout", "--", ".planning/STATE.md")
+    h2 = gm.load("m-l1").get("capsule_hold") or {}
+    check("V-MV2-L1-TREE-CHANGE-REJUDGES", len(asked) == 2 and h2.get("retries") == 1
+          and h2.get("fingerprint") != h.get("fingerprint"), f"gsd_calls={len(asked)} hold={h2}")
+    # the 4th refusal on one tree quarantines: only a tree change re-judges, however long it waits
+    rec = gm.load("m-l1")
+    gm.transition("m-l1", expect_epoch=rec["epoch"], expect_state=gm.BLOCKED, event="t", now=NOW,
+                  capsule_hold={**h, "retries": 3, "next_at": 0})
+    sup(NOW + 9000, host("m-l1"), gsd_spy, HOLD)
+    q = gm.load("m-l1").get("capsule_hold") or {}
+    n_asked = len(asked)
+    rows = sup(NOW + 90000, host("m-l1"), gsd_spy, HOLD)
+    check("V-MV2-L1-QUARANTINE", q.get("retries") == 4 and q.get("quarantined") is True and len(asked) == n_asked
+          and "QUARANTINED" in (row_of(rows, "m-l1").get("held") or ""),
+          f"hold={q} held={row_of(rows, 'm-l1').get('held')}")
+    # control: a hold written before 11.2 (no `retries`) is re-judged on the next idle pass, as T6 did
+    rec = gm.load("m-l1")
+    gm.transition("m-l1", expect_epoch=rec["epoch"], expect_state=gm.BLOCKED, event="t", now=NOW,
+                  capsule_hold={"kind": "seal_refused", "reason": "old", "since": NOW})
+    n_asked = len(asked)
+    sup(NOW + 90001, host("m-l1"), gsd_spy, HOLD)
+    check("V-MV2-L1-CONTROL-PRE-11-2-HOLD-REJUDGED", len(asked) == n_asked + 1, f"gsd_calls={len(asked) - n_asked}")
+
+
 def main() -> int:
     # --- arm: G11 + field absent on legacy ------------------------------------------------------
     try:
@@ -610,6 +672,7 @@ def main() -> int:
           (r_oth.get("launch") or {}).get("ok") is True, f"other={r_oth.get('action')} launch={r_oth.get('launch')}")
 
     halt_section()
+    backoff_section()
     trap_hits = list(TRAP.rglob("*")) if TRAP.exists() else []
     check("V-MV2-TRAP-UNTOUCHED", not trap_hits, str(trap_hits[:3]))
     print(f"MV2_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
