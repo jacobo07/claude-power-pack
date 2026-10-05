@@ -6,7 +6,7 @@
     {
       "number": "1",
       "name": "Judgement task bank for 11 rules",
-      "status": "in_progress"
+      "status": "complete"
     },
     {
       "number": "2",
@@ -29,5 +29,5 @@
     "label": "Show progress",
     "reason": "Unsure of state — showing progress"
   },
-  "updated_at": "2026-10-05T08:15:36.067Z"
+  "updated_at": "2026-10-05T08:51:59.246Z"
 }

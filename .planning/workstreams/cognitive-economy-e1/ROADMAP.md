@@ -25,7 +25,7 @@ UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS.
 
 ## Phases
 
-- [ ] **Phase 1: Judgement task bank for 11 rules** - one task per rule, validated without model calls, frozen
+- [x] **Phase 1: Judgement task bank for 11 rules** - one task per rule, validated without model calls, frozen (completed 2026-10-05)
 - [ ] **Phase 2: E1 runner with the stopping contract as tested code** - GEX44 port of the P3 judgement path
 - [ ] **Phase 3: Counted runs** - pairs in contract order until a stop condition
 - [ ] **Phase 4: Report** - per-rule decisions, measured tokens, limits; no ~/.claude change
@@ -49,22 +49,22 @@ bank: a stub module with `...` bodies and a docstring naming the caller and what
   3. No grader is reachable from a session's working tree. Proven by listing the run tree a session would see.
   4. The bank is frozen by one commit whose hash is recorded in `e1/BANK_FROZEN_AT`.
 
-**Plans:** 5 plans
+**Plans:** 5/5 plans complete
 
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — tracer: driver `_e1_common.py`, POSIX `validate_bank.py`, its V-E1BANK tests, index builder; gceg + eaat tasks validated in fresh BASE worktrees (wave 1)
+- [x] 01-01-PLAN.md — tracer: driver `_e1_common.py`, POSIX `validate_bank.py`, its V-E1BANK tests, index builder; gceg + eaat tasks validated in fresh BASE worktrees (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — hfee, dcme, vpdt judgement tasks (wave 2)
-- [ ] 01-03-PLAN.md — cpc, slai, pert judgement tasks (wave 2)
-- [ ] 01-04-PLAN.md — det, pyt, cr judgement tasks (wave 2)
+- [x] 01-02-PLAN.md — hfee, dcme, vpdt judgement tasks (wave 2)
+- [x] 01-03-PLAN.md — cpc, slai, pert judgement tasks (wave 2)
+- [x] 01-04-PLAN.md — det, pyt, cr judgement tasks (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-05-PLAN.md — move bank-draft/ to bank/, freeze-check, index.json, VALIDATE-E1 11/11 log, single freeze commit, BANK_FROZEN_AT (wave 3)
+- [x] 01-05-PLAN.md — move bank-draft/ to bank/, freeze-check, index.json, VALIDATE-E1 11/11 log, single freeze commit, BANK_FROZEN_AT (wave 3)
 
 **Cross-cutting constraints:**
 
