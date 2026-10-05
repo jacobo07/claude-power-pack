@@ -21,6 +21,11 @@ sessions, 34,871 calls; classifier `wiki/tools/kme_token_audit.py:10-11,236-241`
 >= 30 % KME tool calls). GEX44 test: PP folders alone reproduce 1 session / 128 calls (exit 3, drifted) -> the KME
 population needs content classification across other repos.
 
+## Champion result (task b2c7dhmyw)
+
+INCONCLUSIVE: the watchdog killed it at 100.9 s after 2.97 GB read (~1/3 of the corpus), host free RAM 1.19 GB; the
+process peaked at only 61 MB, so host pressure (other panes), not the scanner. Re-run when free RAM is >= 4 GB.
+
 ## In flight at seal
 
 - Champion baseline: `kme_pillars.py population --denominator KME-L --until auto --expand --root ~/.claude/projects` on the
