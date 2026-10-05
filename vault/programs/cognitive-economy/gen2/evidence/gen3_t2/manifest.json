@@ -1,0 +1,28 @@
+{
+ "note": "sha256 of each script and output; controls summarized from out_*.json",
+ "files": {
+  "meter.py": "6629f0230876294cc2b5e10735ea8235a1413705c2ff05960b2a34047e03b319",
+  "t2_extract.py": "89bcf95d1aafdc56731d45f026e468f92929e7f243272897867ca92ec57ff6f2",
+  "t2_instruments.py": "943054c8970b5e603055ace4d350c0e90772b7a5fb0ec6db5c158d8931d83a2c",
+  "t2_extract_out.txt": "c49cec939ac9adcd96c0d71b7cdfc7b6a6591617282dbb862560dac78e9eea27",
+  "t2_summary.txt": "3653d103f5318c1fed3878132165d34f2b5df142831fac25448cacd9019d7535",
+  "t2_unclassified_sample_60.json": "58cb7311df138f0030d204ea087f5a82504967d35ac938c9a87e658e10231fdc",
+  "out_A_B_F.json": "52d54b439147206d5816a8d9f166608395cefa8ba25b9730606cd8483204ffe7",
+  "out_E.json": "a51c2e7f656a359cac6d53d3e956b509542b6dbd1507b9dabfc3989c9759c62e",
+  "out_C.json": "0aef5e720de2531e4537e5b5c023b6ef20b9bf907102fea2945651934b3e504f",
+  "out_D.json": "23e7082ec7ad89dd3eb3c126c34ff359b5157119d0ca8f0df39c7817c96ce23f",
+  "out_G.json": "e500c646e9110d8609756f91c98264d27b6c9c57a2716eba335169f537ddcaaa",
+  "out_H.json": "3519f92e2595e9500189d6752be6fe3d66a4ec246377573b1e49ce11fa16014c",
+  "out_I.json": "35a2c7b58b91d5de4a60ae77dcbc312a2454e009745d8a733cbe55d7cb8edd96",
+  "t2_cache.json(scratchpad, not committed)": "f75c8d727d7f49640b11fd1737cf671e603637327ad73dadba6a75b510ea1ac2"
+ },
+ "controls_all_pass": {
+  "A_B_F": true,
+  "E": true,
+  "C": true,
+  "D": true,
+  "G": true,
+  "H": true,
+  "I": true
+ }
+}

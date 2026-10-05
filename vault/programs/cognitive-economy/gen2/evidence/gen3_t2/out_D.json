@@ -1,0 +1,338 @@
+{
+ "instrument": "D",
+ "definition": "per planner/researcher/checker run (k4 META set): share of output 8-grams (assistant text + Write/Edit content) already present in its own paid inputs (prompt + tool_results received BEFORE the output). LOWER bound on compile cost c = unique input tokens read once (chars*0.447) + novel output tokens; compared with break-even = mean processed per run (k4 ~4.1M for KSR).",
+ "workloads": {
+  "KSR": {
+   "runs": 12,
+   "break_even_per_run": 4142531,
+   "c_lower_bound_mean": 67206.62723520941,
+   "overlap_share_mean": 0.024048586075942204,
+   "overlap_share_pooled": 0.020375590043128333,
+   "overlap_share_by_stype": {
+    "gsd-planner": 0.04758740380408791,
+    "gsd-plan-checker": 0,
+    "gsd-phase-researcher": 0.02532300694543345
+   },
+   "copy_heavy": false,
+   "verdict": "SURVIVE (lower bound does not kill; survival is NOT proven)",
+   "unigram_mutant_pooled": 0.6448040302617656,
+   "rows": [
+    {
+     "f": "agent-a0a424b77b824e40e.jsonl",
+     "stype": "gsd-plan-checker",
+     "processed": 1789629,
+     "out_tokens": 1541,
+     "out_8grams": 0,
+     "overlap_8gram": 0,
+     "overlap_share": 0,
+     "overlap_share_unigram_mutant": 0,
+     "input_chars": 201824,
+     "c_lower_bound": 91756.32800000001
+    },
+    {
+     "f": "agent-a183c89043c3ad257.jsonl",
+     "stype": "gsd-planner",
+     "processed": 9729508,
+     "out_tokens": 7014,
+     "out_8grams": 5204,
+     "overlap_8gram": 455,
+     "overlap_share": 0.08743274404304381,
+     "overlap_share_unigram_mutant": 0.7018960015017833,
+     "input_chars": 222932,
+     "c_lower_bound": 106051.3507332821
+    },
+    {
+     "f": "agent-a534964e9cb54bc4a.jsonl",
+     "stype": "gsd-planner",
+     "processed": 8012289,
+     "out_tokens": 2261,
+     "out_8grams": 19289,
+     "overlap_8gram": 106,
+     "overlap_share": 0.005495360049769298,
+     "overlap_share_unigram_mutant": 0.6260744248288641,
+     "input_chars": 202057,
+     "c_lower_bound": 92568.05399092748
+    },
+    {
+     "f": "agent-a7b7998644d85be8e.jsonl",
+     "stype": "gsd-plan-checker",
+     "processed": 768982,
+     "out_tokens": 711,
+     "out_8grams": 0,
+     "overlap_8gram": 0,
+     "overlap_share": 0,
+     "overlap_share_unigram_mutant": 0,
+     "input_chars": 107086,
+     "c_lower_bound": 48578.442
+    },
+    {
+     "f": "agent-a818b165f2d090042.jsonl",
+     "stype": "gsd-phase-researcher",
+     "processed": 2776030,
+     "out_tokens": 2016,
+     "out_8grams": 6169,
+     "overlap_8gram": 159,
+     "overlap_share": 0.025774031447560384,
+     "overlap_share_unigram_mutant": 0.6064620355411955,
+     "input_chars": 133969,
+     "c_lower_bound": 61848.18255260172
+    },
+    {
+     "f": "agent-af790ce3dc164186d.jsonl",
+     "stype": "gsd-planner",
+     "processed": 3629539,
+     "out_tokens": 3790,
+     "out_8grams": 2024,
+     "overlap_8gram": 279,
+     "overlap_share": 0.13784584980237155,
+     "overlap_share_unigram_mutant": 0.8751740139211137,
+     "input_chars": 106179,
+     "c_lower_bound": 50729.57722924901
+    },
+    {
+     "f": "agent-ab8e9f301c9cfef9a.jsonl",
+     "stype": "gsd-plan-checker",
+     "processed": 1673849,
+     "out_tokens": 1786,
+     "out_8grams": 0,
+     "overlap_8gram": 0,
+     "overlap_share": 0,
+     "overlap_share_unigram_mutant": 0,
+     "input_chars": 140768,
+     "c_lower_bound": 64709.296
+    },
+    {
+     "f": "agent-ac12bcc44ef916ba7.jsonl",
+     "stype": "gsd-planner",
+     "processed": 6419676,
+     "out_tokens": 951,
+     "out_8grams": 12332,
+     "overlap_8gram": 15,
+     "overlap_share": 0.001216347713266299,
+     "overlap_share_unigram_mutant": 0.6257639112254745,
+     "input_chars": 149140,
+     "c_lower_bound": 67615.42325332468
+    },
+    {
+     "f": "agent-a2a55894f7172cfa7.jsonl",
+     "stype": "gsd-plan-checker",
+     "processed": 341078,
+     "out_tokens": 256,
+     "out_8grams": 0,
+     "overlap_8gram": 0,
+     "overlap_share": 0,
+     "overlap_share_unigram_mutant": 0,
+     "input_chars": 71368,
+     "c_lower_bound": 32157.496
+    },
+    {
+     "f": "agent-a60d9d6d7c123edc8.jsonl",
+     "stype": "gsd-phase-researcher",
+     "processed": 4833877,
+     "out_tokens": 3538,
+     "out_8grams": 5468,
+     "overlap_8gram": 136,
+     "overlap_share": 0.02487198244330651,
+     "overlap_share_unigram_mutant": 0.6882738528769119,
+     "input_chars": 170644,
+     "c_lower_bound": 79727.87092611559
+    },
+    {
+     "f": "agent-aed3b16fb844ba561.jsonl",
+     "stype": "gsd-plan-checker",
+     "processed": 382776,
+     "out_tokens": 54,
+     "out_8grams": 0,
+     "overlap_8gram": 0,
+     "overlap_share": 0,
+     "overlap_share_unigram_mutant": 0,
+     "input_chars": 13822,
+     "c_lower_bound": 6232.434
+    },
+    {
+     "f": "agent-affe1c509c899e447.jsonl",
+     "stype": "gsd-planner",
+     "processed": 9353139,
+     "out_tokens": 24626,
+     "out_8grams": 8408,
+     "overlap_8gram": 50,
+     "overlap_share": 0.005946717411988582,
+     "overlap_share_unigram_mutant": 0.6247685185185186,
+     "input_chars": 179028,
+     "c_lower_bound": 104505.07213701238
+    }
+   ]
+  },
+  "InfinityOps": {
+   "runs": 10,
+   "break_even_per_run": 8458599.9,
+   "c_lower_bound_mean": 120842.34915122771,
+   "overlap_share_mean": 0.015150336001451875,
+   "overlap_share_pooled": 0.02156343501736768,
+   "overlap_share_by_stype": {
+    "gsd-planner": 0.02265729217484401,
+    "gsd-plan-checker": 0,
+    "gsd-phase-researcher": 0.02088287087249668
+   },
+   "copy_heavy": false,
+   "verdict": "SURVIVE (lower bound does not kill; survival is NOT proven)",
+   "unigram_mutant_pooled": 0.7610714110641543,
+   "rows": [
+    {
+     "f": "agent-a3349a0152d8ea877.jsonl",
+     "stype": "gsd-planner",
+     "processed": 16455385,
+     "out_tokens": 2383,
+     "out_8grams": 22812,
+     "overlap_8gram": 191,
+     "overlap_share": 0.008372786252849377,
+     "overlap_share_unigram_mutant": 0.740019135426633,
+     "input_chars": 300046,
+     "c_lower_bound": 136483.60965035946
+    },
+    {
+     "f": "agent-a64ee4c9894c5ae58.jsonl",
+     "stype": "gsd-phase-researcher",
+     "processed": 10087910,
+     "out_tokens": 1326,
+     "out_8grams": 11516,
+     "overlap_8gram": 107,
+     "overlap_share": 0.009291420632163946,
+     "overlap_share_unigram_mutant": 0.6698088731298106,
+     "input_chars": 263623,
+     "c_lower_bound": 119153.16057624175
+    },
+    {
+     "f": "agent-adee598e65c66dc10.jsonl",
+     "stype": "gsd-plan-checker",
+     "processed": 965290,
+     "out_tokens": 141,
+     "out_8grams": 0,
+     "overlap_8gram": 0,
+     "overlap_share": 0,
+     "overlap_share_unigram_mutant": 0,
+     "input_chars": 207893,
+     "c_lower_bound": 93069.171
+    },
+    {
+     "f": "agent-a496020a0e1db771c.jsonl",
+     "stype": "gsd-planner",
+     "processed": 13688688,
+     "out_tokens": 2330,
+     "out_8grams": 24320,
+     "overlap_8gram": 436,
+     "overlap_share": 0.01792763157894737,
+     "overlap_share_unigram_mutant": 0.813423092615259,
+     "input_chars": 331142,
+     "c_lower_bound": 150308.70261842106
+    },
+    {
+     "f": "agent-a61ac9b59b6125d94.jsonl",
+     "stype": "gsd-plan-checker",
+     "processed": 1582755,
+     "out_tokens": 944,
+     "out_8grams": 0,
+     "overlap_8gram": 0,
+     "overlap_share": 0,
+     "overlap_share_unigram_mutant": 0,
+     "input_chars": 240666,
+     "c_lower_bound": 108521.702
+    },
+    {
+     "f": "agent-a9c5513b24d0ab53f.jsonl",
+     "stype": "gsd-phase-researcher",
+     "processed": 6232643,
+     "out_tokens": 4228,
+     "out_8grams": 10902,
+     "overlap_8gram": 65,
+     "overlap_share": 0.005962208769033205,
+     "overlap_share_unigram_mutant": 0.701222850885198,
+     "input_chars": 186864,
+     "c_lower_bound": 87730.99978132453
+    },
+    {
+     "f": "agent-a3e3b9db27e44409d.jsonl",
+     "stype": "gsd-phase-researcher",
+     "processed": 9632603,
+     "out_tokens": 532,
+     "out_8grams": 12366,
+     "overlap_8gram": 167,
+     "overlap_share": 0.013504771146692544,
+     "overlap_share_unigram_mutant": 0.7204958943809371,
+     "input_chars": 290158,
+     "c_lower_bound": 130225.44146174996
+    },
+    {
+     "f": "agent-ad3f6a1168c911cc8.jsonl",
+     "stype": "gsd-planner",
+     "processed": 13805041,
+     "out_tokens": 2817,
+     "out_8grams": 26085,
+     "overlap_8gram": 1087,
+     "overlap_share": 0.04167145869273529,
+     "overlap_share_unigram_mutant": 0.8221343873517787,
+     "input_chars": 321108,
+     "c_lower_bound": 146234.8875008626
+    },
+    {
+     "f": "agent-aeb91906bd89a7358.jsonl",
+     "stype": "gsd-plan-checker",
+     "processed": 2315606,
+     "out_tokens": 333,
+     "out_8grams": 0,
+     "overlap_8gram": 0,
+     "overlap_share": 0,
+     "overlap_share_unigram_mutant": 0,
+     "input_chars": 246759,
+     "c_lower_bound": 110634.273
+    },
+    {
+     "f": "agent-a196285575bfc1ab9.jsonl",
+     "stype": "gsd-phase-researcher",
+     "processed": 9820078,
+     "out_tokens": 1238,
+     "out_8grams": 8307,
+     "overlap_8gram": 455,
+     "overlap_share": 0.054773082942097026,
+     "overlap_share_unigram_mutant": 0.7393342146376637,
+     "input_chars": 279399,
+     "c_lower_bound": 126061.54392331769
+    }
+   ]
+  },
+  "KME": {
+   "runs": 0,
+   "break_even_per_run": null,
+   "c_lower_bound_mean": null,
+   "overlap_share_mean": null,
+   "overlap_share_pooled": 0.0,
+   "overlap_share_by_stype": {},
+   "copy_heavy": null,
+   "verdict": "N/A (no meta runs)",
+   "unigram_mutant_pooled": 0.0,
+   "rows": []
+  }
+ },
+ "controls": {
+  "positive_copy": {
+   "share": 1.0,
+   "pass": true
+  },
+  "negative_disjoint": {
+   "share": 0.0,
+   "pass": true
+  },
+  "shuffled_pairing": {
+   "KSR": {
+    "mismatched_pairing_mean_overlap": 0.02169046163938217,
+    "real_pooled": 0.020375590043128333
+   },
+   "InfinityOps": {
+    "mismatched_pairing_mean_overlap": 0.23269519767068128,
+    "real_pooled": 0.02156343501736768
+   }
+  },
+  "mutant_unigram_flips_copy_heavy": true,
+  "all_pass": true
+ }
+}

@@ -1,0 +1,124 @@
+{
+ "instrument": "G",
+ "definition": "episode = calls since previous DELTA/REPAIR up to a DELTA call; family=(collapsed last-4 tool names, path class, test cmd); recurring = family seen >=2; NULL = tool order shuffled within episode + path classes permuted across episodes (200 reps)",
+ "workloads": {
+  "KSR": {
+   "real": {
+    "episodes": 284,
+    "families": 106,
+    "recurring_families": 40,
+    "recurring_episode_share": 0.7676056338028169,
+    "recurring_proc_share": 0.7810798343619998
+   },
+   "set_variant_sensitivity": {
+    "episodes": 284,
+    "families": 86,
+    "recurring_families": 44,
+    "recurring_episode_share": 0.852112676056338,
+    "recurring_proc_share": 0.8629594066252985
+   },
+   "null_episode_share_mean_sd": [
+    0.568169014084507,
+    0.019825038120539807
+   ],
+   "null_proc_share_mean_sd": [
+    0.5866950219625741,
+    0.021364664775639794
+   ],
+   "recurrence_above_null_episode_pp": 19.943661971830984,
+   "recurrence_above_null_proc_pp": 19.438481239942572,
+   "z_episode": 10.059835371094836,
+   "share_of_DELTA_context_in_recurring_families_pct": 78.10798343619997,
+   "mutant_path_class_only": {
+    "episodes": 284,
+    "families": 9,
+    "recurring_families": 9,
+    "recurring_episode_share": 1.0,
+    "recurring_proc_share": 1.0
+   }
+  },
+  "InfinityOps": {
+   "real": {
+    "episodes": 404,
+    "families": 142,
+    "recurring_families": 48,
+    "recurring_episode_share": 0.7673267326732673,
+    "recurring_proc_share": 0.7740905251718784
+   },
+   "set_variant_sensitivity": {
+    "episodes": 404,
+    "families": 113,
+    "recurring_families": 55,
+    "recurring_episode_share": 0.8564356435643564,
+    "recurring_proc_share": 0.8582617007042401
+   },
+   "null_episode_share_mean_sd": [
+    0.6236757425742574,
+    0.015923322349239214
+   ],
+   "null_proc_share_mean_sd": [
+    0.6367848320401651,
+    0.01628505118214662
+   ],
+   "recurrence_above_null_episode_pp": 14.365099009900995,
+   "recurrence_above_null_proc_pp": 13.730569313171326,
+   "z_episode": 9.021420715374346,
+   "share_of_DELTA_context_in_recurring_families_pct": 77.40905251718783,
+   "mutant_path_class_only": {
+    "episodes": 404,
+    "families": 13,
+    "recurring_families": 12,
+    "recurring_episode_share": 0.9975247524752475,
+    "recurring_proc_share": 0.9966160483835484
+   }
+  },
+  "KME": {
+   "real": {
+    "episodes": 148,
+    "families": 60,
+    "recurring_families": 23,
+    "recurring_episode_share": 0.75,
+    "recurring_proc_share": 0.7534394635539782
+   },
+   "set_variant_sensitivity": {
+    "episodes": 148,
+    "families": 55,
+    "recurring_families": 25,
+    "recurring_episode_share": 0.7972972972972973,
+    "recurring_proc_share": 0.7957560463856322
+   },
+   "null_episode_share_mean_sd": [
+    0.6234459459459459,
+    0.02934883456931576
+   ],
+   "null_proc_share_mean_sd": [
+    0.6228002514410359,
+    0.03057275022755121
+   ],
+   "recurrence_above_null_episode_pp": 12.655405405405407,
+   "recurrence_above_null_proc_pp": 13.063921211294227,
+   "z_episode": 4.312064036313267,
+   "share_of_DELTA_context_in_recurring_families_pct": 75.34394635539782,
+   "mutant_path_class_only": {
+    "episodes": 148,
+    "families": 11,
+    "recurring_families": 11,
+    "recurring_episode_share": 1.0,
+    "recurring_proc_share": 1.0
+   }
+  }
+ },
+ "controls": {
+  "positive_synthetic": {
+   "recurring_episode_share": 0.75,
+   "pass": true
+  },
+  "negative_all_distinct": {
+   "recurring_episode_share": 0.0,
+   "pass": true
+  },
+  "shuffled_null_is_in_workloads": "see null_*_mean_sd",
+  "mutant_path_class_only_changes_share": true,
+  "all_pass": true
+ }
+}

@@ -1,0 +1,26 @@
+[A/B/F] KSR: calls=1141 ctx=273,912,110 base_ok=True calls%={'OTHER': 27.344, 'DELTA': 24.89, 'CONTROL_LOOP': 43.295, 'REPAIR': 4.47} proc%={'OTHER': 20.656, 'DELTA': 28.931, 'CONTROL_LOOP': 45.33, 'REPAIR': 5.083} SDD=0.2489 ATCR=2.357 runs=200 repairAmp=0.17569402126739717 OTHER%=27.3 wide:{'CONTROL_LOOP': 62.752, 'DELTA': 24.89, 'REPAIR': 4.47, 'OTHER': 7.888}
+[A/B/F] InfinityOps: calls=1531 ctx=373,740,097 base_ok=True calls%={'OTHER': 34.161, 'DELTA': 26.388, 'CONTROL_LOOP': 36.512, 'REPAIR': 2.939} proc%={'OTHER': 29.362, 'DELTA': 30.832, 'CONTROL_LOOP': 36.344, 'REPAIR': 3.463} SDD=0.2639 ATCR=2.442 runs=223 repairAmp=0.11231774443105465 OTHER%=34.2 wide:{'CONTROL_LOOP': 57.413, 'DELTA': 26.388, 'OTHER': 13.259, 'REPAIR': 2.939}
+[A/B/F] KME: calls=393 ctx=107,407,089 base_ok=True calls%={'OTHER': 15.267, 'DELTA': 37.659, 'CONTROL_LOOP': 43.257, 'REPAIR': 3.817} proc%={'OTHER': 11.219, 'DELTA': 39.874, 'CONTROL_LOOP': 44.506, 'REPAIR': 4.4} SDD=0.3766 ATCR=1.754 runs=76 repairAmp=0.11035572932294989 OTHER%=15.3 wide:{'CONTROL_LOOP': 52.417, 'OTHER': 6.107, 'DELTA': 37.659, 'REPAIR': 3.817}
+[A/B/F] controls: pos=True neg=True mutant_changed=True all_pass=True
+[E] KSR: results=17 result_tokens=8,313 join_tax=322,752 = 0.12% of base (0.32 tok/char: 0.08%; no-compaction-stop: 0.12%) mean_later=38.8
+[E] InfinityOps: results=23 result_tokens=11,134 join_tax=367,917 = 0.10% of base (0.32 tok/char: 0.07%; no-compaction-stop: 0.10%) mean_later=33.0
+[E] KME: results=3 result_tokens=1,539 join_tax=69,789 = 0.06% of base (0.32 tok/char: 0.05%; no-compaction-stop: 0.06%) mean_later=45.3
+[E] controls all_pass=True
+[C] KSR: floor median=93,364 n=24 (min 78,595 max 126,698); argmin(with rehyd)=N=10,S=5k -48.5%; without rehyd=N=1,S=5k -58.9%; k4(d) best=N=10,S=10k -43.2%; N=20,S=10k -42.3%; N=inf S any 0
+[C] InfinityOps: floor median=92,468 n=31 (min 28,380 max 132,504); argmin(with rehyd)=N=10,S=5k -49.7%; without rehyd=N=1,S=5k -60.1%; k4(d) best=N=10,S=10k -43.7%; N=20,S=10k -42.7%; N=inf S any 0
+[C] KME: floor median=103,978 n=6 (min 71,317 max 139,932); argmin(with rehyd)=N=10,S=5k -52.6%; without rehyd=N=1,S=5k -60.2%; k4(d) best=N=10,S=10k -43.7%; N=20,S=10k -48.4%; N=inf S any 0
+[C] controls all_pass=True (k4 repro 171,951,765 vs 171.95M)
+[D] KSR: runs=12 overlap8_pooled=2.0% mean=2.4% (unigram mutant 64.5%) c_lb_mean=67,207 break_even=4,142,531 -> SURVIVE (lower bound does not kill; survival is NOT proven)
+[D] InfinityOps: runs=10 overlap8_pooled=2.2% mean=1.5% (unigram mutant 76.1%) c_lb_mean=120,842 break_even=8,458,600 -> SURVIVE (lower bound does not kill; survival is NOT proven)
+[D] KME: no planner/researcher/checker runs
+[D] controls all_pass=True; mismatched-pairing overlap: {'KSR': {'mismatched_pairing_mean_overlap': 0.02169046163938217, 'real_pooled': 0.020375590043128333}, 'InfinityOps': {'mismatched_pairing_mean_overlap': 0.23269519767068128, 'real_pooled': 0.02156343501736768}}
+[G] KSR: episodes=284 families=106 recurring_fams=40 rec_ep=76.8% null=56.8+-2.0 above_null=+19.9pp z=10.1; DELTA ctx in recurring fams=78.1% (null 58.7%); set-variant rec_ep=85.2%
+[H] KSR: irreducible floor = 6.3% of workload processed (21.9% of DELTA), nonrecurring DELTA calls ~66; path-only mutant 0.0%
+[I] KSR: control-loop miss 45.3%/43.3%calls; repair/proof miss 5.1%/4.5%calls; transformation miss (recurring DELTA) 22.6%/19.1%calls; novelty (non-recurring DELTA) 6.3%/5.8%calls; unknown (OTHER) 20.7%/27.3%calls
+[G] InfinityOps: episodes=404 families=142 recurring_fams=48 rec_ep=76.7% null=62.4+-1.6 above_null=+14.4pp z=9.0; DELTA ctx in recurring fams=77.4% (null 63.7%); set-variant rec_ep=85.6%
+[H] InfinityOps: irreducible floor = 7.0% of workload processed (22.6% of DELTA), nonrecurring DELTA calls ~94; path-only mutant 0.1%
+[I] InfinityOps: control-loop miss 36.3%/36.5%calls; repair/proof miss 3.5%/2.9%calls; transformation miss (recurring DELTA) 23.9%/20.2%calls; novelty (non-recurring DELTA) 7.0%/6.1%calls; unknown (OTHER) 29.4%/34.2%calls
+[G] KME: episodes=148 families=60 recurring_fams=23 rec_ep=75.0% null=62.3+-2.9 above_null=+12.7pp z=4.3; DELTA ctx in recurring fams=75.3% (null 62.3%); set-variant rec_ep=79.7%
+[H] KME: irreducible floor = 9.8% of workload processed (24.7% of DELTA), nonrecurring DELTA calls ~37; path-only mutant 0.0%
+[I] KME: control-loop miss 44.5%/43.3%calls; repair/proof miss 4.4%/3.8%calls; transformation miss (recurring DELTA) 30.0%/28.2%calls; novelty (non-recurring DELTA) 9.8%/9.4%calls; unknown (OTHER) 11.2%/15.3%calls
+[G] controls all_pass=True [H] True [I] True

@@ -1,0 +1,98 @@
+{
+ "instrument": "I",
+ "definition": "label -> boundary-miss class",
+ "workloads": {
+  "KSR": {
+   "control-loop miss": {
+    "call_pct": 43.29535495179667,
+    "proc_pct": 45.32972896827715
+   },
+   "repair/proof miss": {
+    "call_pct": 4.469763365468887,
+    "proc_pct": 5.0829712434047
+   },
+   "transformation miss (recurring DELTA)": {
+    "call_pct": 19.10604732690622,
+    "proc_pct": 22.597276266008524
+   },
+   "novelty (non-recurring DELTA)": {
+    "call_pct": 5.784399649430324,
+    "proc_pct": 6.333538833662292
+   },
+   "unknown (OTHER)": {
+    "call_pct": 27.344434706397898,
+    "proc_pct": 20.656484688647335
+   },
+   "sum_proc_pct": 100.0,
+   "sum_call_pct": 100.0
+  },
+  "InfinityOps": {
+   "control-loop miss": {
+    "call_pct": 36.51208360548661,
+    "proc_pct": 36.34367025229802
+   },
+   "repair/proof miss": {
+    "call_pct": 2.939255388634879,
+    "proc_pct": 3.4629528531304223
+   },
+   "transformation miss (recurring DELTA)": {
+    "call_pct": 20.248203788373612,
+    "proc_pct": 23.866567177821775
+   },
+   "novelty (non-recurring DELTA)": {
+    "call_pct": 6.139777922926192,
+    "proc_pct": 6.965184925748364
+   },
+   "unknown (OTHER)": {
+    "call_pct": 34.160679294578706,
+    "proc_pct": 29.361624791001418
+   },
+   "sum_proc_pct": 100.0,
+   "sum_call_pct": 100.0
+  },
+  "KME": {
+   "control-loop miss": {
+    "call_pct": 43.25699745547074,
+    "proc_pct": 44.50641092231085
+   },
+   "repair/proof miss": {
+    "call_pct": 3.816793893129771,
+    "proc_pct": 4.400316960781597
+   },
+   "transformation miss (recurring DELTA)": {
+    "call_pct": 28.244274809160306,
+    "proc_pct": 30.04259471383226
+   },
+   "novelty (non-recurring DELTA)": {
+    "call_pct": 9.414758269720101,
+    "proc_pct": 9.831338318718453
+   },
+   "unknown (OTHER)": {
+    "call_pct": 15.267175572519085,
+    "proc_pct": 11.219339084356843
+   },
+   "sum_proc_pct": 100.0,
+   "sum_call_pct": 100.0
+  }
+ },
+ "controls": {
+  "positive_shares_sum_100": true,
+  "negative_shuffled": "label-shuffle null is the A/B/F shuffled-order control",
+  "mutant_OTHER_as_CONTROL": {
+   "KSR": {
+    "mutant_OTHER_as_CONTROL": 65.98621365692449,
+    "base_unknown_pct": 20.656484688647335
+   },
+   "InfinityOps": {
+    "mutant_OTHER_as_CONTROL": 65.70529504329944,
+    "base_unknown_pct": 29.361624791001418
+   },
+   "KME": {
+    "mutant_OTHER_as_CONTROL": 55.72575000666769,
+    "base_unknown_pct": 11.219339084356843
+   }
+  },
+  "mutant_changes_verdict": true,
+  "all_pass": true
+ }
+}

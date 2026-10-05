@@ -1,0 +1,81 @@
+{
+ "instrument": "E",
+ "definition": "overlay (not a share): result tokens (chars*0.447 tok/char) x later parent calls carrying it; carry stops at a context drop >30% (compaction/clear)",
+ "workloads": {
+  "KSR": {
+   "base_processed": 274581880,
+   "results": 17,
+   "result_tokens": 8313.306,
+   "join_tax_tokens": 322751.88,
+   "join_tax_pct_of_base": 0.11754303670730203,
+   "mean_later_calls": 38.8235294117647,
+   "by_stype_tokens": {
+    "gsd-code-reviewer": 18093.666,
+    "gsd-verifier": 10758.396,
+    "general-purpose": 89001.276,
+    "gsd-phase-researcher": 47923.764,
+    "gsd-planner": 80198.952,
+    "gsd-plan-checker": 76775.826
+   },
+   "rate_0.32_pct": 0.08414714037211778,
+   "no_compaction_mutant_pct": 0.11754303670730203
+  },
+  "InfinityOps": {
+   "base_processed": 374549194,
+   "results": 23,
+   "result_tokens": 11134.323,
+   "join_tax_tokens": 367916.76,
+   "join_tax_pct_of_base": 0.09822922219397434,
+   "mean_later_calls": 33.04347826086956,
+   "by_stype_tokens": {
+    "gsd-phase-researcher": 63901.332,
+    "gsd-pattern-mapper": 43084.989,
+    "gsd-planner": 44537.291999999994,
+    "gsd-plan-checker": 33402.969,
+    "gsd-executor": 12586.626,
+    "gsd-code-reviewer": 76972.05900000001,
+    "gsd-verifier": 58576.221000000005,
+    "Explore": 16459.434,
+    "gsd-ui-researcher": 10650.222,
+    "gsd-ui-checker": 7745.616
+   },
+   "rate_0.32_pct": 0.07032069597778923,
+   "no_compaction_mutant_pct": 0.09822922219397434
+  },
+  "KME": {
+   "base_processed": 107758442,
+   "results": 3,
+   "result_tokens": 1539.468,
+   "join_tax_tokens": 69789.21600000001,
+   "join_tax_pct_of_base": 0.06476449984308423,
+   "mean_later_calls": 45.333333333333336,
+   "by_stype_tokens": {
+    "kme-g1-ownership-arbiter": 69789.21600000001
+   },
+   "rate_0.32_pct": 0.04636384776238691,
+   "no_compaction_mutant_pct": 0.06476449984308423
+  }
+ },
+ "controls": {
+  "positive_synthetic": {
+   "expected": 4470.0,
+   "got": 4470.0,
+   "pass": true
+  },
+  "negative_result_at_last_call": {
+   "got": 0.0,
+   "pass": true
+  },
+  "shuffled_positions_tokens": {
+   "KSR": 340845.54600000003,
+   "InfinityOps": 448761.627,
+   "KME": 69789.21600000001
+  },
+  "mutant_no_compaction_stop_synthetic": {
+   "with_stop": 894.0,
+   "without": 3576.0,
+   "verdict_changed": true
+  },
+  "all_pass": true
+ }
+}

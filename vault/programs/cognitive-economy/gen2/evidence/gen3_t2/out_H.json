@@ -1,0 +1,48 @@
+{
+ "instrument": "H",
+ "definition": "non-recurring DELTA (G primary family) processed tokens / workload processed = approximate floor of genuinely new cognition (not quality-judged)",
+ "workloads": {
+  "KSR": {
+   "workload_processed": 274581880,
+   "DELTA_processed": 79438776,
+   "nonrecurring_DELTA_processed": 17390749.999999996,
+   "irreducible_floor_pct_of_workload": 6.333538833662292,
+   "pct_of_DELTA": 21.89201656380002,
+   "nonrecurring_DELTA_calls": 66,
+   "mutant_path_only_floor_pct": 0.0,
+   "repair_pct_excluded": 5.0829712434047
+  },
+  "InfinityOps": {
+   "workload_processed": 374549194,
+   "DELTA_processed": 115480079,
+   "nonrecurring_DELTA_processed": 26088043.999999996,
+   "irreducible_floor_pct_of_workload": 6.965184925748364,
+   "pct_of_DELTA": 22.59094748281216,
+   "nonrecurring_DELTA_calls": 94,
+   "mutant_path_only_floor_pct": 0.10433315736890972,
+   "repair_pct_excluded": 3.4629528531304223
+  },
+  "KME": {
+   "workload_processed": 107758442,
+   "DELTA_processed": 42967529,
+   "nonrecurring_DELTA_processed": 10594097.0,
+   "irreducible_floor_pct_of_workload": 9.831338318718453,
+   "pct_of_DELTA": 24.65605364460218,
+   "nonrecurring_DELTA_calls": 37,
+   "mutant_path_only_floor_pct": 0.0,
+   "repair_pct_excluded": 4.400316960781597
+  }
+ },
+ "controls": {
+  "positive_synthetic_floor": {
+   "nonrecurring_proc_share_of_DELTA": 0.25,
+   "pass": true
+  },
+  "negative_all_distinct_floor_is_100pct_of_DELTA": {
+   "value": 1.0,
+   "pass": true
+  },
+  "mutant_path_only_changes_floor": true,
+  "all_pass": true
+ }
+}

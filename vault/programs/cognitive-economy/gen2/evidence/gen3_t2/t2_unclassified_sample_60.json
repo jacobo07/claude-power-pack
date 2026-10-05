@@ -1,0 +1,971 @@
+{
+ "note": "stratified sample of OTHER (unclassifiable) calls for later HUMAN judgment; no model was used to judge",
+ "n": 60,
+ "calls": [
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\850791eb-a3f4-4dd1-b493-cb9b5f27c31b.jsonl",
+   "call_index": 60,
+   "ts": "2026-10-03T21:05:32.549Z",
+   "stype": null,
+   "ctx": 312599,
+   "tools": [
+    [
+     "Agent",
+     null,
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\faf821d9-1a12-4a30-b47e-570fae6311e2.jsonl",
+   "call_index": 27,
+   "ts": "2026-10-03T20:21:14.302Z",
+   "stype": null,
+   "ctx": 257847,
+   "tools": [
+    [
+     "Agent",
+     null,
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\61dad5d8-54b0-4557-8c81-f09d01de4fd7.jsonl",
+   "call_index": 10,
+   "ts": "2026-10-04T01:33:40.530Z",
+   "stype": null,
+   "ctx": 138633,
+   "tools": []
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\faf821d9-1a12-4a30-b47e-570fae6311e2.jsonl",
+   "call_index": 5,
+   "ts": "2026-10-03T19:44:03.206Z",
+   "stype": null,
+   "ctx": 154557,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "$t=\"$env:USERPROFILE\\.claude\\gsd-core\\bin\\gsd-tools.cjs\"; & node $t query init.p"
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\9a585a1f-6fe3-453a-8c05-501a28b8c2f0.jsonl",
+   "call_index": 3,
+   "ts": "2026-10-04T19:51:44.128Z",
+   "stype": null,
+   "ctx": 146633,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "$t = \"$HOME\\.claude\\gsd-core\\bin\\gsd-tools.cjs\"; node $t query init.milestone-op"
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\faf821d9-1a12-4a30-b47e-570fae6311e2.jsonl",
+   "call_index": 75,
+   "ts": "2026-10-03T20:33:33.471Z",
+   "stype": null,
+   "ctx": 395059,
+   "tools": [
+    [
+     "Read",
+     "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\phases\\01-plan-audit-gex44-lane-entry-gate\\01-02-PLAN.md",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\968c93b1-e44e-4455-b94e-0d40c40caa98.jsonl",
+   "call_index": 0,
+   "ts": "2026-10-04T05:58:26.674Z",
+   "stype": null,
+   "ctx": 121940,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "$g='C:\\Program Files\\Git\\cmd\\git.exe'; & $g status --short | Measure-Object -Lin"
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\2fe0f58c-06b2-4121-a2cd-e49cd45a0530.jsonl",
+   "call_index": 118,
+   "ts": "2026-10-03T23:59:47.506Z",
+   "stype": null,
+   "ctx": 341930,
+   "tools": [
+    [
+     "Skill",
+     null,
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\9a585a1f-6fe3-453a-8c05-501a28b8c2f0\\subagents\\agent-ac12bcc44ef916ba7.jsonl",
+   "call_index": 32,
+   "ts": "2026-10-04T20:17:05.598Z",
+   "stype": "gsd-planner",
+   "ctx": 279473,
+   "tools": []
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\850791eb-a3f4-4dd1-b493-cb9b5f27c31b\\subagents\\agent-a534964e9cb54bc4a.jsonl",
+   "call_index": 8,
+   "ts": "2026-10-03T21:07:28.609Z",
+   "stype": "gsd-planner",
+   "ctx": 170370,
+   "tools": [
+    [
+     "Grep",
+     "C:/Users/User/Apps/recon_work/wt_match_accel/tools/wros/binary/match_accel/gex44",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\850791eb-a3f4-4dd1-b493-cb9b5f27c31b\\subagents\\agent-a7b7998644d85be8e.jsonl",
+   "call_index": 4,
+   "ts": "2026-10-03T22:13:54.095Z",
+   "stype": "gsd-plan-checker",
+   "ctx": 118931,
+   "tools": [
+    [
+     "Read",
+     "C:/Users/User/Apps/recon_work/wt_keosdtk_home/.planning/workstreams/recon-factory/phases/01.1-fork-module-port-into-canonical-core-gap-3/01.1-01-PLAN.md",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\850791eb-a3f4-4dd1-b493-cb9b5f27c31b\\subagents\\agent-a534964e9cb54bc4a.jsonl",
+   "call_index": 7,
+   "ts": "2026-10-03T21:07:11.323Z",
+   "stype": "gsd-planner",
+   "ctx": 161207,
+   "tools": [
+    [
+     "Glob",
+     "C:/Users/User/Apps/recon_work/wt_keosdtk_home",
+     ""
+    ],
+    [
+     "Grep",
+     "C:/Users/User/Apps/recon_work/wt_match_accel/tools/wros/binary/match_accel",
+     ""
+    ],
+    [
+     "Read",
+     "C:/Users/User/Apps/recon_work/wt_match_accel/tools/wros/binary/match_accel/gex44/test_batch_local.py",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\2fe0f58c-06b2-4121-a2cd-e49cd45a0530\\subagents\\agent-ab43ac6c2cbc15c3f.jsonl",
+   "call_index": 10,
+   "ts": "2026-10-04T00:12:01.583Z",
+   "stype": "gsd-verifier",
+   "ctx": 122214,
+   "tools": [
+    [
+     "Bash",
+     null,
+     "powershell.exe -NoProfile -Command \"\\$env:PYTHONDONTWRITEBYTECODE='1'; \\$env:PYT"
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\850791eb-a3f4-4dd1-b493-cb9b5f27c31b\\subagents\\agent-a818b165f2d090042.jsonl",
+   "call_index": 5,
+   "ts": "2026-10-03T20:55:55.722Z",
+   "stype": "gsd-phase-researcher",
+   "ctx": 115064,
+   "tools": [
+    [
+     "Read",
+     "C:/Users/User/Apps/recon_work/wt_match_accel/tools/wros/binary/match_accel/gex44/capsule_build.py",
+     ""
+    ],
+    [
+     "Grep",
+     "C:/Users/User/Apps/recon_work/wt_match_accel/tools/wros/binary/match_accel/gex44/capsule_build.py",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\9a585a1f-6fe3-453a-8c05-501a28b8c2f0\\subagents\\agent-ac12bcc44ef916ba7.jsonl",
+   "call_index": 5,
+   "ts": "2026-10-04T19:58:51.252Z",
+   "stype": "gsd-planner",
+   "ctx": 145290,
+   "tools": [
+    [
+     "Read",
+     "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\tools\\wros\\binary\\decomp\\test_transaction.py",
+     ""
+    ],
+    [
+     "Grep",
+     "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\tools",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\2fe0f58c-06b2-4121-a2cd-e49cd45a0530\\subagents\\agent-ab43ac6c2cbc15c3f.jsonl",
+   "call_index": 0,
+   "ts": "2026-10-04T00:09:52.158Z",
+   "stype": "gsd-verifier",
+   "ctx": 92053,
+   "tools": [
+    [
+     "Grep",
+     "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+     ""
+    ],
+    [
+     "Glob",
+     "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\9a585a1f-6fe3-453a-8c05-501a28b8c2f0\\subagents\\agent-ac12bcc44ef916ba7.jsonl",
+   "call_index": 9,
+   "ts": "2026-10-04T19:59:56.893Z",
+   "stype": "gsd-planner",
+   "ctx": 161289,
+   "tools": [
+    [
+     "Grep",
+     "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\tools\\wros\\binary\\decomp",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\850791eb-a3f4-4dd1-b493-cb9b5f27c31b\\subagents\\agent-af790ce3dc164186d.jsonl",
+   "call_index": 15,
+   "ts": "2026-10-03T22:09:02.710Z",
+   "stype": "gsd-planner",
+   "ctx": 149017,
+   "tools": [
+    [
+     "Edit",
+     "C:/Users/User/Apps/recon_work/wt_keosdtk_home/.planning/workstreams/recon-factory/phases/01.1-fork-module-port-into-canonical-core-gap-3/01.1-05-PLAN.md",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\faf821d9-1a12-4a30-b47e-570fae6311e2\\subagents\\agent-affe1c509c899e447.jsonl",
+   "call_index": 13,
+   "ts": "2026-10-03T20:04:38.714Z",
+   "stype": "gsd-planner",
+   "ctx": 159778,
+   "tools": [
+    [
+     "Glob",
+     "C:\\Users\\User\\Apps\\recon_work\\wt_match_accel\\tools\\kobishield\\dispatcher_patches",
+     ""
+    ],
+    [
+     "Glob",
+     "C:\\Users\\User\\Apps\\recon_work\\wt_match_accel\\tools\\wros\\binary\\match_accel\\gex44",
+     ""
+    ],
+    [
+     "Glob",
+     "C:\\Users\\User\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects\\tools\\kobishield\\dispatcher_patches",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KSR",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-recon-work-wt-keosdtk-home\\faf821d9-1a12-4a30-b47e-570fae6311e2\\subagents\\agent-affe1c509c899e447.jsonl",
+   "call_index": 0,
+   "ts": "2026-10-03T19:59:27.478Z",
+   "stype": "gsd-planner",
+   "ctx": 93967,
+   "tools": [
+    [
+     "Read",
+     "C:/Users/User/Apps/recon_work/wt_keosdtk_home/.planning/workstreams/recon-factory/STATE.md",
+     ""
+    ],
+    [
+     "Read",
+     "C:/Users/User/Apps/recon_work/wt_keosdtk_home/.planning/workstreams/recon-factory/ROADMAP.md",
+     ""
+    ],
+    [
+     "Read",
+     "C:/Users/User/Apps/recon_work/wt_keosdtk_home/.planning/workstreams/recon-factory/phases/01-plan-audit-gex44-lane-entry-gate/01-CONTEXT.md",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\dfc0acda-e418-4f3d-ae14-ba33686864ad.jsonl",
+   "call_index": 100,
+   "ts": "2026-10-05T00:29:11.050Z",
+   "stype": null,
+   "ctx": 330895,
+   "tools": [
+    [
+     "Agent",
+     null,
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\5f5bc46f-45b8-49d3-b5f3-9f1948605fb3.jsonl",
+   "call_index": 92,
+   "ts": "2026-10-04T22:16:43.037Z",
+   "stype": null,
+   "ctx": 331313,
+   "tools": []
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\4f1b398d-1e6a-453c-a226-cfb4611dbced.jsonl",
+   "call_index": 0,
+   "ts": "2026-10-04T23:11:38.140Z",
+   "stype": null,
+   "ctx": 127801,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "Set-Location 'C:\\Users\\User\\Apps\\io-device-trust'; $g='C:\\Program Files\\Git\\cmd\\"
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\4f1b398d-1e6a-453c-a226-cfb4611dbced.jsonl",
+   "call_index": 3,
+   "ts": "2026-10-04T23:12:05.916Z",
+   "stype": null,
+   "ctx": 165417,
+   "tools": [
+    [
+     "Read",
+     "C:\\Users\\User\\Apps\\io-device-trust\\.planning\\workstreams\\odr-device-trust\\phases\\03-service-principal-tenant-resolution\\03-01-PLAN.md",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\5f5bc46f-45b8-49d3-b5f3-9f1948605fb3.jsonl",
+   "call_index": 80,
+   "ts": "2026-10-04T22:13:40.224Z",
+   "stype": null,
+   "ctx": 303251,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "Set-Location 'C:\\Users\\User\\Apps\\io-device-trust\\01_Core_Systems\\infinity_mie'; "
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\dc79aa64-c5eb-4928-a405-bdd2328b8e78.jsonl",
+   "call_index": 115,
+   "ts": "2026-10-04T21:36:28.145Z",
+   "stype": null,
+   "ctx": 368483,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "Set-Location 'C:\\Users\\User\\Apps\\io-device-trust\\01_Core_Systems\\infinity_mie'; "
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\5f5bc46f-45b8-49d3-b5f3-9f1948605fb3.jsonl",
+   "call_index": 36,
+   "ts": "2026-10-04T21:55:27.839Z",
+   "stype": null,
+   "ctx": 217007,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "Set-Location 'C:\\Users\\User\\Apps\\io-device-trust\\01_Core_Systems\\infinity_mie'; "
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\affe87e4-a2f9-48fc-8d98-88c1eb37b999.jsonl",
+   "call_index": 74,
+   "ts": "2026-10-03T22:13:16.727Z",
+   "stype": null,
+   "ctx": 299109,
+   "tools": [
+    [
+     "Skill",
+     null,
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\63bc3ed8-838d-4975-bb11-51fa2c5fc5a7\\subagents\\agent-a9c5513b24d0ab53f.jsonl",
+   "call_index": 26,
+   "ts": "2026-10-04T20:12:48.829Z",
+   "stype": "gsd-phase-researcher",
+   "ctx": 206279,
+   "tools": [
+    [
+     "Edit",
+     "C:/Users/User/Apps/io-device-trust/.planning/workstreams/odr-device-trust/phases/02-host-client-and-gated-capability-grant/02-RESEARCH.md",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\be2a71eb-d86a-40ab-8edf-6f571cc1b896\\subagents\\agent-adee598e65c66dc10.jsonl",
+   "call_index": 3,
+   "ts": "2026-10-03T20:58:58.695Z",
+   "stype": "gsd-plan-checker",
+   "ctx": 146397,
+   "tools": [
+    [
+     "Read",
+     "C:/Users/User/Apps/io-device-trust/.planning/workstreams/odr-device-trust/phases/01-commands-revocation-and-pairing-abuse-guard/01-04-PLAN.md",
+     ""
+    ],
+    [
+     "Read",
+     "C:/Users/User/Apps/io-device-trust/.planning/workstreams/odr-device-trust/phases/01-commands-revocation-and-pairing-abuse-guard/01-05-PLAN.md",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\dfc0acda-e418-4f3d-ae14-ba33686864ad\\subagents\\agent-acf100468ee021fa8.jsonl",
+   "call_index": 5,
+   "ts": "2026-10-05T00:00:23.779Z",
+   "stype": "gsd-code-reviewer",
+   "ctx": 113834,
+   "tools": [
+    [
+     "Read",
+     "C:\\Users\\User\\Apps\\io-device-trust\\01_Core_Systems\\infinity_mie\\lib\\infinity_mie\\odr\\devices.ex",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\be2a71eb-d86a-40ab-8edf-6f571cc1b896\\subagents\\agent-a64ee4c9894c5ae58.jsonl",
+   "call_index": 11,
+   "ts": "2026-10-03T20:03:51.695Z",
+   "stype": "gsd-phase-researcher",
+   "ctx": 143501,
+   "tools": [
+    [
+     "Grep",
+     "C:/Users/User/Apps/io-device-trust/01_Core_Systems/infinity_mie/lib/infinity_mie_web",
+     ""
+    ],
+    [
+     "Grep",
+     "C:/Users/User/Apps/io-device-trust/01_Core_Systems/infinity_mie/lib",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\5f5bc46f-45b8-49d3-b5f3-9f1948605fb3\\subagents\\agent-a3e3b9db27e44409d.jsonl",
+   "call_index": 35,
+   "ts": "2026-10-04T22:25:34.767Z",
+   "stype": "gsd-phase-researcher",
+   "ctx": 274748,
+   "tools": [
+    [
+     "Edit",
+     "C:\\Users\\User\\Apps\\io-device-trust\\.planning\\workstreams\\odr-device-trust\\phases\\03-service-principal-tenant-resolution\\03-RESEARCH.md",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\dfc0acda-e418-4f3d-ae14-ba33686864ad\\subagents\\agent-ab86c6fa65ee8780b.jsonl",
+   "call_index": 20,
+   "ts": "2026-10-05T00:32:16.564Z",
+   "stype": "Explore",
+   "ctx": 117655,
+   "tools": [
+    [
+     "Read",
+     "C:\\Users\\User\\Apps\\io-device-trust\\01_Core_Systems\\infinity_mie\\lib\\infinity_mie\\odr\\channel_switch.ex",
+     ""
+    ],
+    [
+     "Grep",
+     "C:\\Users\\User\\Apps\\io-device-trust\\08_Workflows_Code\\smoke\\reality_smoke.sh",
+     ""
+    ],
+    [
+     "Read",
+     "C:\\Users\\User\\Apps\\io-device-trust\\13_UI_Product_Layer\\infinity_ui\\scripts\\wss_handshake.mjs",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\63bc3ed8-838d-4975-bb11-51fa2c5fc5a7\\subagents\\agent-a8fde422a92dcef34.jsonl",
+   "call_index": 7,
+   "ts": "2026-10-04T20:20:50.551Z",
+   "stype": "gsd-pattern-mapper",
+   "ctx": 107166,
+   "tools": [
+    [
+     "Grep",
+     "C:/Users/User/Apps/io-device-trust/01_Core_Systems/infinity_mie/test/infinity_mie_web/channels/device_channel_test.exs",
+     ""
+    ],
+    [
+     "Grep",
+     "C:/Users/User/Apps/io-device-trust/.github/workflows/deploy-vps.yml",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\5f5bc46f-45b8-49d3-b5f3-9f1948605fb3\\subagents\\agent-aeb91906bd89a7358.jsonl",
+   "call_index": 11,
+   "ts": "2026-10-04T23:07:24.132Z",
+   "stype": "gsd-plan-checker",
+   "ctx": 212641,
+   "tools": [
+    [
+     "Grep",
+     "C:\\Users\\User\\Apps\\io-device-trust\\01_Core_Systems\\infinity_mie\\lib\\infinity_mie\\odr\\command.ex",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\be2a71eb-d86a-40ab-8edf-6f571cc1b896\\subagents\\agent-a64ee4c9894c5ae58.jsonl",
+   "call_index": 18,
+   "ts": "2026-10-03T20:04:39.681Z",
+   "stype": "gsd-phase-researcher",
+   "ctx": 167359,
+   "tools": [
+    [
+     "Glob",
+     "C:\\Users\\User\\Apps\\io-device-trust\\01_Core_Systems\\infinity_mie",
+     ""
+    ],
+    [
+     "Bash",
+     null,
+     "'/c/Program Files/Git/cmd/git.exe' -C /c/Users/User/Apps/io-device-trust ls-file"
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\be2a71eb-d86a-40ab-8edf-6f571cc1b896\\subagents\\agent-a3349a0152d8ea877.jsonl",
+   "call_index": 13,
+   "ts": "2026-10-03T20:25:45.570Z",
+   "stype": "gsd-planner",
+   "ctx": 211277,
+   "tools": [
+    [
+     "Read",
+     "C:/Users/User/Apps/io-device-trust/01_Core_Systems/infinity_mie/test/test_helper.exs",
+     ""
+    ],
+    [
+     "Grep",
+     "C:/Users/User/Apps/io-device-trust/01_Core_Systems/infinity_mie/lib/infinity_mie",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\5f5bc46f-45b8-49d3-b5f3-9f1948605fb3\\subagents\\agent-ad3f6a1168c911cc8.jsonl",
+   "call_index": 18,
+   "ts": "2026-10-04T22:44:49.424Z",
+   "stype": "gsd-planner",
+   "ctx": 283828,
+   "tools": [
+    [
+     "Read",
+     "C:\\Users\\User\\Apps\\io-device-trust\\.planning\\workstreams\\odr-device-trust\\ROADMAP.md",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "InfinityOps",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-device-trust\\63bc3ed8-838d-4975-bb11-51fa2c5fc5a7\\subagents\\agent-a61ac9b59b6125d94.jsonl",
+   "call_index": 5,
+   "ts": "2026-10-04T20:58:14.460Z",
+   "stype": "gsd-plan-checker",
+   "ctx": 197384,
+   "tools": [
+    [
+     "Read",
+     "C:/Users/User/Apps/io-device-trust/01_Core_Systems/infinity_mie/lib/infinity_mie/odr/commands.ex",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\2f9049a0-47d8-44cb-af1a-28ff5c618357.jsonl",
+   "call_index": 63,
+   "ts": "2026-10-03T22:17:50.517Z",
+   "stype": null,
+   "ctx": 257216,
+   "tools": [
+    [
+     "Agent",
+     null,
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\67ca9fa1-8c39-45d8-b8ae-4917a4fdcd07.jsonl",
+   "call_index": 82,
+   "ts": "2026-10-03T20:26:44.242Z",
+   "stype": null,
+   "ctx": 335350,
+   "tools": [
+    [
+     "Agent",
+     null,
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\2f9049a0-47d8-44cb-af1a-28ff5c618357.jsonl",
+   "call_index": 145,
+   "ts": "2026-10-03T23:00:52.285Z",
+   "stype": null,
+   "ctx": 390860,
+   "tools": []
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\41e4bea7-1381-418a-b258-e8b32c0e4a79.jsonl",
+   "call_index": 95,
+   "ts": "2026-10-03T21:43:08.159Z",
+   "stype": null,
+   "ctx": 373960,
+   "tools": []
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\67ca9fa1-8c39-45d8-b8ae-4917a4fdcd07.jsonl",
+   "call_index": 2,
+   "ts": "2026-10-03T20:06:17.495Z",
+   "stype": null,
+   "ctx": 157548,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "$t=\"$env:USERPROFILE\\.claude\\gsd-core\\bin\\gsd-tools.cjs\"; Test-Path $t; Get-Chil"
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\2f9049a0-47d8-44cb-af1a-28ff5c618357.jsonl",
+   "call_index": 2,
+   "ts": "2026-10-03T21:52:01.450Z",
+   "stype": null,
+   "ctx": 143607,
+   "tools": [
+    [
+     "EnterWorktree",
+     "C:/Users/User/Desktop/Cursor Projects/Minecraft Projects/KobiiCraft Workspace/KobiiCraft Core Files/.claude/worktrees/skyparty-spawn",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\67ca9fa1-8c39-45d8-b8ae-4917a4fdcd07.jsonl",
+   "call_index": 1,
+   "ts": "2026-10-03T20:06:13.489Z",
+   "stype": null,
+   "ctx": 137958,
+   "tools": [
+    [
+     "Read",
+     "C:\\Users\\User\\.claude\\gsd-core\\workflows\\autonomous.md",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\41e4bea7-1381-418a-b258-e8b32c0e4a79.jsonl",
+   "call_index": 105,
+   "ts": "2026-10-03T21:47:15.812Z",
+   "stype": null,
+   "ctx": 403094,
+   "tools": [
+    [
+     "Edit",
+     "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\.claude\\worktrees\\skyparty-spawn\\KobiCraftServer\\plugins\\KobiMapEngine\\src\\main\\java\\dev\\kobicraft\\mapengine\\generator\\templates\\SkyPartySpawnTemplate.java",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\67ca9fa1-8c39-45d8-b8ae-4917a4fdcd07.jsonl",
+   "call_index": 9,
+   "ts": "2026-10-03T20:07:20.125Z",
+   "stype": null,
+   "ctx": 168421,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "$g='C:\\Program Files\\Git\\cmd\\git.exe'; & $g worktree add -b gsd/skyparty-spawn \""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\67ca9fa1-8c39-45d8-b8ae-4917a4fdcd07.jsonl",
+   "call_index": 6,
+   "ts": "2026-10-03T20:06:51.344Z",
+   "stype": null,
+   "ctx": 164390,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "Select-String -Path .planning\\workstreams\\luckyarena-arena7\\ROADMAP.md -Pattern "
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\2f9049a0-47d8-44cb-af1a-28ff5c618357.jsonl",
+   "call_index": 1,
+   "ts": "2026-10-03T21:51:53.815Z",
+   "stype": null,
+   "ctx": 141642,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "$g='C:\\Program Files\\Git\\cmd\\git.exe'; & $g worktree list; & $g branch --list 'g"
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\2f9049a0-47d8-44cb-af1a-28ff5c618357.jsonl",
+   "call_index": 8,
+   "ts": "2026-10-03T21:52:39.574Z",
+   "stype": null,
+   "ctx": 170594,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "$w='C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspac"
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\67ca9fa1-8c39-45d8-b8ae-4917a4fdcd07.jsonl",
+   "call_index": 0,
+   "ts": "2026-10-03T20:06:03.591Z",
+   "stype": null,
+   "ctx": 136613,
+   "tools": [
+    [
+     "Glob",
+     null,
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\67ca9fa1-8c39-45d8-b8ae-4917a4fdcd07.jsonl",
+   "call_index": 5,
+   "ts": "2026-10-03T20:06:40.760Z",
+   "stype": null,
+   "ctx": 163068,
+   "tools": [
+    [
+     "PowerShell",
+     null,
+     "$t=\"$env:USERPROFILE\\.claude\\gsd-core\\bin\\gsd-tools.cjs\"; node $t query roadmap."
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\67ca9fa1-8c39-45d8-b8ae-4917a4fdcd07.jsonl",
+   "call_index": 4,
+   "ts": "2026-10-03T20:06:34.388Z",
+   "stype": null,
+   "ctx": 159285,
+   "tools": [
+    [
+     "Read",
+     "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\.planning\\workstreams\\skyparty-spawn\\ROADMAP.md",
+     ""
+    ],
+    [
+     "Read",
+     "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\.planning\\workstreams\\skyparty-spawn\\STATE.md",
+     ""
+    ],
+    [
+     "Read",
+     "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\.planning\\workstreams\\skyparty-spawn\\config.json",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\41e4bea7-1381-418a-b258-e8b32c0e4a79.jsonl",
+   "call_index": 55,
+   "ts": "2026-10-03T21:23:53.301Z",
+   "stype": null,
+   "ctx": 299748,
+   "tools": [
+    [
+     "Edit",
+     "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\.claude\\worktrees\\skyparty-spawn\\scripts\\kme\\intake\\skyparty-spawn\\model_check.py",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\67ca9fa1-8c39-45d8-b8ae-4917a4fdcd07.jsonl",
+   "call_index": 18,
+   "ts": "2026-10-03T20:09:31.471Z",
+   "stype": null,
+   "ctx": 179898,
+   "tools": [
+    [
+     "Skill",
+     null,
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\2f9049a0-47d8-44cb-af1a-28ff5c618357\\subagents\\agent-a8284baa8f61a3504.jsonl",
+   "call_index": 4,
+   "ts": "2026-10-03T22:18:19.361Z",
+   "stype": "kme-g1-ownership-arbiter",
+   "ctx": 81838,
+   "tools": [
+    [
+     "SubagentHandback",
+     null,
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\2f9049a0-47d8-44cb-af1a-28ff5c618357\\subagents\\agent-a8284baa8f61a3504.jsonl",
+   "call_index": 1,
+   "ts": "2026-10-03T22:17:59.102Z",
+   "stype": "kme-g1-ownership-arbiter",
+   "ctx": 75201,
+   "tools": [
+    [
+     "Grep",
+     "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\.claude\\worktrees\\skyparty-spawn\\KobiCraftServer\\plugins\\KobiMapEngine\\src\\main\\java\\dev\\kobicraft\\mapengine\\generator\\templates\\SkyPartySpawnTemplate.java",
+     ""
+    ],
+    [
+     "Grep",
+     "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\.claude\\worktrees\\skyparty-spawn\\vault\\kme\\KME_CAPABILITY_REGISTRY.md",
+     ""
+    ]
+   ]
+  },
+  {
+   "workload": "KME",
+   "file": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\67ca9fa1-8c39-45d8-b8ae-4917a4fdcd07\\subagents\\agent-a2d8f89613bb57e42.jsonl",
+   "call_index": 1,
+   "ts": "2026-10-03T20:28:05.798Z",
+   "stype": "kme-g1-ownership-arbiter",
+   "ctx": 74883,
+   "tools": [
+    [
+     "Grep",
+     "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\.claude\\worktrees\\skyparty-spawn\\vault\\kme\\KME_CAPABILITY_REGISTRY.md",
+     ""
+    ]
+   ]
+  }
+ ]
+}

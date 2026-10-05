@@ -1,0 +1,3 @@
+KSR: transcripts=24 calls=1141 ctx=273,912,110 out=669,770 expected_ctx=273,912,110 -> EXACT MATCH; tool_uses=1367 agent_results=17
+InfinityOps: transcripts=31 calls=1531 ctx=373,740,097 out=809,097 expected_ctx=373,740,097 -> EXACT MATCH; tool_uses=2028 agent_results=23
+KME: transcripts=6 calls=393 ctx=107,407,089 out=351,353 expected_ctx=107,407,089 -> EXACT MATCH; tool_uses=480 agent_results=3
