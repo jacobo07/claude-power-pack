@@ -283,7 +283,7 @@
     {
      "kind": "owner_decision",
      "ref": "vault/programs/cognitive-economy/owner-bundle.md",
-     "sha256": "46f46172ca66dd886c62a97a630fd907d0b8e8990ebc9e1d866b503253479d7f"
+     "sha256": "0ab1a8a83ef6d7441dbd48933f5697a28a5e2d18caf3b37e9ce2ba1c74e0a6c8"
     },
     {
      "kind": "file",
@@ -301,7 +301,16 @@
      "ref": "vault/programs/cognitive-economy/post-reset-packet.json",
      "sha256": "b6b104bb523d147377d13f752fe7d13b31cc66728164eb6bdf5b6e2c1c5522ba"
     },
-    "note": "terminal AUTHORIZATION_BOUND is the frozen rule's and stays; this field records the Owner's answer to it and the experiment that would reopen it"
+    "note": "terminal AUTHORIZATION_BOUND is the frozen rule's and stays; this field records the Owner's answer to it and the experiment that would reopen it",
+    "e1_authorization": {
+     "date": "2026-10-05",
+     "owner_text": [
+      "Approve, E1 after reset",
+      "do the 17M tokens thing now by the way, but on GEX44"
+     ],
+     "design": "grouped first: all 13 rule files excluded together vs resident; split only on a quality loss; never past spend_cap",
+     "host": "GEX44"
+    }
    }
   },
   "C": {
@@ -895,7 +904,7 @@
     {
      "kind": "owner_decision",
      "ref": "vault/programs/cognitive-economy/owner-bundle.md",
-     "sha256": "46f46172ca66dd886c62a97a630fd907d0b8e8990ebc9e1d866b503253479d7f"
+     "sha256": "0ab1a8a83ef6d7441dbd48933f5697a28a5e2d18caf3b37e9ce2ba1c74e0a6c8"
     },
     {
      "kind": "file",
@@ -908,7 +917,29 @@
      "sha256": "2465e6eb265049976bb1aa6ade035a68356d5e2f09f0686a99527dd011842f6c"
     }
    ],
-   "savings": []
+   "savings": [],
+   "owner_decision": {
+    "item": "[T]",
+    "decision": "DECLARE_DORMANT",
+    "date": "2026-10-04",
+    "owner_text": "DECISION 4 — PILLAR T\n\nYES, subject to current ownership verification.\n\nDeclare the fourteen qualifying dormant modules in the existing reachability/lifecycle mechanism, except the eight under modules/knowledge_acquisition that belong to this branch's own workstream and must remain under their correct owner.\n\nDo not treat this numeric description as more authoritative than repository reality.\n\nFirst reconstruct the actual set, owners, references, reachability and lifecycle.\n\nThe required semantic result is:\n\n- dormant modules are represented truthfully;\n- no live module is accidentally classified dormant;\n- no module is stolen from another owner;\n- knowledge-acquisition-owned modules stay under their current correct ownership;\n- lifecycle/reachability status becomes queryable and testable;\n- future drift is detectable.",
+    "result": {
+     "commit": "0ea53eef",
+     "declared_dormant": [
+      "craif/oier",
+      "dataset_first/transduction",
+      "done_gate/architectural_truth",
+      "fable_distillation/fd_04_acceleration",
+      "sqi/ratchet"
+     ],
+     "left_with_owner": "8 modules/knowledge_acquisition modules (decision 4)",
+     "gate_offenders": {
+      "before": 66,
+      "after": 61
+     },
+     "test": "tools/test_reachability.py V-REACH-DORMANT (14/14, 2 mutants red)"
+    }
+   }
   }
  },
  "reviews": {

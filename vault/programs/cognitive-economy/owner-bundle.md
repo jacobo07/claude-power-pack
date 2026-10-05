@@ -20,3 +20,21 @@ campaign could not do itself under its envelope.
 - [R] UC-04 -- promote into `vault/knowledge_base/ukdl-universal.md` the trap "a shared-checkout progress fingerprint
   makes a no-progress halt unreachable" (`tools/gsd_mission.py` progress_fingerprint; handoff J). The text is in
   `ukdl-candidates.md`. The campaign did not write to the peer-hot file (audit G10).
+
+## Disposition of each item (2026-10-05, W7)
+
+Owner decisions 1-7 were given on 2026-10-04 (verbatim in session 0f1368ee); ledger `state.<P>.owner_decision`
+quotes the ones that bind a pillar. A closed item says how the obligation closed, not that a capability is active.
+
+- [RUN] DONE: merged as `11470e92` (24 mission commits, campaign paths only).
+- [L] WIRED, not ACTIVE: decision 2; `/cpp-compound` step 7 calls steps78.py since `f207585b`. ACTIVE needs the
+  first real run's receipt (ADVANCED, with `compound-learnings.json.bak` written inside that run's window).
+- [B] DEFERRED_BY_OWNER_QUOTA (decision 3), still open as an effectiveness obligation. E1 approved on 2026-10-05
+  as a grouped set first (Owner answer: "Approve, E1 after reset"), then moved forward the same day: "do the
+  17M tokens thing now by the way, but on GEX44".
+  The terminal moves only on E1's result, never on this line.
+- [T] DONE as decided: decision 4. Five modules declared DORMANT in `0ea53eef` (craif/oier,
+  dataset_first/transduction, done_gate/architectural_truth, fable_distillation/fd_04_acceleration, sqi/ratchet),
+  each note naming its test. The 8 modules/knowledge_acquisition modules stay with their owner. Gate offenders
+  66 -> 61.
+- [R] UC-04 DONE: decision 6; promoted in `ecb5977a`. CBR half handed to modules/tower (`handoffs/R-cbr.md`).

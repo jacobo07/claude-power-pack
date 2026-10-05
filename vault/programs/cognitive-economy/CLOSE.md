@@ -133,3 +133,20 @@ exit=0
 `--pillar <P>` printed `CEP_PILLAR_<P>=PASS` for all 20 pillars, and `--status` reported `open=[]`
 `violations=[]`. `.planning/workstreams/cognitive-economy/REQUIREMENTS.md` checkboxes now match the ledger.
 Not pushed. Owner items `[L] [B] [T] [R]` in `owner-bundle.md` are still pending.
+
+## 2026-10-05 W7: Owner bundle dispositioned (supersedes nothing above)
+
+The Owner answered all bundle items on 2026-10-04 (decisions 1-7). Each item now carries its disposition in
+`owner-bundle.md`; the ledger quotes the binding decision text in `state.B` and `state.T`.
+
+- `[T]` closed as decided: `0ea53eef` adds a DORMANT class to `modules/liveness/reachability.py`. It is an exemption
+  only while the test named in its note exists, and a DORMANT module that becomes reachable fails the gate as a
+  stale declaration. Five modules were declared DORMANT. Gate offenders went 66 -> 61. The 61 left are not this
+  program's.
+- `[R] UC-04` closed: `ecb5977a` (W6).
+- `[L]` stays WIRED. No real compound run has produced an ADVANCED receipt yet.
+- `[B]` stays DEFERRED_BY_OWNER_QUOTA, but it is no longer parked. E1 is authorized to run now on GEX44, grouped
+  first. B's terminal changes only on E1's measured result.
+
+Nothing here is a saving. Realized savings are still none, and the program status still reads
+EFFECTIVENESS_NOT_CERTIFIED.
