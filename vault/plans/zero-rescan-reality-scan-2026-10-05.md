@@ -46,6 +46,16 @@ runner while the session was idle; no step line written, no orphan scanner left 
 Not restarted: the harness says not to without the Owner. Conclusion: on this laptop at the current load the D-I + L
 runs cannot complete; they need either other apps/panes closed or the GEX44 option (B), which copies the corpus.
 
+Run 5 -- GEX44 (Owner chose B, 2026-10-05: a COPY, originals stay on the laptop; this overrides the brief's
+data-locality rule for this run; CostaLuz not excluded). Repo bundle at 61909502 cloned to
+`/home/kobii/missions/zero-rescan-run`. Corpus copied to `/home/kobii/kme-corpus/projects` (chmod 700): first stream
+reaped by Claude Code's low-memory reaper at 7.9 GB; resumed by a size-keyed delta (bsdtar died `(null)` on a live file
+after 218 s; the remainder sent with a snapshotting Python tarfile stream). Final parity: 10,577 files / 9.50 GB both
+sides, 3 files differing = live transcripts still growing (after the frozen `--until auto` cut). The 3 laptop junctions
+are recreated as relative symlinks. Runner `/home/kobii/missions/gex44_ic_rows.sh` (nohup setsid, cap 4 h/step, rchar +
+VmHWM per step), START 2026-10-05T12:13:26+02:00; summary `/home/kobii/missions/zero-rescan-out/summary.txt`.
+Note: Linux `rchar` counts page-cache hits, comparable to Windows ReadTransferCount, not to disk reads.
+
 ## In flight at seal
 
 - Champion baseline: `kme_pillars.py population --denominator KME-L --until auto --expand --root ~/.claude/projects` on the
