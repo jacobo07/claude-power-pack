@@ -2716,7 +2716,20 @@
   "hook_success_rows": 2,
   "prompt_chars": 30
  },
- "explanations": [],
+ "explanations": [
+  {
+   "commit": "e336e06a",
+   "consumer": "interactive sessions that use the Gmail / Google Drive tools; none in a K probe",
+   "delta_bound": 3400,
+   "evidence": "vault/programs/incremental-cognition/evidence/K-deferred-tools.md",
+   "layer": "other:deferred_tools_delta",
+   "producer": "host: MCP servers configured for the account (claude.ai connectors)",
+   "reason": "41 claude.ai connector tool NAMES (Gmail 30, Google Drive 11) added to the account after the champion; names only, descriptions stay deferred. Interactive sessions have no launch flag to scope them: account floor, budgeted by Owner decision 2026-10-05. Headless launches can remove them (--strict-mcp-config).",
+   "review_when": "the connector set changes, or worker launches adopt --strict-mcp-config (tool-surface phase)",
+   "scope": "unattributed",
+   "unit": "chars"
+  }
+ ],
  "layers": [
   {
    "chars": 3405,
