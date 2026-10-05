@@ -125,3 +125,106 @@ def judge(rec: dict, spent: int | None, fp: str | None) -> dict:
                          f"(stall budget {stall:,}); semantic progress is not keeping up with spend"),
                 "mark": None}
     return {"trip": None, "mark": None}
+
+
+# --- Session scope (W1, 2026-10-05) -------------------------------------------------------------
+# A mission is not the only thing that burns: an ordinary interactive session ran 131 calls to
+# 35.45M processed with nothing measuring it (skyparty-spawn closeout, transcript b9dbdfe2).
+# A session declares an envelope in `session-budget-<sid>.json`; hooks/session_budget_guard.js
+# enforces it on PreToolUse with the SAME unit as above, read incrementally. This side owns the
+# declaration and the reference count the guard is parity-tested against.
+
+_SID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
+DEFAULT_CALL_RATIO = 1.5
+DEFAULT_NOPROGRESS_CALLS = 25
+
+
+def state_dir() -> Path:
+    return Path(os.environ.get("GSD_LONG_RUN_STATE_DIR")
+                or os.path.join(os.path.expanduser("~"), ".claude", "state"))
+
+
+def budget_path(sid: str) -> Path:
+    if not _SID_RE.match(sid or ""):
+        raise ValueError(f"invalid session id: {sid!r}")
+    return state_dir() / f"session-budget-{sid}.json"
+
+
+def session_tokens(transcript: Path, since_iso: str | None = None) -> dict:
+    """Reference count for one transcript: processed tokens (same rule as _file_tokens), tool_use
+    blocks, and the context size of the last counted assistant message."""
+    seen, total, calls, ctx = set(), 0, 0, 0
+    with open(transcript, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(r, dict):
+                continue
+            if since_iso and (r.get("timestamp") or "") < since_iso:
+                continue
+            m = r.get("message") or {}
+            if not isinstance(m, dict):
+                continue
+            if r.get("type") == "assistant" and isinstance(m.get("content"), list):
+                calls += sum(1 for b in m["content"] if isinstance(b, dict) and b.get("type") == "tool_use")
+            u = m.get("usage")
+            if not u or m.get("model") == "<synthetic>":
+                continue
+            mid = m.get("id") or r.get("uuid")
+            if mid in seen:
+                continue
+            seen.add(mid)
+            total += sum(int(u.get(k) or 0) for k in _UK)
+            ctx = sum(int(u.get(k) or 0) for k in _UK[:3])
+    return {"tokens": total, "calls": calls, "context": ctx}
+
+
+def declare(sid: str, target: int, warn: int, stop: int, calls_estimate: int | None = None,
+            context_ceiling: int | None = None, noprogress_calls: int = DEFAULT_NOPROGRESS_CALLS,
+            call_ratio: float = DEFAULT_CALL_RATIO, since_iso: str | None = None) -> Path:
+    if not (0 < target <= warn <= stop):
+        raise ValueError("need 0 < target <= warn <= stop")
+    import datetime as dt
+    rec = {"session_id": sid, "target": target, "warn": warn, "stop": stop,
+           "calls_estimate": calls_estimate, "call_ratio": call_ratio,
+           "context_ceiling": context_ceiling, "noprogress_calls": noprogress_calls,
+           "since": since_iso,
+           "declared_at": dt.datetime.now(dt.timezone.utc).isoformat()[:19]}
+    p = budget_path(sid)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_suffix(".tmp")
+    tmp.write_text(json.dumps(rec, indent=1), encoding="utf-8")
+    os.replace(tmp, p)
+    return p
+
+
+def _main(argv: list[str]) -> int:
+    import argparse
+    ap = argparse.ArgumentParser(prog="mission_spend")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    d = sub.add_parser("session-declare")
+    d.add_argument("--session", required=True)
+    d.add_argument("--target", type=int, required=True)
+    d.add_argument("--warn", type=int, required=True)
+    d.add_argument("--stop", type=int, required=True)
+    d.add_argument("--calls-estimate", type=int)
+    d.add_argument("--context-ceiling", type=int)
+    d.add_argument("--noprogress-calls", type=int, default=DEFAULT_NOPROGRESS_CALLS)
+    d.add_argument("--since", help="ISO timestamp; count only from here (default: whole transcript)")
+    s = sub.add_parser("session-status")
+    s.add_argument("--transcript", required=True)
+    s.add_argument("--since")
+    a = ap.parse_args(argv)
+    if a.cmd == "session-declare":
+        print(declare(a.session, a.target, a.warn, a.stop, a.calls_estimate, a.context_ceiling,
+                      a.noprogress_calls, since_iso=a.since))
+        return 0
+    print(json.dumps(session_tokens(Path(a.transcript), a.since)))
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    raise SystemExit(_main(sys.argv[1:]))
