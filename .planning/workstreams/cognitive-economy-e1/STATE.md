@@ -104,3 +104,6 @@ rules can leave the startup prefix without a judgement loss. Each one costs ~19.
 - DECISION (epoch 3): milestone complete/cleanup NOT run. Reason: the repo's ROOT milestone belongs to another
   track and archiving moves planning files across that boundary; the workstream's terminal state is the Owner
   decision above, which archiving does not advance. Safe: nothing is lost by deferring; reversible.
+- (epoch 3) REMOTE: publishing branch mission/cognitive-economy-e1-run to origin was refused by the
+  ovo-push-gate PreToolUse hook (stderr withheld). Not worked around; the branch is durable in the local repo.
+  Publishing it is left to the Owner.
