@@ -87,3 +87,10 @@ Next 3 actions: (1) `mission_spend.py session-declare` for the orchestrating ses
 - T2-1 for the Owner's go after 2026-10-11T18:00Z: 4 decision points + 1 fresh review; budget 5.73M / 10.68M / 18.46M, call breaker 90, run as a supervised mission (guard cannot cap subagents).
 - Spend: W-a 3,374,974; W-a2 1,718,594; final worker in README; orchestrator pane not separately metered (~0.4M/call).
 - Not done: haircut variant of the transaction lever; item i; a real-session pilot of any lever.
+
+## T2-1 APPROVED (Owner 'y' 2026-10-05) - do not start before 2026-10-11T18:00Z
+Canary InfinityOps odr-device-trust Phase 4 as a SUPERVISED gsd_mission with token_estimate (central 10.68M) and the
+mission token breaker; stop at 90 calls or 13.35M processed (gen3_t2/T2-0.5-README.md). One fresh worker per decision
+point D-01..D-04 + one fresh-context independent review on the founder-authority seam. Before launch: resolve the missing
+D-05 in gen3_t1/OBLIGATIONS-io-phase4.md, declare obligations (cep_gen2 obligations_declared=true for this canary), then
+the Owner-only release of hold m-608c8d8d761f is covered by this 'y' only at launch time. KSR/KME stay held.
