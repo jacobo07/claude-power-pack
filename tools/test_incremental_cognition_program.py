@@ -86,9 +86,15 @@ ce.LEDGER_REL = PROGRAM_DIR + "ledger.json"
 ce.FROZEN_AT_REL = PROGRAM_DIR + "FROZEN_AT"
 ce.HANDOFF_DIR = PROGRAM_DIR + "handoffs/"
 ce.PILLARS = [chr(c) for c in range(ord("A"), ord("N") + 1)]
+# X2 (traceability rows): left unbound, the CE clause read CE's REQUIREMENTS and judged IC pillars against CE-D..CE-L
+# rows (2026-10-05: D told to read MERGED, which is CE D's terminal). Bound here and watched by B1 like the rest.
+CE_REQS = (ce.REQS_REL, ce.REQ_ROW)  # CE's own X2 binding, restored only while CE's own selftest runs
+ce.REQS_REL =".planning/workstreams/incremental-cognition/REQUIREMENTS.md"
+ce.REQ_ROW = re.compile(r"^\|\s*IC-([A-N])\s*\|[^|\n]*\|([^|\n]*)\|\s*$", re.M)
 REPO = ce.REPO
 BINDING = {"SELF_REL": ce.SELF_REL, "LEDGER_REL": ce.LEDGER_REL, "FROZEN_AT_REL": ce.FROZEN_AT_REL,
-           "HANDOFF_DIR": ce.HANDOFF_DIR, "PILLARS": list(ce.PILLARS)}
+           "HANDOFF_DIR": ce.HANDOFF_DIR, "PILLARS": list(ce.PILLARS), "REQS_REL": ce.REQS_REL,
+           "REQ_ROW": ce.REQ_ROW.pattern}
 
 # ---------------------------------------------------------------- stale CE control
 STALE_CE_CONTROL = "V-CEP-REAL-HANDOFF"
@@ -118,8 +124,13 @@ def real_handoff_control(verbose=True) -> bool:
 
 def ce_selftest_with_live_handoff(verbose=True) -> bool:
     buf = io.StringIO()
-    with contextlib.redirect_stdout(buf):
-        _ce_selftest(verbose=True)
+    mine = (ce.REQS_REL, ce.REQ_ROW)
+    ce.REQS_REL, ce.REQ_ROW = CE_REQS  # CE's selftest drives CE-format rows; it judges CE's clause, not IC's binding
+    try:
+        with contextlib.redirect_stdout(buf):
+            _ce_selftest(verbose=True)
+    finally:
+        ce.REQS_REL, ce.REQ_ROW = mine
     lines = buf.getvalue().splitlines()
     reached = any(STALE_CE_CONTROL in x for x in lines)
     other_fails = [x for x in lines if x.strip().startswith("FAIL") and STALE_CE_CONTROL not in x]
@@ -190,7 +201,8 @@ def check_consumed(led: dict, owners: OwnerLedgers, only=None) -> list:
 def check_binding(led: dict) -> list:
     f = []
     now = {"SELF_REL": ce.SELF_REL, "LEDGER_REL": ce.LEDGER_REL, "FROZEN_AT_REL": ce.FROZEN_AT_REL,
-           "HANDOFF_DIR": ce.HANDOFF_DIR, "PILLARS": list(ce.PILLARS)}
+           "HANDOFF_DIR": ce.HANDOFF_DIR, "PILLARS": list(ce.PILLARS), "REQS_REL": ce.REQS_REL,
+           "REQ_ROW": ce.REQ_ROW.pattern}
     for k, v in BINDING.items():
         if now[k] != v:
             f.append(f"B1 CE global {k} rebound away from this program: {now[k]!r}")
@@ -825,6 +837,24 @@ def selftest(verbose=True) -> bool:
     ce.LEDGER_REL = "vault/programs/skill-capability/ledger.json"
     say(any(x.startswith("B1") for x in check_binding(led)), "V-ICP-MUT-rebound-global killed by B1")
     ce.LEDGER_REL = saved
+    saved = ce.REQS_REL
+    ce.REQS_REL = ".planning/workstreams/cognitive-economy/REQUIREMENTS.md"
+    say(any(x.startswith("B1") for x in check_binding(led)), "V-ICP-MUT-rebound-reqs killed by B1")
+    ce.REQS_REL = saved
+
+    # X2 reads THIS program's traceability rows: an IC row naming the terminal passes, a wrong terminal and a
+    # CE-format row (the 2026-10-05 cross-program read) each fail.
+    def x2(text, term="FALSIFIED_OR_REJECTED_BY_EVIDENCE"):
+        res = type("R", (ce.Resolver,), {"file_text": lambda self, rel: text if rel == ce.REQS_REL else ""})()
+        state = {p: {} for p in ce.PILLARS}
+        state["D"] = {"terminal": term}
+        return [x for x in ce.check_disposition({"state": state}, res) if x.startswith("X2")]
+    say(not x2("| IC-D | Silent-success hooks | Complete -- FALSIFIED_OR_REJECTED_BY_EVIDENCE |\n"),
+        "V-ICP-X2-OWN-ROW-CLEAN (IC row names the ledger terminal)")
+    say(bool(x2("| IC-D | Silent-success hooks | Complete -- MERGED_INTO_EXISTING_OWNER |\n")),
+        "V-ICP-MUT-X2-wrong-terminal killed by X2")
+    say(bool(x2("| CE-D | Hooks | Complete -- FALSIFIED_OR_REJECTED_BY_EVIDENCE |\n")),
+        "V-ICP-MUT-X2-foreign-row killed by X2 (a CE row is not an IC row)")
 
     CE = "vault/programs/cognitive-economy/ledger.json"
     base = {"frozen": {"consumes": {"J": [{"ledger": CE, "pillar": "D"}]}},

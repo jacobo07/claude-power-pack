@@ -23,3 +23,25 @@ baseline-ratchet.
 - [ ] **IC-L**: Offline replay / lower bound / regret -- replay ranks live experiments; live runs need quota.
 - [ ] **IC-M**: Optimizer, experiments, routing, events, reality model -- dispositions via CE Q, N, O, M (R2).
 - [ ] **IC-N**: Closeout -- UKDL three levels, CBR, baseline, vault, institutional GC.
+
+## Traceability
+
+Checked by clause X2 of `tools/test_incremental_cognition_program.py`: the row of every closed pillar names its ledger
+terminal, so "Complete" cannot hide how the obligation closed.
+
+| Req | Pillar | Status |
+|---|---|---|
+| IC-A | Mission relay in a shared checkout | Pending |
+| IC-B | Remote environment integrity | Pending |
+| IC-C | Persistent-failure retry classification | Pending |
+| IC-D | Silent-success hooks | Complete -- FALSIFIED_OR_REJECTED_BY_EVIDENCE |
+| IC-E | Large-source read virtualization | Complete -- FALSIFIED_OR_REJECTED_BY_EVIDENCE |
+| IC-F | GSD operational projection | Complete -- MERGED_INTO_EXISTING_OWNER |
+| IC-G | Derived / negative cognition reuse | Complete -- RESEARCH_INSUFFICIENT_EVIDENCE |
+| IC-H | Proof reuse / singleflight / CCSE | Complete -- RESEARCH_INSUFFICIENT_EVIDENCE |
+| IC-I | Startup floor and subagent bootstrap | Pending |
+| IC-J | Context lifetime / rollover / zero-transcript | Pending |
+| IC-K | Cognitive cost regression | Pending |
+| IC-L | Offline replay / lower bound / regret | Complete -- RESEARCH_INSUFFICIENT_EVIDENCE |
+| IC-M | Optimizer, experiments, routing, events, reality model | Pending |
+| IC-N | Closeout | Pending |
