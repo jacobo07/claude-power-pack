@@ -836,6 +836,19 @@ function hostPressure() {
   }
 }
 
+// Which session a deadline log line belongs to (incremental-cognition pillar K, 2026-10-05). The startup-floor gate
+// must tell "the hub settled and said nothing" from "the hub was abandoned": both leave `{"continue":true}` in the
+// transcript, and on a host running many sessions a timestamp cannot say whose start was cut. Only a plain id is
+// ever written; anything else reads 'unknown'. Never throws.
+function sessionOf(rawStdin) {
+  try {
+    const sid = JSON.parse(String(rawStdin || '')).session_id;
+    return (typeof sid === 'string' && /^[0-9A-Za-z][0-9A-Za-z-]{2,63}$/.test(sid)) ? sid : 'unknown';
+  } catch (_) {
+    return 'unknown';
+  }
+}
+
 // One sub-hook as a shell-free child process. Resolves (never rejects) to a
 // spawnSync-SHAPED record {status, stdout, stderr, error} so the ordered reducer
 // below is byte-for-byte the logic the sequential version used.
@@ -1055,7 +1068,7 @@ async function runChain(event, chain, rawStdin) {
     logError(event, 'CHAIN-DEADLINE-ABANDONED before pool',
       new Error('critical lane used ' + (Date.now() - chainStart) + 'ms of ' + budget
         + 'ms; pool NOT spawned (' + restSteps.length + ' skipped: '
-        + (restSteps.map((s) => s.script).join(', ') || '(none)') + '); '
+        + (restSteps.map((s) => s.script).join(', ') || '(none)') + '); session=' + sessionOf(rawStdin) + '; '
         + hostPressure()));
     reapLiveChildren();   // no-op unless a critical step leaked a child
   } else {
@@ -1075,7 +1088,8 @@ async function runChain(event, chain, rawStdin) {
         // wall clock and one that had nothing to say must not read alike.
         const lost = restIdx.filter((i) => !settled[i]).map((i) => runnable[i].script);
         logError(event, 'CHAIN-DEADLINE-ABANDONED after ' + budget + 'ms',
-          new Error('still running: ' + (lost.join(', ') || '(none)') + '; ' + hostPressure()));
+          new Error('still running: ' + (lost.join(', ') || '(none)') + '; session=' + sessionOf(rawStdin)
+            + '; ' + hostPressure()));
         reapLiveChildren();
       }
     } else {
@@ -1475,7 +1489,7 @@ function readStdin(timeoutMs) {
 // failure mode is SILENT AND FAIL-OPEN -- a false return runs the full chain,
 // which is exactly what a working filter looks like from the outside on a
 // starved host, so only a direct assertion on the predicate can tell them apart.
-module.exports = { sanitizeForSchema, familyOf, mergeOutputs, stderrIsSafeToSurface, runChain, isScratchTarget, resolvePyExe,
+module.exports = { sanitizeForSchema, familyOf, mergeOutputs, stderrIsSafeToSurface, runChain, isScratchTarget, resolvePyExe, sessionOf,
   deriveEventFromPayload, NO_EVENT_ROUTES, CHAIN_MAP, CHAIN_NAMES: Object.keys(CHAIN_MAP), EVENT_NAMES: Object.keys(EVENT_MAP) };
 
 // --- Main (CLI path only — skipped when required as a module) ---
