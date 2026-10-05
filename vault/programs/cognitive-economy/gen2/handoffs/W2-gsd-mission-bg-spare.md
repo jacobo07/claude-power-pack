@@ -15,3 +15,13 @@ Asked of the owner:
 
 Reopen condition for gen 2: E1 relays again (sweep line for `m-f011d7fdebc9` with `action` other than `replace`
 plus a new epoch), at which point W3 resumes.
+
+## Resolution (2026-10-05, verified by this pane)
+
+- Owner pane `claude-power-pack-bf` fixed it: `b2b28818`, merged as `876be2e4` (verified ancestor of HEAD).
+  Tests V-MC-STOP-POOLED-* (5), MC 225/225, G23 32/32 (peer-reported, not re-run here).
+- GEX44 clone fast-forwarded 339ccaa9 -> b2b28818 (verified: `git rev-parse` on GEX44 = b2b28818).
+- E1 had already relayed before the deploy: sweep 10:57:43Z `stopped; pid 4165820 gone` (the spare exited on its own).
+  So this fix has NOT yet been exercised in production. Its first real test is E1's next rotation: the epoch-3
+  owner pid 4168684 is itself `claude bg-spare` (verified `ps`). Reopen W2 if that rotation logs
+  `argv is not this worker` again.
