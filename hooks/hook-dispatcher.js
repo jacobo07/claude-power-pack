@@ -105,9 +105,14 @@ const EVENT_MAP = {
   // NotebookEdit, Read, Grep. NO cubre Agent ni WebFetch — esos no tienen cadena
   // de dispatcher hoy, y preferi cobertura parcial gratis a cobertura total que
   // empeora el sintoma.
-  'PreToolUse-Bash-default': ['./turn-boundary-breadcrumb.js'],
-  'PreToolUse-Edit-default': ['./turn-boundary-breadcrumb.js'],
-  'PreToolUse-Read-default': ['./turn-boundary-breadcrumb.js'],
+  //
+  // session_budget_guard.js (2026-10-05): the SESSION cost breaker, same unit as
+  // tools/mission_spend.py. Opt-in: one failed read unless a session-budget-<sid>.json
+  // exists. In-process for the reason above -- a new spawn per tool call is the hang.
+  // Pinned: tools/test_session_budget_guard.py.
+  'PreToolUse-Bash-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js'],
+  'PreToolUse-Edit-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js'],
+  'PreToolUse-Read-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js'],
   // In-process (require-based) bundles only. The Stop event is handled by
   // CHAIN_MAP below instead: those hooks are heterogeneous (one is Python)
   // and not all export run(), so they run as sequential CHILD processes
