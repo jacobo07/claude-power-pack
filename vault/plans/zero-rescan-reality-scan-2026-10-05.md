@@ -26,6 +26,18 @@ population needs content classification across other repos.
 INCONCLUSIVE: the watchdog killed it at 100.9 s after 2.97 GB read (~1/3 of the corpus), host free RAM 1.19 GB; the
 process peaked at only 61 MB, so host pressure (other panes), not the scanner. Re-run when free RAM is >= 4 GB.
 
+Run 2 (session 7cf90b36, task bnc29t9k6, 9.6 GB free at start): STOPPED BY ME at 1097 s, not completed -- its 1500 s cap
+would have killed it and the Owner chose to keep the laptop browser-usable (option A). Its line reads `killed=False`
+because the stop was external; the facts are: 28.63 GB read without finishing (~3.1x the 9.17 GB unique corpus, i.e.
+`--until auto` makes several full passes), peak 156 MB, min free 1.56 GB. Scanner memory is not the constraint; wall
+time and bytes re-read are.
+
+Run 3 (task bfvivsg5j, launched 2026-10-05 ~10:57): owner-bundle rows 4-10 in their exact authorized commands
+(population, d KME-L, d CPP-D-W7, e, f, g, h, i, kme_replay rank), sequential, BelowNormal priority, watchdog floor 0.6
+GB free, cap 3 h per step, stop after a failed population step. One `STEP <id> exit= killed= wall_s= cpu_s= peak_ws_MB=
+read_GB= min_free_GB=` line per step in the session scratchpad `ic_rows_4_10.summary`. The population step is this
+mission's champion baseline.
+
 ## In flight at seal
 
 - Champion baseline: `kme_pillars.py population --denominator KME-L --until auto --expand --root ~/.claude/projects` on the
@@ -51,6 +63,30 @@ process peaked at only 61 MB, so host pressure (other panes), not the scanner. R
   12+ projects-dir globs; 3 freshness vocabularies (tis_observed / usage_index / kme_pillars). Content-addressed transcript
   cache: ABSENT. FIOS: engines only (CONNECT). Cognitive Economy: closed, consumes the index; pillar F reread FALSIFIED 1.88 %.
 - Not read within the bound: `modules/cognitive_os/co_12_telemetry.py`, `scheduler.py`, session-continuity, session_guard.
+
+## Rescan recurrence across the estate (2026-10-05, session 7cf90b36)
+
+Method: grep of every `*.py` iterating `*.jsonl` (119 files name the projects dir; most are single-session lookups or
+stat-only), 25 candidates classified by a read-only subagent (scope / read depth / incremental / trigger, file:line cited),
+the automatic one re-verified by me. Table: session scratchpad `scan-recurrence.md` (session-local, not durable).
+
+| class | count |
+|---|---|
+| ALL_PROJECTS + full-content parse + no cache | 14 (4 of them mtime-windowed, not whole-corpus) |
+| of those, automatic | **1**: `tools/sovereign_miner.py`, scheduled task PP-Sovereign-Miner daily 03:00 (verified: Ready, last run 2026-10-05 03:00 result 0; `json.loads` every line `:104`, recursive glob over PROJECTS_DIR `:164`; docstring still says 1.6 GB) |
+| of those, manual / effectively manual | 13 (kme_token_audit, kme_pillars, token_ground_truth, tis_observed.iter_calls, skill_invocations, skill_invocation_channels, store_consult, merger, measure_command_surface, co_12_telemetry, token_corpus_audit, conversation_quality_audit, by_entrypoint) |
+| already incremental | usage_index (`:438-455` size+mtime_ns+offset), tis_observed.calls_from (offset) |
+| frequent automatic readers | tail/metadata only: session_active (every 5 min x2 tasks), scheduler, cpc_os snapshot (2 min + SessionStart), pp_eval nightly (stat) |
+
+Wired-but-dead / UNKNOWN: merger is spawned only via `tools/vault_refresh_all.py`, which does not exist (verified
+`Test-Path` False) -> never runs from the vault-heartbeat Stop hook; `commands/cpp-resume-sovereign.md:93` is stale.
+budget_monitor -> iter_calls documented as SessionStart hook (`register_global_hooks.py:37`) but no live registration found
+(UNKNOWN). pm_04_auction default -> token_ground_truth: automatic? UNKNOWN. `rename_sessions.py --all --apply` daily 04:00:
+read depth UNKNOWN.
+
+Reading for the ROI gate: automatic full-corpus recurrence is ~1/day (the miner), not a per-session cost. The rescan
+burden is concentrated in MANUAL measurement tools (13), each re-parsing the corpus per invocation, and kme_pillars
+`--until auto` / bundle rows multiply that per run.
 
 ## Open, not acted on
 
