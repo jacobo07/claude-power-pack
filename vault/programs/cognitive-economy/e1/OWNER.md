@@ -1,0 +1,3 @@
+# E1 -- items needing the Owner (one line each)
+
+- 2026-10-05 BLOCKER (Phase 1, plan 01-01): `~/.claude/hooks/quality-skill-gate.js` cannot be satisfied in a linked git worktree -- `receiptPath()` is `<toplevel>/.git/quality-skill-evidence.json`, and in a worktree `.git` is a FILE, so `--record` fails ENOTDIR and every commit staging >=3 source files is denied even after a real code-reviewer pass (verdict approve). Fix needs a `~/.claude` write (HR-001): resolve the receipt dir with `git rev-parse --git-dir` instead of `<toplevel>/.git`. Not worked around: splitting commits under the threshold would evade the gate.
