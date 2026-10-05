@@ -1,0 +1,13 @@
+dedupe: 296 -> 237
+CUT 2026-10-05T12:34:00+00:00  sessions total 237; same-day before n=17, after n=1
+--- all main sessions
+before (same day)                  n= 17 ctx med=  128,169 p25=  117,000 p75=  132,048 | instr files chars med=  157,436 (n=17) rendered med=  161,241
+after E1                           n=  1 ctx med=  124,464 p25=  124,464 p75=  124,464 | instr files chars med=  131,735 (n=1) rendered med=  135,434
+   delta first-call ctx median -3,705; delta instructions chars -25,701
+--- fresh-only (first-call ctx<=250k)
+before (same day)                  n= 17 ctx med=  128,169 p25=  117,000 p75=  132,048 | instr files chars med=  157,436 (n=17) rendered med=  161,241
+after E1                           n=  1 ctx med=  124,464 p25=  124,464 p75=  124,464 | instr files chars med=  131,735 (n=1) rendered med=  135,434
+   delta first-call ctx median -3,705; delta instructions chars -25,701
+instructions chars after-cut sessions, sorted sample: [131735] ... [131735]
+instructions chars before sessions sample: [52737, 109390, 128703] ... [159755, 159755, 159755]
+after-cut with instructions >= 0.9*median(before): 0 of 1

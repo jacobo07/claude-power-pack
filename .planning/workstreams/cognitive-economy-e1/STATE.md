@@ -2,8 +2,8 @@
 gsd_state_version: "1.0"
 milestone: v1
 current_phase: 1 — Judgement task bank for 11 rules
-status: not_started
-stopped_at: Workstream created; contract ADDENDUM-E1 committed bc70934b
+status: executed
+stopped_at: E1 ran (141M processed); REPORT cited at commit 9787a946 (expected vault/programs/cognitive-economy/e1/REPORT.md; that hash and file were NOT found in this checkout on 2026-10-05, likely on the GEX44 clone: UNVERIFIED here); 8 approved rules moved to skills in commit 17b3188a (live ~2026-10-05T12:34Z). Created at bc70934b. Frontmatter counters below were not updated by the E1 run.
 last_updated: "2026-10-05T00:00:00.000Z"
 last_activity: 2026-10-05
 progress:

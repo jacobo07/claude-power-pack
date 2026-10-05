@@ -1,0 +1,4 @@
+intervals 29028 sum growth 56455192
+REAL n 28736 out_tok=0.998 tool_result=0.447 user_text=0.326 rendered_other=0.384 rendered_hook_ctx=0.424 hook_success_stdout=0.052
+SHUFFLED hook_success_stdout (negative control) n 28737 out_tok=1.000 tool_result=0.447 user_text=0.326 rendered_other=0.383 rendered_hook_ctx=0.433 hook_success_stdout=0.019
+intervals with hook_success stdout >0: 28691 of 29028 mean stdout chars there 191.2160607856122
