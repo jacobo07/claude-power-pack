@@ -66,6 +66,26 @@ so not new data) + ONE PP session counted twice via the `mcp-video-analyzer` jun
 corpus change; `--until` cannot fix it (`not_found`). Owner decision needed before D-I: re-scope to the frozen projects
 vs re-investigate the freeze's scope.
 
+Run 6 (GEX44, Owner option 1: KME-L steps with `--project-filter "KobiiCraft-Core-Files|kme-wt-arena2"`, CPP-D-W7
+unfiltered as authorized), 20:09:57 -> 20:14:12 (4 min 15 s for all 9 steps):
+
+| step | exit | wall_s | read_GB | peak_rss_MB |
+|---|---|---|---|---|
+| r4-population | 0 (match exact) | 24 | 2.83 | 99 |
+| r4-d-kmel | 0 | 26 | 2.85 | 159 |
+| r4-d-w7 | 3 (referenced, coverage 1.1206 -> materiality UNMEASURED, not terminal) | 54 | 10.04 | 169 |
+| r5-e / r6-f / r7-g | 0 / 0 / 0 | 24 / 24 / 28 | 2.77 / 2.73 / 2.85 | 106 / 99 / 114 |
+| r8-h / r9-i / r10-l-rank | 0 / 0 / 0 | 24 / 25 / 26 | 2.65 / 2.80 / 2.82 | 110 / 99 / 104 |
+
+Files (measured on plane gex44, copied back, committed with this entry): `measurements/{D-KME-L,E-KME-L,F-KME-L,G-KME-L,
+H-KME-L,I-KME-L,L-KME-L,D-CPP-D-W7}-2026-10-05.md`; the seven KME-L files carry `population_match: exact` and
+`terminal_evidence: true`. W7's 12 % over-coverage is plausibly the same junction alias (UNVERIFIED); D-KME-L says
+`second_workload_required: false`. Not yet done: writing pillar terminals into the IC ledger / owner-bundle rows.
+
+ROI reading: the same population answer cost 869 s / 101.5 GB unscoped (10 locator scans of everything) and 24 s /
+2.83 GB scoped (one pass over the one project that holds the population). Most of the rescan cost was scope, not parsing:
+a project-scoped walk gives ~36x, before any index exists.
+
 ## In flight at seal
 
 - Champion baseline: `kme_pillars.py population --denominator KME-L --until auto --expand --root ~/.claude/projects` on the
