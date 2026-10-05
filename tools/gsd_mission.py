@@ -736,6 +736,13 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
+    try:
+        # Asked BEFORE the claim: an unreadable work-unit packet spends no epoch and starts nothing.
+        prompt = launch_prompt(rec)
+    except MissionError as exc:
+        lr.ledger_append(mission_id, "launch_refused_packet", mission_id=mission_id,
+                         epoch=rec.get("epoch"), why=str(exc)[:300])
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": str(exc), "detail": ""}
     epoch = expect_epoch + 1
     failed = rec.get("failed_launches", 0) + (1 if rec.get("state") == LAUNCHING else 0)
     extra = {"note": note} if note is not None else {}
@@ -772,9 +779,9 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                      pending={"kind": "worker_start", "epoch": epoch,
                               "requested_at": now, "deadline": now + START_DEADLINE_S},
                      **extra)
-    # Bound here too, not only at create: a record armed before bind_workstream existed still
-    # carries the bare command, and its relay would put the successor on the root milestone.
-    prompt = bind_workstream(rec["resume_command"], rec.get("workstream"))
+    # `prompt` was bound above (launch_prompt -> bind_workstream), not only at create: a record armed
+    # before bind_workstream existed still carries the bare command, and its relay would put the
+    # successor on the root milestone.
     run = runner or (lambda argv, cwd: subprocess.run(
         argv, cwd=cwd, capture_output=True, text=True, encoding="utf-8",
         errors="replace", timeout=180))
@@ -997,6 +1004,102 @@ def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
                       reason="owner hold released")
 
 
+_COUNT_RE = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*([kKmM]?)\s*$")
+_MODEL_ALIASES = ("sonnet", "opus", "haiku", "fable")
+_MODEL_ID_RE = re.compile(r"^claude-[a-z0-9][a-z0-9.\-]*$")
+
+
+def _token_count(field: str, value) -> int:
+    """`16000000`, `16M`, `300k`, `1.5m` -> a positive int; anything else is refused."""
+    m = _COUNT_RE.match(str(value))
+    n = int(float(m.group(1)) * {"": 1, "k": 1_000, "m": 1_000_000}[m.group(2).lower()]) if m else 0
+    if n <= 0:
+        raise MissionError(f"{field} must be a positive token count like 16M or 300k, not {value!r}")
+    return n
+
+
+def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = None, autocompact=None,
+                 wu_packet: str | None = None, now: float | None = None) -> dict:
+    """Set the launch envelope of a live mission (spec mission-envelope-and-compiled-wu): the token
+    estimate the cost breaker judges, the worker model, its autocompact window, and the compiled
+    work-unit packet launch_prompt sends instead of resume_command. Every value is validated before
+    anything is written; the budget clock (created_at, cost_mark) is not reset."""
+    changes: dict = {}
+    if token_estimate is not None:
+        changes["token_estimate"] = _token_count("token_estimate", token_estimate)
+    if autocompact is not None:
+        n = _token_count("autocompact", autocompact)
+        changes["autocompact"] = f"{n // 1000}k" if n % 1000 == 0 else str(n)
+    if model is not None:
+        model = str(model).strip()
+        if model not in _MODEL_ALIASES and not _MODEL_ID_RE.match(model):
+            raise MissionError(f"model must be one of {', '.join(_MODEL_ALIASES)} or a claude- model id, "
+                               f"not {model!r}")
+        changes["model"] = model
+    if wu_packet is not None:
+        p = Path(wu_packet).expanduser().resolve()
+        try:
+            data = p.read_bytes() if p.is_file() else b""
+        except OSError:
+            data = b""
+        if not data:
+            raise MissionError(f"wu_packet {str(p)!r} is not an existing, non-empty file")
+        import hashlib
+        changes["wu_packet"] = {"path": str(p), "sha256": hashlib.sha256(data).hexdigest(),
+                                "bytes": len(data), "set_at": time.time() if now is None else now}
+    if not changes:
+        raise MissionError("nothing to set: give --token-estimate, --model, --autocompact or --wu-packet")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is {rec['state']}; its envelope cannot change")
+    shown = {k: (v["path"] if k == "wu_packet" else v) for k, v in changes.items()}
+    old = {k: ((rec.get(k) or {}).get("path") if k == "wu_packet" else rec.get(k)) for k in changes}
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      event="envelope_set", now=now,
+                      reason="envelope: " + "; ".join(f"{k} {old[k]} -> {shown[k]}" for k in changes),
+                      **changes)
+
+
+# Carried into every compiled launch: the three misses of the first packet run (cwops plan, Results).
+COMPILED_WU_LESSONS = (
+    "1. Derive state from `git log` and the phase directory listing, not STATE.md alone.",
+    "2. Decide anything within your authority yourself. Ending your turn on a question is a failure: "
+    "write the open point to the progress file named in the packet and continue, or stop.",
+    "3. Before any evidence run, check that its scripts await every effect they start.",
+)
+
+
+def _packet_digest(path: str) -> str | None:
+    import hashlib
+    try:
+        data = Path(path).read_bytes()
+    except OSError:
+        return None
+    return hashlib.sha256(data).hexdigest() if data else None
+
+
+def launch_prompt(rec: dict) -> str:
+    """What a launched or continued worker is told. Without a compiled work-unit packet: the bound
+    resume command, byte for byte as before. With one: the packet (path + its CURRENT hash) and the
+    lessons, and no GSD command -- the GSD re-entry is the overhead the packet exists to skip.
+    Raises MissionError when the packet cannot be read: a worker never starts without it."""
+    pkt = rec.get("wu_packet")
+    if not pkt:
+        return bind_workstream(rec["resume_command"], rec.get("workstream"))
+    digest = _packet_digest(pkt["path"])
+    if digest is None:
+        raise MissionError(f"wu_packet {pkt['path']!r} is missing or empty")
+    drift = "" if digest == pkt.get("sha256") else f" (changed since it was set: was {str(pkt.get('sha256'))[:12]})"
+    return "\n".join([
+        f"Execute the compiled work unit in {pkt['path']} (sha256 {digest[:12]}{drift}).",
+        "Read that file first and in full; it is your scope, done-gate and budget. Do not run GSD "
+        "commands unless the packet names one.",
+        *COMPILED_WU_LESSONS,
+    ])
+
+
 # The autonomy gate's rubric and wake order live in ONE file, read by the classifier
 # (modules/autonomy_gate), the Ralph Stop hook and this card, so the three cannot drift.
 _RUBRIC_FILE = Path(__file__).resolve().parent.parent / "modules" / "autonomy_gate" / "rubric.json"
@@ -1044,7 +1147,9 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
         f"MISSION CONTINUITY — you are worker epoch {rec['epoch']} of mission {rec['mission_id']}.",
         "You have no memory of earlier workers. Durable state is the repository and GSD, not this card.",
         f"Project: {rec['cwd']}",
-        f"Resume command: {bind_workstream(rec['resume_command'], rec.get('workstream'))}",
+        (f"Compiled work unit: {rec['wu_packet']['path']} (your launch prompt; not the resume command)"
+         if rec.get("wu_packet") else
+         f"Resume command: {bind_workstream(rec['resume_command'], rec.get('workstream'))}"),
         *([f"WORKSTREAM {rec['workstream']}: before any GSD step run `node "
            f"~/.claude/gsd-core/bin/gsd-tools.cjs query workstream.set {rec['workstream']} --raw "
            f"--cwd .` (session-local pointer; gsd_run calls do not forward --ws). The repo's ROOT "
@@ -2338,7 +2443,7 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 if turn_end is not None and turn_end["decision"] == "continue":
                     import gsd_epoch as ge
                     row["continue"] = ge.continue_worker(
-                        mid, rec, prompt=bind_workstream(rec["resume_command"], rec.get("workstream")),
+                        mid, rec, prompt=launch_prompt(rec),
                         decision=turn_end, runner=runner, stop_runner=stop_runner, now=now,
                         progress=progress, work_dir=work_dir)
                     row["action"] = "continue"
@@ -2858,6 +2963,13 @@ def _cli(argv=None) -> int:
     oh.add_argument("--reason", required=True)
     orl = sub.add_parser("release", help="lift an owner hold; the budget clock is not reset")
     orl.add_argument("--mission", required=True)
+    en = sub.add_parser("envelope", help="set token estimate / model / autocompact / compiled work-unit "
+                                         "packet on a live mission (spec mission-envelope-and-compiled-wu)")
+    en.add_argument("--mission", required=True)
+    en.add_argument("--token-estimate", help="processed tokens the cost breaker judges, e.g. 16M")
+    en.add_argument("--model", help="worker model: sonnet, opus, haiku, fable or a claude- model id")
+    en.add_argument("--autocompact", help="worker autocompact window, e.g. 300k")
+    en.add_argument("--wu-packet", help="compiled work-unit file sent instead of the resume command")
     v = sub.add_parser("supervise")
     v.add_argument("--dry-run", action="store_true")
     v.add_argument("--actions-only", action="store_true",
@@ -2902,6 +3014,13 @@ def _cli(argv=None) -> int:
     if args.cmd == "release":
         rec = release_owner_hold(args.mission)
         print(f"OWNER HOLD RELEASED mission={rec['mission_id']} state={rec['state']} epoch={rec['epoch']}")
+        return 0
+    if args.cmd == "envelope":
+        rec = set_envelope(args.mission, token_estimate=args.token_estimate, model=args.model,
+                           autocompact=args.autocompact, wu_packet=args.wu_packet)
+        pkt = (rec.get("wu_packet") or {}).get("path")
+        print(f"ENVELOPE SET mission={rec['mission_id']} token_estimate={rec.get('token_estimate')} "
+              f"model={rec.get('model')} autocompact={rec.get('autocompact')} wu_packet={pkt}")
         return 0
     if args.cmd == "supervise":
         rows = supervise(dry_run=args.dry_run)
