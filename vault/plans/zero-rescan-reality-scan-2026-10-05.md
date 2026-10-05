@@ -37,6 +37,14 @@ Run 3 (task bfvivsg5j, launched 2026-10-05 ~10:57): owner-bundle rows 4-10 in th
 GB free, cap 3 h per step, stop after a failed population step. One `STEP <id> exit= killed= wall_s= cpu_s= peak_ws_MB=
 read_GB= min_free_GB=` line per step in the session scratchpad `ic_rows_4_10.summary`. The population step is this
 mission's champion baseline.
+Result: population killed by the watchdog at 93 s (free 0.48 GB, scanner 50 MB, 1.39 GB read); later steps not run.
+Host at that moment: 28 claude processes 10.1 GB, Brave 7.6 GB, Cursor 5.1 GB of 31.3 GB.
+
+Run 4 (task bwb1d2crm): same steps, watchdog switched to Available MBytes and PAUSE (NtSuspendProcess below 0.5 GB,
+resume above 1.0 GB, mechanism tested on a dummy process) instead of kill. Claude Code's own low-memory reaper killed the
+runner while the session was idle; no step line written, no orphan scanner left (verified), Available 0.63 GB after.
+Not restarted: the harness says not to without the Owner. Conclusion: on this laptop at the current load the D-I + L
+runs cannot complete; they need either other apps/panes closed or the GEX44 option (B), which copies the corpus.
 
 ## In flight at seal
 
