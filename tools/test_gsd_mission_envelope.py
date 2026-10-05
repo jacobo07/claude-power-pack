@@ -131,6 +131,13 @@ def main() -> int:
         calls.append(argv)
         return SimpleNamespace(stdout=f"backgrounded · deadbeef · {argv[3]}", stderr="", returncode=0)
 
+    # Since route admission (tools/route_admission.py) a packet launches only once ADMISSIBLE; the
+    # refusals live in test_gsd_mission_admission.py, here the packet is admitted on a thin route.
+    route = Path(TMP) / "route-env.json"
+    route.write_text('{"envelope": {"target": 3500000, "warn": 4500000, "stop": 5500000, "calls": 25}, '
+                     '"workers": [{"name": "w", "profile": "top-level-worker", "calls": 25, "packet": 4000}]}',
+                     encoding="utf-8")
+    gm.admit_route("m-env", str(route), now=NOW, measure=lambda r: None)
     cur = gm.load("m-env")
     res = gm.launch_worker("m-env", expect_epoch=cur["epoch"], expect_state=cur["state"], reason="t",
                            runner=runner, now=NOW)
