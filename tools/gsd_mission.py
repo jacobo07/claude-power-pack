@@ -1019,7 +1019,7 @@ def _token_count(field: str, value) -> int:
 
 
 def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = None, autocompact=None,
-                 wu_packet: str | None = None, now: float | None = None) -> dict:
+                 wu_packet: str | None = None, continue_max_tokens=None, now: float | None = None) -> dict:
     """Set the launch envelope of a live mission (spec mission-envelope-and-compiled-wu): the token
     estimate the cost breaker judges, the worker model, its autocompact window, and the compiled
     work-unit packet launch_prompt sends instead of resume_command. Every value is validated before
@@ -1047,8 +1047,11 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
         import hashlib
         changes["wu_packet"] = {"path": str(p), "sha256": hashlib.sha256(data).hexdigest(),
                                 "bytes": len(data), "set_at": time.time() if now is None else now}
+    if continue_max_tokens is not None:
+        changes["continue_max_tokens"] = _token_count("continue_max_tokens", continue_max_tokens)
     if not changes:
-        raise MissionError("nothing to set: give --token-estimate, --model, --autocompact or --wu-packet")
+        raise MissionError("nothing to set: give --token-estimate, --model, --autocompact, --wu-packet "
+                           "or --continue-max-tokens")
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
@@ -1056,9 +1059,15 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
         raise MissionError(f"{mission_id} is {rec['state']}; its envelope cannot change")
     shown = {k: (v["path"] if k == "wu_packet" else v) for k, v in changes.items()}
     old = {k: ((rec.get(k) or {}).get("path") if k == "wu_packet" else rec.get(k)) for k in changes}
+    # C23b: a CHANGED packet is a new work unit. Record the epoch it was set at, so decide_turn_end can
+    # tell an owner that predates it (owner epoch <= this) and start a fresh worker instead of resuming.
+    prev = rec.get("wu_packet") or {}
+    new = changes.get("wu_packet")
+    if new and (prev.get("path"), prev.get("sha256")) != (new["path"], new["sha256"]):
+        changes["wu_packet_epoch"] = rec["epoch"]
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                       event="envelope_set", now=now,
-                      reason="envelope: " + "; ".join(f"{k} {old[k]} -> {shown[k]}" for k in changes),
+                      reason="envelope: " + "; ".join(f"{k} {old[k]} -> {shown[k]}" for k in shown),
                       **changes)
 
 
@@ -2970,6 +2979,8 @@ def _cli(argv=None) -> int:
     en.add_argument("--model", help="worker model: sonnet, opus, haiku, fable or a claude- model id")
     en.add_argument("--autocompact", help="worker autocompact window, e.g. 300k")
     en.add_argument("--wu-packet", help="compiled work-unit file sent instead of the resume command")
+    en.add_argument("--continue-max-tokens",
+                    help="per-mission context ceiling for continuing the same session, e.g. 200k")
     v = sub.add_parser("supervise")
     v.add_argument("--dry-run", action="store_true")
     v.add_argument("--actions-only", action="store_true",
@@ -3017,10 +3028,12 @@ def _cli(argv=None) -> int:
         return 0
     if args.cmd == "envelope":
         rec = set_envelope(args.mission, token_estimate=args.token_estimate, model=args.model,
-                           autocompact=args.autocompact, wu_packet=args.wu_packet)
+                           autocompact=args.autocompact, wu_packet=args.wu_packet,
+                           continue_max_tokens=args.continue_max_tokens)
         pkt = (rec.get("wu_packet") or {}).get("path")
         print(f"ENVELOPE SET mission={rec['mission_id']} token_estimate={rec.get('token_estimate')} "
-              f"model={rec.get('model')} autocompact={rec.get('autocompact')} wu_packet={pkt}")
+              f"model={rec.get('model')} autocompact={rec.get('autocompact')} wu_packet={pkt} "
+              f"wu_packet_epoch={rec.get('wu_packet_epoch')} continue_max_tokens={rec.get('continue_max_tokens')}")
         return 0
     if args.cmd == "supervise":
         rows = supervise(dry_run=args.dry_run)
