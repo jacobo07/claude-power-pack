@@ -98,7 +98,18 @@ TUA-X clock-a worktree: t1 P1 closure · t2 obligation graph + packets. Product:
 1. Clock A: watch epoch 2 (ddd4103e) -> read phases/02-real-ships-from-evidence/02-VERIFY.md; measure its cost vs
    WU-A expected 25 calls; then compile the WU-B/WU-C packet (R1 FX read + P5 decision) and attach with
    `envelope --wu-packet` (the supervisor relaunches on it).
-2. Peak builder WU: event model on commercial_moment_events (read its schema first) -> T0-relative compiler ->
-   maturity/clock applicability table from CLAIMS.md checklist -> BF 2026 fixture -> no-regression drill
-   (TEST READY never needs BF READY). Control room + post-event writeback stay DEFERRED.
+2. Peak lane: AT ITS NON-BLOCKING FRONTIER (see PK2 below). Reopen when Clock A reaches P5 economics (A02 min
+   ROAS/POAS) or P6 store publish (A06 BF landing, A08 opt-in, A15 legal texts, first price read-back), or at
+   2026-10-20 to re-run the fixture (`commercial_event_bf2026 --today`) and re-judge COMPRESS_NOW items.
 3. c4 floor variants, c5 CBR candidate once WU-A actuals exist.
+
+## PK2 result (TUA-X-brand001 830bf06e, GEX44 d30e9835)
+- Home: GEX44 operator_genesis (Clock A Phase 10's code home); commercial_moment_events owns no price/offer/action,
+  so it is read, not extended. Engine + BF2026 fixture + 34 tests + mutation drill 8/8; no-regression mutants red.
+- CLI: `PYTHONPATH=/home/kobii/brand001/wt-launch python -m tuax_core.engines.operator_genesis.commercial_event_bf2026 [--today] [--json]`.
+- BF2026 over 43 actions (today 2026-10-05, T0 +53d): clock A 1 (A03 tracking = Clock A P7, already in scope),
+  B 12, DEFER 30; verdicts NOT_APPLICABLE 13, PRECOMPUTE 9, WAIT_HERO 7, WAIT_DEMAND 5, WAIT_FIRST_SALE 5, CLOCK_B 3,
+  EXECUTE 1; timing COMPRESS_NOW 6, PASSED 1, FUTURE 36. Human decisions 1 (A18), external waits 18, machine 11.
+  Regression violations: none (TEST READY never needs BF READY, tested under every maturity combination).
+- Cost: PK2 4,427,646 / 27 calls (expected <=35). Peak spend measured so far: source 1.39M + PK2 4.43M
+  (+ PK1 703d3a72 and PK1b 471ebb02 not yet metered).
