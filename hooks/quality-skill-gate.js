@@ -12,7 +12,8 @@
  * every non-commit Bash command passes untouched. It does NOT touch
  * defaultMode, permissions.allow, or any unrelated rail.
  *
- * Evidence receipt: <repo>/.git/quality-skill-evidence.json
+ * Evidence receipt: <git-dir>/quality-skill-evidence.json (`git rev-parse --absolute-git-dir`;
+ *   `<repo>/.git/` in a main checkout, `.git/worktrees/<name>/` in a linked worktree)
  *   { "ts": <epoch_seconds>, "files": [repo-relative source paths],
  *     "skills": ["code-reviewer", ...] }
  * Produced by running this file in recorder mode AFTER the quality skills:
@@ -43,8 +44,12 @@ function repoRoot(cwd) {
   return execSync("git rev-parse --show-toplevel", { cwd, encoding: "utf8", windowsHide: true }).trim();
 }
 
+// The checkout's own git dir, not `<root>/.git`: in a linked worktree `.git` is a FILE, and a
+// receipt path built under it failed ENOTDIR, so every >= 3-file commit there was denied even
+// after a real review (E1 mission, 2026-10-05). Each worktree keeps its own receipt.
 function receiptPath(root) {
-  return path.join(root, ".git", "quality-skill-evidence.json");
+  const gitDir = execSync("git rev-parse --absolute-git-dir", { cwd: root, encoding: "utf8", windowsHide: true }).trim();
+  return path.join(gitDir, "quality-skill-evidence.json");
 }
 
 function stagedSourceFiles(root) {
