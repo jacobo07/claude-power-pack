@@ -1362,10 +1362,27 @@ def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pi
                         return True, f"host {row.get('state')}; lingering pid {pid} terminated"
                     time.sleep(1)
                 return False, f"pid {pid} survived termination"
+            pooled = _daemon_pooled(argv)
+            if pooled:
+                # 2026-10-05 (GEX44 m-f011d7fdebc9): the daemon hosts background sessions in pooled
+                # processes; after host `done` the pid lives on as a spare carrying no --session-id.
+                # It is the daemon's, never killed -- and holds nothing of this worker, so it is
+                # released. Refusing here blocked the relay on every pass.
+                return True, f"host {row.get('state')}; pid {pid} is a daemon {pooled} process, released (not ours)"
             return False, (f"pid {pid} still alive after {int(wait_s)} s; not terminated: "
                            + ("argv unreadable" if not argv else "argv is not this worker"))
         return False, f"pid {pid} still alive after {int(wait_s)} s"
     return True, "stopped; no pid to wait on"
+
+
+def _daemon_pooled(argv: str | None) -> str | None:
+    """The pooled-process kind when argv is the Claude daemon's own process (`claude bg-spare ...`,
+    `claude bg-pty-host ...`): the subcommand right after the executable, or the `--bg-spare` flag.
+    A word elsewhere in an argv (a prompt, a path) does not count."""
+    tokens = (argv or "").split()
+    if len(tokens) >= 2 and tokens[1] in ("bg-spare", "bg-pty-host"):
+        return tokens[1]
+    return "bg-spare" if "--bg-spare" in tokens else None
 
 
 def _proc_cmdline(pid: int) -> str | None:

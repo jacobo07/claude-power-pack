@@ -723,6 +723,20 @@ def main() -> int:
     check("V-MC-STOP-LINGER-LIVE-VERDICT-SPARED", ok is False and killed == [], why)
     ok, why, killed = linger("done", "claude.exe --session-id s-linger", dies=False)
     check("V-MC-STOP-LINGER-SURVIVOR-REPORTED", ok is False and "survived" in why, why)
+    # 2026-10-05 (GEX44 m-f011d7fdebc9, gen2 W2b): the daemon hosts background sessions in pooled
+    # `claude bg-spare` processes; after host `done` the pid stays alive as a spare with no
+    # --session-id. It is the daemon's, so it is never killed -- and the worker is released.
+    spare = "/home/u/.local/bin/claude bg-spare --bg-spare /tmp/cc-daemon-1000/38442ce8/spare/b28b1b24.claim.sock"
+    ok, why, killed = linger("done", spare)
+    check("V-MC-STOP-POOLED-SPARE-RELEASED", ok is True and killed == [] and "released" in why, why)
+    ok, why, killed = linger("exited", "claude bg-pty-host --socket /tmp/cc-daemon-1000/x.sock")
+    check("V-MC-STOP-POOLED-PTY-HOST-RELEASED", ok is True and killed == [] and "released" in why, why)
+    ok, why, killed = linger("running", spare)
+    check("V-MC-STOP-POOLED-LIVE-VERDICT-SPARED", ok is False and killed == [], why)
+    ok, why, killed = linger("done", "claude bg-spare --session-id s-linger")
+    check("V-MC-STOP-POOLED-CARRYING-US-TERMINATED", ok is True and killed == [4242] and "terminated" in why, why)
+    ok, why, killed = linger("done", "claude.exe --session-id someone-else --resume bg-spare")
+    check("V-MC-STOP-POOLED-WORD-ELSEWHERE-SPARED", ok is False and killed == [] and "not this worker" in why, why)
 
     # --- renewal on budget halt (spec gex44-mission-plane.md, A) ---------------------------
     LATE = NOW + 25 * 3600   # past the default 24 h budget
