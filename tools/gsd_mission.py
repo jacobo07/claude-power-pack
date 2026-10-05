@@ -507,6 +507,11 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
     state = rec.get("state")
     if state in TERMINAL:
         return {"action": "none", "reason": f"terminal {state}"}
+    hold = rec.get("owner_hold")
+    if hold:
+        # spec mission-owner-hold: an Owner park outranks budget, launch and relay -- nothing is
+        # launched, stopped, halted or renewed while it stands. Holding is not halting.
+        return {"action": "none", "reason": f"owner hold: {hold.get('reason')}"}
     spent = budget_exhausted(rec, now)
     if spent and state in (PREPARED, LAUNCHING, HANDOFF):
         return {"action": "halt", "reason": f"budget: {spent}"}
@@ -930,6 +935,35 @@ def add_directive(mission_id: str, text: str, now: float | None = None) -> dict:
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                       event="directive_added", now=now,
                       directives=[*(rec.get("directives") or []), text[:1000]])
+
+
+def set_owner_hold(mission_id: str, reason: str, now: float | None = None) -> dict:
+    """Park a live mission (spec mission-owner-hold): plan_next answers none and renewal is refused
+    until release_owner_hold. The record keeps its identity, epoch and state."""
+    reason = (reason or "").strip()
+    if not reason:
+        raise MissionError("an owner hold needs a reason")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is {rec['state']}; there is nothing to hold")
+    now = time.time() if now is None else now
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      event="owner_hold_set", now=now, reason=f"owner hold: {reason[:300]}",
+                      owner_hold={"reason": reason[:1000], "set_at": now})
+
+
+def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
+    """Return a held mission to normal supervision. The budget clock is not reset."""
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if not rec.get("owner_hold"):
+        raise MissionError(f"{mission_id} has no owner hold")
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      event="owner_hold_released", now=now, owner_hold=None,
+                      reason="owner hold released")
 
 
 # The autonomy gate's rubric and wake order live in ONE file, read by the classifier
@@ -1414,6 +1448,8 @@ def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None) -> str
     Positive test: only a halt the supervisor made for budget, with GSD saying work remains."""
     if os.environ.get("CPP_MISSION_RENEW", "").lower() == "off":
         return "renewal disabled (CPP_MISSION_RENEW=off)"
+    if rec.get("owner_hold"):
+        return f"owner hold: {rec['owner_hold'].get('reason')}"
     if "budget:" not in (halt_reason or ""):
         return f"halt was not for budget: {halt_reason}"
     if gsd_outcome != "OK":
@@ -2767,6 +2803,11 @@ def _cli(argv=None) -> int:
     d = sub.add_parser("directive")
     d.add_argument("--mission", required=True)
     d.add_argument("--text", required=True)
+    oh = sub.add_parser("hold", help="park a live mission: no launch, halt or renewal (spec mission-owner-hold)")
+    oh.add_argument("--mission", required=True)
+    oh.add_argument("--reason", required=True)
+    orl = sub.add_parser("release", help="lift an owner hold; the budget clock is not reset")
+    orl.add_argument("--mission", required=True)
     v = sub.add_parser("supervise")
     v.add_argument("--dry-run", action="store_true")
     v.add_argument("--actions-only", action="store_true",
@@ -2803,6 +2844,14 @@ def _cli(argv=None) -> int:
     if args.cmd == "directive":
         rec = add_directive(args.mission, args.text)
         print(f"DIRECTIVE RECORDED mission={rec['mission_id']} total={len(rec['directives'])}")
+        return 0
+    if args.cmd == "hold":
+        rec = set_owner_hold(args.mission, args.reason)
+        print(f"OWNER HOLD SET mission={rec['mission_id']} state={rec['state']} epoch={rec['epoch']}")
+        return 0
+    if args.cmd == "release":
+        rec = release_owner_hold(args.mission)
+        print(f"OWNER HOLD RELEASED mission={rec['mission_id']} state={rec['state']} epoch={rec['epoch']}")
         return 0
     if args.cmd == "supervise":
         rows = supervise(dry_run=args.dry_run)
