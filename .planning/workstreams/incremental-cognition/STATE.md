@@ -2,80 +2,71 @@
 gsd_state_version: "1.0"
 milestone: v1
 milestone_name: incremental-cognition
-current_phase: 1 — Mission relay in a shared checkout
-current_plan: Not started
-status: planning
-stopped_at: P0 freeze sealed interactively; Phase 1 starts in-pane (RAM below the arming boundary)
-last_updated: "2026-10-03T00:00:00.000Z"
-last_activity: 2026-10-03
-last_activity_desc: Workstream created from the approved incremental-cognition program
+current_phase: rearm/closeout — step 2 (pillar K)
+current_plan: vault/plans/incremental-cognition-rearm-2026-10-05.md
+status: executing
+stopped_at: Step 1 done (STATE.md corrected to the ledger); next is K (owner-bundle row 12, Option B)
+last_updated: "2026-10-05T00:00:00.000Z"
+last_activity: 2026-10-05
+last_activity_desc: STATE.md re-derived from vault/programs/incremental-cognition/ledger.json at HEAD 75691a64
 progress:
-  total_phases: 6
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_pillars: 14
+  terminal_pillars: 6
+  open_pillars: 8
 workstream: incremental-cognition
 created: 2026-10-03
-current_phase_name: Mission relay in a shared checkout
+current_phase_name: Rearm and closeout (same programme, same ledger)
 ---
 
 # Project State
 
+## Authority
+
+The ledger is the state: `vault/programs/incremental-cognition/ledger.json` (frozen rules immutable). This file
+only mirrors it and points at the plan. If the two disagree, the ledger wins and this file is stale.
+
 ## Mission
 
 Incremental Cognition Program: a delta over cognitive-economy and skill-capability. Drive pillars A-N to
-evidence-backed terminals. Mission terms: incremental-cognition, context-rent, institutional-memoization,
-invalidation, cognitive-compiler, baseline-ratchet.
+evidence-backed terminals.
 
-## Current Position
+## Pillars (from the ledger, 2026-10-05, HEAD 75691a64)
 
-**Status:** Ready to plan
-**Current Phase:** 1 — Mission relay in a shared checkout
+| Pillar | Terminal | Where it goes next (plan step) |
+|---|---|---|
+| D | FALSIFIED_OR_REJECTED_BY_EVIDENCE | closed (d2e4edef) |
+| E | FALSIFIED_OR_REJECTED_BY_EVIDENCE | closed (d2e4edef) |
+| F | MERGED_INTO_EXISTING_OWNER | closed (d2e4edef) |
+| G | RESEARCH_INSUFFICIENT_EVIDENCE | closed (d2e4edef) |
+| H | RESEARCH_INSUFFICIENT_EVIDENCE | closed (d2e4edef); Owner keeps it (row 21) |
+| L | RESEARCH_INSUFFICIENT_EVIDENCE | closed (d2e4edef) |
+| K | open | step 2: floor reference + PRG, row 12 Option B |
+| J | open | step 4: ic_r2_evidence.py, row 29 |
+| M | open | step 4: ic_r2_evidence.py, row 30; residue -> autonomous-optimization |
+| B | open | step 5: a7/a5 deploy dry-run, then Owner a7 /login (row 14) |
+| C | open | step 6: PRG only, suites already pinned (row 2) |
+| N | open | step 7: closeout, row 31 |
+| A | open | sleeps until the next real held mission |
+| I | open | sleeps on skill-capability ledger state.B |
+
+Realized-saving effectiveness: NOT CERTIFIED until Autonomous Optimization P4 runs the live late-rollover
+experiment once after the quota reset.
 
 ## Decisions
 
-- [Plan / audit G1]: the CE verifier's stale V-CEP-REAL-HANDOFF is replaced in the wrapper (SC precedent); the CE
-  file is never edited. The defect is handed to the CE owner.
+- [Plan / audit G1]: the CE verifier's stale V-CEP-REAL-HANDOFF is replaced in the wrapper; the CE file is never
+  edited.
 - [Audit G3]: consuming pillars (H, I, J, M) close only through R2 against the owner ledger at a commit on HEAD.
-- [Audit G4]: pillar A design = a non-blocking status for a worktree the predecessor provably worked in; the Brand
-  #001 shape stays blocked.
-- [Audit G6]: the gsd_mission.py repair is deployed only at >= 4 GB free RAM.
-- [Plan]: arming waits for pillar A and >= 4 GB free; until then phases run in the interactive pane.
+- [Audit G6]: any gsd_mission.py hunk reaches the live file only at >= 4 GB free RAM.
+- [Owner 2026-10-05]: rearm plan approved; push of local commits is asked once at the end, never before.
+
+## History
+
+- 2026-10-03: P0 frozen (18e928af, FROZEN_AT d4d35059); pillar A fix deployed d2505df6; GEX44 mission
+  m-d2bdfa31de21 armed for the KME-L runs.
+- 2026-10-05: terminals D E F G H L recorded (d2e4edef); rearm plan 75691a64.
 
 ## Session Continuity
 
-**Stopped At:** Phase 1 (pillar A), RED step. P0 committed 18e928af, FROZEN_AT d4d35059.
-`tools/test_gsd_mission_cwd_align.py` has 4 NEW uncommitted cases (V-MCA-DIVERGED-FOLLOWED / -UNPROVEN /
--STALE-ROADMAP / -THREE-RELAYS) calling `gm.align_cwd(cwd, wt, proven_workstream="ws")`; the
-`threshold=9/9` line still needs 13/13. Not yet run (expected RED: align_cwd has no proven_workstream).
-**Next exact action:** run `python tools/test_gsd_mission_cwd_align.py` -> confirm RED; then in a SCRATCH copy
-of tools/gsd_mission.py add `proven_workstream=None` to align_cwd: in the diverged branch return
-`diverged_followed` (NOT in CWD_ALIGN_BLOCKING) iff proven_workstream and work_dir is a worktree top of the
-same repo and `_worktree_carries_workstream(work_dir, cwd, proven_workstream)`; at supervise ~1481 split
-`ew = effective_workdir(...)`, `work_dir = ew or rec.get("work_dir")`, pass
-`proven_workstream=rec.get("workstream") if ew and ew != rec["cwd"] else None`, ledger event
-`cwd_diverged_followed`. Run cwd_align + test_gsd_mission + test_gsd_epoch + legacy golden; mutation drill;
-deploy into the live file only at >= 4 GB free RAM (audit G6).
-**Update 2026-10-03 (session c47b1f78):** RED confirmed (TypeError on proven_workstream). Fix written in a
-SCRATCH copy only (`%TEMP%\claude\...\c47b1f78-...\scratchpad\droot\tools\gsd_mission.py`; live file sha256
-D5324568... untouched): align_cwd(proven_workstream) -> `diverged_followed`; supervise splits `ew`, sets
-`proven_ws` only when `ew and ew != rec["cwd"]`, ledgers `cwd_diverged_followed`. Gap found: nothing tested the
-supervise wiring -> 3 new gates V-MCA-SUP-PROVEN-PASSED / -RECORDED-NOT-PROOF / -BASE-NOT-PROOF (repo test file
-now 16/16 threshold; RED against the live module until deploy). Against scratch: cwd_align 16/16,
-test_gsd_mission 213/213, test_gsd_epoch 82/82, legacy golden 32/32; mutation drills m1-m7 all KILLED (controls valid; specs in scratchpad\drills).
-**DEPLOYED + committed d2505df6** (Owner go; 8.1 GB free; live sha A217654F..., pre-deploy backup in the session
-scratchpad). Live tree: cwd_align 16/16, test_gsd_mission 213/213, test_gsd_epoch 82/82, golden 32/32.
-Note: m-fdefb0fca0c0 (cognitive-economy) and m-876f8b5a904a (ucep) were already RUNNING epoch 2 before the
-deploy (relaunched 16:10 / 17:01 UTC on "owner dead"); the fix applies from their next relay on.
-**ARMED ON GEX44 (Owner "GEX44", 2026-10-03 17:12 UTC):** mission `m-d2bdfa31de21`, epoch 1 worker
-`607795c4` acked; 12 cycles / 24 h, permission auto; cwd `/home/kobii/missions/incremental-cognition` (clone of
-bare `mission/incremental-cognition` at b6e024ca, repo-local identity, trust set, ~/.claude.json backed up as
-`.bak-ic-<ts>`). Supervised by `agora-mission-sweep.timer`. ROADMAP "Run plane: GEX44" routes A-PRG, KME-L
-(D,E,F,G,I,L) and K's reference to the owner bundle; run starts at Phase 2.
-**Handback (Owner/laptop):** status = ssh gex44 with `CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude python3
-~/.claude/skills/claude-power-pack/tools/gsd_mission.py status`; work = `git fetch
-ssh://gex44/home/kobii/missions/incremental-cognition <worker branch, e.g. mission/incremental-cognition-run>`
-(the worker commits on its OWN worktree branch). Any gsd_mission.py hunk (B, C) reaches the laptop's live file
-only by a deploy at >= 4 GB free (G6).
-**Resume File:** this STATE.md + vault/plans/incremental-cognition-program-2026-10-03.md
+**Resume File:** this STATE.md + vault/plans/incremental-cognition-rearm-2026-10-05.md (order of work and
+execution log). Next exact action: plan step 2 (K).

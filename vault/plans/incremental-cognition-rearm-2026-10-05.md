@@ -59,3 +59,5 @@ A step past 2x its planned calls with no new evidence stops and is re-planned. R
 ~2.5x its first-call context. Expected end state if the experiment has not run: COMPLETE, effectiveness NOT CERTIFIED.
 
 ## Execution log (append per step: step, commit, calls, peak context, result)
+- Step 1 (session c59ad762, after /kresume certified at 75691a6): STATE.md re-derived from ledger state (D E F G H L
+  terminal, 8 open), resume pointer -> this plan. ~7 calls, context ~190k. Result: STALE -> current.
