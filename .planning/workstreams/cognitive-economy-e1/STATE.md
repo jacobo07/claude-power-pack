@@ -48,3 +48,10 @@ rules can leave the startup prefix without a judgement loss. Each one costs ~19.
   requires a harness worktree, where the quality gate cannot be satisfied (see COMMIT PLANE). The guard's
   purpose -- no concurrent commits in a shared checkout -- holds: the agents never commit, files are
   disjoint, and the orchestrator commits each plan after a review.
+- 2026-10-05 (epoch 2) LAYOUT, amended: subagent writes are refused by the harness anywhere under the shared
+  checkout path unless the target is a linked git worktree, and the clone is not one. So: EDIT PLANE =
+  `.claude/worktrees/e1` (agents and orchestrator write here); COMMIT PLANE = the clone. Per commit: copy the
+  changed paths e1 -> clone, review, `--record`, commit in the clone; then in e1 verify each untracked copy is
+  byte-identical to the committed blob, remove it, `git fetch ../e1-commitclone <branch>` and
+  `git merge --ff-only FETCH_HEAD`. 01-02/03/04 agents wrote to /tmp when blocked; the orchestrator placed
+  their files in e1 and ran the real validator (VALIDATE-E1 11/11 base=78ba9e7414 pins=13/13).
