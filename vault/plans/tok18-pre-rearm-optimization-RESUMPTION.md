@@ -73,3 +73,10 @@ Headlines: SDD 0.25/0.26/0.38 (KSR/InfinityOps/KME); control-loop 36-45% of proc
 Open for the Owner: human judgment of gen3_t2/t2_unclassified_sample_60.json (OTHER is 15-34% of calls strict); decide whether lever (c) is worth a measured compile pilot given the break-even in floor-sized calls (~34 KSR / ~66 InfinityOps).
 Do not build: join-tax mitigation, copy-based packet compiler, more hook-text compaction, N=1 or S>=60k handoffs.
 Next 3 actions: (1) Owner reads gen3_t2/README.md "What this changes"; (2) decide canary scope (InfinityOps Phase 4 not contradicted); (3) if (d) proceeds, test N=10,S=5-10k on a real worker with a measured handoff quality check before any realized-saving label.
+
+## T2-0.5 APPROVED (Owner 'y' 2026-10-05) - START HERE
+Read ONLY `vault/programs/cognitive-economy/gen2/evidence/gen3_t2/T2-0.5-PACKET.md`; it supersedes the "Next" lists above.
+T2-0 true cost: worker 3,383,129 measured + pane a5fafaa2 orchestration ~2.5-3.5M estimated (that pane ran ~385k/call) -> ~5.9-6.9M.
+State at approval: HEAD 64406cfc; holds on KSR m-a128e03c7419, InfinityOps m-608c8d8d761f, E1 m-f011d7fdebc9 (GEX44); KME HALTED.
+Online breakers already exist (ccd134e6 mission_spend session scope, edcb4ad7 session_budget_guard): connect, do not rebuild.
+Next 3 actions: (1) `mission_spend.py session-declare` for the orchestrating session (stop 4.5M); (2) dispatch W-a then W-b, one at a time, each with the packet only; (3) verify their controls yourself, write T2-0.5-README.md, report the T2-1 budget for the Owner's go after 2026-10-11T18:00Z.
