@@ -124,6 +124,13 @@ def render(order, records, *, addendum=ADDENDUM, r2_rules=R.EXCLUDED_BY_R2):
     L += ["", "Decisions are the contract's (clause 4); no token count breaks a tie. "
           + (f"B passed where A failed (reported, never used): {', '.join(flagged)}." if flagged
              else "No task where B passed and A failed."), ""]
+    by_id = {r["run_id"]: r for r in runs}
+    weak = [f"{t['id']} ({by_id[t['b_run']].get('grade_summary')})" for t in state["tasks"]
+            if t["decision"] == K.STAYS and t["b_run"] in by_id
+            and any(str(f).startswith("control ") for f in by_id[t["b_run"]].get("grade_fails") or [])]
+    if weak:
+        L += ["Losses whose B run also failed control checks (the solution broke the task's plain behaviour, not only "
+              "its judgement; the decision stands, attribution to the rule is weaker): " + ", ".join(weak) + ".", ""]
 
     pc = stop.get("positive_control")
     L += ["## Positive control (gate 1, first valid pair)", ""]

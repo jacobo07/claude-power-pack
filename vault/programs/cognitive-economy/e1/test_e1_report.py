@@ -144,6 +144,19 @@ def g_bank_access():
     return ok, f"hit={hit_id in text} unaudited={'NOT AUDITED' in text} clean={'No marker hit' in ctext}"
 
 
+def g_weak_loss():
+    lose = T.ORDER_IDS[1]
+    recs, _ = campaign(lambda task, arm, att: {"passed": not (task == lose and arm == "B")})
+    plain = rendered(recs)
+    for r in recs:
+        if r.get("run_id") == f"{lose}-B-a1":
+            r["grade_fails"] = ["control first_request_starts 'refused'"]
+    weak = rendered(recs)
+    ok = "also failed control checks" in weak and lose in weak.split("also failed control")[1].split("\n")[0] \
+        and "also failed control checks" not in plain
+    return ok, f"weak={'also failed control' in weak} plain={'also failed control' in plain}"
+
+
 def g_spend_stop_undecided():
     recs, act = campaign(lambda task, arm, att: {"total": 2_000_000})
     text = rendered(recs)
@@ -201,7 +214,8 @@ GATES = [
     ("V-E1R-ALL-DECIDED", g_all_decided), ("V-E1R-NOT-FINISHED", g_not_finished), ("V-E1R-TAMPERED", g_tampered),
     ("V-E1R-REPLAY-REFUSED", g_replay_refused), ("V-E1R-HARM", g_harm), ("V-E1R-POSCTL", g_posctl),
     ("V-E1R-CEILING", g_ceiling), ("V-E1R-TOKENS-NO-TIEBREAK", g_tokens_no_tiebreak),
-    ("V-E1R-BANK-ACCESS", g_bank_access), ("V-E1R-SPEND-UNDECIDED", g_spend_stop_undecided),
+    ("V-E1R-BANK-ACCESS", g_bank_access), ("V-E1R-WEAK-LOSS", g_weak_loss),
+    ("V-E1R-SPEND-UNDECIDED", g_spend_stop_undecided),
     ("V-E1R-LIMITS", g_limits_verbatim), ("V-E1R-HOME-REFUSED", g_home_refused), ("V-E1R-CLI", g_cli),
 ]
 
