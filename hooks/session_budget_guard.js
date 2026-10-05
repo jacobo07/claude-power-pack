@@ -19,6 +19,13 @@
 // cannot be written) gets ONE grace call, then denies: an envelope nobody can measure is not
 // silently treated as a zero spend.
 //
+// Agent spawn (2026-10-06, Live QA W0: four GSD subagents spent 41.8M of a 4M envelope): an Agent/Task
+// call is denied when the envelope left (stop - processed) cannot pay the spawned type's measured floor
+// for default_min_calls calls (vault/config/route-floors.json, the table tools/route_admission.py
+// admits routes with). An unmeasured type is charged the highest floor in the table: absent is not
+// zero. The dispatcher has no Agent lane, so this check runs only where the guard is registered
+// standalone on `Agent|Task` (the stdin entry at the bottom of this file).
+//
 // Never denied, so a tripped session can still rotate or lift its own envelope: a Bash/PowerShell
 // command naming rollover.py, mission_spend.py or session-budget-. Kill switch:
 // CPP_SESSION_BUDGET=off, or delete the budget file.
@@ -132,6 +139,36 @@ function judge(budget, st) {
   return null;
 }
 
+const AGENT_TOOLS = new Set(['Agent', 'Task']);
+const FLOORS_PATH = path.join(__dirname, '..', 'vault', 'config', 'route-floors.json');
+
+// The floor a spawned agent of `type` re-reads per call, and the call count it is charged for.
+// null = the table cannot be read; the caller says so instead of guessing a number.
+function agentFloor(type, floorsPath) {
+  const t = readJson(floorsPath || process.env.CPP_ROUTE_FLOORS || FLOORS_PATH);
+  const profiles = t && t.profiles && typeof t.profiles === 'object' ? t.profiles : null;
+  if (!profiles) return null;
+  const floors = Object.values(profiles).map(p => Number(p && p.floor)).filter(n => Number.isFinite(n) && n > 0);
+  if (!floors.length) return null;
+  const own = profiles[type] && Number(profiles[type].floor);
+  const known = Number.isFinite(own) && own > 0;
+  return { floor: known ? own : Math.max(...floors), known, minCalls: Math.max(1, Number(t.default_min_calls) || 1) };
+}
+
+function judgeAgent(budget, st, toolInput) {
+  const type = (toolInput && typeof toolInput.subagent_type === 'string' && toolInput.subagent_type) || 'general-purpose';
+  const f = agentFloor(type);
+  if (!f) return advise('SESSION BUDGET: the route floor table cannot be read, so this Agent spawn was not judged against the envelope.');
+  const remaining = Number(budget.stop) - st.tokens;
+  const need = f.floor * f.minCalls;
+  if (remaining < need) {
+    return deny(`Agent spawn of ${type}: floor ${fmt(f.floor)}${f.known ? '' : ' (unmeasured type: highest floor charged)'} ` +
+      `x ${f.minCalls} calls = ${fmt(need)} > envelope left ${fmt(Math.max(0, remaining))} (stop ${fmt(budget.stop)}). ` +
+      'Do the work in this session or recompile the route without agents.');
+  }
+  return null;
+}
+
 function decide(event) {
   const sid = event && event.session_id;
   if (!sid || !SID_RE.test(sid)) return null;
@@ -165,6 +202,11 @@ function decide(event) {
   } else {
     st.grace = false;
     verdict = judge(budget, st);
+    if (AGENT_TOOLS.has(event.tool_name)) {
+      const a = judgeAgent(budget, st, event.tool_input);
+      const denied = v => !!(v && v.hookSpecificOutput && v.hookSpecificOutput.permissionDecision === 'deny');
+      if (a && (denied(a) || !verdict)) verdict = a;     // a deny always outranks an advisory
+    }
   }
   try {
     fs.writeFileSync(sPath + '.tmp', JSON.stringify(st));
@@ -179,4 +221,18 @@ async function run(event) {
   try { return decide(event); } catch (e) { return null; }  // a bug in the guard never breaks a tool call
 }
 
-module.exports = { run, decide, advance, fresh, judge, DEFAULT_CALL_RATIO, DEFAULT_NOPROGRESS };
+module.exports = { run, decide, advance, fresh, judge, judgeAgent, agentFloor, DEFAULT_CALL_RATIO, DEFAULT_NOPROGRESS };
+
+// Standalone entry, for the one event the dispatcher has no lane for: register as a PreToolUse
+// command hook on `Agent|Task` (`node <PP>/hooks/session_budget_guard.js`). Same decide(), same
+// fail-open: a guard bug or unparseable input allows the call.
+if (require.main === module) {
+  let raw = '';
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', d => { raw += d; }).on('end', () => {
+    let out = null;
+    try { out = decide(JSON.parse(raw.replace(/^﻿/, ''))); } catch (e) { out = null; }
+    if (out) process.stdout.write(JSON.stringify(out));
+    process.exit(0);
+  });
+}
