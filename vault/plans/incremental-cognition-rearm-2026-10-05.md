@@ -61,3 +61,8 @@ A step past 2x its planned calls with no new evidence stops and is re-planned. R
 ## Execution log (append per step: step, commit, calls, peak context, result)
 - Step 1 (session c59ad762, after /kresume certified at 75691a6): STATE.md re-derived from ledger state (D E F G H L
   terminal, 8 open), resume pointer -> this plan. ~7 calls, context ~190k. Result: STALE -> current.
+- Step 2 partial (same session, base 9f6e379f): floor/reference.json written from 8f983bc6 (188,147 chars / 87,739
+  tokens, sha c77535d4...), sanity parse WITHIN_BOUND, injected-rise drill 3/3 (+1500 red universal_1k, +500 green,
+  explained green), test_floor_regression_gate 57/57 (10 skipped). Evidence `evidence/K-reference.md`. ~10 calls.
+  BLOCKED on the PRG: no later champion-cwd session exists, and the Option B PRG is a fresh probe session (quota);
+  row 12 said no quota -> Owner question. K stays open; state.K not written.
