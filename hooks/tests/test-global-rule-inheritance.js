@@ -1,24 +1,25 @@
 #!/usr/bin/env node
 /**
- * Proves a global rule file is actually inherited, rather than merely written.
+ * Proves a global rule file is actually inherited -- at the MODEL BOUNDARY, not in a hook's source.
  *
- * A rule that exists and reaches nobody is a document. The claim "future projects inherit this" rests
- * on one mechanism: learning-sentinel.js reads ~/.claude/rules at SessionStart and pushes each .md
- * body into the session context. No registry, no manifest -- a directory glob. That is a good design
- * and it is also the thing that could quietly stop being true: a refactor that switched to a
- * hardcoded list, or narrowed the filter, would leave every existing rule working while silently
- * orphaning every new one.
+ * Until 2026-10-05 this file assumed learning-sentinel.js was the inheritance mechanism and drilled its
+ * directory glob. Measured on the K probe windows (incremental-cognition pillar K, 8f983bc6 and fa7e93cb), that
+ * premise was false: the harness itself loads ~/.claude/rules/**\/*.md, recursively, as User instructions in
+ * every session, so the hook was a second, non-recursive copy (it never saw common/ or python/) that put rule
+ * text in context twice and pushed its own emission past the pipe budget. The hook no longer emits rules.
  *
- * So this drills the mechanism itself rather than asserting that a file exists. Three checks:
+ * So the claim "future sessions inherit this rule" is now judged where it is true or false -- in a real
+ * transcript's startup window:
  *
- *   1. the hook still enumerates the directory (structurally, by reading its source);
- *   2. the enumeration it performs actually picks up every .md now present -- driven against a
- *      temporary file this test creates and deletes, so it cannot pass by naming a file that
- *      happens to be listed somewhere;
- *   3. a positive control, because an enumeration that matched nothing would otherwise report a
- *      clean bill over an empty set, which is the failure this whole file exists to notice.
+ *   1. every rule file that existed when a recent real session started is in that session's `instructions`
+ *      attachment (nested directories included);
+ *   2. the predicate that says so goes red on a synthetic missing rule and green on a present one, so it cannot
+ *      pass by accepting everything;
+ *   3. learning-sentinel.js, driven for real, re-emits no rule text and stays inside the 4,096 B pipe budget;
+ *   4. the destructive-state doctrine still asks the validate-to-effect question in the place it now lives.
  *
  * Run: node ~/.claude/hooks/tests/test-global-rule-inheritance.js
+ *      (CPP_SENTINEL=<path> drives a canonical copy of the hook before it is deployed.)
  */
 'use strict';
 
@@ -26,269 +27,151 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const RULES_DIR = path.join(os.homedir(), '.claude', 'rules');
-const SENTINEL = path.join(os.homedir(), '.claude', 'hooks', 'learning-sentinel.js');
+const HOME_CLAUDE = path.join(os.homedir(), '.claude');
+const RULES_DIR = path.join(HOME_CLAUDE, 'rules');
+const PROJECTS = path.join(HOME_CLAUDE, 'projects');
+const SENTINEL = process.env.CPP_SENTINEL || path.join(HOME_CLAUDE, 'hooks', 'learning-sentinel.js');
+const DESTRUCTIVE_SKILL = path.join(HOME_CLAUDE, 'skills', 'destructive-state-authorization', 'SKILL.md');
+const MAX_CANDIDATES = 25;
 
 let failures = 0;
+function ok(name, evidence) { console.log(`  PASS  ${name}${evidence ? ` — ${evidence}` : ''}`); }
+function fail(name, diagnostic) { failures += 1; console.error(`  FAIL  ${name} — ${diagnostic}`); }
 
-function ok(name, evidence) {
-  console.log(`  PASS  ${name}${evidence ? ` — ${evidence}` : ''}`);
+const norm = (p) => String(p).replace(/\\/g, '/').toLowerCase();
+
+function ruleFiles(dir) {
+  const out = [];
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) out.push(...ruleFiles(p));
+    else if (e.isFile() && e.name.endsWith('.md')) out.push(p);
+  }
+  return out;
 }
 
-function fail(name, diagnostic) {
-  failures += 1;
-  console.error(`  FAIL  ${name} — ${diagnostic}`);
+/** -> {start: Date|null, paths: Set<normalized path>} from the rows before the first assistant row, or null. */
+function startupInstructions(file) {
+  let start = null;
+  const paths = new Set();
+  let text;
+  try { text = fs.readFileSync(file, 'utf8'); } catch { return null; }
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    let row;
+    try { row = JSON.parse(line); } catch { continue; }
+    if (!row || typeof row !== 'object') continue;
+    if (row.type === 'assistant') break;
+    if (!start && row.timestamp) start = new Date(row.timestamp);
+    const a = row.attachment || {};
+    if (a.type === 'instructions') for (const f of a.files || []) if (f && f.type === 'User' && f.path) paths.add(norm(f.path));
+  }
+  return paths.size ? { start, paths } : null;
+}
+
+/** The predicate under test: expected rule paths absent from a delivered set. */
+function missingFrom(delivered, expected) {
+  return expected.filter((p) => !delivered.has(norm(p)));
 }
 
 console.log('test-global-rule-inheritance');
 
-// 1. The mechanism is a glob of the rules directory, read out of the hook's own source. Asserted
-//    structurally because the alternative -- trusting a comment -- is what this is guarding against.
-let sentinelSource = '';
+// 1. Model-boundary delivery from the newest real session that loaded User instructions.
 try {
-  sentinelSource = fs.readFileSync(SENTINEL, 'utf8');
-} catch (error) {
-  fail('learning-sentinel.js is readable', String(error && error.message));
-}
-
-if (sentinelSource) {
-  // Why not a single tidy pattern: the first draft used [^)]* to span the path.join arguments, which
-  // cannot cross the nested os.homedir() call -- so it reported the hook as broken on its very first
-  // run. The instrument was wrong, not the subject, which is the whole reason this file matches three
-  // independent anchors instead of one clever one.
-  const globsRulesDir =
-    /RULES_DIR\s*=\s*path\.join\(/.test(sentinelSource) &&
-    /['"]rules['"]\s*\)/.test(sentinelSource) &&
-    /readdirSync\(RULES_DIR\)/.test(sentinelSource) &&
-    /endsWith\(['"]\.md['"]\)/.test(sentinelSource);
-  if (globsRulesDir) {
-    ok('the session hook enumerates ~/.claude/rules/*.md rather than a fixed list');
-  } else {
-    fail(
-      'the session hook enumerates ~/.claude/rules/*.md rather than a fixed list',
-      'RULES_DIR glob not found in learning-sentinel.js — a new rule file may no longer be inherited, ' +
-        'which looks identical from the outside to one that is'
-    );
+  const rulesNorm = norm(RULES_DIR);
+  const candidates = fs.readdirSync(PROJECTS, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .flatMap((d) => fs.readdirSync(path.join(PROJECTS, d.name)).filter((f) => f.endsWith('.jsonl'))
+      .map((f) => path.join(PROJECTS, d.name, f)))
+    .map((p) => ({ p, m: fs.statSync(p).mtimeMs }))
+    .sort((a, b) => b.m - a.m)
+    .slice(0, MAX_CANDIDATES * 8);
+  let seen = 0;
+  let found = null;
+  for (const { p } of candidates) {
+    if (seen >= MAX_CANDIDATES) break;
+    const win = startupInstructions(p);
+    if (!win) continue;
+    seen += 1;
+    if ([...win.paths].some((x) => x.startsWith(rulesNorm + '/')) && win.start) { found = { p, ...win }; break; }
   }
-  // 2026-09-16 -- STRENGTHENED, and the reason matters more than the change.
-  //
-  // This used to grep for the literal `ctx.push(\`### Global Rule: ${rf}` and it
-  // was RIGHT to fail when that disappeared: a hook that names files instead of
-  // delivering them satisfies every enumeration check while inheriting nothing.
-  // Its own diagnostic said so -- "enumerating the files is not the same as
-  // delivering them" -- and that objection is what turned a truncation into a
-  // relocation rather than being argued away.
-  //
-  // What changed underneath: inlining every rule body put ~148 KB through the
-  // hook's stdout, whose OS pipe buffer is 4-64 KB. On Windows that write is
-  // SYNCHRONOUS, so once the buffer fills with no reader it blocks the event
-  // loop and no timer can bound it -- the 40-minute SessionStart stall. The
-  // bodies cannot travel inline. They now travel in a bundle file and the
-  // emission carries a pointer to it.
-  //
-  // So the assertion moved from SOURCE SHAPE to DELIVERY, which is both what the
-  // original intended and harder to satisfy by accident: a source grep passes on
-  // a hook that builds the string and never emits it, while this requires the
-  // bytes to exist somewhere a reader can reach.
-  const emitsInline = /### Global Rule: \$\{(rf|f)\}/.test(sentinelSource);
-  const writesBundle = /inherited-global-rules\.md/.test(sentinelSource)
-    && /writeFileSync\(/.test(sentinelSource);
-  if (emitsInline && writesBundle) {
-    ok('each rule body is delivered — inline while it fits, by bundle file beyond that');
+  if (!found) {
+    fail('a recent real session carries ~/.claude/rules in its instructions',
+      `no startup window among ${seen} recent transcripts lists a User rule file — this judged nothing`);
   } else {
-    fail(
-      'each rule body is delivered — inline while it fits, by bundle file beyond that',
-      `the delivery site changed shape (inline=${emitsInline} bundle=${writesBundle}); ` +
-        'enumerating the files is not the same as delivering them'
-    );
-  }
-}
-
-// 2. Drive the enumeration against a file the hook has never seen. Naming an existing rule would
-//    prove only that the existing rules are listed somewhere, which is the weaker claim.
-function enumerate() {
-  return fs
-    .readdirSync(RULES_DIR)
-    .filter((f) => f.endsWith('.md'))
-    .sort();
-}
-
-const probeName = `zz-inheritance-probe-${process.pid}.md`;
-const probePath = path.join(RULES_DIR, probeName);
-try {
-  const before = enumerate();
-
-  // 3. Positive control on the population. An enumeration that returned nothing would satisfy every
-  //    "is my file absent" style check and report a clean sweep over an empty set.
-  if (before.length >= 3) {
-    ok('the enumeration finds the existing rules', `${before.length} files`);
-  } else {
-    fail(
-      'the enumeration finds the existing rules',
-      `only ${before.length} found — too few to distinguish a working glob from a broken one`
-    );
-  }
-
-  fs.writeFileSync(probePath, '# probe\n', 'utf8');
-  const after = enumerate();
-  if (after.includes(probeName)) {
-    ok('a newly added rule file is picked up with no registration');
-  } else {
-    fail(
-      'a newly added rule file is picked up with no registration',
-      'the glob did not see a file created moments earlier, so inheritance is not automatic'
-    );
-  }
-
-  // 3b. DRIVE IT. Everything above reads source or reads the directory; neither
-  //     can tell a hook that delivers from one that merely could. So run the
-  //     real hook with a real payload and require the bytes to arrive -- and
-  //     require the EMISSION to stay under the pipe budget in the same breath,
-  //     because satisfying either one alone is how this regressed.
-  try {
-    const { execFileSync } = require('child_process');
-    const raw = execFileSync(process.execPath, [SENTINEL], {
-      input: JSON.stringify({
-        hook_event_name: 'SessionStart', session_id: 'inheritance-probe',
-        cwd: process.cwd(), source: 'startup',
-      }),
-      encoding: 'utf8',
-      timeout: 20000,
-    });
-    const emitted = JSON.parse(raw);
-    const ctx = (emitted.hookSpecificOutput && emitted.hookSpecificOutput.additionalContext) || '';
-    const emissionBytes = Buffer.byteLength(ctx, 'utf8');
-
-    const bundlePath = path.join(os.homedir(), '.claude', 'state', 'inherited-global-rules.md');
-    const bundle = fs.existsSync(bundlePath) ? fs.readFileSync(bundlePath, 'utf8') : '';
-    const delivered = new Set(
-      (bundle.match(/^### Global Rule: (.+)$/gm) || []).map(l => l.replace(/^### Global Rule: /, ''))
-    );
-    for (const l of ctx.split('\n')) {
-      const m = /^### Global Rule: (.+)$/.exec(l);
-      if (m) delivered.add(m[1]);
-    }
-    // The probe file is created moments before and is legitimately absent from a
-    // bundle written earlier in the same run; judge the stable population.
-    const expected = after.filter(f => f !== probeName);
-    const missing = expected.filter(f => !delivered.has(f));
-
-    if (missing.length === 0) {
-      ok('every rule body actually reaches a reader',
-        `${expected.length} delivered (emission ${emissionBytes} B + bundle ${bundle.length} B)`);
+    const all = ruleFiles(RULES_DIR);
+    const expected = all.filter((p) => fs.statSync(p).birthtimeMs < found.start.getTime());
+    const nested = expected.filter((p) => path.dirname(p) !== RULES_DIR);
+    const missing = missingFrom(found.paths, expected);
+    if (expected.length < 3) {
+      fail('the population is large enough to judge', `${expected.length} rule files predate ${path.basename(found.p)}`);
+    } else if (missing.length) {
+      fail('every rule file reaches the model as an instruction',
+        `${missing.length} of ${expected.length} absent from ${path.basename(found.p)}: ${missing.map((m) => path.relative(RULES_DIR, m)).join(', ')}`);
     } else {
-      fail('every rule body actually reaches a reader',
-        `${missing.length} rule(s) enumerated but delivered NOWHERE: ${missing.join(', ')} — ` +
-        'neither inline nor in the bundle file, which is a rule that exists and reaches nobody');
+      ok('every rule file reaches the model as an instruction',
+        `${expected.length}/${expected.length} in ${path.basename(found.p)} (${nested.length} nested), ${all.length - expected.length} newer than that session`);
     }
-
-    // The constraint that forced the bundle in the first place. Without this the
-    // obvious "fix" to the check above is to inline everything again, which
-    // restores the SessionStart stall.
-    if (emissionBytes <= 4096) {
-      ok('the emission stays inside the pipe budget', `${emissionBytes} B <= 4096 B`);
-    } else {
-      fail('the emission stays inside the pipe budget',
-        `${emissionBytes} B exceeds the 4096 B undrained-pipe buffer — on Windows that write is ` +
-        'SYNCHRONOUS and blocks the event loop with no timer able to bound it');
-    }
-  } catch (error) {
-    fail('every rule body actually reaches a reader',
-      `could not drive the hook: ${error && error.message} — this judged nothing`);
-  }
-
-  // The rule this drill was built for. Checked last, so a failure above is not mistaken for this one.
-  if (after.includes('destructive-state-authorization.md')) {
-    ok('the destructive-state authorization rule is in the inherited set');
-  } else {
-    fail(
-      'the destructive-state authorization rule is in the inherited set',
-      'the file is missing from ~/.claude/rules, so no future session receives it'
-    );
   }
 } catch (error) {
-  fail('the rules directory can be enumerated and written', String(error && error.message));
-} finally {
-  try {
-    if (fs.existsSync(probePath)) {
-      fs.unlinkSync(probePath);
-    }
-  } catch {
-    console.error(`  WARN  could not remove probe file ${probePath} — remove it by hand`);
-  }
+  fail('the model-boundary delivery can be judged', String(error && error.message));
 }
 
-// 4. Inheriting the FILE is not inheriting the LESSON. A rule that says "refuse when the state the user
-//    saw has changed" and stops there leaves the harder question unasked -- whether anything can move
-//    between that check and the irreversible step. Those are different properties, and a destructive
-//    feature can satisfy the first completely while losing data to the second.
-//
-//    These rules are agent-injected prose, not an executable gate, so the honest enforcement is that the
-//    delivered text still carries the questions. Matched against a SYNTHETIC body as well as the real
-//    one: a drill pointed only at the real file would pass vacuously the day someone rewrote it, and a
-//    drill pointed only at a defect has an interest in that defect surviving.
+// 2. The predicate, from both poles, on subjects that cannot drift.
+{
+  const delivered = new Set([norm('C:/h/.claude/rules/a.md'), norm('C:/h/.claude/rules/sub/b.md')]);
+  const red = missingFrom(delivered, ['C:/h/.claude/rules/a.md', 'C:/h/.claude/rules/zz-never-delivered.md']);
+  const green = missingFrom(delivered, ['C:\\h\\.claude\\rules\\sub\\b.md', 'C:/h/.claude/rules/a.md']);
+  if (red.length === 1 && green.length === 0) ok('the delivery predicate separates a missing rule from a present one');
+  else fail('the delivery predicate separates a missing rule from a present one', `red=${red.length} green=${green.length}`);
+}
+
+// 3. The hook, driven for real: no rule text re-emitted, inside the pipe budget.
+try {
+  const { execFileSync } = require('child_process');
+  const raw = execFileSync(process.execPath, [SENTINEL], {
+    input: JSON.stringify({ hook_event_name: 'SessionStart', session_id: 'inheritance-probe', cwd: process.cwd(), source: 'startup' }),
+    encoding: 'utf8', timeout: 20000,
+  });
+  const out = raw.trim() ? JSON.parse(raw) : {};
+  const ctx = (out.hookSpecificOutput && out.hookSpecificOutput.additionalContext) || '';
+  const bytes = Buffer.byteLength(ctx, 'utf8');
+  if (/### Global Rule/.test(ctx) || /delivered by file/.test(ctx)) {
+    fail('learning-sentinel re-emits no rule text', 'rule bodies or the bundle pointer are back in the emission: the harness already delivers them');
+  } else {
+    ok('learning-sentinel re-emits no rule text');
+  }
+  if (bytes <= 4096) ok('the emission stays inside the pipe budget', `${bytes} B <= 4096 B`);
+  else fail('the emission stays inside the pipe budget', `${bytes} B exceeds the 4096 B undrained-pipe buffer`);
+} catch (error) {
+  fail('learning-sentinel can be driven', `${error && error.message} — this judged nothing`);
+}
+
+// 4. Inheriting the FILE is not inheriting the LESSON. The destructive-state rule moved to a skill on
+//    2026-09-29 (the rule file is now a pointer), so the doctrine is judged where it lives.
 function demandsEffectIntervalAnalysis(body) {
-  // Whitespace-collapsed before matching: prose wraps, and a predicate that broke when a sentence was
-  // reflowed would report missing doctrine on a rule that still states it. The synthetic green half below
-  // caught exactly that -- its phrase spanned a line break and the literal-space pattern missed it.
   const lowered = body.toLowerCase().replace(/\s+/g, ' ');
   return (
     /between the final check and the (destruction|effect)/.test(lowered) &&
-    /re-?authorize/.test(lowered) &&
+    /re-?authori[sz]e/.test(lowered) &&
     /(subprocess|await|process boundary)/.test(lowered)
   );
 }
-
-const STALE_ONLY_RULE = [
-  '# Destructive guard',
-  'Capture what the user observed and refuse the operation when the current state no longer matches it.',
-  'The authoritative side compares, never the client. Report the refusal in its own words.'
-].join('\n');
-
-const INTERVAL_AWARE_RULE = [
-  '# Destructive guard',
-  'Capture what the user observed and refuse when the current state no longer matches.',
-  'A precondition covers the effect only if the state cannot move between the final check and the',
-  'destruction: enumerate every await and subprocess in that interval, and re-authorize each batch',
-  'member against its own destruction.'
-].join('\n');
-
+const STALE_ONLY_RULE = 'Capture what the user observed and refuse the operation when the current state no longer matches it.';
+const INTERVAL_AWARE_RULE = 'Refuse when the state moved. The state cannot move between the final check and the destruction: '
+  + 'enumerate every await and subprocess in that interval, and re-authorize each batch member.';
 try {
-  // The red branch, on a subject that cannot be fixed out from under the assertion.
-  if (demandsEffectIntervalAnalysis(STALE_ONLY_RULE)) {
-    fail(
-      'a stale-only destructive rule is recognised as incomplete',
-      'the predicate accepted a rule that never mentions the validate-to-effect interval, so it would ' +
-        'report a clean bill over doctrine that cannot prevent the race'
-    );
-  } else {
-    ok('a stale-only destructive rule is recognised as incomplete');
-  }
-  // The green half, so a predicate that rejected everything could not pass the red branch and look real.
-  if (demandsEffectIntervalAnalysis(INTERVAL_AWARE_RULE)) {
-    ok('an interval-aware destructive rule is recognised as complete');
-  } else {
-    fail(
-      'an interval-aware destructive rule is recognised as complete',
-      'the predicate rejects text that does state the interval requirement, so it cannot distinguish'
-    );
-  }
-
-  const destructiveRule = fs.readFileSync(
-    path.join(RULES_DIR, 'destructive-state-authorization.md'),
-    'utf8'
-  );
-  if (demandsEffectIntervalAnalysis(destructiveRule)) {
-    ok('the inherited destructive rule forces the validate-to-effect question');
-  } else {
-    fail(
-      'the inherited destructive rule forces the validate-to-effect question',
-      'the rule is inherited but no longer asks what can move between the final check and the effect, ' +
-        'which is the half a sequential stale test cannot cover'
-    );
-  }
+  if (demandsEffectIntervalAnalysis(STALE_ONLY_RULE)) fail('a stale-only destructive rule is recognised as incomplete', 'predicate accepted it');
+  else ok('a stale-only destructive rule is recognised as incomplete');
+  if (demandsEffectIntervalAnalysis(INTERVAL_AWARE_RULE)) ok('an interval-aware destructive rule is recognised as complete');
+  else fail('an interval-aware destructive rule is recognised as complete', 'predicate rejects text that states it');
+  const pointer = fs.readFileSync(path.join(RULES_DIR, 'destructive-state-authorization.md'), 'utf8');
+  if (!/destructive-state-authorization/.test(pointer)) fail('the inherited rule file points at the skill', 'pointer text lost');
+  else ok('the inherited rule file points at the skill');
+  if (demandsEffectIntervalAnalysis(fs.readFileSync(DESTRUCTIVE_SKILL, 'utf8'))) ok('the destructive-state skill forces the validate-to-effect question');
+  else fail('the destructive-state skill forces the validate-to-effect question', `${DESTRUCTIVE_SKILL} no longer asks what can move between the final check and the effect`);
 } catch (error) {
-  fail('the destructive rule can be read and evaluated', String(error && error.message));
+  fail('the destructive doctrine can be read and evaluated', String(error && error.message));
 }
 
 if (failures > 0) {

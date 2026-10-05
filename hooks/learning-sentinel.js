@@ -24,7 +24,6 @@ const os = require('os');
 const STATE_FILE = path.join(os.homedir(), '.claude', 'state', 'compound-learnings.json');
 const RECOVERED_CACHE = path.join(os.homedir(), '.claude', 'state', 'recovered-composers.json');
 const LOCK_DIR = STATE_FILE + '.lock';
-const RULES_DIR = path.join(os.homedir(), '.claude', 'rules');
 const STALE_LOCK_MS = 30_000;
 const HEADER_PROBE_RE = /## Patterns|\*\*Takeaway:\*\*|\*\*Actionable takeaway:\*\*|## What Worked|## What Failed/;
 
@@ -406,85 +405,15 @@ function handleSessionStart(data) {
     }
   }
 
-  // 2026-09-16 -- EMISSION BUDGET. This loop inlined the FULL BODY of every
-  // global rule file and was MEASURED emitting 148,740 B of additionalContext.
-  //
-  // WHY THAT IS A HANG, not just waste. On Windows, Node's stdout-to-a-pipe is
-  // SYNCHRONOUS. A hook whose wrapper has died inherits a stdout pipe with no
-  // reader, and once the OS buffer fills the write BLOCKS THE EVENT LOOP --
-  // exactly the way readFileSync(0) did, and with no timer able to bound it,
-  // because the timer is never scheduled. Measured buffers: ~4 KB for a
-  // .NET-created pipe, ~64 KB for a libuv one. At 148 KB this hook exceeds BOTH,
-  // so it necessarily blocks mid-write on every single run and survives only
-  // because the harness is normally draining. The run where the harness times
-  // out mid-write is the 40-minute stall, on SessionStart.
-  //
-  // NOTHING IS DROPPED SILENTLY. Rules are inlined until the budget is reached
-  // and the remainder is emitted AS A NAMED LIST OF PATHS, so every rule stays
-  // discoverable and readable on demand -- a capability moved, not removed. The
-  // names are the part that must never be lost; a rule that survives only as an
-  // absence is a rule deleted.
-  //
-  // Corroborating, though not the justification: this directory is also loaded
-  // by the harness itself as user instructions, so most of those bytes were
-  // arriving twice. The budget holds either way, which is why it is written as a
-  // budget rather than as a removal.
-  const EMIT_BUDGET_BYTES = 4096;   // the smaller measured buffer; see above
-  const EMIT_RESERVE_BYTES = 1024;  // headroom for the JSON envelope + other ctx
-  try {
-    if (fs.existsSync(RULES_DIR)) {
-      const ruleFiles = fs.readdirSync(RULES_DIR).filter(f => f.endsWith('.md')).sort();
-      let used = ctx.reduce((n, s) => n + Buffer.byteLength(s, 'utf8'), 0);
-      const deferred = [];
-      for (const rf of ruleFiles) {
-        try {
-          const body = fs.readFileSync(path.join(RULES_DIR, rf), 'utf8');
-          const entry = `### Global Rule: ${rf}\n${body}`;
-          const size = Buffer.byteLength(entry, 'utf8');
-          if (used + size > EMIT_BUDGET_BYTES - EMIT_RESERVE_BYTES) {
-            deferred.push(rf);
-            continue;
-          }
-          ctx.push(entry);
-          used += size;
-        } catch { /* skip */ }
-      }
-      if (deferred.length) {
-        // DELIVERED, NOT MERELY ENUMERATED. A named list is a capability moved
-        // to a worse place; the bodies still have to arrive. So they are written
-        // to ONE file and the pointer names it. The pipe stays under budget and
-        // nothing has to be hunted for.
-        //
-        // test-global-rule-inheritance.js is the reason this exists rather than
-        // a list. Its words: "enumerating the files is not the same as
-        // delivering them". It was right, and its objection is what turned a
-        // truncation into a relocation.
-        let bundlePath = null;
-        try {
-          const bundle = deferred.map(f => {
-            const body = fs.readFileSync(path.join(RULES_DIR, f), 'utf8');
-            return `### Global Rule: ${f}\n${body}`;
-          }).join('\n\n---\n\n');
-          const stateDir = path.join(os.homedir(), '.claude', 'state');
-          fs.mkdirSync(stateDir, { recursive: true });
-          bundlePath = path.join(stateDir, 'inherited-global-rules.md');
-          fs.writeFileSync(bundlePath, bundle, 'utf8');
-        } catch { /* fall back to the pointer list below */ }
-
-        ctx.push(
-          `### Global Rules — ${deferred.length} delivered by file, not inline\n`
-          + (bundlePath
-            ? `Their full bodies are in \`${bundlePath}\` (refreshed this session). `
-              + 'Read that file: these are binding rules, not references.\n'
-            : `Bundle write failed; read them individually from \`${RULES_DIR}\`.\n`)
-          + deferred.map(f => `- ${f}`).join('\n')
-          + '\n\nInlining them would put ~148 KB through a pipe whose OS buffer is '
-          + '4-64 KB, where a synchronous write blocks the event loop and no timer '
-          + 'can bound it. The bodies are preserved; only the channel changed.'
-        );
-      }
-    }
-  } catch { /* noop */ }
+  // 2026-10-05 -- GLOBAL RULES ARE NOT RE-EMITTED HERE (incremental-cognition pillar K).
+  // The harness loads ~/.claude/rules/**/*.md itself, recursively, as User instructions in every session:
+  // both K probe windows (8f983bc6, fa7e93cb) carry all 24 files in their `instructions` attachment, nested
+  // common/ and python/ included -- which this hook's non-recursive glob never saw. Re-emitting them here put
+  // the first few bodies in context TWICE (2,985 chars) plus a pointer ordering every session to read a 30 KB
+  // bundle of rules it already had (1,046 chars, claiming "~148 KB"), and pushed this emission past its own
+  // 4,096 B pipe budget (4,119 B measured). Delivery is proven at the model boundary instead, from a real
+  // transcript, by hooks/tests/test-global-rule-inheritance.js. Evidence:
+  // vault/programs/incremental-cognition/evidence/K-sessionstart-attribution.md.
 
   // Apollo GraphQL hybrid warmup: inline the ~80-token ground-rules card only
   // when the project shows a GraphQL signal. Full modules stay lazy (Q&A 2c).
