@@ -56,6 +56,16 @@ are recreated as relative symlinks. Runner `/home/kobii/missions/gex44_ic_rows.s
 VmHWM per step), START 2026-10-05T12:13:26+02:00; summary `/home/kobii/missions/zero-rescan-out/summary.txt`.
 Note: Linux `rchar` counts page-cache hits, comparable to Windows ReadTransferCount, not to disk reads.
 
+Run 5 result (GEX44): `STEP r4-population exit=3 killed=no wall_s=869 peak_rss_MB=184 read_GB=101.53` -> population gate
+STOP, rows 4-10 not run. **Champion baseline measured: one population run = 869 s, 101.5 GB read (~10.7x the 9.5 GB
+corpus; `until_located.scans` = 10 full scans), 184 MB RSS.** Drift reconciled to the unit: frozen 102 / 34,871 calls /
+11,549,646,300 cache_read = KobiiCraft-Core-Files (101 / 34,870 / 11,549,645,760) + `kme-wt-arena2` (1 / 1 / 540).
+The measured extras are exactly: `_archived` 1 session / 649 calls / 271,001,260 cache_read (dir dates from 2026-03-31,
+so not new data) + ONE PP session counted twice via the `mcp-video-analyzer` junction alias (128 calls / 34,065,113 x2).
+34,871+649+128+128 = 35,776 and the cache_read sum match exactly. So the drift is scan SCOPE (alias + _archived), not
+corpus change; `--until` cannot fix it (`not_found`). Owner decision needed before D-I: re-scope to the frozen projects
+vs re-investigate the freeze's scope.
+
 ## In flight at seal
 
 - Champion baseline: `kme_pillars.py population --denominator KME-L --until auto --expand --root ~/.claude/projects` on the
