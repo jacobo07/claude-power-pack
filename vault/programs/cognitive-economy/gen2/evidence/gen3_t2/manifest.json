@@ -14,7 +14,9 @@
   "out_G.json": "e500c646e9110d8609756f91c98264d27b6c9c57a2716eba335169f537ddcaaa",
   "out_H.json": "3519f92e2595e9500189d6752be6fe3d66a4ec246377573b1e49ce11fa16014c",
   "out_I.json": "35a2c7b58b91d5de4a60ae77dcbc312a2454e009745d8a733cbe55d7cb8edd96",
-  "t2_cache.json(scratchpad, not committed)": "f75c8d727d7f49640b11fd1737cf671e603637327ad73dadba6a75b510ea1ac2"
+  "t2_cache.json(scratchpad, not committed)": "f75c8d727d7f49640b11fd1737cf671e603637327ad73dadba6a75b510ea1ac2",
+  "t2_c_sensitivity.py": "eb628e3930b574abf0de5b8d55e43f1f86ef576c61b56473b1b0682c259e5b9d",
+  "out_C_sensitivity.json": "6782f7db3190bc2fd7d3210af02f0858093b423247b8bc4946174cb53601b818"
  },
  "controls_all_pass": {
   "A_B_F": true,

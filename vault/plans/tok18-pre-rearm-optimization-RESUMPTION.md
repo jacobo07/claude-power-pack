@@ -65,3 +65,11 @@ A successor pane counts its own session from zero; Gen2.1 spend = successor tota
 1. T2: compile Phase 4 into packets from the reviewed Obligation Set; canary measures c (inline compile cost per removed planner/researcher/checker run) -- the number that decides the meta-work lever.
 2. Re-measure the E1 floor once >=3 post-12:34Z sessions exist per project (zero-model, g3_k1_floor.py).
 3. Optional, small: compact advisory hook text (tower-baseline, ExecutionOS tier, woz, Graph-First); ceiling 1.6-2.2%.
+
+
+## T2-0 (Gen3, 2026-10-05) - zero-model instruments A-I + D3 (worker T2ZERO-WORKER-7Q4)
+State: DONE, all controls pass. Evidence: vault/programs/cognitive-economy/gen2/evidence/gen3_t2/ (README.md readout, manifest.json sha256 + controls, out_*.json, PROGRESS.md). Code: gen3_t2/t2_extract.py + t2_instruments.py + t2_c_sensitivity.py; tools/cep_gen2.py (check_obligations) + tools/test_cep_gen2_obligations.py; ledger has obligations_declared=false only. No savings realized; all numbers are measurements or ceilings.
+Headlines: SDD 0.25/0.26/0.38 (KSR/InfinityOps/KME); control-loop 36-45% of processed; REPAIR 3.5-5%; join tax 0.06-0.12% of base (not a lever); lifetime grid with rehydration best N=10,S=5-10k, defensible ceiling -33..-41% (T1 (d) was -43% at its best, so T1's combined -34..-56% loses a few points; (e) not recomputed); D: meta-run output 2% overlap with its paid inputs, c lower bound 67k/121k vs break-even 4.1M/8.5M per run (SURVIVE as lower bound only, not proven); recurrence 75-77% of DELTA episodes (+13-20 pp over null); irreducible new-cognition floor 6.3/7.0/9.8% of processed.
+Open for the Owner: human judgment of gen3_t2/t2_unclassified_sample_60.json (OTHER is 15-34% of calls strict); decide whether lever (c) is worth a measured compile pilot given the break-even in floor-sized calls (~34 KSR / ~66 InfinityOps).
+Do not build: join-tax mitigation, copy-based packet compiler, more hook-text compaction, N=1 or S>=60k handoffs.
+Next 3 actions: (1) Owner reads gen3_t2/README.md "What this changes"; (2) decide canary scope (InfinityOps Phase 4 not contradicted); (3) if (d) proceeds, test N=10,S=5-10k on a real worker with a measured handoff quality check before any realized-saving label.
