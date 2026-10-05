@@ -39,7 +39,18 @@ A successor pane counts its own session from zero; Gen2.1 spend = successor tota
   researcher 8.9M / verifier 7.4M / executor 1.6M are UNVERIFIED (not on disk). A0 measures them from transcripts.
 - gen2 `ledger.json` `budget_tokens` has no unit field; prose labels it processed; derivation of 40/78/150M not on disk.
 
+## Done since the anchor (pane tua-x-96, session 242ae047 -- verify, do not redo)
+- **P0 DONE, c25622e8.** Path reproduced: `plan_next` halts a BLOCKED mission on budget and `renewal_refusal` renews a
+  budget halt (m-4df3ebcb89ff -> m-608c8d8d761f was exactly that). Guard = `gsd_mission.py hold|release` (owner_hold;
+  plan_next none, renewal refused), spec `vault/specs/mission-owner-hold.md`, `tools/test_gsd_mission_owner_hold.py`
+  12/12 + 2-mutant drill, test_gsd_mission 220/220. APPLIED to m-608c8d8d761f; on the live record at budget time
+  (created+24h+60s): plan none, renewal refused; unheld control: halt, renews. Release is Owner-only.
+- **A0 InfinityOps DONE, 85adcbcf** (`gen2/evidence/stage0/infinityops/`): the floor split and role split in "Facts to
+  verify" are now MEASURED (main floor 129k, soft ~80k; planner 14.6M/run, researcher 8.9M, verifier 7.4M, executor
+  1.6M total). Corrections: prompt_snapshot is a host record, not context; hook success text IS context (~7-13%).
+  This pane's spend was not separately metered (long interactive session; count it as UNKNOWN, not zero).
+
 ## Next 3 actions
-1. P0: find the mission renewal/rearm path, reproduce the risk, add the park guard with a red/green test; commit (pathspec).
-2. A0: zero-model attribution of the first-call floor and per-role (subagent type) spend across KSR, KME, InfinityOps.
-3. B pass 1: exact-match mechanical calls; extend to pass 2 only if pass 1 lands near the 10% threshold. Then units fix + readout.
+1. A0 for KSR + KME: the same zero-model floor/role split (reuse `infinityops/io_*.py`, which take a worker list).
+2. B pass 1: exact-match mechanical calls; extend to pass 2 only if pass 1 lands near the 10% threshold.
+3. Units fix (ledger budget_tokens unit field) + minimal economic readout with Resident Prefix Tax and Meta-Work Tax; STOP and report.
