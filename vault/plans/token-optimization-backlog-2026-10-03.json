@@ -1,0 +1,20 @@
+[
+  {"id": "TOK-01", "title": "Limitar sesiones concurrentes a <=4 (medido: 15-37 sesiones principales/hora; la doctrina dice 2)", "priority": 0, "effort": "S", "impact": "Critical"},
+  {"id": "TOK-02", "title": "Congelar hasta el reset semanal los programas meta de economia de tokens en PP (PP = 33% del gasto)", "priority": 0, "effort": "S", "impact": "Critical"},
+  {"id": "TOK-03", "title": "Pausar misiones Ralph / workers desatendidos durante la semana (32% del gasto en sesiones con <=1 prompt humano)", "priority": 0, "effort": "S", "impact": "Critical"},
+  {"id": "TOK-04", "title": "Bajar el muro de rollover/compact de ~450k a ~200k o usar ventana de 200k en vez de [1m] (81% de tokens en llamadas >=200k)", "priority": 0, "effort": "M", "impact": "Critical"},
+  {"id": "TOK-05", "title": "Sonnet como modelo por defecto; Opus solo para arquitectura/review final (Opus = 87% de llamadas)", "priority": 0, "effort": "S", "impact": "High"},
+  {"id": "TOK-06", "title": "Reducir el suelo fijo de contexto de 124k (mediana) a <60k: CLAUDE.md global 40KB, PP CLAUDE.md 36KB, rules 64KB, MEMORY.md 16KB", "priority": 1, "effort": "M", "impact": "High"},
+  {"id": "TOK-07", "title": "Desactivar plugins/skills sin uso (280/319 skills nunca invocadas; gsd-*, bmad, carl, superpowers SessionStart)", "priority": 1, "effort": "S", "impact": "High"},
+  {"id": "TOK-08", "title": "Recortar inyecciones de hooks por llamada (PreToolUse/UserPromptSubmit/SessionStart: Woz, baseline, Graph-First, Tower)", "priority": 1, "effort": "S", "impact": "Medium"},
+  {"id": "TOK-09", "title": "Hacer ULTRA/governance/USAP opt-in: 39 llamadas por prompt humano, ~11M tokens por prompt", "priority": 1, "effort": "M", "impact": "High"},
+  {"id": "TOK-10", "title": "Subagentes en Sonnet/Haiku por defecto (21% del gasto; 42% de ello en Opus)", "priority": 1, "effort": "S", "impact": "Medium"},
+  {"id": "TOK-11", "title": "Disciplina de Read: offset/limit y Grep primero (Read = 41 MB en 28 h, media 13,8 KB por llamada)", "priority": 2, "effort": "S", "impact": "Medium"},
+  {"id": "TOK-12", "title": "Recuperacion de paneles opt-in por panel, no relanzar todo (/lazarus all relanza 7 mas)", "priority": 2, "effort": "S", "impact": "Medium"},
+  {"id": "TOK-13", "title": "Cerrar paneles ociosos en vez de dejarlos vivos (idle >1h = 73% de las reconstrucciones de cache)", "priority": 2, "effort": "S", "impact": "Medium"},
+  {"id": "TOK-14", "title": "Auditar trabajos de fondo que gastan modelo (compound-learnings auto-prompt x27, graphify writeback, indexado)", "priority": 2, "effort": "S", "impact": "Medium"},
+  {"id": "TOK-15", "title": "Alarma de cuota que pueda disparar (umbral actual 100M output/dia vs ~19M medido: nunca dispara)", "priority": 2, "effort": "M", "impact": "Medium"},
+  {"id": "TOK-16", "title": "Excluir .claude/worktrees de Glob/Grep (las copias ensucian cada busqueda)", "priority": 3, "effort": "S", "impact": "Low"},
+  {"id": "TOK-17", "title": "Deduplicar el junction power-pack <-> mcp-video-analyzer en las herramientas de medicion (doble conteo de 1,6B)", "priority": 3, "effort": "S", "impact": "Low"},
+  {"id": "TOK-18", "title": "Tras el reset semanal: inyectar el prompt 'Cognitive Microkernel' como obligaciones del Goal cpp-cognitive-economy (EXTEND, sin Goal nuevo, Sonnet, presupuesto fijo)", "priority": 1, "effort": "L", "impact": "High", "blockers": ["weekly-reset-2026-10-11T18:00Z"]}
+]
