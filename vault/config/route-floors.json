@@ -1,0 +1,22 @@
+{
+  "unit": "first-call context = input_tokens + cache_creation_input_tokens + cache_read_input_tokens of the first assistant message; every later call re-reads at least this much, so calls x floor is a lower bound on processed tokens",
+  "measured_at": "2026-10-05T21:19:39Z",
+  "provenance": {
+    "subagents": "io-liveqa 13f19a47 vault/sidecar/live-qa/subagent-floor.json (tools/subagent_floor.py, window 14 d, scope InfinityOps,io-liveqa, 1173 samples)",
+    "top-level-worker": "io-liveqa ee5ef099 ROUTING-RECOMPILE-PLAN.md (compiled-WU worker, stripped flags: 114k min / 129k median, raw samples not committed); cross-checked 2026-10-06 against worker 0c64c3e7 (m-8bbdf725cd52) first call = 110,835, which lowers the floor"
+  },
+  "default_min_calls": 3,
+  "profiles": {
+    "top-level-worker":          {"floor": 110835, "p50": 129000, "write": true,  "n": null},
+    "gsd-executor":              {"floor": 85084,  "p50": 97700,  "write": true,  "n": 21},
+    "general-purpose":           {"floor": 85040,  "p50": 96831,  "write": true,  "n": 21},
+    "gsd-planner":               {"floor": 85569,  "p50": 99228,  "write": true,  "n": 5},
+    "gsd-phase-researcher":      {"floor": 95908,  "p50": 96311,  "write": true,  "n": 3},
+    "gsd-plan-checker":          {"floor": 95807,  "p50": 96078,  "write": false, "n": 3},
+    "gsd-verifier":              {"floor": 97231,  "p50": 97231,  "write": true,  "n": 2},
+    "gsd-code-reviewer":         {"floor": 82911,  "p50": 82911,  "write": true,  "n": 1},
+    "oneshot-architect-auditor": {"floor": 77486,  "p50": 78340,  "write": false, "n": 8},
+    "pp-code-reviewer":          {"floor": 62682,  "p50": 65473,  "write": false, "n": 23},
+    "Explore":                   {"floor": 24428,  "p50": 25226,  "write": false, "n": 14}
+  }
+}
