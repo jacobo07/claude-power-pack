@@ -1,5 +1,10 @@
 # Zero-rescan mission (KME-L raw-history scan) -- reality scan, measurement phase (2026-10-05)
 
+> **SUPERSEDED 2026-10-05** by `vault/plans/autonomous-optimization-2026-10-05.md` (APPROVED by the Owner the same
+> day; `covers: zero-rescan`, this file is its parent). The ROI gate and the build decision belong there: P1 =
+> usage_index v5, P2 = KME-L challenger that must reproduce the 7 KME-L files and "may lose to plain scoping". This
+> file stays the measurement record; nothing below is rewritten. Handoff of what it adds: the section at the end.
+
 Owner brief: the pasted /ultra-plan "KME-L / zero-rescan" mission (2026-10-05). Mode: ULTRA-PLAN, measurement-first,
 NO build before the ROI gate. Data locality: move compute to the data; do NOT replicate raw transcripts to GEX44.
 
@@ -142,3 +147,25 @@ burden is concentrated in MANUAL measurement tools (13), each re-parsing the cor
   (destructive; superseded by the data-locality rule).
 - Next: per-subcommand rescan count (bundle rows 4-10 = up to 9 full-corpus scans), does the walk follow the junction,
   recurrence across the estate, then the ROI gate and the inline plan + Q&A (ULTRA phase 2 stop).
+
+## Handoff to autonomous-optimization (2026-10-05, session 7cf90b36)
+
+Facts this record adds after that plan's approval snapshot (laptop HEAD 7ea78fa3):
+
+- **IC gen1 state moved** (its P0 "reconcile IC gen1 state"): `d2e4edef` writes terminals D, E (FALSIFIED), F (MERGED,
+  handoff F), G, H, L (RESEARCH_INSUFFICIENT); I stays OPEN (consumes SC B, which has no terminal). H's pre-registered
+  "verification below materiality" check FAILED (5.1 %, 97 % verifier subagents). Handoffs F, I: `92ea26f8`.
+- **Verifier defect fixed in IC, latent in SC**: the IC wrapper never rebound `REQS_REL` / `REQ_ROW`, so X2 judged IC
+  pillars against CE's REQUIREMENTS rows; fixed in `d2e4edef` with mutants. `tools/test_skill_capability_program.py`
+  does not rebind them either (unverified there, not touched). A gen2 wrapper must bind all seven globals.
+- **Equivalence oracle for P2**: the 7 KME-L files were produced on plane gex44 with `--project-filter
+  "KobiiCraft-Core-Files|kme-wt-arena2"`; unscoped, the population drifts by exactly `_archived` (1 session) + the
+  mcp-video-analyzer junction alias (one PP session x2). P1's dedup must make the unscoped walk equal the scoped one.
+- **Per-step cost, scoped** (all 9 rows in 4 min 15 s): 24-28 s and 2.65-2.85 GB each; CPP-D-W7 54 s / 10.04 GB and
+  referenced at coverage 1.12 (not terminal), plausibly the same alias.
+- **GEX44 state**: corpus copy `/home/kobii/kme-corpus/projects` (9.50 GB, 10,577 files, 3 relative symlinks
+  recreating the laptop junctions, Owner option B, CostaLuz included); repo clone `/home/kobii/missions/zero-rescan-run`
+  at 61909502; runner + outputs `zero-rescan-out{,2}`. The older `/home/kobii/kme-l-corpus` (1.2 GB) is redundant.
+  Neither is deleted: both need the Owner's go, and the gen2 run on GEX44 may want the full copy.
+- **Laptop memory**: the low-memory reaper killed two background jobs this session; laptop runs of whole-corpus work
+  are not reliable at the current load.
