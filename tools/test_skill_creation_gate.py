@@ -682,7 +682,18 @@ def autocrlf_plane(fx, seed):
 def git_missing(base):
     py = "/usr/bin/python3" if Path("/usr/bin/python3").is_file() else sys.executable
     env = {"PATH": "/nonexistent", "HOME": os.environ.get("HOME", ""), "LANG": "C.UTF-8"}
-    p = subprocess.run([py, str(GATE), "--repo", str(base)], capture_output=True, timeout=120, env=env)
+    argv = [py, str(GATE), "--repo", str(base)]
+    if os.name == "nt":
+        # Windows: Python cannot start without SYSTEMROOT, Path.home() reads USERPROFILE (not HOME), and
+        # verify_global_mirrors._git_exe falls back to known install paths when PATH lacks git (its M8 fix), so
+        # PATH alone never makes git missing here. The child hides those install files, which is what a host
+        # without git looks like; no production seam is added.
+        env.update({k: os.environ[k] for k in ("SYSTEMROOT", "USERPROFILE") if k in os.environ})
+        boot = ("import os,sys,runpy;_f=os.path.isfile;"
+                "os.path.isfile=lambda p:False if str(p).lower().endswith('git.exe') else _f(p);"
+                "sys.argv=sys.argv[1:];runpy.run_path(sys.argv[0],run_name='__main__')")
+        argv = [py, "-c", boot, str(GATE), "--repo", str(base)]
+    p = subprocess.run(argv, capture_output=True, timeout=120, env=env)
     out = p.stdout.decode("utf-8", "replace") + p.stderr.decode("utf-8", "replace")
     last = (p.stdout.decode("utf-8", "replace").strip().splitlines() or [""])[-1]
     ctl = subprocess.run([py, str(GATE), "--repo", str(base)], capture_output=True, timeout=120)
