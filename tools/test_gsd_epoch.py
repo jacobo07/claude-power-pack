@@ -222,6 +222,34 @@ def main() -> int:
     transcript("s-fl", [asst(NOW - 100, small), asst(NOW - 5, small)])
     check("V-EPOCH-CONTINUATION-RAN-CONTINUES-AGAIN", ge.decide_turn_end(rec, NOW)["decision"] == ge.CONTINUE)
 
+    # --- a new work-unit packet starts a fresh worker (C23b) ---------------------------------
+    # 2026-10-05 (m-3a1a8b1f7fed): WU-C was attached to a worker holding WU-A's 256k context and the
+    # ceiling (256,403 < 300,000) resumed it. A packet set at an epoch >= the owner's epoch postdates
+    # the owner, so the next turn is a fresh worker whatever the context size.
+    pkt = {"path": "/x/WU-C.md", "sha256": "c" * 64, "bytes": 9, "set_at": NOW - 10}
+    rec = running("m-wu", "s-wu", epoch=4, wu_packet=pkt, wu_packet_epoch=4)
+    transcript("s-wu", [asst(NOW - 100, small)])
+    d = ge.decide_turn_end(rec, NOW)
+    check("V-EPOCH-NEW-PACKET-ROTATES-FRESH", d["decision"] == ge.ROTATE and d["mechanism"] == ge.FRESH
+          and "new work unit" in d["reason"] and d["evidence"].get("trigger") == "new_work_unit", d["reason"])
+    # control: a worker launched for the current packet (owner epoch > packet epoch) keeps the ceiling rule
+    rec = running("m-wu-cur", "s-wu-cur", epoch=5, wu_packet=pkt, wu_packet_epoch=4)
+    transcript("s-wu-cur", [asst(NOW - 100, small)])
+    check("V-EPOCH-SAME-PACKET-CONTINUES", ge.decide_turn_end(rec, NOW)["decision"] == ge.CONTINUE)
+    rec = running("m-wu-big", "s-wu-big", epoch=5, wu_packet=pkt, wu_packet_epoch=4)
+    transcript("s-wu-big", [asst(NOW - 100, big)])
+    d = ge.decide_turn_end(rec, NOW)
+    check("V-EPOCH-SAME-PACKET-CEILING-ROTATES", d["decision"] == ge.ROTATE
+          and d["evidence"].get("trigger") == "economic_ceiling", d["reason"])
+    # children and an in-flight continuation still win over the new packet
+    transcript("s-wu-kid", [asst(NOW - 60, small, [bg])])
+    rec = running("m-wu-kid", "s-wu-kid", epoch=4, wu_packet=pkt, wu_packet_epoch=4)
+    check("V-EPOCH-NEW-PACKET-CHILD-STILL-HOLDS", ge.decide_turn_end(rec, NOW)["decision"] == ge.HOLD)
+    rec = running("m-wu-fl", "s-wu-fl", epoch=4, wu_packet=pkt, wu_packet_epoch=4,
+                  last_continuation_at=NOW - 30, last_continuation_session="s-wu-fl")
+    transcript("s-wu-fl", [asst(NOW - 100, small)])
+    check("V-EPOCH-NEW-PACKET-INFLIGHT-STILL-HOLDS", ge.decide_turn_end(rec, NOW)["decision"] == ge.HOLD)
+
     # --- the effect: exact argv, LAUNCHING at the same epoch, copy refused ------------------
     rec = running("m-eff", "abcdef12-0000-0000-0000-000000000000", epoch=3)
     seen = []
