@@ -3,6 +3,10 @@
     python3 validate_bank.py validate [--only ID[,ID...]] [--log PATH]
     python3 validate_bank.py pins
     python3 validate_bank.py index (--stdout | --write | --check)
+    python3 validate_bank.py freeze-check
+
+`freeze-check`: the bank is trusted only at the commit recorded in ../BANK_FROZEN_AT (see freeze_check);
+prints `FREEZE-CHECK OK <hash[:10]>` (exit 0) or `FREEZE-CHECK BAD` plus one line per problem (exit 1).
 
 `validate`: for every task (contract order: rule bytes descending) run its selftest, then in a fresh
 detached worktree at BASE outside the repo list the tree for any bank file, scrub every copy of a packet
@@ -41,6 +45,9 @@ E1_PREFIX = "vault/programs/cognitive-economy/e1/"
 E1_ADDENDUM = E1_PREFIX + "ADDENDUM-E1.md"
 PLAN_PREFIX = ".planning/workstreams/cognitive-economy-e1/phases/"
 BANK_FILE_NAMES = ("_e1_common.py", "validate_bank.py", "test_validate_bank.py")
+# The bank dir is wherever this file lives (bank-draft/ before the freeze, bank/ after); never hardcoded.
+BANK_REL = HERE.relative_to(REPO).as_posix()
+FROZEN_FILE = HERE.parent / "BANK_FROZEN_AT"
 
 
 def child_env():
@@ -477,6 +484,100 @@ def _index_text(idx):
     return json.dumps(idx, indent=1) + "\n"
 
 
+# ---- freeze ------------------------------------------------------------------------------------------
+
+_HEX40 = re.compile(r"[0-9a-f]{40}\n?")
+
+
+def freeze_check(repo=REPO, bank_rel=BANK_REL, frozen_file=FROZEN_FILE, expected_tasks=11):
+    """-> list of problem strings; [] means the bank at HEAD and in the working tree is exactly the frozen bank.
+
+    The frozen file holds the full hash of the ONE commit that adds `bank_rel`. Checks, in order: 40 lowercase
+    hex; the commit exists; `git log --no-renames --diff-filter=A` over bank_rel prints exactly that one hash
+    (--no-renames: with rename detection a bank created by a move shows as R and the freeze commit would be
+    invisible); no committed change to bank_rel since; no working-tree change or untracked file under bank_rel
+    (entries inside __pycache__/ ignored); the frozen VALIDATE.log has `VALIDATE-E1 n/n ... pins=13/13` with
+    n == expected_tasks and a matching `SHA256 <hex> <file>` line for every other frozen bank file."""
+    repo = Path(repo)
+    bank_rel = str(bank_rel).strip("/")
+    frozen_file = Path(frozen_file)
+    if not frozen_file.is_absolute():
+        frozen_file = repo / frozen_file
+    try:
+        raw = frozen_file.read_text(encoding="utf-8")
+    except OSError as e:
+        return [f"{frozen_file.name} unreadable: {e.__class__.__name__}"]
+    if not _HEX40.fullmatch(raw):
+        return [f"{frozen_file.name} does not hold exactly 40 lowercase hex: {raw[:60]!r}"]
+    frozen = raw.strip()
+    if subprocess.run(["git", "cat-file", "-e", frozen + "^{commit}"], cwd=str(repo), capture_output=True,
+                      env=child_env()).returncode:
+        return [f"frozen commit {frozen[:10]} does not exist in {repo}"]
+    problems = []
+    adds = git("log", "--no-renames", "--diff-filter=A", "--format=%H", "--", bank_rel, cwd=repo).split()
+    if adds != [frozen]:
+        problems.append(f"{len(adds)} commits add {bank_rel} (--no-renames), want exactly the frozen "
+                        f"{frozen[:10]}: {[a[:10] for a in adds]}")
+    changed = git("diff", "--name-only", frozen, "HEAD", "--", bank_rel, cwd=repo).split("\n")
+    changed = [c for c in changed if c]
+    if changed:
+        problems.append(f"bank changed since the freeze commit: {changed}")
+    # -z: raw paths (no quoting) and no strip() eating the leading status column of the first record.
+    status = _git_bytes("status", "--porcelain", "-z", "--untracked-files=all", "--", bank_rel,
+                        cwd=repo).decode("utf-8", "replace").split("\0")
+    dirty = [rec for rec in status if len(rec) > 3 and "__pycache__" not in rec[3:].split("/")]
+    if dirty:
+        problems.append(f"working tree differs from the frozen bank (untracked or modified): {dirty}")
+    problems += _frozen_log_problems(repo, frozen, bank_rel, expected_tasks)
+    return problems
+
+
+def _frozen_log_problems(repo, frozen, bank_rel, expected_tasks):
+    names = [p for p in git("ls-tree", "-r", "--name-only", frozen, "--", bank_rel, cwd=repo).split("\n") if p]
+    files = sorted(p[len(bank_rel) + 1:] for p in names)
+    if "VALIDATE.log" not in files:
+        return [f"frozen commit {frozen[:10]} has no {bank_rel}/VALIDATE.log"]
+    log = _git_bytes("cat-file", "blob", f"{frozen}:{bank_rel}/VALIDATE.log", cwd=repo).decode("utf-8", "replace")
+    lines = log.splitlines()
+    problems = []
+    n = expected_tasks
+    if not any(ln.startswith(f"VALIDATE-E1 {n}/{n} ") and "pins=13/13" in ln for ln in lines):
+        problems.append(f"VALIDATE.log has no `VALIDATE-E1 {n}/{n} ... pins=13/13` line")
+    if "PINS 13/13" not in lines:
+        problems.append("VALIDATE.log has no `PINS 13/13` line")
+    logged = {}
+    for ln in lines:
+        if ln.startswith("SHA256 "):
+            parts = ln.split(" ", 2)
+            if len(parts) != 3:
+                problems.append(f"VALIDATE.log malformed SHA256 line: {ln[:80]!r}")
+                continue
+            if parts[2] in logged:
+                problems.append(f"VALIDATE.log names {parts[2]} twice")
+            logged[parts[2]] = parts[1]
+    want = [f for f in files if f != "VALIDATE.log"]
+    for f in want:
+        h = hashlib.sha256(_git_bytes("cat-file", "blob", f"{frozen}:{bank_rel}/{f}", cwd=repo)).hexdigest()
+        if f not in logged:
+            problems.append(f"VALIDATE.log has no SHA256 line for {f}")
+        elif logged[f] != h:
+            problems.append(f"VALIDATE.log SHA256 for {f} is {logged[f][:12]}, frozen bytes hash {h[:12]}")
+    extra = sorted(set(logged) - set(want))
+    if extra:
+        problems.append(f"VALIDATE.log has SHA256 lines for files not in the frozen bank: {extra}")
+    return problems
+
+
+def _index_problems():
+    try:
+        text = _index_text(build_index())
+    except SystemExit as e:
+        return [f"index cannot be built: {e}"]
+    target = HERE / "index.json"
+    same = target.is_file() and target.read_text(encoding="utf-8") == text
+    return [] if same else ["index.json is missing or differs from `index --stdout`"]
+
+
 # ---- CLI ---------------------------------------------------------------------------------------------
 
 def _usage():
@@ -529,6 +630,18 @@ def main(argv):
         same = target.is_file() and target.read_text(encoding="utf-8") == text
         print("index.json matches" if same else "index.json is missing or differs")
         return 0 if same else 1
+    if cmd == "freeze-check":
+        if rest:
+            return _usage()
+        problems = freeze_check()
+        problems += _index_problems()
+        if problems:
+            print("FREEZE-CHECK BAD")
+            for p in problems:
+                print(f"  {p}")
+            return 1
+        print(f"FREEZE-CHECK OK {FROZEN_FILE.read_text(encoding='utf-8').strip()[:10]}")
+        return 0
     return _usage()
 
 

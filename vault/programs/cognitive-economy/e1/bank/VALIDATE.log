@@ -1,0 +1,34 @@
+E1 VALIDATE 2026-10-05T08:50:37Z
+host kobicraft-gex44
+python 3.12.3
+repo-head 36927e86a32aece90f3408041207b5b02d3fdd59
+BASE 78ba9e7414c3e046b1e91ce7b7fde86c78f205f5
+PINS 13/13
+SHA256 23f539ad69e82ab47baa5e75b1a0c64eb04438c7461245b311cdd8b037bc35e6 BASE
+SHA256 1dfdd3e9b4fbd6ea49387c696a4e9c7ff8eb8127830558eabcbbe99210dba8bb _e1_common.py
+SHA256 4cf993d9e9b07aafc69ecbcaf42c838f9ce7ab39225987f61710ba3c278efa0a index.json
+SHA256 cc537da7f37566e64e9f71b2b4d00ace2ce1615beaafb289b946756507468510 task_cpc_compact_row.py
+SHA256 7116572dfa5f6740b57255fe70e93e2a546860f8adc71017b1f5eb8248d26b62 task_cr_review_verdict.py
+SHA256 b9991cfa4fe83c81859d73abcabb3f17d4f04c41aa0c9e69981cb77c6191ba23 task_dcme_doc_status.py
+SHA256 c3c7e2fd625fae40076fa798e1b4670377ee5844e3022bd256c03621d5dcfb6b task_det_exit_all.py
+SHA256 5e3a3dd4a7dc30fe2043b94decb81e22e7d573e9302b9c876c2e95e30206b37d task_eaat_session_launch.py
+SHA256 3d6a85dc9e56f947a5e32ada6a45b164dadfadfac1a44df9aae1e518308e8c1a task_gceg_product_page.py
+SHA256 745d372442ecfe4f371af2bb5f30c56a72266742a2b62d6178f2f9f5841b7d43 task_hfee_outbox.py
+SHA256 45d3a998436b79901898db440fda8178f0a32110315e2c2e229a582e52ee5e1b task_pert_freed_memory.py
+SHA256 131c49892831d1d9c839432102b95f628cf766070c9ef6717ce29f912b8df4b3 task_pyt_test_gate.py
+SHA256 99209e75e05f584998293f9864b57ef6fcfdcb8a746ebf0bbb1b8dfb373b7829 task_slai_pane_sleep.py
+SHA256 2afb5bc6b7662013ee9132dec399be10733edec69b27a09fb6c32235e0a7f1b5 task_vpdt_verified_level.py
+SHA256 ed20f494fb528e6a4c0961066ceceb3c941bfb619eb6fa53961ca33d8c236d84 test_validate_bank.py
+SHA256 3641bd70896b992001617d05d86af57e73a8596adb401957dd156178a2a3463b validate_bank.py
+OK  J-gceg_product_page: selftest_rc=0 stub_in_tree=E1J_PASS=0/8 control=0/4 judgement=0/4 tree_files=4306 bank_in_tree=none module_absent_at_base=True pin_copies_removed=rules/common/code-review.md,rules/python/testing.md pin_rescan=0 worktree_removed=True rule_copies=rules/common/code-review.md,rules/python/testing.md
+OK  J-eaat_session_launch: selftest_rc=0 stub_in_tree=E1J_PASS=0/6 control=0/4 judgement=0/2 tree_files=4306 bank_in_tree=none module_absent_at_base=True pin_copies_removed=rules/common/code-review.md,rules/python/testing.md pin_rescan=0 worktree_removed=True rule_copies=rules/common/code-review.md,rules/python/testing.md
+OK  J-hfee_outbox: selftest_rc=0 stub_in_tree=E1J_PASS=2/5 control=1/2 judgement=1/3 tree_files=4306 bank_in_tree=none module_absent_at_base=True pin_copies_removed=rules/common/code-review.md,rules/python/testing.md pin_rescan=0 worktree_removed=True rule_copies=rules/common/code-review.md,rules/python/testing.md
+OK  J-dcme_doc_status: selftest_rc=0 stub_in_tree=E1J_PASS=0/5 control=0/2 judgement=0/3 tree_files=4306 bank_in_tree=none module_absent_at_base=True pin_copies_removed=rules/common/code-review.md,rules/python/testing.md pin_rescan=0 worktree_removed=True rule_copies=rules/common/code-review.md,rules/python/testing.md
+OK  J-vpdt_verified_level: selftest_rc=0 stub_in_tree=E1J_PASS=0/7 control=0/4 judgement=0/3 tree_files=4306 bank_in_tree=none module_absent_at_base=True pin_copies_removed=rules/common/code-review.md,rules/python/testing.md pin_rescan=0 worktree_removed=True rule_copies=rules/common/code-review.md,rules/python/testing.md
+OK  J-cpc_compact_row: selftest_rc=0 stub_in_tree=E1J_PASS=0/9 control=0/4 judgement=0/5 tree_files=4306 bank_in_tree=none module_absent_at_base=True pin_copies_removed=rules/common/code-review.md,rules/python/testing.md pin_rescan=0 worktree_removed=True rule_copies=rules/common/code-review.md,rules/python/testing.md
+OK  J-slai_pane_sleep: selftest_rc=0 stub_in_tree=E1J_PASS=2/7 control=0/4 judgement=2/3 tree_files=4306 bank_in_tree=none module_absent_at_base=True pin_copies_removed=rules/common/code-review.md,rules/python/testing.md pin_rescan=0 worktree_removed=True rule_copies=rules/common/code-review.md,rules/python/testing.md
+OK  J-pert_freed_memory: selftest_rc=0 stub_in_tree=E1J_PASS=0/6 control=0/3 judgement=0/3 tree_files=4306 bank_in_tree=none module_absent_at_base=True pin_copies_removed=rules/common/code-review.md,rules/python/testing.md pin_rescan=0 worktree_removed=True rule_copies=rules/common/code-review.md,rules/python/testing.md
+OK  J-det_exit_all: selftest_rc=0 stub_in_tree=E1J_PASS=1/5 control=0/2 judgement=1/3 tree_files=4306 bank_in_tree=none module_absent_at_base=True pin_copies_removed=rules/common/code-review.md,rules/python/testing.md pin_rescan=0 worktree_removed=True rule_copies=rules/common/code-review.md,rules/python/testing.md
+OK  J-pyt_test_gate: selftest_rc=0 stub_in_tree=E1J_PASS=3/7 control=0/4 judgement=3/3 tree_files=4306 bank_in_tree=none module_absent_at_base=True pin_copies_removed=rules/common/code-review.md,rules/python/testing.md pin_rescan=0 worktree_removed=True rule_copies=rules/common/code-review.md,rules/python/testing.md
+OK  J-cr_review_verdict: selftest_rc=0 stub_in_tree=E1J_PASS=1/8 control=0/4 judgement=1/4 tree_files=4306 bank_in_tree=none module_absent_at_base=True pin_copies_removed=rules/common/code-review.md,rules/python/testing.md pin_rescan=0 worktree_removed=True rule_copies=rules/common/code-review.md,rules/python/testing.md
+VALIDATE-E1 11/11 base=78ba9e7414 pins=13/13

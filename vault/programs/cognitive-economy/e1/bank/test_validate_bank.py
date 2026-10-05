@@ -459,6 +459,153 @@ def g_common_stems():
     ok = stems <= set(C.COMMON_FORBIDDEN) and {"grader", "judgement", "hidden", "E1J"} <= set(C.COMMON_FORBIDDEN)
     return ok, f"packet stems missing from COMMON_FORBIDDEN={sorted(stems - set(C.COMMON_FORBIDDEN))}"
 
+# ---- freeze: synthetic git repos in tempfile directories, never the real repository ---------------------
+
+FZ_BANK = "e1/bank"
+FZ_FROZEN = "e1/BANK_FROZEN_AT"
+FZ_FILES = {"BASE": "deadbeef\n", "task_a.py": "A = 1\n", "task_b.py": "B = 2\n", "index.json": "{}\n"}
+
+
+def _fz_run(d, *args):
+    env = {**os.environ, "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1"}
+    return subprocess.run(["git", *args], cwd=d, env=env, capture_output=True, text=True, check=True).stdout.strip()
+
+
+def _fz_commit(d, msg, *paths):
+    if paths:  # none: commit what is already staged (a `git mv`)
+        _fz_run(d, "add", "--", *paths)
+    _fz_run(d, "-c", "user.name=e1", "-c", "user.email=e1@example.invalid", "commit", "-q", "-m", msg)
+    return _fz_run(d, "rev-parse", "HEAD")
+
+
+def _fz_log(files, n=2, drop=None, bad_hash_for=None):
+    lines = ["E1 VALIDATE synthetic", "PINS 13/13"]
+    for name in sorted(files):
+        if name == drop:
+            continue
+        h = hashlib.sha256(files[name].encode()).hexdigest()
+        if name == bad_hash_for:
+            h = "0" * 64
+        lines.append(f"SHA256 {h} {name}")
+    lines.append(f"VALIDATE-E1 {n}/{n} base=deadbeef00 pins=13/13")
+    return "\n".join(lines) + "\n"
+
+
+def _fz_write(d, rel, text):
+    p = Path(d) / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(text, encoding="utf-8")
+
+
+def fz_repo(d, via_rename=False, **log_kw):
+    """A repo whose bank FZ_BANK is added by ONE commit (directly, or by moving a dir committed earlier) with a
+    VALIDATE.log, and a follow-up commit records that hash in FZ_FROZEN. -> freeze commit hash."""
+    _fz_run(d, "init", "-q", d)
+    _fz_write(d, "README.md", "repo\n")
+    _fz_commit(d, "root", "README.md")
+    log = _fz_log(FZ_FILES, **log_kw)
+    if via_rename:  # the whole bank, log included, is drafted elsewhere and then moved: a pure-rename commit
+        for name, text in {**FZ_FILES, "VALIDATE.log": log}.items():
+            _fz_write(d, f"e1/bank-draft/{name}", text)
+        _fz_commit(d, "draft", "e1/bank-draft")
+        _fz_run(d, "mv", "e1/bank-draft", FZ_BANK)
+        frozen = _fz_commit(d, "freeze")
+    else:
+        for name, text in {**FZ_FILES, "VALIDATE.log": log}.items():
+            _fz_write(d, f"{FZ_BANK}/{name}", text)
+        frozen = _fz_commit(d, "freeze", FZ_BANK)
+    _fz_write(d, FZ_FROZEN, frozen + "\n")
+    _fz_commit(d, "frozen-at", FZ_FROZEN)
+    return frozen
+
+
+def fz_check(d):
+    return V.freeze_check(d, FZ_BANK, FZ_FROZEN, expected_tasks=2)
+
+
+def fz_red(problems, needle):
+    """Red: at least one problem, and the one that fired is the condition under test."""
+    return bool(problems) and any(needle in p for p in problems)
+
+
+def g_freeze_ok():
+    with tempfile.TemporaryDirectory() as d:
+        frozen = fz_repo(d)
+        probs = fz_check(d)
+        _fz_write(d, f"{FZ_BANK}/__pycache__/task_a.cpython-312.pyc", "bytecode\n")  # ignored by construction
+        probs_cache = fz_check(d)
+    ok = probs == [] and probs_cache == [] and len(frozen) == 40
+    return ok, f"problems={probs} with_untracked_pycache={probs_cache}"
+
+
+def g_freeze_rename():
+    """--no-renames: a bank created by MOVING a committed dir is a pure-rename commit. Under rename detection
+    the freeze commit is an R, not an A, whenever the source side is visible to the diff (pathspec covering
+    both dirs: control below, measured); with a bank-only pathspec git cannot pair the source and shows A even
+    under -M, so --no-renames is what makes the answer independent of pathspec and diff.renames config.
+    freeze_check must find exactly the freeze commit."""
+    with tempfile.TemporaryDirectory() as d:
+        frozen = fz_repo(d, via_rename=True)
+        wide_m = _fz_run(d, "log", "-M", "--diff-filter=A", "--format=%H", "--", "e1").split()
+        wide_nr = _fz_run(d, "log", "--no-renames", "--diff-filter=A", "--format=%H", "--", "e1").split()
+        seen = _fz_run(d, "log", "--no-renames", "--diff-filter=A", "--format=%H", "--", FZ_BANK).split()
+        probs = fz_check(d)
+    ok = frozen not in wide_m and frozen in wide_nr and seen == [frozen] and probs == []
+    return ok, (f"-M over e1 hides freeze={frozen not in wide_m} --no-renames over e1 shows it={frozen in wide_nr} "
+                f"bank adds={[s[:10] for s in seen]} frozen={frozen[:10]} problems={probs}")
+
+
+def g_freeze_edited():
+    with tempfile.TemporaryDirectory() as d:
+        fz_repo(d)
+        _fz_write(d, f"{FZ_BANK}/task_a.py", "A = 'edited'\n")
+        _fz_commit(d, "edit", f"{FZ_BANK}/task_a.py")
+        probs = fz_check(d)
+    return fz_red(probs, "changed since the freeze"), f"problems={probs}"
+
+
+def g_freeze_added():
+    with tempfile.TemporaryDirectory() as d:
+        fz_repo(d)
+        _fz_write(d, f"{FZ_BANK}/task_c.py", "C = 3\n")
+        _fz_commit(d, "add", f"{FZ_BANK}/task_c.py")
+        probs = fz_check(d)
+    return fz_red(probs, "2 commits add"), f"problems={probs}"
+
+
+def g_freeze_untracked():
+    with tempfile.TemporaryDirectory() as d:
+        fz_repo(d)
+        _fz_write(d, f"{FZ_BANK}/task_c.py", "C = 3\n")
+        probs = fz_check(d)
+    return fz_red(probs, "untracked or modified") and len(probs) == 1, f"problems={probs}"
+
+
+def g_freeze_logsha():
+    with tempfile.TemporaryDirectory() as d:
+        fz_repo(d, bad_hash_for="task_a.py")
+        wrong = fz_check(d)
+    with tempfile.TemporaryDirectory() as d:
+        fz_repo(d, drop="task_b.py")
+        omitted = fz_check(d)
+    ok = (fz_red(wrong, "SHA256 for task_a.py") and len(wrong) == 1
+          and fz_red(omitted, "no SHA256 line for task_b.py") and len(omitted) == 1)
+    return ok, f"wrong_hash={wrong} omitted_file={omitted}"
+
+
+def g_freeze_hash():
+    bad = {}
+    with tempfile.TemporaryDirectory() as d:
+        frozen = fz_repo(d)
+        for label, text in {"upper": frozen.upper() + "\n", "short": frozen[:39] + "\n",
+                            "trailing": frozen + " x\n", "empty": "", "branch": "HEAD\n"}.items():
+            _fz_write(d, FZ_FROZEN, text)
+            bad[label] = fz_check(d)
+        _fz_write(d, FZ_FROZEN, frozen + "\n")
+        restored = fz_check(d)
+    ok = all(fz_red(p, "40 lowercase hex") for p in bad.values()) and restored == []
+    return ok, f"refused={ {k: bool(v) for k, v in bad.items()} } restored={restored}"
+
 
 GATES = [
     ("V-E1BANK-GOOD", g_good), ("V-E1BANK-NAIVE-CONTROL", g_naive_control),
@@ -472,6 +619,10 @@ GATES = [
     ("V-E1BANK-INDEX", g_index), ("V-E1BANK-PIN-SCRUB", g_pin_scrub), ("V-E1BANK-FLOOR", g_floor),
     ("V-E1BANK-ONLY", g_only), ("V-E1BANK-JPREPARE", g_jprepare),
     ("V-E1BANK-COMMON-STEMS", g_common_stems),
+    ("V-E1BANK-FREEZE-OK", g_freeze_ok), ("V-E1BANK-FREEZE-RENAME", g_freeze_rename),
+    ("V-E1BANK-FREEZE-EDITED", g_freeze_edited), ("V-E1BANK-FREEZE-ADDED", g_freeze_added),
+    ("V-E1BANK-FREEZE-UNTRACKED", g_freeze_untracked), ("V-E1BANK-FREEZE-LOGSHA", g_freeze_logsha),
+    ("V-E1BANK-FREEZE-HASH", g_freeze_hash),
 ]
 
 
