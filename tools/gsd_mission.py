@@ -701,6 +701,10 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
     mode = rec.get("permission_mode")
     if mode:
         argv += ["--permission-mode", mode]
+    if rec.get("model"):
+        # TOK-18 gen 2 D2: a mission routes its own model. Without it every epoch inherited the
+        # host default, and E1 ran 93 % Opus on mechanical work (gen2/evidence/D1-D2.md).
+        argv += ["--model", str(rec["model"])]
     if rec.get("card"):
         # The card rides the launch itself. Measured W8: the worker's SessionStart hub never
         # completed in two of two launches (chain abandoned under starvation once, silent the
@@ -952,6 +956,33 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None) -> di
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                       event="owner_hold_set", now=now, reason=f"owner hold: {reason[:300]}",
                       owner_hold={"reason": reason[:1000], "set_at": now})
+
+
+def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict:
+    """TOK-18 gen 2 D1: judge a mission that carries `token_estimate` against its measured spend
+    (tools/mission_spend.py). A trip parks it with the Owner hold -- held, never halted or renewed --
+    so the Owner sees estimate, actual and the cause before more is spent. Fail-open on a measuring
+    error: the breaker is an extra stop, and a broken meter must not stop missions on its own.
+    Returns the record as it now stands."""
+    import mission_spend as ms
+    mid = rec["mission_id"]
+    try:
+        spent = (measure or ms.processed_tokens)(rec)
+        fp = (fingerprint or progress_fingerprint)(rec.get("work_dir") or rec["cwd"])
+        verdict = ms.judge(rec, spent, fp)
+    except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+        lr.ledger_append(mid, "cost_breaker_unmeasured", mission_id=mid,
+                         error=f"{type(exc).__name__}: {exc}"[:300])
+        return rec
+    if verdict["trip"]:
+        lr.ledger_append(mid, "cost_breaker_tripped", mission_id=mid, spent=spent,
+                         estimate=rec.get("token_estimate"), reason=verdict["trip"])
+        return set_owner_hold(mid, verdict["trip"], now=now)
+    if verdict["mark"]:
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                          event="cost_mark", now=now, cost_mark=verdict["mark"],
+                          reason=f"progress fingerprint moved at {spent:,} processed")
+    return rec
 
 
 def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
@@ -1995,6 +2026,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             except Exception:  # noqa: BLE001 -- the row still carries the error
                 pass
             continue
+        if not dry_run and rec.get("token_estimate") and not rec.get("owner_hold"):
+            rec = _cost_breaker(rec, now)
         plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
         row = {"mission_id": mid, "state": rec["state"], "epoch": rec["epoch"], **plan}
         out.append(row)
