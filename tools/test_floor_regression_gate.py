@@ -612,6 +612,34 @@ def g_settings_unreadable():
     return (not why), "; ".join(why) or "malformed or non-object settings -> unknown_settings, +1024 red; readable control green"
 
 
+def g_exec_form_registration():
+    """A hook registered in exec form (`command` + `args`) is recorded by the harness as the space-joined command line;
+    the registration must match that line, or every exec-form CPP hook reads `no_registration` (measured 2026-10-05:
+    59 of 65 laptop hooks, the SessionStart dispatcher among them)."""
+    why = []
+    root = Path(scratch("exe"))
+    home, cwd = root / "home", root / "proj"
+    cwd.mkdir(parents=True, exist_ok=True)
+    node, script = "C:/Program Files/nodejs/node.exe", "C:/x/.claude/hooks/hook-dispatcher.js"
+    joined = f"{node} {script} --event=SessionStart-chain"
+    entries = [{"type": "command", "command": node, "args": [script, "--event=SessionStart-chain"]},
+               {"type": "command", "command": "node legacy.js"}]
+    write_settings(home, json.dumps({"hooks": {"SessionStart": [{"matcher": "", "hooks": entries}]}}))
+    regs = GATE.registrations(home / ".claude" / "settings.json") or {}
+    if joined not in regs.get("SessionStart", set()):
+        why.append(f"exec form not registered as its joined line: {sorted(regs.get('SessionStart', set()))}")
+    if "node legacy.js" not in regs.get("SessionStart", set()):
+        why.append("control: string-form command lost")
+    got = GATE.command_scope(joined, GATE.AttributionContext(cwd, home))
+    if got != ("universal", "user_settings"):
+        why.append(f"joined exec-form command scope={got}")
+    bad = [{"type": "command", "command": node, "args": "not-a-list"}]
+    write_settings(home, json.dumps({"hooks": {"SessionStart": [{"matcher": "", "hooks": bad}]}}))
+    if GATE.registrations(home / ".claude" / "settings.json") is not None:
+        why.append("args that are not a list of strings must read unknown (None), never a partial registration")
+    return (not why), "; ".join(why) or "exec form matched by its joined line -> universal/user_settings; string form kept; malformed args -> unknown"
+
+
 def g_cwd_absent_unattributed():
     """A transcript whose cwd is not a directory on this host (a laptop transcript read elsewhere) is never filed as project."""
     why = []
@@ -2638,6 +2666,7 @@ GATES_ATTRIBUTION = [
     ("V-FLOOR-HOOK-EVENT-FALLBACK", g_hook_event_fallback),
     ("V-FLOOR-HOOK-AMBIGUOUS", g_hook_ambiguous),
     ("V-FLOOR-SETTINGS-UNREADABLE", g_settings_unreadable),
+    ("V-FLOOR-EXEC-FORM-REGISTRATION", g_exec_form_registration),
     ("V-FLOOR-CWD-ABSENT-UNATTRIBUTED", g_cwd_absent_unattributed),
     ("V-FLOOR-SKILL-PROJECT", g_skill_project),
     ("V-FLOOR-SKILL-UNIVERSAL", g_skill_universal),

@@ -245,6 +245,14 @@ def registrations(settings_path):
             for h in (m.get("hooks") if isinstance(m, dict) else None) or []:
                 if isinstance(h, dict) and isinstance(h.get("command"), str):
                     regs.setdefault(str(event), set()).add(h["command"])
+                    if "args" in h:
+                        # exec form: the harness records `command` and `args` space-joined, so that line is the
+                        # registration a transcript can be matched against. Args that are not a list of strings make
+                        # the file unknown, never a partial registration.
+                        args = h["args"]
+                        if not isinstance(args, list) or not all(isinstance(a, str) for a in args):
+                            return None
+                        regs[str(event)].add(" ".join([h["command"]] + args))
     return regs
 
 
