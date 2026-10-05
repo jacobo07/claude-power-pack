@@ -3,12 +3,12 @@ gsd_state_version: "1.0"
 milestone: v1
 milestone_name: incremental-cognition
 current_phase: rearm/closeout — step 2 (pillar K)
-current_plan: vault/plans/incremental-cognition-rearm-2026-10-05.md
-status: executing
-stopped_at: Step 1 done (STATE.md corrected to the ledger); next is K (owner-bundle row 12, Option B)
-last_updated: "2026-10-05T00:00:00.000Z"
-last_activity: 2026-10-05
-last_activity_desc: STATE.md re-derived from vault/programs/incremental-cognition/ledger.json at HEAD 75691a64
+current_plan: vault/plans/pillar-k-resident-prefix-2026-10-05.md (K-local), under vault/plans/incremental-cognition-rearm-2026-10-05.md
+status: blocked
+stopped_at: K-local steps 0-9 committed; step 10 needs ONE probe with WINDOW_HEALTH settled (host RAM too low; Owner decision)
+last_updated: "2026-10-06T00:00:00.000Z"
+last_activity: 2026-10-06
+last_activity_desc: K attributed (hub fail-open in the reference; 41 connector names), rules de-duplicated, gate refuses degraded windows
 progress:
   total_pillars: 14
   terminal_pillars: 6

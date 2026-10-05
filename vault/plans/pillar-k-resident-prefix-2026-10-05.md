@@ -41,3 +41,20 @@ live + one K probe. 8. Deferred tools: host scoping test, else account-floor bud
 baseline / regression-debt + per-component budgets in the gate, tests. 10. Close K-local.
 
 ## Execution log (step, commit, calls, result)
+- 0 baf91b69 plan. 1 1ac31957: reference SessionStart=0 was the dispatcher abandoning the hub at its 4,000 ms
+  deadline (13:34:37.839Z, 18.6 % free) -> component INCOMPARABLE, reference kept.
+- 2 5d82174c: gate read 59/65 exec-form hooks as no_registration; fixed (V-FLOOR-EXEC-FORM-REGISTRATION).
+- 3 bf8a7630: rent scan, 40 sessions: 23,249 hook chars/session, 3,131/prompt; per-prompt classes = named debt.
+- 4+6 6063b55f: learning-sentinel no longer re-emits rules the harness already loads (-4,031 chars; its emission
+  was 4,119 B > its own 4,096 B budget); inheritance test now judges the model boundary. Deployed live.
+- 5 b526915a: OWNER_QUEUE / recovery / AutoResearch lines omitted for entrypoint sdk-cli; zero-signal digest dropped.
+- 7 b7170420: probe 6eba7a1f ($0.24): rule de-dup CONFIRMED at the model boundary; hub INCONCLUSIVE (abandoned).
+- 8 e336e06a: deferred +3,378 = 41 claude.ai connector names; `--strict-mcp-config` measured -> 15 names (38e32976).
+- 9 969b39b2 dispatcher names the session in deadline lines (live; confirmed in real lines from 22:09:33Z);
+  8169092c + 1cbdaa10 gate: evidenced budgets print as DEBT, degraded windows refused, unattributable = unknown,
+  unknown never green nor a champion (60/60); f25d05e3 deferred-tools budget in reference.json (measured fields
+  unchanged).
+- 10 OPEN: K-local closes on ONE probe whose window is `WINDOW_HEALTH settled` and verdict WITHIN_BOUND with the
+  deferred-tools DEBT line. Not run: host at ~15 % free RAM abandons the hub several times per hour, and the slice's
+  ~1-2 probe allowance is spent (6eba7a1f, 38e32976). The hub's 4 s abandonment is itself the dominant reliability
+  defect (it also drops mission / rollover cards) -> Owner decision.
