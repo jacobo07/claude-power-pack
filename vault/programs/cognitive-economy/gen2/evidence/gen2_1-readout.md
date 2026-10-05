@@ -1,3 +1,5 @@
+> **SUPERSEDED IN PART 2026-10-05 by Gen3 T1 (414b7dc8, gen3_t1/README.md):** `hook_success` attachments are a host record, not model context (regression 0.052 tok/char vs shuffled control 0.019; positive controls output 0.998, tool_result 0.447). The '~11-13% hook success text' line below and the hook-silence lever (-8%) are withdrawn; model-visible hook text is `hook_additional_context`, 2.94% of estate main context (largest CPP emitter 0.37%). The original text is kept unchanged below.
+
 # Gen2.1 Economic Kill-Shot -- readout (2026-10-05, STOPPED at the spend cap)
 
 Unit: processed tokens (input + cache_write + cache_read + output, deduped by message id). All analysis zero-model.

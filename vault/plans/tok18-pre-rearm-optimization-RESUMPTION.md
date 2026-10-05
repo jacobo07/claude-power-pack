@@ -54,3 +54,14 @@ A successor pane counts its own session from zero; Gen2.1 spend = successor tota
 1. A0 for KSR + KME: the same zero-model floor/role split (reuse `infinityops/io_*.py`, which take a worker list).
 2. B pass 1: exact-match mechanical calls; extend to pass 2 only if pass 1 lands near the 10% threshold.
 3. Units fix (ledger budget_tokens unit field) + minimal economic readout with Resident Prefix Tax and Meta-Work Tax; STOP and report.
+
+## Gen3 T1 DONE (Owner 'y' 2026-10-05; 288c5a28, 414b7dc8; evidence gen2/evidence/gen3_t1/README.md)
+- Spend: T1 worker ~5.1M (Sonnet, metered) + parent orchestration; cap 8M respected. K3 not built: hook_success is not context.
+- Floor after E1: n=1 session (124,464 vs same-project median 128,760); instructions attachment -28,020 chars (~9.0k tok). Median effect UNKNOWN until n>=3.
+- Factorial ceilings (k4_out.txt, KSR control exact): floor -1.5..-3.7%, hook_additional_context -1.6..-2.2%, meta-work -18..-23% at c=0 (KSR break-even c~4.1M/removed run), bounded workers -22..-44%, combined N=20/S=10k -34..-56%.
+- InfinityOps Phase 4 Original Obligation Set: gen3_t1/OBLIGATIONS-io-phase4.md (6 rows + D-01..D-05; extractor floor, prose obligations not captured -> review before T2).
+
+## Next (needs Owner, not before 2026-10-11T18:00Z)
+1. T2: compile Phase 4 into packets from the reviewed Obligation Set; canary measures c (inline compile cost per removed planner/researcher/checker run) -- the number that decides the meta-work lever.
+2. Re-measure the E1 floor once >=3 post-12:34Z sessions exist per project (zero-model, g3_k1_floor.py).
+3. Optional, small: compact advisory hook text (tower-baseline, ExecutionOS tier, woz, Graph-First); ceiling 1.6-2.2%.
