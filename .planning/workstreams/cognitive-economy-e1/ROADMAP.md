@@ -26,7 +26,7 @@ UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS.
 ## Phases
 
 - [x] **Phase 1: Judgement task bank for 11 rules** - one task per rule, validated without model calls, frozen (completed 2026-10-05)
-- [ ] **Phase 2: E1 runner with the stopping contract as tested code** - GEX44 port of the P3 judgement path
+- [x] **Phase 2: E1 runner with the stopping contract as tested code** - GEX44 port of the P3 judgement path (completed 2026-10-05)
 - [ ] **Phase 3: Counted runs** - pairs in contract order until a stop condition
 - [ ] **Phase 4: Report** - per-rule decisions, measured tokens, limits; no ~/.claude change
 
@@ -87,24 +87,24 @@ transcript). Arm B = `--settings {"claudeMdExcludes": [the 13 absolute paths und
   3. Before the first counted run, the runner re-checks the 13 LF sha256 pins against the packet and refuses
      on any mismatch.
 
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — tracer: one counted run of J-gceg_product_page end to end with a fake CLI process (worktree at BASE, scrub + stub, red precondition, session argv, grade, transcript metrics, validity); e1_contract.py validity/spend; no-model guard (wave 1)
+- [x] 02-01-PLAN.md — tracer: one counted run of J-gceg_product_page end to end with a fake CLI process (worktree at BASE, scrub + stub, red precondition, session argv, grade, transcript metrics, validity); e1_contract.py validity/spend; no-model guard (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02-PLAN.md — stopping contract as pure code: order, alternation, decision table, positive control, harm, spend, replay/next_action state machine, pair and stop records (wave 2)
+- [x] 02-02-PLAN.md — stopping contract as pure code: order, alternation, decision table, positive control, harm, spend, replay/next_action state machine, pair and stop records (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-03-PLAN.md — preflight refusals: pins, CLI path/version, bank drift vs BANK_FROZEN_AT, freeze_check, BASE, index order, results; `preflight` subcommand (wave 3)
+- [x] 02-03-PLAN.md — preflight refusals: pins, CLI path/version, bank drift vs BANK_FROZEN_AT, freeze_check, BASE, index order, results; `preflight` subcommand (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 02-04-PLAN.md — durable campaign loop: drive, reconcile, commit per pair, resume; `plan` and `run` subcommands; E1_PASS=60/60 (wave 4)
+- [x] 02-04-PLAN.md — durable campaign loop: drive, reconcile, commit per pair, resume; `plan` and `run` subcommands; E1_PASS=60/60 (wave 4)
 
 **Cross-cutting constraints:**
 

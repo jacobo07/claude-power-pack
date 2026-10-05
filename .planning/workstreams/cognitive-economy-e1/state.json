@@ -11,12 +11,12 @@
     {
       "number": "2",
       "name": "E1 runner with the stopping contract as tested code",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "3",
       "name": "Counted runs",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "4",
@@ -29,5 +29,5 @@
     "label": "Show progress",
     "reason": "Unsure of state — showing progress"
   },
-  "updated_at": "2026-10-05T08:51:59.246Z"
+  "updated_at": "2026-10-05T10:58:42.625Z"
 }

@@ -2,21 +2,21 @@
 gsd_state_version: "1.0"
 milestone: v1
 status: not_started
-last_updated: "2026-10-05T08:51:59.231Z"
-state_head: efab0084134d5f63c0427e3e10e4b9801e25bfc1
+last_updated: "2026-10-05T10:58:42.609Z"
+state_head: 025d4a20590a09790e1f76e164d0075fac4e988f
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 2
+  total_plans: 9
+  completed_plans: 9
 milestone_name: cognitive-economy-e1
 last_activity: 2026-10-05
 workstream: cognitive-economy-e1
 created: 2026-10-05
-current_phase: 02
-current_phase_name: E1 runner with the stopping contract as tested code
+current_phase: 3
+current_phase_name: Counted runs
 current_plan: Not started
-stopped_at: Workstream created; contract ADDENDUM-E1 committed bc70934b
+stopped_at: Phase 2 verified (E1_PASS=77/77, PREFLIGHT OK); Phase 3 counted runs next
 ---
 
 # Project State
@@ -81,9 +81,17 @@ rules can leave the startup prefix without a judgement loss. Each one costs ~19.
   whose transcript reports another CLI version is invalid. Safe: refusals only.
 
 ## Continuity (epoch 2, 2026-10-05)
+
 - Phase 1 COMPLETE (freeze d6887174, BANK_FROZEN_AT efab0084). Phase 2: plans 02-01+02-02 committed 28fc1708;
   02-03 + 02-04 executed, UNCOMMITTED in e1 (suite 64/64 before the 02-03 review fixes). Next: apply 02-03 review
   fixes (job tmp fixes-0203.md), apply 02-04 review findings, commit via the clone, write 02-VERIFICATION.md,
   phase.complete 2. Then Phase 3: `python3 vault/programs/cognitive-economy/e1/e1_runner.py preflight` must be OK,
   then `... run` from the e1 worktree (spend authorized up to 17M by the Owner line in ADDENDUM-E1; the runner
   commits results.jsonl per pair in e1). Run it in the background with a long timeout; resume = same command.
+
+## Continuity (epoch 3, 2026-10-05)
+- Supersedes the epoch-2 note above: 02-03 + 02-04 were committed in 025d4a20. Phase 2 COMPLETE: suite
+  E1_PASS=77/77, `preflight` -> PREFLIGHT OK (pins 13/13, freeze d68871742a, BASE 78ba9e7414), `plan` -> SPENT 0,
+  next run J-gceg_product_page A 1. 02-VERIFICATION.md written.
+- Phase 3: `python3 vault/programs/cognitive-economy/e1/e1_runner.py run` from the e1 worktree, in the
+  background; resume = the same command. Never edit anything under `bank/`.
