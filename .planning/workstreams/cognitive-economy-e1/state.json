@@ -1,0 +1,33 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1",
+  "phases": [
+    {
+      "number": "1",
+      "name": "Judgement task bank for 11 rules",
+      "status": "in_progress"
+    },
+    {
+      "number": "2",
+      "name": "E1 runner with the stopping contract as tested code",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "Counted runs",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "Report",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress",
+    "label": "Show progress",
+    "reason": "Unsure of state — showing progress"
+  },
+  "updated_at": "2026-10-05T08:15:36.067Z"
+}
