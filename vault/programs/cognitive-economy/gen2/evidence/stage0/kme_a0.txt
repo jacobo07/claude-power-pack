@@ -1,0 +1,57 @@
+WORKLOAD kme PROJ C:\Users\User\.claude\projects\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files
+WORKERS ['67ca9fa1', '41e4bea7', '2f9049a0']
+
+===== io_context_rent.py =====
+67ca9fa1: calls= 126 floor=136,613 median=277,027 peak=408,655 tok/char=0.029
+41e4bea7: calls= 108 floor=139,932 median=292,142 peak=405,610 tok/char=0.025
+2f9049a0: calls= 146 floor=137,061 median=273,255 peak=390,860 tok/char=0.298
+
+calls=380 floor mean=137,868 min=136,613 max=139,932
+context/call mean=280,027 median=279,953 p90=374,998 peak=408,655
+measured context total (main transcripts) = 106,410,561; attributed = 107,291,013 (100.8% of measured)
+  floor_rent                     52,336,800   49.2%
+  tool_result                    36,362,830   34.2%
+  injected_attachment            14,449,561   13.6%
+  tool_call_input                 3,628,678    3.4%
+  assistant_text                    258,508    0.2%
+  thinking                          156,925    0.1%
+  user_or_injected_text              71,365    0.1%
+  agent_spawn                        26,345    0.0%
+
+===== io_attachments.py =====
+in-run attachment rent ~32,834,689 tokens (TPC 0.32)
+  prompt_snapshot                                              n=    3  rent=    18,635,705   56.8%
+  hook_success:PreToolUse:Edit                                 n=  222  rent=     1,718,063    5.2%
+  hook_success:PreToolUse:Write                                n=  189  rent=     1,494,044    4.6%
+  hook_success:PreToolUse:PowerShell                           n=  128  rent=     1,382,500    4.2%
+  hook_success:PostToolUse:Edit                                n=  205  rent=     1,179,456    3.6%
+  hook_success:PostToolUse:Write                               n=  188  rent=     1,034,484    3.2%
+  hook_success:PostToolUse:PowerShell                          n=  117  rent=     1,008,042    3.1%
+  deferred_tools_delta                                         n=    8  rent=       881,422    2.7%
+  hook_success:PostToolUse:Read                                n=  112  rent=       875,408    2.7%
+  total_tokens_reminder                                        n=  375  rent=       726,582    2.2%
+  hook_success:PreToolUse:Read                                 n=  113  rent=       721,454    2.2%
+  hook_success:PostToolUse:Grep                                n=   54  rent=       383,283    1.2%
+  hook_success:PreToolUse:Grep                                 n=   54  rent=       341,934    1.0%
+  hook_additional_context:PreToolUse:PowerShell                n=   23  rent=       317,969    1.0%
+  queued_command                                               n=    5  rent=       259,456    0.8%
+
+visible pre-first-call transcript material (8 workers, chars):
+  attachment instructions                                         504,651  ~ 20,186 tok/worker
+  attachment agent_listing_delta                                  171,372  ~  6,854 tok/worker
+  attachment prompt_snapshot                                       50,524  ~  2,020 tok/worker
+  attachment skill_listing                                         46,296  ~  1,851 tok/worker
+  attachment hook_success:SessionStart:startup                     31,980  ~  1,279 tok/worker
+  attachment hook_additional_context:SessionStart                  29,201  ~  1,168 tok/worker
+  attachment file                                                  19,290  ~    771 tok/worker
+  attachment hook_additional_context:UserPromptSubmit              13,713  ~    548 tok/worker
+  attachment deferred_tools_delta                                  12,470  ~    498 tok/worker
+  first user message                                                8,085  ~    323 tok/worker
+  attachment mcp_instructions_delta                                 6,424  ~    256 tok/worker
+  attachment deferred_tools_record                                  3,844  ~    153 tok/worker
+
+===== io_subagents.py =====
+subagent transcripts=3 calls=13 context_total=996,528
+floor mean=71,326 min=71,317 max=71,342
+context/call mean=76,656
+  kme-g1-ownership-arbiter                996,528  100.0%  n=3 calls=13

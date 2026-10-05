@@ -60,15 +60,22 @@ def check(led: dict, root: Path, now: dt.datetime | None = None) -> list:
         if s and s.get("label") == "realized" and not (s.get("measured_by") and "displacement" in s):
             fails.append(f"{wid} realized saving without measuring command and displacement")
     b = led.get("budget_tokens") or {}
+    # A budget whose unit can be read two ways is not a gate (processed vs weighted differed ~6x in this estate).
+    if b and b.get("unit") not in BUDGET_UNITS:
+        fails.append(f"budget_tokens unit {b.get('unit')!r} is not one of {sorted(BUDGET_UNITS)}")
     spent, cap = b.get("spent_measured"), b.get("authorization_boundary")
     if spent is not None and cap is not None and spent > cap and not b.get("owner_extension"):
         fails.append(f"spend {spent:,} over boundary {cap:,} without an Owner extension")
     return fails
 
 
+# processed = input + cache_write + cache_read + output, deduplicated by message id.
+BUDGET_UNITS = {"processed"}
+
+
 def _fixture(root: Path) -> dict:
     (root / "ev.md").write_text("evidence\n", encoding="utf-8")
-    return {"budget_tokens": {"authorization_boundary": 100, "spent_measured": 10},
+    return {"budget_tokens": {"unit": "processed", "authorization_boundary": 100, "spent_measured": 10},
             "work_units": {
                 "A": {"terminal": "IMPLEMENTED_AND_VERIFIED", "evidence": [{"path": "ev.md", "command": "x"}]},
                 "B": {"terminal": "MERGED_INTO_EXISTING_OWNER", "evidence": [{"path": "ev.md"}],
@@ -86,6 +93,8 @@ MUTANTS = {
     "realized-without-displacement": lambda d: d["work_units"]["A"].update(
         saving={"label": "realized", "measured_by": "cmd"}),
     "over-budget": lambda d: d["budget_tokens"].update(spent_measured=101),
+    "untyped-budget": lambda d: d["budget_tokens"].pop("unit"),
+    "weighted-budget": lambda d: d["budget_tokens"].update(unit="weighted"),
     "empty-ledger": lambda d: d.update(work_units={}),
 }
 

@@ -1,0 +1,23 @@
+B pass 1 -- zero-model call-elimination ceiling. A model call (assistant message, deduped by id) is
+CLEAR when every tool_use in it is mechanical (status/list/poll/sleep/existence/unchanged reread/task-output
+poll) and its visible text is short; TESTRUN when it only invokes a known test/gate command (POTENTIAL);
+ASSURANCE when it spawns a reviewer/verifier/checker agent; END when it has no tool_use (turn closer);
+else MODEL. Cost of a call = its processed tokens (input+cache_write+cache_read+output).
+== infinityops: calls=1,531 processed=375,580,969
+  CLEAR     calls=   60 ( 3.9%)  processed=   11,905,250 ( 3.2%)  main=23 sub=37
+  TESTRUN   calls=   22 ( 1.4%)  processed=    6,825,971 ( 1.8%)  main=22 sub=0
+  ASSURANCE calls=   15 ( 1.0%)  processed=    4,667,710 ( 1.2%)  main=15 sub=0
+  END       calls=   32 ( 2.1%)  processed=   10,790,599 ( 2.9%)  main=32 sub=0
+  MODEL     calls=1,402 (91.6%)  processed=  341,391,439 (90.9%)  main=811 sub=591
+== ksr: calls=1,141 processed=275,278,416
+  CLEAR     calls=   76 ( 6.7%)  processed=   14,979,739 ( 5.4%)  main=39 sub=37
+  TESTRUN   calls=    6 ( 0.5%)  processed=    1,726,282 ( 0.6%)  main=5 sub=1
+  ASSURANCE calls=   13 ( 1.1%)  processed=    4,008,437 ( 1.5%)  main=13 sub=0
+  END       calls=   24 ( 2.1%)  processed=    7,607,965 ( 2.8%)  main=23 sub=1
+  MODEL     calls=1,022 (89.6%)  processed=  246,955,993 (89.7%)  main=649 sub=373
+== kme: calls=393 processed=107,764,012
+  CLEAR     calls=   14 ( 3.6%)  processed=    3,155,495 ( 2.9%)  main=14 sub=0
+  TESTRUN   calls=    8 ( 2.0%)  processed=    2,345,470 ( 2.2%)  main=8 sub=0
+  ASSURANCE calls=    0 ( 0.0%)  processed=            0 ( 0.0%)  main=0 sub=0
+  END       calls=    5 ( 1.3%)  processed=    1,859,875 ( 1.7%)  main=5 sub=0
+  MODEL     calls=  366 (93.1%)  processed=  100,403,172 (93.2%)  main=353 sub=13

@@ -3,7 +3,8 @@
  "backlog": "TOK-18",
  "approved": "2026-10-05 Owner 'y'",
  "card": "vault/programs/cognitive-economy/gen2/MISSION.md",
- "budget_tokens": {"authorization_boundary": 150000000, "estimate_low": 40000000, "estimate_central": 78000000, "estimate_high": 150000000, "spent_measured": null},
+ "budget_tokens": {"unit": "processed", "unit_definition": "input + cache_write + cache_read + output, deduplicated by message id", "unit_source": "MISSION.md and backlog prose label it processed; the 40/78/150M derivation is not on disk (typed 2026-10-05, Gen2.1)", "authorization_boundary": 150000000, "estimate_low": 40000000, "estimate_central": 78000000, "estimate_high": 150000000, "spent_measured": null},
+ "gen2_1": {"name": "Economic Kill-Shot", "decided": "2026-10-05 Owner", "unit": "processed", "target": 10000000, "warn": 10000000, "hard_cap": 15000000, "anchor": {"pane": "87601e81", "processed": 19196694, "at": "2026-10-05T11:13:02Z"}, "sunk_before_anchor": 19196694, "plan": "vault/plans/tok18-pre-rearm-optimization-RESUMPTION.md", "readout": "vault/programs/cognitive-economy/gen2/evidence/gen2_1-readout.md"},
  "superseded_estimates": [
   {"label": "previous optimized TOK-18", "low": 400000000, "high": 650000000, "cap": 800000000, "superseded": "2026-10-05"},
   {"label": "unoptimized projection", "low": 1300000000, "high": 2400000000, "superseded": "2026-10-05"}
