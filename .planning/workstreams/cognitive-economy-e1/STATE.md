@@ -2,21 +2,21 @@
 gsd_state_version: "1.0"
 milestone: v1
 status: not_started
-last_updated: "2026-10-05T10:58:42.609Z"
-state_head: 025d4a20590a09790e1f76e164d0075fac4e988f
+last_updated: "2026-10-05T11:17:55.586Z"
+state_head: c59314de0b23e2c84750dca38ba890fa65f97db0
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 9
-  completed_plans: 9
+  completed_phases: 4
+  total_plans: 10
+  completed_plans: 10
 milestone_name: cognitive-economy-e1
 last_activity: 2026-10-05
 workstream: cognitive-economy-e1
 created: 2026-10-05
-current_phase: 3
-current_phase_name: Counted runs
+current_phase: 04
+current_phase_name: Report
 current_plan: Not started
-stopped_at: Phase 2 verified (E1_PASS=77/77, PREFLIGHT OK); Phase 3 counted runs next
+stopped_at: All 4 phases complete; E1 ALL_DECIDED (9,172,196 tokens); move list awaits the Owner
 ---
 
 # Project State
@@ -90,8 +90,17 @@ rules can leave the startup prefix without a judgement loss. Each one costs ~19.
   commits results.jsonl per pair in e1). Run it in the background with a long timeout; resume = same command.
 
 ## Continuity (epoch 3, 2026-10-05)
+
 - Supersedes the epoch-2 note above: 02-03 + 02-04 were committed in 025d4a20. Phase 2 COMPLETE: suite
   E1_PASS=77/77, `preflight` -> PREFLIGHT OK (pins 13/13, freeze d68871742a, BASE 78ba9e7414), `plan` -> SPENT 0,
   next run J-gceg_product_page A 1. 02-VERIFICATION.md written.
 - Phase 3: `python3 vault/programs/cognitive-economy/e1/e1_runner.py run` from the e1 worktree, in the
   background; resume = the same command. Never edit anything under `bank/`.
+- E1 RESULT (epoch 3): `run` ended ALL_DECIDED after 22 valid runs, spent 9,172,196 / 17M (stop 52f0a0dd).
+  REPORT.md rendered by e1_report.py (E1R_PASS=15/15). 6 RELOCATION_CANDIDATE + 2 R2_CARRIED; STAYS: gceg, eaat,
+  det, pyt; NO_INFORMATION: code-review. Phases 3 and 4 complete.
+- OWNER DECISION NEEDED: relocate the 8-rule move list in REPORT.md (global ~/.claude write, HR-001). Options:
+  all 8 / subset / none. Pick: all 8. Not performed. Recorded in e1/OWNER.md.
+- DECISION (epoch 3): milestone complete/cleanup NOT run. Reason: the repo's ROOT milestone belongs to another
+  track and archiving moves planning files across that boundary; the workstream's terminal state is the Owner
+  decision above, which archiving does not advance. Safe: nothing is lost by deferring; reversible.

@@ -16,12 +16,12 @@
     {
       "number": "3",
       "name": "Counted runs",
-      "status": "in_progress"
+      "status": "complete"
     },
     {
       "number": "4",
       "name": "Report",
-      "status": "pending"
+      "status": "complete"
     }
   ],
   "next": {
@@ -29,5 +29,5 @@
     "label": "Show progress",
     "reason": "Unsure of state — showing progress"
   },
-  "updated_at": "2026-10-05T10:58:42.625Z"
+  "updated_at": "2026-10-05T11:17:55.601Z"
 }

@@ -2,8 +2,8 @@
 
 - [ ] **E1-BANK**: 11 judgement tasks, one per rule, validated without model calls and frozen before any counted run.
 - [ ] **E1-RUNNER**: the ADDENDUM-E1 stopping contract implemented as code, every stop branch driven by a test.
-- [ ] **E1-RUNS**: counted pairs on GEX44 until a contract stop, committed pair by pair.
-- [ ] **E1-REPORT**: per-rule decisions with run ids, spend and limits; nothing written under `~/.claude`.
+- [x] **E1-RUNS**: counted pairs on GEX44 until a contract stop, committed pair by pair.
+- [x] **E1-REPORT**: per-rule decisions with run ids, spend and limits; nothing written under `~/.claude`.
 
 ## Traceability
 
@@ -11,5 +11,5 @@
 |---|---|---|
 | E1-BANK | 1 | Pending |
 | E1-RUNNER | 2 | Pending |
-| E1-RUNS | 3 | Pending |
-| E1-REPORT | 4 | Pending |
+| E1-RUNS | 3 | Complete |
+| E1-REPORT | 4 | Complete |

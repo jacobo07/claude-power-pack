@@ -27,8 +27,8 @@ UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS.
 
 - [x] **Phase 1: Judgement task bank for 11 rules** - one task per rule, validated without model calls, frozen (completed 2026-10-05)
 - [x] **Phase 2: E1 runner with the stopping contract as tested code** - GEX44 port of the P3 judgement path (completed 2026-10-05)
-- [ ] **Phase 3: Counted runs** - pairs in contract order until a stop condition
-- [ ] **Phase 4: Report** - per-rule decisions, measured tokens, limits; no ~/.claude change
+- [x] **Phase 3: Counted runs** - pairs in contract order until a stop condition (completed 2026-10-05)
+- [x] **Phase 4: Report** - per-rule decisions, measured tokens, limits; no ~/.claude change (completed 2026-10-05)
 
 ## Phase Details
 
