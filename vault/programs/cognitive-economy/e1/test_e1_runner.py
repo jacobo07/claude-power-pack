@@ -42,7 +42,9 @@ subprocess.Popen = GuardedPopen  # installed before e1_runner or any bank module
 
 import importlib.util  # noqa: E402
 import json  # noqa: E402
+import shutil  # noqa: E402
 import tempfile  # noqa: E402
+import time  # noqa: E402
 import traceback  # noqa: E402
 import types  # noqa: E402
 import uuid  # noqa: E402
@@ -76,11 +78,12 @@ def fake_transcript_lines(sid, extra_repeat=False):
           "output_tokens": 40}
     u2 = {"input_tokens": 5, "cache_creation_input_tokens": 300, "cache_read_input_tokens": 25000,
           "output_tokens": 60}
-    lines = [{"type": "user", "entrypoint": "sdk-cli", "sessionId": sid,
+    v = K.CLI_VERSION
+    lines = [{"type": "user", "entrypoint": "sdk-cli", "sessionId": sid, "version": v,
               "message": {"role": "user", "content": "x"}},
-             {"type": "assistant", "requestId": "req_1", "sessionId": sid,
+             {"type": "assistant", "requestId": "req_1", "sessionId": sid, "version": v,
               "message": {"id": "msg_1", "role": "assistant", "model": K.MODEL, "usage": u1}},
-             {"type": "assistant", "requestId": "req_2", "sessionId": sid,
+             {"type": "assistant", "requestId": "req_2", "sessionId": sid, "version": v,
               "message": {"id": "msg_2", "role": "assistant", "model": K.MODEL, "usage": u2}}]
     if extra_repeat:
         lines.append(lines[-1])
@@ -127,6 +130,7 @@ def good_run(**over):
            "metrics": {"state": "MEASURED", "reason": "by session id", "transcript": "t.jsonl",
                        "entrypoint": "sdk-cli", "calls": 2, "first_call_context": 25003,
                        "total_context": 50308, "output_tokens": 100, "models": [K.MODEL]},
+           "cli_versions_observed": [K.CLI_VERSION], "bank_drift_after": [],
            "ended": "2026-10-05T00:00:01+00:00", "worktree_removed": True}
     for k, v in over.items():
         if k.startswith("metrics."):
@@ -140,6 +144,11 @@ def _raiser(name):
     def f(*a, **k):
         raise AssertionError(f"{name} must not be called")
     return f
+
+
+def real_drift():
+    """The production post-grade re-check over the real worktree bank (read-only git)."""
+    return R.check_frozen_pin() + R.bank_drift(R.REPO, R._bank_rel(R.BANK_DIR, R.REPO), R.FROZEN)
 
 
 def _tracer(pole, arm, rid, excl=None):
@@ -156,7 +165,7 @@ def _tracer(pole, arm, rid, excl=None):
             rec = R.one_run(bank, t, arm, 1, base, excl=R.excludes() if excl is None else excl,
                             cli_version="2.1.289 (test)",
                             append=lambda r: R.append_record(results, r), run_id=rid, exec_fn=fake,
-                            projects=d / "projects")
+                            projects=d / "projects", drift_fn=real_drift)
             R.append_record(results, rec)
             lines = [json.loads(x) for x in results.read_text(encoding="utf-8").splitlines()]
             tree_gone = not os.path.lexists(bank.RUNS / rid)
@@ -241,6 +250,12 @@ FAULTS = [
     ({"metrics.entrypoint": "cli"}, "entrypoint cli"),
     ({"metrics.models": ["claude-haiku-4-5"]}, "model claude-opus-5-5 absent from transcript"),
     ({"grade_summary": "no E1J line"}, "grade did not run"),
+    ({"cli_versions_observed": ["2.1.290"]}, "cli version drift: transcript reports ['2.1.290'], want ['2.1.289']"),
+    ({"cli_versions_observed": ["2.1.289", "2.1.290"]},
+     "cli version drift: transcript reports ['2.1.289', '2.1.290'], want ['2.1.289']"),
+    ({"cli_versions_observed": None}, "cli version drift: transcript reports None, want ['2.1.289']"),
+    ({"bank_drift_after": ["edited since freeze: bank/x.py"]}, "bank drift during run"),
+    ({"bank_drift_after": None}, "bank not re-checked after grade"),
 ]
 
 
@@ -344,12 +359,14 @@ def g_excludes():
 
 
 def g_env():
-    keys = {"CLAUDECODE": "1", "CLAUDE_CODE_ENTRYPOINT": "cli", "CLAUDE_CODE_SSE_PORT": "1234"}
+    keys = {"CLAUDECODE": "1", "CLAUDE_CODE_ENTRYPOINT": "cli", "CLAUDE_CODE_SSE_PORT": "1234",
+            "DISABLE_AUTOUPDATER": "0"}
     saved = {k: os.environ.get(k) for k in keys}
     try:
         os.environ.update(keys)
         env = R.child_env()
-        stripped = not any(k in env for k in keys)
+        stripped = not any(k in env for k in keys if k != "DISABLE_AUTOUPDATER")
+        no_update = env.get("DISABLE_AUTOUPDATER") == "1"
         kept = env.get("PATH") == os.environ.get("PATH") and env.get("HOME") == os.environ.get("HOME") \
             and "PATH" in env and "HOME" in env
     finally:
@@ -358,7 +375,7 @@ def g_env():
                 os.environ.pop(k, None)
             else:
                 os.environ[k] = v
-    return stripped and kept, f"stripped={stripped} kept_PATH_HOME={kept}"
+    return stripped and kept and no_update, f"stripped={stripped} kept_PATH_HOME={kept} autoupdater_off={no_update}"
 
 
 def g_session_parse():
@@ -1000,6 +1017,1238 @@ def g_arm_excludes():
     return ok, f"refused={refused} legal={legal} refused_before_tree={before_tree}"
 
 
+# ---- plan 02-03: pins, CLI, bank drift, records, preflight ------------------------------------------
+
+import contextlib  # noqa: E402
+import hashlib  # noqa: E402
+import io  # noqa: E402
+import re  # noqa: E402
+
+REAL_CANDS = json.loads(R.PACKET.read_text(encoding="utf-8"))["experiments"][0]["candidates"]
+OK_VERSION = "2.1.289 (Claude Code)"
+
+
+def _rel(c):
+    return c["rule"][len("~/.claude/"):] if c["rule"].startswith("~/.claude/") else c["rule"]
+
+
+def _sha_lf(b):
+    return hashlib.sha256(b.replace(b"\r\n", b"\n")).hexdigest()
+
+
+def pin_world(d):
+    """Temp home/.claude holding the 13 packet rule paths (synthetic bytes) and a packet pinning those bytes."""
+    d = Path(d)
+    home = d / "home"
+    cands = []
+    for c in REAL_CANDS:
+        rel = _rel(c)
+        f = home / ".claude" / rel
+        f.parent.mkdir(parents=True, exist_ok=True)
+        data = f"# {rel}\nline two\nline three\n".encode()
+        f.write_bytes(data)
+        cands.append({"rule": c["rule"], "bytes": c["bytes"], "sha256_lf": _sha_lf(data)})
+    return _write_packet(d, cands), home
+
+
+def g_pins():
+    with tempfile.TemporaryDirectory() as d:
+        packet, home = pin_world(d)
+        clean = R.check_pins(packet, home)
+        rel = "rules/python/testing.md"
+        f = home / ".claude" / rel
+        orig = f.read_bytes()
+        f.write_bytes(orig[:-2] + b"X\n")
+        edited = R.check_pins(packet, home)
+        f.unlink()
+        deleted = R.check_pins(packet, home)
+        f.write_bytes(orig.replace(b"\n", b"\r\n"))
+        crlf = R.check_pins(packet, home)
+    ok = (clean == (13, []) and edited[0] == 12 and len(edited[1]) == 1 and edited[1][0].startswith(rel + ": sha256")
+          and deleted[0] == 12 and deleted[1] == [f"{rel}: unreadable (FileNotFoundError)"] and crlf == (13, []))
+    return ok, f"clean={clean[0]}/{clean[1]} edited={edited} deleted={deleted} crlf={crlf}"
+
+
+def g_cli():
+    good = R.check_cli(R.CLAUDE, lambda: OK_VERSION)
+    local = R.check_cli("/usr/local/bin/claude", _raiser("version_fn"))
+    bare = R.check_cli("claude", _raiser("version_fn"))
+    old = R.check_cli(R.CLAUDE, lambda: "2.1.113 (Claude Code)")
+
+    def boom():
+        raise OSError("no exec")
+    unread = R.check_cli(R.CLAUDE, boom)
+    ok = (good == ([], OK_VERSION) and len(local[0]) == 1 and "/usr/local/bin/claude" in local[0][0]
+          and len(bare[0]) == 1 and "claude" in bare[0][0] and len(old[0]) == 1 and "2.1.113" in old[0][0]
+          and unread[0] == ["version unreadable: OSError"])
+    return ok, f"good={good} local={local} bare={bare} old={old} unread={unread}"
+
+
+def _g(repo, *args):
+    subprocess.run(["git", "-c", "user.name=e1", "-c", "user.email=e1@example.invalid", "-c", "core.hooksPath=/dev/null",
+                    "-c", "commit.gpgsign=false", *args], cwd=str(repo), check=True, capture_output=True)
+
+
+def drift_repo(d, bankless_freeze=False):
+    """Temp git repo: bank/{task_a.py,_e1_common.py} committed; BANK_FROZEN_AT holding that commit (or, with
+    bankless_freeze, an earlier commit with no bank/)."""
+    repo = Path(d)
+    _g(repo, "init", "-q")
+    (repo / "README").write_text("r\n", encoding="utf-8")
+    _g(repo, "add", "README")
+    _g(repo, "commit", "-q", "-m", "first")
+    first = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(repo), capture_output=True, text=True).stdout.strip()
+    (repo / "bank").mkdir()
+    (repo / "bank" / "task_a.py").write_text("A = 1\n", encoding="utf-8")
+    (repo / "bank" / "_e1_common.py").write_text("C = 1\n", encoding="utf-8")
+    _g(repo, "add", "bank")
+    _g(repo, "commit", "-q", "-m", "freeze")
+    h = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(repo), capture_output=True, text=True).stdout.strip()
+    frozen = repo / "BANK_FROZEN_AT"
+    frozen.write_text((first if bankless_freeze else h) + "\n", encoding="utf-8")
+    return repo, frozen
+
+
+def g_bank_drift():
+    res = {}
+
+    def case(name, mutate=None, bankless=False):
+        with tempfile.TemporaryDirectory() as d:
+            repo, frozen = drift_repo(d, bankless)
+            if mutate:
+                mutate(repo, frozen)
+            res[name] = R.bank_drift(repo, "bank", frozen)
+
+    def edit(repo, _f):
+        (repo / "bank" / "task_a.py").write_text("A = 2\n", encoding="utf-8")
+
+    def edit_commit(repo, f):
+        edit(repo, f)
+        _g(repo, "commit", "-q", "-am", "edit")
+
+    case("clean")
+    case("edited", edit)
+    case("edited_committed", edit_commit)
+    case("added", lambda r, f: (r / "bank" / "task_zz.py").write_text("Z = 1\n", encoding="utf-8"))
+
+    def pyc(r, _f):
+        (r / "bank" / "__pycache__").mkdir()
+        (r / "bank" / "__pycache__" / "x.pyc").write_bytes(b"\0")
+    case("pycache_only", pyc)
+    case("deleted", lambda r, f: (r / "bank" / "_e1_common.py").unlink())
+    case("frozen_absent", lambda r, f: f.unlink())
+    case("not_a_hash", lambda r, f: f.write_text("not-a-hash\n", encoding="utf-8"))
+    case("zeros", lambda r, f: f.write_text("0" * 40 + "\n", encoding="utf-8"))
+    case("bankless", bankless=True)
+    want = {"clean": None, "pycache_only": None,
+            "edited": "edited since freeze: bank/task_a.py", "edited_committed": "edited since freeze: bank/task_a.py",
+            "added": "added since freeze: bank/task_zz.py", "deleted": "missing since freeze: bank/_e1_common.py",
+            "frozen_absent": "BANK_FROZEN_AT missing", "not_a_hash": "BANK_FROZEN_AT malformed",
+            "zeros": "not in this repository", "bankless": "holds no bank"}
+    ok = all((res[k] == []) if w is None else (len(res[k]) == 1 and w in res[k][0]) for k, w in want.items())
+    return ok, " ".join(f"{k}={res[k]}" for k in want)
+
+
+def g_records_read():
+    with tempfile.TemporaryDirectory() as d:
+        absent = R.read_records(Path(d) / "results.jsonl")
+        f = Path(d) / "r.jsonl"
+        f.write_text('{"kind": "run"}\n\n   \n{"kind": "stop"}\n', encoding="utf-8")
+        blanks = R.read_records(f)
+        g = Path(d) / "bad.jsonl"
+        g.write_text('{"kind": "run"}\n[1, 2]\n', encoding="utf-8")
+        try:
+            R.read_records(g)
+            bad = "no error"
+        except K.ContractError as e:
+            bad = str(e)
+    ok = absent == [] and blanks == [{"kind": "run"}, {"kind": "stop"}] and bad == "results line 2 malformed"
+    return ok, f"absent={absent} blanks={blanks} bad={bad!r}"
+
+
+FAKE_BASE = "78ba9e7414" + "c" * 30
+FAKE_FROZEN = "ab" * 20
+
+
+def fake_world(tmp, **faults):
+    """-> preflight kwargs for an all-good world built under tmp; each fault flips exactly one input."""
+    tmp = Path(tmp)
+    packet, home = pin_world(tmp)
+    pk = json.loads(packet.read_text(encoding="utf-8"))["experiments"][0]["candidates"]
+    e1 = sorted((c for c in pk if _rel(c) not in R.EXCLUDED_BY_R2), key=lambda c: -c["bytes"])
+    tasks = [{"id": f"J-t{i:02d}", "rule": _rel(c), "module": f"m{i}.py", "file": tmp / f"task_t{i:02d}.py"}
+             for i, c in enumerate(e1)]
+    bank_dir = tmp / "bank"
+    bank_dir.mkdir()
+    items = [{"order": i + 1, "id": t["id"], "rule": t["rule"], "rule_bytes": c["bytes"], "sha256_lf": c["sha256_lf"]}
+             for i, (t, c) in enumerate(zip(tasks, e1))]
+    if faults.get("index_swap"):
+        items[3], items[4] = items[4], items[3]
+    if faults.get("index_ten"):
+        items = items[:10]
+    idx = {"bank": "x", "base": FAKE_BASE, "missing": ["rules/x.md"] if faults.get("index_missing") else [],
+           "tasks": items}
+    if not faults.get("index_absent"):
+        (bank_dir / "index.json").write_text(json.dumps(idx), encoding="utf-8")
+
+    def jbase():
+        if faults.get("base_raise"):
+            raise SystemExit(f"BASE {FAKE_BASE} contains the bank or its plans: ['bank/x']")
+        return FAKE_BASE
+    bank = types.SimpleNamespace(HERE=bank_dir, tasks=lambda: [dict(t) for t in tasks], jbase=jbase)
+    if not faults.get("no_freeze"):
+        bank.freeze_check = (lambda *a: ["x"]) if faults.get("freeze_bad") else (lambda *a: [])
+    frozen = tmp / "BANK_FROZEN_AT"
+    frozen.write_text(FAKE_FROZEN + "\n", encoding="utf-8")
+    if faults.get("pin_edit"):
+        f = home / ".claude" / "rules/common/code-review.md"
+        f.write_bytes(f.read_bytes() + b"x")
+    results = tmp / "results.jsonl"
+    if faults.get("results_malformed"):
+        results.write_text('{"kind": "run_start", "run_id": "r"}\nnot json\n', encoding="utf-8")
+    if faults.get("results_attempt3"):
+        t0 = tasks[0]["id"]
+        results.write_text(json.dumps({"kind": "run", "run_id": f"{t0}-A-a3", "task": t0, "arm": "A",
+                                       "attempt": 3}) + "\n", encoding="utf-8")
+    version = "2.1.113 (Claude Code)" if faults.get("version_old") else OK_VERSION
+    drift = ["edited since freeze: bank/task_a.py"] if faults.get("drift") else []
+    return dict(bank_dir=bank_dir, bank=bank, repo=R.REPO, frozen=frozen, results=results, packet=packet, home=home,
+                cli_path=R.CLAUDE, version_fn=lambda: version, drift_fn=lambda *a, **k: list(drift),
+                packet_sha256=hashlib.sha256(packet.read_bytes()).hexdigest(), frozen_hash=FAKE_FROZEN)
+
+
+CHECK_NAMES = ["cli", "packet", "pins", "excludes", "bank", "bank_drift", "freeze_check", "base", "index", "results"]
+
+PREFLIGHT_FAULTS = [
+    ("freeze_bad", "freeze_check"), ("no_freeze", "freeze_check"), ("base_raise", "base"),
+    ("index_absent", "index"), ("index_swap", "index"), ("index_missing", "index"), ("index_ten", "index"),
+    ("pin_edit", "pins"), ("version_old", "cli"), ("results_malformed", "results"),
+    ("results_attempt3", "results"), ("drift", "bank_drift"),
+]
+
+
+def g_preflight_ok():
+    with tempfile.TemporaryDirectory() as d:
+        checks = R.preflight(**fake_world(d))
+    ok = [c[0] for c in checks] == CHECK_NAMES and all(c[1] for c in checks)
+    return ok, " ".join(f"{n}:{'OK' if o else 'REFUSED'}:{det[:40]}" for n, o, det in checks)
+
+
+def g_preflight_refusals():
+    got = {}
+    for fault, want in PREFLIGHT_FAULTS:
+        with tempfile.TemporaryDirectory() as d:
+            checks = R.preflight(**fake_world(d, **{fault: True}))
+        refused = [n for n, o, _ in checks if not o]
+        names = [c[0] for c in checks]
+        got[fault] = (refused, names == CHECK_NAMES, next((det for n, o, det in checks if n == want), "")[:60])
+    ok = all(got[f][0] == [w] and got[f][1] for f, w in PREFLIGHT_FAULTS)
+    return ok, " ".join(f"{f}>{','.join(got[f][0])}" for f, _ in PREFLIGHT_FAULTS)
+
+
+def g_preflight_nobank():
+    with tempfile.TemporaryDirectory() as d:
+        w = fake_world(d)
+        empty = Path(d) / "empty"
+        empty.mkdir()
+        w.update(bank_dir=empty, bank=None)
+        try:
+            checks = R.preflight(**w)
+            esc = None
+        except BaseException as e:  # the gate's subject: nothing may escape
+            checks, esc = [], f"{type(e).__name__}: {e}"
+    st = {n: (o, det) for n, o, det in checks}
+    ok = (esc is None and [c[0] for c in checks] == CHECK_NAMES and st["bank"][0] is False
+          and "no validate_bank.py" in st["bank"][1]
+          and all(st[n] == (False, "bank not loaded") for n in ("freeze_check", "base", "index", "results"))
+          and all(st[n][0] for n in ("cli", "pins", "excludes", "bank_drift")))
+    return ok, f"escaped={esc} " + " ".join(f"{n}:{'OK' if st[n][0] else 'REFUSED'}:{st[n][1][:40]}" for n in st)
+
+
+def g_per_run_checks():
+    out = {}
+    for fault in (None, "pin_edit", "drift", "version_old"):
+        with tempfile.TemporaryDirectory() as d:
+            w = fake_world(d, **({fault: True} if fault else {}))
+            out[fault or "good"] = R.per_run_checks(bank_rel="bank", frozen=w["frozen"], packet=w["packet"],
+                                                    home=w["home"], version_fn=w["version_fn"],
+                                                    drift_fn=w["drift_fn"], packet_sha256=w["packet_sha256"],
+                                                    frozen_hash=w["frozen_hash"])
+    ok = (out["good"] == {"problems": [], "cli_version": OK_VERSION}
+          and all(len(out[f]["problems"]) == 1 for f in ("pin_edit", "drift", "version_old")))
+    return ok, " ".join(f"{k}={v['problems']}" for k, v in out.items())
+
+
+def g_cli_preflight():
+    with tempfile.TemporaryDirectory() as d:
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = R.cmd_preflight(["--bank", d], version_fn=lambda: OK_VERSION)
+        lines = buf.getvalue().splitlines()
+    buf2 = io.StringIO()
+    with contextlib.redirect_stdout(buf2):
+        rc2 = R.cmd_preflight(["--bogus"])
+    ok = (rc == 1 and any(ln.startswith("CHECK bank REFUSED") for ln in lines) and bool(lines)
+          and lines[-1].startswith("PREFLIGHT REFUSED") and rc2 == 2)
+    return ok, f"rc={rc} last={lines[-1] if lines else None!r} bank={[ln[:60] for ln in lines if ' bank ' in ln]} bogus_rc={rc2}"
+
+
+# ---- 02-04 Task 1 gates: the durable campaign loop ------------------------------------------------------
+
+def _no_reconcile(start):
+    raise AssertionError(f"reconcile_fn called for {start.get('run_id')}")
+
+
+class Loop:
+    """One drive() call with recorders: run_fn calls, check_fn calls, the event order and commit subjects."""
+
+    def __init__(self, results, script, *, problems_at=None, commit_raises_at=None, reconcile_fn=_no_reconcile,
+                 spent_log=False):
+        self.results, self.script = Path(results), script
+        self.calls, self.events, self.subjects, self.lines, self.spent_before = [], [], [], [], []
+        self.problems_at, self.commit_raises_at, self.reconcile_fn, self.spent_log = (
+            problems_at, commit_raises_at, reconcile_fn, spent_log)
+        self.checks = 0
+
+    def run_fn(self, task, arm, attempt, ctx):
+        self.events.append("run")
+        if self.spent_log:
+            st = K.replay(mk_order(), R.read_records(self.results))
+            self.spent_before.append((st["spent"], st["max_seen"]))
+        self.calls.append((task, arm, attempt))
+        return self.script(task, arm, attempt)
+
+    def check_fn(self):
+        self.checks += 1
+        self.events.append("check")
+        if self.problems_at is not None and self.checks == self.problems_at:
+            return {"problems": ["pins: rules/python/testing.md sha256 changed"], "cli_version": OK_VERSION}
+        return {"problems": [], "cli_version": OK_VERSION}
+
+    def commit_fn(self, subject):
+        if self.commit_raises_at is not None and len(self.subjects) + 1 == self.commit_raises_at:
+            raise RuntimeError("git commit failed: simulated")
+        self.subjects.append(subject)
+
+    def drive(self, max_pairs=None):
+        return R.drive(mk_order(), results=self.results, run_fn=self.run_fn, check_fn=self.check_fn,
+                       reconcile_fn=self.reconcile_fn, commit_fn=self.commit_fn, max_pairs=max_pairs,
+                       r2_rules=R2_RULES, out=self.lines.append)
+
+    def records(self):
+        return R.read_records(self.results)
+
+
+def _kinds(recs):
+    return {k: sum(r.get("kind") == k for r in recs) for k in ("run", "pair", "stop", "refusal", "run_start")}
+
+
+def _expected_calls(n_tasks):
+    return [(ORDER_IDS[i], arm, 1) for i in range(n_tasks) for arm in K.arm_order(i)]
+
+
+def g_loop_all_decided():
+    with tempfile.TemporaryDirectory() as d:
+        lp = Loop(Path(d) / "results.jsonl", lambda t, a, n: mk_run(t, a, n))
+        rc = lp.drive()
+        recs = lp.records()
+    last = recs[-1] if recs else {}
+    fd = last.get("final_decisions", {})
+    ok = (rc == (0, K.ALL_DECIDED) and _kinds(recs) == {"run": 22, "pair": 11, "stop": 1, "refusal": 0,
+                                                         "run_start": 0}
+          and last.get("kind") == "stop" and last.get("condition") == K.ALL_DECIDED
+          and sum(v["decision"] == K.RELOCATION_CANDIDATE for v in fd.values()) == 11
+          and [fd.get(r, {}).get("decision") for r in R2_RULES] == [K.R2_CARRIED] * 2
+          and len(lp.subjects) == 12 and lp.calls == _expected_calls(11)
+          and lp.events == ["check", "run"] * 22 and lp.checks == 22)
+    return ok, (f"rc={rc} kinds={_kinds(recs)} last={last.get('kind')}/{last.get('condition')} "
+                f"reloc={sum(v['decision'] == K.RELOCATION_CANDIDATE for v in fd.values())} "
+                f"r2={[fd.get(r, {}).get('decision') for r in R2_RULES]} commits={len(lp.subjects)} "
+                f"checks={lp.checks} check_before_every_run={lp.events == ['check', 'run'] * 22} "
+                f"first_calls={lp.calls[:4]}")
+
+
+def g_loop_harm():
+    with tempfile.TemporaryDirectory() as d:
+        lp = Loop(Path(d) / "r.jsonl", lambda t, a, n: mk_run(t, a, n, passed=(a == "A")))
+        rc = lp.drive()
+        recs = lp.records()
+    with tempfile.TemporaryDirectory() as d:
+        three = set(ORDER_IDS[:3])
+        ctl = Loop(Path(d) / "r.jsonl", lambda t, a, n: mk_run(t, a, n, passed=(a == "A" or t not in three)))
+        rc_ctl = ctl.drive()
+        crecs = ctl.records()
+    stop = recs[-1] if recs else {}
+    decs = [v["decision"] for v in stop.get("final_decisions", {}).values()]
+    ok = (rc == (3, K.HARM_STOP) and len(lp.calls) == 8 and _kinds(recs)["pair"] == 4
+          and stop.get("condition") == K.HARM_STOP and decs == [K.STAYS] * 13
+          and rc_ctl == (0, K.ALL_DECIDED) and len(ctl.calls) == 22
+          and crecs[-1].get("losses_in_window") == 3)
+    return ok, (f"all_loss={rc}/{len(lp.calls)}r/{_kinds(recs)['pair']}p stays={decs.count(K.STAYS)}/{len(decs)} "
+                f"control_3_losses={rc_ctl}/{len(ctl.calls)}r losses_in_window={crecs[-1].get('losses_in_window')}")
+
+
+def g_loop_spend():
+    out = {}
+    for name, totals in (("million", None), ("million_then_999999", "ctl")):
+        with tempfile.TemporaryDirectory() as d:
+            cnt = {"n": 0}
+
+            def script(t, a, n, totals=totals, cnt=cnt):
+                cnt["n"] += 1
+                return mk_run(t, a, n, total=999_999 if totals == "ctl" and cnt["n"] > 16 else 1_000_000)
+            lp = Loop(Path(d) / "r.jsonl", script, spent_log=True)
+            rc = lp.drive()
+            stop = lp.records()[-1]
+        out[name] = (rc, len(lp.calls), lp.spent_before[16] if len(lp.spent_before) > 16 else None,
+                     stop.get("spent"), stop.get("over_cap_by"), stop.get("max_seen"))
+    # red drill: with the reactive gate (spend_reached alone) the control script starts an 18th run
+    saved = K.spend_stop_due
+    try:
+        K.spend_stop_due = lambda spent, max_seen: K.spend_reached(spent)
+        with tempfile.TemporaryDirectory() as d:
+            cnt = {"n": 0}
+
+            def script2(t, a, n):
+                cnt["n"] += 1
+                return mk_run(t, a, n, total=999_999 if cnt["n"] > 16 else 1_000_000)
+            mut = Loop(Path(d) / "r.jsonl", script2)
+            mut.drive()
+            mutant = (len(mut.calls), mut.records()[-1].get("over_cap_by"))
+    finally:
+        K.spend_stop_due = saved
+    m, c = out["million"], out["million_then_999999"]
+    ok = (m[0] == (3, K.SPEND_STOP) and m[1] == 17 and m[2] == (16_000_000, 1_000_000) and m[3] == 17_000_000
+          and m[4] == 0
+          and c[0] == (3, K.SPEND_STOP) and c[1] == 17 and c[3] == 16_999_999 and c[4] == 0 and c[5] == 1_000_000
+          and c[3] + c[5] > K.CAP and mutant == (18, 999_998))
+    return ok, (f"million={m[0][1]}/{m[1]}r 17th_starts_at={m[2]} spent={m[3]} over={m[4]} | "
+                f"16x1M+999999={c[0][1]}/{c[1]}r spent={c[3]} over={c[4]} max_seen={c[5]} "
+                f"18th_withheld={c[3]}+{c[5]}>{K.CAP} | reactive-gate-mutant={mutant[0]}r/over={mutant[1]}")
+
+
+def g_loop_posctl():
+    out = {}
+    for name, b0 in (("delta14999", 100_000 - 14_999), ("delta15000", 100_000 - 15_000)):
+        with tempfile.TemporaryDirectory() as d:
+            lp = Loop(Path(d) / "r.jsonl",
+                      lambda t, a, n, b0=b0: mk_run(t, a, n, first=b0 if (t, a) == (T0, "B") else None))
+            rc = lp.drive()
+            recs = lp.records()
+        pr = next((r for r in recs if r.get("kind") == "pair"), {})
+        out[name] = (rc, len(lp.calls), pr.get("used"), (pr.get("positive_control") or {}).get("ok"))
+    s, c = out["delta14999"], out["delta15000"]
+    ok = (s[0] == (3, K.POSITIVE_CONTROL_STOP) and s[1] == 2 and s[2] is False and s[3] is False
+          and c[1] >= 3 and c[0] == (0, K.ALL_DECIDED) and c[2] is True and c[3] is True)
+    return ok, (f"delta14999={s[0][1]}/{s[1]}r used={s[2]} pc_ok={s[3]} | "
+                f"delta15000={c[0][1]}/{c[1]}r used={c[2]} pc_ok={c[3]}")
+
+
+def g_loop_noinfo():
+    with tempfile.TemporaryDirectory() as d:
+        lp = Loop(Path(d) / "r.jsonl", lambda t, a, n: mk_run(t, a, n, valid=not (t == T0 and a == "A")))
+        rc = lp.drive()
+        recs = lp.records()
+    pr = next((r for r in recs if r.get("kind") == "pair" and r.get("task") == T0), {})
+    ok = (pr.get("decision") == K.NO_INFORMATION and "arm A" in str(pr.get("no_info_reason"))
+          and (T0, "B", 1) not in lp.calls and lp.calls[:3] == [(T0, "A", 1), (T0, "A", 2), (T1, "B", 1)]
+          and rc == (0, K.ALL_DECIDED))
+    return ok, (f"pair0={pr.get('decision')} reason={pr.get('no_info_reason')!r} "
+                f"t0_B_called={(T0, 'B', 1) in lp.calls} calls={lp.calls[:3]} end={rc}")
+
+
+def g_loop_resume():
+    with tempfile.TemporaryDirectory() as d:
+        res = Path(d) / "r.jsonl"
+        one = Loop(res, lambda t, a, n: mk_run(t, a, n))
+        rc1 = one.drive(max_pairs=1)
+        b1 = res.read_bytes()
+        k1 = _kinds(R.read_records(res))
+        two = Loop(res, lambda t, a, n: mk_run(t, a, n))
+        rc2 = two.drive()
+        b2 = res.read_bytes()
+        k2 = _kinds(R.read_records(res))
+    ok = (rc1 == (4, "PAUSED") and k1["pair"] == 1 and k1["stop"] == 0 and one.calls == _expected_calls(1)
+          and two.calls[:1] == [(T1, "B", 1)] and not any(c[0] == T0 for c in two.calls)
+          and rc2 == (0, K.ALL_DECIDED) and b2.startswith(b1) and len(b2) > len(b1)
+          and k2["pair"] == 11 and k2["run"] == 22)
+    return ok, (f"first={rc1} kinds={k1} | resume first_call={two.calls[:1]} t0_rerun={any(c[0] == T0 for c in two.calls)} "
+                f"end={rc2} prefix={b2.startswith(b1)} kinds={k2}")
+
+
+def g_loop_halted():
+    with tempfile.TemporaryDirectory() as d:
+        res = Path(d) / "r.jsonl"
+        recs, act = simulate(mk_order(), lambda t, a, n: mk_run(t, a, n, passed=(a == "A")))
+        for r in recs:
+            R.append_record(res, r)
+        before = res.read_bytes()
+
+        def boom(*a, **k):
+            raise AssertionError("called after a stop record")
+        lines = []
+        rc = R.drive(mk_order(), results=res, run_fn=boom, check_fn=boom, reconcile_fn=boom, commit_fn=boom,
+                     r2_rules=R2_RULES, out=lines.append)
+        after = res.read_bytes()
+    ok = act == ("STOP", K.HARM_STOP) and rc == (3, K.HARM_STOP) and before == after and lines == [
+        f"E1-RUN HALTED {K.HARM_STOP}"]
+    return ok, f"rc={rc} unchanged={before == after} out={lines}"
+
+
+def g_loop_refusal():
+    with tempfile.TemporaryDirectory() as d:
+        res = Path(d) / "r.jsonl"
+        lp = Loop(res, lambda t, a, n: mk_run(t, a, n), problems_at=3)
+        rc = lp.drive()
+        recs = lp.records()
+        ref = [r for r in recs if r.get("kind") == "refusal"]
+        again = Loop(res, lambda t, a, n: mk_run(t, a, n))
+        rc2 = again.drive()
+    ok = (rc == (1, "REFUSED") and len(lp.calls) == 2 and len(ref) == 1
+          and ref[0].get("before") == K.run_id(T1, "B", 1) and "testing.md" in str(ref[0].get("problems"))
+          and recs[-1].get("kind") == "refusal" and lp.subjects[-1] == f"data(e1): refusal before {K.run_id(T1, 'B', 1)}"
+          and again.calls[:1] == [(T1, "B", 1)] and rc2 == (0, K.ALL_DECIDED))
+    return ok, (f"rc={rc} runs={len(lp.calls)} refusal={ref[0] if ref else None} commits={lp.subjects} | "
+                f"resume first={again.calls[:1]} end={rc2}")
+
+
+def _reconcile_case(d, with_transcript, start_extra=None):
+    d = Path(d)
+    rid = K.run_id(T0, "A", 1)
+    wt = d / "runs" / rid
+    projects = d / "projects"
+    projects.mkdir()
+    drops = []
+    if with_transcript:
+        wt.mkdir(parents=True)
+        pd = projects / R._norm(wt)
+        pd.mkdir()
+        (pd / "s.jsonl").write_text(fake_transcript_lines("s"), encoding="utf-8")
+    bank = types.SimpleNamespace(HERE=BANK_PATH, drop_tree=lambda p: drops.append(str(p)) or True)
+    res = d / "r.jsonl"
+    R.append_record(res, {"kind": "run_start", "run_id": rid, "task": T0, "rule": RULE_OF[T0], "arm": "A",
+                          "attempt": 1, "base": "0" * 40, "wt": str(wt), "started": "2026-10-05T00:00:00+00:00",
+                          "started_epoch": 0.0, "cli_version": OK_VERSION, "excluded": [], **(start_extra or {})})
+    lp = Loop(res, lambda t, a, n: mk_run(t, a, n),
+              reconcile_fn=lambda start: R.reconcile(bank, start, projects=projects))
+    rc = lp.drive()
+    recs = lp.records()
+    rec = next((r for r in recs if r.get("kind") == "run" and r.get("run_id") == rid), {})
+    return rc, rec, lp, drops, str(wt)
+
+
+def g_loop_reconcile():
+    with tempfile.TemporaryDirectory() as d:
+        rc, rec, lp, drops, wt = _reconcile_case(d, True)
+    with tempfile.TemporaryDirectory() as d:
+        rc2, rec2, lp2, drops2, _ = _reconcile_case(d, False)
+    ok = (rec.get("error") == R.INTERRUPTED and rec.get("valid") is False
+          and "grade did not run" in rec.get("invalid_reasons", []) and rec.get("spend") == 50308
+          and rec.get("worktree_removed") is True and drops == [wt]
+          and lp.calls[:1] == [(T0, "A", 2)] and rc == (0, K.ALL_DECIDED)
+          and rec2.get("spend") is None and rec2.get("worktree_removed") is True and drops2 == []
+          and rc2 == (3, K.SPEND_UNMEASURED) and lp2.calls == [])
+    return ok, (f"with_transcript: valid={rec.get('valid')} spend={rec.get('spend')} err={rec.get('error')!r} "
+                f"dropped={len(drops)} next={lp.calls[:1]} end={rc} | no_transcript: spend={rec2.get('spend')} "
+                f"metrics={(rec2.get('metrics') or {}).get('state')} end={rc2} runs={len(lp2.calls)}")
+
+
+def g_loop_commit_fail():
+    with tempfile.TemporaryDirectory() as d:
+        res = Path(d) / "r.jsonl"
+        lp = Loop(res, lambda t, a, n: mk_run(t, a, n), commit_raises_at=1)
+        rc = lp.drive()
+        recs = lp.records()
+        again = Loop(res, lambda t, a, n: mk_run(t, a, n))
+        rc2 = again.drive()
+        recs2 = again.records()
+    p0 = [r for r in recs2 if r.get("kind") == "pair" and r.get("task") == T0]
+    ok = (rc == (1, "COMMIT_FAILED") and recs[-1].get("kind") == "pair" and recs[-1].get("task") == T0
+          and any(x.startswith("E1-RUN COMMIT_FAILED") for x in lp.lines)
+          and len(p0) == 1 and rc2 == (0, K.ALL_DECIDED) and again.calls[:1] == [(T1, "B", 1)]
+          and again.subjects[:1] == [f"data(e1): pair 2 {T1} {K.RELOCATION_CANDIDATE}"])
+    return ok, (f"rc={rc} last={recs[-1].get('kind')}/{recs[-1].get('task')} | resume end={rc2} "
+                f"t0_pair_records={len(p0)} first_commit={again.subjects[:1]}")
+
+
+# ---- 02-04 Task 2 gates: commit per pair, `plan` and `run` -------------------------------------------------
+
+def _commit_repo(d, hook_rewrites=False):
+    repo = Path(d) / "repo"
+    repo.mkdir()
+    _g(repo, "init", "-q")
+    for k, v in (("user.name", "e1"), ("user.email", "e1@example.invalid"), ("commit.gpgsign", "false"),
+                 ("core.hooksPath", "/dev/null")):
+        _g(repo, "config", k, v)
+    (repo / "results.jsonl").write_text('{"kind": "run_start"}\n', encoding="utf-8")
+    (repo / "other.txt").write_text("o\n", encoding="utf-8")
+    _g(repo, "add", "results.jsonl")
+    _g(repo, "commit", "-q", "-m", "first")
+    if hook_rewrites:
+        hooks = Path(d) / "hooks"
+        hooks.mkdir()
+        h = hooks / "commit-msg"
+        h.write_text("#!/bin/sh\nsed -i '1s/.*/data(e1): rewritten/' \"$1\"\n", encoding="utf-8")
+        h.chmod(0o755)
+        _g(repo, "config", "core.hooksPath", str(hooks))
+    with open(repo / "results.jsonl", "a", encoding="utf-8") as fh:
+        fh.write('{"kind": "pair"}\n')
+    _g(repo, "add", "other.txt")
+    return repo
+
+
+def _git_out(repo, *args):
+    return subprocess.run(["git", *args], cwd=str(repo), capture_output=True, text=True, check=True).stdout
+
+
+def g_commit():
+    subject = "data(e1): pair 1 J-x STAYS"
+    with tempfile.TemporaryDirectory() as d:
+        repo = _commit_repo(d)
+        head = R.commit_results(repo, [repo / "results.jsonl"], subject)
+        names = _git_out(repo, "show", "--name-only", "--format=", "HEAD").split()
+        staged = _git_out(repo, "diff", "--cached", "--name-only").split()
+        subj = _git_out(repo, "log", "-1", "--format=%s").strip()
+        body_last = _git_out(repo, "log", "-1", "--format=%B").rstrip("\n").splitlines()[-1]
+        head_now = _git_out(repo, "rev-parse", "HEAD").strip()
+    with tempfile.TemporaryDirectory() as d:  # the subject check's red branch: a hook rewrites the subject
+        repo = _commit_repo(d, hook_rewrites=True)
+        before = _git_out(repo, "rev-parse", "HEAD").strip()
+        try:
+            R.commit_results(repo, [repo / "results.jsonl"], subject)
+            mismatch = None
+        except RuntimeError as e:
+            mismatch = str(e)
+        after = _git_out(repo, "rev-parse", "HEAD").strip()
+        left = _git_out(repo, "log", "-1", "--format=%s").strip()
+    ok = (head == head_now and names == ["results.jsonl"] and staged == ["other.txt"] and subj == subject
+          and body_last == R.COAUTHOR and mismatch is not None and "rewritten" in mismatch and subject in mismatch
+          and after != before and left == "data(e1): rewritten")
+    return ok, (f"files={names} still_staged={staged} subject_ok={subj == subject} coauthor_ok={body_last == R.COAUTHOR} "
+                f"| hook-rewrite: raised={mismatch is not None} left_as_is={left!r}")
+
+
+FORBIDDEN = re.compile(r"\b(done|ready|ship|final)\b", re.IGNORECASE)
+
+
+def g_commit_subjects():
+    got = {}
+    for name, script, problems_at, want in (
+            ("all_pass", lambda t, a, n: mk_run(t, a, n), None, 12),
+            ("all_loss", lambda t, a, n: mk_run(t, a, n, passed=(a == "A")), None, 5),
+            ("refusal", lambda t, a, n: mk_run(t, a, n), 3, 2)):
+        with tempfile.TemporaryDirectory() as d:
+            lp = Loop(Path(d) / "r.jsonl", script, problems_at=problems_at)
+            lp.drive()
+        got[name] = (lp.subjects, want)
+    subjects = [s for v in got.values() for s in v[0]]
+    ok = (all(len(v[0]) == v[1] for v in got.values()) and len(subjects) == 19
+          and all(s.startswith("data(e1): ") for s in subjects) and not any(FORBIDDEN.search(s) for s in subjects))
+    return ok, (" ".join(f"{k}={len(v[0])}/{v[1]}" for k, v in got.items())
+                + f" forbidden={[s for s in subjects if FORBIDDEN.search(s)]} last={got['all_loss'][0][-1]!r}")
+
+
+def _capture(fn, *a, **k):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = fn(*a, **k)
+    return rc, buf.getvalue().splitlines()
+
+
+def g_cli_plan():
+    with tempfile.TemporaryDirectory() as d:
+        absent = Path(d) / "absent.jsonl"
+        rc, lines = _capture(R.cmd_plan, ["--bank", str(BANK_PATH), "--results", str(absent)])
+        empty = Path(d) / "empty"
+        empty.mkdir()
+        rc_e, lines_e = _capture(R.cmd_plan, ["--bank", str(empty)])
+        one = Path(d) / "one.jsonl"
+        for r in pair(0):
+            R.append_record(one, r)
+        rc_1, lines_1 = _capture(R.cmd_plan, ["--bank", str(BANK_PATH), "--results", str(one)])
+        written = sorted(p.name for p in Path(d).iterdir())
+    tasks = [ln.split() for ln in lines if ln.startswith("TASK ")]
+    want = [t["id"] for t in R.ordered_tasks(need_bank())]
+    ok = (rc == 0 and [t[2] for t in tasks] == want and len(tasks) == 11 and want[0] == GCEG
+          and "arms=A,B" in tasks[0] and tasks[1][2] == "J-eaat_session_launch" and "arms=B,A" in tasks[1]
+          and tasks[-1][2] == "J-cr_review_verdict" and lines[-1] == f"NEXT RUN {GCEG} A 1"
+          and rc_e == 1 and any(x.startswith("PLAN REFUSED") for x in lines_e)
+          and rc_1 == 0 and lines_1[-1] == "NEXT RUN J-eaat_session_launch B 1"
+          and written == ["empty", "one.jsonl"])
+    return ok, (f"rc={rc} tasks={len(tasks)} first={tasks[0][2:3] + tasks[0][5:6] if tasks else None} "
+                f"last={tasks[-1][2] if tasks else None} next={lines[-1] if lines else None!r} | empty_bank={rc_e} "
+                f"{lines_e[-1][:50] if lines_e else None!r} | one_pair next={lines_1[-1] if lines_1 else None!r} "
+                f"files_after={written}")
+
+
+def g_cli_run_refuses():
+    before = list(BLOCKED)
+    saved = R.drive
+    R.drive = _never_drive  # belt and braces: the refusal must come before the loop
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            res = Path(d) / "results.jsonl"
+            rc, lines = _capture(R.cmd_run, ["--no-commit"], frozen=Path(d) / "absent_BANK_FROZEN_AT", results=res,
+                                 version_fn=lambda: OK_VERSION)
+            exists = res.exists()
+    finally:
+        R.drive = saved
+    new = BLOCKED[len(before):]
+    ok = (rc == 1 and bool(lines) and lines[-1].startswith("E1-RUN REFUSED") and not exists
+          and not any("-p" in a for a in new) and new == [])
+    return ok, f"rc={rc} last={lines[-1] if lines else None!r} results_exists={exists} new_blocked={new} " + \
+        f"refused={[ln[:40] for ln in lines if 'REFUSED' in ln and ln.startswith('CHECK')]}"
+
+
+def _never_drive(*a, **k):
+    raise AssertionError("drive reached from a gate that must refuse first")
+
+
+def g_cli_usage():
+    got = {}
+    saved = R.preflight, R.drive
+    reached = []
+    R.preflight = lambda **k: reached.append("preflight") or [("cli", False, "usage gate")]
+    R.drive = _never_drive  # a usage error must never reach the checks, let alone the loop
+    try:
+        for argv in ([], ["bogus"], ["run", "--max-pairs", "x"], ["plan", "--bogus"], ["run", "--max-pairs", "0"]):
+            rc, lines = _capture(R.main, argv)
+            got[" ".join(argv) or "(none)"] = (rc, lines)
+    finally:
+        R.preflight, R.drive = saved
+    usage = got["(none)"][1]
+    text = "\n".join(usage)
+    names_all = all(f"e1_runner.py {c}" in text for c in ("plan", "preflight", "run"))
+    ok = all(v[0] == 2 for v in got.values()) and names_all and reached == []
+    return ok, " ".join(f"{k!r}={v[0]}" for k, v in got.items()) + f" usage_names_all={names_all} checks_reached={reached}"
+
+
+# ---- 02-03 review fixes (F1-F5): pinned identities, post-run re-checks, refusal on a raising check -----------
+
+def _packet_world(d, edit):
+    """fake_world with its packet rewritten by edit(cands) -> (world, cands); the world's packet_sha256 follows the
+    edit, so only the property under test can refuse."""
+    w = fake_world(d)
+    cands = json.loads(w["packet"].read_text(encoding="utf-8"))["experiments"][0]["candidates"]
+    cands = edit(cands)
+    _write_packet(d, cands)
+    w["packet_sha256"] = hashlib.sha256(w["packet"].read_bytes()).hexdigest()
+    return w, cands
+
+
+def _per_run(w, **over):
+    kw = dict(bank_rel="bank", frozen=w["frozen"], packet=w["packet"], home=w["home"], version_fn=w["version_fn"],
+              drift_fn=w["drift_fn"], packet_sha256=w["packet_sha256"], frozen_hash=w["frozen_hash"])
+    kw.update(over)
+    return R.per_run_checks(**kw)["problems"]
+
+
+def _refused(checks):
+    return [n for n, o, _ in checks if not o]
+
+
+def g_packet_pin():
+    """F1: the packet's own bytes are pinned in the runner; preflight and per_run_checks refuse any other packet."""
+    head = subprocess.run(["git", "show", "HEAD:vault/programs/cognitive-economy/post-reset-packet.json"],
+                          cwd=str(R.REPO), capture_output=True, check=True).stdout
+    real = (R.PACKET_SHA256 == hashlib.sha256(head).hexdigest() == hashlib.sha256(R.PACKET.read_bytes()).hexdigest()
+            and R.check_packet() == [])
+    with tempfile.TemporaryDirectory() as d:
+        w = fake_world(d)
+        clean = _per_run(w, packet_sha256=R.PACKET_SHA256)  # the temp packet is not the pinned one
+        pf = _refused(R.preflight(**dict(w, packet_sha256=R.PACKET_SHA256)))
+        good = _per_run(w)
+        missing = _per_run(dict(w, packet=Path(d) / "absent.json"))
+    with tempfile.TemporaryDirectory() as d:
+        # rule bytes edited AND the packet's sha256_lf rewritten to match (review d1): pins pass, the packet pin not
+        pinned = fake_world(d)["packet_sha256"]
+        shutil.rmtree(d)
+        Path(d).mkdir()
+        w2, _ = _packet_world(d, lambda cs: [dict(c, sha256_lf=_sha_lf(b"# edited rule\n"))
+                                             if _rel(c) == "rules/python/testing.md" else c for c in cs])
+        (w2["home"] / ".claude" / "rules/python/testing.md").write_bytes(b"# edited rule\n")
+        rewritten = _per_run(w2, packet_sha256=pinned)
+        pins_pass = R.check_pins(w2["packet"], w2["home"]) == (13, [])
+    ok = (real and len(clean) == 1 and clean[0].startswith("packet sha256") and pf == ["packet"] and good == []
+          and pins_pass and len(rewritten) == 1 and rewritten[0].startswith("packet sha256")
+          and any(p.startswith("packet unreadable: FileNotFoundError") for p in missing))
+    return ok, (f"real_pin={real} other_packet={clean} preflight_refused={pf} control={good} "
+                f"rewritten_pin={rewritten} missing={missing[:2]}")
+
+
+def g_packet_set():
+    """F1+F2: a packet that is not 13 distinct rules is refused by check_pins, excludes, preflight and per-run."""
+    out = {}
+    for name, edit in (("dup", lambda cs: [cs[0] if _rel(c) == "rules/scoped-side-effect-authority.md" else c
+                                           for c in cs]),
+                       ("twelve", lambda cs: [c for c in cs  # review d2: an R2 rule dropped from arm B
+                                              if _rel(c) != "rules/scoped-side-effect-authority.md"])):
+        with tempfile.TemporaryDirectory() as d:
+            w, cands = _packet_world(d, edit)
+            n, bad = R.check_pins(w["packet"], w["home"])
+            try:
+                R.excludes(w["packet"], w["home"])
+                ex = "accepted"
+            except ValueError as e:
+                ex = str(e)
+            pf = _refused(R.preflight(**w))
+            pr = _per_run(w)
+            out[name] = (n, bad, ex, pf, pr)
+    dup, twelve = out["dup"], out["twelve"]
+    ok = (dup[0] == 13 and any("more than once" in b for b in dup[1]) and "more than once" in dup[2]
+          and dup[3] == ["pins", "excludes"] and len(dup[4]) == 1 and dup[4][0].startswith("pins 13/13:")
+          and twelve[0] == 12 and any("12 candidates" in b for b in twelve[1]) and "12 candidates" in twelve[2]
+          and twelve[3] == ["pins", "excludes"] and len(twelve[4]) == 1 and twelve[4][0].startswith("pins 12/13"))
+    return ok, f"dup={dup} | twelve={twelve}"
+
+
+def g_frozen_pin():
+    """F3: BANK_FROZEN_AT must hold the pinned freeze hash; a re-freeze passes bank_drift but is refused."""
+    real = R.BANK_FROZEN_HASH == R.FROZEN.read_text(encoding="utf-8").strip() and R.check_frozen_pin() == [] \
+        and R.BANK_COMMIT_PREFIX == R.BANK_FROZEN_HASH[:10]
+    with tempfile.TemporaryDirectory() as d:
+        (Path(d) / "w").mkdir()
+        (Path(d) / "repo").mkdir()
+        w = fake_world(Path(d) / "w")
+        repo, frozen = drift_repo(Path(d) / "repo")
+        h = frozen.read_text(encoding="utf-8").strip()
+        kw = dict(repo=repo, frozen=frozen, frozen_hash=h, drift_fn=R.bank_drift)
+        control = _per_run(w, **kw)
+        (repo / "bank" / "task_a.py").write_text("A = 2\n", encoding="utf-8")
+        _g(repo, "commit", "-q", "-am", "edit")
+        h2 = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(repo), capture_output=True, text=True).stdout.strip()
+        frozen.write_text(h2 + "\n", encoding="utf-8")
+        drift_alone = R.bank_drift(repo, "bank", frozen)
+        refrozen = _per_run(w, **kw)
+        pf = R.preflight(**dict(w, frozen=w["frozen"], frozen_hash=h))
+    st = {n: (o, det) for n, o, det in pf}
+    ok = (real and control == [] and drift_alone == [] and len(refrozen) == 1
+          and refrozen[0].startswith("BANK_FROZEN_AT") and _refused(pf) == ["bank_drift"]
+          and "!= pinned freeze" in st["bank_drift"][1])
+    return ok, (f"real_pin={real} control={control} refrozen_bank_drift={drift_alone} per_run={refrozen} "
+                f"preflight={_refused(pf)}:{st['bank_drift'][1][:60]}")
+
+
+def _session_run(version="2.1.289", drift_fn=None, has_drift_fn=True):
+    """one_run through the session over a fake bank (red precondition, green grade) and a fake CLI whose transcript
+    stamps `version` -> the run record."""
+    with tempfile.TemporaryDirectory() as d:
+        d = Path(d)
+        tf = d / "task_fake.py"
+        tf.write_text("# fake\n")
+        wt = d / "wt"
+        wt.mkdir()
+        projects = d / "projects"
+        grades = iter([{"rc": 1, "summary": "E1J_PASS=0/8 control=0/4 judgement=0/4", "passed": 0, "total": 8,
+                        "fails": ["x"]},
+                       {"rc": 0, "summary": "E1J_PASS=8/8 control=4/4 judgement=4/4", "passed": 8, "total": 8,
+                        "fails": []}])
+
+        def exec_fn(argv, **kw):
+            sid = str(uuid.uuid4())
+            p = projects / R._norm(kw["cwd"])
+            p.mkdir(parents=True, exist_ok=True)
+            text = fake_transcript_lines(sid).replace(f'"version": "{K.CLI_VERSION}"', f'"version": "{version}"')
+            (p / f"{sid}.jsonl").write_text(text, encoding="utf-8")
+            return subprocess.CompletedProcess(argv, 0, stdout=json.dumps(
+                {"session_id": sid, "num_turns": 2, "is_error": False}) + "\n", stderr="")
+        bank = types.SimpleNamespace(fresh_tree=lambda rid, base: wt, leak_scan=lambda w: (10, []),
+                                     drop_tree=lambda w: True, jprepare=lambda w, t: [],
+                                     jgrade=lambda w, t: next(grades), JPROMPT="{module}")
+        t = {"id": "J-fake", "rule": "rules/x.md", "file": tf, "module": "e1j/fake.py"}
+        kw = {"drift_fn": drift_fn} if has_drift_fn else {}
+        return R.one_run(bank, t, "A", 1, "0" * 40, excl=[], cli_version=OK_VERSION, append=lambda r: None,
+                         exec_fn=exec_fn, projects=projects, **kw)
+
+
+def g_cli_drift():
+    """F4: the transcript's own CLI version is recorded and must equal CLI_VERSION; the bank is re-checked after
+    the grade (drift, a raising check or no check -> invalid)."""
+    def boom():
+        raise OSError("bank gone")
+    good = _session_run(drift_fn=lambda: [])
+    newer = _session_run(version="2.1.290", drift_fn=lambda: [])
+    drifted = _session_run(drift_fn=lambda: ["edited since freeze: bank/task_a.py"])
+    raised = _session_run(drift_fn=boom)
+    unchecked = _session_run(has_drift_fn=False)
+    with tempfile.TemporaryDirectory() as d:
+        f = Path(d) / "t.jsonl"
+        f.write_text(fake_transcript_lines("s") + json.dumps({"type": "x", "version": "2.1.290"}) + "\nnot json\n",
+                     encoding="utf-8")
+        mixed = R.transcript_versions(f)
+    ok = (good["valid"] is True and good["cli_versions_observed"] == ["2.1.289"] and good["bank_drift_after"] == []
+          and newer["valid"] is False and newer["cli_versions_observed"] == ["2.1.290"]
+          and newer["invalid_reasons"] == ["cli version drift: transcript reports ['2.1.290'], want ['2.1.289']"]
+          and drifted["valid"] is False and drifted["invalid_reasons"] == ["bank drift during run"]
+          and raised["valid"] is False and raised["invalid_reasons"] == ["bank drift during run"]
+          and "bank drift unreadable: OSError" in str(raised["bank_drift_after"])
+          and unchecked["valid"] is False and unchecked["invalid_reasons"] == ["bank not re-checked after grade"]
+          and mixed == ["2.1.289", "2.1.290"])
+    return ok, (f"good={good['valid']}/{good['cli_versions_observed']} newer={newer['invalid_reasons']} "
+                f"drifted={drifted['invalid_reasons']} raised={raised['bank_drift_after']} "
+                f"unchecked={unchecked['invalid_reasons']} mixed={mixed}")
+
+
+def g_loop_drift_halt():
+    """F4: a run whose post-grade re-check found bank drift halts the campaign with a refusal record."""
+    calls = []
+
+    def script(t, a, n):
+        calls.append((t, a, n))
+        r = mk_run(t, a, n)
+        if len(calls) == 3:
+            r["bank_drift_after"] = ["edited since freeze: bank/task_a.py"]
+            r["valid"], r["invalid_reasons"] = K.run_valid(r)
+        return r
+    with tempfile.TemporaryDirectory() as d:
+        lp = Loop(Path(d) / "r.jsonl", script)
+        rc = lp.drive()
+        recs = lp.records()
+    rid = K.run_id(*calls[2]) if len(calls) > 2 else None
+    ref = recs[-1] if recs else {}
+    ok = (rc == (1, "REFUSED") and len(lp.calls) == 3 and ref.get("kind") == "refusal" and ref.get("after") == rid
+          and ref.get("problems", [""])[0] == "bank drift during run" and lp.subjects[-1] == f"data(e1): refusal after {rid}"
+          and recs[-2].get("valid") is False)
+    return ok, f"rc={rc} runs={len(lp.calls)} last={ref} commits={lp.subjects[-1:]}"
+
+
+def g_loop_check_every_run():
+    """drive() runs check_fn before EVERY run, attempt 2 included; a check_fn that raises is a refusal."""
+    def script(t, a, n):
+        return mk_run(t, a, n, valid=not (t == T0 and a == "A" and n == 1))
+    with tempfile.TemporaryDirectory() as d:
+        lp = Loop(Path(d) / "r.jsonl", script)
+        rc = lp.drive()
+    retried = (T0, "A", 2) in lp.calls
+    alternates = lp.events == ["check", "run"] * len(lp.calls)
+
+    class Raising(Loop):
+        def check_fn(self):
+            self.checks += 1
+            self.events.append("check")
+            if self.checks == 2:
+                raise OSError("packet unreadable")
+            return {"problems": [], "cli_version": OK_VERSION}
+    with tempfile.TemporaryDirectory() as d:
+        lr = Raising(Path(d) / "r.jsonl", script)
+        try:
+            rc2 = lr.drive()
+            esc = None
+        except BaseException as e:  # the subject: nothing may escape
+            rc2, esc = None, f"{type(e).__name__}: {e}"
+        recs = lr.records()
+    ref = recs[-1] if recs else {}
+    ok = (rc == (0, K.ALL_DECIDED) and retried and alternates and len(lp.calls) == 23
+          and esc is None and rc2 == (1, "REFUSED") and len(lr.calls) == 1 and ref.get("kind") == "refusal"
+          and ref.get("before") == K.run_id(T0, "A", 2) and "per-run check raised: OSError" in str(ref.get("problems")))
+    return ok, (f"rc={rc} runs={len(lp.calls)} attempt2={retried} check_before_every_run={alternates} | "
+                f"raising: rc={rc2} escaped={esc} runs={len(lr.calls)} refusal={ref.get('problems')}")
+
+
+def g_drift_unreadable():
+    """F5: a bank directory the walk cannot list is "bank unreadable", never "nothing added"."""
+    if os.geteuid() == 0:
+        return False, "running as root: mode 000 does not deny reads, the drill cannot observe the branch"
+    res = {}
+    for name, mode in (("listable", 0o755), ("unlistable", 0o000)):
+        with tempfile.TemporaryDirectory() as d:
+            repo, frozen = drift_repo(d)
+            sub = repo / "bank" / "sub"
+            sub.mkdir()
+            (sub / "task_z.py").write_text("Z = 1\n", encoding="utf-8")
+            sub.chmod(mode)
+            try:
+                res[name] = R.bank_drift(repo, "bank", frozen)
+            finally:
+                sub.chmod(0o755)
+    ok = (res["listable"] == ["added since freeze: bank/sub/task_z.py"]
+          and len(res["unlistable"]) == 1 and res["unlistable"][0].startswith("bank unreadable:")
+          and "bank/sub" in res["unlistable"][0])
+    return ok, f"{res}"
+
+
+# ---- 02-04 review fixes: the session dies with the runner (F1), lost commits (F2), torn tail (F3) ----------------
+
+def _wait_for(cond, limit):
+    """Bounded poll: True as soon as cond() holds, False after `limit` seconds (never an open-ended wait)."""
+    end = time.time() + limit
+    while time.time() < end:
+        if cond():
+            return True
+        time.sleep(0.05)
+    return bool(cond())
+
+
+def _fake_script(d, name, body):
+    """An executable fake CLI (never named claude, so the no-model guard stays armed for the real binary)."""
+    f = Path(d) / name
+    f.write_text(f"#!{sys.executable}\n" + body, encoding="utf-8")
+    f.chmod(0o755)
+    return str(f)
+
+
+def _reap(*pids):
+    for pid in pids:
+        try:
+            os.kill(int(pid), 9)
+        except (OSError, ValueError, TypeError):
+            pass
+
+
+_PARENT = """import sys
+sys.path.insert(0, {e1!r})
+import test_e1_runner as TT  # the no-model guard is armed in this process too
+R = TT.R
+R.CLAUDE = sys.argv[1]
+res = sys.argv[2]
+R.session(sys.argv[3], "P", "A", {{}}, [], on_spawn=lambda pid, st: R.append_record(
+    res, {{"kind": "run_start", "run_id": "r", "session_pid": pid, "session_pid_start": st}}))
+"""
+
+
+def g_session_pdeathsig():
+    """A runner SIGKILLed mid-session takes its session with it, and run_start held the child's pid + start time
+    while the child was still running (recorded before the wait)."""
+    with tempfile.TemporaryDirectory() as d:
+        d = Path(d)
+        pidf, res, wt = d / "child.pid", d / "r.jsonl", d / "wt"
+        wt.mkdir()
+        cli = _fake_script(d, "fakecli", "import os, time\n"
+                           f"open({str(pidf)!r}, 'w').write(str(os.getpid()))\ntime.sleep(30)\n")
+        parent_py = d / "parent.py"
+        parent_py.write_text(_PARENT.format(e1=str(E1)), encoding="utf-8")
+        par = subprocess.Popen([sys.executable, str(parent_py), cli, str(res), str(wt)])
+        pid = start = None
+        try:
+            if not _wait_for(lambda: pidf.exists() and pidf.read_text().strip() and res.exists(), 60):
+                return False, "fake session never started"
+            pid = int(pidf.read_text())
+            recs = R.read_records(res)
+            st = R.proc_start(pid)
+            start = st[0] if st else None
+            recorded = (len(recs) == 1 and recs[0].get("session_pid") == pid
+                        and recs[0].get("session_pid_start") == start and start is not None)
+            alive_before = R.session_alive(pid, start)
+            par.kill()
+            par.wait(timeout=10)
+            died = _wait_for(lambda: not R.session_alive(pid, start), 5)
+        finally:
+            _reap(par.pid, pid)
+    return recorded and alive_before and died, (f"recorded_before_wait={recorded} child_alive_then={alive_before} "
+                                                f"child_dead_after_runner_kill={died} pid={pid}")
+
+
+def g_session_timeout_group():
+    """On the session timeout the whole process group dies (a grandchild too), and the run reads "timeout"."""
+    saved = (R.CLAUDE, R.SESSION_TIMEOUT)
+    with tempfile.TemporaryDirectory() as d:
+        d = Path(d)
+        pidf = d / "pids"
+        R.CLAUDE = _fake_script(d, "fakecli", "import os, subprocess, sys, time\n"
+                                "g = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'])\n"
+                                f"open({str(pidf)!r}, 'w').write(f'{{os.getpid()}} {{g.pid}}')\ntime.sleep(30)\n")
+        R.SESSION_TIMEOUT = 2
+        pids = []
+        try:
+            rec = {}
+            R.session(d, "P", "A", rec, [])
+            pids = [int(x) for x in pidf.read_text().split()] if pidf.exists() else []
+            starts = [R.proc_start(x) for x in pids]
+            dead = len(pids) == 2 and _wait_for(lambda: all(st is None or st[1] == "Z" or R.proc_start(x) != st
+                                                                for x, st in zip(pids, starts)), 5)
+        finally:
+            R.CLAUDE, R.SESSION_TIMEOUT = saved
+            _reap(*pids)
+    ok = (rec.get("claude_rc") == "timeout" and rec.get("session_launched") is True and dead
+          and rec.get("session_pid") == (pids[0] if pids else -1) and rec.get("wall_s", 99) < 20)
+    return ok, (f"rc={rec.get('claude_rc')} wall={rec.get('wall_s')} pids={pids} group_dead={dead} "
+                f"recorded_pid={rec.get('session_pid')}")
+
+
+def g_runstart_pid():
+    """The production one_run path (no exec_fn): the child itself finds its own pid in run_start."""
+    bank = need_bank()
+    saved_runs, saved_cli = bank.RUNS, R.CLAUDE
+    saved_env = {k: os.environ.get(k) for k in ("E1FAKE_RESULTS", "E1FAKE_SEEN")}
+    with tempfile.TemporaryDirectory() as d:
+        d = Path(d)
+        results, seen = d / "results.jsonl", d / "seen"
+        bank.RUNS = d / "runs"
+        os.environ["E1FAKE_RESULTS"], os.environ["E1FAKE_SEEN"] = str(results), str(seen)
+        R.CLAUDE = _fake_script(d, "fakecli", "import json, os\n"
+                                "recs = [json.loads(x) for x in open(os.environ['E1FAKE_RESULTS']) if x.strip()]\n"
+                                "ok = [r for r in recs if r.get('kind') == 'run_start' "
+                                "and r.get('session_pid') == os.getpid()]\n"
+                                "open(os.environ['E1FAKE_SEEN'], 'w').write('seen' if len(ok) == 1 else 'missing')\n"
+                                "print(json.dumps({'session_id': '', 'num_turns': 0, 'is_error': False}))\n")
+        try:
+            t = bank.tasks(only=[GCEG])[0]
+            rec = R.one_run(bank, t, "A", 1, bank.jbase(), excl=[], cli_version="2.1.289 (test)",
+                            append=lambda r: R.append_record(results, r), run_id="e1test-pid-A-a1",
+                            projects=d / "projects")
+            R.append_record(results, rec)
+            lines = R.read_records(results)
+            saw = seen.read_text() if seen.exists() else None
+        finally:
+            bank.RUNS, R.CLAUDE = saved_runs, saved_cli
+            for k, v in saved_env.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+    rs = lines[0] if lines else {}
+    ok = ([x.get("kind") for x in lines] == ["run_start", "run"] and saw == "seen"
+          and isinstance(rs.get("session_pid"), int) and isinstance(rs.get("session_pid_start"), int)
+          and rec.get("session_pid") == rs.get("session_pid") and rec.get("claude_rc") == 0
+          and rec.get("session_launched") is True)
+    return ok, (f"kinds={[x.get('kind') for x in lines]} child_saw_its_pid={saw} run_start_pid="
+                f"{rs.get('session_pid')}/{rs.get('session_pid_start')} rc={rec.get('claude_rc')} "
+                f"err={rec.get('error')}")
+
+
+def g_reconcile_alive():
+    """reconcile refuses (no record, no drop, no run) while the recorded session pid with that start time lives;
+    a reused pid (other start time) and a dead pid reconcile as before."""
+    live = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        st = _wait_for(lambda: R.proc_start(live.pid) is not None, 5) and R.proc_start(live.pid)[0]
+        out = {}
+        for name, extra in (("alive", {"session_pid": live.pid, "session_pid_start": st}),
+                            ("unknown_start", {"session_pid": live.pid, "session_pid_start": None}),
+                            ("reused_pid", {"session_pid": live.pid, "session_pid_start": st + 1})):
+            with tempfile.TemporaryDirectory() as d:
+                rc, rec, lp, drops, _ = _reconcile_case(d, True, extra)
+                out[name] = (rc, rec.get("spend"), len(drops), lp.calls[:1], lp.lines[-1] if lp.lines else "")
+        live.kill()
+        live.wait(timeout=10)
+        with tempfile.TemporaryDirectory() as d:
+            rc, rec, lp, drops, _ = _reconcile_case(d, True, {"session_pid": live.pid, "session_pid_start": st})
+            out["dead"] = (rc, rec.get("spend"), len(drops), lp.calls[:1], lp.lines[-1] if lp.lines else "")
+    finally:
+        _reap(live.pid)
+    refused = [f"session still alive pid {live.pid}" in out[k][4] and out[k][0] == (1, "REFUSED")
+               and out[k][1] is None and out[k][2] == 0 and out[k][3] == [] for k in ("alive", "unknown_start")]
+    measured = [out[k][0] == (0, K.ALL_DECIDED) and out[k][1] == 50308 and out[k][2] == 1
+                and out[k][3] == [(T0, "A", 2)] for k in ("reused_pid", "dead")]
+    return all(refused) and all(measured), {k: (v[0], v[1], v[2], v[4][:60]) for k, v in out.items()}
+
+
+class _Kill(BaseException):
+    """Stands in for SIGKILL: drive has no finally, so nothing after the raise point runs."""
+
+
+def _git_repo(d):
+    repo = Path(d) / "repo"
+    repo.mkdir()
+    _g(repo, "init", "-q")
+    for k, v in (("user.name", "e1"), ("user.email", "e1@example.invalid"), ("commit.gpgsign", "false"),
+                 ("core.hooksPath", "/dev/null")):
+        _g(repo, "config", k, v)
+    (repo / "seed.txt").write_text("s\n", encoding="utf-8")
+    _g(repo, "add", "seed.txt")
+    _g(repo, "commit", "-q", "-m", "seed")
+    return repo
+
+
+def _real_drive(repo, res, *, commit_fn=None, dirty_fn=None):
+    return R.drive(mk_order(), results=res, run_fn=lambda t, a, n, ctx: mk_run(t, a, n),
+                   check_fn=lambda: {"problems": [], "cli_version": OK_VERSION}, reconcile_fn=_no_reconcile,
+                   commit_fn=commit_fn or (lambda s: R.commit_results(repo, [res], s)),
+                   dirty_fn=dirty_fn or (lambda: R.results_dirty(repo, res)), r2_rules=R2_RULES, out=lambda x: None)
+
+
+def g_loop_stop_recommit():
+    """A stop record whose commit was lost (crash after the append, or the stop commit failing) is committed by the
+    next drive before it reports HALTED; a dirty file that cannot be committed (or an unreadable status) is
+    COMMIT_FAILED, never a clean exit; a clean halted file makes no commit."""
+    res_of = {}
+    real_append = R.append_record
+    for case in ("crash_after_stop_append", "stop_commit_fails"):
+        with tempfile.TemporaryDirectory() as d:
+            repo = _git_repo(d)
+            res = repo / "results.jsonl"
+            calls = {"n": 0}
+
+            def app(path, rec):
+                real_append(path, rec)
+                if case == "crash_after_stop_append" and rec.get("kind") == "stop":
+                    raise _Kill("after stop append")
+
+            def flaky_commit(subj):
+                if case == "stop_commit_fails" and subj.startswith("data(e1): stop"):
+                    raise RuntimeError("index.lock held by another session (simulated)")
+                R.commit_results(repo, [res], subj)
+            R.append_record = app
+            try:
+                first = _real_drive(repo, res, commit_fn=flaky_commit)
+            except _Kill as e:
+                first = f"KILLED {e}"
+            finally:
+                R.append_record = real_append
+            before = _git_out(repo, "log", "-1", "--format=%s").strip()
+            second = _real_drive(repo, res)
+            head = _git_out(repo, "rev-parse", "HEAD").strip()
+            third = _real_drive(repo, res)  # clean: no further commit
+            res_of[case] = (first, before, second, _git_out(repo, "log", "-1", "--format=%s").strip(),
+                            '"kind": "stop"' in _git_out(repo, "show", "HEAD:results.jsonl"),
+                            _git_out(repo, "status", "--porcelain", "--", "results.jsonl").strip(),
+                            third, _git_out(repo, "rev-parse", "HEAD").strip() == head)
+            calls["n"] += 1
+    halted_subjects = []
+    with tempfile.TemporaryDirectory() as d:  # the HALTED branch on its own: clean at start, dirty at HALTED
+        res = Path(d) / "r.jsonl"
+        lp = Loop(res, lambda t, a, n: mk_run(t, a, n))
+        lp.drive()
+        flags = iter([False, True])
+        rc_h = R.drive(mk_order(), results=res, run_fn=None, check_fn=None, reconcile_fn=None,
+                       commit_fn=halted_subjects.append, dirty_fn=lambda: next(flags), r2_rules=R2_RULES,
+                       out=lambda x: None)
+        rc_fail = R.drive(mk_order(), results=res, run_fn=None, check_fn=None, reconcile_fn=None,
+                          commit_fn=lambda s: (_ for _ in ()).throw(RuntimeError("commit refused")),
+                          dirty_fn=lambda: True, r2_rules=R2_RULES, out=lambda x: None)
+        rc_unread = R.drive(mk_order(), results=res, run_fn=None, check_fn=None, reconcile_fn=None,
+                            commit_fn=halted_subjects.append,
+                            dirty_fn=lambda: (_ for _ in ()).throw(RuntimeError("git status failed")),
+                            r2_rules=R2_RULES, out=lambda x: None)
+    ok = all(v[1].startswith("data(e1): pair 11") and v[2] == (0, K.ALL_DECIDED) and v[4] and v[5] == ""
+             and v[6] == (0, K.ALL_DECIDED) and v[7] for v in res_of.values())
+    ok = ok and (res_of["stop_commit_fails"][0] == (1, "COMMIT_FAILED")
+                 and str(res_of["crash_after_stop_append"][0]).startswith("KILLED")
+                 and rc_h == (0, K.ALL_DECIDED) and halted_subjects == [f"data(e1): stop {K.ALL_DECIDED} (recommit)"]
+                 and rc_fail == (1, "COMMIT_FAILED") and rc_unread == (1, "COMMIT_FAILED"))
+    return ok, ({k: (v[0], v[1][:24], v[2], v[3][:40], v[4], v[5], v[7]) for k, v in res_of.items()},
+                f"halted_branch={rc_h} {halted_subjects} commit_fails={rc_fail} status_unreadable={rc_unread}")
+
+
+def g_torn_tail():
+    """append_record refuses onto a non-empty file whose last byte is not a newline (bytes unchanged), and drive
+    refuses before any run; absent, empty and newline-terminated files append as before."""
+    with tempfile.TemporaryDirectory() as d:
+        d = Path(d)
+        res = d / "r.jsonl"
+        for a in ("A", "B"):
+            R.append_record(res, mk_run(T0, a, 1))
+        res.write_bytes(res.read_bytes()[:-1])
+        before = res.read_bytes()
+        try:
+            R.append_record(res, {"kind": "pair"})
+            refused = None
+        except K.ContractError as e:
+            refused = str(e)
+        unchanged = res.read_bytes() == before
+        lp = Loop(res, lambda t, a, n: mk_run(t, a, n))
+        rc = lp.drive()
+        empty, absent, fine = d / "e.jsonl", d / "a.jsonl", d / "f.jsonl"
+        empty.write_bytes(b"")
+        fine.write_bytes(b'{"kind": "x"}\n')
+        for f in (empty, absent, fine):
+            R.append_record(f, {"kind": "y"})
+        controls = [len(R.read_records(f)) for f in (empty, absent, fine)]
+    ok = (refused is not None and "torn tail" in refused and unchanged and rc == (1, "REFUSED")
+          and lp.calls == [] and any("torn tail" in x for x in lp.lines) and controls == [1, 1, 2])
+    return ok, f"refused={refused!r:.60} unchanged={unchanged} drive={rc} runs={lp.calls} controls={controls}"
+
+
 GATES = [
     ("V-E1-NO-MODEL", g_no_model),
     ("V-E1-TRACER-REF", g_tracer_ref),
@@ -1018,6 +2267,24 @@ GATES = [
     ("V-E1-RECONCILE-SM", g_reconcile_sm), ("V-E1-CAMPAIGN", g_campaign),
     ("V-E1-CLI-ERROR", g_cli_error), ("V-E1-BANK-ACCESS", g_bank_access),
     ("V-E1-BANK-ACCESS-RECORDED", g_bank_access_recorded), ("V-E1-ARM-EXCLUDES", g_arm_excludes),
+    ("V-E1-PINS", g_pins), ("V-E1-CLI", g_cli), ("V-E1-BANK-DRIFT", g_bank_drift),
+    ("V-E1-RECORDS-READ", g_records_read),
+    ("V-E1-PREFLIGHT-OK", g_preflight_ok), ("V-E1-PREFLIGHT-REFUSALS", g_preflight_refusals),
+    ("V-E1-PREFLIGHT-NOBANK", g_preflight_nobank), ("V-E1-PER-RUN-CHECKS", g_per_run_checks),
+    ("V-E1-CLI-PREFLIGHT", g_cli_preflight),
+    ("V-E1-LOOP-ALL-DECIDED", g_loop_all_decided), ("V-E1-LOOP-HARM", g_loop_harm),
+    ("V-E1-LOOP-SPEND", g_loop_spend), ("V-E1-LOOP-POSCTL", g_loop_posctl), ("V-E1-LOOP-NOINFO", g_loop_noinfo),
+    ("V-E1-LOOP-RESUME", g_loop_resume), ("V-E1-LOOP-HALTED", g_loop_halted),
+    ("V-E1-LOOP-REFUSAL", g_loop_refusal), ("V-E1-LOOP-RECONCILE", g_loop_reconcile),
+    ("V-E1-LOOP-COMMIT-FAIL", g_loop_commit_fail),
+    ("V-E1-COMMIT", g_commit), ("V-E1-COMMIT-SUBJECTS", g_commit_subjects), ("V-E1-CLI-PLAN", g_cli_plan),
+    ("V-E1-CLI-RUN-REFUSES", g_cli_run_refuses), ("V-E1-CLI-USAGE", g_cli_usage),
+    ("V-E1-PACKET-PIN", g_packet_pin), ("V-E1-PACKET-SET", g_packet_set), ("V-E1-FROZEN-PIN", g_frozen_pin),
+    ("V-E1-CLI-DRIFT", g_cli_drift), ("V-E1-LOOP-DRIFT-HALT", g_loop_drift_halt),
+    ("V-E1-LOOP-CHECK-EVERY-RUN", g_loop_check_every_run), ("V-E1-DRIFT-UNREADABLE", g_drift_unreadable),
+    ("V-E1-SESSION-PDEATHSIG", g_session_pdeathsig), ("V-E1-SESSION-TIMEOUT-GROUP", g_session_timeout_group),
+    ("V-E1-RUNSTART-PID", g_runstart_pid), ("V-E1-RECONCILE-ALIVE", g_reconcile_alive),
+    ("V-E1-LOOP-STOP-RECOMMIT", g_loop_stop_recommit), ("V-E1-TORN-TAIL", g_torn_tail),
     ("V-E1-NO-MODEL-END", g_no_model_end),  # keep last in every later plan
 ]
 ALWAYS = ("V-E1-NO-MODEL", "V-E1-NO-MODEL-END")

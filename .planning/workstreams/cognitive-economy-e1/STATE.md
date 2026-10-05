@@ -75,3 +75,15 @@ rules can leave the startup prefix without a judgement loss. Each one costs ~19.
   human/next worker to measure that run and re-drive; record it in OWNER.md if it fires.
 - 2026-10-05 (epoch 2) 02-02 review F2 fixed: replay refuses a non-object record and any run recorded after a
   stop record (V-E1-ONE-PAIR cases non_object, run_after_stop; drill red without the check).
+- 2026-10-05 (epoch 2) PINNED IDENTITIES (02-03 review): the runner pins the packet's own sha256, the full freeze
+  hash d68871742a..., and CLI 2.1.289, and sets DISABLE_AUTOUPDATER=1 in the session env (both arms alike) so
+  an auto-update (channel latest; 2.1.287-2.1.289 already installed) cannot swap the binary mid-campaign; a run
+  whose transcript reports another CLI version is invalid. Safe: refusals only.
+
+## Continuity (epoch 2, 2026-10-05)
+- Phase 1 COMPLETE (freeze d6887174, BANK_FROZEN_AT efab0084). Phase 2: plans 02-01+02-02 committed 28fc1708;
+  02-03 + 02-04 executed, UNCOMMITTED in e1 (suite 64/64 before the 02-03 review fixes). Next: apply 02-03 review
+  fixes (job tmp fixes-0203.md), apply 02-04 review findings, commit via the clone, write 02-VERIFICATION.md,
+  phase.complete 2. Then Phase 3: `python3 vault/programs/cognitive-economy/e1/e1_runner.py preflight` must be OK,
+  then `... run` from the e1 worktree (spend authorized up to 17M by the Owner line in ADDENDUM-E1; the runner
+  commits results.jsonl per pair in e1). Run it in the background with a long timeout; resume = same command.

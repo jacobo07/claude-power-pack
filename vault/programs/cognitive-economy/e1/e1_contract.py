@@ -15,10 +15,16 @@ Run-record field contract (kind "run"), relied on by plans 02-02..02-04:
              total_context, output_tokens, models},
     bank_access [[marker, excerpt], ...] (bank markers found in the transcript's tool calls; evidence only, never a
              validity clause; None when no transcript was found), bank_access_error (only when the scan raised),
+    cli_versions_observed (sorted distinct `version` values of the session transcript's lines; None when no
+             transcript was found), bank_drift_after (e1_runner.bank_drift re-run after the post-session grade:
+             [] = the graded bank was the frozen bank; absent = never re-checked),
     error (only when an exception was caught: "<ExcType>: <msg>"), ended, worktree_removed,
     valid, invalid_reasons, task_pass, spend.
-Run-start record (appended immediately before the session is launched):
-    kind "run_start", run_id, task, rule, arm, attempt, base, wt, started, started_epoch, cli_version, excluded.
+Run-start record (appended once the session process exists and before the runner waits on it):
+    kind "run_start", run_id, task, rule, arm, attempt, base, wt, started, started_epoch, cli_version, excluded,
+    session_pid, session_pid_start (the child's pid and its /proc start time in clock ticks; both None when no
+    process was started: an exec error or an injected exec_fn). e1_runner.reconcile refuses while that pid with
+    that start time is alive.
 
 A field that is absent is read as its failing value, never as a pass.
 """
@@ -27,6 +33,7 @@ import sys
 sys.dont_write_bytecode = True
 
 MODEL = "claude-opus-5-5"
+CLI_VERSION = "2.1.289"  # ADDENDUM-E1 Design; STATE.md PINNED IDENTITIES
 CAP = 17_000_000
 PC_DELTA = 15_000
 HARM_WINDOW = 8
@@ -72,7 +79,9 @@ def run_valid(rec):
     clause, in a fixed order. "Session ran" excludes a CLI error result other than error_max_turns (an API or
     usage-limit abort; VALIDITY READINGS (b)). "Grade ran" includes the bank's own grade timeout (reading (a)).
     The arm/exclude match (reading (c)) is refused before launch by e1_runner.check_arm_excludes; bank_access
-    (reading (d)) is evidence only and is never read here."""
+    (reading (d)) is evidence only and is never read here. For a launched session (or one whose launch is not
+    recorded) two more clauses hold: the transcript reports exactly CLI_VERSION (an auto-update between the
+    per-run check and the exec would otherwise go unseen), and the bank re-checked after the grade is unchanged."""
     reasons = []
     if rec.get("bank_in_tree", ["(unlisted)"]):
         reasons.append("bank file in run tree")
@@ -96,6 +105,13 @@ def run_valid(rec):
     if not (grade_timed_out(rec) or ("E1J_PASS=" in str(rec.get("grade_summary") or "")
                                      and _pos_int(rec.get("grade_total")))):
         reasons.append("grade did not run")
+    if rec.get("session_launched") is not False:
+        seen = rec.get("cli_versions_observed")
+        if seen != [CLI_VERSION]:
+            reasons.append(f"cli version drift: transcript reports {seen!r}, want [{CLI_VERSION!r}]")
+        drift = rec.get("bank_drift_after")
+        if drift != []:
+            reasons.append("bank drift during run" if drift else "bank not re-checked after grade")
     return (not reasons), reasons
 
 
