@@ -67,13 +67,71 @@ OWNER DECISION PENDING (M2): on a budget/no_progress halt of a v2 mission, seal 
 owner and carry capsule_key into the renewal -- or declare halt/renewal out of v2 scope?
 Then: T7 fault matrix + chain audit; T8 stays HELD.
 
-**Next 3 actions.**
-1. T6 entry gate: run the 5 gates above; list live missions (`~/.claude/state/gsd-mission-*.json`) and
-   confirm none carries `rollover_protocol`; check `git log` and pp-mission-fix for gsd_mission.py moves.
-2. T6: wire gsd_mission behind the protocol gate using spec section 9 (arm flag + G11 mode refusal,
-   ROTATE -> compile/seal -> `outgoing_stop_authorized` -> gate_before_stop -> stop (G3), capsule_key (G6),
-   capsule_hold (G4), G5 clock, arm before spawn / bind after, v2 card block (G22), MCP strip (G9), renew
-   carries protocol (G20), file kill switch (G13)). G23 must stay green unchanged.
-3. Then flip kresume.md guard status PLANNED -> LIVE; T7 fault matrix + chain audit.
+**2026-10-05 Owner brief: M2 + L1 + L2 + no-note + guard msg + T7 (ULTRA-PLAN entry; inline plan
+for one-click approval BEFORE any mutation; then unattended). Owner M2 DECISION GIVEN: a resumable
+halt is a continuity transition (seal before planned destruction); a hard budget/safety stop may
+override but must enter explicit RECOVERY, never SAFE_TO_FORGET; renewal never silently legacy.
+Reality scan (read-only) DONE at HEAD bbcb3297 (3 ahead of origin, 0 behind):**
+- 100 mission records, 0 capsule-v2, 7 non-terminal. T6 gates green on HEAD: MV2 34, G23 32, MC 220, MCAP 49.
+- gsd_mission.py is CO-OWNED: 4 peer commits since ba99cf77 (18b539cf quota relogin, 25a10ce5 auth park,
+  308da56b mission_launch_gate pre-launch gate in supervise ~L1855 + renewals inherit quarantine,
+  c0042b05). Add their suites to regressions: test_gsd_mission_quota_relogin, test_persistent_failure_park,
+  test_mission_launch_gate. Fetch HEAD before every commit.
+- Halt reality: budget_exhausted = iterations>=max_cycles or age>max_hours since created_at (mission-level;
+  renewal = fresh budget, lineage capped MAX_RENEWALS=3). plan_next halts on budget at PREPARED/LAUNCHING/
+  HANDOFF (HANDOFF even if owner busy = a forced stop), owner UNKNOWN/WAITING/dead+budget, idle(turn
+  ended)+budget; a LIVE BUSY owner is let finish its turn (budget soft until turn end). no_progress halt
+  (supervise ~L1897, stalls>=3) is TERMINAL today: renewal_refusal needs "budget:" in the reason.
+  "3 launches never acked" halt also terminal. Renewal only for budget halts with GSD OK (renew_mission L1399).
+- Draft M2 shape: in the v2 halt branch, BEFORE HALTED: idle owner -> worker_handoff seal (+fallback) ->
+  clean continuity carried into renew_mission (capsule_key; renewed e1 armed with it); otherwise budget
+  wins -> halt + stop -> recovery seal from durable state on the halted record -> renewal carries it as
+  `recovery`; recovery refused -> renewal refused, HALTED with explicit reason (never legacy).
+  no_progress stays terminal (Invariant 9) but records continuity none. Hard bound for a busy v2 owner =
+  budget + wall.grace_s, then forced (v2-only; G23 must not move).
+- L1 reuse provider_breaker's model (BACKOFF_BASE_S 300 * 2^(n-1), cap 3600, QUARANTINE_AFTER 4) +
+  a refusal fingerprint (reasons, HEAD, dirty, obligations): re-seal only on change or backoff elapsed.
+- L2: budget check BEFORE the capsule-hold "none" in plan_next; at certify deadline stop the uncertified
+  worker (no authority, nothing to seal), keep capsule_key, bounded successor attempts per capsule; claim
+  takeover = rollover T2 lease (30 min).
+- No-note: ask once per epoch via gsd_epoch.continue_worker(prompt=handoff instruction) while owner LIVE
+  idle; still no note after that turn -> immediate degraded fallback (no 30 min wait).
+- Guard msg: hooks/capsule_mutation_guard.js:193 renders `python ${m.resume_cmd}` (= mission command);
+  render the real tool path from one canonical source; check whether a live hooks copy exists.
+- T7: tools/test_mission_capsule_faults.py does NOT exist; chain audit = `mission_capsule.py audit --mission`.
+- Iteration input read (Universal vMAX: reality check, CLASE 0-6, minimal core fix, empirical gate, UKDL seed).
+**NEXT: present the inline M2/T7 plan for one-click approval (no mutation before approval).**
 
-**Start.** Read spec sections 8 and 9, run the gates in action 1, then do action 2.
+**2026-10-05 Owner APPROVED S1-S7 ("y"), unattended. Order S1 spec -> S2 M2 -> S3 L1 -> S4 L2 -> S5 no-note ->
+S6 guard text -> S7 T7; one causal change per commit; a red gate = STOP and report.** Gate runner:
+scratchpad `gates.ps1` (11 suites: MV2, G23, MC, MCAP, CAP2, ROLLOVER, EPOCH, MQR, PFP, LG, MCA) + CMG via
+`node hooks/tests/test-capsule-mutation-guard.js --e2e ~/.claude/hooks/hook-dispatcher.js`.
+- S1 SEALED `45922af4` (spec section 11; binding for S2-S7).
+- S2 SEALED `9efe5333` (MV2 56/56, 11 suites green, G23 32/32 unchanged). Drill debt: 6 KILLED; RE-RUN
+  pending for 2 UNJUDGED (RENEW-KEY, card-on-launch; test line hardened) + 2 NOT RUN (renewal-before-seal,
+  inherited) -- batch reaped by Claude Code under host memory pressure (2.4/31 GB free, a peer pane's
+  zero-rescan runs). Do NOT re-launch drills without the Owner's go. Specs: scratchpad s2_mutants.json
+  entries 3, 5, 9, 10. Sibling T6 gap for S7: continuation_failed -> replace armed with a retired key.
+- S3 SEALED `22b55d3b` (L1 backoff), S4 SEALED `bc4df9dd` (L2), S5 SEALED `866f1ecc` (no-note),
+  S6 SEALED `b4fc6d58` (guard text + mission_capsule.TOOL). Last gates: MV2 72/72, CMG 24/24, G23 32/32,
+  all 11 suites green. Drill debt S2-S6 all deferred (Owner's go needed).
+- S7 SEALED `4f150d0e` (spec 11.6 LIVE in code, T7 partial): audit CLI + C12 fix + MCF 18/18. Two audit
+  defects found by the suite and fixed: key read from a ledger field transition() never writes (now from
+  the row's epoch), and a blind v2 ledger read INTACT (now UNREADABLE). All 11 suites + CMG 24/24 green.
+  CAP2 went 35/36 once in the full run: G24 live-state sentinel moved by a peer's concurrent seal/certify
+  at 12:38:08-09 (36/36 alone, same code). Named NOT built: C1/C4/C5/C8/C9, arm->bound audit link,
+  11.x source mutants. Pre-commit review was inline (pp-code-reviewer dispatch blocked by a peer's agent).
+  T8 stays HELD.
+- PEER REQUEST (pane claude-power-pack-4a, 2026-10-05), NOT in the approved plan, NOT acted on: stop_owner
+  treats a pooled `claude bg-spare` pid (host session done/stopped, argv without --session-id) as "not
+  terminated" and blocks relay forever (GEX44 m-f011d7fdebc9); proposal + 3 tests in
+  vault/programs/cognitive-economy/gen2/handoffs/W2-gsd-mission-bg-spare.md (fa135b6b); then update the
+  GEX44 clone (DEPLOY hard-rule class). Needs the Owner's own go -- a peer's "Owner-approved" is not it.
+  Reply to claude-power-pack-4a with the fix hash if done.
+
+**Next 3 actions.**
+1. Ask the Owner for the go to re-run the deferred mutation drills (S2-S7) when host memory allows.
+2. Ask the Owner whether to act on the peer bg-spare stop_owner fix + GEX44 clone update (not approved).
+3. Optional T7 tail if the Owner wants it: fault rows C1/C4/C5/C8/C9 + an arm ledger row for the audit.
+
+**Start.** `git log --oneline -8` (confirm 4f150d0e), then ask action 1 and 2 as one question.
