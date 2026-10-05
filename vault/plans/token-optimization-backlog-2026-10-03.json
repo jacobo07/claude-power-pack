@@ -16,5 +16,5 @@
   {"id": "TOK-15", "title": "Alarma de cuota que pueda disparar (umbral actual 100M output/dia vs ~19M medido: nunca dispara)", "priority": 2, "effort": "M", "impact": "Medium"},
   {"id": "TOK-16", "title": "Excluir .claude/worktrees de Glob/Grep (las copias ensucian cada busqueda)", "priority": 3, "effort": "S", "impact": "Low"},
   {"id": "TOK-17", "title": "Deduplicar el junction power-pack <-> mcp-video-analyzer en las herramientas de medicion (doble conteo de 1,6B)", "priority": 3, "effort": "S", "impact": "Low"},
-  {"id": "TOK-18", "title": "Tras el reset semanal: inyectar el prompt 'Cognitive Microkernel' como obligaciones del Goal cpp-cognitive-economy (EXTEND, sin Goal nuevo, Sonnet, presupuesto fijo)", "priority": 1, "effort": "L", "impact": "High", "blockers": ["weekly-reset-2026-10-11T18:00Z"]}
+  {"id": "TOK-18", "title": "TOK-18 v2: Cognitive Economy generation 2 (vault/programs/cognitive-economy/gen2), estimate 40/78/150M, W1+W2 now, Tier 3+ after reset", "priority": 1, "effort": "M", "impact": "High", "blockers": ["weekly-reset-2026-10-11T18:00Z"]}
 ]

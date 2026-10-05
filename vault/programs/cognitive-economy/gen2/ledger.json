@@ -1,0 +1,23 @@
+{
+ "generation": 2,
+ "backlog": "TOK-18",
+ "approved": "2026-10-05 Owner 'y'",
+ "card": "vault/programs/cognitive-economy/gen2/MISSION.md",
+ "budget_tokens": {"authorization_boundary": 150000000, "estimate_low": 40000000, "estimate_central": 78000000, "estimate_high": 150000000, "spent_measured": null},
+ "superseded_estimates": [
+  {"label": "previous optimized TOK-18", "low": 400000000, "high": 650000000, "cap": 800000000, "superseded": "2026-10-05"},
+  {"label": "unoptimized projection", "low": 1300000000, "high": 2400000000, "superseded": "2026-10-05"}
+ ],
+ "work_units": {
+  "W1": {"title": "compile mission card, gen-2 ledger, gate", "tier": 1, "terminal": "IMPLEMENTED_AND_VERIFIED", "evidence": [{"path": "vault/programs/cognitive-economy/gen2/evidence/W1.md", "command": "python tools/test_cognitive_economy_program.py --generation 2 --selftest"}, {"path": "vault/programs/cognitive-economy/gen2/MISSION.md"}]},
+  "W2": {"title": "GEX44 supervisor: E1 stuck replace + held-mission relay cost", "tier": 1, "terminal": null, "evidence": []},
+  "W3": {"title": "E1 resident floor (Owner-authorized separately)", "tier": 2, "terminal": null, "evidence": []},
+  "W4": {"title": "offline replay of admission / waiting / model mix over usage_index", "tier": 2, "terminal": null, "evidence": []},
+  "W5": {"title": "envelope canary champion vs lean challenger on a real backlog task", "tier": 3, "not_before": "2026-10-11T18:00:00Z", "terminal": null, "evidence": []},
+  "W6": {"title": "zero-transcript continuation proof (capsule-v2 T8)", "tier": 3, "terminal": null, "evidence": []},
+  "W7": {"title": "conditional primitives earned by W2/W4", "tier": 4, "terminal": null, "evidence": []},
+  "W8": {"title": "self-hosting second pass", "tier": 4, "terminal": null, "evidence": []},
+  "W9": {"title": "UKDL / CBR distillation and close", "tier": 4, "terminal": null, "evidence": []},
+  "R": {"title": "independent final review", "tier": 4, "terminal": null, "evidence": []}
+ }
+}

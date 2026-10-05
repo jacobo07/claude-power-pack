@@ -683,7 +683,16 @@ def main(argv=None) -> int:
     mode.add_argument("--status", action="store_true")
     mode.add_argument("--selftest", action="store_true")
     mode.add_argument("--pillar", choices=PILLARS)
+    ap.add_argument("--generation", type=int, choices=(1, 2), default=1,
+                    help="2 = TOK-18 v2 ledger (tools/cep_gen2.py); generation 1 is unchanged")
     a = ap.parse_args(argv)
+
+    if a.generation == 2:
+        if a.pillar:
+            ap.error("--pillar applies to generation 1 only")
+        sys.path.insert(0, str(REPO / "tools"))
+        import cep_gen2
+        return cep_gen2.main("selftest" if a.selftest else "status" if a.status else "final")
 
     if a.selftest:
         ok = selftest()

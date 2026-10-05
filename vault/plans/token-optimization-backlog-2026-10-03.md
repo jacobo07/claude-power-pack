@@ -63,7 +63,14 @@ Las estimaciones de ahorro de abajo son cotas superiores y no se han observado.
 ### Diferido (bloqueado por: reset semanal)
 - **TOK-18** El Owner eligio "esperar al reset" (2026-10-04). El prompt "Cognitive Microkernel / Context MMU" (/cpp-gsd-long) se tratara como obligaciones nuevas del Goal existente `cpp-cognitive-economy` (`vault/plans/cognitive-economy-program-2026-10-03.md`, done-gate `tools/test_cognitive_economy_program.py`). Modo EXTEND, sin Goal nuevo, sin Agent Teams, en Sonnet y con presupuesto fijo que decide el Owner. Prompt guardado verbatim: `vault/plans/cognitive-microkernel-brief-2026-10-04.md` (89 KB, ~22k tokens; NUNCA en la tarjeta de cada epoch, solo puntero).
 
-**Configuracion APROBADA por el Owner (2026-10-05): "yes, arm it but after the quota weekly reset".**
+**TOK-18 v2 (Owner "y" 2026-10-05) SUPERSEDES the static plan below.** The owner programme had already closed
+(generation 1, `vault/programs/cognitive-economy/CLOSE.md`, 20/20 terminals), so TOK-18 is now generation 2 of
+the same programme: card `vault/programs/cognitive-economy/gen2/MISSION.md`, state `gen2/ledger.json`, gate
+`python tools/test_cognitive_economy_program.py --generation 2 --final`. Bottom-up estimate 40 / 78 / 150M
+processed tokens (boundary 150M); W1+W2 now, Tier 3+ not before 2026-10-11T18:00Z. The 0.8B cap and the
+0.4-0.65B estimate are kept below as superseded baselines.
+
+**Configuracion APROBADA por el Owner (2026-10-05): "yes, arm it but after the quota weekly reset".** (SUPERSEDED by v2)
 **Reset semanal de esta cuenta: 2026-10-11 18:00 UTC (20:00 hora de Espana).** No armar antes.
 - Host: GEX44 (`ssh gex44`, usuario kobii, cuenta nueva ya logueada). No hay clon de PP alli: crear uno propio segun la receta de armado en GEX44 (memoria `reference_gex44_mission_arming_recipe.md`).
 - Perfil lean via `CLAUDE_CONFIG_DIR` solo para la mision (hoy GEX44 carga CLAUDE.md 25 KB, 23 rules, 186 skills, 95 agents, 134 hooks). Conservar los hooks de continuidad (context-watchdog, mission_wall/rollover_wall). Probar UNA rotacion real antes de dejarla desatendida.
