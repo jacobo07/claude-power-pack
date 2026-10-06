@@ -294,8 +294,54 @@ def _first_context(path: Path) -> int | None:
     return None
 
 
+def _floor_path() -> Path:
+    return state_dir() / "session-floors.jsonl"
+
+
+def _read_floor_rows() -> list[dict]:
+    try:
+        text = _floor_path().read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    rows = []
+    for line in text.splitlines():
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(r, dict):
+            rows.append(r)
+    return rows
+
+
+def record_floor(sid: str, transcript: Path) -> bool:
+    """Append {sid, cwd_dir, first_context, at} once per sid. Never raises on I/O failure."""
+    try:
+        if any(r.get("sid") == sid for r in _read_floor_rows()):
+            return False
+        fc = _first_context(transcript)
+        if not fc:
+            return False
+        import datetime as dt
+        row = {"sid": sid, "cwd_dir": transcript.parent.name, "first_context": fc,
+               "at": dt.datetime.now(dt.timezone.utc).isoformat()[:19]}
+        p = _floor_path()
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with open(p, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(row) + "\n")
+        return True
+    except OSError:
+        return False
+
+
 def recent_floor(project_dir: Path, exclude: str | None = None, sample: int = FLOOR_SAMPLE) -> int | None:
-    """Median first-call context of the most recent sessions in one project directory, or None."""
+    """Median first-call context of the most recent sessions in one project directory, or None.
+    Prefers the floor ledger (cheap); falls back to scanning transcripts only when it has no rows."""
+    import statistics
+    rows = [r for r in _read_floor_rows() if r.get("cwd_dir") == project_dir.name
+            and r.get("sid") != exclude and isinstance(r.get("first_context"), int) and r["first_context"] > 0]
+    if rows:
+        return int(statistics.median(r["first_context"] for r in rows[-sample:]))
     if not project_dir.is_dir():
         return None
     files = sorted((p for p in project_dir.glob("*.jsonl") if p.stem != exclude),
@@ -324,8 +370,12 @@ def feasibility(sid: str, stop: int, calls_estimate: int | None, cwd: str | None
     if t is not None:
         ref = session_tokens(t, since_iso)
         spent = ref["tokens"]
-        if ref["context"]:
-            per_call, out["source"] = ref["context"], f"this session's last context ({t.name})"
+        # per-call cost is the session's latest context over the WHOLE transcript: a window that
+        # starts after the last row has context 0 and must not fall back to other sessions' floors.
+        own = ref if not since_iso else session_tokens(t, None)
+        if own["context"]:
+            per_call, out["source"] = own["context"], f"this session's last context ({t.name})"
+            record_floor(sid, t)
     if per_call is None:
         d = root / encode_cwd(cwd or os.getcwd())
         per_call = recent_floor(d, exclude=sid)

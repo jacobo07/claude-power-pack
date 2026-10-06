@@ -1364,6 +1364,24 @@ def certify_flow(key: str, claimant: str, answers: Optional[dict], state_dir: Op
     return 0, res
 
 
+def declare_budget_or_refuse(claimant: str, stop: int, calls_estimate: Optional[int],
+                             cwd: Optional[str] = None, since_iso: Optional[str] = None) -> tuple[int, dict]:
+    """Declare the session envelope for the certifying session, through mission_spend.feasibility.
+    Target = 75% of stop, warn = 90%. Infeasible or unprojectable -> (3, feasibility), nothing declared.
+    Called AFTER certification is recorded; it never undoes it."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import mission_spend as ms
+    f = ms.feasibility(claimant, stop, calls_estimate, cwd=cwd, since_iso=since_iso)
+    if not f["feasible"]:
+        print(f"BUDGET REFUSED (certification stays recorded): {f['reason']}. Raise --budget-stop or cut "
+              "--calls-estimate and run session-declare.")
+        return 3, f
+    p = ms.declare(claimant, int(stop * 0.75), int(stop * 0.9), stop, calls_estimate,
+                   since_iso=since_iso, extra={"feasibility": f})
+    print(f"BUDGET DECLARED for {claimant}: stop {stop:,} ({f['reason']}) -> {p}")
+    return 0, f
+
+
 def main(argv=None) -> int:
     for s in (sys.stdout, sys.stderr):
         try:
@@ -1395,6 +1413,9 @@ def main(argv=None) -> int:
     for k in ("goal", "branch", "head", "next"):
         ce.add_argument(f"--{k}")
     ce.add_argument("--answers", help='JSON {"goal","branch","head","next"} (fragile under PowerShell 5.1)')
+    ce.add_argument("--budget-stop", type=int,
+                    help="after a successful certify, declare this session's envelope (stop) via feasibility")
+    ce.add_argument("--calls-estimate", type=int, help="calls the certified unit is expected to need")
     ga = sub.add_parser("gate")
     ga.add_argument("--session", default=current_session())
     ga.add_argument("--max-age-s", type=float, default=RESET_MAX_AGE_S)
@@ -1455,7 +1476,10 @@ def main(argv=None) -> int:
             return 4
         return resume_flow(cap, a.claimant, a.cwd)
     if a.cmd == "certify":
-        return certify_flow(a.from_session, a.claimant, _answers(a))[0]
+        rc = certify_flow(a.from_session, a.claimant, _answers(a))[0]
+        if rc == 0 and a.budget_stop:
+            return declare_budget_or_refuse(a.claimant, a.budget_stop, a.calls_estimate)[0]
+        return rc
     if a.cmd == "status":
         path = STATE_DIR / "rollover-ledger.jsonl"
         rows = path.read_text(encoding="utf-8").splitlines()[-a.n:] if path.is_file() else []

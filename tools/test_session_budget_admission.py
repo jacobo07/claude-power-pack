@@ -89,9 +89,43 @@ def admission(tmp: Path) -> None:
     # Four sessions share the dir: s-admit's first call (100K) plus these three -> median 110K.
     for i, c in enumerate([90_000, 120_000, 150_000]):
         _transcript(proj / f"other{i}.jsonl", [c, c + 5_000])
+    # In-process calls write the floor ledger: isolate them from the real ~/.claude/state.
+    inproc = tmp / "state-inproc"
+    os.environ["GSD_LONG_RUN_STATE_DIR"] = str(inproc)
     f = ms.feasibility("s-fresh", 10_000_000, 5, cwd=str(work), root=cfg / "projects")
     _check("V-ADMIT-FALLBACK", f["feasible"] and f["per_call"] == 110_000 and "median" in (f["source"] or ""),
-           f"per_call={f['per_call']} source={f['source']}")
+           f"per_call={f['per_call']} source={f['source']} (ledger empty -> transcript scan)")
+
+    # Since-window after every row: per-call must still come from the session's OWN context.
+    f = ms.feasibility(sid, 10_000_000, 5, cwd=str(work), root=cfg / "projects", since_iso="2099-01-01T00:00:00")
+    _check("V-ADMIT-SINCE-USES-OWN-CONTEXT",
+           f["per_call"] == 100_000 and f["spent"] == 0 and "this session" in (f["source"] or ""),
+           f"per_call={f['per_call']} spent={f['spent']} source={f['source']}")
+    # Control pole: with a different own context the same call follows it, not the other sessions' floor.
+    _transcript(proj / "s-big.jsonl", [215_000] * 3)
+    f = ms.feasibility("s-big", 10_000_000, 5, cwd=str(work), root=cfg / "projects", since_iso="2099-01-01T00:00:00")
+    _check("V-ADMIT-SINCE-USES-OWN-CONTEXT-CTRL", f["per_call"] == 215_000, f"per_call={f['per_call']}")
+
+    # Floor ledger: row written (once per sid), preferred over the scan, scan still works when empty.
+    rows = [json.loads(x) for x in (inproc / "session-floors.jsonl").read_text(encoding="utf-8").splitlines()]
+    big = [r for r in rows if r["sid"] == "s-big"]
+    _check("V-ADMIT-FLOOR-LEDGER", len(big) == 1 and big[0]["first_context"] == 215_000
+           and big[0]["cwd_dir"] == proj.name and "at" in big[0], f"rows={rows}")
+    ms.feasibility("s-big", 10_000_000, 5, cwd=str(work), root=cfg / "projects")
+    again = (inproc / "session-floors.jsonl").read_text(encoding="utf-8").count('"s-big"')
+    _check("V-ADMIT-FLOOR-LEDGER-ONCE", again == 1, f"s-big rows={again}")
+    ledger_dir = tmp / "state-ledger"
+    ledger_dir.mkdir()
+    os.environ["GSD_LONG_RUN_STATE_DIR"] = str(ledger_dir)
+    (ledger_dir / "session-floors.jsonl").write_text("\n".join(json.dumps(
+        {"sid": f"L{i}", "cwd_dir": proj.name, "first_context": c, "at": "2026-10-06T00:00:00"})
+        for i, c in enumerate([40_000, 50_000, 60_000])) + "\n", encoding="utf-8")
+    fl = ms.recent_floor(proj, exclude="zzz")
+    os.environ["GSD_LONG_RUN_STATE_DIR"] = str(tmp / "state-empty")
+    scan = ms.recent_floor(proj, exclude="zzz")
+    os.environ["GSD_LONG_RUN_STATE_DIR"] = str(inproc)
+    _check("V-ADMIT-FLOOR-LEDGER-PREFERRED", fl == 50_000 and scan is not None and scan != 50_000,
+           f"ledger={fl} scan_fallback={scan}")
 
     # Unknown cost: no transcript and an empty cwd directory -> refused, never admitted.
     empty = tmp / "empty-cwd"
