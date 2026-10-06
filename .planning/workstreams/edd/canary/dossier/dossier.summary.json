@@ -1,0 +1,25 @@
+{
+ "concepts": 81,
+ "modules": 31,
+ "bytes": 67476,
+ "dropped_sections": 0,
+ "concepts_without_candidate": [
+  "C-06",
+  "C-07",
+  "C-10",
+  "C-12",
+  "C-13",
+  "C-18",
+  "C-24",
+  "C-27",
+  "C-39",
+  "C-40",
+  "C-42",
+  "C-46",
+  "C-47",
+  "C-50",
+  "C-64",
+  "C-80"
+ ],
+ "commands": []
+}
