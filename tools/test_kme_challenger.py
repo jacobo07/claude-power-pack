@@ -7,6 +7,11 @@ a PASS and never part of the n/m denominator.
 
     python3 -I tools/test_kme_challenger.py       run every gate
     python3 -I tools/test_kme_challenger.py --drill   mutation drill: every challenger guard must be shown able to fail
+    python3 -I tools/test_kme_challenger.py --real    GEX44 corpus copy: certify, reproduce the 7 KME-L files, read-only proof
+    python3 -I tools/test_kme_challenger.py --real-exposure   GEX44: the KME-only query opens no CostaLuz byte (+ control)
+
+The two real modes read /home/kobii/kme-corpus/projects and /home/kobii/ao-scratch/p1/cold.sqlite (read-only, hashed
+before and after) and write only under /home/kobii/ao-scratch/p2/. An absent corpus or index is a SKIP and exit 1.
 
 Helpers of tools/test_kme_pillars.py (Fx, ts, write_frozen, run_main, scratch, CANARY) are imported, not copied.
 """
@@ -22,7 +27,9 @@ import json
 import os
 import shutil
 import sqlite3
+import subprocess
 import sys
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -31,6 +38,7 @@ for _p in (str(HERE), str(REPO / "wiki" / "tools"), str(REPO)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+import kme_equivalence as ke  # noqa: E402
 import kme_pillars as kp  # noqa: E402
 import kme_replay as kr  # noqa: E402
 import kme_token_audit as kta  # noqa: E402
@@ -64,13 +72,13 @@ def run_gate(gate: str, fn) -> None:
         record("PASS" if res else "FAIL", gate, ev)
 
 
-def summary_line() -> str:
+def summary_line(prefix: str = "KMEC_PASS") -> str:
     counted = [r for r in RESULTS if r[0] in ("PASS", "FAIL")]
     n = sum(1 for r in counted if r[0] == "PASS")
     m = len(counted)
     sk = sum(1 for r in RESULTS if r[0] == "SKIP")
     inc = sum(1 for r in RESULTS if r[0] == "INCONCLUSIVE")
-    return f"KMEC_PASS={n}/{m}  threshold={m}/{m}  skipped={sk}  inconclusive={inc}"
+    return f"{prefix}={n}/{m}  threshold={m}/{m}  skipped={sk}  inconclusive={inc}"
 
 
 # --------------------------------------------------------------------------- open spy
@@ -1091,6 +1099,209 @@ def run_all() -> int:
     return 0 if not bad else 1
 
 
+# --------------------------------------------------------------------------- real-corpus gates (plan 02-04)
+REAL_CORPUS = "/home/kobii/kme-corpus/projects"
+REAL_INDEX = "/home/kobii/ao-scratch/p1/cold.sqlite"
+REAL_SCRATCH = "/home/kobii/ao-scratch/p2"
+REAL_FILTER = "KobiiCraft-Core-Files|kme-wt-arena2"
+REAL_FREEZE = "2026-10-03T16:13:37Z"
+REAL_COMMITTED = REPO / "vault" / "programs" / "incremental-cognition" / "measurements"
+REAL_TIMEOUT = 590
+FORBID_RX = "(?i)costaluz"
+REAL_STATE: dict = {}
+
+
+def real_question(until: str = "auto", flt: str = REAL_FILTER) -> list:
+    return ["--denominator", "KME-L", "--until", until, "--expand", "--root", REAL_CORPUS, "--project-filter", flt]
+
+
+def real_prereq() -> str:
+    """'' when the real inputs exist, else the reason the real gates cannot run."""
+    if not os.path.isdir(REAL_CORPUS):
+        return f"corpus absent: {REAL_CORPUS}"
+    if not os.path.isfile(REAL_INDEX):
+        return f"index absent: {REAL_INDEX}"
+    return ""
+
+
+def corpus_manifest(root: str = REAL_CORPUS) -> dict:
+    """sha256 over the sorted `size mtime_ns relpath` lines of an lstat pass; no file is opened."""
+    lines = []
+    for d, _dirs, files in os.walk(root):
+        for f in files:
+            p = os.path.join(d, f)
+            st = os.lstat(p)
+            lines.append("%d %d %s" % (st.st_size, st.st_mtime_ns, os.path.relpath(p, root)))
+    lines.sort()
+    body = ("\n".join(lines) + "\n").encode("utf-8")
+    return {"files": len(lines), "bytes": sum(int(x.split(" ", 1)[0]) for x in lines),
+            "sha256": hashlib.sha256(body).hexdigest()}
+
+
+def file_identity(path: str = REAL_INDEX) -> dict:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 22), b""):
+            h.update(chunk)
+    st = os.stat(path)
+    side = {sfx: os.path.exists(path + sfx) for sfx in ("-wal", "-shm", "-journal")}
+    return {"sha256": h.hexdigest(), "mtime_ns": st.st_mtime_ns, "size": st.st_size, "sidecars": side}
+
+
+def sh(argv: list, timeout: int = REAL_TIMEOUT) -> dict:
+    """Run one command from the repo root; {argv, rc, out, err, wall_s}. A timeout is rc -9, never a success."""
+    t0 = time.monotonic()
+    try:
+        cp = subprocess.run(argv, cwd=str(REPO), capture_output=True, text=True, timeout=timeout)
+        rc, out, err = cp.returncode, cp.stdout, cp.stderr
+    except subprocess.TimeoutExpired as exc:
+        rc = -9
+        out = (exc.stdout or b"").decode("utf-8", "replace") if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+        err = f"TIMEOUT after {timeout}s"
+    return {"argv": argv, "rc": rc, "out": out, "err": err, "wall_s": round(time.monotonic() - t0, 3)}
+
+
+def py(script: str, *args) -> list:
+    return [sys.executable, "-I", script, *args]
+
+
+def real_run() -> dict:
+    """The whole --real sequence, executed once; every real gate reads this record."""
+    if REAL_STATE:
+        return REAL_STATE
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    run = Path(REAL_SCRATCH) / f"real-{stamp}"
+    run.mkdir(parents=True, exist_ok=False)
+    cert, plog, outd = run / "kmel.cert.json", run / "path.jsonl", run / "challenger"
+    outd.mkdir()
+    st = REAL_STATE
+    st["run_dir"] = str(run)
+    st["before"] = {"manifest": corpus_manifest(), "index": file_identity()}
+    q = real_question()
+    st["certify"] = sh(py("wiki/tools/kme_pillars.py", "certify", *q, "--index-db", REAL_INDEX, "--cert", str(cert)))
+    plan = ["--plan", "challenger", "--index-db", REAL_INDEX, "--cert", str(cert), "--path-log", str(plog),
+            "--out-dir", str(outd)]
+    certified = st["certify"]["rc"] == 0 and cert.is_file()
+    if certified:
+        st["all"] = sh(py("wiki/tools/kme_pillars.py", "all", *q, *plan))
+        st["rank"] = sh(py("wiki/tools/kme_replay.py", "rank", *q, *plan))
+        st["compare"] = sh(py("tools/kme_equivalence.py", "compare", "--candidate", str(outd),
+                              "--committed", str(REAL_COMMITTED)))
+    st["perturb"] = sh(py("tools/kme_equivalence.py", "selftest-perturb", "--committed", str(REAL_COMMITTED)))
+    st["after"] = {"manifest": corpus_manifest(), "index": file_identity()}
+    st["cert_path"], st["path_log"], st["out_dir"] = str(cert), str(plog), str(outd)
+    (run / "real-run.json").write_text(json.dumps(st, indent=1, sort_keys=True), encoding="utf-8")
+    return st
+
+
+def g_real_certified():
+    st = real_run()
+    c = st["certify"]
+    doc = json.loads(Path(st["cert_path"]).read_text(encoding="utf-8")) if Path(st["cert_path"]).is_file() else {}
+    sel, sh_ = doc.get("selected", {}), doc.get("shadow", {})
+    ok = (c["rc"] == 0 and "KMEP-CERT verdict=CERTIFIED" in c["out"] and sel.get("sessions") == 102
+          and sh_.get("agree") is True and sh_.get("champion_selected") == 102 and sh_.get("index_selected") == 102)
+    return ok, (f"rc={c['rc']} {c['out'].strip()} selected={sel.get('sessions')} shadow={sh_} "
+                f"wall_s={c['wall_s']} err={c['err'].strip()[:200]!r}")
+
+
+def g_real_equiv():
+    st = real_run()
+    c = st.get("compare")
+    if c is None:
+        return False, "no compare: certify did not produce a certificate"
+    lines = [x for x in c["out"].splitlines() if x.startswith("KMEQ")]
+    ok = c["rc"] == 0 and "KMEQ_VERDICT=SAME same=7/7" in c["out"] and len(lines) == 8
+    return ok, f"rc={c['rc']} " + " | ".join(x.split(" committed=")[0] for x in lines)
+
+
+def g_real_sessions():
+    st = real_run()
+    got = {}
+    for p in ke.PILLARS:
+        fs = sorted(Path(st["out_dir"]).glob(f"{p}-KME-L-*.md"))
+        got[p] = ke.sessions_of(ke.parse_json_block(fs[0].read_text(encoding="utf-8"))) if len(fs) == 1 else None
+    return all(v == 568 for v in got.values()) and len(got) == 7, f"sessions_scanned={got}"
+
+
+def g_real_h_verdicts():
+    """H is SAME with a masked commit; the owner-verdict map of the candidate equals the committed one and is non-empty."""
+    st = real_run()
+    c = st.get("compare")
+    if c is None:
+        return False, "no compare"
+    h = [x for x in c["out"].splitlines() if x.startswith("KMEQ pillar=H ")]
+    fs = sorted(Path(st["out_dir"]).glob("H-KME-L-*.md"))
+    cand = ke.h_verdict_map(ke.parse_json_block(fs[0].read_text(encoding="utf-8"))) if len(fs) == 1 else None
+    comm = ke.h_verdict_map(ke.parse_json_block((REAL_COMMITTED / "H-KME-L-2026-10-05.md").read_text(encoding="utf-8")))
+    ok = len(h) == 1 and "verdict=SAME" in h[0] and "verdict_map=SAME" in h[0] and bool(cand) and cand == comm
+    return ok, (h[0].split(" committed=")[0] if h else "no H line") + f" verdict_map equal={cand == comm} map={cand}"
+
+
+def g_real_perturb():
+    c = real_run()["perturb"]
+    return c["rc"] == 0 and "KMEQ_SELFTEST=PASS" in c["out"], f"rc={c['rc']} {c['out'].strip().splitlines()[-1:]}"
+
+
+def g_real_index_path():
+    """Two records, each plan_taken index, no deopt, nothing stale. The planned read set is the index-selected sessions
+    plus, by design (02-03 IN-04), the sessions the index holds no first timestamp for, read raw; nothing else."""
+    st = real_run()
+    recs = read_log(st["path_log"])
+    tools = [r.get("tool") for r in recs]
+    cert = json.loads(Path(st["cert_path"]).read_text(encoding="utf-8")) if Path(st["cert_path"]).is_file() else {}
+    n_sel = cert.get("selected", {}).get("sessions")
+    ok = (len(recs) == 2 and tools == ["kme_pillars", "kme_replay"]
+          and all(r.get("plan_taken") == "index" and r.get("deopt") is None
+                  and r["read_set"].get("stale") == []
+                  and r["read_set"]["sessions"] == n_sel + len(r["read_set"].get("no_first_ts") or [])
+                  for r in recs))
+
+    def brief(r):
+        rs = r["read_set"]
+        return (f"{r.get('tool')}.{r.get('subcommand')} plan_taken={r.get('plan_taken')} deopt={r.get('deopt')} "
+                f"stale={rs.get('stale')} sessions={rs['sessions']} (selected {n_sel} + no_first_ts "
+                f"{len(rs.get('no_first_ts') or [])}) files={rs['files']} bytes={rs['bytes']}")
+    return ok, "; ".join(brief(r) for r in recs)
+
+
+def g_real_readonly():
+    st = real_run()
+    b, a = st["before"], st["after"]
+    ok = b["manifest"] == a["manifest"] and b["index"] == a["index"]
+    return ok, (f"manifest before={b['manifest']['sha256'][:12]} after={a['manifest']['sha256'][:12]} "
+                f"files={a['manifest']['files']}; index sha before={b['index']['sha256'][:12]} "
+                f"after={a['index']['sha256'][:12]} mtime_ns equal={b['index']['mtime_ns'] == a['index']['mtime_ns']}")
+
+
+REAL_GATES = [
+    ("V-KMEC-REAL-CERTIFIED", g_real_certified),
+    ("V-KMEC-EQUIV-REAL", g_real_equiv),
+    ("V-KMEC-SESSIONS-SCANNED-568", g_real_sessions),
+    ("V-KMEC-H-VERDICTS", g_real_h_verdicts),
+    ("V-KMEC-EQUIV-PERTURB-REAL", g_real_perturb),
+    ("V-KMEC-REAL-INDEX-PATH", g_real_index_path),
+    ("V-KMEC-REAL-READONLY", g_real_readonly),
+]
+
+
+def run_real_gates(gates, prefix: str) -> int:
+    """A real gate that could not run is a SKIP and the mode exits 1; it is never a pass."""
+    why = real_prereq()
+    for name, fn in gates:
+        if why:
+            record("SKIP", name, why)
+        else:
+            run_gate(name, fn)
+    print(summary_line(prefix))
+    bad = [r for r in RESULTS if r[0] != "PASS"]
+    return 0 if not bad else 1
+
+
+def run_real() -> int:
+    return run_real_gates(REAL_GATES, "KMEC_REAL_PASS")
+
+
 # --------------------------------------------------------------------------- mutation drill
 # A guard that cannot fail proves nothing (RESEARCH Pitfall 9). Each mutant below breaks ONE mechanism of the challenger
 # by replacing a kme_pillars / kme_token_audit attribute, and the gate(s) named beside it must turn red; the unmutated
@@ -1258,4 +1469,10 @@ def run_drill() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(run_drill() if "--drill" in sys.argv[1:] else run_all())
+    _argv = sys.argv[1:]
+    if "--drill" in _argv:
+        sys.exit(run_drill())
+    elif "--real" in _argv:
+        sys.exit(run_real())
+    else:
+        sys.exit(run_all())
