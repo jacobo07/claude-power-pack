@@ -110,7 +110,7 @@ Plans:
    11,549,646,300) on the GEX44 copy, with dedup reconciled to the unit.
 4. Refresh cost measured (wall, bytes) for a cold build and for a delta.
 
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans executed
 
 Plans:
 **Wave 1**
@@ -135,7 +135,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 01-06-PLAN.md -- 01-EVIDENCE.md (Product + Intelligence Delta), gen2 state.O, AOP-O row, [O] owner-bundle lines, STATE
+- [x] 01-06-PLAN.md -- 01-EVIDENCE.md (Product + Intelligence Delta), gen2 state.O, AOP-O row, [O] owner-bundle lines, STATE
 
 ### Phase 2: KME-L challenger
 
