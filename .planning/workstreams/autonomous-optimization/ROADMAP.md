@@ -110,12 +110,12 @@ Plans:
    11,549,646,300) on the GEX44 copy, with dedup reconciled to the unit.
 4. Refresh cost measured (wall, bytes) for a cold build and for a delta.
 
-**Plans:** 6 plans
+**Plans:** 1/6 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md -- baseline consumer set + Linux identity suite; v5 tracer: zero-reread migration, tool events, call occurrences, typed population; drill M1-M4
+- [x] 01-01-PLAN.md -- baseline consumer set + Linux identity suite; v5 tracer: zero-reread migration, tool events, call occurrences, typed population; drill M1-M4
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

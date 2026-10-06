@@ -1,16 +1,16 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-current_phase: 1 — usage_index v5 substrate
+current_phase: 1
 status: executing
-stopped_at: Phase 0 complete, ready to plan Phase 1
-last_updated: "2026-10-06T20:18:42.417Z"
-state_head: 85fd564dac1d83745c81717268cb4cb690226cd1
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-10-06T20:32:22.554Z"
+state_head: 30a6433a47c065fb000b63f16a67fda36f8f0a64
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 6
-  completed_plans: 0
+  completed_plans: 1
 milestone_name: autonomous-optimization
 last_activity: 2026-10-05
 workstream: autonomous-optimization
@@ -30,8 +30,8 @@ first proving incident; a second workload must be taken by the loop itself.
 
 ## Current Position
 
-**Status:** Ready to execute
-**Current Phase:** 1 — usage_index v5 substrate
+**Status:** Executing Phase 1
+**Current Phase:** 1
 
 ## Decisions
 
@@ -47,9 +47,12 @@ first proving incident; a second workload must be taken by the loop itself.
   Relays launched by agora-mission-sweep run with system node v18 (row 16 wiring still pending): only
   node_bridge consumers are affected; do not judge MC/HPKT gates on this plane without CPP_NODE_EXE.
 - [Orchestrator D-OQ3 2026-10-05]: programme done-gate = python3 tools/test_incremental_cognition_program.py --generation 2 --final PASS (ICP_GEN2_VERDICT) plus the Phase 6 Production Reality probe; gen1 red pillars A,B,C,I,J,K,M,N and L8 are inherited state, reported verbatim, never claimed green, never edited.
+- [Phase 1]: 01-01: v5_from NULL marks a legacy file never re-read; population() is UNMEASURED for any in-scope file with it (never zero). SPAWN_SCHEMA is _migrate_spawns' own gate so a version bump never re-queues the backfill.
 
 ## Session Continuity
 
-**Stopped At:** Phase 0 complete (IC-gen2 frozen at afcdceea, FROZEN_AT 8752562a; verification fingerprint amended, status passed), ready to plan Phase 1
+**Last session:** 2026-10-06T20:32:21.550Z
+
+**Stopped At:** Completed 01-01-PLAN.md
 **Next exact action:** plan Phase 1 (usage_index v5) against vault/specs/autonomous-optimization.md; the gen2 judge is python3 tools/test_incremental_cognition_program.py --generation 2 --status
-**Resume File:** this STATE.md + vault/plans/autonomous-optimization-2026-10-05.md
+**Resume File:** None

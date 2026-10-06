@@ -27,7 +27,7 @@ Source: the Owner's /cpp-gsd-long brief (2026-10-05), master done-gate items 1-3
 | Req | Pillar | Status |
 |---|---|---|
 | AOP-M | optimizer lifecycle (reopened) | Pending |
-| AOP-O | usage_index v5 substrate | Pending |
+| AOP-O | usage_index v5 substrate | Complete |
 | AOP-P | KME-L challenger | Pending |
 | AOP-Q | generic opportunity detectors | Pending |
 | AOP-R | second workload taken by the loop | Pending |
