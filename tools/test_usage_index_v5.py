@@ -466,9 +466,288 @@ def grp_no_raw_text() -> None:
             con.close()
 
 
+# -- plan 02 task 1: path identity, the declared _archived rule, the skipped-shape census ----
+
+def _write(p: Path, text: str) -> Path:
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(text, encoding="utf-8")
+    return p
+
+
+def quota_line(h, sess) -> str:
+    return json.dumps({"type": "system", "timestamp": iso(h), "sessionId": sess,
+                       "quotaLimits": {"status": "rejected", "rateLimitType": "seven_day",
+                                       "resetsAt": T0 + 99 * 3600}}) + "\n"
+
+
+def mixed_tree(td: Path, archived=True, drop_sub=False) -> Path:
+    """projects/C--p1 {S1 main + subagent agent-a}, and (archived) projects/_archived/P {S2 main,
+    S2 subagent agent-b}. S2 holds a prompt, an Agent spawn, a Read, a quota line: every
+    ancestry fact a v4 table would store."""
+    proj = td / "projects"
+    d = proj / "C--p1"
+    _write(d / "S1.jsonl", user_prompt("P1", 1, "S1")
+           + asst("m1", 1.1, "S1", tools=[("tuR1", "Read", {"file_path": WINPATH})])
+           + user_result(1.2, "S1", "tuR1", "abc") + asst("m2", 1.3, "S1"))
+    if not drop_sub:
+        _write(d / "S1" / "subagents" / "agent-a.jsonl", asst("ms1", 1.15, "S1", cr=30))
+        _write(d / "S1" / "subagents" / "agent-a.meta.json",
+               json.dumps({"agentType": "Explore", "toolUseId": "tuX", "spawnDepth": 1}))
+    if archived:
+        a = proj / "_archived" / "P"
+        _write(a / "S2.jsonl", user_prompt("PA", 3, "S2") + quota_line(3.05, "S2")
+               + asst("ma1", 3.1, "S2", cr=500,
+                      tools=[("tuAG", "Agent", {"subagent_type": "Explore", "prompt": "look"}),
+                             ("tuAR", "Read", {"file_path": WINPATH})]))
+        _write(a / "S2" / "subagents" / "agent-b.jsonl", asst("mab1", 3.2, "S2", cr=40))
+        _write(a / "S2" / "subagents" / "agent-b.meta.json",
+               json.dumps({"agentType": "Explore", "toolUseId": "tuAG", "spawnDepth": 1}))
+    return proj
+
+
+def path_values(con) -> list[str]:
+    """Every value of every path column of the index (files.resolved included)."""
+    vals = []
+    for table, col, _kind in UX._path_columns(con):
+        vals += [r[0] for r in con.execute(f"SELECT {col} FROM {table} WHERE {col} IS NOT NULL")]
+    vals += [r[0] for r in con.execute("SELECT resolved FROM files WHERE resolved IS NOT NULL")]
+    return vals
+
+
+def grp_alias() -> None:
+    # alias lists BEFORE its target ("A--" < "Z--"), the order that exposed the v4 defect
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        real = proj / "Z--real"
+        _write(real / "S1.jsonl", user_prompt("P1", 1, "S1") + asst("m1", 1.1, "S1"))
+        _write(real / "S1" / "subagents" / "agent-a.jsonl", asst("ms1", 1.15, "S1", cr=30))
+        os.symlink(str(real), str(proj / "A--alias"), target_is_directory=True)
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            n_files = con.execute("SELECT count(*) FROM files").fetchone()[0]
+            n_cf = con.execute("SELECT count(*), count(DISTINCT k) FROM call_files").fetchone()
+            vals = path_values(con)
+            leaked = [v for v in vals if "A--alias" in v]
+            gate("V-UX5-ALIAS-ONCE", n_files == 2 and n_cf == (2, 2) and vals and not leaked,
+                 f"alias listed before its target: files rows={n_files} (want 2), call_files "
+                 f"rows/distinct keys={n_cf} (want 2/2), path-column values={len(vals)}, "
+                 f"carrying the alias spelling={len(leaked)}")
+        finally:
+            con.close()
+
+    # control: a DIFFERENT directory with the same file names is its own store
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        for name, mid in (("B--one", "mA"), ("C--two", "mB")):
+            _write(proj / name / "S1.jsonl", user_prompt("P" + mid, 1, "S1") + asst(mid, 1.1, "S1"))
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            rows = con.execute("SELECT store, session_key FROM files ORDER BY store").fetchall()
+            gate("V-UX5-ALIAS-DISTINCT", rows == [("B--one", "S1"), ("C--two", "S1")],
+                 f"two directories, same file name: files rows={rows}")
+        finally:
+            con.close()
+
+    # a link to a directory OUTSIDE the root: ingested once, under its resolved path
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        proj.mkdir()
+        out = td / "elsewhere" / "ext-store"
+        _write(out / "S9.jsonl", user_prompt("P9", 1, "S9") + asst("m9", 1.1, "S9"))
+        os.symlink(str(out), str(proj / "A--link-out"), target_is_directory=True)
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            paths = [r[0] for r in con.execute("SELECT path FROM files")]
+            want = os.path.realpath(str(out / "S9.jsonl"))
+            vals = path_values(con)
+            gate("V-UX5-ALIAS-OUTSIDE",
+                 paths == [want] and not [v for v in vals if "A--link-out" in v],
+                 f"link to an outside dir: files paths={[Path(p).name for p in paths]} "
+                 f"resolved to the outside store={paths == [want]}; "
+                 f"alias spelling in path columns={len([v for v in vals if 'A--link-out' in v])}")
+        finally:
+            con.close()
+
+
+def grp_identity_columns() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = mixed_tree(td)
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            want = {
+                proj / "C--p1" / "S1.jsonl": ("C--p1", "C--p1", 0, "S1", 0),
+                proj / "C--p1" / "S1" / "subagents" / "agent-a.jsonl": ("C--p1", "C--p1", 0, "S1", 1),
+                proj / "_archived" / "P" / "S2.jsonl": ("_archived", "P", 1, "S2", 0),
+                proj / "_archived" / "P" / "S2" / "subagents" / "agent-b.jsonl":
+                    ("_archived", "P", 1, "S2", 1),
+            }
+            bad = []
+            for p, (store, project, arch, skey, is_sub) in want.items():
+                row = con.execute("SELECT resolved, store, project, archived, session_key, is_sub "
+                                  "FROM files WHERE path=?", (os.path.realpath(str(p)),)).fetchone()
+                exp = (TIS.resolved_path(os.path.realpath(str(p))), store, project, arch, skey, is_sub)
+                if row != exp:
+                    bad.append((p.name, row, exp))
+            n = con.execute("SELECT count(*) FROM files").fetchone()[0]
+            gate("V-UX5-IDENTITY-COLUMNS", not bad and n == len(want),
+                 f"files rows={n}/{len(want)}; rows differing from the path-derived identity "
+                 f"(resolved, store, project, archived, session_key, is_sub)={bad}")
+        finally:
+            con.close()
+
+
+V4_ARCHIVE_TABLES = ("calls", "quota", "prompts", "spawns", "subagents")
+
+
+def grp_archived() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = mixed_tree(td)
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            arch = [r[0] for r in con.execute("SELECT path FROM files WHERE archived=1")]
+            like = "%/_archived/%"
+            v4_rows = {t: con.execute(f"SELECT count(*) FROM {t} WHERE file LIKE ?",
+                                      (like,)).fetchone()[0] for t in V4_ARCHIVE_TABLES}
+            cf = con.execute("SELECT count(*), coalesce(sum(cr),0) FROM call_files WHERE file LIKE ?",
+                             (like,)).fetchone()
+            te = con.execute("SELECT count(*) FROM tool_events WHERE file LIKE ?", (like,)).fetchone()[0]
+            spawn_ids = con.execute("SELECT count(*) FROM spawns WHERE tool_use_id='tuAG'").fetchone()[0]
+            gate("V-UX5-ARCHIVED-INDEXED",
+                 len(arch) == 2 and cf == (2, 540) and te == 2 and not any(v4_rows.values())
+                 and spawn_ids == 0,
+                 f"archived files rows={len(arch)} (want 2); call_files rows/cr={cf} (want 2/540); "
+                 f"tool_events rows={te}; rows in v4 tables for archived files={v4_rows}; "
+                 f"archived Agent spawn leaked into spawns={spawn_ids}")
+        finally:
+            con.close()
+
+    # the declared twin rule: a live file with the same project + session_key wins
+    def sessions_with_archive(arch_project):
+        with tempfile.TemporaryDirectory() as t3:
+            t3 = Path(t3)
+            pr = t3 / "projects"
+            _write(pr / "C--p1" / "S2.jsonl", user_prompt("PL", 1, "S2") + asst("mlive", 1.1, "S2"))
+            _write(pr / "_archived" / arch_project / "S2.jsonl",
+                   user_prompt("PL2", 2, "S2") + asst("march", 2.1, "S2", cr=7))
+            c = UX.connect(t3 / "db" / "ix.sqlite")
+            try:
+                UX.refresh(c, pr, deadline_s=30)
+                p = UX.population(c, include_archived=True)
+                return p["verdict"], p["population"]["sessions_active"], p["population"]["calls"]
+            finally:
+                c.close()
+
+    twin, other = sessions_with_archive("C--p1"), sessions_with_archive("C--other")
+    gate("V-UX5-ARCHIVED-TWIN-LIVE-WINS",
+         twin == ("MEASURED", 1, 1) and other == ("MEASURED", 2, 2),
+         f"include_archived with a live twin (same project + session): verdict/sessions/calls={twin} "
+         f"(want 1 session, the live one); control, same session id under another project: {other} "
+         f"(two sessions)")
+
+    def windows(tree_kwargs):
+        with tempfile.TemporaryDirectory() as t2:
+            t2 = Path(t2)
+            pr = mixed_tree(t2, **tree_kwargs)
+            c = UX.connect(t2 / "db" / "ix.sqlite")
+            try:
+                UX.refresh(c, pr, deadline_s=30)
+                return UX.window(c, T0, T0 + 24 * 3600)
+            finally:
+                c.close()
+
+    with_arch = windows({"archived": True})
+    without = windows({"archived": False})
+    fewer = windows({"archived": True, "drop_sub": True})
+    keys = ("calls", "cache_read", "subagent_calls")
+    gate("V-UX5-V4-READERS-UNCHANGED",
+         with_arch == without and with_arch["calls"] == 3 and with_arch["subagent_calls"] == 1
+         and with_arch != fewer and fewer["subagent_calls"] == 0,
+         f"window() with _archived {[with_arch[k] for k in keys]} vs without "
+         f"{[without[k] for k in keys]} (equal); control, a live subagent file removed: "
+         f"{[fewer[k] for k in keys]} (the comparison can see a difference)")
+
+
+def grp_shapes() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = mixed_tree(td, archived=False)
+        a = _write(proj / "C--p1" / "_preserved" / "x.jsonl", "{}\n")
+        b = _write(proj / "C--p1" / "_empty_shells" / "y.jsonl", "{}\n{}\n")
+        _write(proj / "C--p1" / "S1.jsonl.bak-1", "not a transcript\n")
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            r = UX.refresh(con, proj, deadline_s=30)
+            meta = json.loads(con.execute("SELECT v FROM meta WHERE k='skipped_shapes'").fetchone()[0])
+            in_files = con.execute("SELECT count(*) FROM files WHERE path LIKE '%/_preserved/%' "
+                                   "OR path LIKE '%/_empty_shells/%'").fetchone()[0]
+            samples = sorted(meta.get("samples", []))
+            gate("V-UX5-SHAPE-SKIP-VISIBLE",
+                 meta.get("count") == 2 and meta.get("bytes") == 3 + 6
+                 and meta.get("by_shape") == {"_preserved": 1, "_empty_shells": 1, "other": 0}
+                 and samples == sorted([str(a), str(b)]) and in_files == 0
+                 and r.get("skipped_shapes") == meta,
+                 f"meta skipped_shapes={meta}; rows in files for those shapes={in_files}; "
+                 f"refresh result carries the same census={r.get('skipped_shapes') == meta}")
+        finally:
+            con.close()
+
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, _ = one_session_store(td)
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            row = con.execute("SELECT v FROM meta WHERE k='skipped_shapes'").fetchone()
+            meta = json.loads(row[0]) if row else None
+            rule = con.execute("SELECT v FROM meta WHERE k='archived_rule'").fetchone()
+            gate("V-UX5-SHAPE-SKIP-ZERO",
+                 meta is not None and meta.get("count") == 0 and meta.get("bytes") == 0
+                 and meta.get("samples") == [] and rule is not None and rule[0] == UX.ARCHIVED_RULE,
+                 f"tree without odd shapes: meta skipped_shapes={meta} (present, count 0); "
+                 f"archived_rule recorded={rule is not None}")
+        finally:
+            con.close()
+
+
+def grp_identity_fill() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, db, files, snap, _ = make_v4(td)
+        with Spy(proj) as spy:
+            con = UX.connect(db)
+            UX.refresh(con, proj, deadline_s=30)
+        try:
+            rows = con.execute("SELECT path, resolved, store, project, archived, session_key "
+                               "FROM files ORDER BY path").fetchall()
+            want = sorted((os.path.realpath(str(f)), TIS.resolved_path(str(f)), f.parent.name,
+                           f.parent.name, 0, f.stem) for f in files)
+            v5_null = con.execute("SELECT count(*) FROM files WHERE v5_from IS NULL").fetchone()[0]
+            gate("V-UX5-IDENTITY-FILL-NO-OPEN",
+                 not spy.opened and [tuple(r) for r in rows] == want and v5_null == len(files),
+                 f"migrated v4 index: opens under the fixture root={len(spy.opened)}; identity "
+                 f"columns filled for {len(rows)}/{len(files)} legacy rows equal to the path "
+                 f"derivation={[tuple(r) for r in rows] == want}; their v5 facts stay unknown "
+                 f"(v5_from NULL on {v5_null})")
+        finally:
+            con.close()
+
+
 GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
-          ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text))
+          ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text),
+          ("grp_alias", grp_alias), ("grp_identity_columns", grp_identity_columns),
+          ("grp_archived", grp_archived), ("grp_shapes", grp_shapes),
+          ("grp_identity_fill", grp_identity_fill))
 
 
 # -- mutation drill ------------------------------------------------------------
@@ -585,6 +864,23 @@ def _m_empty_population_measured():
     return _patch(UX, "population", mutant)
 
 
+def _m_store_identity_bypassed():
+    """M5: store identity bypassed: every listed child dir is a store, no alias map."""
+    def mutant(base=None):
+        b = Path(base or TIS.PROJECTS_DIR)
+        return (sorted(c for c in b.iterdir() if c.is_dir()) if b.is_dir() else []), {}
+    return _patch(UX._tis, "store_identity", mutant)
+
+
+def _m_archived_into_calls():
+    """M6: the archived guard around the calls upsert is inverted into `if True`, so archived
+    transcripts are written to calls."""
+    return _source_mutant(
+        "tools/usage_index.py",
+        "                if not archived:  # ARCHIVED_RULE: v5 tables only\n",
+        "                if True:  # ARCHIVED_RULE: v5 tables only\n")
+
+
 MUTANTS = [
     ("M1 _migrate_spawns gated on SCHEMA_VERSION (backfill re-queued)", _m_spawn_backfill_requeued,
      [grp_migrate], ["V-UX5-MIGRATE-ZERO-REREAD"]),
@@ -594,6 +890,10 @@ MUTANTS = [
      [grp_occurrence], ["V-UX5-OCCURRENCE"]),
     ("M4 population MEASURED on an empty scope", _m_empty_population_measured,
      [grp_population_empty], ["V-UX5-EMPTY-REFUSES"]),
+    ("M5 store identity bypassed (alias counted twice)", _m_store_identity_bypassed,
+     [grp_alias], ["V-UX5-ALIAS-ONCE"]),
+    ("M6 archived transcripts written to calls", _m_archived_into_calls,
+     [grp_archived], ["V-UX5-V4-READERS-UNCHANGED", "V-UX5-ARCHIVED-INDEXED"]),
 ]
 
 

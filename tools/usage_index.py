@@ -308,15 +308,118 @@ def _backfill_spawns(con, t_end: float) -> int:
 # used the resolved path: one fact, two answers.
 
 
-def _iter_files(proj: Path):
-    """(path, is_subagent), one spelling per physical transcript (store_identity)."""
+ARCHIVED_DIR = "_archived"
+ARCHIVED_RULE = (
+    "_archived/<project>/ transcripts are indexed with archived=1 and project=<project> into "
+    "the v5 tables only (files, call_files, tool_events, user_hits, file_cwds, "
+    "file_attribution), never into calls, quota, prompts, spawns or subagents, so every v4 "
+    "reader keeps its v4 answer; population excludes them unless include_archived is set; a "
+    "live file with the same project and session_key wins over its archived twin.")
+SKIPPED_SHAPES = ("_preserved", "_empty_shells", "other")   # the census keys, always present
+SKIPPED_SAMPLES = 5
+
+
+def _store_files(store: Path):
+    """The two ingested transcript shapes of one store dir: <store>/<sid>.jsonl and
+    <store>/<sid>/subagents/<agent>.jsonl. Yields (path, is_subagent)."""
+    for jf in store.glob("*.jsonl"):
+        yield jf, 0
+    for jf in store.glob("*/subagents/*.jsonl"):
+        yield jf, 1
+
+
+def _session_key(jf: Path, is_sub: int) -> str:
+    """A session is its main file plus its <sid>/subagents/* files (the champion's rule,
+    wiki/tools/kme_token_audit.py): the first path component under the store."""
+    return jf.parent.parent.name if is_sub else jf.stem
+
+
+def _iter_files_v5(proj: Path):
+    """(path, is_sub, store, project, archived, session_key), one spelling per physical
+    transcript. Store dirs come from `store_identity` (consumed, never re-derived); the
+    `_archived` store is opened one level down through the same producer, so an aliased
+    archived project is counted once too. store is the canonical store dir's name;
+    project equals store for live files and is the child dir's name for archived ones."""
     if not proj.is_dir():
         return
-    for sub in _tis.store_identity(proj)[0]:
-        for jf in sub.glob("*.jsonl"):
-            yield jf, 0
-        for jf in sub.glob("*/subagents/*.jsonl"):
-            yield jf, 1
+    for store in _tis.store_identity(proj)[0]:
+        if store.name == ARCHIVED_DIR:
+            for child in _tis.store_identity(store)[0]:
+                for jf, is_sub in _store_files(child):
+                    yield jf, is_sub, ARCHIVED_DIR, child.name, 1, _session_key(jf, is_sub)
+            continue
+        for jf, is_sub in _store_files(store):
+            yield jf, is_sub, store.name, store.name, 0, _session_key(jf, is_sub)
+
+
+def _iter_files(proj: Path):
+    """(path, is_subagent) of the LIVE transcripts: the v4 reader view of _iter_files_v5.
+    No caller outside this module (grep 2026-10-06: the other `_iter_files` in the repo are
+    unrelated functions of their own modules)."""
+    for jf, is_sub, _store, _project, archived, _skey in _iter_files_v5(proj):
+        if not archived:
+            yield jf, is_sub
+
+
+def _path_identity(path: str, is_sub: int) -> tuple[str, str, int, str]:
+    """(store, project, archived, session_key) from the transcript path string alone, the
+    same facts _iter_files_v5 yields from the directory structure. Pure string work."""
+    p = Path(path)
+    sid_dir = p.parent.parent if is_sub else p      # the <sid> dir, or the main file itself
+    store_dir = sid_dir.parent                      # <store> or <_archived>/<project>
+    if store_dir.parent.name == ARCHIVED_DIR:
+        return ARCHIVED_DIR, store_dir.name, 1, _session_key(p, is_sub)
+    return store_dir.name, store_dir.name, 0, _session_key(p, is_sub)
+
+
+def _fill_path_identity(con) -> int:
+    """Fill resolved/store/project/archived/session_key for files rows that lack them (a
+    migrated v4 index) from the path string and `_tis.resolved_path`. Stat-level only: no
+    transcript is opened. Returns how many rows were filled."""
+    rows = con.execute("SELECT path, is_sub FROM files WHERE session_key IS NULL").fetchall()
+    for path, is_sub in rows:
+        store, project, archived, skey = _path_identity(path, is_sub or 0)
+        con.execute("UPDATE files SET resolved=?, store=?, project=?, archived=?, session_key=? "
+                    "WHERE path=?", (_tis.resolved_path(path), store, project, archived, skey, path))
+    con.commit()
+    return len(rows)
+
+
+def _census_skipped(proj: Path, matched: set) -> dict:
+    """Every *.jsonl under a store that no ingested shape matched (_preserved,
+    _empty_shells, others), counted and never silently absent: count, bytes (os.stat),
+    per-shape counts and up to SKIPPED_SAMPLES sample paths. A listing walk only (no file is
+    opened). A tree with none records count 0; unreadable directories are counted too."""
+    by = {s: 0 for s in SKIPPED_SHAPES}
+    skipped: list = []
+    nbytes = walk_errors = 0
+    roots = []
+    for store in _tis.store_identity(proj)[0]:
+        roots.append(store)
+        if store.name == ARCHIVED_DIR:
+            roots += [c for c in _tis.store_identity(store)[0]
+                      if not str(c).startswith(str(store) + os.sep)]
+
+    def _err(_e):
+        nonlocal walk_errors
+        walk_errors += 1
+
+    for root in roots:
+        for dirpath, _dirs, names in os.walk(root, onerror=_err):
+            for n in names:
+                p = os.path.join(dirpath, n)
+                if not n.endswith(".jsonl") or p in matched:
+                    continue
+                first = os.path.relpath(p, root).split(os.sep)[0]
+                by[first if first in ("_preserved", "_empty_shells") else "other"] += 1
+                try:
+                    nbytes += os.stat(p).st_size
+                except OSError:
+                    walk_errors += 1
+                skipped.append(p)
+    skipped.sort()
+    return {"count": len(skipped), "bytes": nbytes, "by_shape": by,
+            "samples": skipped[:SKIPPED_SAMPLES], "walk_errors": walk_errors}
 
 
 # Every column that carries a transcript path (audit G1, plus spawns.parent_k).
@@ -329,7 +432,7 @@ _PATH_COLUMNS = (("files", "path", "pk"), ("calls", "k", "key"), ("calls", "file
                  ("call_files", "k", "key"), ("call_files", "file", "pk"),
                  ("tool_events", "file", "pk"), ("user_hits", "file", "pk"),
                  ("file_cwds", "file", "pk"), ("file_attribution", "file", "pk"),
-                 ("files", "dup_of", "plain"))
+                 ("files", "dup_of", "plain"), ("files", "resolved", "plain"))
 
 
 def _path_columns(con):
@@ -608,16 +711,22 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
     files_read = upserts = pending = 0
     files_opened = bytes_read = bytes_ingested = files_seen = 0
     backfill_pending = None
+    skipped_shapes = None
     status = "OK"
     err = ""
     try:
         _canonicalize(con, Path(proj))
         _migrate_spawns(con)
         _migrate_v5(con)
+        _fill_path_identity(con)
+        con.execute("INSERT OR REPLACE INTO meta VALUES('archived_rule', ?)", (ARCHIVED_RULE,))
+        con.commit()
+        matched: set = set()
         known = {r[0]: r[1:] for r in con.execute(
             "SELECT path, offset, size, mtime_ns, entrypoint, v5_from FROM files")}
-        for fp, is_sub in _iter_files(Path(proj)):
+        for fp, is_sub, store, project, archived, skey in _iter_files_v5(Path(proj)):
             files_seen += 1
+            matched.add(str(fp))
             try:
                 st = fp.stat()
             except OSError:
@@ -649,11 +758,12 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                                (path,)).fetchone()
             state = {"prompt": srow[0] if srow and offset else None,
                      "title": srow[1] if srow else None, "call_meta": {}, "cwd": None}
-            if is_sub and offset == 0:
+            if is_sub and offset == 0 and not archived:
                 _index_subagent_meta(con, fp)
 
-            def on_line(o, s, path=path, is_sub=is_sub, state=state):
-                _ancestry_line(con, path, is_sub, state, o, s)
+            def on_line(o, s, path=path, is_sub=is_sub, state=state, archived=archived):
+                if not archived:                        # ARCHIVED_RULE: no ancestry rows
+                    _ancestry_line(con, path, is_sub, state, o, s)
                 _v5_line(con, path, state, o, s)
 
             stats: dict = {}
@@ -672,18 +782,19 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                         _num(cc, "ephemeral_5m_input_tokens"),
                         _num(cc, "ephemeral_1h_input_tokens"),
                         _num(u, "cache_read_input_tokens"), _num(u, "output_tokens"))
-                con.execute(
-                    "INSERT INTO calls(k,file,ts,model,is_sub,entrypoint,inp,cw,cw5,cw1,cr,out,"
-                    "session,prompt_id,agent_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
-                    "ON CONFLICT(k) DO UPDATE SET "
-                    "ts=excluded.ts, inp=max(inp,excluded.inp), cw=max(cw,excluded.cw), "
-                    "cw5=max(cw5,excluded.cw5), cw1=max(cw1,excluded.cw1), "
-                    "cr=max(cr,excluded.cr), out=max(out,excluded.out), "
-                    "session=coalesce(excluded.session,session), "
-                    "prompt_id=coalesce(excluded.prompt_id,prompt_id), "
-                    "agent_id=coalesce(excluded.agent_id,agent_id)",
-                    (k, path, vals[0], vals[1], is_sub, entry, vals[2], vals[3], vals[4],
-                     vals[5], vals[6], vals[7], sess, pid, aid))
+                if not archived:  # ARCHIVED_RULE: v5 tables only
+                    con.execute(
+                        "INSERT INTO calls(k,file,ts,model,is_sub,entrypoint,inp,cw,cw5,cw1,cr,out,"
+                        "session,prompt_id,agent_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                        "ON CONFLICT(k) DO UPDATE SET "
+                        "ts=excluded.ts, inp=max(inp,excluded.inp), cw=max(cw,excluded.cw), "
+                        "cw5=max(cw5,excluded.cw5), cw1=max(cw1,excluded.cw1), "
+                        "cr=max(cr,excluded.cr), out=max(out,excluded.out), "
+                        "session=coalesce(excluded.session,session), "
+                        "prompt_id=coalesce(excluded.prompt_id,prompt_id), "
+                        "agent_id=coalesce(excluded.agent_id,agent_id)",
+                        (k, path, vals[0], vals[1], is_sub, entry, vals[2], vals[3], vals[4],
+                         vals[5], vals[6], vals[7], sess, pid, aid))
                 # The occurrence view: this file's own values, order-independent (calls.file
                 # is first-writer-wins).
                 con.execute(
@@ -694,23 +805,33 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                     "cr=max(cr,excluded.cr), out=max(out,excluded.out)",
                     (k, path) + vals)
                 upserts += 1
-            if entry:
+            if entry and not archived:
                 con.execute("UPDATE calls SET entrypoint=? WHERE file=? AND entrypoint IS NULL",
                             (entry, path))
             con.execute("INSERT INTO files(path,offset,size,mtime_ns,is_sub,entrypoint,"
-                        "cur_prompt,title,v5_from) VALUES(?,?,?,?,?,?,?,?,?) "
+                        "cur_prompt,title,v5_from,resolved,store,project,archived,session_key) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
                         "ON CONFLICT(path) DO UPDATE SET offset=excluded.offset, "
                         "size=excluded.size, mtime_ns=excluded.mtime_ns, is_sub=excluded.is_sub, "
                         "entrypoint=excluded.entrypoint, cur_prompt=excluded.cur_prompt, "
-                        "title=excluded.title, v5_from=excluded.v5_from",
+                        "title=excluded.title, v5_from=excluded.v5_from, "
+                        "resolved=excluded.resolved, store=excluded.store, "
+                        "project=excluded.project, archived=excluded.archived, "
+                        "session_key=excluded.session_key",
                         (path, end, st.st_size, st.st_mtime_ns, is_sub, entry,
-                         state["prompt"], state["title"], v5_from))
+                         state["prompt"], state["title"], v5_from, _tis.resolved_path(path),
+                         store, project, archived, skey))
             con.commit()
             files_read += 1
         # Historical spawn results (v3 backfill) use only the time left. They are not
         # freshness: pending files here never make the pass PARTIAL, which would turn
         # the burn alarm into MONITOR_FAILURE while the live index is current.
         backfill_pending = _backfill_spawns(con, t_end)
+        skipped_shapes = _census_skipped(Path(proj), matched) if Path(proj).is_dir() else None
+        if skipped_shapes is not None:
+            con.execute("INSERT OR REPLACE INTO meta VALUES('skipped_shapes', ?)",
+                        (json.dumps(skipped_shapes),))
+            con.commit()
     except Exception as e:  # noqa: BLE001 -- typed, never silent
         status, err = "FAILED", f"{type(e).__name__}: {e}"
     now = time.time()
@@ -727,7 +848,8 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
     return {"status": status, "files_read": files_read, "calls_upserted": upserts,
             "pending": pending, "backfill_pending": backfill_pending, "error": err,
             "files_opened": files_opened, "bytes_read": bytes_read,
-            "bytes_ingested": bytes_ingested, "files_seen": files_seen, "wall_s": wall_s}
+            "bytes_ingested": bytes_ingested, "files_seen": files_seen, "wall_s": wall_s,
+            "skipped_shapes": skipped_shapes}
 
 
 # -- pricing -----------------------------------------------------------------
@@ -1037,10 +1159,14 @@ def population(con, *, until=None, project_filter=None, select=None, include_arc
         "GROUP BY f.path", (until, until)).fetchall()
     sessions: dict = {}
     in_scope = unknown = 0
+    live_keys = {(r[4] or _session_of(r[0], r[1] or 0)[0], r[5] or _session_of(r[0], r[1] or 0)[1])
+                 for r in rows if not r[3]}
     for path, is_sub, v5_from, archived, project, skey, n, inp, cw, cr, outp in rows:
         d_proj, d_sess = _session_of(path, is_sub or 0)
         project, skey = project or d_proj, skey or d_sess
         if archived and not include_archived:
+            continue
+        if archived and (project, skey) in live_keys:      # ARCHIVED_RULE: the live twin wins
             continue
         if project_filter and project_filter not in project:
             continue

@@ -385,6 +385,16 @@ def store_identity(base=None) -> tuple[list[Path], dict[str, str]]:
     return list(seen.values()), aliases
 
 
+def resolved_path(path) -> str:
+    """The resolved path of one transcript file on this host (file identity).
+
+    The companion of `store_identity`, which is store identity: both resolve links
+    here so that no consumer inspects links itself. A file reached through a linked
+    directory has the same resolved path as the file reached directly. Stat-level
+    only (no open, no read); a path that does not exist resolves lexically."""
+    return str(Path(os.path.realpath(str(path))))
+
+
 def store_dirs(base=None) -> list[Path]:
     """Each transcript store under `base` once, by resolved path (store_identity)."""
     return store_identity(base)[0]
