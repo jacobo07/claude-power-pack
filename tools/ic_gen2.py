@@ -26,6 +26,7 @@ import copy
 import hashlib
 import io
 import json
+import posixpath
 import re
 import sys
 from pathlib import Path
@@ -243,7 +244,10 @@ def g2_champ(led, res=None) -> list:
             ev = []
         for e in ev:
             ref = e.get("ref") if isinstance(e, dict) else None
-            if not (isinstance(ref, str) and ref.startswith(CHAMP_DIR)):
+            # confinement is judged on the NORMALISED path and refuses any `..` segment: a bare startswith() accepts
+            # `<CHAMP_DIR>../../owner-bundle.md`, which resolves anywhere in the repo (WR-04)
+            if not (isinstance(ref, str) and ".." not in ref.split("/")
+                    and posixpath.normpath(ref).startswith(CHAMP_DIR)):
                 out.append(f"G2-CHAMP {name}: evidence ref {ref!r} is not under {CHAMP_DIR}")
                 continue
             if not res.path_exists(ref):
@@ -801,6 +805,19 @@ def selftest(verbose=True) -> bool:
     mut("run6-read-GB-null", "G2-CHAMP", lambda d: champ(d, "run6").update(read_GB=None))
     mut("run6-wall-s-string", "G2-CHAMP", lambda d: champ(d, "run6").update(wall_s="24"))
     mut("run5-wall-s-bool", "G2-CHAMP", lambda d: champ(d, "run5").update(wall_s=True))
+
+    # WR-04: a `..` ref passes a string-prefix test. It is appended as an EXTRA evidence entry naming a real file whose
+    # sha is correctly pinned, so the only defect left is the confinement itself.
+    for tname, tref in (("dotdot", CHAMP_DIR + "../../owner-bundle.md"),
+                        ("dotdot-via-self", CHAMP_DIR + "../champion/../../owner-bundle.md")):
+        tsha = ce.Resolver().file_sha(tref)
+        say(tsha is not None, f"V-IC2-TRAVERSAL-FIXTURE-{tname} (the traversal ref resolves to a real file, so only "
+                              f"the confinement can refuse it)")
+        tout = judge(led_with(lambda d, tref=tref, tsha=tsha: champ(d, "run5")["evidence"].append(
+            {"ref": tref, "sha256": tsha, "source_sha256": tsha})))
+        say(any(x.startswith("G2-CHAMP") and "is not under" in x for x in tout),
+            f"V-IC2-MUT-champion-evidence-{tname}-traversal killed by G2-CHAMP 'is not under' "
+            f"(a correctly pinned file reached through {tref!r})")
 
     # G2-OPP: lifecycle order and predicted-never-realized on the opportunity rows (outside `frozen`)
     def opp(d):
