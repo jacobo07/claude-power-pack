@@ -30,10 +30,10 @@ first proving incident; a second workload must be taken by the loop itself.
 
 ## Current Position
 
-**Status:** Ready to execute
-**Current Phase:** 1
-Current Plan: 6
-Total Plans in Phase: 6
+**Status:** Phase 1 complete (pillar O IMPLEMENTED_AND_VERIFIED); next Phase 2 (KME-L challenger)
+**Current Phase:** 2 (KME-L challenger)
+Current Plan: not planned yet
+Total Plans in Phase 1: 6 (all complete)
 
 ## Decisions
 
@@ -52,13 +52,14 @@ Total Plans in Phase: 6
 - [Phase 1]: 01-01: v5_from NULL marks a legacy file never re-read; population() is UNMEASURED for any in-scope file with it (never zero). SPAWN_SCHEMA is _migrate_spawns' own gate so a version bump never re-queues the backfill.
 - [Phase 1]: 01-02: a failed refresh rolls back the file in flight; per-file BEGIN IMMEDIATE with snapshot check; dup_of needs equal content_id AND equal call-key sets
 - [Phase 1]: 01-04: an UNMEASURED population answer carries population=None (numbers under observed_partial); pattern drift is checked against the champion's current set; empty selections refuse; backfill-v5 is the only verb that re-reads history and reports bytes_reread
+- [Phase 1]: 01-06: `_archived` transcripts are v5-only (declared ARCHIVED_RULE: v4 readers keep every number; population excludes them by default and shows them in the reconcile block); the occurrence view (every transcript copy counts) is the parity unit, with unique and first_writer beside it. The 18 shared keys sit between two selected sessions (867896c0 is KME_STRONG), not outside the selection.
 
 ## Session Continuity
 
 **Last session:** 2026-10-06T21:27:41.745Z
 
-**Stopped At:** Completed 01-05-PLAN.md
-**Next exact action:** plan Phase 1 (usage_index v5) against vault/specs/autonomous-optimization.md; the gen2 judge is python3 tools/test_incremental_cognition_program.py --generation 2 --status
+**Stopped At:** Phase 1 complete: pillar O IMPLEMENTED_AND_VERIFIED (parity EXACT 102/34871/11549646300 on gex44)
+**Next exact action:** plan Phase 2 (KME-L challenger) against vault/specs/autonomous-optimization.md; the substrate is tools/usage_index.py population/refresh (v5)
 **Resume File:** None
 
 ## Performance Metrics

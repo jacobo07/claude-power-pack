@@ -273,7 +273,57 @@
  },
  "state": {
   "M": {},
-  "O": {},
+  "O": {
+   "terminal": "IMPLEMENTED_AND_VERIFIED",
+   "reason": "KME-L population parity is EXACT on the GEX44 corpus copy: command python3 tools/usage_index.py population --db /home/kobii/ao-scratch/p1/cold.sqlite --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --until 2026-10-03T16:13:37Z --select kme --host gex44 --expect KME-L --plane gex44 exits 0 with 102 sessions, 0 dead, 34,871 calls and cache_read 11,549,646,300, dedup reconciled to the unit (unique 34,853 / 11,544,130,372, first_writer equal, 18 keys shared between two selected sessions, shared_outside 0, _archived excluded 1 / 649 / 271,001,260), plane gex44, corpus read-only (manifest sha256 equal before and after). The v4 to v5 migration re-reads zero files (V-UX5-MIGRATE-ZERO-REREAD: files_opened=0 bytes_read=0, command python3 tools/test_usage_index_v5.py, USAGE_INDEX_V5_PASS=71/71). The six negative controls go red under their mutants (python3 tools/test_usage_index_v5.py --drill, DRILL killed=18/18): mixed-project session attributed to both (V-UX5-MIXED-BOTH, M13), two histories not merged (V-UX5-HISTORIES-NOT-MERGED, M8), junction alias counted once (V-UX5-ALIAS-ONCE, M5), _archived under a declared rule (V-UX5-ARCHIVED-RULE, M6 and M15), parser failure surfaced (V-UX5-PARSE-ERROR-SURFACED, M7), empty population refusing a verdict (V-UX5-EMPTY-REFUSES, M4). Refresh cost, command python3 tools/usage_index.py refresh --all --db /home/kobii/ao-scratch/p1/cold.sqlite --proj /home/kobii/kme-corpus/projects --deadline 540: cold build 128.069 s over 9,932,073,959 bytes (3,965 files); no-op 0.577 s; delta of 5 files and 709,630 bytes 0.07 s with bytes_ingested equal to the appended bytes. The v4 suites stay green (USAGE_INDEX_PASS=22/22, USAGE_INDEX_IDENTITY_PASS=11/11). The substrate realizes no saving; savings is empty.",
+   "evidence": [
+    {
+     "kind": "gate",
+     "argv": [
+      "python",
+      "tools/test_usage_index_v5.py"
+     ]
+    },
+    {
+     "kind": "gate",
+     "argv": [
+      "python",
+      "tools/test_usage_index_v5.py",
+      "--drill"
+     ]
+    },
+    {
+     "kind": "gate",
+     "argv": [
+      "python",
+      "tools/test_usage_index.py"
+     ]
+    },
+    {
+     "kind": "gate",
+     "argv": [
+      "python",
+      "tools/test_usage_index_identity.py"
+     ]
+    },
+    {
+     "kind": "prg",
+     "ref": "vault/programs/incremental-cognition/gen2/evidence/O-prg.md",
+     "sha256": "3b4038b5889c2033a7c7137842828f8e88e8706c36413f929e6717146a68a9a3"
+    },
+    {
+     "kind": "measurement",
+     "ref": "vault/programs/incremental-cognition/gen2/evidence/O-parity-gex44.md",
+     "sha256": "c8eebeb77398c4360d2be4cafcb8cec042c9a4db550383be025bfd66284d4620"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/incremental-cognition/gen2/evidence/O-cost-gex44.md",
+     "sha256": "54c1949c8ad92d8ebf8f7fcf363e2b0924fd96392893b4e4d59223c61efbfc91"
+    }
+   ],
+   "savings": []
+  },
   "P": {},
   "Q": {},
   "R": {}
