@@ -1,0 +1,59 @@
+{
+ "denominator": "KME-L",
+ "denominator_kind": "frozen",
+ "select": "kme",
+ "until": "2026-10-03T16:13:37Z",
+ "since": null,
+ "until_located": {
+  "method": "exact_at_freeze",
+  "scans": 1,
+  "why": "the population at the freeze instant equals the frozen one",
+  "located": "2026-10-03T16:13:37Z",
+  "freeze_instant": null
+ },
+ "population": {
+  "sessions_active": 102,
+  "sessions_dead": 0,
+  "calls": 34871,
+  "input": 69846,
+  "cache_write": 209909403,
+  "cache_read": 11549646300,
+  "output": 37878881,
+  "weighted": 1764247687.0
+ },
+ "frozen": {
+  "sessions_active": 102,
+  "sessions_dead": 0,
+  "calls": 34871,
+  "input": 69846,
+  "cache_write": 209909403,
+  "cache_read": 11549646300,
+  "output": 37878881,
+  "weighted": 1764247687.0
+ },
+ "population_match": "exact",
+ "deltas": {},
+ "coverage": null,
+ "per_project": [
+  {
+   "project": "C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files",
+   "sessions_active": 101,
+   "sessions_dead": 0,
+   "calls": 34870,
+   "cache_read": 11549645760
+  },
+  {
+   "project": "C--Users-User-Apps-kme-wt-arena2",
+   "sessions_active": 1,
+   "sessions_dead": 0,
+   "calls": 1,
+   "cache_read": 540
+  }
+ ],
+ "corpus": {
+  "roots": 1,
+  "project_dirs": 6,
+  "sessions_scanned": 568,
+  "project_filter": "KobiiCraft-Core-Files|kme-wt-arena2"
+ }
+}

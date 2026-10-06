@@ -128,7 +128,148 @@
     ],
     "rule": "IC-gen2 R closes IMPLEMENTED_AND_VERIFIED only when: (1) the loop itself raises, prices and accepts the next candidate from detector output without the Founder naming it (expected tools/sovereign_miner.py, the only automatic full-corpus parse; the detectors' first-ranked candidate wins if reality offers better, with the ranking recorded); (2) shadow agreement is measured, a canary runs on the GEX44 corpus copy, and certification carries a realized dividend measured on a named denominator; (3) the laptop scheduled-task deploy is an owner-bundle [R] (IC-gen2) line; (4) family-scope promotion of the anti-rescan principle through modules/tower/ratchet.promote happens only if this transfer evidence supports it. Any other ending needs a falsification artifact naming [R] (IC-gen2)."
    }
-  ]
+  ],
+  "champion": {
+   "denominator": "KME-L",
+   "corpus_root": "/home/kobii/kme-corpus/projects",
+   "plane": "gex44",
+   "source_plan": "vault/plans/zero-rescan-reality-scan-2026-10-05.md",
+   "run5": {
+    "label": "unscoped champion (population, KME-L, --until auto, no project filter)",
+    "command": "python3 wiki/tools/kme_pillars.py population --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects",
+    "command_provenance": "reconstructed",
+    "provenance_note": "The Run 5 runner text was overwritten by the Run 6 runner, so this command is reconstructed (D-OQ5), not verbatim. Sources: the Run 5 START line (head, root, no project_filter) and vault/plans/zero-rescan-reality-scan-2026-10-05.md line 91 (the laptop champion form: kme_pillars.py population --denominator KME-L --until auto --expand --root ~/.claude/projects), with the root replaced by the GEX44 corpus copy.",
+    "cwd": "/home/kobii/missions/zero-rescan-run",
+    "head": "61909502",
+    "started": "2026-10-05T12:13:26+02:00",
+    "plane": "gex44",
+    "step": "r4-population",
+    "exit": 3,
+    "wall_s": 869,
+    "read_GB": 101.53,
+    "peak_rss_MB": 184,
+    "population_match": "drifted",
+    "until_located_scans": 10,
+    "project_filter": null,
+    "population": {
+     "sessions_active": 105,
+     "calls": 35776
+    },
+    "evidence": [
+     {
+      "ref": "vault/programs/incremental-cognition/gen2/evidence/champion/run5-summary.txt",
+      "sha256": "a91bcbd477ebc9a13942bb470aa9a767539ace29b3bf6e3c0266a284b0c98dbe",
+      "source_path": "/home/kobii/missions/zero-rescan-out/summary.txt",
+      "source_sha256": "a91bcbd477ebc9a13942bb470aa9a767539ace29b3bf6e3c0266a284b0c98dbe"
+     },
+     {
+      "ref": "vault/programs/incremental-cognition/gen2/evidence/champion/run5-r4-population.log",
+      "sha256": "6fbbb679126cae0269e2df28feba121f3c576dff7e6f8ab94f7b22d2110b62a1",
+      "source_path": "/home/kobii/missions/zero-rescan-out/r4-population.log",
+      "source_sha256": "6fbbb679126cae0269e2df28feba121f3c576dff7e6f8ab94f7b22d2110b62a1"
+     }
+    ]
+   },
+   "run6": {
+    "label": "scoped (project filter KobiiCraft-Core-Files|kme-wt-arena2)",
+    "command": "python3 wiki/tools/kme_pillars.py population --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2'",
+    "command_provenance": "runner-script",
+    "runner_line": 36,
+    "cwd": "/home/kobii/missions/zero-rescan-run",
+    "head": "61909502",
+    "started": "2026-10-05T20:09:57+02:00",
+    "plane": "gex44",
+    "project_filter": "KobiiCraft-Core-Files|kme-wt-arena2",
+    "step": "r4-population",
+    "exit": 0,
+    "wall_s": 24,
+    "read_GB": 2.83,
+    "peak_rss_MB": 99,
+    "population_match": "exact",
+    "until_located_scans": 1,
+    "steps": {
+     "r4-population": {
+      "exit": 0,
+      "wall_s": 24,
+      "read_GB": 2.83,
+      "peak_rss_MB": 99
+     },
+     "r4-d-kmel": {
+      "exit": 0,
+      "wall_s": 26,
+      "read_GB": 2.85,
+      "peak_rss_MB": 159
+     },
+     "r4-d-w7": {
+      "exit": 3,
+      "wall_s": 54,
+      "read_GB": 10.04,
+      "peak_rss_MB": 169
+     },
+     "r5-e": {
+      "exit": 0,
+      "wall_s": 24,
+      "read_GB": 2.77,
+      "peak_rss_MB": 106
+     },
+     "r6-f": {
+      "exit": 0,
+      "wall_s": 24,
+      "read_GB": 2.73,
+      "peak_rss_MB": 99
+     },
+     "r7-g": {
+      "exit": 0,
+      "wall_s": 28,
+      "read_GB": 2.85,
+      "peak_rss_MB": 114
+     },
+     "r8-h": {
+      "exit": 0,
+      "wall_s": 24,
+      "read_GB": 2.65,
+      "peak_rss_MB": 110
+     },
+     "r9-i": {
+      "exit": 0,
+      "wall_s": 25,
+      "read_GB": 2.8,
+      "peak_rss_MB": 99
+     },
+     "r10-l-rank": {
+      "exit": 0,
+      "wall_s": 26,
+      "read_GB": 2.82,
+      "peak_rss_MB": 104
+     }
+    },
+    "evidence": [
+     {
+      "ref": "vault/programs/incremental-cognition/gen2/evidence/champion/run6-summary.txt",
+      "sha256": "75e10e10f2e6a9de8280a22cb256c06f74ce9009b790be73ed3cb1c81205793e",
+      "source_path": "/home/kobii/missions/zero-rescan-out2/summary.txt",
+      "source_sha256": "75e10e10f2e6a9de8280a22cb256c06f74ce9009b790be73ed3cb1c81205793e"
+     },
+     {
+      "ref": "vault/programs/incremental-cognition/gen2/evidence/champion/run6-r4-population.log",
+      "sha256": "725d2ab41be7b953573b9ef0b644e1f72df825f07b42d377865941071ee80b52",
+      "source_path": "/home/kobii/missions/zero-rescan-out2/r4-population.log",
+      "source_sha256": "725d2ab41be7b953573b9ef0b644e1f72df825f07b42d377865941071ee80b52"
+     },
+     {
+      "ref": "vault/programs/incremental-cognition/gen2/evidence/champion/gex44_ic_rows.sh",
+      "sha256": "151338eade13d6306b4d9cb27b6660fb7f48f95b3948e327333115f5a45721f7",
+      "source_path": "/home/kobii/missions/gex44_ic_rows.sh",
+      "source_sha256": "151338eade13d6306b4d9cb27b6660fb7f48f95b3948e327333115f5a45721f7"
+     }
+    ]
+   },
+   "ratios_derived": {
+    "wall": 36.2,
+    "read_GB": 35.9,
+    "basis": "run5 / run6 population step, rounded to one decimal"
+   }
+  }
  },
  "state": {
   "M": {},

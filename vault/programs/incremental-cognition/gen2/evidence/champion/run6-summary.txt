@@ -1,0 +1,11 @@
+START 2026-10-05T20:09:57+02:00 head=61909502 root=/home/kobii/kme-corpus/projects project_filter=KobiiCraft-Core-Files|kme-wt-arena2
+STEP r4-population exit=0 killed=no wall_s=24 peak_rss_MB=99 read_GB=2.83
+STEP r4-d-kmel exit=0 killed=no wall_s=26 peak_rss_MB=159 read_GB=2.85
+STEP r4-d-w7 exit=3 killed=no wall_s=54 peak_rss_MB=169 read_GB=10.04
+STEP r5-e exit=0 killed=no wall_s=24 peak_rss_MB=106 read_GB=2.77
+STEP r6-f exit=0 killed=no wall_s=24 peak_rss_MB=99 read_GB=2.73
+STEP r7-g exit=0 killed=no wall_s=28 peak_rss_MB=114 read_GB=2.85
+STEP r8-h exit=0 killed=no wall_s=24 peak_rss_MB=110 read_GB=2.65
+STEP r9-i exit=0 killed=no wall_s=25 peak_rss_MB=99 read_GB=2.80
+STEP r10-l-rank exit=0 killed=no wall_s=26 peak_rss_MB=104 read_GB=2.82
+DONE 2026-10-05T20:14:12+02:00

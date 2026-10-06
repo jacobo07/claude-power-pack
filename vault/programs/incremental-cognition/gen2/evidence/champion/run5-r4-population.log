@@ -1,0 +1,105 @@
+{
+ "denominator": "KME-L",
+ "denominator_kind": "frozen",
+ "select": "kme",
+ "until": "2026-10-03T16:13:37Z",
+ "since": null,
+ "until_located": {
+  "method": "not_found",
+  "scans": 10,
+  "why": "no cutoff within the window reproduces every field; at the best candidate the fields [measured, frozen] differ: {\"cache_read\": [11820647560, 11549646300], \"cache_write\": [211569058, 209909403], \"calls\": [35520, 34871], \"input\": [90697, 69846], \"output\": [38144197, 37878881], \"sessions_active\": [103, 102]}",
+  "located": null,
+  "freeze_instant": "2026-10-03T16:13:37Z"
+ },
+ "population": {
+  "sessions_active": 105,
+  "sessions_dead": 0,
+  "calls": 35776,
+  "input": 91209,
+  "cache_write": 213227804,
+  "cache_read": 11888777786,
+  "output": 38430323,
+  "weighted": 1807576210.6000001
+ },
+ "frozen": {
+  "sessions_active": 102,
+  "sessions_dead": 0,
+  "calls": 34871,
+  "input": 69846,
+  "cache_write": 209909403,
+  "cache_read": 11549646300,
+  "output": 37878881,
+  "weighted": 1764247687.0
+ },
+ "population_match": "drifted",
+ "deltas": {
+  "sessions_active": [
+   105,
+   102
+  ],
+  "calls": [
+   35776,
+   34871
+  ],
+  "input": [
+   91209,
+   69846
+  ],
+  "cache_write": [
+   213227804,
+   209909403
+  ],
+  "cache_read": [
+   11888777786,
+   11549646300
+  ],
+  "output": [
+   38430323,
+   37878881
+  ]
+ },
+ "coverage": null,
+ "per_project": [
+  {
+   "project": "C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files",
+   "sessions_active": 101,
+   "sessions_dead": 0,
+   "calls": 34870,
+   "cache_read": 11549645760
+  },
+  {
+   "project": "_archived",
+   "sessions_active": 1,
+   "sessions_dead": 0,
+   "calls": 649,
+   "cache_read": 271001260
+  },
+  {
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "sessions_active": 1,
+   "sessions_dead": 0,
+   "calls": 128,
+   "cache_read": 34065113
+  },
+  {
+   "project": "C--Users-User-Apps-mcp-video-analyzer",
+   "sessions_active": 1,
+   "sessions_dead": 0,
+   "calls": 128,
+   "cache_read": 34065113
+  },
+  {
+   "project": "C--Users-User-Apps-kme-wt-arena2",
+   "sessions_active": 1,
+   "sessions_dead": 0,
+   "calls": 1,
+   "cache_read": 540
+  }
+ ],
+ "corpus": {
+  "roots": 1,
+  "project_dirs": 344,
+  "sessions_scanned": 2538,
+  "project_filter": null
+ }
+}

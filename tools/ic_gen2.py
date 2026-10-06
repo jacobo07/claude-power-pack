@@ -172,6 +172,157 @@ def g2_spec(led, root) -> list:
     return []
 
 
+CHAMP_DIR = GEN2_DIR + "evidence/champion/"
+STEP_LINE = re.compile(r"^STEP (\S+) exit=(\d+) killed=(\S+) wall_s=(\d+) peak_rss_MB=(\d+) read_GB=([0-9.]+)\s*$", re.M)
+START_LINE = re.compile(r"^START (\S+) head=(\S+) root=(\S+)(?: project_filter=(.*?))?\s*$", re.M)
+CHAMP_PROVENANCE = {"run5": "reconstructed", "run6": "runner-script"}  # D-OQ5: Run 5's runner text was overwritten
+CHAMP_SCALARS = ("exit", "wall_s", "peak_rss_MB", "read_GB")
+
+
+def _champ_steps(summary_text: str) -> dict:
+    """STEP lines of a runner summary as {id: {exit, wall_s, read_GB, peak_rss_MB}}."""
+    return {m[1]: {"exit": int(m[2]), "wall_s": int(m[4]), "read_GB": float(m[6]), "peak_rss_MB": int(m[5])}
+            for m in STEP_LINE.finditer(summary_text)}
+
+
+def _champ_runner_argv(runner_text: str, step: str):
+    """(argv, line number, problem) of the runner's `run_step <step>` line with its own $VAR assignments expanded
+    and the interpreter `run_step` prepends. argv is None when the runner cannot be read this way."""
+    import shlex
+    env = {}
+    for m in re.finditer(r"""^([A-Z][A-Z0-9_]*)=(?:'([^']*)'|"([^"]*)"|(\S+))\s*$""", runner_text, re.M):
+        env[m[1]] = next(g for g in m.groups()[1:] if g is not None)
+    interp = re.search(r"""^\s*(python3?)\s+"\$@"\s""", runner_text, re.M)
+    if not interp:
+        return None, None, "the runner has no `python3 \"$@\"` interpreter line in run_step"
+    for no, line in enumerate(runner_text.splitlines(), 1):
+        if re.match(rf"run_step\s+{re.escape(step)}\s", line):
+            try:
+                toks = shlex.split(line)[2:]
+            except ValueError as exc:
+                return None, no, f"the run_step {step} line does not tokenize: {exc}"
+            out = []
+            for t in toks:
+                bad = [n for n in re.findall(r"\$([A-Za-z_][A-Za-z0-9_]*)", t) if n not in env]
+                if bad:
+                    return None, no, f"the run_step {step} line uses {bad} that the runner never assigns"
+                out.append(re.sub(r"\$([A-Za-z_][A-Za-z0-9_]*)", lambda m: env[m[1]], t))
+            return [interp[1]] + out, no, None
+    return None, None, f"the runner has no line beginning `run_step {step}`"
+
+
+def g2_champ(led, res=None) -> list:
+    """G2-CHAMP: frozen.champion is re-derived from its pinned copied evidence on every run (D-OQ5). Evidence is
+    read through `res` (file_text / file_sha / path_exists); a missing or unparsable file is a problem, never a skip."""
+    import shlex
+    res = res if res is not None else ce.Resolver()
+    ch = _frozen(led).get("champion")
+    if not isinstance(ch, dict):
+        return ["G2-CHAMP frozen.champion is missing: the champion baseline is not pre-registered"]
+    out = []
+    runs = {}
+    for name in ("run5", "run6"):
+        r = ch.get(name)
+        if not isinstance(r, dict):
+            out.append(f"G2-CHAMP champion.{name} is missing")
+            continue
+        runs[name] = r
+    for name, r in runs.items():
+        cmd = r.get("command")
+        if not (isinstance(cmd, str) and cmd.strip()):
+            out.append(f"G2-CHAMP {name}: command is missing or empty")
+        if r.get("plane") != "gex44":
+            out.append(f"G2-CHAMP {name}: plane is {r.get('plane')!r}, not 'gex44'")
+        if r.get("command_provenance") != CHAMP_PROVENANCE[name]:
+            out.append(f"G2-CHAMP {name}: command_provenance is {r.get('command_provenance')!r}, "
+                       f"must be {CHAMP_PROVENANCE[name]!r} (D-OQ5)")
+        texts = {}
+        ev = r.get("evidence")
+        if not (isinstance(ev, list) and ev):
+            out.append(f"G2-CHAMP {name}: evidence is missing")
+            ev = []
+        for e in ev:
+            ref = e.get("ref") if isinstance(e, dict) else None
+            if not (isinstance(ref, str) and ref.startswith(CHAMP_DIR)):
+                out.append(f"G2-CHAMP {name}: evidence ref {ref!r} is not under {CHAMP_DIR}")
+                continue
+            if not res.path_exists(ref):
+                out.append(f"G2-CHAMP {name}: evidence {ref} does not exist")
+                continue
+            got = res.file_sha(ref)
+            if got != e.get("sha256"):
+                out.append(f"G2-CHAMP {name}: evidence {ref} sha256 {str(got)[:12]} != pinned {str(e.get('sha256'))[:12]}")
+            if e.get("source_sha256") != e.get("sha256"):
+                out.append(f"G2-CHAMP {name}: evidence {ref} source_sha256 differs from sha256 (the copy is not the source)")
+            texts[ref.rsplit("/", 1)[-1]] = res.file_text(ref)
+        summ = next((t for k, t in texts.items() if k.endswith("summary.txt")), None)
+        plog = next((t for k, t in texts.items() if k.endswith(".log")), None)
+        if summ is None:
+            out.append(f"G2-CHAMP {name}: no copied summary among the evidence")
+        else:
+            steps = _champ_steps(summ)
+            row = steps.get(r.get("step"))
+            if row is None:
+                out.append(f"G2-CHAMP {name}: summary has no STEP line for {r.get('step')!r}")
+            else:
+                for k in CHAMP_SCALARS:
+                    if r.get(k) != row[k]:
+                        out.append(f"G2-CHAMP {name}: {k} {r.get(k)!r} != {row[k]!r} in the copied summary")
+            st = START_LINE.search(summ)
+            if not st:
+                out.append(f"G2-CHAMP {name}: summary has no START line")
+            else:
+                for k, want in (("started", st[1]), ("head", st[2]), ("project_filter", st[4] if st[4] else None)):
+                    if r.get(k) != want:
+                        out.append(f"G2-CHAMP {name}: {k} {r.get(k)!r} != {want!r} in the copied summary START line")
+                if ch.get("corpus_root") != st[3]:
+                    out.append(f"G2-CHAMP corpus_root {ch.get('corpus_root')!r} != {st[3]!r} in the {name} START line")
+            if name == "run6" and r.get("steps") != steps:
+                out.append(f"G2-CHAMP {name}: steps {sorted(r.get('steps') or {})} differ from the copied summary's STEP lines "
+                           f"{sorted(steps)} (ids or values)")
+        if plog is None:
+            out.append(f"G2-CHAMP {name}: no copied population log among the evidence")
+        else:
+            try:
+                doc = json.loads(plog)
+                want = {"population_match": doc["population_match"], "until_located_scans": doc["until_located"]["scans"],
+                        "project_filter": doc["corpus"]["project_filter"]}
+                if "population" in r:
+                    want_pop = {k: doc["population"][k] for k in (r["population"] if isinstance(r["population"], dict) else {})}
+                    if r["population"] != want_pop or set(r["population"]) != {"sessions_active", "calls"}:
+                        out.append(f"G2-CHAMP {name}: population {r['population']!r} != {want_pop!r} in the copied log")
+                for k, v in want.items():
+                    if r.get(k) != v:
+                        out.append(f"G2-CHAMP {name}: {k} {r.get(k)!r} != {v!r} in the copied population log")
+            except (ValueError, KeyError, TypeError) as exc:
+                out.append(f"G2-CHAMP {name}: the copied population log is unparsable ({type(exc).__name__}: {exc})")
+        if name == "run6":
+            runner = next((t for k, t in texts.items() if k.endswith(".sh")), None)
+            if runner is None:
+                out.append("G2-CHAMP run6: no copied runner among the evidence")
+            else:
+                argv, no, why = _champ_runner_argv(runner, str(r.get("step")))
+                if argv is None:
+                    out.append(f"G2-CHAMP run6: {why}")
+                else:
+                    if r.get("runner_line") != no:
+                        out.append(f"G2-CHAMP run6: runner_line {r.get('runner_line')!r} != {no} in the copied runner")
+                    try:
+                        have = shlex.split(r.get("command") or "")
+                    except ValueError:
+                        have = None
+                    if have != argv:
+                        out.append(f"G2-CHAMP run6: command {r.get('command')!r} is not the runner's expanded argv {argv}")
+    r5, r6 = runs.get("run5"), runs.get("run6")
+    rd = ch.get("ratios_derived")
+    if r5 and r6 and isinstance(r5.get("wall_s"), (int, float)) and isinstance(r6.get("wall_s"), (int, float)) \
+            and r6["wall_s"] and r6.get("read_GB"):
+        want = {"wall": round(r5["wall_s"] / r6["wall_s"], 1), "read_GB": round(r5["read_GB"] / r6["read_GB"], 1)}
+        if not isinstance(rd, dict) or any(rd.get(k) != v for k, v in want.items()):
+            out.append(f"G2-CHAMP ratios_derived {rd!r} != {want} recomputed from run5 / run6")
+    return out
+
+
 def load_gen1_current():
     """Gen1's `frozen` as the working tree has it, or None when unreadable."""
     try:
@@ -216,6 +367,7 @@ def g2_problems(led: dict, res) -> list:
         out += g2_reopen(led, cur, sha) + g2_denom(led, cur)
     out += g2_pred(led)
     out += g2_spec(led, getattr(res, "spec_root", REPO))
+    out += g2_champ(led, res)
     return out
 
 
@@ -231,6 +383,10 @@ def problems(led: dict, res=None, final: bool = False) -> list:
 
 
 # ---------------------------------------------------------------- selftest
+def load_text(rel: str) -> str:
+    return (REPO / rel).read_text(encoding="utf-8")
+
+
 def _sha(text: str) -> str:
     return hashlib.sha256(text.replace("\r\n", "\n").encode("utf-8")).hexdigest()
 
@@ -384,6 +540,27 @@ def selftest(verbose=True) -> bool:
     mut("spec-missing", "G2-SPEC", lambda d: d["frozen"].update(spec="vault/specs/does-not-exist-ic2.md"))
     mut("spec-key-absent", "G2-SPEC", lambda d: d["frozen"].pop("spec"))
     mut("spec-not-ready", "G2-SPEC", lambda d: d["frozen"].update(spec=REQS_REL))
+
+    # G2-CHAMP: the champion numbers re-derived from the copied evidence (D-OQ5); the clean control is V-IC2-CLEAN
+    def champ(d, run):
+        return d["frozen"]["champion"][run]
+
+    ref6 = CHAMP_DIR + "run6-summary.txt"
+    text6 = load_text(ref6)
+    mut("run5-no-command", "G2-CHAMP", lambda d: champ(d, "run5").pop("command"))
+    mut("run5-provenance-verbatim", "G2-CHAMP", lambda d: champ(d, "run5").update(command_provenance="runner-script"))
+    mut("run6-plane-laptop", "G2-CHAMP", lambda d: champ(d, "run6").update(plane="laptop"))
+    mut("run5-read-GB-101.5", "G2-CHAMP", lambda d: champ(d, "run5").update(read_GB=101.5))
+    mut("run6-step-missing", "G2-CHAMP", lambda d: champ(d, "run6")["steps"].pop("r10-l-rank"))
+    mut("evidence-sha-flipped", "G2-CHAMP",
+        lambda d: champ(d, "run5")["evidence"][0].update(sha256="0" * 64))
+    mut("summary-text-altered", "G2-CHAMP", lambda d: None, files={ref6: text6.replace("wall_s=24 ", "wall_s=25 ", 1)})
+    mut("run6-command-filter-dropped", "G2-CHAMP", lambda d: champ(d, "run6").update(
+        command=champ(d, "run6")["command"].split(" --project-filter")[0]))
+    mut("ratios-derived-wrong", "G2-CHAMP", lambda d: d["frozen"]["champion"]["ratios_derived"].update(wall=36.0))
+    mut("evidence-outside-dir", "G2-CHAMP", lambda d: champ(d, "run5")["evidence"][1].update(
+        ref="vault/programs/incremental-cognition/gen2/owner-bundle.md"))
+    mut("missing", "G2-CHAMP", lambda d: d["frozen"].pop("champion"))
 
     # the bound CE clauses on a closed pillar, with the D-OQ4 allowed loss as the positive control
     f_ok = _p_files()

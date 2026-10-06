@@ -1,0 +1,4 @@
+START 2026-10-05T12:13:26+02:00 head=61909502 root=/home/kobii/kme-corpus/projects
+STEP r4-population exit=3 killed=no wall_s=869 peak_rss_MB=184 read_GB=101.53
+STOP population gate failed
+DONE
