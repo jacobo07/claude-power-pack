@@ -90,11 +90,16 @@ function decide(event) {
   return {
     decision: 'block',
     reason:
-      `${head} This pane continues in a FRESH session, and that rollover (/kclear -> /clear -> ` +
-      '/kresume focus on the next step) can only start when this turn ENDS. Do exactly this: ' +
+      `${head} This pane continues in a FRESH session (/kclear -> /clear -> /kresume focus on ` +
+      'the next step), and YOU start it. Do exactly this, in THIS turn: ' +
       '(1) finish ONLY the atomic step in progress and make it durable (commit / save) -- start ' +
-      'nothing new, dispatch no new agents; (2) END this turn with a short status and the next ' +
-      'exact action. Do NOT run /compact or /clear yourself: the Stop that follows handles it.',
+      'nothing new, dispatch no new agents; (2) invoke the kclear skill NOW (Skill tool, ' +
+      'skill: "kclear"), naming the next exact action as the first open obligation -- that seals ' +
+      'the capsule; (3) END this turn with a short status. The Stop that follows gates the sealed ' +
+      'capsule (context-watchdog _self_sealed_step) and, on SAFE_TO_FORGET, types /clear and arms ' +
+      '/kresume focus on that obligation in the fresh session. Ending the turn WITHOUT /kclear ' +
+      'strands the rollover (measured 2026-10-06: the Owner had to type it). Do NOT run /compact ' +
+      'or /clear yourself.',
   };
 }
 

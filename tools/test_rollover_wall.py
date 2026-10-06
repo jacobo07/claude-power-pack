@@ -91,7 +91,10 @@ def main() -> int:
     check("V-RWALL-AT-WALL-BLOCKS",
           isinstance(out, dict) and out.get("decision") == "block"
           and "CONTEXT WALL" in reason(out) and "46%" in reason(out)
-          and "END this turn" in reason(out) and "/compact" in reason(out),
+          and "END this turn" in reason(out) and "/compact" in reason(out)
+          # 2026-10-06: the notice must ask the model to seal (/kclear) itself; without it
+          # the Stop finds no capsule and the rollover strands.
+          and 'skill: "kclear"' in reason(out) and "invoke the kclear skill NOW" in reason(out),
           f"out={out}")
 
     check("V-RWALL-ONCE-PER-CROSSING", b.decide() is None, "same 46 % again -> silent")
