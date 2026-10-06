@@ -145,6 +145,7 @@ def downgrade_to_v4(con) -> None:
     """Make the index look like one written by v4 code: no v5 table, no v5 column."""
     for t in V5_TABLES:
         con.execute(f"DROP TABLE IF EXISTS {t}")
+    con.execute("DROP INDEX IF EXISTS files_content")     # an index blocks DROP COLUMN
     have = {r[1] for r in con.execute("PRAGMA table_info(files)")}
     for c in V5_FILE_COLS:
         if c in have:
@@ -742,12 +743,242 @@ def grp_identity_fill() -> None:
             con.close()
 
 
+# -- plan 02 task 2: parser/file failures surfaced; content identity and duplicate groups -----
+
+def plain_user(text: str, h: float = 5.0) -> str:
+    return json.dumps({"type": "user", "timestamp": iso(h),
+                       "message": {"role": "user", "content": text}}) + "\n"
+
+
+def last_status(con) -> dict:
+    return json.loads(con.execute("SELECT v FROM meta WHERE k='last_refresh_status'").fetchone()[0])
+
+
+def grp_parse_errors() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        f = _write(proj / "C--p1" / "S1.jsonl",
+                   user_prompt("P1", 1, "S1") + "{this is not json\n"
+                   + asst("m1", 1.1, "S1") + "}}garbage}}\n" + asst("m2", 1.2, "S1"))
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            r = UX.refresh(con, proj, deadline_s=30)
+            pe = con.execute("SELECT parse_errors FROM files WHERE path=?", (os.path.realpath(str(f)),)
+                             ).fetchone()[0]
+            st = last_status(con)
+            ncalls = con.execute("SELECT count(*) FROM calls").fetchone()[0]
+            gate("V-UX5-PARSE-ERROR-SURFACED",
+                 pe == 2 and r.get("parse_errors") == 2 and st.get("parse_errors") == 2
+                 and ncalls == 2 and r["status"] == "OK",
+                 f"two undecodable complete lines: files.parse_errors={pe}, refresh result "
+                 f"parse_errors={r.get('parse_errors')}, meta last_refresh_status "
+                 f"parse_errors={st.get('parse_errors')}; valid calls still ingested={ncalls}/2")
+            # a second pass over an unchanged file must not re-count
+            r2 = UX.refresh(con, proj, deadline_s=30)
+            pe2 = con.execute("SELECT parse_errors FROM files").fetchone()[0]
+            gate("V-UX5-PARSE-ERROR-STABLE", pe2 == 2 and r2.get("parse_errors") == 0,
+                 f"unchanged file re-refreshed: files.parse_errors={pe2} (want 2), this pass "
+                 f"parse_errors={r2.get('parse_errors')} (want 0)")
+        finally:
+            con.close()
+
+    with tempfile.TemporaryDirectory() as td:                      # control: a clean file
+        td = Path(td)
+        proj, _ = one_session_store(td)
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            r = UX.refresh(con, proj, deadline_s=30)
+            pe = con.execute("SELECT parse_errors FROM files").fetchone()[0]
+            st = last_status(con)
+            gate("V-UX5-PARSE-ERROR-CLEAN",
+                 pe == 0 and r.get("parse_errors") == 0 and st.get("parse_errors") == 0
+                 and st.get("files_with_errors") == 0,
+                 f"clean file: files.parse_errors={pe}, result parse_errors={r.get('parse_errors')}, "
+                 f"meta parse_errors={st.get('parse_errors')} files_with_errors="
+                 f"{st.get('files_with_errors')} (a present zero, not an absent key)")
+        finally:
+            con.close()
+
+
+def grp_partial_line() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        whole = asst("m2", 1.2, "S1")
+        cut = len(whole) // 2
+        f = _write(proj / "C--p1" / "S1.jsonl",
+                   user_prompt("P1", 1, "S1") + asst("m1", 1.1, "S1") + whole[:cut])
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            r1 = UX.refresh(con, proj, deadline_s=30)
+            pe1 = con.execute("SELECT parse_errors FROM files").fetchone()[0]
+            n1 = con.execute("SELECT count(*) FROM calls").fetchone()[0]
+            with f.open("a", encoding="utf-8") as fh:
+                fh.write(whole[cut:])
+            r2 = UX.refresh(con, proj, deadline_s=30)
+            pe2 = con.execute("SELECT parse_errors FROM files").fetchone()[0]
+            n2 = con.execute("SELECT count(*) FROM calls").fetchone()[0]
+            gate("V-UX5-PARTIAL-LINE-NOT-ERROR",
+                 pe1 == 0 and r1.get("parse_errors") == 0 and n1 == 1 and pe2 == 0
+                 and r2.get("parse_errors") == 0 and n2 == 2,
+                 f"half-written last line: parse_errors={pe1} calls={n1} (want 0 / 1); after the "
+                 f"line is completed: parse_errors={pe2} calls={n2} (want 0 / 2)")
+        finally:
+            con.close()
+
+
+def _file_error_case(td: Path, inject: bool):
+    proj, files = two_file_store(td)
+    bad = files[1]
+    undo = None
+    if inject:                                    # running as root: mode 000 does not stop open()
+        real = UX._tis.calls_from
+
+        def failing(path, *a, **k):
+            if Path(path).name == bad.name:
+                raise PermissionError(13, "Permission denied", str(path))
+            return real(path, *a, **k)
+        undo = _patch(UX._tis, "calls_from", failing)
+    else:
+        os.chmod(bad, 0)
+    con = UX.connect(td / "db" / "ix.sqlite")
+    try:
+        r = UX.refresh(con, proj, deadline_s=30)
+        row = con.execute("SELECT error, offset FROM files WHERE path=?",
+                          (os.path.realpath(str(bad)),)).fetchone()
+        ok_calls = con.execute("SELECT count(*) FROM calls WHERE file=?",
+                               (os.path.realpath(str(files[0])),)).fetchone()[0]
+        st = last_status(con)
+        # control: once readable again the error clears and the file is ingested
+        if undo:
+            undo()
+        else:
+            os.chmod(bad, 0o644)
+        r2 = UX.refresh(con, proj, deadline_s=30)
+        row2 = con.execute("SELECT error FROM files WHERE path=?", (os.path.realpath(str(bad)),)).fetchone()
+        n2 = con.execute("SELECT count(*) FROM calls WHERE file=?", (os.path.realpath(str(bad)),)).fetchone()[0]
+        return r, row, ok_calls, st, r2, row2, n2
+    finally:
+        con.close()
+
+
+def grp_file_error() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        probe = td / "probe"
+        probe.write_text("x")
+        os.chmod(probe, 0)
+        try:
+            with open(probe, "rb"):
+                root_like = True                  # open() succeeded under mode 000
+        except OSError:
+            root_like = False
+        os.chmod(probe, 0o644)
+        r, row, ok_calls, st, r2, row2, n2 = _file_error_case(td, inject=root_like)
+        mode = "injected PermissionError (mode 000 is readable here)" if root_like else "mode 000"
+        gate("V-UX5-FILE-ERROR-TYPED",
+             row is not None and (row[0] or "").startswith("PermissionError") and ok_calls == 3
+             and r.get("files_with_errors") == 1 and st.get("files_with_errors") == 1
+             and r["status"] == "OK" and row[1] == 0,
+             f"unreadable transcript ({mode}): files.error={row and row[0]!r}, offset not advanced="
+             f"{row and row[1]}; other file ingested={ok_calls}/3 calls; files_with_errors="
+             f"{r.get('files_with_errors')}")
+        gate("V-UX5-FILE-ERROR-CLEARS",
+             row2 is not None and row2[0] is None and n2 == 2 and r2.get("files_with_errors") == 0,
+             f"after the file is readable again: files.error={row2 and row2[0]!r}, its calls={n2}/2, "
+             f"files_with_errors={r2.get('files_with_errors')}")
+
+
+def _hist_tree(td: Path, tails, names=("C--a", "C--b")) -> Path:
+    proj = td / "projects"
+    prefix = user_prompt("P1", 1, "S1") + asst("m1", 1.1, "S1") + asst("m2", 1.2, "S1")
+    for name, tail in zip(names, tails):
+        _write(proj / name / "S1.jsonl", prefix + plain_user(tail))
+    return proj
+
+
+def grp_content_identity() -> None:
+    # same sessionId, shared prefix, different last line of equal length
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = _hist_tree(td, ("alpha", "bravo"))
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            rows = con.execute("SELECT path, content_id, dup_of FROM files ORDER BY path").fetchall()
+            ncalls = con.execute("SELECT count(*) FROM calls").fetchone()[0]
+            ncf = con.execute("SELECT count(*), count(DISTINCT file) FROM call_files").fetchone()
+            ids = [r[1] for r in rows]
+            gate("V-UX5-HISTORIES-NOT-MERGED",
+                 len(rows) == 2 and all(ids) and ids[0] != ids[1]
+                 and all(r[2] is None for r in rows) and ncalls == 2 and ncf == (4, 2),
+                 f"two histories, one sessionId, shared prefix: files rows={len(rows)}, content_ids "
+                 f"distinct={len(set(ids)) == 2}, dup_of={[r[2] for r in rows]}; shared-prefix calls "
+                 f"rows={ncalls} (want 2), call_files rows/files={ncf} (want 4/2)")
+        finally:
+            con.close()
+
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = _hist_tree(td, ("alpha", "alpha"))
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            rows = con.execute("SELECT path, content_id, dup_of FROM files ORDER BY path").fetchall()
+            ncalls = con.execute("SELECT count(*) FROM calls").fetchone()[0]
+            ncf = con.execute("SELECT count(*) FROM call_files").fetchone()[0]
+            small, large = rows[0][0], rows[1][0]
+            gate("V-UX5-COPY-ONCE",
+                 len(rows) == 2 and rows[0][1] and rows[0][1] == rows[1][1] and rows[0][2] is None
+                 and rows[1][2] == small and ncalls == 2 and ncf == 4,
+                 f"byte-identical copies: one content_id={rows[0][1] == rows[1][1]}, smaller path "
+                 f"dup_of={rows[0][2]}, larger path dup_of is the smaller={rows[1][2] == small}; "
+                 f"calls rows={ncalls} (each key once), call_files rows={ncf} (each copy's own)")
+        finally:
+            con.close()
+
+    def build_in_order(first: str, second: str):
+        with tempfile.TemporaryDirectory() as t:
+            t = Path(t)
+            proj = t / "projects"
+            body = (user_prompt("P1", 1, "S1") + asst("m1", 1.1, "S1") + plain_user("alpha"))
+            con = UX.connect(t / "db" / "ix.sqlite")
+            try:
+                _write(proj / first / "S1.jsonl", body)
+                UX.refresh(con, proj, deadline_s=30)
+                _write(proj / second / "S1.jsonl", body)
+                UX.refresh(con, proj, deadline_s=30)
+                m1 = {Path(p).parent.name: Path(d).parent.name if d else None for p, d in
+                      con.execute("SELECT path, dup_of FROM files")}
+                larger = proj / "C--b" / "S1.jsonl"
+                with larger.open("a", encoding="utf-8") as fh:
+                    fh.write(asst("m9", 1.9, "S1"))
+                UX.refresh(con, proj, deadline_s=30)
+                m2 = {Path(p).parent.name: d for p, d in con.execute("SELECT path, dup_of FROM files")}
+                ids = [r[0] for r in con.execute("SELECT content_id FROM files")]
+                return m1, m2, ids
+            finally:
+                con.close()
+
+    ab = build_in_order("C--a", "C--b")
+    ba = build_in_order("C--b", "C--a")
+    gate("V-UX5-DUP-ORDER-INDEPENDENT",
+         ab[0] == ba[0] == {"C--a": None, "C--b": "C--a"}
+         and ab[1] == ba[1] == {"C--a": None, "C--b": None} and len(set(ab[2])) == 2,
+         f"copies ingested a-then-b {ab[0]} and b-then-a {ba[0]} give the same assignment; after "
+         f"the larger copy grows its dup_of is cleared {ab[1]} / {ba[1]} and the two content_ids "
+         f"differ={len(set(ab[2])) == 2}")
+
+
 GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
           ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text),
           ("grp_alias", grp_alias), ("grp_identity_columns", grp_identity_columns),
           ("grp_archived", grp_archived), ("grp_shapes", grp_shapes),
-          ("grp_identity_fill", grp_identity_fill))
+          ("grp_identity_fill", grp_identity_fill), ("grp_parse_errors", grp_parse_errors),
+          ("grp_partial_line", grp_partial_line), ("grp_file_error", grp_file_error),
+          ("grp_content_identity", grp_content_identity))
 
 
 # -- mutation drill ------------------------------------------------------------
@@ -881,6 +1112,22 @@ def _m_archived_into_calls():
         "                if True:  # ARCHIVED_RULE: v5 tables only\n")
 
 
+def _m_bad_line_counter_removed():
+    """M7: tis_observed stops counting undecodable complete lines (the counter becomes a no-op),
+    swapped in through UX._tis."""
+    return _source_mutant("tools/tis_observed.py",
+                          '                    stats["bad"] += 1\n',
+                          '                    pass\n')
+
+
+def _m_content_id_head_only():
+    """M8: the content id is built from the head hash only, so histories that share a first line
+    collapse into one content id."""
+    def mutant(end, head, tail):
+        return hashlib.sha256(f"{head}".encode()).hexdigest()[:32]
+    return _patch(UX, "_content_id", mutant)
+
+
 MUTANTS = [
     ("M1 _migrate_spawns gated on SCHEMA_VERSION (backfill re-queued)", _m_spawn_backfill_requeued,
      [grp_migrate], ["V-UX5-MIGRATE-ZERO-REREAD"]),
@@ -894,6 +1141,10 @@ MUTANTS = [
      [grp_alias], ["V-UX5-ALIAS-ONCE"]),
     ("M6 archived transcripts written to calls", _m_archived_into_calls,
      [grp_archived], ["V-UX5-V4-READERS-UNCHANGED", "V-UX5-ARCHIVED-INDEXED"]),
+    ("M7 undecodable-line counter removed", _m_bad_line_counter_removed,
+     [grp_parse_errors], ["V-UX5-PARSE-ERROR-SURFACED"]),
+    ("M8 content id built from the head hash only", _m_content_id_head_only,
+     [grp_content_identity], ["V-UX5-HISTORIES-NOT-MERGED"]),
 ]
 
 

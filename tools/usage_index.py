@@ -696,6 +696,51 @@ def _index_subagent_meta(con, fp: Path) -> None:
                  md.get("spawnDepth"), md.get("model")))
 
 
+def _content_id(end: int, head_sha: str, tail_sha: str) -> str:
+    """Content identity of a transcript's ingested bytes: its end offset plus the hashes of its
+    first and last complete lines. Two files with a shared prefix but different content differ
+    in the tail hash or the end; two byte-identical files agree on all three."""
+    return hashlib.sha256(f"{end}|{head_sha}|{tail_sha}".encode()).hexdigest()[:32]
+
+
+def _call_key_set(con, path: str) -> set:
+    """The call identities a file holds, comparable across copies: an id-less call's key embeds
+    the file path (`off|<path>|<offset>`), so the path is blanked."""
+    return {("off||" + k.rsplit("|", 1)[1]) if k.startswith("off|") else k
+            for (k,) in con.execute("SELECT k FROM call_files WHERE file=?", (path,))}
+
+
+def _dup_groups(con, content_ids) -> None:
+    """Recompute dup_of for every file of each given content id. A group is the files sharing
+    a content_id; within it, every member whose call-key set equals the lexicographically
+    smallest member's gets dup_of = that path, the others NULL (never a merge on content_id or
+    sessionId alone). A group of one clears its member. Order-independent: the result is a
+    function of the rows now in the index."""
+    for cid in sorted({c for c in content_ids if c}):
+        members = [r[0] for r in con.execute(
+            "SELECT path FROM files WHERE content_id=? ORDER BY path", (cid,))]
+        canon = members[0] if members else None
+        canon_keys = _call_key_set(con, canon) if len(members) > 1 else None
+        for p in members:
+            dup = canon if (len(members) > 1 and p != canon
+                            and _call_key_set(con, p) == canon_keys) else None
+            con.execute("UPDATE files SET dup_of=? WHERE path=?", (dup, p))
+
+
+def _record_file_error(con, path: str, is_sub: int, st, exc: Exception, ident: tuple) -> None:
+    """A transcript that cannot be read: typed `files.error` ("<Class>: <message>"), the offset
+    never advanced, size set to -1 so the next pass retries it. A file never read before gets a
+    row with v5_from NULL (its v5 facts are unknown, not zero)."""
+    store, project, archived, skey = ident
+    con.execute(
+        "INSERT INTO files(path,offset,size,mtime_ns,is_sub,error,resolved,store,project,archived,"
+        "session_key) VALUES(?,0,-1,?,?,?,?,?,?,?,?) ON CONFLICT(path) DO UPDATE SET "
+        "error=excluded.error, size=-1",
+        (path, st.st_mtime_ns, is_sub, f"{type(exc).__name__}: {exc}", _tis.resolved_path(path),
+         store, project, archived, skey))
+    con.commit()
+
+
 def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             since_epoch: float | None = None, deadline_s: float = 20.0) -> dict:
     """Index the bytes appended since the last pass. Bounded by `deadline_s`.
@@ -710,8 +755,10 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
     t_end = t0 + deadline_s
     files_read = upserts = pending = 0
     files_opened = bytes_read = bytes_ingested = files_seen = 0
+    parse_errors = 0
     backfill_pending = None
     skipped_shapes = None
+    files_with_errors = None
     status = "OK"
     err = ""
     try:
@@ -719,6 +766,7 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
         _migrate_spawns(con)
         _migrate_v5(con)
         _fill_path_identity(con)
+        con.execute("CREATE INDEX IF NOT EXISTS files_content ON files(content_id)")
         con.execute("INSERT OR REPLACE INTO meta VALUES('archived_rule', ?)", (ARCHIVED_RULE,))
         con.commit()
         matched: set = set()
@@ -754,8 +802,12 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                 v5_from = prev[4]
             else:
                 v5_from = offset                        # a legacy file that grows
-            srow = con.execute("SELECT cur_prompt, title FROM files WHERE path=?",
-                               (path,)).fetchone()
+            srow = con.execute("SELECT cur_prompt, title, parse_errors, head_sha, tail_sha, "
+                               "content_id FROM files WHERE path=?", (path,)).fetchone()
+            old_pe = (srow[2] or 0) if srow and offset else 0
+            old_head = srow[3] if srow and offset else None
+            old_tail = srow[4] if srow and offset else None
+            old_cid = srow[5] if srow else None
             state = {"prompt": srow[0] if srow and offset else None,
                      "title": srow[1] if srow else None, "call_meta": {}, "cwd": None}
             if is_sub and offset == 0 and not archived:
@@ -768,9 +820,18 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
 
             stats: dict = {}
             files_opened += 1
-            calls, end, ep = _tis.calls_from(fp, offset, on_line=on_line, stats=stats)
+            try:
+                calls, end, ep = _tis.calls_from(fp, offset, on_line=on_line, stats=stats)
+            except OSError as e:                # this file only: typed, the others go on
+                con.rollback()
+                _record_file_error(con, path, is_sub, st, e, (store, project, archived, skey))
+                continue
             bytes_read += stats.get("bytes_seen", 0)
             bytes_ingested += end - offset
+            parse_errors += stats.get("bad", 0)
+            head_sha = stats.get("head_sha") if offset == 0 else old_head
+            tail_sha = stats.get("tail_sha") or old_tail
+            cid = _content_id(end, head_sha, tail_sha) if head_sha and tail_sha else None
             entry = entry or ep
             for c in calls:
                 u = c["usage"]
@@ -809,24 +870,32 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                 con.execute("UPDATE calls SET entrypoint=? WHERE file=? AND entrypoint IS NULL",
                             (entry, path))
             con.execute("INSERT INTO files(path,offset,size,mtime_ns,is_sub,entrypoint,"
-                        "cur_prompt,title,v5_from,resolved,store,project,archived,session_key) "
-                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                        "cur_prompt,title,v5_from,resolved,store,project,archived,session_key,"
+                        "parse_errors,error,head_sha,tail_sha,content_id) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?,?) "
                         "ON CONFLICT(path) DO UPDATE SET offset=excluded.offset, "
                         "size=excluded.size, mtime_ns=excluded.mtime_ns, is_sub=excluded.is_sub, "
                         "entrypoint=excluded.entrypoint, cur_prompt=excluded.cur_prompt, "
                         "title=excluded.title, v5_from=excluded.v5_from, "
                         "resolved=excluded.resolved, store=excluded.store, "
                         "project=excluded.project, archived=excluded.archived, "
-                        "session_key=excluded.session_key",
+                        "session_key=excluded.session_key, parse_errors=excluded.parse_errors, "
+                        "error=NULL, head_sha=excluded.head_sha, tail_sha=excluded.tail_sha, "
+                        "content_id=excluded.content_id",
                         (path, end, st.st_size, st.st_mtime_ns, is_sub, entry,
                          state["prompt"], state["title"], v5_from, _tis.resolved_path(path),
-                         store, project, archived, skey))
+                         store, project, archived, skey, old_pe + stats.get("bad", 0),
+                         head_sha, tail_sha, cid))
+            con.execute("UPDATE files SET dup_of=NULL WHERE path=?", (path,))
+            _dup_groups(con, {old_cid, cid})
             con.commit()
             files_read += 1
         # Historical spawn results (v3 backfill) use only the time left. They are not
         # freshness: pending files here never make the pass PARTIAL, which would turn
         # the burn alarm into MONITOR_FAILURE while the live index is current.
         backfill_pending = _backfill_spawns(con, t_end)
+        files_with_errors = con.execute(
+            "SELECT count(*) FROM files WHERE error IS NOT NULL").fetchone()[0]
         skipped_shapes = _census_skipped(Path(proj), matched) if Path(proj).is_dir() else None
         if skipped_shapes is not None:
             con.execute("INSERT OR REPLACE INTO meta VALUES('skipped_shapes', ?)",
@@ -841,6 +910,7 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                              "pending": pending, "backfill_pending": backfill_pending,
                              "files_opened": files_opened, "bytes_read": bytes_read,
                              "bytes_ingested": bytes_ingested, "files_seen": files_seen,
+                             "parse_errors": parse_errors, "files_with_errors": files_with_errors,
                              "wall_s": wall_s}),))
     if status == "OK":
         con.execute("INSERT OR REPLACE INTO meta VALUES('last_ok_at', ?)", (str(now),))
@@ -849,7 +919,8 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             "pending": pending, "backfill_pending": backfill_pending, "error": err,
             "files_opened": files_opened, "bytes_read": bytes_read,
             "bytes_ingested": bytes_ingested, "files_seen": files_seen, "wall_s": wall_s,
-            "skipped_shapes": skipped_shapes}
+            "skipped_shapes": skipped_shapes, "parse_errors": parse_errors,
+            "files_with_errors": files_with_errors}
 
 
 # -- pricing -----------------------------------------------------------------

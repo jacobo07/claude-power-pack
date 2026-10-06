@@ -23,6 +23,7 @@ API calls and are counted separately, never summed.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -138,11 +139,16 @@ def calls_from(path: Path, offset: int = 0,
 
     `stats`, when given, is filled in the same read loop: `bytes_seen` (every raw chunk
     iterated, the unterminated tail included), `lines` (complete lines) and `bad` (complete
-    non-blank lines that are not valid JSON; the unterminated tail is never counted)."""
+    non-blank lines that are not valid JSON; the unterminated tail is never counted), and the
+    content fingerprints `head_sha` (sha256 hex of the first complete raw line, set only when the
+    read starts at offset 0) and `tail_sha` (sha256 hex of the last complete raw line read in
+    this pass; absent when the pass read no complete line). Both hash bytes the loop already
+    holds: no extra read."""
     calls: dict = {}
     order: list = []
     entrypoint = None
     pos = offset
+    last_raw = None
     if stats is not None:
         for _k in ("bytes_seen", "lines", "bad"):
             stats.setdefault(_k, 0)
@@ -155,6 +161,9 @@ def calls_from(path: Path, offset: int = 0,
                 break
             if stats is not None:
                 stats["lines"] += 1
+                if offset == 0 and "head_sha" not in stats:
+                    stats["head_sha"] = hashlib.sha256(raw).hexdigest()
+                last_raw = raw
             start, pos = pos, pos + len(raw)
             text = raw.decode("utf-8", errors="replace").lstrip("\ufeff").strip()
             if not text:
@@ -181,6 +190,8 @@ def calls_from(path: Path, offset: int = 0,
                 order.append(key)
             calls[key] = {"model": msg.get("model") or "", "usage": msg["usage"],
                           "ts": obj.get("timestamp"), "key": key}
+    if stats is not None and last_raw is not None:
+        stats["tail_sha"] = hashlib.sha256(last_raw).hexdigest()
     return [calls[k] for k in order], pos, entrypoint
 
 
