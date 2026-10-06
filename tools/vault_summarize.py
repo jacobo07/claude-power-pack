@@ -153,6 +153,13 @@ def main() -> int:
                 pp_root, pp_root / ERRORS_REL, pp_root / INDEX_REL)
 
     if args.check:
+        # TOK-18 WU2: zero-model wake check rides this existing scheduled task. Exit code is unchanged.
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import wake_check
+            print("WAKE_CHECK " + __import__("json").dumps(wake_check.evaluate()))
+        except Exception as exc:  # noqa: BLE001 -- named on stdout, never silent, never changes the exit code
+            print(f"WAKE_CHECK_ERROR {type(exc).__name__}: {exc}")
         if not errors_path.exists():
             print("ERROR: errors.md missing", file=sys.stderr)
             return 2
