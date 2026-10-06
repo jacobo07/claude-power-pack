@@ -163,9 +163,10 @@ def p5_checks() -> None:
         ir = json.loads(IR_PATH.read_text(encoding="utf-8-sig"))
         real = ctc.compile_cost(ir, FLOORS)
         c = real["clean"]
+        # The live IR moves as claims close (canary T closed 3 on 2026-10-06), so assert the invariants and
+        # the fixed claim total, not a snapshot of which class each claim is in today.
         check("V-CTC-REAL-IR-CLEAN-COUNTS", c["o_total"] == c["o_zero"] + c["o_shared"] + c["o_irreducible"]
-              and (c["o_total"], c["o_zero"], c["o_shared"], c["o_irreducible"]) == (28, 6, 8, 14)
-              and c["o_semantic_consumers"] == 22, str(c))
+              and c["o_total"] == 28 and c["o_semantic_consumers"] == c["o_shared"] + c["o_irreducible"], str(c))
         rr = ctc.route_verdict(ir, FLOORS)
         check("V-CTC-REAL-IR-ROUTE-VERDICT-IS-ADMIT", rr["verdict"] == rr["admission"]["verdict"] == ra.ADMISSIBLE,
               rr["verdict"])
@@ -208,8 +209,16 @@ def work_model_checks() -> None:
     check("V-CTC-WORK-BAD-KEY-REFUSED", refused(wdoc(work={**T_WORK, "vibes": 3})) == "BAD_CLAIM")
     # explore_ctx (images, large dumps) is carried only by calls AFTER the explore call that read it:
     # T's shape = orient at call 0, explore at call 1, so calls 2..10 carry it (9 calls).
-    big = ctc.compile_cost(wdoc(work={**T_WORK, "explore_ctx": 10_000}), FLOORS)["units"][0]["cost"]
-    check("V-CTC-WORK-EXPLORE-CTX-AFTER-EXPLORE", big - u["cost"] == 10_000 * 9, f"delta={big - u['cost']:,}")
+    base = ctc.work_cost(T_WORK, CAL, WF)[1]
+    big = ctc.work_cost({**T_WORK, "explore_ctx": 10_000}, CAL, WF)[1]
+    check("V-CTC-WORK-EXPLORE-CTX-AFTER-EXPLORE", big - base == 10_000 * 9, f"delta={big - base:,}")
+    # A cost not divisible by its calls must still be admitted by its own default route (F, 2026-10-06:
+    # ceil(cost / n) per call made need_with_margin exceed the target by one token -> RECOMPILE).
+    odd = wdoc(work={"orient": 1, "explore": 3, "files": 1, "commit": 1, "report": 1, "explore_ctx": 41_734})
+    ro = ctc.route_verdict(odd, FLOORS)
+    oc = ro["cost"]["units"][0]
+    check("V-CTC-WORK-NONDIVISIBLE-COST-ADMITTED", ro["verdict"] == ra.ADMISSIBLE and oc["cost"] == oc["calls"] * oc["ctx_eff"],
+          f"{ro['verdict']} cost={oc['cost']:,} calls x ctx_eff={oc['calls'] * oc['ctx_eff']:,} {ro['admission'].get('reasons')}")
 
 
 def _route_refused(doc):

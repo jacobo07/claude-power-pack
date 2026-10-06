@@ -285,7 +285,8 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
                 for k in CAL_KEYS:
                     _pos(f"calibration.{k}", cal[k], allow_zero=k != "files_per_call")
                 n, cost = work_cost(r["work"], cal, r["profile_floor"])
-                ctx = -(-cost // n)  # mean processed per call; the route charges calls x this
+                ctx = -(-cost // n)  # mean processed per call, rounded up; the route charges calls x this
+                cost = n * ctx  # so candidate == route need exactly (at most n - 1 tokens over the model)
                 # a reserve call lands after the planned ones, at the grown context
                 last = r["profile_floor"] + int(cal["ctx_start_over_floor"]) + int(r["work"].get("extra_ctx", 0)) \
                     + int(r["work"].get("explore_ctx", 0)) + int(cal["ctx_growth_per_call"]) * n \
