@@ -94,3 +94,16 @@ Phase-4 audit: `_audit-hub-reliability-2026-10-06.md` (READY WITH CONDITIONS, 9 
 DONE: suites green, drill both poles, >=20 real SessionStarts with 0 before-pool and 0 lost cards (counted from
 `cards DONE`), then the closing K probe in a session with no SessionStart abandonment at all.
 Out of slice (named debt): zero-command-bootstrap / first-time-project double run; gsd_mission.py:2730 doc drift.
+- C0 4bbf6796: cards in `hooks/session_cards.js` (load: 11 ms, 0 active handles); hub imports + re-exports, behaviour
+  unchanged; live on the next SessionStart (hub is served from this checkout). Suites: mission 8/8, owner-facing 8/8,
+  rollover-cwd 13/13, session-start-cost 9/9, restart-kclear 13/14 (baseline-identical), kresume-autotype 32/33
+  (V-KRA-D-FOCUS-TYPED daemon 6 s window, unpaired with baseline). Another session's uncommitted hub hunk
+  (stdin ceiling 12 s -> 50 s) left in the tree, not committed by C0.
+- C1 (repo; live mirror pending Owner): dispatcher `sessionStartInProcess` runs floor + `composeCards` before the pool,
+  outputs prepended, its time counted against the 4 s deadline (runChain opts.startedAt); hub skips cards when
+  PP_SESSION_CARDS_DONE=1 (`hubCards`), so a hub deployed before the dispatcher still emits them. Switches
+  CLAUDE_HOST_MEM_FLOOR_INPROC / CLAUDE_SESSION_CARDS_INPROC; INERT lines carry session=. New suite
+  `tools/test_session_start_inproc.js` 19/19 (hermetic tmp HOME/TEMP; e2e via a stand-in hub), 3/3 mutants killed.
+  Observed in the e2e: at 1.9 % free a NO-OP stand-in hub was reaped by the 4 s deadline in 3/3 attempts while floor +
+  card arrived (V-SSINPROC-E2E-CARDS-SURVIVE-ABANDON) -- the residual cliff is one node spawn, not hub work.
+  restart-and-lag 16/17 (V-HUB-REGISTERED stale since the 2026-09-22 fold), session-start-cost 9/9.

@@ -86,10 +86,12 @@ def gate_restart_flow_complete():
         "command": CMD_RESTART.is_file(),
         "ps1": PS1_RESTART.is_file(),
         "ps1_writes_pending": "restart_pending.json" in _read(PS1_RESTART),
-        # C0 (2026-10-06): the consumer moved to session_cards.js; the hub still calls it.
+        # C0/C1 (2026-10-06): the consumer lives in session_cards.js and is reached through
+        # composeCards(), called by the hub (fallback) and by the dispatcher (in-process).
         "hub_consumes": "restart_pending.json" in _read(CARDS)
         and "function hookRestartResume" in _read(CARDS)
-        and "hookRestartResume(" in _read(HUB),
+        and "hookRestartResume(cwd)" in _read(CARDS).split("function composeCards", 1)[-1]
+        and "composeCards(" in _read(HUB),
     }
     if all(parts.values()):
         _ok("V-RESTART-FLOW-COMPLETE",

@@ -168,9 +168,20 @@ async function getStdinPayload() {
 // the dispatcher can run them in-process. Re-exported below for the existing tests.
 // ---------------------------------------------------------------------------
 const {
-  hookRestartResume, hookWorkStateResume, hookRolloverResume, rolloverFocus,
-  missionNamesSession, hookMissionStart,
+  composeCards, hookRolloverResume, rolloverFocus, missionNamesSession, hookMissionStart,
 } = require('./session_cards');
+
+// Since C1 the dispatcher composes the cards IN-PROCESS before the pool and says so through
+// PP_SESSION_CARDS_DONE, so an abandoned hub no longer takes them down with it. Without that
+// flag (an older dispatcher, CLAUDE_SESSION_CARDS_INPROC=off, a failed require) the hub still
+// composes them, from the same function -- never both, so no one-shot marker is consumed twice.
+function hubCards(payload) {
+  if (process.env.PP_SESSION_CARDS_DONE === '1') {
+    note('cards skipped by hub: delivered in-process by the dispatcher');
+    return null;
+  }
+  return composeCards(payload, { via: 'hub' });
+}
 
 // The rollover card is context for a turn that has not started, and nothing starts one:
 // measured 2026-09-29 (fe1c49ea -> e9d6887e), /kclear and /clear were both typed by the
@@ -880,37 +891,9 @@ async function main() {
     const sessionId = (typeof payload.session_id === 'string')
       ? payload.session_id : '';
 
-    // 0a. Rollover card. The autotype is NOT armed here any more: arming first in main()
-    // (435014d6) still lost to the chain's 4 s deadline when the hub was reaped before it
-    // started (cf02a0a5 -> 7e953f9d, 2026-09-29). It is armed by rollover_autotype.js, a
-    // top-level SessionStart hook outside the chain. Arming here too would launch a second
-    // daemon for the same flag.
-    const rolloverLine = hookRolloverResume(cwd,
-      (typeof payload.source === 'string') ? payload.source : '');
-
-    // 1. Sync hook (may write to stdout).
-    additionalContext = hookRestartResume(cwd);
-
-    // 0. Mission worker ack + rehydration card. FIRST in the context: the host truncates
-    // SessionStart output near 9 KB (claude-code-handoff, measured), and the card is the
-    // one line a successor cannot work without. Capped at 8 KB by gsd_mission itself.
-    const missionCard = hookMissionStart(sessionId,
-      (typeof payload.source === 'string') ? payload.source : '');
-    if (missionCard) {
-      additionalContext = additionalContext
-        ? (missionCard + '\n' + additionalContext)
-        : missionCard;
-    }
-
-    // 0b. Rollover successor card. Ranked with the mission card and for the same reason:
-    // the host truncates SessionStart output near 9 KB, and after a `/clear` this is the
-    // one line without which the successor does not know a thread exists at all.
-    // (rolloverLine was computed at 0a; the autotype is rollover_autotype.js.)
-    if (rolloverLine) {
-      additionalContext = additionalContext
-        ? (rolloverLine + '\n' + additionalContext)
-        : rolloverLine;
-    }
+    // 0. Cards (rollover / mission / restart / work-state): see hubCards above. FIRST in the
+    // context: the host truncates SessionStart output near 9 KB.
+    additionalContext = hubCards(payload);
 
     // 1a. Recovery epoch. MUST run before hookCpcOsRegister, which writes a fresh
     // ACTIVE beacon: that beacon is what proves the PREVIOUS session died without
@@ -922,14 +905,6 @@ async function main() {
       additionalContext = additionalContext
         ? (additionalContext + '\n' + recoveryLine)
         : recoveryLine;
-    }
-
-    // 1b. Auto-Reset Orchestrator M5: inject saved work_state after a reset.
-    const workStateLine = hookWorkStateResume(cwd);
-    if (workStateLine) {
-      additionalContext = additionalContext
-        ? (additionalContext + '\n' + workStateLine)
-        : workStateLine;
     }
 
     // 12. AutoResearch VPS digest -- inline read of the local cache.
@@ -1022,5 +997,5 @@ if (require.main === module) {
   });
 }
 
-module.exports = { missionNamesSession, hookMissionStart, hookRolloverResume, armKresumeAutotype,
+module.exports = { hubCards, missionNamesSession, hookMissionStart, hookRolloverResume, armKresumeAutotype,
   rolloverFocus, getStdinPayload, note, ownerFacingAllowed, digestHasSignal };

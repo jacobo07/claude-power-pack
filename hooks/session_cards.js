@@ -358,9 +358,33 @@ function hookMissionStart(sessionId, source, timeoutMs) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// The one composition of the cards, for both callers: the dispatcher's in-process lane
+// (C1, via='inproc', mission bounded at 1,500 ms) and the hub's fallback (via='hub').
+// Order is the order a successor needs them: rollover, mission, /restart, work-state.
+// Every card function is fail-open on its own, so one bad card never costs the others.
+// The DONE line is the per-session instrument for "0 lost cards" (audit gap 9): a session
+// whose SessionStart has no `cards DONE` line lost its cards.
+// ---------------------------------------------------------------------------
+function composeCards(payload, opts) {
+  const o = opts || {};
+  const p = (payload && typeof payload === 'object') ? payload : {};
+  const cwd = (typeof p.cwd === 'string' && p.cwd) ? p.cwd : process.cwd();
+  const sid = (typeof p.session_id === 'string') ? p.session_id : '';
+  const source = (typeof p.source === 'string') ? p.source : '';
+  const lines = [
+    hookRolloverResume(cwd, source),
+    hookMissionStart(sid, source, o.missionTimeoutMs),
+    hookRestartResume(cwd),
+    hookWorkStateResume(cwd),
+  ].filter(Boolean);
+  note('cards DONE via=' + (o.via || '?') + ' sid=' + (sid || '-') + ' n=' + lines.length);
+  return lines.length ? lines.join('\n') : null;
+}
+
 module.exports = {
   HOME, PP_PATH, LOG_FILE, STATE_DIR, MS_PER_MINUTE, UTF8_BOM_CHARCODE, PYTHON_EXE,
-  note, hookRestartResume, hookWorkStateResume,
+  note, composeCards, hookRestartResume, hookWorkStateResume,
   rolloverPathKey, capsuleIsHere, findRolloverCapsule, hookRolloverResume, rolloverFocus,
   missionNamesSession, hookMissionStart,
 };

@@ -929,8 +929,10 @@ async function runPool(items, limit, worker) {
 
 // Run a chain of sub-hooks as shell-free child processes, up to N concurrently.
 // Returns { outputs:[parsedJSON], blocked:bool, blockStderr:string }.
-async function runChain(event, chain, rawStdin) {
-  const chainStart = Date.now();   // CHAIN DEADLINE clock; see CHAIN_DEADLINE_MS
+async function runChain(event, chain, rawStdin, opts) {
+  // CHAIN DEADLINE clock; see CHAIN_DEADLINE_MS. opts.startedAt lets in-process work done
+  // before the chain (the SessionStart lane) count against the same deadline.
+  const chainStart = (opts && opts.startedAt) || Date.now();
   // The harness's cap starts at PROCESS SPAWN. This clock starts HERE. Node
   // startup, module load and reading stdin are spent against the cap and are
   // invisible to the deadline, so the real budget is cap - startup - flush,
@@ -1020,7 +1022,8 @@ async function runChain(event, chain, rawStdin) {
     // read as one. Distinct marker so a liveness sweep can grep for the class
     // rather than for one script's name.
     if (settled[i] && settled[i].error) {
-      logError(event, 'CRITICAL-GUARD-INERT ' + runnable[i].script, settled[i].error);
+      logError(event, 'CRITICAL-GUARD-INERT ' + runnable[i].script + ' session=' + sessionOf(rawStdin),
+        settled[i].error);
     }
   }
 
@@ -1477,6 +1480,67 @@ function readStdin(timeoutMs) {
   });
 }
 
+// --- SESSIONSTART IN-PROCESS LANE (2026-10-06, C1; vault/plans/pillar-k-resident-prefix) ---
+// Measured over 7 days: the hub's own work never exceeded 3,092 ms (p50 1,161), yet this chain
+// lost it 326 times -- 254 reaped mid-run, 72 never spawned -- because the 4 s budget was spent
+// BEFORE the hub's t0: a serial node spawn of host-memory-floor.js, whose whole logic is one
+// os.freemem() call, then the hub's own cold start. The critical lane alone measured 4,013 to
+// 19,110 ms on the 72. A spawn's cost is a function of host load, so no budget fixes that.
+//
+// So the floor and the cards (rollover / mission / restart / work-state) run HERE, in this
+// process, before the pool: no spawn stands ahead of the hub any more, and the lines a new
+// session cannot work without no longer die with an abandoned advisory hub. Their outputs are
+// PREPENDED (floor, then cards): mergeOutputs concatenates in array order and the harness shows
+// only the head of a large SessionStart block, so appending (the companion-bundle lane below)
+// would bury the starvation warning on exactly the starved sessions it exists for.
+//
+// Only SessionStart-chain. Each half fails open to the old path and has its own switch:
+//   CLAUDE_HOST_MEM_FLOOR_INPROC=off  -> the floor runs as the critical spawned step again
+//   CLAUDE_SESSION_CARDS_INPROC=off   -> the hub composes the cards again
+// The hub learns the cards were delivered through PP_SESSION_CARDS_DONE in the environment its
+// child inherits. An older dispatcher never sets it, so a hub deployed first still emits them:
+// no gap, and no one-shot marker consumed twice. session_cards.js is safe to require here
+// because it has no load-time effects (C0); session_start_hub.js is NOT (it arms a hard exit).
+// Its time counts against the chain deadline (runChain opts.startedAt), so the deadline still
+// bounds how long a new pane waits.
+const SESSIONSTART_FLOOR = './host-memory-floor.js';
+const SESSIONSTART_CARDS = '../skills/claude-power-pack/hooks/session_cards.js';
+const CARDS_MISSION_TIMEOUT_MS = 1500;   // audit gap 2: well inside the 4,000 ms chain deadline
+
+function envSwitchOff(name) {
+  const v = String(process.env[name] || '').trim().toLowerCase();
+  return v === 'off' || v === '0' || v === 'false';
+}
+
+function sessionStartInProcess(event, chain, rawStdin) {
+  const out = { pre: [], chain };
+  if (event !== 'SessionStart-chain') return out;
+  let data = {};
+  try { data = JSON.parse((rawStdin || '{}').replace(/^\uFEFF/, '')) || {}; } catch (_) { data = {}; }
+  if (!envSwitchOff('CLAUDE_HOST_MEM_FLOOR_INPROC')) {
+    try {
+      const floor = require(path.join(__dirname, SESSIONSTART_FLOOR));
+      out.pre.push(floor.run(data));
+      out.chain = out.chain.filter((s) => s.script !== SESSIONSTART_FLOOR);
+    } catch (err) {
+      logError(event, 'INPROC-FLOOR-FAILED (spawned step kept) session=' + sessionOf(rawStdin), err);
+    }
+  }
+  if (!envSwitchOff('CLAUDE_SESSION_CARDS_INPROC')) {
+    try {
+      const cards = require(path.join(__dirname, SESSIONSTART_CARDS));
+      const ctx = cards.composeCards(data, { via: 'inproc', missionTimeoutMs: CARDS_MISSION_TIMEOUT_MS });
+      if (ctx) {
+        out.pre.push({ continue: true, hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: ctx } });
+      }
+      process.env.PP_SESSION_CARDS_DONE = '1';
+    } catch (err) {
+      logError(event, 'INPROC-CARDS-FAILED (the hub composes them) session=' + sessionOf(rawStdin), err);
+    }
+  }
+  return out;
+}
+
 // --- Module exports for unit tests (BL-2026-05-24 regression-guard) -------
 // Exported BEFORE the IIFE so `require('./hook-dispatcher.js')` succeeds
 // without triggering the CLI path. The IIFE below is gated by
@@ -1489,7 +1553,7 @@ function readStdin(timeoutMs) {
 // failure mode is SILENT AND FAIL-OPEN -- a false return runs the full chain,
 // which is exactly what a working filter looks like from the outside on a
 // starved host, so only a direct assertion on the predicate can tell them apart.
-module.exports = { sanitizeForSchema, familyOf, mergeOutputs, stderrIsSafeToSurface, runChain, isScratchTarget, resolvePyExe, sessionOf,
+module.exports = { sanitizeForSchema, familyOf, mergeOutputs, sessionStartInProcess, stderrIsSafeToSurface, runChain, isScratchTarget, resolvePyExe, sessionOf,
   deriveEventFromPayload, NO_EVENT_ROUTES, CHAIN_MAP, CHAIN_NAMES: Object.keys(CHAIN_MAP), EVENT_NAMES: Object.keys(EVENT_MAP) };
 
 // --- Main (CLI path only — skipped when required as a module) ---
@@ -1533,7 +1597,12 @@ if (require.main === module) (async () => {
   // --- Child-process chain path (Stop event — fork-storm-safe) ---
   if (event && CHAIN_MAP[event]) {
     const rawIn = preRaw !== null ? preRaw : await readStdin(3000);
-    const { outputs, blocked, blockStderr } = await runChain(event, CHAIN_MAP[event], rawIn || '');
+    const dispatchStart = Date.now();
+    const inproc = sessionStartInProcess(event, CHAIN_MAP[event], rawIn || '');
+    const chainRes = await runChain(event, inproc.chain, rawIn || '', { startedAt: dispatchStart });
+    const { blocked, blockStderr } = chainRes;
+    // In-process SessionStart outputs FIRST (floor, cards); see SESSIONSTART IN-PROCESS LANE.
+    const outputs = inproc.pre.concat(chainRes.outputs);
     // COMPANION IN-PROCESS BUNDLE (2026-06-04): a "<fam>-chain" event ALSO runs
     // its "<fam>-default" EVENT_MAP bundle IN-PROCESS (require, ~0 extra spawn)
     // and merges the outputs. Empirically (live timing): 2 in-process UPS hooks
