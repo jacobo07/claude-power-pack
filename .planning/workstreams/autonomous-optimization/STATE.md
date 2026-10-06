@@ -46,6 +46,7 @@ first proving incident; a second workload must be taken by the loop itself.
   launch gate does not run the preflight. The waiver covers this arm only; a re-arm needs exit 0 or a new waiver.
   Relays launched by agora-mission-sweep run with system node v18 (row 16 wiring still pending): only
   node_bridge consumers are affected; do not judge MC/HPKT gates on this plane without CPP_NODE_EXE.
+- [Orchestrator D-OQ3 2026-10-05]: programme done-gate = python3 tools/test_incremental_cognition_program.py --generation 2 --final PASS (ICP_GEN2_VERDICT) plus the Phase 6 Production Reality probe; gen1 red pillars A,B,C,I,J,K,M,N and L8 are inherited state, reported verbatim, never claimed green, never edited.
 
 ## Session Continuity
 
