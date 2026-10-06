@@ -17,7 +17,9 @@ import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
-TMP = tempfile.mkdtemp(prefix="gsd-mission-envelope-test-")
+# The prefix must not contain "gsd-": on POSIX the packet path would then hold "/gsd-" and the
+# V-CWU-*-NO-GSD checks would fail on the probe, not the prompt (measured on GEX44, 2026-10-06).
+TMP = tempfile.mkdtemp(prefix="mission-envelope-test-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP

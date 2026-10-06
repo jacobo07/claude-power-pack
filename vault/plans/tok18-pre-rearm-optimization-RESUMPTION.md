@@ -202,3 +202,16 @@ Next, each in a fresh short-lived context, no Opus parent pane, metered with sta
    closure HEAD 963c53977): obligations + non-work receipts + packets (follow D-08 split) + per-packet token and
    call budgets; write tools/orca_p4_canary_gate.py FIRST and see it red. Sonnet, cap 7M.
 3. S4: envelope --wu-packet <packet> --token-estimate 40M, token_trip_ratio 1.5, then `release` the hold.
+
+## S1 DONE (pane 4fb42b1c, 2026-10-06 ~21:30Z) -- GEX44 live 4db97ab0 -> daf90d00
+Picks (-x) of 908902dd (c2 set_envelope + c3 wu_packet launch_prompt) and 917cfa52 (C23b fresh worker per new
+packet); both clean, no hand resolution. Route admission (f3062055) NOT carried: on GEX44 a packet launches without
+`admit`. Bare branch deploy/ggmc-s1-envelope; rollback `git -C <live> reset --keep 4db97ab0` (logged).
+Laptop worktree at daf90d00: ENVELOPE 39/39, EPOCH 87/87, MC 225/225, SLEEP 6/6, OWNER_HOLD 12/12, GOAL 27/27,
+MSPEND 22/22. GEX44 after ff: same suites green except ENVELOPE 37/39 and MC 224/225. MC's red
+(V-MC-PLAN-FACTS-REFUSES-OVERLAP) is identical at 4db97ab0 on GEX44: pre-existing, environmental. ENVELOPE's two
+reds were the probe: mkdtemp prefix "gsd-..." puts "/gsd-" in the packet path on POSIX; control with a neutral
+prefix 39/39 on GEX44; prefix fixed on the laptop branch (live keeps the old test file, no runtime effect).
+Sweep 23:29:08 CEST clean (0 error lines); m-eaf2843afb16 PREPARED epoch 0, owner_hold intact, wu_packet None.
+Spend: 4,254,646 processed / 28 calls, 0 subagents (self_spend.py under this sid).
+Next: S2 (fresh pane, Sonnet, cap 7M).
