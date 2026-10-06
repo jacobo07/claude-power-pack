@@ -56,3 +56,11 @@ Evidence n=1 on a SCAN phase: the default keeps a sampled-quality audit and a lo
 ## Rollback
 Revert the G1 commits; or `CPP_MISSION_GRAMMAR=legacy` live without a revert. The live install changes only by an
 explicit deploy step (cherry-pick + smoke + rollback point), which is a separate Owner-visible action.
+
+## G1 result (independently verified 2026-10-07, laptop session 08cb0d86)
+d4f18ca8 + a42e57ff (worker m-604666a514a3, 7,927,113 metered vs 8M estimate). V-GRAMMAR 41/41 incl. 4 mutation
+drills red + unmutated control green; V-MC 224/225 with the same single red at base 4053b006
+(V-MC-PLAN-FACTS-REFUSES-OVERLAP, pre-existing); ENVELOPE 39/39. The stall breaker parked G1 as a false positive:
+its progress fingerprint reads the clone root and cannot see the worker's worktree (class of UC-04).
+Review findings carried into WU-G2: F1 the done_gate line is read from a packet the worker can edit (sha256 recorded
+but not checked) -> self-certified completion; F2 the gate runs in work_dir/cwd, not the worktree the work is in.
