@@ -212,6 +212,28 @@ def main() -> int:
     transcript("s-started", [asst(NOW - 60, small, [denied]),
                              result(NOW - 59, "toolu_dn", "Command running in background with ID: by7")])
     check("V-EPOCH-STARTED-BG-STILL-HOLDS", ge.child_work("s-started", NOW)["verdict"] == "HOLD")
+    # A background task stopped with TaskStop never emits a <task-notification>, so it held the
+    # /kclear capsule at REFUSED although the process was dead (measured 2026-10-06, e5c665bb:
+    # a local duel server stopped by TaskStop, port no longer listening, 3 refusals).
+    stop = ("toolu_ts", "TaskStop", {"task_id": "by7"})
+    transcript("s-stopped", [asst(NOW - 60, small, [denied]),
+                             result(NOW - 59, "toolu_dn", "Command running in background with ID: by7"),
+                             asst(NOW - 30, small, [stop]),
+                             result(NOW - 29, "toolu_ts", '{"message":"Successfully stopped task: by7 (x)"}')])
+    k = ge.child_work("s-stopped", NOW)
+    check("V-EPOCH-TASKSTOP-ENDS-CHILD", k["verdict"] == "CLEAR", k)
+    # controls: a failed stop, and a stop of a different task, both still hold
+    transcript("s-stopfail", [asst(NOW - 60, small, [denied]),
+                              result(NOW - 59, "toolu_dn", "Command running in background with ID: by7"),
+                              asst(NOW - 30, small, [stop]),
+                              result(NOW - 29, "toolu_ts", "No task found with ID: by7", is_error=True)])
+    check("V-EPOCH-FAILED-TASKSTOP-STILL-HOLDS", ge.child_work("s-stopfail", NOW)["verdict"] == "HOLD")
+    other = ("toolu_ts2", "TaskStop", {"task_id": "zz9"})
+    transcript("s-stopother", [asst(NOW - 60, small, [denied]),
+                               result(NOW - 59, "toolu_dn", "Command running in background with ID: by7"),
+                               asst(NOW - 30, small, [other]),
+                               result(NOW - 29, "toolu_ts2", '{"message":"Successfully stopped task: zz9 (x)"}')])
+    check("V-EPOCH-OTHER-TASKSTOP-STILL-HOLDS", ge.child_work("s-stopother", NOW)["verdict"] == "HOLD")
 
     # --- a continuation in flight is never doubled ------------------------------------------
     rec = running("m-fl", "s-fl", last_continuation_at=NOW - 30, last_continuation_session="s-fl")

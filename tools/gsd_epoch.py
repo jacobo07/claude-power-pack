@@ -232,6 +232,7 @@ def wall_overdue(rec: dict, now: float | None = None) -> dict | None:
 _NOTE_RE = re.compile(r"<tool-use-id>(toolu_[A-Za-z0-9_]+)</tool-use-id>.*?<status>([a-z_]+)</status>", re.S)
 _BG_RESULT_RE = re.compile(r"running in (?:the )?background|async agent|launched in the background|"
                            r"agent (?:is )?running|backgrounded", re.I)
+_TASK_ID_RE = re.compile(r"background with ID: ([A-Za-z0-9_-]+)")
 
 
 def _content_text(content) -> str:
@@ -267,6 +268,11 @@ def child_work(session_id: str, now: float | None = None, wait_s: float = CHILD_
     agent_calls: dict[str, dict] = {}
     finished: set[str] = set()
     queued: dict[str, float | None] = {}
+    # A task stopped with TaskStop never emits a <task-notification> (measured 2026-10-06,
+    # e5c665bb), so a successful stop is its report. Linked by the host's task id, which only the
+    # launch's own result carries.
+    task_of: dict[str, str] = {}      # host task id -> launching tool_use id
+    stops: dict[str, str] = {}        # TaskStop tool_use id -> host task id
     for f in files:
         for row in _rows(f):
             kind = row.get("type")
@@ -292,6 +298,15 @@ def child_work(session_id: str, now: float | None = None, wait_s: float = CHILD_
                 for b in content if isinstance(content, list) else []:
                     if isinstance(b, dict) and b.get("type") == "tool_result":
                         tid = b.get("tool_use_id")
+                        text_b = _content_text(b.get("content"))
+                        if tid in launches:
+                            m = _TASK_ID_RE.search(text_b)
+                            if m:
+                                task_of[m.group(1)] = tid
+                        if tid in stops and not b.get("is_error") and "successfully stopped" in text_b.lower():
+                            launched = task_of.get(stops[tid])
+                            if launched:
+                                finished.add(launched)
                         if tid in launches and tid not in agent_calls and (
                                 b.get("is_error")
                                 or not _BG_RESULT_RE.search(_content_text(b.get("content")))):
@@ -313,6 +328,8 @@ def child_work(session_id: str, now: float | None = None, wait_s: float = CHILD_
                 entry = {"tool_use_id": b.get("id"), "tool": b.get("name"),
                          "what": str(inp.get("description") or inp.get("command") or "")[:120],
                          "at": _ts(row.get("timestamp")), "file": f.name}
+                if b.get("name") == "TaskStop" and (inp.get("task_id") or inp.get("shell_id")):
+                    stops[b.get("id")] = str(inp.get("task_id") or inp.get("shell_id"))
                 if inp.get("run_in_background") is True:
                     launches[b.get("id")] = entry
                 elif b.get("name") in ("Agent", "Task"):
