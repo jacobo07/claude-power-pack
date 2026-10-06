@@ -228,4 +228,12 @@ which refuses to write under the corpus). Symlinks are not followed.
 
 command: `python3 /home/kobii/ao-scratch/p1/manifest.py /home/kobii/kme-corpus/projects /home/kobii/ao-scratch/p1/manifest-before.txt`
 -> `files=10577 bytes=10205326251 sha256=6eab1abced4f04cf4b601c22cf3695e7d7ae3fd31898698fdc2b7625fd10e6a9`
-(manifest before, taken 2026-10-06 before the cache eviction and the cold build; the after hash is added in the cost step).
+(manifest before, taken 2026-10-06 before the cache eviction and the cold build).
+
+After every step of this plan (both whole-corpus cold builds, the no-op, the `cp -a` of the six filter directories, the
+traced runs) the same command was run again into `manifest-after.txt`:
+command: `python3 /home/kobii/ao-scratch/p1/manifest.py /home/kobii/kme-corpus/projects /home/kobii/ao-scratch/p1/manifest-after.txt`
+-> `files=10577 bytes=10205326251 sha256=6eab1abced4f04cf4b601c22cf3695e7d7ae3fd31898698fdc2b7625fd10e6a9`.
+command: `cmp /home/kobii/ao-scratch/p1/manifest-before.txt /home/kobii/ao-scratch/p1/manifest-after.txt` -> identical
+(equal manifest hash, equal file count and byte count: no file under the corpus was created, removed, resized or
+re-timestamped). `git status --porcelain` lists no path under the corpus or the scratch area (both are outside the repo).
