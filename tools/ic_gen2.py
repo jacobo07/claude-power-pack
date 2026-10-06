@@ -323,6 +323,95 @@ def g2_champ(led, res=None) -> list:
     return out
 
 
+LIFECYCLE_FORWARD = ("observed", "priced", "shadow", "canary", "certified", "promoted")
+LIFECYCLE_SIDE = ("rejected", "narrowed", "superseded", "retired")
+OPP_KEYS = ("id", "title", "programme", "schema_note", "plane", "scope", "workload_class", "frequency", "current_cost",
+            "hypothesis", "owner_search_result", "predicted_dividend", "build_cost", "proof_cost", "carrying_cost", "risk",
+            "reversibility", "champion", "challenger", "status", "lifecycle_history", "next_transition",
+            "retirement_condition", "realized_dividend", "evidence")
+
+
+def g2_opp(led, res=None) -> list:
+    """G2-OPP: opportunity rows (top-level `opportunities`, outside `frozen`) keep the lifecycle order and never let a
+    predicted dividend pass as a realized one. Evidence is re-read through `res` on every run."""
+    res = res if res is not None else ce.Resolver()
+    rows = led.get("opportunities") if isinstance(led, dict) else None
+    if not isinstance(rows, list):
+        return ["G2-OPP opportunities is missing or not a list"]
+    out, seen = [], set()
+    known = LIFECYCLE_FORWARD + LIFECYCLE_SIDE
+    for i, o in enumerate(rows):
+        if not isinstance(o, dict):
+            out.append(f"G2-OPP opportunities[{i}] is not an object")
+            continue
+        oid = o.get("id")
+        tag = f"opportunities[{i}] {oid}"
+        missing = [k for k in OPP_KEYS if k not in o]
+        if missing:
+            out.append(f"G2-OPP {tag}: missing keys {missing}")
+        if not (isinstance(oid, str) and re.fullmatch(r"OPP-\d{3}", oid)):
+            out.append(f"G2-OPP {tag}: id must match OPP-NNN")
+        elif oid in seen:
+            out.append(f"G2-OPP {tag}: duplicate id")
+        seen.add(oid)
+        status, hist = o.get("status"), o.get("lifecycle_history")
+        if status not in known:
+            out.append(f"G2-OPP {tag}: status {status!r} is not one of {list(known)}")
+        if not (isinstance(hist, list) and hist and all(isinstance(h, str) for h in hist)):
+            out.append(f"G2-OPP {tag}: lifecycle_history must be a non-empty list of states")
+        else:
+            if hist[0] != "observed":
+                out.append(f"G2-OPP {tag}: lifecycle_history starts with {hist[0]!r}, not 'observed'")
+            if hist[-1] != status:
+                out.append(f"G2-OPP {tag}: lifecycle_history ends with {hist[-1]!r} but status is {status!r}")
+            for a, b in zip(hist, hist[1:]):
+                if b not in known:
+                    out.append(f"G2-OPP {tag}: lifecycle step to unknown state {b!r}")
+                elif a in LIFECYCLE_SIDE and b in LIFECYCLE_FORWARD:
+                    out.append(f"G2-OPP {tag}: forward step {a!r} -> {b!r} after a side state")
+                elif b in LIFECYCLE_FORWARD and a in LIFECYCLE_FORWARD \
+                        and LIFECYCLE_FORWARD.index(b) != LIFECYCLE_FORWARD.index(a) + 1:
+                    out.append(f"G2-OPP {tag}: lifecycle step {a!r} -> {b!r} skips or repeats a state "
+                               f"(order {' -> '.join(LIFECYCLE_FORWARD)})")
+        real = o.get("realized_dividend")
+        if real is not None:
+            if status not in ("certified", "promoted", "retired"):
+                out.append(f"G2-OPP {tag}: realized_dividend is set while status is {status!r} "
+                           "(only certified, promoted or retired may carry one)")
+            if not isinstance(real, dict):
+                out.append(f"G2-OPP {tag}: realized_dividend is not an object")
+            else:
+                lacking = [k for k in ("value", "unit", "denominator", "measurement")
+                           if real.get(k) in (None, "")]
+                if lacking:
+                    out.append(f"G2-OPP {tag}: realized_dividend lacks {lacking}")
+                elif not res.path_exists(str(real["measurement"])):
+                    out.append(f"G2-OPP {tag}: realized_dividend measurement {real['measurement']!r} does not exist")
+        pred = o.get("predicted_dividend")
+        if not isinstance(pred, dict) or pred.get("value") in (None, "") or pred.get("unit") in (None, ""):
+            out.append(f"G2-OPP {tag}: predicted_dividend must carry value and unit")
+        if re.search(r"(?i)\brealized\b", json.dumps(pred, ensure_ascii=False)):
+            out.append(f"G2-OPP {tag}: predicted_dividend text says 'realized' (a prediction is never a realized dividend)")
+        ev = o.get("evidence")
+        if not (isinstance(ev, list) and ev):
+            out.append(f"G2-OPP {tag}: evidence is missing")
+            continue
+        for e in ev:
+            kind, ref = (e.get("kind"), e.get("ref")) if isinstance(e, dict) else (None, None)
+            if kind == "file":
+                if not (isinstance(ref, str) and res.path_exists(ref)):
+                    out.append(f"G2-OPP {tag}: evidence file {ref!r} does not exist")
+                elif res.file_sha(ref) != e.get("sha256"):
+                    out.append(f"G2-OPP {tag}: evidence file {ref} sha256 {str(res.file_sha(ref))[:12]} != pinned "
+                               f"{str(e.get('sha256'))[:12]}")
+            elif kind == "commit":
+                if not (isinstance(ref, str) and res.commit_reachable(ref)):
+                    out.append(f"G2-OPP {tag}: evidence commit {ref!r} is not reachable from HEAD")
+            else:
+                out.append(f"G2-OPP {tag}: evidence kind {kind!r} is not 'file' or 'commit'")
+    return out
+
+
 def load_gen1_current():
     """Gen1's `frozen` as the working tree has it, or None when unreadable."""
     try:
@@ -368,6 +457,7 @@ def g2_problems(led: dict, res) -> list:
     out += g2_pred(led)
     out += g2_spec(led, getattr(res, "spec_root", REPO))
     out += g2_champ(led, res)
+    out += g2_opp(led, res)
     return out
 
 
@@ -558,9 +648,46 @@ def selftest(verbose=True) -> bool:
     mut("run6-command-filter-dropped", "G2-CHAMP", lambda d: champ(d, "run6").update(
         command=champ(d, "run6")["command"].split(" --project-filter")[0]))
     mut("ratios-derived-wrong", "G2-CHAMP", lambda d: d["frozen"]["champion"]["ratios_derived"].update(wall=36.0))
-    mut("evidence-outside-dir", "G2-CHAMP", lambda d: champ(d, "run5")["evidence"][1].update(
+    mut("champion-evidence-outside-dir", "G2-CHAMP", lambda d: champ(d, "run5")["evidence"][1].update(
         ref="vault/programs/incremental-cognition/gen2/owner-bundle.md"))
-    mut("missing", "G2-CHAMP", lambda d: d["frozen"].pop("champion"))
+    mut("champion-missing", "G2-CHAMP", lambda d: d["frozen"].pop("champion"))
+
+    # G2-OPP: lifecycle order and predicted-never-realized on the opportunity rows (outside `frozen`)
+    def opp(d):
+        return d["opportunities"][0]
+
+    def certify(d):
+        o = opp(d)
+        o.update(status="certified", lifecycle_history=["observed", "priced", "shadow", "canary", "certified"],
+                 realized_dividend={"value": 1, "unit": "Owner waivers avoided per default-env re-arm",
+                                    "denominator": "default-env re-arms observed on the live install",
+                                    "measurement": o["evidence"][0]["ref"]})
+
+    certified = judge(led_with(certify))
+    say(not certified, f"V-IC2-OPP-CERTIFIED-ACCEPTED (a row walked observed..certified with a realized dividend that "
+                       f"names value, unit, denominator and measurement: no G2-OPP line) {certified[:2] or ''}")
+
+    def with_opp(fn):
+        return lambda d: fn(opp(d))
+
+    mut("opp-realized-while-priced", "G2-OPP", with_opp(lambda o: o.update(
+        realized_dividend={"value": 1, "unit": "waivers", "denominator": "re-arms", "measurement": o["evidence"][0]["ref"]})))
+    mut("opp-history-skips-to-promoted", "G2-OPP", with_opp(lambda o: o.update(
+        status="promoted", lifecycle_history=["observed", "promoted"])))
+    mut("opp-status-done", "G2-OPP", with_opp(lambda o: o.update(status="done", lifecycle_history=["observed", "priced", "done"])))
+    mut("opp-predicted-without-unit", "G2-OPP", with_opp(lambda o: o["predicted_dividend"].pop("unit")))
+    mut("opp-predicted-labelled-realized", "G2-OPP", with_opp(lambda o: o["predicted_dividend"].update(
+        basis="realized on the live install")))
+    mut("opp-evidence-file-missing", "G2-OPP", with_opp(lambda o: o["evidence"][0].update(
+        ref="vault/programs/incremental-cognition/gen2/evidence/OPP-001-does-not-exist.md")))
+    mut("opp-evidence-sha-flipped", "G2-OPP", with_opp(lambda o: o["evidence"][0].update(sha256="0" * 64)))
+    mut("opp-commit-unreachable", "G2-OPP", with_opp(lambda o: o["evidence"][1].update(ref="0" * 40)))
+    mut("opp-duplicate-id", "G2-OPP", lambda d: d["opportunities"].append(copy.deepcopy(opp(d))))
+    mut("opp-history-last-differs-from-status", "G2-OPP", with_opp(lambda o: o.update(lifecycle_history=["observed"])))
+    mut("opp-history-not-starting-observed", "G2-OPP", with_opp(lambda o: o.update(lifecycle_history=["priced"])))
+    mut("opp-forward-step-after-side-state", "G2-OPP", with_opp(lambda o: o.update(lifecycle_history=["observed", "rejected", "priced"])))
+    mut("opp-certified-realized-missing-denominator", "G2-OPP", lambda d: (certify(d), opp(d)["realized_dividend"].pop("denominator")))
+    mut("opp-key-missing", "G2-OPP", with_opp(lambda o: o.pop("retirement_condition")))
 
     # the bound CE clauses on a closed pillar, with the D-OQ4 allowed loss as the positive control
     f_ok = _p_files()

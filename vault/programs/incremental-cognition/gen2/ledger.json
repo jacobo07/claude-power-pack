@@ -286,5 +286,73 @@
   "product": [],
   "intelligence": []
  },
- "opportunities": []
+ "opportunities": [
+  {
+   "id": "OPP-001",
+   "title": "pp_install judged by commit-hash ancestry only: a -x cherry-pick of the floor reads stale",
+   "programme": "IC-gen2 autonomous-optimization",
+   "schema_note": "provisional until ROADMAP Phase 4 formalizes the opportunity schema",
+   "plane": "gex44",
+   "scope": "tools/gex44_env_preflight.py check_pp_install",
+   "workload_class": "mission-env-preflight",
+   "frequency": "every arm or re-arm of a relay on the default GEX44 env",
+   "current_cost": "pp_install_stale false positive: each re-arm of the default env needs exit 0 or a new Owner waiver (STATE.md decision, 2026-10-05)",
+   "hypothesis": "accepting an exact cherry-pick trailer of the floor removes the false NOT_READY without accepting unrelated histories",
+   "owner_search_result": "EXTEND tools/gex44_env_preflight.py (existing owner of pp_install)",
+   "predicted_dividend": {
+    "value": 1,
+    "unit": "Owner waivers avoided per default-env re-arm",
+    "basis": "predicted from the measured false positive; not yet observed on the live install"
+   },
+   "build_cost": {
+    "value": 185,
+    "unit": "insertions (plus 17 deletions) in 2 files",
+    "command": "git diff --stat 8170c940 HEAD",
+    "detail": "tools/gex44_env_preflight.py 102 lines changed, tools/test_gex44_env_preflight.py 100"
+   },
+   "proof_cost": {
+    "value": 4.8,
+    "unit": "s wall (suite), 20.4 s wall (--drill)",
+    "command": "python3 tools/test_gex44_env_preflight.py ; python3 tools/test_gex44_env_preflight.py --drill",
+    "detail": "Python time.monotonic around subprocess.run"
+   },
+   "carrying_cost": {
+    "value": 0.012,
+    "unit": "s per preflight (median delta, 0.047 s pre-fix vs 0.059 s fixed)",
+    "command": "python3 <script> --current --checks pp_install (three runs each)",
+    "detail": "verdicts differ (NOT_READY vs READY): an indication for one host, not a benchmark; no token or money figure is claimed"
+   },
+   "risk": "a trailer asserts a pick, it does not prove identical code (see evidence Honest limits)",
+   "reversibility": "revert the plan 00-02 fix commits; the live install only changes through its normal fast-forward sync",
+   "champion": "ancestry-only check (pre-fix)",
+   "challenger": "ancestry OR exact cherry-pick trailer OR equal patch-id where the floor object exists",
+   "status": "priced",
+   "lifecycle_history": [
+    "observed",
+    "priced"
+   ],
+   "next_transition": "canary: the live GEX44 install's own preflight reads READY after its normal fast-forward sync",
+   "retirement_condition": "the floor commit itself is in the live install's ancestry (the pick path is then unused)",
+   "realized_dividend": null,
+   "evidence": [
+    {
+     "kind": "file",
+     "ref": "vault/programs/incremental-cognition/gen2/evidence/OPP-001-pp-install-hash-floor.md",
+     "sha256": "d931e67c57e2e5762b32176ca64d18188cb47bb96db2ca611d9195d64b850870"
+    },
+    {
+     "kind": "commit",
+     "ref": "ea8c51f6c2510e914fa5324088f5ed1a0ac13b4a"
+    },
+    {
+     "kind": "commit",
+     "ref": "62152c0bba4ff7d9dbfdf052ddd86aa871e2e0a0"
+    },
+    {
+     "kind": "commit",
+     "ref": "21bafb5d9b3d87c2d23df7ad6261b80fc3d9aa0d"
+    }
+   ]
+  }
+ ]
 }
