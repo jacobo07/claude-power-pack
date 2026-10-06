@@ -743,6 +743,15 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         lr.ledger_append(mission_id, "launch_refused_packet", mission_id=mission_id,
                          epoch=rec.get("epoch"), why=str(exc)[:300])
         return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": str(exc), "detail": ""}
+    # Route admission, also BEFORE the claim: an unadmitted work unit spends no epoch and starts nothing.
+    why = admission_refusal(rec)
+    if why:
+        lr.ledger_append(mission_id, "launch_refused_admission", mission_id=mission_id,
+                         epoch=rec.get("epoch"), why=why[:300])
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": why, "detail": ""}
+    if rec.get("wu_packet") and _admission_switch_off():
+        lr.ledger_append(mission_id, "admission_bypassed", mission_id=mission_id, epoch=rec.get("epoch"),
+                         verdict=(rec.get("admission") or {}).get("verdict"))
     epoch = expect_epoch + 1
     failed = rec.get("failed_launches", 0) + (1 if rec.get("state") == LAUNCHING else 0)
     extra = {"note": note} if note is not None else {}
@@ -806,8 +815,13 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
             except Exception:
                 pass
         return {"ok": False, "epoch": epoch, "bg_id": bg_id, "why": why, "detail": detail}
+    adm = rec.get("admission") or {}
+    # An admission pays for ONE launch (review F3): a successor would otherwise get the full envelope
+    # again every epoch, with `remaining` measured only at admit time. The next launch re-admits.
+    used = ({"admission": {**adm, "consumed_epoch": epoch}}
+            if rec.get("wu_packet") and adm.get("verdict") == "ADMISSIBLE" else {})
     rec = transition(mission_id, expect_epoch=epoch, expect_state=LAUNCHING, event="launched",
-                     now=now, pending={**rec["pending"], "bg_id": bg_id})
+                     now=now, pending={**rec["pending"], "bg_id": bg_id}, **used)
     _record_launch_account(bg_id)
     if rec.get("capsule_key") and capsule_v2(rec):
         _capsule_bind(rec, bg_id=bg_id)
@@ -854,6 +868,7 @@ def ack_session(session_id: str, *, pid: int | None = None, proc_start: str | No
                              **({"capsule_acked_at": now} if v2 else {}))
             if v2:
                 _capsule_bind(new, owner_session=session_id)
+            _declare_worker_envelope(new, session_id)
             return new
         owner = dict(rec.get("owner") or {})
         owner["heartbeat_at"] = now
@@ -1069,6 +1084,95 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
                       event="envelope_set", now=now,
                       reason="envelope: " + "; ".join(f"{k} {old[k]} -> {shown[k]}" for k in shown),
                       **changes)
+
+
+def _admission_switch_off() -> bool:
+    return str(os.environ.get("CPP_ROUTE_ADMISSION") or "").strip().lower() in ("0", "off", "false")
+
+
+def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = None,
+                now: float | None = None, measure=None) -> dict:
+    """Judge the mission's compiled work unit against its route (tools/route_admission.py) and record
+    the verdict, bound to the packet's and the route file's sha256. Every verdict is recorded, so a
+    refusal is visible; only ADMISSIBLE lets launch_worker start a worker. The budget still remaining
+    comes from the cost breaker's own numbers (trip ratio x estimate - attributed spend): a unit that
+    cannot finish before the breaker trips is DEFER, never launched to be held halfway."""
+    import mission_spend as ms
+    import route_admission as ra
+    now = time.time() if now is None else now
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is {rec['state']}; nothing to admit")
+    pkt = rec.get("wu_packet")
+    if not pkt:
+        raise MissionError("admission judges a compiled work unit: set one with `envelope --wu-packet` first")
+    pkt_digest = _packet_digest(pkt["path"])
+    if pkt_digest is None:
+        raise MissionError(f"wu_packet {pkt['path']!r} is missing or empty")
+    p = Path(route_path).expanduser().resolve()
+    try:
+        route = json.loads(p.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as exc:
+        raise MissionError(f"route {str(p)!r} is unreadable: {exc}") from exc
+    remaining = None
+    if rec.get("token_estimate"):
+        spent = (measure or ms.processed_tokens)(rec)
+        if spent is not None:
+            ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
+            remaining = int(ratio * int(rec["token_estimate"])) - spent
+    try:
+        res = ra.admit(route, ra.load_floors(floors_path), remaining=remaining)
+    except ValueError as exc:
+        raise MissionError(f"route {str(p)!r}: {exc}") from exc
+    admission = {"verdict": res["verdict"], "route_path": str(p), "route_file_sha256": _packet_digest(str(p)),
+                 "packet_sha256": pkt_digest, "envelope": res["envelope"],
+                 "need_with_margin": res.get("need_with_margin"), "remaining": remaining,
+                 "reasons": res["reasons"][:6], "at": now}
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      event="route_admission", now=now, admission=admission,
+                      reason=f"route {res['verdict']}: " + ("; ".join(res["reasons"]) or "fits")[:280])
+
+
+def admission_refusal(rec: dict, *, for_launch: bool = True) -> str | None:
+    """Why this mission's compiled work unit must not be sent, or None. A mission without a packet
+    (the GSD resume route) is not judged here. `for_launch` (a new worker) also requires an UNUSED
+    admission; continuing the session that admission already launched does not (it runs inside the
+    envelope it was declared at ack), but its verdict, packet and route are checked all the same."""
+    pkt = rec.get("wu_packet")
+    if not pkt or _admission_switch_off():
+        return None
+    adm = rec.get("admission") or {}
+    if adm.get("verdict") != "ADMISSIBLE":
+        return (f"work unit not admitted (verdict {adm.get('verdict') or 'none'}): run "
+                f"`gsd_mission.py admit --mission {rec['mission_id']} --route <route.json>`")
+    if for_launch and adm.get("consumed_epoch") is not None:
+        return (f"the admission was used by epoch {adm['consumed_epoch']}: admit again so the remaining "
+                f"budget is re-measured (`gsd_mission.py admit --mission {rec['mission_id']} --route ...`)")
+    if adm.get("packet_sha256") != _packet_digest(pkt["path"]):
+        return "the packet changed since it was admitted: admit it again"
+    if adm.get("route_file_sha256") != _packet_digest(adm.get("route_path") or ""):
+        return "the route file changed or vanished since admission: admit it again"
+    return None
+
+
+def _declare_worker_envelope(rec: dict, sid: str | None) -> None:
+    """The admitted envelope becomes the worker's SESSION envelope, enforced call by call by
+    hooks/session_budget_guard.js. Recorded either way, never silent."""
+    adm = rec.get("admission") or {}
+    if not sid or not rec.get("wu_packet") or adm.get("verdict") != "ADMISSIBLE":
+        return
+    env = adm.get("envelope") or {}
+    mid = rec["mission_id"]
+    try:
+        import mission_spend as ms
+        ms.declare(sid, int(env["target"]), int(env["warn"]), int(env["stop"]), calls_estimate=env.get("calls"))
+        lr.ledger_append(mid, "worker_envelope_declared", mission_id=mid, worker=sid,
+                         target=env["target"], stop=env["stop"], calls=env.get("calls"))
+    except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+        lr.ledger_append(mid, "worker_envelope_failed", mission_id=mid, worker=sid,
+                         error=f"{type(exc).__name__}: {exc}"[:300])
 
 
 # Carried into every compiled launch: the three misses of the first packet run (cwops plan, Results).
@@ -1421,6 +1525,7 @@ def adopt_launched(rec: dict, row: dict, now: float | None = None) -> dict:
     _arm_worker_marker(new, sid)
     if v2 and sid:
         _capsule_bind(new, owner_session=sid)
+    _declare_worker_envelope(new, sid)
     return new
 
 
@@ -2451,6 +2556,15 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         continue  # the next pass retries; nothing launched beside a live worker
                 if turn_end is not None and turn_end["decision"] == "continue":
                     import gsd_epoch as ge
+                    # Review F2: the continuation sends the packet too. A packet edited in place, or a
+                    # re-admit that recorded RECOMPILE/DEFER, stops here; no launch either (it would be
+                    # refused for the same reason, after align_cwd had already moved the cwd).
+                    cwhy = admission_refusal(rec, for_launch=False)
+                    if cwhy:
+                        lr.ledger_append(mid, "continue_refused_admission", mission_id=mid,
+                                         epoch=rec["epoch"], why=cwhy[:300])
+                        row["action"], row["why"] = "continue_refused_admission", cwhy
+                        continue
                     row["continue"] = ge.continue_worker(
                         mid, rec, prompt=launch_prompt(rec),
                         decision=turn_end, runner=runner, stop_runner=stop_runner, now=now,
@@ -2981,6 +3095,11 @@ def _cli(argv=None) -> int:
     en.add_argument("--wu-packet", help="compiled work-unit file sent instead of the resume command")
     en.add_argument("--continue-max-tokens",
                     help="per-mission context ceiling for continuing the same session, e.g. 200k")
+    ad = sub.add_parser("admit", help="judge the compiled work unit's route against its envelope "
+                                      "(tools/route_admission.py); only ADMISSIBLE may launch")
+    ad.add_argument("--mission", required=True)
+    ad.add_argument("--route", required=True, help="route JSON: envelope + workers (profile, calls, packet)")
+    ad.add_argument("--floors", help="floor table (default vault/config/route-floors.json)")
     v = sub.add_parser("supervise")
     v.add_argument("--dry-run", action="store_true")
     v.add_argument("--actions-only", action="store_true",
@@ -3035,6 +3154,13 @@ def _cli(argv=None) -> int:
               f"model={rec.get('model')} autocompact={rec.get('autocompact')} wu_packet={pkt} "
               f"wu_packet_epoch={rec.get('wu_packet_epoch')} continue_max_tokens={rec.get('continue_max_tokens')}")
         return 0
+    if args.cmd == "admit":
+        adm = admit_route(args.mission, args.route, floors_path=args.floors)["admission"]
+        print(f"ROUTE {adm['verdict']} mission={args.mission} need={adm.get('need_with_margin')} "
+              f"target={adm['envelope']['target']} remaining={adm.get('remaining')}")
+        for r in adm["reasons"]:
+            print(f"  - {r}")
+        return 0 if adm["verdict"] == "ADMISSIBLE" else 3
     if args.cmd == "supervise":
         rows = supervise(dry_run=args.dry_run)
         if args.actions_only:
