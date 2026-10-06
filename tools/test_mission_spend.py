@@ -80,6 +80,11 @@ def main() -> int:
     check("V-MSPEND-EXACT-SUM", got == 116 + 1000 + 7, f"got {got}")
     check("V-MSPEND-SIBLING-EXCLUDED", got < 10**9, "a ...-e10 style sibling is not this mission")
     check("V-MSPEND-UNKNOWN-NOT-ZERO", ms.processed_tokens({"work_dir": "/nope"}, root=root) is None)
+    # m-e935055d072d: work in a worktree with no transcript dir, transcripts filed under the launch cwd.
+    split = {"work_dir": "/nope/.claude/worktrees/w", "cwd": wd, "created_at": rec["created_at"]}
+    check("V-MSPEND-LAUNCH-CWD-MEASURED", ms.processed_tokens(split, root=root) == got, "cwd plane")
+    check("V-MSPEND-LAUNCH-CWD-CONTROL-ABSENT",
+          ms.processed_tokens({**split, "cwd": "/nope2"}, root=root) is None)
     with open(root / enc / "s1.jsonl", "a", encoding="utf-8") as fh:
         fh.write(_row("d", "2027-01-15T08:05:00Z", out=3) + "\n")
     check("V-MSPEND-CACHE-SEES-GROWTH", ms.processed_tokens(rec, root=root, cache=cache) == got + 3)

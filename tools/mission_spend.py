@@ -76,10 +76,14 @@ def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = N
     """Processed tokens the mission has spent, or None when no transcript directory exists.
     `cache` maps a file path to {size, mtime, tokens}; unchanged files are not re-read."""
     root = root or projects_root()
-    work_dir = rec.get("work_dir") or rec.get("cwd")
-    if not work_dir:
-        return None
-    dirs = mission_dirs(work_dir, root)
+    # Both planes: the host files a worker's transcript under the dir it was LAUNCHED in (cwd), while the
+    # work may live in a worktree (work_dir). Measured 2026-10-06, m-e935055d072d: work_dir alone found no
+    # directory, so a 3,353,877-token worker read as unmeasurable and its breaker was blind.
+    dirs: list[Path] = []
+    for base in (rec.get("work_dir"), rec.get("cwd")):
+        for d in (mission_dirs(base, root) if base else []):
+            if d not in dirs:
+                dirs.append(d)
     if not dirs:
         return None
     since = None
