@@ -284,6 +284,178 @@ def g_run_median():
         f"median over good={j2['wall_median_s']}; all-failed median={j3['wall_median_s']}")
 
 
+# --------------------------------------------------------------------------- Task 2 gates (comparator)
+PILLARS = "DEFGHIL"
+DATE = "2026-10-05"
+MEAS_SHA = {}
+
+
+def keq():
+    """The comparator, imported lazily so a missing tool reads as a FAIL naming ModuleNotFoundError."""
+    import importlib
+    return importlib.import_module("kme_equivalence")
+
+
+def committed_text(p):
+    return (MEASUREMENTS / f"{p}-KME-L-{DATE}.md").read_text(encoding="utf-8")
+
+
+def measurement_hashes():
+    import hashlib
+    return {p: hashlib.sha256((MEASUREMENTS / f"{p}-KME-L-{DATE}.md").read_bytes()).hexdigest() for p in PILLARS}
+
+
+def volatilise(text):
+    """Change exactly the volatile fields, independently of the comparator's own VOLATILE list."""
+    text = re.sub(r'(?m)^(measured_at: )".*"$', r'\1"2026-10-09T01:02:03Z"', text)
+    text = re.sub(r'(?m)^( "measured_at": )".*"(,?)$', r'\1"2026-10-09T01:02:03Z"\2', text)
+    text = re.sub(r'(?m)^(command: )".*"$', r'\1"python3 elsewhere --probe"', text)
+    text = re.sub(r'(?m)^( "command": )".*"(,?)$', r'\1"python3 elsewhere --probe"\2', text)
+    return re.sub(r'("commit": ")[0-9a-f]{40}(")', r"\g<1>" + "f" * 40 + r"\2", text)
+
+
+def perturb_population(text):
+    """One digit of the JSON population.calls changed."""
+    m = re.search(r'("population": \{.*?"calls": )(\d+)', text, re.S)
+    assert m, "population.calls not found"
+    n = m.group(2)
+    return text[:m.end(1)] + n[:-1] + str((int(n[-1]) + 1) % 10) + text[m.end(2):]
+
+
+def cand_dir(mutate=None, only=None, drop=(), rename_date=None):
+    """A candidate directory of copies of the committed files; mutate(pillar, text) -> text."""
+    d = scratch("cand")
+    for p in PILLARS:
+        if p in drop:
+            continue
+        t = committed_text(p)
+        if mutate and (only is None or p in only):
+            t = mutate(p, t)
+        (d / f"{p}-KME-L-{rename_date or DATE}.md").write_text(t, encoding="utf-8")
+    return d
+
+
+def run_compare(cand, extra=()):
+    """(rc, raw output, {pillar: fields}) of `compare` on a candidate dir against the committed measurements."""
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = keq().main(["compare", "--candidate", str(cand), "--committed", str(MEASUREMENTS), *extra])
+    out = buf.getvalue()
+    rows = {}
+    for line in out.splitlines():
+        if line.startswith("KMEQ pillar="):
+            f = dict(re.findall(r"(\w+)=(\S+)", line))
+            rows[f["pillar"]] = f
+    return rc, out, rows
+
+
+def verdicts(rows):
+    return "".join({"SAME": "S", "DIFFERENT": "D", "MISSING": "M"}.get(rows.get(p, {}).get("verdict"), "?") for p in PILLARS)
+
+
+def g_equiv_self():
+    before = measurement_hashes()
+    rc, out, rows = run_compare(cand_dir())
+    rc2, out2, rows2 = run_compare(MEASUREMENTS)
+    ok = (rc == 0 and verdicts(rows) == "SSSSSSS" and "KMEQ_VERDICT=SAME same=7/7" in out
+          and rc2 == 0 and verdicts(rows2) == "SSSSSSS" and measurement_hashes() == before)
+    return ok, f"copies {verdicts(rows)} rc={rc}; committed-vs-itself {verdicts(rows2)} rc={rc2}; committed unchanged={measurement_hashes() == before}"
+
+
+def g_equiv_volatile_masked():
+    d = cand_dir(lambda p, t: volatilise(t), rename_date="2026-10-09")
+    changed = sum(1 for p in PILLARS if volatilise(committed_text(p)) != committed_text(p))
+    rc, out, rows = run_compare(d, ["--date", DATE])
+    return rc == 0 and verdicts(rows) == "SSSSSSS" and changed == 7, (
+        f"{changed}/7 files changed in measured_at/command (+H commit) and renamed 2026-10-09: {verdicts(rows)} rc={rc}")
+
+
+def g_equiv_perturb():
+    seen = {}
+    for p in PILLARS:
+        rc, out, rows = run_compare(cand_dir(lambda q, t: perturb_population(t), only=p))
+        want = "".join("D" if x == p else "S" for x in PILLARS)
+        seen[p] = (verdicts(rows) == want and rc == 1 and "KMEQ_VERDICT=DIFFERENT same=6/7" in out)
+    return all(seen.values()), f"one population digit per file, DIFFERENT and exit 1: {seen}"
+
+
+def g_equiv_sessions():
+    def mut(p, t):
+        assert '"sessions_scanned": 568' in t
+        return t.replace('"sessions_scanned": 568', '"sessions_scanned": 552')
+    rc, out, rows = run_compare(cand_dir(mut, only="D"))
+    r = rows.get("D", {})
+    ok = (rc == 1 and r.get("verdict") == "DIFFERENT" and r.get("sessions_scanned") == "552/568"
+          and "sessions_scanned" in r.get("key", "") and verdicts(rows) == "DSSSSSS")
+    return ok, f"D with sessions_scanned 552: {verdicts(rows)} fields={ {k: r.get(k) for k in ('sessions_scanned', 'key', 'first_diff_line')} }"
+
+
+def g_equiv_h_verdicts():
+    def mut(p, t):
+        t = volatilise(t)   # commit is masked, so only the verdict map can differ
+        n = t.count('"P": "FALSIFIED_OR_REJECTED_BY_EVIDENCE"')
+        assert n >= 2, n
+        return t.replace('"P": "FALSIFIED_OR_REJECTED_BY_EVIDENCE"', '"P": "OPEN"')
+    rc, out, rows = run_compare(cand_dir(mut, only="H"))
+    r = rows.get("H", {})
+    ok = rc == 1 and verdicts(rows) == "SSSSDSS" and r.get("verdict_map") == "DIFFERENT"
+    return ok, f"H copy with one owner terminal changed and commit changed: {verdicts(rows)} verdict_map={r.get('verdict_map')}"
+
+
+def g_equiv_missing():
+    rc, out, rows = run_compare(cand_dir(drop="I"))
+    miss_ok = rc == 1 and verdicts(rows) == "SSSSSMS" and "KMEQ_VERDICT=DIFFERENT same=6/7" in out
+    d = cand_dir()
+    (d / f"D-KME-L-2026-10-06.md").write_text(committed_text("D"), encoding="utf-8")
+    rc2, out2, rows2 = run_compare(d)
+    amb_ok = rc2 == 1 and rows2["D"]["verdict"] == "MISSING" and "ambiguous" in out2
+    rc3, out3, rows3 = run_compare(cand_dir(), ["--pillars", "DEFGHIX"])
+    return miss_ok and amb_ok and rc3 == 2, (
+        f"I absent: {verdicts(rows)} rc={rc}; two D files: {rows2['D']['verdict']} rc={rc2}; unknown pillar X rc={rc3}")
+
+
+def g_equiv_no_content():
+    canary = "CANARY_ZQXJ_TRANSCRIPT_TEXT"
+
+    def mut(p, t):
+        lines = t.split("\n")
+        i = next(i for i, ln in enumerate(lines) if ln.startswith("- ") and i > 30)
+        lines[i] = lines[i] + " " + canary
+        return "\n".join(lines)
+    rc, out, rows = run_compare(cand_dir(mut, only="D"))
+    ok = rc == 1 and rows["D"]["verdict"] == "DIFFERENT" and canary not in out and "CANARY" not in out
+    return ok, f"D body line changed to carry a canary: {rows['D']['verdict']} key={rows['D'].get('key')} canary printed={canary in out}"
+
+
+def g_equiv_selftest():
+    before = measurement_hashes()
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = keq().main(["selftest-perturb", "--committed", str(MEASUREMENTS)])
+    out = buf.getvalue()
+    d = scratch("partial")
+    for p in PILLARS[:-1]:
+        shutil.copy(MEASUREMENTS / f"{p}-KME-L-{DATE}.md", d)
+    buf2 = io.StringIO()
+    with contextlib.redirect_stdout(buf2):
+        rc2 = keq().main(["selftest-perturb", "--committed", str(d)])
+    ok = (rc == 0 and "KMEQ_SELFTEST=PASS" in out and rc2 == 1 and "KMEQ_SELFTEST=FAIL" in buf2.getvalue()
+          and measurement_hashes() == before)
+    return ok, f"real files rc={rc} {'PASS' if 'KMEQ_SELFTEST=PASS' in out else 'not PASS'}; a directory missing L rc={rc2}"
+
+
+GATES_TASK2 = [
+    ("V-KMEC-EQUIV-SELF", g_equiv_self),
+    ("V-KMEC-EQUIV-VOLATILE-MASKED", g_equiv_volatile_masked),
+    ("V-KMEC-EQUIV-PERTURB", g_equiv_perturb),
+    ("V-KMEC-EQUIV-SESSIONS", g_equiv_sessions),
+    ("V-KMEC-EQUIV-H-VERDICTS", g_equiv_h_verdicts),
+    ("V-KMEC-EQUIV-MISSING", g_equiv_missing),
+    ("V-KMEC-EQUIV-NO-CONTENT", g_equiv_no_content),
+    ("V-KMEC-EQUIV-SELFTEST", g_equiv_selftest),
+]
+
+
 GATES_TASK1 = [
     ("V-KMEC-SUM-EXACT", g_sum_exact),
     ("V-KMEC-FORBID-FIRES", g_forbid_fires),
@@ -292,7 +464,7 @@ GATES_TASK1 = [
     ("V-KMEC-RUN-REAL-STRACE", g_run_real_strace),
     ("V-KMEC-RUN-MEDIAN", g_run_median),
 ]
-GATES = GATES_TASK1
+GATES = GATES_TASK1 + GATES_TASK2
 
 
 def run_all() -> int:
