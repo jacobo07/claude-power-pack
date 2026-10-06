@@ -3,12 +3,15 @@
  "backlog": "TOK-18",
  "approved": "2026-10-05 Owner 'y'",
  "card": "vault/programs/cognitive-economy/gen2/MISSION.md",
- "obligations_declared": false, "obligations": [],
+ "obligations_declared": false,
+ "obligations": [],
  "budget_tokens": {"unit": "processed", "unit_definition": "input + cache_write + cache_read + output, deduplicated by message id", "unit_source": "MISSION.md and backlog prose label it processed; the 40/78/150M derivation is not on disk (typed 2026-10-05, Gen2.1)", "authorization_boundary": 150000000, "estimate_low": 40000000, "estimate_central": 78000000, "estimate_high": 150000000, "spent_measured": null},
  "gen2_1": {"name": "Economic Kill-Shot", "decided": "2026-10-05 Owner", "unit": "processed", "target": 10000000, "warn": 10000000, "hard_cap": 15000000, "anchor": {"pane": "87601e81", "processed": 19196694, "at": "2026-10-05T11:13:02Z"}, "sunk_before_anchor": 19196694, "plan": "vault/plans/tok18-pre-rearm-optimization-RESUMPTION.md", "readout": "vault/programs/cognitive-economy/gen2/evidence/gen2_1-readout.md"},
  "superseded_estimates": [
   {"label": "previous optimized TOK-18", "low": 400000000, "high": 650000000, "cap": 800000000, "superseded": "2026-10-05"},
-  {"label": "unoptimized projection", "low": 1300000000, "high": 2400000000, "superseded": "2026-10-05"}
+  {"label": "unoptimized projection", "low": 1300000000, "high": 2400000000, "superseded": "2026-10-05"},
+  {"label": "E1 rule-move saving forecast", "value": 12515, "unit": "processed tokens/call", "quoted_as": "12.5k (post-e1 plan line 31)", "derivation": "moved bytes x pre-move tokens/byte, pointers ignored", "superseded": "2026-10-06", "by": "measured 8,477 (6124eecf)"},
+  {"label": "E1 byte-proportional net estimate", "value": 10800, "unit": "processed tokens/call", "quoted_as": "10.8k and 'pointers keep 22% of bytes' (post-e1 plan line 31)", "derivation": "used 41,353 B from the 17b3188a message; the moved originals are 37,353 B", "superseded": "2026-10-06", "by": "net byte estimate 9,422; pointer share 24.7%"}
  ],
  "work_units": {
   "W1": {"title": "compile mission card, gen-2 ledger, gate", "tier": 1, "terminal": "IMPLEMENTED_AND_VERIFIED", "evidence": [{"path": "vault/programs/cognitive-economy/gen2/evidence/W1.md", "command": "python tools/test_cognitive_economy_program.py --generation 2 --selftest"}, {"path": "vault/programs/cognitive-economy/gen2/MISSION.md"}]},
