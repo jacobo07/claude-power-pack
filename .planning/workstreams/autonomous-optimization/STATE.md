@@ -30,8 +30,8 @@ first proving incident; a second workload must be taken by the loop itself.
 
 ## Current Position
 
-**Status:** Executing Phase 0
-**Current Phase:** 0
+**Status:** Phase 0 complete (IC-gen2 frozen); Phase 1 next
+**Current Phase:** 1 (usage_index v5 substrate, PLAN mode)
 
 ## Decisions
 
@@ -50,6 +50,6 @@ first proving incident; a second workload must be taken by the loop itself.
 
 ## Session Continuity
 
-**Stopped At:** Phase 0 not started.
-**Next exact action:** write `vault/specs/autonomous-optimization.md`, then the gen2 ledger + FROZEN_AT.
+**Stopped At:** Phase 0 complete: IC-gen2 frozen at afcdceea, FROZEN_AT 8752562a
+**Next exact action:** plan Phase 1 (usage_index v5) against vault/specs/autonomous-optimization.md; the gen2 judge is python3 tools/test_incremental_cognition_program.py --generation 2 --status
 **Resume File:** this STATE.md + vault/plans/autonomous-optimization-2026-10-05.md
