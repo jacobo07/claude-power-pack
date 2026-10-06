@@ -875,14 +875,39 @@ def _m_js_unmet_is_ready():
     return _patch(ep, "_judge_js", mutant)
 
 
+def _m_trailer_always_false():
+    return _patch(ep, "_has_pick_trailer", lambda sbx, git, install, floor: False)
+
+
+def _m_patchid_always_false():
+    return _patch(ep, "_patch_id_match", lambda sbx, git, install, floor: False)
+
+
+def _m_trailer_always_true():
+    return _patch(ep, "_has_pick_trailer", lambda sbx, git, install, floor: True)
+
+
+def _m_ancestry_always_false():
+    """The 'hash path' dropped: HEAD is never judged to contain the floor by ancestry."""
+    return _patch(ep, "_is_ancestor", lambda sbx, git, install, floor: False)
+
+
 MUTANTS = [
     ("M1 aggregate maps UNMEASURABLE to READY", _m_unmeasurable_to_ready, [grp_aggregate],
      ["V-ENVPF-UNMEASURABLE-NOT-READY"]),
     ("M2 credentials_expired always False", _m_expiry_always_false, [grp_auth], ["V-ENVPF-AUTH-EXPIRED-ZERO"]),
-    ("M3 ancestor test always passes", _m_ancestor_always_true, [grp_pp], ["V-ENVPF-PP-STALE-REAL"]),
+    # M3 targets the hermetic gate that really reaches _is_ancestor; on a plane where the floor object is
+    # absent the real-repo gate (V-ENVPF-PP-STALE-REAL) never does, which made its old kill false.
+    ("M3 ancestor test always passes", _m_ancestor_always_true, [grp_pp], ["V-ENVPF-PP-STALE-NOT-ANCESTOR"]),
     ("M4 missing scripts ignored", _m_missing_scripts_ignored, [grp_hooks], ["V-ENVPF-HOOKS-MISSING-SCRIPT"]),
     ("M5 satisfies() always True", _m_satisfies_always_true, [grp_interp], ["V-ENVPF-NODE-V18-UNSUPPORTED"]),
     ("M6 JS UNMET mapped to READY", _m_js_unmet_is_ready, [grp_interp], ["V-ENVPF-JS-UNMET"]),
+    ("M7 trailer path always False", _m_trailer_always_false, [grp_pp],
+     ["V-ENVPF-PP-PICK-TRAILER-READY", "V-ENVPF-PP-PICK-FLOOR-ABSENT-READY"]),
+    ("M8 patch-id path always False", _m_patchid_always_false, [grp_pp], ["V-ENVPF-PP-PICK-PATCHID-READY"]),
+    ("M9 trailer path always True", _m_trailer_always_true, [grp_pp],
+     ["V-ENVPF-PP-UNRELATED-STALE", "V-ENVPF-PP-TRAILER-SPOOF-STALE"]),
+    ("M10 ancestry path dropped", _m_ancestry_always_false, [grp_pp], ["V-ENVPF-PP-READY-VIA-ANCESTRY"]),
 ]
 
 

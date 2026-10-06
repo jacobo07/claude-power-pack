@@ -56,6 +56,8 @@ FINDINGS = ("access_token_lapsed_refreshable", "hooks_foreign_env", "install_mod
 # new floor adds a required file -- plan 02-04 raises it to the 02-03 launch-gate commit.
 PP_COMMIT_FLOOR = "5962571c840943ae0a3aa901efb08e69a04434da"
 PP_REQUIRED_FILES = ("tools/gsd_mission.py", "tools/provider_breaker.py")
+# How many non-merge commits of HEAD the patch-id comparison reads (bounds the cost of the third accept path).
+PP_PATCH_ID_SCAN = 300
 PYTHON_MIN = (3, 9)
 PROBE_TIMEOUT_S = 15
 BUDGET_S = 120
@@ -192,16 +194,17 @@ class _Sandbox:
         self.home = self._td.name
         self.env = {"PATH": path or "", "HOME": self.home, "GIT_OPTIONAL_LOCKS": "0", "LC_ALL": "C"}
 
-    def run(self, argv, cwd=None, timeout=None):
+    def run(self, argv, cwd=None, timeout=None, *, input_text=None):
         """(returncode | None when the program could not start, stdout, stderr). Raises TimeoutError when a
-        probe exceeds its bound or the run's budget is spent -- the caller turns that into UNMEASURABLE."""
+        probe exceeds its bound or the run's budget is spent -- the caller turns that into UNMEASURABLE.
+        `input_text` is fed to the child's stdin (git patch-id reads a diff there)."""
         dl = _DEADLINE[0]
         if dl is not None and time.monotonic() > dl:
             raise TimeoutError("budget exhausted")
         limit = PROBE_TIMEOUT_S if timeout is None else timeout
         try:
             p = subprocess.run([str(a) for a in argv], capture_output=True, text=True, errors="replace",
-                               env=self.env, cwd=cwd or self.home, timeout=limit)
+                               env=self.env, cwd=cwd or self.home, timeout=limit, input=input_text)
         except subprocess.TimeoutExpired:
             raise TimeoutError(f"{os.path.basename(str(argv[0]))} timed out after {limit}s") from None
         except OSError as exc:
@@ -270,6 +273,34 @@ def _has_pick_trailer(sbx: _Sandbox, git: str, install: str, floor: str):
     return bool(out.strip()) if rc == 0 else None
 
 
+def _patch_ids(sbx: _Sandbox, git: str, install: str, argv_tail: list):
+    """The set of `git patch-id --stable` ids of the diffs `git <argv_tail>` prints, or None when git cannot
+    answer (non-zero rc or no start). The pipe is done here in two probes because the sandbox has no shell."""
+    rc, diff, _ = sbx.run([git, *argv_tail], cwd=install)
+    if rc != 0:
+        return None
+    rc, out, _ = sbx.run([git, "patch-id", "--stable"], cwd=install, input_text=diff)
+    if rc != 0:
+        return None
+    return {line.split()[0] for line in out.splitlines() if line.split()}
+
+
+def _patch_id_match(sbx: _Sandbox, git: str, install: str, floor: str):
+    """True / False / None: does HEAD's recent history (PP_PATCH_ID_SCAN non-merge commits) hold a commit whose
+    `git patch-id --stable` equals the floor's. Only meaningful when the floor OBJECT is present (the caller
+    checks); a floor with no diff has no patch-id and is not comparable, which is False, never True. None when
+    git could not answer. A probe timeout raises TimeoutError (the caller maps it to UNMEASURABLE)."""
+    floor_ids = _patch_ids(sbx, git, install, ["show", floor])
+    if floor_ids is None:
+        return None
+    if not floor_ids:
+        return False
+    head_ids = _patch_ids(sbx, git, install, ["log", "-p", "--no-merges", f"--max-count={PP_PATCH_ID_SCAN}", "HEAD"])
+    if head_ids is None:
+        return None
+    return bool(floor_ids & head_ids)
+
+
 def check_pp_install(env: dict, floor=None) -> dict:
     """Rules version: the PP install is a git checkout that carries the floor commit's code and the required
     files. The floor is accepted by the first of these paths that holds (reported in detail["floor_via"]):
@@ -326,12 +357,19 @@ def check_pp_install(env: dict, floor=None) -> dict:
                                "git could not search HEAD's history for a cherry-pick of the floor", detail=detail)
             if picked:
                 via = "cherry_pick_trailer"
+        if via is None and floor_present:
+            same = _patch_id_match(sbx, git, install, floor)
+            if same is None:
+                return _result("pp_install", UNMEASURABLE, "git could not compare patch-ids of HEAD and the floor",
+                               detail=detail)
+            if same:
+                via = "patch_id"
         detail["floor_via"] = via
         problems = []
         if via is None:
-            why_not = "not an ancestor" if floor_present else "floor object absent"
-            problems.append(f"head {detail['head'][:8]} does not contain the floor {floor[:8]} "
-                            f"({why_not}; no exact cherry-pick trailer)")
+            why_not = ("not an ancestor; no exact cherry-pick trailer; no equal patch-id" if floor_present
+                       else "floor object absent; no exact cherry-pick trailer")
+            problems.append(f"head {detail['head'][:8]} does not contain the floor {floor[:8]} ({why_not})")
         missing = [f for f in PP_REQUIRED_FILES if not (Path(install) / f).is_file()]
         if missing:
             problems.append("required files missing: " + ", ".join(missing))
