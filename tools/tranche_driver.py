@@ -32,9 +32,9 @@ def spend(sid, projects=PROJECTS):
     return int(m.group(1).replace(",", "")) if m else None
 
 
-def run(argv, timeout=None, stdin=None):
+def run(argv, timeout=None, stdin=None, cwd=None):
     try:
-        return subprocess.run(argv, cwd=ROOT, input=stdin, capture_output=True, text=True, encoding="utf-8",
+        return subprocess.run(argv, cwd=cwd or ROOT, input=stdin, capture_output=True, text=True, encoding="utf-8",
                               errors="replace", timeout=timeout).returncode
     except (OSError, subprocess.TimeoutExpired):
         return None
@@ -91,7 +91,7 @@ def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run
         calls = calls or max(1, p["cap"] // PER_CALL)
         d = run_fn([sys.executable, "tools/mission_spend.py", "session-declare", "--session", sid, "--target",
                     str(int(p["cap"] * .8)), "--warn", str(int(p["cap"] * .9)), "--stop", str(p["cap"]),
-                    "--calls-estimate", str(calls)])
+                    "--calls-estimate", str(calls)], cwd=REPO)  # admission prices calls from REPO, as calls_for does
         if d != 0:
             res["steps"][p["step"]] = {"verdict": "ADMISSION_REFUSED", "sid": sid, "declare_rc": d}
             log(f"{p['step']} ADMISSION_REFUSED sid={sid} declare_rc={d}")

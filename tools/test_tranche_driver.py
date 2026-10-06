@@ -35,7 +35,9 @@ with tempfile.TemporaryDirectory() as tmp:
 
     launched = []
     fake_launch = lambda argv, prompt: launched.append(argv) or 0
-    decl = lambda code: (lambda argv, timeout=None: code if "session-declare" in argv else td.run(argv, timeout))
+    declared_cwd = []
+    decl = lambda code: (lambda argv, timeout=None, cwd=None: (declared_cwd.append(cwd) or code)
+                         if "session-declare" in argv else td.run(argv, timeout))
     pk = dict(P(good)); pk["prompt"] = str(t / "ok.py")
     q = dict(log=lambda m: None, calls_fn=lambda sid, stop: 5)
     r = td.drive([pk], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(4_499_500), decl(0), fake_launch, **q)
@@ -82,6 +84,9 @@ with tempfile.TemporaryDirectory() as tmp:
     finally:
         td.ROOT = td.REPO
     gate("V-DRIVER-RECEIPT-JUDGED-IN-ROOT", c_wt["receipt"] and not c_main["receipt"], (c_main, c_wt))
+    # a worktree has no session history, so admission run there prices nothing and refuses: it must run in REPO.
+    gate("V-DRIVER-ADMISSION-PRICED-IN-REPO", bool(declared_cwd) and all(c == td.REPO for c in declared_cwd),
+         set(map(str, declared_cwd)))
 
 print(f"DRIVER_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
 sys.exit(0 if fails == 0 else 1)
