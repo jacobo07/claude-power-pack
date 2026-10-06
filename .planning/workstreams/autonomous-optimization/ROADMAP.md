@@ -110,7 +110,7 @@ Plans:
    11,549,646,300) on the GEX44 copy, with dedup reconciled to the unit.
 4. Refresh cost measured (wall, bytes) for a cold build and for a delta.
 
-**Plans:** 3/6 plans executed
+**Plans:** 4/6 plans executed
 
 Plans:
 **Wave 1**
@@ -127,7 +127,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 01-04-PLAN.md -- population with the champion classifier from the index, time cut, archived rule, typed refusals, reconcile block; backfill-v5, refresh --all, cost counters
+- [x] 01-04-PLAN.md -- population with the champion classifier from the index, time cut, archived rule, typed refusals, reconcile block; backfill-v5, refresh --all, cost counters
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
