@@ -65,6 +65,12 @@ Modes and exit codes are CE's: --final / --status / --pillar X / --selftest;
 only inside a context manager and prints its own ICP_GEN2_VERDICT / ICP_GEN2_SELFTEST lines; `--pillar` is
 generation 1 only. `--generation 2 --audit` is the machine read of the pre-registration that gates the freeze
 (rules A1-A7, prints one line per rule and ICP_GEN2_AUDIT=PASS|FAIL frozen_sha256=<hex>).
+Generation selection and exit codes (D-OQ3): `--generation 1 ...` is generation 1 ONLY -- ic_gen2 is not loaded, no
+ICP_GEN2_* line is printed, the exit code is generation 1's own (0/1/2). A bare `--selftest` / `--final` is
+generation 1 plus the generation-2 companion lines (ICP_GEN2_SELFTEST / ICP_GEN2_VERDICT) and the gen1-binding leak
+check, and its exit code also folds in gen2's 0/1. If generation 2 cannot be loaded (ic_gen2, its ledger or a module it
+reads is missing, or its --final answers 2) the companion prints `ICP_GEN2_SELFTEST=COULD_NOT_RUN` /
+`ICP_GEN2_VERDICT=COULD_NOT_RUN` and the exit code is generation 1's alone.
 """
 from __future__ import annotations
 
@@ -78,6 +84,7 @@ import posixpath
 import re
 import sys
 import tempfile
+import types
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -1281,6 +1288,78 @@ def selftest(verbose=True) -> bool:
         else:
             off_m = sorted(off_under([open_attest, patcher]) - held_by_attestation)
         say(bool(off_m), f"V-ICP-MUT-{mname} killed by V-ICP-R4-IDENTITY (the poles it leaves open: {off_m[:3]})")
+
+    # D-OQ3 / WR-03: an explicit --generation 1 is generation 1 ONLY, and a gen2 that cannot load degrades to a
+    # COULD_NOT_RUN line instead of crashing (or failing) the generation-1 gate.
+    say(_companion_wanted([]) and _companion_wanted(["--selftest"]) and _companion_wanted(["--final"])
+        and not _companion_wanted(["--generation", "1", "--final"])
+        and not _companion_wanted(["--generation=1", "--selftest"]),
+        "V-ICP-GEN1-EXPLICIT-IS-GEN1-ONLY (a bare --selftest/--final carries the gen2 companion; --generation 1 and "
+        "--generation=1 do not)")
+    saved_import = _import_gen2
+
+    def gen2_must_not_load():
+        raise AssertionError("an explicit --generation 1 run loaded ic_gen2")
+
+    def final_with(import_gen2, argv_):
+        """main(argv_) with generation 1's own --final stubbed (it re-enters selftest) and ic_gen2 stood in for."""
+        r1, r2 = _patch_attr("_final_gen1", lambda: 0), _patch_attr("_import_gen2", import_gen2)
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf):
+                rc_ = main(argv_)
+        finally:
+            r2()
+            r1()
+        return rc_, buf.getvalue()
+
+    def fake_gen2(final_rc):
+        return lambda: types.SimpleNamespace(main=lambda mode: final_rc, PROGRAM="incremental-cognition")
+
+    def missing_gen2():
+        raise ModuleNotFoundError("No module named 'ic_gen2'")
+    rc_x, out_x = final_with(gen2_must_not_load, ["--generation", "1", "--final"])
+    rc_eq, out_eq = final_with(gen2_must_not_load, ["--generation=1", "--final"])
+    say(rc_x == 0 and rc_eq == 0 and "ICP_GEN2" not in out_x + out_eq,
+        "V-ICP-GEN1-FLAG-HONOURED (--generation 1 / --generation=1 --final never loads ic_gen2 and returns generation "
+        "1's own code)")
+    rc_pass, _ = final_with(fake_gen2(0), ["--final"])
+    rc_fail, _ = final_with(fake_gen2(1), ["--final"])
+    rc_cnr, out_cnr = final_with(fake_gen2(2), ["--final"])
+    rc_gone, out_gone = final_with(missing_gen2, ["--final"])
+    say((rc_pass, rc_fail, rc_cnr, rc_gone) == (0, 1, 0, 0) and "ICP_GEN2_VERDICT=COULD_NOT_RUN" in out_gone,
+        f"V-ICP-GEN1-FINAL-EXIT-CONTRACT (bare --final: gen2 pass 0, gen2 fail 1, gen2 answering 2 or not loadable "
+        f"leaves generation 1's own code and prints COULD_NOT_RUN when absent; got {(rc_pass, rc_fail, rc_cnr, rc_gone)})")
+    say(_generation(["--selftest", "--generation"]) == (None, ["--selftest"]),
+        "V-ICP-GEN-TRAILING-FLAG (a trailing --generation with no value is refused, never silently generation 1)")
+
+    def absent():
+        raise ModuleNotFoundError("No module named 'ic_gen2'")
+    out_absent = io.StringIO()
+    restore = _patch_attr("_import_gen2", absent)
+    try:
+        with contextlib.redirect_stdout(out_absent):
+            r_sel = _gen2_companion("ICP_GEN2_SELFTEST", lambda m: m.selftest(verbose=False))
+            r_fin = _gen2_companion("ICP_GEN2_VERDICT", lambda m: m.main("final"))
+    finally:
+        restore()
+    say(r_sel is None and r_fin is None and "ICP_GEN2_SELFTEST=COULD_NOT_RUN" in out_absent.getvalue()
+        and "ICP_GEN2_VERDICT=COULD_NOT_RUN" in out_absent.getvalue(),
+        "V-ICP-GEN2-ABSENT-DEGRADES (ic_gen2 not importable: both companions print ICP_GEN2_*=COULD_NOT_RUN and "
+        "report None, which the exit code ignores)")
+    g2mod = _import_gen2()
+    saved_ledger = g2mod.LEDGER_REL
+    g2mod.LEDGER_REL = "vault/programs/incremental-cognition/gen2/no-such-ledger.json"
+    out_noled = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(out_noled):
+            r_noled = _gen2_companion("ICP_GEN2_SELFTEST", lambda m: m.selftest(verbose=False))
+    finally:
+        g2mod.LEDGER_REL = saved_ledger
+    say(r_noled is None and "ICP_GEN2_SELFTEST=COULD_NOT_RUN" in out_noled.getvalue(),
+        "V-ICP-GEN2-LEDGER-ABSENT-DEGRADES (gen2 ledger unreadable: COULD_NOT_RUN line, None)")
+    say(_gen2_companion("ICP_GEN2_CONTROL", lambda m: m.PROGRAM) == "incremental-cognition",
+        "V-ICP-GEN2-PRESENT-CONTROL (gen2 present: the companion returns its result, so the degrade gates above can fail)")
     return ok
 
 
@@ -1310,10 +1389,13 @@ def _final_gen1() -> int:
 
 
 def _generation(argv):
-    """(generation, argv without the --generation tokens). Absent -> 1; an unparsable value -> (None, argv)."""
+    """(generation, argv without the --generation tokens). Absent -> 1; an unparsable value, or a trailing
+    `--generation` with no value, -> (None, argv)."""
     gen, rest, i = 1, [], 0
     while i < len(argv):
         a = argv[i]
+        if a == "--generation" and i + 1 >= len(argv):
+            return None, rest
         if a == "--generation" and i + 1 < len(argv):
             gen, i = argv[i + 1], i + 2
             continue
@@ -1328,8 +1410,31 @@ def _generation(argv):
         return None, rest
 
 
+def _import_gen2():
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import ic_gen2
+    return ic_gen2
+
+
+def _companion_wanted(argv) -> bool:
+    """A bare --selftest / --final also prints the generation-2 companion lines (D-OQ3). An explicit
+    `--generation 1` / `--generation=1` is generation 1 ONLY: no gen2 import, no gen2 lines, no gen2 exit code."""
+    return not any(a == "--generation" or a.startswith("--generation=") for a in argv)
+
+
+def _gen2_companion(label, run):
+    """`run(ic_gen2)`'s result, or None after printing `<label>=COULD_NOT_RUN ...` when generation 2 cannot be
+    loaded (module, its ledger or a module it reads missing). None never fails the generation-1 gate."""
+    try:
+        return run(_import_gen2())
+    except (ImportError, OSError, ValueError) as exc:
+        print(f"{label}=COULD_NOT_RUN gen2 unavailable ({type(exc).__name__}: {exc}); generation 1 is judged on its own")
+        return None
+
+
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    companion = _companion_wanted(argv)
     gen, g_argv = _generation(argv)
     if gen not in (1, 2):
         print("ICP_GEN2_VERDICT=COULD_NOT_RUN --generation must be 1 or 2")
@@ -1345,20 +1450,22 @@ def main(argv=None) -> int:
         if mode is None:
             print("ICP_GEN2_VERDICT=COULD_NOT_RUN usage: --generation 2 --status|--final|--selftest|--audit")
             return 2
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import ic_gen2  # lazy: generation 1 never loads it
+        ic_gen2 = _import_gen2()  # only a generation-2 run, or a bare gen1 --selftest/--final companion, loads it
         return ic_gen2.main(mode)
+    argv = g_argv  # generation 1 from here on, with any --generation 1 tokens stripped before CE sees them
     if "--selftest" in argv:
         own = selftest()
         rc = ce.main(["--selftest"])
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import ic_gen2
-        g2 = ic_gen2.selftest(verbose=False)
-        print(f"ICP_GEN2_SELFTEST={'PASS' if g2 else 'FAIL'}")
-        try:
-            leak = check_binding(load_ledger())  # gen2 must leave this program's gen1 binding exactly as it was
-        except (OSError, json.JSONDecodeError) as exc:
-            leak = [f"B1 gen1 ledger unreadable after the gen2 selftest: {exc}"]
+        g2, leak = True, []
+        if companion:
+            r2 = _gen2_companion("ICP_GEN2_SELFTEST", lambda m: m.selftest(verbose=False))
+            if r2 is not None:  # None = gen2 could not run; it printed COULD_NOT_RUN and is not a gen1 failure
+                g2 = r2
+                print(f"ICP_GEN2_SELFTEST={'PASS' if g2 else 'FAIL'}")
+                try:
+                    leak = check_binding(load_ledger())  # gen2 must leave this program's gen1 binding exactly as it was
+                except (OSError, json.JSONDecodeError) as exc:
+                    leak = [f"B1 gen1 ledger unreadable after the gen2 selftest: {exc}"]
         for x in leak:
             print("  FAIL", x)
         good = own and rc == 0 and g2 and not leak
@@ -1366,17 +1473,24 @@ def main(argv=None) -> int:
         return 0 if good else 1
     if "--final" in argv:
         rc1 = _final_gen1()
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import ic_gen2
-        rc2 = ic_gen2.main("final")  # prints its own ICP_GEN2_VERDICT line; gen1's verdict above is unchanged (D-OQ3)
-        try:
-            leak = check_binding(load_ledger())
-        except (OSError, json.JSONDecodeError) as exc:
-            leak = [f"B1 gen1 ledger unreadable after the gen2 final: {exc}"]
+        if not companion:
+            return rc1  # --generation 1 --final: exactly generation 1's own verdict and exit code
+        # prints its own ICP_GEN2_VERDICT line; gen1's verdict above is unchanged (D-OQ3)
+        rc2 = _gen2_companion("ICP_GEN2_VERDICT", lambda m: m.main("final"))
+        if rc2 == 2:
+            rc2 = None  # gen2 COULD_NOT_RUN (it printed its own line): not a gen1 failure
+        leak = []
+        if rc2 is not None:
+            try:
+                leak = check_binding(load_ledger())
+            except (OSError, json.JSONDecodeError) as exc:
+                leak = [f"B1 gen1 ledger unreadable after the gen2 final: {exc}"]
         for x in leak:
             print("  FAIL", x)
-        if 2 in (rc1, rc2):
+        if rc1 == 2:
             return 2
+        if rc2 is None:
+            return rc1
         return 0 if rc1 == 0 and rc2 == 0 and not leak else 1
     pid = None
     for i, a in enumerate(argv):
