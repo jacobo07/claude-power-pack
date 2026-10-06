@@ -295,6 +295,41 @@ def image_term_checks() -> None:
     check("V-CTC-IMG-ZERO-FIGURE-REFUSED", refused(idoc(4, cal_extra={"image_ctx": [{**IMG_CAL[0], "tokens": 0}]})) == "BAD_CLAIM")
 
 
+SHA_A, SHA_B = "a" * 40, "b" * 40
+
+
+def gdoc(grounding=3, prestaged=None, head=None):
+    d = wdoc(work={**F_WORK, "grounding": grounding})
+    if prestaged is not None:
+        d["units"][0]["prestaged_repo_facts"] = {"source_sha": prestaged}
+    if head is not None:
+        d["head_sha"] = head
+    return d
+
+
+def grounding_checks() -> None:
+    base = ctc.compile_cost(wdoc(work=F_WORK), FLOORS)["units"][0]
+    g = ctc.compile_cost(gdoc(), FLOORS)["units"][0]
+    # F e6: 3 repo-grounding calls (Glob, git ls-files, git grep) were not in the shape; they are explore calls
+    check("V-CTC-GROUND-COUNTS-AS-EXPLORE-CALLS", g["calls"] == base["calls"] + 3 and g["grounding_basis"] == "counted"
+          and g["cost"] > base["cost"], f"{g['calls']} vs {base['calls']} {g.get('grounding_basis')}")
+    plain_explore = ctc.compile_cost(wdoc(work={**F_WORK, "explore": F_WORK["explore"] + 3}), FLOORS)["units"][0]
+    check("V-CTC-GROUND-EQUALS-ADDED-EXPLORE", g["cost"] == plain_explore["cost"] and g["calls"] == plain_explore["calls"])
+    # pre-staged facts keyed by a source SHA that still matches HEAD remove the grounding calls
+    ok = ctc.compile_cost(gdoc(prestaged=SHA_A, head=SHA_A), FLOORS)["units"][0]
+    check("V-CTC-GROUND-PRESTAGED-MATCHING-HEAD-FREE", ok["calls"] == base["calls"] and ok["cost"] == base["cost"]
+          and ok["grounding_basis"] == "prestaged", f"{ok['calls']} {ok.get('grounding_basis')}")
+    # red controls: stale SHA, no HEAD to compare against, or no declaration -> counted
+    stale = ctc.compile_cost(gdoc(prestaged=SHA_A, head=SHA_B), FLOORS)["units"][0]
+    check("V-CTC-GROUND-STALE-SHA-STILL-COUNTED", stale["calls"] == base["calls"] + 3 and stale["grounding_basis"] == "counted")
+    nohead = ctc.compile_cost(gdoc(prestaged=SHA_A), FLOORS)["units"][0]
+    check("V-CTC-GROUND-UNVERIFIABLE-HEAD-COUNTED", nohead["calls"] == base["calls"] + 3)
+    kw = ctc.compile_cost(gdoc(prestaged=SHA_A), FLOORS, head_sha=SHA_A)["units"][0]
+    check("V-CTC-GROUND-HEAD-KWARG-MATCHES", kw["grounding_basis"] == "prestaged" and kw["calls"] == base["calls"])
+    check("V-CTC-GROUND-ZERO-IS-NONE-CONTROL", ctc.compile_cost(gdoc(grounding=0), FLOORS)["units"][0]["grounding_basis"] == "none")
+    check("V-CTC-GROUND-MALFORMED-SHA-REFUSED", refused(gdoc(prestaged="")) == "BAD_CLAIM")
+
+
 def _route_refused(doc):
     try:
         ctc.route_verdict(doc, FLOORS)
@@ -371,6 +406,7 @@ def main() -> int:
     work_model_checks()
     output_term_checks()
     image_term_checks()
+    grounding_checks()
     print(f"CTC_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

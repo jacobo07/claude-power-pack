@@ -70,7 +70,11 @@ PHASE_KEYS = ("phases", "phase_count", "phase_average", "phase_average_cost", "a
 # an ordinary text exploration (images, large dumps): split evenly over the explore calls and carried
 # from the call after each one. ctx_start_over_floor already holds a typical text exploration's return.
 WORK_KEYS = ("orient", "explore", "files", "runs", "repairs", "commit", "report", "extra_ctx", "explore_ctx",
-             "write_output", "images")
+             "write_output", "images", "grounding")
+# grounding: repo-listing / grep calls for claims that cite shipped code (F e6: 3 such calls were outside the
+# shape). They count as explore calls, unless the unit declares `prestaged_repo_facts: {source_sha}` and that SHA
+# equals the HEAD the compile was given (`head_sha` kwarg or doc key). No HEAD to compare, or a different one,
+# means the facts cannot be trusted as current: the calls are counted (grounding_basis "counted").
 # images: count of images the unit reads. Context = count x calibration.image_ctx[(model, bucket)].tokens, where
 # the unit names `image_profile: {model, width, height}`. The bucket is the image's long edge (chosen cut points,
 # not measured). A key with no calibration row is UNKNOWN_IMAGE_COST (refused), or is charged at
@@ -193,6 +197,16 @@ def check_scope(doc: dict, claims: list) -> None:
         raise Refused("UNCOVERED_GATE", f"no claim references gate(s) {', '.join(missing)}")
 
 
+def _prestaged(u: dict):
+    p = u.get("prestaged_repo_facts")
+    if p is None:
+        return None
+    sha = p.get("source_sha") if isinstance(p, dict) else None
+    if not isinstance(sha, str) or not sha.strip():
+        raise Refused("BAD_CLAIM", f"unit {u['id']!r}: prestaged_repo_facts needs a non-empty source_sha")
+    return sha.strip()
+
+
 def _unit_rows(doc: dict, claims: list, effs: list, floors: dict, deopt: float):
     units = doc.get("units")
     if units is None:
@@ -225,7 +239,8 @@ def _unit_rows(doc: dict, claims: list, effs: list, floors: dict, deopt: float):
         by_id[u["id"]] = {"id": u["id"], "profile": u["profile"], "model_prior": u.get("model_prior"),
                           "est_calls": n, "reserve_calls": r, "ctx_tokens": ctx, "profile_floor": pf,
                           "order": u.get("order", i), "claims": [], "model": False, "deopt": False,
-                          "work": work, "image_profile": u.get("image_profile")}
+                          "work": work, "image_profile": u.get("image_profile"),
+                          "prestaged": _prestaged(u)}
     for c, eff in zip(claims, effs):
         uid = c.get("unit")
         if uid is None:
@@ -246,10 +261,24 @@ def _unit_rows(doc: dict, claims: list, effs: list, floors: dict, deopt: float):
     return sorted(by_id.values(), key=lambda r: (r["order"], r["id"]))
 
 
-def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_MARGIN) -> dict:
+def resolve_grounding(work: dict, prestaged, head) -> tuple[dict, str]:
+    """(work with grounding calls folded into explore, basis none|counted|prestaged)."""
+    g = int(work.get("grounding", 0))
+    w = {k: v for k, v in work.items() if k != "grounding"}
+    if g <= 0:
+        return w, "none"
+    if prestaged and head and prestaged == head:
+        return w, "prestaged"
+    w["explore"] = int(w.get("explore", 0)) + g
+    return w, "counted"
+
+
+def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_MARGIN,
+                 head_sha: str | None = None) -> dict:
     """Pure. Raises Refused on a phase-forecast, an empty or malformed claim set, or a scope gap."""
     if not isinstance(doc, dict):
         raise Refused("BAD_CLAIM", "input must be a JSON object")
+    head = (head_sha or doc.get("head_sha") or "").strip() or None
     hit = [k for k in PHASE_KEYS if k in doc]
     if hit:
         raise Refused("PHASE_MULTIPLIER", f"{', '.join(hit)} given: cost is forecast from claims, "
@@ -328,7 +357,7 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
             ctx = max(ctx, r["profile_floor"])
             cost = n * ctx
             reserve_cost = r["reserve_calls"] * ctx
-            r["image_ctx"], r["image_basis"] = 0, "none"
+            r["image_ctx"], r["image_basis"], r["grounding_basis"] = 0, "none", "none"
             if r["work"] is not None and not a:
                 cal = doc.get("calibration") or {}
                 missing = [k for k in CAL_KEYS if k not in cal]
@@ -336,7 +365,8 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
                     raise Refused("BAD_CLAIM", f"unit {r['id']!r} has work but calibration lacks {missing}")
                 for k in CAL_KEYS:
                     _pos(f"calibration.{k}", cal[k], allow_zero=k != "files_per_call")
-                rw, r["image_ctx"], r["image_basis"] = resolve_images(r["work"], r["image_profile"], cal, r["id"])
+                rw, r["grounding_basis"] = resolve_grounding(r["work"], r["prestaged"], head)
+                rw, r["image_ctx"], r["image_basis"] = resolve_images(rw, r["image_profile"], cal, r["id"])
                 r["work"] = rw
                 n, cost = work_cost(r["work"], cal, r["profile_floor"])
                 ctx = -(-cost // n)  # mean processed per call, rounded up; the route charges calls x this
@@ -367,7 +397,8 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
         "counts": counts, "clean": clean, **clean, "sleeping": sleeping, "owner_reality": owner,
         "profile_source": source, "worker_floor": worker_floor, "margin": margin,
         "units": [{k: r[k] for k in ("id", "profile", "model_prior", "calls", "reserve_calls", "ctx_eff",
-                                     "profile_floor", "cost", "claims", "image_ctx", "image_basis")}
+                                     "profile_floor", "cost", "claims", "image_ctx", "image_basis",
+                                     "grounding_basis")}
                   for r in active_rows],
         "reserve_calls": reserve_calls, "reserve_tokens": reserve_tokens,
         "unmeasured_allowance": allowance,
