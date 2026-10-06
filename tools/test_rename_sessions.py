@@ -145,11 +145,31 @@ def test_classifiers() -> None:
         "SUB - SERP: erlang otp": True,                     # our own SUB label -> refine
         "Optimize RAM footprint": False,                    # real name
         "Fix bug 12345": False,                             # real name
+        "continue": True, "go ahead": True,                 # a nudge named the session
+        "The command below was run directly in Claude Code, not sent…": True,  # wrapper text
+        "```text": True,                                    # fenced-prompt ai-title
+        "Wii": False,                                       # short human name stays
     }
     bad = {k: R.is_reclaimable_title(k, repo) for k, v in cases.items()
            if R.is_reclaimable_title(k, repo) != v}
     _ok("V-RENAME-RECLAIM-DETECT", f"{len(cases)}/{len(cases)} reclaim cases correct") \
         if not bad else _fail("V-RENAME-RECLAIM-DETECT", f"misclassified: {bad}")
+
+    # derive_name: a nudge never names a session when a later prompt has a topic;
+    # with only nudges the branch does; with neither, the nudge beats a hash.
+    def sess(msgs, branch="", cmd=""):
+        return {"ai": "", "first_user": msgs[0], "user_msgs": msgs, "branch": branch, "cmd_name": cmd}
+    kresume = "<command-message>kresume</command-message>\n<command-name>/kresume</command-name>"
+    got = (R.derive_name(sess([kresume, "continue", "<bash-input> ls</bash-input>",
+                               "que es lo que tenemos que optimizar de las skills?"]))[0],
+           R.derive_name(sess(["go ahead", "sí, hazlo"], "feature/orders"))[0],
+           R.derive_name(sess(["go ahead", "sí, hazlo"], "main"))[0],
+           R.derive_name(sess(["go", "sigue"], "sprint/acmf", "/gsd-map-codebase"))[0],
+           R.derive_name(sess([kresume, '"Migra la tabla de pedidos a Postgres"'], "", "/kresume"))[0])
+    want = ("que es lo que tenemos que optimizar de las skills?", "feature/orders", "go ahead",
+            "/gsd-map-codebase", "Migra la tabla de pedidos a Postgres")
+    _ok("V-RENAME-FILLER-SKIPPED", f"{got}") if got == want \
+        else _fail("V-RENAME-FILLER-SKIPPED", f"got {got}, want {want}")
 
     proj = R.DEFAULT_PROJECT
     canon = R.is_canonical_location(proj, str(Path.home() / ".claude" / "skills" / "claude-power-pack"))

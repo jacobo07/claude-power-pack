@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * mark-live-session.js — SessionStart + Stop hook (Claude Power Pack).
+ * mark-live-session.js — SessionStart + Stop + SessionEnd hook (Claude Power Pack).
  *
  * Replaces the legacy ~/.claude/hooks/resume-hide-live.js cloaking
  * approach. The legacy hook hid live sessions from the native /resume
@@ -9,25 +9,27 @@
  * permanently masked active sessions from the picker, and crashed
  * sessions disappeared forever unless an orphan sweep restored them.
  *
- * This hook keeps every session visible in /resume — including the live
- * ones — and tags the live ones with a leading "⚡ " on the session's
- * `custom-title`, which the picker renders verbatim. The result: the user
- * sees every session, can tell at a glance which ones are currently
- * open in another pane, and never loses a crashed session because
- * nothing was ever hidden.
+ * This hook keeps every session visible in /resume and writes its state into
+ * the session's `custom-title`, which the picker renders verbatim:
+ *   "⚡ <title>"            open in some pane right now
+ *   "<title>"               died without being closed (crash, reboot): reopen it
+ *   "<title> ✓ terminada"   closed on purpose with /clear (also /kclear, which
+ *                           ends in /clear), /exit or /logout
+ * The title itself and every decision about it come from
+ * session-title-lib.decideTitle.
  *
  * Mechanism:
  *   - The native picker scans each `<proj>/<uuid>.jsonl` and renders the
  *     LATEST `{"type":"custom-title", ...}` record it finds. Records are
  *     append-only; the harness never rewrites prior lines. So appending
  *     a fresh custom-title line is the standard way to mutate display state.
- *   - On Stop (every assistant turn) we append a "⚡ <title>" line IF the
- *     current last custom-title does not already carry the prefix
- *     (idempotent — never double-prefix, never accumulate dupes).
- *   - On SessionStart + on every Stop we run an orphan sweep across
- *     every project's .jsonl: any session whose last custom-title carries
- *     the prefix AND whose underlying process is no longer alive gets a
- *     strip-line appended, undoing the marker.
+ *   - Stop / SessionStart: append "⚡ <title>" when the title is not already
+ *     that (idempotent). A resumed "✓ terminada" session becomes live again.
+ *   - SessionEnd: reason clear | prompt_input_exit | logout -> "✓ terminada";
+ *     any other reason -> drop the "⚡ ".
+ *   - SessionStart + Stop also run an orphan sweep across every project's
+ *     .jsonl: a session whose last custom-title carries "⚡ " AND whose
+ *     process is no longer alive gets the plain title back.
  *
  * Liveness discriminator (same 3-layer gate as the patched
  * resume-hide-live#isOrphanedDead — see
@@ -50,29 +52,24 @@
  *     stuck "⚡ " is never permanent.
  *
  * Input shape (Claude Code hook contract):
- *   stdin = JSON: { session_id, hook_event_name, cwd, ... }
- * Output: silence on stdout = success. stderr writes survive but don't
- *   block the harness; exit code is always 0.
+ *   stdin = JSON: { session_id, hook_event_name, transcript_path, reason, ... }
+ * Output: silence on stdout = success. Exit code is always 0.
  *
- * Registration (Owner step, opt-out default in the Power Pack rollout):
- *   python claude-power-pack/tools/settings_merger.py register-sessionstart \
- *     --node-script <abs path to this file> --timeout 5
- *   python claude-power-pack/tools/settings_merger.py register-stop \
- *     --node-script <abs path to this file> --timeout 5
- *   then /restart.
+ * Registration: Stop via ~/.claude/hooks/hook-dispatcher.js (Stop-chain),
+ * SessionStart via session_start_hub.js, SessionEnd as its own entry in
+ * ~/.claude/settings.json.
  */
 
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { deriveReadableTitle, isHashTitle } = require('./session-title-lib.js');
+const { decideTitle, lastCustomTitle } = require('./session-title-lib.js');
 
-const LIVE_PREFIX = '⚡ ';                 // "⚡ " (HIGH VOLTAGE SIGN + space)
 const STALE_MS = 300 * 1000;
-const TAIL_BYTES = 64 * 1024;
 const PROJECTS_DIR = path.join(os.homedir(), '.claude', 'projects');
 const LAZARUS_DIR = path.join(os.homedir(), '.claude', 'lazarus');
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const FINISH_REASONS = new Set(['clear', 'prompt_input_exit', 'logout']);
 
 function readStdin() {
   try {
@@ -109,50 +106,16 @@ function getLiveSessions() {
   return _liveSessionsCache;
 }
 
-function findSessionFile(sessionId) {
+function findSessionFile(sessionId, transcriptPath) {
+  if (transcriptPath && transcriptPath.endsWith(sessionId + '.jsonl') && fs.existsSync(transcriptPath)) {
+    return transcriptPath;
+  }
   if (!sessionId) return null;
   let projDirs;
   try { projDirs = fs.readdirSync(PROJECTS_DIR); } catch { return null; }
   for (const proj of projDirs) {
     const candidate = path.join(PROJECTS_DIR, proj, sessionId + '.jsonl');
-    if (fs.existsSync(candidate)) {
-      return { proj, dir: path.join(PROJECTS_DIR, proj), filePath: candidate };
-    }
-  }
-  return null;
-}
-
-// Returns the *latest* custom-title record's effective state, or null.
-// { rawTitle: "⚡ Foo", baseTitle: "Foo", hasPrefix: true }
-function lastCustomTitle(filePath) {
-  let stat;
-  try { stat = fs.statSync(filePath); } catch { return null; }
-  const start = Math.max(0, stat.size - TAIL_BYTES);
-  const length = stat.size - start;
-  if (length <= 0) return null;
-  let buf;
-  try {
-    const fd = fs.openSync(filePath, 'r');
-    try {
-      buf = Buffer.alloc(length);
-      fs.readSync(fd, buf, 0, length, start);
-    } finally { fs.closeSync(fd); }
-  } catch { return null; }
-  const lines = buf.toString('utf-8').split('\n');
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    let obj;
-    try { obj = JSON.parse(line); } catch { continue; }
-    if (obj && obj.type === 'custom-title' && typeof obj.customTitle === 'string') {
-      const raw = obj.customTitle;
-      const has = raw.startsWith(LIVE_PREFIX);
-      return {
-        rawTitle: raw,
-        baseTitle: has ? raw.slice(LIVE_PREFIX.length) : raw,
-        hasPrefix: has,
-      };
-    }
+    if (fs.existsSync(candidate)) return candidate;
   }
   return null;
 }
@@ -168,9 +131,6 @@ function appendCustomTitle(filePath, sessionId, title) {
     return false;
   }
 }
-
-// Base-title resolution now lives in session-title-lib.deriveReadableTitle,
-// which yields "[repo] — [first Owner prompt 50c]" (hash only as last resort).
 
 function isSessionAlive(projName, uuid, filePath) {
   let stat;
@@ -193,21 +153,14 @@ function isSessionAlive(projName, uuid, filePath) {
   return false;
 }
 
-function markOwnSessionLive(sessionId) {
-  if (!sessionId) return;
-  const found = findSessionFile(sessionId);
-  if (!found) return;
-  const last = lastCustomTitle(found.filePath);
-  // Resolve the readable base: keep an existing non-hash base; otherwise derive
-  // "[repo] — [first prompt]" from the transcript. This also SELF-HEALS a legacy
-  // "⚡ <hash>" title (the old fallbackTitle wrote the UUID prefix as the base).
-  let base = last && last.baseTitle;
-  if (!base || isHashTitle(base)) {
-    base = deriveReadableTitle(found.filePath, sessionId);
-  }
-  // Already live with the correct base -> nothing to do (idempotent).
-  if (last && last.hasPrefix && last.baseTitle === base) return;
-  appendCustomTitle(found.filePath, sessionId, LIVE_PREFIX + base);
+// Apply `mode` ('live' | 'finished' | 'dead') to one session's title.
+function markOwnSession(sessionId, transcriptPath, mode) {
+  if (!sessionId) return null;
+  const filePath = findSessionFile(sessionId, transcriptPath);
+  if (!filePath) return null;
+  const title = decideTitle(filePath, sessionId, mode);
+  if (title !== null) appendCustomTitle(filePath, sessionId, title);
+  return title;
 }
 
 function orphanMarkSweep(ownSessionId) {
@@ -230,7 +183,8 @@ function orphanMarkSweep(ownSessionId) {
       const last = lastCustomTitle(filePath);
       if (!last || !last.hasPrefix) continue;
       if (isSessionAlive(proj, uuid, filePath)) continue;
-      appendCustomTitle(filePath, uuid, last.baseTitle);
+      const title = decideTitle(filePath, uuid, 'dead');
+      if (title !== null) appendCustomTitle(filePath, uuid, title);
     }
   }
 }
@@ -243,18 +197,19 @@ function main() {
   const sessionId = input.session_id || process.env.PP_EVT_SID || '';
   const event = input.hook_event_name || input.event
     || process.env.PP_EVT_EVENT || '';
-  orphanMarkSweep(sessionId);
-  // On Stop we also refresh our own marker. On SessionStart the .jsonl
-  // for this session usually doesn't exist yet, so markOwnSessionLive is
-  // a no-op there — the first Stop after the first assistant turn will
-  // apply it.
-  if (event === 'Stop' || event === '') {
-    markOwnSessionLive(sessionId);
-  } else if (event === 'SessionStart') {
-    // Attempt mark anyway — harmless if the .jsonl already exists.
-    markOwnSessionLive(sessionId);
+  if (event === 'SessionEnd') {
+    markOwnSession(sessionId, input.transcript_path, FINISH_REASONS.has(input.reason) ? 'finished' : 'dead');
+    return;
   }
+  orphanMarkSweep(sessionId);
+  // On SessionStart the .jsonl usually doesn't exist yet, so this is a no-op
+  // there; the first Stop applies it.
+  markOwnSession(sessionId, input.transcript_path, 'live');
+}
+
+if (require.main === module) {
+  try { main(); } catch { /* never block the harness */ }
   process.exit(0);
 }
 
-main();
+module.exports = { markOwnSession, FINISH_REASONS };
