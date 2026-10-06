@@ -143,4 +143,7 @@ GEX44 deploy of C1-C5 still needs the Owner's go before 2026-10-07T05:00Z.
 - B1 42a984fb: cep_gen2 fails a closed experiment without a receipt and re-derives its arithmetic (23/23 mutants).
 - D1-D7 a051c761..1b93539b: gen1 state.B saving 8,477/call (upper_bound); forecast 12,515 (the 12.5k) superseded, -32.3%; plan's 10.8k/22% came from 41,353 B typo (real 37,353 B, net est 9,422); pointer tax ESTIMATED 3,093-4,038/call; payback PAID_BACK (8,784/1,083 laptop main calls, lower bound); gen2 W3 closed with receipt.
 - Evidence: vault/programs/cognitive-economy/gen2/evidence/e1_closeout/README.md. Semantic (UKDL/KV/CBR candidates) not written here.
-- Next: Phase 2 (fresh pane): wake mode in cep_gen2 on a zero-model scheduled task (W1, W2).
+- Spend: pane 7f13d6e2 = 8,157,384 processed / 47 calls, 0 subagents (stage0/self_spend.py under this sid). Phase 1 budget
+  was 0.7M central / 1.2M recompile: OVER ~7x, and over the plan's 4.5M pre-live hard recompile on its own. HR-COST-002:
+  Phase 2 does not start until the Owner re-authorizes the envelope (cause: ~170k context per call x 47 calls).
+- Next: Phase 2 (fresh pane, after Owner re-authorization): wake mode in cep_gen2 on a zero-model scheduled task (W1, W2).
