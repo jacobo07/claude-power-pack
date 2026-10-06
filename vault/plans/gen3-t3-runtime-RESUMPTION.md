@@ -25,6 +25,24 @@ session-status --transcript <its jsonl> before declaring the next envelope.
   project.
 
 ## Next 3 actions (one fresh worker per unit; at most 3 edit calls per file per unit)
+0. DONE in this worktree (session bd2f5752, committed with c3): (a) ROLLACT 29/29 incl. self-seal gates + mutant red,
+   (b) EXEMPT_CMD += session_checkpoint.py with V-SBG-EXEMPT covering it, (c) kclear.md step 5 ends on a trailing
+   `/clear`. STILL OPEN: (d) land in the main checkout (live) by patch apply, with c5. c3 DONE too: V-SBG-LATENCY =
+   min of 3 + V-SBG-LATENCY-RED-CONTROL (60 ms mutant). MARGINAL at 9% free RAM: run 1 min 155 ms FAIL, run 2 min
+   45.9 PASS (mutant min 67.9) -- the cold-process floor sits near 50; Owner may want a warm-process measure.
+   Original text of 0 follows for (d).
+   Autonomous rotation after ANY
+   /kclear. In modules/zero-crash/hooks/context-watchdog.py: `_self_sealed_step` +
+   `_own_capsule` + ROLLOVER_SELF_SEAL_FLAG; called from the Stop path as `elif _rollover_active():` after the
+   ROLLOVER_ASK_FLAG step 2. Root cause: step 2 (gate -> /clear dispatch -> kresume courier) was reachable only via
+   ASK, set only by the context wall / econ trigger, so a manual or breaker /kclear ended as "run /clear" to the Owner.
+   To do: (a) tests in tools/test_rollover_active_path.py: fresh own capsule -> rollover_clear_dispatched + courier;
+   REFUSED/stale/certified/mission -> no dispatch; same seal twice -> one act (rearm clears ASK but not the self flag);
+   _own_capsule == rollover.capsule_path and ROLLOVER_SELF_SEAL_MAX_AGE_S == rollover.RESET_MAX_AGE_S pinned;
+   mutant (drop the self flag) must go red. (b) EXEMPT_CMD in hooks/session_budget_guard.js += session_checkpoint\.py
+   (breaker blocked /kclear live). (c) commands/kclear.md step 5: on SAFE_TO_FORGET end with a trailing `/clear` line,
+   never "suggest /clear". Known gap: no metrics file -> Stop returns before step 2 (same as the wall path).
+   (d) land in the main checkout (live) by patch apply, with c5.
 1. c3 RECOMPILED (Owner 2026-10-06: "Fix the gate, skip c3"; the 1.7M c3 allocation is dropped): make V-SBG-LATENCY in
    tools/test_session_budget_guard.py judge the MIN of 3 incremental calls (append one line before each) against 50 ms;
    keep the detail line printing all three. Red control: a mutant guard with a 60 ms busy-wait in advance() must FAIL

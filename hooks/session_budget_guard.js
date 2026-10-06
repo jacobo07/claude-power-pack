@@ -37,7 +37,9 @@ const path = require('path');
 const SID_RE = /^[A-Za-z0-9._-]{1,128}$/;
 const UK = ['input_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens', 'output_tokens'];
 const PROGRESS_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
-const EXEMPT_CMD = /rollover\.py|mission_spend\.py|session-budget-/;
+// session_checkpoint.py is /kclear's writer: the breaker tells the model to rotate, so it must not
+// block the seal it asked for (measured live 2026-10-06, d64f90b2).
+const EXEMPT_CMD = /rollover\.py|mission_spend\.py|session_checkpoint\.py|session-budget-/;
 const MAX_IDS = 20000;
 const DEFAULT_CALL_RATIO = 1.5;
 const DEFAULT_NOPROGRESS = 25;

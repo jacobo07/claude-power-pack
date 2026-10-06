@@ -63,11 +63,14 @@ allowed-tools:
      Capsule:  <the [capsule] line the tool printed>
    ```
 
-5. **Only if the tool printed `[capsule] SAFE_TO_FORGET`**, suggest: `/clear`, then `/kresume` in
-   the fresh session (it claims the capsule, refreshes reality and runs the resume exam — no plan
-   path to paste). On `REFUSED` or `UNKNOWN`, fix what it names and re-run `/kclear`; **do not
-   suggest /clear** — the context would be destroyed without a verified checkpoint
-   (spec `vault/specs/interactive-context-rollover.md`).
+5. **Only if the tool printed `[capsule] SAFE_TO_FORGET`**, end the response with a SINGLE trailing
+   line, exactly `/clear`, and nothing after it. Do not ask the Owner to type it: the rotation is
+   automatic. On the next Stop the context watchdog re-judges this capsule with `rollover.py gate`,
+   dispatches `/clear` and arms the `/kresume` courier for the fresh session (it claims the
+   capsule, refreshes reality and runs the resume exam — no plan path to paste). This holds for
+   any `/kclear`, not only the one the context wall asked for. On `REFUSED` or `UNKNOWN`, fix what
+   it names and re-run `/kclear`; **never emit /clear** — the context would be destroyed without a
+   verified checkpoint (spec `vault/specs/interactive-context-rollover.md`).
 
 ---
 
