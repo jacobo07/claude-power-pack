@@ -79,7 +79,8 @@ def main() -> int:
               f"unheld={before} held={after['action']}")
 
     # 3. renewal: unheld budget halt renews (control); held is refused, naming the hold.
-    unheld = gm.load("m-pre")
+    # A launched record (epoch 1): a never-launched one is refused on its own (goal-governed C3).
+    unheld = gm.load("m-run")
     unheld = {**unheld, "owner_hold": None}
     check("V-OH-CONTROL-RENEWAL-ALLOWED", gm.renewal_refusal(unheld, BUDGET_HALT, "OK") is None)
     why = gm.renewal_refusal(gm.load("m-blk"), BUDGET_HALT, "OK")
