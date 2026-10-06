@@ -315,11 +315,20 @@ def g2_champ(led, res=None) -> list:
                         out.append(f"G2-CHAMP run6: command {r.get('command')!r} is not the runner's expanded argv {argv}")
     r5, r6 = runs.get("run5"), runs.get("run6")
     rd = ch.get("ratios_derived")
-    if r5 and r6 and isinstance(r5.get("wall_s"), (int, float)) and isinstance(r6.get("wall_s"), (int, float)) \
-            and r6["wall_s"] and r6.get("read_GB"):
-        want = {"wall": round(r5["wall_s"] / r6["wall_s"], 1), "read_GB": round(r5["read_GB"] / r6["read_GB"], 1)}
-        if not isinstance(rd, dict) or any(rd.get(k) != v for k, v in want.items()):
-            out.append(f"G2-CHAMP ratios_derived {rd!r} != {want} recomputed from run5 / run6")
+    if r5 and r6:
+        # a malformed number is a judged failure line, never a KeyError / TypeError out of the judge (WR-02)
+        def num(v):
+            return isinstance(v, (int, float)) and not isinstance(v, bool)
+        bad = [f"{n}.{k} {r.get(k)!r}" for n, r in (("run5", r5), ("run6", r6)) for k in ("wall_s", "read_GB")
+               if not num(r.get(k))] + [f"run6.{k} {r6.get(k)!r}" for k in ("wall_s", "read_GB")
+                                        if num(r6.get(k)) and not r6[k] > 0]
+        if bad:
+            out.append("G2-CHAMP ratios_derived cannot be recomputed: wall_s and read_GB must be numbers "
+                       f"(run6 positive); got {'; '.join(bad)}")
+        else:
+            want = {"wall": round(r5["wall_s"] / r6["wall_s"], 1), "read_GB": round(r5["read_GB"] / r6["read_GB"], 1)}
+            if not isinstance(rd, dict) or any(rd.get(k) != v for k, v in want.items()):
+                out.append(f"G2-CHAMP ratios_derived {rd!r} != {want} recomputed from run5 / run6")
     return out
 
 
@@ -397,7 +406,12 @@ def audit_rules(led, res, roadmap_text, tracked, selftest_fn) -> dict:
         a4.append("A4 the ROADMAP Phases checklist yielded no pillar-to-phase map (unparsable)")
     ids = [p.get("id") for p in fz.get("pillars") or [] if isinstance(p, dict)]
     for p in fz.get("pillars") or []:
-        if isinstance(p, dict) and rmap and sorted(p.get("roadmap_phases") or []) != rmap.get(p.get("id"), []):
+        phases = p.get("roadmap_phases") if isinstance(p, dict) else None
+        # mixed-type or non-list roadmap_phases is a mismatch line, not a TypeError out of sorted()
+        phases = (sorted(phases) if isinstance(phases, list) and all(isinstance(x, int) and not isinstance(x, bool)
+                                                                       for x in phases) else None) \
+            if phases else []
+        if isinstance(p, dict) and rmap and phases != rmap.get(p.get("id"), []):
             a4.append(f"A4 pillar {p.get('id')}: roadmap_phases {p.get('roadmap_phases')!r} != ROADMAP checklist "
                       f"{rmap.get(p.get('id'), [])}")
     a4 += [f"A4 the ROADMAP names pillar {k} in phases {v} but frozen.pillars has no {k}" for k, v in rmap.items()
@@ -781,6 +795,12 @@ def selftest(verbose=True) -> bool:
     mut("champion-evidence-outside-dir", "G2-CHAMP", lambda d: champ(d, "run5")["evidence"][1].update(
         ref="vault/programs/incremental-cognition/gen2/owner-bundle.md"))
     mut("champion-missing", "G2-CHAMP", lambda d: d["frozen"].pop("champion"))
+    # WR-02: a malformed number is a judged failure line, never an exception out of judge()/main()
+    mut("run5-read-GB-removed", "G2-CHAMP", lambda d: champ(d, "run5").pop("read_GB"))
+    mut("run5-read-GB-string", "G2-CHAMP", lambda d: champ(d, "run5").update(read_GB="101.5"))
+    mut("run6-read-GB-null", "G2-CHAMP", lambda d: champ(d, "run6").update(read_GB=None))
+    mut("run6-wall-s-string", "G2-CHAMP", lambda d: champ(d, "run6").update(wall_s="24"))
+    mut("run5-wall-s-bool", "G2-CHAMP", lambda d: champ(d, "run5").update(wall_s=True))
 
     # G2-OPP: lifecycle order and predicted-never-realized on the opportunity rows (outside `frozen`)
     def opp(d):
@@ -862,6 +882,9 @@ def selftest(verbose=True) -> bool:
                  aud(led_with(lambda d: d["reviews"].update(ukdl={"file": REQS_REL})))))
     rows.append(("A4-pillar-O-roadmap-phases-2", "A4", aud(led_with(lambda d: pil(d, "O").update(roadmap_phases=[2])))))
     rows.append(("A4-roadmap-unparsable", "A4", aud(real, roadmap="no checklist here")))
+    # WR-02: mixed-type lists are judged failures, not a TypeError out of sorted()
+    rows.append(("A4-roadmap-phases-mixed-types", "A4",
+                 aud(led_with(lambda d: pil(d, "O").update(roadmap_phases=[1, "x"])))))
     rows.append(("A5-owner-not-tracked", "A5", aud(real, tracked=lambda p: p != "tools/usage_index.py")))
     rows.append(("A6-rule-contains-TBD", "A6", aud(led_with(lambda d: pil(d, "O").update(rule=pil(d, "O")["rule"] + " TBD")))))
     rows.append(("A6-rule-contains-later", "A6", aud(led_with(lambda d: pil(d, "Q").update(rule=pil(d, "Q")["rule"] + " later")))))
