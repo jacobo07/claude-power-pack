@@ -104,5 +104,11 @@
   "C-77",
   "C-80"
  ],
- "learning_paths": []
+ "learning_paths": [
+  "vault/lessons/edd-researcher-context-rent.md",
+  "vault/programs/cognitive-economy/ukdl-candidates.md",
+  ".planning/workstreams/edd/canary/CBR.md",
+  ".planning/workstreams/edd/canary/REFORECAST.md"
+ ],
+ "orchestrator_note": "processed_tokens measured by tools/mission_spend.py in the gate (3,310,496); learning_paths added by the orchestrator"
 }
