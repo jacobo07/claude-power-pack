@@ -138,3 +138,9 @@ GEX44 deploy of C1-C5 still needs the Owner's go before 2026-10-07T05:00Z.
 - Spend: this pane 2,178,039 processed / 15 calls (main thread, 0 subagents), measured with stage0/self_spend.py run under this session id.
   self_spend.py hard-codes sid 87601e81; run it under a substituted id rather than editing the sealed script.
 - Next: Phase 1 (fresh pane): B1 receipt path in cep_gen2, then D1-D8 as ONE driver call.
+
+## Post-E1 Phase 1 DONE (2026-10-06, driver vault/programs/cognitive-economy/gen2/evidence/e1_closeout/e1_closeout.py)
+- B1 42a984fb: cep_gen2 fails a closed experiment without a receipt and re-derives its arithmetic (23/23 mutants).
+- D1-D7 a051c761..1b93539b: gen1 state.B saving 8,477/call (upper_bound); forecast 12,515 (the 12.5k) superseded, -32.3%; plan's 10.8k/22% came from 41,353 B typo (real 37,353 B, net est 9,422); pointer tax ESTIMATED 3,093-4,038/call; payback PAID_BACK (8,784/1,083 laptop main calls, lower bound); gen2 W3 closed with receipt.
+- Evidence: vault/programs/cognitive-economy/gen2/evidence/e1_closeout/README.md. Semantic (UKDL/KV/CBR candidates) not written here.
+- Next: Phase 2 (fresh pane): wake mode in cep_gen2 on a zero-model scheduled task (W1, W2).
