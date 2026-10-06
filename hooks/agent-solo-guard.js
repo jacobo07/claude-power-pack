@@ -428,6 +428,28 @@ async function main() {
     process.exit(2);
   }
 
+  // --- Session cost breaker at dispatch (Gen3 T3 c4) ------------------------
+  // Agent has no dispatcher lane, so session_budget_guard's envelope -- including the new
+  // child's reserve -- is judged HERE, before the child starts. Last of the checks and ahead of
+  // the tracker entry, so a denied dispatch does not hold this session's solo slot. Fail-open:
+  // a budget-guard bug or a missing file never blocks a dispatch, it is logged.
+  // Known gap: the platform gate above exits first on non-Windows hosts.
+  let budget = null;
+  try {
+    budget = require(path.join(__dirname, "session_budget_guard.js")).decide(payload, { dispatch: true });
+  } catch (e) {
+    safeLog(`BUDGET-FAILOPEN\t${e && e.message ? e.message : "unknown"}`);
+  }
+  const hso = budget && budget.hookSpecificOutput;
+  if (hso && hso.permissionDecision === "deny") {
+    const reason = String(hso.permissionDecisionReason || "SESSION BUDGET BREAKER");
+    safeLog(`BLOCK-BUDGET\tsubagent=${subagentType}`);
+    // stderr FIRST (2026-09-15 mute-gate fix): exit 2 reads fd 2.
+    try { process.stderr.write(reason + "\n"); } catch {}
+    process.stdout.write(JSON.stringify({ decision: "block", reason }));
+    process.exit(2);
+  }
+
   const entry = {
     ts: now,
     session_id: sid,
@@ -437,6 +459,7 @@ async function main() {
   tracker.push(entry);
   writeTracker(tracker);
   safeLog(`ALLOW\tsubagent=${subagentType}\thead="${entry.prompt_head}"`);
+  if (hso && hso.additionalContext) process.stdout.write(JSON.stringify(budget));   // the warn advisory
   process.exit(0);
 }
 

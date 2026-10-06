@@ -47,8 +47,15 @@ session-status --transcript <its jsonl> before declaring the next envelope.
    tools/test_session_budget_guard.py judge the MIN of 3 incremental calls (append one line before each) against 50 ms;
    keep the detail line printing all three. Red control: a mutant guard with a 60 ms busy-wait in advance() must FAIL
    it. Run the suite once, commit (~0.3M / 4 calls).
-2. c4: agent-solo-guard calls decide(payload, {dispatch:true}) + red/green; exempt session_checkpoint.py from the
-   breaker; one fresh pp-code-reviewer on the seam. Then c5 landing + live probe.
+2. c4 DONE (session bd2f5752): agent-solo-guard calls decide(payload, {dispatch:true}) after the content checks and
+   before the tracker entry (a denied dispatch holds no solo slot); fail-open on require/decide errors; the warn
+   advisory is printed on allow. AGENT_SOLO_GUARD 25/25; pre-c4 guard exits 0 on the red case (BOM-free stdin; PS 5.1
+   piping adds a BOM and fails BOTH arms open -- use cmd /c "node g.js < p.json"). pp-code-reviewer (Sonnet): APPROVE,
+   0 C/H/M, 2 LOW (advisory test -- added; platform gate skips the budget check off Windows -- known gap).
+   NEXT = c5. Main checkout is at 6124eecf with many foreign dirty files incl. hooks/session_budget_guard.js and
+   tools/test_session_budget_guard.py; main-side commit ed172f48 touched the rollover path since 646c6c86, so use
+   `git diff 646c6c86 -- <9 code paths> | git apply --3way` and inspect every conflict. Host was at 1.6% free RAM at
+   c4 close: measure free RAM before the live probe.
 3. c6-c7 rollover idempotency + checkpoint root; then c8 profile, R6 micro-canary, c11, c12 per the plan.
 
 Start: read the plan file, `git -C C:\Users\User\Apps\pp-gen3-t3 log --oneline -4`, declare the session envelope

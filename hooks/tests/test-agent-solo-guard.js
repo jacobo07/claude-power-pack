@@ -29,7 +29,23 @@ const GUARD = path.join(__dirname, '..', 'agent-solo-guard.js');
 // silently clearing other panes' inflight entries while it ran.
 const STATE = fs.mkdtempSync(path.join(os.tmpdir(), 'aguard-state-'));
 const TRACKER = path.join(STATE, 'agent-solo-tracker.json');
-const ENV = Object.assign({}, process.env, { AGENT_SOLO_STATE_DIR: STATE });
+// GSD_LONG_RUN_STATE_DIR: the session-budget envelope the guard consults at dispatch (c4) is read
+// from here too, never from the live ~/.claude/state.
+const ENV = Object.assign({}, process.env, { AGENT_SOLO_STATE_DIR: STATE, GSD_LONG_RUN_STATE_DIR: STATE });
+delete ENV.CPP_SESSION_BUDGET;
+
+// A declared session envelope with an empty transcript: 0 processed, so only the dispatch
+// reserve can push it past stop. reserve > stop -> deny; reserve < stop -> allow.
+function envelope(sid, childReserve) {
+  const tx = path.join(STATE, `${sid}.jsonl`);
+  fs.writeFileSync(tx, '');
+  fs.writeFileSync(path.join(STATE, `session-budget-${sid}.json`),
+    JSON.stringify({ target: 500, warn: 800, stop: 1000, child_reserve: childReserve }));
+  try { fs.unlinkSync(path.join(STATE, `session-budget-${sid}.state.json`)); } catch (_) { /* fresh */ }
+  return tx;
+}
+const budgeted = (sid, childReserve) => Object.assign(dispatch(BOUNDED),
+  { session_id: sid, transcript_path: envelope(sid, childReserve) });
 
 const BLOCK = 2;
 const ALLOW = 0;
@@ -180,6 +196,34 @@ const CASES = [
   // Unresolvable is UNKNOWN, not incapable: the original demand stands.
   ['long + unresolvable agent + "parent persists" still blocks',
     () => run(as(UNBOUNDED + ' Return the report; the parent persists it.', 'no-such-agent-anywhere')), BLOCK],
+
+  // --- 2026-10-06 Gen3 T3 c4: the session cost breaker at dispatch ---------
+  // Agent has no dispatcher lane; before c4 nothing judged the new child's reserve, so the
+  // pre-c4 guard returns ALLOW on the first case. The green control proves the check is not
+  // simply refusing every budgeted dispatch.
+  ['dispatch whose child reserve passes stop is denied', () => run(budgeted('sbg-red', 5000)), BLOCK],
+  ['dispatch inside the envelope is allowed', () => run(budgeted('sbg-green', 10)), ALLOW],
+  // A denied dispatch must not leave a tracker entry, or it would also block the next one for 30s.
+  ['a budget-denied dispatch does not hold the solo slot', () => {
+    run(budgeted('sbg-slot', 5000));
+    fs.unlinkSync(path.join(STATE, 'session-budget-sbg-slot.json'));   // the Owner lifts the envelope
+    return run(Object.assign(dispatch(BOUNDED), { session_id: 'sbg-slot' }), false);
+  }, ALLOW],
+  // Past warn, far from stop: allowed AND the advisory reaches stdout as parseable JSON
+  // (c4 review LOW: a dropped or malformed print kept every other case green).
+  ['past-warn dispatch is allowed and carries the advisory', () => {
+    const p = budgeted('sbg-warn', 10);
+    fs.writeFileSync(p.transcript_path, JSON.stringify({ type: 'assistant', timestamp: '2026-10-06T10:00:00.000Z',
+      uuid: 'u-w1', message: { id: 'w1', model: 'claude-opus-5-5', content: [{ type: 'text', text: 'x' }],
+        usage: { input_tokens: 900, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, output_tokens: 0 } } }) + '\n');
+    fs.writeFileSync(path.join(STATE, 'session-budget-sbg-warn.json'),
+      JSON.stringify({ target: 500, warn: 800, stop: 1e9, child_reserve: 10 }));
+    resetTracker();
+    const r = spawnSync(process.execPath, [GUARD], { input: JSON.stringify(p), encoding: 'utf8', env: ENV });
+    let ctx = '';
+    try { ctx = JSON.parse(r.stdout).hookSpecificOutput.additionalContext || ''; } catch (_) { /* stays '' */ }
+    return r.status === ALLOW && /SESSION BUDGET/.test(ctx) ? ALLOW : `status=${r.status} stdout=${r.stdout.slice(0, 80)}`;
+  }, ALLOW],
 ];
 
 let pass = 0;
