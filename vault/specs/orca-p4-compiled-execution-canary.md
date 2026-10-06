@@ -1,6 +1,6 @@
 ---
 covers: [orca-p4-canary, compiled-execution, planner-extinction, proof-of-non-work, model-boundary-budget, p4-reforecast]
-status: PROPOSED -- awaiting Owner approval (2026-10-06T20:xxZ, pane ef0d3f77)
+status: APPROVED (Owner "y" 2026-10-06, covers S0 hold, S1 GEX44 deploy, 75M canary cap); S0 DONE (GEX44 seq 9, plan at 05:01Z = none)
 parent: vault/specs/goal-governed-mission-control.md; vault/specs/mission-envelope-and-compiled-wu.md; gen2/evidence/gen3_t2/README.md (T2 canary)
 ---
 

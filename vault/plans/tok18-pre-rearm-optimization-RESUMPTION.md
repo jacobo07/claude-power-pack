@@ -190,3 +190,15 @@ Owner hold (its replacement m-6f7451aefe40 uses the same worktree).
 OPEN code fixes for a fresh pane (re-read HEAD; gsd_mission.py has other writers): (a) render the card at
 epoch 1 when directives exist; (b) effective_workdir follows a no-workstream predecessor only into a worktree
 holding .planning/ROADMAP.md (RED-first test + M6 positive control).
+
+## ORCA P4 COMPILED-EXECUTION CANARY -- APPROVED (Owner "y" 2026-10-06) -- START HERE
+Spec: vault/specs/orca-p4-compiled-execution-canary.md (1c416a50). Authority in the "y": S0 hold, S1 GEX44 deploy,
+canary total cap 75M (over -> hold). S0 DONE: m-eaf2843afb16 owner_hold (GEX44 seq 9; plan_next at 05:01Z = none).
+Next, each in a fresh short-lived context, no Opus parent pane, metered with stage0/self_spend.py under its sid:
+1. S1: find the laptop commits behind spec mission-envelope-and-compiled-wu (c2 set_envelope CLI, c3 wu_packet in
+   launch_prompt) + their test; cherry-pick onto GEX44 live 4db97ab0 in a scratch worktree, run
+   test_gsd_mission_envelope + the GGMC suites there, push to the bare repo, ff the live install, smoke on GEX44.
+2. S2: compile P4 from closure .planning/workstreams/closure/phases/04-continuity-closure-wave-d/04-CONTEXT.md (at
+   closure HEAD 963c53977): obligations + non-work receipts + packets (follow D-08 split) + per-packet token and
+   call budgets; write tools/orca_p4_canary_gate.py FIRST and see it red. Sonnet, cap 7M.
+3. S4: envelope --wu-packet <packet> --token-estimate 40M, token_trip_ratio 1.5, then `release` the hold.
