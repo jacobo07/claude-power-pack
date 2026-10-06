@@ -318,7 +318,11 @@ def make_pick_install(tmp: Path, *, trailer=True, floor_absent=False, spoof=Fals
     (build / "other.txt").write_text("other\n", encoding="utf-8")
     git(build, "add", "-A")
     git(build, "commit", "-q", "-m", "other")
-    if spoof:
+    if spoof == "midline":
+        # the floor's FULL 40-hex inside the exact trailer text, but mid-line in prose: not a trailer line
+        git(build, "commit", "-q", "--allow-empty", "-m",
+            f"docs: prose only, not a pick\n\nsee (cherry picked from commit {floor}) for context, ok?")
+    elif spoof:
         other40 = "0123456789abcdef0123456789abcdef01234567"
         git(build, "commit", "-q", "--allow-empty", "-m", f"spoof\n\n(cherry picked from commit {other40})")
         git(build, "commit", "-q", "--allow-empty", "-m", f"spoof\n\n(cherry picked from commit {floor[:8]})")
@@ -440,6 +444,8 @@ def grp_pp() -> None:
     case("V-ENVPF-PP-UNRELATED-STALE", lambda tmp: make_pick_install(tmp, pick=False), ep.NOT_READY,
          "pp_install_stale", expect_why="does not contain the floor")
     case("V-ENVPF-PP-TRAILER-SPOOF-STALE", lambda tmp: make_pick_install(tmp, spoof=True, floor_absent=True),
+         ep.NOT_READY, "pp_install_stale", expect_why="does not contain the floor")
+    case("V-ENVPF-PP-TRAILER-MIDLINE-STALE", lambda tmp: make_pick_install(tmp, spoof="midline", floor_absent=True),
          ep.NOT_READY, "pp_install_stale", expect_why="does not contain the floor")
     case("V-ENVPF-PP-PICK-REQUIRED-FILE", lambda tmp: make_pick_install(tmp, drop_required=True), ep.NOT_READY,
          "pp_install_stale", expect_why="required files missing")
@@ -887,6 +893,16 @@ def _m_trailer_always_true():
     return _patch(ep, "_has_pick_trailer", lambda sbx, git, install, floor: True)
 
 
+def _m_trailer_unanchored():
+    """The pre-fix matcher: a fixed-string substring match over the whole message, so prose quoting the
+    trailer text is accepted as if it were a trailer line."""
+    def unanchored(sbx, git, install, floor):
+        rc, out, _ = sbx.run([git, "log", "-F", "--grep", f"(cherry picked from commit {floor})", "--format=%H",
+                              "--max-count=1", "HEAD"], cwd=install)
+        return bool(out.strip()) if rc == 0 else None
+    return _patch(ep, "_has_pick_trailer", unanchored)
+
+
 def _m_ancestry_always_false():
     """The 'hash path' dropped: HEAD is never judged to contain the floor by ancestry."""
     return _patch(ep, "_is_ancestor", lambda sbx, git, install, floor: False)
@@ -908,6 +924,8 @@ MUTANTS = [
     ("M9 trailer path always True", _m_trailer_always_true, [grp_pp],
      ["V-ENVPF-PP-UNRELATED-STALE", "V-ENVPF-PP-TRAILER-SPOOF-STALE"]),
     ("M10 ancestry path dropped", _m_ancestry_always_false, [grp_pp], ["V-ENVPF-PP-READY-VIA-ANCESTRY"]),
+    ("M11 trailer match unanchored (mid-line prose accepted)", _m_trailer_unanchored, [grp_pp],
+     ["V-ENVPF-PP-TRAILER-MIDLINE-STALE"]),
 ]
 
 

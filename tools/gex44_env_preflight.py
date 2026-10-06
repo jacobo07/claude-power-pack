@@ -265,10 +265,13 @@ def _is_ancestor(sbx: _Sandbox, git: str, install: str, floor: str):
 
 def _has_pick_trailer(sbx: _Sandbox, git: str, install: str, floor: str):
     """True / False / None: does a commit in HEAD's history carry the exact `-x` trailer
-    `(cherry picked from commit <floor>)`. `floor` is the full 40-hex id (validated by the caller), matched as a
-    fixed string, so an abbreviation or a different sha never matches. Works with the floor OBJECT absent, which
-    is the GEX44 case. rc 0 answers (empty output is False); any other rc is a failure to ask (None)."""
-    rc, out, _ = sbx.run([git, "log", "-F", "--grep", f"(cherry picked from commit {floor})", "--format=%H",
+    `(cherry picked from commit <floor>)` as a WHOLE LINE. `floor` is the full 40-hex id (validated by the
+    caller, so it is regex-safe), so an abbreviation or a different sha never matches. The pattern is anchored
+    `^...$` (default BRE: parentheses and hex are literal; `^`/`$` anchor per message line) and deliberately not
+    `-F`, which is a substring match and would accept a commit whose prose merely quotes the trailer text.
+    Works with the floor OBJECT absent, which is the GEX44 case. rc 0 answers (empty output is False); any other
+    rc is a failure to ask (None)."""
+    rc, out, _ = sbx.run([git, "log", "--grep", f"^(cherry picked from commit {floor})$", "--format=%H",
                           "--max-count=1", "HEAD"], cwd=install)
     return bool(out.strip()) if rc == 0 else None
 
