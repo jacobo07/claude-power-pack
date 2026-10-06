@@ -96,11 +96,11 @@ class Box:
         with open(self.tx, "a", encoding="utf-8") as fh:
             fh.write(text)
 
-    def call(self, cmd="echo hi", tx=True, **env):
+    def call(self, cmd="echo hi", tx=True, guard=None, **env):
         ev = {"session_id": SID, "tool_name": "Bash", "tool_input": {"command": cmd}}
         if tx:
             ev["transcript_path"] = str(self.tx)
-        p = subprocess.run([NODE, "-e", RUNNER, str(GUARD)], input=json.dumps(ev), capture_output=True,
+        p = subprocess.run([NODE, "-e", RUNNER, str(guard or GUARD)], input=json.dumps(ev), capture_output=True,
                            text=True, env=self.env(**env), timeout=60)
         if p.returncode != 0:
             return {"out": "CRASH:" + p.stderr[-300:], "ms": -1}
@@ -209,8 +209,10 @@ def main():
     b = Box(); b.declare(); b.append(row("a", U(5000)))
     tripped = kind(b.call()["out"])
     ex = kind(b.call(cmd="python rollover.py seal")["out"])
+    ck = kind(b.call(cmd="echo '{}' | python session_checkpoint.py record --stdin")["out"])
     kill = kind(b.call(CPP_SESSION_BUDGET="off")["out"])
-    check("V-SBG-EXEMPT", (tripped, ex) == ("deny", "allow"), f"over stop -> {tripped}; rollover.py -> {ex}")
+    check("V-SBG-EXEMPT", (tripped, ex, ck) == ("deny", "allow", "allow"),
+          f"over stop -> {tripped}; rollover.py -> {ex}; session_checkpoint.py (/kclear) -> {ck}")
     check("V-SBG-KILL", kill == "allow", f"CPP_SESSION_BUDGET=off -> {kill}")
 
     # V-SBG-REAL-PARITY (positive control): the largest real transcript on this host
@@ -228,9 +230,26 @@ def main():
         py = ms.session_tokens(snap)
         check("V-SBG-REAL-PARITY", s["tokens"] == py["tokens"] == ms._file_tokens(snap, None) and s["calls"] == py["calls"] and py["tokens"] > 0,
               f"{snap.stat().st_size/1e6:.1f} MB: js {s['tokens']:,}/{s['calls']} py {py['tokens']:,}/{py['calls']}; first full read {r['ms']:.0f} ms")
-        b.append(row("zz-new", U(1)))
-        r2 = b.call()
-        check("V-SBG-LATENCY", 0 <= r2["ms"] < 50, f"incremental call after one appended line: {r2['ms']:.2f} ms (< 50)")
+        # MIN of 3 (Owner 2026-10-06, c3): c2 measured the floor at ~10 ms and the 50-500 ms tails
+        # as host RAM pressure on both arms, so one sample judged the host, not the guard.
+        def incr_ms(guard=None):
+            out = []
+            for i in range(3):
+                b.append(row(f"zz-new-{guard is not None}-{i}", U(1)))
+                out.append(b.call(guard=guard)["ms"])
+            return out
+        lat = incr_ms()
+        check("V-SBG-LATENCY", all(m >= 0 for m in lat) and min(lat) < 50,
+              f"min of 3 incremental calls (one appended line each): {min(lat):.2f} ms (< 50); all {[round(m, 2) for m in lat]}")
+        # Red control: a guard that really is slow (60 ms busy-wait per advance) must fail it.
+        src = GUARD.read_text(encoding="utf-8")
+        site = "function advance(st, transcript, slot) {"
+        mut = b.root / "slow_guard.js"
+        mut.write_text(src.replace(site, site + " const _t0 = Date.now(); while (Date.now() - _t0 < 60) {}"),
+                       encoding="utf-8")
+        slow = incr_ms(guard=mut)
+        check("V-SBG-LATENCY-RED-CONTROL", src.count(site) == 1 and min(slow) >= 50,
+              f"60 ms busy-wait mutant: min {min(slow):.2f} ms (must be >= 50); all {[round(m, 2) for m in slow]}")
 
     # V-SBG-WIRED: canonical and live dispatchers list the guard on all three PreToolUse lanes
     for d in DISPATCHERS:
