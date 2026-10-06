@@ -25,6 +25,7 @@ import importlib.util
 import io
 import json
 import os
+import shlex
 import shutil
 import sqlite3
 import subprocess
@@ -1302,6 +1303,103 @@ def run_real() -> int:
     return run_real_gates(REAL_GATES, "KMEC_REAL_PASS")
 
 
+EXPO_STATE: dict = {}
+
+
+def strace_args(label: str, trace_dir: Path, steps: list, ok_exit: int = 0) -> list:
+    """argv of tools/strace_io_sum.py run: one traced repetition, no untraced walls, KME scope, CostaLuz forbidden."""
+    a = py("tools/strace_io_sum.py", "run", "--label", label, "--repeat", "0", "--trace-repeat", "1",
+           "--trace-dir", str(trace_dir), "--corpus-root", REAL_CORPUS, "--scope-regex", REAL_FILTER,
+           "--forbid-regex", FORBID_RX, "--index-path", REAL_INDEX)
+    if ok_exit:
+        a += ["--ok-exit", "0", "--ok-exit", str(ok_exit)]
+    for st in steps:
+        a += ["--step", st]
+    return a
+
+
+def json_of(res: dict) -> dict:
+    try:
+        return json.loads(res["out"])
+    except ValueError:
+        return {}
+
+
+def exposure_run() -> dict:
+    """certify once, then two traced `population` runs: the challenger (KME-only) and the control (filter + CostaLuz)."""
+    if EXPO_STATE:
+        return EXPO_STATE
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    run = Path(REAL_SCRATCH) / f"exposure-{stamp}"
+    run.mkdir(parents=True, exist_ok=False)
+    cert, plog = run / "kmel.cert.json", run / "pop-path.jsonl"
+    st = EXPO_STATE
+    st["run_dir"] = str(run)
+    st["before"] = {"manifest": corpus_manifest(), "index": file_identity()}
+    q = real_question()
+    st["certify"] = sh(py("wiki/tools/kme_pillars.py", "certify", *q, "--index-db", REAL_INDEX, "--cert", str(cert)))
+    if st["certify"]["rc"] == 0 and cert.is_file():
+        pop = " ".join(["python3", "-I", "wiki/tools/kme_pillars.py", "population"] + [shlex.quote(x) for x in q]
+                       + ["--plan", "challenger", "--index-db", REAL_INDEX, "--cert", str(cert),
+                          "--path-log", str(plog)])
+        st["challenger"] = sh(strace_args("challenger-population", run / "strace", [pop]))
+        ctl = " ".join(["python3", "-I", "wiki/tools/kme_pillars.py", "population"]
+                       + [shlex.quote(x) for x in real_question(REAL_FREEZE, REAL_FILTER + "|CostaLuz")]
+                       + ["--plan", "scoped"])
+        st["control"] = sh(strace_args("control-filter-costaluz", run / "strace", [ctl], ok_exit=3))
+    st["after"] = {"manifest": corpus_manifest(), "index": file_identity()}
+    st["cert_path"], st["path_log"] = str(cert), str(plog)
+    (run / "exposure-run.json").write_text(json.dumps(st, indent=1, sort_keys=True), encoding="utf-8")
+    return st
+
+
+def _traced(res: dict) -> dict:
+    j = json_of(res)
+    t = (j.get("traced") or [{}])[0]
+    return t if t.get("verdict") == "MEASURED" and not t.get("failed") else {}
+
+
+def g_costaluz_zero_real():
+    st = exposure_run()
+    if "challenger" not in st:
+        return False, "certify did not produce a certificate"
+    ch, ct = _traced(st["challenger"]), _traced(st["control"])
+    recs = read_log(st["path_log"])
+    planned = recs[-1]["read_set"]["files"] if recs else None
+    keys = ("forbidden_bytes", "forbidden_opens", "cross_project_bytes", "raw_bytes", "raw_files_opened",
+            "unique_bytes", "index_bytes")
+    half1 = (bool(ch) and ch["forbidden_bytes"] == 0 and ch["forbidden_opens"] == 0 and ch["cross_project_bytes"] == 0
+             and ch["raw_files_opened"] == planned and len(recs) == 1 and recs[0].get("plan_taken") == "index")
+    half2 = bool(ct) and ct["forbidden_bytes"] > 0
+    return half1 and half2, (f"challenger {({k: ch.get(k) for k in keys} if ch else 'UNMEASURED/failed')} "
+                             f"planned_files={planned}; control forbidden_bytes={ct.get('forbidden_bytes')} "
+                             f"forbidden_opens={ct.get('forbidden_opens')} cross_project_bytes="
+                             f"{ct.get('cross_project_bytes')} (halves: challenger={half1} control_fires={half2})")
+
+
+def g_exposure_readonly():
+    st = exposure_run()
+    b, a = st["before"], st["after"]
+    return b == a, (f"manifest before={b['manifest']['sha256'][:12]} after={a['manifest']['sha256'][:12]}; index sha "
+                    f"before={b['index']['sha256'][:12]} after={a['index']['sha256'][:12]} "
+                    f"mtime_ns equal={b['index']['mtime_ns'] == a['index']['mtime_ns']}")
+
+
+EXPOSURE_GATES = [
+    ("V-KMEC-COSTALUZ-ZERO-REAL", g_costaluz_zero_real),
+    ("V-KMEC-EXPOSURE-READONLY", g_exposure_readonly),
+]
+
+
+def run_real_exposure() -> int:
+    if real_prereq() == "" and not (shutil.which("strace") or os.path.exists("/usr/bin/strace")):
+        for name, _fn in EXPOSURE_GATES:
+            record("SKIP", name, "strace not found")
+        print(summary_line("KMEC_EXPOSURE_PASS"))
+        return 1
+    return run_real_gates(EXPOSURE_GATES, "KMEC_EXPOSURE_PASS")
+
+
 # --------------------------------------------------------------------------- mutation drill
 # A guard that cannot fail proves nothing (RESEARCH Pitfall 9). Each mutant below breaks ONE mechanism of the challenger
 # by replacing a kme_pillars / kme_token_audit attribute, and the gate(s) named beside it must turn red; the unmutated
@@ -1474,5 +1572,7 @@ if __name__ == "__main__":
         sys.exit(run_drill())
     elif "--real" in _argv:
         sys.exit(run_real())
+    elif "--real-exposure" in _argv:
+        sys.exit(run_real_exposure())
     else:
         sys.exit(run_all())
