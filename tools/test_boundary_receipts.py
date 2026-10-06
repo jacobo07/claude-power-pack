@@ -63,6 +63,118 @@ def bash(cmd, result, err=False):
     return ("Bash", {"command": cmd}, result, err)
 
 
+PROJ = Path(r"C:\Users\User\.claude\projects\C--Users-User-Apps-io-ql-story")
+FIX_F = PROJ / "22b08816-e7ad-43d8-829c-b4f6500d1105.jsonl"
+FIX_T = next(iter(sorted(PROJ.glob("886279a8*.jsonl"))), PROJ / "886279a8.jsonl")
+PACKETS = Path(r"C:\Users\User\Apps\io-ql-story\.planning\workstreams\ql-story-tour\packets")
+
+
+def png_bytes(w, h):
+    import struct
+    return b"\x89PNG\r\n\x1a\n" + struct.pack(">I4sIIBBBBB", 13, b"IHDR", w, h, 8, 2, 0, 0, 0) + b"\0" * 20
+
+
+def jpg_bytes(w, h):
+    import struct
+    # SOI, an APP0 segment, then SOF0 (precision 8, height, width, 1 component)
+    return b"\xff\xd8" + b"\xff\xe0" + struct.pack(">H", 6) + b"JFIF" + \
+        b"\xff\xc0" + struct.pack(">HBHHB", 11, 8, h, w, 1) + b"\x01\x11\x00" + b"\xff\xd9"
+
+
+def img_block(data, media):
+    import base64
+    return {"type": "image", "source": {"type": "base64", "media_type": media,
+                                        "data": base64.b64encode(data).decode()}}
+
+
+def raw_image_truth(main: Path):
+    """Independent pass over the raw transcript: image blocks inside tool results, by tool_use_id, no module code."""
+    import base64
+    import hashlib
+    paths = [main] + sorted((main.with_suffix("") / "subagents").glob("*.jsonl"))
+    seen, hashes = set(), []
+    for p in paths:
+        for raw in p.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                row = json.loads(raw)
+            except ValueError:
+                continue
+            msg = row.get("message") if isinstance(row, dict) else None
+            content = msg.get("content") if isinstance(msg, dict) else None
+            for b in content if isinstance(content, list) else []:
+                if isinstance(b, dict) and b.get("type") == "tool_result" and b.get("tool_use_id") not in seen:
+                    seen.add(b.get("tool_use_id"))
+                    inner = b.get("content")
+                    for x in inner if isinstance(inner, list) else []:
+                        if isinstance(x, dict) and x.get("type") == "image":
+                            hashes.append(hashlib.sha256(base64.b64decode(x["source"]["data"])).hexdigest())
+    return hashes
+
+
+def real_receipts(transcript: Path, packet: Path):
+    calls, results = br.read_transcripts(br.transcript_paths(transcript))
+    return br.build_receipts(calls, results, br.load_packet(packet))
+
+
+def image_checks() -> None:
+    # synthetic: dimensions come from the bytes' header, model from the call, identity from the data
+    r = T()
+    r.add([("Read", {"file_path": "a.png"}, [img_block(png_bytes(640, 480), "image/png")]),
+           ("Read", {"file_path": "b.jpg"}, [img_block(jpg_bytes(1800, 1300), "image/jpeg")])])
+    rc = r.run()
+    ev = [e for x in rc for e in x["events"] if e["kind"] == "image_new"]
+    got = sorted((e["media_type"], e["width"], e["height"]) for e in ev)
+    check("V-BR-IMAGE-EVENT-HEADER-DIMENSIONS", got == [("image/jpeg", 1800, 1300), ("image/png", 640, 480)], str(got))
+    check("V-BR-IMAGE-EVENT-CARRIES-MODEL-AND-COUNT", all(e["model"] == "m" for e in ev) and rc[0]["images"] == 2,
+          f"{[e.get('model') for e in ev]} images={rc[0].get('images')}")
+    import hashlib
+    check("V-BR-IMAGE-IDENTITY-IS-DATA-HASH", {e["key"] for e in ev} ==
+          {hashlib.sha256(png_bytes(640, 480)).hexdigest()[:12], hashlib.sha256(jpg_bytes(1800, 1300)).hexdigest()[:12]})
+    # control: text-only transcript yields no image event and a zero image count
+    t = T()
+    t.add([("Read", {"file_path": "a"}, "plain text")])
+    rt = t.run()
+    check("V-BR-TEXT-ONLY-ZERO-IMAGE-EVENTS-CONTROL", count(rt, "image_new") == 0 and rt[0]["images"] == 0)
+    # the same image twice is one event and one duplicate, but two images in the call counts
+    d = T()
+    same = [img_block(png_bytes(10, 10), "image/png")]
+    d.add([("Read", {"file_path": "a.png"}, same), ("Read", {"file_path": "a2.png"}, same)])
+    d.add([("Read", {"file_path": "a.png"}, same)])
+    rd = d.run()
+    check("V-BR-IMAGE-DUPLICATES-COUNT-AS-DUPLICATES", count(rd, "image_new") == 1 and sum(x["image_dups"] for x in rd) == 2
+          and [x["images"] for x in rd] == [2, 1], f"{count(rd, 'image_new')} {[x['image_dups'] for x in rd]}")
+    # an image result with text and a non-image-only result still keeps its text evidence
+    m = T()
+    m.add([("Read", {"file_path": "a"}, [{"type": "text", "text": "caption words"}, img_block(png_bytes(3, 3), "image/png")])])
+    rm = m.run()
+    check("V-BR-MIXED-RESULT-KEEPS-TEXT-EVIDENCE", count(rm, "evidence_new") == 1 and count(rm, "image_new") == 1)
+    # an unparseable image keeps its identity and reports dimensions UNKNOWN (None), never a guess
+    u = T()
+    u.add([("Read", {"file_path": "x"}, [img_block(b"not an image at all", "image/webp")])])
+    eu = [e for x in u.run() for e in x["events"] if e["kind"] == "image_new"]
+    check("V-BR-IMAGE-UNPARSEABLE-DIMENSIONS-UNKNOWN", len(eu) == 1 and eu[0]["width"] is None and eu[0]["height"] is None, str(eu))
+
+    # real fixtures: the module's image events equal an independent pass over the raw transcript
+    for name, fix, pk in (("F", FIX_F, PACKETS / "F.md"), ("T", FIX_T, PACKETS / "T.md")):
+        ok = fix.exists() and pk.exists()
+        check(f"V-BR-REAL-FIXTURE-{name}-EXISTS", ok, f"{fix} {pk}")
+        if not ok:
+            continue
+        truth = raw_image_truth(fix)
+        rc = real_receipts(fix, pk)
+        events = [e for x in rc for e in x["events"] if e["kind"] == "image_new"]
+        total = sum(x["images"] for x in rc)
+        dups = sum(x["image_dups"] for x in rc)
+        check(f"V-BR-REAL-{name}-IMAGE-COUNT-EQUALS-RAW-PASS", total == len(truth) and len(events) + dups == len(truth)
+              and {e["key"] for e in events} == {h[:12] for h in truth},
+              f"events={len(events)} dups={dups} per-call={total} raw={len(truth)} distinct={len(set(truth))}")
+        if name == "F":
+            check("V-BR-REAL-F-IMAGES-ARE-8-WITH-DIMENSIONS", len(truth) == 8 and all(e["width"] and e["height"] for e in events),
+                  str([(e["media_type"], e["width"], e["height"]) for e in events]))
+        else:
+            check("V-BR-REAL-T-TEXT-ONLY-ZERO-IMAGES-CONTROL", len(truth) == 0 and not events, f"raw={len(truth)}")
+
+
 def main() -> int:
     fail_out = "FAILED tests/test_x.py::test_boom - AssertionError: boom\n1 failed"
     r = T()
@@ -152,6 +264,7 @@ def main() -> int:
     check("V-BR-PROSE-CONTEXT-WITHOUT-AFFECTED-COUNTS-NOTHING-CONTROL", count(r.run(prose), "artifact_delta") == 0,
           str(count(r.run(prose), "artifact_delta")))
 
+    image_checks()
     print(f"BR_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

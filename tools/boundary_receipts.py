@@ -14,10 +14,12 @@ Subagent transcripts (<transcript stem>/subagents/*.jsonl) are merged in timesta
 from __future__ import annotations
 
 import argparse
+import base64
 import fnmatch
 import hashlib
 import json
 import re
+import struct
 import sys
 from pathlib import Path
 
@@ -85,6 +87,63 @@ def _result_text(block: dict) -> str:
     return str(c or "")
 
 
+def image_dimensions(data: bytes) -> tuple[int | None, int | None]:
+    """(width, height) from the bytes' own header (PNG, GIF, JPEG SOFn, WebP); (None, None) when not understood."""
+    try:
+        if data[:8] == b"\x89PNG\r\n\x1a\n" and data[12:16] == b"IHDR":
+            return struct.unpack(">II", data[16:24])
+        if data[:6] in (b"GIF87a", b"GIF89a"):
+            return struct.unpack("<HH", data[6:10])
+        if data[:2] == b"\xff\xd8":
+            i = 2
+            while i + 9 < len(data):
+                if data[i] != 0xFF:
+                    i += 1
+                    continue
+                marker = data[i + 1]
+                if marker == 0xFF:
+                    i += 1
+                    continue
+                if marker in (0xD8, 0x01) or 0xD0 <= marker <= 0xD7:
+                    i += 2
+                    continue
+                if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+                    h, w = struct.unpack(">HH", data[i + 5:i + 9])
+                    return w, h
+                i += 2 + struct.unpack(">H", data[i + 2:i + 4])[0]
+        if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+            kind = data[12:16]
+            if kind == b"VP8X":
+                return 1 + int.from_bytes(data[24:27], "little"), 1 + int.from_bytes(data[27:30], "little")
+            if kind == b"VP8L" and data[20] == 0x2F:
+                bits = int.from_bytes(data[21:25], "little")
+                return (bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1
+            if kind == b"VP8 ":
+                w, h = struct.unpack("<HH", data[26:30])
+                return w & 0x3FFF, h & 0x3FFF
+    except (struct.error, IndexError):
+        pass
+    return None, None
+
+
+def _result_images(block: dict) -> list[dict]:
+    """Image blocks of a tool result as identity records (key = data hash); the pixel data is never kept."""
+    c, out = block.get("content"), []
+    for x in c if isinstance(c, list) else []:
+        if not (isinstance(x, dict) and x.get("type") == "image"):
+            continue
+        src = x.get("source") if isinstance(x.get("source"), dict) else {}
+        try:
+            data = base64.b64decode(src.get("data") or "")
+        except (ValueError, TypeError):
+            data = b""
+        w, h = image_dimensions(data)
+        sha = hashlib.sha256(data).hexdigest()
+        out.append({"sha": sha, "key": sha[:12], "media_type": src.get("media_type"),
+                    "width": w, "height": h, "bytes": len(data)})
+    return out
+
+
 def read_transcripts(paths: list[Path]) -> tuple[list[dict], dict]:
     calls: dict = {}
     results: dict = {}
@@ -116,7 +175,8 @@ def read_transcripts(paths: list[Path]) -> tuple[list[dict], dict]:
             elif isinstance(content, list):
                 for b in content:
                     if isinstance(b, dict) and b.get("type") == "tool_result":
-                        results[b.get("tool_use_id")] = {"text": _result_text(b), "is_error": bool(b.get("is_error"))}
+                        results[b.get("tool_use_id")] = {"text": _result_text(b), "is_error": bool(b.get("is_error")),
+                                                         "images": _result_images(b)}
     return sorted(calls.values(), key=lambda c: c["ts"]), results
 
 
@@ -168,6 +228,7 @@ def build_receipts(calls: list[dict], results: dict, packet: dict, *, since: str
     test_state: dict = {}
     seen_sigs: set = set()
     seen_adv: set = set()
+    seen_images: set = set()
     closed: set = set()
     receipts = []
     for call in calls:
@@ -176,11 +237,20 @@ def build_receipts(calls: list[dict], results: dict, packet: dict, *, since: str
         u = call["usage"] or {}
         context = int(u.get("input_tokens") or 0) + int(u.get("cache_read_input_tokens") or 0) \
             + int(u.get("cache_creation_input_tokens") or 0)
-        events, advancements, dups = [], [], 0
+        events, advancements, dups, n_images, img_dups = [], [], 0, 0, 0
         for t in call["tools"]:
             name, inp = t.get("name"), t.get("input") or {}
-            res = results.get(t.get("id"), {"text": "", "is_error": False})
+            res = results.get(t.get("id"), {"text": "", "is_error": False, "images": []})
             text = res["text"]
+            for im in res.get("images", []):
+                n_images += 1
+                if im["sha"][:12] in seen_images:
+                    img_dups += 1
+                else:
+                    seen_images.add(im["sha"][:12])
+                    events.append({"kind": "image_new", "key": im["sha"][:12], "media_type": im["media_type"],
+                                   "width": im["width"], "height": im["height"], "bytes": im["bytes"],
+                                   "model": call["model"]})
             if name in EDIT_TOOLS:
                 path = str(inp.get("file_path") or "")
                 if not path or not _glob_match(path, packet["globs"]):
@@ -253,7 +323,7 @@ def build_receipts(calls: list[dict], results: dict, packet: dict, *, since: str
                          "processed": context + int(u.get("output_tokens") or 0),
                          "tools": [t.get("name") for t in call["tools"]], "unit": packet["unit"],
                          "consumer_claims": list(packet["claims"]), "events": events,
-                         "advancements": advancements, "duplicates": dups})
+                         "advancements": advancements, "duplicates": dups, "images": n_images, "image_dups": img_dups})
     return receipts
 
 
