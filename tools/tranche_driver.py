@@ -46,7 +46,26 @@ def check(p, sid, spend_fn=spend, run_fn=run):
     return c, s
 
 
-def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run_fn=run, launch_fn=None, log=print):
+def calls_for(sid, stop, feas_fn=None):
+    """Largest call count session-declare will admit under `stop`, priced at the guard's own measured per-call
+    context (not a fixed 110k). 0 = nothing fits; None = cost unknown (the declare will refuse)."""
+    if feas_fn is None:
+        sys.path.insert(0, str(REPO / "tools"))
+        import mission_spend as ms
+        feas_fn, g, r = ms.feasibility, ms.DEFAULT_GROWTH_PER_CALL, ms.DEFAULT_RESERVE_CALLS
+    else:
+        g, r = 2_100, 2
+    f = feas_fn(sid, stop, 1)
+    if f.get("per_call") is None:
+        return None
+    n = 0
+    while (f["spent"] + (n + 1 + r) * f["per_call"] + g * (n + 1 + r) * (n + 2 + r) // 2) <= stop:
+        n += 1
+    return n
+
+
+def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run_fn=run, launch_fn=None, log=print,
+          calls_fn=calls_for):
     claude = shutil.which("claude") or "claude"
     launch_fn = launch_fn or (lambda argv, prompt: run(argv, 3600, prompt))
     for p in packets:
@@ -55,7 +74,13 @@ def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run
             res["steps"][p["step"]] = {"verdict": "REFUSED_OVER_CAP", "total_before": total, "cap": p["cap"]}
             log(f"{p['step']} REFUSED_OVER_CAP total_before={total:,} step_cap={p['cap']:,} limit={cap - reserve:,}")
             break
-        sid, calls = str(uuid.uuid4()), max(1, p["cap"] // PER_CALL)
+        sid = str(uuid.uuid4())
+        calls = calls_fn(sid, p["cap"])
+        if calls == 0:
+            res["steps"][p["step"]] = {"verdict": "REFUSED_INFEASIBLE", "sid": sid, "cap": p["cap"]}
+            log(f"{p['step']} REFUSED_INFEASIBLE sid={sid} cap={p['cap']:,}: not one call fits at the measured floor")
+            break
+        calls = calls or max(1, p["cap"] // PER_CALL)
         d = run_fn([sys.executable, "tools/mission_spend.py", "session-declare", "--session", sid, "--target",
                     str(int(p["cap"] * .8)), "--warn", str(int(p["cap"] * .9)), "--stop", str(p["cap"]),
                     "--calls-estimate", str(calls)])
@@ -64,7 +89,7 @@ def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run
             log(f"{p['step']} ADMISSION_REFUSED sid={sid} declare_rc={d}")
             break
         prompt = (REPO / p["prompt"]).read_text(encoding="utf-8") + (
-            f"\n\nYOUR SESSION ID: {sid}. CAP {p['cap']:,} processed tokens = {calls} calls at ~110k/call. "
+            f"\n\nYOUR SESSION ID: {sid}. CAP {p['cap']:,} processed tokens = {calls} calls at this repo's measured per-call floor. "
             f"Write the receipt {p['receipt']} with a `COMMITS: <hash ...>` line before your last call.\n")
         t0 = time.time()
         lrc = launch_fn([claude, "-p", "--session-id", sid, "--output-format", "json",
