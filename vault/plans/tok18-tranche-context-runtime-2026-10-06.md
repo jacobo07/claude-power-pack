@@ -71,6 +71,9 @@ WU2 0.4M, WU3 1.2M (miner + naive-trim arm + dependency-aware packet on 4 histor
 admissible; no paid canary), WU4 0.3M. If the re-measured remainder is below their sum, WU4 is cut first, then WU3.
 A unit that crosses its cap stops and writes a partial receipt; it never borrows from the next.
 
+- pane c77978f6 final (planning): 5,856,325 processed / 33 calls / 0 subagents (stage0/self_spend.py under that sid). The 6M tranche was exhausted by planning (~98%). Cause: one pane re-sending ~170-190k context per call; 4th overrun with this cause. The "~0.9M for decision calls" estimate was wrong: actual 2.51M / 13 calls.
+- Owner 2026-10-06: new execution envelope 1.2M (WU1 0.6 / WU2 0.4 / WU4 0.2), WU3 deferred until WU1 measures fresh-worker per-call cost; workers run as fresh subagents/panes with compiled packets, never in the planning pane.
+
 | 7f13d6e2 | post-E1 Phase 1 (49 calls) + re-plan scan (this turn) | files 1 calls 53 processed 9,638,790 (ctx 9,574,887 out 63,903) subagent calls 0 subagent ctx 0 | |
 
 ## PROPOSED addendum (pane 7f13d6e2, 2026-10-06; NOT approved; zero-model scan, transcript-measured)
