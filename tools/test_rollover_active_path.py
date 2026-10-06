@@ -70,7 +70,7 @@ def sid() -> str:
 
 def clear(wd, s):
     for f in (wd.ROLLOVER_ASK_FLAG, wd.ROLLOVER_CLEAR_FLAG, wd.ROLLOVER_WAIT_FLAG,
-              wd.ADVISORY_FLAG, wd.SNAPSHOT_FLAG):
+              wd.ROLLOVER_INFLIGHT_FLAG, wd.ADVISORY_FLAG, wd.SNAPSHOT_FLAG):
         wd._clear_flag(s, f)
 
 
@@ -333,6 +333,41 @@ def main() -> int:
     check("V-ROLLACT-SELF-MUTANT-GOES-RED", len(calls) == 2,
           f"mutant dispatched {len(calls)}x for one seal (the real hook: 1x)")
     clear(mut, s)
+
+    print("a /clear in flight is not withdrawn by the next Stop (measured 2026-10-06, eab8a573)")
+    # The incident: Stop 1 dispatched /clear (inbox deferred it, status-busy); Stop 2 at 48 % fell
+    # through to the tier-2 block, the turn re-opened, the daemon WITHDREW the line. Replay it.
+    s = sid(); clear(wd, s); calls.clear()
+    with_verdict("SAFE_TO_FORGET")
+    wd._set_flag(s, wd.ROLLOVER_ASK_FLAG)
+    first = wd._rollover_step(s, str(ROOT), "", 48.0)
+    (Path(tempfile.gettempdir()) / wd.ORCH_THROTTLE_FLAG.format(session_id=s)).write_text(
+        str(time.time()), encoding="utf-8")
+    os.environ["_TEST_CONTEXT_PCT"] = "48.0"
+    try:
+        second = wd.run({"session_id": s, "cwd": str(ROOT), "transcript_path": ""}) or {}
+    finally:
+        os.environ.pop("_TEST_CONTEXT_PCT", None)
+    check("V-ROLLACT-INFLIGHT-STOP-STAYS-QUIET",
+          (first or {}).get("decision") == "block" and len(calls) == 1
+          and second.get("decision") != "block",
+          f"first={(first or {}).get('decision')} dispatches={len(calls)} second={second}")
+    # Control: past the daemon's window the flag no longer mutes the wall.
+    flag = Path(tempfile.gettempdir()) / wd.ROLLOVER_INFLIGHT_FLAG.format(session_id=s)
+    old = time.time() - wd.ROLLOVER_INFLIGHT_MAX_AGE_S - 60
+    os.utime(flag, (old, old))
+    check("V-ROLLACT-INFLIGHT-EXPIRES", not wd._clear_in_flight(s),
+          "a /clear that never landed cannot silence the wall forever")
+    clear(wd, s)
+    # Control: the compact fallback sets CLEAR but is NOT in flight (it needs the tier-2 path).
+    s = sid(); clear(wd, s); calls.clear()
+    with_verdict("NO_CAPSULE")
+    for _ in range(wd.ROLLOVER_MAX_WAIT):
+        wd._rollover_step(s, str(ROOT), "", 75.0)
+    check("V-ROLLACT-FALLBACK-NOT-INFLIGHT",
+          wd._flag_exists(s, wd.ROLLOVER_CLEAR_FLAG) and not wd._clear_in_flight(s),
+          "fallback closes the rollover leg without muting the compact leg")
+    clear(wd, s)
 
     print(f"ROLLACT_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1

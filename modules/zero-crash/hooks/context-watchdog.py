@@ -242,6 +242,11 @@ ADVISORY_FLAG = "claude-ctxwd-adv-{session_id}.flag"
 ROLLOVER_ASK_FLAG = "claude-ctxwd-rollask-{session_id}.flag"
 ROLLOVER_CLEAR_FLAG = "claude-ctxwd-rollclear-{session_id}.flag"
 ROLLOVER_WAIT_FLAG = "claude-ctxwd-rollwait-{session_id}.flag"
+# Set ONLY when `/clear` was actually dispatched (not on the compact fallback, which also sets
+# CLEAR and needs the tier-2 path). While it stands, later Stops of the cycle stay quiet: measured
+# 2026-10-06 (eab8a573) the tier-2 block on the Stop after the dispatch re-opened the turn, the
+# inbox daemon saw the last line change and WITHDREW the /clear, and nothing re-dispatched it.
+ROLLOVER_INFLIGHT_FLAG = "claude-ctxwd-rollinflight-{session_id}.flag"
 ROLLOVER_MAX_WAIT = 3
 # Self-sealed crossing (_self_sealed_step): the capsule mtime already acted on. Never cleared by
 # the rearm, so one seal is acted on at most once.
@@ -305,6 +310,19 @@ def _set_flag(session_id: str, template: str) -> None:
         flag.write_text("1", encoding="utf-8")
     except Exception:
         pass
+
+
+#: = the inbox daemon's ttl (auto-compact-sendkeys-daemon: "ttl=600s"): past it the line is not
+#: being typed any more, so the wall may speak again.
+ROLLOVER_INFLIGHT_MAX_AGE_S = 600
+
+
+def _clear_in_flight(session_id: str) -> bool:
+    flag = Path(tempfile.gettempdir()) / ROLLOVER_INFLIGHT_FLAG.format(session_id=session_id)
+    try:
+        return (_now_ts() - flag.stat().st_mtime) <= ROLLOVER_INFLIGHT_MAX_AGE_S
+    except OSError:
+        return False
 
 
 def _append_progress_md(atomic_write, session_id: str, used_pct: float, remaining_pct, cwd: str, transcript_path: str) -> None:
@@ -1047,6 +1065,7 @@ def _rollover_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict
     g = _rollover_gate(session_id)
     if g["verdict"] == "SAFE_TO_FORGET":
         _set_flag(session_id, ROLLOVER_CLEAR_FLAG)   # before the dispatch: never re-entrant
+        _set_flag(session_id, ROLLOVER_INFLIGHT_FLAG)
         route = _dispatch_continuation(
             session_id, "clear", transcript=transcript, cwd=cwd, used_pct=used_pct,
             cid=f"{session_id}:clear:{int(_now_ts())}",
@@ -1691,6 +1710,13 @@ def _run_inner(event: dict) -> dict:
         if reply is not None:
             return reply
 
+    # A `/clear` is being typed for this cycle: stay quiet, or a block here re-opens the turn and
+    # the inbox daemon withdraws the line it was about to type (ROLLOVER_INFLIGHT_FLAG). Bounded by
+    # the daemon's own delivery window, so a /clear that never lands cannot mute the wall forever.
+    if _rollover_active() and _clear_in_flight(session_id):
+        _ledger(session_id, "rollover_stop_quiet_inflight", used_pct=used_pct)
+        return {}
+
     early = _overlay_first()
     if early:
         _LAST.pop("used_pct", None)   # heartbeat as before the move: legacy path never reached
@@ -1701,7 +1727,7 @@ def _run_inner(event: dict) -> dict:
         _clear_flag(session_id, ADVISORY_FLAG)
         # A new cycle: the rollover chain re-arms with it, or one crossing per session
         # would be the most this could ever do.
-        for _rf in (ROLLOVER_ASK_FLAG, ROLLOVER_CLEAR_FLAG, ROLLOVER_WAIT_FLAG):
+        for _rf in (ROLLOVER_ASK_FLAG, ROLLOVER_CLEAR_FLAG, ROLLOVER_WAIT_FLAG, ROLLOVER_INFLIGHT_FLAG):
             _clear_flag(session_id, _rf)
 
         # Post-compaction resume (gap C). Same low-context window as the rearm,
