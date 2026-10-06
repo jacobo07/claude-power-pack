@@ -4,72 +4,72 @@ Status vocabulary per ROADMAP Phase 1. Built from the zero-model dossier; rows s
 
 | ID | Concept | Status | Producer | Consumer | Evidence / note |
 |---|---|---|---|---|---|
-| C-01 | PRIMARY SOURCE / MISSION BASIS | DATASET_ONLY | - | - | UNKNOWN: no dossier candidate is the owner; meaning of "primary source" not settled by a page |
+| C-01 | PRIMARY SOURCE / MISSION BASIS | DATASET_ONLY | - | - | searched git grep -i -E 'primary source|source of truth|mission basis|ground truth' -- modules tools hooks commands vault/specs governance; hits are generic "single source of truth" doc phrases (commands/knowledge.md:31, cpp-prd-parse.md:19), no operator binding a mission to a primary source |
 | C-02 | EXECUTION MODE DECISION | UNDER_ANOTHER_NAME | modules/gsd_x/tier.py:83 | modules/gsd_x/cli.py:205 | tier.classify measured, injected by the UserPromptSubmit seam; mode choice itself is CLAUDE.md PR-MODE-SELECTION-001 prose |
-| C-03 | PLAN EXPERIENCE | DATASET_ONLY | - | - | UNKNOWN: no candidate; dossier hits are lexical noise |
+| C-03 | PLAN EXPERIENCE | DATASET_ONLY | - | - | searched git grep -i -E 'plan experience|experience plan|user experience of the plan' -- modules tools hooks commands vault/specs governance; zero hits; CDIO-07 experience contract (CLAUDE.md) is about surface behaviour, not plan experience |
 | C-04 | FIRST ACTION — FULL REALITY SCAN | NOT_A_SYSTEM | - | - | process instruction; carried by ROADMAP Phase 1 itself |
 | C-05 | MANDATORY ITERATION STANDARD | DOCUMENTED_ONLY | - | - | source/iteracion-avanzada-universal.txt is a text standard; no executable owner found; conflicts listed in vault/specs/edd.md |
-| C-06 | DELEGATION PRINCIPLE | DATASET_ONLY | - | - | UNKNOWN: no candidate; agent-solo-guard.js (Rule J) governs dispatch bounds, not shown to be this concept |
-| C-07 | OPPORTUNITY DELEGATION PRINCIPLE | DATASET_ONLY | - | - | UNKNOWN: no candidate |
+| C-06 | DELEGATION PRINCIPLE | DATASET_ONLY | - | - | searched git grep -i -E 'delegation principle|delegate rule|delegation bound|opportunit' -- modules tools hooks commands vault/specs governance; hooks/agent-solo-guard.js bounds Agent dispatch (rule J) but encodes no principle of what to delegate; opportunity hits are cost/IAS ledgers |
+| C-07 | OPPORTUNITY DELEGATION PRINCIPLE | DATASET_ONLY | - | - | searched git grep -i -E 'opportunity delegation|delegat.*opportunit|opportunit.*delegat' -- modules tools hooks commands vault/specs governance; zero hits (what-now opportunity-cost ledger is a different concept) |
 | C-08 | MISSION NORTH STAR | UNDER_ANOTHER_NAME | modules/gsd_x/goal/contract.py:113 | modules/gsd_x/goal/convergence.py:323 | goal declare carries intent; goal_closure is the convergence the north star demands |
 | C-09 | ARCHITECTURAL TARGET — SEMANTIC REALITY COMPILATION | DATASET_ONLY | - | - | no owner: obligation.derive_from_facts (obligation.py:454) reads 10 regex facts, no semantic model (research A1) |
 | C-10 | SEMANTIC CONSERVATION LAW | DATASET_ONLY | - | - | gap: 4 operators DO-1..DO-4 are consequence/absent-signal/failure/parity shaped, none state/ownership/projection shaped (research A1, obligation.py:392-397) |
 | C-11 | UNIVERSAL SEMANTIC CONSERVATION FAMILIES | DATASET_ONLY | - | - | same gap as C-10; Phase 3 operator families |
-| C-12 | PURPOSE-FIRST REASONING | DATASET_ONLY | - | - | UNKNOWN: no candidate |
-| C-13 | RELATIONSHIP COMPLETENESS | DATASET_ONLY | - | - | UNKNOWN: no candidate |
-| C-14 | TEMPORARY STATE LAW | DATASET_ONLY | - | - | UNKNOWN: state-lifetime doctrine lives in ~/.claude/rules (outside repo scope); no in-repo operator |
-| C-15 | OWNERSHIP CLOSURE | UNDER_ANOTHER_NAME | tools/usea_ownership_audit.py:144 | tools/verify_spp.py:823 | USEA ownership audit is the canonical-authority checker, run by verify_spp |
+| C-12 | PURPOSE-FIRST REASONING | DATASET_ONLY | - | - | searched git grep -i -E 'purpose-first|why-first|purpose of the|intent-first' -- modules tools hooks commands vault/specs governance; only modules/surface_architecture/archetypes.py:135 INTENT_FIRST, a UI archetype, not a reasoning order |
+| C-13 | RELATIONSHIP COMPLETENESS | DATASET_ONLY | - | - | searched git grep -i -E 'relationship complet|completeness of relation|relation graph complete|edge complet' -- modules tools hooks commands vault/specs governance; zero hits |
+| C-14 | TEMPORARY STATE LAW | DOCUMENTED_ONLY | - | - | searched git grep -i -E 'temporary state|ephemeral state|state lifetime|stale state' -- modules tools hooks commands vault/specs governance; law lives as the state-lifetime-and-incarnation global rule/skill (outside repo, cited vault/specs/interactive-context-rollover.md:29, mission-continuity.md:87); no in-repo operator |
+| C-15 | OWNERSHIP CLOSURE | DATASET_ONLY | - | - | searched git grep -i -E 'lifecycle owner|resource owner|owner scope|owner_pid|release_on_exit|orphan resource|reap' -- modules tools hooks commands vault/specs governance; RECLASSIFIED: usea_ownership_audit checks which module is the architectural authority, not product resource lifecycle. Neighbours only: capsule_mutation_guard.js:145 owner_session (mission-worker authority), tools/kill_zombies.ps1 (ops reaper); none binds a product resource to an owner scope |
 | C-16 | PROJECTION CLOSURE | ALREADY_IMPLEMENTED | modules/gsd_x/mission/closure.py:228 | tools/gsd_x_mission.py:205 | project_closure is a projection that can say no (blocking set: backlog, ACCEPTED, STALE, CANDIDATE, blindness) |
-| C-17 | EDD CANONICAL RESPONSIBILITY | DATASET_ONLY | - | - | UNKNOWN: possibly C-15 owner; not settled |
-| C-18 | COMPLETION LENSES | DATASET_ONLY | - | - | UNKNOWN: no candidate |
-| C-19 | ACTIVE EPISTEMIC CONTROL | DATASET_ONLY | - | - | UNKNOWN: modules/decision_review/epistemic_algebra.py:60 is a candidate, not read |
+| C-17 | EDD CANONICAL RESPONSIBILITY | UNDER_ANOTHER_NAME | tools/usea_ownership_audit.py:144 | tools/verify_spp.py:823 | canonical-responsibility = one canonical architectural authority per concern; USEA audit states and checks it (line 144 message), run by verify_spp (split from C-15 which means product lifecycle ownership) |
+| C-18 | COMPLETION LENSES | DATASET_ONLY | - | - | searched git grep -i -E 'completion lens|done lens|lenses of completion' -- modules tools hooks commands vault/specs governance; only CDIO-05 design-review lenses (vault/specs/cdio-08:17), not completion lenses |
+| C-19 | ACTIVE EPISTEMIC CONTROL | PARTIAL | modules/decision_review/epistemic_algebra.py:66 | modules/decision_review/decision_kernel.py:36 | acis_rank/acis_max join epistemic levels of claims and decision_kernel consumes them; no active control that drives unknowns to resolution for a mission (search: epistemic, unverified assumption) |
 | C-20 | FOUNDER DECISION QUESTIONS | PARTIAL | modules/gsd_x/goal/reconcile.py:179 | tools/gsd_x_goal.py:289 | ESCALATE carries a packet dict at runtime; not a persisted question class, no compression |
-| C-21 | FOUNDER QUESTION COMPRESSION | DATASET_ONLY | - | - | UNKNOWN: frontier_intelligence/session_compiler.py:6 orders candidate questions; not shown to compress Founder questions |
+| C-21 | FOUNDER QUESTION COMPRESSION | PARTIAL | modules/frontier_intelligence/session_compiler.py:10 | modules/liveness/liveness_ledger.py:127 | FD-00 admission ranks candidate questions ADMIT/ROUTE_CHEAPER/DECLINE and orders them; compresses frontier-session questions, not Founder questions; consumer is scheduled preflight (liveness_ledger.py:127) |
 | C-22 | INTENT CLOSURE CHECKPOINTS | PARTIAL | modules/gsd_x/mission/contract.py:141 | tools/gsd_x_mission.py:203 | mission contract projects intent into closure input; no intent-closure checkpoint events |
-| C-23 | ASSUMPTION LIABILITY | DATASET_ONLY | - | - | UNKNOWN: no candidate |
-| C-24 | MULTI-REFERENCE INTELLIGENCE | DATASET_ONLY | - | - | UNKNOWN: no candidate |
+| C-23 | ASSUMPTION LIABILITY | DATASET_ONLY | - | - | searched git grep -i -E 'assumption liab|assumption ledger|assumption debt|unverified assumption' -- modules tools hooks commands vault/specs governance; zero hits (HR-PREMISE-001 premise_verifier checks file/API premises only) |
+| C-24 | MULTI-REFERENCE INTELLIGENCE | DATASET_ONLY | - | - | searched git grep -i -E 'multi-reference|multi-source|several references|reference set' -- modules tools hooks commands vault/specs governance; only knowledge_acquisition MULTI_SOURCE (queues.py:148), corroboration of research sources, not reference intelligence |
 | C-25 | REFERENCE MECHANISM EXTRACTION | PARTIAL | modules/gsd_x/mission/obligation.py:347 | tools/gsd_x_mission.py:65 | reference_is_executable + parity operator DO-4 interrogate a runnable reference; no mechanism extraction |
-| C-26 | REFERENCE FRONTIER | DATASET_ONLY | - | - | UNKNOWN: D2A d2a_engine.py:980 run() is the candidate owner of reference-to-advantage; its callers were not traced |
-| C-27 | EXCELLENCE FRONTIER | DATASET_ONLY | - | - | UNKNOWN: no candidate |
+| C-26 | REFERENCE FRONTIER | PARTIAL | modules/duplicate_to_advantage/d2a_engine.py:980 | commands/d2a-family.md:29 | D2A run(prop) searches the best adjacent capability beyond duplicates, a reference-to-advantage engine; no frontier concept over references; callers traced: commands/d2a-family.md |
+| C-27 | EXCELLENCE FRONTIER | DATASET_ONLY | - | - | searched git grep -i -E 'excellence|ceiling|beyond the reference|exceed the reference|surpass' -- modules tools hooks commands vault/specs governance; hits are auto-test CEILING verdicts, unrelated |
 | C-28 | FOUNDER OPPORTUNITY REVIEW | DATASET_ONLY | - | - | proactive_scanner.py:70 types opportunity; its only importers are a docstring and tests, so no consumer |
 | C-29 | SUPERIORITY CLAIMS REQUIRE PROOF | PARTIAL | modules/gsd_x/mission/closure.py:67 | modules/gsd_x/goal/convergence.py:268 | evaluate_transition refuses narrative as authority; no superiority-claim class |
 | C-30 | EXPECTED REALITY VERSUS OBSERVED REALITY | PARTIAL | modules/gsd_x/mission/closure.py:36 | modules/gsd_x/goal/convergence.py:268 | Verdict is the observed side; the expected side is only the obligation consequence text |
-| C-31 | SEMANTIC RESIDUALS | DATASET_ONLY | - | - | UNKNOWN: closure.py:184 residual_risk is lexical neighbour only |
+| C-31 | SEMANTIC RESIDUALS | PARTIAL | modules/cognitive_os/guarantee_ledger.py:45 | modules/cognitive_os/guarantee_ledger.py:163 | guarantee ledger entries carry a named residual and print it; covers guarantees, not semantic residuals of a closed goal (closure.py:184 residual_risk is lexical) |
 | C-32 | CONTINUOUS BUG → CAPABILITY ASCENSION | PARTIAL | tools/ceps.py:360 | tools/ceps.py:472 | CEPS records errors and distributes; failure-to-capability step absent (convergence.record_failure :240 has no production caller) |
 | C-33 | SEMANTIC INVALIDATION EVENT | PARTIAL | modules/gsd_x/mission/obligation.py:511 | tools/gsd_x_mission.py:93 | invalidate_if_parent_gone fires on fact disappearance only; no defect-triggered event (research A1) |
 | C-34 | DUAL REPAIR OBLIGATION | DATASET_ONLY | - | - | no product+factory pair: FAILURE_DISPOSITIONS (convergence.py:60) has no factory disposition |
 | C-35 | EARLIEST PREVENTABLE POINT | DOCUMENTED_ONLY | - | - | CLAE Part 30 six-level elevation ladder (vault/knowledge_base/clae/CLAE_INDEX.md:46); no code |
-| C-36 | CAPABILITY LEARNING OVER BUG MEMORIZATION | DATASET_ONLY | - | - | UNKNOWN: deep-research E3 capability learnings are research-domain only |
+| C-36 | CAPABILITY LEARNING OVER BUG MEMORIZATION | PARTIAL | modules/deep-research/research_engines.py:25 | commands/cpp-deep-research.md:29 | E3 REALITY: every learning carries the capability it confers; research-domain only, not wired to defect closure |
 | C-37 | SIBLING EXPLOSION SEARCH | DOCUMENTED_ONLY | - | - | CLAE Part 30 section 5 sibling defect campaign (PART_31_failure_family_synthesis.md:204 cites it); no code |
 | C-38 | FORWARD IMMUNITY PROPAGATION | PARTIAL | tools/ceps.py:231 | tools/ceps.py:472 | CEPS M10 forward propagation substrate + M11 distributor; propagates patterns, not capability revisions to live goals |
 | C-39 | SELF-EVOLUTION DEBT | PARTIAL | modules/gsd_x/goal/convergence.py:240 | modules/gsd_x/goal/convergence.py:323 | record_failure + goal_closure block undispositioned failures; no factory disposition and record_failure has no production caller (research A7) |
-| C-40 | CAPABILITY REVISIONING / NO SELF-CORRUPTION | DATASET_ONLY | - | - | UNKNOWN: goal/contract.py:124 revise refuses silent weakening; no production caller of revise found by grep |
+| C-40 | CAPABILITY REVISIONING / NO SELF-CORRUPTION | PARTIAL | modules/gsd_x/goal/contract.py:124 | tools/gsd_x_goal.py:41 | revise refuses a revision that drops acceptance/constraints without weakening_reason; non-test callers searched (git grep revise( in modules tools commands hooks): none for goal revise, tests only; consumer cited only imports the contract module (gsd_x_goal.py:41), revise itself is not exposed |
 | C-41 | FACTORY REGRESSION | PARTIAL | tools/mutation_ratchet.py:85 | tools/verify_spp.py:676 | mutation ratchet at push tier guards existing code; nothing guards the factory as a whole |
 | C-42 | NOVEL HOLDOUTS | DATASET_ONLY | - | - | Phase 2 deliverable; none exist |
-| C-43 | PREVENTION DEPTH RATCHET | DATASET_ONLY | - | - | UNKNOWN: no candidate; modules/tower ratchet is baseline depth, not prevention depth |
+| C-43 | PREVENTION DEPTH RATCHET | DATASET_ONLY | - | - | searched git grep -i -E 'prevention depth|depth ratchet|ratchet' -- modules tools hooks commands vault/specs governance; ratchets found (commands/liveness.md:53, intent-verify.md:20) ratchet debt/criteria, none ratchets depth of prevention |
 | C-44 | EXPECTATION ESCAPE INCIDENTS | DATASET_ONLY | - | - | Phase 2 gold set; SkyParty evidence is external (answer side) |
 | C-45 | BLIND COUNTERFACTUAL REPLAY | PARTIAL | modules/rule_compiler/counterfactual.py:111 | modules/rule_compiler/effect_harness.py:155 | rule-level counterfactual (WOULD_BLOCK/WOULD_NOT_BLOCK); not blind generative replay |
 | C-46 | SKYPARTY FORENSIC GOLD SET | DATASET_ONLY | - | - | Phase 2; tarballs are outside the repo |
-| C-47 | FOUNDER-FIRST SURPRISE | DATASET_ONLY | - | - | UNKNOWN: no candidate |
+| C-47 | FOUNDER-FIRST SURPRISE | DATASET_ONLY | - | - | searched git grep -i -E 'founder-first|surprise|question budget|max_questions' -- modules tools hooks commands vault/specs governance; surprise hits are sqi/reconcile.py:396 executed-but-not-authored sets, unrelated |
 | C-48 | DECISION FRONTIER | PARTIAL | modules/decision_review/decision_record.py:241 | modules/decision_review/decision_kernel.py:291 | DRK registry is the decision provenance owner (1 row); no blocking-packet class and no closure effect |
-| C-49 | REFERENCE CHALLENGE CONTRACT | DATASET_ONLY | - | - | UNKNOWN: no candidate |
-| C-50 | EXCELLENCE / FRONTIER ADVANCEMENT | DATASET_ONLY | - | - | UNKNOWN: no candidate |
+| C-49 | REFERENCE CHALLENGE CONTRACT | DATASET_ONLY | - | - | searched git grep -i -E 'reference challenge|challenge the reference|reference contract' -- modules tools hooks commands vault/specs governance; zero hits |
+| C-50 | EXCELLENCE / FRONTIER ADVANCEMENT | DATASET_ONLY | - | - | searched git grep -i -E 'excellence|frontier advancement|advance the frontier|surpass' -- modules tools hooks commands vault/specs governance; same negative as C-27 |
 | C-51 | EXPECTATION CLOSURE | PARTIAL | modules/gsd_x/mission/obligation.py:478 | modules/gsd_x/mission/closure.py:67 | materiality gate + transition refusal close obligations; expectation-specific closure not distinguished |
 | C-52 | PROOF COMPILATION | PARTIAL | modules/gsd_x/mission/contract.py:205 | tools/gsd_x_mission.py:203 | proof_requirements reads o.proof: dormant (no producer sets proof) and latent AttributeError o.id (research A5) |
 | C-53 | EVIDENCE AUTHORITY | ALREADY_IMPLEMENTED | modules/gsd_x/mission/closure.py:67 | modules/gsd_x/goal/convergence.py:268 | narrative never authority; Verdict carries gate, exit, tree_hash, gate_pin |
-| C-54 | PRODUCTION REALITY GATE | ALREADY_IMPLEMENTED | modules/gsd_x/goal/convergence.py:160 | modules/gsd_x/goal/convergence.py:261 | goal REALITY plane demands in_game/live gate class at accept and at transition; mission-path production_reality is a self-declared string (closure.py:230) |
+| C-54 | PRODUCTION REALITY GATE | PARTIAL | modules/gsd_x/goal/convergence.py:160 | modules/gsd_x/goal/convergence.py:261 | goal path enforces: accept_obligation refuses REALITY obligation without in_game/live gate class (:160), evaluate refuses non-runtime verdict (:261). Mission path does not: closure.py:230 production_reality is a self-declared string defaulting UNPROVEN; only enforced on goal path |
 | C-55 | REALITY CONTRACT | ALREADY_IMPLEMENTED | hooks/scaffold-auditor.js:15 | hooks/hook-dispatcher.js:198 | scaffold-auditor Stop hook, block:true |
-| C-56 | CROSS-DOMAIN TRANSFER | DATASET_ONLY | - | - | UNKNOWN: transfer fixtures exist only as tests (tools/test_gsd_x_mission.py:180); no runtime transfer owner |
+| C-56 | CROSS-DOMAIN TRANSFER | DATASET_ONLY | - | - | searched git grep -i -E 'cross-domain|transferab|transfer to another domain' -- modules tools hooks commands vault/specs governance; only research axis TRANSFERABILITY (research_engines.py:68) and fixtures in tools/test_gsd_x_mission.py:180; no runtime transfer owner |
 | C-57 | EDD BENCHMARK | DATASET_ONLY | - | - | Phase 2 V-EDD-BENCH; neighbour tools/bench_gsd_x_reconstruction.py is a frozen-corpus A/B, not expectation discovery |
-| C-58 | NEGATIVE CONTROLS | DATASET_ONLY | - | - | UNKNOWN: negative-control convention exists (instrument-before-claim); no EDD set |
+| C-58 | NEGATIVE CONTROLS | PARTIAL | hooks/_tests/test-matcher-liveness.js:88 | commands/cost-autopsy.md:46 | positive-control convention is applied per gate test (also commands/cost-autopsy.md:46); no generic enforcer that every EDD check ships a negative control |
 | C-59 | MUTATE EDD ITSELF | DATASET_ONLY | - | - | Phase 3 drills; tools/mutation_drill.py:196 main exists but no EDD operator yet |
 | C-60 | CONSTITUTIVE BASELINE RATCHET | REACHABLE_NOT_EFFECTIVE | modules/tower/ratchet.py:72 | tools/family_baseline.py:115 | chain verify reachable by operator CLI only; promote and donegate have no production caller (research E) |
 | C-61 | BASELINE OF COMPLETENESS FOR FUTURE SOFTWARE | PARTIAL | modules/tower/families.py:88 | modules/gsd_x/cli.py:99 | family baseline injection is live but advisory; completion effect absent |
 | C-62 | UKDL — THREE LEVELS | DOCUMENTED_ONLY | - | - | vault/knowledge_base/ukdl-universal.md PR-/T- ids and HARD_RULES.md exist; the HR/PR/Trap three-level split for EDD staged per D-02, not re-verified |
 | C-63 | KNOWLEDGE VAULT | DOCUMENTED_ONLY | - | - | vault/incidents and vault/lessons are a file convention; no schema validator found (research E) |
 | C-64 | ERROR → IMMUNITY | DOCUMENTED_ONLY | - | - | CLAE Part 30 failure-to-immunity (CLAE_PRODUCTION_GATES.md:79 Immunity Gate); no code |
-| C-65 | SUCCESS → INSTINCT | DATASET_ONLY | - | - | UNKNOWN: no candidate |
-| C-66 | AGENT TEAMS MODE | DATASET_ONLY | - | - | UNKNOWN: carrier agents (agent_spec.py) are a different thing from Agent Teams handoff discipline |
+| C-65 | SUCCESS → INSTINCT | DATASET_ONLY | - | - | searched git grep -i -E 'instinct|reflex|learned habit|promote.*rule' -- modules tools hooks commands vault/specs governance; closest is fable_distillation/ukdl_queue.py:174 promote (claims to rules), manual Owner step, not success-to-instinct |
+| C-66 | AGENT TEAMS MODE | DOCUMENTED_ONLY | - | - | searched git grep -i -E 'handoff block|agent teams' -- modules tools hooks commands vault/specs governance; rule is the HANDOFF BLOCK section of ~/.claude/CLAUDE.md (outside repo); repo hits only vault/specs/cursor-window-session-restoration.md:6 prompt origin; carrier agents differ |
 | C-67 | UWCP | ALREADY_IMPLEMENTED | modules/gsd_x/goal/log.py:138 | modules/gsd_x/goal/sweep.py:278 | goal event log + sweep driver |
 | C-68 | LOOPS / AUTONOMOUS ONE-SHOT CONVERGENCE | ALREADY_IMPLEMENTED | modules/gsd_x/goal/sweep.py:278 | tools/gsd_x_goal.py:211 | autonomous goal sweep, cmd_autonomous |
 | C-69 | CONTEXT HYGIENE | ALREADY_IMPLEMENTED | tools/tco_compact_gate.py:10 | hooks/session_start_hub.js:80 | TCO compact gate spawned at session start |
@@ -80,8 +80,8 @@ Status vocabulary per ROADMAP Phase 1. Built from the zero-model dossier; rows s
 | C-74 | PRODUCER → CONSUMER → COMPLETION EFFECT | DOCUMENTED_ONLY | - | - | Mistake #38 + modules/liveness/reachability.py:725 instrument; aperture is modules/ only so tools/ is never scanned (research E1); no completion consumer |
 | C-75 | DONE GATE — REQUIRED CLOSURES | REACHABLE_NOT_EFFECTIVE | tools/gsd_x_mission.py:259 | capabilities/cpp-gsd-x-mission/capability.json:64 | ship:pre gate is off by default (gsd_x_mission.enabled) and hard-wired to Windows paths (research A4) |
 | C-76 | FOUNDER INTERACTION DURING THE MISSION | NOT_A_SYSTEM | - | - | process instruction; Decision Packets and DECISION_FRONTIER.md are the Phase 5 artifact |
-| C-77 | REFERENCE FRONTIER AMBITION | DATASET_ONLY | - | - | UNKNOWN: no candidate |
+| C-77 | REFERENCE FRONTIER AMBITION | DATASET_ONLY | - | - | searched git grep -i -E 'reference frontier ambition|ambition|beyond reference|exceed reference' -- modules tools hooks commands vault/specs governance; zero hits for ambition; frontier_intelligence concerns frontier-model sessions |
 | C-78 | META-ANALYSIS AT SESSION / EPOCH CLOSURE | DOCUMENTED_ONLY | - | - | vault/specs/uwcp.md:237 lists meta-analysis in the certification record; no code |
 | C-79 | FINAL HANDOFF | NOT_A_SYSTEM | - | - | process instruction; Phase 7 writes HANDOFF.md |
-| C-80 | FINAL KILL-SWITCHES | DATASET_ONLY | - | - | UNKNOWN: no candidate |
+| C-80 | FINAL KILL-SWITCHES | DATASET_ONLY | - | - | searched git grep -i -E 'kill.?switch|CLAUDE_[A-Z_]+=off|disable with' -- modules tools hooks commands vault/specs governance; per-component kill switches exist (closer-guard.js:63, capsule_mutation_guard.js:28) but no EDD kill-switch set or final inventory |
 | C-81 | ULTIMATE CONSTITUTIONAL OUTCOME | NOT_A_SYSTEM | - | - | end-state statement of the mission, judged by Phase 7 |

@@ -1,0 +1,173 @@
+{
+ "mission_id": "m-51b4175db047",
+ "rows": {
+  "C-01": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'primary source|source of truth|mission basis|ground truth' -- mod"
+  },
+  "C-03": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'plan experience|experience plan|user experience of the plan' -- m"
+  },
+  "C-06": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'delegation principle|delegate rule|delegation bound|opportunit' -"
+  },
+  "C-07": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'opportunity delegation|delegat.*opportunit|opportunit.*delegat' -"
+  },
+  "C-12": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'purpose-first|why-first|purpose of the|intent-first' -- modules t"
+  },
+  "C-13": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'relationship complet|completeness of relation|relation graph comp"
+  },
+  "C-14": {
+   "from": "DATASET_ONLY",
+   "to": "DOCUMENTED_ONLY",
+   "basis": "searched git grep -i -E 'temporary state|ephemeral state|state lifetime|stale state' -- mo"
+  },
+  "C-15": {
+   "from": "UNDER_ANOTHER_NAME",
+   "to": "DATASET_ONLY",
+   "basis": "reclassified; searched git grep -i -E 'lifecycle owner|resource owner|owner scope|owner_pid|re"
+  },
+  "C-17": {
+   "from": "DATASET_ONLY",
+   "to": "UNDER_ANOTHER_NAME",
+   "basis": "tools/usea_ownership_audit.py:144"
+  },
+  "C-18": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'completion lens|done lens|lenses of completion' -- modules tools "
+  },
+  "C-19": {
+   "from": "DATASET_ONLY",
+   "to": "PARTIAL",
+   "basis": "modules/decision_review/epistemic_algebra.py:66"
+  },
+  "C-21": {
+   "from": "DATASET_ONLY",
+   "to": "PARTIAL",
+   "basis": "modules/frontier_intelligence/session_compiler.py:10"
+  },
+  "C-23": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'assumption liab|assumption ledger|assumption debt|unverified assu"
+  },
+  "C-24": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'multi-reference|multi-source|several references|reference set' --"
+  },
+  "C-26": {
+   "from": "DATASET_ONLY",
+   "to": "PARTIAL",
+   "basis": "modules/duplicate_to_advantage/d2a_engine.py:980"
+  },
+  "C-27": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'excellence|ceiling|beyond the reference|exceed the reference|surp"
+  },
+  "C-31": {
+   "from": "DATASET_ONLY",
+   "to": "PARTIAL",
+   "basis": "modules/cognitive_os/guarantee_ledger.py:45"
+  },
+  "C-36": {
+   "from": "DATASET_ONLY",
+   "to": "PARTIAL",
+   "basis": "modules/deep-research/research_engines.py:25"
+  },
+  "C-40": {
+   "from": "DATASET_ONLY",
+   "to": "PARTIAL",
+   "basis": "modules/gsd_x/goal/contract.py:124"
+  },
+  "C-43": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'prevention depth|depth ratchet|ratchet' -- modules tools hooks co"
+  },
+  "C-47": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'founder-first|surprise|question budget|max_questions' -- modules "
+  },
+  "C-49": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'reference challenge|challenge the reference|reference contract' -"
+  },
+  "C-50": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'excellence|frontier advancement|advance the frontier|surpass' -- "
+  },
+  "C-54": {
+   "from": "ALREADY_IMPLEMENTED",
+   "to": "PARTIAL",
+   "basis": "modules/gsd_x/goal/convergence.py:160"
+  },
+  "C-56": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'cross-domain|transferab|transfer to another domain' -- modules to"
+  },
+  "C-58": {
+   "from": "DATASET_ONLY",
+   "to": "PARTIAL",
+   "basis": "hooks/_tests/test-matcher-liveness.js:88"
+  },
+  "C-65": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'instinct|reflex|learned habit|promote.*rule' -- modules tools hoo"
+  },
+  "C-66": {
+   "from": "DATASET_ONLY",
+   "to": "DOCUMENTED_ONLY",
+   "basis": "searched git grep -i -E 'handoff block|agent teams' -- modules tools hooks commands vault/"
+  },
+  "C-77": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'reference frontier ambition|ambition|beyond reference|exceed refe"
+  },
+  "C-80": {
+   "from": "DATASET_ONLY",
+   "to": "DATASET_ONLY",
+   "basis": "searched git grep -i -E 'kill.?switch|CLAUDE_[A-Z_]+=off|disable with' -- modules tools ho"
+  }
+ },
+ "unresolvable": [],
+ "boundaries": [
+  {
+   "n": 1,
+   "reason": "PAGE",
+   "purpose": "read packet, rows, dossier sections"
+  },
+  {
+   "n": 2,
+   "reason": "PAGE",
+   "purpose": "synonym greps for 28 UNKNOWN rows"
+  },
+  {
+   "n": 3,
+   "reason": "PROOF_FAILURE",
+   "purpose": "verify cited lines, read C-54 enforcement"
+  }
+ ]
+}
