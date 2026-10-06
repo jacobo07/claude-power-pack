@@ -20,10 +20,15 @@
 // Measured 2026-09-30 (0518ccd0 -> 31ab653e): the require below also imported the hub's
 // 2 s stdin budget. On a starved host the payload arrived later, the read timed out, the
 // payload became {}, and the arm was skipped for want of a session id. The budget is the
-// hub's to own, but this hook's harness timeout is 15 s, so it asks for 10 s (the hub's
-// hard-exit is budget + 3 s = 13 s, still inside 15). Must be set BEFORE the require.
+// hub's to own, so this hook sets its own. Must be set BEFORE the require.
+//
+// Measured 2026-10-01 (bf89cbb9 -> 66f6a312): four panes cleared within minutes, every
+// SessionStart hook took 16-25 s, and the harness cancelled this one at its 15 s timeout
+// (`hook_cancelled ... timedOut:true durationMs:17878`) before it armed or logged. The
+// timeout is now 60 s in settings.json; the budget is 45 s, so the hub's hard-exit
+// (budget + 3 s = 48 s) still lands inside it. On a healthy host this exits in < 1 s.
 if (!process.env.PP_HUB_STDIN_BUDGET_MS) {
-  process.env.PP_HUB_STDIN_BUDGET_MS = '10000';
+  process.env.PP_HUB_STDIN_BUDGET_MS = '45000';
 }
 const hub = require('./session_start_hub.js');
 
