@@ -110,6 +110,33 @@ Plans:
    11,549,646,300) on the GEX44 copy, with dedup reconciled to the unit.
 4. Refresh cost measured (wall, bytes) for a cold build and for a delta.
 
+**Plans:** 6 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 01-01-PLAN.md -- baseline consumer set + Linux identity suite; v5 tracer: zero-reread migration, tool events, call occurrences, typed population; drill M1-M4
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 01-02-PLAN.md -- path identity, declared `_archived` rule (v5-only), skipped-shape census, parser/file failures surfaced, content identity, interrupted/parallel refresh guarantees
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 01-03-PLAN.md -- effective timestamps, cwds, registered pattern hits + user-text hits, project/workstream attribution from a discovered registry
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 01-04-PLAN.md -- population with the champion classifier from the index, time cut, archived rule, typed refusals, reconcile block; backfill-v5, refresh --all, cost counters
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 01-05-PLAN.md -- GEX44 corpus copy: KME-L parity reconciled to the unit, cold/warm/no-op/delta cost, PRG, after-change regression
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 01-06-PLAN.md -- 01-EVIDENCE.md (Product + Intelligence Delta), gen2 state.O, AOP-O row, [O] owner-bundle lines, STATE
+
 ### Phase 2: KME-L challenger
 
 **Goal**: ordinary KME analytics stop rescanning raw history.
