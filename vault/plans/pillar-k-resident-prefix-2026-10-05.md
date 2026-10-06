@@ -141,3 +141,9 @@ Out of slice (named debt): zero-command-bootstrap / first-time-project double ru
   ALWAYS abandoned and floor + card still arrive, abandonment logged with the session (deterministic red pole; case 9
   is the control). Before-pool attribution driven deterministically through runChain(startedAt-5 s), with a
   no-lane control. 24/24; attribution mutant killed. Not covered: main() passing inprocMs (only the e2e can reach it).
+- C5 committed d70f6100; dispatcher LIVE 2026-10-06T17:24:15Z (Owner yes): live == repo 89AC77449B706E63; previous
+  live (C1, B74D5B48...) at ~/.claude/backups/dispatcher-c5-20261006/hook-dispatcher.js.
+- DONE BAR (Owner 2026-10-06, replaces ">=20 with 0 before-pool"): >=20 real SessionStarts after 12:37Z, every one
+  `cards DONE via=inproc` (0 lost cards, 0 `via=hub`, 0 INPROC-*-FAILED). Before-pool / after-deadline hub
+  abandonments are REPORTED as a count with host free-RAM, judged against host pressure, not a blocker.
+  Progress at 17:24Z: 7/20, cards 7/7. Then the closing K probe.
