@@ -11,7 +11,13 @@ session-status --transcript <its jsonl> before declaring the next envelope.
   (SBT 6/6 re-run before commit). c0 = the plan file + this file.
 
 ## Open facts (verify, do not trust)
-- V-SBG-LATENCY 103 ms > 50 ms on the legacy suite: flake vs readdir/stat cost not separated.
+- c2 DONE (session d64f90b2, 2026-10-06): V-SBG-LATENCY is NOT an S2 regression. Suite 5x interleaved: 646c6c86
+  min 6.9 / p50 42.9 / 2 fails, HEAD min 45.6 / p50 119.1 / 4 fails (rank-sum U=19/25, not separable). In-process
+  decide() A/B, 60x interleaved, 20k-row transcript: base min 10.05 p50 168.6, HEAD min 11.24 p50 159.5 -> S2 adds
+  ~1 ms. Floor ~10 ms = the 20k-id state round-trip (read+parse ~4, Set ~4, stringify+write ~3; tiny state 1.8);
+  tails 50-500 ms = host RAM pressure (3.8% free at session start) on both arms. Scripts: session scratchpad
+  c2_latency.py / c2_bench.js / c2_parts.js. Consequence: c3 as written (skip readdir/stat over the known child set)
+  saves ~1 ms; the hot path is the ids round-trip. c3 needs an Owner decision before any edit.
 - Main checkout holds ANOTHER pane's uncommitted hunk in hooks/session_budget_guard.js and
   tools/test_session_budget_guard.py: land by `git diff 646c6c86..HEAD -- <paths> | git apply --3way` there, commit with
   `git apply --cached` of the same patch; never commit or overwrite the foreign hunk.
