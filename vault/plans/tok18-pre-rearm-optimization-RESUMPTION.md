@@ -114,3 +114,18 @@ rotation = its 17:42Z budget renewal (carries estimate + note). Stopped: 23.07M 
 Next (fresh pane, <=4M): C5 write-on-change sleep (launch_held / provider_held); C6 `status --surface`;
 flip CPP_MISSION_BOUNDED_RENEWAL to enforce after shadow rows; deploy C1-C4 to GEX44 live install BEFORE
 2026-10-07T05:00Z (m-eaf2843afb16 launches unbounded then) -- Owner call; UKDL/Vault entries.
+
+## Post-E1 Phase 0 DONE (2026-10-06, pane e0332e3a, read-only, HEAD a5a5e91)
+- Mission Compiler: no code. Only `modules/crawl_os/mission_compiler.py`, PLANNED for crawl intent (another domain). Not an owner.
+- Context Compiler: ABSENT, as recorded in `vault/programs/skill-capability/ledger.json` row L (deferred to cognitive-economy).
+- GSD X: `modules/gsd_x/goal/brief.py::compile_brief` is deterministic, but it builds epoch briefs from the GOAL LOG. It does
+  not build planner packets from the git tree, so it does not own B3. B3 stays EXTEND `tools/source_packet.py` (build/build_context/persist).
+- gen2 ledger writer: none in code. `tools/cep_gen2.py` (LEDGER_REL) only reads and checks it (not_before, obligations);
+  the ledger is edited by commits. B1 adds the receipt check to cep_gen2 `check`; D1-D7 writes go in the driver, not a new owner.
+- Wake carrier: no wait/wake evaluator exists (`not_before` only in cep_gen2). Zero-model daily tasks: PP-LivenessCheck 09:00
+  (liveness_ledger.py --report; mixes concerns), PP-Tower-Capsules 03:45, PP-Vault-Summarize 02:00, PP-SessionTitles 04:00.
+  Not PP-SelfEval: pp_eval night spends model quota, which would break the wait test. Phase 2 picks one of these (recommend
+  a `wake` mode in cep_gen2 invoked by an existing zero-model task's command line); still no new task.
+- Spend: this pane 2,178,039 processed / 15 calls (main thread, 0 subagents), measured with stage0/self_spend.py run under this session id.
+  self_spend.py hard-codes sid 87601e81; run it under a substituted id rather than editing the sealed script.
+- Next: Phase 1 (fresh pane): B1 receipt path in cep_gen2, then D1-D8 as ONE driver call.
