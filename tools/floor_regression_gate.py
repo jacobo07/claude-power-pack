@@ -1118,10 +1118,16 @@ def unmeasured_tokens_verdict(axis, chars_only):
             "pass --chars-only to accept a chars-only comparison")
 
 
-def compare(ref, now, chars_only=False):
+def compare(ref, now, chars_only=False, admit_cwd=False):
     rp0, np0 = ref.get("provenance", {}), now["provenance"]
     differing = [f for f in ("plane", "platform", "install_home", "cwd")
                  if _comparable_value(rp0.get(f)) != _comparable_value(np0.get(f))]
+    cwd_admitted = None
+    if admit_cwd and differing == ["cwd"]:
+        # Explicit, reported admission (never silent): only a cwd difference is admitted; plane, platform and
+        # install_home still refuse. Project-scope rows then compare two different projects and say so.
+        cwd_admitted = {"ref": rp0.get("cwd"), "now": np0.get("cwd")}
+        differing = []
     if differing:
         raise Unmeasurable("not_comparable", "fields differ: " + ", ".join(differing))
     gone = absent_layers(ref, now)
@@ -1182,6 +1188,7 @@ def compare(ref, now, chars_only=False):
         "detail": detail,
         "rows": rows, "findings": findings, "explained": explained, "scope_deltas": scope_deltas,
         "tokens_axis": axis,
+        "cwd_admitted": cwd_admitted,
         "ratchet_hint": ref_total > 0 and (ref_total - now["total_chars"]) >= TOTAL_PCT * ref_total,
         "totals": {"ref": ref_total, "now": now["total_chars"], "delta": now["total_chars"] - ref_total},
         "window": {"ref_sha256": rp.get("window_sha256"), "now_sha256": np_["window_sha256"],
@@ -1219,6 +1226,9 @@ def render(r):
         lines.append(r.get("detail", ""))
     if "totals" in r:   # a comparison was made (UNMEASURABLE tokens_unmeasured carries one too)
         t = r["totals"]
+        if r.get("cwd_admitted"):
+            ca = r["cwd_admitted"]
+            lines.append(f"CWD_ADMITTED ref={ca['ref']} now={ca['now']} (--admit-cwd: project-scope rows span two projects)")
         lines.append(f"FLOOR total_chars ref={t['ref']} now={t['now']} delta={_s(t['delta'])}")
         w = r["window"]
         lines.append(f"WINDOW ref_sha256={str(w['ref_sha256'])[:12]} now_sha256={str(w['now_sha256'])[:12]} "
@@ -1275,12 +1285,15 @@ def build_parser():
                     help="--check only: accept a comparison whose tokens axis could not be compared (no model call, or a "
                          "different prompt) as WITHIN_BOUND_CHARS_ONLY exit 0; without it that is exit 2 tokens_unmeasured. "
                          "A tokens axis that CAN be compared is still enforced")
+    ap.add_argument("--admit-cwd", action="store_true",
+                    help="--check only: admit a working directory that differs from the reference's (organic sessions); "
+                         "reported as CWD_ADMITTED. plane / platform / install_home differences still exit 2")
     ap.add_argument("--replace", action="store_true")
     ap.add_argument("--json", action="store_true")
     return ap
 
 
-JSON_KEYS = ("verdict", "exit", "reason", "rows", "findings", "explained", "scope_deltas", "tokens_axis",
+JSON_KEYS = ("verdict", "exit", "reason", "rows", "findings", "explained", "scope_deltas", "tokens_axis", "cwd_admitted",
              "ratchet_hint", "reference", "provenance", "caveats", "detail", "probe_error")
 
 
@@ -1316,6 +1329,8 @@ def main(argv=None):
         redact = load_redactor()
         if args.chars_only and not args.check:
             raise Unmeasurable("chars_only_without_check", "--chars-only only applies to --check")
+        if args.admit_cwd and not args.check:
+            raise Unmeasurable("admit_cwd_without_check", "--admit-cwd only applies to --check")
         if args.write_reference:
             precheck_write(args.write_reference, args.replace)
             path, src = resolve_source(args)
@@ -1339,7 +1354,7 @@ def main(argv=None):
             now = measure(path)
             health = refuse_degraded(now["provenance"]["session_id"], "the checked floor",
                                      now["provenance"].get("first_call_at"))
-            result = unverified_green(compare(ref, now, chars_only=args.chars_only), health)
+            result = unverified_green(compare(ref, now, chars_only=args.chars_only, admit_cwd=args.admit_cwd), health)
             result["window_health"] = health
             rp = ref.get("provenance", {})
             result["provenance"] = {**stamp_source(now["provenance"], src), "probe_view": now["probe_view"]}

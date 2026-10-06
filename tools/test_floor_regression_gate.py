@@ -1322,6 +1322,30 @@ def g_not_comparable():
     return (not why), "; ".join(why) or "plane / cwd / platform / install_home each refuse and are named"
 
 
+def g_admit_cwd():
+    root, ref_tx, now_tx, ref_json = good_ref("ac")
+    why = []
+    bad = root / "bad-cwd.json"
+    bad.write_text(ref_json.read_text(encoding="utf-8"), encoding="utf-8")
+    edit_json(bad, lambda d: d["provenance"].update(cwd="elsewhere"))
+    rc, out, _ = run_main(["--check", "--reference", bad, "--transcript", now_tx])
+    if not unmeasurable(rc, out, "not_comparable"):
+        why.append(f"without the flag: rc={rc} last={last_line(out)!r}")
+    rc, out, _ = run_main(["--check", "--reference", bad, "--transcript", now_tx, "--admit-cwd"])
+    if rc != 0 or not find_lines(out, "CWD_ADMITTED"):
+        why.append(f"with --admit-cwd: rc={rc} last={last_line(out)!r}")
+    bad2 = root / "bad-plane-cwd.json"
+    bad2.write_text(ref_json.read_text(encoding="utf-8"), encoding="utf-8")
+    edit_json(bad2, lambda d: d["provenance"].update(cwd="elsewhere", plane="elsewhere"))
+    rc, out, _ = run_main(["--check", "--reference", bad2, "--transcript", now_tx, "--admit-cwd"])
+    if not unmeasurable(rc, out, "not_comparable"):
+        why.append(f"plane+cwd with the flag must still refuse: rc={rc} last={last_line(out)!r}")
+    rc, out, _ = run_main(["--write-reference", root / "w-ac.json", "--transcript", now_tx, "--admit-cwd"])
+    if not unmeasurable(rc, out, "admit_cwd_without_check"):
+        why.append(f"--admit-cwd with --write-reference: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "cwd differs: exit 2 without the flag, exit 0 + CWD_ADMITTED with it; plane+cwd still exit 2; flag refused outside --check"
+
+
 def g_write_safety():
     root, ref_tx, now_tx, ref_json = good_ref("ws")
     why = []
@@ -2778,6 +2802,7 @@ GATES_ATTRIBUTION = [
 GATES_SAFETY = [
     ("V-FLOOR-UNMEASURABLE-TABLE", g_unmeasurable_table),
     ("V-FLOOR-NOT-COMPARABLE", g_not_comparable),
+    ("V-FLOOR-ADMIT-CWD", g_admit_cwd),
     ("V-FLOOR-WRITE-SAFETY", g_write_safety),
     ("V-FLOOR-NO-MODEL-CALL", g_no_model_call),
     ("V-FLOOR-NO-SECRET", g_no_secret),
