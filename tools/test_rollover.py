@@ -290,6 +290,27 @@ def main() -> int:
         check("V-ROLLOVER-GATE-GREEN", g["verdict"] == "SAFE_TO_FORGET" and not g["reasons"], g["reasons"])
         check("V-ROLLOVER-GATE-EXIT-0", ro.main(["gate", "--session", gsid]) == 0, "a good capsule may reset")
 
+        # G12: the watchdog's shadow and economic evaluations run for the SAME session after
+        # /kclear sealed (a /kclear commit moves HEAD, the next Stop spawns econ). They must never
+        # write over the capsule the model sealed: the gate would refuse, or /kresume would adopt
+        # a capsule without the model's goal/next/summary.
+        import rollover_econ as econ
+        real_refresh, econ.refresh_prior = econ.refresh_prior, lambda sd=None: None  # the real one rebuilds the prior (~3 min)
+        before = ro.capsule_path(gsid, state).read_bytes()
+        try:
+            srow = ro.observe(gsid, str(repo), str(tp), 40.0, "t1", state_dir=state)
+            econ.evaluate(gsid, str(repo), str(tp), 30.0, None, state_dir=state)
+        finally:
+            econ.refresh_prior = real_refresh
+        led_rows = [json.loads(x) for x in (state / "rollover-ledger.jsonl").read_text(encoding="utf-8").splitlines() if x.strip()]
+        shadow_paths = [r["capsule"].get("path", "") for r in led_rows
+                        if r.get("event") == "shadow_candidate" and r.get("session_id") == gsid]
+        check("V-ROLLOVER-SHADOW-KEEPS-KCLEAR-CAPSULE", ro.capsule_path(gsid, state).read_bytes() == before
+              and ro.gate(gsid, state)["verdict"] == "SAFE_TO_FORGET", ro.gate(gsid, state)["reasons"])
+        # Control: both writers still sealed (a writer that stopped writing would pass the check above).
+        check("V-ROLLOVER-SHADOW-SEALS-ELSEWHERE", len(shadow_paths) == 2 and srow["capsule"].get("sealed")
+              and all(Path(p).is_file() and Path(p).parent.name == "shadow-capsules" for p in shadow_paths), shadow_paths)
+
         # "nothing was ever sealed" is NOT "your capsule went bad": different code, different fix.
         check("V-ROLLOVER-GATE-NO-CAPSULE", ro.gate("zzzzzzzz-9999", state)["verdict"] == "NO_CAPSULE"
               and ro.main(["gate", "--session", "zzzzzzzz-9999"]) == 4, "absent != refused, 4 != 3")

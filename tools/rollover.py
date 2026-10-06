@@ -448,9 +448,12 @@ def _atomic_write(path: Path, data: bytes) -> None:
         raise
 
 
-def capsule_path(session_id: str, state_dir: Optional[Path] = None) -> Path:
+def capsule_path(session_id: str, state_dir: Optional[Path] = None, shadow: bool = False) -> Path:
+    """shadow=True is the watchdog's own evaluation copy. It never shares a path with the capsule
+    the model sealed, which the gate and /kresume read (G12: it used to overwrite it)."""
     safe = re.sub(r"[^A-Za-z0-9_.-]", "_", session_id or "unknown")
-    sub = "mission-capsules" if safe.startswith(MISSION_PREFIX) else "capsules"
+    sub = ("shadow-capsules" if shadow else
+           "mission-capsules" if safe.startswith(MISSION_PREFIX) else "capsules")
     return (state_dir or STATE_DIR) / sub / f"{safe}.json"
 
 
@@ -460,9 +463,9 @@ def mission_key(mission_id: str, epoch) -> str:
     return f"{MISSION_PREFIX}{mission_id}-e{int(epoch)}"
 
 
-def seal(capsule: dict, state_dir: Optional[Path] = None) -> dict:
+def seal(capsule: dict, state_dir: Optional[Path] = None, shadow: bool = False) -> dict:
     """Write, then read back from DISK and compare the hash. Only a read-back is a seal."""
-    path = capsule_path(capsule.get("session_id", ""), state_dir)
+    path = capsule_path(capsule.get("session_id", ""), state_dir, shadow)
     data = json.dumps(capsule, indent=1, sort_keys=True, ensure_ascii=False).encode("utf-8")
     want = hashlib.sha256(data).hexdigest()
     try:
@@ -1142,7 +1145,7 @@ def observe(session_id: str, cwd: str, transcript: Optional[str], used_pct: Opti
             tier: str = "", start_head: Optional[str] = None, state_dir: Optional[Path] = None) -> dict:
     """SHADOW: every step of a rollover except the destruction, recorded."""
     cap = compile_capsule(session_id, cwd, transcript)
-    receipt = seal(cap, state_dir)
+    receipt = seal(cap, state_dir, shadow=True)
     comp = completeness(cap)
     stf = safe_to_forget(receipt, comp)
     usage = cap["usage"]

@@ -217,8 +217,13 @@ Stage 2 CLOSED (Owner "rec", 2026-10-06): no prose-reader re-registration. Reope
 pre-registration whose instrument is fixed before any data, and only if goal-file coverage at T rises
 (today's ceiling is 54 %: most boundaries have no committed goal file yet). Live rollover wiring stays on the
 evidence-interval decide from D1a/D1b; no horizon-driven CONTINUE path is built.
-Remaining debt (unchanged): hooks/rollover_autotype.js hunk unreleased; shadow/econ seal() overwrites a
-/kclear capsule (G12); identity backup deleted only on the typed phrase.
+Remaining debt: hooks/rollover_autotype.js hunk unreleased; identity backup deleted only on the typed phrase.
+G12 CLOSED (2026-10-06): shadow (`observe`) and econ (`rollover_econ.evaluate`) now seal into
+`<state>/shadow-capsules/`, so the /kclear capsule the gate and /kresume read is never overwritten.
+V-ROLLOVER-SHADOW-KEEPS-KCLEAR-CAPSULE + its control V-ROLLOVER-SHADOW-SEALS-ELSEWHERE went red on the old code
+(gate: "capsule on disk is not the bytes that were sealed"), green after; rollover 57/57, econ 19/19, active 15/15,
+capsule-v2 36/36, host-affinity 10/10, mission-capsule 49/49. test_mission_watchdog 14/15: its
+V-MCW-CONTROL-PLAIN-ROLLOVER-KCLEAR fails identically on a clean HEAD worktree -- pre-existing, not this change.
 
 ## Not now
 NEXT: the `decide` horizon/rehydration change (owner rollover.py); `gsd_epoch` 300k static threshold (c2/e9 lane);

@@ -46,7 +46,7 @@ def evaluate(session_id: str, cwd: str, transcript: Optional[str], used_pct: Opt
     """Judge this session now, with its start head; record the row and the decision file."""
     ro = _rollover()
     cap = ro.compile_capsule(session_id, cwd, transcript)
-    receipt = ro.seal(cap, state_dir)
+    receipt = ro.seal(cap, state_dir, shadow=True)
     comp = ro.completeness(cap)
     stf = ro.safe_to_forget(receipt, comp)
     usage = cap["usage"]
