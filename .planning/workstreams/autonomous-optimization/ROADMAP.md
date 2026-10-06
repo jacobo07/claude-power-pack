@@ -152,7 +152,7 @@ Plans:
 4. Stale-cache control: changing a source or the parser version invalidates exactly the affected closure.
 5. If the challenger does not beat the scoped path on repeated queries, narrow or reject it and record why.
 
-**Plans:** 2/6 plans executed
+**Plans:** 3/6 plans executed
 
 Plans:
 **Wave 1**
@@ -162,7 +162,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-03-PLAN.md -- certify (shadow agreement), four invalidation keys, watermark closure, IN-04 guard, post-scan shadow guard, deopt table, drill
+- [x] 02-03-PLAN.md -- certify (shadow agreement), four invalidation keys, watermark closure, IN-04 guard, post-scan shadow guard, deopt table, drill
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
