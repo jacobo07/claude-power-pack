@@ -1,0 +1,19 @@
+{
+  "mission_id": "WU-G1",
+  "commits": ["d4f18ca8", "the commit that carries this receipt and tools/test_grammar_default.py (git log -1 -- this file)"],
+  "tests": {
+    "grammar": "GRAMMAR_PASS=41/41  threshold=41/41",
+    "mc": "MC_PASS=225/225",
+    "envelope": "ENVELOPE_PASS=39/39  threshold=39/39"
+  },
+  "changed_functions": [
+    "gsd_mission.grammar_legacy", "gsd_mission.window_refusal", "gsd_mission.envelope_refusal",
+    "gsd_mission.packet_done_gate", "gsd_mission.packet_gate_passed", "gsd_mission.launch_worker",
+    "gsd_mission.set_envelope", "gsd_mission.supervise", "gsd_mission.arm", "gsd_mission._cli",
+    "gsd_mission.RENEWAL_CARRIED_ENVELOPE", "gsd_epoch.continue_worker"
+  ],
+  "boundaries": [
+    {"n": 1, "reason": "PROOF_FAILURE", "purpose": "nine lifecycle suites red without envelope; added bounded fixture"},
+    {"n": 2, "reason": "PROOF_FAILURE", "purpose": "legacy characterization pinned goldens; set legacy switch, filter bypass events"}
+  ]
+}
