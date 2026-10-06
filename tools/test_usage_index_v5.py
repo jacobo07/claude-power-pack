@@ -1110,6 +1110,313 @@ def grp_migrate_once() -> None:
             c2.close()
 
 
+# -- plan 03 task 1: effective timestamps, cwds, registered patterns, classifier features ----
+
+_KTA: list = []
+
+
+def champion():
+    """wiki/tools/kme_token_audit.py loaded straight from its file by this gate (the gate's own
+    reference for what the champion counts), never through the module under test."""
+    if not _KTA:
+        import importlib.util
+        src = HERE.parent / "wiki" / "tools" / "kme_token_audit.py"
+        spec = importlib.util.spec_from_file_location("kme_token_audit_gate", src)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        _KTA.append(mod)
+    return _KTA[0]
+
+
+def no_ts(line: str) -> str:
+    o = json.loads(line)
+    o.pop("timestamp", None)
+    return json.dumps(o) + "\n"
+
+
+def line_offsets(lines) -> list[int]:
+    offs, pos = [], 0
+    for ln in lines:
+        offs.append(pos)
+        pos += len(ln.encode("utf-8"))
+    return offs
+
+
+def one_file_db(td: Path, lines, store="C--p1", sid="S1"):
+    """projects/<store>/<sid>.jsonl holding `lines`; returns (proj, file, db path)."""
+    proj = td / "projects"
+    f = _write(proj / store / f"{sid}.jsonl", "".join(lines))
+    return proj, f, td / "db" / "ix.sqlite"
+
+
+def grp_ts_inherit() -> None:
+    t1, t2 = T0 + 1 * 3600, T0 + 2 * 3600
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        lines = [no_ts(asst("m1", 0, "S1", tools=[("tuA", "Read", {"file_path": WINPATH})])),
+                 user_prompt("P1", 1, "S1"),
+                 no_ts(asst("m2", 0, "S1", tools=[("tuB", "Read", {"file_path": WINPATH})])),
+                 asst("m3", 2, "S1", tools=[("tuC", "Read", {"file_path": WINPATH})])]
+        proj, f, db = one_file_db(td, lines)
+        con = UX.connect(db)
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            ev = dict(con.execute("SELECT tool_use_id, ts FROM tool_events"))
+            cf = dict(con.execute("SELECT k, ts FROM call_files"))
+            first, last = con.execute("SELECT first_ts, last_ts FROM files WHERE path=?",
+                                      (str(f),)).fetchone()
+            resolved_a = con.execute(
+                "SELECT coalesce(e.ts, f.first_ts) FROM tool_events e JOIN files f ON f.path=e.file "
+                "WHERE e.tool_use_id='tuA'").fetchone()[0]
+            gate("V-UX5-TS-INHERIT",
+                 ev["tuA"] is None and ev["tuB"] == t1 and ev["tuC"] == t2
+                 and cf["m1|rm1"] is None and cf["m2|rm2"] == t1 and cf["m3|rm3"] == t2
+                 and first == t1 and last == t2 and resolved_a == t1,
+                 f"leading ts-less event stores NULL ({ev['tuA']}) and resolves to files.first_ts "
+                 f"({resolved_a} == {t1}); ts-less line inherits ({ev['tuB']} == {t1}); a line with "
+                 f"its own ts keeps it ({ev['tuC']} == {t2}); call_files.ts {cf}; first/last={first}/{last}")
+            with f.open("a", encoding="utf-8") as fh:        # a second pass opens on a ts-less line
+                fh.write(no_ts(asst("m4", 0, "S1", tools=[("tuD", "Read", {"file_path": WINPATH})])))
+            UX.refresh(con, proj, deadline_s=30)
+            ev2 = dict(con.execute("SELECT tool_use_id, ts FROM tool_events"))
+            last2 = con.execute("SELECT last_ts FROM files WHERE path=?", (str(f),)).fetchone()[0]
+            gate("V-UX5-TS-INHERIT-ACROSS-PASSES", ev2["tuD"] == t2 and last2 == t2,
+                 f"a second pass starting with a ts-less line inherits files.last_ts: "
+                 f"{ev2['tuD']} == {t2}; last_ts stays {last2}")
+        finally:
+            con.close()
+
+
+def grp_cwd() -> None:
+    a, sub = WINCWD, WINCWD + "\\sub"
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        lines = [asst("m1", 1.0, "S1", cwd=a), asst("m2", 1.5, "S1", cwd=sub),
+                 user_result(1.6, "S1", "none", "x"), asst("m3", 2.0, "S1", cwd=a)]
+        offs = line_offsets(lines)
+        proj, f, db = one_file_db(td, lines)
+        con = UX.connect(db)
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            rows = {r[0]: r[1:] for r in con.execute(
+                "SELECT cwd, first_off, first_ts FROM file_cwds WHERE file=?", (str(f),))}
+            gate("V-UX5-CWD",
+                 set(rows) == {a, sub} and rows[a] == (offs[0], T0 + 3600)
+                 and rows[sub] == (offs[1], T0 + 1.5 * 3600),
+                 f"two distinct cwds A, A/sub (A seen again adds nothing, the cwd-less line adds "
+                 f"nothing); first_off/first_ts: {rows} want A={offs[0]}, sub={offs[1]}")
+        finally:
+            con.close()
+
+
+def _pattern_tree(td: Path):
+    inp_hit = {"command": "echo KobiMapEngine and KobiMapEngine"}
+    lines = [user_prompt("P1", 1, "S1"),
+             asst("m1", 1.1, "S1", tools=[("tuH", "Bash", inp_hit),
+                                          ("tuN", "Bash", {"command": "ls"}),
+                                          ("tuU", "Bash", {"command": "KMEñ"})])]
+    return one_file_db(td, lines), inp_hit
+
+
+def grp_pattern_source() -> None:
+    kta = champion()
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        (proj, f, db), _ = _pattern_tree(td)
+        con = UX.connect(db)
+        try:
+            r = UX.refresh(con, proj, deadline_s=30)
+            row = con.execute("SELECT regex, flags, source, version FROM patterns WHERE name='kme'"
+                              ).fetchone()
+            pv = con.execute("SELECT pat_ver FROM files WHERE path=?", (str(f),)).fetchone()[0]
+            ps = (con.execute("SELECT v FROM meta WHERE k='pattern_set'").fetchone() or [None])[0]
+            other = UX._pattern_set({"kme": (kta.PATH_KME_RE.pattern, kta.PATH_KME_RE.flags)})
+            same = UX._pattern_set({"kme": (kta.KME_RE.pattern, kta.KME_RE.flags)})
+            gate("V-UX5-PATTERN-SOURCE",
+                 row is not None and row[0] == kta.KME_RE.pattern and row[1] == kta.KME_RE.flags
+                 and pv == ps and ps is not None and same == ps and other != ps
+                 and r.get("pattern_error") is None,
+                 f"patterns.kme regex==KME_RE.pattern: {row and row[0] == kta.KME_RE.pattern}, "
+                 f"flags {row and row[1]}=={kta.KME_RE.flags}; files.pat_ver==meta pattern_set: "
+                 f"{pv == ps}; control: a different regex gives a different pattern_set "
+                 f"({other != ps}); pattern_error={r.get('pattern_error')}")
+        finally:
+            con.close()
+
+
+def grp_pat_hits() -> None:
+    kta = champion()
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        (proj, f, db), inp_hit = _pattern_tree(td)
+        con = UX.connect(db)
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            want = len(kta.KME_RE.findall(json.dumps(inp_hit, ensure_ascii=False)))
+            got = dict(con.execute("SELECT tool_use_id, pat_hits FROM tool_events"))
+            gate("V-UX5-PAT-HITS",
+                 want == 2 and got["tuH"] is not None and json.loads(got["tuH"]) == {"kme": want}
+                 and got["tuN"] is None,
+                 f"two mentions: pat_hits={got['tuH']} want {{'kme': {want}}} (the champion "
+                 f"expression on the same input); control: no hit stores NULL ({got['tuN']})")
+            # the champion serializes with ensure_ascii=False: `KME` followed by a non-ASCII letter
+            # is no word boundary there, but WOULD match in the ASCII-escaped form
+            esc = len(kta.KME_RE.findall(json.dumps({"command": "KMEñ"}, ensure_ascii=True)))
+            raw = len(kta.KME_RE.findall(json.dumps({"command": "KMEñ"}, ensure_ascii=False)))
+            gate("V-UX5-PAT-HITS-SERIALIZATION", esc == 1 and raw == 0 and got["tuU"] is None,
+                 f"ascii-escaped form hits {esc}, champion form hits {raw}; stored {got['tuU']} "
+                 f"(must follow the champion form)")
+        finally:
+            con.close()
+
+
+def _user_line(content, h, **extra) -> str:
+    o = {"type": "user", "timestamp": iso(h), "message": {"role": "user", "content": content}}
+    o.update(extra)
+    return json.dumps(o) + "\n"
+
+
+def grp_user_hits() -> None:
+    kta = champion()
+    human = "please look at KobiMapEngine and KMEIP"
+    cmd = "<command-name>x</command-name> KobiMapEngine KobiMapEngine"
+    skill = "Base directory for this skill: KME KME KME"
+    long_ = "KobiMapEngine " + "x" * 20000
+    listed = [{"type": "text", "text": "KMEIP again"},
+              {"type": "tool_result", "tool_use_id": "t9", "content": "KobiMapEngine"}]
+    lines = [user_prompt("P1", 1, "S1"),
+             _user_line(human, 2), _user_line(cmd, 3), _user_line(skill, 4),
+             _user_line(long_, 5), _user_line("KobiMapEngine meta", 6, isMeta=True),
+             _user_line(listed, 7)]
+    offs = line_offsets(lines)
+    controls = (cmd, skill, long_, "KobiMapEngine meta")
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, f, db = one_file_db(td, lines)
+        con = UX.connect(db)
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            rows = {r[0]: (r[1], r[2]) for r in con.execute(
+                "SELECT off, ts, pat_hits FROM user_hits WHERE file=?", (str(f),))}
+            raw_hits = [len(kta.KME_RE.findall(c)) for c in controls]
+            want = len(kta.KME_RE.findall(human))
+            gate("V-UX5-USER-HITS-FILTER",
+                 want == 2 and all(h > 0 for h in raw_hits) and offs[1] in rows
+                 and json.loads(rows[offs[1]][1]) == {"kme": want}
+                 and rows[offs[1]][0] == T0 + 2 * 3600
+                 and not {offs[2], offs[3], offs[4], offs[5]} & set(rows),
+                 f"human text -> one row with the champion count {want} (rows at offsets "
+                 f"{sorted(rows)}); the four controls (<command-name> in the first 400, skill base "
+                 f"directory in the first 200, length >= 20000, isMeta) all hit in raw text "
+                 f"({raw_hits}) and produce no row")
+            gate("V-UX5-USER-HITS-LIST-SHAPE",
+                 offs[6] in rows and json.loads(rows[offs[6]][1]) == {"kme": 1},
+                 f"a list-content human text item counts, a tool_result item inside it does not "
+                 f"({rows.get(offs[6])})")
+        finally:
+            con.close()
+
+
+def grp_result_text_parity() -> None:
+    kta = champion()
+    shapes = ["plain", "", None, [], {"k": 1}, 7,
+              [{"type": "text", "text": "a"}, {"type": "text", "text": "b"}],
+              [{"type": "text", "text": "x"},
+               {"type": "tool_result", "content": [{"type": "text", "text": "nested"}, "bare"]},
+               {"type": "image", "source": {}}, "bare string", {"type": "unknown", "text": "t"}],
+              [{"type": "tool_result", "content": "inner str"}, {"type": "text"}]]
+    bad = [repr(s)[:40] for s in shapes if UX._result_text(s) != kta.text_of(s)]
+    gate("V-UX5-RESULT-TEXT-PARITY", not bad,
+         f"_result_text == kme_token_audit.text_of on {len(shapes)} shapes (str, None, empty, "
+         f"mixed list with nested tool_result, image, bare strings); differing: {bad}")
+
+
+def grp_pattern_unavailable() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        (proj, f, db), _ = _pattern_tree(td)
+        con = UX.connect(db)
+        undo = _patch(UX, "PATTERN_SOURCES",
+                      (("kme", "wiki/tools/no_such_pattern_source.py", "KME_RE"),))
+        try:
+            r = UX.refresh(con, proj, deadline_s=30)
+            pv = con.execute("SELECT pat_ver FROM files WHERE path=?", (str(f),)).fetchone()[0]
+            hits = [x[0] for x in con.execute("SELECT pat_hits FROM tool_events")]
+            meta_pe = json.loads(con.execute(
+                "SELECT v FROM meta WHERE k='last_refresh_status'").fetchone()[0]).get("pattern_error")
+            gate("V-UX5-PATTERN-UNAVAILABLE",
+                 pv is None and r.get("pattern_error") and meta_pe and all(h is None for h in hits)
+                 and r["status"] == "OK",
+                 f"source cannot load: pat_ver={pv} (typed absence), refresh pattern_error="
+                 f"{r.get('pattern_error')!r}, meta carries it: {bool(meta_pe)}, a hit-bearing input "
+                 f"stores {hits} (never a zero count), the burn index itself stays {r['status']}")
+        finally:
+            undo()
+            con.close()
+    # control: the same fixture with the real source is fully measured
+    with tempfile.TemporaryDirectory() as td2:
+        (proj2, f2, db2), _ = _pattern_tree(Path(td2))
+        con2 = UX.connect(db2)
+        try:
+            r2 = UX.refresh(con2, proj2, deadline_s=30)
+            pv2 = con2.execute("SELECT pat_ver FROM files WHERE path=?", (str(f2),)).fetchone()[0]
+            h2 = con2.execute("SELECT pat_hits FROM tool_events WHERE tool_use_id='tuH'").fetchone()[0]
+            gate("V-UX5-PATTERN-UNAVAILABLE-CONTROL",
+                 pv2 is not None and h2 is not None and not r2.get("pattern_error"),
+                 f"control: with the real source pat_ver={pv2} and the hit is stored ({h2})")
+        finally:
+            con2.close()
+
+
+def grp_pattern_drift() -> None:
+    """A pass under a different pattern never re-tags a file whose earlier rows were measured
+    under the first one: its pat_ver stops matching meta pattern_set (plan 04 refuses on that)."""
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        (proj, f, db), _ = _pattern_tree(td)
+        con = UX.connect(db)
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            pv1 = con.execute("SELECT pat_ver FROM files WHERE path=?", (str(f),)).fetchone()[0]
+            undo = _patch(UX, "PATTERN_SOURCES",
+                          (("kme", "wiki/tools/kme_token_audit.py", "PATH_KME_RE"),))
+            try:
+                with f.open("a", encoding="utf-8") as fh:
+                    fh.write(asst("m2", 2, "S1", tools=[("tuX", "Bash", {"command": "ls"})]))
+                UX.refresh(con, proj, deadline_s=30)
+            finally:
+                undo()
+            pv2 = con.execute("SELECT pat_ver FROM files WHERE path=?", (str(f),)).fetchone()[0]
+            ps = con.execute("SELECT v FROM meta WHERE k='pattern_set'").fetchone()[0]
+            gate("V-UX5-PATTERN-DRIFT-NOT-RETAGGED", pv1 is not None and pv2 != ps,
+                 f"first pass pat_ver={pv1}; after a pass under another pattern the file's "
+                 f"pat_ver={pv2} is not the new pattern_set {ps} (mixed file never claims one set)")
+        finally:
+            con.close()
+
+
+def grp_result_head() -> None:
+    """spawns.result_head (v3 column, kept: v4 data is never dropped) stays at its 200-char
+    ceiling, so the only free text the index holds is bounded."""
+    body = "R" * 5000
+    lines = [user_prompt("P1", 1, "S1"),
+             asst("m1", 1.1, "S1",
+                  tools=[("tuAG", "Agent", {"subagent_type": "Explore", "prompt": "p"})]),
+             user_result(1.2, "S1", "tuAG", body)]
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, f, db = one_file_db(td, lines)
+        con = UX.connect(db)
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            head = con.execute("SELECT result_head FROM spawns WHERE tool_use_id='tuAG'").fetchone()[0]
+            gate("V-UX5-RESULT-HEAD-BOUND", head is not None and len(head) == UX.RESULT_HEAD == 200,
+                 f"spawns.result_head holds {len(head or '')} of {len(body)} chars (ceiling "
+                 f"{UX.RESULT_HEAD}); the column is kept, not widened, not dropped")
+        finally:
+            con.close()
+
+
 GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
           ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text),
@@ -1118,7 +1425,12 @@ GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_identity_fill", grp_identity_fill), ("grp_parse_errors", grp_parse_errors),
           ("grp_partial_line", grp_partial_line), ("grp_file_error", grp_file_error),
           ("grp_content_identity", grp_content_identity), ("grp_crash_resume", grp_crash_resume),
-          ("grp_concurrent_refresh", grp_concurrent_refresh), ("grp_migrate_once", grp_migrate_once))
+          ("grp_concurrent_refresh", grp_concurrent_refresh), ("grp_migrate_once", grp_migrate_once),
+          ("grp_ts_inherit", grp_ts_inherit), ("grp_cwd", grp_cwd),
+          ("grp_pattern_source", grp_pattern_source), ("grp_pat_hits", grp_pat_hits),
+          ("grp_user_hits", grp_user_hits), ("grp_result_text_parity", grp_result_text_parity),
+          ("grp_pattern_unavailable", grp_pattern_unavailable),
+          ("grp_pattern_drift", grp_pattern_drift), ("grp_result_head", grp_result_head))
 
 
 # -- mutation drill ------------------------------------------------------------
@@ -1278,6 +1590,27 @@ def _m_begin_file_always_admits():
     return _patch(UX, "_begin_file", mutant)
 
 
+def _m_ts_inherit_dropped():
+    """M10: the timestamp fallback to the file's last timestamp becomes None (source text)."""
+    return _source_mutant(
+        "tools/usage_index.py",
+        '    ts = own if own is not None else state.get("last_ts")\n',
+        '    ts = own if own is not None else None\n')
+
+
+def _m_pattern_source_drift():
+    """M11: the pattern source names another compiled regex of the same file (in-process patch
+    of PATTERN_SOURCES), so the registered regex is no longer the champion's KME_RE."""
+    return _patch(UX, "PATTERN_SOURCES",
+                  (("kme", "wiki/tools/kme_token_audit.py", "PATH_KME_RE"),))
+
+
+def _m_user_length_guard_removed():
+    """M12: the human-text length guard is removed (source text)."""
+    return _source_mutant("tools/usage_index.py",
+                          "and len(tx) < USER_TEXT_MAX", "and True")
+
+
 MUTANTS = [
     ("M1 _migrate_spawns gated on SCHEMA_VERSION (backfill re-queued)", _m_spawn_backfill_requeued,
      [grp_migrate], ["V-UX5-MIGRATE-ZERO-REREAD"]),
@@ -1297,6 +1630,12 @@ MUTANTS = [
      [grp_content_identity], ["V-UX5-HISTORIES-NOT-MERGED"]),
     ("M9 per-file snapshot check always admits", _m_begin_file_always_admits,
      [grp_concurrent_refresh], ["V-UX5-STALE-SNAPSHOT-SKIPS"]),
+    ("M10 timestamp inheritance dropped", _m_ts_inherit_dropped,
+     [grp_ts_inherit], ["V-UX5-TS-INHERIT"]),
+    ("M11 pattern source drifts to another regex", _m_pattern_source_drift,
+     [grp_pattern_source], ["V-UX5-PATTERN-SOURCE"]),
+    ("M12 human-text length guard removed", _m_user_length_guard_removed,
+     [grp_user_hits], ["V-UX5-USER-HITS-FILTER"]),
 ]
 
 

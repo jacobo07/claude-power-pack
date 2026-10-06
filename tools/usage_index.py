@@ -634,25 +634,116 @@ def _result_text(content) -> str:
     return ""
 
 
+# -- classifier patterns: loaded from the champion's own module, never copied ---------------
+# (name, source file relative to the PP root, attribute holding the compiled regex). The regex
+# and flags are read off the compiled object at ingest; no pattern literal lives in this file.
+PATTERN_SOURCES = (("kme", "wiki/tools/kme_token_audit.py", "KME_RE"),)
+USER_TEXT_MAX = 20000       # the champion's `len(tx) < 20000` guard on a human-typed text
+_PATTERN_MODULES: dict = {}  # source path -> imported module, one import per process per source
+
+
+def _pattern_version(regex: str, flags: int) -> str:
+    return hashlib.sha256(f"{regex}\0{flags}".encode("utf-8")).hexdigest()[:12]
+
+
+def _pattern_set(items: dict) -> str:
+    """Identity of a set of patterns: sha256 over the sorted name/version pairs. `items` is
+    {name: (regex, flags)}; the same text and flags always give the same set, any change gives
+    another one."""
+    pairs = sorted((n, _pattern_version(r, f)) for n, (r, f) in items.items())
+    return hashlib.sha256(json.dumps(pairs).encode("utf-8")).hexdigest()
+
+
+def _load_patterns(con) -> dict:
+    """Register every PATTERN_SOURCES entry in the `patterns` table and meta `pattern_set`.
+    Returns {"compiled": {name: compiled regex}, "set": pattern_set | None, "error": None |
+    "<Class>: <message>"}. Any load failure (file missing, attribute missing, not a compiled
+    regex) registers NOTHING for this pass: compiled is empty, set None, the error is typed, and
+    the files ingested in the pass carry pat_ver NULL (hits unknown, never zero)."""
+    import importlib.util
+    compiled: dict = {}
+    try:
+        for name, rel, attr in PATTERN_SOURCES:
+            mod = _PATTERN_MODULES.get(rel)
+            if mod is None:
+                spec = importlib.util.spec_from_file_location(
+                    "_ux_pattern_" + Path(rel).stem, _PP_ROOT / rel)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                _PATTERN_MODULES[rel] = mod
+            rx = getattr(mod, attr)
+            if not (hasattr(rx, "pattern") and hasattr(rx, "flags") and hasattr(rx, "findall")):
+                raise TypeError(f"{rel}:{attr} is not a compiled regex")
+            compiled[name] = rx
+    except Exception as e:  # noqa: BLE001 -- typed, surfaced as pattern_error
+        return {"compiled": {}, "set": None, "error": f"{type(e).__name__}: {e}"}
+    items = {n: (rx.pattern, rx.flags) for n, rx in compiled.items()}
+    pset = _pattern_set(items)
+    for name, rel, attr in PATTERN_SOURCES:
+        rx = compiled[name]
+        con.execute("INSERT INTO patterns(name,regex,flags,source,version) VALUES(?,?,?,?,?) "
+                    "ON CONFLICT(name) DO UPDATE SET regex=excluded.regex, flags=excluded.flags, "
+                    "source=excluded.source, version=excluded.version",
+                    (name, rx.pattern, rx.flags, f"{rel}:{attr}", _pattern_version(rx.pattern, rx.flags)))
+    con.execute("INSERT OR REPLACE INTO meta VALUES('pattern_set', ?)", (pset,))
+    con.commit()
+    return {"compiled": compiled, "set": pset, "error": None}
+
+
+def _hits(pats: dict, text: str):
+    """JSON of the non-zero per-pattern hit counts of `text`, None when every count is zero (or
+    there are no patterns: the file's pat_ver says whether that means unmeasured)."""
+    counts = {n: len(rx.findall(text)) for n, rx in pats.items()}
+    counts = {n: k for n, k in counts.items() if k}
+    return json.dumps(counts, sort_keys=True) if counts else None
+
+
+def _human_text(tx: str) -> bool:
+    """The champion's guard for a human-typed text (kme_token_audit.user_text): not an expanded
+    command or skill body and not a pasted log."""
+    return ('<command-name>' not in tx[:400] and 'Base directory for this skill' not in tx[:200]
+            and len(tx) < USER_TEXT_MAX)
+
+
 def _v5_line(con, path: str, state: dict, o: dict, start: int) -> None:
     """v5 facts from one transcript line, in the same parse as _ancestry_line (one read
-    pass, no second reader). A tool_use becomes a tool_events row (hash, sizes and a
-    normalized path only: never the input or result text, HR-SECRET-002); the tool_result
-    that answers it fills the result columns, which stay NULL until one is seen."""
+    pass, no second reader). A tool_use becomes a tool_events row (hash, sizes, a normalized
+    path and per-pattern hit counts only: never the input or result text, HR-SECRET-002); the
+    tool_result that answers it fills the result columns, which stay NULL until one is seen.
+
+    Effective timestamp (the champion's make_keep rule): a line's own timestamp, else the last
+    one seen in its file (state, seeded from files.last_ts on a resumed pass), else NULL; NULL
+    resolves to files.first_ts at query time."""
+    own = _epoch(o.get("timestamp"))
+    if own is not None:
+        state["last_ts"] = own
+        if state.get("first_ok") and state.get("first_ts") is None:
+            state["first_ts"] = own
+    ts = own if own is not None else state.get("last_ts")
     cwd = o.get("cwd")
     if isinstance(cwd, str) and cwd:
         state["cwd"] = cwd
+        if cwd not in state["cwds_seen"]:
+            state["cwds_seen"].add(cwd)
+            con.execute("INSERT INTO file_cwds(file,cwd,first_off,first_ts) VALUES(?,?,?,?) "
+                        "ON CONFLICT(file,cwd) DO NOTHING", (path, cwd, start, ts))
     msg = o.get("message")
-    content = msg.get("content") if isinstance(msg, dict) else None
-    if not isinstance(content, list):
+    if not isinstance(msg, dict):
         return
+    if isinstance(msg.get("usage"), dict) and msg.get("model") != _tis.SYNTHETIC_MODEL:
+        key = (msg.get("id"), o.get("requestId"))
+        if key == (None, None):
+            key = ("off", start)                        # the key calls_from gives an id-less call
+        state["call_ts"][key] = ts
+    content = msg.get("content")
     t = o.get("type")
-    ts = _epoch(o.get("timestamp"))
-    if t == "assistant":
+    pats = state["pats"]
+    if t == "assistant" and isinstance(content, list):
         for i, c in enumerate(content):
             if not (isinstance(c, dict) and c.get("type") == "tool_use"):
                 continue
             inp = c.get("input")
+            champ = json.dumps(inp, ensure_ascii=False) if pats else None   # the champion's form
             if inp is None:
                 inp = {}
             raw = json.dumps(inp, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
@@ -664,22 +755,44 @@ def _v5_line(con, path: str, state: dict, o: dict, start: int) -> None:
                         fpath = _norm_path(inp[fld], state.get("cwd"))
                         break
             con.execute(
-                "INSERT INTO tool_events(file,tool_use_id,off,ts,tool,input_hash,input_bytes,path) "
-                "VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(file,tool_use_id) DO UPDATE SET "
+                "INSERT INTO tool_events(file,tool_use_id,off,ts,tool,input_hash,input_bytes,path,"
+                "pat_hits) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(file,tool_use_id) DO UPDATE SET "
                 "off=excluded.off, ts=excluded.ts, tool=excluded.tool, "
                 "input_hash=excluded.input_hash, input_bytes=excluded.input_bytes, "
-                "path=excluded.path",
+                "path=excluded.path, pat_hits=excluded.pat_hits",
                 (path, c.get("id") or f"off|{start}|{i}", start, ts, c.get("name"),
-                 hashlib.sha256(raw_b).hexdigest()[:16], len(raw_b), fpath))
+                 hashlib.sha256(raw_b).hexdigest()[:16], len(raw_b), fpath,
+                 _hits(pats, champ) if pats else None))
     elif t == "user":
-        for c in content:
-            if not (isinstance(c, dict) and c.get("type") == "tool_result" and c.get("tool_use_id")):
-                continue
-            text = _result_text(c.get("content"))
-            con.execute("UPDATE tool_events SET result_chars=?, result_bytes=?, is_error=?, "
-                        "result_off=? WHERE file=? AND tool_use_id=?",
-                        (len(text), len(text.encode("utf-8", "replace")),
-                         1 if c.get("is_error") else 0, start, path, c["tool_use_id"]))
+        texts = []
+        if isinstance(content, list):
+            for c in content:
+                if not isinstance(c, dict):
+                    continue
+                if c.get("type") == "tool_result":
+                    if not c.get("tool_use_id"):
+                        continue
+                    text = _result_text(c.get("content"))
+                    con.execute("UPDATE tool_events SET result_chars=?, result_bytes=?, is_error=?, "
+                                "result_off=? WHERE file=? AND tool_use_id=?",
+                                (len(text), len(text.encode("utf-8", "replace")),
+                                 1 if c.get("is_error") else 0, start, path, c["tool_use_id"]))
+                elif c.get("type") == "text" and not o.get("isMeta"):
+                    texts.append(c.get("text", ""))
+        elif isinstance(content, str) and not o.get("isMeta"):
+            texts.append(content)
+        if pats:
+            total: dict = {}
+            for tx in texts:
+                if isinstance(tx, str) and _human_text(tx):
+                    for n, rx in pats.items():
+                        total[n] = total.get(n, 0) + len(rx.findall(tx))
+            total = {n: k for n, k in total.items() if k}
+            if total:
+                con.execute("INSERT INTO user_hits(file,off,ts,pat_hits) VALUES(?,?,?,?) "
+                            "ON CONFLICT(file,off) DO UPDATE SET ts=excluded.ts, "
+                            "pat_hits=excluded.pat_hits",
+                            (path, start, ts, json.dumps(total, sort_keys=True)))
 
 
 def _index_subagent_meta(con, fp: Path) -> None:
@@ -790,6 +903,7 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
     backfill_pending = None
     skipped_shapes = None
     files_with_errors = None
+    pattern_error = None
     status = "OK"
     err = ""
     try:
@@ -800,6 +914,8 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
         con.execute("CREATE INDEX IF NOT EXISTS files_content ON files(content_id)")
         con.execute("INSERT OR REPLACE INTO meta VALUES('archived_rule', ?)", (ARCHIVED_RULE,))
         con.commit()
+        pat = _load_patterns(con)
+        pattern_error = pat["error"]
         matched: set = set()
         known = snapshot if snapshot is not None else _snapshot(con)
         for fp, is_sub, store, project, archived, skey in _iter_files_v5(Path(proj)):
@@ -836,13 +952,24 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             else:
                 v5_from = offset                        # a legacy file that grows
             srow = con.execute("SELECT cur_prompt, title, parse_errors, head_sha, tail_sha, "
-                               "content_id FROM files WHERE path=?", (path,)).fetchone()
+                               "content_id, first_ts, last_ts, pat_ver FROM files WHERE path=?",
+                               (path,)).fetchone()
             old_pe = (srow[2] or 0) if srow and offset else 0
             old_head = srow[3] if srow and offset else None
             old_tail = srow[4] if srow and offset else None
             old_cid = srow[5] if srow else None
+            # pat_ver: the pattern set every v5 row of this file was measured under. A file whose
+            # earlier rows were measured under another set (or none) while this pass uses a
+            # different one is mixed: it claims NO set (NULL) rather than re-tagging itself.
+            start_clean = offset == 0 or v5_from == offset
+            old_pv = srow[8] if srow and offset else None
+            pat_ver = (pat["set"] if pat["set"] and (start_clean or old_pv == pat["set"]) else None)
             state = {"prompt": srow[0] if srow and offset else None,
-                     "title": srow[1] if srow else None, "call_meta": {}, "cwd": None}
+                     "title": srow[1] if srow else None, "call_meta": {}, "cwd": None,
+                     "first_ts": srow[6] if srow and offset else None,
+                     "last_ts": srow[7] if srow and offset else None,
+                     "first_ok": v5_from == 0,       # first_ts is the FILE's first only if read from 0
+                     "pats": pat["compiled"], "cwds_seen": set(), "call_ts": {}}
             if is_sub and offset == 0 and not archived:
                 _index_subagent_meta(con, fp)
 
@@ -890,22 +1017,24 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                         (k, path, vals[0], vals[1], is_sub, entry, vals[2], vals[3], vals[4],
                          vals[5], vals[6], vals[7], sess, pid, aid))
                 # The occurrence view: this file's own values, order-independent (calls.file
-                # is first-writer-wins).
+                # is first-writer-wins). Its ts is the EFFECTIVE one (inherited when the call's
+                # own line carries none), like every other v5 row.
+                cts = vals[0] if vals[0] is not None else state["call_ts"].get(c["key"])
                 con.execute(
                     "INSERT INTO call_files(k,file,ts,model,inp,cw,cw5,cw1,cr,out) "
                     "VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(k,file) DO UPDATE SET "
                     "ts=excluded.ts, model=excluded.model, inp=max(inp,excluded.inp), "
                     "cw=max(cw,excluded.cw), cw5=max(cw5,excluded.cw5), cw1=max(cw1,excluded.cw1), "
                     "cr=max(cr,excluded.cr), out=max(out,excluded.out)",
-                    (k, path) + vals)
+                    (k, path, cts) + vals[1:])
                 upserts += 1
             if entry and not archived:
                 con.execute("UPDATE calls SET entrypoint=? WHERE file=? AND entrypoint IS NULL",
                             (entry, path))
             con.execute("INSERT INTO files(path,offset,size,mtime_ns,is_sub,entrypoint,"
                         "cur_prompt,title,v5_from,resolved,store,project,archived,session_key,"
-                        "parse_errors,error,head_sha,tail_sha,content_id) "
-                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?,?) "
+                        "parse_errors,error,head_sha,tail_sha,content_id,first_ts,last_ts,pat_ver) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?,?,?,?,?) "
                         "ON CONFLICT(path) DO UPDATE SET offset=excluded.offset, "
                         "size=excluded.size, mtime_ns=excluded.mtime_ns, is_sub=excluded.is_sub, "
                         "entrypoint=excluded.entrypoint, cur_prompt=excluded.cur_prompt, "
@@ -914,11 +1043,12 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                         "project=excluded.project, archived=excluded.archived, "
                         "session_key=excluded.session_key, parse_errors=excluded.parse_errors, "
                         "error=NULL, head_sha=excluded.head_sha, tail_sha=excluded.tail_sha, "
-                        "content_id=excluded.content_id",
+                        "content_id=excluded.content_id, first_ts=excluded.first_ts, "
+                        "last_ts=excluded.last_ts, pat_ver=excluded.pat_ver",
                         (path, end, st.st_size, st.st_mtime_ns, is_sub, entry,
                          state["prompt"], state["title"], v5_from, _tis.resolved_path(path),
                          store, project, archived, skey, old_pe + stats.get("bad", 0),
-                         head_sha, tail_sha, cid))
+                         head_sha, tail_sha, cid, state["first_ts"], state["last_ts"], pat_ver))
             con.execute("UPDATE files SET dup_of=NULL WHERE path=?", (path,))
             _dup_groups(con, {old_cid, cid})
             con.commit()
@@ -945,7 +1075,8 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                              "files_opened": files_opened, "bytes_read": bytes_read,
                              "bytes_ingested": bytes_ingested, "files_seen": files_seen,
                              "parse_errors": parse_errors, "files_with_errors": files_with_errors,
-                             "skipped_concurrent": skipped_concurrent, "wall_s": wall_s}),))
+                             "skipped_concurrent": skipped_concurrent,
+                             "pattern_error": pattern_error, "wall_s": wall_s}),))
     if status == "OK":
         con.execute("INSERT OR REPLACE INTO meta VALUES('last_ok_at', ?)", (str(now),))
     con.commit()
@@ -954,7 +1085,8 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             "files_opened": files_opened, "bytes_read": bytes_read,
             "bytes_ingested": bytes_ingested, "files_seen": files_seen, "wall_s": wall_s,
             "skipped_shapes": skipped_shapes, "parse_errors": parse_errors,
-            "files_with_errors": files_with_errors, "skipped_concurrent": skipped_concurrent}
+            "files_with_errors": files_with_errors, "skipped_concurrent": skipped_concurrent,
+            "pattern_error": pattern_error}
 
 
 # -- pricing -----------------------------------------------------------------
