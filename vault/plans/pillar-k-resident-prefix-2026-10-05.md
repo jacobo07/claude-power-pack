@@ -107,3 +107,9 @@ Out of slice (named debt): zero-command-bootstrap / first-time-project double ru
   Observed in the e2e: at 1.9 % free a NO-OP stand-in hub was reaped by the 4 s deadline in 3/3 attempts while floor +
   card arrived (V-SSINPROC-E2E-CARDS-SURVIVE-ABANDON) -- the residual cliff is one node spawn, not hub work.
   restart-and-lag 16/17 (V-HUB-REGISTERED stale since the 2026-09-22 fold), session-start-cost 9/9.
+- C1 committed 755de1f6; LIVE ~2026-10-06T12:37Z (Owner "y"): ~/.claude/hooks/hook-dispatcher.js == repo
+  (B74D5B483555CDA4). Backup of the previous live file (6A00D9B6E6AC7E75):
+  ~/.claude/backups/dispatcher-c1-20261006/hook-dispatcher.js -- rollback = Copy-Item it back.
+  DONE count (>=20 real SessionStarts after 12:37Z): `%TEMP%\pp-session-hub.log` lines `cards DONE via=inproc sid=`
+  (one per start; `via=hub` means the lane did not run) vs `~/.claude/logs/hook-dispatcher-errors.log`
+  `[SessionStart-chain] CHAIN-DEADLINE-ABANDONED before pool` (target 0) and `INPROC-*-FAILED` (target 0).
