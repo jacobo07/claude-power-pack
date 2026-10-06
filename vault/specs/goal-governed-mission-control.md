@@ -1,6 +1,6 @@
 ---
 covers: [goal-governed-mission-control, mission-control-tax, renewal-carries-route, unbounded-renewal, never-launched-renewal, goal-policy, mission-singleflight, mission-sleep-wake, mission-surface]
-status: C1-C3 LIVE (924bdad6); C4 LIVE with the commit that lands its gates; C5-C6 DRAFT
+status: C1-C3 LIVE (924bdad6); C4 LIVE (f71fbdd1); C5 LIVE with the commit that lands test_gsd_mission_sleep; C6 DRAFT
 production: 2026-10-06T12:37:10Z laptop sweep halted m-8c64d4f52fc9 and logged "not renewed: never launched" (C3)
 parent: vault/specs/mission-owner-hold.md; vault/specs/mission-envelope-and-compiled-wu.md; Owner ULTRA-PLAN approval "y" 2026-10-06
 ---
@@ -48,6 +48,27 @@ the Owner's provenance recorded on the new attempt.
 
 ### C5 Sleep and wake (G3) -- lands in S4
 Precondition failure and provider holds carry a typed wake predicate and write the ledger only on change.
+
+Measured 2026-10-06 on the laptop ledger (15,955 rows, 2026-09-18..10-06): `quota_held` 3,011 of 3,029 rows
+repeat the previous row of the same mission unchanged; `launch_held_cwd` and the `launch_held` transition
+1,530 of 1,661 each. About 40% of the ledger restates a hold nothing changed, and every `launch_held` repeat
+also rewrites the record and spends a `seq`.
+
+- A hold is a `sleep` entry on the record: `{cause, wake, epoch, reason, since}` (`tools/mission_sleep.py`).
+  `wake` is typed: `time` (`at`), `owner` (quarantine: an Owner release is the only waker), `env_ready`
+  (preflight reasons), `cwd_aligned` (cwd, work_dir, status).
+- Sites: quota and provider hold on relay/replace, the launch gate's lineage hold and preflight NOT_READY,
+  and the cwd-alignment launch hold. Each writes its typed row and persists `sleep` through ONE `transition`
+  only when the entry differs from the record's (`since` ignored). An unchanged pass writes nothing; the
+  pass still holds (the sweep row says `held`, no launch).
+- Any transition that does not set `sleep` drops it: after real movement the next hold is news again.
+- Out of scope: `relay_held` (its gsd counter `n` is load-bearing for `GSD_HOLD_BLOCK_AFTER`) and the
+  turn-end HOLD row; they keep writing per pass and are named debt.
+- Readers: `gsd_epoch` `provider_holds` now counts hold episodes, not passes; `routing_metrics` still sees
+  the first `quota_held` of each epoch.
+- Acceptance 5: two identical held passes write one hold row and one record write; a changed reason or a new
+  epoch writes again; a hold after a non-sleep transition writes again (control); the pass that writes
+  nothing still launches nothing.
 
 ### C6 Surface (G4) -- lands in S5
 `status --surface`: each non-terminal attempt classed HOT / WARM / COLD / TERMINAL with its wake predicate

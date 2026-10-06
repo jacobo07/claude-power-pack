@@ -205,8 +205,12 @@ def grp_fallback() -> None:
     with scenario(syn, home, breaker=False):
         out = drive(3, mid="m-pfp-fb")
     ev = held_auth(out["events"])
-    check("V-PFP-137-FALLBACK-PARKS", out["launches"] == 0 and len(ev) == 3,
-          f"launches={out['launches']} provider_held(auth,quarantine) rows={len(ev)} (3 relay cycles, breaker unimportable)")
+    # GGMC C5: held on all 3 passes (sweep rows), announced ONCE (the hold did not change), asleep on an Owner waker.
+    wake = ((out["rec"].get("sleep") or {}).get("wake") or {}).get("kind")
+    check("V-PFP-137-FALLBACK-PARKS", out["launches"] == 0 and len(out["held"]) == 3 and len(ev) == 1
+          and wake == "owner",
+          f"launches={out['launches']} held_passes={len(out['held'])} provider_held(auth,quarantine) rows={len(ev)} "
+          f"wake={wake} (3 relay cycles, breaker unimportable)")
     check("V-PFP-137-FALLBACK-VISIBLE", names(out["events"], "provider_breaker_unavailable") >= 1,
           f"provider_breaker_unavailable rows={names(out['events'], 'provider_breaker_unavailable')}")
 
@@ -457,8 +461,11 @@ def grp_supervise_release() -> None:
         with scenario(syn, h, breaker=True):
             out = drive(3, mid="m-pfp-sup-hold")
         n = names(out["events"], "provider_released")
-        return out["launches"] == 0 and n == 0 and len(held_auth(out["events"])) == 3, \
-            f"launches={out['launches']} provider_released={n} provider_held(auth)={len(held_auth(out['events']))}"
+        # GGMC C5: three held passes, one announcement (the hold never changed).
+        return (out["launches"] == 0 and n == 0 and len(out["held"]) == 3
+                and len(held_auth(out["events"])) == 1), \
+            (f"launches={out['launches']} provider_released={n} held_passes={len(out['held'])} "
+             f"provider_held(auth)={len(held_auth(out['events']))}")
     guarded("V-PFP-SUP-NO-RELOGIN-PARKS", no_relogin)
 
 

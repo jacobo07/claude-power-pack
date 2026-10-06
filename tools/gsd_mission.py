@@ -282,7 +282,8 @@ def create(cwd: str, resume_command: str, *, mission_id: str | None = None,
 
 
 def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
-               now: float | None = None, worker: str | None = None, **changes) -> dict:
+               now: float | None = None, worker: str | None = None,
+               ledger_extra: dict | None = None, **changes) -> dict:
     """Compare-and-swap. ``expect_state`` is one state or a set of them.
 
     Raises CasConflict when the record moved since the caller observed it. The
@@ -292,6 +293,10 @@ def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
     ``worker`` names the session the event concerns, for the ledger only. (The
     ledger is keyed by its own ``session_id`` parameter, which here carries the
     mission id, so the worker cannot travel under that name.)
+
+    ``ledger_extra`` rides on the ledger row only (a hold's typed fields; it cannot
+    overwrite the row's own keys). A transition that does not set ``sleep`` ends it
+    (GGMC C5): after real movement the next hold is news again.
     """
     now = time.time() if now is None else now
     allowed = {expect_state} if isinstance(expect_state, str) else set(expect_state)
@@ -307,13 +312,17 @@ def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
         if new_state not in STATES:
             raise MissionError(f"unknown state {new_state!r}")
         rec.update(changes)
+        if "sleep" not in changes:
+            rec.pop("sleep", None)   # popped, not nulled: a record that never slept keeps its bytes
         rec["updated_at"] = now
         # Every committed transition has a number, so the ledger's copy of the history can be
         # checked for holes against the record (history_gaps). A record with no seq predates T4.
         rec["seq"] = int(rec.get("seq") or 0) + 1
         rec["code_id"] = CODE_ID
         _write(path, rec)
-    extra = {k: v for k, v in (("reason", changes.get("reason")), ("worker", worker)) if v}
+    core = ("mission_id", "epoch", "state", "seq", "code")
+    extra = {k: v for k, v in (ledger_extra or {}).items() if k not in core}
+    extra.update({k: v for k, v in (("reason", changes.get("reason")), ("worker", worker)) if v})
     lr.ledger_append(mission_id, event, mission_id=mission_id, epoch=rec["epoch"],
                      state=rec["state"], seq=rec["seq"], code=CODE_ID, **extra)
     return rec
@@ -2222,18 +2231,21 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         # The successor would meet the same refusal: hold, spending no epoch.
                         # tools/provider_breaker.py: quota keeps this exact row; auth, transient
                         # failures and repeated instant deaths back off or quarantine.
+                        # GGMC C5: the row is written when the hold CHANGES, not on every pass.
+                        import mission_sleep as ms
                         if hold.get("class", "quota") == "quota":
                             row["held"] = f"provider quota until {int(hold['until'])}: {hold['reason']}"
-                            lr.ledger_append(mid, "quota_held", mission_id=mid, epoch=rec["epoch"],
-                                             until=hold["until"], reason=hold["reason"])
+                            sleep_on_change(rec, "provider_quota", ms.provider_wake(hold), "quota_held", now,
+                                            until=hold["until"], reason=hold["reason"])
                         else:
                             until = hold.get("until")
                             row["held"] = (f"provider {hold['class']} "
                                            f"{'QUARANTINED' if hold.get('quarantine') else f'until {int(until)}'}"
                                            f" (streak {hold.get('streak')}): {hold['reason']}")
-                            lr.ledger_append(mid, "provider_held", mission_id=mid, epoch=rec["epoch"],
-                                             until=until, reason=hold["reason"], provider_class=hold["class"],
-                                             streak=hold.get("streak"), quarantine=bool(hold.get("quarantine")))
+                            sleep_on_change(rec, f"provider_{hold['class']}", ms.provider_wake(hold),
+                                            "provider_held", now, until=until, reason=hold["reason"],
+                                            provider_class=hold["class"], streak=hold.get("streak"),
+                                            quarantine=bool(hold.get("quarantine")))
                         continue
                 if act in ("relay", "replace") and rec.get("owner"):
                     # Judge (and brief) where the predecessor actually worked. Measured M6: the
@@ -2306,6 +2318,9 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     row["launch_gate"] = gate.get("verdict")
                     if gate.get("refuse"):
                         row["held"] = gate.get("reason")
+                        s = gate.get("sleep")
+                        if s:
+                            sleep_on_change(rec, s["cause"], s["wake"], s["event"], now, **s["fields"])
                         continue
                 turn_end = None
                 import gsd_epoch as ge
@@ -2393,10 +2408,14 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                                      detail=aligned["detail"])
                 elif aligned["status"] in CWD_ALIGN_BLOCKING:
                     why = f"launch held: cwd not aligned with work_dir ({aligned['status']}): {aligned['detail']}"
-                    lr.ledger_append(mid, "launch_held_cwd", mission_id=mid, epoch=rec["epoch"],
-                                     status=aligned["status"], detail=aligned["detail"])
-                    transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                               event="launch_held", now=now, reason=why)
+                    wake = {"kind": "cwd_aligned", "cwd": rec["cwd"], "work_dir": work_dir or rec.get("work_dir"),
+                            "status": aligned["status"]}
+                    import mission_sleep as ms
+                    if not ms.same(rec, ms.entry("launch_cwd", wake, rec["epoch"], why, now)):
+                        # GGMC C5: both rows only when the hold changed (1,530 of 1,661 were repeats).
+                        lr.ledger_append(mid, "launch_held_cwd", mission_id=mid, epoch=rec["epoch"],
+                                         status=aligned["status"], detail=aligned["detail"])
+                        sleep_on_change(rec, "launch_cwd", wake, "launch_held", now, set_reason=True, reason=why)
                     row["held"] = why
                     continue
                 note = None
@@ -2834,6 +2853,22 @@ def _quota_released_by_relogin(rec: dict, hold: dict | None) -> bool:
     lr.ledger_append(rec.get("mission_id"), "quota_hold_released", mission_id=rec.get("mission_id"),
                      reason="a different account is logged in than the refused worker ran as",
                      refused_session=sid, until=hold.get("until"))
+    return True
+
+
+def sleep_on_change(rec: dict, cause: str, wake: dict, event: str, now: float, *,
+                    set_reason: bool = False, **fields) -> bool:
+    """GGMC C5: announce a hold and persist it as the record's `sleep` -- only when it changed. True when
+    written. An unchanged hold writes nothing: the pass still holds, it just has nothing new to say.
+    `set_reason` also records the reason on the record (launch_held always did); a provider hold must
+    not, because renewal reads the record's reason for "budget:"."""
+    import mission_sleep as ms
+    new = ms.entry(cause, wake, rec["epoch"], fields.get("reason"), now)
+    if ms.same(rec, new):
+        return False
+    changes = {"reason": fields["reason"]} if set_reason and fields.get("reason") else {}
+    transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"], event=event,
+               now=now, sleep=new, ledger_extra=fields, **changes)
     return True
 
 

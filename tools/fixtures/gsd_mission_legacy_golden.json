@@ -3,7 +3,43 @@
   "captured_on_head": "1b0b929d",
   "gsd_mission_sha256": "d53245689ce9a87ae05039c9b22d79ce6765446f0f7a2fa3e7671344fc9531e8",
   "gsd_mission_has_rollover_protocol": false,
-  "scenarios": 23
+  "scenarios": 23,
+  "amendments": [
+   {
+    "scenario": "s_provider_quota_hold",
+    "why": "GGMC C5 (vault/specs/goal-governed-mission-control.md): a provider hold persists as the record's typed sleep and writes its row only when the hold changes",
+    "on_head": "d70f6100",
+    "gsd_mission_sha256": "7ebab01fa2880c6813b87e6b0b36b17f059d1a67ce146a08900fb523d328c1ea",
+    "diff": [
+     "/s_provider_quota_hold/records/m-quota/keys: length 25 != 26",
+     "/s_provider_quota_hold/records/m-quota/keys[21]: 'state' != 'sleep'",
+     "/s_provider_quota_hold/records/m-quota/keys[22]: 'updated_at' != 'state'",
+     "/s_provider_quota_hold/records/m-quota/keys[23]: 'wall' != 'updated_at'"
+    ]
+   },
+   {
+    "scenario": "s_provider_auth_hold",
+    "why": "GGMC C5 (vault/specs/goal-governed-mission-control.md): a provider hold persists as the record's typed sleep and writes its row only when the hold changes",
+    "on_head": "d70f6100",
+    "gsd_mission_sha256": "7ebab01fa2880c6813b87e6b0b36b17f059d1a67ce146a08900fb523d328c1ea",
+    "diff": [
+     "/s_provider_auth_hold/records/m-auth/keys: length 25 != 26",
+     "/s_provider_auth_hold/records/m-auth/keys[21]: 'state' != 'sleep'",
+     "/s_provider_auth_hold/records/m-auth/keys[22]: 'updated_at' != 'state'",
+     "/s_provider_auth_hold/records/m-auth/keys[23]: 'wall' != 'updated_at'"
+    ]
+   },
+   {
+    "scenario": "s_budget_halt_renew",
+    "why": "GGMC C2 (924bdad6, pre-existing red on HEAD b54e8f5a): an unbounded budget renewal logs renewal_unbounded_shadow before renewing while CPP_MISSION_BOUNDED_RENEWAL is in shadow",
+    "on_head": "d70f6100",
+    "gsd_mission_sha256": "7ebab01fa2880c6813b87e6b0b36b17f059d1a67ce146a08900fb523d328c1ea",
+    "diff": [
+     "/s_budget_halt_renew/events/m-budget: length 4 != 5",
+     "/s_budget_halt_renew/events/m-budget[3]: 'mission_renewed' != 'renewal_unbounded_shadow'"
+    ]
+   }
+  ]
  },
  "scenarios": {
   "s_launch_ack_heartbeat": {
@@ -1114,6 +1150,7 @@
       "resume_command",
       "schema_version",
       "seq",
+      "sleep",
       "state",
       "updated_at",
       "wall",
@@ -1170,6 +1207,7 @@
       "resume_command",
       "schema_version",
       "seq",
+      "sleep",
       "state",
       "updated_at",
       "wall",
@@ -1485,6 +1523,7 @@
      "mission_prepared",
      "seed",
      "mission_halted",
+     "renewal_unbounded_shadow",
      "mission_renewed"
     ],
     "renewed[0]": [
