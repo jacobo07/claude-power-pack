@@ -1,0 +1,38 @@
+[
+  {
+    "repo": "C:/Users/User/Apps/pp-ql-econ",
+    "paths": ["tools/cost_to_completion.py", "tools/test_cost_to_completion.py"],
+    "test_cmds": ["C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe tools/test_cost_to_completion.py"],
+    "message": "feat(ql-econ): cost_to_completion visual class, shared claims, units path, scope coverage, route verdict\n\nP5: extend the canonical owner. visual class (4 calls x 150k, deopt), shared_with costs 0 and is counted,\nclean counts (o_total/o_zero/o_shared/o_irreducible/o_semantic_consumers), units cost path with reserve and\nunmeasured allowance, two-way gate/claim coverage (UNCOVERED_GATE, ORPHAN_CLAIM), and --route whose verdict\nis route_admission.admit's verdict.\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "repo": "C:/Users/User/Apps/pp-ql-econ",
+    "paths": ["tools/wu_packet.py", "tools/test_wu_packet.py"],
+    "test_cmds": ["C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe tools/test_wu_packet.py"],
+    "message": "feat(ql-econ): wu_packet compile/verify, packets derived from the claims IR\n\nP3: fingerprint = unit + claims + gates + product HEAD + IR sha256; verify prints CURRENT or STALE.\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "repo": "C:/Users/User/Apps/pp-ql-econ",
+    "paths": ["tools/boundary_receipts.py", "tools/test_boundary_receipts.py"],
+    "test_cmds": ["C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe tools/test_boundary_receipts.py"],
+    "message": "feat(ql-econ): boundary_receipts, runtime-generated per-call receipts and shadow stall governor\n\nP4: events and advancements derived from the transcript; the model logs nothing.\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "repo": "C:/Users/User/Apps/pp-ql-econ",
+    "paths": ["tools/manifest_commit.py", "tools/test_manifest_commit.py", "vault/plans/ql-econ-commit-manifest.json"],
+    "test_cmds": ["C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe tools/test_manifest_commit.py"],
+    "message": "feat(ql-econ): manifest_commit driver and the commit manifest for this build\n\nZero-model driver: tests first, pathspec-scoped commit per entry, JSON log per step.\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "repo": "C:/Users/User/Apps/io-ql-story",
+    "paths": ["17_Businesses/QuickLease/docs/plans/ql-story-tour/claims.json"],
+    "test_cmds": ["C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe C:/Users/User/Apps/pp-ql-econ/tools/cost_to_completion.py --claims 17_Businesses/QuickLease/docs/plans/ql-story-tour/claims.json --route"],
+    "message": "docs(ql-story-tour): canonical claims IR, validated by cost_to_completion --route\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "repo": "C:/Users/User/Apps/io-ql-story",
+    "paths": ["17_Businesses/QuickLease/docs/plans/ql-story-tour/prestage_forensics.ps1"],
+    "test_cmds": ["powershell -NoProfile -Command \"$t=$null;$e=$null;[void][System.Management.Automation.Language.Parser]::ParseFile('17_Businesses/QuickLease/docs/plans/ql-story-tour/prestage_forensics.ps1',[ref]$t,[ref]$e);if($e.Count){exit 1}\""],
+    "message": "feat(ql-story-tour): zero-model pre-stage forensics driver (contact sheets, capture, tokens, manifest)\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+  }
+]
