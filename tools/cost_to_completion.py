@@ -70,7 +70,46 @@ PHASE_KEYS = ("phases", "phase_count", "phase_average", "phase_average_cost", "a
 # an ordinary text exploration (images, large dumps): split evenly over the explore calls and carried
 # from the call after each one. ctx_start_over_floor already holds a typical text exploration's return.
 WORK_KEYS = ("orient", "explore", "files", "runs", "repairs", "commit", "report", "extra_ctx", "explore_ctx",
-             "write_output")
+             "write_output", "images")
+# images: count of images the unit reads. Context = count x calibration.image_ctx[(model, bucket)].tokens, where
+# the unit names `image_profile: {model, width, height}`. The bucket is the image's long edge (chosen cut points,
+# not measured). A key with no calibration row is UNKNOWN_IMAGE_COST (refused), or is charged at
+# calibration.image_ceiling_tokens when the doc states one (image_basis "ceiling"); it is never 0.
+IMAGE_BUCKET_EDGES = (512, 1024, 1568, 2048, 4096)
+
+
+def dimension_bucket(width: int, height: int) -> str:
+    edge = max(int(width), int(height))
+    for e in IMAGE_BUCKET_EDGES:
+        if edge <= e:
+            return f"le{e}"
+    return f"gt{IMAGE_BUCKET_EDGES[-1]}"
+
+
+def resolve_images(work: dict, profile, cal: dict, uid: str) -> tuple[dict, int, str]:
+    """(work with image context folded into explore_ctx, image tokens, basis none|measured|ceiling)."""
+    n = int(work.get("images", 0))
+    w = {k: v for k, v in work.items() if k != "images"}
+    if n <= 0:
+        return w, 0, "none"
+    table = cal.get("image_ctx") or []
+    for row in table:
+        if not isinstance(row, dict) or not row.get("model") or not row.get("bucket") or not row.get("source"):
+            raise Refused("BAD_CLAIM", f"calibration.image_ctx rows need model, bucket, tokens and a source: {row!r}")
+        _pos("calibration.image_ctx.tokens", row.get("tokens"))
+    per, basis = None, "measured"
+    if isinstance(profile, dict) and profile.get("model") and profile.get("width") and profile.get("height"):
+        key = (profile["model"], dimension_bucket(profile["width"], profile["height"]))
+        per = next((int(r["tokens"]) for r in table if (r["model"], r["bucket"]) == key), None)
+    if per is None:
+        ceiling = cal.get("image_ceiling_tokens")
+        if ceiling is None:
+            raise Refused("UNKNOWN_IMAGE_COST", f"unit {uid!r} reads {n} image(s) with no measured per-image "
+                          f"figure for {profile!r} and no calibration.image_ceiling_tokens")
+        per, basis = int(_pos("calibration.image_ceiling_tokens", ceiling)), "ceiling"
+    total = n * per
+    w["explore_ctx"] = int(w.get("explore_ctx", 0)) + total
+    return w, total, basis
 CAL_KEYS = ("files_per_call", "ctx_start_over_floor", "ctx_growth_per_call", "output_per_call")
 # write_output: tokens of the unit's one long write (A: generation, charged on the writing call in place of the
 # flat output_per_call; B: residency, carried by each later call x calibration.write_residency, default 1.0)
@@ -186,7 +225,7 @@ def _unit_rows(doc: dict, claims: list, effs: list, floors: dict, deopt: float):
         by_id[u["id"]] = {"id": u["id"], "profile": u["profile"], "model_prior": u.get("model_prior"),
                           "est_calls": n, "reserve_calls": r, "ctx_tokens": ctx, "profile_floor": pf,
                           "order": u.get("order", i), "claims": [], "model": False, "deopt": False,
-                          "work": work}
+                          "work": work, "image_profile": u.get("image_profile")}
     for c, eff in zip(claims, effs):
         uid = c.get("unit")
         if uid is None:
@@ -289,6 +328,7 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
             ctx = max(ctx, r["profile_floor"])
             cost = n * ctx
             reserve_cost = r["reserve_calls"] * ctx
+            r["image_ctx"], r["image_basis"] = 0, "none"
             if r["work"] is not None and not a:
                 cal = doc.get("calibration") or {}
                 missing = [k for k in CAL_KEYS if k not in cal]
@@ -296,6 +336,8 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
                     raise Refused("BAD_CLAIM", f"unit {r['id']!r} has work but calibration lacks {missing}")
                 for k in CAL_KEYS:
                     _pos(f"calibration.{k}", cal[k], allow_zero=k != "files_per_call")
+                rw, r["image_ctx"], r["image_basis"] = resolve_images(r["work"], r["image_profile"], cal, r["id"])
+                r["work"] = rw
                 n, cost = work_cost(r["work"], cal, r["profile_floor"])
                 ctx = -(-cost // n)  # mean processed per call, rounded up; the route charges calls x this
                 cost = n * ctx  # so candidate == route need exactly (at most n - 1 tokens over the model)
@@ -325,7 +367,8 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
         "counts": counts, "clean": clean, **clean, "sleeping": sleeping, "owner_reality": owner,
         "profile_source": source, "worker_floor": worker_floor, "margin": margin,
         "units": [{k: r[k] for k in ("id", "profile", "model_prior", "calls", "reserve_calls", "ctx_eff",
-                                     "profile_floor", "cost", "claims")} for r in active_rows],
+                                     "profile_floor", "cost", "claims", "image_ctx", "image_basis")}
+                  for r in active_rows],
         "reserve_calls": reserve_calls, "reserve_tokens": reserve_tokens,
         "unmeasured_allowance": allowance,
     }

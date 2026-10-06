@@ -254,6 +254,47 @@ def output_term_checks() -> None:
     check("V-CTC-OUT-NEGATIVE-REFUSED", refused(wdoc(work={**F_WORK, "write_output": -1})) == "BAD_CLAIM")
 
 
+IMG_CAL = [{"model": "claude-opus-5-5", "bucket": "le2048", "tokens": 3_230,
+            "source": "F e5 4 sheets +12,920; F e6 calls 4->5 3 sheets +9,768 incl 483 out"}]
+OPUS_SHEET = {"model": "claude-opus-5-5", "width": 1800, "height": 1300}
+
+
+def idoc(images, profile=OPUS_SHEET, cal_extra=None, work=None):
+    d = wdoc(work={**(work or F_WORK), "images": images}, cal={**CAL, "image_ctx": IMG_CAL, **(cal_extra or {})})
+    if profile is not None:
+        d["units"][0]["image_profile"] = dict(profile)
+    return d
+
+
+def image_term_checks() -> None:
+    check("V-CTC-IMG-BUCKET-OF-1800x1300", ctc.dimension_bucket(1800, 1300) == "le2048"
+          and ctc.dimension_bucket(390, 844) == "le1024" and ctc.dimension_bucket(5000, 10) == "gt4096")
+    # measured key: count x per-image figure rides as explore context, text evidence stays explore_ctx
+    base = ctc.compile_cost(wdoc(work=F_WORK), FLOORS)["units"][0]["cost"]
+    four = ctc.compile_cost(idoc(4), FLOORS)["units"][0]
+    check("V-CTC-IMG-COUNT-TIMES-MEASURED-FIGURE", four["cost"] - base == ctc.work_cost(
+        {**F_WORK, "explore_ctx": F_WORK["explore_ctx"] + 4 * 3230}, CAL, WF)[1] - ctc.work_cost(F_WORK, CAL, WF)[1],
+          f"delta={four['cost'] - base:,}")
+    eight = ctc.compile_cost(idoc(8), FLOORS)["units"][0]
+    check("V-CTC-IMG-SCALES-WITH-COUNT", eight["cost"] > four["cost"] > base and eight["image_basis"] == "measured"
+          and eight["image_ctx"] == 8 * 3230, f"{eight.get('image_basis')} {eight.get('image_ctx')}")
+    # control: no images -> no image term, no profile needed
+    none = ctc.compile_cost(idoc(0, profile=None), FLOORS)["units"][0]
+    check("V-CTC-IMG-ZERO-IMAGES-NO-TERM-CONTROL", none["cost"] == base and none["image_basis"] == "none", str(none.get("image_basis")))
+    # unknown key: refused, or charged at a stated ceiling, never zero
+    other = {"model": "claude-sonnet-5-5", "width": 1800, "height": 1300}
+    check("V-CTC-IMG-UNKNOWN-MODEL-REFUSED", refused(idoc(4, profile=other)) == "UNKNOWN_IMAGE_COST")
+    check("V-CTC-IMG-UNKNOWN-BUCKET-REFUSED", refused(idoc(4, profile={**OPUS_SHEET, "width": 390, "height": 844})) == "UNKNOWN_IMAGE_COST")
+    check("V-CTC-IMG-MISSING-PROFILE-REFUSED", refused(idoc(4, profile=None)) == "UNKNOWN_IMAGE_COST")
+    ceil_row = ctc.compile_cost(idoc(4, profile=other, cal_extra={"image_ceiling_tokens": 6000}), FLOORS)["units"][0]
+    check("V-CTC-IMG-UNKNOWN-AT-STATED-CEILING-NEVER-ZERO", ceil_row["image_basis"] == "ceiling" and ceil_row["image_ctx"] == 4 * 6000
+          and ceil_row["cost"] > base, f"{ceil_row.get('image_basis')} {ceil_row.get('image_ctx')}")
+    # a calibration figure without a source is not calibration data
+    nosrc = idoc(4, cal_extra={"image_ctx": [{"model": "claude-opus-5-5", "bucket": "le2048", "tokens": 3230}]})
+    check("V-CTC-IMG-FIGURE-WITHOUT-SOURCE-REFUSED", refused(nosrc) == "BAD_CLAIM")
+    check("V-CTC-IMG-ZERO-FIGURE-REFUSED", refused(idoc(4, cal_extra={"image_ctx": [{**IMG_CAL[0], "tokens": 0}]})) == "BAD_CLAIM")
+
+
 def _route_refused(doc):
     try:
         ctc.route_verdict(doc, FLOORS)
@@ -329,6 +370,7 @@ def main() -> int:
     p5_checks()
     work_model_checks()
     output_term_checks()
+    image_term_checks()
     print(f"CTC_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
