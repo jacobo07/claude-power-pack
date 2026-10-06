@@ -1,0 +1,23 @@
+{
+ "receipt": "pointer tax of the E1 relocation (resident one-line pointers that replace the 8 rule bodies)",
+ "pointer_files": [
+  "C:\\Users\\User\\.claude\\rules\\technical-failure-to-product-state.md",
+  "C:\\Users\\User\\.claude\\rules\\scoped-side-effect-authority.md",
+  "C:\\Users\\User\\.claude\\rules\\human-facing-external-effects.md",
+  "C:\\Users\\User\\.claude\\rules\\documented-capability-must-be-executable.md",
+  "C:\\Users\\User\\.claude\\rules\\validation-planes-do-not-transfer.md",
+  "C:\\Users\\User\\.claude\\rules\\capability-preserving-compaction.md",
+  "C:\\Users\\User\\.claude\\rules\\state-lifetime-and-incarnation.md",
+  "C:\\Users\\User\\.claude\\rules\\post-effect-resource-truth.md"
+ ],
+ "pointer_bytes": 9232,
+ "tokens_per_call_estimate": {
+  "low": 3093,
+  "high": 4038,
+  "label": "ESTIMATED",
+  "low_method": "pointer bytes x pre-move tokens/byte",
+  "high_method": "post-move excludable minus the 5 resident rules at average density"
+ },
+ "measured": "UNMEASURED: no probe isolates the pointers (two equations, three unknowns)",
+ "lever": "removing the pointers would need the skill listing to carry the triggers; not proposed here"
+}
