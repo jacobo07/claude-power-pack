@@ -161,11 +161,16 @@ def main() -> int:
     data = json.loads(p.read_text(encoding="utf-8"))
     data["wall"] = dict(gm.DEFAULT_WALL)
     mk._save(p, data)
+    # INVERTED AGAIN 2026-10-06, following 118e5994 (2026-09-29) as test_gsd_long_run did in
+    # 2e4be931: /kclear is work the MODEL does, never a keystroke. The wall asks for it in the
+    # block reason, ledgers `rollover_kclear_asked`, and dispatches nothing. Red here since 09-29.
     before = dict(calls)
     out = run_at(plain, 45.0)
-    last = calls.get("last") or {}
-    check("V-MCW-CONTROL-PLAIN-ROLLOVER-KCLEAR", last.get("expect_prefix") == "/kclear"
-          and calls["dispatch"] == before["dispatch"] + 1, (last.get("kind"), last.get("expect_prefix")))
+    plain_events = [e["event"] for e in lr.ledger_events(plain)]
+    check("V-MCW-CONTROL-PLAIN-ROLLOVER-KCLEAR", out.get("decision") == "block"
+          and "invoke the `kclear` skill" in out.get("reason", "")
+          and "rollover_kclear_asked" in plain_events and calls["dispatch"] == before["dispatch"],
+          (out.get("decision"), plain_events, calls["dispatch"] - before["dispatch"]))
     # The kill switch must restore the old crossing exactly, or "rollover is on" and "the
     # /compact path is gone" are the same observable.
     plain2 = f"mcw-plain-{uuid.uuid4().hex[:8]}"
@@ -198,9 +203,10 @@ def main() -> int:
     while time.time() < deadline and rows_for(private) == 0:
         time.sleep(0.25)
     check("V-MCW-SHADOW-REDIRECTED", rows_for(private) > 0, f"private rows {rows_for(private)}")
+    # shadow-capsules/ since G12 (ed172f48): the detached shadow seals there, not in capsules/.
     check("V-MCW-LIVE-ROLLOVER-UNTOUCHED", rows_for(LIVE_ROLLOVER / "rollover-ledger.jsonl") == 0
-          and not any((LIVE_ROLLOVER / "capsules").glob(f"{plain}*"))
-          and not any((LIVE_ROLLOVER / "capsules").glob(f"{plain2}*")),
+          and not any(p for sub in ("capsules", "shadow-capsules") for s in (plain, plain2)
+                      for p in (LIVE_ROLLOVER / sub).glob(f"{s}*")),
           f"live rows {rows_for(LIVE_ROLLOVER / 'rollover-ledger.jsonl')}")
 
     print(f"MCW_PASS={passes}/{passes + fails}")
