@@ -861,8 +861,14 @@ def _launch_slim(rec: dict, prompt: str, epoch: int, now: float, spawner=None) -
     out_path, err_path = slim_job_paths(mid, sid)
     _declare_worker_envelope(rec, sid)
     argv = worker_argv(rec, prompt, session_id=sid)
+    # Start where the work lives. A mission armed from the main checkout records that checkout as
+    # `cwd` and its worktree as `work_dir`; a print-mode worker's shell starts in whatever directory it
+    # is spawned in, so spawning in `cwd` put epoch 4 of m-8bbdf725cd52 (2026-10-06) in a shared
+    # checkout on another branch, one `git commit` away from landing there.
+    wd = rec.get("work_dir")
+    run_dir = wd if wd and Path(wd).is_dir() else rec["cwd"]
     try:
-        pid = (spawner or _spawn_detached)(argv, rec["cwd"], out_path, err_path)
+        pid = (spawner or _spawn_detached)(argv, run_dir, out_path, err_path)
     except Exception as exc:  # the launch itself could not happen
         why = f"{type(exc).__name__}: {exc}"
         lr.ledger_append(mid, "launch_failed", mission_id=mid, epoch=epoch, rc=None, bg_id=sid,

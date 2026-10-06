@@ -317,6 +317,19 @@ def main() -> int:
     ok = finish_slim("m-slimok", "slim-route-o.json", {"ids": [], "tokens": 120_000, "calls": 3, "closeout": 0})
     check("V-ADM-SLIM-UNTRIPPED-STATE-COMPLETES", ok["state"] == gm.COMPLETED and ok["slim_result"].get("tripped") is None,
           f"{ok['state']} {ok.get('reason')}")
+    # Epoch 4 of m-8bbdf725cd52 (2026-10-06) was spawned in the main checkout (`cwd`) instead of its
+    # worktree (`work_dir`). The worker must start where the work lives; no work_dir keeps `cwd`.
+    check("V-ADM-SLIM-NO-WORKDIR-SPAWNS-IN-CWD", Path(seen["cwd"]) == Path(srec["cwd"]), f"{seen['cwd']} vs {srec['cwd']}")
+    wt = Path(TMP) / "wt-slim"
+    wt.mkdir(exist_ok=True)
+    mission("m-slimwd")
+    cur = gm.load("m-slimwd")
+    gm.transition("m-slimwd", expect_epoch=cur["epoch"], expect_state=cur["state"], event="t_wd", now=NOW, work_dir=str(wt))
+    admit("m-slimwd", "slim-route-w.json", SLIM)
+    cur = gm.load("m-slimwd")
+    gm.launch_worker("m-slimwd", expect_epoch=cur["epoch"], expect_state=cur["state"], reason="t",
+                     runner=no_bg, spawner=spawner, now=NOW)
+    check("V-ADM-SLIM-SPAWNS-IN-WORK-DIR", Path(seen["cwd"]) == wt, f"spawned in {seen['cwd']}, work_dir {wt}")
     mission("m-slimfail")
     admit("m-slimfail", "slim-route-f.json", SLIM)
     cur = gm.load("m-slimfail")
