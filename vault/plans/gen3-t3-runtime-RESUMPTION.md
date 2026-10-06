@@ -25,8 +25,10 @@ session-status --transcript <its jsonl> before declaring the next envelope.
   project.
 
 ## Next 3 actions (one fresh worker per unit; at most 3 edit calls per file per unit)
-1. c2: run tools/test_session_budget_guard.py 5x at HEAD~1 (646c6c86 tree via `git worktree` or `git stash`-free temp
-   checkout) and 5x at HEAD; attribute the latency; then c3 fast-path cursor over the known child set, red/green + mutant.
+1. c3 RECOMPILED (Owner 2026-10-06: "Fix the gate, skip c3"; the 1.7M c3 allocation is dropped): make V-SBG-LATENCY in
+   tools/test_session_budget_guard.py judge the MIN of 3 incremental calls (append one line before each) against 50 ms;
+   keep the detail line printing all three. Red control: a mutant guard with a 60 ms busy-wait in advance() must FAIL
+   it. Run the suite once, commit (~0.3M / 4 calls).
 2. c4: agent-solo-guard calls decide(payload, {dispatch:true}) + red/green; exempt session_checkpoint.py from the
    breaker; one fresh pp-code-reviewer on the seam. Then c5 landing + live probe.
 3. c6-c7 rollover idempotency + checkpoint root; then c8 profile, R6 micro-canary, c11, c12 per the plan.
