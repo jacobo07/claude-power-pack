@@ -132,6 +132,34 @@ function judge(budget, st) {
   return null;
 }
 
+// Closeout allowance. A tripped breaker denied EVERYTHING, Read included, so the pane could neither
+// record its spend row nor write a handoff: measured 2026-10-06, session 1fd598fe tripped at 922K
+// against stop 800K and every later call (a plain Read too) was denied. A tripped session now gets
+// `closeout_calls` (default 4) calls that are read-only or write a closeout file; nothing else.
+const READ_ONLY = new Set(['Read', 'Grep', 'Glob']);
+const CLOSEOUT_PATH = /(^|[\\/])(vault[\\/]plans[\\/][^\\/]+\.md|memory[\\/]handoffs[\\/][^\\/]+\.md|RESUMPTION_FILE\.md)$/;
+const DEFAULT_CLOSEOUT = 4;
+
+function closeout(budget, st, event, verdict) {
+  const d = verdict && verdict.hookSpecificOutput;
+  if (!d || d.permissionDecision !== 'deny') return verdict;
+  const declared = Number(budget.closeout_calls);
+  const limit = Number.isFinite(declared) && declared >= 0 ? declared : DEFAULT_CLOSEOUT;
+  const tool = String(event.tool_name || '');
+  const fp = event.tool_input && typeof event.tool_input.file_path === 'string' ? event.tool_input.file_path : '';
+  const eligible = READ_ONLY.has(tool) || (PROGRESS_TOOLS.has(tool) && CLOSEOUT_PATH.test(fp));
+  const used = Number(st.closeout) || 0;
+  if (!eligible || used >= limit) {
+    d.permissionDecisionReason += ` Closeout allowance ${used}/${limit} used; only Read/Grep/Glob and ` +
+      'writes to vault/plans/*.md, memory/handoffs/*.md or RESUMPTION_FILE.md qualify.';
+    return verdict;
+  }
+  st.closeout = used + 1;
+  const why = d.permissionDecisionReason.split(' Way out')[0].replace('SESSION BUDGET BREAKER -- ', '');
+  return advise(`SESSION BUDGET TRIPPED (${why}) -- closeout call ${st.closeout}/${limit} allowed: ` +
+    'record the spend row and the handoff, then stop.');
+}
+
 function decide(event) {
   const sid = event && event.session_id;
   if (!sid || !SID_RE.test(sid)) return null;
@@ -164,13 +192,20 @@ function decide(event) {
     }
   } else {
     st.grace = false;
-    verdict = judge(budget, st);
+    verdict = closeout(budget, st, event, judge(budget, st));
   }
+  // Per-process temp name: parallel tool calls run the guard concurrently, and on Windows two
+  // renames onto one target race to EPERM (measured 2026-10-05: a parallel Read pair was denied).
+  const tmp = `${sPath}.${process.pid}.tmp`;
   try {
-    fs.writeFileSync(sPath + '.tmp', JSON.stringify(st));
-    fs.renameSync(sPath + '.tmp', sPath);
+    fs.writeFileSync(tmp, JSON.stringify(st));
+    fs.renameSync(tmp, sPath);
   } catch (e) {
-    return deny(`accounting state cannot be written (${e.code || e.message}).`);
+    try { fs.unlinkSync(tmp); } catch (_) { /* nothing to clean */ }
+    // The verdict was computed from a readable transcript; a lost write only means the next call
+    // re-reads from the older offset (same totals). Only the grace record must persist, so the
+    // unreadable path still fails closed.
+    if (unreadable) return deny(`accounting unreadable and the grace record cannot be written (${e.code || e.message}).`);
   }
   return verdict;
 }

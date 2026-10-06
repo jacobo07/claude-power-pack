@@ -235,7 +235,8 @@ def session_tokens(transcript: Path, since_iso: str | None = None) -> dict:
 
 def declare(sid: str, target: int, warn: int, stop: int, calls_estimate: int | None = None,
             context_ceiling: int | None = None, noprogress_calls: int = DEFAULT_NOPROGRESS_CALLS,
-            call_ratio: float = DEFAULT_CALL_RATIO, since_iso: str | None = None) -> Path:
+            call_ratio: float = DEFAULT_CALL_RATIO, since_iso: str | None = None,
+            extra: dict | None = None) -> Path:
     if not (0 < target <= warn <= stop):
         raise ValueError("need 0 < target <= warn <= stop")
     import datetime as dt
@@ -244,6 +245,8 @@ def declare(sid: str, target: int, warn: int, stop: int, calls_estimate: int | N
            "context_ceiling": context_ceiling, "noprogress_calls": noprogress_calls,
            "since": since_iso,
            "declared_at": dt.datetime.now(dt.timezone.utc).isoformat()[:19]}
+    if extra:
+        rec.update(extra)
     p = budget_path(sid)
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_suffix(".tmp")
@@ -252,8 +255,98 @@ def declare(sid: str, target: int, warn: int, stop: int, calls_estimate: int | N
     return p
 
 
+# --- Admission (TOK-18 Slice A2, 2026-10-06) ----------------------------------------------------
+# An envelope was declared without ever being compared with what the pane costs per call. Session
+# 1fd598fe declared stop 800K for ~6 calls right after /kresume; at ~110K context per call the resume
+# had already spent most of it, and the breaker tripped on the next call with zero work done. A
+# declaration is now projected from MEASURED per-call cost and refused before any call is spent on it.
+DEFAULT_GROWTH_PER_CALL = 2_100   # context growth per call, measured over the 49 calls of post-E1 Phase 1
+DEFAULT_RESERVE_CALLS = 2         # closeout: the spend row and the handoff
+FLOOR_SAMPLE = 10                 # recent same-cwd sessions sampled when this session has no transcript yet
+
+
+def find_transcript(sid: str, root: Path | None = None) -> Path | None:
+    root = root or projects_root()
+    if not root.is_dir():
+        return None
+    hits = [p for p in root.glob(f"*/{sid}.jsonl") if p.is_file()]
+    return max(hits, key=lambda p: p.stat().st_mtime) if hits else None
+
+
+def _first_context(path: Path) -> int | None:
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            if '"usage"' not in line:
+                continue
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            m = r.get("message") if isinstance(r, dict) else None
+            if not isinstance(m, dict):
+                continue
+            u = m.get("usage")
+            if not u or m.get("model") == "<synthetic>":
+                continue
+            n = sum(int(u.get(k) or 0) for k in _UK[:3])
+            if n:
+                return n
+    return None
+
+
+def recent_floor(project_dir: Path, exclude: str | None = None, sample: int = FLOOR_SAMPLE) -> int | None:
+    """Median first-call context of the most recent sessions in one project directory, or None."""
+    if not project_dir.is_dir():
+        return None
+    files = sorted((p for p in project_dir.glob("*.jsonl") if p.stem != exclude),
+                   key=lambda p: p.stat().st_mtime, reverse=True)[:sample]
+    floors = [f for f in (_first_context(p) for p in files) if f]
+    if not floors:
+        return None
+    import statistics
+    return int(statistics.median(floors))
+
+
+def feasibility(sid: str, stop: int, calls_estimate: int | None, cwd: str | None = None,
+                since_iso: str | None = None, root: Path | None = None,
+                growth: int = DEFAULT_GROWTH_PER_CALL, reserve_calls: int = DEFAULT_RESERVE_CALLS) -> dict:
+    """Project spent + n x per-call context + growth against `stop`. Per-call cost comes from this
+    session's own last context, else the median first call of recent same-cwd sessions. Unknown cost
+    or no call count is refused: an envelope that cannot be projected is not admitted."""
+    root = root or projects_root()
+    out = {"feasible": False, "stop": stop, "calls": None, "spent": None, "per_call": None,
+           "projected": None, "source": None, "reason": None}
+    if not calls_estimate or calls_estimate <= 0:
+        out["reason"] = "no --calls-estimate: an envelope cannot be projected without a call count"
+        return out
+    spent, per_call = 0, None
+    t = find_transcript(sid, root)
+    if t is not None:
+        ref = session_tokens(t, since_iso)
+        spent = ref["tokens"]
+        if ref["context"]:
+            per_call, out["source"] = ref["context"], f"this session's last context ({t.name})"
+    if per_call is None:
+        d = root / encode_cwd(cwd or os.getcwd())
+        per_call = recent_floor(d, exclude=sid)
+        if per_call is not None:
+            out["source"] = f"median first-call context of recent sessions in {d.name}"
+    if per_call is None:
+        out["reason"] = ("per-call cost unknown (no transcript for this session and no recent session "
+                         "in this cwd): unknown is never admitted")
+        return out
+    n = int(calls_estimate) + reserve_calls
+    projected = spent + n * per_call + growth * n * (n + 1) // 2
+    ok = projected <= stop
+    out.update(calls=n, spent=spent, per_call=per_call, projected=projected, feasible=ok)
+    out["reason"] = (f"projected {projected:,} = spent {spent:,} + {n} calls x {per_call:,} + growth "
+                     f"{growth:,}/call; {'<=' if ok else '>'} stop {stop:,}")
+    return out
+
+
 def _main(argv: list[str]) -> int:
     import argparse
+    import sys
     ap = argparse.ArgumentParser(prog="mission_spend")
     sub = ap.add_subparsers(dest="cmd", required=True)
     d = sub.add_parser("session-declare")
@@ -265,13 +358,23 @@ def _main(argv: list[str]) -> int:
     d.add_argument("--context-ceiling", type=int)
     d.add_argument("--noprogress-calls", type=int, default=DEFAULT_NOPROGRESS_CALLS)
     d.add_argument("--since", help="ISO timestamp; count only from here (default: whole transcript)")
+    d.add_argument("--skip-feasibility", action="store_true",
+                   help="declare without the admission projection (the override is recorded in the budget file)")
     s = sub.add_parser("session-status")
     s.add_argument("--transcript", required=True)
     s.add_argument("--since")
     a = ap.parse_args(argv)
     if a.cmd == "session-declare":
+        if a.skip_feasibility:
+            f = {"skipped": True}
+        else:
+            f = feasibility(a.session, a.stop, a.calls_estimate, since_iso=a.since)
+            if not f["feasible"]:
+                print(f"REFUSED: {f['reason']}. Raise --stop, cut --calls-estimate, or pass "
+                      "--skip-feasibility (recorded).", file=sys.stderr)
+                return 3
         print(declare(a.session, a.target, a.warn, a.stop, a.calls_estimate, a.context_ceiling,
-                      a.noprogress_calls, since_iso=a.since))
+                      a.noprogress_calls, since_iso=a.since, extra={"feasibility": f}))
         return 0
     print(json.dumps(session_tokens(Path(a.transcript), a.since)))
     return 0
