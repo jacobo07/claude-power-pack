@@ -95,6 +95,56 @@ def main() -> int:
     check("V-GGMC-NEVER-LAUNCHED-REFUSED", bool(why) and "never launched" in why, str(why))
     check("V-GGMC-NEVER-LAUNCHED-CONTROL", gm.renewal_refusal({**never, "epoch": 1}, BUDGET_HALT, "OK") is None)
 
+    # C4: the Goal is the authority; a new mission id is not.
+    def arm(ws, **kw):
+        return gm.arm(TMP, f"/gsd-autonomous --ws {ws}", launch=False, now=NOW, **kw)["mission"]
+
+    def refused(fn, needle):
+        try:
+            fn()
+        except gm.MissionError as exc:
+            return needle in str(exc)
+        return False
+
+    first = arm("ws-g")
+    check("V-GGMC-GOAL-BOUND", (first.get("goal") or {}).get("workstream") == "ws-g", str(first.get("goal")))
+    check("V-GGMC-SINGLEFLIGHT-REFUSED", refused(lambda: arm("ws-g"), "singleflight"))
+    check("V-GGMC-SINGLEFLIGHT-CONTROL-OTHER-GOAL", arm("ws-h")["state"] == gm.PREPARED)
+    other_repo = Path(TMP) / "other-repo"
+    other_repo.mkdir()
+    check("V-GGMC-SINGLEFLIGHT-CONTROL-OTHER-REPO",
+          gm.arm(str(other_repo), "/gsd-autonomous --ws ws-g", launch=False, now=NOW)["mission"]["state"] == gm.PREPARED)
+
+    gm.set_owner_hold(first["mission_id"], "Owner park", now=NOW)
+    check("V-GGMC-GOAL-HOLD-REFUSES-NEW-ID", refused(lambda: arm("ws-g"), "goal held"))
+    check("V-GGMC-GOAL-HOLD-COVERS-UNITS", refused(lambda: arm("ws-g", parallel_unit="u9"), "goal held"))
+    check("V-GGMC-SUPERSEDE-NEEDS-AUTHORITY",
+          refused(lambda: arm("ws-g", supersedes=first["mission_id"]), "--authority"))
+    succ = arm("ws-g", supersedes=first["mission_id"], authority="Owner 'y' 2026-10-06, plan v3")
+    old = gm.load(first["mission_id"])
+    check("V-GGMC-SUPERSEDE-WITH-AUTHORITY", succ.get("supersedes") == first["mission_id"]
+          and "Owner" in (succ.get("authority") or "") and old["state"] == gm.HALTED
+          and succ["mission_id"] in (old.get("reason") or ""), f"{old['state']} {old.get('reason')}")
+    check("V-GGMC-SUPERSEDE-FOREIGN-GOAL-REFUSED",
+          refused(lambda: arm("ws-h", supersedes=succ["mission_id"], authority="Owner"), "not an attempt of this goal"))
+
+    u1 = arm("ws-p", parallel_unit="u1")
+    check("V-GGMC-PARALLEL-DISTINCT-UNIT-ALLOWED", arm("ws-p", parallel_unit="u2")["state"] == gm.PREPARED)
+    check("V-GGMC-PARALLEL-SAME-UNIT-REFUSED", refused(lambda: arm("ws-p", parallel_unit="u1"), "singleflight"))
+    check("V-GGMC-PARALLEL-UNNAMED-REFUSED", refused(lambda: arm("ws-p"), "singleflight"))
+
+    # Renewal obeys the Goal: a halted attempt of ws-p does not renew beside a live sibling unit.
+    halted = gm.transition(u1["mission_id"], expect_epoch=0, expect_state=gm.PREPARED, event="t_halt", now=NOW,
+                           state=gm.HALTED, epoch=1, reason=BUDGET_HALT, token_estimate=1_000_000)
+    halted = {**halted, "goal": {**halted["goal"], "unit": "u2"}}   # same unit as the live u2 sibling
+    why = gm._renewal_why_not(halted, BUDGET_HALT, {"outcome": "OK"}, TMP, fingerprint=lambda w: None)
+    check("V-GGMC-RENEWAL-OBEYS-SINGLEFLIGHT", bool(why) and "singleflight" in why, str(why))
+    lone = gm.transition(gm.arm(TMP, "/gsd-autonomous --ws ws-lone", launch=False, now=NOW)["mission"]["mission_id"],
+                         expect_epoch=0, expect_state=gm.PREPARED, event="t_halt", now=NOW, state=gm.HALTED,
+                         epoch=1, reason=BUDGET_HALT, token_estimate=1_000_000)
+    check("V-GGMC-RENEWAL-CONTROL-LONE-GOAL",
+          gm._renewal_why_not(lone, BUDGET_HALT, {"outcome": "OK"}, TMP, fingerprint=lambda w: None) is None)
+
     print(f"GOAL_CONTROL_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

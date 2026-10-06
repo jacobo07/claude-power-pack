@@ -1,6 +1,7 @@
 ---
 covers: [goal-governed-mission-control, mission-control-tax, renewal-carries-route, unbounded-renewal, never-launched-renewal, goal-policy, mission-singleflight, mission-sleep-wake, mission-surface]
-status: DRAFT -- each section turns LIVE with the commit that lands it and its V-gates
+status: C1-C3 LIVE (924bdad6); C4 LIVE with the commit that lands its gates; C5-C6 DRAFT
+production: 2026-10-06T12:37:10Z laptop sweep halted m-8c64d4f52fc9 and logged "not renewed: never launched" (C3)
 parent: vault/specs/mission-owner-hold.md; vault/specs/mission-envelope-and-compiled-wu.md; Owner ULTRA-PLAN approval "y" 2026-10-06
 ---
 
