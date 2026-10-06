@@ -28,8 +28,11 @@ CLI:
   burn                            refresh (bounded) + current state
   replay --at ISO [--step-h 1]    state at past instants, from the index only
   holdout                         calibrate on pair A, score on pair B (done-gate G6)
-  population [--until ISO] [--project-filter S] [--select S] [--include-archived]
-             [--expect JSON|FILE] [--plane NAME]   typed population verdict (exit 0/1/3)
+  population [--until ISO] [--project-filter RE] [--select all|kme] [--include-archived]
+             [--host H] [--tolerate-parse-errors] [--expect KEY|JSON|FILE] [--expect-file F]
+             [--perturb FIELD=INT] [--detail] [--plane NAME]
+                                         typed population verdict from the index alone
+                                         (EXACT/MEASURED 0, DRIFTED 1, usage 2, UNMEASURED 3)
 """
 from __future__ import annotations
 
@@ -1521,7 +1524,17 @@ def holdout(con) -> dict:
 
 POP_FIELDS = ("sessions_active", "sessions_dead", "calls", "input", "cache_write",
               "cache_read", "output")
+VERDICT_FIELDS = ("sessions_active", "sessions_dead", "calls", "cache_read")     # decide EXACT/DRIFTED
+SECONDARY_FIELDS = ("input", "cache_write", "output")                            # reported, never folded in
 POP_EXIT = {"MEASURED": 0, "EXACT": 0, "DRIFTED": 1, "UNMEASURED": 3}
+DEFAULT_DENOM_FILE = (_PP_ROOT / "vault" / "programs" / "incremental-cognition" / "denominators"
+                      / "kme_audit_2026-10-03.json")
+# The champion's own classifier, loaded by path (never copied): classify() reads the session
+# features, is_kme() applies the selection (class, or the GEX44 a-env host rule).
+CLASSIFIER_SOURCES = ("wiki/tools/kme_token_audit.py", "wiki/tools/kme_report.py")
+# A row counts toward an instant when its effective timestamp (its own, else the file's first)
+# is at or before it; with no instant every row counts. Two placeholders: (until, until).
+_CUT = "(? IS NULL OR coalesce({t}, f.first_ts) <= ?)"
 
 
 def _session_of(path: str, is_sub: int) -> tuple[str, str]:
@@ -1534,79 +1547,323 @@ def _session_of(path: str, is_sub: int) -> tuple[str, str]:
     return p.parent.name, p.stem
 
 
-def population(con, *, until=None, project_filter=None, select=None, include_archived=False,
-               expected=None, host=None) -> dict:
-    """Typed answer to "what does the index say about this population of sessions".
+def _champion_module(rel: str):
+    """A champion module imported once per process from its file under the PP root (the same
+    cache and naming the pattern loader uses)."""
+    import importlib.util
+    mod = _PATTERN_MODULES.get(rel)
+    if mod is None:
+        spec = importlib.util.spec_from_file_location("_ux_pattern_" + Path(rel).stem, _PP_ROOT / rel)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        _PATTERN_MODULES[rel] = mod
+    return mod
 
-    A session is (archived, project, session_key); it is ACTIVE when it has at least one
-    call occurrence (call_files, ts <= until when given), DEAD otherwise. The verdict is
-    UNMEASURED, never zero, when nothing is in scope, when the index is below v5, or when
-    an in-scope file was never read under v5 (its v5 facts are unknown). MEASURED when
-    `expected` is None; EXACT or DRIFTED against `expected` (a dict of POP_FIELDS).
-    `project_filter` is a substring of the project name; `select` None or "all" is every
-    session (richer selectors arrive with plan 04 and are refused, not guessed)."""
-    zero = {k: 0 for k in POP_FIELDS}
-    out = {"verdict": "UNMEASURED", "reasons": [], "host": host, "population": dict(zero),
-           "per_project": {}}
+
+def _kme_selector(host=None):
+    """-> select(features) -> (is_kme, class, share), the champion's own functions applied to a
+    feature dict with the keys they read (project, cwd, tool_uses, tool_uses_kme, user_kme_hits).
+    No threshold lives here."""
+    audit = _champion_module(CLASSIFIER_SOURCES[0])
+    report = _champion_module(CLASSIFIER_SOURCES[1])
+
+    def select(feat: dict):
+        s = dict(feat)
+        s["class"], share = audit.classify(s)
+        s["host"] = host
+        return bool(report.is_kme(s)), s["class"], share
+    return select
+
+
+def _live_pattern_set() -> str:
+    """The pattern identity of the champion's regexes as they are now (nothing is registered)."""
+    items = {}
+    for name, rel, attr in PATTERN_SOURCES:
+        rx = getattr(_champion_module(rel), attr)
+        items[name] = (rx.pattern, rx.flags)
+    return _pattern_set(items)
+
+
+def _agg_row(n, inp, cw, cr, outp) -> dict:
+    return {"calls": n, "input": inp, "cache_write": cw, "cache_read": cr, "output": outp}
+
+
+def population(con, *, until=None, project_filter=None, select=None, include_archived=False,
+               expected=None, host=None, tolerate_parse_errors=False, detail=False) -> dict:
+    """Typed answer to "which sessions are in this population and what did they cost, as of an
+    instant", from the index alone (no transcript is opened).
+
+    A session is (archived, project, session_key). Scope: files whose project matches
+    `project_filter` (re.search). With `until` (epoch seconds or an ISO string) a v5 row counts
+    when its effective time, coalesce(own ts, the file's first ts), is at or before it, and a
+    session exists only when its earliest file starts by then. `select` "kme" applies the
+    champion's classifier (_kme_selector) to features read from the index; None or "all" keeps
+    every session. Calls are the occurrence view (call_files), duplicates included, as the
+    champion counts them; the reconcile block names every dedup decision.
+
+    ARCHIVED_RULE: `_archived` sessions are excluded unless `include_archived`; an archived
+    twin of a live session (same project and session_key) is always excluded. Both are reported.
+
+    Verdict: UNMEASURED (never zero) with `reasons` when nothing is in scope, the selection is
+    empty, an in-scope file has incomplete v5 coverage, a parse error (unless
+    `tolerate_parse_errors`, then counted in parse_errors_tolerated) or a file error, or the
+    files were ingested under another pattern set than the champion's current one. Otherwise
+    MEASURED, or EXACT / DRIFTED against `expected` (a dict holding every VERDICT_FIELDS key);
+    `secondary` carries input, cache_write and output beside it, never inside the verdict."""
+    out = {"verdict": "UNMEASURED", "reasons": [], "host": host, "until": until,
+           "select": select or "all", "population": None, "per_project": [], "reconcile": None}
+    reasons = out["reasons"]
     cols = {r[1] for r in con.execute("PRAGMA table_info(files)")}
-    if not {"v5_from", "archived", "project", "session_key"} <= cols:
-        out["reasons"].append("index is below schema v5 (files.v5_from absent): run refresh")
+    if not {"v5_from", "archived", "project", "session_key", "first_ts"} <= cols:
+        reasons.append("index is below schema v5 (files.v5_from absent): run refresh")
         return out
-    if select not in (None, "all"):
-        out["reasons"].append(f"selector {select!r} is not available in this build")
+    if select not in (None, "all", "kme"):
+        reasons.append(f"selector {select!r} is not available (all | kme)")
         return out
-    rows = con.execute(
-        "SELECT f.path, f.is_sub, f.v5_from, f.archived, f.project, f.session_key, "
-        "count(c.k), coalesce(sum(c.inp),0), coalesce(sum(c.cw),0), coalesce(sum(c.cr),0), "
-        "coalesce(sum(c.out),0) FROM files f "
-        "LEFT JOIN call_files c ON c.file = f.path AND (? IS NULL OR c.ts <= ?) "
-        "GROUP BY f.path", (until, until)).fetchall()
-    sessions: dict = {}
-    in_scope = unknown = 0
-    live_keys = {(r[4] or _session_of(r[0], r[1] or 0)[0], r[5] or _session_of(r[0], r[1] or 0)[1])
-                 for r in rows if not r[3]}
-    for path, is_sub, v5_from, archived, project, skey, n, inp, cw, cr, outp in rows:
+    if isinstance(until, str):
+        until = _epoch(until)
+        if until is None:
+            reasons.append("until is not an ISO instant")
+            return out
+        out["until"] = until
+    try:
+        prx = re.compile(project_filter) if project_filter else None
+    except re.error as e:
+        reasons.append(f"project_filter is not a regex: {e}")
+        return out
+    sel = None
+    if select == "kme":
+        try:
+            sel = _kme_selector(host)
+            live_set = _live_pattern_set()
+        except Exception as e:  # noqa: BLE001 -- typed, never silent
+            reasons.append(f"classifier unavailable: {type(e).__name__}: {e}")
+            return out
+
+    # -- files, partitioned into scope / archived rule ------------------------------------
+    files: dict = {}
+    for (path, is_sub, v5_from, archived, store, project, skey, first_ts, perr, ferr, pat_ver,
+         dup_of) in con.execute(
+            "SELECT path, is_sub, v5_from, archived, store, project, session_key, first_ts, "
+            "parse_errors, error, pat_ver, dup_of FROM files"):
         d_proj, d_sess = _session_of(path, is_sub or 0)
-        project, skey = project or d_proj, skey or d_sess
-        if archived and not include_archived:
+        files[path] = {"sub": bool(is_sub), "v5_from": v5_from, "archived": bool(archived),
+                       "project": project or d_proj, "skey": skey or d_sess, "first": first_ts,
+                       "perr": perr or 0, "err": ferr, "pat": pat_ver, "dup": dup_of}
+    live_keys = {(f["project"], f["skey"]) for f in files.values() if not f["archived"]}
+
+    def cut(t):
+        return _CUT.format(t=t)
+
+    cp = (until, until)
+    calls_by_file = {r[0]: r[1:] for r in con.execute(
+        "SELECT c.file, count(*), coalesce(sum(c.inp),0), coalesce(sum(c.cw),0), "
+        "coalesce(sum(c.cr),0), coalesce(sum(c.out),0) FROM call_files c "
+        "JOIN files f ON f.path=c.file WHERE " + cut("c.ts") + " GROUP BY c.file", cp)}
+
+    sessions: dict = {}
+    twins: dict = {}
+    excluded: dict = {}
+    for path, f in files.items():
+        if prx is not None and not prx.search(f["project"]):
             continue
-        if archived and (project, skey) in live_keys:      # ARCHIVED_RULE: the live twin wins
+        key = (int(f["archived"]), f["project"], f["skey"])
+        if f["archived"] and (f["project"], f["skey"]) in live_keys:        # the live twin wins
+            twins.setdefault(key, []).append(path)
             continue
-        if project_filter and project_filter not in project:
+        if f["archived"] and not include_archived:                         # ARCHIVED_RULE
+            excluded.setdefault(key, []).append(path)
             continue
-        in_scope += 1
-        unknown += v5_from is None
-        s = sessions.setdefault((int(bool(archived)), project, skey), [0, 0, 0, 0, 0])
-        for i, v in enumerate((n, inp, cw, cr, outp)):
-            s[i] += v
-    if not in_scope:
-        out["reasons"].append("no file in scope")
-    if unknown:
-        out["reasons"].append(f"{unknown} in-scope file(s) were never read under v5 "
-                              "(v5_from NULL): their v5 facts are unknown, not zero")
+        sessions.setdefault(key, []).append(path)
+
+    def exists(paths) -> bool:
+        if until is None:
+            return True
+        firsts = [files[p]["first"] for p in paths if files[p]["first"] is not None]
+        return bool(firsts) and min(firsts) <= until
+
+    def agg(group: dict) -> dict:
+        n_s = n_f = 0
+        tot = [0, 0, 0, 0, 0]
+        for paths in group.values():
+            if not exists(paths):
+                continue
+            n_s += 1
+            n_f += len(paths)
+            for p in paths:
+                for i, v in enumerate(calls_by_file.get(p, (0, 0, 0, 0, 0))):
+                    tot[i] += v
+        return {"sessions": n_s, "files": n_f, "calls": tot[0], "cache_read": tot[3]}
+
+    scope_paths = [p for paths in sessions.values() for p in paths]
+    out["reconcile"] = {"archived_excluded": agg(excluded), "archived_twins": agg(twins),
+                        "dup_files_in_scope": sum(1 for p in scope_paths if files[p]["dup"]),
+                        "skipped_shapes": None}
+    row = con.execute("SELECT v FROM meta WHERE k='skipped_shapes'").fetchone()
+    if row:
+        try:
+            out["reconcile"]["skipped_shapes"] = json.loads(row[0])
+        except ValueError:
+            pass
+
+    # -- typed refusals over every in-scope file ---------------------------------------------
+    if not scope_paths:
+        reasons.append("no file in scope")
+    incomplete = [p for p in scope_paths if files[p]["v5_from"] is None or files[p]["v5_from"] > 0]
+    if incomplete:
+        reasons.append(f"{len(incomplete)} in-scope file(s) have incomplete v5 coverage (v5_from "
+                       "NULL or above 0): their v5 facts are unknown, not zero; run backfill-v5")
+    perr = sum(files[p]["perr"] for p in scope_paths)
+    if perr and not tolerate_parse_errors:
+        reasons.append(f"{perr} parse error(s) in {sum(1 for p in scope_paths if files[p]['perr'])} "
+                       "in-scope file(s): lines the index could not read are unknown, not absent")
+    elif perr:
+        out["parse_errors_tolerated"] = perr
+    ferrs = [p for p in scope_paths if files[p]["err"]]
+    if ferrs:
+        reasons.append(f"{len(ferrs)} in-scope file(s) carry a file error (unreadable transcript)")
+    if sel is not None and scope_paths:
+        meta_set = (con.execute("SELECT v FROM meta WHERE k='pattern_set'").fetchone() or [None])[0]
+        stale = [p for p in scope_paths if files[p]["pat"] != live_set]
+        if meta_set != live_set or stale:
+            reasons.append(f"pattern set differs: the champion's current set is {live_set[:12]}, the "
+                           f"index registered {str(meta_set)[:12]} and {len(stale)} in-scope file(s) "
+                           "were measured under another set or none: the hits are unknown")
+
+    # -- features, selection, totals ------------------------------------------------------------
+    live_sessions = {k: v for k, v in sessions.items() if exists(v)}
+    tools_n: dict = {}
+    tools_kme: dict = {}
+    user_kme: dict = {}
+    cwds: dict = {}
+    if sel is not None:
+        tools_n = dict(con.execute(
+            "SELECT e.file, count(*) FROM tool_events e JOIN files f ON f.path=e.file WHERE "
+            + cut("e.ts") + " GROUP BY e.file", cp))
+        for fpath, hits in con.execute(
+                "SELECT e.file, e.pat_hits FROM tool_events e JOIN files f ON f.path=e.file "
+                "WHERE e.pat_hits IS NOT NULL AND " + cut("e.ts"), cp):
+            if (json.loads(hits).get("kme") or 0) > 0:
+                tools_kme[fpath] = tools_kme.get(fpath, 0) + 1
+        for fpath, hits in con.execute(
+                "SELECT u.file, u.pat_hits FROM user_hits u JOIN files f ON f.path=u.file WHERE "
+                + cut("u.ts"), cp):
+            user_kme[fpath] = user_kme.get(fpath, 0) + (json.loads(hits).get("kme") or 0)
+        for fpath, cwd in con.execute(
+                "SELECT c.file, c.cwd FROM file_cwds c JOIN files f ON f.path=c.file WHERE "
+                + cut("c.first_ts") + " ORDER BY c.file, c.first_off", cp):
+            cwds.setdefault(fpath, []).append(cwd)
+
+    zero = {k: 0 for k in POP_FIELDS}
     pop = dict(zero)
     per: dict = {}
-    for (_arch, project, _skey), (n, inp, cw, cr, outp) in sessions.items():
-        pp = per.setdefault(project, dict(zero))
-        for tgt in (pop, pp):
-            tgt["sessions_active" if n else "sessions_dead"] += 1
-            tgt["calls"] += n
-            tgt["input"] += inp
-            tgt["cache_write"] += cw
-            tgt["cache_read"] += cr
-            tgt["output"] += outp
-    out["population"], out["per_project"] = pop, per
-    if out["reasons"]:
+    rows = []
+    selected_paths: list = []
+    for (arch, project, skey), paths in sorted(live_sessions.items()):
+        order = sorted(paths, key=lambda p: (files[p]["sub"], p))        # main file first
+        n, inp, cw, cr, outp = (sum(calls_by_file.get(p, (0,) * 5)[i] for p in paths)
+                                for i in range(5))
+        cls = share = None
+        chosen = True
+        if sel is not None:
+            cwd = next((cwds[p][0] for p in order if cwds.get(p)), None)
+            chosen, cls, share = sel({
+                "project": project, "cwd": cwd,
+                "tool_uses": sum(tools_n.get(p, 0) for p in paths),
+                "tool_uses_kme": sum(tools_kme.get(p, 0) for p in paths),
+                "user_kme_hits": sum(user_kme.get(p, 0) for p in paths)})
+        if detail:
+            rows.append({"project": project, "session_key": skey, "archived": bool(arch),
+                         "class": cls, "share": share, "selected": chosen, "calls": n,
+                         "cache_read": cr})
+        if not chosen:
+            continue
+        selected_paths += paths
+        pp = per.setdefault(project, {"project": project, "sessions_active": 0,
+                                      "sessions_dead": 0, "calls": 0, "cache_read": 0})
+        pop["sessions_active" if n else "sessions_dead"] += 1
+        pp["sessions_active" if n else "sessions_dead"] += 1
+        pop["calls"] += n
+        pp["calls"] += n
+        pop["cache_read"] += cr
+        pp["cache_read"] += cr
+        pop["input"] += inp
+        pop["cache_write"] += cw
+        pop["output"] += outp
+    if scope_paths and not (pop["sessions_active"] + pop["sessions_dead"]):
+        reasons.append("empty population: no session exists at the instant" if not sel else
+                       "empty population: the selector selects no session")
+    out["per_project"] = [per[k] for k in sorted(per)]
+    if detail:
+        out["detail"] = rows
+    out["reconcile"].update(_reconcile(con, selected_paths, files, until))
+    if reasons:
+        out["observed_partial"] = pop          # what was seen, never offered as the population
         return out
+    out["population"] = pop
     if expected is None:
         out["verdict"] = "MEASURED"
         return out
-    drift = {k: {"expected": expected[k], "got": pop.get(k)} for k in expected
-             if pop.get(k) != expected[k]}
-    out["verdict"] = "DRIFTED" if drift else "EXACT"
-    if drift:
-        out["drift"] = drift
+    missing = [k for k in VERDICT_FIELDS if not isinstance(expected.get(k), int)]
+    if missing:
+        reasons.append(f"expected record lacks integer field(s) {missing}")
+        return out
+    deltas = {k: {"expected": expected[k], "observed": pop[k], "delta": pop[k] - expected[k]}
+              for k in VERDICT_FIELDS if pop[k] != expected[k]}
+    out["secondary"] = {k: {"observed": pop[k], "expected": expected.get(k),
+                            "match": (pop[k] == expected[k]) if isinstance(expected.get(k), int)
+                            else None} for k in SECONDARY_FIELDS}
+    out["verdict"] = "DRIFTED" if deltas else "EXACT"
+    out["deltas"] = deltas
     return out
+
+
+def _reconcile(con, selected_paths: list, files: dict, until) -> dict:
+    """The dedup decisions behind a population answer, named to the unit. `unique`: distinct
+    call keys across the selection (per-field max over their occurrences). `shared_outside`:
+    keys of the selection that also occur in a file outside it. `first_writer`: what the v4
+    `calls` table attributes to the selection's files (order dependent). All three are read
+    from the index."""
+    con.execute("CREATE TEMP TABLE IF NOT EXISTS _pop_sel(file TEXT PRIMARY KEY)")
+    try:
+        con.execute("DELETE FROM _pop_sel")
+        con.executemany("INSERT OR IGNORE INTO _pop_sel VALUES(?)", [(p,) for p in selected_paths])
+        cp = (until, until)
+        u = con.execute(
+            "SELECT count(*), coalesce(sum(i),0), coalesce(sum(w),0), coalesce(sum(r),0), "
+            "coalesce(sum(o),0) FROM (SELECT c.k, max(c.inp) i, max(c.cw) w, max(c.cr) r, "
+            "max(c.out) o FROM call_files c JOIN files f ON f.path=c.file "
+            "JOIN _pop_sel s ON s.file=c.file WHERE " + _CUT.format(t="c.ts") + " GROUP BY c.k)",
+            cp).fetchone()
+        shared = con.execute(
+            "SELECT count(*), coalesce(sum(r),0) FROM (SELECT c.k, max(c.cr) r FROM call_files c "
+            "JOIN files f ON f.path=c.file JOIN _pop_sel s ON s.file=c.file WHERE "
+            + _CUT.format(t="c.ts") + " AND EXISTS (SELECT 1 FROM call_files o WHERE o.k=c.k AND "
+            "o.file NOT IN (SELECT file FROM _pop_sel)) GROUP BY c.k)", cp).fetchone()
+        sample = [list(r) for r in con.execute(
+            "SELECT DISTINCT f2.project, f2.session_key FROM call_files o JOIN files f2 "
+            "ON f2.path=o.file WHERE o.file NOT IN (SELECT file FROM _pop_sel) AND o.k IN "
+            "(SELECT c.k FROM call_files c JOIN _pop_sel s ON s.file=c.file) "
+            "ORDER BY 1, 2 LIMIT 10")]
+        fw = con.execute(
+            "SELECT count(*), coalesce(sum(cl.cr),0) FROM calls cl JOIN files f ON f.path=cl.file "
+            "JOIN _pop_sel s ON s.file=cl.file WHERE " + _CUT.format(t="cl.ts"), cp).fetchone()
+    finally:
+        con.execute("DROP TABLE IF EXISTS _pop_sel")
+        con.commit()
+    return {"unique": _agg_row(*u), "first_writer": {"calls": fw[0], "cache_read": fw[1]},
+            "shared_outside": {"keys": shared[0], "cache_read": shared[1], "sessions": sample}}
+
+
+def _load_expected(expect: str, expect_file) -> dict:
+    """The expected record of a population: a JSON object literal, else a file of one, else KEY of
+    `expect_file` (default: the frozen denominator record)."""
+    if expect.lstrip().startswith("{"):
+        return json.loads(expect)
+    if Path(expect).is_file():
+        return json.loads(Path(expect).read_text(encoding="utf-8"))
+    src = Path(expect_file) if expect_file else DEFAULT_DENOM_FILE
+    return dict(json.loads(src.read_text(encoding="utf-8"))[expect])
 
 
 def main(argv=None) -> int:
@@ -1623,7 +1880,15 @@ def main(argv=None) -> int:
     ap.add_argument("--project-filter", default=None)
     ap.add_argument("--select", default=None)
     ap.add_argument("--include-archived", action="store_true")
-    ap.add_argument("--expect", default=None, help="JSON object of population fields, or a file of it")
+    ap.add_argument("--host", default=None, help="champion host for the a-env selection rule")
+    ap.add_argument("--tolerate-parse-errors", action="store_true")
+    ap.add_argument("--expect", default=None,
+                    help="a KEY of --expect-file, a JSON object of population fields, or a file of it")
+    ap.add_argument("--expect-file", default=None,
+                    help=f"record holding KEY (default {DEFAULT_DENOM_FILE.name})")
+    ap.add_argument("--perturb", action="append", default=[], metavar="FIELD=INT",
+                    help="add INT to the expected FIELD (proves a drift is reported); repeatable")
+    ap.add_argument("--detail", action="store_true", help="per-session rows")
     ap.add_argument("--plane", default=None, help="host/plane label carried into the answer")
     a = ap.parse_args(argv)
     con = connect(Path(a.db))
@@ -1663,11 +1928,20 @@ def main(argv=None) -> int:
     if a.cmd == "population":
         expected = None
         if a.expect:
-            src = Path(a.expect)
-            expected = json.loads(src.read_text(encoding="utf-8") if src.is_file() else a.expect)
+            try:
+                expected = _load_expected(a.expect, a.expect_file)
+                for kv in a.perturb:
+                    field, _, delta = kv.partition("=")
+                    expected[field] = int(expected[field]) + int(delta)
+            except (OSError, KeyError, ValueError, TypeError) as e:
+                print(f"population: cannot build the expected record: {type(e).__name__}: {e}",
+                      file=sys.stderr)
+                return 2
         res = population(con, until=_epoch(a.until) if a.until else None,
                          project_filter=a.project_filter, select=a.select,
-                         include_archived=a.include_archived, expected=expected, host=a.plane)
+                         include_archived=a.include_archived, expected=expected, host=a.host,
+                         tolerate_parse_errors=a.tolerate_parse_errors, detail=a.detail)
+        res["plane"] = a.plane
         print(json.dumps(res, indent=1))
         return POP_EXIT[res["verdict"]]
     return 1

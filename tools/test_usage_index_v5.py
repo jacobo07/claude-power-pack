@@ -1601,6 +1601,372 @@ def grp_attr_no_open() -> None:
             con.close()
 
 
+# -- plan 04 task 1: population against the champion's own classifier ---------------------------
+# The champion side is wiki/tools/kme_pillars.py (scan_project with make_keep(None, U), finish_session,
+# is_kme, population), used read-only; the index side never opens a transcript.
+
+HIT = "grep -rn KobiMapEngine src"          # a tool input KME_RE matches
+MISS = "ls -la"
+U_H = 10                                    # the freeze instant, hours after T0
+TOT_FIELDS = ("sessions_active", "sessions_dead", "calls", "cache_read", "input", "cache_write",
+              "output")
+
+
+def _tool_lines(sid, prefix, plan, cwd=WINCWD):
+    """plan = [(hour | None, hit)]: one assistant line with one Bash tool_use each; hour None
+    writes the line without a timestamp."""
+    out = []
+    for i, (h, hit) in enumerate(plan):
+        ln = asst(f"{prefix}{i}", 0 if h is None else h, sid,
+                  tools=[(f"{prefix}t{i}", "Bash", {"command": HIT if hit else MISS})],
+                  cr=100 + i, cwd=cwd)
+        out.append(no_ts(ln) if h is None else ln)
+    return out
+
+
+def kme_tree(td: Path) -> Path:
+    """Hermetic projects root covering every selection case of the champion."""
+    proj = td / "projects"
+    alpha = proj / "C--Users-User-Apps-alpha"
+
+    def sess(d, sid, lines):
+        _write(d / f"{sid}.jsonl", "".join(lines))
+
+    sess(alpha, "STRONG", [user_prompt("PS", 0.5, "STRONG")]
+         + _tool_lines("STRONG", "s", [(1, 1), (2, 1), (3, 1), (4, 1), (11, 1), (12, 1)]))
+    _write(alpha / "STRONG" / "subagents" / "agent-1.jsonl",
+           "".join(_tool_lines("STRONG", "a", [(2.5, 1), (11, 1)])))
+    sess(alpha, "WEAK", _tool_lines("WEAK", "w", [(1 + 0.1 * i, i in (3, 9)) for i in range(20)]))
+    sess(alpha, "NONE", _tool_lines("NONE", "n", [(h, 0) for h in (1, 2, 3, 4, 5)]))
+    sess(alpha, "AFTER", _tool_lines("AFTER", "f", [(1, 0), (2, 0), (3, 0), (11, 1), (12, 1),
+                                                   (13, 1), (14, 1)]))
+    sess(alpha, "FUTURE", [user_prompt("PF", 12, "FUTURE")]
+         + _tool_lines("FUTURE", "u", [(12, 1), (13, 1)]))
+    sess(alpha, "NOTS", _tool_lines("NOTS", "t", [(None, 1), (2, 1), (None, 1), (3, 1)]))
+    sess(alpha, "USERKME", _tool_lines("USERKME", "k", [(1 + 0.2 * i, i == 4) for i in range(10)])
+         + [plain_user("please map the KME arena", 1.5), plain_user("and check the KME spawns", 1.6)])
+    sess(alpha, "LATERCWD", [asst("l0", 1, "LATERCWD", tools=[("lt0", "Bash", {"command": MISS})]),
+                             asst("l1", 2, "LATERCWD", tools=[("lt1", "Bash", {"command": MISS})],
+                                  cwd="C:\\Users\\User\\Apps\\kme-lab")])
+    sess(proj / "C--Users-User-Apps-KobiMapEngine", "PATHPROJ",
+         _tool_lines("PATHPROJ", "p", [(1, 0), (2, 0)]))
+    sess(proj / "C--Users-User-Apps-beta", "CWDKME",
+         _tool_lines("CWDKME", "c", [(1, 0), (2, 0)], cwd="C:\\Users\\User\\Apps\\kme-sandbox"))
+    sess(proj / "-home-kobii-kobii-a5-env", "HOSTA5",
+         _tool_lines("HOSTA5", "h", [(1, 0), (2, 0)], cwd="/home/kobii/a5"))
+    sess(proj / "_archived" / "C--Users-User-Apps-alpha-old", "ARCH1",
+         _tool_lines("ARCH1", "r", [(1, 1), (2, 1)]))
+    return proj
+
+
+UNTIL = T0 + U_H * 3600
+
+
+def champion_pop(proj: Path, host):
+    """The frozen instrument on the live project dirs of `proj`: scan_project with
+    make_keep(None, U), finish_session, population (kme_pillars), existence counted by wrapping
+    the keep predicate per session (the champion's own `kept` notion)."""
+    import collections
+    wt = str(HERE.parent / "wiki" / "tools")
+    if wt not in sys.path:
+        sys.path.insert(0, wt)
+    import kme_pillars as kp
+    import kme_report as kr
+    import kme_token_audit as kta
+    keep = kp.make_keep(None, datetime.fromtimestamp(UNTIL, timezone.utc))
+    sessions, kept_by_id, exists, selected = [], {}, {}, set()
+    for d in sorted(p for p in proj.iterdir() if p.is_dir() and p.name != "_archived"):
+        kc = collections.Counter()
+
+        def counting(path, o, d=d, kc=kc):
+            r = keep(path, o)
+            if r:
+                rel = os.path.relpath(path, str(d)).replace("\\", "/")
+                kc[rel.split("/")[0].replace(".jsonl", "")] += 1
+            return r
+
+        for s in kta.scan_project(str(d), keep=counting):
+            kta.finish_session(s, host)
+            sessions.append(s)
+            kept_by_id[id(s)] = kc[s["session"]]
+            if kc[s["session"]] > 0:
+                key = (s["project"], s["session"])
+                exists[key] = (s["class"], s["main"].get("calls", 0) + s["sub"].get("calls", 0),
+                               s["main"].get("cr", 0) + s["sub"].get("cr", 0))
+                if kr.is_kme(s):
+                    selected.add(key)
+    pop = kp.population(sessions, {"select": "kme"}, kept_by_id, True)
+    return {"exists": exists, "selected": selected, "totals": {f: pop[f] for f in TOT_FIELDS}}
+
+
+def kme_db(td: Path):
+    proj = kme_tree(td)
+    con = UX.connect(td / "db" / "ix.sqlite")
+    UX.refresh(con, proj, deadline_s=60)
+    return proj, con
+
+
+def grp_kme_parity() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, con = kme_db(td)
+        try:
+            champ = champion_pop(proj, "gex44")
+            pop = UX.population(con, until=UNTIL, select="kme", host="gex44", detail=True)
+            rows = {(r["project"], r["session_key"]): r for r in pop.get("detail") or []}
+            mine = {k: (r["class"], r["calls"], r["cache_read"]) for k, r in rows.items()}
+            msel = {k for k, r in rows.items() if r["selected"]}
+            tot = pop.get("population") or {}
+            same_tot = all(tot.get(f) == champ["totals"][f] for f in TOT_FIELDS)
+            gate("V-UX5-KME-CLASSIFIER-PARITY",
+                 pop.get("verdict") == "MEASURED" and mine == champ["exists"]
+                 and msel == champ["selected"] and same_tot,
+                 f"index vs champion at U={U_H}h: sessions equal={mine == champ['exists']} "
+                 f"(index {len(mine)}, champion {len(champ['exists'])}), selected equal="
+                 f"{msel == champ['selected']} ({len(msel)}), totals equal={same_tot} "
+                 f"(index {tot}, champion {champ['totals']}); verdict={pop.get('verdict')} "
+                 f"reasons={pop.get('reasons')}")
+            classes = {v[0] for v in champ["exists"].values()}
+            nocut = UX.population(con, select="kme", host="gex44", detail=True)
+            nrows = {(r["project"], r["session_key"]): r for r in nocut.get("detail") or []}
+            lap = UX.population(con, until=UNTIL, select="kme", host="laptop", detail=True)
+            lrows = {(r["project"], r["session_key"]): r["selected"] for r in lap.get("detail") or []}
+            a5 = ("-home-kobii-kobii-a5-env", "HOSTA5")
+            alpha = "C--Users-User-Apps-alpha"
+            gate("V-UX5-KME-PARITY-NONDEGENERATE",
+                 classes == {"KME_PATH", "KME_STRONG", "KME_WEAK", "NONE"}
+                 and (alpha, "FUTURE") not in champ["exists"]
+                 and champ["exists"][(alpha, "AFTER")][0] == "NONE"
+                 and nrows[(alpha, "AFTER")]["class"] == "KME_STRONG"
+                 and (alpha, "FUTURE") in nrows
+                 and a5 in champ["selected"] and lrows.get(a5) is False
+                 and 0 < len(champ["selected"]) < len(champ["exists"]),
+                 f"the fixture exercises all four classes {sorted(classes)}; the session that turns "
+                 f"KME only after U is NONE at U but KME_STRONG without the cut; the session that "
+                 f"starts after U does not exist at U; the host rule selects the a5 env only for "
+                 f"gex44 (laptop: {lrows.get(a5)}); {len(champ['selected'])} of "
+                 f"{len(champ['exists'])} sessions selected")
+        finally:
+            con.close()
+
+
+def _pop_cli(db: Path, *argv):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
+        try:
+            rc = UX.main(["population", "--db", str(db), *argv])
+        except SystemExit as e:             # argparse usage error: exit code 2
+            rc = e.code
+    try:
+        return rc, json.loads(buf.getvalue())
+    except ValueError:
+        return rc, {}
+
+
+def grp_pop_verdicts() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, con = kme_db(td)
+        try:
+            champ = champion_pop(proj, "gex44")
+            ef = td / "expect.json"
+            ef.write_text(json.dumps({"FIX": champ["totals"]}), encoding="utf-8")
+            db = td / "db" / "ix.sqlite"
+            base = ["--until", iso(U_H), "--select", "kme", "--host", "gex44", "--expect", "FIX",
+                    "--expect-file", str(ef)]
+            rc0, o0 = _pop_cli(db, *base)
+            rc1, o1 = _pop_cli(db, *base, "--perturb", "calls=1")
+            gate("V-UX5-POP-EXACT",
+                 rc0 == 0 and o0.get("verdict") == "EXACT" and not o0.get("deltas")
+                 and all(o0.get("secondary", {}).get(f, {}).get("match") is True
+                         for f in ("input", "cache_write", "output")),
+                 f"expected = the champion totals {champ['totals']}: cli exit={rc0} "
+                 f"verdict={o0.get('verdict')} deltas={o0.get('deltas')} reasons={o0.get('reasons')}")
+            d1 = (o1.get("deltas") or {}).get("calls", {})
+            gate("V-UX5-POP-DRIFTED",
+                 rc1 == 1 and o1.get("verdict") == "DRIFTED" and d1.get("delta") == -1
+                 and set(o1.get("deltas") or {}) == {"calls"},
+                 f"the same expectation with calls+1: cli exit={rc1} verdict={o1.get('verdict')} "
+                 f"deltas={o1.get('deltas')} (want exactly calls, delta -1)")
+        finally:
+            con.close()
+
+
+def grp_archived_rule() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        _write(proj / "C--p1" / "S1.jsonl", user_prompt("PL", 1, "S1") + asst("l1", 1.1, "S1")
+               + asst("l2", 1.2, "S1"))
+        _write(proj / "_archived" / "C--p1" / "S1.jsonl", user_prompt("PT", 2, "S1")
+               + asst("t1", 2.1, "S1", cr=7))
+        _write(proj / "_archived" / "C--old" / "S9.jsonl", user_prompt("PO", 3, "S9")
+               + asst("o1", 3.1, "S9", cr=40) + asst("o2", 3.2, "S9", cr=41))
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            d = UX.population(con)
+            i = UX.population(con, include_archived=True)
+            dr, ir = d.get("reconcile") or {}, i.get("reconcile") or {}
+            dp, ip = d.get("population") or {}, i.get("population") or {}
+            ex_d, tw_d = dr.get("archived_excluded") or {}, dr.get("archived_twins") or {}
+            ex_i, tw_i = ir.get("archived_excluded") or {}, ir.get("archived_twins") or {}
+            gate("V-UX5-ARCHIVED-RULE",
+                 d.get("verdict") == "MEASURED" and dp.get("sessions_active") == 1
+                 and dp.get("calls") == 2 and dp.get("cache_read") == 200
+                 and (ex_d.get("sessions"), ex_d.get("calls"), ex_d.get("cache_read")) == (1, 2, 81)
+                 and (tw_d.get("sessions"), tw_d.get("calls"), tw_d.get("cache_read")) == (1, 1, 7)
+                 and ip.get("sessions_active") == 2 and ip.get("calls") == 4
+                 and ip.get("cache_read") == 281
+                 and ex_i.get("sessions") == 0 and ex_i.get("calls") == 0
+                 and (tw_i.get("sessions"), tw_i.get("calls")) == (1, 1),
+                 f"default: live session only (population {dp}), archived_excluded={ex_d} "
+                 f"(the non-twin archived session: 1 session, 2 calls, cr 81), archived_twins={tw_d}; "
+                 f"include_archived: population {ip} (live + the non-twin archived, never the twin), "
+                 f"archived_excluded={ex_i}, archived_twins={tw_i}")
+        finally:
+            con.close()
+
+
+def grp_pop_refuses() -> None:
+    def named(pop, word):
+        return word in " ".join(pop.get("reasons") or [])
+
+    # parse errors: refused, with an admitting control (tolerated and counted)
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, f = one_session_store(td)
+        with f.open("a", encoding="utf-8") as fh:
+            fh.write("this is not json\n")
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            refused = UX.population(con)
+            tol = UX.population(con, tolerate_parse_errors=True)
+            tp = tol.get("population") or {}
+            gate("V-UX5-POP-REFUSES-PARSE",
+                 refused.get("verdict") == "UNMEASURED" and named(refused, "parse error")
+                 and refused.get("population") is None,
+                 f"a bad line in an in-scope file: verdict={refused.get('verdict')} "
+                 f"reasons={refused.get('reasons')} population={refused.get('population')}")
+            gate("V-UX5-POP-TOLERATES-PARSE",
+                 tol.get("verdict") == "MEASURED" and tol.get("parse_errors_tolerated") == 1
+                 and tp.get("calls") == 2 and tp.get("cache_read") == 200,
+                 f"the same index with tolerate_parse_errors: verdict={tol.get('verdict')} "
+                 f"parse_errors_tolerated={tol.get('parse_errors_tolerated')} population={tp}")
+            con.execute("UPDATE files SET error='OSError: injected'")
+            con.commit()
+            ferr = UX.population(con, tolerate_parse_errors=True)
+            gate("V-UX5-POP-REFUSES-FILE-ERROR",
+                 ferr.get("verdict") == "UNMEASURED" and named(ferr, "file error")
+                 and tol.get("verdict") == "MEASURED",
+                 f"a file carrying an error: verdict={ferr.get('verdict')} reasons="
+                 f"{ferr.get('reasons')}; control (no error): {tol.get('verdict')}")
+        finally:
+            con.close()
+
+    # legacy coverage: a migrated v4 index is refused; a cold build of the same tree is measured
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, db, _files, _snap, _todo = make_v4(td)
+        con = UX.connect(db)
+        cold = UX.connect(td / "cold" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            UX.refresh(cold, proj, deadline_s=30)
+            legacy = UX.population(con)
+            ctl = UX.population(cold)
+            cp = ctl.get("population") or {}
+            gate("V-UX5-POP-REFUSES-LEGACY",
+                 legacy.get("verdict") == "UNMEASURED" and named(legacy, "incomplete v5 coverage")
+                 and ctl.get("verdict") == "MEASURED" and cp.get("calls") == 5,
+                 f"migrated v4 index: verdict={legacy.get('verdict')} reasons={legacy.get('reasons')}; "
+                 f"control, a cold build of the same tree: {ctl.get('verdict')} calls={cp.get('calls')}")
+        finally:
+            con.close()
+            cold.close()
+
+    # pattern drift: meta (and per-file) pattern identity must equal the champion's current set
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        lines = [user_prompt("P1", 1, "S1"),
+                 asst("m1", 1.1, "S1", tools=[("tu1", "Bash", {"command": HIT})])]
+        proj, f, db = one_file_db(td, lines)
+        con = UX.connect(db)
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            ok = UX.population(con, select="kme")
+            con.execute("UPDATE meta SET v='drifted' WHERE k='pattern_set'")
+            con.commit()
+            drift = UX.population(con, select="kme")
+            plain = UX.population(con)
+            con.execute("DELETE FROM meta WHERE k='pattern_set'")
+            con.execute("UPDATE files SET pat_ver=NULL")
+            con.commit()
+            unset = UX.population(con, select="kme")
+            gate("V-UX5-POP-REFUSES-PATTERN-DRIFT",
+                 drift.get("verdict") == "UNMEASURED" and named(drift, "pattern set")
+                 and unset.get("verdict") == "UNMEASURED" and named(unset, "pattern set")
+                 and ok.get("verdict") == "MEASURED" and plain.get("verdict") == "MEASURED",
+                 f"meta pattern_set changed after ingest: verdict={drift.get('verdict')} "
+                 f"reasons={drift.get('reasons')}; files without a pattern identity: "
+                 f"{unset.get('verdict')}; controls: unchanged -> {ok.get('verdict')}, a selector "
+                 f"that reads no pattern (select all) on the drifted index -> {plain.get('verdict')}")
+        finally:
+            con.close()
+
+
+def _pair_db(td: Path, sb_first: bool):
+    """SA and SC are KME_STRONG and share the call ma2; SA and SB share the call mshare (SB is
+    not selected). sb_first controls which writer ingests mshare first. SD is a byte-identical
+    copy of SB: a duplicate file in scope."""
+    proj = td / "projects"
+    sb = user_prompt("PB", 1, "SB") + asst("mshare", 1.0, "SB", tools=[("tb", "Bash", {"command": MISS})])
+    sa = (user_prompt("PA", 1, "SA")
+          + asst("mshare", 1.0, "SA", tools=[("ta1", "Bash", {"command": HIT})])
+          + asst("ma2", 1.1, "SA", tools=[("ta2", "Bash", {"command": HIT})], cr=200))
+    sc = (user_prompt("PC", 1, "SC")
+          + asst("ma2", 1.1, "SC", tools=[("tc2", "Bash", {"command": HIT})], cr=200)
+          + asst("mc3", 1.2, "SC", tools=[("tc3", "Bash", {"command": HIT})], cr=300))
+    unselected = (("C--rb", "SB", sb), ("C--rd", "SD", sb))
+    selected = (("C--ra", "SA", sa), ("C--rc", "SC", sc))
+    con = UX.connect(td / "db" / "ix.sqlite")
+    for grp in ((unselected, selected) if sb_first else (selected, unselected)):
+        for d, sid, text in grp:
+            _write(proj / d / f"{sid}.jsonl", text)
+        UX.refresh(con, proj, deadline_s=30)
+    return con
+
+
+def grp_reconcile() -> None:
+    res = {}
+    for order in (True, False):
+        with tempfile.TemporaryDirectory() as td:
+            con = _pair_db(Path(td), order)
+            try:
+                res[order] = UX.population(con, select="kme", detail=True)
+            finally:
+                con.close()
+    a, b = res[True], res[False]
+    pa, pb = a.get("population") or {}, b.get("population") or {}
+    ra, rb = a.get("reconcile") or {}, b.get("reconcile") or {}
+    fw = (ra.get("first_writer") or {}).get("calls"), (rb.get("first_writer") or {}).get("calls")
+    so = ra.get("shared_outside") or {}
+    un = ra.get("unique") or {}
+    gate("V-UX5-RECONCILE-SHARED",
+         a.get("verdict") == "MEASURED" and pa.get("sessions_active") == 2 and pa.get("calls") == 4
+         and pa.get("cache_read") == 800 and pa == pb and ra.get("unique") == rb.get("unique")
+         and ra.get("shared_outside") == rb.get("shared_outside")
+         and so.get("keys") == 1 and so.get("cache_read") == 100
+         and un.get("calls") == 3 and un.get("cache_read") == 600
+         and ra.get("dup_files_in_scope") == 1
+         and fw[0] != fw[1] and sorted(fw) == [2, 3],
+         f"selection SA+SC (4 occurrences, 3 unique keys): occurrence totals {pa} equal for both "
+         f"ingest orders ({pa == pb}); unique={un}; shared_outside={so} (mshare, present in the "
+         f"unselected SB and its copy); duplicate files in scope={ra.get('dup_files_in_scope')}; "
+         f"the v4 first-writer figure differs by order: {fw}")
+
+
 GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
           ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text),
@@ -1617,7 +1983,9 @@ GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_pattern_drift", grp_pattern_drift), ("grp_result_head", grp_result_head),
           ("grp_attr_mixed", grp_attr_mixed), ("grp_attr_nested", grp_attr_nested),
           ("grp_attr_segment", grp_attr_segment), ("grp_attr_order", grp_attr_order),
-          ("grp_attr_no_open", grp_attr_no_open))
+          ("grp_attr_no_open", grp_attr_no_open), ("grp_kme_parity", grp_kme_parity),
+          ("grp_pop_verdicts", grp_pop_verdicts), ("grp_archived_rule", grp_archived_rule),
+          ("grp_pop_refuses", grp_pop_refuses), ("grp_reconcile", grp_reconcile))
 
 
 # -- mutation drill ------------------------------------------------------------
@@ -1813,6 +2181,30 @@ def _m_user_length_guard_removed():
                           "and len(tx) < USER_TEXT_MAX", "and True")
 
 
+def _m_archived_exclusion_removed():
+    """M15: the archived exclusion of population is removed (source text), so a default answer
+    counts `_archived` sessions."""
+    return _source_mutant("tools/usage_index.py",
+                          'if f["archived"] and not include_archived:',
+                          'if False:')
+
+
+def _m_time_cut_removed():
+    """M16: the time cut is removed from the classifier's feature query (source text), so a
+    session is classified on tool uses recorded after the freeze instant."""
+    return _source_mutant("tools/usage_index.py",
+                          '"WHERE e.pat_hits IS NOT NULL AND " + cut("e.ts"), cp):',
+                          '"WHERE e.pat_hits IS NOT NULL AND " + "(? IS NULL OR ? IS NULL OR 1)", cp):')
+
+
+def _m_calls_from_first_writer():
+    """M17: a session's calls are read from calls.file (first writer) instead of the occurrence
+    view call_files (source text)."""
+    return _source_mutant("tools/usage_index.py",
+                          '"coalesce(sum(c.cr),0), coalesce(sum(c.out),0) FROM call_files c "',
+                          '"coalesce(sum(c.cr),0), coalesce(sum(c.out),0) FROM calls c "')
+
+
 MUTANTS = [
     ("M1 _migrate_spawns gated on SCHEMA_VERSION (backfill re-queued)", _m_spawn_backfill_requeued,
      [grp_migrate], ["V-UX5-MIGRATE-ZERO-REREAD"]),
@@ -1842,6 +2234,12 @@ MUTANTS = [
      [grp_attr_mixed], ["V-UX5-MIXED-BOTH"]),
     ("M14 segment prefix replaced by a plain string prefix", _m_plain_string_prefix,
      [grp_attr_segment], ["V-UX5-SEGMENT-PREFIX"]),
+    ("M15 archived exclusion removed from population", _m_archived_exclusion_removed,
+     [grp_archived_rule], ["V-UX5-ARCHIVED-RULE"]),
+    ("M16 time cut removed from the classifier feature query", _m_time_cut_removed,
+     [grp_kme_parity], ["V-UX5-KME-CLASSIFIER-PARITY"]),
+    ("M17 session calls read from calls.file instead of call_files", _m_calls_from_first_writer,
+     [grp_reconcile], ["V-UX5-RECONCILE-SHARED"]),
 ]
 
 
