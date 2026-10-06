@@ -1,0 +1,108 @@
+{
+ "mission_id": "m-51b4175db047",
+ "boundaries": [
+  {
+   "n": 1,
+   "reason": "PAGE",
+   "purpose": "read dossier, roadmap, canary gate source"
+  },
+  {
+   "n": 2,
+   "reason": "PAGE",
+   "purpose": "read dossier second page"
+  },
+  {
+   "n": 3,
+   "reason": "PAGE",
+   "purpose": "write skeleton matrix, commit"
+  },
+  {
+   "n": 4,
+   "reason": "PAGE",
+   "purpose": "grep owner anchors in gsd_x"
+  },
+  {
+   "n": 5,
+   "reason": "PAGE",
+   "purpose": "read salvaged research sections A, B, D, E"
+  },
+  {
+   "n": 6,
+   "reason": "PAGE",
+   "purpose": "grep line anchors for candidate owners"
+  },
+  {
+   "n": 7,
+   "reason": "PAGE",
+   "purpose": "verify consumer lines before citing"
+  },
+  {
+   "n": 8,
+   "reason": "PROOF_FAILURE",
+   "purpose": "fill matrix, run G2-G4 gate"
+  },
+  {
+   "n": 9,
+   "reason": "PAGE",
+   "purpose": "write vault/specs/edd.md"
+  },
+  {
+   "n": 10,
+   "reason": "RECOVERY",
+   "purpose": "look up own mission id in state"
+  },
+  {
+   "n": 11,
+   "reason": "PAGE",
+   "purpose": "write receipt, run gate"
+  }
+ ],
+ "pages_read": [
+  ".planning/workstreams/edd/canary/WU-1.md",
+  ".planning/workstreams/edd/canary/dossier/dossier.md",
+  ".planning/workstreams/edd/ROADMAP.md",
+  "tools/edd_canary_gate.py",
+  ".planning/workstreams/edd/phases/01-reality-scan-ownership-matrix-spec/01-RESEARCH.md:76-155",
+  ".planning/workstreams/edd/phases/01-reality-scan-ownership-matrix-spec/01-RESEARCH.md:189-248"
+ ],
+ "rows_by_status": {
+  "DATASET_ONLY": 38,
+  "UNDER_ANOTHER_NAME": 3,
+  "NOT_A_SYSTEM": 7,
+  "DOCUMENTED_ONLY": 8,
+  "ALREADY_IMPLEMENTED": 8,
+  "PARTIAL": 15,
+  "REACHABLE_NOT_EFFECTIVE": 2
+ },
+ "unknown_rows": [
+  "C-01",
+  "C-03",
+  "C-06",
+  "C-07",
+  "C-12",
+  "C-13",
+  "C-14",
+  "C-17",
+  "C-18",
+  "C-19",
+  "C-21",
+  "C-23",
+  "C-24",
+  "C-26",
+  "C-27",
+  "C-31",
+  "C-36",
+  "C-40",
+  "C-43",
+  "C-47",
+  "C-49",
+  "C-50",
+  "C-56",
+  "C-58",
+  "C-65",
+  "C-66",
+  "C-77",
+  "C-80"
+ ],
+ "learning_paths": []
+}
