@@ -97,3 +97,9 @@ the Owner-only release of hold m-608c8d8d761f is covered by this 'y' only at lau
 ## Gen3 T2 DONE (Owner 'carry on' + cap 42M; evidence gen2/evidence/gen3_t2/README.md)
 - 44.25M measured (2.25M over cap). Canary branch canary/odr-p4-packets in C:\Users\User\Apps\io-odr-p4-canary, HEAD 312e0db5, not pushed. Review APPROVE + 1 LOW open.
 - Next (Owner): merge/deploy decision for InfinityOps Phase 4 (OWNER-GATED), the LOW fix, and whether to build an external spend breaker for agents before any further canary.
+
+## POST-E1 APPROVED (Owner 'y' 2026-10-06, wake via scheduled task INCLUDED) - START HERE
+Read ONLY `vault/plans/post-e1-meta-work-2026-10-06.md`; it supersedes every "Next" list above.
+Next: Phase 0 ownership check (Mission Compiler / GSD X / Context Compiler / ledger writer / scheduled-task carrier),
+then Phase 1 E1 closeout: author B1 in cep_gen2, run D1-D8 as ONE driver call with 0 model calls between steps.
+One fresh pane per phase; meter with stage0/self_spend.py; pre-live model-bound hard recompile 4.5M.
