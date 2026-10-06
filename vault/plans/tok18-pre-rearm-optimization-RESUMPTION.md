@@ -115,6 +115,15 @@ Next (fresh pane, <=4M): C5 write-on-change sleep (launch_held / provider_held);
 flip CPP_MISSION_BOUNDED_RENEWAL to enforce after shadow rows; deploy C1-C4 to GEX44 live install BEFORE
 2026-10-07T05:00Z (m-eaf2843afb16 launches unbounded then) -- Owner call; UKDL/Vault entries.
 
+## C5 DONE (pane ef0d3f77, 2026-10-06) -- 063ff456
+Holds sleep and write only on change (`tools/mission_sleep.py`; quota/provider, gate lineage + preflight,
+cwd launch hold). test_gsd_mission_sleep 6/6 + drill 3/3; MC 225/225; G23 32/32 via new `--amend` (the
+documented `--capture --force` re-pin was unexecutable since T6; C2's s_budget_halt_renew red was re-pinned
+with it). Pre-existing reds on clean HEAD, untouched: V-MV2-HALT-NONE-FIRST-WORKER (C3 vs an old pin),
+V-ROUTE-REAL-LEDGER (historical contractId). Debt: relay_held still writes per pass. Scratch worktree gone.
+Next: C6 `status --surface` (reads `sleep.wake` for HOT/WARM/COLD + Owner-only = wake.kind owner);
+GEX44 deploy of C1-C5 still needs the Owner's go before 2026-10-07T05:00Z.
+
 ## Post-E1 Phase 0 DONE (2026-10-06, pane e0332e3a, read-only, HEAD a5a5e91)
 - Mission Compiler: no code. Only `modules/crawl_os/mission_compiler.py`, PLANNED for crawl intent (another domain). Not an owner.
 - Context Compiler: ABSENT, as recorded in `vault/programs/skill-capability/ledger.json` row L (deferred to cognitive-economy).
