@@ -309,9 +309,33 @@
     {
      "kind": "commit",
      "ref": "223612e9"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/cognitive-economy/measure/e1_postmove_laptop.json",
+     "sha256": "98b40fd29f56cfd66fdd8862eddfde0d88e8713c060f026c3a2819e72dd24d5e"
     }
    ],
-   "savings": [],
+   "savings": [
+    {
+     "status": "upper_bound",
+     "displacement": "unknown",
+     "denominator": "billed first-call context per call, laptop, same-probe A/B differential (19,051 -> 10,574)",
+     "value": 8477,
+     "unit": "processed tokens/call",
+     "measurement": "vault/programs/cognitive-economy/measure/e1_postmove_laptop.json",
+     "note": "on-demand loads of the 8 relocated skills are not netted out, so this bounds the net saving from above"
+    },
+    {
+     "status": "upper_bound",
+     "displacement": "unknown",
+     "denominator": "laptop main-thread calls 2026-10-05T12:35:40Z..2026-10-06T16:25:19+00:00 (usage_index), projected",
+     "value": 74461968,
+     "unit": "processed tokens",
+     "measurement": "vault/programs/cognitive-economy/gen2/evidence/e1_closeout/payback.json",
+     "note": "GEX44 and subagent calls not counted"
+    }
+   ],
    "owner_decision": {
     "item": "[B]",
     "decision": "APPROVED_ALL_8_MOVES",
