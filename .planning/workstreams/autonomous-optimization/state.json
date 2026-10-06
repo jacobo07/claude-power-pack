@@ -1,0 +1,48 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1",
+  "phases": [
+    {
+      "number": "1",
+      "name": "usage_index v5 substrate",
+      "status": "pending"
+    },
+    {
+      "number": "2",
+      "name": "KME-L challenger",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "Generic opportunity detectors + discovery eval",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "Opportunity record, pricing, autonomy envelope",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "Second workload taken by the loop",
+      "status": "pending"
+    },
+    {
+      "number": "6",
+      "name": "Ratchet, inheritance, regression, overhead",
+      "status": "pending"
+    },
+    {
+      "number": "7",
+      "name": "Red team and closeout",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 0 of 7 · executing"
+  },
+  "updated_at": "2026-10-06T11:10:22.529Z"
+}
