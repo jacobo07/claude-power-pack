@@ -43,7 +43,7 @@ never PASS; a predicted saving is never a realized one; a challenger is allowed 
 ## Phases
 
 - [x] **Phase 0: Spec, gen2 freeze, novelty gate** - pillar M reopen, O-R pre-registered (completed 2026-10-06)
-- [ ] **Phase 1: usage_index v5 substrate** - pillar O (PLAN mode)
+- [x] **Phase 1: usage_index v5 substrate** - pillar O (PLAN mode) (completed 2026-10-06)
 - [ ] **Phase 2: KME-L challenger** - pillar P
 - [ ] **Phase 3: Generic opportunity detectors + discovery eval** - pillar Q
 - [ ] **Phase 4: Opportunity record, pricing, autonomy envelope** - pillar M
@@ -110,7 +110,7 @@ Plans:
    11,549,646,300) on the GEX44 copy, with dedup reconciled to the unit.
 4. Refresh cost measured (wall, bytes) for a cold build and for a delta.
 
-**Plans:** 6/6 plans executed
+**Plans:** 6/6 plans complete
 
 Plans:
 **Wave 1**
