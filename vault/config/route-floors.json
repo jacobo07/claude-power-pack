@@ -17,6 +17,8 @@
     "gsd-code-reviewer":         {"floor": 82911,  "p50": 82911,  "write": true,  "n": 1},
     "oneshot-architect-auditor": {"floor": 77486,  "p50": 78340,  "write": false, "n": 8},
     "pp-code-reviewer":          {"floor": 62682,  "p50": 65473,  "write": false, "n": 23},
-    "Explore":                   {"floor": 24428,  "p50": 25226,  "write": false, "n": 14}
+    "Explore":                   {"floor": 24428,  "p50": 25226,  "write": false, "n": 14},
+    "slim-t1":                   {"floor": 8848,   "p50": 8848,   "write": false, "n": 1},
+    "slim-t2":                   {"floor": 13507,  "p50": 13507,  "write": true,  "n": 2, "requires": "vault/config/slim-critical-settings.json"}
   }
 }
