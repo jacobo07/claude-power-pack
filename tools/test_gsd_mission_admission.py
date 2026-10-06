@@ -106,6 +106,21 @@ def refused_launch(mid: str) -> tuple[bool, str]:
 
 
 def main() -> int:
+    # 0. worker_argv: slim-t2 is a print-mode launch carrying the breaker; the default stays `--bg`
+    base = {"mission_id": "m-slim", "epoch": 1, "card": "KERNEL", "model": "sonnet"}
+    t2 = gm.worker_argv({**base, "worker_profile": "slim-t2"}, "do it")
+    t1 = gm.worker_argv({**base, "worker_profile": "slim-t1"}, "do it")
+    dflt = gm.worker_argv(dict(base), "do it")
+    check("V-ADM-SLIM-T2-ARGV", "-p" in t2 and "--bg" not in t2 and "--no-session-persistence" not in t2
+          and any(a.startswith("--settings=") and a.endswith("slim-critical-settings.json") for a in t2)
+          and "--tools=Read,Grep,Glob,Bash,Edit,Write" in t2 and "--system-prompt=KERNEL" in t2 and t2[-1] == "do it", str(t2))
+    check("V-ADM-SLIM-T1-ARGV", "-p" in t1 and "--bg" not in t1 and "--no-session-persistence" in t1
+          and not any(a.startswith("--settings=") for a in t1))
+    check("V-ADM-DEFAULT-ARGV-UNCHANGED", dflt[1] == "--bg" and "-p" not in dflt
+          and not any(a.startswith("--settings=") for a in dflt) and "--autocompact" in dflt and dflt[-1] == "do it", str(dflt))
+    check("V-ADM-SLIM-FROM-ADMISSION", gm.slim_profile({"admission": {"workers": [{"profile": "slim-t2"}]}}) == "slim-t2"
+          and gm.slim_profile({"admission": {"workers": [{"profile": "top-level-worker"}]}}) is None)
+
     # 1. an unadmitted packet refuses BEFORE the claim; the refusal is on the ledger
     mission("m-un")
     ok, why = refused_launch("m-un")

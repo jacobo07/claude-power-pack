@@ -54,7 +54,7 @@ def main() -> int:
     snap = json.loads((HERE.parent / "vault" / "config" / "subagent-floor.json").read_text(encoding="utf-8"))
     measured = snap["by_agent_type"]
     drift = {k: (v["floor"], (measured.get(k) or {}).get("min")) for k, v in profiles.items()
-             if k != ra.TOP_LEVEL and (v["floor"], v["p50"], v["n"]) != ((measured.get(k) or {}).get("min"),
+             if k != ra.TOP_LEVEL and not k.startswith("slim-") and (v["floor"], v["p50"], v["n"]) != ((measured.get(k) or {}).get("min"),
                                                                           (measured.get(k) or {}).get("p50"),
                                                                           (measured.get(k) or {}).get("n"))}
     check("V-RADM-TABLE-MATCHES-SNAPSHOT", not drift and set(measured) <= set(profiles),
@@ -75,6 +75,22 @@ def main() -> int:
           f"{t['verdict']} {t['need_with_margin']:,} <= {W0R_ENV['target']:,}")
     check("V-RADM-RECOMPILE-HINT", h["max_calls_single_worker"] >= 25,
           f"the hint names a single-worker budget of {h['max_calls_single_worker']} calls, which admits the thin route")
+
+    # slim-t2 carries the budget breaker: admitted with its measured floor only when the critical
+    # settings file exists (control: present -> ADMISSIBLE; absent -> ESCALATE, never launched).
+    slim = {"envelope": W0R_ENV, "workers": [{"name": "s", "profile": "slim-t2", "calls": 25, "packet": 4_000}]}
+    with tempfile.TemporaryDirectory() as root:
+        (Path(root) / "vault" / "config").mkdir(parents=True)
+        missing = ra.admit(slim, floors, root=root)
+        (Path(root) / "vault" / "config" / "slim-critical-settings.json").write_text("{}", encoding="utf-8")
+        present = ra.admit(slim, floors, root=root)
+    check("V-RADM-SLIM-T2-ADMITTED", present["verdict"] == ra.ADMISSIBLE
+          and present["workers"][0]["floor"] == profiles["slim-t2"]["floor"] == 13507,
+          f"{present['verdict']} floor {present['workers'][0]['floor']}")
+    check("V-RADM-SLIM-T2-REFUSED-WITHOUT-SETTINGS", missing["verdict"] == ra.ESCALATE
+          and "slim-critical-settings.json" in missing["reasons"][0], str(missing["reasons"]))
+    check("V-RADM-SLIM-REPO-FILE-EXISTS", (HERE.parent / "vault" / "config" / "slim-critical-settings.json").is_file()
+          and ra.admit(slim, floors)["verdict"] == ra.ADMISSIBLE, "default root resolves the committed file")
 
     # exact boundary on a synthetic table: margin 0, floor 100, 10 calls = 1000
     tiny = {"default_min_calls": 3, "profiles": {ra.TOP_LEVEL: {"floor": 100, "p50": 100, "write": True}}}

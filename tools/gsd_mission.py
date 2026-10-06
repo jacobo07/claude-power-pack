@@ -675,6 +675,40 @@ def worker_mcp_verdict(now: float | None = None) -> str:
     return str(d.get("verdict") or "NONE")
 
 
+SLIM_PROFILES = ("slim-t1", "slim-t2")
+SLIM_SETTINGS = Path(__file__).resolve().parent.parent / "vault" / "config" / "slim-critical-settings.json"
+SLIM_DEFAULT_TOOLS = ("Read", "Grep", "Glob", "Bash", "Edit", "Write")
+SLIM_DEFAULT_KERNEL = "You are a terse worker. Use only the tools given. Do exactly what is asked."
+
+
+def slim_profile(rec: dict) -> str | None:
+    """slim-t1 / slim-t2 when the mission asks for a slim worker: `rec["worker_profile"]`, else the
+    profile of the first worker of the admitted route. Anything else keeps the `--bg` launch."""
+    prof = rec.get("worker_profile")
+    if not prof:
+        workers = (rec.get("admission") or {}).get("workers") or []
+        prof = next((w.get("profile") for w in workers if w.get("profile") in SLIM_PROFILES), None)
+    return prof if prof in SLIM_PROFILES else None
+
+
+def slim_argv(rec: dict, prompt: str, exe: str, profile: str) -> list[str]:
+    """`claude -p` print-mode launch (measured floor 8.8k-13.5k vs 97k default). `=` forms only:
+    PowerShell 5.1 drops empty args and --tools is variadic. slim-t2 carries the budget breaker via
+    --settings, so it must keep the transcript the guard reads: `--no-session-persistence` there makes
+    the guard deny after one grace call (measured 2026-10-06), so only slim-t1 (no hooks) passes it."""
+    tools = rec.get("slim_tools") or [t.split("(")[0] for t in rec.get("allowed_tools") or []] or list(SLIM_DEFAULT_TOOLS)
+    argv = [exe, "-p", "--setting-sources=local", "--strict-mcp-config", "--disable-slash-commands",
+            f"--system-prompt={rec.get('card') or SLIM_DEFAULT_KERNEL}",
+            "--exclude-dynamic-system-prompt-sections",
+            f"--tools={','.join(dict.fromkeys(tools))}", "--output-format=json"]
+    if profile == "slim-t1":
+        argv.append("--no-session-persistence")
+    else:
+        argv.append(f"--settings={SLIM_SETTINGS}")
+    argv.append(f"--model={rec.get('model') or 'sonnet'}")
+    return argv + [prompt]
+
+
 def worker_argv(rec: dict, prompt: str) -> list[str]:
     """The launch command. `--bg` manages the session id (W0 E4) and does not inherit the
     launcher's environment (E3), so identity comes back on stdout (E5), nowhere else.
@@ -685,6 +719,9 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
     option (`--autocompact N`) sits between them and the prompt -- the exact shape W0
     launched successfully."""
     exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
+    slim = slim_profile(rec)
+    if slim:
+        return slim_argv(rec, prompt, exe, slim)
     argv = [exe, "--bg", "-n", worker_name(rec)]
     # Owner-approved 2026-09-25: two BLOCKED missions (m-2b4b7a36b2c8, m-2be47a186897) were
     # both parked on an EnterWorktree permission prompt -- the card tells a worker to enter
