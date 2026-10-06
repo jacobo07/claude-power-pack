@@ -1069,7 +1069,10 @@ async function runChain(event, chain, rawStdin, opts) {
     // answer the question it exists for. restSteps is in scope and carries .script,
     // so this is the same expression the `after` branch already uses.
     logError(event, 'CHAIN-DEADLINE-ABANDONED before pool',
-      new Error('critical lane used ' + (Date.now() - chainStart) + 'ms of ' + budget
+      new Error((opts && opts.inprocMs
+          ? 'in-process lane (floor ' + opts.inprocMs.floor + 'ms, cards ' + opts.inprocMs.cards + 'ms) + '
+          : '')
+        + 'critical lane used ' + (Date.now() - chainStart) + 'ms of ' + budget
         + 'ms; pool NOT spawned (' + restSteps.length + ' skipped: '
         + (restSteps.map((s) => s.script).join(', ') || '(none)') + '); session=' + sessionOf(rawStdin) + '; '
         + hostPressure()));
@@ -1513,11 +1516,14 @@ function envSwitchOff(name) {
 }
 
 function sessionStartInProcess(event, chain, rawStdin) {
-  const out = { pre: [], chain };
+  // ms: wall time of each half, reported on the before-pool line (C5). Measured 2026-10-06
+  // 13:25:32: 7,405 ms used before the pool with nothing spawned in the lane.
+  const out = { pre: [], chain, ms: { floor: 0, cards: 0 } };
   if (event !== 'SessionStart-chain') return out;
   let data = {};
   try { data = JSON.parse((rawStdin || '{}').replace(/^\uFEFF/, '')) || {}; } catch (_) { data = {}; }
   if (!envSwitchOff('CLAUDE_HOST_MEM_FLOOR_INPROC')) {
+    const tf = Date.now();
     try {
       const floor = require(path.join(__dirname, SESSIONSTART_FLOOR));
       out.pre.push(floor.run(data));
@@ -1525,8 +1531,10 @@ function sessionStartInProcess(event, chain, rawStdin) {
     } catch (err) {
       logError(event, 'INPROC-FLOOR-FAILED (spawned step kept) session=' + sessionOf(rawStdin), err);
     }
+    out.ms.floor = Date.now() - tf;
   }
   if (!envSwitchOff('CLAUDE_SESSION_CARDS_INPROC')) {
+    const tc = Date.now();
     try {
       const cards = require(path.join(__dirname, SESSIONSTART_CARDS));
       const ctx = cards.composeCards(data, { via: 'inproc', missionTimeoutMs: CARDS_MISSION_TIMEOUT_MS });
@@ -1537,6 +1545,7 @@ function sessionStartInProcess(event, chain, rawStdin) {
     } catch (err) {
       logError(event, 'INPROC-CARDS-FAILED (the hub composes them) session=' + sessionOf(rawStdin), err);
     }
+    out.ms.cards = Date.now() - tc;
   }
   return out;
 }
@@ -1599,7 +1608,7 @@ if (require.main === module) (async () => {
     const rawIn = preRaw !== null ? preRaw : await readStdin(3000);
     const dispatchStart = Date.now();
     const inproc = sessionStartInProcess(event, CHAIN_MAP[event], rawIn || '');
-    const chainRes = await runChain(event, inproc.chain, rawIn || '', { startedAt: dispatchStart });
+    const chainRes = await runChain(event, inproc.chain, rawIn || '', { startedAt: dispatchStart, inprocMs: inproc.ms });
     const { blocked, blockStderr } = chainRes;
     // In-process SessionStart outputs FIRST (floor, cards); see SESSIONSTART IN-PROCESS LANE.
     const outputs = inproc.pre.concat(chainRes.outputs);

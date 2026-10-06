@@ -131,3 +131,13 @@ Out of slice (named debt): zero-command-bootstrap / first-time-project double ru
   (2 launches, flag recreated). Courier 22/22. kresume-autotype 31/35: the 4 failures are V-KRA-D-* daemon gates
   whose flags the test writes directly (no hub code on that path): daemon REQUESTED then exit ~0.7 s later on a
   starved host. Markers accumulate one per rollover in ~/.claude/hooks (no pruning yet; named debt).
+- C4 committed 52573419. Live evidence 12:37-14:36Z: 7 real starts all `via=inproc` (cards delivered every time);
+  4 hub abandonments after 4000 ms and ONE before-pool at 13:25:32 ("critical lane used 7405ms") with no spawn in the
+  lane -- the in-process floor + cards themselves took ~7 s on a host at ~2-3 % free. So "0 before-pool" cannot be
+  guaranteed on this host; "0 lost cards" held 7/7.
+- C5: `cards DONE ... ms=<total> (rollover= mission= restart= workstate=)` (session_cards.js, live on save);
+  dispatcher times the lane halves and the before-pool line reads `in-process lane (floor Xms, cards Yms) + critical
+  lane used Zms` (repo; live needs the mirror). Drill in test_session_start_inproc.js: a stand-in hub sleeping 8 s is
+  ALWAYS abandoned and floor + card still arrive, abandonment logged with the session (deterministic red pole; case 9
+  is the control). Before-pool attribution driven deterministically through runChain(startedAt-5 s), with a
+  no-lane control. 24/24; attribution mutant killed. Not covered: main() passing inprocMs (only the e2e can reach it).

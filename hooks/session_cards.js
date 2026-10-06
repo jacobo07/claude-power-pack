@@ -372,13 +372,24 @@ function composeCards(payload, opts) {
   const cwd = (typeof p.cwd === 'string' && p.cwd) ? p.cwd : process.cwd();
   const sid = (typeof p.session_id === 'string') ? p.session_id : '';
   const source = (typeof p.source === 'string') ? p.source : '';
+  // Per-card wall time (C5, 2026-10-06): one real start spent 7,405 ms before the pool with no
+  // spawn in the lane, i.e. inside this function or the floor on a host at ~2 % free RAM. The
+  // DONE line says which card it was instead of leaving it to inference.
+  const ms = {};
+  const timed = (k, fn) => {
+    const t = Date.now();
+    try { return fn(); } finally { ms[k] = Date.now() - t; }
+  };
+  const t0 = Date.now();
   const lines = [
-    hookRolloverResume(cwd, source),
-    hookMissionStart(sid, source, o.missionTimeoutMs),
-    hookRestartResume(cwd),
-    hookWorkStateResume(cwd),
+    timed('rollover', () => hookRolloverResume(cwd, source)),
+    timed('mission', () => hookMissionStart(sid, source, o.missionTimeoutMs)),
+    timed('restart', () => hookRestartResume(cwd)),
+    timed('workstate', () => hookWorkStateResume(cwd)),
   ].filter(Boolean);
-  note('cards DONE via=' + (o.via || '?') + ' sid=' + (sid || '-') + ' n=' + lines.length);
+  note('cards DONE via=' + (o.via || '?') + ' sid=' + (sid || '-') + ' n=' + lines.length
+       + ' ms=' + (Date.now() - t0) + ' (rollover=' + ms.rollover + ' mission=' + ms.mission
+       + ' restart=' + ms.restart + ' workstate=' + ms.workstate + ')');
   return lines.length ? lines.join('\n') : null;
 }
 

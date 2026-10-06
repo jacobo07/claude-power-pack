@@ -167,6 +167,56 @@ res = e2e({ CLAUDE_SESSION_CARDS_INPROC: 'off' });
 check('V-SSINPROC-E2E-NO-FLAG-WHEN-OFF', res.settled && res.o.includes('STANDIN-HUB flag=unset')
   && !res.o.includes('[/restart resume]'), res.settled ? res.o.slice(-200) : 'INCONCLUSIVE: 3/3 abandoned (host)');
 
+// 10. C5 DRILL -- deterministic red pole: a stand-in hub that sleeps 8 s, twice the chain deadline,
+// is ALWAYS abandoned, whatever the host's load. The cards and the floor must still be delivered,
+// the abandonment must be logged naming the hub, and the cards line must carry its timings. The
+// positive control is case 9 (a settled stand-in hub appears after the card, with the flag).
+fs.writeFileSync(path.join(PPH, 'session_start_hub.js'),
+  "setTimeout(()=>{process.stdout.write(JSON.stringify({continue:true,additionalContext:'SLOW-HUB'}));"
+  + "process.exit(0);},8000);process.stdin.resume();");
+writeMarker();
+try { fs.rmSync(ERRLOG, { force: true }); } catch (_) { /* absent */ }
+{
+  const env = Object.assign({}, process.env, { CLAUDE_HOST_MEM_CRIT_MB: '999999' });
+  delete env.PP_SESSION_CARDS_DONE;
+  const p = spawnSync(process.execPath, [path.join(HOOKS, 'hook-dispatcher.js'), '--event=SessionStart-chain'],
+    { input: payload({ session_id: 'dddd4444-5555' }), env, encoding: 'utf8', timeout: 60000, windowsHide: true });
+  const o = String(p.stdout || '');
+  let log = '';
+  try { log = fs.readFileSync(ERRLOG, 'utf8'); } catch (_) { /* nothing logged */ }
+  check('V-SSINPROC-DRILL-CARDS-SURVIVE-SLOW-HUB', /SUELO DE MEMORIA/.test(o) && o.includes('[/restart resume]')
+    && !o.includes('SLOW-HUB'), o.slice(0, 200));
+  check('V-SSINPROC-DRILL-ABANDON-LOGGED', /CHAIN-DEADLINE-ABANDONED/.test(log) && log.includes('session_start_hub.js')
+    && log.includes('dddd4444-5555'), log.slice(-300));
+  const hubLogNow = fs.readFileSync(path.join(tmp, 'pp-session-hub.log'), 'utf8');
+  check('V-SSINPROC-DRILL-CARDS-TIMED', /cards DONE via=inproc sid=dddd4444-5555 n=1 ms=\d+ \(rollover=\d+ mission=\d+ restart=\d+ workstate=\d+\)/
+    .test(hubLogNow), hubLogNow.trim().split('\n').slice(-2).join(' | '));
+}
+
+// 11. Before-pool attribution, driven deterministically: a chain whose clock started 5 s ago has no
+// budget left, so runChain takes the before-pool branch every time. The line must name the
+// in-process lane's halves (the 13:25:32 case read as "critical lane" with no critical step).
+// Control: without inprocMs the line keeps its old shape (no attribution invented).
+(async () => {
+  const rest = CHAIN.filter((s) => s.script !== FLOOR_STEP && !s.critical);
+  try { fs.rmSync(ERRLOG, { force: true }); } catch (_) { /* absent */ }
+  await disp.runChain('SessionStart-chain', rest, payload({ session_id: 'eeee5555-6666' }),
+    { startedAt: Date.now() - 5000, inprocMs: { floor: 11, cards: 4321 } });
+  let log = '';
+  try { log = fs.readFileSync(ERRLOG, 'utf8'); } catch (_) { /* nothing logged */ }
+  check('V-SSINPROC-BEFORE-POOL-ATTRIBUTED', /before pool/.test(log)
+    && log.includes('in-process lane (floor 11ms, cards 4321ms) + critical lane used'), log.slice(-300));
+  try { fs.rmSync(ERRLOG, { force: true }); } catch (_) { /* absent */ }
+  await disp.runChain('SessionStart-chain', rest, payload({ session_id: 'eeee5555-7777' }),
+    { startedAt: Date.now() - 5000 });
+  try { log = fs.readFileSync(ERRLOG, 'utf8'); } catch (_) { log = ''; }
+  check('V-SSINPROC-BEFORE-POOL-PLAIN-WITHOUT-LANE', /before pool/.test(log) && !log.includes('in-process lane')
+    && log.includes('critical lane used'), log.slice(-300));
+  finish();
+})();
+
+function finish() {
+
 // 8. The hub honours the flag (never both), and composes the cards without it (no gap).
 writeMarker();
 process.env.PP_SESSION_CARDS_DONE = '1';
@@ -181,3 +231,4 @@ check('V-SSINPROC-HUB-COMPOSES-WITHOUT-FLAG', composed.includes('[/restart resum
 console.log('SSINPROC_PASS=' + pass + '/' + (pass + fail));
 try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (_) { /* scratch; the OS reaps it */ }
 process.exit(fail ? 1 : 0);
+}
