@@ -24,7 +24,7 @@ PP = HERE.parent
 sys.path.insert(0, str(HERE))
 import mission_spend as ms  # noqa: E402
 
-GUARD = PP / "hooks" / "session_budget_guard.js"
+GUARD = Path(os.environ.get("SBG_DRILL_GUARD") or PP / "hooks" / "session_budget_guard.js")   # drill: a mutated copy
 LIVE_DISPATCHER = Path.home() / ".claude" / "hooks" / "hook-dispatcher.js"
 DISPATCHERS = [PP / "hooks" / "hook-dispatcher.js", LIVE_DISPATCHER]
 NODE = shutil.which("node") or "node"
@@ -96,8 +96,8 @@ class Box:
         with open(self.tx, "a", encoding="utf-8") as fh:
             fh.write(text)
 
-    def call(self, cmd="echo hi", tx=True, **env):
-        ev = {"session_id": SID, "tool_name": "Bash", "tool_input": {"command": cmd}}
+    def call(self, cmd="echo hi", tx=True, tool="Bash", inp=None, **env):
+        ev = {"session_id": SID, "tool_name": tool, "tool_input": inp if inp is not None else {"command": cmd}}
         if tx:
             ev["transcript_path"] = str(self.tx)
         p = subprocess.run([NODE, "-e", RUNNER, str(GUARD)], input=json.dumps(ev), capture_output=True,
@@ -212,6 +212,58 @@ def main():
     kill = kind(b.call(CPP_SESSION_BUDGET="off")["out"])
     check("V-SBG-EXEMPT", (tripped, ex) == ("deny", "allow"), f"over stop -> {tripped}; rollover.py -> {ex}")
     check("V-SBG-KILL", kill == "allow", f"CPP_SESSION_BUDGET=off -> {kill}")
+
+    # V-SBG-CHECKPOINT-*: envelope = 20 calls x 1.5 = 30; reserve 6 (capped at a quarter = 7)
+    def reads(n):
+        return row(f"r{time.monotonic_ns()}", U(1), tools=[("Read", {})] * n)
+
+    def reason(o):
+        return ((o or {}).get("hookSpecificOutput") or {}).get("permissionDecisionReason") or ""
+
+    COMMIT = 'git commit -m "wip <noreply@example.com>" -- a.txt'
+    PS_GIT = "& 'C:\\Program Files\\Git\\cmd\\git.exe' -C C:\\repo status"
+    # post-ceiling (31 calls > 30)
+    b = Box(); b.declare(calls_estimate=20); b.append(reads(31))
+    c1 = b.call(COMMIT)
+    c1b = b.call(tool="PowerShell", cmd=PS_GIT)
+    c1c = b.call("git add -A && git commit -F m.txt; git status")
+    check("V-SBG-CHECKPOINT-POST-CEILING-COMMIT", all(kind(c["out"]) == "advise" and "CHECKPOINT MODE" in ((c["out"].get("hookSpecificOutput") or {}).get("additionalContext") or "") for c in (c1, c1b, c1c)),
+          f"git commit / PS git status / chain -> {kind(c1['out'])},{kind(c1b['out'])},{kind(c1c['out'])}")
+    c2 = b.call(tool="Edit", inp={"file_path": "C:/repo/src/app.js"})
+    check("V-SBG-CHECKPOINT-POST-CEILING-SOURCE-DENIED", kind(c2["out"]) == "deny" and "CHECKPOINT MODE" in reason(c2["out"]) and "RESUMPTION" in reason(c2["out"]) and "git commit" in reason(c2["out"]),
+          f"Edit src/app.js -> {kind(c2['out'])}; text lists the allowed set")
+    c3 = [b.call(tool=t, inp={"file_path": p}) for t, p in (("Edit", "C:\\repo\\RESUMPTION.md"), ("Write", "/r/RESUMPTION_M2.md"), ("Write", "/r/TOKENS.md"))]
+    check("V-SBG-CHECKPOINT-POST-CEILING-RESUMPTION", all(kind(c["out"]) == "advise" for c in c3), f"{[kind(c['out']) for c in c3]}")
+    check("V-SBG-CHECKPOINT-READ-AND-OTHER-BASH-DENIED", all(kind(c["out"]) == "deny" for c in (
+        b.call(tool="Read", inp={"file_path": "a"}), b.call("npm test"), b.call("git status | cat"), b.call("git status; rm -rf x"),
+        b.call("git commit -m x > out.txt"), b.call('git commit -m "$(rm x)"'), b.call("git push"), b.call("git reset --hard"))),
+          "Read, npm, piped/chained/redirected/substituted git, push and reset are all denied in the window")
+    # declared checkpoint_paths admit their file and only theirs
+    b = Box(); b.declare(calls_estimate=20); b.append(reads(31))
+    bp = b.state / f"session-budget-{SID}.json"
+    j = json.loads(bp.read_text(encoding="utf-8")); j["checkpoint_paths"] = ["vault/handoffs/h.md"]; bp.write_text(json.dumps(j), encoding="utf-8")
+    p_ok, p_no = b.call(tool="Write", inp={"file_path": "C:/r/vault/handoffs/h.md"}), b.call(tool="Write", inp={"file_path": "C:/r/vault/handoffs/other.md"})
+    check("V-SBG-CHECKPOINT-DECLARED-PATH", kind(p_ok["out"]) == "advise" and kind(p_no["out"]) == "deny", f"declared -> {kind(p_ok['out'])}, other -> {kind(p_no['out'])}")
+    # approaching the ceiling: 25 calls (5 remain) is already checkpoint; 10 calls is ordinary
+    b = Box(); b.declare(calls_estimate=20); b.append(reads(25))
+    pre_src, pre_git = b.call(tool="Edit", inp={"file_path": "C:/r/src/a.js"}), b.call(COMMIT)
+    b = Box(); b.declare(calls_estimate=20); b.append(reads(10))
+    early = b.call(tool="Edit", inp={"file_path": "C:/r/src/a.js"})
+    check("V-SBG-CHECKPOINT-PRE-CEILING", (kind(pre_src["out"]), kind(pre_git["out"]), kind(early["out"])) == ("deny", "advise", "allow"),
+          f"5 remain: src {kind(pre_src['out'])}, commit {kind(pre_git['out'])}; 20 remain: src {kind(early['out'])}")
+    # beyond the reserve (ceiling passed by >= 6 calls): everything denied, with the ordinary breaker text
+    b = Box(); b.declare(calls_estimate=20); b.append(reads(31))
+    b.call(COMMIT)                      # first over-ceiling look pins over_at = 31
+    b.append(reads(6))
+    far = [b.call(COMMIT), b.call(tool="Edit", inp={"file_path": "C:/r/RESUMPTION.md"}), b.call(tool="Edit", inp={"file_path": "C:/r/src/a.js"})]
+    check("V-SBG-CHECKPOINT-BEYOND-RESERVE-ALL-DENIED", all(kind(c["out"]) == "deny" and "CHECKPOINT MODE" not in reason(c["out"]) and "SESSION BUDGET BREAKER" in reason(c["out"]) for c in far),
+          f"{[kind(c['out']) for c in far]}")
+    # reserve 0 in the budget file turns the mode off: the ordinary deny for a commit
+    b = Box(); b.declare(calls_estimate=20); b.append(reads(31))
+    j = json.loads((b.state / f"session-budget-{SID}.json").read_text(encoding="utf-8")); j["checkpoint_reserve"] = 0
+    (b.state / f"session-budget-{SID}.json").write_text(json.dumps(j), encoding="utf-8")
+    off = b.call(COMMIT)
+    check("V-SBG-CHECKPOINT-RESERVE-ZERO-OFF", kind(off["out"]) == "deny" and "CHECKPOINT MODE" not in reason(off["out"]), f"{kind(off['out'])}")
 
     # V-SBG-REAL-PARITY (positive control): the largest real transcript on this host
     proj = ms.projects_root()

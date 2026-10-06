@@ -108,7 +108,112 @@ function advise(text) {
   return { hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: text } };
 }
 
-function judge(budget, st) {
+// ---- checkpoint mode -------------------------------------------------------------------------
+// A session that hits its stop ceiling used to be denied EVERYTHING, including the commit that
+// would have saved its work and the RESUMPTION file the successor reads. When the calls remaining
+// before the stop ceiling fall to the reserve (default 6; `checkpoint_reserve` in the budget file),
+// or the ceiling is passed by fewer than `reserve` calls, the guard denies everything EXCEPT:
+//   (a) PowerShell/Bash commands made only of git add / git commit / git status / git log;
+//   (b) Write/Edit/MultiEdit of RESUMPTION*.md, TOKENS.md or a path in the budget's `checkpoint_paths`.
+// Beyond the reserve the ordinary deny applies to everything. The reserve is capped at a quarter of
+// the envelope's calls so a tiny envelope is not all checkpoint.
+const DEFAULT_CHECKPOINT_RESERVE = 6;
+const GIT_EXE = String.raw`(?:git(?:\.exe)?|"[^"]*git(?:\.exe)?"|'[^']*git(?:\.exe)?')`;
+const GIT_SEGMENT = new RegExp(String.raw`^(?:&\s*)?${GIT_EXE}\s+(?:-C\s+(?:"[^"]*"|'[^']*'|\S+)\s+)?(?:add|commit|status|log)(?:\s|$)`);
+
+// Split a command at unquoted ; && || newline. null when it holds anything that could do more than
+// run those segments: an unquoted pipe, redirect or backtick, or $( / backtick inside double quotes.
+function splitCommand(cmd) {
+  const segs = [];
+  let cur = '', q = null;
+  for (let i = 0; i < cmd.length; i++) {
+    const c = cmd[i];
+    if (q) {
+      if (q === '"' && (c === '`' || (c === '$' && cmd[i + 1] === '('))) return null;
+      if (c === q) q = null;
+      cur += c;
+      continue;
+    }
+    if (c === "'" || c === '"') { q = c; cur += c; continue; }
+    if (c === '`' || c === '<' || c === '>') return null;
+    if (c === '$' && cmd[i + 1] === '(') return null;
+    if (c === '&' && cmd[i + 1] === '&') { segs.push(cur); cur = ''; i++; continue; }
+    if (c === '|') { if (cmd[i + 1] === '|') { segs.push(cur); cur = ''; i++; continue; } return null; }
+    if (c === ';' || c === '\n' || c === '\r') { segs.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  if (q) return null;
+  segs.push(cur);
+  return segs.map(s => s.trim()).filter(Boolean);
+}
+
+function gitOnly(cmd) {
+  const segs = splitCommand(String(cmd || ''));
+  return !!segs && segs.length > 0 && segs.every(s => GIT_SEGMENT.test(s));
+}
+
+function checkpointPathOk(p, budget) {
+  const norm = String(p || '').replace(/\\/g, '/').toLowerCase();
+  const base = norm.split('/').pop();
+  if (/^resumption.*\.md$/.test(base) || base === 'tokens.md') return true;
+  const extra = Array.isArray(budget.checkpoint_paths) ? budget.checkpoint_paths : [];
+  return extra.some(e => {
+    const n = String(e || '').replace(/\\/g, '/').toLowerCase();
+    return n && (norm === n || norm.endsWith('/' + n));
+  });
+}
+
+function checkpointAllowed(call, budget) {
+  if (!call || !call.tool) return false;
+  const inp = call.input || {};
+  if (call.tool === 'Bash' || call.tool === 'PowerShell') return gitOnly(inp.command);
+  if (call.tool === 'Write' || call.tool === 'Edit' || call.tool === 'MultiEdit') return checkpointPathOk(inp.file_path, budget);
+  return false;
+}
+
+// Calls left before the stop ceiling (negative once past it), and the envelope's total calls.
+function callsRemaining(budget, st) {
+  const est = Number(budget.calls_estimate) || 0;
+  const ratio = Number(budget.call_ratio) || DEFAULT_CALL_RATIO;
+  let rem = Infinity, total = Infinity;
+  if (est > 0) { total = ratio * est; rem = total - st.calls; }
+  if (st.calls > 0 && st.tokens > 0) {
+    const per = st.tokens / st.calls;
+    const tr = Math.floor((budget.stop - st.tokens) / per);
+    if (tr < rem) { rem = tr; total = Math.min(total, st.calls + tr); }
+  } else if (st.tokens > budget.stop) { rem = -1; }
+  return { rem, total };
+}
+
+function checkpointVerdict(budget, st, call, why) {
+  const reserve = Math.max(0, Math.floor(Number(budget.checkpoint_reserve ?? DEFAULT_CHECKPOINT_RESERVE)));
+  const { rem, total } = callsRemaining(budget, st);
+  if (rem >= 0) delete st.over_at;
+  else if (st.over_at === undefined) st.over_at = st.calls;
+  if (reserve === 0 || rem === Infinity) return null;
+  const cap = Number.isFinite(total) ? Math.floor(total / 4) : reserve;
+  const preWindow = Math.min(reserve, cap) > 0 && rem >= 0 && rem <= Math.min(reserve, cap);
+  const overBy = st.over_at === undefined ? 0 : st.calls - st.over_at;
+  const postWindow = rem < 0 && overBy < reserve;
+  if (!preWindow && !postWindow) return null;
+  const extra = Array.isArray(budget.checkpoint_paths) && budget.checkpoint_paths.length
+    ? `, ${budget.checkpoint_paths.join(', ')}` : '';
+  const left = postWindow ? reserve - overBy : rem;
+  const text = `${why || `${rem} calls remain before the stop ceiling.`} ` +
+    `Allowed now: (a) PowerShell/Bash commands that are only git add / git commit / git status / git log; ` +
+    `(b) Write/Edit of RESUMPTION*.md, TOKENS.md${extra}. Everything else is denied. ` +
+    `${left} checkpoint call(s) left: commit your work, write RESUMPTION.md, then end the turn and /kclear.`;
+  if (checkpointAllowed(call, budget)) return advise(`SESSION BUDGET CHECKPOINT MODE -- ${text}`);
+  return { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny',
+    permissionDecisionReason: `SESSION BUDGET CHECKPOINT MODE -- ${text}` } };
+}
+
+function judge(budget, st, call) {
+  if (call) {
+    const cp = checkpointVerdict(budget, st, call,
+      st.tokens > budget.stop ? `processed ${fmt(st.tokens)} > stop ${fmt(budget.stop)} (target ${fmt(budget.target)}).` : null);
+    if (cp) return cp;
+  }
   if (st.tokens > budget.stop) {
     return deny(`processed ${fmt(st.tokens)} > stop ${fmt(budget.stop)} (target ${fmt(budget.target)}).`);
   }
@@ -164,7 +269,7 @@ function decide(event) {
     }
   } else {
     st.grace = false;
-    verdict = judge(budget, st);
+    verdict = judge(budget, st, { tool: event.tool_name, input: event.tool_input || {} });
   }
   try {
     fs.writeFileSync(sPath + '.tmp', JSON.stringify(st));
@@ -179,4 +284,5 @@ async function run(event) {
   try { return decide(event); } catch (e) { return null; }  // a bug in the guard never breaks a tool call
 }
 
-module.exports = { run, decide, advance, fresh, judge, DEFAULT_CALL_RATIO, DEFAULT_NOPROGRESS };
+module.exports = { run, decide, advance, fresh, judge, gitOnly, DEFAULT_CALL_RATIO, DEFAULT_NOPROGRESS,
+  DEFAULT_CHECKPOINT_RESERVE };
