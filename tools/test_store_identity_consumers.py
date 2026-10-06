@@ -18,6 +18,7 @@ INCONCLUSIVE (exit 2), never a pass."""
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -60,9 +61,15 @@ def line(mid, mins_ago, sess):
 
 
 def junction(link: Path, target: Path) -> bool:
-    r = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)],
-                       capture_output=True, text=True)
-    return r.returncode == 0 and link.is_dir()
+    if os.name == "nt":
+        r = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)],
+                           capture_output=True, text=True)
+        return r.returncode == 0 and link.is_dir()
+    try:                                          # POSIX: a directory symlink aliases like a junction
+        os.symlink(str(target), str(link), target_is_directory=True)
+    except OSError:
+        return False
+    return link.is_dir()
 
 
 def build(proj: Path, name: str, sess: str) -> Path:

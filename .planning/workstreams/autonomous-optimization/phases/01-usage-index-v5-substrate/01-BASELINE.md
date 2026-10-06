@@ -50,3 +50,11 @@ two seeded-alias separators use `os.sep`.
 
 `python3 tools/test_usage_index_identity.py` -> exit 0, last line `USAGE_INDEX_IDENTITY_PASS=11/11  threshold=11/11`.
 No V-UXID gate is red.
+
+## Store-identity consumers suite after the Linux fallback (Rule 3 deviation)
+
+`tools/test_store_identity_consumers.py` carried the identical `mklink /J` shell-out and crashed on Linux, which would
+have made the plan's own Task 2 gate (`PASS V-SIC-UX-ONE-PRODUCER`) unrunnable. The same `junction()` fallback was
+applied (committed separately from the two-file Task 1 commit). Post-fix: exit 0, last line
+`STORE_IDENTITY_CONSUMERS_PASS=12/12  threshold=12/12`, `PASS V-SIC-UX-ONE-PRODUCER` present. This is the comparison
+line for plan 01 Task 2. `tools/test_token_ground_truth_junction.py` keeps its crash (no gate of this phase needs it).
