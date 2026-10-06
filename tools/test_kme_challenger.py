@@ -872,6 +872,187 @@ def g_metric_coverage():
     return ok, (f"uncovered dependencies={gaps or 'none'}; listed names missing from source={absent or 'none'}; "
                 f"selection names missing={absent_sel or 'none'}; control (VERIFY_CMD_RE dropped from H) -> {control}")
 
+# --------------------------------------------------------------------------- gates: closure, IN-04, shadow (plan 03, task 2)
+def append_line(path, obj):
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(obj) + "\n")
+
+
+def kme_text_line(t):
+    """An assistant line that mentions KMEIP but carries no usage: it changes the file's bytes (so the source is stale)
+    and gives the classifier something to read, yet the session stays unselected and no call is added."""
+    return {"type": "assistant", "timestamp": t, "message": {"role": "assistant",
+            "content": [{"type": "text", "text": "touching the KMEIP map again"}]}}
+
+
+def g_stale_source():
+    w = World("ss", n2=True)
+    w.cert_for()
+    sel = selected_transcripts(w)
+    ctl = go(w, "auto", ["--index-db", str(w.db)])
+    ctl_ok = (ctl["rc"] == 0 and ctl["rec"]["plan_taken"] == "index" and ctl["rec"]["read_set"]["stale"] == []
+              and set(ctl["opened"]) == sel)
+    append_line(w.files["n1"], kme_text_line(T.ts(13)))
+    res = go(w, "auto", ["--index-db", str(w.db)])
+    champ = w.measure(None)
+    rec = res["rec"]
+    n1, n2 = str(w.files["n1"]), str(w.files["n2"])
+    ok = (ctl_ok and res["rc"] == 0 and rec["plan_taken"] == "index" and rec["deopt"] is None
+          and rec["read_set"]["stale"] == [f"{IN_SCOPE}/n1"]
+          and set(res["opened"]) == sel | {n1} and n2 not in set(res["opened"]) and str(w.files["c1"]) not in set(res["opened"])
+          and rec["read_set"]["sessions"] == 2 and rec["read_set"]["files"] == 3
+          and len(champ[3]) == 1 and masked_of(res) == mask(*load(champ[3][0])))
+    return ok, (f"control: taken={ctl['rec']['plan_taken']} stale={ctl['rec']['read_set']['stale']} opened="
+                f"{names(ctl['opened'])}; after appending to n1: stale={rec['read_set']['stale']} opened="
+                f"{names(res['opened'])} (n2 untouched, never opened) output equals champion on the modified tree="
+                f"{masked_of(res) == mask(*load(champ[3][0]))}")
+
+
+def g_stale_new_file():
+    w = World("snf")
+    w.cert_for()
+    # (a) a new non-KME session appears after certification: read, classified in-process, output equals the champion's
+    n3 = T.Fx(w.root, project=IN_SCOPE, session="n3")
+    n3.human("rename the helper", T.ts(18))
+    n3.assistant("n3a", "rn3a", (2, 30, 300, 7), T.ts(19))
+    a = go(w, "auto", ["--index-db", str(w.db)])
+    champ_a = w.measure(None)
+    a_ok = (a["rc"] == 0 and a["rec"]["plan_taken"] == "index" and a["rec"]["read_set"]["stale"] == [f"{IN_SCOPE}/n3"]
+            and str(n3.path.resolve()) in set(a["opened"]) and str(w.files["n1"]) not in set(a["opened"])
+            and masked_of(a) == mask(*load(champ_a[3][0])))
+    # (b) an indexed file vanishes: its session is stale too (and nothing is opened for it)
+    os.remove(w.files["n1"])
+    b = go(w, "auto", ["--index-db", str(w.db)])
+    champ_b = w.measure(None)
+    b_ok = (b["rc"] == 0 and b["rec"]["plan_taken"] == "index"
+            and b["rec"]["read_set"]["stale"] == [f"{IN_SCOPE}/n1", f"{IN_SCOPE}/n3"]
+            and masked_of(b) == mask(*load(champ_b[3][0])))
+    # (c) a new session that the champion classifier DOES select: the frozen population no longer reproduces, so the
+    # shadow guard refuses (auto deopts to the scoped tier, challenger exits 3); nothing is served from the index
+    w2 = World("snf2")
+    w2.cert_for()
+    k2 = T.Fx(w2.root, project=IN_SCOPE, session="k2")
+    _kme_session(k2, "q", 30)
+    c = go(w2, "auto", ["--index-db", str(w2.db)])
+    scoped_c = w2.measure("scoped")
+    forced = go(w2, "challenger", ["--index-db", str(w2.db)])
+    dc = c["rec"]["deopt"]
+    c_ok = (c["rec"]["plan_taken"] == "scoped" and dc and dc["guard"] == "shadow" and "population" in dc["reason"]
+            and masked_of(c) == mask(*load(scoped_c[3][0])) and forced["rc"] == 3 and not forced["files"]
+            and forced["rec"]["deopt"]["guard"] == "shadow")
+    ok = a_ok and b_ok and c_ok
+    return ok, (f"(a) new non-KME file: stale={a['rec']['read_set']['stale']} equal to champion={a_ok}; (b) file vanished: "
+                f"stale={b['rec']['read_set']['stale']} equal={b_ok}; (c) new KME session: auto deopt={dc and dc['guard']} "
+                f"({dc and dc['reason'][:70]}) taken={c['rec']['plan_taken']} forced rc={forced['rc']}")
+
+
+def g_in04_no_first_ts():
+    w = World("in4", z1=True)
+    w.cert_for()
+    res = go(w, "auto", ["--index-db", str(w.db)])
+    champ = w.measure(None)
+    rec = res["rec"]
+    z1 = str(w.files["z1"])
+    guard = next((g for g in rec["guards"] if g["guard"] == "no_first_ts"), {})
+    plain = World("in4b")
+    plain.cert_for()
+    ctl = go(plain, "auto", ["--index-db", str(plain.db)])
+    ctl_guard = next((g for g in ctl["rec"]["guards"] if g["guard"] == "no_first_ts"), {})
+    ok = (res["rc"] == 0 and rec["plan_taken"] == "index" and rec["read_set"]["no_first_ts"] == [f"{IN_SCOPE}/z1"]
+          and "1 session(s)" in guard.get("reason", "") and "IN-04" in guard.get("reason", "")
+          and z1 in set(res["opened"]) and masked_of(res) == mask(*load(champ[3][0]))
+          and ctl["rec"]["read_set"]["no_first_ts"] == [] and "0 session(s)" in ctl_guard.get("reason", ""))
+    return ok, (f"IN-04 session z1: no_first_ts={rec['read_set']['no_first_ts']} guard='{guard.get('reason', '')[:80]}' "
+                f"opened z1={z1 in set(res['opened'])}; without it: {ctl['rec']['read_set']['no_first_ts']} "
+                f"'{ctl_guard.get('reason', '')[:40]}'")
+
+
+def copy_root(w, name):
+    """A byte-identical copy of the fixture projects tree at another path (the index was built over the original)."""
+    dst = w.dir / name / "projects"
+    shutil.copytree(w.projects, dst)
+    return dst
+
+
+def cert_with_roots(w, roots, name="cert-roots.json"):
+    c = json.loads(Path(w.cert_for()).read_text(encoding="utf-8"))
+    c["question"]["roots"] = sorted(os.path.realpath(str(r)) for r in roots)
+    p = w.dir / name
+    p.write_text(json.dumps(c), encoding="utf-8")
+    return p
+
+
+def g_root_not_indexed():
+    w = World("rni")
+    root2 = copy_root(w, "root2")
+    cert_p = w.dir / "cert-r2.json"
+    rc_c, out_c, err_c = run_certify(w, cert_p, projects=root2)
+    forged = cert_with_roots(w, [root2])
+    res = go(w, "auto", ["--index-db", str(w.db), "--cert", str(forged)], projects=root2)
+    scoped = w.measure("scoped", projects=root2)
+    forced = go(w, "challenger", ["--index-db", str(w.db), "--cert", str(forged)], projects=root2)
+    d = res["rec"]["deopt"]
+    # control: the original root with its own certificate is served by the index
+    ctl = go(w, "auto", ["--index-db", str(w.db)])
+    ok = (rc_c == kp.EXIT_UNMEASURED and "root_not_indexed" in err_c and not cert_p.exists()
+          and d and d["guard"] == "watermark" and d["reason"].startswith("root_not_indexed")
+          and res["rec"]["plan_taken"] == "scoped" and masked_of(res) == mask(*load(scoped[3][0]))
+          and forced["rc"] == 3 and not forced["files"] and ctl["rec"]["plan_taken"] == "index")
+    return ok, (f"certify over a root the index never saw: rc={rc_c} written={cert_p.exists()}; run with a forged "
+                f"certificate: deopt {d and d['guard']}: {d and d['reason'][:70]}; forced rc={forced['rc']}; "
+                f"control taken={ctl['rec']['plan_taken']}")
+
+
+def g_deopt_logged():
+    w = World("dl")
+    good = w.cert_for()
+    db4 = db_copy(w, "schema4", "UPDATE meta SET v='4' WHERE k='schema_version'")
+    dbpe = db_copy(w, "parse-err", "UPDATE files SET parse_errors=1 WHERE path LIKE '%/n1.jsonl'")
+    pop = json.loads(Path(w.frozen).read_text(encoding="utf-8"))["KME-L"]
+    drift = T.write_frozen(w.dir / "frozen-drift.json", **{"KME-L": dict(pop, calls=pop["calls"] + 1)})
+    root2 = copy_root(w, "root2")
+    forged = cert_with_roots(w, [root2])
+    ux = kp._usage_index()
+    db = str(w.db)
+    rows = [  # (row, guard, reason prefix, extra flags, frozen, projects, patch)
+        ("index_open/missing", "index_open", "index_missing", ["--index-db", str(w.dir / "gone.sqlite")], None, None, None),
+        ("index_open/schema4", "index_open", "schema: 4", ["--index-db", str(db4)], None, None, None),
+        ("population/DRIFTED", "population", "population: DRIFTED", ["--index-db", db, "--cert", str(good)], drift, None, None),
+        ("population/UNMEASURED", "population", "population: UNMEASURED", ["--index-db", str(dbpe)], None, None, None),
+        ("certificate", "certificate", "cert_missing", ["--index-db", db, "--cert", str(w.dir / "none.json")], None, None, None),
+        ("parser", "parser", "selection parser digest differs", ["--index-db", db], None, None, lambda: parser_patch(w)),
+        ("attribution", "attribution", "attribution version differs", ["--index-db", db], None, None,
+         lambda: patched_attr(ux, "ATTR_VERSION", ux.ATTR_VERSION + 1)),
+        ("metric", "metric", "population definition differs", ["--index-db", db], None, None,
+         lambda: patch_kme_pillars_text('WEIGHTS = {"input": 1.0,', 'WEIGHTS = {"input": 3.0,')),
+        ("watermark/root_not_indexed", "watermark", "root_not_indexed", ["--index-db", db, "--cert", str(forged)], None,
+         root2, None),
+        ("shadow", "shadow", "selection differs", ["--index-db", db], None, None,
+         lambda: swapped_selection(select_extra="n1")),
+    ]
+    out, bad = [], []
+    for name, guard, prefix, extra, frozen, projects, patch in rows:
+        with contextlib.ExitStack() as st:
+            if patch:
+                st.enter_context(patch())
+            auto = go(w, "auto", extra, frozen=frozen, projects=projects)
+            forced = go(w, "challenger", extra, frozen=frozen, projects=projects)
+        scoped = w.measure("scoped", frozen=frozen, projects=projects)
+        d = (auto["rec"] or {}).get("deopt")
+        row_ok = (d is not None and d["guard"] == guard and d["reason"].startswith(prefix)
+                  and auto["rec"]["plan_taken"] in ("scoped", "global") and auto["files"] and scoped[3]
+                  and masked_of(auto) == mask(*load(scoped[3][0]))
+                  and forced["rc"] == 3 and not forced["files"] and forced["rec"]["plan_taken"] == "refused"
+                  and forced["rec"]["deopt"]["guard"] == guard)
+        out.append(f"{name}:{'ok' if row_ok else 'BAD'}")
+        if not row_ok:
+            bad.append((name, d, auto["rc"], forced["rc"]))
+    ctl = go(w, "auto", ["--index-db", db])
+    ctl_ok = ctl["rc"] == 0 and ctl["rec"]["plan_taken"] == "index" and ctl["rec"]["deopt"] is None
+    ok = not bad and ctl_ok
+    return ok, (f"guards {len(rows)}/10 [{', '.join(out)}] control (all green): taken={ctl['rec']['plan_taken']} "
+                f"deopt={ctl['rec']['deopt']}" + (f"; failing {bad}" if bad else ""))
+
 
 GATES = [
     ("V-KMEC-SCAN-PROJECT-DEFAULT", g_scan_project_default),
@@ -890,6 +1071,11 @@ GATES = [
     ("V-KMEC-PATTERN-DRIFT", g_pattern_drift),
     ("V-KMEC-CERT-GUARDS", g_cert_guards),
     ("V-KMEC-METRIC-COVERAGE", g_metric_coverage),
+    ("V-KMEC-STALE-SOURCE", g_stale_source),
+    ("V-KMEC-STALE-NEW-FILE", g_stale_new_file),
+    ("V-KMEC-IN04-NO-FIRST-TS", g_in04_no_first_ts),
+    ("V-KMEC-ROOT-NOT-INDEXED", g_root_not_indexed),
+    ("V-KMEC-DEOPT-LOGGED", g_deopt_logged),
 ]
 
 
