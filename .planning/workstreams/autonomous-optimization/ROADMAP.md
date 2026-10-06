@@ -110,7 +110,7 @@ Plans:
    11,549,646,300) on the GEX44 copy, with dedup reconciled to the unit.
 4. Refresh cost measured (wall, bytes) for a cold build and for a delta.
 
-**Plans:** 2/6 plans executed
+**Plans:** 3/6 plans executed
 
 Plans:
 **Wave 1**
@@ -123,7 +123,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md -- effective timestamps, cwds, registered pattern hits + user-text hits, project/workstream attribution from a discovered registry
+- [x] 01-03-PLAN.md -- effective timestamps, cwds, registered pattern hits + user-text hits, project/workstream attribution from a discovered registry
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
