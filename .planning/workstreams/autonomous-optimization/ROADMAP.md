@@ -152,7 +152,7 @@ Plans:
 4. Stale-cache control: changing a source or the parser version invalidates exactly the affected closure.
 5. If the challenger does not beat the scoped path on repeated queries, narrow or reject it and record why.
 
-**Plans:** 3/6 plans executed
+**Plans:** 4/6 plans executed
 
 Plans:
 **Wave 1**
@@ -166,7 +166,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-04-PLAN.md -- GEX44 corpus: certify, 7 files reproduced, zero CostaLuz bytes with firing controls, read-only proof (`--real`, `--real-exposure`)
+- [x] 02-04-PLAN.md -- GEX44 corpus: certify, 7 files reproduced, zero CostaLuz bytes with firing controls, read-only proof (`--real`, `--real-exposure`)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 

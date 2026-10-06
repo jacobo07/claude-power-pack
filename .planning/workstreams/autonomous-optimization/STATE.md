@@ -2,16 +2,16 @@
 gsd_state_version: "1.0"
 milestone: v1
 current_phase: 2
-current_plan: 4
+current_plan: 5
 status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-10-06T23:10:13.466Z"
-state_head: 1ca72e86b22914e15660d3bdb100bba0767c4b9f
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-10-06T23:27:23.082Z"
+state_head: 1ed0225567d8ca3e06a50570df5755dabf12c136
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
 milestone_name: autonomous-optimization
 last_activity: 2026-10-05
 workstream: autonomous-optimization
@@ -32,7 +32,7 @@ first proving incident; a second workload must be taken by the loop itself.
 
 **Status:** Ready to execute
 **Current Phase:** 2
-Current Plan: 4
+Current Plan: 5
 Total Plans in Phase: 6
 
 ## Decisions
@@ -65,12 +65,13 @@ Total Plans in Phase: 6
 - [Phase 2]: 02-03: A KME session appearing after certification that changes the frozen population is refused by the shadow guard (auto deopts to scoped, challenger exit 3), not served by closure
 - [Phase 2]: 02-03: Index root identity closed as guard watermark / root_not_indexed in both the run and certify
 - [Phase 2]: 02-03: Metric key lists name constants, functions and classes, checked against the discovered observer closure (V-KMEC-METRIC-COVERAGE)
+- [Phase 2]: 02-04: challenger planned read set on the real corpus is 107 sessions (102 index-selected + 5 no-first-ts read raw by design); equivalence SAME 7/7; KME-only query opens 0 CostaLuz bytes, controls fire
 
 ## Session Continuity
 
-**Last session:** 2026-10-06T23:10:13.434Z
+**Last session:** 2026-10-06T23:27:23.050Z
 
-**Stopped At:** Completed 02-03-PLAN.md
+**Stopped At:** Completed 02-04-PLAN.md
 **Next exact action:** `/gsd-code-review 1 --fix --auto --ws autonomous-optimization` for CR-01 (usage_index.py:2112, `population --until 2026-09-01` silently drops the cut: until=None, reproduced on /home/kobii/ao-scratch/p1/cold.sqlite; must become UNMEASURED exit 3), WR-01 (per-file `except OSError` too narrow), WR-02 (`_registry` should join only `v5_from = 0` files). Red gate first per fix in tools/test_usage_index_v5.py; after fixes the KME-L parity with `--until 2026-10-03T16:13:37Z` must stay EXACT. Then spawn gsd-verifier -> 01-VERIFICATION.md, then `phase.complete 1`, then Phase 2. Isolation: worktree base-check degrades (fork-ref-unknown) -> re-run `dispatch-isolation --phase N --force-isolation none` before every gsd-executor dispatch or the isolation guard refuses it.
 **Resume File:** None
 
@@ -86,3 +87,4 @@ Total Plans in Phase: 6
 | Phase 2 P01 | 40min | 2 tasks | 4 files |
 | Phase 2 P02-02 | 5min | 2 tasks | 3 files |
 | Phase 2 P03 | ~1h | 3 tasks | 2 files |
+| Phase 02 P04 | 25min | 2 tasks | 3 files |
