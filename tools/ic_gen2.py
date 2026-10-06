@@ -350,10 +350,13 @@ def frozen_sha256(frozen) -> str:
                           .encode("utf-8")).hexdigest()
 
 
-def expected_final_failures(frozen_at_present: bool) -> set:
+def expected_final_failures(frozen_at_present: bool, led: dict = None) -> set:
     """The final-mode failure lines that are the open programme itself, no more and no fewer. The texts are CE's own
-    clause strings (tools/test_cognitive_economy_program.py L2, L3, L8), not paraphrases."""
-    exp = {f"L3 {pid}: no terminal disposition" for pid in PILLARS}
+    clause strings (tools/test_cognitive_economy_program.py L2, L3, L8), not paraphrases. With `led`, a pillar that
+    already carries a terminal is no longer open, so its L3 line is not expected (its terminal is judged by the
+    ordinary clauses: any L4-L7 line it earns is an unexpected failure); without `led` every pillar is open."""
+    closed = {pid for pid, st in ((led or {}).get("state") or {}).items() if (st or {}).get("terminal")}
+    exp = {f"L3 {pid}: no terminal disposition" for pid in PILLARS if pid not in closed}
     if not frozen_at_present:
         exp.add("L2 not frozen: FROZEN_AT missing, the pre-registration was never committed")
     exp |= {f"L8 review {key}: missing or its file does not exist" for key in ("ukdl", "cbr")}
@@ -399,7 +402,7 @@ def audit_rules(led, res, roadmap_text, tracked, selftest_fn) -> dict:
               "gen2 selftest passes")
     with bound():
         frozen_present = res.frozen_at_commit() is not None
-    actual, exp = set(problems(led, res, final=True)), expected_final_failures(frozen_present)
+    actual, exp = set(problems(led, res, final=True)), expected_final_failures(frozen_present, led)
     a3 = [f"A3 unexpected final-mode failure: {x}" for x in sorted(actual - exp)]
     a3 += [f"A3 expected open-programme line absent from the final-mode failures: {x}" for x in sorted(exp - actual)]
     rep[3] = (a3, f"final-mode failure set equals the expected open-programme set ({len(exp)} lines, "
@@ -720,7 +723,12 @@ def selftest(verbose=True) -> bool:
         elif verbose:
             print(f"  ok   {label}")
 
-    real = load_ledger()
+    actual = load_ledger()
+    # The mutants below are judged against the programme as pre-registered, every pillar open. The working ledger
+    # grows terminals as phases close; a fixture must not depend on which pillars happen to be closed today, and a
+    # final-mode judge of a closed pillar would run its real gates.
+    real = copy.deepcopy(actual)
+    real["state"] = {pid: {} for pid in real["state"]}
 
     def judge(led, frozen="own", final=False, files=None, **kw):
         fz = copy.deepcopy(led.get("frozen")) if frozen == "own" else frozen
@@ -734,8 +742,10 @@ def selftest(verbose=True) -> bool:
     def pil(d, pid):
         return [p for p in d["frozen"]["pillars"] if p["id"] == pid][0]
 
-    clean = judge(real)
+    clean = judge(actual)
     say(not clean, f"V-IC2-CLEAN (real gen2 ledger, served as its own FROZEN_AT copy, zero problems) {clean[:2] or ''}")
+    clean_open = judge(real)
+    say(not clean_open, f"V-IC2-CLEAN-OPEN (the pre-registered baseline, every pillar open, zero problems) {clean_open[:2] or ''}")
     fin = judge(real, final=True)
     say(not any(x.startswith("L2") for x in fin), "V-IC2-CLEAN-FROZEN-CONTROL (final with FROZEN_AT served: no L2 line)")
     cur = load_gen1_current()
@@ -891,6 +901,10 @@ def selftest(verbose=True) -> bool:
         {"L2 not frozen: FROZEN_AT missing, the pre-registration was never committed"}
         and len(expected_final_failures(False)) == 10,
         "V-IC2-AUDIT-EXPECTED-SET (pre-freeze set is 10 lines, post-freeze drops exactly L2)")
+    exp_all, exp_o = expected_final_failures(True), expected_final_failures(True, {"state": {"O": {"terminal": "X"}}})
+    say(exp_all - exp_o == {"L3 O: no terminal disposition"} and exp_o < exp_all
+        and expected_final_failures(True, {"state": {"O": {}}}) == exp_all,
+        "V-IC2-AUDIT-CLOSED-NOT-EXPECTED (a pillar with a terminal drops exactly its own L3 line; an open one drops nothing)")
     rows.append(("A1-program-foreign", "A1", aud(led_with(lambda d: d.update(program="skill-capability")))))
     rows.append(("A2-selftest-red", "A2", aud(real, selftest_fn=lambda: False)))
     rows.append(("A3-closed-pillar-without-reason", "A3",
