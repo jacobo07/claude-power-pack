@@ -240,9 +240,218 @@ def spec_mutants() -> None:
          f"heading removed -> {[x for x in p if 'Kill switches' in x]}")
 
 
+# --- novelty record judge --------------------------------------------------------------------
+
+from modules.spec_gate.gate import NOVELTY_PROOF_QUESTIONS, check_novelty_gate  # noqa: E402
+
+NOVELTY_REL = "vault/audits/autonomous-optimization-novelty-2026-10-05.md"
+ROADMAP_REL = ".planning/workstreams/autonomous-optimization/ROADMAP.md"
+GATE_CONTROLS = ("new autonomous optimization operating system", "new optimization governance layer")
+REQUIRED_SWEEP = ("SCHEMA_VERSION", "challenger", "def promote", "def record_signal",
+                  "opportunity lifecycle", "def store_identity", "ratchet", "opportunities")
+# path.ext:LINE "fragment" -- the fragment is straight-quoted and holds no double quote
+_CITE = re.compile(r'([A-Za-z0-9_./-]+\.[A-Za-z0-9]+):(\d+) "([^"\n]+)"')
+_ROW = re.compile(r"^\|\s*\*{0,2}(\d+)\*{0,2}\s*\|")
+_GATE_LINE = re.compile(r"^(plan text|ROADMAP text|control \"[^\"]+\"): applies=(True|False) matched=(None|'[^']*')\s*$", re.M)
+_GIT_ENV = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_SYSTEM": os.devnull,
+            "GIT_TERMINAL_PROMPT": "0"}
+
+
+def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", "-c", "core.hooksPath=" + os.devnull, *args], cwd=root, env=_GIT_ENV,
+                          capture_output=True, text=True, timeout=30)
+
+
+def _section(text: str, heading: str) -> str:
+    m = re.search(rf"^{re.escape(heading)}.*$", text, re.M)
+    if not m:
+        return ""
+    rest = text[m.end():]
+    nxt = re.search(r"^## ", rest, re.M)
+    return rest[:nxt.start()] if nxt else rest
+
+
+def cite_problems(cites: list[tuple[str, str, str]], root: Path | str, snapshot: str) -> list[str]:
+    """Resolve each (path, line, fragment): inside the repo, tracked by git, present in the snapshot
+    commit with the fragment verbatim on that line. Argv lists only, never a shell."""
+    root = Path(root)
+    probs: list[str] = []
+    real_root = root.resolve()
+    for rel, line, frag in cites:
+        tag = f'{rel}:{line} "{frag[:40]}"'
+        norm = os.path.normpath(rel)
+        resolved = (root / rel).resolve()
+        if os.path.isabs(rel) or norm.startswith("..") or (
+                resolved != real_root and real_root not in resolved.parents):
+            probs.append(f"CITE: {tag} is outside the repo")
+            continue
+        if _git(root, "ls-files", "--error-unmatch", "--", norm).returncode != 0:
+            probs.append(f"CITE: {tag} is not a git-tracked file")
+            continue
+        blob = _git(root, "show", f"{snapshot}:{norm}")
+        if blob.returncode != 0:
+            probs.append(f"CITE: {tag} is not present in snapshot {snapshot[:8]}")
+            continue
+        lines = blob.stdout.splitlines()
+        n = int(line)
+        if not 1 <= n <= len(lines):
+            probs.append(f"CITE: {tag} line {n} is past the end ({len(lines)} lines)")
+        elif frag not in lines[n - 1]:
+            probs.append(f"CITE: {tag} fragment does not occur on that line")
+    return probs
+
+
+def _gate_repr(text: str) -> str:
+    r = check_novelty_gate(text)
+    return f"applies={r.applies} matched={r.matched!r}"
+
+
+def live_gate_lines(root: Path | str = ROOT) -> dict[str, str]:
+    root = Path(root)
+    out = {"plan text": _gate_repr((root / PLAN_REL).read_text(encoding="utf-8")),
+           "ROADMAP text": _gate_repr((root / ROADMAP_REL).read_text(encoding="utf-8"))}
+    for c in GATE_CONTROLS:
+        out[f'control "{c}"'] = _gate_repr(c)
+    return out
+
+
+def novelty_problems(text: str, root: Path | str = ROOT) -> list[str]:
+    """Every defect of a novelty record text, each prefixed with the rule that found it."""
+    root = Path(root)
+    probs: list[str] = []
+    fm = parse_front_matter(text)
+    snapshot = str(fm.get("sweep_commit", "")).strip()
+
+    rows = [ln for ln in _section(text, "## 3. The thirteen").splitlines() if _ROW.match(ln)]
+    if len(rows) != 13:
+        probs.append(f"ROWS: {len(rows)} table rows, need exactly 13")
+    all_cites: list[tuple[str, str, str]] = []
+    for ln in rows:
+        cells = [c.strip() for c in ln.strip().strip("|").split("|", 2)]
+        n = int(_ROW.match(ln).group(1))
+        if len(cells) != 3:
+            probs.append(f"ROWS: row {n} is not # | question | answer")
+            continue
+        if not 1 <= n <= 13 or cells[1] != NOVELTY_PROOF_QUESTIONS[n - 1]:
+            probs.append(f"ROWS: row {n} question does not equal NOVELTY_PROOF_QUESTIONS[{n - 1}]")
+        found = _CITE.findall(cells[2])
+        if not found:
+            probs.append(f"CITE: row {n} carries no path:LINE \"fragment\" citation")
+        all_cites.extend(found)
+
+    if not re.fullmatch(r"[0-9a-f]{7,40}", snapshot):
+        probs.append(f"CITE: front matter sweep_commit {snapshot!r} is not a commit sha")
+    elif _git(root, "merge-base", "--is-ancestor", snapshot, "HEAD").returncode != 0:
+        probs.append(f"CITE: sweep_commit {snapshot} is not an ancestor of HEAD")
+    else:
+        probs.extend(cite_problems(all_cites, root, snapshot))
+
+    verdict = str(fm.get("verdict", "")).strip()
+    if verdict != "EXTEND_EXISTING_OWNER":
+        probs.append(f"VERDICT: front matter verdict is {verdict!r}, the slice stops unless EXTEND_EXISTING_OWNER")
+    if "EXTEND_EXISTING_OWNER" not in _section(text, "## 4. Verdict"):
+        probs.append("VERDICT: section 4 does not state EXTEND_EXISTING_OWNER")
+
+    recorded = {m.group(1): f"applies={m.group(2)} matched={m.group(3)}" for m in _GATE_LINE.finditer(text)}
+    for key, live in live_gate_lines(root).items():
+        if key not in recorded:
+            probs.append(f"GATE: record has no line for {key!r}")
+        elif recorded[key] != live:
+            probs.append(f"GATE: {key!r} recorded {recorded[key]} but the gate returns {live}")
+
+    sweep = _section(text, "## 2. Sweep")
+    for needle in REQUIRED_SWEEP:
+        if needle not in sweep:
+            probs.append(f"SWEEP: section 2 has no command for {needle!r}")
+    if len(re.findall(r"hits=\d+", sweep)) < len(REQUIRED_SWEEP):
+        probs.append("SWEEP: fewer hit counts than required commands")
+    return probs
+
+
+def _first_cite(text: str) -> re.Match:
+    sec = _section(text, "## 3. The thirteen")
+    m = _CITE.search(sec)
+    if m is None:
+        raise AssertionError("record has no citation to mutate")
+    return m
+
+
+def novelty_gates() -> None:
+    path = ROOT / NOVELTY_REL
+    text = path.read_text(encoding="utf-8")
+    probs = novelty_problems(text)
+
+    rows = [p for p in probs if p.startswith("ROWS")]
+    gate("V-AOP0-NOVELTY-13", not rows, f"13 rows in order against NOVELTY_PROOF_QUESTIONS; problems={rows}")
+
+    cite = [p for p in probs if p.startswith("CITE")]
+    n_cites = len(_CITE.findall(_section(text, "## 3. The thirteen")))
+    gate("V-AOP0-NOVELTY-CITES-RESOLVE", not cite, f"{n_cites} citations resolved; problems={cite}")
+
+    ctrl = check_novelty_gate(GATE_CONTROLS[0])
+    gp = [p for p in probs if p.startswith("GATE")]
+    gate("V-AOP0-NOVELTY-GATE-CONTROL", ctrl.applies is True and ctrl.matched == "operating system" and not gp,
+         f"positive control applies={ctrl.applies} matched={ctrl.matched!r}; problems={gp}")
+
+    vp = [p for p in probs if p.startswith("VERDICT")]
+    gate("V-AOP0-NOVELTY-VERDICT", not vp, f"problems={vp}")
+
+    sp = [p for p in probs if p.startswith("SWEEP")]
+    gate("V-AOP0-NOVELTY-SWEEP-RECORDED", not sp, f"problems={sp}")
+
+
+def novelty_mutants() -> None:
+    text = (ROOT / NOVELTY_REL).read_text(encoding="utf-8")
+    base = novelty_problems(text)
+    gate("V-AOP0-MUT-novelty-control", not base, f"real record is clean before any mutant: {base}")
+    clean = not base
+
+    lines = text.splitlines(keepends=True)
+    idx13 = next(i for i, ln in enumerate(lines) if _ROW.match(ln) and _ROW.match(ln).group(1) == "13")
+    p = novelty_problems("".join(lines[:idx13] + lines[idx13 + 1:]))
+    gate("V-AOP0-MUT-novelty-rows12", clean and _has(p, "ROWS"), f"12 rows -> {[x for x in p if x.startswith('ROWS')]}")
+
+    m = _first_cite(text)
+    frag_mut = text.replace(f'"{m.group(3)}"', f'"{m.group(3)}Z"', 1)
+    p = novelty_problems(frag_mut)
+    gate("V-AOP0-MUT-novelty-fragment", clean and any("fragment does not occur" in x for x in p),
+         f"fragment +1 char -> {[x[:90] for x in p if x.startswith('CITE')]}")
+
+    eof_mut = text.replace(f'{m.group(1)}:{m.group(2)} "', f'{m.group(1)}:999999 "', 1)
+    p = novelty_problems(eof_mut)
+    gate("V-AOP0-MUT-novelty-line-eof", clean and any("past the end" in x for x in p),
+         f"line 999999 -> {[x[:90] for x in p if x.startswith('CITE')]}")
+
+    out_mut = text.replace(f'{m.group(1)}:{m.group(2)} "', f'../outside.md:{m.group(2)} "', 1)
+    po = novelty_problems(out_mut)
+    tmp = Path(tempfile.mkdtemp(prefix="aop0-novrepo-"))
+    for args in (("init", "-q"), ("config", "user.email", "t@example.invalid"), ("config", "user.name", "t")):
+        _git(tmp, *args)
+    (tmp / "a.txt").write_text("hello world\n", encoding="utf-8")
+    (tmp / "b.txt").write_text("hello world\n", encoding="utf-8")        # present on disk, never added
+    _git(tmp, "add", "a.txt")
+    _git(tmp, "commit", "-q", "-m", "fixture")
+    snap = _git(tmp, "rev-parse", "HEAD").stdout.strip()
+    ctrl_c = cite_problems([("a.txt", "1", "hello")], tmp, snap)
+    pu = cite_problems([("b.txt", "1", "hello")], tmp, snap)
+    gate("V-AOP0-MUT-novelty-path",
+         clean and not ctrl_c and any("outside the repo" in x for x in po) and any("not a git-tracked" in x for x in pu),
+         f"control(tracked)={ctrl_c} outside={[x[:60] for x in po if 'outside' in x]} untracked={pu}")
+
+    p = novelty_problems(text.replace("verdict: EXTEND_EXISTING_OWNER", "verdict: NEW_MODULE", 1))
+    gate("V-AOP0-MUT-novelty-verdict", clean and _has(p, "VERDICT"), f"NEW_MODULE -> {[x for x in p if x.startswith('VERDICT')]}")
+
+    stale = text.replace("plan text: applies=False", "plan text: applies=True", 1)
+    p = novelty_problems(stale)
+    gate("V-AOP0-MUT-novelty-stale-gate", clean and _has(p, "GATE"),
+         f"recorded applies flipped -> {[x[:80] for x in p if x.startswith('GATE')]}")
+
+
 def main() -> int:
     guarded("V-AOP0-SPEC", spec_gates)
     guarded("V-AOP0-SPEC-MUT", spec_mutants)
+    guarded("V-AOP0-NOVELTY", novelty_gates)
+    guarded("V-AOP0-NOVELTY-MUT", novelty_mutants)
     passes = sum(1 for _, ok, _ in results if ok)
     total = len(results)
     print(f"AOP0_PASS={passes}/{total}  threshold={total}/{total}")
