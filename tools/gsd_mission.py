@@ -687,7 +687,9 @@ def worker_mcp_verdict(now: float | None = None) -> str:
 
 SLIM_PROFILES = ("slim-t1", "slim-t2")
 SLIM_SETTINGS = Path(__file__).resolve().parent.parent / "vault" / "config" / "slim-critical-settings.json"
-SLIM_DEFAULT_TOOLS = ("Read", "Grep", "Glob", "Bash", "Edit", "Write")
+# PowerShell on Windows: the critical lane's bash-bridge guard blocks git through Bash, and a worker with
+# no PowerShell tool edited but could not commit (e2e 2026-10-07, .scratch/e2e_edit.py arm `auto`).
+SLIM_DEFAULT_TOOLS = ("Read", "Grep", "Glob", "Bash", "Edit", "Write") + (("PowerShell",) if os.name == "nt" else ())
 SLIM_DEFAULT_KERNEL = "You are a terse worker. Use only the tools given. Do exactly what is asked."
 
 
@@ -711,6 +713,12 @@ def slim_argv(rec: dict, prompt: str, exe: str, profile: str, session_id: str | 
             f"--system-prompt={rec.get('card') or SLIM_DEFAULT_KERNEL}",
             "--exclude-dynamic-system-prompt-sections",
             f"--tools={','.join(dict.fromkeys(tools))}", "--output-format=json"]
+    # 2026-10-06 (m-8bbdf725cd52 W1-staging e5): a `-p` worker with no permission mode had its 4 writes
+    # denied and burned to the no-progress breaker. Same pre-approvals and mode as the `--bg` launch;
+    # a record without a mode still gets edits (Owner-approved), never a prompt nobody answers.
+    for tool in dict.fromkeys([*(rec.get("allowed_tools") or []), "Edit(.planning/**)"]):
+        argv.append(f"--allowedTools={tool}")
+    argv.append(f"--permission-mode={rec.get('permission_mode') or 'acceptEdits'}")
     if profile == "slim-t1":
         argv.append("--no-session-persistence")
     else:
