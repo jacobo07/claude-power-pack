@@ -243,6 +243,9 @@ ROLLOVER_ASK_FLAG = "claude-ctxwd-rollask-{session_id}.flag"
 ROLLOVER_CLEAR_FLAG = "claude-ctxwd-rollclear-{session_id}.flag"
 ROLLOVER_WAIT_FLAG = "claude-ctxwd-rollwait-{session_id}.flag"
 ROLLOVER_MAX_WAIT = 3
+# Self-sealed crossing (_self_sealed_step): the capsule mtime already acted on. Never cleared by
+# the rearm, so one seal is acted on at most once.
+ROLLOVER_SELF_SEAL_FLAG = "claude-ctxwd-rollself-{session_id}.flag"
 # Economic trigger (spec vault/specs/economic-rollover-trigger.md): set beside ASK when the ask
 # came from the break-even decider rather than the wall, so a capsule that never arrives
 # withdraws the ask instead of falling back to /compact at 25 %. Per-session state (start
@@ -1084,6 +1087,58 @@ def _rollover_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict
     return None
 
 
+ROLLOVER_SELF_SEAL_MAX_AGE_S = 30 * 60   # = rollover.RESET_MAX_AGE_S (pinned by the gate)
+
+
+def _own_capsule(session_id: str) -> Path:
+    """Spelled like rollover.capsule_path (pinned by the gate) so an ordinary Stop costs one
+    stat, not an import of rollover.py."""
+    root = Path(os.environ.get("CPP_ROLLOVER_STATE_DIR")
+                or (Path.home() / ".claude" / "state" / "rollover"))
+    return root / "capsules" / f"{re.sub(r'[^A-Za-z0-9_.-]', '_', session_id)}.json"
+
+
+def _self_sealed_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict | None:
+    """A capsule this session sealed WITHOUT the wall asking -- a /kclear the Owner or the model
+    ran, or the one the session-budget breaker tells the model to run -- is the same request
+    to cross. Measured 2026-10-06 (d64f90b2): /kclear sealed SAFE_TO_FORGET and nothing typed
+    /clear, because step 2 was reachable only through ROLLOVER_ASK_FLAG, which only the wall
+    and the economic trigger set; the crossing ended as a sentence asking the Owner to type it.
+    Here: set the ask and run the same step 2, so rollover.py's gate stays the only authority
+    over /clear and the same courier arms /kresume. A certified or stale capsule is not a
+    request (the gate would refuse it anyway). Kill switch: CPP_ROLLOVER_ACTIVE=0.
+
+    ONE act per seal, keyed by the capsule's mtime in a flag the rearm never clears: the rearm
+    wipes ASK/CLEAR at a low reading, so without this a /clear whose typing failed would be
+    re-dispatched on every later Stop -- a block loop. A REFUSED seal is not retried either;
+    sealing again (a new /kclear) is a new seal and is acted on."""
+    if _flag_exists(session_id, ROLLOVER_ASK_FLAG) or _flag_exists(session_id, ROLLOVER_CLEAR_FLAG):
+        return None
+    cap = _own_capsule(session_id)
+    try:
+        st = cap.stat()
+    except OSError:
+        return None                                  # nothing sealed here: the common case
+    age = _now_ts() - st.st_mtime
+    if age > ROLLOVER_SELF_SEAL_MAX_AGE_S or cap.with_suffix(".certified").exists():
+        return None
+    done = Path(tempfile.gettempdir()) / ROLLOVER_SELF_SEAL_FLAG.format(session_id=session_id)
+    try:
+        if done.read_text(encoding="utf-8").strip() == str(st.st_mtime_ns):
+            return None                              # this seal was already acted on
+    except OSError:
+        pass
+    if (_read_autorun_marker(session_id) or {}).get("mission_id"):
+        return None                                  # mission workers rotate under gsd_mission
+    try:
+        done.write_text(str(st.st_mtime_ns), encoding="utf-8")   # before acting: never re-entrant
+    except OSError:
+        return None                                  # an act that cannot be debounced would loop
+    _set_flag(session_id, ROLLOVER_ASK_FLAG)
+    _ledger(session_id, "rollover_self_sealed", age_s=int(age), used_pct=used_pct)
+    return _rollover_step(session_id, cwd, transcript, used_pct)
+
+
 def _shadow_rollover(session_id: str, cwd: str, transcript_path: str, used_pct, tier: str) -> bool:
     """P3 SHADOW (vault/specs/interactive-context-rollover.md): record what a fresh-epoch
     rollover WOULD do at this crossing -- capsule, completeness, safe-to-forget, break-even.
@@ -1618,6 +1673,13 @@ def _run_inner(event: dict) -> dict:
     if _rollover_active() and _flag_exists(session_id, ROLLOVER_ASK_FLAG):
         reply = _rollover_step(session_id, event.get("cwd") or os.getcwd(),
                                event.get("transcript_path") or "", used_pct)
+        if reply is not None:
+            return reply
+    elif _rollover_active():
+        # Step 2 for a capsule sealed without the wall asking (a manual or breaker /kclear).
+        # Must sit ahead of the rearm below, which clears ASK/CLEAR at a low reading.
+        reply = _self_sealed_step(session_id, event.get("cwd") or os.getcwd(),
+                                  event.get("transcript_path") or "", used_pct)
         if reply is not None:
             return reply
 
