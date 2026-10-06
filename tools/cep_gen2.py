@@ -303,5 +303,56 @@ def main(mode: str) -> int:
     return 0 if not fails else 1
 
 
+TRANCHE_DIR = "vault/programs/cognitive-economy/gen2/evidence/tranche"
+TRANCHE_STATES = {"PASS", "FAIL", "WAITING", "BLOCKED", "BLOCKED_BY_OWNERSHIP", "UNDECIDED"}
+
+
+def tranche(name: str, root: Path = REPO) -> int:
+    """`--tranche <name>`: judge <name>-results.json (written by tools/tranche_driver.py). Existing modes untouched.
+    Computed clauses: receipts, violations (owned ledger units only), spend. Extra clauses are printed as given;
+    only PASS is green, so WAITING/BLOCKED/UNDECIDED keep the tranche red."""
+    import re
+    try:
+        r = json.loads((root / TRANCHE_DIR / f"{name}-results.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"CEP2_TRANCHE=COULD_NOT_RUN results unreadable: {exc}")
+        return 2
+    steps = r.get("steps") or {}
+    has = lambda s: bool(s.get("receipt")) and (root / s["receipt"]).is_file()
+    for k, s in steps.items():
+        print(f"STEP {k} {s.get('verdict')} receipt={has(s)}")
+    cl = {}
+    miss = [k for k, s in steps.items() if s.get("verdict") == "PASS" and not has(s)]
+    cl["receipts"] = ("PASS" if steps and not miss else "FAIL", "missing:" + ",".join(miss) if miss else f"{len(steps)} steps")
+    owned = r.get("owned_units") or []
+    if not owned:
+        cl["violations"] = ("UNDECIDED", "no owned ledger units declared")
+    else:
+        try:
+            led = json.loads((root / LEDGER_REL).read_text(encoding="utf-8"))
+            v = [x for x in check(led, root) if any(re.search(rf"\b{re.escape(u)}\b", x) for u in owned)]
+            cl["violations"] = ("PASS" if not v else "FAIL", f"{len(v)} on {owned}")
+        except (OSError, json.JSONDecodeError) as exc:
+            cl["violations"] = ("FAIL", f"ledger unreadable: {exc}")
+    nums = [r.get("coordinator_spend")] + [s.get("spend") for s in steps.values() if s.get("sid")]
+    cap = r.get("cap", 4_500_000)
+    if any(not isinstance(n, int) for n in nums):
+        cl["spend"] = ("FAIL", "unknown spend (unmeasured is never green)")
+    else:
+        cl["spend"] = ("PASS" if sum(nums) <= cap else "FAIL", f"total={sum(nums):,} cap={cap:,}")
+    for k, c in (r.get("clauses") or {}).items():
+        st, ev = c.get("status"), c.get("evidence") or ""
+        if st not in TRANCHE_STATES or (st == "PASS" and not (ev and (root / ev).is_file())):
+            st = "FAIL"
+        cl[k] = (st, ev)
+    for k, (st, ev) in cl.items():
+        print(f"CLAUSE {k} {st} {ev}")
+    green = sum(st == "PASS" for st, _ in cl.values())
+    print(f"CEP2_TRANCHE={'PASS' if green == len(cl) else 'FAIL'} clauses={len(cl)} green={green}")
+    return 0 if green == len(cl) else 1
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 2 and sys.argv[1] == "--tranche":
+        sys.exit(tranche(sys.argv[2]))
     sys.exit(main(sys.argv[1].lstrip("-") if len(sys.argv) > 1 else "final"))

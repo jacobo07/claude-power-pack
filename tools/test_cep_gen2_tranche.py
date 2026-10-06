@@ -1,0 +1,58 @@
+"""V-CEP2-TRANCHE-* gates for `cep_gen2.py --tranche`: a green control and every red branch."""
+import contextlib, copy, io, json, sys, tempfile
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import cep_gen2 as cg  # noqa: E402
+
+passes = fails = 0
+
+
+def run(root, results, ledger=None):
+    d = root / cg.TRANCHE_DIR
+    d.mkdir(parents=True, exist_ok=True)
+    f = d / "t-results.json"
+    f.unlink(missing_ok=True)
+    if results is not None:
+        f.write_text(json.dumps(results), encoding="utf-8")
+    if ledger is not None:
+        (root / cg.LEDGER_REL).parent.mkdir(parents=True, exist_ok=True)
+        (root / cg.LEDGER_REL).write_text(json.dumps(ledger), encoding="utf-8")
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = cg.tranche("t", root)
+    return rc, buf.getvalue()
+
+
+def gate(name, ok, ev=""):
+    global passes, fails
+    passes += bool(ok); fails += not ok
+    print(f"  {'ok' if ok else 'FAIL'}   {name} {ev if not ok else ''}")
+
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    base = cg._fixture(root)
+    (root / "r.md").write_text("receipt\n", encoding="utf-8")
+    good = {"steps": {"S1": {"verdict": "PASS", "receipt": "r.md", "sid": "x", "spend": 100}},
+            "coordinator_spend": 100, "cap": 1000, "owned_units": ["A"],
+            "clauses": {"c1": {"status": "PASS", "evidence": "r.md"}}}
+    rc, out = run(root, good, base); gate("V-CEP2-TRANCHE-GREEN-CONTROL", rc == 0 and "CEP2_TRANCHE=PASS" in out, out)
+    r = copy.deepcopy(good); r["steps"]["S1"]["receipt"] = "nope.md"
+    rc, out = run(root, r); gate("V-CEP2-TRANCHE-MISSING-RECEIPT", rc == 1 and "CLAUSE receipts FAIL" in out, out)
+    r = copy.deepcopy(good); r["steps"]["S1"]["spend"] = 2000
+    rc, out = run(root, r); gate("V-CEP2-TRANCHE-OVER-CAP", rc == 1 and "CLAUSE spend FAIL" in out, out)
+    r = copy.deepcopy(good); r["steps"]["S1"]["spend"] = None
+    rc, out = run(root, r); gate("V-CEP2-TRANCHE-UNKNOWN-SPEND", rc == 1 and "unknown spend" in out, out)
+    r = copy.deepcopy(good); r["clauses"]["c1"]["status"] = "WAITING"
+    rc, out = run(root, r); gate("V-CEP2-TRANCHE-WAITING-NOT-GREEN", rc == 1 and "CLAUSE c1 WAITING" in out, out)
+    r = copy.deepcopy(good); r["clauses"]["c1"]["evidence"] = "nope.md"
+    rc, out = run(root, r); gate("V-CEP2-TRANCHE-PASS-WITHOUT-EVIDENCE", rc == 1 and "CLAUSE c1 FAIL" in out, out)
+    r = copy.deepcopy(good); r["owned_units"] = []
+    rc, out = run(root, r); gate("V-CEP2-TRANCHE-NO-OWNED-UNDECIDED", rc == 1 and "violations UNDECIDED" in out, out)
+    bad = copy.deepcopy(base); cg.MUTANTS["open-unit"](bad)
+    rc, out = run(root, good, bad); gate("V-CEP2-TRANCHE-OWNED-VIOLATION", rc == 1 and "CLAUSE violations FAIL" in out, out)
+    rc, out = run(root, None); gate("V-CEP2-TRANCHE-MISSING-FILE", rc == 2 and "COULD_NOT_RUN" in out, out)
+
+print(f"CEP2_TRANCHE_TEST_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
+sys.exit(0 if fails == 0 else 1)
