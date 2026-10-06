@@ -147,6 +147,16 @@ vs <=4M budget: OVER ~7x (~222k context per call). HR-COST-002 STOP: nothing fur
 Open, all Owner calls: (1) bound or hold m-eaf2843afb16 before 05:00Z; (2) deploy C6 to GEX44; (3) flip
 CPP_MISSION_BOUNDED_RENEWAL to enforce; UKDL/Vault entries remain.
 
+## m-eaf2843afb16 Cognitive Economy envelope (Owner 2026-10-06 "make it use CE at full potential")
+Orca X closure workstream (/home/kobii/closure-wt, GEX44). Lineage measured (live meter == transcript scan):
+839,560,807 processed; P1 109.4M, P2 114.8M, P3 280.7M, P8 310.6M, P4 discuss 24.1M; 85% subagents
+(executor 33%, planner 23%, reviewer+fixer 25%, main 15%, verifier/checker/gp 4%). Remaining: P4 plan+exec, P5,
+P6, P7, P9. Set via GEX44 transition (no envelope CLI there): token_estimate 135M (trip 270M -> Owner hold),
+autocompact 160k, continue_max_tokens 160k; directive #3 = CE rules (review at phase tip only, one planner pass,
+fresh executors, no gp agents, keep verifier + combined-tree gate). Backup .json.bak-ce-20261006.
+Estimate to finish: no-CE 990M (550M-1.5B); with CE 664M central (369M-1.0B; 937M if directives ignored);
+program total ~1.50B. Budget halt 2026-10-07T18:12Z; breaker likely trips ~9 h into the run.
+
 ## Post-E1 Phase 0 DONE (2026-10-06, pane e0332e3a, read-only, HEAD a5a5e91)
 - Mission Compiler: no code. Only `modules/crawl_os/mission_compiler.py`, PLANNED for crawl intent (another domain). Not an owner.
 - Context Compiler: ABSENT, as recorded in `vault/programs/skill-capability/ledger.json` row L (deferred to cognitive-economy).
