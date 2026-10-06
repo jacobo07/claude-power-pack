@@ -476,5 +476,146 @@ def run_all() -> int:
     return 0 if counted and all(r[0] == "PASS" for r in counted) and not skipped_strace else 1
 
 
+# --------------------------------------------------------------------------- mutation drill
+GATE_FN = dict(GATES)
+DRILL_GATES = [n for n, _ in GATES]
+
+
+def _quiet(names) -> dict:
+    """Run the named gates with printing off; {gate: passed} for the ones that ran to PASS/FAIL."""
+    start = len(RESULTS)
+    QUIET[0] = True
+    try:
+        for n in names:
+            run_gate(n, GATE_FN[n])
+    finally:
+        QUIET[0] = False
+    return {g: st == "PASS" for st, g, _ in RESULTS[start:] if st in ("PASS", "FAIL")}
+
+
+def _patch(mod, attr, value):
+    saved = getattr(mod, attr)
+    setattr(mod, attr, value)
+    return lambda: setattr(mod, attr, saved)
+
+
+def _both(*restores):
+    def restore():
+        for r in reversed(restores):
+            r()
+    return restore
+
+
+def _widen_verdict_map():
+    """The comparator's VOLATILE list also swallows H's whole consumed_owner_verdicts block (a mask that is too wide)."""
+    k = keq()
+    extra = (re.compile(r"(?m)^(- consumed_owner_verdicts: )(.*)$"),
+             re.compile(r"(?m)^(- CE owner terminals are present at this commit: )(.*)$"),
+             re.compile(r'(?s)("consumed_owner_verdicts": )(\{.*?\n  \})'))
+    return _patch(k, "VOLATILE", k.VOLATILE + extra)
+
+
+def _widen_sessions():
+    k = keq()
+    return _patch(k, "VOLATILE", k.VOLATILE + (re.compile(r'("sessions_scanned": )(\d+)'),))
+
+
+def _m_mask_every_line():
+    k = keq()
+    return _patch(k, "VOLATILE", (re.compile(r"(?m)^()(.*)$"),))
+
+
+def _m_mask_nothing():
+    return _patch(keq(), "VOLATILE", ())
+
+
+def _m_verdict_check_off():
+    k = keq()
+    return _both(_widen_verdict_map(), _patch(k, "h_verdict_map", lambda doc: "constant"))
+
+
+def _m_sessions_check_off():
+    k = keq()
+    return _both(_widen_sessions(), _patch(k, "sessions_of", lambda doc: 568))
+
+
+def _m_sum_ignores_pread64():
+    return _patch(ssum, "READ_SYSCALLS", frozenset({"read", "readv", "preadv"}))
+
+
+def _m_forbid_case_sensitive():
+    return _patch(ssum, "DEFAULT_FORBID", "CostaLuz")
+
+
+def _m_unique_by_path():
+    return _patch(ssum, "unique_key", lambda path: (path, os.stat(path).st_size))
+
+
+def _m_empty_log_reads_zero():
+    return _patch(ssum, "finalize_verdict", lambda n: "MEASURED")
+
+
+def _m_resumed_lines_ignored():
+    return _patch(ssum, "_RE_RESUMED", re.compile(r"(?!x)x"))
+
+
+MUTANTS = [
+    ("M1 comparator masks every line", _m_mask_every_line, ["V-KMEC-EQUIV-PERTURB"]),
+    ("M2 comparator masks nothing", _m_mask_nothing, ["V-KMEC-EQUIV-VOLATILE-MASKED", "V-KMEC-EQUIV-SELFTEST"]),
+    ("M3 commit mask swallows H's verdict map and the verdict-map check is off", _m_verdict_check_off,
+     ["V-KMEC-EQUIV-H-VERDICTS"]),
+    ("M4 sessions_scanned masked and the sessions check is off", _m_sessions_check_off, ["V-KMEC-EQUIV-SESSIONS"]),
+    ("M5 summer ignores pread64", _m_sum_ignores_pread64, ["V-KMEC-SUM-EXACT"]),
+    ("M6 forbid regex is case-sensitive", _m_forbid_case_sensitive, ["V-KMEC-FORBID-FIRES"]),
+    ("M7 unique bytes keyed by path instead of inode", _m_unique_by_path, ["V-KMEC-UNIQUE-INODE"]),
+    ("M8 an unparsable log reads as zero (MEASURED)", _m_empty_log_reads_zero, ["V-KMEC-SUM-EMPTY-UNMEASURED"]),
+    ("M9 resumed lines of an unfinished read are dropped", _m_resumed_lines_ignored, ["V-KMEC-SUM-EXACT"]),
+]
+
+# Backstops: a mask that is too wide must still be refused by the explicit check, so these gates stay GREEN.
+BACKSTOPS = [
+    ("B1 verdict map swallowed by the mask, explicit check live", _widen_verdict_map, "V-KMEC-EQUIV-H-VERDICTS"),
+    ("B2 sessions_scanned swallowed by the mask, explicit check live", _widen_sessions, "V-KMEC-EQUIV-SESSIONS"),
+]
+
+
+def run_drill() -> int:
+    """Control first (all gates green), each mutant applied and restored, then an unmutated rerun."""
+    control = _quiet(DRILL_GATES)
+    control_ok = len(control) == len(DRILL_GATES) and all(control.values())
+    print(f"{'PASS' if control_ok else 'FAIL'} DRILL-CONTROL unmutated run: {sum(control.values())}/{len(control)} gates green")
+    killed = 0
+    for label, apply, targets in MUTANTS:
+        restore = apply()
+        try:
+            seen = _quiet(targets)
+        finally:
+            restore()
+        by = [t for t in targets if seen.get(t) is False]
+        if len(by) == len(targets):
+            killed += 1
+            print(f"KILLED {label} by {', '.join(by)}")
+        else:
+            print(f"SURVIVED {label} (still green or absent: {', '.join(t for t in targets if seen.get(t) is not False)})")
+    held = 0
+    for label, apply, target in BACKSTOPS:
+        restore = apply()
+        try:
+            seen = _quiet([target])
+        finally:
+            restore()
+        if seen.get(target) is True:
+            held += 1
+            print(f"HELD {label}: {target} stayed green")
+        else:
+            print(f"BROKE {label}: {target} -> {seen.get(target)}")
+    after = _quiet(DRILL_GATES)
+    clean = len(after) == len(DRILL_GATES) and all(after.values())
+    print(f"{'PASS' if clean else 'FAIL'} DRILL-CLEAN-AFTER-MUTANTS unmutated rerun: {sum(after.values())}/{len(after)} gates green")
+    print(f"DRILL killed={killed}/{len(MUTANTS)} backstops_held={held}/{len(BACKSTOPS)}")
+    ok = killed == len(MUTANTS) and held == len(BACKSTOPS) and control_ok and clean
+    return 0 if ok else 1
+
+
 if __name__ == "__main__":
-    sys.exit(run_all())
+    sys.exit(run_drill() if "--drill" in sys.argv[1:] else run_all())
