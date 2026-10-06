@@ -1283,6 +1283,31 @@ def selftest(verbose=True) -> bool:
     return ok
 
 
+def _final_gen1() -> int:
+    """Generation 1 --final: its own ICP_VERDICT line and meaning, unchanged (D-OQ3). 0 pass, 1 fail, 2 could not run."""
+    fails = []
+    if not selftest(verbose=False):
+        fails.append("S1 wrapper selftest failed")
+    rc = ce.main(["--final"])
+    if rc == 2:
+        print("ICP_VERDICT=COULD_NOT_RUN")
+        return 2
+    if rc != 0:
+        fails.append(f"CE clauses failed (rc {rc})")
+    try:
+        led = load_ledger()
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"ICP_VERDICT=COULD_NOT_RUN ledger unreadable: {exc}")
+        return 2
+    fails += check_binding(led) + check_consumed(led, OwnerLedgers())
+    fails += check_measurement_scope(led, ce.Resolver())
+    fails += check_owner_decisions(led)
+    for x in fails:
+        print("  FAIL", x)
+    print(f"ICP_VERDICT={'PASS' if not fails else 'FAIL'} failures={len(fails)}")
+    return 0 if not fails else 1
+
+
 def _generation(argv):
     """(generation, argv without the --generation tokens). Absent -> 1; an unparsable value -> (None, argv)."""
     gen, rest, i = 1, [], 0
@@ -1324,31 +1349,33 @@ def main(argv=None) -> int:
     if "--selftest" in argv:
         own = selftest()
         rc = ce.main(["--selftest"])
-        good = own and rc == 0
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import ic_gen2
+        g2 = ic_gen2.selftest(verbose=False)
+        print(f"ICP_GEN2_SELFTEST={'PASS' if g2 else 'FAIL'}")
+        try:
+            leak = check_binding(load_ledger())  # gen2 must leave this program's gen1 binding exactly as it was
+        except (OSError, json.JSONDecodeError) as exc:
+            leak = [f"B1 gen1 ledger unreadable after the gen2 selftest: {exc}"]
+        for x in leak:
+            print("  FAIL", x)
+        good = own and rc == 0 and g2 and not leak
         print(f"ICP_SELFTEST={'PASS' if good else 'FAIL'}")
         return 0 if good else 1
     if "--final" in argv:
-        fails = []
-        if not selftest(verbose=False):
-            fails.append("S1 wrapper selftest failed")
-        rc = ce.main(["--final"])
-        if rc == 2:
-            print("ICP_VERDICT=COULD_NOT_RUN")
-            return 2
-        if rc != 0:
-            fails.append(f"CE clauses failed (rc {rc})")
+        rc1 = _final_gen1()
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import ic_gen2
+        rc2 = ic_gen2.main("final")  # prints its own ICP_GEN2_VERDICT line; gen1's verdict above is unchanged (D-OQ3)
         try:
-            led = load_ledger()
+            leak = check_binding(load_ledger())
         except (OSError, json.JSONDecodeError) as exc:
-            print(f"ICP_VERDICT=COULD_NOT_RUN ledger unreadable: {exc}")
-            return 2
-        fails += check_binding(led) + check_consumed(led, OwnerLedgers())
-        fails += check_measurement_scope(led, ce.Resolver())
-        fails += check_owner_decisions(led)
-        for x in fails:
+            leak = [f"B1 gen1 ledger unreadable after the gen2 final: {exc}"]
+        for x in leak:
             print("  FAIL", x)
-        print(f"ICP_VERDICT={'PASS' if not fails else 'FAIL'} failures={len(fails)}")
-        return 0 if not fails else 1
+        if 2 in (rc1, rc2):
+            return 2
+        return 0 if rc1 == 0 and rc2 == 0 and not leak else 1
     pid = None
     for i, a in enumerate(argv):
         if a == "--pillar" and i + 1 < len(argv):

@@ -21,3 +21,13 @@ Source: the Owner's /cpp-gsd-long brief (2026-10-05), master done-gate items 1-3
 | AO-15 | Vault + UKDL disposition for every bug (gate 29) | 7 |
 | AO-16 | vMAX-NULL-ERROR clean; tests, mutants, benchmarks, PRG green (gate 30-31) | 7 |
 | AO-17 | survives a fresh worker without transcript archaeology (gate 32) | 7 |
+
+## Traceability (IC-gen2 pillars, read by the bound X2 clause of tools/ic_gen2.py)
+
+| Req | Pillar | Status |
+|---|---|---|
+| AOP-M | optimizer lifecycle (reopened) | Pending |
+| AOP-O | usage_index v5 substrate | Pending |
+| AOP-P | KME-L challenger | Pending |
+| AOP-Q | generic opportunity detectors | Pending |
+| AOP-R | second workload taken by the loop | Pending |
