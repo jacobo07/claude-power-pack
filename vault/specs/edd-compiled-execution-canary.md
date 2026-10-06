@@ -61,4 +61,13 @@ receipt exist; reachability exit 0 for new tools.
   modules/ only and could never see tools/ -- a vacuous pass), WU-1 packet. dc20be77: partial RESEARCH.md salvaged.
 - Canary record m-99b4cc7104f9: `arm --no-launch --supersedes m-ee81e1595007` (old -> HALTED), hold, envelope
   token_estimate 6M (trip 12M at default ratio 2.0, stall 3M), model sonnet, autocompact 120k, wu_packet WU-1
-  (sha256 761051cb), max 3 cycles / 6 h, release. Launch is the agora sweep's.
+  (sha256 761051cb), max 3 cycles / 6 h, release. Launch is the agora sweep's.- Attempt 1 m-99b4cc7104f9 BLOCKED 22:13Z: autocompact 120k < measured floor 95.7k + dossier (3 compactions, 0.49M,
+  compaction cost UNKNOWN). My error: window guessed, not derived from the floor (UC-18). Superseded.
+- Attempt 2 m-51b4175db047 (autocompact 250k): matrix 81 rows + vault/specs/edd.md + receipt for 3,310,496 metered
+  (work session 16 calls 2.60M; 2 continuation epochs 0.71M = 21.5% tax, UC-19). HALTED at max-cycles 3.
+- Done-gate superseded note: the "reachability exit 0" clause above was replaced by G9 produced -> named -> read.
+- RESULT 2026-10-06T22:5xZ: `python3 tools/edd_canary_gate.py` -> EDD_CANARY_GATE=13/13 at GEX44 mission/edd-run
+  9640aecf; gate_ukdl_candidates PASS (19). Sampled quality 6/8 (C-15 wrong owner, C-54 wrong status), 28 rows
+  UNKNOWN -> Phase 1 NOT done; repair packet WU-1R unfunded. Reforecast remaining EDD ~36M/~95M/~215M (canary/
+  REFORECAST.md). Orchestrating Opus pane 08cb0d86 cost 17.41M / 56 calls since 21:52Z (UC-20): tranche ~21.2M
+  measured of 25M cap; stopped there.
