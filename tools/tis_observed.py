@@ -122,7 +122,7 @@ def _calls_in(path: Path) -> tuple[list[dict], int, int, int]:
 
 
 def calls_from(path: Path, offset: int = 0,
-               on_line=None) -> tuple[list[dict], int, Optional[str]]:
+               on_line=None, stats: Optional[dict] = None) -> tuple[list[dict], int, Optional[str]]:
     """Incremental twin of _calls_in: real calls in the COMPLETE lines after `offset`.
 
     Same filters and identity as _calls_in (synthetic skipped, last copy of a
@@ -134,16 +134,27 @@ def calls_from(path: Path, offset: int = 0,
     agreement of both readers is pinned in tools/test_usage_index.py.
 
     `on_line(obj, start_offset)` sees every parsed JSON line in file order, so an
-    indexer can read ancestry (promptId, origin, quotaLimits) in the same pass."""
+    indexer can read ancestry (promptId, origin, quotaLimits) in the same pass.
+
+    `stats`, when given, is filled in the same read loop: `bytes_seen` (every raw chunk
+    iterated, the unterminated tail included), `lines` (complete lines) and `bad` (complete
+    non-blank lines that are not valid JSON; the unterminated tail is never counted)."""
     calls: dict = {}
     order: list = []
     entrypoint = None
     pos = offset
+    if stats is not None:
+        for _k in ("bytes_seen", "lines", "bad"):
+            stats.setdefault(_k, 0)
     with open(path, "rb") as fh:
         fh.seek(offset)
         for raw in fh:
+            if stats is not None:
+                stats["bytes_seen"] += len(raw)
             if not raw.endswith(b"\n"):
                 break
+            if stats is not None:
+                stats["lines"] += 1
             start, pos = pos, pos + len(raw)
             text = raw.decode("utf-8", errors="replace").lstrip("\ufeff").strip()
             if not text:
@@ -151,6 +162,8 @@ def calls_from(path: Path, offset: int = 0,
             try:
                 obj = json.loads(text)
             except json.JSONDecodeError:
+                if stats is not None:
+                    stats["bad"] += 1
                 continue
             if isinstance(obj, dict) and entrypoint is None and obj.get("entrypoint"):
                 entrypoint = obj["entrypoint"]

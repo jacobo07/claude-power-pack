@@ -159,7 +159,7 @@ def main() -> int:
                f"calls={ux.window(con, T0, T0 + 99 * 3600)['calls']} upserted={r2['calls_upserted']} "
                f"backfill_pending={r2['backfill_pending']}")
             ver = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()[0]
-            ok("V-SPOUT-VERSION", ver == str(ux.SCHEMA_VERSION) == "4", f"schema_version={ver}")
+            ok("V-SPOUT-VERSION", ver == str(ux.SCHEMA_VERSION) == "5", f"schema_version={ver}")
             nohash = con.execute("SELECT count(*) FROM spawns WHERE input_hash IS NULL").fetchone()[0]
             ok("V-SPOUT-INPUT-HASH", nohash == 0,
                f"{nohash} spawns without input_hash after the upgrade (v4 backfill)")

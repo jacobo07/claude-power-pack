@@ -28,13 +28,18 @@ CLI:
   burn                            refresh (bounded) + current state
   replay --at ISO [--step-h 1]    state at past instants, from the index only
   holdout                         calibrate on pair A, score on pair B (done-gate G6)
+  population [--until ISO] [--project-filter S] [--select S] [--include-archived]
+             [--expect JSON|FILE] [--plane NAME]   typed population verdict (exit 0/1/3)
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import ntpath
 import os
+import posixpath
+import re
 import sqlite3
 import sys
 import time
@@ -62,7 +67,8 @@ STALE_AFTER_S = float(os.environ.get("CPP_USAGE_INDEX_STALE_S", "7200"))
 RATE_WINDOW_H = 6.0
 ANOMALY_FACTOR = 1.5      # 24 h rate vs the median daily rate of the prior 14 days
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
+SPAWN_SCHEMA = 4   # the version _migrate_spawns stamps; it never writes SCHEMA_VERSION (a bump must not re-queue the backfill)
 V2 = 2          # the version whose upgrade re-reads every file; never re-run for a later bump
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS files(path TEXT PRIMARY KEY, offset INTEGER, size INTEGER,
@@ -83,10 +89,40 @@ CREATE TABLE IF NOT EXISTS spawns(tool_use_id TEXT PRIMARY KEY, parent_k TEXT, s
   result_ts REAL, is_error INTEGER, result_head TEXT, input_hash TEXT);
 CREATE TABLE IF NOT EXISTS subagents(file TEXT PRIMARY KEY, session TEXT, agent_type TEXT,
   tool_use_id TEXT, depth INTEGER, model_meta TEXT);
+-- v5 (phase 1, pillar O): the occurrence view, tool events, attribution, patterns. Additive
+-- only: the new `files` columns are added by _migrate_v5, never here (a reader takes no write lock).
+CREATE TABLE IF NOT EXISTS call_files(k TEXT, file TEXT, ts REAL, model TEXT, inp INTEGER,
+  cw INTEGER, cw5 INTEGER, cw1 INTEGER, cr INTEGER, out INTEGER, PRIMARY KEY(k, file));
+CREATE INDEX IF NOT EXISTS call_files_file ON call_files(file);
+CREATE TABLE IF NOT EXISTS tool_events(file TEXT, tool_use_id TEXT, off INTEGER, ts REAL,
+  tool TEXT, input_hash TEXT, input_bytes INTEGER, path TEXT, pat_hits TEXT,
+  result_bytes INTEGER, result_chars INTEGER, is_error INTEGER, result_off INTEGER,
+  PRIMARY KEY(file, tool_use_id));
+CREATE TABLE IF NOT EXISTS user_hits(file TEXT, off INTEGER, ts REAL, pat_hits TEXT,
+  PRIMARY KEY(file, off));
+CREATE TABLE IF NOT EXISTS file_cwds(file TEXT, cwd TEXT, first_off INTEGER, first_ts REAL,
+  PRIMARY KEY(file, cwd));
+CREATE TABLE IF NOT EXISTS file_attribution(file TEXT, kind TEXT, name TEXT, role TEXT,
+  n INTEGER, PRIMARY KEY(file, kind, name, role));
+CREATE TABLE IF NOT EXISTS patterns(name TEXT PRIMARY KEY, regex TEXT, flags INTEGER,
+  source TEXT, version TEXT);
 """
 _V2_COLUMNS = (("calls", "session", "TEXT"), ("calls", "prompt_id", "TEXT"),
                ("calls", "agent_id", "TEXT"), ("files", "cur_prompt", "TEXT"),
                ("files", "title", "TEXT"))
+# v5 `files` columns. `resolved` is produced by tis_observed (plan 02), never computed here.
+# v5_from = byte offset from which this file's v5 rows are complete: 0 for a file first read
+# under v5, the old offset for a legacy file that grows, NULL for a legacy file never re-read
+# (typed UNMEASURED for every v5 fact, never "no tools").
+_V5_COLUMNS = (("files", "resolved", "TEXT"), ("files", "store", "TEXT"),
+               ("files", "project", "TEXT"), ("files", "archived", "INTEGER"),
+               ("files", "session_key", "TEXT"), ("files", "first_ts", "REAL"),
+               ("files", "last_ts", "REAL"), ("files", "parse_errors", "INTEGER"),
+               ("files", "error", "TEXT"), ("files", "v5_from", "INTEGER"),
+               ("files", "head_sha", "TEXT"), ("files", "tail_sha", "TEXT"),
+               ("files", "content_id", "TEXT"), ("files", "dup_of", "TEXT"),
+               ("files", "pat_ver", "TEXT"))
+_V5_FILE_TABLES = ("call_files", "tool_events", "user_hits", "file_cwds", "file_attribution")
 
 
 def _iso(t: float) -> str:
@@ -144,18 +180,19 @@ def spawn_input_hash(inp: dict) -> str:
 
 
 def _migrate_spawns(con) -> None:
-    """-> v4: adds any missing spawn columns and queues ONLY the transcripts that hold
+    """-> v4 (SPAWN_SCHEMA, its own gate: a later bump never re-queues this): adds any
+    missing spawn columns and queues ONLY the transcripts that hold
     a spawn lacking a result or an input hash for a backfill; no file offset is
     touched, so totals cannot move (audit G2). One BEGIN IMMEDIATE, version
     re-checked inside it, so two concurrent refreshes migrate once."""
     row = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
-    if row is not None and int(row[0]) >= SCHEMA_VERSION:
+    if row is not None and int(row[0]) >= SPAWN_SCHEMA:
         return
     con.commit()
     con.execute("BEGIN IMMEDIATE")
     try:
         row = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
-        if row is None or int(row[0]) < SCHEMA_VERSION:
+        if row is None or int(row[0]) < SPAWN_SCHEMA:
             have = {r[1] for r in con.execute("PRAGMA table_info(spawns)")}
             for col, typ in _SPAWN_COLUMNS:
                 if col not in have:
@@ -166,6 +203,33 @@ def _migrate_spawns(con) -> None:
                 "SELECT DISTINCT file FROM spawns WHERE (result_ts IS NULL OR input_hash IS NULL) "
                 "AND file IS NOT NULL")})
             con.execute("INSERT OR REPLACE INTO meta VALUES('spawn_backfill', ?)", (json.dumps(todo),))
+            con.execute("INSERT OR REPLACE INTO meta VALUES('schema_version', ?)",
+                        (str(SPAWN_SCHEMA),))
+        con.commit()
+    except BaseException:
+        con.rollback()
+        raise
+
+
+def _migrate_v5(con) -> None:
+    """-> v5: additive only. Adds the missing `files` columns and stamps the version; opens
+    no transcript, touches no offset, deletes nothing (pillar O rule 2). One BEGIN
+    IMMEDIATE, version re-checked inside it, so two concurrent refreshes migrate once.
+    The v5 tables themselves come from SCHEMA (CREATE TABLE IF NOT EXISTS)."""
+    row = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
+    if row is not None and int(row[0]) >= SCHEMA_VERSION:
+        return
+    con.commit()
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        row = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
+        if row is None or int(row[0]) < SCHEMA_VERSION:
+            have = {r[1] for r in con.execute("PRAGMA table_info(files)")}
+            for table, col, typ in _V5_COLUMNS:
+                if col not in have:
+                    con.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
+            con.execute("INSERT OR REPLACE INTO meta VALUES('v5_migration', ?)",
+                        (json.dumps({"at": time.time(), "files_opened": 0}),))
             con.execute("INSERT OR REPLACE INTO meta VALUES('schema_version', ?)",
                         (str(SCHEMA_VERSION),))
         con.commit()
@@ -261,12 +325,29 @@ def _iter_files(proj: Path):
 _PATH_COLUMNS = (("files", "path", "pk"), ("calls", "k", "key"), ("calls", "file", "plain"),
                  ("quota", "file", "pk"), ("prompts", "file", "plain"),
                  ("spawns", "file", "plain"), ("spawns", "parent_k", "key"),
-                 ("subagents", "file", "pk"))
+                 ("subagents", "file", "pk"),
+                 ("call_files", "k", "key"), ("call_files", "file", "pk"),
+                 ("tool_events", "file", "pk"), ("user_hits", "file", "pk"),
+                 ("file_cwds", "file", "pk"), ("file_attribution", "file", "pk"),
+                 ("files", "dup_of", "plain"))
+
+
+def _path_columns(con):
+    """_PATH_COLUMNS minus the columns this index does not have yet: canonicalization
+    runs before _migrate_v5, so a v4 index has no files.dup_of to rewrite."""
+    have: dict = {}
+    out = []
+    for table, col, kind in _PATH_COLUMNS:
+        if table not in have:
+            have[table] = {r[1] for r in con.execute(f"PRAGMA table_info({table})")}
+        if col in have[table]:
+            out.append((table, col, kind))
+    return out
 
 
 def _alias_rows(con, alias: str) -> int:
     n = 0
-    for table, col, kind in _PATH_COLUMNS:
+    for table, col, kind in _path_columns(con):
         pre = ("off|" + alias) if kind == "key" else alias
         n += con.execute(f"SELECT count(*) FROM {table} WHERE substr({col},1,?)=?",
                          (len(pre), pre)).fetchone()[0]
@@ -318,7 +399,7 @@ def _canonicalize(con, proj: Path) -> dict:
     con.execute("BEGIN IMMEDIATE")
     try:
         for a, c in todo.items():
-            for table, col, kind in _PATH_COLUMNS:
+            for table, col, kind in _path_columns(con):
                 pa, pc = (("off|" + a, "off|" + c) if kind == "key" else (a, c))
                 where = f"substr({col},1,{len(pa)})=?"
                 verb = "UPDATE OR IGNORE" if kind in ("pk", "key") else "UPDATE"
@@ -405,6 +486,99 @@ def _ancestry_line(con, path: str, is_sub: int, state: dict, o: dict, start: int
                              spawn_input_hash(inp)))
 
 
+_WIN_ABS = re.compile(r"^(?:[A-Za-z]:[\\/]|\\\\)")
+
+
+def _norm_path(p, cwd=None):
+    """A tool-input path as one comparable string. Pure string work: never touches the
+    disk and never resolves against this host's file system (T-01-05). Windows-shaped
+    strings go through ntpath then forward slashes; POSIX absolute through posixpath; a
+    relative path is joined onto the current cwd when one is known, else kept relative."""
+    if not isinstance(p, str) or not p:
+        return None
+    if _WIN_ABS.match(p):
+        return ntpath.normpath(p).replace("\\", "/")
+    if p.startswith("/"):
+        return posixpath.normpath(p)
+    if isinstance(cwd, str) and cwd:
+        if _WIN_ABS.match(cwd):
+            return ntpath.normpath(ntpath.join(cwd, p)).replace("\\", "/")
+        if cwd.startswith("/"):
+            return posixpath.normpath(posixpath.join(cwd, p))
+    return posixpath.normpath(p.replace("\\", "/"))
+
+
+def _result_text(content) -> str:
+    """Flatten a tool_result body exactly like wiki/tools/kme_token_audit.py::text_of:
+    str as is; a list joins with newline the `text` of text items, the flattening of
+    nested tool_result items, `[image]` for image items and bare strings. The text is
+    only measured, never stored."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        out = []
+        for c in content:
+            if isinstance(c, dict):
+                if c.get("type") == "text":
+                    out.append(c.get("text", ""))
+                elif c.get("type") == "tool_result":
+                    out.append(_result_text(c.get("content")))
+                elif c.get("type") == "image":
+                    out.append("[image]")
+            elif isinstance(c, str):
+                out.append(c)
+        return "\n".join(out)
+    return ""
+
+
+def _v5_line(con, path: str, state: dict, o: dict, start: int) -> None:
+    """v5 facts from one transcript line, in the same parse as _ancestry_line (one read
+    pass, no second reader). A tool_use becomes a tool_events row (hash, sizes and a
+    normalized path only: never the input or result text, HR-SECRET-002); the tool_result
+    that answers it fills the result columns, which stay NULL until one is seen."""
+    cwd = o.get("cwd")
+    if isinstance(cwd, str) and cwd:
+        state["cwd"] = cwd
+    msg = o.get("message")
+    content = msg.get("content") if isinstance(msg, dict) else None
+    if not isinstance(content, list):
+        return
+    t = o.get("type")
+    ts = _epoch(o.get("timestamp"))
+    if t == "assistant":
+        for i, c in enumerate(content):
+            if not (isinstance(c, dict) and c.get("type") == "tool_use"):
+                continue
+            inp = c.get("input")
+            if inp is None:
+                inp = {}
+            raw = json.dumps(inp, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+            raw_b = raw.encode("utf-8", "replace")
+            fpath = None
+            if isinstance(inp, dict):
+                for fld in ("file_path", "notebook_path", "path"):
+                    if inp.get(fld):
+                        fpath = _norm_path(inp[fld], state.get("cwd"))
+                        break
+            con.execute(
+                "INSERT INTO tool_events(file,tool_use_id,off,ts,tool,input_hash,input_bytes,path) "
+                "VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(file,tool_use_id) DO UPDATE SET "
+                "off=excluded.off, ts=excluded.ts, tool=excluded.tool, "
+                "input_hash=excluded.input_hash, input_bytes=excluded.input_bytes, "
+                "path=excluded.path",
+                (path, c.get("id") or f"off|{start}|{i}", start, ts, c.get("name"),
+                 hashlib.sha256(raw_b).hexdigest()[:16], len(raw_b), fpath))
+    elif t == "user":
+        for c in content:
+            if not (isinstance(c, dict) and c.get("type") == "tool_result" and c.get("tool_use_id")):
+                continue
+            text = _result_text(c.get("content"))
+            con.execute("UPDATE tool_events SET result_chars=?, result_bytes=?, is_error=?, "
+                        "result_off=? WHERE file=? AND tool_use_id=?",
+                        (len(text), len(text.encode("utf-8", "replace")),
+                         1 if c.get("is_error") else 0, start, path, c["tool_use_id"]))
+
+
 def _index_subagent_meta(con, fp: Path) -> None:
     """agentType / toolUseId / spawnDepth from <agent>.meta.json. A missing or
     unreadable meta is recorded with NULLs: typed unknown, never a guess."""
@@ -423,21 +597,27 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             since_epoch: float | None = None, deadline_s: float = 20.0) -> dict:
     """Index the bytes appended since the last pass. Bounded by `deadline_s`.
 
-    Returns {status: OK|PARTIAL|FAILED, files_read, calls_upserted, pending}.
-    PARTIAL is resumable: offsets are committed per file, so the next pass
-    continues where this one stopped. The outcome is recorded in meta so that a
-    reader can tell a missed run from a quiet one."""
-    t_end = time.monotonic() + deadline_s
+    Returns {status: OK|PARTIAL|FAILED, files_read, calls_upserted, pending, ...} plus the
+    pass's own measurements: files_opened (opens attempted), bytes_read (raw bytes
+    iterated), bytes_ingested (end minus offset), files_seen, wall_s. PARTIAL is
+    resumable: offsets are committed per file, so the next pass continues where this one
+    stopped. The outcome is recorded in meta so that a reader can tell a missed run from
+    a quiet one."""
+    t0 = time.monotonic()
+    t_end = t0 + deadline_s
     files_read = upserts = pending = 0
+    files_opened = bytes_read = bytes_ingested = files_seen = 0
     backfill_pending = None
     status = "OK"
     err = ""
     try:
         _canonicalize(con, Path(proj))
         _migrate_spawns(con)
+        _migrate_v5(con)
         known = {r[0]: r[1:] for r in con.execute(
-            "SELECT path, offset, size, mtime_ns, entrypoint FROM files")}
+            "SELECT path, offset, size, mtime_ns, entrypoint, v5_from FROM files")}
         for fp, is_sub in _iter_files(Path(proj)):
+            files_seen += 1
             try:
                 st = fp.stat()
             except OSError:
@@ -455,22 +635,43 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             offset = prev[0] if prev else 0
             entry = prev[3] if prev else None
             if prev and st.st_size < offset:            # rewritten: start over
-                for t in ("calls", "quota"):
+                for t in ("calls", "quota") + _V5_FILE_TABLES:
                     con.execute(f"DELETE FROM {t} WHERE file=?", (path,))
                 offset, entry = 0, None
+            # v5_from: where this file's v5 rows start being complete.
+            if offset == 0:
+                v5_from = 0
+            elif prev and prev[4] is not None:
+                v5_from = prev[4]
+            else:
+                v5_from = offset                        # a legacy file that grows
             srow = con.execute("SELECT cur_prompt, title FROM files WHERE path=?",
                                (path,)).fetchone()
             state = {"prompt": srow[0] if srow and offset else None,
-                     "title": srow[1] if srow else None, "call_meta": {}}
+                     "title": srow[1] if srow else None, "call_meta": {}, "cwd": None}
             if is_sub and offset == 0:
                 _index_subagent_meta(con, fp)
-            calls, end, ep = _tis.calls_from(
-                fp, offset, on_line=lambda o, s: _ancestry_line(con, path, is_sub, state, o, s))
+
+            def on_line(o, s, path=path, is_sub=is_sub, state=state):
+                _ancestry_line(con, path, is_sub, state, o, s)
+                _v5_line(con, path, state, o, s)
+
+            stats: dict = {}
+            files_opened += 1
+            calls, end, ep = _tis.calls_from(fp, offset, on_line=on_line, stats=stats)
+            bytes_read += stats.get("bytes_seen", 0)
+            bytes_ingested += end - offset
             entry = entry or ep
             for c in calls:
                 u = c["usage"]
                 cc = u.get("cache_creation") if isinstance(u.get("cache_creation"), dict) else {}
                 sess, pid, aid = state["call_meta"].get(c["key"], (None, None, None))
+                k = _key(path, c["key"])
+                vals = (_epoch(c.get("ts")), c.get("model") or "", _num(u, "input_tokens"),
+                        _num(u, "cache_creation_input_tokens"),
+                        _num(cc, "ephemeral_5m_input_tokens"),
+                        _num(cc, "ephemeral_1h_input_tokens"),
+                        _num(u, "cache_read_input_tokens"), _num(u, "output_tokens"))
                 con.execute(
                     "INSERT INTO calls(k,file,ts,model,is_sub,entrypoint,inp,cw,cw5,cw1,cr,out,"
                     "session,prompt_id,agent_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
@@ -481,21 +682,29 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                     "session=coalesce(excluded.session,session), "
                     "prompt_id=coalesce(excluded.prompt_id,prompt_id), "
                     "agent_id=coalesce(excluded.agent_id,agent_id)",
-                    (_key(path, c["key"]), path, _epoch(c.get("ts")), c.get("model") or "",
-                     is_sub, entry, _num(u, "input_tokens"),
-                     _num(u, "cache_creation_input_tokens"),
-                     _num(cc, "ephemeral_5m_input_tokens"),
-                     _num(cc, "ephemeral_1h_input_tokens"),
-                     _num(u, "cache_read_input_tokens"), _num(u, "output_tokens"),
-                     sess, pid, aid))
+                    (k, path, vals[0], vals[1], is_sub, entry, vals[2], vals[3], vals[4],
+                     vals[5], vals[6], vals[7], sess, pid, aid))
+                # The occurrence view: this file's own values, order-independent (calls.file
+                # is first-writer-wins).
+                con.execute(
+                    "INSERT INTO call_files(k,file,ts,model,inp,cw,cw5,cw1,cr,out) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(k,file) DO UPDATE SET "
+                    "ts=excluded.ts, model=excluded.model, inp=max(inp,excluded.inp), "
+                    "cw=max(cw,excluded.cw), cw5=max(cw5,excluded.cw5), cw1=max(cw1,excluded.cw1), "
+                    "cr=max(cr,excluded.cr), out=max(out,excluded.out)",
+                    (k, path) + vals)
                 upserts += 1
             if entry:
                 con.execute("UPDATE calls SET entrypoint=? WHERE file=? AND entrypoint IS NULL",
                             (entry, path))
-            con.execute("INSERT OR REPLACE INTO files(path,offset,size,mtime_ns,is_sub,entrypoint,"
-                        "cur_prompt,title) VALUES(?,?,?,?,?,?,?,?)",
+            con.execute("INSERT INTO files(path,offset,size,mtime_ns,is_sub,entrypoint,"
+                        "cur_prompt,title,v5_from) VALUES(?,?,?,?,?,?,?,?,?) "
+                        "ON CONFLICT(path) DO UPDATE SET offset=excluded.offset, "
+                        "size=excluded.size, mtime_ns=excluded.mtime_ns, is_sub=excluded.is_sub, "
+                        "entrypoint=excluded.entrypoint, cur_prompt=excluded.cur_prompt, "
+                        "title=excluded.title, v5_from=excluded.v5_from",
                         (path, end, st.st_size, st.st_mtime_ns, is_sub, entry,
-                         state["prompt"], state["title"]))
+                         state["prompt"], state["title"], v5_from))
             con.commit()
             files_read += 1
         # Historical spawn results (v3 backfill) use only the time left. They are not
@@ -505,14 +714,20 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
     except Exception as e:  # noqa: BLE001 -- typed, never silent
         status, err = "FAILED", f"{type(e).__name__}: {e}"
     now = time.time()
+    wall_s = round(time.monotonic() - t0, 3)
     con.execute("INSERT OR REPLACE INTO meta VALUES('last_refresh_status', ?)",
                 (json.dumps({"status": status, "at": now, "error": err,
-                             "pending": pending, "backfill_pending": backfill_pending}),))
+                             "pending": pending, "backfill_pending": backfill_pending,
+                             "files_opened": files_opened, "bytes_read": bytes_read,
+                             "bytes_ingested": bytes_ingested, "files_seen": files_seen,
+                             "wall_s": wall_s}),))
     if status == "OK":
         con.execute("INSERT OR REPLACE INTO meta VALUES('last_ok_at', ?)", (str(now),))
     con.commit()
     return {"status": status, "files_read": files_read, "calls_upserted": upserts,
-            "pending": pending, "backfill_pending": backfill_pending, "error": err}
+            "pending": pending, "backfill_pending": backfill_pending, "error": err,
+            "files_opened": files_opened, "bytes_read": bytes_read,
+            "bytes_ingested": bytes_ingested, "files_seen": files_seen, "wall_s": wall_s}
 
 
 # -- pricing -----------------------------------------------------------------
@@ -778,9 +993,95 @@ def holdout(con) -> dict:
             "results": res}
 
 
+POP_FIELDS = ("sessions_active", "sessions_dead", "calls", "input", "cache_write",
+              "cache_read", "output")
+POP_EXIT = {"MEASURED": 0, "EXACT": 0, "DRIFTED": 1, "UNMEASURED": 3}
+
+
+def _session_of(path: str, is_sub: int) -> tuple[str, str]:
+    """(project, session_key) from the transcript path alone (pure string work). A main
+    transcript is <store>/<session>.jsonl; a subagent one is
+    <store>/<session>/subagents/<agent>.jsonl and belongs to its parent session."""
+    p = Path(path)
+    if is_sub:
+        return p.parent.parent.parent.name, p.parent.parent.name
+    return p.parent.name, p.stem
+
+
+def population(con, *, until=None, project_filter=None, select=None, include_archived=False,
+               expected=None, host=None) -> dict:
+    """Typed answer to "what does the index say about this population of sessions".
+
+    A session is (archived, project, session_key); it is ACTIVE when it has at least one
+    call occurrence (call_files, ts <= until when given), DEAD otherwise. The verdict is
+    UNMEASURED, never zero, when nothing is in scope, when the index is below v5, or when
+    an in-scope file was never read under v5 (its v5 facts are unknown). MEASURED when
+    `expected` is None; EXACT or DRIFTED against `expected` (a dict of POP_FIELDS).
+    `project_filter` is a substring of the project name; `select` None or "all" is every
+    session (richer selectors arrive with plan 04 and are refused, not guessed)."""
+    zero = {k: 0 for k in POP_FIELDS}
+    out = {"verdict": "UNMEASURED", "reasons": [], "host": host, "population": dict(zero),
+           "per_project": {}}
+    cols = {r[1] for r in con.execute("PRAGMA table_info(files)")}
+    if not {"v5_from", "archived", "project", "session_key"} <= cols:
+        out["reasons"].append("index is below schema v5 (files.v5_from absent): run refresh")
+        return out
+    if select not in (None, "all"):
+        out["reasons"].append(f"selector {select!r} is not available in this build")
+        return out
+    rows = con.execute(
+        "SELECT f.path, f.is_sub, f.v5_from, f.archived, f.project, f.session_key, "
+        "count(c.k), coalesce(sum(c.inp),0), coalesce(sum(c.cw),0), coalesce(sum(c.cr),0), "
+        "coalesce(sum(c.out),0) FROM files f "
+        "LEFT JOIN call_files c ON c.file = f.path AND (? IS NULL OR c.ts <= ?) "
+        "GROUP BY f.path", (until, until)).fetchall()
+    sessions: dict = {}
+    in_scope = unknown = 0
+    for path, is_sub, v5_from, archived, project, skey, n, inp, cw, cr, outp in rows:
+        d_proj, d_sess = _session_of(path, is_sub or 0)
+        project, skey = project or d_proj, skey or d_sess
+        if archived and not include_archived:
+            continue
+        if project_filter and project_filter not in project:
+            continue
+        in_scope += 1
+        unknown += v5_from is None
+        s = sessions.setdefault((int(bool(archived)), project, skey), [0, 0, 0, 0, 0])
+        for i, v in enumerate((n, inp, cw, cr, outp)):
+            s[i] += v
+    if not in_scope:
+        out["reasons"].append("no file in scope")
+    if unknown:
+        out["reasons"].append(f"{unknown} in-scope file(s) were never read under v5 "
+                              "(v5_from NULL): their v5 facts are unknown, not zero")
+    pop = dict(zero)
+    per: dict = {}
+    for (_arch, project, _skey), (n, inp, cw, cr, outp) in sessions.items():
+        pp = per.setdefault(project, dict(zero))
+        for tgt in (pop, pp):
+            tgt["sessions_active" if n else "sessions_dead"] += 1
+            tgt["calls"] += n
+            tgt["input"] += inp
+            tgt["cache_write"] += cw
+            tgt["cache_read"] += cr
+            tgt["output"] += outp
+    out["population"], out["per_project"] = pop, per
+    if out["reasons"]:
+        return out
+    if expected is None:
+        out["verdict"] = "MEASURED"
+        return out
+    drift = {k: {"expected": expected[k], "got": pop.get(k)} for k in expected
+             if pop.get(k) != expected[k]}
+    out["verdict"] = "DRIFTED" if drift else "EXACT"
+    if drift:
+        out["drift"] = drift
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
-    ap.add_argument("cmd", choices=["refresh", "window", "burn", "replay", "holdout"])
+    ap.add_argument("cmd", choices=["refresh", "window", "burn", "replay", "holdout", "population"])
     ap.add_argument("args", nargs="*")
     ap.add_argument("--db", default=str(DEFAULT_DB))
     ap.add_argument("--proj", default=str(DEFAULT_PROJ))
@@ -789,6 +1090,11 @@ def main(argv=None) -> int:
     ap.add_argument("--at", default=None)
     ap.add_argument("--until", default=None)
     ap.add_argument("--step-h", type=float, default=1.0)
+    ap.add_argument("--project-filter", default=None)
+    ap.add_argument("--select", default=None)
+    ap.add_argument("--include-archived", action="store_true")
+    ap.add_argument("--expect", default=None, help="JSON object of population fields, or a file of it")
+    ap.add_argument("--plane", default=None, help="host/plane label carried into the answer")
     a = ap.parse_args(argv)
     con = connect(Path(a.db))
     if a.cmd == "refresh":
@@ -824,6 +1130,16 @@ def main(argv=None) -> int:
     if a.cmd == "holdout":
         print(json.dumps(holdout(con), indent=1))
         return 0
+    if a.cmd == "population":
+        expected = None
+        if a.expect:
+            src = Path(a.expect)
+            expected = json.loads(src.read_text(encoding="utf-8") if src.is_file() else a.expect)
+        res = population(con, until=_epoch(a.until) if a.until else None,
+                         project_filter=a.project_filter, select=a.select,
+                         include_archived=a.include_archived, expected=expected, host=a.plane)
+        print(json.dumps(res, indent=1))
+        return POP_EXIT[res["verdict"]]
     return 1
 
 
