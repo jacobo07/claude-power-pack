@@ -5,6 +5,16 @@ status: passed
 score: 5/5 must-haves verified
 covered_files:
   - .planning/workstreams/autonomous-optimization/REQUIREMENTS.md
+  - .planning/workstreams/autonomous-optimization/phases/00-spec-gen2-freeze-novelty-gate/00-01-PLAN.md
+  - .planning/workstreams/autonomous-optimization/phases/00-spec-gen2-freeze-novelty-gate/00-01-SUMMARY.md
+  - .planning/workstreams/autonomous-optimization/phases/00-spec-gen2-freeze-novelty-gate/00-02-PLAN.md
+  - .planning/workstreams/autonomous-optimization/phases/00-spec-gen2-freeze-novelty-gate/00-02-SUMMARY.md
+  - .planning/workstreams/autonomous-optimization/phases/00-spec-gen2-freeze-novelty-gate/00-03-PLAN.md
+  - .planning/workstreams/autonomous-optimization/phases/00-spec-gen2-freeze-novelty-gate/00-03-SUMMARY.md
+  - .planning/workstreams/autonomous-optimization/phases/00-spec-gen2-freeze-novelty-gate/00-04-PLAN.md
+  - .planning/workstreams/autonomous-optimization/phases/00-spec-gen2-freeze-novelty-gate/00-04-SUMMARY.md
+  - .planning/workstreams/autonomous-optimization/phases/00-spec-gen2-freeze-novelty-gate/00-05-PLAN.md
+  - .planning/workstreams/autonomous-optimization/phases/00-spec-gen2-freeze-novelty-gate/00-05-SUMMARY.md
   - tools/gex44_env_preflight.py
   - tools/ic_gen2.py
   - tools/test_ao_p0.py
@@ -14,7 +24,7 @@ covered_files:
   - vault/programs/incremental-cognition/gen2/FROZEN_AT
   - vault/programs/incremental-cognition/gen2/ledger.json
   - vault/specs/autonomous-optimization.md
-covered_digest: "v1:sha256:2c7c63ecf9dfa6ab90c10217517303d5b869620404f7391fc44e2c46350032ed"
+covered_digest: "v1:sha256:e4d1d68d8440d89da879c1850cd0d4c974a4d9338893dcd4f6873db92b44d203"
 behavior_unverified: 0
 overrides_applied: 0
 ---
@@ -25,6 +35,7 @@ overrides_applied: 0
 **Verified:** 2026-10-06 (HEAD f3f5095e, plane gex44, worktree ao-gen2; only uncommitted change is hook output `vault/progress.md`)
 **Status:** passed
 **Re-verification:** No, initial verification
+**Fingerprint amendment (2026-10-06, autonomous run):** `covered_files` omitted the 00-0N PLAN/SUMMARY files that `gsd-tools verification.status` requires, so the report read `stale` with zero content drift (the original 10-file digest recomputed equal; the only commit after f3f5095e is this report). The 10 PLAN/SUMMARY paths were added and the digest recomputed after re-running the gates: AOP0 22/22, ENVPF 65/65, ICP_GEN2_SELFTEST=PASS, gen2 status open=[M,O,P,Q,R] violations=[]. Verdict unchanged.
 
 ## Goal Achievement
 

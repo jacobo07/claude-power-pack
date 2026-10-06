@@ -42,7 +42,7 @@ never PASS; a predicted saving is never a realized one; a challenger is allowed 
 
 ## Phases
 
-- [ ] **Phase 0: Spec, gen2 freeze, novelty gate** - pillar M reopen, O-R pre-registered
+- [x] **Phase 0: Spec, gen2 freeze, novelty gate** - pillar M reopen, O-R pre-registered (completed 2026-10-06)
 - [ ] **Phase 1: usage_index v5 substrate** - pillar O (PLAN mode)
 - [ ] **Phase 2: KME-L challenger** - pillar P
 - [ ] **Phase 3: Generic opportunity detectors + discovery eval** - pillar Q
@@ -75,7 +75,7 @@ never PASS; a predicted saving is never a realized one; a challenger is allowed 
    (pick-only history -> READY; unrelated history -> still NOT_READY; mutant dropping the hash path -> red).
    The live GEX44 install is updated only through its normal fast-forward sync, never by hand.
 
-**Plans:** 5/5 plans executed (waves: 1 = 01; 2 = 02, 03; 3 = 04; 4 = 05)
+**Plans:** 5/5 plans complete
 
 Plans:
 **Wave 1**

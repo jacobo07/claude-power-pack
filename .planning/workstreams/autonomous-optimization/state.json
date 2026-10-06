@@ -6,7 +6,7 @@
     {
       "number": "1",
       "name": "usage_index v5 substrate",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "2",
@@ -41,8 +41,8 @@
   ],
   "next": {
     "command": "/gsd:progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 0 of 7 · executing"
+    "label": "Advance to the next step (plan phase 1)",
+    "reason": "Phase 1 of 7 — needs a plan"
   },
-  "updated_at": "2026-10-06T11:11:01.417Z"
+  "updated_at": "2026-10-06T19:33:25.157Z"
 }

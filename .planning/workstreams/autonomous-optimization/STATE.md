@@ -1,11 +1,11 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-current_phase: 0
-status: executing
-stopped_at: Workstream created from the approved plan; armed on GEX44
-last_updated: "2026-10-06T11:11:01.398Z"
-state_head: 9b2bb43a12c81b148a8ae51f38b43d8ea6f95dce
+current_phase: 1 — usage_index v5 substrate
+status: planning
+stopped_at: Phase 0 complete, ready to plan Phase 1
+last_updated: "2026-10-06T19:33:25.139Z"
+state_head: 3c4fb4b7d2c5c032bee9834af5537c3ed33f1f7c
 progress:
   total_phases: 7
   completed_phases: 0
@@ -15,7 +15,7 @@ milestone_name: autonomous-optimization
 last_activity: 2026-10-05
 workstream: autonomous-optimization
 created: 2026-10-05
-current_phase_name: Spec, gen2 freeze, novelty gate
+current_phase_name: usage_index v5 substrate
 current_plan: Not started
 last_activity_desc: Workstream created from the approved autonomous-optimization plan
 ---
@@ -30,8 +30,8 @@ first proving incident; a second workload must be taken by the loop itself.
 
 ## Current Position
 
-**Status:** Phase 0 complete (IC-gen2 frozen); Phase 1 next
-**Current Phase:** 1 (usage_index v5 substrate, PLAN mode)
+**Status:** Ready to plan
+**Current Phase:** 1 — usage_index v5 substrate
 
 ## Decisions
 
@@ -50,6 +50,6 @@ first proving incident; a second workload must be taken by the loop itself.
 
 ## Session Continuity
 
-**Stopped At:** Phase 0 complete: IC-gen2 frozen at afcdceea, FROZEN_AT 8752562a
+**Stopped At:** Phase 0 complete (IC-gen2 frozen at afcdceea, FROZEN_AT 8752562a; verification fingerprint amended, status passed), ready to plan Phase 1
 **Next exact action:** plan Phase 1 (usage_index v5) against vault/specs/autonomous-optimization.md; the gen2 judge is python3 tools/test_incremental_cognition_program.py --generation 2 --status
 **Resume File:** this STATE.md + vault/plans/autonomous-optimization-2026-10-05.md
