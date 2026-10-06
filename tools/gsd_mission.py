@@ -982,6 +982,34 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None) -> di
                       owner_hold={"reason": reason[:1000], "set_at": now})
 
 
+def set_rollover_protocol(mission_id: str, protocol: str, now: float | None = None,
+                          sessions: list[dict] | None = None, pid_alive=lr._pid_alive) -> dict:
+    """Set `rollover_protocol` on an EXISTING mission (today only `arm` sets it). Same rules as arm:
+    a known protocol and a permission mode that can run the successor's exam. Refused unless the
+    mission is under owner hold or its owner is positively DEAD / absent: flipping the protocol under
+    a live owner would change how that owner's own rollover is read mid-flight. CAS + ledger event
+    through `transition`, exactly as set_owner_hold."""
+    if protocol != CAPSULE_V2:
+        raise MissionError(f"unknown rollover protocol {protocol!r} (only {CAPSULE_V2})")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is {rec['state']}; its protocol cannot change")
+    if rec.get("permission_mode") not in CAPSULE_V2_MODES:
+        raise MissionError(f"{CAPSULE_V2} needs permission mode {' or '.join(CAPSULE_V2_MODES)}, "
+                           f"not {rec.get('permission_mode')!r}")
+    if not rec.get("owner_hold") and rec.get("owner"):
+        verdict, evidence = liveness(rec["owner"], sessions, pid_alive=pid_alive)
+        if verdict != DEAD:
+            raise MissionError(f"{mission_id} has a live owner ({verdict}: {evidence}); "
+                               f"hold it first (`hold --mission {mission_id} --reason ...`)")
+    now = time.time() if now is None else now
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      event="rollover_protocol_set", now=now, rollover_protocol=protocol,
+                      reason=f"rollover protocol set to {protocol}")
+
+
 def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict:
     """TOK-18 gen 2 D1: judge a mission that carries `token_estimate` against its measured spend
     (tools/mission_spend.py). A trip parks it with the Owner hold -- held, never halted or renewed --
@@ -3121,6 +3149,11 @@ def _cli(argv=None) -> int:
     oh.add_argument("--reason", required=True)
     orl = sub.add_parser("release", help="lift an owner hold; the budget clock is not reset")
     orl.add_argument("--mission", required=True)
+    pr = sub.add_parser("protocol", help="set the rollover protocol on an existing mission "
+                                         "(held or owner-less only; same permission-mode rule as arm)")
+    pr.add_argument("--mission", required=True)
+    pr.add_argument("--rollover-protocol", required=True,
+                    help=f"only {CAPSULE_V2}; anything else is refused")
     en = sub.add_parser("envelope", help="set token estimate / model / autocompact / compiled work-unit "
                                          "packet on a live mission (spec mission-envelope-and-compiled-wu)")
     en.add_argument("--mission", required=True)
@@ -3179,6 +3212,11 @@ def _cli(argv=None) -> int:
     if args.cmd == "release":
         rec = release_owner_hold(args.mission)
         print(f"OWNER HOLD RELEASED mission={rec['mission_id']} state={rec['state']} epoch={rec['epoch']}")
+        return 0
+    if args.cmd == "protocol":
+        rec = set_rollover_protocol(args.mission, args.rollover_protocol)
+        print(f"ROLLOVER PROTOCOL SET mission={rec['mission_id']} protocol={rec['rollover_protocol']} "
+              f"state={rec['state']} epoch={rec['epoch']}")
         return 0
     if args.cmd == "envelope":
         rec = set_envelope(args.mission, token_estimate=args.token_estimate, model=args.model,
