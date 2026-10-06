@@ -152,13 +152,13 @@ Plans:
 4. Stale-cache control: changing a source or the parser version invalidates exactly the affected closure.
 5. If the challenger does not beat the scoped path on repeated queries, narrow or reject it and record why.
 
-**Plans:** 1/6 plans executed
+**Plans:** 2/6 plans executed
 
 Plans:
 **Wave 1**
 
 - [x] 02-01-PLAN.md -- tracer: index-selected sessions only through the existing observers; `--plan` KS-4 routing, `--cross-project`, path log, kme_replay wiring
-- [ ] 02-02-PLAN.md -- instruments: `tools/strace_io_sum.py` (open-set columns, CostaLuz detector) and `tools/kme_equivalence.py` (masked 7-file compare, perturb control)
+- [x] 02-02-PLAN.md -- instruments: `tools/strace_io_sum.py` (open-set columns, CostaLuz detector) and `tools/kme_equivalence.py` (masked 7-file compare, perturb control)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

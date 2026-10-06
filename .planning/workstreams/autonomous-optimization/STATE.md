@@ -2,16 +2,16 @@
 gsd_state_version: "1.0"
 milestone: v1
 current_phase: 2
-current_plan: 2
+current_plan: 3
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-10-06T22:43:34.423Z"
-state_head: aa961615a496bc2666a0c4de4724f9f6cecedd33
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-10-06T22:52:44.564Z"
+state_head: b9c8b273f3ecd3edeef9d7e30ebc6efc745cbe13
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 12
-  completed_plans: 7
+  completed_plans: 8
 milestone_name: autonomous-optimization
 last_activity: 2026-10-05
 workstream: autonomous-optimization
@@ -32,7 +32,7 @@ first proving incident; a second workload must be taken by the loop itself.
 
 **Status:** Ready to execute
 **Current Phase:** 2
-Current Plan: 2
+Current Plan: 3
 Total Plans in Phase: 6
 
 ## Decisions
@@ -59,12 +59,14 @@ Total Plans in Phase: 6
 - OWNER DECISION NEEDED [2026-10-06]: publishing branch mission/autonomous-optimization-gen2 to origin is refused by the ovo-push-gate hook (stderr withheld). Options: (a) the Owner publishes it, (b) the Owner exempts this mission branch in the gate, (c) keep it local. Pick: (c) for now. The commits are durable in the shared object store.
 - [Phase 2]: 02-01: plan_taken vocabulary champion|scoped|index|global|refused; index tier refuses --since; PlanRefused carries passed guards; raw tiers walk the tree only when --path-log is given
 - [Phase 2]: 02-01 note for 02-03/04: index guard does not yet check index-vs-root identity; a project filter makes the index population scoped, EXACT only if the filter covers every KME-L project
+- [Phase 2]: 02-02: UNMEASURED strace summaries carry null columns, never 0; open_set_identical is null for fewer than 2 traced repetitions
+- [Phase 2]: 02-02: comparator masks only measured_at, command and H's 40-hex commit; sessions_scanned and the H owner-verdict map are explicit backstop checks proven live by drill B1/B2
 
 ## Session Continuity
 
-**Last session:** 2026-10-06T22:43:34.392Z
+**Last session:** 2026-10-06T22:52:44.534Z
 
-**Stopped At:** Completed 02-01-PLAN.md
+**Stopped At:** Completed 02-02-PLAN.md
 **Next exact action:** `/gsd-code-review 1 --fix --auto --ws autonomous-optimization` for CR-01 (usage_index.py:2112, `population --until 2026-09-01` silently drops the cut: until=None, reproduced on /home/kobii/ao-scratch/p1/cold.sqlite; must become UNMEASURED exit 3), WR-01 (per-file `except OSError` too narrow), WR-02 (`_registry` should join only `v5_from = 0` files). Red gate first per fix in tools/test_usage_index_v5.py; after fixes the KME-L parity with `--until 2026-10-03T16:13:37Z` must stay EXACT. Then spawn gsd-verifier -> 01-VERIFICATION.md, then `phase.complete 1`, then Phase 2. Isolation: worktree base-check degrades (fork-ref-unknown) -> re-run `dispatch-isolation --phase N --force-isolation none` before every gsd-executor dispatch or the isolation guard refuses it.
 **Resume File:** None
 
@@ -78,3 +80,4 @@ Total Plans in Phase: 6
 | Phase 01 P05 | single session | 2 tasks | 4 files |
 | Phase 1 P06 | single session | 2 tasks | 6 files |
 | Phase 2 P01 | 40min | 2 tasks | 4 files |
+| Phase 2 P02-02 | 5min | 2 tasks | 3 files |
