@@ -543,6 +543,7 @@ def build_parser():
     sp.add_argument("--rollover-growth", type=int, default=ROLLOVER_GROWTH,
                     help=f"late_rollover threshold: context growth above the thread floor (default {ROLLOVER_GROWTH})")
     sp.add_argument("--json", action="store_true")
+    kp.add_plan_args(sp)
     sp.set_defaults(frozen_ce_ledger=None, role="auto")
     return ap
 
@@ -746,7 +747,11 @@ def main(argv=None):
     ctx, rc = kp._prepare(a, [PILLAR])
     if ctx is None:
         return rc
-    sc, until, loc = kp._resolve(ctx, list(CANDIDATES), observer_factories=factories(a.rollover_growth))
+    try:
+        sc, until, loc = kp.resolve_logged(ctx, list(CANDIDATES), redact, "kme_replay", a.cmd,
+                                           observer_factories=factories(a.rollover_growth))
+    except kp.PlanRefused:
+        return kp.EXIT_UNMEASURED
     res = rank_result(ctx, sc, loc, until, argv, a.rollover_growth)
     out_dir = Path(a.out_dir) if a.out_dir else kp.REPO / kp.MEASUREMENTS_REL
     stem = f"{PILLAR}-{ctx['label']}-{kp._utcnow().strftime('%Y-%m-%d')}"

@@ -1892,10 +1892,11 @@ INDEX_MIN_SCHEMA = 5
 class PlanRefused(Exception):
     """A guard of the challenger's access plan failed: `guard` names it, `reason` is the index's own or the guard's."""
 
-    def __init__(self, guard, reason):
+    def __init__(self, guard, reason, guards=None):
         super().__init__(f"{guard}: {reason}")
         self.guard = guard
         self.reason = reason
+        self.guards = list(guards or []) + [{"guard": guard, "ok": False, "reason": reason}]
 
 
 def add_plan_args(sp):
@@ -1940,21 +1941,21 @@ def _index_tier(ctx):
     guards = []
     db = ctx.get("index_db") or str(_usage_index().DEFAULT_DB)
     if not os.path.isfile(db):
-        raise PlanRefused("index_open", f"index_missing: {db}")
+        raise PlanRefused("index_open", f"index_missing: {db}", guards)
     try:
         con = _open_index_ro(db)
         row = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
     except sqlite3.Error as exc:
-        raise PlanRefused("index_open", f"index_unreadable: {exc.__class__.__name__}")
+        raise PlanRefused("index_open", f"index_unreadable: {exc.__class__.__name__}", guards)
     try:
         ver = int(row[0]) if row else 0
         if ver < INDEX_MIN_SCHEMA:
-            raise PlanRefused("index_open", f"schema: {ver} < {INDEX_MIN_SCHEMA}")
+            raise PlanRefused("index_open", f"schema: {ver} < {INDEX_MIN_SCHEMA}", guards)
         guards.append({"guard": "index_open", "ok": True, "reason": f"schema {ver}"})
         if ctx["kind"] != "frozen" or ctx["den"] not in ("KME-L", "KME-G") or ctx["select"] != "kme":
-            raise PlanRefused("kind", f"{ctx['den']}/{ctx['select']} has no certified index tier")
+            raise PlanRefused("kind", f"{ctx['den']}/{ctx['select']} has no certified index tier", guards)
         if ctx["since"] is not None:
-            raise PlanRefused("kind", "--since has no certified index tier (the index answers as of an instant)")
+            raise PlanRefused("kind", "--since has no certified index tier (the index answers as of an instant)", guards)
         guards.append({"guard": "kind", "ok": True, "reason": f"{ctx['den']}/kme"})
         until = ctx["freeze"] if ctx["auto"] else ctx["until"]
         ans = _usage_index().population(
@@ -1962,12 +1963,13 @@ def _index_tier(ctx):
             project_filter=ctx["pf"].pattern if ctx["pf"] else None, select="kme", host=ctx["host"],
             expected=ctx["frozen"]["fields"], detail=True)
     except sqlite3.Error as exc:
-        raise PlanRefused("population", f"population: UNMEASURED: index_unreadable: {exc.__class__.__name__}")
+        raise PlanRefused("population", f"population: UNMEASURED: index_unreadable: {exc.__class__.__name__}", guards)
     finally:
         con.close()
     if ans["verdict"] != "EXACT":
         raise PlanRefused("population", f"population: {ans['verdict']}: {'; '.join(ans['reasons'])}"
-                          if ans["reasons"] else f"population: {ans['verdict']}: deltas {sorted(ans.get('deltas') or {})}")
+                          if ans["reasons"] else f"population: {ans['verdict']}: deltas {sorted(ans.get('deltas') or {})}",
+                          guards)
     guards.append({"guard": "population", "ok": True, "reason": "EXACT"})
     read_set = {(r["project"], r["session_key"]) for r in ans["detail"] if r["selected"] and not r["archived"]}
     admitted = {}
@@ -1982,6 +1984,88 @@ def _index_tier(ctx):
         return True
     return {"tier": "index", "select": select, "read_set": read_set, "guards": guards, "admitted": admitted,
             "index_db": db}
+
+
+PATH_SCHEMA = 1
+
+
+def _walk_read_set(dirs):
+    """(files, bytes) of every transcript under the scanned dirs: what a raw tier plans to read."""
+    files = nbytes = 0
+    for d in dirs:
+        for root, _dns, fns in os.walk(d):
+            for f in fns:
+                if f.endswith(".jsonl"):
+                    files += 1
+                    try:
+                        nbytes += os.stat(os.path.join(root, f)).st_size
+                    except OSError:
+                        pass
+    return files, nbytes
+
+
+def _path_record(ctx, tool, subcommand, sc, refusal):
+    """The access-plan record of one run: counts, flag values, digests and guard reasons only (reasons name session
+    ids and in-scope relative paths, never line content)."""
+    access = ctx.get("access")
+    if refusal is not None:
+        taken, guards, deopt = "refused", refusal.guards, {"guard": refusal.guard, "reason": refusal.reason}
+        read_set = {"basis": "planned", "sessions": 0, "files": 0, "bytes": 0}
+    else:
+        taken = ctx.get("tier", ctx.get("plan", "champion"))
+        d = ctx.get("deopt")
+        deopt = {"guard": d["guard"], "reason": d["reason"]} if d else None
+        guards = (access or {}).get("guards") or (d["guards"] if d else [])
+        if access:
+            adm = access["admitted"]
+            read_set = {"basis": "planned", "sessions": len(access["read_set"]), "files": len(adm),
+                        "bytes": sum(v for v in adm.values() if v)}
+        elif ctx.get("path_log") and sc is not None:
+            files, nbytes = _walk_read_set(sc["dirs"])
+            read_set = {"basis": "planned", "sessions": len(sc["sessions"]), "files": files, "bytes": nbytes}
+        else:
+            read_set = {"basis": "unwalked", "sessions": None, "files": None, "bytes": None}
+    until = ctx["freeze"] if ctx["auto"] else ctx["until"]
+    return {"schema": PATH_SCHEMA, "tool": tool, "subcommand": subcommand, "plan_requested": ctx.get("plan"),
+            "plan_taken": taken, "guards": guards, "deopt": deopt, "read_set": read_set,
+            "sessions_registered": len(sc["sessions"]) if sc is not None else None,
+            "index_db": ctx.get("index_db"), "denominator": ctx["label"],
+            "project_filter": ctx["pf"].pattern if ctx["pf"] else None,
+            "until": fmt_instant(until) if until is not None else None,
+            "cross_project": ctx.get("cross_project", False), "plane": plane_name()}
+
+
+def report_path(ctx, redact, tool, subcommand, sc, refusal=None):
+    """One KMEP-PATH stderr line for every non-champion run (and any run with --path-log), and one redacted JSON line
+    appended to --path-log (HR-SECRET-002: the record passes the same redaction as the measurement file)."""
+    rec = _path_record(ctx, tool, subcommand, sc, refusal)
+    if ctx.get("plan") != "champion" or ctx.get("path_log"):
+        files = rec["read_set"]["files"]
+        print(f"KMEP-PATH plan={rec['plan_requested']} taken={rec['plan_taken']} "
+              f"deopt={rec['deopt']['guard'] if rec['deopt'] else 'none'} "
+              f"read_files={files if files is not None else 'unwalked'}", file=sys.stderr)
+    if ctx.get("path_log"):
+        line = redact(json.dumps(rec, sort_keys=True, ensure_ascii=True))
+        try:
+            lp = Path(ctx["path_log"])
+            lp.parent.mkdir(parents=True, exist_ok=True)
+            with open(lp, "a", encoding="utf-8", newline="\n") as fh:
+                fh.write(line + "\n")
+        except OSError as exc:
+            print(f"{tool}: path log not written ({exc.__class__.__name__})", file=sys.stderr)
+
+
+def resolve_logged(ctx, pillars, redact, tool, subcommand, observer_factories=None):
+    """_resolve plus the access-plan report. A PlanRefused is reported (stderr + path log) and re-raised: the caller
+    returns EXIT_UNMEASURED and writes nothing."""
+    try:
+        out = _resolve(ctx, pillars, observer_factories)
+    except PlanRefused as exc:
+        print(f"{tool}: plan {ctx['plan']} refused: {exc.guard}: {exc.reason}", file=sys.stderr)
+        report_path(ctx, redact, tool, subcommand, None, exc)
+        raise
+    report_path(ctx, redact, tool, subcommand, out[0])
+    return out
 
 
 # --------------------------------------------------------------------------- CLI
@@ -2123,10 +2207,29 @@ def _prepare(a, pillars):
         since, until = parse_instant(frozen["since"]), parse_instant(frozen["until"])
     host = a.host or (frozen["host"] if frozen else "local")
     plan = getattr(a, "plan", "champion")
-    if plan == "auto":
-        return None, _fail("--plan auto is not routed yet; use champion, scoped or challenger")
-    return {"plan": plan, "index_db": getattr(a, "index_db", None), "path_log": getattr(a, "path_log", None),
-            "cross_project": bool(getattr(a, "cross_project", False)), "label": label, "den": den, "kind": kind, "frozen": frozen, "select": select, "host": host,
+    cross = bool(getattr(a, "cross_project", False))
+    index_db = getattr(a, "index_db", None)
+    path_log = getattr(a, "path_log", None)
+    if plan == "scoped" and pf is None:
+        return None, _fail("--plan scoped needs --project-filter (a scoped read has a scope)")
+    if plan in ("challenger", "auto"):
+        if pf is None and not cross:
+            return None, _fail(f"--plan {plan} needs --project-filter, or --cross-project to ask a global question "
+                               f"(--cross-project is the only way to read outside one scope)")
+        index_db = index_db or str(_usage_index().DEFAULT_DB)
+    else:
+        if cross:
+            return None, _fail(f"--cross-project is only valid with --plan challenger or auto, not {plan}")
+        if index_db is not None:
+            return None, _fail(f"--index-db is only valid with --plan challenger or auto, not {plan}")
+    if path_log is not None:      # the path log is a write: never into a scanned corpus either
+        log_real = os.path.realpath(path_log)
+        for r in a.root:
+            root_real = os.path.realpath(r)
+            if log_real == root_real or os.path.commonpath([log_real, root_real]) == root_real:
+                return None, _fail(f"--path-log {path_log} resolves inside --root {r}: the instrument never writes "
+                                   f"into a scanned corpus; nothing written")
+    return {"plan": plan, "index_db": index_db, "path_log": path_log, "cross_project": cross, "label": label, "den": den, "kind": kind, "frozen": frozen, "select": select, "host": host,
             "since": since, "until": until, "auto": auto, "freeze": freeze, "roots": a.root, "expand": a.expand,
             "pf": pf, "role": role, "pillars": list(pillars), "frozen_source": fsrc}, None
 
@@ -2147,11 +2250,28 @@ def _measure(ctx, pillars, until, want_instants=False, observer_factories=None):
 
 
 def _resolve(ctx, pillars, observer_factories=None):
-    """The measuring scan for the run: at the fixed cutoff, or at the located one for --until auto.
-    Returns (scan, until, located) where located is None or the locator's verdict. Plan challenger computes the
-    index tier first (PlanRefused propagates); the other plans are today's code, untouched."""
-    if ctx.get("plan") == "challenger":
-        ctx["access"] = _index_tier(ctx)
+    """The measuring scan for the run, through the access plan. champion / scoped: today's scan, no index call.
+    challenger: the index tier (PlanRefused propagates, nothing is read). auto: the index tier, deopting on a
+    PlanRefused to scoped raw (a filter was given) or global raw (--cross-project), the deopt kept in ctx["deopt"].
+    Returns (scan, until, located) where located is None or the locator's verdict."""
+    plan = ctx.get("plan", "champion")
+    ctx["access"], ctx["deopt"], ctx["tier"] = None, None, plan
+    if plan in ("challenger", "auto"):
+        try:
+            ctx["access"] = _index_tier(ctx)
+            ctx["tier"] = "index"
+            return _resolve_scan(ctx, pillars, observer_factories)
+        except PlanRefused as exc:
+            if plan == "challenger":
+                raise
+            ctx["access"] = None
+            ctx["deopt"] = {"guard": exc.guard, "reason": exc.reason, "guards": exc.guards}
+            ctx["tier"] = "scoped" if ctx["pf"] is not None else "global"
+    return _resolve_scan(ctx, pillars, observer_factories)
+
+
+def _resolve_scan(ctx, pillars, observer_factories=None):
+    """The scan of the chosen tier: at the fixed cutoff, or at the located one for --until auto."""
     if not ctx["auto"]:
         return _measure(ctx, pillars, ctx["until"], observer_factories=observer_factories), ctx["until"], None
     frozen = ctx["frozen"]["fields"]
@@ -2333,9 +2453,8 @@ def main(argv=None):
     if ctx is None:
         return rc
     try:
-        sc, until, loc = _resolve(ctx, pillars)
-    except PlanRefused as exc:
-        print(f"kme_pillars: plan {ctx['plan']} refused: {exc.guard}: {exc.reason}", file=sys.stderr)
+        sc, until, loc = resolve_logged(ctx, pillars, redact, "kme_pillars", a.cmd)
+    except PlanRefused:
         return EXIT_UNMEASURED
 
     if a.cmd == "population":
