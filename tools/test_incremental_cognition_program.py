@@ -70,7 +70,9 @@ ICP_GEN2_* line is printed, the exit code is generation 1's own (0/1/2). A bare 
 generation 1 plus the generation-2 companion lines (ICP_GEN2_SELFTEST / ICP_GEN2_VERDICT) and the gen1-binding leak
 check, and its exit code also folds in gen2's 0/1. If generation 2 cannot be loaded (ic_gen2, its ledger or a module it
 reads is missing, or its --final answers 2) the companion prints `ICP_GEN2_SELFTEST=COULD_NOT_RUN` /
-`ICP_GEN2_VERDICT=COULD_NOT_RUN` and the exit code is generation 1's alone.
+`ICP_GEN2_VERDICT=COULD_NOT_RUN` and the exit code is generation 1's alone. The generation-1 selftest's own gen2
+gates (V-ICP-GEN2-LEDGER-ABSENT-DEGRADES / -PRESENT-CONTROL) run only on a bare invocation and print a visible SKIP
+(never counted as a pass) when ic_gen2 cannot be imported; under `--generation 1` they are skipped without importing it.
 """
 from __future__ import annotations
 
@@ -82,6 +84,7 @@ import json
 import os
 import posixpath
 import re
+import subprocess
 import sys
 import tempfile
 import types
@@ -828,7 +831,28 @@ class FakeOwners(OwnerLedgers):
         return self.table.get((sha, ref, pillar))
 
 
-def selftest(verbose=True) -> bool:
+_BLOCK_GEN2 = (
+    "import runpy, sys\n"
+    "class _Block:\n"
+    "    def find_spec(self, name, path=None, target=None):\n"
+    "        if name == 'ic_gen2':\n"
+    "            print('IC_GEN2_IMPORT_ATTEMPTED')\n"
+    "            raise ModuleNotFoundError('ic_gen2 blocked by the selftest')\n"
+    "sys.meta_path.insert(0, _Block())\n"
+    "sys.argv = sys.argv[1:]\n"
+    "runpy.run_path(sys.argv[0], run_name='__main__')\n"
+)
+
+
+def _selftest_with_gen2_blocked(args):
+    """(rc, stdout) of this script run in a child with ic_gen2 unimportable (every attempt is reported)."""
+    env = dict(os.environ, ICP_SELFTEST_NO_SUBPROCESS="1")
+    r = subprocess.run([sys.executable, "-c", _BLOCK_GEN2, str(Path(__file__).resolve()), *args],
+                       capture_output=True, text=True, timeout=120, env=env, cwd=str(REPO))
+    return r.returncode, r.stdout
+
+
+def selftest(verbose=True, gen2_gates=True) -> bool:
     ok = True
 
     def say(good, label):
@@ -1296,14 +1320,13 @@ def selftest(verbose=True) -> bool:
         and not _companion_wanted(["--generation=1", "--selftest"]),
         "V-ICP-GEN1-EXPLICIT-IS-GEN1-ONLY (a bare --selftest/--final carries the gen2 companion; --generation 1 and "
         "--generation=1 do not)")
-    saved_import = _import_gen2
 
     def gen2_must_not_load():
         raise AssertionError("an explicit --generation 1 run loaded ic_gen2")
 
     def final_with(import_gen2, argv_):
         """main(argv_) with generation 1's own --final stubbed (it re-enters selftest) and ic_gen2 stood in for."""
-        r1, r2 = _patch_attr("_final_gen1", lambda: 0), _patch_attr("_import_gen2", import_gen2)
+        r1, r2 = _patch_attr("_final_gen1", lambda *a, **k: 0), _patch_attr("_import_gen2", import_gen2)
         buf = io.StringIO()
         try:
             with contextlib.redirect_stdout(buf):
@@ -1347,26 +1370,53 @@ def selftest(verbose=True) -> bool:
         and "ICP_GEN2_VERDICT=COULD_NOT_RUN" in out_absent.getvalue(),
         "V-ICP-GEN2-ABSENT-DEGRADES (ic_gen2 not importable: both companions print ICP_GEN2_*=COULD_NOT_RUN and "
         "report None, which the exit code ignores)")
-    g2mod = _import_gen2()
-    saved_ledger = g2mod.LEDGER_REL
-    g2mod.LEDGER_REL = "vault/programs/incremental-cognition/gen2/no-such-ledger.json"
-    out_noled = io.StringIO()
+    # WR-05: with ic_gen2 unimportable, generation 1's selftest must still pass. An explicit --generation 1 run must not
+    # even try the import; a bare run tries it and degrades. The children block ic_gen2 with a meta-path finder that
+    # reports every attempt, so "never imported" is observed rather than inferred.
+    if not gen2_gates:
+        print("  SKIP V-ICP-GEN2-LEDGER-ABSENT-DEGRADES / V-ICP-GEN2-PRESENT-CONTROL / V-ICP-GEN1-SELFTEST-NO-GEN2 "
+              "(--generation 1: ic_gen2 is not loaded; not counted as a pass)")
+        return ok
     try:
-        with contextlib.redirect_stdout(out_noled):
-            r_noled = _gen2_companion("ICP_GEN2_SELFTEST", lambda m: m.selftest(verbose=False))
-    finally:
-        g2mod.LEDGER_REL = saved_ledger
-    say(r_noled is None and "ICP_GEN2_SELFTEST=COULD_NOT_RUN" in out_noled.getvalue(),
-        "V-ICP-GEN2-LEDGER-ABSENT-DEGRADES (gen2 ledger unreadable: COULD_NOT_RUN line, None)")
-    say(_gen2_companion("ICP_GEN2_CONTROL", lambda m: m.PROGRAM) == "incremental-cognition",
-        "V-ICP-GEN2-PRESENT-CONTROL (gen2 present: the companion returns its result, so the degrade gates above can fail)")
+        g2mod = _import_gen2()
+    except ImportError as exc:
+        print(f"  SKIP V-ICP-GEN2-LEDGER-ABSENT-DEGRADES / V-ICP-GEN2-PRESENT-CONTROL (ic_gen2 not importable: {exc}); "
+              "not counted as a pass")
+        g2mod = None
+    if g2mod is not None:
+        saved_ledger = g2mod.LEDGER_REL
+        g2mod.LEDGER_REL = "vault/programs/incremental-cognition/gen2/no-such-ledger.json"
+        out_noled = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out_noled):
+                r_noled = _gen2_companion("ICP_GEN2_SELFTEST", lambda m: m.selftest(verbose=False))
+        finally:
+            g2mod.LEDGER_REL = saved_ledger
+        say(r_noled is None and "ICP_GEN2_SELFTEST=COULD_NOT_RUN" in out_noled.getvalue(),
+            "V-ICP-GEN2-LEDGER-ABSENT-DEGRADES (gen2 ledger unreadable: COULD_NOT_RUN line, None)")
+        say(_gen2_companion("ICP_GEN2_CONTROL", lambda m: m.PROGRAM) == "incremental-cognition",
+            "V-ICP-GEN2-PRESENT-CONTROL (gen2 present: the companion returns its result, so the degrade gates above "
+            "can fail)")
+    if os.environ.get("ICP_SELFTEST_NO_SUBPROCESS"):
+        print("  SKIP V-ICP-GEN1-SELFTEST-NO-GEN2 (running inside its own child; not counted as a pass)")
+        return ok
+    g1_rc, g1_out = _selftest_with_gen2_blocked(["--generation", "1", "--selftest"])
+    say(g1_rc == 0 and "ICP_SELFTEST=PASS" in g1_out and "IC_GEN2_IMPORT_ATTEMPTED" not in g1_out
+        and not any(ln.startswith("ICP_GEN2_") for ln in g1_out.splitlines()),
+        f"V-ICP-GEN1-SELFTEST-NO-GEN2 (--generation 1 --selftest with ic_gen2 blocked exits 0 and never attempts the "
+        f"import; rc {g1_rc})")
+    bare_rc, bare_out = _selftest_with_gen2_blocked(["--selftest"])
+    say(bare_rc == 0 and "IC_GEN2_IMPORT_ATTEMPTED" in bare_out and "ICP_GEN2_SELFTEST=COULD_NOT_RUN" in bare_out
+        and "ICP_SELFTEST=PASS" in bare_out,
+        f"V-ICP-GEN2-BLOCKED-CONTROL (the same blocker on a bare --selftest does catch the import attempt and "
+        f"degrades to COULD_NOT_RUN, so the gate above can fail; rc {bare_rc})")
     return ok
 
 
-def _final_gen1() -> int:
+def _final_gen1(gen2_gates=True) -> int:
     """Generation 1 --final: its own ICP_VERDICT line and meaning, unchanged (D-OQ3). 0 pass, 1 fail, 2 could not run."""
     fails = []
-    if not selftest(verbose=False):
+    if not selftest(verbose=False, gen2_gates=gen2_gates):
         fails.append("S1 wrapper selftest failed")
     rc = ce.main(["--final"])
     if rc == 2:
@@ -1454,7 +1504,7 @@ def main(argv=None) -> int:
         return ic_gen2.main(mode)
     argv = g_argv  # generation 1 from here on, with any --generation 1 tokens stripped before CE sees them
     if "--selftest" in argv:
-        own = selftest()
+        own = selftest(gen2_gates=companion)
         rc = ce.main(["--selftest"])
         g2, leak = True, []
         if companion:
@@ -1472,7 +1522,7 @@ def main(argv=None) -> int:
         print(f"ICP_SELFTEST={'PASS' if good else 'FAIL'}")
         return 0 if good else 1
     if "--final" in argv:
-        rc1 = _final_gen1()
+        rc1 = _final_gen1(gen2_gates=companion)
         if not companion:
             return rc1  # --generation 1 --final: exactly generation 1's own verdict and exit code
         # prints its own ICP_GEN2_VERDICT line; gen1's verdict above is unchanged (D-OQ3)
