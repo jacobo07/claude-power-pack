@@ -128,6 +128,16 @@ V-ROUTE-REAL-LEDGER (historical contractId). Debt: relay_held still writes per p
 Next: C6 `status --surface` (reads `sleep.wake` for HOT/WARM/COLD + Owner-only = wake.kind owner);
 GEX44 deploy of C1-C5 still needs the Owner's go before 2026-10-07T05:00Z.
 
+## GEX44 DEPLOYED (Owner 'yes' 2026-10-06; ~17:40Z)
+Live install /home/kobii/.claude/skills/claude-power-pack fast-forwarded 4856b50d -> 4db97ab0 (= live head +
+cherry-picks of 924bdad6, 9d7d980f, f71fbdd1, 063ff456 ONLY; branch deploy/ggmc-c1-c5 in the bare repo).
+One hand resolution: test_mission_spend.py launch-cwd checks without `sessions=` (live predates attribution).
+Smoke on laptop plane at 4db97ab0: 13 suites green (MC 225/225, G23 32/32, cwd-align 16/16). On GEX44: sleep 6/6,
+goal-control 27/27, mspend 22/22, LG 20/20, PFP 28/28, owner-hold 12/12; 17:44:25Z agora sweep clean, 0 error rows.
+Rollback: `git -C <live> reset --keep 4856b50d` (point logged in ~/.claude/state/ggmc-deploy-rollback.log).
+Still true: m-eaf2843afb16 PREPARED epoch 0, token_estimate None; C2 is SHADOW, so it still launches unbounded
+at 05:00Z unless the Owner bounds or holds it.
+
 ## Post-E1 Phase 0 DONE (2026-10-06, pane e0332e3a, read-only, HEAD a5a5e91)
 - Mission Compiler: no code. Only `modules/crawl_os/mission_compiler.py`, PLANNED for crawl intent (another domain). Not an owner.
 - Context Compiler: ABSENT, as recorded in `vault/programs/skill-capability/ledger.json` row L (deferred to cognitive-economy).
