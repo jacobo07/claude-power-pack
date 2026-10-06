@@ -52,7 +52,13 @@ session-status --transcript <its jsonl> before declaring the next envelope.
    advisory is printed on allow. AGENT_SOLO_GUARD 25/25; pre-c4 guard exits 0 on the red case (BOM-free stdin; PS 5.1
    piping adds a BOM and fails BOTH arms open -- use cmd /c "node g.js < p.json"). pp-code-reviewer (Sonnet): APPROVE,
    0 C/H/M, 2 LOW (advisory test -- added; platform gate skips the budget check off Windows -- known gap).
-   NEXT = c5. Main checkout is at 6124eecf with many foreign dirty files incl. hooks/session_budget_guard.js and
+   c5 BUILT ON GEX44 (Owner "run c5 on GEX44"): a40bb5a1 = patch 646c6c86..b89b483c (9 code paths) --3way onto
+   6124eecf, 0 conflicts; clone /home/kobii/missions/c5-land, base worktree /home/kobii/missions/c5-base; laptop
+   branch c5/land = a40bb5a1. Suites green there; 5 suites fail IDENTICALLY on the unpatched base (pre-existing,
+   listed in the commit). STILL OPEN (laptop-only): put a40bb5a1 into the laptop main checkout without taking the
+   foreign dirty hunks, copy hooks to ~/.claude/hooks hash-verified, V-SBG-WIRED/E2E + AGENT_SOLO_GUARD on win32,
+   live probe. GEX44's own live install was NOT touched.
+   (old note) Main checkout is at 6124eecf with many foreign dirty files incl. hooks/session_budget_guard.js and
    tools/test_session_budget_guard.py; main-side commit ed172f48 touched the rollover path since 646c6c86, so use
    `git diff 646c6c86 -- <9 code paths> | git apply --3way` and inspect every conflict. Host was at 1.6% free RAM at
    c4 close: measure free RAM before the live probe.
