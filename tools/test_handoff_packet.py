@@ -28,6 +28,8 @@ for d in ("state", "sessions", "packets", "proj/src"):
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 import gsd_mission as gm  # noqa: E402
+import envelope_fixture  # noqa: E402  (compiled-grammar-default law 2: lifecycle gates need a bounded mission)
+envelope_fixture.bound_missions(gm)
 
 PROJ = TMP / "proj"
 SRC = PROJ / "src" / "mod.py"

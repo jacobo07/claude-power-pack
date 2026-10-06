@@ -29,6 +29,11 @@ import gsd_mission as gm  # noqa: E402
 # real repository. Unmeasured (None) is the neutral answer; T5 cases inject their own.
 gm.progress_fingerprint = lambda work_dir: None
 
+# compiled-grammar-default law 2: no envelope, no launch. These gates test the mission lifecycle, not
+# admission (test_grammar_default.py), so every mission they create is bounded by a large estimate.
+import envelope_fixture  # noqa: E402
+envelope_fixture.bound_missions(gm)
+
 passes = fails = 0
 
 

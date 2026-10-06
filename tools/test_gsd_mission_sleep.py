@@ -25,6 +25,8 @@ os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_mission as gm  # noqa: E402
+import envelope_fixture  # noqa: E402  (compiled-grammar-default law 2: lifecycle gates need a bounded mission)
+envelope_fixture.bound_missions(gm)
 import mission_launch_gate as mlg  # noqa: E402
 import mission_sleep as ms  # noqa: E402
 

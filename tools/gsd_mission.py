@@ -920,6 +920,11 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         lr.ledger_append(mission_id, "launch_refused_admission", mission_id=mission_id,
                          epoch=rec.get("epoch"), why=why[:300])
         return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": why, "detail": ""}
+    why = envelope_refusal(rec)
+    if why:
+        lr.ledger_append(mission_id, "launch_refused_envelope", mission_id=mission_id,
+                         epoch=rec.get("epoch"), why=why[:300])
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": why, "detail": ""}
     if rec.get("wu_packet") and _admission_switch_off():
         lr.ledger_append(mission_id, "admission_bypassed", mission_id=mission_id, epoch=rec.get("epoch"),
                          verdict=(rec.get("admission") or {}).get("verdict"))
@@ -1275,6 +1280,10 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
         raise MissionError(f"no mission {mission_id}")
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is {rec['state']}; its envelope cannot change")
+    if not grammar_legacy() and ("autocompact" in changes or "wu_packet" in changes):
+        why = window_refusal({**rec, **changes})
+        if why:
+            raise MissionError(why)
     shown = {k: (v["path"] if k == "wu_packet" else v) for k, v in changes.items()}
     old = {k: ((rec.get(k) or {}).get("path") if k == "wu_packet" else rec.get(k)) for k in changes}
     # C23b: a CHANGED packet is a new work unit. Record the epoch it was set at, so decide_turn_end can
@@ -1291,6 +1300,111 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
 
 def _admission_switch_off() -> bool:
     return str(os.environ.get("CPP_ROUTE_ADMISSION") or "").strip().lower() in ("0", "off", "false")
+
+
+# --------------------------------------------------------------------------- compiled grammar default
+# spec compiled-grammar-default laws 1-4 and 7. One authority at the effect: launch_worker and
+# gsd_epoch.continue_worker both ask envelope_refusal before they claim anything.
+GRAMMAR_WINDOW_MARGIN = 40_000   # working margin over floor + packet, spec law 3
+PACKET_GATE_TIMEOUT_S = 120
+_GATE_RE = re.compile(r"^done_gate:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
+
+
+def grammar_legacy() -> bool:
+    """Law 7: CPP_MISSION_GRAMMAR=legacy restores laws 2-5 to the behaviour before the default."""
+    return str(os.environ.get("CPP_MISSION_GRAMMAR") or "").strip().lower() == "legacy"
+
+
+def window_refusal(rec: dict, autocompact=None, *, floors_path: str | None = None) -> str | None:
+    """Law 3: an explicit autocompact window must be >= the measured floor of the worker profile
+    + the packet's bytes / 4 + a working margin. An unknown floor refuses, never a guess."""
+    value = autocompact if autocompact is not None else rec.get("autocompact")
+    if value in (None, ""):
+        return None
+    window = _token_count("autocompact", value)
+    profile = rec.get("worker_profile") or "top-level-worker"
+    try:
+        import route_admission as ra
+        floor = ra.load_floors(floors_path)["profiles"].get(profile, {}).get("floor")
+    except (OSError, ValueError) as exc:
+        return f"autocompact {value}: the floor table is unreadable ({exc}); the window cannot be judged"
+    if isinstance(floor, bool) or not isinstance(floor, int) or floor <= 0:
+        return f"autocompact {value}: no measured floor for worker profile {profile!r}; the window cannot be judged"
+    pkt = rec.get("wu_packet") or {}
+    pbytes = int(pkt.get("bytes") or 0)
+    packet_tokens = -(-pbytes // 4)
+    need = floor + packet_tokens + GRAMMAR_WINDOW_MARGIN
+    if window < need:
+        return (f"autocompact {value} ({window:,}) is below {need:,} = floor {floor:,} ({profile}) + "
+                f"packet {packet_tokens:,} ({pbytes:,} bytes / 4) + margin {GRAMMAR_WINDOW_MARGIN:,}")
+    return None
+
+
+def envelope_refusal(rec: dict) -> str | None:
+    """Laws 1-3 at the launch boundary: why this record may not start (or wake) a worker, or None.
+    No token_estimate is refused unless the record carries an `unbounded` authority; absent is never
+    read as unlimited. Legacy (law 7) bypasses and ledgers the refusal it would have made."""
+    why = None
+    unb = rec.get("unbounded") or {}
+    if not rec.get("token_estimate") and not (unb.get("authority") or "").strip():
+        why = ("no token envelope: set one with `envelope --token-estimate`, or arm with "
+               "`--unbounded --authority <who decided, where recorded>`")
+    if why is None:
+        why = window_refusal(rec)
+    if why is None:
+        if not rec.get("token_estimate"):
+            lr.ledger_append(rec["mission_id"], "unbounded_launch", mission_id=rec["mission_id"],
+                             epoch=rec.get("epoch"), authority=str(unb.get("authority"))[:300])
+        return None
+    if grammar_legacy():
+        lr.ledger_append(rec["mission_id"], "grammar_legacy_bypass", mission_id=rec["mission_id"],
+                         epoch=rec.get("epoch"), law="envelope", why=why[:300])
+        return None
+    return why
+
+
+def packet_done_gate(rec: dict) -> str | None:
+    """Law 4: the first `done_gate:` line of the mission's compiled packet, or None."""
+    pkt = rec.get("wu_packet")
+    if not pkt:
+        return None
+    try:
+        text = Path(pkt["path"]).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return None
+    m = _GATE_RE.search(text)
+    return m.group(1) if m else None
+
+
+def packet_gate_passed(rec: dict, now: float, *, gate_runner=None) -> dict | None:
+    """Law 4: run the packet's done_gate in the record's work tree, bounded. Exit 0 -> a dict with the
+    command and the output tail; a non-zero exit, a timeout or an unrunnable gate -> None (today's path).
+    Legacy skips the gate and ledgers it."""
+    gate = packet_done_gate(rec)
+    if not gate:
+        return None
+    mid = rec["mission_id"]
+    if grammar_legacy():
+        lr.ledger_append(mid, "grammar_legacy_bypass", mission_id=mid, epoch=rec.get("epoch"),
+                         law="packet_gate", why=f"done_gate not run: {gate[:200]}")
+        return None
+    import subprocess
+    cwd = rec.get("work_dir") or rec["cwd"]
+    run = gate_runner or (lambda cmd, wd: subprocess.run(
+        cmd, shell=True, cwd=wd, capture_output=True, text=True, encoding="utf-8", errors="replace",
+        timeout=int(os.environ.get("CPP_PACKET_GATE_TIMEOUT") or PACKET_GATE_TIMEOUT_S)))
+    try:
+        r = run(gate, cwd)
+    except Exception as exc:  # noqa: BLE001 -- a timeout or an unrunnable gate is not a pass
+        lr.ledger_append(mid, "packet_gate_unanswered", mission_id=mid, epoch=rec.get("epoch"),
+                         gate=gate[:200], error=f"{type(exc).__name__}: {exc}"[:300])
+        return None
+    if r.returncode != 0:
+        return None
+    tail = ANSI_RE.sub("", (r.stdout or "") + (r.stderr or "")).strip()[-400:]
+    lr.ledger_append(mid, "packet_gate_passed", mission_id=mid, epoch=rec.get("epoch"), gate=gate[:200],
+                     cwd=cwd, tail=tail)
+    return {"gate": gate, "tail": tail}
 
 
 def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = None,
@@ -1923,7 +2037,7 @@ def _needs_look(m: dict, now: float) -> bool:
 
 MAX_RENEWALS = 3   # budget renewals per lineage (spec vault/specs/gex44-mission-plane.md, A)
 RENEWAL_CARRIED_ENVELOPE = ("token_estimate", "token_trip_ratio", "model", "autocompact",
-                            "continue_max_tokens", "wu_packet", "mission_terms", "note", "goal")
+                            "continue_max_tokens", "wu_packet", "mission_terms", "note", "goal", "unbounded")
 
 
 def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None) -> str | None:
@@ -2442,7 +2556,7 @@ def _capsule_arm(rec: dict, row: dict) -> bool:
 
 def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
               gsd_status=None, runner=None, stop_runner=None, pid_alive=lr._pid_alive,
-              fingerprint=None, capsule_io: dict | None = None) -> list[dict]:
+              fingerprint=None, capsule_io: dict | None = None, gate_runner=None) -> list[dict]:
     """One out-of-band pass over every mission. Each action is ledgered by the
     transition it makes; a pass that decides nothing still returns one row per
     mission, so an empty estate and an unjudged one never look alike."""
@@ -2536,6 +2650,17 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             if plan["action"] in ("none", "await"):
                 continue
             act = plan["action"]
+            if act in ("relay", "replace", "halt", "launch") and rec.get("wu_packet") and rec.get("epoch"):
+                # Law 4: a packet ends its mission. Asked before the supervisor continues, rotates,
+                # renews or relaunches it; a pass turns the mission COMPLETED and nothing starts.
+                gate = packet_gate_passed(rec, now, gate_runner=gate_runner)
+                if gate:
+                    done = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                      event="mission_completed", now=now, state=COMPLETED, pending=None,
+                                      reason=f"packet done_gate passed ({plan['reason']}): {gate['gate']}")
+                    reap(done, row)
+                    row["action"], row["gate"] = "completed", gate["gate"]
+                    continue
             if v2 and act == "relay" and rec["state"] == BLOCKED:
                 # Spec 11.2 (L1): asked BEFORE GSD, so a backed-off re-judge costs no query and no row.
                 wait = _seal_rejudge_wait(rec, now)
@@ -2945,7 +3070,10 @@ def goal_refusal(conflicts: list[dict], unit: str | None = None) -> str | None:
 
 
 def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
-        authority: str | None = None, parallel_unit: str | None = None, **kw) -> dict:
+        authority: str | None = None, parallel_unit: str | None = None, unbounded: bool = False,
+        **kw) -> dict:
+    if unbounded and not (authority or "").strip():
+        raise MissionError("--unbounded needs --authority: who decided, and where it is recorded")
     ws = kw.get("workstream")
     if ws is None and resume_command.startswith("/gsd-"):
         m = _WS_FLAG.search(resume_command)
@@ -2973,6 +3101,8 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
         extra["goal"] = {"repo": key[0], "workstream": key[1], "unit": parallel_unit}
     if supersedes:
         extra.update(supersedes=supersedes, authority=authority.strip()[:1000])
+    if unbounded:
+        extra["unbounded"] = {"authority": authority.strip()[:1000], "at": time.time()}
     if extra:
         rec = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=PREPARED,
                          event="goal_bound", **extra)
@@ -3453,7 +3583,9 @@ def _cli(argv=None) -> int:
                         "needs --permission-mode auto or bypassPermissions. Omitted: legacy.")
     a.add_argument("--supersedes", help="the live attempt of this goal this one replaces (spec "
                                         "goal-governed-mission-control C4); needs --authority")
-    a.add_argument("--authority", help="who decided the supersession and where it is recorded")
+    a.add_argument("--authority", help="who decided the supersession (or --unbounded) and where it is recorded")
+    a.add_argument("--unbounded", action="store_true",
+                   help="launch with no token envelope (spec compiled-grammar-default law 2); needs --authority")
     a.add_argument("--parallel-unit", help="a named work unit that may run beside other named units "
                                            "of the same goal")
     s = sub.add_parser("session-start")
@@ -3509,7 +3641,8 @@ def _cli(argv=None) -> int:
                   max_cycles=args.max_cycles, max_hours=args.max_hours,
                   permission_mode=args.permission_mode, allowed_tools=args.allowed_tools,
                   add_dirs=args.add_dir, wall=wall, rollover_protocol=args.rollover_protocol,
-                  supersedes=args.supersedes, authority=args.authority, parallel_unit=args.parallel_unit)
+                  supersedes=args.supersedes, authority=args.authority, parallel_unit=args.parallel_unit,
+                  unbounded=args.unbounded)
         print(json.dumps(res, indent=2))
         return 0 if args.no_launch or res.get("launch", {}).get("ok") else 1
     if args.cmd == "session-start":

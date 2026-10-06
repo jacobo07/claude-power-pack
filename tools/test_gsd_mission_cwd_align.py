@@ -26,6 +26,8 @@ os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(STATE) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = STATE
 
 import gsd_mission as gm  # noqa: E402
+import envelope_fixture  # noqa: E402  (compiled-grammar-default law 2: lifecycle gates need a bounded mission)
+envelope_fixture.bound_missions(gm)
 import gsd_long_run as lr  # noqa: E402
 
 gm.progress_fingerprint = lambda work_dir: None

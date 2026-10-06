@@ -24,6 +24,8 @@ os.environ.pop("CPP_MISSION_CONTINUATION", None)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_long_run as lr  # noqa: E402
 import gsd_mission as gm  # noqa: E402
+import envelope_fixture  # noqa: E402  (compiled-grammar-default law 2: lifecycle gates need a bounded mission)
+envelope_fixture.bound_missions(gm)
 import gsd_epoch as ge  # noqa: E402
 
 gm.progress_fingerprint = lambda work_dir: None   # hermetic: never run git in TMP

@@ -38,6 +38,10 @@ os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
 for _k in ("CPP_CLAUDE_EXE", "CPP_MISSION_CONTINUATION", "CPP_SOURCE_PACKET_CARD"):
     os.environ.pop(_k, None)
+# This file pins the grammar as it was before compiled-grammar-default; law 7 is the switch that restores it.
+# The switch's own ledger rows (grammar_legacy_bypass) are law 7's addition and are asserted in
+# test_grammar_default.py, so they are not part of this characterization.
+os.environ["CPP_MISSION_GRAMMAR"] = "legacy"
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import gsd_epoch as ge  # noqa: E402
@@ -190,11 +194,11 @@ def record_shape(mid):
 def observe(mids, rows):
     renewed = [r["renewed_as"] for r in rows or [] if r.get("renewed_as")]
     out = {"rows": norm(rows or []),
-           "events": {m: [e["event"] for e in lr.ledger_events(m)] for m in mids},
+           "events": {m: [e["event"] for e in lr.ledger_events(m) if e["event"] != "grammar_legacy_bypass"] for m in mids},
            "launch_argv": norm(W.launches), "stop_argv": norm(W.stops),
            "records": {m: record_shape(m) for m in mids}}
     for i, m in enumerate(renewed):
-        out["events"][f"renewed[{i}]"] = [e["event"] for e in lr.ledger_events(m)]
+        out["events"][f"renewed[{i}]"] = [e["event"] for e in lr.ledger_events(m) if e["event"] != "grammar_legacy_bypass"]
         out["records"][f"renewed[{i}]"] = record_shape(m)
     for row in out["rows"]:
         if isinstance(row, dict) and row.get("renewed_as"):

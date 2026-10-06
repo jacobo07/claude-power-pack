@@ -32,6 +32,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 if os.environ.get("GSD_MISSION_DRILL_DIR"):
     sys.path.insert(0, os.environ["GSD_MISSION_DRILL_DIR"])
 import gsd_mission as gm  # noqa: E402
+import envelope_fixture  # noqa: E402  (compiled-grammar-default law 2: lifecycle gates need a bounded mission)
+envelope_fixture.bound_missions(gm)
 import mission_spend as ms  # noqa: E402
 
 gm.progress_fingerprint = lambda work_dir: None
