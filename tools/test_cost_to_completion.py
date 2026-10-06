@@ -139,7 +139,7 @@ def p5_checks() -> None:
     rc, res = cli_route({**g, "gates": [{"id": "G1"}, {"id": "G2"}, {"id": "G3"}]})
     check("V-CTC-CLI-UNCOVERED-EXIT-2", rc == 2 and res.get("verdict") == "REFUSED", f"rc={rc} {res}")
     # route verdict pass-through
-    r = ctc.route_verdict(udoc(), FLOORS)
+    r = ctc.route_verdict(mdoc(), FLOORS)
     check("V-CTC-ROUTE-ADMISSIBLE", r["verdict"] == ra.ADMISSIBLE == r["admission"]["verdict"], r["verdict"])
     big = udoc(est1=4)
     big["envelope"] = {"target": 450_000}
@@ -153,7 +153,7 @@ def p5_checks() -> None:
     check("V-CTC-ROUTE-DEFER-PASS-THROUGH", defer["verdict"] == ra.DEFER, defer["verdict"])
     rc, res = cli_route(big)
     check("V-CTC-CLI-ROUTE-RECOMPILE-EXIT-3", rc == 3 and res.get("verdict") == ra.RECOMPILE, f"rc={rc}")
-    rc, res = cli_route(udoc())
+    rc, res = cli_route(mdoc())
     check("V-CTC-CLI-ROUTE-ADMISSIBLE-EXIT-0", rc == 0 and res.get("verdict") == ra.ADMISSIBLE, f"rc={rc}")
     check("V-CTC-ROUTE-NEEDS-UNITS", refused({"claims": [{"id": "a", "class": "novel"}]}) is None
           and _route_refused({"claims": [{"id": "a", "class": "novel"}]}) == "BAD_CLAIM")
@@ -168,8 +168,13 @@ def p5_checks() -> None:
         check("V-CTC-REAL-IR-CLEAN-COUNTS", c["o_total"] == c["o_zero"] + c["o_shared"] + c["o_irreducible"]
               and c["o_total"] == 28 and c["o_semantic_consumers"] == c["o_shared"] + c["o_irreducible"], str(c))
         rr = ctc.route_verdict(ir, FLOORS)
-        check("V-CTC-REAL-IR-ROUTE-VERDICT-IS-ADMIT", rr["verdict"] == rr["admission"]["verdict"] == ra.ADMISSIBLE,
-              rr["verdict"])
+        # The mission verdict is admit's verdict, held at PROVISIONAL while any active unit's shape is a prior. The
+        # truth is an independent pass over the IR: an active unit with neither `work` nor a doc-level actual.
+        active_ids = {u["id"] for u in rr["cost"]["units"]}
+        prior_truth = sorted(u["id"] for u in ir["units"] if u["id"] in active_ids and "work" not in u)
+        check("V-CTC-REAL-IR-ROUTE-VERDICT-IS-ADMIT", rr["admission"]["verdict"] == ra.ADMISSIBLE
+              and rr["verdict"] == (ctc.PROVISIONAL if prior_truth else ra.ADMISSIBLE)
+              and sorted(rr["prior_units"]) == prior_truth, f"{rr['verdict']} prior={rr.get('prior_units')} truth={prior_truth}")
         dropped = json.loads(json.dumps(ir))
         for cl in dropped["claims"]:
             cl["gates"] = [x for x in cl.get("gates", []) if x != "G20"]
@@ -295,6 +300,54 @@ def image_term_checks() -> None:
     check("V-CTC-IMG-ZERO-FIGURE-REFUSED", refused(idoc(4, cal_extra={"image_ctx": [{**IMG_CAL[0], "tokens": 0}]})) == "BAD_CLAIM")
 
 
+def mdoc():
+    """udoc with both active units measured (doc-level actuals equal to the plan): shape evidence is `measured`."""
+    d = udoc()
+    d["actuals"] = {"U1": {"calls": 2, "ctx_tokens": 140000}, "U2": {"calls": 1, "ctx_tokens": 10000}}
+    return d
+
+
+def shape_basis_checks() -> None:
+    # red: units with no shape evidence (no work, no actuals) are `prior`; admit's ADMISSIBLE is held back
+    p = ctc.route_verdict(udoc(), FLOORS)
+    check("V-CTC-BASIS-PRIOR-UNIT-NOT-ADMISSIBLE", p["admission"]["verdict"] == ra.ADMISSIBLE and p["verdict"] == ctc.PROVISIONAL
+          and p["verdict"] != ra.ADMISSIBLE and p["prior_units"] == ["U1", "U2"], f"{p['verdict']} {p.get('prior_units')}")
+    check("V-CTC-BASIS-PROVISIONAL-STATES-THE-CEILING", p["uncertainty_ceiling_tokens"] == p["cost"]["ceiling"]["tokens"]
+          > p["cost"]["candidate"]["tokens"])
+    rc, res = cli_route(udoc())
+    check("V-CTC-BASIS-CLI-PRIOR-EXIT-3", rc == 3 and res.get("verdict") == ctc.PROVISIONAL, f"rc={rc} {res.get('verdict')}")
+    # controls: all measured, all derived -> plain ADMISSIBLE
+    m = ctc.route_verdict(mdoc(), FLOORS)
+    check("V-CTC-BASIS-ALL-MEASURED-ADMISSIBLE-CONTROL", m["verdict"] == ra.ADMISSIBLE and not m["prior_units"]
+          and {u["shape_basis"] for u in m["cost"]["units"]} == {"measured"})
+    dv = ctc.route_verdict(wdoc(), FLOORS)
+    check("V-CTC-BASIS-ALL-DERIVED-ADMISSIBLE-CONTROL", dv["verdict"] == ra.ADMISSIBLE
+          and [u["shape_basis"] for u in dv["cost"]["units"]] == ["derived"])
+    # one prior unit among derived ones is enough
+    mix = wdoc()
+    mix["claims"].append({"id": "b", "class": "bounded_coding", "unit": "P", "gates": ["G1"]})
+    mix["units"].append({"id": "P", "est_calls": 2, "reserve_calls": 0, "profile": "top-level-worker", "ctx_tokens": 135000, "order": 2})
+    mv = ctc.route_verdict(mix, FLOORS)
+    check("V-CTC-BASIS-ONE-PRIOR-AMONG-DERIVED-PROVISIONAL", mv["verdict"] == ctc.PROVISIONAL and mv["prior_units"] == ["P"])
+    # a declaration cannot exceed the evidence; a weaker declaration holds
+    over = wdoc()
+    over["units"][0]["shape_basis"] = "measured"
+    check("V-CTC-BASIS-DECLARED-STRONGER-THAN-EVIDENCE-REFUSED", refused(over) == "BAD_CLAIM")
+    bogus = wdoc()
+    bogus["units"][0]["shape_basis"] = "vibes"
+    check("V-CTC-BASIS-UNKNOWN-VALUE-REFUSED", refused(bogus) == "BAD_CLAIM")
+    weak = wdoc()
+    weak["units"][0]["shape_basis"] = "prior"
+    wv = ctc.route_verdict(weak, FLOORS)
+    check("V-CTC-BASIS-WEAKER-DECLARATION-HOLDS", wv["verdict"] == ctc.PROVISIONAL and wv["prior_units"] == ["T"])
+    # the uncertainty ceiling: a prior unit's cost is multiplied by the deopt factor (existing semantics)
+    base = ctc.compile_cost(wdoc(), FLOORS)
+    pri = ctc.compile_cost(weak, FLOORS)
+    extra = pri["ceiling"]["tokens"] - base["ceiling"]["tokens"]
+    check("V-CTC-BASIS-PRIOR-CEILING-USES-DEOPT", extra == -(-int(base["units"][0]["cost"]) * 2 // 1) and pri["units"][0]["shape_basis"] == "prior",
+          f"extra={extra:,} cost={base['units'][0]['cost']:,}")
+
+
 SHA_A, SHA_B = "a" * 40, "b" * 40
 
 
@@ -407,6 +460,7 @@ def main() -> int:
     output_term_checks()
     image_term_checks()
     grounding_checks()
+    shape_basis_checks()
     print(f"CTC_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

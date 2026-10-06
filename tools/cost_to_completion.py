@@ -61,6 +61,13 @@ PRIORS = {"known_transform": {"calls": 2, "ctx_tokens": 115_000},
           "visual": {"calls": 4, "ctx_tokens": 150_000}}
 DEFAULT_DEOPT_FACTOR = 3.0
 DEFAULT_UNMEASURED_ALLOWANCE = 1.0
+# Shape basis (what a unit's forecast stands on): measured = doc-level `actuals` for the unit; derived = a
+# structural `work` shape under a calibration; prior = neither (est_calls x ctx_tokens, a chosen figure).
+# A unit may declare `shape_basis`; a declaration stronger than its evidence is BAD_CLAIM, a weaker one holds.
+# Admission strength cannot exceed the weakest unit: a route holding a `prior` unit is PROVISIONAL (admit's own
+# verdict stays in `admission`), its ceiling carries the deopt factor for that unit, and exit code stays 3.
+SHAPE_BASES = ("prior", "derived", "measured")
+PROVISIONAL = "PROVISIONAL"
 PHASE_KEYS = ("phases", "phase_count", "phase_average", "phase_average_cost", "avg_phase_cost")
 # Structural call model (canary T, 2026-10-06): a worker's calls are its shape, not a guess.
 # orient (read packet + repo state), explore (batched reads), ceil(files / files_per_call) writes,
@@ -240,7 +247,9 @@ def _unit_rows(doc: dict, claims: list, effs: list, floors: dict, deopt: float):
                           "est_calls": n, "reserve_calls": r, "ctx_tokens": ctx, "profile_floor": pf,
                           "order": u.get("order", i), "claims": [], "model": False, "deopt": False,
                           "work": work, "image_profile": u.get("image_profile"),
-                          "prestaged": _prestaged(u)}
+                          "prestaged": _prestaged(u), "declared_basis": u.get("shape_basis")}
+        if u.get("shape_basis") is not None and u["shape_basis"] not in SHAPE_BASES:
+            raise Refused("BAD_CLAIM", f"unit {u['id']!r}: shape_basis must be one of {', '.join(SHAPE_BASES)}")
     for c, eff in zip(claims, effs):
         uid = c.get("unit")
         if uid is None:
@@ -376,12 +385,18 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
                     + int(r["work"].get("explore_ctx", 0)) + int(cal["ctx_growth_per_call"]) * n \
                     + int(cal["output_per_call"])
                 reserve_cost = r["reserve_calls"] * last
-            r.update(calls=n, ctx_eff=ctx, cost=cost, reserve_cost=reserve_cost, measured=bool(a))
+            evidence = "measured" if a else "derived" if r["work"] is not None else "prior"
+            declared = r["declared_basis"]
+            if declared and SHAPE_BASES.index(declared) > SHAPE_BASES.index(evidence):
+                raise Refused("BAD_CLAIM", f"unit {r['id']!r}: shape_basis {declared!r} is stronger than its "
+                              f"evidence ({evidence}): a forecast cannot claim more than it stands on")
+            basis = declared or evidence
+            r.update(calls=n, ctx_eff=ctx, cost=cost, reserve_cost=reserve_cost, measured=bool(a), shape_basis=basis)
             calls += n
             cand += cost
             reserve_calls += r["reserve_calls"]
             reserve_tokens += r["reserve_cost"]
-            ceil += math.ceil(cost * (deopt - 1)) if r["deopt"] else 0
+            ceil += math.ceil(cost * (deopt - 1)) if r["deopt"] or basis == "prior" else 0
         allowance = doc.get("unmeasured_allowance", DEFAULT_UNMEASURED_ALLOWANCE)
         allowance = float(_pos("unmeasured_allowance", allowance, allow_zero=True))
         if active and all(r["measured"] for r in active):
@@ -398,7 +413,7 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
         "profile_source": source, "worker_floor": worker_floor, "margin": margin,
         "units": [{k: r[k] for k in ("id", "profile", "model_prior", "calls", "reserve_calls", "ctx_eff",
                                      "profile_floor", "cost", "claims", "image_ctx", "image_basis",
-                                     "grounding_basis")}
+                                     "grounding_basis", "shape_basis")}
                   for r in active_rows],
         "reserve_calls": reserve_calls, "reserve_tokens": reserve_tokens,
         "unmeasured_allowance": allowance,
@@ -433,7 +448,10 @@ def route_verdict(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_
         adm = (admit_fn or ra.admit)(route, floors, margin=margin, remaining=remaining)
     except ValueError as exc:
         raise Refused("BAD_CLAIM", f"route is malformed: {exc}")
-    return {"verdict": adm["verdict"], "route": route, "admission": adm, "cost": cost}
+    prior = [r["id"] for r in cost["units"] if r["shape_basis"] == "prior"]
+    verdict = PROVISIONAL if prior and adm["verdict"] == ra.ADMISSIBLE else adm["verdict"]
+    return {"verdict": verdict, "route": route, "admission": adm, "cost": cost, "prior_units": prior,
+            "uncertainty_ceiling_tokens": cost["ceiling"]["tokens"]}
 
 
 def main(argv: list[str] | None = None) -> int:
