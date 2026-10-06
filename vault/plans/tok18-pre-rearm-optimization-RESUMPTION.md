@@ -180,3 +180,13 @@ program total ~1.50B. Budget halt 2026-10-07T18:12Z; breaker likely trips ~9 h i
   was 0.7M central / 1.2M recompile: OVER ~7x, and over the plan's 4.5M pre-live hard recompile on its own. HR-COST-002:
   Phase 2 does not start until the Owner re-authorizes the envelope (cause: ~170k context per call x 47 calls).
 - Next: Phase 2 (fresh pane, after Owner re-authorization): wake mode in cep_gen2 on a zero-model scheduled task (W1, W2).
+
+## m-eaf2843afb16 directive delivery (pane ef0d3f77, 2026-10-06; peer report gap 2)
+Handoff vault/handoffs/bug-gsd-mission-effective-workdir-2026-10-06.md. An epoch-1 fresh launch with note "" gets
+NO card (session_start `epoch <= 1 and not note`; launch_worker renders a card only with note/card/capsule), so
+the CE directive would never reach the 05:00Z worker. Set a factual note via transition (GEX44 seq 7); the
+rendered epoch-1 card is 4,839 chars with CE directive (1)-(6) intact. Peer confirms m-ce41dd79ddd7 stays under
+Owner hold (its replacement m-6f7451aefe40 uses the same worktree).
+OPEN code fixes for a fresh pane (re-read HEAD; gsd_mission.py has other writers): (a) render the card at
+epoch 1 when directives exist; (b) effective_workdir follows a no-workstream predecessor only into a worktree
+holding .planning/ROADMAP.md (RED-first test + M6 positive control).
