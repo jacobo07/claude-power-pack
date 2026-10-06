@@ -70,3 +70,20 @@ Cause is the same as the prior three overruns: ~167k context per call in the app
 WU2 0.4M, WU3 1.2M (miner + naive-trim arm + dependency-aware packet on 4 historical planner runs; UNDECIDED
 admissible; no paid canary), WU4 0.3M. If the re-measured remainder is below their sum, WU4 is cut first, then WU3.
 A unit that crosses its cap stops and writes a partial receipt; it never borrows from the next.
+
+| 7f13d6e2 | post-E1 Phase 1 (49 calls) + re-plan scan (this turn) | files 1 calls 53 processed 9,638,790 (ctx 9,574,887 out 63,903) subagent calls 0 subagent ctx 0 | |
+
+## PROPOSED addendum (pane 7f13d6e2, 2026-10-06; NOT approved; zero-model scan, transcript-measured)
+- Phase 1 anatomy, 49 calls, ~8.6M (handoff's 8.16M/47 was read before the last 2 calls): resume 3 calls 0.37M;
+  scan/archaeology 24 calls 3.72M (of which 8 greps hunting one number, 1.20M: the 12.5k was reconstructable arithmetic);
+  authoring 10 calls 1.88M (B1 as 5 Edits on one file 0.92M); edit churn/anti-thrash/dry-run fix 7 calls 1.48M;
+  driver run+verify+meter 3 calls 0.65M; closeout 2 calls 0.44M. Intelligence-requiring ~6-10 calls. Floor 120.8k at
+  call 1, growth ~2.1k/call -> cost(n) ~= n x 121k + 1.05k x n^2. No duplicated text block in the raw transcript.
+- Pre-call admission EXISTS: hooks/session_budget_guard.js (PreToolUse deny on stop/divergence/context/no-progress),
+  dispatcher-wired. It is OPT-IN via mission_spend.py session-declare; no pane of this tranche declared, so it was inert.
+- Feasibility at the measured floor: WU2 0.4M allows <=3 boundaries; a build+test+prove unit needs ~6 -> infeasible
+  as an Opus pane. Remaining tranche after scan 3.35M + decision ~0.9M + this pane's planning turn: ~0.5M or less.
+- T3 worktree HEAD a62fec6e does NOT contain a5a5e91b (merge-base rc 1): notice still owed.
+- e1_runner.py calls bare git; test_cognitive_economy_program.py already has the canonical shutil.which + absolute fallback.
+- Payback on known TCO: 9.17M runs + Phase 0 2.18M + Phase 1 ~8.6M >= 19.95M -> break-even >= 2,354 calls vs 8,784
+  observed main calls: still past break-even on GROSS saving; NET saving (skill reloads) UNMEASURED.
