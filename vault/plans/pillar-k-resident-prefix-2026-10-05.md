@@ -58,3 +58,25 @@ baseline / regression-debt + per-component budgets in the gate, tests. 10. Close
   deferred-tools DEBT line. Not run: host at ~15 % free RAM abandons the hub several times per hour, and the slice's
   ~1-2 probe allowance is spent (6eba7a1f, 38e32976). The hub's 4 s abandonment is itself the dominant reliability
   defect (it also drops mission / rollover cards) -> Owner decision.
+
+## Hub critical-path delta (read-only, session 9196ecb9, 2026-10-06, 7-day window)
+Sources: `%TEMP%\pp-session-hub.log`, `~/.claude/logs/hook-dispatcher-errors.log`.
+- Hub's OWN work never exceeds the budget: 859 DONE runs, elapsed p50 1,161 / p90 1,867 / p99 2,659 / max 3,092 ms, 0 > 4,000.
+- Yet the dispatcher lost it 326x: 254 reaped mid-run ("after 4000ms") + 72 never spawned ("before pool", critical
+  lane alone 4,013..19,110 ms). The 4 s budget is spent BEFORE the hub's t0: serial `host-memory-floor.js` (critical,
+  zero-spawn logic = one `os.freemem()`, but paid as a whole node spawn) + the hub's own node cold start.
+- Inside the hub, time up to the `recovery epoch` line p50 967 / p90 1,550 ms vs after it p50 125 / p90 423 ms.
+  The comment's "~176 ms" for the recovery gate is stale. 42 runs logged the recovery line and were reaped before DONE.
+  The line it re-prints every session is a 3-day-old FAILED verdict (epoch 2026-10-03T01:35:59Z).
+- Side defect: kresume autotype armed >1x for 127 of 196 sessions (same sid, seconds apart).
+
+## Hub reliability slice -- Owner decisions 2026-10-06 (all four recommended options)
+- Recovery verdict: full line ONCE per interruption epoch, then a one-line reminder until /lazarus or dismiss;
+  python runs only when the gate's inputs change (cache keyed on them).
+- host-memory-floor: in-process in the dispatcher, SessionStart only, env kill switch.
+- kresume double-arm fix is IN this slice (C4).
+- SessionStart CHAIN_DEADLINE_MS stays 4000.
+Commits: C1 floor in-process -> C2 cards step (critical, fs-only: rollover/mission/restart/work-state) split from the
+advisory hub -> C3 recovery cache + once-per-epoch -> C4 autotype idempotent per sid -> C5 drill (starved advisory,
+cards must arrive; control in budget). Done: dispatcher + floor-gate suites green, drill both poles, >=20 real
+SessionStarts with 0 before-pool and 0 lost cards, then the closing K probe.
