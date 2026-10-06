@@ -49,6 +49,7 @@ CMD_KCLEAR = HOME / ".claude" / "commands" / "kclear.md"
 PS1_RESTART = HOME / ".claude" / "scripts" / "restart-claude.ps1"
 SETTINGS = HOME / ".claude" / "settings.json"
 HUB = PP_ROOT / "hooks" / "session_start_hub.js"
+CARDS = PP_ROOT / "hooks" / "session_cards.js"
 RAM_WATCHDOG = PP_ROOT / "modules" / "zero-crash" / "hooks" / "ram-watchdog.js"
 RAM_GUARD_STOP = PP_ROOT / "hooks" / "ram-guard-stop.js"
 CPC_RESTART = PP_ROOT / "modules" / "cpc_os" / "restart.py"
@@ -85,8 +86,10 @@ def gate_restart_flow_complete():
         "command": CMD_RESTART.is_file(),
         "ps1": PS1_RESTART.is_file(),
         "ps1_writes_pending": "restart_pending.json" in _read(PS1_RESTART),
-        "hub_consumes": "restart_pending.json" in _read(HUB)
-        and "hookRestartResume" in _read(HUB),
+        # C0 (2026-10-06): the consumer moved to session_cards.js; the hub still calls it.
+        "hub_consumes": "restart_pending.json" in _read(CARDS)
+        and "function hookRestartResume" in _read(CARDS)
+        and "hookRestartResume(" in _read(HUB),
     }
     if all(parts.values()):
         _ok("V-RESTART-FLOW-COMPLETE",
