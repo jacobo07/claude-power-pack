@@ -98,7 +98,11 @@ the Owner-only release of hold m-608c8d8d761f is covered by this 'y' only at lau
 - 44.25M measured (2.25M over cap). Canary branch canary/odr-p4-packets in C:\Users\User\Apps\io-odr-p4-canary, HEAD 312e0db5, not pushed. Review APPROVE + 1 LOW open.
 - Next (Owner): merge/deploy decision for InfinityOps Phase 4 (OWNER-GATED), the LOW fix, and whether to build an external spend breaker for agents before any further canary.
 
-## POST-E1 APPROVED (Owner 'y' 2026-10-06, wake via scheduled task INCLUDED) - START HERE
+## TOK-18 TRANCHE APPROVED (Owner 'y' 2026-10-06, pane c77978f6) - START HERE
+Read ONLY `vault/plans/tok18-tranche-context-runtime-2026-10-06.md`. 6M hard cap re-authorizes post-E1 Phase 2+3.
+Next: WU1 floor gate wired (fresh pane; read Pillar K plan first, hand off if K claims it). Then WU2, WU3, WU4.
+
+## POST-E1 APPROVED (Owner 'y' 2026-10-06, wake via scheduled task INCLUDED) - superseded by the tranche above
 Read ONLY `vault/plans/post-e1-meta-work-2026-10-06.md`; it supersedes every "Next" list above.
 Next: Phase 0 ownership check (Mission Compiler / GSD X / Context Compiler / ledger writer / scheduled-task carrier),
 then Phase 1 E1 closeout: author B1 in cep_gen2, run D1-D8 as ONE driver call with 0 model calls between steps.
