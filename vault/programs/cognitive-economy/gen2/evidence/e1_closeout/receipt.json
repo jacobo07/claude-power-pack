@@ -1,0 +1,56 @@
+{
+ "experiment": "E1 resident-rule relocation",
+ "work_unit": "W3",
+ "closed": "2026-10-06T16:26:03+00:00",
+ "cost": {
+  "unit": "processed",
+  "value": 9172196,
+  "source": "vault/programs/cognitive-economy/e1/REPORT.md",
+  "scope": "E1 counted runs only (9,172,196); the orchestrating panes were not metered, so the true break-even is later than this"
+ },
+ "saving": {
+  "per_call": 8477,
+  "unit": "processed tokens/call",
+  "label": "upper_bound",
+  "measured_by": "python vault/programs/cognitive-economy/measure/e1_mechanical.py --claude <cli>",
+  "evidence": "vault/programs/cognitive-economy/measure/e1_postmove_laptop.json"
+ },
+ "forecast": {
+  "per_call": 12515,
+  "derivation": "moved bytes x pre-move tokens/byte"
+ },
+ "calibration": {
+  "error_pct": -32.3,
+  "record": "vault/programs/cognitive-economy/gen2/evidence/e1_closeout/calibration.json"
+ },
+ "payback": {
+  "activated_at": "2026-10-05T12:35:40Z",
+  "coverage": "laptop transcripts only, main-thread calls (lower bound)",
+  "break_even_calls": 1083,
+  "calls_observed": 8784,
+  "state": "PAID_BACK",
+  "observed_until": "2026-10-06T16:25:19+00:00",
+  "subagent_calls_not_counted": 1792,
+  "index_refresh_status": "OK",
+  "cost_scope": "E1 counted runs only (9,172,196); the orchestrating panes were not metered, so the true break-even is later than this"
+ },
+ "supersedes": [
+  {
+   "value": 12515,
+   "quoted_as": "12.5k"
+  },
+  {
+   "value": 10800,
+   "quoted_as": "10.8k"
+  }
+ ],
+ "evidence": [
+  "vault/programs/cognitive-economy/e1/REPORT.md",
+  "vault/programs/cognitive-economy/measure/e1_mechanical_laptop.json",
+  "vault/programs/cognitive-economy/measure/e1_postmove_laptop.json",
+  "vault/programs/cognitive-economy/gen2/evidence/e1_closeout/calibration.json",
+  "vault/programs/cognitive-economy/gen2/evidence/e1_closeout/pointer_tax.json",
+  "vault/programs/cognitive-economy/gen2/evidence/e1_closeout/payback.json",
+  "vault/programs/cognitive-economy/measure/test_e1_mechanical_cleanup.py"
+ ]
+}
