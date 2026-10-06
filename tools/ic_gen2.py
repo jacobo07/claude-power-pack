@@ -323,6 +323,131 @@ def g2_champ(led, res=None) -> list:
     return out
 
 
+ROADMAP_REL = ".planning/workstreams/autonomous-optimization/ROADMAP.md"
+FREEZE_AUDIT_REL = GEN2_DIR + "evidence/freeze-audit.md"
+PLACEHOLDER = re.compile(r"(?i)\b(?:TBD|TODO|FIXME|XXX|PLACEHOLDER)\b|<[A-Za-z][^<>\n]{0,60}>")
+A6_SKIP = ("materiality", "denominators", "reopens")  # copied verbatim from gen1, already pinned by G2-DENOM / G2-REOPEN
+AUDIT_RECORD_LINE = re.compile(r"^ICP_GEN2_AUDIT=PASS frozen_sha256=([0-9a-f]{64})\s*$", re.M)
+ROADMAP_PHASE_LINE = re.compile(r"^- \[[ xX]\] \*\*Phase (\d+):[^\n]*?\*\* - pillars? ([A-Z](?:, [A-Z])*)", re.M)
+
+
+def frozen_sha256(frozen) -> str:
+    """Canonical sha256 of the `frozen` object (what the freeze pins and the audit record quotes)."""
+    return hashlib.sha256(json.dumps(frozen, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+                          .encode("utf-8")).hexdigest()
+
+
+def expected_final_failures(frozen_at_present: bool) -> set:
+    """The final-mode failure lines that are the open programme itself, no more and no fewer. The texts are CE's own
+    clause strings (tools/test_cognitive_economy_program.py L2, L3, L8), not paraphrases."""
+    exp = {f"L3 {pid}: no terminal disposition" for pid in PILLARS}
+    if not frozen_at_present:
+        exp.add("L2 not frozen: FROZEN_AT missing, the pre-registration was never committed")
+    exp |= {f"L8 review {key}: missing or its file does not exist" for key in ("ukdl", "cbr")}
+    exp |= {f"L8 delta {key}: empty" for key in ("product", "intelligence")}
+    return exp
+
+
+def roadmap_phase_map(text: str) -> dict:
+    """{pillar letter: sorted phase numbers} from the ROADMAP `## Phases` checklist, phases 1..6 only."""
+    out = {}
+    for m in ROADMAP_PHASE_LINE.finditer(text or ""):
+        n = int(m[1])
+        if 1 <= n <= 6:
+            for letter in re.findall(r"[A-Z]", m[2]):
+                out.setdefault(letter, []).append(n)
+    return {k: sorted(set(v)) for k, v in out.items()}
+
+
+def _tracked_git(path: str) -> bool:
+    """True when git tracks `path` (argv list, no shell)."""
+    return ce._git("ls-files", "--error-unmatch", "--", path).returncode == 0
+
+
+def _strings(x, path=""):
+    if isinstance(x, str):
+        yield path, x
+    elif isinstance(x, dict):
+        for k, v in x.items():
+            yield from _strings(v, f"{path}.{k}" if path else str(k))
+    elif isinstance(x, list):
+        for i, v in enumerate(x):
+            yield from _strings(v, f"{path}[{i}]")
+
+
+def audit_rules(led, res, roadmap_text, tracked, selftest_fn) -> dict:
+    """{n: (failure lines starting 'A<n> ', detail for the ok line)} for A1-A7. This is the pre-freeze gate: A3 expects
+    the programme to be OPEN (no terminals yet), so it is run before FROZEN_AT, and again right after it."""
+    fz = _frozen(led)
+    rep = {}
+    a1 = [f"A1 {x}" for x in problems(led, res, final=False)]
+    rep[1] = (a1, "status problems empty (CE L1-L9/X under the gen2 binding + G2 rules)")
+    rep[2] = ([] if selftest_fn() else ["A2 the gen2 selftest failed: a rule cannot be trusted to fire"],
+              "gen2 selftest passes")
+    with bound():
+        frozen_present = res.frozen_at_commit() is not None
+    actual, exp = set(problems(led, res, final=True)), expected_final_failures(frozen_present)
+    a3 = [f"A3 unexpected final-mode failure: {x}" for x in sorted(actual - exp)]
+    a3 += [f"A3 expected open-programme line absent from the final-mode failures: {x}" for x in sorted(exp - actual)]
+    rep[3] = (a3, f"final-mode failure set equals the expected open-programme set ({len(exp)} lines, "
+                  f"{'frozen' if frozen_present else 'pre-freeze'})")
+    rmap = roadmap_phase_map(roadmap_text)
+    a4 = []
+    if not rmap:
+        a4.append("A4 the ROADMAP Phases checklist yielded no pillar-to-phase map (unparsable)")
+    ids = [p.get("id") for p in fz.get("pillars") or [] if isinstance(p, dict)]
+    for p in fz.get("pillars") or []:
+        if isinstance(p, dict) and rmap and sorted(p.get("roadmap_phases") or []) != rmap.get(p.get("id"), []):
+            a4.append(f"A4 pillar {p.get('id')}: roadmap_phases {p.get('roadmap_phases')!r} != ROADMAP checklist "
+                      f"{rmap.get(p.get('id'), [])}")
+    a4 += [f"A4 the ROADMAP names pillar {k} in phases {v} but frozen.pillars has no {k}" for k, v in rmap.items()
+           if k not in ids]
+    rep[4] = (a4, "roadmap_phases equal the ROADMAP checklist: " + ", ".join(f"{k}{v}" for k, v in sorted(rmap.items())))
+    owners = sorted({o for p in fz.get("pillars") or [] if isinstance(p, dict) for o in p.get("owner") or []})
+    a5 = [f"A5 frozen owner {o} is not git-tracked" for o in owners if not tracked(o)]
+    rep[5] = (a5, f"{len(owners)} frozen owner paths tracked")
+    a6, scanned = [], 0
+    for key, val in fz.items():
+        if key in A6_SKIP:
+            continue
+        for path, s in _strings(val, key):
+            scanned += 1
+            m = _deferral_or_placeholder(s)
+            if m:
+                a6.append(f"A6 frozen.{path} carries {m!r} (a deferral word or an authoring placeholder)")
+    rep[6] = (a6, f"{scanned} gen2-authored frozen strings carry no deferral word and no placeholder")
+    a7, detail7 = [], "not frozen yet"
+    if res.path_exists(FROZEN_AT_REL):
+        detail7 = "recorded frozen_sha256 equals the live one"
+        if not res.path_exists(FREEZE_AUDIT_REL):
+            a7.append(f"A7 {FROZEN_AT_REL} exists but {FREEZE_AUDIT_REL} does not: the freeze has no audit record")
+        else:
+            recorded = set(AUDIT_RECORD_LINE.findall(res.file_text(FREEZE_AUDIT_REL)))
+            live = frozen_sha256(fz)
+            if len(recorded) != 1:
+                a7.append(f"A7 the audit record must carry exactly one `ICP_GEN2_AUDIT=PASS frozen_sha256=<hex>` line, "
+                          f"found {len(recorded)} distinct")
+            elif recorded != {live}:
+                a7.append(f"A7 recorded frozen_sha256 {sorted(recorded)[0][:12]} != live {live[:12]} "
+                          "(frozen changed after it was audited)")
+    rep[7] = (a7, detail7)
+    return rep
+
+
+def _deferral_or_placeholder(s: str):
+    """The first deferral word or authoring placeholder in `s`, or None."""
+    m = ce.DEFERRAL_PROSE.search(s) or PLACEHOLDER.search(s)
+    return m.group(0) if m else None
+
+
+def audit(led, res, roadmap_text, tracked=None, selftest_fn=None) -> list:
+    """A1-A7 failure lines (empty = the pre-registration is cleared for the freeze). `tracked(path) -> bool` and
+    `selftest_fn() -> bool` are injectable so the selftest can drive A5 without git and A2 without recursing."""
+    rep = audit_rules(led, res, roadmap_text, tracked or _tracked_git,
+                      selftest_fn or (lambda: selftest(verbose=False)))
+    return [x for n in sorted(rep) for x in rep[n][0]]
+
+
 LIFECYCLE_FORWARD = ("observed", "priced", "shadow", "canary", "certified", "promoted")
 LIFECYCLE_SIDE = ("rejected", "narrowed", "superseded", "retired")
 OPP_KEYS = ("id", "title", "programme", "schema_note", "plane", "scope", "workload_class", "frequency", "current_cost",
@@ -704,6 +829,43 @@ def selftest(verbose=True) -> bool:
     rows.append(("closed-pillar-wrong-aop-row", "X2", judge(_close_p(copy.deepcopy(real), f_row), files=f_row)))
     f_norow = {**f_ok, REQS_REL: "| AOP-M | optimizer lifecycle (reopened) | Pending |\n"}
     rows.append(("closed-pillar-no-aop-row", "X2", judge(_close_p(copy.deepcopy(real), f_norow), files=f_norow)))
+    # --audit A1-A7: the machine read of the pre-registration. Injected `tracked` and `selftest_fn` keep it hermetic and
+    # recursion-free; the clean control and the frozen-and-matching control prove the rules do not refuse everything.
+    road = load_text(ROADMAP_REL)
+
+    def aud(led, frozen="own", files=None, roadmap=None, tracked=None, selftest_fn=None, **kw):
+        fz = copy.deepcopy(led.get("frozen")) if frozen == "own" else frozen
+        return audit(led, Fx(fz, files, **kw), road if roadmap is None else roadmap,
+                     tracked or (lambda p: True), selftest_fn or (lambda: True))
+
+    a_clean = aud(real)
+    say(not a_clean, f"V-IC2-AUDIT-CLEAN (real ledger, injected tracked/selftest: A1-A7 empty) {a_clean[:2] or ''}")
+    rec_ok = {FROZEN_AT_REL: "0" * 40 + "\n",
+              FREEZE_AUDIT_REL: f"## Audit\nICP_GEN2_AUDIT=PASS frozen_sha256={frozen_sha256(real['frozen'])}\n"}
+    a_frozen = aud(real, files=rec_ok)
+    say(not a_frozen, f"V-IC2-AUDIT-FROZEN-RECORD-ACCEPTED (FROZEN_AT present, record sha equals live: no A line) "
+                      f"{a_frozen[:2] or ''}")
+    say(expected_final_failures(False) - expected_final_failures(True) ==
+        {"L2 not frozen: FROZEN_AT missing, the pre-registration was never committed"}
+        and len(expected_final_failures(False)) == 10,
+        "V-IC2-AUDIT-EXPECTED-SET (pre-freeze set is 10 lines, post-freeze drops exactly L2)")
+    rows.append(("A1-program-foreign", "A1", aud(led_with(lambda d: d.update(program="skill-capability")))))
+    rows.append(("A2-selftest-red", "A2", aud(real, selftest_fn=lambda: False)))
+    rows.append(("A3-closed-pillar-without-reason", "A3",
+                 aud(_close_p(copy.deepcopy(real), f_ok, reason=""), files=f_ok)))
+    rows.append(("A3-expected-open-line-absent", "A3",
+                 aud(led_with(lambda d: d["reviews"].update(ukdl={"file": REQS_REL})))))
+    rows.append(("A4-pillar-O-roadmap-phases-2", "A4", aud(led_with(lambda d: pil(d, "O").update(roadmap_phases=[2])))))
+    rows.append(("A4-roadmap-unparsable", "A4", aud(real, roadmap="no checklist here")))
+    rows.append(("A5-owner-not-tracked", "A5", aud(real, tracked=lambda p: p != "tools/usage_index.py")))
+    rows.append(("A6-rule-contains-TBD", "A6", aud(led_with(lambda d: pil(d, "O").update(rule=pil(d, "O")["rule"] + " TBD")))))
+    rows.append(("A6-rule-contains-later", "A6", aud(led_with(lambda d: pil(d, "Q").update(rule=pil(d, "Q")["rule"] + " later")))))
+    rows.append(("A6-champion-note-angle-prompt", "A6", aud(led_with(
+        lambda d: d["frozen"]["champion"]["run5"].update(provenance_note="see <fill in the source>")))))
+    rec_bad = {FROZEN_AT_REL: "0" * 40 + "\n",
+               FREEZE_AUDIT_REL: "## Audit\nICP_GEN2_AUDIT=PASS frozen_sha256=" + "0" * 64 + "\n"}
+    rows.append(("A7-recorded-sha-differs", "A7", aud(real, files=rec_bad)))
+    rows.append(("A7-frozen-without-record", "A7", aud(real, files={FROZEN_AT_REL: "0" * 40 + "\n"})))
     for name, label, out in rows:
         hit = [x for x in out if x.startswith(label)]
         say(bool(hit), f"V-IC2-MUT-{name} killed by {label}" if hit
@@ -728,13 +890,42 @@ def selftest(verbose=True) -> bool:
     return ok
 
 
+def _main_audit() -> int:
+    """`--generation 2 --audit`: one line per rule A1-A7, then ICP_GEN2_AUDIT=PASS|FAIL|COULD_NOT_RUN. Exit 0/1/2."""
+    try:
+        led = load_ledger()
+        if not isinstance(led, dict):
+            raise ValueError("ledger is not a JSON object")
+        roadmap = (REPO / ROADMAP_REL).read_text(encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        print(f"ICP_GEN2_AUDIT=COULD_NOT_RUN ledger or ROADMAP unreadable: {exc}")
+        return 2
+    rep = audit_rules(led, ce.Resolver(), roadmap, _tracked_git, lambda: selftest(verbose=False))
+    n_fail = 0
+    for n in sorted(rep):
+        fails, detail = rep[n]
+        if not fails:
+            print("A7 ok (not frozen yet)" if (n == 7 and detail == "not frozen yet") else f"A{n} ok {detail}")
+        for x in fails:
+            n_fail += 1
+            print(f"A{n} FAIL {x[len(f'A{n} '):]}")
+    sha = frozen_sha256(_frozen(led))
+    if n_fail:
+        print(f"ICP_GEN2_AUDIT=FAIL frozen_sha256={sha} failures={n_fail}")
+        return 1
+    print(f"ICP_GEN2_AUDIT=PASS frozen_sha256={sha}")
+    return 0
+
+
 def main(mode: str) -> int:
     if mode == "selftest":
         good = selftest()
         print(f"ICP_GEN2_SELFTEST={'PASS' if good else 'FAIL'}")
         return 0 if good else 1
+    if mode == "audit":
+        return _main_audit()
     if mode not in ("status", "final"):
-        print(f"ICP_GEN2_VERDICT=COULD_NOT_RUN unknown mode {mode!r} (status|final|selftest)")
+        print(f"ICP_GEN2_VERDICT=COULD_NOT_RUN unknown mode {mode!r} (status|final|selftest|audit)")
         return 2
     try:
         led = load_ledger()
