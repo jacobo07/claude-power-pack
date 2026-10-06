@@ -58,8 +58,8 @@ Total Plans in Phase: 6
 
 **Last session:** 2026-10-06T21:37:42.460Z
 
-**Stopped At:** Phase 1 complete: pillar O IMPLEMENTED_AND_VERIFIED (parity EXACT 102/34871/11549646300 on gex44)
-**Next exact action:** plan Phase 2 (KME-L challenger) against vault/specs/autonomous-optimization.md; the substrate is tools/usage_index.py population/refresh (v5)
+**Stopped At:** Phase 1 plans 6/6 executed, pillar O state written (parity EXACT 102/34871/11549646300 on gex44, orchestrator re-run). Regression gate over Phase 0 green (AOP0 22/22, ENVPF 65/65 + drill 11/11, ICP_SELFTEST PASS, ICP_GEN2_AUDIT PASS). Code review committed (62b76405): 1 critical, 2 warning, 5 info, NOT yet fixed. Phase 1 NOT verified and NOT phase.complete.
+**Next exact action:** `/gsd-code-review 1 --fix --auto --ws autonomous-optimization` for CR-01 (usage_index.py:2112, `population --until 2026-09-01` silently drops the cut: until=None, reproduced on /home/kobii/ao-scratch/p1/cold.sqlite; must become UNMEASURED exit 3), WR-01 (per-file `except OSError` too narrow), WR-02 (`_registry` should join only `v5_from = 0` files). Red gate first per fix in tools/test_usage_index_v5.py; after fixes the KME-L parity with `--until 2026-10-03T16:13:37Z` must stay EXACT. Then spawn gsd-verifier -> 01-VERIFICATION.md, then `phase.complete 1`, then Phase 2. Isolation: worktree base-check degrades (fork-ref-unknown) -> re-run `dispatch-isolation --phase N --force-isolation none` before every gsd-executor dispatch or the isolation guard refuses it.
 **Resume File:** None
 
 ## Performance Metrics
