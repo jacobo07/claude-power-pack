@@ -221,6 +221,39 @@ def work_model_checks() -> None:
           f"{ro['verdict']} cost={oc['cost']:,} calls x ctx_eff={oc['calls'] * oc['ctx_eff']:,} {ro['admission'].get('reasons')}")
 
 
+F_OUT = 14_298  # F epoch 6 call 9: one Write of a 198-line doc; calls 10-11 carried ~14.6k more context
+F_WORK = {"orient": 1, "explore": 7, "files": 1, "commit": 1, "report": 1, "explore_ctx": 41_734}
+
+
+def output_term_checks() -> None:
+    n, base = ctc.work_cost(F_WORK, CAL, WF)
+    n2, with_w = ctc.work_cost({**F_WORK, "write_output": F_OUT}, CAL, WF)
+    later = n - 1 - (F_WORK["orient"] + F_WORK["explore"] + 1 - 1)  # calls after the writing call (index 8 of 11)
+    out = CAL["output_per_call"]
+    check("V-CTC-OUT-SAME-CALL-COUNT", n == n2 == 11 and later == 2, f"{n} {n2} later={later}")
+    # (A) generation replaces that call's flat output; (B) residency carries it in every later call's context
+    check("V-CTC-OUT-GENERATION-PLUS-RESIDENCY", with_w - base == (F_OUT - out) + F_OUT * later,
+          f"delta={with_w - base:,} want={(F_OUT - out) + F_OUT * later:,}")
+    # an externalized write (the write is the last call): generation yes, residency ~0
+    ext = {"orient": 1, "explore": 1, "files": 1}
+    _, e0 = ctc.work_cost(ext, CAL, WF)
+    _, e1 = ctc.work_cost({**ext, "write_output": F_OUT}, CAL, WF)
+    check("V-CTC-OUT-EXTERNALIZED-WRITE-GETS-A-NOT-B", e1 - e0 == F_OUT - out, f"delta={e1 - e0:,} want={F_OUT - out:,}")
+    # the two parameters are independent: residency 0 leaves A, residency 2 doubles B only
+    _, r0 = ctc.work_cost({**F_WORK, "write_output": F_OUT}, {**CAL, "write_residency": 0.0}, WF)
+    _, r2 = ctc.work_cost({**F_WORK, "write_output": F_OUT}, {**CAL, "write_residency": 2.0}, WF)
+    check("V-CTC-OUT-RESIDENCY-IS-ITS-OWN-PARAMETER", r0 - base == F_OUT - out
+          and r2 - r0 == 2 * F_OUT * later, f"{r0 - base:,} {r2 - r0:,}")
+    # existing coefficients unchanged: no write_output, or a calibration without write_residency, is the old model
+    check("V-CTC-OUT-ABSENT-IS-OLD-MODEL-CONTROL", ctc.work_cost(T_WORK, CAL, WF)[1] == ctc.work_cost(T_WORK, {**CAL, "write_residency": 5.0}, WF)[1]
+          and abs(ctc.work_cost(T_WORK, CAL, WF)[1] - T_EPOCH4) / T_EPOCH4 < 0.001)
+    # through the compiler: the unit cost carries the term, and a negative output is refused
+    c0 = ctc.compile_cost(wdoc(work=F_WORK), FLOORS)["units"][0]["cost"]
+    c1 = ctc.compile_cost(wdoc(work={**F_WORK, "write_output": F_OUT}), FLOORS)["units"][0]["cost"]
+    check("V-CTC-OUT-REACHES-UNIT-COST", abs((c1 - c0) - ((F_OUT - out) + F_OUT * later)) <= 11, f"{c1 - c0:,}")
+    check("V-CTC-OUT-NEGATIVE-REFUSED", refused(wdoc(work={**F_WORK, "write_output": -1})) == "BAD_CLAIM")
+
+
 def _route_refused(doc):
     try:
         ctc.route_verdict(doc, FLOORS)
@@ -295,6 +328,7 @@ def main() -> int:
 
     p5_checks()
     work_model_checks()
+    output_term_checks()
     print(f"CTC_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

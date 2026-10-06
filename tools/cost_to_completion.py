@@ -69,8 +69,11 @@ PHASE_KEYS = ("phases", "phase_count", "phase_average", "phase_average_cost", "a
 # unit carries from its first call (a large packet). explore_ctx is context the explore calls READ beyond
 # an ordinary text exploration (images, large dumps): split evenly over the explore calls and carried
 # from the call after each one. ctx_start_over_floor already holds a typical text exploration's return.
-WORK_KEYS = ("orient", "explore", "files", "runs", "repairs", "commit", "report", "extra_ctx", "explore_ctx")
+WORK_KEYS = ("orient", "explore", "files", "runs", "repairs", "commit", "report", "extra_ctx", "explore_ctx",
+             "write_output")
 CAL_KEYS = ("files_per_call", "ctx_start_over_floor", "ctx_growth_per_call", "output_per_call")
+# write_output: tokens of the unit's one long write (A: generation, charged on the writing call in place of the
+# flat output_per_call; B: residency, carried by each later call x calibration.write_residency, default 1.0)
 
 
 def work_cost(work: dict, cal: dict, floor: int) -> tuple[int, int]:
@@ -88,6 +91,15 @@ def work_cost(work: dict, cal: dict, floor: int) -> tuple[int, int]:
     g, out = int(cal["ctx_growth_per_call"]), int(cal["output_per_call"])
     orient, explore, ex = int(work.get("orient", 0)), int(work.get("explore", 0)), int(work.get("explore_ctx", 0))
     carried = sum(ex * min(max(i - orient, 0), explore) // explore for i in range(n)) if explore and ex else 0
+    wo = int(work.get("write_output", 0))
+    if wo:
+        # (A) generation: the writing call (last file call) emits `wo` instead of the flat output_per_call.
+        # (B) residency: those tokens ride in the context of every later call, x write_residency (default 1.0,
+        # measured F e6: calls 10-11 grew ~14.6k after a 14,298-token write). An externalized write has no later call.
+        w_idx = int(work.get("orient", 0)) + explore + math.ceil(float(work.get("files", 0)) / fpc) - 1
+        later = max(n - 1 - w_idx, 0) if work.get("files") else 0
+        res = float(cal.get("write_residency", 1.0))
+        return n, n * c0 + g * n * (n - 1) // 2 + out * n + carried + (wo - out) + int(round(wo * later * res))
     return n, n * c0 + g * n * (n - 1) // 2 + out * n + carried
 
 
