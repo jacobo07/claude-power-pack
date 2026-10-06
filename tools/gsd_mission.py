@@ -1713,6 +1713,8 @@ def _needs_look(m: dict, now: float) -> bool:
 
 
 MAX_RENEWALS = 3   # budget renewals per lineage (spec vault/specs/gex44-mission-plane.md, A)
+RENEWAL_CARRIED_ENVELOPE = ("token_estimate", "token_trip_ratio", "model", "autocompact",
+                            "continue_max_tokens", "wu_packet", "mission_terms", "note")
 
 
 def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None) -> str | None:
@@ -1728,7 +1730,25 @@ def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None) -> str
         return f"GSD answered {gsd_outcome}, not work-remains"
     if int(rec.get("renewal") or 0) >= MAX_RENEWALS:
         return f"renewal cap {MAX_RENEWALS} reached for lineage {rec.get('lineage_id') or rec['mission_id']}"
+    if rec.get("epoch") == 0:   # recorded zero only: a record without the field is unknown, not zero
+        # spec goal-governed-mission-control C3: no worker ever launched. Measured 2026-10-06
+        # (m-8c64d4f52fc9): a cwd divergence held every launch for 23 h (470 rows, 0 launches) and
+        # the budget halt renewed it like a mission that had worked. A fresh budget cures nothing.
+        return "never launched: every launch of this attempt was held, a fresh budget changes nothing"
+    if not rec.get("token_estimate") and bounded_renewal_mode() == "enforce":
+        return UNBOUNDED_RENEWAL
     return None
+
+
+UNBOUNDED_RENEWAL = ("unbounded: no token_estimate, so the successor would launch with no cost breaker "
+                     "and no route admission (set one with `envelope --token-estimate`)")
+
+
+def bounded_renewal_mode() -> str:
+    """spec goal-governed-mission-control C2: shadow (default) | enforce | off. Measured 2026-10-05:
+    the unbounded budget renewal m-98719dd9d1b1 ran 99 calls / 27.7M processed in 27 min."""
+    v = str(os.environ.get("CPP_MISSION_BOUNDED_RENEWAL") or "shadow").strip().lower()
+    return v if v in ("shadow", "enforce", "off") else "shadow"
 
 
 def _renewal_why_not(rec: dict, halt_reason: str, st: dict, halt_wd: str, fingerprint=None) -> str | None:
@@ -1767,6 +1787,16 @@ def renew_mission(rec: dict, now: float | None = None, capsule_key: str | None =
                "directives": list(rec.get("directives") or [])}
     if rec.get("work_dir"):
         carried["work_dir"] = rec["work_dir"]
+    # spec goal-governed-mission-control C1: the route travels with the work. Never `admission`:
+    # a renewed unit is re-admitted against a re-measured budget.
+    for k in RENEWAL_CARRIED_ENVELOPE:
+        if rec.get(k) not in (None, "", [], {}):
+            carried[k] = rec[k]
+    if rec.get("wu_packet"):
+        carried["wu_packet_epoch"] = 0
+    if not rec.get("token_estimate") and bounded_renewal_mode() == "shadow":
+        lr.ledger_append(rec["mission_id"], "renewal_unbounded_shadow", mission_id=rec["mission_id"],
+                         reason=UNBOUNDED_RENEWAL)
     v2_carry = {}
     if capsule_key:
         v2_carry["capsule_key"] = capsule_key
