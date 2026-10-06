@@ -47,7 +47,8 @@ EXIT = {READY: 0, NOT_READY: 1, UNMEASURABLE: 2}
 # The closed set of refusals. Anything a check cannot place here is UNMEASURABLE, never a new reason.
 REASONS = ("auth_expired", "auth_missing", "pp_install_stale", "hooks_broken", "interpreter_unsupported")
 # Non-refusing observations: reported beside a READY (or any) verdict, never a reason to refuse.
-FINDINGS = ("access_token_lapsed_refreshable", "hooks_foreign_env", "install_modified", "hook_entries_unjudged")
+FINDINGS = ("access_token_lapsed_refreshable", "hooks_foreign_env", "install_modified", "hook_entries_unjudged",
+            "floor_by_pick")
 
 # The first PP commit whose install parks an auth refusal (plan 02-01, tools/gsd_mission.py +
 # tools/provider_breaker.py + tools/test_persistent_failure_park.py). An install that does not contain it
@@ -259,10 +260,30 @@ def _is_ancestor(sbx: _Sandbox, git: str, install: str, floor: str):
     return True if rc == 0 else False if rc == 1 else None
 
 
+def _has_pick_trailer(sbx: _Sandbox, git: str, install: str, floor: str):
+    """True / False / None: does a commit in HEAD's history carry the exact `-x` trailer
+    `(cherry picked from commit <floor>)`. `floor` is the full 40-hex id (validated by the caller), matched as a
+    fixed string, so an abbreviation or a different sha never matches. Works with the floor OBJECT absent, which
+    is the GEX44 case. rc 0 answers (empty output is False); any other rc is a failure to ask (None)."""
+    rc, out, _ = sbx.run([git, "log", "-F", "--grep", f"(cherry picked from commit {floor})", "--format=%H",
+                          "--max-count=1", "HEAD"], cwd=install)
+    return bool(out.strip()) if rc == 0 else None
+
+
 def check_pp_install(env: dict, floor=None) -> dict:
-    """Rules version: the PP install is a git checkout whose HEAD descends from the floor commit and which
-    carries the required files. The floor's presence also proves repo identity: a foreign repository cannot
-    contain this sha. Local modifications are a finding, never a refusal."""
+    """Rules version: the PP install is a git checkout that carries the floor commit's code and the required
+    files. The floor is accepted by the first of these paths that holds (reported in detail["floor_via"]):
+
+        ancestry            HEAD contains the floor commit (`git merge-base --is-ancestor`)
+        cherry_pick_trailer a commit in HEAD's history carries the exact `(cherry picked from commit <floor>)`
+                            trailer, full 40-hex, even when the floor object itself is absent from the clone
+        patch_id            (floor object present only) an equal `git patch-id --stable` in HEAD's recent history
+
+    Any path other than ancestry adds the non-refusing finding `floor_by_pick`, so a pick is visible, never
+    silent. Honest limit: a trailer asserts a pick, it does not prove the code is identical (a conflict-resolved
+    pick has a different patch-id). The floor's presence in ancestry also proves repo identity: a foreign
+    repository cannot contain this sha. Local modifications are a finding, never a refusal. Git failing to answer
+    is UNMEASURABLE, never READY."""
     floor = floor or PP_COMMIT_FLOOR
     install, git = env.get("install"), env.get("git")
     detail = {"install": install, "floor": floor}
@@ -288,20 +309,35 @@ def check_pp_install(env: dict, floor=None) -> dict:
         rc, _, _ = sbx.run([git, "rev-parse", "--verify", "--quiet", f"{floor}^{{commit}}"], cwd=install)
         if rc not in (0, 1):
             return _result("pp_install", UNMEASURABLE, "git could not look up the floor commit", detail=detail)
-        problems = []
-        if rc == 1:
-            problems.append(f"floor {floor[:8]} is not in this install's history (head {detail['head'][:8]})")
-        else:
+        floor_present = rc == 0
+        detail["floor_present"] = floor_present
+        via = None
+        if floor_present:
             anc = _is_ancestor(sbx, git, install, floor)
             if anc is None:
                 return _result("pp_install", UNMEASURABLE, "git could not compare HEAD with the floor",
                                detail=detail)
-            if not anc:
-                problems.append(f"head {detail['head'][:8]} does not contain the floor {floor[:8]}")
+            if anc:
+                via = "ancestry"
+        if via is None:
+            picked = _has_pick_trailer(sbx, git, install, floor)
+            if picked is None:
+                return _result("pp_install", UNMEASURABLE,
+                               "git could not search HEAD's history for a cherry-pick of the floor", detail=detail)
+            if picked:
+                via = "cherry_pick_trailer"
+        detail["floor_via"] = via
+        problems = []
+        if via is None:
+            why_not = "not an ancestor" if floor_present else "floor object absent"
+            problems.append(f"head {detail['head'][:8]} does not contain the floor {floor[:8]} "
+                            f"({why_not}; no exact cherry-pick trailer)")
         missing = [f for f in PP_REQUIRED_FILES if not (Path(install) / f).is_file()]
         if missing:
             problems.append("required files missing: " + ", ".join(missing))
         findings = []
+        if via is not None and via != "ancestry":
+            findings.append("floor_by_pick")
         rc, st, _ = sbx.run([git, "--no-optional-locks", "status", "--porcelain", "--untracked-files=no"],
                             cwd=install)
         if rc == 0 and st.strip():
@@ -312,7 +348,7 @@ def check_pp_install(env: dict, floor=None) -> dict:
         if problems:
             return _result("pp_install", NOT_READY, "; ".join(problems), reasons=["pp_install_stale"],
                            findings=findings, detail=detail)
-        return _result("pp_install", READY, f"head {detail['head'][:8]} contains the floor {floor[:8]}",
+        return _result("pp_install", READY, f"head {detail['head'][:8]} contains the floor {floor[:8]} via {via}",
                        findings=findings, detail=detail)
     except TimeoutError as exc:
         return _result("pp_install", UNMEASURABLE, str(exc), detail=detail)
