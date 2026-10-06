@@ -74,6 +74,15 @@ never PASS; a predicted saving is never a realized one; a challenger is allowed 
    (pick-only history -> READY; unrelated history -> still NOT_READY; mutant dropping the hash path -> red).
    The live GEX44 install is updated only through its normal fast-forward sync, never by hand.
 
+**Plans:** 5 plans (waves: 1 = 01; 2 = 02, 03; 3 = 04; 4 = 05)
+
+Plans:
+- [ ] 00-01-PLAN.md -- T3 spec `vault/specs/autonomous-optimization.md` + HR-NOVELTY-001 record + `tools/test_ao_p0.py` (criteria 1, 3)
+- [ ] 00-02-PLAN.md -- preflight `pp_install` floor-by-pick fix, red first, drill M7-M10, OPP-001 evidence, `[P0]` owner-bundle line (criterion 5)
+- [ ] 00-03-PLAN.md -- IC-gen2 ledger draft + `tools/ic_gen2.py` judge + `--generation 2` dispatch + G2 rules and selftest (criterion 2)
+- [ ] 00-04-PLAN.md -- champion Run 5 / Run 6 frozen with pinned evidence, OPP-001 row, `--generation 2 --audit` (criteria 4, 5)
+- [ ] 00-05-PLAN.md -- automated pre-freeze audit gate, two-commit freeze (ledger, then FROZEN_AT), 00-EVIDENCE.md (criterion 2)
+
 ### Phase 1: usage_index v5 substrate
 
 **Goal**: execution history is ingested once per content identity into queryable structured state.
