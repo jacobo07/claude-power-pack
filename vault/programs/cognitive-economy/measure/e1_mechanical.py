@@ -57,7 +57,9 @@ def one_call(claude: str, model: str, excludes: list | None) -> dict:
         cmd += ["--settings", json.dumps({"claudeMdExcludes": excludes})]
     env = {k: v for k, v in os.environ.items()
            if not (k.startswith("CLAUDECODE") or k.startswith("CLAUDE_CODE_"))}
-    with tempfile.TemporaryDirectory(prefix="e1mech-") as wd:
+    # A process the CLI leaves behind (a hook child) can still hold the cwd on Windows; a cleanup
+    # failure must not throw away a measurement that already happened (measured 2026-10-06).
+    with tempfile.TemporaryDirectory(prefix="e1mech-", ignore_cleanup_errors=True) as wd:
         try:
             r = subprocess.run(cmd, cwd=wd, capture_output=True, text=True, encoding="utf-8",
                                errors="replace", timeout=300, env=env)
