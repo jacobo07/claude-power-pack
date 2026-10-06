@@ -35,3 +35,13 @@ fresh short contexts at 1-4M per tranche; continuation tax removed by a packet-l
 Champion for comparison: 650M low / 1.2B central / 1.87B high (Orca phase averages, n = 1, borrowed).
 Prediction error of this plan so far: canary planned 3-8M, actual 3.31M (attempt 2) + 0.49M (attempt 1 failure).
 Tranche cap 25M: ~21.2M measured + UNKNOWN compaction cost; the repair packet is held for Owner authority.
+## WU-1R repair (m-84da090be030), measured
+- 1,958,619 processed / 16 calls (one session 6fab39dd, ctx peak 140,578); estimate was 3M. The stall breaker set a
+  hold after the work was committed (1.96M since the tree last changed > 1.5M stall budget) and the worker stayed
+  alive until `claude stop` (UC-14 again).
+- Outcome: 30 rows re-judged, 0 UNKNOWN, 0 unresolvable; gate 13/13.
+- Independent sample (seed 42, 6 rows): 3 correct, 2 minor (C-01, C-07 process instructions -> NOT_A_SYSTEM), 1 wrong
+  (C-17: the C-15 vocabulary-match error moved, not removed). Fixed by the orchestrator directly (3 rows).
+- Receipt self-report: 3 boundaries vs 16 measured calls -> worker-reported counts are claims; only metered counts count.
+- Phase 1 total, compiled grammar: 3.31M + 0.49M (failed attempt) + 1.96M = 5.76M, plus 2 orchestrator edits.
+  Precision over the two independent samples: 9 of 14 rows right as first judged; all 5 errors corrected.
