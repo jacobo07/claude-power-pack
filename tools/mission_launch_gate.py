@@ -63,16 +63,22 @@ def _lineage(rec: dict, now: float) -> dict | None:
     hold = pb.lineage_hold(rec, now)
     if not hold:
         return None
-    mid = rec.get("mission_id")
     src = hold.get("inherited_from")
     until = hold.get("until")
     cls = hold.get("class", "quota")
     when = "QUARANTINED" if hold.get("quarantine") else f"until {int(until)}" if until else "held"
-    lr.ledger_append(mid, "provider_held", mission_id=mid, epoch=rec.get("epoch"), until=until,
-                     reason=hold.get("reason"), provider_class=cls, streak=hold.get("streak"),
-                     quarantine=bool(hold.get("quarantine")), inherited_from=src)
+    import mission_sleep as ms
     return {"refuse": True, "kind": "lineage", "verdict": "PROVIDER_HELD",
-            "reason": f"provider {cls} {when} inherited from {src}: {hold.get('reason')}"}
+            "reason": f"provider {cls} {when} inherited from {src}: {hold.get('reason')}",
+            "sleep": _sleep(rec, f"provider_{cls}_inherited", ms.provider_wake(hold), "provider_held",
+                            until=until, reason=hold.get("reason"), provider_class=cls, streak=hold.get("streak"),
+                            quarantine=bool(hold.get("quarantine")), inherited_from=src)}
+
+
+def _sleep(rec: dict, cause: str, wake: dict, event: str, **fields) -> dict:
+    """A refusal's row, handed to the caller (GGMC C5): supervise writes it, and persists the hold as the
+    record's `sleep`, only when it changed. Written here, it repeated on every pass."""
+    return {"cause": cause, "wake": wake, "event": event, "fields": fields}
 
 
 def _env(rec: dict, act: str, now: float) -> dict:
@@ -89,11 +95,12 @@ def _env(rec: dict, act: str, now: float) -> dict:
     reasons = [str(r) for r in (res.get("reasons") or [])]
     unmeasured = res.get("unmeasured") or []
     if v == "NOT_READY":
-        lr.ledger_append(mid, "launch_preflight_refused", mission_id=mid, epoch=rec.get("epoch"), act=act,
-                         reasons=reasons, unmeasured=unmeasured)
-        return {"refuse": True, "kind": "preflight", "verdict": "NOT_READY",
-                "reason": f"env preflight NOT_READY: {', '.join(reasons) or 'no reason named'}"
-                          " -- launch refused (owner bundle [B])"}
+        why = (f"env preflight NOT_READY: {', '.join(reasons) or 'no reason named'}"
+               " -- launch refused (owner bundle [B])")
+        return {"refuse": True, "kind": "preflight", "verdict": "NOT_READY", "reason": why,
+                "sleep": _sleep(rec, "env_preflight", {"kind": "env_ready", "reasons": reasons},
+                                "launch_preflight_refused", reason=why, act=act, reasons=reasons,
+                                unmeasured=unmeasured)}
     if v == "READY":
         return {"refuse": False, "kind": "preflight", "verdict": "READY", "reason": "env preflight READY"}
     if not unmeasured:

@@ -9,8 +9,10 @@ missions (P3) have no protocol field; every gsd_mission edit reaches them on the
 
 The golden lives in tools/fixtures/gsd_mission_legacy_golden.json. It was captured once with
 `--capture` (refused when the golden already exists); its `meta` names the source sha and HEAD
-it was taken on. A legitimate legacy change is a re-capture with `--capture --force`, made on
-purpose and reviewed as a diff of the golden, never a side effect of a green run.
+it was taken on. A legitimate legacy change is `--amend <scenario> --why <text>`, made on purpose,
+recorded in meta.amendments and reviewed as a diff of the golden, never a side effect of a green
+run. (`--capture --force` cannot serve it: the source has named rollover_protocol since T6, so a
+fresh capture fails V-G23-GOLDEN-PRE-CHANGE.)
 
 Hermetic: state is redirected to a temp dir BEFORE import; host sessions, pid probe, runners,
 git/GSD/transcript facts and the provider breaker are injected. Nothing here reads or writes
@@ -450,6 +452,37 @@ def _git_head() -> str:
         return f"unreadable ({type(exc).__name__})"
 
 
+def amend(argv: list[str], snap: dict, src: bytes) -> int:
+    """Re-pin ONE scenario on purpose: `--amend <scenario> --why <text>`.
+
+    `--capture --force` cannot serve a legitimate legacy change any more: since T6 the source names
+    rollover_protocol, so a fresh capture fails V-G23-GOLDEN-PRE-CHANGE for ever. An amendment keeps
+    the pre-change capture for every other scenario, prints the diff it accepts, and records itself
+    in meta.amendments (head, source sha, reason, diff) -- reviewed as a diff of the golden."""
+    name = argv[argv.index("--amend") + 1] if argv.index("--amend") + 1 < len(argv) else ""
+    why = argv[argv.index("--why") + 1].strip() if "--why" in argv and argv.index("--why") + 1 < len(argv) else ""
+    golden = json.loads(GOLDEN.read_text(encoding="utf-8"))
+    if name not in snap["scenarios"] or name not in (golden.get("scenarios") or {}):
+        print(f"REFUSED: unknown scenario {name!r}")
+        return 2
+    if not why:
+        print("REFUSED: an amendment needs --why <the change that makes the legacy path differ>")
+        return 2
+    d = diff(golden["scenarios"][name], snap["scenarios"][name], f"/{name}")
+    if not d:
+        print(f"REFUSED: {name} already matches the golden; nothing to amend")
+        return 2
+    for line in d:
+        print(f"ACCEPT {line}")
+    golden["scenarios"][name] = snap["scenarios"][name]
+    golden.setdefault("meta", {}).setdefault("amendments", []).append(
+        {"scenario": name, "why": why, "on_head": _git_head(),
+         "gsd_mission_sha256": hashlib.sha256(src).hexdigest(), "diff": d[:20]})
+    GOLDEN.write_text(json.dumps(golden, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    print(f"AMENDED {name} ({len(d)} diffs)")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     src = (HERE / "gsd_mission.py").read_bytes()
     snap = snapshot()
@@ -466,6 +499,8 @@ def main(argv: list[str]) -> int:
                           encoding="utf-8", newline="\n")
         print(f"CAPTURED {GOLDEN} {meta}")
         return 0
+    if "--amend" in argv:
+        return amend(argv, snap, src)
 
     try:
         golden = json.loads(GOLDEN.read_text(encoding="utf-8"))
