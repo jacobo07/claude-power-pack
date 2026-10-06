@@ -138,6 +138,15 @@ Rollback: `git -C <live> reset --keep 4856b50d` (point logged in ~/.claude/state
 Still true: m-eaf2843afb16 PREPARED epoch 0, token_estimate None; C2 is SHADOW, so it still launches unbounded
 at 05:00Z unless the Owner bounds or holds it.
 
+## C6 DONE (pane ef0d3f77) -- 1d25b4ae, laptop only (GEX44 still at 4db97ab0, C1-C5)
+`gsd_mission.py status --surface`: HOT/WARM/COLD + owner_only + KPIs (`tools/mission_surface.py`, sleep judged
+before plan). test_gsd_mission_surface 6/6 + drill 3/3; MC 225/225. Laptop estate: 7 live, HOT 2 / WARM 1 /
+COLD 4 (owner_only 4: holds m-608c8d8d761f, m-a128e03c7419; blocked-on-prompt m-8bbdf725cd52, m-b65977d380b3).
+SPEND: pane ef0d3f77 = 29,364,576 processed / 132 calls, 0 subagents (stage0/self_spend.py under this sid)
+vs <=4M budget: OVER ~7x (~222k context per call). HR-COST-002 STOP: nothing further starts without the Owner.
+Open, all Owner calls: (1) bound or hold m-eaf2843afb16 before 05:00Z; (2) deploy C6 to GEX44; (3) flip
+CPP_MISSION_BOUNDED_RENEWAL to enforce; UKDL/Vault entries remain.
+
 ## Post-E1 Phase 0 DONE (2026-10-06, pane e0332e3a, read-only, HEAD a5a5e91)
 - Mission Compiler: no code. Only `modules/crawl_os/mission_compiler.py`, PLANNED for crawl intent (another domain). Not an owner.
 - Context Compiler: ABSENT, as recorded in `vault/programs/skill-capability/ledger.json` row L (deferred to cognitive-economy).
