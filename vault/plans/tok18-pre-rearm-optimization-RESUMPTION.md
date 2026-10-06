@@ -103,3 +103,14 @@ Read ONLY `vault/plans/post-e1-meta-work-2026-10-06.md`; it supersedes every "Ne
 Next: Phase 0 ownership check (Mission Compiler / GSD X / Context Compiler / ledger writer / scheduled-task carrier),
 then Phase 1 E1 closeout: author B1 in cep_gen2, run D1-D8 as ONE driver call with 0 model calls between steps.
 One fresh pane per phase; meter with stage0/self_spend.py; pre-live model-bound hard recompile 4.5M.
+
+## Goal-governed mission control (Owner ULTRA-PLAN 'y' 2026-10-06, pane e0a08ce5) - STOPPED AT BUDGET
+Spec `vault/specs/goal-governed-mission-control.md`. LIVE: C1-C3 924bdad6 (renewal carries route; unbounded
+renewal shadow/enforce via CPP_MISSION_BOUNDED_RENEWAL; epoch-0 never renews -- fired in prod 12:37:10Z on
+m-8c64d4f52fc9), 9d7d980f (mission_spend measures launch-cwd plane: KME read None -> 3,353,877), C4 f71fbdd1
+(goal hold + singleflight + `arm --supersedes --authority`, also on renewal). KME: Owner-ratified v3 rearm
+(dac2c3bb) supersedes Gen2.1 "never rearm"; m-e935055d072d token_estimate 1.75M (trip 3.5M), hold released;
+rotation = its 17:42Z budget renewal (carries estimate + note). Stopped: 23.07M processed since approval vs 15M cap.
+Next (fresh pane, <=4M): C5 write-on-change sleep (launch_held / provider_held); C6 `status --surface`;
+flip CPP_MISSION_BOUNDED_RENEWAL to enforce after shadow rows; deploy C1-C4 to GEX44 live install BEFORE
+2026-10-07T05:00Z (m-eaf2843afb16 launches unbounded then) -- Owner call; UKDL/Vault entries.
