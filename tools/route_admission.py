@@ -28,7 +28,8 @@ import json
 import math
 from pathlib import Path
 
-FLOORS_PATH = Path(__file__).resolve().parent.parent / "vault" / "config" / "route-floors.json"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+FLOORS_PATH = REPO_ROOT / "vault" / "config" / "route-floors.json"
 DEFAULT_GROWTH_MARGIN = 0.20
 TOP_LEVEL = "top-level-worker"
 ADMISSIBLE, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "DEFER", "RECOMPILE", "ESCALATE"
@@ -58,8 +59,10 @@ def route_digest(route: dict) -> str:
 
 
 def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
-          remaining: int | None = None) -> dict:
-    """Judge `route` against its envelope. Raises ValueError on a malformed route (fail closed)."""
+          remaining: int | None = None, root: Path | str | None = None) -> dict:
+    """Judge `route` against its envelope. Raises ValueError on a malformed route (fail closed).
+    `root` is the repo root that a profile's `requires` file is resolved against."""
+    root = root or REPO_ROOT
     env = route.get("envelope") or {}
     target = _pos_int("envelope.target", env.get("target"))
     warn = _pos_int("envelope.warn", env.get("warn"))
@@ -85,6 +88,12 @@ def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
         prof = profiles.get(w.get("profile"))
         if prof is None or not isinstance(prof.get("floor"), int) or prof["floor"] <= 0:
             unknown.append(f"{name}: profile {w.get('profile')!r} has no measured floor")
+            continue
+        req = prof.get("requires")
+        if req and not (Path(root) / req).is_file():
+            # slim-t2's floor was measured WITH the critical settings loaded; without that file the
+            # worker would run with no budget breaker, which is the thing the profile exists to carry.
+            unknown.append(f"{name}: profile {w.get('profile')!r} requires {req}, which is missing")
             continue
         rows.append({"name": name, "profile": w["profile"], "calls": calls, "packet": packet,
                      "floor": prof["floor"], "cost": calls * (prof["floor"] + packet)})
