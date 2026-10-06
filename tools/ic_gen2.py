@@ -616,14 +616,19 @@ class Fx(ce.Resolver):
         self._pin = load_gen1_current() if gen1_pin == "real" else gen1_pin  # the pin never follows a mutated _cur
         self._sha = load_gen1_sha() if gen1_sha == "real" else gen1_sha
 
+    # A `files` value of None HIDES that path from the real repo, so a mutant such as "FROZEN_AT without an audit
+    # record" stays true after the real record has been written (found by plan 00-05: it survived once the record
+    # existed on disk).
     def path_exists(self, rel):
-        return rel in self.files or super().path_exists(rel)
+        if rel in self.files:
+            return self.files[rel] is not None
+        return super().path_exists(rel)
 
     def file_sha(self, rel):
-        return _sha(self.files[rel]) if rel in self.files else super().file_sha(rel)
+        return _sha(self.files[rel]) if self.files.get(rel) is not None else super().file_sha(rel)
 
     def file_text(self, rel):
-        return self.files[rel] if rel in self.files else super().file_text(rel)
+        return self.files[rel] if self.files.get(rel) is not None else super().file_text(rel)
 
     def handoff_landed(self, rel):
         return True
@@ -865,7 +870,7 @@ def selftest(verbose=True) -> bool:
     rec_bad = {FROZEN_AT_REL: "0" * 40 + "\n",
                FREEZE_AUDIT_REL: "## Audit\nICP_GEN2_AUDIT=PASS frozen_sha256=" + "0" * 64 + "\n"}
     rows.append(("A7-recorded-sha-differs", "A7", aud(real, files=rec_bad)))
-    rows.append(("A7-frozen-without-record", "A7", aud(real, files={FROZEN_AT_REL: "0" * 40 + "\n"})))
+    rows.append(("A7-frozen-without-record", "A7", aud(real, files={FROZEN_AT_REL: "0" * 40 + "\n", FREEZE_AUDIT_REL: None})))
     for name, label, out in rows:
         hit = [x for x in out if x.startswith(label)]
         say(bool(hit), f"V-IC2-MUT-{name} killed by {label}" if hit
