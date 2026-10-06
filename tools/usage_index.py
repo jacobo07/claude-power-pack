@@ -848,13 +848,14 @@ def _longest_root(key: str, roots: dict):
 def _registry(con) -> tuple[dict, dict, str]:
     """(registry {root key: project name}, homes {(store, project, session_key): root key},
     digest). A root is the normalized first cwd (smallest first_off) of a main file; its name is
-    the transcript dir name of that raw cwd. Two spellings of one root keep the smaller name, so
+    the transcript dir name of that raw cwd. Only a main file read from byte 0 (v5_from = 0)
+    names a root: a legacy file read from mid-file has an unknown home, never a guessed one. Two spellings of one root keep the smaller name, so
     the registry is a function of the rows, not of their order."""
     registry: dict = {}
     homes: dict = {}
     rows = con.execute(
         "SELECT f.store, f.project, f.session_key, c.cwd FROM files f "
-        "JOIN file_cwds c ON c.file=f.path WHERE f.is_sub=0 AND c.first_off="
+        "JOIN file_cwds c ON c.file=f.path WHERE f.is_sub=0 AND f.v5_from=0 AND c.first_off="
         "(SELECT min(first_off) FROM file_cwds WHERE file=f.path) ORDER BY f.path")
     for store, project, skey, cwd in rows:
         norm = _norm_path(cwd)
@@ -1156,76 +1157,76 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             files_opened += 1
             try:
                 calls, end, ep = _tis.calls_from(fp, offset, on_line=on_line, stats=stats)
-            except OSError as e:                # this file only: typed, the others go on
-                con.rollback()
+                bytes_read += stats.get("bytes_seen", 0)
+                bytes_ingested += end - offset
+                parse_errors += stats.get("bad", 0)
+                head_sha = stats.get("head_sha") if offset == 0 else old_head
+                tail_sha = stats.get("tail_sha") or old_tail
+                cid = _content_id(end, head_sha, tail_sha) if head_sha and tail_sha else None
+                entry = entry or ep
+                for c in calls:
+                    u = c["usage"]
+                    cc = u.get("cache_creation") if isinstance(u.get("cache_creation"), dict) else {}
+                    sess, pid, aid = state["call_meta"].get(c["key"], (None, None, None))
+                    k = _key(path, c["key"])
+                    vals = (_epoch(c.get("ts")), c.get("model") or "", _num(u, "input_tokens"),
+                            _num(u, "cache_creation_input_tokens"),
+                            _num(cc, "ephemeral_5m_input_tokens"),
+                            _num(cc, "ephemeral_1h_input_tokens"),
+                            _num(u, "cache_read_input_tokens"), _num(u, "output_tokens"))
+                    if not archived:  # ARCHIVED_RULE: v5 tables only
+                        con.execute(
+                            "INSERT INTO calls(k,file,ts,model,is_sub,entrypoint,inp,cw,cw5,cw1,cr,out,"
+                            "session,prompt_id,agent_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                            "ON CONFLICT(k) DO UPDATE SET "
+                            "ts=excluded.ts, inp=max(inp,excluded.inp), cw=max(cw,excluded.cw), "
+                            "cw5=max(cw5,excluded.cw5), cw1=max(cw1,excluded.cw1), "
+                            "cr=max(cr,excluded.cr), out=max(out,excluded.out), "
+                            "session=coalesce(excluded.session,session), "
+                            "prompt_id=coalesce(excluded.prompt_id,prompt_id), "
+                            "agent_id=coalesce(excluded.agent_id,agent_id)",
+                            (k, path, vals[0], vals[1], is_sub, entry, vals[2], vals[3], vals[4],
+                             vals[5], vals[6], vals[7], sess, pid, aid))
+                    # The occurrence view: this file's own values, order-independent (calls.file
+                    # is first-writer-wins). Its ts is the EFFECTIVE one (inherited when the call's
+                    # own line carries none), like every other v5 row.
+                    cts = vals[0] if vals[0] is not None else state["call_ts"].get(c["key"])
+                    con.execute(
+                        "INSERT INTO call_files(k,file,ts,model,inp,cw,cw5,cw1,cr,out) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(k,file) DO UPDATE SET "
+                        "ts=excluded.ts, model=excluded.model, inp=max(inp,excluded.inp), "
+                        "cw=max(cw,excluded.cw), cw5=max(cw5,excluded.cw5), cw1=max(cw1,excluded.cw1), "
+                        "cr=max(cr,excluded.cr), out=max(out,excluded.out)",
+                        (k, path, cts) + vals[1:])
+                    upserts += 1
+                if entry and not archived:
+                    con.execute("UPDATE calls SET entrypoint=? WHERE file=? AND entrypoint IS NULL",
+                                (entry, path))
+                con.execute("INSERT INTO files(path,offset,size,mtime_ns,is_sub,entrypoint,"
+                            "cur_prompt,title,v5_from,resolved,store,project,archived,session_key,"
+                            "parse_errors,error,head_sha,tail_sha,content_id,first_ts,last_ts,pat_ver) "
+                            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?,?,?,?,?) "
+                            "ON CONFLICT(path) DO UPDATE SET offset=excluded.offset, "
+                            "size=excluded.size, mtime_ns=excluded.mtime_ns, is_sub=excluded.is_sub, "
+                            "entrypoint=excluded.entrypoint, cur_prompt=excluded.cur_prompt, "
+                            "title=excluded.title, v5_from=excluded.v5_from, "
+                            "resolved=excluded.resolved, store=excluded.store, "
+                            "project=excluded.project, archived=excluded.archived, "
+                            "session_key=excluded.session_key, parse_errors=excluded.parse_errors, "
+                            "error=NULL, head_sha=excluded.head_sha, tail_sha=excluded.tail_sha, "
+                            "content_id=excluded.content_id, first_ts=excluded.first_ts, "
+                            "last_ts=excluded.last_ts, pat_ver=excluded.pat_ver",
+                            (path, end, st.st_size, st.st_mtime_ns, is_sub, entry,
+                             state["prompt"], state["title"], v5_from, _tis.resolved_path(path),
+                             store, project, archived, skey, old_pe + stats.get("bad", 0),
+                             head_sha, tail_sha, cid, state["first_ts"], state["last_ts"], pat_ver))
+                con.execute("UPDATE files SET dup_of=NULL WHERE path=?", (path,))
+                _dup_groups(con, {old_cid, cid})
+                con.commit()
+            except Exception as e:  # noqa: BLE001 -- this file only: typed, the others go on
+                con.rollback()          # the file is dropped whole, never half-committed
                 _record_file_error(con, path, is_sub, st, e, (store, project, archived, skey))
                 continue
-            bytes_read += stats.get("bytes_seen", 0)
-            bytes_ingested += end - offset
-            parse_errors += stats.get("bad", 0)
-            head_sha = stats.get("head_sha") if offset == 0 else old_head
-            tail_sha = stats.get("tail_sha") or old_tail
-            cid = _content_id(end, head_sha, tail_sha) if head_sha and tail_sha else None
-            entry = entry or ep
-            for c in calls:
-                u = c["usage"]
-                cc = u.get("cache_creation") if isinstance(u.get("cache_creation"), dict) else {}
-                sess, pid, aid = state["call_meta"].get(c["key"], (None, None, None))
-                k = _key(path, c["key"])
-                vals = (_epoch(c.get("ts")), c.get("model") or "", _num(u, "input_tokens"),
-                        _num(u, "cache_creation_input_tokens"),
-                        _num(cc, "ephemeral_5m_input_tokens"),
-                        _num(cc, "ephemeral_1h_input_tokens"),
-                        _num(u, "cache_read_input_tokens"), _num(u, "output_tokens"))
-                if not archived:  # ARCHIVED_RULE: v5 tables only
-                    con.execute(
-                        "INSERT INTO calls(k,file,ts,model,is_sub,entrypoint,inp,cw,cw5,cw1,cr,out,"
-                        "session,prompt_id,agent_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
-                        "ON CONFLICT(k) DO UPDATE SET "
-                        "ts=excluded.ts, inp=max(inp,excluded.inp), cw=max(cw,excluded.cw), "
-                        "cw5=max(cw5,excluded.cw5), cw1=max(cw1,excluded.cw1), "
-                        "cr=max(cr,excluded.cr), out=max(out,excluded.out), "
-                        "session=coalesce(excluded.session,session), "
-                        "prompt_id=coalesce(excluded.prompt_id,prompt_id), "
-                        "agent_id=coalesce(excluded.agent_id,agent_id)",
-                        (k, path, vals[0], vals[1], is_sub, entry, vals[2], vals[3], vals[4],
-                         vals[5], vals[6], vals[7], sess, pid, aid))
-                # The occurrence view: this file's own values, order-independent (calls.file
-                # is first-writer-wins). Its ts is the EFFECTIVE one (inherited when the call's
-                # own line carries none), like every other v5 row.
-                cts = vals[0] if vals[0] is not None else state["call_ts"].get(c["key"])
-                con.execute(
-                    "INSERT INTO call_files(k,file,ts,model,inp,cw,cw5,cw1,cr,out) "
-                    "VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(k,file) DO UPDATE SET "
-                    "ts=excluded.ts, model=excluded.model, inp=max(inp,excluded.inp), "
-                    "cw=max(cw,excluded.cw), cw5=max(cw5,excluded.cw5), cw1=max(cw1,excluded.cw1), "
-                    "cr=max(cr,excluded.cr), out=max(out,excluded.out)",
-                    (k, path, cts) + vals[1:])
-                upserts += 1
-            if entry and not archived:
-                con.execute("UPDATE calls SET entrypoint=? WHERE file=? AND entrypoint IS NULL",
-                            (entry, path))
-            con.execute("INSERT INTO files(path,offset,size,mtime_ns,is_sub,entrypoint,"
-                        "cur_prompt,title,v5_from,resolved,store,project,archived,session_key,"
-                        "parse_errors,error,head_sha,tail_sha,content_id,first_ts,last_ts,pat_ver) "
-                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?,?,?,?,?) "
-                        "ON CONFLICT(path) DO UPDATE SET offset=excluded.offset, "
-                        "size=excluded.size, mtime_ns=excluded.mtime_ns, is_sub=excluded.is_sub, "
-                        "entrypoint=excluded.entrypoint, cur_prompt=excluded.cur_prompt, "
-                        "title=excluded.title, v5_from=excluded.v5_from, "
-                        "resolved=excluded.resolved, store=excluded.store, "
-                        "project=excluded.project, archived=excluded.archived, "
-                        "session_key=excluded.session_key, parse_errors=excluded.parse_errors, "
-                        "error=NULL, head_sha=excluded.head_sha, tail_sha=excluded.tail_sha, "
-                        "content_id=excluded.content_id, first_ts=excluded.first_ts, "
-                        "last_ts=excluded.last_ts, pat_ver=excluded.pat_ver",
-                        (path, end, st.st_size, st.st_mtime_ns, is_sub, entry,
-                         state["prompt"], state["title"], v5_from, _tis.resolved_path(path),
-                         store, project, archived, skey, old_pe + stats.get("bad", 0),
-                         head_sha, tail_sha, cid, state["first_ts"], state["last_ts"], pat_ver))
-            con.execute("UPDATE files SET dup_of=NULL WHERE path=?", (path,))
-            _dup_groups(con, {old_cid, cid})
-            con.commit()
             files_read += 1
             read_paths.append(path)
         _attribute(con, read_paths)         # stored rows only: opens no transcript
@@ -1781,10 +1782,10 @@ def population(con, *, until=None, project_filter=None, select=None, include_arc
     if select not in (None, "all", "kme"):
         reasons.append(f"selector {select!r} is not available (all | kme)")
         return out
-    if isinstance(until, str):
-        until = _epoch(until)
+    if until is not None:
+        raw, until = until, _epoch(until)
         if until is None:
-            reasons.append("until is not an ISO instant")
+            reasons.append(f"until {raw!r} is not an ISO instant (YYYY-MM-DDTHH:MM:SS[Z])")
             return out
         out["until"] = until
     try:
@@ -2109,7 +2110,7 @@ def main(argv=None) -> int:
                 print(f"population: cannot build the expected record: {type(e).__name__}: {e}",
                       file=sys.stderr)
                 return 2
-        res = population(con, until=_epoch(a.until) if a.until else None,
+        res = population(con, until=a.until,     # population() reads and refuses it
                          project_filter=a.project_filter, select=a.select,
                          include_archived=a.include_archived, expected=expected, host=a.host,
                          tolerate_parse_errors=a.tolerate_parse_errors, detail=a.detail)

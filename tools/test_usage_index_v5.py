@@ -1009,19 +1009,28 @@ def grp_crash_resume() -> None:
         real = UX._v5_line
         seen: dict = {}
 
+        class Crash(BaseException):
+            """A process death, not an error: no handler in refresh may type it as a file error."""
+
         def crashing(con, path, state, o, start):
             real(con, path, state, o, start)
             seen[path] = seen.get(path, 0) + 1
             if len(seen) == 2 and seen[path] == 3:       # after the third line of the second file
-                raise RuntimeError("injected crash")
+                raise Crash("injected crash")
 
-        con = UX.connect(td / "db" / "ix.sqlite")
+        db = td / "db" / "ix.sqlite"
+        con = UX.connect(db)
         try:
             undo = _patch(UX, "_v5_line", crashing)
+            crashed = None
             try:
-                r1 = UX.refresh(con, proj, deadline_s=30)
+                UX.refresh(con, proj, deadline_s=30)
+            except Crash as e:
+                crashed = e
             finally:
                 undo()
+                con.close()                              # the process is gone: nothing commits
+            con = UX.connect(db)
             second = list(seen)[1] if len(seen) == 2 else None
             leftovers = {}
             if second:
@@ -1034,10 +1043,10 @@ def grp_crash_resume() -> None:
             r2 = UX.refresh(con, proj, deadline_s=30)
             got = table_counts(con)
             gate("V-UX5-CRASH-RESUME",
-                 r1["status"] == "FAILED" and "injected crash" in r1["error"] and second is not None
+                 crashed is not None and second is not None
                  and not any(leftovers.values()) and first_ok and r2["status"] == "OK"
                  and got == want and sum(want["parse_errors"].values()) == 2,
-                 f"crash injected after line 3 of the second file: status={r1['status']}; rows of "
+                 f"crash injected after line 3 of the second file: escaped refresh={crashed is not None}; rows of "
                  f"that file left behind={leftovers} (want all 0); the first file committed="
                  f"{first_ok}; after the next refresh {got} equals the one-shot build {want}")
         finally:
@@ -2115,6 +2124,96 @@ def grp_cli_cost_keys() -> None:
              f"maxrss still reported)")
 
 
+def grp_pop_until_refused() -> None:
+    """CR-01: a --until the CLI cannot read is refused (UNMEASURED, exit 3, a reason), never
+    dropped into 'every row counts'. Control: a valid instant on the same index is MEASURED."""
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, _f = one_session_store(td)
+        db = td / "db" / "ix.sqlite"
+        con = UX.connect(db)
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+        finally:
+            con.close()
+        rc_bad, o_bad = _pop_cli(db, "--until", "2026-09-01")
+        rc_ok, o_ok = _pop_cli(db, "--until", iso(10))
+        gate("V-UX5-POP-UNTIL-REFUSED",
+             rc_bad == 3 and o_bad.get("verdict") == "UNMEASURED"
+             and any("until" in r for r in o_bad.get("reasons") or [])
+             and o_bad.get("population") is None
+             and rc_ok == 0 and o_ok.get("verdict") == "MEASURED"
+             and (o_ok.get("population") or {}).get("calls") == 2,
+             f"--until 2026-09-01 (date only): exit={rc_bad} verdict={o_bad.get('verdict')} "
+             f"reasons={o_bad.get('reasons')} population={o_bad.get('population')}; control "
+             f"--until {iso(10)}: exit={rc_ok} verdict={o_ok.get('verdict')} "
+             f"calls={(o_ok.get('population') or {}).get('calls')}")
+
+
+def grp_file_error_any() -> None:
+    """WR-01: a non-OSError failure inside one transcript (a lone surrogate SQLite cannot bind)
+    is typed on that file and the pass goes on; it never fails the pass or starves later files."""
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, files = two_file_store(td)
+        bad_line = asst("mx", 1.5, "S1", tools=[("tuX", "Read", {"file_path": "C:\\a\\ud83d"})])
+        with files[0].open("a", encoding="utf-8") as fh:
+            fh.write(bad_line.replace("\\\\ud83d", "\\ud83d"))     # JSON escape of a lone surrogate
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            r = UX.refresh(con, proj, deadline_s=30)
+            bad = con.execute("SELECT error, offset FROM files WHERE path=?",
+                              (os.path.realpath(str(files[0])),)).fetchone()
+            other = con.execute("SELECT count(*) FROM calls WHERE file=?",
+                                (os.path.realpath(str(files[1])),)).fetchone()[0]
+            pop = UX.population(con)
+            gate("V-UX5-FILE-ERROR-ANY",
+                 r.get("status") == "OK" and bad is not None
+                 and (bad[0] or "").startswith("UnicodeEncodeError") and bad[1] == 0
+                 and other == 2 and r.get("files_with_errors") == 1
+                 and pop.get("verdict") == "UNMEASURED",
+                 f"lone surrogate in one transcript: pass status={r.get('status')} "
+                 f"error={r.get('error')!r}; that file's error={bad and bad[0]!r} offset="
+                 f"{bad and bad[1]}; the other file's calls={other}/2; files_with_errors="
+                 f"{r.get('files_with_errors')}; population={pop.get('verdict')} {pop.get('reasons')}")
+        finally:
+            con.close()
+
+
+def grp_legacy_home() -> None:
+    """WR-02: a legacy file that grows is read from mid-file, so the first cwd it shows is not
+    the session's launch cwd. Its home is unknown (absent from the registry), never guessed.
+    Control: a cold build of the same tree names the true launch cwd."""
+    other = "C:\\Users\\User\\Apps\\elsewhere"
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, db, files, con = _legacy_db(td)
+        try:
+            with files[0].open("a", encoding="utf-8") as fh:
+                fh.write(asst("m9", 1.9, "S1", cwd=other))
+            UX.refresh(con, proj, deadline_s=30)
+            v5f = con.execute("SELECT v5_from FROM files WHERE path=?",
+                              (os.path.realpath(str(files[0])),)).fetchone()[0]
+            reg, homes, _d = UX._registry(con)
+            home = homes.get(("C--p1", "C--p1", "S1"))
+            guessed = [k for k in reg if "elsewhere" in k.lower()]
+            cold = UX.connect(td / "cold" / "ix.sqlite")
+            try:
+                UX.refresh(cold, proj, deadline_s=30)
+                creg, chomes, _cd = UX._registry(cold)
+            finally:
+                cold.close()
+            chome = [v for (s, p, k), v in chomes.items() if k == "S1"]
+            gate("V-UX5-LEGACY-HOME-UNKNOWN",
+                 (v5f or 0) > 0 and not guessed
+                 and not [v for (s, p, k), v in homes.items() if k == "S1"]
+                 and len(chome) == 1 and "proj" in chome[0].lower(),
+                 f"legacy file grew with a new cwd: v5_from={v5f}; registry roots from it="
+                 f"{guessed}; S1 home={home} (want none); cold build S1 home={chome}")
+        finally:
+            con.close()
+
+
 GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
           ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text),
@@ -2136,7 +2235,9 @@ GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_pop_refuses", grp_pop_refuses), ("grp_reconcile", grp_reconcile),
           ("grp_backfill", grp_backfill),
           ("grp_backfill_stops_at_offset", grp_backfill_stops_at_offset),
-          ("grp_cold_all", grp_cold_all), ("grp_cli_cost_keys", grp_cli_cost_keys))
+          ("grp_cold_all", grp_cold_all), ("grp_cli_cost_keys", grp_cli_cost_keys),
+          ("grp_pop_until_refused", grp_pop_until_refused),
+          ("grp_file_error_any", grp_file_error_any), ("grp_legacy_home", grp_legacy_home))
 
 
 # -- mutation drill ------------------------------------------------------------
@@ -2234,11 +2335,12 @@ def _m_migrate_resets_offsets():
 
 
 def _m_occurrence_dropped():
-    """M3: the call_files upsert becomes a no-op."""
-    return _source_mutant(
-        "tools/usage_index.py",
-        "con.execute(\n                    \"INSERT INTO call_files(k,file,ts,model,inp,cw,cw5,cw1,cr,out) \"",
-        "(lambda *a: None)(\n                    \"INSERT INTO call_files(k,file,ts,model,inp,cw,cw5,cw1,cr,out) \"")
+    """M3: the call_files upsert of refresh becomes a no-op."""
+    head = ('like every other v5 row.\n'
+            '                    cts = vals[0] if vals[0] is not None else state["call_ts"].get(c["key"])\n'
+            '                    ')
+    return _source_mutant("tools/usage_index.py", head + "con.execute(\n",
+                          head + "(lambda *a: None)(\n")
 
 
 def _m_empty_population_measured():
@@ -2366,6 +2468,28 @@ def _m_backfill_unbounded():
     return _patch(UX._tis, "calls_from", mutant)
 
 
+
+def _m_cli_until_dropped():
+    """M19 (CR-01): the CLI turns an unreadable --until into None before population sees it."""
+    return _source_mutant("tools/usage_index.py",
+                          "        res = population(con, until=a.until,",
+                          "        res = population(con, until=_epoch(a.until) if a.until else None,")
+
+
+def _m_file_error_oserror_only():
+    """M20 (WR-01): the per-file handler types only OSError again."""
+    return _source_mutant("tools/usage_index.py",
+                          "            except Exception as e:  # noqa: BLE001 -- this file only:",
+                          "            except OSError as e:  # noqa: BLE001 -- this file only:")
+
+
+def _m_legacy_home_guessed():
+    """M21 (WR-02): a main file read from mid-file names its session's home root again."""
+    return _source_mutant("tools/usage_index.py",
+                          "WHERE f.is_sub=0 AND f.v5_from=0 AND c.first_off=",
+                          "WHERE f.is_sub=0 AND c.first_off=")
+
+
 MUTANTS = [
     ("M1 _migrate_spawns gated on SCHEMA_VERSION (backfill re-queued)", _m_spawn_backfill_requeued,
      [grp_migrate], ["V-UX5-MIGRATE-ZERO-REREAD"]),
@@ -2403,6 +2527,12 @@ MUTANTS = [
      [grp_reconcile], ["V-UX5-RECONCILE-SHARED"]),
     ("M18 backfill reads past the committed offset", _m_backfill_unbounded,
      [grp_backfill_stops_at_offset], ["V-UX5-BACKFILL-STOPS-AT-OFFSET"]),
+    ("M19 unreadable --until dropped to None by the CLI", _m_cli_until_dropped,
+     [grp_pop_until_refused], ["V-UX5-POP-UNTIL-REFUSED"]),
+    ("M20 per-file handler narrowed back to OSError", _m_file_error_oserror_only,
+     [grp_file_error_any], ["V-UX5-FILE-ERROR-ANY"]),
+    ("M21 legacy mid-file cwd names the session home", _m_legacy_home_guessed,
+     [grp_legacy_home], ["V-UX5-LEGACY-HOME-UNKNOWN"]),
 ]
 
 
