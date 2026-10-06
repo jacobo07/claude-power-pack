@@ -65,6 +65,8 @@ def scan_file(path, sess, observer=None, keep=None):
     # by V-KMEP-AUDIT-BYTE-IDENTICAL): keep(path, o) -> False drops the line before anything reads it;
     # observer.on_line(path, o, call_index, sess) sees each kept line with the call index the residency loop uses;
     # observer.on_file_end(path, sess, order, calls, compact_points) runs once the file is fully accumulated.
+    # scan_project(select=...) is a further additive hook of kme_pillars (default None = the P0 behaviour): a file the
+    # select callable refuses is never opened, its session is still registered.
     calls = {}          # dedupe key -> record
     order = []          # dedupe keys in order (main thread residency)
     tools = {}          # tool_use_id -> (name, key)
@@ -209,8 +211,10 @@ def new_sess(proj, sid):
                 subagent_files=0, bad_lines=0, tool_uses=0, tool_uses_kme=0, user_kme_hits=0)
 
 
-def scan_project(pdir, observer=None, keep=None):
-    """Scan one project dir; observer / keep are passed to scan_file (default None = P0 behaviour)."""
+def scan_project(pdir, observer=None, keep=None, select=None):
+    """Scan one project dir; observer / keep are passed to scan_file (default None = P0 behaviour).
+    select(proj, sid, full_path) -> bool, when given, decides per file whether it is read: a refused file is never
+    opened, but its session is still registered (the session count of a run does not depend on the selection)."""
     proj = os.path.basename(pdir.rstrip('/\\'))
     sessions = {}
     for root, _dirs, files in os.walk(pdir):
@@ -222,6 +226,8 @@ def scan_project(pdir, observer=None, keep=None):
             sid = rel.split('/')[0].replace('.jsonl', '')
             s = sessions.get(sid) or new_sess(proj, sid)
             sessions[sid] = s
+            if select is not None and not select(proj, sid, full):
+                continue
             try:
                 scan_file(full, s, observer=observer, keep=keep)
             except Exception as e:

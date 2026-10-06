@@ -50,14 +50,17 @@ import argparse
 import collections
 import datetime
 import hashlib
+import importlib.util
 import json
 import os
 import re
 import shlex
 import shutil
 import socket
+import sqlite3
 import subprocess
 import sys
+import urllib.parse
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
@@ -1626,9 +1629,10 @@ PILLAR_HELP = {"D": "silent-success hooks: hook_additional_context rent per call
 
 
 # --------------------------------------------------------------------------- scan + population
-def scan(roots, expand, host, observers, keep, project_filter=None):
+def scan(roots, expand, host, observers, keep, project_filter=None, select=None):
     """Frozen-parser scan of every root; returns (sessions, fanout, dirs). `project_filter` (a compiled regex) keeps
-    only the child dirs (expand) or the roots whose basename it matches (re.search)."""
+    only the child dirs (expand) or the roots whose basename it matches (re.search). `select(proj, sid, path)` (the
+    challenger's index tier) is forwarded to scan_project: a refused transcript file is never opened."""
     global SCAN_COUNT
     SCAN_COUNT += 1
     _META_CACHE.clear()
@@ -1642,7 +1646,7 @@ def scan(roots, expand, host, observers, keep, project_filter=None):
     fan = _Fanout(observers)
     sessions = []
     for d in dirs:
-        for s in kme_token_audit.scan_project(d, observer=fan, keep=keep):
+        for s in kme_token_audit.scan_project(d, observer=fan, keep=keep, select=select):
             kme_token_audit.finish_session(s, host)
             sessions.append(s)
     return sessions, fan, dirs
@@ -1880,6 +1884,106 @@ ESTIMATE_MODEL_I = ("no char estimate: measured usage only; per subagent file = 
 ESTIMATE_MODELS = {"G": ESTIMATE_MODEL_G, "I": ESTIMATE_MODEL_I}   # H keeps the default chars-per-token model
 
 
+# --------------------------------------------------------------------------- access plan (challenger)
+PLANS = ("champion", "scoped", "challenger", "auto")
+INDEX_MIN_SCHEMA = 5
+
+
+class PlanRefused(Exception):
+    """A guard of the challenger's access plan failed: `guard` names it, `reason` is the index's own or the guard's."""
+
+    def __init__(self, guard, reason):
+        super().__init__(f"{guard}: {reason}")
+        self.guard = guard
+        self.reason = reason
+
+
+def add_plan_args(sp):
+    """The access-plan flags, shared by every kme_pillars subcommand and by kme_replay rank."""
+    sp.add_argument("--plan", choices=PLANS, default="champion",
+                    help="access plan (KS-4): champion = today's scan (default); scoped = project-scoped raw; "
+                         "challenger = the certified index selects the sessions, only their transcripts are read "
+                         "(refused with exit 3 when a guard fails); auto = challenger, deopting to scoped / global raw")
+    sp.add_argument("--index-db", default=None, help="usage index read by the challenger / auto plans "
+                                                     "(default: tools/usage_index.py DEFAULT_DB)")
+    sp.add_argument("--path-log", default=None, help="append one redacted JSON access-plan record per run")
+    sp.add_argument("--cross-project", action="store_true",
+                    help="the question is explicitly cross-project: allows an unfiltered challenger / auto run, "
+                         "and the global raw tier under auto")
+
+
+_UX_MODULE = []
+
+
+def _usage_index():
+    """tools/usage_index.py, loaded once by path and only for the challenger / auto plans."""
+    if not _UX_MODULE:
+        spec = importlib.util.spec_from_file_location("_kmep_usage_index", REPO / "tools" / "usage_index.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        _UX_MODULE.append(mod)
+    return _UX_MODULE[0]
+
+
+def _open_index_ro(path):
+    """Read-only connection to the index (mode=ro URI). Never the usage_index connect helper: that one runs the schema
+    script and so writes."""
+    real = os.path.realpath(str(path))
+    return sqlite3.connect("file:" + urllib.parse.quote(real) + "?mode=ro", uri=True)
+
+
+def _index_tier(ctx):
+    """The certified-index tier: the set of (project, session) the index selects for this run, as an access dict
+    {"tier": "index", "select": callable, "read_set": set, "guards": [...], "admitted": {path: bytes}}.
+    Raises PlanRefused(guard, reason) on the first failed guard; an UNMEASURED / DRIFTED index answer is refused with
+    the index's own reasons, never read as a zero."""
+    guards = []
+    db = ctx.get("index_db") or str(_usage_index().DEFAULT_DB)
+    if not os.path.isfile(db):
+        raise PlanRefused("index_open", f"index_missing: {db}")
+    try:
+        con = _open_index_ro(db)
+        row = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
+    except sqlite3.Error as exc:
+        raise PlanRefused("index_open", f"index_unreadable: {exc.__class__.__name__}")
+    try:
+        ver = int(row[0]) if row else 0
+        if ver < INDEX_MIN_SCHEMA:
+            raise PlanRefused("index_open", f"schema: {ver} < {INDEX_MIN_SCHEMA}")
+        guards.append({"guard": "index_open", "ok": True, "reason": f"schema {ver}"})
+        if ctx["kind"] != "frozen" or ctx["den"] not in ("KME-L", "KME-G") or ctx["select"] != "kme":
+            raise PlanRefused("kind", f"{ctx['den']}/{ctx['select']} has no certified index tier")
+        if ctx["since"] is not None:
+            raise PlanRefused("kind", "--since has no certified index tier (the index answers as of an instant)")
+        guards.append({"guard": "kind", "ok": True, "reason": f"{ctx['den']}/kme"})
+        until = ctx["freeze"] if ctx["auto"] else ctx["until"]
+        ans = _usage_index().population(
+            con, until=fmt_instant(until) if until is not None else None,
+            project_filter=ctx["pf"].pattern if ctx["pf"] else None, select="kme", host=ctx["host"],
+            expected=ctx["frozen"]["fields"], detail=True)
+    except sqlite3.Error as exc:
+        raise PlanRefused("population", f"population: UNMEASURED: index_unreadable: {exc.__class__.__name__}")
+    finally:
+        con.close()
+    if ans["verdict"] != "EXACT":
+        raise PlanRefused("population", f"population: {ans['verdict']}: {'; '.join(ans['reasons'])}"
+                          if ans["reasons"] else f"population: {ans['verdict']}: deltas {sorted(ans.get('deltas') or {})}")
+    guards.append({"guard": "population", "ok": True, "reason": "EXACT"})
+    read_set = {(r["project"], r["session_key"]) for r in ans["detail"] if r["selected"] and not r["archived"]}
+    admitted = {}
+
+    def select(proj, sid, path):
+        if (proj, sid) not in read_set:
+            return False
+        try:
+            admitted[path] = os.stat(path).st_size
+        except OSError:
+            admitted[path] = None
+        return True
+    return {"tier": "index", "select": select, "read_set": read_set, "guards": guards, "admitted": admitted,
+            "index_db": db}
+
+
 # --------------------------------------------------------------------------- CLI
 def build_parser():
     ap = argparse.ArgumentParser(prog="kme_pillars.py", description=__doc__.split("\n")[0])
@@ -1901,6 +2005,7 @@ def build_parser():
                                                                f"(default {FREEZE_INSTANT})")
         sp.add_argument("--frozen-file", default=None)
         sp.add_argument("--frozen-ce-ledger", default=None, help="CE ledger read for the referenced CPP-D-W7 denominator")
+        add_plan_args(sp)
         if measuring:
             sp.add_argument("--out-dir", default=None)
             sp.add_argument("--role", choices=["auto", "second_workload"], default="auto")
@@ -2017,7 +2122,11 @@ def _prepare(a, pillars):
         kind, select = "referenced", "all"
         since, until = parse_instant(frozen["since"]), parse_instant(frozen["until"])
     host = a.host or (frozen["host"] if frozen else "local")
-    return {"label": label, "den": den, "kind": kind, "frozen": frozen, "select": select, "host": host,
+    plan = getattr(a, "plan", "champion")
+    if plan == "auto":
+        return None, _fail("--plan auto is not routed yet; use champion, scoped or challenger")
+    return {"plan": plan, "index_db": getattr(a, "index_db", None), "path_log": getattr(a, "path_log", None),
+            "cross_project": bool(getattr(a, "cross_project", False)), "label": label, "den": den, "kind": kind, "frozen": frozen, "select": select, "host": host,
             "since": since, "until": until, "auto": auto, "freeze": freeze, "roots": a.root, "expand": a.expand,
             "pf": pf, "role": role, "pillars": list(pillars), "frozen_source": fsrc}, None
 
@@ -2028,7 +2137,7 @@ def _measure(ctx, pillars, until, want_instants=False, observer_factories=None):
     inst = InstantObserver(ctx["freeze"] - datetime.timedelta(hours=LOCATE_WINDOW_H)) if want_instants else None
     keep = make_keep(ctx["since"], until) if (ctx["since"] is not None or until is not None) else None
     sessions, fan, dirs = scan(ctx["roots"], ctx["expand"], ctx["host"], list(obs.values()) + ([inst] if inst else []),
-                               keep, ctx["pf"])
+                               keep, ctx["pf"], (ctx.get("access") or {}).get("select"))
     pop = population(sessions, {"select": ctx["select"]}, fan.kept, keep is not None)
     selected = pop.pop("selected")
     measured = {f: pop[f] for f in POP_FIELDS}
@@ -2039,11 +2148,20 @@ def _measure(ctx, pillars, until, want_instants=False, observer_factories=None):
 
 def _resolve(ctx, pillars, observer_factories=None):
     """The measuring scan for the run: at the fixed cutoff, or at the located one for --until auto.
-    Returns (scan, until, located) where located is None or the locator's verdict."""
+    Returns (scan, until, located) where located is None or the locator's verdict. Plan challenger computes the
+    index tier first (PlanRefused propagates); the other plans are today's code, untouched."""
+    if ctx.get("plan") == "challenger":
+        ctx["access"] = _index_tier(ctx)
     if not ctx["auto"]:
         return _measure(ctx, pillars, ctx["until"], observer_factories=observer_factories), ctx["until"], None
     frozen = ctx["frozen"]["fields"]
     first = _measure(ctx, pillars, ctx["freeze"], want_instants=True, observer_factories=observer_factories)
+    if (ctx.get("access") or {}).get("tier") == "index":
+        # the locator must never bisect on a selected-only scan: the index said EXACT at the freeze instant, so the
+        # scan of the selected sessions has to say it too
+        match = compare_population(first["measured"], frozen)[0]
+        if match != "exact":
+            raise PlanRefused("shadow", f"population at the freeze instant is {match} on the selected sessions")
 
     def probe(until, want):
         sc = _measure(ctx, [], until, want)
@@ -2214,7 +2332,11 @@ def main(argv=None):
     ctx, rc = _prepare(a, pillars)
     if ctx is None:
         return rc
-    sc, until, loc = _resolve(ctx, pillars)
+    try:
+        sc, until, loc = _resolve(ctx, pillars)
+    except PlanRefused as exc:
+        print(f"kme_pillars: plan {ctx['plan']} refused: {exc.guard}: {exc.reason}", file=sys.stderr)
+        return EXIT_UNMEASURED
 
     if a.cmd == "population":
         rep, ok = _population_report(ctx, sc, loc, until)
