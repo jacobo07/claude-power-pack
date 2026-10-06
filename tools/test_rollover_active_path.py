@@ -253,6 +253,40 @@ def main() -> int:
           f"calls={[c['kind'] for c in calls]} decision={out.get('decision')}")
     clear(wd, s)
 
+    # The same Stop with the overlay NOT throttled. Measured 2026-10-06 (e0332e3a): the first
+    # Stop after a manual /kclear ran the auto-reset overlay first, the dispatcher killed the
+    # hook at 20 s, and /clear was never typed. The crossing must not queue behind the advisory.
+    s, cap = self_case(wd)
+    overlay_calls: list = []
+    real_overlay = wd._orchestrator_overlay
+    wd._orchestrator_overlay = lambda ev: overlay_calls.append(ev) or {"systemMessage": "advisory"}
+    os.environ["_TEST_CONTEXT_PCT"] = "20.0"
+    try:
+        out = wd.run({"session_id": s, "cwd": str(ROOT), "transcript_path": ""}) or {}
+    finally:
+        os.environ.pop("_TEST_CONTEXT_PCT", None)
+        wd._orchestrator_overlay = real_overlay
+    check("V-ROLLACT-SELF-CROSSES-AHEAD-OF-OVERLAY",
+          [c["kind"] for c in calls] == ["clear"] and out.get("decision") == "block"
+          and overlay_calls == [],
+          f"calls={[c['kind'] for c in calls]} decision={out.get('decision')} "
+          f"overlay_ran={len(overlay_calls)}")
+    clear(wd, s)
+    # Control: with nothing sealed, the overlay still runs and its advisory still surfaces.
+    s, cap = self_case(wd, seal=False)
+    overlay_calls.clear()
+    wd._orchestrator_overlay = lambda ev: overlay_calls.append(ev) or {"systemMessage": "advisory"}
+    os.environ["_TEST_CONTEXT_PCT"] = "20.0"
+    try:
+        out = wd.run({"session_id": s, "cwd": str(ROOT), "transcript_path": ""}) or {}
+    finally:
+        os.environ.pop("_TEST_CONTEXT_PCT", None)
+        wd._orchestrator_overlay = real_overlay
+    check("V-ROLLACT-OVERLAY-STILL-SURFACES", len(overlay_calls) == 1 and calls == []
+          and out.get("systemMessage") == "advisory",
+          f"overlay_ran={len(overlay_calls)} calls={calls} out={out}")
+    clear(wd, s)
+
     for gate, kw, verdict, marker in [
         ("V-ROLLACT-SELF-REFUSED-TYPES-NOTHING", {}, "REFUSED", None),
         ("V-ROLLACT-SELF-STALE-TYPES-NOTHING", {"age_s": wd.ROLLOVER_SELF_SEAL_MAX_AGE_S + 60},

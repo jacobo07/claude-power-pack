@@ -1609,14 +1609,22 @@ def _run_inner(event: dict) -> dict:
     # its own. Fail-open is preserved -- an overlay that raises leaves the
     # continuation path exactly as it was.
     # Pinned by tools/test_watchdog_overlay_precedence.py (both poles).
-    try:
-        overlay = _orchestrator_overlay(event)
-        if overlay:
-            if not _read_autorun_marker(session_id):
-                return overlay
-            _LAST["overlay"] = overlay
-    except Exception:
-        pass
+    #
+    # Called BELOW the rollover step since 2026-10-06 (e0332e3a): run first, the overlay's
+    # multi-second orchestrate() took the first Stop after a manual /kclear, the dispatcher
+    # killed the hook at 20 s, and /clear was never typed. A pending crossing costs one stat
+    # and outranks an advisory; the overlay keeps every other Stop exactly as before.
+    # Pinned by V-ROLLACT-SELF-CROSSES-AHEAD-OF-OVERLAY.
+    def _overlay_first():
+        try:
+            overlay = _orchestrator_overlay(event)
+            if overlay:
+                if not _read_autorun_marker(session_id):
+                    return overlay
+                _LAST["overlay"] = overlay
+        except Exception:
+            pass
+        return None
 
     # Empirical-test override (Owner DONE-gate 6a, 2026-05-20):
     # `_TEST_CONTEXT_PCT=<n>` forces a used_pct value so a synthetic Stop
@@ -1637,11 +1645,11 @@ def _run_inner(event: dict) -> dict:
     else:
         metrics = _read_metrics(session_id)
     if not metrics:
-        return {}
+        return _overlay_first() or {}
 
     used_pct = metrics.get("used_pct")
     if not isinstance(used_pct, (int, float)):
-        return {}
+        return _overlay_first() or {}
     # Stashed for the heartbeat. Without the percentage the line can say the
     # hook ran and not whether it SHOULD have fired, which is half an answer:
     # a `pass` at 74% and a `pass` at 12% are different facts about this chain.
@@ -1682,6 +1690,11 @@ def _run_inner(event: dict) -> dict:
                                   event.get("transcript_path") or "", used_pct)
         if reply is not None:
             return reply
+
+    early = _overlay_first()
+    if early:
+        _LAST.pop("used_pct", None)   # heartbeat as before the move: legacy path never reached
+        return early
 
     snap_pct, adv_pct, rearm_pct = _thresholds(session_id)
     if used_pct < rearm_pct:
