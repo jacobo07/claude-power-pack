@@ -1,0 +1,162 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+UNIVERSAL ITERATION PROMPT — vMAX
+iteracion-avanzada-universal.txt
+Guardar en: C:\Users\User\Downloads\Promptsss\
+            Prompts pa iterar\Universal\
+            iteracion-avanzada-universal.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CONTEXTO: Hay un error, fallo, o resultado por debajo
+del estándar. Este prompt activa el protocolo de
+iteración universal. Aplica a código, UI, lógica,
+integración, y cualquier output técnico.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FASE 1 — LEER ANTES DE PROPONER (SCS C28)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OBLIGATORIO antes de cualquier fix:
+
+1. Leer el archivo/módulo/función que falló.
+   No proponer cambios hasta haber leído la fuente real.
+
+2. Leer el error exacto. El mensaje completo,
+   no una paráfrasis.
+
+3. Verificar las premises del plan anterior:
+   ¿El archivo que asumimos que existía, existe?
+   ¿La función que íbamos a llamar tiene esa firma?
+   ¿El API devuelve lo que esperábamos?
+   Si alguna premise era falsa → eso ES la causa raíz.
+
+Emitir REALITY CHECK antes de continuar:
+  Fuente leída: [archivo + líneas relevantes]
+  Error exacto: [mensaje completo]
+  Premise falsa detectada: [sí/no + cuál]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FASE 2 — CLASIFICAR EL ERROR (ROOT CAUSE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Clasificar en la taxonomía antes de fixear:
+
+  CLASE 0: Error ya en NEVER_AGAIN log
+           → bug se repitió. Escalar: ¿por qué
+             la Hard Rule no lo previno?
+
+  CLASE 1: Plan asumió API/función que no existe
+           → Fix: SCS C28 + premise_verifier
+           → UKDL: Process Rule
+
+  CLASE 2: Plan asumió estado del repo que era falso
+           → Fix: verificar estado antes de ejecutar
+           → UKDL: UKDL Trap
+
+  CLASE 3: Archivo de gobernanza creció sin control
+           → Fix: linter + firewall
+           → UKDL: Hard Rule
+
+  CLASE 4: Tool call falló silenciosamente
+           → Fix: verificar estado con herramienta
+             distinta, no reintentar con la misma
+           → UKDL: UKDL Trap
+
+  CLASE 5: Output declarado DONE sin verificación
+           → Fix: done-gate empírico obligatorio
+           → UKDL: Hard Rule
+
+  CLASE 6: Error visual/UX (feel gap)
+           → Fix: iterar hasta indistinguible
+             de la intención original
+           → Criterio: ¿lo aprobaría el Owner
+             sin que se lo expliquen?
+
+Emitir: "Este error es CLASE N porque [mecanismo]"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FASE 3 — EL FIX (mínimo que resuelve el problema)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Reglas del fix:
+
+  NO parchear la superficie si la causa está
+  en el core. Un fix de 3 líneas en el lugar
+  correcto vale más que 300 líneas en el lugar
+  equivocado.
+
+  NO declarar fixed hasta que el done-gate
+  empírico pase. "Debería funcionar" no es
+  un done-gate.
+
+  NO añadir complejidad para compensar un error.
+  Simplificar primero.
+
+Done-gate obligatorio (output real, no teórico):
+  Ejecutar el comando/test que prueba que funciona.
+  Pegar el output real.
+  Si el output no es el esperado: no está fixed.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FASE 4 — APRENDER (UKDL seed obligatorio)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Todo fix no trivial genera una entrada UKDL.
+La severidad determina el tipo:
+
+  Daño irreversible posible → Hard Rule
+  Error costoso pero recuperable → Process Rule
+  Edge case técnico o antipatrón → UKDL Trap
+
+Formato mínimo de la entrada:
+  ID: T-[DOMINIO]-[NNN] / HR-[DOMINIO]-[NNN] / PR-[DOMINIO]-[NNN]
+  Trap/Rule: [una frase que describe qué evitar]
+  Fix: [qué hacer en vez de eso]
+  Evidencia: [commit o fecha donde ocurrió]
+
+Destino:
+  vault/knowledge_base/ukdl-universal.md
+  O el vault del proyecto activo.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FASE 5 — PROPAGACIÓN CROSS-PROJECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Si el error es CLASE 1 o 2 (premise o API):
+  ¿Puede este mismo error ocurrir en otros repos?
+  Si sí: documentar en el UKDL global con tag
+  #CROSS-PROJECT para que el PP lo propague.
+
+Si el error es CLASE 3 (gobernanza):
+  Verificar que el firewall/linter cubre este caso.
+  Si no: añadirlo.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTRATO DE REALIDAD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Prohibido declarar DONE si:
+  ▸ Hay un TODO o placeholder en el output
+  ▸ El done-gate no tiene output real pegado
+  ▸ La premise verificada era falsa y no se corrigió
+  ▸ El UKDL seed no está escrito para fixes no triviales
+  ▸ El error es CLASE 0 (ya en NEVER_AGAIN)
+    y no se investigó por qué la HR no lo previno
+
+Kernel vMAX-NULL-ERROR:
+  Sin errores fantasma. Sin "Failed to fetch".
+  Sin "Coming Soon". Sin placeholders.
+  Cada sesión termina con el baseline más alto
+  que el que empezó.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHECKLIST RÁPIDO (antes de declarar fixed)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ☐ Fuente leída antes de proponer el fix
+  ☐ Error clasificado en CLASE 0-6
+  ☐ Premises verificadas (no asumidas)
+  ☐ Fix en el lugar correcto (no en la superficie)
+  ☐ Done-gate con output real pegado
+  ☐ UKDL seed escrito si el fix no era trivial
+  ☐ Cross-project check si aplica
+  ☐ Baseline de esta sesión > baseline anterior
