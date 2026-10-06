@@ -1,6 +1,6 @@
 ---
 covers: [goal-governed-mission-control, mission-control-tax, renewal-carries-route, unbounded-renewal, never-launched-renewal, goal-policy, mission-singleflight, mission-sleep-wake, mission-surface]
-status: C1-C3 LIVE (924bdad6); C4 LIVE (f71fbdd1); C5 LIVE with the commit that lands test_gsd_mission_sleep; C6 DRAFT
+status: C1-C3 LIVE (924bdad6); C4 LIVE (f71fbdd1); C5 LIVE (063ff456; GEX44 4db97ab0); C6 LIVE with the commit that lands test_gsd_mission_surface
 production: 2026-10-06T12:37:10Z laptop sweep halted m-8c64d4f52fc9 and logged "not renewed: never launched" (C3)
 parent: vault/specs/mission-owner-hold.md; vault/specs/mission-envelope-and-compiled-wu.md; Owner ULTRA-PLAN approval "y" 2026-10-06
 ---
@@ -73,6 +73,23 @@ also rewrites the record and spends a `seq`.
 ### C6 Surface (G4) -- lands in S5
 `status --surface`: each non-terminal attempt classed HOT / WARM / COLD / TERMINAL with its wake predicate
 and an Owner-only flag; KPIs (hot ratio, owner-only count, rejects by kind).
+
+Pure and zero-model (`tools/mission_surface.py`), from the record, `plan_next` and the clock. `plan_next`
+does not read `sleep`, so a sleeping attempt still plans relay/launch and supervise holds it: the sleep is
+judged BEFORE the plan. Closed rules, first match wins:
+1. TERMINAL -- state terminal.
+2. COLD (owner_only) -- unreadable record; `owner_hold`; `sleep.wake.kind == owner` (quarantine);
+   plan `surface_blocked` (a human is asked). Nothing in the machine moves it.
+3. WARM -- asleep on a machine waker (`time` with `at` in the future or unknown, `env_ready`,
+   `cwd_aligned`); `gsd_hold`; `capsule_hold`; plan `await` or `surface_unknown`. It wakes by itself or
+   is waiting for an answer already asked.
+4. HOT -- everything else: a `time` wake already due, a live owner at work, or a pass that will act
+   (launch / relay / replace / adopt / unblock / halt).
+KPIs over non-terminal attempts: `hot_ratio` = HOT / non-terminal (None when there are none: absent is not
+zero), `owner_only` count, `holds_by_cause` = count of `sleep.cause`. `status` without `--surface` keeps
+its exact output.
+Acceptance 6: one fixture per rule, the sleeping-relay case classed WARM not HOT (control: the same record
+without `sleep` is HOT), a due `time` wake HOT, and `hot_ratio` None on an empty estate.
 
 ## Acceptance (each gate driven red by a mutation drill on a copy, never on the live file)
 1. A renewal keeps token_estimate, wu_packet, note; never admission (control: fields present on the halted rec).

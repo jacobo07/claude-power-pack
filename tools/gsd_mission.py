@@ -3133,6 +3133,23 @@ def sleep_on_change(rec: dict, cause: str, wake: dict, event: str, now: float, *
     return True
 
 
+def status_surface(rows: list[dict], missions: list[dict], now: float) -> dict:
+    """GGMC C6: the attempts that are not terminal, HOT first, each with its class, waker and Owner-only
+    flag, plus the estate KPIs. `rows` are status rows (plan already computed); unreadable rows are COLD."""
+    import mission_surface as msf
+    by_id = {m["mission_id"]: m for m in missions}
+    out = []
+    for row in rows:
+        m = by_id.get(row["mission_id"])
+        c = msf.classify(m, row.get("plan"), now, TERMINAL)
+        out.append({"mission_id": row["mission_id"], "state": row.get("state"), "epoch": row.get("epoch"),
+                    **c, "sleep_cause": ((m or {}).get("sleep") or {}).get("cause"),
+                    "cwd": (m or {}).get("cwd")})
+    order = {msf.HOT: 0, msf.COLD: 1, msf.WARM: 2}
+    live = sorted((r for r in out if r["class"] != msf.TERMINAL), key=lambda r: (order[r["class"]], r["mission_id"]))
+    return {"attempts": live, "kpi": msf.kpis(out)}
+
+
 def provider_hold(rec: dict, now: float) -> dict | None:
     """The hold for this mission's next successor (tools/provider_breaker.py). If the breaker
     itself cannot run, fall back to the pre-breaker quota check -- and say so in the ledger:
@@ -3300,7 +3317,9 @@ def _cli(argv=None) -> int:
     v.add_argument("--dry-run", action="store_true")
     v.add_argument("--actions-only", action="store_true",
                    help="print only rows where the pass acted (the sweep logs nothing otherwise)")
-    sub.add_parser("status")
+    st = sub.add_parser("status")
+    st.add_argument("--surface", action="store_true",
+                    help="exception surface: non-terminal attempts as HOT/WARM/COLD + KPIs (GGMC C6)")
     args = ap.parse_args(argv)
     if args.cmd == "arm":
         wall = None
@@ -3381,6 +3400,9 @@ def _cli(argv=None) -> int:
                      "iterations": m.get("iterations"), "owner": (m.get("owner") or {}).get("session_id"),
                      "liveness": v_, "evidence": why, "pending": m.get("pending"),
                      "plan": plan_next(m, time.time(), sessions)})
+    if getattr(args, "surface", False):
+        print(json.dumps(status_surface(rows, missions, time.time()), indent=2))
+        return 0
     events = lr.ledger_events()   # once, not per mission (~1 MB on this host)
     for row in rows:
         m = next((x for x in missions if x["mission_id"] == row["mission_id"]), None)
