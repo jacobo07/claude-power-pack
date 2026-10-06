@@ -152,6 +152,30 @@ Plans:
 4. Stale-cache control: changing a source or the parser version invalidates exactly the affected closure.
 5. If the challenger does not beat the scoped path on repeated queries, narrow or reject it and record why.
 
+**Plans:** 6 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md -- tracer: index-selected sessions only through the existing observers; `--plan` KS-4 routing, `--cross-project`, path log, kme_replay wiring
+- [ ] 02-02-PLAN.md -- instruments: `tools/strace_io_sum.py` (open-set columns, CostaLuz detector) and `tools/kme_equivalence.py` (masked 7-file compare, perturb control)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-03-PLAN.md -- certify (shadow agreement), four invalidation keys, watermark closure, IN-04 guard, post-scan shadow guard, deopt table, drill
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 02-04-PLAN.md -- GEX44 corpus: certify, 7 files reproduced, zero CostaLuz bytes with firing controls, read-only proof (`--real`, `--real-exposure`)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 02-05-PLAN.md -- champion vs scoped vs challenger table: N=5 cold/warm, post-delta canary on a scratch copy, Data block
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 02-06-PLAN.md -- criterion 5 decided by measurement (narrowed claim or increment-1 loss), OPP-002 ledger row, 02-EVIDENCE.md
+
 ### Phase 3: Generic opportunity detectors + discovery eval
 
 **Goal**: recurring waste is discovered from execution evidence, not named by the Founder.
