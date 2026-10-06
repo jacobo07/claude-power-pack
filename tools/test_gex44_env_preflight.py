@@ -290,6 +290,53 @@ def make_install(tmp: Path) -> dict:
     return {"inst": inst, "base": base, "floor": floor, "tip": git(inst, "rev-parse", "HEAD")}
 
 
+def make_pick_install(tmp: Path, *, trailer=True, floor_absent=False, spoof=False, drop_required=False,
+                      pick=True) -> dict:
+    """A PP install whose floor lives on a side branch and reached main only as a cherry-pick (or not at all).
+
+    base -> side: floor.txt (the floor) ; main: base -> other.txt -> cherry-pick of the floor. The unrelated
+    main commit makes the pick a DIFFERENT commit (a pick onto the floor's own parent would reproduce the same
+    hash and be an ancestor). trailer=False picks without -x. floor_absent=True builds the history in tmp/src
+    and clones it with --no-local --single-branch --branch main, so the floor OBJECT is genuinely absent from
+    the install, as on GEX44 (a plain local clone copies every object). spoof=True builds no pick and adds two
+    main commits whose messages carry a trailer naming a different 40-hex sha and the floor abbreviated to 8.
+    drop_required=True removes tools/provider_breaker.py in a commit after the pick."""
+    build = (tmp / "src") if floor_absent else install_of(tmp)
+    (build / "tools").mkdir(parents=True)
+    git(build, "init", "-q", "-b", "main")
+    for f in ep.PP_REQUIRED_FILES:
+        (build / f).write_text("# fixture\n", encoding="utf-8")
+    git(build, "add", "-A")
+    git(build, "commit", "-q", "-m", "base")
+    base = git(build, "rev-parse", "HEAD")
+    git(build, "checkout", "-q", "-b", "side")
+    (build / "floor.txt").write_text("floor\n", encoding="utf-8")
+    git(build, "add", "-A")
+    git(build, "commit", "-q", "-m", "floor")
+    floor = git(build, "rev-parse", "HEAD")
+    git(build, "checkout", "-q", "main")
+    (build / "other.txt").write_text("other\n", encoding="utf-8")
+    git(build, "add", "-A")
+    git(build, "commit", "-q", "-m", "other")
+    if spoof:
+        other40 = "0123456789abcdef0123456789abcdef01234567"
+        git(build, "commit", "-q", "--allow-empty", "-m", f"spoof\n\n(cherry picked from commit {other40})")
+        git(build, "commit", "-q", "--allow-empty", "-m", f"spoof\n\n(cherry picked from commit {floor[:8]})")
+    elif pick:
+        git(build, "cherry-pick", *(("-x",) if trailer else ()), floor)
+    if drop_required:
+        git(build, "rm", "-q", "tools/provider_breaker.py")
+        git(build, "commit", "-q", "-m", "drop breaker")
+    inst = install_of(tmp)
+    if floor_absent:
+        inst.parent.mkdir(parents=True, exist_ok=True)
+        git(tmp, "clone", "-q", "--no-local", "--single-branch", "--branch", "main", str(build), str(inst))
+        if subprocess.run(["git", "cat-file", "-e", f"{floor}^{{commit}}"], cwd=inst,
+                          capture_output=True).returncode == 0:
+            raise RuntimeError("fixture error: the floor object is present in a clone that must not have it")
+    return {"inst": inst, "base": base, "floor": floor, "tip": git(inst, "rev-parse", "HEAD")}
+
+
 def link_node(tmp: Path) -> str:
     """The env's own node: a symlink to the system node, in the layout env.sh declares."""
     (tmp / "node" / "bin").mkdir(parents=True, exist_ok=True)
@@ -349,7 +396,8 @@ def interp(tmp: Path, *, node_v="v24.15.0", py_v="Python 3.12.3", js=JS_OK, rng=
 
 # --------------------------------------------------------------------------- rules version
 def grp_pp() -> None:
-    def case(name, build, expect_state, expect_reason=None, expect_finding=None, floor_of=None):
+    def case(name, build, expect_state, expect_reason=None, expect_finding=None, floor_of=None,
+             expect_detail=None, expect_why=None):
         def body():
             tmp = make_env(scratch(), expires_at_ms=FUTURE_MS)
             ctx = build(tmp)
@@ -361,7 +409,12 @@ def grp_pp() -> None:
                 ok = ok and r["reasons"] == [expect_reason]
             if expect_finding:
                 ok = ok and expect_finding in r["findings"]
-            return ok, f"state={r['state']} reasons={r['reasons']} findings={r['findings']} why={r['why']}"
+            for key, want in (expect_detail or {}).items():
+                ok = ok and r["detail"].get(key) == want
+            if expect_why:
+                ok = ok and expect_why in r["why"]
+            return ok, (f"state={r['state']} reasons={r['reasons']} findings={r['findings']} "
+                        f"via={r['detail'].get('floor_via')} present={r['detail'].get('floor_present')} why={r['why']}")
         guarded(name, body)
 
     case("V-ENVPF-PP-STALE-FLOOR-ABSENT", make_install, ep.NOT_READY, "pp_install_stale",
@@ -374,6 +427,22 @@ def grp_pp() -> None:
     case("V-ENVPF-PP-STALE-NOT-ANCESTOR", detach_to_base, ep.NOT_READY, "pp_install_stale")
 
     case("V-ENVPF-PP-READY", make_install, ep.READY)
+
+    # --- floor reached by cherry-pick: three accept paths, one verdict (spec: vault/specs/autonomous-optimization.md)
+    case("V-ENVPF-PP-READY-VIA-ANCESTRY", make_install, ep.READY, expect_detail={"floor_via": "ancestry"})
+    case("V-ENVPF-PP-PICK-TRAILER-READY", lambda tmp: make_pick_install(tmp), ep.READY,
+         expect_finding="floor_by_pick", expect_detail={"floor_via": "cherry_pick_trailer", "floor_present": True})
+    case("V-ENVPF-PP-PICK-FLOOR-ABSENT-READY", lambda tmp: make_pick_install(tmp, floor_absent=True), ep.READY,
+         expect_finding="floor_by_pick", expect_detail={"floor_via": "cherry_pick_trailer", "floor_present": False})
+    case("V-ENVPF-PP-PICK-PATCHID-READY", lambda tmp: make_pick_install(tmp, trailer=False), ep.READY,
+         expect_finding="floor_by_pick", expect_detail={"floor_via": "patch_id"})
+    # main = base -> other, the floor exists on a side branch only: diverged, unrelated, no pick of any kind
+    case("V-ENVPF-PP-UNRELATED-STALE", lambda tmp: make_pick_install(tmp, pick=False), ep.NOT_READY,
+         "pp_install_stale", expect_why="does not contain the floor")
+    case("V-ENVPF-PP-TRAILER-SPOOF-STALE", lambda tmp: make_pick_install(tmp, spoof=True, floor_absent=True),
+         ep.NOT_READY, "pp_install_stale", expect_why="does not contain the floor")
+    case("V-ENVPF-PP-PICK-REQUIRED-FILE", lambda tmp: make_pick_install(tmp, drop_required=True), ep.NOT_READY,
+         "pp_install_stale", expect_why="required files missing")
 
     def sibling(tmp):
         c = make_install(tmp)
