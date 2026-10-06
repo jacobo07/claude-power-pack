@@ -90,3 +90,28 @@ A unit that crosses its cap stops and writes a partial receipt; it never borrows
 - e1_runner.py calls bare git; test_cognitive_economy_program.py already has the canonical shutil.which + absolute fallback.
 - Payback on known TCO: 9.17M runs + Phase 0 2.18M + Phase 1 ~8.6M >= 19.95M -> break-even >= 2,354 calls vs 8,784
   observed main calls: still past break-even on GROSS saving; NET saving (skill reloads) UNMEASURED.
+
+**Owner decision 2026-10-06 (pane 7f13d6e2): "y" to the PROPOSED addendum (A+B, 2.0M HARD). Reconciled with the c77978f6 envelope above: Slice B IS WU2 and stays with c77978f6's WU2-packet.md under its own cap, so only Slice A is drawn here (0.8M); B's 0.8M is not drawn unless the Owner says so.**
+Caps binding, no borrowing: A 0.8M, B 0.8M, reserve 0.4M (proof/repair, Owner-visible if touched). WU1/WU3/WU4 deferred
+until A is live, then re-admitted through A's feasibility gate. One fresh pane per slice; read ONLY this card.
+FIRST ACTION of every worker (before any other tool call): `python tools/mission_spend.py session-declare` for its own
+session id with stop = its cap and a calls estimate; then self_spend reading at close into the Spend table.
+Rules for the worker: one Write per new file (no Edit chains), batch reads, no searches for numbers derivable from
+artifacts, the deterministic parts run as ONE script call.
+
+### Slice A -- admission by construction (EXECUTION, ~6 calls, cap 0.8M)
+Owners to EXTEND (no new system): hooks/session_budget_guard.js (PreToolUse deny; opt-in today), tools/mission_spend.py
+(`session-declare`), tools/rollover.py (`certify`), tools/test_session_budget_guard.py.
+A1 certify (kresume) declares the session budget from the unit's cap on its card, so a card-bound pane cannot run undeclared.
+A2 declare runs feasibility: floor (this session's first-call context, else median first-call of recent same-cwd sessions
+from usage_index) x minimum calls + growth + proof reserve > cap -> refuse with the numbers; unknown floor -> refuse, never allow.
+A3 folded debt: e1_runner.py git via the shutil.which + absolute fallback already in test_cognitive_economy_program.py;
+T3 notice (a5a5e91b holds a710f2a4's c0 paths; T3 HEAD a62fec6e lacks it) via a handoff file, never editing the T3 worktree;
+receipt cost scope -> known TCO >= 19.95M, break-even >= 2,354, net UNMEASURED; <=4 UKDL entries after a duplicate check
+(budget feasibility before start; admission must be default-on; measure from the artifact, not the commit message;
+the authoring pane's context x calls is the budget).
+A4 proof: red/green on a mutated copy for A1 and A2; one REAL fresh pane whose guard denies at the projected point.
+A5 `tools/test_tok18_tranche.py` = the ONE master gate: guard + rollover tests, feasibility both poles, WU2 wake test,
+cep_gen2 --status clean on touched units, Spend table <= authorized cap; missing evidence = FAIL, UNKNOWN never passes.
+
+### Slice B -- WU2 wake mode (EXECUTION, ~6 calls, cap 0.8M) = WU2 above, admitted by A, plus predicted-vs-actual spend row.
