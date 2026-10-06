@@ -43,9 +43,13 @@ OUT_SCOPE = "-home-x-CostaLuz-fixture"
 
 
 # --------------------------------------------------------------------------- gate plumbing
+QUIET = [False]
+
+
 def record(status: str, gate: str, ev: str = "") -> None:
     RESULTS.append((status, gate, str(ev)))
-    print(f"{status} {gate} {ev}".rstrip())
+    if not QUIET[0]:
+        print(f"{status} {gate} {ev}".rstrip())
 
 
 def run_gate(gate: str, fn) -> None:
@@ -1087,5 +1091,171 @@ def run_all() -> int:
     return 0 if not bad else 1
 
 
+# --------------------------------------------------------------------------- mutation drill
+# A guard that cannot fail proves nothing (RESEARCH Pitfall 9). Each mutant below breaks ONE mechanism of the challenger
+# by replacing a kme_pillars / kme_token_audit attribute, and the gate(s) named beside it must turn red; the unmutated
+# run must be green before and after. A mutant that survives means a guard no gate can tell from a working one.
+GATE_FN = dict(GATES)
+DRILL_GATES = [n for n, _ in GATES]
+
+
+def _quiet(names) -> dict:
+    """Run the named gates with printing off; {gate: passed} for the ones that ran to PASS/FAIL."""
+    start = len(RESULTS)
+    QUIET[0] = True
+    try:
+        for n in names:
+            run_gate(n, GATE_FN[n])
+    finally:
+        QUIET[0] = False
+    return {g: st == "PASS" for st, g, _ in RESULTS[start:] if st in ("PASS", "FAIL")}
+
+
+def _patch(mod, attr, value):
+    saved = getattr(mod, attr)
+    setattr(mod, attr, value)
+    return lambda: setattr(mod, attr, saved)
+
+
+def _m_watermark_never_stale():
+    return _patch(kp, "_watermark", lambda ctx, state, cert: set())
+
+
+def _m_watermark_all_stale():
+    return _patch(kp, "_watermark", lambda ctx, state, cert: {(p, s) for (p, s, _z, _m) in state["disk"].values()})
+
+
+def _m_parser_constant():
+    return _patch(kp, "selection_parser_digest", lambda: "0" * 64)
+
+
+def _m_attribution_skipped():
+    return _patch(kp, "_check_attribution", lambda *a: None)
+
+
+def _m_metric_constant():
+    return _patch(kp, "metric_digests", lambda: {k: "0" * 64 for k in kp.METRIC_DEFINITIONS})
+
+
+def _m_metric_changed_all():
+    return _patch(kp, "_metric_changed", lambda cert_metric, live: list(kp.PILLAR_KEYS))
+
+
+def _m_select_admits_all():
+    return _patch(kp, "_make_select", lambda read_set, admitted: (lambda proj, sid, path: True))
+
+
+def _m_refused_session_unregistered():
+    real = kta.scan_project
+
+    def mutant(pdir, observer=None, keep=None, select=None):
+        if select is None:
+            return real(pdir, observer=observer, keep=keep)
+        touched = set()
+
+        def spy(proj, sid, path):
+            r = select(proj, sid, path)
+            if r:
+                touched.add((proj, sid))
+            return r
+        return [s for s in real(pdir, observer=observer, keep=keep, select=spy)
+                if (s["project"], s["session"]) in touched]
+    return _patch(kta, "scan_project", mutant)
+
+
+def _m_deopt_not_recorded():
+    real = kp._resolve
+
+    def mutant(ctx, pillars, observer_factories=None):
+        out = real(ctx, pillars, observer_factories)
+        ctx["deopt"] = None
+        return out
+    return _patch(kp, "_resolve", mutant)
+
+
+def _m_forced_challenger_falls_back():
+    real = kp._resolve
+
+    def mutant(ctx, pillars, observer_factories=None):
+        if ctx.get("plan") == "challenger":
+            ctx["plan"] = "auto"
+        return real(ctx, pillars, observer_factories)
+    return _patch(kp, "_resolve", mutant)
+
+
+def _m_missing_scope_runs_global():
+    real = kp._prepare
+
+    def mutant(a, pillars):
+        if getattr(a, "plan", "champion") in ("challenger", "auto") and getattr(a, "project_filter", None) is None:
+            a.cross_project = True
+        return real(a, pillars)
+    return _patch(kp, "_prepare", mutant)
+
+
+def _m_no_first_ts_dropped():
+    return _patch(kp, "_no_first_ts_sessions", lambda until, state: set())
+
+
+def _m_shadow_always_admits():
+    return _patch(kp, "_shadow_check", lambda ctx, sc, access: None)
+
+
+def _m_certify_skips_comparison():
+    return _patch(kp, "_selection_agreement", lambda champion, index: (True, [], []))
+
+
+def _m_index_read_write():
+    return _patch(kp, "_open_index_ro", lambda path: kp._usage_index().connect(Path(path)))
+
+
+MUTANTS = [
+    ("M1 _watermark never reports a stale session", _m_watermark_never_stale, ["V-KMEC-STALE-SOURCE"]),
+    ("M2 _watermark marks every session stale", _m_watermark_all_stale, ["V-KMEC-STALE-SOURCE"]),
+    ("M3 selection_parser_digest is a constant", _m_parser_constant, ["V-KMEC-STALE-PARSER"]),
+    ("M4 attribution version comparison skipped", _m_attribution_skipped, ["V-KMEC-ATTR-VERSION"]),
+    ("M5 metric_digests are constants", _m_metric_constant, ["V-KMEC-STALE-METRIC"]),
+    ("M6 metric_changed lists every pillar", _m_metric_changed_all, ["V-KMEC-STALE-METRIC"]),
+    ("M7 the select callable admits every file", _m_select_admits_all, ["V-KMEC-TRACER-D-E2E"]),
+    ("M8 a refused file's session is not registered", _m_refused_session_unregistered, ["V-KMEC-TRACER-D-E2E"]),
+    ("M9 an auto deopt is recorded as null", _m_deopt_not_recorded, ["V-KMEC-DEOPT-LOGGED"]),
+    ("M10 a forced challenger falls back to the scoped tier with exit 0", _m_forced_challenger_falls_back,
+     ["V-KMEC-KS4-FORCED"]),
+    ("M11 a missing scope without --cross-project runs global", _m_missing_scope_runs_global,
+     ["V-KMEC-CROSS-PROJECT-EXPLICIT"]),
+    ("M12 sessions without a first timestamp (IN-04) are not added", _m_no_first_ts_dropped,
+     ["V-KMEC-IN04-NO-FIRST-TS"]),
+    ("M13 the post-scan shadow guard always admits", _m_shadow_always_admits, ["V-KMEC-DEOPT-LOGGED"]),
+    ("M14 certify skips the per-session comparison", _m_certify_skips_comparison, ["V-KMEC-CERTIFY-SHADOW"]),
+    ("M15 the index is opened read-write through the usage_index connect helper", _m_index_read_write,
+     ["V-KMEC-INDEX-READ-ONLY"]),
+]
+
+
+def run_drill() -> int:
+    """Control first (every in-process gate green), each mutant applied and restored, then an unmutated rerun."""
+    control = _quiet(DRILL_GATES)
+    control_ok = len(control) == len(DRILL_GATES) and all(control.values())
+    print(f"{'PASS' if control_ok else 'FAIL'} DRILL-CONTROL unmutated run: {sum(control.values())}/{len(control)} gates green")
+    killed = 0
+    for label, apply, targets in MUTANTS:
+        restore = apply()
+        try:
+            seen = _quiet(targets)
+        finally:
+            restore()
+        by = [t for t in targets if seen.get(t) is False]
+        if len(by) == len(targets):
+            killed += 1
+            print(f"KILLED {label} by {', '.join(by)}")
+        else:
+            print(f"SURVIVED {label} (still green or absent: {', '.join(t for t in targets if seen.get(t) is not False)})")
+    after = _quiet(DRILL_GATES)
+    clean = len(after) == len(DRILL_GATES) and all(after.values())
+    print(f"{'PASS' if clean else 'FAIL'} DRILL-CLEAN-AFTER-MUTANTS unmutated rerun: {sum(after.values())}/{len(after)} gates green")
+    print(f"DRILL killed={killed}/{len(MUTANTS)}")
+    return 0 if (killed == len(MUTANTS) and control_ok and clean) else 1
+
+
 if __name__ == "__main__":
-    sys.exit(run_all())
+    sys.exit(run_drill() if "--drill" in sys.argv[1:] else run_all())
