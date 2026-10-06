@@ -60,7 +60,10 @@ Added here:
       ledger read through any other program's path is refused.
 
 Modes and exit codes are CE's: --final / --status / --pillar X / --selftest;
-0 pass, 1 fail, 2 could not run.
+0 pass, 1 fail, 2 could not run. `--generation 2 --status|--final|--selftest` judges the IC-gen2 ledger
+(vault/programs/incremental-cognition/gen2/ledger.json) through tools/ic_gen2.py, which rebinds the CE globals
+only inside a context manager and prints its own ICP_GEN2_VERDICT / ICP_GEN2_SELFTEST lines; `--pillar` is
+generation 1 only.
 """
 from __future__ import annotations
 
@@ -1280,8 +1283,44 @@ def selftest(verbose=True) -> bool:
     return ok
 
 
+def _generation(argv):
+    """(generation, argv without the --generation tokens). Absent -> 1; an unparsable value -> (None, argv)."""
+    gen, rest, i = 1, [], 0
+    while i < len(argv):
+        a = argv[i]
+        if a == "--generation" and i + 1 < len(argv):
+            gen, i = argv[i + 1], i + 2
+            continue
+        if a.startswith("--generation="):
+            gen, i = a.split("=", 1)[1], i + 1
+            continue
+        rest.append(a)
+        i += 1
+    try:
+        return int(gen), rest
+    except (TypeError, ValueError):
+        return None, rest
+
+
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    gen, g_argv = _generation(argv)
+    if gen not in (1, 2):
+        print("ICP_GEN2_VERDICT=COULD_NOT_RUN --generation must be 1 or 2")
+        return 2
+    if gen == 2:
+        if any(a == "--pillar" or a.startswith("--pillar=") for a in g_argv):
+            print("ICP_GEN2_VERDICT=COULD_NOT_RUN --pillar applies to generation 1 only")
+            return 2
+        mode = "status" if "--status" in g_argv else "final" if "--final" in g_argv or not g_argv else None
+        if "--selftest" in g_argv and mode is None:
+            mode = "selftest"
+        if mode is None:
+            print("ICP_GEN2_VERDICT=COULD_NOT_RUN usage: --generation 2 --status|--final|--selftest")
+            return 2
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import ic_gen2  # lazy: generation 1 never loads it
+        return ic_gen2.main(mode)
     if "--selftest" in argv:
         own = selftest()
         rc = ce.main(["--selftest"])
