@@ -317,12 +317,56 @@ def _set_flag(session_id: str, template: str) -> None:
 ROLLOVER_INFLIGHT_MAX_AGE_S = 600
 
 
-def _clear_in_flight(session_id: str) -> bool:
-    flag = Path(tempfile.gettempdir()) / ROLLOVER_INFLIGHT_FLAG.format(session_id=session_id)
+#: Outcomes the inbox daemon ledgers when a request is over (Write-LedgerRow in
+#: auto-compact-sendkeys-daemon.ps1): nothing will be typed for it any more.
+INBOX_OUTCOME_EVENTS = ("withdrawn", "refused", "compact_dispatched")
+INBOX_LEDGER_TAIL_BYTES = 262144
+
+
+def _inbox_request_ended(session_id: str, since_ts: float) -> bool:
+    """True only on POSITIVE evidence: the daemon ledgered an outcome for THIS session after
+    `since_ts`. Not "req.json is absent": the daemon writes that file only once the transcript ends
+    on the line, i.e. after the model's reply and the Stop chain, so its absence also means "not
+    picked up yet". An unreadable ledger is unknown, and unknown keeps the request in flight (the
+    600 s bound still applies). Never raises.
+
+    The daemon stamps whole seconds, so a row in the dispatch's own second is ambiguous (it may
+    be the PREVIOUS request's outcome) and counts as not-ended. A real outcome cannot land there:
+    it follows the model's reply to the dispatching block."""
+    base = os.environ.get("GSD_LONG_RUN_STATE_DIR") or (Path.home() / ".claude" / "state")
     try:
-        return (_now_ts() - flag.stat().st_mtime) <= ROLLOVER_INFLIGHT_MAX_AGE_S
+        with open(Path(base) / "gsd-autorun-ledger.jsonl", "rb") as fh:
+            fh.seek(0, os.SEEK_END)
+            fh.seek(max(0, fh.tell() - INBOX_LEDGER_TAIL_BYTES))
+            tail = fh.read().decode("utf-8", "replace")
     except OSError:
         return False
+    for line in reversed(tail.splitlines()):
+        if session_id not in line:
+            continue
+        try:
+            row = json.loads(line)
+            if row.get("session_id") != session_id or row.get("event") not in INBOX_OUTCOME_EVENTS:
+                continue
+            ts = _dt.datetime.fromisoformat(str(row.get("ts")).replace("Z", "+00:00")).timestamp()
+        except Exception:
+            continue
+        if ts > since_ts:
+            return True
+    return False
+
+
+def _clear_in_flight(session_id: str) -> bool:
+    """A dispatched `/clear` is live until the daemon says it is over, bounded by its window.
+    Measured 2026-10-06 (1a9ec524): age alone kept a WITHDRAWN request "in flight" for 10 min."""
+    flag = Path(tempfile.gettempdir()) / ROLLOVER_INFLIGHT_FLAG.format(session_id=session_id)
+    try:
+        since = flag.stat().st_mtime
+    except OSError:
+        return False
+    if (_now_ts() - since) > ROLLOVER_INFLIGHT_MAX_AGE_S:
+        return False
+    return not _inbox_request_ended(session_id, since)
 
 
 def _append_progress_md(atomic_write, session_id: str, used_pct: float, remaining_pct, cwd: str, transcript_path: str) -> None:
@@ -1061,7 +1105,13 @@ def _rollover_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict
     wall a turn earlier, which would authorise forgetting whatever the model did in between.
     """
     if _flag_exists(session_id, ROLLOVER_CLEAR_FLAG):
-        return None
+        if not _resealed_since_clear(session_id):
+            return None
+        # A /kclear sealed after this cycle's /clear, which is no longer in flight: a new request
+        # to cross. Re-open step 2 for it; the gate below judges the new seal as it did the first.
+        for _rf in (ROLLOVER_CLEAR_FLAG, ROLLOVER_INFLIGHT_FLAG, ROLLOVER_WAIT_FLAG):
+            _clear_flag(session_id, _rf)
+        _ledger(session_id, "rollover_reseal_rearmed")
     g = _rollover_gate(session_id)
     if g["verdict"] == "SAFE_TO_FORGET":
         _set_flag(session_id, ROLLOVER_CLEAR_FLAG)   # before the dispatch: never re-entrant
@@ -1117,6 +1167,23 @@ def _own_capsule(session_id: str) -> Path:
     return root / "capsules" / f"{re.sub(r'[^A-Za-z0-9_.-]', '_', session_id)}.json"
 
 
+def _resealed_since_clear(session_id: str) -> bool:
+    """Did a /kclear seal this session's capsule AFTER this cycle's `/clear` step closed, with no
+    `/clear` still in flight? Only write_capsule touches the capsule file (claim and certify use
+    sidecars), so its mtime is the seal time. The same seal never qualifies, so a /clear that
+    fails to land is retried only by a NEW /kclear -- never by the next Stop, which would loop."""
+    if _clear_in_flight(session_id):
+        return False
+    cap = _own_capsule(session_id)
+    try:
+        sealed = cap.stat().st_mtime
+        closed = (Path(tempfile.gettempdir())
+                  / ROLLOVER_CLEAR_FLAG.format(session_id=session_id)).stat().st_mtime
+    except OSError:
+        return False
+    return sealed > closed and not cap.with_suffix(".certified").exists()
+
+
 def _self_sealed_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict | None:
     """A capsule this session sealed WITHOUT the wall asking -- a /kclear the Owner or the model
     ran, or the one the session-budget breaker tells the model to run -- is the same request
@@ -1131,8 +1198,10 @@ def _self_sealed_step(session_id: str, cwd: str, transcript: str, used_pct) -> d
     wipes ASK/CLEAR at a low reading, so without this a /clear whose typing failed would be
     re-dispatched on every later Stop -- a block loop. A REFUSED seal is not retried either;
     sealing again (a new /kclear) is a new seal and is acted on."""
-    if _flag_exists(session_id, ROLLOVER_ASK_FLAG) or _flag_exists(session_id, ROLLOVER_CLEAR_FLAG):
-        return None
+    if _flag_exists(session_id, ROLLOVER_ASK_FLAG):
+        return None                                  # step 2 already runs on the ASK branch
+    if _flag_exists(session_id, ROLLOVER_CLEAR_FLAG) and not _resealed_since_clear(session_id):
+        return None                                  # a closed step re-opens only for a NEW seal
     cap = _own_capsule(session_id)
     try:
         st = cap.stat()

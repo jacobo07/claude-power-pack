@@ -369,6 +369,129 @@ def main() -> int:
           "fallback closes the rollover leg without muting the compact leg")
     clear(wd, s)
 
+    # Measured 2026-10-06 (1a9ec524): the daemon ledgered `withdrawn` at 20:04:57 (a peer message
+    # re-opened the turn), the next Stops stayed quiet "in flight" anyway, and a second /kclear at
+    # 20:10 sealed SAFE_TO_FORGET with nothing dispatched -- ASK/CLEAR were still set, so step 2
+    # returned None at its first line. The Owner typed /clear. Replay it.
+    print("a withdrawn /clear is over, and a fresh seal after it crosses again")
+    ledger = _TMP / "state" / "gsd-autorun-ledger.jsonl"
+
+    def daemon_row(s_, event, at=None):
+        # Byte-shaped like auto-compact-sendkeys-daemon.ps1 Write-LedgerRow: compact, seconds.
+        ts = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(at if at is not None else time.time()))
+        with open(ledger, "a", encoding="utf-8") as fh:
+            fh.write('{"detail":"terminal inbox %s","session_id":"%s","event":"%s","ts":"%s"}\n'
+                     % (event, s_, event, ts))
+
+    def dispatched_case():
+        s_, cap_ = self_case(wd)
+        calls.clear()
+        with_verdict("SAFE_TO_FORGET")
+        wd._set_flag(s_, wd.ROLLOVER_ASK_FLAG)
+        old_seal = time.time() - 5
+        os.utime(cap_, (old_seal, old_seal))      # sealed before the dispatch, as in the incident
+        wd._rollover_step(s_, str(ROOT), "", 45.0)
+        # The daemon's outcome follows the model's reply, seconds after the dispatch: date the
+        # dispatch back so an outcome stamped "now" is unambiguously newer (whole-second stamps).
+        back = time.time() - 3
+        for f in (wd.ROLLOVER_CLEAR_FLAG, wd.ROLLOVER_INFLIGHT_FLAG):
+            os.utime(Path(tempfile.gettempdir()) / f.format(session_id=s_), (back, back))
+        return s_, cap_
+
+    s, cap = dispatched_case()
+    check("V-ROLLACT-INFLIGHT-UNTIL-OUTCOME", len(calls) == 1 and wd._clear_in_flight(s),
+          "no daemon outcome yet: the request is still live (control)")
+    daemon_row(s, "withdrawn")
+    check("V-ROLLACT-WITHDRAWN-NOT-INFLIGHT", not wd._clear_in_flight(s),
+          "the daemon's own `withdrawn` row ends the request; the wall is not muted for 600 s")
+    clear(wd, s)
+
+    s, cap = dispatched_case()
+    daemon_row(s, "refused")
+    check("V-ROLLACT-REFUSED-NOT-INFLIGHT", not wd._clear_in_flight(s), "`refused` ends it too")
+    clear(wd, s)
+
+    s, cap = dispatched_case()
+    daemon_row(s, "withdrawn", at=time.time() - 120)      # an earlier cycle's outcome
+    daemon_row(sid(), "withdrawn")                        # another session's outcome
+    check("V-ROLLACT-OLD-OR-FOREIGN-OUTCOME-STILL-INFLIGHT", wd._clear_in_flight(s),
+          "only THIS session's outcome, newer than THIS dispatch, ends it")
+    clear(wd, s)
+
+    # The loop guard: the SAME seal is never re-dispatched after a withdrawal.
+    s, cap = dispatched_case()
+    daemon_row(s, "withdrawn")
+    again = wd._rollover_step(s, str(ROOT), "", 45.0)
+    check("V-ROLLACT-WITHDRAWN-SAME-SEAL-NOT-RETRIED", len(calls) == 1 and again is None,
+          f"dispatches={len(calls)} -- a retry needs a new /kclear, or a busy turn would loop")
+    # A NEW seal after the withdrawal IS acted on, through the same gate.
+    t = time.time() + 2
+    os.utime(cap, (t, t))
+    out = wd._rollover_step(s, str(ROOT), "", 48.0)
+    check("V-ROLLACT-RESEAL-AFTER-WITHDRAW-REDISPATCHES",
+          [c["kind"] for c in calls] == ["clear", "clear"] and (out or {}).get("decision") == "block",
+          f"calls={[c['kind'] for c in calls]} decision={(out or {}).get('decision')}")
+    check("V-ROLLACT-RESEAL-REDISPATCH-IS-INFLIGHT", wd._clear_in_flight(s),
+          "the re-dispatch is a live request again, and quiets the Stops after it")
+    clear(wd, s)
+
+    # A new seal while the first /clear is STILL live does not dispatch a second one over it.
+    s, cap = dispatched_case()
+    t = time.time() + 2
+    os.utime(cap, (t, t))
+    out = wd._rollover_step(s, str(ROOT), "", 48.0)
+    check("V-ROLLACT-RESEAL-WHILE-INFLIGHT-WAITS", len(calls) == 1 and out is None,
+          f"dispatches={len(calls)}")
+    clear(wd, s)
+
+    # A refused gate on the new seal types nothing (the gate stays the only authority).
+    s, cap = dispatched_case()
+    daemon_row(s, "withdrawn")
+    t = time.time() + 2
+    os.utime(cap, (t, t))
+    with_verdict("REFUSED", ["stub"])
+    out = wd._rollover_step(s, str(ROOT), "", 48.0)
+    check("V-ROLLACT-RESEAL-REFUSED-TYPES-NOTHING", len(calls) == 1 and out is None,
+          f"dispatches={len(calls)}")
+    clear(wd, s)
+
+    # The whole incident through run(): withdrawn, re-sealed, next Stop at 48 % crosses.
+    s, cap = dispatched_case()
+    daemon_row(s, "withdrawn")
+    t = time.time() + 2
+    os.utime(cap, (t, t))
+    (Path(tempfile.gettempdir()) / wd.ORCH_THROTTLE_FLAG.format(session_id=s)).write_text(
+        str(time.time()), encoding="utf-8")
+    os.environ["_TEST_CONTEXT_PCT"] = "48.0"
+    try:
+        out = wd.run({"session_id": s, "cwd": str(ROOT), "transcript_path": ""}) or {}
+    finally:
+        os.environ.pop("_TEST_CONTEXT_PCT", None)
+    check("V-ROLLACT-INCIDENT-REPLAY-CROSSES",
+          [c["kind"] for c in calls] == ["clear", "clear"] and out.get("decision") == "block"
+          and "`/clear`" in out.get("reason", ""),
+          f"calls={[c['kind'] for c in calls]} decision={out.get('decision')}")
+    clear(wd, s)
+
+    # Red control: without the in-flight check, a re-seal types a second /clear over a live one.
+    src = WATCHDOG.read_text(encoding="utf-8")
+    needle = "    if _clear_in_flight(session_id):\n        return False\n    cap = _own_capsule(session_id)"
+    check("V-ROLLACT-RESEAL-MUTANT-APPLIES", src.count(needle) == 1, "the mutation site is unique")
+    mut2 = importlib.util.module_from_spec(importlib.util.spec_from_loader("ctxwd_reseal_mut", loader=None))
+    mut2.__file__ = str(WATCHDOG)
+    exec(compile(src.replace(needle, "    cap = _own_capsule(session_id)"), str(WATCHDOG), "exec"),
+         mut2.__dict__)
+    mut2._dispatch_continuation = wd._dispatch_continuation
+    mut2._spawn_kresume_courier = wd._spawn_kresume_courier
+    mut2._rollover_gate = lambda s_: {"verdict": "SAFE_TO_FORGET", "reasons": [], "rc": 0}
+    s, cap = dispatched_case()
+    t = time.time() + 2
+    os.utime(cap, (t, t))
+    mut2._rollover_step(s, str(ROOT), "", 48.0)
+    check("V-ROLLACT-RESEAL-MUTANT-GOES-RED", len(calls) == 2,
+          f"mutant dispatched {len(calls)}x over a live /clear (the real hook: 1x)")
+    clear(wd, s)
+
     print(f"ROLLACT_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
