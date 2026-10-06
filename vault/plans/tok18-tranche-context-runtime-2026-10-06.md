@@ -64,3 +64,9 @@ Projection at write time: sunk 3.35M + units central 4.0M = 7.35M > 6M cap. Per 
 the Owner picks: (a) the 6M cap applies to WU1-WU4 only (scan sunk), or (b) the 6M cap holds tranche-wide and the
 units shrink to <= 2.65M (WU3 cut to 1.2M: miner + naive-trim arm on 4 planner runs, verdict UNDECIDED-allowed).
 Cause is the same as the prior three overruns: ~167k context per call in the approving pane.
+
+**Owner decision 2026-10-06: (b).** 6M is tranche-wide. Remaining is 2.65M minus this decision's calls
+(~0.9M; the first WU1 step re-measures pane c77978f6 with self_spend). Per-unit caps, binding: WU1 0.6M,
+WU2 0.4M, WU3 1.2M (miner + naive-trim arm + dependency-aware packet on 4 historical planner runs; UNDECIDED
+admissible; no paid canary), WU4 0.3M. If the re-measured remainder is below their sum, WU4 is cut first, then WU3.
+A unit that crosses its cap stops and writes a partial receipt; it never borrows from the next.
