@@ -23,7 +23,13 @@ calibration made from an Owner meter reading paired with a measured window, and
 it is labelled ESTIMATED.
 
 CLI:
-  refresh [--deadline S]          index new bytes (default 600 s for a first build)
+  refresh [--deadline S] [--all]  index new bytes (default 600 s for a first build); --all (or
+                                  --since-days 0) ingests every transcript whatever its age.
+                                  Prints wall_s, bytes_read, bytes_ingested, files_opened,
+                                  files_seen and proc {rchar_delta, maxrss_kb} (null if unreadable)
+  backfill-v5 [--deadline S]      opt-in: bring legacy (v4-migrated) files to full v5 coverage by
+                                  re-reading only the bytes below their committed offset; reports
+                                  them as bytes_reread; a second run reads 0 (exit 0 only when OK)
   window START END                aggregate for an ISO interval
   burn                            refresh (bounded) + current state
   replay --at ISO [--step-h 1]    state at past instants, from the index only
@@ -1259,6 +1265,161 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             "pattern_error": pattern_error}
 
 
+class _FileChanged(Exception):
+    """The bytes below a file's committed offset are no longer the ones the index consumed."""
+
+
+def backfill_v5(con: sqlite3.Connection, proj: Path | None = None, *,
+                deadline_s: float = 600.0) -> dict:
+    """Opt-in history backfill (pillar O rule 2): bring every legacy file (v5_from NULL, or a
+    legacy file that grew, v5_from above 0) to full v5 coverage by re-reading ONLY the bytes
+    below its committed offset. Neither migration nor refresh ever does this; the bytes are
+    reported (`bytes_reread`) so the cost is visible, and a second run reads zero.
+
+    Per file, in its own BEGIN IMMEDIATE transaction gated by the same snapshot check as refresh:
+    the file's v5 rows are rebuilt from one bounded read (`end_offset` = files.offset) and
+    files.v5_from, first_ts, last_ts, head_sha, tail_sha, content_id, pat_ver and parse_errors are
+    set from it. calls, quota, prompts, spawns, subagents and every offset, size and mtime are
+    never written (v4 history is untouched). Deadline-bound and resumable; a file that changed,
+    shrank, vanished or is being advanced by another writer stays pending. `proj` is accepted for
+    symmetry with refresh: the candidates are the index's own legacy rows (their stored paths).
+
+    Returns {status: OK|PARTIAL|NOT_MIGRATED|FAILED, files_backfilled, bytes_reread, pending,
+    skipped_concurrent, skipped_changed, errors, wall_s}."""
+    t0 = time.monotonic()
+    t_end = t0 + deadline_s
+    res = {"status": "OK", "files_backfilled": 0, "bytes_reread": 0, "pending": 0,
+           "skipped_concurrent": 0, "skipped_changed": 0, "errors": [], "wall_s": 0.0}
+    cols = {r[1] for r in con.execute("PRAGMA table_info(files)")}
+    ver = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
+    if "v5_from" not in cols or ver is None or int(ver[0]) < SCHEMA_VERSION:
+        res.update(status="NOT_MIGRATED", pending=None,
+                   errors=["index is below schema v5: run refresh once (additive, reads nothing)"])
+        return res
+    touched: list = []
+    try:
+        pat = _load_patterns(con)
+        res["pattern_error"] = pat["error"]
+        snap = _snapshot(con)
+        todo = con.execute("SELECT path, is_sub, archived, offset FROM files WHERE "
+                           "(v5_from IS NULL OR v5_from > 0) AND offset > 0 ORDER BY path").fetchall()
+        for path, is_sub, archived, offset in todo:
+            if time.monotonic() >= t_end:
+                res["pending"] += 1
+                res["status"] = "PARTIAL"
+                continue
+            fp = Path(path)
+            try:
+                size = fp.stat().st_size
+            except OSError as e:
+                res["pending"] += 1
+                res["errors"].append(f"{path}: {type(e).__name__}: {e}")
+                continue
+            if size < offset:                          # rewritten shorter: refresh restarts it
+                res["pending"] += 1
+                res["skipped_changed"] += 1
+                continue
+            if not _begin_file(con, path, snap.get(path)):
+                res["pending"] += 1
+                res["skipped_concurrent"] += 1
+                continue
+            try:
+                for t in _V5_FILE_TABLES:
+                    con.execute(f"DELETE FROM {t} WHERE file=?", (path,))
+                state = {"prompt": None, "title": None, "call_meta": {}, "cwd": None,
+                         "first_ts": None, "last_ts": None, "first_ok": True,
+                         "pats": pat["compiled"], "cwds_seen": set(), "call_ts": {}}
+
+                def on_line(o, s, path=path, state=state):      # the v5 extractor only
+                    _v5_line(con, path, state, o, s)
+
+                stats: dict = {}
+                calls, end, _ep = _tis.calls_from(fp, 0, on_line=on_line, stats=stats,
+                                                  end_offset=offset)
+                if end != offset:
+                    raise _FileChanged(f"read ended at {end}, committed offset is {offset}")
+                for c in calls:
+                    u = c["usage"]
+                    cc = u.get("cache_creation") if isinstance(u.get("cache_creation"), dict) else {}
+                    vals = (_epoch(c.get("ts")), c.get("model") or "", _num(u, "input_tokens"),
+                            _num(u, "cache_creation_input_tokens"),
+                            _num(cc, "ephemeral_5m_input_tokens"),
+                            _num(cc, "ephemeral_1h_input_tokens"),
+                            _num(u, "cache_read_input_tokens"), _num(u, "output_tokens"))
+                    cts = vals[0] if vals[0] is not None else state["call_ts"].get(c["key"])
+                    con.execute(
+                        "INSERT INTO call_files(k,file,ts,model,inp,cw,cw5,cw1,cr,out) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(k,file) DO UPDATE SET "
+                        "ts=excluded.ts, model=excluded.model, inp=max(inp,excluded.inp), "
+                        "cw=max(cw,excluded.cw), cw5=max(cw5,excluded.cw5), "
+                        "cw1=max(cw1,excluded.cw1), cr=max(cr,excluded.cr), "
+                        "out=max(out,excluded.out)", (_key(path, c["key"]), path, cts) + vals[1:])
+                head, tail = stats.get("head_sha"), stats.get("tail_sha")
+                cid = _content_id(end, head, tail) if head and tail else None
+                con.execute("UPDATE files SET v5_from=0, first_ts=?, last_ts=?, head_sha=?, "
+                            "tail_sha=?, content_id=?, pat_ver=?, parse_errors=?, dup_of=NULL "
+                            "WHERE path=?", (state["first_ts"], state["last_ts"], head, tail, cid,
+                                             pat["set"], stats.get("bad", 0), path))
+                _dup_groups(con, {cid})
+                con.commit()
+            except _FileChanged:
+                con.rollback()
+                res["pending"] += 1
+                res["skipped_changed"] += 1
+                continue
+            except OSError as e:
+                con.rollback()
+                res["pending"] += 1
+                res["errors"].append(f"{path}: {type(e).__name__}: {e}")
+                continue
+            res["files_backfilled"] += 1
+            res["bytes_reread"] += stats.get("bytes_seen", 0)
+            touched.append(path)
+        _attribute(con, touched)                      # stored rows only: opens no transcript
+        if res["pending"] and res["status"] == "OK":
+            res["status"] = "PARTIAL"
+    except Exception as e:  # noqa: BLE001 -- typed, never silent
+        con.rollback()
+        res["status"] = "FAILED"
+        res["errors"].append(f"{type(e).__name__}: {e}")
+    res["errors"] = res["errors"][:5]
+    res["wall_s"] = round(time.monotonic() - t0, 3)
+    con.execute("INSERT OR REPLACE INTO meta VALUES('last_backfill_v5', ?)",
+                (json.dumps({"at": time.time(), **{k: res[k] for k in (
+                    "status", "files_backfilled", "bytes_reread", "pending")}}),))
+    con.commit()
+    return res
+
+
+PROC_IO = "/proc/self/io"
+
+
+def _proc_rchar():
+    """Bytes this process has asked the kernel to read so far (/proc/self/io rchar), or None
+    when the file cannot be read (not Linux, or no permission): unknown, never zero."""
+    try:
+        for line in Path(PROC_IO).read_text(encoding="ascii").splitlines():
+            if line.startswith("rchar:"):
+                return int(line.split()[1])
+    except (OSError, ValueError, IndexError):
+        pass
+    return None
+
+
+def _proc_cost(rchar_before) -> dict:
+    """{rchar_delta, maxrss_kb} of this process since `rchar_before` was taken (None when
+    unreadable / unavailable on this platform)."""
+    after = _proc_rchar()
+    delta = after - rchar_before if (after is not None and rchar_before is not None) else None
+    try:
+        import resource
+        rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        rss = rss // 1024 if sys.platform == "darwin" else rss      # darwin reports bytes
+    except (ImportError, OSError, ValueError):
+        rss = None
+    return {"rchar_delta": delta, "maxrss_kb": rss}
+
+
 # -- pricing -----------------------------------------------------------------
 
 def load_prices() -> dict:
@@ -1868,12 +2029,15 @@ def _load_expected(expect: str, expect_file) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
-    ap.add_argument("cmd", choices=["refresh", "window", "burn", "replay", "holdout", "population"])
+    ap.add_argument("cmd", choices=["refresh", "window", "burn", "replay", "holdout", "population", "backfill-v5"])
     ap.add_argument("args", nargs="*")
     ap.add_argument("--db", default=str(DEFAULT_DB))
     ap.add_argument("--proj", default=str(DEFAULT_PROJ))
     ap.add_argument("--deadline", type=float, default=600.0)
-    ap.add_argument("--since-days", type=float, default=21.0)
+    ap.add_argument("--since-days", type=float, default=21.0,
+                    help="skip transcripts untouched for longer (0 = no limit, same as --all)")
+    ap.add_argument("--all", action="store_true",
+                    help="refresh: ingest every shape-matched transcript whatever its age")
     ap.add_argument("--at", default=None)
     ap.add_argument("--until", default=None)
     ap.add_argument("--step-h", type=float, default=1.0)
@@ -1893,8 +2057,16 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     con = connect(Path(a.db))
     if a.cmd == "refresh":
-        r = refresh(con, Path(a.proj), since_epoch=time.time() - a.since_days * 86400,
-                    deadline_s=a.deadline)
+        since = None if (a.all or a.since_days <= 0) else time.time() - a.since_days * 86400
+        rchar = _proc_rchar()
+        r = refresh(con, Path(a.proj), since_epoch=since, deadline_s=a.deadline)
+        r["proc"] = _proc_cost(rchar)
+        print(json.dumps(r))
+        return 0 if r["status"] == "OK" else 2
+    if a.cmd == "backfill-v5":
+        rchar = _proc_rchar()
+        r = backfill_v5(con, Path(a.proj), deadline_s=a.deadline)
+        r["proc"] = _proc_cost(rchar)
         print(json.dumps(r))
         return 0 if r["status"] == "OK" else 2
     if a.cmd == "window":

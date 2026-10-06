@@ -1967,6 +1967,154 @@ def grp_reconcile() -> None:
          f"the v4 first-writer figure differs by order: {fw}")
 
 
+# -- plan 04 task 2: opt-in history backfill, cold build, CLI cost counters -------------------------
+
+V5_ROW_TABLES = (("call_files", "k, file"), ("tool_events", "file, tool_use_id"),
+                 ("user_hits", "file, off"), ("file_cwds", "file, cwd"),
+                 ("file_attribution", "file, kind, name, role"))
+V5_FILE_STATE = "path, v5_from, first_ts, last_ts, head_sha, tail_sha, content_id, pat_ver, parse_errors, dup_of"
+
+
+def v5_rows(con) -> dict:
+    """Every v5 row and the v5 columns of `files`, in a comparable order."""
+    out = {t: con.execute(f"SELECT * FROM {t} ORDER BY {o}").fetchall() for t, o in V5_ROW_TABLES}
+    out["files"] = con.execute(f"SELECT {V5_FILE_STATE} FROM files ORDER BY path").fetchall()
+    return out
+
+
+def _legacy_db(td: Path):
+    """A v4-shaped index of two_file_store, then migrated by one refresh (every file legacy)."""
+    proj, db, files, snap, _todo = make_v4(td)
+    con = UX.connect(db)
+    UX.refresh(con, proj, deadline_s=30)
+    return proj, db, files, con
+
+
+def grp_backfill() -> None:
+    expected = {"sessions_active": 2, "sessions_dead": 0, "calls": 5, "cache_read": 410}
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, db, files, con = _legacy_db(td)
+        try:
+            before = UX.population(con)
+            offs = sum(r[0] for r in con.execute("SELECT offset FROM files"))
+            snap = snapshot(con)
+            legacy_n = con.execute("SELECT count(*) FROM files WHERE v5_from IS NULL").fetchone()[0]
+            r1 = UX.backfill_v5(con, proj)
+            after = snapshot(con)
+            v5f = [r[0] for r in con.execute("SELECT v5_from FROM files")]
+            pop = UX.population(con, expected=expected)
+            r2 = UX.backfill_v5(con, proj)
+            cold = UX.connect(td / "cold" / "ix.sqlite")
+            try:
+                UX.refresh(cold, proj, deadline_s=30)
+                same_as_cold = v5_rows(con) == v5_rows(cold)
+            finally:
+                cold.close()
+            gate("V-UX5-BACKFILL",
+                 before.get("verdict") == "UNMEASURED" and legacy_n == 2
+                 and r1.get("status") == "OK" and r1.get("files_backfilled") == 2
+                 and r1.get("bytes_reread") == offs and r1.get("pending") == 0
+                 and after == snap and v5f == [0, 0] and pop.get("verdict") == "EXACT"
+                 and r2.get("files_backfilled") == 0 and r2.get("bytes_reread") == 0
+                 and same_as_cold,
+                 f"legacy index: population {before.get('verdict')}; backfill: {r1}; bytes below the "
+                 f"committed offsets = {offs}; v4 row counts and offsets unchanged={after == snap}; "
+                 f"v5_from={v5f}; population against the expected record: {pop.get('verdict')}; "
+                 f"second backfill reads {r2.get('bytes_reread')} bytes in {r2.get('files_backfilled')} "
+                 f"files; every v5 row equals a cold build of the tree: {same_as_cold}")
+        finally:
+            con.close()
+
+
+def grp_backfill_stops_at_offset() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, db, files, con = _legacy_db(td)
+        try:
+            offs = {r[0]: r[1] for r in con.execute("SELECT path, offset FROM files")}
+            tail = asst("m6", 3.0, "S2", tools=[("tuNew", "Read", {"file_path": WINPATH})], cr=70)
+            with files[1].open("a", encoding="utf-8") as fh:
+                fh.write(tail)
+            r1 = UX.backfill_v5(con, proj)
+            offs_after = {r[0]: r[1] for r in con.execute("SELECT path, offset FROM files")}
+            leaked = con.execute("SELECT count(*) FROM tool_events WHERE tool_use_id='tuNew'").fetchone()[0]
+            leaked_c = con.execute("SELECT count(*) FROM call_files WHERE k='m6|rm6'").fetchone()[0]
+            r2 = UX.refresh(con, proj, deadline_s=30)
+            cold = UX.connect(td / "cold" / "ix.sqlite")
+            try:
+                UX.refresh(cold, proj, deadline_s=30)
+                same_as_cold = v5_rows(con) == v5_rows(cold)
+            finally:
+                cold.close()
+            gate("V-UX5-BACKFILL-STOPS-AT-OFFSET",
+                 r1.get("bytes_reread") == sum(offs.values()) and offs_after == offs
+                 and leaked == 0 and leaked_c == 0
+                 and r2.get("files_read") == 1 and r2.get("bytes_ingested") == len(tail.encode("utf-8"))
+                 and same_as_cold,
+                 f"a legacy file grew past its offset: backfill read {r1.get('bytes_reread')} bytes "
+                 f"(committed offsets {sum(offs.values())}), offsets unchanged={offs_after == offs}, "
+                 f"the appended tool event / call leaked in={leaked}/{leaked_c}; the next refresh "
+                 f"read {r2.get('files_read')} file and ingested {r2.get('bytes_ingested')} of "
+                 f"{len(tail.encode('utf-8'))} tail bytes; every v5 row equals a cold build: "
+                 f"{same_as_cold}")
+        finally:
+            con.close()
+
+
+def _cli_refresh(db: Path, proj: Path, *argv):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = UX.main(["refresh", "--db", str(db), "--proj", str(proj), *argv])
+    return rc, json.loads(buf.getvalue())
+
+
+def grp_cold_all() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, files = two_file_store(td)
+        old = T0 - 60 * 86400
+        os.utime(files[1], (old, old))
+        rc_d, dflt = _cli_refresh(td / "d" / "ix.sqlite", proj)
+        rc_a, allr = _cli_refresh(td / "a" / "ix.sqlite", proj, "--all")
+        rc_z, zero = _cli_refresh(td / "z" / "ix.sqlite", proj, "--since-days", "0")
+        gate("V-UX5-COLD-ALL",
+             rc_d == 0 and dflt["files_seen"] == 2 and dflt["files_read"] == 1
+             and rc_a == 0 and allr["files_read"] == allr["files_seen"] == 2
+             and zero["files_read"] == zero["files_seen"] == 2,
+             f"a transcript 60 days old: default refresh files_read={dflt['files_read']} of "
+             f"files_seen={dflt['files_seen']}; refresh --all files_read={allr['files_read']} of "
+             f"{allr['files_seen']}; --since-days 0 files_read={zero['files_read']} of "
+             f"{zero['files_seen']}")
+
+
+def grp_cli_cost_keys() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, _ = one_session_store(td)
+        rc, r = _cli_refresh(td / "ix.sqlite", proj)
+        proc = r.get("proc") or {}
+        saved = UX.PROC_IO
+        UX.PROC_IO = str(td / "no-such-io-file")
+        try:
+            _rc2, r2 = _cli_refresh(td / "ix2.sqlite", proj)
+        finally:
+            UX.PROC_IO = saved
+        proc2 = r2.get("proc") or {}
+        keys = ("wall_s", "bytes_read", "bytes_ingested", "files_opened", "files_seen")
+        gate("V-UX5-CLI-COST-KEYS",
+             rc == 0 and all(k in r for k in keys) and r["files_opened"] == 1 and r["bytes_read"] > 0
+             and r["bytes_read"] == r["bytes_ingested"]
+             and set(proc) == {"rchar_delta", "maxrss_kb"}
+             and isinstance(proc["rchar_delta"], int) and proc["rchar_delta"] >= r["bytes_read"]
+             and isinstance(proc["maxrss_kb"], int) and proc["maxrss_kb"] > 0
+             and set(proc2) == {"rchar_delta", "maxrss_kb"} and proc2["rchar_delta"] is None
+             and isinstance(proc2["maxrss_kb"], int),
+             f"cli refresh keys {[k for k in keys if k in r]}, proc={proc} (rchar_delta >= bytes_read "
+             f"{r['bytes_read']}); control, /proc/self/io unreadable: proc={proc2} (rchar_delta null, "
+             f"maxrss still reported)")
+
+
 GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
           ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text),
@@ -1985,7 +2133,10 @@ GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_attr_segment", grp_attr_segment), ("grp_attr_order", grp_attr_order),
           ("grp_attr_no_open", grp_attr_no_open), ("grp_kme_parity", grp_kme_parity),
           ("grp_pop_verdicts", grp_pop_verdicts), ("grp_archived_rule", grp_archived_rule),
-          ("grp_pop_refuses", grp_pop_refuses), ("grp_reconcile", grp_reconcile))
+          ("grp_pop_refuses", grp_pop_refuses), ("grp_reconcile", grp_reconcile),
+          ("grp_backfill", grp_backfill),
+          ("grp_backfill_stops_at_offset", grp_backfill_stops_at_offset),
+          ("grp_cold_all", grp_cold_all), ("grp_cli_cost_keys", grp_cli_cost_keys))
 
 
 # -- mutation drill ------------------------------------------------------------
@@ -2205,6 +2356,16 @@ def _m_calls_from_first_writer():
                           '"coalesce(sum(c.cr),0), coalesce(sum(c.out),0) FROM calls c "')
 
 
+def _m_backfill_unbounded():
+    """M18: backfill reads without end_offset (in-process patch of calls_from), so it ingests
+    bytes the index never consumed."""
+    real = UX._tis.calls_from
+
+    def mutant(path, offset=0, on_line=None, stats=None, end_offset=None):
+        return real(path, offset, on_line=on_line, stats=stats)
+    return _patch(UX._tis, "calls_from", mutant)
+
+
 MUTANTS = [
     ("M1 _migrate_spawns gated on SCHEMA_VERSION (backfill re-queued)", _m_spawn_backfill_requeued,
      [grp_migrate], ["V-UX5-MIGRATE-ZERO-REREAD"]),
@@ -2240,6 +2401,8 @@ MUTANTS = [
      [grp_kme_parity], ["V-UX5-KME-CLASSIFIER-PARITY"]),
     ("M17 session calls read from calls.file instead of call_files", _m_calls_from_first_writer,
      [grp_reconcile], ["V-UX5-RECONCILE-SHARED"]),
+    ("M18 backfill reads past the committed offset", _m_backfill_unbounded,
+     [grp_backfill_stops_at_offset], ["V-UX5-BACKFILL-STOPS-AT-OFFSET"]),
 ]
 
 

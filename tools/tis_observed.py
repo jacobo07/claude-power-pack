@@ -123,7 +123,8 @@ def _calls_in(path: Path) -> tuple[list[dict], int, int, int]:
 
 
 def calls_from(path: Path, offset: int = 0,
-               on_line=None, stats: Optional[dict] = None) -> tuple[list[dict], int, Optional[str]]:
+               on_line=None, stats: Optional[dict] = None,
+               end_offset: Optional[int] = None) -> tuple[list[dict], int, Optional[str]]:
     """Incremental twin of _calls_in: real calls in the COMPLETE lines after `offset`.
 
     Same filters and identity as _calls_in (synthetic skipped, last copy of a
@@ -143,7 +144,12 @@ def calls_from(path: Path, offset: int = 0,
     content fingerprints `head_sha` (sha256 hex of the first complete raw line, set only when the
     read starts at offset 0) and `tail_sha` (sha256 hex of the last complete raw line read in
     this pass; absent when the pass read no complete line). Both hash bytes the loop already
-    holds: no extra read."""
+    holds: no extra read.
+
+    `end_offset`, when given, bounds the read from above: the loop stops before the first line
+    whose start is at or beyond it, and that line is neither parsed nor counted in `bytes_seen`
+    (a line that starts below it is read whole). A committed index offset is line-aligned, so a
+    read bounded by it never ingests bytes the index never consumed. Default None = unchanged."""
     calls: dict = {}
     order: list = []
     entrypoint = None
@@ -155,6 +161,8 @@ def calls_from(path: Path, offset: int = 0,
     with open(path, "rb") as fh:
         fh.seek(offset)
         for raw in fh:
+            if end_offset is not None and pos >= end_offset:
+                break
             if stats is not None:
                 stats["bytes_seen"] += len(raw)
             if not raw.endswith(b"\n"):
