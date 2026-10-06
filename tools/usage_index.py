@@ -741,8 +741,32 @@ def _record_file_error(con, path: str, is_sub: int, st, exc: Exception, ident: t
     con.commit()
 
 
+def _snapshot(con) -> dict:
+    """The per-file state a pass starts from: {path: (offset, size, mtime_ns, entrypoint,
+    v5_from)}. A pass decides what to read from this snapshot and `_begin_file` later checks
+    that nobody advanced a file since."""
+    return {r[0]: r[1:] for r in con.execute(
+        "SELECT path, offset, size, mtime_ns, entrypoint, v5_from FROM files")}
+
+
+def _begin_file(con, path: str, prev) -> bool:
+    """Open this file's own write transaction (BEGIN IMMEDIATE) and admit the ingest only if
+    its `files` row still equals the snapshot's (offset, size, mtime_ns): a row another writer
+    advanced since the snapshot (or one that appeared) is rolled back and refused, so two
+    refreshes over one index never ingest the same bytes twice. A crash before the file's
+    commit leaves the journal to roll it back whole."""
+    con.commit()
+    con.execute("BEGIN IMMEDIATE")
+    cur = con.execute("SELECT offset, size, mtime_ns FROM files WHERE path=?", (path,)).fetchone()
+    if (tuple(cur) if cur else None) == (tuple(prev[:3]) if prev else None):
+        return True
+    con.rollback()
+    return False
+
+
 def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
-            since_epoch: float | None = None, deadline_s: float = 20.0) -> dict:
+            since_epoch: float | None = None, deadline_s: float = 20.0,
+            snapshot: dict | None = None) -> dict:
     """Index the bytes appended since the last pass. Bounded by `deadline_s`.
 
     Returns {status: OK|PARTIAL|FAILED, files_read, calls_upserted, pending, ...} plus the
@@ -750,12 +774,19 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
     iterated), bytes_ingested (end minus offset), files_seen, wall_s. PARTIAL is
     resumable: offsets are committed per file, so the next pass continues where this one
     stopped. The outcome is recorded in meta so that a reader can tell a missed run from
-    a quiet one."""
+    a quiet one.
+
+    Interruption and parallel refresh (AOP-O edge probe): each file is ingested in its own
+    BEGIN IMMEDIATE transaction that first re-reads the file's row and compares it with the
+    snapshot the pass started from (`snapshot`, default: read now). A changed row means
+    another writer advanced the file: the file is skipped and counted in skipped_concurrent.
+    A crash before a file's commit rolls that file back whole; the next pass re-reads it from
+    the last committed offset."""
     t0 = time.monotonic()
     t_end = t0 + deadline_s
     files_read = upserts = pending = 0
     files_opened = bytes_read = bytes_ingested = files_seen = 0
-    parse_errors = 0
+    parse_errors = skipped_concurrent = 0
     backfill_pending = None
     skipped_shapes = None
     files_with_errors = None
@@ -770,8 +801,7 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
         con.execute("INSERT OR REPLACE INTO meta VALUES('archived_rule', ?)", (ARCHIVED_RULE,))
         con.commit()
         matched: set = set()
-        known = {r[0]: r[1:] for r in con.execute(
-            "SELECT path, offset, size, mtime_ns, entrypoint, v5_from FROM files")}
+        known = snapshot if snapshot is not None else _snapshot(con)
         for fp, is_sub, store, project, archived, skey in _iter_files_v5(Path(proj)):
             files_seen += 1
             matched.add(str(fp))
@@ -788,6 +818,9 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             if time.monotonic() >= t_end:      # >=: Windows' clock ticks ~15 ms
                 pending += 1
                 status = "PARTIAL"
+                continue
+            if not _begin_file(con, path, prev):
+                skipped_concurrent += 1
                 continue
             offset = prev[0] if prev else 0
             entry = prev[3] if prev else None
@@ -902,6 +935,7 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                         (json.dumps(skipped_shapes),))
             con.commit()
     except Exception as e:  # noqa: BLE001 -- typed, never silent
+        con.rollback()              # the file in flight is dropped whole, never half-committed
         status, err = "FAILED", f"{type(e).__name__}: {e}"
     now = time.time()
     wall_s = round(time.monotonic() - t0, 3)
@@ -911,7 +945,7 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
                              "files_opened": files_opened, "bytes_read": bytes_read,
                              "bytes_ingested": bytes_ingested, "files_seen": files_seen,
                              "parse_errors": parse_errors, "files_with_errors": files_with_errors,
-                             "wall_s": wall_s}),))
+                             "skipped_concurrent": skipped_concurrent, "wall_s": wall_s}),))
     if status == "OK":
         con.execute("INSERT OR REPLACE INTO meta VALUES('last_ok_at', ?)", (str(now),))
     con.commit()
@@ -920,7 +954,7 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             "files_opened": files_opened, "bytes_read": bytes_read,
             "bytes_ingested": bytes_ingested, "files_seen": files_seen, "wall_s": wall_s,
             "skipped_shapes": skipped_shapes, "parse_errors": parse_errors,
-            "files_with_errors": files_with_errors}
+            "files_with_errors": files_with_errors, "skipped_concurrent": skipped_concurrent}
 
 
 # -- pricing -----------------------------------------------------------------

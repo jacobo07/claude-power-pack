@@ -971,6 +971,145 @@ def grp_content_identity() -> None:
          f"differ={len(set(ab[2])) == 2}")
 
 
+# -- plan 02 task 3: interrupted and parallel refresh (the AOP-O edge probe) ---------------
+
+def _crash_tree(td: Path) -> Path:
+    """Two transcripts of five valid lines each and one undecodable line each, so a double
+    count of parse_errors or of any row shows."""
+    proj = td / "projects"
+    for sess, base in (("S1", 1.0), ("S2", 2.0)):
+        _write(proj / "C--p1" / f"{sess}.jsonl",
+               user_prompt("P" + sess, base, sess)
+               + asst("m1" + sess, base + 0.1, sess, tools=[("tuR" + sess, "Read", {"file_path": WINPATH})])
+               + "{broken line\n"
+               + user_result(base + 0.2, sess, "tuR" + sess, "abc")
+               + asst("m2" + sess, base + 0.3, sess) + asst("m3" + sess, base + 0.4, sess))
+    return proj
+
+
+def table_counts(con) -> dict:
+    out = {t: con.execute(f"SELECT count(*) FROM {t}").fetchone()[0]
+           for t in ("files", "calls", "call_files", "tool_events")}
+    out["parse_errors"] = {Path(p).name: n for p, n in
+                           con.execute("SELECT path, parse_errors FROM files")}
+    return out
+
+
+def grp_crash_resume() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = _crash_tree(td)
+        ref = UX.connect(td / "db" / "ref.sqlite")
+        try:
+            UX.refresh(ref, proj, deadline_s=30)
+            want = table_counts(ref)
+        finally:
+            ref.close()
+
+        real = UX._v5_line
+        seen: dict = {}
+
+        def crashing(con, path, state, o, start):
+            real(con, path, state, o, start)
+            seen[path] = seen.get(path, 0) + 1
+            if len(seen) == 2 and seen[path] == 3:       # after the third line of the second file
+                raise RuntimeError("injected crash")
+
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            undo = _patch(UX, "_v5_line", crashing)
+            try:
+                r1 = UX.refresh(con, proj, deadline_s=30)
+            finally:
+                undo()
+            second = list(seen)[1] if len(seen) == 2 else None
+            leftovers = {}
+            if second:
+                for t, col in (("files", "path"), ("calls", "file"), ("call_files", "file"),
+                               ("tool_events", "file"), ("quota", "file"), ("prompts", "file")):
+                    leftovers[t] = con.execute(f"SELECT count(*) FROM {t} WHERE {col}=?",
+                                               (second,)).fetchone()[0]
+            first_ok = bool(seen) and con.execute("SELECT count(*) FROM files WHERE path=?",
+                                                  (list(seen)[0],)).fetchone()[0] == 1
+            r2 = UX.refresh(con, proj, deadline_s=30)
+            got = table_counts(con)
+            gate("V-UX5-CRASH-RESUME",
+                 r1["status"] == "FAILED" and "injected crash" in r1["error"] and second is not None
+                 and not any(leftovers.values()) and first_ok and r2["status"] == "OK"
+                 and got == want and sum(want["parse_errors"].values()) == 2,
+                 f"crash injected after line 3 of the second file: status={r1['status']}; rows of "
+                 f"that file left behind={leftovers} (want all 0); the first file committed="
+                 f"{first_ok}; after the next refresh {got} equals the one-shot build {want}")
+        finally:
+            con.close()
+
+
+def grp_concurrent_refresh() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = _crash_tree(td)
+        db = td / "db" / "ix.sqlite"
+        a = UX.connect(db)
+        b = UX.connect(db)
+        try:
+            UX.refresh(a, proj, deadline_s=30)
+            stale = UX._snapshot(b)                       # B looks, then A moves on
+            files = sorted((proj / "C--p1").glob("*.jsonl"))
+            for f in files:
+                with f.open("a", encoding="utf-8") as fh:
+                    fh.write("{another broken line\n" + asst("m9" + f.stem, 9.0, f.stem))
+            ra = UX.refresh(a, proj, deadline_s=30)
+            rb = UX.refresh(b, proj, deadline_s=30, snapshot=stale)
+            got = table_counts(a)
+            ref = UX.connect(td / "db" / "ref.sqlite")
+            try:
+                UX.refresh(ref, proj, deadline_s=30)
+                want = table_counts(ref)
+            finally:
+                ref.close()
+            gate("V-UX5-STALE-SNAPSHOT-SKIPS",
+                 ra["files_read"] == 2 and rb["skipped_concurrent"] == 2 and rb["files_read"] == 0
+                 and rb["parse_errors"] == 0 and got == want
+                 and last_status(b).get("skipped_concurrent") == 2,
+                 f"B started from a snapshot taken before A advanced both files: B skipped_concurrent="
+                 f"{rb['skipped_concurrent']} files_read={rb['files_read']} parse_errors this pass="
+                 f"{rb['parse_errors']}; rows {got} equal a single refresh {want}")
+
+            # control: an up-to-date snapshot of an appended file is ingested by B
+            fresh = UX._snapshot(b)
+            with files[0].open("a", encoding="utf-8") as fh:
+                fh.write(asst("m10", 10.0, "S1"))
+            rb2 = UX.refresh(b, proj, deadline_s=30, snapshot=fresh)
+            n = b.execute("SELECT count(*) FROM calls WHERE k LIKE 'm10|%'").fetchone()[0]
+            gate("V-UX5-FRESH-SNAPSHOT-INGESTS",
+                 rb2["files_read"] == 1 and rb2["skipped_concurrent"] == 0 and n == 1,
+                 f"up-to-date snapshot, one appended file: files_read={rb2['files_read']} "
+                 f"skipped_concurrent={rb2['skipped_concurrent']} new call ingested={n}")
+        finally:
+            a.close()
+            b.close()
+
+
+def grp_migrate_once() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, db, files, snap, _ = make_v4(td)
+        c1 = UX.connect(db)
+        c2 = UX.connect(db)
+        try:
+            UX._migrate_v5(c1)
+            first = c1.execute("SELECT v FROM meta WHERE k='v5_migration'").fetchone()[0]
+            UX._migrate_v5(c2)
+            second = c2.execute("SELECT v FROM meta WHERE k='v5_migration'").fetchone()[0]
+            ver = c2.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()[0]
+            gate("V-UX5-MIGRATE-ONCE", first and first == second and ver == "5",
+                 f"second migration through another connection: v5_migration unchanged="
+                 f"{first == second} ({first}), schema_version={ver}")
+        finally:
+            c1.close()
+            c2.close()
+
+
 GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
           ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text),
@@ -978,7 +1117,8 @@ GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_archived", grp_archived), ("grp_shapes", grp_shapes),
           ("grp_identity_fill", grp_identity_fill), ("grp_parse_errors", grp_parse_errors),
           ("grp_partial_line", grp_partial_line), ("grp_file_error", grp_file_error),
-          ("grp_content_identity", grp_content_identity))
+          ("grp_content_identity", grp_content_identity), ("grp_crash_resume", grp_crash_resume),
+          ("grp_concurrent_refresh", grp_concurrent_refresh), ("grp_migrate_once", grp_migrate_once))
 
 
 # -- mutation drill ------------------------------------------------------------
@@ -1128,6 +1268,16 @@ def _m_content_id_head_only():
     return _patch(UX, "_content_id", mutant)
 
 
+def _m_begin_file_always_admits():
+    """M9: the per-file snapshot check always admits, so a refresh working from a stale snapshot
+    re-ingests files another writer already advanced."""
+    def mutant(con, path, prev):
+        con.commit()
+        con.execute("BEGIN IMMEDIATE")
+        return True
+    return _patch(UX, "_begin_file", mutant)
+
+
 MUTANTS = [
     ("M1 _migrate_spawns gated on SCHEMA_VERSION (backfill re-queued)", _m_spawn_backfill_requeued,
      [grp_migrate], ["V-UX5-MIGRATE-ZERO-REREAD"]),
@@ -1145,6 +1295,8 @@ MUTANTS = [
      [grp_parse_errors], ["V-UX5-PARSE-ERROR-SURFACED"]),
     ("M8 content id built from the head hash only", _m_content_id_head_only,
      [grp_content_identity], ["V-UX5-HISTORIES-NOT-MERGED"]),
+    ("M9 per-file snapshot check always admits", _m_begin_file_always_admits,
+     [grp_concurrent_refresh], ["V-UX5-STALE-SNAPSHOT-SKIPS"]),
 ]
 
 
