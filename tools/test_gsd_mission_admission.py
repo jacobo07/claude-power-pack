@@ -191,6 +191,22 @@ def main() -> int:
     asid = worker_sid("m-adopt")
     gm.adopt_launched(gm.load("m-adopt"), {"sessionId": asid, "pid": 3}, now=NOW + 6)
     check("V-ADM-ADOPT-DECLARES-ENVELOPE", ms.budget_path(asid).is_file())
+    # Replay of m-8bbdf725cd52 epoch 2 (2026-10-06): a record whose resume command does not start with
+    # '/' makes _arm_worker_marker raise during adoption; the envelope must already be declared.
+    mission("m-adopt-raise")
+    cur = gm.load("m-adopt-raise")
+    gm.transition("m-adopt-raise", expect_epoch=cur["epoch"], expect_state=cur["state"], event="t_shape", now=NOW,
+                  resume_command="MISSION: InfinityOps Sidecar Live QA (record shape seen in production)")
+    admit("m-adopt-raise", "adopt-raise.json")
+    launch("m-adopt-raise")
+    rsid = worker_sid("m-adopt-raise")
+    raised = None
+    try:
+        gm.adopt_launched(gm.load("m-adopt-raise"), {"sessionId": rsid, "pid": 4}, now=NOW + 7)
+    except Exception as exc:  # noqa: BLE001 -- the replay expects the marker to raise
+        raised = type(exc).__name__
+    check("V-ADM-ADOPT-ENVELOPE-SURVIVES-MARKER-ERROR", ms.budget_path(rsid).is_file(),
+          f"marker raised {raised}; envelope declared {ms.budget_path(rsid).is_file()}")
 
     # 9b. review F3: one admission pays for ONE launch; the successor re-admits (remaining re-measured)
     thin_rec = gm.load("m-thin")

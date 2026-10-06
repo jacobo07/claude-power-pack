@@ -866,9 +866,11 @@ def ack_session(session_id: str, *, pid: int | None = None, proc_start: str | No
                                     "epoch": rec["epoch"], "kind": "background"},
                              # spec 3.5: the certification deadline runs from the successor's ack.
                              **({"capsule_acked_at": now} if v2 else {}))
+            # The envelope first: it never raises, and a later step that does must not leave the
+            # worker running unmetered (measured 2026-10-06 on adoption, see adopt_launched).
+            _declare_worker_envelope(new, session_id)
             if v2:
                 _capsule_bind(new, owner_session=session_id)
-            _declare_worker_envelope(new, session_id)
             return new
         owner = dict(rec.get("owner") or {})
         owner["heartbeat_at"] = now
@@ -1522,10 +1524,13 @@ def adopt_launched(rec: dict, row: dict, now: float | None = None) -> dict:
                             "heartbeat_at": now or time.time(), "epoch": rec["epoch"],
                             "kind": "background"},
                      **({"capsule_acked_at": now or time.time()} if v2 else {}))
+    # The envelope BEFORE the marker: 2026-10-06 (m-8bbdf725cd52 epoch 2) _arm_worker_marker raised
+    # MarkerError on a record whose resume command does not start with '/', and the adopted W0r worker
+    # ran with no session envelope until it was declared by hand.
+    _declare_worker_envelope(new, sid)
     _arm_worker_marker(new, sid)
     if v2 and sid:
         _capsule_bind(new, owner_session=sid)
-    _declare_worker_envelope(new, sid)
     return new
 
 
