@@ -1417,6 +1417,190 @@ def grp_result_head() -> None:
             con.close()
 
 
+# -- plan 03 task 2: project and workstream attribution from a discovered registry -----------
+
+APPS = "C:\\Users\\User\\Apps\\"
+
+
+def pname(cwd: str) -> str:
+    """The project name the registry gives a launch cwd (the transcript dir name Claude Code uses)."""
+    return TIS.project_key(cwd)
+
+
+def sess_file(proj: Path, cwd: str, sid: str, tool_paths, h: float = 1.0) -> Path:
+    """projects/<store of cwd>/<sid>.jsonl: a prompt and one assistant line reading `tool_paths`."""
+    tools = [(f"tu{sid}{i}", "Read", {"file_path": p}) for i, p in enumerate(tool_paths)]
+    return _write(proj / pname(cwd) / f"{sid}.jsonl",
+                  user_prompt("P" + sid, h, sid, cwd=cwd)
+                  + asst("m" + sid, h + 0.1, sid, tools=tools, cwd=cwd))
+
+
+def attr_of(db_con, store_cwd: str, sid: str) -> dict:
+    return UX.attribution(db_con, pname(store_cwd), sid)
+
+
+def grp_attr_mixed() -> None:
+    A, B = APPS + "alpha", APPS + "beta"
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        sess_file(proj, A, "SA", [A + "\\a.py", B + "\\b.py"])
+        sess_file(proj, A, "SC", ["C:\\USERS\\User\\Apps\\alpha\\c.py",
+                                  "C:\\Users\\User\\AppData\\Local\\Temp\\x.tmp"])
+        sess_file(proj, A, "SW", [A + "\\.planning\\workstreams\\ws-one\\STATE.md",
+                                  A + "\\.planning\\workstreams\\ws-two\\x.md"])
+        sess_file(proj, B, "SB", [B + "\\b2.py"])
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            r = UX.refresh(con, proj, deadline_s=30)
+            sa, sb, sc, sw = (attr_of(con, A, "SA"), attr_of(con, B, "SB"),
+                              attr_of(con, A, "SC"), attr_of(con, A, "SW"))
+            gate("V-UX5-MIXED-BOTH",
+                 r["status"] == "OK"
+                 and sa["projects"] == {pname(A): {"home": 2}, pname(B): {"touched": 1}}
+                 and sa["mixed"] is True,
+                 f"launched in alpha, reads under alpha and under registered beta: projects="
+                 f"{sa['projects']} mixed={sa['mixed']}")
+            gate("V-UX5-MIXED-CONTROL",
+                 sb["projects"] == {pname(B): {"home": 2}} and sb["mixed"] is False,
+                 f"all paths under the launch root: exactly one project row {sb['projects']} "
+                 f"mixed={sb['mixed']}")
+            names = [x[0] for x in con.execute("SELECT DISTINCT name FROM file_attribution "
+                                               "WHERE kind='project'")]
+            bucket = con.execute("SELECT name, role, n FROM file_attribution WHERE kind='bucket' "
+                                 "AND file LIKE '%SC.jsonl'").fetchall()
+            gate("V-UX5-UNATTRIBUTED-BUCKET",
+                 sc["unattributed"] == 1 and bucket == [(UX.UNATTRIBUTED, "touched", 1)]
+                 and not any("appdata" in n.lower() for n in names)
+                 and sc["projects"] == {pname(A): {"home": 2}},
+                 f"an AppData path counts in the <unattributed> bucket {bucket} and names no project "
+                 f"(project names {sorted(names)}); an upper-cased Windows path still resolves under "
+                 f"its root (home={sc['projects']})")
+            gate("V-UX5-WORKSTREAM",
+                 sw["workstreams"] == {"ws-one": {"touched": 1}, "ws-two": {"touched": 1}}
+                 and sb["workstreams"] == {} and sa["workstreams"] == {},
+                 f"two workstream rows {sw['workstreams']}; control: sessions without such paths "
+                 f"have none ({sb['workstreams']}, {sa['workstreams']})")
+        finally:
+            con.close()
+
+
+def grp_attr_nested() -> None:
+    K, S, B = APPS + "core", APPS + "core\\server", APPS + "beta"
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        sess_file(proj, K, "SK", [S + "\\x.py", K + "\\y.py"])
+        sess_file(proj, S, "SS", [S + "\\z.py"])
+        sess_file(proj, B, "SB", [S + "\\x.py"])
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            sk, sb = attr_of(con, K, "SK"), attr_of(con, B, "SB")
+            gate("V-UX5-NESTED-ROOT-STAYS-HOME",
+                 sk["projects"] == {pname(K): {"home": 3}}
+                 and sb["projects"] == {pname(B): {"home": 1}, pname(S): {"touched": 1}},
+                 f"a path under the home root AND under nested registered root core\\server stays "
+                 f"home ({sk['projects']}); control: from another root the same path is the nested "
+                 f"root's, the longest match ({sb['projects']})")
+        finally:
+            con.close()
+
+
+def grp_attr_segment() -> None:
+    F, S = APPS + "Core-Files", APPS + "Core-Files-Server"
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        sess_file(proj, F, "SF", [S + "\\q.py", F + "\\w.py"])
+        sess_file(proj, S, "SS", [F + "\\r.py"])
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            sf, ss = attr_of(con, F, "SF"), attr_of(con, S, "SS")
+            gate("V-UX5-SEGMENT-PREFIX",
+                 sf["projects"] == {pname(F): {"home": 2}, pname(S): {"touched": 1}}
+                 and ss["projects"] == {pname(S): {"home": 1}, pname(F): {"touched": 1}},
+                 f"Core-Files-Server is never under Core-Files: {sf['projects']}; and the reverse "
+                 f"direction {ss['projects']}")
+        finally:
+            con.close()
+
+
+def _order_tree(td: Path, first: str) -> Path:
+    """Two stores whose sessions read each other's roots. The `first` store's files are the
+    only ones new enough for the first pass (since_epoch), so the two builds ingest in opposite
+    orders."""
+    A, B = APPS + "alpha", APPS + "beta"
+    proj = td / "projects"
+    fa = sess_file(proj, A, "SA", [A + "\\a.py", B + "\\b.py"])
+    fb = sess_file(proj, B, "SB", [B + "\\b2.py", A + "\\a2.py"])
+    new, old = (fa, fb) if first == "A" else (fb, fa)
+    os.utime(new, (2_000_000_100, 2_000_000_100))
+    os.utime(old, (1_000_000_000, 1_000_000_000))
+    return proj
+
+
+def _attr_dump(con) -> list:
+    return [(Path(r[0]).parent.name + "/" + Path(r[0]).name,) + tuple(r[1:]) for r in con.execute(
+        "SELECT file, kind, name, role, n FROM file_attribution ORDER BY 1,2,3,4,5")]
+
+
+def grp_attr_order() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        dumps, mids = [], []
+        for first in ("A", "B"):
+            sub = td / first
+            proj = _order_tree(sub, first)
+            con = UX.connect(sub / "db" / "ix.sqlite")
+            try:
+                UX.refresh(con, proj, deadline_s=30, since_epoch=1_500_000_000)
+                mids.append(_attr_dump(con))
+                UX.refresh(con, proj, deadline_s=30)
+                dumps.append(_attr_dump(con))
+            finally:
+                con.close()
+        gate("V-UX5-ATTR-ORDER-INDEPENDENT",
+             dumps[0] == dumps[1] and len(dumps[0]) >= 4 and mids[0] != dumps[0]
+             and mids[1] != dumps[1] and mids[0] != mids[1],
+             f"two ingest orders end with identical file_attribution rows ({len(dumps[0])} rows); "
+             f"control: the half-built states differ from the final ones and from each other, so "
+             f"the equality is not the trivial case")
+
+
+def grp_attr_no_open() -> None:
+    A, B = APPS + "alpha", APPS + "beta"
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        sess_file(proj, B, "SB", [B + "\\b2.py", A + "\\a2.py"])
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            before = attr_of(con, B, "SB")
+            sess_file(proj, A, "SA", [A + "\\a.py"])
+            with Spy(proj) as spy:
+                r = UX.refresh(con, proj, deadline_s=30)
+            after = attr_of(con, B, "SB")
+            in_beta = [p for p in spy.opened if "/" + pname(B) + "/" in p]
+            in_alpha = [p for p in spy.opened if "/" + pname(A) + "/" in p]
+            gate("V-UX5-ATTR-NO-OPEN",
+                 r["status"] == "OK" and not in_beta and before["unattributed"] == 1
+                 and before["projects"] == {pname(B): {"home": 2}}
+                 and after["unattributed"] == 0
+                 and after["projects"] == {pname(B): {"home": 2}, pname(A): {"touched": 1}},
+                 f"a new launch root recomputed the old session without opening it (opens under "
+                 f"its store: {len(in_beta)}); before {before['projects']} unattributed="
+                 f"{before['unattributed']}, after {after['projects']} unattributed="
+                 f"{after['unattributed']}")
+            gate("V-UX5-ATTR-NO-OPEN-CONTROL", len(in_alpha) >= 1,
+                 f"the same spy sees the new store's file being read ({len(in_alpha)} opens): it "
+                 f"can fire")
+        finally:
+            con.close()
+
+
 GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
           ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text),
@@ -1430,7 +1614,10 @@ GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_pattern_source", grp_pattern_source), ("grp_pat_hits", grp_pat_hits),
           ("grp_user_hits", grp_user_hits), ("grp_result_text_parity", grp_result_text_parity),
           ("grp_pattern_unavailable", grp_pattern_unavailable),
-          ("grp_pattern_drift", grp_pattern_drift), ("grp_result_head", grp_result_head))
+          ("grp_pattern_drift", grp_pattern_drift), ("grp_result_head", grp_result_head),
+          ("grp_attr_mixed", grp_attr_mixed), ("grp_attr_nested", grp_attr_nested),
+          ("grp_attr_segment", grp_attr_segment), ("grp_attr_order", grp_attr_order),
+          ("grp_attr_no_open", grp_attr_no_open))
 
 
 # -- mutation drill ------------------------------------------------------------
@@ -1605,6 +1792,21 @@ def _m_pattern_source_drift():
                   (("kme", "wiki/tools/kme_token_audit.py", "PATH_KME_RE"),))
 
 
+def _m_touched_rows_dropped():
+    """M13: the attribution row builder drops every touched row (in-process patch), so a mixed
+    session looks like a single-project one."""
+    real = UX._attribution_rows
+
+    def mutant(*a, **k):
+        return [r for r in real(*a, **k) if r[2] != "touched"]
+    return _patch(UX, "_attribution_rows", mutant)
+
+
+def _m_plain_string_prefix():
+    """M14: the segment-prefix helper becomes a plain string prefix (in-process patch)."""
+    return _patch(UX, "_under", lambda key, root: key.startswith(root))
+
+
 def _m_user_length_guard_removed():
     """M12: the human-text length guard is removed (source text)."""
     return _source_mutant("tools/usage_index.py",
@@ -1636,6 +1838,10 @@ MUTANTS = [
      [grp_pattern_source], ["V-UX5-PATTERN-SOURCE"]),
     ("M12 human-text length guard removed", _m_user_length_guard_removed,
      [grp_user_hits], ["V-UX5-USER-HITS-FILTER"]),
+    ("M13 touched attribution rows dropped", _m_touched_rows_dropped,
+     [grp_attr_mixed], ["V-UX5-MIXED-BOTH"]),
+    ("M14 segment prefix replaced by a plain string prefix", _m_plain_string_prefix,
+     [grp_attr_segment], ["V-UX5-SEGMENT-PREFIX"]),
 ]
 
 

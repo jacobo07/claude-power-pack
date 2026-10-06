@@ -795,6 +795,170 @@ def _v5_line(con, path: str, state: dict, o: dict, start: int) -> None:
                             (path, start, ts, json.dumps(total, sort_keys=True)))
 
 
+# -- project / workstream attribution (pillar O clause 1 and 3a) ----------------------------
+# A file's projects are a SET with a role, never one label: `home` is the project of the
+# session's own launch root, `touched` any other registered root its tool paths or cwds fall
+# under. The root registry is DISCOVERED from the recorded launch cwds (the first cwd of every
+# main file), never enrolled by hand (PR-COVERAGE-BY-CONSTRUCTION-001). Recorded paths belong to
+# the machine that recorded them: everything below is string work, nothing is opened or resolved
+# on this host (T-01-11). Attribution is a function of stored rows only, so it never depends on
+# ingest order and a registry change recomputes it without opening a transcript.
+ATTR_VERSION = 1
+UNATTRIBUTED = "<unattributed>"      # typed bucket (kind 'bucket'): counted, visible, never a project
+_FOLD_SHAPE = re.compile(r"^(?:[A-Za-z]:/|//)")           # Windows-shaped normalized path: case-insensitive
+_ROOT_LIKE = re.compile(r"^(?:/|[A-Za-z]:/?|//)$")        # a filesystem root is not a project root
+_WS_IN_PATH = re.compile(r"(?:^|/)\.planning/workstreams/([^/]+)/")
+_WS_IN_CWD = re.compile(r"(?:^|/)\.planning/workstreams/([^/]+)(?:/|$)")
+
+
+def _path_key(p: str) -> str:
+    """Comparable form of a normalized path: casefolded when Windows-shaped."""
+    return p.casefold() if _FOLD_SHAPE.match(p) else p
+
+
+def _under(key: str, root: str) -> bool:
+    """`key` is `root` or lies below it, by path SEGMENT (never a plain string prefix: Core-Files
+    must not own Core-Files-Server)."""
+    return key == root or key.startswith(root + "/")
+
+
+def _longest_root(key: str, roots: dict):
+    """The longest registered root that is a segment-ancestor of `key` (or `key` itself), else
+    None. Walks the ancestors, so it is segment-based by construction."""
+    cand = key
+    while cand:
+        if cand in roots:
+            return cand
+        i = cand.rfind("/")
+        if i <= 0:
+            return None
+        cand = cand[:i]
+    return None
+
+
+def _registry(con) -> tuple[dict, dict, str]:
+    """(registry {root key: project name}, homes {(store, project, session_key): root key},
+    digest). A root is the normalized first cwd (smallest first_off) of a main file; its name is
+    the transcript dir name of that raw cwd. Two spellings of one root keep the smaller name, so
+    the registry is a function of the rows, not of their order."""
+    registry: dict = {}
+    homes: dict = {}
+    rows = con.execute(
+        "SELECT f.store, f.project, f.session_key, c.cwd FROM files f "
+        "JOIN file_cwds c ON c.file=f.path WHERE f.is_sub=0 AND c.first_off="
+        "(SELECT min(first_off) FROM file_cwds WHERE file=f.path) ORDER BY f.path")
+    for store, project, skey, cwd in rows:
+        norm = _norm_path(cwd)
+        if norm is None:
+            continue
+        key = _path_key(norm)
+        if _ROOT_LIKE.match(key):
+            continue
+        name = _tis.project_key(cwd)
+        if key not in registry or name < registry[key]:
+            registry[key] = name
+        homes[(store, project, skey)] = key
+    digest = hashlib.sha256(json.dumps(sorted(registry.items())).encode("utf-8")).hexdigest()
+    return registry, homes, digest
+
+
+def _attribution_rows(home_name, home_root, paths, cwds, registry) -> list:
+    """The file_attribution rows (kind, name, role, n) of one file, from its stored tool paths
+    and cwds only. A path under the home root is home (even when a nested registered root also
+    holds it); else the longest registered root names a touched project (a name equal to the home
+    name is home); else it is counted in the <unattributed> bucket, relative paths included. A
+    workstream is the segment after `.planning/workstreams/`."""
+    home = unattributed = 0
+    touched: dict = {}
+    ws: dict = {}
+    items = [(p, _WS_IN_PATH) for p in paths] + [(_norm_path(c), _WS_IN_CWD) for c in cwds]
+    for norm, ws_re in items:
+        if not norm:
+            continue
+        key = _path_key(norm)
+        if home_root and _under(key, home_root):
+            home += 1
+        else:
+            root = _longest_root(key, registry)
+            if root is None:
+                unattributed += 1
+            elif registry[root] == home_name:
+                home += 1
+            else:
+                touched[registry[root]] = touched.get(registry[root], 0) + 1
+        m = ws_re.search(norm)
+        if m:
+            ws[m.group(1)] = ws.get(m.group(1), 0) + 1
+    rows = []
+    if home_name:
+        rows.append(("project", home_name, "home", home))
+    rows += [("project", n, "touched", touched[n]) for n in sorted(touched)]
+    if unattributed:
+        rows.append(("bucket", UNATTRIBUTED, "touched", unattributed))
+    rows += [("workstream", n, "touched", ws[n]) for n in sorted(ws)]
+    return rows
+
+
+def _attribute(con, files=None) -> dict:
+    """(Re)compute file_attribution from the stored rows. `files` are the paths read in this pass:
+    when the discovered registry (or ATTR_VERSION) differs from the one the stored rows were built
+    with, EVERY file is recomputed; otherwise only the sessions of the given files (a session's home
+    root comes from its main file). Opens nothing. A file whose v5 rows were never written (a legacy
+    file not re-read) gets no rows: its attribution is unknown, not zero."""
+    registry, homes, digest = _registry(con)
+    meta = dict(con.execute("SELECT k, v FROM meta WHERE k IN ('attr_registry','attr_version')"))
+    full = (files is None or meta.get("attr_registry") != digest
+            or meta.get("attr_version") != str(ATTR_VERSION))
+    if full:
+        targets = [r[0] for r in con.execute("SELECT path FROM files WHERE v5_from IS NOT NULL "
+                                             "ORDER BY path")]
+    else:
+        tset = set()
+        for p in files:
+            row = con.execute("SELECT store, project, session_key FROM files WHERE path=?",
+                              (p,)).fetchone()
+            if row is not None:
+                tset.update(r[0] for r in con.execute(
+                    "SELECT path FROM files WHERE store=? AND project=? AND session_key=? "
+                    "AND v5_from IS NOT NULL", row))
+        targets = sorted(tset)
+    for p in targets:
+        project, store, skey = con.execute(
+            "SELECT project, store, session_key FROM files WHERE path=?", (p,)).fetchone()
+        paths = [r[0] for r in con.execute(
+            "SELECT path FROM tool_events WHERE file=? AND path IS NOT NULL", (p,))]
+        cwds = [r[0] for r in con.execute("SELECT cwd FROM file_cwds WHERE file=? ORDER BY cwd", (p,))]
+        rows = _attribution_rows(project, homes.get((store, project, skey)), paths, cwds, registry)
+        con.execute("DELETE FROM file_attribution WHERE file=?", (p,))
+        con.executemany("INSERT INTO file_attribution(file,kind,name,role,n) VALUES(?,?,?,?,?)",
+                        [(p,) + r for r in rows])
+    con.execute("INSERT OR REPLACE INTO meta VALUES('attr_registry', ?)", (digest,))
+    con.execute("INSERT OR REPLACE INTO meta VALUES('attr_version', ?)", (str(ATTR_VERSION),))
+    con.commit()
+    return {"files": len(targets), "full": full, "roots": len(registry)}
+
+
+def attribution(con, store: str, session_key: str) -> dict:
+    """The session-level union of its files' attribution (main file plus subagents):
+    {projects: {name: {role: n}}, workstreams: {name: {role: n}}, unattributed: n, mixed: bool}.
+    `mixed` is more than one distinct project. Reads stored rows only."""
+    projects: dict = {}
+    workstreams: dict = {}
+    unattributed = 0
+    for kind, name, role, n in con.execute(
+            "SELECT a.kind, a.name, a.role, sum(a.n) FROM file_attribution a "
+            "JOIN files f ON f.path=a.file WHERE f.store=? AND f.session_key=? "
+            "GROUP BY a.kind, a.name, a.role ORDER BY 1,2,3", (store, session_key)):
+        if kind == "project":
+            projects.setdefault(name, {})[role] = n
+        elif kind == "workstream":
+            workstreams.setdefault(name, {})[role] = n
+        elif kind == "bucket":
+            unattributed += n
+    return {"projects": projects, "workstreams": workstreams, "unattributed": unattributed,
+            "mixed": len(projects) > 1}
+
+
 def _index_subagent_meta(con, fp: Path) -> None:
     """agentType / toolUseId / spawnDepth from <agent>.meta.json. A missing or
     unreadable meta is recorded with NULLs: typed unknown, never a guess."""
@@ -904,6 +1068,7 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
     skipped_shapes = None
     files_with_errors = None
     pattern_error = None
+    read_paths: list = []
     status = "OK"
     err = ""
     try:
@@ -1053,6 +1218,8 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             _dup_groups(con, {old_cid, cid})
             con.commit()
             files_read += 1
+            read_paths.append(path)
+        _attribute(con, read_paths)         # stored rows only: opens no transcript
         # Historical spawn results (v3 backfill) use only the time left. They are not
         # freshness: pending files here never make the pass PARTIAL, which would turn
         # the burn alarm into MONITOR_FAILURE while the live index is current.
