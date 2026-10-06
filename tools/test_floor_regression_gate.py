@@ -1214,7 +1214,7 @@ def g_tokens_rule():
 REFERENCE_KEYS = {"schema", "provenance", "components", "layers", "total_chars", "tokens", "skill_listing",
                   "excluded", "explanations", "caveats"}
 JSON_KEYS = {"verdict", "exit", "reason", "rows", "findings", "explained", "scope_deltas", "tokens_axis",
-             "ratchet_hint", "reference", "provenance", "caveats", "detail", "probe_error"}
+             "ratchet_hint", "reference", "provenance", "caveats", "detail", "probe_error", "cwd_admitted"}
 
 
 @contextlib.contextmanager
@@ -1500,7 +1500,7 @@ def g_json():
     doc = json.loads(out)
     if set(doc) != JSON_KEYS or doc.get("verdict") != "UNMEASURABLE" or doc.get("exit") != 2 or doc.get("reason") != "no_transcript":
         why.append(f"unmeasurable doc: keys={sorted(doc)} verdict={doc.get('verdict')} reason={doc.get('reason')}")
-    return (not why), "; ".join(why) or "one JSON document with the 14 keys (detail and probe_error since IN-02), for a verdict and for UNMEASURABLE"
+    return (not why), "; ".join(why) or "one JSON document with the 15 keys (detail and probe_error since IN-02, cwd_admitted since WU1), for a verdict and for UNMEASURABLE"
 
 
 def g_cli_usage():
