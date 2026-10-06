@@ -110,7 +110,7 @@ Plans:
    11,549,646,300) on the GEX44 copy, with dedup reconciled to the unit.
 4. Refresh cost measured (wall, bytes) for a cold build and for a delta.
 
-**Plans:** 4/6 plans executed
+**Plans:** 5/6 plans executed
 
 Plans:
 **Wave 1**
@@ -131,7 +131,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 01-05-PLAN.md -- GEX44 corpus copy: KME-L parity reconciled to the unit, cold/warm/no-op/delta cost, PRG, after-change regression
+- [x] 01-05-PLAN.md -- GEX44 corpus copy: KME-L parity reconciled to the unit, cold/warm/no-op/delta cost, PRG, after-change regression
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
