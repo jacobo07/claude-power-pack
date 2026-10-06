@@ -110,7 +110,7 @@ Plans:
    11,549,646,300) on the GEX44 copy, with dedup reconciled to the unit.
 4. Refresh cost measured (wall, bytes) for a cold build and for a delta.
 
-**Plans:** 1/6 plans executed
+**Plans:** 2/6 plans executed
 
 Plans:
 **Wave 1**
@@ -119,7 +119,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md -- path identity, declared `_archived` rule (v5-only), skipped-shape census, parser/file failures surfaced, content identity, interrupted/parallel refresh guarantees
+- [x] 01-02-PLAN.md -- path identity, declared `_archived` rule (v5-only), skipped-shape census, parser/file failures surfaced, content identity, interrupted/parallel refresh guarantees
 
 **Wave 3** *(blocked on Wave 2 completion)*
 

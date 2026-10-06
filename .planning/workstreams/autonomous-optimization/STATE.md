@@ -2,21 +2,21 @@
 gsd_state_version: "1.0"
 milestone: v1
 current_phase: 1
+current_plan: 3
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-10-06T20:32:22.554Z"
-state_head: 30a6433a47c065fb000b63f16a67fda36f8f0a64
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-10-06T20:43:42.707Z"
+state_head: 3f420085893598eebf2a2dbdeb0b829c6f033422
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 6
-  completed_plans: 1
+  completed_plans: 2
 milestone_name: autonomous-optimization
 last_activity: 2026-10-05
 workstream: autonomous-optimization
 created: 2026-10-05
 current_phase_name: usage_index v5 substrate
-current_plan: Not started
 last_activity_desc: Workstream created from the approved autonomous-optimization plan
 ---
 
@@ -30,8 +30,10 @@ first proving incident; a second workload must be taken by the loop itself.
 
 ## Current Position
 
-**Status:** Executing Phase 1
+**Status:** Ready to execute
 **Current Phase:** 1
+Current Plan: 3
+Total Plans in Phase: 6
 
 ## Decisions
 
@@ -48,11 +50,18 @@ first proving incident; a second workload must be taken by the loop itself.
   node_bridge consumers are affected; do not judge MC/HPKT gates on this plane without CPP_NODE_EXE.
 - [Orchestrator D-OQ3 2026-10-05]: programme done-gate = python3 tools/test_incremental_cognition_program.py --generation 2 --final PASS (ICP_GEN2_VERDICT) plus the Phase 6 Production Reality probe; gen1 red pillars A,B,C,I,J,K,M,N and L8 are inherited state, reported verbatim, never claimed green, never edited.
 - [Phase 1]: 01-01: v5_from NULL marks a legacy file never re-read; population() is UNMEASURED for any in-scope file with it (never zero). SPAWN_SCHEMA is _migrate_spawns' own gate so a version bump never re-queues the backfill.
+- [Phase 1]: 01-02: a failed refresh rolls back the file in flight; per-file BEGIN IMMEDIATE with snapshot check; dup_of needs equal content_id AND equal call-key sets
 
 ## Session Continuity
 
-**Last session:** 2026-10-06T20:32:21.550Z
+**Last session:** 2026-10-06T20:43:27.436Z
 
-**Stopped At:** Completed 01-01-PLAN.md
+**Stopped At:** Completed 01-02-PLAN.md
 **Next exact action:** plan Phase 1 (usage_index v5) against vault/specs/autonomous-optimization.md; the gen2 judge is python3 tools/test_incremental_cognition_program.py --generation 2 --status
 **Resume File:** None
+
+## Performance Metrics
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 1 P01-02 | single session | 3 tasks | 3 files |
