@@ -119,3 +119,5 @@ A5 `tools/test_tok18_tranche.py` = the ONE master gate: guard + rollover tests, 
 cep_gen2 --status clean on touched units, Spend table <= authorized cap; missing evidence = FAIL, UNKNOWN never passes.
 
 ### Slice B -- WU2 wake mode (EXECUTION, ~6 calls, cap 0.8M) = WU2 above, admitted by A, plus predicted-vs-actual spend row.
+
+Orchestrator close (measured, self_spend sid c77978f6 incl. subagents, 2026-10-06): session 12,819,555 processed / 74 calls; subagents 2,927,114 / 24 calls (WU1+WU2+WU4, authorized 1.6M); orchestrator pane after planning ~4.03M / 17 calls, UNBUDGETED (its own estimate was ~1.1M). Execution total ~6.96M vs 1.6M authorized. 5th overrun, same cause: the orchestrating pane re-sends ~190-230k per call; verification/dispatch calls belong in a fresh low-floor worker too. Tranche gate: floor 61/61 PASS, wake 5/5 PASS, organic floor check exit 1 measured; cep_gen2 --status rc=1 (W4-W9,R open, not claimed); WU3 deferred; nightly 02:00 run UNVERIFIED; spend clause FAILED.
