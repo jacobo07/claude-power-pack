@@ -213,6 +213,13 @@ instrument chosen post hoc. If wanted, it is a NEW pre-registration (instrument 
 ceiling is 54 %, while F-b already shows no signal among the counted rows.
 Consequence: T-UNCONDITIONED-PRIOR-CANNOT-SAY-CONTINUE-001 stands; the negative control stays PARTIAL.
 
+Stage 2 CLOSED (Owner "rec", 2026-10-06): no prose-reader re-registration. Reopen only with a new
+pre-registration whose instrument is fixed before any data, and only if goal-file coverage at T rises
+(today's ceiling is 54 %: most boundaries have no committed goal file yet). Live rollover wiring stays on the
+evidence-interval decide from D1a/D1b; no horizon-driven CONTINUE path is built.
+Remaining debt (unchanged): hooks/rollover_autotype.js hunk unreleased; shadow/econ seal() overwrites a
+/kclear capsule (G12); identity backup deleted only on the typed phrase.
+
 ## Not now
 NEXT: the `decide` horizon/rehydration change (owner rollover.py); `gsd_epoch` 300k static threshold (c2/e9 lane);
 the torn-append fix. LATER: live shadow on new sessions, bounded live experiment. RESEARCH: context live-range
