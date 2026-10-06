@@ -67,6 +67,7 @@ def render(ir_path: Path, unit_id: str, repo: str) -> str:
     L += [f"- {c['id']}: {c.get('title', '')} [gates: {', '.join(c.get('gates') or []) or '-'}]" for c in claims]
     L += ["", "## Gates", ""] + [f"- {g['id']}: {g.get('text', '')}" for g in gates]
     L += ["", "## Context", ""] + [f"- {p}" for p in unit.get("context") or []]
+    L += ["", "## Affected", ""] + [f"- {p}" for p in unit.get("affected") or []]
     L += ["", "## Acceptance", ""] + [f"- {a}" for a in unit.get("acceptance") or []]
     L += ["", "## Capabilities", ""] + [f"- {a}" for a in unit.get("capabilities") or []]
     L += ["", "## Budget", "", f"- est calls: {est}", f"- reserve calls: {res}",

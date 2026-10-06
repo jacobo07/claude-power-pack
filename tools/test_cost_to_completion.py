@@ -175,6 +175,43 @@ def p5_checks() -> None:
         check("V-CTC-REAL-IR-DROPPED-GATE-RED", refused(dropped) == "UNCOVERED_GATE")
 
 
+T_EPOCH4 = 1_476_773  # canary T, worker 886279a8, 11 calls, measured by transcript census 2026-10-06
+CAL = {"files_per_call": 1.25, "ctx_start_over_floor": 10_222, "ctx_growth_per_call": 2_454,
+       "output_per_call": 927, "source": "T epoch 4 886279a8"}
+T_WORK = {"orient": 1, "explore": 1, "files": 5, "runs": 2, "repairs": 1, "commit": 1, "report": 1}
+
+
+def wdoc(work=T_WORK, cal=CAL):
+    d = {"gates": [{"id": "G1"}], "claims": [{"id": "a", "class": "bounded_coding", "unit": "T", "gates": ["G1"]}],
+         "units": [{"id": "T", "est_calls": 4, "reserve_calls": 2, "profile": "top-level-worker",
+                    "ctx_tokens": 135000, "order": 1}]}
+    if work is not None:
+        d["units"][0]["work"] = dict(work)
+    if cal is not None:
+        d["calibration"] = dict(cal)
+    return d
+
+
+def work_model_checks() -> None:
+    out = ctc.compile_cost(wdoc(), FLOORS)
+    u = out["units"][0]
+    check("V-CTC-WORK-CALLS-FROM-STRUCTURE", u["calls"] == 11 and out["candidate"]["calls"] == 11, str(u))
+    err = (u["cost"] - T_EPOCH4) / T_EPOCH4
+    check("V-CTC-WORK-RETRODICTS-T-EPOCH4", abs(err) < 0.001, f"cost={u['cost']:,} actual={T_EPOCH4:,} err={err:+.4%}")
+    plain = ctc.compile_cost(wdoc(work=None), FLOORS)
+    nocal = ctc.compile_cost(wdoc(work=None, cal=None), FLOORS)
+    check("V-CTC-WORK-ABSENT-UNCHANGED-CONTROL", plain["candidate"] == nocal["candidate"]
+          and plain["candidate"]["tokens"] == 4 * 135000, str(plain["candidate"]))
+    r = ctc.route_verdict(wdoc(), FLOORS)
+    need = sum(w["calls"] * (WF + w["packet"]) for w in r["route"]["workers"])
+    check("V-CTC-WORK-ROUTE-MATCHES-COST", abs(need - u["cost"]) <= u["calls"], f"need={need:,} cost={u['cost']:,}")
+    check("V-CTC-WORK-BAD-KEY-REFUSED", refused(wdoc(work={**T_WORK, "vibes": 3})) == "BAD_CLAIM")
+    # explore_ctx (images, large dumps) is carried only by calls AFTER the explore call that read it:
+    # T's shape = orient at call 0, explore at call 1, so calls 2..10 carry it (9 calls).
+    big = ctc.compile_cost(wdoc(work={**T_WORK, "explore_ctx": 10_000}), FLOORS)["units"][0]["cost"]
+    check("V-CTC-WORK-EXPLORE-CTX-AFTER-EXPLORE", big - u["cost"] == 10_000 * 9, f"delta={big - u['cost']:,}")
+
+
 def _route_refused(doc):
     try:
         ctc.route_verdict(doc, FLOORS)
@@ -248,6 +285,7 @@ def main() -> int:
     check("V-CTC-EMPTY-CLAIMS-REFUSED", rc != 0 and o.get("reason") == "NO_CLAIMS", f"rc={rc} {o}")
 
     p5_checks()
+    work_model_checks()
     print(f"CTC_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

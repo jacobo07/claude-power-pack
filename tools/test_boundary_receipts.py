@@ -47,10 +47,10 @@ class T:
         if results:
             self.lines.append(json.dumps({"type": "user", "timestamp": ts, "message": {"content": results}}))
 
-    def run(self):
+    def run(self, packet=PACKET):
         d = Path(tempfile.mkdtemp(prefix="br-test-"))
         (d / "s.jsonl").write_text("\n".join(self.lines), encoding="utf-8")
-        (d / "p.md").write_text(PACKET, encoding="utf-8")
+        (d / "p.md").write_text(packet, encoding="utf-8")
         calls, results = br.read_transcripts(br.transcript_paths(d / "s.jsonl"))
         return br.build_receipts(calls, results, br.load_packet(d / "p.md"))
 
@@ -141,6 +141,16 @@ def main() -> int:
         r2.add([("Read", {"file_path": f"f{i}"}, f"unique {i}")])
     s2 = br.summarize(r2.run())
     check("V-BR-FRESH-CALLS-NO-STALL-CONTROL", s2["stalls"] == 0 and s2["semantic_interrupt_density"] == 1.0, str(s2))
+
+    # Canary T (2026-10-06): a real packet's Context is prose, so using it as globs dropped every write.
+    prose = PACKET.replace("- src/*.ts", "- ENVIRONMENT IS PRE-STAGED: node_modules installed, do not reinstall")
+    r = T()
+    r.add([("Write", {"file_path": "C:/repo/src/a.ts", "content": "const a = 1;"}, "ok")])
+    r.add([("Write", {"file_path": "C:/repo/docs/outside.md", "content": "x"}, "ok")])
+    rc = r.run(prose.replace("## Acceptance", "## Affected\n\n- src/*.ts\n\n## Acceptance"))
+    check("V-BR-AFFECTED-GLOBS-NOT-PROSE-CONTEXT", count(rc, "artifact_delta") == 1, str(count(rc, "artifact_delta")))
+    check("V-BR-PROSE-CONTEXT-WITHOUT-AFFECTED-COUNTS-NOTHING-CONTROL", count(r.run(prose), "artifact_delta") == 0,
+          str(count(r.run(prose), "artifact_delta")))
 
     print(f"BR_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1

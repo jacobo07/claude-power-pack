@@ -62,6 +62,33 @@ PRIORS = {"known_transform": {"calls": 2, "ctx_tokens": 115_000},
 DEFAULT_DEOPT_FACTOR = 3.0
 DEFAULT_UNMEASURED_ALLOWANCE = 1.0
 PHASE_KEYS = ("phases", "phase_count", "phase_average", "phase_average_cost", "avg_phase_cost")
+# Structural call model (canary T, 2026-10-06): a worker's calls are its shape, not a guess.
+# orient (read packet + repo state), explore (batched reads), ceil(files / files_per_call) writes,
+# runs (each distinct verification command), repairs (fix edits after a red run), commit, report (the
+# final tool-less message, which every worker sends and est_calls never counted). extra_ctx is context a
+# unit carries from its first call (a large packet). explore_ctx is context the explore calls READ beyond
+# an ordinary text exploration (images, large dumps): split evenly over the explore calls and carried
+# from the call after each one. ctx_start_over_floor already holds a typical text exploration's return.
+WORK_KEYS = ("orient", "explore", "files", "runs", "repairs", "commit", "report", "extra_ctx", "explore_ctx")
+CAL_KEYS = ("files_per_call", "ctx_start_over_floor", "ctx_growth_per_call", "output_per_call")
+
+
+def work_cost(work: dict, cal: dict, floor: int) -> tuple[int, int]:
+    """(calls, processed tokens) for a unit's `work` under a measured `calibration`.
+
+    Context at call i (0-based) = floor + ctx_start_over_floor + extra_ctx + growth x i
+    + explore_ctx x (explore calls already answered before call i) / explore; every call also emits
+    output_per_call. Processed = sum over calls of context + output (what the census measures)."""
+    fpc = float(cal["files_per_call"])
+    n = int(sum(int(work.get(k, 0)) for k in ("orient", "explore", "runs", "repairs", "commit", "report"))
+            + math.ceil(float(work.get("files", 0)) / fpc))
+    if n <= 0:
+        raise Refused("BAD_CLAIM", "work describes zero calls")
+    c0 = floor + int(cal["ctx_start_over_floor"]) + int(work.get("extra_ctx", 0))
+    g, out = int(cal["ctx_growth_per_call"]), int(cal["output_per_call"])
+    orient, explore, ex = int(work.get("orient", 0)), int(work.get("explore", 0)), int(work.get("explore_ctx", 0))
+    carried = sum(ex * min(max(i - orient, 0), explore) // explore for i in range(n)) if explore and ex else 0
+    return n, n * c0 + g * n * (n - 1) // 2 + out * n + carried
 
 
 class Refused(Exception):
@@ -136,9 +163,18 @@ def _unit_rows(doc: dict, claims: list, effs: list, floors: dict, deopt: float):
         n = int(_pos(f"{u['id']}.est_calls", u.get("est_calls")))
         r = int(_pos(f"{u['id']}.reserve_calls", u.get("reserve_calls", 0), allow_zero=True))
         ctx = int(_pos(f"{u['id']}.ctx_tokens", u.get("ctx_tokens")))
+        work = u.get("work")
+        if work is not None:
+            if not isinstance(work, dict) or not work:
+                raise Refused("BAD_CLAIM", f"unit {u['id']!r}: work must be a non-empty object")
+            bad = sorted(set(work) - set(WORK_KEYS))
+            if bad:
+                raise Refused("BAD_CLAIM", f"unit {u['id']!r}: unknown work keys {bad} (allowed: {', '.join(WORK_KEYS)})")
+            work = {k: _pos(f"{u['id']}.work.{k}", v, allow_zero=True) for k, v in work.items()}
         by_id[u["id"]] = {"id": u["id"], "profile": u["profile"], "model_prior": u.get("model_prior"),
                           "est_calls": n, "reserve_calls": r, "ctx_tokens": ctx, "profile_floor": pf,
-                          "order": u.get("order", i), "claims": [], "model": False, "deopt": False}
+                          "order": u.get("order", i), "claims": [], "model": False, "deopt": False,
+                          "work": work}
     for c, eff in zip(claims, effs):
         uid = c.get("unit")
         if uid is None:
@@ -240,8 +276,22 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
                 ctx = int(_pos(f"actual.{r['id']}.ctx_tokens", a.get("ctx_tokens", ctx)))
             ctx = max(ctx, r["profile_floor"])
             cost = n * ctx
-            r.update(calls=n, ctx_eff=ctx, cost=cost, reserve_cost=r["reserve_calls"] * ctx,
-                     measured=bool(a))
+            reserve_cost = r["reserve_calls"] * ctx
+            if r["work"] is not None and not a:
+                cal = doc.get("calibration") or {}
+                missing = [k for k in CAL_KEYS if k not in cal]
+                if missing:
+                    raise Refused("BAD_CLAIM", f"unit {r['id']!r} has work but calibration lacks {missing}")
+                for k in CAL_KEYS:
+                    _pos(f"calibration.{k}", cal[k], allow_zero=k != "files_per_call")
+                n, cost = work_cost(r["work"], cal, r["profile_floor"])
+                ctx = -(-cost // n)  # mean processed per call; the route charges calls x this
+                # a reserve call lands after the planned ones, at the grown context
+                last = r["profile_floor"] + int(cal["ctx_start_over_floor"]) + int(r["work"].get("extra_ctx", 0)) \
+                    + int(r["work"].get("explore_ctx", 0)) + int(cal["ctx_growth_per_call"]) * n \
+                    + int(cal["output_per_call"])
+                reserve_cost = r["reserve_calls"] * last
+            r.update(calls=n, ctx_eff=ctx, cost=cost, reserve_cost=reserve_cost, measured=bool(a))
             calls += n
             cand += cost
             reserve_calls += r["reserve_calls"]

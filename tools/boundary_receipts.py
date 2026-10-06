@@ -63,7 +63,7 @@ def _norm_text(s: str) -> str:
 
 def load_packet(path: Path) -> dict:
     text = path.read_text(encoding="utf-8")
-    unit, section, sec = None, None, {"Claims": [], "Context": [], "Acceptance": []}
+    unit, section, sec = None, None, {"Claims": [], "Context": [], "Affected": [], "Acceptance": []}
     for ln in text.splitlines():
         if ln.startswith("unit: ") and unit is None:
             unit = ln[6:].strip()
@@ -72,7 +72,10 @@ def load_packet(path: Path) -> dict:
         elif section in sec and ln.startswith("- "):
             sec[section].append(ln[2:].strip())
     claims = [c.split(":", 1)[0].strip() for c in sec["Claims"]]
-    return {"unit": unit, "claims": claims, "globs": sec["Context"], "acceptance": sec["Acceptance"]}
+    # `## Affected` holds the unit's file globs. Context is prose in a real packet; it is used as globs
+    # only by packets written before Affected existed (canary T, 2026-10-06, dropped every write that way).
+    globs = sec["Affected"] or sec["Context"]
+    return {"unit": unit, "claims": claims, "globs": globs, "acceptance": sec["Acceptance"]}
 
 
 def _result_text(block: dict) -> str:
