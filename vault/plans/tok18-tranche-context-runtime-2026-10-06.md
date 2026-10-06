@@ -75,6 +75,10 @@ A unit that crosses its cap stops and writes a partial receipt; it never borrows
 - Owner 2026-10-06: new execution envelope 1.2M (WU1 0.6 / WU2 0.4 / WU4 0.2), WU3 deferred until WU1 measures fresh-worker per-call cost; workers run as fresh subagents/panes with compiled packets, never in the planning pane.
 
 | 7f13d6e2 | post-E1 Phase 1 (49 calls) + re-plan scan (this turn) | files 1 calls 53 processed 9,638,790 (ctx 9,574,887 out 63,903) subagent calls 0 subagent ctx 0 | |
+- Tranche close (WU4): WU1 PARTIAL (--admit-cwd code, red test fixed b67f5d8f, wiring not done); WU2 DONE for code/fixture, production UNVERIFIED; WU4 DONE (LEARNINGS.md, ukdl-candidates.md); WU3 deferred.
+- Spend: planning pane 5,856,325 / 33 calls (~98% of 6M); WU1 ~1.5M vs 0.6M cap; every fresh worker starts at ~96k, so allowance = budget / prefix.
+- Owner items: re-baseline floor reference or explain +37,683 chars (memory_project +34,478 is cross-project); decide a consumer for WAKE_FLAG.json.
+- Owner items: confirm PP-Vault-Summarize 02:00 run on 2026-10-07 (Get-ScheduledTask PP-Vault-Summarize | Get-ScheduledTaskInfo); UKDL candidates await promotion.
 
 ## PROPOSED addendum (pane 7f13d6e2, 2026-10-06; NOT approved; zero-model scan, transcript-measured)
 - Phase 1 anatomy, 49 calls, ~8.6M (handoff's 8.16M/47 was read before the last 2 calls): resume 3 calls 0.37M;
