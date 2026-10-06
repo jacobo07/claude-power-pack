@@ -293,6 +293,30 @@ def main() -> int:
     done = gm.load("m-slimlaunch")
     check("V-ADM-SLIM-SUPERVISE-COMPLETES", done["state"] == gm.COMPLETED and done["slim_result"]["result"] == "done",
           f"{done['state']} {[r for r in rows if r['mission_id'] == 'm-slimlaunch']}")
+    # A worker the breaker stopped exits cleanly (is_error=false); the guard's state file decides.
+    def finish_slim(mid, route_file, state):
+        mission(mid)
+        admit(mid, route_file, SLIM)
+        cur = gm.load(mid)
+        gm.launch_worker(mid, expect_epoch=cur["epoch"], expect_state=cur["state"], reason="t",
+                         runner=no_bg, spawner=spawner, now=NOW)
+        own = gm.load(mid)["owner"]
+        Path(own["out_path"]).write_text(json.dumps(
+            {"type": "result", "is_error": False, "result": "stopped by budget" if state["closeout"] else "done",
+             "session_id": own["session_id"], "usage": {"output_tokens": 5}, "permission_denials": []}),
+            encoding="utf-8")
+        sp = ms.budget_path(own["session_id"])
+        sp.with_name(f"session-budget-{own['session_id']}.state.json").write_text(json.dumps(state), encoding="utf-8")
+        gm.supervise(now=NOW + 60, sessions=[], pid_alive=dead)
+        return gm.load(mid)
+
+    trip = finish_slim("m-slimtrip", "slim-route-t.json", {"ids": [], "tokens": 350_000, "calls": 3, "closeout": 1})
+    check("V-ADM-SLIM-TRIPPED-HALTS-NOT-COMPLETES", trip["state"] == gm.HALTED
+          and "breaker tripped" in (trip.get("reason") or "")
+          and (trip["slim_result"].get("tripped") or "").startswith("breaker tripped"), f"{trip['state']} {trip.get('reason')}")
+    ok = finish_slim("m-slimok", "slim-route-o.json", {"ids": [], "tokens": 120_000, "calls": 3, "closeout": 0})
+    check("V-ADM-SLIM-UNTRIPPED-STATE-COMPLETES", ok["state"] == gm.COMPLETED and ok["slim_result"].get("tripped") is None,
+          f"{ok['state']} {ok.get('reason')}")
     mission("m-slimfail")
     admit("m-slimfail", "slim-route-f.json", SLIM)
     cur = gm.load("m-slimfail")

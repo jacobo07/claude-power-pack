@@ -794,6 +794,30 @@ def _spawn_detached(argv: list[str], cwd: str, out_path: Path, err_path: Path) -
     return proc.pid
 
 
+def slim_budget_trip(sid: str | None) -> str | None:
+    """Why the breaker stopped this worker, or None. A print-mode worker the breaker stopped still
+    exits cleanly with is_error=false (measured 2026-10-06, m-e2e-red3: it obeyed the closeout
+    advisory and reported), so a clean exit is not completion. Evidence is the guard's own state
+    file: any closeout call spent means it tripped; tokens past stop means it would have.
+    Unreadable files answer None here; the envelope was declared at launch, so their absence is
+    the declare failure the ledger already records."""
+    if not sid:
+        return None
+    try:
+        import mission_spend as ms
+        bpath = ms.budget_path(sid)
+        budget = json.loads(bpath.read_text(encoding="utf-8-sig"))
+        st = json.loads(bpath.with_name(f"session-budget-{sid}.state.json").read_text(encoding="utf-8-sig"))
+    except (ImportError, ValueError, OSError):
+        return None
+    used, tokens, stop = int(st.get("closeout") or 0), int(st.get("tokens") or 0), int(budget.get("stop") or 0)
+    if used > 0:
+        return f"breaker tripped: {used} closeout call(s) spent at {tokens} processed (stop {stop})"
+    if stop and tokens > stop:
+        return f"breaker tripped: {tokens} processed > stop {stop}"
+    return None
+
+
 def slim_result(owner: dict | None, pid_alive=lr._pid_alive) -> dict:
     """Is a slim worker finished? `{"status": running|finished|failed|unknown, ...}`.
 
@@ -815,6 +839,7 @@ def slim_result(owner: dict | None, pid_alive=lr._pid_alive) -> dict:
         return {"status": "finished", "is_error": bool(data.get("is_error")),
                 "session_id": data.get("session_id"), "tokens": tokens,
                 "denials": len(data.get("permission_denials") or []),
+                "tripped": slim_budget_trip(owner.get("session_id")),
                 "result": str(data.get("result") or "")[:500]}
     pid = owner.get("pid")
     if not isinstance(pid, int):
@@ -2581,10 +2606,11 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         row["renewed_as"] = renew_mission(halted, now=now)["mission_id"]
             elif act == "slim_finished":
                 s = plan["slim"]
+                stopped = s.get("tripped") or ("worker reported is_error" if s["is_error"] else None)
                 transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                           event="slim_worker_finished", now=now, state=HALTED if s["is_error"] else COMPLETED,
+                           event="slim_worker_finished", now=now, state=HALTED if stopped else COMPLETED,
                            pending=None, slim_result=s, worker=s.get("session_id"),
-                           reason=plan["reason"])
+                           reason=f"{plan['reason']}; {stopped}" if stopped else plan["reason"])
             elif act == "surface_blocked":
                 if rec["state"] != BLOCKED:
                     needs = host_job_needs((rec.get("owner") or {}).get("session_id"))
