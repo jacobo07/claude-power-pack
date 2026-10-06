@@ -1490,7 +1490,7 @@ def _needs_look(m: dict, now: float) -> bool:
 
 MAX_RENEWALS = 3   # budget renewals per lineage (spec vault/specs/gex44-mission-plane.md, A)
 RENEWAL_CARRIED_ENVELOPE = ("token_estimate", "token_trip_ratio", "model", "autocompact",
-                            "continue_max_tokens", "wu_packet", "mission_terms", "note")
+                            "continue_max_tokens", "wu_packet", "mission_terms", "note", "goal")
 
 
 def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None) -> str | None:
@@ -1539,6 +1539,14 @@ def _renewal_why_not(rec: dict, halt_reason: str, st: dict, halt_wd: str, finger
         fp_now = (fingerprint or progress_fingerprint)(halt_wd)
         if fp_now is not None and fp_now == origin:
             why_not = "no progress in this mission (work tree unchanged since its first launch)"
+    if not why_not:
+        # GGMC C4: a renewal is a new attempt of the same Goal and obeys the same authority as `arm`.
+        try:
+            key = goal_key(rec.get("cwd") or "", rec.get("workstream"))
+            why_not = goal_refusal(goal_conflicts(key, exclude=rec["mission_id"]),
+                                   (rec.get("goal") or {}).get("unit"))
+        except Exception as exc:  # noqa: BLE001 -- an unanswered goal check never renews
+            why_not = f"goal check failed: {type(exc).__name__}: {exc}"[:300]
     return why_not
 
 
@@ -2431,8 +2439,88 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
     return unreadable + out
 
 
-def arm(cwd: str, resume_command: str, *, launch: bool = True, **kw) -> dict:
+# --------------------------------------------------------------------------- goal authority (GGMC C4)
+# spec goal-governed-mission-control C4: the Goal (a workstream of a repository) is the authority; a
+# mission is a disposable attempt at it. Measured 2026-10-06: create() refused only a live record with
+# the SAME id, so a fresh `arm` on a workstream whose attempt sits under an Owner hold (KSR recon-factory,
+# InfinityOps odr-device-trust) would have started a second attempt beside the hold.
+def goal_key(cwd: str, workstream: str | None) -> tuple[str, str] | None:
+    """(repository identity, workstream), or None for a mission without a workstream (no Goal to guard).
+    The repository is the git common dir, so a worktree and its main checkout are one Goal."""
+    if not workstream or not cwd:
+        return None
+    tc = _git_toplevel_and_common(cwd)
+    repo = tc[1] if tc else os.path.normcase(str(Path(cwd).resolve()))
+    return repo, workstream
+
+
+def goal_conflicts(key: tuple[str, str] | None, *, exclude: str | None = None,
+                   records: list[dict] | None = None) -> list[dict]:
+    """Non-terminal attempts of the Goal `key` other than `exclude`, each {mission_id, held, unit}."""
+    if key is None:
+        return []
+    out = []
+    for r in (records if records is not None else all_missions()):
+        if r["mission_id"] == exclude or r.get("state") in TERMINAL or r.get("workstream") != key[1]:
+            continue
+        if goal_key(r.get("cwd") or "", r.get("workstream")) != key:
+            continue
+        out.append({"mission_id": r["mission_id"], "held": bool(r.get("owner_hold")),
+                    "unit": (r.get("goal") or {}).get("unit")})
+    return out
+
+
+def goal_refusal(conflicts: list[dict], unit: str | None = None) -> str | None:
+    """Why a new attempt may not start beside `conflicts`, or None. A Goal hold covers every unit; a live
+    attempt without a unit owns the whole Goal; two units may run side by side only when both are named
+    and differ."""
+    for c in conflicts:
+        if c["held"]:
+            return f"goal held: {c['mission_id']} is under an Owner hold (release it, or supersede it with authority)"
+    for c in conflicts:
+        if not unit or not c["unit"] or c["unit"] == unit:
+            return (f"singleflight: {c['mission_id']} is a live attempt of this goal"
+                    + (f" (unit {c['unit']})" if c["unit"] else "")
+                    + "; supersede it with authority, or name a distinct --parallel-unit on both")
+    return None
+
+
+def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
+        authority: str | None = None, parallel_unit: str | None = None, **kw) -> dict:
+    ws = kw.get("workstream")
+    if ws is None and resume_command.startswith("/gsd-"):
+        m = _WS_FLAG.search(resume_command)
+        ws = m.group(1) if m else None
+    key = goal_key(cwd, ws)
+    conflicts = goal_conflicts(key)
+    old = None
+    if supersedes:
+        if not (authority or "").strip():
+            raise MissionError("--supersedes needs --authority: who decided, and where it is recorded")
+        old = load(supersedes)
+        if old is None or old["state"] in TERMINAL:
+            raise MissionError(f"{supersedes} is not a live attempt to supersede")
+        if key is None or goal_key(old.get("cwd") or "", old.get("workstream")) != key:
+            raise MissionError(f"{supersedes} is not an attempt of this goal")
+        conflicts = [c for c in conflicts if c["mission_id"] != supersedes]
+    why = goal_refusal(conflicts, parallel_unit)
+    if why:
+        if key is not None:
+            lr.ledger_append(f"goal-{key[1]}", "goal_arm_refused", workstream=key[1], why=why[:300])
+        raise MissionError(why)
     rec = create(cwd, resume_command, **kw)
+    extra = {}
+    if key is not None:
+        extra["goal"] = {"repo": key[0], "workstream": key[1], "unit": parallel_unit}
+    if supersedes:
+        extra.update(supersedes=supersedes, authority=authority.strip()[:1000])
+    if extra:
+        rec = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=PREPARED,
+                         event="goal_bound", **extra)
+    if old is not None:
+        transition(supersedes, expect_epoch=old["epoch"], expect_state=old["state"],
+                   event="mission_superseded", state=HALTED, pending=None,
+                   reason=f"superseded by {rec['mission_id']}: {authority.strip()[:300]}")
     if not launch:
         return {"mission": rec}
     # The origin is the tree BEFORE epoch 1 works (review F6): measured here, at arm, it makes
@@ -2871,6 +2959,11 @@ def _cli(argv=None) -> int:
     a.add_argument("--rollover-protocol", choices=(CAPSULE_V2,), default=None,
                    help="rotate through a sealed, certified capsule (spec mission-capsule-rollover); "
                         "needs --permission-mode auto or bypassPermissions. Omitted: legacy.")
+    a.add_argument("--supersedes", help="the live attempt of this goal this one replaces (spec "
+                                        "goal-governed-mission-control C4); needs --authority")
+    a.add_argument("--authority", help="who decided the supersession and where it is recorded")
+    a.add_argument("--parallel-unit", help="a named work unit that may run beside other named units "
+                                           "of the same goal")
     s = sub.add_parser("session-start")
     s.add_argument("--session", required=True)
     s.add_argument("--source", default="")
@@ -2902,7 +2995,8 @@ def _cli(argv=None) -> int:
         res = arm(args.cwd, args.command, launch=not args.no_launch, workstream=args.workstream,
                   max_cycles=args.max_cycles, max_hours=args.max_hours,
                   permission_mode=args.permission_mode, allowed_tools=args.allowed_tools,
-                  add_dirs=args.add_dir, wall=wall, rollover_protocol=args.rollover_protocol)
+                  add_dirs=args.add_dir, wall=wall, rollover_protocol=args.rollover_protocol,
+                  supersedes=args.supersedes, authority=args.authority, parallel_unit=args.parallel_unit)
         print(json.dumps(res, indent=2))
         return 0 if args.no_launch or res.get("launch", {}).get("ok") else 1
     if args.cmd == "session-start":
