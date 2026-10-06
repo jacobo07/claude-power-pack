@@ -117,6 +117,20 @@ def main() -> int:
     derived = ms.processed_tokens({**rec, "mission_id": "m-attr", "owner": {"session_id": "s3"}}, root=root)
     check("V-MSPEND-DERIVED-END-TO-END", derived == got + 40, f"got {derived}")
 
+    # --- union of cwd and work_dir dirs (m-8bbdf725cd52: work_dir had no transcript dir) ---------
+    cwd2 = "/home/kobii/missions/liveqa-cwd"
+    (root / ms.encode_cwd(cwd2)).mkdir(parents=True)
+    (root / ms.encode_cwd(cwd2) / "w1.jsonl").write_text(_row("u1", "2027-01-15T08:06:00Z", out=21) + "\n",
+                                                          encoding="utf-8")
+    rec2 = {"work_dir": "/home/kobii/missions/liveqa-no-transcripts", "cwd": cwd2, "created_at": 1_800_000_000.0}
+    check("V-MSPEND-CWD-ONLY-MEASURES", ms.processed_tokens(rec2, root=root, sessions=({"w1"}, set())) == 21,
+          "transcripts only under cwd's dir, work_dir has none")
+    check("V-MSPEND-CWD-ONLY-NO-WORKDIR-UNKNOWN",
+          ms.processed_tokens({"work_dir": "/nope1", "cwd": "/nope2"}, root=root, sessions=({"w1"}, set())) is None)
+    check("V-MSPEND-UNION-DEDUP",
+          ms.processed_tokens({**rec2, "work_dir": cwd2}, root=root, sessions=({"w1"}, set())) == 21,
+          "same dir via both fields is counted once")
+
     # --- judge: every trip has a control -------------------------------------------------------
     e1 = {"token_estimate": 17 * M}
     check("V-MSPEND-NO-ESTIMATE-NEVER-TRIPS", ms.judge({}, 10**12, "f")["trip"] is None)

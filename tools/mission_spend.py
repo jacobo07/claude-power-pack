@@ -119,10 +119,13 @@ def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = N
     `sessions` overrides `mission_sessions(rec)`. `cache` maps a file path to {size, mtime, tokens};
     unchanged files are not re-read."""
     root = root or projects_root()
-    work_dir = rec.get("work_dir") or rec.get("cwd")
-    if not work_dir:
-        return None
-    dirs = mission_dirs(work_dir, root)
+    # Union of the cwd's and the work_dir's project dirs: workers run in `cwd` while `work_dir` may
+    # have no transcript dir at all (m-8bbdf725cd52: work_dir=io-liveqa, meter blind -> None).
+    dirs: list[Path] = []
+    for wd in (rec.get("work_dir"), rec.get("cwd")):
+        for d in (mission_dirs(wd, root) if wd else []):
+            if d not in dirs:
+                dirs.append(d)
     if not dirs:
         return None
     ids, prefixes = sessions if sessions is not None else mission_sessions(rec)
