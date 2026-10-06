@@ -53,6 +53,10 @@ Total Plans in Phase: 6
 - [Phase 1]: 01-02: a failed refresh rolls back the file in flight; per-file BEGIN IMMEDIATE with snapshot check; dup_of needs equal content_id AND equal call-key sets
 - [Phase 1]: 01-04: an UNMEASURED population answer carries population=None (numbers under observed_partial); pattern drift is checked against the champion's current set; empty selections refuse; backfill-v5 is the only verb that re-reads history and reports bytes_reread
 - [Phase 1]: 01-06: `_archived` transcripts are v5-only (declared ARCHIVED_RULE: v4 readers keep every number; population excludes them by default and shows them in the reconcile block); the occurrence view (every transcript copy counts) is the parity unit, with unique and first_writer beside it. The 18 shared keys sit between two selected sessions (867896c0 is KME_STRONG), not outside the selection.
+- [Epoch 2, 2026-10-06]: review CR-01/WR-01/WR-02 fixed inline (6674ccc0), test-first, drill 21/21. V-UX5-CRASH-RESUME now models a crash as a BaseException, because a plain Exception is now (correctly) a typed file error. Reason for inline: the fixer subagent had stopped at the mission wall.
+- [Epoch 2, 2026-10-06]: Phase 1 verified 4/4 (dd1c910a). The verifier rebuilt the KME-L index at HEAD in a copy and got EXACT again. The copy (/home/kobii/ao-verify-p1, 0 hard links) was deleted; safe because it was a self-made copy that can be rebuilt from the corpus.
+- [Epoch 2, 2026-10-06]: carried warning IN-04: sessions with no first_ts drop out of an `--until` population without a reason (5 in-scope files, 0 calls, parity unaffected). Folded into Phase 2 planning.
+- OWNER DECISION NEEDED [2026-10-06]: publishing branch mission/autonomous-optimization-gen2 to origin is refused by the ovo-push-gate hook (stderr withheld). Options: (a) the Owner publishes it, (b) the Owner exempts this mission branch in the gate, (c) keep it local. Pick: (c) for now. The commits are durable in the shared object store.
 
 ## Session Continuity
 
