@@ -293,6 +293,46 @@ def hub_gates():
           and "hidden_launch.vbs" in daemon_calls[0],
           f"got={got}")
 
+    # --- C4 (2026-10-06): one arm per successor. The hook and the courier both arm by design;
+    # measured, 132 of 135 doubly-armed sessions in 7 days were exactly that pair. The second arm
+    # comes AFTER the daemon may have consumed the flag, so the flag is deleted between the two
+    # arms here, as the daemon does once it has typed. Control: a different sid still arms.
+    def double_arm(second_sid):
+        home = fresh()
+        seed_capsule(home, cwd)
+        hooks = home / ".claude" / "hooks"
+        hooks.mkdir(parents=True, exist_ok=True)
+        (hooks / "auto-compact-sendkeys-daemon.ps1").write_text("exit 0\r\n", encoding="ascii")
+        js = (
+            "const fs=require('fs');const cp=require('child_process');const calls=[];"
+            "cp.spawn=(c,a)=>{calls.push([c].concat(a||[]).join(' '));return {pid:1,unref(){}};};"
+            "const h=require(process.argv[1]);"
+            "const a=h.armKresumeAutotype('succ-2222',process.argv[2],'t','','hook');const w1=h.lastKresumeArm();"
+            "try{fs.unlinkSync(a);}catch(_){}"
+            "const b=h.armKresumeAutotype(process.argv[3],process.argv[2],'t','','courier');const w2=h.lastKresumeArm();"
+            "process.stdout.write(JSON.stringify({a:a,b:b,w1:w1,w2:w2,calls:calls,"
+            "flagBack:fs.existsSync(a)}));"
+        )
+        env = dict(os.environ)
+        env.update({"USERPROFILE": str(home), "HOME": str(home), "AC_DAEMON_DIR": str(hooks)})
+        r = subprocess.run(["node", "-e", js, str(HUB), cwd, second_sid],
+                           env=env, capture_output=True, text=True, timeout=60)
+        try:
+            return json.loads(r.stdout or "{}")
+        except ValueError:
+            return {"err": r.stderr[-300:]}
+
+    got = double_arm("succ-2222")
+    daemon_calls = [c for c in got.get("calls", []) if "auto-compact-sendkeys-daemon.ps1" in c]
+    check("V-KRA-HUB-SECOND-ARM-IS-NOOP",
+          got.get("a") and got.get("b") == got.get("a") and len(daemon_calls) == 1
+          and got.get("flagBack") is False and got.get("w1") == "armed" and got.get("w2") == "already armed",
+          f"got={got}")
+    got = double_arm("succ-9999")
+    daemon_calls = [c for c in got.get("calls", []) if "auto-compact-sendkeys-daemon.ps1" in c]
+    check("V-KRA-HUB-OTHER-SID-STILL-ARMS",
+          len(daemon_calls) == 2 and got.get("w2") == "armed" and got.get("b") != got.get("a"), f"got={got}")
+
     # --- the launch must actually BOOT (2026-09-30, 614697c1). The recorded-spawn gate above
     # pinned `powershell.exe` for a year of runs while that exact launch never executed a line:
     # the note above blamed the sandbox, but a detached powershell never starts ANYWHERE

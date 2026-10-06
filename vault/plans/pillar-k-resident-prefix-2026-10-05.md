@@ -121,3 +121,13 @@ Out of slice (named debt): zero-command-bootstrap / first-time-project double ru
   hash-compare-removed, stale-hash-kept all killed. Kill switch CPP_RECOVERY_FASTPATH=off.
   Live epoch (2026-10-03) scores conversations by exact id and every pane was relaunched as a new conversation, so it
   can never reach RECOVERED: only an Owner dismiss closes it. Until then pane_map churn (5-min task) re-runs the gate.
+- C3 committed 1c5e12cd (live with the commit).
+- C4 (live on commit): cause CONFIRMED -- 132 of 135 doubly-armed sessions (7 days) had a courier ARMED ledger row
+  within 10 s of an arm; the 8x/65x outliers are test fixture sids (succ-2222, succ-3333, evil) that a suite writes
+  into the REAL hub log (named debt). armKresumeAutotype claims `kresume-armed-<sid>.marker` with wx before writing
+  the flag; the loser returns the same flag path, writes and launches nothing, why='already armed' (courier still
+  ARMED); a failed flag write releases the claim; log lines name the caller (hook|courier). New gates
+  V-KRA-HUB-SECOND-ARM-IS-NOOP + V-KRA-HUB-OTHER-SID-STILL-ARMS pass; mutant (wx -> w) on a hub COPY killed
+  (2 launches, flag recreated). Courier 22/22. kresume-autotype 31/35: the 4 failures are V-KRA-D-* daemon gates
+  whose flags the test writes directly (no hub code on that path): daemon REQUESTED then exit ~0.7 s later on a
+  starved host. Markers accumulate one per rollover in ~/.claude/hooks (no pruning yet; named debt).

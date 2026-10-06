@@ -209,7 +209,29 @@ function kresumeLaunchSpec() {
   };
 }
 
-function armKresumeAutotype(sessionId, cwd, transcriptPath, focus) {
+// C4 (2026-10-06): ONE arm per successor. Two callers arm by design -- rollover_autotype.js on
+// the SessionStart payload and the predecessor's courier (kresume_courier.py `--arm`) -- and over
+// 7 days 132 of 135 doubly-armed sessions had a courier ARMED row within 10 s of an arm. Each
+// call rewrote the flag and relaunched the daemon; the daemon deletes the flag once it has typed,
+// so an arm seconds later could recreate it and type /kresume a second time. The marker is
+// claimed atomically (wx) BEFORE the flag is written and outlives the daemon consuming the flag;
+// a caller that loses the claim returns the same flag path and writes / launches nothing.
+// Not *.flag on purpose: the daemon and its tests read only auto-compact-*.flag.
+function kresumeArmedMarker(hooksDir, safeSid) {
+  return path.join(hooksDir, 'kresume-armed-' + safeSid + '.marker');
+}
+
+// Outcome of the last arm in this process, for callers that report it (rollover_autotype.js).
+let LAST_KRESUME_ARM = null;
+function lastKresumeArm() {
+  return LAST_KRESUME_ARM;
+}
+
+function armKresumeAutotype(sessionId, cwd, transcriptPath, focus, caller) {
+  let marker = null;
+  let flagWritten = false;
+  const who = caller || '?';
+  LAST_KRESUME_ARM = null;
   try {
     const sw = String(process.env.CPP_KRESUME_AUTOTYPE || '').trim().toLowerCase();
     if (sw === '0' || sw === 'off' || sw === 'false') {
@@ -225,6 +247,20 @@ function armKresumeAutotype(sessionId, cwd, transcriptPath, focus) {
     const hooksDir = process.env.AC_DAEMON_DIR || path.join(HOME, '.claude', 'hooks');
     fs.mkdirSync(hooksDir, { recursive: true });
     const flag = path.join(hooksDir, 'auto-compact-trigger-' + safeSid + '.flag');
+    marker = kresumeArmedMarker(hooksDir, safeSid);
+    try {
+      fs.writeFileSync(marker, new Date().toISOString() + ' pid=' + process.pid + ' caller=' + who + '\n',
+                       { flag: 'wx' });
+    } catch (claimErr) {
+      if (claimErr && claimErr.code === 'EEXIST') {
+        marker = null;   // not ours: never removed by this caller
+        LAST_KRESUME_ARM = 'already armed';
+        note('kresume autotype already armed sid=' + safeSid + ' caller=' + who
+             + ' (no second flag, no second daemon)');
+        return flag;
+      }
+      throw claimErr;
+    }
     const body = {
       ts: new Date().toISOString(), session_id: sessionId, cwd: cwd,
       transcript: transcriptPath || '',
@@ -234,6 +270,7 @@ function armKresumeAutotype(sessionId, cwd, transcriptPath, focus) {
     const tmp = flag + '.' + process.pid + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(body) + '\n', 'utf8');
     fs.renameSync(tmp, flag);
+    flagWritten = true;
     // Launched NOW, never queued. Measured 2026-09-29 (435014d6): on a starved host the
     // SessionStart chain abandoned the hub 0.8 s after it armed, before flushSpawns(), so
     // the queued daemon launch died with it; the flag sat until an unrelated daemon run
@@ -248,10 +285,15 @@ function armKresumeAutotype(sessionId, cwd, transcriptPath, focus) {
       return flag;   // the Stop launcher still serves the flag, one turn late
     }
     spawnNow(kresumeLaunchSpec());
-    note('kresume autotype armed sid=' + safeSid);
+    LAST_KRESUME_ARM = 'armed';
+    note('kresume autotype armed sid=' + safeSid + ' caller=' + who);
     return flag;
   } catch (err) {
     note('kresume autotype failed', err);
+    // A claim without a flag would block every later arm for this successor: release it.
+    if (marker && !flagWritten) {
+      try { fs.unlinkSync(marker); } catch (_) { /* best effort; logged above */ }
+    }
     return null;   // the card is still shown; a human can type it
   }
 }
@@ -1008,4 +1050,5 @@ if (require.main === module) {
 }
 
 module.exports = { hubCards, missionNamesSession, hookMissionStart, hookRolloverResume, armKresumeAutotype,
+  kresumeArmedMarker, lastKresumeArm,
   rolloverFocus, getStdinPayload, note, ownerFacingAllowed, digestHasSignal };

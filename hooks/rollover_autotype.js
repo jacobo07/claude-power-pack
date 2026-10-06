@@ -34,14 +34,18 @@ const hub = require('./session_start_hub.js');
 
 // One arm, two callers: the SessionStart payload below, and the PREDECESSOR's courier
 // (tools/kresume_courier.py) through `--arm`. Spec vault/specs/kresume-courier.md. The flag is
-// written only by hub.armKresumeAutotype, so the two paths cannot disagree about its shape,
-// and it is keyed by session id, so both arming the same successor still types one line.
-function arm(sessionId, cwd, transcriptPath) {
+// written only by hub.armKresumeAutotype, so the two paths cannot disagree about its shape.
+// "Keyed by session id" was NOT enough on its own (C4, 2026-10-06): 132 of 135 doubly-armed
+// sessions in 7 days were this hook plus the courier, each rewriting the flag and relaunching
+// the daemon. The hub now claims a per-sid marker first; the second caller gets the same flag
+// back with why='already armed', which the courier still records as ARMED.
+function arm(sessionId, cwd, transcriptPath, caller) {
   if (!hub.hookRolloverResume(cwd, 'clear')) {
     return { armed: null, why: 'no unretired capsule for this cwd' };
   }
-  const flag = hub.armKresumeAutotype(sessionId, cwd, transcriptPath, hub.rolloverFocus(cwd, 'clear'));
-  return { armed: flag, why: flag ? 'armed' : 'declined (kill switch, no session id, or write failed)' };
+  const flag = hub.armKresumeAutotype(sessionId, cwd, transcriptPath, hub.rolloverFocus(cwd, 'clear'), caller);
+  if (!flag) return { armed: null, why: 'declined (kill switch, no session id, or write failed)' };
+  return { armed: flag, why: hub.lastKresumeArm() || 'armed' };
 }
 
 async function main() {
@@ -60,7 +64,7 @@ async function main() {
     return;   // a startup, resume or compaction is not a rollover crossing
   }
   const cwd = (typeof payload.cwd === 'string' && payload.cwd) ? payload.cwd : process.cwd();
-  arm(sid, cwd, (typeof payload.transcript_path === 'string') ? payload.transcript_path : '');
+  arm(sid, cwd, (typeof payload.transcript_path === 'string') ? payload.transcript_path : '', 'hook');
 }
 
 // `node rollover_autotype.js --arm <sid> <cwd> <transcript>`: never reads stdin, prints one
@@ -69,7 +73,7 @@ function cli(argv) {
   const [sid, cwd, transcript] = argv.slice(argv.indexOf('--arm') + 1);
   let out;
   try {
-    out = arm(sid || '', cwd || '', transcript || '');
+    out = arm(sid || '', cwd || '', transcript || '', 'courier');
   } catch (err) {
     out = { armed: null, why: 'arm threw: ' + ((err && err.message) || err) };
   }
