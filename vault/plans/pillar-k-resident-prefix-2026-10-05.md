@@ -113,3 +113,11 @@ Out of slice (named debt): zero-command-bootstrap / first-time-project double ru
   DONE count (>=20 real SessionStarts after 12:37Z): `%TEMP%\pp-session-hub.log` lines `cards DONE via=inproc sid=`
   (one per start; `via=hub` means the lane did not run) vs `~/.claude/logs/hook-dispatcher-errors.log`
   `[SessionStart-chain] CHAIN-DEADLINE-ABANDONED before pool` (target 0) and `INPROC-*-FAILED` (target 0).
+- C3 (live on commit; hub served from the checkout): `hooks/recovery_fastpath.js` runs the python gate only when
+  (a) a boot follows a non-graceful beacon (120 s margin) or (b) an open epoch was judged on different pane_map bytes
+  (judged_input_sha); else prints the gate's own stored `reminder_line`. Gate prints the full line once
+  (announced_at), then the reminder. `record_verdict` drops the hash unless the caller supplies one (CLI path forces a
+  re-judge). `tools/test_recovery_fastpath.py` 18/18 node-vs-real-gate parity; mutants boot-check-removed,
+  hash-compare-removed, stale-hash-kept all killed. Kill switch CPP_RECOVERY_FASTPATH=off.
+  Live epoch (2026-10-03) scores conversations by exact id and every pane was relaunched as a new conversation, so it
+  can never reach RECOVERED: only an Owner dismiss closes it. Until then pane_map churn (5-min task) re-runs the gate.

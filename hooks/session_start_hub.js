@@ -84,8 +84,8 @@ const RECOVERY_EPOCH_GATE_PY = path.join(PP_PATH, 'tools', 'recovery_epoch_gate.
 // The recovery gate is the ONE hook here that must run synchronously: its whole
 // product is a line the Owner reads THIS session ("4 panes did not come back").
 // Detached, the answer would arrive after the turn it belongs to. Measured at
-// ~176 ms on this host and silent on a healthy start (nothing printed, no epoch),
-// which is inside the inline-hook budget.
+// ~176 ms in isolation -- but on 2026-10-06 the hub spent p50 967 / p90 1,550 ms up to
+// its line, so C3 (recovery_fastpath.js) skips it whenever its answer cannot have changed.
 const RECOVERY_GATE_TIMEOUT_MS = 8000;
 
 // ---------------------------------------------------------------------------
@@ -268,8 +268,18 @@ function isAbsolutePathString(p) {
 // Detects the interruption, pins the pre-crash topology, judges what came back.
 // Fail-open in every branch: a recovery gate that can block a session start is a
 // worse failure than the silence it exists to end.
+const { recoveryFastPath } = require('./recovery_fastpath');
+
 function hookRecoveryEpoch() {
   try {
+    // C3: run the python gate only when its answer can have changed (recovery_fastpath.js).
+    const fp = recoveryFastPath(STATE_DIR);
+    if (!fp.run) {
+      note('recovery fast path: gate skipped (' + fp.why + ')'
+           + (fp.line ? ', reminder from the last judgement' : ''));
+      return fp.line || null;
+    }
+    note('recovery fast path: gate runs (' + fp.why + ')');
     if (!fs.existsSync(RECOVERY_EPOCH_GATE_PY)) return null;
     const out = require('child_process').execFileSync(
       PYTHON_EXE, [RECOVERY_EPOCH_GATE_PY],

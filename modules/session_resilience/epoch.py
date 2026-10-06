@@ -272,11 +272,17 @@ def open_epoch(state_dir: Path | str, detection: dict,
 
 
 def record_verdict(state_dir: Path | str, verdict: str, missing: list[str] | None = None,
-                   now: datetime | None = None) -> dict | None:
+                   now: datetime | None = None, extra: dict | None = None) -> dict | None:
     """Attach a verdict to the open epoch. RECOVERED closes it; anything else keeps
     it OPEN so the shortfall keeps surfacing until it is really recovered or the
     Owner dismisses it. An unjudged loss that stops being mentioned is a loss that
-    was silently accepted -- the exact failure this whole effort exists to end."""
+    was silently accepted -- the exact failure this whole effort exists to end.
+
+    ``extra`` carries the SessionStart fast path's facts (judged_input_sha,
+    reminder_line, announced_at; hooks/recovery_fastpath.js). The input hash is
+    DROPPED unless the caller supplies a fresh one: a verdict written by any other
+    path (the manual CLI) must force the next SessionStart to re-judge rather than
+    let the hub reprint a reminder vouched for by an older judgement."""
     ep = read_epoch(state_dir)
     if not ep or ep.get("status") != OPEN:
         return None
@@ -284,6 +290,9 @@ def record_verdict(state_dir: Path | str, verdict: str, missing: list[str] | Non
     ep["verdict"] = verdict
     ep["missing"] = list(missing or [])
     ep["judged_at"] = now.isoformat(timespec="seconds")
+    ep.pop("judged_input_sha", None)
+    if extra:
+        ep.update(extra)
     if verdict == "RECOVERED":
         ep["status"] = CLOSED
         ep["closed_reason"] = "recovered"

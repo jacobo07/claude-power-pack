@@ -31,6 +31,7 @@ the manual path for that case.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -87,6 +88,9 @@ def banner(state_dir: Path) -> str:
     if not obs.is_file():
         return ""
     try:
+        # Hashed BEFORE the parse: if pane_map is rewritten in between, the stored hash
+        # is the OLDER content's, so the next SessionStart re-judges (the safe direction).
+        obs_sha = hashlib.sha256(obs.read_bytes()).hexdigest()
         reference = rv.to_description(rv._live_only(rv._read_json(ref)))
         observed = rv.to_description(rv._live_only(rv._read_json(obs)))
     except (OSError, ValueError):
@@ -94,12 +98,29 @@ def banner(state_dir: Path) -> str:
 
     decision, _card, missing = rv.verdict(reference, observed)
     summary = rv.summarize(reference, observed)
-    epoch.record_verdict(state_dir, decision.verdict, missing)
-
     if decision.verdict == "RECOVERED":
+        epoch.record_verdict(state_dir, decision.verdict, missing)
         return ""  # the board is back; saying so every time is noise
 
     dims = "; ".join(f"{k}: {summary[k]}" for k in sorted(summary))
+    # Once per interruption (Owner 2026-10-06): the full line the first time it is
+    # judged, then a one-line reminder until RECOVERED or dismissed. The reminder is
+    # stored with the hash of the pane_map it was judged on, so the SessionStart hub
+    # (hooks/recovery_fastpath.js) can reprint it without running this gate while
+    # nothing it reads has changed. N panes starting together after a reboot may each
+    # print the full line once; accepted (audit gap 7) -- one writer, epoch.py.
+    announced = ep.get("announced_at")
+    reminder = (
+        f"[recovery] still {decision.verdict}: the interruption at {ep.get('interrupted_at')} "
+        f"is open ({len(missing)} dimension(s) short). `/lazarus all` relaunches the missing "
+        f"panes; `python modules/session_resilience/epoch.py --dismiss` closes it.")
+    epoch.record_verdict(state_dir, decision.verdict, missing, extra={
+        "judged_input_sha": obs_sha,
+        "reminder_line": reminder,
+        "announced_at": announced or epoch._utcnow().isoformat(timespec="seconds"),
+    })
+    if announced:
+        return reminder
     return (
         f"[recovery] {decision.verdict} -- this workspace was interrupted at "
         f"{ep.get('interrupted_at')} and did not come back whole. Scored against the "
