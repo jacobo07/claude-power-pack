@@ -10,6 +10,7 @@ junction cannot be created the run is INCONCLUSIVE (exit 2), never a pass."""
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import subprocess
 import sys
@@ -61,9 +62,15 @@ def user(pid, h, sess):
 
 
 def junction(link: Path, target: Path) -> bool:
-    r = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)],
-                       capture_output=True, text=True)
-    return r.returncode == 0 and link.is_dir()
+    if os.name == "nt":
+        r = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)],
+                           capture_output=True, text=True)
+        return r.returncode == 0 and link.is_dir()
+    try:                                          # POSIX: a directory symlink aliases like a junction
+        os.symlink(str(target), str(link), target_is_directory=True)
+    except OSError:
+        return False
+    return link.is_dir()
 
 
 def build_real(proj: Path, name: str, sess: str) -> Path:
@@ -132,8 +139,8 @@ def main() -> int:
         # Migration: an index written by the pre-fix code holds alias rows, including
         # duplicates of canonical ones. Seed them, refresh, require one identity and
         # unchanged totals, with a verified backup taken first.
-        a = str(alias) + "\\"
-        z = str(real) + "\\"
+        a = str(alias) + os.sep
+        z = str(real) + os.sep
         seeded = 0
         for table, col in (("files", "path"), ("calls", "file"), ("quota", "file"),
                            ("prompts", "file"), ("spawns", "file"), ("subagents", "file")):
