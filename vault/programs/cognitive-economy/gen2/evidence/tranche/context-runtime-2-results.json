@@ -1,0 +1,53 @@
+{
+ "steps": {
+  "S6": {
+   "verdict": "PASS",
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/S6-receipt.md"
+  },
+  "S1": {
+   "verdict": "BLOCKED",
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/S1-receipt.md"
+  },
+  "S3S4": {
+   "verdict": "PARTIAL",
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/S3S4-receipt.md"
+  },
+  "S5": {
+   "verdict": "BLOCKED",
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/S5-receipt.md"
+  },
+  "S7": {
+   "verdict": "BLOCKED_BY_OWNERSHIP",
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/S7-receipt.md"
+  }
+ },
+ "coordinator_spend": 2318601,
+ "cap": 4500000,
+ "owned_units": [],
+ "clauses": {
+  "floor_suite_sameclass_decomposition": {
+   "status": "BLOCKED",
+   "evidence": "vault/programs/cognitive-economy/gen2/evidence/tranche/S1-receipt.md"
+  },
+  "wake_e2e": {
+   "status": "BLOCKED",
+   "evidence": "vault/programs/cognitive-economy/gen2/evidence/tranche/S3S4-receipt.md"
+  },
+  "nightly_0200": {
+   "status": "WAITING",
+   "evidence": "vault/programs/cognitive-economy/gen2/evidence/tranche/context-runtime-2-ledger.md"
+  },
+  "s5_verdict_exclusions_mutation_livemutant": {
+   "status": "BLOCKED",
+   "evidence": "vault/programs/cognitive-economy/gen2/evidence/tranche/S5-receipt.md"
+  },
+  "s6_driver_test": {
+   "status": "PASS",
+   "evidence": "vault/programs/cognitive-economy/gen2/evidence/tranche/S6-receipt.md"
+  },
+  "ukdl_promotion": {
+   "status": "BLOCKED_BY_OWNERSHIP",
+   "evidence": "vault/programs/cognitive-economy/gen2/evidence/tranche/S7-receipt.md"
+  }
+ }
+}
