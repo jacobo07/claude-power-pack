@@ -113,11 +113,16 @@ def main() -> int:
     dflt = gm.worker_argv(dict(base), "do it")
     check("V-ADM-SLIM-T2-ARGV", "-p" in t2 and "--bg" not in t2 and "--no-session-persistence" not in t2
           and any(a.startswith("--settings=") and a.endswith("slim-critical-settings.json") for a in t2)
-          and "--tools=Read,Grep,Glob,Bash,Edit,Write" in t2 and "--system-prompt=KERNEL" in t2 and t2[-1] == "do it", str(t2))
+          and f"--tools={','.join(gm.SLIM_DEFAULT_TOOLS)}" in t2 and ("PowerShell" in gm.SLIM_DEFAULT_TOOLS) == (os.name == "nt") and "--system-prompt=KERNEL" in t2 and t2[-1] == "do it", str(t2))
     check("V-ADM-SLIM-T1-ARGV", "-p" in t1 and "--bg" not in t1 and "--no-session-persistence" in t1
           and not any(a.startswith("--settings=") for a in t1))
     check("V-ADM-DEFAULT-ARGV-UNCHANGED", dflt[1] == "--bg" and "-p" not in dflt
           and not any(a.startswith("--settings=") for a in dflt) and "--autocompact" in dflt and dflt[-1] == "do it", str(dflt))
+    t2p = gm.worker_argv({**base, "worker_profile": "slim-t2", "permission_mode": "auto",
+                          "allowed_tools": ["Bash(git commit:*)"]}, "do it")
+    check("V-ADM-SLIM-PERMISSIONS", "--permission-mode=acceptEdits" in t2 and "--permission-mode=auto" in t2p
+          and "--allowedTools=Edit(.planning/**)" in t2 and "--allowedTools=Bash(git commit:*)" in t2p
+          and not any(a in ("--allowedTools", "--permission-mode") for a in t2p) and t2p[-1] == "do it", str(t2p))
     check("V-ADM-SLIM-FROM-ADMISSION", gm.slim_profile({"admission": {"workers": [{"profile": "slim-t2"}]}}) == "slim-t2"
           and gm.slim_profile({"admission": {"workers": [{"profile": "top-level-worker"}]}}) is None)
 
