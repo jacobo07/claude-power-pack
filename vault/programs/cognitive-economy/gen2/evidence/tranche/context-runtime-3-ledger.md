@@ -1,0 +1,4 @@
+- driver 2026-10-06T23:44:35 S1 ADMISSION_REFUSED sid=216f3ad7-2693-4d3e-9248-844a7afec3ed declare_rc=3
+- driver 2026-10-07T00:04:36 S1 FAIL sid=d22fd7a9-7664-460e-8905-f32a4cea7511 launch_rc=0 checks={'receipt': True, 'commits': False, 'tests': False, 'spend': True} spend=1028956 cap=2,800,000
+- driver 2026-10-07T00:06:02 S3 FAIL sid=2391adb0-afb8-411b-9e8e-034749916382 launch_rc=0 checks={'receipt': False, 'commits': False, 'tests': False, 'spend': True} spend=889745 cap=1,600,000
+- driver 2026-10-07T00:12:07 S5 PASS sid=743714db-4169-4a9b-a6b7-2f46fb2e9e26 launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=1374272 cap=2,800,000

@@ -66,6 +66,22 @@ with tempfile.TemporaryDirectory() as tmp:
     gate("V-DRIVER-PASS-PATH+WORKER-SPEND-COUNTS", r["steps"]["SX"]["verdict"] == "PASS" and len(launched) == 1 and
          "--session-id" in launched[0] and r["steps"]["SY"]["verdict"] == "REFUSED_OVER_CAP", r["steps"])
     gate("V-DRIVER-REAL-METER", isinstance(td.spend("e6e0eca7-6de8-4e89-9194-4cb611644727"), int))
+    # a worker run from a worktree is filed under ANOTHER project dir; the meter must find it, and no file is unknown.
+    proj = t / "projects"; (proj / "C--elsewhere-wt").mkdir(parents=True)
+    (proj / "C--elsewhere-wt" / "w1.jsonl").write_text(
+        '{"message": {"id": "m1", "usage": {"input_tokens": 100, "output_tokens": 5}}}\n', encoding="utf-8")
+    gate("V-DRIVER-SPEND-OTHER-PROJECT-DIR", td.spend("w1", proj) == 105, td.spend("w1", proj))
+    gate("V-DRIVER-SPEND-NO-TRANSCRIPT-IS-UNKNOWN", td.spend("absent", proj) is None)
+    # receipts are judged in the worktree (ROOT), not in the coordinator's tree.
+    (t / "rel-receipt.md").write_text("verdict PASS\n")
+    rel = {"step": "SR", "cap": 1000, "receipt": "rel-receipt.md", "tests": [], "prompt": ""}
+    c_main, _ = td.check(rel, "x", sp(1))
+    td.ROOT = t
+    try:
+        c_wt, _ = td.check(rel, "x", sp(1))
+    finally:
+        td.ROOT = td.REPO
+    gate("V-DRIVER-RECEIPT-JUDGED-IN-ROOT", c_wt["receipt"] and not c_main["receipt"], (c_main, c_wt))
 
 print(f"DRIVER_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
 sys.exit(0 if fails == 0 else 1)

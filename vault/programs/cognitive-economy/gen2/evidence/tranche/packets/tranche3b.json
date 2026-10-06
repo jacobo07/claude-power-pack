@@ -1,0 +1,16 @@
+[
+ {
+  "step": "S1",
+  "prompt": "vault/programs/cognitive-economy/gen2/evidence/tranche/packets/S1.md",
+  "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/S1-receipt.md",
+  "cap": 2400000,
+  "tests": ["tools/test_listing_floor_probe.py"]
+ },
+ {
+  "step": "S3",
+  "prompt": "vault/programs/cognitive-economy/gen2/evidence/tranche/packets/S3.md",
+  "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/S3-receipt.md",
+  "cap": 1450000,
+  "tests": ["tools/test_wake_flag_consumer.py"]
+ }
+]

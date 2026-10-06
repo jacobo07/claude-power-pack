@@ -12,33 +12,41 @@ REPO = Path(__file__).resolve().parents[1]
 SPEND_SRC = REPO / "vault/programs/cognitive-economy/gen2/evidence/stage0/self_spend.py"
 GIT = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
 PER_CALL = 110_000
+PROJECTS = Path.home() / ".claude" / "projects"
+ROOT = REPO  # the tree workers edit; --root points it at a git worktree outside ~/.claude (sensitive-path block)
 
 
-def spend(sid):
-    """Processed tokens for a session via stage0/self_spend.py (read, sid swapped in memory, never edited)."""
+def spend(sid, projects=PROJECTS):
+    """Processed tokens for a session via stage0/self_spend.py (read, sid and its project dir swapped in memory,
+    never edited). A worker in a worktree is filed under another project dir, so the dir is found, not assumed.
+    No transcript -> None (unknown), never 0."""
+    hits = sorted(projects.glob(f"*/{sid}.jsonl"))
+    if not hits:
+        return None
     buf = io.StringIO()
     src = re.sub(r'sid="[^"]*"', f'sid="{sid}"', SPEND_SRC.read_text(encoding="utf-8"), count=1)
+    src = re.sub(r'^d=.*$', lambda _m: f'd={str(hits[0].parent)!r}', src, count=1, flags=re.M)
     with contextlib.redirect_stdout(buf):
-        exec(src, {})  # noqa: S102 -- the program's own meter, executed unmodified except the sid
+        exec(src, {})  # noqa: S102 -- the program's own meter, executed unmodified except sid and dir
     m = re.search(r"processed ([\d,]+)", buf.getvalue())
     return int(m.group(1).replace(",", "")) if m else None
 
 
 def run(argv, timeout=None, stdin=None):
     try:
-        return subprocess.run(argv, cwd=REPO, input=stdin, capture_output=True, text=True, encoding="utf-8",
+        return subprocess.run(argv, cwd=ROOT, input=stdin, capture_output=True, text=True, encoding="utf-8",
                               errors="replace", timeout=timeout).returncode
     except (OSError, subprocess.TimeoutExpired):
         return None
 
 
 def check(p, sid, spend_fn=spend, run_fn=run):
-    rc = REPO / p["receipt"]
+    rc = ROOT / p["receipt"]
     c = {"receipt": rc.is_file()}
     text = rc.read_text(encoding="utf-8", errors="replace") if c["receipt"] else ""
     hs = [h for ln in text.splitlines() if ln.strip().upper().startswith("COMMITS:")
           for h in re.findall(r"\b[0-9a-f]{7,40}\b", ln)]
-    c["commits"] = bool(hs) and all(run_fn([GIT, "-C", str(REPO), "merge-base", "--is-ancestor", h, "HEAD"]) == 0
+    c["commits"] = bool(hs) and all(run_fn([GIT, "-C", str(ROOT), "merge-base", "--is-ancestor", h, "HEAD"]) == 0
                                     for h in hs)
     c["tests"] = all(run_fn([sys.executable, *shlex.split(t)], 1800) == 0 for t in p.get("tests", []))
     s = spend_fn(sid)
@@ -88,9 +96,11 @@ def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run
             res["steps"][p["step"]] = {"verdict": "ADMISSION_REFUSED", "sid": sid, "declare_rc": d}
             log(f"{p['step']} ADMISSION_REFUSED sid={sid} declare_rc={d}")
             break
-        prompt = (REPO / p["prompt"]).read_text(encoding="utf-8") + (
-            f"\n\nYOUR SESSION ID: {sid}. CAP {p['cap']:,} processed tokens = {calls} calls at this repo's measured per-call floor. "
-            f"Write the receipt {p['receipt']} with a `COMMITS: <hash ...>` line before your last call.\n")
+        tree = (f"\n\nYOUR WORKING TREE IS {ROOT} (a git worktree on its own branch). Edit, test and commit only "
+                f"there; every repo path above already points at it.") if ROOT != REPO else ""
+        prompt = (REPO / p["prompt"]).read_text(encoding="utf-8").replace(str(REPO), str(ROOT)) + tree + (
+            f"\n\nYOUR SESSION ID: {sid}. CAP {p['cap']:,} processed tokens = {calls} calls at this repo's measured "
+            f"per-call floor. Write the receipt {p['receipt']} with a `COMMITS: <hash ...>` line before your last call.\n")
         t0 = time.time()
         lrc = launch_fn([claude, "-p", "--session-id", sid, "--output-format", "json",
                          "--permission-mode", "acceptEdits", "--allowedTools", "Read Write Edit Grep Glob PowerShell"],
@@ -113,7 +123,14 @@ def main(argv=None):
     ap.add_argument("--cap", type=int, default=4_500_000)
     ap.add_argument("--reserve", type=int, default=0)
     ap.add_argument("--step-max", type=int, default=1_200_000)
+    ap.add_argument("--root", help="git worktree the workers edit (outside ~/.claude); receipts/tests checked there")
     a = ap.parse_args(argv)
+    global ROOT
+    if a.root:
+        ROOT = Path(a.root).resolve()
+        if run([GIT, "-C", str(ROOT), "rev-parse", "--is-inside-work-tree"]) != 0:
+            print(f"--root {ROOT} is not a git work tree", file=sys.stderr)
+            return 2
     out, led = REPO / a.results, REPO / a.ledger
     res = json.loads(out.read_text(encoding="utf-8")) if out.is_file() else {"steps": {}}
 
