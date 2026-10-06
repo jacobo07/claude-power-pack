@@ -408,12 +408,229 @@ def grp_population_empty() -> None:
             con.close()
 
 
+def _text_hits(db: Path, needles) -> list[str]:
+    """Every (table.column) of the index whose value contains any needle. Scans EVERY column
+    of every table, whatever its declared type."""
+    hits = []
+    raw = sqlite3.connect(str(db))
+    try:
+        tables = [r[0] for r in raw.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+        for t in tables:
+            cols = [r[1] for r in raw.execute(f"PRAGMA table_info({t})")]
+            for row in raw.execute(f"SELECT * FROM {t}"):
+                for c, v in zip(cols, row):
+                    if isinstance(v, bytes):
+                        v = v.decode("utf-8", "replace")
+                    if isinstance(v, str) and any(n in v for n in needles):
+                        hits.append(f"{t}.{c}")
+    finally:
+        raw.close()
+    return sorted(set(hits))
+
+
+def grp_no_raw_text() -> None:
+    """HR-SECRET-002 / T-01-01: the index keeps hashes, sizes and normalized paths, never the
+    text of a tool input or a tool result. The marker literals are assembled at run time and
+    are clearly fake (HR-SECRET-005); no real key shape is ever written."""
+    marker_in = "FAKE-MARKER-" + "A" * 40
+    marker_out = "FAKE-MARKER-" + "B" * 40
+    body = "out: " + marker_out
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        d = proj / "C--p1"
+        d.mkdir(parents=True)
+        (d / "S1.jsonl").write_text(
+            user_prompt("P1", 1, "S1")
+            + asst("m1", 1.1, "S1", tools=[("tuB1", "Bash", {"command": "echo " + marker_in,
+                                                           "file_path": WINPATH})])
+            + user_result(1.2, "S1", "tuB1", body), encoding="utf-8")
+        db = td / "db" / "ix.sqlite"
+        con = UX.connect(db)
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            row = con.execute("SELECT input_hash, input_bytes, result_chars FROM tool_events "
+                              "WHERE tool_use_id='tuB1'").fetchone()
+            con.commit()
+            clean = _text_hits(db, (marker_in, marker_out))
+            gate("V-UX5-NO-RAW-TEXT", row is not None and row[2] == len(body) and not clean,
+                 f"the tool event was ingested (hash/size row={row}); columns holding either "
+                 f"marker: {clean}")
+            con.execute("CREATE TABLE scratch(x TEXT)")
+            con.execute("INSERT INTO scratch VALUES(?)", (marker_in,))
+            con.commit()
+            seen = _text_hits(db, (marker_in, marker_out))
+            gate("V-UX5-NO-RAW-TEXT-CONTROL", seen == ["scratch.x"],
+                 f"the same scan finds a marker written into a scratch table of the same DB: {seen}")
+        finally:
+            con.close()
+
+
 GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
-          ("grp_population_empty", grp_population_empty))
+          ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text))
+
+
+# -- mutation drill ------------------------------------------------------------
+# Every gate is shown able to go red: each mutant breaks the code under test in one
+# way, the gates it must kill are re-run, the mutant is restored. The unmutated control
+# runs first and must be green (a drill whose control is red proves nothing), and the
+# unmutated rerun at the end proves the restore. Later plans append to MUTANTS.
+
+class InvalidMutant(Exception):
+    """The anchor text is not present exactly once: the mutant does not exist."""
+
+
+def _quiet(groups) -> dict:
+    global _QUIET
+    saved, _QUIET = _QUIET, True
+    res: dict = {}
+    try:
+        for fn in groups:
+            res.update(guarded(fn.__name__, fn))
+    finally:
+        _QUIET = saved
+    return res
+
+
+def _patch(obj, attr, value):
+    saved = getattr(obj, attr)
+    setattr(obj, attr, value)
+    return lambda: setattr(obj, attr, saved)
+
+
+_MUT_N = [0]
+
+
+def _source_mutant(rel_path, old, new):
+    """A copy of tools/<rel_path> with `old` replaced by `new` (strings, or equal-length
+    sequences of them), each anchor required to occur exactly once. The copy is loaded under
+    a unique module name and swapped into UX (or TIS, via UX._tis); the returned callable
+    puts the original back."""
+    import importlib.util
+
+    global UX, TIS
+    src_path = HERE.parent / rel_path
+    src = src_path.read_text(encoding="utf-8")
+    olds = [old] if isinstance(old, str) else list(old)
+    news = [new] if isinstance(new, str) else list(new)
+    for o in olds:
+        if src.count(o) != 1:
+            raise InvalidMutant(f"anchor occurs {src.count(o)}x in {rel_path}: {o[:60]!r}")
+    for o, n in zip(olds, news):
+        src = src.replace(o, n)
+    tmp = tempfile.TemporaryDirectory(prefix="ux5mut_")
+    dst = Path(tmp.name) / src_path.name
+    dst.write_text(src, encoding="utf-8")
+    _MUT_N[0] += 1
+    name = f"{src_path.stem}__mut{_MUT_N[0]}"
+    spec = importlib.util.spec_from_file_location(name, dst)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+    saved = (UX, TIS, getattr(UX, "_tis", None))
+    if src_path.stem == "usage_index":
+        UX = mod
+    elif src_path.stem == "tis_observed":
+        TIS = mod
+        UX._tis = mod
+
+    def restore():
+        global UX, TIS
+        UX, TIS = saved[0], saved[1]
+        if saved[2] is not None:
+            UX._tis = saved[2]
+        sys.modules.pop(name, None)
+        tmp.cleanup()
+    return restore
+
+
+def _m_spawn_backfill_requeued():
+    """M1: _migrate_spawns gated on SCHEMA_VERSION again, so the v5 bump re-queues the spawn
+    backfill and re-opens ingested files."""
+    return _source_mutant(
+        "tools/usage_index.py",
+        ("    if row is not None and int(row[0]) >= SPAWN_SCHEMA:",
+         "        if row is None or int(row[0]) < SPAWN_SCHEMA:"),
+        ("    if row is not None and int(row[0]) >= SCHEMA_VERSION:",
+         "        if row is None or int(row[0]) < SCHEMA_VERSION:"))
+
+
+def _m_migrate_resets_offsets():
+    """M2: _migrate_v5 also resets the file sizes, which forces a re-read of every file."""
+    return _source_mutant(
+        "tools/usage_index.py",
+        "                        (str(SCHEMA_VERSION),))",
+        "                        (str(SCHEMA_VERSION),))\n"
+        "            con.execute(\"UPDATE files SET size=-1\")")
+
+
+def _m_occurrence_dropped():
+    """M3: the call_files upsert becomes a no-op."""
+    return _source_mutant(
+        "tools/usage_index.py",
+        "con.execute(\n                    \"INSERT INTO call_files(k,file,ts,model,inp,cw,cw5,cw1,cr,out) \"",
+        "(lambda *a: None)(\n                    \"INSERT INTO call_files(k,file,ts,model,inp,cw,cw5,cw1,cr,out) \"")
+
+
+def _m_empty_population_measured():
+    """M4: population reports MEASURED on a scope that holds nothing."""
+    real = UX.population
+
+    def mutant(*a, **k):
+        out = real(*a, **k)
+        if out.get("verdict") == "UNMEASURED":
+            out["verdict"] = "MEASURED"
+        return out
+    return _patch(UX, "population", mutant)
+
+
+MUTANTS = [
+    ("M1 _migrate_spawns gated on SCHEMA_VERSION (backfill re-queued)", _m_spawn_backfill_requeued,
+     [grp_migrate], ["V-UX5-MIGRATE-ZERO-REREAD"]),
+    ("M2 _migrate_v5 resets file sizes (forces a re-read)", _m_migrate_resets_offsets,
+     [grp_migrate], ["V-UX5-MIGRATE-ZERO-REREAD"]),
+    ("M3 call_files occurrence upsert removed", _m_occurrence_dropped,
+     [grp_occurrence], ["V-UX5-OCCURRENCE"]),
+    ("M4 population MEASURED on an empty scope", _m_empty_population_measured,
+     [grp_population_empty], ["V-UX5-EMPTY-REFUSES"]),
+]
+
+
+def run_drill() -> int:
+    control = _quiet([fn for _, fn in GROUPS])
+    control_ok = bool(control) and all(control.values())
+    print(f"{'PASS' if control_ok else 'FAIL DRILL-CONTROL'} DRILL-CONTROL unmutated run: "
+          f"{sum(control.values())}/{len(control)} gates green")
+    killed = 0
+    for label, apply, groups, targets in MUTANTS:
+        try:
+            restore = apply()
+        except InvalidMutant as e:
+            print(f"INVALID {label}: {e}")
+            continue
+        try:
+            seen = _quiet(groups)
+        finally:
+            restore()
+        by = [t for t in targets if seen.get(t) is False]
+        if len(by) == len(targets):
+            killed += 1
+            print(f"KILLED {label} by {', '.join(by)}")
+        else:
+            print(f"SURVIVED {label} (still green or absent: "
+                  f"{', '.join(t for t in targets if seen.get(t) is not False)}; saw {seen})")
+    after = _quiet([fn for _, fn in GROUPS])
+    clean = bool(after) and all(after.values())
+    print(f"{'PASS' if clean else 'FAIL DRILL-CLEAN-AFTER-MUTANTS'} DRILL-CLEAN-AFTER-MUTANTS "
+          f"unmutated rerun: {sum(after.values())}/{len(after)} gates green")
+    print(f"DRILL killed={killed}/{len(MUTANTS)}")
+    return 0 if (killed == len(MUTANTS) and control_ok and clean) else 1
 
 
 def main(argv=None) -> int:
+    if "--drill" in (argv or []):
+        return run_drill()
     for name, fn in GROUPS:
         guarded(name, fn)
     total = PASS + FAIL
