@@ -1,0 +1,38 @@
+{
+ "record": "rule-virtualization forecast calibration (E1 move, 17b3188a)",
+ "instrument": "e1_mechanical.py one-call A/B probe, laptop, same day per figure",
+ "evidence": {
+  "pre": "vault/programs/cognitive-economy/measure/e1_mechanical_laptop.json",
+  "post": "vault/programs/cognitive-economy/measure/e1_postmove_laptop.json",
+  "report": "vault/programs/cognitive-economy/e1/REPORT.md"
+ },
+ "inputs": {
+  "pre_excludable": 19051,
+  "post_excludable": 10574,
+  "pre_pinned_bytes": 56861,
+  "post_pinned_bytes": 28740,
+  "moved_bytes": 37353,
+  "pointer_bytes": 9232,
+  "resident5_bytes": 19508,
+  "tokens_per_byte": 0.335045
+ },
+ "forecast_gross": 12515,
+ "byte_est_net": 9422,
+ "measured": 8477,
+ "error_pct_vs_forecast": -32.3,
+ "error_pct_vs_byte_est_net": -10.0,
+ "cause": "the forecast priced the moved bytes and forgot the pointers that replace them; the pointers are 9,232 B = 24.7% of the moved bytes",
+ "residual_unexplained_tokens": -945,
+ "plan_figures_corrected": {
+  "byte_est": [
+   10800,
+   9422
+  ],
+  "pointer_share_pct": [
+   22,
+   24.7
+  ],
+  "source_of_error": "41,353 B in the 17b3188a message"
+ },
+ "rule_for_next_forecast": "forecast = (removed bytes - replacement bytes) x measured tokens/byte; expect a further ~10% shortfall until a second calibration point exists (n=1)"
+}
