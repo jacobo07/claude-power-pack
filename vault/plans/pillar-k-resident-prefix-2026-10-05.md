@@ -76,7 +76,21 @@ Sources: `%TEMP%\pp-session-hub.log`, `~/.claude/logs/hook-dispatcher-errors.log
 - host-memory-floor: in-process in the dispatcher, SessionStart only, env kill switch.
 - kresume double-arm fix is IN this slice (C4).
 - SessionStart CHAIN_DEADLINE_MS stays 4000.
-Commits: C1 floor in-process -> C2 cards step (critical, fs-only: rollover/mission/restart/work-state) split from the
-advisory hub -> C3 recovery cache + once-per-epoch -> C4 autotype idempotent per sid -> C5 drill (starved advisory,
-cards must arrive; control in budget). Done: dispatcher + floor-gate suites green, drill both poles, >=20 real
-SessionStarts with 0 before-pool and 0 lost cards, then the closing K probe.
+Phase-4 audit: `_audit-hub-reliability-2026-10-06.md` (READY WITH CONDITIONS, 9 gaps). Revised commit order (phase 5):
+- C0 extract `hooks/session_cards.js`: rollover/restart/work-state/mission functions, NO load-time effects (no
+  armHardExit, no stdin); hub + rollover_autotype.js require it; hub re-exports for its tests (gap 3).
+- C1 dispatcher, SessionStart only, BEFORE runChain and in-process: BOM-stripped payload once; floor `run()` then
+  cards; both outputs UNSHIFTED (floor first, then cards) (gaps 1, 4). Floor + cards leave CHAIN_MAP; one-shot
+  consumers (restart unlink, work_state unlink) leave hub main() in the same commit. Switches:
+  `CLAUDE_HOST_MEM_FLOOR_INPROC=off` / `CLAUDE_SESSION_CARDS_INPROC=off` restore the spawned path; fail-open require.
+  Mission python on the cards path bounded at 1,500 ms (gap 2). `cards DONE sid= n=` line; `session=` on
+  CRITICAL-GUARD-INERT (gap 9). Mirror to ~/.claude/hooks with hash compare (gap 5).
+- C3 recovery: node predicate decides whether python runs (beacon/boot/epoch facts, pane_map mtime vs judged_at),
+  parity test vs epoch.detect_interruption both poles (gap 6); python records `announced_at`, node reads only;
+  full line once, one-line reminder until RECOVERED or dismiss (gap 7). Saving lands only once no epoch is open.
+- C4 autotype: per-sid atomic wx armed marker, second caller -> why='already armed' (courier reads ARMED), log tags
+  caller (gap 8); confirm cause against courier ledger first.
+- C5 SessionStart drill pair (starved advisory -> cards arrive; control in budget) + suites listed in the audit.
+DONE: suites green, drill both poles, >=20 real SessionStarts with 0 before-pool and 0 lost cards (counted from
+`cards DONE`), then the closing K probe in a session with no SessionStart abandonment at all.
+Out of slice (named debt): zero-command-bootstrap / first-time-project double run; gsd_mission.py:2730 doc drift.
