@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
-"""V-KMEC-* gates: the KME-L challenger access plan (autonomous-optimization phase 2, plan 01).
+"""V-KMEC-* gates: the KME-L challenger access plan and its guard chain (autonomous-optimization phase 2, plans 01, 03).
 
 Hermetic: every fixture is a synthetic transcript tree plus a fixture usage index built here under a scratch
 directory. Nothing outside it is read or written. A SKIP or an INCONCLUSIVE is printed and counted apart; it is never
 a PASS and never part of the n/m denominator.
 
     python3 -I tools/test_kme_challenger.py       run every gate
+    python3 -I tools/test_kme_challenger.py --drill   mutation drill: every challenger guard must be shown able to fail
 
 Helpers of tools/test_kme_pillars.py (Fx, ts, write_frozen, run_main, scratch, CANARY) are imported, not copied.
 """
 from __future__ import annotations
 
+import ast
 import builtins
 import contextlib
 import hashlib
@@ -134,10 +136,12 @@ def _kme_session(fx, tag, t0):
     fx.assistant(f"{tag}2", f"r{tag}2", (5, 100, 800, 40), T.ts(t0 + 3))
 
 
-def challenger_fixture(root):
+def challenger_fixture(root, n2=False, preserved=False, z1=False):
     """In scope (-home-x-core-fixture, no 'kme' in the name): k1 = KME by content (+ one subagent file), n1 = no KME
     signal. Out of scope (-home-x-CostaLuz-fixture): c1 = KME by content, so an unscoped run would select and open it.
-    Returns {name: path} of every transcript file."""
+    Options (each adds one in-scope shape): n2 = a second non-KME session that no gate touches; preserved = a
+    `_preserved/p1.jsonl` file (a shape the index does not hold: the certificate's `uncovered` map); z1 = a session
+    whose only file has no timestamped line (review IN-04). Returns {name: path} of every transcript file."""
     files = {}
     k1 = T.Fx(root, project=IN_SCOPE, session="k1")
     _kme_session(k1, "k", 0)
@@ -151,6 +155,19 @@ def challenger_fixture(root):
     c1 = T.Fx(root, project=OUT_SCOPE, session="c1")
     _kme_session(c1, "c", 20)
     files.update(k1=k1.path, k1_sub=sub.path, n1=n1.path, c1=c1.path)
+    if n2:
+        f = T.Fx(root, project=IN_SCOPE, session="n2")
+        f.human("tidy the docs", T.ts(14))
+        f.assistant("n2a", "rn2a", (3, 40, 500, 9), T.ts(15))
+        files["n2"] = f.path
+    if preserved:
+        f = T.Fx(root, project=IN_SCOPE, session="p1", path=Path(root) / "projects" / IN_SCOPE / "_preserved" / "p1.jsonl")
+        f.human("preserved note", T.ts(16))
+        files["preserved"] = f.path
+    if z1:
+        f = T.Fx(root, project=IN_SCOPE, session="z1")
+        f.meta()                        # a metadata line: real transcripts carry no timestamp on these
+        files["z1"] = f.path
     return {k: Path(os.path.realpath(v)) for k, v in files.items()}
 
 
@@ -166,15 +183,18 @@ def build_index(root, db):
 class World:
     """One fixture tree + its index + the frozen entry the champion's own scoped population of it defines."""
 
-    def __init__(self, tag="w"):
+    def __init__(self, tag="w", **shapes):
         self.dir = T.scratch(tag)
         self.root = self.dir / "fx"
         self.projects = self.root / "projects"
-        self.files = challenger_fixture(self.root)
+        self.files = challenger_fixture(self.root, **shapes)
+        self.extra_sessions = sum(1 for k in ("n2", "preserved", "z1") if shapes.get(k))
         self.db = build_index(self.root, self.dir / "ix" / "index.sqlite")
         self.out_n = 0
-        self.frozen = self._champion_frozen()
-        self.frozen_global = self._champion_frozen(pf=None, calls=5, sessions=3, name="frozen-global.json")
+        self.cert_cache = {}
+        self.frozen = self._champion_frozen(sessions=2 + self.extra_sessions)
+        self.frozen_global = self._champion_frozen(pf=None, calls=5, sessions=3 + self.extra_sessions,
+                                                   name="frozen-global.json")
 
     def out(self, name="o"):
         self.out_n += 1
@@ -193,22 +213,53 @@ class World:
         assert pop["sessions_active"] == (1 if pf else 2), pop
         return T.write_frozen(self.dir / name, **{"KME-L": pop})
 
-    def args(self, pillar="d", frozen=None, plan=None, extra=(), root_flags=True, pf="core-fixture"):
+    def args(self, pillar="d", frozen=None, plan=None, extra=(), root_flags=True, pf="core-fixture", projects=None):
+        extra = list(extra)
         a = [pillar, "--denominator", "KME-L", "--frozen-file", str(frozen or self.frozen)]
         if root_flags:
-            a += ["--root", str(self.projects), "--expand"]
+            a += ["--root", str(projects or self.projects), "--expand"]
         if pf:
             a += ["--project-filter", pf]
         if plan:
             a += ["--plan", plan]
-        return a + list(extra)
+        # a challenger / auto run needs the certificate of ITS question (certified here against the clean index), unless
+        # the caller names one, the index does not exist, or the run is a usage error (no scope, no --cross-project)
+        if (plan in ("challenger", "auto") and "--index-db" in extra and "--cert" not in extra
+                and os.path.isfile(extra[extra.index("--index-db") + 1])
+                and (pf or "--cross-project" in extra)):
+            until = extra[extra.index("--until") + 1] if "--until" in extra else None
+            extra += ["--cert", str(self.cert_for(pf=pf, frozen=frozen, cross="--cross-project" in extra, until=until))]
+        return a + extra
 
-    def measure(self, plan=None, extra=(), pf="core-fixture", spy=True):
+    def certify_args(self, cert, pf="core-fixture", frozen=None, cross=False, until=None, index=None, projects=None):
+        a = ["certify", "--denominator", "KME-L", "--frozen-file", str(frozen or self.frozen),
+             "--root", str(projects or self.projects), "--expand", "--index-db", str(index or self.db),
+             "--cert", str(cert)]
+        if pf:
+            a += ["--project-filter", pf]
+        if cross:
+            a += ["--cross-project"]
+        if until:
+            a += ["--until", until]
+        return a
+
+    def cert_for(self, pf="core-fixture", frozen=None, cross=False, until=None):
+        """Path of the certificate of this question (certify against the clean index, once). The file exists only when
+        certify exited 0; a caller that needs it checks."""
+        key = (pf, str(frozen or self.frozen), cross, until)
+        if key not in self.cert_cache:
+            path = self.dir / f"cert-{len(self.cert_cache) + 1}.json"
+            T.run_main(self.certify_args(path, pf=pf, frozen=frozen, cross=cross, until=until))
+            self.cert_cache[key] = path
+        return self.cert_cache[key]
+
+    def measure(self, plan=None, extra=(), pf="core-fixture", spy=True, frozen=None, projects=None):
         """In-process run -> (rc, out, err, files written, opened transcript paths)."""
         outd = self.out()
-        cmd = self.args("d", plan=plan, extra=list(extra) + ["--out-dir", str(outd)], pf=pf)
+        cmd = self.args("d", plan=plan, frozen=frozen, projects=projects, extra=list(extra) + ["--out-dir", str(outd)],
+                        pf=pf)
         if spy:
-            with OpenSpy(self.projects) as sp:
+            with OpenSpy(self.projects, *([projects] if projects else [])) as sp:
                 rc, out, err = T.run_main(cmd)
             opened = sp.opened
         else:
@@ -325,7 +376,8 @@ def g_index_read_only():
 
 # --------------------------------------------------------------------------- gates: access plan (task 2)
 PATH_KEYS = {"schema", "tool", "subcommand", "plan_requested", "plan_taken", "guards", "deopt", "read_set",
-             "sessions_registered", "index_db", "denominator", "project_filter", "until", "cross_project", "plane"}
+             "sessions_registered", "index_db", "denominator", "project_filter", "until", "cross_project", "keys",
+             "metric_changed", "plane"}
 
 
 def names(paths):
@@ -353,9 +405,10 @@ def g_plan_order():
     rc3, _o, err3, f3, op3 = w.measure("auto", ["--index-db", gone, "--cross-project"], pf=None)
     # no filter + --cross-project + valid index (global frozen) -> index, selected sessions only, c1 included
     outd = w.out()
+    cmd4 = w.args("d", frozen=w.frozen_global, plan="auto", pf=None,
+                  extra=["--index-db", str(w.db), "--cross-project", "--out-dir", str(outd)])
     with OpenSpy(w.projects) as sp4:
-        rc4, _o, err4 = T.run_main(w.args("d", frozen=w.frozen_global, plan="auto", pf=None,
-                                          extra=["--index-db", str(w.db), "--cross-project", "--out-dir", str(outd)]))
+        rc4, _o, err4 = T.run_main(cmd4)
     t1, t2, t3, t4 = path_taken(err1), path_taken(err2), path_taken(err3), path_taken(err4)
     ok = (rc1 == 0 and t1 and t1[:3] == ("auto", "index", "none") and set(op1) == selected_transcripts(w)
           and t2 and t2[:3] == ("auto", "scoped", "index_open") and c1 not in set(op2)
@@ -457,6 +510,9 @@ def g_path_log():
 
 
 def run_replay(w, plan, extra=()):
+    extra = list(extra)
+    if plan in ("challenger", "auto") and "--index-db" in extra and os.path.isfile(extra[extra.index("--index-db") + 1]):
+        extra += ["--cert", str(w.cert_for())]
     outd = w.out("replay")
     args = ["rank", "--denominator", "KME-L", "--frozen-file", str(w.frozen), "--root", str(w.projects), "--expand",
             "--project-filter", "core-fixture", "--out-dir", str(outd)] + (["--plan", plan] if plan else []) + list(extra)
@@ -497,6 +553,326 @@ def g_replay_plan():
                 f"path records={[(r['tool'], r['plan_taken']) for r in recs]}; forced refusal rc={rc_r} files={len(f_r)}")
 
 
+# --------------------------------------------------------------------------- gates: certificate and keys (plan 03, task 1)
+def read_log(path):
+    return [json.loads(x) for x in Path(path).read_text(encoding="utf-8").splitlines()] if Path(path).exists() else []
+
+
+def run_certify(w, cert, **kw):
+    rc, out, err = T.run_main(w.certify_args(cert, **kw))
+    return rc, out, err
+
+
+def go(w, plan, extra=(), pf="core-fixture", frozen=None, projects=None, spy=True):
+    """One logged run: {rc, err, files, opened, rec (the path record of the run), out dir}."""
+    log = w.dir / f"go-{w.out_n + 1}.jsonl"
+    rc, out, err, files, opened = w.measure(plan, list(extra) + ["--path-log", str(log)], pf=pf, spy=spy,
+                                            frozen=frozen, projects=projects)
+    recs = read_log(log)
+    return {"rc": rc, "err": err, "files": files, "opened": opened, "rec": recs[-1] if recs else None}
+
+
+def masked_of(res):
+    return mask(*load(res["files"][0])) if res["files"] else None
+
+
+@contextlib.contextmanager
+def patched_attr(obj, name, value):
+    saved = getattr(obj, name)
+    setattr(obj, name, value)
+    try:
+        yield
+    finally:
+        setattr(obj, name, saved)
+
+
+def patch_kme_pillars_text(find, repl):
+    """A `_source_text` that serves kme_pillars.py with one definition text changed (nothing on disk is edited)."""
+    real = kp._source_text
+
+    def fake(rel):
+        text = real(rel)
+        if rel == kp._KP_REL:
+            assert find in text, f"{find!r} not found in {rel}"
+            text = text.replace(find, repl, 1)
+        return text
+    return patched_attr(kp, "_source_text", fake)
+
+
+def parser_patch(w):
+    """A SELECTION_SOURCES whose kme_report.py is a scratch copy with ONE extra byte (same basename: only the bytes
+    differ). Returns the context manager and the digest it produces."""
+    mut = w.dir / "mut" / "kme_report.py"
+    mut.parent.mkdir(exist_ok=True)
+    mut.write_bytes((REPO / "wiki" / "tools" / "kme_report.py").read_bytes() + b"\n")
+    srcs = tuple(str(mut) if os.path.basename(x) == "kme_report.py" else x for x in kp.SELECTION_SOURCES)
+    return patched_attr(kp, "SELECTION_SOURCES", srcs)
+
+
+def swapped_selection(select_extra=None, drop=None):
+    """A usage_index.population that answers with the same totals but a different per-session selection."""
+    ux = kp._usage_index()
+    real = ux.population
+
+    def fake(*a, **k):
+        ans = real(*a, **k)
+        for r in ans.get("detail", []):
+            if drop and r["session_key"] == drop:
+                r["selected"] = False
+            if select_extra and r["session_key"] == select_extra:
+                r["selected"] = True
+        return ans
+    return patched_attr(ux, "population", fake)
+
+
+def g_certify_shadow():
+    w = World("cs")
+    champ = T.run_json(w.args("d", extra=["--out-dir", str(w.dir / "champ-out")]))[1]["population"]
+    want = champ["sessions_active"] + champ["sessions_dead"]
+    cert = w.dir / "c-ok.json"
+    rc, out, err = run_certify(w, cert)
+    c = json.loads(cert.read_text(encoding="utf-8")) if cert.exists() else {}
+    ok_main = (rc == 0 and f"verdict=CERTIFIED selected={want} uncovered=0 cert={cert}" in out
+               and c.get("shadow", {}).get("agree") is True and c["selected"]["sessions"] == want
+               and c["shadow"]["champion_selected"] == c["shadow"]["index_selected"] == want and want == 1)
+    # the index's per-session selection swapped (same totals): disagreement, exit 1, ids named, nothing written
+    cert2 = w.dir / "c-swap.json"
+    with swapped_selection(select_extra="n1", drop="k1"):
+        rc2, out2, err2 = run_certify(w, cert2)
+    swap_ok = (rc2 == kp.EXIT_DISAGREE and "verdict=NOT_CERTIFIED" in out2 and not cert2.exists()
+               and f"{IN_SCOPE}/k1" in err2 and f"{IN_SCOPE}/n1" in err2)
+    # a drifted frozen file: the index guard fails, exit 3, nothing written
+    pop = json.loads(Path(w.frozen).read_text(encoding="utf-8"))["KME-L"]
+    drift = T.write_frozen(w.dir / "frozen-drift.json", **{"KME-L": dict(pop, calls=pop["calls"] + 1)})
+    cert3 = w.dir / "c-drift.json"
+    rc3, out3, err3 = run_certify(w, cert3, frozen=drift)
+    drift_ok = rc3 == kp.EXIT_UNMEASURED and "verdict=UNMEASURED" in out3 and not cert3.exists() and "DRIFTED" in err3
+    # a certificate may not be written inside a scanned root
+    inside = w.projects / "cert-inside.json"
+    rc4, _o, err4 = run_certify(w, inside)
+    inside_ok = rc4 == kp.EXIT_USAGE and not inside.exists()
+    ok = ok_main and swap_ok and drift_ok and inside_ok
+    return ok, (f"certify rc={rc} selected={c.get('selected', {}).get('sessions')} shadow={c.get('shadow')}; swapped "
+                f"selection rc={rc2} names k1+n1={swap_ok} written={cert2.exists()}; drifted frozen rc={rc3} "
+                f"written={cert3.exists()}; cert inside root rc={rc4}; err={err[-100:]}")
+
+
+def g_keys_four():
+    w = World("k4", preserved=True)
+    cert = w.cert_for()
+    c = json.loads(cert.read_text(encoding="utf-8")) if cert.exists() else {}
+    metric = (c.get("keys") or {}).get("metric") or {}
+    pres = str(w.files["preserved"])
+    shape_ok = (c.get("schema") == "kmep-cert/1" and len(c["keys"]["parser"]) == 64
+                and set(metric) == {"population", "D", "E", "F", "G", "H", "I", "L"}
+                and all(len(v) == 64 for v in metric.values())
+                and c["index"]["attr_version"] == "1" and len(c["index"]["pattern_set"]) == 64
+                and list(c["uncovered"]) == [pres]
+                and c["question"]["roots"] == [os.path.realpath(str(w.projects))])
+    r1 = go(w, "auto", ["--index-db", str(w.db)])
+    rec = r1["rec"]
+    run_ok = (r1["rc"] == 0 and rec and rec["plan_taken"] == "index" and rec["keys"] == c["keys"]
+              and rec["metric_changed"] == [] and rec["read_set"]["stale"] == [])
+    # the certificate vouches for the `_preserved` file by its exact (size, mtime_ns): a change to it is stale
+    with open(pres, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps({"type": "user", "timestamp": T.ts(17), "message": {"role": "user", "content": "more"}}) + "\n")
+    r2 = go(w, "auto", ["--index-db", str(w.db)])
+    touch_ok = (r2["rc"] == 0 and r2["rec"]["plan_taken"] == "index"
+                and r2["rec"]["read_set"]["stale"] == [f"{IN_SCOPE}/_preserved"])
+    ok = shape_ok and run_ok and touch_ok
+    return ok, (f"cert keys parser={str(c.get('keys', {}).get('parser'))[:12]} metric keys={sorted(metric)} attr="
+                f"{c.get('index', {}).get('attr_version')} uncovered={[os.path.basename(p) for p in c.get('uncovered', {})]}; "
+                f"index run keys==cert={bool(rec) and rec['keys'] == c.get('keys')} metric_changed="
+                f"{rec and rec['metric_changed']} stale={rec and rec['read_set']['stale']}; after touching the "
+                f"preserved file stale={r2['rec'] and r2['rec']['read_set']['stale']}")
+
+
+def g_stale_parser():
+    w = World("sp")
+    w.cert_for()
+    digest_clean = kp.selection_parser_digest()
+    ctl = go(w, "auto", ["--index-db", str(w.db)])
+    scoped = w.measure("scoped")
+    with parser_patch(w):
+        digest_mut = kp.selection_parser_digest()
+        res = go(w, "auto", ["--index-db", str(w.db)])
+        forced = go(w, "challenger", ["--index-db", str(w.db)])
+    d = res["rec"]["deopt"] if res["rec"] else None
+    ok = (digest_clean != digest_mut and ctl["rec"]["plan_taken"] == "index" and ctl["rec"]["deopt"] is None
+          and d and d["guard"] == "parser" and digest_clean[:12] in d["reason"] and digest_mut[:12] in d["reason"]
+          and res["rec"]["plan_taken"] == "scoped" and res["rc"] == 0 and len(scoped[3]) == 1
+          and masked_of(res) == mask(*load(scoped[3][0]))
+          and forced["rc"] == 3 and not forced["files"])
+    return ok, (f"digest {digest_clean[:12]} -> {digest_mut[:12]}; control taken={ctl['rec']['plan_taken']}; "
+                f"auto deopt={d and d['guard']} ({d and d['reason'][:80]}) taken={res['rec']['plan_taken']} output equals "
+                f"scoped={masked_of(res) == mask(*load(scoped[3][0]))}; forced challenger rc={forced['rc']} files="
+                f"{len(forced['files'])}")
+
+
+def g_stale_metric():
+    w = World("sm")
+    w.cert_for()
+    ctl = go(w, "auto", ["--index-db", str(w.db)])
+    with patch_kme_pillars_text('H_DEFINITION = ("verification:', 'H_DEFINITION = ("verification (changed):'):
+        one = go(w, "auto", ["--index-db", str(w.db)])
+    with patch_kme_pillars_text('WEIGHTS = {"input": 1.0,', 'WEIGHTS = {"input": 1.5,'):
+        many = go(w, "auto", ["--index-db", str(w.db)])
+        forced = go(w, "challenger", ["--index-db", str(w.db)])
+    want_many = ["D", "E", "F", "G", "H", "I", "L"]
+    dm = many["rec"]["deopt"]
+    ok = (ctl["rec"]["metric_changed"] == [] and ctl["rec"]["plan_taken"] == "index"
+          and one["rec"]["metric_changed"] == ["H"] and one["rec"]["plan_taken"] == "index" and one["rec"]["deopt"] is None
+          and one["rc"] == 0
+          and many["rec"]["metric_changed"] == want_many and dm and dm["guard"] == "metric"
+          and many["rec"]["plan_taken"] == "scoped" and forced["rc"] == 3 and not forced["files"])
+    return ok, (f"control metric_changed={ctl['rec']['metric_changed']}; H_DEFINITION changed -> "
+                f"{one['rec']['metric_changed']} taken={one['rec']['plan_taken']}; WEIGHTS changed -> "
+                f"{many['rec']['metric_changed']} deopt={dm and dm['guard']} taken={many['rec']['plan_taken']}; forced "
+                f"challenger rc={forced['rc']}")
+
+
+def g_attr_version():
+    w = World("av")
+    w.cert_for()
+    ctl = go(w, "auto", ["--index-db", str(w.db)])
+    ux = kp._usage_index()
+    with patched_attr(ux, "ATTR_VERSION", ux.ATTR_VERSION + 1):
+        res = go(w, "auto", ["--index-db", str(w.db)])
+        forced = go(w, "challenger", ["--index-db", str(w.db)])
+    d = res["rec"]["deopt"]
+    ok = (ctl["rec"]["plan_taken"] == "index" and d and d["guard"] == "attribution" and "attribution version" in d["reason"]
+          and res["rec"]["plan_taken"] == "scoped" and forced["rc"] == 3 and not forced["files"])
+    return ok, (f"control taken={ctl['rec']['plan_taken']}; ATTR_VERSION+1 -> deopt {d and d['guard']}: "
+                f"{d and d['reason']}; forced rc={forced['rc']}")
+
+
+def db_copy(w, name, sql):
+    """A copy of the fixture index with one statement applied (the clean index and its certificate stay as they are)."""
+    d = w.dir / name
+    d.mkdir()
+    dst = d / "index.sqlite"
+    shutil.copyfile(w.db, dst)
+    con = sqlite3.connect(dst)
+    try:
+        con.execute(sql)
+        con.commit()
+    finally:
+        con.close()
+    return dst
+
+
+def g_pattern_drift():
+    w = World("pd")
+    drift = db_copy(w, "drift", "UPDATE meta SET v='" + "0" * 64 + "' WHERE k='pattern_set'")
+    res = go(w, "auto", ["--index-db", str(drift)])
+    d = res["rec"]["deopt"]
+    ok = d and d["guard"] == "population" and "pattern set differs" in d["reason"] and res["rec"]["plan_taken"] == "scoped"
+    return ok, f"altered meta pattern_set -> deopt {d and d['guard']}: {d and d['reason'][:140]}"
+
+
+def g_cert_guards():
+    w = World("cg")
+    rows = {}
+    rows["missing"] = go(w, "auto", ["--index-db", str(w.db), "--cert", str(w.dir / "no-such-cert.json")])
+    other_pf = w.cert_for(pf=None, frozen=w.frozen_global, cross=True)
+    rows["project_filter"] = go(w, "auto", ["--index-db", str(w.db), "--cert", str(other_pf)])
+    other_until = w.cert_for(until="2026-10-03T12:00:00Z")
+    rows["until"] = go(w, "auto", ["--index-db", str(w.db), "--cert", str(other_until)])
+    want = {"missing": "cert_missing", "project_filter": "question.project_filter", "until": "question.until"}
+    seen = {k: (r["rec"]["deopt"]["guard"], r["rec"]["deopt"]["reason"]) for k, r in rows.items()}
+    ok = (Path(other_pf).exists() and Path(other_until).exists()
+          and all(g == "certificate" and want[k] in reason for k, (g, reason) in seen.items())
+          and all(r["rec"]["plan_taken"] == "scoped" for r in rows.values()))
+    return ok, "; ".join(f"{k}: {g} {reason[:70]}" for k, (g, reason) in seen.items())
+
+
+def _closure(defs, roots):
+    """Module-level names reachable from `roots` through ast Name references (and `kp.<name>` attribute reads)."""
+    seen, todo = set(), list(roots)
+    while todo:
+        c = todo.pop()
+        if c in seen or c not in defs:
+            continue
+        seen.add(c)
+        for x in ast.walk(defs[c]):
+            if isinstance(x, ast.Name):
+                todo.append(x.id)
+    return seen
+
+
+def _module_defs(rel):
+    defs = {}
+    for node in ast.parse((REPO / rel).read_text(encoding="utf-8")).body:
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+            defs[node.name] = node
+        elif isinstance(node, ast.Assign):
+            for t in node.targets:
+                if isinstance(t, ast.Name):
+                    defs[t.id] = node
+    return defs
+
+
+INFRA = {"PillarObserver", "population", "weighted", "parse_instant", "REPO", "_META_CACHE", "_load_redact",
+         "_located_block", "_match", "_utcnow", "plane_name", "fmt_instant", "INSTRUMENT", "PILLAR", "command_string"}
+
+
+def _uncovered_names(listed, roots_by_rel):
+    """Names a definition reads (transitively) that its list does not carry: a dependency whose change the key would
+    never see."""
+    missing = {}
+    for rel, roots in roots_by_rel.items():
+        need = _closure(_module_defs(rel), roots) - INFRA
+        have = {n for r, names in listed for n in names if r == rel}
+        if need - have:
+            missing[rel] = sorted(need - have)
+    return missing
+
+
+def g_metric_coverage():
+    """The METRIC_DEFINITIONS lists are curated; this gate DISCOVERS what each observer reads and checks the lists
+    carry all of it, so a dependency added later cannot sit outside the key (PR-COVERAGE-BY-CONSTRUCTION-001)."""
+    kp_rel, kr_rel = kp._KP_REL, kp._KR_REL
+    roots = {"D": "DObserver", "E": "EObserver", "F": "FObserver", "G": "GObserver", "H": "HObserver", "I": "IObserver"}
+    gaps = {}
+    for key, cls in roots.items():
+        miss = _uncovered_names(kp.METRIC_DEFINITIONS[key], {kp_rel: [cls]})
+        if miss:
+            gaps[key] = miss
+    # L: kme_replay names, then the kme_pillars names they read through `kp.<name>`
+    kr_defs = _module_defs(kr_rel)
+    l_roots = ["rank_result", "RereadObserver", "RolloverObserver", "RetryObserver"]
+    kr_need = _closure(kr_defs, l_roots)
+    kp_names = set()
+    for n in kr_need:
+        for x in ast.walk(kr_defs[n]):
+            if isinstance(x, ast.Attribute) and isinstance(x.value, ast.Name) and x.value.id == "kp":
+                kp_names.add(x.attr)
+    kp_need = _closure(_module_defs(kp_rel), kp_names)
+    have_kr = {n for r, names in kp.METRIC_DEFINITIONS["L"] for n in names if r == kr_rel}
+    have_kp = {n for r, names in kp.METRIC_DEFINITIONS["L"] for n in names if r == kp_rel}
+    miss_l = {"kme_replay": sorted(kr_need - INFRA - have_kr), "kme_pillars": sorted(kp_need - INFRA - have_kp)}
+    if any(miss_l.values()):
+        gaps["L"] = miss_l
+    # population + selection rules: everything population() and make_keep() read is in the population key or in the
+    # selection names
+    sel_need = _closure(_module_defs(kp_rel), ["population", "make_keep"]) - {"population", "make_keep"}
+    covered = set(kp.SELECTION_NAMES) | {n for _r, names in kp.METRIC_DEFINITIONS["population"] for n in names}
+    if sel_need - covered:
+        gaps["population"] = sorted(sel_need - covered)
+    # every listed name exists (a stale name would silently read as 'missing' on both sides of every comparison)
+    absent = {k: [n for rel, names in parts for n, seg in kp._module_segments(rel, names) if seg is None]
+              for k, parts in kp.METRIC_DEFINITIONS.items()}
+    absent = {k: v for k, v in absent.items() if v}
+    absent_sel = [n for n, seg in kp._module_segments(kp._KP_REL, kp.SELECTION_NAMES) if seg is None]
+    # control: the same check, with one dependency dropped from H's list, must name it
+    trimmed = [(rel, tuple(n for n in names if n != "VERIFY_CMD_RE")) for rel, names in kp.METRIC_DEFINITIONS["H"]]
+    control = _uncovered_names(trimmed, {kp_rel: ["HObserver"]})
+    ctl_ok = control.get(kp_rel) == ["VERIFY_CMD_RE"]
+    ok = not gaps and not absent and not absent_sel and ctl_ok
+    return ok, (f"uncovered dependencies={gaps or 'none'}; listed names missing from source={absent or 'none'}; "
+                f"selection names missing={absent_sel or 'none'}; control (VERIFY_CMD_RE dropped from H) -> {control}")
+
+
 GATES = [
     ("V-KMEC-SCAN-PROJECT-DEFAULT", g_scan_project_default),
     ("V-KMEC-TRACER-D-E2E", g_tracer_d_e2e),
@@ -506,6 +882,14 @@ GATES = [
     ("V-KMEC-KS4-FORCED", g_ks4_forced),
     ("V-KMEC-PATH-LOG", g_path_log),
     ("V-KMEC-REPLAY-PLAN", g_replay_plan),
+    ("V-KMEC-CERTIFY-SHADOW", g_certify_shadow),
+    ("V-KMEC-KEYS-FOUR", g_keys_four),
+    ("V-KMEC-STALE-PARSER", g_stale_parser),
+    ("V-KMEC-STALE-METRIC", g_stale_metric),
+    ("V-KMEC-ATTR-VERSION", g_attr_version),
+    ("V-KMEC-PATTERN-DRIFT", g_pattern_drift),
+    ("V-KMEC-CERT-GUARDS", g_cert_guards),
+    ("V-KMEC-METRIC-COVERAGE", g_metric_coverage),
 ]
 
 

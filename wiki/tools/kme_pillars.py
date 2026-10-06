@@ -47,6 +47,7 @@ Exit codes: 0 measured, 2 usage / refusal, 3 UNMEASURED (the file is still writt
 from __future__ import annotations
 
 import argparse
+import ast
 import collections
 import datetime
 import hashlib
@@ -89,6 +90,7 @@ VERDICTS = (">= 3 %", "< 3 %", "STRADDLES", "UNMEASURED")
 FROZEN_NAMES = ("KME-L", "KME-G", "CPP-D-W7")
 LABEL_RE = re.compile(r"^[A-Z0-9][A-Z0-9-]{1,40}$")
 EXIT_OK, EXIT_USAGE, EXIT_UNMEASURED = 0, 2, 3
+EXIT_DISAGREE = 1       # certify: the index selection and the champion's differ
 LOCATE_MAX_SCANS = 24      # the whole of a run, including the final measuring scan after a located cutoff
 LOCATE_WINDOW_H = 24       # the cutoff search looks at call instants within this many hours before the freeze instant
 SCAN_COUNT = 0             # transcript-tree scans done by this process (the one-scan claim of `all` is checked on it)
@@ -1629,13 +1631,10 @@ PILLAR_HELP = {"D": "silent-success hooks: hook_additional_context rent per call
 
 
 # --------------------------------------------------------------------------- scan + population
-def scan(roots, expand, host, observers, keep, project_filter=None, select=None):
-    """Frozen-parser scan of every root; returns (sessions, fanout, dirs). `project_filter` (a compiled regex) keeps
-    only the child dirs (expand) or the roots whose basename it matches (re.search). `select(proj, sid, path)` (the
-    challenger's index tier) is forwarded to scan_project: a refused transcript file is never opened."""
-    global SCAN_COUNT
-    SCAN_COUNT += 1
-    _META_CACHE.clear()
+def _scope_dirs(roots, expand, project_filter=None):
+    """The project dirs a scan of these roots reads: every child dir (expand) or the root itself, kept when the
+    compiled `project_filter` matches (re.search) the child / root basename. One rule for scan() and for the
+    challenger's source-watermark walk, so the walk can never list a dir the scan would not."""
     dirs = []
     for r in roots:
         if expand:
@@ -1643,6 +1642,17 @@ def scan(roots, expand, host, observers, keep, project_filter=None, select=None)
                      and (project_filter is None or project_filter.search(d))]
         elif project_filter is None or project_filter.search(os.path.basename(r.rstrip("/\\"))):
             dirs.append(r)
+    return dirs
+
+
+def scan(roots, expand, host, observers, keep, project_filter=None, select=None):
+    """Frozen-parser scan of every root; returns (sessions, fanout, dirs). `project_filter` (a compiled regex) keeps
+    only the child dirs (expand) or the roots whose basename it matches (re.search). `select(proj, sid, path)` (the
+    challenger's index tier) is forwarded to scan_project: a refused transcript file is never opened."""
+    global SCAN_COUNT
+    SCAN_COUNT += 1
+    _META_CACHE.clear()
+    dirs = _scope_dirs(roots, expand, project_filter)
     fan = _Fanout(observers)
     sessions = []
     for d in dirs:
@@ -1887,6 +1897,131 @@ ESTIMATE_MODELS = {"G": ESTIMATE_MODEL_G, "I": ESTIMATE_MODEL_I}   # H keeps the
 # --------------------------------------------------------------------------- access plan (challenger)
 PLANS = ("champion", "scoped", "challenger", "auto")
 INDEX_MIN_SCHEMA = 5
+CERT_SCHEMA = "kmep-cert/1"
+CERT_SUFFIX = ".kmep-cert.json"
+_KP_REL = "wiki/tools/kme_pillars.py"
+_KR_REL = "wiki/tools/kme_replay.py"
+
+# --- invalidation keys -----------------------------------------------------------------------------------------
+# The certificate is a persisted claim: "for THIS question, the index selection equals the champion's, under THESE code
+# and definition digests". Two keys bind it to code. The selection-parser digest covers everything that decides WHICH
+# sessions are in the population (the frozen parser, the champion classifier, the index substrate, this file's own
+# population / window rules); a change anywhere in it invalidates every session's cached decision. The metric digests
+# cover what is MEASURED from the selected sessions (one per pillar, plus the population definition); a pillar's change
+# names that pillar and does not touch the selection. Both read SOURCE TEXT only (ast segments of module-level names),
+# so neither module is imported to compute them.
+SELECTION_SOURCES = ("tools/usage_index.py", "wiki/tools/kme_token_audit.py", "wiki/tools/kme_report.py")
+SELECTION_NAMES = ("population", "make_keep", "parse_instant", "_first_ts", "_UNSET")     # of this file
+_COMMON = ("CPT_HI", "CPT_LO", "POP_FIELDS", "WEIGHTS", "THRESHOLD", "materiality", "burden", "burden_interval",
+           "resident_calls")
+METRIC_DEFINITIONS = {
+    "population": ((_KP_REL, ("POP_FIELDS", "WEIGHTS", "weighted")),),
+    "D": ((_KP_REL, ("DObserver", "THRESHOLD", "materiality", "ESTIMATE_MODEL", "CAVEATS", "CPT_HI", "CPT_LO",
+                     "POP_FIELDS", "WEIGHTS", "burden", "burden_interval", "context_chars", "counts_for_d",
+                     "resident_calls")),),
+    "E": ((_KP_REL, ("EObserver", "THRESHOLD", "materiality", "ESTIMATE_MODEL", "CAVEATS", "CPT_HI", "CPT_LO",
+                     "WEIGHTS", "E_CLASSES", "STUB_PREFIX", "WRITE_TOOLS", "_blocks", "burden", "burden_interval",
+                     "classify_read", "is_stub_text", "resident_calls")),),
+    "F": ((_KP_REL, ("FObserver", "THRESHOLD", "materiality", "ESTIMATE_MODEL", "CAVEATS", "CPT_HI", "CPT_LO",
+                     "WEIGHTS", "INIT_RE", "SKILL_BODY_PREFIX", "_GSD_DIRS", "_GSD_ROOTS", "_basename", "_blocks",
+                     "_user_text", "burden", "burden_interval", "gsd_doc_kind", "pair_ratio", "resident_calls")),),
+    "G": ((_KP_REL, ("GObserver", "THRESHOLD", "materiality", "ESTIMATE_MODEL_G", "G_CAVEATS", "WEIGHTS", "CITE_RE",
+                     "DECISION_ID_RE", "FALSIFY_RE", "MARKER_WORDS", "NEGATED_RE", "RELITIGATE_RE", "RETEST_RE",
+                     "SEALED_RE", "SENT_SPLIT_RE", "SKILL_BODY_PREFIX", "STOPWORDS", "_EPOCH", "_blocks", "_content",
+                     "_decision_ids", "_decision_ids_raw", "_norm_word", "_subject", "_user_text", "_words",
+                     "call_weighted", "contains_seq", "is_earlier", "overlap_loose", "strip_negated")),),
+    "H": ((_KP_REL, ("HObserver", "THRESHOLD", "materiality", "ESTIMATE_MODEL", "CAVEATS", "H_CAVEATS", "ASSIGN_RE",
+                     "CE_LEDGER_REL", "CPT_HI", "CPT_LO", "HEREDOC_RE", "H_DEFINITION", "H_SENSITIVITY_LABEL",
+                     "INSTALL_RE", "NON_RUN_PROGRAMS", "POP_FIELDS", "QUOTED_RE", "SEG_SPLIT_RE", "SIG_PATH_RE",
+                     "SIG_RUN_RE", "SIG_URLISH_RE", "VERIFIER_AGENT_RE", "VERIFY_CMD_RE", "WEIGHTS", "WRAPPERS",
+                     "_SIG_REDACT", "_blocks", "_code_only", "_opaque_run", "_program_tokens", "_sig_base",
+                     "_sig_redact", "burden", "burden_interval", "call_weighted", "ce_owner_verdicts",
+                     "cmd_signature", "h_numerator_interval", "is_subagent_path", "read_subagent_meta",
+                     "resident_calls", "subagent_type", "verify_segment")),),
+    "I": ((_KP_REL, ("IObserver", "THRESHOLD", "materiality", "ESTIMATE_MODEL_I", "I_CAVEATS", "CAVEATS",
+                     "POP_FIELDS", "WEIGHTS", "call_weighted", "distribution", "is_subagent_path",
+                     "read_subagent_meta", "subagent_type")),),
+    "L": ((_KR_REL, ("AGENT_TOOLS", "BOUND_READINGS", "CANDIDATES", "CAVEATS", "DEFINITIONS", "NAMES",
+                     "READ_ONLY_TOOLS", "ROLLOVER_GROWTH", "ROLLOVER_SENSITIVITY", "ROUND", "RULE_DENOMINATORS",
+                     "RereadObserver", "RetryObserver", "RolloverObserver", "_events_of", "_r",
+                     "_unmeasured_reason", "bound_label", "candidate_status", "denominator_for", "dense_ranks",
+                     "entry_figures", "in_selection", "rank_candidates", "rank_result", "retry_key", "retry_kind",
+                     "retry_weighted", "rollover_avoided", "rollover_segments", "rollover_weighted",
+                     "same_message", "scrub_details", "split_ranking", "terminal_ok", "thread_of",
+                     "upper_bound_of")),
+          (_KP_REL, ("ASSIGN_RE", "CPT_HI", "CPT_LO", "DW7_FIELDS", "EObserver", "E_CLASSES", "POP_FIELDS",
+                     "SIG_PATH_RE", "SIG_RUN_RE", "SIG_URLISH_RE", "STUB_PREFIX", "THRESHOLD", "WEIGHTS", "WRAPPERS",
+                     "WRITE_TOOLS", "_SIG_REDACT", "_blocks", "_opaque_run", "_program_tokens", "_sig_base",
+                     "_sig_redact", "burden", "burden_interval", "classify_read", "cmd_signature",
+                     "compare_population", "distribution", "is_stub_text", "is_subagent_path",
+                     "referenced_coverage", "resident_calls"))),
+}
+PILLAR_KEYS = ("D", "E", "F", "G", "H", "I", "L")
+
+
+def _source_text(rel):
+    """Text of a repo source (a path relative to the repo root, or an absolute one). One seam, so a test can show a
+    definition change without editing a committed file."""
+    return Path(rel if os.path.isabs(rel) else REPO / rel).read_text(encoding="utf-8")
+
+
+def _source_bytes(rel):
+    return Path(rel if os.path.isabs(rel) else REPO / rel).read_bytes()
+
+
+def _module_segments(rel, names, cache=None):
+    """[(name, source text of its module-level def / assignment, or None when the name is gone)] read by `ast` from the
+    file text: the file is parsed, never imported. A name that disappears reads as None, so a rename is a change."""
+    cache = {} if cache is None else cache
+    if rel not in cache:
+        text = _source_text(rel)
+        defs = {}
+        for node in ast.parse(text).body:
+            if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+                defs[node.name] = node
+            elif isinstance(node, ast.Assign):
+                for t in node.targets:
+                    if isinstance(t, ast.Name):
+                        defs[t.id] = node
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                defs[node.target.id] = node
+        cache[rel] = (text, defs)
+    text, defs = cache[rel]
+    return [(n, ast.get_source_segment(text, defs[n]) if n in defs else None) for n in names]
+
+
+def _digest(parts):
+    return hashlib.sha256(json.dumps(parts, ensure_ascii=True).encode("utf-8")).hexdigest()
+
+
+def selection_parser_digest():
+    """Digest of every source that decides WHICH sessions a population holds: the SELECTION_SOURCES files (bytes, keyed
+    by basename) and this file's population / window rules (SELECTION_NAMES segments)."""
+    parts = [["file", os.path.basename(rel), hashlib.sha256(_source_bytes(rel)).hexdigest()]
+             for rel in SELECTION_SOURCES]
+    parts += [["name", n, seg] for n, seg in _module_segments(_KP_REL, SELECTION_NAMES)]
+    return _digest(sorted(parts, key=lambda p: (p[0], p[1])))
+
+
+def metric_digests():
+    """{key: digest of that key's definition}: key is `population` or a pillar letter (D..I, L)."""
+    cache = {}
+    return {key: _digest([[rel, n, seg] for rel, names in parts for n, seg in _module_segments(rel, names, cache)])
+            for key, parts in METRIC_DEFINITIONS.items()}
+
+
+def _metric_changed(cert_metric, live):
+    """Pillar letters whose definition digest differs from the certificate's (the population key is its own guard)."""
+    return sorted(k for k in PILLAR_KEYS if (cert_metric or {}).get(k) != live.get(k))
+
+
+def _check_attribution(index_ver, live_ver, cert_ver):
+    """None when the attribution version agrees across the index, the loaded substrate and the certificate, else the
+    reason text."""
+    vals = {"index": str(index_ver), "substrate": str(live_ver), "certificate": str(cert_ver)}
+    if len(set(vals.values())) == 1:
+        return None
+    return "attribution version differs: " + ", ".join(f"{k} {v}" for k, v in vals.items())
 
 
 class PlanRefused(Exception):
@@ -1907,6 +2042,8 @@ def add_plan_args(sp):
                          "(refused with exit 3 when a guard fails); auto = challenger, deopting to scoped / global raw")
     sp.add_argument("--index-db", default=None, help="usage index read by the challenger / auto plans "
                                                      "(default: tools/usage_index.py DEFAULT_DB)")
+    sp.add_argument("--cert", default=None, help="certificate the challenger / auto plans require, written by "
+                                                 "`kme_pillars.py certify` (default: <index-db>" + CERT_SUFFIX + ")")
     sp.add_argument("--path-log", default=None, help="append one redacted JSON access-plan record per run")
     sp.add_argument("--cross-project", action="store_true",
                     help="the question is explicitly cross-project: allows an unfiltered challenger / auto run, "
@@ -1933,18 +2070,34 @@ def _open_index_ro(path):
     return sqlite3.connect("file:" + urllib.parse.quote(real) + "?mode=ro", uri=True)
 
 
-def _index_tier(ctx):
-    """The certified-index tier: the set of (project, session) the index selects for this run, as an access dict
-    {"tier": "index", "select": callable, "read_set": set, "guards": [...], "admitted": {path: bytes}}.
-    Raises PlanRefused(guard, reason) on the first failed guard; an UNMEASURED / DRIFTED index answer is refused with
-    the index's own reasons, never read as a zero."""
-    guards = []
+def _question(ctx):
+    """The question a certificate answers: what a different run must repeat to reuse it."""
+    until = ctx["freeze"] if ctx["auto"] else ctx["until"]
+    return {"denominator": ctx["label"], "select": ctx["select"], "host": ctx["host"],
+            "project_filter": ctx["pf"].pattern if ctx["pf"] else None,
+            "cross_project": bool(ctx.get("cross_project")), "expand": bool(ctx["expand"]),
+            "roots": sorted(os.path.realpath(r) for r in ctx["roots"]),
+            "until": fmt_instant(until) if until is not None else None}
+
+
+def _pairs_digest(pairs):
+    return hashlib.sha256(json.dumps(sorted([list(p) for p in pairs]), ensure_ascii=True).encode("utf-8")).hexdigest()
+
+
+def _sid_text(pairs, limit=3):
+    ids = [f"{p}/{s}" for p, s in sorted(pairs)]
+    return ", ".join(ids[:limit]) + (f", +{len(ids) - limit} more" if len(ids) > limit else "")
+
+
+def _index_open(ctx, guards):
+    """Open the index read-only and run the guards index_open and kind. Returns (con, db, meta)."""
     db = ctx.get("index_db") or str(_usage_index().DEFAULT_DB)
     if not os.path.isfile(db):
         raise PlanRefused("index_open", f"index_missing: {db}", guards)
     try:
         con = _open_index_ro(db)
         row = con.execute("SELECT v FROM meta WHERE k='schema_version'").fetchone()
+        meta = dict(con.execute("SELECT k, v FROM meta WHERE k IN ('pattern_set', 'attr_version', 'attr_registry')"))
     except sqlite3.Error as exc:
         raise PlanRefused("index_open", f"index_unreadable: {exc.__class__.__name__}", guards)
     try:
@@ -1957,23 +2110,181 @@ def _index_tier(ctx):
         if ctx["since"] is not None:
             raise PlanRefused("kind", "--since has no certified index tier (the index answers as of an instant)", guards)
         guards.append({"guard": "kind", "ok": True, "reason": f"{ctx['den']}/kme"})
-        until = ctx["freeze"] if ctx["auto"] else ctx["until"]
+    except PlanRefused:
+        con.close()
+        raise
+    meta["schema_version"] = ver
+    return con, db, meta
+
+
+def _index_population(ctx, con, guards):
+    """The index's own population answer for this question, refused unless EXACT against the run's frozen fields (the
+    index's reasons are quoted, never read as a zero). Returns (answer, selected pairs incl. dead sessions, files rows)."""
+    until = ctx["freeze"] if ctx["auto"] else ctx["until"]
+    try:
         ans = _usage_index().population(
             con, until=fmt_instant(until) if until is not None else None,
             project_filter=ctx["pf"].pattern if ctx["pf"] else None, select="kme", host=ctx["host"],
             expected=ctx["frozen"]["fields"], detail=True)
+        rows = con.execute("SELECT path, size, mtime_ns, offset, archived, project, session_key, first_ts "
+                           "FROM files").fetchall()
     except sqlite3.Error as exc:
         raise PlanRefused("population", f"population: UNMEASURED: index_unreadable: {exc.__class__.__name__}", guards)
-    finally:
-        con.close()
     if ans["verdict"] != "EXACT":
         raise PlanRefused("population", f"population: {ans['verdict']}: {'; '.join(ans['reasons'])}"
                           if ans["reasons"] else f"population: {ans['verdict']}: deltas {sorted(ans.get('deltas') or {})}",
                           guards)
     guards.append({"guard": "population", "ok": True, "reason": "EXACT"})
-    read_set = {(r["project"], r["session_key"]) for r in ans["detail"] if r["selected"] and not r["archived"]}
-    admitted = {}
+    selected = {(r["project"], r["session_key"]) for r in ans["detail"] if r["selected"] and not r["archived"]}
+    return ans, selected, rows
 
+
+def _disk_files(dirs):
+    """Every in-scope transcript the scan would register, by stat only: {realpath: (project, session, size, mtime_ns)}.
+    The project and session are the ones scan_project computes (basename of the scanned dir, first path component of
+    the relative path), which are what the select callable is asked about."""
+    out = {}
+    for d in dirs:
+        proj = os.path.basename(d.rstrip("/\\"))
+        for root, _dns, fns in os.walk(d):
+            real_root = None
+            for f in fns:
+                if not f.endswith(".jsonl"):
+                    continue
+                full = os.path.join(root, f)
+                sid = os.path.relpath(full, d).replace("\\", "/").split("/")[0].replace(".jsonl", "")
+                try:
+                    st = os.stat(full)
+                except OSError:
+                    continue
+                if real_root is None:
+                    real_root = os.path.realpath(root)
+                key = os.path.realpath(full) if os.path.islink(full) else os.path.join(real_root, f)
+                out[key] = (proj, sid, st.st_size, st.st_mtime_ns)
+    return out
+
+
+def _scope_state(ctx, rows):
+    """The index's files rows and the disk, both limited to the dirs this run's scan would read (T-02-13: no other
+    project is listed). Returns {"disk": {path: (proj, sid, size, mtime_ns)}, "idx": {path: row dict}}. Raises
+    PlanRefused("watermark", "root_not_indexed: ...") when no in-scope disk path is present in the index at all: the
+    index was built over another tree than --root, so none of its decisions describe this one."""
+    dirs = _scope_dirs(ctx["roots"], ctx["expand"], ctx["pf"])
+    disk = _disk_files(dirs)
+    real_dirs = [os.path.realpath(d) for d in dirs]
+    idx = {}
+    for path, size, mtime_ns, offset, archived, project, skey, first_ts in rows:
+        if archived or not any(path == d or path.startswith(d + os.sep) for d in real_dirs):
+            continue
+        idx[path] = {"size": size, "mtime_ns": mtime_ns, "offset": offset, "project": project, "skey": skey,
+                     "first_ts": first_ts}
+    if not disk:
+        raise PlanRefused("watermark", "root_not_indexed: no in-scope transcript exists under the roots", None)
+    if not any(p in idx for p in disk):
+        raise PlanRefused("watermark", f"root_not_indexed: none of the {len(disk)} in-scope transcript(s) on disk is "
+                                       f"held by the index (it was built over another tree)", None)
+    return {"disk": disk, "idx": idx}
+
+
+def _watermark(ctx, state, cert):
+    """Closure-exact staleness: the (project, session) pairs whose sources changed since the index (or the certificate)
+    last saw them. A disk file is stale when its (size, mtime_ns) differs from the index row's, when the row's own
+    offset is short of its size, or when the index has no row for it and the certificate's `uncovered` map does not
+    vouch for its exact (size, mtime_ns); an index row with no file on disk marks its session stale too."""
+    disk, idx = state["disk"], state["idx"]
+    uncovered = (cert or {}).get("uncovered") or {}
+    stale = set()
+    for path, (proj, sid, size, mtime_ns) in disk.items():
+        row = idx.get(path)
+        if row is None:
+            if uncovered.get(path) != [size, mtime_ns]:
+                stale.add((proj, sid))
+        elif (row["size"], row["mtime_ns"]) != (size, mtime_ns) or row["offset"] != row["size"]:
+            stale.add((proj, sid))
+    for path, row in idx.items():
+        if path not in disk:
+            stale.add((row["project"], row["skey"]))
+    return stale
+
+
+def _no_first_ts_sessions(until, state):
+    """IN-04 (review 01-REVIEW): with `until` set, the index's population drops a session none of whose files carries a
+    first timestamp, without a reason. Those sessions are named here so they are read raw instead."""
+    if until is None:
+        return set()
+    firsts = {}
+    for row in state["idx"].values():
+        firsts.setdefault((row["project"], row["skey"]), []).append(row["first_ts"])
+    return {k for k, v in firsts.items() if all(x is None for x in v)}
+
+
+def _load_cert(ctx, guards):
+    path = ctx.get("cert")
+    if not path or not os.path.isfile(path):
+        raise PlanRefused("certificate", f"cert_missing: {path}", guards)
+    try:
+        cert = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise PlanRefused("certificate", f"cert_unreadable: {exc.__class__.__name__}: {path}", guards)
+    if not isinstance(cert, dict) or cert.get("schema") != CERT_SCHEMA:
+        raise PlanRefused("certificate", f"cert_schema: {cert.get('schema') if isinstance(cert, dict) else None!r} "
+                                         f"!= {CERT_SCHEMA!r}", guards)
+    try:
+        for k in ("question", "index", "keys", "uncovered"):
+            if not isinstance(cert[k], dict):
+                raise KeyError(k)
+        cert["keys"]["metric"]["population"]
+        cert["keys"]["parser"]
+        cert["index"]["pattern_set"]
+        cert["index"]["attr_version"]
+    except (KeyError, TypeError) as exc:
+        raise PlanRefused("certificate", f"cert_malformed: missing {exc}", guards)
+    return cert
+
+
+def _check_certificate(ctx, cert, meta, guards):
+    """The certificate guards, in order: question, pattern set, attribution version, parser digest, population metric.
+    Sets ctx["keys"] (the live digests) and ctx["metric_changed"] (the pillars whose definition moved) before any key
+    guard can refuse, so a refusal still records them."""
+    q = _question(ctx)
+    for field in q:
+        if cert["question"].get(field) != q[field]:
+            raise PlanRefused("certificate", f"question.{field}: certificate {cert['question'].get(field)!r} != run "
+                                             f"{q[field]!r}", guards)
+    guards.append({"guard": "certificate", "ok": True, "reason": "question equal"})
+    try:
+        live_pattern = _usage_index()._live_pattern_set()
+    except Exception as exc:  # noqa: BLE001 -- typed, never silent
+        raise PlanRefused("pattern", f"classifier unavailable: {exc.__class__.__name__}: {exc}", guards)
+    if cert["index"]["pattern_set"] != live_pattern:
+        raise PlanRefused("pattern", f"pattern set differs: certificate {str(cert['index']['pattern_set'])[:12]} != "
+                                     f"champion's current {live_pattern[:12]}", guards)
+    guards.append({"guard": "pattern", "ok": True, "reason": live_pattern[:12]})
+    bad = _check_attribution(meta.get("attr_version"), _usage_index().ATTR_VERSION, cert["index"]["attr_version"])
+    if bad:
+        raise PlanRefused("attribution", bad, guards)
+    guards.append({"guard": "attribution", "ok": True, "reason": f"version {cert['index']['attr_version']}"})
+    try:
+        live_parser, live_metric = selection_parser_digest(), metric_digests()
+    except (OSError, SyntaxError, ValueError) as exc:
+        raise PlanRefused("parser", f"keys unreadable: {exc.__class__.__name__}: {exc}", guards)
+    ctx["keys"] = {"parser": live_parser, "metric": live_metric}
+    cert_metric = cert["keys"]["metric"]
+    ctx["metric_changed"] = _metric_changed(cert_metric, live_metric)
+    if cert["keys"]["parser"] != live_parser:
+        raise PlanRefused("parser", f"selection parser digest differs: certificate {str(cert['keys']['parser'])[:12]} "
+                                    f"!= live {live_parser[:12]}", guards)
+    guards.append({"guard": "parser", "ok": True, "reason": live_parser[:12]})
+    if cert_metric.get("population") != live_metric["population"]:
+        raise PlanRefused("metric", f"population definition differs: certificate {str(cert_metric.get('population'))[:12]} "
+                                    f"!= live {live_metric['population'][:12]}; pillar definitions changed: "
+                                    f"{ctx['metric_changed']}", guards)
+    guards.append({"guard": "metric", "ok": True,
+                   "reason": f"population {live_metric['population'][:12]}; pillars changed: {ctx['metric_changed']}"})
+
+
+def _make_select(read_set, admitted):
+    """The select callable of the index tier: a file is opened only when its session is in the read set."""
     def select(proj, sid, path):
         if (proj, sid) not in read_set:
             return False
@@ -1982,11 +2293,156 @@ def _index_tier(ctx):
         except OSError:
             admitted[path] = None
         return True
-    return {"tier": "index", "select": select, "read_set": read_set, "guards": guards, "admitted": admitted,
-            "index_db": db}
+    return select
 
 
-PATH_SCHEMA = 1
+def _index_tier(ctx):
+    """The certified-index tier: the set of (project, session) to read for this run, as an access dict
+    {"tier": "index", "select": callable, "read_set": set, "guards": [...], "admitted": {path: bytes}, ...}.
+    Guards in order: index_open, kind, certificate (+ pattern, attribution, parser, metric), population, watermark,
+    no_first_ts. Raises PlanRefused(guard, reason) on the first failed guard; an UNMEASURED / DRIFTED index answer is
+    refused with the index's own reasons, never read as a zero."""
+    guards = []
+    con, db, meta = _index_open(ctx, guards)
+    try:
+        cert = _load_cert(ctx, guards)
+        _check_certificate(ctx, cert, meta, guards)
+        _ans, index_selected, rows = _index_population(ctx, con, guards)
+    finally:
+        con.close()
+    try:
+        state = _scope_state(ctx, rows)
+    except PlanRefused as exc:
+        raise PlanRefused(exc.guard, exc.reason, guards)
+    stale = _watermark(ctx, state, cert)
+    guards.append({"guard": "watermark", "ok": True,
+                   "reason": f"{len(stale)} stale session(s)" + (f": {_sid_text(stale)}" if stale else "")})
+    until = ctx["freeze"] if ctx["auto"] else ctx["until"]
+    no_first = _no_first_ts_sessions(until, state)
+    guards.append({"guard": "no_first_ts", "ok": True,
+                   "reason": f"{len(no_first)} session(s) without a first timestamp read raw (review IN-04)"
+                             + (f": {_sid_text(no_first)}" if no_first else "")})
+    read_set = index_selected | stale | no_first
+    admitted = {}
+    return {"tier": "index", "select": _make_select(read_set, admitted), "read_set": read_set, "guards": guards,
+            "admitted": admitted, "index_db": db, "index_selected": index_selected, "stale": stale,
+            "no_first_ts": no_first}
+
+
+def _selected_pairs(sc):
+    """(project, session) of every session the champion's rule selects in a scan, dead sessions included: the same
+    decision kme_pillars.population makes, as a set of identities instead of counts."""
+    out = set()
+    for s in sc["sessions"]:
+        if sc["window"] and sc["kept"].get(id(s), 0) == 0:
+            continue
+        if kme_report.is_kme(s):
+            out.add((s["project"], s["session"]))
+    return out
+
+
+def _selection_agreement(champion, index):
+    """(agree, only the champion selects, only the index selects)."""
+    only_c, only_i = sorted(champion - index), sorted(index - champion)
+    return (not only_c and not only_i), only_c, only_i
+
+
+def _shadow_check(ctx, sc, access):
+    """The post-scan shadow guard: the in-process population must be exact against the frozen fields, and the champion's
+    classifier must select every index-selected session whose sources are unchanged (and nothing the index did not
+    select). Raises PlanRefused("shadow", ...): an auto run deopts, a challenger run is refused."""
+    match, deltas = compare_population(sc["measured"], ctx["frozen"]["fields"])
+    if match != "exact":
+        raise PlanRefused("shadow", f"in-process population is {match} against the frozen fields (differing: "
+                                    f"{sorted(deltas)})", access["guards"])
+    proc = _selected_pairs(sc)
+    skip = access["stale"] | access["no_first_ts"]
+    agree, only_c, only_i = _selection_agreement(proc - skip, access["index_selected"] - skip)
+    if not agree:
+        raise PlanRefused("shadow", f"selection differs from the index: {len(only_i)} index-selected session(s) not "
+                                    f"selected by the champion classifier ({_sid_text(only_i)}), {len(only_c)} "
+                                    f"champion-selected session(s) the index did not select ({_sid_text(only_c)})",
+                          access["guards"])
+
+
+# --------------------------------------------------------------------------- certify
+def _atomic_write(path, text):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+    os.replace(tmp, path)
+
+
+def _certify(a, argv):
+    """`certify`: write a certificate only when the index population is EXACT against the frozen denominator AND a
+    champion scan of the same scope selects exactly the same sessions as the index. Exit 0 CERTIFIED, 1 NOT_CERTIFIED
+    (disagreement, nothing written), 3 UNMEASURED (an index guard failed, nothing written), 2 usage."""
+    try:
+        redact = _load_redact()
+    except Exception as exc:  # noqa: BLE001 -- no redaction available means nothing is written
+        return _fail(f"secret_firewall unavailable ({exc.__class__.__name__}); nothing written")
+    a.plan, a.path_log = "challenger", None
+    ctx, rc = _prepare(a, [])
+    if ctx is None:
+        return rc
+    cert_real = os.path.realpath(a.cert)
+    for r in a.root:
+        root_real = os.path.realpath(r)
+        if cert_real == root_real or os.path.commonpath([cert_real, root_real]) == root_real:
+            return _fail(f"--cert {a.cert} resolves inside --root {r}: the instrument never writes into a scanned "
+                         f"corpus; nothing written")
+
+    def verdict(v, selected=0, uncovered=0, path="none"):
+        print(f"KMEP-CERT verdict={v} selected={selected} uncovered={uncovered} cert={path}")
+
+    guards = []
+    try:
+        con, db, meta = _index_open(ctx, guards)
+        try:
+            ans, idx_pairs, rows = _index_population(ctx, con, guards)
+        finally:
+            con.close()
+        state = _scope_state(ctx, rows)
+    except PlanRefused as exc:
+        print(f"kme_pillars: certify refused: {exc.guard}: {exc.reason}", file=sys.stderr)
+        verdict("UNMEASURED")
+        return EXIT_UNMEASURED
+    until = ctx["freeze"] if ctx["auto"] else ctx["until"]
+    ctx["access"] = None
+    sc = _measure(ctx, [], until)
+    match, deltas = compare_population(sc["measured"], ctx["frozen"]["fields"])
+    if match != "exact":
+        print(f"kme_pillars: champion population is {match} against the frozen fields (differing: {sorted(deltas)}) "
+              f"while the index is EXACT: not certified", file=sys.stderr)
+        verdict("NOT_CERTIFIED", len(idx_pairs))
+        return EXIT_DISAGREE
+    champ_pairs = _selected_pairs(sc)
+    agree, only_c, only_i = _selection_agreement(champ_pairs, idx_pairs)
+    if not agree:
+        print(f"kme_pillars: selection differs: champion {len(champ_pairs)} vs index {len(idx_pairs)}; only the "
+              f"champion selects {len(only_c)} (first {[f'{p}/{s}' for p, s in only_c[:5]]}), only the index selects "
+              f"{len(only_i)} (first {[f'{p}/{s}' for p, s in only_i[:5]]})", file=sys.stderr)
+        verdict("NOT_CERTIFIED", len(idx_pairs))
+        return EXIT_DISAGREE
+    uncovered = {p: [size, mt] for p, (_proj, _sid, size, mt) in state["disk"].items() if p not in state["idx"]}
+    cert = {"schema": CERT_SCHEMA, "question": _question(ctx),
+            "index": {"path": os.path.realpath(db), "schema_version": meta["schema_version"],
+                      "pattern_set": meta.get("pattern_set"), "attr_version": meta.get("attr_version"),
+                      "attr_registry": meta.get("attr_registry")},
+            "keys": {"parser": selection_parser_digest(), "metric": metric_digests()},
+            "selected": {"sessions": len(idx_pairs), "digest": _pairs_digest(idx_pairs)},
+            "uncovered": uncovered,
+            "shadow": {"champion_selected": len(champ_pairs), "index_selected": len(idx_pairs), "agree": True},
+            "certified_at": _utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"), "plane": plane_name(),
+            "command": command_string(argv)}
+    _atomic_write(a.cert, redact(json.dumps(cert, indent=1, sort_keys=True, ensure_ascii=True)) + "\n")
+    verdict("CERTIFIED", len(idx_pairs), len(uncovered), a.cert)
+    return EXIT_OK
+
+
+PATH_SCHEMA = 2     # 2: adds `keys`, `metric_changed` and read_set.stale / read_set.no_first_ts
 
 
 def _walk_read_set(dirs):
@@ -2010,7 +2466,7 @@ def _path_record(ctx, tool, subcommand, sc, refusal):
     access = ctx.get("access")
     if refusal is not None:
         taken, guards, deopt = "refused", refusal.guards, {"guard": refusal.guard, "reason": refusal.reason}
-        read_set = {"basis": "planned", "sessions": 0, "files": 0, "bytes": 0}
+        read_set = {"basis": "planned", "sessions": 0, "files": 0, "bytes": 0, "stale": None, "no_first_ts": None}
     else:
         taken = ctx.get("tier", ctx.get("plan", "champion"))
         d = ctx.get("deopt")
@@ -2019,12 +2475,16 @@ def _path_record(ctx, tool, subcommand, sc, refusal):
         if access:
             adm = access["admitted"]
             read_set = {"basis": "planned", "sessions": len(access["read_set"]), "files": len(adm),
-                        "bytes": sum(v for v in adm.values() if v)}
+                        "bytes": sum(v for v in adm.values() if v),
+                        "stale": sorted(f"{p}/{s}" for p, s in access["stale"]),
+                        "no_first_ts": sorted(f"{p}/{s}" for p, s in access["no_first_ts"])}
         elif ctx.get("path_log") and sc is not None:
             files, nbytes = _walk_read_set(sc["dirs"])
-            read_set = {"basis": "planned", "sessions": len(sc["sessions"]), "files": files, "bytes": nbytes}
+            read_set = {"basis": "planned", "sessions": len(sc["sessions"]), "files": files, "bytes": nbytes,
+                        "stale": None, "no_first_ts": None}
         else:
-            read_set = {"basis": "unwalked", "sessions": None, "files": None, "bytes": None}
+            read_set = {"basis": "unwalked", "sessions": None, "files": None, "bytes": None, "stale": None,
+                        "no_first_ts": None}
     until = ctx["freeze"] if ctx["auto"] else ctx["until"]
     return {"schema": PATH_SCHEMA, "tool": tool, "subcommand": subcommand, "plan_requested": ctx.get("plan"),
             "plan_taken": taken, "guards": guards, "deopt": deopt, "read_set": read_set,
@@ -2032,7 +2492,8 @@ def _path_record(ctx, tool, subcommand, sc, refusal):
             "index_db": ctx.get("index_db"), "denominator": ctx["label"],
             "project_filter": ctx["pf"].pattern if ctx["pf"] else None,
             "until": fmt_instant(until) if until is not None else None,
-            "cross_project": ctx.get("cross_project", False), "plane": plane_name()}
+            "cross_project": ctx.get("cross_project", False), "keys": ctx.get("keys"),
+            "metric_changed": ctx.get("metric_changed"), "plane": plane_name()}
 
 
 def report_path(ctx, redact, tool, subcommand, sc, refusal=None):
@@ -2073,7 +2534,7 @@ def build_parser():
     ap = argparse.ArgumentParser(prog="kme_pillars.py", description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True, metavar="PILLAR")
 
-    def common(sp, measuring):
+    def common(sp, measuring, plan_args=True):
         sp.add_argument("--denominator", required=True, choices=["KME-L", "KME-G", DW7_NAME, "OTHER"])
         sp.add_argument("--label", default=None, help="name of the OTHER workload (A-Z 0-9 -)")
         sp.add_argument("--select", choices=["kme", "all"], default=None)
@@ -2089,7 +2550,8 @@ def build_parser():
                                                                f"(default {FREEZE_INSTANT})")
         sp.add_argument("--frozen-file", default=None)
         sp.add_argument("--frozen-ce-ledger", default=None, help="CE ledger read for the referenced CPP-D-W7 denominator")
-        add_plan_args(sp)
+        if plan_args:
+            add_plan_args(sp)
         if measuring:
             sp.add_argument("--out-dir", default=None)
             sp.add_argument("--role", choices=["auto", "second_workload"], default="auto")
@@ -2097,6 +2559,14 @@ def build_parser():
     for p, helptext in PILLAR_HELP.items():
         common(sub.add_parser(p.lower(), help=helptext), True)
     common(sub.add_parser("all", help="every pillar in ONE scan, one measurement file per pillar"), True)
+    cp = sub.add_parser("certify", help="certify the index selection of one question: writes the certificate the "
+                                        "challenger / auto plans require, only when the index population is EXACT "
+                                        "and a champion scan of the same scope selects the same sessions")
+    common(cp, False, plan_args=False)
+    cp.add_argument("--index-db", default=None, help="usage index to certify (default: tools/usage_index.py DEFAULT_DB)")
+    cp.add_argument("--cert", required=True, help="where the certificate is written (never inside a --root)")
+    cp.add_argument("--cross-project", action="store_true",
+                    help="the certified question is explicitly cross-project (no --project-filter)")
     common(sub.add_parser("population", help="print the recomputed population (and per-project rows of the "
                                               "selected sessions) and whether it reproduces the frozen one; "
                                               "writes nothing"), False)
@@ -2209,6 +2679,7 @@ def _prepare(a, pillars):
     plan = getattr(a, "plan", "champion")
     cross = bool(getattr(a, "cross_project", False))
     index_db = getattr(a, "index_db", None)
+    cert = getattr(a, "cert", None)
     path_log = getattr(a, "path_log", None)
     if plan == "scoped" and pf is None:
         return None, _fail("--plan scoped needs --project-filter (a scoped read has a scope)")
@@ -2217,11 +2688,14 @@ def _prepare(a, pillars):
             return None, _fail(f"--plan {plan} needs --project-filter, or --cross-project to ask a global question "
                                f"(--cross-project is the only way to read outside one scope)")
         index_db = index_db or str(_usage_index().DEFAULT_DB)
+        cert = cert or (index_db + CERT_SUFFIX)
     else:
         if cross:
             return None, _fail(f"--cross-project is only valid with --plan challenger or auto, not {plan}")
         if index_db is not None:
             return None, _fail(f"--index-db is only valid with --plan challenger or auto, not {plan}")
+        if cert is not None:
+            return None, _fail(f"--cert is only valid with --plan challenger or auto, not {plan}")
     if path_log is not None:      # the path log is a write: never into a scanned corpus either
         log_real = os.path.realpath(path_log)
         for r in a.root:
@@ -2229,7 +2703,7 @@ def _prepare(a, pillars):
             if log_real == root_real or os.path.commonpath([log_real, root_real]) == root_real:
                 return None, _fail(f"--path-log {path_log} resolves inside --root {r}: the instrument never writes "
                                    f"into a scanned corpus; nothing written")
-    return {"plan": plan, "index_db": index_db, "path_log": path_log, "cross_project": cross, "label": label, "den": den, "kind": kind, "frozen": frozen, "select": select, "host": host,
+    return {"plan": plan, "index_db": index_db, "cert": cert, "path_log": path_log, "cross_project": cross, "label": label, "den": den, "kind": kind, "frozen": frozen, "select": select, "host": host,
             "since": since, "until": until, "auto": auto, "freeze": freeze, "roots": a.root, "expand": a.expand,
             "pf": pf, "role": role, "pillars": list(pillars), "frozen_source": fsrc}, None
 
@@ -2246,7 +2720,8 @@ def _measure(ctx, pillars, until, want_instants=False, observer_factories=None):
     measured = {f: pop[f] for f in POP_FIELDS}
     measured["weighted"] = pop["weighted"]
     return {"sessions": sessions, "dirs": dirs, "pop": pop, "selected": selected, "measured": measured, "obs": obs,
-            "instants": inst.for_selected(selected) if inst else None, "until": until}
+            "instants": inst.for_selected(selected) if inst else None, "until": until,
+            "kept": fan.kept, "window": keep is not None}
 
 
 def _resolve(ctx, pillars, observer_factories=None):
@@ -2256,6 +2731,7 @@ def _resolve(ctx, pillars, observer_factories=None):
     Returns (scan, until, located) where located is None or the locator's verdict."""
     plan = ctx.get("plan", "champion")
     ctx["access"], ctx["deopt"], ctx["tier"] = None, None, plan
+    ctx["keys"] = ctx["metric_changed"] = None
     if plan in ("challenger", "auto"):
         try:
             ctx["access"] = _index_tier(ctx)
@@ -2271,17 +2747,20 @@ def _resolve(ctx, pillars, observer_factories=None):
 
 
 def _resolve_scan(ctx, pillars, observer_factories=None):
-    """The scan of the chosen tier: at the fixed cutoff, or at the located one for --until auto."""
+    """The scan of the chosen tier: at the fixed cutoff, or at the located one for --until auto. On the index tier the
+    shadow guard runs right after the measuring scan (for --until auto: after the freeze-instant scan, before any
+    probe), so the locator can never bisect on a scan the index and the champion disagree about."""
+    access = ctx.get("access") or {}
+    index = access.get("tier") == "index"
     if not ctx["auto"]:
-        return _measure(ctx, pillars, ctx["until"], observer_factories=observer_factories), ctx["until"], None
+        sc = _measure(ctx, pillars, ctx["until"], observer_factories=observer_factories)
+        if index:
+            _shadow_check(ctx, sc, access)
+        return sc, ctx["until"], None
     frozen = ctx["frozen"]["fields"]
     first = _measure(ctx, pillars, ctx["freeze"], want_instants=True, observer_factories=observer_factories)
-    if (ctx.get("access") or {}).get("tier") == "index":
-        # the locator must never bisect on a selected-only scan: the index said EXACT at the freeze instant, so the
-        # scan of the selected sessions has to say it too
-        match = compare_population(first["measured"], frozen)[0]
-        if match != "exact":
-            raise PlanRefused("shadow", f"population at the freeze instant is {match} on the selected sessions")
+    if index:
+        _shadow_check(ctx, first, access)
 
     def probe(until, want):
         sc = _measure(ctx, [], until, want)
@@ -2442,6 +2921,8 @@ def main(argv=None):
         a = ap.parse_args(sys.argv[1:] if argv is None else list(argv))
     except SystemExit as e:
         return int(e.code or 0)
+    if a.cmd == "certify":
+        return _certify(a, argv)
     pillars = list(OBSERVERS) if a.cmd == "all" else ([] if a.cmd == "population" else [a.cmd.upper()])
 
     try:
