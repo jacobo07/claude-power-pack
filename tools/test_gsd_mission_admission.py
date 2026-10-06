@@ -244,6 +244,63 @@ def main() -> int:
           and (gm.load("m-unused").get("admission") or {}).get("consumed_epoch") is None,
           "a launch the host refused started nothing and does not use the admission up")
 
+    # 9c. slim launch: pre-generated session id, budget file before the process, detached spawn, completion
+    SLIM = {"envelope": {"target": 200_000, "warn": 250_000, "stop": 300_000, "calls": 10},
+            "workers": [{"name": "s0", "profile": "slim-t2", "calls": 3, "packet": 500}]}
+    mission("m-slimlaunch")
+    sa = admit("m-slimlaunch", "slim-route.json", SLIM)
+    check("V-ADM-WORKER-PROFILE-RECORDED", sa.get("worker_profile") == "slim-t2" and sa["admission"]["verdict"] == "ADMISSIBLE"
+          and sa["admission"]["workers"][0]["profile"] == "slim-t2", str(sa.get("worker_profile")))
+    seen: dict = {}
+
+    def spawner(argv, cwd, out_path, err_path):
+        sid = next(a.split("=", 1)[1] for a in argv if a.startswith("--session-id="))
+        bf = ms.budget_path(sid)
+        seen.update(argv=argv, sid=sid, cwd=cwd, out=out_path, err=err_path,
+                    budget=json.loads(bf.read_text(encoding="utf-8")) if bf.exists() else None)
+        Path(out_path).parent.mkdir(parents=True, exist_ok=True)   # what the real spawner does
+        return 4242
+
+    def no_bg(argv, cwd):
+        raise AssertionError("slim launch must not use the --bg runner")
+
+    cur = gm.load("m-slimlaunch")
+    sres = gm.launch_worker("m-slimlaunch", expect_epoch=cur["epoch"], expect_state=cur["state"], reason="t",
+                            runner=no_bg, spawner=spawner, now=NOW)
+    srec = gm.load("m-slimlaunch")
+    check("V-ADM-SLIM-BINDS-OWN-SID", sres.get("ok") is True and sres["bg_id"] == seen["sid"]
+          and srec["state"] == gm.RUNNING and srec["owner"]["session_id"] == seen["sid"]
+          and srec["owner"]["kind"] == "slim" and srec["owner"]["pid"] == 4242 and "--bg" not in seen["argv"]
+          and "-p" in seen["argv"] and seen["argv"][-1] == gm.launch_prompt(cur), str(sres))
+    check("V-ADM-SLIM-BUDGET-BEFORE-SPAWN", seen["budget"] is not None and seen["budget"]["stop"] == 300_000
+          and seen["budget"]["target"] == 200_000 and seen["budget"]["calls_estimate"] == 10, str(seen["budget"]))
+    check("V-ADM-SLIM-ADMISSION-CONSUMED", srec["admission"].get("consumed_epoch") == srec["epoch"])
+    check("V-ADM-SLIM-DEFAULT-BG-UNCHANGED", gm.worker_argv(dict(base), "do it", session_id="x") == dflt)
+    owner = srec["owner"]
+    alive, dead = (lambda p: True), (lambda p: False)
+    p_run = gm.plan_next(srec, NOW + 60, [], alive)
+    check("V-ADM-SLIM-RUNNING-NOT-FINISHED", p_run["action"] == "none" and "running" in p_run["reason"], str(p_run))
+    p_dead = gm.plan_next(srec, NOW + 60, [], dead)
+    check("V-ADM-SLIM-EXIT-NO-JSON-HALTS", p_dead["action"] == "halt" and "no result JSON" in p_dead["reason"], str(p_dead))
+    Path(owner["out_path"]).write_text(json.dumps(
+        {"type": "result", "is_error": False, "result": "done", "session_id": owner["session_id"],
+         "usage": {"input_tokens": 2, "cache_read_input_tokens": 10, "output_tokens": 5},
+         "permission_denials": [{"tool_name": "Read"}]}), encoding="utf-8")
+    p_fin = gm.plan_next(srec, NOW + 60, [], alive)
+    check("V-ADM-SLIM-JSON-MEANS-FINISHED", p_fin["action"] == "slim_finished" and p_fin["slim"]["tokens"] == 17
+          and p_fin["slim"]["denials"] == 1 and p_fin["slim"]["session_id"] == owner["session_id"], str(p_fin))
+    rows = gm.supervise(now=NOW + 60, sessions=[], pid_alive=dead)
+    done = gm.load("m-slimlaunch")
+    check("V-ADM-SLIM-SUPERVISE-COMPLETES", done["state"] == gm.COMPLETED and done["slim_result"]["result"] == "done",
+          f"{done['state']} {[r for r in rows if r['mission_id'] == 'm-slimlaunch']}")
+    mission("m-slimfail")
+    admit("m-slimfail", "slim-route-f.json", SLIM)
+    cur = gm.load("m-slimfail")
+    gm.launch_worker("m-slimfail", expect_epoch=cur["epoch"], expect_state=cur["state"], reason="t", runner=no_bg,
+                     spawner=lambda *a: (_ for _ in ()).throw(OSError("no exe")), now=NOW)
+    check("V-ADM-SLIM-SPAWN-FAILURE-LEDGERED", gm.load("m-slimfail")["state"] == gm.LAUNCHING and any(
+        e.get("event") == "launch_failed" for e in gm.lr.ledger_events("m-slimfail")))
+
     # 10. CLI: admitted exit 0, rejected exit 3
     mission("m-cli")
     rc_ok = gm._cli(["admit", "--mission", "m-cli", "--route", write("cli-thin.json", THIN), "--floors", FLOORS])

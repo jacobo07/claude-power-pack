@@ -547,6 +547,16 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         if rec.get("failed_launches", 0) + 1 >= MAX_REPLACEMENTS:
             return {"action": "halt", "reason": f"{MAX_REPLACEMENTS} launches never acknowledged"}
         return {"action": "replace", "reason": "start ack overdue"}
+    if state == RUNNING and (rec.get("owner") or {}).get("kind") == "slim":
+        # A slim (`claude -p`) worker is one synchronous process, never in the host's session list:
+        # judged by its own exit + result file. A finished one is complete, not "dead" (no replace).
+        s = slim_result(rec.get("owner"), pid_alive)
+        if s["status"] == "finished":
+            return {"action": "slim_finished", "slim": s,
+                    "reason": f"slim worker finished (is_error={s['is_error']}, tokens {s['tokens']:,})"}
+        if s["status"] == "failed":
+            return {"action": "halt", "reason": f"slim worker failed: {s['why']}"}
+        return {"action": "none", "reason": f"slim worker {s['status']}"}
     verdict, why = liveness(rec.get("owner"), sessions, pid_alive)
     if spent and state in (RUNNING, BLOCKED) and verdict in (UNKNOWN, WAITING_HUMAN):
         # The budget must bind when the owner can never become DEAD or idle: a background
@@ -691,7 +701,7 @@ def slim_profile(rec: dict) -> str | None:
     return prof if prof in SLIM_PROFILES else None
 
 
-def slim_argv(rec: dict, prompt: str, exe: str, profile: str) -> list[str]:
+def slim_argv(rec: dict, prompt: str, exe: str, profile: str, session_id: str | None = None) -> list[str]:
     """`claude -p` print-mode launch (measured floor 8.8k-13.5k vs 97k default). `=` forms only:
     PowerShell 5.1 drops empty args and --tools is variadic. slim-t2 carries the budget breaker via
     --settings, so it must keep the transcript the guard reads: `--no-session-persistence` there makes
@@ -706,10 +716,12 @@ def slim_argv(rec: dict, prompt: str, exe: str, profile: str) -> list[str]:
     else:
         argv.append(f"--settings={SLIM_SETTINGS}")
     argv.append(f"--model={rec.get('model') or 'sonnet'}")
+    if session_id:
+        argv.append(f"--session-id={session_id}")   # the id is OURS: no stdout to parse, budget file keyed to it
     return argv + [prompt]
 
 
-def worker_argv(rec: dict, prompt: str) -> list[str]:
+def worker_argv(rec: dict, prompt: str, session_id: str | None = None) -> list[str]:
     """The launch command. `--bg` manages the session id (W0 E4) and does not inherit the
     launcher's environment (E3), so identity comes back on stdout (E5), nowhere else.
 
@@ -721,7 +733,7 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
     exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
     slim = slim_profile(rec)
     if slim:
-        return slim_argv(rec, prompt, exe, slim)
+        return slim_argv(rec, prompt, exe, slim, session_id)
     argv = [exe, "--bg", "-n", worker_name(rec)]
     # Owner-approved 2026-09-25: two BLOCKED missions (m-2b4b7a36b2c8, m-2be47a186897) were
     # both parked on an EnterWorktree permission prompt -- the card tells a worker to enter
@@ -761,10 +773,92 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
     return argv + [prompt]
 
 
+def slim_job_paths(mission_id: str, sid: str) -> tuple[Path, Path]:
+    """Per-worker stdout (the `--output-format=json` result) and stderr files, in the mission store."""
+    d = lr.state_dir() / "slim-jobs" / mission_id
+    return d / f"{sid}.out.json", d / f"{sid}.err.txt"
+
+
+def _spawn_detached(argv: list[str], cwd: str, out_path: Path, err_path: Path) -> int:
+    """Start `claude -p` DETACHED (it is synchronous: the supervisor must not block on it) with its
+    stdout/stderr going to files. Returns the pid."""
+    import subprocess
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    kw: dict = {}
+    if os.name == "nt":
+        kw["creationflags"] = 0x00000008 | 0x00000200 | 0x08000000  # DETACHED | NEW_PROCESS_GROUP | NO_WINDOW
+    else:
+        kw["start_new_session"] = True
+    with open(out_path, "wb") as so, open(err_path, "wb") as se:
+        proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=so, stderr=se, **kw)
+    return proc.pid
+
+
+def slim_result(owner: dict | None, pid_alive=lr._pid_alive) -> dict:
+    """Is a slim worker finished? `{"status": running|finished|failed|unknown, ...}`.
+
+    Finished = its output file holds the result JSON (print mode writes it once, at the end), whatever
+    the pid says: a reused pid must not keep a finished worker "running". No JSON and the process gone
+    = failed; no JSON and the process alive = running; an unanswerable pid = unknown (never failed)."""
+    owner = owner or {}
+    data = None
+    try:
+        data = json.loads(Path(owner["out_path"]).read_text(encoding="utf-8-sig"))
+    except (KeyError, TypeError, OSError, ValueError):
+        pass
+    if isinstance(data, list):   # `--output-format=json` on some builds: an event array, result last
+        data = next((e for e in reversed(data) if isinstance(e, dict) and e.get("type") == "result"), None)
+    if isinstance(data, dict) and ("result" in data or "is_error" in data):
+        u = data.get("usage") or {}
+        tokens = sum(int(u.get(k) or 0) for k in ("input_tokens", "cache_creation_input_tokens",
+                                                   "cache_read_input_tokens", "output_tokens"))
+        return {"status": "finished", "is_error": bool(data.get("is_error")),
+                "session_id": data.get("session_id"), "tokens": tokens,
+                "denials": len(data.get("permission_denials") or []),
+                "result": str(data.get("result") or "")[:500]}
+    pid = owner.get("pid")
+    if not isinstance(pid, int):
+        return {"status": "unknown", "why": "no pid recorded"}
+    alive = pid_alive(pid)
+    if alive is True:
+        return {"status": "running", "pid": pid}
+    if alive is None:
+        return {"status": "unknown", "why": f"pid {pid} could not be checked"}
+    return {"status": "failed", "why": f"pid {pid} exited and {owner.get('out_path')} holds no result JSON"}
+
+
+def _launch_slim(rec: dict, prompt: str, epoch: int, now: float, spawner=None) -> dict:
+    """Launch a slim (`claude -p`) worker and bind it. The session id is generated HERE and passed as
+    --session-id, so nothing is parsed from stdout; the budget file is written from the admitted
+    envelope BEFORE the process starts, or the breaker would be inert for its first calls."""
+    mid = rec["mission_id"]
+    sid = str(uuid.uuid4())
+    out_path, err_path = slim_job_paths(mid, sid)
+    _declare_worker_envelope(rec, sid)
+    argv = worker_argv(rec, prompt, session_id=sid)
+    try:
+        pid = (spawner or _spawn_detached)(argv, rec["cwd"], out_path, err_path)
+    except Exception as exc:  # the launch itself could not happen
+        why = f"{type(exc).__name__}: {exc}"
+        lr.ledger_append(mid, "launch_failed", mission_id=mid, epoch=epoch, rc=None, bg_id=sid,
+                         why="slim launch refused", detail=why[-300:])
+        return {"ok": False, "epoch": epoch, "bg_id": sid, "why": "slim launch refused", "detail": why}
+    adm = rec.get("admission") or {}
+    used = ({"admission": {**adm, "consumed_epoch": epoch}}
+            if rec.get("wu_packet") and adm.get("verdict") == "ADMISSIBLE" else {})
+    rec = transition(mid, expect_epoch=epoch, expect_state=LAUNCHING, event="launched", now=now,
+                     pending={**rec["pending"], "bg_id": sid}, **used)
+    owner = {"session_id": sid, "pid": pid, "proc_start": None, "heartbeat_at": now, "epoch": epoch,
+             "kind": "slim", "profile": slim_profile(rec), "out_path": str(out_path), "err_path": str(err_path)}
+    transition(mid, expect_epoch=epoch, expect_state=LAUNCHING, event="worker_acked", now=now, state=RUNNING,
+               pending=None, failed_launches=0, iterations=rec.get("iterations", 0) + 1, worker=sid, owner=owner)
+    return {"ok": True, "epoch": epoch, "bg_id": sid, "pid": pid, "slim": True}
+
+
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
-                  progress: dict | None = None, packet: dict | None = None) -> dict:
+                  progress: dict | None = None, packet: dict | None = None, spawner=None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
@@ -834,6 +928,8 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                      pending={"kind": "worker_start", "epoch": epoch,
                               "requested_at": now, "deadline": now + START_DEADLINE_S},
                      **extra)
+    if slim_profile(rec):
+        return _launch_slim(rec, prompt, epoch, now, spawner=spawner)
     # `prompt` was bound above (launch_prompt -> bind_workstream), not only at create: a record armed
     # before bind_workstream existed still carries the bare command, and its relay would put the
     # successor on the root milestone.
@@ -1205,9 +1301,17 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
     admission = {"verdict": res["verdict"], "route_path": str(p), "route_file_sha256": _packet_digest(str(p)),
                  "packet_sha256": pkt_digest, "envelope": res["envelope"],
                  "need_with_margin": res.get("need_with_margin"), "remaining": remaining,
-                 "reasons": res["reasons"][:6], "at": now}
+                 "reasons": res["reasons"][:6], "at": now,
+                 "workers": [{k: w.get(k) for k in ("name", "profile", "calls", "floor")}
+                             for w in res.get("workers") or []]}
+    # The route's worker profile is recorded on the mission, so launch reads one field. Only an
+    # admission-set value is ever replaced; a profile an operator set by hand stays.
+    slim = next((w["profile"] for w in admission["workers"] if w["profile"] in SLIM_PROFILES), None)
+    prof = ({"worker_profile": slim, "worker_profile_src": "admission"} if slim
+            else {"worker_profile": None, "worker_profile_src": None} if rec.get("worker_profile_src") == "admission"
+            else {})
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                      event="route_admission", now=now, admission=admission,
+                      event="route_admission", now=now, admission=admission, **prof,
                       reason=f"route {res['verdict']}: " + ("; ".join(res["reasons"]) or "fits")[:280])
 
 
@@ -2475,6 +2579,12 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         row["renewal"] = f"not renewed: {why_not}"
                     else:
                         row["renewed_as"] = renew_mission(halted, now=now)["mission_id"]
+            elif act == "slim_finished":
+                s = plan["slim"]
+                transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                           event="slim_worker_finished", now=now, state=HALTED if s["is_error"] else COMPLETED,
+                           pending=None, slim_result=s, worker=s.get("session_id"),
+                           reason=plan["reason"])
             elif act == "surface_blocked":
                 if rec["state"] != BLOCKED:
                     needs = host_job_needs((rec.get("owner") or {}).get("session_id"))
