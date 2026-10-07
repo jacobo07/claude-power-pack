@@ -149,6 +149,37 @@ def main() -> int:
     check("V-TL-MISSING-REFUSED", rc == 2 and not out.exists(),
           f"rc={rc} out_exists={out.exists()} {txt.strip()[:120]}")
 
+    # --- Task 2: hermetic fixture goal through the real CLI ---------------------------------
+    out = TMP / "fx.json"
+    rc, txt = tool("fixture", "--out", out)
+    fx = load(out)
+    tl = fx.get("timeline", {})
+    eps = tl.get("epochs") or {}
+    jd = (tl.get("judged") or [{}])[-1]
+    steps = fx.get("steps") or []
+    check("V-TL-FIXTURE-CONVERGES",
+          rc == 0 and fx.get("converged") is True and jd.get("verdict") == "PASS"
+          and sum(1 for e in eps.values() if e.get("ended_s") is not None) == 4
+          and all(isinstance(e.get("observed"), list) for e in eps.values() if e.get("receipt_s") is not None)
+          and steps and all("rc" in s and "wall_s" in s for s in steps),
+          f"rc={rc} converged={fx.get('converged')} judged={jd.get('verdict')} "
+          f"ended={sum(1 for e in eps.values() if e.get('ended_s') is not None)} "
+          f"observed={[e.get('observed') for e in eps.values()]} passes={len(fx.get('passes') or [])} "
+          f"{txt.strip()[-160:]}")
+
+    declare = next((s for s in steps if s.get("name") == "declare"), {})
+    store_line = next((l for l in declare.get("stdout_tail", []) if l.strip().startswith("store:")), "")
+    goals_root = (fx.get("hermetic") or {}).get("goals_root", "")
+    tmp_root = Path(tempfile.gettempdir()).resolve()
+    store_path = store_line.split("store:", 1)[1].strip() if store_line else ""
+    check("V-TL-FIXTURE-HERMETIC",
+          bool(store_path) and bool(goals_root)
+          and Path(store_path).resolve().is_relative_to(Path(goals_root).resolve())
+          and Path(goals_root).resolve().is_relative_to(tmp_root)
+          and not (HOME / ".claude" / "state" / "gsd-x").exists(),
+          f"store={store_path} goals_root={goals_root} "
+          f"test_home_has_gsdx={(HOME / '.claude' / 'state' / 'gsd-x').exists()}")
+
     total = passes + fails
     print(f"\nGSDX_GOAL_TIMELINE_PASS={passes}/{total}  threshold={total}/{total}")
     return 0 if fails == 0 else 1
