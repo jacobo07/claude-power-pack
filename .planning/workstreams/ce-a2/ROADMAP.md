@@ -30,7 +30,7 @@ Iteration lens (after Phase 1, after any falsified hypothesis, before Phase 8 pr
 
 ## Phases
 
-- [ ] **Phase 1: A2-0 Gate truth**
+- [x] **Phase 1: A2-0 Gate truth**
 - [ ] **Phase 2: A2-1 Metered attribution including the coordinator**
 - [ ] **Phase 3: A2-2 Presence contract and baseline negotiation**
 - [ ] **Phase 4: A2-3 T3 offline replay (boundary census, epoch policy, concurrency)**

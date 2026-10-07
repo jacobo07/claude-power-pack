@@ -177,6 +177,8 @@ def run_check(tag: str, argv: list, root: Path) -> list:
     if any(a.replace("\\", "/").endswith(SELF_NAMES) for a in argv):
         return [f"{tag} check is recursive: it invokes this gate"]
     exe = sys.executable if argv[0] in ("python", "python3") else shutil.which(argv[0])
+    if not exe and argv[0].endswith(".py") and (root / argv[0]).is_file():
+        return [f"{tag} check misconfigured: {argv[0]!r} is a script, not an interpreter; prefix the argv with 'python'"]
     if not exe:
         return [f"{tag} check tool missing: {argv[0]!r} not found"]
     if exe == sys.executable and len(argv) > 1 and argv[1].endswith(".py") and not (root / argv[1]).is_file():
@@ -441,6 +443,17 @@ def selftest(verbose=True, mutation=True) -> bool:
             ok &= good
             if verbose:
                 print(f"  {'ok' if good else 'FAIL'}   V-CEP2-OBL-{name} {'green' if not got else 'red'} {got if not good else ''}")
+        (root / "tools").mkdir(exist_ok=True)
+        (root / "tools" / "ok_check.py").write_text("raise SystemExit(0)\n", encoding="utf-8")
+        for name, argv, want_ok, needle in (
+                ("script-without-interpreter", ["tools/ok_check.py"], False, "is a script, not an interpreter"),
+                ("python-script-passes", ["python", "tools/ok_check.py"], True, None),
+                ("python3-alias-portable", ["python3", "tools/ok_check.py"], True, None)):
+            got = run_check("X", argv, root)
+            good = (not got) if want_ok else (len(got) == 1 and needle in got[0])
+            ok &= good
+            if verbose:
+                print(f"  {'ok' if good else 'FAIL'}   V-CEP2-RUN-{name} {got if not good else ''}")
     if mutation:
         red = _mutant_open_passes_goes_red()
         ok &= red

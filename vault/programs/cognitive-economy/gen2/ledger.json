@@ -22,6 +22,7 @@
    "execution": "T1",
    "status": "CHECKED",
    "check": [
+    "python",
     "tools/test_ce_t1_state.py"
    ]
   },
@@ -33,6 +34,7 @@
    "execution": "T1",
    "status": "CHECKED",
    "check": [
+    "python",
     "tools/test_ce_t1_lifecycle.py"
    ]
   },
@@ -141,9 +143,9 @@
    "clause": "A1 receipts: every started, unfrozen tranche has a valid receipt; a family at its strike limit has all its tranches frozen",
    "terminal": "EXECUTE",
    "execution": "A1",
-   "status": "OPEN",
+   "status": "CHECKED",
    "check": [
-    "python3",
+    "python",
     "tools/test_ce_a1.py",
     "--obligation",
     "C15"
@@ -155,9 +157,9 @@
    "clause": "A1 spend <= 20M processed; UNKNOWN fails",
    "terminal": "EXECUTE",
    "execution": "A1",
-   "status": "OPEN",
+   "status": "CHECKED",
    "check": [
-    "python3",
+    "python",
     "tools/test_ce_a1.py",
     "--obligation",
     "C16"
@@ -494,7 +496,8 @@
     "strikes": 0
    },
    "gen3-envelopes": {
-    "strikes": 0
+    "strikes": null,
+    "strikes_note": "UNKNOWN 2026-10-07 A2-0: no T1/T1b receipt exists in vault/programs/cognitive-economy/gen3 (only T3-receipt.md), so neither 0 nor 2 has evidence; null never passes C15"
    }
   },
   "strike_limit": 2
