@@ -43,9 +43,16 @@ Fresh context: read, in order, `vault/specs/gsdx-proof-conserving-convergence.md
 
 - 2026-10-07: `.gsd/`, the workstream `config.json` and `milestone.lock` (gsd-tools runtime state) are excluded through the common `.git/info/exclude` and are neither committed nor added to `.gitignore`. Safe: local only, reversible, and names only gsdx-pcc paths.
 - 2026-10-07: The in-copy run of the mutation suite was killed by the memory-pressure reaper and NOT restarted (harness policy). It is recorded UNKNOWN in 01-INCUMBENT.md. Re-run when RAM allows (command in 01-05-SUMMARY.md).
+- 2026-10-07 (Owner, 20:05): the mutation-suite timing stays UNKNOWN in Phase 1. It becomes the ENTRY OBLIGATION of Phase 6 (DENOMINATOR R11; ROADMAP Phase 6 "Entry obligation"). Phase 6 measures the incumbent in an isolated copy before any speedup claim. Worker epoch 3 added the tool's required `--out`/`--log-dir` to the recorded command, because the short form exits with an argparse error (`tools/gsdx_reality_baseline.py:370-371`).
+- 2026-10-07 INCIDENT (worker epoch 2): verification returned `human_needed` (7efe5322, 16:24 +0200), and the worker ended its turn on a question to the Owner inside an UNATTENDED mission. The mission parked BLOCKED until the Owner answered at 20:05 (about 3h41m, next commit baf27b86 at 20:12). Every human_verification item except the mutation decision was a command the worker could run itself (01-verify-*.log). RULE from now on: when verification returns human_needed, run the checks yourself, or record the decision per the mission card's DECISION GATE (OWNER DECISION NEEDED with options and a pick), then continue. Never end a turn on a question. UKDL candidate T-UNATTENDED-HUMAN-NEEDED-ENDS-TURN-ON-QUESTION-PARKS-MISSION-001.
+- 2026-10-07 (worker epoch 3): Phase 1 verification set to `passed` after the four UNCERTAIN rows were verified from committed logs (01-verify-{vrb,vtl,gate-provider,git}.log at baf27b86). The registry hunks were re-read and all fall inside `known_orphans`.
+
+## Owner steps
+
+- OWNER STEP (not done by the mission; it is a global file under `~/.claude`, which the mission must not edit): change the routing of `human_needed` in the global `gsd-autonomous` skill and workflow (`~/.claude/gsd-core/workflows/autonomous.md`). In an UNATTENDED run it should run the human_verification commands itself, or record OWNER DECISION NEEDED and continue, never end the turn on a question. Source: the epoch-2 incident above.
 
 ## Blockers
 
-None. Open measurement gap: incumbent `test_gsd_x_goal_mutation.py` is UNKNOWN (memory-pressure reaper; see 01-05-SUMMARY.md).
+None. Open measurement gap carried to Phase 6 as R11: incumbent `test_gsd_x_goal_mutation.py` is UNKNOWN (memory-pressure reaper; see 01-05-SUMMARY.md).
 </content>
 </invoke>

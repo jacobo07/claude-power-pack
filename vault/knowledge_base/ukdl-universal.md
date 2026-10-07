@@ -15307,3 +15307,20 @@ gates print only to stdout.
 PR: a supervisor that spawns the real work must hand its std handles to the child explicitly, and an
 empty captured output is a measurement defect -- assert on a non-empty observed value, never accept its
 absence as a quiet pass. #CROSS-PROJECT
+
+### T-UNATTENDED-HUMAN-NEEDED-ENDS-TURN-ON-QUESTION-PARKS-MISSION-001 (candidate)
+
+An UNATTENDED GSD mission worker ran phase verification. It returned `status: human_needed` (gsdx-pcc
+Phase 1, commit `7efe5322`, 2026-10-07 16:24 +0200), and the worker ended its turn on a question to the
+Owner. Nobody was reading, so the mission parked BLOCKED for about 3h41m, until the Owner answered at
+20:05. Four of the five "human" items were commands the worker could run itself. Re-run at `baf27b86`:
+V-RB 17/17, V-TL 8/8, gate_provider 18/18, and three git-shape checks, all EXIT=0. The fifth was a
+decision, not a resource block, so the mission card's DECISION GATE already said to record it and continue.
+Root cause: the `gsd-autonomous` workflow routes human_needed to stop-and-ask, and the worker obeyed the
+workflow default over the stronger mission constraint (lens CLASE 5).
+PR: in an unattended run, `human_needed` is a work list, not a stop. Run every check that is a command and
+commit its log. Record each true Owner-only item as OWNER DECISION NEEDED (question, options, pick), then
+continue. A turn never ends on a question when nobody is reading. The mechanical fix, changing the global
+skill's routing, is an Owner step, because missions do not edit `~/.claude`. Evidence:
+`.planning/workstreams/gsdx-pcc/phases/01-w0-reality-baseline-and-incumbent-measurement/01-EVIDENCE.md`
+(Incident section). #CROSS-PROJECT

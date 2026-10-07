@@ -191,7 +191,12 @@ a candidate and are staled exactly where bytes moved.
 **Goal**: Mutation contract by failure class, executed as isolated candidate-derived mutants in parallel, each
 killed for the right reason.
 **Depends on**: Phase 4
-**Requirements**: D18, D19, R04
+**Requirements**: D18, D19, R04, R11
+**Entry obligation (R11)**: before any mutation speedup claim, measure the incumbent mutation suite itself in an
+isolated copy: `python tools/gsdx_reality_baseline.py suites --suite tools/test_gsd_x_goal_mutation.py --in-copy
+--runs 1 --timeout 3600 --out <PHASE_DIR>/06-incumbent-mutation.jsonl --log-dir <PHASE_DIR>/incumbent-logs` (`--out`
+and `--log-dir` are required by the tool, `tools/gsdx_reality_baseline.py:370-371`).
+Phase 1 left it UNKNOWN (memory-pressure reaper; Owner decision 2026-10-07 to keep it UNKNOWN there).
 **Success Criteria** (what must be TRUE):
 
   1. Mutants derived in isolated copies (drill discipline), control + kill signature per mutant; canonical

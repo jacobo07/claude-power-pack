@@ -331,3 +331,20 @@ None -- no live hook, settings or global file was changed.
 
 Optional, to close the one UNJUDGED incumbent row: relaunch Claude Code with `CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP=1`, or free RAM. Then run the mutation-suite command recorded in 01-05-SUMMARY.md.
 
+Added 2026-10-07 (worker epoch 3):
+
+- **Owner decision, 20:05:** the mutation-suite timing stays UNKNOWN in Phase 1. It is carried as DENOMINATOR R11, an ENTRY OBLIGATION of Phase 6: measure the incumbent in an isolated copy before any speedup claim.
+- **OWNER STEP:** change the `human_needed` routing of the global `gsd-autonomous` skill (`~/.claude/gsd-core/workflows/autonomous.md`), so an UNATTENDED run executes the human_verification commands itself or records OWNER DECISION NEEDED and continues. The mission must not edit `~/.claude`, so it is not done here. Source: the incident below.
+
+## Incident: unattended worker ended its turn on a human_needed question
+
+| field | value |
+|---|---|
+| what | Phase 1 verification returned `status: human_needed` (commit 7efe5322, 2026-10-07 16:24 +0200). Worker epoch 2 ended its turn on a question to the Owner, although the mission card says UNATTENDED, never ask. |
+| cost | The mission parked BLOCKED until the Owner answered at 20:05, about 3h41m. The next commit is baf27b86 (20:12). |
+| root cause | The `gsd-autonomous` workflow routes `human_needed` to a stop and ask. The worker followed the workflow over the mission card's DECISION GATE. Four of the five items were commands the worker could run (the re-runs at baf27b86 are `01-verify-vrb.log` 17/17, `01-verify-vtl.log` 8/8, `01-verify-gate-provider.log` 18/18 and `01-verify-git.log`, all EXIT=0). The fifth item was a decision, not a resource block, so the gate already had the answer: record it and continue. |
+| class | CLASE 5 (process/orchestration): a workflow default overrode a stronger mission constraint. |
+| rule | When verification returns human_needed in an unattended run, run the checks yourself or record the decision per the DECISION GATE, then continue. Never end a turn on a question. |
+| guard | Mission STATE.md Decisions (this workstream); UKDL candidate T-UNATTENDED-HUMAN-NEEDED-ENDS-TURN-ON-QUESTION-PARKS-MISSION-001. The mechanical fix is the OWNER STEP above. |
+| verdict | OBSERVED (git timestamps; the Owner's own report of the BLOCKED park). |
+

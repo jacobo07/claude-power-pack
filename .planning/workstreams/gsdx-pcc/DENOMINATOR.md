@@ -64,6 +64,7 @@ disposition. Phase = the roadmap phase expected to close it.
 | R08 | Pilot identity: Owner chose io-chatgpt-plugin; scout found Phase 6 in io-ucg | Reality 15 | pilot io-chatgpt-plugin, replay io-ucg; record discrepancy | 7,9 | OPEN | |
 | R09 | software_construction tower family (Owner D-O2) | modules/tower | BUILD B0 + inheritance proof | 10 | OPEN | |
 | R10 | gsd_x/goal/* unreachable per liveness gate (frozen as inherited debt in Phase 1) | modules/liveness/reachability.py; 17 gsd_x/goal units among 57 offenders at fbca24fc in this worktree (61 in the main checkout), frozen in vault/liveness/reachability_registry.json known_orphans | wire or DECLARE in reachability_registry by Phase 10 | 10 | OPEN | frozen at 96bdb8b1; .planning/workstreams/gsdx-pcc/phases/01-w0-reality-baseline-and-incumbent-measurement/01-liveness-before.md |
+| R11 | Incumbent test_gsd_x_goal_mutation.py timing UNKNOWN in Phase 1 | tools/gsdx_reality_baseline.py (01-INCUMBENT.md:71; Owner decision 2026-10-07 20:05: keep UNKNOWN in Phase 1) | ENTRY OBLIGATION of Phase 6: measure the incumbent mutation suite itself in an isolated copy (`tools/gsdx_reality_baseline.py suites --suite tools/test_gsd_x_goal_mutation.py --in-copy`, plus the required `--out`/`--log-dir`; full form in 01-05-SUMMARY.md:47) before any speedup claim | 6 | OPEN | |
 
 ## Mutation corpus (each a faithful mutant killed for the right reason)
 false reuse after relevant change · failure to invalidate a causal dependency · UNKNOWN treated as clean ·
