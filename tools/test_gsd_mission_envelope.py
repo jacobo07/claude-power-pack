@@ -195,6 +195,72 @@ def main() -> int:
     rc = gm._cli(["envelope", "--mission", "m-cli", "--continue-max-tokens", "250k"])
     check("V-ENV-CLI-CONTINUE-MAX", rc == 0 and gm.load("m-cli").get("continue_max_tokens") == 250_000, str(rc))
 
+    # 8. cep-gen3 T1c: auto envelope. Headroom from the mission's own rate, clamped; the ceiling only
+    #    when the rate cannot be measured. The live defaults file is never read by these gates.
+    gm._BUDGET_DEFAULTS = Path(TMP) / "no-such-defaults.json"
+    cfg = dict(gm._BUILTIN_BUDGET)
+    h, how = gm.auto_headroom(3_000_000, 1, 3, cfg)
+    check("V-AUTO-RATE", h == 9_000_000 and "rate 3,000,000/epoch x 3" in how, how)
+    h, how = gm.auto_headroom(3_000_000, 3, 3, cfg)
+    check("V-AUTO-RATE-LAST-EPOCH", h == 1_000_000 and "x 1 epoch" in how and "clamped" not in how, how)
+    h, how = gm.auto_headroom(10_000_000, 1, 3, cfg)
+    check("V-AUTO-CLAMP-HIGH", h == 15_000_000 and "clamped" in how, how)
+    h, how = gm.auto_headroom(100_000, 1, 2, cfg)
+    check("V-AUTO-CLAMP-LOW", h == 1_000_000 and "clamped" in how, how)
+    for name, args in {"UNMEASURED": (None, 1, 3), "ZERO": (0, 1, 3), "NO-EPOCH": (5, 0, 3),
+                       "NO-CAP": (5, 1, None)}.items():
+        h, how = gm.auto_headroom(*args, cfg)
+        check(f"V-AUTO-CEILING-{name}", h == 15_000_000 and how.startswith("ceiling"), how)
+
+    _running("m-auto")
+    gm.transition("m-auto", expect_epoch=1, expect_state=gm.RUNNING, event="t_cap", now=NOW, max_cycles=3)
+    r = gm._auto_budget(gm.load("m-auto"), NOW, measure=lambda rec: 3_000_000)
+    check("V-AUTO-ASSIGNED", r.get("token_estimate") == 6_000_000 and r.get("token_estimate_src") == "auto"
+          and "rate" in (r.get("token_estimate_basis") or ""), str(r.get("token_estimate_basis")))
+
+    def boom(rec):
+        raise OSError("meter down")
+    _running("m-auto-u")
+    r = gm._auto_budget(gm.load("m-auto-u"), NOW, measure=boom)
+    check("V-AUTO-UNMEASURED-NAMED", r.get("token_estimate") == 7_500_000
+          and "spend unmeasured" in (r.get("token_estimate_basis") or ""), str(r.get("token_estimate_basis")))
+
+    gm._BUDGET_DEFAULTS = Path(TMP) / "budget-defaults.json"
+    gm._BUDGET_DEFAULTS.write_text('{"headroom_tokens": 4000000, "min_headroom_tokens": 500000}', encoding="utf-8")
+    _running("m-auto-c")
+    r = gm._auto_budget(gm.load("m-auto-c"), NOW, measure=lambda rec: None)
+    check("V-AUTO-CONFIG-READ", r.get("token_estimate") == 2_000_000
+          and "mission-budget-defaults.json" in r.get("token_estimate_basis", ""), r.get("token_estimate_basis"))
+    gm._BUDGET_DEFAULTS.write_text('{"headroom_tokens": 1000, "min_headroom_tokens": 5000}', encoding="utf-8")
+    _running("m-auto-b")
+    r = gm._auto_budget(gm.load("m-auto-b"), NOW, measure=lambda rec: None)
+    check("V-AUTO-BAD-CONFIG-FALLS-BACK", r.get("token_estimate") == 7_500_000
+          and "built-in" in r.get("token_estimate_basis", ""), r.get("token_estimate_basis"))
+    gm._BUDGET_DEFAULTS = Path(TMP) / "no-such-defaults.json"
+
+    # supervise wiring: assigns to an unbudgeted, unheld record only; dry run assigns nothing.
+    for mid in ("m-sv-free", "m-sv-op", "m-sv-held"):
+        _running(mid)
+    gm.set_envelope("m-sv-op", token_estimate="1.5M", now=NOW)
+    gm.set_owner_hold("m-sv-held", "test hold", now=NOW)
+    real = (gm.plan_next, ms.processed_tokens, gm._cost_breaker)
+    gm.plan_next = lambda *a, **k: {"action": "none", "reason": "test"}
+    ms.processed_tokens = lambda rec, *a, **k: 2_000_000
+    gm._cost_breaker = lambda rec, now, *a, **k: rec
+    inert = dict(sessions=[], runner=lambda *a, **k: None, stop_runner=lambda *a, **k: None)
+    try:
+        gm.supervise(now=NOW + 10, dry_run=True, **inert)
+        check("V-AUTO-DRY-RUN-ASSIGNS-NOTHING", gm.load("m-sv-free").get("token_estimate") is None)
+        gm.supervise(now=NOW + 20, **inert)
+    finally:
+        gm.plan_next, ms.processed_tokens, gm._cost_breaker = real
+    free, op, held = (gm.load(m) for m in ("m-sv-free", "m-sv-op", "m-sv-held"))
+    check("V-AUTO-SUPERVISE-ASSIGNS", free.get("token_estimate_src") == "auto" and free.get("token_estimate"),
+          str(free.get("token_estimate")))
+    check("V-AUTO-OPERATOR-PRESERVED", op.get("token_estimate") == 1_500_000 and not op.get("token_estimate_src"),
+          str(op.get("token_estimate")))
+    check("V-AUTO-HELD-UNTOUCHED", held.get("token_estimate") is None)
+
     print(f"ENVELOPE_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

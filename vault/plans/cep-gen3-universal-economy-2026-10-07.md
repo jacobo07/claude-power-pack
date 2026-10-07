@@ -58,6 +58,7 @@ change method. UKDL into ukdl-universal.md only when no foreign uncommitted hunk
 | T1 m-67e0ddbedffa (superseded by T1b) | 4,559,225 | - | no product |
 | T1b m-3e4f27d678a1 (HALTED, superseded by T1c) | 7,594k | 55 | no product; session guard 55 > 35x1.5 |
 | T2 m-9bee7894f20f (RETIRED by Owner, left on cost-breaker hold) | 3,015,851 | - | no receipt; floor/packet work folds into the stages 4-10 reforecast |
+| T1c m-3b71f5457c70 (HALTED max_hours) + finish in pane 0f9b771b | 1,752,008 + 10,075,093 | 17 + 66 | ENVELOPE 55/55, 2/2 mutants killed; receipt gen3/T1c-receipt.md. gen3 ~37.2M: CAP 31M BREACHED |
 
 ## Decisions 2026-10-07 (Owner, pane 0f9b771b)
 - T1b: retire + option (b). T1c m-3b71f5457c70 armed with `--supersedes`, packet gen3/packets/T1c.md (one fixed

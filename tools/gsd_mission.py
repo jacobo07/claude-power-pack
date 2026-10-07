@@ -28,6 +28,7 @@ the host's session list, and returns what the supervisor should do and why.
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import sys
@@ -1189,6 +1190,68 @@ def set_rollover_protocol(mission_id: str, protocol: str, now: float | None = No
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                       event="rollover_protocol_set", now=now, rollover_protocol=protocol,
                       reason=f"rollover protocol set to {protocol}")
+
+
+_BUDGET_DEFAULTS = Path(__file__).resolve().parent.parent / "vault" / "config" / "mission-budget-defaults.json"
+_BUILTIN_BUDGET = {"headroom_tokens": 15_000_000, "min_headroom_tokens": 1_000_000}
+
+
+def _budget_defaults() -> tuple[dict, str]:
+    """(defaults, source). A missing or unreadable file falls back to the built-in values and says so."""
+    try:
+        raw = json.loads(_BUDGET_DEFAULTS.read_text(encoding="utf-8"))
+        cfg = {k: int(raw.get(k, v)) for k, v in _BUILTIN_BUDGET.items()}
+        if not 0 < cfg["min_headroom_tokens"] <= cfg["headroom_tokens"]:
+            raise ValueError("need 0 < min_headroom_tokens <= headroom_tokens")
+        return cfg, "mission-budget-defaults.json"
+    except Exception:  # noqa: BLE001 -- the source string carries the fallback
+        return dict(_BUILTIN_BUDGET), "built-in defaults (file missing or unreadable)"
+
+
+def auto_headroom(spent: int | None, epoch: int, max_cycles: int | None, cfg: dict) -> tuple[int, str]:
+    """Headroom from the mission's OWN measured rate when it has one: (spent / epochs started) x
+    epochs it may still run (the current one included), clamped to [min_headroom, headroom]. A flat
+    15M gave a 300k-per-epoch unit and a 10M-per-epoch unit the same allowance (cep-gen3 T1c).
+    Unmeasured spend, no epoch yet or no cycle cap: the configured ceiling, named as such. Pure."""
+    lo, hi = cfg["min_headroom_tokens"], cfg["headroom_tokens"]
+    if spent is None or spent <= 0 or epoch < 1 or not max_cycles:
+        why = ("spend unmeasured" if spent is None else "no spend yet" if spent <= 0
+               else "no epoch yet" if epoch < 1 else "no cycle cap")
+        return hi, f"ceiling {hi:,} ({why})"
+    rate = spent / epoch
+    left = max(1, int(max_cycles) - epoch + 1)
+    raw = math.ceil(rate * left)
+    h = min(hi, max(lo, raw))
+    clamp = "" if h == raw else f", clamped to [{lo:,}, {hi:,}]"
+    return h, f"rate {round(rate):,}/epoch x {left} epoch(s) left = {raw:,}{clamp}"
+
+
+def _auto_budget(rec: dict, now: float, measure=None) -> dict:
+    """cep-gen3 T1c: a live mission with no operator envelope gets an estimate so the cost breaker
+    has something to judge: ceil((spent + headroom) / ratio), headroom from auto_headroom. An
+    unmeasured spend counts as zero in the sum but is named in the basis, never passed off as 0.
+    Any failure is a ledger row and the record is returned unchanged."""
+    import mission_spend as ms
+    mid = rec["mission_id"]
+    try:
+        try:
+            spent = (measure or ms.processed_tokens)(rec)
+        except Exception:  # noqa: BLE001 -- unmeasured is a named state, not zero
+            spent = None
+        cfg, src = _budget_defaults()
+        headroom, how = auto_headroom(spent, int(rec.get("epoch") or 0), rec.get("max_cycles"), cfg)
+        ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
+        est = math.ceil(((spent or 0) + headroom) / ratio)
+        spent_txt = "spend unmeasured" if spent is None else f"spent {spent:,}"
+        basis = (f"auto envelope: ({spent_txt} + headroom {headroom:,} [{how}; {src}]) / trip ratio"
+                 f" {ratio:g} = {est:,}")
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                          event="envelope_auto_assigned", now=now, token_estimate=est,
+                          token_estimate_src="auto", token_estimate_basis=basis, reason=basis)
+    except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+        lr.ledger_append(mid, "envelope_auto_unassigned", mission_id=mid,
+                         error=f"{type(exc).__name__}: {exc}"[:300])
+        return rec
 
 
 def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict:
@@ -2505,6 +2568,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             except Exception:  # noqa: BLE001 -- the row still carries the error
                 pass
             continue
+        if not dry_run and rec.get("token_estimate") is None and not rec.get("owner_hold"):
+            rec = _auto_budget(rec, now)
         if not dry_run and rec.get("token_estimate") and not rec.get("owner_hold"):
             rec = _cost_breaker(rec, now)
         plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
