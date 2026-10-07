@@ -76,6 +76,24 @@ Fix (Owner choice "handoff writes only", landed 19240f98): a goal refusal admits
 handoff/plan/RESUMPTION path per pane and no Read/Grep/Glob. Expected residual per pane is one
 crossing call plus the final reply. NOT yet re-measured live: the rerun canary is the done gate.
 
+## Canary #2 after the fix (goal `canary-20261007b`, 2026-10-07 19:58Z, wall 196 s)
+Same prompt, cap 3,000,000, lease_calls 2, two sonnet workers; guard at 19240f98. Driver
+`canary2.py` (stderr kept separate; diag.py measurement), receipt `receipt_canary-20261007b.json`.
+
+| worker | files | requests | tokens | ledger refusal (seq) | deny tool_result | after refusal |
+|---|---|---|---|---|---|---|
+| 6e022dd5 | 2 | 19 | 1,683,073 | 20:00:46.821 (51) | 20:00:46.912 | 1 request, 98,623, no tools |
+| 7aa64450 | 3 | 18 | 1,524,285 | 20:01:06.625 (54) | 20:01:06.696 | 1 request, 96,461, no tools |
+| **total** | 5 | 37 | **3,207,358** | | | 195,084 |
+
+- Overshoot **207,358 (6.9%)**, was 1,173,828 (39%). Closeout advisories: **0**. Each pane's first
+  refusal was its deny (one refusal per sid in the journal, versus five each in #1).
+- Decomposition: 195,084 = the one final text reply per pane after the deny; the remaining 12,274
+  is the spend that crossed the cap before the refusal.
+- Inside the declared bound (per pane: crossing call + in-flight turn). **Not zero.** The final reply
+  after a deny is a model request that no PreToolUse hook can gate. Zero needs headroom: refuse at
+  cap - (live requesters x per-call). Whether this residual counts as authorized is the Owner's call.
+
 ## Relevance to A1
 A1 crossed a 20M cap by 22.3M (111.5%) with no pre-call refusal at all. Here the refusal reached
 every pane; the residual is a ~1.2M absolute overshoot from concurrency. That is not yet the zero
