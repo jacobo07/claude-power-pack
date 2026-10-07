@@ -276,24 +276,27 @@ def gate_compile():
 
     # the real roadmaps of this repo: the first workstream with an open phase compiles (dry-run only).
     import re as _re
-    real = HERE.parent
+    real_roads = sorted((HERE.parent / ".planning" / "workstreams").glob("*/ROADMAP.md"))
     target = None
-    for road in sorted((real / ".planning" / "workstreams").glob("*/ROADMAP.md")):
+    for road in real_roads:
         m = _re.search(r"^- \[ \] \*\*Phase (\d+):", road.read_text(encoding="utf-8-sig"), _re.MULTILINE)
         if m:
-            target = (road.parent.name, int(m.group(1)))
+            target = (road, int(m.group(1)))
             break
     if target:
+        # compiled against a COPY of the real roadmap, so a mutated dry-run cannot write into this repo
+        ws = target[0].parent.name
+        copy = make_repo(Path(TMP) / "real-copy", {f".planning/workstreams/{ws}/ROADMAP.md":
+                                                  target[0].read_text(encoding="utf-8-sig")})
         try:
             def snap():
-                base = real / ".planning" / "workstreams" / target[0]
-                return sorted((str(f), f.stat().st_mtime_ns, f.stat().st_size) for f in base.rglob("*") if f.is_file())
+                return sorted((str(f), f.stat().st_mtime_ns) for f in copy.rglob("*") if f.is_file() and ".git" not in f.parts)
             before_files = snap()
-            rr = gc.compile_phase(str(real), target[0], target[1], gate="python3 tools/test_x.py", dry_run=True)
+            rr = gc.compile_phase(str(copy), ws, target[1], gate="python3 tools/test_x.py", dry_run=True)
             ok = rr["dry_run"] and rr["budget"]["token_estimate"] > 0 and snap() == before_files
-            ev = f"{target} {rr['title']}"
+            ev = f"{ws} phase {target[1]} {rr['title']}"
         except gc.CompileError as exc:
-            ok, ev = False, f"{target}: {exc}"
+            ok, ev = False, f"{ws} phase {target[1]}: {exc}"
         check("V-GRAMMAR-COMPILE-REAL-ROADMAP-DRY-RUN", ok, ev)
     else:
         check("V-GRAMMAR-COMPILE-REAL-ROADMAP-DRY-RUN", True, "no workstream has an open phase: nothing to compile")
