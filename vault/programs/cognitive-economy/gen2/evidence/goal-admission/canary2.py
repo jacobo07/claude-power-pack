@@ -43,7 +43,13 @@ env = dict(os.environ, CPP_GOAL=goal)
 env.pop("CPP_SESSION_BUDGET", None)
 t0 = time.time()
 procs = []
+# Canary #4: the machine-global agent-solo-guard blocked worker 0's Agent because worker 1 had dispatched
+# one seconds earlier; worker 0 ended its turn with a question and never reached the cap. A stagger
+# longer than that guard's 30 s window keeps the two Agent dispatches apart.
+stagger = int(os.environ.get("CANARY_STAGGER_S", "0"))
 for i in range(workers):
+    if i and stagger:
+        time.sleep(stagger)
     out = open(cdir / f"worker{i}.json", "w", encoding="utf-8")
     err = open(cdir / f"worker{i}.stderr.txt", "w", encoding="utf-8")
     procs.append((subprocess.Popen([shutil.which("claude"), "-p", PROMPT, "--output-format", "json",

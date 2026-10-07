@@ -113,6 +113,22 @@ canary2.py here).
   panes the worst case is about N x 1K over. Closing it means reserving context plus an output
   margin; not done.
 
+## Canaries #4-#6: output margin and the unwritten issuing request (2026-10-07 21:38-22:00Z)
+| # | guard | total vs 3M | panes denied | finding |
+|---|---|---|---|---|
+| 4 `canary-20261007d` | ac6af297 (output margin) | 2,532,586 | 1 of 2 | worker 0's Agent was blocked by the machine-global agent-solo-guard (worker 1 dispatched seconds earlier); it ended its turn with a question. Denied pane: hold 102,768, reply 102,689 |
+| 5 `canary-20261007e` | ac6af297, 60 s stagger | **3,036,183 (+36,183)** | 2 of 2 | the first of 3 parallel Reads reached the guard before its issuing request (94,658) was written; that request ate the final hold (`check5.py`) |
+| 6 `canary-20261007f` | ffd8f9e9 (pending request) | **2,912,243 (under)** | 2 of 2 | one reply per pane; holds 96,669 vs 95,796, and 99,944 vs **100,131 (+187)** |
+
+- #5 -> fix ffd8f9e9: the PreToolUse payload carries `tool_use_id` (probed live); when that id has
+  not been written, the guard counts the issuing request as one next-request estimate. In #6 that
+  path fired: J53 measured 1,604,972 against the real 1,604,996.
+- The stagger (`CANARY_STAGGER_S=60` in canary2.py) keeps the two workers' Agent dispatches outside
+  the agent-solo-guard's 30 s window. It is a canary workaround, not a property of goal admission.
+- Residual, measured: a final reply can still exceed its hold. In #6 it was +187 (0.2%). The
+  margin is last total + largest growth over 5 requests, an estimate, not a bound. The cap held in
+  #3, #4 and #6 because the leftover room absorbed it.
+
 ## Relevance to A1
 A1 crossed a 20M cap by 22.3M (111.5%) with no pre-call refusal at all. Here the refusal reached
 every pane; the residual is a ~1.2M absolute overshoot from concurrency. That is not yet the zero

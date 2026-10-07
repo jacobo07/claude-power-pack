@@ -1,0 +1,68 @@
+{
+ "goal": "canary-20261007f",
+ "cap": 3000000,
+ "since": "2026-10-07T21:56:53",
+ "wall_s": 192,
+ "workers": [
+  {
+   "sid": "26bcfef5-3989-4836-94ac-185da419ec70",
+   "files": 2,
+   "requests": 19,
+   "tokens": 1705127,
+   "ledger_refusals": [
+    {
+     "seq": 53,
+     "at": "2026-10-07T21:59:42.524",
+     "measured": 1604972
+    },
+    {
+     "seq": 55,
+     "at": "2026-10-07T21:59:44.933",
+     "measured": 1604996
+    }
+   ],
+   "first_deny_tool_result": "2026-10-07T21:59:42.604Z",
+   "closeout_advisories": 0,
+   "requests_after_first_refusal": [
+    {
+     "at": "2026-10-07T21:59:47.755Z",
+     "tokens": 100131,
+     "tools": [],
+     "file": "26bcfef5-398"
+    }
+   ],
+   "tokens_after_first_refusal": 100131
+  },
+  {
+   "sid": "836cd5f4-cd59-4758-95a3-4d899ce54a9b",
+   "files": 2,
+   "requests": 14,
+   "tokens": 1207116,
+   "ledger_refusals": [
+    {
+     "seq": 51,
+     "at": "2026-10-07T21:59:34.472",
+     "measured": 1113238
+    }
+   ],
+   "first_deny_tool_result": "2026-10-07T21:59:34.540Z",
+   "closeout_advisories": 0,
+   "requests_after_first_refusal": [
+    {
+     "at": "2026-10-07T21:59:39.482Z",
+     "tokens": 95796,
+     "tools": [],
+     "file": "836cd5f4-cd5"
+    }
+   ],
+   "tokens_after_first_refusal": 95796
+  }
+ ],
+ "independent_total": 2912243,
+ "overshoot": -87757,
+ "first_refusal_used": {
+  "seq": 51,
+  "at": "2026-10-07T21:59:34.472",
+  "settled_sum": 2522448
+ }
+}
