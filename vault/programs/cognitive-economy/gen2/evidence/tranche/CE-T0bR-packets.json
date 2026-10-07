@@ -1,0 +1,5 @@
+[
+ {"step": "T0bR", "prompt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T0bR-packet.md",
+  "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T0b-receipt.md", "cap": 1400000,
+  "tests": ["tools/test_cep_gen2_obligations.py", "tools/test_cognitive_economy_program.py --generation 2 --selftest"]}
+]

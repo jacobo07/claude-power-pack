@@ -1,0 +1,20 @@
+{
+ "steps": {
+  "T0bR": {
+   "verdict": "PASS",
+   "sid": "c68f047f-e007-4532-ace3-1462a2337d3e",
+   "launch_rc": 0,
+   "checks": {
+    "receipt": true,
+    "commits": true,
+    "tests": true,
+    "spend": true
+   },
+   "spend": 1134541,
+   "cap": 1400000,
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T0b-receipt.md",
+   "secs": 210
+  }
+ },
+ "coordinator_spend": null
+}

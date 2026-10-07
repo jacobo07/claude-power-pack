@@ -1,0 +1,35 @@
+{
+ "steps": {
+  "T0a": {
+   "verdict": "PASS",
+   "sid": "22e4fda5-2fdb-4a66-a9e8-6ef1c44eff94",
+   "launch_rc": 0,
+   "checks": {
+    "receipt": true,
+    "commits": true,
+    "tests": true,
+    "spend": true
+   },
+   "spend": 1024112,
+   "cap": 1400000,
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T0a-receipt.md",
+   "secs": 245
+  },
+  "T0b": {
+   "verdict": "FAIL",
+   "sid": "23501b2c-24e1-4bf4-997b-ada3c7a3a374",
+   "launch_rc": 0,
+   "checks": {
+    "receipt": false,
+    "commits": false,
+    "tests": true,
+    "spend": true
+   },
+   "spend": 945219,
+   "cap": 1400000,
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T0b-receipt.md",
+   "secs": 285
+  }
+ },
+ "coordinator_spend": null
+}

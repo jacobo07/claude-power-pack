@@ -8,3 +8,9 @@ Adding a key to a JSON output contract without updating the contract test commit
 A mutation drill whose unmutated control already sits on the red pole proves nothing; assert the control is green first. WU1: unmutated floor check already exit 1.
 ## Trap: T-CROSS-PROJECT-FLOOR-COMPARE-001 (project-scoped)
 Admitting a cwd difference makes project-scope rows (memory_project +34,478 of +37,683) a different-project comparison, not a regression. Label them non-comparable or record a per-cwd reference.
+## Trap: T-METER-IGNORES-SUBJECT-FLAG-001 (universal, 1 incident; CLASE 4 silent tool failure)
+A meter that silently ignores its subject flag (`self_spend.py --session X` had no argparse and measured hardcoded sid 87601e81) returns a well-formed number for the wrong subject: 83,894,371 quoted for a pane that really spent 17,568,509. Fix: the meter echoes the subject it measured and refuses unknown args; a reading whose echoed subject != requested is void. Evidence: CE-T0a 25203294, SELF_SPEND_ATTRIBUTION_PASS=6/6.
+## Process Rule: PR-PACKET-RECEIPT-BEFORE-CAP-001 (project-scoped, 2 incidents: S3 cr3, CE-T0b)
+A capped worker that writes its receipt last loses all attribution when the cap lands first (CE-T0b: 945,219 spent, +118 lines, no receipt). Packets order: receipt skeleton early, updated before the final 2 calls; the driver preserves an uncommitted partial as a wip commit (f19838dd) and re-issues a continuation packet that states the partial, never re-scans.
+## Trap: T-ORCHESTRATOR-PANE-SIXTH-OVERRUN (project-scoped, extends the 5-overrun cause)
+Pane 71ccfa86 (scan + plan + T0 dispatch): 17,568,509 / 85 calls = ~207k/call. Same cause as the five prior overruns; rotate before T1 instead of carrying.
