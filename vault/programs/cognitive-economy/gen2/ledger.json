@@ -3,8 +3,135 @@
  "backlog": "TOK-18",
  "approved": "2026-10-05 Owner 'y'",
  "card": "vault/programs/cognitive-economy/gen2/MISSION.md",
- "obligations_declared": false,
- "obligations": [],
+ "obligations_declared": true,
+ "obligations": [
+  {
+   "id": "C1",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "ownership: D2A family run, no NEW system without the 13-question novelty proof",
+   "terminal": "EXECUTE",
+   "execution": "T9",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C2",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "state: transcript-deletion + handoff-destruction tests green",
+   "terminal": "EXECUTE",
+   "execution": "T1",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C3",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "lifecycle: SAFE_TO_FORGET both poles; /kclear->/clear->/kresume certified on a canary; autocompact not the continuation; WAITING with zero hot sessions",
+   "terminal": "EXECUTE",
+   "execution": "T1",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C4",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "recovery: pane-loss canary resumes model-free to first verified progress",
+   "terminal": "EXECUTE",
+   "execution": "T1",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C5",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "context: WU3 verdict file; different boundaries receive different projections (both poles)",
+   "terminal": "EXECUTE",
+   "execution": "T2",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C6",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "read: one high-rent read class extinct or a certified step",
+   "terminal": "EXECUTE",
+   "execution": "T4",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C7",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "transport: tool/agent receipts on certified path; transit waste measured down on a real workload",
+   "terminal": "EXECUTE",
+   "execution": "T4",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C8",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "boundaries: reason-coded boundaries; non-novel count down vs champion",
+   "terminal": "EXECUTE",
+   "execution": "T5",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C9",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "agents: admission enforced; one historical Agent role eliminated or proven necessary",
+   "terminal": "EXECUTE",
+   "execution": "T5",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C10",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "proof: affected-proof selection proven; healthy proof readless",
+   "terminal": "EXECUTE",
+   "execution": "T6",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C11",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "autonomy: one epoch policy auto-selected (KEEP/DEALLOCATE by workload); shadowed then canaried; rollback exists",
+   "terminal": "EXECUTE",
+   "execution": "T6",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C12",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "baseline: one hot rule/mechanism retired or proven not yet safe; UKDL/CBR entries exist",
+   "terminal": "EXECUTE",
+   "execution": "T7",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C13",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "economics: program spend <= 85M measured, no cost shifted to repair or Owner",
+   "terminal": "EXECUTE",
+   "execution": "T9",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C14",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "original work: G2 state reconstructable from the card + GEX44 records without any transcript",
+   "terminal": "EXECUTE",
+   "execution": "T9",
+   "status": "OPEN",
+   "check": null
+  }
+ ],
  "budget_tokens": {
   "unit": "processed",
   "unit_definition": "input + cache_write + cache_read + output, deduplicated by message id",
