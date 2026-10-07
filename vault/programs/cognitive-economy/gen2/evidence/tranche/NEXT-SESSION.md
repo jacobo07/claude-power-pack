@@ -18,16 +18,19 @@ Nothing has been pushed. Commit by pathspec only; other sessions write in this t
 - Gate: `python tools/cep_gen2.py --tranche context-runtime-3` -> FAIL on spend 24,521,947 > 7,200,000 (workers
   ~6.08M; coordinator e6e0eca7 ~18.4M). This is the true result. Do not re-baseline the manifest to make it green.
 
-## Owner decisions needed (ask before acting)
-1. S5: accept 599bd751/c7ca71d8 as they are, or re-run S5 through the worktree driver?
-2. Floor: change ~/.claude/CLAUDE.md, or fix the HARD RULES compiler source (vault/hard_rules/HARD_RULES.md, stub
-   entries HR-001..007 incl. the test entry HR-002, ~21k chars mirrored into the project CLAUDE.md)?
-3. Wake: which goal id should a wake move, and should vault_summarize.py --check call `--consume`?
-4. UKDL: wait for the other writer, or promote from receipts into a new file?
+## Owner decisions (answered 2026-10-07: "all rec")
+1. S5: ACCEPT 599bd751/c7ca71d8 after a diff review (read-only, no re-run). If the review finds a defect, re-run
+   S5 through the worktree driver instead.
+2. Floor: FIX THE HARD RULES COMPILER SOURCE (vault/hard_rules/HARD_RULES.md and its compiler; drop the stub entries
+   HR-001..007 incl. the test entry HR-002 from the ~21k-char mirror in the project CLAUDE.md). Do NOT edit
+   ~/.claude/CLAUDE.md. Prove it with the S1 probe pair (same class, before/after first-call tokens).
+3. Wake: DEFER. Bind no goal and do not schedule `--consume` until the floor gate is green; otherwise the
+   nightly job fires a wake every night. Ask the Owner for the goal id at that point.
+4. UKDL: WAIT for the other writer's hunks to land; do not fork into a new file.
 
 ## Rules for the next session
 - New tranche name with its own manifest (cap + coordinator sid + baseline from self_spend at start).
 - Coordinator under 6 calls. Every fix-and-relaunch loop goes to a worker packet, never to the coordinator pane.
 - Meter the coordinator before every relaunch.
 
-Start: read this file, ask the four decisions, then build packets only for what was decided.
+Start: read this file; the decisions above are answered. Build worker packets for items 1 and 2 only.
