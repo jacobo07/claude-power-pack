@@ -1,0 +1,3 @@
+- driver 2026-10-07T12:17:35 T0a PASS sid=22e4fda5-2fdb-4a66-a9e8-6ef1c44eff94 launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=1024112 cap=1,400,000
+- driver 2026-10-07T12:22:21 T0b FAIL sid=23501b2c-24e1-4bf4-997b-ada3c7a3a374 launch_rc=0 checks={'receipt': False, 'commits': False, 'tests': True, 'spend': True} spend=945219 cap=1,400,000
+- driver 2026-10-07T12:27:23 T0bR PASS sid=c68f047f-e007-4532-ace3-1462a2337d3e launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=1134541 cap=1,400,000
