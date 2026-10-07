@@ -36,6 +36,7 @@ TMP = tempfile.mkdtemp(prefix="gsd-mission-g23-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
+os.environ["CPP_ROLLOVER_STATE_DIR"] = str(Path(TMP) / "rollover")
 for _k in ("CPP_CLAUDE_EXE", "CPP_MISSION_CONTINUATION", "CPP_SOURCE_PACKET_CARD"):
     os.environ.pop(_k, None)
 HERE = Path(__file__).resolve().parent
@@ -43,6 +44,7 @@ sys.path.insert(0, str(HERE))
 import gsd_epoch as ge  # noqa: E402
 import gsd_long_run as lr  # noqa: E402
 import gsd_mission as gm  # noqa: E402
+import rollover as ro  # noqa: E402
 
 GOLDEN = HERE / "fixtures" / "gsd_mission_legacy_golden.json"
 NOW = 1_800_000_000.0
@@ -509,6 +511,10 @@ def main(argv: list[str]) -> int:
         print(f"G23_PASS={passes}/{passes + fails}")
         return 1
     meta = golden.get("meta") or {}
+    # The legacy path seals capsules through rollover.py, whose ledger lives under its own state
+    # dir; left unredirected, every run appended 7 fixture rows to the live rollover ledger.
+    state = Path(ro.STATE_DIR).resolve()
+    check("V-G23-HERMETIC-ROLLOVER-STATE", state.is_relative_to(Path(TMP).resolve()), str(state))
     check("V-G23-GOLDEN-PRE-CHANGE", meta.get("gsd_mission_has_rollover_protocol") is False,
           f"captured on {meta.get('captured_on_head')} without rollover_protocol in the source")
     want = {"scenarios": golden.get("scenarios"), "cards": golden.get("cards")}
