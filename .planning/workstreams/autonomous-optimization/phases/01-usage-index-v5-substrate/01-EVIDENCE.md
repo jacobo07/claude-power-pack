@@ -175,3 +175,20 @@ No new module, database, runtime or ratchet. The champion classifier and pattern
 - Inherited reds stay red and are reported verbatim above: estate_shadow 10/11, frontier_intelligence_os `V-FIOS-LIVE-PATH-WIRED`, token_ground_truth_junction crash, `modules/liveness/reachability.py` exit 1 (aperture `modules/` only).
 - The programme `--generation 2 --final` is expected to stay FAIL on pillars M, P, Q, R (L3) and the four L8 lines; this phase realizes no dividend and `state.O` carries `savings: []`.
 - Pillar O's terminal row is written by plan 01-06 Task 2 after this document is committed.
+
+## Criterion 4 re-measured after the CR-01 / WR-01 / WR-02 fixes (2026-10-07, plane: gex44)
+
+Code at 9bb886b2. Same commands as O-cost-gex44.md, into fresh databases under /home/kobii/ao-scratch/p1fix (the p1
+databases and delta-root are untouched; delta-root was copied with `cp -a`, append_delta.py copied with its ROOT
+rewritten to the copy). Driver: /home/kobii/ao-scratch/p1fix/run.sh; every rc 0; zero model calls.
+
+| run | files_opened | bytes_read | wall_s | rchar_delta | maxrss_kb | DB bytes |
+|---|---|---|---|---|---|---|
+| v5 cold, whole corpus (evict.py first: evicted_files=4015 failed=0) | 3,965 | 9,932,073,959 | 123.547 | 158,621,987,223 | 89,956 | 489,816,064 |
+| v5 no-op | 0 | 0 | 0.57 | 958,972,486 | 33,080 | 489,816,064 |
+| v5 cold, 6-dir copy (already carries the first append) | 979 | 3,054,618,518 | 25.073 | 18,465,284,415 | 88,032 | - |
+| v5 delta (5 appended files) | 5 | 709,630 | 0.068 | 136,581,712 | 30,784 | 144,011,264 |
+
+Delta equality holds: files_opened 5 = 5 appended files; bytes_read 709,630 = appended_total 709,630. Cold reads the
+same files and bytes and builds a byte-identical-size DB as before the fixes; the 6-dir bytes differ from the first
+measurement by exactly 709,630 (the earlier append inside the copied root). Criterion 4: MEASURED, unchanged by the fixes.

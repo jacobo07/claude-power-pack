@@ -39,3 +39,17 @@ caused by these fixes, not fixed here):
 - `tools/test_token_ground_truth_junction.py` exit 1, `FileNotFoundError: 'cmd'` (Windows `mklink` shell-out)
 
 Also open: criterion 4 was not re-measured in this unit.
+
+## Close-out (2026-10-07, laptop pane b9bd9469 on the Owner's 'y')
+
+- Criterion 4 re-measured on the fixed code: see 01-EVIDENCE.md "Criterion 4 re-measured" (cold 3,965 files /
+  9,932,073,959 B / 123.547 s, delta 5 files / 709,630 B / 0.068 s, delta equality holds). plane: gex44.
+- Coordinator re-verification: HEAD USAGE_INDEX_V5_PASS=76/76; the same test file against the pre-fix tools at
+  41e35562 fails exactly the four fix gates (V-UX5-UNTIL-DATE-ONLY-REFUSED, V-UX5-UNTIL-GARBAGE-REFUSED,
+  V-UX5-POISON-FILE-CONTINUES, V-UX5-LEGACY-GROWN-NO-LAUNCH-ROOT).
+- Owner decision: the three red consumer commands (test_estate_shadow 10/11, test_frontier_intelligence_os 48/49,
+  test_token_ground_truth_junction 'cmd' on Linux) are recorded identically in 01-BASELINE.md before Phase 1 and are
+  accepted as out of this phase's scope. They remain open debt in their own owners, not fixed here.
+- Info items IN-01..IN-05 remain OPEN.
+
+phase_1_verdict: PASS (Owner-accepted inherited failures; criterion 4 re-measured)
