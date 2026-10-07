@@ -203,7 +203,14 @@ class GoalLedger(SpendLedger):
                 for rid in r.get("closes", []):
                     if rid in res:
                         res[rid]["state"] = SETTLED
-        open_ = sum(r["amount"] for r in res.values() if r["state"] in (RESERVED, LEAKED))
+        for r in res.values():
+            r["hold"] = r["amount"] if r["state"] in (RESERVED, LEAKED) else 0
+            if r["hold"] and r.get("kind") == "agent":
+                # A child's spend lands in its parent sid's measured total, so an open agent hold
+                # shrinks by what that sid has settled since the spawn: neither counted twice nor
+                # released by the parent's next renew (review M1, 31f1e714).
+                r["hold"] = max(0, r["amount"] - max(0, marks.get(r["sid"], 0) - int(r.get("base", 0))))
+        open_ = sum(r["hold"] for r in res.values())
         return {"goal": self.goal, "cap": cap, "source": source, "marks": marks, "res": res,
                 "seqs": seqs, "open": open_, "used": sum(marks.values()) + open_}
 
@@ -224,8 +231,9 @@ class GoalLedger(SpendLedger):
                 "remaining": None if g["cap"] is None else g["cap"] - g["used"], **extra}
 
     def declare_cap(self, value: int, source: str, *, inside_agent: bool = False) -> dict:
-        """Initial cap and lowering are always admitted. A raise is refused from inside an agent
-        session, and refused once used >= cap: raising a crossed cap makes the limit retrospective."""
+        """Initial cap and lowering are always admitted. A raise is refused unless the caller holds the
+        Owner's authority (`inside_agent=False`), and refused once used >= cap: raising a crossed cap
+        makes the limit retrospective."""
         if not isinstance(value, int) or value <= 0:
             raise LedgerError("cap must be a positive int")
         with self._lock:
@@ -234,7 +242,8 @@ class GoalLedger(SpendLedger):
             cur = g["cap"]
             if cur is not None and value > cur:
                 if inside_agent:
-                    return self._summary(g, ok=False, reason="a cap raise cannot come from inside an agent session")
+                    return self._summary(g, ok=False, reason="a cap raise needs the Owner's interactive "
+                                         "confirmation (goal-declare --owner on a terminal)")
                 if g["used"] >= cur:
                     return self._summary(g, ok=False, reason=f"CONTAINED: used {g['used']:,} >= cap {cur:,}; "
                                          "a crossed cap is never raised -- declare a new goal id")
@@ -243,8 +252,9 @@ class GoalLedger(SpendLedger):
             return self._summary(self._gfold(recs), ok=True, reason="")
 
     def renew(self, sid: str, measured: int, lease: int) -> dict:
-        """Settle `sid` at its cumulative `measured`, close its open reservations, reserve the next
-        lease (at most `lease`, at most what remains). At most one open lease per sid afterwards."""
+        """Settle `sid` at its cumulative `measured`, close its open LEASES and any agent hold the
+        settled spend has used up, reserve the next lease (at most `lease`, at most what remains).
+        At most one open lease per sid afterwards; an agent hold survives until its spend arrives."""
         if not isinstance(measured, int) or measured < 0 or not isinstance(lease, int) or lease <= 0:
             raise LedgerError("measured must be an int >= 0 and lease a positive int")
         with self._lock:
@@ -252,8 +262,10 @@ class GoalLedger(SpendLedger):
             g = self._sweep_leaks(recs)
             if g["cap"] is None:
                 return self._summary(g, ok=False, reason="no cap declared for this goal")
+            mark = max(g["marks"].get(sid, 0), measured)
             closes = sorted(rid for rid, r in g["res"].items()
-                            if r["sid"] == sid and r["state"] in (RESERVED, LEAKED))
+                            if r["sid"] == sid and r["state"] in (RESERVED, LEAKED)
+                            and (r.get("kind") != "agent" or mark - int(r.get("base", 0)) >= r["amount"]))
             if closes or measured > g["marks"].get(sid, 0):
                 self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes})
                 g = self._gfold(recs)
@@ -267,11 +279,11 @@ class GoalLedger(SpendLedger):
             return self._summary(self._gfold(recs), ok=True, reason="",
                                  lease={"id": rid, "amount": amount, "base": measured})
 
-    def spawn(self, sid: str, estimate: int) -> dict:
-        """Admit a child (Agent / worker) only if its estimate fits what remains. The reservation is
-        closed by the parent sid's next settle, whose measured total includes the child's transcript."""
-        if not isinstance(estimate, int) or estimate <= 0:
-            raise LedgerError("estimate must be a positive int")
+    def spawn(self, sid: str, estimate: int, base: int = 0) -> dict:
+        """Admit a child (Agent / worker) only if its estimate fits what remains. `base` is the parent
+        sid's measured total at launch; the hold shrinks as settled spend passes it (see _gfold)."""
+        if not isinstance(estimate, int) or estimate <= 0 or not isinstance(base, int) or base < 0:
+            raise LedgerError("estimate must be a positive int and base an int >= 0")
         with self._lock:
             recs = self._read()
             g = self._sweep_leaks(recs)
@@ -282,7 +294,7 @@ class GoalLedger(SpendLedger):
                 return self._summary(g, ok=False, reason=f"spawn estimate {estimate:,} > remaining {remaining:,}")
             rid = f"{self.goal}:{sid}:{g['seqs'].get(sid, 0) + 1}"
             self._append(recs, {"op": "reserve", "id": rid, "sid": sid, "kind": "agent", "provider": self.goal,
-                                "amount": estimate, "window": GOAL_WINDOW})
+                                "amount": estimate, "window": GOAL_WINDOW, "base": base})
             return self._summary(self._gfold(recs), ok=True, reason="", reservation=rid)
 
     def status(self) -> dict:

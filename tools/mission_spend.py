@@ -408,9 +408,12 @@ def goal_root() -> Path:
     return state_dir() / "goal-budget"
 
 
+_GOAL_RE = re.compile(r"^(?!\.+$)[A-Za-z0-9._-]{1,128}$")   # '.' / '..' would root a ledger in state/
+
+
 def _goal_ledger(goal: str):
     import sys
-    if not _SID_RE.match(goal or ""):
+    if not _GOAL_RE.match(goal or ""):
         raise ValueError(f"invalid goal id: {goal!r}")
     repo = str(Path(__file__).resolve().parents[1])
     if repo not in sys.path:
@@ -444,13 +447,16 @@ def _overlaps(a: str, b: str) -> bool:
 
 
 def inside_agent() -> bool:
+    """A backstop only: the agent's own child process can unset it (review H1, 31f1e714). The
+    authority for a raise or a rebind is `owner` -- an interactive confirmation, see _main."""
     return bool(os.environ.get("CLAUDECODE"))
 
 
 def goal_declare(goal: str, cap: int, source: str, roots: list[str] | None = None,
-                 hosts: list[str] | None = None, lease_calls: int | None = None) -> dict:
-    """Create a goal or change its cap. From inside an agent session only a NEW goal or a LOWER cap
-    is admitted; a goal's roots never overlap another goal's."""
+                 hosts: list[str] | None = None, lease_calls: int | None = None,
+                 owner: bool = False) -> dict:
+    """Create a goal or change its cap. Without `owner` (an interactive Owner confirmation) only a
+    NEW goal or a LOWER cap is admitted; a goal's roots never overlap another goal's."""
     import datetime as dt
     import sys
     led = _goal_ledger(goal)            # validates the id and creates the goal directory
@@ -458,18 +464,19 @@ def goal_declare(goal: str, cap: int, source: str, roots: list[str] | None = Non
     if repo not in sys.path:
         sys.path.insert(0, repo)
     from modules.lease.store import Exclusive
-    agent = inside_agent()
+    unprivileged = not (owner and not inside_agent())   # the Owner confirmed it, outside any session
     with Exclusive(goal_root() / "index.lock", 10.0):
         ix = read_index()
         cur = ix.get(goal)
         roots = [_norm(r) for r in (roots or [])]
-        if cur is not None and agent and (roots and roots != cur.get("roots") or hosts and hosts != cur.get("hosts")
-                                          or lease_calls and lease_calls != cur.get("lease_calls")):
-            return {"ok": False, "goal": goal, "reason": "an agent session cannot rebind an existing goal"}
+        if cur is not None and unprivileged and (roots and roots != cur.get("roots") or hosts and hosts != cur.get("hosts")
+                                                 or lease_calls and lease_calls != cur.get("lease_calls")):
+            return {"ok": False, "goal": goal,
+                    "reason": "rebinding an existing goal needs the Owner's interactive confirmation (--owner)"}
         for other, e in ix.items():
             if other != goal and any(_overlaps(r, o) for r in roots for o in e.get("roots", [])):
                 return {"ok": False, "goal": goal, "reason": f"roots overlap goal {other!r}"}
-        out = led.declare_cap(cap, source, inside_agent=agent)
+        out = led.declare_cap(cap, source, inside_agent=unprivileged)
         if not out["ok"]:
             return out
         entry = dict(cur or {"since": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
@@ -502,13 +509,13 @@ def goal_renew(goal: str, sid: str, measured: int, per_call: int, host: str) -> 
     return _goal_ledger(goal).renew(sid, measured, lease)
 
 
-def goal_spawn(goal: str, sid: str, estimate: int | None, per_call: int, host: str) -> dict:
+def goal_spawn(goal: str, sid: str, estimate: int | None, per_call: int, host: str, measured: int = 0) -> dict:
     e, why = _goal_entry(goal, host)
     if e is None:
         return {"ok": False, "goal": goal, "reason": why}
     if not estimate or estimate <= 0:
         estimate = int(e.get("lease_calls") or GOAL_LEASE_CALLS) * (per_call if per_call > 0 else GOAL_DEFAULT_PER_CALL)
-    return _goal_ledger(goal).spawn(sid, estimate)
+    return _goal_ledger(goal).spawn(sid, estimate, base=max(0, measured))
 
 
 def _main(argv: list[str]) -> int:
@@ -538,26 +545,36 @@ def _main(argv: list[str]) -> int:
     gd.add_argument("--root", action="append", default=[], help="a directory whose sessions bind to this goal")
     gd.add_argument("--host", action="append", default=[], help="a host allowed to spend (default: any)")
     gd.add_argument("--lease-calls", type=int)
+    gd.add_argument("--owner", action="store_true",
+                    help="raise a cap or rebind a goal: asks you to type the goal id on an interactive terminal")
     for name in ("goal-renew", "goal-spawn"):
         g = sub.add_parser(name)
         g.add_argument("--goal", required=True)
         g.add_argument("--session", required=True)
         g.add_argument("--per-call", type=int, default=0)
         g.add_argument("--host", default=socket.gethostname())
-        if name == "goal-renew":
-            g.add_argument("--measured", type=int, required=True)
-        else:
+        g.add_argument("--measured", type=int, required=(name == "goal-renew"), default=0)
+        if name == "goal-spawn":
             g.add_argument("--estimate", type=int)
     gs = sub.add_parser("goal-status")
     gs.add_argument("--goal", required=True)
     a = ap.parse_args(argv)
     if a.cmd.startswith("goal-"):
         if a.cmd == "goal-declare":
-            out = goal_declare(a.goal, a.cap, a.source, a.root, a.host, a.lease_calls)
+            owner = False
+            if a.owner:
+                # The authority for a raise or a rebind is a person at a terminal: an agent's tool shell
+                # has no interactive stdin, and an env var it can unset is not an authority (review H1).
+                if not sys.stdin.isatty():
+                    print(json.dumps({"ok": False, "goal": a.goal,
+                                      "reason": "--owner needs an interactive terminal (stdin is not a TTY)"}))
+                    return 3
+                owner = input(f"Owner change to goal {a.goal!r}: type the goal id to confirm: ").strip() == a.goal
+            out = goal_declare(a.goal, a.cap, a.source, a.root, a.host, a.lease_calls, owner=owner)
         elif a.cmd == "goal-renew":
             out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
         elif a.cmd == "goal-spawn":
-            out = goal_spawn(a.goal, a.session, a.estimate, a.per_call, a.host)
+            out = goal_spawn(a.goal, a.session, a.estimate, a.per_call, a.host, a.measured)
         else:
             out = {**_goal_ledger(a.goal).status(), "binding": read_index().get(a.goal)}
         print(json.dumps(out, sort_keys=True))

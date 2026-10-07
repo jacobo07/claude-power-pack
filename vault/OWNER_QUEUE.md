@@ -39,11 +39,13 @@ launches needs two Owner steps (HR-001):
    ```
 
 Verify: `python tools/test_goal_budget_admission.py` (V-GOAL-*). Kill switch: `CPP_SESSION_BUDGET=off`.
-Declaring a goal or raising its cap is an Owner act from a plain terminal (a raise from inside a
-Claude session is refused; a crossed cap is never raised -- a new goal id is):
+Declaring a NEW goal or lowering a cap needs nothing extra. Raising a cap or rebinding a goal is an
+Owner act: add `--owner` and type the goal id back on an interactive terminal (an agent's shell has
+no TTY and is refused; a crossed cap is never raised -- declare a new goal id):
 
 ```powershell
 python tools/mission_spend.py goal-declare --goal <id> --cap <tokens> --source "<where decided>" --root "<dir>" --host $env:COMPUTERNAME
+python tools/mission_spend.py goal-declare --goal <id> --cap <higher> --source "<where decided>" --owner
 ```
 
 ## ACV resolver CLI -- no command or agent names it yet (2026-10-03, ACV C5 R2)

@@ -202,16 +202,42 @@ function goalBinding(event, sid) {
   return null;
 }
 
-// Only a bare status read is exempt in goal mode: a substring match let any command that merely
-// MENTIONED mission_spend.py skip the gate (audit gap 4).
+// Only a bare status read is exempt in goal mode, anchored on the WHOLE command: python, then
+// mission_spend.py, then goal-status --goal <id>, then nothing. A substring match (audit gap 4) and
+// an unanchored token match (review H2: `python heavy_job.py --tag mission_spend.py goal-status`)
+// both let another program run unjudged.
+const GOAL_STATUS_ONLY = /^\s*(?:&\s*)?(?:(['"])(?:[^'"]*[\\/])?(?:python3?|py)(?:\.exe)?\1|(?:[^\s'"]*[\\/])?(?:python3?|py)(?:\.exe)?)\s+(['"]?)(?:[^\s'"]*[\\/])?mission_spend\.py\2\s+goal-status\s+--goal\s+[A-Za-z0-9._-]+\s*$/i;
 function goalExempt(cmd) {
-  const c = String(cmd).replace(/^\s*&\s*/, '');
-  return /mission_spend\.py['"]?\s+goal-status\b/.test(c) && !/[;|&`<>\n]|\$\(/.test(c);
+  return GOAL_STATUS_ONLY.test(String(cmd));
 }
 
+// The state a bound session must not write: the goal ledger and index, its own guard state and
+// budget file (a forged lease or a dropped `goal` field un-binds it), and the goal CLI's mutating
+// verbs. Same OS user, so this defeats the casual and accidental path, not an agent that edits this
+// hook -- see the spec's trust boundary (review H1).
+const GOAL_STATE = /goal-budget|session-budget-|mission_spend\.py['"]?\s+goal-(?:declare|renew|spawn)\b/i;
 function touchesGoalState(event) {
   const ti = event.tool_input || {};
-  return /goal-budget/i.test(String(ti.command || '') + ' ' + String(ti.file_path || '') + ' ' + String(ti.path || ''));
+  return GOAL_STATE.test(String(ti.command || '') + ' ' + String(ti.file_path || '') + ' ' + String(ti.path || ''));
+}
+
+// A cached lease is admitted only while the journal still holds it OPEN: its id appears exactly once
+// (the reserve row; a settle or leak names it again) and that row carries the same amount and base.
+// The local state file is a cache, never the authority (review H1a: a forged {amount: 1e15}).
+function leaseOpenInJournal(goal, lease) {
+  if (!lease || typeof lease.id !== 'string') return false;
+  let text;
+  try { text = fs.readFileSync(path.join(stateDir(), 'goal-budget', goal, 'spend.journal.jsonl'), 'utf8'); } catch (e) { return false; }
+  const needle = JSON.stringify(lease.id);
+  const first = text.indexOf(needle);
+  if (first < 0 || text.indexOf(needle, first + needle.length) >= 0) return false;
+  const start = text.lastIndexOf('\n', first) + 1;
+  const end = text.indexOf('\n', first);
+  try {
+    const r = JSON.parse(text.slice(start, end < 0 ? undefined : end));
+    return r.op === 'reserve' && r.kind === 'lease' && r.id === lease.id &&
+      r.amount === lease.amount && r.base === lease.base;
+  } catch (e) { return false; }
 }
 
 function goalDeny(goal, reason) {
@@ -296,9 +322,9 @@ function decideGoal(event, sid, bind) {
       verdict = goalDeny(goal, `UNKNOWN: the transcript cannot be read (${e.code || e.message}).`);
     }
   }
-  const base = ['--goal', goal, '--session', sid, '--per-call', String(gs.context || 0)];
-  if (!verdict && (!gs.lease || gs.tokens - gs.lease.base >= gs.lease.amount)) {
-    const r = callGoal(['goal-renew', ...base, '--measured', String(gs.tokens)]);
+  const base = ['--goal', goal, '--session', sid, '--per-call', String(gs.context || 0), '--measured', String(gs.tokens)];
+  if (!verdict && (!gs.lease || gs.tokens - gs.lease.base >= gs.lease.amount || !leaseOpenInJournal(goal, gs.lease))) {
+    const r = callGoal(['goal-renew', ...base]);
     if (r.failed) verdict = goalDeny(goal, `UNKNOWN: ${r.failed}.`);
     else if (!r.ok) {
       gs.lease = null;

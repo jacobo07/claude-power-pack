@@ -63,8 +63,48 @@ class Env:
         shutil.rmtree(self.root, ignore_errors=True)
 
 
-def declare(goal, cap, **kw):
-    return ms.goal_declare(goal, cap, "test", kw.get("roots"), kw.get("hosts"), kw.get("lease_calls"))
+def declare(goal, cap, owner=True, **kw):
+    """owner=True stands for the Owner's interactive confirmation; gates that test its absence pass False."""
+    return ms.goal_declare(goal, cap, "test", kw.get("roots"), kw.get("hosts"), kw.get("lease_calls"), owner=owner)
+
+
+# --- review 31f1e714 gates (H1 authority, M1 agent hold, L1 ids) --------------------------------------
+
+def g_review_fixes():
+    e = Env()
+    try:
+        try:
+            ms._goal_ledger("..")
+            check("V-GOAL-ID-DOTS", False, "goal id '..' accepted: its ledger would sit in state/ itself")
+        except ValueError:
+            check("V-GOAL-ID-DOTS", "a.b" == ms._goal_ledger("a.b").goal, "'..' refused, 'a.b' admitted")
+
+        declare("o", 1000, lease_calls=1)
+        r = declare("o", 2000, owner=False)
+        ok = declare("o", 900, owner=False)
+        check("V-GOAL-RAISE-NEEDS-OWNER", not r["ok"] and ok["ok"] and ok["cap"] == 900,
+              f"no CLAUDECODE, no Owner confirmation: raise -> {r.get('reason', '')[:50]}; lowering admitted")
+        p = subprocess.run([sys.executable, str(HERE / "mission_spend.py"), "goal-declare", "--goal", "o",
+                            "--cap", "5000", "--source", "t", "--owner"],
+                           input="o\n", capture_output=True, text=True, env=dict(os.environ))
+        out = json.loads(p.stdout.strip().splitlines()[-1])
+        check("V-GOAL-OWNER-NEEDS-TTY", p.returncode == 3 and "TTY" in out["reason"],
+              f"--owner with piped stdin (an agent shell) -> exit {p.returncode}: {out['reason']}")
+
+        declare("ah", 10_000, lease_calls=1)
+        led = GoalLedger(ms.goal_root() / "ah", "ah")
+        led.renew("p", 0, 100)
+        rid = led.spawn("p", 1000, base=0)["reservation"]
+        led.renew("p", 300, 100)                  # the child's first 300 land; the parent renews
+        st, res = led.status(), led._gfold(led._read())["res"][rid]
+        check("V-GOAL-AGENT-HOLD-SURVIVES-RENEW", res["state"] == "RESERVED" and st["used"] == 300 + 700 + 100,
+              f"after a renew the hold is still open and shrunk: state {res['state']}, used {st['used']} (want 1100)")
+        led.renew("p", 1300, 100)
+        res = led._gfold(led._read())["res"][rid]
+        check("V-GOAL-AGENT-HOLD-RELEASED", res["state"] == "SETTLED" and led.status()["used"] == 1400,
+              f"once the child's spend reached the estimate the hold closes: {res['state']}, used {led.status()['used']}")
+    finally:
+        e.close()
 
 
 # --- ledger / CLI gates -----------------------------------------------------------------------------
@@ -306,6 +346,27 @@ def g_guard():
         dec, _ = run_guard(e, "bound-1", tx, work, tool="Bash",
                            tool_input={"command": "python tools/mission_spend.py goal-status --goal gg"})
         check("V-GOAL-GUARD-STATUS-EXEMPT", dec is None, "a bare goal-status stays reachable when exhausted")
+        dec, _ = run_guard(e, "bound-1", tx, work, tool="PowerShell", tool_input={
+            "command": "& 'C:\\Py\\python.exe' 'tools\\mission_spend.py' goal-status --goal gg"})
+        check("V-GOAL-GUARD-STATUS-EXEMPT-PS", dec is None, "the PowerShell call-operator form is exempt too")
+        dec, _ = run_guard(e, "bound-1", tx, work, tool="Bash",
+                           tool_input={"command": "python tools/heavy_job.py --tag mission_spend.py goal-status --goal gg"})
+        check("V-GOAL-GUARD-EXEMPT-DECOY", dec == "deny", "another program carrying the status words is judged (H2)")
+
+        # H1a: a forged local lease (same goal + since, an enormous amount) is not the authority.
+        since = ms.read_index()["gg"]["since"]
+        forged = {"goal": "gg", "since": since, "files": {}, "ids": [], "tokens": 0, "context": 0, "closeout": 0,
+                  "lease": {"id": "gg:bound-7:1", "amount": 10 ** 15, "base": 0}}
+        (e.state / "session-budget-bound-7.goal.json").write_text(json.dumps(forged), encoding="utf-8")
+        dec, why = run_guard(e, "bound-7", tx, work, tool="Bash", tool_input={"command": "python big_job.py"})
+        check("V-GOAL-GUARD-FORGED-LEASE", dec == "deny" and "budget_spent" in why,
+              f"a lease the journal never issued forces a renew, which refuses: {why[:80]}")
+        dec, why = run_guard(e, "bound-8", tx, work, tool="Write",
+                             tool_input={"file_path": str(e.state / "session-budget-bound-8.goal.json"), "content": "{}"})
+        dec2, _ = run_guard(e, "bound-8", tx, work, tool="Bash", tool_input={
+            "command": "python tools/mission_spend.py goal-declare --goal gg --cap 999999999 --source x"})
+        check("V-GOAL-GUARD-SELF-STATE-PROTECTED", dec == "deny" and dec2 == "deny",
+              "writing its own guard state, or goal-declare from a bound session, is judged as goal state")
         dec, _ = run_guard(e, "bound-1", tx, work, tool="Bash",
                            tool_input={"command": "echo mission_spend.py goal-status; python big_job.py"})
         check("V-GOAL-GUARD-EXEMPT-NARROW", dec == "deny", "a command that only MENTIONS it is still judged")
@@ -339,7 +400,7 @@ def g_dispatch_wiring():
 
 def main():
     for g in (g_cap_journal, g_race, g_settle_and_resume, g_cross_account, g_crash_and_leak, g_spawn,
-              g_raise, g_host_and_roots, g_guard, g_dispatch_wiring):
+              g_raise, g_host_and_roots, g_review_fixes, g_guard, g_dispatch_wiring):
         try:
             g()
         except Exception as ex:   # a crashed gate is a FAIL with its reason, never a skipped one

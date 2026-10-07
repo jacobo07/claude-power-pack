@@ -28,11 +28,22 @@ breaker that did exist (`hooks/session_budget_guard.js`) could not have stopped 
 - **Lease**: `renew(sid, measured, per_call)` settles the sid, closes its open reservations, and
   reserves `min(remaining, lease_calls x per_call)` as `<goal>:<sid>:<seq>`. At most one open lease
   per sid. Refused when nothing remains.
-- **Agent spawn**: `spawn(sid, estimate)` reserves the estimate (default one lease) or refuses.
-  Closed by the sid's next settle (the child's spend is in the sid's measured total).
-- **Cap changes**: initial declare and lowering always allowed. A raise is refused when used >= cap
-  (CONTAINED: the only way forward is a new goal id) and refused from inside an agent (`CLAUDECODE`
-  set). `source` of every cap is recorded.
+- **Agent spawn**: `spawn(sid, estimate, base=measured)` reserves the estimate (default one lease)
+  or refuses. The hold shrinks as the sid's settled spend passes `base` and closes when it reaches
+  the estimate; a renew closes only LEASES (review M1: the parent's first renew used to drop it).
+- **Cap changes**: initial declare and lowering always allowed. A raise or a rebind needs the
+  Owner's authority: `goal-declare --owner`, which requires an interactive TTY and the goal id typed
+  back. `CLAUDECODE` set refuses too, as a backstop only (an agent can unset it -- review H1). A raise
+  is refused when used >= cap (CONTAINED: the only way forward is a new goal id). `source` recorded.
+- **Local lease is a cache**: the guard admits on a cached lease only while the journal holds that
+  id open with the same amount and base (review H1a: a forged `{amount: 1e15}`).
+
+## Trust boundary
+Everything here runs as one OS user, the same one the agent's shell runs as. The gate defeats the
+accidental and casual paths -- an undeclared pane, a forgotten Agent, a substring-shaped bypass, a
+forged cache, an env flag unset -- and makes every refusal and settle a durable journal row. It does
+not stop an agent that deliberately edits this hook, `settings.json`, or the journal itself; those
+are covered by the existing self-modification denials, not by this gate.
 - **Binding** (precedence, first wins): env `CPP_GOAL` > session cwd under a goal's `roots`
   (`<state>/goal-budget/index.json`) > `goal` field in `session-budget-<sid>.json`. A new goal whose
   roots overlap an open goal's roots is refused.
