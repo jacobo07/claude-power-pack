@@ -1,0 +1,190 @@
+{
+ "calls": 1099,
+ "calls_by_bucket": {
+  "A": 310,
+  "B": 68,
+  "excluded_A": 32,
+  "excluded_B": 3,
+  "not_program": 516,
+  "outside_span": 170,
+  "unknown_featureless": 0,
+  "unknown_no_tools": 0
+ },
+ "controls": {
+  "neg": {
+   "a45dad7c": 0,
+   "c14908c3": 0,
+   "f552a163": 0
+  },
+  "ok": true,
+  "pos": {
+   "423e33b0": true,
+   "b9bd9469": true
+  }
+ },
+ "excluded_prefixes": [
+  "242ae047",
+  "71ccfa86",
+  "7f13d6e2",
+  "87601e81",
+  "c77978f6",
+  "e6e0eca7"
+ ],
+ "paths": [
+  "vault/programs/cognitive-economy/",
+  "tools/cep_gen2.py",
+  "tools/test_ce_",
+  "tools/test_cep_gen2",
+  "tools/test_cognitive_economy_program.py"
+ ],
+ "population_ok": true,
+ "population_processed": 246666361,
+ "roots": [
+  "apps/pp-ce-gen2/",
+  "apps/pp-a1/",
+  "apps/pp-gen3-t1/",
+  "apps/pp-gen3-t3/",
+  "worktrees/cognitive-economy/",
+  "worktrees/cep-gen3-t2/",
+  "worktrees/ce-gen3-t1b/"
+ ],
+ "sessions": [
+  {
+   "A": 24715309,
+   "outside_span": 2361943,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "423e33b0-fb61-4fd9-9145-3e3cfbcbb0f4"
+  },
+  {
+   "A": 15344936,
+   "B": 1149925,
+   "outside_span": 122733,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "b9bd9469-0a95-40cf-bdc2-c7ba2b44ffdd"
+  },
+  {
+   "A": 10486532,
+   "B": 108831,
+   "outside_span": 330035,
+   "project": "C--Users-User-Apps-recon-work-wt-keosdtk-home",
+   "session": "81d50321-61ec-4ce4-bfa6-f2f25362b24a"
+  },
+  {
+   "A": 7315228,
+   "B": 794656,
+   "outside_span": 2640683,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "8a8e2b25-f272-4baa-95b0-88cf932af056"
+  },
+  {
+   "A": 205577,
+   "B": 6760122,
+   "outside_span": 626492,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "6cc09172-b778-4d0d-b8a5-ea62c79689ac"
+  },
+  {
+   "A": 4557049,
+   "outside_span": 765486,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "0f9b771b-ae75-40df-bb08-e64ff2b1f3d1"
+  },
+  {
+   "A": 141702,
+   "B": 1322869,
+   "outside_span": 287437,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "62ac7eb5-3d82-44e8-9802-93c3b191b545"
+  },
+  {
+   "A": 1091902,
+   "B": 157061,
+   "project": "C--Users-User-Apps-pp-ce-gen2",
+   "session": "63e866c3-6ece-4f42-8a0e-e3a09e7b0902"
+  },
+  {
+   "A": 468209,
+   "outside_span": 124479,
+   "project": "C--Users-User-Apps-cr4-wt",
+   "session": "b4d5d96e-5517-42b9-ab28-243d7f9c08e4"
+  },
+  {
+   "A": 259517,
+   "outside_span": 1182959,
+   "project": "C--Users-User-Apps-cr4-wt",
+   "session": "aca5562e-c89b-4e37-a5ce-5c20d63b848c"
+  },
+  {
+   "B": 211429,
+   "outside_span": 19830689,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "9de9bf3b-efea-4c79-a1ce-e1b1cacaea49"
+  },
+  {
+   "A": 200645,
+   "outside_span": 797669,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "bc576038-e8ad-44be-8c28-553bcf3b2826"
+  },
+  {
+   "B": 132897,
+   "outside_span": 797377,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "886d7bb9-086d-4c66-a2db-a4043e2221de"
+  },
+  {
+   "excluded_A": 3077949,
+   "outside_span": 2685385,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "c77978f6-1b2f-4c45-9178-d7d66eb0f2e5"
+  },
+  {
+   "excluded_A": 6835730,
+   "excluded_B": 759654,
+   "outside_span": 588788,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "e6e0eca7-6de8-4e89-9194-4cb611644727"
+  }
+ ],
+ "since": 1791371530.0,
+ "totals": {
+  "A": 64786606,
+  "B": 10637790,
+  "excluded_A": 9913679,
+  "excluded_B": 759654,
+  "not_program": 127426477,
+  "outside_span": 33142155,
+  "unknown_featureless": 0,
+  "unknown_no_tools": 0
+ },
+ "unit": "processed",
+ "until": 1791375753.0,
+ "window_sessions": [
+  "0ea5b790",
+  "0f9b771b",
+  "423e33b0",
+  "56788abd",
+  "5d270b03",
+  "62ac7eb5",
+  "63e866c3",
+  "6b747dbd",
+  "6cc09172",
+  "78f0f711",
+  "81d50321",
+  "83e8b14f",
+  "886d7bb9",
+  "8a8e2b25",
+  "9de9bf3b",
+  "a45dad7c",
+  "aca5562e",
+  "b4d5d96e",
+  "b9bd9469",
+  "bc576038",
+  "c14908c3",
+  "c2020285",
+  "c77978f6",
+  "e6e0eca7",
+  "eb82ef0a",
+  "f552a163"
+ ]
+}

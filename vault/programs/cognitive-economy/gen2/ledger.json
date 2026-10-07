@@ -250,12 +250,32 @@
    ]
   },
   "coordination_spend": {
-   "value": null,
+   "value": 258994397,
    "unit": "processed",
-   "sources": [],
+   "sources": [
+    {
+     "what": "tier A, laptop index, 41 program sessions",
+     "processed": 258994397,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/a1/A1-2-canary.json"
+    },
+    {
+     "what": "tier B lineage (reads / cwd in a program worktree), reported apart, NOT in value",
+     "processed": 119920566,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/a1/A1-2-canary.json"
+    },
+    {
+     "what": "already in spent_measured sources (excluded_A + excluded_B), NOT in value",
+     "processed": 124609059,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/a1/A1-2-canary.json"
+    }
+   ],
    "unknown": [
-    "A1-2 meter (turns.py --attribute) not built"
-   ]
+    "GEX44-hosted transcripts (~$250 of optimization missions in the window) are not in the laptop index (G6)",
+    "outside_span 555,407,655: program sessions' calls before their first / after their last program signal -- not attributed either way",
+    "unknown_no_tools 985,545: sessions with no tool_use observed"
+   ],
+   "window": "2026-10-04T18:00:00Z..2026-10-07T10:33:00Z",
+   "meter": "measure/turns.py --attribute (A1-2); value = tier A (calls between a session's first and last program write), sessions already in spent_measured excluded"
   }
  },
  "gen2_1": {
@@ -437,7 +457,7 @@
  },
  "a1": {
   "cap": 20000000,
-  "spent": null,
+  "spent": 42307381,
   "frozen": [
    "T2",
    "T4",
@@ -459,6 +479,28 @@
     "strikes": 0
    }
   },
-  "strike_limit": 2
+  "strike_limit": 2,
+  "spent_as_of": "2026-10-07T12:22:33Z",
+  "spent_sources": [
+   {
+    "what": "pane 423e33b0 from the approval turn 2026-10-07T11:12:10Z, tiers A+B",
+    "processed": 24715309,
+    "file": "vault/programs/cognitive-economy/gen2/evidence/a1/A1-2-a1-window.json"
+   },
+   {
+    "what": "pane b9bd9469 (A1-U1 relaunch + A1-2 build), tiers A+B, still running at as_of",
+    "processed": 16494861,
+    "file": "vault/programs/cognitive-economy/gen2/evidence/a1/A1-2-a1-window.json"
+   },
+   {
+    "what": "U1 headless worker on GEX44, out.json usage == dedup transcript sum",
+    "processed": 1097211,
+    "file": "vault/programs/cognitive-economy/gen2/evidence/a1/U1-RECEIPT.md"
+   }
+  ],
+  "spent_upper_bound": {
+   "processed": 44792057,
+   "why": "the two panes' whole sessions since approval incl. calls outside their program span"
+  }
  }
 }

@@ -51,6 +51,11 @@ Modes:
                                no classifier label
   --score SHEET                compare a labelled sheet with the classifier (agreement + a
                                shuffled-label negative control)
+  --attribute --since T [--until T] [--paths F] [--ledger L] [--control-pos S,..] [--control-neg S,..]
+                               A1-2 program meter: the window's spend split into tier A (program
+                               writes), tier B (lineage), excluded (already in the ledger) and
+                               UNKNOWN buckets; exit 1 unless the population and controls hold
+                               (see `attribute`). Gate: tools/test_ce_a1_attribute.py
 """
 from __future__ import annotations
 
@@ -145,8 +150,9 @@ def tool_cat(name: str, inp: dict):
     return "other", None
 
 
-def scan_file(path: str, wanted: set) -> dict:
-    """{index key: feature} for the calls of `wanted` found in this transcript."""
+def scan_file(path: str, wanted: set, probe=None) -> dict:
+    """{index key: feature} for the calls of `wanted` found in this transcript. `probe(name, inp, cwd)`,
+    when given, labels each tool_use (None = no label) into the feature's `hits` (used by --attribute)."""
     out: dict = {}
     seen: set = set()
     err_pending = False
@@ -175,7 +181,7 @@ def scan_file(path: str, wanted: set) -> dict:
             key = f"{m.get('id')}|{o.get('requestId')}"
             if key not in out:
                 out[key] = {"prev_error": err_pending, "tools": [], "reps": [], "ts": o.get("timestamp"),
-                            "cwd": o.get("cwd")}
+                            "cwd": o.get("cwd"), "hits": set()}
                 err_pending = False
             f = out[key]
             for c in content:
@@ -194,6 +200,10 @@ def scan_file(path: str, wanted: set) -> dict:
                 if epath and o.get("cwd") and not Path(epath).is_absolute():
                     epath = str(Path(o["cwd"]) / epath)
                 f["tools"].append((cat, epath))
+                if probe is not None:
+                    hit = probe(name, inp, o.get("cwd"))
+                    if hit:
+                        f["hits"].add(hit)
     return {k: v for k, v in out.items() if k in wanted}
 
 
@@ -449,6 +459,187 @@ def per_root(feats: list[dict], n: int = 40) -> dict:
             "advanced_roots": len(adv), "rows": rows}
 
 
+# ------------------------------------------------------------------ A1-2 program attribution
+
+# Fragments (case- and slash-insensitive). A trailing "/" marks a directory: it matches the name
+# followed by a separator or the end, never a longer sibling name. ROOTS are the program worktrees:
+# a session whose cwd is inside one is program work by lineage.
+PROGRAM_PATHS = ("vault/programs/cognitive-economy/", "tools/cep_gen2.py", "tools/test_ce_",
+                 "tools/test_cep_gen2", "tools/test_cognitive_economy_program.py")
+PROGRAM_ROOTS = ("apps/pp-ce-gen2/", "apps/pp-a1/", "apps/pp-gen3-t1/", "apps/pp-gen3-t3/",
+                 "worktrees/cognitive-economy/", "worktrees/cep-gen3-t2/", "worktrees/ce-gen3-t1b/")
+BUCKETS = ("A", "B", "excluded_A", "excluded_B", "outside_span", "not_program", "unknown_no_tools",
+           "unknown_featureless")
+
+
+def _pnorm(s) -> str:
+    return str(s or "").replace("\\", "/").lower()
+
+
+def frag_rx(frags) -> re.Pattern:
+    parts = []
+    for f in frags:
+        f = _pnorm(f)
+        parts.append(re.escape(f[:-1]) + r"(?![\w.-])" if f.endswith("/") else re.escape(f))
+    return re.compile("|".join(parts) if parts else r"(?!x)x")
+
+
+# A shell command that changes state or executes code: naming a program path, it is program WORK.
+# Without one of these it only looked (Get-ChildItem, cat, Select-String): lineage, not a write.
+# Found by the canary: a KobiiCraft pane LISTING the program dir was booked to tier A.
+SHELL_WRITE = re.compile(
+    r"(?i)(\b(Set|Add|Clear)-Content\b|\bOut-File\b|\b(Copy|Move|New|Remove|Rename)-Item\b|WriteAll(Text|Bytes|Lines)|"
+    r"\bsed\s+-i|\btee\b|(^|[;&|]\s*)(cp|mv|rm|mkdir|touch)\s|(?<![<>=!2-])>>?(?![=&])|\bpython[\d.]*(\.exe)?['\"]?\s)")
+
+
+def program_probe(rx: re.Pattern):
+    """A scan_file probe: 'write' = an edit of a program path, or a shell command naming one that
+    tests, commits, writes or executes (shell writes carry no path, G4); 'read' = a Read/Grep/Glob
+    of one, or a shell command naming one that only looks (lineage)."""
+    def probe(name, inp, cwd):
+        if name in EDIT_TOOLS:
+            p = inp.get(EDIT_TOOLS[name])
+            if p and cwd and not Path(str(p)).is_absolute():
+                p = str(Path(cwd) / str(p))
+            return "write" if rx.search(_pnorm(p)) else None
+        if name in SHELL_TOOLS:
+            cmd = str(inp.get("command") or "")
+            if not rx.search(_pnorm(cmd)):
+                return None
+            return "write" if shell_cat(cmd) in ("test", "git") or SHELL_WRITE.search(cmd) else "read"
+        if name in READ_TOOLS:
+            return "read" if rx.search(_pnorm(" ".join(str(inp.get(k, "")) for k in ("file_path", "path")))) else None
+        return None
+    return probe
+
+
+def ledger_session_prefixes(ledger) -> set:
+    """8-hex session prefixes named in the ledger's spent_measured sources: already metered (G5).
+    String fields only: an integer `processed` (12819555) is 8 hex digits too and is not a session."""
+    src = ((json.loads(Path(ledger).read_text(encoding="utf-8")).get("budget_tokens") or {})
+           .get("spent_measured") or {}).get("sources") or []
+    text = " ".join(v for s in src if isinstance(s, dict) for v in s.values() if isinstance(v, str))
+    return set(re.findall(r"\b[0-9a-f]{8}\b", text))
+
+
+def attribute(since: float, until: float, paths=PROGRAM_PATHS, roots=PROGRAM_ROOTS, exclude=(),
+              con=None) -> dict:
+    """A1-2 (G3-G5): how much of the window's spend was program work. Zero model calls.
+
+    Population: index calls with since < ts <= until, one row per index key `<message.id>|<requestId>`
+    (a message streamed over several transcript lines is one call). Subagent calls carry their
+    parent's session, so they roll up to it. Unit: processed = input + cache_write + cache_read + output.
+    Per session: a WRITE signal is an edit of a program path or a shell command naming one; a LINEAGE
+    signal is a Read of one or a call whose cwd is inside a program worktree. Tier A = calls between
+    the first and last write signal; tier B = the other calls between the first and last signal of
+    any kind. A and B are reported apart and never summed into one measured figure. Sessions whose id
+    prefix is in `exclude` land in excluded_A / excluded_B. Calls the transcript scan cannot find, and
+    sessions without a single tool_use, are UNKNOWN -- not 0, not "not program"."""
+    own = con is None
+    con = con or ro_connect()
+    rows = con.execute("SELECT k, file, ts, session, inp, cw, cr, out FROM calls WHERE ts > ? AND ts <= ?",
+                       (since, until)).fetchall()
+    if own:
+        con.close()
+    probe, root_rx = program_probe(frag_rx(paths)), frag_rx(roots)
+    by_file = defaultdict(list)
+    for r in rows:
+        by_file[r[1]].append(r)
+    sess = defaultdict(list)    # sid -> [(ts, processed, signal, featureless, text_only)]
+    proj: dict = {}
+    for fp, rs in by_file.items():
+        found = scan_file(fp, {r[0] for r in rs}, probe)
+        p = Path(fp)
+        for k, _f, ts, sid, inp, cw, cr, out in rs:
+            n = (inp or 0) + (cw or 0) + (cr or 0) + (out or 0)
+            if "subagents" not in p.parts or sid not in proj:
+                proj[sid] = p.parents[2].name if "subagents" in p.parts else p.parent.name
+            g = found.get(k)
+            if g is None:
+                sess[sid].append((ts, n, None, True, False))
+                continue
+            if g["hits"] & {"write", "shell"}:
+                sig = "write"
+            elif g["hits"] or root_rx.search(_pnorm(g.get("cwd"))):
+                sig = "lineage"
+            else:
+                sig = None
+            sess[sid].append((ts, n, sig, False, not g["tools"]))
+    tot = Counter()
+    calls = Counter()
+    out_rows = []
+    for sid, cs in sess.items():
+        w = [c[0] for c in cs if c[2] == "write"]
+        a = [c[0] for c in cs if c[2]]
+        ex = "excluded_" if str(sid)[:8] in exclude else ""
+        row = Counter()
+        for ts, n, sig, featureless, text_only in cs:
+            if featureless:
+                b = "unknown_featureless"
+            elif w and w[0] <= ts <= w[-1]:
+                b = ex + "A"
+            elif a and min(a) <= ts <= max(a):
+                b = ex + "B"
+            elif a:
+                b = "outside_span"
+            else:
+                b = None
+            if b is None:
+                b = "unknown_no_tools" if all(c[3] or c[4] for c in cs) else "not_program"
+            tot[b] += n
+            calls[b] += 1
+            row[b] += n
+        if any(row[x] for x in ("A", "B", "excluded_A", "excluded_B")):
+            out_rows.append({"session": sid, "project": proj.get(sid), **{x: row[x] for x in BUCKETS if row[x]}})
+    window_sum = sum((r[4] or 0) + (r[5] or 0) + (r[6] or 0) + (r[7] or 0) for r in rows)
+    return {"since": since, "until": until, "unit": "processed", "calls": len(rows),
+            "population_processed": window_sum, "population_ok": sum(tot.values()) == window_sum,
+            "totals": {b: tot[b] for b in BUCKETS}, "calls_by_bucket": {b: calls[b] for b in BUCKETS},
+            "excluded_prefixes": sorted(exclude), "window_sessions": sorted({str(s)[:8] for s in sess}),
+            "sessions": sorted(out_rows, key=lambda r: -(r.get("A", 0) + r.get("B", 0)))}
+
+
+def attribution_controls(res: dict, pos=(), neg=()) -> dict:
+    """Positive controls must be detected (any of A/B, excluded or not); negative controls must
+    carry 0 in every program bucket. A control session absent from the window fails: it was
+    not observed, so it proves nothing either way."""
+    by = {str(r["session"])[:8]: sum(r.get(x, 0) for x in ("A", "B", "excluded_A", "excluded_B"))
+          for r in res["sessions"]}
+    seen = set(res.get("window_sessions") or ())
+    out = {"pos": {p: by.get(p, 0) > 0 for p in pos},
+           "neg": {p: (by.get(p, 0) if p in seen else "NOT_IN_WINDOW") for p in neg}}
+    out["ok"] = (res["population_ok"] and all(out["pos"].values())
+                 and all(v == 0 for v in out["neg"].values()))
+    return out
+
+
+def attribute_main(a) -> int:
+    def ts(v):
+        if v is None:
+            return datetime.now(timezone.utc).timestamp()
+        t = ts_of(v)
+        if t is None:
+            raise SystemExit(f"unreadable time: {v!r}")
+        return t
+    paths, roots = PROGRAM_PATHS, PROGRAM_ROOTS
+    if a.paths:
+        spec = json.loads(Path(a.paths).read_text(encoding="utf-8"))
+        paths, roots = tuple(spec.get("paths", paths)), tuple(spec.get("roots", roots))
+    exclude = ledger_session_prefixes(a.ledger) if a.ledger else set()
+    res = attribute(ts(a.since), ts(a.until), paths, roots, exclude)
+    split = lambda s: tuple(x.strip()[:8] for x in s.split(",") if x.strip())
+    res["controls"] = attribution_controls(res, split(a.control_pos), split(a.control_neg))
+    res["paths"], res["roots"] = list(paths), list(roots)
+    blob = json.dumps(res, indent=1, sort_keys=True, default=str)
+    if a.json:
+        Path(a.json).write_text(blob, encoding="utf-8", newline="\n")
+    print("result_sha256", hashlib.sha256(blob.encode()).hexdigest())
+    print("totals", json.dumps(res["totals"]))
+    print("calls", res["calls"], "population_ok", res["population_ok"], "program_sessions", len(res["sessions"]))
+    print("controls", json.dumps(res["controls"]))
+    return 0 if res["controls"]["ok"] else 1
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
     ap.add_argument("--measure", action="store_true")
@@ -458,9 +649,18 @@ def main(argv=None) -> int:
     ap.add_argument("--seed", type=int, default=20261003)
     ap.add_argument("--sheet")
     ap.add_argument("--score")
+    ap.add_argument("--attribute", action="store_true")
+    ap.add_argument("--since")
+    ap.add_argument("--until")
+    ap.add_argument("--paths", help="JSON {paths: [...], roots: [...]} replacing the defaults")
+    ap.add_argument("--ledger", default=str(REPO / "vault/programs/cognitive-economy/gen2/ledger.json"))
+    ap.add_argument("--control-pos", default="")
+    ap.add_argument("--control-neg", default="")
     a = ap.parse_args(argv)
     if a.score:
         return score(a.score)
+    if a.attribute:
+        return attribute_main(a)
     feats, meta = extract()
     agg = aggregate(feats)
     control = {"population_calls": len(feats), "dw7_calls": DW7_CALLS,

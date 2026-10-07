@@ -1,0 +1,492 @@
+{
+ "calls": 15587,
+ "calls_by_bucket": {
+  "A": 972,
+  "B": 570,
+  "excluded_A": 446,
+  "excluded_B": 103,
+  "not_program": 11233,
+  "outside_span": 2251,
+  "unknown_featureless": 0,
+  "unknown_no_tools": 12
+ },
+ "controls": {
+  "neg": {
+   "0f413d45": 0,
+   "5f5bc46f": 0,
+   "d5944dbc": 0,
+   "f9a3447d": 0
+  },
+  "ok": true,
+  "pos": {
+   "71ccfa86": true,
+   "87601e81": true
+  }
+ },
+ "excluded_prefixes": [
+  "242ae047",
+  "71ccfa86",
+  "7f13d6e2",
+  "87601e81",
+  "c77978f6",
+  "e6e0eca7"
+ ],
+ "paths": [
+  "vault/programs/cognitive-economy/",
+  "tools/cep_gen2.py",
+  "tools/test_ce_",
+  "tools/test_cep_gen2",
+  "tools/test_cognitive_economy_program.py"
+ ],
+ "population_ok": true,
+ "population_processed": 4022461746,
+ "roots": [
+  "apps/pp-ce-gen2/",
+  "apps/pp-a1/",
+  "apps/pp-gen3-t1/",
+  "apps/pp-gen3-t3/",
+  "worktrees/cognitive-economy/",
+  "worktrees/cep-gen3-t2/",
+  "worktrees/ce-gen3-t1b/"
+ ],
+ "sessions": [
+  {
+   "A": 53723662,
+   "B": 274862,
+   "outside_span": 1452368,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "0f1368ee-6071-4212-b648-34a9cb38b2be"
+  },
+  {
+   "A": 50897862,
+   "B": 994624,
+   "outside_span": 1041532,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "2a407422-ef79-470c-bc27-470de812eda5"
+  },
+  {
+   "A": 44231094,
+   "B": 1486158,
+   "outside_span": 4167177,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "a5fafaa2-6f7d-4ce6-a146-a8104c44edf9"
+  },
+  {
+   "A": 652690,
+   "B": 37995924,
+   "outside_span": 17280724,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "7cf90b36-7e0b-4a6c-92fa-dfb5be8651d0"
+  },
+  {
+   "A": 34125510,
+   "outside_span": 6313544,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "db2b68e7-7265-4a8d-9920-ff745a055872"
+  },
+  {
+   "A": 21470767,
+   "B": 7697203,
+   "outside_span": 1839685,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "e1cb7fc6-1d90-4c0b-ac70-2ebfd2e3f97a"
+  },
+  {
+   "A": 23690277,
+   "B": 2029955,
+   "outside_span": 14386619,
+   "project": "C--Users-User-Desktop-Cursor-Projects-TUA-X",
+   "session": "8d714d99-f9df-4e5f-b66a-7a1c786e3449"
+  },
+  {
+   "A": 163071,
+   "B": 20919625,
+   "outside_span": 924935,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "2cc507fd-2a61-4dc6-9115-13b19d865f19"
+  },
+  {
+   "B": 13850649,
+   "outside_span": 2107041,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "bd2f5752-2b55-4907-8802-58bc21f5c48b"
+  },
+  {
+   "B": 9629062,
+   "outside_span": 615575,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "d64f90b2-f42e-4a2b-b7b2-2663707cd6cf"
+  },
+  {
+   "A": 9411341,
+   "B": 151256,
+   "outside_span": 1593132,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "8743fa42-ceb4-4f56-ab56-25c9589c0ef8"
+  },
+  {
+   "A": 366568,
+   "B": 9048718,
+   "outside_span": 31526370,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "08cb0d86-386a-469f-ab87-baecfdda03f3"
+  },
+  {
+   "A": 6153921,
+   "outside_span": 1329731,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "dc383770-e4b5-4930-bb8c-3a49d7c34ce8"
+  },
+  {
+   "A": 150650,
+   "B": 4915487,
+   "outside_span": 559182,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "d8d8d060-115f-49eb-a1c6-07c8ea8166a3"
+  },
+  {
+   "A": 3641254,
+   "B": 1124584,
+   "outside_span": 263909,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "ba0891df-1869-4583-bde4-2964998a0fc1"
+  },
+  {
+   "A": 185580,
+   "B": 3736396,
+   "outside_span": 6813138,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "203e945d-4368-4d09-9343-e35533daa5d2"
+  },
+  {
+   "A": 1665067,
+   "outside_span": 568360,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "29a8c52e-e3ab-4b76-a322-1afb870eb308"
+  },
+  {
+   "A": 484439,
+   "B": 927871,
+   "outside_span": 10030324,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "e0332e3a-7cba-4d4f-8508-4f3bea0a34ab"
+  },
+  {
+   "A": 1288726,
+   "outside_span": 384085,
+   "project": "C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files",
+   "session": "d171af19-42e5-425d-a57b-48be594777cc"
+  },
+  {
+   "A": 464059,
+   "B": 747549,
+   "outside_span": 162664,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "743714db-4169-4a9b-a6b7-2f46fb2e9e26"
+  },
+  {
+   "A": 1200116,
+   "outside_span": 464056,
+   "project": "C--Users-User-Apps-recon-work-wt-keosdtk-home",
+   "session": "037006b4-ae1d-430f-b84d-10ba73f19198"
+  },
+  {
+   "B": 1150399,
+   "outside_span": 29916609,
+   "project": "C--Users-User-Desktop-Cursor-Projects-InfinityOps-17-Businesses-QuickLease",
+   "session": "2fc4dcbc-830f-4e1b-9033-92437197b10e"
+  },
+  {
+   "B": 1102377,
+   "outside_span": 65477428,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "7f072421-15a5-4b22-8e59-a076851e85a5"
+  },
+  {
+   "A": 1018121,
+   "outside_span": 383333,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "98d133a9-b327-46cd-a9ac-b4a2f359ed9a"
+  },
+  {
+   "A": 935235,
+   "outside_span": 349610,
+   "project": "C--Users-User-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects",
+   "session": "515878c7-b877-48a3-aa7e-32abfb8a1ee5"
+  },
+  {
+   "A": 746878,
+   "outside_span": 657783,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "631deac9-3f09-44b3-85b5-e9cbb1eefa7d"
+  },
+  {
+   "A": 740792,
+   "outside_span": 354447,
+   "project": "C--Users-User-Desktop-Cursor-Projects-TUA-X",
+   "session": "ac0d727c-4695-48f5-8704-ab283e3e0859"
+  },
+  {
+   "A": 405927,
+   "B": 284138,
+   "outside_span": 416104,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "734fdc97-fb32-438e-aad1-db29e18d1bda"
+  },
+  {
+   "B": 631152,
+   "outside_span": 34771436,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "e3839dd3-3caa-4919-835c-7834fc949ee1"
+  },
+  {
+   "B": 629085,
+   "outside_span": 118467998,
+   "project": "C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files",
+   "session": "bf8eb18a-c9ef-445f-953e-4428734262c5"
+  },
+  {
+   "A": 439784,
+   "outside_span": 7880717,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "1fd598fe-af43-488a-8a95-36b032ab78f9"
+  },
+  {
+   "A": 337082,
+   "outside_span": 65792398,
+   "project": "C--Users-User-Desktop-Cursor-Projects-TUA-X",
+   "session": "bfa7821b-75c5-4168-ae5b-5b91ce987c3c"
+  },
+  {
+   "A": 166828,
+   "B": 166372,
+   "outside_span": 4933970,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "4fb42b1c-fada-4978-aab1-b3963065b714"
+  },
+  {
+   "B": 224073,
+   "outside_span": 56767333,
+   "project": "C--Users-User-Desktop-Cursor-Projects-InfinityOps",
+   "session": "ae158156-2e5d-45dc-b754-4d1506f4f57f"
+  },
+  {
+   "B": 203047,
+   "outside_span": 37881040,
+   "project": "C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files",
+   "session": "b9dbdfe2-1e53-4eea-96d6-bccd58c453f6"
+  },
+  {
+   "A": 122881,
+   "outside_span": 2434308,
+   "project": "C--Users-User-Apps-pp-ql-econ",
+   "session": "78919b87-7534-48ea-8207-8e90154f76a9"
+  },
+  {
+   "A": 114215,
+   "outside_span": 775530,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "2391adb0-afb8-411b-9e8e-034749916382"
+  },
+  {
+   "excluded_A": 8592359,
+   "excluded_B": 15091313,
+   "outside_span": 6204832,
+   "project": "C--Users-User-Desktop-Cursor-Projects-TUA-X",
+   "session": "242ae047-3621-4110-82ca-63be30ca7493"
+  },
+  {
+   "excluded_A": 73299425,
+   "excluded_B": 6129390,
+   "outside_span": 4707791,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "87601e81-fc6a-4199-a22a-3848715634a6"
+  },
+  {
+   "excluded_A": 6061291,
+   "excluded_B": 3073708,
+   "outside_span": 3058139,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "7f13d6e2-0a73-4464-9a54-0423a9c75757"
+  },
+  {
+   "excluded_A": 10306282,
+   "excluded_B": 2055291,
+   "outside_span": 10352698,
+   "project": "C--Users-User--claude-skills-claude-power-pack",
+   "session": "71ccfa86-6902-4449-a345-dacb4b1ba2de"
+  }
+ ],
+ "since": 1791136800.0,
+ "totals": {
+  "A": 258994397,
+  "B": 119920566,
+  "excluded_A": 98259357,
+  "excluded_B": 26349702,
+  "not_program": 2962544524,
+  "outside_span": 555407655,
+  "unknown_featureless": 0,
+  "unknown_no_tools": 985545
+ },
+ "unit": "processed",
+ "until": 1791369180.0,
+ "window_sessions": [
+  "037006b4",
+  "0636a17e",
+  "08cb0d86",
+  "093fb531",
+  "0a057a26",
+  "0c64c3e7",
+  "0f1368ee",
+  "0f413d45",
+  "0fb176d3",
+  "169c231d",
+  "19b09a06",
+  "1a9ec524",
+  "1bbb5ff6",
+  "1f9f5ba2",
+  "1fd598fe",
+  "203e945d",
+  "2391adb0",
+  "242ae047",
+  "2747fb9a",
+  "29a8c52e",
+  "2a0243c9",
+  "2a407422",
+  "2b484ab9",
+  "2cc507fd",
+  "2dc6c7cf",
+  "2e47d47f",
+  "2e7601ad",
+  "2fc04d5e",
+  "2fc4dcbc",
+  "30a56de0",
+  "34ffda82",
+  "36438e25",
+  "370d4c45",
+  "38e32976",
+  "3a05f288",
+  "3c27795c",
+  "40c82043",
+  "43a69735",
+  "463ffd72",
+  "471ebb02",
+  "4f1b398d",
+  "4fb42b1c",
+  "50c1a2ed",
+  "515878c7",
+  "52d51e17",
+  "53d5cdd7",
+  "59d80167",
+  "5f5bc46f",
+  "614fdfff",
+  "619fff87",
+  "622d5e75",
+  "631deac9",
+  "63bc3ed8",
+  "6a16a4c0",
+  "6eba7a1f",
+  "6faafa79",
+  "703d3a72",
+  "70beff67",
+  "71ccfa86",
+  "734fdc97",
+  "743714db",
+  "74b86498",
+  "75c203ec",
+  "7823c669",
+  "78919b87",
+  "7cf90b36",
+  "7d1ddcb7",
+  "7d5bb7be",
+  "7f072421",
+  "7f13d6e2",
+  "80072f9f",
+  "8416c0f5",
+  "84a5bc3c",
+  "8743fa42",
+  "87601e81",
+  "878ab75f",
+  "89e4f4f2",
+  "8c99bb45",
+  "8d714d99",
+  "8e91d2df",
+  "9026d810",
+  "9196ecb9",
+  "93fc214d",
+  "98d133a9",
+  "9924bdb2",
+  "9a585a1f",
+  "9e5adb31",
+  "9e8cb7b1",
+  "9ff0e183",
+  "9ff1148f",
+  "a1709634",
+  "a17314a0",
+  "a511af93",
+  "a5fafaa2",
+  "a713b1fc",
+  "a7e9e17f",
+  "a7fd0e10",
+  "a8221309",
+  "ac0d727c",
+  "ae158156",
+  "b001c9b0",
+  "b12e80b1",
+  "b380e956",
+  "b9dbdfe2",
+  "ba0891df",
+  "ba4bb7f8",
+  "bd2f5752",
+  "bd3c4420",
+  "bd4af0d5",
+  "bed74b2f",
+  "bf3e9df2",
+  "bf8eb18a",
+  "bfa7821b",
+  "c1093bf3",
+  "c21f9853",
+  "c27755dc",
+  "c47b1f78",
+  "c59ad762",
+  "c85f3eb9",
+  "cb0c6351",
+  "cb1ac291",
+  "cec68800",
+  "d05476d4",
+  "d09cc6cb",
+  "d171af19",
+  "d3300efc",
+  "d348d4e2",
+  "d4f22eaa",
+  "d5944dbc",
+  "d64f90b2",
+  "d8d8d060",
+  "db2b68e7",
+  "dc383770",
+  "dc79aa64",
+  "ddd4103e",
+  "dfc0acda",
+  "e0332e3a",
+  "e0a08ce5",
+  "e1cb7fc6",
+  "e3839dd3",
+  "e5c665bb",
+  "e76f7aa7",
+  "e9110291",
+  "eab8a573",
+  "ec95adbc",
+  "ed9262d1",
+  "ef0d3f77",
+  "f03264a3",
+  "f48f4690",
+  "f8147c6a",
+  "f9326789",
+  "f9371e46",
+  "f99f5d5e",
+  "f9a3447d",
+  "fa3f4992",
+  "fa7e93cb",
+  "fe49c72f"
+ ]
+}
