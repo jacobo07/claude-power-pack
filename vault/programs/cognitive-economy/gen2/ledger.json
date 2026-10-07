@@ -31,8 +31,10 @@
    "clause": "lifecycle: SAFE_TO_FORGET both poles; /kclear->/clear->/kresume certified on a canary; autocompact not the continuation; WAITING with zero hot sessions",
    "terminal": "EXECUTE",
    "execution": "T1",
-   "status": "OPEN",
-   "check": null
+   "status": "CHECKED",
+   "check": [
+    "tools/test_ce_t1_lifecycle.py"
+   ]
   },
   {
    "id": "C4",

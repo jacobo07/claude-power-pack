@@ -10,10 +10,13 @@ c. Canary: seal -> gate -> transcript removed (the clear) -> resume_flow -> cert
    RESUME_CERTIFIED + .certified; a second claimant is refused with exit 5.
 d. Autocompact demoted: with a FORGET_SAFE capsule decide() picks rollover at the wall, even when
    usage is unreadable; compaction (would_rollover False) stays the fallback only with no capsule.
+e. C3 part 2 (WAITING zero-hot, stale-pane revalidation) runs as a subprocess gate:
+   test_ce_t1_waiting.py must exit 0 and print its CE_T1_WAIT_PASS line.
 """
 from __future__ import annotations
 
 import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -120,6 +123,12 @@ def main() -> int:
               "below the wall an unreadable usage still never rolls (no pressure, no figures)")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+    w = subprocess.run([sys.executable, str(HERE / "test_ce_t1_waiting.py")], capture_output=True,
+                       text=True, timeout=300)
+    line = next((ln for ln in w.stdout.splitlines() if ln.startswith("CE_T1_WAIT_PASS=")),
+                "no CE_T1_WAIT_PASS line")
+    check("V-CE-T1-LIFE-WAITING", w.returncode == 0 and line.startswith("CE_T1_WAIT_PASS="),
+          f"exit={w.returncode} {line}")
     after = st.live_fingerprint()
     check("V-CE-T1-LIFE-LIVE-UNTOUCHED", before == after, "live ~/.claude/state/rollover fingerprint unchanged")
     print(f"CE_T1_LIFE_PASS={passes}/{passes + fails}")
