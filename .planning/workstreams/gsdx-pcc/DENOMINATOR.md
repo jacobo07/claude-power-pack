@@ -54,7 +54,7 @@ disposition. Phase = the roadmap phase expected to close it.
 | D45 | Explicit INHERITED events (§44) | none | BUILD event | 4 | OPEN | |
 | D46 | Work classes (§45) | none | BUILD ledger + evidence-gated promotion | 9 | OPEN | |
 | D47 | GSD X root function wording (§46) | spec | EXTEND module docs + baseline | 10 | OPEN | |
-| R01 | Gate output lost on Windows (gate.py:72) | gate provider | FIX red-first + drill + UKDL | 1 | OPEN | |
+| R01 | Gate output lost on Windows (gate.py:72) | gate provider | FIX red-first + drill + UKDL | 1 | DONE | 58934936; GSDX_GATE_PROVIDER_PASS=18/18 (01-phase-end-gate-provider.log); drill MUTANT KILLED gate=V-GATE-VERDICT-FIELDS exit 0 (01-r01-drill.log); UKDL T-SUBPROCESS-WITHOUT-INHERITED-STD-HANDLES-LOSES-GRANDCHILD-OUTPUT-ON-WINDOWS-001; .planning/workstreams/gsdx-pcc/phases/01-w0-reality-baseline-and-incumbent-measurement/01-EVIDENCE.md |
 | R02 | Whole-repo tree binding | git_state.py:129 | covered by D12 | 4 | OPEN | |
 | R03 | Goal workers get no family baseline (`claude -p`) | providers/claude.py | FIX via brief injection | 10 | OPEN | |
 | R04 | mutation_probe live-tree mutation (8/10 pairs) | mutation_probe | farm never uses live mode; record as debt | 6 | OPEN | |
