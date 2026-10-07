@@ -118,3 +118,5 @@ memory/
 .claude/cache/learnings/
 # Stray redirect artifact
 claude-power-pack...
+# SessionStart capability marker (hook-generated, never tracked)
+.pp-capabilities

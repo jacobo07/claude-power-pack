@@ -1,0 +1,63 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": null,
+  "phases": [
+    {
+      "number": "1",
+      "name": "W0 Reality, baseline and incumbent measurement",
+      "status": "in_progress"
+    },
+    {
+      "number": "2",
+      "name": "W1 Convergence semantics (ULTRA-PLAN, the only one)",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "W2 Execution frontier and scheduling",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "W3 Candidate snapshots, invalidation, proof inheritance",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "W4 Judge VALIDATE vs REPLAY, parallel replay, reviewer concurrency",
+      "status": "pending"
+    },
+    {
+      "number": "6",
+      "name": "W5 Mutant farm",
+      "status": "pending"
+    },
+    {
+      "number": "7",
+      "name": "W6 Universal impact adapter contract + Elixir pilot",
+      "status": "pending"
+    },
+    {
+      "number": "8",
+      "name": "W7 Continuation objects and boundary context images",
+      "status": "pending"
+    },
+    {
+      "number": "9",
+      "name": "W8 Latency observatory, shadow corpus, historical replay",
+      "status": "pending"
+    },
+    {
+      "number": "10",
+      "name": "W9 Production Reality, fresh agent, UKDL, baseline ratchet, meta-analysis",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 1 of 10 · 0% · executing"
+  },
+  "updated_at": "2026-10-07T13:16:26.063Z"
+}
