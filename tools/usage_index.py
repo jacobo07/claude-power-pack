@@ -848,13 +848,15 @@ def _longest_root(key: str, roots: dict):
 def _registry(con) -> tuple[dict, dict, str]:
     """(registry {root key: project name}, homes {(store, project, session_key): root key},
     digest). A root is the normalized first cwd (smallest first_off) of a main file; its name is
-    the transcript dir name of that raw cwd. Two spellings of one root keep the smaller name, so
+    the transcript dir name of that raw cwd. Only a file read from byte 0 (`v5_from = 0`) can
+    name a root: a legacy file that grew starts mid-file, so its first cwd is not the launch cwd.
+    Two spellings of one root keep the smaller name, so
     the registry is a function of the rows, not of their order."""
     registry: dict = {}
     homes: dict = {}
     rows = con.execute(
         "SELECT f.store, f.project, f.session_key, c.cwd FROM files f "
-        "JOIN file_cwds c ON c.file=f.path WHERE f.is_sub=0 AND c.first_off="
+        "JOIN file_cwds c ON c.file=f.path WHERE f.is_sub=0 AND f.v5_from=0 AND c.first_off="
         "(SELECT min(first_off) FROM file_cwds WHERE file=f.path) ORDER BY f.path")
     for store, project, skey, cwd in rows:
         norm = _norm_path(cwd)

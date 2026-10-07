@@ -2200,7 +2200,40 @@ def grp_poison_file() -> None:
             con.close()
 
 
-GROUPS = (("grp_until_refused", grp_until_refused), ("grp_poison_file", grp_poison_file), ("grp_schema", grp_schema),("grp_tool_event", grp_tool_event),
+def grp_grown_legacy_home() -> None:
+    A, B, C = APPS + "alpha", APPS + "beta", APPS + "gamma"
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj = td / "projects"
+        legacy = sess_file(proj, A, "SL", [A + "\\a.py"])
+        sess_file(proj, C, "SC", [C + "\\c.py"])               # control: read from byte 0
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+            lp = os.path.realpath(str(legacy))
+            # a v4-era file: its v5 rows were never written, only the byte offset survives
+            for t in ("call_files", "tool_events", "user_hits", "file_cwds", "file_attribution"):
+                con.execute(f"DELETE FROM {t} WHERE file=?", (lp,))
+            con.execute("UPDATE files SET v5_from=NULL WHERE path=?", (lp,))
+            con.commit()
+            with legacy.open("a", encoding="utf-8") as fh:        # grows, new bytes carry cwd B
+                fh.write(asst("mL2", 2.0, "SL", tools=[("tuL9", "Read", {"file_path": B + "\\b.py"})],
+                              cwd=B))
+            UX.refresh(con, proj, deadline_s=30)
+            v5_from = con.execute("SELECT v5_from FROM files WHERE path=?", (lp,)).fetchone()[0]
+            registry, homes, _ = UX._registry(con)
+            names = sorted(registry.values())
+            gate("V-UX5-LEGACY-GROWN-NO-LAUNCH-ROOT",
+                 v5_from and v5_from > 0 and names == [pname(C)]
+                 and not any(k[2] == "SL" for k in homes),
+                 f"legacy file grown from offset {v5_from} with a new cwd: registry roots={names} "
+                 f"(want only the byte-0 control {pname(C)}); homes of the grown session="
+                 f"{[k for k in homes if k[2] == 'SL']}")
+        finally:
+            con.close()
+
+
+GROUPS = (("grp_until_refused", grp_until_refused), ("grp_poison_file", grp_poison_file), ("grp_grown_legacy_home", grp_grown_legacy_home), ("grp_schema", grp_schema),("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
           ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text),
           ("grp_alias", grp_alias), ("grp_identity_columns", grp_identity_columns),
