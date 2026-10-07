@@ -158,5 +158,12 @@ sonnet worker on GEX44, envelope 4M processed / 30 calls, packet
 missions/autonomous-optimization .planning/.../01-usage-index-v5-substrate/01-FIX-PACKET.md committed 41e35562, PID
 3934792, transcript 1a348a7e. Phases 2-7 stay paused until pre-call budget admission exists. Spend is metered from
 the worker's own transcript and counts against the program, not against A1 (A1 stays in containment).
+AO unit RESULT: commits d0700cbe CR-01, 9cb5e319 WR-01, ae720bcb WR-02, 9bb886b2 verification GAPS + receipt
+(fetched to the laptop as local branch ao/p1fix). Spend MEASURED 3,107,523 processed (out.json usage), 29/30 turns,
+$1.26 list = 78% of the 4M envelope. Coordinator re-verified on GEX44: HEAD USAGE_INDEX_V5_PASS=76/76; the same test
+file against pre-fix tools (41e35562) fails exactly the 4 fix gates (DATE-ONLY, GARBAGE, POISON-FILE,
+LEGACY-GROWN) -> red-before is real. Verification GAPS: 3 consumer commands exit 1 and each is recorded identically in
+01-BASELINE.md (estate_shadow 10/11, frontier_intelligence_os 48/49, token_ground_truth_junction 'cmd' on Linux);
+criterion 4 (refresh cost) not re-measured after the fixes. Phase 2 not started.
 Also settled today: cognitive-resource-os has no open work -- CRO-01 PASS on GEX44 since 2026-09-30 (bb094d1,
 194 passed / 4 skipped); the laptop's STATE.md is stale only because mission/cognitive-resource-os-gex44 is unmerged.
