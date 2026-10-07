@@ -196,10 +196,24 @@ def run_check(tag: str, argv: list, root: Path) -> list:
 # it needs `receipt`, a path to a JSON receipt. The receipt states cost, measured saving, forecast, payback, and the estimates
 # it supersedes. Every derived number is recomputed here, so a receipt cannot carry arithmetic its own inputs contradict.
 PAYBACK_STATES = {"PAID_BACK", "NOT_YET", "UNKNOWN"}
+RECEIPT_KINDS = {"payback", "measurement"}
+CONFIDENCE = {"low", "medium", "high"}
 
 
 def _pos_int(v) -> bool:
     return isinstance(v, int) and not isinstance(v, bool) and v > 0
+
+
+def _receipt_extras(wid: str, r: dict) -> list:
+    """Optional amortization fields (amendment A1), validated whenever present, for every kind."""
+    f = []
+    if "horizon_days" in r and not _pos_int(r["horizon_days"]):
+        f.append(f"{wid} receipt horizon_days {r['horizon_days']!r} is not a positive integer")
+    if "confidence" in r and r["confidence"] not in CONFIDENCE:
+        f.append(f"{wid} receipt confidence {r['confidence']!r} is not low/medium/high")
+    if "retirement_criterion" in r and not (isinstance(r["retirement_criterion"], str) and r["retirement_criterion"].strip()):
+        f.append(f"{wid} receipt retirement_criterion must be a non-empty string")
+    return f
 
 
 def check_receipt(wid: str, rel, root: Path) -> list:
@@ -213,8 +227,20 @@ def check_receipt(wid: str, rel, root: Path) -> list:
     if not isinstance(r, dict):
         return [f"{wid} receipt {rel!r} is not an object"]
     f = []
+    kind = r.get("kind", "payback")
+    if kind not in RECEIPT_KINDS:
+        return [f"{wid} receipt kind {kind!r} is not one of {sorted(RECEIPT_KINDS)}"]
     if r.get("work_unit") != wid:
         f.append(f"{wid} receipt names work unit {r.get('work_unit')!r}")
+    f.extend(_receipt_extras(wid, r))
+    if kind == "measurement":
+        cost = r.get("cost") if isinstance(r.get("cost"), dict) else {}
+        if cost.get("unit") not in BUDGET_UNITS or not _pos_int(cost.get("value")):
+            f.append(f"{wid} receipt cost needs unit 'processed' and a positive integer value")
+        dv = r.get("decision_value")
+        if not isinstance(dv, str) or not dv.strip():
+            f.append(f"{wid} measurement receipt needs a non-empty decision_value string")
+        return f
     cost, sav, fc, pb = (r.get(k) if isinstance(r.get(k), dict) else {} for k in ("cost", "saving", "forecast", "payback"))
     if cost.get("unit") not in BUDGET_UNITS or not _pos_int(cost.get("value")):
         f.append(f"{wid} receipt cost needs unit 'processed' and a positive integer value")
@@ -286,6 +312,13 @@ def _fixture(root: Path) -> dict:
                       "evidence": [{"path": "ev.md", "command": "x"}]}}}
 
 
+def _as_measurement(r: dict, **kw) -> None:
+    for k in ("saving", "forecast", "calibration", "payback"):
+        r.pop(k, None)
+    r.update(kind="measurement", decision_value="KEEP/DEALLOCATE floor is read from this measurement")
+    r.update(kw)
+
+
 # Each rewrites the fixture receipt on disk; the ledger dict is left unchanged.
 RECEIPT_MUTANTS = {
     "receipt-wrong-break-even": lambda r: r["payback"].update(break_even_calls=33),
@@ -298,6 +331,12 @@ RECEIPT_MUTANTS = {
     "receipt-missing-evidence": lambda r: r.update(evidence=["nope.md"]),
     "receipt-other-unit": lambda r: r.update(work_unit="A"),
     "receipt-no-supersedes": lambda r: r.pop("supersedes"),
+    "receipt-unknown-kind": lambda r: r.update(kind="vibes"),
+    "receipt-bad-horizon": lambda r: r.update(horizon_days=0),
+    "receipt-bad-confidence": lambda r: r.update(confidence="certain"),
+    "receipt-empty-retirement": lambda r: r.update(retirement_criterion=" "),
+    "measurement-without-decision-value": lambda r: _as_measurement(r, decision_value=""),
+    "measurement-without-cost": lambda r: _as_measurement(r, cost={"unit": "processed", "value": 0}),
 }
 
 
@@ -385,6 +424,14 @@ def selftest(verbose=True, mutation=True) -> bool:
             ok &= killed
             if verbose:
                 print(f"  {'ok' if killed else 'FAIL'}   V-CEP2-MUT-{name} {'killed' if killed else 'SURVIVED'}")
+        for name, extra in {"measurement": {}, "measurement+amortization": {
+                "horizon_days": 30, "confidence": "low", "retirement_criterion": "retire if floor moves"}}.items():
+            _write_receipt(root, lambda r, e=extra: _as_measurement(r, **e))
+            got = check(copy.deepcopy(base), root)
+            ok &= not got
+            if verbose:
+                print(f"  {'ok' if not got else 'FAIL'}   V-CEP2-RECEIPT-{name} (positive pole) {got or ''}")
+        _write_receipt(root)
         for name, (extra, run, want) in OBL_CASES.items():
             d = copy.deepcopy(base)
             d["obligations_declared"] = True
