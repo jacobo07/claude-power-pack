@@ -70,9 +70,15 @@ RETURNING = ("returning user", "existing customer", "log back in",
 
 # The words that make surface architecture RELEVANT at all. Applicability is
 # first-class: an artifact that names no entry surface must stay uncontaminated.
+#
+# "sign in" and its spellings were missing while "log in" was present, so a
+# product whose entry surface is called Sign in (QuickLease, mission 004,
+# 2026-10-07) was reported as naming no entry surface at all. Word boundaries
+# keep "design in" from matching "sign in".
 ENTRY_SURFACE = ("sign up", "signup", "sign-up", "onboarding",
                  "create an account", "account creation", "register",
-                 "registration", "log in", "login", "trial", "free trial")
+                 "registration", "log in", "login", "log-in",
+                 "sign in", "sign-in", "signin", "trial", "free trial")
 
 
 def matches(hay: str, phrases) -> bool:
