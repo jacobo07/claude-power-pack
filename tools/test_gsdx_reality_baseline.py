@@ -195,7 +195,67 @@ def main() -> int:
 
 
 def task2(rb) -> None:
-    pass
+    root = repo("r2", {"syn_sleep.py": "import time\ntime.sleep(30)\nprint('SYN_PASS=1/1')\n"})
+    g = guard_dir("g4")
+    out = TMP / "timeout.jsonl"
+    rc, txt = run_suite(root, "syn_sleep.py", out, g, "--timeout", "1")
+    r = [x for x in rows(out) if x["kind"] == "run"]
+    check("V-RB-TIMEOUT",
+          rc == 1 and r and r[0]["timed_out"] is True and r[0]["returncode"] is None and r[0]["summary"] is None,
+          f"rc={rc} row={ {k: r[0].get(k) for k in ('timed_out', 'returncode', 'summary')} if r else None}")
+
+    # A synthetic suite carrying the live-mutating name: it overwrites <its ROOT>/modules/target.txt.
+    mut = ("import pathlib\nroot = pathlib.Path(__file__).resolve().parents[1]\n"
+           "(root / 'modules' / 'target.txt').write_text('MUTATED', encoding='utf-8')\n"
+           "print('SYN_CAUGHT=1/1')\n")
+    root = repo("r3", {"test_gsd_x_goal_mutation.py": mut})
+    (root / "modules").mkdir()
+    target = root / "modules" / "target.txt"
+    target.write_text("original", encoding="utf-8")
+    sha0 = hashlib.sha256(target.read_bytes()).hexdigest()
+    out = TMP / "mut.jsonl"
+    rc, txt = run_suite(root, "test_gsd_x_goal_mutation.py", out, g)
+    check("V-RB-LIVE-MUTATING-REFUSED",
+          rc == 2 and not [x for x in rows(out) if x["kind"] == "run"]
+          and hashlib.sha256(target.read_bytes()).hexdigest() == sha0,
+          f"rc={rc} rows={len(rows(out))} {txt.strip()[:120]}")
+
+    rc, txt = run_suite(root, "test_gsd_x_goal_mutation.py", out, g, "--in-copy")
+    r = [x for x in rows(out) if x["kind"] == "run"]
+    sha1 = hashlib.sha256(target.read_bytes()).hexdigest()
+    check("V-RB-IN-COPY-ISOLATED",
+          rc == 0 and r and r[0]["in_copy"] is True and (r[0]["summary"] or "").split("=")[0].endswith("_CAUGHT")
+          and sha1 == sha0,
+          f"rc={rc} in_copy={r[0]['in_copy'] if r else None} summary={r[0]['summary'] if r else None} "
+          f"live_sha_unchanged={sha1 == sha0} {txt.strip()[:120]}")
+
+    out = TMP / "unknown.jsonl"
+    rc, _ = tool("unknown", "--out", out, "--suite", "S", "--reason", "R")
+    u = rows(out)
+    check("V-RB-UNKNOWN-ROW",
+          rc == 0 and len(u) == 1 and u[0].get("kind") == "unknown" and u[0].get("suite") == "S"
+          and u[0].get("reason") == "R",
+          f"rc={rc} rows={u}")
+
+    src = TMP / "table.jsonl"
+    hand = [
+        {"kind": "run", "suite": "A", "path": "tools/A.py", "in_copy": False, "cold": True, "wall_s": 2.0,
+         "returncode": 0, "timed_out": False, "summary": "A_PASS=2/2", "passed": 2, "total": 2},
+        {"kind": "run", "suite": "A", "path": "tools/A.py", "in_copy": False, "cold": False, "wall_s": 1.5,
+         "returncode": 0, "timed_out": False, "summary": "A_PASS=2/2", "passed": 2, "total": 2},
+        {"kind": "unknown", "suite": "B", "reason": "needs a live host"},
+    ]
+    src.write_text("".join(json.dumps(h) + "\n" for h in hand), encoding="utf-8")
+    md = TMP / "table.md"
+    rc, txt = tool("table", "--in", src, "--baseline", "A=3/3", "--md-out", md)
+    a_line = next((l for l in txt.splitlines() if l.startswith("| A ")), "")
+    b_line = next((l for l in txt.splitlines() if l.startswith("| B ")), "")
+    cells = [c.strip() for c in a_line.strip("|").split("|")]
+    check("V-RB-TABLE",
+          rc == 0 and cells[1:6] == ["2", "2.000", "1.500", "2.000", "0"] and "A_PASS=2/2" in a_line
+          and "DIFFERS (baseline 3/3)" in a_line and "UNKNOWN (needs a live host)" in b_line
+          and md.is_file() and md.read_text(encoding="utf-8").strip() in txt,
+          f"rc={rc} A={a_line} B={b_line}")
 
 
 if __name__ == "__main__":

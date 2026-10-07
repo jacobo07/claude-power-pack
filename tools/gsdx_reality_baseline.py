@@ -42,6 +42,9 @@ DEFAULT_GUARD = REAL_HOME / ".claude" / "state" / "gsd-x"
 # (measured confound, 01-01 Task 1). Only these exact file names are excluded; a change
 # to one is still recorded on the guard row as `excluded_changed`.
 DEFAULT_GUARD_EXCLUDE = ("sweep_heartbeat.json",)
+# Suites that write the live source tree they run from (test_gsd_x_goal_mutation.py:1-45
+# mutates goal modules under ROOT = parents[1]): refused unless --in-copy.
+LIVE_MUTATING = ("test_gsd_x_goal_mutation.py",)
 SUMMARY_RE = re.compile(r"\b([A-Z][A-Z0-9_]*_(?:PASS|CAUGHT))=(\d+)/(\d+)")
 
 
@@ -187,10 +190,82 @@ def cmd_fingerprint(a) -> int:
     return {"SAME": 0, "CHANGED": 1}.get(res["verdict"], 2)
 
 
+COPY_DIRS = ("modules", "tools", "vault/pricing", "vault/config")
+COPY_IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", "node_modules")  # as mutation_drill.py:54
+
+
 def _resolve_suites(a, repo: Path) -> list[Path]:
     if a.suite:
         return [(repo / s).resolve() for s in a.suite]
-    return sorted(p for p in (repo / "tools").glob("test_gsd_x_goal*.py"))
+    return sorted(p for p in (repo / "tools").glob("test_gsd_x_goal*.py") if p.name not in LIVE_MUTATING)
+
+
+def _make_copy(repo: Path) -> Path:
+    """Copy COPY_DIRS into a fresh mkdtemp; the caller removes exactly that path."""
+    dst = Path(tempfile.mkdtemp(prefix="gsdx_rb_copy_"))
+    for d in COPY_DIRS:
+        if (repo / d).is_dir():
+            shutil.copytree(repo / d, dst / d, ignore=COPY_IGNORE)
+    return dst
+
+
+def cmd_unknown(a) -> int:
+    _append(Path(a.out), {"kind": "unknown", "suite": a.suite, "reason": a.reason, "recorded_at": _now()})
+    print(f"UNKNOWN recorded: {a.suite} ({a.reason})")
+    return 0
+
+
+def _parse_baselines(items) -> dict:
+    out = {}
+    for item in items or []:
+        name, _, frac = item.partition("=")
+        out[name] = frac
+    return out
+
+
+def render_table(rows: list[dict], baselines: dict) -> str:
+    head = "| suite | runs | cold s | min s | max s | exit codes | summary | baseline | command |"
+    lines = [head, "|---|---|---|---|---|---|---|---|---|"]
+    order = []
+    for r in rows:
+        if r.get("kind") in ("run", "unknown") and r.get("suite") not in order:
+            order.append(r.get("suite"))
+    for suite in order:
+        runs = [r for r in rows if r.get("kind") == "run" and r.get("suite") == suite]
+        unknowns = [r for r in rows if r.get("kind") == "unknown" and r.get("suite") == suite]
+        for u in unknowns:
+            lines.append(f"| {suite} | UNKNOWN ({u.get('reason')}) | - | - | - | - | - | - | - |")
+        if not runs:
+            continue
+        walls = [r["wall_s"] for r in runs if isinstance(r.get("wall_s"), (int, float))]
+        cold = next((r["wall_s"] for r in runs if r.get("cold")), None)
+        codes = sorted({"timeout" if r.get("timed_out") else str(r.get("returncode")) for r in runs})
+        summaries = []
+        for r in runs:
+            s = r.get("summary") or "none"
+            if s not in summaries:
+                summaries.append(s)
+        fracs = {f"{r['passed']}/{r['total']}" for r in runs if r.get("summary")}
+        want = baselines.get(suite)
+        if want is None:
+            base = "-"
+        elif fracs == {want}:
+            base = f"= {want}"
+        else:
+            base = f"DIFFERS (baseline {want})"
+        cmd = f"python {runs[0].get('path')}" + (" [in copy]" if runs[0].get("in_copy") else "")
+        lines.append(f"| {suite} | {len(runs)} | {'' if cold is None else f'{cold:.3f}'} | "
+                     f"{f'{min(walls):.3f}' if walls else ''} | {f'{max(walls):.3f}' if walls else ''} | "
+                     f"{', '.join(codes)} | {' / '.join(summaries)} | {base} | {cmd} |")
+    return "\n".join(lines) + "\n"
+
+
+def cmd_table(a) -> int:
+    text = render_table(_load_rows(Path(a.in_)), _parse_baselines(a.baseline))
+    print(text, end="")
+    if a.md_out:
+        Path(a.md_out).write_text(text, encoding="utf-8")
+    return 0
 
 
 def cmd_suites(a) -> int:
@@ -199,6 +274,11 @@ def cmd_suites(a) -> int:
     missing = [str(s) for s in suites if not s.is_file()]
     if missing or not suites:
         print(f"refused: suite file(s) missing: {missing or 'none selected'}")
+        return 2
+    live = [s.name for s in suites if s.name in LIVE_MUTATING]
+    if live and not a.in_copy:
+        print(f"refused: {live} write the live source tree they run from "
+              f"(test_gsd_x_goal_mutation.py:1-45); re-run with --in-copy")
         return 2
     guards = [Path(g) for g in (a.guard_dir or [DEFAULT_GUARD])]
     out, log_dir = Path(a.out), Path(a.log_dir)
@@ -213,21 +293,27 @@ def cmd_suites(a) -> int:
             log = log_dir / f"{suite.stem}-{k}.log"
             tmp = Path(tempfile.mkdtemp(prefix="gsdx_rb_run_"))
             env = hermetic_env(tmp)
-            argv = [sys.executable, str(suite)]
+            copy_root, copy_s, cwd, target = None, None, repo, suite
+            if a.in_copy:
+                c0 = time.perf_counter()
+                copy_root = _make_copy(repo)
+                copy_s = round(time.perf_counter() - c0, 3)
+                cwd, target = copy_root, copy_root / rel
+            argv = [sys.executable, str(target)]
             started = _now()
             t0 = time.perf_counter()
             timed_out, rc = False, None
             with log.open("w", encoding="utf-8", errors="replace") as fh:
                 try:
-                    rc = subprocess.run(argv, cwd=str(repo), env=env, stdout=fh, stderr=subprocess.STDOUT,
+                    rc = subprocess.run(argv, cwd=str(cwd), env=env, stdout=fh, stderr=subprocess.STDOUT,
                                         stdin=subprocess.DEVNULL, timeout=a.timeout).returncode
                 except subprocess.TimeoutExpired:
                     timed_out = True
             wall = round(time.perf_counter() - t0, 3)
             summ = parse_summary(log.read_text(encoding="utf-8", errors="replace"))
             row = {"kind": "run", "label": a.label, "suite": suite.name, "path": rel, "argv": argv,
-                   "in_copy": False, "run_index": k, "cold": not prior, "started_at": started,
-                   "wall_s": wall, "returncode": rc, "timed_out": timed_out,
+                   "in_copy": bool(a.in_copy), "copy_s": copy_s, "run_index": k, "cold": not prior,
+                   "started_at": started, "wall_s": wall, "returncode": rc, "timed_out": timed_out,
                    "summary": summ["text"] if summ else None,
                    "passed": summ["passed"] if summ else None, "total": summ["total"] if summ else None,
                    "log": str(log), "free_ram_mb": free_ram_mb(),
@@ -239,6 +325,8 @@ def cmd_suites(a) -> int:
                   f"summary={row['summary']}{' TIMEOUT' if timed_out else ''}")
             if not a.keep_temp:
                 shutil.rmtree(tmp, ignore_errors=True)
+                if copy_root is not None:
+                    shutil.rmtree(copy_root, ignore_errors=True)
     guard_bad = False
     for g in guards:
         after = fingerprint(g)
@@ -273,12 +361,21 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--repo-root")
     s.add_argument("--label")
     s.add_argument("--keep-temp", action="store_true")
+    u = sub.add_parser("unknown")
+    u.add_argument("--out", required=True)
+    u.add_argument("--suite", required=True)
+    u.add_argument("--reason", required=True)
+    t = sub.add_parser("table")
+    t.add_argument("--in", dest="in_", required=True)
+    t.add_argument("--baseline", action="append")
+    t.add_argument("--md-out")
     return p
 
 
 def main(argv=None) -> int:
     a = build_parser().parse_args(argv)
-    return {"fingerprint": cmd_fingerprint, "suites": cmd_suites}[a.cmd](a)
+    return {"fingerprint": cmd_fingerprint, "suites": cmd_suites, "unknown": cmd_unknown,
+            "table": cmd_table}[a.cmd](a)
 
 
 if __name__ == "__main__":
