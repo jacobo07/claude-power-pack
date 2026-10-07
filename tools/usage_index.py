@@ -1781,7 +1781,10 @@ def population(con, *, until=None, project_filter=None, select=None, include_arc
     if select not in (None, "all", "kme"):
         reasons.append(f"selector {select!r} is not available (all | kme)")
         return out
-    if isinstance(until, str):
+    if until is not None:
+        if isinstance(until, bool) or not isinstance(until, (str, int, float)):
+            reasons.append("until is neither an ISO instant nor a number")
+            return out
         until = _epoch(until)
         if until is None:
             reasons.append("until is not an ISO instant")
@@ -2109,7 +2112,7 @@ def main(argv=None) -> int:
                 print(f"population: cannot build the expected record: {type(e).__name__}: {e}",
                       file=sys.stderr)
                 return 2
-        res = population(con, until=_epoch(a.until) if a.until else None,
+        res = population(con, until=a.until or None,
                          project_filter=a.project_filter, select=a.select,
                          include_archived=a.include_archived, expected=expected, host=a.host,
                          tolerate_parse_errors=a.tolerate_parse_errors, detail=a.detail)

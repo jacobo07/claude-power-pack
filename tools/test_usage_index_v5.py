@@ -2115,7 +2115,45 @@ def grp_cli_cost_keys() -> None:
              f"maxrss still reported)")
 
 
-GROUPS = (("grp_schema", grp_schema), ("grp_tool_event", grp_tool_event),
+def grp_until_refused() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, _ = one_session_store(td)
+        db = td / "db" / "ix.sqlite"
+        con = UX.connect(db)
+        try:
+            UX.refresh(con, proj, deadline_s=30)
+        finally:
+            con.close()
+        rc_d, date_only = _pop_cli(db, "--until", "2026-09-01")
+        rc_g, garbage = _pop_cli(db, "--until", "garbage")
+        rc_c, control = _pop_cli(db, "--until", "2026-10-02T00:00:00Z")
+        con = UX.connect(db)
+        try:
+            try:
+                lib = UX.population(con, until=object())
+            except Exception as e:  # noqa: BLE001 -- a crash is a failed refusal, not a pass
+                lib = {"verdict": f"CRASH {type(e).__name__}"}
+        finally:
+            con.close()
+        gate("V-UX5-UNTIL-DATE-ONLY-REFUSED",
+             date_only.get("verdict") == "UNMEASURED" and bool(date_only.get("reasons"))
+             and date_only.get("population") is None,
+             f"--until 2026-09-01: exit={rc_d} verdict={date_only.get('verdict')} "
+             f"until={date_only.get('until')} reasons={date_only.get('reasons')}")
+        gate("V-UX5-UNTIL-GARBAGE-REFUSED",
+             garbage.get("verdict") == "UNMEASURED" and bool(garbage.get("reasons"))
+             and garbage.get("population") is None and lib.get("verdict") == "UNMEASURED",
+             f"--until garbage: exit={rc_g} verdict={garbage.get('verdict')} "
+             f"reasons={garbage.get('reasons')}; population(until=object()) -> {lib.get('verdict')}")
+        gate("V-UX5-UNTIL-VALID-CONTROL",
+             control.get("verdict") == "MEASURED" and rc_c == 0
+             and (control.get("population") or {}).get("calls") == 2,
+             f"--until 2026-10-02T00:00:00Z: exit={rc_c} verdict={control.get('verdict')} "
+             f"calls={(control.get('population') or {}).get('calls')}")
+
+
+GROUPS = (("grp_until_refused", grp_until_refused), ("grp_schema", grp_schema),("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
           ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text),
           ("grp_alias", grp_alias), ("grp_identity_columns", grp_identity_columns),
