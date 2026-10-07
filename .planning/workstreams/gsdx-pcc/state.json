@@ -6,12 +6,12 @@
     {
       "number": "1",
       "name": "W0 Reality, baseline and incumbent measurement",
-      "status": "in_progress"
+      "status": "complete"
     },
     {
       "number": "2",
       "name": "W1 Convergence semantics (ULTRA-PLAN, the only one)",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "3",
@@ -56,8 +56,8 @@
   ],
   "next": {
     "command": "/gsd:progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 1 of 10 · 0% · executing"
+    "label": "Advance to the next step (plan phase 2)",
+    "reason": "Phase 2 of 10 — needs a plan"
   },
-  "updated_at": "2026-10-07T13:18:31.790Z"
+  "updated_at": "2026-10-07T18:22:40.085Z"
 }

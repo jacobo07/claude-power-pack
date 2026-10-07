@@ -44,7 +44,7 @@ discriminating evidence, or less reconstruction -- never from removing a check.
 
 ## Phases
 
-- [ ] **Phase 1: W0 Reality, baseline and incumbent measurement**
+- [x] **Phase 1: W0 Reality, baseline and incumbent measurement** (completed 2026-10-07)
   Premise-verify every API the spec names (HR-PREMISE-001: evidence_bundle, mutation_drill, change_impact,
   parallel_mesh pure fns, tower). Fix R01 (gate supervisor drops gate output on Windows, providers/gate.py:72)
   red-first, mutation-drilled, UKDL T-entry. Measure the incumbent: per-suite wall time of the GSD X goal suites,
@@ -115,23 +115,23 @@ measured so every later speedup has an honest baseline.
   3. Incumbent table in EVIDENCE.md: per-suite wall time of the GSD X goal suites, judge replay time, one real
      goal's sweep->judge timeline; UNKNOWN recorded where unmeasurable.
 
-**Plans:** 6 plans
+**Plans:** 6/6 plans complete
 
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md -- R01 red-first: gate supervisor std handles, mutation drill with control, UKDL T-entry (wave 1)
-- [ ] 01-02-PLAN.md -- reality-baseline instrument: guarded hermetic suite timing, in-copy runs, UNKNOWN rows, table (wave 1)
-- [ ] 01-03-PLAN.md -- goal timeline instrument: recorded goal over a verified copy, hermetic fixture via the real CLI (wave 1)
-- [ ] 01-04-PLAN.md -- HR-PREMISE-001 record with a failing control, liveness debt frozen by name, DENOMINATOR R10 (wave 1)
+- [x] 01-01-PLAN.md -- R01 red-first: gate supervisor std handles, mutation drill with control, UKDL T-entry (wave 1)
+- [x] 01-02-PLAN.md -- reality-baseline instrument: guarded hermetic suite timing, in-copy runs, UNKNOWN rows, table (wave 1)
+- [x] 01-03-PLAN.md -- goal timeline instrument: recorded goal over a verified copy, hermetic fixture via the real CLI (wave 1)
+- [x] 01-04-PLAN.md -- HR-PREMISE-001 record with a failing control, liveness debt frozen by name, DENOMINATOR R10 (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-05-PLAN.md -- incumbent measurement: every goal suite, mutation suite in a copy, timelines, judge replay (wave 2)
+- [x] 01-05-PLAN.md -- incumbent measurement: every goal suite, mutation suite in a copy, timelines, judge replay (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-06-PLAN.md -- phase-end gates, 01-EVIDENCE.md with Production Reality verdicts, R01 dispositioned (wave 3)
+- [x] 01-06-PLAN.md -- phase-end gates, 01-EVIDENCE.md with Production Reality verdicts, R01 dispositioned (wave 3)
 
 ### Phase 2: W1 Convergence semantics (ULTRA-PLAN, the only one)
 
