@@ -1,0 +1,4 @@
+[
+ {"step": "R1", "prompt": "vault/programs/cognitive-economy/gen2/evidence/tranche/packets/R1-s5-review.md", "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/R1-receipt.md", "cap": 800000, "tests": ["tools/test_wu3_packets.py"]},
+ {"step": "R2", "prompt": "vault/programs/cognitive-economy/gen2/evidence/tranche/packets/R2-hardrules.md", "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/R2-receipt.md", "cap": 2000000, "tests": ["tools/test_hard_rules_mirror.py"]}
+]
