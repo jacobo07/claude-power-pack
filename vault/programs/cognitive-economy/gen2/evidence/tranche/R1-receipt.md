@@ -47,4 +47,4 @@ These results match the claims in S5-receipt.md: WU2 ADMIT, WU1 DEOPT (blocked),
 - N2: The origin of `.pp-capabilities` was not measured. It could come from a session hook or from the builder. It is not part of either S5 commit and was left untouched.
 - N3: GIT is hardcoded to a Windows path (wu3_packets.py:36), so the tool is host-specific. The header of S5-receipt.md says "context-runtime-3" while this tranche is context-runtime-4. Both are cosmetic.
 
-COMMITS: pending
+COMMITS: d5636e78 (receipt) + this follow-up commit that records the hash
