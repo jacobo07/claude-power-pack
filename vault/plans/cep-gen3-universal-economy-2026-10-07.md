@@ -54,3 +54,4 @@ change method. UKDL into ukdl-universal.md only when no foreign uncommitted hunk
 ## Spend
 | tranche | processed | calls | gate |
 |---|---|---|---|
+| T1 | not measured (cap 3M) | ~35 | tests green (envelope_required 15/15, legacy 32/32; capsule_v2 71/72 pre-existing); receipt gen3/T1-receipt.md, branch ce/gen3-t1-envelope 44cbe15d |
