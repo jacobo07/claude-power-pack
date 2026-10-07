@@ -7,7 +7,14 @@ the Owner executes. Newest-relevant first.
 
 ---
 
-## NEW (2026-10-07) -- goal budget admission: Agent lane + dispatcher copy  [PENDING]
+## NEW (2026-10-07) -- goal budget admission: Agent lane + dispatcher copy  [RESOLVED 2026-10-07]
+
+Done by the agent on the Owner's explicit instruction ("do it yourself with update config"):
+live dispatcher 89AC7744 -> 6C8BF09F (backup `~/.claude/backups/hook-dispatcher.js.bak-20261007-pre-agent-lane`),
+settings.json gained the Task|Agent -> `--event=PreToolUse-Agent-default` group. Verified:
+`test_hook_registration_integrity.py --live-only` PASS before and after; pipe test through the
+registered command: unbound Agent passes, exhausted-goal Agent denied before launch, roomy goal admitted.
+Rollback: copy the backup over the live dispatcher and delete that one settings group.
 
 Spec `vault/specs/goal-budget-admission.md` (A1 incident: 42.3M spent against a 20M cap read only
 after the spend). The guard's goal mode is live on the Bash/PowerShell, Edit and Read lanes as soon as
