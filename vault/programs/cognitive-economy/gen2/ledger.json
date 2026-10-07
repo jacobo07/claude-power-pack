@@ -456,7 +456,7 @@
   }
  },
  "a1": {
-  "cap": 60000000,
+  "cap": 20000000,
   "spent": 42307381,
   "frozen": [
    "T2",
@@ -510,7 +510,30 @@
    {
     "cap": 60000000,
     "set": "2026-10-07 Owner choice 'Raise cap to 60M' (pane b9bd9469) after a1.spent 42,307,381 > 20M; covers spend to date + ~18M for T3 replay and T7"
+   },
+   {
+    "cap": 20000000,
+    "set": "2026-10-07 Owner 'y' (pane b9bd9469): 60M raise withdrawn -- raising a cap after crossing it turns the limit into a retrospective number"
    }
-  ]
+  ],
+  "status": "ECONOMIC_CONTAINMENT",
+  "breach": {
+   "spent": 42307381,
+   "cap": 20000000,
+   "overshoot_pct": 111.5,
+   "as_of": "2026-10-07T12:22:33Z",
+   "root_cause": "the cap was a ledger number read by C16 after spend; no admission path checked it before a call (interactive coordinator panes carried 41.2M of 42.3M)"
+  },
+  "containment": {
+   "allowed": [
+    "deterministic work that buys no new cognition",
+    "bounded cognition to build/prove pre-call budget admission (fresh pane, spec first)"
+   ],
+   "frozen_units": [
+    "T3",
+    "T7"
+   ],
+   "reopen": "only after pre-call admission is proven (tiny-cap canary, zero unauthorized overshoot) and A1 is reforecast from its current state"
+  }
  }
 }
