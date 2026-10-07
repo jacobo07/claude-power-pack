@@ -1,6 +1,11 @@
 {
- "cap": 3500000,
- "cap_source": "Owner 'go ahead' 2026-10-07 on NEXT-SESSION items 1+2: workers R1 0.8M + R2 2.0M, coordinator allowance 0.7M",
- "coordinator": {"sid": "e6e0eca7-6de8-4e89-9194-4cb611644727", "baseline": 26189610,
-   "baseline_source": "tranche_driver.spend(e6e0eca7) read immediately before the tranche-4 packets were committed"}
+    "cap":  3500000,
+    "cap_source":  "Owner \u0027go ahead\u0027 2026-10-07 on NEXT-SESSION items 1+2: workers R1 0.8M + R2 2.0M, coordinator allowance 0.7M",
+    "coordinator":  {
+                        "sid":  "e6e0eca7-6de8-4e89-9194-4cb611644727",
+                        "baseline":  26189610,
+                        "baseline_source":  "tranche_driver.spend(e6e0eca7) read immediately before the tranche-4 packets were committed",
+                        "final":  30760307,
+                        "final_source":  "E0 freeze at tranche-4 closure (Owner: close as FAIL, no re-baseline)"
+                    }
 }

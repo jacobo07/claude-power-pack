@@ -1,0 +1,7 @@
+{
+ "cap": 6700000,
+ "cap_source": "Owner 'y' to 'go 1-4, 5=drafts' on vault/plans/cr4-closure-and-failure-classes-2026-10-07.md",
+ "owned_units": [],
+ "owned_units_reason": "tranche edits tooling (gate, driver, hard_rules, ceps, goal log); it owns no gen2 ledger units",
+ "coordinator": {"sid": "e6e0eca7-6de8-4e89-9194-4cb611644727", "baseline": 30760307, "allowance": 500000}
+}
