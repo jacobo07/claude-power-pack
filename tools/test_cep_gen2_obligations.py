@@ -138,9 +138,10 @@ def main() -> int:
         print(f"  {'ok' if clean else 'FAIL'}   V-OBL-INTEGRATION-declared-valid-passes-check")
     live = json.loads((cep.REPO / cep.LEDGER_REL).read_text(encoding="utf-8"))
     st = cep.check_obligations(live, cep.REPO)[0]
-    live_ok = live.get("obligations_declared") is not True and st == "UNASSESSED"
+    # CE-T0b declared C1-C14: the live ledger is now assessed, and stays red while any obligation is OPEN or unrun.
+    live_ok = live.get("obligations_declared") is True and st == "FAIL"
     ok &= live_ok
-    print(f"  {'ok' if live_ok else 'FAIL'}   V-OBL-LIVE-LEDGER-unassessed (status {st}, declared={live.get('obligations_declared')!r})")
+    print(f"  {'ok' if live_ok else 'FAIL'}   V-OBL-LIVE-LEDGER-assessed (status {st}, declared={live.get('obligations_declared')!r})")
     print(f"OBL_TEST={'PASS' if ok else 'FAIL'}")
     return 0 if ok else 1
 

@@ -12,7 +12,10 @@ from __future__ import annotations
 
 import copy
 import datetime as dt
+import importlib.util
 import json
+import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -31,7 +34,11 @@ def _now() -> dt.datetime:
     return dt.datetime.now(dt.timezone.utc)
 
 
-def check(led: dict, root: Path, now: dt.datetime | None = None) -> list:
+def check(led: dict, root: Path, now: dt.datetime | None = None, run_checks: bool = False) -> list:
+    return check_units(led, root, now) + check_obligations(led, root, run_checks)[1]
+
+
+def check_units(led: dict, root: Path, now: dt.datetime | None = None) -> list:
     now = now or _now()
     fails = []
     wus = led.get("work_units") or {}
@@ -68,17 +75,22 @@ def check(led: dict, root: Path, now: dt.datetime | None = None) -> list:
     spent, cap = b.get("spent_measured"), b.get("authorization_boundary")
     if spent is not None and cap is not None and spent > cap and not b.get("owner_extension"):
         fails.append(f"spend {spent:,} over boundary {cap:,} without an Owner extension")
-    fails.extend(check_obligations(led, root)[1])
     return fails
 
 
 # Scope conservation (D3, optional). ledger.obligations_declared (bool) + ledger.obligations [{id, source, terminal, evidence|execution}].
 # Absent / false / null -> UNASSESSED (never PASS by vacuity, never FAIL). True -> every obligation needs a valid terminal and
 # an execution mapping or evidence: EXECUTE needs `execution`; SATISFIED needs `evidence`; the rest need either.
+# Master Done-Gate (CE-T0b): an obligation that carries the key `check` is also judged by that check. status OPEN (check null)
+# never passes; status CHECKED needs an argv that exits 0 when run from the repo root. Outside --final the check is not run,
+# so it is UNKNOWN, and UNKNOWN never passes. A missing tool and a non-zero exit both fail.
 OBL_TERMINALS = {"SATISFIED", "EXECUTE", "REUSE", "MERGED", "OWNED_ELSEWHERE", "CONDITIONAL", "SUPERSEDED", "OWNER_REMOVED"}
+OBL_CHECK_STATES = {"OPEN", "CHECKED"}
+CHECK_TIMEOUT_S = 900
+SELF_NAMES = ("cep_gen2.py", "test_cognitive_economy_program.py")
 
 
-def check_obligations(led: dict, root: Path) -> tuple:
+def check_obligations(led: dict, root: Path, run_checks: bool = False) -> tuple:
     """Return (status, fails); status is UNASSESSED, PASS or FAIL."""
     decl = led.get("obligations_declared")
     if decl is None or decl is False:
@@ -122,7 +134,43 @@ def check_obligations(led: dict, root: Path) -> tuple:
             fails.append(f"{tag} EXECUTE without an execution mapping")
         elif term == "SATISFIED" and not ev:
             fails.append(f"{tag} SATISFIED without evidence")
+        if "check" in o:
+            fails.extend(_master_check(tag, o, root, run_checks))
     return ("FAIL" if fails else "PASS"), fails
+
+
+def _master_check(tag: str, o: dict, root: Path, run: bool) -> list:
+    st, argv = o.get("status"), o.get("check")
+    if st not in OBL_CHECK_STATES:
+        return [f"{tag} status {st!r} is not one of {sorted(OBL_CHECK_STATES)}"]
+    if st == "OPEN":
+        if argv is not None:
+            return [f"{tag} OPEN yet carries a check (a bound check is CHECKED)"]
+        return [f"{tag} OPEN: no executable check yet (owner {o.get('execution')})"]  # MUT-OPEN
+    if not (isinstance(argv, list) and argv and all(isinstance(a, str) and a for a in argv)):
+        return [f"{tag} CHECKED needs check as a non-empty argv list, got {argv!r}"]
+    if not run:
+        return [f"{tag} check not executed in this mode: UNKNOWN never passes"]
+    return run_check(tag, argv, root)
+
+
+def run_check(tag: str, argv: list, root: Path) -> list:
+    if any(a.replace("\\", "/").endswith(SELF_NAMES) for a in argv):
+        return [f"{tag} check is recursive: it invokes this gate"]
+    exe = sys.executable if argv[0] in ("python", "python3") else shutil.which(argv[0])
+    if not exe:
+        return [f"{tag} check tool missing: {argv[0]!r} not found"]
+    if exe == sys.executable and len(argv) > 1 and argv[1].endswith(".py") and not (root / argv[1]).is_file():
+        return [f"{tag} check tool missing: {argv[1]!r}"]
+    try:
+        r = subprocess.run([exe, *argv[1:]], cwd=root, capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=CHECK_TIMEOUT_S)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return [f"{tag} check could not run: {exc!r}"]
+    if r.returncode != 0:
+        tail = ((r.stdout or "") + (r.stderr or "")).strip().splitlines()[-1:]
+        return [f"{tag} check exited {r.returncode}: {' '.join(argv)} {tail}"]
+    return []
 
 
 # Experiment receipt (B1, post-E1 plan Phase 1). A work unit with `experiment: true` and a terminal is a CLOSED experiment;
@@ -253,7 +301,49 @@ MUTANTS = {
 }
 
 
-def selftest(verbose=True) -> bool:
+CHK_OK = ["python", "-c", "raise SystemExit(0)"]
+
+
+def _obl(oid: str, **kw) -> dict:
+    o = {"id": oid, "source": "fixture", "clause": "c", "terminal": "EXECUTE", "execution": "T0",
+         "status": "CHECKED", "check": CHK_OK}
+    o.update(kw)
+    return o
+
+
+# Master Done-Gate cases: name -> (obligations added beside a passing C1, run_checks, want_green).
+OBL_CASES = {
+    "all-pass-control": ([], True, True),
+    "open": ([_obl("C2", status="OPEN", check=None)], True, False),
+    "check-exits-1": ([_obl("C2", check=["python", "-c", "raise SystemExit(1)"])], True, False),
+    "check-tool-missing": ([_obl("C2", check=["python", "tools/no_such_check.py"])], True, False),
+    "check-binary-missing": ([_obl("C2", check=["no-such-binary-cep2"])], True, False),
+    "check-not-run-is-unknown": ([], False, False),
+    "open-with-check": ([_obl("C2", status="OPEN")], True, False),
+    "checked-without-argv": ([_obl("C2", check=None)], True, False),
+    "unknown-status": ([_obl("C2", status="DONE")], True, False),
+    "recursive-check": ([_obl("C2", check=["python", "tools/cep_gen2.py", "--final"])], True, False),
+}
+
+
+def _mutant_open_passes_goes_red() -> bool:
+    """Copy this module with an OPEN obligation counted as passing; True when the copy's selftest goes red."""
+    src = Path(__file__).read_text(encoding="utf-8").splitlines(keepends=True)
+    hits = [i for i, l in enumerate(src) if l.rstrip().endswith("# MUT-OPEN") and l.strip().startswith("return")]
+    if len(hits) != 1:
+        return False
+    i = hits[0]
+    src[i] = src[i][: len(src[i]) - len(src[i].lstrip())] + "return []\n"
+    with tempfile.TemporaryDirectory() as tmp:
+        p = Path(tmp) / "cep_gen2_mut.py"
+        p.write_text("".join(src), encoding="utf-8")
+        spec = importlib.util.spec_from_file_location("cep_gen2_mut", p)
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        return m.selftest(verbose=False, mutation=False) is False
+
+
+def selftest(verbose=True, mutation=True) -> bool:
     ok = True
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -276,6 +366,20 @@ def selftest(verbose=True) -> bool:
             ok &= killed
             if verbose:
                 print(f"  {'ok' if killed else 'FAIL'}   V-CEP2-MUT-{name} {'killed' if killed else 'SURVIVED'}")
+        for name, (extra, run, want) in OBL_CASES.items():
+            d = copy.deepcopy(base)
+            d["obligations_declared"] = True
+            d["obligations"] = [_obl("C1")] + copy.deepcopy(extra)
+            got = check(d, root, run_checks=run)
+            good = (not got) == want
+            ok &= good
+            if verbose:
+                print(f"  {'ok' if good else 'FAIL'}   V-CEP2-OBL-{name} {'green' if not got else 'red'} {got if not good else ''}")
+    if mutation:
+        red = _mutant_open_passes_goes_red()
+        ok &= red
+        if verbose:
+            print(f"  {'ok' if red else 'FAIL'}   V-CEP2-MUT-open-obligation-passes {'killed' if red else 'SURVIVED'}")
     return ok
 
 
@@ -289,14 +393,16 @@ def main(mode: str) -> int:
     except (OSError, json.JSONDecodeError) as exc:
         print(f"CEP2_VERDICT=COULD_NOT_RUN ledger unreadable: {exc}")
         return 2
-    fails = check(led, REPO)
     if mode == "status":
+        fails = check(led, REPO)
         open_ = [w for w, u in led.get("work_units", {}).items() if not u.get("terminal")]
         print(json.dumps({"open": open_, "violations": fails}, indent=1, ensure_ascii=False))
         return 1 if fails else 0
+    ost, ofails = check_obligations(led, REPO, run_checks=True)
+    fails = check_units(led, REPO) + ofails
     if not selftest(verbose=False):
         fails.insert(0, "S0 selftest failed: the verifier cannot be trusted")
-    print(f"CEP2_OBLIGATIONS={check_obligations(led, REPO)[0]}")
+    print(f"CEP2_OBLIGATIONS={ost}")
     for x in fails:
         print("  FAIL", x)
     print(f"CEP2_VERDICT={'PASS' if not fails else 'FAIL'} failures={len(fails)}")
