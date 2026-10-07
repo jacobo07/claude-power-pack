@@ -95,6 +95,144 @@ discriminating evidence, or less reconstruction -- never from removing a check.
   with repo only); tower family `software_construction` B0 + goal-brief injection so `claude -p` goal workers
   inherit it; UKDL HR/PR/T entries; meta-analysis; `tools/gsdx_pcc_done.py`.
 
+## Phase Details
+
+Requirements are DENOMINATOR row ids (`REQUIREMENTS.md`: the requirement set IS the denominator). A row listed in
+two phases is closed by the later one; the earlier one lands its part.
+
+### Phase 1: W0 Reality, baseline and incumbent measurement
+
+**Goal**: Every API the spec names is premise-verified, R01 is fixed red-first, and the incumbent full path is
+measured so every later speedup has an honest baseline.
+**Depends on**: Nothing
+**Requirements**: R01
+**Success Criteria** (what must be TRUE):
+
+  1. HR-PREMISE-001 premise check recorded for evidence_bundle, mutation_drill, change_impact, parallel_mesh pure
+     fns and tower (real signatures cited file:line in EVIDENCE.md).
+  2. R01 (gate output lost on Windows, `providers/gate.py:72`) driven red, fixed, mutation-drilled; gate_provider
+     suite 18/18; UKDL T-entry written.
+  3. Incumbent table in EVIDENCE.md: per-suite wall time of the GSD X goal suites, judge replay time, one real
+     goal's sweep->judge timeline; UNKNOWN recorded where unmeasurable.
+
+### Phase 2: W1 Convergence semantics (ULTRA-PLAN, the only one)
+
+**Goal**: Proof states, certificate validity, causal fingerprint, freshness classes, frontier semantics, event
+types, kill switches and legacy-log replay are resolved in the spec, audited, and land as a zero-behaviour-change
+compatibility seam.
+**Depends on**: Phase 1
+**Requirements**: D01, D03, D10, D43, D44
+**Success Criteria** (what must be TRUE):
+
+  1. Amended spec audited by `oneshot-architect-auditor`; every gap injected.
+  2. New event types + projections land with ZERO behaviour change; every existing goal suite unchanged and green.
+  3. A replay test over a recorded legacy goal log passes.
+
+### Phase 3: W2 Execution frontier and scheduling
+
+**Goal**: `decide()` becomes the first action of a compiled execution frontier; WAIT only when the frontier is
+empty; sweep dispatches N independent gate epochs under a resource bound.
+**Depends on**: Phase 2
+**Requirements**: D04, D05, D06, D07, D08, D09, D25, D26, D27, D28, D33, D34
+**Success Criteria** (what must be TRUE):
+
+  1. `compile_frontier` projection (four frontiers, read/write/resource sets derived mechanically); legacy
+     `decide()` callers unchanged.
+  2. RED-first: global WAIT with independent work, unsafe parallel writes, resource collision admitted as
+     independent -- each seen red, then green.
+  3. Critical path from measured priors (UNKNOWN allowed); information-gain and failure-first as separate signals;
+     posture ECONOMY/BALANCED/WALL_CLOCK on the goal budget.
+
+### Phase 4: W3 Candidate snapshots, invalidation, proof inheritance
+
+**Goal**: Proofs bind to candidate snapshots by causal fingerprint; inheritance is explicit and never applies to
+fresh-required evidence; UNKNOWN impact forces FULL.
+**Depends on**: Phase 3
+**Requirements**: D01, D10, D11, D12, D13, D14, D20, D23, D24, D39, D45, R02
+**Success Criteria** (what must be TRUE):
+
+  1. Candidate snapshot on git objects + causal fingerprint + `proof.produced/inherited/invalidated` events.
+  2. Minimal sufficient verification set with UNKNOWN -> FULL.
+  3. RED-first: false reuse after a relevant change; UNKNOWN treated as clean; fresh-required proof inherited;
+     omitted proof without an INHERITED event; candidate changes under verification.
+
+### Phase 5: W4 Judge VALIDATE vs REPLAY, parallel replay, reviewer concurrency
+
+**Goal**: The judge validates certificates independently or replays them (bounded concurrency); reviewers bind to
+a candidate and are staled exactly where bytes moved.
+**Depends on**: Phase 4
+**Requirements**: D15, D16, D17, R05
+**Success Criteria** (what must be TRUE):
+
+  1. Judge VALIDATE and REPLAY paths; independent replays concurrent under a bound.
+  2. A->B->A hole in evidence_bundle closed.
+  3. RED-first: builder self-certification; gate weakening accepted; stale review surviving mutation.
+
+### Phase 6: W5 Mutant farm
+
+**Goal**: Mutation contract by failure class, executed as isolated candidate-derived mutants in parallel, each
+killed for the right reason.
+**Depends on**: Phase 4
+**Requirements**: D18, D19, R04
+**Success Criteria** (what must be TRUE):
+
+  1. Mutants derived in isolated copies (drill discipline), control + kill signature per mutant; canonical
+     candidate intact.
+  2. RED-first: a mutant that crashes / fails setup is NOT counted as killed.
+  3. Live-mode mutation_probe never used by the farm; R04 recorded as debt.
+
+### Phase 7: W6 Universal impact adapter contract + Elixir pilot
+
+**Goal**: Impact adapters behind one contract inside the change_impact owner; Elixir adapter runs in SHADOW on a
+pilot worktree; every other ecosystem falls back to FULL provably.
+**Depends on**: Phase 4
+**Requirements**: D21, D22, D37, D38, D41, R06, R07, R08
+**Success Criteria** (what must be TRUE):
+
+  1. Adapter contract (direct, transitive, unknown frontier, change class in GK-13 vocabulary, unmapped surfaces,
+     authority); Python adapter = today's graph.
+  2. Elixir adapter in SHADOW on a `gsdx-pilot-*` worktree of io-chatgpt-plugin, incumbent full `mix test` in
+     parallel; maturity at most PROBATION, as append-only events.
+  3. RED-first: unsupported adapter authorising selective execution; adapter still TRUSTED/PROBATION after a
+     discrepancy. Every other denominator ecosystem: FULL fallback proven reachable.
+
+### Phase 8: W7 Continuation objects and boundary context images
+
+**Goal**: Per-job briefs and a sealed continuation object at epoch boundaries; no-progress detected from frontier
+delta.
+**Depends on**: Phase 3
+**Requirements**: D29, D30, D31, D32
+**Success Criteria** (what must be TRUE):
+
+  1. Per-job briefs from brief.py (mutation / repair / reviewer / fresh worker).
+  2. Continuation object sealed at epoch boundaries; convergence monotonicity checked from the frontier delta.
+  3. RED-first: handoff loses a blocking frontier.
+
+### Phase 9: W8 Latency observatory, shadow corpus, historical replay
+
+**Goal**: TTPD and the non-collapsed metric set as projections; old-vs-new shadow comparison; historical replay
+with zero false coverage on any promoted scope.
+**Depends on**: Phase 5, Phase 6, Phase 7
+**Requirements**: D02, D24, D35, D36, D37, D40, D46, R08
+**Success Criteria** (what must be TRUE):
+
+  1. TTPD + metric set projections over GoalLog.
+  2. `tools/gsdx_shadow.py` report; false_coverage == 0 on every promoted scope.
+  3. Replay of the io-ucg Phase-6 class and the Vault incidents (stale evidence, self-certification, live-mutant).
+
+### Phase 10: W9 Production Reality, fresh agent, UKDL, baseline ratchet, meta-analysis
+
+**Goal**: A real goal converges through the real CLI + sweep + judge on a fresh fixture repo, a fresh agent
+confirms it, and the `software_construction` family baseline is inherited by goal workers.
+**Depends on**: Phase 8, Phase 9
+**Requirements**: D03, D47, R03, R09
+**Success Criteria** (what must be TRUE):
+
+  1. Production Reality evidence: a real GoalLog with produced/inherited/invalidated proofs and a judge receipt
+     using VALIDATE and REPLAY.
+  2. Fresh-agent report PASS; tower family `software_construction` B0 + goal-brief injection verified.
+  3. `python tools/gsdx_pcc_done.py` exit 0 (the final done-gate below).
+
 ## Final done-gate (Phase 10 builds `tools/gsdx_pcc_done.py` to run exactly these)
 
 1. Every `tools/test_gsd_x_goal_*.py` suite exit 0 (gate_provider 18/18).
