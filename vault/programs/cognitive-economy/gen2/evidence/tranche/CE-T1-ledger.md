@@ -1,0 +1,11 @@
+- driver 2026-10-07T12:34:16 T1a FAIL sid=fab6ddd4-ca60-49a2-85e8-28697ba0659c launch_rc=1 checks={'receipt': False, 'commits': False, 'tests': True, 'spend': True} spend=106739 cap=1,400,000
+- driver 2026-10-07T12:34:30 T1b FAIL sid=9b787eab-2c78-4f42-bc0d-be91a9173577 launch_rc=1 checks={'receipt': False, 'commits': False, 'tests': False, 'spend': True} spend=0 cap=1,400,000
+- driver 2026-10-07T12:34:44 T1c FAIL sid=2634abd1-53cd-46be-911e-83d540904ad8 launch_rc=1 checks={'receipt': False, 'commits': False, 'tests': False, 'spend': True} spend=0 cap=1,400,000
+- driver 2026-10-07T12:34:58 T1d FAIL sid=dd8987bf-26cf-467e-b545-3422c3b008aa launch_rc=1 checks={'receipt': False, 'commits': False, 'tests': False, 'spend': True} spend=0 cap=1,400,000
+- driver 2026-10-07T12:35:14 T1e FAIL sid=65e35a1b-b779-44df-bc1a-223f89d4db35 launch_rc=1 checks={'receipt': False, 'commits': False, 'tests': False, 'spend': True} spend=0 cap=1,400,000
+- coordinator 2026-10-07 run1: all 5 workers launch_rc=1 (account weekly limit hit; 0 receipts, 0 commits). Results kept as CE-T1-results-run1-weekly-limit.json; rerun after /login.
+- driver 2026-10-07T12:41:19 T1a FAIL sid=80283aee-7908-42ea-bfc4-1544a113fc6b launch_rc=0 checks={'receipt': False, 'commits': False, 'tests': True, 'spend': True} spend=989449 cap=1,400,000
+- driver 2026-10-07T12:44:38 T1b PASS sid=26cfb282-b7a4-4353-a4c7-09f3e65a5d51 launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=888613 cap=1,400,000
+- driver 2026-10-07T12:49:55 T1c PASS sid=ec6ce024-4efe-4fca-8ce9-e64428269247 launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=1142163 cap=1,400,000
+- driver 2026-10-07T12:49:55 T1d REFUSED_OVER_CAP total_before=6,727,863 step_cap=1,400,000 limit=8,000,000
+- coordinator 2026-10-07 run2 readout: T1a FAIL (commit d465eaef, no receipt; coordinator re-verified 64/64, 36/36, receipt de813045 in worktree), T1b PASS, T1c PASS, T1d REFUSED_OVER_CAP (coordinator 3.71M + workers 3.02M vs 8M). Owner: raise cap + improve spend measurement -> run3 = T1d T1e + new T1f (driver measurement) at --cap 11.5M (from the 15M program reserve).

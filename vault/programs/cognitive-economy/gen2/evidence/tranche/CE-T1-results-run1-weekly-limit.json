@@ -1,0 +1,80 @@
+{
+ "steps": {
+  "T1a": {
+   "verdict": "FAIL",
+   "sid": "fab6ddd4-ca60-49a2-85e8-28697ba0659c",
+   "launch_rc": 1,
+   "checks": {
+    "receipt": false,
+    "commits": false,
+    "tests": true,
+    "spend": true
+   },
+   "spend": 106739,
+   "cap": 1400000,
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T1a-receipt.md",
+   "secs": 46
+  },
+  "T1b": {
+   "verdict": "FAIL",
+   "sid": "9b787eab-2c78-4f42-bc0d-be91a9173577",
+   "launch_rc": 1,
+   "checks": {
+    "receipt": false,
+    "commits": false,
+    "tests": false,
+    "spend": true
+   },
+   "spend": 0,
+   "cap": 1400000,
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T1b-receipt.md",
+   "secs": 14
+  },
+  "T1c": {
+   "verdict": "FAIL",
+   "sid": "2634abd1-53cd-46be-911e-83d540904ad8",
+   "launch_rc": 1,
+   "checks": {
+    "receipt": false,
+    "commits": false,
+    "tests": false,
+    "spend": true
+   },
+   "spend": 0,
+   "cap": 1400000,
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T1c-receipt.md",
+   "secs": 14
+  },
+  "T1d": {
+   "verdict": "FAIL",
+   "sid": "dd8987bf-26cf-467e-b545-3422c3b008aa",
+   "launch_rc": 1,
+   "checks": {
+    "receipt": false,
+    "commits": false,
+    "tests": false,
+    "spend": true
+   },
+   "spend": 0,
+   "cap": 1400000,
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T1d-receipt.md",
+   "secs": 14
+  },
+  "T1e": {
+   "verdict": "FAIL",
+   "sid": "65e35a1b-b779-44df-bc1a-223f89d4db35",
+   "launch_rc": 1,
+   "checks": {
+    "receipt": false,
+    "commits": false,
+    "tests": false,
+    "spend": true
+   },
+   "spend": 0,
+   "cap": 1400000,
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T1e-receipt.md",
+   "secs": 15
+  }
+ },
+ "coordinator_spend": 3007710
+}

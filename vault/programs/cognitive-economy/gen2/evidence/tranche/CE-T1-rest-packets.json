@@ -1,0 +1,12 @@
+[
+ {"step": "T1d", "prompt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T1d-packet.md",
+  "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T1d-receipt.md", "cap": 1400000,
+  "tests": ["tools/test_ce_t1_waiting.py", "tools/test_ce_t1_lifecycle.py", "tools/test_wake_flag_consumer.py",
+            "tools/test_lease.py", "tools/test_cep_gen2_obligations.py"]},
+ {"step": "T1e", "prompt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T1e-packet.md",
+  "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T1e-receipt.md", "cap": 1400000,
+  "tests": ["tools/test_ce_t1_paneloss.py", "tools/test_ce_t1_state.py", "tools/test_cep_gen2_obligations.py"]},
+ {"step": "T1f", "prompt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T1f-packet.md",
+  "receipt": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T1f-receipt.md", "cap": 1400000,
+  "tests": ["tools/test_tranche_driver.py"]}
+]
