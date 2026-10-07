@@ -63,6 +63,7 @@ disposition. Phase = the roadmap phase expected to close it.
 | R07 | Ecosystems: Python, Elixir, Rust, Go, Java, Kotlin, Node, PHP, Ruby | sdd_os/scaffold + hook-runtime | each: trusted adapter OR proven FULL fallback | 7 | OPEN | |
 | R08 | Pilot identity: Owner chose io-chatgpt-plugin; scout found Phase 6 in io-ucg | Reality 15 | pilot io-chatgpt-plugin, replay io-ucg; record discrepancy | 7,9 | OPEN | |
 | R09 | software_construction tower family (Owner D-O2) | modules/tower | BUILD B0 + inheritance proof | 10 | OPEN | |
+| R10 | gsd_x/goal/* unreachable per liveness gate (frozen as inherited debt in Phase 1) | modules/liveness/reachability.py; 17 gsd_x/goal units among 57 offenders at fbca24fc in this worktree (61 in the main checkout), frozen in vault/liveness/reachability_registry.json known_orphans | wire or DECLARE in reachability_registry by Phase 10 | 10 | OPEN | frozen at 96bdb8b1; .planning/workstreams/gsdx-pcc/phases/01-w0-reality-baseline-and-incumbent-measurement/01-liveness-before.md |
 
 ## Mutation corpus (each a faithful mutant killed for the right reason)
 false reuse after relevant change · failure to invalidate a causal dependency · UNKNOWN treated as clean ·
