@@ -304,13 +304,15 @@ def main(mode: str) -> int:
 
 
 TRANCHE_DIR = "vault/programs/cognitive-economy/gen2/evidence/tranche"
-TRANCHE_STATES = {"PASS", "FAIL", "WAITING", "BLOCKED", "BLOCKED_BY_OWNERSHIP", "UNDECIDED"}
+TRANCHE_STATES = {"PASS", "FAIL", "WAITING", "BLOCKED", "BLOCKED_BY_OWNERSHIP", "UNDECIDED", "NOT_APPLICABLE"}
+
+GREEN_STATES = ("PASS", "NOT_APPLICABLE")
 
 
 def tranche(name: str, root: Path = REPO) -> int:
     """`--tranche <name>`: judge <name>-results.json (written by tools/tranche_driver.py). Existing modes untouched.
     Computed clauses: receipts, violations (owned ledger units only), spend. Extra clauses are printed as given;
-    only PASS is green, so WAITING/BLOCKED/UNDECIDED keep the tranche red."""
+    only PASS and NOT_APPLICABLE are green, so WAITING/BLOCKED/UNDECIDED keep the tranche red."""
     import re
     d = root / TRANCHE_DIR
     # re-run files <name><letter>-results.json: the latest verdict per step wins, but EVERY attempt's spend counts,
@@ -324,14 +326,29 @@ def tranche(name: str, root: Path = REPO) -> int:
         print(f"CEP2_TRANCHE=COULD_NOT_RUN results unreadable: {exc}")
         return 2
     r = {"steps": {}, "clauses": {}, "owned_units": [], "cap": man.get("cap", rs[0].get("cap", 4_500_000))}
+    # owned_units: [] is a decision only when explicit AND carrying owned_units_reason; a missing key is not one.
+    owned_declared = isinstance(man.get("owned_units"), list)
+    owned_reason = str(man.get("owned_units_reason") or "").strip()
+    r["owned_units"] += list(man["owned_units"]) if owned_declared else []
     attempt_spends = []
     for x in rs:
         r["steps"].update(x.get("steps") or {})
         r["clauses"].update(x.get("clauses") or {})
         r["owned_units"] += [u for u in x.get("owned_units") or [] if u not in r["owned_units"]]
+        owned_declared = owned_declared or isinstance(x.get("owned_units"), list)
+        owned_reason = owned_reason or str(x.get("owned_units_reason") or "").strip()
         attempt_spends += [s.get("spend") for s in (x.get("steps") or {}).values() if s.get("sid")]
     coord = man.get("coordinator")
-    if coord:  # a model coordinator metered live from its transcript, minus its reading when the tranche began
+    coord_mode = "RESULTS"
+    final = coord.get("final") if isinstance(coord, dict) else None
+    if coord and isinstance(final, int) and not isinstance(final, bool):  # frozen: reproducible, transcript NOT read
+        coord_mode = "FROZEN"
+        try:
+            r["coordinator_spend"] = final - int(coord["baseline"])
+        except (KeyError, TypeError, ValueError):
+            r["coordinator_spend"] = None
+    elif coord:  # a model coordinator metered live from its transcript, minus its reading when the tranche began
+        coord_mode = "LIVE (not reproducible)"
         try:
             sys.path.insert(0, str(REPO / "tools"))
             from tranche_driver import spend as _spend
@@ -349,8 +366,11 @@ def tranche(name: str, root: Path = REPO) -> int:
     miss = [k for k, s in steps.items() if s.get("verdict") == "PASS" and not has(s)]
     cl["receipts"] = ("PASS" if steps and not miss else "FAIL", "missing:" + ",".join(miss) if miss else f"{len(steps)} steps")
     owned = r.get("owned_units") or []
-    if not owned:
-        cl["violations"] = ("UNDECIDED", "no owned ledger units declared")
+    if not owned and owned_declared and owned_reason:
+        cl["violations"] = ("NOT_APPLICABLE", f"owned_units: [] declared ({owned_reason})")
+    elif not owned:
+        cl["violations"] = ("UNDECIDED", "owned_units: [] without owned_units_reason" if owned_declared
+                            else "no owned ledger units declared")
     else:
         try:
             led = json.loads((root / LEDGER_REL).read_text(encoding="utf-8"))
@@ -361,17 +381,17 @@ def tranche(name: str, root: Path = REPO) -> int:
     nums = [r.get("coordinator_spend")] + attempt_spends
     cap = r["cap"]
     if any(not isinstance(n, int) for n in nums):
-        cl["spend"] = ("FAIL", "unknown spend (unmeasured is never green)")
+        cl["spend"] = ("FAIL", f"unknown spend (unmeasured is never green) coordinator={coord_mode}")
     else:
-        cl["spend"] = ("PASS" if sum(nums) <= cap else "FAIL", f"total={sum(nums):,} cap={cap:,}")
+        cl["spend"] = ("PASS" if sum(nums) <= cap else "FAIL", f"total={sum(nums):,} cap={cap:,} coordinator={coord_mode}")
     for k, c in (r.get("clauses") or {}).items():
         st, ev = c.get("status"), c.get("evidence") or ""
-        if st not in TRANCHE_STATES or (st == "PASS" and not (ev and (root / ev).is_file())):
+        if st not in TRANCHE_STATES or (st in GREEN_STATES and not (ev and (root / ev).is_file())):
             st = "FAIL"
         cl[k] = (st, ev)
     for k, (st, ev) in cl.items():
         print(f"CLAUSE {k} {st} {ev}")
-    green = sum(st == "PASS" for st, _ in cl.values())
+    green = sum(st in GREEN_STATES for st, _ in cl.values())
     print(f"CEP2_TRANCHE={'PASS' if green == len(cl) else 'FAIL'} clauses={len(cl)} green={green}")
     return 0 if green == len(cl) else 1
 
