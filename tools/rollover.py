@@ -641,6 +641,12 @@ def decide(usage: dict, capsule_bytes: int, boundary: bool, used_pct: Optional[f
     evidence dict from rollover_replay.build_prior; with evidence, only ROBUST_ROLLOVER rolls
     (plan ccp-s16 §16.1 Q2: undetermined or unknown economics never ask). Pure: callers load."""
     if usage.get("state") != "OK":
+        # At the wall, unreadable usage must not hand a session that HAS a capsule to autocompact:
+        # pressure needs no usage figures. Compaction stays the fallback only when no capsule exists
+        # (capsule_bytes <= 0) -- CE-T1c, autocompact demoted.
+        if used_pct is not None and used_pct >= pressure_pct and capsule_bytes > 0:
+            return {"would_rollover": True, "breakeven_calls": None,
+                    "reason": f"pressure: {used_pct}% >= {pressure_pct}% with a capsule (usage {usage.get('reason')})"}
         return {"would_rollover": False, "reason": f"usage {usage.get('reason')}", "breakeven_calls": None}
     ev = horizon if isinstance(horizon, dict) else None
     boot = max(1, capsule_bytes // 4)          # ESTIMATE: ~4 chars per token
