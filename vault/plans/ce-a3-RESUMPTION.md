@@ -16,7 +16,15 @@ Coherence anchor: `python tools/mission_spend.py goal-status --goal ce-a3`.
 died without writing it. ~/.claude edits are Owner diffs (HR-001). A1 stays ECONOMIC_CONTAINMENT; A2 superseded.
 Crossed cap = stop, never raised (raise needs `--owner` TTY anyway).
 
-**Next 3.** (1) Read U1-RECEIPT.md (`gen2/evidence/a3/`); check goal-status. (2) Write packet A3-U2 (default
+**U1 DONE (658b1c5b).** Receipt `gen2/evidence/a3/U1-RECEIPT.md`, A3AUTOPSY_PASS=10/10. Floor ~120k (not 105k);
+floor x calls = 42-72% of each pane, growth 28-58%, 28-34% of calls carry no effect; repeated Reads negligible.
+=> lever order: fewer pane calls (U2 binding/sub-cap) > floor (U3) > growth. Worker hit max_turns at 1,822,163
+(1.52x of 1.2M, no commit; pane committed). Packets must budget turns from the ~120k floor and commit early.
+**Budget after U1:** goal-status used 5,463,546 / 9.9M (settled 3.72M + open leases 1.75M), remaining 4,436,454.
+U2+U3+U4+U5 planned 7.2M does NOT fit. Reforecast: U2 (2.0M, 16 turns) then U3 (2.0M); U4/U5 only if the remainder
+allows, else STOP and ask the Owner for a new goal id (a crossed cap is never raised).
+
+**Next 3.** (1) Check goal-status (open leases settle as panes end). (2) Write packet A3-U2 (default
 binding by program path + coordinator sub-cap + superseded/stale/late-usage gates, extending
 `tools/test_goal_budget_admission.py` V-GOAL; spec `vault/specs/goal-budget-admission.md`) using U1's top rent
 classes, launch it the same way. (3) Then U3 floor probes, U4 GEX44, U5 UKDL/KV/CBR + A1 reforecast.
