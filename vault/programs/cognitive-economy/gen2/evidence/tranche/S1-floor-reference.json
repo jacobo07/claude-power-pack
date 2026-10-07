@@ -1,0 +1,52 @@
+{
+ "schema": "s1-floor-reference/1",
+ "class": {
+  "name": "minimal-prompt@claude-power-pack",
+  "session": "headless claude -p, --max-turns 1, --output-format json",
+  "prompt": "Reply with the single word OK.",
+  "model": "claude-opus-5-5",
+  "cwd": "~/.claude/skills/claude-power-pack (listing_floor_probe REPO default)",
+  "plane": "laptop, win32",
+  "measured_at": "2026-10-07"
+ },
+ "commands": {
+  "pair": "python wiki/tools/listing_floor_probe.py --label s1-floor --prompt \"Reply with the single word OK.\" --pair --off-settings vault/programs/cognitive-economy/gen2/evidence/tranche/S1-off-settings.json --out vault/programs/cognitive-economy/gen2/evidence/tranche/S1-probe-pairs.jsonl  (exit 0; row label s1-floor in S1-probe-pairs.jsonl)",
+  "files": "python s1_files.py 80072f9f-470a-4079-aba1-39cf61f52b3d a7e9e17f-124f-46d3-9207-eb22855a854e  (exit 0; read-only listing of the startup window, script body in S1-decomposition.md)"
+ },
+ "off_switch": "S1-off-settings.json = {\"disableAllHooks\": true}, passed via --settings to the OFF session only; no settings.json or ~/.claude file edited",
+ "sessions": {"on": "80072f9f-470a-4079-aba1-39cf61f52b3d", "off": "a7e9e17f-124f-46d3-9207-eb22855a854e"},
+ "tokens": {
+  "on_first_call": {"value": 105454, "command": "pair"},
+  "off_hooks_disabled_first_call": {"value": 102403, "command": "pair"},
+  "cpp_hooks_added": {"value": 3051, "command": "pair",
+                      "basis": "ON - OFF; the OFF window carries 0 hook chars (kill switch verified by attribute(), else UNDECIDED)"},
+  "host_forced": {"value": null, "verdict": "UNDECIDED",
+                  "reason": "no kill switch removes the instruction files (~/.claude/CLAUDE.md, ~/.claude/rules/*, project CLAUDE.md, MEMORY.md) or the CPP part of the skill/agent listings without editing ~/.claude config, which this unit may not do; the 102,403 OFF reading still contains them, so it is an upper bound on host-forced, not host-forced"}
+ },
+ "window_chars": {
+  "command": "pair (layers = floor_regression_gate read_window + classify, grouped by listing_floor_probe.layer_class)",
+  "on":  {"agent_listing": 25996, "harness_other": 17073, "hooks": 7772, "memory_global": 39809, "memory_project": 40434,
+          "other_instructions": 16462, "rules": 36831, "skill_listing": 29999, "system_prompt": 7003},
+  "off": {"agent_listing": 25996, "harness_other": 17073, "memory_global": 39809, "memory_project": 40434,
+          "other_instructions": 16462, "rules": 36831, "skill_listing": 29999, "system_prompt": 7003}
+ },
+ "controllable_items_ranked": [
+  {"rank": 1, "item": "~/.claude/CLAUDE.md (global router)", "class": "memory_global", "chars": 39809, "tokens": null, "command": "files", "authority": "Owner (~/.claude config)"},
+  {"rank": 2, "item": "~/.claude/rules/** (25 files)", "class": "rules", "chars": 36831, "tokens": null, "command": "pair", "authority": "Owner (~/.claude config)", "largest": {"generated-content-needs-an-evidence-gate.md": 6257, "effect-authority-across-transports.md": 6100, "durable-exit-transaction.md": 2824, "python/testing.md": 2489}},
+  {"rank": 3, "item": "claude-power-pack/CLAUDE.md (project)", "class": "memory_project", "chars": 34478, "tokens": null, "command": "files", "authority": "repo; HARD RULES block (21,230 chars of 35,804 at the live checkout) is the inline mirror of vault/hard_rules/HARD_RULES.md"},
+  {"rank": 4, "item": "skill_listing", "class": "skill_listing", "chars": 29999, "tokens": null, "command": "pair", "authority": "mixed (harness built-ins + plugins + CPP skills); at the 30,000-char listing budget, so removing a skill displaces descriptions rather than lowering chars"},
+  {"rank": 5, "item": "agent_listing", "class": "agent_listing", "chars": 25996, "tokens": null, "command": "pair", "authority": "mixed (harness built-ins + plugin + CPP agents)"},
+  {"rank": 6, "item": "auto-memory MEMORY.md", "class": "other_instructions", "chars": 16462, "tokens": null, "command": "files", "authority": "memory index (200-line rule)"},
+  {"rank": 7, "item": "C:/Users/User/CLAUDE.md (parent dir)", "class": "memory_project", "chars": 5956, "tokens": null, "command": "files", "authority": "Owner"},
+  {"rank": 8, "item": "hooks (SessionStart 5,526 + UserPromptSubmit 2,246)", "class": "hooks", "chars": 7772, "tokens": 3051, "command": "pair + files", "authority": "kill switch exists (disableAllHooks); the only class with a measured token cost"}
+ ],
+ "estimate_not_measured": {
+  "chars_per_token_hooks": 2.55,
+  "basis": "7,772 hook chars / 3,051 measured tokens; applying it to other classes is an ESTIMATE and is never used as a measured number",
+  "cpp_instruction_files_chars": 133536
+ },
+ "biggest_controllable": {
+  "item": "~/.claude/CLAUDE.md", "chars": 39809, "decision": "REJECTED",
+  "reason": "outside this worker's authority: the packet forbids editing ~/.claude config and HR-001 stops writes there; the cut is an Owner decision. Before = 39,809 chars (session 80072f9f); after = unchanged (no edit made)."
+ }
+}
