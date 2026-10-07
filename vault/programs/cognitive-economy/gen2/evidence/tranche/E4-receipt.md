@@ -37,4 +37,10 @@ Verdict: **UNDECIDED**
 - Migration was NOT run with --apply against the real file; only the read-only dry-run, per the brief. The coordinator runs `python tools/ceps.py --migrate-pending-ukdl --apply` in the main tree.
 - Did not touch ukdl-universal.md; did not grep other callers of `distribute()['ukdl']` (budget) -- the key keeps its bool type, meaning changed to 'staged'.
 
+
+## Open regressions (why the verdict is UNDECIDED, not PASS)
+- `tools/test_ceps_full_cycle.py` exit 1: FileNotFoundError reading `<tmp>/ukdl.md`. It asserts the OLD contract (distribute appends to UKDL). Expected consequence of E4; the test must be updated to assert a staged draft instead. Not done (budget).
+- `tools/test_ceps_corrections.py` 7/9: LEAVES-PENDING and DISMISSABLE fail. Probable cause (not verified): confirm_draft -> record_error -> distribute now stages a `kind=ukdl_entry` draft into the same DRAFTS_DIR, so list_drafts() still shows one pending item after confirm/dismiss. Fix options for the coordinator: those two gates count only correction drafts (exclude `kind=ukdl_entry`), or UKDL drafts get a subdirectory. That is a decision about what "pending" means, so it is left open.
+- `tools/test_ceps_admission.py` 19/20: the failing gate was not identified in the captured tail. Whether it fails on the parent commit was NOT measured, so do not attribute it to E4 or clear it without a baseline run.
+- Physical tool calls: 3 in total (1 inspection, 1 driver, 1 for this addendum). The session cap stopped the fixes.
 COMMITS: 873e3e23
