@@ -54,3 +54,15 @@ change method. UKDL into ukdl-universal.md only when no foreign uncommitted hunk
 ## Spend
 | tranche | processed | calls | gate |
 |---|---|---|---|
+| T3 (plan 04-03, 3 commits + SUMMARY) | 10,269,382 (worker 7.26M + pane 3.17M; champion 16.6M/plan) | 63 | WORKUNIT 37/37, TX2 18/18, ADMISSION_SCOPE 13/13; receipt gen3/T3-receipt.md |
+| T1 m-67e0ddbedffa (superseded by T1b) | 4,559,225 | - | no product |
+| T1b m-3e4f27d678a1 (HALTED, superseded by T1c) | 7,594k | 55 | no product; session guard 55 > 35x1.5 |
+| T2 m-9bee7894f20f (RETIRED by Owner, left on cost-breaker hold) | 3,015,851 | - | no receipt; floor/packet work folds into the stages 4-10 reforecast |
+
+## Decisions 2026-10-07 (Owner, pane 0f9b771b)
+- T1b: retire + option (b). T1c m-3b71f5457c70 armed with `--supersedes`, packet gen3/packets/T1c.md (one fixed
+  auto-budget rule: estimate = ceil((spent + 15M headroom) / trip ratio) on unbudgeted, unheld missions), envelope
+  1.5M, route 11 calls, admission ADMISSIBLE at need 1,474,902.
+- T2: retired. No supersede successor exists, so the record keeps its owner hold (no launch or renewal possible);
+  gsd_mission has no plain retire verb.
+- Cap: ~25.4M + T1c <= 3M (breaker) leaves >= ~2.6M of 31M. No further tranche without the reforecast.
