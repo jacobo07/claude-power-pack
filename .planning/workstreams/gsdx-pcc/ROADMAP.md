@@ -115,6 +115,24 @@ measured so every later speedup has an honest baseline.
   3. Incumbent table in EVIDENCE.md: per-suite wall time of the GSD X goal suites, judge replay time, one real
      goal's sweep->judge timeline; UNKNOWN recorded where unmeasurable.
 
+**Plans:** 6 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 01-01-PLAN.md -- R01 red-first: gate supervisor std handles, mutation drill with control, UKDL T-entry (wave 1)
+- [ ] 01-02-PLAN.md -- reality-baseline instrument: guarded hermetic suite timing, in-copy runs, UNKNOWN rows, table (wave 1)
+- [ ] 01-03-PLAN.md -- goal timeline instrument: recorded goal over a verified copy, hermetic fixture via the real CLI (wave 1)
+- [ ] 01-04-PLAN.md -- HR-PREMISE-001 record with a failing control, liveness debt frozen by name, DENOMINATOR R10 (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 01-05-PLAN.md -- incumbent measurement: every goal suite, mutation suite in a copy, timelines, judge replay (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 01-06-PLAN.md -- phase-end gates, 01-EVIDENCE.md with Production Reality verdicts, R01 dispositioned (wave 3)
+
 ### Phase 2: W1 Convergence semantics (ULTRA-PLAN, the only one)
 
 **Goal**: Proof states, certificate validity, causal fingerprint, freshness classes, frontier semantics, event
@@ -225,7 +243,7 @@ with zero false coverage on any promoted scope.
 **Goal**: A real goal converges through the real CLI + sweep + judge on a fresh fixture repo, a fresh agent
 confirms it, and the `software_construction` family baseline is inherited by goal workers.
 **Depends on**: Phase 8, Phase 9
-**Requirements**: D03, D47, R03, R09
+**Requirements**: D03, D47, R03, R09, R10
 **Success Criteria** (what must be TRUE):
 
   1. Production Reality evidence: a real GoalLog with produced/inherited/invalidated proofs and a judge receipt
@@ -248,5 +266,6 @@ confirms it, and the `software_construction` family baseline is inherited by goa
 7. Fresh-agent report PASS.
 8. `python tools/family_baseline.py verify software_construction` exit 0 + inheritance test.
 9. DENOMINATOR fully dispositioned; worktree clean; `python tools/gsdx_pcc_done.py` exit 0.
+
 </content>
 </invoke>
