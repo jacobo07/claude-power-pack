@@ -38,6 +38,102 @@
      "/s_budget_halt_renew/events/m-budget: length 4 != 5",
      "/s_budget_halt_renew/events/m-budget[3]: 'mission_renewed' != 'renewal_unbounded_shadow'"
     ]
+   },
+   {
+    "scenario": "s_launch_ack_heartbeat",
+    "why": "cep-gen3 T1: a launch with no token_estimate and no wu_packet now ledgers one would_refuse_no_envelope row (CPP_MISSION_ENVELOPE_REQUIRED=shadow default) before launch_claimed; no other event or byte changes",
+    "on_head": "d3a05021",
+    "gsd_mission_sha256": "aa756cf8104f52a21266f68d46badbfe2e429c4a2fabf1260b8da5de6e726552",
+    "diff": [
+     "/s_launch_ack_heartbeat/events/m-launch: length 6 != 7",
+     "/s_launch_ack_heartbeat/events/m-launch[1]: 'launch_claimed' != 'would_refuse_no_envelope'",
+     "/s_launch_ack_heartbeat/events/m-launch[2]: 'launched' != 'launch_claimed'",
+     "/s_launch_ack_heartbeat/events/m-launch[3]: 'launch_cause' != 'launched'"
+    ]
+   },
+   {
+    "scenario": "s_adopt",
+    "why": "cep-gen3 T1: a launch with no token_estimate and no wu_packet now ledgers one would_refuse_no_envelope row (CPP_MISSION_ENVELOPE_REQUIRED=shadow default) before launch_claimed; no other event or byte changes",
+    "on_head": "d3a05021",
+    "gsd_mission_sha256": "aa756cf8104f52a21266f68d46badbfe2e429c4a2fabf1260b8da5de6e726552",
+    "diff": [
+     "/s_adopt/events/m-adopt: length 5 != 6",
+     "/s_adopt/events/m-adopt[1]: 'launch_claimed' != 'would_refuse_no_envelope'",
+     "/s_adopt/events/m-adopt[2]: 'launched' != 'launch_claimed'",
+     "/s_adopt/events/m-adopt[3]: 'launch_cause' != 'launched'"
+    ]
+   },
+   {
+    "scenario": "s_replace_overdue_launch",
+    "why": "cep-gen3 T1: a launch with no token_estimate and no wu_packet now ledgers one would_refuse_no_envelope row (CPP_MISSION_ENVELOPE_REQUIRED=shadow default) before launch_claimed; no other event or byte changes",
+    "on_head": "d3a05021",
+    "gsd_mission_sha256": "aa756cf8104f52a21266f68d46badbfe2e429c4a2fabf1260b8da5de6e726552",
+    "diff": [
+     "/s_replace_overdue_launch/events/m-overdue: length 7 != 9",
+     "/s_replace_overdue_launch/events/m-overdue[1]: 'launch_claimed' != 'would_refuse_no_envelope'",
+     "/s_replace_overdue_launch/events/m-overdue[2]: 'launched' != 'launch_claimed'",
+     "/s_replace_overdue_launch/events/m-overdue[3]: 'launch_cause' != 'launched'"
+    ]
+   },
+   {
+    "scenario": "s_relay_rotate_unmeasured",
+    "why": "cep-gen3 T1: a launch with no token_estimate and no wu_packet now ledgers one would_refuse_no_envelope row (CPP_MISSION_ENVELOPE_REQUIRED=shadow default) before launch_claimed; no other event or byte changes",
+    "on_head": "d3a05021",
+    "gsd_mission_sha256": "aa756cf8104f52a21266f68d46badbfe2e429c4a2fabf1260b8da5de6e726552",
+    "diff": [
+     "/s_relay_rotate_unmeasured/events/m-unmeas: length 5 != 6",
+     "/s_relay_rotate_unmeasured/events/m-unmeas[2]: 'launch_claimed' != 'would_refuse_no_envelope'",
+     "/s_relay_rotate_unmeasured/events/m-unmeas[3]: 'launched' != 'launch_claimed'",
+     "/s_relay_rotate_unmeasured/events/m-unmeas[4]: 'launch_cause' != 'launched'"
+    ]
+   },
+   {
+    "scenario": "s_relay_rotate_ceiling",
+    "why": "cep-gen3 T1: a launch with no token_estimate and no wu_packet now ledgers one would_refuse_no_envelope row (CPP_MISSION_ENVELOPE_REQUIRED=shadow default) before launch_claimed; no other event or byte changes",
+    "on_head": "d3a05021",
+    "gsd_mission_sha256": "aa756cf8104f52a21266f68d46badbfe2e429c4a2fabf1260b8da5de6e726552",
+    "diff": [
+     "/s_relay_rotate_ceiling/events/m-ceil: length 5 != 6",
+     "/s_relay_rotate_ceiling/events/m-ceil[2]: 'launch_claimed' != 'would_refuse_no_envelope'",
+     "/s_relay_rotate_ceiling/events/m-ceil[3]: 'launched' != 'launch_claimed'",
+     "/s_relay_rotate_ceiling/events/m-ceil[4]: 'launch_cause' != 'launched'"
+    ]
+   },
+   {
+    "scenario": "s_replace_owner_dead",
+    "why": "cep-gen3 T1: a launch with no token_estimate and no wu_packet now ledgers one would_refuse_no_envelope row (CPP_MISSION_ENVELOPE_REQUIRED=shadow default) before launch_claimed; no other event or byte changes",
+    "on_head": "d3a05021",
+    "gsd_mission_sha256": "aa756cf8104f52a21266f68d46badbfe2e429c4a2fabf1260b8da5de6e726552",
+    "diff": [
+     "/s_replace_owner_dead/events/m-dead: length 5 != 6",
+     "/s_replace_owner_dead/events/m-dead[2]: 'launch_claimed' != 'would_refuse_no_envelope'",
+     "/s_replace_owner_dead/events/m-dead[3]: 'launched' != 'launch_claimed'",
+     "/s_replace_owner_dead/events/m-dead[4]: 'launch_cause' != 'launched'"
+    ]
+   },
+   {
+    "scenario": "s_handoff_relay",
+    "why": "cep-gen3 T1: a launch with no token_estimate and no wu_packet now ledgers one would_refuse_no_envelope row (CPP_MISSION_ENVELOPE_REQUIRED=shadow default) before launch_claimed; no other event or byte changes",
+    "on_head": "d3a05021",
+    "gsd_mission_sha256": "aa756cf8104f52a21266f68d46badbfe2e429c4a2fabf1260b8da5de6e726552",
+    "diff": [
+     "/s_handoff_relay/events/m-hand: length 6 != 7",
+     "/s_handoff_relay/events/m-hand[3]: 'launch_claimed' != 'would_refuse_no_envelope'",
+     "/s_handoff_relay/events/m-hand[4]: 'launched' != 'launch_claimed'",
+     "/s_handoff_relay/events/m-hand[5]: 'launch_cause' != 'launched'"
+    ]
+   },
+   {
+    "scenario": "s_wall_enforced",
+    "why": "cep-gen3 T1: a launch with no token_estimate and no wu_packet now ledgers one would_refuse_no_envelope row (CPP_MISSION_ENVELOPE_REQUIRED=shadow default) before launch_claimed; no other event or byte changes",
+    "on_head": "d3a05021",
+    "gsd_mission_sha256": "aa756cf8104f52a21266f68d46badbfe2e429c4a2fabf1260b8da5de6e726552",
+    "diff": [
+     "/s_wall_enforced/events/m-wall: length 5 != 6",
+     "/s_wall_enforced/events/m-wall[2]: 'launch_claimed' != 'would_refuse_no_envelope'",
+     "/s_wall_enforced/events/m-wall[3]: 'launched' != 'launch_claimed'",
+     "/s_wall_enforced/events/m-wall[4]: 'launch_cause' != 'launched'"
+    ]
    }
   ]
  },
@@ -67,6 +163,7 @@
    "events": {
     "m-launch": [
      "mission_prepared",
+     "would_refuse_no_envelope",
      "launch_claimed",
      "launched",
      "launch_cause",
@@ -146,6 +243,7 @@
    "events": {
     "m-adopt": [
      "mission_prepared",
+     "would_refuse_no_envelope",
      "launch_claimed",
      "launched",
      "launch_cause",
@@ -237,9 +335,11 @@
    "events": {
     "m-overdue": [
      "mission_prepared",
+     "would_refuse_no_envelope",
      "launch_claimed",
      "launched",
      "launch_cause",
+     "would_refuse_no_envelope",
      "launch_claimed",
      "launched",
      "launch_cause"
@@ -506,6 +606,7 @@
     "m-unmeas": [
      "mission_prepared",
      "seed",
+     "would_refuse_no_envelope",
      "launch_claimed",
      "launched",
      "launch_cause"
@@ -614,6 +715,7 @@
     "m-ceil": [
      "mission_prepared",
      "seed",
+     "would_refuse_no_envelope",
      "launch_claimed",
      "launched",
      "launch_cause"
@@ -805,6 +907,7 @@
     "m-dead": [
      "mission_prepared",
      "seed",
+     "would_refuse_no_envelope",
      "launch_claimed",
      "launched",
      "launch_cause"
@@ -1317,6 +1420,7 @@
      "mission_prepared",
      "seed",
      "handoff_requested",
+     "would_refuse_no_envelope",
      "launch_claimed",
      "launched",
      "launch_cause"
@@ -1431,6 +1535,7 @@
     "m-wall": [
      "mission_prepared",
      "seed",
+     "would_refuse_no_envelope",
      "launch_claimed",
      "launched",
      "launch_cause"

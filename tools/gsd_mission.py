@@ -521,6 +521,9 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         # spec mission-owner-hold: an Owner park outranks budget, launch and relay -- nothing is
         # launched, stopped, halted or renewed while it stands. Holding is not halting.
         return {"action": "none", "reason": f"owner hold: {hold.get('reason')}"}
+    if state == BLOCKED and rec.get("launch_hold") and not rec.get("owner"):
+        # cep-gen3 T1: parked once by park_uncurable_launch; supervise un-parks it when the cause is cured.
+        return {"action": "none", "reason": f"launch parked: {(rec['launch_hold'] or {}).get('reason')}"}
     spent = budget_exhausted(rec, now)
     if spent and state in (PREPARED, LAUNCHING, HANDOFF):
         return {"action": "halt", "reason": f"budget: {spent}"}
@@ -931,6 +934,17 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     if rec.get("wu_packet") and _admission_switch_off():
         lr.ledger_append(mission_id, "admission_bypassed", mission_id=mission_id, epoch=rec.get("epoch"),
                          verdict=(rec.get("admission") or {}).get("verdict"))
+    if envelope_missing(rec):
+        # T1 (cep-gen3): no estimate AND no packet leaves the launch with no cost breaker and no route
+        # admission. Shadow (default) only says so; enforce refuses before the claim, like admission.
+        mode = envelope_required_mode()
+        if mode == "enforce":
+            lr.ledger_append(mission_id, "launch_refused_no_envelope", mission_id=mission_id,
+                             epoch=rec.get("epoch"), why=NO_ENVELOPE[:300])
+            return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": NO_ENVELOPE, "detail": ""}
+        if mode == "shadow":
+            lr.ledger_append(mission_id, "would_refuse_no_envelope", mission_id=mission_id,
+                             epoch=rec.get("epoch"), reason=NO_ENVELOPE[:300])
     epoch = expect_epoch + 1
     failed = rec.get("failed_launches", 0) + (1 if rec.get("state") == LAUNCHING else 0)
     extra = {"note": note} if note is not None else {}
@@ -1245,7 +1259,8 @@ def _token_count(field: str, value) -> int:
 
 
 def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = None, autocompact=None,
-                 wu_packet: str | None = None, continue_max_tokens=None, now: float | None = None) -> dict:
+                 wu_packet: str | None = None, continue_max_tokens=None, now: float | None = None,
+                 waiver_reason: str | None = None) -> dict:
     """Set the launch envelope of a live mission (spec mission-envelope-and-compiled-wu): the token
     estimate the cost breaker judges, the worker model, its autocompact window, and the compiled
     work-unit packet launch_prompt sends instead of resume_command. Every value is validated before
@@ -1275,9 +1290,14 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
                                 "bytes": len(data), "set_at": time.time() if now is None else now}
     if continue_max_tokens is not None:
         changes["continue_max_tokens"] = _token_count("continue_max_tokens", continue_max_tokens)
+    if waiver_reason is not None:
+        if not str(waiver_reason).strip():
+            raise MissionError("an envelope waiver needs a non-empty reason")
+        changes["envelope_waiver"] = {"reason": str(waiver_reason).strip()[:500],
+                                      "set_at": time.time() if now is None else now}
     if not changes:
-        raise MissionError("nothing to set: give --token-estimate, --model, --autocompact, --wu-packet "
-                           "or --continue-max-tokens")
+        raise MissionError("nothing to set: give --token-estimate, --model, --autocompact, --wu-packet, "
+                           "--continue-max-tokens or --waiver-reason")
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
@@ -1352,6 +1372,53 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                       event="route_admission", now=now, admission=admission, **prof,
                       reason=f"route {res['verdict']}: " + ("; ".join(res["reasons"]) or "fits")[:280])
+
+
+NO_ENVELOPE = ("no envelope: no token_estimate and no wu_packet, so the launch has no cost breaker and no "
+               "route admission (set one with `envelope --token-estimate`/`--wu-packet`, or record an Owner "
+               "waiver with `envelope --waiver-reason`)")
+
+
+def envelope_required_mode() -> str:
+    """cep-gen3 T1: shadow (default; logs would_refuse_no_envelope) | enforce | off."""
+    v = str(os.environ.get("CPP_MISSION_ENVELOPE_REQUIRED") or "shadow").strip().lower()
+    return v if v in ("shadow", "enforce", "off") else "shadow"
+
+
+def envelope_missing(rec: dict) -> bool:
+    """True when nothing bounds the launch: no estimate, no packet, and no explicit Owner waiver."""
+    waiver = rec.get("envelope_waiver") or {}
+    return (not rec.get("token_estimate") and not rec.get("wu_packet")
+            and not str(waiver.get("reason") or "").strip())
+
+
+def uncurable_launch_refusal(rec: dict) -> str | None:
+    """A launch refusal no supervisor sweep can cure (an Owner/operator action is needed): missing
+    admission, or a missing envelope under enforce. Measured 2026-10-07: a gen3 mission armed with an
+    unadmitted packet was refused 86 times over 8 h, once per pass, until max-hours."""
+    return admission_refusal(rec) or (NO_ENVELOPE if envelope_required_mode() == "enforce"
+                                      and envelope_missing(rec) else None)
+
+
+def park_uncurable_launch(rec: dict, why: str, now: float | None = None) -> dict:
+    """PREPARED -> BLOCKED once, with the reason recorded and surfaced; the next pass does not retry."""
+    if rec.get("state") != PREPARED or rec.get("owner_hold"):
+        return rec
+    return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=PREPARED,
+                      event="launch_parked", now=now, state=BLOCKED,
+                      launch_hold={"reason": why[:300], "at": time.time() if now is None else now},
+                      reason=f"launch refused, not curable by a sweep: {why[:240]}")
+
+
+def unpark_cured_launch(rec: dict, now: float | None = None) -> dict | None:
+    """BLOCKED by park_uncurable_launch and the cause is now cured -> PREPARED again; else None."""
+    if rec.get("state") != BLOCKED or not rec.get("launch_hold") or rec.get("owner"):
+        return None
+    if uncurable_launch_refusal(rec) is not None:
+        return None
+    return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=BLOCKED,
+                      event="launch_unparked", now=now, state=PREPARED, launch_hold=None,
+                      reason="the launch refusal is cured")
 
 
 def admission_refusal(rec: dict, *, for_launch: bool = True) -> str | None:
@@ -2507,6 +2574,11 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             continue
         if not dry_run and rec.get("token_estimate") and not rec.get("owner_hold"):
             rec = _cost_breaker(rec, now)
+        if not dry_run and rec.get("launch_hold") and not rec.get("owner_hold"):
+            try:
+                rec = unpark_cured_launch(rec, now) or rec   # cured since the park: launch again
+            except CasConflict:
+                continue   # another supervisor moved it first
         plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
         row = {"mission_id": mid, "state": rec["state"], "epoch": rec["epoch"], **plan}
         out.append(row)
@@ -2893,6 +2965,14 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     cause = ge.cause_for(act, plan["reason"], rec, turn_end)
                     row["cause"] = cause.get("cause")
                     ge.record_cause(mid, {"epoch": row["launch"]["epoch"]}, cause, ge.FRESH)
+                else:
+                    # cep-gen3 T1: a refusal only an operator can cure parks the mission once (BLOCKED,
+                    # surfaced) instead of being retried, and ledgered, on every pass until max-hours.
+                    cur = load(mid) or rec
+                    unc = uncurable_launch_refusal(cur) if cur.get("state") == PREPARED else None
+                    if unc:
+                        park_uncurable_launch(cur, unc, now)
+                        row["parked"] = unc
         except CasConflict as exc:
             row["cas"] = str(exc)  # another supervisor acted first: correct, not an error
         except Exception as exc:  # noqa: BLE001 -- one mission's failure must not blind the rest
@@ -3495,6 +3575,8 @@ def _cli(argv=None) -> int:
     en.add_argument("--wu-packet", help="compiled work-unit file sent instead of the resume command")
     en.add_argument("--continue-max-tokens",
                     help="per-mission context ceiling for continuing the same session, e.g. 200k")
+    en.add_argument("--waiver-reason",
+                    help="explicit Owner waiver: launch with no token estimate and no packet (cep-gen3 T1)")
     ad = sub.add_parser("admit", help="judge the compiled work unit's route against its envelope "
                                       "(tools/route_admission.py); only ADMISSIBLE may launch")
     ad.add_argument("--mission", required=True)
@@ -3556,7 +3638,8 @@ def _cli(argv=None) -> int:
     if args.cmd == "envelope":
         rec = set_envelope(args.mission, token_estimate=args.token_estimate, model=args.model,
                            autocompact=args.autocompact, wu_packet=args.wu_packet,
-                           continue_max_tokens=args.continue_max_tokens)
+                           continue_max_tokens=args.continue_max_tokens,
+                           waiver_reason=args.waiver_reason)
         pkt = (rec.get("wu_packet") or {}).get("path")
         print(f"ENVELOPE SET mission={rec['mission_id']} token_estimate={rec.get('token_estimate')} "
               f"model={rec.get('model')} autocompact={rec.get('autocompact')} wu_packet={pkt} "
