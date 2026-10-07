@@ -18,6 +18,10 @@ Iteration lens (after Phase 1, after any falsified hypothesis, before Phase 8 pr
   for mutation evidence; `python modules/liveness/reachability.py` exit 0 at phase end for new modules.
 - Metered beats self-reported; null is never zero; a phase over 1.5x its cap stops, records the diagnosis in its
   EVIDENCE.md and changes method.
+- Admission is consumed per epoch (gen3 law; a relay without it stalls, as m-595b674b8e41 shows). Before ending an
+  epoch with `HANDOFF NOTE:`, re-admit the next one: `python C:\Users\User\.claude\skills\claude-power-pack\tools\gsd_mission.py
+  admit --mission m-72fba680c953 --route vault/programs/cognitive-economy/gen2/evidence/a2/route-epoch.json`;
+  record its verdict in the phase EVIDENCE.md. RECOMPILE means stop: the remaining budget no longer fits.
 - Never ask the Owner mid-run: write the blocker into the phase EVIDENCE.md, mark it BLOCKED, continue with the next
   unblocked phase.
 - Every phase ends with `.planning/workstreams/ce-a2/phases/<NN>/EVIDENCE.md` (commands, exit codes, observed output,
