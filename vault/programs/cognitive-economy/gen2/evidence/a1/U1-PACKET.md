@@ -3,8 +3,9 @@ done_gate: python3 tools/test_ce_a1.py && python3 tools/test_cep_gen2_obligation
 # A1-U1 -- gen2 gate extensions for amendment A1 (G1, G2, G7, G8 receipt kind)
 
 Authority: Owner 'y' 2026-10-07 to vault/programs/cognitive-economy/gen2/AMENDMENT-A1-2026-10-07.md (read ONLY its
-sections "Phase 4 audit" and "What A1 adds"). This packet is your whole task. Budget: 4M processed tokens hard stop
-(the mission envelope trips the cost breaker there). Batch reads; do not reread files you have read. Never ask a
+sections "Phase 4 audit" and "What A1 adds"). This packet is your whole task. Budget: 8M processed tokens, at most
+58 model calls (route-U1.json beside this file: ADMISSIBLE at 7.80M with margin over a measured 110,835/call floor);
+the mission envelope trips the cost breaker there. Batch reads; do not reread files you have read. Never ask a
 question: decide inside this scope; ending on a question is a failure. Do not run GSD commands.
 
 Repo: this clone, branch you are on. Python: python3. Commit with `git commit -F <msgfile> -- <paths>` (pathspec only),
