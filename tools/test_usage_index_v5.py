@@ -1031,10 +1031,17 @@ def grp_crash_resume() -> None:
                                                (second,)).fetchone()[0]
             first_ok = bool(seen) and con.execute("SELECT count(*) FROM files WHERE path=?",
                                                   (list(seen)[0],)).fetchone()[0] == 1
+            # WR-01: the crash is now one file's typed error, not a pass-wide FAILED; the only
+            # row the crashed file keeps is its files row carrying that error.
+            err_row = con.execute("SELECT error FROM files WHERE path=?", (second,)).fetchone() \
+                if second else None
+            if second:
+                leftovers["files"] -= 1 if err_row and err_row[0] else 0
             r2 = UX.refresh(con, proj, deadline_s=30)
             got = table_counts(con)
             gate("V-UX5-CRASH-RESUME",
-                 r1["status"] == "FAILED" and "injected crash" in r1["error"] and second is not None
+                 r1["status"] == "OK" and r1.get("files_with_errors") == 1 and second is not None
+                 and err_row is not None and "injected crash" in (err_row[0] or "")
                  and not any(leftovers.values()) and first_ok and r2["status"] == "OK"
                  and got == want and sum(want["parse_errors"].values()) == 2,
                  f"crash injected after line 3 of the second file: status={r1['status']}; rows of "
@@ -2153,7 +2160,47 @@ def grp_until_refused() -> None:
              f"calls={(control.get('population') or {}).get('calls')}")
 
 
-GROUPS = (("grp_until_refused", grp_until_refused), ("grp_schema", grp_schema),("grp_tool_event", grp_tool_event),
+def grp_poison_file() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        proj, files = two_file_store(td)
+        poison, good = files[1], files[0]
+        real = UX._v5_line
+
+        def poisoned(con, path, state, o, start):
+            if Path(path).name == poison.name:
+                raise sqlite3.InterfaceError("Error binding parameter 3: lone surrogate")
+            return real(con, path, state, o, start)
+
+        con = UX.connect(td / "db" / "ix.sqlite")
+        try:
+            undo = _patch(UX, "_v5_line", poisoned)
+            try:
+                r = UX.refresh(con, proj, deadline_s=30)
+            finally:
+                undo()
+            row = con.execute("SELECT error, offset FROM files WHERE path=?",
+                              (os.path.realpath(str(poison)),)).fetchone()
+            good_calls = con.execute("SELECT count(*) FROM calls WHERE file=?",
+                                     (os.path.realpath(str(good)),)).fetchone()[0]
+            left = con.execute("SELECT count(*) FROM calls WHERE file=?",
+                               (os.path.realpath(str(poison)),)).fetchone()[0]
+            pop = UX.population(con)
+            gate("V-UX5-POISON-FILE-CONTINUES",
+                 r.get("status") == "OK" and good_calls == 3 and left == 0
+                 and row is not None and (row[0] or "").startswith("InterfaceError")
+                 and row[1] == 0 and r.get("files_with_errors") == 1
+                 and pop.get("verdict") == "UNMEASURED"
+                 and "error" in " ".join(pop.get("reasons", [])),
+                 f"non-OSError on one file: status={r.get('status')} good file calls={good_calls}/3 "
+                 f"poison rows left={left} files.error={row and row[0]!r} offset={row and row[1]} "
+                 f"files_with_errors={r.get('files_with_errors')}; population "
+                 f"verdict={pop.get('verdict')} reasons={pop.get('reasons')}")
+        finally:
+            con.close()
+
+
+GROUPS = (("grp_until_refused", grp_until_refused), ("grp_poison_file", grp_poison_file), ("grp_schema", grp_schema),("grp_tool_event", grp_tool_event),
           ("grp_occurrence", grp_occurrence), ("grp_migrate", grp_migrate),
           ("grp_population_empty", grp_population_empty), ("grp_no_raw_text", grp_no_raw_text),
           ("grp_alias", grp_alias), ("grp_identity_columns", grp_identity_columns),

@@ -1156,7 +1156,7 @@ def refresh(con: sqlite3.Connection, proj: Path = DEFAULT_PROJ, *,
             files_opened += 1
             try:
                 calls, end, ep = _tis.calls_from(fp, offset, on_line=on_line, stats=stats)
-            except OSError as e:                # this file only: typed, the others go on
+            except Exception as e:  # noqa: BLE001 -- this file only: typed, the others go on
                 con.rollback()
                 _record_file_error(con, path, is_sub, st, e, (store, project, archived, skey))
                 continue
