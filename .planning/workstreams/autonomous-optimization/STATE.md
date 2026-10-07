@@ -3,15 +3,15 @@ gsd_state_version: "1.0"
 milestone: v1
 current_phase: 2
 current_plan: 6
-status: executing
-stopped_at: Completed 02-05-PLAN.md
-last_updated: "2026-10-07T00:04:21.103Z"
-state_head: cd4b63ccd3b7416a2e9bb719757d656a5792465f
+status: verifying
+stopped_at: Completed 02-06-PLAN.md
+last_updated: "2026-10-07T00:14:56.379Z"
+state_head: d204c26669ec63a3340a1c66c8c7ca784a9c090d
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
 milestone_name: autonomous-optimization
 last_activity: 2026-10-05
 workstream: autonomous-optimization
@@ -30,7 +30,7 @@ first proving incident; a second workload must be taken by the loop itself.
 
 ## Current Position
 
-**Status:** Ready to execute
+**Status:** Phase complete — ready for verification
 **Current Phase:** 2
 Current Plan: 6
 Total Plans in Phase: 6
@@ -67,12 +67,14 @@ Total Plans in Phase: 6
 - [Phase 2]: 02-03: Metric key lists name constants, functions and classes, checked against the discovered observer closure (V-KMEC-METRIC-COVERAGE)
 - [Phase 2]: 02-04: challenger planned read set on the real corpus is 107 sessions (102 index-selected + 5 no-first-ts read raw by design); equivalence SAME 7/7; KME-only query opens 0 CostaLuz bytes, controls fire
 - [Phase 2]: 02-05: measured medians (N=5, 7-file query) scoped warm 56.976 s vs challenger warm 29.581 s; raw bytes 6,120,339,068 vs 3,298,099,868 plus 1,805,435,496 index bytes; post-delta canary SAME 7/7 (judgement is 02-06)
+- [Phase 2]: Phase 2 criterion 5 WIN (P-JUDGEMENT computed from the P-table Data block): challenger warm wall 29.581 vs 56.976 s, raw bytes 3.298 vs 6.120 GB; narrowed, challenger also reads 1.81 GB index (5.10 GB total vs 6.12 GB); evicted rows residency-not-measured; facts sidecar not built (decision 1)
+- [Phase 2]: Phase 2 ledger row OPP-002 at canary (realized_dividend null, frozen object unchanged); pillar P gets no terminal until Phase 6 clause 6
 
 ## Session Continuity
 
-**Last session:** 2026-10-07T00:04:21.071Z
+**Last session:** 2026-10-07T00:14:56.347Z
 
-**Stopped At:** Completed 02-05-PLAN.md
+**Stopped At:** Completed 02-06-PLAN.md
 **Next exact action:** `/gsd-code-review 1 --fix --auto --ws autonomous-optimization` for CR-01 (usage_index.py:2112, `population --until 2026-09-01` silently drops the cut: until=None, reproduced on /home/kobii/ao-scratch/p1/cold.sqlite; must become UNMEASURED exit 3), WR-01 (per-file `except OSError` too narrow), WR-02 (`_registry` should join only `v5_from = 0` files). Red gate first per fix in tools/test_usage_index_v5.py; after fixes the KME-L parity with `--until 2026-10-03T16:13:37Z` must stay EXACT. Then spawn gsd-verifier -> 01-VERIFICATION.md, then `phase.complete 1`, then Phase 2. Isolation: worktree base-check degrades (fork-ref-unknown) -> re-run `dispatch-isolation --phase N --force-isolation none` before every gsd-executor dispatch or the isolation guard refuses it.
 **Resume File:** None
 
@@ -90,3 +92,4 @@ Total Plans in Phase: 6
 | Phase 2 P03 | ~1h | 3 tasks | 2 files |
 | Phase 02 P04 | 25min | 2 tasks | 3 files |
 | Phase 02 P05 | 40min | 3 tasks | 1 files |
+| Phase 2 P06 | 10min | 3 tasks | 3 files |

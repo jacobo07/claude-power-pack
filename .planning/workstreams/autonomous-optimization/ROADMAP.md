@@ -152,7 +152,7 @@ Plans:
 4. Stale-cache control: changing a source or the parser version invalidates exactly the affected closure.
 5. If the challenger does not beat the scoped path on repeated queries, narrow or reject it and record why.
 
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans executed
 
 Plans:
 **Wave 1**
@@ -174,7 +174,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 02-06-PLAN.md -- criterion 5 decided by measurement (narrowed claim or increment-1 loss), OPP-002 ledger row, 02-EVIDENCE.md
+- [x] 02-06-PLAN.md -- criterion 5 decided by measurement (narrowed claim or increment-1 loss), OPP-002 ledger row, 02-EVIDENCE.md
 
 ### Phase 3: Generic opportunity detectors + discovery eval
 
