@@ -12,7 +12,10 @@ from __future__ import annotations
 
 import copy
 import datetime as dt
+import importlib.util
 import json
+import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -31,7 +34,11 @@ def _now() -> dt.datetime:
     return dt.datetime.now(dt.timezone.utc)
 
 
-def check(led: dict, root: Path, now: dt.datetime | None = None) -> list:
+def check(led: dict, root: Path, now: dt.datetime | None = None, run_checks: bool = False) -> list:
+    return check_units(led, root, now) + check_obligations(led, root, run_checks)[1]
+
+
+def check_units(led: dict, root: Path, now: dt.datetime | None = None) -> list:
     now = now or _now()
     fails = []
     wus = led.get("work_units") or {}
@@ -65,20 +72,44 @@ def check(led: dict, root: Path, now: dt.datetime | None = None) -> list:
     # A budget whose unit can be read two ways is not a gate (processed vs weighted differed ~6x in this estate).
     if b and b.get("unit") not in BUDGET_UNITS:
         fails.append(f"budget_tokens unit {b.get('unit')!r} is not one of {sorted(BUDGET_UNITS)}")
-    spent, cap = b.get("spent_measured"), b.get("authorization_boundary")
-    if spent is not None and cap is not None and spent > cap and not b.get("owner_extension"):
-        fails.append(f"spend {spent:,} over boundary {cap:,} without an Owner extension")
-    fails.extend(check_obligations(led, root)[1])
+    fails.extend(check_spend(b))
     return fails
+
+
+def _is_int(v) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def check_spend(b: dict) -> list:
+    """spent_measured is an int or {value:int, sources, unknown}. A truthy `unknown` or a non-int value is UNKNOWN,
+    and UNKNOWN never passes; over the boundary without owner_extension fails. Absent spend or boundary is not judged."""
+    spent, cap = b.get("spent_measured"), b.get("authorization_boundary")
+    if spent is None or cap is None:
+        return []
+    if isinstance(spent, dict):
+        if spent.get("unknown"):
+            return [f"spend UNKNOWN: spent_measured.unknown={spent.get('unknown')!r} (UNKNOWN never passes)"]
+        spent = spent.get("value")
+    if not (_is_int(spent) and _is_int(cap)):
+        return [f"spend not comparable: spent_measured is {type(spent).__name__}, boundary is {type(cap).__name__} (UNKNOWN never passes)"]
+    if spent > cap and not b.get("owner_extension"):
+        return [f"spend {spent:,} over boundary {cap:,} without an Owner extension"]
+    return []
 
 
 # Scope conservation (D3, optional). ledger.obligations_declared (bool) + ledger.obligations [{id, source, terminal, evidence|execution}].
 # Absent / false / null -> UNASSESSED (never PASS by vacuity, never FAIL). True -> every obligation needs a valid terminal and
 # an execution mapping or evidence: EXECUTE needs `execution`; SATISFIED needs `evidence`; the rest need either.
+# Master Done-Gate (CE-T0b): an obligation that carries the key `check` is also judged by that check. status OPEN (check null)
+# never passes; status CHECKED needs an argv that exits 0 when run from the repo root. Outside --final the check is not run,
+# so it is UNKNOWN, and UNKNOWN never passes. A missing tool and a non-zero exit both fail.
 OBL_TERMINALS = {"SATISFIED", "EXECUTE", "REUSE", "MERGED", "OWNED_ELSEWHERE", "CONDITIONAL", "SUPERSEDED", "OWNER_REMOVED"}
+OBL_CHECK_STATES = {"OPEN", "CHECKED"}
+CHECK_TIMEOUT_S = 900
+SELF_NAMES = ("cep_gen2.py", "test_cognitive_economy_program.py")
 
 
-def check_obligations(led: dict, root: Path) -> tuple:
+def check_obligations(led: dict, root: Path, run_checks: bool = False) -> tuple:
     """Return (status, fails); status is UNASSESSED, PASS or FAIL."""
     decl = led.get("obligations_declared")
     if decl is None or decl is False:
@@ -122,17 +153,67 @@ def check_obligations(led: dict, root: Path) -> tuple:
             fails.append(f"{tag} EXECUTE without an execution mapping")
         elif term == "SATISFIED" and not ev:
             fails.append(f"{tag} SATISFIED without evidence")
+        if "check" in o:
+            fails.extend(_master_check(tag, o, root, run_checks))
     return ("FAIL" if fails else "PASS"), fails
+
+
+def _master_check(tag: str, o: dict, root: Path, run: bool) -> list:
+    st, argv = o.get("status"), o.get("check")
+    if st not in OBL_CHECK_STATES:
+        return [f"{tag} status {st!r} is not one of {sorted(OBL_CHECK_STATES)}"]
+    if st == "OPEN":
+        if argv is not None:
+            return [f"{tag} OPEN yet carries a check (a bound check is CHECKED)"]
+        return [f"{tag} OPEN: no executable check yet (owner {o.get('execution')})"]  # MUT-OPEN
+    if not (isinstance(argv, list) and argv and all(isinstance(a, str) and a for a in argv)):
+        return [f"{tag} CHECKED needs check as a non-empty argv list, got {argv!r}"]
+    if not run:
+        return [f"{tag} check not executed in this mode: UNKNOWN never passes"]
+    return run_check(tag, argv, root)
+
+
+def run_check(tag: str, argv: list, root: Path) -> list:
+    if any(a.replace("\\", "/").endswith(SELF_NAMES) for a in argv):
+        return [f"{tag} check is recursive: it invokes this gate"]
+    exe = sys.executable if argv[0] in ("python", "python3") else shutil.which(argv[0])
+    if not exe:
+        return [f"{tag} check tool missing: {argv[0]!r} not found"]
+    if exe == sys.executable and len(argv) > 1 and argv[1].endswith(".py") and not (root / argv[1]).is_file():
+        return [f"{tag} check tool missing: {argv[1]!r}"]
+    try:
+        r = subprocess.run([exe, *argv[1:]], cwd=root, capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=CHECK_TIMEOUT_S)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return [f"{tag} check could not run: {exc!r}"]
+    if r.returncode != 0:
+        tail = ((r.stdout or "") + (r.stderr or "")).strip().splitlines()[-1:]
+        return [f"{tag} check exited {r.returncode}: {' '.join(argv)} {tail}"]
+    return []
 
 
 # Experiment receipt (B1, post-E1 plan Phase 1). A work unit with `experiment: true` and a terminal is a CLOSED experiment;
 # it needs `receipt`, a path to a JSON receipt. The receipt states cost, measured saving, forecast, payback, and the estimates
 # it supersedes. Every derived number is recomputed here, so a receipt cannot carry arithmetic its own inputs contradict.
 PAYBACK_STATES = {"PAID_BACK", "NOT_YET", "UNKNOWN"}
+RECEIPT_KINDS = {"payback", "measurement"}
+CONFIDENCE = {"low", "medium", "high"}
 
 
 def _pos_int(v) -> bool:
     return isinstance(v, int) and not isinstance(v, bool) and v > 0
+
+
+def _receipt_extras(wid: str, r: dict) -> list:
+    """Optional amortization fields (amendment A1), validated whenever present, for every kind."""
+    f = []
+    if "horizon_days" in r and not _pos_int(r["horizon_days"]):
+        f.append(f"{wid} receipt horizon_days {r['horizon_days']!r} is not a positive integer")
+    if "confidence" in r and r["confidence"] not in CONFIDENCE:
+        f.append(f"{wid} receipt confidence {r['confidence']!r} is not low/medium/high")
+    if "retirement_criterion" in r and not (isinstance(r["retirement_criterion"], str) and r["retirement_criterion"].strip()):
+        f.append(f"{wid} receipt retirement_criterion must be a non-empty string")
+    return f
 
 
 def check_receipt(wid: str, rel, root: Path) -> list:
@@ -146,8 +227,20 @@ def check_receipt(wid: str, rel, root: Path) -> list:
     if not isinstance(r, dict):
         return [f"{wid} receipt {rel!r} is not an object"]
     f = []
+    kind = r.get("kind", "payback")
+    if kind not in RECEIPT_KINDS:
+        return [f"{wid} receipt kind {kind!r} is not one of {sorted(RECEIPT_KINDS)}"]
     if r.get("work_unit") != wid:
         f.append(f"{wid} receipt names work unit {r.get('work_unit')!r}")
+    f.extend(_receipt_extras(wid, r))
+    if kind == "measurement":
+        cost = r.get("cost") if isinstance(r.get("cost"), dict) else {}
+        if cost.get("unit") not in BUDGET_UNITS or not _pos_int(cost.get("value")):
+            f.append(f"{wid} receipt cost needs unit 'processed' and a positive integer value")
+        dv = r.get("decision_value")
+        if not isinstance(dv, str) or not dv.strip():
+            f.append(f"{wid} measurement receipt needs a non-empty decision_value string")
+        return f
     cost, sav, fc, pb = (r.get(k) if isinstance(r.get(k), dict) else {} for k in ("cost", "saving", "forecast", "payback"))
     if cost.get("unit") not in BUDGET_UNITS or not _pos_int(cost.get("value")):
         f.append(f"{wid} receipt cost needs unit 'processed' and a positive integer value")
@@ -219,6 +312,13 @@ def _fixture(root: Path) -> dict:
                       "evidence": [{"path": "ev.md", "command": "x"}]}}}
 
 
+def _as_measurement(r: dict, **kw) -> None:
+    for k in ("saving", "forecast", "calibration", "payback"):
+        r.pop(k, None)
+    r.update(kind="measurement", decision_value="KEEP/DEALLOCATE floor is read from this measurement")
+    r.update(kw)
+
+
 # Each rewrites the fixture receipt on disk; the ledger dict is left unchanged.
 RECEIPT_MUTANTS = {
     "receipt-wrong-break-even": lambda r: r["payback"].update(break_even_calls=33),
@@ -231,6 +331,12 @@ RECEIPT_MUTANTS = {
     "receipt-missing-evidence": lambda r: r.update(evidence=["nope.md"]),
     "receipt-other-unit": lambda r: r.update(work_unit="A"),
     "receipt-no-supersedes": lambda r: r.pop("supersedes"),
+    "receipt-unknown-kind": lambda r: r.update(kind="vibes"),
+    "receipt-bad-horizon": lambda r: r.update(horizon_days=0),
+    "receipt-bad-confidence": lambda r: r.update(confidence="certain"),
+    "receipt-empty-retirement": lambda r: r.update(retirement_criterion=" "),
+    "measurement-without-decision-value": lambda r: _as_measurement(r, decision_value=""),
+    "measurement-without-cost": lambda r: _as_measurement(r, cost={"unit": "processed", "value": 0}),
 }
 
 
@@ -253,7 +359,49 @@ MUTANTS = {
 }
 
 
-def selftest(verbose=True) -> bool:
+CHK_OK = ["python", "-c", "raise SystemExit(0)"]
+
+
+def _obl(oid: str, **kw) -> dict:
+    o = {"id": oid, "source": "fixture", "clause": "c", "terminal": "EXECUTE", "execution": "T0",
+         "status": "CHECKED", "check": CHK_OK}
+    o.update(kw)
+    return o
+
+
+# Master Done-Gate cases: name -> (obligations added beside a passing C1, run_checks, want_green).
+OBL_CASES = {
+    "all-pass-control": ([], True, True),
+    "open": ([_obl("C2", status="OPEN", check=None)], True, False),
+    "check-exits-1": ([_obl("C2", check=["python", "-c", "raise SystemExit(1)"])], True, False),
+    "check-tool-missing": ([_obl("C2", check=["python", "tools/no_such_check.py"])], True, False),
+    "check-binary-missing": ([_obl("C2", check=["no-such-binary-cep2"])], True, False),
+    "check-not-run-is-unknown": ([], False, False),
+    "open-with-check": ([_obl("C2", status="OPEN")], True, False),
+    "checked-without-argv": ([_obl("C2", check=None)], True, False),
+    "unknown-status": ([_obl("C2", status="DONE")], True, False),
+    "recursive-check": ([_obl("C2", check=["python", "tools/cep_gen2.py", "--final"])], True, False),
+}
+
+
+def _mutant_open_passes_goes_red() -> bool:
+    """Copy this module with an OPEN obligation counted as passing; True when the copy's selftest goes red."""
+    src = Path(__file__).read_text(encoding="utf-8").splitlines(keepends=True)
+    hits = [i for i, l in enumerate(src) if l.rstrip().endswith("# MUT-OPEN") and l.strip().startswith("return")]
+    if len(hits) != 1:
+        return False
+    i = hits[0]
+    src[i] = src[i][: len(src[i]) - len(src[i].lstrip())] + "return []\n"
+    with tempfile.TemporaryDirectory() as tmp:
+        p = Path(tmp) / "cep_gen2_mut.py"
+        p.write_text("".join(src), encoding="utf-8")
+        spec = importlib.util.spec_from_file_location("cep_gen2_mut", p)
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        return m.selftest(verbose=False, mutation=False) is False
+
+
+def selftest(verbose=True, mutation=True) -> bool:
     ok = True
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -276,6 +424,28 @@ def selftest(verbose=True) -> bool:
             ok &= killed
             if verbose:
                 print(f"  {'ok' if killed else 'FAIL'}   V-CEP2-MUT-{name} {'killed' if killed else 'SURVIVED'}")
+        for name, extra in {"measurement": {}, "measurement+amortization": {
+                "horizon_days": 30, "confidence": "low", "retirement_criterion": "retire if floor moves"}}.items():
+            _write_receipt(root, lambda r, e=extra: _as_measurement(r, **e))
+            got = check(copy.deepcopy(base), root)
+            ok &= not got
+            if verbose:
+                print(f"  {'ok' if not got else 'FAIL'}   V-CEP2-RECEIPT-{name} (positive pole) {got or ''}")
+        _write_receipt(root)
+        for name, (extra, run, want) in OBL_CASES.items():
+            d = copy.deepcopy(base)
+            d["obligations_declared"] = True
+            d["obligations"] = [_obl("C1")] + copy.deepcopy(extra)
+            got = check(d, root, run_checks=run)
+            good = (not got) == want
+            ok &= good
+            if verbose:
+                print(f"  {'ok' if good else 'FAIL'}   V-CEP2-OBL-{name} {'green' if not got else 'red'} {got if not good else ''}")
+    if mutation:
+        red = _mutant_open_passes_goes_red()
+        ok &= red
+        if verbose:
+            print(f"  {'ok' if red else 'FAIL'}   V-CEP2-MUT-open-obligation-passes {'killed' if red else 'SURVIVED'}")
     return ok
 
 
@@ -289,14 +459,16 @@ def main(mode: str) -> int:
     except (OSError, json.JSONDecodeError) as exc:
         print(f"CEP2_VERDICT=COULD_NOT_RUN ledger unreadable: {exc}")
         return 2
-    fails = check(led, REPO)
     if mode == "status":
+        fails = check(led, REPO)
         open_ = [w for w, u in led.get("work_units", {}).items() if not u.get("terminal")]
         print(json.dumps({"open": open_, "violations": fails}, indent=1, ensure_ascii=False))
         return 1 if fails else 0
+    ost, ofails = check_obligations(led, REPO, run_checks=True)
+    fails = check_units(led, REPO) + ofails
     if not selftest(verbose=False):
         fails.insert(0, "S0 selftest failed: the verifier cannot be trusted")
-    print(f"CEP2_OBLIGATIONS={check_obligations(led, REPO)[0]}")
+    print(f"CEP2_OBLIGATIONS={ost}")
     for x in fails:
         print("  FAIL", x)
     print(f"CEP2_VERDICT={'PASS' if not fails else 'FAIL'} failures={len(fails)}")

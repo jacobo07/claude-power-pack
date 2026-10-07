@@ -3,8 +3,165 @@
  "backlog": "TOK-18",
  "approved": "2026-10-05 Owner 'y'",
  "card": "vault/programs/cognitive-economy/gen2/MISSION.md",
- "obligations_declared": false,
- "obligations": [],
+ "obligations_declared": true,
+ "obligations": [
+  {
+   "id": "C1",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "ownership: D2A family run, no NEW system without the 13-question novelty proof",
+   "terminal": "EXECUTE",
+   "execution": "T9",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C2",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "state: transcript-deletion + handoff-destruction tests green",
+   "terminal": "EXECUTE",
+   "execution": "T1",
+   "status": "CHECKED",
+   "check": [
+    "tools/test_ce_t1_state.py"
+   ]
+  },
+  {
+   "id": "C3",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "lifecycle: SAFE_TO_FORGET both poles; /kclear->/clear->/kresume certified on a canary; autocompact not the continuation; WAITING with zero hot sessions",
+   "terminal": "EXECUTE",
+   "execution": "T1",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C4",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "recovery: pane-loss canary resumes model-free to first verified progress",
+   "terminal": "EXECUTE",
+   "execution": "T1",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C5",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "context: WU3 verdict file; different boundaries receive different projections (both poles)",
+   "terminal": "EXECUTE",
+   "execution": "T2",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C6",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "read: one high-rent read class extinct or a certified step",
+   "terminal": "EXECUTE",
+   "execution": "T4",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C7",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "transport: tool/agent receipts on certified path; transit waste measured down on a real workload",
+   "terminal": "EXECUTE",
+   "execution": "T4",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C8",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "boundaries: reason-coded boundaries; non-novel count down vs champion",
+   "terminal": "EXECUTE",
+   "execution": "T5",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C9",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "agents: admission enforced; one historical Agent role eliminated or proven necessary",
+   "terminal": "EXECUTE",
+   "execution": "T5",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C10",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "proof: affected-proof selection proven; healthy proof readless",
+   "terminal": "EXECUTE",
+   "execution": "T6",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C11",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "autonomy: one epoch policy auto-selected (KEEP/DEALLOCATE by workload); shadowed then canaried; rollback exists",
+   "terminal": "EXECUTE",
+   "execution": "T6",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C12",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "baseline: one hot rule/mechanism retired or proven not yet safe; UKDL/CBR entries exist",
+   "terminal": "EXECUTE",
+   "execution": "T7",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C13",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "economics: program spend <= 85M measured, no cost shifted to repair or Owner",
+   "terminal": "EXECUTE",
+   "execution": "T9",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C14",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "original work: G2 state reconstructable from the card + GEX44 records without any transcript",
+   "terminal": "EXECUTE",
+   "execution": "T9",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C15",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "A1 receipts: every started, unfrozen tranche has a valid receipt; a family at its strike limit has all its tranches frozen",
+   "terminal": "EXECUTE",
+   "execution": "A1",
+   "status": "OPEN",
+   "check": [
+    "python3",
+    "tools/test_ce_a1.py",
+    "--obligation",
+    "C15"
+   ]
+  },
+  {
+   "id": "C16",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "A1 spend <= 20M processed; UNKNOWN fails",
+   "terminal": "EXECUTE",
+   "execution": "A1",
+   "status": "OPEN",
+   "check": [
+    "python3",
+    "tools/test_ce_a1.py",
+    "--obligation",
+    "C16"
+   ]
+  }
+ ],
  "budget_tokens": {
   "unit": "processed",
   "unit_definition": "input + cache_write + cache_read + output, deduplicated by message id",
@@ -13,7 +170,113 @@
   "estimate_low": 40000000,
   "estimate_central": 78000000,
   "estimate_high": 150000000,
-  "spent_measured": null
+  "spent_measured": {
+   "value": null,
+   "sources": [
+    {
+     "what": "Gen2 D1 spend pre-anchor (88 calls)",
+     "processed": 27088463,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/stage0/owner_map.md:50 (cites skill-capability/gen2/SPEND.md)"
+    },
+    {
+     "what": "Stage 0 + plan pane at Gen2.1 approval (rounded 17.4M; overlap with D1 not stated)",
+     "processed": 17400000,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/stage0/README.md:33"
+    },
+    {
+     "what": "Gen2.1 pane 87601e81 after anchor",
+     "processed": 6096405,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/gen2_1-readout.md:8"
+    },
+    {
+     "what": "Gen2.1 pane tua-x-96/242ae047 after anchor",
+     "processed": 8435275,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/gen2_1-readout.md:8"
+    },
+    {
+     "what": "E1 m-f011d7fdebc9 actual",
+     "processed": 141008708,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/D1-D2.md:4"
+    },
+    {
+     "what": "gen3_t1 compiler agent own meter",
+     "processed": 4931354,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/gen3_t1/README.md:30"
+    },
+    {
+     "what": "gen3_t2 steps total (rounded 44.25M)",
+     "processed": 44250000,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/gen3_t2/README.md:7"
+    },
+    {
+     "what": "tok18 orchestrator c77978f6 incl subagents",
+     "processed": 12819555,
+     "file": "vault/plans/tok18-tranche-context-runtime-2026-10-06.md:127"
+    },
+    {
+     "what": "tok18 pane 7f13d6e2",
+     "processed": 9638790,
+     "file": "vault/plans/tok18-tranche-context-runtime-2026-10-06.md:77"
+    },
+    {
+     "what": "context-runtime-2 coordinator e6e0eca7",
+     "processed": 2318601,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/tranche/context-runtime-2-results.json:24"
+    },
+    {
+     "what": "context-runtime-3 workers S1+S3+S5",
+     "processed": 3292973,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/tranche/context-runtime-3-results.json"
+    },
+    {
+     "what": "context-runtime-3b workers S1+S3",
+     "processed": 2787331,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/tranche/context-runtime-3b-results.json"
+    },
+    {
+     "what": "completion-plan pane 71ccfa86 (CE-T0a fixed meter, power-pack dir)",
+     "processed": "sid 71ccfa86-6902-4449-a345-dacb4b1ba2de files 1 calls 85 processed 17,568,509 (ctx 17,495,044 out 73,465) subagent calls 0 subagent ctx 0",
+     "file": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T0a-receipt.md"
+    }
+   ],
+   "unknown": [
+    "S5 receipt: processed not measured (S5-receipt.md:52)",
+    "WU2 processed total absent (WU4-receipt.md:9)",
+    "T2-0.5 final worker figure only in the worker's last report (T2-0.5-README.md:69)",
+    "overlap between Stage0 17.4M and D1 27.1M, and whether E1 141M counts against the gen2 boundary",
+    "GEX44-hosted transcripts are not in the laptop index (owner_map.md:47)",
+    "CE-T0 tranche workers (this session 22e4fda5 and siblings) not yet metered",
+    "any reading taken with `self_spend.py --session X` before CE-T0a measured sid 87601e81, not X"
+   ]
+  },
+  "coordination_spend": {
+   "value": 258994397,
+   "unit": "processed",
+   "sources": [
+    {
+     "what": "tier A, laptop index, 41 program sessions",
+     "processed": 258994397,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/a1/A1-2-canary.json"
+    },
+    {
+     "what": "tier B lineage (reads / cwd in a program worktree), reported apart, NOT in value",
+     "processed": 119920566,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/a1/A1-2-canary.json"
+    },
+    {
+     "what": "already in spent_measured sources (excluded_A + excluded_B), NOT in value",
+     "processed": 124609059,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/a1/A1-2-canary.json"
+    }
+   ],
+   "unknown": [
+    "GEX44-hosted transcripts (~$250 of optimization missions in the window) are not in the laptop index (G6)",
+    "outside_span 555,407,655: program sessions' calls before their first / after their last program signal -- not attributed either way",
+    "unknown_no_tools 985,545: sessions with no tool_use observed"
+   ],
+   "window": "2026-10-04T18:00:00Z..2026-10-07T10:33:00Z",
+   "meter": "measure/turns.py --attribute (A1-2); value = tier A (calls between a session's first and last program write), sessions already in spent_measured excluded"
+  }
  },
  "gen2_1": {
   "name": "Economic Kill-Shot",
@@ -190,6 +453,87 @@
    "T8": 6000000,
    "T9": 5000000,
    "reserve": 15000000
+  }
+ },
+ "a1": {
+  "cap": 20000000,
+  "spent": 42307381,
+  "frozen": [
+   "T2",
+   "T4",
+   "T5",
+   "T6",
+   "T8"
+  ],
+  "families": {
+   "e1-rule-moves": {
+    "strikes": 0
+   },
+   "ic-ao-measurement": {
+    "strikes": 0
+   },
+   "context-runtime": {
+    "strikes": 0
+   },
+   "gen3-envelopes": {
+    "strikes": 0
+   }
+  },
+  "strike_limit": 2,
+  "spent_as_of": "2026-10-07T12:22:33Z",
+  "spent_sources": [
+   {
+    "what": "pane 423e33b0 from the approval turn 2026-10-07T11:12:10Z, tiers A+B",
+    "processed": 24715309,
+    "file": "vault/programs/cognitive-economy/gen2/evidence/a1/A1-2-a1-window.json"
+   },
+   {
+    "what": "pane b9bd9469 (A1-U1 relaunch + A1-2 build), tiers A+B, still running at as_of",
+    "processed": 16494861,
+    "file": "vault/programs/cognitive-economy/gen2/evidence/a1/A1-2-a1-window.json"
+   },
+   {
+    "what": "U1 headless worker on GEX44, out.json usage == dedup transcript sum",
+    "processed": 1097211,
+    "file": "vault/programs/cognitive-economy/gen2/evidence/a1/U1-RECEIPT.md"
+   }
+  ],
+  "spent_upper_bound": {
+   "processed": 44792057,
+   "why": "the two panes' whole sessions since approval incl. calls outside their program span"
+  },
+  "cap_history": [
+   {
+    "cap": 20000000,
+    "set": "2026-10-07 amendment A1 decision 1 (Owner 'y', pane 423e33b0)"
+   },
+   {
+    "cap": 60000000,
+    "set": "2026-10-07 Owner choice 'Raise cap to 60M' (pane b9bd9469) after a1.spent 42,307,381 > 20M; covers spend to date + ~18M for T3 replay and T7"
+   },
+   {
+    "cap": 20000000,
+    "set": "2026-10-07 Owner 'y' (pane b9bd9469): 60M raise withdrawn -- raising a cap after crossing it turns the limit into a retrospective number"
+   }
+  ],
+  "status": "ECONOMIC_CONTAINMENT",
+  "breach": {
+   "spent": 42307381,
+   "cap": 20000000,
+   "overshoot_pct": 111.5,
+   "as_of": "2026-10-07T12:22:33Z",
+   "root_cause": "the cap was a ledger number read by C16 after spend; no admission path checked it before a call (interactive coordinator panes carried 41.2M of 42.3M)"
+  },
+  "containment": {
+   "allowed": [
+    "deterministic work that buys no new cognition",
+    "bounded cognition to build/prove pre-call budget admission (fresh pane, spec first)"
+   ],
+   "frozen_units": [
+    "T3",
+    "T7"
+   ],
+   "reopen": "only after pre-call admission is proven (tiny-cap canary, zero unauthorized overshoot) and A1 is reforecast from its current state"
   }
  }
 }

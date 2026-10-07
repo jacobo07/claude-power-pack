@@ -136,11 +136,48 @@ def main() -> int:
         clean = cep.check(cg, root) == []
         ok &= clean
         print(f"  {'ok' if clean else 'FAIL'}   V-OBL-INTEGRATION-declared-valid-passes-check")
+        # CE-T1a: spent_measured may be a dict {value, sources, unknown}; it must be JUDGED, not merely type-guarded.
+        def spend_fails(mod, sm):
+            d = led(decl=...)
+            d["budget_tokens"]["spent_measured"] = sm
+            return any("spend" in x for x in mod.check(d, root))
+
+        spend_cases = [("dict-under", {"value": 10, "sources": ["tis"], "unknown": False}, False),
+                       ("dict-over", {"value": 200, "sources": ["tis"], "unknown": []}, True),
+                       ("dict-unknown", {"value": 10, "sources": ["tis"], "unknown": ["src-b unread"]}, True),
+                       ("dict-no-value", {"sources": [], "unknown": False}, True),
+                       ("int-under", 10, False),
+                       ("int-over", 200, True)]
+
+        def spend_bad(mod):
+            return [n for n, sm, want in spend_cases if spend_fails(mod, sm) != want]
+
+        bad = spend_bad(cep)
+        ok &= not bad
+        print(f"  {'ok' if not bad else 'FAIL'}   V-SPEND-CASES ({len(spend_cases)} cases) {bad or ''}")
+        ext = led(decl=...)
+        ext["budget_tokens"].update(spent_measured={"value": 200, "unknown": False}, owner_extension="Owner 2026-10-07")
+        ext_ok = cep.check(ext, root) == []
+        ok &= ext_ok
+        print(f"  {'ok' if ext_ok else 'FAIL'}   V-SPEND-OWNER-EXTENSION-admits-overrun")
+        # Mutant on a COPY of the module: an `unknown` that passes must turn the case table red.
+        import importlib.util
+        src = Path(cep.__file__).read_text(encoding="utf-8")
+        mut_src = src.replace('if spent.get("unknown"):', 'if False:')
+        mp = root / "cep_gen2_mut_unknown.py"
+        mp.write_text(mut_src, encoding="utf-8")
+        spec = importlib.util.spec_from_file_location("cep_gen2_mut_unknown", mp)
+        mut = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mut)
+        killed = mut_src != src and bool(spend_bad(mut))
+        ok &= killed
+        print(f"  {'ok' if killed else 'FAIL'}   V-SPEND-MUT-unknown-passes {'killed' if killed else 'SURVIVED'} {spend_bad(mut)}")
     live = json.loads((cep.REPO / cep.LEDGER_REL).read_text(encoding="utf-8"))
     st = cep.check_obligations(live, cep.REPO)[0]
-    live_ok = live.get("obligations_declared") is not True and st == "UNASSESSED"
+    # CE-T0b declared C1-C14: the live ledger is now assessed, and stays red while any obligation is OPEN or unrun.
+    live_ok = live.get("obligations_declared") is True and st == "FAIL"
     ok &= live_ok
-    print(f"  {'ok' if live_ok else 'FAIL'}   V-OBL-LIVE-LEDGER-unassessed (status {st}, declared={live.get('obligations_declared')!r})")
+    print(f"  {'ok' if live_ok else 'FAIL'}   V-OBL-LIVE-LEDGER-assessed (status {st}, declared={live.get('obligations_declared')!r})")
     print(f"OBL_TEST={'PASS' if ok else 'FAIL'}")
     return 0 if ok else 1
 

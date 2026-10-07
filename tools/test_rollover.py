@@ -275,6 +275,52 @@ def main() -> int:
         check("V-ROLLOVER-CERTIFIED-RETIRED", ro.newest_capsule(str(repo), state, exclude="x") is None
               or ro.newest_capsule(str(repo), state, exclude="x")["session_id"] != SID, "certified capsule not offered again")
 
+        print("forget-safety: the capsule alone must restart the work (CE-T1a)")
+        fs = ro.forget_safe(cap)
+        check("V-ROLLOVER-FORGET-SAFE", fs["verdict"] == "FORGET_SAFE" and not fs["missing"], fs)
+        hp = Path((cap.get("handoff") or {}).get("path") or "")
+        hidden = hp.with_name(hp.name + ".hidden")
+        moved = hp.is_file()
+        if moved:
+            hp.rename(hidden)
+        try:
+            fs_nh = ro.forget_safe(cap)
+        finally:
+            if moved:
+                hidden.rename(hp)
+        check("V-ROLLOVER-FORGET-SAFE-WITHOUT-HANDOFF", moved and fs_nh["verdict"] == "FORGET_SAFE", f"handoff hidden={moved} {fs_nh}")
+        for gate_id, mut, word in (("GOAL", lambda c: c.update(goal=ro._unknown("x")), "goal"),
+                                   ("OBLIGATIONS", lambda c: c.update(obligations=[]), "obligations"),
+                                   ("BRANCH", lambda c: c["repo"].update(branch=ro._unknown("x")), "branch"),
+                                   ("HEAD", lambda c: c["repo"].pop("head", None), "head")):
+            c = json.loads(json.dumps(cap))
+            mut(c)
+            r = ro.forget_safe(c)
+            check(f"V-ROLLOVER-FORGET-UNSAFE-{gate_id}", r["verdict"] == "FORGET_UNSAFE"
+                  and any(m.startswith(word) for m in r["missing"]), r)
+        # certify_flow: exam passes but the goal file is gone -> exit 9, capsule NOT retired.
+        F9 = "ffffffff-0009"
+        g9 = goal.with_name("goal9.md")
+        g9.write_text(goal.read_text(encoding="utf-8"), encoding="utf-8")
+        c9 = json.loads(json.dumps(cap))
+        c9["session_id"] = F9
+        c9.setdefault("handoff", {})["session"] = F9
+        c9["goal"]["path"] = str(g9)
+        ro.seal(c9, state)
+        rc9r = ro.main(["resume", "--cwd", str(repo), "--claimant", "succ-9", "--from", F9])
+        g9.unlink()
+        real_certify = ro.certify
+        ro.certify = lambda capsule, answers, reality=None: {"verdict": "RESUME_CERTIFIED", "wrong": []}
+        try:
+            rc9, res9 = ro.certify_flow(F9, "succ-9", {"goal": "goal9.md"}, state_dir=state)
+        finally:
+            ro.certify = real_certify
+        rows9 = (state / "rollover-ledger.jsonl").read_text(encoding="utf-8")
+        check("V-ROLLOVER-CERTIFY-FORGET-UNSAFE-EXIT-9", rc9r == 0 and rc9 == 9 and res9.get("verdict") == "FORGET_UNSAFE"
+              and not ro.capsule_path(F9, state).with_suffix(".certified").exists()
+              and ro.capsule_path(F9, state).is_file() and "certify_forget_unsafe" in rows9,
+              f"resume rc={rc9r} certify rc={rc9} {res9.get('missing')}")
+
         print("reset gate: may /clear be typed for this session RIGHT NOW?")
         ro.STATE_DIR = state
         gsid = "gggggggg-0007"

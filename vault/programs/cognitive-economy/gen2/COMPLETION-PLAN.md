@@ -113,3 +113,20 @@ live deploy (Owner authority boundary). Run it under the new baseline as the fir
 ## Owner-only items in the single approval
 1. Plan + envelope (85M ceiling inside the existing 150M). 2. Lift the 2026-10-11 not-before on W4/W5 and the W6 hold.
 3. Push stays Owner-granted per branch as today; ~/.claude edits stay Owner-applied.
+
+## Execution log
+- T0 CLOSED 2026-10-07 (pane 71ccfa86 dispatch, workers via tranche_driver, root C:\Users\User\Apps\pp-ce-gen2,
+  branch ce/gen2-completion). T0a PASS 1,024,112 (self_spend ignored --session and metered hardcoded 87601e81; fixed
+  25203294, SELF_SPEND_ATTRIBUTION_PASS=6/6). T0b FAIL 945,219 (cap before receipt; partial kept as f19838dd).
+  T0bR PASS 1,134,541 (C1-C14 declared OPEN 8455c0b0; --final FAIL names 22 failures; OPEN-passes mutant killed).
+  T0d G2 re-verify zero-model (676ed6a0): 41/41, 62/62, 39/39, MC 224/225 baseline red.
+  Worker spend 3,103,872 vs T0 cap 3M (1.03x; 0.10M from reserve). Dispatch pane 71ccfa86: 17,568,509 / 85 calls
+  (~207k/call, sixth orchestrator overrun) -> rotated by /kclear after T0, never carried into T1.
+- DEBT carried: spend clause compares `spent_measured` (now {value,sources,unknown}) by type guard only; T1's
+  first worker step fixes the comparison (value vs boundary; unknown -> UNKNOWN, never pass).
+
+## Next frontier (machine continuation)
+T1 (W6, EXECUTION, cap 8M, 4-6 packets of <= 1.5M each): obligations C2, C3, C4. A fresh session compiles T1 packets
+from THIS card + `rollover.py` (certify/claim) + capsule-v2 owner files only, writes them under
+gen2/evidence/tranche/CE-T1*, and runs `tools/tranche_driver.py --root C:\Users\User\Apps\pp-ce-gen2`. The planning
+session dispatches and rotates; it does not implement. First packet = the DEBT above + Forget-Safety check in certify.
