@@ -132,6 +132,34 @@
    "execution": "T9",
    "status": "OPEN",
    "check": null
+  },
+  {
+   "id": "C15",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "A1 receipts: every started, unfrozen tranche has a valid receipt; a family at its strike limit has all its tranches frozen",
+   "terminal": "EXECUTE",
+   "execution": "A1",
+   "status": "OPEN",
+   "check": [
+    "python3",
+    "tools/test_ce_a1.py",
+    "--obligation",
+    "C15"
+   ]
+  },
+  {
+   "id": "C16",
+   "source": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md#master-done-gate",
+   "clause": "A1 spend <= 20M processed; UNKNOWN fails",
+   "terminal": "EXECUTE",
+   "execution": "A1",
+   "status": "OPEN",
+   "check": [
+    "python3",
+    "tools/test_ce_a1.py",
+    "--obligation",
+    "C16"
+   ]
   }
  ],
  "budget_tokens": {
@@ -219,6 +247,14 @@
     "GEX44-hosted transcripts are not in the laptop index (owner_map.md:47)",
     "CE-T0 tranche workers (this session 22e4fda5 and siblings) not yet metered",
     "any reading taken with `self_spend.py --session X` before CE-T0a measured sid 87601e81, not X"
+   ]
+  },
+  "coordination_spend": {
+   "value": null,
+   "unit": "processed",
+   "sources": [],
+   "unknown": [
+    "A1-2 meter (turns.py --attribute) not built"
    ]
   }
  },
@@ -398,5 +434,31 @@
    "T9": 5000000,
    "reserve": 15000000
   }
+ },
+ "a1": {
+  "cap": 20000000,
+  "spent": null,
+  "frozen": [
+   "T2",
+   "T4",
+   "T5",
+   "T6",
+   "T8"
+  ],
+  "families": {
+   "e1-rule-moves": {
+    "strikes": 0
+   },
+   "ic-ao-measurement": {
+    "strikes": 0
+   },
+   "context-runtime": {
+    "strikes": 0
+   },
+   "gen3-envelopes": {
+    "strikes": 0
+   }
+  },
+  "strike_limit": 2
  }
 }
