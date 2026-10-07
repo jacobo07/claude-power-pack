@@ -1,6 +1,6 @@
 ---
 covers: [cheap-architecture-admission, ce-a3, coordinator-extinction, route-admission, cost-ladder, safe-deopt]
-status: PROPOSED (awaiting one Owner approval: 'fold into A3, defer U4, go T0')
+status: BLOCKED (depends_on: goal ce-a3 unit U2 receipt; wake: first operation is Reality Delta + Proof of Non-Work)
 extends: goal ce-a3 (Amendment A3, 5617f901)
 source: fresh read-only planner 50908090-5ffc-4787-b8ad-c9eb911df84e, 19 calls, 1,478,444 processed
 ---
@@ -223,3 +223,13 @@ Prompt extinction and parentless execution follow from the above: workers read t
 Also: the context7 server needs authorizing via `/mcp`, and coplay-mcp, magic-ui, notion and 21st-dev/magic failed to connect. This plan uses none of them.
 
 **Approval phrase:** **"fold into A3, defer U4, go T0"**
+
+## Owner decision 2026-10-07 (supersedes the approval phrase above)
+1. A3 stays exclusively with its current owner pane (pp-ce-a3: U1 result 62fe1091, U2 packet 2b59d938). Do not launch T1/T2, no second coordinator.
+2. T0 only, as independent work to close E3 (done deterministically; see E3-receipt).
+3. This plan is a durable goal in BLOCKED state, dependent on ce-a3 U2. Zero hot context while waiting. Wake trigger: an A3 U2 receipt under pp-ce-a3 vault/programs/cognitive-economy/gen2/evidence/a3/. NOTE: no verified event-driven scheduler binds this today, so the wake is a machine-resolvable continuation, not an automatic one.
+4. First operation on wake: Reality Delta against what A3 built + Proof of Non-Work + overlap scan; EXTEND/MERGE/CONNECT before adding anything.
+5. Never open a new goal id to continue A3 past its crossed cap. A3 needs an explicit reforecast/reauthorization of A3 itself.
+
+## First canary for this goal: DENIED/NO-WORK coordination ~ 0 cognition
+Evidence: coordinator 98e93726 spent 187,645 tokens to learn 'ce-a3 cap crossed + active owner + overlapping unit'. Target: goal budget crossed + active owner + overlapping Work Unit -> deterministic refusal receipt with no model boundary.
