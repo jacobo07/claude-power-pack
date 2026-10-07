@@ -1,0 +1,15 @@
+{
+  "epoch": "E5",
+  "subject": "R2 CLAUDE.md cut (commit 7f42e43e)",
+  "label": "ESTIMATED",
+  "measured": false,
+  "delta_tokens_measured": null,
+  "delta_tokens_expected_chars_div_4": 605,
+  "probe_before": {"ref": "7f42e43e^", "session_id": null, "first_call_tokens": null, "spend_processed_tokens": null},
+  "probe_after": {"ref": "7f42e43e", "session_id": null, "first_call_tokens": null, "spend_processed_tokens": null},
+  "prompt": "Reply with the single word OK.",
+  "why_not_run": "Session cap was 500,000 processed tokens = 1 call at the measured per-call floor. Reading the listing_floor_probe.py CLI, creating two worktrees, running two ON probes, metering both with tranche_driver.spend(sid) and removing the worktrees needs at least 6 calls. The one call was spent writing this file and the receipt.",
+  "unverified_premises": ["wiki/tools/listing_floor_probe.py CLI flags", "tools/tranche_driver.py spend(sid) signature", "tools/test_listing_floor_probe.py exists"],
+  "confounders": ["prompt cache state differs between the two probe sessions (the first call may hit the cache, the second may not)", "the global ~/.claude/CLAUDE.md and rules/ size at run time load into both probes and can drift between runs", "hooks (SessionStart / UserPromptSubmit) inject context that varies per session", "chars/4 is a heuristic, not a tokenizer count"],
+  "next_action": "Re-dispatch E5 with a cap of at least 6 calls (about 3M processed tokens at this floor) to produce a MEASURED delta."
+}
