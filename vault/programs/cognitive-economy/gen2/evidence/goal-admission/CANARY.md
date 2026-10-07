@@ -72,8 +72,9 @@ The 5th refusal per sid was the first real deny (79f9 row 64, 9adc row 66): an e
   a refused renew whose measured value did not move writes no journal row, so the journal
   under-counts refusals made by parallel calls.
 
-Fix direction, not chosen yet: a goal refusal gets no free closeout, or the closeout is paid from
-a reserve held back from the cap. Either way the deny must be a deny.
+Fix (Owner choice "handoff writes only", landed 19240f98): a goal refusal admits one write to a
+handoff/plan/RESUMPTION path per pane and no Read/Grep/Glob. Expected residual per pane is one
+crossing call plus the final reply. NOT yet re-measured live: the rerun canary is the done gate.
 
 ## Relevance to A1
 A1 crossed a 20M cap by 22.3M (111.5%) with no pre-call refusal at all. Here the refusal reached
