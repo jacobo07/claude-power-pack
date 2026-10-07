@@ -394,8 +394,126 @@ def feasibility(sid: str, stop: int, calls_estimate: int | None, cwd: str | None
     return out
 
 
+# --- Goal budget admission (A1 incident 2026-10-07, vault/specs/goal-budget-admission.md) ----------
+# A session envelope judged one pane; A1 was spent by several panes and their subagents against one
+# cap that nothing checked before a call. A GOAL is that cap: a GoalLedger journal under
+# <state>/goal-budget/<goal>/, plus index.json (roots, hosts, lease size, since) that binds panes to it.
+# session_budget_guard.js measures each bound session and asks `goal-renew` for a lease when the last
+# one is spent; a refusal there is the pre-call stop.
+GOAL_LEASE_CALLS = 5
+GOAL_DEFAULT_PER_CALL = 150_000   # used only before a session has a measured context of its own
+
+
+def goal_root() -> Path:
+    return state_dir() / "goal-budget"
+
+
+def _goal_ledger(goal: str):
+    import sys
+    if not _SID_RE.match(goal or ""):
+        raise ValueError(f"invalid goal id: {goal!r}")
+    repo = str(Path(__file__).resolve().parents[1])
+    if repo not in sys.path:
+        sys.path.insert(0, repo)
+    from modules.provider_routing.ledger import GoalLedger
+    return GoalLedger(goal_root() / goal, goal)
+
+
+def read_index() -> dict:
+    try:
+        ix = json.loads((goal_root() / "index.json").read_text(encoding="utf-8-sig"))
+        return ix if isinstance(ix, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _write_index(ix: dict) -> None:
+    p = goal_root() / "index.json"
+    tmp = p.with_name(f"index.json.{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(ix, indent=1, sort_keys=True), encoding="utf-8")
+    os.replace(tmp, p)
+
+
+def _norm(p: str) -> str:
+    return os.path.normcase(os.path.abspath(p)).rstrip("\\/")
+
+
+def _overlaps(a: str, b: str) -> bool:
+    a, b = _norm(a), _norm(b)
+    return a == b or a.startswith(b + os.sep) or b.startswith(a + os.sep)
+
+
+def inside_agent() -> bool:
+    return bool(os.environ.get("CLAUDECODE"))
+
+
+def goal_declare(goal: str, cap: int, source: str, roots: list[str] | None = None,
+                 hosts: list[str] | None = None, lease_calls: int | None = None) -> dict:
+    """Create a goal or change its cap. From inside an agent session only a NEW goal or a LOWER cap
+    is admitted; a goal's roots never overlap another goal's."""
+    import datetime as dt
+    import sys
+    led = _goal_ledger(goal)            # validates the id and creates the goal directory
+    repo = str(Path(__file__).resolve().parents[1])
+    if repo not in sys.path:
+        sys.path.insert(0, repo)
+    from modules.lease.store import Exclusive
+    agent = inside_agent()
+    with Exclusive(goal_root() / "index.lock", 10.0):
+        ix = read_index()
+        cur = ix.get(goal)
+        roots = [_norm(r) for r in (roots or [])]
+        if cur is not None and agent and (roots and roots != cur.get("roots") or hosts and hosts != cur.get("hosts")
+                                          or lease_calls and lease_calls != cur.get("lease_calls")):
+            return {"ok": False, "goal": goal, "reason": "an agent session cannot rebind an existing goal"}
+        for other, e in ix.items():
+            if other != goal and any(_overlaps(r, o) for r in roots for o in e.get("roots", [])):
+                return {"ok": False, "goal": goal, "reason": f"roots overlap goal {other!r}"}
+        out = led.declare_cap(cap, source, inside_agent=agent)
+        if not out["ok"]:
+            return out
+        entry = dict(cur or {"since": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+                             "roots": [], "hosts": [], "lease_calls": GOAL_LEASE_CALLS})
+        if roots:
+            entry["roots"] = roots
+        if hosts:
+            entry["hosts"] = hosts
+        if lease_calls:
+            entry["lease_calls"] = lease_calls
+        ix[goal] = entry
+        _write_index(ix)
+    return {**out, "binding": entry}
+
+
+def _goal_entry(goal: str, host: str) -> tuple[dict | None, str]:
+    e = read_index().get(goal)
+    if e is None:
+        return None, f"UNKNOWN: goal {goal!r} is not declared"
+    if e.get("hosts") and host not in e["hosts"]:
+        return None, f"UNKNOWN: host {host!r} is not one of goal {goal!r} hosts {e['hosts']}"
+    return e, ""
+
+
+def goal_renew(goal: str, sid: str, measured: int, per_call: int, host: str) -> dict:
+    e, why = _goal_entry(goal, host)
+    if e is None:
+        return {"ok": False, "goal": goal, "reason": why}
+    lease = int(e.get("lease_calls") or GOAL_LEASE_CALLS) * (per_call if per_call > 0 else GOAL_DEFAULT_PER_CALL)
+    return _goal_ledger(goal).renew(sid, measured, lease)
+
+
+def goal_spawn(goal: str, sid: str, estimate: int | None, per_call: int, host: str) -> dict:
+    e, why = _goal_entry(goal, host)
+    if e is None:
+        return {"ok": False, "goal": goal, "reason": why}
+    if not estimate or estimate <= 0:
+        estimate = int(e.get("lease_calls") or GOAL_LEASE_CALLS) * (per_call if per_call > 0 else GOAL_DEFAULT_PER_CALL)
+    return _goal_ledger(goal).spawn(sid, estimate)
+
+
 def _main(argv: list[str]) -> int:
     import argparse
+    import socket
     import sys
     ap = argparse.ArgumentParser(prog="mission_spend")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -413,7 +531,37 @@ def _main(argv: list[str]) -> int:
     s = sub.add_parser("session-status")
     s.add_argument("--transcript", required=True)
     s.add_argument("--since")
+    gd = sub.add_parser("goal-declare")
+    gd.add_argument("--goal", required=True)
+    gd.add_argument("--cap", type=int, required=True)
+    gd.add_argument("--source", required=True, help="where this cap is decided, e.g. ledger.json@ab44236e")
+    gd.add_argument("--root", action="append", default=[], help="a directory whose sessions bind to this goal")
+    gd.add_argument("--host", action="append", default=[], help="a host allowed to spend (default: any)")
+    gd.add_argument("--lease-calls", type=int)
+    for name in ("goal-renew", "goal-spawn"):
+        g = sub.add_parser(name)
+        g.add_argument("--goal", required=True)
+        g.add_argument("--session", required=True)
+        g.add_argument("--per-call", type=int, default=0)
+        g.add_argument("--host", default=socket.gethostname())
+        if name == "goal-renew":
+            g.add_argument("--measured", type=int, required=True)
+        else:
+            g.add_argument("--estimate", type=int)
+    gs = sub.add_parser("goal-status")
+    gs.add_argument("--goal", required=True)
     a = ap.parse_args(argv)
+    if a.cmd.startswith("goal-"):
+        if a.cmd == "goal-declare":
+            out = goal_declare(a.goal, a.cap, a.source, a.root, a.host, a.lease_calls)
+        elif a.cmd == "goal-renew":
+            out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
+        elif a.cmd == "goal-spawn":
+            out = goal_spawn(a.goal, a.session, a.estimate, a.per_call, a.host)
+        else:
+            out = {**_goal_ledger(a.goal).status(), "binding": read_index().get(a.goal)}
+        print(json.dumps(out, sort_keys=True))
+        return 0 if out.get("ok") else 3
     if a.cmd == "session-declare":
         if a.skip_feasibility:
             f = {"skipped": True}

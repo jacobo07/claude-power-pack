@@ -26,11 +26,13 @@
 // Incremental: the state file keeps a byte offset; each call reads only the complete lines
 // appended since. Coverage is the dispatcher's PreToolUse lanes (Bash, PowerShell, Write, Edit,
 // MultiEdit, NotebookEdit, Read, Grep); Agent/WebFetch calls are COUNTED (they are in the
-// transcript) but not themselves gated -- the next gated call is.
+// transcript) but not themselves gated -- the next gated call is. In GOAL mode (below) an Agent
+// call is gated before launch once the dispatcher's PreToolUse-Agent lane is registered.
 'use strict';
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const SID_RE = /^[A-Za-z0-9._-]{1,128}$/;
 const UK = ['input_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens', 'output_tokens'];
@@ -160,11 +162,179 @@ function closeout(budget, st, event, verdict) {
     'record the spend row and the handoff, then stop.');
 }
 
+// --- Goal mode (A1 incident 2026-10-07, vault/specs/goal-budget-admission.md) ----------------------
+// A session envelope judged one pane. A1's 42.3M was spent by two undeclared coordinator panes and
+// their subagents against one 20M cap that nothing checked before a call. In goal mode a session is
+// BOUND to a goal (env CPP_GOAL > cwd under a goal's roots > `goal` in its budget file), measured
+// over its own transcript AND <sid>/subagents/*.jsonl (subagent tool calls fire this hook with the
+// parent's session id, but their usage is written there), and admitted against a lease reserved from
+// the goal's GoalLedger. When the lease is spent, `mission_spend.py goal-renew` settles the measured
+// total and reserves the next one, or refuses. Unlike the session envelope, goal mode fails CLOSED:
+// an unknown goal, a host outside the goal, an unreadable transcript or a renew that fails is a deny.
+// The deny is a plain permissionDecision, never {continue:false} (dispatcher:423-433, dead screen).
+const PY = process.env.PYTHON_BIN || (process.platform === 'win32'
+  ? 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe' : 'python3');
+const MISSION_SPEND = path.join(__dirname, '..', 'tools', 'mission_spend.py');
+const RENEW_TIMEOUT_MS = 8000;              // below the Read chain's 20 s, so a slow renew is a deny, not a kill
+
+function normPath(p) {
+  const r = path.resolve(String(p || '')).replace(/[\\/]+$/, '');
+  return process.platform === 'win32' ? r.toLowerCase() : r;
+}
+
+function under(p, root) {
+  const a = normPath(p), b = normPath(root);
+  return a === b || a.startsWith(b + path.sep);
+}
+
+function goalBinding(event, sid) {
+  const ix = readJson(path.join(stateDir(), 'goal-budget', 'index.json'));
+  const entry = g => (ix && typeof ix === 'object' && ix[g] && typeof ix[g] === 'object') ? ix[g] : null;
+  const env = String(process.env.CPP_GOAL || '').trim();
+  if (env) return { goal: env, entry: entry(env) };
+  if (ix && typeof ix === 'object' && event.cwd) {
+    for (const [g, e] of Object.entries(ix)) {
+      if (e && Array.isArray(e.roots) && e.roots.some(r => under(event.cwd, r))) return { goal: g, entry: e };
+    }
+  }
+  const b = readJson(path.join(stateDir(), `session-budget-${sid}.json`));
+  if (b && typeof b.goal === 'string' && b.goal) return { goal: b.goal, entry: entry(b.goal) };
+  return null;
+}
+
+// Only a bare status read is exempt in goal mode: a substring match let any command that merely
+// MENTIONED mission_spend.py skip the gate (audit gap 4).
+function goalExempt(cmd) {
+  const c = String(cmd).replace(/^\s*&\s*/, '');
+  return /mission_spend\.py['"]?\s+goal-status\b/.test(c) && !/[;|&`<>\n]|\$\(/.test(c);
+}
+
+function touchesGoalState(event) {
+  const ti = event.tool_input || {};
+  return /goal-budget/i.test(String(ti.command || '') + ' ' + String(ti.file_path || '') + ' ' + String(ti.path || ''));
+}
+
+function goalDeny(goal, reason) {
+  return { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny',
+    permissionDecisionReason: `GOAL BUDGET (${goal}) -- ${reason} Way out: end this turn now with a ` +
+      'status line and the next exact action. Nothing new starts on this goal; the Owner decides ' +
+      '(a crossed cap is never raised -- a new goal id is). Read the ledger with ' +
+      `\`python tools/mission_spend.py goal-status --goal ${goal}\`.` } };
+}
+
+function foldFile(gs, file, isMain) {
+  let size;
+  try { size = fs.statSync(file).size; } catch (e) { if (isMain) throw e; return; }
+  let off = gs.files[file] || 0;
+  if (size < off) off = 0;                    // truncated: message ids keep the re-read from double counting
+  if (size === off) return;
+  const fd = fs.openSync(file, 'r');
+  let buf;
+  try {
+    buf = Buffer.alloc(size - off);
+    fs.readSync(fd, buf, 0, buf.length, off);
+  } finally { fs.closeSync(fd); }
+  const end = buf.lastIndexOf(0x0a);
+  if (end < 0) return;
+  gs.files[file] = off + end + 1;
+  const seen = new Set(gs.ids);
+  for (const line of buf.subarray(0, end).toString('utf8').split('\n')) {
+    if (!line) continue;
+    let r;
+    try { r = JSON.parse(line); } catch (e) { continue; }
+    if (!r || typeof r !== 'object') continue;
+    if (gs.since && String(r.timestamp || '') < gs.since) continue;
+    const m = r.message;
+    if (!m || typeof m !== 'object' || !m.usage || m.model === '<synthetic>') continue;
+    const mid = m.id || r.uuid;
+    if (seen.has(mid)) continue;
+    seen.add(mid);
+    gs.ids.push(mid);
+    gs.tokens += UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+    if (isMain) gs.context = UK.slice(0, 3).reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+  }
+  if (gs.ids.length > MAX_IDS) gs.ids = gs.ids.slice(-MAX_IDS);
+}
+
+function measureGoal(gs, transcript) {
+  foldFile(gs, transcript, true);
+  const subDir = path.join(path.dirname(transcript), path.basename(transcript, '.jsonl'), 'subagents');
+  let names = [];
+  try { names = fs.readdirSync(subDir).filter(n => n.endsWith('.jsonl')).sort(); } catch (e) { names = []; }
+  for (const n of names) foldFile(gs, path.join(subDir, n), false);
+}
+
+function callGoal(args) {
+  const r = spawnSync(PY, [MISSION_SPEND, ...args],
+    { encoding: 'utf8', timeout: RENEW_TIMEOUT_MS, windowsHide: true });
+  if (r.error || (r.status !== 0 && r.status !== 3)) {
+    return { failed: `${args[0]} did not answer (${r.error ? (r.error.code || r.error.message) : 'exit ' + r.status})` };
+  }
+  const line = String(r.stdout || '').trim().split('\n').pop();
+  try {
+    const out = JSON.parse(line);
+    return out && typeof out === 'object' ? out : { failed: `${args[0]} answered no object` };
+  } catch (e) { return { failed: `${args[0]} answered unparseable output` }; }
+}
+
+function decideGoal(event, sid, bind) {
+  const { goal, entry } = bind;
+  const cmd = event.tool_input && typeof event.tool_input.command === 'string' ? event.tool_input.command : '';
+  if (cmd && goalExempt(cmd)) return null;
+  if (!entry) return goalDeny(goal, `UNKNOWN: goal ${goal} is not declared on this host; unknown is never admitted.`);
+  if (touchesGoalState(event)) return goalDeny(goal, 'a call that touches goal-budget state is not admitted from a bound session.');
+  const gPath = path.join(stateDir(), `session-budget-${sid}.goal.json`);
+  let gs = readJson(gPath);
+  const since = entry.since ? String(entry.since) : null;
+  if (!gs || gs.goal !== goal || gs.since !== since || !gs.files || !Array.isArray(gs.ids)) {
+    gs = { goal, since, files: {}, ids: [], tokens: 0, context: 0, lease: null, closeout: 0 };
+  }
+  let verdict = null;
+  if (!event.transcript_path) verdict = goalDeny(goal, 'UNKNOWN: the event carries no transcript_path.');
+  else {
+    try { measureGoal(gs, event.transcript_path); } catch (e) {
+      verdict = goalDeny(goal, `UNKNOWN: the transcript cannot be read (${e.code || e.message}).`);
+    }
+  }
+  const base = ['--goal', goal, '--session', sid, '--per-call', String(gs.context || 0)];
+  if (!verdict && (!gs.lease || gs.tokens - gs.lease.base >= gs.lease.amount)) {
+    const r = callGoal(['goal-renew', ...base, '--measured', String(gs.tokens)]);
+    if (r.failed) verdict = goalDeny(goal, `UNKNOWN: ${r.failed}.`);
+    else if (!r.ok) {
+      gs.lease = null;
+      verdict = closeout(entry, gs, event, goalDeny(goal, `refused: ${r.reason}.`));
+    } else gs.lease = r.lease;
+  }
+  const tool = String(event.tool_name || '');
+  if (!verdict && (tool === 'Agent' || tool === 'Task')) {
+    const r = callGoal(['goal-spawn', ...base]);
+    if (r.failed) verdict = goalDeny(goal, `UNKNOWN: ${r.failed}; no child starts on an unmeasured goal.`);
+    else if (!r.ok) verdict = goalDeny(goal, `child refused before launch: ${r.reason}.`);
+  }
+  const tmp = `${gPath}.${process.pid}.tmp`;
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(gs));
+    fs.renameSync(tmp, gPath);
+  } catch (e) {
+    try { fs.unlinkSync(tmp); } catch (_) { /* nothing to clean */ }
+    // The journal is the authority; a lost local write only means the next call renews early.
+  }
+  return verdict;
+}
+
 function decide(event) {
   const sid = event && event.session_id;
   if (!sid || !SID_RE.test(sid)) return null;
   const sw = String(process.env.CPP_SESSION_BUDGET || '').trim().toLowerCase();
   if (sw === '0' || sw === 'off' || sw === 'false') return null;
+  const bind = goalBinding(event, sid);
+  if (bind) {
+    let gv;
+    try { gv = decideGoal(event, sid, bind); } catch (e) {
+      gv = goalDeny(bind.goal, `UNKNOWN: the goal check itself failed (${e.code || e.message}); a bound session fails closed.`);
+    }
+    if (gv) return gv;
+  }
   const bPath = path.join(stateDir(), `session-budget-${sid}.json`);
   if (!fs.existsSync(bPath)) return null;                     // the opt-in: no envelope, no guard
   const cmd = event.tool_input && typeof event.tool_input.command === 'string' ? event.tool_input.command : '';

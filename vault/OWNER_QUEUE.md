@@ -7,6 +7,45 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## NEW (2026-10-07) -- goal budget admission: Agent lane + dispatcher copy  [PENDING]
+
+Spec `vault/specs/goal-budget-admission.md` (A1 incident: 42.3M spent against a 20M cap read only
+after the spend). The guard's goal mode is live on the Bash/PowerShell, Edit and Read lanes as soon as
+the branch is in the main checkout -- it is inert until a goal is declared. Gating an Agent BEFORE it
+launches needs two Owner steps (HR-001):
+
+1. Copy the dispatcher (live copy == PP mirror at 89AC7744 before this change, so only the new lane
+   and route land):
+
+   ```powershell
+   Copy-Item "$env:USERPROFILE\.claude\skills\claude-power-pack\hooks\hook-dispatcher.js" "$env:USERPROFILE\.claude\hooks\hook-dispatcher.js"
+   ```
+
+2. Add this group to `PreToolUse` in `~/.claude/settings.json`, next to the two `Task|Agent` groups:
+
+   ```json
+   {
+     "matcher": "Task|Agent",
+     "hooks": [
+       {
+         "type": "command",
+         "command": "C:/Program Files/nodejs/node.exe",
+         "args": ["C:/Users/User/.claude/hooks/hook-dispatcher.js", "--event=PreToolUse-Agent-default"],
+         "timeout": 15,
+         "statusMessage": "Goal budget admission for Agent spawns (A1)"
+       }
+     ]
+   }
+   ```
+
+Verify: `python tools/test_goal_budget_admission.py` (V-GOAL-*). Kill switch: `CPP_SESSION_BUDGET=off`.
+Declaring a goal or raising its cap is an Owner act from a plain terminal (a raise from inside a
+Claude session is refused; a crossed cap is never raised -- a new goal id is):
+
+```powershell
+python tools/mission_spend.py goal-declare --goal <id> --cap <tokens> --source "<where decided>" --root "<dir>" --host $env:COMPUTERNAME
+```
+
 ## ACV resolver CLI -- no command or agent names it yet (2026-10-03, ACV C5 R2)
 
 `modules/capability_runtime/agent_resolver_cli.py` is the only production entry to the agent
