@@ -45,6 +45,36 @@ once remaining < (requesters x per-call).
   ... failed` line broke the JSON parse, and the driver reported independent_total 0 and 0 denies --
   a zero from an instrument that never looked.
 
+## Diagnosis (2026-10-07, successor session; raw transcripts + journal, no ledger code)
+Instrument: `diag.py` beside this file. The hypothesis above is **refuted** for this run. The
+"first deny at 3,771,750" was the first `GOAL BUDGET` *tool_result*; the **ledger** refused much
+earlier, at journal row 57 (18:46:10Z, used **3,005,579**, 5,579 over the cap). Each of the
+following refusals (rows 57-66) is a settle with no reserve after it. Between a refusal and the deny,
+`closeout()` (built for the session-envelope breaker) turned the goal deny into an *allow* for
+Read/Grep/Glob, 4 per sid, and passed the refusal only as advisory context ("SESSION BUDGET TRIPPED
+... closeout call n/4 allowed"). The canary's workload is only Reads, so all 4 were used each time.
+The 5th refusal per sid was the first real deny (79f9 row 64, 9adc row 66): an exact match.
+
+| component | tokens | source |
+|---|---|---|
+| used at the first ledger refusal | 3,005,579 | journal row 57 |
+| 9adc crossing call (on a 364-token lease, row 48) | 174,777 | rows 55->58 |
+| closeout-admitted Reads, 4 per pane (8 requests, ~98-101K each) | **793,112** | transcripts, `tools=['Read']` |
+| final text reply after the real deny (1 per pane) | 200,360 | transcripts |
+| **total** | **4,173,828** | = the independent total, exactly |
+
+- **Closeout allowance in goal mode: 793,112 = 68% of the overshoot.** This is the defect.
+- Subagent final answers: **0** requests after the first refusal came from a subagent file. Refuted.
+- Agent hold sized from the parent's per-call: no part of the overshoot. Refuted as a cause.
+- Tool-call-only observation: the residual it explains (crossing call + final reply, ~375K, about one
+  per-call per pane at each end) is the declared bound working as designed, not a breach of it.
+- Side finding: each advisory appears twice per call in the transcripts (two `attachment` rows), and
+  a refused renew whose measured value did not move writes no journal row, so the journal
+  under-counts refusals made by parallel calls.
+
+Fix direction, not chosen yet: a goal refusal gets no free closeout, or the closeout is paid from
+a reserve held back from the cap. Either way the deny must be a deny.
+
 ## Relevance to A1
 A1 crossed a 20M cap by 22.3M (111.5%) with no pre-call refusal at all. Here the refusal reached
 every pane; the residual is a ~1.2M absolute overshoot from concurrency. That is not yet the zero
