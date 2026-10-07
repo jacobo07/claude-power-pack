@@ -87,6 +87,42 @@ with tempfile.TemporaryDirectory() as tmp:
     # a worktree has no session history, so admission run there prices nothing and refuses: it must run in REPO.
     gate("V-DRIVER-ADMISSION-PRICED-IN-REPO", bool(declared_cwd) and all(c == td.REPO for c in declared_cwd),
          set(map(str, declared_cwd)))
+    # E2: with a manifest the coordinator is declared (stop = baseline + allowance) before any launch.
+    ev = []
+
+    def cdecl(code):
+        def f(argv, timeout=None, cwd=None):
+            if "session-declare" in argv:
+                ev.append(("declare", argv[argv.index("--session") + 1], argv[argv.index("--stop") + 1]))
+                return code if "COORD" in argv else 0
+            return td.run(argv, timeout)
+        return f
+    ev_launch = lambda argv, prompt: ev.append(("launch",)) or 0
+    man = {"coordinator": {"sid": "COORD", "allowance": 1000}}
+    q2 = dict(log=lambda m: None, calls_fn=lambda sid, stop: 5, calls_count_fn=lambda sid: 7)
+    r = td.drive([pk], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(500), cdecl(0), ev_launch, manifest=man, **q2)
+    gate("V-DRIVER-COORDINATOR-DECLARED-FIRST", ev[:1] == [("declare", "COORD", "1500")] and ("launch",) in ev, ev)
+    s = r["steps"]["SX"]
+    gate("V-DRIVER-STEP-CALLS-AND-BOUNDARIES", s.get("calls") == 7 and s.get("boundaries") == 1, s)
+    ev.clear()
+    r = td.drive([pk], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(500), cdecl(3), ev_launch, manifest=man, **q2)
+    gate("V-DRIVER-COORDINATOR-REFUSED-NOTHING-LAUNCHED", ("launch",) not in ev and not r["steps"] and
+         r.get("coordinator_admission", {}).get("verdict") == "REFUSED", (ev, r))
+    ev.clear()
+    r = td.drive([pk], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(500), cdecl(3), ev_launch, **q2)
+    gate("V-DRIVER-NO-MANIFEST-UNCHANGED", ("launch",) in ev and all(e[1] != "COORD" for e in ev if e[0] == "declare")
+         and "coordinator_admission" not in r, ev)
+    # calls come from the guard's own counter on the worker transcript; no transcript is unknown, never 0.
+    w2 = proj / "C--elsewhere-wt" / "w2.jsonl"
+    w2.write_text("".join(
+        '{"type": "assistant", "message": {"id": "m%d", "role": "assistant", "content": [{"type": "tool_use", '
+        '"id": "t%d", "name": "Read", "input": {}}], "usage": {"input_tokens": 100, "output_tokens": 5}}}\n' % (i, i)
+        for i in (1, 2)), encoding="utf-8")
+    ref = ms.session_tokens(w2)["calls"]
+    gate("V-DRIVER-CALLS-FROM-TRANSCRIPT", td.calls_of("w2", proj) == ref == 2 and td.calls_of("absent", proj) is None,
+         (td.calls_of("w2", proj), ref))
+    gate("V-DRIVER-BOUNDARIES-LISTED", td.boundaries("x\nBOUNDARIES: a; b; c\n") == 3 and td.boundaries("") == 1
+         and td.boundaries("BOUNDARIES: 4") == 4)
 
 print(f"DRIVER_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
 sys.exit(0 if fails == 0 else 1)

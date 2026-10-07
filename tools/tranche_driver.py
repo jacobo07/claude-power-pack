@@ -4,6 +4,8 @@ One headless `claude -p` worker per packet, then deterministic receipt checks: r
 its `COMMITS:` line is reachable from HEAD (at least one), each named test exits 0, worker spend <= step cap.
 Refuses a step whose cap exceeds --step-max, or that would push the tranche past --cap minus --reserve (stops).
 Spend enforcement is the existing guard: each worker is declared via `mission_spend.py session-declare`.
+With --manifest naming `coordinator.sid` + `coordinator.allowance`, the coordinator itself is declared first
+(stop = baseline + allowance); a refused declare launches nothing (E2, cr4 closure plan).
 """
 import argparse, contextlib, io, json, re, shlex, shutil, subprocess, sys, time, uuid
 from pathlib import Path
@@ -12,6 +14,7 @@ REPO = Path(__file__).resolve().parents[1]
 SPEND_SRC = REPO / "vault/programs/cognitive-economy/gen2/evidence/stage0/self_spend.py"
 GIT = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
 PER_CALL = 110_000
+COORD_CALLS = 6
 PROJECTS = Path.home() / ".claude" / "projects"
 ROOT = REPO  # the tree workers edit; --root points it at a git worktree outside ~/.claude (sensitive-path block)
 
@@ -30,6 +33,28 @@ def spend(sid, projects=PROJECTS):
         exec(src, {})  # noqa: S102 -- the program's own meter, executed unmodified except sid and dir
     m = re.search(r"processed ([\d,]+)", buf.getvalue())
     return int(m.group(1).replace(",", "")) if m else None
+
+
+def calls_of(sid, projects=PROJECTS):
+    """Calls of a worker session, counted by the guard's own counter (mission_spend.session_tokens), found the
+    same way spend() finds the transcript. No transcript -> None (unknown), never 0."""
+    hits = sorted(projects.glob(f"*/{sid}.jsonl"))
+    if not hits:
+        return None
+    sys.path.insert(0, str(REPO / "tools"))
+    import mission_spend as ms
+    return ms.session_tokens(hits[0])["calls"]
+
+
+def boundaries(text):
+    """Semantic boundaries a receipt claims: 1 per packet unless a `BOUNDARIES:` line lists more (a count, or
+    items separated by ; or ,)."""
+    for ln in text.splitlines():
+        if ln.strip().upper().startswith("BOUNDARIES:"):
+            v = ln.split(":", 1)[1].strip()
+            n = int(v) if v.isdigit() else len([x for x in re.split(r"[;,]", v) if x.strip()])
+            return max(1, n)
+    return 1
 
 
 def run(argv, timeout=None, stdin=None, cwd=None):
@@ -72,10 +97,29 @@ def calls_for(sid, stop, feas_fn=None):
     return n
 
 
+def declare_coordinator(co, res, spend_fn, run_fn, log):
+    """Declare the coordinator session before any packet: stop = its measured baseline + allowance. True = admitted."""
+    allowance = int(co["allowance"])
+    base = spend_fn(co["sid"]) or 0
+    stop = base + allowance
+    d = run_fn([sys.executable, "tools/mission_spend.py", "session-declare", "--session", co["sid"], "--target",
+                str(base + int(allowance * .8)), "--warn", str(base + int(allowance * .9)), "--stop", str(stop),
+                "--calls-estimate", str(COORD_CALLS)], cwd=REPO)
+    ok = d == 0
+    res["coordinator_admission"] = {"verdict": "ADMITTED" if ok else "REFUSED", "sid": co["sid"], "baseline": base,
+                                    "stop": stop, "declare_rc": d}
+    if not ok:
+        log(f"COORDINATOR_ADMISSION_REFUSED sid={co['sid']} baseline={base:,} stop={stop:,} declare_rc={d}")
+    return ok
+
+
 def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run_fn=run, launch_fn=None, log=print,
-          calls_fn=calls_for):
+          calls_fn=calls_for, manifest=None, calls_count_fn=calls_of):
     claude = shutil.which("claude") or "claude"
     launch_fn = launch_fn or (lambda argv, prompt: run(argv, 3600, prompt))
+    co = (manifest or {}).get("coordinator") or {}
+    if co.get("sid") and co.get("allowance") and not declare_coordinator(co, res, spend_fn, run_fn, log):
+        packets = []
     for p in packets:
         total = (spend_fn(coordinator) or 0) + sum(s.get("spend") or 0 for s in res["steps"].values())
         if p["cap"] > step_max or total + p["cap"] > cap - reserve:
@@ -107,8 +151,11 @@ def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run
                         prompt)
         c, s = check(p, sid, spend_fn, run_fn)
         v = "PASS" if all(c.values()) else "FAIL"
+        rcpt = ROOT / p["receipt"]
+        rtext = rcpt.read_text(encoding="utf-8", errors="replace") if rcpt.is_file() else ""
         res["steps"][p["step"]] = {"verdict": v, "sid": sid, "launch_rc": lrc, "checks": c, "spend": s,
                                    "cap": p["cap"], "receipt": p["receipt"], "secs": round(time.time() - t0)}
+        res["steps"][p["step"]].update(calls=calls_count_fn(sid), boundaries=boundaries(rtext))
         log(f"{p['step']} {v} sid={sid} launch_rc={lrc} checks={c} spend={s} cap={p['cap']:,}")
     res["coordinator_spend"] = spend_fn(coordinator)
     res["cap"] = cap  # cep_gen2 --tranche judges spend against the cap this run was given
@@ -125,6 +172,7 @@ def main(argv=None):
     ap.add_argument("--reserve", type=int, default=0)
     ap.add_argument("--step-max", type=int, default=1_200_000)
     ap.add_argument("--root", help="git worktree the workers edit (outside ~/.claude); receipts/tests checked there")
+    ap.add_argument("--manifest", help="JSON with coordinator.sid + coordinator.allowance: declare the coordinator first")
     a = ap.parse_args(argv)
     global ROOT
     if a.root:
@@ -134,14 +182,17 @@ def main(argv=None):
             return 2
     out, led = REPO / a.results, REPO / a.ledger
     res = json.loads(out.read_text(encoding="utf-8")) if out.is_file() else {"steps": {}}
+    manifest = json.loads((REPO / a.manifest).read_text(encoding="utf-8")) if a.manifest else None
 
     def log(msg):
         with led.open("a", encoding="utf-8") as f:
             f.write(f"- driver {time.strftime('%Y-%m-%dT%H:%M:%S')} {msg}\n")
         print(msg)
     drive(json.loads((REPO / a.packets).read_text(encoding="utf-8")), res, a.coordinator, a.cap, a.reserve,
-          a.step_max, log=log)
+          a.step_max, log=log, manifest=manifest)
     out.write_text(json.dumps(res, indent=1), encoding="utf-8")
+    if res.get("coordinator_admission", {}).get("verdict") == "REFUSED":
+        return 1  # nothing ran: an empty step set must not read as all-PASS
     return 0 if all(s.get("verdict") == "PASS" for s in res["steps"].values()) else 1
 
 
