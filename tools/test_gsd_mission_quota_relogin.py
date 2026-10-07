@@ -31,6 +31,8 @@ TOOLS = Path(os.environ.get("MQR_TOOLS_DIR") or Path(__file__).resolve().parent)
 sys.path.insert(0, str(TOOLS))
 sys.path.insert(1, str(Path(__file__).resolve().parent))
 import gsd_mission as gm  # noqa: E402
+import envelope_fixture  # noqa: E402  (compiled-grammar-default law 2: lifecycle gates need a bounded mission)
+envelope_fixture.bound_missions(gm)
 import gsd_long_run as lr  # noqa: E402
 import provider_breaker as pb  # noqa: E402
 

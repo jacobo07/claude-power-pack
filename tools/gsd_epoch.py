@@ -512,6 +512,12 @@ def continue_worker(mission_id: str, rec: dict, *, prompt: str, decision: dict, 
     import gsd_mission as gm
     now = time.time() if now is None else now
     sid = rec["owner"]["session_id"]
+    # Law 1 of compiled-grammar-default: waking a worker passes the same envelope admission as starting one.
+    ewhy = gm.envelope_refusal(rec)
+    if ewhy:
+        lr.ledger_append(mission_id, "continue_refused_envelope", mission_id=mission_id,
+                         epoch=rec["epoch"], why=ewhy[:300])
+        return {"ok": False, "why": ewhy, "mechanism": RESUME, "session": sid, "epoch": rec["epoch"]}
     extra = {"progress": progress} if progress is not None else {}
     if progress is not None and not rec.get("progress_origin") and progress.get("measured"):
         extra["progress_origin"] = progress.get("fp")

@@ -33,6 +33,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import rollover as ro  # noqa: E402
 import mission_capsule as mc  # noqa: E402
 import gsd_mission as gm  # noqa: E402
+import envelope_fixture  # noqa: E402  (compiled-grammar-default law 2: lifecycle gates need a bounded mission)
+envelope_fixture.bound_missions(gm)
 
 ro.STATE_DIR = TRAP
 gm.progress_fingerprint = lambda work_dir: None   # unmeasured: the neutral answer (as test_gsd_mission)
