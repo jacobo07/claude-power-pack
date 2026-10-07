@@ -72,12 +72,29 @@ def check_units(led: dict, root: Path, now: dt.datetime | None = None) -> list:
     # A budget whose unit can be read two ways is not a gate (processed vs weighted differed ~6x in this estate).
     if b and b.get("unit") not in BUDGET_UNITS:
         fails.append(f"budget_tokens unit {b.get('unit')!r} is not one of {sorted(BUDGET_UNITS)}")
-    spent, cap = b.get("spent_measured"), b.get("authorization_boundary")
-    if spent is not None and cap is not None and not all(isinstance(v, int) and not isinstance(v, bool) for v in (spent, cap)):
-        fails.append(f"spend not comparable: spent_measured is {type(spent).__name__}, boundary is {type(cap).__name__} (UNKNOWN never passes)")
-    elif spent is not None and cap is not None and spent > cap and not b.get("owner_extension"):
-        fails.append(f"spend {spent:,} over boundary {cap:,} without an Owner extension")
+    fails.extend(check_spend(b))
     return fails
+
+
+def _is_int(v) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def check_spend(b: dict) -> list:
+    """spent_measured is an int or {value:int, sources, unknown}. A truthy `unknown` or a non-int value is UNKNOWN,
+    and UNKNOWN never passes; over the boundary without owner_extension fails. Absent spend or boundary is not judged."""
+    spent, cap = b.get("spent_measured"), b.get("authorization_boundary")
+    if spent is None or cap is None:
+        return []
+    if isinstance(spent, dict):
+        if spent.get("unknown"):
+            return [f"spend UNKNOWN: spent_measured.unknown={spent.get('unknown')!r} (UNKNOWN never passes)"]
+        spent = spent.get("value")
+    if not (_is_int(spent) and _is_int(cap)):
+        return [f"spend not comparable: spent_measured is {type(spent).__name__}, boundary is {type(cap).__name__} (UNKNOWN never passes)"]
+    if spent > cap and not b.get("owner_extension"):
+        return [f"spend {spent:,} over boundary {cap:,} without an Owner extension"]
+    return []
 
 
 # Scope conservation (D3, optional). ledger.obligations_declared (bool) + ledger.obligations [{id, source, terminal, evidence|execution}].

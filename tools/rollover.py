@@ -1296,6 +1296,24 @@ def _flip_precert(cap: dict, key: str, claimant: str, state_dir: Optional[Path],
     return None
 
 
+def forget_safe(capsule: dict) -> dict:
+    """Forget-Safety (CE-T1a): may the capsule be retired? Only if the MACHINE continuation alone --
+    a readable goal file, >= 1 obligation, branch and head -- can restart the work. The handoff
+    prose is deliberately NOT consulted: it is what a reset forgets."""
+    missing = []
+    gp = (capsule.get("goal") or {}).get("path")
+    if not (isinstance(gp, str) and gp and Path(gp).is_file() and os.access(gp, os.R_OK)):
+        missing.append(f"goal (no readable goal file: {gp!r})")
+    obl = capsule.get("obligations")
+    if not (isinstance(obl, list) and any(isinstance(o, str) and o.strip() for o in obl)):
+        missing.append("obligations (none)")
+    repo = capsule.get("repo") or {}
+    for k in ("branch", "head"):
+        if not (isinstance(repo.get(k), str) and repo.get(k).strip()):
+            missing.append(f"{k} (absent or UNKNOWN)")
+    return {"verdict": "FORGET_SAFE" if not missing else "FORGET_UNSAFE", "missing": missing}
+
+
 def certify_flow(key: str, claimant: str, answers: Optional[dict], state_dir: Optional[Path] = None,
                  mission_id: Optional[str] = None) -> tuple[int, dict]:
     """Only the CURRENT generation's holder, after a refresh recorded in that generation, may
@@ -1353,6 +1371,14 @@ def certify_flow(key: str, claimant: str, answers: Optional[dict], state_dir: Op
             print("RESUME_FAILED -- re-read the goal file and the tree; do not mutate yet. Wrong: "
                   + ", ".join(w["key"] for w in res["wrong"]))
             return 6, res
+        fs = forget_safe(cap)
+        if fs["verdict"] != "FORGET_SAFE":
+            # The exam passed, but the capsule alone (no handoff prose) could not restart the work:
+            # retiring it now would forget the only machine continuation. Keep it; nothing retired.
+            ledger("certify_forget_unsafe", state_dir, session_id=key, claimant=claimant, generation=gen,
+                   missing=fs["missing"])
+            print("FORGET_UNSAFE -- the capsule is NOT retired; it lacks: " + ", ".join(fs["missing"]))
+            return 9, {**res, "verdict": "FORGET_UNSAFE", "missing": fs["missing"]}
         _atomic_write(marker, json.dumps({**cur, "certified_generation": gen}).encode("utf-8"))
         _atomic_write(path.with_suffix(".certified"), _iso().encode("utf-8"))
         why = _flip_precert(cap, key, claimant, state_dir, mission_id)
