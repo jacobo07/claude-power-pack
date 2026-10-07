@@ -1,0 +1,24 @@
+{
+  "tranche": "T1",
+  "packet": "vault/specs/packets/WU-CC1.md",
+  "branch": "cost-collapse/main",
+  "commits": ["f3b503e6 fix(cost-collapse): G1 on the live base -- auto estimate is not an envelope, F1/F2 gated, Windows harness"],
+  "gate_before": {
+    "tools/test_grammar_default.py": "GRAMMAR_PASS=33/41",
+    "tools/test_gsd_mission_envelope.py": "ENVELOPE_PASS=55/55",
+    "tools/test_gsd_mission.py": "MC_PASS=225/225"
+  },
+  "gate_after": {
+    "tools/test_grammar_default.py": "GRAMMAR_PASS=56/56",
+    "tools/test_gsd_mission_envelope.py": "ENVELOPE_PASS=55/55",
+    "tools/test_gsd_mission.py": "MC_PASS=225/225"
+  },
+  "classification": {
+    "a_launch_path_bypass": "supervise() runs _auto_budget before the launch boundary and stamps token_estimate (src=auto); envelope_refusal read it as a declared envelope, so SWEEP, CONTINUE and RENEWAL (successor inherited it) all launched. Fixed in tools/gsd_mission.py: envelope_refusal ignores src=auto, renewal does not carry an auto estimate, set_envelope clears the marker.",
+    "b_windows_harness": "fake claude was a #!/bin/sh file (WinError 193) -> .cmd + python shim; REAL-HANG gate used POSIX sleep (cmd answers at once, never a timeout) -> sys.executable gate."
+  },
+  "f1_f2": "already present in gsd_mission.py on this base (packet_gate_drift, packet_gate_dir); this tranche added the missing gates V-GRAMMAR-F1-* (3) and V-GRAMMAR-F2-* (8) with real git repo + linked worktree fixtures, plus mutation drills F1-PACKET-DRIFT-NEVER-CHECKED, F2-ANY-REPO-ADMITTED, AUTO-ESTIMATE-COUNTS-AS-ENVELOPE (all go red).",
+  "processed_tokens": null,
+  "processed_tokens_note": "not measured by this worker; mission_spend.processed_tokens(rec) over the T1 mission is the source",
+  "open_points": []
+}
