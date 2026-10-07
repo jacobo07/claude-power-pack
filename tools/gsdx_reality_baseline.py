@@ -201,11 +201,27 @@ def _resolve_suites(a, repo: Path) -> list[Path]:
 
 
 def _make_copy(repo: Path) -> Path:
-    """Copy COPY_DIRS into a fresh mkdtemp; the caller removes exactly that path."""
+    """Copy COPY_DIRS into a fresh mkdtemp as a clean one-commit git checkout.
+
+    The live-mutating suite refuses unless `git status --porcelain` on its targets answers
+    and is clean (test_gsd_x_goal_mutation.py:484-491), so a bare file copy is not enough.
+    The scratch repo runs with core.hooksPath pointed at an empty dir inside the copy: the
+    host's global hooks govern real commits, not this throwaway checkout. The caller removes
+    exactly the returned path."""
     dst = Path(tempfile.mkdtemp(prefix="gsdx_rb_copy_"))
     for d in COPY_DIRS:
         if (repo / d).is_dir():
             shutil.copytree(repo / d, dst / d, ignore=COPY_IGNORE)
+    nohooks = dst / ".git-nohooks"
+    nohooks.mkdir()
+    (dst / ".gitignore").write_text(".git-nohooks/\n__pycache__/\n*.pyc\n", encoding="utf-8")
+    git = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
+    env = dict(os.environ, GIT_AUTHOR_NAME="gsdx-rb", GIT_AUTHOR_EMAIL="gsdx-rb@local",
+               GIT_COMMITTER_NAME="gsdx-rb", GIT_COMMITTER_EMAIL="gsdx-rb@local")
+    base = [git, "-C", str(dst), "-c", f"core.hooksPath={nohooks.as_posix()}"]
+    for args in (["init", "-q"], ["add", "-A"], ["commit", "-q", "-m", "gsdx-rb in-copy snapshot"]):
+        subprocess.run(base + args, check=True, env=env, capture_output=True, stdin=subprocess.DEVNULL,
+                       timeout=600)
     return dst
 
 

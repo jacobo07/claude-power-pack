@@ -229,6 +229,28 @@ def task2(rb) -> None:
           f"rc={rc} in_copy={r[0]['in_copy'] if r else None} summary={r[0]['summary'] if r else None} "
           f"live_sha_unchanged={sha1 == sha0} {txt.strip()[:120]}")
 
+    # The real mutation suite refuses unless `git status --porcelain` on its targets answers
+    # and is clean (test_gsd_x_goal_mutation.py:484-491): the copy must be a clean checkout.
+    gitprobe = ("import pathlib,shutil,subprocess,sys\nroot = pathlib.Path(__file__).resolve().parents[1]\n"
+                "git = shutil.which('git') or r'C:\\Program Files\\Git\\cmd\\git.exe'\n"
+                "p = subprocess.run([git, '-C', str(root), 'status', '--porcelain'], capture_output=True, text=True)\n"
+                "print('GIT rc=%d dirty=%r' % (p.returncode, p.stdout.strip()))\n"
+                "ok = p.returncode == 0 and not p.stdout.strip() and (root / '.git').exists()\n"
+                "print('SYN_CAUGHT=1/1' if ok else 'SYN_CAUGHT=0/1')\nsys.exit(0 if ok else 1)\n")
+    root = repo("r4", {"test_gsd_x_goal_mutation.py": gitprobe})
+    (root / "modules").mkdir()
+    (root / "modules" / "target.txt").write_text("original", encoding="utf-8")
+    out = TMP / "gitcopy.jsonl"
+    rc, txt = run_suite(root, "test_gsd_x_goal_mutation.py", out, g, "--in-copy")
+    r = [x for x in rows(out) if x["kind"] == "run"]
+    probe = ""
+    if r and Path(r[0]["log"]).is_file():
+        probe = next((l for l in Path(r[0]["log"]).read_text(encoding="utf-8").splitlines()
+                      if l.startswith("GIT ")), "")
+    check("V-RB-IN-COPY-CLEAN-GIT",
+          rc == 0 and r and r[0]["returncode"] == 0 and not (root / ".git").exists(),
+          f"rc={rc} probe={probe!r} live_has_git={(root / '.git').exists()}")
+
     out = TMP / "unknown.jsonl"
     rc, _ = tool("unknown", "--out", out, "--suite", "S", "--reason", "R")
     u = rows(out)
