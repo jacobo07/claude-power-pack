@@ -15283,3 +15283,27 @@ writes while the worker stalls, and require the halt to fire. Evidence: `tools/g
 (fingerprint) and `:1893-1907` (halt), read at `37d1940d`; `vault/programs/cognitive-economy/handoffs/J.md`;
 `vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md`. Sibling of
 T-AN-MTIME-SENTINEL-OVER-STATE-OTHER-WRITERS-OWN-001: a test sentinel has the same blindness.
+
+## GSD X proof-conserving convergence, W0 (2026-10-07)
+
+Source: `vault/specs/gsdx-proof-conserving-convergence.md` Reality 13-14, DENOMINATOR row R01, and the phase
+evidence in `.planning/workstreams/gsdx-pcc/phases/01-w0-reality-baseline-and-incumbent-measurement/`.
+Status: fixed at `58934936` (branch gsdx/pcc); observed on the Windows host; POSIX not re-run this phase.
+
+### Traps
+
+### T-SUBPROCESS-WITHOUT-INHERITED-STD-HANDLES-LOSES-GRANDCHILD-OUTPUT-ON-WINDOWS-001
+
+A supervisor process launched with its stdout pointed at a log file ran the real gate with
+`subprocess.run(cmd)` and no std arguments. On Windows the gate received no usable stdout, so the log
+stayed empty and every gate verdict recorded `observed: ''` while exit codes stayed correct: a silent
+instrument failure (lens CLASE 4). Measured 2026-10-07 in `modules/gsd_x/goal/providers/gate.py:72` at
+fbca24fc, pre-existing in 3/3 runs as `V-GATE-VERDICT-FIELDS` 17/18; the raw run logs were 0 B. Scratch
+reproduction: 0 B captured versus 11 B with explicit handles. Fix (`58934936`): pass
+`stdout=sys.stdout, stderr=sys.stderr` to the child; the suite went 17/18 -> 18/18, the run logs now hold
+`12 passed` (11 B) and `1 failed` (10 B), and `tools/mutation_drill.py` KILLED the revert mutant after a
+passing control (`6216a3c9`). Known limit: a stderr-only mutant SURVIVED (exit 1) because that suite's
+gates print only to stdout.
+PR: a supervisor that spawns the real work must hand its std handles to the child explicitly, and an
+empty captured output is a measurement defect -- assert on a non-empty observed value, never accept its
+absence as a quiet pass. #CROSS-PROJECT
