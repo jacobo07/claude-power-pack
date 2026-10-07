@@ -146,6 +146,33 @@ compatibility seam.
   2. New event types + projections land with ZERO behaviour change; every existing goal suite unchanged and green.
   3. A replay test over a recorded legacy goal log passes.
 
+**Plans:** 6 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md -- spec Semantics S1-S16 resolved in place, ULTRA Q&A in STATE, premises verified, auditor dispatched solo, every gap injected or dispositioned (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-02-PLAN.md -- legacy fixture (g-002/g-001 byte copy + manifests), golden from the unmodified engine, replay suite committed RED-first (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 02-03-PLAN.md -- proof.py event seam: ledger projection, CAS writer, kill switches, liveness declared; replay suite green (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 02-04-PLAN.md -- proof states, certificate validity, causal fingerprint, typed contract, freshness; legacy map equals _needs_a_gate_here (wave 4)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 02-05-PLAN.md -- five laws as executable invariants, D44 scanners, declared additive vocabulary, spec-resolved gate (wave 5)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 02-06-PLAN.md -- on-disk drills, 19 suites at Phase 1 counts, liveness, no-legacy-edit, 02-EVIDENCE.md, D43/D44 DONE (wave 6)
+
 ### Phase 3: W2 Execution frontier and scheduling
 
 **Goal**: `decide()` becomes the first action of a compiled execution frontier; WAIT only when the frontier is
