@@ -165,5 +165,9 @@ file against pre-fix tools (41e35562) fails exactly the 4 fix gates (DATE-ONLY, 
 LEGACY-GROWN) -> red-before is real. Verification GAPS: 3 consumer commands exit 1 and each is recorded identically in
 01-BASELINE.md (estate_shadow 10/11, frontier_intelligence_os 48/49, token_ground_truth_junction 'cmd' on Linux);
 criterion 4 (refresh cost) not re-measured after the fixes. Phase 2 not started.
+AO phase 1 CLOSED 744e1bf2 (Owner 'y'): criterion 4 re-measured on the fixed code, zero model calls (cold 3,965 files /
+9,932,073,959 B / 123.547 s / DB 489,816,064 = before; delta 5 files / 709,630 B = appended_total / 0.068 s);
+phase_1_verdict PASS with the 3 baseline-identical failures accepted as out of scope (debt in their own owners).
+Phases 2-7 stay paused until pre-call budget admission exists.
 Also settled today: cognitive-resource-os has no open work -- CRO-01 PASS on GEX44 since 2026-09-30 (bb094d1,
 194 passed / 4 skipped); the laptop's STATE.md is stale only because mission/cognitive-resource-os-gex44 is unmerged.
