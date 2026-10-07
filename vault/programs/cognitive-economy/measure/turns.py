@@ -450,6 +450,11 @@ def per_root(feats: list[dict], n: int = 40) -> dict:
 
 
 def main(argv=None) -> int:
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if "--attribute" in argv:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import attribute
+        return attribute.main([x for x in argv if x != "--attribute"])
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
     ap.add_argument("--measure", action="store_true")
     ap.add_argument("--json")

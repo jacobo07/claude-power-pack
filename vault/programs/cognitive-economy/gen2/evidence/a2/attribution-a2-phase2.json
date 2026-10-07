@@ -1,0 +1,37 @@
+{
+ "attributed_calls": 85,
+ "by_basis": {
+  "lineage_card": 0,
+  "lineage_cwd": 1289163,
+  "write_span": 15918064
+ },
+ "duplicates_dropped": 1753,
+ "excluded_sessions": [],
+ "program_processed": 17207227,
+ "sessions": {
+  "489481fa-3018-4082-98a4-95ce316cd24d": {
+   "attributed_calls": 57,
+   "basis": {
+    "lineage_card": 0,
+    "lineage_cwd": 1289163,
+    "write_span": 8538546
+   },
+   "calls": 57,
+   "processed": 9827709
+  },
+  "886d7bb9-086d-4c66-a2db-a4043e2221de": {
+   "attributed_calls": 28,
+   "basis": {
+    "lineage_card": 0,
+    "lineage_cwd": 0,
+    "write_span": 7379518
+   },
+   "calls": 66,
+   "processed": 7379518
+  }
+ },
+ "unit": "processed",
+ "unknown": [
+  "302 text-only calls outside every basis: share UNKNOWN, not counted"
+ ]
+}

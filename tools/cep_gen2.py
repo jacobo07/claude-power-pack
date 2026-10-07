@@ -215,6 +215,14 @@ def _receipt_extras(wid: str, r: dict) -> list:
         f.append(f"{wid} receipt confidence {r['confidence']!r} is not low/medium/high")
     if "retirement_criterion" in r and not (isinstance(r["retirement_criterion"], str) and r["retirement_criterion"].strip()):
         f.append(f"{wid} receipt retirement_criterion must be a non-empty string")
+    if "boundary_calls" in r:  # a self-reported call count is judged against the metered one (EDD WU-1 said 3, the meter 16)
+        rep, met = r["boundary_calls"], r.get("metered_calls")
+        if not isinstance(rep, int) or isinstance(rep, bool) or rep < 0:
+            f.append(f"{wid} receipt boundary_calls {rep!r} is not a non-negative integer")
+        elif not (isinstance(met, int) and not isinstance(met, bool) and met >= 0):
+            f.append(f"{wid} receipt reports boundary_calls={rep} with no metered_calls: UNKNOWN never passes")
+        elif rep < met:
+            f.append(f"{wid} receipt self-reports {rep} boundary calls but the meter counted {met}: metered wins")
     return f
 
 
@@ -337,6 +345,9 @@ RECEIPT_MUTANTS = {
     "receipt-bad-horizon": lambda r: r.update(horizon_days=0),
     "receipt-bad-confidence": lambda r: r.update(confidence="certain"),
     "receipt-empty-retirement": lambda r: r.update(retirement_criterion=" "),
+    "receipt-self-report-below-meter": lambda r: r.update(boundary_calls=3, metered_calls=16),
+    "receipt-boundary-without-meter": lambda r: r.update(boundary_calls=3),
+    "receipt-negative-boundary": lambda r: r.update(boundary_calls=-1, metered_calls=0),
     "measurement-without-decision-value": lambda r: _as_measurement(r, decision_value=""),
     "measurement-without-cost": lambda r: _as_measurement(r, cost={"unit": "processed", "value": 0}),
 }
@@ -427,7 +438,9 @@ def selftest(verbose=True, mutation=True) -> bool:
             if verbose:
                 print(f"  {'ok' if killed else 'FAIL'}   V-CEP2-MUT-{name} {'killed' if killed else 'SURVIVED'}")
         for name, extra in {"measurement": {}, "measurement+amortization": {
-                "horizon_days": 30, "confidence": "low", "retirement_criterion": "retire if floor moves"}}.items():
+                "horizon_days": 30, "confidence": "low", "retirement_criterion": "retire if floor moves"},
+                "measurement+metered-equal": {"boundary_calls": 16, "metered_calls": 16},
+                "measurement+over-reported": {"boundary_calls": 20, "metered_calls": 16}}.items():
             _write_receipt(root, lambda r, e=extra: _as_measurement(r, **e))
             got = check(copy.deepcopy(base), root)
             ok &= not got
