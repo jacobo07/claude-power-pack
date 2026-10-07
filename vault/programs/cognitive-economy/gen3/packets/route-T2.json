@@ -1,0 +1,1 @@
+{"envelope":{"target":3000000,"warn":2400000,"stop":3000000,"calls":17},"workers":[{"name":"cep-gen3-T2","profile":"top-level-worker","calls":12,"packet":"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cognitive-economy\\gen3\\packets\\T2.md"}]}
