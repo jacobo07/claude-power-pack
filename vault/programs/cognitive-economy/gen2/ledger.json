@@ -162,6 +162,42 @@
     "--obligation",
     "C16"
    ]
+  },
+  {
+   "id": "C17",
+   "source": "vault/programs/cognitive-economy/gen2/AMENDMENT-A2-2026-10-07.md#master-done-gate",
+   "clause": "presence: a plain desired-state task in CPP, one mature project and one weakly integrated project negotiates and activates the strongest certified baseline with no Owner request; both poles (present activates, absent invents nothing)",
+   "terminal": "EXECUTE",
+   "execution": "A2-2",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C18",
+   "source": "vault/programs/cognitive-economy/gen2/AMENDMENT-A2-2026-10-07.md#master-done-gate",
+   "clause": "proportionality: a one-line fix triggers no Goal machinery, no Agent and no broad scan; controllable floor delta <= 0 against floor_regression_gate",
+   "terminal": "EXECUTE",
+   "execution": "A2-2",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C19",
+   "source": "vault/programs/cognitive-economy/gen2/AMENDMENT-A2-2026-10-07.md#master-done-gate",
+   "clause": "universal coverage: an interactive task, a small task, a long mission and an Agent workflow outside CPP itself inherit the baseline, evidenced from their own transcripts/records",
+   "terminal": "EXECUTE",
+   "execution": "A2-6",
+   "status": "OPEN",
+   "check": null
+  },
+  {
+   "id": "C20",
+   "source": "vault/programs/cognitive-economy/gen2/AMENDMENT-A2-2026-10-07.md#master-done-gate",
+   "clause": "end-to-end deflation: same Work Class, total cost INCLUDING coordinator lower than its champion (EDD Phase 1 end-to-end ~23.2M per closed phase), same scope, proof and Production Reality; receipts judged by metered calls, never by self-reported boundaries",
+   "terminal": "EXECUTE",
+   "execution": "A2-6",
+   "status": "OPEN",
+   "check": null
   }
  ],
  "budget_tokens": {
@@ -462,5 +498,32 @@
    }
   },
   "strike_limit": 2
+ },
+ "a2": {
+  "card": "vault/programs/cognitive-economy/gen2/AMENDMENT-A2-2026-10-07.md",
+  "approved": "2026-10-07 Owner 'y' (pane 886d7bb9) to the inline A2 plan, decisions 1-3 at their defaults",
+  "decisions": {
+   "1": "E1 m-f011d7fdebc9 (141,008,708 processed) is excluded from the gen2 authorization boundary; the boundary is NOT raised; A2 cap 20M processed metered including the coordinating pane",
+   "2": "A2 is an amendment of PLAN-CE-GEN2-COMPLETION, not a new program; the A1 moratorium stays in force (T2 T4 T5 T6 T8 unfreeze only via an A1-1 amortization record with break-even <= 30 days)",
+   "3": "EDD Phase 2 is funded as the A2-6 self-hosting canary inside the A2 cap plus its own envelope derived from the EDD reforecast; held if its forecast including coordinator exceeds 1.5x EDD Phase 1 end-to-end"
+  },
+  "cap": 20000000,
+  "central_forecast": 15000000,
+  "spent": null,
+  "spent_note": "UNVERIFIED until A2-1 meters per call including the coordinator; null never counts as zero",
+  "units": {
+   "A2-0": 500000,
+   "A2-1": 3000000,
+   "A2-2": 4000000,
+   "A2-3": 6000000,
+   "A2-4": 3000000,
+   "A2-5": null,
+   "A2-6": null,
+   "A2-7": 4000000
+  },
+  "worktree": "C:/Users/User/Apps/pp-ce-a2",
+  "branch": "ce/a2",
+  "workstream": "ce-a2",
+  "mission": null
  }
 }
