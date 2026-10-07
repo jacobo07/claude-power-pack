@@ -9,3 +9,6 @@
 - driver 2026-10-07T12:49:55 T1c PASS sid=ec6ce024-4efe-4fca-8ce9-e64428269247 launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=1142163 cap=1,400,000
 - driver 2026-10-07T12:49:55 T1d REFUSED_OVER_CAP total_before=6,727,863 step_cap=1,400,000 limit=8,000,000
 - coordinator 2026-10-07 run2 readout: T1a FAIL (commit d465eaef, no receipt; coordinator re-verified 64/64, 36/36, receipt de813045 in worktree), T1b PASS, T1c PASS, T1d REFUSED_OVER_CAP (coordinator 3.71M + workers 3.02M vs 8M). Owner: raise cap + improve spend measurement -> run3 = T1d T1e + new T1f (driver measurement) at --cap 11.5M (from the 15M program reserve).
+- driver 2026-10-07T13:10:20 T1d PASS sid=4c34936a-609b-434b-98a3-3738d4f958b3 launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=1196773 cap=1,400,000
+- driver 2026-10-07T13:10:20 T1e REFUSED_OVER_CAP total_before=10,323,965 step_cap=1,400,000 limit=11,500,000
+- coordinator 2026-10-07 run3 readout: T1d PASS 1,196,773 (697bc611, be88dee5; C3 CHECKED). T1e REFUSED_OVER_CAP at 10,323,965 / 11.5M. Measured: coordinator bc576038 = 6,490,928 (self_spend), workers T1a-d = 4,216,998. The coordinator, not the workers, is the overrun (7th orchestrator overrun). Decision: no further cap raise from this pane; rotate (/kclear) and run T1e+T1f from a fresh coordinator.
