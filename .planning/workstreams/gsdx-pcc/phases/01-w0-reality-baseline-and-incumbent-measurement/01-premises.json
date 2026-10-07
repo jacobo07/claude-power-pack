@@ -1,0 +1,304 @@
+[
+ {
+  "type": "file_exists",
+  "path": "tools/evidence_bundle.py"
+ },
+ {
+  "type": "file_exists",
+  "path": "tools/mutation_drill.py"
+ },
+ {
+  "type": "file_exists",
+  "path": "tools/mutation_probe.py"
+ },
+ {
+  "type": "file_exists",
+  "path": "tools/change_impact.py"
+ },
+ {
+  "type": "file_exists",
+  "path": "tools/family_baseline.py"
+ },
+ {
+  "type": "file_exists",
+  "path": "modules/gsd_x/goal/brief.py"
+ },
+ {
+  "type": "file_exists",
+  "path": "modules/gsd_x/goal/providers/claude.py"
+ },
+ {
+  "type": "file_exists",
+  "path": "vault/knowledge_base/graphify/graphify_13_change_impact_compatibility.md"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.evidence_bundle",
+  "attr": "run_check"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.evidence_bundle",
+  "attr": "ticket_line"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.evidence_bundle",
+  "attr": "ticket"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.evidence_bundle",
+  "attr": "write_review"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.evidence_bundle",
+  "attr": "collect"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.evidence_bundle",
+  "attr": "main"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.mutation_drill",
+  "attr": "drill"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.mutation_drill",
+  "attr": "gate_line"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.mutation_drill",
+  "attr": "detail_lines"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.mutation_drill",
+  "attr": "HarnessError"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.mutation_drill",
+  "attr": "main"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.change_impact",
+  "attr": "SCOPES"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.change_impact",
+  "attr": "FLOOR"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.change_impact",
+  "attr": "edges_of"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.change_impact",
+  "attr": "manifest"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.change_impact",
+  "attr": "analyze"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.change_impact",
+  "attr": "main"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.cognitive_os.scheduler",
+  "attr": "decide"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.cognitive_os.scheduler",
+  "attr": "CapVerdict"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.parallel_mesh.pm_02_intent",
+  "attr": "CollisionDetector"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.parallel_mesh.pm_02_intent",
+  "attr": "Intent"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.parallel_mesh.pm_02_intent",
+  "attr": "norm_scope"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.baselines",
+  "attr": "generations"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.baselines",
+  "attr": "load_generation"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.baselines",
+  "attr": "latest"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.baselines",
+  "attr": "active_entries"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.baselines",
+  "attr": "generation_sha256"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.baselines",
+  "attr": "write_generation"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.baselines",
+  "attr": "verify_origin"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.baselines",
+  "attr": "REQUIRED"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.baselines",
+  "attr": "BASELINES_DIR"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.families",
+  "attr": "load_families"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.families",
+  "attr": "classify_prompt"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.families",
+  "attr": "repo_family_report"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.families",
+  "attr": "Family"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.families",
+  "attr": "FAMILIES_DIR"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.select",
+  "attr": "select_for_injection"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.select",
+  "attr": "Selection"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.select",
+  "attr": "MAX_ENTRIES"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.select",
+  "attr": "MAX_CHARS"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.ratchet",
+  "attr": "verify_chain"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.ratchet",
+  "attr": "revert"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.ratchet",
+  "attr": "promote"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.ratchet",
+  "attr": "RatchetRefusal"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.tower.donegate",
+  "attr": "judge"
+ },
+ {
+  "type": "attr_exists",
+  "module": "tools.family_baseline",
+  "attr": "main"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.gsd_x.goal.reconcile",
+  "attr": "decide"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.gsd_x.goal.sweep",
+  "attr": "sweep_goal"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.gsd_x.goal.judge",
+  "attr": "judge"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.gsd_x.goal.git_state",
+  "attr": "tree_id"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.gsd_x.goal.git_state",
+  "attr": "blob_oid"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.gsd_x.goal.git_state",
+  "attr": "file_pin"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.gsd_x.goal.log",
+  "attr": "GoalLog"
+ },
+ {
+  "type": "attr_exists",
+  "module": "modules.gsd_x.cli",
+  "attr": "family_block"
+ }
+]

@@ -1,0 +1,5 @@
+PREMISE VERIFICATION FAILED:
+  [FAIL] decide in modules.parallel_mesh.pm_02_intent
+         evidence: absent; public names: ['CollisionDetector', 'INTENT_WINDOW_MIN', 'Intent', 'PaneIntentRegistry', 'Path', 'annotations', 'asdict', 'dataclass', 'datetime', 'field', 'json', 'main', 'norm_scope', 'os', 're', 'resolve_launch_scope', 'scope_gated_admit', 'sys', 'timedelta', 'timezone']
+         fix: real API of modules.parallel_mesh.pm_02_intent: ['CollisionDetector', 'INTENT_WINDOW_MIN', 'Intent', 'PaneIntentRegistry', 'Path', 'annotations', 'asdict', 'dataclass', 'datetime', 'field', 'json', 'main', 'norm_scope', 'os', 're', 'resolve_launch_scope', 'scope_gated_admit', 'sys', 'timedelta', 'timezone']
+EXIT=1
