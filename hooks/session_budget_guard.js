@@ -142,18 +142,21 @@ const READ_ONLY = new Set(['Read', 'Grep', 'Glob']);
 const CLOSEOUT_PATH = /(^|[\\/])(vault[\\/]plans[\\/][^\\/]+\.md|memory[\\/]handoffs[\\/][^\\/]+\.md|RESUMPTION_FILE\.md)$/;
 const DEFAULT_CLOSEOUT = 4;
 
-function closeout(budget, st, event, verdict) {
+// Goal mode passes `goal`: one handoff write, no reads. The live canary of 2026-10-07 (CANARY.md,
+// 51e46273) refused at 3,005,579 against a 3M cap, then admitted 4 Reads per pane at ~100K each:
+// 793K of a 1.17M overshoot. A Read does not write a handoff, it only spends.
+function closeout(budget, st, event, verdict, goal = false) {
   const d = verdict && verdict.hookSpecificOutput;
   if (!d || d.permissionDecision !== 'deny') return verdict;
   const declared = Number(budget.closeout_calls);
-  const limit = Number.isFinite(declared) && declared >= 0 ? declared : DEFAULT_CLOSEOUT;
+  const limit = goal ? 1 : (Number.isFinite(declared) && declared >= 0 ? declared : DEFAULT_CLOSEOUT);
   const tool = String(event.tool_name || '');
   const fp = event.tool_input && typeof event.tool_input.file_path === 'string' ? event.tool_input.file_path : '';
-  const eligible = READ_ONLY.has(tool) || (PROGRESS_TOOLS.has(tool) && CLOSEOUT_PATH.test(fp));
+  const eligible = (!goal && READ_ONLY.has(tool)) || (PROGRESS_TOOLS.has(tool) && CLOSEOUT_PATH.test(fp));
   const used = Number(st.closeout) || 0;
   if (!eligible || used >= limit) {
-    d.permissionDecisionReason += ` Closeout allowance ${used}/${limit} used; only Read/Grep/Glob and ` +
-      'writes to vault/plans/*.md, memory/handoffs/*.md or RESUMPTION_FILE.md qualify.';
+    d.permissionDecisionReason += ` Closeout allowance ${used}/${limit} used; only ` +
+      (goal ? '' : 'Read/Grep/Glob and ') + 'writes to vault/plans/*.md, memory/handoffs/*.md or RESUMPTION_FILE.md qualify.';
     return verdict;
   }
   st.closeout = used + 1;
@@ -328,7 +331,7 @@ function decideGoal(event, sid, bind) {
     if (r.failed) verdict = goalDeny(goal, `UNKNOWN: ${r.failed}.`);
     else if (!r.ok) {
       gs.lease = null;
-      verdict = closeout(entry, gs, event, goalDeny(goal, `refused: ${r.reason}.`));
+      verdict = closeout(entry, gs, event, goalDeny(goal, `refused: ${r.reason}.`), true);
     } else gs.lease = r.lease;
   }
   const tool = String(event.tool_name || '');

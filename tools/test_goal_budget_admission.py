@@ -339,9 +339,20 @@ def g_guard():
             fh.write(row("m3", 200))
         dec, why = run_guard(e, "bound-1", tx, work, tool="Bash", tool_input={"command": "python big_job.py"})
         check("V-GOAL-GUARD-EXHAUSTED", dec == "deny" and "GOAL BUDGET (gg)" in why, why[:100])
-        dec, why = run_guard(e, "bound-1", tx, work)
-        check("V-GOAL-GUARD-CLOSEOUT", dec is None and "closeout call 1/4" in why,
-              f"an exhausted pane may still Read to write its handoff: {why[:70]}")
+        # Canary 2026-10-07 (CANARY.md, 51e46273): a free Read closeout after a goal refusal admitted
+        # 793K of a 1.17M overshoot. A goal refusal admits ONE handoff write per pane and no reads.
+        for n in range(5):
+            dec, why = run_guard(e, "bound-1", tx, work)
+            if dec != "deny":
+                break
+        check("V-GOAL-GUARD-NO-READ-CLOSEOUT", dec == "deny" and "GOAL BUDGET (gg)" in why,
+              f"an exhausted goal pane gets no Read closeout (5 tries): {dec} {why[:70]}")
+        hand = str(work / "memory" / "handoffs" / "h.md")
+        dec, why = run_guard(e, "bound-1", tx, work, tool="Write", tool_input={"file_path": hand, "content": "x"})
+        check("V-GOAL-GUARD-CLOSEOUT", dec is None and "closeout call 1/1" in why,
+              f"an exhausted goal pane may write its handoff once: {why[:70]}")
+        dec, why = run_guard(e, "bound-1", tx, work, tool="Write", tool_input={"file_path": hand, "content": "y"})
+        check("V-GOAL-GUARD-CLOSEOUT-ONCE", dec == "deny", f"a second handoff write is denied: {why[:70]}")
 
         dec, _ = run_guard(e, "bound-1", tx, work, tool="Bash",
                            tool_input={"command": "python tools/mission_spend.py goal-status --goal gg"})
