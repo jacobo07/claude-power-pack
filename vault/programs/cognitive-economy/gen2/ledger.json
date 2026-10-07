@@ -20,8 +20,10 @@
    "clause": "state: transcript-deletion + handoff-destruction tests green",
    "terminal": "EXECUTE",
    "execution": "T1",
-   "status": "OPEN",
-   "check": null
+   "status": "CHECKED",
+   "check": [
+    "tools/test_ce_t1_state.py"
+   ]
   },
   {
    "id": "C3",
