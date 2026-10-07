@@ -263,7 +263,90 @@ def list_hard_rules(claude_md_path: Path | None = None) -> list[dict]:
     return rules
 
 
+GENERIC_STOP = ("STOP. Verify preconditions in writing. Document what you "
+                "are about to do.")
+
+_ENTRY_START = re.compile(r"^###\s+(HR-\S+)", re.MULTILINE)
+
+
+def stub_reason(entry: str) -> str | None:
+    """Why an HR entry is a stub that must not reach the mirror, or None.
+
+    Stubs come from the auto-propose pipeline: a heading turned into a
+    ``TRIGGER: Before: <heading>``, a STOP that is boilerplate or a
+    sliced markdown table, or a pipeline test fixture.
+    """
+    if re.search(r"auto-propose pipeline|\bZZZ\b|^TRIGGER:\s+Test recognizer",
+                 entry, re.MULTILINE):
+        return "test entry for the auto-propose pipeline"
+    trigger = re.search(r"^TRIGGER:\s*(.*)$", entry, re.MULTILINE)
+    stop = re.search(r"^STOP:\s*(.*)$", entry, re.MULTILINE)
+    if trigger is None or stop is None:
+        return "missing TRIGGER or STOP"
+    if trigger.group(1).startswith("Before: "):
+        return "TRIGGER derived from a heading, not a real trigger"
+    if stop.group(1).startswith("|"):
+        return "STOP is a sliced markdown table fragment"
+    if stop.group(1).startswith(GENERIC_STOP):
+        return "STOP is generic boilerplate"
+    return None
+
+
+def _split_entries(inner: str) -> tuple[str, list[tuple[str, str]]]:
+    """Split a block into (preamble, [(rule_id, entry_text), ...])."""
+    starts = list(_ENTRY_START.finditer(inner))
+    if not starts:
+        return inner, []
+    entries = []
+    for i, m in enumerate(starts):
+        end = starts[i + 1].start() if i + 1 < len(starts) else len(inner)
+        entries.append((m.group(1), inner[m.start():end]))
+    return inner[:starts[0].start()], entries
+
+
+def prune_stub_rules(path: Path, dry_run: bool = False) -> list[tuple[str, str]]:
+    """Regenerate the sentinel block of ``path`` without stub entries.
+
+    Returns ``[(rule_id, reason), ...]`` for every entry dropped. Real
+    entries keep their exact text and order; nothing outside the
+    sentinels changes.
+    """
+    content = _read(path)
+    start, end, inner = _extract_block(content)
+    preamble, entries = _split_entries(inner)
+    kept, dropped = [], []
+    for rid, entry in entries:
+        reason = stub_reason(entry)
+        if reason is None:
+            kept.append(entry)
+        else:
+            dropped.append((rid, reason))
+    if dropped and not dry_run:
+        inner_start = start + len(SENTINEL_START)
+        new = content[:inner_start] + preamble + "".join(kept) + content[end:]
+        _atomic_write_text(path, new)
+    return dropped
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+    ap = argparse.ArgumentParser(description="Regenerate the HARD RULES "
+                                 "mirror and archive without stub entries.")
+    ap.add_argument("--prune", action="store_true", required=True)
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("paths", nargs="*", type=Path,
+                    default=[DEFAULT_ARCHIVE, DEFAULT_CLAUDE_MD])
+    args = ap.parse_args(argv)
+    for p in args.paths:
+        for rid, reason in prune_stub_rules(p, dry_run=args.dry_run):
+            print(f"{'would drop' if args.dry_run else 'dropped'} {rid} "
+                  f"from {p.name}: {reason}")
+    return 0
+
+
 __all__ = [
+    "stub_reason",
+    "prune_stub_rules",
     "SENTINEL_START",
     "SENTINEL_END",
     "HARD_RULES_HEADER",
@@ -274,3 +357,7 @@ __all__ = [
     "list_hard_rules",
     "get_current_rules",
 ]
+
+
+if __name__ == "__main__":
+    sys.exit(main())

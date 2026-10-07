@@ -152,46 +152,6 @@ STOP: Ship the PP-internal half (hook script, command body); document the Owner-
 EVIDENCE: [never_again] Classifier blocks ~/.claude/settings.json + commands/ in auto-mode
 SEVERITY: CRITICAL | RECURRENCE: 1x
 <!-- digest:64f2b03b74fac74e -->
-### HR-002 -- Test Critical Bug For Auto-propose Pipeline
-TRIGGER: Test recognizer for pipeline
-STOP: Run auto_HR-002 proposal drafting
-EVIDENCE: [never_again] TEST CRITICAL bug for auto-propose pipeline ZZZ
-SEVERITY: CRITICAL | RECURRENCE: 1x
-<!-- digest:5dd06d48bc0295d0 -->
-### HR-003 -- Ukdl S 2026-05-26
-TRIGGER: Before: UKDL S+++ 2026-05-26
-STOP: write body to file via Write tool, invoke `git commit -F file` (or `gh --body-file`, `mix run -f`, `node script.js`). Transversal across repos. Cross-ref: `vault/lessons/git-commit-heredoc-argv-reparser.md`.
-EVIDENCE: [ukdl] UKDL S+++ 2026-05-26
-SEVERITY: CRITICAL | RECURRENCE: 1x
-<!-- digest:361c719fafa18134 -->
-### HR-004 -- Osa Absorption Tco Context Fix
-TRIGGER: Before: OSA Absorption + TCO Context Fix UKDL (2026-05-28)
-STOP: UKDL (2026-05-28)
-
-| UKDL-OSA-2026-05-28-L1 | Context-percent proxy MUST be MAX of recent calls' `input_tokens`, NOT cumulative SUM. The TIS log records every claude-CLI invocation; summing across them inflates with session length and is no
-EVIDENCE: [ukdl] OSA Absorption + TCO Context Fix UKDL (2026-05-28)
-SEVERITY: CRITICAL | RECURRENCE: 1x
-<!-- digest:cbe88b328a5f13ae -->
-### HR-005 -- 2026-05-24 -- Deployment Skill Iteration Log
-TRIGGER: Before initiating any production deploy or release
-STOP: |
-|---|---|---|
-| L1 | V-FORBIDDEN-REMOTE initial design called `run_git_push` with `remote: "origin"` and a project_
-EVIDENCE: [session_lessons] 2026-05-24 -- Deployment Skill iteration log
-SEVERITY: CRITICAL | RECURRENCE: 1x
-<!-- digest:e262ee8bd1088d8f -->
-### HR-006 -- L6 A1a2 Sync Direction Propagates Corruption
-TRIGGER: Before: L6: A1/A2 sync direction propagates corruption byte-perfectly
-STOP: STOP. Verify preconditions in writing. Document what you are about to do. Get explicit confirmation if any step is irreversible.
-EVIDENCE: [session_lessons] L6: A1/A2 sync direction propagates corruption byte-perfectly
-SEVERITY: CRITICAL | RECURRENCE: 1x
-<!-- digest:73db6006aff9f187 -->
-### HR-007 -- Neveragain 2026-05-29t200643z Claude-power-pack
-TRIGGER: Before: NEVER_AGAIN — 2026-05-29T20:06:43Z — claude-power-pack — HIGH
-STOP: STOP. Verify preconditions in writing. Document what you are about to do. Get explicit confirmation if any step is irreversible.
-EVIDENCE: [session_lessons] NEVER_AGAIN — 2026-05-29T20:06:43Z — claude-power-pack — HIGH
-SEVERITY: CRITICAL | RECURRENCE: 1x
-<!-- digest:1140b4a5b582d54a -->
 ### HR-SECRET-001 -- Stop before Write/Edit/MultiEdit if CRITICAL secret detected
 TRIGGER: PreToolUse on Write / Edit / MultiEdit with content matching a CRITICAL pattern (anthropic_key, openai_key, github_pat, aws_access_key, private_key, connection_string).
 STOP: Hook returns `continue:false` with stopReason "HR-SECRET-001 -- Secret Firewall blocked <Tool>. Rotate the secret before retrying." Detector never logs raw values; reporter records pattern_name + severity + line_no only. EXCEPCIÓN: Owner phrase "rotated and authorized -- HR-SECRET-001 OK" for ONE turn only.
