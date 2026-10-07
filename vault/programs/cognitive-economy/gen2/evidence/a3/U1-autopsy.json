@@ -1,0 +1,250 @@
+{
+ "0f9b771b": {
+  "agent_spawns": 0,
+  "calls": 79,
+  "counterfactual_est": {
+   "floor": 95695,
+   "label": "ESTIMATED",
+   "processed": 5304121,
+   "saving": 8126291
+  },
+  "effect_calls": 55,
+  "floor": 121931,
+  "median_ctx": 164860,
+  "no_effect_calls": 24,
+  "p90_ctx": 207018,
+  "processed": 13430412,
+  "repeated_reads": {
+   "count": 3,
+   "tokens_est": 1940
+  },
+  "slope_per_call": 1240.5,
+  "split": {
+   "floor_x_calls": 9632549,
+   "growth_above_floor": 3746004,
+   "output": 51859,
+   "rent_share": 0.2789
+  },
+  "status": "OK",
+  "subagent_files": 0,
+  "subagent_processed": 0,
+  "tool_result_share": {
+   "AskUserQuestion": 0.0038,
+   "Edit": 0.0206,
+   "Glob": 0.0107,
+   "Grep": 0.0803,
+   "PowerShell": 0.539,
+   "Read": 0.3214,
+   "Write": 0.0242
+  },
+  "tool_result_tokens_est": {
+   "AskUserQuestion": 93,
+   "Edit": 508,
+   "Glob": 263,
+   "Grep": 1982,
+   "PowerShell": 13299,
+   "Read": 7931,
+   "Write": 597
+  }
+ },
+ "423e33b0": {
+  "agent_spawns": 3,
+  "calls": 125,
+  "counterfactual_est": {
+   "floor": 95695,
+   "label": "ESTIMATED",
+   "processed": 8132683,
+   "saving": 28262984
+  },
+  "effect_calls": 84,
+  "floor": 121423,
+  "median_ctx": 319586,
+  "no_effect_calls": 41,
+  "p90_ctx": 386808,
+  "processed": 36395667,
+  "repeated_reads": {
+   "count": 6,
+   "tokens_est": 6940
+  },
+  "slope_per_call": 2339.8,
+  "split": {
+   "floor_x_calls": 15177875,
+   "growth_above_floor": 21100090,
+   "output": 117702,
+   "rent_share": 0.5797
+  },
+  "status": "OK",
+  "subagent_files": 1,
+  "subagent_processed": 1330462,
+  "tool_result_share": {
+   "Agent": 0.0143,
+   "Edit": 0.0213,
+   "Glob": 0.0326,
+   "Grep": 0.0702,
+   "PowerShell": 0.3561,
+   "Read": 0.4953,
+   "Skill": 0.0001,
+   "Write": 0.0102
+  },
+  "tool_result_tokens_est": {
+   "Agent": 867,
+   "Edit": 1285,
+   "Glob": 1972,
+   "Grep": 4241,
+   "PowerShell": 21530,
+   "Read": 29941,
+   "Skill": 5,
+   "Write": 615
+  }
+ },
+ "886d7bb9": {
+  "agent_spawns": 0,
+  "calls": 81,
+  "counterfactual_est": {
+   "floor": 95695,
+   "label": "ESTIMATED",
+   "processed": 5120675,
+   "saving": 14856601
+  },
+  "effect_calls": 53,
+  "floor": 120127,
+  "median_ctx": 258483,
+  "no_effect_calls": 28,
+  "p90_ctx": 297086,
+  "processed": 19977276,
+  "repeated_reads": {
+   "count": 5,
+   "tokens_est": 1356
+  },
+  "slope_per_call": 1955.8,
+  "split": {
+   "floor_x_calls": 9730287,
+   "growth_above_floor": 10175345,
+   "output": 71644,
+   "rent_share": 0.5093
+  },
+  "status": "OK",
+  "subagent_files": 0,
+  "subagent_processed": 0,
+  "tool_result_share": {
+   "Edit": 0.0052,
+   "Glob": 0.12,
+   "Grep": 0.0653,
+   "PowerShell": 0.3356,
+   "Read": 0.4572,
+   "Skill": 0.0002,
+   "Write": 0.0165
+  },
+  "tool_result_tokens_est": {
+   "Edit": 188,
+   "Glob": 4310,
+   "Grep": 2347,
+   "PowerShell": 12053,
+   "Read": 16423,
+   "Skill": 7,
+   "Write": 591
+  }
+ },
+ "b9bd9469": {
+  "agent_spawns": 0,
+  "calls": 206,
+  "counterfactual_est": {
+   "floor": 95695,
+   "label": "ESTIMATED",
+   "processed": 14097218,
+   "saving": 44128460
+  },
+  "effect_calls": 146,
+  "floor": 122544,
+  "median_ctx": 272834,
+  "no_effect_calls": 60,
+  "p90_ctx": 417093,
+  "processed": 58225678,
+  "repeated_reads": {
+   "count": 11,
+   "tokens_est": 8408
+  },
+  "slope_per_call": 1510.3,
+  "split": {
+   "floor_x_calls": 25244064,
+   "growth_above_floor": 32820601,
+   "output": 161013,
+   "rent_share": 0.5637
+  },
+  "status": "OK",
+  "subagent_files": 0,
+  "subagent_processed": 0,
+  "tool_result_share": {
+   "AskUserQuestion": 0.0006,
+   "Edit": 0.0255,
+   "Glob": 0.0058,
+   "Grep": 0.0814,
+   "Monitor": 0.0011,
+   "PowerShell": 0.4619,
+   "Read": 0.3999,
+   "TaskStop": 0.0033,
+   "ToolSearch": 0.0004,
+   "Write": 0.0201
+  },
+  "tool_result_tokens_est": {
+   "AskUserQuestion": 41,
+   "Edit": 1701,
+   "Glob": 386,
+   "Grep": 5433,
+   "Monitor": 75,
+   "PowerShell": 30840,
+   "Read": 26702,
+   "TaskStop": 223,
+   "ToolSearch": 24,
+   "Write": 1341
+  }
+ },
+ "e6e0eca7": {
+  "agent_spawns": 1,
+  "calls": 148,
+  "counterfactual_est": {
+   "floor": 95695,
+   "label": "ESTIMATED",
+   "processed": 9274226,
+   "saving": 25324727
+  },
+  "effect_calls": 96,
+  "floor": 119930,
+  "median_ctx": 227562,
+  "no_effect_calls": 52,
+  "p90_ctx": 339346,
+  "processed": 34598953,
+  "repeated_reads": {
+   "count": 8,
+   "tokens_est": 1946
+  },
+  "slope_per_call": 1522.7,
+  "split": {
+   "floor_x_calls": 17749640,
+   "growth_above_floor": 16731210,
+   "output": 118103,
+   "rent_share": 0.4836
+  },
+  "status": "OK",
+  "subagent_files": 1,
+  "subagent_processed": 1985280,
+  "tool_result_share": {
+   "Agent": 0.0071,
+   "Edit": 0.0337,
+   "Glob": 0.0002,
+   "Grep": 0.0269,
+   "PowerShell": 0.6403,
+   "Read": 0.2537,
+   "Write": 0.0382
+  },
+  "tool_result_tokens_est": {
+   "Agent": 273,
+   "Edit": 1299,
+   "Glob": 6,
+   "Grep": 1035,
+   "PowerShell": 24659,
+   "Read": 9771,
+   "Write": 1470
+  }
+ }
+}
