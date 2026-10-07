@@ -152,11 +152,13 @@ def _race(cap, n=5):
 
 def g_race():
     # Every racer must ANSWER: an unanswered racer is the lost-lock failure, not a refusal.
-    won, mute, used = _race(100)
-    check("V-GOAL-RACE-LAST", won == 1 and mute == 0 and used == 100,
-          f"5 processes race a 100 cap with 100 leases: {won} admitted, {mute} unanswered, used {used}")
-    won, mute, used = _race(500)
-    check("V-GOAL-RACE-CONTROL", won == 5 and mute == 0 and used == 500, f"same race at cap 500: {won} admitted")
+    # With headroom an admitted racer costs its lease (100) plus its final reply (100): cap 200 fits one.
+    # The 4 losers each book their own final reply (they still answer the deny): used 100 + 4 x 100.
+    won, mute, used = _race(200)
+    check("V-GOAL-RACE-LAST", won == 1 and mute == 0 and used == 500,
+          f"5 processes race a 200 cap with 100 leases + 100 replies: {won} admitted, {mute} unanswered, used {used}")
+    won, mute, used = _race(1000)
+    check("V-GOAL-RACE-CONTROL", won == 5 and mute == 0 and used == 500, f"same race at cap 1000: {won} admitted")
 
 
 def g_settle_and_resume():
@@ -182,12 +184,12 @@ def g_settle_and_resume():
 def g_cross_account():
     e = Env()
     try:
-        declare("acct", 300, lease_calls=1)
+        declare("acct", 400, lease_calls=1)
         a = ms.goal_renew("acct", "account-A-sid", 250, 50, HOST)
         b = ms.goal_renew("acct", "account-B-sid", 0, 50, HOST)
         check("V-GOAL-CROSS-ACCOUNT", a["ok"] and not b["ok"],
-              f"A settles 250 + lease 50 = cap; B (other account, same goal) -> {b.get('reason')}")
-        declare("acct2", 300, lease_calls=1)
+              f"A settles 250 + lease 50 + its reply 50; B (other account, same goal) -> {b.get('reason')}")
+        declare("acct2", 400, lease_calls=1)
         c = ms.goal_renew("acct2", "account-B-sid", 0, 50, HOST)
         check("V-GOAL-CROSS-ACCOUNT-CONTROL", c["ok"], "B on its own goal is admitted")
     finally:
@@ -219,11 +221,55 @@ def g_spawn():
     e = Env()
     try:
         declare("sp", 1000, lease_calls=1)
-        ms.goal_renew("sp", "p", 900, 50, HOST)        # used 950, remaining 50
+        ms.goal_renew("sp", "p", 850, 50, HOST)        # used 900; remaining 50 net of p's own reply (50)
         r = ms.goal_spawn("sp", "p", 100, 0, HOST)
         check("V-GOAL-SPAWN-OVER-REMAINING", not r["ok"], f"Agent estimate 100 vs remaining 50: {r['reason']}")
         r = ms.goal_spawn("sp", "p", 40, 0, HOST)
         check("V-GOAL-SPAWN-CONTROL", r["ok"], "estimate 40 fits and is reserved")
+    finally:
+        e.close()
+
+
+def _two_panes(goal, per_call):
+    """Two panes each spend exactly their lease until refused, then make one final reply of
+    `per_call` (the request a deny cannot stop). Returns the total actually spent."""
+    led = GoalLedger(ms.goal_root() / goal, goal)
+    spent, live = {"a": 0, "b": 0}, ["a", "b"]
+    for _ in range(100):
+        for sid in list(live):
+            r = led.renew(sid, spent[sid], 200, per_call=per_call)
+            if r["ok"]:
+                spent[sid] += r["lease"]["amount"]
+            else:
+                live.remove(sid)
+                spent[sid] += 100
+        if not live:
+            break
+    return sum(spent.values())
+
+
+def g_headroom():
+    # Canary #2 (CANARY.md, cc2a2a73): with the closeout gone, 195,084 of the 207,358 overshoot was one
+    # final reply per pane after its deny. Headroom holds that reply back from every other pane.
+    e = Env()
+    try:
+        declare("hr", 2000)
+        declare("hr0", 2000)
+        on, off = _two_panes("hr", 100), _two_panes("hr0", 0)
+        check("V-GOAL-HEADROOM-CAP-HOLDS", on <= 2000 and off > 2000,
+              f"spent incl. final replies: with headroom {on} <= 2000; control without it {off} > 2000")
+        g = GoalLedger(ms.goal_root() / "hr", "hr")._gfold(GoalLedger(ms.goal_root() / "hr", "hr")._read())
+        finals = [r for r in g["res"].values() if r.get("kind") == "final"]
+        check("V-GOAL-HEADROOM-FINAL-HOLD", len(finals) == 2 and all(r["amount"] == 100 for r in finals),
+              f"each refused pane books its final reply: {[(r['sid'], r['amount']) for r in finals]}")
+
+        declare("hs", 1000)
+        led = GoalLedger(ms.goal_root() / "hs", "hs")
+        led.renew("p", 0, 200, per_call=100)                     # used 200, one live pane owes 100
+        r = led.spawn("p", 750, base=0)
+        check("V-GOAL-HEADROOM-SPAWN", not r["ok"] and "final reply" in r["reason"],
+              f"raw remaining 800 but 700 net of the pane's reply: {r['reason'][:70]}")
+        check("V-GOAL-HEADROOM-SPAWN-CONTROL", led.spawn("p", 700, base=0)["ok"], "700 fits net of headroom")
     finally:
         e.close()
 
@@ -309,7 +355,9 @@ def g_guard():
         work, other = e.root / "work", e.root / "other"
         work.mkdir()
         other.mkdir()
-        declare("gg", 1000, roots=[str(work)], lease_calls=1)
+        # 1200: leases 100 then 150 admitted (each net of the pane's own reply), an Agent of one lease
+        # (150) refused at 50 left net of headroom, and the next renew at 1050 + reply 200 refused.
+        declare("gg", 1200, roots=[str(work)], lease_calls=1)
         tx = e.root / "t.jsonl"
         tx.write_text(row("m1", 100), encoding="utf-8")
 
@@ -411,7 +459,7 @@ def g_dispatch_wiring():
 
 def main():
     for g in (g_cap_journal, g_race, g_settle_and_resume, g_cross_account, g_crash_and_leak, g_spawn,
-              g_raise, g_host_and_roots, g_review_fixes, g_guard, g_dispatch_wiring):
+              g_headroom, g_raise, g_host_and_roots, g_review_fixes, g_guard, g_dispatch_wiring):
         try:
             g()
         except Exception as ex:   # a crashed gate is a FAIL with its reason, never a skipped one

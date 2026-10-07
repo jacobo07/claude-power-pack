@@ -53,9 +53,20 @@ are covered by the existing self-modification denials, not by this gate.
   goal mode; unbound sessions keep fail-open). Host not in goal `hosts` -> deny (UNKNOWN).
   Substring exemption is off in goal mode; only a bare `mission_spend.py goal-status` is exempt.
 
-## Overshoot bound (declared, not zero)
-Hooks see tool calls, not API requests. Per bound pane: one lease + the tokens of the call that
-crosses it + the in-flight turn after a deny (`continue:false` ends it). Canary measures it.
+## Overshoot bound -- headroom (Owner, 2026-10-07: "add the headroom")
+Hooks see tool calls, not API requests, so a deny cannot stop the one reply that answers it.
+Canary #2 measured that reply as 195,084 of a 207,358 overshoot. Three changes reserve it in advance:
+- **Final-reply headroom**: `renew(sid, measured, lease, per_call)` refuses unless
+  `cap - used - (per_call of every OTHER pane with an open lease) - own per_call >= own per_call`, i.e.
+  one more call and every live pane's last reply still fit. The lease is at most that room.
+- **Final hold**: a refusal books `kind: final, amount: per_call` for the refused sid (once), so no
+  other pane can spend its reply. It closes when a later settle of that sid shows growth.
+- **No crossing**: the guard renews BEFORE a call when `tokens - lease.base + context > lease.amount`,
+  because an admitted call is paid by the request that follows it (about one context).
+- `spawn` admits a child only within `cap - used - headroom`: a child never takes a pane's reply.
+Residual: estimation error only (the reply exceeds the last context by its output tokens and
+growth); a subagent's own final answer is covered by its agent hold, not by headroom. The canary
+measures it.
 
 ## Acceptance
 - AC1 two processes racing the last lease: exactly one admitted.

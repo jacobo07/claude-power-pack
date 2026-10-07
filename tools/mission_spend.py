@@ -505,8 +505,8 @@ def goal_renew(goal: str, sid: str, measured: int, per_call: int, host: str) -> 
     e, why = _goal_entry(goal, host)
     if e is None:
         return {"ok": False, "goal": goal, "reason": why}
-    lease = int(e.get("lease_calls") or GOAL_LEASE_CALLS) * (per_call if per_call > 0 else GOAL_DEFAULT_PER_CALL)
-    return _goal_ledger(goal).renew(sid, measured, lease)
+    pc = per_call if per_call > 0 else GOAL_DEFAULT_PER_CALL
+    return _goal_ledger(goal).renew(sid, measured, int(e.get("lease_calls") or GOAL_LEASE_CALLS) * pc, per_call=pc)
 
 
 def goal_spawn(goal: str, sid: str, estimate: int | None, per_call: int, host: str, measured: int = 0) -> dict:

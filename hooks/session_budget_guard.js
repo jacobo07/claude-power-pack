@@ -326,7 +326,10 @@ function decideGoal(event, sid, bind) {
     }
   }
   const base = ['--goal', goal, '--session', sid, '--per-call', String(gs.context || 0), '--measured', String(gs.tokens)];
-  if (!verdict && (!gs.lease || gs.tokens - gs.lease.base >= gs.lease.amount || !leaseOpenInJournal(goal, gs.lease))) {
+  // Renew BEFORE the call whose next request would cross the lease: an admitted call is paid by the
+  // request that follows it, about one context (`gs.context`), so the lease must still hold that much.
+  const crossing = gs.lease && gs.tokens - gs.lease.base + (gs.context || 0) > gs.lease.amount;
+  if (!verdict && (!gs.lease || crossing || !leaseOpenInJournal(goal, gs.lease))) {
     const r = callGoal(['goal-renew', ...base]);
     if (r.failed) verdict = goalDeny(goal, `UNKNOWN: ${r.failed}.`);
     else if (!r.ok) {

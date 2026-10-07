@@ -251,12 +251,24 @@ class GoalLedger(SpendLedger):
                 self._append(recs, {"op": "cap", "value": value, "source": source})
             return self._summary(self._gfold(recs), ok=True, reason="")
 
-    def renew(self, sid: str, measured: int, lease: int) -> dict:
+    @staticmethod
+    def _headroom(g: dict, exclude: str | None = None) -> int:
+        """One final reply per live pane: a deny stops tool calls, not the model request that answers
+        it (canary #2, 2026-10-07: 195,084 of a 207,358 overshoot). A live pane is a sid with an open
+        LEASE; its `per_call` is the size of that reply."""
+        return sum(int(r.get("per_call") or 0) for r in g["res"].values()
+                   if r["hold"] and r.get("kind") == "lease" and r["sid"] != exclude)
+
+    def renew(self, sid: str, measured: int, lease: int, per_call: int = 0) -> dict:
         """Settle `sid` at its cumulative `measured`, close its open LEASES and any agent hold the
         settled spend has used up, reserve the next lease (at most `lease`, at most what remains).
-        At most one open lease per sid afterwards; an agent hold survives until its spend arrives."""
-        if not isinstance(measured, int) or measured < 0 or not isinstance(lease, int) or lease <= 0:
-            raise LedgerError("measured must be an int >= 0 and lease a positive int")
+        At most one open lease per sid afterwards; an agent hold survives until its spend arrives.
+        With `per_call` > 0, what remains is net of every live pane's final reply, this one's too:
+        refused unless one more call AND its reply fit, and a refusal books this pane's reply as a
+        `final` hold so no other pane can spend it."""
+        if not isinstance(measured, int) or measured < 0 or not isinstance(lease, int) or lease <= 0 \
+                or not isinstance(per_call, int) or per_call < 0:
+            raise LedgerError("measured must be an int >= 0, lease a positive int, per_call an int >= 0")
         with self._lock:
             recs = self._read()
             g = self._sweep_leaks(recs)
@@ -265,17 +277,27 @@ class GoalLedger(SpendLedger):
             mark = max(g["marks"].get(sid, 0), measured)
             closes = sorted(rid for rid, r in g["res"].items()
                             if r["sid"] == sid and r["state"] in (RESERVED, LEAKED)
-                            and (r.get("kind") != "agent" or mark - int(r.get("base", 0)) >= r["amount"]))
+                            and (r.get("kind") == "lease"
+                                 or r.get("kind") == "agent" and mark - int(r.get("base", 0)) >= r["amount"]
+                                 or r.get("kind") == "final" and mark > int(r.get("base", 0))))
             if closes or measured > g["marks"].get(sid, 0):
                 self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes})
                 g = self._gfold(recs)
-            remaining = g["cap"] - g["used"]
-            if remaining <= 0:
-                return self._summary(g, ok=False, reason=f"budget_spent: used {g['used']:,} >= cap {g['cap']:,}")
+            room = g["cap"] - g["used"] - self._headroom(g, exclude=sid) - per_call
+            if room < max(per_call, 1):
+                if per_call and not any(r["hold"] and r["sid"] == sid and r.get("kind") == "final"
+                                        for r in g["res"].values()):
+                    self._append(recs, {"op": "reserve", "id": f"{self.goal}:{sid}:{g['seqs'].get(sid, 0) + 1}",
+                                        "sid": sid, "kind": "final", "provider": self.goal, "amount": per_call,
+                                        "window": GOAL_WINDOW, "base": measured, "per_call": per_call})
+                    g = self._gfold(recs)
+                return self._summary(g, ok=False, reason=(
+                    f"budget_spent: used {g['used']:,} of cap {g['cap']:,}; after one final reply per live "
+                    f"pane, {max(room, 0):,} is left, less than one call ({max(per_call, 1):,})"))
             seq = g["seqs"].get(sid, 0) + 1
-            rid, amount = f"{self.goal}:{sid}:{seq}", min(lease, remaining)
+            rid, amount = f"{self.goal}:{sid}:{seq}", min(lease, room)
             self._append(recs, {"op": "reserve", "id": rid, "sid": sid, "kind": "lease", "provider": self.goal,
-                                "amount": amount, "window": GOAL_WINDOW, "base": measured})
+                                "amount": amount, "window": GOAL_WINDOW, "base": measured, "per_call": per_call})
             return self._summary(self._gfold(recs), ok=True, reason="",
                                  lease={"id": rid, "amount": amount, "base": measured})
 
@@ -289,9 +311,10 @@ class GoalLedger(SpendLedger):
             g = self._sweep_leaks(recs)
             if g["cap"] is None:
                 return self._summary(g, ok=False, reason="no cap declared for this goal")
-            remaining = g["cap"] - g["used"]
+            remaining = g["cap"] - g["used"] - self._headroom(g)   # a child never takes a pane's last reply
             if estimate > remaining:
-                return self._summary(g, ok=False, reason=f"spawn estimate {estimate:,} > remaining {remaining:,}")
+                return self._summary(g, ok=False, reason=f"spawn estimate {estimate:,} > remaining {remaining:,} "
+                                     "(net of one final reply per live pane)")
             rid = f"{self.goal}:{sid}:{g['seqs'].get(sid, 0) + 1}"
             self._append(recs, {"op": "reserve", "id": rid, "sid": sid, "kind": "agent", "provider": self.goal,
                                 "amount": estimate, "window": GOAL_WINDOW, "base": base})
