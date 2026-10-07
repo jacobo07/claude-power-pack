@@ -68,6 +68,10 @@ Canary #2 measured that reply as 195,084 of a 207,358 overshoot. Three changes r
   the last main request's full total (context + output) plus the largest growth between consecutive
   main requests over the last 5. Canary #3 reserved the context alone and each reply came in
   831-1,230 over it.
+- **Unwritten issuing request**: a PreToolUse can run before the request that issued it is in the
+  transcript (canary #5: the first of 3 parallel Reads). When the payload's `tool_use_id` is not
+  among the tool_use ids written so far, the guard reports `measured + per_call` (the watermark
+  keeps the higher of that and the real total).
 Residual: a reply that grows more than any of the last 5 requests did. A subagent's own final
 answer is covered by its agent hold, not by headroom. The canary measures it.
 

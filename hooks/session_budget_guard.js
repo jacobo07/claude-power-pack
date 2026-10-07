@@ -275,6 +275,14 @@ function foldFile(gs, file, isMain) {
     if (gs.since && String(r.timestamp || '') < gs.since) continue;
     const m = r.message;
     if (!m || typeof m !== 'object' || !m.usage || m.model === '<synthetic>') continue;
+    // Every tool_use id written so far, before the message-id dedupe: one message's parallel tool
+    // calls arrive as several rows sharing an id. decideGoal uses this to see whether the request
+    // that issued the call being judged has reached the transcript yet (see `pending`).
+    if (Array.isArray(m.content)) {
+      for (const b of m.content) {
+        if (b && b.type === 'tool_use' && typeof b.id === 'string') gs.toolIds = (gs.toolIds || []).concat(b.id).slice(-MAX_TOOL_IDS);
+      }
+    }
     const mid = m.id || r.uuid;
     if (seen.has(mid)) continue;
     seen.add(mid);
@@ -296,6 +304,7 @@ function foldFile(gs, file, isMain) {
 // largest growth between consecutive main requests in the last GROWTH_WINDOW. This is the per-call
 // the ledger reserves as the pane's final reply, so it errs high: one spike stays for 5 requests.
 const GROWTH_WINDOW = 5;
+const MAX_TOOL_IDS = 500;   // recent tool_use ids kept to recognise an unwritten issuing request
 function nextRequest(gs) {
   const last = gs.lastTotal > 0 ? gs.lastTotal : (gs.context || 0);
   return last + Math.max(0, ...(Array.isArray(gs.deltas) ? gs.deltas : []));
@@ -342,10 +351,17 @@ function decideGoal(event, sid, bind) {
     }
   }
   const next = nextRequest(gs);
-  const base = ['--goal', goal, '--session', sid, '--per-call', String(next), '--measured', String(gs.tokens)];
+  // The request that issued this call may not be in the transcript yet (canary #5: the first of 3
+  // parallel Reads measured without it, its final hold was eaten by it, the reply overshot 36,183).
+  // When the payload's tool_use_id has not been written, count that request as one `next`. The
+  // watermark keeps the higher of this estimate and the real total once it lands.
+  const tuid = typeof event.tool_use_id === 'string' ? event.tool_use_id : '';
+  const pending = tuid && !(gs.toolIds || []).includes(tuid) ? next : 0;
+  const measured = gs.tokens + pending;
+  const base = ['--goal', goal, '--session', sid, '--per-call', String(next), '--measured', String(measured)];
   // Renew BEFORE the call whose next request would cross the lease: an admitted call is paid by the
   // request that follows it (`next`), so the lease must still hold that much.
-  const crossing = gs.lease && gs.tokens - gs.lease.base + next > gs.lease.amount;
+  const crossing = gs.lease && measured - gs.lease.base + next > gs.lease.amount;
   if (!verdict && (!gs.lease || crossing || !leaseOpenInJournal(goal, gs.lease))) {
     const r = callGoal(['goal-renew', ...base]);
     if (r.failed) verdict = goalDeny(goal, `UNKNOWN: ${r.failed}.`);

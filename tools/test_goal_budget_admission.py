@@ -335,13 +335,15 @@ def row(mid, n, ts="2099-01-01T00:00:00.000Z", out=0):    # after any goal's `si
                                    "content": [{"type": "text", "text": "x"}]}}) + "\n"
 
 
-def run_guard(e, sid, tx, cwd, tool="Read", tool_input=None, **env_extra):
+def run_guard(e, sid, tx, cwd, tool="Read", tool_input=None, tool_use_id=None, **env_extra):
     env = dict(os.environ, GSD_LONG_RUN_STATE_DIR=str(e.state))
     env.pop("CPP_SESSION_BUDGET", None)
     env.pop("CPP_GOAL", None)
     env.update(env_extra)
     ev = {"session_id": sid, "transcript_path": str(tx), "cwd": str(cwd), "tool_name": tool,
           "tool_input": tool_input or {"file_path": str(cwd / "f.txt")}}
+    if tool_use_id:
+        ev["tool_use_id"] = tool_use_id
     p = subprocess.run([NODE, "-e", RUNNER, str(GUARD)], input=json.dumps(ev), capture_output=True,
                        text=True, env=env, timeout=60)
     out = json.loads(p.stdout)["out"]
@@ -457,6 +459,34 @@ def g_guard():
         e.close()
 
 
+def g_unflushed():
+    # Canary #5 (CANARY.md): 3 parallel Reads came from a request not yet written to the transcript;
+    # the first one's renew measured without it, its final hold was eaten by that request, and the
+    # real reply overshot by 36,183. A call whose tool_use_id is not in the transcript yet counts its
+    # issuing request as pending (one next-request estimate).
+    e = Env()
+    try:
+        work = e.root / "work"
+        work.mkdir()
+        declare("uf", 100_000, roots=[str(work)])
+        tx = e.root / "t.jsonl"
+        r = json.loads(row("m1", 100))
+        r["message"]["content"] = [{"type": "tool_use", "id": "toolu_seen", "name": "Read", "input": {}}]
+        tx.write_text(json.dumps(r) + "\n", encoding="utf-8")
+        led = GoalLedger(ms.goal_root() / "uf", "uf")
+
+        def settled(sid):
+            return [x["measured"] for x in led._read() if x["op"] == "settle" and x["sid"] == sid]
+        run_guard(e, "uf-flushed", tx, work, tool_use_id="toolu_seen")
+        run_guard(e, "uf-pending", tx, work, tool_use_id="toolu_not_written_yet")
+        check("V-GOAL-GUARD-UNFLUSHED-CONTROL", settled("uf-flushed") == [100],
+              f"the issuing request is in the transcript: measured {settled('uf-flushed')} (want [100])")
+        check("V-GOAL-GUARD-UNFLUSHED", settled("uf-pending") == [200],
+              f"the issuing request is not written yet: measured {settled('uf-pending')} (want [200] = 100 + one pending)")
+    finally:
+        e.close()
+
+
 def g_dispatch_wiring():
     text = DISPATCHER.read_text(encoding="utf-8")
     check("V-GOAL-AGENT-LANE",
@@ -467,7 +497,7 @@ def g_dispatch_wiring():
 
 def main():
     for g in (g_cap_journal, g_race, g_settle_and_resume, g_cross_account, g_crash_and_leak, g_spawn,
-              g_headroom, g_raise, g_host_and_roots, g_review_fixes, g_guard, g_dispatch_wiring):
+              g_headroom, g_raise, g_host_and_roots, g_review_fixes, g_guard, g_unflushed, g_dispatch_wiring):
         try:
             g()
         except Exception as ex:   # a crashed gate is a FAIL with its reason, never a skipped one
