@@ -26,6 +26,9 @@ os.environ.update(HOME=str(HOME), USERPROFILE=str(HOME), PYTHONIOENCODING="utf-8
 
 passes = 0
 fails = 0
+# Pinned, not derived from what ran: a gate that vanishes (e.g. the task-2 block skipped
+# because LIVE_MUTATING was renamed) must turn the suite red, not shrink the denominator.
+EXPECTED = 17
 
 
 def check(gate: str, ok: bool, detail) -> None:
@@ -74,7 +77,7 @@ def run_suite(root: Path, suite: str, out: Path, guard: Path, *extra, env=None):
 def main() -> int:
     if not TOOL.is_file():
         print(f"  FAIL V-RB-TOOL-EXISTS: {TOOL} is missing")
-        print(f"\nGSDX_REALITY_BASELINE_PASS=0/16  threshold=16/16")
+        print(f"\nGSDX_REALITY_BASELINE_PASS=0/{EXPECTED}  threshold={EXPECTED}/{EXPECTED}")
         return 1
     sys.path.insert(0, str(ROOT / "tools"))
     import gsdx_reality_baseline as rb  # noqa: E402
@@ -190,8 +193,11 @@ def main() -> int:
         task2(rb)
 
     total = passes + fails
-    print(f"\nGSDX_REALITY_BASELINE_PASS={passes}/{total}  threshold={total}/{total}")
-    return 0 if fails == 0 else 1
+    if total != EXPECTED:
+        print(f"  FAIL V-RB-GATE-COUNT: {total} gates ran, {EXPECTED} expected -- a gate vanished or was added "
+              "without updating EXPECTED")
+    print(f"\nGSDX_REALITY_BASELINE_PASS={passes}/{EXPECTED}  threshold={EXPECTED}/{EXPECTED}")
+    return 0 if fails == 0 and total == EXPECTED else 1
 
 
 def task2(rb) -> None:

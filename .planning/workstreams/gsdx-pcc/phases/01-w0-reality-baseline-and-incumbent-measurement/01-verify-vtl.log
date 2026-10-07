@@ -1,0 +1,12 @@
+  PASS V-TL-DELTAS: rc=0 first=1.5 ep={'provider': 'gate', 'dispatching_s': 1.5, 'running_s': 1.6, 'ended_s': 3.0, 'receipt_s': 3.1, 'outcome': 'succeeded', 'cost_seconds': 1.4, 'observed': ['2 passed']} judged={'seq': 6, 't_s': 5.0, 'verdict': 'PASS', 'gate_count': 2, 'gate_seconds': [0.5, 0.3], 'replay_s': 0.8} replay=0.8
+  PASS V-TL-READS-A-COPY: source_unchanged=True copied_to=C:\Users\User\AppData\Local\Temp\gsdx_tl_copy_8mgkppi8\abababababababababababababababababababab\g-tl
+  PASS V-TL-JUDGE-ABSENT-UNKNOWN: rc=0 replay=None unknown_printed=True
+  PASS V-TL-JUDGE-PARTIAL-UNKNOWN: rc=0 replay=None
+  PASS V-TL-CORRUPT-REFUSED: rc=2 out_exists=False REFUSED: C:\Users\User\AppData\Local\Temp\gsdx_tl_copy_h560xmyv\abababababababababababababababababababab\g-tl\000003.jso
+  PASS V-TL-MISSING-REFUSED: rc=2 out_exists=False REFUSED: no goal directory C:\Users\User\AppData\Local\Temp\gsdx_tl_test_c7vbmozg\missing\ababababababababababababababab
+  PASS V-TL-FIXTURE-CONVERGES: rc=0 converged=True judged=PASS ended=4 observed=[['2 passed'], ['2 passed'], ['2 passed'], ['2 passed']] passes=8       : 1.949 s
+written: C:\Users\User\AppData\Local\Temp\gsdx_tl_test_c7vbmozg\fx.json (fixture root C:\Users\User\AppData\Local\Temp\gsdx_tl_fixture_3lzm9fw7)
+  PASS V-TL-FIXTURE-HERMETIC: store=C:\Users\User\AppData\Local\Temp\gsdx_tl_fixture_3lzm9fw7\goals\4b411970af76dbd63e1e08d98a88f7117988537b\g-w0-fixture goals_root=C:\Users\User\AppData\Local\Temp\gsdx_tl_fixture_3lzm9fw7\goals test_home_has_gsdx=False
+
+GSDX_GOAL_TIMELINE_PASS=8/8  threshold=8/8
+EXIT=0

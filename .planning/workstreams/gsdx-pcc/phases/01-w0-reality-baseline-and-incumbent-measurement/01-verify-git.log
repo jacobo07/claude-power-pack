@@ -1,0 +1,25 @@
+$ git show --stat --format=%h%x20%s 58934936
+58934936 fix(gsdx-pcc-01): gate supervisor hands its std handles to the gate (R01)
+
+ .../01-r01-collateral-post.log                     | 81 ++++++++++++++++++++++
+ .../01-r01-collateral-pre.log                      | 81 ++++++++++++++++++++++
+ .../01-r01-green.log                               | 21 ++++++
+ .../01-r01-red.log                                 | 21 ++++++
+ modules/gsd_x/goal/providers/gate.py               |  9 ++-
+ 5 files changed, 211 insertions(+), 2 deletions(-)
+EXIT=0
+
+$ git diff --numstat fbca24fc 96bdb8b1 -- vault/liveness/reachability_registry.json
+58	2	vault/liveness/reachability_registry.json
+$ git diff -U0 fbca24fc 96bdb8b1 -- vault/liveness/reachability_registry.json (hunk headers)
+@@ -5 +5 @@
+@@ -7,0 +8,51 @@
+@@ -11 +62,6 @@
+
+$ git show --numstat --format=%h 0c93c0e9 -- vault/knowledge_base/ukdl-universal.md
+0c93c0e9
+
+24	0	vault/knowledge_base/ukdl-universal.md
+
+$ git branch -r --contains HEAD
+(none)

@@ -1,0 +1,23 @@
+  PASS V-RB-FP-SAME: rc=0 SAME: files 1 -> 1 (delta +0)
+  PASS V-RB-FP-DETECTS-WRITE: rc=1 CHANGED: files 1 -> 2 (delta +1)
+  changed: added.txt
+  PASS V-RB-FP-DETECTS-DELETE: rc=1 CHANGED: files 1 -> 0 (delta -1)
+  PASS V-RB-FP-UNREADABLE-IS-UNKNOWN: rc=2 UNKNOWN: cannot read fingerprint C:\Users\User\AppData\Local\Temp\gsdx_rb_test_skn02maf\bad.json: Expecting property nam
+  PASS V-RB-SUMMARY-PARSE: {'text': 'X_PASS=3/4', 'token': 'X_PASS', 'passed': 3, 'total': 4} {'text': 'Y_CAUGHT=5/5', 'token': 'Y_CAUGHT', 'passed': 5, 'total': 5} None
+  PASS V-RB-SUITE-TIMED: rc=0/0 rows=2 first={'wall_s': 0.134, 'returncode': 0, 'passed': 2, 'total': 2, 'cold': True} ok   syn_ok.py run 1: 0.134s rc=0 summary=SYN_PASS=2/2
+guard C:\Users\User\AppData\Local\Temp\gsdx_r
+  PASS V-RB-SUITE-FAIL-RECORDED: rc=1 row_rc=1
+  PASS V-RB-NO-SUMMARY-UNJUDGED: rc=1 summary=None
+  PASS V-RB-HERMETIC-ENV: rc=0 {'HOME': 'C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_rb_run_q1p6jz1j\\home', 'USERPROFILE': 'C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_rb_run_q1p6jz1j\\home', 'GSDX_GOALS_ROOT': 'C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_rb_run_q1p6jz1j\\goals'}
+  PASS V-RB-GUARD-TRIPS: rc=3 guard={'kind': 'guard', 'label': None, 'dir': 'C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_rb_test_skn02maf\\g2', 'recorded_at': '2026-10-07T18:09:59+00:00', 'before': {'dir': 'C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_rb_test_skn02maf\\g2', 'exists': True, 'files': 1, 'max_mtime_ns': 1791396598862927600, 'errors': 0, 'digest': '0af2da0eacdc0ad5b6d0d4f8ca0132f6b911bcbf7c6417886a89fb3fc2c69dc3', 'excluded': {}}, 'after': {'dir': 'C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_rb_test_skn02maf\\g2', 'exists': True, 'files': 2, 'max_mtime_ns': 1791396599216286600, 'errors': 0, 'digest': '350baacf83315de9b9945041ae2c0e24c4b5ffd122b6f0cffe7c78cda46b599c', 'excluded': {}}, 'verdict': 'CHANGED', 'changed': ['leak.txt'], 'delta': 1, 'excluded_changed': [], 'reason': None}
+  PASS V-RB-GUARD-EXCLUDES-ONLY-NAMED: heartbeat rc=0 verdict=SAME excluded_changed=['sweep_heartbeat.json']; control rc=3
+  PASS V-RB-TIMEOUT: rc=1 row={'timed_out': True, 'returncode': None, 'summary': None}
+  PASS V-RB-LIVE-MUTATING-REFUSED: rc=2 rows=0 refused: ['test_gsd_x_goal_mutation.py'] write the live source tree they run from (test_gsd_x_goal_mutation.py:1-45); re
+  PASS V-RB-IN-COPY-ISOLATED: rc=0 in_copy=True summary=SYN_CAUGHT=1/1 live_sha_unchanged=True ok   test_gsd_x_goal_mutation.py run 1: 0.22s rc=0 summary=SYN_CAUGHT=1/1
+guard C:\Users\User\AppData\Local\Temp\gsdx_rb
+  PASS V-RB-IN-COPY-CLEAN-GIT: rc=0 probe="GIT rc=0 dirty=''" live_has_git=False
+  PASS V-RB-UNKNOWN-ROW: rc=0 rows=[{'kind': 'unknown', 'suite': 'S', 'reason': 'R', 'recorded_at': '2026-10-07T18:10:03+00:00'}]
+  PASS V-RB-TABLE: rc=0 A=| A | 2 | 2.000 | 1.500 | 2.000 | 0 | A_PASS=2/2 | DIFFERS (baseline 3/3) | python tools/A.py | B=| B | UNKNOWN (needs a live host) | - | - | - | - | - | - | - |
+
+GSDX_REALITY_BASELINE_PASS=17/17  threshold=17/17
+EXIT=0
