@@ -512,7 +512,7 @@
   },
   "cap": 20000000,
   "central_forecast": 15000000,
-  "spent": null,
+  "spent": 27612077,
   "spent_note": "UNVERIFIED until A2-1 meters per call including the coordinator; null never counts as zero",
   "units": {
    "A2-0": 500000,
@@ -527,6 +527,25 @@
   "worktree": "C:/Users/User/Apps/pp-ce-a2",
   "branch": "ce/a2",
   "workstream": "ce-a2",
-  "mission": null
+  "mission": null,
+  "status": "STOPPED by Owner (a) 2026-10-07: cap breach",
+  "spent_sources": [
+   {
+    "what": "worker 489481fa (Phase 1 + partial Phase 2)",
+    "processed": 10695300,
+    "calls": 61,
+    "how": "gen2/evidence/stage0/self_spend.py --session --dir C--Users-User-Apps-pp-ce-a2"
+   },
+   {
+    "what": "coordinator pane 886d7bb9 (scan, plan, setup, status) to ~18:00Z",
+    "processed": 16916777,
+    "calls": 71,
+    "how": "gen2/evidence/stage0/self_spend.py --session"
+   }
+  ],
+  "spent_unknown": [
+   "coordinator calls after ~18:00Z not included",
+   "meter not yet independently verified (evidence/a2/METER-PACKET.md)"
+  ]
  }
 }
