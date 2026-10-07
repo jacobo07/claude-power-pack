@@ -1,0 +1,16 @@
+  PASS V-ENGINE-CLOSURE-DISCOVERS-LAZY-IMPORTS: 62 files, incl. function-level imports (repo_identity, secret_firewall)
+  PASS V-ENGINE-CLOSURE-EXCLUDES-UNRELATED: an unrelated module (usage_index) is outside the closure
+  PASS V-ENGINE-ID-DETERMINISTIC: two reads agree (engine:cbbc28a831a89...)
+  PASS V-ENGINE-ID-FIXTURE-NONEMPTY: fixture identity computed
+  PASS V-ENGINE-ID-IGNORES-UNRELATED-CHANGE: changing a file outside the closure keeps the identity
+  PASS V-ENGINE-ID-EOL-FLIPPED: precondition: the file's line endings really changed
+  PASS V-ENGINE-ID-EOL-NEUTRAL: a CRLF checkout of the same code has the same identity (finding B1)
+  PASS V-ENGINE-ID-TRACKS-LAZY-DEP: a change in a function-level import moves the identity
+  PASS V-ENGINE-ID-TRACKS-SCRIPT-LITERAL: a script the engine names by path is part of the identity
+  PASS V-ENGINE-ID-UNKNOWN-WITHOUT-SEEDS: a missing required suite is UNKNOWN, never a partial identity
+  PASS V-ENGINE-VERDICT-SURVIVES-UNRELATED-COMMIT: same engine, other HEAD -> allowed (judge and chaos suites green on engine cbbc28a8)
+  PASS V-ENGINE-VERDICT-REFUSES-OTHER-ENGINE: same HEAD, other engine -> refused: the engine identity wins
+  PASS V-ENGINE-VERDICT-RED-STILL-REFUSED: a matching engine does not license a red record
+  PASS V-ENGINE-VERDICT-LEGACY-RECORD-USES-HEAD: a record without an engine digest keeps the HEAD rule (stale here)
+
+GSDX_ENGINE_ID_PASS=14/14  threshold=14/14

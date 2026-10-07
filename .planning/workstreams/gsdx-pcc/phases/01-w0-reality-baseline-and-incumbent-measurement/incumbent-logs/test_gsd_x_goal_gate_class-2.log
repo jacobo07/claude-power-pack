@@ -1,0 +1,13 @@
+  PASS V-GATECLASS-REALITY-REFUSES-UNSTATED: an unstated class on a REALITY obligation is refused at acceptance: ob-unstated: a REALITY obligation must declare an in_game or live gate class at acceptance (got nothing); only a runtime observation can prove a reality claim, and the plane may not be used to infer that it made one
+  PASS V-GATECLASS-REALITY-REFUSES-UNIT: a unit gate may not be registered to prove a reality claim
+  PASS V-GATECLASS-UNKNOWN-REFUSED: a class outside the vocabulary is refused rather than stored
+  PASS V-GATECLASS-REALITY-ADMITS-INGAME: the control: a declared in_game gate IS accepted, so the guard is not refusing everything
+  PASS V-GATECLASS-REALITY-ADMITS-LIVE: the control: `live` is a runtime class too
+  PASS V-GATECLASS-NONREALITY-UNAFFECTED: the negative control: a non-REALITY obligation still needs no class, so the guard is scoped to the plane it is about
+  PASS V-GATECLASS-PERSISTED: the declared class survives the event log and projection
+  PASS V-GATECLASS-LEGACY-IS-UNSTATED: a pre-fix obligation projects with no class -- unstated, not assumed runtime
+  PASS V-GATECLASS-SWEEP-REFUSES-LEGACY: the unattended sweep refuses to dispatch it instead of inferring: g-legacy: ob-legacy declares no runtime gate class (nothing); a REALITY obligation is not dispatched on an inferred one
+  PASS V-GATECLASS-SWEEP-STARTED-NOTHING: and no gate epoch was created for it, so nothing ran under a guessed class
+  PASS V-GATECLASS-SWEEP-DISPATCHES-DECLARED: the control: a declared in_game obligation is NOT refused: g-declared: dispatched ep-2b89be8aa538 for ob-real
+
+GSDX_GATE_CLASS_PASS=11/11  threshold=11/11

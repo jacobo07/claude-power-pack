@@ -1,0 +1,13 @@
+  PASS V-JUDGE-PASSES-HONEST: an honest goal is certified after re-running its 4 pinned gates (4 pinned gate(s) re-run and passed at git:86cdb280993c03ffafa81e02ead3e894a5af3dae)
+  PASS V-JUDGE-REFUSES-RIGGED-GATE: a gate weakened after acceptance is refused, even though it exits 0
+  PASS V-JUDGE-REFUSES-FAILING-GATE: a pinned gate that re-runs and fails refuses certification
+  PASS V-JUDGE-REFUSES-INSIDE-EPOCH: a judge invoked from inside an epoch refuses: that is the builder
+  PASS V-JUDGE-WRONG-TREE: judging tree A while standing in tree B is refused
+  PASS V-JUDGE-NOTHING-IS-NOT-PASS: a goal with no proven obligation is UNJUDGEABLE, never PASS
+  PASS V-JUDGE-UNRUNNABLE-OUTRANKS: a gate the judge could not run outranks subject failures in the same run
+  PASS V-JUDGE-NOTHING-RECORDED-IS-NOT-A-PASS: with no receipt banked the reader returns nothing, never an optimistic default
+  PASS V-JUDGE-RECEIPT-IS-READ-BACK: a banked receipt is readable by the reconciler (PASS)
+  PASS V-JUDGE-RECEIPT-IS-NOT-READ-AT-ANOTHER-TREE: a receipt about another tree is not offered for this one
+  PASS V-JUDGE-REFUSAL-IS-RECORDED: a refusal is banked and readable (REFUSED), so the reconciler can escalate on it
+
+GSDX_JUDGE_PASS=11/11  threshold=11/11

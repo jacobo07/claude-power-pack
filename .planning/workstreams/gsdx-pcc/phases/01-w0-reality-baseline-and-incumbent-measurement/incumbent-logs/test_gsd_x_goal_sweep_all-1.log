@@ -1,0 +1,13 @@
+  PASS V-SWEEPALL-PRECONDITION-ROOT-DELETED: precondition: g-gone's root really is gone
+  PASS V-SWEEPALL-REFUSES-FOREIGN-ROOT: a root holding ANOTHER repository is refused at write, nothing appended
+  PASS V-SWEEPALL-DISCOVERS-AUTONOMOUS: only g-on is swept, at its recorded root (['g-on'])
+  PASS V-SWEEPALL-NAMES-LEGACY-SKIP: autonomous without a recorded root is skipped with that reason
+  PASS V-SWEEPALL-NAMES-MISSING-ROOT: a recorded root that vanished is skipped with that reason
+  PASS V-SWEEPALL-OFF-AND-NEVER-SILENT: switched-off and never-marked goals are not swept
+  PASS V-SWEEPALL-HEARTBEAT-ON-REFUSAL: a refused run still leaves a dated heartbeat naming the refusal
+  PASS V-SWEEPALL-ACTS-WHEN-GREEN: with a green record it plans g-on's gate (["g-on: would run ob-outcome's gate"])
+  PASS V-SWEEPALL-HEARTBEAT-ON-ACT: heartbeat records the run (1 goal, 1 act)
+  PASS V-SWEEPALL-DRY-RUN-DISPATCHES-NOTHING: a dry sweep-all creates no epoch
+  PASS V-SWEEPALL-RETRY-KEY-IS-ENGINE: the retry key names the engine, not the moving repo HEAD
+
+GSDX_SWEEP_ALL_PASS=11/11  threshold=11/11

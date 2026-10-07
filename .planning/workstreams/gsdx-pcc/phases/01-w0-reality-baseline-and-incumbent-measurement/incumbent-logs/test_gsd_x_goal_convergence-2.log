@@ -1,0 +1,31 @@
+  PASS V-CONV-POSITIVE-CONTROL: a fully evidenced goal closes
+  PASS V-CONV-UNKNOWN-BLOCKS: every never-judged plane blocks closure
+  PASS V-CONV-NA-NEEDS-REASON: N/A without a reason refused
+  PASS V-CONV-ALWAYS-NOT-NA: OUTCOME cannot be declared N/A, reason or not
+  PASS V-CONV-GATE-REQUIRED: an obligation with no done gate refused
+  PASS V-CONV-PIN-REQUIRED: an obligation whose gate files are not pinned refused
+  PASS V-CONV-APPLICABLE-NEEDS-OBLIGATION: an applicable plane with no obligation blocks
+  PASS V-CONV-NARRATIVE-NOT-AUTHORITY: executor narrative refused (mission rule reused)
+  PASS V-CONV-FAILED-GATE: a failed gate refuses with its own reason
+  PASS V-CONV-REALITY-NEEDS-RUNTIME: a unit-test verdict cannot prove REALITY
+  PASS V-CONV-REALITY-ACCEPTS-RUNTIME: an in_game verdict proves REALITY (control)
+  PASS V-CONV-TREE-REQUIRED: a verdict with no tree is unjudgeable, not refused, not allowed
+  PASS V-CONV-VERDICT-REVISION: a verdict about another revision refused
+  PASS V-CONV-GATE-PIN: a gate whose files changed since acceptance refused
+  PASS V-CONV-CLOSE-AT-OTHER-TREE: evidence from another tree does not close this one
+  PASS V-CONV-OPEN-EPOCH: an open epoch blocks closure
+  PASS V-CONV-FAILURE-BLOCKS: an undispositioned failure blocks closure
+  PASS V-CONV-FAILURE-DISPOSITION-REASON: a failure disposition without a reason refused
+  PASS V-CONV-FAILURE-DISPOSITION-KIND: an unknown failure disposition refused
+  PASS V-CONV-FAILURE-DISPOSITIONED: a dispositioned failure no longer blocks
+  PASS V-CONV-OB-DISPOSITION-NOT-SATISFIED: SATISFIED may not be declared on an obligation; only a verdict reaches it
+  PASS V-CONV-OB-DISPOSITION-NEEDS-REASON: retiring an obligation without a reason refused
+  PASS V-CONV-OB-DISPOSITION-UNKNOWN-OB: retiring an obligation that does not exist refused
+  PASS V-CONV-RETIRED-IS-NOT-COVERAGE: retiring the last obligation on an applicable plane blocks that plane
+  PASS V-CONV-RETIRED-STAYS-RETIRED: a retired obligation cannot be proven afterwards (mission rule reused)
+  PASS V-CONV-RETIRED-WITH-SUCCESSOR-CLOSES: a retired obligation replaced by a proven successor closes
+  PASS V-CONV-REVISION-STALES-EVIDENCE: a new revision stops old proof from closing
+  PASS V-CONV-REVISION-NEEDS-CARRY: an old-revision obligation cannot be re-proven until carried
+  PASS V-CONV-REVISION-CARRIED: carried and re-proven obligations close the new revision
+
+GSDX_GOAL_CONV_PASS=29/29  threshold=29/29

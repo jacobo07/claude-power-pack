@@ -1,0 +1,22 @@
+  PASS V-BRIEF-VERBATIM-INTENT: the brief carries the Founder's own words
+  PASS V-BRIEF-OPEN-GAPS: it names the open obligation and what would prove it
+  PASS V-BRIEF-FAILURES: it carries undispositioned failures
+  PASS V-BRIEF-BOUNDARIES: it states the boundaries an executor may not cross
+  PASS V-BRIEF-DETERMINISTIC: the same state compiles the same brief
+  PASS V-BRIEF-NO-TRANSCRIPT: nothing in the brief comes from a chat transcript
+  PASS V-CLH-PROVIDER-CONTRACT: the headless provider satisfies the contract
+  PASS V-CLH-WORKTREE-ONLY: a headless epoch refuses to run outside a worktree the goal owns
+  PASS V-CLH-RUNS: a headless session runs in its worktree and its commit is in the receipt
+  PASS V-CLH-NO-VERDICT: a headless session yields NO verdict: a gate judges the work
+  PASS V-CLH-CAP: the Owner's daily cap stops a headless dispatch
+  PASS V-CLH-KILL-FLAG: the kill-switch file stops a headless dispatch
+  PASS V-CLI-BRIEF-WRITTEN: the brief is written where the operator will find it
+  PASS V-CLI-WAITS: with no receipt yet, the epoch is running
+  PASS V-CLI-EXPIRES: past its TTL the epoch ends EXPIRED, not LOST -- nobody died, the window closed
+  PASS V-CLI-EXPIRED-FAILURE: an expired interactive epoch harvests a named failure
+  PASS V-CLI-RECEIPT-ENDS: a receipt file ends the epoch
+  PASS V-CLI-NARRATIVE-NOT-PROOF: the operator's account is stored as narrative and proves nothing
+  PASS V-CLI-PROBE-KEEPS-ROOT: a recovered interactive handle knows its real worktree
+  PASS V-CLI-PROBE-NONE: a token never handed over probes to None
+
+GSDX_CLAUDE_PROVIDERS_PASS=20/20  threshold=20/20

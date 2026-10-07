@@ -1,0 +1,10 @@
+  PASS V-MUTSAFE-KILL-STRANDS: precondition: a hard kill mid-mutant leaves the mutant and its journal
+  PASS V-MUTSAFE-RECOVER: the next run restores the original bytes and retires the journal
+  PASS V-MUTSAFE-RECOVER-NOOP: a journal over unmutated files moves nothing
+  PASS V-MUTSAFE-NO-JOURNAL: no journal, nothing to recover
+  PASS V-MUTSAFE-CORRUPT-REFUSES: a journal failing its own digest raises and writes nothing
+  PASS V-MUTSAFE-CLEAN-ADMITS: a committed, unmodified target is admitted
+  PASS V-MUTSAFE-DIRTY-REFUSES: a modified target is named, so the run refuses
+  PASS V-MUTSAFE-UNANSWERED-IS-NOT-CLEAN: outside a repository git cannot answer, and that is None, not clean
+
+GSDX_GOAL_MUTATION_SAFETY_PASS=8/8  threshold=8/8

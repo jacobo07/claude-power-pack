@@ -1,0 +1,20 @@
+  PASS V-CX-PROVIDER-CONTRACT: the provider satisfies the contract with a 20-min-class bound
+  PASS V-CX-REAL-BINARY: the codex binary this provider launches exists: codex-cli 0.153.4
+  PASS V-CX-KILL-ENV: the CODEX_DISABLED env stops a dispatch
+  PASS V-CX-KILL-FLAG: the kill-switch file stops a dispatch with no restart
+  PASS V-CX-COOLDOWN-BLOCKS: a live shared cooldown stops a dispatch
+  PASS V-CX-EPOCH-RUNS: the epoch ran in its worktree and its commit is in the receipt (['d14544297e263609e7afc65cabb1b9f62cfbd526'])
+  PASS V-CX-NO-VERDICT: codex writing code yields NO verdict: a gate epoch judges the work
+  PASS V-CX-AUDIT-ONE-LEDGER: dispatch and harvest are appended to the shared account ledger, tagged goal-epoch
+  PASS V-CX-LOCK: a second local epoch is refused while one holds the account
+  PASS V-CX-LOCK-RELEASED: cancelling releases the account lock
+  PASS V-CX-LOCK-STALE-RECLAIMED: a lock held by a dead process is reclaimed
+  PASS V-CX-RATELIMIT-TRIPS-COOLDOWN: a rate limit in the output writes the SHARED cooldown and is a named failure
+  PASS V-CX-BUDGET-COUNTS: the ledger counts today's goal-epoch dispatches (3/3)
+  PASS V-CX-BUDGET-STOPS: the daily cap stops a dispatch and says what it spent
+  PASS V-CX-NEEDS-PROMPT: a codex epoch with no prompt refused
+  PASS V-CX-NEEDS-WORKTREE: a codex epoch whose worktree does not exist refused
+  PASS V-CX-PROBE: a run started before a crash is found by its pre-minted token
+  PASS V-CX-PROBE-NONE: a token that never dispatched probes to None
+
+GSDX_CODEX_PROVIDER_PASS=18/18  threshold=18/18

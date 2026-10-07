@@ -1,0 +1,28 @@
+  PASS V-GOAL-ID-DECLARED: seq=1 revision=7cf00981c58c0e11
+  PASS V-GOAL-ID-UNIQUE: re-declaring an existing goal id refused
+  PASS V-GOAL-ID-SYNTAX: malformed goal id refused
+  PASS V-GOAL-INTENT-REQUIRED: a goal without the Founder's words refused
+  PASS V-GOAL-REV-STABLE: scope path order does not change the revision
+  PASS V-GOAL-REV-SENSITIVE: acceptance order is content, and moves it
+  PASS V-GOAL-REV-BUDGET-NEUTRAL: budget and authority events leave the revision untouched
+  PASS V-GOAL-REV-NOOP-REFUSED: a no-op revision is refused
+  PASS V-GOAL-REV-NEW: criterion change minted 1722edcf4e731465
+  PASS V-GOAL-CAS-STALE: append at an already-published seq refused as LostRace
+  PASS V-GOAL-CAS-PUBLISH-ONCE: a second publish of one sequence number refused
+  PASS V-GOAL-CAS-PUBLISH-ONE-EVENT: only one event exists at that sequence
+  PASS V-GOAL-CAS-TWO-WRITERS: two processes raced for seq 2: ['LOST', 'WON'], log has 2 events
+  PASS V-GOAL-CAS-TEMP-IGNORED: a crashed writer's temp file is not an event
+  PASS V-GOAL-LOG-TRUNCATED-RAISES: truncated event raises; never read as fewer events
+  PASS V-GOAL-LOG-CHAIN: editing a past event breaks its digest and is detected
+  PASS V-GOAL-LOG-GAP: a missing sequence number raises
+  PASS V-GOAL-MALFORMED-PAYLOAD: a chain-valid but malformed payload raises Corrupt
+  PASS V-GOAL-CAS-PERMISSION: sharing violation -> Inconclusive, not lost, not won
+  PASS V-GOAL-CAS-PERMISSION-NOTHING-WRITTEN: the inconclusive write left no event behind
+  PASS V-GOAL-REPOID-SURVIVES-MOVE: the id is the root commit, unchanged by moving the checkout
+  PASS V-GOAL-REPOID-REFUSES: no repository -> RepoIdUnknown, never a made-up id
+  PASS V-GOAL-SINGLE-OWNER-UNBOUND: an unbound root still writes its own store
+  PASS V-GOAL-SINGLE-OWNER: a goal-bound root refuses per-root obligation writes
+  PASS V-GOAL-SINGLE-OWNER-CLOSURE: mission closure on a bound root is refused, exit 2
+  PASS V-GOAL-SINGLE-OWNER-UNREADABLE: an unreadable binding is not 'unbound'
+
+GSDX_GOAL_PASS=26/26  threshold=26/26
