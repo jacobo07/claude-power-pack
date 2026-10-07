@@ -1,0 +1,150 @@
+       0.000s  #1    goal.declared        
+      18.172s  #2    plane.applicability  
+      18.946s  #3    plane.applicability  
+      19.460s  #4    plane.applicability  
+      19.888s  #5    plane.applicability  
+      20.330s  #6    plane.applicability  
+      20.743s  #7    plane.applicability  
+      21.223s  #8    plane.applicability  
+      21.654s  #9    plane.applicability  
+      22.068s  #10   plane.applicability  
+      22.614s  #11   plane.applicability  
+     106.420s  #12   epoch.dispatching    ep-9e40a91d49dc
+     107.202s  #13   epoch.running        ep-9e40a91d49dc
+     127.502s  #14   epoch.receipt        ep-9e40a91d49dc
+     127.587s  #15   epoch.ended          ep-9e40a91d49dc
+     208.969s  #16   failure.recorded     
+     209.026s  #17   epoch.dispatching    ep-a72779d9d196
+     209.382s  #18   epoch.running        ep-a72779d9d196
+     339.235s  #19   epoch.receipt        ep-a72779d9d196
+     339.264s  #20   epoch.ended          ep-a72779d9d196
+     352.154s  #21   obligation.accepted  
+     352.557s  #22   obligation.accepted  
+     352.951s  #23   obligation.accepted  
+     423.975s  #24   goal.autonomous      
+     424.464s  #25   epoch.dispatching    ep-fa58f6044552
+     424.968s  #26   epoch.running        ep-fa58f6044552
+     431.428s  #27   epoch.ended          ep-fa58f6044552
+     438.197s  #28   epoch.dispatching    ep-0a6d8cd273a0
+     438.788s  #29   epoch.running        ep-0a6d8cd273a0
+     445.258s  #30   epoch.ended          ep-0a6d8cd273a0
+     451.641s  #31   epoch.dispatching    ep-5ad65671a665
+     452.348s  #32   epoch.running        ep-5ad65671a665
+     458.737s  #33   epoch.ended          ep-5ad65671a665
+    1598.407s  #34   epoch.dispatching    ep-9e778f3ad9aa
+    1598.753s  #35   epoch.running        ep-9e778f3ad9aa
+    1605.516s  #36   epoch.receipt        ep-9e778f3ad9aa
+    1605.544s  #37   obligation.satisfied 
+    1605.570s  #38   epoch.ended          ep-9e778f3ad9aa
+    1611.978s  #39   epoch.dispatching    ep-8411c78ee50d
+    1612.313s  #40   epoch.running        ep-8411c78ee50d
+    1619.025s  #41   epoch.receipt        ep-8411c78ee50d
+    1619.061s  #42   epoch.ended          ep-8411c78ee50d
+    1625.511s  #43   epoch.dispatching    ep-3cad47f4d4e7
+    1625.874s  #44   epoch.running        ep-3cad47f4d4e7
+    1633.102s  #45   epoch.receipt        ep-3cad47f4d4e7
+    1633.136s  #46   obligation.satisfied 
+    1633.173s  #47   epoch.ended          ep-3cad47f4d4e7
+    1980.690s  #48   failure.recorded     
+    1980.733s  #49   failure.recorded     
+    1980.776s  #50   failure.recorded     
+    4509.902s  #51   obligation.dispositioned 
+    4511.684s  #52   obligation.accepted  
+    4523.976s  #53   obligation.accepted  
+    4524.414s  #54   obligation.accepted  
+    4524.839s  #55   obligation.accepted  
+    4745.819s  #56   epoch.dispatching    ep-ff1f9b5fff47
+    4746.247s  #57   epoch.running        ep-ff1f9b5fff47
+    4747.713s  #58   epoch.receipt        ep-ff1f9b5fff47
+    4747.778s  #59   obligation.satisfied 
+    4747.818s  #60   epoch.ended          ep-ff1f9b5fff47
+    4748.954s  #61   epoch.dispatching    ep-d6eb00480dc1
+    4749.459s  #62   epoch.running        ep-d6eb00480dc1
+    4751.043s  #63   epoch.receipt        ep-d6eb00480dc1
+    4751.093s  #64   obligation.satisfied 
+    4751.135s  #65   epoch.ended          ep-d6eb00480dc1
+    4752.162s  #66   epoch.dispatching    ep-002809fe2a28
+    4752.579s  #67   epoch.running        ep-002809fe2a28
+    4753.817s  #68   epoch.receipt        ep-002809fe2a28
+    4753.861s  #69   obligation.satisfied 
+    4753.904s  #70   epoch.ended          ep-002809fe2a28
+    4773.261s  #71   epoch.dispatching    ep-0365595b5480
+    4773.780s  #72   epoch.running        ep-0365595b5480
+    4814.473s  #73   epoch.receipt        ep-0365595b5480
+    4814.533s  #74   obligation.satisfied 
+    4814.592s  #75   epoch.ended          ep-0365595b5480
+    4828.564s  #76   epoch.dispatching    ep-1bd4e103cecc
+    4829.054s  #77   epoch.running        ep-1bd4e103cecc
+    4842.974s  #78   epoch.receipt        ep-1bd4e103cecc
+    4843.041s  #79   obligation.satisfied 
+    4843.110s  #80   epoch.ended          ep-1bd4e103cecc
+    4856.859s  #81   epoch.dispatching    ep-e68c00f7fa53
+    4858.491s  #82   epoch.running        ep-e68c00f7fa53
+    4873.008s  #83   epoch.receipt        ep-e68c00f7fa53
+    4873.079s  #84   obligation.satisfied 
+    4873.150s  #85   epoch.ended          ep-e68c00f7fa53
+    4927.554s  #86   failure.dispositioned 
+    4928.077s  #87   failure.dispositioned 
+    4943.623s  #88   failure.dispositioned 
+    4944.097s  #89   failure.dispositioned 
+    4980.714s  #90   goal.judged          
+  865853.451s  #91   goal.autonomous      
+  865913.182s  #92   epoch.dispatching    ep-0954eedea9fe
+  865913.469s  #93   epoch.running        ep-0954eedea9fe
+  865987.055s  #94   epoch.receipt        ep-0954eedea9fe
+  865987.112s  #95   obligation.satisfied 
+  865987.168s  #96   epoch.ended          ep-0954eedea9fe
+  866033.894s  #97   obligation.accepted  
+  866287.621s  #98   epoch.dispatching    ep-37d87d5a72cf
+  866287.950s  #99   epoch.running        ep-37d87d5a72cf
+  866587.714s  #100  epoch.receipt        ep-37d87d5a72cf
+  866587.768s  #101  obligation.satisfied 
+  866587.826s  #102  epoch.ended          ep-37d87d5a72cf
+  866887.325s  #103  epoch.dispatching    ep-ae4d94763a40
+  866887.638s  #104  epoch.running        ep-ae4d94763a40
+  867187.669s  #105  epoch.receipt        ep-ae4d94763a40
+  867187.738s  #106  obligation.satisfied 
+  867187.795s  #107  epoch.ended          ep-ae4d94763a40
+  867487.772s  #108  epoch.dispatching    ep-9284ed933f2d
+  867488.219s  #109  epoch.running        ep-9284ed933f2d
+  868691.558s  #110  epoch.receipt        ep-9284ed933f2d
+  868691.628s  #111  obligation.satisfied 
+  868691.701s  #112  epoch.ended          ep-9284ed933f2d
+  868987.845s  #113  epoch.dispatching    ep-f89214c2f7e0
+  868988.185s  #114  epoch.running        ep-f89214c2f7e0
+  869288.176s  #115  epoch.receipt        ep-f89214c2f7e0
+  869288.239s  #116  obligation.satisfied 
+  869288.311s  #117  epoch.ended          ep-f89214c2f7e0
+  869591.640s  #118  epoch.dispatching    ep-07456db4e2e3
+  869591.967s  #119  epoch.running        ep-07456db4e2e3
+  869889.694s  #120  epoch.receipt        ep-07456db4e2e3
+  869889.782s  #121  obligation.satisfied 
+  869889.863s  #122  epoch.ended          ep-07456db4e2e3
+  871323.695s  #123  goal.judged          
+first dispatch        : 106.42 s
+epoch ep-9e40a91d49dc: ended 127.587 s outcome failed cost 20.7 s observed []
+epoch ep-a72779d9d196: ended 339.264 s outcome completed cost 130.1 s observed []
+epoch ep-fa58f6044552: ended 431.428 s outcome lost cost UNKNOWN s observed []
+epoch ep-0a6d8cd273a0: ended 445.258 s outcome lost cost UNKNOWN s observed []
+epoch ep-5ad65671a665: ended 458.737 s outcome lost cost UNKNOWN s observed []
+epoch ep-9e778f3ad9aa: ended 1605.57 s outcome completed cost 7.1 s observed ['GOALJOB_PASS=6/6  threshold=6/6']
+epoch ep-8411c78ee50d: ended 1619.061 s outcome failed cost 7.0 s observed ['UNREADABLE_INPUT: no receipt at C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\kc-goal-spine-wt\\tools\\smoke-test\\jobs\\done\\lobby-hotbar-census.report.json -- the run has']
+epoch ep-3cad47f4d4e7: ended 1633.173 s outcome completed cost 7.5 s observed ['desde este fichero, asi que no autoriza ningun PLAYER_VERIFIED.']
+epoch ep-ff1f9b5fff47: ended 4747.818 s outcome completed cost 1.8 s observed ['GOALRCPT_PASS=4/4  threshold=4/4']
+epoch ep-d6eb00480dc1: ended 4751.135 s outcome completed cost 2.0 s observed ['desde este fichero, asi que no autoriza ningun PLAYER_VERIFIED.']
+epoch ep-002809fe2a28: ended 4753.904 s outcome completed cost 1.6 s observed ['GOALJOB_PASS=6/6  threshold=6/6']
+epoch ep-0365595b5480: ended 4814.592 s outcome completed cost 41.1 s observed ['GOALLIVE_PASS=4/4  threshold=4/4']
+epoch ep-1bd4e103cecc: ended 4843.11 s outcome completed cost 14.3 s observed ['GOALSETUP_PASS=5/5  threshold=5/5']
+epoch ep-e68c00f7fa53: ended 4873.15 s outcome completed cost 16.1 s observed ['GOALUCR_PASS=6/6  threshold=6/6']
+epoch ep-0954eedea9fe: ended 865987.168 s outcome completed cost 73.8 s observed ['GOALRCPT_PASS=4/4  threshold=4/4']
+epoch ep-37d87d5a72cf: ended 866587.826 s outcome completed cost 300.0 s observed ['desde este fichero, asi que no autoriza ningun PLAYER_VERIFIED.']
+epoch ep-ae4d94763a40: ended 867187.795 s outcome completed cost 300.3 s observed ['GOALJOB_PASS=6/6  threshold=6/6']
+epoch ep-9284ed933f2d: ended 868691.701 s outcome completed cost 1203.7 s observed ['GOALLIVE_PASS=4/4  threshold=4/4']
+epoch ep-f89214c2f7e0: ended 869288.311 s outcome completed cost 300.3 s observed ['GOALSETUP_PASS=5/5  threshold=5/5']
+epoch ep-07456db4e2e3: ended 869889.863 s outcome completed cost 298.0 s observed ['GOALUCR_PASS=6/6  threshold=6/6']
+judged gate count     : 6
+judged verdict        : PASS
+judge replay          : 32.3 s
+declared -> judged    : 871323.695 s
+written: .planning\workstreams\gsdx-pcc\phases\01-w0-reality-baseline-and-incumbent-measurement\01-timeline-g001.json
+EXIT=0

@@ -1,0 +1,14 @@
+{
+ "dir": "C:\\Users\\User\\.claude\\state\\gsd-x",
+ "exists": true,
+ "files": 253,
+ "max_mtime_ns": 1790973887688687300,
+ "errors": 0,
+ "digest": "32e223245c69ae9d09c26c8411cf2fa9e00fdb7e5742b19948afbc21d074d566",
+ "excluded": {
+  "sweep_heartbeat.json": [
+   276,
+   1791381950959954700
+  ]
+ }
+}

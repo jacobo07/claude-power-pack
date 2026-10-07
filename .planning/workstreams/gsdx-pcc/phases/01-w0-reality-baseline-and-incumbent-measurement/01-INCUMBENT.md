@@ -78,3 +78,79 @@ Over the 17 measured suites, excluding the mutation suite. The numbers come from
 - sum min  = 3.951 + 9.551 + 13.845 + 9.053 + 53.433 + 3.929 + 2.901 + 5.715 + 0.397 + 4.212 + 5.092 + 8.346 + 0.214 + 1.348 + 1.289 + 14.077 + 9.327 = **146.680 s**
 
 Both are a **lower bound -- 1 suite(s) UNKNOWN** (`test_gsd_x_goal_mutation.py`) for the whole goal-suite family. `test_gsd_x_goal_cli.py` alone is 53.4 s, about 36 % of the min sum.
+## Timelines
+
+- **Guard:** the live store was fingerprinted before and after all three runs (`01-guard-timeline.json` / `.log`): `SAME: files 253 -> 253`, `EXIT=0`. The only change was `sweep_heartbeat.json`, which is excluded by name.
+- **How the tables were made:** they were rendered from the committed JSONs (`01-timeline-{g002,g001,fixture}.json`, with stdout and `EXIT=` in the matching `.log`). Times are seconds relative to `goal.declared`.
+- **What the recorded goals include:** g-002 and g-001 are real goals recorded on this host by an older engine. Their declare-to-judged spans include operator and scheduler idle time, so they are timelines, not compute. g-001's 871323.695 s (about 10 days) is mostly idle time between epochs.
+- **g-001 receipts:** three of its gate epochs carry no `cost.seconds` (a receipt shape that predates the field), so they read UNKNOWN.
+- **The fixture:** a fresh goal driven through the real CLI by the current engine, hermetic, with a 0.2 s pass interval set by the instrument.
+### g-002-router-surface -- recorded 2026-09-22, older engine
+
+| metric | value | command | exit code |
+|---|---|---|---|
+| declare -> first dispatch (s) | 60.592 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 4a226561... --goal g-002-router-surface` | 0 |
+| epoch ep-e141e8dbd990 (gate) dispatch -> ended (s) / receipt cost.seconds | 4.84 / 4.7 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 4a226561... --goal g-002-router-surface` | 0 |
+| epoch ep-8b07e4810c67 (gate) dispatch -> ended (s) / receipt cost.seconds | 4.683 / 4.6 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 4a226561... --goal g-002-router-surface` | 0 |
+| epoch ep-cc6d54668881 (gate) dispatch -> ended (s) / receipt cost.seconds | 5.881 / 5.8 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 4a226561... --goal g-002-router-surface` | 0 |
+| epoch ep-68a14c7b78b3 (gate) dispatch -> ended (s) / receipt cost.seconds | 4.821 / 4.7 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 4a226561... --goal g-002-router-surface` | 0 |
+| epoch ep-bc5b4eef1a63 (gate) dispatch -> ended (s) / receipt cost.seconds | 4.944 / 4.8 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 4a226561... --goal g-002-router-surface` | 0 |
+| epoch ep-9abb04b6c1a5 (gate) dispatch -> ended (s) / receipt cost.seconds | 4.934 / 4.8 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 4a226561... --goal g-002-router-surface` | 0 |
+| declare -> last judged (s) | 155.755 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 4a226561... --goal g-002-router-surface` | 0 |
+| judged gates / verdict | 6 / PASS | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 4a226561... --goal g-002-router-surface` | 0 |
+| judge replay (s, sum of per-gate seconds, 0.1 s source precision) | 2.9 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 4a226561... --goal g-002-router-surface` | 0 |
+
+### g-001-smoke-runner -- recorded, older engine
+
+| metric | value | command | exit code |
+|---|---|---|---|
+| declare -> first dispatch (s) | 106.42 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-9e40a91d49dc (codex) dispatch -> ended (s) / receipt cost.seconds | 21.167 / 20.7 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-a72779d9d196 (claude-interactive) dispatch -> ended (s) / receipt cost.seconds | 130.238 / 130.1 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-fa58f6044552 (gate) dispatch -> ended (s) / receipt cost.seconds | 6.964 / UNKNOWN | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-0a6d8cd273a0 (gate) dispatch -> ended (s) / receipt cost.seconds | 7.061 / UNKNOWN | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-5ad65671a665 (gate) dispatch -> ended (s) / receipt cost.seconds | 7.096 / UNKNOWN | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-9e778f3ad9aa (gate) dispatch -> ended (s) / receipt cost.seconds | 7.163 / 7.1 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-8411c78ee50d (gate) dispatch -> ended (s) / receipt cost.seconds | 7.083 / 7.0 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-3cad47f4d4e7 (gate) dispatch -> ended (s) / receipt cost.seconds | 7.662 / 7.5 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-ff1f9b5fff47 (gate) dispatch -> ended (s) / receipt cost.seconds | 1.999 / 1.8 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-d6eb00480dc1 (gate) dispatch -> ended (s) / receipt cost.seconds | 2.181 / 2.0 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-002809fe2a28 (gate) dispatch -> ended (s) / receipt cost.seconds | 1.742 / 1.6 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-0365595b5480 (gate) dispatch -> ended (s) / receipt cost.seconds | 41.331 / 41.1 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-1bd4e103cecc (gate) dispatch -> ended (s) / receipt cost.seconds | 14.546 / 14.3 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-e68c00f7fa53 (gate) dispatch -> ended (s) / receipt cost.seconds | 16.291 / 16.1 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-0954eedea9fe (gate) dispatch -> ended (s) / receipt cost.seconds | 73.986 / 73.8 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-37d87d5a72cf (gate) dispatch -> ended (s) / receipt cost.seconds | 300.205 / 300.0 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-ae4d94763a40 (gate) dispatch -> ended (s) / receipt cost.seconds | 300.47 / 300.3 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-9284ed933f2d (gate) dispatch -> ended (s) / receipt cost.seconds | 1203.929 / 1203.7 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-f89214c2f7e0 (gate) dispatch -> ended (s) / receipt cost.seconds | 300.466 / 300.3 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| epoch ep-07456db4e2e3 (gate) dispatch -> ended (s) / receipt cost.seconds | 298.223 / 298.0 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| declare -> last judged (s) | 871323.695 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| judged gates / verdict | 6 / PASS | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+| judge replay (s, sum of per-gate seconds, 0.1 s source precision) | 32.3 | `python tools/gsdx_goal_timeline.py recorded --store ~/.claude/state/gsd-x/goals --repo 1f924bca... --goal g-001-smoke-runner` | 0 |
+
+### fixture g-w0-fixture -- current engine 8b83216c, hermetic, this host
+
+| metric | value | command | exit code |
+|---|---|---|---|
+| declare -> first dispatch (s) | 9.244 | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| epoch ep-b55b7c8f6a50 (gate) dispatch -> ended (s) / receipt cost.seconds | 4.379 / 4.3 | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| epoch ep-ed943394cdf9 (gate) dispatch -> ended (s) / receipt cost.seconds | 4.168 / 4.1 | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| epoch ep-dedbd99f4400 (gate) dispatch -> ended (s) / receipt cost.seconds | 4.116 / 4.0 | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| epoch ep-51106e7cea28 (gate) dispatch -> ended (s) / receipt cost.seconds | 4.996 / 4.9 | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| declare -> last judged (s) | 39.676 | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| judged gates / verdict | 4 / PASS | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| judge replay (s, sum of per-gate seconds, 0.1 s source precision) | 0.4 | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| reconcile/status passes to CLOSURE CLEAR | 8 | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| pass interval (s; instrument parameter, not an incumbent property) | 0.2 | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| judge CLI wall (s) | 1.558 | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| receipt `observed` (all epochs; R01 at the CLI plane) | ['2 passed'] | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+| converged | True | `python tools/gsdx_goal_timeline.py fixture` | 0 |
+
+## UNKNOWN
+
+- **The scheduler's real cadence between sweep passes on this host.** The fixture drives passes back to back at an instrument-chosen 0.2 s interval. The recorded goals' gaps mix scheduler cadence with operator idle time and cannot separate the two.
+- **Judge replay of g-002 / g-001 at the current engine.** Their repositories' trees are not available in this worktree. The 2.9 s and 32.3 s are the older engine's recorded per-gate seconds.
+- **POSIX / GEX44 timings.** They were not run in this phase. Every number here is Windows, this laptop, with 3.4-3.8 GB of RAM free.
+- **`test_gsd_x_goal_mutation.py` wall time and CAUGHT count.** See Suite findings: the instrument gap was fixed, then the run was stopped by the memory-pressure reaper and not restarted unattended.
+- **`cost.seconds` for three g-001 gate epochs.** Their receipts predate the field.

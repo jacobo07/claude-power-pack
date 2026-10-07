@@ -1,0 +1,971 @@
+{
+ "source": "recorded",
+ "store": "C:\\Users\\User\\.claude\\state\\gsd-x\\goals",
+ "repo": "1f924bcabb838f1387a2afe5729e29b61891a3b4",
+ "goal": "g-001-smoke-runner",
+ "copied_to": "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_copy_jmknqbsr\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\g-001-smoke-runner",
+ "read_at": "2026-10-07T14:10:55+00:00",
+ "timeline": {
+  "events": [
+   {
+    "seq": 1,
+    "type": "goal.declared",
+    "t_s": 0.0
+   },
+   {
+    "seq": 2,
+    "type": "plane.applicability",
+    "t_s": 18.172
+   },
+   {
+    "seq": 3,
+    "type": "plane.applicability",
+    "t_s": 18.946
+   },
+   {
+    "seq": 4,
+    "type": "plane.applicability",
+    "t_s": 19.46
+   },
+   {
+    "seq": 5,
+    "type": "plane.applicability",
+    "t_s": 19.888
+   },
+   {
+    "seq": 6,
+    "type": "plane.applicability",
+    "t_s": 20.33
+   },
+   {
+    "seq": 7,
+    "type": "plane.applicability",
+    "t_s": 20.743
+   },
+   {
+    "seq": 8,
+    "type": "plane.applicability",
+    "t_s": 21.223
+   },
+   {
+    "seq": 9,
+    "type": "plane.applicability",
+    "t_s": 21.654
+   },
+   {
+    "seq": 10,
+    "type": "plane.applicability",
+    "t_s": 22.068
+   },
+   {
+    "seq": 11,
+    "type": "plane.applicability",
+    "t_s": 22.614
+   },
+   {
+    "seq": 12,
+    "type": "epoch.dispatching",
+    "t_s": 106.42,
+    "epoch_id": "ep-9e40a91d49dc"
+   },
+   {
+    "seq": 13,
+    "type": "epoch.running",
+    "t_s": 107.202,
+    "epoch_id": "ep-9e40a91d49dc"
+   },
+   {
+    "seq": 14,
+    "type": "epoch.receipt",
+    "t_s": 127.502,
+    "epoch_id": "ep-9e40a91d49dc"
+   },
+   {
+    "seq": 15,
+    "type": "epoch.ended",
+    "t_s": 127.587,
+    "epoch_id": "ep-9e40a91d49dc"
+   },
+   {
+    "seq": 16,
+    "type": "failure.recorded",
+    "t_s": 208.969
+   },
+   {
+    "seq": 17,
+    "type": "epoch.dispatching",
+    "t_s": 209.026,
+    "epoch_id": "ep-a72779d9d196"
+   },
+   {
+    "seq": 18,
+    "type": "epoch.running",
+    "t_s": 209.382,
+    "epoch_id": "ep-a72779d9d196"
+   },
+   {
+    "seq": 19,
+    "type": "epoch.receipt",
+    "t_s": 339.235,
+    "epoch_id": "ep-a72779d9d196"
+   },
+   {
+    "seq": 20,
+    "type": "epoch.ended",
+    "t_s": 339.264,
+    "epoch_id": "ep-a72779d9d196"
+   },
+   {
+    "seq": 21,
+    "type": "obligation.accepted",
+    "t_s": 352.154
+   },
+   {
+    "seq": 22,
+    "type": "obligation.accepted",
+    "t_s": 352.557
+   },
+   {
+    "seq": 23,
+    "type": "obligation.accepted",
+    "t_s": 352.951
+   },
+   {
+    "seq": 24,
+    "type": "goal.autonomous",
+    "t_s": 423.975
+   },
+   {
+    "seq": 25,
+    "type": "epoch.dispatching",
+    "t_s": 424.464,
+    "epoch_id": "ep-fa58f6044552"
+   },
+   {
+    "seq": 26,
+    "type": "epoch.running",
+    "t_s": 424.968,
+    "epoch_id": "ep-fa58f6044552"
+   },
+   {
+    "seq": 27,
+    "type": "epoch.ended",
+    "t_s": 431.428,
+    "epoch_id": "ep-fa58f6044552"
+   },
+   {
+    "seq": 28,
+    "type": "epoch.dispatching",
+    "t_s": 438.197,
+    "epoch_id": "ep-0a6d8cd273a0"
+   },
+   {
+    "seq": 29,
+    "type": "epoch.running",
+    "t_s": 438.788,
+    "epoch_id": "ep-0a6d8cd273a0"
+   },
+   {
+    "seq": 30,
+    "type": "epoch.ended",
+    "t_s": 445.258,
+    "epoch_id": "ep-0a6d8cd273a0"
+   },
+   {
+    "seq": 31,
+    "type": "epoch.dispatching",
+    "t_s": 451.641,
+    "epoch_id": "ep-5ad65671a665"
+   },
+   {
+    "seq": 32,
+    "type": "epoch.running",
+    "t_s": 452.348,
+    "epoch_id": "ep-5ad65671a665"
+   },
+   {
+    "seq": 33,
+    "type": "epoch.ended",
+    "t_s": 458.737,
+    "epoch_id": "ep-5ad65671a665"
+   },
+   {
+    "seq": 34,
+    "type": "epoch.dispatching",
+    "t_s": 1598.407,
+    "epoch_id": "ep-9e778f3ad9aa"
+   },
+   {
+    "seq": 35,
+    "type": "epoch.running",
+    "t_s": 1598.753,
+    "epoch_id": "ep-9e778f3ad9aa"
+   },
+   {
+    "seq": 36,
+    "type": "epoch.receipt",
+    "t_s": 1605.516,
+    "epoch_id": "ep-9e778f3ad9aa"
+   },
+   {
+    "seq": 37,
+    "type": "obligation.satisfied",
+    "t_s": 1605.544
+   },
+   {
+    "seq": 38,
+    "type": "epoch.ended",
+    "t_s": 1605.57,
+    "epoch_id": "ep-9e778f3ad9aa"
+   },
+   {
+    "seq": 39,
+    "type": "epoch.dispatching",
+    "t_s": 1611.978,
+    "epoch_id": "ep-8411c78ee50d"
+   },
+   {
+    "seq": 40,
+    "type": "epoch.running",
+    "t_s": 1612.313,
+    "epoch_id": "ep-8411c78ee50d"
+   },
+   {
+    "seq": 41,
+    "type": "epoch.receipt",
+    "t_s": 1619.025,
+    "epoch_id": "ep-8411c78ee50d"
+   },
+   {
+    "seq": 42,
+    "type": "epoch.ended",
+    "t_s": 1619.061,
+    "epoch_id": "ep-8411c78ee50d"
+   },
+   {
+    "seq": 43,
+    "type": "epoch.dispatching",
+    "t_s": 1625.511,
+    "epoch_id": "ep-3cad47f4d4e7"
+   },
+   {
+    "seq": 44,
+    "type": "epoch.running",
+    "t_s": 1625.874,
+    "epoch_id": "ep-3cad47f4d4e7"
+   },
+   {
+    "seq": 45,
+    "type": "epoch.receipt",
+    "t_s": 1633.102,
+    "epoch_id": "ep-3cad47f4d4e7"
+   },
+   {
+    "seq": 46,
+    "type": "obligation.satisfied",
+    "t_s": 1633.136
+   },
+   {
+    "seq": 47,
+    "type": "epoch.ended",
+    "t_s": 1633.173,
+    "epoch_id": "ep-3cad47f4d4e7"
+   },
+   {
+    "seq": 48,
+    "type": "failure.recorded",
+    "t_s": 1980.69
+   },
+   {
+    "seq": 49,
+    "type": "failure.recorded",
+    "t_s": 1980.733
+   },
+   {
+    "seq": 50,
+    "type": "failure.recorded",
+    "t_s": 1980.776
+   },
+   {
+    "seq": 51,
+    "type": "obligation.dispositioned",
+    "t_s": 4509.902
+   },
+   {
+    "seq": 52,
+    "type": "obligation.accepted",
+    "t_s": 4511.684
+   },
+   {
+    "seq": 53,
+    "type": "obligation.accepted",
+    "t_s": 4523.976
+   },
+   {
+    "seq": 54,
+    "type": "obligation.accepted",
+    "t_s": 4524.414
+   },
+   {
+    "seq": 55,
+    "type": "obligation.accepted",
+    "t_s": 4524.839
+   },
+   {
+    "seq": 56,
+    "type": "epoch.dispatching",
+    "t_s": 4745.819,
+    "epoch_id": "ep-ff1f9b5fff47"
+   },
+   {
+    "seq": 57,
+    "type": "epoch.running",
+    "t_s": 4746.247,
+    "epoch_id": "ep-ff1f9b5fff47"
+   },
+   {
+    "seq": 58,
+    "type": "epoch.receipt",
+    "t_s": 4747.713,
+    "epoch_id": "ep-ff1f9b5fff47"
+   },
+   {
+    "seq": 59,
+    "type": "obligation.satisfied",
+    "t_s": 4747.778
+   },
+   {
+    "seq": 60,
+    "type": "epoch.ended",
+    "t_s": 4747.818,
+    "epoch_id": "ep-ff1f9b5fff47"
+   },
+   {
+    "seq": 61,
+    "type": "epoch.dispatching",
+    "t_s": 4748.954,
+    "epoch_id": "ep-d6eb00480dc1"
+   },
+   {
+    "seq": 62,
+    "type": "epoch.running",
+    "t_s": 4749.459,
+    "epoch_id": "ep-d6eb00480dc1"
+   },
+   {
+    "seq": 63,
+    "type": "epoch.receipt",
+    "t_s": 4751.043,
+    "epoch_id": "ep-d6eb00480dc1"
+   },
+   {
+    "seq": 64,
+    "type": "obligation.satisfied",
+    "t_s": 4751.093
+   },
+   {
+    "seq": 65,
+    "type": "epoch.ended",
+    "t_s": 4751.135,
+    "epoch_id": "ep-d6eb00480dc1"
+   },
+   {
+    "seq": 66,
+    "type": "epoch.dispatching",
+    "t_s": 4752.162,
+    "epoch_id": "ep-002809fe2a28"
+   },
+   {
+    "seq": 67,
+    "type": "epoch.running",
+    "t_s": 4752.579,
+    "epoch_id": "ep-002809fe2a28"
+   },
+   {
+    "seq": 68,
+    "type": "epoch.receipt",
+    "t_s": 4753.817,
+    "epoch_id": "ep-002809fe2a28"
+   },
+   {
+    "seq": 69,
+    "type": "obligation.satisfied",
+    "t_s": 4753.861
+   },
+   {
+    "seq": 70,
+    "type": "epoch.ended",
+    "t_s": 4753.904,
+    "epoch_id": "ep-002809fe2a28"
+   },
+   {
+    "seq": 71,
+    "type": "epoch.dispatching",
+    "t_s": 4773.261,
+    "epoch_id": "ep-0365595b5480"
+   },
+   {
+    "seq": 72,
+    "type": "epoch.running",
+    "t_s": 4773.78,
+    "epoch_id": "ep-0365595b5480"
+   },
+   {
+    "seq": 73,
+    "type": "epoch.receipt",
+    "t_s": 4814.473,
+    "epoch_id": "ep-0365595b5480"
+   },
+   {
+    "seq": 74,
+    "type": "obligation.satisfied",
+    "t_s": 4814.533
+   },
+   {
+    "seq": 75,
+    "type": "epoch.ended",
+    "t_s": 4814.592,
+    "epoch_id": "ep-0365595b5480"
+   },
+   {
+    "seq": 76,
+    "type": "epoch.dispatching",
+    "t_s": 4828.564,
+    "epoch_id": "ep-1bd4e103cecc"
+   },
+   {
+    "seq": 77,
+    "type": "epoch.running",
+    "t_s": 4829.054,
+    "epoch_id": "ep-1bd4e103cecc"
+   },
+   {
+    "seq": 78,
+    "type": "epoch.receipt",
+    "t_s": 4842.974,
+    "epoch_id": "ep-1bd4e103cecc"
+   },
+   {
+    "seq": 79,
+    "type": "obligation.satisfied",
+    "t_s": 4843.041
+   },
+   {
+    "seq": 80,
+    "type": "epoch.ended",
+    "t_s": 4843.11,
+    "epoch_id": "ep-1bd4e103cecc"
+   },
+   {
+    "seq": 81,
+    "type": "epoch.dispatching",
+    "t_s": 4856.859,
+    "epoch_id": "ep-e68c00f7fa53"
+   },
+   {
+    "seq": 82,
+    "type": "epoch.running",
+    "t_s": 4858.491,
+    "epoch_id": "ep-e68c00f7fa53"
+   },
+   {
+    "seq": 83,
+    "type": "epoch.receipt",
+    "t_s": 4873.008,
+    "epoch_id": "ep-e68c00f7fa53"
+   },
+   {
+    "seq": 84,
+    "type": "obligation.satisfied",
+    "t_s": 4873.079
+   },
+   {
+    "seq": 85,
+    "type": "epoch.ended",
+    "t_s": 4873.15,
+    "epoch_id": "ep-e68c00f7fa53"
+   },
+   {
+    "seq": 86,
+    "type": "failure.dispositioned",
+    "t_s": 4927.554
+   },
+   {
+    "seq": 87,
+    "type": "failure.dispositioned",
+    "t_s": 4928.077
+   },
+   {
+    "seq": 88,
+    "type": "failure.dispositioned",
+    "t_s": 4943.623
+   },
+   {
+    "seq": 89,
+    "type": "failure.dispositioned",
+    "t_s": 4944.097
+   },
+   {
+    "seq": 90,
+    "type": "goal.judged",
+    "t_s": 4980.714
+   },
+   {
+    "seq": 91,
+    "type": "goal.autonomous",
+    "t_s": 865853.451
+   },
+   {
+    "seq": 92,
+    "type": "epoch.dispatching",
+    "t_s": 865913.182,
+    "epoch_id": "ep-0954eedea9fe"
+   },
+   {
+    "seq": 93,
+    "type": "epoch.running",
+    "t_s": 865913.469,
+    "epoch_id": "ep-0954eedea9fe"
+   },
+   {
+    "seq": 94,
+    "type": "epoch.receipt",
+    "t_s": 865987.055,
+    "epoch_id": "ep-0954eedea9fe"
+   },
+   {
+    "seq": 95,
+    "type": "obligation.satisfied",
+    "t_s": 865987.112
+   },
+   {
+    "seq": 96,
+    "type": "epoch.ended",
+    "t_s": 865987.168,
+    "epoch_id": "ep-0954eedea9fe"
+   },
+   {
+    "seq": 97,
+    "type": "obligation.accepted",
+    "t_s": 866033.894
+   },
+   {
+    "seq": 98,
+    "type": "epoch.dispatching",
+    "t_s": 866287.621,
+    "epoch_id": "ep-37d87d5a72cf"
+   },
+   {
+    "seq": 99,
+    "type": "epoch.running",
+    "t_s": 866287.95,
+    "epoch_id": "ep-37d87d5a72cf"
+   },
+   {
+    "seq": 100,
+    "type": "epoch.receipt",
+    "t_s": 866587.714,
+    "epoch_id": "ep-37d87d5a72cf"
+   },
+   {
+    "seq": 101,
+    "type": "obligation.satisfied",
+    "t_s": 866587.768
+   },
+   {
+    "seq": 102,
+    "type": "epoch.ended",
+    "t_s": 866587.826,
+    "epoch_id": "ep-37d87d5a72cf"
+   },
+   {
+    "seq": 103,
+    "type": "epoch.dispatching",
+    "t_s": 866887.325,
+    "epoch_id": "ep-ae4d94763a40"
+   },
+   {
+    "seq": 104,
+    "type": "epoch.running",
+    "t_s": 866887.638,
+    "epoch_id": "ep-ae4d94763a40"
+   },
+   {
+    "seq": 105,
+    "type": "epoch.receipt",
+    "t_s": 867187.669,
+    "epoch_id": "ep-ae4d94763a40"
+   },
+   {
+    "seq": 106,
+    "type": "obligation.satisfied",
+    "t_s": 867187.738
+   },
+   {
+    "seq": 107,
+    "type": "epoch.ended",
+    "t_s": 867187.795,
+    "epoch_id": "ep-ae4d94763a40"
+   },
+   {
+    "seq": 108,
+    "type": "epoch.dispatching",
+    "t_s": 867487.772,
+    "epoch_id": "ep-9284ed933f2d"
+   },
+   {
+    "seq": 109,
+    "type": "epoch.running",
+    "t_s": 867488.219,
+    "epoch_id": "ep-9284ed933f2d"
+   },
+   {
+    "seq": 110,
+    "type": "epoch.receipt",
+    "t_s": 868691.558,
+    "epoch_id": "ep-9284ed933f2d"
+   },
+   {
+    "seq": 111,
+    "type": "obligation.satisfied",
+    "t_s": 868691.628
+   },
+   {
+    "seq": 112,
+    "type": "epoch.ended",
+    "t_s": 868691.701,
+    "epoch_id": "ep-9284ed933f2d"
+   },
+   {
+    "seq": 113,
+    "type": "epoch.dispatching",
+    "t_s": 868987.845,
+    "epoch_id": "ep-f89214c2f7e0"
+   },
+   {
+    "seq": 114,
+    "type": "epoch.running",
+    "t_s": 868988.185,
+    "epoch_id": "ep-f89214c2f7e0"
+   },
+   {
+    "seq": 115,
+    "type": "epoch.receipt",
+    "t_s": 869288.176,
+    "epoch_id": "ep-f89214c2f7e0"
+   },
+   {
+    "seq": 116,
+    "type": "obligation.satisfied",
+    "t_s": 869288.239
+   },
+   {
+    "seq": 117,
+    "type": "epoch.ended",
+    "t_s": 869288.311,
+    "epoch_id": "ep-f89214c2f7e0"
+   },
+   {
+    "seq": 118,
+    "type": "epoch.dispatching",
+    "t_s": 869591.64,
+    "epoch_id": "ep-07456db4e2e3"
+   },
+   {
+    "seq": 119,
+    "type": "epoch.running",
+    "t_s": 869591.967,
+    "epoch_id": "ep-07456db4e2e3"
+   },
+   {
+    "seq": 120,
+    "type": "epoch.receipt",
+    "t_s": 869889.694,
+    "epoch_id": "ep-07456db4e2e3"
+   },
+   {
+    "seq": 121,
+    "type": "obligation.satisfied",
+    "t_s": 869889.782
+   },
+   {
+    "seq": 122,
+    "type": "epoch.ended",
+    "t_s": 869889.863,
+    "epoch_id": "ep-07456db4e2e3"
+   },
+   {
+    "seq": 123,
+    "type": "goal.judged",
+    "t_s": 871323.695
+   }
+  ],
+  "epochs": {
+   "ep-9e40a91d49dc": {
+    "provider": "codex",
+    "dispatching_s": 106.42,
+    "running_s": 107.202,
+    "ended_s": 127.587,
+    "receipt_s": 127.502,
+    "outcome": "failed",
+    "cost_seconds": 20.7,
+    "observed": []
+   },
+   "ep-a72779d9d196": {
+    "provider": "claude-interactive",
+    "dispatching_s": 209.026,
+    "running_s": 209.382,
+    "ended_s": 339.264,
+    "receipt_s": 339.235,
+    "outcome": "completed",
+    "cost_seconds": 130.1,
+    "observed": []
+   },
+   "ep-fa58f6044552": {
+    "provider": "gate",
+    "dispatching_s": 424.464,
+    "running_s": 424.968,
+    "ended_s": 431.428,
+    "receipt_s": null,
+    "outcome": "lost",
+    "cost_seconds": null,
+    "observed": []
+   },
+   "ep-0a6d8cd273a0": {
+    "provider": "gate",
+    "dispatching_s": 438.197,
+    "running_s": 438.788,
+    "ended_s": 445.258,
+    "receipt_s": null,
+    "outcome": "lost",
+    "cost_seconds": null,
+    "observed": []
+   },
+   "ep-5ad65671a665": {
+    "provider": "gate",
+    "dispatching_s": 451.641,
+    "running_s": 452.348,
+    "ended_s": 458.737,
+    "receipt_s": null,
+    "outcome": "lost",
+    "cost_seconds": null,
+    "observed": []
+   },
+   "ep-9e778f3ad9aa": {
+    "provider": "gate",
+    "dispatching_s": 1598.407,
+    "running_s": 1598.753,
+    "ended_s": 1605.57,
+    "receipt_s": 1605.516,
+    "outcome": "completed",
+    "cost_seconds": 7.1,
+    "observed": [
+     "GOALJOB_PASS=6/6  threshold=6/6"
+    ]
+   },
+   "ep-8411c78ee50d": {
+    "provider": "gate",
+    "dispatching_s": 1611.978,
+    "running_s": 1612.313,
+    "ended_s": 1619.061,
+    "receipt_s": 1619.025,
+    "outcome": "failed",
+    "cost_seconds": 7.0,
+    "observed": [
+     "UNREADABLE_INPUT: no receipt at C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\kc-goal-spine-wt\\tools\\smoke-test\\jobs\\done\\lobby-hotbar-census.report.json -- the run has"
+    ]
+   },
+   "ep-3cad47f4d4e7": {
+    "provider": "gate",
+    "dispatching_s": 1625.511,
+    "running_s": 1625.874,
+    "ended_s": 1633.173,
+    "receipt_s": 1633.102,
+    "outcome": "completed",
+    "cost_seconds": 7.5,
+    "observed": [
+     "desde este fichero, asi que no autoriza ningun PLAYER_VERIFIED."
+    ]
+   },
+   "ep-ff1f9b5fff47": {
+    "provider": "gate",
+    "dispatching_s": 4745.819,
+    "running_s": 4746.247,
+    "ended_s": 4747.818,
+    "receipt_s": 4747.713,
+    "outcome": "completed",
+    "cost_seconds": 1.8,
+    "observed": [
+     "GOALRCPT_PASS=4/4  threshold=4/4"
+    ]
+   },
+   "ep-d6eb00480dc1": {
+    "provider": "gate",
+    "dispatching_s": 4748.954,
+    "running_s": 4749.459,
+    "ended_s": 4751.135,
+    "receipt_s": 4751.043,
+    "outcome": "completed",
+    "cost_seconds": 2.0,
+    "observed": [
+     "desde este fichero, asi que no autoriza ningun PLAYER_VERIFIED."
+    ]
+   },
+   "ep-002809fe2a28": {
+    "provider": "gate",
+    "dispatching_s": 4752.162,
+    "running_s": 4752.579,
+    "ended_s": 4753.904,
+    "receipt_s": 4753.817,
+    "outcome": "completed",
+    "cost_seconds": 1.6,
+    "observed": [
+     "GOALJOB_PASS=6/6  threshold=6/6"
+    ]
+   },
+   "ep-0365595b5480": {
+    "provider": "gate",
+    "dispatching_s": 4773.261,
+    "running_s": 4773.78,
+    "ended_s": 4814.592,
+    "receipt_s": 4814.473,
+    "outcome": "completed",
+    "cost_seconds": 41.1,
+    "observed": [
+     "GOALLIVE_PASS=4/4  threshold=4/4"
+    ]
+   },
+   "ep-1bd4e103cecc": {
+    "provider": "gate",
+    "dispatching_s": 4828.564,
+    "running_s": 4829.054,
+    "ended_s": 4843.11,
+    "receipt_s": 4842.974,
+    "outcome": "completed",
+    "cost_seconds": 14.3,
+    "observed": [
+     "GOALSETUP_PASS=5/5  threshold=5/5"
+    ]
+   },
+   "ep-e68c00f7fa53": {
+    "provider": "gate",
+    "dispatching_s": 4856.859,
+    "running_s": 4858.491,
+    "ended_s": 4873.15,
+    "receipt_s": 4873.008,
+    "outcome": "completed",
+    "cost_seconds": 16.1,
+    "observed": [
+     "GOALUCR_PASS=6/6  threshold=6/6"
+    ]
+   },
+   "ep-0954eedea9fe": {
+    "provider": "gate",
+    "dispatching_s": 865913.182,
+    "running_s": 865913.469,
+    "ended_s": 865987.168,
+    "receipt_s": 865987.055,
+    "outcome": "completed",
+    "cost_seconds": 73.8,
+    "observed": [
+     "GOALRCPT_PASS=4/4  threshold=4/4"
+    ]
+   },
+   "ep-37d87d5a72cf": {
+    "provider": "gate",
+    "dispatching_s": 866287.621,
+    "running_s": 866287.95,
+    "ended_s": 866587.826,
+    "receipt_s": 866587.714,
+    "outcome": "completed",
+    "cost_seconds": 300.0,
+    "observed": [
+     "desde este fichero, asi que no autoriza ningun PLAYER_VERIFIED."
+    ]
+   },
+   "ep-ae4d94763a40": {
+    "provider": "gate",
+    "dispatching_s": 866887.325,
+    "running_s": 866887.638,
+    "ended_s": 867187.795,
+    "receipt_s": 867187.669,
+    "outcome": "completed",
+    "cost_seconds": 300.3,
+    "observed": [
+     "GOALJOB_PASS=6/6  threshold=6/6"
+    ]
+   },
+   "ep-9284ed933f2d": {
+    "provider": "gate",
+    "dispatching_s": 867487.772,
+    "running_s": 867488.219,
+    "ended_s": 868691.701,
+    "receipt_s": 868691.558,
+    "outcome": "completed",
+    "cost_seconds": 1203.7,
+    "observed": [
+     "GOALLIVE_PASS=4/4  threshold=4/4"
+    ]
+   },
+   "ep-f89214c2f7e0": {
+    "provider": "gate",
+    "dispatching_s": 868987.845,
+    "running_s": 868988.185,
+    "ended_s": 869288.311,
+    "receipt_s": 869288.176,
+    "outcome": "completed",
+    "cost_seconds": 300.3,
+    "observed": [
+     "GOALSETUP_PASS=5/5  threshold=5/5"
+    ]
+   },
+   "ep-07456db4e2e3": {
+    "provider": "gate",
+    "dispatching_s": 869591.64,
+    "running_s": 869591.967,
+    "ended_s": 869889.863,
+    "receipt_s": 869889.694,
+    "outcome": "completed",
+    "cost_seconds": 298.0,
+    "observed": [
+     "GOALUCR_PASS=6/6  threshold=6/6"
+    ]
+   }
+  },
+  "first_dispatch_s": 106.42,
+  "judged": [
+   {
+    "seq": 90,
+    "t_s": 4980.714,
+    "verdict": "PASS",
+    "gate_count": 6,
+    "gate_seconds": [
+     0.1,
+     0.1,
+     0.1,
+     16.6,
+     0.1,
+     0.1
+    ],
+    "replay_s": 17.1
+   },
+   {
+    "seq": 123,
+    "t_s": 871323.695,
+    "verdict": "PASS",
+    "gate_count": 6,
+    "gate_seconds": [
+     0.2,
+     0.3,
+     0.2,
+     31.1,
+     0.3,
+     0.2
+    ],
+    "replay_s": 32.3
+   }
+  ],
+  "judge_replay_s": 32.3,
+  "declared_to_last_judged_s": 871323.695
+ }
+}

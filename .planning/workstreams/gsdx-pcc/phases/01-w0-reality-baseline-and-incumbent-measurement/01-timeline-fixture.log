@@ -1,0 +1,11 @@
+engine 8b83216c0ae4 python 3.12.10 passes 8 closure_clear True converged True
+declare -> first dispatch : 9.244 s
+epoch ep-b55b7c8f6a50: cost 4.3 s observed ['2 passed']
+epoch ep-ed943394cdf9: cost 4.1 s observed ['2 passed']
+epoch ep-dedbd99f4400: cost 4.0 s observed ['2 passed']
+epoch ep-51106e7cea28: cost 4.9 s observed ['2 passed']
+declare -> judged         : 39.676 s
+judge replay              : 0.4 s
+judge CLI wall            : 1.558 s
+written: .planning\workstreams\gsdx-pcc\phases\01-w0-reality-baseline-and-incumbent-measurement\01-timeline-fixture.json (fixture root C:\Users\User\AppData\Local\Temp\gsdx_tl_fixture_t8_mp22n)
+EXIT=0
