@@ -62,10 +62,44 @@ T6, T8. Each unfreezes only when its amortization record shows break-even inside
 5. ~/.claude/CLAUDE.md changes delivered as Owner-applied diffs (HR-001).
 6. oneshot-architect-auditor runs on this amendment BEFORE any A1 execution (dispatched 2026-10-07).
 
+## Phase 4 audit (oneshot-architect-auditor, 2026-10-07): NEEDS-FIX, 9 gaps -> phase 5 fixes (binding)
+G1 BLOCKER: do NOT write estate optimization spend into spent_measured (cep_gen2.py:95 check_spend would go red
+   for ever vs 150M, and the window predates gen2 approval 2026-10-05). Fix: separate ledger block
+   `budget_tokens.coordination_spend` {value, sources, unknown}; spent_measured gets only program-attributable spend
+   since approval.
+G2 A1-1 duplicated cep_gen2.py:195-254 check_receipt (cost, saving, forecast, break_even_calls, PAID_BACK/NOT_YET/
+   UNKNOWN). Fix: per tranche `experiment:true` + `receipt`; extend check_receipt with horizon_days, confidence,
+   retirement_criterion. No new record type.
+G3 tools/self_spend.py does not exist (real: gen2/evidence/stage0/self_spend.py, 26 lines, one session). Fix: A1-2 is a
+   `turns.py --attribute` mode reusing scan_file / tool_cat (measure/turns.py:133-196).
+G4 false negatives: planning panes rarely Write/Edit; shell writes carry no path. Fix: attribute also by lineage (cwd in
+   a program worktree, Reads of program cards, subagents rolled up to parent); text_only share reported UNKNOWN.
+G5 false positives / double count: per-call attribution between first and last program write; dedup message.id|
+   requestId; exclude session ids already in ledger sources; explicit path list incl. pp-ce-gen2; +/- control sessions.
+G6 the A1 cap is unmeterable on GEX44 (meter reads laptop projects only). Fix: GEX44 meter run over ssh writing
+   per-unit session ids + totals BEFORE any GEX44 unit; until then the cap is UNVERIFIED.
+G7 C15/C16 undefined; gen2 gate logic lives in cep_gen2.py:112-192 and run_check refuses self-invocation. Fix: add C15
+   (unfrozen tranche has valid receipt; frozen stay frozen; two-strike family state) and C16 (A1 spend <= 20M,
+   UNKNOWN fails) pointing at a standalone tools/test_ce_a1.py, OPEN with check:null until it exists.
+G8 ordering: T3 is shadow (no per_call saving) so a payback receipt would be rejected (cep_gen2.py:221-223). Fix:
+   receipt kind `measurement` (cost + decision value, no payback). Order: A1-6 -> A1-2 -> T3 -> T7 (T7 moves the floor
+   T3's KEEP/DEALLOCATE economics read; or parameterize T3's floor).
+G9 resume_failed count: 27 in the whole ledger vs 19 cited. Fix: pin window and row ids (done below).
+
+## Executed
+- A1-6 (zero-model, 2026-10-07): window 2026-10-04T18Z..2026-10-07: 19 resume_failed rows, ALL followed by
+  resume_certified of the same claimant on retry (next 11, goal 3, dirty 3, goal+dirty 2). Zero terminal continuation
+  failures; the audit memory's "19 failed resumes" was a misreading. rollover.py:1264-1271 judges the exam against
+  the tree as it is now, so "next"/"dirty" misses after a moved tree may be correct-by-design -- label pending.
+- Found while classifying: test_gsd_mission_legacy_characterization.py (V-G23) wrote the LIVE rollover ledger on
+  every run (7 rows; 210 of 322 capsule_sealed rows in the window, all "not a git work tree" on gsd-mission-g23-*
+  temp dirs). Fixed be76dec1: CPP_ROLLOVER_STATE_DIR redirected + gate V-G23-HERMETIC-ROLLOVER-STATE (RED before,
+  33/33 GREEN after, live delta 7 -> 0). Corrected window figures: 112 real seals, 94 SAFE_TO_FORGET. Six torn
+  JSONL lines (176, 377, 430, ...) predate the window, after "write failed: PermissionError" seals: historical,
+  current status UNVERIFIED.
+
 ## Resumption (read only this file + gen2/ledger.json in pp-ce-gen2)
-1. Dispatch oneshot-architect-auditor on this file + COMPLETION-PLAN.md; apply its gap list here (phase 5).
-2. A1-2 meter: extend CE-T0a self_spend attribution with write-path + lineage; canary = the 2026-10-04..07 window
-   (expected ~888M laptop tier A+B); write the result into ledger budget_tokens.spent_measured.
-3. A1-6: classify the 11 resume_failed "next" rows in ~/.claude/state/rollover/rollover-ledger.jsonl against their
-   capsules; then T3 replay and T7, each with an A1-1 amortization record first.
-Status line to keep current: A1 spent 0 / 20M; executed units: none.
+1. G7 + G1 + G2: ledger + cep_gen2.py extensions (coordination_spend block, C15/C16 OPEN, receipt fields) in pp-ce-gen2.
+2. A1-2 = turns.py --attribute (G3-G5), canary on the 2026-10-04..07 window into coordination_spend; then G6 GEX44 run.
+3. T3 replay with a measurement receipt (G8), then T7.
+Status line to keep current: A1 spent UNMEASURED (this pane, laptop) / 20M; executed units: A1-6, G23 hermetic fix.
