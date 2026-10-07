@@ -150,3 +150,13 @@ reality scan of the owners above; done-gate = tiny-cap canary across several pan
 overshoot, mutation suite from the Owner's list (concurrent last-reserve, Agent spawn over parent remaining, resume
 reset, cross-account, crash with live lease, UNKNOWN cost). Merges of a1/u1 + a1/a1-2 into ce/gen2-completion still
 wait for the pp-ce-gen2 pane to go idle.
+
+## EXCEPTION to decision 4 -- 2026-10-07 (Owner 'y', pane b9bd9469), ONE unit only
+Autonomous Optimization (IC gen2) phase-1 close-out: CR-01 (population --until bad value -> MEASURED/EXACT, false
+PASS), WR-01 (non-OSError aborts refresh), WR-02 (grown legacy file sets launch cwd) + phase-1 verification. Headless
+sonnet worker on GEX44, envelope 4M processed / 30 calls, packet
+missions/autonomous-optimization .planning/.../01-usage-index-v5-substrate/01-FIX-PACKET.md committed 41e35562, PID
+3934792, transcript 1a348a7e. Phases 2-7 stay paused until pre-call budget admission exists. Spend is metered from
+the worker's own transcript and counts against the program, not against A1 (A1 stays in containment).
+Also settled today: cognitive-resource-os has no open work -- CRO-01 PASS on GEX44 since 2026-09-30 (bb094d1,
+194 passed / 4 skipped); the laptop's STATE.md is stale only because mission/cognitive-resource-os-gex44 is unmerged.
