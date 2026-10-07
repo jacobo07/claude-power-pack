@@ -470,7 +470,7 @@ def record_error(
 # ---------------------------------------------------------------------------
 
 def distribute(event: dict) -> dict:
-    """Atomic-append the event to the 3 destinations.
+    """Distribute the event: lessons appended, UKDL entry STAGED as a draft.
 
     Returns {"session_lessons": bool, "ukdl": bool, "patterns_db": bool}.
     Each flag = "this destination is now updated with the event".
@@ -497,8 +497,11 @@ def distribute(event: dict) -> dict:
             f"\n- [{event['category']}/{event['subsystem']}] "
             f"`{event['id']}` -- {event['prevention_rule']}\n"
         )
-        _atomic_append(UKDL_PATH, ukdl_entry)
-        result["ukdl"] = True
+        # Staged, never appended: the tracked UKDL file changes only through
+        # promote_ukdl_draft(), an explicit promotion (E4).
+        result["ukdl_draft"] = _stage_ukdl_draft(
+            event.get("id", ""), ukdl_entry.strip(), "distribute")
+        result["ukdl"] = bool(result["ukdl_draft"])
     except Exception as exc:
         _log(f"distribute ukdl ERROR {type(exc).__name__}: {exc}")
 
@@ -884,6 +887,8 @@ def confirm_draft(draft_id: str, category: str = "spec-violation",
         draft = json.loads(src.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError, ValueError):
         return None
+    if draft.get("kind") == UKDL_DRAFT_KIND:
+        return None  # a UKDL draft is promoted (promote-ukdl), not confirmed
     event = record_error(
         category=category,
         subsystem=subsystem,
@@ -911,6 +916,126 @@ def dismiss_draft(draft_id: str, reason: str = "") -> Optional[dict]:
     return _move_draft(draft_id, _dismissed_dir(), dismissed_reason=str(reason))
 
 
+# ---------------------------------------------------------------------------
+# E4: UKDL staging -- distribute() stages, only promote_ukdl_draft() appends
+# ---------------------------------------------------------------------------
+
+UKDL_DRAFT_KIND = "ukdl_entry"
+# The exact line distribute() writes: "- [category/subsystem] `id` -- rule".
+_CEPS_UKDL_LINE_RX = re.compile(r"^- \[[^\]/\s]+/[^\]]+\] `[^`]+` -- \S.*$")
+
+
+def _stage_ukdl_draft(source_event_id: str, line: str, source: str) -> str:
+    """Write one UKDL entry into the CEPS draft set; return its draft id.
+
+    The id hashes the line, so staging the same entry twice is one draft.
+    Returns "" unless the draft file is observed on disk afterwards.
+    """
+    from datetime import datetime, timezone
+    draft_id = "ukdl-" + hashlib.sha1(line.encode("utf-8")).hexdigest()[:12]
+    draft = {
+        "draft_id": draft_id,
+        "kind": UKDL_DRAFT_KIND,
+        "ukdl_line": line,
+        "event_id": source_event_id,
+        "source": source,
+        "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "needs_confirmation": True,
+    }
+    path = DRAFTS_DIR / f"{draft_id}.json"
+    try:
+        DRAFTS_DIR.mkdir(parents=True, exist_ok=True)
+        _atomic_write(path, json.dumps(draft, indent=2, ensure_ascii=False) + "\n")
+    except OSError as exc:
+        _log(f"_stage_ukdl_draft ERROR {type(exc).__name__}: {exc}")
+        return ""
+    return draft_id if path.is_file() else ""
+
+
+def promote_ukdl_draft(draft_id: str) -> Optional[dict]:
+    """Append one staged entry to the tracked UKDL file -- the only path that does."""
+    src = DRAFTS_DIR / f"{draft_id}.json"
+    if not src.exists():
+        return None
+    try:
+        draft = json.loads(src.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ValueError):
+        return None
+    line = str(draft.get("ukdl_line", ""))
+    if draft.get("kind") != UKDL_DRAFT_KIND or not line:
+        return None
+    try:
+        _atomic_append(UKDL_PATH, f"\n{line}\n")
+    except OSError as exc:
+        _log(f"promote_ukdl_draft ERROR {type(exc).__name__}: {exc}")
+        return None
+    return _move_draft(draft_id, _confirmed_dir(), promoted_to="ukdl")
+
+
+def _head_text(path: Path) -> Optional[str]:
+    """The committed (HEAD) text of `path`, or None when git cannot say."""
+    import shutil
+    import subprocess
+    git = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
+    try:
+        rel = path.resolve().relative_to(PP_ROOT.resolve()).as_posix()
+        out = subprocess.run([git, "-C", str(PP_ROOT), "show", f"HEAD:{rel}"],
+                             capture_output=True, timeout=60)
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        _log(f"_head_text ERROR {type(exc).__name__}: {exc}")
+        return None
+    if out.returncode != 0:
+        return None
+    return out.stdout.decode("utf-8")
+
+
+def migrate_pending_ukdl(path: Optional[Path] = None, head_text: Optional[str] = None,
+                         apply: bool = False) -> dict:
+    """Move uncommitted CEPS-shaped UKDL lines into drafts. Dry-run by default.
+
+    "Uncommitted" = lines the working file adds relative to HEAD, compared with
+    line endings stripped so a CRLF checkout does not read as all-new. A line
+    is removed only after its draft is observed on disk; anything not
+    CEPS-shaped (a human edit) stays where it is.
+    """
+    import difflib
+    import os
+    path = Path(path) if path else UKDL_PATH
+    if head_text is None:
+        head_text = _head_text(path)
+        if head_text is None:
+            return {"error": "cannot read the HEAD version", "path": str(path),
+                    "applied": False}
+    work = path.read_bytes().decode("utf-8").splitlines(keepends=True)
+    head_keys = [ln.rstrip("\r\n") for ln in head_text.splitlines()]
+    work_keys = [ln.rstrip("\r\n") for ln in work]
+    added = []
+    matcher = difflib.SequenceMatcher(None, head_keys, work_keys, autojunk=False)
+    for tag, _i1, _i2, j1, j2 in matcher.get_opcodes():
+        if tag in ("insert", "replace"):
+            added.extend(range(j1, j2))
+    added_set = set(added)
+    shaped = [j for j in added if _CEPS_UKDL_LINE_RX.match(work_keys[j])]
+    report = {"path": str(path), "added_lines": len(added),
+              "ceps_shaped": len(shaped), "moved": 0, "applied": bool(apply)}
+    if not apply:
+        return report
+    drop = set()
+    for j in shaped:
+        if not _stage_ukdl_draft("", work_keys[j], "migrate-pending-ukdl"):
+            continue  # not staged -> never removed
+        drop.add(j)
+        if j - 1 in added_set and not work_keys[j - 1].strip():
+            drop.add(j - 1)  # the blank separator distribute() wrote with it
+        report["moved"] += 1
+    if drop:
+        tmp = path.with_name(path.name + ".e4tmp")
+        tmp.write_bytes("".join(ln for k, ln in enumerate(work)
+                                if k not in drop).encode("utf-8"))
+        os.replace(tmp, path)
+    return report
+
+
 def _main(argv: list) -> int:
     if not argv:
         print("usage: ceps.py record <category> <subsystem> <root_cause...>",
@@ -920,10 +1045,28 @@ def _main(argv: list) -> int:
               file=sys.stderr)
         print("       ceps.py promote", file=sys.stderr)
         print("       ceps.py drafts", file=sys.stderr)
+        print("       ceps.py --migrate-pending-ukdl [--apply] [path]", file=sys.stderr)
+        print("       ceps.py promote-ukdl <draft-id>", file=sys.stderr)
         print("       ceps.py confirm <draft-id> [category] [subsystem]",
               file=sys.stderr)
         print("       ceps.py dismiss <draft-id> [reason...]", file=sys.stderr)
         return 2
+    if argv[0] == "--migrate-pending-ukdl":
+        apply = "--apply" in argv[1:]
+        rest = [a for a in argv[1:] if a != "--apply"]
+        report = migrate_pending_ukdl(Path(rest[0]) if rest else None, apply=apply)
+        print(json.dumps(report, ensure_ascii=False))
+        return 1 if "error" in report else 0
+    if argv[0] == "promote-ukdl":
+        if len(argv) < 2:
+            print("promote-ukdl requires a draft-id", file=sys.stderr)
+            return 2
+        if not promote_ukdl_draft(argv[1]):
+            print(f"promote-ukdl failed for {argv[1]} (unknown or not a UKDL draft)",
+                  file=sys.stderr)
+            return 1
+        print(json.dumps({"promoted": argv[1]}))
+        return 0
     if argv[0] == "drafts":
         pending = list_drafts()
         print(json.dumps({"pending": pending, "count": len(pending)},
