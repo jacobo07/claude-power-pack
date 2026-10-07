@@ -53,6 +53,28 @@ with tempfile.TemporaryDirectory() as tmp:
     bad = copy.deepcopy(base); cg.MUTANTS["open-unit"](bad)
     rc, out = run(root, good, bad); gate("V-CEP2-TRANCHE-OWNED-VIOLATION", rc == 1 and "CLAUSE violations FAIL" in out, out)
     rc, out = run(root, None); gate("V-CEP2-TRANCHE-MISSING-FILE", rc == 2 and "COULD_NOT_RUN" in out, out)
+    # re-run file: S1 failed (spend 300) then passed on re-run (spend 200). Verdict follows the re-run; spend counts both.
+    d = root / cg.TRANCHE_DIR
+    first = copy.deepcopy(good); first["steps"]["S1"].update(verdict="FAIL", spend=300)
+    rerun = {"steps": {"S1": {"verdict": "PASS", "receipt": "r.md", "sid": "y", "spend": 200}}, "coordinator_spend": 0}
+    (d / "tb-results.json").write_text(json.dumps(rerun), encoding="utf-8")
+    rc, out = run(root, first, base)
+    gate("V-CEP2-TRANCHE-RERUN-SUPERSEDES-VERDICT", rc == 0 and "STEP S1 PASS" in out, out)
+    gate("V-CEP2-TRANCHE-RERUN-KEEPS-FAILED-SPEND", "total=600" in out, out)  # coord 100 + 300 + 200
+    big = copy.deepcopy(rerun); big["steps"]["S1"]["spend"] = 700
+    (d / "tb-results.json").write_text(json.dumps(big), encoding="utf-8")
+    rc, out = run(root, first, base)
+    gate("V-CEP2-TRANCHE-RERUN-OVER-CAP", rc == 1 and "CLAUSE spend FAIL" in out, out)  # 100+300+700 > 1000
+    # manifest: cap comes from it; a coordinator whose transcript cannot be found is unknown, never 0.
+    (d / "tb-results.json").write_text(json.dumps(rerun), encoding="utf-8")
+    (d / "t-tranche.json").write_text(json.dumps({"cap": 550}), encoding="utf-8")
+    rc, out = run(root, first, base)
+    gate("V-CEP2-TRANCHE-MANIFEST-CAP", rc == 1 and "cap=550" in out, out)
+    (d / "t-tranche.json").write_text(json.dumps({"cap": 10_000, "coordinator": {"sid": "no-such-session",
+                                                                                 "baseline": 0}}), encoding="utf-8")
+    rc, out = run(root, first, base)
+    gate("V-CEP2-TRANCHE-MANIFEST-COORD-UNKNOWN", rc == 1 and "unknown spend" in out, out)
+    (d / "t-tranche.json").unlink(); (d / "tb-results.json").unlink()
 
 print(f"CEP2_TRANCHE_TEST_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
 sys.exit(0 if fails == 0 else 1)

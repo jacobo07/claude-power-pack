@@ -1,0 +1,9 @@
+{
+ "cap": 7200000,
+ "cap_source": "Owner approved option 1 (7.2M: S1 2.8M, S3 1.6M, S5 2.8M) on 2026-10-07",
+ "coordinator": {
+  "sid": "e6e0eca7-6de8-4e89-9194-4cb611644727",
+  "baseline": 3940215,
+  "baseline_source": "tranche_driver reading at the context-runtime-2 S1 refusal: 'S1 REFUSED_OVER_CAP total_before=3,940,215' (context-runtime-2-ledger.md)"
+ }
+}

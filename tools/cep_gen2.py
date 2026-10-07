@@ -312,12 +312,36 @@ def tranche(name: str, root: Path = REPO) -> int:
     Computed clauses: receipts, violations (owned ledger units only), spend. Extra clauses are printed as given;
     only PASS is green, so WAITING/BLOCKED/UNDECIDED keep the tranche red."""
     import re
+    d = root / TRANCHE_DIR
+    # re-run files <name><letter>-results.json: the latest verdict per step wins, but EVERY attempt's spend counts,
+    # so a failed attempt can never drop out of the total by being superseded.
+    files = [d / f"{name}-results.json"] + sorted(d.glob(f"{name}[a-z]-results.json"))
     try:
-        r = json.loads((root / TRANCHE_DIR / f"{name}-results.json").read_text(encoding="utf-8"))
+        rs = [json.loads(f.read_text(encoding="utf-8")) for f in files]
+        man = json.loads((d / f"{name}-tranche.json").read_text(encoding="utf-8")) \
+            if (d / f"{name}-tranche.json").is_file() else {}
     except (OSError, json.JSONDecodeError) as exc:
         print(f"CEP2_TRANCHE=COULD_NOT_RUN results unreadable: {exc}")
         return 2
-    steps = r.get("steps") or {}
+    r = {"steps": {}, "clauses": {}, "owned_units": [], "cap": man.get("cap", rs[0].get("cap", 4_500_000))}
+    attempt_spends = []
+    for x in rs:
+        r["steps"].update(x.get("steps") or {})
+        r["clauses"].update(x.get("clauses") or {})
+        r["owned_units"] += [u for u in x.get("owned_units") or [] if u not in r["owned_units"]]
+        attempt_spends += [s.get("spend") for s in (x.get("steps") or {}).values() if s.get("sid")]
+    coord = man.get("coordinator")
+    if coord:  # a model coordinator metered live from its transcript, minus its reading when the tranche began
+        try:
+            sys.path.insert(0, str(REPO / "tools"))
+            from tranche_driver import spend as _spend
+            now = _spend(coord["sid"])
+            r["coordinator_spend"] = now - int(coord["baseline"]) if isinstance(now, int) else None
+        except (ImportError, KeyError, TypeError, ValueError):
+            r["coordinator_spend"] = None
+    else:
+        r["coordinator_spend"] = rs[0].get("coordinator_spend")
+    steps = r["steps"]
     has = lambda s: bool(s.get("receipt")) and (root / s["receipt"]).is_file()
     for k, s in steps.items():
         print(f"STEP {k} {s.get('verdict')} receipt={has(s)}")
@@ -334,8 +358,8 @@ def tranche(name: str, root: Path = REPO) -> int:
             cl["violations"] = ("PASS" if not v else "FAIL", f"{len(v)} on {owned}")
         except (OSError, json.JSONDecodeError) as exc:
             cl["violations"] = ("FAIL", f"ledger unreadable: {exc}")
-    nums = [r.get("coordinator_spend")] + [s.get("spend") for s in steps.values() if s.get("sid")]
-    cap = r.get("cap", 4_500_000)
+    nums = [r.get("coordinator_spend")] + attempt_spends
+    cap = r["cap"]
     if any(not isinstance(n, int) for n in nums):
         cl["spend"] = ("FAIL", "unknown spend (unmeasured is never green)")
     else:

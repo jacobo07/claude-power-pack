@@ -111,6 +111,7 @@ def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run
                                    "cap": p["cap"], "receipt": p["receipt"], "secs": round(time.time() - t0)}
         log(f"{p['step']} {v} sid={sid} launch_rc={lrc} checks={c} spend={s} cap={p['cap']:,}")
     res["coordinator_spend"] = spend_fn(coordinator)
+    res["cap"] = cap  # cep_gen2 --tranche judges spend against the cap this run was given
     return res
 
 
