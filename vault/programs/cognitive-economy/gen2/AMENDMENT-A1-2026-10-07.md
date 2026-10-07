@@ -110,3 +110,14 @@ not deployed (same NO_PHASES defect that BLOCKED G2) -> U1 runs as a bounded hea
 `cd ~/missions/ce-a1 && nohup claude -p "<run U1-PACKET.md>" --model sonnet --max-turns 58 --permission-mode auto
 --output-format json` (out: ~/missions/ce-a1-U1.out.json). First launch: 429 usage_limit_reached on the GEX44
 account too (resets Oct 11 20:00), 0 tokens spent. Relaunch after the Owner logs GEX44 into another account.
+Relaunched 2026-10-07 on GEX44 account jacobofifa07@gmail.com (the laptop's account: U1 spend draws on the same weekly
+quota) as PID 3630229, transcript ~/.claude/projects/-home-kobii-missions-ce-a1/65727119-*.jsonl; 429 artifacts kept as
+ce-a1-U1.out.429-costaluz.json/.err. U1 DONE: 4 commits 6f11a3c5..82a493aa (receipt evidence/a1/U1-RECEIPT.md).
+U1 worker spend MEASURED 1,097,211 processed (out.json usage == dedup transcript sum, 11 API calls / 12 turns,
+sonnet-5-5, $0.71 list) = 14% of the 8M envelope. Done_gate re-run independently by the coordinator on GEX44: all 5
+exit 0 (CE_A1_PASS=12/12, null-as-zero mutant killed); real-ledger C16 exit 1 as expected, C15 exit 0 VACUOUSLY
+(tranches are bare ints, nothing "started" -- receipt flags it). a1.spent left null on purpose: coordinator (laptop)
+spend is unmeasured until the A1-2 meter, so writing 1.1M would make C16 pass on a partial sum.
+Integration: fetched as local branch a1/u1 (82a493aa); `git merge-tree` against ce/gen2-completion (be88dee5) is
+clean. NOT merged: another pane is live in pp-ce-gen2 (rollover.py dirty 13:45, untracked T1e test); merge it there
+when that pane is idle. Open from receipt: C15/C16 OPEN-with-check keep `--final` red; family tranche lists absent.
