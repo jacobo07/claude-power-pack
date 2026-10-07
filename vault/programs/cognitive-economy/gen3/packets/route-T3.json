@@ -1,1 +1,1 @@
-{"envelope":{"target":25000000,"warn":20000000,"stop":25000000,"calls":65},"workers":[{"name":"cep-gen3-T3","profile":"top-level-worker","calls":60,"packet":"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cognitive-economy\\gen3\\packets\\T3.md"}]}
+{"envelope":{"target":20000000,"warn":22500000,"stop":25000000,"calls":65},"workers":[{"name":"cep-gen3-T3","profile":"top-level-worker","calls":60,"packet":"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cognitive-economy\\gen3\\packets\\T3.md"}]}
