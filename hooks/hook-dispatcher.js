@@ -113,6 +113,11 @@ const EVENT_MAP = {
   'PreToolUse-Bash-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js'],
   'PreToolUse-Edit-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js'],
   'PreToolUse-Read-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js'],
+  // Agent lane (2026-10-07, vault/specs/goal-budget-admission.md): in GOAL mode an Agent is a child
+  // spend reserved from the goal BEFORE launch (A1: 42.3M against a 20M cap, nothing checked first).
+  // Registered directly as --event=PreToolUse-Agent-default on matcher Task|Agent (Owner step, HR-001:
+  // vault/OWNER_QUEUE.md). Inert for sessions bound to no goal and with no session budget.
+  'PreToolUse-Agent-default': ['../skills/claude-power-pack/hooks/session_budget_guard.js'],
   // In-process (require-based) bundles only. The Stop event is handled by
   // CHAIN_MAP below instead: those hooks are heterogeneous (one is Python)
   // and not all export run(), so they run as sequential CHILD processes
@@ -1196,6 +1201,7 @@ const NO_EVENT_ROUTES = [
   { hook: 'PreToolUse', tools: ['Bash', 'PowerShell'], chain: 'PreToolUse-Bash-chain' },
   { hook: 'PreToolUse', tools: ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'], chain: 'PreToolUse-Edit-chain' },
   { hook: 'PreToolUse', tools: ['Read', 'Grep'], chain: 'PreToolUse-Read-chain' },
+  { hook: 'PreToolUse', tools: ['Agent', 'Task'], chain: 'PreToolUse-Agent-default' },
   { hook: 'PostToolUse', tools: null, chain: 'PostToolUse-default' },
   { hook: 'Stop', tools: null, chain: 'Stop-chain' },
   { hook: 'UserPromptSubmit', tools: null, chain: 'UserPromptSubmit-chain' },

@@ -163,3 +163,140 @@ class SpendLedger:
     def state(self) -> dict:
         with self._lock:
             return self._fold(self._read())
+
+
+# --- Goal scope (A1 incident 2026-10-07, vault/specs/goal-budget-admission.md) ----------------------
+# A1's cap was a number read AFTER the spend. A goal ledger holds one goal's cap and every settlement
+# as journal state, so admission and the post-hoc check read the same thing. Two ops are added; the
+# base fold ignores both, so a SpendLedger reading this journal is unaffected:
+#   cap     {value, source}            -- the cap is folded, never taken from a constructor argument;
+#   settle  {sid, measured, closes}    -- `measured` is the sid's CUMULATIVE processed tokens; the
+#                                         booked amount is the highest one seen (a watermark), so a
+#                                         replayed or duplicated settle books nothing twice.
+# used = sum(watermarks) + open reservations (RESERVED or LEAKED, not closed by a settle of their sid).
+GOAL_WINDOW = "goal"
+SETTLED = "SETTLED"
+DEFAULT_GOAL_LEAK_S = 6 * 3600
+
+
+class GoalLedger(SpendLedger):
+    def __init__(self, root, goal: str, *, leak_after_s: float = DEFAULT_GOAL_LEAK_S,
+                 clock=time.time, host: str | None = None):
+        super().__init__(root, caps={}, leak_after_s=leak_after_s, clock=clock,
+                         window=lambda ts: GOAL_WINDOW, host=host)
+        self.goal = goal
+
+    def _gfold(self, recs: list[dict]) -> dict:
+        cap, source, marks, res, seqs = None, None, {}, {}, {}
+        for r in recs:
+            op = r["op"]
+            if op == "cap":
+                cap, source = r["value"], r.get("source")
+            elif op == "reserve":
+                res[r["id"]] = {**r, "state": RESERVED}
+                seqs[r["sid"]] = seqs.get(r["sid"], 0) + 1
+            elif op == "leak":
+                if res.get(r["id"], {}).get("state") == RESERVED:
+                    res[r["id"]]["state"] = LEAKED
+            elif op == "settle":
+                marks[r["sid"]] = max(marks.get(r["sid"], 0), int(r["measured"]))
+                for rid in r.get("closes", []):
+                    if rid in res:
+                        res[rid]["state"] = SETTLED
+        for r in res.values():
+            r["hold"] = r["amount"] if r["state"] in (RESERVED, LEAKED) else 0
+            if r["hold"] and r.get("kind") == "agent":
+                # A child's spend lands in its parent sid's measured total, so an open agent hold
+                # shrinks by what that sid has settled since the spawn: neither counted twice nor
+                # released by the parent's next renew (review M1, 31f1e714).
+                r["hold"] = max(0, r["amount"] - max(0, marks.get(r["sid"], 0) - int(r.get("base", 0))))
+        open_ = sum(r["hold"] for r in res.values())
+        return {"goal": self.goal, "cap": cap, "source": source, "marks": marks, "res": res,
+                "seqs": seqs, "open": open_, "used": sum(marks.values()) + open_}
+
+    def _sweep_leaks(self, recs: list[dict]) -> dict:
+        now = self.clock()
+        for rid, r in self._gfold(recs)["res"].items():
+            if r["state"] == RESERVED and now - r["ts"] > self.leak_after_s:
+                self._append(recs, {"op": "leak", "id": rid})   # still counts; reported, not dropped
+        return self._gfold(recs)
+
+    def reserve(self, rid, provider, amount=1):
+        raise LedgerError("a goal ledger reserves through renew() / spawn(), never reserve()")
+
+    @staticmethod
+    def _summary(g: dict, **extra) -> dict:
+        return {"goal": g["goal"], "cap": g["cap"], "used": g["used"], "open": g["open"],
+                "settled": sum(g["marks"].values()),
+                "remaining": None if g["cap"] is None else g["cap"] - g["used"], **extra}
+
+    def declare_cap(self, value: int, source: str, *, inside_agent: bool = False) -> dict:
+        """Initial cap and lowering are always admitted. A raise is refused unless the caller holds the
+        Owner's authority (`inside_agent=False`), and refused once used >= cap: raising a crossed cap
+        makes the limit retrospective."""
+        if not isinstance(value, int) or value <= 0:
+            raise LedgerError("cap must be a positive int")
+        with self._lock:
+            recs = self._read()
+            g = self._sweep_leaks(recs)
+            cur = g["cap"]
+            if cur is not None and value > cur:
+                if inside_agent:
+                    return self._summary(g, ok=False, reason="a cap raise needs the Owner's interactive "
+                                         "confirmation (goal-declare --owner on a terminal)")
+                if g["used"] >= cur:
+                    return self._summary(g, ok=False, reason=f"CONTAINED: used {g['used']:,} >= cap {cur:,}; "
+                                         "a crossed cap is never raised -- declare a new goal id")
+            if cur != value:
+                self._append(recs, {"op": "cap", "value": value, "source": source})
+            return self._summary(self._gfold(recs), ok=True, reason="")
+
+    def renew(self, sid: str, measured: int, lease: int) -> dict:
+        """Settle `sid` at its cumulative `measured`, close its open LEASES and any agent hold the
+        settled spend has used up, reserve the next lease (at most `lease`, at most what remains).
+        At most one open lease per sid afterwards; an agent hold survives until its spend arrives."""
+        if not isinstance(measured, int) or measured < 0 or not isinstance(lease, int) or lease <= 0:
+            raise LedgerError("measured must be an int >= 0 and lease a positive int")
+        with self._lock:
+            recs = self._read()
+            g = self._sweep_leaks(recs)
+            if g["cap"] is None:
+                return self._summary(g, ok=False, reason="no cap declared for this goal")
+            mark = max(g["marks"].get(sid, 0), measured)
+            closes = sorted(rid for rid, r in g["res"].items()
+                            if r["sid"] == sid and r["state"] in (RESERVED, LEAKED)
+                            and (r.get("kind") != "agent" or mark - int(r.get("base", 0)) >= r["amount"]))
+            if closes or measured > g["marks"].get(sid, 0):
+                self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes})
+                g = self._gfold(recs)
+            remaining = g["cap"] - g["used"]
+            if remaining <= 0:
+                return self._summary(g, ok=False, reason=f"budget_spent: used {g['used']:,} >= cap {g['cap']:,}")
+            seq = g["seqs"].get(sid, 0) + 1
+            rid, amount = f"{self.goal}:{sid}:{seq}", min(lease, remaining)
+            self._append(recs, {"op": "reserve", "id": rid, "sid": sid, "kind": "lease", "provider": self.goal,
+                                "amount": amount, "window": GOAL_WINDOW, "base": measured})
+            return self._summary(self._gfold(recs), ok=True, reason="",
+                                 lease={"id": rid, "amount": amount, "base": measured})
+
+    def spawn(self, sid: str, estimate: int, base: int = 0) -> dict:
+        """Admit a child (Agent / worker) only if its estimate fits what remains. `base` is the parent
+        sid's measured total at launch; the hold shrinks as settled spend passes it (see _gfold)."""
+        if not isinstance(estimate, int) or estimate <= 0 or not isinstance(base, int) or base < 0:
+            raise LedgerError("estimate must be a positive int and base an int >= 0")
+        with self._lock:
+            recs = self._read()
+            g = self._sweep_leaks(recs)
+            if g["cap"] is None:
+                return self._summary(g, ok=False, reason="no cap declared for this goal")
+            remaining = g["cap"] - g["used"]
+            if estimate > remaining:
+                return self._summary(g, ok=False, reason=f"spawn estimate {estimate:,} > remaining {remaining:,}")
+            rid = f"{self.goal}:{sid}:{g['seqs'].get(sid, 0) + 1}"
+            self._append(recs, {"op": "reserve", "id": rid, "sid": sid, "kind": "agent", "provider": self.goal,
+                                "amount": estimate, "window": GOAL_WINDOW, "base": base})
+            return self._summary(self._gfold(recs), ok=True, reason="", reservation=rid)
+
+    def status(self) -> dict:
+        with self._lock:
+            return self._summary(self._sweep_leaks(self._read()), ok=True, reason="")
