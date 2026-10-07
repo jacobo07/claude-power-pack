@@ -15,3 +15,8 @@
 - Golden (cut-off 2026-10-07T18:00Z, both counters AGREE, 0 torn lines): 489481fa-3018-4082-98a4-95ce316cd24d = 10,695,300 / 61;
   886d7bb9-086d-4c66-a2db-a4043e2221de = 18,733,339 / 77 (>= 16,916,777 / 71 pinned by the packet; the session kept
   spending between the packet's reading and the 18:00Z cut-off).
+
+## Mutation evidence (coordinator 886d7bb9, 2026-10-07, after the meter worker hit max-turns)
+- `python vault/programs/cognitive-economy/gen2/evidence/a2/meter_drills.py` -> METER_DRILL_KILLED=6/6 via tools/mutation_drill.py (isolated copy + clean control): single-dir (attribute, self_spend), text-only dropped from the session total, unattributed dropped from the aggregate, null-as-zero, DISAGREE carrying a number.
+- A first run aimed the aggregate mutant at V-METER-F2-TOTAL-INCLUDES-UNATTRIBUTED (which judges the per-session total) and read SURVIVED; the suite still failed 15/30. Re-aimed at V-METER-ATTRIBUTION-NEVER-REDUCES-TOTAL (KILLED) and a per-session text-only mutant added for the F2 gate (KILLED). The miss was the drill's target, not the meter.
+- Meter packet M1-M7 closed.
