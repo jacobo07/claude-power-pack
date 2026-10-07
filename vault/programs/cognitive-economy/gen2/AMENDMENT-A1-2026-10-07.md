@@ -129,3 +129,24 @@ counted whole sessions (555M of program sessions lies outside any write span).
 **A1 OVER CAP**: a1.spent = 42,307,381 at 12:22:33Z (423e33b0 from approval 11:12:10Z 24,715,309 + b9bd9469
 16,494,861 + U1 1,097,211; upper bound 44,792,057) vs cap 20,000,000. C16 on the real ledger: exit 1, over cap.
 Next (T3 replay) is HELD for the Owner: raise the A1 cap, or stop A1 here.
+
+## INCIDENT 2026-10-07 -- A1 ECONOMIC_CONTAINMENT (Owner 'y', pane b9bd9469)
+Owner briefly chose a 60M raise (84289c7d), then withdrew it: raising a cap after crossing it turns the limit into a
+retrospective number. a1/a1-2 ab44236e: cap back to 20M, cap_history keeps all three entries, a1.status =
+ECONOMIC_CONTAINMENT, breach {spent 42,307,381, overshoot 111.5%}, T3 + T7 FROZEN. C16 stays red as the record.
+Root cause: the 20M cap was a ledger number read by C16 AFTER spend; no admission path checked it before a call.
+Interactive coordinator panes (423e33b0 24.7M, b9bd9469 16.5M) carried 41.2M of 42.3M; the worker (U1) 1.1M.
+Universal pattern: POST-HOC BUDGET ENFORCEMENT IS NOT BUDGET ENFORCEMENT.
+Existing admission owners (extend, do not build a new kernel -- HR-NOVELTY-001): tools/route_admission.py:61 admit,
+tools/gsd_mission.py:1304 admit_route (missions only; not deployed on GEX44 daf90d00), modules/cognitive_os/governor.py:67
+admit (weekly account quota), modules/cognitive_os/loop_budget.py:166 admit_subagent (own allowance, not a
+sub-allocation), modules/provider_routing/ledger.py:121 reserve (provider capacity only), mission cost breaker (parks
+after spend). Missing: one pre-call reservation from the goal's canonical budget, shared by parent/child/resume/machine;
+UNKNOWN material spend (GEX44, G6) fail-closed for new cognition.
+Host limit to design around: harness hooks see tool calls and turns, not each API request -> the hard gate can refuse a
+pane's next tool call / turn and any new worker or Agent before launch, not a call already in flight (bounded, not 0).
+NEXT (fresh pane, not b9bd9469): `/ultra plan` pre-call budget admission, spec first (SDD T3); phase 1 = read-only
+reality scan of the owners above; done-gate = tiny-cap canary across several panes + Agents with zero unauthorized
+overshoot, mutation suite from the Owner's list (concurrent last-reserve, Agent spawn over parent remaining, resume
+reset, cross-account, crash with live lease, UNKNOWN cost). Merges of a1/u1 + a1/a1-2 into ce/gen2-completion still
+wait for the pp-ce-gen2 pane to go idle.
