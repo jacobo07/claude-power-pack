@@ -1,7 +1,7 @@
 ---
 id: PLAN-CE-GEN2-COMPLETION
 date: 2026-10-07
-status: PROPOSED (pane 71ccfa86) -- awaiting ONE Owner approval
+status: APPROVED 2026-10-07 (Owner 'y', pane 71ccfa86): items 1-3; executing T0
 covers: [cognitive-economy-gen2-completion, selective-semantic-materialization, read-extinction, transport-extinction, process-lifecycle, forget-safety, autocompact-retirement, model-boundary-elimination, g2-return]
 parents: [vault/programs/cognitive-economy/gen2/MISSION.md, vault/plans/tok18-tranche-context-runtime-2026-10-06.md, vault/specs/compiled-grammar-default.md]
 mode: PLAN for the program (architecture settled: extend gen2). EXECUTION per tranche. No ULTRA.

@@ -5,24 +5,191 @@
  "card": "vault/programs/cognitive-economy/gen2/MISSION.md",
  "obligations_declared": false,
  "obligations": [],
- "budget_tokens": {"unit": "processed", "unit_definition": "input + cache_write + cache_read + output, deduplicated by message id", "unit_source": "MISSION.md and backlog prose label it processed; the 40/78/150M derivation is not on disk (typed 2026-10-05, Gen2.1)", "authorization_boundary": 150000000, "estimate_low": 40000000, "estimate_central": 78000000, "estimate_high": 150000000, "spent_measured": null},
- "gen2_1": {"name": "Economic Kill-Shot", "decided": "2026-10-05 Owner", "unit": "processed", "target": 10000000, "warn": 10000000, "hard_cap": 15000000, "anchor": {"pane": "87601e81", "processed": 19196694, "at": "2026-10-05T11:13:02Z"}, "sunk_before_anchor": 19196694, "plan": "vault/plans/tok18-pre-rearm-optimization-RESUMPTION.md", "readout": "vault/programs/cognitive-economy/gen2/evidence/gen2_1-readout.md"},
+ "budget_tokens": {
+  "unit": "processed",
+  "unit_definition": "input + cache_write + cache_read + output, deduplicated by message id",
+  "unit_source": "MISSION.md and backlog prose label it processed; the 40/78/150M derivation is not on disk (typed 2026-10-05, Gen2.1)",
+  "authorization_boundary": 150000000,
+  "estimate_low": 40000000,
+  "estimate_central": 78000000,
+  "estimate_high": 150000000,
+  "spent_measured": null
+ },
+ "gen2_1": {
+  "name": "Economic Kill-Shot",
+  "decided": "2026-10-05 Owner",
+  "unit": "processed",
+  "target": 10000000,
+  "warn": 10000000,
+  "hard_cap": 15000000,
+  "anchor": {
+   "pane": "87601e81",
+   "processed": 19196694,
+   "at": "2026-10-05T11:13:02Z"
+  },
+  "sunk_before_anchor": 19196694,
+  "plan": "vault/plans/tok18-pre-rearm-optimization-RESUMPTION.md",
+  "readout": "vault/programs/cognitive-economy/gen2/evidence/gen2_1-readout.md"
+ },
  "superseded_estimates": [
-  {"label": "previous optimized TOK-18", "low": 400000000, "high": 650000000, "cap": 800000000, "superseded": "2026-10-05"},
-  {"label": "unoptimized projection", "low": 1300000000, "high": 2400000000, "superseded": "2026-10-05"},
-  {"label": "E1 rule-move saving forecast", "value": 12515, "unit": "processed tokens/call", "quoted_as": "12.5k (post-e1 plan line 31)", "derivation": "moved bytes x pre-move tokens/byte, pointers ignored", "superseded": "2026-10-06", "by": "measured 8,477 (6124eecf)"},
-  {"label": "E1 byte-proportional net estimate", "value": 10800, "unit": "processed tokens/call", "quoted_as": "10.8k and 'pointers keep 22% of bytes' (post-e1 plan line 31)", "derivation": "used 41,353 B from the 17b3188a message; the moved originals are 37,353 B", "superseded": "2026-10-06", "by": "net byte estimate 9,422; pointer share 24.7%"}
+  {
+   "label": "previous optimized TOK-18",
+   "low": 400000000,
+   "high": 650000000,
+   "cap": 800000000,
+   "superseded": "2026-10-05"
+  },
+  {
+   "label": "unoptimized projection",
+   "low": 1300000000,
+   "high": 2400000000,
+   "superseded": "2026-10-05"
+  },
+  {
+   "label": "E1 rule-move saving forecast",
+   "value": 12515,
+   "unit": "processed tokens/call",
+   "quoted_as": "12.5k (post-e1 plan line 31)",
+   "derivation": "moved bytes x pre-move tokens/byte, pointers ignored",
+   "superseded": "2026-10-06",
+   "by": "measured 8,477 (6124eecf)"
+  },
+  {
+   "label": "E1 byte-proportional net estimate",
+   "value": 10800,
+   "unit": "processed tokens/call",
+   "quoted_as": "10.8k and 'pointers keep 22% of bytes' (post-e1 plan line 31)",
+   "derivation": "used 41,353 B from the 17b3188a message; the moved originals are 37,353 B",
+   "superseded": "2026-10-06",
+   "by": "net byte estimate 9,422; pointer share 24.7%"
+  }
  ],
  "work_units": {
-  "W1": {"title": "compile mission card, gen-2 ledger, gate", "tier": 1, "terminal": "IMPLEMENTED_AND_VERIFIED", "evidence": [{"path": "vault/programs/cognitive-economy/gen2/evidence/W1.md", "command": "python tools/test_cognitive_economy_program.py --generation 2 --selftest"}, {"path": "vault/programs/cognitive-economy/gen2/MISSION.md"}]},
-  "W2": {"title": "GEX44 supervisor: E1 stuck replace + held-mission relay cost", "tier": 1, "terminal": "DEFERRED_STRONGER_OWNER", "evidence": [{"path": "vault/programs/cognitive-economy/gen2/evidence/W2.md"}, {"path": "vault/programs/cognitive-economy/gen2/handoffs/W2-gsd-mission-bg-spare.md"}], "findings": {"W2a_held_relay_model_calls": 0, "W2a_held_sweeps": 275, "W2b": "pooled bg-spare pid blocks relay; fix handed to gsd_mission owner"}},
-  "W3": {"title": "E1 resident floor (Owner-authorized separately)", "tier": 2, "terminal": "IMPLEMENTED_AND_VERIFIED", "evidence": [{"path": "vault/programs/cognitive-economy/gen2/evidence/e1_closeout/receipt.json", "command": "python tools/cep_gen2.py --status"}, {"path": "vault/programs/cognitive-economy/e1/REPORT.md", "command": "python vault/programs/cognitive-economy/e1/test_e1_report.py"}], "experiment": true, "receipt": "vault/programs/cognitive-economy/gen2/evidence/e1_closeout/receipt.json", "saving": {"label": "upper_bound", "per_call": 8477, "measured_by": "python vault/programs/cognitive-economy/measure/e1_mechanical.py --claude <cli>"}},
-  "W4": {"title": "offline replay of admission / waiting / model mix over usage_index", "tier": 2, "not_before": "2026-10-11T18:00:00Z", "owner_decision": "2026-10-05: '2. after the 11th'", "terminal": null, "evidence": []},
-  "W5": {"title": "envelope canary champion vs lean challenger on a real backlog task", "tier": 3, "not_before": "2026-10-11T18:00:00Z", "terminal": null, "evidence": []},
-  "W6": {"title": "zero-transcript continuation proof (capsule-v2 T8)", "tier": 3, "terminal": null, "evidence": []},
-  "W7": {"title": "conditional primitives earned by W2/W4", "tier": 4, "terminal": null, "evidence": []},
-  "W8": {"title": "self-hosting second pass", "tier": 4, "terminal": null, "evidence": []},
-  "W9": {"title": "UKDL / CBR distillation and close", "tier": 4, "terminal": null, "evidence": []},
-  "R": {"title": "independent final review", "tier": 4, "terminal": null, "evidence": []}
+  "W1": {
+   "title": "compile mission card, gen-2 ledger, gate",
+   "tier": 1,
+   "terminal": "IMPLEMENTED_AND_VERIFIED",
+   "evidence": [
+    {
+     "path": "vault/programs/cognitive-economy/gen2/evidence/W1.md",
+     "command": "python tools/test_cognitive_economy_program.py --generation 2 --selftest"
+    },
+    {
+     "path": "vault/programs/cognitive-economy/gen2/MISSION.md"
+    }
+   ]
+  },
+  "W2": {
+   "title": "GEX44 supervisor: E1 stuck replace + held-mission relay cost",
+   "tier": 1,
+   "terminal": "DEFERRED_STRONGER_OWNER",
+   "evidence": [
+    {
+     "path": "vault/programs/cognitive-economy/gen2/evidence/W2.md"
+    },
+    {
+     "path": "vault/programs/cognitive-economy/gen2/handoffs/W2-gsd-mission-bg-spare.md"
+    }
+   ],
+   "findings": {
+    "W2a_held_relay_model_calls": 0,
+    "W2a_held_sweeps": 275,
+    "W2b": "pooled bg-spare pid blocks relay; fix handed to gsd_mission owner"
+   }
+  },
+  "W3": {
+   "title": "E1 resident floor (Owner-authorized separately)",
+   "tier": 2,
+   "terminal": "IMPLEMENTED_AND_VERIFIED",
+   "evidence": [
+    {
+     "path": "vault/programs/cognitive-economy/gen2/evidence/e1_closeout/receipt.json",
+     "command": "python tools/cep_gen2.py --status"
+    },
+    {
+     "path": "vault/programs/cognitive-economy/e1/REPORT.md",
+     "command": "python vault/programs/cognitive-economy/e1/test_e1_report.py"
+    }
+   ],
+   "experiment": true,
+   "receipt": "vault/programs/cognitive-economy/gen2/evidence/e1_closeout/receipt.json",
+   "saving": {
+    "label": "upper_bound",
+    "per_call": 8477,
+    "measured_by": "python vault/programs/cognitive-economy/measure/e1_mechanical.py --claude <cli>"
+   }
+  },
+  "W4": {
+   "title": "offline replay of admission / waiting / model mix over usage_index",
+   "tier": 2,
+   "owner_decision": "2026-10-05: '2. after the 11th'",
+   "terminal": null,
+   "evidence": [],
+   "not_before_lifted": {
+    "was": "2026-10-11T18:00:00Z",
+    "by": "2026-10-07 Owner 'y' (pane 71ccfa86) to COMPLETION-PLAN.md items 1-3"
+   }
+  },
+  "W5": {
+   "title": "envelope canary champion vs lean challenger on a real backlog task",
+   "tier": 3,
+   "terminal": null,
+   "evidence": [],
+   "not_before_lifted": {
+    "was": "2026-10-11T18:00:00Z",
+    "by": "2026-10-07 Owner 'y' (pane 71ccfa86) to COMPLETION-PLAN.md items 1-3"
+   }
+  },
+  "W6": {
+   "title": "zero-transcript continuation proof (capsule-v2 T8)",
+   "tier": 3,
+   "terminal": null,
+   "evidence": [],
+   "hold_lifted": "2026-10-07 Owner 'y' (pane 71ccfa86) to COMPLETION-PLAN.md items 1-3"
+  },
+  "W7": {
+   "title": "conditional primitives earned by W2/W4",
+   "tier": 4,
+   "terminal": null,
+   "evidence": []
+  },
+  "W8": {
+   "title": "self-hosting second pass",
+   "tier": 4,
+   "terminal": null,
+   "evidence": []
+  },
+  "W9": {
+   "title": "UKDL / CBR distillation and close",
+   "tier": 4,
+   "terminal": null,
+   "evidence": []
+  },
+  "R": {
+   "title": "independent final review",
+   "tier": 4,
+   "terminal": null,
+   "evidence": []
+  }
+ },
+ "completion_plan": {
+  "card": "vault/programs/cognitive-economy/gen2/COMPLETION-PLAN.md",
+  "approved": "2026-10-07 Owner 'y' (pane 71ccfa86) to COMPLETION-PLAN.md items 1-3",
+  "ceiling_processed": 85000000,
+  "central_forecast": 55000000,
+  "within_authorization_boundary": 150000000,
+  "tranches": {
+   "T0": 3000000,
+   "T1": 8000000,
+   "T2": 6000000,
+   "T3": 6000000,
+   "T4": 6000000,
+   "T5": 20000000,
+   "T6": 6000000,
+   "T7": 4000000,
+   "T8": 6000000,
+   "T9": 5000000,
+   "reserve": 15000000
+  }
  }
 }
