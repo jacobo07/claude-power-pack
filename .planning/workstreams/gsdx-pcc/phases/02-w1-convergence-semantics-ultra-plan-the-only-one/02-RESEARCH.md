@@ -503,7 +503,12 @@ for k in boundaries:
 | A14 | `unknown:` equality only bites on a git outage | G2 | severity could be higher if non-git scope roots are used; not driven |
 | A15 | Auditor output can be made mechanical by gap-count == disposition-count | G19 | the auditor's numbering may contain sub-items |
 
-## Open Questions
+## Open Questions (RESOLVED -- see STATE.md Decisions, 2026-10-07 worker epoch 3)
+
+All five are resolved by the worker's recorded decisions (STATE.md, "Phase 2 research open questions"): (1) land
+only `obligation.contract` + `proof.*`, freeze the rest in the spec; (2) commit the byte copy behind a secret/PII
+gate; (3) G2 -> DENOMINATOR R12, Phase 4; (4) env-only switches, unrecognised value = OFF; (5) mutation suite
+excluded (R11).
 
 1. **Land the Phase 3-8 events as code, or freeze them in the spec only?** Known: CONTEXT says Phase 2 lands "their event types and projections"; Reality Contract bars a constant with no projection. Unclear: whether the Owner's intent for D03/D43 needs the extra types now. Recommendation: spec table + collision gate now (G11); add code with real projections only if the audit demands it.
 2. **Commit the recorded logs, or only a generator?** Known: 173 files, about 163 KB, Owner-private intent prose (g-002 seq 1), repo is private. Recommendation: commit the byte copy with the secret/PII grep gate; the generator covers the six uncovered legacy types.
