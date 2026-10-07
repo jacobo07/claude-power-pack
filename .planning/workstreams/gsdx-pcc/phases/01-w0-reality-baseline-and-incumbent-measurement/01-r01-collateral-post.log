@@ -1,0 +1,81 @@
+=== tools/test_gsd_x_goal_sweep.py ===
+  PASS V-SWEEP-REFUSES-WITHOUT-RECORD: with no recorded green the sweep refuses to act at all
+  PASS V-SWEEP-REFUSES-RED-RECORD: a record that is not green is not permission
+  PASS V-SWEEP-REFUSES-STALE-RECORD: a green recorded for ANOTHER commit is stale, not a licence
+  PASS V-SWEEP-REFUSES-UNREADABLE: an unreadable record is refused, never read as permission
+  PASS V-SWEEP-ACTS-WHEN-GREEN: with the record green it plans work (["g-auto: would run ob-outcome's gate"])
+  PASS V-SWEEP-SKIPS-MANUAL-GOALS: a goal nobody marked autonomous is skipped
+  PASS V-SWEEP-DRY-RUN-CHANGES-NOTHING: a dry run dispatches nothing
+  PASS V-SWEEP-DISPATCHES-GATE: the gate epoch is dispatched and recorded running (['g-auto: dispatched ep-092d0f847f69 for ob-outcome'])
+  PASS V-SWEEP-NON-BLOCKING: the sweep recorded a RUNNING epoch and returned: it did not wait for the gate to finish, which a five-minute schedule cannot afford
+  PASS V-SWEEP-BANKS-THE-VERDICT: the sweep ran the gate, harvested its verdict and satisfied the obligation (1 passed)
+  PASS V-SWEEP-FAILED-GATE-IS-EVIDENCE: a gate that exits non-zero ends its epoch FAILED
+  PASS V-SWEEP-REPORTS-WORK-NEVER-SPENDS: work that spends an account is REPORTED, naming the provider it needs, and is not dispatched (['g-failing: NEXT_EPOCH (needs provider codex) -- ob-outcome has a gate that ran and failed; that is new information and needs work'])
+  PASS V-SWEEP-NO-CODEX-EPOCH: no codex epoch was created by the sweep
+  PASS V-SWEEP-SILENT-WHEN-IDLE: a sweep that did nothing prints nothing
+
+GSDX_GOAL_SWEEP_PASS=14/14  threshold=14/14
+EXIT=0
+=== tools/test_gsd_x_goal_gate_class.py ===
+  PASS V-GATECLASS-REALITY-REFUSES-UNSTATED: an unstated class on a REALITY obligation is refused at acceptance: ob-unstated: a REALITY obligation must declare an in_game or live gate class at acceptance (got nothing); only a runtime observation can prove a reality claim, and the plane may not be used to infer that it made one
+  PASS V-GATECLASS-REALITY-REFUSES-UNIT: a unit gate may not be registered to prove a reality claim
+  PASS V-GATECLASS-UNKNOWN-REFUSED: a class outside the vocabulary is refused rather than stored
+  PASS V-GATECLASS-REALITY-ADMITS-INGAME: the control: a declared in_game gate IS accepted, so the guard is not refusing everything
+  PASS V-GATECLASS-REALITY-ADMITS-LIVE: the control: `live` is a runtime class too
+  PASS V-GATECLASS-NONREALITY-UNAFFECTED: the negative control: a non-REALITY obligation still needs no class, so the guard is scoped to the plane it is about
+  PASS V-GATECLASS-PERSISTED: the declared class survives the event log and projection
+  PASS V-GATECLASS-LEGACY-IS-UNSTATED: a pre-fix obligation projects with no class -- unstated, not assumed runtime
+  PASS V-GATECLASS-SWEEP-REFUSES-LEGACY: the unattended sweep refuses to dispatch it instead of inferring: g-legacy: ob-legacy declares no runtime gate class (nothing); a REALITY obligation is not dispatched on an inferred one
+  PASS V-GATECLASS-SWEEP-STARTED-NOTHING: and no gate epoch was created for it, so nothing ran under a guessed class
+  PASS V-GATECLASS-SWEEP-DISPATCHES-DECLARED: the control: a declared in_game obligation is NOT refused: g-declared: dispatched ep-d9126082cf99 for ob-real
+
+GSDX_GATE_CLASS_PASS=11/11  threshold=11/11
+EXIT=0
+=== tools/test_gsd_x_goal_cli.py ===
+  PASS V-CLI-DECLARE: a goal is declared from the command line (declared g-cli @ revision 9dfdd46a50bb9733)
+  PASS V-CLI-NA-NEEDS-REASON: declaring a plane N/A with no reason is refused, exit 2
+  PASS V-CLI-STATUS-BLOCKED: a goal with open planes reports BLOCKED and exits 1
+  PASS V-CLI-OBLIGE: obligations are accepted with their gate files pinned
+  PASS V-CLI-RECONCILE-DECIDES: reconcile prints a decision and changes nothing without --apply
+  PASS V-CLI-RECONCILE-APPLIES: with --apply the gate epoch is dispatched
+  PASS V-CLI-EXPLAIN: explain compiles the epoch brief from durable state
+  PASS V-CLI-BIND: a root is bound to its goal
+  PASS V-CLI-BOUND-GATE-ASKS-THE-GOAL: on a bound root the mission gate answers from the GOAL, blocking on its open obligations rather than failing closed
+  PASS V-CLI-BOUND-GATE-NOT-AN-ERROR: the bound answer is a verdict, not a breakage
+  PASS V-CLI-BOUND-STORE-REFUSES: the per-root mission store refuses to write under a bound goal
+  PASS V-CLI-SWEEP-REFUSES-WITHOUT-RECORD: the sweep entrance refuses to act with no recorded green, and says so
+  PASS V-CLI-RETIRE-CANNOT-DECLARE-SATISFIED: the CLI will not let an operator declare an obligation satisfied
+  PASS V-CLI-RETIRE: an obligation is retired with a stated reason
+  PASS V-CLI-RETIRE-REOPENS-ITS-PLANE: retiring the only obligation on a plane reports that plane as blocking again
+  PASS V-CLI-RETIRED-PLANE-BLOCKS: status names the reopened plane
+  PASS V-CLI-DISPOSITION-UNKNOWN-FAILURE: dispositioning a failure nobody recorded is refused
+  PASS V-CLI-JUDGE-REFUSES-UNPROVEN: with nothing proven the judge does not certify
+  PASS V-CLI-CLOSURE-CLEARS: the gates ran through the CLI and closure cleared
+  PASS V-CLI-CLEAR-IS-NOT-CONVERGED: closure clear is not convergence: the judge has not run yet
+  PASS V-CLI-JUDGE-RECORDS: the judge certifies and banks its receipt
+  PASS V-CLI-CONVERGED-IS-REACHABLE: the recorded receipt is read back and the goal converges
+  PASS V-CLI-EXPORT: the goal exports a checkpoint (goal.json)
+  PASS V-CLI-RESTORE-IDEMPOTENT: restoring the same export is a no-op, not a replay
+  PASS V-CLI-RESTORE-REFUSES-REGRESSION: an export older than the store is refused rather than replayed
+
+GSDX_GOAL_CLI_PASS=25/25  threshold=25/25
+EXIT=0
+=== tools/test_gsd_x_goal_chaos.py ===
+  PASS V-CHAOS-1-DECISION-REDERIVED: a decision lost before it was appended is simply re-derived
+  PASS V-CHAOS-2-CAS: the second coordinator loses the sequence and must re-derive
+  PASS V-CHAOS-3-WALL-BOUND: an epoch past its bound is visible as such and ends EXPIRED
+  PASS V-CHAOS-4-OPEN-UNTIL-RESOLVED: an epoch whose dispatch never happened stays open and blocks closure
+  PASS V-CHAOS-4-RECOVERS-LOST: with no run behind it the epoch resolves LOST and stops blocking
+  PASS V-CHAOS-5-REVISION-MOVED: an epoch aimed at the old revision cannot bank work against the new one
+  PASS V-CHAOS-6-DUPLICATE-RECEIPT: a duplicate receipt is refused
+  PASS V-CHAOS-7-REPLAY: replaying a receipt after the epoch ended is refused
+  PASS V-CHAOS-8-BUDGET: a spent budget escalates with the gaps attached, and does not converge
+  PASS V-CHAOS-9-EMPTY-QUEUE: an empty queue with open gaps escalates; there is no path to CONVERGED
+  PASS V-CHAOS-10-DONE-IS-NOT-CONVERGED: an epoch reporting COMPLETED leaves the goal blocked on its obligations
+  PASS V-CHAOS-11-HARVEST-OPEN: implementation complete with the learning plane open does not close
+  PASS V-CHAOS-12-DESTROYED-IS-NOT-EMPTY: a destroyed store refuses rather than reporting a goal with no history
+  PASS V-CHAOS-12-COLD-BIRTH: the goal is reconstructed from its checkpoint with the same revision and gaps
+  PASS V-CHAOS-13-RESTART-SAME-DECISION: a new process re-reads the store and decides the same thing (NEXT_EPOCH: ob-1 (OUTCOME) has never been judged at this tre)
+
+GSDX_GOAL_CHAOS_PASS=15/15  threshold=15/15
+EXIT=0

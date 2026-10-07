@@ -1,0 +1,21 @@
+  PASS V-GATE-TREE-CLEAN: a clean scope is named by its commit tree (git:3a75e6456979...)
+  PASS V-GATE-TREE-DIRTY: an uncommitted scope says so rather than borrowing the commit's name
+  PASS V-GATE-TREE-UNKNOWN: a tree we could not read is 'unknown:', never an empty string that matches
+  PASS V-GATE-PIN-MOVES: editing the gate changes its pin
+  PASS V-GATE-PIN-MISSING: pinning a missing gate file refused
+  PASS V-GATE-OBSERVE-ENDED: a passing gate ends COMPLETED (exit 0)
+  FAIL V-GATE-VERDICT-FIELDS: verdict={'gate': 'gate_ok.py', 'exit_status': 0, 'observed': '', 'tree_hash': 'git:3a75e645697930094bbfbb95860f4ff53efa6c2c', 'revision': 'rev1', 'gate_class': 'unit', 'gate_pin': [['gate_ok.py', 'aa56ee99025e4171912fcd6b0bdb0a44fc494274e8cc561df48310738b4df244']]}
+  PASS V-GATE-NO-FAILURE-ON-PASS: a passing gate records no failure
+  PASS V-GATE-FAILING-IS-EVIDENCE: a failing gate is a verdict AND a failure with a signature
+  PASS V-GATE-NEEDS-COMMAND: a gate epoch with no command refused
+  PASS V-GATE-CLASS-DECLARED: an unknown gate class refused, never inferred
+  PASS V-GATE-FILES-PINNED: a gate that names no files of its own refused
+  PASS V-GATE-RUNNING: a live gate reports running
+  PASS V-GATE-CANCEL-PRECONDITION: precondition: the gate's own grandchild is running before cancel
+  PASS V-GATE-CANCEL-KILLS: cancel killed the process tree (supervisor 35652 and grandchild 35164 gone)
+  PASS V-GATE-CANCELLED-NO-VERDICT: a cancelled gate yields no verdict and says why, rather than inventing one
+  PASS V-GATE-PROBE-NOTHING: a token that was never dispatched probes to None
+  PASS V-GATE-PROBE-FINDS: a run started before a crash is found by its pre-minted token
+
+GSDX_GATE_PROVIDER_PASS=17/18  threshold=18/18
+EXIT=1

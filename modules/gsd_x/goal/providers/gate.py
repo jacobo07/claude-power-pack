@@ -65,11 +65,16 @@ class GateProvider:
 
     @staticmethod
     def _supervisor() -> str:
-        """Run the real gate, then record its exit status where anyone can read it."""
+        """Run the real gate, then record its exit status where anyone can read it.
+
+        Measured 2026-10-07 (R01): with no std arguments, Windows gave the gate
+        no usable stdout, so the run log stayed empty and every verdict observed
+        nothing. The gate now writes through the supervisor's own log handles.
+        """
         return (
             "import json,subprocess,sys,time\n"
             "res=sys.argv[1]; cmd=sys.argv[2:]\n"
-            "rc=subprocess.run(cmd).returncode\n"
+            "rc=subprocess.run(cmd,stdout=sys.stdout,stderr=sys.stderr).returncode\n"
             "json.dump({'exit_status':rc,'ended_at':time.time()}, open(res,'w'))\n"
             "sys.exit(rc)\n"
         )
