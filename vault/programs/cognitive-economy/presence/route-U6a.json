@@ -1,0 +1,1 @@
+{"envelope":{"target":1600000,"warn":1800000,"stop":2000000,"calls":32},"workers":[{"name":"ce-presence-U6a","profile":"slim-t2","calls":30,"packet":6000}]}

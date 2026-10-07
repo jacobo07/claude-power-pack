@@ -895,6 +895,97 @@ def _launch_slim(rec: dict, prompt: str, epoch: int, now: float, spawner=None) -
     return {"ok": True, "epoch": epoch, "bg_id": sid, "pid": pid, "slim": True}
 
 
+LEGACY_REASONS = ("host_limitation", "uncertified_work_class", "quality_requirement", "novel_architecture",
+                  "safe_deopt")
+_BASELINE_FIELDS = ("model", "autocompact", "continue_max_tokens")
+# Built-in fallback = the policy values (never Opus / 600k). Evidence: gen3/packets/T1.md + T3.md ran
+# `--model sonnet --autocompact 250k`; continuation ceiling kept equal to the compaction line.
+_BUILTIN_BASELINE = {"version": "builtin", "classes": {
+    c: {"model": "sonnet", "autocompact": "250k", "continue_max_tokens": 250_000}
+    for c in ("COMPILED_UNIT", "GSD_RESUME", "OTHER")}}
+
+
+def baseline_mode() -> str:
+    """CPP_CE_BASELINE: shadow (default) | enforce | off."""
+    v = str(os.environ.get("CPP_CE_BASELINE") or "shadow").strip().lower()
+    return v if v in ("shadow", "enforce", "off") else "shadow"
+
+
+def work_class(rec: dict) -> str:
+    """From the record only: COMPILED_UNIT (has wu_packet), GSD_RESUME (resume_command starts /gsd-), OTHER."""
+    if rec.get("wu_packet"):
+        return "COMPILED_UNIT"
+    if str(rec.get("resume_command") or "").lstrip().startswith("/gsd-"):
+        return "GSD_RESUME"
+    return "OTHER"
+
+
+def _baseline_policy() -> tuple[dict, str]:
+    """(policy, source) -- source is `policy` or `builtin` (file unreadable or malformed)."""
+    try:
+        raw = json.loads(_BUDGET_DEFAULTS.read_text(encoding="utf-8-sig"))
+        ver = str(raw["baseline_version"])
+        classes = {}
+        for c in _BUILTIN_BASELINE["classes"]:
+            e = raw["baseline_classes"][c]
+            classes[c] = {"model": str(e["model"]) or None, "autocompact": str(e["autocompact"]) or None,
+                          "continue_max_tokens": int(e["continue_max_tokens"])}
+            if not all(classes[c].values()):
+                raise ValueError("empty baseline value")
+        return {"version": ver, "classes": classes}, "policy"
+    except Exception:  # noqa: BLE001 -- unreadable policy answers with the built-in cheap values
+        return _BUILTIN_BASELINE, "builtin"
+
+
+def _tokens_of(v) -> int:
+    m = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*([kKmM]?)\s*", str(v or ""))
+    return int(float(m.group(1)) * {"": 1, "k": 1000, "m": 1_000_000}[m.group(2).lower()]) if m else 0
+
+
+def _legacy_combo(rec: dict) -> bool:
+    """The final launch is --bg + Opus + >=600k compaction."""
+    model = str(rec.get("model") or "").lower()
+    return (not slim_profile(rec)) and ("opus" in model or not model) and _tokens_of(rec.get("autocompact")) >= 600_000
+
+
+def resolve_baseline(rec: dict) -> dict:
+    """Absent optimisation fields resolve to the certified baseline, never to the host maximum.
+    Returns a NEW record: explicit values kept (src explicit), absent -> policy value (src policy@<v>) or
+    builtin. Mode `off` returns the record unchanged."""
+    if baseline_mode() == "off":
+        return rec
+    pol, origin = _baseline_policy()
+    cls = work_class(rec)
+    base = pol["classes"][cls]
+    # A value an earlier resolution wrote is still policy-derived while it is unchanged: re-resolve it, or
+    # the next epoch reports it `explicit` and a policy change never reaches the mission. A value an
+    # operator set afterwards (envelope --model opus) differs from what was written, so it stays explicit.
+    prior = rec.get("baseline") or {}
+    written = {f: v for f, v in (prior.get("values") or {}).items()
+               if not str((prior.get("src") or {}).get(f, "explicit")).startswith("explicit")}
+    out, src, values = dict(rec), {}, {}
+    for f in _BASELINE_FIELDS:
+        if rec.get(f) and not (f in written and rec.get(f) == written[f]):
+            src[f] = "explicit"
+        else:
+            out[f] = base[f]
+            src[f] = f"policy@{pol['version']}" if origin == "policy" else "builtin"
+        values[f] = out.get(f)
+    out["baseline"] = {"version": pol["version"], "tier": "COMPILED" if rec.get("wu_packet") else "BASIC",
+                       "work_class": cls, "src": src, "values": values, "legacy_reason": rec.get("legacy_reason")}
+    return out
+
+
+def baseline_legacy_verdict(rec: dict) -> str | None:
+    """Why the resolved record is an unexplained legacy launch, else None."""
+    if not _legacy_combo(rec):
+        return None
+    reason = str(rec.get("legacy_reason") or "").split(":")[0]
+    return None if reason in LEGACY_REASONS else (
+        "legacy launch (--bg + opus + >=600k) without legacy_reason; fix: `gsd_mission envelope --mission "
+        f"{rec.get('mission_id')} --model sonnet --autocompact 250k` or set legacy_reason in {LEGACY_REASONS}")
+
+
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
@@ -932,9 +1023,18 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     if rec.get("wu_packet") and _admission_switch_off():
         lr.ledger_append(mission_id, "admission_bypassed", mission_id=mission_id, epoch=rec.get("epoch"),
                          verdict=(rec.get("admission") or {}).get("verdict"))
+    resolved = resolve_baseline(rec)
+    baseline_on = resolved is not rec
+    legacy_why = baseline_legacy_verdict(resolved) if baseline_mode() != "off" else None
+    if legacy_why and baseline_mode() == "enforce":
+        lr.ledger_append(mission_id, "launch_refused_baseline", mission_id=mission_id,
+                         epoch=rec.get("epoch"), why=legacy_why[:300])
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": legacy_why, "detail": ""}
     epoch = expect_epoch + 1
     failed = rec.get("failed_launches", 0) + (1 if rec.get("state") == LAUNCHING else 0)
     extra = {"note": note} if note is not None else {}
+    if baseline_on:
+        extra.update({k: resolved[k] for k in (*_BASELINE_FIELDS, "baseline")})
     if note is not None:
         # The packet travels with THIS hand-off's note and is cleared with it, never inherited.
         extra["packet"] = packet
@@ -968,6 +1068,10 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                      pending={"kind": "worker_start", "epoch": epoch,
                               "requested_at": now, "deadline": now + START_DEADLINE_S},
                      **extra)
+    if baseline_on:
+        lr.ledger_append(mission_id, "baseline_resolved", mission_id=mission_id, epoch=epoch, **rec["baseline"])
+        if legacy_why:
+            lr.ledger_append(mission_id, "would_refuse_legacy", mission_id=mission_id, epoch=epoch, why=legacy_why[:300])
     if slim_profile(rec):
         return _launch_slim(rec, prompt, epoch, now, spawner=spawner)
     # `prompt` was bound above (launch_prompt -> bind_workstream), not only at create: a record armed
