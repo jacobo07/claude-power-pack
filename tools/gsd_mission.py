@@ -1363,24 +1363,67 @@ def envelope_refusal(rec: dict) -> str | None:
     return why
 
 
-def packet_done_gate(rec: dict) -> str | None:
-    """Law 4: the first `done_gate:` line of the mission's compiled packet, or None."""
+_TREE_RE = re.compile(r"^work_tree:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
+
+
+def _packet_text(rec: dict) -> str | None:
     pkt = rec.get("wu_packet")
     if not pkt:
         return None
     try:
-        text = Path(pkt["path"]).read_text(encoding="utf-8-sig", errors="replace")
+        return Path(pkt["path"]).read_text(encoding="utf-8-sig", errors="replace")
     except OSError:
         return None
-    m = _GATE_RE.search(text)
+
+
+def packet_done_gate(rec: dict) -> str | None:
+    """Law 4: the first `done_gate:` line of the mission's compiled packet, or None."""
+    text = _packet_text(rec)
+    m = _GATE_RE.search(text) if text else None
     return m.group(1) if m else None
 
 
+def _tree_inside_repo(tree: str, base_cwd: str) -> str | None:
+    """The packet's `work_tree:` resolved, only when it is an absolute directory inside the record's
+    repository (the cwd's git common dir, or under the cwd). Anything else is None."""
+    p = Path(tree)
+    if not p.is_absolute() or not p.is_dir():
+        return None
+    p = p.resolve()
+    base = Path(base_cwd).resolve()
+    if p == base or base in p.parents:
+        return str(p)
+    here, root = _git_toplevel_and_common(str(p)), _git_toplevel_and_common(str(base))
+    return str(p) if here and root and here[1] == root[1] else None
+
+
+def packet_gate_dir(rec: dict, text: str | None = None) -> tuple[str | None, str]:
+    """F2: the tree the packet's gate runs in. A packet `work_tree:` line wins (None when it lies outside
+    the record's repo: not judged); else where the owner worker actually works (effective_workdir, the
+    same resolution the relay and halt paths use); else the recorded work_dir; else the cwd."""
+    text = _packet_text(rec) if text is None else text
+    m = _TREE_RE.search(text or "")
+    if m:
+        t = _tree_inside_repo(m.group(1), rec["cwd"])
+        return t, "packet work_tree" if t else f"work_tree {m.group(1)[:200]!r} is not inside the repo"
+    wd = rec.get("work_dir") or rec["cwd"]
+    if rec.get("owner"):
+        try:
+            wd = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream")) or wd
+        except Exception:  # noqa: BLE001 -- keep the recorded dir; never guess
+            pass
+    return wd, "worker tree"
+
+
 def packet_gate_passed(rec: dict, now: float, *, gate_runner=None) -> dict | None:
-    """Law 4: run the packet's done_gate in the record's work tree, bounded. Exit 0 -> a dict with the
+    """Law 4: run the packet's done_gate in the tree the work is in, bounded. Exit 0 -> a dict with the
     command and the output tail; a non-zero exit, a timeout or an unrunnable gate -> None (today's path).
-    Legacy skips the gate and ledgers it."""
-    gate = packet_done_gate(rec)
+    F1: a packet whose bytes differ from the sha256 recorded at `envelope --wu-packet` is not judged
+    (the worker could have written its own gate): `packet_gate_drift`. Legacy skips the gate and ledgers it."""
+    pkt = rec.get("wu_packet") or {}
+    text = _packet_text(rec)
+    m = _GATE_RE.search(text) if text else None
+    gate = m.group(1) if m else None
     if not gate:
         return None
     mid = rec["mission_id"]
@@ -1388,8 +1431,17 @@ def packet_gate_passed(rec: dict, now: float, *, gate_runner=None) -> dict | Non
         lr.ledger_append(mid, "grammar_legacy_bypass", mission_id=mid, epoch=rec.get("epoch"),
                          law="packet_gate", why=f"done_gate not run: {gate[:200]}")
         return None
+    now_sha = _packet_digest(pkt["path"])
+    if not pkt.get("sha256") or now_sha != pkt["sha256"]:
+        lr.ledger_append(mid, "packet_gate_drift", mission_id=mid, epoch=rec.get("epoch"), gate=gate[:200],
+                         recorded=str(pkt.get("sha256"))[:12], current=str(now_sha)[:12])
+        return None
+    cwd, why = packet_gate_dir(rec, text)
+    if cwd is None:
+        lr.ledger_append(mid, "packet_gate_unanswered", mission_id=mid, epoch=rec.get("epoch"),
+                         gate=gate[:200], error=why)
+        return None
     import subprocess
-    cwd = rec.get("work_dir") or rec["cwd"]
     run = gate_runner or (lambda cmd, wd: subprocess.run(
         cmd, shell=True, cwd=wd, capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=int(os.environ.get("CPP_PACKET_GATE_TIMEOUT") or PACKET_GATE_TIMEOUT_S)))
