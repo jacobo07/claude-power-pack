@@ -89,7 +89,7 @@ def main() -> int:
     desc = next((l for l in front.splitlines() if l.startswith("description:")), "")
     check("V-ROUTE-DESCRIPTION-SAYS-RALPH", "Ralph" in desc and "autocompact" in desc
           and "survives context compactions" not in desc, desc[:120])
-    i_route, i_ralph = doc.find("## Routing"), doc.find("## Default: Ralph")
+    i_route, i_ralph = doc.find("## Routing"), doc.find("## Default:")
     check("V-ROUTE-ROUTING-SECTION-FIRST", 0 <= i_route < i_ralph, f"routing={i_route} ralph={i_ralph}")
     # No live instruction may arm the retired path: no config --apply, no marker --write step.
     check("V-ROUTE-NO-LIVE-V2-STEPS", "gsd_autorun_marker.py\" --write" not in doc

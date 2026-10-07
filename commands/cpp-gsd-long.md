@@ -28,7 +28,34 @@ context wall", and on this estate that means a fresh session: the relay IS the a
 Specs: `vault/specs/mission-continuity.md` (v3, the only live path). Historical:
 `vault/specs/gsd-autonomous-autocompact.md` (v1), `vault/specs/gsd-long-run-v2.md` (v2).
 
-## Default: Ralph mission (fresh session at every wall) — v3
+## Default: compile the next phase and arm it (spec compiled-grammar-default, laws 5-6)
+
+A long GSD run is compiled, not conducted. Per roadmap phase a zero-model tool writes a dossier and a
+work-unit packet with a deterministic `done_gate:`, and arms ONE mission over it. A mission whose packet
+gate passes ends COMPLETED instead of continuing or renewing (law 4). Measured on EDD Phase 1: the old
+planner/researcher/executor grammar spent 32.1M processed tokens and closed 0 obligations; the compiled
+packet spent 3.3M.
+
+```bash
+cd <project root>      # a TRUSTED workspace
+python3 "$PP/tools/gsd_compile.py" compile --repo . --workstream <ws> --phase <N> --gate "<deterministic command>" --dry-run
+python3 "$PP/tools/gsd_compile.py" compile --repo . --workstream <ws> --phase <N> --gate "<deterministic command>" --arm
+nohup python3 "$PP/tools/mission_wait.py" --mission <id> --guard-renewals > /dev/null 2>&1 &   # waiting is a tool, not a pane
+python3 "$PP/tools/gsd_mission.py" status
+```
+
+- No gate, no packet: a phase without a `Gate:` line needs `--gate`. A done or absent phase is refused.
+- `--arm` = arm (no launch) -> owner hold -> envelope (estimate from the measured floor, model, autocompact
+  from floor + packet + margin) -> route admission -> release. Nothing launches on a half-set envelope.
+- The worker enters the ONE worktree the packet names and works only there; the gate runs in that tree.
+- `tools/mission_wait.py` polls with zero model calls; `--guard-renewals` holds and stops any successor of
+  the mission, and it writes `gsd-mission-wait-<id>.json` next to the record.
+- Do not keep a model pane polling `status`: that pane cost 17.41M against 2.60M of work (UC-20).
+
+## Legacy (CPP_MISSION_GRAMMAR=legacy): Ralph mission via /gsd-autonomous (fresh session at every wall) — v3
+
+Set `CPP_MISSION_GRAMMAR=legacy` to restore the pre-default behaviour (no envelope requirement, no window
+floor, no packet gate); every use is ledgered as `grammar_legacy_bypass`. The mechanics below are unchanged.
 
 **Owner decision 2026-09-23:** a long run continues in a **new session** at its context wall
 instead of compacting — a fresh process frees the RAM a long-lived one accumulates (one

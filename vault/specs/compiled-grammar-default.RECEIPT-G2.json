@@ -1,0 +1,36 @@
+{
+  "work_unit": "WU-G2b",
+  "spec": "vault/specs/compiled-grammar-default.md",
+  "laws": [4, 5, 6],
+  "worktree": "/home/kobii/missions/grammar/.claude/worktrees/wu-g2",
+  "branch": "worktree-wu-g2",
+  "base": "713bd7ba",
+  "commits": {
+    "27bbbc2f": "gsd_compile (law 5) and mission_wait (law 6) tools",
+    "this_receipt_commit": "tests, command doc, receipt (see git log on the branch)"
+  },
+  "tests": {
+    "tools/test_grammar_default.py": "GRAMMAR_PASS=41/41",
+    "tools/test_grammar_compile.py": "GRAMMAR_COMPILE_PASS=62/62 (18 mutation drills red, unmutated copy green)",
+    "tools/test_gsd_mission.py": "MC_PASS=225/225 (the baseline red V-MC-PLAN-FACTS-REFUSES-OVERLAP did not reproduce in this worktree)",
+    "tools/test_gsd_mission_envelope.py": "ENVELOPE_PASS=39/39",
+    "tools/test_cpp_gsd_long_routing.py": "ROUTE_PASS=8/9; the red V-ROUTE-LIVE-COMMAND-IS-REPO-COMMAND is environmental (the test's temp HOME holds no live copy of the command); the heading probe of V-ROUTE-ROUTING-SECTION-FIRST was updated from '## Default: Ralph' to '## Default:'"
+  },
+  "findings": {
+    "F1": "packet sha256 drift -> gate not judged, ledger packet_gate_drift; absent recorded sha -> not judged. Tests V-GRAMMAR-F1-*; mutations F1-NO-DRIFT-CHECK, F1-ABSENT-SHA-ACCEPTED red.",
+    "F2": "gate runs in the packet work_tree when inside the record's repo (same git common dir), else not judged + packet_gate_unanswered; no line -> owner worker tree, work_dir, cwd. Tests V-GRAMMAR-F2-* (worktree of the same repo admitted; sibling clone of another repo, relative path, missing dir, non-repo dir refused); mutations F2-* red."
+  },
+  "changed_functions": {
+    "tools/gsd_mission.py": "unchanged in this unit; F1/F2 (_packet_text, _tree_inside_repo, packet_gate_dir, packet_gate_passed) were already in 1a4192fe and are now proven",
+    "tools/gsd_compile.py": ["parse_phase", "phase_gate", "module_roots", "budget", "render_packet", "compile_phase", "arm_mission", "main"],
+    "tools/mission_wait.py": ["guard_renewals", "check", "report", "wait", "main"],
+    "tools/test_grammar_compile.py": "new",
+    "tools/test_cpp_gsd_long_routing.py": "heading probe",
+    "commands/cpp-gsd-long.md": "default section = compile + arm; old arming under a Legacy heading"
+  },
+  "notes": [
+    "arm_mission also runs gsd_mission.admit_route: launch_worker refuses a packet whose route was never admitted, so the spec's arm -> hold -> envelope -> release alone cannot launch without a manual admit step.",
+    "The live EDD Phase 2 arm named in the spec's G2 gate was NOT run here: it arms a live mission and the live install changes only by an explicit deploy.",
+    "Real roadmaps in this repo use Success criteria in four shapes (case, parenthetical, unindented items, one inline criterion, Phase 0); parse_phase handles them and V-GRAMMAR-COMPILE-REAL-ROADMAP-DRY-RUN compiles the first open real phase (autonomous-optimization phase 0)."
+  ]
+}

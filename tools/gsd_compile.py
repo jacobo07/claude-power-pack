@@ -49,13 +49,16 @@ def parse_phase(roadmap: str, n: int) -> dict:
         raise CompileError(f"phase {n} is already complete ([x] in the roadmap)")
     goal = re.search(r"^\*\*Goal\*\*:[ \t]*(.+)$", section, re.MULTILINE)
     req = re.search(r"^\*\*Requirements\*\*:[ \t]*(.+)$", section, re.MULTILINE)
-    sc = re.search(r"^\*\*Success Criteria\*\*:[^\n]*\n(.*?)(?=^\*\*|\Z)", section, re.MULTILINE | re.DOTALL)
+    sc = re.search(r"^\*\*Success criteria\*\*[^:\n]*:[ \t]*([^\n]*)\n?(.*?)(?=^\*\*|\Z)", section,
+                   re.MULTILINE | re.DOTALL | re.IGNORECASE)
     criteria: list[str] = []
-    for ln in (sc.group(1) if sc else "").splitlines():
+    for ln in (sc.group(2) if sc else "").splitlines():
         if re.match(r"^\s*\d+\.\s", ln):
             criteria.append(ln.strip())
         elif ln.strip() and criteria:
             criteria[-1] += "\n" + ln.rstrip()
+    if not criteria and sc and sc.group(1).strip():
+        criteria.append("1. " + sc.group(1).strip())   # the roadmap states its one criterion on the header line
     if not criteria:
         raise CompileError(f"phase {n} has no Success Criteria: there is nothing to verify")
     return {"title": m.group(1).strip(), "goal": goal.group(1).strip() if goal else "",
@@ -189,7 +192,7 @@ def compile_phase(repo: str, ws: str, n: int, *, gate: str | None = None, out: s
     out_dir.mkdir(parents=True, exist_ok=True)
     contract = out_dir / "contract.md"
     heads = [re.sub(r"^\s*\d+\.\s*", "", c.splitlines()[0])[:160] for c in phase["criteria"]]
-    contract.write_text("\n".join("### " + h for h in heads) + "\n\n" + phase["section"], encoding="utf-8")
+    contract.write_text("\n\n".join(f"### {h}\n{c}" for h, c in zip(heads, phase["criteria"])) + "\n", encoding="utf-8")
     dargs = ["--repo", str(root), "--contract", str(contract), "--out", str(out_dir)]
     for m in mods:
         dargs += ["--module-root", m]
