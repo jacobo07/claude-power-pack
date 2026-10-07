@@ -512,7 +512,7 @@
   },
   "cap": 20000000,
   "central_forecast": 15000000,
-  "spent": 27612077,
+  "spent": 37544454,
   "spent_note": "UNVERIFIED until A2-1 meters per call including the coordinator; null never counts as zero",
   "units": {
    "A2-0": 500000,
@@ -534,18 +534,23 @@
     "what": "worker 489481fa (Phase 1 + partial Phase 2)",
     "processed": 10695300,
     "calls": 61,
-    "how": "gen2/evidence/stage0/self_spend.py --session --dir C--Users-User-Apps-pp-ce-a2"
+    "how": "measure/attribute.py --session (two independent counters, verdict AGREE)"
    },
    {
-    "what": "coordinator pane 886d7bb9 (scan, plan, setup, status) to ~18:00Z",
-    "processed": 16916777,
-    "calls": 71,
-    "how": "gen2/evidence/stage0/self_spend.py --session"
+    "what": "coordinator pane 886d7bb9 (scan, plan, setup, status, stop, meter review)",
+    "processed": 21902275,
+    "calls": 87,
+    "how": "measure/attribute.py --session (two independent counters, verdict AGREE)"
+   },
+   {
+    "what": "meter worker 50beb02e-649c-4b40-b507-967e4458a0eb (METER-PACKET.md, headless sonnet, ended error_max_turns)",
+    "processed": 4946879,
+    "calls": 35,
+    "how": "measure/attribute.py --session (two independent counters, verdict AGREE)"
    }
   ],
   "spent_unknown": [
-   "coordinator calls after ~18:00Z not included",
-   "meter not yet independently verified (evidence/a2/METER-PACKET.md)"
+   "coordinator calls after this reading are not included"
   ]
  }
 }
