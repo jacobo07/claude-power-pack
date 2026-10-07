@@ -78,7 +78,9 @@ refusals = {}
 for i, r in enumerate(jr):
     if r["op"] == "settle":
         nxt = jr[i + 1] if i + 1 < len(jr) else None
-        if not (nxt and nxt["op"] == "reserve" and nxt["sid"] == r["sid"]):
+        # A refusal is a settle with no LEASE after it; since a3aaa515 it is followed by a `final` hold.
+        # Canary #3 first ran without the `kind` test and reported no refusals at all (check3.py).
+        if not (nxt and nxt["op"] == "reserve" and nxt["sid"] == r["sid"] and nxt.get("kind") != "final"):
             refusals.setdefault(r["sid"], []).append({"seq": r["seq"], "at": iso(r["ts"]), "measured": r["measured"]})
 
 pdir = Path.home() / ".claude" / "projects"

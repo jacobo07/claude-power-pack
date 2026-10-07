@@ -94,6 +94,25 @@ Same prompt, cap 3,000,000, lease_calls 2, two sonnet workers; guard at 19240f98
   after a deny is a model request that no PreToolUse hook can gate. Zero needs headroom: refuse at
   cap - (live requesters x per-call). Whether this residual counts as authorized is the Owner's call.
 
+## Canary #3 with headroom (goal `canary-20261007c`, 2026-10-07 21:23Z, wall 215 s)
+Guard + ledger at a3aaa515 (final-reply headroom, final hold, renew before the crossing call).
+Same driver and prompt. Receipt `receipt_canary-20261007c.json`; refusals re-measured by
+`check3.py`, because the driver's refusal detector was blind to the new `final` row (fixed in
+canary2.py here).
+
+| worker | requests | tokens | refused at (journal) | reply reserved | reply spent after deny |
+|---|---|---|---|---|---|
+| cd088f91 | 14 | 1,204,899 | row 90, used 2,811,643 (Read) | 93,695 | 1 request, 94,925 |
+| c86a96b2 | 20 | 1,794,651 | row 96, used 2,997,489 (Agent) | 99,029 | 1 request, 99,860 |
+| **total** | 34 | **2,999,550** | | 192,724 | 194,785 |
+
+- **Spend 2,999,550 vs cap 3,000,000: no overshoot (450 under).** Was +1,173,828 (#1) and +207,358 (#2).
+- One refusal per pane, one reply per pane after it, 0 closeouts, 4 agent holds, 44 leases.
+- Residual risk, measured: each reply exceeded its reservation (the last context) by its output and
+  growth, +1,230 and +831. The room left over absorbed it here, but nothing guarantees that. With N
+  panes the worst case is about N x 1K over. Closing it means reserving context plus an output
+  margin; not done.
+
 ## Relevance to A1
 A1 crossed a 20M cap by 22.3M (111.5%) with no pre-call refusal at all. Here the refusal reached
 every pane; the residual is a ~1.2M absolute overshoot from concurrency. That is not yet the zero

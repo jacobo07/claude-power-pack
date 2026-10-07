@@ -1,0 +1,33 @@
+{
+ "goal": "canary-20261007c",
+ "cap": 3000000,
+ "since": "2026-10-07T21:23:22",
+ "wall_s": 215,
+ "workers": [
+  {
+   "sid": "cd088f91-6a6d-4aa5-be5a-48c128f0748c",
+   "files": 2,
+   "requests": 14,
+   "tokens": 1204899,
+   "ledger_refusals": [],
+   "first_deny_tool_result": "2026-10-07T21:26:24.154Z",
+   "closeout_advisories": 0,
+   "requests_after_first_refusal": [],
+   "tokens_after_first_refusal": 0
+  },
+  {
+   "sid": "c86a96b2-a9b7-4619-be98-7bc28f6778cd",
+   "files": 2,
+   "requests": 20,
+   "tokens": 1794651,
+   "ledger_refusals": [],
+   "first_deny_tool_result": "2026-10-07T21:26:30.340Z",
+   "closeout_advisories": 0,
+   "requests_after_first_refusal": [],
+   "tokens_after_first_refusal": 0
+  }
+ ],
+ "independent_total": 2999550,
+ "overshoot": -450,
+ "first_refusal_used": null
+}
