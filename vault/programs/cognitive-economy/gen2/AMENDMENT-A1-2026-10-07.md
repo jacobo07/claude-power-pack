@@ -121,3 +121,11 @@ spend is unmeasured until the A1-2 meter, so writing 1.1M would make C16 pass on
 Integration: fetched as local branch a1/u1 (82a493aa); `git merge-tree` against ce/gen2-completion (be88dee5) is
 clean. NOT merged: another pane is live in pp-ce-gen2 (rollover.py dirty 13:45, untracked T1e test); merge it there
 when that pane is idle. Open from receipt: C15/C16 OPEN-with-check keep `--final` red; family tranche lists absent.
+A1-2 DONE (Owner 'y' to plan, pane b9bd9469): branch a1/a1-2 5a075c91 in worktree C:/Users/User/Apps/pp-a1 (on top of
+a1/u1; NOT merged, same reason). `turns.py --attribute` + tools/test_ce_a1_attribute.py 18/18, 3 mutants killed; full
+done gate green; receipt evidence/a1/A1-2-RECEIPT.md. Canary 10-04T18Z..10-07T10:33Z: tier A 258,994,397, B
+119,920,566, already-ledgered 124,609,059 (controls ok) -> coordination_spend.value = tier A. The ad-hoc 520M/368M
+counted whole sessions (555M of program sessions lies outside any write span).
+**A1 OVER CAP**: a1.spent = 42,307,381 at 12:22:33Z (423e33b0 from approval 11:12:10Z 24,715,309 + b9bd9469
+16,494,861 + U1 1,097,211; upper bound 44,792,057) vs cap 20,000,000. C16 on the real ledger: exit 1, over cap.
+Next (T3 replay) is HELD for the Owner: raise the A1 cap, or stop A1 here.
