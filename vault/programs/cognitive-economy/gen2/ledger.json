@@ -456,7 +456,7 @@
   }
  },
  "a1": {
-  "cap": 20000000,
+  "cap": 60000000,
   "spent": 42307381,
   "frozen": [
    "T2",
@@ -501,6 +501,16 @@
   "spent_upper_bound": {
    "processed": 44792057,
    "why": "the two panes' whole sessions since approval incl. calls outside their program span"
-  }
+  },
+  "cap_history": [
+   {
+    "cap": 20000000,
+    "set": "2026-10-07 amendment A1 decision 1 (Owner 'y', pane 423e33b0)"
+   },
+   {
+    "cap": 60000000,
+    "set": "2026-10-07 Owner choice 'Raise cap to 60M' (pane b9bd9469) after a1.spent 42,307,381 > 20M; covers spend to date + ~18M for T3 replay and T7"
+   }
+  ]
  }
 }
