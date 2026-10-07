@@ -64,9 +64,12 @@ Canary #2 measured that reply as 195,084 of a 207,358 overshoot. Three changes r
 - **No crossing**: the guard renews BEFORE a call when `tokens - lease.base + context > lease.amount`,
   because an admitted call is paid by the request that follows it (about one context).
 - `spawn` admits a child only within `cap - used - headroom`: a child never takes a pane's reply.
-Residual: estimation error only (the reply exceeds the last context by its output tokens and
-growth); a subagent's own final answer is covered by its agent hold, not by headroom. The canary
-measures it.
+- **Output margin** (Owner, 2026-10-07): `per_call` is the next request, not the last context:
+  the last main request's full total (context + output) plus the largest growth between consecutive
+  main requests over the last 5. Canary #3 reserved the context alone and each reply came in
+  831-1,230 over it.
+Residual: a reply that grows more than any of the last 5 requests did. A subagent's own final
+answer is covered by its agent hold, not by headroom. The canary measures it.
 
 ## Acceptance
 - AC1 two processes racing the last lease: exactly one admitted.

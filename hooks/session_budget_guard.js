@@ -280,9 +280,25 @@ function foldFile(gs, file, isMain) {
     seen.add(mid);
     gs.ids.push(mid);
     gs.tokens += UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
-    if (isMain) gs.context = UK.slice(0, 3).reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+    if (isMain) {
+      gs.context = UK.slice(0, 3).reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+      // The next request re-reads this one's context AND its output, plus whatever the turn appends.
+      // Canary #3 reserved the context alone and each final reply came in 831-1,230 over it.
+      const total = UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+      if (gs.lastTotal > 0 && total > gs.lastTotal) gs.deltas = (gs.deltas || []).concat(total - gs.lastTotal).slice(-GROWTH_WINDOW);
+      gs.lastTotal = total;
+    }
   }
   if (gs.ids.length > MAX_IDS) gs.ids = gs.ids.slice(-MAX_IDS);
+}
+
+// Size of the pane's next request: the last main request's full total (context + output) plus the
+// largest growth between consecutive main requests in the last GROWTH_WINDOW. This is the per-call
+// the ledger reserves as the pane's final reply, so it errs high: one spike stays for 5 requests.
+const GROWTH_WINDOW = 5;
+function nextRequest(gs) {
+  const last = gs.lastTotal > 0 ? gs.lastTotal : (gs.context || 0);
+  return last + Math.max(0, ...(Array.isArray(gs.deltas) ? gs.deltas : []));
 }
 
 function measureGoal(gs, transcript) {
@@ -325,10 +341,11 @@ function decideGoal(event, sid, bind) {
       verdict = goalDeny(goal, `UNKNOWN: the transcript cannot be read (${e.code || e.message}).`);
     }
   }
-  const base = ['--goal', goal, '--session', sid, '--per-call', String(gs.context || 0), '--measured', String(gs.tokens)];
+  const next = nextRequest(gs);
+  const base = ['--goal', goal, '--session', sid, '--per-call', String(next), '--measured', String(gs.tokens)];
   // Renew BEFORE the call whose next request would cross the lease: an admitted call is paid by the
-  // request that follows it, about one context (`gs.context`), so the lease must still hold that much.
-  const crossing = gs.lease && gs.tokens - gs.lease.base + (gs.context || 0) > gs.lease.amount;
+  // request that follows it (`next`), so the lease must still hold that much.
+  const crossing = gs.lease && gs.tokens - gs.lease.base + next > gs.lease.amount;
   if (!verdict && (!gs.lease || crossing || !leaseOpenInJournal(goal, gs.lease))) {
     const r = callGoal(['goal-renew', ...base]);
     if (r.failed) verdict = goalDeny(goal, `UNKNOWN: ${r.failed}.`);

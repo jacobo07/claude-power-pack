@@ -328,8 +328,8 @@ let raw = ''; process.stdin.on('data', d => raw += d).on('end', () => {
 """
 
 
-def row(mid, n, ts="2099-01-01T00:00:00.000Z"):    # after any goal's `since`, so every row counts
-    u = {"input_tokens": n, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "output_tokens": 0}
+def row(mid, n, ts="2099-01-01T00:00:00.000Z", out=0):    # after any goal's `since`, so every row counts
+    u = {"input_tokens": n, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "output_tokens": out}
     return json.dumps({"type": "assistant", "timestamp": ts, "uuid": "u-" + mid,
                        "message": {"id": mid, "model": "claude-opus-5-5", "usage": u,
                                    "content": [{"type": "text", "text": "x"}]}}) + "\n"
@@ -355,9 +355,10 @@ def g_guard():
         work, other = e.root / "work", e.root / "other"
         work.mkdir()
         other.mkdir()
-        # 1200: leases 100 then 150 admitted (each net of the pane's own reply), an Agent of one lease
-        # (150) refused at 50 left net of headroom, and the next renew at 1050 + reply 200 refused.
-        declare("gg", 1200, roots=[str(work)], lease_calls=1)
+        # Next request = last main total + largest recent growth: 100, then 150+50, then 200+50.
+        # 1300: leases 100 then 200 admitted (each net of the pane's own reply), an Agent of one lease
+        # (200) refused at 50 left net of headroom, and the renew at 1050 + reply 250 refused.
+        declare("gg", 1300, roots=[str(work)], lease_calls=1)
         tx = e.root / "t.jsonl"
         tx.write_text(row("m1", 100), encoding="utf-8")
 
@@ -384,9 +385,16 @@ def g_guard():
               f"Agent with remaining < one lease: {why[:90]}")
 
         with open(tx, "a", encoding="utf-8") as fh:
-            fh.write(row("m3", 200))
+            fh.write(row("m3", 200, out=20))       # total 220: the reply re-reads the output too
         dec, why = run_guard(e, "bound-1", tx, work, tool="Bash", tool_input={"command": "python big_job.py"})
         check("V-GOAL-GUARD-EXHAUSTED", dec == "deny" and "GOAL BUDGET (gg)" in why, why[:100])
+        # Canary #3 (02a20a93) reserved the context alone; each reply came in ~1K over. The final hold
+        # must be the last total (220, output included) plus the largest recent growth (150 -> 220 = 70).
+        # Context alone would hold 200 + growth, never 290.
+        led = GoalLedger(ms.goal_root() / "gg", "gg")
+        finals = [r["amount"] for r in led._gfold(led._read())["res"].values()
+                  if r.get("kind") == "final" and r["sid"] == "bound-1"]
+        check("V-GOAL-GUARD-REPLY-MARGIN", finals == [290], f"final-reply hold = last total + growth: {finals} (want [290])")
         # Canary 2026-10-07 (CANARY.md, 51e46273): a free Read closeout after a goal refusal admitted
         # 793K of a 1.17M overshoot. A goal refusal admits ONE handoff write per pane and no reads.
         for n in range(5):
