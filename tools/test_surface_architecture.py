@@ -235,8 +235,10 @@ def gate_kernel_is_domain_blind() -> None:
     anchor, unlike applicability._hits). So a domain word here would make the first
     vertical's derivative uncompilable. This gate is the pre-check.
     """
+    # "sign-in" joined with the vocabulary (2026-10-07). Bare "signin" is NOT
+    # banned: this check is a substring test and it would fire on "signing".
     banned = ("signup", "sign-up", "onboarding", "onboard", "login", "log-in",
-              "trial", "guest account", "e-mail address")
+              "sign-in", "trial", "guest account", "e-mail address")
     pkg = _PP_ROOT / "modules" / "surface_architecture"
     hits = []
     for src in sorted(pkg.glob("*.py")):
