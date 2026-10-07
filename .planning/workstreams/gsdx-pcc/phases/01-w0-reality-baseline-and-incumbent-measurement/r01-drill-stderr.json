@@ -1,0 +1,7 @@
+{
+  "file": "modules/gsd_x/goal/providers/gate.py",
+  "test": "tools/test_gsd_x_goal_gate_provider.py",
+  "gate": "V-GATE-VERDICT-FIELDS",
+  "old": "rc=subprocess.run(cmd,stdout=sys.stdout,stderr=sys.stderr).returncode",
+  "new": "rc=subprocess.run(cmd,stdout=sys.stdout).returncode"
+}

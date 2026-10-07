@@ -1,0 +1,4 @@
+  FAIL V-GATE-VERDICT-FIELDS: verdict={'gate': 'gate_ok.py', 'exit_status': 0, 'observed': '', 'tree_hash': 'git:3a75e645697930094bbfbb95860f4ff53efa6c2c', 'revision': 'rev1', 'gate_class': 'unit', 'gate_pin': [['gate_ok.py', 'aa56ee99025e4171912fcd6b0bdb0a44fc494274e8cc561df48310738b4df244']]}
+GSDX_GATE_PROVIDER_PASS=17/18  threshold=18/18
+MUTANT KILLED gate=V-GATE-VERDICT-FIELDS
+EXIT=0
