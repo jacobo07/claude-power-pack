@@ -103,3 +103,10 @@ G9 resume_failed count: 27 in the whole ledger vs 19 cited. Fix: pin window and 
 2. A1-2 = turns.py --attribute (G3-G5), canary on the 2026-10-04..07 window into coordination_spend; then G6 GEX44 run.
 3. T3 replay with a measurement receipt (G8), then T7.
 Status line to keep current: A1 spent UNMEASURED (this pane, laptop) / 20M; executed units: A1-6, G23 hermetic fix.
+U1 (2026-10-07): packet + route committed fabf3071 (ADMISSIBLE 7.80M / 58 calls). Staged on GEX44 clone
+~/missions/ce-a1 at 61ab9f23 (branch mission/ce-a1, git identity + trust set, ~/.claude.json backed up to
+~/.claude.json.bak-ce-a1). GEX44 live PP is daf90d00: no `admit`, no route_admission.py, and the packet-gate law is
+not deployed (same NO_PHASES defect that BLOCKED G2) -> U1 runs as a bounded headless worker, not a gsd mission:
+`cd ~/missions/ce-a1 && nohup claude -p "<run U1-PACKET.md>" --model sonnet --max-turns 58 --permission-mode auto
+--output-format json` (out: ~/missions/ce-a1-U1.out.json). First launch: 429 usage_limit_reached on the GEX44
+account too (resets Oct 11 20:00), 0 tokens spent. Relaunch after the Owner logs GEX44 into another account.
