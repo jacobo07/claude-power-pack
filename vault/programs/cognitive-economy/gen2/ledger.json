@@ -13,7 +13,85 @@
   "estimate_low": 40000000,
   "estimate_central": 78000000,
   "estimate_high": 150000000,
-  "spent_measured": null
+  "spent_measured": {
+   "value": null,
+   "sources": [
+    {
+     "what": "Gen2 D1 spend pre-anchor (88 calls)",
+     "processed": 27088463,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/stage0/owner_map.md:50 (cites skill-capability/gen2/SPEND.md)"
+    },
+    {
+     "what": "Stage 0 + plan pane at Gen2.1 approval (rounded 17.4M; overlap with D1 not stated)",
+     "processed": 17400000,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/stage0/README.md:33"
+    },
+    {
+     "what": "Gen2.1 pane 87601e81 after anchor",
+     "processed": 6096405,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/gen2_1-readout.md:8"
+    },
+    {
+     "what": "Gen2.1 pane tua-x-96/242ae047 after anchor",
+     "processed": 8435275,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/gen2_1-readout.md:8"
+    },
+    {
+     "what": "E1 m-f011d7fdebc9 actual",
+     "processed": 141008708,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/D1-D2.md:4"
+    },
+    {
+     "what": "gen3_t1 compiler agent own meter",
+     "processed": 4931354,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/gen3_t1/README.md:30"
+    },
+    {
+     "what": "gen3_t2 steps total (rounded 44.25M)",
+     "processed": 44250000,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/gen3_t2/README.md:7"
+    },
+    {
+     "what": "tok18 orchestrator c77978f6 incl subagents",
+     "processed": 12819555,
+     "file": "vault/plans/tok18-tranche-context-runtime-2026-10-06.md:127"
+    },
+    {
+     "what": "tok18 pane 7f13d6e2",
+     "processed": 9638790,
+     "file": "vault/plans/tok18-tranche-context-runtime-2026-10-06.md:77"
+    },
+    {
+     "what": "context-runtime-2 coordinator e6e0eca7",
+     "processed": 2318601,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/tranche/context-runtime-2-results.json:24"
+    },
+    {
+     "what": "context-runtime-3 workers S1+S3+S5",
+     "processed": 3292973,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/tranche/context-runtime-3-results.json"
+    },
+    {
+     "what": "context-runtime-3b workers S1+S3",
+     "processed": 2787331,
+     "file": "vault/programs/cognitive-economy/gen2/evidence/tranche/context-runtime-3b-results.json"
+    },
+    {
+     "what": "completion-plan pane 71ccfa86 (CE-T0a fixed meter, power-pack dir)",
+     "processed": "sid 71ccfa86-6902-4449-a345-dacb4b1ba2de files 1 calls 85 processed 17,568,509 (ctx 17,495,044 out 73,465) subagent calls 0 subagent ctx 0",
+     "file": "vault/programs/cognitive-economy/gen2/evidence/tranche/CE-T0a-receipt.md"
+    }
+   ],
+   "unknown": [
+    "S5 receipt: processed not measured (S5-receipt.md:52)",
+    "WU2 processed total absent (WU4-receipt.md:9)",
+    "T2-0.5 final worker figure only in the worker's last report (T2-0.5-README.md:69)",
+    "overlap between Stage0 17.4M and D1 27.1M, and whether E1 141M counts against the gen2 boundary",
+    "GEX44-hosted transcripts are not in the laptop index (owner_map.md:47)",
+    "CE-T0 tranche workers (this session 22e4fda5 and siblings) not yet metered",
+    "any reading taken with `self_spend.py --session X` before CE-T0a measured sid 87601e81, not X"
+   ]
+  }
  },
  "gen2_1": {
   "name": "Economic Kill-Shot",
