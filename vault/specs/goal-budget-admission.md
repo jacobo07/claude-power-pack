@@ -4,7 +4,7 @@ tier: T3
 covers: [goal-budget, goal-admission, session_budget_guard, mission_spend, SpendLedger, GoalLedger, A1, ECONOMIC_CONTAINMENT, pre-call admission]
 origin: vault/programs/cognitive-economy/gen2/AMENDMENT-A1-2026-10-07.md (INCIDENT 2026-10-07)
 novelty: EXTEND_EXISTING_OWNER (HR-NOVELTY-001) -- session_budget_guard.js, tools/mission_spend.py, modules/provider_routing/ledger.py
-status: draft
+status: done (Owner "done", 2026-10-08; live canary #6 at ffd8f9e9: 2,912,243 of a 3M cap -- CANARY.md)
 ---
 
 # Goal budget admission -- reserve before spend

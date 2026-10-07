@@ -129,6 +129,16 @@ canary2.py here).
   margin is last total + largest growth over 5 requests, an estimate, not a bound. The cap held in
   #3, #4 and #6 because the leftover room absorbed it.
 
+## Closing verdict (2026-10-08)
+**Goal admission declared DONE by the Owner ("done") on canary #6** (guard ffd8f9e9): two bound
+panes plus Agents, 2,912,243 of a 3,000,000 cap, each pane denied once and one reply after it.
+Suites at close: GOAL_PASS=54/54, ADMIT_PASS=12/12, SBG_PASS=17/17 (V-SBG-LATENCY flaky on a loaded host).
+Accepted residual: a final reply can exceed its hold by a few hundred tokens (+187 in #6). The cap
+holds while the leftover room absorbs that; no pad was added (Owner chose done over a ~2% pad).
+The verdict line at the top of this file describes canary #1 and is kept as history.
+Open debt carried from the capsule: renewal churn on parallel calls (obligation 4);
+test_hook_registration_integrity StopIteration (obligation 5).
+
 ## Relevance to A1
 A1 crossed a 20M cap by 22.3M (111.5%) with no pre-call refusal at all. Here the refusal reached
 every pane; the residual is a ~1.2M absolute overshoot from concurrency. That is not yet the zero
