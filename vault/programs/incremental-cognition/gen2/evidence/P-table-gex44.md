@@ -5,7 +5,7 @@ plane: gex44
 denominator: KME-L
 corpus_root: /home/kobii/kme-corpus/projects
 index: /home/kobii/ao-scratch/p1/cold.sqlite
-head: b1023f3d7fc115c4f3622f7cce5238873b0b02ff
+head: e06dafa748713179d5cc4668d234ded5ad7e832a
 measured_at: 2026-10-06T23:30:43Z
 ---
 
@@ -99,7 +99,7 @@ sessions (read raw by design, 02-03 guard `no_first_ts`, as in 02-04) + 3 newly 
 = 110 sessions; the two stale selected sessions are already inside the 102. Files 372 = 369 + 3
 (each newly stale session has one file). Bytes 1,649,876,803 = 1,648,220,948 (02-04 read set) + 1,655,611
 (the three newly read files after the append) + 244 (2 x 122 appended to the already-read selected sessions).
-The strace of the traced canary-cost run below opens 372 corpus files whose sessions equal that same
+The strace of a traced canary-cost repetition (`/home/kobii/ao-scratch/p2/strace/`, first traced run; the later two-repetition run opens the identical set, `open_set_identical` true) opens 372 corpus files whose sessions equal that same
 110-session set (checked from `opened_paths`). The plan's phrase "selected sessions plus the three stale" is
 refined, not violated, by the five no-first-timestamp sessions already read raw in 02-04.
 
@@ -142,9 +142,9 @@ command: `python3 -I tools/strace_io_sum.py run --label challenger-post-delta --
 {"label": "challenger-post-delta", "n": 5, "wall_median_s": 28.758788, "wall_runs_s": [28.731407, 28.758788, 28.859836, 28.927118, 28.636859], "failed": [], "cache": {"mode": "not evicted (page cache as found)"}}
 ```
 
-Bytes, one traced run (`--repeat 0 --trace-repeat 1`, strace logs in `/home/kobii/ao-scratch/p2/strace/challenger-post-delta-r0-s*.strace`):
+Bytes, two traced repetitions with identical opened-file sets (`--repeat 0 --trace-repeat 2`, strace logs in `/home/kobii/ao-scratch/p2/strace2/challenger-post-delta-r{0,1}-s*.strace`; this JSON replaces an earlier one-repetition traced run whose result was identical, `raw_bytes` 3301460730, `raw_files_opened` 372, `index_bytes` 519078504). The two steps are the challenger commands of step 4 with `--path-log /home/kobii/ao-scratch/p2/delta-bench-path-2.jsonl --out-dir /home/kobii/ao-scratch/p2/delta-bench-out-2` (4 records, all `plan_taken: index`, `deopt: null`, stale 5):
 
-command: `python3 -I tools/strace_io_sum.py run --label challenger-post-delta --repeat 0 --trace-repeat 1 --trace-dir /home/kobii/ao-scratch/p2/strace --corpus-root /home/kobii/ao-scratch/p2/delta-root --scope-regex 'KobiiCraft-Core-Files|kme-wt-arena2' --forbid-regex '(?i)costaluz' --index-path /home/kobii/ao-scratch/p2/delta.sqlite --step '<C step 1 on the copy>' --step '<C step 2 on the copy>'`
+command: `python3 -I tools/strace_io_sum.py run --label challenger-post-delta --repeat 0 --trace-repeat 2 --trace-dir /home/kobii/ao-scratch/p2/strace2 --corpus-root /home/kobii/ao-scratch/p2/delta-root --scope-regex 'KobiiCraft-Core-Files|kme-wt-arena2' --forbid-regex '(?i)costaluz' --index-path /home/kobii/ao-scratch/p2/delta.sqlite --step '<C step 1 on the copy>' --step '<C step 2 on the copy>'`
 
 ```json
 {"verdict": "MEASURED", "raw_bytes": 3301460730, "raw_files_opened": 372, "unique_bytes": 1649876803, "cross_project_bytes": 0, "forbidden_bytes": 0, "forbidden_opens": 0, "index_bytes": 519078504, "other_bytes": 6163665, "open_set_sha256": "a986037f571d"}
@@ -152,4 +152,83 @@ command: `python3 -I tools/strace_io_sum.py run --label challenger-post-delta --
 
 by_project: `{"C--Users-User-Apps-kme-wt-arena2": {"bytes": 1569084, "files": 1}, "C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files": {"bytes": 3299891646, "files": 371}}`. `raw_bytes` is two processes (`all`, `rank`) each reading the set once; `index_bytes` is the
 delta index (`delta.sqlite`, a six-directory index: smaller than the whole-corpus index of the main rows).
+## Runs
+
+Setup (all rows below): real corpus `/home/kobii/kme-corpus/projects` and index `/home/kobii/ao-scratch/p1/cold.sqlite`,
+both read-only. Question Q: `--denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2'`.
+Scoped query S: `python3 -I wiki/tools/kme_pillars.py all <Q> --plan scoped --out-dir /home/kobii/ao-scratch/p2/bench-out-scoped` then
+`python3 -I wiki/tools/kme_replay.py rank <Q> --plan scoped --out-dir /home/kobii/ao-scratch/p2/bench-out-scoped`. Challenger query C: the same two steps with
+`--plan challenger --index-db /home/kobii/ao-scratch/p1/cold.sqlite --cert /home/kobii/ao-scratch/p2/bench.cert.json --path-log <log> --out-dir /home/kobii/ao-scratch/p2/bench-out-challenger`
+(forced, so a deopt would exit 3 and fail the run). Certificate:
+command: `python3 -I wiki/tools/kme_pillars.py certify <Q> --index-db /home/kobii/ao-scratch/p1/cold.sqlite --cert /home/kobii/ao-scratch/p2/bench.cert.json`
+-> `KMEP-CERT verdict=CERTIFIED selected=102 uncovered=16`. Each configuration ran in the foreground under `timeout 590` (or less);
+the cold configurations were split 3 + 2 repetitions (same label, union taken). Evicted = best-effort `posix_fadvise(DONTNEED)` of the six
+scoped directories (6,948 files) and the index before every repetition: the cache state is labelled **evicted best-effort, residency not measured**, never
+"cold" as a measured state. The warm configurations ran one unrecorded warm-up query first. Walls are untraced repetitions only; the
+reported wall is the sum of the two steps (`all` + `rank`) of one repetition; bytes come only from the traced runs below.
+
+### Walls, N=5 per configuration
+
+**scoped-warm** (S, page cache as found after one warm-up query)
+
+command: `python3 -I tools/strace_io_sum.py run --label scoped-warm --repeat 5 --trace-dir /home/kobii/ao-scratch/p2/bench/tr/scoped-warm --corpus-root /home/kobii/kme-corpus/projects --scope-regex 'KobiiCraft-Core-Files|kme-wt-arena2' --forbid-regex '(?i)costaluz' --index-path /home/kobii/ao-scratch/p1/cold.sqlite --step 'python3 -I wiki/tools/kme_pillars.py all --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan scoped --out-dir /home/kobii/ao-scratch/p2/bench-out-scoped' --step 'python3 -I wiki/tools/kme_replay.py rank --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan scoped --out-dir /home/kobii/ao-scratch/p2/bench-out-scoped'` -> JSON `/home/kobii/ao-scratch/p2/bench/scoped-warm.json`
+
+```json
+{"label": "scoped-warm", "mode": "warm", "wall_runs_s": [56.975624, 57.181243, 57.926827, 56.415992, 56.063434], "n": 5, "wall_median_s": 56.975624, "failed": [], "cache": {"mode": "not evicted (page cache as found)"}}
+```
+
+**scoped-cold** (S, evicted best-effort, residency not measured)
+
+command: `python3 -I tools/strace_io_sum.py run --label scoped-cold --repeat 3 --trace-dir /home/kobii/ao-scratch/p2/bench/tr/scoped-cold-a --evict /home/kobii/kme-corpus/projects/C--Users-User-Apps-kme-wt-arena2 --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files--audit-cache --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-KobiCraftServer --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-KobiCraftServer-plugins-kobicore --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-sentient-videos --evict /home/kobii/ao-scratch/p1/cold.sqlite --corpus-root /home/kobii/kme-corpus/projects --scope-regex 'KobiiCraft-Core-Files|kme-wt-arena2' --forbid-regex '(?i)costaluz' --index-path /home/kobii/ao-scratch/p1/cold.sqlite --step 'python3 -I wiki/tools/kme_pillars.py all --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan scoped --out-dir /home/kobii/ao-scratch/p2/bench-out-scoped' --step 'python3 -I wiki/tools/kme_replay.py rank --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan scoped --out-dir /home/kobii/ao-scratch/p2/bench-out-scoped'` -> JSON `/home/kobii/ao-scratch/p2/bench/scoped-cold-a.json`
+command: `python3 -I tools/strace_io_sum.py run --label scoped-cold --repeat 2 --trace-dir /home/kobii/ao-scratch/p2/bench/tr/scoped-cold-b --evict /home/kobii/kme-corpus/projects/C--Users-User-Apps-kme-wt-arena2 --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files--audit-cache --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-KobiCraftServer --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-KobiCraftServer-plugins-kobicore --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-sentient-videos --evict /home/kobii/ao-scratch/p1/cold.sqlite --corpus-root /home/kobii/kme-corpus/projects --scope-regex 'KobiiCraft-Core-Files|kme-wt-arena2' --forbid-regex '(?i)costaluz' --index-path /home/kobii/ao-scratch/p1/cold.sqlite --step 'python3 -I wiki/tools/kme_pillars.py all --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan scoped --out-dir /home/kobii/ao-scratch/p2/bench-out-scoped' --step 'python3 -I wiki/tools/kme_replay.py rank --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan scoped --out-dir /home/kobii/ao-scratch/p2/bench-out-scoped'` -> JSON `/home/kobii/ao-scratch/p2/bench/scoped-cold-b.json`
+
+```json
+{"label": "scoped-cold", "mode": "evicted best-effort, residency not measured", "wall_runs_s": [58.175961, 58.523155, 59.525624, 58.672375, 57.989338], "n": 5, "wall_median_s": 58.523155, "failed": [], "cache": {"mode": "evicted best-effort, residency not measured", "evicted": 4632, "failed": 0, "repetitions_evicted": 2}}
+```
+
+**challenger-warm** (C, page cache as found after one warm-up query)
+
+command: `python3 -I tools/strace_io_sum.py run --label challenger-warm --repeat 5 --trace-dir /home/kobii/ao-scratch/p2/bench/tr/challenger-warm --corpus-root /home/kobii/kme-corpus/projects --scope-regex 'KobiiCraft-Core-Files|kme-wt-arena2' --forbid-regex '(?i)costaluz' --index-path /home/kobii/ao-scratch/p1/cold.sqlite --step 'python3 -I wiki/tools/kme_pillars.py all --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan challenger --index-db /home/kobii/ao-scratch/p1/cold.sqlite --cert /home/kobii/ao-scratch/p2/bench.cert.json --path-log /home/kobii/ao-scratch/p2/bench-path.jsonl --out-dir /home/kobii/ao-scratch/p2/bench-out-challenger' --step 'python3 -I wiki/tools/kme_replay.py rank --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan challenger --index-db /home/kobii/ao-scratch/p1/cold.sqlite --cert /home/kobii/ao-scratch/p2/bench.cert.json --path-log /home/kobii/ao-scratch/p2/bench-path.jsonl --out-dir /home/kobii/ao-scratch/p2/bench-out-challenger'` -> JSON `/home/kobii/ao-scratch/p2/bench/challenger-warm.json`
+
+```json
+{"label": "challenger-warm", "mode": "warm", "wall_runs_s": [29.580848, 29.400441, 29.548201, 29.731905, 29.96619], "n": 5, "wall_median_s": 29.580848, "failed": [], "cache": {"mode": "not evicted (page cache as found)"}}
+```
+
+Path records of the 5 untraced repetitions (10 = 5 repetitions x 2 steps): `/home/kobii/ao-scratch/p2/bench/path-challenger-warm.jsonl`: 10 records, plan_taken/deopt/stale/files/bytes = [('index', 'None', 0, 369, 1648220948)]
+
+**challenger-cold** (C, evicted best-effort, residency not measured)
+
+command: `python3 -I tools/strace_io_sum.py run --label challenger-cold --repeat 3 --trace-dir /home/kobii/ao-scratch/p2/bench/tr/challenger-cold-a --evict /home/kobii/kme-corpus/projects/C--Users-User-Apps-kme-wt-arena2 --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files--audit-cache --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-KobiCraftServer --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-KobiCraftServer-plugins-kobicore --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-sentient-videos --evict /home/kobii/ao-scratch/p1/cold.sqlite --corpus-root /home/kobii/kme-corpus/projects --scope-regex 'KobiiCraft-Core-Files|kme-wt-arena2' --forbid-regex '(?i)costaluz' --index-path /home/kobii/ao-scratch/p1/cold.sqlite --step 'python3 -I wiki/tools/kme_pillars.py all --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan challenger --index-db /home/kobii/ao-scratch/p1/cold.sqlite --cert /home/kobii/ao-scratch/p2/bench.cert.json --path-log /home/kobii/ao-scratch/p2/bench-path.jsonl --out-dir /home/kobii/ao-scratch/p2/bench-out-challenger' --step 'python3 -I wiki/tools/kme_replay.py rank --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan challenger --index-db /home/kobii/ao-scratch/p1/cold.sqlite --cert /home/kobii/ao-scratch/p2/bench.cert.json --path-log /home/kobii/ao-scratch/p2/bench-path.jsonl --out-dir /home/kobii/ao-scratch/p2/bench-out-challenger'` -> JSON `/home/kobii/ao-scratch/p2/bench/challenger-cold-a.json`
+command: `python3 -I tools/strace_io_sum.py run --label challenger-cold --repeat 2 --trace-dir /home/kobii/ao-scratch/p2/bench/tr/challenger-cold-b --evict /home/kobii/kme-corpus/projects/C--Users-User-Apps-kme-wt-arena2 --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files--audit-cache --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-KobiCraftServer --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-KobiCraftServer-plugins-kobicore --evict /home/kobii/kme-corpus/projects/C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-sentient-videos --evict /home/kobii/ao-scratch/p1/cold.sqlite --corpus-root /home/kobii/kme-corpus/projects --scope-regex 'KobiiCraft-Core-Files|kme-wt-arena2' --forbid-regex '(?i)costaluz' --index-path /home/kobii/ao-scratch/p1/cold.sqlite --step 'python3 -I wiki/tools/kme_pillars.py all --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan challenger --index-db /home/kobii/ao-scratch/p1/cold.sqlite --cert /home/kobii/ao-scratch/p2/bench.cert.json --path-log /home/kobii/ao-scratch/p2/bench-path.jsonl --out-dir /home/kobii/ao-scratch/p2/bench-out-challenger' --step 'python3 -I wiki/tools/kme_replay.py rank --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan challenger --index-db /home/kobii/ao-scratch/p1/cold.sqlite --cert /home/kobii/ao-scratch/p2/bench.cert.json --path-log /home/kobii/ao-scratch/p2/bench-path.jsonl --out-dir /home/kobii/ao-scratch/p2/bench-out-challenger'` -> JSON `/home/kobii/ao-scratch/p2/bench/challenger-cold-b.json`
+
+```json
+{"label": "challenger-cold", "mode": "evicted best-effort, residency not measured", "wall_runs_s": [37.928528, 37.297473, 37.451222, 37.529019, 37.783499], "n": 5, "wall_median_s": 37.529019, "failed": [], "cache": {"mode": "evicted best-effort, residency not measured", "evicted": 4632, "failed": 0, "repetitions_evicted": 2}}
+```
+
+Path records (`/home/kobii/ao-scratch/p2/bench/path-challenger-cold.jsonl`): 10 records, plan_taken/deopt/stale/files/bytes = [('index', 'None', 0, 369, 1648220948)]
+
+### Bytes, two traced repetitions per path
+
+**scoped-traced** (S)
+
+command: `python3 -I tools/strace_io_sum.py run --label scoped-traced --repeat 0 --trace-repeat 2 --trace-dir /home/kobii/ao-scratch/p2/bench/tr/scoped-traced --corpus-root /home/kobii/kme-corpus/projects --scope-regex 'KobiiCraft-Core-Files|kme-wt-arena2' --forbid-regex '(?i)costaluz' --index-path /home/kobii/ao-scratch/p1/cold.sqlite --step 'python3 -I wiki/tools/kme_pillars.py all --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan scoped --out-dir /home/kobii/ao-scratch/p2/bench-out-scoped' --step 'python3 -I wiki/tools/kme_replay.py rank --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan scoped --out-dir /home/kobii/ao-scratch/p2/bench-out-scoped'` -> JSON `/home/kobii/ao-scratch/p2/bench/scoped-traced.json`
+
+```json
+{"label": "scoped-traced", "open_set_identical": true, "failed": [], "traced": [{"verdict": "MEASURED", "raw_bytes": 6120339068, "raw_files_opened": 995, "unique_bytes": 3055976146, "cross_project_bytes": 0, "forbidden_bytes": 0, "forbidden_opens": 0, "index_bytes": 0, "other_bytes": 4500551, "lines_unparsed": 0, "run": 0, "open_set_sha256": "6309f6db454d"}, {"verdict": "MEASURED", "raw_bytes": 6120339068, "raw_files_opened": 995, "unique_bytes": 3055976146, "cross_project_bytes": 0, "forbidden_bytes": 0, "forbidden_opens": 0, "index_bytes": 0, "other_bytes": 4500551, "lines_unparsed": 0, "run": 1, "open_set_sha256": "6309f6db454d"}]}
+```
+
+**challenger-traced** (C)
+
+command: `python3 -I tools/strace_io_sum.py run --label challenger-traced --repeat 0 --trace-repeat 2 --trace-dir /home/kobii/ao-scratch/p2/bench/tr/challenger-traced --corpus-root /home/kobii/kme-corpus/projects --scope-regex 'KobiiCraft-Core-Files|kme-wt-arena2' --forbid-regex '(?i)costaluz' --index-path /home/kobii/ao-scratch/p1/cold.sqlite --step 'python3 -I wiki/tools/kme_pillars.py all --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan challenger --index-db /home/kobii/ao-scratch/p1/cold.sqlite --cert /home/kobii/ao-scratch/p2/bench.cert.json --path-log /home/kobii/ao-scratch/p2/bench-path.jsonl --out-dir /home/kobii/ao-scratch/p2/bench-out-challenger' --step 'python3 -I wiki/tools/kme_replay.py rank --denominator KME-L --until auto --expand --root /home/kobii/kme-corpus/projects --project-filter 'KobiiCraft-Core-Files|kme-wt-arena2' --plan challenger --index-db /home/kobii/ao-scratch/p1/cold.sqlite --cert /home/kobii/ao-scratch/p2/bench.cert.json --path-log /home/kobii/ao-scratch/p2/bench-path.jsonl --out-dir /home/kobii/ao-scratch/p2/bench-out-challenger'` -> JSON `/home/kobii/ao-scratch/p2/bench/challenger-traced.json`
+
+```json
+{"label": "challenger-traced", "open_set_identical": true, "failed": [], "traced": [{"verdict": "MEASURED", "raw_bytes": 3298099868, "raw_files_opened": 369, "unique_bytes": 1648220948, "cross_project_bytes": 0, "forbidden_bytes": 0, "forbidden_opens": 0, "index_bytes": 1805435496, "other_bytes": 6163481, "lines_unparsed": 362, "run": 0, "open_set_sha256": "f58f3283e947"}, {"verdict": "MEASURED", "raw_bytes": 3298099868, "raw_files_opened": 369, "unique_bytes": 1648220948, "cross_project_bytes": 0, "forbidden_bytes": 0, "forbidden_opens": 0, "index_bytes": 1805435496, "other_bytes": 6163481, "lines_unparsed": 362, "run": 1, "open_set_sha256": "f58f3283e947"}]}
+```
+
+Path records of the challenger traced run (`/home/kobii/ao-scratch/p2/bench/path-challenger-traced.jsonl`): 4 records, plan_taken/deopt/stale/files/bytes = [('index', 'None', 0, 369, 1648220948)]
+
+Every challenger path record of the bench (warm, cold and traced) shows `plan_taken: index` and `deopt: null`, stale 0, 369 files, 1,648,220,948 bytes. `raw_bytes` of a 7-file run is two processes (`all`, `rank`) each reading its set once; `index_bytes` is likewise two reads of the index. `open_set_identical` is true for both pairs and for the post-delta pair.
+
+Equivalence of the bench configuration itself (one fresh run of each plan into an empty out-dir, then compare against the committed files): challenger `KMEQ_VERDICT=SAME same=7/7`, scoped `KMEQ_VERDICT=SAME same=7/7` (commands: C and S as above with `--out-dir /home/kobii/ao-scratch/p2/bench-eq-challenger` / `bench-eq-scoped`; `python3 -I tools/kme_equivalence.py compare --candidate <dir> --committed vault/programs/incremental-cognition/measurements`). The repeated bench out-dirs accumulate suffixed files and compare as `MISSING reason=ambiguous`, which is why the checks use fresh dirs.
+
 <!-- gsd:write-continue -->
