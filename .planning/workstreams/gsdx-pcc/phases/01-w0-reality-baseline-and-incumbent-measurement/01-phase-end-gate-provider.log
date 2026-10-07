@@ -1,0 +1,21 @@
+  PASS V-GATE-TREE-CLEAN: a clean scope is named by its commit tree (git:3a75e6456979...)
+  PASS V-GATE-TREE-DIRTY: an uncommitted scope says so rather than borrowing the commit's name
+  PASS V-GATE-TREE-UNKNOWN: a tree we could not read is 'unknown:', never an empty string that matches
+  PASS V-GATE-PIN-MOVES: editing the gate changes its pin
+  PASS V-GATE-PIN-MISSING: pinning a missing gate file refused
+  PASS V-GATE-OBSERVE-ENDED: a passing gate ends COMPLETED (exit 0)
+  PASS V-GATE-VERDICT-FIELDS: the verdict carries exit, tree, revision, class, pin and what it observed
+  PASS V-GATE-NO-FAILURE-ON-PASS: a passing gate records no failure
+  PASS V-GATE-FAILING-IS-EVIDENCE: a failing gate is a verdict AND a failure with a signature
+  PASS V-GATE-NEEDS-COMMAND: a gate epoch with no command refused
+  PASS V-GATE-CLASS-DECLARED: an unknown gate class refused, never inferred
+  PASS V-GATE-FILES-PINNED: a gate that names no files of its own refused
+  PASS V-GATE-RUNNING: a live gate reports running
+  PASS V-GATE-CANCEL-PRECONDITION: precondition: the gate's own grandchild is running before cancel
+  PASS V-GATE-CANCEL-KILLS: cancel killed the process tree (supervisor 10516 and grandchild 37624 gone)
+  PASS V-GATE-CANCELLED-NO-VERDICT: a cancelled gate yields no verdict and says why, rather than inventing one
+  PASS V-GATE-PROBE-NOTHING: a token that was never dispatched probes to None
+  PASS V-GATE-PROBE-FINDS: a run started before a crash is found by its pre-minted token
+
+GSDX_GATE_PROVIDER_PASS=18/18  threshold=18/18
+EXIT=0
