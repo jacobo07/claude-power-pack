@@ -241,20 +241,30 @@ def _check_cascade_signal() -> None:
 def _check_never_again_auto() -> None:
     try:
         from modules.osa import never_again as na
-        proposals_dir = ROOT / "vault" / "hard_rules"
-        before = set(p.name for p in proposals_dir.glob("auto_*.md")
-                     if proposals_dir.is_dir())
-        na.inject(
-            issue="ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ",
-            root_cause="V-gate smoke probe",
-            fix="N/A smoke",
-            recognizer="Sees ZZZ-SMOKE-CRITICAL token",
-            severity="CRITICAL",
-            project="hr-gate-smoke",
-        )
-        after = set(p.name for p in proposals_dir.glob("auto_*.md")
-                    if proposals_dir.is_dir())
-        new = after - before
+        # Hermetic: every path inject() writes is redirected to a temp
+        # root, so the gate leaves `git status` unchanged.
+        saved = {k: getattr(na, k) for k in
+                 ("PP_ROOT", "LOG_PATH", "SESSION_LESSONS", "UKDL_PATH")}
+        with tempfile.TemporaryDirectory(prefix="hr_na_") as td:
+            tmp = Path(td)
+            na.PP_ROOT = tmp
+            na.LOG_PATH = tmp / "vault" / "osa" / "never_again_log.jsonl"
+            na.SESSION_LESSONS = tmp / "vault" / "knowledge_base" / "s.md"
+            na.UKDL_PATH = tmp / "vault" / "knowledge_base" / "u.md"
+            try:
+                na.inject(
+                    issue="ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ",
+                    root_cause="V-gate smoke probe",
+                    fix="N/A smoke",
+                    recognizer="Sees ZZZ-SMOKE-CRITICAL token",
+                    severity="CRITICAL",
+                    project="hr-gate-smoke",
+                )
+            finally:
+                for k, v in saved.items():
+                    setattr(na, k, v)
+            new = set(p.name for p in
+                      (tmp / "vault" / "hard_rules").glob("auto_*.md"))
         if new:
             _ok("V-HR-NEVER-AGAIN-AUTO",
                 f"draft created: {next(iter(new))}")
