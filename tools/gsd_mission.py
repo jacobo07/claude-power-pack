@@ -1321,6 +1321,7 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
     changes: dict = {}
     if token_estimate is not None:
         changes["token_estimate"] = _token_count("token_estimate", token_estimate)
+        changes["token_estimate_src"] = None   # an Owner estimate replaces an auto one; operator = no src
     if autocompact is not None:
         n = _token_count("autocompact", autocompact)
         changes["autocompact"] = f"{n // 1000}k" if n % 1000 == 0 else str(n)
@@ -1417,13 +1418,16 @@ def envelope_refusal(rec: dict) -> str | None:
     read as unlimited. Legacy (law 7) bypasses and ledgers the refusal it would have made."""
     why = None
     unb = rec.get("unbounded") or {}
-    if not rec.get("token_estimate") and not (unb.get("authority") or "").strip():
+    # An estimate the supervisor auto-assigned (_auto_budget, src "auto") is a breaker input, not an
+    # envelope someone decided: counting it let every bare mission launch, wake and renew (law 2).
+    declared = rec.get("token_estimate") and rec.get("token_estimate_src") != "auto"
+    if not declared and not (unb.get("authority") or "").strip():
         why = ("no token envelope: set one with `envelope --token-estimate`, or arm with "
                "`--unbounded --authority <who decided, where recorded>`")
     if why is None:
         why = window_refusal(rec)
     if why is None:
-        if not rec.get("token_estimate"):
+        if not declared:
             lr.ledger_append(rec["mission_id"], "unbounded_launch", mission_id=rec["mission_id"],
                              epoch=rec.get("epoch"), authority=str(unb.get("authority"))[:300])
         return None
@@ -2244,6 +2248,8 @@ def renew_mission(rec: dict, now: float | None = None, capsule_key: str | None =
     # spec goal-governed-mission-control C1: the route travels with the work. Never `admission`:
     # a renewed unit is re-admitted against a re-measured budget.
     for k in RENEWAL_CARRIED_ENVELOPE:
+        if k == "token_estimate" and rec.get("token_estimate_src") == "auto":
+            continue   # auto-assigned, not an envelope: the successor must not inherit it (law 2)
         if rec.get(k) not in (None, "", [], {}):
             carried[k] = rec[k]
     if rec.get("wu_packet"):
