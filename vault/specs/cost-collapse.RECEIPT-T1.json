@@ -20,5 +20,5 @@
   "f1_f2": "already present in gsd_mission.py on this base (packet_gate_drift, packet_gate_dir); this tranche added the missing gates V-GRAMMAR-F1-* (3) and V-GRAMMAR-F2-* (8) with real git repo + linked worktree fixtures, plus mutation drills F1-PACKET-DRIFT-NEVER-CHECKED, F2-ANY-REPO-ADMITTED, AUTO-ESTIMATE-COUNTS-AS-ENVELOPE (all go red).",
   "processed_tokens": null,
   "processed_tokens_note": "not measured by this worker; mission_spend.processed_tokens(rec) over the T1 mission is the source",
-  "open_points": []
+  "open_points": ["T2 NOT ARMED: gsd_mission.py arm refused: singleflight, m-1a51d97b4a15 is a live attempt of this goal (the T1 mission itself). Packet WU-CC2.md is committed (db634d55). After T1 ends run: arm --cwd C:\\Users\\User\\Apps\\pp-cost-collapse --command \"Execute the work unit in the wu_packet\" --workstream cost-collapse --no-launch ; then envelope --mission <id> --wu-packet vault/specs/packets/WU-CC2.md --token-estimate 5M --model sonnet --autocompact 250k"]
 }
