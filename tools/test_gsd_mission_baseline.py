@@ -114,6 +114,17 @@ def main() -> int:
     check("V-BASE-PACKET-SLIM-UNTOUCHED", gm.slim_profile(slim) == "slim-t2" and slim["baseline"]["tier"] == "COMPILED"
           and slim["baseline"]["work_class"] == "COMPILED_UNIT")
 
+    # V-BASE-RERESOLVE: a value the previous resolution wrote is still policy-derived on the next launch;
+    # an operator change made after it stays explicit. Control pair: same record, one field moved.
+    first = gm.resolve_baseline({"mission_id": "m", "epoch": 1, "resume_command": "/gsd-autonomous"})
+    again = gm.resolve_baseline(first)
+    check("V-BASE-RERESOLVE-STAYS-POLICY", again["baseline"]["src"]["model"].startswith("policy")
+          and again["model"] == "sonnet", str(again["baseline"]))
+    moved = gm.resolve_baseline({**first, "model": "opus"})
+    check("V-BASE-RERESOLVE-OPERATOR-EXPLICIT", moved["model"] == "opus"
+          and moved["baseline"]["src"]["model"] == "explicit"
+          and moved["baseline"]["src"]["autocompact"].startswith("policy"), str(moved["baseline"]))
+
     # V-BASE-OFF: no change at all.
     mission("m-off")
     _, argv = launch("m-off", "off")

@@ -957,15 +957,22 @@ def resolve_baseline(rec: dict) -> dict:
     pol, origin = _baseline_policy()
     cls = work_class(rec)
     base = pol["classes"][cls]
-    out, src = dict(rec), {}
+    # A value an earlier resolution wrote is still policy-derived while it is unchanged: re-resolve it, or
+    # the next epoch reports it `explicit` and a policy change never reaches the mission. A value an
+    # operator set afterwards (envelope --model opus) differs from what was written, so it stays explicit.
+    prior = rec.get("baseline") or {}
+    written = {f: v for f, v in (prior.get("values") or {}).items()
+               if not str((prior.get("src") or {}).get(f, "explicit")).startswith("explicit")}
+    out, src, values = dict(rec), {}, {}
     for f in _BASELINE_FIELDS:
-        if rec.get(f):
+        if rec.get(f) and not (f in written and rec.get(f) == written[f]):
             src[f] = "explicit"
         else:
             out[f] = base[f]
             src[f] = f"policy@{pol['version']}" if origin == "policy" else "builtin"
+        values[f] = out.get(f)
     out["baseline"] = {"version": pol["version"], "tier": "COMPILED" if rec.get("wu_packet") else "BASIC",
-                       "work_class": cls, "src": src, "legacy_reason": rec.get("legacy_reason")}
+                       "work_class": cls, "src": src, "values": values, "legacy_reason": rec.get("legacy_reason")}
     return out
 
 
