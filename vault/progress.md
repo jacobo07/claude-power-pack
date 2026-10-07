@@ -37,3 +37,8 @@ Append-only; rotate manually after `/kclear` or `/compact`.
 - used: **41%** | remaining: 59%
 - cwd: `C:\Users\User\Apps\pp-gsdx-pcc`
 - transcript: `C:\Users\User\.claude\projects\C--Users-User-Apps-pp-gsdx-pcc\83e8b14f-22d0-43bd-974f-4fc77f78e711.jsonl`
+
+## 2026-10-07T14:17:58+00:00 — session c7baf898
+- used: **40%** | remaining: 60%
+- cwd: `C:\Users\User\Apps\pp-gsdx-pcc`
+- transcript: `C:\Users\User\.claude\projects\C--Users-User-Apps-pp-gsdx-pcc\c7baf898-9ae4-4165-9d85-28335a799c95.jsonl`
