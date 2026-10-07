@@ -1447,6 +1447,7 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
     changes: dict = {}
     if token_estimate is not None:
         changes["token_estimate"] = _token_count("token_estimate", token_estimate)
+        changes["token_estimate_src"] = None   # an Owner estimate replaces an auto one; operator = no src
     if autocompact is not None:
         n = _token_count("autocompact", autocompact)
         changes["autocompact"] = f"{n // 1000}k" if n % 1000 == 0 else str(n)
@@ -1493,6 +1494,166 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
 
 def _admission_switch_off() -> bool:
     return str(os.environ.get("CPP_ROUTE_ADMISSION") or "").strip().lower() in ("0", "off", "false")
+
+
+# --------------------------------------------------------------------------- compiled grammar default
+# spec compiled-grammar-default laws 1-4 and 7. One authority at the effect: launch_worker and
+# gsd_epoch.continue_worker both ask envelope_refusal before they claim anything.
+GRAMMAR_WINDOW_MARGIN = 40_000   # working margin over floor + packet, spec law 3
+PACKET_GATE_TIMEOUT_S = 120
+_GATE_RE = re.compile(r"^done_gate:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
+
+
+def grammar_legacy() -> bool:
+    """Law 7: CPP_MISSION_GRAMMAR=legacy restores laws 2-5 to the behaviour before the default."""
+    return str(os.environ.get("CPP_MISSION_GRAMMAR") or "").strip().lower() == "legacy"
+
+
+def window_refusal(rec: dict, autocompact=None, *, floors_path: str | None = None) -> str | None:
+    """Law 3: an explicit autocompact window must be >= the measured floor of the worker profile
+    + the packet's bytes / 4 + a working margin. An unknown floor refuses, never a guess."""
+    value = autocompact if autocompact is not None else rec.get("autocompact")
+    if value in (None, ""):
+        return None
+    window = _token_count("autocompact", value)
+    profile = rec.get("worker_profile") or "top-level-worker"
+    try:
+        import route_admission as ra
+        floor = ra.load_floors(floors_path)["profiles"].get(profile, {}).get("floor")
+    except (OSError, ValueError) as exc:
+        return f"autocompact {value}: the floor table is unreadable ({exc}); the window cannot be judged"
+    if isinstance(floor, bool) or not isinstance(floor, int) or floor <= 0:
+        return f"autocompact {value}: no measured floor for worker profile {profile!r}; the window cannot be judged"
+    pkt = rec.get("wu_packet") or {}
+    pbytes = int(pkt.get("bytes") or 0)
+    packet_tokens = -(-pbytes // 4)
+    need = floor + packet_tokens + GRAMMAR_WINDOW_MARGIN
+    if window < need:
+        return (f"autocompact {value} ({window:,}) is below {need:,} = floor {floor:,} ({profile}) + "
+                f"packet {packet_tokens:,} ({pbytes:,} bytes / 4) + margin {GRAMMAR_WINDOW_MARGIN:,}")
+    return None
+
+
+def envelope_refusal(rec: dict) -> str | None:
+    """Laws 1-3 at the launch boundary: why this record may not start (or wake) a worker, or None.
+    No token_estimate is refused unless the record carries an `unbounded` authority; absent is never
+    read as unlimited. Legacy (law 7) bypasses and ledgers the refusal it would have made."""
+    why = None
+    unb = rec.get("unbounded") or {}
+    # An estimate the supervisor auto-assigned (_auto_budget, src "auto") is a breaker input, not an
+    # envelope someone decided: counting it let every bare mission launch, wake and renew (law 2).
+    declared = rec.get("token_estimate") and rec.get("token_estimate_src") != "auto"
+    if not declared and not (unb.get("authority") or "").strip():
+        why = ("no token envelope: set one with `envelope --token-estimate`, or arm with "
+               "`--unbounded --authority <who decided, where recorded>`")
+    if why is None:
+        why = window_refusal(rec)
+    if why is None:
+        if not declared:
+            lr.ledger_append(rec["mission_id"], "unbounded_launch", mission_id=rec["mission_id"],
+                             epoch=rec.get("epoch"), authority=str(unb.get("authority"))[:300])
+        return None
+    if grammar_legacy():
+        lr.ledger_append(rec["mission_id"], "grammar_legacy_bypass", mission_id=rec["mission_id"],
+                         epoch=rec.get("epoch"), law="envelope", why=why[:300])
+        return None
+    return why
+
+
+_TREE_RE = re.compile(r"^work_tree:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
+
+
+def _packet_text(rec: dict) -> str | None:
+    pkt = rec.get("wu_packet")
+    if not pkt:
+        return None
+    try:
+        return Path(pkt["path"]).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return None
+
+
+def packet_done_gate(rec: dict) -> str | None:
+    """Law 4: the first `done_gate:` line of the mission's compiled packet, or None."""
+    text = _packet_text(rec)
+    m = _GATE_RE.search(text) if text else None
+    return m.group(1) if m else None
+
+
+def _tree_inside_repo(tree: str, base_cwd: str) -> str | None:
+    """The packet's `work_tree:` resolved, only when it is an absolute directory inside the record's
+    repository (the cwd's git common dir, or under the cwd). Anything else is None."""
+    p = Path(tree)
+    if not p.is_absolute() or not p.is_dir():
+        return None
+    p = p.resolve()
+    base = Path(base_cwd).resolve()
+    if p == base or base in p.parents:
+        return str(p)
+    here, root = _git_toplevel_and_common(str(p)), _git_toplevel_and_common(str(base))
+    return str(p) if here and root and here[1] == root[1] else None
+
+
+def packet_gate_dir(rec: dict, text: str | None = None) -> tuple[str | None, str]:
+    """F2: the tree the packet's gate runs in. A packet `work_tree:` line wins (None when it lies outside
+    the record's repo: not judged); else where the owner worker actually works (effective_workdir, the
+    same resolution the relay and halt paths use); else the recorded work_dir; else the cwd."""
+    text = _packet_text(rec) if text is None else text
+    m = _TREE_RE.search(text or "")
+    if m:
+        t = _tree_inside_repo(m.group(1), rec["cwd"])
+        return t, "packet work_tree" if t else f"work_tree {m.group(1)[:200]!r} is not inside the repo"
+    wd = rec.get("work_dir") or rec["cwd"]
+    if rec.get("owner"):
+        try:
+            wd = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream")) or wd
+        except Exception:  # noqa: BLE001 -- keep the recorded dir; never guess
+            pass
+    return wd, "worker tree"
+
+
+def packet_gate_passed(rec: dict, now: float, *, gate_runner=None) -> dict | None:
+    """Law 4: run the packet's done_gate in the tree the work is in, bounded. Exit 0 -> a dict with the
+    command and the output tail; a non-zero exit, a timeout or an unrunnable gate -> None (today's path).
+    F1: a packet whose bytes differ from the sha256 recorded at `envelope --wu-packet` is not judged
+    (the worker could have written its own gate): `packet_gate_drift`. Legacy skips the gate and ledgers it."""
+    pkt = rec.get("wu_packet") or {}
+    text = _packet_text(rec)
+    m = _GATE_RE.search(text) if text else None
+    gate = m.group(1) if m else None
+    if not gate:
+        return None
+    mid = rec["mission_id"]
+    if grammar_legacy():
+        lr.ledger_append(mid, "grammar_legacy_bypass", mission_id=mid, epoch=rec.get("epoch"),
+                         law="packet_gate", why=f"done_gate not run: {gate[:200]}")
+        return None
+    now_sha = _packet_digest(pkt["path"])
+    if not pkt.get("sha256") or now_sha != pkt["sha256"]:
+        lr.ledger_append(mid, "packet_gate_drift", mission_id=mid, epoch=rec.get("epoch"), gate=gate[:200],
+                         recorded=str(pkt.get("sha256"))[:12], current=str(now_sha)[:12])
+        return None
+    cwd, why = packet_gate_dir(rec, text)
+    if cwd is None:
+        lr.ledger_append(mid, "packet_gate_unanswered", mission_id=mid, epoch=rec.get("epoch"),
+                         gate=gate[:200], error=why)
+        return None
+    import subprocess
+    run = gate_runner or (lambda cmd, wd: subprocess.run(
+        cmd, shell=True, cwd=wd, capture_output=True, text=True, encoding="utf-8", errors="replace",
+        timeout=int(os.environ.get("CPP_PACKET_GATE_TIMEOUT") or PACKET_GATE_TIMEOUT_S)))
+    try:
+        r = run(gate, cwd)
+    except Exception as exc:  # noqa: BLE001 -- a timeout or an unrunnable gate is not a pass
+        lr.ledger_append(mid, "packet_gate_unanswered", mission_id=mid, epoch=rec.get("epoch"),
+                         gate=gate[:200], error=f"{type(exc).__name__}: {exc}"[:300])
+        return None
+    if r.returncode != 0:
+        return None
+    tail = ANSI_RE.sub("", (r.stdout or "") + (r.stderr or "")).strip()[-400:]
+    lr.ledger_append(mid, "packet_gate_passed", mission_id=mid, epoch=rec.get("epoch"), gate=gate[:200],
+                     cwd=cwd, tail=tail)
+    return {"gate": gate, "tail": tail}
 
 
 def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = None,
@@ -2251,6 +2412,8 @@ def renew_mission(rec: dict, now: float | None = None, capsule_key: str | None =
     # spec goal-governed-mission-control C1: the route travels with the work. Never `admission`:
     # a renewed unit is re-admitted against a re-measured budget.
     for k in RENEWAL_CARRIED_ENVELOPE:
+        if k == "token_estimate" and rec.get("token_estimate_src") == "auto":
+            continue   # auto-assigned, not an envelope: the successor must not inherit it (law 2)
         if rec.get(k) not in (None, "", [], {}):
             carried[k] = rec[k]
     if rec.get("wu_packet"):
