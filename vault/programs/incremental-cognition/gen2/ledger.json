@@ -403,6 +403,118 @@
      "ref": "21bafb5d9b3d87c2d23df7ad6261b80fc3d9aa0d"
     }
    ]
+  },
+  {
+   "id": "OPP-002",
+   "title": "KME-L analytics rescan the whole scoped history on every query",
+   "programme": "IC-gen2 autonomous-optimization",
+   "schema_note": "provisional until ROADMAP Phase 4 formalizes the opportunity schema",
+   "plane": "gex44",
+   "scope": "wiki/tools/kme_pillars.py, wiki/tools/kme_replay.py, wiki/tools/kme_token_audit.py access plan",
+   "workload_class": "kme-analytics",
+   "frequency": "every KME-L population or measurement query (not measured: no count of real queries exists on this plane)",
+   "current_cost": "scoped all+rank 7-file query on the GEX44 corpus copy: warm median wall 56.975624 s (n=5), traced raw bytes 6,120,339,068 over 995 files; champion Run 5 (unscoped, cited) 869 s wall and rchar 101.53 GB over 10 locator scans (P-table-gex44.md Table and Data block)",
+   "hypothesis": "index-certified selection reads only the selected sessions' transcripts instead of rescanning the scoped history",
+   "owner_search_result": "EXTEND wiki/tools/kme_pillars.py (HR-NOVELTY-001 record, Phase 0)",
+   "predicted_dividend": {
+    "value": 27.394776,
+    "unit": "s wall per KME-L 7-file query, warm median, GEX44 copy",
+    "basis": "measured per query on the GEX44 corpus copy, n=5 warm medians, scoped minus challenger (P-table-gex44.md, P-criterion5-gex44.md); savings over real usage are not measured until promotion"
+   },
+   "build_cost": {
+    "value": 3624,
+    "unit": "insertions (plus 17 deletions) in 7 files",
+    "command": "git diff --stat 23f5a7f1ee85736ceb67a2ba12b754e64a5cbcb7..HEAD -- wiki/tools tools/test_kme_challenger.py tools/strace_io_sum.py tools/kme_equivalence.py tools/test_kme_measure_tools.py",
+    "detail": "kme_pillars.py 750, kme_replay.py 7, kme_token_audit.py 10, kme_equivalence.py 268, strace_io_sum.py 407, test_kme_challenger.py 1578, test_kme_measure_tools.py 621 changed lines; base is the commit before 02-01"
+   },
+   "proof_cost": {
+    "value": 11.2,
+    "unit": "s wall (test_kme_challenger.py suite); 32.8 s (--drill, 15 mutants); 0.4 s (test_kme_measure_tools.py); 0.9 s (its --drill, 9 mutants)",
+    "command": "python3 -I tools/test_kme_challenger.py ; python3 -I tools/test_kme_challenger.py --drill ; python3 -I tools/test_kme_measure_tools.py ; python3 -I tools/test_kme_measure_tools.py --drill",
+    "detail": "wall by date +%s.%N around each command, one run each on GEX44, hermetic suites only; the --real corpus gates and the N=5 bench runs are extra"
+   },
+   "carrying_cost": {
+    "value": 1805435496,
+    "unit": "index bytes read per query (two processes, whole-corpus SQLite index)",
+    "command": "python3 -I tools/strace_io_sum.py run --label challenger-traced --repeat 0 --trace-repeat 2 (P-table-gex44.md Runs)",
+    "detail": "the challenger reads 1,805,435,496 index bytes beside 3,298,099,868 raw bytes (total 5,103,535,364 against 6,120,339,068 scoped); re-certification is one scoped champion scan whenever a selection source changes"
+   },
+   "risk": "the challenger answer rests on the certificate keys (selection parser, attribution version, pattern set, population definition); a selection-source edit outside those keys would read stale until re-certified; GEX44 only, laptop not measured",
+   "reversibility": "--plan champion is the default and stays callable (KS-4); revert the Phase 2 commits",
+   "champion": "scoped all+rank",
+   "challenger": "--plan challenger|auto index-certified selection",
+   "status": "canary",
+   "lifecycle_history": [
+    "observed",
+    "priced",
+    "shadow",
+    "canary"
+   ],
+   "next_transition": "certified then promoted: Phase 6 ratchet promotion at project scope (frozen rule clause 6), with a fresh-worker path-log test and the --real gates as the bypass regression gate",
+   "retirement_condition": "a facts store or index answer that needs no raw read for the KME questions supersedes it",
+   "realized_dividend": null,
+   "evidence": [
+    {
+     "kind": "file",
+     "ref": "vault/programs/incremental-cognition/gen2/evidence/P-equivalence-gex44.md",
+     "sha256": "bdaf0d266e07c6a031eaecf971598027912a2b5884910f07dbc7f238328ccaa8"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/incremental-cognition/gen2/evidence/P-exposure-gex44.md",
+     "sha256": "ad4dd4a288ba6dc84013a3ac78e7e7b37c8d3067b2c70c5069bf87409204cd3b"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/incremental-cognition/gen2/evidence/P-table-gex44.md",
+     "sha256": "bd55c5f3a25e03b8157e2d9c3c0aba423c94d9e0d7746777613fcd1ddfa1cae5"
+    },
+    {
+     "kind": "file",
+     "ref": "vault/programs/incremental-cognition/gen2/evidence/P-criterion5-gex44.md",
+     "sha256": "bbc09a1825b8b01bfe6399730e936068ca4ec255b29fbeb0ae462ede6e554353"
+    },
+    {
+     "kind": "commit",
+     "ref": "596d8460d187a5c04306a140681c4eae0019532e"
+    },
+    {
+     "kind": "commit",
+     "ref": "aa961615a496bc2666a0c4de4724f9f6cecedd33"
+    },
+    {
+     "kind": "commit",
+     "ref": "f30b167a8eb62b10a639c1bf1b485692d2e17201"
+    },
+    {
+     "kind": "commit",
+     "ref": "61eb3ee822889358d504dd1488ba56381657c0b9"
+    },
+    {
+     "kind": "commit",
+     "ref": "016bf57d97bfd79b13b09a3ed4d8ca6690aaf346"
+    },
+    {
+     "kind": "commit",
+     "ref": "e71fd60e0bd887b3456cd8810ee5b1d55c605921"
+    },
+    {
+     "kind": "commit",
+     "ref": "1ca72e86b22914e15660d3bdb100bba0767c4b9f"
+    },
+    {
+     "kind": "commit",
+     "ref": "87fa25bbd63f9df2cf3cfbe51c195e370ebb7ed7"
+    },
+    {
+     "kind": "commit",
+     "ref": "e06dafa748713179d5cc4668d234ded5ad7e832a"
+    },
+    {
+     "kind": "commit",
+     "ref": "cd4b63ccd3b7416a2e9bb719757d656a5792465f"
+    }
+   ]
   }
  ]
 }
