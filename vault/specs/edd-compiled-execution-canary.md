@@ -190,3 +190,23 @@ receipt exist; reachability exit 0 for new tools.
   - 038387fa froze FORECAST-P2B.json BEFORE arming: P2-B 11 calls 1,380,000 (band 1.1-1.8M); P2-B-AUDIT 7 calls
     725,000 (band 0.69-0.80M), the evidence unit of the corrected audit model in COSTMODEL.json.
   - **P2-B armed m-0729ac737bec** (162d2ead): sonnet, lease 1,725,000, capsule-v2, no autocompact, unit p2b.
+- P2-B RESULT (MEASURED; external judges after both records settled HALTED by the sweep, 19:53:08Z; edd-run 9cc55257):
+  - Work: 8 calls, 892,740 (forecast 11 / 1,380,000; -35%). Lint passed first time, sealed 85a2cea5 (9 cases, 18
+    files), auditor armed 5c1dfd3e. The 3 forecast calls never needed were the fix slack and one write turn: the
+    model was over-provisioned, not missing a component.
+  - **Incident, continuation tax**: the worker's host row read done, the sweep asked GSD (whole EDD workstream,
+    phases 2-7 pending: "work remains") and launched epoch 2 a0c6a8bf, which spent **20 calls / 2,130,930 in 55 s**
+    on capsule resume/certify and a re-check of the seal, mutating nothing. REFORECAST UC-19 had measured this tax
+    (21.5%) and named the fix; it was never built. Held + stopped by me (both jobs `done`). Fix: laptop 1dad0c27 /
+    GEX44 live 1872e9a1 -- a record's `done_check` (argv) is asked before GSD and any continuation; edd-run 5edf5d94
+    -- edd_p2_chain.py REQUIRES `--done-check`, `edd_p2b.py done` answers for P2-B and P2-B-AUDIT. The judge now
+    prices every epoch of a unit by ledger worker ids (the owner alone is one epoch; mission_spend's directory-wide
+    count adds a concurrent unit in the same cwd -- the breaker still uses it: debt).
+  - Quality: 0 wrong, 0 leak. H06 correct; H01, H02 minor (answer keys thin: H01 misses same-day release to the
+    next waitlisted person and the atomic claim race). **P2-B verdict FREEZE** (2 minors + cost 28 calls 3,023,670,
+    +119% with the tax).
+  - **Audit model validated prospectively**: P2-B-AUDIT 7 calls 718,216 vs 725,000 (-0.9%). The P2-A judge's own rule
+    now clears P2-A/AUDIT/AUDIT2/AUDIT3: ADMISSION-P2A reads ADMIT_P2B.
+  - Phase 2 spend ~4.49M + 3.02M + 0.72M = ~8.23M of the 14M ceiling (2.13M of it the fixed tax).
+  - Trap hit by me: `claude stop` inside an ssh `bash -s` script read the rest of the script from stdin as a prompt
+    (a model replied; the lines after it never ran). Always `</dev/null` for `claude` in a remote script.

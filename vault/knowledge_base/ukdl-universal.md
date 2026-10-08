@@ -5168,6 +5168,30 @@ the lifecycle state it protects, not on a field that correlates with it today. F
 GEX44 ddfb8a26: breaker and auto-budget skip TERMINAL. Related: a hold may prevent relaunch but must not
 prevent terminal settlement (laptop 03234663 / afdfa22d).
 
+## HR-UNIT-COMPLETION-IS-THE-PACKETS-001 -- a bounded unit is done when its own packet says so
+
+**Hard rule.** A worker armed for a bounded unit (a packet, a work unit, one step of a larger goal) carries
+its own deterministic done-check, and the supervisor asks it BEFORE any continuation, rotation ritual or
+successor. Never infer a unit's completion from the progress of the enclosing goal: "the workstream still
+has work" is true for every unit but the last, so it relaunches every finished unit. The arming path refuses
+a unit without a done-check; a check that cannot answer never completes anything.
+
+**Origin 2026-10-08, EDD P2-B (m-0729ac737bec).** The unit finished in 8 calls / 892,740. GSD answered for the
+whole EDD workstream ("work remains", phases 2-7), the sweep launched epoch 2, and it spent 20 calls /
+2,130,930 in 55 s re-certifying a finished unit -- 2.4x the work. REFORECAST UC-19 had measured the same tax
+(21.5%) and named the fix a day earlier; it stayed a sentence. Fix: laptop 1dad0c27 / GEX44 1872e9a1
+(`done_check`), edd-run 5edf5d94 (chain requires it). Gate red on the old code: the done unit was replaced.
+
+**Cross-ref:** `HR-SUPERVISOR-PER-SUBJECT-ISOLATION-001`, `PR-PROSPECTIVE-COST-FORECAST-001` (the tax was a cost
+component no forecast should have to carry).
+
+## T-REMOTE-SCRIPT-STDIN-EATEN-001 -- an interactive CLI inside `ssh host bash -s < script` reads the script
+
+**Trap.** `bash -s` takes the script on stdin, and any child that reads stdin consumes the remaining lines.
+`claude stop <id>` did exactly that: it took the rest of the script as a prompt, a model answered, and none of
+the following commands ran -- while the output looked like a plausible reply. Give every such child
+`</dev/null` (`edd_p2_chain.py` already passes stdin=DEVNULL for this reason).
+
 ## T-PID-OUTLIVES-JOB-001 -- a host pid is not the job's lifetime
 
 **Trap.** A pooled worker process (`bg-spare`) claims a job and outlives it: EDD AUDIT3's pid was 5 h old for
