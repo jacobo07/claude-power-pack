@@ -1,1 +1,1 @@
-{"envelope":{"target":1500000,"warn":1900000,"stop":3000000,"calls":16},"workers":[{"name":"gsdx-factory-AG1","profile":"top-level-worker","calls":13,"packet":2400}]}
+{"envelope":{"target":1900000,"warn":2400000,"stop":3600000,"calls":16},"workers":[{"name":"gsdx-factory-AG1","profile":"top-level-worker","calls":13,"packet":2400}]}
