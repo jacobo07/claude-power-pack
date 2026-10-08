@@ -518,6 +518,194 @@ def goal_spawn(goal: str, sid: str, estimate: int | None, per_call: int, host: s
     return _goal_ledger(goal).spawn(sid, estimate, base=max(0, measured))
 
 
+# --- Autopsy + forecast (cost-collapse T2, 2026-10-08) --------------------------------------------
+# Where the processed tokens of a mission went, per session and per subagent, from the same
+# transcripts and the same attribution as `processed_tokens`; then the inverse, a bottom-up forecast
+# whose every missing input is `unmeasured`, never zero.
+DEFAULT_STALL_SECONDS = 600
+
+
+def _ts(s: str | None) -> float | None:
+    if not s:
+        return None
+    import datetime as dt
+    try:
+        t = dt.datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=dt.timezone.utc)
+    return t.timestamp()
+
+
+def autopsy_transcript(path: Path, since_iso: str | None = None, stall_s: int = DEFAULT_STALL_SECONDS,
+                       seen_global: set | None = None) -> dict:
+    """One transcript. `processed` follows `_file_tokens` exactly (dedupe by message id inside the file),
+    so the sum over a mission equals `processed_tokens`. A message id already in `seen_global` (counted in
+    an earlier transcript: a forked copy replays its parent's history) is reported under `fork_*` and
+    left out of `processed_unique`. Context = input + cache write + cache read of one call."""
+    seen, tools_seen, tools = set(), set(), {}
+    n = proc = uniq = fork_n = fork_tok = cr = cw = out = 0
+    ctxs, times = [], []
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(r, dict):
+                continue
+            if since_iso and (r.get("timestamp") or "") < since_iso:
+                continue
+            m = r.get("message")
+            if not isinstance(m, dict):
+                continue
+            if r.get("type") == "assistant" and isinstance(m.get("content"), list):
+                for b in m["content"]:
+                    if isinstance(b, dict) and b.get("type") == "tool_use":
+                        bid = b.get("id") or id(b)
+                        if bid not in tools_seen:
+                            tools_seen.add(bid)
+                            tools[b.get("name") or "?"] = tools.get(b.get("name") or "?", 0) + 1
+            u = m.get("usage")
+            if not u or m.get("model") == "<synthetic>":
+                continue
+            mid = m.get("id") or r.get("uuid")
+            if mid in seen:
+                continue
+            seen.add(mid)
+            tok = sum(int(u.get(k) or 0) for k in _UK)
+            n += 1
+            proc += tok
+            cr += int(u.get("cache_read_input_tokens") or 0)
+            cw += int(u.get("cache_creation_input_tokens") or 0)
+            out += int(u.get("output_tokens") or 0)
+            ctxs.append(sum(int(u.get(k) or 0) for k in _UK[:3]))
+            t = _ts(r.get("timestamp"))
+            if t is not None:
+                times.append(t)
+            if seen_global is not None and mid in seen_global:
+                fork_n += 1
+                fork_tok += tok
+            else:
+                uniq += tok
+                if seen_global is not None:
+                    seen_global.add(mid)
+    times.sort()
+    stalls = [{"after": times[i - 1], "gap_s": round(times[i] - times[i - 1], 1)}
+              for i in range(1, len(times)) if times[i] - times[i - 1] > stall_s]
+    return {"calls": n, "processed": proc, "processed_unique": uniq, "fork_calls": fork_n,
+            "fork_tokens": fork_tok, "cache_read": cr, "cache_write": cw, "output": out,
+            "first_ctx": ctxs[0] if ctxs else None, "max_ctx": max(ctxs) if ctxs else None,
+            "mean_ctx": round(sum(ctxs) / len(ctxs)) if ctxs else None,
+            "tool_mix": dict(sorted(tools.items(), key=lambda kv: -kv[1])),
+            "stalls": stalls, "stall_seconds": round(sum(s["gap_s"] for s in stalls), 1),
+            "first_ts": times[0] if times else None}
+
+
+def autopsy(rec: dict, root: Path | None = None, stall_s: int = DEFAULT_STALL_SECONDS,
+            sessions: tuple[set[str], set[str]] | None = None) -> dict | None:
+    """Per-session / per-subagent breakdown of the mission's OWN transcripts, or None when the mission
+    cannot be measured (same rule as `processed_tokens`: absent is not zero). Attribution is
+    `mission_sessions` + `_attributed`, not re-derived. Transcripts are walked oldest first so the
+    original keeps a forked message and the copy is the one excluded."""
+    root = root or projects_root()
+    dirs: list[Path] = []
+    for base in (rec.get("work_dir"), rec.get("cwd")):
+        for d in (mission_dirs(base, root) if base else []):
+            if d not in dirs:
+                dirs.append(d)
+    if not dirs:
+        return None
+    ids, prefixes = sessions if sessions is not None else mission_sessions(rec)
+    if not ids and not prefixes:
+        return None
+    since = None
+    if rec.get("created_at"):
+        import datetime as dt
+        since = dt.datetime.fromtimestamp(float(rec["created_at"]), dt.timezone.utc).isoformat()[:19]
+    files = []
+    for d in dirs:
+        for p in d.rglob("*.jsonl"):
+            if _attributed(p, d, ids, prefixes):
+                files.append((d, p))
+    seen_global: set = set()
+    stats = []
+    for d, p in files:
+        s = autopsy_transcript(p, since, stall_s, seen_global=None)
+        s["_p"], s["_d"] = p, d
+        stats.append(s)
+    stats.sort(key=lambda s: (s["first_ts"] is None, s["first_ts"] or 0, str(s["_p"])))
+    rows = []
+    for s in stats:
+        # second pass with the shared id set, oldest transcript first: forks fall out of the later file
+        full = autopsy_transcript(s["_p"], since, stall_s, seen_global=seen_global)
+        rel = s["_p"].relative_to(s["_d"])
+        kind = "subagent" if "subagents" in rel.parts else "session"
+        full.update({"file": str(rel).replace("\\", "/"), "kind": kind,
+                     "session": rel.parts[0] if kind == "subagent" else s["_p"].stem,
+                     "agent": s["_p"].stem if kind == "subagent" else None})
+        rows.append(full)
+    tot = {k: sum(r[k] for r in rows) for k in
+           ("calls", "processed", "processed_unique", "fork_calls", "fork_tokens",
+            "cache_read", "cache_write", "output", "stall_seconds")}
+    tot["mean_ctx"] = (round(sum((r["mean_ctx"] or 0) * r["calls"] for r in rows) / tot["calls"])
+                       if tot["calls"] else None)
+    return {"mission_id": rec.get("mission_id"), "since": since, "stall_threshold_s": stall_s,
+            "rows": rows, "total": tot}
+
+
+def _row_input(v):
+    """(value|None, basis) from a bare number, a {value, basis} dict, or nothing."""
+    if isinstance(v, dict):
+        val, basis = v.get("value"), str(v.get("basis") or "declared")
+    else:
+        val, basis = v, "declared"
+    if val is None or (isinstance(val, str) and val.strip() in ("", "?", "unmeasured")):
+        return None, "unmeasured"
+    return float(val), basis
+
+
+_FORECAST_INPUTS = ("units", "calls_per_unit", "floor", "context_image", "repair")
+
+
+def forecast(rows: list[dict]) -> dict:
+    """Obligation rows: units x calls_per_unit x (floor + context_image) x (1 + repair) processed tokens.
+    A row with any missing input is `unmeasured` with tokens None and the missing inputs named: absent is
+    never zero (a repair rate of 0 must be stated, not omitted). Confidence is the weakest input basis:
+    `measured` (every basis starts `measured`), `estimated` (anything else declared), `unmeasured`.
+    The total is a LOWER BOUND whenever a row is unmeasured."""
+    out, total, miss_rows = [], 0.0, 0
+    for r in rows:
+        vals, bases, missing = {}, {}, []
+        for k in _FORECAST_INPUTS:
+            v, b = _row_input(r.get(k))
+            vals[k], bases[k] = v, b
+            if v is None:
+                missing.append(k)
+        if missing:
+            miss_rows += 1
+            out.append({"name": r.get("name"), "tokens": None, "confidence": "unmeasured",
+                        "missing": missing, "basis": bases})
+            continue
+        tokens = (vals["units"] * vals["calls_per_unit"] * (vals["floor"] + vals["context_image"])
+                  * (1 + vals["repair"]))
+        conf = "measured" if all(b.startswith("measured") for b in bases.values()) else "estimated"
+        total += tokens
+        out.append({"name": r.get("name"), "tokens": round(tokens), "confidence": conf,
+                    "missing": [], "basis": bases})
+    return {"rows": out, "total": round(total), "lower_bound": miss_rows > 0,
+            "unmeasured_rows": miss_rows}
+
+
+def _load_mission(mid: str) -> dict:
+    import gsd_mission as gm
+    rec = gm.load(mid)
+    if rec is None:
+        raise SystemExit(f"mission {mid} not found")
+    return rec
+
+
 def _main(argv: list[str]) -> int:
     import argparse
     import socket
@@ -558,7 +746,24 @@ def _main(argv: list[str]) -> int:
             g.add_argument("--estimate", type=int)
     gs = sub.add_parser("goal-status")
     gs.add_argument("--goal", required=True)
+    au = sub.add_parser("autopsy")
+    au.add_argument("--mission", required=True)
+    au.add_argument("--stall-seconds", type=int, default=DEFAULT_STALL_SECONDS)
+    au.add_argument("--root", help="transcript projects root (default: ~/.claude/projects)")
+    fc = sub.add_parser("forecast")
+    fc.add_argument("--rows", required=True, help="JSON file: a list of obligation rows")
     a = ap.parse_args(argv)
+    if a.cmd == "autopsy":
+        res = autopsy(_load_mission(a.mission), Path(a.root) if a.root else None, a.stall_seconds)
+        if res is None:
+            print(json.dumps({"ok": False, "mission_id": a.mission, "reason": "unmeasurable: no transcript "
+                              "directory or no attributable session"}))
+            return 3
+        print(json.dumps({"ok": True, **res}, sort_keys=True))
+        return 0
+    if a.cmd == "forecast":
+        print(json.dumps(forecast(json.loads(Path(a.rows).read_text(encoding="utf-8-sig"))), sort_keys=True))
+        return 0
     if a.cmd.startswith("goal-"):
         if a.cmd == "goal-declare":
             owner = False
