@@ -32,7 +32,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 FLOORS_PATH = REPO_ROOT / "vault" / "config" / "route-floors.json"
 DEFAULT_GROWTH_MARGIN = 0.20
 TOP_LEVEL = "top-level-worker"
-ADMISSIBLE, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "DEFER", "RECOMPILE", "ESCALATE"
+ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "WATCHED", "DEFER", "RECOMPILE", "ESCALATE"
+LOW_CONFIDENCE_N = 5            # fewer samples than this: SAFETY can only WATCH, never refuse (spec D3)
+CHALLENGER_AUTHORITATIVE = False  # spec D3: flipped once V-ADMIT-EXPECTED canaries 1-4 are green
 
 
 def load_floors(path: Path | str | None = None) -> dict:
@@ -58,8 +60,120 @@ def route_digest(route: dict) -> str:
     return hashlib.sha256(json.dumps(route, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
+def _calibrated(profile: dict, field: str) -> tuple[float, int, str] | None:
+    """(value, n, basis) of a calibrated profile field, or None. Absent / malformed is UNKNOWN, never 0."""
+    f = profile.get(field)
+    if not isinstance(f, dict):
+        return None
+    v, n = f.get("value"), f.get("n")
+    if isinstance(v, bool) or not isinstance(v, (int, float)) or v < 0:
+        return None
+    if isinstance(n, bool) or not isinstance(n, int) or n < 1:
+        return None
+    return float(v), n, str(f.get("basis") or "estimated")
+
+
+def _process_cost(floor: int, packet: int, g: float, calls: int) -> int:
+    """n x (F + packet) + g x n(n-1)/2: context grows linearly inside one process, so cost is quadratic."""
+    return round(calls * (floor + packet) + g * calls * (calls - 1) / 2)
+
+
+def max_calls_per_process(floor: int, g: float, target: int) -> int:
+    n = 0
+    while _process_cost(floor, 0, g, n + 1) <= target:
+        n += 1
+    return n
+
+
+def forecast_route(champ: dict, floors: dict, *, remaining: int | None = None) -> dict:
+    """Expected-completion tiers over the champion's measured rows. `available: False` only for a legacy
+    floor table that carries no growth calibration at all (the champion stands); a profile missing its own
+    calibration inside a calibrated table is UNKNOWN -> ESCALATE."""
+    profiles = floors["profiles"]
+    if not any(isinstance(p, dict) and "growth_per_call" in p for p in profiles.values()):
+        return {"available": False, "reason": "floor table has no growth calibration"}
+    env = champ["envelope"]
+    target, warn, stop, env_calls = env["target"], env["warn"], env["stop"], env["calls"]
+    lower = champ["need"]
+    expected = safety = 0
+    unknown, ns, bases = [], [], []
+    for r in champ["workers"]:
+        prof = profiles[r["profile"]]
+        g, err = _calibrated(prof, "growth_per_call"), _calibrated(prof, "calls_err")
+        if g is None or err is None:
+            unknown.append(f"{r['name']}: profile {r['profile']!r} has no calibrated "
+                           f"{'growth_per_call' if g is None else 'calls_err'} (absent is not zero)")
+            continue
+        hi = math.ceil(round(r["calls"] * (1 + err[0]), 6))
+        expected += _process_cost(r["floor"], r["packet"], g[0], r["calls"])
+        safety += _process_cost(r["floor"], r["packet"], g[0], hi)
+        ns += [g[1], err[1]]
+        bases += [g[2], err[2]]
+    top = profiles.get(TOP_LEVEL) or {}
+    tg = _calibrated(top, "growth_per_call")
+    cap = max_calls_per_process(top["floor"], tg[0], target) if tg and isinstance(top.get("floor"), int) else None
+    out = {"available": True, "lower_bound": lower, "hard": stop, "max_calls_per_process": cap,
+           "proof_repair": "included_in_calibration"}
+    if unknown:
+        return {**out, "expected": None, "safety": None, "confidence": {"level": "UNMEASURED", "n": 0},
+                "basis": "unmeasured", "verdict": ESCALATE, "reasons": unknown}
+    n_min = min(ns)
+    low = n_min < LOW_CONFIDENCE_N
+    weakest = "estimated" if any(not b.startswith("measured") for b in bases) else "measured"
+    out.update(expected=expected, safety=safety, basis=weakest,
+               confidence={"level": "LOW" if low else "OK", "n": n_min})
+    reasons = []
+    if env_calls is not None and champ["calls"] > env_calls:
+        reasons.append(f"{champ['calls']} calls > envelope {env_calls}")
+    if expected > target:
+        reasons.append(f"expected {expected:,} > target {target:,}")
+    if reasons:
+        min_calls = int(floors.get("default_min_calls") or 1)
+        top_floor = top.get("floor") if isinstance(top.get("floor"), int) else max(p["floor"] for p in profiles.values())
+        if min_calls * top_floor > target:
+            return {**out, "verdict": ESCALATE, "reasons": reasons + [
+                f"the envelope cannot hold one {TOP_LEVEL} for {min_calls} calls: raise it or drop the unit"]}
+        if cap is not None:
+            reasons.append(f"thin the route: one {TOP_LEVEL}, no agents, at most {cap} calls per process fits")
+        return {**out, "verdict": RECOMPILE, "reasons": reasons}
+    if safety > stop:
+        if low:
+            verdict, why = WATCHED, (f"safety {safety:,} > stop {stop:,}, but confidence is LOW (n={n_min} < "
+                                     f"{LOW_CONFIDENCE_N}): safety can only watch, never refuse")
+        else:
+            return {**out, "verdict": ESCALATE, "reasons": [f"safety {safety:,} > stop {stop:,}"]}
+    elif safety > warn:
+        verdict, why = WATCHED, f"safety {safety:,} > warn {warn:,}: reforecast at planned-calls exhaustion and at warn"
+    else:
+        verdict, why = ADMISSIBLE, None
+    if remaining is not None and expected > remaining:
+        return {**out, "verdict": DEFER,
+                "reasons": [f"expects {expected:,} but only {remaining:,} of the budget remains"]}
+    return {**out, "verdict": verdict, "reasons": [why] if why else []}
+
+
 def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
           remaining: int | None = None, root: Path | str | None = None) -> dict:
+    """Champion (floor x margin) plus challenger (expected completion). Once CHALLENGER_AUTHORITATIVE the
+    challenger's verdict is the verdict and the champion's is kept under `champion`."""
+    champ = _champion(route, floors, margin=margin, remaining=remaining, root=root)
+    if "need" not in champ:        # an unmeasured floor / missing requires: the champion's ESCALATE stands
+        return champ
+    fc = forecast_route(champ, floors, remaining=remaining)
+    out = {**champ, "champion": {k: champ.get(k) for k in ("verdict", "reasons", "need", "need_with_margin")}}
+    if not fc["available"]:
+        return {**out, "forecast": fc}
+    out["max_calls_per_process"] = fc["max_calls_per_process"]
+    out["forecast"] = {k: fc[k] for k in ("lower_bound", "expected", "safety", "hard", "confidence", "basis",
+                                           "proof_repair")}
+    out["challenger"] = {"verdict": fc["verdict"], "reasons": fc["reasons"]}
+    if CHALLENGER_AUTHORITATIVE:
+        out["verdict"], out["reasons"] = fc["verdict"], fc["reasons"]
+    return out
+
+
+def _champion(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
+              remaining: int | None = None, root: Path | str | None = None) -> dict:
     """Judge `route` against its envelope. Raises ValueError on a malformed route (fail closed).
     `root` is the repo root that a profile's `requires` file is resolved against."""
     root = root or REPO_ROOT
