@@ -1,0 +1,648 @@
+diff --git a/tools/mission_wait.py b/tools/mission_wait.py
+new file mode 100644
+index 00000000..a700588a
+--- /dev/null
++++ b/tools/mission_wait.py
+@@ -0,0 +1,619 @@
++#!/usr/bin/env python3
++"""Dependency-wait contract and zero-model wake evaluator (goal caa-wake, W1).
++
++A WAIT is a declared dependency (a committed git object, a goal's state, an Owner authority) plus the
++deterministic action to take once it is true. This module extends `wake_check.py` (its CLI imports it):
++
++  * one immutable JSON record per wait under the wait dir (`CPP_MISSION_WAIT_DIR`, default
++    ~/.claude/state/mission-wait) and ONE gsd_x GoalLog per wait holding its state. The log's seq
++    compare-and-swap is the singleflight; no second store.
++  * states WAITING -> SATISFIED -> CLAIMED -> CONSUMED, or STALE / SUPERSEDED / DENIED.
++  * LEVEL-triggered: every pass re-reads durable truth for every WAITING wait, so a dependency that
++    was already true, or turned true while no evaluator ran, is found. `git cat-file -e` on committed
++    objects only; the work tree never counts.
++  * tri-state: True / False / None. None (unreadable, unknown) is never True: the pass writes a
++    REFUSED receipt and leaves the state unchanged.
++  * never invokes a model. Every subprocess goes through `wake_check.run_cmd`, which refuses a
++    model-shaped argv and counts it. Launching a mission (`next.action == "arm"`) is a launch of a
++    separate process the verdict admitted, not a model call made here.
++
++Verdicts at admission: NO_WORK | DENIED | DETERMINISTIC | COGNITIVE | HELD, each with a receipt.
++
++    python tools/wake_check.py --waits            evaluate every wait, claim and execute
++    python tools/wake_check.py --waits --plan     evaluate and report, write nothing
++    python tools/wake_check.py --declare FILE     declare a wait from a JSON record
++    python tools/wake_check.py --delta WAIT_ID    zero-model delta for the woken worker
++Kill switch: CPP_MISSION_WAIT=off makes every entry point a no-op.
++"""
++from __future__ import annotations
++
++import hashlib
++import json
++import operator
++import os
++import re
++import shutil
++import subprocess
++import sys
++from datetime import datetime, timezone
++from pathlib import Path
++
++HERE = Path(__file__).resolve().parent
++ROOT = HERE.parent
++for _p in (str(ROOT), str(HERE)):
++    if _p not in sys.path:
++        sys.path.insert(0, _p)
++
++import wake_check as wc                          # noqa: E402
++from modules.gsd_x.goal import log as gl        # noqa: E402
++
++NS_REPO = hashlib.sha1(b"mission-wait").hexdigest()      # GoalLog repo namespace for every wait
++DEP_TYPES = ("git_object", "goal_state", "owner_authority")
++NEXT_ACTIONS = ("arm", "deterministic", "none")
++OPS = {"eq": operator.eq, "ne": operator.ne, "lt": operator.lt, "le": operator.le,
++       "gt": operator.gt, "ge": operator.ge}
++MIN_FREE_RAM_GB = 4.0
++TERMINAL = ("CONSUMED", "STALE", "SUPERSEDED", "DENIED")
++STATE_OF = {"wait_declared": "WAITING", "satisfied": "SATISFIED", "claimed": "CLAIMED",
++            "consumed": "CONSUMED", "stale": "STALE", "superseded": "SUPERSEDED", "denied": "DENIED"}
++ALLOWED = {"WAITING": {"satisfied", "stale", "superseded", "denied"},
++           "SATISFIED": {"claimed", "stale", "superseded", "denied"},
++           "CLAIMED": {"consumed"}}
++REQUIRED = ("wait_id", "dependency_type", "predicate", "source", "next", "invalidators",
++            "owner_program", "goal", "created_at", "waits_on")
++
++
++class Unknown(Exception):
++    """An input could not be read. The pass records REFUSED and changes no state."""
++
++
++def disabled() -> bool:
++    return os.environ.get("CPP_MISSION_WAIT", "").strip().lower() == "off"
++
++
++def wait_dir() -> Path:
++    env = os.environ.get("CPP_MISSION_WAIT_DIR", "").strip()
++    return Path(env) if env else Path.home() / ".claude" / "state" / "mission-wait"
++
++
++def now_iso() -> str:
++    return datetime.now(timezone.utc).isoformat()
++
++
++def sha(obj) -> str:
++    return hashlib.sha256(json.dumps(obj, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
++
++
++# ---------------------------------------------------------------- record
++
++def _check_pred(p, field: str, allow_empty: bool) -> None:
++    if p in (None, {}) and allow_empty:
++        return
++    if not isinstance(p, dict):
++        raise ValueError("%s must be an object" % field)
++    if "kind" in p:
++        k = p["kind"]
++        if k == "git_object":
++            if not all(isinstance(p.get(x), str) and p[x] for x in ("repo", "ref", "path")):
++                raise ValueError("%s: git_object needs repo, ref, path" % field)
++        elif k == "goal_status":
++            if not (isinstance(p.get("goal"), str) and isinstance(p.get("field"), str) and p.get("op") in OPS
++                    and "value" in p):
++                raise ValueError("%s: goal_status needs goal, field, op in %s, value" % (field, sorted(OPS)))
++        else:
++            raise ValueError("%s: unknown kind %r" % (field, k))
++        return
++    keys = [k for k in ("any_of", "all_of") if k in p]
++    if len(keys) != 1 or not isinstance(p[keys[0]], list):
++        raise ValueError("%s needs exactly one of any_of / all_of (a list)" % field)
++    if not p[keys[0]] and not allow_empty:
++        raise ValueError("%s: %s is empty" % (field, keys[0]))
++    for i, child in enumerate(p[keys[0]]):
++        _check_pred(child, "%s.%s[%d]" % (field, keys[0], i), False)
++
++
++def validate(rec) -> dict:
++    if not isinstance(rec, dict):
++        raise ValueError("record is not an object")
++    missing = [k for k in REQUIRED if k not in rec]
++    if missing:
++        raise ValueError("missing fields: %s" % ", ".join(missing))
++    if not gl.GOAL_ID_RE.match(str(rec["wait_id"])):
++        raise ValueError("wait_id %r must match %s" % (rec["wait_id"], gl.GOAL_ID_RE.pattern))
++    if rec["dependency_type"] not in DEP_TYPES:
++        raise ValueError("dependency_type must be one of %s" % (DEP_TYPES,))
++    _check_pred(rec["predicate"], "predicate", False)
++    _check_pred(rec["invalidators"], "invalidators", True)
++    nxt = rec["next"]
++    if not isinstance(nxt, dict) or nxt.get("action") not in NEXT_ACTIONS:
++        raise ValueError("next.action must be one of %s" % (NEXT_ACTIONS,))
++    if nxt["action"] == "arm" and not (isinstance(nxt.get("cwd"), str) and isinstance(nxt.get("command"), str)):
++        raise ValueError("next arm needs cwd and command")
++    if nxt["action"] == "deterministic" and not (isinstance(nxt.get("argv"), list) and nxt["argv"]):
++        raise ValueError("next deterministic needs a non-empty argv")
++    if not isinstance(rec["waits_on"], list) or not all(isinstance(w, str) for w in rec["waits_on"]):
++        raise ValueError("waits_on must be a list of wait ids")
++    return rec
++
++
++def _record_path(wait_id: str, wd: Path | None = None) -> Path:
++    return (wd or wait_dir()) / ("%s.json" % wait_id)
++
++
++def open_log(wait_id: str, wd: Path | None = None) -> gl.GoalLog:
++    return gl.GoalLog(NS_REPO, wait_id, base=(wd or wait_dir()) / "log")
++
++
++def derive(events) -> str:
++    """The state a wait's log spells out. A log that is not a legal walk is unreadable, not 'WAITING'."""
++    if not events or events[0].type != "wait_declared":
++        raise gl.GoalLogCorrupt("wait log does not start with wait_declared")
++    state = "WAITING"
++    for e in events[1:]:
++        if e.type not in STATE_OF:
++            continue
++        if e.type not in ALLOWED.get(state, set()):
++            raise gl.GoalLogCorrupt("illegal transition %s -> %s at seq %d" % (state, e.type, e.seq))
++        state = STATE_OF[e.type]
++    return state
++
++
++# ---------------------------------------------------------------- probes
++
++def find_git() -> str:
++    return shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
++
++
++def default_free_ram_gb() -> float | None:
++    if os.name == "nt":
++        import ctypes
++
++        class MemStatus(ctypes.Structure):
++            _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
++                        ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
++                        ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
++                        ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong),
++                        ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
++        st = MemStatus()
++        st.dwLength = ctypes.sizeof(MemStatus)
++        if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(st)):
++            return None
++        return st.ullAvailPhys / 2 ** 30
++    try:
++        for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
++            if line.startswith("MemAvailable:"):
++                return int(line.split()[1]) / 2 ** 20
++    except (OSError, ValueError, IndexError):
++        return None
++    return None
++
++
++class Ctx:
++    """Everything a pass reads from the world. Tests replace the fields; defaults are the live reads."""
++
++    def __init__(self, wd: Path | None = None, goal_status=None, live_missions=None, free_ram=None,
++                 executor=None, goals_overlapping=None, between=None, plan_only: bool = False,
++                 actor: str = "mission_wait"):
++        self.wd = wd or wait_dir()
++        self.counter = {"model_calls": 0}
++        self.git = find_git()
++        self.goal_status = goal_status or self._goal_status
++        self.live_missions = live_missions or self._live_missions
++        self.free_ram = free_ram or default_free_ram_gb
++        self.executor = executor or self._execute
++        self.goals_overlapping = goals_overlapping or self._goals_overlapping
++        self.between = between or (lambda point, wait_id: None)
++        self.plan_only = plan_only
++        self.actor = actor
++
++    def run(self, argv: list[str], cwd: str | None = None):
++        try:
++            return wc.run_cmd(argv, self.counter, cwd=cwd)
++        except (OSError, subprocess.SubprocessError) as exc:
++            raise Unknown("%s: %s" % (type(exc).__name__, exc)) from exc
++
++    def _goal_status(self, goal: str) -> dict | None:
++        r = self.run([sys.executable, str(HERE / "mission_spend.py"), "goal-status", "--goal", goal])
++        try:
++            out = json.loads(r.stdout)
++        except ValueError:
++            return None
++        return out if isinstance(out, dict) and out.get("ok") is True else None
++
++    def _live_missions(self, cwd: str) -> list | None:
++        try:
++            import gsd_mission as gm
++            import mission_spend as ms
++            missions, bad = gm._scan()
++            if bad:
++                return None
++            return [m["mission_id"] for m in missions
++                    if m.get("state") not in gm.TERMINAL and ms._overlaps(str(m.get("cwd") or ""), cwd)]
++        except Exception as exc:                  # an unreadable mission store is UNKNOWN, never "none live"
++            print("mission_wait: live-mission probe failed: %s: %s" % (type(exc).__name__, exc), file=sys.stderr)
++            return None
++
++    def _goals_overlapping(self, cwd: str) -> list | None:
++        try:
++            import mission_spend as ms
++            return sorted(g for g, e in ms.read_index().items()
++                          if any(ms._overlaps(r, cwd) for r in e.get("roots", [])))
++        except Exception as exc:
++            print("mission_wait: goal index probe failed: %s: %s" % (type(exc).__name__, exc), file=sys.stderr)
++            return None
++
++    def _execute(self, nxt: dict) -> dict:
++        if nxt["action"] == "arm":
++            argv = [sys.executable, str(HERE / "gsd_mission.py"), "arm", "--cwd", nxt["cwd"],
++                    "--command", nxt["command"], "--rollover-protocol", nxt.get("rollover_protocol", "capsule-v2")]
++            if nxt.get("max_cycles"):
++                argv += ["--max-cycles", str(int(nxt["max_cycles"]))]
++            if nxt.get("max_hours"):
++                argv += ["--max-hours", str(float(nxt["max_hours"]))]
++        else:
++            argv = [str(a) for a in nxt["argv"]]
++        r = self.run(argv)
++        return {"ok": r.returncode == 0, "rc": r.returncode, "tail": (r.stdout or "")[-400:]}
++
++
++# ---------------------------------------------------------------- predicates
++
++def _git_leaf(leaf: dict, ctx: Ctx):
++    repo, ref, path = leaf["repo"], leaf["ref"], leaf["path"]
++    ev = {"kind": "git_object", "repo": repo, "ref": ref, "path": path}
++    if not Path(repo).is_dir():
++        return None, {**ev, "unknown": "repo directory is missing"}
++    if ctx.run([ctx.git, "rev-parse", "--git-dir"], cwd=repo).returncode != 0:
++        return None, {**ev, "unknown": "not a git repository"}
++    spec = "%s:%s" % (ref, path)
++    present = ctx.run([ctx.git, "cat-file", "-e", spec], cwd=repo).returncode == 0
++    if not present:
++        return False, ev
++    blob = ctx.run([ctx.git, "rev-parse", spec], cwd=repo)
++    if blob.returncode != 0 or not blob.stdout.strip():
++        return None, {**ev, "unknown": "object present but its id is unreadable"}
++    return True, {**ev, "blob": blob.stdout.strip()}
++
++
++def _goal_leaf(leaf: dict, ctx: Ctx):
++    ev = {"kind": "goal_status", "goal": leaf["goal"], "field": leaf["field"], "op": leaf["op"],
++          "value": leaf["value"]}
++    gs = ctx.goal_status(leaf["goal"])
++    if not isinstance(gs, dict) or gs.get(leaf["field"]) is None:
++        return None, {**ev, "unknown": "goal status or field unreadable"}
++    try:
++        got = OPS[leaf["op"]](gs[leaf["field"]], leaf["value"])
++    except TypeError:
++        return None, {**ev, "unknown": "field %r is not comparable with %r" % (gs[leaf["field"]], leaf["value"])}
++    return bool(got), {**ev, "observed": gs[leaf["field"]]}
++
++
++def eval_pred(p, ctx: Ctx):
++    """(True | False | None, evidence list). None = unknown, and unknown is never True."""
++    if p in (None, {}):
++        return False, []
++    if "kind" in p:
++        v, ev = (_git_leaf if p["kind"] == "git_object" else _goal_leaf)(p, ctx)
++        return v, [ev]
++    mode = "any_of" if "any_of" in p else "all_of"
++    vals, evs, true_evs = [], [], []
++    for child in p[mode]:
++        v, ev = eval_pred(child, ctx)
++        vals.append(v)
++        evs.extend(ev)
++        if v is True:
++            true_evs.extend(ev)
++    if mode == "any_of":
++        if true_evs:
++            return True, true_evs
++        return (None if any(v is None for v in vals) else False), evs
++    if any(v is False for v in vals):
++        return False, evs
++    return (None if any(v is None for v in vals) else True), evs
++
++
++# ---------------------------------------------------------------- cycles
++
++def find_cycles(records: dict) -> dict:
++    """wait_id -> the cycle (list of ids) it sits on. Only ids that are on a cycle appear."""
++    out: dict = {}
++    for start in sorted(records):
++        stack, seen = [(start, [start])], set()
++        while stack:
++            node, path = stack.pop()
++            for nxt in records.get(node, {}).get("waits_on", []):
++                if nxt == start:
++                    for member in path:
++                        out.setdefault(member, path + [start])
++                elif nxt in records and nxt not in seen:
++                    seen.add(nxt)
++                    stack.append((nxt, path + [nxt]))
++    return out
++
++
++# ---------------------------------------------------------------- receipts + CAS
++
++def write_receipt(ctx: Ctx, wait_id: str, outcome: str, **fields) -> dict:
++    rdir = ctx.wd / "receipts"
++    rdir.mkdir(parents=True, exist_ok=True)
++    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
++    path = rdir / ("wait-%s-%s-%s.json" % (stamp, wait_id, outcome))
++    rep = {"wait_id": wait_id, "outcome": outcome, "model_calls": ctx.counter["model_calls"],
++           "model_tokens": 0, "at": now_iso(), **fields, "receipt": str(path)}
++    path.write_text(json.dumps(rep, indent=1), encoding="utf-8")
++    return rep
++
++
++def cas(log: gl.GoalLog, seq: int, type_: str, data: dict, actor: str):
++    """Append event `seq` or report the lost race. Returns (event | None, lost: bool)."""
++    try:
++        return log.append(seq, type_, data, actor), False
++    except gl.LostRace:
++        return None, True
++    except gl.GoalLogError as exc:
++        raise Unknown("%s: %s" % (type(exc).__name__, exc)) from exc
++
++
++# ---------------------------------------------------------------- declare
++
++def declare(rec: dict, ctx: Ctx | None = None) -> dict:
++    ctx = ctx or Ctx()
++    if disabled():
++        return {"outcome": "DISABLED"}
++    validate(rec)
++    wid = rec["wait_id"]
++    log = open_log(wid, ctx.wd)
++    try:
++        existing = log.read()
++    except gl.GoalLogError as exc:
++        return write_receipt(ctx, wid, "REFUSED", cause="%s: %s" % (type(exc).__name__, exc))
++    digest = sha(rec)
++    if existing:
++        same = existing[0].data.get("record_sha256") == digest
++        return {"outcome": "DUPLICATE" if same else "REFUSED", "wait_id": wid,
++                "cause": "" if same else "wait_id already declared with a different record"}
++    obs, _ = eval_pred(rec["predicate"], ctx)
++    ctx.wd.mkdir(parents=True, exist_ok=True)
++    path = _record_path(wid, ctx.wd)
++    try:
++        with open(path, "x", encoding="utf-8") as fh:
++            json.dump(rec, fh, indent=1)
++    except FileExistsError:
++        return {"outcome": "REFUSED", "wait_id": wid, "cause": "record file exists without a log"}
++    ev, lost = cas(log, 1, "wait_declared", {"record_sha256": digest, "declared_observation": obs}, ctx.actor)
++    return {"outcome": "DUPLICATE" if lost else "DECLARED", "wait_id": wid, "record_sha256": digest,
++            "declared_observation": obs}
++
++
++def supersede(wait_id: str, by: str, ctx: Ctx | None = None) -> dict:
++    ctx = ctx or Ctx()
++    if disabled():
++        return {"outcome": "DISABLED"}
++    log = open_log(wait_id, ctx.wd)
++    events = log.read()
++    state = derive(events)
++    if state not in ALLOWED:
++        return {"outcome": "SKIP_" + state, "wait_id": wait_id}
++    ev, lost = cas(log, len(events) + 1, "superseded", {"by": by}, ctx.actor)
++    return {"outcome": "DUPLICATE" if lost else "SUPERSEDED", "wait_id": wait_id}
++
++
++# ---------------------------------------------------------------- admission
++
++def admit(rec: dict, ctx: Ctx):
++    """(verdict, reasons). Raises Unknown when an input needed for the verdict is unreadable."""
++    nxt = rec["next"]
++    if nxt["action"] == "none":
++        return "NO_WORK", ["next.action is none"]
++    if nxt["action"] == "deterministic":
++        return "DETERMINISTIC", []
++    gs = ctx.goal_status(rec["goal"])
++    if not isinstance(gs, dict) or not isinstance(gs.get("remaining"), int):
++        raise Unknown("goal %r: status or remaining is unreadable" % rec["goal"])
++    remaining, lease = gs["remaining"], int(nxt.get("lease_tokens") or 0)
++    if remaining <= 0 or remaining < lease:
++        return "DENIED", ["goal %s remaining %d < lease %d" % (rec["goal"], remaining, max(lease, 1))]
++    live = ctx.live_missions(nxt["cwd"])
++    if live:
++        return "DENIED", ["live mission(s) already on %s: %s" % (nxt["cwd"], ", ".join(live))]
++    if nxt.get("route"):
++        import route_admission as ra
++        try:
++            adm = ra.admit(nxt["route"], ra.load_floors(nxt.get("floors")), remaining=remaining)
++        except (ValueError, OSError) as exc:
++            raise Unknown("route admission input unreadable: %s" % exc) from exc
++        if adm["verdict"] in (ra.RECOMPILE, ra.ESCALATE):
++            return "DENIED", ["route %s: %s" % (adm["verdict"], "; ".join(adm["reasons"]))]
++        if adm["verdict"] == ra.DEFER:
++            return "HELD", ["route DEFER: %s" % "; ".join(adm["reasons"])]
++    if live is None:
++        return "HELD", ["live missions on %s could not be read" % nxt["cwd"]]
++    ram = ctx.free_ram()
++    if ram is None or ram < MIN_FREE_RAM_GB:
++        return "HELD", ["free RAM %s GB < %.1f GB" % ("unmeasured" if ram is None else "%.1f" % ram,
++                                                      MIN_FREE_RAM_GB)]
++    return "COGNITIVE", []
++
++
++# ---------------------------------------------------------------- one wait
++
++def process(wait_id: str, records: dict, cycles: dict, ctx: Ctx) -> dict:
++    base = {"wait_id": wait_id}
++    rec = records[wait_id]
++    try:
++        log = open_log(wait_id, ctx.wd)
++        events = log.read()
++        state = derive(events)
++        if events[0].data.get("record_sha256") != sha(rec):
++            raise Unknown("record changed after it was declared")
++    except KeyError:
++        return write_receipt(ctx, wait_id, "REFUSED", state_changed=False, cause="record unreadable or invalid")
++    except (gl.GoalLogError, Unknown) as exc:
++        return write_receipt(ctx, wait_id, "REFUSED", state_changed=False,
++                             cause="%s: %s" % (type(exc).__name__, exc))
++    if state not in ALLOWED:
++        return {**base, "outcome": "SKIP_" + state, "state": state}
++    seq = len(events) + 1
++    try:
++        if wait_id in cycles:
++            reason = "waits_on cycle: " + " -> ".join(cycles[wait_id])
++            if ctx.plan_only:
++                return {**base, "outcome": "WOULD_DENY", "reasons": [reason]}
++            cas(log, seq, "denied", {"verdict": "DENIED", "reasons": [reason]}, ctx.actor)
++            return write_receipt(ctx, wait_id, "DENIED", verdict="DENIED", reasons=[reason],
++                                 cycle=cycles[wait_id], state_changed=True)
++        inv_val, inv_ev = eval_pred(rec["invalidators"], ctx)
++        if inv_val is None:
++            raise Unknown("an invalidator is unreadable: %s" % json.dumps(inv_ev))
++        if inv_val is True:
++            if ctx.plan_only:
++                return {**base, "outcome": "WOULD_STALE", "evidence": inv_ev}
++            cas(log, seq, "stale", {"invalidated_by": inv_ev}, ctx.actor)
++            return write_receipt(ctx, wait_id, "STALE", evidence=inv_ev, launched=False, state_changed=True)
++        evidence = [e for e in events if e.type == "satisfied"]
++        evidence = evidence[0].data["evidence"] if evidence else None
++        if state == "WAITING":
++            sat, evidence = eval_pred(rec["predicate"], ctx)
++            if sat is None:
++                raise Unknown("predicate unreadable: %s" % json.dumps(evidence))
++            if sat is False:
++                return {**base, "outcome": "WAITING", "state": state}
++            if ctx.plan_only:
++                state = "SATISFIED"
++            else:
++                ctx.between("satisfy", wait_id)
++                _, lost = cas(log, seq, "satisfied", {"evidence": evidence, "evidence_digest": sha(evidence)},
++                              ctx.actor)
++                if lost:
++                    return {**base, "outcome": "DUPLICATE", "state": "SATISFIED"}
++                seq += 1
++                state = "SATISFIED"
++        verdict, reasons = admit(rec, ctx)
++        edigest = sha(evidence)
++        if verdict == "DENIED":
++            if ctx.plan_only:
++                return {**base, "outcome": "WOULD_DENY", "reasons": reasons}
++            cas(log, seq, "denied", {"verdict": verdict, "reasons": reasons}, ctx.actor)
++            return write_receipt(ctx, wait_id, "DENIED", verdict=verdict, reasons=reasons, evidence=evidence,
++                                 launched=False, state_changed=True)
++        if verdict == "HELD":
++            return write_receipt(ctx, wait_id, "HELD", verdict=verdict, reasons=reasons, evidence=evidence,
++                                 launched=False, state_changed=state != "WAITING" and not ctx.plan_only)
++        if ctx.plan_only:
++            return {**base, "outcome": "WOULD_" + verdict, "evidence": evidence}
++        ctx.between("claim", wait_id)
++        ev, lost = cas(log, seq, "claimed", {"verdict": verdict, "evidence_digest": edigest}, ctx.actor)
++        if lost:
++            return {**base, "outcome": "DUPLICATE", "state": "CLAIMED"}
++        seq += 1
++        if verdict == "NO_WORK":
++            cas(log, seq, "consumed", {"verdict": verdict, "executed": False}, ctx.actor)
++            return write_receipt(ctx, wait_id, "NO_WORK", verdict=verdict, reasons=reasons, evidence=evidence,
++                                 launched=False, state_changed=True)
++        result = ctx.executor(rec["next"])
++        if not result.get("ok"):
++            return write_receipt(ctx, wait_id, "EXEC_FAILED", verdict=verdict, evidence=evidence, launched=True,
++                                 result=result, state_changed=True, state="CLAIMED")
++        cas(log, seq, "consumed", {"verdict": verdict, "executed": True, "result": result}, ctx.actor)
++        return write_receipt(ctx, wait_id, verdict, verdict=verdict, evidence=evidence, launched=True,
++                             result=result, claim_seq=ev.seq, state_changed=True)
++    except Unknown as exc:
++        return write_receipt(ctx, wait_id, "REFUSED", state_changed=False, state=state, cause=str(exc))
++
++
++def load_records(wd: Path):
++    """(valid records by id, ids whose file is present but unreadable)."""
++    records, bad = {}, []
++    if not wd.is_dir():
++        return records, bad
++    for p in sorted(wd.glob("*.json")):
++        try:
++            rec = validate(json.loads(p.read_text(encoding="utf-8-sig")))
++            if rec["wait_id"] != p.stem:
++                raise ValueError("wait_id does not match its file name")
++            records[p.stem] = rec
++        except (OSError, ValueError) as exc:
++            bad.append((p.stem, "%s: %s" % (type(exc).__name__, exc)))
++    return records, bad
++
++
++def evaluate_waits(ctx: Ctx | None = None) -> dict:
++    """One level-triggered pass over every wait. Idempotent: a second pass finds nothing left to do."""
++    ctx = ctx or Ctx()
++    if disabled():
++        return {"outcome": "DISABLED", "waits": [], "model_calls": 0}
++    records, bad = load_records(ctx.wd)
++    cycles = find_cycles(records)
++    results = [write_receipt(ctx, wid, "REFUSED", state_changed=False, cause=why) for wid, why in bad]
++    results += [process(wid, records, cycles, ctx) for wid in sorted(records)]
++    return {"outcome": "PASS", "waits": results, "model_calls": ctx.counter["model_calls"], "at": now_iso()}
++
++
++# ---------------------------------------------------------------- delta
++
++def delta(wait_id: str, ctx: Ctx | None = None) -> dict:
++    """What a woken worker needs, with no model: HEAD, the receipt blob, files changed since the plan's
++    commit, and the live goals / missions that overlap `next.cwd`."""
++    ctx = ctx or Ctx()
++    if disabled():
++        return {"outcome": "DISABLED"}
++    records, _ = load_records(ctx.wd)
++    rec = records.get(wait_id)
++    if rec is None:
++        return {"outcome": "REFUSED", "wait_id": wait_id, "cause": "record unreadable or absent"}
++    try:
++        events = open_log(wait_id, ctx.wd).read()
++        state = derive(events)
++    except gl.GoalLogError as exc:
++        return {"outcome": "REFUSED", "wait_id": wait_id, "cause": "%s: %s" % (type(exc).__name__, exc)}
++    sat = next((e for e in events if e.type == "satisfied"), None)
++    cwd = rec["next"].get("cwd")
++    out = {"outcome": "DELTA", "wait_id": wait_id, "state": state, "events": [e.type for e in events],
++           "receipt_blobs": [x["blob"] for x in (sat.data["evidence"] if sat else []) if "blob" in x],
++           "evidence": sat.data["evidence"] if sat else None, "head": None, "changed_since_plan": None,
++           "plan_commit": rec.get("plan_commit"), "goals_overlapping": None, "live_missions": None}
++    if cwd and Path(cwd).is_dir():
++        head = ctx.run([ctx.git, "rev-parse", "HEAD"], cwd=cwd)
++        out["head"] = head.stdout.strip() if head.returncode == 0 else None
++        if rec.get("plan_commit"):
++            diff = ctx.run([ctx.git, "diff", "--name-only", "%s..HEAD" % rec["plan_commit"]], cwd=cwd)
++            out["changed_since_plan"] = diff.stdout.split() if diff.returncode == 0 else None
++        out["goals_overlapping"] = ctx.goals_overlapping(cwd)
++        out["live_missions"] = ctx.live_missions(cwd)
++    out["model_calls"] = ctx.counter["model_calls"]
++    return out
++
++
++# ---------------------------------------------------------------- CLI
++
++def cli(argv: list[str]) -> int:
++    if not argv:
++        print("usage: --waits [--plan] | --declare FILE | --delta WAIT_ID | --supersede WAIT_ID BY")
++        return 2
++    cmd, rest = argv[0], argv[1:]
++    if cmd == "--waits":
++        out = evaluate_waits(Ctx(plan_only="--plan" in rest))
++        print("WAIT_PASS " + json.dumps(out))
++        return 1 if any(w.get("outcome") == "REFUSED" for w in out["waits"]) else 0
++    if cmd == "--declare" and len(rest) == 1:
++        try:
++            rec = json.loads(Path(rest[0]).read_text(encoding="utf-8-sig"))
++            out = declare(rec)
++        except (OSError, ValueError) as exc:
++            out = {"outcome": "REFUSED", "cause": "%s: %s" % (type(exc).__name__, exc)}
++        print("WAIT_DECLARE " + json.dumps(out))
++        return 1 if out["outcome"] == "REFUSED" else 0
++    if cmd == "--delta" and len(rest) == 1:
++        out = delta(rest[0])
++        print(json.dumps(out, indent=1))
++        return 1 if out["outcome"] == "REFUSED" else 0
++    if cmd == "--supersede" and len(rest) == 2:
++        out = supersede(rest[0], rest[1])
++        print("WAIT_SUPERSEDE " + json.dumps(out))
++        return 0
++    print("unknown arguments: %s" % " ".join(argv))
++    return 2
++
++
++if __name__ == "__main__":
++    sys.exit(cli(sys.argv[1:]))
+diff --git a/tools/wake_check.py b/tools/wake_check.py
+index c6055cb7..82d5eec4 100644
+--- a/tools/wake_check.py
++++ b/tools/wake_check.py
+@@ -23,11 +23,16 @@ def default_gate_cmd() -> list[str]:
+             "--project-dir", str(DEFAULT_PROJECT_DIR), "--chars-only", "--admit-cwd"]
+ 
+ 
+-def run_gate(argv: list[str], counter: dict) -> int:
++def run_cmd(argv: list[str], counter: dict, cwd: str | None = None) -> subprocess.CompletedProcess:
++    """The one place a subprocess starts. A model-shaped argv is refused and counted."""
+     if any(a == "--probe" or Path(a).name.lower().startswith(FORBIDDEN) for a in argv):
+         counter["model_calls"] += 1
+         raise RuntimeError("wake check refuses a model-shaped argv")
+-    return subprocess.run(argv, capture_output=True, text=True, timeout=120).returncode
++    return subprocess.run(argv, capture_output=True, text=True, timeout=120, cwd=cwd)
++
++
++def run_gate(argv: list[str], counter: dict) -> int:
++    return run_cmd(argv, counter).returncode
+ 
+ 
+ def evaluate(flag: Path | None = None) -> dict:

@@ -1,0 +1,1 @@
+{"envelope":{"target":550000,"warn":600000,"stop":650000,"calls":12},"workers":[{"name":"caa-wake-W1R-2","profile":"slim-t2","calls":12,"packet":2257}]}
