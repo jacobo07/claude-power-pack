@@ -18,3 +18,4 @@ actual vs forecast: actual 1.73M for 30 calls vs forecast 1.2M.
 - goal-reconcile: R5c's hold SPENT+RELEASED; ce-a3b-r used 8,148,603, remaining 451,397, open 1,234,380 held by the two strays (LIVE by the 30-min transcript rule until ~17:36).
 - R4 NOT armed: 1.73M + 0.8M reserve does not fit. ONE AUTHORITY_REQUEST written to vault/OWNER_QUEUE.md (B1).
 - Fix of the arm shape is in lifecycle-v2 WU-1H scope addendum C (2bed6e14).
+- 17:36 reconcile: both stray holds SPENT+RELEASED. The strays cost 866,883 measured (settled 6,914,223 -> 7,781,106). ce-a3b-r used 7,781,106, open 0, remaining 818,894. R4 still does not fit; the request stands (option 1 real need ~2.9M).
