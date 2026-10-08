@@ -25,8 +25,23 @@ PRE_BINDING_PROGRAM_CAPEX) on ce-lifecycle-v. WU-1H's gsd_mission.py change is i
 Open debt: deterministic approval consumer (arm the next listed unit when a COMPLETED unit's receipt exists but it did
 not arm) -- today the chain is worker-driven; packet it after WU-1H. ctx-rent untouched until then.
 
+UPDATE 2026-10-08 ~15:30 UTC (coordinator claude-power-pack-c8):
+- WU-1B DONE b62f9019 (receipt committed; LIFE 6/6, GOAL 54/54, HOOK 7/7, MC 224/225 pre-existing; 3 mutants killed).
+  Mission m-8b571c4b78f7 then HALTED on its envelope. Its worker deferred the WU-1C arm to "a fresh pane" (TRAP).
+- Slot ownership: ce-a3 Amendment C (Owner y, pp-ce-a3 4f1fe9ae) rewrote WU-1C = WU-1H pulled forward (reuses
+  fault_capsule from ce/a3b-r) and owns the WU-1C/WU-1H slots and the out-of-band control work. Roots unit = WU-1C2
+  (3c1c5f3e), which arms WU-1D. My WU-1H packet is superseded by Amendment C's WU-1C unless that coordinator says otherwise.
+- m-1783bda2a44b = my WU-1C arm on the pre-rewrite packet, OWNER HOLD. The Amendment C arm must pass
+  --supersedes m-1783bda2a44b. Never release that hold.
+- Install hazard: the live checkout's hooks/session_budget_guard.js has six commits not on this branch
+  (31f1e714..ffd8f9e9, merge-base 86ad6f16). WU-1B's Copy-Item recipe would REVERT them. The install must be a
+  3-way merge. Install owner = a3b-r R3 (Amendment C C5), with one first-activation Owner command (HR-001).
+- Route admission printed remaining=None, so it does not read goal authority. Packets carry the check until fixed.
+- Authority at 15:20 UTC: remaining 1,426,798, open 489,605 (WU-1B leases, releasable). WU-1C+1C2+1D will
+  likely exhaust it; WU-2+ and ctx-rent need ONE semantic authority decision.
+
 Next 3 actions:
-1. When WU-1B-receipt.md lands: read its verdict; check that WU-1C was armed (`gsd_mission.py status`).
-2. When WU-1-receipt.md lands: perform the install described above.
-3. Update this file.
+1. Amendment C coordinator: commit WU-1C/route, arm with --supersedes m-1783bda2a44b.
+2. Chain: WU-1C -> WU-1C2 -> WU-1D (each arms the next; WAITING_FOR_AUTHORITY if short).
+3. After WU-1-receipt: a3b-r R3 installs by 3-way merge; then the reclassify op for fc54a743.
 Start: read only this file, then action 1.
