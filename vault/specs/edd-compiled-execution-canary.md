@@ -150,5 +150,19 @@ receipt exist; reachability exit 0 for new tools.
   - Hold restored on the record. Structural fix: laptop e582e818 + f8d01322 / GEX44 ddfb8a26 -- the breaker and
     auto-budget skip terminal records. Drill red with the production error verbatim.
   - Sweep rc=0 from 16:36Z. AUDIT3 LAUNCHING epoch 1.
+- AUDIT3 m-c597a68e7077 RESULT (MEASURED; external judge after process exit; GEX44 f249b521):
+  - Audit 2c53d228: E01, E02 and E04 all **correct**. The quality gate PASSES.
+  - Spend: 7 calls, 692,049 vs 500,000 (+38%). The packet no longer asked for the judge and the worker did not run
+    it. The 7 calls were packet, sample, gold, evidence, one verification grep, write+commit, final message.
+  - My forecast omitted the final-message call every unit pays (~104k) and left no slack for one verification
+    read. Fact: all three audits cost 7 calls (707,206 / 696,658 / 692,049, spread 2%) whatever the packet asked.
+    An audit unit is ~7 x 99k, dominated by the per-call floor.
+  - Lifecycle, third variant: the breaker tripped in the pass BEFORE adoption, so the record froze at LAUNCHING
+    with no owner. Fix: laptop afdfa22d / GEX44 8e2c0303. A held LAUNCHING whose host row for this launch id is
+    finished settles to HALTED and records who ran. The real sweep settled it at 16:47:08Z with rc=0.
+  - Worker process: the host's pid 301196 is a `bg-spare` that claimed the job, so it is 5 h old for a 28 min job.
+    The job was done and idle. `claude stop f92cdad1` made it exit, and spend did not move afterwards.
+  - Verdict: **FREEZE on economics only**. P2-A +50%, AUDIT +41%, AUDIT2 +66%, AUDIT3 +38%; nothing cleared,
+    factor 1.659. Phase 2 spend ~4.49M of the 14M ceiling.
 - P2-B does not exist: no packet, no scope, no holdout spec. Only the 2.0M forecast and the Owner's description
   ("creates the holdouts that will judge new machinery"). It cannot be auto-armed on a PASS until written.
