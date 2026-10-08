@@ -2,6 +2,9 @@
 status: APPROVED (Owner "y" 2026-10-08)
 covers: [bootstrap-deadlock, approval-consumer, halted-without-receipt, prospective-binding, ledger-repair, ctx-rent-canary]
 goal: ce-lifecycle-v2 (lineage of ce-lifecycle-v)
+amended_by: ce-a3 Amendment D (pp-ce-a3 3aa002af, Owner "y" ~18:05, +5,600,000 applied as ledger seq 26)
+units: [WU-1H, WU-ADV, WU-1C, WU-1D, WU-INST, WU-TRIP, WU-FLOOR, WU-GEX, WU-CLOSE]
+packet_dir: vault/programs/cognitive-economy/lifecycle
 ---
 
 # ce-lifecycle-v2 -- bootstrap deadlock closure + continuation (Master Plan)

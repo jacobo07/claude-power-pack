@@ -1,8 +1,14 @@
 # WU-1H -- HALTED without a receipt continues: fault capsule + bounded renewal (V-LIFE-HALT-CONTINUES)
 
-Plan: vault/plans/ce-lifecycle-WU-1R-recovery-plan-2026-10-08.md (APPROVED, Owner A), row WU-1H. Cites amendment A1.
+Plan: vault/plans/ce-lifecycle-WU-1R-recovery-plan-2026-10-08.md (APPROVED, Owner A), row WU-1H; this is unit L1 of
+ce-a3 Amendment D (Owner "y" ~18:05, pp-ce-a3 3aa002af), which runs it FIRST. Cites amendment A1.
 Goal ce-lifecycle-v2. Worktree = your cwd (branch ce/lifecycle-v2).
-Precondition: WU-1-receipt.md exists and says WU-1 done. If it says BLOCKED, stop and repeat its blocker.
+Precondition: WU-1B-receipt.md exists and says WU-1B done. If it says BLOCKED, stop and repeat its blocker.
+
+Third measured case (2026-10-08 16:06 UTC): WU-1C's worker (m-1783bda2a44b) died mid-run. Its out.json was empty and
+supervise took the "slim worker failed: pid exited and ... holds no result JSON" branch -> HALTED, nothing renewed.
+Steps 1-3 apply to that branch too: capsule (DONE/SALVAGE may both be empty), one renewal of the same packet.
+Add V-LIFE-DEAD-NO-RESULT (empty out.json + dead pid -> capsule + one successor).
 
 Measured gap (read in the live checkout 2026-10-08): in `supervise`, the `slim_finished` branch
 (tools/gsd_mission.py ~2790) moves a worker that tripped its envelope straight to HALTED. It writes no capsule and
@@ -10,7 +16,8 @@ renews nothing. That is how WU-1 (m-3403c155ecb8, 1,198,372 > 1,150,000) strande
 pane intervened. `renew_mission` (~2161) already makes a PREPARED same-work successor that the normal launch path starts.
 EXTEND these two; do not add a new supervisor.
 
-Budget discipline: hard cap 13 model calls; batch into large PowerShell calls, logs under _logs/wu1h/; read only the
+Budget discipline: hard cap 16 model calls (Amendment D L1 = 0.6M) per epoch, max 2 epochs; CHECKPOINT FIRST: commit a
+stub WU-1H-receipt.md before step 1, so a dead worker leaves a trace; batch into large PowerShell calls, logs under _logs/wu1h/; read only the
 slim_finished branch, renew_mission, _renewal_why_not and the capsule-v2 helpers they call. Past ~50K context: commit
 what is green, append to the receipt, end with HANDOFF NOTE.
 
@@ -41,8 +48,11 @@ Steps:
 7. Commit by pathspec with -F msgfile and verify `git log -1 --format=%s`. Never push, reset, stash or check out.
 8. Write WU-1H-receipt.md (<= 40 lines) with a deploy recipe for tools/gsd_mission.py (files + sha256 + base sha in the
    live checkout + rollback). Do NOT deploy (HR-001). Commit it.
-9. Arm WU-2 only if WU-2.md and route-WU-2.json exist AND goal-status for ce-lifecycle-v2 shows remaining minus open
-   >= the WU-2 lease + reserve + 300,000 checkpoint reserve. Recipe as in WU-1D step 8 with lc-WU-2. Otherwise write
+9. Arm WU-ADV (Amendment D L2) only if WU-ADV.md and route-WU-ADV.json exist AND goal-status for ce-lifecycle-v2
+   shows remaining minus open >= 1,100,000 (0.8M + 300K checkpoint reserve). Use the atomic arm from addendum C if it
+   is green, else: arm --cwd <this worktree> --command /gsd-autonomous --no-launch --rollover-protocol capsule-v2
+   --max-cycles 3 --parallel-unit lc-WU-ADV; envelope --mission <id> --wu-packet <abs WU-ADV.md> --token-estimate
+   800000; admit --mission <id> --route <abs route-WU-ADV.json>. Otherwise write
    WAITING_FOR_AUTHORITY with the numbers into the receipt. Never hand the arm to "a fresh pane": arm it yourself or
    record ARM_FAILED + the error (WU-1B's worker deferred its arm to a pane; that is the trap this unit closes).
 

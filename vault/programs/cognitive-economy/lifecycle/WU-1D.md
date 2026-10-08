@@ -25,20 +25,20 @@ Steps:
    ONE consolidated deploy recipe for every file WU-1 changed that the live checkout runs (hooks/lib/goal_binding.js,
    hooks/session_budget_guard.js, tools/mission_spend.py, tools/gsd_mission.py, modules/provider_routing/ledger.py):
    files + sha256 + base sha in the live checkout + rollback. Do NOT deploy (HR-001). Spend, reforecast, UNKNOWNs.
-6. Write WU-2.md + route-WU-2.json from the vertical-slice plan (vault/plans/ce-lifecycle-vertical-slice-plan-2026-10-08.md)
-   and amendment A1, same shape as this file. Use the measured estimator (~34K per call at the 50K rotation rule),
-   not the plan's nominal lease. Do NOT arm WU-2.
+6. Do NOT write a WU-2 packet: ce-a3 Amendment D (3aa002af) replaces WU-2 with units WU-INST..WU-CLOSE, already
+   packeted by the coordinator. List in the receipt any WU-2 obligation from the vertical-slice plan that no L-unit covers.
 7. Commit the receipt and the WU-2 packet.
-8. Arm WU-1H only if WU-1H.md and route-WU-1H.json exist here (tracked or untracked: existence on disk is the test)
-   AND `mission_spend.py goal-status --goal ce-lifecycle-v2` shows remaining - open >= 850,000 (550K lease + 300K
-   checkpoint reserve; route admission does not read goal remaining). If not, write WAITING_FOR_AUTHORITY with the
+8. Arm WU-INST (Amendment D L5) only if WU-INST.md and route-WU-INST.json exist here AND no live/PREPARED mission
+   already holds it (WU-ADV's sweep consumer may have armed it) AND `mission_spend.py goal-status --goal
+   ce-lifecycle-v2` shows remaining - open >= 1,100,000 (0.8M + 300K checkpoint reserve). Use the atomic arm if green,
+   else the recipe below with lc-WU-INST and --token-estimate 800000. If not, write WAITING_FOR_AUTHORITY with the
    numbers in the receipt. Never hand the arm to "a fresh pane": arm it yourself, or record ARM_FAILED + the error.
    Recipe (python =
    C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe, tool =
    C:\Users\User\.claude\skills\claude-power-pack\tools\gsd_mission.py):
-   `arm --cwd <this worktree> --command /gsd-autonomous --no-launch --rollover-protocol capsule-v2 --max-cycles 3 --parallel-unit lc-WU-1H`
-   then `envelope --mission <id> --wu-packet <abs WU-1H.md> --token-estimate 550000`
-   then `admit --mission <id> --route <abs route-WU-1H.json>`.
+   `arm --cwd <this worktree> --command /gsd-autonomous --no-launch --rollover-protocol capsule-v2 --max-cycles 3 --parallel-unit lc-WU-INST`
+   then `envelope --mission <id> --wu-packet <abs WU-INST.md> --token-estimate 800000`
+   then `admit --mission <id> --route <abs route-WU-INST.json>`.
 
 Do not touch: the live checkout under ~/.claude, ctx-rent, the ce-lifecycle-v worktree.
 
