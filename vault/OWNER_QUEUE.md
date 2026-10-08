@@ -1044,3 +1044,12 @@ already half-shipped and is now witnessed in the plan itself.
   escaped write now fails the suite instead of surfacing as a dirty tree later.
   Worth a second look: the ledger-discovery spec enrolled this ledger on a row
   count that was entirely test output.
+
+
+## AUTHORITY_REQUEST ce-a3b-r (A3 + A3b remainder) -- 2026-10-08 17:3x, ce-a3 Amendment C (pp-ce-a3 4f1fe9ae)
+
+ce-a3b-r has 451,397 left (1,234,380 more is held by two stray launches and frees at ~17:36 only if they prove phantom). R4 needs 1.73M + 0.8M reserve, so the chain is parked at WAITING_FOR_AUTHORITY with no session running.
+- Option 1 (critical path, recommended): up to 3.3M for R4 progress tripwire (1.73M) + R3 runtime installer that makes the GOAL_STATE fix live (1.2M) + 0.8M reserve, minus what is left.
+- Option 2 (finish A3): up to 9.1M = option 1 + R6 1.8M + R7 2.0M (absorbs ce-a3 U5) + ce-a3 U3 2.0M. Excludes ce-a3 U4 (GEX44), unsized until R7's Reality Delta.
+- NO: R4-R7 and U3-U5 become DEFERRED; nothing runs.
+Same goal, no new id. Consumer: lifecycle-v2 WU-ADV (sweep advance stage) arms the next unit once it lands; extending a goal's authority on YES has no owner yet and is filed against lifecycle WU-4.

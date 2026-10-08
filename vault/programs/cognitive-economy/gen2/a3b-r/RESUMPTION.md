@@ -24,3 +24,5 @@ Next 3 actions (for a fresh pane, only if the chain broke):
 3. If a unit stopped on a guard refusal: read the receipt; R1 is the fix for path-pattern refusals.
 
 Start: read only this file.
+
+**STATE 2026-10-08 ~17:30 (ce-a3 Amendment C).** R5 sealed (6902264d, receipt ff8c16c3 + Close outcome). R4 packet + route committed (06aa9d15) but NOT armed: WAITING_FOR_AUTHORITY, one request in vault/OWNER_QUEUE.md (option 1: R4+R3 up to 3.3M; option 2: +R6+R7+ce-a3 U3 up to 9.1M). Strays m-413f1e324aa5 / m-d84de9dd1edb are on owner hold. ce-a3 is terminal (U2 SUPERSEDED, pp-ce-a3 4f1fe9ae); its U3 and U5 fold into this chain. Continuation after a YES = lifecycle-v2 WU-ADV (sweep advance stage), never a pane.

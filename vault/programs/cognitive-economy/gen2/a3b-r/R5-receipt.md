@@ -12,3 +12,9 @@ refs: R5.md, R5c.md, commits 88d37fe9, 6902264d; report ~/.claude/state/slim-job
 
 actual vs forecast: actual 1.73M for 30 calls vs forecast 1.2M.
 
+
+## Close outcome (written by the control plane, unbound pane b42025e1, ce-a3 Amendment C)
+- R5c (m-447ca8005684) COMPLETED but its Close ran `arm` twice WITHOUT --no-launch: m-d84de9dd1edb (blocked on a question) and m-413f1e324aa5 (gsd NO_PHASES), both packet-less /gsd-autonomous launches with the auto 7.5M envelope. Neither was R4. Both put on owner hold, never to be released.
+- goal-reconcile: R5c's hold SPENT+RELEASED; ce-a3b-r used 8,148,603, remaining 451,397, open 1,234,380 held by the two strays (LIVE by the 30-min transcript rule until ~17:36).
+- R4 NOT armed: 1.73M + 0.8M reserve does not fit. ONE AUTHORITY_REQUEST written to vault/OWNER_QUEUE.md (B1).
+- Fix of the arm shape is in lifecycle-v2 WU-1H scope addendum C (2bed6e14).
