@@ -43,7 +43,8 @@ Steps:
    live checkout + rollback). Do NOT deploy (HR-001). Commit it.
 9. Arm WU-2 only if WU-2.md and route-WU-2.json exist AND goal-status for ce-lifecycle-v2 shows remaining minus open
    >= the WU-2 lease + reserve + 300,000 checkpoint reserve. Recipe as in WU-1D step 8 with lc-WU-2. Otherwise write
-   WAITING_FOR_AUTHORITY with the numbers into the receipt.
+   WAITING_FOR_AUTHORITY with the numbers into the receipt. Never hand the arm to "a fresh pane": arm it yourself or
+   record ARM_FAILED + the error (WU-1B's worker deferred its arm to a pane; that is the trap this unit closes).
 
 Do not touch: the live checkout under ~/.claude, ctx-rent, the ce-lifecycle-v worktree.
 

@@ -29,7 +29,11 @@ Steps:
    and amendment A1, same shape as this file. Use the measured estimator (~34K per call at the 50K rotation rule),
    not the plan's nominal lease. Do NOT arm WU-2.
 7. Commit the receipt and the WU-2 packet.
-8. Arm WU-1H only if WU-1H.md and route-WU-1H.json exist here. Recipe (python =
+8. Arm WU-1H only if WU-1H.md and route-WU-1H.json exist here (tracked or untracked: existence on disk is the test)
+   AND `mission_spend.py goal-status --goal ce-lifecycle-v2` shows remaining - open >= 850,000 (550K lease + 300K
+   checkpoint reserve; route admission does not read goal remaining). If not, write WAITING_FOR_AUTHORITY with the
+   numbers in the receipt. Never hand the arm to "a fresh pane": arm it yourself, or record ARM_FAILED + the error.
+   Recipe (python =
    C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe, tool =
    C:\Users\User\.claude\skills\claude-power-pack\tools\gsd_mission.py):
    `arm --cwd <this worktree> --command /gsd-autonomous --no-launch --rollover-protocol capsule-v2 --max-cycles 3 --parallel-unit lc-WU-1H`
