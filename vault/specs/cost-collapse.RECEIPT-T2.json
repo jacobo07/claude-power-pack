@@ -28,5 +28,7 @@
   "mutation_checks": ["fork exclusion reverted", "stall detector blinded", "per-file dedupe dropped", "attribution dropped (foreign session counted)", "absent forecast input treated as a value"],
   "processed_tokens": null,
   "processed_tokens_note": "not measured by this worker; mission_spend.processed_tokens over the T2 mission is the source (~20 model calls used, budget 50)",
-  "open_points": ["`python -I` removes the script directory from sys.path, so mission_spend.py CLI subcommands that import gsd_mission must not be run with -I (the gate runs them without it)."]
+  "open_points": [
+    "T3 NOT ARMED: gsd_mission.py arm refused: singleflight, m-b76843b319af is a live attempt of this goal (the T2 mission itself). Packet WU-CC3.md is committed (540ace84). After T2 ends run: arm --cwd C:\\Users\\User\\Apps\\pp-cost-collapse --command \"Execute the work unit in the wu_packet\" --workstream cost-collapse --no-launch ; then envelope --mission <id> --wu-packet vault/specs/packets/WU-CC3.md --token-estimate 15M --model sonnet --autocompact 250k",
+    "`python -I` removes the script directory from sys.path, so mission_spend.py CLI subcommands that import gsd_mission must not be run with -I (the gate runs them without it)."]
 }
