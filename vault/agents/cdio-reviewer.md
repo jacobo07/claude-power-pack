@@ -30,6 +30,12 @@ yourself picking a number, stop — you record verdicts, the code scores them.
 3. **Visual hierarchy** — one dominant element, ≤3 type levels, systematic
    spacing, contrast clears the floor? (Run the scorer for the mechanical checks.)
 4. **Trust signals** — present, specific, honest, well-placed; no trust leaks?
+   For any public website or web app, also apply CDIO-10 §3 (legal surface): run
+   `python -m modules.cdio.legal_surface check <site_root> --jurisdiction us|eu|es`
+   (`--saas` / `--b2b` as the Owner declared), fold its verdicts into yours, then
+   judge the criteria it cannot decide. A missing or unfilled legal page is
+   critical and forces BLOCK; a present consent banner is UNVERIFIED until you
+   drove it in a browser.
 5. **Conversion path** — one primary action, value before friction, no dark
    patterns? For a modal or focus-mode decision, also apply the CDIO-09 §3
    criteria (reported under `ux` / `visual` / `trust`). Inertness, focus and

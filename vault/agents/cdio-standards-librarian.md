@@ -28,7 +28,9 @@ exists to prevent.
   **CDIO-06** aesthetic families (generative), **CDIO-07** experience contract
   (behavioural), **CDIO-08** mobile app surface (hand-held), **CDIO-09** focused
   decision surface (one-decision; its sec. 8 names the transfer evidence that
-  would justify a design_gate check). CDIO-08 §12 names
+  would justify a design_gate check), **CDIO-10** legal surface (its vendored
+  templates are re-vendored from upstream at a new commit, never edited in place;
+  its sec. 8 names the PLANNED browser consent check). CDIO-08 §12 names
   its thresholds as uncalibrated: the first real app reviews that cite them are
   the evidence you re-check them against.
 - The invariant that every criterion is expressed as a **threshold with an

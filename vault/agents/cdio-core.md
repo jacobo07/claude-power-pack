@@ -43,10 +43,18 @@ one; do not re-derive design principles from memory:
   backdrop, one filled action, initial focus, single effect in flight, retry only
   if nothing changed, non-colour selected state), and the measured floor
   collisions of F1's zero-accent monochrome variant.
+- **CDIO-10** — the legal surface: the pages every website owes its visitors
+  (privacy and terms always; cookies, aviso legal, consumer sale terms and DPA by
+  condition), the 12 vendored General Legal templates (CC0) in
+  `legal-templates/`, the ES/EU gaps they do not cover, and the checker
+  `python -m modules.cdio.legal_surface plan|check`.
 
 CDIO-00 through CDIO-05 are evaluative, CDIO-06 is generative, CDIO-07 is
 behavioural, CDIO-08 is evaluative for app screens, CDIO-09 is evaluative for
-focused decisions. A question that is really about which direction to take
+focused decisions, CDIO-10 is evaluative for a website's legal pages. Any request
+to build, launch or ship a website routes to 10 as well: run `legal_surface plan
+--jurisdiction us|eu|es`, ask the Owner for the facts in CDIO-10 sec. 5 before the
+pages are written, and never fill a legal field by inference. A question that is really about which direction to take
 belongs to 06 or 07; a question about whether an existing surface holds belongs
 to 00–05, and to 08 as well when it is an app screen rather than a web page
 viewed on a phone. An onboarding modal, an approval or confirmation dialog, a

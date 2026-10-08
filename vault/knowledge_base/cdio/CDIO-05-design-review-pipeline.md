@@ -40,7 +40,12 @@ the floor (CDIO-01)? This lens carries the mechanical accessibility checks.
 
 **Lens 4 — Trust signals.** Are trust signals present, specific, honest, and
 placed where the undecided user reaches them; are the finish details present;
-is the surface free of trust leaks (CDIO-03)?
+is the surface free of trust leaks (CDIO-03)? For any public website or web app,
+this lens also applies the CDIO-10 legal-surface criteria (required legal pages
+present, filled from facts, linked, matched to the jurisdiction, consent before
+tracking); the mechanical half is emitted by `modules/cdio/legal_surface.py` and
+every verdict reports under `trust`, `ux` or `visual`, so the score formula is
+unchanged.
 
 **Lens 5 — Conversion path.** Is there one clear primary action; is the value
 before the friction; is the structure value-then-proof-then-ask; are there no
@@ -84,8 +89,10 @@ Severity is not a feeling; it is assigned by rule so it is reproducible:
 
 - **Critical** — any accessibility-floor failure (contrast below the AA
   threshold, tap target below 44px, keyboard trap), any broken/dead-end state,
-  a buried or absent primary action, a fabricated trust signal, or a dark
-  pattern. Criticals block a "done" verdict by themselves (CDIO-00 §4).
+  a buried or absent primary action, a fabricated trust signal, a dark
+  pattern, or a legal-floor failure (a required legal page missing, or published
+  with unfilled template fields — CDIO-10 §3). Criticals block a "done" verdict
+  by themselves (CDIO-00 §4).
 - **Major** — a defect that clearly harms the experience but does not block a
   provisional ship: scale explosion (>3 type levels), no proof section on a
   landing page, field bloat, mental-model-mismatched navigation, value framed as
