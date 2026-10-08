@@ -259,3 +259,33 @@ Decisions on the two drifts, neither applied:
 - `hook-dispatcher.js`: **repo is ahead, not applied.** Its only difference is uncommitted work of
   another pane (names the abandoned scripts in `CHAIN-DEADLINE-ABANDONED before pool`; `node
   --check` OK, `restSteps` in scope). Idle since 09-30 20:27. Deploy after that pane commits it.
+
+---
+
+## D11 — Wii Sports Tennis reconstruction with Wii Motion OS integrated (Owner, 2026-10-08)
+
+**Goal:** reconstruct the Tennis of Wii Sports from `E:\wbfs\Wii Sports + Wii Sports Resort [SP2P01]\SP2P01.wbfs`
+(present, 1,549,795,328 bytes; the brackets in the folder name need `-LiteralPath` in PowerShell) into
+`C:\Users\User\Desktop\Cursor Projects\Wii Projects\KobiiSports + KobiiSports Resort` (exists, EMPTY on 2026-10-08), so its
+motion handling can be improved with Wii Motion OS integrated at source level.
+
+**Known on 2026-10-08:**
+- Wii Motion OS is a T3 spec plus 19 datasets (`KobiiSports Resort/_ksr_clean_repo/vault/specs/t3-wii-motion-os-compendium.md`,
+  non-goal "implementation"), and `_ksr_clean_repo/tools/wmos_adapter` is at V0A. U1 (the injection substrate) is unresolved.
+  With reconstructed source, motion code is changed in source, so the U1 study is not on this path.
+- The recon factory is built for the Wii Sports Resort main.dol (34,159 functions). Wii Sports is a different executable,
+  so it needs its own corpus, census, split and oracle-parity setup.
+- Unknown and decisive: how Tennis's code is packaged (module vs main executable), its function count, and how many of
+  its functions are shape-identical to already-solved Resort functions (shared engine and library families).
+
+**Recommended scope:** a closure-scoped reconstruction, not a full matching rebuild. Reconstruct the motion closure
+(Wiimote read, swing detection, racket and ball response), relink it with retail objects for everything else
+(`relink.py` / `lcf2ld.py` exist in the decomp core), then integrate WMOS in that source. Validate in Dolphin on GEX44
+(D7), then on hardware.
+
+**Cost:** hypothesis until recon-factory CP50 measures the cost per function. See the Owner estimate of 2026-10-08 in
+the gen3 session. Step 0 is zero-model: extract the disc, locate Tennis, count its functions, measure shape overlap
+with the Resort census.
+
+**Activation criterion:** recon-factory CP50 has reported its cost per function and the learning-curve result (the
+per-game cost model needs both). Step 0 may run earlier, because it is zero-model.
