@@ -91,3 +91,13 @@ receipt exist; reachability exit 0 for new tools.
   - `tools/edd_p2_admit.py judge` writes ADMISSION-P2A.json, ADMIT_P2B or FREEZE (FREEZE if >30% over forecast, the
     audit fails, or spend is UNKNOWN). It never arms P2-B.
   - EDDP2 gates 8/8; a mutant goes red.
+- P2-A RESULT (MEASURED, 12:39): gold set 11 escapes + 2 searched absences (c2076d3f).
+  - Auditor m-4bb8952b2903: E01 correct, E02 correct, E11 WRONG (guard already present in pre, nothing escaped).
+  - Admission (aacfb632): **FREEZE**. Audit below the bar, and P2-A was +50% over forecast (19 calls vs 12
+    planned; 2,397,234 vs 1.6M). The auditor was -21% (4 calls, 394,286). Progress-free spend 0 for both.
+  - Reforecast factor 1.498: P2-B ~3.0M, P2-C ~2.7M. Phase 2 spend so far ~2.79M of the 14M ceiling.
+  - Causes: (1) the close protocol (hash, sample, arm, receipt) cost ~5 calls the bottom-up count omitted;
+    (2) E07-E11 rest on code comments with no pre->post hunk, so they are pre-fixed, not escapes replayable on
+    skyparty_pre. The P2-A receipt flagged both.
+  - Arming defect, mine: stall < trip on a worktree unit (the fingerprint reads the clone root). Caught at 12:34 and
+    fixed by transition before any sweep judged it (ab958f71).
