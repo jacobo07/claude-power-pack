@@ -521,6 +521,16 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
     if hold:
         # spec mission-owner-hold: an Owner park outranks budget, launch and relay -- nothing is
         # launched, stopped, halted or renewed while it stands. Holding is not halting.
+        # A hold may prevent relaunch; it must not prevent terminal settlement. Measured 2026-10-08
+        # (EDD m-4bb8952b2903, m-79f84cdd34dc): a cost-breaker hold set on a worker that then finished
+        # left the record RUNNING with its owner gone, and goal singleflight refused every later unit
+        # until the Owner closed it by hand. Only positive DEAD evidence settles; UNKNOWN stays parked.
+        if state in (RUNNING, BLOCKED) and rec.get("owner"):
+            verdict, evidence = liveness(rec.get("owner"), sessions, pid_alive)
+            if verdict == DEAD:
+                return {"action": "settle",
+                        "reason": f"owner hold, owner DEAD ({evidence}): settled terminal, hold kept "
+                                  f"(hold: {str(hold.get('reason'))[:200]})"}
         return {"action": "none", "reason": f"owner hold: {hold.get('reason')}"}
     spent = budget_exhausted(rec, now)
     if spent and state in (PREPARED, LAUNCHING, HANDOFF):
@@ -2794,6 +2804,13 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                            event="slim_worker_finished", now=now, state=HALTED if stopped else COMPLETED,
                            pending=None, slim_result=s, worker=s.get("session_id"),
                            reason=f"{plan['reason']}; {stopped}" if stopped else plan["reason"])
+            elif act == "settle":
+                # Terminal, never relaunched: HALTED keeps owner_hold, so renewal_refusal still refuses it,
+                # and leaves goal_conflicts because the state is terminal.
+                settled = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                     event="hold_settled", now=now, state=HALTED, pending=None,
+                                     reason=plan["reason"])
+                reap(settled, row)
             elif act == "surface_blocked":
                 if rec["state"] != BLOCKED:
                     needs = host_job_needs((rec.get("owner") or {}).get("session_id"))

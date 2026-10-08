@@ -110,6 +110,33 @@ def main() -> int:
     except gm.MissionError:
         check("V-OH-RELEASE-UNHELD-REFUSED", True)
 
+    # 5. a hold may prevent relaunch, never terminal settlement (EDD m-79f84cdd34dc, 2026-10-08): held RUNNING,
+    # host lists the worker done -> settle. Controls: host does not list it (UNKNOWN) and host lists it active.
+    _mission("m-zmb", gm.RUNNING)
+    z = gm.set_owner_hold("m-zmb", "cost breaker: processed 696,658 > 1.25 x estimate 420,000", now=NOW)
+    row = lambda st: [{"sessionId": "m-zmb-w", "id": "m-zmb-w"[:8], "kind": "background", "state": st}]  # noqa: E731
+    p = gm.plan_next(z, NOW + 60, row("done"), pid_alive=gone)
+    check("V-OH-HELD-DEAD-SETTLES", p["action"] == "settle" and "host lists session done" in p["reason"], str(p))
+    p = gm.plan_next(z, NOW + 60, [], pid_alive=gone)
+    check("V-OH-HELD-UNKNOWN-STAYS-PARKED", p["action"] == "none", str(p))
+    p = gm.plan_next(z, NOW + 60, row("running"), pid_alive=gone)
+    check("V-OH-HELD-LIVE-STAYS-PARKED", p["action"] == "none", str(p))
+    key = gm.goal_key(TMP, "ws-z")
+    gm.transition("m-zmb", expect_epoch=z["epoch"], expect_state=gm.RUNNING, event="t_ws", now=NOW, workstream="ws-z")
+    blocked = [c["mission_id"] for c in gm.goal_conflicts(key)]
+    calls = []
+    rows = gm.supervise(now=NOW + 60, sessions=row("done"), runner=lambda a: calls.append(a) or "",
+                        stop_runner=lambda a: calls.append(a), pid_alive=gone,
+                        gsd_status=lambda cwd, workstream=None: {"outcome": "OK"}, fingerprint=lambda wd: None)
+    after = gm.load("m-zmb")
+    check("V-OH-SWEEP-SETTLES-TERMINAL", after["state"] == gm.HALTED and bool(after.get("owner_hold"))
+          and any(r["mission_id"] == "m-zmb" and r.get("action") == "settle" for r in rows),
+          f"{after['state']} hold={bool(after.get('owner_hold'))}")
+    check("V-OH-SETTLE-FREES-GOAL", blocked == ["m-zmb"] and gm.goal_conflicts(key) == [],
+          f"before={blocked}")
+    why = gm.renewal_refusal(after, BUDGET_HALT, "OK")
+    check("V-OH-SETTLED-NEVER-RENEWED", bool(why) and "owner hold" in why, str(why))
+
     print(f"OWNER_HOLD_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
