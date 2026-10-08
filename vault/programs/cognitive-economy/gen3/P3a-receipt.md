@@ -17,4 +17,8 @@ Intake: 289 MATCH donors, 289 sha-backed, 0 already registered, 289 would_regist
 Open: registry write + bulk promotion = 3b; GAP-1 runner must emit schema ksr.decomp.src_bundle/1; donor id/source field
 shapes inferred defensively (289/289 matched live); promote() path with a real bundle unexercised.
 
+Metered by the main pane (worker transcript 856bc1ba, usage deduplicated by message.id): 16 model calls, 2,353,284
+processed (30,363 out) -- OVER the 1.65M hard stop by 703,284; the session breaker did not halt the worker. Drill re-run
+by the main pane from dcd9178: SEAM_DRILL=8/8.
+
 HANDOFF NOTE: P3a done
