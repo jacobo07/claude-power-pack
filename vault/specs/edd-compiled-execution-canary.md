@@ -101,3 +101,17 @@ receipt exist; reachability exit 0 for new tools.
     skyparty_pre. The P2-A receipt flagged both.
   - Arming defect, mine: stall < trip on a worktree unit (the fingerprint reads the clone root). Caught at 12:34 and
     fixed by transition before any sweep judged it (ab958f71).
+- P2-A REPAIR (deterministic, no model; GEX44 mission/edd-run):
+  - c0e9c6d7 added `tools/edd_p2_close.py` (close = 1 call, not ~5), a `pre_fixed` class, and measured cost-model
+    clearance. 2ff24d33 moved E07-E11 to pre_fixed, so the replay set is E01-E06. It also recorded the cost-model
+    correction (COSTMODEL.json, evidence unit P2-A-AUDIT2). The v1 audit was kept as AUDIT-P2A.v1.json.
+  - f135b8e0 froze skyparty_gold.json at sha256 7b37553aa548. Sample (seed 42): E01 E05 E06.
+  - 2e3c837d: a running unit cannot clear the cost model, because its own tail goes uncounted. P2-A-AUDIT judged
+    itself at 4 calls and finished at 7 (~0.72M by transcript; breaker 1,007,807; attribution gap UNKNOWN).
+    Clearance now needs the evidence unit's process to have exited.
+  - Arming AUDIT2 was first REFUSED at 10:50Z by goal singleflight: the finished auditor m-4bb8952b2903 still sat
+    under its breaker hold. Finished workers linger under holds and block the goal. After it was closed as
+    COMPLETED (Owner y, pane 88df3ab3), the same close re-ran from pane 24ca0218 on 2026-10-08. It armed
+    **P2-A-AUDIT2 m-79f84cdd34dc**: sonnet, estimate 420,000 x 1.25, lease = stall 525,000, capsule-v2, no
+    autocompact, max-cycles 2, unit p2a-audit2, released for the sweep. Receipt 31102277.
+  - Next: after AUDIT2 exits, run `edd_p2_admit.py judge`. P2-B stays unarmed (Owner authorised P2-A only).
