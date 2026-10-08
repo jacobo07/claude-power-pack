@@ -27,9 +27,13 @@ import argparse
 import ast
 import json
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+_WIN_GIT = Path(r"C:\Program Files\Git\cmd\git.exe")   # git is absent from a -NonInteractive PowerShell PATH
+GIT = shutil.which("git") or (str(_WIN_GIT) if _WIN_GIT.exists() else "git")
 
 STOP = frozenset("""a an and are as at be by for from has have in into is it its of on or that the
 this to was were will with not no only must should may can every each all any per vs versus our
@@ -60,7 +64,7 @@ def concepts_from_contract(text: str) -> list[dict]:
 
 def rg(pattern: str, root: Path, globs: list[str]) -> list[tuple[str, int, str]]:
     """path, line, text for a case-insensitive regex; git grep keeps it to tracked files."""
-    cmd = ["git", "-C", str(root), "grep", "-n", "-I", "-i", "-E", pattern, "--", *globs]
+    cmd = [GIT, "-C", str(root), "grep", "-n", "-I", "-i", "-E", pattern, "--", *globs]
     p = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
     if p.returncode not in (0, 1):
         raise RuntimeError(f"git grep failed rc={p.returncode}: {p.stderr[:300]}")
@@ -174,7 +178,116 @@ def build(args) -> dict:
     return summary
 
 
+# ---------------------------------------------------------------------------------------------
+# PROOF OF NON-WORK (A-G1): every obligation gets a disposition before any worker is armed.
+# A claim that work is unnecessary is admitted only when a deterministic probe re-checks it now.
+# ---------------------------------------------------------------------------------------------
+DISPOSITIONS = ("NO_WORK", "ALREADY_SATISFIED", "REUSE_EXISTING", "MERGE", "DETERMINISTIC",
+                "CERTIFIED_CAPABILITY", "CHEAP_COGNITION", "STRONG_COGNITION", "FRONTIER_COGNITION",
+                "DEFERRED_EXTERNAL", "UNKNOWN")
+NEEDS_PROBE = ("NO_WORK", "ALREADY_SATISFIED", "REUSE_EXISTING", "MERGE", "CERTIFIED_CAPABILITY")
+
+
+def _abs(root: Path, p: str) -> Path:
+    q = Path(p)
+    return q if q.is_absolute() else root / q
+
+
+def run_probe(probe: dict, root: Path) -> dict:
+    """One deterministic re-check. Never raises: an instrument that cannot run reports ok=False."""
+    kind = probe.get("kind")
+    try:
+        if kind == "file_exists":
+            ok = _abs(root, probe["path"]).exists()
+            return {"kind": kind, "ok": ok, "detail": probe["path"] + (" exists" if ok else " MISSING")}
+        if kind == "commit":
+            repo = _abs(root, probe.get("repo", "."))
+            p = subprocess.run([GIT, "-C", str(repo), "merge-base", "--is-ancestor", probe["sha"], probe["ref"]],
+                               capture_output=True, text=True, errors="replace", timeout=60)
+            return {"kind": kind, "ok": p.returncode == 0,
+                    "detail": f"{probe['sha']} ancestor-of {probe['ref']} rc={p.returncode} {p.stderr.strip()[:120]}"}
+        if kind == "grep":
+            target, rx = _abs(root, probe["path"]), re.compile(probe["pattern"], re.M)
+            files = sorted(f for f in target.rglob("*") if f.is_file()) if target.is_dir() else [target]
+            hits = [f.as_posix() for f in files if f.exists() and rx.search(f.read_text(encoding="utf-8", errors="replace"))]
+            return {"kind": kind, "ok": bool(hits), "detail": f"{len(hits)} hit(s) for /{probe['pattern']}/ in {probe['path']}"}
+        if kind == "cmd_rc0":
+            cmd = probe["cmd"] if isinstance(probe["cmd"], list) else probe["cmd"].split()
+            p = subprocess.run(cmd, cwd=_abs(root, probe.get("cwd", ".")), capture_output=True, text=True,
+                               errors="replace", timeout=int(probe.get("timeout", 120)))
+            marker_ok = probe["marker"] in (p.stdout + p.stderr)
+            return {"kind": kind, "ok": p.returncode == 0 and marker_ok,
+                    "detail": f"rc={p.returncode} marker {'found' if marker_ok else 'ABSENT'}: {probe['marker']}"}
+        return {"kind": kind, "ok": False, "detail": f"unknown probe kind {kind!r}"}
+    except (OSError, KeyError, re.error, subprocess.TimeoutExpired) as e:
+        return {"kind": kind, "ok": False, "detail": f"PROBE ERROR {type(e).__name__}: {e}"}
+
+
+def dispose(rows: list, expect: list, root: Path) -> dict:
+    """Final disposition per obligation, plus the structural errors --check turns into exit 1."""
+    errors, out, seen = [], [], set()
+    ids_present = {r.get("id") for r in rows if isinstance(r, dict)}
+    for i in expect:
+        if i not in ids_present:
+            errors.append(f"MISSING {i}: expected obligation has no row")
+    for n, r in enumerate(rows):
+        oid = r.get("id") if isinstance(r, dict) else None
+        if not oid or not r.get("claimed"):
+            errors.append(f"MISSING row#{n}: no id or no claimed disposition")
+            continue
+        if oid in seen:
+            errors.append(f"DUPLICATE {oid}")
+            continue
+        seen.add(oid)
+        claimed, final, reason, results = r["claimed"], r["claimed"], "", []
+        if claimed not in DISPOSITIONS:
+            errors.append(f"VOCAB {oid}: {claimed!r} is outside the closed set")
+            final, reason = "UNKNOWN", f"claim {claimed!r} outside vocabulary"
+        elif claimed in NEEDS_PROBE:
+            results = [run_probe(p, root) for p in r.get("evidence") or []]
+            if claimed == "MERGE" and r.get("merge_into") not in ids_present | set(expect):
+                errors.append(f"MERGE {oid}: target {r.get('merge_into')!r} is not an obligation id")
+                final, reason = "UNKNOWN", "MERGE without a valid target"
+            elif not results:
+                errors.append(f"PROBE {oid}: {claimed} claimed with no evidence")
+                final, reason = "UNKNOWN", "no evidence entry"
+            elif not all(x["ok"] for x in results):
+                errors.append(f"PROBE {oid}: {claimed} failed its probe")
+                final, reason = "UNKNOWN", "; ".join(x["detail"] for x in results if not x["ok"])
+        elif claimed == "UNKNOWN":
+            reason = r.get("reason", "")
+        out.append({"id": oid, "block": r.get("block", ""), "claimed": claimed, "disposition": final,
+                    "reason": reason, "merge_into": r.get("merge_into"), "probes": results})
+    counts = {d: sum(1 for o in out if o["disposition"] == d) for d in DISPOSITIONS}
+    undisposed = sum(1 for e in errors if e.startswith(("MISSING", "DUPLICATE")))
+    return {"obligations": out, "counts": {k: v for k, v in counts.items() if v}, "errors": errors,
+            "unknown": counts["UNKNOWN"], "undisposed": undisposed}
+
+
+def dispose_main(argv) -> int:
+    ap = argparse.ArgumentParser(prog="gsd_dossier.py dispose")
+    ap.add_argument("--obligations", required=True, help="json list, or {expect:[ids], obligations:[...]}")
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--repo", default=".", help="root that relative probe paths resolve against")
+    ap.add_argument("--check", action="store_true", help="exit 1 on any structural error or failed probe")
+    a = ap.parse_args(argv)
+    data = json.loads(Path(a.obligations).read_text(encoding="utf-8-sig"))
+    rows, expect = (data["obligations"], data.get("expect", [])) if isinstance(data, dict) else (data, [])
+    res = dispose(rows, expect, Path(a.repo).resolve())
+    out = Path(a.out)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "dispositions.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
+    for e in res["errors"]:
+        print("ERROR", e)
+    print(f"DISPOSE counts={json.dumps(res['counts'], sort_keys=True)} unknown={res['unknown']} "
+          f"undisposed={res['undisposed']}")
+    return 1 if a.check and res["errors"] else 0
+
+
 def main(argv=None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "dispose":
+        return dispose_main(argv[1:])
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--repo", required=True)
     ap.add_argument("--contract", required=True, help="mission prompt / spec whose sections are the concepts")
