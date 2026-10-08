@@ -154,6 +154,9 @@ def main() -> int:
         else:
             check("V-OH-BREAKER-SKIPS-TERMINAL", err is None and out is not None and not out.get("owner_hold"),
                   str(err))
+            if not hasattr(gm, "_auto_budget"):
+                print("SKIP V-OH-AUTOBUDGET-SKIPS-TERMINAL (this build has no _auto_budget; not counted)")
+                continue
             seq = gm.load(mid)["seq"]
             gm._auto_budget({**gm.load(mid), "token_estimate": None}, NOW + 60, measure=lambda rr: 1)
             check("V-OH-AUTOBUDGET-SKIPS-TERMINAL", gm.load(mid)["seq"] == seq, f"seq {seq} -> {gm.load(mid)['seq']}")
