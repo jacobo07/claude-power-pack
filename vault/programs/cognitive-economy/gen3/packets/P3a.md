@@ -1,11 +1,12 @@
 # P3a -- recon-factory Phase 3a: verified SRC bundle seam + donor intake dry-run (GAP-2, GAP-6, GAP-12)
 
-Mission: MISSION_ID_FILLED_AT_ARM (write this id in the receipt, mandatory).
+Mission: m-789229da3a6f (supersedes the completed P7G0 m-302d70eabd59; write this id in the receipt, mandatory).
 Authority: Owner "y" 2026-10-08 (tranche ceiling raised to ~6.8M to finish the minimal path; gen3/TRANCHE-CP50.md).
 Funds Phase 3a ONLY: never call promote() on the real ledger, never write src_registry.json, never compile locally,
 never enqueue on GEX44, never arm a mission, never push.
-Envelope (route-P3a.json, floor 110,835/call): expected 10 x (110,835 + 20k) x 1.2 = 1.57M (route target 1.6M) | warn
-1.75M | HARD STOP 1.9M. Hard limit 10 tool calls. 0 subagents. NO search tools (Glob/Grep) at all.
+Envelope (route-P3a.json, floor 110,835/call): expected 9 x (110,835 + 20k) x 1.2 = 1.41M (route target 1.45M) | warn
+1.55M | HARD STOP 1.65M (the tranche's remaining ceiling). Hard limit 9 tool calls: there is NO fix call; if the drill
+fails, write the failure into SUMMARY and receipt as PARTIAL. 0 subagents. NO search tools (Glob/Grep) at all.
 
 ## Corpus = ONE file
 Read `C:\Users\User\.claude\skills\claude-power-pack\vault\programs\cognitive-economy\gen3\recon-reforecast\P3A-DOSSIER.md`
@@ -39,12 +40,11 @@ Implement policy v1 exactly; do not redesign it.
    drill and regression lines verbatim, intake counts, open points (registry write and bulk promotion are 3b; the GAP-1
    runner must emit this bundle schema).
 
-## Call plan (10)
+## Call plan (9)
 1 Read dossier. 2-4 Edit levels.py (at most 3 Edits, sequential, each one consolidated). 5 Write test_src_seam.py.
 6 One PowerShell call (absolute python `C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe`, cwd = the decomp
-dir, PYTHONIOENCODING=utf-8): test_src_seam.py only. 7 one fix if
-needed (else skip). 8 Write SUMMARY. 9 Write receipt
-`C:\Users\User\.claude\skills\claude-power-pack\vault\programs\cognitive-economy\gen3\P3a-receipt.md`. 10 One PowerShell call:
+dir, PYTHONIOENCODING=utf-8): test_src_seam.py only. 7 Write SUMMARY. 8 Write receipt
+`C:\Users\User\.claude\skills\claude-power-pack\vault\programs\cognitive-economy\gen3\P3a-receipt.md`. 9 One PowerShell call:
 commit levels.py + test_src_seam.py + SUMMARY in the work tree, then the receipt in the PP repo, each by pathspec
 (`git add -- <paths>; git commit -F <msgfile> -- <paths>`; git = `C:\Program Files\Git\cmd\git.exe`), then print both
 `git log -1 --format=%h %s`.

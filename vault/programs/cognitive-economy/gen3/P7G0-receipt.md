@@ -11,4 +11,8 @@
 - Both hashes equal the dossier's expected values on the first run (Pln part sha also matched).
 - Open points: Owner may amend preregistration text before the first run, never after; holdout unread; GAP-4 A/A re-run and arm C redefinition deferred; no push, no checkpoint, no GEX44.
 
+Metered by the main pane (worker transcript 53cd63b4, usage deduplicated by message.id): 11 model calls, 1,332,106
+processed (11,895 out) -- OVER the 1.2M hard stop by 132,106; the session breaker did not trip. Drill re-run by the main
+pane from e3b0b82: G0_DRILL=6/6; draw and holdout sha256 equal P7G0-DOSSIER.md exactly.
+
 HANDOFF NOTE: P7G0 done

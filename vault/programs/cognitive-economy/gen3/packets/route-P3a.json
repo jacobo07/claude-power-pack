@@ -1,1 +1,1 @@
-{"envelope":{"target":1600000,"warn":1750000,"stop":1900000,"calls":12},"workers":[{"name":"recon-P3a","profile":"top-level-worker","calls":10,"packet":20000}]}
+{"envelope":{"target":1450000,"warn":1550000,"stop":1650000,"calls":11},"workers":[{"name":"recon-P3a","profile":"top-level-worker","calls":9,"packet":20000}]}
