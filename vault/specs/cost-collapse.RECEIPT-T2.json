@@ -1,0 +1,32 @@
+{
+  "tranche": "T2",
+  "packet": "vault/specs/packets/WU-CC2.md",
+  "branch": "cost-collapse/main",
+  "commits": ["2b5b0ea5 feat(cost-collapse): mission_spend autopsy + forecast, V-AUTOPSY gates (T2)"],
+  "gate": {
+    "tools/test_autopsy.py": "AUTOPSY_PASS=42/42",
+    "tools/test_gsd_mission_envelope.py": "ENVELOPE_PASS=55/55",
+    "tools/test_grammar_default.py": "GRAMMAR_PASS=56/56"
+  },
+  "reproduction": {
+    "mission": "m-53847a002b65",
+    "transcripts_on_host": true,
+    "autopsy_processed": 187431344,
+    "meter_processed_tokens": 187431344,
+    "error": 0.0,
+    "calls": 719,
+    "cache_read": 183178097,
+    "cache_write": 3952969,
+    "output": 298840,
+    "mean_ctx": 260268,
+    "stall_seconds_total": 18613.2,
+    "fork_calls": 0,
+    "note": "Same instant, same attribution (mission_sessions + _attributed): the autopsy equals processed_tokens exactly. The mission had grown from 162.2M (spec, 2026-10-07T19:30Z) to 187.4M at measurement. Also pinned on a recorded fixture (vault/specs/fixtures/autopsy-m53847-sample.*, one real subagent transcript: 12 calls, 2,108,311) so the gate holds on a host without the transcripts."
+  },
+  "autopsy_findings": "Per-session mean ctx 261k-288k; first-call floor 125k main / 68-99k subagents (matches spec). Subagents: aa7da38b 91 calls 25.45M; a0c42830 78 calls 22.33M. No forked copies in this mission, so fork exclusion is proven on synthetic transcripts only. Longest stall 13,397 s in session c7baf898.",
+  "design": "autopsy.processed follows _file_tokens (per-file dedupe) so it sums to the meter; processed_unique excludes message ids already counted in an older transcript (forks), reported as fork_calls/fork_tokens, never hidden. forecast row = units x calls_per_unit x (floor + context_image) x (1 + repair); any missing input -> tokens null, confidence unmeasured, missing named; a stated repair of 0 is a value; total is flagged lower_bound while any row is unmeasured. Confidence = weakest input basis (measured:* / estimated / unmeasured).",
+  "mutation_checks": ["fork exclusion reverted", "stall detector blinded", "per-file dedupe dropped", "attribution dropped (foreign session counted)", "absent forecast input treated as a value"],
+  "processed_tokens": null,
+  "processed_tokens_note": "not measured by this worker; mission_spend.processed_tokens over the T2 mission is the source (~20 model calls used, budget 50)",
+  "open_points": ["`python -I` removes the script directory from sys.path, so mission_spend.py CLI subcommands that import gsd_mission must not be run with -I (the gate runs them without it)."]
+}
