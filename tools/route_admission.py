@@ -152,6 +152,25 @@ def forecast_route(champ: dict, floors: dict, *, remaining: int | None = None) -
     return {**out, "verdict": verdict, "reasons": [why] if why else []}
 
 
+def dependent_admission(pred_spent: int | None, pred_target: int | None) -> dict:
+    """A successor is admitted against its predecessor's METERED receipt (spent processed tokens), never
+    the predecessor's estimate. Absent receipt / target is UNKNOWN -> ESCALATE, never admitted; spent over
+    the target means the model that sized the predecessor is wrong, so the successor must not inherit it."""
+    def _ok(v) -> bool:
+        return isinstance(v, int) and not isinstance(v, bool) and v > 0
+    if pred_spent is not None and (isinstance(pred_spent, bool) or not isinstance(pred_spent, int) or pred_spent < 0):
+        pred_spent = None
+    if pred_spent is None or not _ok(pred_target):
+        return {"verdict": ESCALATE, "basis": "unmeasured", "spent": pred_spent, "target": pred_target,
+                "reason": "predecessor has no metered receipt (absent is not zero): successor not admitted"}
+    if pred_spent > pred_target:
+        return {"verdict": ESCALATE, "basis": "measured:mission_spend", "spent": pred_spent, "target": pred_target,
+                "reason": f"predecessor metered {pred_spent:,} > its target {pred_target:,}: "
+                          f"successor inherits a bad model, escalate"}
+    return {"verdict": None, "basis": "measured:mission_spend", "spent": pred_spent, "target": pred_target,
+            "reason": f"predecessor metered {pred_spent:,} <= target {pred_target:,}: successor judged on its own forecast"}
+
+
 def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
           remaining: int | None = None, root: Path | str | None = None) -> dict:
     """Champion (floor x margin) plus challenger (expected completion). Once CHALLENGER_AUTHORITATIVE the

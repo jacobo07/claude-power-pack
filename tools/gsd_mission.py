@@ -1557,7 +1557,7 @@ def packet_gate_passed(rec: dict, now: float, *, gate_runner=None) -> dict | Non
 
 
 def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = None,
-                now: float | None = None, measure=None) -> dict:
+                now: float | None = None, measure=None, depends_on: str | None = None) -> dict:
     """Judge the mission's compiled work unit against its route (tools/route_admission.py) and record
     the verdict, bound to the packet's and the route file's sha256. Every verdict is recorded, so a
     refusal is visible; only ADMISSIBLE lets launch_worker start a worker. The budget still remaining
@@ -1592,7 +1592,17 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
         res = ra.admit(route, ra.load_floors(floors_path), remaining=remaining)
     except ValueError as exc:
         raise MissionError(f"route {str(p)!r}: {exc}") from exc
-    admission = {"verdict": res["verdict"], "route_path": str(p), "route_file_sha256": _packet_digest(str(p)),
+    dep = None
+    depends_on = depends_on or rec.get("depends_on")
+    if depends_on:
+        # Dependent admission (spec E3): judged on the predecessor's METERED spend, never its estimate.
+        pred = load(depends_on)
+        pred_spent = (measure or ms.processed_tokens)(pred) if pred else None
+        dep = ra.dependent_admission(pred_spent, (pred or {}).get("token_estimate"))
+        dep["predecessor"] = depends_on
+        if dep["verdict"]:
+            res = {**res, "verdict": dep["verdict"], "reasons": [dep["reason"], *res["reasons"]]}
+    admission = {"verdict": res["verdict"], **({"dependent": dep} if dep else {}), "route_path": str(p), "route_file_sha256": _packet_digest(str(p)),
                  "packet_sha256": pkt_digest, "envelope": res["envelope"],
                  "need_with_margin": res.get("need_with_margin"), "remaining": remaining,
                  "reasons": res["reasons"][:6], "at": now,
@@ -3777,6 +3787,7 @@ def _cli(argv=None) -> int:
     ad.add_argument("--mission", required=True)
     ad.add_argument("--route", required=True, help="route JSON: envelope + workers (profile, calls, packet)")
     ad.add_argument("--floors", help="floor table (default vault/config/route-floors.json)")
+    ad.add_argument("--depends-on", help="predecessor mission: admitted only on its metered receipt (spec E3)")
     v = sub.add_parser("supervise")
     v.add_argument("--dry-run", action="store_true")
     v.add_argument("--actions-only", action="store_true",
@@ -3841,7 +3852,8 @@ def _cli(argv=None) -> int:
               f"wu_packet_epoch={rec.get('wu_packet_epoch')} continue_max_tokens={rec.get('continue_max_tokens')}")
         return 0
     if args.cmd == "admit":
-        adm = admit_route(args.mission, args.route, floors_path=args.floors)["admission"]
+        adm = admit_route(args.mission, args.route, floors_path=args.floors,
+                         depends_on=args.depends_on)["admission"]
         fc = adm.get("forecast") or {}
         print(f"ROUTE {adm['verdict']} mission={args.mission} need={adm.get('need_with_margin')} "
               f"expected={fc.get('expected')} safety={fc.get('safety')} "
