@@ -42,7 +42,17 @@ FLOORS = str(Path(__file__).resolve().parent.parent / "vault" / "config" / "rout
 passes = fails = 0
 NOW = 1_800_000_000.0
 ENV = {"target": 3_500_000, "warn": 4_500_000, "stop": 5_500_000, "calls": 25}
-THIN = {"envelope": ENV, "workers": [{"name": "w0r", "profile": "top-level-worker", "calls": 25, "packet": 4000}]}
+# D3: the challenger decides, and 25 calls of top-level-worker expect 3.56M > the 3.5M target; 22 expect 3.06M
+THIN = {"envelope": ENV, "workers": [{"name": "w0r", "profile": "top-level-worker", "calls": 22, "packet": 4000}]}
+# slim-t2 has a measured floor but NO measured growth / calls_err (the repo table keeps it UNKNOWN -> ESCALATE,
+# pinned below). The slim LAUNCH gates test launch mechanics, so they run on a fixture table that gives it an
+# explicitly estimated calibration; nothing here claims those numbers are measured.
+_slim_tbl = json.loads(Path(FLOORS).read_text(encoding="utf-8-sig"))
+for _f, _v in (("growth_per_call", 500), ("calls_err", 0.3)):
+    _slim_tbl["profiles"]["slim-t2"][_f] = {"value": _v, "n": 5, "basis": "estimated:test-fixture",
+                                            "provenance": "hermetic fixture for slim launch mechanics"}
+SLIM_FLOORS = str(Path(TMP) / "floors-slim-fixture.json")
+Path(SLIM_FLOORS).write_text(json.dumps(_slim_tbl), encoding="utf-8")
 HEAVY = {"envelope": ENV, "workers": [
     {"name": "orch", "profile": "top-level-worker", "calls": 40, "packet": 5000},
     *({"name": f"exec-{i}", "profile": "gsd-executor", "calls": 20, "packet": 20000} for i in range(3))]}
@@ -97,7 +107,9 @@ def launch(mid: str) -> dict:
 
 
 def admit(mid: str, route_name: str, route=THIN, measure=lambda r: None) -> dict:
-    return gm.admit_route(mid, write(route_name, route), floors_path=FLOORS, now=NOW, measure=measure)
+    slim = any(w["profile"] == "slim-t2" for w in route["workers"])
+    return gm.admit_route(mid, write(route_name, route), floors_path=SLIM_FLOORS if slim else FLOORS,
+                          now=NOW, measure=measure)
 
 
 def refused_launch(mid: str) -> tuple[bool, str]:
@@ -138,7 +150,15 @@ def main() -> int:
     mission("m-heavy")
     h = admit("m-heavy", "heavy.json", HEAVY)["admission"]
     ok, why = refused_launch("m-heavy")
-    check("V-ADM-HEAVY-RECORDED-AND-REFUSED", h["verdict"] == "RECOMPILE" and ok, f"{h['verdict']}: {why}")
+    # D3: gsd-executor has no measured calls_err, so the challenger is UNKNOWN -> ESCALATE (still refused)
+    check("V-ADM-HEAVY-RECORDED-AND-REFUSED", h["verdict"] == "ESCALATE" and "calls_err" in h["reasons"][0] and ok,
+          f"{h['verdict']}: {why}")
+    mission("m-slim-unknown")
+    sl_repo = gm.admit_route("m-slim-unknown", write("slim-repo.json", {"envelope": ENV, "workers": [
+        {"name": "s", "profile": "slim-t2", "calls": 3, "packet": 500}]}), floors_path=FLOORS, now=NOW)["admission"]
+    ok_u, _ = refused_launch("m-slim-unknown")
+    check("V-ADM-SLIM-UNCALIBRATED-ESCALATES-ON-REPO-TABLE", sl_repo["verdict"] == "ESCALATE" and ok_u,
+          str(sl_repo["reasons"][:1]))
     mission("m-thin")
     t = admit("m-thin", "thin.json")["admission"]
     res = launch("m-thin")

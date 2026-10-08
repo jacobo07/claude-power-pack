@@ -66,10 +66,18 @@ def main() -> int:
         {"name": "exec-2", "profile": "gsd-executor", "calls": 20, "packet": 20_000},
         {"name": "exec-3", "profile": "gsd-executor", "calls": 20, "packet": 20_000}]}
     h = ra.admit(heavy, floors)
-    check("V-RADM-HEAVY-REJECTED", h["verdict"] == ra.RECOMPILE and h["need"] > 10 * M,
+    # D3: gsd-executor has no measured calls_err (no planned-vs-metered pairs exist for subagents), so the
+    # challenger cannot size it and says UNKNOWN -> ESCALATE; the champion alone would have said RECOMPILE.
+    check("V-RADM-HEAVY-REJECTED", h["verdict"] == ra.ESCALATE and h["need"] > 10 * M
+          and "calls_err" in h["reasons"][0] and h["champion"]["verdict"] == ra.RECOMPILE,
           f"{h['verdict']} need {h.get('need'):,}: {h['reasons']}")
+    known = {"envelope": W0R_ENV, "workers": [
+        {"name": f"w{i}", "profile": ra.TOP_LEVEL, "calls": 30, "packet": 5_000} for i in range(3)]}
+    k = ra.admit(known, floors)
+    check("V-RADM-HEAVY-MEASURED-RECOMPILES", k["verdict"] == ra.RECOMPILE and k["forecast"]["expected"] > W0R_ENV["target"],
+          f"{k['verdict']}: {k['reasons'][:1]}")
     thin = {"envelope": W0R_ENV, "workers": [
-        {"name": "w0r", "profile": ra.TOP_LEVEL, "calls": 25, "packet": 4_000}]}
+        {"name": "w0r", "profile": ra.TOP_LEVEL, "calls": 22, "packet": 4_000}]}   # 25 calls expects 3.56M > 3.5M
     t = ra.admit(thin, floors)
     check("V-RADM-THIN-ADMITTED", t["verdict"] == ra.ADMISSIBLE and t["need_with_margin"] <= W0R_ENV["target"],
           f"{t['verdict']} {t['need_with_margin']:,} <= {W0R_ENV['target']:,}")
@@ -84,13 +92,16 @@ def main() -> int:
         missing = ra.admit(slim, floors, root=root)
         (Path(root) / "vault" / "config" / "slim-critical-settings.json").write_text("{}", encoding="utf-8")
         present = ra.admit(slim, floors, root=root)
-    check("V-RADM-SLIM-T2-ADMITTED", present["verdict"] == ra.ADMISSIBLE
+    # D3: slim-t2 has a measured floor but no calls_err, so the challenger is UNKNOWN -> ESCALATE; the
+    # champion still admits it (floor + settings file present), which is what the control pins.
+    check("V-RADM-SLIM-T2-ADMITTED", present["champion"]["verdict"] == ra.ADMISSIBLE
+          and present["verdict"] == ra.ESCALATE and "no calibrated" in present["reasons"][0]
           and present["workers"][0]["floor"] == profiles["slim-t2"]["floor"] == 13507,
           f"{present['verdict']} floor {present['workers'][0]['floor']}")
     check("V-RADM-SLIM-T2-REFUSED-WITHOUT-SETTINGS", missing["verdict"] == ra.ESCALATE
           and "slim-critical-settings.json" in missing["reasons"][0], str(missing["reasons"]))
     check("V-RADM-SLIM-REPO-FILE-EXISTS", (HERE.parent / "vault" / "config" / "slim-critical-settings.json").is_file()
-          and ra.admit(slim, floors)["verdict"] == ra.ADMISSIBLE, "default root resolves the committed file")
+          and ra.admit(slim, floors)["champion"]["verdict"] == ra.ADMISSIBLE, "default root resolves the committed file")
 
     # exact boundary on a synthetic table: margin 0, floor 100, 10 calls = 1000
     tiny = {"default_min_calls": 3, "profiles": {ra.TOP_LEVEL: {"floor": 100, "p50": 100, "write": True}}}
@@ -116,9 +127,10 @@ def main() -> int:
              "workers": [{"name": "w", "profile": ra.TOP_LEVEL, "calls": 3}]}
     e = ra.admit(small, floors)
     check("V-RADM-INFEASIBLE-ENVELOPE-ESCALATES", e["verdict"] == ra.ESCALATE, f"{e['reasons']}")
-    roomy = {**small, "envelope": {"target": 400_000, "warn": 400_000, "stop": 400_000}}
+    # warn/stop sit above the call-band high edge (5 calls ~577k), so only the target decides here
+    roomy = {**small, "envelope": {"target": 400_000, "warn": 600_000, "stop": 800_000}}
     check("V-RADM-INFEASIBLE-CONTROL", ra.admit(roomy, floors)["verdict"] == ra.ADMISSIBLE,
-          "3 x 110,835 x 1.2 = 399,006 <= 400,000")
+          "3 x 110,835 + growth ~339k <= 400,000; safety ~577k <= warn 600,000")
 
     bad = [
         {"envelope": W0R_ENV, "workers": []},

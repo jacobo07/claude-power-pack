@@ -34,7 +34,7 @@ DEFAULT_GROWTH_MARGIN = 0.20
 TOP_LEVEL = "top-level-worker"
 ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "WATCHED", "DEFER", "RECOMPILE", "ESCALATE"
 LOW_CONFIDENCE_N = 5            # fewer samples than this: SAFETY can only WATCH, never refuse (spec D3)
-CHALLENGER_AUTHORITATIVE = False  # spec D3 flip held: it turns test_route_admission / test_gsd_mission_admission red (see RECEIPT-E1)
+CHALLENGER_AUTHORITATIVE = True   # spec D3 flip (E3): the growth term decides; the champion is kept under `champion`
 
 
 def load_floors(path: Path | str | None = None) -> dict:
