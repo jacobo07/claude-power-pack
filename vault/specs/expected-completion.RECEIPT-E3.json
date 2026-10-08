@@ -1,0 +1,68 @@
+{
+  "unit": "WU-E3R",
+  "status": "GREEN: D3 flip certified in worktree (ACTIVE only after E4 landing); E3 canonical receipt written; E3G armed per chain",
+  "commits": [
+    "3f2ff5c4 dependent-admission(E3): successor admitted on predecessor's metered receipt, V-DEP 15/15 + 3 drills",
+    "14879ab0 route-admission(E3): D3 flip - challenger (expected completion) authoritative, champion kept"
+  ],
+  "gates": {
+    "test_route_admission": "RADM_PASS=22/22",
+    "test_gsd_mission_admission": "ADM_PASS=44/44",
+    "test_route_admission_expected": "ADMIT_EXPECTED_PASS=23/23",
+    "test_gsd_mission_envelope": "ENVELOPE_PASS=55/55 (after 1 repair round)",
+    "test_grammar_default": "GRAMMAR_PASS=56/56",
+    "test_autopsy": "AUTOPSY_PASS=42/42",
+    "test_running_control": "RUNCTL_PASS=17/17",
+    "test_dependent_admission": "DEPENDENT_ADMISSION_PASS=15/15 + 3 drills red-on-mutant (canary 8, canary 9, absent receipt read as zero)",
+    "route_floors_unchanged": "git diff --exit-code vault/config/route-floors.json -> 0"
+  },
+  "decisions": [
+    "Repair round 1 (of max 3): V-CWU-LAUNCH-SENDS-PACKET went red because the D3 growth term makes the fixture route (25 calls, top-level-worker, packet 4000, target 3.5M) expect 3,563,875 > target -> RECOMPILE. Cause is the flip; fixture thinned to 20 calls in tools/test_gsd_mission_envelope.py (4th file in the D3 commit; packet named 3).",
+    "slim-t2 and gsd-executor calls_err stay ABSENT from route-floors.json: no planned-vs-metered call pairs exist, a value would be invented. On the repo table they ESCALATE; fixture values (estimated:test-fixture) live only in temp tables.",
+    "Dependent admission uses zero tolerance (spent <= predecessor target); the spec's class tolerance is undefined."
+  ],
+  "authoritative_policy": "certified-in-worktree (ACTIVE only after E4 landing)",
+  "unknown_telemetry": [
+    "slim-t2 calls_err",
+    "gsd-executor calls_err"
+  ],
+  "economics": {
+    "worker_session": "b35651f5-4167-40cb-9596-624e90b58f48 (mission m-7310776922c0)",
+    "forecast_calls": 34,
+    "actual_calls": 45,
+    "call_error": 0.324,
+    "forecast_tokens": 6000000,
+    "actual_tokens": 7622341,
+    "token_error": 0.270,
+    "basis": {
+      "forecast_calls": "ESTIMATED: route-E3 envelope calls 34 (spec said ~25, packet <=32; three inconsistent forecasts)",
+      "actual_calls": "MEASURED: mission_spend autopsy --mission m-7310776922c0, assistant model calls in the transcript. The session guard counted 52 tool calls (plan WU-0), a different unit; against 52 call_error would be 0.529",
+      "forecast_tokens": "ESTIMATED: route-E3 target (spec said ~4M, which would give token_error 0.906)",
+      "actual_tokens": "MEASURED: autopsy processed = cache_read 7,241,308 + cache_write 350,573 + output 30,370 (+ uncached input)",
+      "call_error": "(45-34)/34, derived from the two figures above",
+      "token_error": "(7,622,341-6,000,000)/6,000,000, derived"
+    },
+    "context": {
+      "first_ctx": 119481,
+      "mean_ctx": 168710,
+      "max_ctx": 208272,
+      "p90_ctx": "UNKNOWN: autopsy rows carry first/mean/max only, no per-call series",
+      "g_per_call": "ESTIMATED ~2238 = 2 x (mean - first) / (n - 1) over 45 calls, the same estimator as the route-floors growth_per_call (repo value 2310, n=5)"
+    },
+    "stall": "MEASURED: one stall of 5949.5 s after ts 1791469908"
+  },
+  "incident": {
+    "receipt_blocked_by_guard_closeout_path": "packet receipt path vault/specs/*.json is excluded by construction from the session guard closeout allowance (vault/plans/*.md, memory/handoffs/*.md, RESUMPTION_FILE.md); E3 wrote RECEIPT-E3.md as fallback",
+    "call_ratio_deny_with_no_checkpoint_tier": "guard denies at calls > 1.5 x estimate (52 > 51); tokens have warn->checkpoint (E2), calls have none",
+    "eac_forecast_inert": "gsd_mission.py:2778 calls _cost_breaker without usage, so the E2 EAC reforecast never runs in the live sweep (owned by WU-E3C)"
+  },
+  "chain": {
+    "mission": "m-bb14cd34e793",
+    "next_unit": "WU-E3G",
+    "see": "vault/plans/expected-completion-E3R-plan.md section Chain"
+  },
+  "open_points": [
+    "Live guard hash differs from worktree guard hash (same ratio and closeout regex): reconcile before E4 landing.",
+    "Spec call forecast (25) vs packet (32) vs route (34) vs measured 45: calibration pair for WU-E3G (c), confidence stays LOW."
+  ]
+}
