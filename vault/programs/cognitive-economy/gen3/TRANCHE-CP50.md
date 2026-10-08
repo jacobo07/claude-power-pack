@@ -20,8 +20,11 @@ Plan by plan, one lease and one receipt each. FULL_WSR is never a budget. CP50 i
 **CEILING EXCEEDED: 7.49M against ~6.8M.** No further lease is funded until the Owner decides.
 
 Pattern: the dossier leases cost 1.02M / 1.37M / 1.33M / 2.35M; per model call ~125-147k. R1's per-phase figures
-undercount by ~1.4-3.2x. Two of four leases ran past their hard stop (P7G0 +132k, P3a +703k): the envelope's stop did
-not halt a running worker -- a control-plane defect to investigate before the next lease.
+undercount by ~1.4-3.2x. Two of four leases ran past their stop (P7G0 +132k, P3a +703k). Investigated 2026-10-08: the in-session
+guard (hooks/session_budget_guard.js) DID deny at the stop (P3a at 1,708,171); the overshoot is its closeout allowance
+(up to 4 calls at ~160k each) spent on the receipt and commit the worker had not yet written. Not a defect. Rule for the
+next lease: route stop = intended ceiling - ~0.65M, warn one call earlier, and the packet goes straight to receipt +
+commit at the warn advisory; token_estimate = stop / 2 (supervisor breaker ratio is 2.0).
 
 Remaining minimal path: Phase 2 GEX44 leg = the GAP-1 canonical runner + its A/A gate (GAP-10 RATIFIED 2026-10-03,
 GAP-1 APPROVED 2026-10-03). Not funded.
