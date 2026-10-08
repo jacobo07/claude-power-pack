@@ -1259,7 +1259,18 @@ def _auto_budget(rec: dict, now: float, measure=None) -> dict:
         return rec
 
 
-def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict:
+def _route_profile(name: str | None) -> dict | None:
+    """The route-floors profile a mission was admitted under (rec.route_profile), or None."""
+    if not name:
+        return None
+    p = Path(__file__).resolve().parent.parent / "vault" / "config" / "route-floors.json"
+    try:
+        return (json.loads(p.read_text(encoding="utf-8-sig")).get("profiles") or {}).get(name)
+    except (OSError, ValueError):
+        return None
+
+
+def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None, usage=None) -> dict:
     """TOK-18 gen 2 D1: judge a mission that carries `token_estimate` against its measured spend
     (tools/mission_spend.py). A trip parks it with the Owner hold -- held, never halted or renewed --
     so the Owner sees estimate, actual and the cause before more is spent. Fail-open on a measuring
@@ -1270,7 +1281,10 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
     try:
         spent = (measure or ms.processed_tokens)(rec)
         fp = (fingerprint or progress_fingerprint)(rec.get("work_dir") or rec["cwd"])
-        verdict = ms.judge(rec, spent, fp)
+        # `usage` -> (ctx_now, calls_done) of the worker; without it there is no forecast (fail-open).
+        ctx_now, calls_done = (usage(rec) if usage else None) or (None, None)
+        verdict = ms.judge(rec, spent, fp, ctx_now=ctx_now, calls_done=calls_done,
+                           profile=_route_profile(rec.get("route_profile")))
     except Exception as exc:  # noqa: BLE001 -- recorded, never silent
         lr.ledger_append(mid, "cost_breaker_unmeasured", mission_id=mid,
                          error=f"{type(exc).__name__}: {exc}"[:300])
@@ -1279,6 +1293,14 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
         lr.ledger_append(mid, "cost_breaker_tripped", mission_id=mid, spent=spent,
                          estimate=rec.get("token_estimate"), reason=verdict["trip"])
         return set_owner_hold(mid, verdict["trip"], now=now)
+    if verdict.get("decision") == "CHECKPOINT" and verdict["forecast"]:
+        eac = verdict["forecast"]["eac"]
+        tgt = int(rec["token_estimate"])
+        reason = (f"checkpoint: EAC {eac:,} > target {tgt:,}" if eac > tgt else
+                  f"checkpoint: progress fingerprint frozen, EAC {eac:,} <= target {tgt:,}")
+        lr.ledger_append(mid, "cost_breaker_checkpoint", mission_id=mid, spent=spent,
+                         estimate=rec.get("token_estimate"), forecast=verdict["forecast"], reason=reason)
+        return set_owner_hold(mid, reason, now=now)
     if verdict["mark"]:
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                           event="cost_mark", now=now, cost_mark=verdict["mark"],

@@ -154,29 +154,80 @@ def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = N
     return total
 
 
-def judge(rec: dict, spent: int | None, fp: str | None) -> dict:
-    """{trip: reason|None, mark: new cost_mark|None}. Pure."""
+# Running control (expected-completion E2). Chosen, not measured: a mission may forecast up to 25 %
+# over its target before the forecast asks for a checkpoint; the 2 x hard trip is the real ceiling.
+DEFAULT_EAC_TOLERANCE = 0.25
+# Context rent: rotating costs one re-read of the floor to rehydrate a fresh session. Chosen as 1.0 x
+# the profile floor F (a fresh session re-reads about F before its first useful call).
+REHYDRATION_FLOORS = 1.0
+
+
+def eac_forecast(spent: int, ctx_now: int, planned_calls: int, calls_done: int,
+                 profile: dict | None) -> dict:
+    """Estimate at completion: EAC = spent + r x (ctx_now + g x r / 2), r = remaining calls =
+    max(0, planned_calls x (1 + calls_err) - calls_done). g (growth per call) and calls_err come from
+    the route-floors profile. Absent g -> verdict UNKNOWN with eac None (absence is not zero); an absent
+    calls_err is the one honest default, 0. Pure."""
+    prof = profile or {}
+    gv = (prof.get("growth_per_call") or {}).get("value")
+    if gv is None:
+        return {"eac": None, "r": None, "g": None, "basis": "UNKNOWN: profile has no growth_per_call",
+                "verdict": "UNKNOWN", "rotate_recommended": None}
+    g = float(gv)
+    err = float((prof.get("calls_err") or {}).get("value") or 0.0)
+    r = max(0.0, planned_calls * (1.0 + err) - calls_done)
+    eac = spent + r * (ctx_now + g * r / 2.0)
+    floor = prof.get("floor")
+    rotate = None
+    if floor:
+        f = float(floor)
+        rotate = (ctx_now - f) * r > f + REHYDRATION_FLOORS * f
+    return {"eac": int(round(eac)), "r": r, "g": g,
+            "basis": f"spent {spent:,} + r {r:g} x (ctx {ctx_now:,} + g {g:g} x r / 2); calls_err {err:g}",
+            "verdict": "KNOWN", "rotate_recommended": rotate}
+
+
+def judge(rec: dict, spent: int | None, fp: str | None, ctx_now: int | None = None,
+          calls_done: int | None = None, profile: dict | None = None) -> dict:
+    """{trip: reason|None, mark: new cost_mark|None, forecast: dict|None, decision: str|None}. Pure.
+
+    The stall trip and the 2 x target hard trip are unchanged and win over any forecast. With a
+    forecast input set (rec.planned_calls, ctx_now, calls_done) the decision is CONTINUE when
+    EAC <= target x (1 + tolerance) AND the progress fingerprint moved since the last mark;
+    CHECKPOINT otherwise; UNKNOWN when the profile has no growth_per_call (never CONTINUE)."""
     est = rec.get("token_estimate")
     if not est or spent is None:
-        return {"trip": None, "mark": None}
+        return {"trip": None, "mark": None, "forecast": None, "decision": None}
     est = int(est)
     ratio = float(rec.get("token_trip_ratio") or DEFAULT_TRIP_RATIO)
     if spent > ratio * est:
         return {"trip": (f"cost breaker: processed {spent:,} > {ratio:g} x estimate {est:,}; "
                          "explain the variance and recompute the remaining work before release"),
-                "mark": None}
+                "mark": None, "forecast": None, "decision": None}
     mark = rec.get("cost_mark") or {}
+    forecast = decision = None
+    planned = rec.get("planned_calls")
+    if planned and ctx_now is not None and calls_done is not None:
+        forecast = eac_forecast(spent, int(ctx_now), int(planned), int(calls_done), profile)
+        tol = float(rec.get("eac_tolerance") if rec.get("eac_tolerance") is not None
+                    else DEFAULT_EAC_TOLERANCE)
+        if forecast["verdict"] == "UNKNOWN":
+            decision = "UNKNOWN"
+        else:
+            moved = fp is not None and mark.get("fp") != fp
+            decision = "CONTINUE" if (forecast["eac"] <= est * (1 + tol) and moved) else "CHECKPOINT"
     if fp is None:
-        return {"trip": None, "mark": None}
+        return {"trip": None, "mark": None, "forecast": forecast, "decision": decision}
     if mark.get("fp") != fp:
-        return {"trip": None, "mark": {"fp": fp, "tokens": spent}}
+        return {"trip": None, "mark": {"fp": fp, "tokens": spent}, "forecast": forecast,
+                "decision": decision}
     stall = int(rec.get("token_stall_budget") or est * DEFAULT_STALL_FRACTION)
     burned = spent - int(mark.get("tokens") or 0)
     if burned > stall:
         return {"trip": (f"cost breaker: {burned:,} processed since the work tree last changed "
                          f"(stall budget {stall:,}); semantic progress is not keeping up with spend"),
-                "mark": None}
-    return {"trip": None, "mark": None}
+                "mark": None, "forecast": forecast, "decision": decision}
+    return {"trip": None, "mark": None, "forecast": forecast, "decision": decision}
 
 
 # --- Session scope (W1, 2026-10-05) -------------------------------------------------------------

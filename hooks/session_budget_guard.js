@@ -128,8 +128,9 @@ function judge(budget, st) {
     return deny(`${st.calls - st.progress_at} calls since the last edit or commit (limit ${k}): spend without progress.`);
   }
   if (st.tokens > budget.warn) {
-    return advise(`SESSION BUDGET: processed ${fmt(st.tokens)} is past warn ${fmt(budget.warn)} ` +
-      `(stop ${fmt(budget.stop)}). Finish the unit in hand; start nothing new.`);
+    return advise(`SESSION BUDGET CHECKPOINT: processed ${fmt(st.tokens)} is past warn ${fmt(budget.warn)} ` +
+      `(stop ${fmt(budget.stop)}). Write a progress receipt now (what is sealed, what remains, calls used) ` +
+      'and stop the current section; the closeout allowance after a stop is the reserve for it.');
   }
   return null;
 }
