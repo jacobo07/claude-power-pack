@@ -1,4 +1,4 @@
-status: PROPOSED (pane 5d6a315c, 2026-10-08 ~20:15Z) -- awaiting Owner y
+status: APPROVED (Owner "y", 2026-10-08 ~20:20Z, pane 5d6a315c) -- D-A plan as written, D-B host = this laptop, D-C stop for an Owner cap decision after E4b
 covers: [watched-verdict-contract, runtime-convergence, bridge-retirement, receipt-driven-successor, coordinator-extinction, context-floor, call-compression, proof-transaction, control-plane-tax, e3g-close, e3c, e4, t2-reconciliation, t3-recompile]
 supersedes-chain-of: vault/plans/expected-completion-E3R-plan.md (its Chain step 4 = the bridge; retired here)
 
