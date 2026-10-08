@@ -71,3 +71,10 @@ receipt exist; reachability exit 0 for new tools.
   UNKNOWN -> Phase 1 NOT done; repair packet WU-1R unfunded. Reforecast remaining EDD ~36M/~95M/~215M (canary/
   REFORECAST.md). Orchestrating Opus pane 08cb0d86 cost 17.41M / 56 calls since 21:52Z (UC-20): tranche ~21.2M
   measured of 25M cap; stopped there.
+- WU-1R (Owner-approved 2026-10-07, m-84da090be030) RAN: 1,958,619 / 16 calls, 30 rows settled, 0 UNKNOWN, 0
+  unresolvable (19 DATASET_ONLY, 8 PARTIAL, 2 DOCUMENTED_ONLY, 1 UNDER_ANOTHER_NAME). Independent sample (seed 42)
+  then fixed C-17, C-01, C-07. GEX44 mission/edd-run f7ed6c5a; gate 13/13 re-run 2026-10-08. **Phase 1 DONE: 5.76M
+  total vs 32.06M stopped champion.** The mission record still reads RUNNING under a stall-breaker hold with its pid
+  gone (UC-14): stale, held, never relaunched.
+- Next = Phase 2 (gold sets + benchmark before operators), UNFUNDED. Reforecast for Phases 2-7: 36M / 95M / 215M
+  (REFORECAST.md). Checked 2026-10-08 from laptop pane 88df3ab3, read-only over ssh.
