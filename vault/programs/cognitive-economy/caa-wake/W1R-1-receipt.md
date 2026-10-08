@@ -17,3 +17,6 @@ Mutants (edge-triggered, no-CAS, skipped invalidator, work-tree read, UNKNOWN-as
 
 ## Commits
 675d573f (code + tests)
+
+## Close
+Mission m-3f3c48d7404d (cwd pp-caa-wake-t2, W1R-2, capsule-v2, max-cycles 3, max-hours 4). Envelope set 600000 sonnet. Admit verdict: ROUTE ADMISSIBLE need=227002 target=550000.
