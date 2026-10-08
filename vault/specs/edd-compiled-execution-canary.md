@@ -139,3 +139,16 @@ receipt exist; reachability exit 0 for new tools.
   - Lifecycle root cause: `tools/gsd_mission.py:520-524` (`plan_next`). Any owner_hold returns `none` before
     liveness is asked, so a DEAD owner under a hold can never reach a terminal state. `goal_conflicts` counts every
     non-terminal record, so the goal stays blocked.
+- LIFECYCLE FIX (Owner "y" 2026-10-08, pane 24ca0218):
+  - laptop 03234663 / GEX44 live d91bdfd8: under a hold, a DEAD owner (positive evidence only) now settles to
+    HALTED with the hold kept. OWNER_HOLD gates are red against the old code.
+  - First real pass 16:14:08Z: zombie m-604666a514a3 (grammar, RUNNING under a stall-breaker hold since
+    2026-10-06 23:45Z) was settled by the sweep itself.
+  - Incident, mine: closing m-79f84cdd34dc with `owner_hold=None` let `_cost_breaker` trip on a COMPLETED record.
+    `set_owner_hold` raised, and the raise crashed EVERY sweep pass from ~15:35Z. AUDIT3 sat PREPARED. The same
+    class had crashed 264 passes over ~24 h before (m-da6e925b5092, from 2026-10-07 07:37Z).
+  - Hold restored on the record. Structural fix: laptop e582e818 + f8d01322 / GEX44 ddfb8a26 -- the breaker and
+    auto-budget skip terminal records. Drill red with the production error verbatim.
+  - Sweep rc=0 from 16:36Z. AUDIT3 LAUNCHING epoch 1.
+- P2-B does not exist: no packet, no scope, no holdout spec. Only the 2.0M forecast and the Owner's description
+  ("creates the holdouts that will judge new machinery"). It cannot be auto-armed on a PASS until written.
