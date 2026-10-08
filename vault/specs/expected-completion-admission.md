@@ -79,7 +79,26 @@ EXPECTED ~6.25M each. T4-T7 continue per cost-collapse.md.
 
 ## Program budget
 Spent: T1 11.14M + T2 4.09M + T0 and this pane (unmeasured here). E1-E4 add ~17M. Original 60M cap cannot hold
-T3-T7 (~40M) after that; decision D1.
+T3-T7 (~40M) after that; decision D1. Goal `cost-collapse` declared in the goal ledger at cap 69,774,423
+(= 85M - metered T1 - T2), bound to this worktree.
+
+## Phase-4 audit (inline; the auditor dispatch was refused twice by agent-solo-guard -> Regla 12 pivot)
+A1 HIGH -- chain defect CONFIRMED: worktree tools/gsd_mission.py:2784-2793 runs packet_gate_passed() before any
+   relay/replace/halt/launch and completes the mission; the live copy has no packet gate at all, so it resumes the
+   ended session through tools/gsd_epoch.py:547 ("host started a COPY"). The fix exists (T1 f3b503e6); it only needs
+   landing. E3 shrinks to sweep-side dependent admission. Until E4 lands, every E-worker's last act is
+   `arm --supersedes <its own mission> --authority <this spec>`.
+A2 MED -- warn control point EXISTS: hooks/session_budget_guard.js:130 injects additionalContext past warn
+   (advisory text), :150-163 grants a closeout allowance after a deny. E2 REUSES both: warn text becomes the
+   checkpoint instruction; the closeout allowance is the checkpoint reserve. No new reserve mechanism.
+A3 MED -- g fit: per session g = 2 x (mean - first) / (n - 1), computed per SEGMENT (split where context drops
+   > 30%: autocompact/compaction) and per profile (subagent transcripts never feed top-level-worker).
+A4 MED -- proof/repair are not separable in T1/T2 receipts: they are inside the calibrated totals (basis
+   `included_in_calibration`) and inside the calls band; never zero, never a separately invented term.
+A5 LOW -- singleflight: sweep-side arming after a COMPLETED predecessor has no conflict (singleflight refuses only
+   live attempts); it conflicts only while the predecessor is stuck, which A1 removes.
+EXECUTION-READY: yes, with A1-A5 applied. D3 applied in E1: once canaries 1-4 pass, the growth term is
+authoritative; the lower bound stays as the impossible-route / ESCALATE check; the calls band is advisory (WATCH).
 
 ## Rollback
 Champion stays authoritative until E4 promotion; revert = drop the challenger verdict field (shadow only) or
