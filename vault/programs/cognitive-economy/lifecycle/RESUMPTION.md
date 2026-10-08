@@ -4,7 +4,8 @@ Identity: worktree C:\Users\User\Apps\pp-ce-lifecycle, branch ce/lifecycle off 8
 vault/plans/ce-lifecycle-master-plan-2026-10-08.md (APPROVED, Owner "y" 2026-10-08). Goal ce-lifecycle, cap 8M.
 Thesis: one lifecycle decision for context edge and lease edge; refuse before the model; successor by arm, never by Owner.
 
-Sealed: card + L1 packet + route-L1.json committed; L1 armed via gsd_mission (mission id in the commit after arm).
+Sealed: card + L1 packet + route-L1.json committed; L1 armed as m-0e11396839b5 (PREPARED, route ADMISSIBLE need=655,436
+target=850,000; envelope wu_packet=L1.md, token_estimate 1.0M; launched by PP-GsdLongRun-Sweep, 5-min cadence).
 Pending: Owner TTY rebind of ce-lifecycle to this root (card section 10 item 4) -- until then the worker is bounded by
 its mission envelope only. ctx-rent S1 is owned by goal ctx-rent / pp-ctx-rent (its own RESUMPTION_FILE.md, next = S1);
 not armed from here because that worktree holds another pane's uncommitted spec.
