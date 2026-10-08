@@ -1353,3 +1353,11 @@ A corpus spec's candidate list is a hypothesis about gaps, not a build order. Ap
 
 ---
 
+## 2026-10-07 — Folded the next-gen Cognitive Economy ULTRA prompt into gen2 as Amendment A3 (56
+
+**Session:** `2aa0b0fb-fd18-48c4-8b68-cdbad82a4dae`
+
+Fewer calls beats smaller context: re-paying the ~120k floor per call is 42-72% of coordinator spend.
+
+---
+
