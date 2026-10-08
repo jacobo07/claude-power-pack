@@ -1,0 +1,35 @@
+{
+    "unit":  "WU-E1",
+    "status":  "PARTIAL: sections 1-2 sealed; section 3 gates green; D3 flip HELD; section 4 chain NOT run (E2 not armed)",
+    "commits":  [
+                    "ce433d17 calibration",
+                    "c5b5e563 estimator + gate"
+                ],
+    "gates":  {
+                  "test_route_admission_expected":  "ADMIT_EXPECTED_PASS=23/23",
+                  "test_route_admission":  "RADM_PASS=21/21",
+                  "test_gsd_mission_admission":  "ADM_PASS=43/43",
+                  "test_gsd_mission_envelope":  "ENVELOPE_PASS=55/55",
+                  "test_grammar_default":  "GRAMMAR_PASS=56/56",
+                  "test_autopsy":  "AUTOPSY_PASS=42/42"
+              },
+    "calibration":  {
+                        "top_level_worker_g":  2310,
+                        "top_level_n_sessions":  5,
+                        "calls_err":  0.354,
+                        "calls_err_n":  2,
+                        "confidence":  "LOW (calls_err n=2 \u003c 5): SAFETY can only WATCH",
+                        "t1_safety_vs_actual":  "12,080,575 vs 11,135,030 = +8.5%",
+                        "t2_model_error_at_27_calls":  "-6.5%",
+                        "t2_planned_36_expected_error":  "+33.8% (call-count error)",
+                        "gsdx_total":  "187,431,344 (reproduces RECEIPT-T2)",
+                        "gsdx_after_2026_10_07T19_30Z":  "3,580,766 -- the 162.2M-\u003e187.4M delta is NOT post-hold spend (attribution/measurement difference); spec item can be settled as such",
+                        "profiles_without_samples":  "slim-t1, slim-t2, Explore, general-purpose, pp-code-reviewer, oneshot-architect-auditor, gsd-code-reviewer carry no g (absent is not zero)",
+                        "subagent_calls_err":  "absent for every subagent profile"
+                    },
+    "open_points":  [
+                        "D3 flip (CHALLENGER_AUTHORITATIVE) held False: True makes test_route_admission 8 FAIL and test_gsd_mission_admission 7+ FAIL (thin fixtures sit at the lower-bound edge so expected \u003e target; gsd-executor / slim-t2 have no calls_err so ESCALATE). Needs an Owner/E-next decision: re-size those fixtures or calibrate slim-t2/subagent calls_err.",
+                        "gsd_mission treats WATCHED as launchable (5 sites) -- inert while shadow.",
+                        "Session guard hit warn at 6.3M; section 4 skipped per packet: WU-E2.md / route-E2.json NOT written, E2 NOT armed."
+                    ]
+}
