@@ -23,11 +23,16 @@ def default_gate_cmd() -> list[str]:
             "--project-dir", str(DEFAULT_PROJECT_DIR), "--chars-only", "--admit-cwd"]
 
 
-def run_gate(argv: list[str], counter: dict) -> int:
+def run_cmd(argv: list[str], counter: dict, cwd: str | None = None) -> subprocess.CompletedProcess:
+    """The one place a subprocess starts. A model-shaped argv is refused and counted."""
     if any(a == "--probe" or Path(a).name.lower().startswith(FORBIDDEN) for a in argv):
         counter["model_calls"] += 1
         raise RuntimeError("wake check refuses a model-shaped argv")
-    return subprocess.run(argv, capture_output=True, text=True, timeout=120).returncode
+    return subprocess.run(argv, capture_output=True, text=True, timeout=120, cwd=cwd)
+
+
+def run_gate(argv: list[str], counter: dict) -> int:
+    return run_cmd(argv, counter).returncode
 
 
 def evaluate(flag: Path | None = None) -> dict:
@@ -110,6 +115,13 @@ def consume(goal, flag: Path | None = None, receipts: Path | None = None,
 
 
 if __name__ == "__main__":
+    _a = sys.argv[1:]
+    if _a and (_a[0] in ("--waits", "--delta", "--declare", "--supersede")):
+        import mission_wait
+        sys.exit(mission_wait.cli(_a))
+    if _a and not (len(_a) == 3 and _a[0] == "--consume"):
+        print("wake_check: unknown arguments: %s" % " ".join(_a), file=sys.stderr)
+        sys.exit(2)
     if len(sys.argv) == 4 and sys.argv[1] == "--consume":
         r = consume(_goal_log_module().GoalLog(sys.argv[2], sys.argv[3]))
         print("WAKE_CONSUME " + json.dumps(r))
