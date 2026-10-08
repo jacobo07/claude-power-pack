@@ -1,3 +1,23 @@
+# ACTIVE (2026-10-08): cost-collapse + expected-completion admission (worktree pp-cost-collapse)
+
+Specs (binding): `vault/specs/cost-collapse.md` (T1-T7) and `vault/specs/expected-completion-admission.md`
+(APPROVED, Owner "y": D1 program cap 85M, D2 land live at E4, D3 growth term authoritative after canaries 1-4).
+Goal ledger: goal `cost-collapse`, cap 69,774,423 (85M - metered T1 11,135,030 - T2 4,090,547), root = this tree.
+
+State: T1 done (f3b503e6, GRAMMAR 56/56; 11.14M vs 8M). T2 done (2b5b0ea5, AUTOPSY 42/42; 4.09M vs 5M). Their
+mission records are superseded (m-1a51d97b4a15 HALTED, m-b76843b319af superseded by E1). E1 armed + admitted as
+m-66e1c23cae19 (WU-E1.md, route-E1.json, need 4,446,486 <= 5M); the 5-min live sweep launches it. T3 FROZEN until
+E3's dependent admission or E4 landing; WU-CC3.md is committed (540ace84) but must be re-admitted under E1's model.
+gsdx-pcc m-53847a002b65 stays held until T7.
+
+Chain defect (audit A1): the live gsd_mission.py has no packet gate, so every finished packet worker gets a "COPY"
+continuation and a stuck LAUNCHING record; each E-worker therefore supersedes its own mission when arming the next.
+
+Next: (1) if E1 has no receipt `vault/specs/expected-completion.RECEIPT-E1.json`, check `gsd_mission.py status` for
+m-66e1c23cae19 and the sweep log `~/.claude/state/gsd-long-run-sweep.log` -- do not poll with a model;
+(2) E2 -> E3 -> E4 run as a packet chain; (3) after E4: reconcile T2, re-admit T3 (expected split T3a/T3b).
+Coherence anchor: `git log --oneline -1` in this tree is at or after 2e2047c2.
+
 # POST-INCIDENT STATE (2026-09-20) — /cpp-gsd-long: what is settled, what blocks C7
 
 Commits this wave, all pushed: `15bcdbe` `ba540f2` `27a7094` `d92bcc9`.
