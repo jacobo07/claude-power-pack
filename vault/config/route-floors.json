@@ -7,18 +7,126 @@
   },
   "default_min_calls": 3,
   "profiles": {
-    "top-level-worker":          {"floor": 110835, "p50": 129000, "write": true,  "n": null},
-    "gsd-executor":              {"floor": 85084,  "p50": 97700,  "write": true,  "n": 21},
-    "general-purpose":           {"floor": 85040,  "p50": 96831,  "write": true,  "n": 21},
-    "gsd-planner":               {"floor": 85569,  "p50": 99228,  "write": true,  "n": 5},
-    "gsd-phase-researcher":      {"floor": 95908,  "p50": 96311,  "write": true,  "n": 3},
-    "gsd-plan-checker":          {"floor": 95807,  "p50": 96078,  "write": false, "n": 3},
-    "gsd-verifier":              {"floor": 97231,  "p50": 97231,  "write": true,  "n": 2},
-    "gsd-code-reviewer":         {"floor": 82911,  "p50": 82911,  "write": true,  "n": 1},
-    "oneshot-architect-auditor": {"floor": 77486,  "p50": 78340,  "write": false, "n": 8},
-    "pp-code-reviewer":          {"floor": 62682,  "p50": 65473,  "write": false, "n": 23},
-    "Explore":                   {"floor": 24428,  "p50": 25226,  "write": false, "n": 14},
-    "slim-t1":                   {"floor": 8848,   "p50": 8848,   "write": false, "n": 1},
-    "slim-t2":                   {"floor": 13507,  "p50": 13507,  "write": true,  "n": 2, "requires": "vault/config/slim-critical-settings.json"}
+    "top-level-worker": {
+      "floor": 110835,
+      "p50": 129000,
+      "write": true,
+      "n": null,
+      "growth_per_call": {
+        "value": 2310,
+        "n": 5,
+        "basis": "measured:autopsy-segmented-fit",
+        "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 5 session(s), 469 calls"
+      },
+      "calls_err": {
+        "value": 0.354,
+        "n": 2,
+        "basis": "measured:planned-vs-metered-calls",
+        "provenance": "high edge of (actual - planned) / planned over completed packet units 48 planned -> 65 metered, 36 planned -> 27 metered"
+      }
+    },
+    "gsd-executor": {
+      "floor": 85084,
+      "p50": 97700,
+      "write": true,
+      "n": 21,
+      "growth_per_call": {
+        "value": 11052,
+        "n": 1,
+        "basis": "measured:autopsy-segmented-fit",
+        "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 1 session(s), 5 calls"
+      }
+    },
+    "general-purpose": {
+      "floor": 85040,
+      "p50": 96831,
+      "write": true,
+      "n": 21
+    },
+    "gsd-planner": {
+      "floor": 85569,
+      "p50": 99228,
+      "write": true,
+      "n": 5,
+      "growth_per_call": {
+        "value": 4777,
+        "n": 2,
+        "basis": "measured:autopsy-segmented-fit",
+        "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 2 session(s), 151 calls"
+      }
+    },
+    "gsd-phase-researcher": {
+      "floor": 95908,
+      "p50": 96311,
+      "write": true,
+      "n": 3,
+      "growth_per_call": {
+        "value": 4606,
+        "n": 2,
+        "basis": "measured:autopsy-segmented-fit",
+        "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 2 session(s), 125 calls"
+      }
+    },
+    "gsd-plan-checker": {
+      "floor": 95807,
+      "p50": 96078,
+      "write": false,
+      "n": 3,
+      "growth_per_call": {
+        "value": 15388,
+        "n": 2,
+        "basis": "measured:autopsy-segmented-fit",
+        "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 2 session(s), 17 calls"
+      }
+    },
+    "gsd-verifier": {
+      "floor": 97231,
+      "p50": 97231,
+      "write": true,
+      "n": 2,
+      "growth_per_call": {
+        "value": 4526,
+        "n": 1,
+        "basis": "measured:autopsy-segmented-fit",
+        "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 1 session(s), 30 calls"
+      }
+    },
+    "gsd-code-reviewer": {
+      "floor": 82911,
+      "p50": 82911,
+      "write": true,
+      "n": 1
+    },
+    "oneshot-architect-auditor": {
+      "floor": 77486,
+      "p50": 78340,
+      "write": false,
+      "n": 8
+    },
+    "pp-code-reviewer": {
+      "floor": 62682,
+      "p50": 65473,
+      "write": false,
+      "n": 23
+    },
+    "Explore": {
+      "floor": 24428,
+      "p50": 25226,
+      "write": false,
+      "n": 14
+    },
+    "slim-t1": {
+      "floor": 8848,
+      "p50": 8848,
+      "write": false,
+      "n": 1
+    },
+    "slim-t2": {
+      "floor": 13507,
+      "p50": 13507,
+      "write": true,
+      "n": 2,
+      "requires": "vault/config/slim-critical-settings.json"
+    }
   }
 }

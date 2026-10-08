@@ -1,0 +1,361 @@
+{
+ "sessions": [
+  {
+   "file": "4959fef0-9e13-4f62-ab91-325ac0d4f03c/subagents/agent-a0c4283095c14c4b8.jsonl",
+   "kind": "subagent",
+   "profile": "gsd-phase-researcher",
+   "calls": 78,
+   "processed": 22325737,
+   "first_ctx": 95842,
+   "mean_ctx": 285859,
+   "segments": [
+    {
+     "calls": 78,
+     "first_ctx": 95842,
+     "mean_ctx": 285859,
+     "g": 4936
+    }
+   ],
+   "g": 4936,
+   "g_calls": 78
+  },
+  {
+   "file": "4959fef0-9e13-4f62-ab91-325ac0d4f03c/subagents/agent-a96833688b060f606.jsonl",
+   "kind": "subagent",
+   "profile": "gsd-plan-checker",
+   "calls": 12,
+   "processed": 2108311,
+   "first_ctx": 95862,
+   "mean_ctx": 175687,
+   "segments": [
+    {
+     "calls": 12,
+     "first_ctx": 95862,
+     "mean_ctx": 175687,
+     "g": 14514
+    }
+   ],
+   "g": 14514,
+   "g_calls": 12
+  },
+  {
+   "file": "4959fef0-9e13-4f62-ab91-325ac0d4f03c/subagents/agent-ab6a046b09d5c0b3f.jsonl",
+   "kind": "subagent",
+   "profile": "gsd-planner",
+   "calls": 60,
+   "processed": 16468449,
+   "first_ctx": 99740,
+   "mean_ctx": 274361,
+   "segments": [
+    {
+     "calls": 60,
+     "first_ctx": 99740,
+     "mean_ctx": 274361,
+     "g": 5919
+    }
+   ],
+   "g": 5919,
+   "g_calls": 60
+  },
+  {
+   "file": "4959fef0-9e13-4f62-ab91-325ac0d4f03c/subagents/agent-adcac670702db3ee5.jsonl",
+   "kind": "subagent",
+   "profile": "gsd-pattern-mapper",
+   "calls": 7,
+   "processed": 757469,
+   "first_ctx": 68968,
+   "mean_ctx": 108083,
+   "segments": [
+    {
+     "calls": 7,
+     "first_ctx": 68968,
+     "mean_ctx": 108083,
+     "g": 13038
+    }
+   ],
+   "g": 13038,
+   "g_calls": 7
+  },
+  {
+   "file": "4959fef0-9e13-4f62-ab91-325ac0d4f03c.jsonl",
+   "kind": "session",
+   "profile": "top-level-worker",
+   "calls": 106,
+   "processed": 27740156,
+   "first_ctx": 125224,
+   "mean_ctx": 261037,
+   "segments": [
+    {
+     "calls": 106,
+     "first_ctx": 125224,
+     "mean_ctx": 261037,
+     "g": 2587
+    }
+   ],
+   "g": 2587,
+   "g_calls": 106
+  },
+  {
+   "file": "83e8b14f-22d0-43bd-974f-4fc77f78e711/subagents/agent-a45681b037c2c79b5.jsonl",
+   "kind": "subagent",
+   "profile": "gsd-pattern-mapper",
+   "calls": 7,
+   "processed": 665439,
+   "first_ctx": 68365,
+   "mean_ctx": 95016,
+   "segments": [
+    {
+     "calls": 7,
+     "first_ctx": 68365,
+     "mean_ctx": 95016,
+     "g": 8884
+    }
+   ],
+   "g": 8884,
+   "g_calls": 7
+  },
+  {
+   "file": "83e8b14f-22d0-43bd-974f-4fc77f78e711/subagents/agent-a58e2fd24b331c618.jsonl",
+   "kind": "subagent",
+   "profile": "gsd-plan-checker",
+   "calls": 5,
+   "processed": 651093,
+   "first_ctx": 95149,
+   "mean_ctx": 130117,
+   "segments": [
+    {
+     "calls": 5,
+     "first_ctx": 95149,
+     "mean_ctx": 130117,
+     "g": 17484
+    }
+   ],
+   "g": 17484,
+   "g_calls": 5
+  },
+  {
+   "file": "83e8b14f-22d0-43bd-974f-4fc77f78e711/subagents/agent-a8ba7c22e5ef1eea4.jsonl",
+   "kind": "subagent",
+   "profile": "gsd-executor",
+   "calls": 5,
+   "processed": 597563,
+   "first_ctx": 97356,
+   "mean_ctx": 119460,
+   "segments": [
+    {
+     "calls": 5,
+     "first_ctx": 97356,
+     "mean_ctx": 119460,
+     "g": 11052
+    }
+   ],
+   "g": 11052,
+   "g_calls": 5
+  },
+  {
+   "file": "83e8b14f-22d0-43bd-974f-4fc77f78e711/subagents/agent-aa7da38bd6179a2a3.jsonl",
+   "kind": "subagent",
+   "profile": "gsd-planner",
+   "calls": 91,
+   "processed": 25451919,
+   "first_ctx": 98537,
+   "mean_ctx": 279621,
+   "segments": [
+    {
+     "calls": 91,
+     "first_ctx": 98537,
+     "mean_ctx": 279621,
+     "g": 4024
+    }
+   ],
+   "g": 4024,
+   "g_calls": 91
+  },
+  {
+   "file": "83e8b14f-22d0-43bd-974f-4fc77f78e711/subagents/agent-abd3174bad4115e9c.jsonl",
+   "kind": "subagent",
+   "profile": "gsd-phase-researcher",
+   "calls": 47,
+   "processed": 8885494,
+   "first_ctx": 95686,
+   "mean_ctx": 189038,
+   "segments": [
+    {
+     "calls": 47,
+     "first_ctx": 95686,
+     "mean_ctx": 189038,
+     "g": 4059
+    }
+   ],
+   "g": 4059,
+   "g_calls": 47
+  },
+  {
+   "file": "83e8b14f-22d0-43bd-974f-4fc77f78e711.jsonl",
+   "kind": "session",
+   "profile": "top-level-worker",
+   "calls": 93,
+   "processed": 26862577,
+   "first_ctx": 125947,
+   "mean_ctx": 288161,
+   "segments": [
+    {
+     "calls": 93,
+     "first_ctx": 125947,
+     "mean_ctx": 288161,
+     "g": 3526
+    }
+   ],
+   "g": 3526,
+   "g_calls": 93
+  },
+  {
+   "file": "c7baf898-9ae4-4165-9d85-28335a799c95/subagents/agent-a227130bbfdd7eded.jsonl",
+   "kind": "subagent",
+   "profile": "gsd-verifier",
+   "calls": 30,
+   "processed": 4851623,
+   "first_ctx": 96089,
+   "mean_ctx": 161710,
+   "segments": [
+    {
+     "calls": 30,
+     "first_ctx": 96089,
+     "mean_ctx": 161710,
+     "g": 4526
+    }
+   ],
+   "g": 4526,
+   "g_calls": 30
+  },
+  {
+   "file": "c7baf898-9ae4-4165-9d85-28335a799c95.jsonl",
+   "kind": "session",
+   "profile": "top-level-worker",
+   "calls": 178,
+   "processed": 50065514,
+   "first_ctx": 125522,
+   "mean_ctx": 280592,
+   "segments": [
+    {
+     "calls": 178,
+     "first_ctx": 125522,
+     "mean_ctx": 280592,
+     "g": 1752
+    }
+   ],
+   "g": 1752,
+   "g_calls": 178
+  },
+  {
+   "file": "815cef7f-dd4f-42bd-b7d3-3a72d3a37efd.jsonl",
+   "kind": "session",
+   "profile": "top-level-worker",
+   "calls": 65,
+   "processed": 11135030,
+   "first_ctx": 118780,
+   "mean_ctx": 170801,
+   "segments": [
+    {
+     "calls": 65,
+     "first_ctx": 118780,
+     "mean_ctx": 170801,
+     "g": 1626
+    }
+   ],
+   "g": 1626,
+   "g_calls": 65
+  },
+  {
+   "file": "559aeaca-cd01-4f5d-a120-0b5596745695.jsonl",
+   "kind": "session",
+   "profile": "top-level-worker",
+   "calls": 27,
+   "processed": 4090547,
+   "first_ctx": 119788,
+   "mean_ctx": 150517,
+   "segments": [
+    {
+     "calls": 27,
+     "first_ctx": 119788,
+     "mean_ctx": 150517,
+     "g": 2364
+    }
+   ],
+   "g": 2364,
+   "g_calls": 27
+  }
+ ],
+ "spend_window": {
+  "total": 202656921,
+  "at_or_after": 18806343,
+  "since": "2026-10-07T19:30:00"
+ },
+ "profiles": {
+  "gsd-phase-researcher": {
+   "growth_per_call": {
+    "value": 4606,
+    "n": 2,
+    "basis": "measured:autopsy-segmented-fit",
+    "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 2 session(s), 125 calls"
+   }
+  },
+  "gsd-plan-checker": {
+   "growth_per_call": {
+    "value": 15388,
+    "n": 2,
+    "basis": "measured:autopsy-segmented-fit",
+    "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 2 session(s), 17 calls"
+   }
+  },
+  "gsd-planner": {
+   "growth_per_call": {
+    "value": 4777,
+    "n": 2,
+    "basis": "measured:autopsy-segmented-fit",
+    "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 2 session(s), 151 calls"
+   }
+  },
+  "gsd-pattern-mapper": {
+   "growth_per_call": {
+    "value": 10961,
+    "n": 2,
+    "basis": "measured:autopsy-segmented-fit",
+    "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 2 session(s), 14 calls"
+   }
+  },
+  "top-level-worker": {
+   "growth_per_call": {
+    "value": 2310,
+    "n": 5,
+    "basis": "measured:autopsy-segmented-fit",
+    "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 5 session(s), 469 calls"
+   },
+   "calls_err": {
+    "value": 0.354,
+    "n": 2,
+    "basis": "measured:planned-vs-metered-calls",
+    "provenance": "high edge of (actual - planned) / planned over completed packet units 48 planned -> 65 metered, 36 planned -> 27 metered"
+   }
+  },
+  "gsd-executor": {
+   "growth_per_call": {
+    "value": 11052,
+    "n": 1,
+    "basis": "measured:autopsy-segmented-fit",
+    "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 1 session(s), 5 calls"
+   }
+  },
+  "gsd-verifier": {
+   "growth_per_call": {
+    "value": 4526,
+    "n": 1,
+    "basis": "measured:autopsy-segmented-fit",
+    "provenance": "tools/expected_calibration.py: call-weighted mean of g = 2 x (mean - first) / (n - 1) per segment over 1 session(s), 30 calls"
+   }
+  }
+ },
+ "not_in_floor_table": [
+  "gsd-pattern-mapper"
+ ]
+}
