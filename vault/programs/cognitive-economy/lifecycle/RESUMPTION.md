@@ -41,8 +41,23 @@ UPDATE 2026-10-08 ~15:30 UTC (coordinator claude-power-pack-c8):
 - Authority at 15:20 UTC: remaining 1,426,798, open 489,605 (WU-1B leases, releasable). WU-1C+1C2+1D will
   likely exhaust it; WU-2+ and ctx-rent need ONE semantic authority decision.
 
+UPDATE ~16:40 UTC -- SUPERSEDES the chain order above. Amendment D adopted (pp-ce-a3 3aa002af, Owner "y" ~18:05
+local; cap 3,247,012 -> 8,847,012 as journal seq 26, same goal id; verified by commit + plan section 3b + journal,
+not by the peer message alone). Install owner moves from a3b-r R3 to WU-INST (L5) here.
+- The Amendment D author (pane b42025e1 / claude-power-pack-df) identified itself as the WU-1C rewriter, handed over
+  L2-L9, and went SAFE_TO_FORGET. It does not write here.
+- WU-1C (m-1783bda2a44b) DIED 16:06 UTC: pid exited, empty out.json, no commits, no dirt -> HALTED (third
+  halt-without-receipt case, now in WU-1H scope as V-LIFE-DEAD-NO-RESULT).
+- Order (master plan frontmatter `units:`): WU-1H (L1, ARMED m-6ffa7ac2513b) -> WU-ADV (L2) -> WU-1C (L3, fresh
+  mission armed by WU-ADV) -> WU-1D (L4) -> WU-INST (L5) -> WU-TRIP (L6) -> WU-FLOOR (L7) -> WU-GEX (L8) ->
+  WU-CLOSE (L9, ctx-rent handoff). Every packet + route exists; each arms the next with an authority check.
+- Worst-case stops ~6.57M vs ~6.08M executable (6,742,332 - 659,435 open); measured spend runs below estimates;
+  a shortfall surfaces as WAITING_FOR_AUTHORITY at the tail, never as an overrun.
+- WU-INST integrates R1b (ce/a3b-r d0d0eb2b, same two files as WU-1B) here first, then one 3-way merge into LIVE.
+  Files carrying WU-1C/1D changes need one hash-bound Owner YES (not in Amendment D's named install set).
+
 Next 3 actions:
-1. Sweep launches m-1783bda2a44b (WU-1C); confirm it via `gsd_mission.py status`.
-2. Chain: WU-1C -> WU-1D -> WU-1H (each arms the next; WAITING_FOR_AUTHORITY if short).
-3. After WU-1-receipt: a3b-r R3 installs by 3-way merge; then the reclassify op for fc54a743.
+1. Sweep launches m-6ffa7ac2513b (WU-1H); `gsd_mission.py status` confirms.
+2. The chain arms itself; a coordinator acts only on BLOCKED / WAITING_FOR_* / ARM_FAILED in a receipt.
+3. After WU-CLOSE: ctx-rent S2 resumes through the advance consumer.
 Start: read only this file, then action 1.
