@@ -401,6 +401,180 @@ def g_guard():
         e.close()
 
 
+# --- R1 (goal ce-a3b-r): canonical goal-state authorization + scoped Owner grants -------------------
+
+def _short83(p: Path):
+    """The 8.3 alias of an existing path, or None when the volume has none."""
+    if sys.platform != "win32":
+        return None
+    import ctypes
+    buf = ctypes.create_unicode_buffer(1024)
+    n = ctypes.windll.kernel32.GetShortPathNameW(str(p), buf, 1024)
+    s = buf.value if 0 < n < 1024 else None
+    return s if s and s.lower() != str(p).lower() else None
+
+
+def _junction(link: Path, target: Path) -> bool:
+    if sys.platform != "win32":
+        try:
+            os.symlink(target, link, target_is_directory=True)
+            return True
+        except OSError:
+            return False
+    r = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)], capture_output=True, text=True)
+    return r.returncode == 0 and link.exists()
+
+
+def g_canon():
+    e = Env()
+    try:
+        work = e.root / "work"
+        (work / "specs").mkdir(parents=True)
+        declare("gc", 10_000_000, roots=[str(work)], lease_calls=1)
+        tx = e.root / "t.jsonl"
+        tx.write_text(row("m1", 100), encoding="utf-8")
+        spec = work / "specs" / "goal-budget-admission.md"
+        spec.write_text("# a read-only spec that merely carries the words in its name\n", encoding="utf-8")
+        dec, why = run_guard(e, "cn-1", tx, work, tool_input={"file_path": str(spec)})
+        check("V-GOAL-CANON-SPEC-READABLE", dec is None,
+              f"a spec NAMED goal-budget-*.md outside the state dir is admitted: {dec} {why[:80]}")
+        dec, why = run_guard(e, "cn-1", tx, work, tool="Grep", tool_input={"pattern": "x", "path": str(spec.parent)})
+        check("V-GOAL-CANON-SPEC-GREPPABLE", dec is None, f"grep over the spec dir is admitted: {dec} {why[:80]}")
+
+        led = e.state / "goal-budget" / "gc" / "spend.journal.jsonl"
+        check("V-GOAL-CANON-LEDGER-EXISTS", led.exists(), f"the control target exists: {led.name}")
+        aliases = {
+            "absolute": (work, str(led)),
+            "relative": (e.state, "goal-budget/gc/spend.journal.jsonl"),
+            "dotdot": (work, str(e.state / "goal-budget" / "gc" / ".." / "gc" / "spend.journal.jsonl")),
+            "dotdot-out": (work, str(work / ".." / "state" / "goal-budget" / "gc" / "spend.journal.jsonl")),
+            "mixed-case": (work, str(led).replace("goal-budget", "GoAl-BuDgEt")),
+            "forward-slash": (work, str(led).replace("\\", "/")),
+            "trailing-sep": (work, str(led.parent) + os.sep),
+            "dir-itself": (work, str(e.state / "goal-budget")),
+        }
+        short = _short83(e.state / "goal-budget")
+        if short:
+            aliases["8.3-short"] = (work, str(Path(short) / "gc" / "spend.journal.jsonl"))
+        jn = e.root / "innocent"
+        if _junction(jn, e.state / "goal-budget"):
+            aliases["junction"] = (work, str(jn / "gc" / "spend.journal.jsonl"))
+        bad = []
+        for name, (cwd, fp) in aliases.items():
+            dec, why = run_guard(e, "cn-2", tx, cwd, tool_input={"file_path": fp})
+            if dec != "deny":
+                bad.append(name)
+        check("V-GOAL-CANON-STATE-DENIED", not bad,
+              f"the ledger and {len(aliases) - 1} aliases ({', '.join(aliases)}) all denied; admitted: {bad or 'none'}")
+        sess = e.state / "session-budget-cn-3.json"
+        sess.write_text("{}", encoding="utf-8")
+        dec, _ = run_guard(e, "cn-3", tx, work, tool="Edit", tool_input={"file_path": str(sess), "old_string": "a", "new_string": "b"})
+        dec2, _ = run_guard(e, "cn-3", tx, work, tool="Write", tool_input={"file_path": str(e.state / "goal-budget" / "gc" / "x"), "content": "y"})
+        check("V-GOAL-CANON-WRITES-DENIED", dec == "deny" and dec2 == "deny", f"Edit {dec}, Write {dec2} on protected state")
+        dec, _ = run_guard(e, "cn-3", tx, work, tool="Bash", tool_input={"command": f"cat '{str(led).replace(chr(92), '/')}'"})
+        check("V-GOAL-CANON-SHELL-PATH-DENIED", dec == "deny", "a shell command naming the ledger by a path token is denied")
+        dec, _ = run_guard(e, "cn-3", tx, work, tool="Bash", tool_input={"command": "python tools/mission_spend.py goal-grant --goal gc --session cn-3 --op read --path x"})
+        dec2, _ = run_guard(e, "cn-3", tx, work, tool="Bash", tool_input={"command": "python tools/mission_spend.py goal-revoke --id g"})
+        check("V-GOAL-CANON-SHELL-VERBS-DENIED", dec == "deny" and dec2 == "deny", f"goal-grant {dec}, goal-revoke {dec2} from a bound shell")
+        dec, _ = run_guard(e, "cn-3", tx, work, tool="Bash", tool_input={"command": "echo hello"})
+        check("V-GOAL-CANON-SHELL-CONTROL", dec is None, "an unrelated shell command is admitted")
+    finally:
+        e.close()
+
+
+def _grant(*a, **k):
+    try:
+        return ms.goal_grant(*a, **k)
+    except AttributeError:
+        return {"ok": False, "reason": "goal_grant is not implemented"}
+
+
+def _journal_ops(e, goal, op):
+    p = e.state / "goal-budget" / goal / "spend.journal.jsonl"
+    return [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines() if x.strip() and json.loads(x).get("op") == op]
+
+
+def g_grant():
+    import time
+    e = Env()
+    try:
+        work = e.root / "work"
+        work.mkdir()
+        declare("gt", 10_000_000, roots=[str(work)], lease_calls=1)
+        tx = e.root / "t.jsonl"
+        tx.write_text(row("m1", 100), encoding="utf-8")
+        prot = e.state / "goal-budget" / "notes.txt"
+        prot.write_text("owner-approved read", encoding="utf-8")
+        rd = {"file_path": str(prot)}
+
+        dec, _ = run_guard(e, "gr-0", tx, work, tool_input=rd)
+        check("V-GOAL-GRANT-CONTROL", dec == "deny", "no grant: the protected read is denied")
+        r = _grant("gt", "gr-1", "read", str(prot), owner=False)
+        check("V-GOAL-GRANT-NEEDS-OWNER", not r.get("ok"), f"a grant without --owner is refused: {str(r.get('reason'))[:60]}")
+
+        r = _grant("gt", "gr-1", "read", str(prot), count=1, ttl_min=60, owner=True)
+        check("V-GOAL-GRANT-ISSUED", bool(r.get("ok")) and len(_journal_ops(e, "gt", "grant")) == 1 if r.get("ok") else False,
+              f"Owner grant recorded in the journal: {r.get('ok')} {str(r.get('reason', ''))[:50]}")
+        dec1, w1 = run_guard(e, "gr-1", tx, work, tool_input=rd)
+        dec2, w2 = run_guard(e, "gr-1", tx, work, tool_input=rd)
+        check("V-GOAL-GRANT-EXACT", dec1 is None and dec2 == "deny" and len(_journal_ops(e, "gt", "grant_use")) == 1,
+              f"first read {dec1}, second read {dec2} (count 1); grant_use rows {len(_journal_ops(e, 'gt', 'grant_use')) if (e.state / 'goal-budget' / 'gt').exists() else 0}")
+
+        _grant("gt", "gr-2", "read", str(prot), count=1, ttl_min=60, owner=True, now=time.time() - 7200)
+        dec, _ = run_guard(e, "gr-2", tx, work, tool_input=rd)
+        check("V-GOAL-GRANT-EXPIRED", dec == "deny", f"an expired grant is denied: {dec}")
+
+        _grant("gt", "gr-3", "read", str(prot), count=1, ttl_min=60, owner=True)
+        dec, _ = run_guard(e, "gr-4", tx, work, tool_input=rd)
+        check("V-GOAL-GRANT-OTHER-SID", dec == "deny", f"another session cannot use it: {dec}")
+
+        other = e.state / "goal-budget" / "other.txt"
+        other.write_text("a", encoding="utf-8")
+        _grant("gt", "gr-5", "read", str(other), count=1, ttl_min=60, owner=True)
+        other.write_text("changed after the grant", encoding="utf-8")
+        dec, _ = run_guard(e, "gr-5", tx, work, tool_input={"file_path": str(other)})
+        check("V-GOAL-GRANT-SHA-CHANGED", dec == "deny", f"a changed sha256 voids the grant: {dec}")
+
+        _grant("gt", "gr-6", "read", str(prot), count=5, ttl_min=60, owner=True)
+        dec, _ = run_guard(e, "gr-6", tx, work, tool="Edit", tool_input={"file_path": str(prot), "old_string": "a", "new_string": "b"})
+        dec2, _ = run_guard(e, "gr-6", tx, work, tool="Write", tool_input={"file_path": str(prot), "content": "z"})
+        check("V-GOAL-GRANT-NEVER-WRITES", dec == "deny" and dec2 == "deny", f"read grant: Edit {dec}, Write {dec2}")
+        dec3, _ = run_guard(e, "gr-6", tx, work, tool_input=rd)
+        check("V-GOAL-GRANT-SAME-CONTROL", dec3 is None, f"the same grant still admits its Read: {dec3}")
+
+        _grant("gt", "gr-7", "read", str(prot), count=5, ttl_min=60, owner=True)
+        dec, _ = run_guard(e, "gr-7", tx, work, tool_input=rd, CPP_GOAL_GRANTS="0")
+        check("V-GOAL-GRANT-SWITCH-OFF", dec == "deny", f"CPP_GOAL_GRANTS=0 ignores grants: {dec}")
+
+        gid = (_journal_ops(e, "gt", "grant") or [{}])[-1].get("id")
+        rv = ms.goal_revoke("gt", gid) if hasattr(ms, "goal_revoke") and gid else {"ok": False}
+        _grant("gt", "gr-8", "read", str(prot), count=5, ttl_min=60, owner=True)
+        g8 = [g for g in _journal_ops(e, "gt", "grant") if g.get("sid") == "gr-8"]
+        rv = ms.goal_revoke("gt", g8[0]["id"]) if hasattr(ms, "goal_revoke") and g8 else {"ok": False}
+        dec, _ = run_guard(e, "gr-8", tx, work, tool_input=rd)
+        check("V-GOAL-GRANT-REVOKED", bool(rv.get("ok")) and dec == "deny", f"a revoked grant is denied: revoke {rv.get('ok')}, read {dec}")
+    finally:
+        e.close()
+
+
+def g_refusal_no_closeout_read():
+    e = Env()
+    try:
+        work = e.root / "work2"
+        work.mkdir()
+        declare("gx", 1000, roots=[str(work)], lease_calls=1)
+        tx = e.root / "t.jsonl"
+        tx.write_text(row("m1", 100), encoding="utf-8")
+        run_guard(e, "rf-1", tx, work)
+        with open(tx, "a", encoding="utf-8") as fh:
+            fh.write(row("m2", 2000))
+        decs = [run_guard(e, "rf-1", tx, work)[0] for _ in range(5)]
+        check("V-GOAL-REFUSAL-NO-CLOSEOUT-READ", all(d == "deny" for d in decs),
+              f"pins 19240f98: five Reads after a goal refusal -> {decs}")
+    finally:
+        e.close()
+
+
 def g_dispatch_wiring():
     text = DISPATCHER.read_text(encoding="utf-8")
     check("V-GOAL-AGENT-LANE",
@@ -411,7 +585,8 @@ def g_dispatch_wiring():
 
 def main():
     for g in (g_cap_journal, g_race, g_settle_and_resume, g_cross_account, g_crash_and_leak, g_spawn,
-              g_raise, g_host_and_roots, g_review_fixes, g_guard, g_dispatch_wiring):
+              g_raise, g_host_and_roots, g_review_fixes, g_guard, g_canon, g_grant,
+              g_refusal_no_closeout_read, g_dispatch_wiring):
         try:
             g()
         except Exception as ex:   # a crashed gate is a FAIL with its reason, never a skipped one
