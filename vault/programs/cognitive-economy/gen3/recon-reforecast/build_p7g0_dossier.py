@@ -124,9 +124,11 @@ def main():
             "3. Stratum key = (class, B.stratum_of(dict(row, closure=False), cuts)[1], bgroup). Class covers CXX and PS.",
             "4. seed = sha256_hex(census_sha256 + corpus_sha256 + %r); rest_seed = sha256_hex(seed + ':rest');"
             " holdout_seed = sha256_hex(seed + ':holdout'). Hex strings, utf-8." % SALT,
-            "5. Draw: Pln part = %d from Pln population rows (M0 region minus the 2 shared helpers) with seed; rest part ="
+            "5. Pln = population rows with 0x%08X <= int(census_id.split(':')[1], 16) < 0x%08X, minus the shared helpers"
+            " %s (the M0 recipe; %d rows). Draw: Pln part = %d from Pln rows with seed; rest part ="
             " %d from non-Pln rows with rest_seed. Each part: by-stratum allocation B.allocate, then for k in sorted strata"
-            " random.Random(int(seed,16)).sample(members sorted by census_id, alloc[k]) with ONE rng per part." % (N_PLN, N_REST),
+            " random.Random(int(seed,16)).sample(members sorted by census_id, alloc[k]) with ONE rng per part." % (
+                LO, HI, ", ".join("0x%08X" % a for a in sorted(SHARED)), len(pln), N_PLN, N_REST),
             "6. Holdout = %d from population minus the draw, same procedure, holdout_seed. Written to its own file; the"
             " freeze record stores only its sha256 and n. No checkpoint before 300 may read it." % N_HOLDOUT,
             "7. Preregistration (text in the freeze record, no numbers): metric = median comparable cost per L3 per stratum as"
