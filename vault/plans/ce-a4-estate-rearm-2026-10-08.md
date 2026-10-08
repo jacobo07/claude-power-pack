@@ -148,6 +148,33 @@ budget by default instead.
 **Total cap: 21.7M**, goal `ce-a4`, root `Apps/pp-ce-a4`, excluding W1b, which stays in `ce-a3b`. Each unit's cap
 comes from measured units: U6a 1.04M, A3-U1 1.82M.
 
+## 6b. Inherited from cep-gen4 (fold 2026-10-08, Owner, pane 0f9b771b)
+
+gen4 (f14f33a5, 9658c5f2) is folded into A4. Its 15M envelope is CLOSED, never spent (0 processed); A4 does not
+inherit budget from it. Its proof obligations ARE inherited and join the Master Done-Gate:
+
+| gen4 unit | A4 owner | obligation A4 must prove (unchanged from gen4) |
+|---|---|---|
+| P0 worker write | root `Apps/pp-ce-a4` worktree, W0 | one real BACKGROUND worker commits on this repo through the worktree; name the layer that refused T1c's edits to the live checkout (m-3b71f5457c70, bg 62ac7eb5) from its log |
+| S4 zero-model coordinator | tranche_driver --manifest, W2b | one real unit whose coordinator spend is MEASURED <= 1.5M (A4 sub-cap 0.6M is stricter and wins) |
+| S9 estate enforcement | W3 CBR baseline | CBR "no mission without an envelope" backed by a live `envelope_auto_assigned` ledger row |
+
+**F0 stays outside A4** as a bounded 1M unit with its own receipt (gen4 card, section F0): split the per-call floor
+into host vs Power Pack with a pass-through mod. A4's turn budgets derive from the ~120k floor (section 5), so:
+
+- **F0 runs before W0.** No A4 unit is armed until gen4/F0-receipt.md exists.
+- **A4 reforecast checkpoint after F0.** Re-derive every unit's turn budget from the measured split, and from the
+  removable Power Pack share if F0 finds one. The 21.7M cap below is NOT approved until that reforecast is written.
+
+Budget consolidation, as measured here: combined live authorization falls from 36.7M (gen4 15M + A4 21.7M) to
+22.7M (A4 21.7M + F0 1M). No A4 row is double-counted against gen4 money, because gen4 spent none. A4's own rows
+are not reduced yet: lowering them now would be a guess; F0's floor split is the input that can lower them.
+
+Rule candidates (UKDL BLOCKED_BY_OWNERSHIP: ukdl-universal.md has another pane's uncommitted hunks):
+- When two active programs claim the same obligation, execution stops until one canonical owner is resolved.
+- Consolidating programs consolidates budget, not only ownership: the folded envelope is closed, not kept live.
+- A folded program becomes provenance, never a second execution source.
+
 ## 7. Null-policy semantics, legacy deopt, rollback
 
 - An absent field resolves to policy. Unreadable policy resolves to builtin cheap values (U6a, landed).
