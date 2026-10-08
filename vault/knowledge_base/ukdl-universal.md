@@ -5119,6 +5119,62 @@ remains 0 until rules cite deposits -- which these two promotions are the first 
 
 **Cross-ref:** `PR-ACIS-FALSIFIABILITY-001`, `T-PORTABILITY-SELF-LABEL-001`.
 
+## HR-SUPERVISOR-PER-SUBJECT-ISOLATION-001 -- one subject cannot end a supervisor's pass
+
+**Hard rule.** A supervisor that judges N subjects per pass runs EVERY per-subject step inside that
+subject's isolation -- guards, breakers and budgeters included, not only the actions. A raise marks that
+subject's row with an error and a ledger entry; the pass continues for the rest. And the supervisor's health
+reads each pass's exit status, not only its freshness: a pass that runs on time and fails every time is
+FAILING, with a consecutive-failure count, never OK.
+
+**Origin 2026-10-07/08, GEX44 mission sweep.** `_cost_breaker` ran before the per-mission `try`. One
+terminal record made it call `set_owner_hold`, which refuses terminal records; the raise ended every pass
+for every mission: 264 passes over ~24 h (nobody noticed), then ~1 h the next day (a manual close by me).
+`sweep_health` read OK throughout: fresh heartbeat, no timeouts, rc=1 ignored. Fix: laptop 30086f18 /
+GEX44 f07aaf01 (isolation, FAILING on rc, `fail_streak`, error rows kept in the sweep log, exit 3).
+Gates red on the old code with the production error verbatim.
+
+**Cross-ref:** `T-FRESH-HEARTBEAT-CRASHING-PASS-001`, `T-GUARD-KEYED-ON-FIELD-NOT-LIFECYCLE-001`.
+
+## PR-PROSPECTIVE-COST-FORECAST-001 -- price the unit before it runs, judge it after it closes
+
+**Process rule.** Before an expensive model unit is armed: (1) price it as components -- fixed calls (the
+packet read, the closing step and the final message every unit pays), variable calls, and per-call cost as
+measured floor plus what the unit reads and writes -- not as one average; (2) commit that forecast BEFORE
+arming, so the judge can refuse a forecast younger than the unit's record; (3) judge only after the unit's
+cost boundary closed, from outside the unit; (4) a miss beyond the band in EITHER direction means a cost
+component is missing or invented -- find it, do not widen the lease. When the next real workload can
+discriminate the model, it is the validation: do not buy a ceremonial probe to confirm it.
+
+**Origin 2026-10-08, EDD Phase 2.** Four units missed (+50%, +41%, +66%, +38%). The last miss was the final-
+message call (~104k) the bottom-up count omitted; three audits then measured 7 calls each within 2%
+(707,206 / 696,658 / 692,049) whatever their packet asked. P2-B was priced by components and frozen
+(edd-run 038387fa) before arming (162d2ead); `edd_p2b.py judge` enforces the order.
+
+**Cross-ref:** `PR-NO-SELF-CERTIFICATION-001`, `feedback_budget_cap_must_be_projected_from_measured_floor`.
+
+## T-FRESH-HEARTBEAT-CRASHING-PASS-001 -- "the heartbeat is fresh" is not "the supervisor works"
+
+**Trap.** A liveness check built on freshness answers "did it run", not "did it succeed". A loop that crashes
+on schedule writes a fresh heartbeat every time. Read the per-pass outcome, count consecutive failures, and
+keep failed subjects visible in any filtered log (an `--actions-only` filter hid isolated error rows because
+their action was "none"). Origin: `HR-SUPERVISOR-PER-SUBJECT-ISOLATION-001`.
+
+## T-GUARD-KEYED-ON-FIELD-NOT-LIFECYCLE-001 -- a guard on "has a hold" instead of "is terminal"
+
+**Trap.** `_cost_breaker` skipped records that HAD a hold, so clearing the hold field on a finished record
+(a manual close) re-armed the breaker against a terminal record, which then raised. A guard must key on
+the lifecycle state it protects, not on a field that correlates with it today. Fix laptop e582e818 /
+GEX44 ddfb8a26: breaker and auto-budget skip TERMINAL. Related: a hold may prevent relaunch but must not
+prevent terminal settlement (laptop 03234663 / afdfa22d).
+
+## T-PID-OUTLIVES-JOB-001 -- a host pid is not the job's lifetime
+
+**Trap.** A pooled worker process (`bg-spare`) claims a job and outlives it: EDD AUDIT3's pid was 5 h old for
+a 28-minute job and stayed alive idle after finishing, so a judge keyed on "pid alive" held the result
+INCONCLUSIVE for ever. The job's boundary is the control plane's terminal record (settled on the host's own
+"finished" listing), or the pid gone -- whichever comes first. Fixed in both EDD judges (edd-run 2dfd1d30).
+
 ## PR-PROHIBITIONS-DO-NOT-CONFLICT-001 -- the residual move
 
 **Process rule.** Every Hard Rule is a prohibition, and prohibitions cannot contradict one another --

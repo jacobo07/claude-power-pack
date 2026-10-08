@@ -166,3 +166,27 @@ receipt exist; reachability exit 0 for new tools.
     factor 1.659. Phase 2 spend ~4.49M of the 14M ceiling.
 - P2-B does not exist: no packet, no scope, no holdout spec. Only the 2.0M forecast and the Owner's description
   ("creates the holdouts that will judge new machinery"). It cannot be auto-armed on a PASS until written.
+- P2-B (Owner y 2026-10-08, pane 24ca0218: no standalone ~0.7M probe; P2-B is the prospective cost test):
+  - Sweep blast radius + silence (laptop 30086f18 / GEX44 live f07aaf01): `_auto_budget`/`_cost_breaker`/`plan_next`
+    ran outside supervise's per-mission isolation, so ONE raise ended every pass for every mission (the 264-pass
+    and ~1 h outages). Now isolated. `sweep_health` judged only age and timeouts, so a pass crashing on time read
+    OK: stage rc != 0 now reads FAILING, the heartbeat carries `fail_streak`, and `supervise --actions-only` keeps
+    error rows and exits 3. Real pass 19:14:38Z: rc=0, fail_streak 0, SWEEP OK. No push channel from GEX44 to the
+    Owner exists: detection is at `status`, not a notification (debt).
+  - Known red: laptop V-MC-SUP-HOST-UNANSWERED-NOT-BLOCKED, cause measured: `_auto_budget`'s
+    `envelope_auto_assigned` transition refreshes `updated_at`, the staleness clock plan_next reads, delaying the
+    UNKNOWN surface by up to 30 min once per record (stub it out and the gate passes). Laptop build only. GEX44 live's
+    known red is a different gate, V-MC-PLAN-FACTS-REFUSES-OVERLAP, identical before and after f07aaf01.
+  - m-e3ed7e14a5e2 (other workstream) is PREPARED by design: launch held, cwd and work_dir lineages diverged. Untouched.
+  - P2-B = ROADMAP Phase 2 criterion 2: 4 holdouts (checkout, background job, SaaS onboarding, renamed game) + 5
+    negative controls (one per class), question discipline both ways, inputs/ (tested side) apart from answers/.
+    Criterion 3 (V-EDD-BENCH + BEFORE score) is P2-C; Reference Frontier stays Phase 5.
+  - edd-run 2dfd1d30 `tools/edd_p2b.py`: lint (structure, grading-frame words, origin vocabulary, verbatim 6-word
+    answer runs), seal, guard (wired into edd_p2_chain.py: only Phase-2 units or audits may name holdouts/answers;
+    Phase 3 refused until sealed), judge (PASS/FREEZE/FAIL, INCONCLUSIVE while running, forecast must predate the
+    record, +-30% either way). Both judges: a terminal record closes a unit's boundary (bg-spare pid, AUDIT3).
+    EDDP2B 29/29, EDDP2 26/26, two mutants red. Residual: the guard reads packets, not a worker's file reads; a
+    Phase-3 judge must scan its transcript for holdouts/answers reads (named Phase-3 done-gate item).
+  - 038387fa froze FORECAST-P2B.json BEFORE arming: P2-B 11 calls 1,380,000 (band 1.1-1.8M); P2-B-AUDIT 7 calls
+    725,000 (band 0.69-0.80M), the evidence unit of the corrected audit model in COSTMODEL.json.
+  - **P2-B armed m-0729ac737bec** (162d2ead): sonnet, lease 1,725,000, capsule-v2, no autocompact, unit p2b.
