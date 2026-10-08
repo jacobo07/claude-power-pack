@@ -143,6 +143,21 @@ compounds into churn and reputational cost.
 - **Dead-end error** — a failure state with no recovery path. Critical.
 - **Silent action** — an action with no feedback or status.
 - **Dark pattern** — any manipulative pattern from §4. Trust defect.
+- **Dead affordance** — a control that presents an action whose target does not
+  resolve where it is rendered. Critical on a recovery surface.
+
+**`dead-affordance`** (dimension `ux`, severity critical). A link or button that
+looks actionable but does not reach a real destination on the host that renders
+it, or that promises what the serving surface cannot know. The common shapes: a
+relative path that a host proxy rewrites into a route that does not exist; a
+target that was renamed or never shipped; a "go to your dashboard" link on an
+origin that cannot see the session, so it cannot know there is one. Detection:
+follow every link from the rendered surface, on the host that serves it, and
+record the final status after redirects; a structural check that a link merely
+exists proves nothing about where it goes. Offering three ways out is not
+recovery if one of them is a dead end: a recovery surface carrying a dead
+affordance is itself a dead-end error, which is why the severity is critical
+there and major elsewhere.
 
 ## 6. How CDIO-02 feeds the score
 

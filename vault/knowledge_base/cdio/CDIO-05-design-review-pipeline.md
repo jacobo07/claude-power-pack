@@ -167,6 +167,34 @@ labels it as such, and the reviewer may accept a stated override. The pipeline's
 promise is narrow and kept: a reproducible score, a defensible verdict, and every
 finding carrying a criterion and an observed value.
 
+**A reference is evidence of intent, not of production truth.** When a surface
+is built from an approved image (a mockup, a generated render, a competitor
+screenshot), the review scores the rendered product, and it reports two things
+separately: fidelity to the reference (composition, hierarchy, warmth, rhythm)
+and fitness for the product (truthful routes, brand tokens, accessibility,
+performance, every layout state). Affordances drawn in a reference, such as a
+mock navigation, a "view sample report" card or a dashboard button, are not
+requirements until the product can keep them; replacing one with a truthful
+equivalent is an adaptation, recorded as such, not a fidelity defect. The
+reverse holds as well: a polished render is no evidence that its links lead
+anywhere. Neither score may be borrowed to excuse the other.
+
+**An observation must be able to see what it claims.** A finding, or a pass,
+about what a person sees needs a rendered observation of that state. Text
+present in the page source or in a serialized payload is not rendered text:
+some frameworks embed the not-found tree in the payload of every page, so a
+source search "finds" an error page on every healthy page. A check at one width
+says nothing about a layout state that exists only at another: a tablet width
+where the header has already stacked while a card grid has not is its own
+state, not a scaled desktop. Every piece of review evidence names the viewport
+and theme it observed, and a layout state with no observation is reported as
+unobserved, never as passing.
+
+**`unobserved-layout-state`** (dimension `visual`, severity major). A review
+that declares a surface complete while one of its materially different layout
+or theme states (a breakpoint where the arrangement changes, a dark theme) has
+no rendered observation.
+
 ## 9. A full worked review (verdicts to score)
 
 Consider a SaaS landing page reviewed through the six lenses. The reviewer

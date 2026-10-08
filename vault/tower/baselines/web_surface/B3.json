@@ -1,0 +1,284 @@
+{
+  "family": "web_surface",
+  "generation": 3,
+  "parent": 2,
+  "parent_sha256": "ee3d132d7d05c18bf7536a6589af3a054f49f12b5db1e9d0b42af759fd2b4b61",
+  "created_at": 1791458407.6416998,
+  "reason": "promote web_surface-host-owns-its-edge-states, web_surface-reference-actions-route-truth, web_surface-every-layout-state-observed: edge states owned by their host, reference actions route-true, every layout state observed; first consumer QuickLease 404 (InfinityOps feat/ql-not-found)",
+  "entries": [
+    {
+      "id": "web_surface-deploy-http-200-real-domain",
+      "requirement": "A deploy is not DONE until the public URL returns HTTP 200 on the real custom domain (never the *.vercel.app alias) with the end-user experience intact.",
+      "why": "A green local build is not a deploy; done means the production URL on the real domain actually works.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\DEPLOY_GOVERNANCE.md",
+        "line": 36,
+        "quote": "A deploy is DONE only when the public URL returns HTTP 200 on the real domain with the"
+      },
+      "class": "D",
+      "check": "curl -s -o /dev/null -w '%{http_code}' https://<real-domain> == 200",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-external-deps-or-honest-preview",
+      "requirement": "Before deploy, every external dependency the site needs (database, payments, email keys) must be configured and working, OR the shipped surface is an honest static preview that promises no functionality that is not wired.",
+      "why": "A bare deploy of a transactional store needing a real database plus payment/email keys would have shipped a broken store.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\DEPLOY_GOVERNANCE.md",
+        "line": 13,
+        "quote": "- [ ] External dependencies (database, payments, email keys) are configured — OR the"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-pii-scrub-before-commit",
+      "requirement": "If the site processes third-party data (contact forms, staged planning content), grep the staging area for PII (phone/email/national-ID patterns) and sanitize any hit before commit.",
+      "why": "The portfolio's first commit staged a third party's phone number in a planning doc.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\DEPLOY_GOVERNANCE.md",
+        "line": 10,
+        "quote": "- [ ] If the project processed third-party data: grep the staging area for PII"
+      },
+      "class": "C",
+      "check": "grep staging area for phone/email/national-ID patterns before commit",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-copy-humanized-done-gate",
+      "requirement": "Public-facing copy must pass the V-COPY-01 humanization gate before deploy: fetch the rendered HTML of every principal route and grep it for the banned technical-vocabulary list; any visible-text hit BLOCKs the deploy.",
+      "why": "Humanizing public copy before production is NOT optional -- it is a done-gate, exactly like a passing build; a project MUST NOT deploy with technical vocabulary visible to the end user.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\COPY_GOVERNANCE.md",
+        "line": 8,
+        "quote": "Humanizing public copy before production is NOT optional. It is a done-gate, exactly like"
+      },
+      "class": "D",
+      "check": "grep banned-term list against fetched production HTML (visible text only); zero hits required",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-copy-href-label-clean",
+      "requirement": "A functional technical URL inside an href/src attribute is exempt from the banned-term scan, but its visible label must still read as a plain name, not a hosting-platform suffix.",
+      "why": "A URL is a technical necessity like a variable name, not copy -- but the visible text next to it is copy and must stay clean.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\COPY_GOVERNANCE.md",
+        "line": 18,
+        "quote": "4. A functional URL inside an `href`/`src` attribute is exempt — it is a technical"
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-repo-private-by-default",
+      "requirement": "A repository holding proprietary code, business logic, or internal governance for the site is private from its first commit; public is an active decision, never the default.",
+      "why": "23 proprietary repositories were found public in the portfolio security audit.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\REPO_SECURITY_GOVERNANCE.md",
+        "line": 7,
+        "quote": "A repository holding proprietary code, business logic, datasets, or internal governance is"
+      },
+      "class": "D",
+      "check": "repo visibility == private unless explicitly justified as open-source/community",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-experience-declared-before-build",
+      "requirement": "Any interactive element of the surface must have its `experience:` contract declared in DESIGN.md front-matter before it is built, not settled ad hoc by whoever writes the last component.",
+      "why": "How a surface behaves on touch and while it waits is declared, not settled by whoever writes the last component.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\CLAUDE.md",
+        "line": 67,
+        "quote": "- **Declare before building.** `experience:` in DESIGN.md front-matter, reached via"
+      },
+      "class": "D",
+      "check": "DESIGN.md front-matter contains an experience: field",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-experience-floors-not-arbitrable",
+      "requirement": "Reduced-motion equivalence, motion-as-sole-channel, and blocking animation are CRITICAL floors on the surface that may never be traded away, regardless of its declared expressiveness ceiling.",
+      "why": "Floors are not arbitrable (HR-EXPERIENCE-FLOOR-001).",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\CLAUDE.md",
+        "line": 75,
+        "quote": "- **Floors are not arbitrable.** Reduced-motion equivalence, motion-as-sole-channel and"
+      },
+      "class": "D",
+      "check": "python tools/test_experience_contract.py (V-EXP-*)",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-accessibility-is-the-floor",
+      "requirement": "No amount of clarity, trust, or conversion quality justifies dropping below WCAG AA; a contrast or keyboard-access failure is always a blocking defect regardless of how the rest of the surface scores.",
+      "why": "Accessibility is not on the value ladder -- it is the floor.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\cdio\\CDIO-00-design-intelligence-kernel.md",
+        "line": 120,
+        "quote": "4. **Accessibility is not on the ladder — it is the floor.** No amount of"
+      },
+      "class": "D",
+      "check": "contrast ratio >= 4.5:1 body / >= 3:1 large text (WCAG 2.1 AA); keyboard nav reachable",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-legibility-thresholds",
+      "requirement": "Body text on the surface must clear contrast ratio >=4.5:1 (large text/UI >=3:1, WCAG 2.1 AA), be >=16px on mobile, hold a 45-75 character line length, and use line-height >=1.4.",
+      "why": "These thresholds trace to a human constraint on screen legibility at typical acuity, not a preference.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\cdio\\CDIO-00-design-intelligence-kernel.md",
+        "line": 51,
+        "quote": "Measured by: contrast ratio ≥ 4.5:1 for body text and ≥ 3:1 for large text"
+      },
+      "class": "D",
+      "check": "automated contrast + font-size + line-length measurement on rendered page",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-cdio-review-gate",
+      "requirement": "A visual surface is not done unless its CDIO Design Quality Score is >=80 with zero critical issues (APPROVE); a score <60 or any critical issue is BLOCK regardless of the arithmetic score.",
+      "why": "This is the PP completion standard for visual output: a surface that is BLOCK or REVISE is not done (PR-CDIO-REVIEW-GATE-001).",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\cdio\\CDIO-05-design-review-pipeline.md",
+        "line": 114,
+        "quote": "- **APPROVE** — score **≥ 80 AND zero critical** issues. The surface may be"
+      },
+      "class": "D",
+      "check": "cdio-reviewer verdict == APPROVE (score>=80, criticals==0)",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-above-the-fold-essentials",
+      "requirement": "The first viewport without scrolling must contain the value proposition, the primary CTA, and at least one trust signal; a missing primary action or missing value above the fold is a finding.",
+      "why": "Lens 2 -- Above the fold -- is one of the six ordered review lenses because it mirrors how a real user encounters the surface.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\cdio\\CDIO-05-design-review-pipeline.md",
+        "line": 32,
+        "quote": "**Lens 2 — Above the fold.** What is present in the first viewport without"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-mobile-first-check",
+      "requirement": "The surface must hold at a 320-390px width: body text >=16px, tap targets >=44x44px, no horizontal scroll, and the primary CTA still reachable and prominent.",
+      "why": "Mobile is checked explicitly because a desktop-only review misses where most users actually are.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\cdio\\CDIO-05-design-review-pipeline.md",
+        "line": 49,
+        "quote": "**Lens 6 — Mobile-first check.** Does the surface hold at a 320–390px width:"
+      },
+      "class": "D",
+      "check": "render at 320px and 390px viewport; measure tap target size and horizontal scroll",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-deploy-claims-match-shipped-infra",
+      "requirement": "Every technical/commercial claim in deployed copy must be checked against shipped infra before deploy; on a model/pricing change, the visible copy, injected JSON-LD, metadata, and OG image must all agree before cutover, verified by a same-commit build that prerenders the changed pages.",
+      "why": "Copy and code ship in different sprints; copy drifts into claiming features that are not deployed, or that the product no longer has after a model change (EP-6, 'COPY-REALITY').",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\knowledge_vault\\core\\HARD-RULES.md",
+        "line": 100,
+        "quote": "### HR-8 -- Never deploy a page whose claims are not backed by shipped infra; on a model change, copy + structured-data + metadata + OG must all agree before cutover"
+      },
+      "class": "D",
+      "check": "same-commit prerender diff of copy vs JSON-LD vs metadata vs OG image",
+      "status": "reviewed"
+    },
+    {
+      "id": "web_surface-finding-needs-criterion-and-value",
+      "requirement": "Every design finding recorded about the surface must name a measurable criterion and the observed value that fails it; a finding with no locus or measurement must be dropped, never recorded.",
+      "why": "'This looks cheap' is not a valid design finding -- only a named criterion plus an observed value is.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\cdio\\CDIO-00-design-intelligence-kernel.md",
+        "line": 31,
+        "quote": "finding is only valid if it names a measurable criterion and the observed value"
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "status": "reviewed",
+      "check": "the effect client's type rejects a non-GET call through the shared helper (tsc fails on a POST via the GET helper)",
+      "id": "web_surface-effect-keeps-http-status",
+      "requirement": "A server client that performs an effect (POST/PUT/DELETE) keeps the upstream HTTP status and classifies it into a closed outcome union with no message field; a shared helper that flattens failures must be unusable for effects by its type, not by convention.",
+      "why": "A trap note about the flattening helper fixed onboarding only; roadmap completion still used it, so an expired session read as 'try again' and the step_locked copy could never fire.",
+      "origin": {
+        "file": "C:\\Users\\User\\Apps\\io-focus\\vault\\knowledge_base\\ukdl-universal.md",
+        "line": 1758,
+        "quote": "### HR — An effect never goes through a helper that drops the HTTP status"
+      },
+      "class": "C"
+    },
+    {
+      "status": "reviewed",
+      "check": "browser spec project run against `next build && next start` exits 0 twice, the second without updating snapshots",
+      "id": "web_surface-ui-verified-on-production-build",
+      "requirement": "A user-visible surface is not done until a production build has rendered it in a real browser (never a dev server), at phone/tablet/desktop widths and with reduced motion, against reference captures a person has looked at; every check must be able to fail.",
+      "why": "tsc and vitest were green while every radius computed to 0px and the backdrop had no blur; the first production-build run of the focus specs also found three test defects jsdom could not.",
+      "origin": {
+        "file": "C:\\Users\\User\\Apps\\io-focus\\vault\\knowledge_base\\ukdl-universal.md",
+        "line": 1716,
+        "quote": "### PROC — A visual surface is not done until a production build has rendered it in a real browser, measured"
+      },
+      "class": "D"
+    },
+    {
+      "status": "reviewed",
+      "check": "consumer browser suite proves each obligation on a production build (reference: InfinityOps tests/smoke/ql-signin.spec.ts, 27/27)",
+      "id": "web_surface-entry-future-state-preview-obligations",
+      "requirement": "An entry surface (sign in, sign up, onboarding) that shows the product's own state before the value boundary meets six obligations: states and words come from the product's closed state vocabulary and copy; the subject is visibly labelled fiction with no personal data; reduced motion, no JavaScript and preview failure all show one static state in the same box (zero layout shift); motion over 5 s has a visible pause outside the hidden layer; the preview loads and fails on its own while the form keeps working; and if the preview sits above the form, a skip link is the first focusable element and the form's distance from the top is measured.",
+      "why": "A generated mock-up for QuickLease sign-in claimed in-app messages, a documents list and real-time updates that the product does not have, and a device placed above the form pushed the email field 1.43 screens down at 390x844 (mission 004, 2026-10-07).",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\uacf\\UACF-01-surface-architecture.md",
+        "line": 93,
+        "quote": "## 3a. Entry-surface primitive: future-state preview (2026-10-07)"
+      },
+      "class": "D"
+    },
+    {
+      "status": "reviewed",
+      "check": "production-build smoke requests an unknown path on every host and asserts status, brand, title and every meta content (reference: InfinityOps tests/smoke/ql-not-found.quicklease.spec.ts)",
+      "id": "web_surface-host-owns-its-edge-states",
+      "class": "D",
+      "requirement": "A surface served on several hosts or brands renders every edge state (not-found, error, empty) as the product of the host that served it: the page, the title and every identity field it emits (description, application name, preview cards, icons). Each failure keeps its own status: unauthenticated goes to sign-in, forbidden answers 403 or a written anti-enumeration not-found, a server failure answers 500; a real page never renders the not-found surface, judged on the rendered page, never on its source.",
+      "why": "An unknown quicklease.ai path answered the right 404 status as the InfinityOps Spanish page; after the page was fixed its og:title and twitter:title still named InfinityOps, because the framework merges metadata field by field and only the title had been replaced. vault/specs/cdio-edge-states.md (InfinityOps feat/ql-not-found, 2026-10-08)",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\cdio\\CDIO-03-trust-premium-intelligence.md",
+        "line": 172,
+        "quote": "**Edge states belong to the host that serves them.**"
+      }
+    },
+    {
+      "status": "reviewed",
+      "check": "route-truth test resolves every recovery link per host through the host rewrite, plus a browser crawl of each link (reference: InfinityOps lib/quicklease/not-found.test.ts)",
+      "id": "web_surface-reference-actions-route-truth",
+      "class": "D",
+      "requirement": "Every action on a surface built from a reference image reaches a real destination on the host that renders it, proved by following each link on that host to its final status. An action the product cannot keep (a mock navigation, an unapproved sample, a dashboard the origin cannot see) is replaced by a truthful equivalent or removed, and reference fidelity and product fitness are reported separately.",
+      "why": "The approved 404 reference drew a mock nav, a 'view sample report' card and a 'go to dashboard' button; a relative /contact on the app host is rewritten to a route that does not exist. Only following each link on its own host caught the dead ones (mutants M2, M3). vault/specs/cdio-edge-states.md (InfinityOps feat/ql-not-found, 2026-10-08)",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\cdio\\CDIO-02-ux-intelligence-engine.md",
+        "line": 149,
+        "quote": "**`dead-affordance`** (dimension `ux`, severity critical)."
+      }
+    },
+    {
+      "status": "auto",
+      "check": "theme/layout probe at each breakpoint where the arrangement changes, plus a measured property of the failure (reference: InfinityOps tests/smoke/ql-theme.spec.ts not-found probe at 1280/768/390)",
+      "id": "web_surface-every-layout-state-observed",
+      "class": "D",
+      "requirement": "A visual done claim names every layout state in which the arrangement changes (including a width where one region has already stacked while another has not) and every theme, and holds a rendered observation of each on a production build; a state with no observation is reported unobserved, never passing.",
+      "why": "At 768px the 404's hero was stacked while its shortcut cards were already three across, leaving ~110px of text per card; neither the 390 nor the 1280 capture could show it, and structural layout tests at 768 were green. vault/specs/cdio-edge-states.md (InfinityOps feat/ql-not-found, 2026-10-08)",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\cdio\\CDIO-05-design-review-pipeline.md",
+        "line": 193,
+        "quote": "**`unobserved-layout-state`** (dimension `visual`, severity major)."
+      }
+    }
+  ],
+  "promoted_by": "Owner (approved plan D3 'web_surface promotion', 2026-10-08) for the two reviewed entries; web_surface-every-layout-state-observed promoted auto, awaiting review"
+}

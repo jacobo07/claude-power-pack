@@ -127,10 +127,33 @@ def active_entries(family: str, root: str | None = None) -> list:
     return [e for e in g.get("entries", []) if e.get("status") != "reverted"]
 
 
-def generation_sha256(family: str, n: int, root: str | None = None) -> str:
-    """SHA-256 of a generation file's exact bytes."""
+def _generation_bytes(family: str, n: int, root: str | None = None) -> bytes:
     with open(os.path.join(_family_dir(family, root), "B%d.json" % n), "rb") as fh:
-        return hashlib.sha256(fh.read()).hexdigest()
+        return fh.read()
+
+
+def generation_sha256(family: str, n: int, root: str | None = None) -> str:
+    """SHA-256 of a generation file's bytes with LF line endings.
+
+    Line endings are the checkout's, not the record's: git stores LF, and a
+    Windows checkout with core.autocrlf=true hands the same file over as CRLF.
+    Hashing raw bytes made the chain verdict depend on how the reader checked
+    the repo out (measured 2026-10-08: web_surface B2 had anchored B1's CRLF
+    bytes, so B2 read TAMPERED on every LF checkout and B1 on every CRLF one).
+    """
+    return hashlib.sha256(_generation_bytes(family, n, root).replace(b"\r\n", b"\n")).hexdigest()
+
+
+def generation_anchors(family: str, n: int, root: str | None = None) -> set:
+    """Every anchor a child may legitimately hold for generation n.
+
+    The LF hash (what write_generation records) and the CRLF hash (what a child
+    written from a CRLF checkout before 2026-10-08 recorded). Both are computed
+    from the content, so any edit to the content still matches neither.
+    """
+    lf = _generation_bytes(family, n, root).replace(b"\r\n", b"\n")
+    return {hashlib.sha256(lf).hexdigest(),
+            hashlib.sha256(lf.replace(b"\n", b"\r\n")).hexdigest()}
 
 
 # Fields write_generation owns; `extra` may add keys but never override these.

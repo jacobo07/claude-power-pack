@@ -165,7 +165,40 @@ shows a raw code, a stack trace, or a generic "Something went wrong" with no pat
 forward is a finding (and, if it is a dead end, critical per CDIO-02). A
 trustworthy error names what happened in human language, what the user can do,
 and preserves their work. A 404 that dead-ends with no navigation back is a
-finding; one that offers search or a link home is not.
+finding; one that offers search or a link home is not, provided every link it
+offers resolves on the host that renders it (CDIO-02 `dead-affordance`).
+Offering a way out is not recovery; reaching a real page is.
+
+**Edge states belong to the host that serves them.** When one application
+answers for several products or hosts, a framework's single not-found or error
+page renders under whichever brand happened to own it, and the visitor gets the
+right status in the wrong brand. Identity is not only the visible page: link
+previews, browser tabs, bookmarks and home-screen icons show the emitted
+metadata to people who never see the page body, and frameworks merge metadata
+field by field, so replacing the title alone leaves the description, the
+application name, the preview cards and the icons inherited from another
+product. Measurement: request an unknown path on every host the application
+answers for, and read both the rendered page and every identity field it emits;
+each must name the host's own product.
+
+**`edge-state-host-ownership`** (dimension `trust`, severity major). An edge
+state (not-found, error, empty) rendered, titled or described in the identity of
+a product other than the one whose host served it.
+
+**An edge state keeps its status.** A not-found page must not stand in for other
+failures, because each tells the user something different to do next. An
+unauthenticated request is sent to sign-in or answered 401; a forbidden one is
+answered 403, unless revealing that the resource exists would itself leak
+information, in which case a not-found is a deliberate, written-down decision
+for that resource; a server failure is a 500 with its own page and a retry.
+Measurement: probe each failure class and record both the status and the page
+that rendered. The reverse collapse counts too: a real page must never render
+the not-found surface, judged on the rendered page rather than on its source.
+
+**`error-status-collapse`** (dimension `trust`, severity critical). A failure of
+one class rendered or reported as another (an expired session, a permission
+refusal or a server error shown as "page not found", or a real page showing the
+not-found surface).
 
 **Loading states.** A surface that shows nothing while it loads reads as broken.
 Measurement: an operation over roughly one second with no skeleton, spinner, or
