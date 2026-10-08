@@ -6,6 +6,10 @@ open -> 0, all SPENT). U3/U4/U5 continue only inside the ce-a3b-r chain after a 
 authority request (`vault/plans/ce-a3-amendment-C-out-of-band-control.md` C2). Continuation is deterministic, no pane:
 lifecycle WU-1H (sweep advances a unit that ended without its Close) per C3. Never cd into this root; never revive it.
 Everything below is history.
+**2026-10-08 ~18:10 Amendment D (3aa002af, Owner "y").** Superseded the paragraph above: U3/U4/U5 and a3b-r R3/R4/R6/R7
+now live in ce-lifecycle-v2 as units L2, L5-L9 after WU-1H. The goal got +5.6M on the same goal id (cap 8,847,012).
+Owner of the packets: lifecycle-v2 coordinator c8 (handoff message 45209e17). If c8 never packets them, the next
+reader writes them from card section 3 into pp-ce-lifecycle-v2, re-reading its git log right before writing.
 
 **Identity.** Worktree `C:\Users\User\Apps\pp-ce-a3`, branch `ce/a3` (off 5617f901 + merge a1/a1-2 at 9a02b315).
 Card `vault/programs/cognitive-economy/gen2/AMENDMENT-A3-2026-10-07.md` (APPROVED, Owner 'y', pane 2aa0b0fb).
