@@ -46,6 +46,17 @@ Steps:
    WAITING_FOR_AUTHORITY with the numbers into the receipt. Never hand the arm to "a fresh pane": arm it yourself or
    record ARM_FAILED + the error (WU-1B's worker deferred its arm to a pane; that is the trap this unit closes).
 
+Scope addendum (ce-a3 Amendment C, Owner "y" 2026-10-08, pp-ce-a3 4f1fe9ae; measured cases, not hypotheses):
+A. COMPLETED counts too. ce-a3 U2's worker ended `subtype: success` after a cap refusal with no receipt. Apply steps
+   1-3 to a COMPLETED mission whose wu_packet receipt is absent: work-unit status RECOVERY_PENDING, no dependent arm.
+   Add V-LIFE-SUCCESS-NO-RECEIPT + a mutant that treats provider success as the receipt (must go red).
+B. One capsule format. ce/a3b-r 6902264d already has `mission_capsule.fault_capsule` (R5, AUTOPSY 10/10). Reuse it via
+   `git cherry-pick -x 88d37fe9 6902264d` if it applies cleanly; otherwise record in the receipt why a second format exists.
+C. Atomic arm. R5c's Close ran `arm` without --no-launch twice: two packet-less /gsd-autonomous launches with the auto
+   7.5M envelope (m-413f1e324aa5, m-d84de9dd1edb, now on owner hold); ce-a3b-r used 5.87M -> 8.23M over R5c plus those two, 1.44M held open by them. Step 9 and every Close:
+   arm --no-launch, then envelope, then admit; if envelope or admit fails, `hold` the armed mission with the error.
+If 13 calls cannot cover A-C, finish steps 1-9 first and list A-C as residual in the receipt.
+
 Do not touch: the live checkout under ~/.claude, ctx-rent, the ce-lifecycle-v worktree.
 
 End your final message with: HANDOFF NOTE: WU-1H done
