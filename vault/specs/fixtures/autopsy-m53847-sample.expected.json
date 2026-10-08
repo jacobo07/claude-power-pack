@@ -1,0 +1,16 @@
+{
+ "calls": 12,
+ "processed": 2108311,
+ "cache_read": 1899706,
+ "cache_write": 208512,
+ "output": 69,
+ "first_ctx": 95862,
+ "max_ctx": 208514,
+ "mean_ctx": 175687,
+ "tool_mix": {
+  "Read": 12,
+  "Grep": 7,
+  "Glob": 3,
+  "SubagentHandback": 1
+ }
+}
