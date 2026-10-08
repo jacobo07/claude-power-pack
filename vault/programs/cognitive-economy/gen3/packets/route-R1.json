@@ -1,1 +1,1 @@
-{"envelope":{"target":1000000,"warn":1250000,"stop":1500000,"calls":13},"workers":[{"name":"cep-gen3-R1","profile":"top-level-worker","calls":12,"packet":12000}]}
+{"envelope":{"target":650000,"warn":870000,"stop":1000000,"calls":6},"workers":[{"name":"cep-gen3-R1","profile":"top-level-worker","calls":5,"packet":12000}]}
