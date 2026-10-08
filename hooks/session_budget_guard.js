@@ -218,10 +218,77 @@ function goalExempt(cmd) {
 // budget file (a forged lease or a dropped `goal` field un-binds it), and the goal CLI's mutating
 // verbs. Same OS user, so this defeats the casual and accidental path, not an agent that edits this
 // hook -- see the spec's trust boundary (review H1).
-const GOAL_STATE = /goal-budget|session-budget-|mission_spend\.py['"]?\s+goal-(?:declare|renew|spawn)\b/i;
+//
+// Canonical, not lexical (R1): the old substring regex denied a read-only spec whose NAME held
+// "goal-budget" and admitted any alias the regex missed. File-tool targets are now resolved
+// (cwd-relative, real path when it exists, lowercase on win32, no trailing separator) and denied only
+// when they lie inside state/goal-budget or are a state/session-budget-* file.
+// TRUST BOUNDARY: only the file tools are canonical. A shell can build a path at runtime (variables,
+// globs, base64, a script that does it), so the shell check below -- mutating goal verbs plus
+// path-like tokens resolved the same way -- is best effort and defeats the casual path only.
+const GOAL_VERBS = /mission_spend\.py['"]?\s+goal-(?:declare|renew|spawn|grant(?!-use)|revoke)\b/i;
+
+function canonPath(p, cwd) {
+  let r = path.resolve(cwd ? String(cwd) : process.cwd(), String(p));
+  // realpath the deepest existing ancestor so a missing leaf still resolves through junctions/8.3.
+  let tail = '';
+  let probe = r;
+  for (;;) {
+    try { probe = fs.realpathSync.native(probe); break; } catch (e) {
+      const parent = path.dirname(probe);
+      if (parent === probe) break;
+      tail = path.join(path.basename(probe), tail);
+      probe = parent;
+    }
+  }
+  r = tail ? path.join(probe, tail) : probe;
+  r = r.replace(/[\\/]+$/, '');
+  return process.platform === 'win32' ? r.toLowerCase() : r;
+}
+
+function isProtected(canon) {
+  const st = canonPath(stateDir());
+  const base = path.basename(canon);
+  const dir = canon === st ? null : path.dirname(canon);
+  if (canon === path.join(st, process.platform === 'win32' ? 'goal-budget' : 'goal-budget')) return true;
+  if (canon.startsWith(path.join(st, 'goal-budget') + path.sep)) return true;
+  return dir === st && base.startsWith('session-budget-');
+}
+
+function protectedTarget(event) {
+  const ti = event.tool_input || {};
+  for (const k of ['file_path', 'path', 'notebook_path']) {
+    if (typeof ti[k] === 'string' && ti[k] && isProtected(canonPath(ti[k], event.cwd))) return ti[k];
+  }
+  return null;
+}
+
 function touchesGoalState(event) {
   const ti = event.tool_input || {};
-  return GOAL_STATE.test(String(ti.command || '') + ' ' + String(ti.file_path || '') + ' ' + String(ti.path || ''));
+  if (protectedTarget(event)) return true;
+  const cmd = typeof ti.command === 'string' ? ti.command : '';
+  if (!cmd) return false;
+  if (GOAL_VERBS.test(cmd)) return true;
+  for (const tok of cmd.split(/[\s'"`;|&<>()=,]+/)) {
+    if (!tok || !/[\\/]|^session-budget-|^goal-budget$/i.test(tok)) continue;
+    try {
+      if (isProtected(canonPath(tok, event.cwd))) return true;
+      if (isProtected(canonPath(tok, stateDir()))) return true;   // a bare relative name from the state dir
+    } catch (e) { /* an unresolvable token cannot be judged: best effort */ }
+  }
+  return false;
+}
+
+// An Owner grant admits one protected READ: goal-grant-use checks sid + canonical resource + sha256 +
+// count + expiry in the journal under its lock and records the use. Never for Edit/Write.
+function grantAdmitsRead(goal, sid, event) {
+  if (process.env.CPP_GOAL_GRANTS === '0') return false;
+  if (String(event.tool_name || '') !== 'Read') return false;
+  const target = protectedTarget(event);
+  if (!target) return false;
+  const r = callGoal(['goal-grant-use', '--goal', goal, '--session', sid, '--op', 'read',
+    '--path', String(target), '--cwd', String(event.cwd || process.cwd())]);
+  return !r.failed && r.ok === true;
 }
 
 // A cached lease is admitted only while the journal still holds it OPEN: its id appears exactly once
@@ -311,7 +378,7 @@ function decideGoal(event, sid, bind) {
   const cmd = event.tool_input && typeof event.tool_input.command === 'string' ? event.tool_input.command : '';
   if (cmd && goalExempt(cmd)) return null;
   if (!entry) return goalDeny(goal, `UNKNOWN: goal ${goal} is not declared on this host; unknown is never admitted.`);
-  if (touchesGoalState(event)) return goalDeny(goal, 'a call that touches goal-budget state is not admitted from a bound session.');
+  if (touchesGoalState(event) && !grantAdmitsRead(goal, sid, event)) return goalDeny(goal, 'a call that touches goal-budget state is not admitted from a bound session.');
   const gPath = path.join(stateDir(), `session-budget-${sid}.goal.json`);
   let gs = readJson(gPath);
   const since = entry.since ? String(entry.since) : null;

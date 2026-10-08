@@ -461,7 +461,9 @@ def g_canon():
             aliases["junction"] = (work, str(jn / "gc" / "spend.journal.jsonl"))
         bad = []
         for name, (cwd, fp) in aliases.items():
-            dec, why = run_guard(e, "cn-2", tx, cwd, tool_input={"file_path": fp})
+            # CPP_GOAL binds the session whatever its cwd: the "relative" alias runs from the state dir,
+            # which is under no goal root, so by cwd alone it would be unbound (and out of scope).
+            dec, why = run_guard(e, "cn-2", tx, cwd, tool_input={"file_path": fp}, CPP_GOAL="gc")
             if dec != "deny":
                 bad.append(name)
         check("V-GOAL-CANON-STATE-DENIED", not bad,

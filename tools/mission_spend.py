@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from pathlib import Path
 
 DEFAULT_TRIP_RATIO = 2.0
@@ -518,6 +519,92 @@ def goal_spawn(goal: str, sid: str, estimate: int | None, per_call: int, host: s
     return _goal_ledger(goal).spawn(sid, estimate, base=max(0, measured))
 
 
+def _canon(p: str, cwd: str | None = None) -> str:
+    """Same canonical form the guard uses: resolved, real path when it exists, lowercase on win32."""
+    full = os.path.abspath(os.path.join(cwd or os.getcwd(), p))
+    if os.path.exists(full):
+        full = os.path.realpath(full)
+    full = full.rstrip("\\/")
+    return full.lower() if sys.platform == "win32" else full
+
+
+def _sha256_file(p: str) -> str | None:
+    import hashlib
+    try:
+        return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def goal_grant(goal: str, sid: str, access: str, path: str, count: int = 1, ttl_min: int = 60,
+               owner: bool = False, now: float | None = None) -> dict:
+    """Owner grant: `sid` may perform `access` (read only) on one stable file `count` times until it
+    expires, while the file's sha256 is unchanged. Journal row {op:"grant", access:...}: `op` is the
+    row type, so the operation granted is named `access`. A grant on spend.journal.jsonl would void
+    itself (its sha256 changes with every row), so the journal and lock files are refused."""
+    import time
+    if not owner:
+        return {"ok": False, "goal": goal, "reason": "a grant needs the Owner's interactive confirmation (--owner)"}
+    if access != "read":
+        return {"ok": False, "goal": goal, "reason": "only a read can be granted"}
+    if int(count) < 1 or int(ttl_min) < 1:
+        return {"ok": False, "goal": goal, "reason": "count and ttl-min must be >= 1"}
+    res = _canon(path)
+    if os.path.basename(res) in ("spend.journal.jsonl", "spend.lock"):
+        return {"ok": False, "goal": goal, "reason": "the journal changes per row; grant a stable file"}
+    digest = _sha256_file(res)
+    if digest is None:
+        return {"ok": False, "goal": goal, "reason": f"cannot read {path!r}"}
+    led = _goal_ledger(goal)
+    t = time.time() if now is None else float(now)
+    import uuid
+    gid = "g-" + uuid.uuid4().hex[:12]
+    with led._lock:
+        recs = led._read()
+        led._append(recs, {"op": "grant", "id": gid, "sid": sid, "access": access, "resource": res,
+                           "sha256": digest, "count": int(count), "issued": t,
+                           "expires": t + int(ttl_min) * 60})
+    return {"ok": True, "goal": goal, "id": gid, "resource": res, "sha256": digest}
+
+
+def goal_revoke(goal: str, gid: str) -> dict:
+    led = _goal_ledger(goal)
+    with led._lock:
+        recs = led._read()
+        if not any(r.get("op") == "grant" and r.get("id") == gid for r in recs):
+            return {"ok": False, "goal": goal, "reason": f"no grant {gid!r}"}
+        led._append(recs, {"op": "revoke", "id": gid})
+    return {"ok": True, "goal": goal, "id": gid}
+
+
+def goal_grant_use(goal: str, sid: str, access: str, path: str, now: float | None = None,
+                   cwd: str | None = None) -> dict:
+    """Admit one use: an open grant for sid + access + canonical resource, sha256 unchanged, count
+    left, not expired, not revoked. Appends {op:"grant_use"} under the ledger lock."""
+    import time
+    t = time.time() if now is None else float(now)
+    res = _canon(path, cwd)
+    digest = _sha256_file(res)
+    if digest is None:
+        return {"ok": False, "goal": goal, "reason": "resource unreadable"}
+    led = _goal_ledger(goal)
+    with led._lock:
+        recs = led._read()
+        revoked = {r.get("id") for r in recs if r.get("op") == "revoke"}
+        used: dict = {}
+        for r in recs:
+            if r.get("op") == "grant_use":
+                used[r.get("id")] = used.get(r.get("id"), 0) + 1
+        for r in recs:
+            if (r.get("op") == "grant" and r.get("sid") == sid and r.get("access") == access
+                    and r.get("resource") == res and r.get("sha256") == digest
+                    and r.get("id") not in revoked and float(r.get("expires", 0)) > t
+                    and used.get(r.get("id"), 0) < int(r.get("count", 0))):
+                led._append(recs, {"op": "grant_use", "id": r["id"], "sid": sid, "access": access})
+                return {"ok": True, "goal": goal, "id": r["id"]}
+    return {"ok": False, "goal": goal, "reason": "no open grant"}
+
+
 def _main(argv: list[str]) -> int:
     import argparse
     import socket
@@ -558,6 +645,23 @@ def _main(argv: list[str]) -> int:
             g.add_argument("--estimate", type=int)
     gs = sub.add_parser("goal-status")
     gs.add_argument("--goal", required=True)
+    gg = sub.add_parser("goal-grant")
+    gg.add_argument("--goal", required=True)
+    gg.add_argument("--session", required=True)
+    gg.add_argument("--op", default="read")
+    gg.add_argument("--path", required=True)
+    gg.add_argument("--count", type=int, default=1)
+    gg.add_argument("--ttl-min", type=int, default=60)
+    gg.add_argument("--owner", action="store_true", help="asks you to type the goal id on an interactive terminal")
+    gr = sub.add_parser("goal-revoke")
+    gr.add_argument("--goal", required=True)
+    gr.add_argument("--id", required=True)
+    gu = sub.add_parser("goal-grant-use")
+    gu.add_argument("--goal", required=True)
+    gu.add_argument("--session", required=True)
+    gu.add_argument("--op", default="read")
+    gu.add_argument("--path", required=True)
+    gu.add_argument("--cwd")
     a = ap.parse_args(argv)
     if a.cmd.startswith("goal-"):
         if a.cmd == "goal-declare":
@@ -571,6 +675,19 @@ def _main(argv: list[str]) -> int:
                     return 3
                 owner = input(f"Owner change to goal {a.goal!r}: type the goal id to confirm: ").strip() == a.goal
             out = goal_declare(a.goal, a.cap, a.source, a.root, a.host, a.lease_calls, owner=owner)
+        elif a.cmd == "goal-grant":
+            owner = False
+            if a.owner:
+                if not sys.stdin.isatty():
+                    print(json.dumps({"ok": False, "goal": a.goal,
+                                      "reason": "--owner needs an interactive terminal (stdin is not a TTY)"}))
+                    return 3
+                owner = input(f"Owner grant on goal {a.goal!r}: type the goal id to confirm: ").strip() == a.goal
+            out = goal_grant(a.goal, a.session, a.op, a.path, a.count, a.ttl_min, owner=owner)
+        elif a.cmd == "goal-revoke":
+            out = goal_revoke(a.goal, a.id)
+        elif a.cmd == "goal-grant-use":
+            out = goal_grant_use(a.goal, a.session, a.op, a.path, cwd=a.cwd)
         elif a.cmd == "goal-renew":
             out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
         elif a.cmd == "goal-spawn":
