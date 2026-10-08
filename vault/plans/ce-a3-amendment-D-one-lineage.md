@@ -1,7 +1,7 @@
 ---
 id: PLAN-CE-A3-AMENDMENT-D
 covers: [chain-deadlock, atomic-arm, success-without-receipt, shared-failure-record, same-goal-extension, approval-consumer, certified-install, a3-u3-u5, a3b-r-merge]
-status: AWAITING OWNER APPROVAL (one reply)
+status: APPROVED (Owner "y" 2026-10-08 ~18:05; reconfirmed to coordinator c8 2026-10-08; applied as ce-lifecycle-v2 journal seq 26)
 source: unbound pane b42025e1, main-checkout cwd, reads by absolute path / git -C, 2026-10-08 ~18:00
 extends: ce-a3 Amendment C (4f1fe9ae); lifecycle-v2 bootstrap master plan (79350a8e, APPROVED)
 ---
