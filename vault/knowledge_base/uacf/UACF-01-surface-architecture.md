@@ -90,6 +90,41 @@ of the two and hiding the tension. That is `CONFLICT`, and it escalates to a hum
 storage is required before that owner exists, and the two boundaries land at different
 phases.
 
+## 3a. Entry-surface primitive: future-state preview (2026-10-07)
+
+**Applies when** an entry surface (sign in, sign up, onboarding) shows the product's
+own state *before* the value boundary: the party sees what their work will look like
+before they have any work. First consumer: QuickLease `/ql/sign-in` (InfinityOps
+mission 004), a device that crossfades a case page through the paid customer journey.
+
+**Obligations**, each one a way the primitive was seen to go wrong in the reference
+material before it was built:
+
+1. **Truthful source.** States come from the product's closed state vocabulary, in the
+   order a real subject moves, and the words from the same copy the product renders.
+   The preview cannot show a state the product lacks or word one differently. A
+   generated mock-up proposed in-app messages, a documents list and "real-time
+   updates" for a product with none of them.
+2. **Labelled fiction, no personal data.** The subject is fictional and says so,
+   visibly and in the accessible description.
+3. **Rest state.** Under reduced motion, without JavaScript and when the preview fails,
+   it shows one static state in the same box. Swapping between them causes zero layout
+   shift.
+4. **Pause.** Motion that lasts more than 5 s has a visible pause control outside the
+   hidden animated layer (WCAG 2.2.2).
+5. **Failure isolation.** The preview loads separately and fails on its own. The entry
+   form beside it keeps working when the preview chunk is blocked or throws.
+6. **The form stays reachable.** If the preview sits above the form on narrow screens,
+   a skip link is the first focusable element and the form's distance from the top is
+   measured, not assumed.
+
+**Status: documented, not executable.** No resolver rule or registry condition checks
+these obligations yet. The consumer proves them in its own suite
+(`tests/smoke/ql-signin.spec.ts` in InfinityOps). The vocabulary change that made the
+consumer's DESIGN.md visible to this capability at all ("sign in" was missing while
+"log in" was present) is executable and tested (V-INHERIT-DESIGN-SIGN-IN, with its
+"design in" control).
+
 ## 4. Four outcomes, and why three was wrong
 
 `RECOMMEND` 0 · `ABSTAIN` 20 · `REQUIRE_APPROVAL` 21 reuse `modules/cdicf/selector.js`

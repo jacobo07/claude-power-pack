@@ -423,6 +423,31 @@ def main() -> int:
           f"times is still not an entry surface "
           f"(state={trap.get('capability_state')})")
 
+    # Sign-in IS an entry surface (QuickLease mission 004, 2026-10-07: its
+    # DESIGN.md said "Sign-in" and the gate answered "names no entry surface").
+    # Paired with the same word-boundary trap in the new spelling: "design in"
+    # contains "sign in" as a substring and must not count.
+    front = quiet_md.split("# Internal Metrics Dashboard")[0]
+    signin_md = front + "# Customer area\n\nThe Sign-in page shows the case beside the form.\n"
+    design_in_md = front + "# Studio notes\n\nWe design in public and redesign in private.\n"
+    with tempfile.TemporaryDirectory() as tmp:
+        sp = Path(tmp) / "DESIGN.md"
+        sp.write_text(signin_md, encoding="utf-8")
+        signin = design_gate(str(sp))
+        dp = Path(tmp) / "DESIGN_IN.md"
+        dp.write_text(design_in_md, encoding="utf-8")
+        design_in = design_gate(str(dp))
+    signin_status = ((signin.get("capability_decisions") or {})
+                     .get("surface_architecture_design_md") or {}).get("status")
+    check("V-INHERIT-DESIGN-SIGN-IN",
+          signin.get("capability_state") == "inherited" and signin_status == "invoked",
+          f"a design document naming only 'Sign-in' is an entry surface "
+          f"(state={signin.get('capability_state')}, status={signin_status})")
+    check("V-INHERIT-DESIGN-SIGN-IN-SUBSTRING",
+          design_in.get("capability_state") == "not_applicable",
+          f"'design in' does not match 'sign in' "
+          f"(state={design_in.get('capability_state')})")
+
     # --- E. The axis reports; it does not score -----------------------------
     # Structurally the decisions are attached after scoring, so they CANNOT move
     # the number. That is an argument about the code. This is the measurement:

@@ -128,7 +128,7 @@ def verify_chain(family: str, root: str | None = None) -> ChainReport:
         anchor = child.get("parent_sha256")
         if not anchor:
             rep.unanchored.append(cur)
-        elif anchor != bl.generation_sha256(family, prev, root):
+        elif anchor not in bl.generation_anchors(family, prev, root):
             rep.tampered.append(cur)
         for ident, kind in diff(parent, child):
             if not _recorded(child, ident, kind):
