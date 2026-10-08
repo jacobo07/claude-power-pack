@@ -7,6 +7,10 @@ reservations, and two guard defects. Fix the unowned gaps, finish A3b C21-C25.
 
 Sealed: R0 (B0 salvaged; EMX 9/9; R0-receipt.md). R1 packet + route written and armed (see mission id in R1-receipt.md
 or `gsd_mission.py status`).
+AMENDMENT B (APPROVED 2026-10-08 ~14:30, vault/plans/ce-a3b-recovery-amendment-B-autochain.md): R1, R1b, R2 sealed.
+goal-reconcile run by the unbound coordinator: ce-a3b used 6,863,796 -> 6,829,856 (open 1,422,621 -> 0);
+ce-a3b-r used 4,314,243 -> 3,907,484 (open 1,022,380 -> 0, remaining 4,692,516). Order now R5 -> R4 -> R3, then ONE
+authority request for R6+R7. Every packet's Close arms the next unit (autochain) or writes one AUTHORITY_REQUEST line.
 Old goal ce-a3b and worktree pp-ce-a3b: forensic evidence, read-only. Never cd into either root from a pane.
 
 Decisions: units are slim-worker missions; each unit writes and arms the next packet; no coordinator pane. Order
