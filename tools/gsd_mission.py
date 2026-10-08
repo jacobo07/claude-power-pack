@@ -1641,6 +1641,24 @@ def admission_refusal(rec: dict, *, for_launch: bool = True) -> str | None:
     return None
 
 
+_RECEIPT_RE = re.compile(r"^receipt:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
+
+
+def packet_receipt_path(rec: dict) -> str | None:
+    """The packet's `receipt:` line resolved to ONE absolute path inside the packet's work tree, or None
+    (absent, absolute, or escaping the tree). The guard's closeout allowance admits exactly this file."""
+    text = _packet_text(rec)
+    m = _RECEIPT_RE.search(text) if text else None
+    if not m or Path(m.group(1)).is_absolute():
+        return None
+    tree, _ = packet_gate_dir(rec, text)
+    if not tree:
+        return None
+    root = Path(tree).resolve()
+    p = (root / m.group(1)).resolve()
+    return str(p) if root in p.parents else None
+
+
 def _declare_worker_envelope(rec: dict, sid: str | None) -> None:
     """The admitted envelope becomes the worker's SESSION envelope, enforced call by call by
     hooks/session_budget_guard.js. Recorded either way, never silent."""
@@ -1651,9 +1669,11 @@ def _declare_worker_envelope(rec: dict, sid: str | None) -> None:
     mid = rec["mission_id"]
     try:
         import mission_spend as ms
-        ms.declare(sid, int(env["target"]), int(env["warn"]), int(env["stop"]), calls_estimate=env.get("calls"))
+        receipt = packet_receipt_path(rec)
+        ms.declare(sid, int(env["target"]), int(env["warn"]), int(env["stop"]), calls_estimate=env.get("calls"),
+                   receipt_path=receipt)
         lr.ledger_append(mid, "worker_envelope_declared", mission_id=mid, worker=sid,
-                         target=env["target"], stop=env["stop"], calls=env.get("calls"))
+                         target=env["target"], stop=env["stop"], calls=env.get("calls"), receipt_path=receipt)
     except Exception as exc:  # noqa: BLE001 -- recorded, never silent
         lr.ledger_append(mid, "worker_envelope_failed", mission_id=mid, worker=sid,
                          error=f"{type(exc).__name__}: {exc}"[:300])

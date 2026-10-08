@@ -96,8 +96,9 @@ class Box:
         with open(self.tx, "a", encoding="utf-8") as fh:
             fh.write(text)
 
-    def call(self, cmd="echo hi", tx=True, **env):
-        ev = {"session_id": SID, "tool_name": "Bash", "tool_input": {"command": cmd}}
+    def call(self, cmd="echo hi", tx=True, tool="Bash", ti=None, **env):
+        ev = {"session_id": SID, "tool_name": tool, "tool_input": ti if ti is not None else {"command": cmd},
+              "cwd": str(self.root)}
         if tx:
             ev["transcript_path"] = str(self.tx)
         p = subprocess.run([NODE, "-e", RUNNER, str(GUARD)], input=json.dumps(ev), capture_output=True,
@@ -173,7 +174,8 @@ def main():
     g = kind(b.call()["out"])
     b.append(row("b", U(1), tools=[("Edit", {})]))
     d = kind(b.call()["out"])
-    check("V-SBG-DIVERGENCE", (g, d) == ("allow", "deny"), f"3 calls -> {g}, 4 calls -> {d}")
+    # 3 > estimate 2 is now the call checkpoint (advise); the deny line is unchanged at 1.5 x
+    check("V-SBG-DIVERGENCE", (g, d) == ("advise", "deny"), f"3 calls -> {g}, 4 calls -> {d}")
 
     # V-SBG-CONTEXT
     b = Box(); b.declare(target=10**9, warn=10**9, stop=10**9, context_ceiling=50000)
@@ -212,6 +214,80 @@ def main():
     kill = kind(b.call(CPP_SESSION_BUDGET="off")["out"])
     check("V-SBG-EXEMPT", (tripped, ex) == ("deny", "allow"), f"over stop -> {tripped}; rollover.py -> {ex}")
     check("V-SBG-KILL", kill == "allow", f"CPP_SESSION_BUDGET=off -> {kill}")
+
+    # V-SBG-CALL-CHECKPOINT: steer past the estimate (advised ONCE), deny stays at call_ratio x estimate
+    b = Box(); b.declare(calls_estimate=10)
+    b.append(row("a", U(1), tools=[("Edit", {})] * 9))
+    before = kind(b.call()["out"])
+    b.append(row("b", U(1), tools=[("Edit", {})] * 2))
+    past = b.call()["out"]
+    again = kind(b.call()["out"])
+    b.append(row("c", U(1), tools=[("Edit", {})] * 5))
+    dn = kind(b.call()["out"])
+    check("V-SBG-CALL-CHECKPOINT", (before, kind(past), again, dn) == ("allow", "advise", "allow", "deny")
+          and "CHECKPOINT (calls)" in past["hookSpecificOutput"]["additionalContext"],
+          f"9/10 -> {before}, 11/10 -> {kind(past)}, repeat -> {again}, 16 (> 1.5 x 10) -> {dn}")
+
+    # V-SBG-CALL-NOPROGRESS-EARLY: 75% of the estimate AND half the no-progress limit idle -> earlier steer
+    b = Box(); b.declare(calls_estimate=20, noprogress_calls=6)
+    b.append(row("a", U(1), tools=[("Edit", {})] * 8))
+    b.append(row("b", U(1), tools=[("Read", {})] * 3))
+    ctl = kind(b.call()["out"])                        # 11 calls: idle 3 but < 75% of 20
+    b2 = Box(); b2.declare(calls_estimate=20, noprogress_calls=6)
+    b2.append(row("a", U(1), tools=[("Edit", {})] * 12))
+    b2.append(row("b", U(1), tools=[("Read", {})] * 3))
+    early = b2.call()["out"]                           # 15 calls = 75%, idle 3 = ceil(6/2)
+    once = kind(b2.call()["out"])
+    check("V-SBG-CALL-NOPROGRESS-EARLY", (ctl, kind(early), once) == ("allow", "advise", "allow")
+          and "75%" in early["hookSpecificOutput"]["additionalContext"],
+          f"11/20 idle 3 -> {ctl}; 15/20 idle 3 -> {kind(early)}; repeat -> {once}")
+
+    # V-SBG-RECEIPT: after the stop, exactly the declared receipt_path is writable; other .json stays denied
+    b = Box(); rp = b.root / "vault" / "specs" / "RECEIPT-X.json"
+    b.declare(calls_estimate=2, receipt_path=str(rp))
+    b.append(row("a", U(1), tools=[("Edit", {})] * 4))
+    trip = kind(b.call()["out"])
+    other = kind(b.call(tool="Write", ti={"file_path": str(b.root / "vault" / "specs" / "OTHER.json")})["out"])
+    abs_ok = kind(b.call(tool="Write", ti={"file_path": str(rp)})["out"])
+    rel_ok = kind(b.call(tool="Write", ti={"file_path": "vault/specs/RECEIPT-X.json"})["out"])
+    bash = kind(b.call(cmd="echo x > vault/specs/RECEIPT-X.json")["out"])
+    check("V-SBG-RECEIPT", (trip, other, abs_ok, rel_ok, bash) == ("deny", "deny", "advise", "advise", "deny"),
+          f"tripped {trip}; other.json {other}; receipt abs {abs_ok}, rel {rel_ok}; Bash {bash}")
+    u = Box(); u.declare(calls_estimate=2)
+    u.append(row("a", U(1), tools=[("Edit", {})] * 4))
+    u_rp = kind(u.call(tool="Write", ti={"file_path": str(u.root / "vault" / "specs" / "RECEIPT-X.json")})["out"])
+    u_md = kind(u.call(tool="Write", ti={"file_path": str(u.root / "vault" / "plans" / "p.md")})["out"])
+    check("V-SBG-RECEIPT-UNDECLARED", (u_rp, u_md) == ("deny", "advise"),
+          f"no receipt_path: json receipt {u_rp}, vault/plans/*.md {u_md} (old regex unchanged)")
+
+    # V-SBG-RECEIPT-PACKET: the packet's `receipt:` line reaches the declared budget; escapes resolve to none
+    import gsd_mission as gm  # noqa: E402
+    t = Path(tempfile.mkdtemp(prefix="sbg_pkt_"))
+    old = os.environ.get("GSD_LONG_RUN_STATE_DIR")
+    try:
+        def pkt(line):
+            p = t / "p.md"
+            p.write_text(f"done_gate: x\nwork_tree: {t}\n{line}\n# body\n", encoding="utf-8")
+            return {"mission_id": "m-sbg", "cwd": str(t), "wu_packet": {"path": str(p)},
+                    "admission": {"verdict": "ADMISSIBLE", "envelope": {"target": 10, "warn": 20, "stop": 30, "calls": 5}}}
+        good = gm.packet_receipt_path(pkt("receipt: vault/specs/R.json"))
+        esc = gm.packet_receipt_path(pkt("receipt: ../x.json"))
+        ab = gm.packet_receipt_path(pkt(f"receipt: {t / 'a.json'}"))
+        none = gm.packet_receipt_path(pkt("no receipt here"))
+        bx = Box()
+        os.environ["GSD_LONG_RUN_STATE_DIR"] = str(bx.state)
+        gm._declare_worker_envelope(pkt("receipt: vault/specs/R.json"), SID)
+        declared = json.loads((bx.state / f"session-budget-{SID}.json").read_text(encoding="utf-8")).get("receipt_path")
+        gm._declare_worker_envelope(pkt("no receipt here"), SID)
+        absent = json.loads((bx.state / f"session-budget-{SID}.json").read_text(encoding="utf-8")).get("receipt_path")
+    finally:
+        if old is None:
+            os.environ.pop("GSD_LONG_RUN_STATE_DIR", None)
+        else:
+            os.environ["GSD_LONG_RUN_STATE_DIR"] = old
+    want = str((t / "vault" / "specs" / "R.json").resolve())
+    check("V-SBG-RECEIPT-PACKET", good == want and declared == want and esc is None and ab is None and none is None and absent is None,
+          f"resolved {good == want}; declared in budget {declared == want}; ../ escape {esc}; absolute {ab}; absent {none}/{absent}")
 
     # V-SBG-REAL-PARITY (positive control): the largest real transcript on this host
     proj = ms.projects_root()

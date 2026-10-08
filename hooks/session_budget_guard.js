@@ -51,7 +51,7 @@ function readJson(p) {
 }
 
 function fresh(since) {
-  return { since: since || null, offset: 0, tokens: 0, calls: 0, context: 0, progress_at: 0, ids: [], grace: false };
+  return { since: since || null, offset: 0, tokens: 0, calls: 0, context: 0, progress_at: 0, call_adv: 0, ids: [], grace: false };
 }
 
 // Fold the complete lines appended since st.offset into st. Mirrors mission_spend.session_tokens.
@@ -127,6 +127,20 @@ function judge(budget, st) {
   if (st.calls - st.progress_at > k) {
     return deny(`${st.calls - st.progress_at} calls since the last edit or commit (limit ${k}): spend without progress.`);
   }
+  // Call-trajectory checkpoint (E3 incident: 52 calls vs estimate 34 hit the airbag with no earlier
+  // steer; tokens had one at warn). Tier 2 = past the estimate; tier 1 = three quarters of it with half
+  // the no-progress limit already spent since the last edit or commit. Each tier is advised ONCE.
+  if (est > 0) {
+    const idle = st.calls - st.progress_at;
+    const tier = st.calls > est ? 2 : (st.calls >= 0.75 * est && idle >= Math.ceil(k / 2)) ? 1 : 0;
+    if (tier > (Number(st.call_adv) || 0)) {
+      st.call_adv = tier;
+      return advise(`SESSION BUDGET CHECKPOINT (calls): ${st.calls} tool calls ` +
+        (tier === 2 ? `are past the estimate ${est}` : `are at 75% of the estimate ${est} with ${idle} since the last edit or commit`) +
+        ` (deny at ${ratio} x = ${Math.floor(ratio * est)}). Write a progress receipt now (what is sealed, what remains, ` +
+        'calls used), reforecast the remaining work, and stop the current section.');
+    }
+  }
   if (st.tokens > budget.warn) {
     return advise(`SESSION BUDGET CHECKPOINT: processed ${fmt(st.tokens)} is past warn ${fmt(budget.warn)} ` +
       `(stop ${fmt(budget.stop)}). Write a progress receipt now (what is sealed, what remains, calls used) ` +
@@ -143,6 +157,15 @@ const READ_ONLY = new Set(['Read', 'Grep', 'Glob']);
 const CLOSEOUT_PATH = /(^|[\\/])(vault[\\/]plans[\\/][^\\/]+\.md|memory[\\/]handoffs[\\/][^\\/]+\.md|RESUMPTION_FILE\.md)$/;
 const DEFAULT_CLOSEOUT = 4;
 
+// A packet may declare `receipt: <path>`; the declaration carries the resolved absolute path as
+// budget.receipt_path and exactly that one file joins the allowance (E3: the packet's vault/specs/*.json
+// receipt was unwritable once tripped). Absent receipt_path = the three patterns above, unchanged.
+function isReceiptPath(budget, event, fp) {
+  const rp = budget && typeof budget.receipt_path === 'string' ? budget.receipt_path : '';
+  if (!rp || !fp) return false;
+  return normPath(path.resolve(String(event.cwd || ''), fp)) === normPath(rp);
+}
+
 function closeout(budget, st, event, verdict) {
   const d = verdict && verdict.hookSpecificOutput;
   if (!d || d.permissionDecision !== 'deny') return verdict;
@@ -150,7 +173,7 @@ function closeout(budget, st, event, verdict) {
   const limit = Number.isFinite(declared) && declared >= 0 ? declared : DEFAULT_CLOSEOUT;
   const tool = String(event.tool_name || '');
   const fp = event.tool_input && typeof event.tool_input.file_path === 'string' ? event.tool_input.file_path : '';
-  const eligible = READ_ONLY.has(tool) || (PROGRESS_TOOLS.has(tool) && CLOSEOUT_PATH.test(fp));
+  const eligible = READ_ONLY.has(tool) || (PROGRESS_TOOLS.has(tool) && (CLOSEOUT_PATH.test(fp) || isReceiptPath(budget, event, fp)));
   const used = Number(st.closeout) || 0;
   if (!eligible || used >= limit) {
     d.permissionDecisionReason += ` Closeout allowance ${used}/${limit} used; only Read/Grep/Glob and ` +

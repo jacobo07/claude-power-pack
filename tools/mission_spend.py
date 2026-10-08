@@ -287,7 +287,7 @@ def session_tokens(transcript: Path, since_iso: str | None = None) -> dict:
 def declare(sid: str, target: int, warn: int, stop: int, calls_estimate: int | None = None,
             context_ceiling: int | None = None, noprogress_calls: int = DEFAULT_NOPROGRESS_CALLS,
             call_ratio: float = DEFAULT_CALL_RATIO, since_iso: str | None = None,
-            extra: dict | None = None) -> Path:
+            extra: dict | None = None, receipt_path: str | None = None) -> Path:
     if not (0 < target <= warn <= stop):
         raise ValueError("need 0 < target <= warn <= stop")
     import datetime as dt
@@ -296,6 +296,8 @@ def declare(sid: str, target: int, warn: int, stop: int, calls_estimate: int | N
            "context_ceiling": context_ceiling, "noprogress_calls": noprogress_calls,
            "since": since_iso,
            "declared_at": dt.datetime.now(dt.timezone.utc).isoformat()[:19]}
+    if receipt_path:
+        rec["receipt_path"] = str(receipt_path)
     if extra:
         rec.update(extra)
     p = budget_path(sid)

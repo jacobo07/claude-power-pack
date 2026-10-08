@@ -1,0 +1,34 @@
+{
+  "unit": "WU-E3G",
+  "status": "PARTIAL: sections 1-2 and their gates landed and green; done_gate NOT exit 0 (V-SBG-LATENCY red, pre-existing on this host); 1 of 5 mutation drills KILLED, 4 CONTROL_INVALID",
+  "commits": ["see git log: 'guard(E3G): call-trajectory checkpoint + packet-declared receipt survives the stop'"],
+  "gates": {
+    "test_session_budget_guard": "SBG_PASS=20/21 -- only V-SBG-LATENCY red (incremental call 110-413 ms vs < 50)",
+    "new_gates_green": ["V-SBG-CALL-CHECKPOINT", "V-SBG-CALL-NOPROGRESS-EARLY", "V-SBG-RECEIPT", "V-SBG-RECEIPT-UNDECLARED", "V-SBG-RECEIPT-PACKET"],
+    "changed_gate": "V-SBG-DIVERGENCE now expects advise at 3 calls vs estimate 2 (the new checkpoint); deny at 4 is unchanged",
+    "not_run": ["test_session_budget_admission", "test_gsd_mission_admission", "test_running_control", "test_route_admission"]
+  },
+  "mutation_drills": {
+    "d1 checkpoint tier 2 disabled": "KILLED by V-SBG-CALL-CHECKPOINT",
+    "d2 early tier disabled": "CONTROL_INVALID (control exits 1 on V-SBG-LATENCY), not proven",
+    "d3 receipt allowance disabled": "CONTROL_INVALID (same cause), not proven",
+    "d4 gsd_mission drops receipt_path": "CONTROL_INVALID (control crashed: FileNotFoundError on session-budget state.json inside the copied layout, cause not diagnosed)",
+    "d5 CLOSEOUT_PATH widened to .json": "CONTROL_INVALID (same latency cause), not proven",
+    "specs": "$CLAUDE_JOB_DIR/tmp/d1..d5.json (anchors in the receipt notes below)"
+  },
+  "decisions": [
+    "Checkpoint tiers: tier 2 = calls > calls_estimate; tier 1 = calls >= 0.75 x estimate AND calls - progress_at >= ceil(noprogress_calls / 2). Each tier advised once (state.call_adv). Deny stays at call_ratio x estimate.",
+    "Receipt: packet header `receipt: <repo-relative path>` -> gsd_mission.packet_receipt_path (resolved inside the packet work_tree; absolute or ../ escape -> None) -> mission_spend.declare(receipt_path=) -> guard closeout admits Write/Edit to exactly that resolved path. Absent -> old three patterns.",
+    "closeout_calls default stays 4: a receipt write consumes one of the 4 and the section-1 checkpoint now fires before the deny, so receipt + handoff fit; no measurement here argues for more."
+  ],
+  "economics": {
+    "model_calls": "about 29 against a cap of 26 (route-E3G.json); tokens not metered by this worker",
+    "note": "overran the call cap diagnosing drill controls"
+  },
+  "open_points": [
+    "V-SBG-LATENCY is red on this host at HEAD too (HEAD guard 388-575 ms measured on the same transcript): per-call cost is dominated by the state file's id list (up to 20000 ids read and rewritten each call). Owner of the fix: E3C or a latency unit; it also blocks every mutation drill that requires an exit-0 control on this suite.",
+    "Re-run drills d2-d5 once the control is green, or run them against a copy with the latency gate excluded; d4 control crash needs a diagnosis.",
+    "The four suites named in packet section 3 were not re-run."
+  ],
+  "chain": "WU-E3C armed after this commit (see HANDOFF NOTE)"
+}
