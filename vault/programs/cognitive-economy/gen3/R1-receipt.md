@@ -1,5 +1,6 @@
 # R1 receipt - recon-factory reforecast (analysis only)
-Mission: UNKNOWN (no m-<12hex> id found in route-R1.json or env)
+Mission: m-f504f9101de0 (filled in by the main pane: the packet never passed the id to the worker; worker wrote UNKNOWN)
+Spend (control plane, worker session f3cd8c81, message-id dedup): 4 calls, 553,590 processed (12,237 out). Target 740k, stop 1.0M.
 Authority: Owner "y" 2026-10-08. Funds nothing; no mission armed, no phase run, recon work tree untouched.
 Calls: 3 (2 Read: R1.md, DOSSIER.md; 1 write + commit). Subagents: 0. Hard limit 5.
 Spend: measured afterwards by the control plane, not claimed here.
