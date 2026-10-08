@@ -1053,3 +1053,5 @@ ce-a3b-r has 451,397 left (1,234,380 more is held by two stray launches and free
 - Option 2 (finish A3): up to 9.1M = option 1 + R6 1.8M + R7 2.0M (absorbs ce-a3 U5) + ce-a3 U3 2.0M. Excludes ce-a3 U4 (GEX44), unsized until R7's Reality Delta.
 - NO: R4-R7 and U3-U5 become DEFERRED; nothing runs.
 Same goal, no new id. Consumer: lifecycle-v2 WU-ADV (sweep advance stage) arms the next unit once it lands; extending a goal's authority on YES has no owner yet and is filed against lifecycle WU-4.
+
+**SUPERSEDED 2026-10-08 ~18:10** -- the AUTHORITY_REQUEST ce-a3b-r above is answered by ce-a3 Amendment D (pp-ce-a3 3aa002af, Owner "y"): R3/R4/R6/R7 merge into ce-lifecycle-v2, which received +5,600,000 on the same goal (declare_cap, cap 3,247,012 -> 8,847,012). Do not answer the options above. ce-a3b-r takes no new units.
