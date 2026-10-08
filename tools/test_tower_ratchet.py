@@ -211,6 +211,36 @@ def main() -> int:
         _check("V-TRAT-TAMPERED", not rep.ok and rep.tampered == [1],
                "B0 edited after B1 anchored it -> B1 reports TAMPERED", rep.as_dict())
 
+        # --- line endings are the checkout's, not an edit -------------------
+        # A Windows checkout (core.autocrlf=true) hands the same record over as
+        # CRLF; web_surface B2 had anchored B1's CRLF bytes (2026-10-08). The
+        # verdict must not depend on how the reader checked the repo out, and a
+        # real edit must still be caught in either rendering.
+        root = fresh("eol")
+        rt.promote(fam, [_e("e")], reason="new", authority="Owner", root=root)
+        p0 = os.path.join(root, fam, "B0.json")
+        with open(p0, "rb") as fh:
+            lf = fh.read().replace(b"\r\n", b"\n")
+        with open(p0, "wb") as fh:
+            fh.write(lf.replace(b"\n", b"\r\n"))
+        crlf_ok = rt.verify_chain(fam, root=root).ok
+        # A child written FROM the CRLF checkout anchors the CRLF bytes...
+        rt.promote(fam, [_e("f")], reason="from crlf", authority="Owner", root=root)
+        with open(os.path.join(root, fam, "B1.json"), "rb") as fh:
+            b1 = fh.read()
+        with open(os.path.join(root, fam, "B1.json"), "wb") as fh:
+            fh.write(b1.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
+        both_ok = rt.verify_chain(fam, root=root).ok
+        # ...and an edit in CRLF form is still an edit.
+        edited = json.loads(lf.decode("utf-8"))
+        edited["reason"] = str(edited.get("reason", "")) + " (edited)"
+        with open(p0, "wb") as fh:
+            fh.write(json.dumps(edited, indent=1).encode("utf-8").replace(b"\n", b"\r\n"))
+        rep = rt.verify_chain(fam, root=root)
+        _check("V-TRAT-LINE-ENDINGS", crlf_ok and both_ok and rep.tampered == [1],
+               "CRLF checkout of an untouched chain verifies; an edited CRLF parent is TAMPERED",
+               "crlf_ok=%s both_ok=%s %s" % (crlf_ok, both_ok, rep.as_dict()))
+
         # --- the CLI, through its real entry point -------------------------
         import family_baseline as fb
         saved = bl.BASELINES_DIR
