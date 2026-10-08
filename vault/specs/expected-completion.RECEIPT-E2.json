@@ -1,0 +1,32 @@
+{
+  "unit": "WU-E2",
+  "status": "GREEN: sections 1-4 sealed; chain run (E3 armed, not launched)",
+  "commits": ["09a2aae1 running-control: EAC reforecast, CONTINUE/CHECKPOINT, warn-as-checkpoint, V-RUNCTL 17/17", "5d0c1673 WU-E3 packet + route-E3"],
+  "gates": {
+    "test_running_control": "RUNCTL_PASS=17/17",
+    "test_route_admission_expected": "ADMIT_EXPECTED_PASS=23/23",
+    "test_route_admission": "RADM_PASS=21/21",
+    "test_gsd_mission_admission": "ADM_PASS=43/43",
+    "test_gsd_mission_envelope": "ENVELOPE_PASS=55/55",
+    "test_grammar_default": "GRAMMAR_PASS=56/56",
+    "test_autopsy": "AUTOPSY_PASS=42/42"
+  },
+  "decisions": [
+    "DEFAULT_EAC_TOLERANCE 0.25 (chosen, documented in mission_spend.py); REHYDRATION_FLOORS 1.0 x profile floor (chosen)",
+    "judge gained optional ctx_now/calls_done/profile; without them the legacy shape holds (forecast None, decision None)",
+    "gsd_mission._cost_breaker takes a usage callable -> (ctx_now, calls_done); NO production caller supplies it yet, so the forecast is inert in the live sweep until E3 wires the worker usage reader",
+    "mission record needs planned_calls + route_profile for the forecast to run"
+  ],
+  "chain": {
+    "mission": "m-4cdcf9c003d9",
+    "next_mission": "m-7310776922c0",
+    "arm": "supersedes m-4cdcf9c003d9, --no-launch",
+    "envelope": "token_estimate 6000000, sonnet, autocompact 250k, wu_packet WU-E3.md",
+    "admit_verdict": "ROUTE ADMISSIBLE need=4332864 target=6000000 (champion; expected/safety not shown by the mission admit line)",
+    "estimator_forecast_route_E3": "lower 3,610,720 / expected 4,756,480 / safety 7,150,000 / hard 12,000,000, confidence LOW"
+  },
+  "open_points": [
+    "Live wiring of usage -> (ctx_now, calls_done) into the sweep's _cost_breaker call is E3-adjacent: add to WU-E3 scope if wanted (not in its packet).",
+    "Mutation drills cover 4 hunks in mission_spend; the gsd_mission hold path is covered by a hermetic stub test, not a mutant."
+  ]
+}
