@@ -585,8 +585,57 @@ def g_dispatch_wiring():
           "dispatcher carries the Agent lane and its no-event route")
 
 
+def _reconcile(*a, **k):
+    try:
+        return ms.goal_reconcile(*a, **k)
+    except AttributeError:
+        return {"ok": False, "reason": "goal_reconcile is not implemented"}
+
+
+def g_reconcile():
+    import time
+    e = Env()
+    try:
+        proj, beac = e.root / "projects" / "p", e.root / "beacons"
+        proj.mkdir(parents=True)
+        beac.mkdir()
+        declare("rc", 10_000_000, lease_calls=1)
+        old = time.time() - 7200
+        for sid, n in (("dead1", 500), ("live1", 700), ("live2", 900), ("unk1", 300)):
+            ms.goal_renew("rc", sid, 0, 1000, HOST)
+            if sid != "unk1":
+                tx = proj / f"{sid}.jsonl"
+                tx.write_text(row("m-" + sid, n), encoding="utf-8")
+                if sid != "live2":
+                    os.utime(tx, (old, old))
+        (proj / "unk1.jsonl").mkdir()                       # present but unreadable as a file
+        (beac / "kclaude-pane-1.sid").write_text(json.dumps({"sid": "live1"}), encoding="utf-8")
+        kw = dict(beacon_dir=beac, projects=e.root / "projects", idle_s=1800)
+        before = ms._goal_ledger("rc").status()
+        r = _reconcile("rc", **kw)
+        g = ms._goal_ledger("rc")
+        fold = g._gfold(g._read())
+        st = {s: v for s, v in (r.get("sessions") or {}).items()}
+        open_of = lambda s: [k for k, v in fold["res"].items() if v["sid"] == s and v["state"] in ("RESERVED", "LEAKED")]
+        check("V-GOAL-RECONCILE-DEAD", st.get("dead1") == "SPENT+RELEASED" and fold["marks"].get("dead1") == 500
+              and not open_of("dead1"), f"dead: {st.get('dead1')} mark {fold['marks'].get('dead1')} open {open_of('dead1')}")
+        check("V-GOAL-RECONCILE-LIVE", st.get("live1") == "LIVE" and st.get("live2") == "LIVE"
+              and "live1" not in fold["marks"] and len(open_of("live1")) == 1 and len(open_of("live2")) == 1,
+              f"beacon-live {st.get('live1')}, fresh-transcript-live {st.get('live2')}, left untouched")
+        check("V-GOAL-RECONCILE-UNKNOWN", st.get("unk1") == "UNKNOWN" and len(open_of("unk1")) == 1
+              and "unk1" not in fold["marks"], f"unreadable transcript: {st.get('unk1')}, still counted")
+        n = len(g._read())
+        r2 = _reconcile("rc", **kw)
+        check("V-GOAL-RECONCILE-IDEMPOTENT", len(ms._goal_ledger("rc")._read()) == n and r2.get("ok", False),
+              f"second run adds no rows ({n} -> {len(ms._goal_ledger('rc')._read())})")
+        check("V-GOAL-RECONCILE-USED", ms._goal_ledger("rc").status()["used"] == before["used"] - 1000 + 500,
+              f"used {before['used']} -> {ms._goal_ledger('rc').status()['used']}")
+    finally:
+        e.close()
+
+
 def main():
-    for g in (g_cap_journal, g_race, g_settle_and_resume, g_cross_account, g_crash_and_leak, g_spawn,
+    for g in (g_reconcile,g_cap_journal, g_race, g_settle_and_resume, g_cross_account, g_crash_and_leak, g_spawn,
               g_raise, g_host_and_roots, g_review_fixes, g_guard, g_canon, g_grant,
               g_refusal_no_closeout_read, g_dispatch_wiring):
         try:
