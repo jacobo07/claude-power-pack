@@ -115,3 +115,11 @@ receipt exist; reachability exit 0 for new tools.
     **P2-A-AUDIT2 m-79f84cdd34dc**: sonnet, estimate 420,000 x 1.25, lease = stall 525,000, capsule-v2, no
     autocompact, max-cycles 2, unit p2a-audit2, released for the sweep. Receipt 31102277.
   - Next: after AUDIT2 exits, run `edd_p2_admit.py judge`. P2-B stays unarmed (Owner authorised P2-A only).
+- P2-A-AUDIT2 RESULT (MEASURED, post-exit judge, GEX44 270bf3c3): **FREEZE**, factor 1.659.
+  - Audit: E01 correct; E05 and E06 minor, because both entries call themselves LATENT, so "escape" is the wrong
+    framing.
+  - Cost: AUDIT2 took 7 calls and 696,658 tokens vs a 420k forecast (+66%). It ran the judge itself while still
+    alive (dd030e9a) and saw 4 calls, 386,580 (-8%). The tail was 3 calls and ~0.31M. This repeats the 2e3c837d
+    defect at the unit level.
+  - Phase 2 spend: ~3.80M of the 14M ceiling.
+  - The record still reads RUNNING under a breaker hold with its pid gone, so it lingers like m-4bb8952b2903.
