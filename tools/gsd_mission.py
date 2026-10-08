@@ -2641,6 +2641,22 @@ def _capsule_arm(rec: dict, row: dict) -> bool:
         return False
 
 
+def _unit_done(rec: dict) -> dict:
+    """Run the unit's own done-check: an argv list the arming tool stored on the record (never a shell string).
+    rc 0 = DONE, rc 1 = NOT_DONE, anything else (or no answer within 60 s) = UNANSWERED."""
+    import subprocess
+    argv = rec.get("done_check")
+    if not isinstance(argv, list) or not argv or not all(isinstance(a, str) for a in argv):
+        return {"outcome": "UNANSWERED", "detail": f"done_check is not an argv list: {argv!r}"[:200]}
+    try:
+        r = subprocess.run(argv, cwd=rec.get("cwd") or None, capture_output=True, text=True, timeout=60,
+                           stdin=subprocess.DEVNULL)
+    except Exception as exc:  # noqa: BLE001 -- unanswered, never "done"
+        return {"outcome": "UNANSWERED", "detail": f"{type(exc).__name__}: {exc}"[:200]}
+    detail = ((r.stdout or "") + (r.stderr or "")).strip()[-200:]
+    return {"outcome": {0: "DONE", 1: "NOT_DONE"}.get(r.returncode, "UNANSWERED"), "detail": detail or f"rc {r.returncode}"}
+
+
 def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
               gsd_status=None, runner=None, stop_runner=None, pid_alive=lr._pid_alive,
               fingerprint=None, capsule_io: dict | None = None) -> list[dict]:
@@ -2920,6 +2936,21 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         proven_ws = rec.get("workstream")
                     if work_dir:
                         row["work_dir"] = work_dir
+                if act in ("relay", "replace") and rec.get("done_check"):
+                    # A packet unit is done when ITS packet says so, asked before GSD and before any continuation,
+                    # capsule ritual or successor. GSD answers for the whole workstream: EDD P2-B finished in 8 calls,
+                    # GSD said "work remains" (phases 2-7), and the successor spent 20 calls / 2,130,930 re-certifying
+                    # a finished unit (2026-10-08; REFORECAST UC-19 measured the same tax at 21.5%). Only DONE acts:
+                    # NOT_DONE and UNANSWERED keep the existing path, so a broken check can never complete a unit.
+                    done = _unit_done(rec)
+                    row["unit_done"] = done["outcome"]
+                    if done["outcome"] == "DONE":
+                        completed = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                               event="unit_completed", now=now, state=COMPLETED, pending=None,
+                                               reason=f"unit done-check passed: {done['detail']}")
+                        reap(completed, row)
+                        row["action"] = "completed"
+                        continue
                 if act in ("relay", "replace") and rec["resume_command"].startswith("/gsd-autonomous"):
                     st = (gsd_status or _supervise_gsd_status)(work_dir or rec.get("work_dir") or rec["cwd"],
                                                        workstream=rec.get("workstream"))

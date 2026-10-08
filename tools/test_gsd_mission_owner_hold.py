@@ -228,6 +228,30 @@ def main() -> int:
         else:
             check("V-OH-CONTROL-SWEEP-CLI-CLEAN-RC0", rc == 0 and shown == [], f"rc={rc} shown={shown}")
 
+    # 9. a packet unit is done when ITS done-check says so, not when GSD's whole workstream is (EDD P2-B m-0729ac737bec,
+    # 2026-10-08: the unit finished in 8 calls; GSD answered "work remains" for phases 2-7, so the sweep launched a
+    # successor that spent 20 calls / 2,130,930 re-certifying a finished unit). Control: a check that says "not done"
+    # leaves the old path alone, and a check that cannot answer never completes anything.
+    import sys as _sys
+    for mid, code in (("m-unit-done", 0), ("m-unit-notdone", 1), ("m-unit-broken", 7)):
+        r = _mission(mid, gm.RUNNING)
+        gm.transition(mid, expect_epoch=r["epoch"], expect_state=r["state"], event="t_unit", now=NOW,
+                      done_check=[_sys.executable, "-c", f"raise SystemExit({code})"], max_hours=100.0)
+    launched = []
+    rows = gm.supervise(now=NOW + 60, sessions=[{"sessionId": f"{m}-w", "id": f"{m}-w"[:8], "kind": "background",
+                                                 "state": "done"} for m in ("m-unit-done", "m-unit-notdone",
+                                                                            "m-unit-broken")],
+                        runner=lambda *a, **k: launched.append(a) or "", stop_runner=lambda *a, **k: None,
+                        pid_alive=gone, gsd_status=lambda cwd, workstream=None: {"outcome": "OK"},
+                        fingerprint=lambda wd: None)
+    by = {r["mission_id"]: r for r in rows}
+    d = gm.load("m-unit-done")
+    check("V-OH-UNIT-DONECHECK-COMPLETES", d["state"] == gm.COMPLETED and by["m-unit-done"].get("unit_done") == "DONE"
+          and not any("m-unit-done" in str(a) for a in launched), f"{d['state']} row={by.get('m-unit-done')}")
+    for mid, want in (("m-unit-notdone", "NOT_DONE"), ("m-unit-broken", "UNANSWERED")):
+        check(f"V-OH-CONTROL-UNIT-{want}-NOT-COMPLETED", gm.load(mid)["state"] != gm.COMPLETED
+              and by[mid].get("unit_done") == want, f"{gm.load(mid)['state']} row={by.get(mid)}")
+
     print(f"OWNER_HOLD_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
