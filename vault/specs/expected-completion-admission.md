@@ -1,5 +1,5 @@
 ---
-status: PROPOSED (pane 5d6a315c, 2026-10-08) -- awaiting Owner approval in chat; this file backs the plan, it is not the approval surface
+status: APPROVED (Owner "y", 2026-10-08, pane 5d6a315c) -- D1 program cap 85M, D2 land live at E4, D3 growth term authoritative after canaries 1-4 / calls band advisory until n>=5
 covers: [expected-completion-admission, route-admission, forecast-classes, warn-control-point, progress-spend, dependent-admission, packet-chain-completion, context-rent-trigger, cost-collapse-T3-plus]
 extends: tools/route_admission.py (owner: admission verdict), tools/mission_spend.py (owner: meter, judge, forecast, autopsy), tools/gsd_mission.py (owner: sweep, envelope, arm), vault/specs/goal-budget-admission.md (owner: goal ledger, leases, pre-call reservation), vault/specs/cost-collapse.md (parent program)
 novelty: EXTEND_EXISTING_OWNER (HR-NOVELTY-001) -- no new module
