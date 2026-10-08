@@ -161,6 +161,26 @@ def main() -> int:
             gm._auto_budget({**gm.load(mid), "token_estimate": None}, NOW + 60, measure=lambda rr: 1)
             check("V-OH-AUTOBUDGET-SKIPS-TERMINAL", gm.load(mid)["seq"] == seq, f"seq {seq} -> {gm.load(mid)['seq']}")
 
+    # 7. a launch parked BEFORE adoption (EDD m-c597a68e7077): held LAUNCHING, host lists THIS launch's worker
+    # done -> settle, recording who ran. Controls: the worker still running, and no host row for the launch id.
+    r = _mission("m-lch", gm.LAUNCHING)
+    r = gm.transition("m-lch", expect_epoch=r["epoch"], expect_state=gm.LAUNCHING, event="t_bg", now=NOW,
+                      pending={**r["pending"], "bg_id": "f92cdad1"})
+    h = gm.set_owner_hold("m-lch", "cost breaker: processed 692,049 > 1.25 x estimate 500,000", now=NOW)
+    lrow = lambda st: [{"id": "f92cdad1", "sessionId": "f92cdad1-7481", "pid": 301196,  # noqa: E731
+                        "kind": "background", "state": st}]
+    p = gm.plan_next(h, NOW + 60, lrow("done"), pid_alive=gone)
+    check("V-OH-HELD-LAUNCH-DONE-SETTLES", p["action"] == "settle" and p.get("launched"), str(p.get("reason")))
+    check("V-OH-HELD-LAUNCH-RUNNING-PARKED", gm.plan_next(h, NOW + 60, lrow("running"), pid_alive=gone)["action"]
+          == "none")
+    check("V-OH-HELD-LAUNCH-UNLISTED-PARKED", gm.plan_next(h, NOW + 60, [], pid_alive=gone)["action"] == "none")
+    gm.supervise(now=NOW + 60, sessions=lrow("done"), runner=lambda a: "", stop_runner=lambda a: None,
+                 pid_alive=gone, gsd_status=lambda cwd, workstream=None: {"outcome": "OK"}, fingerprint=lambda wd: None)
+    s = gm.load("m-lch")
+    check("V-OH-LAUNCH-SETTLE-RECORDS-WORKER", s["state"] == gm.HALTED and bool(s.get("owner_hold"))
+          and (s.get("owner") or {}).get("session_id") == "f92cdad1-7481" and (s.get("owner") or {}).get("pid") == 301196,
+          f"{s['state']} owner={s.get('owner')}")
+
     print(f"OWNER_HOLD_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

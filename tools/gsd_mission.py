@@ -531,6 +531,15 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
                 return {"action": "settle",
                         "reason": f"owner hold, owner DEAD ({evidence}): settled terminal, hold kept "
                                   f"(hold: {str(hold.get('reason'))[:200]})"}
+        if state == LAUNCHING:
+            # The breaker can park a launch in the pass BEFORE adoption (EDD m-c597a68e7077, 2026-10-08: the
+            # worker ran 7 calls and finished; the hold froze the record at LAUNCHING with no owner). The host
+            # row for THIS launch's id, listed finished, is the same positive evidence liveness() accepts.
+            lrow = launched_row(rec.get("pending"), sessions)
+            if lrow is not None and lrow.get("state") in ("stopped", "done", "exited", "failed"):
+                return {"action": "settle", "launched": lrow,
+                        "reason": f"owner hold, launched worker {lrow.get('id')} host lists {lrow.get('state')}: "
+                                  f"settled terminal, hold kept (hold: {str(hold.get('reason'))[:200]})"}
         return {"action": "none", "reason": f"owner hold: {hold.get('reason')}"}
     spent = budget_exhausted(rec, now)
     if spent and state in (PREPARED, LAUNCHING, HANDOFF):
@@ -2814,9 +2823,15 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             elif act == "settle":
                 # Terminal, never relaunched: HALTED keeps owner_hold, so renewal_refusal still refuses it,
                 # and leaves goal_conflicts because the state is terminal.
+                lrow = plan.get("launched")
+                # A never-adopted launch records who ran (spend attribution reads owner.session_id), without
+                # adopt_launched's envelope/marker/capsule arming, which only a live worker needs.
+                who = {"worker": lrow.get("sessionId"),
+                       "owner": {"session_id": lrow.get("sessionId"), "pid": lrow.get("pid"), "proc_start": None,
+                                 "heartbeat_at": now, "epoch": rec["epoch"], "kind": "background"}} if lrow else {}
                 settled = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                      event="hold_settled", now=now, state=HALTED, pending=None,
-                                     reason=plan["reason"])
+                                     reason=plan["reason"], **who)
                 reap(settled, row)
             elif act == "surface_blocked":
                 if rec["state"] != BLOCKED:
