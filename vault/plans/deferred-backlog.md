@@ -287,5 +287,13 @@ motion handling can be improved with Wii Motion OS integrated at source level.
 the gen3 session. Step 0 is zero-model: extract the disc, locate Tennis, count its functions, measure shape overlap
 with the Resort census.
 
+**Step 0 DONE 2026-10-08** (zero-model, `vault/plans/d11-tennis-step0.md`):
+- Tennis is inside `files/EU/sys/sports/SportsPackEP.dol` (no RELs). DTK finds 14,885 functions.
+- 63% of the DOL's functions have an exact shape match in the Resort factory split; only 23% of the Tennis candidate
+  does (1,797 functions, an upper bound).
+- The disc's Resort DOL is not the factory's binary.
+
+Next zero-model probe: call-graph walk from the Tennis scene and the Wiimote read path, to size the motion closure.
+
 **Activation criterion:** recon-factory CP50 has reported its cost per function and the learning-curve result (the
 per-game cost model needs both). Step 0 may run earlier, because it is zero-model.
