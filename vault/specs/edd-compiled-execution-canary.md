@@ -123,3 +123,19 @@ receipt exist; reachability exit 0 for new tools.
     defect at the unit level.
   - Phase 2 spend: ~3.80M of the 14M ceiling.
   - The record still reads RUNNING under a breaker hold with its pid gone, so it lingers like m-4bb8952b2903.
+- P2-A-R2 (Owner 2026-10-08: "sí, cerrar el record", P2-B stays FROZEN; pane 24ca0218; deterministic, no model):
+  - Zombie m-79f84cdd34dc moved RUNNING -> COMPLETED after an assert that its pid was gone. The goal is free.
+    Recorded as debt: automatic terminal settlement.
+  - 7046dd61 adds a `latent` class. E05 and E06 left the replay set; the replayable set is E01-E04 and the
+    sample is E01 E02 E04. An escape whose own text says LATENT is now refused.
+  - The same commit changes the judge. It returns INCONCLUSIVE (exit 3, writes nothing) while any unit's process
+    lives, and refuses an audit packet that tells its worker to run the judge. The packet no longer does.
+  - EDDP2 25/25, and the new gates are red on the old judge.
+  - 6c187881 COSTMODEL: the evidence unit is P2-A-AUDIT3. Its forecast is 500,000 = AUDIT2's audit-only first 5
+    calls (488,773). 1.659 stays as the observed factor of a defective unit, not a multiplier.
+  - 95bc9460 gold re-frozen at sha256 8c86b86d13d7. The deterministic pre-audit PASSED before arming.
+  - **P2-A-AUDIT3 m-c597a68e7077** armed: sonnet, 500,000 x 1.25, lease = stall 625,000, capsule-v2, no
+    autocompact. Receipt 57bcf46c.
+  - Lifecycle root cause: `tools/gsd_mission.py:520-524` (`plan_next`). Any owner_hold returns `none` before
+    liveness is asked, so a DEAD owner under a hold can never reach a terminal state. `goal_conflicts` counts every
+    non-terminal record, so the goal stays blocked.
