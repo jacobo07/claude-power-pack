@@ -78,3 +78,16 @@ receipt exist; reachability exit 0 for new tools.
   gone (UC-14): stale, held, never relaunched.
 - Next = Phase 2 (gold sets + benchmark before operators), UNFUNDED. Reforecast for Phases 2-7: 36M / 95M / 215M
   (REFORECAST.md). Checked 2026-10-08 from laptop pane 88df3ab3, read-only over ssh.
+- Owner 2026-10-08: Phase 2 approved with a 14M PROGRAMME ceiling, which is not a worker budget. Units run in
+  sequence: P2-A -> evidence -> P2-B -> evidence -> P2-C. No Opus coordinator. On GEX44 a per-unit lease only PARKS at
+  sweep cadence (WU-1R overshot its stall budget by 0.46M, 31%) and no goal guard exists, so the leases are not
+  enforceable per call. Under the Owner's own rule, therefore, ONLY P2-A is authorised.
+- P2-A armed as m-5373d6f4cda7 (mission/edd-run b17f7aa2, b199b8ee); it supersedes stale WU-1R m-84da090be030.
+  - Zero-model dossier first: 28 pre->post hunks across 10 categories, deterministic.
+  - Lease bottom-up: 1.6M x 1.25 = 2.0M, first progress 0.8M.
+  - Context: capsule-v2 rotation, no autocompact (600k safety net only), Owner "instead of autocompact /kclear
+    /clear /kresume".
+  - P2-A arms an independent auditor (p2a-audit, 0.625M).
+  - `tools/edd_p2_admit.py judge` writes ADMISSION-P2A.json, ADMIT_P2B or FREEZE (FREEZE if >30% over forecast, the
+    audit fails, or spend is UNKNOWN). It never arms P2-B.
+  - EDDP2 gates 8/8; a mutant goes red.
