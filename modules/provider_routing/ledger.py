@@ -187,10 +187,14 @@ class GoalLedger(SpendLedger):
         self.goal = goal
 
     def _gfold(self, recs: list[dict]) -> dict:
-        cap, source, marks, res, seqs = None, None, {}, {}, {}
+        cap, source, marks, res, seqs, pre = None, None, {}, {}, {}, {}
         for r in recs:
             op = r["op"]
-            if op == "cap":
+            if op == "prebind":
+                # PRE_BINDING_PROGRAM_CAPEX: history of a session from before it was bound. Watermarked
+                # per sid, reported, and NEVER part of `used`.
+                pre[r["sid"]] = max(pre.get(r["sid"], 0), int(r["measured"]))
+            elif op == "cap":
                 cap, source = r["value"], r.get("source")
             elif op == "reserve":
                 res[r["id"]] = {**r, "state": RESERVED}
@@ -212,7 +216,20 @@ class GoalLedger(SpendLedger):
                 r["hold"] = max(0, r["amount"] - max(0, marks.get(r["sid"], 0) - int(r.get("base", 0))))
         open_ = sum(r["hold"] for r in res.values())
         return {"goal": self.goal, "cap": cap, "source": source, "marks": marks, "res": res,
-                "seqs": seqs, "open": open_, "used": sum(marks.values()) + open_}
+                "seqs": seqs, "open": open_, "used": sum(marks.values()) + open_,
+                "prebind": pre, "PRE_BINDING_PROGRAM_CAPEX": sum(pre.values())}
+
+    def prebind(self, sid: str, measured: int) -> dict:
+        """Book a session's pre-binding history as program capex, never as goal spend."""
+        if not isinstance(measured, int) or measured < 0:
+            raise LedgerError("measured must be an int >= 0")
+        with self._lock:
+            recs = self._read()
+            g = self._gfold(recs)
+            if measured > g["prebind"].get(sid, 0):
+                self._append(recs, {"op": "prebind", "sid": sid, "measured": measured})
+                g = self._gfold(recs)
+            return self._summary(g, ok=True, reason="", PRE_BINDING_PROGRAM_CAPEX=g["PRE_BINDING_PROGRAM_CAPEX"])
 
     def _sweep_leaks(self, recs: list[dict]) -> dict:
         now = self.clock()

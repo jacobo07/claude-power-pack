@@ -249,7 +249,11 @@ function foldFile(gs, file, isMain) {
     let r;
     try { r = JSON.parse(line); } catch (e) { continue; }
     if (!r || typeof r !== 'object') continue;
-    if (gs.since && String(r.timestamp || '') < gs.since) continue;
+    const ts = String(r.timestamp || '');
+    // gs.since = max(goal.since, binding.since_ts). A row from the goal's window but before this
+    // session was bound is PRE_BINDING: counted in gs.prebind, never in gs.tokens (see decideGoal).
+    const pre = !!(gs.since && ts < gs.since);
+    if (pre && !(gs.goalSince && ts >= gs.goalSince && gs.prospective)) continue;
     const m = r.message;
     if (!m || typeof m !== 'object' || !m.usage || m.model === '<synthetic>') continue;
     // Every tool_use id written so far, before the message-id dedupe: one message's parallel tool
@@ -264,6 +268,10 @@ function foldFile(gs, file, isMain) {
     if (seen.has(mid)) continue;
     seen.add(mid);
     gs.ids.push(mid);
+    if (pre) {
+      gs.prebind = (gs.prebind || 0) + UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+      continue;
+    }
     gs.tokens += UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
     if (isMain) {
       gs.context = UK.slice(0, 3).reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
@@ -316,9 +324,14 @@ function decideGoal(event, sid, bind) {
   if (touchesGoalState(event)) return goalDeny(goal, 'a call that touches goal-budget state is not admitted from a bound session.');
   const gPath = path.join(stateDir(), `session-budget-${sid}.goal.json`);
   let gs = readJson(gPath);
-  const since = entry.since ? String(entry.since) : null;
+  const goalSince = entry.since ? String(entry.since) : null;
+  // Prospective measure: a session counts only from the moment it was bound (max of both).
+  const bindTs = bind.sinceTs ? String(bind.sinceTs) : null;
+  const since = bindTs && (!goalSince || bindTs > goalSince) ? bindTs : goalSince;
+  const prosp = !!(bindTs && bind.record !== undefined);
   if (!gs || gs.goal !== goal || gs.since !== since || !gs.files || !Array.isArray(gs.ids)) {
-    gs = { goal, since, files: {}, ids: [], tokens: 0, context: 0, lease: null, closeout: 0 };
+    gs = { goal, since, goalSince, prospective: prosp, files: {}, ids: [], tokens: 0, prebind: 0,
+      prebindWritten: false, context: 0, lease: null, closeout: 0 };
   }
   let verdict = null;
   if (!event.transcript_path) verdict = goalDeny(goal, 'UNKNOWN: the event carries no transcript_path.');
@@ -326,6 +339,11 @@ function decideGoal(event, sid, bind) {
     try { measureGoal(gs, event.transcript_path); } catch (e) {
       verdict = goalDeny(goal, `UNKNOWN: the transcript cannot be read (${e.code || e.message}).`);
     }
+  }
+  // Pre-binding spend is booked once as a journal op (PRE_BINDING_PROGRAM_CAPEX), never in `used`.
+  if (!verdict && gs.prospective && !bind.provisional && gs.prebind > 0 && !gs.prebindWritten) {
+    const pr = callGoal(['goal-prebind', '--goal', goal, '--session', sid, '--measured', String(gs.prebind)]);
+    if (!pr.failed) gs.prebindWritten = true;   // a failed write retries on the next call
   }
   const next = nextRequest(gs);
   // The request that issued this call may not be in the transcript yet (canary #5: the first of 3
