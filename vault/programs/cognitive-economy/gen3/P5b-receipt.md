@@ -16,4 +16,9 @@ Collapse ranking (sole besides CLASS_UNPROBED / carrying): SDA 8,362 / 11,079 > 
 
 Open points: Jsk/Png controls unrun (bounds not in dossier); matrix/summary outputs live in %TEMP% (p5b_matrix.jsonl, p5b_summary.json), not in git; 400/400 M0 closure addrs matched the census.
 
+Metered by the main pane (worker transcript 5df1c131, usage deduplicated by message.id): 8 model calls, 1,015,198
+processed (12,189 out), under the 1.2M target and the 1.4M stop. Commits: recon `0bb9786`, receipt `7cbd30b7`.
+Drill re-run by the main pane from the committed tree: CENSUS_DRILL=4/4, identical lines.
+Phase 5 total including the failed P5 lease: 1,412,234 + 1,015,198 = 2,427,432 (R1 expected 1,105,515).
+
 HANDOFF NOTE: P5b done
