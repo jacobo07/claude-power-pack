@@ -1,0 +1,169 @@
+diff --git a/hooks/lib/goal_binding.js b/hooks/lib/goal_binding.js
+index 843d3b91..726505b9 100644
+--- a/hooks/lib/goal_binding.js
++++ b/hooks/lib/goal_binding.js
+@@ -1,4 +1,17 @@
+ // goal_binding.js -- which goal a session spends against (extracted from session_budget_guard.js).
++//
++// Resolution order (WU-1, prospective binding). Python twin: tools/mission_spend.py resolve_binding.
++//   (a) <state>/goal-binding/<sid>.json, immutable once written:
++//         {goal, since_ts, source: launcher|explicit|cwd, pid}. It always wins; a session whose record
++//         names another goal (or "none") is never re-bound by cwd.
++//   (b) env CPP_GOAL: honoured when the record agrees; a record that disagrees ignores it and logs a
++//         warning row (<state>/goal-binding/warnings.jsonl). With no record, env binds as before
++//         (explicit, no cut) so existing env-bound sessions keep their behaviour.
++//   (c) cwd under a goal root: WRITES the record with since_ts = now, at the first MUTATING call. A
++//         session that has only read (Read/Grep/Glob, goal-status, git log/status/show) gets an
++//         in-memory binding from now and leaves no record (observer isolation).
++//   (d) the budget file's `goal` field (legacy, no cut).
++// CPP_PROSPECTIVE_BIND=0 restores the old resolver exactly (no record read or written).
+ 'use strict';
+ const fs = require('fs');
+ const os = require('os');
+@@ -22,9 +35,55 @@ function under(p, root) {
+   return a === b || a.startsWith(b + path.sep);
+ }
+ 
+-function goalBinding(event, sid) {
+-  const ix = readJson(path.join(stateDir(), 'goal-budget', 'index.json'));
+-  const entry = g => (ix && typeof ix === 'object' && ix[g] && typeof ix[g] === 'object') ? ix[g] : null;
++function prospective() {
++  const v = String(process.env.CPP_PROSPECTIVE_BIND || '').trim().toLowerCase();
++  return !(v === '0' || v === 'off' || v === 'false');
++}
++
++function bindingDir() { return path.join(stateDir(), 'goal-binding'); }
++function bindingPath(sid) { return path.join(bindingDir(), `${sid}.json`); }
++
++function nowTs() { return new Date().toISOString().slice(0, 19); }
++
++function readBinding(sid) {
++  const r = readJson(bindingPath(sid));
++  return r && typeof r === 'object' && typeof r.goal === 'string' && r.goal ? r : null;
++}
++
++// Immutable: 'wx' fails when the record exists, and the existing one is returned instead.
++function writeBinding(sid, goal, source) {
++  const rec = { goal, since_ts: nowTs(), source, pid: process.pid };
++  try {
++    fs.mkdirSync(bindingDir(), { recursive: true });
++    fs.writeFileSync(bindingPath(sid), JSON.stringify(rec), { flag: 'wx' });
++    return rec;
++  } catch (e) {
++    return readBinding(sid) || rec;
++  }
++}
++
++function warn(sid, text) {
++  try {
++    fs.mkdirSync(bindingDir(), { recursive: true });
++    fs.appendFileSync(path.join(bindingDir(), 'warnings.jsonl'),
++      JSON.stringify({ ts: nowTs(), sid, warning: text }) + '\n');
++  } catch (e) { /* a warning that cannot be written is not a reason to fail a call */ }
++}
++
++const READ_TOOLS = new Set(['Read', 'Grep', 'Glob']);
++const READ_ONLY_CMD = /^\s*(?:&\s*)?(?:(?:['"]?[^\s'"]*[\\/])?git(?:\.exe)?['"]?\s+(?:-C\s+\S+\s+)?(?:log|status|show)\b|(?:['"]?[^\s'"]*[\\/])?(?:python3?|py)(?:\.exe)?['"]?\s+['"]?(?:[^\s'"]*[\\/])?mission_spend\.py['"]?\s+goal-status\b)/i;
++
++// A call is read-only when it is Read/Grep/Glob, or a single shell command that is goal-status or
++// git log/status/show with no chaining, redirection or substitution. Everything else mutates.
++function isReadOnlyCall(event) {
++  const tool = String((event && event.tool_name) || '');
++  if (READ_TOOLS.has(tool)) return true;
++  const cmd = event && event.tool_input && typeof event.tool_input.command === 'string' ? event.tool_input.command : '';
++  if (!cmd || /[;&|<>`\n]|\$\(/.test(cmd.replace(/^\s*&\s*/, ''))) return false;
++  return READ_ONLY_CMD.test(cmd);
++}
++
++function legacyBinding(event, sid, ix, entry) {
+   const env = String(process.env.CPP_GOAL || '').trim();
+   if (env) return { goal: env, entry: entry(env) };
+   if (ix && typeof ix === 'object' && event.cwd) {
+@@ -37,4 +96,29 @@ function goalBinding(event, sid) {
+   return null;
+ }
+ 
+-module.exports = { goalBinding, normPath, under, stateDir, readJson };
++function goalBinding(event, sid) {
++  const ix = readJson(path.join(stateDir(), 'goal-budget', 'index.json'));
++  const entry = g => (ix && typeof ix === 'object' && ix[g] && typeof ix[g] === 'object') ? ix[g] : null;
++  if (!prospective()) return legacyBinding(event, sid, ix, entry);
++  const env = String(process.env.CPP_GOAL || '').trim();
++  const rec = readBinding(sid);
++  if (rec) {
++    if (env && env !== rec.goal) warn(sid, `CPP_GOAL=${env} ignored: the binding record names ${rec.goal} (${rec.source})`);
++    if (rec.goal === 'none') return null;
++    return { goal: rec.goal, entry: entry(rec.goal), record: rec, sinceTs: rec.since_ts || null };
++  }
++  if (env) return { goal: env, entry: entry(env) };
++  if (ix && typeof ix === 'object' && event.cwd) {
++    for (const [g, e] of Object.entries(ix)) {
++      if (e && Array.isArray(e.roots) && e.roots.some(r => under(event.cwd, r))) {
++        if (isReadOnlyCall(event)) return { goal: g, entry: e, record: null, sinceTs: nowTs(), provisional: true };
++        const w = writeBinding(sid, g, 'cwd');
++        return { goal: w.goal, entry: w.goal === g ? e : entry(w.goal), record: w, sinceTs: w.since_ts || null };
++      }
++    }
++  }
++  return legacyBinding(event, sid, ix, entry);
++}
++
++module.exports = { goalBinding, normPath, under, stateDir, readJson, readBinding, writeBinding, bindingPath,
++  isReadOnlyCall, prospective };
+diff --git a/hooks/session_budget_guard.js b/hooks/session_budget_guard.js
+index 55d30adb..bcc4b330 100644
+--- a/hooks/session_budget_guard.js
++++ b/hooks/session_budget_guard.js
+@@ -249,7 +249,11 @@ function foldFile(gs, file, isMain) {
+     let r;
+     try { r = JSON.parse(line); } catch (e) { continue; }
+     if (!r || typeof r !== 'object') continue;
+-    if (gs.since && String(r.timestamp || '') < gs.since) continue;
++    const ts = String(r.timestamp || '');
++    // gs.since = max(goal.since, binding.since_ts). A row from the goal's window but before this
++    // session was bound is PRE_BINDING: counted in gs.prebind, never in gs.tokens (see decideGoal).
++    const pre = !!(gs.since && ts < gs.since);
++    if (pre && !(gs.goalSince && ts >= gs.goalSince && gs.prospective)) continue;
+     const m = r.message;
+     if (!m || typeof m !== 'object' || !m.usage || m.model === '<synthetic>') continue;
+     // Every tool_use id written so far, before the message-id dedupe: one message's parallel tool
+@@ -264,6 +268,10 @@ function foldFile(gs, file, isMain) {
+     if (seen.has(mid)) continue;
+     seen.add(mid);
+     gs.ids.push(mid);
++    if (pre) {
++      gs.prebind = (gs.prebind || 0) + UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
++      continue;
++    }
+     gs.tokens += UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+     if (isMain) {
+       gs.context = UK.slice(0, 3).reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+@@ -316,9 +324,14 @@ function decideGoal(event, sid, bind) {
+   if (touchesGoalState(event)) return goalDeny(goal, 'a call that touches goal-budget state is not admitted from a bound session.');
+   const gPath = path.join(stateDir(), `session-budget-${sid}.goal.json`);
+   let gs = readJson(gPath);
+-  const since = entry.since ? String(entry.since) : null;
++  const goalSince = entry.since ? String(entry.since) : null;
++  // Prospective measure: a session counts only from the moment it was bound (max of both).
++  const bindTs = bind.sinceTs ? String(bind.sinceTs) : null;
++  const since = bindTs && (!goalSince || bindTs > goalSince) ? bindTs : goalSince;
++  const prosp = !!(bindTs && bind.record !== undefined);
+   if (!gs || gs.goal !== goal || gs.since !== since || !gs.files || !Array.isArray(gs.ids)) {
+-    gs = { goal, since, files: {}, ids: [], tokens: 0, context: 0, lease: null, closeout: 0 };
++    gs = { goal, since, goalSince, prospective: prosp, files: {}, ids: [], tokens: 0, prebind: 0,
++      prebindWritten: false, context: 0, lease: null, closeout: 0 };
+   }
+   let verdict = null;
+   if (!event.transcript_path) verdict = goalDeny(goal, 'UNKNOWN: the event carries no transcript_path.');
+@@ -327,6 +340,11 @@ function decideGoal(event, sid, bind) {
+       verdict = goalDeny(goal, `UNKNOWN: the transcript cannot be read (${e.code || e.message}).`);
+     }
+   }
++  // Pre-binding spend is booked once as a journal op (PRE_BINDING_PROGRAM_CAPEX), never in `used`.
++  if (!verdict && gs.prospective && !bind.provisional && gs.prebind > 0 && !gs.prebindWritten) {
++    const pr = callGoal(['goal-prebind', '--goal', goal, '--session', sid, '--measured', String(gs.prebind)]);
++    if (!pr.failed) gs.prebindWritten = true;   // a failed write retries on the next call
++  }
+   const next = nextRequest(gs);
+   // The request that issued this call may not be in the transcript yet (canary #5: the first of 3
+   // parallel Reads measured without it, its final hold was eaten by it, the reply overshot 36,183).
