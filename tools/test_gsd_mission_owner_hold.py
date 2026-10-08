@@ -181,6 +181,53 @@ def main() -> int:
           and (s.get("owner") or {}).get("session_id") == "f92cdad1-7481" and (s.get("owner") or {}).get("pid") == 301196,
           f"{s['state']} owner={s.get('owner')}")
 
+    # 8. one record's pre-plan failure must not end the pass for the others (GEX44 2026-10-07/08: the breaker's
+    # raise sat outside the per-mission isolation, so ONE record crashed every pass for every mission, 264 + ~12
+    # passes). The raise is the production error verbatim. Control: the healthy neighbour is still planned.
+    for mid in ("m-iso-bad", "m-iso-ok"):
+        r = _mission(mid, gm.RUNNING)
+        gm.transition(mid, expect_epoch=r["epoch"], expect_state=r["state"], event="t_env", now=NOW,
+                      token_estimate=100_000)
+    real = gm._cost_breaker
+
+    def poisoned(rec, now, **kw):
+        if rec["mission_id"] == "m-iso-bad":
+            raise gm.MissionError("m-iso-bad is COMPLETED; there is nothing to hold")
+        return real(rec, now, **kw)
+    gm._cost_breaker = poisoned
+    try:
+        rows, err = gm.supervise(now=NOW + 60, sessions=[], runner=lambda a: "", stop_runner=lambda a: None,
+                                 pid_alive=gone, gsd_status=lambda cwd, workstream=None: {"outcome": "OK"},
+                                 fingerprint=lambda wd: None), None
+    except Exception as exc:  # noqa: BLE001 -- the failure under test
+        rows, err = [], f"{type(exc).__name__}: {exc}"
+    finally:
+        gm._cost_breaker = real
+    by = {r["mission_id"]: r for r in rows}
+    check("V-OH-PREPLAN-FAILURE-ISOLATED", err is None and "MissionError" in str(by.get("m-iso-bad", {}).get("error"))
+          and by["m-iso-bad"].get("action") == "none", str(err or by.get("m-iso-bad")))
+    check("V-OH-CONTROL-NEIGHBOUR-STILL-PLANNED", "m-iso-ok" in by and not by["m-iso-ok"].get("error"),
+          str(by.get("m-iso-ok")))
+    # ... and the sweep's own call (`supervise --actions-only`) keeps the error row and exits non-zero, so the
+    # heartbeat records it. Control: an error-free pass prints nothing and exits 0.
+    import contextlib
+    import io
+    import json
+    real_sup = gm.supervise
+    for label, rows_in in (("err", [by["m-iso-bad"], by["m-iso-ok"]]), ("clean", [by["m-iso-ok"]])):
+        gm.supervise = lambda dry_run=False, _r=rows_in: _r
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf):
+                rc = gm._cli(["supervise", "--actions-only"])
+        finally:
+            gm.supervise = real_sup
+        shown = [r["mission_id"] for r in json.loads(buf.getvalue())]
+        if label == "err":
+            check("V-OH-SWEEP-CLI-SURFACES-ERROR", rc == 3 and shown == ["m-iso-bad"], f"rc={rc} shown={shown}")
+        else:
+            check("V-OH-CONTROL-SWEEP-CLI-CLEAN-RC0", rc == 0 and shown == [], f"rc={rc} shown={shown}")
+
     print(f"OWNER_HOLD_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

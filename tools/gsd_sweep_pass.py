@@ -136,7 +136,13 @@ def main(argv=None) -> int:
             _write_json(state / "gsd-sweep-skip.json", {"outcome": "skipped",
                         "reason": "another pass holds the lease", "at": started, "pid": os.getpid()})
             return 0
-        _write_json(beat, {"outcome": "running", "started_at": started, "pid": os.getpid()})
+        # Consecutive failed passes, carried through the "running" beat that overwrites the last one. One failed
+        # pass is news; 264 of them (GEX44 2026-10-07) must read as one number, not as log archaeology.
+        try:
+            prior = int(json.loads(beat.read_text(encoding="utf-8-sig")).get("fail_streak") or 0)
+        except (OSError, ValueError, AttributeError):
+            prior = 0
+        _write_json(beat, {"outcome": "running", "started_at": started, "pid": os.getpid(), "fail_streak": prior})
         done = []
         for name in stages:
             _, _, env_key, default = STAGES[name]
@@ -147,8 +153,9 @@ def main(argv=None) -> int:
                 _log(log, "", f"SWEEP_STAGE_TIMEOUT stage={name} after {timeout_s}s; "
                               f"tree of pid {r['pid']} killed")
             done.append({k: r[k] for k in ("name", "rc", "timed_out", "secs")})
+        bad = any(d["timed_out"] or d["rc"] not in (0, None) for d in done)
         _write_json(beat, {"outcome": "ran", "started_at": started, "finished_at": _now(),
-                           "pid": os.getpid(), "stages": done})
+                           "pid": os.getpid(), "stages": done, "fail_streak": prior + 1 if bad else 0})
     finally:
         fh.close()
     return 0

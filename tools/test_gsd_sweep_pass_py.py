@@ -105,6 +105,14 @@ def main() -> int:
     subprocess.run(cmd, env={**env, "FAKE_MISSION_RC": "3"}, capture_output=True, text=True, timeout=120)
     st3 = {s["name"]: s for s in read_beat().get("stages", [])}
     check("V-SWEEPPY-STAGE-RC-IS-REAL", st3.get("mission", {}).get("rc") == 3, str(st3.get("mission")))
+    # 1b'. consecutive failed passes are counted (GEX44 2026-10-07: 264 rc=1 passes nobody saw); a clean pass resets
+    s0 = read_beat().get("fail_streak") or 0
+    subprocess.run(cmd + ["--stages", "mission"], env={**env, "FAKE_MISSION_RC": "3"}, capture_output=True,
+                   text=True, timeout=60)
+    check("V-SWEEPPY-FAIL-STREAK-COUNTS", s0 >= 1 and read_beat().get("fail_streak") == s0 + 1,
+          f"{s0} -> {read_beat().get('fail_streak')}")
+    subprocess.run(cmd + ["--stages", "mission"], env=env, capture_output=True, text=True, timeout=60)
+    check("V-SWEEPPY-CONTROL-CLEAN-PASS-RESETS-STREAK", read_beat().get("fail_streak") == 0, str(read_beat()))
 
     # 1c. --stages mission runs only the mission stage (the GEX44 unit's form)
     subprocess.run(cmd + ["--stages", "mission"], env=env, capture_output=True, text=True, timeout=60)

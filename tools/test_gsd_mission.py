@@ -249,6 +249,14 @@ def main() -> int:
     hb.write_text(json.dumps({"outcome": "ran", "stages": [{"name": "v2", "timed_out": True}]}),
                   encoding="utf-8")
     check("V-MC-SWEEP-TIMEOUT-DEGRADED", v_() == "DEGRADED")
+    # GEX44 2026-10-07: 264 passes ran on time with the mission stage at rc=1 and read OK.
+    hb.write_text(json.dumps({"outcome": "ran", "fail_streak": 264,
+                              "stages": [{"name": "mission", "rc": 1, "timed_out": False}]}), encoding="utf-8")
+    h_ = gm.sweep_health()
+    check("V-MC-SWEEP-STAGE-RC-FAILING", h_["verdict"] == "FAILING" and "264 consecutive" in h_["detail"], str(h_))
+    hb.write_text(json.dumps({"outcome": "ran", "stages": [{"name": "mission", "rc": 0, "timed_out": False}]}),
+                  encoding="utf-8")
+    check("V-MC-SWEEP-STAGE-RC0-CONTROL-OK", v_() == "OK")
     old_t = time.time() - 3600
     os.utime(hb, (old_t, old_t))
     check("V-MC-SWEEP-OLD-STALE", v_() == "STALE")

@@ -2698,11 +2698,24 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             except Exception:  # noqa: BLE001 -- the row still carries the error
                 pass
             continue
-        if not dry_run and rec.get("token_estimate") is None and not rec.get("owner_hold"):
-            rec = _auto_budget(rec, now)
-        if not dry_run and rec.get("token_estimate") and not rec.get("owner_hold"):
-            rec = _cost_breaker(rec, now)
-        plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
+        try:
+            if not dry_run and rec.get("token_estimate") is None and not rec.get("owner_hold"):
+                rec = _auto_budget(rec, now)
+            if not dry_run and rec.get("token_estimate") and not rec.get("owner_hold"):
+                rec = _cost_breaker(rec, now)
+            plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
+        except Exception as exc:  # noqa: BLE001 -- isolated per mission, like capsule_v2 above
+            # GEX44 2026-10-07/08: a breaker raise here (set_owner_hold on a terminal record) ended EVERY pass
+            # for EVERY mission, 264 passes over ~24 h and ~12 more the next day. Nothing is done for this
+            # mission this pass; the rest are supervised and the error is ledgered where status reads.
+            err = f"pre-plan: {type(exc).__name__}: {exc}"
+            out.append({"mission_id": mid, "state": rec["state"], "epoch": rec["epoch"],
+                        "action": "none", "reason": err, "error": err})
+            try:
+                lr.ledger_append(mid, "supervise_error", mission_id=mid, error=err[:300])
+            except Exception:  # noqa: BLE001 -- the row still carries the error
+                pass
+            continue
         row = {"mission_id": mid, "state": rec["state"], "epoch": rec["epoch"], **plan}
         out.append(row)
         if dry_run:
@@ -3779,10 +3792,14 @@ def _cli(argv=None) -> int:
         return 0 if adm["verdict"] == "ADMISSIBLE" else 3
     if args.cmd == "supervise":
         rows = supervise(dry_run=args.dry_run)
+        failed = [r for r in rows if r.get("error")]
         if args.actions_only:
-            rows = [r for r in rows if r.get("action") not in ("none", "await")]
+            # An isolated per-mission error has action "none"; filtering it out made it invisible in the sweep log.
+            rows = [r for r in rows if r.get("action") not in ("none", "await") or r.get("error")]
         print(json.dumps(rows))
-        return 0
+        # Non-zero so the sweep heartbeat records the failure and sweep_health reads FAILING (264 crashed passes
+        # read OK on 2026-10-07 because only age and timeouts were judged).
+        return 3 if failed else 0
     missions, bad = _scan()
     rows = [{"mission_id": b["mission_id"], "state": "UNREADABLE", "error": b["error"],
              "path": b["path"], "plan": {"action": "surface_unreadable",
@@ -3831,12 +3848,19 @@ def sweep_health(now: float | None = None) -> dict:
     except (OSError, ValueError):
         return {"verdict": "NOT_OBSERVED", "detail": f"no readable heartbeat at {p}"}
     timed = [s["name"] for s in b.get("stages", []) if s.get("timed_out")]
+    # A pass that runs on time and crashes every time is not healthy: GEX44 2026-10-07, 264 passes rc=1 read OK.
+    failing = [f"{s['name']} rc={s['rc']}" for s in b.get("stages", [])
+               if not s.get("timed_out") and s.get("rc") not in (0, None)]
     if b.get("outcome") == "running" and age > SWEEP_STALE_S:
         # A pass is bounded at 840 s by its own stage deadlines; running past that is a pass
         # that escaped its bounds, not merely a missed schedule.
         return {"verdict": "STUCK", "detail": f"pass running for {int(age)} s"}
     if age > SWEEP_STALE_S:
         return {"verdict": "STALE", "detail": f"last pass {int(age)} s ago ({b.get('outcome')})"}
+    if failing:
+        streak = b.get("fail_streak")
+        return {"verdict": "FAILING", "detail": f"stages failed last pass: {failing}"
+                + (f"; {streak} consecutive failed passes" if streak else "")}
     if timed:
         return {"verdict": "DEGRADED", "detail": f"stages timed out last pass: {timed}"}
     return {"verdict": "OK", "detail": f"{b.get('outcome')} {int(age)} s ago"}
