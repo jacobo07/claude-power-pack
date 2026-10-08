@@ -38,6 +38,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_long_run as lr  # noqa: E402  (state_dir, ledger, _pid_alive, sessions_dir)
+from route_admission import KNOWN_VERDICTS, LAUNCHABLE_VERDICTS  # noqa: E402  (one verdict contract)
 
 SCHEMA_VERSION = 1
 MISSION_TEMPLATE = "gsd-mission-{mission_id}.json"
@@ -885,7 +886,7 @@ def _launch_slim(rec: dict, prompt: str, epoch: int, now: float, spawner=None) -
         return {"ok": False, "epoch": epoch, "bg_id": sid, "why": "slim launch refused", "detail": why}
     adm = rec.get("admission") or {}
     used = ({"admission": {**adm, "consumed_epoch": epoch}}
-            if rec.get("wu_packet") and adm.get("verdict") in ("ADMISSIBLE", "WATCHED") else {})
+            if rec.get("wu_packet") and adm.get("verdict") in LAUNCHABLE_VERDICTS else {})
     rec = transition(mid, expect_epoch=epoch, expect_state=LAUNCHING, event="launched", now=now,
                      pending={**rec["pending"], "bg_id": sid}, **used)
     owner = {"session_id": sid, "pid": pid, "proc_start": None, "heartbeat_at": now, "epoch": epoch,
@@ -1006,7 +1007,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     # An admission pays for ONE launch (review F3): a successor would otherwise get the full envelope
     # again every epoch, with `remaining` measured only at admit time. The next launch re-admits.
     used = ({"admission": {**adm, "consumed_epoch": epoch}}
-            if rec.get("wu_packet") and adm.get("verdict") in ("ADMISSIBLE", "WATCHED") else {})
+            if rec.get("wu_packet") and adm.get("verdict") in LAUNCHABLE_VERDICTS else {})
     rec = transition(mission_id, expect_epoch=epoch, expect_state=LAUNCHING, event="launched",
                      now=now, pending={**rec["pending"], "bg_id": bg_id}, **used)
     _record_launch_account(bg_id)
@@ -1628,7 +1629,10 @@ def admission_refusal(rec: dict, *, for_launch: bool = True) -> str | None:
     if not pkt or _admission_switch_off():
         return None
     adm = rec.get("admission") or {}
-    if adm.get("verdict") not in ("ADMISSIBLE", "WATCHED"):
+    if adm.get("verdict") is not None and adm.get("verdict") not in KNOWN_VERDICTS:
+        return (f"verdict_unknown: {adm.get('verdict')!r} is not a verdict this build knows "
+                f"(record code_id {rec.get('code_id')}, this CODE_ID {CODE_ID}): admit again with this build")
+    if adm.get("verdict") not in LAUNCHABLE_VERDICTS:
         return (f"work unit not admitted (verdict {adm.get('verdict') or 'none'}): run "
                 f"`gsd_mission.py admit --mission {rec['mission_id']} --route <route.json>`")
     if for_launch and adm.get("consumed_epoch") is not None:
@@ -1663,7 +1667,7 @@ def _declare_worker_envelope(rec: dict, sid: str | None) -> None:
     """The admitted envelope becomes the worker's SESSION envelope, enforced call by call by
     hooks/session_budget_guard.js. Recorded either way, never silent."""
     adm = rec.get("admission") or {}
-    if not sid or not rec.get("wu_packet") or adm.get("verdict") not in ("ADMISSIBLE", "WATCHED"):
+    if not sid or not rec.get("wu_packet") or adm.get("verdict") not in LAUNCHABLE_VERDICTS:
         return
     env = adm.get("envelope") or {}
     mid = rec["mission_id"]
@@ -3880,7 +3884,7 @@ def _cli(argv=None) -> int:
               f"target={adm['envelope']['target']} remaining={adm.get('remaining')}")
         for r in adm["reasons"]:
             print(f"  - {r}")
-        return 0 if adm["verdict"] in ("ADMISSIBLE", "WATCHED") else 3
+        return 0 if adm["verdict"] in LAUNCHABLE_VERDICTS else 3
     if args.cmd == "supervise":
         rows = supervise(dry_run=args.dry_run)
         if args.actions_only:

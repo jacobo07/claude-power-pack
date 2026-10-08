@@ -33,7 +33,9 @@ FLOORS_PATH = REPO_ROOT / "vault" / "config" / "route-floors.json"
 DEFAULT_GROWTH_MARGIN = 0.20
 TOP_LEVEL = "top-level-worker"
 ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "WATCHED", "DEFER", "RECOMPILE", "ESCALATE"
-LOW_CONFIDENCE_N = 5            # fewer samples than this: SAFETY can only WATCH, never refuse (spec D3)
+LAUNCHABLE_VERDICTS = (ADMISSIBLE, WATCHED)       # the ONE definition of "may start a worker"; gsd_mission imports it
+KNOWN_VERDICTS = (ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE)   # every verdict this module can emit
+LOW_CONFIDENCE_N = 5           # fewer samples than this: SAFETY can only WATCH, never refuse (spec D3)
 CHALLENGER_AUTHORITATIVE = True   # spec D3 flip (E3): the growth term decides; the champion is kept under `champion`
 
 
