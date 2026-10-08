@@ -605,6 +605,68 @@ def goal_grant_use(goal: str, sid: str, access: str, path: str, now: float | Non
     return {"ok": False, "goal": goal, "reason": "no open grant"}
 
 
+GOAL_IDLE_S = 1800
+_BEACON_GLOB = "kclaude-pane-*.sid"
+
+
+def _live_beacon_sids(beacon_dir: Path | None) -> set[str]:
+    d = beacon_dir or Path(os.environ.get("TEMP") or os.environ.get("TMP") or "/tmp")
+    out: set[str] = set()
+    try:
+        for p in d.glob(_BEACON_GLOB):
+            try:
+                sid = json.loads(p.read_text(encoding="utf-8-sig")).get("sid")
+            except (OSError, ValueError, AttributeError):
+                continue
+            if isinstance(sid, str) and sid.strip():
+                out.add(sid.strip())
+    except OSError:
+        pass
+    return out
+
+
+def goal_reconcile(goal: str, *, beacon_dir: Path | None = None, projects: Path | None = None,
+                   idle_s: float = GOAL_IDLE_S, now: float | None = None) -> dict:
+    """Settle dead sessions' open reservations at their transcript-measured total.
+    LIVE (a beacon names the sid, or its transcript was written within idle_s) -> untouched.
+    UNKNOWN (no transcript, or unreadable/unstattable) -> stays counted, nothing released.
+    Otherwise settle at the measured total and close every open lease / agent hold of the sid.
+    Rows go through the ledger's _append under its lock; a second run finds nothing open."""
+    import time
+    t = time.time() if now is None else float(now)
+    live = _live_beacon_sids(beacon_dir)
+    since = (read_index().get(goal) or {}).get("since")
+    led = _goal_ledger(goal)
+    sessions: dict = {}
+    with led._lock:
+        recs = led._read()
+        g = led._gfold(recs)
+        sids = sorted({r["sid"] for r in g["res"].values() if r["state"] in ("RESERVED", "LEAKED")})
+        for sid in sids:
+            if sid in live:
+                sessions[sid] = "LIVE"
+                continue
+            try:
+                tx = find_transcript(sid, projects)
+                if tx is None:
+                    sessions[sid] = "UNKNOWN"
+                    continue
+                if t - tx.stat().st_mtime < idle_s:
+                    sessions[sid] = "LIVE"
+                    continue
+                measured = int(session_tokens(tx, since)["tokens"])
+            except (OSError, ValueError):
+                sessions[sid] = "UNKNOWN"
+                continue
+            closes = sorted(rid for rid, r in g["res"].items()
+                            if r["sid"] == sid and r["state"] in ("RESERVED", "LEAKED"))
+            led._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes,
+                               "reason": "reconcile"})
+            sessions[sid] = "SPENT+RELEASED"
+        out = led._summary(led._gfold(recs), ok=True, reason="")
+    return {**out, "sessions": sessions}
+
+
 def _main(argv: list[str]) -> int:
     import argparse
     import socket
@@ -656,6 +718,9 @@ def _main(argv: list[str]) -> int:
     gr = sub.add_parser("goal-revoke")
     gr.add_argument("--goal", required=True)
     gr.add_argument("--id", required=True)
+    grc = sub.add_parser("goal-reconcile")
+    grc.add_argument("--goal", required=True)
+    grc.add_argument("--idle-s", type=float, default=GOAL_IDLE_S)
     gu = sub.add_parser("goal-grant-use")
     gu.add_argument("--goal", required=True)
     gu.add_argument("--session", required=True)
@@ -688,6 +753,8 @@ def _main(argv: list[str]) -> int:
             out = goal_revoke(a.goal, a.id)
         elif a.cmd == "goal-grant-use":
             out = goal_grant_use(a.goal, a.session, a.op, a.path, cwd=a.cwd)
+        elif a.cmd == "goal-reconcile":
+            out = goal_reconcile(a.goal, idle_s=a.idle_s)
         elif a.cmd == "goal-renew":
             out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
         elif a.cmd == "goal-spawn":
