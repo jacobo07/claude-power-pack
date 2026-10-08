@@ -1,0 +1,121 @@
+diff --git a/tools/route_admission.py b/tools/route_admission.py
+index 27b16db7..fab77961 100644
+--- a/tools/route_admission.py
++++ b/tools/route_admission.py
+@@ -34,7 +34,7 @@ DEFAULT_GROWTH_MARGIN = 0.20
+ TOP_LEVEL = "top-level-worker"
+ ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "WATCHED", "DEFER", "RECOMPILE", "ESCALATE"
+ LOW_CONFIDENCE_N = 5            # fewer samples than this: SAFETY can only WATCH, never refuse (spec D3)
+-CHALLENGER_AUTHORITATIVE = False  # spec D3 flip held: it turns test_route_admission / test_gsd_mission_admission red (see RECEIPT-E1)
++CHALLENGER_AUTHORITATIVE = True   # spec D3 flip (E3): the growth term decides; the champion is kept under `champion`
+ 
+ 
+ def load_floors(path: Path | str | None = None) -> dict:
+diff --git a/tools/test_gsd_mission_admission.py b/tools/test_gsd_mission_admission.py
+index 735dba5f..4d883ec3 100644
+--- a/tools/test_gsd_mission_admission.py
++++ b/tools/test_gsd_mission_admission.py
+@@ -42,7 +42,17 @@ FLOORS = str(Path(__file__).resolve().parent.parent / "vault" / "config" / "rout
+ passes = fails = 0
+ NOW = 1_800_000_000.0
+ ENV = {"target": 3_500_000, "warn": 4_500_000, "stop": 5_500_000, "calls": 25}
+-THIN = {"envelope": ENV, "workers": [{"name": "w0r", "profile": "top-level-worker", "calls": 25, "packet": 4000}]}
++# D3: the challenger decides, and 25 calls of top-level-worker expect 3.56M > the 3.5M target; 22 expect 3.06M
++THIN = {"envelope": ENV, "workers": [{"name": "w0r", "profile": "top-level-worker", "calls": 22, "packet": 4000}]}
++# slim-t2 has a measured floor but NO measured growth / calls_err (the repo table keeps it UNKNOWN -> ESCALATE,
++# pinned below). The slim LAUNCH gates test launch mechanics, so they run on a fixture table that gives it an
++# explicitly estimated calibration; nothing here claims those numbers are measured.
++_slim_tbl = json.loads(Path(FLOORS).read_text(encoding="utf-8-sig"))
++for _f, _v in (("growth_per_call", 500), ("calls_err", 0.3)):
++    _slim_tbl["profiles"]["slim-t2"][_f] = {"value": _v, "n": 5, "basis": "estimated:test-fixture",
++                                            "provenance": "hermetic fixture for slim launch mechanics"}
++SLIM_FLOORS = str(Path(TMP) / "floors-slim-fixture.json")
++Path(SLIM_FLOORS).write_text(json.dumps(_slim_tbl), encoding="utf-8")
+ HEAVY = {"envelope": ENV, "workers": [
+     {"name": "orch", "profile": "top-level-worker", "calls": 40, "packet": 5000},
+     *({"name": f"exec-{i}", "profile": "gsd-executor", "calls": 20, "packet": 20000} for i in range(3))]}
+@@ -97,7 +107,9 @@ def launch(mid: str) -> dict:
+ 
+ 
+ def admit(mid: str, route_name: str, route=THIN, measure=lambda r: None) -> dict:
+-    return gm.admit_route(mid, write(route_name, route), floors_path=FLOORS, now=NOW, measure=measure)
++    slim = any(w["profile"] == "slim-t2" for w in route["workers"])
++    return gm.admit_route(mid, write(route_name, route), floors_path=SLIM_FLOORS if slim else FLOORS,
++                          now=NOW, measure=measure)
+ 
+ 
+ def refused_launch(mid: str) -> tuple[bool, str]:
+@@ -138,7 +150,15 @@ def main() -> int:
+     mission("m-heavy")
+     h = admit("m-heavy", "heavy.json", HEAVY)["admission"]
+     ok, why = refused_launch("m-heavy")
+-    check("V-ADM-HEAVY-RECORDED-AND-REFUSED", h["verdict"] == "RECOMPILE" and ok, f"{h['verdict']}: {why}")
++    # D3: gsd-executor has no measured calls_err, so the challenger is UNKNOWN -> ESCALATE (still refused)
++    check("V-ADM-HEAVY-RECORDED-AND-REFUSED", h["verdict"] == "ESCALATE" and "calls_err" in h["reasons"][0] and ok,
++          f"{h['verdict']}: {why}")
++    mission("m-slim-unknown")
++    sl_repo = gm.admit_route("m-slim-unknown", write("slim-repo.json", {"envelope": ENV, "workers": [
++        {"name": "s", "profile": "slim-t2", "calls": 3, "packet": 500}]}), floors_path=FLOORS, now=NOW)["admission"]
++    ok_u, _ = refused_launch("m-slim-unknown")
++    check("V-ADM-SLIM-UNCALIBRATED-ESCALATES-ON-REPO-TABLE", sl_repo["verdict"] == "ESCALATE" and ok_u,
++          str(sl_repo["reasons"][:1]))
+     mission("m-thin")
+     t = admit("m-thin", "thin.json")["admission"]
+     res = launch("m-thin")
+diff --git a/tools/test_route_admission.py b/tools/test_route_admission.py
+index 4685e464..406c194e 100644
+--- a/tools/test_route_admission.py
++++ b/tools/test_route_admission.py
+@@ -66,10 +66,18 @@ def main() -> int:
+         {"name": "exec-2", "profile": "gsd-executor", "calls": 20, "packet": 20_000},
+         {"name": "exec-3", "profile": "gsd-executor", "calls": 20, "packet": 20_000}]}
+     h = ra.admit(heavy, floors)
+-    check("V-RADM-HEAVY-REJECTED", h["verdict"] == ra.RECOMPILE and h["need"] > 10 * M,
++    # D3: gsd-executor has no measured calls_err (no planned-vs-metered pairs exist for subagents), so the
++    # challenger cannot size it and says UNKNOWN -> ESCALATE; the champion alone would have said RECOMPILE.
++    check("V-RADM-HEAVY-REJECTED", h["verdict"] == ra.ESCALATE and h["need"] > 10 * M
++          and "calls_err" in h["reasons"][0] and h["champion"]["verdict"] == ra.RECOMPILE,
+           f"{h['verdict']} need {h.get('need'):,}: {h['reasons']}")
++    known = {"envelope": W0R_ENV, "workers": [
++        {"name": f"w{i}", "profile": ra.TOP_LEVEL, "calls": 30, "packet": 5_000} for i in range(3)]}
++    k = ra.admit(known, floors)
++    check("V-RADM-HEAVY-MEASURED-RECOMPILES", k["verdict"] == ra.RECOMPILE and k["forecast"]["expected"] > W0R_ENV["target"],
++          f"{k['verdict']}: {k['reasons'][:1]}")
+     thin = {"envelope": W0R_ENV, "workers": [
+-        {"name": "w0r", "profile": ra.TOP_LEVEL, "calls": 25, "packet": 4_000}]}
++        {"name": "w0r", "profile": ra.TOP_LEVEL, "calls": 22, "packet": 4_000}]}   # 25 calls expects 3.56M > 3.5M
+     t = ra.admit(thin, floors)
+     check("V-RADM-THIN-ADMITTED", t["verdict"] == ra.ADMISSIBLE and t["need_with_margin"] <= W0R_ENV["target"],
+           f"{t['verdict']} {t['need_with_margin']:,} <= {W0R_ENV['target']:,}")
+@@ -84,13 +92,16 @@ def main() -> int:
+         missing = ra.admit(slim, floors, root=root)
+         (Path(root) / "vault" / "config" / "slim-critical-settings.json").write_text("{}", encoding="utf-8")
+         present = ra.admit(slim, floors, root=root)
+-    check("V-RADM-SLIM-T2-ADMITTED", present["verdict"] == ra.ADMISSIBLE
++    # D3: slim-t2 has a measured floor but no calls_err, so the challenger is UNKNOWN -> ESCALATE; the
++    # champion still admits it (floor + settings file present), which is what the control pins.
++    check("V-RADM-SLIM-T2-ADMITTED", present["champion"]["verdict"] == ra.ADMISSIBLE
++          and present["verdict"] == ra.ESCALATE and "no calibrated" in present["reasons"][0]
+           and present["workers"][0]["floor"] == profiles["slim-t2"]["floor"] == 13507,
+           f"{present['verdict']} floor {present['workers'][0]['floor']}")
+     check("V-RADM-SLIM-T2-REFUSED-WITHOUT-SETTINGS", missing["verdict"] == ra.ESCALATE
+           and "slim-critical-settings.json" in missing["reasons"][0], str(missing["reasons"]))
+     check("V-RADM-SLIM-REPO-FILE-EXISTS", (HERE.parent / "vault" / "config" / "slim-critical-settings.json").is_file()
+-          and ra.admit(slim, floors)["verdict"] == ra.ADMISSIBLE, "default root resolves the committed file")
++          and ra.admit(slim, floors)["champion"]["verdict"] == ra.ADMISSIBLE, "default root resolves the committed file")
+ 
+     # exact boundary on a synthetic table: margin 0, floor 100, 10 calls = 1000
+     tiny = {"default_min_calls": 3, "profiles": {ra.TOP_LEVEL: {"floor": 100, "p50": 100, "write": True}}}
+@@ -116,9 +127,10 @@ def main() -> int:
+              "workers": [{"name": "w", "profile": ra.TOP_LEVEL, "calls": 3}]}
+     e = ra.admit(small, floors)
+     check("V-RADM-INFEASIBLE-ENVELOPE-ESCALATES", e["verdict"] == ra.ESCALATE, f"{e['reasons']}")
+-    roomy = {**small, "envelope": {"target": 400_000, "warn": 400_000, "stop": 400_000}}
++    # warn/stop sit above the call-band high edge (5 calls ~577k), so only the target decides here
++    roomy = {**small, "envelope": {"target": 400_000, "warn": 600_000, "stop": 800_000}}
+     check("V-RADM-INFEASIBLE-CONTROL", ra.admit(roomy, floors)["verdict"] == ra.ADMISSIBLE,
+-          "3 x 110,835 x 1.2 = 399,006 <= 400,000")
++          "3 x 110,835 + growth ~339k <= 400,000; safety ~577k <= warn 600,000")
+ 
+     bad = [
+         {"envelope": W0R_ENV, "workers": []},
