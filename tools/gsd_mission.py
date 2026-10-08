@@ -1347,6 +1347,8 @@ def _auto_budget(rec: dict, now: float, measure=None) -> dict:
     Any failure is a ledger row and the record is returned unchanged."""
     import mission_spend as ms
     mid = rec["mission_id"]
+    if rec.get("state") in TERMINAL:
+        return rec   # a finished record needs no envelope (and is then judged by no breaker)
     try:
         try:
             spent = (measure or ms.processed_tokens)(rec)
@@ -1376,6 +1378,11 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
     Returns the record as it now stands."""
     import mission_spend as ms
     mid = rec["mission_id"]
+    if rec.get("state") in TERMINAL:
+        # A finished record has nothing left to park, and set_owner_hold refuses it: that raise escaped
+        # supervise() and crashed EVERY pass for every mission (GEX44: m-da6e925b5092, 264 passes over
+        # ~24 h from 2026-10-07; m-79f84cdd34dc, 2026-10-08, a COMPLETED record whose hold was cleared).
+        return rec
     try:
         spent = (measure or ms.processed_tokens)(rec)
         fp = (fingerprint or progress_fingerprint)(rec.get("work_dir") or rec["cwd"])

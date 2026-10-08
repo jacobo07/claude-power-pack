@@ -137,6 +137,27 @@ def main() -> int:
     why = gm.renewal_refusal(after, BUDGET_HALT, "OK")
     check("V-OH-SETTLED-NEVER-RENEWED", bool(why) and "owner hold" in why, str(why))
 
+    # 6. the breaker never judges a terminal record (GEX44 sweep crashed every pass on one: set_owner_hold
+    # refuses terminal records and the raise escaped supervise). Control: the same spend on RUNNING trips.
+    trip = {"measure": lambda r: 10_000_000, "fingerprint": lambda wd: None}
+    for mid, st in (("m-brk-run", gm.RUNNING), ("m-brk-done", gm.COMPLETED)):
+        _mission(mid, gm.RUNNING)
+        r = gm.load(mid)
+        r = gm.transition(mid, expect_epoch=r["epoch"], expect_state=r["state"], event="t_env", now=NOW,
+                          state=st, token_estimate=100_000)
+        try:
+            out, err = gm._cost_breaker(r, NOW + 60, **trip), None
+        except Exception as exc:  # noqa: BLE001 -- the failure under test
+            out, err = None, f"{type(exc).__name__}: {exc}"
+        if st == gm.RUNNING:
+            check("V-OH-CONTROL-BREAKER-TRIPS-LIVE", err is None and bool((out or {}).get("owner_hold")), str(err))
+        else:
+            check("V-OH-BREAKER-SKIPS-TERMINAL", err is None and out is not None and not out.get("owner_hold"),
+                  str(err))
+            seq = gm.load(mid)["seq"]
+            gm._auto_budget({**gm.load(mid), "token_estimate": None}, NOW + 60, measure=lambda rr: 1)
+            check("V-OH-AUTOBUDGET-SKIPS-TERMINAL", gm.load(mid)["seq"] == seq, f"seq {seq} -> {gm.load(mid)['seq']}")
+
     print(f"OWNER_HOLD_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
