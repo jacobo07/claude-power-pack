@@ -68,6 +68,24 @@ uniforme sobre las letras.
 | VP-017 | [[progressive-state-build]] — Intra-State Progressive Build | B5 movimiento | local (REF-MOTION-001) |
 | VP-018 | [[shared-element-continuity]] — Shared-Element Continuity | B6 movimiento | hypothesis (REF-MOTION-001) |
 
+| VP-019 | [[hold-to-confirm]] — Hold-to-Confirm | E1 interaccion | research (REF-KITCHEN-001) |
+| VP-020 | [[magnetic-drop-zone]] — Magnetic Drop Zone | E2 interaccion | research (REF-KITCHEN-001) |
+| VP-021 | [[content-fit-dynamic-button]] — Content-Fit Dynamic Button | E3 interaccion | research (REF-KITCHEN-001) |
+| VP-022 | [[scramble-text-reveal]] — Scramble Text Reveal | B7 movimiento | research (REF-KITCHEN-001) |
+| VP-023 | [[state-driven-physical-process]] — State-Driven Physical Process | B8 movimiento | research (REF-KITCHEN-001) |
+| VP-024 | [[self-drawing-stroke]] — Self-Drawing Stroke (firma + loader) | B9 movimiento | research (REF-KITCHEN-001) |
+| VP-025 | [[scroll-overflow-fade]] — Scroll Overflow Fade | D3 superficie-textura | research (REF-KITCHEN-001) |
+| VP-026 | [[perforated-paper-silhouette]] — Perforated Paper Silhouette (ticket + sello) | D4 superficie-textura | research (REF-KITCHEN-001) |
+| VP-027 | [[tactile-skeuomorphic-object]] — Tactile Skeuomorphic Object | D5 superficie-textura | research (REF-KITCHEN-001) |
+
+Eje E (interaccion, anadido 2026-10-08): primitivas de control cuyo valor es el
+contrato de estados (cancelaciones, teclado, anuncios), no el efecto visual.
+REF-KITCHEN-001 (`evidence/REF-KITCHEN-001/OBSERVATION.md`) es la absorcion de
+los 15 estudios de https://www.dqnamo.com/kitchen: sin licencia declarada, asi
+que solo principios, nunca codigo; VP-007 ampliado con su variante por puntero
+y scroll; el Model Selector rechazado (afirma benchmarks sin mostrar ninguno).
+Gate: `python tools/test_visual_patterns_kitchen.py`.
+
 "Investigacion" = patron verificado con fuentes reales, sin implementacion
 propia todavia en un proyecto del Owner. Actualizar el campo Evidence de la
 entrada correspondiente en cuanto se implemente por primera vez.

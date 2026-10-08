@@ -37,6 +37,27 @@ simular el cambio de reflejo del foil holografico al moverse la luz.
 - Animacion ligada al scroll o al movimiento del cursor (el reflejo "sigue"
   la interaccion, mas fiel a la metafora de foil fisico).
 
+### Variante por puntero y scroll (REF-KITCHEN-001, 2026-10-08)
+
+Segunda fuente, observada (OBSERVED) en la Kitchen de dqnamo, aplicada a una
+superficie (tarjeta) y no solo a texto:
+
+- **Capas decorativas apiladas** (base foil, pelicula, nacar detras del
+  contenido; brillo y reflejo encima), todas ocultas a tecnologias de apoyo.
+- **El progreso de scroll y la posicion del puntero se escriben como variables
+  CSS** (desplazamiento del foil en X e Y, angulo y opacidad del brillo) desde
+  un unico listener pasivo agrupado con requestAnimationFrame, que se limpia al
+  desmontar. El scroll se mide respecto al elemento (por defecto) o al documento.
+- **El puntero se acota** a 0.08..0.92 por eje para que el reflejo no salte en
+  los bordes.
+- Sin animacion por tiempo: el foil solo cambia cuando el usuario se mueve, lo
+  que resuelve la fatiga de lectura del loop continuo descrito arriba.
+
+UNKNOWN en esa fuente: movimiento reducido y contraste del texto sobre el foil.
+Las reglas de este archivo siguen aplicando: congelar en un estado valido con
+movimiento reducido y medir el contraste en el punto mas claro del recorrido
+(HR-VP-03).
+
 ## Tokens requeridos
 
 `--foil-stop-1` .. `--foil-stop-n` (multiples paradas de color),
@@ -71,3 +92,4 @@ pendiente de primera implementacion.
 
 - [CSS Holographic Effect: Iridescent and Chrome — Effect.Labs](https://effect-labs.com/en/pages/blog/effet-holographique-css.html)
 - [Iridescent foil letterpress effect — CodePen](https://codepen.io/electrifried/pen/REjQdM)
+- [Iridescent Foil — dqnamo Kitchen](https://www.dqnamo.com/experiments/iridescent-foil) (REF-KITCHEN-001; solo principios, sin licencia declarada)
