@@ -11,6 +11,14 @@
   "default_interface": "eva",
   "corpora": [
     {
+      "corpus_id": "OTK",
+      "label": "Operator Tacit Knowledge - 65 Owner questions + red-team follow-up each (2026-10-09)",
+      "path": "~/Downloads/EVA_OTK130_Operator_Tacit_Knowledge.md",
+      "expected_count": 130,
+      "priority": 5,
+      "conversation_mode": "SECTION"
+    },
+    {
       "corpus_id": "SF30",
       "label": "Six-Figure First-30-Day Launch Reverse Engineering",
       "path": "~/Downloads/EVA_PRE_200_Six_Figure_First_30_Day_Launch_Reverse_Engineering.md",
