@@ -24,7 +24,12 @@ Metered by the main pane (worker transcript f4f23b86, usage deduplicated by mess
 processed (56,399 out). That is OVER the 1.85M stop by 546,336, and it equals the breaker's figure. Control: the same
 script gives P3a 2,353,284 over 16 calls, matching its receipt exactly.
 
-Open: P2b open point 1 (runner source: worktree or HEAD) must be decided before any send. The AA_GATE verdict needs
-P2b's single job.
+P2b open point 1 (runner source: worktree or HEAD) is decided by the bytes; there is nothing left to choose. The git
+blob hashes of runner_lib.py (254b335c) and match_runner.sh (8a515d34) are identical at HEAD 1f72401, in the work tree,
+and in the copy staged in 211412Z. 211412Z was built with runner_source=worktree and records source_commit 6226c88, a
+commit from before the P2a code was committed. That is a provenance note only: the runner and the payload are
+byte-identical either way.
+
+Open: the AA_GATE verdict needs P2b's single job, which is not funded.
 
 HANDOFF NOTE: P2a done (local half)
