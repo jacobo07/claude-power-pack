@@ -1,0 +1,412 @@
+diff --git a/tools/mission_capsule.py b/tools/mission_capsule.py
+index f560e5c1..28ef8ca8 100644
+--- a/tools/mission_capsule.py
++++ b/tools/mission_capsule.py
+@@ -198,6 +198,18 @@ def seal_mission(cap: dict, sd=None) -> dict:
+             "reasons": reasons, "warnings": comp["warnings"]}
+ 
+ 
++def fault_capsule(goal: str, sid: str, cwd: str, reason: str, *, sd=None, transcript=None,
++                  ask: Optional[Callable] = None, children: Optional[dict] = None, now: Optional[float] = None) -> dict:
++    """R5 Fault Capsule: a bound session that hit a terminal goal refusal, or ended while bound.
++    The same mission capsule (no new format), sealed as a supervisor fallback (degraded): the
++    session's own record is the transcript; the reason is the session's CLAIM and goes in the note."""
++    rec = {"mission_id": f"goal-{goal}-{sid}", "epoch": 1, "owner": {"session_id": sid},
++           "work_dir": cwd, "goal_ref": goal}
++    cap = compile_mission_capsule(rec, origin="supervisor_fallback", note=f"FAULT goal={goal}: {reason}",
++                                  work_dir=cwd, transcript=transcript, ask=ask, children=children, now=now)
++    return seal_mission(cap, sd)
++
++
+ def gate_before_stop(key: str, sd=None, now: Optional[float] = None,
+                      max_age_s: float = ro.RESET_MAX_AGE_S) -> dict:
+     """May the outgoing worker be stopped RIGHT NOW? Exactly rollover.gate on the sealed capsule:
+diff --git a/tools/mission_spend.py b/tools/mission_spend.py
+index 92a32f09..28edb278 100644
+--- a/tools/mission_spend.py
++++ b/tools/mission_spend.py
+@@ -673,6 +673,132 @@ def resolve_binding(event: dict, sid: str) -> dict | None:
+     return _legacy_binding(event, sid, ix)
+ 
+ 
++def _under(cwd: str | None, roots: list[str]) -> bool:
++    if not cwd:
++        return False
++    c = _norm(cwd)
++    return any(c == r or c.startswith(r + os.sep) for r in map(_norm, roots))
++
++
++def _session_autopsy(path: Path, roots: list[str]) -> dict:
++    """Port of gen2/a3b-r/forensics/autopsy.py: calls and processed tokens per unique message id,
++    split by whether the cwd was inside the goal's roots when the call was made."""
++    seen, calls, processed, bound, refusals = set(), 0, 0, 0, 0
++    last_cwd, first_cwd = None, None
++    with open(path, encoding="utf-8", errors="replace") as fh:
++        for line in fh:
++            try:
++                r = json.loads(line)
++            except ValueError:
++                continue
++            if not isinstance(r, dict):
++                continue
++            if r.get("cwd"):
++                last_cwd = r["cwd"]
++                first_cwd = first_cwd or last_cwd
++            m = r.get("message") or {}
++            if not isinstance(m, dict):
++                continue
++            if r.get("type") == "user" and isinstance(m.get("content"), list):
++                for b in m["content"]:
++                    if isinstance(b, dict) and b.get("type") == "tool_result":
++                        txt = json.dumps(b.get("content"))[:400]
++                        if "GOAL BUDGET" in txt or "SESSION BUDGET" in txt:
++                            refusals += 1
++            u = m.get("usage")
++            if not u or m.get("model") == "<synthetic>":
++                continue
++            mid = m.get("id") or r.get("uuid")
++            if mid in seen:
++                continue
++            seen.add(mid)
++            n = sum(int(u.get(k) or 0) for k in _UK)
++            calls += 1
++            processed += n
++            if _under(last_cwd, roots):
++                bound += n
++    return {"calls": calls, "processed": processed, "bound": bound, "pre_bind": processed - bound,
++            "refusals": refusals, "role": "worker" if _under(first_cwd, roots) else "pane"}
++
++
++def _git_facts(root: str | None) -> dict:
++    import shutil
++    import subprocess
++    exe = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
++    if not root or not os.path.isdir(root):
++        return {"root": root, "head": None, "dirty": None}
++
++    def run(*a):
++        try:
++            p = subprocess.run([exe, "-C", root, *a], capture_output=True, text=True, timeout=30)
++            return p.stdout if p.returncode == 0 else None
++        except (OSError, subprocess.SubprocessError):
++            return None
++    head, st = run("rev-parse", "HEAD"), run("status", "--porcelain")
++    return {"root": root, "head": head.strip() if head else None,
++            "dirty": len([x for x in st.splitlines() if x.strip()]) if st is not None else None}
++
++
++def goal_autopsy(goal: str, *, projects: Path | None = None) -> dict:
++    """Deterministic, read-only post-mortem of a goal: per session calls, processed, pre-bind vs bound,
++    refusals, open holds; git HEAD and dirty count of the goal root. Reads the journal WITHOUT the leak
++    sweep (status() appends `leak` rows), so it adds nothing to a spent goal."""
++    ent = read_index().get(goal)
++    if ent is None:
++        return {"ok": False, "goal": goal, "reason": f"UNKNOWN: goal {goal!r} is not declared", "sessions": []}
++    led = _goal_ledger(goal)
++    with led._lock:
++        g = led._gfold(led._read())
++    roots = list(ent.get("roots") or [])
++    sids = sorted({r["sid"] for r in g["res"].values()} | set(g["marks"]))
++    rows = []
++    for sid in sids:
++        holds = sum(1 for r in g["res"].values() if r["sid"] == sid and r["state"] in ("RESERVED", "LEAKED"))
++        try:
++            tx = find_transcript(sid, projects)
++            a = _session_autopsy(tx, roots) if tx else None
++        except OSError:
++            a = None
++        row = {"sid": sid, "transcript": a is not None, "open_holds": holds,
++               **(a or {"calls": 0, "processed": 0, "bound": 0, "pre_bind": 0, "refusals": 0, "role": "unknown"})}
++        rows.append(row)
++    tot = lambda k, role=None: sum(r[k] for r in rows if role is None or r["role"] == role)
++    return {"ok": True, "goal": goal, "cap": g["cap"], "used": g["used"], "sessions": rows,
++            "workers_processed": tot("processed", "worker"), "panes_processed": tot("processed", "pane"),
++            "pre_bind_processed": tot("pre_bind"), "bound_processed": tot("bound"),
++            "git": _git_facts(roots[0] if roots else None)}
++
++
++def autopsy_table(out: dict) -> str:
++    """The incident table as fixed-width text (byte-stable for a given journal and transcripts)."""
++    w = (8, 5, 11, 9, 10, 8)
++
++    def line(cells):
++        return " ".join(str(c).ljust(n) for c, n in zip(cells[:-1], w)) + " " + str(cells[-1]) + "\n"
++    rows = out.get("sessions") or []
++    s = line(("sid", "calls", "processed", "pre_bind", "bound", "refusals", "open_holds"))
++    for r in rows:
++        s += line((r["sid"][:8], r["calls"], f"{r['processed']:,}", f"{r['pre_bind']:,}", f"{r['bound']:,}",
++                   r["refusals"], r["open_holds"]))
++    t = lambda k: sum(r[k] for r in rows)
++    return s + line(("TOTAL", t("calls"), f"{t('processed'):,}", f"{t('pre_bind'):,}", f"{t('bound'):,}",
++                     t("refusals"), t("open_holds")))
++
++
++def goal_fault_capsule(goal: str, sid: str, cwd: str, reason: str, *, sd=None, transcript=None,
++                       ask=None, children=None) -> dict | None:
++    """A bound session's terminal refusal / SessionEnd -> a Fault Capsule through mission_capsule.
++    None for a session whose cwd is outside the goal's roots (unbound sessions leave nothing)."""
++    ent = read_index().get(goal)
++    if ent is None or not _under(cwd, list(ent.get("roots") or [])):
++        return None
++    import mission_capsule as mc
++    if transcript is None:
++        tx = find_transcript(sid)
++        transcript = str(tx) if tx else None
++    return mc.fault_capsule(goal, sid, cwd, reason, sd=sd, transcript=transcript, ask=ask, children=children)
++
++
+ def _main(argv: list[str]) -> int:
+     import argparse
+     import socket
+@@ -727,6 +853,10 @@ def _main(argv: list[str]) -> int:
+     gc.add_argument("--owner", action="store_true")
+     gs = sub.add_parser("goal-status")
+     gs.add_argument("--goal", required=True)
++    ga = sub.add_parser("goal-autopsy")
++    ga.add_argument("--goal", required=True)
++    ga.add_argument("--projects")
++    ga.add_argument("--table", action="store_true")
+     a = ap.parse_args(argv)
+     if a.cmd.startswith("goal-"):
+         if a.cmd == "goal-declare":
+@@ -754,6 +884,10 @@ def _main(argv: list[str]) -> int:
+                 print(json.dumps({"ok": False, "goal": a.goal, "reason": "not confirmed"}))
+                 return 3
+             out = goal_correct(a.goal, a.session, a.measured, a.reason, "owner-tty")
++        elif a.cmd == "goal-autopsy":
++            out = goal_autopsy(a.goal, projects=Path(a.projects) if a.projects else None)
++            if a.table and out.get("ok"):
++                print(autopsy_table(out), end="")
+         elif a.cmd == "goal-renew":
+             out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
+         elif a.cmd == "goal-spawn":
+diff --git a/tools/test_goal_autopsy.py b/tools/test_goal_autopsy.py
+new file mode 100644
+index 00000000..6e6362b1
+--- /dev/null
++++ b/tools/test_goal_autopsy.py
+@@ -0,0 +1,224 @@
++#!/usr/bin/env python3
++"""V-GOAL-AUTOPSY-* gates (R5): goal-autopsy is read-only and reproduces the ce-a3b incident table;
++a bound session's terminal refusal / SessionEnd leaves a Fault Capsule.
++
++    python tools/test_goal_autopsy.py
++"""
++from __future__ import annotations
++
++import json
++import os
++import shutil
++import socket
++import sys
++import tempfile
++from pathlib import Path
++
++HERE = Path(__file__).resolve().parent
++PP = HERE.parent
++sys.path.insert(0, str(HERE))
++sys.path.insert(0, str(PP))
++import mission_spend as ms  # noqa: E402
++
++HOST = socket.gethostname()
++passes = fails = 0
++
++# card section 1 (vault/plans/ce-a3b-recovery-2026-10-08.md): sid, calls, processed, pre-bind, pre-bind calls, refusals
++INCIDENT = (
++    ("116de5ca", 10, 1_160_335, 0, 0, 0),
++    ("2494f14c", 29, 3_993_419, 629_367, 5, 2),
++    ("9437261e", 4, 435_148, 0, 0, 1),
++    ("f538b230", 8, 1_077_180, 797_740, 2, 1),
++)
++EXPECTED_TABLE = (
++    "sid      calls processed   pre_bind  bound      refusals open_holds\n"
++    "116de5ca 10    1,160,335   0         1,160,335  0        1\n"
++    "2494f14c 29    3,993,419   629,367   3,364,052  2        0\n"
++    "9437261e 4     435,148     0         435,148    1        1\n"
++    "f538b230 8     1,077,180   797,740   279,440    1        0\n"
++    "TOTAL    51    6,666,082   1,427,107 5,238,975  4        2\n"
++)
++
++
++def check(gate, cond, ev):
++    global passes, fails
++    if cond:
++        passes += 1
++        print(f"PASS {gate}: {ev}")
++    else:
++        fails += 1
++        print(f"FAIL {gate}: {ev}")
++
++
++class Env:
++    def __init__(self):
++        self.root = Path(tempfile.mkdtemp(prefix="autopsy_"))
++        self.state = self.root / "state"
++        self.state.mkdir()
++        self.goalroot = self.root / "goalroot"
++        self.goalroot.mkdir()
++        self.outside = self.root / "outside"
++        self.outside.mkdir()
++        self.saved = {k: os.environ.get(k) for k in ("GSD_LONG_RUN_STATE_DIR", "CLAUDECODE", "CPP_GOAL")}
++        os.environ["GSD_LONG_RUN_STATE_DIR"] = str(self.state)
++        os.environ.pop("CLAUDECODE", None)
++        os.environ.pop("CPP_GOAL", None)
++
++    def close(self):
++        for k, v in self.saved.items():
++            if v is None:
++                os.environ.pop(k, None)
++            else:
++                os.environ[k] = v
++        shutil.rmtree(self.root, ignore_errors=True)
++
++
++def _row(mid, n, cwd, ts):
++    u = {"input_tokens": n, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "output_tokens": 0}
++    return json.dumps({"type": "assistant", "timestamp": ts, "uuid": "u-" + mid, "cwd": str(cwd),
++                       "message": {"id": mid, "model": "claude-opus-5-5", "usage": u,
++                                   "content": [{"type": "text", "text": "x"}]}}) + "\n"
++
++
++def _refusal(i, cwd, ts):
++    return json.dumps({"type": "user", "timestamp": ts, "uuid": f"r{i}", "cwd": str(cwd), "message": {
++        "role": "user", "content": [{"type": "tool_result", "tool_use_id": f"t{i}",
++                                     "content": "GOAL BUDGET (g) -- budget_spent"}]}}) + "\n"
++
++
++def write_session(path, sid, calls, total, pre, pre_calls, refusals, inside, outside):
++    parts, ts = [], 0
++    nb = calls - pre_calls
++    for i in range(calls):
++        if i < pre_calls:
++            n, cwd = pre // pre_calls, outside
++            if i == pre_calls - 1:
++                n = pre - (pre // pre_calls) * (pre_calls - 1)
++        else:
++            k = i - pre_calls
++            n, cwd = (total - pre) // nb, inside
++            if k == nb - 1:
++                n = (total - pre) - ((total - pre) // nb) * (nb - 1)
++        ts += 1
++        parts.append(_row(f"{sid}-{i}", n, cwd, f"2099-01-01T00:{ts:02d}:00.000Z"))
++    for j in range(refusals):
++        parts.append(_refusal(j, inside, f"2099-01-01T01:{j:02d}:00.000Z"))
++    path.write_text("".join(parts), encoding="utf-8")
++
++
++def build_incident(e):
++    ms.goal_declare("g", 50_000_000, "test", [str(e.goalroot)], None, 1, owner=True)
++    proj = e.root / "projects" / "p"
++    proj.mkdir(parents=True)
++    for sid, calls, total, pre, pre_calls, refusals in INCIDENT:
++        write_session(proj / f"{sid}.jsonl", sid, calls, total, pre, pre_calls, refusals, e.goalroot, e.outside)
++    for sid in ("116de5ca", "9437261e"):          # the two workers keep an open lease; the panes settled
++        ms.goal_renew("g", sid, 0, 1000, HOST)
++    for sid in ("2494f14c", "f538b230"):
++        ms.goal_renew("g", sid, 0, 1000, HOST)
++        ms.goal_renew("g", sid, 1, 1000, HOST)    # renew settles + re-leases; close it by settling explicitly
++    led = ms._goal_ledger("g")
++    with led._lock:
++        recs = led._read()
++        g = led._gfold(recs)
++        for sid in ("2494f14c", "f538b230"):
++            closes = sorted(r for r, v in g["res"].items() if v["sid"] == sid and v["state"] in ("RESERVED", "LEAKED"))
++            led._append(recs, {"op": "settle", "sid": sid, "measured": 5, "closes": closes})
++    return e.root / "projects"
++
++
++def _autopsy(*a, **k):
++    try:
++        return ms.goal_autopsy(*a, **k)
++    except AttributeError:
++        return {"ok": False, "reason": "goal_autopsy is not implemented", "sessions": []}
++
++
++def _table(out):
++    try:
++        return ms.autopsy_table(out)
++    except AttributeError:
++        return ""
++
++
++def g_autopsy():
++    e = Env()
++    try:
++        projects = build_incident(e)
++        jr = ms._goal_ledger("g").journal
++        before = jr.read_bytes()
++        # (a) inspectable from an UNBOUND session (cwd outside every root), zero rows added
++        os.chdir(e.outside)
++        out = _autopsy("g", projects=projects)
++        check("V-GOAL-AUTOPSY-READONLY", jr.read_bytes() == before and out.get("ok", False),
++              f"autopsy ok={out.get('ok')} journal bytes unchanged ({len(before)})")
++        # control: the same call on an undeclared goal is refused (not an empty success)
++        bad = _autopsy("nope", projects=projects)
++        check("V-GOAL-AUTOPSY-UNDECLARED", not bad.get("ok", False), f"undeclared goal -> {bad.get('reason', '')[:50]}")
++        # (c) the incident table, byte-identical
++        tbl = _table(out)
++        check("V-GOAL-AUTOPSY-INCIDENT", tbl == EXPECTED_TABLE, "incident table byte-identical" if tbl == EXPECTED_TABLE
++              else "table differs:\n" + tbl)
++        check("V-GOAL-AUTOPSY-SPLIT", out.get("workers_processed") == 1_595_483 and out.get("panes_processed") == 5_070_599
++              and out.get("pre_bind_processed") == 1_427_107,
++              f"workers {out.get('workers_processed')} panes {out.get('panes_processed')} retro {out.get('pre_bind_processed')}")
++        check("V-GOAL-AUTOPSY-GIT", isinstance(out.get("git"), dict) and {"head", "dirty"} <= set(out["git"]),
++              f"git {out.get('git')}")
++        # deterministic: two runs, identical text
++        check("V-GOAL-AUTOPSY-DETERMINISTIC", _table(_autopsy("g", projects=projects)) == tbl and tbl != "", "second run identical")
++    finally:
++        os.chdir(PP)
++        e.close()
++
++
++def _fault(*a, **k):
++    try:
++        return ms.goal_fault_capsule(*a, **k)
++    except AttributeError:
++        return {"verdict": "NOT_IMPLEMENTED"}
++
++
++def g_fault():
++    e = Env()
++    try:
++        build_incident(e)
++        sd = e.root / "rollover"
++        tx = e.root / "projects" / "p" / "9437261e.jsonl"
++        kw = dict(sd=sd, transcript=str(tx), ask=lambda wd, ws: (None, "test"),
++                  children={"verdict": "NONE", "pending": [], "unconsumed": []})
++        # (b) a killed bound worker (SessionEnd while bound) leaves a capsule
++        r = _fault("g", "9437261e", str(e.goalroot), "SessionEnd", **kw)
++        files = [p for p in sd.rglob("*") if p.is_file() and "9437261e" in (p.name + p.read_text(errors="replace"))] \
++            if sd.exists() else []
++        check("V-GOAL-AUTOPSY-FAULT-SESSIONEND", bool(r) and r.get("key") and bool(files),
++              f"bound SessionEnd -> key {r and r.get('key')} files {len(files)}")
++        # a terminal goal refusal writes one too, with the reason in the note
++        r2 = _fault("g", "116de5ca", str(e.goalroot), "refused: budget_spent", **kw)
++        check("V-GOAL-AUTOPSY-FAULT-REFUSAL", bool(r2) and r2.get("key") and r2.get("key") != (r or {}).get("key"),
++              f"bound refusal -> key {r2 and r2.get('key')}")
++        # control: an UNBOUND session (cwd outside every root) leaves nothing
++        n = len(list(sd.rglob("*")))
++        r3 = _fault("g", "f538b230", str(e.outside), "SessionEnd", **kw)
++        check("V-GOAL-AUTOPSY-FAULT-UNBOUND", r3 is None and len(list(sd.rglob("*"))) == n,
++              f"unbound -> {r3}, files {n} -> {len(list(sd.rglob('*')))}")
++        # no new capsule format: it is a mission capsule (kind mission, rollover-capsule-v2)
++        cap = next((json.loads(p.read_text()) for p in sd.rglob("*.json")
++                    if '"rollover-capsule-v2"' in p.read_text(errors="replace")), {})
++        check("V-GOAL-AUTOPSY-FAULT-FORMAT", cap.get("kind") == "mission" and cap.get("schema") == "rollover-capsule-v2",
++              f"kind {cap.get('kind')} schema {cap.get('schema')}")
++    finally:
++        e.close()
++
++
++def main():
++    for g in (g_autopsy, g_fault):
++        try:
++            g()
++        except Exception as ex:
++            check(f"V-GOAL-AUTOPSY-{g.__name__}", False, f"crashed: {type(ex).__name__}: {ex}")
++    print(f"AUTOPSY_PASS={passes}/{passes + fails}")
++    return 0 if fails == 0 else 1
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())

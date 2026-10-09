@@ -1,0 +1,13 @@
+diff --git a/hooks/session_budget_guard.js b/hooks/session_budget_guard.js
+index 2d2efd33..7bb53619 100644
+--- a/hooks/session_budget_guard.js
++++ b/hooks/session_budget_guard.js
+@@ -209,7 +209,7 @@ function goalBinding(event, sid) {
+ // mission_spend.py, then goal-status --goal <id>, then nothing. A substring match (audit gap 4) and
+ // an unanchored token match (review H2: `python heavy_job.py --tag mission_spend.py goal-status`)
+ // both let another program run unjudged.
+-const GOAL_STATUS_ONLY = /^\s*(?:&\s*)?(?:(['"])(?:[^'"]*[\\/])?(?:python3?|py)(?:\.exe)?\1|(?:[^\s'"]*[\\/])?(?:python3?|py)(?:\.exe)?)\s+(['"]?)(?:[^\s'"]*[\\/])?mission_spend\.py\2\s+goal-status\s+--goal\s+[A-Za-z0-9._-]+\s*$/i;
++const GOAL_STATUS_ONLY = /^\s*(?:&\s*)?(?:(['"])(?:[^'"]*[\\/])?(?:python3?|py)(?:\.exe)?\1|(?:[^\s'"]*[\\/])?(?:python3?|py)(?:\.exe)?)\s+(['"]?)(?:[^\s'"]*[\\/])?mission_spend\.py\2\s+goal-(?:status|autopsy)\s+--goal\s+[A-Za-z0-9._-]+\s*$/i;
+ function goalExempt(cmd) {
+   return GOAL_STATUS_ONLY.test(String(cmd));
+ }
