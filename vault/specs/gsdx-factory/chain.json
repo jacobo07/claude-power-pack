@@ -32,7 +32,12 @@
    "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-DOCTRINE.json",
    "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-DOCTRINE.json",
    "after": "PLAN-1",
-   "wait": []
+   "wait": [],
+   "accept": [
+    "DONE",
+    "DONE_WITH_LIMITS"
+   ],
+   "accept_note": "coordinator 2026-10-09: gate test_wu_doctrine.py re-run rc 0 (41 rows); limits are scope notes (cluster-level probes), not unfinished work"
   },
   {
    "id": "W3",
