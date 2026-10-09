@@ -7,7 +7,10 @@ Rule: a coordinator NEVER Set-Locations into a goal root; use `git -C`, absolute
 
 State: R0 / A-G1 DONE. Tool+test 0573e610; obligations+dispositions f923c24a; receipt
 `vault/specs/gsdx-factory.RECEIPT-AG1.json`. dispose --check rc=0 (22 disposed, 0 undisposed, 5 UNKNOWN), DISPOSE_PASS=17/17,
-canary A1/B1 PASS. Pending coordinator steps: settle sid 6305f97c at 3,276,310 + close its lease (old goal); mark m-fa18e2b8b44d terminal.
+canary A1/B1 PASS. Coordinator steps done: sid 6305f97c settled at 3,276,310 on old goal (leaked 839,065 lease closed);
+m-fa18e2b8b44d under OWNER HOLD pointing at the receipt (gsd_mission has no terminal verb). Side effect for S1: `goal-renew
+--per-call 0` falls back to the 150,000 default, so the refused renew booked a phantom `final` hold for the dead sid
+(gsdx-factory:6305f97c...:6). No release op exists; old goal reads used 14,020,691 of which ~10.4M is misattributed.
 
 Next: S4 (slim-tier dominator probe, 0.3M) -> S1 (steward: settle stopped sids, ledger correction, salvage) -> S2/S3 -> L1.
 A-G2..A-G5 are recompiled from L1 + S4, never re-armed from stale packets. Coherence anchor: `git log` here at or after f923c24a.
