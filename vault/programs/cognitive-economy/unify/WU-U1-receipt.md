@@ -1,6 +1,6 @@
-﻿# WU-U1 receipt
+# WU-U1 receipt
 Status: DONE
-Commit (docs): 7ff77d95
+Commit (docs): 91aa46d2
 Files: unify/obligation-ledger.md, unify/incident-ce-lifecycle-v2-overrun.md, vault/plans/ce-unify-final-plan-2026-10-09.md
 Dataset sha256 verified = A15765B5...87B1 (2 Read calls).
 Ledger (50 rows): ALREADY-DONE=2, EXTEND=19, OWNED=16, REJECT=7, UNKNOWN=6.
