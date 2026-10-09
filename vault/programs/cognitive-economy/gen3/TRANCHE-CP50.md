@@ -9,6 +9,10 @@ Correction, same day: the successor stage that WU-5 described is WU-ADV(2), and 
 Measured 13:15: goal ce-lifecycle-v3 remaining 2,934,095, open 396,885. WU-S3 epoch 1 (m-4ace4480521c) HALTED at 975,091
 against its 950,000 stop. It was renewed by the chain as m-a1a658f26a16 (PREPARED), with one live writer, the sweep.
 CP50 is therefore blocked on S2-S5 and then on S6 funding (the plan's option B), not on any action this pane can take.
+2026-10-09 Owner "autorizo" to the question "ampliar el goal ce-lifecycle-v3 hasta unos 8,5M en total": cap 4,295,976 ->
+8,500,000 (+4,204,024). The raise needs `goal-declare --owner`, which asks for the goal id on an interactive terminal, so
+the Owner types it. Caveat stated to the Owner: the plan's own option B reads as an EXTENSION of ~8.5M (S1-S7 ~4.2M + S6
+~5.5M). At an 8.5M total, S6 may still end in WAITING_FOR_AUTHORITY, now with an EAC from the corrected estimator.
 
 ## Authority
 - 2026-10-08 Owner "y y": fund the tranche, ~4.2M expected, 5.0M ceiling (R1 REFORECAST).
