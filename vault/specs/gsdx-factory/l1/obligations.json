@@ -1,0 +1,4912 @@
+{
+ "expect": [
+  "S-preamble",
+  "S-mission-execution-mode",
+  "S-primary-execution-environment",
+  "S-one-mission-law",
+  "S-mandatory-owner-approval-exactly-once",
+  "S-mandatory-token-budget-in-the-inline-plan",
+  "S-token-budget-is-an-economic-control-not-a-normal-stop-condit",
+  "S-economic-plan-requirements",
+  "S-source-of-truth-ingestion",
+  "S-iteration-file",
+  "S-no-implementation-code-in-this-prompt",
+  "S-context-first-reality-first-law",
+  "S-no-parallel-cathedrals",
+  "S-the-three-mutually-reinforcing-outputs",
+  "S-master-north-star",
+  "S-ultimate-economic-law",
+  "S-known-work-novel-work-law",
+  "S-autonomous-optimization-capability",
+  "S-autonomous-optimization-flow",
+  "S-opportunity-delegation-must-become-software",
+  "S-kme-l-canonical-first-incident",
+  "S-zero-rescan-target",
+  "S-kme-l-must-generalize",
+  "S-gsd-x-reconstruction-factory",
+  "S-reconstruction-is-not-function-by-function-work",
+  "S-minimum-intervention-before-full-reconstruction",
+  "S-source-ownership-levels",
+  "S-mission-compilation",
+  "S-mission-compiler-passes",
+  "S-execution-equivalence-strategy-space",
+  "S-cognitive-economic-kernel",
+  "S-dynamic-resource-value",
+  "S-cognitive-capex-vs-opex",
+  "S-capability-p-l-break-even",
+  "S-reasoning-debt",
+  "S-decision-extinction",
+  "S-model-boundary-accounting",
+  "S-semantic-boundary-budget",
+  "S-model-as-novelty-interrupt-handler",
+  "S-zero-model-regions",
+  "S-forward-oracle-inversion",
+  "S-circularity-firewall",
+  "S-kobimapengine-reconstruction",
+  "S-kme-forward-inverse-lab",
+  "S-ksr-wii-reconstruction",
+  "S-wii-software-genome",
+  "S-cross-title-homology",
+  "S-compiler-behavior-inversion-atlas",
+  "S-global-type-structural-solving",
+  "S-uncertainty-graph",
+  "S-semantic-dominators-cut-sets",
+  "S-constraint-avalanches",
+  "S-population-collapse",
+  "S-minimum-source-cut-minimum-intervention",
+  "S-static-dynamic-reconstruction",
+  "S-active-experiment-design",
+  "S-oracle-ladder",
+  "S-read-once-reason-once-prove-once-observe-once",
+  "S-cognitive-virtual-memory",
+  "S-context-economics",
+  "S-semantic-gc",
+  "S-fresh-epoch-economics",
+  "S-zero-transcript-continuation",
+  "S-parentless-execution",
+  "S-agent-teams-mode",
+  "S-semantic-agent-output",
+  "S-cognitive-singleflight",
+  "S-content-addressed-derivations",
+  "S-proof-build-system",
+  "S-verification-discriminative-power",
+  "S-proof-hierarchy",
+  "S-proof-escrow",
+  "S-critical-path-wall-clock-compression",
+  "S-serial-novelty-depth",
+  "S-queueing-backpressure",
+  "S-resource-lane-separation",
+  "S-speculative-preparation",
+  "S-factory-self-evolution",
+  "S-automation-opportunity-miner",
+  "S-factory-generations",
+  "S-cbr-reconstruction-birth",
+  "S-causal-applicability",
+  "S-reconstruction-construction-return",
+  "S-double-ratchet",
+  "S-baseline-distance-hot-rejuvenation",
+  "S-reconstruction-as-gsd-x-stress-test",
+  "S-production-reality-gate",
+  "S-vmax-null-error",
+  "S-bug-failure-knowledge-contract",
+  "S-failure-to-prevention",
+  "S-constitutive-baseline-ratchet",
+  "S-baseline-of-completeness",
+  "S-instruction-compile-out",
+  "S-opportunity-delegation-principle",
+  "S-delegation-principle",
+  "S-agent-teams",
+  "S-self-prompting-continuation-loop",
+  "S-no-idle-model",
+  "S-micro-commit-law",
+  "S-shared-workspace-safety",
+  "S-token-economic-self-hosting",
+  "S-cognitive-learning-curve",
+  "S-autonomous-optimization-benchmark",
+  "S-reconstruction-benchmark",
+  "S-kme-benchmark",
+  "S-ksr-34k-benchmark",
+  "S-cross-title-transfer-benchmark",
+  "S-cbr-inheritance-benchmark",
+  "S-fresh-worker-benchmark",
+  "S-100x-estate-scaling-test",
+  "S-autonomous-factory-optimization-must-discover-something-new",
+  "S-anti-goodhart",
+  "S-pareto-selection",
+  "S-infrastructure-natural-selection",
+  "S-realized-dividend",
+  "S-master-scoreboard",
+  "S-progress-liveness",
+  "S-cognitive-bankruptcy",
+  "S-no-identical-retry",
+  "S-videos",
+  "S-master-done-gate",
+  "S-mandatory-final-red-team",
+  "S-session-mission-close-meta-analysis",
+  "S-final-handoff-contract",
+  "S-final-constitutional-laws",
+  "S-ultimate-target",
+  "S-preamble-2",
+  "S-primary-mission",
+  "S-north-star",
+  "S-constitutional-economic-law",
+  "S-asymptotic-law",
+  "S-mission-mode",
+  "S-first-response-contract",
+  "S-no-implementation-code",
+  "S-source-of-truth",
+  "S-current-reported-economic-reality",
+  "S-previously-identified-target-bands",
+  "S-program-authority",
+  "S-hard-stop-law",
+  "S-scope-preservation",
+  "S-ksr-full-corpus-scope",
+  "S-pre-arm-concurrency-check",
+  "S-global-ownership-reconciliation",
+  "S-do-not-create-another-mega-system",
+  "S-cognitive-economics-optimization-stack",
+  "S-a0-semantic-partial-evaluation",
+  "S-proof-of-non-work",
+  "S-mission-ir",
+  "S-mission-compiler",
+  "S-a1-model-boundary-admission",
+  "S-semantic-interrupt-model",
+  "S-a2-physical-call-compression",
+  "S-new-required-metric",
+  "S-a3-control-plane-cognitive-tax",
+  "S-no-giant-coordinator",
+  "S-a4-context-rent-extinction",
+  "S-fresh-focus-floor",
+  "S-gex44-advantage",
+  "S-contextimage",
+  "S-context-rent-metrics",
+  "S-semantic-epoch-rotation",
+  "S-rotation-economics",
+  "S-a5-read-extinction",
+  "S-a6-transport-extinction",
+  "S-zero-copy-cognition",
+  "S-a7-proof-compiler",
+  "S-proof-reuse",
+  "S-proof-receipts",
+  "S-a8-parentless-execution",
+  "S-a9-zero-hot-waiting",
+  "S-a10-actual-predecessor-dependent-admission",
+  "S-a11-dynamic-reforecast",
+  "S-a12-progress-spend-tripwire",
+  "S-a13-checkpoint-proof-reserve",
+  "S-a14-cognitive-capex-vs-opex",
+  "S-a15-known-work-cognitive-tax",
+  "S-a16-reasoning-debt",
+  "S-capability-break-even",
+  "S-a17-cognitive-pgo",
+  "S-a18-economic-scoreboard",
+  "S-mission-a-minimum-done-gate",
+  "S-do-not-overoptimize-before-productive-work",
+  "S-optimization-moratorium",
+  "S-b0-d2a-reality-owner-scan",
+  "S-b1-recompute-work-graph",
+  "S-no-silent-scope-loss",
+  "S-b2-new-bottom-up-reforecast",
+  "S-target-bands",
+  "S-no-320m-normal-ceiling",
+  "S-b3-autonomous-optimization-workstream",
+  "S-kme-l-correction",
+  "S-negative-roi-is-a-valid-result",
+  "S-b4-reconstruction-factory",
+  "S-reconstruction-factory-law",
+  "S-factory-economic-unit",
+  "S-function-inventory-is-not-cognitive-inventory",
+  "S-family-amortization",
+  "S-b5-context-economics-for-reconstruction",
+  "S-b6-proof-economics",
+  "S-b7-cbr",
+  "S-cbr-reconstruction-double-ratchet",
+  "S-construction-return",
+  "S-b8-verification",
+  "S-red-team",
+  "S-b9-coordination",
+  "S-coordination-is-not-product-work",
+  "S-b10-knowledge-return",
+  "S-ukdl-vault-cost-target",
+  "S-b11-contingency",
+  "S-global-economic-tripwires",
+  "S-wave-economics",
+  "S-mission-must-get-cheaper-while-running",
+  "S-cost-of-novelty",
+  "S-institutional-novelty-concentration",
+  "S-cognitive-capitalization-rate",
+  "S-capability-maturity",
+  "S-cbr-pareto-safety",
+  "S-anti-goodhart-2",
+  "S-agent-teams-mode-2",
+  "S-loops",
+  "S-uwcp",
+  "S-gex44-resource-economics",
+  "S-parallelism",
+  "S-delegation-principle-2",
+  "S-opportunity-delegation-principle-2",
+  "S-concurrent-writers",
+  "S-micro-commits",
+  "S-iteration",
+  "S-knowledge-vault",
+  "S-ukdl",
+  "S-constitutive-baseline-ratchet-2",
+  "S-cbr-must-change-future-execution",
+  "S-production-reality-gate-2",
+  "S-kernel-vmax-null-error",
+  "S-active-reality-contract",
+  "S-mission-a-canaries",
+  "S-mission-b-canaries",
+  "S-economic-master-done-gate",
+  "S-mission-a-master-done-gate",
+  "S-mission-b-master-done-gate",
+  "S-budget-master-done-gate",
+  "S-self-hosting",
+  "S-self-hosting-tripwire",
+  "S-handoff-contract",
+  "S-video-image-contract",
+  "S-final-constitutional-laws-2",
+  "S-first-response-now",
+  "S-after-the-single-approval",
+  "S-preamble-3",
+  "S-primary-mission-2",
+  "S-source-datasets",
+  "S-dataset-completeness-contract",
+  "S-current-reported-reality",
+  "S-previous-owner-authority",
+  "S-gex44-execution-requirement",
+  "S-mode",
+  "S-first-response-contract-2",
+  "S-no-implementation-code-in-plan",
+  "S-constitutional-north-star",
+  "S-universal-cognitive-cost-collapse",
+  "S-conservation-law-of-cognitive-work",
+  "S-minimum-total-verified-cost",
+  "S-models-are-interrupt-handlers",
+  "S-autonomous-mission-stewardship",
+  "S-mission-continuity-law",
+  "S-a-worker-stop-is-not-a-mission-stop",
+  "S-mission-steward",
+  "S-healthy-mission-with-zero-active-model",
+  "S-mission-continuation-compiler",
+  "S-continuation-object",
+  "S-history-independence",
+  "S-control-plane-liveness",
+  "S-mission-deadlock-detection",
+  "S-forgotten-mission-detection",
+  "S-current-a-g1-genesis-canary",
+  "S-a-g1-residual-law",
+  "S-automatic-tier-descent",
+  "S-economic-self-healing-canary",
+  "S-economic-immunity-canary",
+  "S-economic-compounding-canary",
+  "S-fresh-process-capital-inheritance",
+  "S-autonomous-reservation-reconciliation",
+  "S-program-authority-vs-process-lease",
+  "S-autonomous-budget-recompilation",
+  "S-semantic-boundary-budget-2",
+  "S-multidimensional-economic-leases",
+  "S-cognitive-purchase-order",
+  "S-cognitive-receipt",
+  "S-call-legitimacy",
+  "S-legitimate-cognition-ratio",
+  "S-cognitive-fault-accounting",
+  "S-cognitive-waste-ledger",
+  "S-autonomous-optimization-market",
+  "S-self-optimization-has-no-special-privilege",
+  "S-capability-break-even-2",
+  "S-optimization-moratorium-2",
+  "S-champion-challenger",
+  "S-automatic-deopt",
+  "S-offline-cognitive-counterfactual-lab",
+  "S-cognitive-regret",
+  "S-learned-cost-model",
+  "S-learned-worker-tiering",
+  "S-learned-context-allocation",
+  "S-learned-epoch-lifetime",
+  "S-semantic-locality",
+  "S-context-is-compiled",
+  "S-context-abi",
+  "S-cognitive-memory-hierarchy",
+  "S-semantic-derivation-cache",
+  "S-estate-wide-singleflight",
+  "S-read-once-reason-once-prove-once-observe-once-2",
+  "S-semantic-garbage-collection",
+  "S-work-unit-garbage-collection",
+  "S-incremental-mission-recompilation",
+  "S-cognitive-mvcc",
+  "S-frontier-changed",
+  "S-automatic-work-unit-fission",
+  "S-automatic-work-unit-fusion",
+  "S-cognitive-preemption",
+  "S-dynamic-shadow-prices",
+  "S-cognitive-exchange",
+  "S-cognitive-roofline",
+  "S-automatic-amdahl-reprofiling",
+  "S-cognitive-superoptimization",
+  "S-mission-e-graph",
+  "S-cognitive-jit",
+  "S-hot-reasoning-compilation",
+  "S-decision-inlining",
+  "S-dead-decision-elimination",
+  "S-common-cognitive-subexpression-elimination",
+  "S-batch-vectorize-homologous-work",
+  "S-proof-compiler",
+  "S-proof-portfolio",
+  "S-dynamic-assurance",
+  "S-proof-insurance",
+  "S-proof-contribution-attribution",
+  "S-proof-singleflight",
+  "S-constitutive-baseline-ratchet-3",
+  "S-constitutive-baseline-pruner",
+  "S-constitutional-compression",
+  "S-compiled-constitution",
+  "S-trigger-compilation",
+  "S-cognitive-boot-compiler",
+  "S-boot-cost-slo",
+  "S-institutional-cognitive-deflation",
+  "S-cognitive-inflation-alarm",
+  "S-institutional-lto",
+  "S-institutional-partial-evaluation",
+  "S-nested-compilation",
+  "S-no-inheritance-of-prose-by-default",
+  "S-zero-transcript-dependency",
+  "S-zero-session-identity-as-architectural-target",
+  "S-zero-pane-architecture",
+  "S-zero-prompt-architecture-for-mature-work",
+  "S-autonomous-economic-scientific-loop",
+  "S-persist-on-goal-pivot-on-economics",
+  "S-two-speed-runtime",
+  "S-evolution-loop-is-event-driven",
+  "S-optimization-candidate-lifecycle",
+  "S-separate-invention-from-deployment-authority",
+  "S-proof-carrying-optimization",
+  "S-economic-chaos-mutation",
+  "S-layer-specific-circuit-breakers",
+  "S-call-explosion-breaker",
+  "S-coordination-breaker",
+  "S-rediscovery-breaker",
+  "S-capability-miss-breaker",
+  "S-cognitive-priority-inversion",
+  "S-cognitive-qos",
+  "S-human-attention-economics",
+  "S-owner-interaction-compiler",
+  "S-autonomous-continuity-rate",
+  "S-human-dependency-half-life",
+  "S-recovery-economics",
+  "S-automatic-forget-safety",
+  "S-process-rotation",
+  "S-process-churn",
+  "S-exactly-once-semantic-continuation",
+  "S-control-plane-restart",
+  "S-machine-restart-canary",
+  "S-cross-machine-continuation",
+  "S-cognitive-process-scheduler",
+  "S-cognitive-capital-allocation",
+  "S-uncertainty-economics",
+  "S-uncertainty-dominators",
+  "S-knowledge-fan-out",
+  "S-frontier-cognition-portfolio",
+  "S-cognitive-capex-vs-opex-2",
+  "S-capability-p-l",
+  "S-capability-depreciation-retirement",
+  "S-architectural-simplicity-pressure",
+  "S-autonomous-simplification-pass",
+  "S-cognitive-thermodynamics",
+  "S-verified-novelty-yield",
+  "S-known-work-cognitive-tax",
+  "S-institutional-cognitive-deflation-2",
+  "S-decision-extinction-velocity",
+  "S-cognitive-capital-turnover",
+  "S-reasoning-half-life",
+  "S-baseline-surface-deflation",
+  "S-architecture-payback-ratio",
+  "S-production-economic-reality",
+  "S-economic-provenance",
+  "S-economic-truth-lattice",
+  "S-mission-a-objective-rewrite",
+  "S-a-g2-through-a-g5-recompilation",
+  "S-mission-a-economic-done-gate",
+  "S-cognitive-economics-completion-contract",
+  "S-economic-regression-ci",
+  "S-economic-contracts-for-mature-capabilities",
+  "S-reconstruction-factory-mission-c",
+  "S-reconstruction-dataset-exhaustive-compilation",
+  "S-reconstruction-law",
+  "S-reconstruction-work-extinction-funnel",
+  "S-reconstruction-cognitive-inventory",
+  "S-family-amortization-2",
+  "S-reconstruction-contextimages",
+  "S-frontier-reasoning-compiler",
+  "S-compiler-diff-healthy-loop",
+  "S-batch-cognition",
+  "S-global-type-economics",
+  "S-compiler-behavior-economics",
+  "S-cognitive-pgo",
+  "S-reconstruction-hot-path-compilation",
+  "S-zero-reasoning-regions",
+  "S-reconstruction-economic-learning-curve",
+  "S-campaign-p-l",
+  "S-cbr-reconstruction-double-ratchet-2",
+  "S-construction-return-2",
+  "S-cross-project-transfer-canary",
+  "S-reverse-transfer-canary",
+  "S-full-wsr-scope",
+  "S-gex44-resource-reality",
+  "S-parallelism-2",
+  "S-agent-teams-mode-3",
+  "S-loops-2",
+  "S-uwcp-2",
+  "S-progress-liveness-2",
+  "S-progress-spend-tripwire",
+  "S-dynamic-reforecast",
+  "S-hard-stop-law-2",
+  "S-checkpoint-proof-reserve",
+  "S-cognitive-priority-and-delay",
+  "S-value-of-information",
+  "S-real-options",
+  "S-stop-loss",
+  "S-speculation-p-l",
+  "S-economic-health-states",
+  "S-automatic-economic-incident-response",
+  "S-economic-immunity",
+  "S-sibling-immunization",
+  "S-estate-immunization",
+  "S-hot-rejuvenation",
+  "S-production-loop-vs-evolution-loop",
+  "S-meta-cognition-budget",
+  "S-simplicity-premium",
+  "S-capability-sunset",
+  "S-continuous-baseline-gardening",
+  "S-production-reality-gate-3",
+  "S-kernel-vmax-null-error-2",
+  "S-active-reality-contract-2",
+  "S-knowledge-vault-2",
+  "S-ukdl-2",
+  "S-process-rule",
+  "S-traps",
+  "S-cognitive-ci",
+  "S-constitutive-baseline-ratchet-4",
+  "S-baseline-completion-law",
+  "S-delegation-principle-3",
+  "S-opportunity-delegation-principle-3",
+  "S-concurrent-writers-2",
+  "S-micro-commits-2",
+  "S-iteration-2",
+  "S-first-response-required-reality-scan",
+  "S-first-response-master-plan",
+  "S-master-plan-must-explicitly-answer",
+  "S-owner-approval-contract",
+  "S-after-approval-bootstrap-order",
+  "S-do-not-wait-for-every-theoretical-optimization",
+  "S-program-authority-behavior",
+  "S-master-done-gate-2",
+  "S-economic-master-done-gate-2",
+  "S-baseline-deflation-done-gate",
+  "S-self-hosting-done-gate",
+  "S-handoff-contract-2",
+  "S-video-image-contract-2",
+  "S-final-constitutional-laws-3",
+  "S-first-response-now-2",
+  "S-preamble-4",
+  "S-master-mission",
+  "S-scope-boundary",
+  "S-current-reported-reality-2",
+  "S-s1-economic-incident",
+  "S-s2-reported-purpose",
+  "S-s3-reported-purpose",
+  "S-l1-reported-purpose",
+  "S-part-a-reported-state",
+  "S-part-b-reported-scope",
+  "S-historical-remaining-cost-references",
+  "S-gex44-execution-requirement-2",
+  "S-uwcp-3",
+  "S-first-response-contract-3",
+  "S-owner-authority-contract",
+  "S-token-budget-mandatory-in-first-plan",
+  "S-no-blind-100m-authorization",
+  "S-autonomous-authority-recompilation",
+  "S-phase-0-current-reality",
+  "S-phase-1-close-s1-at-minimum-cognitive-cost",
+  "S-s1-durability",
+  "S-certified-closeout-transaction",
+  "S-phase-2-s2-call-unit-truth",
+  "S-call-accounting-invariant",
+  "S-unit-typed-budgets",
+  "S-s2-production-canary",
+  "S-phase-3-s3-cost-model",
+  "S-growth-aware-model",
+  "S-phase-aware-costing",
+  "S-stochastic-expected-verified-completion",
+  "S-forecast-confidence",
+  "S-three-miss-invalidation",
+  "S-predictive-lease-edge",
+  "S-protected-reserves",
+  "S-phase-4-l1-obligation-compilation",
+  "S-dataset-programme-obligation-ledger",
+  "S-proof-of-non-work-2",
+  "S-proof-of-no-cognition",
+  "S-phase-5-reforecast-the-entire-remaining-programme",
+  "S-do-not-inflate-all-old-rows",
+  "S-phase-6-work-class-profile-guided-execution",
+  "S-resolver-ladder",
+  "S-slim-t2",
+  "S-frontier-token-firewall",
+  "S-phase-7-context-economics",
+  "S-read-extinction",
+  "S-zero-transcript-successor",
+  "S-worker-lifetime-optimization",
+  "S-phase-8-autonomous-mission-stewardship",
+  "S-program-liveness-vs-process-liveness",
+  "S-automatic-reservation-reconciliation",
+  "S-unknown-is-not-free",
+  "S-phantom-reservation-prevention",
+  "S-phase-9-s1-steward-productionization",
+  "S-steward-self-hosting",
+  "S-phase-10-part-a-completion",
+  "S-a-g2-a-g3-learning-gate",
+  "S-part-a-done-gate",
+  "S-phase-11-part-b-reconstruction-factory",
+  "S-reconstruction-unit-economics",
+  "S-family-factoring",
+  "S-ksr-state",
+  "S-ksr-gate-strategy",
+  "S-compiler-mismatch-fast-path",
+  "S-kme-benchmark-2",
+  "S-phase-12-proof-economics",
+  "S-certified-proof-transaction",
+  "S-mutation-economics",
+  "S-phase-13-cognitive-economic-autopsy",
+  "S-no-budget-inflation-learning",
+  "S-phase-14-profile-guided-optimization",
+  "S-phase-15-cognitive-economics-global-baseline",
+  "S-constitutive-baseline-ratchet-5",
+  "S-baseline-retirement",
+  "S-ukdl-3",
+  "S-process-rule-2",
+  "S-traps-2",
+  "S-failure-knowledge",
+  "S-fios",
+  "S-optimizer-roi",
+  "S-autonomous-amdahl-loop",
+  "S-agent-teams-mode-4",
+  "S-resource-aware-gex44-execution",
+  "S-zero-hot-waiting",
+  "S-loops-3",
+  "S-delegation-principle-4",
+  "S-opportunity-delegation-principle-4",
+  "S-concurrent-writers-3",
+  "S-micro-commits-3",
+  "S-iteration-3",
+  "S-production-reality-gate-4",
+  "S-kernel-vmax-null-error-3",
+  "S-active-reality-contract-3",
+  "S-part-b-coordination-economics",
+  "S-closeout-economics",
+  "S-cross-project-transfer",
+  "S-economic-immunity-2",
+  "S-master-done-gate-s1-s2-s3-l1",
+  "S-master-done-gate-part-a",
+  "S-master-done-gate-part-b",
+  "S-master-done-gate-autonomy",
+  "S-master-done-gate-economics",
+  "S-master-done-gate-knowledge",
+  "S-handoff-contract-3",
+  "S-final-meta-analysis",
+  "S-first-response-now-3",
+  "S-after-the-single-approval-2"
+ ],
+ "obligations": [
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-preamble-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-preamble",
+   "block": "2026-10-08T2017",
+   "title": "PREAMBLE"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-mission-execution-mode",
+   "block": "2026-10-08T2017",
+   "title": "MISSION EXECUTION MODE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-primary-execution-environment",
+   "block": "2026-10-08T2017",
+   "title": "PRIMARY EXECUTION ENVIRONMENT"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-one-mission-law",
+   "block": "2026-10-08T2017",
+   "title": "ONE-MISSION LAW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mandatory-owner-approval-exactly-once",
+   "block": "2026-10-08T2017",
+   "title": "MANDATORY OWNER APPROVAL \u2014 EXACTLY ONCE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mandatory-token-budget-in-the-inline-plan",
+   "block": "2026-10-08T2017",
+   "title": "MANDATORY TOKEN BUDGET IN THE INLINE PLAN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-token-budget-is-an-economic-control-not-a-normal-stop-condit",
+   "block": "2026-10-08T2017",
+   "title": "TOKEN BUDGET IS AN ECONOMIC CONTROL, NOT A NORMAL STOP CONDITION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-economic-plan-requirements",
+   "block": "2026-10-08T2017",
+   "title": "ECONOMIC PLAN REQUIREMENTS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-source-of-truth-ingestion",
+   "block": "2026-10-08T2017",
+   "title": "SOURCE-OF-TRUTH INGESTION"
+  },
+  {
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+     "pattern": "(?i)iteration"
+    }
+   ],
+   "reason": "doctrine; phrase found in enforcing file",
+   "id": "S-iteration-file",
+   "block": "2026-10-08T2017",
+   "title": "ITERATION FILE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-implementation-code-in-this-prompt",
+   "block": "2026-10-08T2017",
+   "title": "NO IMPLEMENTATION CODE IN THIS PROMPT"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-context-first-reality-first-law",
+   "block": "2026-10-08T2017",
+   "title": "CONTEXT-FIRST / REALITY-FIRST LAW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-parallel-cathedrals",
+   "block": "2026-10-08T2017",
+   "title": "NO PARALLEL CATHEDRALS"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-the-three-mutually-reinforcing-outputs",
+   "block": "2026-10-08T2017",
+   "title": "THE THREE MUTUALLY REINFORCING OUTPUTS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-master-north-star",
+   "block": "2026-10-08T2017",
+   "title": "MASTER NORTH STAR"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-ultimate-economic-law",
+   "block": "2026-10-08T2017",
+   "title": "ULTIMATE ECONOMIC LAW"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-known-work-novel-work-law",
+   "block": "2026-10-08T2017",
+   "title": "KNOWN WORK / NOVEL WORK LAW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-optimization-capability",
+   "block": "2026-10-08T2017",
+   "title": "AUTONOMOUS OPTIMIZATION CAPABILITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-optimization-flow",
+   "block": "2026-10-08T2017",
+   "title": "AUTONOMOUS OPTIMIZATION FLOW"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-opportunity-delegation-must-become-software",
+   "block": "2026-10-08T2017",
+   "title": "OPPORTUNITY DELEGATION MUST BECOME SOFTWARE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-kme-l-canonical-first-incident",
+   "block": "2026-10-08T2017",
+   "title": "KME-L CANONICAL FIRST INCIDENT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-zero-rescan-target",
+   "block": "2026-10-08T2017",
+   "title": "ZERO-RESCAN TARGET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-kme-l-must-generalize",
+   "block": "2026-10-08T2017",
+   "title": "KME-L MUST GENERALIZE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-gsd-x-reconstruction-factory",
+   "block": "2026-10-08T2017",
+   "title": "GSD X RECONSTRUCTION FACTORY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-is-not-function-by-function-work",
+   "block": "2026-10-08T2017",
+   "title": "RECONSTRUCTION IS NOT FUNCTION-BY-FUNCTION WORK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-minimum-intervention-before-full-reconstruction",
+   "block": "2026-10-08T2017",
+   "title": "MINIMUM INTERVENTION BEFORE FULL RECONSTRUCTION"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-source-ownership-levels",
+   "block": "2026-10-08T2017",
+   "title": "SOURCE OWNERSHIP LEVELS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-compilation",
+   "block": "2026-10-08T2017",
+   "title": "MISSION COMPILATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-compiler-passes",
+   "block": "2026-10-08T2017",
+   "title": "MISSION COMPILER PASSES"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-execution-equivalence-strategy-space",
+   "block": "2026-10-08T2017",
+   "title": "EXECUTION EQUIVALENCE / STRATEGY SPACE"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-cognitive-economic-kernel",
+   "block": "2026-10-08T2017",
+   "title": "COGNITIVE ECONOMIC KERNEL"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-dynamic-resource-value",
+   "block": "2026-10-08T2017",
+   "title": "DYNAMIC RESOURCE VALUE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-cognitive-capex-vs-opex-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-cognitive-capex-vs-opex",
+   "block": "2026-10-08T2017",
+   "title": "COGNITIVE CAPEX VS OPEX"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-capability-p-l-break-even",
+   "block": "2026-10-08T2017",
+   "title": "CAPABILITY P&L / BREAK-EVEN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reasoning-debt",
+   "block": "2026-10-08T2017",
+   "title": "REASONING DEBT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-decision-extinction",
+   "block": "2026-10-08T2017",
+   "title": "DECISION EXTINCTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-model-boundary-accounting",
+   "block": "2026-10-08T2017",
+   "title": "MODEL BOUNDARY ACCOUNTING"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-semantic-boundary-budget-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-semantic-boundary-budget",
+   "block": "2026-10-08T2017",
+   "title": "SEMANTIC BOUNDARY BUDGET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-model-as-novelty-interrupt-handler",
+   "block": "2026-10-08T2017",
+   "title": "MODEL AS NOVELTY INTERRUPT HANDLER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-zero-model-regions",
+   "block": "2026-10-08T2017",
+   "title": "ZERO-MODEL REGIONS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-forward-oracle-inversion",
+   "block": "2026-10-08T2017",
+   "title": "FORWARD-ORACLE INVERSION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-circularity-firewall",
+   "block": "2026-10-08T2017",
+   "title": "CIRCULARITY FIREWALL"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-kobimapengine-reconstruction",
+   "block": "2026-10-08T2017",
+   "title": "KOBIMAPENGINE RECONSTRUCTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-kme-forward-inverse-lab",
+   "block": "2026-10-08T2017",
+   "title": "KME FORWARD/INVERSE LAB"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-ksr-wii-reconstruction",
+   "block": "2026-10-08T2017",
+   "title": "KSR / WII RECONSTRUCTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-wii-software-genome",
+   "block": "2026-10-08T2017",
+   "title": "WII SOFTWARE GENOME"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cross-title-homology",
+   "block": "2026-10-08T2017",
+   "title": "CROSS-TITLE HOMOLOGY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-compiler-behavior-inversion-atlas",
+   "block": "2026-10-08T2017",
+   "title": "COMPILER BEHAVIOR / INVERSION ATLAS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-global-type-structural-solving",
+   "block": "2026-10-08T2017",
+   "title": "GLOBAL TYPE / STRUCTURAL SOLVING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-uncertainty-graph",
+   "block": "2026-10-08T2017",
+   "title": "UNCERTAINTY GRAPH"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-semantic-dominators-cut-sets",
+   "block": "2026-10-08T2017",
+   "title": "SEMANTIC DOMINATORS / CUT SETS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-constraint-avalanches",
+   "block": "2026-10-08T2017",
+   "title": "CONSTRAINT AVALANCHES"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-population-collapse",
+   "block": "2026-10-08T2017",
+   "title": "POPULATION COLLAPSE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-minimum-source-cut-minimum-intervention",
+   "block": "2026-10-08T2017",
+   "title": "MINIMUM SOURCE CUT / MINIMUM INTERVENTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-static-dynamic-reconstruction",
+   "block": "2026-10-08T2017",
+   "title": "STATIC + DYNAMIC RECONSTRUCTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-active-experiment-design",
+   "block": "2026-10-08T2017",
+   "title": "ACTIVE EXPERIMENT DESIGN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-oracle-ladder",
+   "block": "2026-10-08T2017",
+   "title": "ORACLE LADDER"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-read-once-reason-once-prove-once-observe-once-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-read-once-reason-once-prove-once-observe-once",
+   "block": "2026-10-08T2017",
+   "title": "READ ONCE / REASON ONCE / PROVE ONCE / OBSERVE ONCE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-virtual-memory",
+   "block": "2026-10-08T2017",
+   "title": "COGNITIVE VIRTUAL MEMORY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-context-economics",
+   "block": "2026-10-08T2017",
+   "title": "CONTEXT ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-semantic-gc",
+   "block": "2026-10-08T2017",
+   "title": "SEMANTIC GC"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-fresh-epoch-economics",
+   "block": "2026-10-08T2017",
+   "title": "FRESH EPOCH ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-zero-transcript-continuation",
+   "block": "2026-10-08T2017",
+   "title": "ZERO-TRANSCRIPT CONTINUATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-parentless-execution",
+   "block": "2026-10-08T2017",
+   "title": "PARENTLESS EXECUTION"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-agent-teams-mode-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-agent-teams-mode",
+   "block": "2026-10-08T2017",
+   "title": "AGENT TEAMS MODE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-semantic-agent-output",
+   "block": "2026-10-08T2017",
+   "title": "SEMANTIC AGENT OUTPUT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-singleflight",
+   "block": "2026-10-08T2017",
+   "title": "COGNITIVE SINGLEFLIGHT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-content-addressed-derivations",
+   "block": "2026-10-08T2017",
+   "title": "CONTENT-ADDRESSED DERIVATIONS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-build-system",
+   "block": "2026-10-08T2017",
+   "title": "PROOF BUILD SYSTEM"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-verification-discriminative-power",
+   "block": "2026-10-08T2017",
+   "title": "VERIFICATION DISCRIMINATIVE POWER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-hierarchy",
+   "block": "2026-10-08T2017",
+   "title": "PROOF HIERARCHY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-escrow",
+   "block": "2026-10-08T2017",
+   "title": "PROOF ESCROW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-critical-path-wall-clock-compression",
+   "block": "2026-10-08T2017",
+   "title": "CRITICAL PATH / WALL-CLOCK COMPRESSION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-serial-novelty-depth",
+   "block": "2026-10-08T2017",
+   "title": "SERIAL NOVELTY DEPTH"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-queueing-backpressure",
+   "block": "2026-10-08T2017",
+   "title": "QUEUEING / BACKPRESSURE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-resource-lane-separation",
+   "block": "2026-10-08T2017",
+   "title": "RESOURCE LANE SEPARATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-speculative-preparation",
+   "block": "2026-10-08T2017",
+   "title": "SPECULATIVE PREPARATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-factory-self-evolution",
+   "block": "2026-10-08T2017",
+   "title": "FACTORY SELF-EVOLUTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-automation-opportunity-miner",
+   "block": "2026-10-08T2017",
+   "title": "AUTOMATION OPPORTUNITY MINER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-factory-generations",
+   "block": "2026-10-08T2017",
+   "title": "FACTORY GENERATIONS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cbr-reconstruction-birth",
+   "block": "2026-10-08T2017",
+   "title": "CBR \u2192 RECONSTRUCTION BIRTH"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-causal-applicability",
+   "block": "2026-10-08T2017",
+   "title": "CAUSAL APPLICABILITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-construction-return",
+   "block": "2026-10-08T2017",
+   "title": "RECONSTRUCTION CONSTRUCTION RETURN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-double-ratchet",
+   "block": "2026-10-08T2017",
+   "title": "DOUBLE RATCHET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-baseline-distance-hot-rejuvenation",
+   "block": "2026-10-08T2017",
+   "title": "BASELINE DISTANCE / HOT REJUVENATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-as-gsd-x-stress-test",
+   "block": "2026-10-08T2017",
+   "title": "RECONSTRUCTION AS GSD X STRESS TEST"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-production-reality-gate-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-production-reality-gate",
+   "block": "2026-10-08T2017",
+   "title": "PRODUCTION REALITY GATE"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-vmax-null-error",
+   "block": "2026-10-08T2017",
+   "title": "VMAX-NULL-ERROR"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-bug-failure-knowledge-contract",
+   "block": "2026-10-08T2017",
+   "title": "BUG / FAILURE KNOWLEDGE CONTRACT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-failure-to-prevention",
+   "block": "2026-10-08T2017",
+   "title": "FAILURE-TO-PREVENTION"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-constitutive-baseline-ratchet-5",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-constitutive-baseline-ratchet",
+   "block": "2026-10-08T2017",
+   "title": "CONSTITUTIVE BASELINE RATCHET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-baseline-of-completeness",
+   "block": "2026-10-08T2017",
+   "title": "BASELINE OF COMPLETENESS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-instruction-compile-out",
+   "block": "2026-10-08T2017",
+   "title": "INSTRUCTION COMPILE-OUT"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-opportunity-delegation-principle-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-opportunity-delegation-principle",
+   "block": "2026-10-08T2017",
+   "title": "OPPORTUNITY DELEGATION PRINCIPLE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-delegation-principle-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-delegation-principle",
+   "block": "2026-10-08T2017",
+   "title": "DELEGATION PRINCIPLE"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-agent-teams",
+   "block": "2026-10-08T2017",
+   "title": "AGENT TEAMS"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-self-prompting-continuation-loop",
+   "block": "2026-10-08T2017",
+   "title": "SELF-PROMPTING / CONTINUATION LOOP"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-idle-model",
+   "block": "2026-10-08T2017",
+   "title": "NO IDLE MODEL"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-micro-commit-law",
+   "block": "2026-10-08T2017",
+   "title": "MICRO-COMMIT LAW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-shared-workspace-safety",
+   "block": "2026-10-08T2017",
+   "title": "SHARED WORKSPACE SAFETY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-token-economic-self-hosting",
+   "block": "2026-10-08T2017",
+   "title": "TOKEN-ECONOMIC SELF-HOSTING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-learning-curve",
+   "block": "2026-10-08T2017",
+   "title": "COGNITIVE LEARNING CURVE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-optimization-benchmark",
+   "block": "2026-10-08T2017",
+   "title": "AUTONOMOUS OPTIMIZATION BENCHMARK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-benchmark",
+   "block": "2026-10-08T2017",
+   "title": "RECONSTRUCTION BENCHMARK"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-kme-benchmark-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-kme-benchmark",
+   "block": "2026-10-08T2017",
+   "title": "KME BENCHMARK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-ksr-34k-benchmark",
+   "block": "2026-10-08T2017",
+   "title": "KSR 34K BENCHMARK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cross-title-transfer-benchmark",
+   "block": "2026-10-08T2017",
+   "title": "CROSS-TITLE TRANSFER BENCHMARK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cbr-inheritance-benchmark",
+   "block": "2026-10-08T2017",
+   "title": "CBR INHERITANCE BENCHMARK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-fresh-worker-benchmark",
+   "block": "2026-10-08T2017",
+   "title": "FRESH-WORKER BENCHMARK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-100x-estate-scaling-test",
+   "block": "2026-10-08T2017",
+   "title": "100X ESTATE SCALING TEST"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-factory-optimization-must-discover-something-new",
+   "block": "2026-10-08T2017",
+   "title": "AUTONOMOUS FACTORY OPTIMIZATION MUST DISCOVER SOMETHING NEW"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-anti-goodhart-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-anti-goodhart",
+   "block": "2026-10-08T2017",
+   "title": "ANTI-GOODHART"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-pareto-selection",
+   "block": "2026-10-08T2017",
+   "title": "PARETO SELECTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-infrastructure-natural-selection",
+   "block": "2026-10-08T2017",
+   "title": "INFRASTRUCTURE NATURAL SELECTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-realized-dividend",
+   "block": "2026-10-08T2017",
+   "title": "REALIZED DIVIDEND"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-master-scoreboard",
+   "block": "2026-10-08T2017",
+   "title": "MASTER SCOREBOARD"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-progress-liveness-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-progress-liveness",
+   "block": "2026-10-08T2017",
+   "title": "PROGRESS LIVENESS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-bankruptcy",
+   "block": "2026-10-08T2017",
+   "title": "COGNITIVE BANKRUPTCY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-identical-retry",
+   "block": "2026-10-08T2017",
+   "title": "NO IDENTICAL RETRY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-videos",
+   "block": "2026-10-08T2017",
+   "title": "VIDEOS"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-master-done-gate-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-master-done-gate",
+   "block": "2026-10-08T2017",
+   "title": "MASTER DONE-GATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mandatory-final-red-team",
+   "block": "2026-10-08T2017",
+   "title": "MANDATORY FINAL RED TEAM"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-session-mission-close-meta-analysis",
+   "block": "2026-10-08T2017",
+   "title": "SESSION / MISSION CLOSE META-ANALYSIS"
+  },
+  {
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "pattern": "(?i)hand-?off"
+    }
+   ],
+   "reason": "doctrine; phrase found in enforcing file",
+   "id": "S-final-handoff-contract",
+   "block": "2026-10-08T2017",
+   "title": "FINAL HANDOFF CONTRACT"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-final-constitutional-laws-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-final-constitutional-laws",
+   "block": "2026-10-08T2017",
+   "title": "FINAL CONSTITUTIONAL LAWS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-ultimate-target",
+   "block": "2026-10-08T2017",
+   "title": "ULTIMATE TARGET"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-preamble-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-preamble-2",
+   "block": "2026-10-08T2031",
+   "title": "PREAMBLE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-primary-mission-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-primary-mission",
+   "block": "2026-10-08T2031",
+   "title": "PRIMARY MISSION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-north-star",
+   "block": "2026-10-08T2031",
+   "title": "NORTH STAR"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-constitutional-economic-law",
+   "block": "2026-10-08T2031",
+   "title": "CONSTITUTIONAL ECONOMIC LAW"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-asymptotic-law",
+   "block": "2026-10-08T2031",
+   "title": "ASYMPTOTIC LAW"
+  },
+  {
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "pattern": "(?i)mission[\\s\\-_/]*mode"
+    }
+   ],
+   "reason": "doctrine; phrase found in enforcing file",
+   "id": "S-mission-mode",
+   "block": "2026-10-08T2031",
+   "title": "MISSION MODE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-first-response-contract-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-first-response-contract",
+   "block": "2026-10-08T2031",
+   "title": "FIRST RESPONSE CONTRACT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-implementation-code",
+   "block": "2026-10-08T2031",
+   "title": "NO IMPLEMENTATION CODE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-source-of-truth",
+   "block": "2026-10-08T2031",
+   "title": "SOURCE OF TRUTH"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-current-reported-economic-reality",
+   "block": "2026-10-08T2031",
+   "title": "CURRENT REPORTED ECONOMIC REALITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-previously-identified-target-bands",
+   "block": "2026-10-08T2031",
+   "title": "PREVIOUSLY IDENTIFIED TARGET BANDS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-program-authority",
+   "block": "2026-10-08T2031",
+   "title": "PROGRAM AUTHORITY"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-hard-stop-law-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-hard-stop-law",
+   "block": "2026-10-08T2031",
+   "title": "HARD STOP LAW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-scope-preservation",
+   "block": "2026-10-08T2031",
+   "title": "SCOPE PRESERVATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-ksr-full-corpus-scope",
+   "block": "2026-10-08T2031",
+   "title": "KSR / FULL CORPUS SCOPE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-pre-arm-concurrency-check",
+   "block": "2026-10-08T2031",
+   "title": "PRE-ARM CONCURRENCY CHECK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-global-ownership-reconciliation",
+   "block": "2026-10-08T2031",
+   "title": "GLOBAL OWNERSHIP RECONCILIATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-do-not-create-another-mega-system",
+   "block": "2026-10-08T2031",
+   "title": "DO NOT CREATE ANOTHER MEGA-SYSTEM"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-economics-optimization-stack",
+   "block": "2026-10-08T2031",
+   "title": "COGNITIVE ECONOMICS OPTIMIZATION STACK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a0-semantic-partial-evaluation",
+   "block": "2026-10-08T2031",
+   "title": "A0 \u2014 SEMANTIC PARTIAL EVALUATION"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-proof-of-non-work-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-proof-of-non-work",
+   "block": "2026-10-08T2031",
+   "title": "PROOF OF NON-WORK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-ir",
+   "block": "2026-10-08T2031",
+   "title": "MISSION IR"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-compiler",
+   "block": "2026-10-08T2031",
+   "title": "MISSION COMPILER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a1-model-boundary-admission",
+   "block": "2026-10-08T2031",
+   "title": "A1 \u2014 MODEL BOUNDARY ADMISSION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-semantic-interrupt-model",
+   "block": "2026-10-08T2031",
+   "title": "SEMANTIC INTERRUPT MODEL"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a2-physical-call-compression",
+   "block": "2026-10-08T2031",
+   "title": "A2 \u2014 PHYSICAL CALL COMPRESSION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-new-required-metric",
+   "block": "2026-10-08T2031",
+   "title": "NEW REQUIRED METRIC"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a3-control-plane-cognitive-tax",
+   "block": "2026-10-08T2031",
+   "title": "A3 \u2014 CONTROL-PLANE COGNITIVE TAX"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-giant-coordinator",
+   "block": "2026-10-08T2031",
+   "title": "NO GIANT COORDINATOR"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a4-context-rent-extinction",
+   "block": "2026-10-08T2031",
+   "title": "A4 \u2014 CONTEXT RENT EXTINCTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-fresh-focus-floor",
+   "block": "2026-10-08T2031",
+   "title": "FRESH FOCUS FLOOR"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-gex44-advantage",
+   "block": "2026-10-08T2031",
+   "title": "GEX44 ADVANTAGE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-contextimage",
+   "block": "2026-10-08T2031",
+   "title": "CONTEXTIMAGE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-context-rent-metrics",
+   "block": "2026-10-08T2031",
+   "title": "CONTEXT RENT METRICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-semantic-epoch-rotation",
+   "block": "2026-10-08T2031",
+   "title": "SEMANTIC EPOCH ROTATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-rotation-economics",
+   "block": "2026-10-08T2031",
+   "title": "ROTATION ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a5-read-extinction",
+   "block": "2026-10-08T2031",
+   "title": "A5 \u2014 READ EXTINCTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a6-transport-extinction",
+   "block": "2026-10-08T2031",
+   "title": "A6 \u2014 TRANSPORT EXTINCTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-zero-copy-cognition",
+   "block": "2026-10-08T2031",
+   "title": "ZERO-COPY COGNITION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a7-proof-compiler",
+   "block": "2026-10-08T2031",
+   "title": "A7 \u2014 PROOF COMPILER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-reuse",
+   "block": "2026-10-08T2031",
+   "title": "PROOF REUSE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-receipts",
+   "block": "2026-10-08T2031",
+   "title": "PROOF RECEIPTS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a8-parentless-execution",
+   "block": "2026-10-08T2031",
+   "title": "A8 \u2014 PARENTLESS EXECUTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a9-zero-hot-waiting",
+   "block": "2026-10-08T2031",
+   "title": "A9 \u2014 ZERO-HOT WAITING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a10-actual-predecessor-dependent-admission",
+   "block": "2026-10-08T2031",
+   "title": "A10 \u2014 ACTUAL-PREDECESSOR DEPENDENT ADMISSION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a11-dynamic-reforecast",
+   "block": "2026-10-08T2031",
+   "title": "A11 \u2014 DYNAMIC REFORECAST"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a12-progress-spend-tripwire",
+   "block": "2026-10-08T2031",
+   "title": "A12 \u2014 PROGRESS/SPEND TRIPWIRE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a13-checkpoint-proof-reserve",
+   "block": "2026-10-08T2031",
+   "title": "A13 \u2014 CHECKPOINT / PROOF RESERVE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a14-cognitive-capex-vs-opex",
+   "block": "2026-10-08T2031",
+   "title": "A14 \u2014 COGNITIVE CAPEX VS OPEX"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a15-known-work-cognitive-tax",
+   "block": "2026-10-08T2031",
+   "title": "A15 \u2014 KNOWN-WORK COGNITIVE TAX"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a16-reasoning-debt",
+   "block": "2026-10-08T2031",
+   "title": "A16 \u2014 REASONING DEBT"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-capability-break-even-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-capability-break-even",
+   "block": "2026-10-08T2031",
+   "title": "CAPABILITY BREAK-EVEN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a17-cognitive-pgo",
+   "block": "2026-10-08T2031",
+   "title": "A17 \u2014 COGNITIVE PGO"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a18-economic-scoreboard",
+   "block": "2026-10-08T2031",
+   "title": "A18 \u2014 ECONOMIC SCOREBOARD"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-a-minimum-done-gate",
+   "block": "2026-10-08T2031",
+   "title": "MISSION A MINIMUM DONE-GATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-do-not-overoptimize-before-productive-work",
+   "block": "2026-10-08T2031",
+   "title": "DO NOT OVEROPTIMIZE BEFORE PRODUCTIVE WORK"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-optimization-moratorium-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-optimization-moratorium",
+   "block": "2026-10-08T2031",
+   "title": "OPTIMIZATION MORATORIUM"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b0-d2a-reality-owner-scan",
+   "block": "2026-10-08T2031",
+   "title": "B0 \u2014 D2A / REALITY / OWNER SCAN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b1-recompute-work-graph",
+   "block": "2026-10-08T2031",
+   "title": "B1 \u2014 RECOMPUTE WORK GRAPH"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-silent-scope-loss",
+   "block": "2026-10-08T2031",
+   "title": "NO SILENT SCOPE LOSS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b2-new-bottom-up-reforecast",
+   "block": "2026-10-08T2031",
+   "title": "B2 \u2014 NEW BOTTOM-UP REFORECAST"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-target-bands",
+   "block": "2026-10-08T2031",
+   "title": "TARGET BANDS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-320m-normal-ceiling",
+   "block": "2026-10-08T2031",
+   "title": "NO 320M NORMAL CEILING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b3-autonomous-optimization-workstream",
+   "block": "2026-10-08T2031",
+   "title": "B3 \u2014 AUTONOMOUS OPTIMIZATION WORKSTREAM"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-kme-l-correction",
+   "block": "2026-10-08T2031",
+   "title": "KME-L CORRECTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-negative-roi-is-a-valid-result",
+   "block": "2026-10-08T2031",
+   "title": "NEGATIVE ROI IS A VALID RESULT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b4-reconstruction-factory",
+   "block": "2026-10-08T2031",
+   "title": "B4 \u2014 RECONSTRUCTION FACTORY"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-reconstruction-factory-law",
+   "block": "2026-10-08T2031",
+   "title": "RECONSTRUCTION FACTORY LAW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-factory-economic-unit",
+   "block": "2026-10-08T2031",
+   "title": "FACTORY ECONOMIC UNIT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-function-inventory-is-not-cognitive-inventory",
+   "block": "2026-10-08T2031",
+   "title": "FUNCTION INVENTORY IS NOT COGNITIVE INVENTORY"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-family-amortization-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-family-amortization",
+   "block": "2026-10-08T2031",
+   "title": "FAMILY AMORTIZATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b5-context-economics-for-reconstruction",
+   "block": "2026-10-08T2031",
+   "title": "B5 \u2014 CONTEXT ECONOMICS FOR RECONSTRUCTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b6-proof-economics",
+   "block": "2026-10-08T2031",
+   "title": "B6 \u2014 PROOF ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b7-cbr",
+   "block": "2026-10-08T2031",
+   "title": "B7 \u2014 CBR"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-cbr-reconstruction-double-ratchet-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-cbr-reconstruction-double-ratchet",
+   "block": "2026-10-08T2031",
+   "title": "CBR \u2194 RECONSTRUCTION DOUBLE RATCHET"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-construction-return-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-construction-return",
+   "block": "2026-10-08T2031",
+   "title": "CONSTRUCTION RETURN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b8-verification",
+   "block": "2026-10-08T2031",
+   "title": "B8 \u2014 VERIFICATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-red-team",
+   "block": "2026-10-08T2031",
+   "title": "RED TEAM"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b9-coordination",
+   "block": "2026-10-08T2031",
+   "title": "B9 \u2014 COORDINATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-coordination-is-not-product-work",
+   "block": "2026-10-08T2031",
+   "title": "COORDINATION IS NOT PRODUCT WORK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b10-knowledge-return",
+   "block": "2026-10-08T2031",
+   "title": "B10 \u2014 KNOWLEDGE RETURN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-ukdl-vault-cost-target",
+   "block": "2026-10-08T2031",
+   "title": "UKDL / VAULT COST TARGET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-b11-contingency",
+   "block": "2026-10-08T2031",
+   "title": "B11 \u2014 CONTINGENCY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-global-economic-tripwires",
+   "block": "2026-10-08T2031",
+   "title": "GLOBAL ECONOMIC TRIPWIRES"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-wave-economics",
+   "block": "2026-10-08T2031",
+   "title": "WAVE ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-must-get-cheaper-while-running",
+   "block": "2026-10-08T2031",
+   "title": "MISSION MUST GET CHEAPER WHILE RUNNING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cost-of-novelty",
+   "block": "2026-10-08T2031",
+   "title": "COST OF NOVELTY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-institutional-novelty-concentration",
+   "block": "2026-10-08T2031",
+   "title": "INSTITUTIONAL NOVELTY CONCENTRATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-capitalization-rate",
+   "block": "2026-10-08T2031",
+   "title": "COGNITIVE CAPITALIZATION RATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-capability-maturity",
+   "block": "2026-10-08T2031",
+   "title": "CAPABILITY MATURITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cbr-pareto-safety",
+   "block": "2026-10-08T2031",
+   "title": "CBR PARETO SAFETY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-anti-goodhart-2",
+   "block": "2026-10-08T2031",
+   "title": "ANTI-GOODHART"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-agent-teams-mode-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-agent-teams-mode-2",
+   "block": "2026-10-08T2031",
+   "title": "AGENT TEAMS MODE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-loops-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-loops",
+   "block": "2026-10-08T2031",
+   "title": "LOOPS"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-uwcp-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-uwcp",
+   "block": "2026-10-08T2031",
+   "title": "UWCP"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-gex44-resource-economics",
+   "block": "2026-10-08T2031",
+   "title": "GEX44 RESOURCE ECONOMICS"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-parallelism-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-parallelism",
+   "block": "2026-10-08T2031",
+   "title": "PARALLELISM"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-delegation-principle-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-delegation-principle-2",
+   "block": "2026-10-08T2031",
+   "title": "DELEGATION PRINCIPLE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-opportunity-delegation-principle-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-opportunity-delegation-principle-2",
+   "block": "2026-10-08T2031",
+   "title": "OPPORTUNITY DELEGATION PRINCIPLE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-concurrent-writers-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-concurrent-writers",
+   "block": "2026-10-08T2031",
+   "title": "CONCURRENT WRITERS"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-micro-commits-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-micro-commits",
+   "block": "2026-10-08T2031",
+   "title": "MICRO-COMMITS"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-iteration-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-iteration",
+   "block": "2026-10-08T2031",
+   "title": "ITERATION"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-knowledge-vault-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-knowledge-vault",
+   "block": "2026-10-08T2031",
+   "title": "KNOWLEDGE VAULT"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-ukdl-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-ukdl",
+   "block": "2026-10-08T2031",
+   "title": "UKDL"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-constitutive-baseline-ratchet-5",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-constitutive-baseline-ratchet-2",
+   "block": "2026-10-08T2031",
+   "title": "CONSTITUTIVE BASELINE RATCHET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cbr-must-change-future-execution",
+   "block": "2026-10-08T2031",
+   "title": "CBR MUST CHANGE FUTURE EXECUTION"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-production-reality-gate-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-production-reality-gate-2",
+   "block": "2026-10-08T2031",
+   "title": "PRODUCTION REALITY GATE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-kernel-vmax-null-error-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-kernel-vmax-null-error",
+   "block": "2026-10-08T2031",
+   "title": "KERNEL vMAX-NULL-ERROR"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-active-reality-contract-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-active-reality-contract",
+   "block": "2026-10-08T2031",
+   "title": "ACTIVE REALITY CONTRACT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-a-canaries",
+   "block": "2026-10-08T2031",
+   "title": "MISSION A CANARIES"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-b-canaries",
+   "block": "2026-10-08T2031",
+   "title": "MISSION B CANARIES"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-economic-master-done-gate-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-economic-master-done-gate",
+   "block": "2026-10-08T2031",
+   "title": "ECONOMIC MASTER DONE-GATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-a-master-done-gate",
+   "block": "2026-10-08T2031",
+   "title": "MISSION A MASTER DONE-GATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-b-master-done-gate",
+   "block": "2026-10-08T2031",
+   "title": "MISSION B MASTER DONE-GATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-budget-master-done-gate",
+   "block": "2026-10-08T2031",
+   "title": "BUDGET MASTER DONE-GATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-self-hosting",
+   "block": "2026-10-08T2031",
+   "title": "SELF-HOSTING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-self-hosting-tripwire",
+   "block": "2026-10-08T2031",
+   "title": "SELF-HOSTING TRIPWIRE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-handoff-contract-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-handoff-contract",
+   "block": "2026-10-08T2031",
+   "title": "HANDOFF CONTRACT"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-video-image-contract-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-video-image-contract",
+   "block": "2026-10-08T2031",
+   "title": "VIDEO / IMAGE CONTRACT"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-final-constitutional-laws-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-final-constitutional-laws-2",
+   "block": "2026-10-08T2031",
+   "title": "FINAL CONSTITUTIONAL LAWS"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-first-response-now-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-first-response-now",
+   "block": "2026-10-08T2031",
+   "title": "FIRST RESPONSE NOW"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-after-the-single-approval-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-after-the-single-approval",
+   "block": "2026-10-08T2031",
+   "title": "AFTER THE SINGLE APPROVAL"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-preamble-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-preamble-3",
+   "block": "2026-10-09T0725",
+   "title": "PREAMBLE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-primary-mission-2",
+   "block": "2026-10-09T0725",
+   "title": "PRIMARY MISSION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-source-datasets",
+   "block": "2026-10-09T0725",
+   "title": "SOURCE DATASETS"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-dataset-completeness-contract",
+   "block": "2026-10-09T0725",
+   "title": "DATASET COMPLETENESS CONTRACT"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-current-reported-reality-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-current-reported-reality",
+   "block": "2026-10-09T0725",
+   "title": "CURRENT REPORTED REALITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-previous-owner-authority",
+   "block": "2026-10-09T0725",
+   "title": "PREVIOUS OWNER AUTHORITY"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-gex44-execution-requirement-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-gex44-execution-requirement",
+   "block": "2026-10-09T0725",
+   "title": "GEX44 EXECUTION REQUIREMENT"
+  },
+  {
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+     "pattern": "(?i)mode"
+    }
+   ],
+   "reason": "doctrine; phrase found in enforcing file",
+   "id": "S-mode",
+   "block": "2026-10-09T0725",
+   "title": "MODE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-first-response-contract-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-first-response-contract-2",
+   "block": "2026-10-09T0725",
+   "title": "FIRST RESPONSE CONTRACT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-implementation-code-in-plan",
+   "block": "2026-10-09T0725",
+   "title": "NO IMPLEMENTATION CODE IN PLAN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-constitutional-north-star",
+   "block": "2026-10-09T0725",
+   "title": "CONSTITUTIONAL NORTH STAR"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-universal-cognitive-cost-collapse",
+   "block": "2026-10-09T0725",
+   "title": "UNIVERSAL COGNITIVE COST COLLAPSE"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-conservation-law-of-cognitive-work",
+   "block": "2026-10-09T0725",
+   "title": "CONSERVATION LAW OF COGNITIVE WORK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-minimum-total-verified-cost",
+   "block": "2026-10-09T0725",
+   "title": "MINIMUM TOTAL VERIFIED COST"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-models-are-interrupt-handlers",
+   "block": "2026-10-09T0725",
+   "title": "MODELS ARE INTERRUPT HANDLERS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-mission-stewardship",
+   "block": "2026-10-09T0725",
+   "title": "AUTONOMOUS MISSION STEWARDSHIP"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-mission-continuity-law",
+   "block": "2026-10-09T0725",
+   "title": "MISSION CONTINUITY LAW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a-worker-stop-is-not-a-mission-stop",
+   "block": "2026-10-09T0725",
+   "title": "A WORKER STOP IS NOT A MISSION STOP"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-steward",
+   "block": "2026-10-09T0725",
+   "title": "MISSION STEWARD"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-healthy-mission-with-zero-active-model",
+   "block": "2026-10-09T0725",
+   "title": "HEALTHY MISSION WITH ZERO ACTIVE MODEL"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-continuation-compiler",
+   "block": "2026-10-09T0725",
+   "title": "MISSION CONTINUATION COMPILER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-continuation-object",
+   "block": "2026-10-09T0725",
+   "title": "CONTINUATION OBJECT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-history-independence",
+   "block": "2026-10-09T0725",
+   "title": "HISTORY INDEPENDENCE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-control-plane-liveness",
+   "block": "2026-10-09T0725",
+   "title": "CONTROL-PLANE LIVENESS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-deadlock-detection",
+   "block": "2026-10-09T0725",
+   "title": "MISSION DEADLOCK DETECTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-forgotten-mission-detection",
+   "block": "2026-10-09T0725",
+   "title": "FORGOTTEN MISSION DETECTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-current-a-g1-genesis-canary",
+   "block": "2026-10-09T0725",
+   "title": "CURRENT A-G1 GENESIS CANARY"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-a-g1-residual-law",
+   "block": "2026-10-09T0725",
+   "title": "A-G1 RESIDUAL LAW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-automatic-tier-descent",
+   "block": "2026-10-09T0725",
+   "title": "AUTOMATIC TIER DESCENT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-economic-self-healing-canary",
+   "block": "2026-10-09T0725",
+   "title": "ECONOMIC SELF-HEALING CANARY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-economic-immunity-canary",
+   "block": "2026-10-09T0725",
+   "title": "ECONOMIC IMMUNITY CANARY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-economic-compounding-canary",
+   "block": "2026-10-09T0725",
+   "title": "ECONOMIC COMPOUNDING CANARY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-fresh-process-capital-inheritance",
+   "block": "2026-10-09T0725",
+   "title": "FRESH-PROCESS CAPITAL INHERITANCE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-reservation-reconciliation",
+   "block": "2026-10-09T0725",
+   "title": "AUTONOMOUS RESERVATION RECONCILIATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-program-authority-vs-process-lease",
+   "block": "2026-10-09T0725",
+   "title": "PROGRAM AUTHORITY VS PROCESS LEASE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-budget-recompilation",
+   "block": "2026-10-09T0725",
+   "title": "AUTONOMOUS BUDGET RECOMPILATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-semantic-boundary-budget-2",
+   "block": "2026-10-09T0725",
+   "title": "SEMANTIC BOUNDARY BUDGET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-multidimensional-economic-leases",
+   "block": "2026-10-09T0725",
+   "title": "MULTIDIMENSIONAL ECONOMIC LEASES"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-purchase-order",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE PURCHASE ORDER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-receipt",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE RECEIPT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-call-legitimacy",
+   "block": "2026-10-09T0725",
+   "title": "CALL LEGITIMACY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-legitimate-cognition-ratio",
+   "block": "2026-10-09T0725",
+   "title": "LEGITIMATE COGNITION RATIO"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-fault-accounting",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE FAULT ACCOUNTING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-waste-ledger",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE WASTE LEDGER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-optimization-market",
+   "block": "2026-10-09T0725",
+   "title": "AUTONOMOUS OPTIMIZATION MARKET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-self-optimization-has-no-special-privilege",
+   "block": "2026-10-09T0725",
+   "title": "SELF-OPTIMIZATION HAS NO SPECIAL PRIVILEGE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-capability-break-even-2",
+   "block": "2026-10-09T0725",
+   "title": "CAPABILITY BREAK-EVEN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-optimization-moratorium-2",
+   "block": "2026-10-09T0725",
+   "title": "OPTIMIZATION MORATORIUM"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-champion-challenger",
+   "block": "2026-10-09T0725",
+   "title": "CHAMPION / CHALLENGER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-automatic-deopt",
+   "block": "2026-10-09T0725",
+   "title": "AUTOMATIC DEOPT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-offline-cognitive-counterfactual-lab",
+   "block": "2026-10-09T0725",
+   "title": "OFFLINE COGNITIVE COUNTERFACTUAL LAB"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-regret",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE REGRET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-learned-cost-model",
+   "block": "2026-10-09T0725",
+   "title": "LEARNED COST MODEL"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-learned-worker-tiering",
+   "block": "2026-10-09T0725",
+   "title": "LEARNED WORKER TIERING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-learned-context-allocation",
+   "block": "2026-10-09T0725",
+   "title": "LEARNED CONTEXT ALLOCATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-learned-epoch-lifetime",
+   "block": "2026-10-09T0725",
+   "title": "LEARNED EPOCH LIFETIME"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-semantic-locality",
+   "block": "2026-10-09T0725",
+   "title": "SEMANTIC LOCALITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-context-is-compiled",
+   "block": "2026-10-09T0725",
+   "title": "CONTEXT IS COMPILED"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-context-abi",
+   "block": "2026-10-09T0725",
+   "title": "CONTEXT ABI"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-memory-hierarchy",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE MEMORY HIERARCHY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-semantic-derivation-cache",
+   "block": "2026-10-09T0725",
+   "title": "SEMANTIC DERIVATION CACHE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-estate-wide-singleflight",
+   "block": "2026-10-09T0725",
+   "title": "ESTATE-WIDE SINGLEFLIGHT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-read-once-reason-once-prove-once-observe-once-2",
+   "block": "2026-10-09T0725",
+   "title": "READ ONCE / REASON ONCE / PROVE ONCE / OBSERVE ONCE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-semantic-garbage-collection",
+   "block": "2026-10-09T0725",
+   "title": "SEMANTIC GARBAGE COLLECTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-work-unit-garbage-collection",
+   "block": "2026-10-09T0725",
+   "title": "WORK UNIT GARBAGE COLLECTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-incremental-mission-recompilation",
+   "block": "2026-10-09T0725",
+   "title": "INCREMENTAL MISSION RECOMPILATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-mvcc",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE MVCC"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-frontier-changed",
+   "block": "2026-10-09T0725",
+   "title": "FRONTIER_CHANGED"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-automatic-work-unit-fission",
+   "block": "2026-10-09T0725",
+   "title": "AUTOMATIC WORK UNIT FISSION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-automatic-work-unit-fusion",
+   "block": "2026-10-09T0725",
+   "title": "AUTOMATIC WORK UNIT FUSION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-preemption",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE PREEMPTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-dynamic-shadow-prices",
+   "block": "2026-10-09T0725",
+   "title": "DYNAMIC SHADOW PRICES"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-exchange",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE EXCHANGE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-roofline",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE ROOFLINE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-automatic-amdahl-reprofiling",
+   "block": "2026-10-09T0725",
+   "title": "AUTOMATIC AMDAHL REPROFILING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-superoptimization",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE SUPEROPTIMIZATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-e-graph",
+   "block": "2026-10-09T0725",
+   "title": "MISSION E-GRAPH"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-cognitive-jit",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE JIT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-hot-reasoning-compilation",
+   "block": "2026-10-09T0725",
+   "title": "HOT REASONING COMPILATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-decision-inlining",
+   "block": "2026-10-09T0725",
+   "title": "DECISION INLINING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-dead-decision-elimination",
+   "block": "2026-10-09T0725",
+   "title": "DEAD DECISION ELIMINATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-common-cognitive-subexpression-elimination",
+   "block": "2026-10-09T0725",
+   "title": "COMMON COGNITIVE SUBEXPRESSION ELIMINATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-batch-vectorize-homologous-work",
+   "block": "2026-10-09T0725",
+   "title": "BATCH / VECTORIZE HOMOLOGOUS WORK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-compiler",
+   "block": "2026-10-09T0725",
+   "title": "PROOF COMPILER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-portfolio",
+   "block": "2026-10-09T0725",
+   "title": "PROOF PORTFOLIO"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-dynamic-assurance",
+   "block": "2026-10-09T0725",
+   "title": "DYNAMIC ASSURANCE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-insurance",
+   "block": "2026-10-09T0725",
+   "title": "PROOF INSURANCE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-contribution-attribution",
+   "block": "2026-10-09T0725",
+   "title": "PROOF CONTRIBUTION ATTRIBUTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-singleflight",
+   "block": "2026-10-09T0725",
+   "title": "PROOF SINGLEFLIGHT"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-constitutive-baseline-ratchet-5",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-constitutive-baseline-ratchet-3",
+   "block": "2026-10-09T0725",
+   "title": "CONSTITUTIVE BASELINE RATCHET"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-constitutive-baseline-pruner",
+   "block": "2026-10-09T0725",
+   "title": "CONSTITUTIVE BASELINE PRUNER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-constitutional-compression",
+   "block": "2026-10-09T0725",
+   "title": "CONSTITUTIONAL COMPRESSION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-compiled-constitution",
+   "block": "2026-10-09T0725",
+   "title": "COMPILED CONSTITUTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-trigger-compilation",
+   "block": "2026-10-09T0725",
+   "title": "TRIGGER COMPILATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-boot-compiler",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE BOOT COMPILER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-boot-cost-slo",
+   "block": "2026-10-09T0725",
+   "title": "BOOT COST SLO"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-institutional-cognitive-deflation",
+   "block": "2026-10-09T0725",
+   "title": "INSTITUTIONAL COGNITIVE DEFLATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-inflation-alarm",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE INFLATION ALARM"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-institutional-lto",
+   "block": "2026-10-09T0725",
+   "title": "INSTITUTIONAL LTO"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-institutional-partial-evaluation",
+   "block": "2026-10-09T0725",
+   "title": "INSTITUTIONAL PARTIAL EVALUATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-nested-compilation",
+   "block": "2026-10-09T0725",
+   "title": "NESTED COMPILATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-inheritance-of-prose-by-default",
+   "block": "2026-10-09T0725",
+   "title": "NO INHERITANCE OF PROSE BY DEFAULT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-zero-transcript-dependency",
+   "block": "2026-10-09T0725",
+   "title": "ZERO TRANSCRIPT DEPENDENCY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-zero-session-identity-as-architectural-target",
+   "block": "2026-10-09T0725",
+   "title": "ZERO SESSION IDENTITY AS ARCHITECTURAL TARGET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-zero-pane-architecture",
+   "block": "2026-10-09T0725",
+   "title": "ZERO PANE ARCHITECTURE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-zero-prompt-architecture-for-mature-work",
+   "block": "2026-10-09T0725",
+   "title": "ZERO PROMPT ARCHITECTURE FOR MATURE WORK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-economic-scientific-loop",
+   "block": "2026-10-09T0725",
+   "title": "AUTONOMOUS ECONOMIC SCIENTIFIC LOOP"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-persist-on-goal-pivot-on-economics",
+   "block": "2026-10-09T0725",
+   "title": "PERSIST ON GOAL, PIVOT ON ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-two-speed-runtime",
+   "block": "2026-10-09T0725",
+   "title": "TWO-SPEED RUNTIME"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-evolution-loop-is-event-driven",
+   "block": "2026-10-09T0725",
+   "title": "EVOLUTION LOOP IS EVENT-DRIVEN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-optimization-candidate-lifecycle",
+   "block": "2026-10-09T0725",
+   "title": "OPTIMIZATION CANDIDATE LIFECYCLE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-separate-invention-from-deployment-authority",
+   "block": "2026-10-09T0725",
+   "title": "SEPARATE INVENTION FROM DEPLOYMENT AUTHORITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-carrying-optimization",
+   "block": "2026-10-09T0725",
+   "title": "PROOF-CARRYING OPTIMIZATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-economic-chaos-mutation",
+   "block": "2026-10-09T0725",
+   "title": "ECONOMIC CHAOS / MUTATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-layer-specific-circuit-breakers",
+   "block": "2026-10-09T0725",
+   "title": "LAYER-SPECIFIC CIRCUIT BREAKERS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-call-explosion-breaker",
+   "block": "2026-10-09T0725",
+   "title": "CALL EXPLOSION BREAKER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-coordination-breaker",
+   "block": "2026-10-09T0725",
+   "title": "COORDINATION BREAKER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-rediscovery-breaker",
+   "block": "2026-10-09T0725",
+   "title": "REDISCOVERY BREAKER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-capability-miss-breaker",
+   "block": "2026-10-09T0725",
+   "title": "CAPABILITY MISS BREAKER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-priority-inversion",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE PRIORITY INVERSION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-qos",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE QOS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-human-attention-economics",
+   "block": "2026-10-09T0725",
+   "title": "HUMAN ATTENTION ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-owner-interaction-compiler",
+   "block": "2026-10-09T0725",
+   "title": "OWNER INTERACTION COMPILER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-continuity-rate",
+   "block": "2026-10-09T0725",
+   "title": "AUTONOMOUS CONTINUITY RATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-human-dependency-half-life",
+   "block": "2026-10-09T0725",
+   "title": "HUMAN DEPENDENCY HALF-LIFE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-recovery-economics",
+   "block": "2026-10-09T0725",
+   "title": "RECOVERY ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-automatic-forget-safety",
+   "block": "2026-10-09T0725",
+   "title": "AUTOMATIC FORGET SAFETY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-process-rotation",
+   "block": "2026-10-09T0725",
+   "title": "PROCESS ROTATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-process-churn",
+   "block": "2026-10-09T0725",
+   "title": "PROCESS CHURN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-exactly-once-semantic-continuation",
+   "block": "2026-10-09T0725",
+   "title": "EXACTLY-ONCE SEMANTIC CONTINUATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-control-plane-restart",
+   "block": "2026-10-09T0725",
+   "title": "CONTROL-PLANE RESTART"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-machine-restart-canary",
+   "block": "2026-10-09T0725",
+   "title": "MACHINE RESTART CANARY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cross-machine-continuation",
+   "block": "2026-10-09T0725",
+   "title": "CROSS-MACHINE CONTINUATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-process-scheduler",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE PROCESS SCHEDULER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-capital-allocation",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE CAPITAL ALLOCATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-uncertainty-economics",
+   "block": "2026-10-09T0725",
+   "title": "UNCERTAINTY ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-uncertainty-dominators",
+   "block": "2026-10-09T0725",
+   "title": "UNCERTAINTY DOMINATORS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-knowledge-fan-out",
+   "block": "2026-10-09T0725",
+   "title": "KNOWLEDGE FAN-OUT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-frontier-cognition-portfolio",
+   "block": "2026-10-09T0725",
+   "title": "FRONTIER COGNITION PORTFOLIO"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-capex-vs-opex-2",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE CAPEX VS OPEX"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-capability-p-l",
+   "block": "2026-10-09T0725",
+   "title": "CAPABILITY P&L"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-capability-depreciation-retirement",
+   "block": "2026-10-09T0725",
+   "title": "CAPABILITY DEPRECIATION / RETIREMENT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-architectural-simplicity-pressure",
+   "block": "2026-10-09T0725",
+   "title": "ARCHITECTURAL SIMPLICITY PRESSURE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-simplification-pass",
+   "block": "2026-10-09T0725",
+   "title": "AUTONOMOUS SIMPLIFICATION PASS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-thermodynamics",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE THERMODYNAMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-verified-novelty-yield",
+   "block": "2026-10-09T0725",
+   "title": "VERIFIED NOVELTY YIELD"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-known-work-cognitive-tax",
+   "block": "2026-10-09T0725",
+   "title": "KNOWN-WORK COGNITIVE TAX"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-institutional-cognitive-deflation",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-institutional-cognitive-deflation-2",
+   "block": "2026-10-09T0725",
+   "title": "INSTITUTIONAL COGNITIVE DEFLATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-decision-extinction-velocity",
+   "block": "2026-10-09T0725",
+   "title": "DECISION EXTINCTION VELOCITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-capital-turnover",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE CAPITAL TURNOVER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reasoning-half-life",
+   "block": "2026-10-09T0725",
+   "title": "REASONING HALF-LIFE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-baseline-surface-deflation",
+   "block": "2026-10-09T0725",
+   "title": "BASELINE SURFACE DEFLATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-architecture-payback-ratio",
+   "block": "2026-10-09T0725",
+   "title": "ARCHITECTURE PAYBACK RATIO"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-production-economic-reality",
+   "block": "2026-10-09T0725",
+   "title": "PRODUCTION ECONOMIC REALITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-economic-provenance",
+   "block": "2026-10-09T0725",
+   "title": "ECONOMIC PROVENANCE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-economic-truth-lattice",
+   "block": "2026-10-09T0725",
+   "title": "ECONOMIC TRUTH LATTICE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-a-objective-rewrite",
+   "block": "2026-10-09T0725",
+   "title": "MISSION A OBJECTIVE REWRITE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a-g2-through-a-g5-recompilation",
+   "block": "2026-10-09T0725",
+   "title": "A-G2 THROUGH A-G5 RECOMPILATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mission-a-economic-done-gate",
+   "block": "2026-10-09T0725",
+   "title": "MISSION A ECONOMIC DONE-GATE"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-cognitive-economics-completion-contract",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE ECONOMICS COMPLETION CONTRACT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-economic-regression-ci",
+   "block": "2026-10-09T0725",
+   "title": "ECONOMIC REGRESSION CI"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-economic-contracts-for-mature-capabilities",
+   "block": "2026-10-09T0725",
+   "title": "ECONOMIC CONTRACTS FOR MATURE CAPABILITIES"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-factory-mission-c",
+   "block": "2026-10-09T0725",
+   "title": "RECONSTRUCTION FACTORY \u2014 MISSION C"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-dataset-exhaustive-compilation",
+   "block": "2026-10-09T0725",
+   "title": "RECONSTRUCTION DATASET EXHAUSTIVE COMPILATION"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-reconstruction-law",
+   "block": "2026-10-09T0725",
+   "title": "RECONSTRUCTION LAW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-work-extinction-funnel",
+   "block": "2026-10-09T0725",
+   "title": "RECONSTRUCTION WORK EXTINCTION FUNNEL"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-cognitive-inventory",
+   "block": "2026-10-09T0725",
+   "title": "RECONSTRUCTION COGNITIVE INVENTORY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-family-amortization-2",
+   "block": "2026-10-09T0725",
+   "title": "FAMILY AMORTIZATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-contextimages",
+   "block": "2026-10-09T0725",
+   "title": "RECONSTRUCTION CONTEXTIMAGES"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-frontier-reasoning-compiler",
+   "block": "2026-10-09T0725",
+   "title": "FRONTIER REASONING COMPILER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-compiler-diff-healthy-loop",
+   "block": "2026-10-09T0725",
+   "title": "COMPILER / DIFF HEALTHY LOOP"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-batch-cognition",
+   "block": "2026-10-09T0725",
+   "title": "BATCH COGNITION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-global-type-economics",
+   "block": "2026-10-09T0725",
+   "title": "GLOBAL TYPE ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-compiler-behavior-economics",
+   "block": "2026-10-09T0725",
+   "title": "COMPILER BEHAVIOR ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-pgo",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE PGO"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-hot-path-compilation",
+   "block": "2026-10-09T0725",
+   "title": "RECONSTRUCTION HOT-PATH COMPILATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-zero-reasoning-regions",
+   "block": "2026-10-09T0725",
+   "title": "ZERO-REASONING REGIONS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-economic-learning-curve",
+   "block": "2026-10-09T0725",
+   "title": "RECONSTRUCTION ECONOMIC LEARNING CURVE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-campaign-p-l",
+   "block": "2026-10-09T0725",
+   "title": "CAMPAIGN P&L"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cbr-reconstruction-double-ratchet-2",
+   "block": "2026-10-09T0725",
+   "title": "CBR \u2194 RECONSTRUCTION DOUBLE RATCHET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-construction-return-2",
+   "block": "2026-10-09T0725",
+   "title": "CONSTRUCTION RETURN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cross-project-transfer-canary",
+   "block": "2026-10-09T0725",
+   "title": "CROSS-PROJECT TRANSFER CANARY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reverse-transfer-canary",
+   "block": "2026-10-09T0725",
+   "title": "REVERSE TRANSFER CANARY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-full-wsr-scope",
+   "block": "2026-10-09T0725",
+   "title": "FULL WSR SCOPE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-gex44-resource-reality",
+   "block": "2026-10-09T0725",
+   "title": "GEX44 RESOURCE REALITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-parallelism-2",
+   "block": "2026-10-09T0725",
+   "title": "PARALLELISM"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-agent-teams-mode-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-agent-teams-mode-3",
+   "block": "2026-10-09T0725",
+   "title": "AGENT TEAMS MODE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-loops-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-loops-2",
+   "block": "2026-10-09T0725",
+   "title": "LOOPS"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-uwcp-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-uwcp-2",
+   "block": "2026-10-09T0725",
+   "title": "UWCP"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-progress-liveness-2",
+   "block": "2026-10-09T0725",
+   "title": "PROGRESS LIVENESS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-progress-spend-tripwire",
+   "block": "2026-10-09T0725",
+   "title": "PROGRESS/SPEND TRIPWIRE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-dynamic-reforecast",
+   "block": "2026-10-09T0725",
+   "title": "DYNAMIC REFORECAST"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-hard-stop-law-2",
+   "block": "2026-10-09T0725",
+   "title": "HARD STOP LAW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-checkpoint-proof-reserve",
+   "block": "2026-10-09T0725",
+   "title": "CHECKPOINT / PROOF RESERVE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-priority-and-delay",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE PRIORITY AND DELAY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-value-of-information",
+   "block": "2026-10-09T0725",
+   "title": "VALUE OF INFORMATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-real-options",
+   "block": "2026-10-09T0725",
+   "title": "REAL OPTIONS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-stop-loss",
+   "block": "2026-10-09T0725",
+   "title": "STOP-LOSS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-speculation-p-l",
+   "block": "2026-10-09T0725",
+   "title": "SPECULATION P&L"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-economic-health-states",
+   "block": "2026-10-09T0725",
+   "title": "ECONOMIC HEALTH STATES"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-automatic-economic-incident-response",
+   "block": "2026-10-09T0725",
+   "title": "AUTOMATIC ECONOMIC INCIDENT RESPONSE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-economic-immunity-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-economic-immunity",
+   "block": "2026-10-09T0725",
+   "title": "ECONOMIC IMMUNITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-sibling-immunization",
+   "block": "2026-10-09T0725",
+   "title": "SIBLING IMMUNIZATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-estate-immunization",
+   "block": "2026-10-09T0725",
+   "title": "ESTATE IMMUNIZATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-hot-rejuvenation",
+   "block": "2026-10-09T0725",
+   "title": "HOT REJUVENATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-production-loop-vs-evolution-loop",
+   "block": "2026-10-09T0725",
+   "title": "PRODUCTION LOOP VS EVOLUTION LOOP"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-meta-cognition-budget",
+   "block": "2026-10-09T0725",
+   "title": "META-COGNITION BUDGET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-simplicity-premium",
+   "block": "2026-10-09T0725",
+   "title": "SIMPLICITY PREMIUM"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-capability-sunset",
+   "block": "2026-10-09T0725",
+   "title": "CAPABILITY SUNSET"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-continuous-baseline-gardening",
+   "block": "2026-10-09T0725",
+   "title": "CONTINUOUS BASELINE GARDENING"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-production-reality-gate-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-production-reality-gate-3",
+   "block": "2026-10-09T0725",
+   "title": "PRODUCTION REALITY GATE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-kernel-vmax-null-error-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-kernel-vmax-null-error-2",
+   "block": "2026-10-09T0725",
+   "title": "KERNEL vMAX-NULL-ERROR"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-active-reality-contract-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-active-reality-contract-2",
+   "block": "2026-10-09T0725",
+   "title": "ACTIVE REALITY CONTRACT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-knowledge-vault-2",
+   "block": "2026-10-09T0725",
+   "title": "KNOWLEDGE VAULT"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-ukdl-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-ukdl-2",
+   "block": "2026-10-09T0725",
+   "title": "UKDL"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-process-rule-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-process-rule",
+   "block": "2026-10-09T0725",
+   "title": "PROCESS RULE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-traps-2",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-traps",
+   "block": "2026-10-09T0725",
+   "title": "TRAPS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cognitive-ci",
+   "block": "2026-10-09T0725",
+   "title": "COGNITIVE CI"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-constitutive-baseline-ratchet-5",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-constitutive-baseline-ratchet-4",
+   "block": "2026-10-09T0725",
+   "title": "CONSTITUTIVE BASELINE RATCHET"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-baseline-completion-law",
+   "block": "2026-10-09T0725",
+   "title": "BASELINE COMPLETION LAW"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-delegation-principle-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-delegation-principle-3",
+   "block": "2026-10-09T0725",
+   "title": "DELEGATION PRINCIPLE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-opportunity-delegation-principle-4",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-opportunity-delegation-principle-3",
+   "block": "2026-10-09T0725",
+   "title": "OPPORTUNITY DELEGATION PRINCIPLE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-concurrent-writers-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-concurrent-writers-2",
+   "block": "2026-10-09T0725",
+   "title": "CONCURRENT WRITERS"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-micro-commits-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-micro-commits-2",
+   "block": "2026-10-09T0725",
+   "title": "MICRO-COMMITS"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-iteration-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-iteration-2",
+   "block": "2026-10-09T0725",
+   "title": "ITERATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-first-response-required-reality-scan",
+   "block": "2026-10-09T0725",
+   "title": "FIRST RESPONSE \u2014 REQUIRED REALITY SCAN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-first-response-master-plan",
+   "block": "2026-10-09T0725",
+   "title": "FIRST RESPONSE \u2014 MASTER PLAN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-master-plan-must-explicitly-answer",
+   "block": "2026-10-09T0725",
+   "title": "MASTER PLAN MUST EXPLICITLY ANSWER"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-owner-approval-contract",
+   "block": "2026-10-09T0725",
+   "title": "OWNER APPROVAL CONTRACT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-after-approval-bootstrap-order",
+   "block": "2026-10-09T0725",
+   "title": "AFTER APPROVAL \u2014 BOOTSTRAP ORDER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-do-not-wait-for-every-theoretical-optimization",
+   "block": "2026-10-09T0725",
+   "title": "DO NOT WAIT FOR EVERY THEORETICAL OPTIMIZATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-program-authority-behavior",
+   "block": "2026-10-09T0725",
+   "title": "PROGRAM AUTHORITY BEHAVIOR"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-master-done-gate-2",
+   "block": "2026-10-09T0725",
+   "title": "MASTER DONE-GATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-economic-master-done-gate-2",
+   "block": "2026-10-09T0725",
+   "title": "ECONOMIC MASTER DONE-GATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-baseline-deflation-done-gate",
+   "block": "2026-10-09T0725",
+   "title": "BASELINE DEFLATION DONE-GATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-self-hosting-done-gate",
+   "block": "2026-10-09T0725",
+   "title": "SELF-HOSTING DONE-GATE"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-handoff-contract-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-handoff-contract-2",
+   "block": "2026-10-09T0725",
+   "title": "HANDOFF CONTRACT"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-video-image-contract-2",
+   "block": "2026-10-09T0725",
+   "title": "VIDEO / IMAGE CONTRACT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-final-constitutional-laws-3",
+   "block": "2026-10-09T0725",
+   "title": "FINAL CONSTITUTIONAL LAWS"
+  },
+  {
+   "claimed": "SUPERSEDED",
+   "superseded_by": "S-first-response-now-3",
+   "reason": "newer prompt re-issues this title",
+   "id": "S-first-response-now-2",
+   "block": "2026-10-09T0725",
+   "title": "FIRST RESPONSE NOW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-preamble-4",
+   "block": "2026-10-09T1232",
+   "title": "PREAMBLE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-master-mission",
+   "block": "2026-10-09T1232",
+   "title": "MASTER MISSION"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-scope-boundary",
+   "block": "2026-10-09T1232",
+   "title": "SCOPE BOUNDARY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-current-reported-reality-2",
+   "block": "2026-10-09T1232",
+   "title": "CURRENT REPORTED REALITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-s1-economic-incident",
+   "block": "2026-10-09T1232",
+   "title": "S1 ECONOMIC INCIDENT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-s2-reported-purpose",
+   "block": "2026-10-09T1232",
+   "title": "S2 REPORTED PURPOSE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-s3-reported-purpose",
+   "block": "2026-10-09T1232",
+   "title": "S3 REPORTED PURPOSE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-l1-reported-purpose",
+   "block": "2026-10-09T1232",
+   "title": "L1 REPORTED PURPOSE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-part-a-reported-state",
+   "block": "2026-10-09T1232",
+   "title": "PART A REPORTED STATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-part-b-reported-scope",
+   "block": "2026-10-09T1232",
+   "title": "PART B REPORTED SCOPE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-historical-remaining-cost-references",
+   "block": "2026-10-09T1232",
+   "title": "HISTORICAL REMAINING COST REFERENCES"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-gex44-execution-requirement-2",
+   "block": "2026-10-09T1232",
+   "title": "GEX44 EXECUTION REQUIREMENT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-uwcp-3",
+   "block": "2026-10-09T1232",
+   "title": "UWCP"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-first-response-contract-3",
+   "block": "2026-10-09T1232",
+   "title": "FIRST RESPONSE CONTRACT"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-owner-authority-contract",
+   "block": "2026-10-09T1232",
+   "title": "OWNER AUTHORITY CONTRACT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-token-budget-mandatory-in-first-plan",
+   "block": "2026-10-09T1232",
+   "title": "TOKEN BUDGET \u2014 MANDATORY IN FIRST PLAN"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-blind-100m-authorization",
+   "block": "2026-10-09T1232",
+   "title": "NO BLIND 100M AUTHORIZATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-authority-recompilation",
+   "block": "2026-10-09T1232",
+   "title": "AUTONOMOUS AUTHORITY RECOMPILATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-0-current-reality",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 0 \u2014 CURRENT REALITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-1-close-s1-at-minimum-cognitive-cost",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 1 \u2014 CLOSE S1 AT MINIMUM COGNITIVE COST"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-s1-durability",
+   "block": "2026-10-09T1232",
+   "title": "S1 DURABILITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-certified-closeout-transaction",
+   "block": "2026-10-09T1232",
+   "title": "CERTIFIED CLOSEOUT TRANSACTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-2-s2-call-unit-truth",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 2 \u2014 S2 CALL-UNIT TRUTH"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-call-accounting-invariant",
+   "block": "2026-10-09T1232",
+   "title": "CALL ACCOUNTING INVARIANT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-unit-typed-budgets",
+   "block": "2026-10-09T1232",
+   "title": "UNIT-TYPED BUDGETS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-s2-production-canary",
+   "block": "2026-10-09T1232",
+   "title": "S2 PRODUCTION CANARY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-3-s3-cost-model",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 3 \u2014 S3 COST MODEL"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-growth-aware-model",
+   "block": "2026-10-09T1232",
+   "title": "GROWTH-AWARE MODEL"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-aware-costing",
+   "block": "2026-10-09T1232",
+   "title": "PHASE-AWARE COSTING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-stochastic-expected-verified-completion",
+   "block": "2026-10-09T1232",
+   "title": "STOCHASTIC EXPECTED VERIFIED COMPLETION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-forecast-confidence",
+   "block": "2026-10-09T1232",
+   "title": "FORECAST CONFIDENCE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-three-miss-invalidation",
+   "block": "2026-10-09T1232",
+   "title": "THREE-MISS INVALIDATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-predictive-lease-edge",
+   "block": "2026-10-09T1232",
+   "title": "PREDICTIVE LEASE EDGE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-protected-reserves",
+   "block": "2026-10-09T1232",
+   "title": "PROTECTED RESERVES"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-4-l1-obligation-compilation",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 4 \u2014 L1 OBLIGATION COMPILATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-dataset-programme-obligation-ledger",
+   "block": "2026-10-09T1232",
+   "title": "DATASET / PROGRAMME OBLIGATION LEDGER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-of-non-work-2",
+   "block": "2026-10-09T1232",
+   "title": "PROOF OF NON-WORK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-proof-of-no-cognition",
+   "block": "2026-10-09T1232",
+   "title": "PROOF OF NO COGNITION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-5-reforecast-the-entire-remaining-programme",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 5 \u2014 REFORECAST THE ENTIRE REMAINING PROGRAMME"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-do-not-inflate-all-old-rows",
+   "block": "2026-10-09T1232",
+   "title": "DO NOT INFLATE ALL OLD ROWS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-6-work-class-profile-guided-execution",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 6 \u2014 WORK-CLASS PROFILE-GUIDED EXECUTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-resolver-ladder",
+   "block": "2026-10-09T1232",
+   "title": "RESOLVER LADDER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-slim-t2",
+   "block": "2026-10-09T1232",
+   "title": "SLIM-T2"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-frontier-token-firewall",
+   "block": "2026-10-09T1232",
+   "title": "FRONTIER TOKEN FIREWALL"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-7-context-economics",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 7 \u2014 CONTEXT ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-read-extinction",
+   "block": "2026-10-09T1232",
+   "title": "READ EXTINCTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-zero-transcript-successor",
+   "block": "2026-10-09T1232",
+   "title": "ZERO-TRANSCRIPT SUCCESSOR"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-worker-lifetime-optimization",
+   "block": "2026-10-09T1232",
+   "title": "WORKER LIFETIME OPTIMIZATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-8-autonomous-mission-stewardship",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 8 \u2014 AUTONOMOUS MISSION STEWARDSHIP"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-program-liveness-vs-process-liveness",
+   "block": "2026-10-09T1232",
+   "title": "PROGRAM LIVENESS VS PROCESS LIVENESS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-automatic-reservation-reconciliation",
+   "block": "2026-10-09T1232",
+   "title": "AUTOMATIC RESERVATION RECONCILIATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-unknown-is-not-free",
+   "block": "2026-10-09T1232",
+   "title": "UNKNOWN IS NOT FREE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phantom-reservation-prevention",
+   "block": "2026-10-09T1232",
+   "title": "PHANTOM RESERVATION PREVENTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-9-s1-steward-productionization",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 9 \u2014 S1 STEWARD PRODUCTIONIZATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-steward-self-hosting",
+   "block": "2026-10-09T1232",
+   "title": "STEWARD SELF-HOSTING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-10-part-a-completion",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 10 \u2014 PART A COMPLETION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-a-g2-a-g3-learning-gate",
+   "block": "2026-10-09T1232",
+   "title": "A-G2 / A-G3 LEARNING GATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-part-a-done-gate",
+   "block": "2026-10-09T1232",
+   "title": "PART A DONE-GATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-11-part-b-reconstruction-factory",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 11 \u2014 PART B RECONSTRUCTION FACTORY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-reconstruction-unit-economics",
+   "block": "2026-10-09T1232",
+   "title": "RECONSTRUCTION UNIT ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-family-factoring",
+   "block": "2026-10-09T1232",
+   "title": "FAMILY FACTORING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-ksr-state",
+   "block": "2026-10-09T1232",
+   "title": "KSR STATE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-ksr-gate-strategy",
+   "block": "2026-10-09T1232",
+   "title": "KSR GATE STRATEGY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-compiler-mismatch-fast-path",
+   "block": "2026-10-09T1232",
+   "title": "COMPILER-MISMATCH FAST PATH"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-kme-benchmark-2",
+   "block": "2026-10-09T1232",
+   "title": "KME BENCHMARK"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-12-proof-economics",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 12 \u2014 PROOF ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-certified-proof-transaction",
+   "block": "2026-10-09T1232",
+   "title": "CERTIFIED PROOF TRANSACTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-mutation-economics",
+   "block": "2026-10-09T1232",
+   "title": "MUTATION ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-13-cognitive-economic-autopsy",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 13 \u2014 COGNITIVE ECONOMIC AUTOPSY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-no-budget-inflation-learning",
+   "block": "2026-10-09T1232",
+   "title": "NO BUDGET-INFLATION LEARNING"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-14-profile-guided-optimization",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 14 \u2014 PROFILE-GUIDED OPTIMIZATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-phase-15-cognitive-economics-global-baseline",
+   "block": "2026-10-09T1232",
+   "title": "PHASE 15 \u2014 COGNITIVE ECONOMICS GLOBAL BASELINE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-constitutive-baseline-ratchet-5",
+   "block": "2026-10-09T1232",
+   "title": "CONSTITUTIVE BASELINE RATCHET"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-baseline-retirement",
+   "block": "2026-10-09T1232",
+   "title": "BASELINE RETIREMENT"
+  },
+  {
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "pattern": "(?i)ukdl"
+    }
+   ],
+   "reason": "doctrine; phrase found in enforcing file",
+   "id": "S-ukdl-3",
+   "block": "2026-10-09T1232",
+   "title": "UKDL"
+  },
+  {
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "pattern": "(?i)process[\\s\\-_/]*rule"
+    }
+   ],
+   "reason": "doctrine; phrase found in enforcing file",
+   "id": "S-process-rule-2",
+   "block": "2026-10-09T1232",
+   "title": "PROCESS RULE"
+  },
+  {
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "pattern": "(?i)traps"
+    }
+   ],
+   "reason": "doctrine; phrase found in enforcing file",
+   "id": "S-traps-2",
+   "block": "2026-10-09T1232",
+   "title": "TRAPS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-failure-knowledge",
+   "block": "2026-10-09T1232",
+   "title": "FAILURE KNOWLEDGE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-fios",
+   "block": "2026-10-09T1232",
+   "title": "FIOS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-optimizer-roi",
+   "block": "2026-10-09T1232",
+   "title": "OPTIMIZER ROI"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-autonomous-amdahl-loop",
+   "block": "2026-10-09T1232",
+   "title": "AUTONOMOUS AMDAHL LOOP"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-agent-teams-mode-4",
+   "block": "2026-10-09T1232",
+   "title": "AGENT TEAMS MODE"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-resource-aware-gex44-execution",
+   "block": "2026-10-09T1232",
+   "title": "RESOURCE-AWARE GEX44 EXECUTION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-zero-hot-waiting",
+   "block": "2026-10-09T1232",
+   "title": "ZERO-HOT WAITING"
+  },
+  {
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "pattern": "(?i)loops"
+    }
+   ],
+   "reason": "doctrine; phrase found in enforcing file",
+   "id": "S-loops-3",
+   "block": "2026-10-09T1232",
+   "title": "LOOPS"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-delegation-principle-4",
+   "block": "2026-10-09T1232",
+   "title": "DELEGATION PRINCIPLE"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-opportunity-delegation-principle-4",
+   "block": "2026-10-09T1232",
+   "title": "OPPORTUNITY DELEGATION PRINCIPLE"
+  },
+  {
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+     "pattern": "(?i)concurrent[\\s\\-_/]*writers"
+    }
+   ],
+   "reason": "doctrine; phrase found in enforcing file",
+   "id": "S-concurrent-writers-3",
+   "block": "2026-10-09T1232",
+   "title": "CONCURRENT WRITERS"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-micro-commits-3",
+   "block": "2026-10-09T1232",
+   "title": "MICRO-COMMITS"
+  },
+  {
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+     "pattern": "(?i)iteration"
+    }
+   ],
+   "reason": "doctrine; phrase found in enforcing file",
+   "id": "S-iteration-3",
+   "block": "2026-10-09T1232",
+   "title": "ITERATION"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-production-reality-gate-4",
+   "block": "2026-10-09T1232",
+   "title": "PRODUCTION REALITY GATE"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-kernel-vmax-null-error-3",
+   "block": "2026-10-09T1232",
+   "title": "KERNEL vMAX-NULL-ERROR"
+  },
+  {
+   "claimed": "CHEAP_COGNITION",
+   "reason": "doctrine without an enforcer",
+   "id": "S-active-reality-contract-3",
+   "block": "2026-10-09T1232",
+   "title": "ACTIVE REALITY CONTRACT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-part-b-coordination-economics",
+   "block": "2026-10-09T1232",
+   "title": "PART B COORDINATION ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-closeout-economics",
+   "block": "2026-10-09T1232",
+   "title": "CLOSEOUT ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-cross-project-transfer",
+   "block": "2026-10-09T1232",
+   "title": "CROSS-PROJECT TRANSFER"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-economic-immunity-2",
+   "block": "2026-10-09T1232",
+   "title": "ECONOMIC IMMUNITY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-master-done-gate-s1-s2-s3-l1",
+   "block": "2026-10-09T1232",
+   "title": "MASTER DONE-GATE \u2014 S1/S2/S3/L1"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-master-done-gate-part-a",
+   "block": "2026-10-09T1232",
+   "title": "MASTER DONE-GATE \u2014 PART A"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-master-done-gate-part-b",
+   "block": "2026-10-09T1232",
+   "title": "MASTER DONE-GATE \u2014 PART B"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-master-done-gate-autonomy",
+   "block": "2026-10-09T1232",
+   "title": "MASTER DONE-GATE \u2014 AUTONOMY"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-master-done-gate-economics",
+   "block": "2026-10-09T1232",
+   "title": "MASTER DONE-GATE \u2014 ECONOMICS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-master-done-gate-knowledge",
+   "block": "2026-10-09T1232",
+   "title": "MASTER DONE-GATE \u2014 KNOWLEDGE"
+  },
+  {
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "pattern": "(?i)hand-?off"
+    }
+   ],
+   "reason": "doctrine; phrase found in enforcing file",
+   "id": "S-handoff-contract-3",
+   "block": "2026-10-09T1232",
+   "title": "HANDOFF CONTRACT"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-final-meta-analysis",
+   "block": "2026-10-09T1232",
+   "title": "FINAL META-ANALYSIS"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-first-response-now-3",
+   "block": "2026-10-09T1232",
+   "title": "FIRST RESPONSE NOW"
+  },
+  {
+   "claimed": "UNKNOWN",
+   "reason": "needs review",
+   "id": "S-after-the-single-approval-2",
+   "block": "2026-10-09T1232",
+   "title": "AFTER THE SINGLE APPROVAL"
+  }
+ ]
+}
