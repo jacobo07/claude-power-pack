@@ -1,6 +1,14 @@
 # CP50-prerequisite tranche -- ledger
 
-Plan by plan, one lease and one receipt each. FULL_WSR is never a budget. CP50 itself waits for ce-lifecycle-v WU-5.
+Plan by plan, one lease and one receipt each. FULL_WSR is never a budget. CP50 itself waits for the ce-lifecycle
+`lifecycle` sweep stage. That stage was WU-5 in ce-lifecycle-v. The goal moved v -> v2 -> v3, so it is now WU-CLOSE (L9) of
+goal ce-lifecycle-v3 (worktree Apps\pp-ce-lifecycle-v3, RESUMPTION.md). Re-pointed 2026-10-09 by Owner "sí". At that time:
+WU-S1 DONE, L1 INSTALLED, WU-ADV IN PROGRESS, no `lifecycle` stage in live tools/.
+Correction, same day: the successor stage that WU-5 described is WU-ADV(2), and WU-CLOSE is the last unit of plan v3 S6
+(ADV2 -> 1C -> 1D -> INST -> TRIP -> FLOOR -> GEX -> CLOSE, ~5.5M by the plan). Owner option A funded S0-S5 + S7, not S6.
+Measured 13:15: goal ce-lifecycle-v3 remaining 2,934,095, open 396,885. WU-S3 epoch 1 (m-4ace4480521c) HALTED at 975,091
+against its 950,000 stop. It was renewed by the chain as m-a1a658f26a16 (PREPARED), with one live writer, the sweep.
+CP50 is therefore blocked on S2-S5 and then on S6 funding (the plan's option B), not on any action this pane can take.
 
 ## Authority
 - 2026-10-08 Owner "y y": fund the tranche, ~4.2M expected, 5.0M ceiling (R1 REFORECAST).
