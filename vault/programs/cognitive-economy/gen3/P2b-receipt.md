@@ -97,6 +97,9 @@ P2b total: 65 calls, 16,832,965 processed, 40,966 out. Job 2 alone: 10 calls, 2,
 job 3 3.07M / 9.
 
 ## Open
-- test_contract and test_candidate are red, unbaselined (see above). --runner-source head reads a fork path.
+- test_contract and test_candidate are red. BASELINED 2026-10-09: on a detached worktree at 6226c88 (1f72401^, before
+  P2a) both fail identically: test_contract with the same FileNotFoundError, and test_candidate with the same two FAILs
+  (V-CAND-OPERANDS-NORMALISED, V-SDA-PRECHECK-REAL). The reds predate P2a/P2b; they are not caused by them.
+- --runner-source head reads a fork path.
 - Never send 211354Z, 211412Z or 215900Z. The job-2 tree stays un-ingested in returns/.incoming.
 3. Never send 211354Z, 211412Z or 215900Z: they are custody-invalid.
