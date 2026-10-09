@@ -1,0 +1,4788 @@
+{
+ "S-primary-execution-environment": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Reality Delta"
+   }
+  ],
+  "reason": "Master Plan section 0 re-derives the reported state"
+ },
+ "S-mandatory-owner-approval-exactly-once": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-mandatory-token-budget-in-the-inline-plan": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-token-budget-is-an-economic-control-not-a-normal-stop-condit": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-economic-plan-requirements": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-source-of-truth-ingestion": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Reality Delta"
+   }
+  ],
+  "reason": "Master Plan section 0 re-derives the reported state"
+ },
+ "S-no-implementation-code-in-this-prompt": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-no-parallel-cathedrals": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-master-north-star": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-autonomous-optimization-capability": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-autonomous-optimization-flow": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-kme-l-canonical-first-incident": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-zero-rescan-target": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-kme-l-must-generalize": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-gsd-x-reconstruction-factory": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-reconstruction-is-not-function-by-function-work": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-minimum-intervention-before-full-reconstruction": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-mission-compilation": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-mission-compiler-passes": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-execution-equivalence-strategy-space": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-dynamic-resource-value": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-capability-p-l-break-even": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-reasoning-debt": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-decision-extinction": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-model-boundary-accounting": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-model-as-novelty-interrupt-handler": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-zero-model-regions": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-forward-oracle-inversion": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-circularity-firewall": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-kobimapengine-reconstruction": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-kme-forward-inverse-lab": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-ksr-wii-reconstruction": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-wii-software-genome": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-cross-title-homology": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-compiler-behavior-inversion-atlas": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-global-type-structural-solving": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-uncertainty-graph": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-semantic-dominators-cut-sets": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-constraint-avalanches": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-population-collapse": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-minimum-source-cut-minimum-intervention": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-static-dynamic-reconstruction": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-active-experiment-design": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-oracle-ladder": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-cognitive-virtual-memory": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-context-economics": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-semantic-gc": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-fresh-epoch-economics": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-zero-transcript-continuation": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-parentless-execution": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-semantic-agent-output": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-cognitive-singleflight": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-content-addressed-derivations": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-proof-build-system": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-verification-discriminative-power": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-proof-hierarchy": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-proof-escrow": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-critical-path-wall-clock-compression": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-serial-novelty-depth": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-queueing-backpressure": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-resource-lane-separation": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-speculative-preparation": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-factory-self-evolution": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-automation-opportunity-miner": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-factory-generations": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-cbr-reconstruction-birth": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-causal-applicability": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-reconstruction-construction-return": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-double-ratchet": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-baseline-distance-hot-rejuvenation": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-reconstruction-as-gsd-x-stress-test": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-failure-to-prevention": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-baseline-of-completeness": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-instruction-compile-out": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-no-idle-model": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-shared-workspace-safety": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-token-economic-self-hosting": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-cognitive-learning-curve": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-autonomous-optimization-benchmark": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-reconstruction-benchmark": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-ksr-34k-benchmark": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-cross-title-transfer-benchmark": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-cbr-inheritance-benchmark": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-fresh-worker-benchmark": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-100x-estate-scaling-test": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-autonomous-factory-optimization-must-discover-something-new": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-pareto-selection": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-infrastructure-natural-selection": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-realized-dividend": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-master-scoreboard": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-cognitive-bankruptcy": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-no-identical-retry": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-videos": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-mandatory-final-red-team": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-session-mission-close-meta-analysis": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-ultimate-target": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-north-star": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-no-implementation-code": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-source-of-truth": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Reality Delta"
+   }
+  ],
+  "reason": "Master Plan section 0 re-derives the reported state"
+ },
+ "S-current-reported-economic-reality": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Reality Delta"
+   }
+  ],
+  "reason": "Master Plan section 0 re-derives the reported state"
+ },
+ "S-previously-identified-target-bands": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-program-authority": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-scope-preservation": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: R4 reconciliation"
+ },
+ "S-ksr-full-corpus-scope": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-pre-arm-concurrency-check": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-global-ownership-reconciliation": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-do-not-create-another-mega-system": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-cognitive-economics-optimization-stack": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a0-semantic-partial-evaluation": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-mission-ir": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-mission-compiler": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-a1-model-boundary-admission": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-semantic-interrupt-model": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a2-physical-call-compression": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-new-required-metric": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a3-control-plane-cognitive-tax": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-no-giant-coordinator": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a4-context-rent-extinction": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-fresh-focus-floor": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-gex44-advantage": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "GEX44 port (W5)",
+  "reason": "needs the GEX44 control-plane port"
+ },
+ "S-contextimage": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-context-rent-metrics": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-semantic-epoch-rotation": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-rotation-economics": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-a5-read-extinction": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-a6-transport-extinction": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-zero-copy-cognition": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a7-proof-compiler": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-proof-reuse": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-proof-receipts": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-a8-parentless-execution": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a9-zero-hot-waiting": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Zero-hot"
+   }
+  ],
+  "reason": "Master Plan W1 zero-hot wait"
+ },
+ "S-a10-actual-predecessor-dependent-admission": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a11-dynamic-reforecast": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-a12-progress-spend-tripwire": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a13-checkpoint-proof-reserve": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-a14-cognitive-capex-vs-opex": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a15-known-work-cognitive-tax": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a16-reasoning-debt": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a17-cognitive-pgo": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-a18-economic-scoreboard": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-mission-a-minimum-done-gate": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W3 (ce-lifecycle-v3 INST2)",
+  "reason": "W6 Part A units, after W3"
+ },
+ "S-do-not-overoptimize-before-productive-work": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-b0-d2a-reality-owner-scan": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-b1-recompute-work-graph": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-no-silent-scope-loss": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-b2-new-bottom-up-reforecast": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-target-bands": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-no-320m-normal-ceiling": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-b3-autonomous-optimization-workstream": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-kme-l-correction": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-negative-roi-is-a-valid-result": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-b4-reconstruction-factory": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-factory-economic-unit": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-function-inventory-is-not-cognitive-inventory": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-b5-context-economics-for-reconstruction": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-b6-proof-economics": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-b7-cbr": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-b8-verification": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-red-team": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-b9-coordination": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-coordination-is-not-product-work": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-b10-knowledge-return": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-ukdl-vault-cost-target": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-b11-contingency": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-global-economic-tripwires": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-wave-economics": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-mission-must-get-cheaper-while-running": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-cost-of-novelty": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-institutional-novelty-concentration": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-cognitive-capitalization-rate": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-capability-maturity": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-cbr-pareto-safety": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-anti-goodhart-2": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-gex44-resource-economics": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "GEX44 port (W5)",
+  "reason": "needs the GEX44 control-plane port"
+ },
+ "S-cbr-must-change-future-execution": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-mission-a-canaries": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W3 (ce-lifecycle-v3 INST2)",
+  "reason": "W6 Part A units, after W3"
+ },
+ "S-mission-b-canaries": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-mission-a-master-done-gate": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W3 (ce-lifecycle-v3 INST2)",
+  "reason": "W6 Part A units, after W3"
+ },
+ "S-mission-b-master-done-gate": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout gate evaluated over receipts"
+ },
+ "S-budget-master-done-gate": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout gate evaluated over receipts"
+ },
+ "S-self-hosting": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-self-hosting-tripwire": {
+  "claimed": "MERGE",
+  "merge_into": "S-master-mission",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "older-prompt row without a title rule: folded under S-master-mission by prompt precedence (not reviewed in depth)"
+ },
+ "S-primary-mission-2": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Reality Delta"
+   }
+  ],
+  "reason": "Master Plan section 0 re-derives the reported state"
+ },
+ "S-source-datasets": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-previous-owner-authority": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-no-implementation-code-in-plan": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-constitutional-north-star": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-universal-cognitive-cost-collapse": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-minimum-total-verified-cost": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-models-are-interrupt-handlers": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-autonomous-mission-stewardship": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-a-worker-stop-is-not-a-mission-stop": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-mission-steward": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-healthy-mission-with-zero-active-model": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-mission-continuation-compiler": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-continuation-object": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-history-independence": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-control-plane-liveness": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-mission-deadlock-detection": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-forgotten-mission-detection": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-current-a-g1-genesis-canary": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-AG1.json"
+   }
+  ],
+  "reason": "A-G1 receipt"
+ },
+ "S-automatic-tier-descent": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-economic-self-healing-canary": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-economic-immunity-canary": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Economic immunity"
+   }
+  ],
+  "reason": "Master Plan answer 13"
+ },
+ "S-economic-compounding-canary": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-fresh-process-capital-inheritance": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-autonomous-reservation-reconciliation": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: R4 reconciliation"
+ },
+ "S-program-authority-vs-process-lease": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: R4 reconciliation"
+ },
+ "S-autonomous-budget-recompilation": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-semantic-boundary-budget-2": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-multidimensional-economic-leases": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: calls_unit field + model-call counter"
+ },
+ "S-cognitive-purchase-order": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: calls_unit field + model-call counter"
+ },
+ "S-cognitive-receipt": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: calls_unit field + model-call counter"
+ },
+ "S-call-legitimacy": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: calls_unit field + model-call counter"
+ },
+ "S-legitimate-cognition-ratio": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-fault-accounting": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-waste-ledger": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-autonomous-optimization-market": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-self-optimization-has-no-special-privilege": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-capability-break-even-2": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-optimization-moratorium-2": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-champion-challenger": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-automatic-deopt": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-offline-cognitive-counterfactual-lab": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-regret": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-learned-cost-model": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-learned-worker-tiering": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-learned-context-allocation": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-learned-epoch-lifetime": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-semantic-locality": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-context-is-compiled": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-context-abi": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-cognitive-memory-hierarchy": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-semantic-derivation-cache": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-estate-wide-singleflight": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-read-once-reason-once-prove-once-observe-once-2": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-semantic-garbage-collection": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-work-unit-garbage-collection": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-incremental-mission-recompilation": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-mvcc": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-frontier-changed": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-automatic-work-unit-fission": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-automatic-work-unit-fusion": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-preemption": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-dynamic-shadow-prices": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-exchange": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-roofline": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-automatic-amdahl-reprofiling": {
+  "claimed": "CHEAP_COGNITION",
+  "reason": "W8 knowledge writer / PGO owner row (slim-t2)"
+ },
+ "S-cognitive-superoptimization": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-mission-e-graph": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-hot-reasoning-compilation": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-decision-inlining": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-dead-decision-elimination": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-common-cognitive-subexpression-elimination": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-batch-vectorize-homologous-work": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-proof-compiler": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-proof-portfolio": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-dynamic-assurance": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-proof-insurance": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-proof-contribution-attribution": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-proof-singleflight": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-constitutional-compression": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-compiled-constitution": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-trigger-compilation": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-boot-compiler": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-boot-cost-slo": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-institutional-cognitive-deflation": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-inflation-alarm": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-institutional-lto": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-institutional-partial-evaluation": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-nested-compilation": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-no-inheritance-of-prose-by-default": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-zero-transcript-dependency": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-zero-session-identity-as-architectural-target": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-zero-pane-architecture": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-zero-prompt-architecture-for-mature-work": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-autonomous-economic-scientific-loop": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-persist-on-goal-pivot-on-economics": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-two-speed-runtime": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-evolution-loop-is-event-driven": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-optimization-candidate-lifecycle": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-separate-invention-from-deployment-authority": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-proof-carrying-optimization": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-economic-chaos-mutation": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-layer-specific-circuit-breakers": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-call-explosion-breaker": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-coordination-breaker": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-rediscovery-breaker": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-capability-miss-breaker": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-priority-inversion": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-qos": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-human-attention-economics": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-owner-interaction-compiler": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-autonomous-continuity-rate": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-human-dependency-half-life": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-recovery-economics": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-automatic-forget-safety": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-process-rotation": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-process-churn": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-exactly-once-semantic-continuation": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-control-plane-restart": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-machine-restart-canary": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "GEX44 port (W5)",
+  "reason": "needs the GEX44 control-plane port"
+ },
+ "S-cross-machine-continuation": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "GEX44 port (W5)",
+  "reason": "needs the GEX44 control-plane port"
+ },
+ "S-cognitive-process-scheduler": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-capital-allocation": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-uncertainty-economics": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-uncertainty-dominators": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-knowledge-fan-out": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-frontier-cognition-portfolio": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-capex-vs-opex-2": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-capability-p-l": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-capability-depreciation-retirement": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-architectural-simplicity-pressure": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-autonomous-simplification-pass": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-thermodynamics": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-verified-novelty-yield": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-known-work-cognitive-tax": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-decision-extinction-velocity": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-capital-turnover": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-reasoning-half-life": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-baseline-surface-deflation": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-architecture-payback-ratio": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-production-economic-reality": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-economic-provenance": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-economic-truth-lattice": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-mission-a-objective-rewrite": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W3 (ce-lifecycle-v3 INST2)",
+  "reason": "W6 Part A units, after W3"
+ },
+ "S-a-g2-through-a-g5-recompilation": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W3 (ce-lifecycle-v3 INST2)",
+  "reason": "W6 Part A units, after W3"
+ },
+ "S-mission-a-economic-done-gate": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W3 (ce-lifecycle-v3 INST2)",
+  "reason": "W6 Part A units, after W3"
+ },
+ "S-economic-regression-ci": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-reconstruction-factory-mission-c": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-reconstruction-dataset-exhaustive-compilation": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-reconstruction-work-extinction-funnel": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-reconstruction-cognitive-inventory": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-family-amortization-2": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-reconstruction-contextimages": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-frontier-reasoning-compiler": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-compiler-diff-healthy-loop": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-batch-cognition": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-global-type-economics": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-compiler-behavior-economics": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-cognitive-pgo": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-reconstruction-hot-path-compilation": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-zero-reasoning-regions": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-reconstruction-economic-learning-curve": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-campaign-p-l": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-cbr-reconstruction-double-ratchet-2": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-construction-return-2": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-cross-project-transfer-canary": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "CP50 criterion",
+  "reason": "transfer canary needs P3/CP50 results"
+ },
+ "S-reverse-transfer-canary": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "CP50 criterion",
+  "reason": "transfer canary needs P3/CP50 results"
+ },
+ "S-full-wsr-scope": {
+  "claimed": "DEFERRED_EXTERNAL",
+  "reason": "gsdx plan section 5 / TRANCHE-CP50: FULL_WSR is never a budget"
+ },
+ "S-gex44-resource-reality": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "GEX44 port (W5)",
+  "reason": "needs the GEX44 control-plane port"
+ },
+ "S-parallelism-2": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-progress-liveness-2": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-progress-spend-tripwire": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-dynamic-reforecast": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-checkpoint-proof-reserve": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-cognitive-priority-and-delay": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-value-of-information": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-real-options": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-stop-loss": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-speculation-p-l": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-economic-health-states": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-automatic-economic-incident-response": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-sibling-immunization": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-estate-immunization": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-hot-rejuvenation": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-production-loop-vs-evolution-loop": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-meta-cognition-budget": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-simplicity-premium": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-capability-sunset": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-continuous-baseline-gardening": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-knowledge-vault-2": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-cognitive-ci": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-first-response-required-reality-scan": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-first-response-master-plan": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-master-plan-must-explicitly-answer": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-after-approval-bootstrap-order": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-do-not-wait-for-every-theoretical-optimization": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-program-authority-behavior": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-master-done-gate-2": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout gate evaluated over receipts"
+ },
+ "S-economic-master-done-gate-2": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout gate evaluated over receipts"
+ },
+ "S-baseline-deflation-done-gate": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-self-hosting-done-gate": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-final-constitutional-laws-3": {
+  "claimed": "MERGE",
+  "merge_into": "S-phase-14-profile-guided-optimization",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\l1\\sections.json"
+   }
+  ],
+  "reason": "optimization-stack candidate: enters only through the PGO/ROI market under the moratorium"
+ },
+ "S-preamble-4": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Reality Delta"
+   }
+  ],
+  "reason": "Master Plan section 0 re-derives the reported state"
+ },
+ "S-master-mission": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Reality Delta"
+   }
+  ],
+  "reason": "Master Plan section 0 re-derives the reported state"
+ },
+ "S-current-reported-reality-2": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Reality Delta"
+   }
+  ],
+  "reason": "Master Plan section 0 re-derives the reported state"
+ },
+ "S-s1-economic-incident": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-s2-reported-purpose": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: calls_unit field + model-call counter"
+ },
+ "S-s3-reported-purpose": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-l1-reported-purpose": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\tools\\gsd_dossier.py",
+    "pattern": "def dispose\\("
+   }
+  ],
+  "reason": "L1 gate tool exists"
+ },
+ "S-part-a-reported-state": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W3 (ce-lifecycle-v3 INST2)",
+  "reason": "W6 Part A units, after W3"
+ },
+ "S-part-b-reported-scope": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Reality Delta"
+   }
+  ],
+  "reason": "Master Plan section 0 re-derives the reported state"
+ },
+ "S-historical-remaining-cost-references": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Reality Delta"
+   }
+  ],
+  "reason": "Master Plan section 0 re-derives the reported state"
+ },
+ "S-gex44-execution-requirement-2": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "GEX44 port (W5)",
+  "reason": "needs the GEX44 control-plane port"
+ },
+ "S-uwcp-3": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "GEX44 port (W5)",
+  "reason": "Master Plan W5: UWCP evaluated at the port"
+ },
+ "S-token-budget-mandatory-in-first-plan": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-no-blind-100m-authorization": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-autonomous-authority-recompilation": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-phase-0-current-reality": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Reality Delta"
+   }
+  ],
+  "reason": "Master Plan section 0 re-derives the reported state"
+ },
+ "S-phase-1-close-s1-at-minimum-cognitive-cost": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-s1-durability": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-certified-closeout-transaction": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-phase-2-s2-call-unit-truth": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: calls_unit field + model-call counter"
+ },
+ "S-unit-typed-budgets": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: calls_unit field + model-call counter"
+ },
+ "S-s2-production-canary": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: calls_unit field + model-call counter"
+ },
+ "S-phase-3-s3-cost-model": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-growth-aware-model": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-phase-aware-costing": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-stochastic-expected-verified-completion": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-forecast-confidence": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-three-miss-invalidation": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-predictive-lease-edge": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S4-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S4 lease edge"
+ },
+ "S-protected-reserves": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-phase-4-l1-obligation-compilation": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\tools\\gsd_dossier.py",
+    "pattern": "def dispose\\("
+   }
+  ],
+  "reason": "L1 gate tool exists"
+ },
+ "S-dataset-programme-obligation-ledger": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\tools\\gsd_dossier.py",
+    "pattern": "def dispose\\("
+   }
+  ],
+  "reason": "L1 gate tool exists"
+ },
+ "S-proof-of-non-work-2": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\tools\\gsd_dossier.py",
+    "pattern": "def dispose\\("
+   }
+  ],
+  "reason": "L1 gate tool exists"
+ },
+ "S-proof-of-no-cognition": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\tools\\gsd_dossier.py",
+    "pattern": "def dispose\\("
+   }
+  ],
+  "reason": "L1 gate tool exists"
+ },
+ "S-phase-5-reforecast-the-entire-remaining-programme": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S3-receipt.md"
+   }
+  ],
+  "reason": "lc3 WU-S3 growth estimator (MERGE onto it in W3)"
+ },
+ "S-do-not-inflate-all-old-rows": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W4 reforecast / autopsy is arithmetic over receipts"
+ },
+ "S-phase-6-work-class-profile-guided-execution": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)slim-t2"
+   }
+  ],
+  "reason": "Master Plan section 3 resolver profiles"
+ },
+ "S-resolver-ladder": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)slim-t2"
+   }
+  ],
+  "reason": "Master Plan section 3 resolver profiles"
+ },
+ "S-slim-t2": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)slim-t2"
+   }
+  ],
+  "reason": "Master Plan section 3 resolver profiles"
+ },
+ "S-frontier-token-firewall": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)slim-t2"
+   }
+  ],
+  "reason": "Master Plan section 3 resolver profiles"
+ },
+ "S-phase-7-context-economics": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-read-extinction": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-zero-transcript-successor": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-worker-lifetime-optimization": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "(?i)epoch length"
+   }
+  ],
+  "reason": "Master Plan answer 5 epoch length L*"
+ },
+ "S-phase-8-autonomous-mission-stewardship": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-program-liveness-vs-process-liveness": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-automatic-reservation-reconciliation": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: R4 reconciliation"
+ },
+ "S-unknown-is-not-free": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: R4 reconciliation"
+ },
+ "S-phantom-reservation-prevention": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "ce-lifecycle-v3 INST2",
+  "reason": "W3 residual: R4 reconciliation"
+ },
+ "S-phase-9-s1-steward-productionization": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-steward-self-hosting": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "file_exists",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-S1.json"
+   }
+  ],
+  "reason": "S1 steward + certified closeout shipped (RECEIPT-S1)"
+ },
+ "S-phase-10-part-a-completion": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W3 (ce-lifecycle-v3 INST2)",
+  "reason": "W6 Part A units, after W3"
+ },
+ "S-a-g2-a-g3-learning-gate": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W3 (ce-lifecycle-v3 INST2)",
+  "reason": "W6 Part A units, after W3"
+ },
+ "S-part-a-done-gate": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W3 (ce-lifecycle-v3 INST2)",
+  "reason": "W6 Part A units, after W3"
+ },
+ "S-phase-11-part-b-reconstruction-factory": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-reconstruction-unit-economics": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-family-factoring": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-ksr-state": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-ksr-gate-strategy": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-compiler-mismatch-fast-path": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)reconstruct"
+   }
+  ],
+  "reason": "Part B maps onto the recon-factory ROADMAP phases"
+ },
+ "S-kme-benchmark-2": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-phase-12-proof-economics": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-certified-proof-transaction": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-mutation-economics": {
+  "claimed": "REUSE_EXISTING",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home\\.planning\\workstreams\\recon-factory\\ROADMAP.md",
+    "pattern": "(?i)verif|proof"
+   }
+  ],
+  "reason": "recon-factory proof/verification phases (P5/P6 checked)"
+ },
+ "S-phase-13-cognitive-economic-autopsy": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W4 reforecast / autopsy is arithmetic over receipts"
+ },
+ "S-no-budget-inflation-learning": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W4 reforecast / autopsy is arithmetic over receipts"
+ },
+ "S-phase-14-profile-guided-optimization": {
+  "claimed": "CHEAP_COGNITION",
+  "reason": "W8 knowledge writer / PGO owner row (slim-t2)"
+ },
+ "S-phase-15-cognitive-economics-global-baseline": {
+  "claimed": "CHEAP_COGNITION",
+  "reason": "W8 knowledge writer / PGO owner row (slim-t2)"
+ },
+ "S-constitutive-baseline-ratchet-5": {
+  "claimed": "CHEAP_COGNITION",
+  "reason": "W8 knowledge writer / PGO owner row (slim-t2)"
+ },
+ "S-failure-knowledge": {
+  "claimed": "CHEAP_COGNITION",
+  "reason": "W8 knowledge writer / PGO owner row (slim-t2)"
+ },
+ "S-fios": {
+  "claimed": "CHEAP_COGNITION",
+  "reason": "W8 knowledge writer / PGO owner row (slim-t2)"
+ },
+ "S-optimizer-roi": {
+  "claimed": "CHEAP_COGNITION",
+  "reason": "W8 knowledge writer / PGO owner row (slim-t2)"
+ },
+ "S-autonomous-amdahl-loop": {
+  "claimed": "CHEAP_COGNITION",
+  "reason": "W8 knowledge writer / PGO owner row (slim-t2)"
+ },
+ "S-resource-aware-gex44-execution": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "GEX44 port (W5)",
+  "reason": "needs the GEX44 control-plane port"
+ },
+ "S-zero-hot-waiting": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Zero-hot"
+   }
+  ],
+  "reason": "Master Plan W1 zero-hot wait"
+ },
+ "S-production-reality-gate-4": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout checks the reality gate over receipts"
+ },
+ "S-part-b-coordination-economics": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W7 Part B on GEX44",
+  "reason": "coordination economics measured during W7"
+ },
+ "S-closeout-economics": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout gate evaluated over receipts"
+ },
+ "S-cross-project-transfer": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "CP50 criterion",
+  "reason": "transfer canary needs P3/CP50 results"
+ },
+ "S-economic-immunity-2": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "Economic immunity"
+   }
+  ],
+  "reason": "Master Plan answer 13"
+ },
+ "S-master-done-gate-s1-s2-s3-l1": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout gate evaluated over receipts"
+ },
+ "S-master-done-gate-part-a": {
+  "claimed": "WAIT_DEPENDENCY",
+  "depends_on": "W3 (ce-lifecycle-v3 INST2)",
+  "reason": "W6 Part A units, after W3"
+ },
+ "S-master-done-gate-part-b": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout gate evaluated over receipts"
+ },
+ "S-master-done-gate-autonomy": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout gate evaluated over receipts"
+ },
+ "S-master-done-gate-economics": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout gate evaluated over receipts"
+ },
+ "S-master-done-gate-knowledge": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout gate evaluated over receipts"
+ },
+ "S-final-meta-analysis": {
+  "claimed": "DETERMINISTIC",
+  "reason": "W8 closeout gate evaluated over receipts"
+ },
+ "S-first-response-now-3": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ },
+ "S-after-the-single-approval-2": {
+  "claimed": "ALREADY_SATISFIED",
+  "evidence": [
+   {
+    "kind": "grep",
+    "path": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\plans\\gsdx-factory-master-plan.md",
+    "pattern": "hard ceiling of 55M"
+   }
+  ],
+  "reason": "Master Plan section 1 answer 10: 40M envelope / 55M ceiling, approved"
+ }
+}
