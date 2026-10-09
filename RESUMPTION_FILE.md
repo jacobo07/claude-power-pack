@@ -1,4 +1,18 @@
-# ACTIVE (2026-10-08): cost-collapse + expected-completion admission (worktree pp-cost-collapse)
+# ACTIVE (2026-10-09): gsdx-factory steward recovery (worktree pp-gsdx-factory-2, goal gsdx-factory-2)
+
+Plan (binding, Owner "y"): live tree `vault/plans/gsdx-steward-recovery-plan.md`; handoff `vault/plans/gsdx-r0-handoff.md`.
+Goal ledger: `gsdx-factory-2`, cap 100M, root = this worktree. Old goal `gsdx-factory` is over cap by LEDGER_MISATTRIBUTION
+(coordinator Set-Location into its root booked a whole session); a ledger correction op is S1's job.
+Rule: a coordinator NEVER Set-Locations into a goal root; use `git -C`, absolute paths, child-process cwd only.
+
+State: R0 / A-G1 DONE. Tool+test 0573e610; obligations+dispositions f923c24a; receipt
+`vault/specs/gsdx-factory.RECEIPT-AG1.json`. dispose --check rc=0 (22 disposed, 0 undisposed, 5 UNKNOWN), DISPOSE_PASS=17/17,
+canary A1/B1 PASS. Pending coordinator steps: settle sid 6305f97c at 3,276,310 + close its lease (old goal); mark m-fa18e2b8b44d terminal.
+
+Next: S4 (slim-tier dominator probe, 0.3M) -> S1 (steward: settle stopped sids, ledger correction, salvage) -> S2/S3 -> L1.
+A-G2..A-G5 are recompiled from L1 + S4, never re-armed from stale packets. Coherence anchor: `git log` here at or after f923c24a.
+
+# PRIOR (2026-10-08): cost-collapse + expected-completion admission (worktree pp-cost-collapse)
 
 Specs (binding): `vault/specs/cost-collapse.md` (T1-T7) and `vault/specs/expected-completion-admission.md`
 (APPROVED, Owner "y": D1 program cap 85M, D2 land live at E4, D3 growth term authoritative after canaries 1-4).

@@ -1,0 +1,32 @@
+{
+  "unit": "WU-AG1",
+  "status": "DONE: sections 1-4 landed; dispose --check rc=0, DISPOSE_PASS=17/17, canary A1/B1 PASS",
+  "commits": {
+    "tool_and_test": "0573e610 A-G1: gsd_dossier dispose (Proof of Non-Work) + V-DISPOSE gates",
+    "obligations_and_dispositions": "f923c24a A-G1 R0: obligations.json (22 rows) + dispositions.json, dispose --check rc=0"
+  },
+  "data": {
+    "vault/specs/gsdx-factory/obligations.json": "sha256 0bcae6a40f156f13a471800ac0701c26a2096082a59d7fd036e83f8b6f726917",
+    "vault/specs/gsdx-factory/dispositions.json": "sha256 5b29b258841f3d64cdf003aeb8e70b3c28aab8d458f47687a7023ae8220fc6d6"
+  },
+  "gates": {
+    "dispose_check": "rc=0 counts={ALREADY_SATISFIED 3, CHEAP_COGNITION 4, DEFERRED_EXTERNAL 1, DETERMINISTIC 1, MERGE 1, REUSE_EXISTING 3, STRONG_COGNITION 4, UNKNOWN 5} unknown=5 undisposed=0",
+    "test_gsd_dispose": "DISPOSE_PASS=17/17 threshold=17/17",
+    "rerun": "both re-run 2026-10-09 in worktree pp-gsdx-factory-2 on the bytes committed in f923c24a, same counts as the R0 replay in pp-gsdx-factory"
+  },
+  "canary_A1_B1": "PASS: 7 obligations end ALREADY_SATISFIED/REUSE_EXISTING/MERGE with a re-checked probe, and undisposed=0",
+  "mutation_drill": "file_exists probe forced ok=True -> KILLED by V-DISPOSE-PROBE-FAIL-UNKNOWN (worker session, recorded in its RESUMPTION_FILE)",
+  "provenance": "obligations.json was composed by the worker in its breaker-refused call #19; R0 replayed it verbatim under a script pinning the salvage file by sha256 (c0ef35d0875c...), zero model calls",
+  "economics": {
+    "worker_sid": "6305f97c",
+    "worker_measured_tokens": 3276310,
+    "worker_model_calls": "27 (breaker: 27 > 1.5 x 16); route-AG1 cap was 14",
+    "note": "the worker overran on call count, the measured miss route-AG1 already named; R0 close cost a handful of coordinator calls"
+  },
+  "open_points": [
+    "5 rows stay UNKNOWN (GEX44-only evidence gex44_probe_pending, or weak local evidence such as A3 fresh_context_tax.py without '49'); L1 must re-probe them, never weaken the probe.",
+    "Goal gsdx-factory crossed its cap by LEDGER_MISATTRIBUTION (coordinator Set-Location into the goal root, sid 530d9700); the program continues as goal gsdx-factory-2 (cap 100M). S1 owns a ledger correction op.",
+    "Settlement of sid 6305f97c at 3,276,310 and the terminal mark on m-fa18e2b8b44d are coordinator steps outside this receipt."
+  ],
+  "chain": "not armed by this unit: next per plan is S4 -> S1 -> S2/S3 -> L1; A-G2 recompiled from L1 and S4"
+}
