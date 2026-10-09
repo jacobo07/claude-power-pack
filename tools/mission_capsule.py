@@ -198,6 +198,18 @@ def seal_mission(cap: dict, sd=None) -> dict:
             "reasons": reasons, "warnings": comp["warnings"]}
 
 
+def fault_capsule(goal: str, sid: str, cwd: str, reason: str, *, sd=None, transcript=None,
+                  ask: Optional[Callable] = None, children: Optional[dict] = None, now: Optional[float] = None) -> dict:
+    """R5 Fault Capsule: a bound session that hit a terminal goal refusal, or ended while bound.
+    The same mission capsule (no new format), sealed as a supervisor fallback (degraded): the
+    session's own record is the transcript; the reason is the session's CLAIM and goes in the note."""
+    rec = {"mission_id": f"goal-{goal}-{sid}", "epoch": 1, "owner": {"session_id": sid},
+           "work_dir": cwd, "goal_ref": goal}
+    cap = compile_mission_capsule(rec, origin="supervisor_fallback", note=f"FAULT goal={goal}: {reason}",
+                                  work_dir=cwd, transcript=transcript, ask=ask, children=children, now=now)
+    return seal_mission(cap, sd)
+
+
 def gate_before_stop(key: str, sd=None, now: Optional[float] = None,
                      max_age_s: float = ro.RESET_MAX_AGE_S) -> dict:
     """May the outgoing worker be stopped RIGHT NOW? Exactly rollover.gate on the sealed capsule:

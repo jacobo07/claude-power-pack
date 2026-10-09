@@ -673,6 +673,132 @@ def resolve_binding(event: dict, sid: str) -> dict | None:
     return _legacy_binding(event, sid, ix)
 
 
+def _under(cwd: str | None, roots: list[str]) -> bool:
+    if not cwd:
+        return False
+    c = _norm(cwd)
+    return any(c == r or c.startswith(r + os.sep) for r in map(_norm, roots))
+
+
+def _session_autopsy(path: Path, roots: list[str]) -> dict:
+    """Port of gen2/a3b-r/forensics/autopsy.py: calls and processed tokens per unique message id,
+    split by whether the cwd was inside the goal's roots when the call was made."""
+    seen, calls, processed, bound, refusals = set(), 0, 0, 0, 0
+    last_cwd, first_cwd = None, None
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(r, dict):
+                continue
+            if r.get("cwd"):
+                last_cwd = r["cwd"]
+                first_cwd = first_cwd or last_cwd
+            m = r.get("message") or {}
+            if not isinstance(m, dict):
+                continue
+            if r.get("type") == "user" and isinstance(m.get("content"), list):
+                for b in m["content"]:
+                    if isinstance(b, dict) and b.get("type") == "tool_result":
+                        txt = json.dumps(b.get("content"))[:400]
+                        if "GOAL BUDGET" in txt or "SESSION BUDGET" in txt:
+                            refusals += 1
+            u = m.get("usage")
+            if not u or m.get("model") == "<synthetic>":
+                continue
+            mid = m.get("id") or r.get("uuid")
+            if mid in seen:
+                continue
+            seen.add(mid)
+            n = sum(int(u.get(k) or 0) for k in _UK)
+            calls += 1
+            processed += n
+            if _under(last_cwd, roots):
+                bound += n
+    return {"calls": calls, "processed": processed, "bound": bound, "pre_bind": processed - bound,
+            "refusals": refusals, "role": "worker" if _under(first_cwd, roots) else "pane"}
+
+
+def _git_facts(root: str | None) -> dict:
+    import shutil
+    import subprocess
+    exe = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
+    if not root or not os.path.isdir(root):
+        return {"root": root, "head": None, "dirty": None}
+
+    def run(*a):
+        try:
+            p = subprocess.run([exe, "-C", root, *a], capture_output=True, text=True, timeout=30)
+            return p.stdout if p.returncode == 0 else None
+        except (OSError, subprocess.SubprocessError):
+            return None
+    head, st = run("rev-parse", "HEAD"), run("status", "--porcelain")
+    return {"root": root, "head": head.strip() if head else None,
+            "dirty": len([x for x in st.splitlines() if x.strip()]) if st is not None else None}
+
+
+def goal_autopsy(goal: str, *, projects: Path | None = None) -> dict:
+    """Deterministic, read-only post-mortem of a goal: per session calls, processed, pre-bind vs bound,
+    refusals, open holds; git HEAD and dirty count of the goal root. Reads the journal WITHOUT the leak
+    sweep (status() appends `leak` rows), so it adds nothing to a spent goal."""
+    ent = read_index().get(goal)
+    if ent is None:
+        return {"ok": False, "goal": goal, "reason": f"UNKNOWN: goal {goal!r} is not declared", "sessions": []}
+    led = _goal_ledger(goal)
+    with led._lock:
+        g = led._gfold(led._read())
+    roots = list(ent.get("roots") or [])
+    sids = sorted({r["sid"] for r in g["res"].values()} | set(g["marks"]))
+    rows = []
+    for sid in sids:
+        holds = sum(1 for r in g["res"].values() if r["sid"] == sid and r["state"] in ("RESERVED", "LEAKED"))
+        try:
+            tx = find_transcript(sid, projects)
+            a = _session_autopsy(tx, roots) if tx else None
+        except OSError:
+            a = None
+        row = {"sid": sid, "transcript": a is not None, "open_holds": holds,
+               **(a or {"calls": 0, "processed": 0, "bound": 0, "pre_bind": 0, "refusals": 0, "role": "unknown"})}
+        rows.append(row)
+    tot = lambda k, role=None: sum(r[k] for r in rows if role is None or r["role"] == role)
+    return {"ok": True, "goal": goal, "cap": g["cap"], "used": g["used"], "sessions": rows,
+            "workers_processed": tot("processed", "worker"), "panes_processed": tot("processed", "pane"),
+            "pre_bind_processed": tot("pre_bind"), "bound_processed": tot("bound"),
+            "git": _git_facts(roots[0] if roots else None)}
+
+
+def autopsy_table(out: dict) -> str:
+    """The incident table as fixed-width text (byte-stable for a given journal and transcripts)."""
+    w = (8, 5, 11, 9, 10, 8)
+
+    def line(cells):
+        return " ".join(str(c).ljust(n) for c, n in zip(cells[:-1], w)) + " " + str(cells[-1]) + "\n"
+    rows = out.get("sessions") or []
+    s = line(("sid", "calls", "processed", "pre_bind", "bound", "refusals", "open_holds"))
+    for r in rows:
+        s += line((r["sid"][:8], r["calls"], f"{r['processed']:,}", f"{r['pre_bind']:,}", f"{r['bound']:,}",
+                   r["refusals"], r["open_holds"]))
+    t = lambda k: sum(r[k] for r in rows)
+    return s + line(("TOTAL", t("calls"), f"{t('processed'):,}", f"{t('pre_bind'):,}", f"{t('bound'):,}",
+                     t("refusals"), t("open_holds")))
+
+
+def goal_fault_capsule(goal: str, sid: str, cwd: str, reason: str, *, sd=None, transcript=None,
+                       ask=None, children=None) -> dict | None:
+    """A bound session's terminal refusal / SessionEnd -> a Fault Capsule through mission_capsule.
+    None for a session whose cwd is outside the goal's roots (unbound sessions leave nothing)."""
+    ent = read_index().get(goal)
+    if ent is None or not _under(cwd, list(ent.get("roots") or [])):
+        return None
+    import mission_capsule as mc
+    if transcript is None:
+        tx = find_transcript(sid)
+        transcript = str(tx) if tx else None
+    return mc.fault_capsule(goal, sid, cwd, reason, sd=sd, transcript=transcript, ask=ask, children=children)
+
+
 def _main(argv: list[str]) -> int:
     import argparse
     import socket
@@ -727,6 +853,10 @@ def _main(argv: list[str]) -> int:
     gc.add_argument("--owner", action="store_true")
     gs = sub.add_parser("goal-status")
     gs.add_argument("--goal", required=True)
+    ga = sub.add_parser("goal-autopsy")
+    ga.add_argument("--goal", required=True)
+    ga.add_argument("--projects")
+    ga.add_argument("--table", action="store_true")
     a = ap.parse_args(argv)
     if a.cmd.startswith("goal-"):
         if a.cmd == "goal-declare":
@@ -754,6 +884,10 @@ def _main(argv: list[str]) -> int:
                 print(json.dumps({"ok": False, "goal": a.goal, "reason": "not confirmed"}))
                 return 3
             out = goal_correct(a.goal, a.session, a.measured, a.reason, "owner-tty")
+        elif a.cmd == "goal-autopsy":
+            out = goal_autopsy(a.goal, projects=Path(a.projects) if a.projects else None)
+            if a.table and out.get("ok"):
+                print(autopsy_table(out), end="")
         elif a.cmd == "goal-renew":
             out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
         elif a.cmd == "goal-spawn":
