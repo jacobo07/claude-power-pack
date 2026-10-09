@@ -25,10 +25,15 @@ Owners, do not write their files while their units run: ce-lifecycle-v3 (`Apps\p
 session_budget_guard.js, ledger.py, mission_spend.py; it adopts S1 via WU-S5b/S5c then installs live via WU-INST2),
 cost-collapse (route_admission.py; laptop live tree holds its uncommitted E4a edits), gen3 (recon worktree).
 
-NEXT: (1) W2 L1: compile packet + route (slim-t2) and arm it here; output = disposition of every obligation across
-gsdx Part A/B, recon ROADMAP phases 2/3/7/8/9, gen3 receipts. (2) W1 event: ce-lifecycle-v3 INST2 receipt -> W3
-(unit-typed calls, per-class growth, R4 orphan-hold settle, successor arming within envelope). (3) W5 GEX44 port after W3
-(GEX44 live @1872e9a1 has no admission/dossier/steward/guard; read DEPLOY hard rules first).
+RUNNING WITHOUT A COORDINATOR (since ~15:30): L1 armed m-4e161ffd6420 (WU-L1.md, slim-t2, ADMISSIBLE), launched by the
+5-min sweep. Successors are armed by `tools/gsdx_chain.py tick` (Task PP-GsdxChain-Tick, 15 min; decisions in
+~/.claude/state/gsdx-chain.jsonl, wrapper rc in gsdx-chain-tick.log) from `vault/specs/gsdx-factory/chain.json`:
+L1 -> PLAN-1 (planner epoch: compiles the next <=4 units from l1/GRAPH.md, appends them + PLAN-2). Kill switch
+CPP_GSDX_CHAIN=off or disable the task.
+NEXT (only if the chain row says so): `stopped_without_done` = a unit ended PARTIAL/HALTED -> read its receipt/partial,
+compile a residual packet, add it to chain.json; `refuse_envelope` or a receipt with `owner_needed` -> Owner.
+Open: W3 waits on ce-lifecycle-v3 WU-INST2-receipt.md; W5 GEX44 port (no admission/dossier/steward/guard there; read
+DEPLOY hard rules first).
 Coherence anchor: `git log --oneline -1` here at or after the RECEIPT-S1 commit.
 
 # PRIOR (2026-10-09 morning): gsdx-factory steward recovery (worktree pp-gsdx-factory-2, goal gsdx-factory-2)
