@@ -1,0 +1,129 @@
+{
+ "sid": "7013ffb1-d61e-4c58-9b42-5c30b717038c",
+ "rc": 0,
+ "wall_s": 36.5,
+ "argv_flags": [
+  "-p",
+  "--setting-sources=local",
+  "--strict-mcp-config",
+  "--disable-slash-commands",
+  "--system-prompt=You are a terse worker. Use only the tools given. Do exactly what is asked.",
+  "--exclude-dynamic-system-prompt-sections",
+  "--tools=Read,Grep,Glob,Edit,Write,PowerShell",
+  "--output-format=json",
+  "--allowedTools=Read",
+  "--allowedTools=Grep",
+  "--allowedTools=Glob",
+  "--allowedTools=Edit",
+  "--allowedTools=Write",
+  "--allowedTools=PowerShell",
+  "--allowedTools=Edit(.planning/**)",
+  "--permission-mode=acceptEdits",
+  "--settings=C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\config\\slim-critical-settings.json",
+  "--model=sonnet",
+  "--session-id=7013ffb1-d61e-4c58-9b42-5c30b717038c"
+ ],
+ "result": {
+  "subtype": "success",
+  "is_error": false,
+  "num_turns": 5,
+  "result": "bfb4c8b3",
+  "total_cost_usd": 0.0935258,
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 18852,
+   "cache_read_input_tokens": 54059,
+   "output_tokens": 729,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 18852,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "not_available",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 10,
+     "cache_read_input_tokens": 18419,
+     "cache_creation_input_tokens": 433,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 433
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  }
+ },
+ "stderr_tail": "",
+ "transcript": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-pp-gsdx-factory-2\\7013ffb1-d61e-4c58-9b42-5c30b717038c.jsonl",
+ "tokens": {
+  "tokens": 73648,
+  "calls": 4,
+  "context": 18854
+ },
+ "first_call_context": 17455,
+ "guard_state_files": [
+  "session-budget-7013ffb1-d61e-4c58-9b42-5c30b717038c.goal.json",
+  "session-budget-7013ffb1-d61e-4c58-9b42-5c30b717038c.json",
+  "session-budget-7013ffb1-d61e-4c58-9b42-5c30b717038c.state.json"
+ ],
+ "guard_state": {
+  "session-budget-7013ffb1-d61e-4c58-9b42-5c30b717038c.goal.json": {
+   "goal": "gsdx-factory-2",
+   "since": "2026-10-09T08:00:28",
+   "files": {
+    "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-pp-gsdx-factory-2\\7013ffb1-d61e-4c58-9b42-5c30b717038c.jsonl": 98040
+   },
+   "ids": [
+    "msg_011CfrMN7i3qFowsLMuwAyPi",
+    "msg_011CfrMNxujbNHSnqN1gmHdU",
+    "msg_011CfrMPp6hZ8Zx9JPcgY9GJ"
+   ],
+   "tokens": 54784,
+   "context": 18421,
+   "lease": {
+    "amount": 750000,
+    "base": 0,
+    "id": "gsdx-factory-2:7013ffb1-d61e-4c58-9b42-5c30b717038c:1"
+   },
+   "closeout": 0,
+   "toolIds": [
+    "toolu_01TqnYbFGRLtHbaaqQguhasy",
+    "toolu_018wCMBoPuU4GK3uhYdZmcZe",
+    "toolu_011hUoT4avWf9MpjA49q6o9g",
+    "toolu_01KeL2BefQDvC7neJAioGpBk"
+   ],
+   "lastTotal": 18707,
+   "deltas": [
+    565,
+    386
+   ]
+  },
+  "session-budget-7013ffb1-d61e-4c58-9b42-5c30b717038c.state.json": {
+   "since": null,
+   "offset": 98040,
+   "tokens": 54784,
+   "calls": 4,
+   "context": 18421,
+   "progress_at": 4,
+   "ids": [
+    "msg_011CfrMN7i3qFowsLMuwAyPi",
+    "msg_011CfrMNxujbNHSnqN1gmHdU",
+    "msg_011CfrMPp6hZ8Zx9JPcgY9GJ"
+   ],
+   "grace": false
+  }
+ },
+ "probe_commit": "bfb4c8b3 s4: slim-t2 probe artifact",
+ "probe_file": "S4 slim-t2 probe: obligations=22"
+}

@@ -12,7 +12,10 @@ m-fa18e2b8b44d under OWNER HOLD pointing at the receipt (gsd_mission has no term
 --per-call 0` falls back to the 150,000 default, so the refused renew booked a phantom `final` hold for the dead sid
 (gsdx-factory:6305f97c...:6). No release op exists; old goal reads used 14,020,691 of which ~10.4M is misattributed.
 
-Next: S4 (slim-tier dominator probe, 0.3M) -> S1 (steward: settle stopped sids, ledger correction, salvage) -> S2/S3 -> L1.
+S4 DONE (PASS, `vault/specs/gsdx-factory.RECEIPT-S4.json`): slim-t2 ran Read->Write->PowerShell commit (bfb4c8b3) with the
+guard live, and the guard denied the Write at stop 5,000. Floor 17.5K vs 121K top-level; whole unit 73,648 tokens. Its two
+probe sids hold 838,615 of open lease on this goal (real 130,061) until S1 can settle a finished sid without a new lease.
+Next: S1 (steward: settle stopped sids, ledger correction, salvage) -> S2 (slim-t2) / S3 -> L1.
 A-G2..A-G5 are recompiled from L1 + S4, never re-armed from stale packets. Coherence anchor: `git log` here at or after f923c24a.
 
 # PRIOR (2026-10-08): cost-collapse + expected-completion admission (worktree pp-cost-collapse)

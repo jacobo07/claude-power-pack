@@ -1,0 +1,34 @@
+{
+  "unit": "S4 slim-tier dominator probe",
+  "question": "can slim-t2 run a packet with tools + the session budget guard (plan section 4)?",
+  "status": "PASS: slim-t2 ran a Read -> Write -> PowerShell git commit packet end to end with the guard live, and the guard denied the mutation when the envelope was below one call",
+  "method": "vault/specs/gsdx-factory/s4/s4_probe.py: argv from the worktree's own gsd_mission.slim_argv(profile slim-t2), session budget declared via mission_spend.declare, cwd = worktree on the child only, measurement from the transcript and the guard's state files. Raw output: s4/result-pass.json, s4/result-deny.json.",
+  "positive_pole": {
+    "sid": "7013ffb1-d61e-4c58-9b42-5c30b717038c",
+    "envelope": "target 150,000 / warn 250,000 / stop 400,000, calls_estimate 8",
+    "outcome": "rc=0, subtype success, 5 turns, 36.5 s wall; wrote s4-probe.txt 'obligations=22' (correct) and committed bfb4c8b3 via PowerShell + git -C",
+    "first_call_context": 17455,
+    "processed_tokens": 73648,
+    "tool_calls": 4,
+    "guard_evidence": "state file recorded 4 tool ids + 3 message ids, goal mode bound to gsdx-factory-2 by cwd, lease 750,000 reserved"
+  },
+  "negative_pole": {
+    "sid": "55c8c721-00de-4c88-a4d3-420fcb02a0ff",
+    "envelope": "target = warn = stop = 5,000",
+    "outcome": "Write denied: 'SESSION BUDGET BREAKER -- processed 36,768 > stop 5,000'; no probe file, no commit; the worker reported the stop and the next action",
+    "first_call_context": 17464,
+    "processed_tokens": 56413,
+    "observation": "two Reads passed before the deny; consistent with PreToolUse running before the emitting request is flushed to the transcript (guard reads a lagged total), so a slim breaker overshoots by about one call. Not changed here; S2 owns the guard's call unit."
+  },
+  "economics": {
+    "slim_t2_floor_measured": "17,455 / 17,464 (n=2, this packet + slim-critical settings); route-floors.json says 13,507 (n=2). Not edited here: the table is read by the cost-collapse admission tests; proposal for S3: add these samples.",
+    "vs_A_G1": "A-G1 top-level floor 121,144 and mean 156K per call; slim-t2 packet 73,648 for the whole unit (4 tool calls), ~6.9x lower floor",
+    "probe_cost": "130,061 processed tokens across both poles; total_cost_usd 0.0935 + 0.0689 as reported by claude -p"
+  },
+  "ledger_open_points": [
+    "Both probe sids hold open goal leases on gsdx-factory-2: 750,000 (7013ffb1) + 88,615 (55c8c721) against 130,061 real. goal-renew cannot close a finished sid without reserving a new lease: the stopped-sid settlement is S1's transition. Until then gsdx-factory-2 'used' overstates by ~0.71M.",
+    "Old goal gsdx-factory: phantom 150,000 final hold for 6305f97c (see RESUMPTION_FILE)."
+  ],
+  "consequence": "S2 runs slim-t2 as planned. Later units default to slim-t2 when the packet needs only Read/Grep/Glob/Edit/Write/PowerShell; top-level stays for units needing subagents, skills or MCP.",
+  "next": "S1 (steward stopped-worker transition, includes settling stopped sids without a new lease)"
+}
