@@ -21,6 +21,14 @@ Plan by plan, one lease and one receipt each. FULL_WSR is never a budget. CP50 i
 **CEILING EXCEEDED: 7.49M against ~6.8M.** No further lease is funded until the Owner decides.
 - 2026-10-08 Owner "fund it" + "b": funded P2a ONLY (local half, no send), on top of the exceeded ceiling. The tranche now
   stands at 9.88M. P2b (send, wait, judge) is not funded.
+- 2026-10-09 Owner "fund it": P2b funded (one A/A job, BUILD=reproduce-20261008T211412Z only, from the main pane, no
+  worker). No ceiling was named; the main pane set its own: 1.0M of session tokens.
+- P2b job 1 ksrmb-20261009-072932 FAILED INVALID_CUSTODY on GEX44 (seq-qualified entity); fixed in recon 1c2b89f,
+  resend waits for the Owner (last RF cap slot). See P2b-receipt.md.
+- MAIN-PANE spend, counted separately from the worker table above (session ce1c3a41, deduplicated by message.id):
+  10,812,318 over 64 calls before "fund it" (P2a close, meter, D11 step 1), and 12,177,177 over 49 calls for P2b,
+  which is 12x its self-set 1.0M ceiling. A main-pane call costs ~250k here; a ceiling must be projected from that
+  measured floor, never guessed.
 - P2a meter: worker f4f23b86, 14 model calls, 56,399 output tokens. The same script reproduced P3a's 2,353,284 over 16
   calls exactly, as a control. Even with the guard's closeout calls the worker did not commit; the main pane committed.
 
