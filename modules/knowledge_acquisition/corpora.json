@@ -19,6 +19,14 @@
       "conversation_mode": "SECTION"
     },
     {
+      "corpus_id": "OTKD",
+      "label": "OTK follow-up - distribution behind each EVA threshold, data vs doctrine, VAT basis (2026-10-09)",
+      "path": "~/Downloads/EVA_OTKD_Threshold_Distributions.md",
+      "expected_count": 8,
+      "priority": 6,
+      "conversation_mode": "ISOLATED"
+    },
+    {
       "corpus_id": "SF30",
       "label": "Six-Figure First-30-Day Launch Reverse Engineering",
       "path": "~/Downloads/EVA_PRE_200_Six_Figure_First_30_Day_Launch_Reverse_Engineering.md",
