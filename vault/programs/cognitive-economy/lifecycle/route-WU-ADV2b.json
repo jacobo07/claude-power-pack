@@ -1,1 +1,1 @@
-{"envelope":{"target":600000,"warn":660000,"stop":720000,"calls":24},"workers":[{"name":"ce-lifecycle-v3-WU-ADV2b","profile":"slim-t2","calls":7,"packet":3600}]}
+{"envelope":{"target":800000,"warn":880000,"stop":960000,"calls":24},"workers":[{"name":"ce-lifecycle-v3-WU-ADV2b","profile":"slim-t2","calls":7,"packet":3600}]}
