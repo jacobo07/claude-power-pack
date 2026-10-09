@@ -204,6 +204,7 @@ calls. Not a Power Pack hook, ACL or classifier. P0 is satisfied by design when 
 | reserve | 15% of units | 2.1M | 2.1M | |
 Totals: lower bound ~11.5M; expected 14.5M + reserve 2.1M = **16.6M authority**; if W0 measures a slim floor
 > 60k, the slim rows revert to 1.0x (~19.6M) and A4 stops for Owner re-approval instead of spending past 16.6M.
+**APPROVED 2026-10-09 (Owner "y", pane 0f9b771b): 16.6M authority, goal ce-a4; stop for re-approval if W0's first-call floor > 60k.** Coordinator: this one arming call, then receipt-driven units.
 F0's own spend (4,651,404 / 17 calls in this pane vs 1M cap) is a coordinator breach, recorded as gen3-class evidence.
 
 ## 7. Null-policy semantics, legacy deopt, rollback
