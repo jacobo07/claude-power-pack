@@ -112,12 +112,46 @@ def _arm(chain: dict, u: dict) -> dict:
     return {"rc": p.returncode, **res, "stderr": p.stderr.strip()[-300:]}
 
 
-def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None) -> dict:
+def to_settle(chain: dict, missions: list[dict], open_sids: set) -> list[str]:
+    """Session ids of TERMINAL missions of this chain's units that still hold an open goal reservation.
+    A worker that finished WITH a receipt is not the steward's case (it acts only without one), so nobody else
+    closes its lease: the chain does, at transcript-measured spend (goal-settle refuses blind)."""
+    packets = {_norm(u["packet"]) for u in chain["units"]}
+    out = []
+    for m in missions:
+        if m.get("state") in TERMINAL and _norm((m.get("wu_packet") or {}).get("path", "")) in packets:
+            sids = [(m.get("owner") or {}).get("session_id")] + [p.get("session_id") for p in m.get("previous_owners") or []
+                                                                 if isinstance(p, dict)]
+            out += [s for s in sids if s and s in open_sids and s not in out]
+    return out
+
+
+def _live_settle(goal: str, missions: list[dict], chain: dict) -> list[dict]:
+    import mission_spend as ms  # noqa: E402 -- _live_state put LIVE on sys.path
+    led = ms._goal_ledger(goal)
+    g = led._gfold(led._read())
+    open_sids = {r["sid"] for r in g["res"].values() if r.get("hold")}
+    done = []
+    for sid in to_settle(chain, missions, open_sids):
+        try:
+            r = ms.goal_settle(goal, sid)
+            done.append({"sid": sid[:8], "ok": r.get("ok"), "closed": len(r.get("closed", [])), "reason": r.get("reason", "")})
+        except Exception as e:  # noqa: BLE001 -- one bad row must not stop arming; it is reported
+            done.append({"sid": sid[:8], "ok": False, "reason": f"{type(e).__name__}: {e}"[:200]})
+    return done
+
+
+def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settler=None) -> dict:
     if os.environ.get("CPP_GSDX_CHAIN", "").lower() == "off":
         return {"action": "off"}
     chain = json.loads(chain_path.read_text(encoding="utf-8-sig"))
     missions, used = state() if state else _live_state(chain["goal"])
+    settled = []
+    if not dry_run:
+        settled = (settler or (lambda: _live_settle(chain["goal"], missions, chain)))() if (settler or state is None) else []
     row = decide(chain, missions, used, _route_target)
+    if settled:
+        row["settled"] = settled
     if row["action"] == "arm" and not dry_run:
         unit = next(u for u in chain["units"] if u["id"] == row["unit"])
         row["armed"] = (armer or _arm)(chain, unit)

@@ -74,6 +74,16 @@ r2 = gc.tick(p, state=lambda: ([mission(d, "A", "PREPARED")], 0), armer=arm)
 check("V-CHAIN-ARM-REFUSED-SURFACED", r1["action"] == "arm_refused" and r2["action"] == "running",
       f"{r1['action']} / {r2['action']}")
 
+# terminal missions of chain units with open holds are settled; live or foreign missions are not
+d, p, chain = setup("settle")
+term = dict(mission(d, "A", "COMPLETED"), owner={"session_id": "sid-A"})
+live = dict(mission(d, "B", "RUNNING"), owner={"session_id": "sid-B"})
+foreign = {"mission_id": "m-x", "cwd": str(d), "state": "HALTED", "wu_packet": {"path": str(d / "other.md")},
+           "owner": {"session_id": "sid-X"}}
+picked = gc.to_settle(chain, [term, live, foreign], {"sid-A", "sid-B", "sid-X"})
+none_open = gc.to_settle(chain, [term], set())
+check("V-CHAIN-SETTLES-TERMINAL", picked == ["sid-A"] and none_open == [], f"{picked} / {none_open}")
+
 # a running mission -> nothing armed
 d, p, _ = setup("running")
 armed.clear()
