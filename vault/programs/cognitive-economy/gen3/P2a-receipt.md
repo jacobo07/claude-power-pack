@@ -20,8 +20,9 @@ Drill (main-pane rerun): PASS V-P2A-ROOT / CAP / MUTANT / CAPSULE / BUILD / RETU
 Builds in the RF root: 211354Z, 211412Z and 215900Z (the drill rerun). All three have payload sha256 34cc3993bcf7dd10...
 and there is no jobs ledger, so nothing has been enqueued. P2b sends 211412Z only.
 
-Spend: NOT YET METERED. The breaker figure of 2,396,336 is the supervisor's estimate, not a meter. Obligation 2 meters
-worker f4f23b86, deduplicated by message.id, and updates TRANCHE-CP50.md.
+Metered by the main pane (worker transcript f4f23b86, usage deduplicated by message.id): 14 model calls, 2,396,336
+processed (56,399 out). That is OVER the 1.85M stop by 546,336, and it equals the breaker's figure. Control: the same
+script gives P3a 2,353,284 over 16 calls, matching its receipt exactly.
 
 Open: P2b open point 1 (runner source: worktree or HEAD) must be decided before any send. The AA_GATE verdict needs
 P2b's single job.

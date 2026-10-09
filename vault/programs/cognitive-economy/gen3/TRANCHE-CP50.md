@@ -15,9 +15,14 @@ Plan by plan, one lease and one receipt each. FULL_WSR is never a budget. CP50 i
 | P6 | m-be59d97fa311 | Phase 6 done after main-pane fix, ROUTER_DRILL 7/7 | 1,372,775 |
 | P7G0 | m-302d70eabd59 | G0 freeze done, G0_DRILL 6/6 (e3b0b82); OVER its 1.2M stop | 1,332,106 |
 | P3a | m-789229da3a6f | Phase 3a seam done, SEAM_DRILL 8/8 (dcd9178); OVER its 1.65M stop by 703k | 2,353,284 |
-| total | | | 7,485,597 |
+| P2a | m-f501c31d6523 | Phase 2 local half, P2A_DRILL 7/7; committed zero-model by the main pane (1f72401); OVER its 1.85M stop by 546k | 2,396,336 |
+| total | | | 9,881,933 |
 
 **CEILING EXCEEDED: 7.49M against ~6.8M.** No further lease is funded until the Owner decides.
+- 2026-10-08 Owner "fund it" + "b": funded P2a ONLY (local half, no send), on top of the exceeded ceiling. The tranche now
+  stands at 9.88M. P2b (send, wait, judge) is not funded.
+- P2a meter: worker f4f23b86, 14 model calls, 56,399 output tokens. The same script reproduced P3a's 2,353,284 over 16
+  calls exactly, as a control. Even with the guard's closeout calls the worker did not commit; the main pane committed.
 
 Pattern: the dossier leases cost 1.02M / 1.37M / 1.33M / 2.35M; per model call ~125-147k. R1's per-phase figures
 undercount by ~1.4-3.2x. Two of four leases ran past their stop (P7G0 +132k, P3a +703k). Investigated 2026-10-08: the in-session
