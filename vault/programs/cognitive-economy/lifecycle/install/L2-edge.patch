@@ -1,0 +1,559 @@
+diff --git a/hooks/session_budget_guard.js b/hooks/session_budget_guard.js
+index bcc4b330..8d9dfe38 100644
+--- a/hooks/session_budget_guard.js
++++ b/hooks/session_budget_guard.js
+@@ -127,6 +127,16 @@ function judge(budget, st) {
+   if (st.calls - st.progress_at > k) {
+     return deny(`${st.calls - st.progress_at} calls since the last edit or commit (limit ${k}): spend without progress.`);
+   }
++  // Predictive lease edge (WU-S4): WU-S3 tripped at 975K vs stop 950K, so the breaker was the first signal.
++  // Fires strictly before the stop deny: the remaining lease holds about `reserve` calls at the mean cost so far.
++  if (String(process.env.CPP_LEASE_EDGE || '').trim().toLowerCase() !== 'off') {
++    const per = st.tokens / Math.max(st.calls, 1);
++    const reserve = Number(budget.closeout_reserve_calls) || 3;
++    if (st.tokens + per * reserve > budget.stop) {
++      return advise(`LEASE EDGE: the remaining lease holds about ${reserve} calls. Do no new substantive work. ` +
++        'Now: commit what is green (pathspec, -F), write the receipt with Status: PARTIAL and the exact next step, end with HANDOFF NOTE.');
++    }
++  }
+   if (st.tokens > budget.warn) {
+     return advise(`SESSION BUDGET: processed ${fmt(st.tokens)} is past warn ${fmt(budget.warn)} ` +
+       `(stop ${fmt(budget.stop)}). Finish the unit in hand; start nothing new.`);
+diff --git a/tools/route_admission.py b/tools/route_admission.py
+index 95bf0731..110ebf1d 100644
+--- a/tools/route_admission.py
++++ b/tools/route_admission.py
+@@ -1,149 +1,200 @@
+-"""Route admission: is a work unit's topology feasible inside its token envelope BEFORE it runs?
+-
+-Live QA W0 (m-8bbdf725cd52, 2026-10-05) was planned at 4M and ran to 53.7M of its own spend: an
+-orchestrator plus four GSD subagents, each re-reading a floor of ~85k (subagents) or ~111k (a
+-top-level worker) on every call. Nothing compared the topology with the envelope before launch; the
+-cost breaker only saw it afterwards. This module is that comparison. Pure, deterministic, no model.
+-
+-Mechanical floor of a route = sum over its workers of calls x (profile floor + packet). It is a lower
+-bound: every call re-reads at least the first-call context. The growth margin covers the context
+-growing within the run; DEFAULT_GROWTH_MARGIN is a chosen value, not a measured one.
+-
+-Verdicts (only ADMISSIBLE may launch):
+-  ADMISSIBLE  floor x (1 + margin) <= envelope target, and total calls <= envelope calls
+-  DEFER       admissible against the envelope, but more than the budget still remaining now
+-  RECOMPILE   does not fit; the envelope can hold a minimal unit, so the planner must thin the route
+-              (fewer calls, cheaper profiles, no agents) -- `max_calls_single_worker` says how far
+-  ESCALATE    nothing the planner can do: a profile has no measured floor (absent is not zero), or
+-              the envelope cannot hold even one top-level worker for default_min_calls -- Owner call
+-
+-  route_admission.py admit --route ROUTE.json [--floors F] [--margin 0.2] [--remaining N]
+-ROUTE.json = {"envelope": {"target", "warn", "stop", "calls"},
+-              "workers": [{"name", "profile", "calls", "packet"}]}
+-"""
+-from __future__ import annotations
+-
+-import hashlib
+-import json
+-import math
+-from pathlib import Path
+-
+-REPO_ROOT = Path(__file__).resolve().parent.parent
+-FLOORS_PATH = REPO_ROOT / "vault" / "config" / "route-floors.json"
+-DEFAULT_GROWTH_MARGIN = 0.20
+-TOP_LEVEL = "top-level-worker"
+-ADMISSIBLE, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "DEFER", "RECOMPILE", "ESCALATE"
+-
+-
+-def load_floors(path: Path | str | None = None) -> dict:
+-    data = json.loads(Path(path or FLOORS_PATH).read_text(encoding="utf-8-sig"))
+-    profiles = data.get("profiles")
+-    if not isinstance(profiles, dict) or not profiles:
+-        raise ValueError("floor table has no profiles")
+-    return data
+-
+-
+-def _pos_int(field: str, value) -> int:
+-    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+-        raise ValueError(f"{field} must be a positive integer, not {value!r}")
+-    return value
+-
+-
+-def _with_margin(n: int, margin: float) -> int:
+-    # round first: 1000 x 1.1 is 1100.0000000000002 in floats, and ceil would make it 1101
+-    return math.ceil(round(n * (1 + margin), 6))
+-
+-
+-def route_digest(route: dict) -> str:
+-    return hashlib.sha256(json.dumps(route, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+-
+-
+-def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
+-          remaining: int | None = None, root: Path | str | None = None) -> dict:
+-    """Judge `route` against its envelope. Raises ValueError on a malformed route (fail closed).
+-    `root` is the repo root that a profile's `requires` file is resolved against."""
+-    root = root or REPO_ROOT
+-    env = route.get("envelope") or {}
+-    target = _pos_int("envelope.target", env.get("target"))
+-    warn = _pos_int("envelope.warn", env.get("warn"))
+-    stop = _pos_int("envelope.stop", env.get("stop"))
+-    if not target <= warn <= stop:
+-        raise ValueError("envelope needs target <= warn <= stop")
+-    env_calls = env.get("calls")
+-    if env_calls is not None:
+-        env_calls = _pos_int("envelope.calls", env_calls)
+-    workers = route.get("workers")
+-    if not isinstance(workers, list) or not workers:
+-        raise ValueError("route needs at least one worker")
+-    if margin < 0:
+-        raise ValueError("margin must be >= 0")
+-    profiles = floors["profiles"]
+-    rows, unknown = [], []
+-    for i, w in enumerate(workers):
+-        name = str(w.get("name") or f"worker-{i}")
+-        calls = _pos_int(f"{name}.calls", w.get("calls"))
+-        packet = w.get("packet", 0)
+-        if isinstance(packet, bool) or not isinstance(packet, int) or packet < 0:
+-            raise ValueError(f"{name}.packet must be a non-negative integer")
+-        prof = profiles.get(w.get("profile"))
+-        if prof is None or not isinstance(prof.get("floor"), int) or prof["floor"] <= 0:
+-            unknown.append(f"{name}: profile {w.get('profile')!r} has no measured floor")
+-            continue
+-        req = prof.get("requires")
+-        if req and not (Path(root) / req).is_file():
+-            # slim-t2's floor was measured WITH the critical settings loaded; without that file the
+-            # worker would run with no budget breaker, which is the thing the profile exists to carry.
+-            unknown.append(f"{name}: profile {w.get('profile')!r} requires {req}, which is missing")
+-            continue
+-        rows.append({"name": name, "profile": w["profile"], "calls": calls, "packet": packet,
+-                     "floor": prof["floor"], "cost": calls * (prof["floor"] + packet)})
+-    out = {"envelope": {"target": target, "warn": warn, "stop": stop, "calls": env_calls},
+-           "margin": margin, "workers": rows, "route_sha256": route_digest(route)}
+-    if unknown:
+-        return {**out, "verdict": ESCALATE, "reasons": unknown}
+-    need = sum(r["cost"] for r in rows)
+-    need_m = _with_margin(need, margin)
+-    calls = sum(r["calls"] for r in rows)
+-    out.update(need=need, need_with_margin=need_m, calls=calls)
+-    top = profiles.get(TOP_LEVEL) or {}
+-    top_floor = top.get("floor") if isinstance(top.get("floor"), int) else max(p["floor"] for p in profiles.values())
+-    min_calls = int(floors.get("default_min_calls") or 1)
+-    out["max_calls_single_worker"] = int(target // ((1 + margin) * top_floor))
+-    reasons = []
+-    if need_m > target:
+-        reasons.append(f"floor {need:,} x {1 + margin:g} = {need_m:,} > target {target:,}")
+-    if env_calls is not None and calls > env_calls:
+-        reasons.append(f"{calls} calls > envelope {env_calls}")
+-    if not reasons:
+-        if remaining is not None and need_m > remaining:
+-            return {**out, "verdict": DEFER,
+-                    "reasons": [f"needs {need_m:,} but only {remaining:,} of the budget remains"]}
+-        return {**out, "verdict": ADMISSIBLE, "reasons": []}
+-    if _with_margin(min_calls * top_floor, margin) > target:
+-        reasons.append(f"the envelope cannot hold one {TOP_LEVEL} for {min_calls} calls "
+-                       f"({top_floor:,} floor): raise it or drop the unit")
+-        return {**out, "verdict": ESCALATE, "reasons": reasons}
+-    reasons.append(f"thin the route: one {TOP_LEVEL}, no agents, at most "
+-                   f"{out['max_calls_single_worker']} calls fits")
+-    return {**out, "verdict": RECOMPILE, "reasons": reasons}
+-
+-
+-def _main(argv: list[str]) -> int:
+-    import argparse
+-    ap = argparse.ArgumentParser(prog="route_admission")
+-    sub = ap.add_subparsers(dest="cmd", required=True)
+-    a = sub.add_parser("admit")
+-    a.add_argument("--route", required=True)
+-    a.add_argument("--floors")
+-    a.add_argument("--margin", type=float, default=DEFAULT_GROWTH_MARGIN)
+-    a.add_argument("--remaining", type=int)
+-    args = ap.parse_args(argv)
+-    route = json.loads(Path(args.route).read_text(encoding="utf-8-sig"))
+-    res = admit(route, load_floors(args.floors), margin=args.margin, remaining=args.remaining)
+-    print(json.dumps(res, indent=1))
+-    return 0 if res["verdict"] == ADMISSIBLE else 3
+-
+-
+-if __name__ == "__main__":
+-    import sys
+-    raise SystemExit(_main(sys.argv[1:]))
++"""Route admission: is a work unit's topology feasible inside its token envelope BEFORE it runs?
++
++Live QA W0 (m-8bbdf725cd52, 2026-10-05) was planned at 4M and ran to 53.7M of its own spend: an
++orchestrator plus four GSD subagents, each re-reading a floor of ~85k (subagents) or ~111k (a
++top-level worker) on every call. Nothing compared the topology with the envelope before launch; the
++cost breaker only saw it afterwards. This module is that comparison. Pure, deterministic, no model.
++
++Mechanical floor of a route = sum over its workers of calls x (profile floor + packet). It is a lower
++bound: every call re-reads at least the first-call context. The growth margin covers the context
++growing within the run; DEFAULT_GROWTH_MARGIN is a chosen value, not a measured one.
++
++Verdicts (only ADMISSIBLE may launch):
++  ADMISSIBLE  floor x (1 + margin) <= envelope target, and total calls <= envelope calls
++  DEFER       admissible against the envelope, but more than the budget still remaining now
++  RECOMPILE   does not fit; the envelope can hold a minimal unit, so the planner must thin the route
++              (fewer calls, cheaper profiles, no agents) -- `max_calls_single_worker` says how far
++  ESCALATE    nothing the planner can do: a profile has no measured floor (absent is not zero), or
++              the envelope cannot hold even one top-level worker for default_min_calls -- Owner call
++
++  route_admission.py admit --route ROUTE.json [--floors F] [--margin 0.2] [--remaining N]
++ROUTE.json = {"envelope": {"target", "warn", "stop", "calls"},
++              "workers": [{"name", "profile", "calls", "packet"}]}
++"""
++from __future__ import annotations
++
++import hashlib
++import json
++import math
++from pathlib import Path
++
++REPO_ROOT = Path(__file__).resolve().parent.parent
++FLOORS_PATH = REPO_ROOT / "vault" / "config" / "route-floors.json"
++DEFAULT_GROWTH_MARGIN = 0.20
++TOP_LEVEL = "top-level-worker"
++ADMISSIBLE, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "DEFER", "RECOMPILE", "ESCALATE"
++
++
++def load_floors(path: Path | str | None = None) -> dict:
++    data = json.loads(Path(path or FLOORS_PATH).read_text(encoding="utf-8-sig"))
++    profiles = data.get("profiles")
++    if not isinstance(profiles, dict) or not profiles:
++        raise ValueError("floor table has no profiles")
++    return data
++
++
++def _pos_int(field: str, value) -> int:
++    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
++        raise ValueError(f"{field} must be a positive integer, not {value!r}")
++    return value
++
++
++def _with_margin(n: int, margin: float) -> int:
++    # round first: 1000 x 1.1 is 1100.0000000000002 in floats, and ceil would make it 1101
++    return math.ceil(round(n * (1 + margin), 6))
++
++
++MISS_FACTOR = 1.25
++
++
++def is_degraded(prof: dict) -> bool:
++    m = prof.get("misses") or []
++    return len(m) >= 3 and all(x["actual"] > MISS_FACTOR * x["need"] for x in m[-3:])
++
++
++def max_ratio(prof: dict) -> float:
++    return max(x["actual"] / x["need"] for x in prof["misses"][-3:])
++
++
++def record_actual(profile: str, need: int, actual: int, path: Path | str | None = None) -> dict:
++    """Append a miss (actual > 1.25 x need) to the profile's list; a hit clears it."""
++    path = Path(path or FLOORS_PATH)
++    data = load_floors(path)
++    prof = data["profiles"][profile]
++    if need <= 0:
++        raise ValueError("need must be positive")
++    if actual > MISS_FACTOR * need:
++        prof.setdefault("misses", []).append({"need": need, "actual": actual})
++    else:
++        prof["misses"] = []
++    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
++    return {"profile": profile, "misses": prof["misses"], "degraded": is_degraded(prof)}
++
++
++def route_digest(route: dict) -> str:
++    return hashlib.sha256(json.dumps(route, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
++
++
++def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
++          remaining: int | None = None, root: Path | str | None = None) -> dict:
++    """Judge `route` against its envelope. Raises ValueError on a malformed route (fail closed).
++    `root` is the repo root that a profile's `requires` file is resolved against."""
++    root = root or REPO_ROOT
++    env = route.get("envelope") or {}
++    target = _pos_int("envelope.target", env.get("target"))
++    warn = _pos_int("envelope.warn", env.get("warn"))
++    stop = _pos_int("envelope.stop", env.get("stop"))
++    if not target <= warn <= stop:
++        raise ValueError("envelope needs target <= warn <= stop")
++    env_calls = env.get("calls")
++    if env_calls is not None:
++        env_calls = _pos_int("envelope.calls", env_calls)
++    workers = route.get("workers")
++    if not isinstance(workers, list) or not workers:
++        raise ValueError("route needs at least one worker")
++    if margin < 0:
++        raise ValueError("margin must be >= 0")
++    profiles = floors["profiles"]
++    rows, unknown, degraded = [], [], []
++    for i, w in enumerate(workers):
++        name = str(w.get("name") or f"worker-{i}")
++        calls = _pos_int(f"{name}.calls", w.get("calls"))
++        packet = w.get("packet", 0)
++        if isinstance(packet, bool) or not isinstance(packet, int) or packet < 0:
++            raise ValueError(f"{name}.packet must be a non-negative integer")
++        prof = profiles.get(w.get("profile"))
++        if prof is None or not isinstance(prof.get("floor"), int) or prof["floor"] <= 0:
++            unknown.append(f"{name}: profile {w.get('profile')!r} has no measured floor")
++            continue
++        req = prof.get("requires")
++        if req and not (Path(root) / req).is_file():
++            # slim-t2's floor was measured WITH the critical settings loaded; without that file the
++            # worker would run with no budget breaker, which is the thing the profile exists to carry.
++            unknown.append(f"{name}: profile {w.get('profile')!r} requires {req}, which is missing")
++            continue
++        pr = prof.get("physical_ratio")
++        calls_phys = calls
++        if isinstance(pr, (int, float)) and not isinstance(pr, bool) and pr > 0:
++            calls_phys = math.ceil(calls * pr)
++        cost = calls_phys * (prof["floor"] + packet)
++        g = prof.get("growth")
++        if isinstance(g, (int, float)) and not isinstance(g, bool) and g > 0:
++            cost += math.ceil(g * calls_phys * (calls_phys - 1) / 2)
++            est = "growth"
++        else:
++            est = "floor"
++        if is_degraded(prof):
++            cost = math.ceil(cost * max_ratio(prof))
++            degraded.append(f"estimator DEGRADED for {w['profile']}")
++        rows.append({"name": name, "profile": w["profile"], "calls": calls, "calls_physical": calls_phys, "packet": packet,
++                     "floor": prof["floor"], "cost": cost, "estimator": est})
++    out = {"envelope": {"target": target, "warn": warn, "stop": stop, "calls": env_calls},
++           "margin": margin, "workers": rows,
++           "estimator": "growth" if rows and all(r["estimator"] == "growth" for r in rows) else "floor", "route_sha256": route_digest(route)}
++    if unknown:
++        return {**out, "verdict": ESCALATE, "reasons": unknown}
++    need = sum(r["cost"] for r in rows)
++    need_m = _with_margin(need, margin)
++    calls = sum(r["calls"] for r in rows)
++    out.update(need=need, need_with_margin=need_m, calls=calls,
++               calls_physical=sum(r["calls_physical"] for r in rows))
++    top = profiles.get(TOP_LEVEL) or {}
++    top_floor = top.get("floor") if isinstance(top.get("floor"), int) else max(p["floor"] for p in profiles.values())
++    min_calls = int(floors.get("default_min_calls") or 1)
++    out["max_calls_single_worker"] = int(target // ((1 + margin) * top_floor))
++    reasons = list(dict.fromkeys(degraded))
++    if need_m > target:
++        reasons.append(f"floor {need:,} x {1 + margin:g} = {need_m:,} > target {target:,}")
++    if env_calls is not None and calls > env_calls:
++        reasons.append(f"{calls} calls > envelope {env_calls}")
++    if not (reasons and (need_m > target or (env_calls is not None and calls > env_calls))):
++        if remaining is not None and need_m > remaining:
++            return {**out, "verdict": DEFER,
++                    "reasons": [f"needs {need_m:,} but only {remaining:,} of the budget remains"]}
++        return {**out, "verdict": ADMISSIBLE, "reasons": reasons}
++    if _with_margin(min_calls * top_floor, margin) > target:
++        reasons.append(f"the envelope cannot hold one {TOP_LEVEL} for {min_calls} calls "
++                       f"({top_floor:,} floor): raise it or drop the unit")
++        return {**out, "verdict": ESCALATE, "reasons": reasons}
++    reasons.append(f"thin the route: one {TOP_LEVEL}, no agents, at most "
++                   f"{out['max_calls_single_worker']} calls fits")
++    return {**out, "verdict": RECOMPILE, "reasons": reasons}
++
++
++def _main(argv: list[str]) -> int:
++    import argparse
++    ap = argparse.ArgumentParser(prog="route_admission")
++    sub = ap.add_subparsers(dest="cmd", required=True)
++    a = sub.add_parser("admit")
++    a.add_argument("--route", required=True)
++    a.add_argument("--floors")
++    a.add_argument("--margin", type=float, default=DEFAULT_GROWTH_MARGIN)
++    a.add_argument("--remaining", type=int)
++    r = sub.add_parser("record")
++    r.add_argument("--profile", required=True)
++    r.add_argument("--need", type=int, required=True)
++    r.add_argument("--actual", type=int, required=True)
++    r.add_argument("--floors")
++    args = ap.parse_args(argv)
++    if args.cmd == "record":
++        print(json.dumps(record_actual(args.profile, args.need, args.actual, args.floors)))
++        return 0
++    route = json.loads(Path(args.route).read_text(encoding="utf-8-sig"))
++    res = admit(route, load_floors(args.floors), margin=args.margin, remaining=args.remaining)
++    print(json.dumps(res, indent=1))
++    return 0 if res["verdict"] == ADMISSIBLE else 3
++
++
++if __name__ == "__main__":
++    import sys
++    raise SystemExit(_main(sys.argv[1:]))
+diff --git a/tools/test_route_estimator.py b/tools/test_route_estimator.py
+new file mode 100644
+index 00000000..44b9cc5c
+--- /dev/null
++++ b/tools/test_route_estimator.py
+@@ -0,0 +1,87 @@
++#!/usr/bin/env python
++"""V-EST-* gates for the growth estimator and three-miss DEGRADED rule in tools/route_admission.py.
++Hermetic: a temp floors file. Mutation drill: ROUTE_ADMISSION_DRILL_DIR holds a mutated copy."""
++from __future__ import annotations
++
++import json
++import os
++import sys
++import tempfile
++from pathlib import Path
++
++HERE = Path(__file__).resolve().parent
++if os.environ.get("ROUTE_ADMISSION_DRILL_DIR"):
++    sys.path.insert(0, os.environ["ROUTE_ADMISSION_DRILL_DIR"])
++sys.path.insert(1 if os.environ.get("ROUTE_ADMISSION_DRILL_DIR") else 0, str(HERE))
++import route_admission as ra  # noqa: E402
++
++passes = fails = 0
++ENV = {"target": 50_000_000, "warn": 60_000_000, "stop": 70_000_000}
++G = 1725
++# (calls, first-call cost, actual total) from estimator-fit.md
++FIT = [(19, 18332, 909_247), (19, 18236, 742_614), (22, 18514, 680_606), (17, 18585, 442_155)]
++
++
++def check(gate, cond, ev=""):
++    global passes, fails
++    passes += bool(cond)
++    fails += not cond
++    print(f"{'PASS' if cond else 'FAIL'} {gate} {ev}")
++
++
++def floors(tmp, growth=True, misses=None):
++    prof = {"floor": 13507, "write": True}
++    if growth:
++        prof["growth"] = G
++    if misses is not None:
++        prof["misses"] = misses
++    p = Path(tmp) / "floors.json"
++    p.write_text(json.dumps({"default_min_calls": 1, "profiles": {"slim-t2": prof}}), encoding="utf-8")
++    return p
++
++
++def need(p, calls, packet=0):
++    route = {"envelope": ENV, "workers": [{"name": "w", "profile": "slim-t2", "calls": calls, "packet": packet}]}
++    return ra.admit(route, ra.load_floors(p))
++
++
++def main():
++    with tempfile.TemporaryDirectory() as tmp:
++        p = floors(tmp)
++        pred = sum(need(p, c, f - 13507)["need"] for c, f, _ in FIT)
++        act = sum(a for _, _, a in FIT)
++        check("V-EST-GROWTH-QUADRATIC", abs(pred - act) <= 0.25 * act and need(p, 7)["estimator"] == "growth",
++              f"pooled predicted {pred:,} vs actual {act:,}")
++        n7 = need(p, 7, 6360)["need"]
++        check("V-EST-GROWTH-1H4-ABOVE-FLOOR", n7 == 7 * (13507 + 6360) + G * 21, f"{n7:,} (1H4 actual 448,589: known gap)")
++        q = floors(tmp, growth=False)
++        r = need(q, 7, 6360)
++        check("V-EST-NO-GROWTH-UNCHANGED", r["need"] == 7 * (13507 + 6360) and r["estimator"] == "floor", str(r["need"]))
++        r = floors(tmp)
++        base = need(r, 5)["need"]
++        for i in range(2):
++            ra.record_actual("slim-t2", 100, 200, r)
++        check("V-EST-TWO-MISSES-NOT-DEGRADED", "DEGRADED" not in " ".join(need(r, 5)["reasons"]))
++        ra.record_actual("slim-t2", 100, 300, r)
++        res = need(r, 5)
++        check("V-EST-THREE-MISS-DEGRADED", any("estimator DEGRADED for slim-t2" in x for x in res["reasons"]), str(res["reasons"]))
++        check("V-EST-DEGRADED-PRICES-UP", res["need"] == base * 3 and res["need"] > base, f"{res['need']:,} vs {base:,}")
++        ra.record_actual("slim-t2", 100, 110, r)
++        res2 = need(r, 5)
++        check("V-EST-HIT-CLEARS", ra.load_floors(r)["profiles"]["slim-t2"]["misses"] == [] and res2["need"] == base
++              and not res2["reasons"], str(res2["reasons"]))
++        # Part B: physical calls (every tool use runs ~2.4x the declared steps)
++        ph = Path(tmp) / "phys.json"
++        ph.write_text(json.dumps({"default_min_calls": 1, "profiles": {"slim-t2": {
++            "floor": 13507, "write": True, "growth": G, "physical_ratio": 2.4, "physical_ratio_n": 4}}}), encoding="utf-8")
++        rp = need(ph, 7, 18585 - 13507)
++        check("V-EST-PHYSICAL-1H4", abs(rp["need"] - 442_155) <= 0.25 * 442_155 and rp["calls"] == 7
++              and rp["calls_physical"] == 17, f"{rp['need']:,} vs 442,155; calls={rp['calls']} physical={rp['calls_physical']}")
++        rc = need(floors(tmp), 7, 6360)
++        check("V-EST-PHYSICAL-CONTROL", rc["need"] == 7 * (13507 + 6360) + G * 21 and rc["calls_physical"] == 7, str(rc["need"]))
++    print(f"EST_PASS={passes}/{passes + fails}")
++    return 0 if fails == 0 else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tools/test_session_budget_guard.py b/tools/test_session_budget_guard.py
+index 8bccd67f..4c876dd8 100644
+--- a/tools/test_session_budget_guard.py
++++ b/tools/test_session_budget_guard.py
+@@ -252,6 +252,32 @@ def main():
+     check("V-SBG-E2E", hso.get("permissionDecision") == "deny" and "SESSION BUDGET BREAKER" in (hso.get("permissionDecisionReason") or ""),
+           f"live dispatcher -> {hso.get('permissionDecision')!r}")
+ 
++    # V-LIFE-EDGE: replay of WU-1H3 (10 calls, 645K, stop 500K) through judge(); guard path may be a mutant copy
++    def edge_replay(guard, **env):
++        js = ("const g=require(process.argv[1]);const b={target:400000,warn:450000,stop:500000};"
++              "const o=[];for(let c=1;c<=10;c++){const t=c*64500;"
++              "const v=g.judge(b,{tokens:t,calls:c,progress_at:c,context:0});"
++              "const h=v&&v.hookSpecificOutput;o.push([c,t,h?(h.permissionDecision||'advise'):null,h&&h.additionalContext||'']);}"
++              "const q=g.judge(b,{tokens:100000,calls:5,progress_at:5,context:0});o.push(['q',q]);"
++              "process.stdout.write(JSON.stringify(o));")
++        p = subprocess.run([NODE, "-e", js, str(guard)], capture_output=True, text=True, env=dict(os.environ, **env), timeout=60)
++        return json.loads(p.stdout) if p.returncode == 0 else []
++
++    def first_edge(rows):
++        return next((r for r in rows if r[0] != "q" and "LEASE EDGE" in r[3]), None)
++
++    rows = edge_replay(GUARD, CPP_LEASE_EDGE="")
++    fe = first_edge(rows)
++    check("V-LIFE-EDGE-BEFORE-STOP", fe is not None and fe[1] < 500000, f"first edge at call {fe and fe[0]} tokens {fe and fe[1]} < stop 500000")
++    q = next((r for r in rows if r[0] == "q"), None)
++    check("V-LIFE-EDGE-QUIET-EARLY", q is not None and q[1] is None, f"20% of stop -> {q and q[1]}")
++    check("V-LIFE-EDGE-KILL", first_edge(edge_replay(GUARD, CPP_LEASE_EDGE="off")) is None, "CPP_LEASE_EDGE=off -> no edge")
++    mut = Path(tempfile.mkdtemp(prefix="sbg_mut_")) / "session_budget_guard.js"
++    src = GUARD.read_text(encoding="utf-8")
++    mut.write_text(src.replace("st.tokens + per * reserve > budget.stop", "false"), encoding="utf-8")
++    check("V-LIFE-EDGE-MUTANT-RED", mut.read_text(encoding="utf-8") != src and first_edge(edge_replay(mut, CPP_LEASE_EDGE="")) is None,
++          "mutant (edge branch dropped) -> EDGE-BEFORE-STOP would go red")
++
+     print(f"SBG_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
+     return 0 if fails == 0 else 1
+ 
+diff --git a/vault/config/route-floors.json b/vault/config/route-floors.json
+index 118c3e3c..35a5c037 100644
+--- a/vault/config/route-floors.json
++++ b/vault/config/route-floors.json
+@@ -1,24 +1,25 @@
+-{
+-  "unit": "first-call context = input_tokens + cache_creation_input_tokens + cache_read_input_tokens of the first assistant message; every later call re-reads at least this much, so calls x floor is a lower bound on processed tokens",
+-  "measured_at": "2026-10-05T21:19:39Z",
+-  "provenance": {
+-    "subagents": "io-liveqa 13f19a47 vault/sidecar/live-qa/subagent-floor.json (tools/subagent_floor.py, window 14 d, scope InfinityOps,io-liveqa, 1173 samples)",
+-    "top-level-worker": "io-liveqa ee5ef099 ROUTING-RECOMPILE-PLAN.md (compiled-WU worker, stripped flags: 114k min / 129k median, raw samples not committed); cross-checked 2026-10-06 against worker 0c64c3e7 (m-8bbdf725cd52) first call = 110,835, which lowers the floor"
+-  },
+-  "default_min_calls": 3,
+-  "profiles": {
+-    "top-level-worker":          {"floor": 110835, "p50": 129000, "write": true,  "n": null},
+-    "gsd-executor":              {"floor": 85084,  "p50": 97700,  "write": true,  "n": 21},
+-    "general-purpose":           {"floor": 85040,  "p50": 96831,  "write": true,  "n": 21},
+-    "gsd-planner":               {"floor": 85569,  "p50": 99228,  "write": true,  "n": 5},
+-    "gsd-phase-researcher":      {"floor": 95908,  "p50": 96311,  "write": true,  "n": 3},
+-    "gsd-plan-checker":          {"floor": 95807,  "p50": 96078,  "write": false, "n": 3},
+-    "gsd-verifier":              {"floor": 97231,  "p50": 97231,  "write": true,  "n": 2},
+-    "gsd-code-reviewer":         {"floor": 82911,  "p50": 82911,  "write": true,  "n": 1},
+-    "oneshot-architect-auditor": {"floor": 77486,  "p50": 78340,  "write": false, "n": 8},
+-    "pp-code-reviewer":          {"floor": 62682,  "p50": 65473,  "write": false, "n": 23},
+-    "Explore":                   {"floor": 24428,  "p50": 25226,  "write": false, "n": 14},
+-    "slim-t1":                   {"floor": 8848,   "p50": 8848,   "write": false, "n": 1},
+-    "slim-t2":                   {"floor": 13507,  "p50": 13507,  "write": true,  "n": 2, "requires": "vault/config/slim-critical-settings.json"}
+-  }
+-}
++﻿{
++  "unit": "first-call context = input_tokens + cache_creation_input_tokens + cache_read_input_tokens of the first assistant message; every later call re-reads at least this much, so calls x floor is a lower bound on processed tokens",
++  "measured_at": "2026-10-05T21:19:39Z",
++  "provenance": {
++    "subagents": "io-liveqa 13f19a47 vault/sidecar/live-qa/subagent-floor.json (tools/subagent_floor.py, window 14 d, scope InfinityOps,io-liveqa, 1173 samples)",
++    "top-level-worker": "io-liveqa ee5ef099 ROUTING-RECOMPILE-PLAN.md (compiled-WU worker, stripped flags: 114k min / 129k median, raw samples not committed); cross-checked 2026-10-06 against worker 0c64c3e7 (m-8bbdf725cd52) first call = 110,835, which lowers the floor"
++  },
++  "default_min_calls": 3,
++  "profiles": {
++    "top-level-worker":          {"floor": 110835, "p50": 129000, "write": true,  "n": null},
++    "gsd-executor":              {"floor": 85084,  "p50": 97700,  "write": true,  "n": 21},
++    "general-purpose":           {"floor": 85040,  "p50": 96831,  "write": true,  "n": 21},
++    "gsd-planner":               {"floor": 85569,  "p50": 99228,  "write": true,  "n": 5},
++    "gsd-phase-researcher":      {"floor": 95908,  "p50": 96311,  "write": true,  "n": 3},
++    "gsd-plan-checker":          {"floor": 95807,  "p50": 96078,  "write": false, "n": 3},
++    "gsd-verifier":              {"floor": 97231,  "p50": 97231,  "write": true,  "n": 2},
++    "gsd-code-reviewer":         {"floor": 82911,  "p50": 82911,  "write": true,  "n": 1},
++    "oneshot-architect-auditor": {"floor": 77486,  "p50": 78340,  "write": false, "n": 8},
++    "pp-code-reviewer":          {"floor": 62682,  "p50": 65473,  "write": false, "n": 23},
++    "Explore":                   {"floor": 24428,  "p50": 25226,  "write": false, "n": 14},
++    "slim-t1":                   {"floor": 8848,   "p50": 8848,   "write": false, "n": 1},
++    "slim-t2":                   {"floor": 13507,  "p50": 13507,  "write": true,  "n": 2, "growth": 1725, "growth_n": 4, "physical_ratio": 2.4, "physical_ratio_n": 4, "misses": [], "requires": "vault/config/slim-critical-settings.json"}
++  }
++}
++

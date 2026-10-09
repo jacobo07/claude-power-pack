@@ -122,17 +122,21 @@ def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
             # worker would run with no budget breaker, which is the thing the profile exists to carry.
             unknown.append(f"{name}: profile {w.get('profile')!r} requires {req}, which is missing")
             continue
-        cost = calls * (prof["floor"] + packet)
+        pr = prof.get("physical_ratio")
+        calls_phys = calls
+        if isinstance(pr, (int, float)) and not isinstance(pr, bool) and pr > 0:
+            calls_phys = math.ceil(calls * pr)
+        cost = calls_phys * (prof["floor"] + packet)
         g = prof.get("growth")
         if isinstance(g, (int, float)) and not isinstance(g, bool) and g > 0:
-            cost += math.ceil(g * calls * (calls - 1) / 2)
+            cost += math.ceil(g * calls_phys * (calls_phys - 1) / 2)
             est = "growth"
         else:
             est = "floor"
         if is_degraded(prof):
             cost = math.ceil(cost * max_ratio(prof))
             degraded.append(f"estimator DEGRADED for {w['profile']}")
-        rows.append({"name": name, "profile": w["profile"], "calls": calls, "packet": packet,
+        rows.append({"name": name, "profile": w["profile"], "calls": calls, "calls_physical": calls_phys, "packet": packet,
                      "floor": prof["floor"], "cost": cost, "estimator": est})
     out = {"envelope": {"target": target, "warn": warn, "stop": stop, "calls": env_calls},
            "margin": margin, "workers": rows,
@@ -142,7 +146,8 @@ def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
     need = sum(r["cost"] for r in rows)
     need_m = _with_margin(need, margin)
     calls = sum(r["calls"] for r in rows)
-    out.update(need=need, need_with_margin=need_m, calls=calls)
+    out.update(need=need, need_with_margin=need_m, calls=calls,
+               calls_physical=sum(r["calls_physical"] for r in rows))
     top = profiles.get(TOP_LEVEL) or {}
     top_floor = top.get("floor") if isinstance(top.get("floor"), int) else max(p["floor"] for p in profiles.values())
     min_calls = int(floors.get("default_min_calls") or 1)

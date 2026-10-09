@@ -36,6 +36,13 @@ Steps:
      a missing transcript stays held as UNKNOWN).
    Mutants: drop the since filter; drop the lease close. Run test_halt_continues, test_mission_steward,
    test_gsd_mission (226/227 baseline), test_gsd_mission_admission (43/43).
+3b. Two faults from WU-S4 (WU-S4-receipt.md F1, F3). Both are small; fix them in the same files:
+   - F1: a slim worker that finishes with is_error=False but whose packet receipt is missing, a stub, or
+     Status: PARTIAL must NOT end COMPLETED. Route it to the same path as a breaker HALT, so halt_continue (or
+     the steward's fallback receipt) continues it. Use the existing _receipt_present.
+     Gate V-LIFE-SUCCESS-NO-RECEIPT-NOT-COMPLETED, with a control where the receipt is DONE and it completes.
+   - F3: in hooks/session_budget_guard.js the calls-ratio deny (judge(), `st.calls > ratio * est`) must go through
+     closeout() like the token stop, so the receipt can still be written. Gate in test_session_budget_guard.py.
 4. Dry run against LIVE state: `python tools/mission_steward.py --dry-run` (or the steward's equivalent). It must
    propose closing the leases of sids 12fc875e, d3d5b84a and 84955c89 on goal ce-lifecycle-v3. Paste the 3 lines.
 5. Install patch: `git diff --binary af86e3dc -- <changed files>` -> install/L3-steward.patch + sha256.

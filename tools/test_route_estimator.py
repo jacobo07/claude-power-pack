@@ -70,6 +70,15 @@ def main():
         res2 = need(r, 5)
         check("V-EST-HIT-CLEARS", ra.load_floors(r)["profiles"]["slim-t2"]["misses"] == [] and res2["need"] == base
               and not res2["reasons"], str(res2["reasons"]))
+        # Part B: physical calls (every tool use runs ~2.4x the declared steps)
+        ph = Path(tmp) / "phys.json"
+        ph.write_text(json.dumps({"default_min_calls": 1, "profiles": {"slim-t2": {
+            "floor": 13507, "write": True, "growth": G, "physical_ratio": 2.4, "physical_ratio_n": 4}}}), encoding="utf-8")
+        rp = need(ph, 7, 18585 - 13507)
+        check("V-EST-PHYSICAL-1H4", abs(rp["need"] - 442_155) <= 0.25 * 442_155 and rp["calls"] == 7
+              and rp["calls_physical"] == 17, f"{rp['need']:,} vs 442,155; calls={rp['calls']} physical={rp['calls_physical']}")
+        rc = need(floors(tmp), 7, 6360)
+        check("V-EST-PHYSICAL-CONTROL", rc["need"] == 7 * (13507 + 6360) + G * 21 and rc["calls_physical"] == 7, str(rc["need"]))
     print(f"EST_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 

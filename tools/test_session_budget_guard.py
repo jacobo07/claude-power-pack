@@ -252,6 +252,32 @@ def main():
     check("V-SBG-E2E", hso.get("permissionDecision") == "deny" and "SESSION BUDGET BREAKER" in (hso.get("permissionDecisionReason") or ""),
           f"live dispatcher -> {hso.get('permissionDecision')!r}")
 
+    # V-LIFE-EDGE: replay of WU-1H3 (10 calls, 645K, stop 500K) through judge(); guard path may be a mutant copy
+    def edge_replay(guard, **env):
+        js = ("const g=require(process.argv[1]);const b={target:400000,warn:450000,stop:500000};"
+              "const o=[];for(let c=1;c<=10;c++){const t=c*64500;"
+              "const v=g.judge(b,{tokens:t,calls:c,progress_at:c,context:0});"
+              "const h=v&&v.hookSpecificOutput;o.push([c,t,h?(h.permissionDecision||'advise'):null,h&&h.additionalContext||'']);}"
+              "const q=g.judge(b,{tokens:100000,calls:5,progress_at:5,context:0});o.push(['q',q]);"
+              "process.stdout.write(JSON.stringify(o));")
+        p = subprocess.run([NODE, "-e", js, str(guard)], capture_output=True, text=True, env=dict(os.environ, **env), timeout=60)
+        return json.loads(p.stdout) if p.returncode == 0 else []
+
+    def first_edge(rows):
+        return next((r for r in rows if r[0] != "q" and "LEASE EDGE" in r[3]), None)
+
+    rows = edge_replay(GUARD, CPP_LEASE_EDGE="")
+    fe = first_edge(rows)
+    check("V-LIFE-EDGE-BEFORE-STOP", fe is not None and fe[1] < 500000, f"first edge at call {fe and fe[0]} tokens {fe and fe[1]} < stop 500000")
+    q = next((r for r in rows if r[0] == "q"), None)
+    check("V-LIFE-EDGE-QUIET-EARLY", q is not None and q[1] is None, f"20% of stop -> {q and q[1]}")
+    check("V-LIFE-EDGE-KILL", first_edge(edge_replay(GUARD, CPP_LEASE_EDGE="off")) is None, "CPP_LEASE_EDGE=off -> no edge")
+    mut = Path(tempfile.mkdtemp(prefix="sbg_mut_")) / "session_budget_guard.js"
+    src = GUARD.read_text(encoding="utf-8")
+    mut.write_text(src.replace("st.tokens + per * reserve > budget.stop", "false"), encoding="utf-8")
+    check("V-LIFE-EDGE-MUTANT-RED", mut.read_text(encoding="utf-8") != src and first_edge(edge_replay(mut, CPP_LEASE_EDGE="")) is None,
+          "mutant (edge branch dropped) -> EDGE-BEFORE-STOP would go red")
+
     print(f"SBG_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
