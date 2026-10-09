@@ -55,8 +55,10 @@ def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> d
         if p:
             by_packet.setdefault(_norm(p), []).append(m)
     status = {u["id"]: receipt_status(Path(u["receipt"])) for u in units}
+    accept = {u["id"]: set(u.get("accept") or ["DONE"]) for u in units}   # a unit may accept more than DONE, by name
+    done = {uid for uid, s in status.items() if s in accept[uid]}
     for u in units:
-        if status[u["id"]] == "DONE":
+        if u["id"] in done:
             continue
         ms = by_packet.get(_norm(u["packet"]), [])
         if any(m.get("state") not in TERMINAL for m in ms):
@@ -64,7 +66,7 @@ def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> d
         if ms:
             return {"action": "stopped_without_done", "unit": u["id"], "receipt": status[u["id"]],
                     "reason": "steward / residual owns it; never re-armed by the chain"}
-        if u.get("after") and status.get(u["after"]) != "DONE":
+        if u.get("after") and u["after"] not in done:
             return {"action": "wait_predecessor", "unit": u["id"], "after": u["after"], "receipt": status.get(u["after"])}
         missing = [w for w in u.get("wait", []) if not Path(w).exists()]
         if missing:

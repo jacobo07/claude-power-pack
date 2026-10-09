@@ -14,6 +14,14 @@ never push, never Set-Location / cd. Work class: COMPILATION (read structured in
 - `vault/specs/gsdx-factory/chain.json` (the chain the 15-minute tick `tools/gsdx_chain.py tick` executes).
 - One existing packet as a template: `vault/specs/packets/WU-L1.md` (header lines, sections 0-2, budget/closeout).
 
+## 0b. L1 limits you must correct (coordinator, 2026-10-09)
+- GRAPH.md `n` and `cost` are placeholders (n = rows/6 or rows/4); never copy them. Estimate n per unit from the work it
+  names (files to change, gates to write, GEX44 jobs to wait on), and say how in one line per unit.
+- Open recon phases (P2 close, P3, P7 CP50, P8, P9) are one GRAPH row (U-W7). Decompose them from the recon ROADMAP
+  `### Phase N` sections (read only those ranges) into units of at most 25 model calls each.
+- Measured references: L1 itself = 1,804,651 + a 98,070 no-op renewal (route target 1.3M: +46%); S1 = 2,708,995 at 40
+  model calls; gen3 recon phase leases 1.0-2.4M each (TRANCHE-CP50.md).
+
 ## 1. Rules for every packet you write
 - Header: `done_gate:` (a command that exits 0 only when the unit is proven), `work_tree:`, `receipt:`.
 - Section 0 facts must be checked by you now (a path exists, a commit is an ancestor); write nothing you did not verify.

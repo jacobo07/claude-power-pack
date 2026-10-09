@@ -55,6 +55,17 @@ armed.clear()
 r = gc.tick(p, state=lambda: ([mission(d, "A", "COMPLETED")], 0), armer=arm)
 check("V-CHAIN-PARTIAL-NOT-ARMED", r["action"] == "stopped_without_done" and not armed, r["action"])
 
+# a named extra status is accepted only for the unit that lists it
+d, p, chain = setup("accept")
+(d / "R-A.json").write_text(json.dumps({"status": "DONE_WITH_LIMITS"}), encoding="utf-8")
+armed.clear()
+r1 = gc.tick(p, state=lambda: ([mission(d, "A", "COMPLETED")], 0), armer=arm)
+chain["units"][0]["accept"] = ["DONE", "DONE_WITH_LIMITS"]
+p.write_text(json.dumps(chain), encoding="utf-8")
+r2 = gc.tick(p, state=lambda: ([mission(d, "A", "COMPLETED")], 0), armer=arm)
+check("V-CHAIN-ACCEPT-IS-PER-UNIT", r1["action"] == "stopped_without_done" and r2["action"] == "arm"
+      and r2["unit"] == "B" and armed == ["B"], f"{r1['action']} -> {r2['action']}")
+
 # a running mission -> nothing armed
 d, p, _ = setup("running")
 armed.clear()

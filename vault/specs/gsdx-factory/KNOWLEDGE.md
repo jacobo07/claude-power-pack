@@ -31,6 +31,16 @@ Each entry: symptom, root cause, chain, impact, proof, fix, prevention, applicab
   deterministic path it cost ~0 model tokens. UKDL candidate: GREEN IMPLEMENTATION SHOULD BECOME DURABLE BEFORE
   AVOIDABLE LEASE EXHAUSTION; closeout is a transaction, not a worker phase.
 
+## K6. An unrecognised receipt status renewed a finished worker (L1, 2026-10-09)
+- Symptom: L1 (m-4e161ffd6420) finished with everything committed and Status DONE_WITH_LIMITS; the supervisor renewed
+  it as m-2c6cb462596f, which spent 98,070 tokens re-checking a clean tree.
+- Root cause: receipt status is free text; anything not DONE reads as "work remains". The same free text stalled the
+  chain (stopped_without_done) until the coordinator named the extra status per unit (chain `accept`).
+- Fix (gsdx side): chain `accept` list per unit, V-CHAIN-ACCEPT-IS-PER-UNIT. Open: a closed receipt-status vocabulary
+  (DONE / PARTIAL / BLOCKED / FAILED + `limits[]`) shared by packet template, supervisor and chain.
+- Also: L1's GRAPH costs were placeholders (n = rows/6); a gate that checks disposition coverage says nothing about the
+  quality of a forecast built beside it. PLAN-1 re-prices.
+
 ## K5. A successor arming step had no owner (programme level)
 - Symptom: every unit end needed a coordinator pane to arm the next one (the 49% control-plane tax measured in
   cost-collapse). Fix: tools/gsdx_chain.py tick (85024700), CHAIN_PASS=9/9, envelope mutant KILLED.
