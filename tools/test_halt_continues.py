@@ -207,6 +207,11 @@ def main() -> int:
     rec, rows, _ = run("m-hc10", state=TRIP, receipt=True, receipt_text="# WU receipt\n\nStatus: IN PROGRESS\n")
     check("V-LIFE-HALT-STATUS-IN-PROGRESS", capsule("m-hc10") is not None and len(successors("m-hc10")) == 1,
           str(rows))
+    rec, rows, _ = run("m-hc11", state=TRIP, receipt=True, receipt_text="# WU-X receipt -- Status: PARTIAL\n\nbody\n")
+    check("V-LIFE-RECEIPT-STATUS-IN-TITLE", capsule("m-hc11") is not None and len(successors("m-hc11")) == 1,
+          str(rows))
+    rec, rows, _ = run("m-hc12", state=TRIP, receipt=True, receipt_text="# WU-X receipt -- Status: DONE\n\nbody\n")
+    check("V-LIFE-RECEIPT-DONE-IN-TITLE-CONTROL", capsule("m-hc12") is None and not successors("m-hc12"), str(rows))
     # 7c. the renewed successor is admitted, so the normal launch path can start it (renew never carries admission)
     one = successors("m-hc1")[0]
     check("V-LIFE-HALT-READMITTED", (one.get("admission") or {}).get("verdict") == "ADMISSIBLE"

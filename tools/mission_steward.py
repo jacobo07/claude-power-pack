@@ -128,7 +128,8 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
     receipt = gm.packet_receipt_path(rec)
     if receipt and Path(receipt).exists():
         return None                       # the canonical receipt is the worker's own close: untouched
-    goal = spend_goal_for(rec.get("cwd"), index)
+    g0 = rec.get("goal")
+    goal = (g0 if isinstance(g0, str) and g0 else None) or spend_goal_for(rec.get("cwd"), index)
     if not goal:
         row.update(action="UNKNOWN", reason="no spend goal is bound to this mission's cwd: nothing settled")
         return row
@@ -289,8 +290,10 @@ def steward_pass(missions: list[dict], now: float, *, sessions=None, pid_alive=N
     index = ms.read_index()
     rows = []
     for m in missions:
-        if m["state"] not in (gm.HALTED, gm.BLOCKED) or not m.get("wu_packet") or not m.get("goal"):
+        if m["state"] not in (gm.COMPLETED, gm.HALTED, gm.BLOCKED) or not m.get("wu_packet"):
             continue
+        if m["state"] == gm.COMPLETED and not spend_goal_for(m.get("cwd"), index):
+            continue                      # a finished mission bound to no goal has nothing to settle
         verdict = gm.liveness(m.get("owner"), sessions, pid_alive)[0]
         if verdict in (gm.LIVE, gm.WAITING_HUMAN):
             continue
