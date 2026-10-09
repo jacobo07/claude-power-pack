@@ -94,8 +94,11 @@ def advance_checks() -> None:
     # not listed: U3 has packet+route but is not in units; with U2 receipt done the plan is complete
     (pd / "U2-receipt.md").write_text("Status: DONE\n", encoding="utf-8")
     gm.advance_pass(arm_fn=arm, headroom=lambda g: 1_000_000)
-    direct = gm.advance_unit(json.loads((adir / "ap-adv.json").read_text(encoding="utf-8")),
-                             gm.parse_plan(plan), "U3", repo, arm_fn=arm, headroom=lambda g: 1_000_000)
+    try:
+        direct = gm.advance_unit(json.loads((adir / "ap-adv.json").read_text(encoding="utf-8")),
+                                 gm.parse_plan(plan), "U3", repo, arm_fn=arm, headroom=lambda g: 1_000_000)
+    except Exception as exc:  # noqa: BLE001 -- a raise is not a refusal; the gate must read it as a FAIL
+        direct = {"status": f"RAISED {type(exc).__name__}"}
     check("V-LIFE-ADV-NOT-LISTED", "U3" not in armed and armed == ["U2"] and direct["status"] == "NOT_LISTED",
           f"{armed} {direct['status']}")
     # no authority: new plan, headroom too small

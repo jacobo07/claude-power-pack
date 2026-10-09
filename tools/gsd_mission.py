@@ -3574,7 +3574,7 @@ def advance_unit(rec: dict, plan: dict, unit: str, repo: Path, *, arm_fn=None, h
     try:
         res = (arm_fn or arm_chain)(str(repo), "/gsd-autonomous", wu_packet=str(packet), token_estimate=est,
                                     route=str(route), parallel_unit=f"lc-{unit}", max_cycles=3,
-                                    rollover_protocol=CAPSULE_V2)
+                                    rollover_protocol=CAPSULE_V2, permission_mode="auto")  # = the CLI default
     except Exception as exc:  # noqa: BLE001 -- no mission was armed, so the key must not claim one
         kp.unlink(missing_ok=True)
         return {"status": "ARM_FAILED", "why": f"{type(exc).__name__}: {exc}"[:300], "mission_id": None}
