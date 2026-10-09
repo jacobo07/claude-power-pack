@@ -100,6 +100,8 @@ job 3 3.07M / 9.
 - test_contract and test_candidate are red. BASELINED 2026-10-09: on a detached worktree at 6226c88 (1f72401^, before
   P2a) both fail identically: test_contract with the same FileNotFoundError, and test_candidate with the same two FAILs
   (V-CAND-OPERANDS-NORMALISED, V-SDA-PRECHECK-REAL). The reds predate P2a/P2b; they are not caused by them.
-- --runner-source head reads a fork path.
+- FIXED recon d887946: --runner-source head now derives the runner path from stage.py's own directory, so it reads
+  decomp/gex44. Its HEAD bytes equal the worktree bytes. Control: the old fork path is absent at HEAD. Suites:
+  P2A 9/9, REPRODUCE 56/56, RUNNER_GATE 22/22, BATCH_LOCAL 74/74.
 - Never send 211354Z, 211412Z or 215900Z. The job-2 tree stays un-ingested in returns/.incoming.
 3. Never send 211354Z, 211412Z or 215900Z: they are custody-invalid.
