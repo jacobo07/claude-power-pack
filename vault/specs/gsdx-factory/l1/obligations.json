@@ -606,8 +606,22 @@
    "title": "PREAMBLE"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster authority: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "authority"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK authority",
+     "timeout": 120
+    }
+   ],
    "id": "S-mission-execution-mode",
    "block": "2026-10-08T2017",
    "title": "MISSION EXECUTION MODE"
@@ -627,8 +641,22 @@
    "title": "PRIMARY EXECUTION ENVIRONMENT"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster authority: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "authority"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK authority",
+     "timeout": 120
+    }
+   ],
    "id": "S-one-mission-law",
    "block": "2026-10-08T2017",
    "title": "ONE-MISSION LAW"
@@ -732,8 +760,22 @@
    "title": "NO IMPLEMENTATION CODE IN THIS PROMPT"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster knowledge: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "knowledge"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK knowledge",
+     "timeout": 120
+    }
+   ],
    "id": "S-context-first-reality-first-law",
    "block": "2026-10-08T2017",
    "title": "CONTEXT-FIRST / REALITY-FIRST LAW"
@@ -753,8 +795,22 @@
    "title": "NO PARALLEL CATHEDRALS"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster knowledge: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "knowledge"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK knowledge",
+     "timeout": 120
+    }
+   ],
    "id": "S-the-three-mutually-reinforcing-outputs",
    "block": "2026-10-08T2017",
    "title": "THE THREE MUTUALLY REINFORCING OUTPUTS"
@@ -774,15 +830,43 @@
    "title": "MASTER NORTH STAR"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-ultimate-economic-law",
    "block": "2026-10-08T2017",
    "title": "ULTIMATE ECONOMIC LAW"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster delegation: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "delegation"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK delegation",
+     "timeout": 120
+    }
+   ],
    "id": "S-known-work-novel-work-law",
    "block": "2026-10-08T2017",
    "title": "KNOWN WORK / NOVEL WORK LAW"
@@ -816,8 +900,22 @@
    "title": "AUTONOMOUS OPTIMIZATION FLOW"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster delegation: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "delegation"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK delegation",
+     "timeout": 120
+    }
+   ],
    "id": "S-opportunity-delegation-must-become-software",
    "block": "2026-10-08T2017",
    "title": "OPPORTUNITY DELEGATION MUST BECOME SOFTWARE"
@@ -907,8 +1005,22 @@
    "title": "MINIMUM INTERVENTION BEFORE FULL RECONSTRUCTION"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster knowledge: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "knowledge"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK knowledge",
+     "timeout": 120
+    }
+   ],
    "id": "S-source-ownership-levels",
    "block": "2026-10-08T2017",
    "title": "SOURCE OWNERSHIP LEVELS"
@@ -956,8 +1068,22 @@
    "title": "EXECUTION EQUIVALENCE / STRATEGY SPACE"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-cognitive-economic-kernel",
    "block": "2026-10-08T2017",
    "title": "COGNITIVE ECONOMIC KERNEL"
@@ -1716,15 +1842,43 @@
    "title": "PRODUCTION REALITY GATE"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-vmax-null-error",
    "block": "2026-10-08T2017",
    "title": "VMAX-NULL-ERROR"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster knowledge: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "knowledge"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK knowledge",
+     "timeout": 120
+    }
+   ],
    "id": "S-bug-failure-knowledge-contract",
    "block": "2026-10-08T2017",
    "title": "BUG / FAILURE KNOWLEDGE CONTRACT"
@@ -1796,15 +1950,43 @@
    "title": "DELEGATION PRINCIPLE"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster delegation: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "delegation"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK delegation",
+     "timeout": 120
+    }
+   ],
    "id": "S-agent-teams",
    "block": "2026-10-08T2017",
    "title": "AGENT TEAMS"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster delegation: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "delegation"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK delegation",
+     "timeout": 120
+    }
+   ],
    "id": "S-self-prompting-continuation-loop",
    "block": "2026-10-08T2017",
    "title": "SELF-PROMPTING / CONTINUATION LOOP"
@@ -1824,8 +2006,22 @@
    "title": "NO IDLE MODEL"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster commit: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "commit"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK commit",
+     "timeout": 120
+    }
+   ],
    "id": "S-micro-commit-law",
    "block": "2026-10-08T2017",
    "title": "MICRO-COMMIT LAW"
@@ -2209,15 +2405,43 @@
    "title": "NORTH STAR"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-constitutional-economic-law",
    "block": "2026-10-08T2031",
    "title": "CONSTITUTIONAL ECONOMIC LAW"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-asymptotic-law",
    "block": "2026-10-08T2031",
    "title": "ASYMPTOTIC LAW"
@@ -3038,8 +3262,22 @@
    "title": "B4 \u2014 RECONSTRUCTION FACTORY"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster knowledge: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "knowledge"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK knowledge",
+     "timeout": 120
+    }
+   ],
    "id": "S-reconstruction-factory-law",
    "block": "2026-10-08T2031",
    "title": "RECONSTRUCTION FACTORY LAW"
@@ -3661,8 +3899,22 @@
    "title": "SOURCE DATASETS"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster knowledge: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "knowledge"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK knowledge",
+     "timeout": 120
+    }
+   ],
    "id": "S-dataset-completeness-contract",
    "block": "2026-10-09T0725",
    "title": "DATASET COMPLETENESS CONTRACT"
@@ -3762,8 +4014,22 @@
    "title": "UNIVERSAL COGNITIVE COST COLLAPSE"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-conservation-law-of-cognitive-work",
    "block": "2026-10-09T0725",
    "title": "CONSERVATION LAW OF COGNITIVE WORK"
@@ -3810,8 +4076,22 @@
    "title": "AUTONOMOUS MISSION STEWARDSHIP"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster authority: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "authority"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK authority",
+     "timeout": 120
+    }
+   ],
    "id": "S-mission-continuity-law",
    "block": "2026-10-09T0725",
    "title": "MISSION CONTINUITY LAW"
@@ -3949,8 +4229,22 @@
    "title": "CURRENT A-G1 GENESIS CANARY"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster knowledge: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "knowledge"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK knowledge",
+     "timeout": 120
+    }
+   ],
    "id": "S-a-g1-residual-law",
    "block": "2026-10-09T0725",
    "title": "A-G1 RESIDUAL LAW"
@@ -4598,8 +4892,22 @@
    "title": "MISSION E-GRAPH"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-cognitive-jit",
    "block": "2026-10-09T0725",
    "title": "COGNITIVE JIT"
@@ -4767,8 +5075,22 @@
    "title": "CONSTITUTIVE BASELINE RATCHET"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-constitutive-baseline-pruner",
    "block": "2026-10-09T0725",
    "title": "CONSTITUTIVE BASELINE PRUNER"
@@ -5687,8 +6009,22 @@
    "title": "MISSION A ECONOMIC DONE-GATE"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-cognitive-economics-completion-contract",
    "block": "2026-10-09T0725",
    "title": "COGNITIVE ECONOMICS COMPLETION CONTRACT"
@@ -5708,8 +6044,22 @@
    "title": "ECONOMIC REGRESSION CI"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-economic-contracts-for-mature-capabilities",
    "block": "2026-10-09T0725",
    "title": "ECONOMIC CONTRACTS FOR MATURE CAPABILITIES"
@@ -5743,8 +6093,22 @@
    "title": "RECONSTRUCTION DATASET EXHAUSTIVE COMPILATION"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster knowledge: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "knowledge"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK knowledge",
+     "timeout": 120
+    }
+   ],
    "id": "S-reconstruction-law",
    "block": "2026-10-09T0725",
    "title": "RECONSTRUCTION LAW"
@@ -6084,8 +6448,22 @@
    "title": "DYNAMIC REFORECAST"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster authority: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "authority"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK authority",
+     "timeout": 120
+    }
+   ],
    "id": "S-hard-stop-law-2",
    "block": "2026-10-09T0725",
    "title": "HARD STOP LAW"
@@ -6407,8 +6785,22 @@
    "title": "CONSTITUTIVE BASELINE RATCHET"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-baseline-completion-law",
    "block": "2026-10-09T0725",
    "title": "BASELINE COMPLETION LAW"
@@ -6496,8 +6888,22 @@
    "title": "MASTER PLAN MUST EXPLICITLY ANSWER"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster authority: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "authority"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK authority",
+     "timeout": 120
+    }
+   ],
    "id": "S-owner-approval-contract",
    "block": "2026-10-09T0725",
    "title": "OWNER APPROVAL CONTRACT"
@@ -6595,8 +7001,22 @@
    "title": "HANDOFF CONTRACT"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster knowledge: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "knowledge"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK knowledge",
+     "timeout": 120
+    }
+   ],
    "id": "S-video-image-contract-2",
    "block": "2026-10-09T0725",
    "title": "VIDEO / IMAGE CONTRACT"
@@ -6652,8 +7072,22 @@
    "title": "MASTER MISSION"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster authority: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "authority"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK authority",
+     "timeout": 120
+    }
+   ],
    "id": "S-scope-boundary",
    "block": "2026-10-09T1232",
    "title": "SCOPE BOUNDARY"
@@ -6773,15 +7207,43 @@
    "title": "UWCP"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster authority: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "authority"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK authority",
+     "timeout": 120
+    }
+   ],
    "id": "S-first-response-contract-3",
    "block": "2026-10-09T1232",
    "title": "FIRST RESPONSE CONTRACT"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster authority: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "authority"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK authority",
+     "timeout": 120
+    }
+   ],
    "id": "S-owner-authority-contract",
    "block": "2026-10-09T1232",
    "title": "OWNER AUTHORITY CONTRACT"
@@ -6890,8 +7352,22 @@
    "title": "PHASE 2 \u2014 S2 CALL-UNIT TRUTH"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-call-accounting-invariant",
    "block": "2026-10-09T1232",
    "title": "CALL ACCOUNTING INVARIANT"
@@ -7480,8 +7956,22 @@
    "title": "CONSTITUTIVE BASELINE RATCHET"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-baseline-retirement",
    "block": "2026-10-09T1232",
    "title": "BASELINE RETIREMENT"
@@ -7557,8 +8047,22 @@
    "title": "AUTONOMOUS AMDAHL LOOP"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster delegation: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "delegation"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK delegation",
+     "timeout": 120
+    }
+   ],
    "id": "S-agent-teams-mode-4",
    "block": "2026-10-09T1232",
    "title": "AGENT TEAMS MODE"
@@ -7600,15 +8104,43 @@
    "title": "LOOPS"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster delegation: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "delegation"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK delegation",
+     "timeout": 120
+    }
+   ],
    "id": "S-delegation-principle-4",
    "block": "2026-10-09T1232",
    "title": "DELEGATION PRINCIPLE"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster delegation: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "delegation"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK delegation",
+     "timeout": 120
+    }
+   ],
    "id": "S-opportunity-delegation-principle-4",
    "block": "2026-10-09T1232",
    "title": "OPPORTUNITY DELEGATION PRINCIPLE"
@@ -7628,8 +8160,22 @@
    "title": "CONCURRENT WRITERS"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster commit: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "commit"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK commit",
+     "timeout": 120
+    }
+   ],
    "id": "S-micro-commits-3",
    "block": "2026-10-09T1232",
    "title": "MICRO-COMMITS"
@@ -7656,15 +8202,43 @@
    "title": "PRODUCTION REALITY GATE"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster economics: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "economics"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK economics",
+     "timeout": 120
+    }
+   ],
    "id": "S-kernel-vmax-null-error-3",
    "block": "2026-10-09T1232",
    "title": "KERNEL vMAX-NULL-ERROR"
   },
   {
-   "claimed": "CHEAP_COGNITION",
-   "reason": "doctrine without an enforcer",
+   "claimed": "REUSE_EXISTING",
+   "reason": "DOCTRINE-ENFORCER cluster knowledge: gate enforces the rule",
+   "evidence": [
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/gsdx_doctrine_gate.py",
+      "--cluster",
+      "knowledge"
+     ],
+     "cwd": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+     "marker": "DOCTRINE-GATE OK knowledge",
+     "timeout": 120
+    }
+   ],
    "id": "S-active-reality-contract-3",
    "block": "2026-10-09T1232",
    "title": "ACTIVE REALITY CONTRACT"

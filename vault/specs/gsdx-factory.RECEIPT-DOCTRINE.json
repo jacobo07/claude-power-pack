@@ -1,0 +1,17 @@
+{
+ "unit": "WU-DOCTRINE",
+ "status": "DONE_WITH_LIMITS",
+ "gate_cmd": "python tools/test_wu_doctrine.py",
+ "gate_rc": 0,
+ "rows": 41,
+ "clusters": {"commit": 2, "authority": 8, "delegation": 7, "economics": 14, "knowledge": 10},
+ "pre_state_gate": "FAIL (0/41 rows carried an enforcer, gate tool missing)",
+ "limits": [
+  "Probes are cluster-level structural/live checks (commit size, packet headers, closeout budget, corpus presence), not semantic proof of each doctrine sentence",
+  "delegation check skips pre-chain packets WU-G1/G2 (no 'Plan (binding' marker)",
+  "8 U-KB-W8 rows remain CHEAP_COGNITION by design (other unit)"
+ ],
+ "files": ["tools/test_wu_doctrine.py", "tools/gsdx_doctrine_gate.py", "tools/gsdx_doctrine_build.py",
+           "vault/specs/gsdx-factory/doctrine/ENFORCEMENT.md", "vault/specs/gsdx-factory/l1/review.json",
+           "vault/specs/gsdx-factory/l1/obligations.json"]
+}
