@@ -154,6 +154,68 @@ def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = N
     return total
 
 
+# --- Lineage (UCDA A2, 2026-10-09) -----------------------------------------------------------------
+# A renewal used to carry a FRESH token_estimate: a lineage renewed three times could spend 4x its
+# envelope while every single mission stayed under its own. The lineage is the unit of budget.
+
+def _lineage_id(m: dict) -> str:
+    return m.get("lineage_id") or m["mission_id"]
+
+
+def lineage_members(mission_id: str, all_missions=None, extra: dict | None = None) -> list[dict]:
+    """Every mission of the lineage `mission_id` belongs to, root first. `extra` is a record not yet
+    persisted (the one being renewed)."""
+    if all_missions is None:
+        import gsd_mission as gm
+        all_missions = gm.all_missions
+    recs = {m["mission_id"]: m for m in all_missions()}
+    if extra:
+        recs.setdefault(extra["mission_id"], extra)
+    target = recs.get(mission_id)
+    if target is None:
+        return []
+    lid = _lineage_id(target)
+    members = [m for m in recs.values() if _lineage_id(m) == lid]
+    return sorted(members, key=lambda m: (int(m.get("renewal") or 0), float(m.get("created_at") or 0)))
+
+
+def lineage_head(mission_id: str, all_missions=None) -> str:
+    """The newest mission of the lineage of `mission_id`; the id itself when it is unknown."""
+    members = lineage_members(mission_id, all_missions)
+    return members[-1]["mission_id"] if members else mission_id
+
+
+def lineage_spend(mission_id: str, all_missions=None, extra: dict | None = None,
+                  root: Path | None = None, cache: dict | None = None) -> dict:
+    """{processed, unmeasured, members}: sum over the measurable members; a member that cannot be
+    measured is listed in `unmeasured`, never counted as zero."""
+    total, unmeasured, ids = 0, [], []
+    for m in lineage_members(mission_id, all_missions, extra):
+        ids.append(m["mission_id"])
+        n = processed_tokens(m, root, cache)
+        if n is None:
+            unmeasured.append(m["mission_id"])
+        else:
+            total += n
+    return {"processed": total, "unmeasured": unmeasured, "members": ids}
+
+
+def lineage_remaining(rec: dict, all_missions=None, root: Path | None = None, cache: dict | None = None) -> dict:
+    """Remaining token budget of the lineage `rec` belongs to: {budget, spent, remaining, unmeasured}.
+    `remaining` is None when there is no budget or any member is unmeasurable (absence is not zero)."""
+    budget = rec.get("lineage_token_budget") or rec.get("token_estimate")
+    out = {"budget": int(budget) if budget else None, "spent": None, "remaining": None, "unmeasured": []}
+    if not budget:
+        return out
+    sp = lineage_spend(rec["mission_id"], all_missions, extra=rec, root=root, cache=cache)
+    out["unmeasured"] = sp["unmeasured"]
+    if sp["unmeasured"]:
+        return out
+    out["spent"] = sp["processed"]
+    out["remaining"] = int(budget) - sp["processed"]
+    return out
+
+
 def judge(rec: dict, spent: int | None, fp: str | None) -> dict:
     """{trip: reason|None, mark: new cost_mark|None}. Pure."""
     est = rec.get("token_estimate")

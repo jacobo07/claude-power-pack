@@ -2178,6 +2178,16 @@ def _renewal_why_not(rec: dict, halt_reason: str, st: dict, halt_wd: str, finger
         fp_now = (fingerprint or progress_fingerprint)(halt_wd)
         if fp_now is not None and fp_now == origin:
             why_not = "no progress in this mission (work tree unchanged since its first launch)"
+    if not why_not and (rec.get("token_estimate") or rec.get("lineage_token_budget")):
+        # UCDA A2: an exhausted lineage budget earns no renewal. Unmeasured is not exhausted.
+        try:
+            import mission_spend as ms
+            lr_ = ms.lineage_remaining(rec)
+            if lr_.get("remaining") is not None and lr_["remaining"] <= 0:
+                why_not = (f"lineage budget exhausted: {lr_['spent']:,} processed of {lr_['budget']:,} "
+                           f"across lineage {rec.get('lineage_id') or rec['mission_id']}")
+        except Exception:  # noqa: BLE001
+            pass
     if not why_not:
         # GGMC C4: a renewal is a new attempt of the same Goal and obeys the same authority as `arm`.
         try:
@@ -2217,6 +2227,20 @@ def renew_mission(rec: dict, now: float | None = None, capsule_key: str | None =
             carried[k] = rec[k]
     if rec.get("wu_packet"):
         carried["wu_packet_epoch"] = 0
+    # UCDA A2: the lineage owns the budget; the successor inherits what REMAINS, not a fresh estimate.
+    if rec.get("token_estimate") or rec.get("lineage_token_budget"):
+        import mission_spend as ms
+        try:
+            lr_ = ms.lineage_remaining(rec)
+        except Exception:  # noqa: BLE001 -- an unanswered meter is unknown, never zero
+            lr_ = {"budget": rec.get("lineage_token_budget") or rec.get("token_estimate"),
+                   "remaining": None}
+        if lr_.get("budget"):
+            carried["lineage_token_budget"] = lr_["budget"]
+            if lr_.get("remaining") is None:
+                carried["lineage_spend_unknown"] = True
+            else:
+                carried["token_estimate"] = max(int(lr_["remaining"]), 1)
     if not rec.get("token_estimate") and bounded_renewal_mode() == "shadow":
         lr.ledger_append(rec["mission_id"], "renewal_unbounded_shadow", mission_id=rec["mission_id"],
                          reason=UNBOUNDED_RENEWAL)
