@@ -26,6 +26,11 @@ patch install/L3-econ.patch, which the coordinator applies with tools/lifecycle_
 duplicate that work; the install is applied there under the authority above.
 Install DEPLOY gates (hardrule_compile --class DEPLOY): HR-2 needs a green smoke from the same commit with one
 end-to-end path through the changed code. HR-CASCADE-001 needs the suites green in the applying session.
+L3 APPLIED LIVE 2026-10-09 16:08 as PP 37a5f3c0 "install(lifecycle L3)". Verified here: tools/mission_steward.py and
+test_route_estimator.py exist, and the e5014bab..HEAD diff covers 7 install-set files (+609/-40). WU-INST2 receipt
+(v3 15327f34): patch sha256 5872fdb0..., 0 conflicts, every suite green except the known pre-existing
+V-MC-SUP-HOST-UNANSWERED-NOT-BLOCKED. The CP50 dependency is now MET. The CP50 run itself is still unplanned: REFORECAST
+section 3 amendments (a)-(d) are only "TO PROPOSE", and the run is excluded from every cost figure.
 
 ## Authority
 - 2026-10-08 Owner "y y": fund the tranche, ~4.2M expected, 5.0M ceiling (R1 REFORECAST).
