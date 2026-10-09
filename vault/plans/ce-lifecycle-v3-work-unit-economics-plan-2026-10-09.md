@@ -121,3 +121,11 @@ Master done-gate of the Owner prompt. In particular:
 - the three-miss DEGRADED canary is green;
 - the edge fires before the breaker in a replay of WU-1H3;
 - the chain reaches terminal or WAITING_FOR_AUTHORITY with a measured EAC.
+
+## Obligation OB-APPROVAL-TO-ARM (recorded 2026-10-09, Owner)
+An Owner approval must become a durable decision record that the sweep turns into goal-declare plus an armed
+mission (packet + envelope + gate) with no hand-opened pane.
+- Gap today: "extending a goal's authority on YES has no owner" (ce-a3b-r OWNER_QUEUE, filed against lifecycle WU-4).
+- Canary: session 9137e707 hit the ce-a3b-r cap after binding through Set-Location, and the guard's only exit was the
+  Owner opening a pane by hand.
+- ce-unify, launched manually 2026-10-09, is the last manual launch.
