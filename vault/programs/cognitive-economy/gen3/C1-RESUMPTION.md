@@ -34,7 +34,12 @@ P2a m-f501c31d6523 (held by its cost breaker; P2a DONE, variance explained in P2
 Envelope: token_estimate 500k (breaker at 2x = 1.0M = stop), model sonnet, wu_packet packets/C1.md. Admission: first
 route (9 calls) RECOMPILE need 1,369,818 > 850k; cut to 6 worker calls (C2 template written by the main pane, no
 SUMMARY, no spare call) -> need 913,212; envelope now target 0.92M | warn 0.96M | stop 1.0M -> ROUTE ADMISSIBLE.
-NEXT: when the receipt gen3/C1-receipt.md lands, read it, meter the worker transcript (dedupe by message.id) against
+C1 RUN 1 REFUSED 2026-10-09 15:16-15:17 (worker sid c021de1c, 2 calls, 215,716 processed, nothing written, mission
+HALTED): goal cp50-c1 ledger used 7,684,629 > cap 1.5M. Cause = retroactive attribution: the lifecycle steward settled
+4 already-finished recon-factory sessions into cp50-c1 (seq 2-4 m-6d6bb4cef637 1,412,234 | m-789229da3a6f 2,353,284 |
+m-be59d97fa311 1,372,775, at declare+2 min; seq 5 P2a m-f501c31d6523 2,396,336, when the C1 arm superseded it). Goal
+root now rebound to _retired_cp50-c1. Owner decision pending: new goal id (and whether to fix the steward first).
+NEXT (after the Owner decides): when the receipt gen3/C1-receipt.md lands, read it, meter the worker transcript (dedupe by message.id) against
 the 1.0M stop, then size C2 from the measured per-call figure; C2's first deliverable = the arm-A executor.
 
 Next 3 actions (historical):

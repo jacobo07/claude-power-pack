@@ -144,7 +144,11 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
     tree, _ = gm.packet_gate_dir(rec)
     tree = tree or rec["cwd"]
     ms = _ms()
-    tok = ms.session_tokens(tp)
+    # Only spend made after the goal was declared is the goal's. Measured 2026-10-09, cp50-c1: without
+    # this, four recon-factory sessions that had stopped before the goal existed were settled into it
+    # (7,534,629 tokens) and the first C1 call was refused over a cap C1 had not touched.
+    since = (index.get(goal) or {}).get("since")
+    tok = ms.session_tokens(tp, since)
     tr = read_transcript(tp)
     # re-read before each step: the record is the memory, never this pass's earlier copy
     fresh = gm.load(mid) or rec
@@ -152,7 +156,7 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
     if not st.get("settled"):
         out = ledger_for(goal).settle_stopped(sid, int(tok["tokens"]), f"steward:{mid}")
         fresh = _step(gm, mid, fresh, "settled", {"goal": goal, "sid": sid, "measured": int(tok["tokens"]),
-                                                   "closed": out.get("closed", []), "at": now}, st)
+                                                   "since": since, "closed": out.get("closed", []), "at": now}, st)
         row["settled"] = int(tok["tokens"])
     fresh = gm.load(mid) or fresh
     st = dict(fresh.get("steward") or {})

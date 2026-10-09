@@ -55,7 +55,8 @@ def ops(goal, op):
     return [r for r in journal(goal) if r["op"] == op]
 
 
-def transcript(path: Path, refused_input=None):
+def transcript(path: Path, refused_input=None, ts="2099-01-01T00:00:00.000Z"):
+    """`ts` stamps every line; the default is after any goal's `since`, so the whole session is the goal's."""
     lines = [
         {"type": "assistant", "uuid": "u1", "message": {"id": "msg1", "model": "x", "usage": {
             "input_tokens": 1000, "output_tokens": 500},
@@ -68,13 +69,15 @@ def transcript(path: Path, refused_input=None):
         {"type": "assistant", "uuid": "u4", "message": {"id": "msg2", "model": "x", "usage": {
             "input_tokens": 2000, "output_tokens": 500}, "content": [{"type": "text", "text": "ok"}]}},
     ]
+    for x in lines:
+        x["timestamp"] = ts
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(json.dumps(x) for x in lines) + "\n", encoding="utf-8")
     return 4000          # 1500 (deduped msg1) + 2500
 
 
 def case(state=gm.HALTED, hold=False, receipt=False, refused_input=None, with_goal=True, cap=50_000_000,
-         goal_field=True):
+         goal_field=True, ts="2099-01-01T00:00:00.000Z"):
     N[0] += 1
     n = N[0]
     tree = Path(TMP) / f"tree{n}"
@@ -98,7 +101,7 @@ def case(state=gm.HALTED, hold=False, receipt=False, refused_input=None, with_go
     rec = gm.transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="test_setup",
                         now=NOW - 500, **changes)
     tp = Path(TMP) / "tx" / f"{sid}.jsonl"
-    measured = transcript(tp, refused_input)
+    measured = transcript(tp, refused_input, ts)
     led = ms._goal_ledger(goal) if with_goal else None
     if led:
         led.renew(sid, 0, 700_000)                                  # an open lease of the dead worker
@@ -263,6 +266,25 @@ check("V-STEWARD-SETTLES-COMPLETED", d0 == 850_000 and d1 == 0 and len(ops(cd["g
 nj = len(journal(cd["goal"]))
 rd2 = mine(run(cd), cd)
 check("V-STEWARD-SETTLE-ONCE", len(journal(cd["goal"])) == nj and not rd2 and len(ops(cd["goal"], "settle")) == 1)
+
+# --- spend made before the goal was declared is not the goal's (cp50-c1, 2026-10-09: 7,534,629 settled
+# from four sessions that stopped before the goal existed). Holds still close. Control: every gate above
+# uses a post-`since` transcript and books the full 4000.
+cpre = case(state=gm.COMPLETED, goal_field=False, ts="2000-01-01T00:00:00.000Z")
+run(cpre)
+gp = cpre["led"].status()
+stp = (gm.load(cpre["mid"]).get("steward") or {}).get("settled") or {}
+check("V-STEWARD-PRE-GOAL-SPEND-EXCLUDED", gp["used"] == 0 and gp["open"] == 0 and stp.get("measured") == 0
+      and stp.get("since"), f"used={gp['used']} open={gp['open']} since={stp.get('since')}")
+# --- a session that straddles the declaration books only its post-`since` part (msg2 = 2500)
+cmix = case(state=gm.COMPLETED, goal_field=False)
+mixed = [json.loads(x) for x in cmix["tp"].read_text(encoding="utf-8").splitlines() if x.strip()]
+for x in mixed[:3]:
+    x["timestamp"] = "2000-01-01T00:00:00.000Z"
+cmix["tp"].write_text("\n".join(json.dumps(x) for x in mixed) + "\n", encoding="utf-8")
+run(cmix)
+check("V-STEWARD-STRADDLE-POST-SINCE-ONLY", cmix["led"].status()["used"] == 2500,
+      f"used={cmix['led'].status()['used']}")
 
 print(f"STEWARD_PASS={passes}/{passes + fails}")
 sys.exit(0 if not fails else 1)
