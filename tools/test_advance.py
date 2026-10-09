@@ -65,6 +65,111 @@ def admit(mid, goal_rem):
     return gm.admit_route(mid, str(route), floors_path=FLOORS, now=NOW, measure=lambda r: None)["admission"]
 
 
+def advance_checks() -> None:
+    """WU-ADV2b: advance_pass with a temp repo, injected headroom and arm_fn."""
+    repo = Path(TMP) / "advrepo"
+    pd = repo / "pk"
+    pd.mkdir(parents=True)
+    route = json.dumps({"envelope": {"target": 100_000}})
+    for u in ("U1", "U2", "U3"):
+        (pd / f"{u}.md").write_text(f"# {u}\n", encoding="utf-8")
+        (pd / f"route-{u}.json").write_text(route, encoding="utf-8")
+    (pd / "U1-receipt.md").write_text("# U1 receipt -- Status: DONE\n", encoding="utf-8")
+    plan = repo / "plan.md"
+    plan.write_text("---\nstatus: APPROVED\nunits: [U1, U2]\npacket_dir: pk\n---\nbody\n", encoding="utf-8")
+    adir = Path(TMP) / "approvals"
+    adir.mkdir(exist_ok=True)
+
+    def rec(aid="ap-adv", **kw):
+        (adir / f"{aid}.json").write_text(json.dumps({"approval_id": aid, "plan_path": str(plan), "goal": "g-adv",
+                                                      "repo": str(repo), **kw}), encoding="utf-8")
+
+    armed = []
+    arm = lambda cwd, cmd, **k: (armed.append(Path(k["wu_packet"]).stem), {"ok": True, "mission_id": "m-x"})[1]
+    rec()
+    rows = gm.advance_pass(arm_fn=arm, headroom=lambda g: 1_000_000)
+    check("V-LIFE-ADV-ARMS-NEXT", armed == ["U2"] and rows[0]["status"] == "ARMED", f"{armed} {rows}")
+    gm.advance_pass(arm_fn=arm, headroom=lambda g: 1_000_000)
+    check("V-LIFE-ADV-ONCE", armed == ["U2"], f"{armed}")
+    # not listed: U3 has packet+route but is not in units; with U2 receipt done the plan is complete
+    (pd / "U2-receipt.md").write_text("Status: DONE\n", encoding="utf-8")
+    gm.advance_pass(arm_fn=arm, headroom=lambda g: 1_000_000)
+    try:
+        direct = gm.advance_unit(json.loads((adir / "ap-adv.json").read_text(encoding="utf-8")),
+                                 gm.parse_plan(plan), "U3", repo, arm_fn=arm, headroom=lambda g: 1_000_000)
+    except Exception as exc:  # noqa: BLE001 -- a raise is not a refusal; the gate must read it as a FAIL
+        direct = {"status": f"RAISED {type(exc).__name__}"}
+    check("V-LIFE-ADV-NOT-LISTED", "U3" not in armed and armed == ["U2"] and direct["status"] == "NOT_LISTED",
+          f"{armed} {direct['status']}")
+    # no authority: new plan, headroom too small
+    plan2 = repo / "plan2.md"
+    plan2.write_text("---\nstatus: APPROVED\nunits: [U1, U3]\npacket_dir: pk\n---\n", encoding="utf-8")
+    (adir / "ap-adv.json").unlink()
+    (adir / "ap-2.json").write_text(json.dumps({"approval_id": "ap-2", "plan_path": str(plan2), "goal": "g-adv",
+                                                "repo": str(repo)}), encoding="utf-8")
+    rows = gm.advance_pass(arm_fn=arm, headroom=lambda g: 10)
+    st = (repo / "plan2.md.status").read_text(encoding="utf-8")
+    check("V-LIFE-ADV-NO-AUTHORITY", "U3" not in armed and rows[0]["status"] == "WAITING_FOR_AUTHORITY"
+          and st.startswith("WAITING_FOR_AUTHORITY"), f"{rows[0]['status']}")
+    # stub receipt: U1 receipt is a stub, so U2 is never armed as successor
+    (pd / "U1-receipt.md").write_text("Status: DONE (STUB)\n", encoding="utf-8")
+    plan3 = repo / "plan3.md"
+    plan3.write_text("---\nstatus: APPROVED\nunits: [U1, U2]\npacket_dir: pk\n---\n", encoding="utf-8")
+    (adir / "ap-2.json").unlink()
+    (adir / "ap-3.json").write_text(json.dumps({"approval_id": "ap-3", "plan_path": str(plan3), "goal": "g-adv3",
+                                                "repo": str(repo)}), encoding="utf-8")
+    (pd / "U2-receipt.md").unlink()
+    before = list(armed)
+    gm.advance_pass(arm_fn=arm, headroom=lambda g: 1_000_000)
+    check("V-LIFE-ADV-STUB-RECEIPT-NO-ARM", armed == before, f"{armed}")
+    # a DONE receipt may describe stubs and PARTIAL states in prose (WU-S5d's does); a status line decides
+    prose = pd / "P-receipt.md"
+    prose.write_text("# P receipt\n\nStatus: DONE\n- D2: a PARTIAL / IN PROGRESS / stub status now reads as no "
+                     "receipt.\n", encoding="utf-8")
+    title = pd / "T-receipt.md"
+    title.write_text("# T receipt -- Status: PARTIAL\n", encoding="utf-8")
+    check("V-LIFE-ADV-RECEIPT-PROSE", gm.receipt_complete(prose) and not gm.receipt_complete(title)
+          and gm._receipt_present({"wu_packet": {"path": str(pd / "P.md")}}), "prose DONE / title PARTIAL")
+    # an arm that raises armed nothing: the singleflight key is released and the next pass retries
+    (adir / "ap-3.json").unlink()
+    (pd / "U1-receipt.md").write_text("Status: DONE\n", encoding="utf-8")
+    plan4 = repo / "plan4.md"
+    plan4.write_text("---\nstatus: APPROVED\nunits: [U1, U3]\npacket_dir: pk\n---\n", encoding="utf-8")
+    (adir / "ap-4.json").write_text(json.dumps({"approval_id": "ap-4", "plan_path": str(plan4), "goal": "g-adv",
+                                                "repo": str(repo)}), encoding="utf-8")
+
+    def boom(*a, **k):
+        raise TypeError("unexpected keyword argument")
+    first = gm.advance_pass(arm_fn=boom, headroom=lambda g: 1_000_000)
+    again = gm.advance_pass(arm_fn=arm, headroom=lambda g: 1_000_000)
+    check("V-LIFE-ADV-ARM-RAISES-RETRIES", first[0]["status"] == "ARM_FAILED" and again[0]["status"] == "ARMED"
+          and armed[-1] == "U3", f"{first[0]['status']} -> {again[0]['status']}")
+    (adir / "ap-4.json").unlink()
+
+
+def advance_real_arm() -> None:
+    """The real arm_chain, not an injected one: the kwargs advance_unit passes must bind (state dir is TMP)."""
+    repo = Path(TMP) / "advreal"
+    repo.mkdir()
+    g = lambda *a: subprocess.run([GIT, "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t", *a],
+                                  check=True, capture_output=True)
+    g("init", "-q")
+    pd = repo / "pk"
+    pd.mkdir()
+    (pd / "R1-receipt.md").write_text("Status: DONE\n", encoding="utf-8")
+    (pd / "R2.md").write_text("# R2\n", encoding="utf-8")
+    (pd / "route-R2.json").write_text(json.dumps(SLIM), encoding="utf-8")
+    plan = repo / "plan.md"
+    plan.write_text("---\nstatus: APPROVED\nunits: [R1, R2]\npacket_dir: pk\n---\n", encoding="utf-8")
+    g("add", "-A")
+    g("commit", "-q", "-m", "first")
+    rec = {"approval_id": "ap-real", "plan_path": str(plan), "goal": "g-real", "repo": str(repo)}
+    out = gm.advance_unit(rec, gm.parse_plan(plan), "R2", repo, headroom=lambda g_: 1_000_000)
+    m = gm.load(out.get("mission_id") or "") if out.get("mission_id") else None
+    check("V-LIFE-ADV-REAL-ARM", out["status"] == "ARMED" and m is not None and m["state"] == gm.PREPARED
+          and Path(m["wu_packet"]["path"]).name == "R2.md", f"{out}")
+
+
 def main() -> int:
     root = Path(TMP) / "goal"
     led = GoalLedger(root, "g-t")
@@ -84,6 +189,8 @@ def main() -> int:
     ok = admit("m-nogoal", None)
     check("V-LIFE-ADMIT-NO-GOAL-UNCHANGED", ok["verdict"] == "ADMISSIBLE" and ok["remaining"] is None,
           f"{ok['verdict']} rem={ok['remaining']}")
+    advance_checks()
+    advance_real_arm()
     print(f"ADVANCE_PASS={passes} FAIL={fails}")
     return 1 if fails else 0
 

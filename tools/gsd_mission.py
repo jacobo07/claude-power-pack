@@ -2330,11 +2330,16 @@ def _receipt_present(rec: dict) -> bool:
         body = r.read_text(encoding="utf-8")
     except OSError:
         return False
-    # A checkpoint stub is not a receipt, whatever its case: WU-ADV's said "checkpoint stub" and read as done.
+    return _receipt_body_ok(body)
+
+
+def _receipt_body_ok(body: str) -> bool:
+    """Not a stub, partial or in-progress receipt. A checkpoint stub is not a receipt, whatever its case (WU-ADV's
+    said "checkpoint stub" and read as done). Judged on Status: lines and the title block only: a DONE receipt may
+    describe stubs or PARTIAL states in its prose, and WU-S5d's own receipt does."""
     head = "\n".join(body.splitlines()[:3])
-    return not (re.search(r"\bstub\b", body, re.I)
-                or re.search(r"^\s*Status:\s*(IN PROGRESS|PARTIAL)\b", body, re.I | re.M)
-                or re.search(r"Status:\s*(IN PROGRESS|PARTIAL|stub)\b", head, re.I))
+    return not (re.search(r"\bstub\b", head, re.I)
+                or re.search(r"Status:\s*(IN PROGRESS|PARTIAL|stub)\b", body, re.I))
 
 
 _TREE_RE = re.compile(r"^work_tree:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
@@ -2913,7 +2918,7 @@ def _unit_done(rec: dict) -> dict:
     return {"outcome": {0: "DONE", 1: "NOT_DONE"}.get(r.returncode, "UNANSWERED"), "detail": detail or f"rc {r.returncode}"}
 
 
-def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
+def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=None,
               gsd_status=None, runner=None, stop_runner=None, pid_alive=lr._pid_alive,
               fingerprint=None, capsule_io: dict | None = None) -> list[dict]:
     """One out-of-band pass over every mission. Each action is ledgered by the
@@ -3548,6 +3553,162 @@ def arm_chain(cwd: str, resume_command: str, *, wu_packet: str, token_estimate, 
         set_owner_hold(mid, why)
         return {"ok": False, "mission_id": mid, "held": True, "why": why}
     return {"ok": True, "mission_id": mid, "mission": load(mid)}
+
+
+
+# --------------------------------------------------------------------------- advance (WU-ADV2b)
+# Approval record -> goal authority -> armed next unit, by the sweep. CPP_SWEEP_ADVANCE=off disables.
+def advance_on() -> bool:
+    return (os.environ.get("CPP_SWEEP_ADVANCE") or "").strip().lower() != "off"
+
+
+def parse_plan(path) -> dict:
+    """Front matter of an approved plan: status, units (ordered), packet_dir."""
+    text = Path(path).read_text(encoding="utf-8-sig")
+    m = re.match(r"\A---\s*\r?\n(.*?)\r?\n---", text, re.S)
+    if not m:
+        raise MissionError(f"plan {path} has no front matter")
+    fm = {}
+    for ln in m.group(1).splitlines():
+        k, sep, v = ln.partition(":")
+        if sep:
+            fm[k.strip()] = v.strip()
+    units = [u.strip() for u in re.sub(r"[\[\]]", "", fm.get("units", "")).split(",") if u.strip()]
+    return {"status": fm.get("status", ""), "units": units, "packet_dir": fm.get("packet_dir", "")}
+
+
+def receipt_complete(path) -> bool:
+    """Status: DONE and not a stub/partial/in-progress receipt (the same rule as _receipt_present)."""
+    try:
+        body = Path(path).read_text(encoding="utf-8-sig")
+    except OSError:
+        return False
+    return _receipt_body_ok(body) and bool(re.search(r"Status:\s*DONE\b", body, re.I))
+
+
+def goal_headroom(goal) -> int | None:
+    """remaining - open of an EXISTING capped goal ledger; None when unmeasurable (never creates one)."""
+    if not goal:
+        return None
+    try:
+        import mission_spend as ms
+        if not (ms.goal_root() / goal).exists():
+            return None
+        st = ms._goal_ledger(goal).status()
+        if st.get("remaining") is None:
+            return None
+        return int(st["remaining"]) - int(st.get("open") or 0)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _adv_status(plan_path: Path, status: str, why: str) -> None:
+    sp = plan_path.with_name(plan_path.name + ".status")
+    sp.write_text(f"{status}\n{why}\n", encoding="utf-8")
+
+
+def apply_approval(rec: dict, ledger=None) -> dict:
+    """cap_delta once, through the consume-once declare_cap (approval_id names the source)."""
+    delta = int(rec.get("cap_delta") or 0)
+    if delta <= 0:
+        return {"applied": False, "why": "no cap_delta"}
+    if ledger is None:
+        import mission_spend as ms
+        ledger = ms._goal_ledger(rec["goal"])
+    cur = ledger.status().get("cap")
+    if cur is None:
+        return {"applied": False, "why": "goal has no cap"}
+    res = ledger.declare_cap(int(cur) + delta, f"approval {rec['approval_id']}", approval_id=rec["approval_id"])
+    return {"applied": bool(res.get("ok")) and "already consumed" not in str(res.get("reason", "")),
+            "why": res.get("reason", ""), "cap": res.get("cap")}
+
+
+def advance_unit(rec: dict, plan: dict, unit: str, repo: Path, *, arm_fn=None, headroom=None) -> dict:
+    goal = rec["goal"]
+    if unit not in plan["units"]:
+        return {"status": "NOT_LISTED", "why": f"{unit} is not in the plan's units"}
+    i = plan["units"].index(unit)
+    pdir = repo / plan["packet_dir"]
+    if i > 0 and not receipt_complete(pdir / f"{plan['units'][i - 1]}-receipt.md"):
+        return {"status": "WAITING_FOR_RECEIPT", "why": f"predecessor {plan['units'][i - 1]} has no complete receipt"}
+    own = pdir / f"{unit}-receipt.md"
+    if own.exists() and not receipt_complete(own):
+        return {"status": "WAITING_FOR_RECEIPT", "why": f"{unit} has a stub/partial receipt; a worker owns it"}
+    packet, route = pdir / f"{unit}.md", pdir / f"route-{unit}.json"
+    if not packet.exists() or not route.exists():
+        return {"status": "WAITING_FOR_PACKET", "why": f"{packet.name} or {route.name} missing"}
+    try:
+        est = int(json.loads(route.read_text(encoding="utf-8-sig"))["envelope"]["target"])
+    except Exception as exc:  # noqa: BLE001
+        return {"status": "WAITING_FOR_PACKET", "why": f"route has no envelope target ({type(exc).__name__})"}
+    room = (headroom or goal_headroom)(goal)
+    if room is None or room < est:
+        return {"status": "WAITING_FOR_AUTHORITY", "why": f"goal {goal} headroom {room} < estimate {est}"}
+    import hashlib
+    key = hashlib.sha256(f"{rec['plan_path']}|{unit}".encode()).hexdigest()[:24]
+    kp = lr.state_dir() / "advance" / "keys" / f"{key}.json"
+    kp.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(kp, "x", encoding="utf-8") as fh:   # persisted BEFORE the arm: a second pass is a no-op
+            json.dump({"goal": goal, "unit": unit, "at": time.time()}, fh)
+    except FileExistsError:
+        return {"status": "ALREADY_ARMED", "why": f"singleflight key {key} present"}
+    # The goal is not passed: it resolves from the cwd binding (_mission_goal), as for a hand-armed unit.
+    try:
+        res = (arm_fn or arm_chain)(str(repo), "/gsd-autonomous", wu_packet=str(packet), token_estimate=est,
+                                    route=str(route), parallel_unit=f"lc-{unit}", max_cycles=3,
+                                    rollover_protocol=CAPSULE_V2, permission_mode="auto")  # = the CLI default
+    except Exception as exc:  # noqa: BLE001 -- no mission was armed, so the key must not claim one
+        kp.unlink(missing_ok=True)
+        return {"status": "ARM_FAILED", "why": f"{type(exc).__name__}: {exc}"[:300], "mission_id": None}
+    # A held arm keeps its key: that mission exists and is the Owner's to release, never armed a second time.
+    return {"status": "ARMED" if res.get("ok") else "ARM_FAILED", "why": res.get("why") or "",
+            "mission_id": res.get("mission_id"), "key": key}
+
+
+def advance_pass(*, arm_fn=None, headroom=None, ledger_for=None) -> list[dict]:
+    rows = []
+    adir = lr.state_dir() / "approvals"
+    if not advance_on() or not adir.is_dir():
+        return rows
+    for ap in sorted(adir.glob("*.json")):
+        try:
+            rec = json.loads(ap.read_text(encoding="utf-8-sig"))
+            repo = Path(rec.get("repo") or ".")
+            plan_path = Path(rec["plan_path"])
+            if not plan_path.is_absolute():
+                plan_path = repo / plan_path
+            plan = parse_plan(plan_path)
+            if not plan["status"].upper().startswith("APPROVED"):
+                row = {"unit": None, "status": "WAITING_FOR_AUTHORITY", "why": f"plan status {plan['status']!r}"}
+            else:
+                if rec.get("cap_delta"):
+                    apply_approval(rec, ledger_for(rec["goal"]) if ledger_for else None)
+                pdir = repo / plan["packet_dir"]
+                row = {"unit": None, "status": "PLAN_COMPLETE", "why": "every unit has a receipt"}
+                for u in plan["units"]:
+                    if not receipt_complete(pdir / f"{u}-receipt.md"):
+                        row = {"unit": u, **advance_unit(rec, plan, u, repo, arm_fn=arm_fn, headroom=headroom)}
+                        break
+                if row["status"] in ("WAITING_FOR_AUTHORITY", "WAITING_FOR_PACKET"):
+                    _adv_status(plan_path, row["status"], row["why"])
+            rows.append({"mission_id": f"advance:{ap.stem}", "action": "advance", **row})
+        except Exception as exc:  # noqa: BLE001 -- one bad record never stops the pass
+            rows.append({"mission_id": f"advance:{ap.stem}", "action": "advance", "status": "ERROR",
+                         "error": f"{type(exc).__name__}: {exc}"[:300]})
+    return rows
+
+
+def supervise(*args, **kw) -> list[dict]:
+    rows = _supervise_core(*args, **kw)
+    dry = kw.get("dry_run", args[1] if len(args) > 1 else False)
+    if not dry:
+        try:
+            rows = rows + advance_pass()
+        except Exception as exc:  # noqa: BLE001
+            rows = rows + [{"mission_id": "advance", "action": "advance", "status": "ERROR",
+                            "error": f"{type(exc).__name__}: {exc}"[:300]}]
+    return rows
 
 
 NO_PROGRESS_EPOCHS = 3   # consecutive relays with an unchanged work tree before HALTED
