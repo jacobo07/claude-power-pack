@@ -1,0 +1,42 @@
+[
+ {
+  "unit": "U-W5",
+  "rows": 8,
+  "tier": "top",
+  "n": 2,
+  "cost": 244000,
+  "dependency": "WAIT GEX44 port prerequisites (DEPLOY rules)"
+ },
+ {
+  "unit": "U-DOCTRINE",
+  "rows": 41,
+  "tier": "slim-t2",
+  "n": 7,
+  "cost": 168700,
+  "dependency": "none"
+ },
+ {
+  "unit": "U-CP50",
+  "rows": 3,
+  "tier": "top",
+  "n": 1,
+  "cost": 121000,
+  "dependency": "WAIT CP50 criterion"
+ },
+ {
+  "unit": "U-W7",
+  "rows": 1,
+  "tier": "top",
+  "n": 1,
+  "cost": 121000,
+  "dependency": "WAIT W5 + P3"
+ },
+ {
+  "unit": "U-W3",
+  "rows": 14,
+  "tier": "slim-t2",
+  "n": 3,
+  "cost": 62100,
+  "dependency": "WAIT ce-lifecycle-v3 INST2"
+ }
+]

@@ -1,0 +1,76 @@
+{
+ "unit": "WU-L1",
+ "status": "DONE_WITH_LIMITS",
+ "gate_rc": 0,
+ "gate_line": "DISPOSE counts={ALREADY_SATISFIED: 46, CHEAP_COGNITION: 49, DEFERRED_EXTERNAL: 1, DETERMINISTIC: 15, MERGE: 220, REUSE_EXISTING: 158, SUPERSEDED: 69, WAIT_DEPENDENCY: 37} unknown=0 undisposed=0",
+ "counts": {
+  "ALREADY_SATISFIED": 46,
+  "REUSE_EXISTING": 158,
+  "MERGE": 220,
+  "DETERMINISTIC": 15,
+  "CHEAP_COGNITION": 49,
+  "DEFERRED_EXTERNAL": 1,
+  "SUPERSEDED": 69,
+  "WAIT_DEPENDENCY": 37
+ },
+ "unknown": 0,
+ "unknown_reasons": [],
+ "errors": [],
+ "commits": [
+  "df55d3ab",
+  "e7f2925e",
+  "947240d0",
+  "285a6a1d",
+  "85024700",
+  "26ffb4d9"
+ ],
+ "top5_work_units": [
+  {
+   "unit": "U-W5",
+   "rows": 8,
+   "tier": "top",
+   "n": 2,
+   "cost": 244000,
+   "dependency": "WAIT GEX44 port prerequisites (DEPLOY rules)"
+  },
+  {
+   "unit": "U-DOCTRINE",
+   "rows": 41,
+   "tier": "slim-t2",
+   "n": 7,
+   "cost": 168700,
+   "dependency": "none"
+  },
+  {
+   "unit": "U-CP50",
+   "rows": 3,
+   "tier": "top",
+   "n": 1,
+   "cost": 121000,
+   "dependency": "WAIT CP50 criterion"
+  },
+  {
+   "unit": "U-W7",
+   "rows": 1,
+   "tier": "top",
+   "n": 1,
+   "cost": 121000,
+   "dependency": "WAIT W5 + P3"
+  },
+  {
+   "unit": "U-W3",
+   "rows": 14,
+   "tier": "slim-t2",
+   "n": 3,
+   "cost": 62100,
+   "dependency": "WAIT ce-lifecycle-v3 INST2"
+  }
+ ],
+ "limits": [
+  "review rules are title-regex, not 12-line body reads: 220 older-prompt/optimization-stack rows are MERGE by prompt precedence, not reviewed in depth",
+  "41 doctrine rows are CHEAP_COGNITION (no enforcing phrase found), U-DOCTRINE is an estimate",
+  "GRAPH n is rows/6 (slim-t2) or rows/4 (top), not a measured call count",
+  "Part B rows are REUSE_EXISTING via a ROADMAP grep; open recon phases (P2 close, P3, CP50, P8, P9) are tracked by W7, not per-row"
+ ],
+ "successor": "vault/specs/packets/WU-W3.md (coordinator)"
+}
