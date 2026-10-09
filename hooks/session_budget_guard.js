@@ -127,6 +127,16 @@ function judge(budget, st) {
   if (st.calls - st.progress_at > k) {
     return deny(`${st.calls - st.progress_at} calls since the last edit or commit (limit ${k}): spend without progress.`);
   }
+  // Predictive lease edge (WU-S4): WU-S3 tripped at 975K vs stop 950K, so the breaker was the first signal.
+  // Fires strictly before the stop deny: the remaining lease holds about `reserve` calls at the mean cost so far.
+  if (String(process.env.CPP_LEASE_EDGE || '').trim().toLowerCase() !== 'off') {
+    const per = st.tokens / Math.max(st.calls, 1);
+    const reserve = Number(budget.closeout_reserve_calls) || 3;
+    if (st.tokens + per * reserve > budget.stop) {
+      return advise(`LEASE EDGE: the remaining lease holds about ${reserve} calls. Do no new substantive work. ` +
+        'Now: commit what is green (pathspec, -F), write the receipt with Status: PARTIAL and the exact next step, end with HANDOFF NOTE.');
+    }
+  }
   if (st.tokens > budget.warn) {
     return advise(`SESSION BUDGET: processed ${fmt(st.tokens)} is past warn ${fmt(budget.warn)} ` +
       `(stop ${fmt(budget.stop)}). Finish the unit in hand; start nothing new.`);
@@ -139,7 +149,7 @@ function judge(budget, st) {
 // against stop 800K and every later call (a plain Read too) was denied. A tripped session now gets
 // `closeout_calls` (default 4) calls that are read-only or write a closeout file; nothing else.
 const READ_ONLY = new Set(['Read', 'Grep', 'Glob']);
-const CLOSEOUT_PATH = /(^|[\\/])(vault[\\/]plans[\\/][^\\/]+\.md|memory[\\/]handoffs[\\/][^\\/]+\.md|RESUMPTION_FILE\.md)$/;
+const CLOSEOUT_PATH = /(^|[\\/])(vault[\\/]plans[\\/][^\\/]+\.md|memory[\\/]handoffs[\\/][^\\/]+\.md|RESUMPTION_FILE\.md|[^\\/]+-receipt\.md)$/;   // F3: a work-unit receipt is a closeout file
 const DEFAULT_CLOSEOUT = 4;
 
 // Goal mode passes `goal`: one handoff write, no reads. The live canary of 2026-10-07 (CANARY.md,

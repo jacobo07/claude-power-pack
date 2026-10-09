@@ -294,6 +294,7 @@ def main() -> int:
     p_fin = gm.plan_next(srec, NOW + 60, [], alive)
     check("V-ADM-SLIM-JSON-MEANS-FINISHED", p_fin["action"] == "slim_finished" and p_fin["slim"]["tokens"] == 17
           and p_fin["slim"]["denials"] == 1 and p_fin["slim"]["session_id"] == owner["session_id"], str(p_fin))
+    write("m-slimlaunch-WU-receipt.md", "# receipt\nStatus: DONE\n")
     rows = gm.supervise(now=NOW + 60, sessions=[], pid_alive=dead)
     done = gm.load("m-slimlaunch")
     check("V-ADM-SLIM-SUPERVISE-COMPLETES", done["state"] == gm.COMPLETED and done["slim_result"]["result"] == "done",
@@ -312,6 +313,8 @@ def main() -> int:
             encoding="utf-8")
         sp = ms.budget_path(own["session_id"])
         sp.with_name(f"session-budget-{own['session_id']}.state.json").write_text(json.dumps(state), encoding="utf-8")
+        if not state["closeout"]:
+            write(f"{mid}-WU-receipt.md", "# receipt\nStatus: DONE\n")
         gm.supervise(now=NOW + 60, sessions=[], pid_alive=dead)
         return gm.load(mid)
 

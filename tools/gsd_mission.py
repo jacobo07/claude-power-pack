@@ -1742,9 +1742,7 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
 
 def _git_toplevel_and_common(path: str) -> tuple[str, str] | None:
     import subprocess
-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
-    if not Path(g).exists():
-        g = "git"
+    g = resolve_exe("git") or "git"
     try:
         r = subprocess.run([g, "-C", path, "rev-parse", "--show-toplevel", "--git-common-dir"],
                            capture_output=True, text=True, timeout=20)
@@ -1780,9 +1778,7 @@ def _worktree_carries_workstream(worktree: str, base_cwd: str, workstream: str) 
     does not contain the Lobby roadmap commit 20561b15. Any git failure -> False (stay on the
     mission cwd, where the mission was armed)."""
     import subprocess
-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
-    if not Path(g).exists():
-        g = "git"
+    g = resolve_exe("git") or "git"
     try:
         r = subprocess.run([g, "-C", base_cwd, "log", "-1", "--format=%H", "--",
                             f".planning/workstreams/{workstream}"],
@@ -1829,9 +1825,7 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
         return {"status": "unreadable", "detail": f"git could not read cwd={cwd} or work_dir={work_dir}"}
     if here[1] != there[1]:
         return {"status": "unrelated", "detail": "work_dir is not a worktree of the cwd's repository"}
-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
-    if not Path(g).exists():
-        g = "git"
+    g = resolve_exe("git") or "git"
 
     def git(path, *args):
         return subprocess.run([g, "-C", path, *args], capture_output=True, text=True, timeout=60)
@@ -2241,11 +2235,43 @@ def halt_continue_on() -> bool:
     return os.environ.get("CPP_HALT_CONTINUE", "").lower() != "off"
 
 
-def _git_ro(wd: str, *args: str) -> str:
+def resolve_exe(name: str) -> str | None:
+    """Certified executable resolver: CPP_EXE_<NAME> override, shutil.which, known Windows paths.
+    None only when every source fails."""
     import shutil
     import subprocess
-    fallback = r"C:\Program Files\Git\cmd\git.exe"
-    git = shutil.which("git") or (fallback if Path(fallback).exists() else "git")
+    key = name.lower()
+    cands = [os.environ.get(f"CPP_EXE_{key.upper()}")]
+    if key == "git":
+        cands.append(os.environ.get("CPP_GIT_EXE"))
+    for c in cands:
+        if c and Path(c).exists():
+            return c
+    w = shutil.which(name)
+    if w:
+        return w
+    known = {"git": [r"C:\Program Files\Git\cmd\git.exe"], "python": [sys.executable]}.get(key, [])
+    for c in known:
+        if c and Path(c).exists():
+            return c
+    if key == "node":
+        try:
+            r = subprocess.run([os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "where.exe"),
+                                "node"], capture_output=True, text=True, timeout=15)
+            for ln in r.stdout.splitlines():
+                if ln.strip() and Path(ln.strip()).exists():
+                    return ln.strip()
+        except Exception:  # noqa: BLE001
+            pass
+    return None
+
+
+def _git_ro(wd: str, *args: str) -> str | None:
+    """None = git UNRESOLVED (distinct from "" = git ran and printed nothing)."""
+    import subprocess
+    git = resolve_exe("git")
+    if not git:
+        return None
     try:
         p = subprocess.run([git, "-C", wd, *args], capture_output=True, text=True, timeout=30)
         return p.stdout if p.returncode == 0 else ""
@@ -2259,11 +2285,20 @@ def write_fault_capsule(rec: dict, wd: str, result_text: str, slim: dict | None)
     mid, epoch = rec["mission_id"], rec.get("epoch")
     path = lr.state_dir() / "fault-capsules" / f"{mid}-e{epoch}.json"
     text = result_text or ""
-    dirty = [ln for ln in _git_ro(wd, "status", "--porcelain").splitlines() if ln.strip()]
-    log = [ln for ln in _git_ro(wd, "log", "--oneline", "-n", "20").splitlines() if ln.strip()]
+    unresolved = _git_ro(wd, "rev-parse", "HEAD") is None
+    dirty = [ln for ln in (_git_ro(wd, "status", "--porcelain") or "").splitlines() if ln.strip()]
+    if rec.get("created_at"):
+        # F4: only this mission's commits, not the branch history (steward helper owns the since-log).
+        import mission_steward as _stw
+        log = _stw._git_log(wd, float(rec["created_at"]))
+    else:
+        log = [ln for ln in (_git_ro(wd, "log", "--oneline", "-n", "20") or "").splitlines() if ln.strip()]
     data = {"mission_id": mid, "epoch": epoch, "written_at": time.time(),
-            "head": _git_ro(wd, "rev-parse", "HEAD").strip(), "commits": log,
-            "dirty": dirty, "diff_stat": _git_ro(wd, "diff", "--stat"),
+            "git": "UNRESOLVED" if unresolved else "ok",
+            "head": "UNRESOLVED" if unresolved else (_git_ro(wd, "rev-parse", "HEAD") or "").strip(),
+            "commits": log if not unresolved else "UNRESOLVED",
+            "dirty": dirty if not unresolved else "UNRESOLVED",
+            "diff_stat": "UNRESOLVED" if unresolved else (_git_ro(wd, "diff", "--stat") or ""),
             "gate_lines": [ln for ln in text.splitlines()
                            if re.match(r"^(PASS|FAIL|[A-Z_]+_PASS=)", ln)][-20:],
             "spend": {"slim_tokens": (slim or {}).get("tokens"), "tripped": (slim or {}).get("tripped"),
@@ -2294,6 +2329,63 @@ def _receipt_present(rec: dict) -> bool:
     # A checkpoint stub is not a receipt, whatever its case: WU-ADV's said "checkpoint stub" and read as done.
     return not (re.search(r"\bstub\b", body, re.I)
                 or re.search(r"^\s*Status:\s*(IN PROGRESS|PARTIAL)\b", body, re.I | re.M))
+
+
+_TREE_RE = re.compile(r"^work_tree:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
+_RECEIPT_RE = re.compile(r"^receipt:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
+
+
+def _packet_text(rec: dict) -> str | None:
+    pkt = rec.get("wu_packet")
+    if not pkt:
+        return None
+    try:
+        return Path(pkt["path"]).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return None
+
+
+def _tree_inside_repo(tree: str, base_cwd: str) -> str | None:
+    """The packet's `work_tree:` only when it is an absolute directory inside the record's repository."""
+    p = Path(tree)
+    if not p.is_absolute() or not p.is_dir():
+        return None
+    p = p.resolve()
+    base = Path(base_cwd).resolve()
+    if p == base or base in p.parents:
+        return str(p)
+    here, root = _git_toplevel_and_common(str(p)), _git_toplevel_and_common(str(base))
+    return str(p) if here and root and here[1] == root[1] else None
+
+
+def packet_gate_dir(rec: dict, text: str | None = None) -> tuple[str | None, str]:
+    """The tree the packet's work happens in: `work_tree:` line, else the owner's effective workdir, else cwd."""
+    text = _packet_text(rec) if text is None else text
+    m = _TREE_RE.search(text or "")
+    if m:
+        t = _tree_inside_repo(m.group(1), rec["cwd"])
+        return t, "packet work_tree" if t else f"work_tree {m.group(1)[:200]!r} is not inside the repo"
+    wd = rec.get("work_dir") or rec["cwd"]
+    if rec.get("owner"):
+        try:
+            wd = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream")) or wd
+        except Exception:  # noqa: BLE001 -- keep the recorded dir; never guess
+            pass
+    return wd, "worker tree"
+
+
+def packet_receipt_path(rec: dict) -> str | None:
+    """The packet's `receipt:` line resolved to one absolute path inside the work tree, or None."""
+    text = _packet_text(rec)
+    m = _RECEIPT_RE.search(text) if text else None
+    if not m or Path(m.group(1)).is_absolute():
+        return None
+    tree, _ = packet_gate_dir(rec, text)
+    if not tree:
+        return None
+    root = Path(tree).resolve()
+    p = (root / m.group(1)).resolve()
+    return str(p) if root in p.parents else None
 
 
 def spend_goal(rec: dict) -> str | None:
@@ -2328,11 +2420,23 @@ def halt_authority(rec: dict) -> int | None:
 
 def halt_continue(rec: dict, wd: str, result_text: str, slim: dict | None, row: dict, now: float) -> None:
     """rec = the mission as it stands after the stop. Fills row['capsule'] / row['renewed_as'] / row['renewal']."""
-    if not halt_continue_on() or not (rec.get("wu_packet") or {}).get("path"):
+    if not halt_continue_on():
+        row.setdefault("renewal", "not renewed: halt-continue off")
         return
-    mid = rec["mission_id"]
+    if not (rec.get("wu_packet") or {}).get("path"):
+        row.setdefault("renewal", "not renewed: no work-unit packet")
+        return
     if _receipt_present(rec):
+        row.setdefault("renewal", "not renewed: receipt present")
         return
+    try:
+        _halt_continue_body(rec, wd, result_text, slim, row, now)
+    except Exception as exc:  # noqa: BLE001 -- F5: a non-renewal always leaves its reason on the row
+        row.setdefault("renewal", f"not renewed: halt-continue raised {type(exc).__name__}: {exc}"[:600])
+
+
+def _halt_continue_body(rec: dict, wd: str, result_text: str, slim: dict | None, row: dict, now: float) -> None:
+    mid = rec["mission_id"]
     cap = write_fault_capsule(rec, wd, result_text, slim)
     row["capsule"] = cap
     why = None
@@ -2821,7 +2925,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
         # Nothing to supervise: do not ask the host (`claude agents --json` costs seconds,
         # measured > 60 s once under load) on every 5-minute pass of an idle estate.
         return unreadable + [{"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
-                              "action": "none", "reason": f"terminal {m['state']}"} for m in missions]
+                              "action": "none", "reason": f"terminal {m['state']}"} for m in missions] \
+            + _steward_rows(missions, now, sessions, pid_alive, dry_run)
     if sessions is None:
         sessions = host_sessions()
     stop_run = stop_runner or (lambda a: subprocess.run(a, capture_output=True, text=True, timeout=120))
@@ -2994,13 +3099,14 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             elif act == "slim_finished":
                 s = plan["slim"]
                 stopped = s.get("tripped") or ("worker reported is_error" if s["is_error"] else None)
+                if not stopped and halt_continue_on() and (rec.get("wu_packet") or {}).get("path") \
+                        and not _receipt_present(rec):
+                    stopped = "no receipt"   # F1: a clean finish without its receipt is a fault, not done
                 fin = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                  event="slim_worker_finished", now=now, state=HALTED if stopped else COMPLETED,
                                  pending=None, slim_result=s, worker=s.get("session_id"),
                                  reason=f"{plan['reason']}; {stopped}" if stopped else plan["reason"])
-                if halt_continue_on() and (stopped or not _receipt_present(fin)):
-                    if not stopped:
-                        row["work_unit_status"] = "RECOVERY_PENDING"
+                if halt_continue_on() and stopped:
                     halt_continue(fin, fin.get("work_dir") or fin["cwd"], s.get("result") or "", s, row, now)
             elif act == "settle":
                 # Terminal, never relaunched: HALTED keeps owner_hold, so renewal_refusal still refuses it,
@@ -3308,8 +3414,21 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 lr.ledger_append(mid, "supervise_error", mission_id=mid, error=row["error"])
             except Exception:  # noqa: BLE001 -- the row still carries the error
                 pass
-    return unreadable + out
+    return unreadable + out + _steward_rows(missions, now, sessions, pid_alive, dry_run)
 
+
+def _steward_rows(missions, now, sessions, pid_alive, dry_run) -> list[dict]:
+    """The mission steward (tools/mission_steward.py), isolated: any failure is ONE row, never a failed sweep."""
+    if dry_run:
+        return []
+    try:
+        import mission_steward
+        if sessions is None and any(m["state"] in (HALTED, BLOCKED) and m.get("wu_packet") and m.get("goal")
+                                    and not (m.get("steward") or {}).get("done") for m in missions):
+            sessions = host_sessions()     # a stopped worker is judged against the host, not guessed
+        return mission_steward.steward_pass(missions, now, sessions=sessions, pid_alive=pid_alive)
+    except Exception as exc:  # noqa: BLE001
+        return [{"action": "steward_error", "error": f"{type(exc).__name__}: {exc}"[:300]}]
 
 # --------------------------------------------------------------------------- goal authority (GGMC C4)
 # spec goal-governed-mission-control C4: the Goal (a workstream of a repository) is the authority; a
@@ -3439,9 +3558,7 @@ def progress_fingerprint(work_dir: str) -> str | None:
     A commit is the unit of work GSD and the hand-off card both ask a worker to leave behind."""
     import hashlib
     import subprocess
-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
-    if not Path(g).exists():
-        g = "git"
+    g = resolve_exe("git") or "git"
     parts = []
     try:
         for args in (["rev-parse", "HEAD"], ["status", "--porcelain"], ["diff", "HEAD", "--shortstat"]):
@@ -3484,9 +3601,7 @@ def _plan_facts(work_dir: str, workstream: str | None = None) -> str:
 
 def _git_facts(cwd: str) -> dict:
     import subprocess
-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
-    if not Path(g).exists():
-        g = "git"
+    g = resolve_exe("git") or "git"
     facts = {}
     try:
         facts["head"] = subprocess.run([g, "-C", cwd, "rev-parse", "--short", "HEAD"],

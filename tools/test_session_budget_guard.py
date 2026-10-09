@@ -175,6 +175,19 @@ def main():
     d = kind(b.call()["out"])
     check("V-SBG-DIVERGENCE", (g, d) == ("allow", "deny"), f"3 calls -> {g}, 4 calls -> {d}")
 
+    # V-SBG-CALLS-WALL-RECEIPT (F3): over the calls wall, the receipt write is allowed, other writes are not
+    def call_write(box, fp):
+        ev = {"session_id": SID, "tool_name": "Write", "tool_input": {"file_path": fp},
+              "transcript_path": str(box.tx)}
+        p = subprocess.run([NODE, "-e", RUNNER, str(GUARD)], input=json.dumps(ev), capture_output=True,
+                           text=True, env=box.env(), timeout=60)
+        return json.loads(p.stdout)["out"]
+    b = Box(); b.declare(calls_estimate=2)
+    b.append(row("a", U(1), tools=[("Edit", {})] * 5))
+    rc = kind(call_write(b, r"C:\x\vault\programs\WU-S5c-receipt.md"))
+    ot = kind(call_write(b, r"C:\x\src\app.py"))
+    check("V-SBG-CALLS-WALL-RECEIPT", (rc, ot) == ("advise", "deny"), f"receipt -> {rc}, other write -> {ot}")
+
     # V-SBG-CONTEXT
     b = Box(); b.declare(target=10**9, warn=10**9, stop=10**9, context_ceiling=50000)
     b.append(row("a", U(10, 0, 40000)))
@@ -251,6 +264,32 @@ def main():
         hso = {}
     check("V-SBG-E2E", hso.get("permissionDecision") == "deny" and "SESSION BUDGET BREAKER" in (hso.get("permissionDecisionReason") or ""),
           f"live dispatcher -> {hso.get('permissionDecision')!r}")
+
+    # V-LIFE-EDGE: replay of WU-1H3 (10 calls, 645K, stop 500K) through judge(); guard path may be a mutant copy
+    def edge_replay(guard, **env):
+        js = ("const g=require(process.argv[1]);const b={target:400000,warn:450000,stop:500000};"
+              "const o=[];for(let c=1;c<=10;c++){const t=c*64500;"
+              "const v=g.judge(b,{tokens:t,calls:c,progress_at:c,context:0});"
+              "const h=v&&v.hookSpecificOutput;o.push([c,t,h?(h.permissionDecision||'advise'):null,h&&h.additionalContext||'']);}"
+              "const q=g.judge(b,{tokens:100000,calls:5,progress_at:5,context:0});o.push(['q',q]);"
+              "process.stdout.write(JSON.stringify(o));")
+        p = subprocess.run([NODE, "-e", js, str(guard)], capture_output=True, text=True, env=dict(os.environ, **env), timeout=60)
+        return json.loads(p.stdout) if p.returncode == 0 else []
+
+    def first_edge(rows):
+        return next((r for r in rows if r[0] != "q" and "LEASE EDGE" in r[3]), None)
+
+    rows = edge_replay(GUARD, CPP_LEASE_EDGE="")
+    fe = first_edge(rows)
+    check("V-LIFE-EDGE-BEFORE-STOP", fe is not None and fe[1] < 500000, f"first edge at call {fe and fe[0]} tokens {fe and fe[1]} < stop 500000")
+    q = next((r for r in rows if r[0] == "q"), None)
+    check("V-LIFE-EDGE-QUIET-EARLY", q is not None and q[1] is None, f"20% of stop -> {q and q[1]}")
+    check("V-LIFE-EDGE-KILL", first_edge(edge_replay(GUARD, CPP_LEASE_EDGE="off")) is None, "CPP_LEASE_EDGE=off -> no edge")
+    mut = Path(tempfile.mkdtemp(prefix="sbg_mut_")) / "session_budget_guard.js"
+    src = GUARD.read_text(encoding="utf-8")
+    mut.write_text(src.replace("st.tokens + per * reserve > budget.stop", "false"), encoding="utf-8")
+    check("V-LIFE-EDGE-MUTANT-RED", mut.read_text(encoding="utf-8") != src and first_edge(edge_replay(mut, CPP_LEASE_EDGE="")) is None,
+          "mutant (edge branch dropped) -> EDGE-BEFORE-STOP would go red")
 
     print(f"SBG_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1

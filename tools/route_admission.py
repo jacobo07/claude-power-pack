@@ -54,6 +54,33 @@ def _with_margin(n: int, margin: float) -> int:
     return math.ceil(round(n * (1 + margin), 6))
 
 
+MISS_FACTOR = 1.25
+
+
+def is_degraded(prof: dict) -> bool:
+    m = prof.get("misses") or []
+    return len(m) >= 3 and all(x["actual"] > MISS_FACTOR * x["need"] for x in m[-3:])
+
+
+def max_ratio(prof: dict) -> float:
+    return max(x["actual"] / x["need"] for x in prof["misses"][-3:])
+
+
+def record_actual(profile: str, need: int, actual: int, path: Path | str | None = None) -> dict:
+    """Append a miss (actual > 1.25 x need) to the profile's list; a hit clears it."""
+    path = Path(path or FLOORS_PATH)
+    data = load_floors(path)
+    prof = data["profiles"][profile]
+    if need <= 0:
+        raise ValueError("need must be positive")
+    if actual > MISS_FACTOR * need:
+        prof.setdefault("misses", []).append({"need": need, "actual": actual})
+    else:
+        prof["misses"] = []
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return {"profile": profile, "misses": prof["misses"], "degraded": is_degraded(prof)}
+
+
 def route_digest(route: dict) -> str:
     return hashlib.sha256(json.dumps(route, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
@@ -78,7 +105,7 @@ def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
     if margin < 0:
         raise ValueError("margin must be >= 0")
     profiles = floors["profiles"]
-    rows, unknown = [], []
+    rows, unknown, degraded = [], [], []
     for i, w in enumerate(workers):
         name = str(w.get("name") or f"worker-{i}")
         calls = _pos_int(f"{name}.calls", w.get("calls"))
@@ -95,30 +122,46 @@ def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
             # worker would run with no budget breaker, which is the thing the profile exists to carry.
             unknown.append(f"{name}: profile {w.get('profile')!r} requires {req}, which is missing")
             continue
-        rows.append({"name": name, "profile": w["profile"], "calls": calls, "packet": packet,
-                     "floor": prof["floor"], "cost": calls * (prof["floor"] + packet)})
+        pr = prof.get("physical_ratio")
+        calls_phys = calls
+        if isinstance(pr, (int, float)) and not isinstance(pr, bool) and pr > 0:
+            calls_phys = math.ceil(calls * pr)
+        cost = calls_phys * (prof["floor"] + packet)
+        g = prof.get("growth")
+        if isinstance(g, (int, float)) and not isinstance(g, bool) and g > 0:
+            cost += math.ceil(g * calls_phys * (calls_phys - 1) / 2)
+            est = "growth"
+        else:
+            est = "floor"
+        if is_degraded(prof):
+            cost = math.ceil(cost * max_ratio(prof))
+            degraded.append(f"estimator DEGRADED for {w['profile']}")
+        rows.append({"name": name, "profile": w["profile"], "calls": calls, "calls_physical": calls_phys, "packet": packet,
+                     "floor": prof["floor"], "cost": cost, "estimator": est})
     out = {"envelope": {"target": target, "warn": warn, "stop": stop, "calls": env_calls},
-           "margin": margin, "workers": rows, "route_sha256": route_digest(route)}
+           "margin": margin, "workers": rows,
+           "estimator": "growth" if rows and all(r["estimator"] == "growth" for r in rows) else "floor", "route_sha256": route_digest(route)}
     if unknown:
         return {**out, "verdict": ESCALATE, "reasons": unknown}
     need = sum(r["cost"] for r in rows)
     need_m = _with_margin(need, margin)
     calls = sum(r["calls"] for r in rows)
-    out.update(need=need, need_with_margin=need_m, calls=calls)
+    out.update(need=need, need_with_margin=need_m, calls=calls,
+               calls_physical=sum(r["calls_physical"] for r in rows))
     top = profiles.get(TOP_LEVEL) or {}
     top_floor = top.get("floor") if isinstance(top.get("floor"), int) else max(p["floor"] for p in profiles.values())
     min_calls = int(floors.get("default_min_calls") or 1)
     out["max_calls_single_worker"] = int(target // ((1 + margin) * top_floor))
-    reasons = []
+    reasons = list(dict.fromkeys(degraded))
     if need_m > target:
         reasons.append(f"floor {need:,} x {1 + margin:g} = {need_m:,} > target {target:,}")
     if env_calls is not None and calls > env_calls:
         reasons.append(f"{calls} calls > envelope {env_calls}")
-    if not reasons:
+    if not (reasons and (need_m > target or (env_calls is not None and calls > env_calls))):
         if remaining is not None and need_m > remaining:
             return {**out, "verdict": DEFER,
                     "reasons": [f"needs {need_m:,} but only {remaining:,} of the budget remains"]}
-        return {**out, "verdict": ADMISSIBLE, "reasons": []}
+        return {**out, "verdict": ADMISSIBLE, "reasons": reasons}
     if _with_margin(min_calls * top_floor, margin) > target:
         reasons.append(f"the envelope cannot hold one {TOP_LEVEL} for {min_calls} calls "
                        f"({top_floor:,} floor): raise it or drop the unit")
@@ -137,7 +180,15 @@ def _main(argv: list[str]) -> int:
     a.add_argument("--floors")
     a.add_argument("--margin", type=float, default=DEFAULT_GROWTH_MARGIN)
     a.add_argument("--remaining", type=int)
+    r = sub.add_parser("record")
+    r.add_argument("--profile", required=True)
+    r.add_argument("--need", type=int, required=True)
+    r.add_argument("--actual", type=int, required=True)
+    r.add_argument("--floors")
     args = ap.parse_args(argv)
+    if args.cmd == "record":
+        print(json.dumps(record_actual(args.profile, args.need, args.actual, args.floors)))
+        return 0
     route = json.loads(Path(args.route).read_text(encoding="utf-8-sig"))
     res = admit(route, load_floors(args.floors), margin=args.margin, remaining=args.remaining)
     print(json.dumps(res, indent=1))

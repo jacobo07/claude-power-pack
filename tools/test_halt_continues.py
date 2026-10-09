@@ -123,7 +123,7 @@ def main() -> int:
           rec["state"] == gm.HALTED and cap is not None and len(suc) == 1 and one.get("state") == gm.PREPARED
           and one["continuity_from"].get("capsule_path") == str(gm.lr.state_dir() / "fault-capsules" / "m-hc1-e2.json")
           and any("dirty.txt" in d for d in cap["partial_receipt"]["SALVAGE"])
-          and any("first" in c for c in cap["partial_receipt"]["DONE"])
+          and isinstance(cap["partial_receipt"]["DONE"], list)  # F4: mission-scoped; "first" predates NOW
           and cap["head"] and cap["gate_lines"] == ["PASS V-X"] and "stopped" in cap["result"]
           and cap["spend"]["slim_tokens"] == 5,
           f"{rec['state']} suc={len(suc)} cap={bool(cap)}")
@@ -155,8 +155,41 @@ def main() -> int:
           and len(successors("m-hc5")) == 1, f"{rec['state']} {rows}")
     # 6. provider success without a receipt is not done
     rec, rows, _ = run("m-hc6", state=OKSTATE, text="done")
-    check("V-LIFE-SUCCESS-NO-RECEIPT", rec["state"] == gm.COMPLETED and capsule("m-hc6") is not None
-          and len(successors("m-hc6")) == 1 and rows[0].get("work_unit_status") == "RECOVERY_PENDING", str(rows))
+    check("V-LIFE-SUCCESS-NO-RECEIPT-NOT-COMPLETED",
+          rec["state"] == gm.HALTED and "no receipt" in str(rec.get("reason") or rec)
+          and capsule("m-hc6") is not None and len(successors("m-hc6")) == 1, f"{rec['state']} {rows}")
+    # F5: a non-renewal always leaves its reason; force the exception path after the capsule decision
+    real_wfc = gm.write_fault_capsule
+    def boom(*a, **k):
+        raise RuntimeError("forced")
+    gm.write_fault_capsule = boom
+    try:
+        rec, rows, _ = run("m-hc5b", state=TRIP)
+    finally:
+        gm.write_fault_capsule = real_wfc
+    check("V-LIFE-NONRENEW-HAS-REASON", not successors("m-hc5b") and rows
+          and "not renewed" in str(rows[0].get("renewal")) and "forced" in str(rows[0].get("renewal")), str(rows))
+    rec, rows, _ = run("m-hc5c", state=TRIP, receipt=True)
+    check("V-LIFE-NONRENEW-RECEIPT-REASON", rows and "receipt present" in str(rows[0].get("renewal")), str(rows))
+    # F4: capsule commits are only those since the mission was created
+    sc = make_repo("scoped")
+    (Path(sc) / "b.txt").write_text("b\n", encoding="utf-8")
+    g(sc, "add", "b.txt")
+    old_env = dict(os.environ)
+    os.environ.update(GIT_COMMITTER_DATE="2020-01-01T00:00:00", GIT_AUTHOR_DATE="2020-01-01T00:00:00")
+    try:
+        g(sc, "commit", "-q", "-m", "ancient-history")
+    finally:
+        os.environ.pop("GIT_COMMITTER_DATE"); os.environ.pop("GIT_AUTHOR_DATE")
+    (Path(sc) / "c.txt").write_text("c\n", encoding="utf-8")
+    g(sc, "add", "c.txt")
+    g(sc, "commit", "-q", "-m", "mission-work")
+    gm.write_fault_capsule({"mission_id": "m-sc", "epoch": 3, "created_at": 1_700_000_000.0}, sc, "x", None)
+    csc = capsule("m-sc", 3) or {}
+    check("V-LIFE-CAPSULE-MISSION-SCOPED",
+          any("mission-work" in c for c in csc.get("commits") or [])
+          and not any("ancient-history" in c or "first" in c for c in csc.get("commits") or []),
+          str(csc.get("commits")))
     # 7. controls: a receipt present means nothing to recover
     rec, rows, _ = run("m-hc7", state=TRIP, receipt=True)
     check("V-LIFE-HALT-RECEIPT-PRESENT", rec["state"] == gm.HALTED and capsule("m-hc7") is None
@@ -202,6 +235,28 @@ def main() -> int:
           and good["ok"] is True and not gmm.get("owner_hold") and not gmm.get("owner")
           and gmm["state"] == gm.PREPARED and gmm["admission"]["verdict"] == "ADMISSIBLE"
           and gmm["wu_packet"]["path"] == str(pkt), f"{bad.get('why')} | {gmm['state']}")
+    # 9. S2: capsule survives PATH loss; unresolved git says UNRESOLVED, never ""
+    pl = make_repo("pathloss")
+    saved = os.environ.get("PATH")
+    os.environ["PATH"] = ""
+    try:
+        gm.write_fault_capsule({"mission_id": "m-pl", "epoch": 7}, pl, "PASS V-X", None)
+    finally:
+        os.environ["PATH"] = saved
+    cp = capsule("m-pl", 7) or {}
+    check("V-LIFE-CAPSULE-PATH-LOSS",
+          len(str(cp.get("head", ""))) == 40 and any("first" in c for c in cp.get("commits") or [])
+          and any("dirty.txt" in d for d in cp.get("dirty") or []), f"{cp.get('head')} {cp.get('git')}")
+    real_resolve = gm.resolve_exe
+    gm.resolve_exe = lambda name: None
+    try:
+        gm.write_fault_capsule({"mission_id": "m-un", "epoch": 7}, pl, "PASS V-X", None)
+    finally:
+        gm.resolve_exe = real_resolve
+    cu = capsule("m-un", 7) or {}
+    check("V-LIFE-CAPSULE-UNRESOLVED",
+          cu.get("git") == "UNRESOLVED" and cu.get("head") == "UNRESOLVED" and cu.get("commits") == "UNRESOLVED"
+          and cu.get("dirty") == "UNRESOLVED", f"{cu.get('git')} {cu.get('head')!r}")
     print(f"HALT_CONTINUES_PASS={passes} FAIL={fails}")
     return 1 if fails else 0
 
