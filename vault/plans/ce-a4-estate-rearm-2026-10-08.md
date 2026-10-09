@@ -175,6 +175,37 @@ Rule candidates (UKDL BLOCKED_BY_OWNERSHIP: ukdl-universal.md has another pane's
 - Consolidating programs consolidates budget, not only ownership: the folded envelope is closed, not kept live.
 - A folded program becomes provenance, never a second execution source.
 
+## 6c. Post-F0 reforecast (2026-10-09, pane 0f9b771b; F0 receipt c8fc9f8a)
+
+F0 (MEASURED, 618 fresh sessions): default top-level floor 122.6k (opus-5-5 median), so the old ~120k assumption
+was not stale for that profile; but ~64% (~78k) is Power Pack injection (instructions ~48k, skills ~12k, agents
+~10k, hooks ~5k) and the host-only part is 31.8-34.3k. Sonnet sessions reach 18.2k at p25. A compiled unit carries
+its own packet, so mechanical units are repriced on a SLIM injection profile (DERIVED ~0.4-0.5x per call),
+UNVERIFIED until W0 measures its own first-call floor. Strong units keep the full profile (1.0x).
+
+T1c refusal layer (from its log, L107/L112): Claude Code's background-isolation guard ("hasn't isolated its changes
+yet. Call EnterWorktree first ... a path inside a linked git worktree is accepted"), then EnterWorktree failed
+("Could not read the repository git config to neutralize filter drivers"), then the session budget breaker at 17
+calls. Not a Power Pack hook, ACL or classifier. P0 is satisfied by design when a unit's cwd is a linked worktree
+(root `Apps/pp-ce-a4`); the EnterWorktree git-config failure stays a named defect. The guard is never disabled.
+
+| unit | disposition | old cap | expected | note |
+|---|---|---|---|---|
+| W0 | SLIM_T1 + P0 + slim-profile canary | 1.2M | 0.5M | real background worker commits in the worktree (P0); logs its own first-call floor |
+| W1a | STRONG | 3.0M | 3.0M | merge judgement across 6 families; mandatory envelope enforce (S9 part) |
+| W1b | outside A4 (ce-a3b 1.58M) | - | 0 | default goal binding = the gen3 / F0 coordinator-breach protection |
+| W1c | SLIM_T2 | 3.0M | 1.5M | |
+| W1-gate | DETERMINISTIC + canary sessions | 0.8M | 0.4M | table built by tranche_driver |
+| W2a | queue closes DETERMINISTIC; gsdx-pcc migration STRONG | 3.0M | 2.5M | T2 m-9bee7894f20f: Owner retired it 2026-10-07 -> CLOSE_NO_WORK, never resumed |
+| W2b | STRONG | 2.5M | 2.5M | S4: coordinator spend measured from transcripts |
+| W2c | SLIM_T2 | 2.0M | 1.0M | |
+| W3 | MERGE: CBR + UKDL/KV writes SLIM, PGO STRONG | 3.5M | 2.5M | S9 CBR promotion; UKDL only when the file has no foreign hunks |
+| coordinator | one arming call, then tranche_driver | 0.6M | 0.6M | this pane measured ~270-300k/call: at most ONE post-approval call |
+| reserve | 15% of units | 2.1M | 2.1M | |
+Totals: lower bound ~11.5M; expected 14.5M + reserve 2.1M = **16.6M authority**; if W0 measures a slim floor
+> 60k, the slim rows revert to 1.0x (~19.6M) and A4 stops for Owner re-approval instead of spending past 16.6M.
+F0's own spend (4,651,404 / 17 calls in this pane vs 1M cap) is a coordinator breach, recorded as gen3-class evidence.
+
 ## 7. Null-policy semantics, legacy deopt, rollback
 
 - An absent field resolves to policy. Unreadable policy resolves to builtin cheap values (U6a, landed).
