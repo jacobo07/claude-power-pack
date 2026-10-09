@@ -73,7 +73,8 @@ def transcript(path: Path, refused_input=None):
     return 4000          # 1500 (deduped msg1) + 2500
 
 
-def case(state=gm.HALTED, hold=False, receipt=False, refused_input=None, with_goal=True, cap=50_000_000):
+def case(state=gm.HALTED, hold=False, receipt=False, refused_input=None, with_goal=True, cap=50_000_000,
+         goal_field=True):
     N[0] += 1
     n = N[0]
     tree = Path(TMP) / f"tree{n}"
@@ -88,8 +89,10 @@ def case(state=gm.HALTED, hold=False, receipt=False, refused_input=None, with_go
         r = ms.goal_declare(goal, cap, "test", [str(tree)])
         assert r["ok"], r
     rec = gm.create(str(tree), "claude --resume x", mission_id=mid)
-    changes = dict(state=state, wu_packet={"path": str(pkt), "sha256": "x"}, goal={"repo": "r", "unit": "u"},
+    changes = dict(state=state, wu_packet={"path": str(pkt), "sha256": "x"},
                    owner={"session_id": sid, "kind": "background"}, admission={"at": NOW - 1000})
+    if goal_field:
+        changes["goal"] = {"repo": "r", "unit": "u"}
     if hold:
         changes["owner_hold"] = {"by": "test"}
     rec = gm.transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="test_setup",
@@ -250,6 +253,16 @@ empty_before = len(journal(cx["goal"]))
 cz = case(with_goal=False, state=gm.COMPLETED)
 rz = [r for r in run(cz) if r.get("mission_id") == cz["mid"]]
 check("V-STEWARD-CONTROL-NOTHING-QUALIFIES", not rz and "steward" not in gm.load(cz["mid"]))
+
+# --- a COMPLETED sweep-armed mission (no goal field) bound by cwd is settled; control: a second pass appends nothing
+cd = case(state=gm.COMPLETED, goal_field=False)
+d0 = cd["led"].status()["open"]
+run(cd)
+d1 = cd["led"].status()["open"]
+check("V-STEWARD-SETTLES-COMPLETED", d0 == 850_000 and d1 == 0 and len(ops(cd["goal"], "settle")) == 1, f"{d0}->{d1}")
+nj = len(journal(cd["goal"]))
+rd2 = mine(run(cd), cd)
+check("V-STEWARD-SETTLE-ONCE", len(journal(cd["goal"])) == nj and not rd2 and len(ops(cd["goal"], "settle")) == 1)
 
 print(f"STEWARD_PASS={passes}/{passes + fails}")
 sys.exit(0 if not fails else 1)

@@ -89,7 +89,11 @@ def run(mid, *, state=None, write_result=True, receipt=False, text="PASS V-X\nst
     gm.set_envelope(mid, wu_packet=str(pkt), token_estimate=250_000, now=NOW)
     route = Path(TMP) / f"{mid}-route.json"
     route.write_text(json.dumps(SLIM), encoding="utf-8")
-    gm.admit_route(mid, str(route), floors_path=FLOORS, now=NOW, measure=lambda r: None)
+    _ha, gm.halt_authority = gm.halt_authority, (lambda rec: 10_000_000)  # admission is goal-aware (WU-ADV2a)
+    try:
+        gm.admit_route(mid, str(route), floors_path=FLOORS, now=NOW, measure=lambda r: None)
+    finally:
+        gm.halt_authority = _ha
     cur = gm.load(mid)
     gm.launch_worker(mid, expect_epoch=cur["epoch"], expect_state=cur["state"], reason="t",
                      runner=None, spawner=spawner, now=NOW)
@@ -203,6 +207,11 @@ def main() -> int:
     rec, rows, _ = run("m-hc10", state=TRIP, receipt=True, receipt_text="# WU receipt\n\nStatus: IN PROGRESS\n")
     check("V-LIFE-HALT-STATUS-IN-PROGRESS", capsule("m-hc10") is not None and len(successors("m-hc10")) == 1,
           str(rows))
+    rec, rows, _ = run("m-hc11", state=TRIP, receipt=True, receipt_text="# WU-X receipt -- Status: PARTIAL\n\nbody\n")
+    check("V-LIFE-RECEIPT-STATUS-IN-TITLE", capsule("m-hc11") is not None and len(successors("m-hc11")) == 1,
+          str(rows))
+    rec, rows, _ = run("m-hc12", state=TRIP, receipt=True, receipt_text="# WU-X receipt -- Status: DONE\n\nbody\n")
+    check("V-LIFE-RECEIPT-DONE-IN-TITLE-CONTROL", capsule("m-hc12") is None and not successors("m-hc12"), str(rows))
     # 7c. the renewed successor is admitted, so the normal launch path can start it (renew never carries admission)
     one = successors("m-hc1")[0]
     check("V-LIFE-HALT-READMITTED", (one.get("admission") or {}).get("verdict") == "ADMISSIBLE"

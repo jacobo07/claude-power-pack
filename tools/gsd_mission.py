@@ -1526,6 +1526,10 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
         if spent is not None:
             ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
             remaining = int(ratio * int(rec["token_estimate"])) - spent
+    # WU-ADV2a: the mission's spend goal bounds admission too. No goal / unmeasurable keeps the above.
+    goal_rem = halt_authority(rec)
+    if goal_rem is not None:
+        remaining = goal_rem if remaining is None else min(remaining, goal_rem)
     try:
         res = ra.admit(route, ra.load_floors(floors_path), remaining=remaining)
     except ValueError as exc:
@@ -2327,8 +2331,10 @@ def _receipt_present(rec: dict) -> bool:
     except OSError:
         return False
     # A checkpoint stub is not a receipt, whatever its case: WU-ADV's said "checkpoint stub" and read as done.
+    head = "\n".join(body.splitlines()[:3])
     return not (re.search(r"\bstub\b", body, re.I)
-                or re.search(r"^\s*Status:\s*(IN PROGRESS|PARTIAL)\b", body, re.I | re.M))
+                or re.search(r"^\s*Status:\s*(IN PROGRESS|PARTIAL)\b", body, re.I | re.M)
+                or re.search(r"Status:\s*(IN PROGRESS|PARTIAL|stub)\b", head, re.I))
 
 
 _TREE_RE = re.compile(r"^work_tree:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
