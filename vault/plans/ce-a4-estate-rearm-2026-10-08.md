@@ -148,6 +148,32 @@ budget by default instead.
 **Total cap: 21.7M**, goal `ce-a4`, root `Apps/pp-ce-a4`, excluding W1b, which stays in `ce-a3b`. Each unit's cap
 comes from measured units: U6a 1.04M, A3-U1 1.82M.
 
+### 6.1 Folded obligations (ce-unify ledger, EXTEND rows; P2 2026-10-09)
+
+Source: Apps/pp-ce-unify obligation-ledger.md (ce/unify 91aa46d2). Each row is owned by the named unit; none is a new unit.
+
+| Row | Dataset line | Obligation | Owner unit |
+|---|---|---|---|
+| D-01 | 7 | goal-autopsy reaches LIVE tools/mission_spend.py | W1a -- LANDED 81301310 |
+| D-04 | 28 | admission must read goal remaining (remaining=None) | W1b default binding |
+| D-07 | 102 | Gen1 results become conditional findings (workload, invalidators, reopen) | W3 UKDL via CEPS |
+| D-09 | 184 | runtime reopen triggers for dormant negatives | W3 UKDL via CEPS |
+| D-10 | 211 | negative knowledge blocks re-investment (non-investment proof) | W3 UKDL |
+| D-11 | 238 | experiment ROIC / falsification value | W3 Semantic PGO |
+| D-12 | 277 | classify workload by dominant bound (roofline) | W3 autopsy profile |
+| D-17 | 480 | KPI = novelty concentration / known-work tax, not token % | W3 + section 9 deflation definition |
+| D-18 | 505 | work-class learning curves | W3 + section 9 one class before/after |
+| D-20 | 594 | stochastic expected-verified-completion cost | W3 PGO (W1c single routing table) |
+| D-22 | 671 | meta-work tax SLO near zero | W3 Cognitive CI clause (ce-unify P3) |
+| D-24 | 727 | automatic Token Incident on cost outlier | W3 Cognitive CI clause (ce-unify P3); first record incident-ce-lifecycle-v2-overrun.md |
+| D-26 | 785 | counterfactual replay before building | W3 (gen2 W4 offline replay) |
+| D-27 | 812 | universal holdout (unseen Work Classes) | W1-gate Canary 1 (non-PP repo) |
+| D-29 | 848 | Token NPV, CAPEX/OPEX split | W3 PGO: one NPV field in autopsy |
+| D-32 | 2406 | shrink constitution; token rent ledger by surface | W1c prompt extinction (CLAUDE.md linter 39,812 chars) |
+| D-34 | 1137 | institutional cognitive deflation as supreme KPI | section 9 (same as D-17) |
+| D-37 | 1939 | common subexpression elimination, cross-goal derivation, singleflight | W1a cost-collapse singleflight |
+| D-46 | 2238 | route provider per Work Class; frontier purity | W1c one routing table (purity metric UNKNOWN, not built) |
+
 ## 7. Null-policy semantics, legacy deopt, rollback
 
 - An absent field resolves to policy. Unreadable policy resolves to builtin cheap values (U6a, landed).
