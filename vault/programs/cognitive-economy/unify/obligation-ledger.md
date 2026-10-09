@@ -10,19 +10,19 @@ The dataset line numbers are the first line of the passage. The dataset is 62 nu
 | D-01 | 7 | goal-autopsy reaches LIVE tools/mission_spend.py (branch ce/a3b-r only) | ce-a4 W1a (integrate deltas by file) | EXTEND (ce-a4 W1a; no a4 doc names it) |
 | D-02 | 10 | R5c closes R5: receipt, suites, mutation test | m-447ca8005684 (ce-a3b-r) | ALREADY-DONE (R5c COMPLETED; code 88d37fe9, 6902264d) |
 | D-03 | 14 | failure-registry wiring | ce-lifecycle-v2 R4 (Amendment D, 3aa002af) | OWNED |
-| D-04 | 28 | admission must read goal remaining (remaining=None) | ce-a4 W1b default binding | EXTEND (ce-a4 W1b) |
+| D-04 | 28 | admission must read goal remaining (remaining=None) | ce-a4 W1b default binding | ALREADY-DONE (ed566db0 goal-aware admission; measured: m-3ca2f1fe4460 admission remaining=14,164,665 == ce-a4 goal remaining) |
 | D-05 | 28 | R1 guard not live until R3 | ce-lifecycle-v2 WU-INST (L5) | OWNED |
-| D-06 | 29 | finished worker's reserve freed only by manual goal-reconcile | none found | UNKNOWN (decide: does the sweep call goal-reconcile on COMPLETED?) |
+| D-06 | 29 | finished worker's reserve freed only by manual goal-reconcile | none found | ALREADY-DONE (ed566db0 steward settles every terminal worker; measured: goal ce-unify used 750,000 w/ 1 open hold -> 663,402 settled, open 0, no manual goal-reconcile) |
 | D-07 | 102 | Gen1 results become conditional findings (workload, invalidators, reopen) | ce-a4 W3 UKDL via CEPS | EXTEND (ce-a4 W3) |
-| D-08 | 143 | lever interaction matrix | none | UNKNOWN (decide: two levers measured on one Work Class after W1a) |
+| D-08 | 143 | lever interaction matrix | none | UNKNOWN (missing: cost of two levers measured on one Work Class; W1a has not run, ce-a4 settled 2,526,633 of 16,600,000) |
 | D-09 | 184 | runtime reopen triggers for dormant negatives | ce-a4 W3 UKDL via CEPS | EXTEND (ce-a4 W3) |
 | D-10 | 211 | negative knowledge blocks re-investment (non-investment proof) | ce-a4 W3 UKDL | EXTEND (ce-a4 W3) |
 | D-11 | 238 | experiment ROIC / falsification value | ce-a4 W3 Semantic PGO | EXTEND (ce-a4 W3) |
 | D-12 | 277 | classify workload by dominant bound (roofline) | ce-a4 W3 autopsy profile | EXTEND (ce-a4 W3) |
 | D-13 | 347 | continuous observe-classify-replay-canary-promote loop | ce-a4 W3 (self-host, Canary 15) | OWNED |
 | D-14 | 362 | ask why work exists, not only cost | none (slogan, no deliverable) | REJECT (no measurable output; covered by D-18/D-35) |
-| D-15 | 399 | known-work fraction per call class | ce-a4 W2b Work Extinction | UNKNOWN (decide: one autopsied mission classified; gen2 says this lever is unmeasured) |
-| D-16 | 455 | irreducible lower bound / overhead multiplier | none | UNKNOWN (decide: a definition of "decision" countable from receipts) |
+| D-15 | 399 | known-work fraction per call class | ce-a4 W2b Work Extinction | UNKNOWN (missing: known-work fraction, in tokens, of one autopsied mission's calls classified by call class; none exists) |
+| D-16 | 455 | irreducible lower bound / overhead multiplier | none | UNKNOWN (missing: count of 'decision' events per mission countable from receipts; no definition/field recorded) |
 | D-17 | 480 | KPI = novelty concentration / known-work tax, not token % | ce-a4 sec.9 deflation definition | EXTEND (ce-a4 W3) |
 | D-18 | 505 | work-class learning curves | ce-a4 sec.9 one class before/after | EXTEND (ce-a4 W3) |
 | D-19 | 563 | worker lifetime learned per class; epoch lifetime | ce-lifecycle (v3 S-units) | OWNED |
@@ -37,7 +37,7 @@ The dataset line numbers are the first line of the passage. The dataset is 62 nu
 | D-28 | 831 | token delta CI on every CPP change | ce-a4 W3 Cognitive CI | OWNED |
 | D-29 | 848 | Token NPV, CAPEX/OPEX split | ce-a4 W3 PGO | EXTEND (one NPV field in autopsy) |
 | D-30 | 882 | capitalization rate, decision-surface metric, debt register, balance sheet | none | REJECT (new instruments; D-32 covers rent) |
-| D-31 | 989 | cost-of-change per module as NFR | none | UNKNOWN (decide: autopsy per-file token attribution exists) |
+| D-31 | 989 | cost-of-change per module as NFR | none | EXTEND (goal-autopsy per-file attribution; measured: live goal-autopsy emits 0 per-file fields, only goal/session-level) |
 | D-32 | 2406 | shrink constitution; token rent ledger by surface | ce-a4 W1c prompt extinction | EXTEND (CLAUDE.md linter 39,812 chars is the signal) |
 | D-33 | 1029 | APIs make wrong decision impossible | none | REJECT (principle, no deliverable) |
 | D-34 | 1137 | institutional cognitive deflation as supreme KPI | ce-a4 sec.9 | EXTEND (same as D-17; one class, stated normalisation) |
@@ -46,7 +46,7 @@ The dataset line numbers are the first line of the passage. The dataset is 62 nu
 | D-37 | 1939 | common subexpression elimination, cross-goal derivation, singleflight | cost-collapse singleflight via ce-a4 W1a | EXTEND (ce-a4 W1a) |
 | D-38 | 1981 | semantic state versions; no transcript inheritance | ce-a4 W2c ContextImage (Canary 5); capsule-v2 | OWNED |
 | D-39 | 2025 | cognitive virtual memory (paging) | none | REJECT (new subsystem, nothing measured) |
-| D-40 | 2050 | tool-schema linker; zero-copy tool output | none | UNKNOWN (decide: measure schema rent; Gen1 filtering was 2.67%, L1236) |
+| D-40 | 2050 | tool-schema linker; zero-copy tool output | none | UNKNOWN (missing: tool-schema tokens within the ~18K per-call fixed prefix; system/schema split not recorded) |
 | D-41 | 2094 | proof compiler, executable proof transaction | ce-a4 W2b | OWNED |
 | D-42 | 2149 | compiled research | none | REJECT (no owner, no measurement) |
 | D-43 | 2170 | known failures handled by policy | ce-lifecycle (v2 R4, v3) | OWNED |
@@ -58,4 +58,4 @@ The dataset line numbers are the first line of the passage. The dataset is 62 nu
 | D-49 | 2600 | finding to CBR global baseline | ce-a4 W3 CBR | OWNED |
 | D-50 | 1186 | no invented global % target; certified capability or negative result | gen2 measured-only rule (MISSION.md) | ALREADY-DONE (gen2 MISSION rule; commit not read) |
 
-Counts (50 rows): ALREADY-DONE=2, EXTEND=19, OWNED=16, REJECT=7, UNKNOWN=6
+Counts (50 rows): ALREADY-DONE=4, EXTEND=19, OWNED=16, REJECT=7, UNKNOWN=4
