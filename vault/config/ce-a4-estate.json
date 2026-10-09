@@ -1,0 +1,8 @@
+{
+  "dispositions": {
+    "m-53847a002b65": {"disposition": "FREEZE_AND_MIGRATE", "why": "card s3: raw GSD grammar 162.2M, Phase 2 of 10 not started"},
+    "m-b76843b319af": {"disposition": "MIGRATE_NEXT_EPOCH", "why": "card s3: absorbed as A4-W1a"},
+    "m-9bee7894f20f": {"disposition": "CLOSE_NO_WORK", "why": "Owner retired T2 2026-10-07"},
+    "m-4bf75e9e8ecc": {"disposition": "CLOSE_NO_WORK", "why": "duplicate W0 armed by pane 0f9b771b; held and superseded; never launch or release"}
+  }
+}
