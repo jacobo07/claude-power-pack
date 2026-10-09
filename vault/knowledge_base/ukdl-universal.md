@@ -8045,6 +8045,16 @@ generalisation is [[T-RULE-STARVED-OF-ITS-INPUT-001]] moved one layer out: there
 had no producer for its input, here a rule has no path to its input.
 
 
+
+**Instance (2026-10-09, EDD canary): a measured forecast is still prose.** REFORECAST had measured the
+completed-unit continuation tax as UC-19 (21.5 %) and named the fix; the canary's learning ledger (`canary/CBR.md`)
+carried it as "proposal, not built". Nothing that arms a unit read that ledger, so P2-B paid 20 calls / 2,130,930 for
+exactly that failure. The mechanical consumer is now the arming path itself: `edd_p2b.guard` (called by
+`edd_p2_chain.py`, the only EDD arming path) refuses while any ledger row says "not built" without `disposition:`
+(built, deferred to its owner, rejected -- each with a reason). On the live tree it refused the next unit until
+UC-19 (BUILT) and UC-13 (PARTIAL) were dispositioned. Scope is materiality, not universality: a forecast becomes a
+blocking row only when it is written into a ledger an arming path consults.
+
 ## T-CONSUMER-ORPHANED-BY-ITS-PRODUCER-001 — improving a producer can silently kill its consumer
 
 **Trap.** A producer is correctly upgraded; a consumer still reads the retired symbol and
@@ -9746,6 +9756,14 @@ ABSENT_RUNNING / LOCAL_EDIT. Type the direction: a checkout that is behind owes 
 nothing, and conflating that with a checkout that is ahead produces a red everyone learns to
 ignore. Sister of [[T-HOOK-MIRROR-001]], which covers the repo-to-live-mirror leg of the
 same journey; this is the leg where both paths are the same file and only the branch differs.
+
+
+**Two-host instance (2026-10-09).** The same gap across hosts: the mission meter's per-session attribution landed on
+the laptop on 2026-10-06 (f3062055), while GEX44 -- the host that runs every mission -- kept a directory-wide meter
+for three more days and the debt list called the defect "unfixed". The debt was a missing port, not a missing fix,
+and no one could tell from the commit log. When a tool executes on more than one host, its fix is delivered per
+executing host: check the symbol in the file each host executes (`grep -n "def mission_sessions"`), then port by
+exact anchors with a mutant that goes red on the unported file.
 
 ### T-IMMUNITY-BOUGHT-BY-REMOVING-THE-APERTURE-001
 
@@ -15412,3 +15430,23 @@ writes while the worker stalls, and require the halt to fire. Evidence: `tools/g
 (fingerprint) and `:1893-1907` (halt), read at `37d1940d`; `vault/programs/cognitive-economy/handoffs/J.md`;
 `vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md`. Sibling of
 T-AN-MTIME-SENTINEL-OVER-STATE-OTHER-WRITERS-OWN-001: a test sentinel has the same blindness.
+
+## T-TRANSFER-SOURCE-FORGES-CONTAMINATION-001 -- answers derived from a corpus share its text
+
+A contamination scan that flags answer-only text in a worker's transcript must first remove everything the worker
+may legitimately have read -- including the corpus the answers were TRANSFERRED FROM. EDD's holdout answers were
+written by transferring the SkyParty gold grammar; P2-A, written before any holdout existed, scanned CONTAMINATED on
+13 six-word runs it shared with H04/H08 through that gold. After excluding inputs, gold and ROADMAP: 1 coincidental
+run, against 542 for the auditor that really read three answers. **Rule.** Calibrate a text-overlap detector on a
+real transcript that provably could not have seen the secret (a negative control from before it existed) and on one
+that provably did (a positive control), then set the threshold between them; report the runs below it, never hide
+them. Source: edd-run 4579a7d0 (`edd_p2b.py scan`).
+
+## PR-GOLD-KEY-CHANGE-IS-A-NEW-VERSION-001 -- a benchmark answer edited in place keeps a false identity
+
+A gold answer that changes after it was sealed and judged must become a new sealed version that names what changed,
+what it supersedes and which earlier judgments it voids; the re-validation targets the changed cases plus at least
+one case no auditor has seen, so the repair cannot only confirm itself. An edit under the old seal is refused by the
+seal check, not by discipline. Origin: EDD P2-B (2026-10-09), H01/H02 judged `minor` with incomplete keys; Owner
+decision D-03 "repair, never carry known-incomplete gold forward". Mechanism: `edd_p2b.py reseal` (LINEAGE.json),
+`sealed()` refuses a sums file the lineage does not describe. Related: the evaluation-corpus-governance skill.

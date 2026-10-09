@@ -210,3 +210,27 @@ receipt exist; reachability exit 0 for new tools.
   - Phase 2 spend ~4.49M + 3.02M + 0.72M = ~8.23M of the 14M ceiling (2.13M of it the fixed tax).
   - Trap hit by me: `claude stop` inside an ssh `bash -s` script read the rest of the script from stdin as a prompt
     (a model replied; the lines after it never ran). Always `</dev/null` for `claude` in a remote script.
+- EDD FULL-CONVERGENCE, S0 + P2-B-R arming (2026-10-09, pane 24ca0218; Owner y to the inline plan = D-03 repair the
+  gold keys as a new version, D-04 envelope ~39M, Phase-2 ceiling 16M; edd-run e04a7c3b):
+  - **Breaker attribution was a missing PORT, not a missing fix.** Laptop f3062055 (2026-10-06) already charged a
+    mission only its own sessions (owner + its ledger workers + subagents + pending bg_id prefix); GEX44 live -- the
+    host that runs every unit -- still summed the whole cwd for three more days while the debt list called it
+    unfixed. Anchored port (git apply refused: different base) -> GEX44 live 30fdbf0f. MSPEND 30/30 (+8 gates);
+    mutant `_attributed -> True` turns 4 gates red; OWNER_HOLD 31/31; MC 226/227 = the known red
+    V-MC-PLAN-FACTS-REFUSES-OVERLAP, identical on the unpatched tree.
+  - **UC-19 effect path.** canary/CBR.md held UC-19 as "proposal, not built" while P2-B paid 2.13M for it. Arming
+    (edd_p2_chain -> edd_p2b.guard) now refuses while any CBR row says "not built" without `disposition:`. On the
+    real tree it refused P2-B-R on UC-13 and UC-19 until 2538d948 dispositioned them (UC-19 BUILT; UC-13 PARTIAL,
+    deferred to gsd_mission). Mutant (guard off) -> red.
+  - **Contamination scan** (edd-run 4579a7d0, `edd_p2b.py scan --tag T`): every session the ledger ties to the unit
+    + its subagents; answer-path tool calls, broad holdout listings, answer-only 6-word runs (every git version of
+    the answers, minus inputs, SkyParty gold, ROADMAP). Real transcripts: P2-B-AUDIT 542 runs on exactly its sampled
+    H01/H02/H06 (allowed: audit); P2-A-AUDIT..3 CLEAN; P2-A -- written before any holdout -- first read
+    CONTAMINATED (13 runs shared with H04/H08 through the gold the answers transfer from), then 1 coincidental run
+    once the source corpus was excluded -> threshold 3, weak runs reported. Mutant (blind scanner) -> 4 gates red.
+    Limits stated in its output: transcripts only.
+  - **Gold versions**: `reseal` writes LINEAGE.json (supersedes, changed files, invalidated judgments); sealed()
+    refuses a gold edit under the old identity; the re-audit set = invalidated cases + one case no auditor saw.
+    EDDP2B 61/61. Done-check drill on GEX44 live gsd_mission (consultation disabled) -> OWNER_HOLD 28/31, restored 31/31.
+  - FORECAST-P2B-R.json frozen at 4f46aeff BEFORE arming: author 7 calls 810,000 (lease 1,012,500), re-auditor 7
+    calls 725,000. **P2-B-R armed m-0216790ee987** (4911e5a9), done-check `edd_p2b.py done --tag P2-B-R`.
