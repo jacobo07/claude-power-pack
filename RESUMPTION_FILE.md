@@ -15,7 +15,11 @@ m-fa18e2b8b44d under OWNER HOLD pointing at the receipt (gsd_mission has no term
 S4 DONE (PASS, `vault/specs/gsdx-factory.RECEIPT-S4.json`): slim-t2 ran Read->Write->PowerShell commit (bfb4c8b3) with the
 guard live, and the guard denied the Write at stop 5,000. Floor 17.5K vs 121K top-level; whole unit 73,648 tokens. Its two
 probe sids hold 838,615 of open lease on this goal (real 130,061) until S1 can settle a finished sid without a new lease.
-Next: S1 (steward: settle stopped sids, ledger correction, salvage) -> S2 (slim-t2) / S3 -> L1.
+S1 ARMED 2026-10-09 ~09:10Z (Owner option "b": new tools/mission_steward.py, one guarded call in supervise()):
+mission m-ffb75e73f813, slim-t2/sonnet, packet vault/specs/packets/WU-S1.md (4e34c258), route-S1.json ADMISSIBLE
+(need 763,246 flat-floor; target 2.5M, stop 4M). It superseded AG1 (m-fa18e2b8b44d now HALTED). Launched by the live
+5-min sweep; result = vault/specs/gsdx-factory.RECEIPT-S1.json. Check `gsd_mission.py status`, never poll with a model.
+After S1: coordinator lands it on live, then goal-settle the open probe/phantom holds; then S2 (slim-t2) / S3 -> L1.
 A-G2..A-G5 are recompiled from L1 + S4, never re-armed from stale packets. Coherence anchor: `git log` here at or after f923c24a.
 
 # PRIOR (2026-10-08): cost-collapse + expected-completion admission (worktree pp-cost-collapse)
