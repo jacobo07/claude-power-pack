@@ -209,7 +209,17 @@ def main() -> int:
     # Independent of the tier: a floor-LIGHT prompt still inherits the estate,
     # and a prompt that builds a known family still inherits that family's law.
     pl = payload if isinstance(payload, dict) else {}
-    parts = [p for p in (advisory(v), inherited_block(pl), family_block(prompt, pl)) if p]
+    # Recall (vault/specs/prompt-recall.md): the entries relevant to THIS prompt, on every
+    # prompt, deduped per session. Its own fail-open; "" when nothing earns a place. Its cost
+    # is bounded inside recall.py (WAL + 0.2 s reader timeout), because stdout is written once
+    # at exit and gsd_x_tier.js drops the stdout of a killed child: ordering here protects nothing.
+    parts = [advisory(v), inherited_block(pl), family_block(prompt, pl)]
+    try:
+        from modules.gsd_x.recall import recall_block
+        parts.append(recall_block(prompt, pl))
+    except Exception:                                   # noqa: BLE001
+        pass
+    parts = [p for p in parts if p]
     if parts:
         sys.stdout.write("\n\n".join(parts))
     return 0
