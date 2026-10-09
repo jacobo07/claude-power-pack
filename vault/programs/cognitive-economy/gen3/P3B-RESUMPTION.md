@@ -36,10 +36,48 @@ Split (mirrors P2a/P2b):
     and that the refused rows are named.
 
 Next 3 actions:
-1. Zero-model: recon-reforecast/build_p3b_dossier.py, on the pattern of build_p3a_dossier.py. Verbatim AST extracts of
+1. DONE 2026-10-09: build_p3b_dossier.py -> P3B-DOSSIER.md (85.6k chars, ~21k tokens, missing=0, exit 0). Bundle-field
+   gap found: the receipt has no `produced_utc`, `host_plane` or `runner.job_key`. It has `ended_at`, `host`
+   ("kobicraft-gex44") and `job_id`. The P3b1 packet must state the mapping, or write UNKNOWN and stop.
+   Original spec: Zero-model: recon-reforecast/build_p3b_dossier.py, on the pattern of build_p3a_dossier.py. Verbatim AST extracts of
    levels.py (verify_src_bundle, check_src, promote, src_intake), oracle_parity.aa_returned/verdict path, reproduce.py
    build_units, capsule_build/custody APIs, and the receipt schema. Output P3B-DOSSIER.md; anything not found = UNKNOWN.
-2. packets/P3b1.md + route-P3b1.json (P2a format). Goal `rf-p3b` via mission_spend goal-declare (cap 2.4M, root = recon
+2. PARTIAL 2026-10-09: packets/P3b1.md + route-P3b1.json WRITTEN (Owner "y": the bundle-field mapping is fixed in
+   policy 3; the job is 294 units = 5 sealed + 289 donors, because a registry write drifts the 5 PROVEN rows). The goal
+   is NOT declared: goal-declare rf-p3b fails with "roots overlap goal 'cp50-c1'". That goal binds the same worktree, cap
+   1.5M, settled 5,138,293. A rebind needs `goal-declare --owner` on a TTY, so the Owner decides.
+   UPDATE 15:42: the Owner ran release_cp50-c1_root.bat, so cp50-c1 now binds `_retired_cp50-c1`. rf-p3b is DECLARED:
+   cap 2,400,000, root wt_keosdtk_home, host DESKTOP-PMT5BS8, remaining 2.4M.
+   BLOCKER before arming: C1 mission m-4c2ceda008e1 is BLOCKED, not finished. Its worker session c021de1c lives in this
+   same worktree and there is no C1-receipt.md. cp50-c1 shows used 7,684,629 against its 1.5M cap, with 150k still open.
+   If C1 resumes, its calls bind to rf-p3b. The Owner decides: hold or finish C1 first.
+   UPDATE ~16:10: blocker CLEARED. The Owner said "yes" to hold; `hold` refused because C1 is already HALTED (liveness DEAD,
+   "host lists session stopped"), so nothing can bind to rf-p3b. The Owner asked to arm P3b1 on GEX44: NOT armed, because
+   GEX44 cannot run it as written. GEX44 has no recon repo (it has no remote; ~/ksr has no decomp tree) and no
+   decomp/match_accel factory data. The recon code hardcodes Windows paths (reproduce.py:33
+   F_FACTORY = r"C:\Users\...\match_accel_factory"; capsule_build.py:39 R + r"\match_accel_factory"; LOCAL_LEDGER =
+   F_FACTORY + r"\ledger.jsonl"), so on Linux every factory path resolves to nothing. The packet also forbids that
+   redesign. Owner decides: laptop (ready now) or a GEX44 portability unit first.
+   DONE (Owner "yes" = laptop): mission m-1a112049e9c8 ARMED on the laptop. It is PREPARED with no launch; the sweep launches it.
+   envelope: token_estimate 875k (breaker 1.75M = stop), model sonnet, wu_packet packets/P3b1.md.
+   Admission: the first try returned RECOMPILE (need 1,570,020 > target 1.5M). route-P3b1.json now has target 1.6M and
+   11 envelope calls, which made it ADMISSIBLE.
+   rf-p3b already carries 215,716: the steward settled the dead C1 worker into it after the rebind. Remaining: 2,184,284.
+P3b1 DONE 22:42: m-1a112049e9c8 HALTED (session done). Commits: recon 4e7d8e7, PP c051a15b (receipt). P3B_DRILL=10/10,
+   re-run by the coordinator (10/10). CAPSULE=cap1-984a35109f79 (trim census), BUILD=reproduce-20261009T193108Z with
+   294 units. Worker spend ~1.79M against a 1.75M stop. rf-p3b remaining 397,449, which does NOT cover P3b-2.
+   Check before P3b-2: the V-P3B-IMPACT line prints "control_proven=5"; confirm the control names no drift.
+   Coordinator slip: one Set-Location into the goal root to re-run the drill, reverted at once.
+P3b-2 PRE-CHECK 2026-10-09 (main pane): goals OK (rf-p3b2 -> wt_keosdtk_home, cap 2.4M, used 0; rf-p3b ->
+   _retired_rf-p3b, used 3,318,702 vs 2.4M cap, open 169,870). CONTROL DRIFT FOUND, P3b-2 STOPPED before any send:
+   SB.impact(levels.load_store()) on the REAL store = control_proven=5, each with drift=["match_py"], bundle_verifies=false.
+   match_py = sha256(match.py). match.py is clean in the tree; it last changed in recon ac1f1ae (2026-10-04, canonical
+   @sda21/@ha/@l operands), after the 5 rows were sealed. The drill's IMPACT gate only asserts src_registry is not in the
+   control's drift, so it passed. Owner decides: (a) accept, since the bundle path re-judges the 5 under the current oracle
+   (10 in the summary), or (b) revalidate the 5 against the current match.py first. Then do summary steps 1-10.
+OLD NEXT: when gen3/P3b1-receipt.md lands, read it, check the drill (V-P3B-* all PASS) and the CAPSULE= and BUILD= lines,
+   then run P3b-2 from the main pane (sequence in the 03b-01-SUMMARY).
+   Original spec: packets/P3b1.md + route-P3b1.json (P2a format). Goal `rf-p3b` via mission_spend goal-declare (cap 2.4M, root = recon
    worktree).
 3. Arm with the live gsd_mission.py (arm --no-launch, envelope, admit). The sweep launches it. Never Set-Location into a
    goal root.
