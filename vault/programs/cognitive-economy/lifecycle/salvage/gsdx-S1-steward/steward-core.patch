@@ -1,0 +1,166 @@
+diff --git a/modules/provider_routing/ledger.py b/modules/provider_routing/ledger.py
+index 3b090e4e..a5b6f8fc 100644
+--- a/modules/provider_routing/ledger.py
++++ b/modules/provider_routing/ledger.py
+@@ -198,6 +198,8 @@ class GoalLedger(SpendLedger):
+             elif op == "leak":
+                 if res.get(r["id"], {}).get("state") == RESERVED:
+                     res[r["id"]]["state"] = LEAKED
++            elif op == "correct":
++                marks[r["sid"]] = int(r["measured"])       # may LOWER; later settles watermark from here
+             elif op == "settle":
+                 marks[r["sid"]] = max(marks.get(r["sid"], 0), int(r["measured"]))
+                 for rid in r.get("closes", []):
+@@ -279,6 +281,34 @@ class GoalLedger(SpendLedger):
+             return self._summary(self._gfold(recs), ok=True, reason="",
+                                  lease={"id": rid, "amount": amount, "base": measured})
+ 
++    def settle_stopped(self, sid: str, measured: int, reason: str) -> dict:
++        """A stopped worker: settle `sid` at `measured` and close EVERY open hold of it (lease, agent,
++        final). Never reserves. A second call books nothing new."""
++        if not isinstance(measured, int) or measured < 0:
++            raise LedgerError("measured must be an int >= 0")
++        with self._lock:
++            recs = self._read()
++            g = self._sweep_leaks(recs)
++            closes = sorted(rid for rid, r in g["res"].items()
++                            if r["sid"] == sid and r["state"] in (RESERVED, LEAKED))
++            if closes or measured > g["marks"].get(sid, 0):
++                self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes,
++                                    "stopped": True, "reason": reason})
++                g = self._gfold(recs)
++            return self._summary(g, ok=True, reason="", closed=closes)
++
++    def correct(self, sid: str, measured: int, reason: str, authority: str) -> dict:
++        """Owner correction of a misattributed mark (may lower it). Journalled, never silent."""
++        if not isinstance(measured, int) or measured < 0 or not reason or not authority:
++            raise LedgerError("correct needs measured int >= 0, a reason and an authority")
++        with self._lock:
++            recs = self._read()
++            g = self._sweep_leaks(recs)
++            self._append(recs, {"op": "correct", "sid": sid, "measured": measured,
++                                "reason": reason, "authority": authority,
++                                "previous": g["marks"].get(sid, 0)})
++            return self._summary(self._gfold(recs), ok=True, reason="")
++
+     def spawn(self, sid: str, estimate: int, base: int = 0) -> dict:
+         """Admit a child (Agent / worker) only if its estimate fits what remains. `base` is the parent
+         sid's measured total at launch; the hold shrinks as settled spend passes it (see _gfold)."""
+diff --git a/tools/gsd_mission.py b/tools/gsd_mission.py
+index 5642263b..f23687ff 100644
+--- a/tools/gsd_mission.py
++++ b/tools/gsd_mission.py
+@@ -2757,7 +2757,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
+         # Nothing to supervise: do not ask the host (`claude agents --json` costs seconds,
+         # measured > 60 s once under load) on every 5-minute pass of an idle estate.
+         return unreadable + [{"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
+-                              "action": "none", "reason": f"terminal {m['state']}"} for m in missions]
++                              "action": "none", "reason": f"terminal {m['state']}"} for m in missions] \
++            + _steward_rows(missions, now, sessions, pid_alive, dry_run)
+     if sessions is None:
+         sessions = host_sessions()
+     stop_run = stop_runner or (lambda a: subprocess.run(a, capture_output=True, text=True, timeout=120))
+@@ -3207,7 +3208,21 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
+                 lr.ledger_append(mid, "supervise_error", mission_id=mid, error=row["error"])
+             except Exception:  # noqa: BLE001 -- the row still carries the error
+                 pass
+-    return unreadable + out
++    return unreadable + out + _steward_rows(missions, now, sessions, pid_alive, dry_run)
++
++
++def _steward_rows(missions, now, sessions, pid_alive, dry_run) -> list[dict]:
++    """The mission steward (tools/mission_steward.py), isolated: any failure is ONE row, never a failed sweep."""
++    if dry_run:
++        return []
++    try:
++        import mission_steward
++        if sessions is None and any(m["state"] in (HALTED, BLOCKED) and m.get("wu_packet") and m.get("goal")
++                                    and not (m.get("steward") or {}).get("done") for m in missions):
++            sessions = host_sessions()     # a stopped worker is judged against the host, not guessed
++        return mission_steward.steward_pass(missions, now, sessions=sessions, pid_alive=pid_alive)
++    except Exception as exc:  # noqa: BLE001
++        return [{"action": "steward_error", "error": f"{type(exc).__name__}: {exc}"[:300]}]
+ 
+ 
+ # --------------------------------------------------------------------------- goal authority (GGMC C4)
+diff --git a/tools/mission_spend.py b/tools/mission_spend.py
+index 17e320a7..5ba669d8 100644
+--- a/tools/mission_spend.py
++++ b/tools/mission_spend.py
+@@ -475,6 +475,40 @@ def _goal_ledger(goal: str):
+     return GoalLedger(goal_root() / goal, goal)
+ 
+ 
++def goal_settle(goal: str, sid: str, measured: int | None = None, reason: str = "goal-settle",
++                transcripts_root: Path | None = None) -> dict:
++    """Settle a STOPPED session and close all of its holds (never reserves). Blind -> refused."""
++    if not _SID_RE.match(sid or ""):
++        raise ValueError(f"invalid session id: {sid!r}")
++    if measured is None:
++        tp = find_transcript(sid, transcripts_root)
++        if tp is None:
++            return {"ok": False, "goal": goal, "reason": "no transcript for the session and no --measured: "
++                    "refusing to settle blind"}
++        measured = int(session_tokens(tp)["tokens"])
++    return _goal_ledger(goal).settle_stopped(sid, int(measured), reason)
++
++
++def _real_console_stdin() -> bool:
++    """A person at a terminal. On Windows the NUL device reports isatty() True, so ask the console."""
++    import sys
++    if not sys.stdin or not sys.stdin.isatty():
++        return False
++    if os.name == "nt":
++        try:
++            import ctypes
++            mode = ctypes.c_uint32()
++            h = ctypes.windll.kernel32.GetStdHandle(-10)
++            return bool(ctypes.windll.kernel32.GetConsoleMode(h, ctypes.byref(mode)))
++        except Exception:  # noqa: BLE001
++            return False
++    return True
++
++
++def goal_correct(goal: str, sid: str, measured: int, reason: str, authority: str) -> dict:
++    return _goal_ledger(goal).correct(sid, int(measured), reason, authority)
++
++
+ def read_index() -> dict:
+     try:
+         ix = json.loads((goal_root() / "index.json").read_text(encoding="utf-8-sig"))
+@@ -797,6 +831,16 @@ def _main(argv: list[str]) -> int:
+         g.add_argument("--measured", type=int, required=(name == "goal-renew"), default=0)
+         if name == "goal-spawn":
+             g.add_argument("--estimate", type=int)
++    gt = sub.add_parser("goal-settle")
++    gt.add_argument("--goal", required=True)
++    gt.add_argument("--session", required=True)
++    gt.add_argument("--measured", type=int)
++    gc = sub.add_parser("goal-correct")
++    gc.add_argument("--goal", required=True)
++    gc.add_argument("--session", required=True)
++    gc.add_argument("--measured", type=int, required=True)
++    gc.add_argument("--reason", required=True)
++    gc.add_argument("--owner", action="store_true")
+     gs = sub.add_parser("goal-status")
+     gs.add_argument("--goal", required=True)
+     au = sub.add_parser("autopsy")
+@@ -829,6 +873,18 @@ def _main(argv: list[str]) -> int:
+                     return 3
+                 owner = input(f"Owner change to goal {a.goal!r}: type the goal id to confirm: ").strip() == a.goal
+             out = goal_declare(a.goal, a.cap, a.source, a.root, a.host, a.lease_calls, owner=owner)
++        elif a.cmd == "goal-settle":
++            out = goal_settle(a.goal, a.session, a.measured)
++        elif a.cmd == "goal-correct":
++            if not a.owner or not _real_console_stdin():
++                print(json.dumps({"ok": False, "goal": a.goal,
++                                  "reason": "goal-correct needs --owner on an interactive terminal "
++                                  "(stdin is not a TTY)"}))
++                return 3
++            if input(f"Owner correction of goal {a.goal!r}: type the goal id to confirm: ").strip() != a.goal:
++                print(json.dumps({"ok": False, "goal": a.goal, "reason": "not confirmed"}))
++                return 3
++            out = goal_correct(a.goal, a.session, a.measured, a.reason, "owner-tty")
+         elif a.cmd == "goal-renew":
+             out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
+         elif a.cmd == "goal-spawn":
