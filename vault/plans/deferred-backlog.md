@@ -307,8 +307,12 @@ with the Resort census.
 - 51 Tennis functions (122 in the game) load the manager global directly, which is a floor. One-indirection field
   reads: Tennis 0. Inline reads through `this` are UNRESOLVED.
 
-Next zero-model probe (step 3): find the controller object's allocator (the loop at 800B7D88 in fn_800B7BFC), then
-track `this` through argument registers into the Tennis units.
+**Step 3 DONE 2026-10-09** (zero-model probe, `vault/plans/d11-tennis-step3.md`):
+- Each controller is a 0xFC0-byte object at mgr+0x1C[ch]. The two getters are fn_800B7AD4 and fn_801DDEC8.
+- Tennis has 50 getter callers. 20 of them read controller fields, mostly the raw buffer and low offsets. The derived
+  state is read in 1. All of these are floors.
+- Controls: positive met; negative 0/50.
+Optional step 4: one level of argument propagation, then subtract the Resort-shape overlap.
 
 **Activation criterion:** recon-factory CP50 has reported its cost per function and the learning-curve result (the
 per-game cost model needs both). Step 0 may run earlier, because it is zero-model.
