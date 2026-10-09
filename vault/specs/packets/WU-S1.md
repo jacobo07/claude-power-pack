@@ -23,8 +23,10 @@ never Set-Location / cd (git -C and absolute paths only).
 - `tools/gsd_mission.py`: states PREPARED LAUNCHING RUNNING HANDOFF BLOCKED + `TERMINAL` {COMPLETED HALTED ORPHANED}; `LIVE == "ALIVE"`; `_scan()`, `load()`,
   `transition(mid, expect_epoch=, expect_state=, event=, now=, **changes)` (CAS; fields without `state` keep the state;
   raises `CasConflict`), `liveness(owner, sessions, pid_alive)[0] == LIVE`, `packet_receipt_path(rec)` (packet `receipt:`
-  line resolved inside `work_tree:`), `supervise()` ends `return unreadable + out` (~line 3210). Records carry `goal`,
-  `wu_packet`, `owner` {session_id}, `owner_hold`, `admission`, `updated_at`.
+  line resolved inside `work_tree:`), `supervise()` ends `return unreadable + out` (~line 3210). Records carry `cwd`,
+  `goal` (GGMC dict {repo, workstream, unit} -- NOT the spend-goal id), `wu_packet` {path, sha256}, `owner` {session_id},
+  `owner_hold`, `admission`, `updated_at`. Map a mission to its SPEND goal by `cwd` against `read_index()` roots
+  (lower-cased paths); no binding -> the steward settles nothing for it (row says why).
 - The LIVE sweep runs the live tree's gsd_mission.py, which lacks `packet_receipt_path`: nothing here goes live until the
   branch lands. Do not touch the live tree.
 - Windows: PowerShell tool; git `C:\Program Files\Git\cmd\git.exe`; python = done_gate path; `$env:PYTHONIOENCODING='utf-8'`;
