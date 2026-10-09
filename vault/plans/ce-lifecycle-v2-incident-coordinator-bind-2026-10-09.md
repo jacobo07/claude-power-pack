@@ -42,3 +42,25 @@ sids. B4: WU-ADV2. B5: packet immunization. B6: the chain.
    - If not: continue at the stub test split.
 3. Trap for every packet and coordinator: never Set-Location / cd into a goal root. Use `python <abs path>` with `-C`-style
    absolute paths, or `Start-Process -WorkingDirectory` for a child.
+
+## Repair (Owner "yes" 2026-10-09, after 13:05 local)
+- The settle was confirmed: journal seq 91-94 all carry sid 97a3d9cf, and that sid appears nowhere earlier.
+  - seq 91: settle 32,579,283
+  - seq 92: final reserve 222,546
+  - seq 93: settle 32,801,829 (closes :1)
+  - seq 94: final reserve 222,546 (:2)
+- Backup: `~/.claude/state/goal-budget/ce-lifecycle-v2/spend.journal.jsonl.bak-pre-incident-repair-20261009`
+  (23,405 bytes, 94 records).
+- The four trailing rows were removed (1,012 bytes, sha256 32910ffff94d67cbe6c910533af1a868fd88f99409d616d34d28b12bb87afefd).
+  - Byte-compare before replace; atomic os.replace.
+- Re-fold, read-only (scratchpad fold_goal.py, mirrors GoalLedger._gfold): 90 records, cap 8,847,012, used 6,605,944,
+  settled 4,469,374, open 2,136,570 (the 8 terminal leases, LEAKED), remaining 2,241,068. This is the pre-poison state.
+- Superseded: the program moved to lineage ce-lifecycle-v3 (plan acaf6ad3, Owner option A). The v3 cap of 4,295,976
+  already counts v2's certain remainder.
+- v2 is therefore no longer bricked, but it is RETIRED.
+- Double-spend check:
+  - halt_continue fires only at a supervise stop transition, never on the six already-HALTED v2 records.
+  - v2's halt authority is 2,241,068 - 2,136,570 = 104,498, below every packet estimate.
+  - Closing v2 for good (lowering its cap to used) is an Owner decision; it was not done.
+- Live L1 (3f9b57cc, prospective binding) means a coordinator cwd bind now measures from the bind point, so this shape
+  cannot recur at this size.
