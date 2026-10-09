@@ -28,6 +28,9 @@ Plan by plan, one lease and one receipt each. FULL_WSR is never a budget. CP50 i
   (OUT 20 MB ceiling vs 88 MB of .diff.json) with no receipt. Unadmitted judge, md5-verified: 40/40 agree, mutant
   caught, 40/40 objects byte-identical; objdiff C3 unmeasured. P2b total main pane 16,832,965 over 65 calls.
   See P2b-receipt.md.
+- 2026-10-09 Owner "go ahead": runner trims diff.json (recon cd412ed, judge rev 7377ff0f). Owner "autorizo un tercer
+  cupo": RF cap 2 -> 3 (2b12075). Job 3 ksrmb-20261009-090602: runner PASS, ingested, **AA_GATE PASS (admissible)**,
+  C1-C5 all PASS. P2b final main-pane spend: 27,600,379 over 98 calls. Phase 2 GEX44 leg: DONE.
 - MAIN-PANE spend, counted separately from the worker table above (session ce1c3a41, deduplicated by message.id):
   10,812,318 over 64 calls before "fund it" (P2a close, meter, D11 step 1), and 12,177,177 over 49 calls for P2b,
   which is 12x its self-set 1.0M ceiling. A main-pane call costs ~250k here; a ceiling must be projected from that

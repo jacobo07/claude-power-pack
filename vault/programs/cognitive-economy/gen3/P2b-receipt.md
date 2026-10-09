@@ -2,8 +2,8 @@
 
 Authority: Owner "fund it" 2026-10-09 (one A/A job, from the main pane, no worker). No ceiling was named. The main pane
 set its own ceiling of 1.0M without projecting it from the measured per-call floor; see Spend.
-Status: BLOCKED. The first job FAILED in custody before any compile. The fix is committed and drilled. The resend would
-use the root's LAST cap slot, so it waits for the Owner.
+Status: DONE. AA_GATE PASS on job 3 (ksrmb-20261009-090602), admissible. Job 1 failed custody (entity format) and
+job 2 failed OUT (diff.json size); both were fixed before job 3.
 
 ## Job 1 -- ksrmb-20261009-072932 (build reproduce-20261008T211412Z)
 - Pre-checks, read immediately before the send:
@@ -75,8 +75,28 @@ P2b total: 65 calls, 16,832,965 processed, 40,966 out. Job 2 alone: 10 calls, 2,
 - Send candidate: the drill build reproduce-20261009T083118Z stages runner 7377ff0f, but from the work tree before
   the commit. Before any send, rebuild with --runner-source head at cd412ed or later.
 
-## Open (Owner)
-1. The RF root's phase-2 cap is exhausted (2/2). An admissible A/A run needs a 3rd slot, i.e. an Owner cap decision.
-2. The OUT fix is done (above). The next send is a rebuild from head, then the pre-checks, send, wait, repatriate and
-   judge: ~6 to 10 main-pane calls, best run from a fresh pane.
+## Job 3 -- ksrmb-20261009-090602: AA_GATE PASS (admissible). Owner "autorizo un tercer cupo"
+- Cap: RF phase-2 2 -> 3 in stage.py (recon 2b12075); V-P2A-CAP now reads the cap. P2A_DRILL=9/9.
+- Build reproduce-20261009T090510Z, source_commit 2b12075, judge runner_lib 7377ff0f. --runner-source head is broken
+  in this tree (it reads the fork path tools/wros/binary/match_accel/gex44/), so the build used worktree. The staged
+  runner_lib.py and match_runner.sh git blobs equal HEAD's (c46269d4, 8a515d34).
+- Pre-checks: PINS=OK, slot_ledger PASS (violations=0, lease=none), GEX44 idle, boots 0/6. SEND=RUNNING. Then
+  COLLECTED, then REPATRIATE=OK with ingest INGESTED, tree 4f134ab4.... Runner verdict PASS, reason OK.
+- AA_GATE PASS: 41 units, 0 dropped. C1 40/40 agree. C2 mutant DIFF 1/2 (objdiff 99.5). C3 objdiff measured on
+  every unit, 0 wrong. C4 40/40 byte-identical. C5 judge 7377ff0f. Report: phases/02-oracle-parity-s1/02-AA-RESULT.json.
+- Disclosed, judge-side only, fixed AFTER the first read of this return; no criterion changed. The first read said
+  FAIL on two reader bugs in aa_returned:
+  (a) it judged the runner's secondary main_800ECE30.s110.mut.crlf.o as a 42nd unit, producing the only DISAGREE and
+      the only unmeasured pct;
+  (b) it did not look for the judge revision at receipt.measured.runner, so C5 read null.
+  Fixed in oracle_parity: .crlf.o is listed as secondary_crlf, and measured.runner was added to the revision lookup.
+  V-P2A-RETURNED is unchanged (51 AGREE).
+
+## Spend (main pane, P2b final)
+98 calls, 27,600,379 processed, 69,704 out. Breakdown: jobs 1-2 16.83M / 65 calls (above); OUT fix 6.47M / 20;
+job 3 3.07M / 9.
+
+## Open
+- test_contract and test_candidate are red, unbaselined (see above). --runner-source head reads a fork path.
+- Never send 211354Z, 211412Z or 215900Z. The job-2 tree stays un-ingested in returns/.incoming.
 3. Never send 211354Z, 211412Z or 215900Z: they are custody-invalid.
