@@ -38,8 +38,13 @@ C1 RUN 1 REFUSED 2026-10-09 15:16-15:17 (worker sid c021de1c, 2 calls, 215,716 p
 HALTED): goal cp50-c1 ledger used 7,684,629 > cap 1.5M. Cause = retroactive attribution: the lifecycle steward settled
 4 already-finished recon-factory sessions into cp50-c1 (seq 2-4 m-6d6bb4cef637 1,412,234 | m-789229da3a6f 2,353,284 |
 m-be59d97fa311 1,372,775, at declare+2 min; seq 5 P2a m-f501c31d6523 2,396,336, when the C1 arm superseded it). Goal
-root now rebound to _retired_cp50-c1. Owner decision pending: new goal id (and whether to fix the steward first).
-NEXT (after the Owner decides): when the receipt gen3/C1-receipt.md lands, read it, meter the worker transcript (dedupe by message.id) against
+root now rebound to _retired_cp50-c1. Owner chose "fix the steward + cp50-c1b": steward fix PP 38caeaaf (only
+post-`since` spend is settled; STEWARD_PASS=22/22, isolated mutation drill KILLED). wt_keosdtk_home is held by goal
+rf-p3b, so C1 runs in its own worktree C:\Users\User\Apps\recon_work\wt_cp50_c1 (branch cp50-c1 at 4e7d8e7). Re-arm
+is owned by peer pane claude-power-pack-c4 (packet PP b2d1eab3; goal cp50-c1b bound to wt_cp50_c1 only; inputs read
+absolute from wt_keosdtk_home), waiting for the Owner to trust the workspace. This pane arms nothing there.
+NEXT: when the receipt gen3/C1-receipt.md lands: merge branch cp50-c1 into keosdtk-home (coordinator step, this
+track; bench.py + test_bench.py only, pathspec, never the dirty .ksr_vault paths), then read the receipt, meter the worker transcript (dedupe by message.id) against
 the 1.0M stop, then size C2 from the measured per-call figure; C2's first deliverable = the arm-A executor.
 
 Next 3 actions (historical):
