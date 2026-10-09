@@ -64,6 +64,23 @@ author: coordinator 3339c6c2 (unbound, cwd claude-power-pack)
     mission_wall, which every CPP mission already uses. UKDL and CBR promotion happen only after the canaries pass live.
 16. Original mission: S6 resumes WU-ADV2 under the new machinery, then 1C, 1D, INST, TRIP, FLOOR, GEX, CLOSE.
 
+## ERRATUM 2026-10-09 13:15 (measured by WU-S3, estimator-fit.md) -- answers 2-5 corrected
+The earlier claim "the call count was right for 1H4 (7/7)" is FALSE. That number counted packet steps, not physical calls.
+- Transcripts show 17 physical calls for WU-1H4, 19 for 1H and 1H2, and 22 for 1H3. Every tool use is a call.
+- First-call floor ~18.5K (route-floors said 13.5K). Per-call growth is only ~0.8-2.5K (pooled 1,725).
+- The dominant error is the CALL-COUNT model: a packet's "N model calls" cap is unenforced and runs about 2.4x.
+  Context growth is secondary.
+- 1H4 check: 17 x 18.5K + 815 x 136 = ~425K vs 442K observed.
+- Consequences:
+  - S3's growth term alone does not fix admission.
+  - Admission must price PHYSICAL calls: about 2.4 x the declared steps, until a per-class ratio is learned.
+  - The calls cap must become a live wall (S4), or the declared number stays fiction.
+- Live evidence of S1:
+  - WU-S3 (m-4ace4480521c) tripped at 975K. halt_continue wrote a populated capsule (real HEAD, so the git
+    resolver works) and renewed the mission as m-a1a658f26a16, re-admitted. That is the first automatic
+    continuation with zero relay.
+  - Defect: the capsule "DONE" lists the whole branch history, not the mission's own commits.
+
 ## Units (one live writer; coordinator does S0 only, then rotates out)
 S0 Freeze and recover, zero model, this pane:
    - re-run test_halt_continues on the dirty tree;
