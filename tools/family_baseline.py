@@ -5,6 +5,11 @@
     python tools/family_baseline.py review <family>
     python tools/family_baseline.py verify <family>
     python tools/family_baseline.py revert <family> <id> --reason R --authority A
+    python tools/family_baseline.py judge <family> [--repo PATH] [--na ID=REASON ...] [--json]
+
+judge runs the S6 done-gate (modules/tower/donegate) over a subject repo: every active entry
+of the newest generation gets APPLIED_VERIFIED / VIOLATED / DELEGATED / NOT_APPLICABLE /
+UNJUDGED. Report-only (spec §7): exit 1 means enforcement WOULD have blocked, nothing more.
 
 review lists the entries still `auto` and then verifies the chain. verify
 reports every unrecorded weakening between consecutive generations and every
@@ -135,6 +140,33 @@ def revert_cmd(family: str, entry_id: str, reason: str, authority: str) -> int:
     return 0
 
 
+def judge_cmd(family: str, repo: str, na_args: list, as_json: bool) -> int:
+    """Run the S6 done-gate (modules/tower/donegate) over a subject repo. REPORT-ONLY: the
+    exit code says whether enforcement WOULD have blocked; nothing is refused (spec §7)."""
+    from modules.tower import donegate as dg
+    na = {}
+    for a in na_args:
+        ident, _, reason = a.partition("=")
+        na[ident.strip()] = reason
+    rep = dg.judge(family, os.path.abspath(repo or "."), not_applicable=na)
+    if as_json:
+        print(json.dumps(rep, indent=2, ensure_ascii=False))
+    elif rep["status"] == dg.NO_BASELINE:
+        print("%s: no baseline generation -- nothing to judge" % family)
+    else:
+        print("%s judged under %s (sha256 %s, chain %s) against %s"
+              % (family, rep["judged_under"], (rep["generation_sha256"] or "")[:12],
+                 "OK" if rep["chain_ok"] else "REGRESSED", os.path.abspath(repo or ".")))
+        for x in rep["entries"]:
+            print("  %-16s %-40s %s" % (x["verdict"], x["entry_id"], x["detail"] or ""))
+        counts = {}
+        for x in rep["entries"]:
+            counts[x["verdict"]] = counts.get(x["verdict"], 0) + 1
+        print("verdicts: %s  would_block=%s  (report-only: nothing was refused)"
+              % (", ".join("%s=%d" % kv for kv in sorted(counts.items())), rep["would_block"]))
+    return 1 if rep["would_block"] else 0
+
+
 def _opt(argv: list, name: str) -> str:
     return argv[argv.index(name) + 1] if name in argv and argv.index(name) + 1 < len(argv) \
         else ""
@@ -151,6 +183,9 @@ def main(argv: list) -> int:
         return verify(argv[1])
     if len(argv) >= 3 and argv[0] == "revert":
         return revert_cmd(argv[1], argv[2], _opt(argv, "--reason"), _opt(argv, "--authority"))
+    if len(argv) >= 2 and argv[0] == "judge":
+        na = [argv[i + 1] for i, a in enumerate(argv[:-1]) if a == "--na"]
+        return judge_cmd(argv[1], _opt(argv, "--repo"), na, "--json" in argv)
     print(__doc__)
     return 2
 

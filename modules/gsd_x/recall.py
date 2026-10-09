@@ -42,6 +42,14 @@ MAX_TERMS = 12
 COMMON_DF = 0.15           # a term in more than 15% of chunks carries no signal
 MIN_MATCHED = 3            # distinct query terms a hit must contain
 SHOWN_KEEP_S = 7 * 86400
+# The 2,000-answer SEO/GEO corpus every project must consult (rule seo-geo-corpus-methodology).
+SEO_CORPUS = HOME / "Desktop" / "Cursor Projects" / "GEO-audit" / "docs" / "corpus"
+# Kinds that are not institutional truth: labelled in the block, at most one hit per prompt.
+UNVALIDATED = {"candidate": "UNVALIDATED external answer, KACQ candidate (HR-ACQ-NO-AUTOPROMOTION-001)",
+               "seo-geo": "SEO/GEO corpus: METHOD not DATA, grade E1-E2, cite the SG-ID"}
+MAX_UNVALIDATED = 1
+# Bump whenever chunk_file's output for an existing kind changes: refresh() then re-cuts all.
+CHUNKER = "2"
 
 STOP = set("""
 a about above after again all also am an and any are as at be because been before being
@@ -91,6 +99,20 @@ def default_sources() -> list:
                     (kb / "clae" / "CLAE_TRAPS.md", "clae")):
         if f.is_file():
             out.append((f, kind, "global"))
+    # Plans carry sealed ids that never reached UKDL (F6: 23 plans), so they are a source too.
+    plans = PP_ROOT / "vault" / "plans"
+    if plans.is_dir():
+        out.extend((f, "plan", "global") for f in plans.glob("*.md"))
+    # UNVALIDATED kinds (see UNVALIDATED): captured external answers stop at a validation
+    # queue (HR-ACQ-NO-AUTOPROMOTION-001); showing one labelled as a candidate is not
+    # promoting it.
+    raw = PP_ROOT / "vault" / "knowledge_acquisition" / "raw" / "response"
+    if raw.is_dir():
+        out.extend((f, "candidate", "kacq") for f in raw.glob("*/*.md"))
+    seo = Path(os.environ.get("CPP_RECALL_SEO_CORPUS") or SEO_CORPUS)
+    if seo.is_dir():
+        out.extend((f, "seo-geo", "global") for f in (seo / "mapping").glob("corpus_map_*.md"))
+        out.extend((f, "seo-geo", "global") for f in (seo / "answers").glob("*-full.jsonl"))
     return out
 
 
@@ -155,7 +177,42 @@ def chunk_rules(text: str) -> list:
     return chunks
 
 
+def chunk_candidate(path: Path) -> list:
+    """A KACQ response, titled by the question it answers (the response alone has none). The
+    question lives in raw/prompt/<id[:2]>/<id>.md, named by the response's .meta.json."""
+    body = _read(path).strip()
+    question = ""
+    try:
+        meta = json.loads(_read(path.with_suffix("").with_suffix(".meta.json")))
+        pid = str(meta.get("prompt_id") or "")
+        q = path.parents[2] / "prompt" / pid[:2] / ("%s.md" % pid)
+        question = " ".join(_read(q).split()) if pid and q.is_file() else ""
+    except (OSError, ValueError):
+        pass
+    if not body:
+        return []
+    return [((question or path.stem)[:160], (question + "\n" + body).strip()[:6000])]
+
+
+def chunk_jsonl(path: Path) -> list:
+    """One record per line ({id, question, answer}), as the SEO/GEO corpus stores it."""
+    out = []
+    for line in _read(path).splitlines():
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue
+        q, a = str(rec.get("question") or ""), str(rec.get("answer") or "")
+        if q or a:
+            out.append(("%s %s" % (rec.get("id", ""), q[:140]), (q + "\n" + a).strip()[:6000]))
+    return out
+
+
 def chunk_file(path: Path, kind: str) -> list:
+    if kind == "candidate":
+        return chunk_candidate(path)
+    if path.suffix == ".jsonl":
+        return chunk_jsonl(path)
     text = _read(path)
     return chunk_memory(text, path.stem) if kind == "memory" else chunk_rules(text)
 
@@ -195,12 +252,19 @@ def _drop(con, path: str) -> None:
 
 
 def refresh(sources=None, db=None) -> dict:
-    """Re-chunk changed files, drop removed ones. Returns counts."""
+    """Re-chunk changed files, drop removed ones. Returns counts.
+
+    A file is unchanged only if its (mtime, size, kind) AND the chunker that cut it are the
+    same: a file indexed by an older chunker is never touched again otherwise (measured: the
+    KACQ answers and the SEO jsonl stayed rule-split after their own chunkers landed)."""
     sources = default_sources() if sources is None else sources
     con = connect(db or db_path())
     seen, changed, removed = set(), 0, 0
     try:
-        known = {r[0]: (r[1], r[2]) for r in con.execute("SELECT path, mtime_ns, size FROM files")}
+        known = {r[0]: (r[1], r[2], r[3])
+                 for r in con.execute("SELECT path, mtime_ns, size, kind FROM files")}
+        row = con.execute("SELECT v FROM meta WHERE k='chunker'").fetchone()
+        stale_chunker = not row or row[0] != CHUNKER
         con.execute("BEGIN")
         for path, kind, scope in sources:
             p = str(path)
@@ -209,7 +273,7 @@ def refresh(sources=None, db=None) -> dict:
             except OSError:
                 continue
             seen.add(p)
-            if known.get(p) == (st.st_mtime_ns, st.st_size):
+            if not stale_chunker and known.get(p) == (st.st_mtime_ns, st.st_size, kind):
                 continue
             _drop(con, p)
             try:
@@ -228,6 +292,7 @@ def refresh(sources=None, db=None) -> dict:
             _drop(con, p)
             removed += 1
         con.execute("INSERT OR REPLACE INTO meta VALUES ('last_refresh', ?)", (str(time.time()),))
+        con.execute("INSERT OR REPLACE INTO meta VALUES ('chunker', ?)", (CHUNKER,))
         con.execute("COMMIT")
         n = con.execute("SELECT count(*) FROM chunks").fetchone()[0]
     finally:
@@ -270,11 +335,17 @@ def query(prompt: str, cwd: str = "", db=None, exclude=(), k: int = TOP_K) -> li
         # hit needs three, or every term of a two-term prompt.
         need = min(len(terms), max(MIN_MATCHED, math.ceil(0.3 * len(terms))))
         match = " OR ".join('"%s"' % t for t in terms)
-        rows = con.execute(
-            "SELECT c.id, c.path, c.title, c.body, f.kind, f.scope, bm25(recall_fts, 4.0, 1.0) "
-            "FROM recall_fts JOIN chunks c ON c.id = recall_fts.rowid "
-            "JOIN files f ON f.path = c.path WHERE recall_fts MATCH ? "
-            "ORDER BY bm25(recall_fts, 4.0, 1.0) LIMIT 80", (match,)).fetchall()
+        # Two row windows: one jsonl file holds 2,000 seo-geo chunks, so a single window could
+        # fill with rows that collapse to one capped hit and push every validated rule out of
+        # reach before Python ever scores it (review 2026-10-09, MEDIUM).
+        unval = sorted(UNVALIDATED)
+        marks = ",".join("?" * len(unval))
+        sql = ("SELECT c.id, c.path, c.title, c.body, f.kind, f.scope, bm25(recall_fts, 4.0, 1.0) "
+               "FROM recall_fts JOIN chunks c ON c.id = recall_fts.rowid "
+               "JOIN files f ON f.path = c.path WHERE recall_fts MATCH ? AND f.kind %s IN (%s) "
+               "ORDER BY bm25(recall_fts, 4.0, 1.0) LIMIT %d")
+        rows = con.execute(sql % ("NOT", marks, 80), (match, *unval)).fetchall()
+        rows += con.execute(sql % ("", marks, 20), (match, *unval)).fetchall()
     finally:
         con.close()
     here = project_scope(cwd)
@@ -290,10 +361,14 @@ def query(prompt: str, cwd: str = "", db=None, exclude=(), k: int = TOP_K) -> li
         scored.append((-rank * boost * (len(matched) / len(terms)) ** 0.5,
                        cid, p, title, body, kind, matched))
     scored.sort(key=lambda s: s[0], reverse=True)
-    hits, files = [], set()
+    hits, files, unvalidated = [], set(), 0
     for _, cid, p, title, body, kind, matched in scored:
         if p in files:
             continue
+        if kind in UNVALIDATED:
+            if unvalidated >= MAX_UNVALIDATED:          # never crowd out validated knowledge
+                continue
+            unvalidated += 1
         files.add(p)
         hits.append({"id": cid, "path": p, "kind": kind, "title": title,
                      "snippet": " ".join(body.split())[:SNIPPET], "matched": matched})
@@ -383,11 +458,13 @@ def recall_block(prompt: str, payload: dict) -> str:
         if sf:
             with sf.open("a") as fh:
                 fh.write(" ".join(str(h["id"]) for h in hits) + "\n")
-        lines = ["Recall -- entries from memories, UKDL, HARD-RULES and CLAE that share rare "
-                 "terms with this prompt (BM25, not judged for truth). Open the path for the "
-                 "full entry and verify it before relying on it:"]
+        lines = ["Recall -- entries from memories, UKDL, HARD-RULES, CLAE, plans and labelled "
+                 "corpora that share rare terms with this prompt (BM25, not judged for truth). "
+                 "Open the path for the full entry and verify it before relying on it:"]
         for h in hits:
-            lines.append("- [%s] %s -- %s (%s)" % (h["kind"], h["title"], h["snippet"],
+            tag = h["kind"] if h["kind"] not in UNVALIDATED else \
+                "%s | %s" % (h["kind"], UNVALIDATED[h["kind"]])
+            lines.append("- [%s] %s -- %s (%s)" % (tag, h["title"], h["snippet"],
                                                    _short(h["path"])))
         return "\n".join(lines)
     except Exception:                                   # noqa: BLE001

@@ -2872,6 +2872,55 @@ cache ratio. ORIGEN: same 2026-06-23 audit.
 
 ---
 
+<!-- Promoted 2026-10-09 from stranded citations: each id below was cited as "UKDL <id>" or as
+an enforced rule by sealed code/docs, but never written here (F6 re-check; F6 itself checked only
+UKDL + global HARD-RULES and missed vault/hard_rules/HARD_RULES.md). Text is the cited source's. -->
+
+### T-SPAWN-WINDOW-001 -- every spawn on a Windows host must carry a hide flag
+
+**TRIGGER:** a hook, a `settings.json` hook command, or a Scheduled Task starts a console process.
+**TRAP:** without `windowsHide: true` (Node), `-WindowStyle Hidden` (PowerShell) or `pythonw.exe`
+(Python tasks), each firing flashes a console window in the Owner's interactive session. The
+sources are three, not one: PP hooks, the live `~/.claude/settings.json` commands (the SessionEnd
+orphan-reaper), and `InteractiveToken` Scheduled Tasks (7 of 8 PP tasks were flashing: 5
+`python.exe` + 2 unhidden PowerShell -- the "cmd.exe colgado" interruptions).
+**GATE:** `python tools/audit_spawn_windows.py [--settings] [--schtasks]`.
+ORIGEN: wrapper W7/W10 2026-06-23 (SCS C48); schtasks extension 2026-06-30
+(`vault/lessons/schtasks-interactive-token-window-flash.md`).
+
+### T-WRAPPER-TRANSCRIPT-ANCHOR-001 -- the only resume anchor is a transcript .jsonl on disk
+
+**TRIGGER:** deciding which session a wrapper / auto-resumer reopens with `--resume <sid>`.
+**TRAP:** a session_id without its `<sid>.jsonl` is NOT resumable, and registry or snapshot COUNTS
+are never an anchor: the snapshot accrues phantom null-sid "live" entries. Resuming from them opens
+"History restored" into a new, empty session. Disk is truth.
+ORIGEN: wrapper W2 2026-06-23 (SCS C48); enforced in `modules/wrapper/auto_resumer.py`.
+
+### T-TAB-ORDER-EXTENSION-ONLY-001 -- Cursor's visual tab order is readable only from an extension
+
+**TRAP:** the left-to-right order of Cursor tabs exists only inside an extension, via
+`vscode.window.tabGroups`. `build_pane_map.ps1` cannot read it; the PP Sessions extension must
+write `~/.claude/state/tab_order.json` first. Extension inactive, or panel (not editor-area)
+terminals -> the order falls back to `lastActivity`, fail-open.
+ORIGEN: SCS C78 addendum v2, 2026-07-06 (`vault/knowledge_base/scs/scs_tab_order_capture_c78_addendum_v2.md`).
+
+### HR-APA-016 -- renaming a capability is not specializing it
+
+A derivative whose entire delta is naming (`id`, `name`, `owner`, `sovereign_question`, `parent`,
+`version`) is REJECTED. Noun substitution is a view, not a capability delta.
+ENFORCED: `modules/capability_runtime/derivatives.py` (`derive()` raises `ContractError`).
+ORIGEN: APIR corpus audit 2026-08-03 (the rule had no enforcement surface until then).
+
+### HR-APA-017 -- a derivative may not weaken an inherited boundary unilaterally
+
+`non_scope`, `rollback` and `kill_switch` are inherited boundaries; weakening any of them needs an
+explicit, named, approved override (`approved_override`). Comparison is BY VALUE: copy the parent's
+strings, never improve their wording -- a paraphrase reads as a dropped boundary and `derive()`
+refuses it (UACF adjudication).
+ENFORCED: `modules/capability_runtime/derivatives.py`. ORIGEN: APIR corpus audit 2026-08-03.
+
+---
+
 ### T-WRAPPER-W5-SOURCE-001 -- cost gate reads transcripts, never budget_monitor/TIS
 
 **TRIGGER:** building/extending the kclaude W5 cost gate (or any "how much have

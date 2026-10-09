@@ -38,6 +38,21 @@ Tower hand-over: one effect, one owner). Recall is a fourth block of that owner,
   at most one refresh. An attempt stamp limits launches to one per 10 min even when every
   refresh fails. The prompt it fires on uses the index as it is.
 
+## Amendment 2026-10-09b -- plans and unvalidated corpora
+- **More sources:** `vault/plans/*.md` (kind `plan`; F6 found 23 plans citing ids absent from
+  the stores), KACQ captured answers `vault/knowledge_acquisition/raw/response/*/*.md` (kind
+  `candidate`, titled by their question from `raw/prompt/`), and the SEO/GEO corpus maps + full
+  answers jsonl (kind `seo-geo`, one chunk per SG record; root overridable by
+  `CPP_RECALL_SEO_CORPUS`).
+- **Unvalidated kinds** (`candidate`, `seo-geo`) carry their label in the block
+  (HR-ACQ-NO-AUTOPROMOTION-001 / METHOD-not-DATA) and at most ONE such hit is shown per prompt,
+  so they never displace validated rules. Showing a labelled candidate is not promoting it.
+- **Chunker version:** `CHUNKER` is stored in `meta`; when it differs, or a file's kind changed,
+  refresh re-cuts every file. Measured defect it closes: files first indexed by an older chunker
+  were skipped forever by the (mtime, size) key.
+- Acceptance adds V-RECALL-CANDIDATE-TITLED, -JSONL-CHUNKS, -UNVALIDATED-CAPPED (+ validated
+  control), -UNVALIDATED-LABELLED, -CHUNKER-VERSION (+ same-chunker control).
+
 ## Unindexed memories
 `tools/memory_catalog.py` writes `MEMORY_CATALOG.md` in each memory dir (every memory file with
 no pointer in `MEMORY.md`, one line each from its frontmatter) and adds ONE idempotent pointer

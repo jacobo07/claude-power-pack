@@ -367,10 +367,6 @@
       "class": "PLANNED",
       "note": "FD-04 validation companion to fd_04_prover (LIVE); not itself imported by any live surface"
     },
-    "fable_distillation/ukdl_queue": {
-      "class": "PLANNED",
-      "note": "FD flywheel queue-writer, built; not yet wired into fd_07_flywheel.py's live path"
-    },
     "frontier_intelligence/corpus_roi": {
       "class": "PLANNED",
       "note": "B1 Dataset ROI Ledger, built per vault/plans/d2a-replacement-2026-07-17.md macrofamily B; not yet wired into any live consumer"

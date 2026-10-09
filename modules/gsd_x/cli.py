@@ -141,8 +141,10 @@ def family_block(prompt: str, payload: dict, families=None, root=None) -> str:
                 pass
             lines = ["Family baseline %s (sha256 %s) -- this prompt builds a %s (matched: %s). "
                      "Implement each rule WITHOUT being asked, or state `NO APLICA: <reason>` "
-                     "for it. The done-gate judges every active entry of this generation, "
-                     "shown here or not:" % (stamp, sha[:12], fid, ", ".join(hits))]
+                     "for it. Before calling it done, run `/family-done-gate` (python "
+                     "tools/family_baseline.py judge %s --repo .): it judges every active "
+                     "entry of this generation, shown here or not:"
+                     % (stamp, sha[:12], fid, ", ".join(hits), fid)]
             lines += ["- [%s] %s" % (e.get("id"), e.get("requirement")) for e in s.injected]
             if s.deferred:
                 lines.append("Not shown (prompt ceiling), judged anyway: "

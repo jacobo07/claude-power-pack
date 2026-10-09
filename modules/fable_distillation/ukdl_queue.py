@@ -192,10 +192,29 @@ def under_review(repo: str, fingerprint: str, *, reviewed_by: str = "owner",
                        note=note, state_dir=state_dir, now=now)
 
 
+def summary(state_dir=None) -> dict:
+    """Pending count per ledger across the whole estate. The flywheel writes one ledger per
+    repo, so a per-repo listing never shows the backlog (measured 2026-10-09: 409 candidates
+    in 65 ledgers, 3 transitions ever)."""
+    rows = []
+    for f in sorted(_state_dir(state_dir).glob("ukdl_candidates_*.jsonl")):
+        enc = f.name[len("ukdl_candidates_"):-len(".jsonl")]
+        cands = [c for c in _read_jsonl(f) if c.get("fingerprint")]
+        latest = _latest_by_fp(_read_jsonl(_transitions_path(enc, state_dir)))
+        open_ = sum(1 for c in cands
+                    if latest.get(c["fingerprint"], {}).get("status") not in _TERMINAL)
+        if cands:
+            rows.append({"ledger": enc, "candidates": len(cands), "pending": open_})
+    rows.sort(key=lambda r: r["pending"], reverse=True)
+    return {"ledgers": len(rows), "candidates": sum(r["candidates"] for r in rows),
+            "pending": sum(r["pending"] for r in rows), "by_ledger": rows}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="UKDL candidate queue -- status + promotion")
     ap.add_argument("--repo", default=str(_PP_ROOT))
     ap.add_argument("--state-dir", default=None)
+    ap.add_argument("--summary", action="store_true", help="pending per ledger, whole estate")
     ap.add_argument("--list", action="store_true", help="every candidate + derived status")
     ap.add_argument("--pending", action="store_true", help="candidates awaiting a decision")
     ap.add_argument("--promote", metavar="FINGERPRINT")
@@ -216,6 +235,8 @@ def main(argv=None) -> int:
     elif args.under_review:
         r = under_review(args.repo, args.under_review, reviewed_by=args.by,
                          note=args.note, state_dir=args.state_dir)
+    elif args.summary:
+        r = summary(args.state_dir)
     elif args.pending:
         r = pending(args.repo, args.state_dir)
     elif args.list:

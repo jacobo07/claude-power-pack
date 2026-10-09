@@ -111,6 +111,18 @@ def gate_transitions_are_append_only(sd: Path) -> None:
         _fail("V-UKDL-LATEST-WINS", f"{st}")
 
 
+def gate_summary_matches_per_repo(sd: Path) -> None:
+    """--summary must agree with the per-repo derivation, including decided rows."""
+    from modules.fable_distillation.ukdl_queue import summary
+    s = summary(sd)
+    want_c, want_p = len(candidates(_REPO, sd)), len(pending(_REPO, sd))
+    if s["candidates"] == want_c and s["pending"] == want_p and want_p < want_c:
+        _ok("V-UKDL-SUMMARY", f"summary {s['pending']}/{s['candidates']} pending == per-repo; "
+            "decided rows excluded")
+    else:
+        _fail("V-UKDL-SUMMARY", f"{s} vs per-repo {want_p}/{want_c}")
+
+
 def gate_live_queue_drained() -> None:
     p = pending(_REPO)
     if not p:
@@ -251,6 +263,7 @@ def main() -> int:
         gate_promotion_needs_a_real_rule(sd)
         gate_rejection_needs_a_reason(sd)
         gate_transitions_are_append_only(sd)
+        gate_summary_matches_per_repo(sd)
     gate_live_queue_drained()
     gate_memory_size()
     gate_memory_lossless()

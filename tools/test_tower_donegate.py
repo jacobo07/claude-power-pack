@@ -174,6 +174,34 @@ def main() -> int:
                and none["status"] == dg.NO_BASELINE,
                "a family with no generation says so; it does not read as clean", none)
 
+        # The CLI the hook and /family-done-gate name. Before it existed, nothing
+        # outside this file ever called dg.judge (liveness: tower/donegate unreachable).
+        import json as _json
+        import subprocess as _sp
+        tool = os.path.join(_HERE, "family_baseline.py")
+        first = real["entries"][0]["entry_id"]
+        cli = _sp.run([sys.executable, tool, "judge", "kobiicraft_mode", "--repo", broken,
+                       "--na", "%s=fixture repo has no plugin" % first, "--json"],
+                      capture_output=True, text=True, encoding="utf-8", timeout=60)
+        try:
+            crep = _json.loads(cli.stdout)
+        except ValueError:
+            crep = {}
+        cv = _verdicts(crep) if crep else {}
+        _check("V-TDG-CLI-JUDGES",
+               crep.get("judged_under") == "kobiicraft_mode/B0"
+               and len(crep.get("entries", [])) == len(real["entries"])
+               and cv.get(first) == dg.NOT_APPLICABLE
+               and cli.returncode == (1 if crep.get("would_block") else 0),
+               "judge CLI: %d entries, --na honoured, exit %d == would_block"
+               % (len(crep.get("entries", [])), cli.returncode),
+               (cli.returncode, cli.stdout[-300:], cli.stderr[-300:]))
+        nob = _sp.run([sys.executable, tool, "judge", "no_such_family"],
+                      capture_output=True, text=True, encoding="utf-8", timeout=60)
+        _check("V-TDG-CLI-NO-BASELINE",
+               nob.returncode == 0 and "no baseline generation" in nob.stdout,
+               "unknown family says so and exits 0", (nob.returncode, nob.stdout))
+
         print()
         print("TOWER_DONEGATE_PASS=%d/%d  threshold=%d/%d"
               % (_PASS, _PASS + _FAIL, _PASS + _FAIL, _PASS + _FAIL))
