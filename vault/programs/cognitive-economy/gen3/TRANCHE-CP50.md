@@ -23,8 +23,11 @@ Plan by plan, one lease and one receipt each. FULL_WSR is never a budget. CP50 i
   stands at 9.88M. P2b (send, wait, judge) is not funded.
 - 2026-10-09 Owner "fund it": P2b funded (one A/A job, BUILD=reproduce-20261008T211412Z only, from the main pane, no
   worker). No ceiling was named; the main pane set its own: 1.0M of session tokens.
-- P2b job 1 ksrmb-20261009-072932 FAILED INVALID_CUSTODY on GEX44 (seq-qualified entity); fixed in recon 1c2b89f,
-  resend waits for the Owner (last RF cap slot). See P2b-receipt.md.
+- P2b job 1 ksrmb-20261009-072932 FAILED INVALID_CUSTODY on GEX44 (seq-qualified entity); fixed in recon 1c2b89f.
+- 2026-10-09 Owner "si": job 2 ksrmb-20261009-075610 (last RF slot, cap 2/2) compiled 41/41, but FAILED TOOL_FAILURE
+  (OUT 20 MB ceiling vs 88 MB of .diff.json) with no receipt. Unadmitted judge, md5-verified: 40/40 agree, mutant
+  caught, 40/40 objects byte-identical; objdiff C3 unmeasured. P2b total main pane 16,832,965 over 65 calls.
+  See P2b-receipt.md.
 - MAIN-PANE spend, counted separately from the worker table above (session ce1c3a41, deduplicated by message.id):
   10,812,318 over 64 calls before "fund it" (P2a close, meter, D11 step 1), and 12,177,177 over 49 calls for P2b,
   which is 12x its self-set 1.0M ceiling. A main-pane call costs ~250k here; a ceiling must be projected from that

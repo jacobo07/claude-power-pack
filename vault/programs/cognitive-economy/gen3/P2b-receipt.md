@@ -35,9 +35,33 @@ use the root's LAST cap slot, so it waits for the Owner.
 - The same session BEFORE "fund it" (P2a close, P2a meter, P2b point 1, D11 step 1): 64 calls, 10,812,318. It was not
   in the tranche ledger, which counts worker transcripts only.
 
+## Job 2 -- ksrmb-20261009-075610 (build reproduce-20261009T074333Z, Owner "si", last RF slot: cap 2/2)
+- Pre-checks (same set, re-read immediately before): PRECHECK=OK. Result SEND=RUNNING. wait reported COLLECTED.
+- GEX44 verdict: FAIL TOOL_FAILURE. "OUT would exceed 20971520 bytes without runner.log" (runner_lib write_out).
+  All 41 units compiled. For each miss the runner keeps the full objdiff report: 16 .diff.json totalling 88,370,513
+  bytes, the largest 40,273,068 (main_80018178.s81). No receipt.json or MANIFEST.json was written, so repatriate
+  refused the ingest (REPATRIATE=INVALID_CUSTODY, tree 31da1cff...). The tree sits in returns/.incoming.
+- Cause #2: the A/A draw holds 15 deliberate misses (7 DIFF and 8 SIZE) plus the mutant. Their full objdiff reports
+  cannot fit the 20 MB OUT ceiling. The P2a drill never sized OUT.
+
+## A/A judgement, NOT ADMISSIBLE (no receipt, not ingested)
+All 60 files match the VPS collect.json md5 and size. The 41 primary .o were judged with the local canonical judge
+(oracle_parity.aa_returned, which now reads the seq from unit_id even without a receipt row; recon commit below).
+- C1 PASS: 40/40 drawn units agree with their recorded class and exact text, all 7 DIFF and 8 SIZE included.
+- C2 PASS: the mutant main:800ECE30.s110 comes back DIFF 1/2.
+- C3 UNMEASURED: 41/41 objdiff pct are missing, because they lived in the unwritten receipt.
+- C4 PASS: 40/40 objects are byte-identical to the ledger objects.
+- C5 PASS: judge revision runner_lib 5ff10ef7....
+Formal verdict: FAIL, by C3 unmeasured plus inadmissibility. In substance, the split route reproduces the canonical
+verdicts and the bytes exactly. Full report: recon-factory phases/02-oracle-parity-s1/02-AA-RESULT.json.
+
+## Spend (main pane, final)
+P2b total: 65 calls, 16,832,965 processed, 40,966 out. Job 2 alone: 10 calls, 2,954,405, against an estimate of
+1.5M to 2.5M.
+
 ## Open (Owner)
-1. Resend: send reproduce-20261009T074333Z only. It takes the RF root's 2nd and last phase-2 slot, which AA_GATE had
-   assigned to "one parity capsule".
-2. Budget: the resend costs ~6 to 10 main-pane calls (pre-checks, send, wait, repatriate, judge, receipt), i.e.
-   1.5M to 2.5M at ~250k per call, or less from a fresh pane.
-3. Do not send 211354Z, 211412Z or 215900Z: they are custody-invalid.
+1. The RF root's phase-2 cap is exhausted (2/2). An admissible A/A run needs a 3rd slot, i.e. an Owner cap decision.
+2. Before that run, fix the OUT size in runner_lib. The runner changes, so the judge revision changes (GAP-5). Options:
+   cap or trim each .diff.json (keep the symbol summary, drop the full report), or omit .diff.json when the task flags
+   aa_gate. Either way a drill gate must size OUT for the 41-unit task.
+3. Never send 211354Z, 211412Z or 215900Z: they are custody-invalid.
