@@ -1,0 +1,262 @@
+{
+ "obligations": [
+  {
+   "id": "O-WS0",
+   "block": "B",
+   "claimed": "ALREADY_SATISFIED",
+   "disposition": "ALREADY_SATISFIED",
+   "reason": "",
+   "merge_into": null,
+   "probes": [
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "vault/specs/d2a-family-wiring.md exists"
+    }
+   ]
+  },
+  {
+   "id": "O-A1",
+   "block": "B",
+   "claimed": "REUSE_EXISTING",
+   "disposition": "REUSE_EXISTING",
+   "reason": "",
+   "merge_into": null,
+   "probes": [
+    {
+     "kind": "grep",
+     "ok": true,
+     "detail": "1 hit(s) for /def .*rank/ in wiki/tools/kme_replay.py"
+    }
+   ]
+  },
+  {
+   "id": "O-A2",
+   "block": "B",
+   "claimed": "DETERMINISTIC",
+   "disposition": "DETERMINISTIC",
+   "reason": "",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "O-A3",
+   "block": "B",
+   "claimed": "REUSE_EXISTING",
+   "disposition": "REUSE_EXISTING",
+   "reason": "",
+   "merge_into": null,
+   "probes": [
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "tools/fresh_context_tax.py exists"
+    }
+   ]
+  },
+  {
+   "id": "O-A4",
+   "block": "B",
+   "claimed": "ALREADY_SATISFIED",
+   "disposition": "ALREADY_SATISFIED",
+   "reason": "",
+   "merge_into": null,
+   "probes": [
+    {
+     "kind": "grep",
+     "ok": true,
+     "detail": "1 hit(s) for /CHALLENGER_AUTHORITATIVE = True/ in tools/route_admission.py"
+    }
+   ]
+  },
+  {
+   "id": "O-DISC",
+   "block": "B",
+   "claimed": "CHEAP_COGNITION",
+   "disposition": "CHEAP_COGNITION",
+   "reason": "",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "O-B1",
+   "block": "B",
+   "claimed": "UNKNOWN",
+   "disposition": "UNKNOWN",
+   "reason": "gex44_probe_pending",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "O-B2",
+   "block": "B",
+   "claimed": "UNKNOWN",
+   "disposition": "UNKNOWN",
+   "reason": "gex44_probe_pending (KSR tool state)",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "O-B3",
+   "block": "B",
+   "claimed": "STRONG_COGNITION",
+   "disposition": "STRONG_COGNITION",
+   "reason": "",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "O-B4",
+   "block": "B",
+   "claimed": "STRONG_COGNITION",
+   "disposition": "STRONG_COGNITION",
+   "reason": "",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "O-B5",
+   "block": "B",
+   "claimed": "MERGE",
+   "disposition": "MERGE",
+   "reason": "",
+   "merge_into": "A-G1",
+   "probes": [
+    {
+     "kind": "grep",
+     "ok": true,
+     "detail": "1 hit(s) for /def dispose/ in tools/gsd_dossier.py"
+    }
+   ]
+  },
+  {
+   "id": "O-C",
+   "block": "B",
+   "claimed": "REUSE_EXISTING",
+   "disposition": "REUSE_EXISTING",
+   "reason": "",
+   "merge_into": null,
+   "probes": [
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "tools/tower_capsule.py exists"
+    }
+   ]
+  },
+  {
+   "id": "O-D",
+   "block": "B",
+   "claimed": "STRONG_COGNITION",
+   "disposition": "STRONG_COGNITION",
+   "reason": "",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "O-E",
+   "block": "B",
+   "claimed": "UNKNOWN",
+   "disposition": "UNKNOWN",
+   "reason": "depends_on_cost_collapse_E4b",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "O-F",
+   "block": "B",
+   "claimed": "CHEAP_COGNITION",
+   "disposition": "CHEAP_COGNITION",
+   "reason": "",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "O-META",
+   "block": "B",
+   "claimed": "UNKNOWN",
+   "disposition": "UNKNOWN",
+   "reason": "plan gives no disposition",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "O-WSR",
+   "block": "B",
+   "claimed": "DEFERRED_EXTERNAL",
+   "disposition": "DEFERRED_EXTERNAL",
+   "reason": "",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "A-G1",
+   "block": "A",
+   "claimed": "ALREADY_SATISFIED",
+   "disposition": "ALREADY_SATISFIED",
+   "reason": "",
+   "merge_into": null,
+   "probes": [
+    {
+     "kind": "commit",
+     "ok": true,
+     "detail": "0573e610 ancestor-of HEAD rc=0 "
+    },
+    {
+     "kind": "cmd_rc0",
+     "ok": true,
+     "detail": "rc=0 marker found: DISPOSE_PASS=17/17"
+    }
+   ]
+  },
+  {
+   "id": "A-G2",
+   "block": "A",
+   "claimed": "CHEAP_COGNITION",
+   "disposition": "CHEAP_COGNITION",
+   "reason": "",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "A-G3",
+   "block": "A",
+   "claimed": "UNKNOWN",
+   "disposition": "UNKNOWN",
+   "reason": "waits_for_cost_collapse_E4b",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "A-G4",
+   "block": "A",
+   "claimed": "CHEAP_COGNITION",
+   "disposition": "CHEAP_COGNITION",
+   "reason": "",
+   "merge_into": null,
+   "probes": []
+  },
+  {
+   "id": "A-G5",
+   "block": "A",
+   "claimed": "STRONG_COGNITION",
+   "disposition": "STRONG_COGNITION",
+   "reason": "",
+   "merge_into": null,
+   "probes": []
+  }
+ ],
+ "counts": {
+  "ALREADY_SATISFIED": 3,
+  "REUSE_EXISTING": 3,
+  "MERGE": 1,
+  "DETERMINISTIC": 1,
+  "CHEAP_COGNITION": 4,
+  "STRONG_COGNITION": 4,
+  "DEFERRED_EXTERNAL": 1,
+  "UNKNOWN": 5
+ },
+ "errors": [],
+ "unknown": 5,
+ "undisposed": 0
+}

@@ -1,0 +1,221 @@
+{
+ "expect": [
+  "O-WS0",
+  "O-A1",
+  "O-A2",
+  "O-A3",
+  "O-A4",
+  "O-DISC",
+  "O-B1",
+  "O-B2",
+  "O-B3",
+  "O-B4",
+  "O-B5",
+  "O-C",
+  "O-D",
+  "O-E",
+  "O-F",
+  "O-META",
+  "O-WSR",
+  "A-G1",
+  "A-G2",
+  "A-G3",
+  "A-G4",
+  "A-G5"
+ ],
+ "obligations": [
+  {
+   "id": "O-WS0",
+   "text": "WS0 reality, D2A, iteration",
+   "block": "B",
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "file_exists",
+     "path": "vault/specs/d2a-family-wiring.md"
+    }
+   ]
+  },
+  {
+   "id": "O-A1",
+   "text": "A1 optimization candidates",
+   "block": "B",
+   "claimed": "REUSE_EXISTING",
+   "evidence": [
+    {
+     "kind": "grep",
+     "pattern": "def .*rank",
+     "path": "wiki/tools/kme_replay.py"
+    }
+   ]
+  },
+  {
+   "id": "O-A2",
+   "text": "A2 KME-L CPU/disk incremental index",
+   "block": "B",
+   "claimed": "DETERMINISTIC"
+  },
+  {
+   "id": "O-A3",
+   "text": "A3 second pattern + negative-ROI rejection",
+   "block": "B",
+   "claimed": "REUSE_EXISTING",
+   "evidence": [
+    {
+     "kind": "file_exists",
+     "path": "tools/fresh_context_tax.py"
+    }
+   ]
+  },
+  {
+   "id": "O-A4",
+   "text": "A4 champion/challenger",
+   "block": "B",
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "grep",
+     "pattern": "CHALLENGER_AUTHORITATIVE = True",
+     "path": "tools/route_admission.py"
+    }
+   ]
+  },
+  {
+   "id": "O-DISC",
+   "text": "discover candidate the prompt does not name",
+   "block": "B",
+   "claimed": "CHEAP_COGNITION"
+  },
+  {
+   "id": "O-B1",
+   "text": "B1 reconstruction inventory",
+   "block": "B",
+   "claimed": "UNKNOWN",
+   "reason": "gex44_probe_pending"
+  },
+  {
+   "id": "O-B2",
+   "text": "B2 KSR factorization",
+   "block": "B",
+   "claimed": "UNKNOWN",
+   "reason": "gex44_probe_pending (KSR tool state)"
+  },
+  {
+   "id": "O-B3",
+   "text": "B3 fast path mismatch classifier",
+   "block": "B",
+   "claimed": "STRONG_COGNITION"
+  },
+  {
+   "id": "O-B4",
+   "text": "B4 reconstruction benchmark",
+   "block": "B",
+   "claimed": "STRONG_COGNITION"
+  },
+  {
+   "id": "O-B5",
+   "text": "B5 mission compiler passes",
+   "block": "B",
+   "claimed": "MERGE",
+   "merge_into": "A-G1",
+   "evidence": [
+    {
+     "kind": "grep",
+     "pattern": "def dispose",
+     "path": "tools/gsd_dossier.py"
+    }
+   ]
+  },
+  {
+   "id": "O-C",
+   "text": "C1-C3 CBR birth, return, retirement",
+   "block": "B",
+   "claimed": "REUSE_EXISTING",
+   "evidence": [
+    {
+     "kind": "file_exists",
+     "path": "tools/tower_capsule.py"
+    }
+   ]
+  },
+  {
+   "id": "O-D",
+   "text": "D verification",
+   "block": "B",
+   "claimed": "STRONG_COGNITION"
+  },
+  {
+   "id": "O-E",
+   "text": "E coordination, successor by receipt",
+   "block": "B",
+   "claimed": "UNKNOWN",
+   "reason": "depends_on_cost_collapse_E4b"
+  },
+  {
+   "id": "O-F",
+   "text": "F UKDL/vault extraction",
+   "block": "B",
+   "claimed": "CHEAP_COGNITION"
+  },
+  {
+   "id": "O-META",
+   "text": "meta-analysis and close",
+   "block": "B",
+   "claimed": "UNKNOWN",
+   "reason": "plan gives no disposition"
+  },
+  {
+   "id": "O-WSR",
+   "text": "full WSR ~34k functions",
+   "block": "B",
+   "claimed": "DEFERRED_EXTERNAL"
+  },
+  {
+   "id": "A-G1",
+   "text": "Proof of Non-Work",
+   "block": "A",
+   "claimed": "ALREADY_SATISFIED",
+   "evidence": [
+    {
+     "kind": "commit",
+     "sha": "0573e610",
+     "ref": "HEAD"
+    },
+    {
+     "kind": "cmd_rc0",
+     "cmd": [
+      "C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe",
+      "tools/test_gsd_dispose.py"
+     ],
+     "marker": "DISPOSE_PASS=17/17",
+     "timeout": 240
+    }
+   ]
+  },
+  {
+   "id": "A-G2",
+   "text": "proof reuse by dependency fingerprint",
+   "block": "A",
+   "claimed": "CHEAP_COGNITION"
+  },
+  {
+   "id": "A-G3",
+   "text": "ContextImage = dossier + tier",
+   "block": "A",
+   "claimed": "UNKNOWN",
+   "reason": "waits_for_cost_collapse_E4b"
+  },
+  {
+   "id": "A-G4",
+   "text": "canaries A1-A10 consolidated",
+   "block": "A",
+   "claimed": "CHEAP_COGNITION"
+  },
+  {
+   "id": "A-G5",
+   "text": "CBR ratchet",
+   "block": "A",
+   "claimed": "STRONG_COGNITION"
+  }
+ ]
+}
