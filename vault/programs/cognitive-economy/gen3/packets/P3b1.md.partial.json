@@ -1,0 +1,15 @@
+{
+ "canonical": false,
+ "commits": [
+  "4e7d8e7 P3b-1 local half: register_src, src_bundles assembler + impact, 10/10 drill, 03b-01 summary"
+ ],
+ "goal": "rf-p3b",
+ "mission_id": "m-1a112049e9c8",
+ "model_calls": 11,
+ "refused_calls": 0,
+ "salvage": [],
+ "session": "4c490fa2-47db-4025-8f19-40234c5a53c8",
+ "status": "PARTIAL",
+ "tokens": 1786835,
+ "tool_calls": 10
+}
