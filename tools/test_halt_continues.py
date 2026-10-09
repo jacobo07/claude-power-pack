@@ -89,7 +89,11 @@ def run(mid, *, state=None, write_result=True, receipt=False, text="PASS V-X\nst
     gm.set_envelope(mid, wu_packet=str(pkt), token_estimate=250_000, now=NOW)
     route = Path(TMP) / f"{mid}-route.json"
     route.write_text(json.dumps(SLIM), encoding="utf-8")
-    gm.admit_route(mid, str(route), floors_path=FLOORS, now=NOW, measure=lambda r: None)
+    _ha, gm.halt_authority = gm.halt_authority, (lambda rec: 10_000_000)  # admission is goal-aware (WU-ADV2a)
+    try:
+        gm.admit_route(mid, str(route), floors_path=FLOORS, now=NOW, measure=lambda r: None)
+    finally:
+        gm.halt_authority = _ha
     cur = gm.load(mid)
     gm.launch_worker(mid, expect_epoch=cur["epoch"], expect_state=cur["state"], reason="t",
                      runner=None, spawner=spawner, now=NOW)

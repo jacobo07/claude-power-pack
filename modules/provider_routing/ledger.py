@@ -249,7 +249,12 @@ class GoalLedger(SpendLedger):
                 "settled": sum(g["marks"].values()),
                 "remaining": None if g["cap"] is None else g["cap"] - g["used"], **extra}
 
-    def declare_cap(self, value: int, source: str, *, inside_agent: bool = False) -> dict:
+    @staticmethod
+    def approval_token(approval_id: str) -> str:
+        return f"approval:{approval_id}"
+
+    def declare_cap(self, value: int, source: str, *, inside_agent: bool = False,
+                    approval_id: str | None = None) -> dict:
         """Initial cap and lowering are always admitted. A raise is refused unless the caller holds the
         Owner's authority (`inside_agent=False`), and refused once used >= cap: raising a crossed cap
         makes the limit retrospective."""
@@ -257,6 +262,13 @@ class GoalLedger(SpendLedger):
             raise LedgerError("cap must be a positive int")
         with self._lock:
             recs = self._read()
+            if approval_id:
+                tok = self.approval_token(approval_id)
+                if any(r.get("op") == "cap" and tok in str(r.get("source") or "") for r in recs):
+                    return self._summary(self._gfold(recs), ok=True, applied=False,
+                                         reason=f"approval {approval_id} already consumed")
+                if tok not in source:
+                    source = f"{source} {tok}"
             g = self._sweep_leaks(recs)
             cur = g["cap"]
             if cur is not None and value > cur:
