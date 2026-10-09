@@ -1,0 +1,123 @@
+﻿{
+ "days": 3.0,
+ "n": 618,
+ "intercept_tokens": 31769,
+ "tokens_per_char": 0.35537040899743444,
+ "r2": 0.82765028937024,
+ "floor_median": 121465,
+ "floor_min": 5380,
+ "floor_max": 216794,
+ "chars_median": 238370,
+ "chars_min": 860,
+ "chars_max": 619689,
+ "median_chars_by_type": {
+  "att:agent_listing_delta": 28265,
+  "att:async_hook_response": 0,
+  "att:auto_mode": 7,
+  "att:command_permissions": 18,
+  "att:credential_org": 36,
+  "att:date": 10,
+  "att:deferred_tools_delta": 6192,
+  "att:deferred_tools_record": 0,
+  "att:environment": 354,
+  "att:file": 0,
+  "att:hook_additional_context": 8536,
+  "att:hook_cancelled": 0,
+  "att:hook_non_blocking_error": 0,
+  "att:hook_success": 6593,
+  "att:hook_system_message": 0,
+  "att:instructions": 134995,
+  "att:mcp_instructions_delta": 1914,
+  "att:model": 190,
+  "att:prompt_snapshot": 7502,
+  "att:remote_session_change": 130,
+  "att:selected_lines_in_ide": 0,
+  "att:session_context": 548,
+  "att:skill_listing": 34963,
+  "att:skill_mention": 0,
+  "att:total_tokens_reminder": 0,
+  "att:unknown_command_fallback": 0,
+  "user_prompt": 3187
+ },
+ "models": {
+  "claude-sonnet-5-5": 96,
+  "claude-opus-5-5": 482,
+  "claude-opus-5": 37,
+  "claude-haiku-5-5": 1,
+  "claude-haiku-4-5-20251001": 2
+ },
+ "projects": 62,
+ "multi": {
+  "r2": 0.8513443945607333,
+  "intercept_tokens": 23229,
+  "per_group": {
+   "instructions": {
+    "tok_per_char": 0.3257,
+    "median_chars": 134995,
+    "median_tokens": 43965
+   },
+   "skill_listing": {
+    "tok_per_char": 0.7253,
+    "median_chars": 34963,
+    "median_tokens": 25359
+   },
+   "agent_listing": {
+    "tok_per_char": 0.56,
+    "median_chars": 28265,
+    "median_tokens": 15827
+   },
+   "hook_context": {
+    "tok_per_char": -1.0485,
+    "median_chars": 8536,
+    "median_tokens": -8950
+   },
+   "hook_success": {
+    "tok_per_char": 2.3063,
+    "median_chars": 6593,
+    "median_tokens": 15205
+   },
+   "prompt_snapshot": {
+    "tok_per_char": 0.0425,
+    "median_chars": 7502,
+    "median_tokens": 319
+   },
+   "mcp_deferred": {
+    "tok_per_char": 0.1053,
+    "median_chars": 9354,
+    "median_tokens": 985
+   },
+   "user_prompt": {
+    "tok_per_char": 0.3032,
+    "median_chars": 3187,
+    "median_tokens": 966
+   }
+  }
+ },
+ "variants": {
+  "all": {
+   "intercept": 31769,
+   "tok_per_char": 0.3554,
+   "r2": 0.8277
+  },
+  "no_hook_success": {
+   "intercept": 33162,
+   "tok_per_char": 0.3596,
+   "r2": 0.8213
+  },
+  "no_prompt_snapshot": {
+   "intercept": 32881,
+   "tok_per_char": 0.364,
+   "r2": 0.8271
+  },
+  "no_both": {
+   "intercept": 34339,
+   "tok_per_char": 0.3683,
+   "r2": 0.8205
+  },
+  "no_hook_context": {
+   "intercept": 33761,
+   "tok_per_char": 0.3601,
+   "r2": 0.8223
+  }
+ }
+}
