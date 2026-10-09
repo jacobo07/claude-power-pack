@@ -59,9 +59,24 @@ verdicts and the bytes exactly. Full report: recon-factory phases/02-oracle-pari
 P2b total: 65 calls, 16,832,965 processed, 40,966 out. Job 2 alone: 10 calls, 2,954,405, against an estimate of
 1.5M to 2.5M.
 
+## OUT fix prepared (Owner "go ahead", 2026-10-09; recon cd412ed; nothing sent)
+- runner_lib.trim_objdiff_report: in reproduce mode a miss's .diff.json keeps only the judged symbol's entries
+  (sections kept), plus the full report's sha256 and size. parse_objdiff_percent reads the same value from it. Candidate
+  and batch modes are unchanged. The judge revision changes: runner_lib 5ff10ef7... -> 7377ff0f... (GAP-5).
+- Drill V-P2A-OUT-FITS, on the 16 REAL reports of job 2: the pct is identical after trimming for every unit, the
+  provenance sha256 matches, and OUT drops from 88,402,409 to 333,516 bytes against the 20,971,520 ceiling. Control:
+  the untrimmed OUT is over the ceiling. P2A_DRILL=9/9.
+- Regression: test_reproduce 56/56, test_runner_gates 22/22, test_batch_local 74/74. Two batch_local gates had gone
+  red since P2a (1f72401) because they pinned the old refusal text "not the factory root". The guard still refuses
+  the temp root (ROOT_NOT_LIVE, exit 15, empty ledger); only the wording changed, so the test was updated. Not green,
+  and not caused by these changes (they touch neither candidate mode nor the dispatcher), but NOT compared against a
+  pre-change baseline: test_contract (FileNotFoundError on dispatcher_patches/06_ksr_match_batch.py) and
+  test_candidate (V-CAND-OPERANDS-NORMALISED, V-SDA-PRECHECK-REAL, plus a missing .planning file).
+- Send candidate: the drill build reproduce-20261009T083118Z stages runner 7377ff0f, but from the work tree before
+  the commit. Before any send, rebuild with --runner-source head at cd412ed or later.
+
 ## Open (Owner)
 1. The RF root's phase-2 cap is exhausted (2/2). An admissible A/A run needs a 3rd slot, i.e. an Owner cap decision.
-2. Before that run, fix the OUT size in runner_lib. The runner changes, so the judge revision changes (GAP-5). Options:
-   cap or trim each .diff.json (keep the symbol summary, drop the full report), or omit .diff.json when the task flags
-   aa_gate. Either way a drill gate must size OUT for the 41-unit task.
+2. The OUT fix is done (above). The next send is a rebuild from head, then the pre-checks, send, wait, repatriate and
+   judge: ~6 to 10 main-pane calls, best run from a fresh pane.
 3. Never send 211354Z, 211412Z or 215900Z: they are custody-invalid.
