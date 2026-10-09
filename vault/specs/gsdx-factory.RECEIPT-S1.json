@@ -1,0 +1,46 @@
+{
+  "unit": "S1 mission steward (stopped worker -> settle, partial receipt, salvage, residual; forgotten goal; unarmed successor)",
+  "status": "DONE",
+  "mission": "m-ffb75e73f813 (HALTED by the session calls breaker at 61 tool calls > 1.5 x 40)",
+  "worker_sid": "e422223f-3804-48fc-aa2e-2d1967088082",
+  "closeout": "ZERO_MODEL by the coordinator pane under Master Plan v1 W0 (Owner 'y' 2026-10-09); no fresh worker bought",
+  "commits": {
+    "55ced1e8": "ledger settle_stopped + correct; goal-settle / goal-correct CLIs",
+    "006c8b7b": "tools/mission_steward.py + _steward_rows helper in supervise() (both exits)",
+    "2a3c3bd0": "test_mission_steward.py, stale duplicate pass actually fed"
+  },
+  "gates": {
+    "test_mission_steward.py": "STEWARD_PASS=18/18 (re-run by coordinator after the test fix)",
+    "test_goal_budget_admission.py": "GOAL_PASS=45/45",
+    "test_gsd_mission_admission.py": "ADM_PASS=44/44"
+  },
+  "mutation_drills": {
+    "settle_stopped closes only leases": "KILLED on V-STEWARD-SETTLE-CLOSES-ALL (850000->150000 open)",
+    "steward re-reads return the pass's stale input copy": "KILLED on V-STEWARD-DUP-PASS-ONE-EFFECT (seq 6), after the test fix",
+    "first attempt (entry re-read only)": "SURVIVED: the test captured `stale` and never passed it to the steward, and the inner re-reads cover the entry one. Fixed in 2a3c3bd0; the worker had named this gap in its RESUMPTION note."
+  },
+  "deviation_accepted": "the steward is called on both supervise() exits through one guarded helper: an all-terminal estate takes the early return, so a single end call would never steward it",
+  "settlement": {
+    "gsdx-factory-2": "goal-settle e422223f (2,708,995), 7013ffb1 (73,648), 55c8c721 (56,413) at transcript-measured; used 2,839,056 = measured worker spend, open 0; released 1,023,527",
+    "gsdx-factory": "phantom final hold of 6305f97c closed (150,000). 530d9700 final hold 232,321 KEPT: liveness not proven (UNKNOWN is not free)"
+  },
+  "economics": {
+    "processed_tokens": 2708995,
+    "model_calls": 40,
+    "tool_calls": 64,
+    "first_call_context": 18742,
+    "last_call_context": 96922,
+    "growth_per_model_call": 2005,
+    "admission_estimate": 763246,
+    "flat_model_at_40_calls": 749680,
+    "linear_growth_model_at_40_calls": 2313280,
+    "attribution": [
+      "FORECAST_MODEL_MISS / CONTEXT_GROWTH: flat floor x calls explains 28% of spend; growth term explains to 85%",
+      "CALL_UNIT_MISMATCH: 40 model calls = envelope 40 (on plan); the breaker counted 61 tool calls against 1.5 x 40 model calls",
+      "CLOSEOUT_MISS: no calls reserved for drills + commits + receipt; the tail would have cost ~0.6M at 95K context in-worker",
+      "residual +17% over the growth model: output tokens + super-linear tail (UNKNOWN split)"
+    ],
+    "avoidable": "the breaker trip itself (unit mismatch) and the in-worker closeout; the implementation spend was not waste"
+  },
+  "next": "Master Plan v1: W2 L1 obligation ledger (independent); W3 waits for ce-lifecycle-v3 INST2 (S2/S3 MERGE); S1 lands live through ce-lifecycle-v3 WU-S5b/INST2, which adopts this code"
+}

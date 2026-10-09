@@ -1,4 +1,37 @@
-# ACTIVE (2026-10-09): gsdx-factory steward recovery (worktree pp-gsdx-factory-2, goal gsdx-factory-2)
+# S1 PARTIAL (2026-10-09, budget breaker at 61 calls; NOTHING COMMITTED, receipt not written)
+Working-tree changes (uncommitted) in pp-gsdx-factory-2: modules/provider_routing/ledger.py (settle_stopped, correct),
+tools/mission_spend.py (goal-settle, goal-correct, _real_console_stdin: Windows NUL reports isatty True),
+tools/mission_steward.py (new: R1/R2/R3, kill switch), tools/gsd_mission.py (_steward_rows helper, called at the end of
+supervise() AND in its early-return path -- terminal-only estates return early, so one end call would never run), tools/test_mission_steward.py.
+Gates: STEWARD_PASS=18/18; regression GOAL_PASS=45/45, ADM_PASS=44/44.
+NEXT (exact): (1) in test_mission_steward.py make V-STEWARD-DUP-PASS-ONE-EFFECT replay the STALE list `stale`
+(captured; second pass currently uses run(c)) via st.steward_pass(stale, ...) in try/except; (2) run the two mutation drills
+(settle_stopped closes only leases -> -SETTLE-CLOSES-ALL red; steward skips re-read -> -DUP-PASS-ONE-EFFECT red) with tools/mutation_drill.py;
+(3) pathspec commits (ledger+CLI, steward+hook, test); (4) write vault/specs/gsdx-factory.RECEIPT-S1.json; (5) coordinator lands S1 live.
+Decisions: R1 acts when owner verdict is not ALIVE/WAITING_HUMAN (UNKNOWN acts; settle is a watermark). R3 syntax: `successor:` line or JSON key.
+(The S1 PARTIAL note above is SUPERSEDED: every step in it is done; see ACTIVE below.)
+
+# ACTIVE (2026-10-09 ~15:00): GSD X Reconstruction Factory, Master Plan v1 APPROVED (Owner "y")
+
+Plan: `vault/plans/gsdx-factory-master-plan.md` (68d21301). Envelope 40M, hard ceiling 55M, inside goal
+gsdx-factory-2 (ledger cap 100M). Canonical factory = workstream recon-factory in `Apps\recon_work\wt_keosdtk_home`
+(branch keosdtk-home, 569 dirty paths there: never touch). Full WSR out of scope. Never Set-Location into a goal root.
+
+W0 DONE (zero model): S1 commits 55ced1e8 006c8b7b 2a3c3bd0, RECEIPT-S1 (STEWARD 18/18, GOAL 45/45, ADM 44/44, both
+drills KILLED). Ledger: gsdx-factory-2 used 2,839,056 = measured, open 0. Old goal: phantom closed; 530d9700 hold
+232,321 kept (liveness UNKNOWN).
+
+Owners, do not write their files while their units run: ce-lifecycle-v3 (`Apps\pp-ce-lifecycle-v3`: gsd_mission.py,
+session_budget_guard.js, ledger.py, mission_spend.py; it adopts S1 via WU-S5b/S5c then installs live via WU-INST2),
+cost-collapse (route_admission.py; laptop live tree holds its uncommitted E4a edits), gen3 (recon worktree).
+
+NEXT: (1) W2 L1: compile packet + route (slim-t2) and arm it here; output = disposition of every obligation across
+gsdx Part A/B, recon ROADMAP phases 2/3/7/8/9, gen3 receipts. (2) W1 event: ce-lifecycle-v3 INST2 receipt -> W3
+(unit-typed calls, per-class growth, R4 orphan-hold settle, successor arming within envelope). (3) W5 GEX44 port after W3
+(GEX44 live @1872e9a1 has no admission/dossier/steward/guard; read DEPLOY hard rules first).
+Coherence anchor: `git log --oneline -1` here at or after the RECEIPT-S1 commit.
+
+# PRIOR (2026-10-09 morning): gsdx-factory steward recovery (worktree pp-gsdx-factory-2, goal gsdx-factory-2)
 
 Plan (binding, Owner "y"): live tree `vault/plans/gsdx-steward-recovery-plan.md`; handoff `vault/plans/gsdx-r0-handoff.md`.
 Goal ledger: `gsdx-factory-2`, cap 100M, root = this worktree. Old goal `gsdx-factory` is over cap by LEDGER_MISATTRIBUTION
