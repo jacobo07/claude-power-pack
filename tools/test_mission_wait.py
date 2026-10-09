@@ -287,11 +287,26 @@ def main() -> int:
           "blob containing the string satisfied (positive control); blob without it did not; unreadable blob UNKNOWN",
           "out=%s unk=%s" % ({k: v["outcome"] for k, v in out.items()}, v_unk))
 
+    # ZEROMODEL (ported from gen2 V-CE-T1-WAIT-ZERO-HOT / IDEMPOTENT): a woken pass makes no model call and
+    # a second pass changes no durable byte
+    repo = make_repo(tmp)
+    commit_file(repo, "z.txt")
+    w = World(tmp)
+    w.declare(rec("w-zero", leaf(repo, "z.txt")))
+    z1 = w.run()["w-zero"]
+    s1 = {p.name: p.read_bytes() for p in (w.wd / "log").rglob("*") if p.is_file()}
+    z2 = w.run()["w-zero"]
+    s2 = {p.name: p.read_bytes() for p in (w.wd / "log").rglob("*") if p.is_file()}
+    check("V-WAIT-ZEROMODEL", z1["outcome"] == "COGNITIVE" and z1["model_calls"] == 0 and z1["model_tokens"] == 0
+          and z2["outcome"] == "SKIP_CONSUMED" and s1 == s2 and len(w.launched) == 1,
+          "woken pass: model_calls 0, model_tokens 0; second pass SKIP_CONSUMED with the log byte-identical",
+          "z1=%s calls=%s z2=%s same=%s" % (z1["outcome"], z1.get("model_calls"), z2["outcome"], s1 == s2))
+
     n, m = len(passes), len(passes) + len(fails)
     print("WAIT_PASS=%d/%d" % (n, m))
     if fails:
         print("FAILED: " + ", ".join(fails))
-    return 0 if not fails and n == 13 else 1
+    return 0 if not fails and n == 14 else 1
 
 
 class _BrokenCat:
