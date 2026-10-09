@@ -2757,7 +2757,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
         # Nothing to supervise: do not ask the host (`claude agents --json` costs seconds,
         # measured > 60 s once under load) on every 5-minute pass of an idle estate.
         return unreadable + [{"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
-                              "action": "none", "reason": f"terminal {m['state']}"} for m in missions]
+                              "action": "none", "reason": f"terminal {m['state']}"} for m in missions] \
+            + _steward_rows(missions, now, sessions, pid_alive, dry_run)
     if sessions is None:
         sessions = host_sessions()
     stop_run = stop_runner or (lambda a: subprocess.run(a, capture_output=True, text=True, timeout=120))
@@ -3207,7 +3208,21 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 lr.ledger_append(mid, "supervise_error", mission_id=mid, error=row["error"])
             except Exception:  # noqa: BLE001 -- the row still carries the error
                 pass
-    return unreadable + out
+    return unreadable + out + _steward_rows(missions, now, sessions, pid_alive, dry_run)
+
+
+def _steward_rows(missions, now, sessions, pid_alive, dry_run) -> list[dict]:
+    """The mission steward (tools/mission_steward.py), isolated: any failure is ONE row, never a failed sweep."""
+    if dry_run:
+        return []
+    try:
+        import mission_steward
+        if sessions is None and any(m["state"] in (HALTED, BLOCKED) and m.get("wu_packet") and m.get("goal")
+                                    and not (m.get("steward") or {}).get("done") for m in missions):
+            sessions = host_sessions()     # a stopped worker is judged against the host, not guessed
+        return mission_steward.steward_pass(missions, now, sessions=sessions, pid_alive=pid_alive)
+    except Exception as exc:  # noqa: BLE001
+        return [{"action": "steward_error", "error": f"{type(exc).__name__}: {exc}"[:300]}]
 
 
 # --------------------------------------------------------------------------- goal authority (GGMC C4)
