@@ -300,8 +300,15 @@ with the Resort census.
 - A DTK unit is not an SDK library: the 3,900-function SDK object made a first count meaningless. Libraries are now
   bounded by their version-string anchors.
 
-Next zero-model probe: data flow. Find where the 3 KPAD callers store the controller state, then count the Tennis
-functions that load from it.
+**Step 2 DONE 2026-10-09** (zero-model probe, `vault/plans/d11-tennis-step2.md`):
+- It corrected step 1: the 3 callers only call setters. KPADRead is inferred to be fn_800DB250.
+- The read result lands in a per-channel controller object (~0xFB8 bytes), not in a global. The manager is published
+  in SDA globals lbl_805133B8 and lbl_80513DF0.
+- 51 Tennis functions (122 in the game) load the manager global directly, which is a floor. One-indirection field
+  reads: Tennis 0. Inline reads through `this` are UNRESOLVED.
+
+Next zero-model probe (step 3): find the controller object's allocator (the loop at 800B7D88 in fn_800B7BFC), then
+track `this` through argument registers into the Tennis units.
 
 **Activation criterion:** recon-factory CP50 has reported its cost per function and the learning-curve result (the
 per-game cost model needs both). Step 0 may run earlier, because it is zero-model.
