@@ -1577,6 +1577,34 @@ def admission_refusal(rec: dict, *, for_launch: bool = True) -> str | None:
     return None
 
 
+def readmit_for_relay(rec: dict, *, now: float | None = None, measure=None) -> dict:
+    """A3-chain: the supervisor relays a packet mission with no resident orchestrator, so nobody runs
+    `admit` between epochs. An admission pays for ONE launch (review F3); when the ONLY thing refusing
+    the successor is that it was consumed, the supervisor re-admits it deterministically from the
+    route file the Owner-admitted verdict recorded: same route, remaining budget re-measured. Anything
+    else (never admitted, non-ADMISSIBLE, packet or route changed, switch off) is left to
+    `admission_refusal`, so a RECOMPILE/DEFER verdict still stops the launch. Returns the (re)loaded
+    record and never raises: a failed re-admission leaves the refusal in place."""
+    mid = rec["mission_id"]
+    adm = rec.get("admission") or {}
+    if (not rec.get("wu_packet") or _admission_switch_off() or adm.get("verdict") != "ADMISSIBLE"
+            or adm.get("consumed_epoch") is None or not adm.get("route_path")):
+        return {"readmitted": False, "rec": rec}
+    if (adm.get("packet_sha256") != _packet_digest(rec["wu_packet"]["path"])
+            or adm.get("route_file_sha256") != _packet_digest(adm["route_path"])):
+        return {"readmitted": False, "rec": rec}   # changed under us: a human decision, not a relay
+    try:
+        new = admit_route(mid, adm["route_path"], now=now, measure=measure)
+    except Exception as exc:  # noqa: BLE001 -- the refusal stays; recorded, not raised
+        lr.ledger_append(mid, "relay_readmit_failed", mission_id=mid, epoch=rec["epoch"],
+                         error=f"{type(exc).__name__}: {exc}"[:300])
+        return {"readmitted": False, "rec": rec}
+    lr.ledger_append(mid, "relay_readmitted", mission_id=mid, epoch=new["epoch"],
+                     verdict=(new.get("admission") or {}).get("verdict"), route=adm["route_path"],
+                     remaining=(new.get("admission") or {}).get("remaining"))
+    return {"readmitted": True, "rec": new}
+
+
 def _declare_worker_envelope(rec: dict, sid: str | None) -> None:
     """The admitted envelope becomes the worker's SESSION envelope, enforced call by call by
     hooks/session_budget_guard.js. Recorded either way, never silent."""
@@ -3432,6 +3460,11 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     # spec 3.3: no marker, no spawn. `launch` too (spec 11.1): a renewal that carries a
                     # capsule starts its first worker as that capsule's successor.
                     continue
+                if act in ("relay", "replace", "launch"):
+                    ra_res = readmit_for_relay(rec, now=now)
+                    if ra_res["readmitted"]:
+                        rec = ra_res["rec"]
+                        row["readmitted"] = True
                 row["launch"] = launch_worker(mid, expect_epoch=rec["epoch"],
                                               expect_state=rec["state"], reason=plan["reason"],
                                               runner=runner, now=now, note=note,
