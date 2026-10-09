@@ -51,7 +51,7 @@ function readJson(p) {
 }
 
 function fresh(since) {
-  return { since: since || null, offset: 0, tokens: 0, calls: 0, context: 0, progress_at: 0, call_adv: 0, ids: [], grace: false };
+  return { since: since || null, offset: 0, tokens: 0, calls: 0, model_calls: 0, context: 0, progress_at: 0, call_adv: 0, ids: [], grace: false };
 }
 
 // Fold the complete lines appended since st.offset into st. Mirrors mission_spend.session_tokens.
@@ -91,6 +91,7 @@ function advance(st, transcript) {
     if (seen.has(mid)) continue;
     seen.add(mid);
     st.ids.push(mid);
+    st.model_calls = (Number(st.model_calls) || 0) + 1;   // model calls = distinct message.id
     st.tokens += UK.reduce((s, k) => s + (Number(u[k]) || 0), 0);
     st.context = UK.slice(0, 3).reduce((s, k) => s + (Number(u[k]) || 0), 0);
   }
@@ -116,8 +117,16 @@ function judge(budget, st) {
   }
   const est = Number(budget.calls_estimate) || 0;
   const ratio = Number(budget.call_ratio) || DEFAULT_CALL_RATIO;
-  if (est > 0 && st.calls > ratio * est) {
-    return deny(`${st.calls} tool calls > ${ratio} x estimate ${est}: the plan diverged; recompute the remaining work.`);
+  // calls_unit says what calls_estimate counts. Absent = 'tool' (legacy); an unrecognised unit is not
+  // free: an estimate nobody can compare is a deny, not a silent pass.
+  const unit = budget.calls_unit === undefined || budget.calls_unit === null ? 'tool' : String(budget.calls_unit);
+  if (unit !== 'tool' && unit !== 'model') {
+    return deny(`unknown calls_unit ${JSON.stringify(unit)} (expected "tool" or "model"): the call estimate cannot be judged.`);
+  }
+  const counted = unit === 'model' ? (Number(st.model_calls) || 0) : st.calls;
+  const noun = unit === 'model' ? 'model calls' : 'tool calls';
+  if (est > 0 && counted > ratio * est) {
+    return deny(`${counted} ${noun} > ${ratio} x estimate ${est}: the plan diverged; recompute the remaining work.`);
   }
   const ceil = Number(budget.context_ceiling) || 0;
   if (ceil > 0 && st.context > ceil) {
@@ -132,10 +141,10 @@ function judge(budget, st) {
   // the no-progress limit already spent since the last edit or commit. Each tier is advised ONCE.
   if (est > 0) {
     const idle = st.calls - st.progress_at;
-    const tier = st.calls > est ? 2 : (st.calls >= 0.75 * est && idle >= Math.ceil(k / 2)) ? 1 : 0;
+    const tier = counted > est ? 2 : (counted >= 0.75 * est && idle >= Math.ceil(k / 2)) ? 1 : 0;
     if (tier > (Number(st.call_adv) || 0)) {
       st.call_adv = tier;
-      return advise(`SESSION BUDGET CHECKPOINT (calls): ${st.calls} tool calls ` +
+      return advise(`SESSION BUDGET CHECKPOINT (calls): ${counted} ${noun} ` +
         (tier === 2 ? `are past the estimate ${est}` : `are at 75% of the estimate ${est} with ${idle} since the last edit or commit`) +
         ` (deny at ${ratio} x = ${Math.floor(ratio * est)}). Write a progress receipt now (what is sealed, what remains, ` +
         'calls used), reforecast the remaining work, and stop the current section.');

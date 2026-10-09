@@ -240,6 +240,7 @@ def judge(rec: dict, spent: int | None, fp: str | None, ctx_now: int | None = No
 _SID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 DEFAULT_CALL_RATIO = 1.5
 DEFAULT_NOPROGRESS_CALLS = 25
+CALLS_UNITS = ("tool", "model")   # what calls_estimate counts: tool_use blocks, or model calls (distinct message.id)
 
 
 def state_dir() -> Path:
@@ -257,6 +258,7 @@ def session_tokens(transcript: Path, since_iso: str | None = None) -> dict:
     """Reference count for one transcript: processed tokens (same rule as _file_tokens), tool_use
     blocks, and the context size of the last counted assistant message."""
     seen, total, calls, ctx = set(), 0, 0, 0
+    model_ids: set = set()   # model calls = distinct message.id (one model message spans several rows)
     with open(transcript, encoding="utf-8", errors="replace") as fh:
         for line in fh:
             try:
@@ -279,20 +281,24 @@ def session_tokens(transcript: Path, since_iso: str | None = None) -> dict:
             if mid in seen:
                 continue
             seen.add(mid)
+            model_ids.add(mid)
             total += sum(int(u.get(k) or 0) for k in _UK)
             ctx = sum(int(u.get(k) or 0) for k in _UK[:3])
-    return {"tokens": total, "calls": calls, "context": ctx}
+    return {"tokens": total, "calls": calls, "context": ctx, "model_calls": len(model_ids)}
 
 
 def declare(sid: str, target: int, warn: int, stop: int, calls_estimate: int | None = None,
             context_ceiling: int | None = None, noprogress_calls: int = DEFAULT_NOPROGRESS_CALLS,
             call_ratio: float = DEFAULT_CALL_RATIO, since_iso: str | None = None,
-            extra: dict | None = None, receipt_path: str | None = None) -> Path:
+            extra: dict | None = None, receipt_path: str | None = None,
+            calls_unit: str = "tool") -> Path:
     if not (0 < target <= warn <= stop):
         raise ValueError("need 0 < target <= warn <= stop")
+    if calls_unit not in CALLS_UNITS:
+        raise ValueError(f"calls_unit must be one of {CALLS_UNITS}, got {calls_unit!r}")
     import datetime as dt
     rec = {"session_id": sid, "target": target, "warn": warn, "stop": stop,
-           "calls_estimate": calls_estimate, "call_ratio": call_ratio,
+           "calls_estimate": calls_estimate, "calls_unit": calls_unit, "call_ratio": call_ratio,
            "context_ceiling": context_ceiling, "noprogress_calls": noprogress_calls,
            "since": since_iso,
            "declared_at": dt.datetime.now(dt.timezone.utc).isoformat()[:19]}
@@ -805,6 +811,7 @@ def _main(argv: list[str]) -> int:
     d.add_argument("--warn", type=int, required=True)
     d.add_argument("--stop", type=int, required=True)
     d.add_argument("--calls-estimate", type=int)
+    d.add_argument("--calls-unit", choices=CALLS_UNITS, default="tool")
     d.add_argument("--context-ceiling", type=int)
     d.add_argument("--noprogress-calls", type=int, default=DEFAULT_NOPROGRESS_CALLS)
     d.add_argument("--since", help="ISO timestamp; count only from here (default: whole transcript)")
@@ -903,7 +910,8 @@ def _main(argv: list[str]) -> int:
                       "--skip-feasibility (recorded).", file=sys.stderr)
                 return 3
         print(declare(a.session, a.target, a.warn, a.stop, a.calls_estimate, a.context_ceiling,
-                      a.noprogress_calls, since_iso=a.since, extra={"feasibility": f}))
+                      a.noprogress_calls, since_iso=a.since, extra={"feasibility": f},
+                      calls_unit=a.calls_unit))
         return 0
     print(json.dumps(session_tokens(Path(a.transcript), a.since)))
     return 0

@@ -1,0 +1,5 @@
+{"unit":"WU-W3","status":"PARTIAL","done_gate":"tools/test_wu_w3.py 9/9 rc 0 (failed on pre-state: TypeError calls_unit)",
+"delivered":["calls_unit field (tool|model, default tool, unknown refused at declare and denied in guard)","model-call counter by message.id in session_budget_guard.js and mission_spend.session_tokens","breaker denies on the declared unit and names it"],
+"suites":{"test_session_budget_guard":"all PASS except V-SBG-LATENCY 3004ms under host load (known load flake, INST2 receipt: 21/21 alone)"},
+"remaining":["per-class g/r and closeout tail","R4 reconciliation / phantom-reservation prevention","successor arming within envelope","S1 replay pricing >=2.1M check","mission_spend --calls-unit CLI not yet exercised end-to-end","untouched: gsd_mission.py, provider_routing/ledger.py"],
+"landing":"GEX44-port/steward step, not this unit"}
