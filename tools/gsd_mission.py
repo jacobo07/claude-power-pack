@@ -2265,12 +2265,33 @@ def _receipt_present(rec: dict) -> bool:
         body = r.read_text(encoding="utf-8")
     except OSError:
         return False
-    return "STUB" not in body
+    # A checkpoint stub is not a receipt, whatever its case: WU-ADV's said "checkpoint stub" and read as done.
+    return not (re.search(r"\bstub\b", body, re.I)
+                or re.search(r"^\s*Status:\s*(IN PROGRESS|PARTIAL)\b", body, re.I | re.M))
+
+
+def spend_goal(rec: dict) -> str | None:
+    """The CE goal that pays for this mission. A sweep-armed record carries neither `goal.ce_goal` nor a
+    workstream, so the cwd binding in the goal index (the same one the session guard uses) decides."""
+    g = rec.get("goal")
+    named = (g.get("ce_goal") if isinstance(g, dict) else None) or os.environ.get("CPP_CE_GOAL")
+    if named:
+        return named
+    try:
+        import mission_spend as ms
+        wd = ms._norm(rec.get("work_dir") or rec["cwd"])
+        hits = [goal for goal, e in ms.read_index().items()
+                if any(wd == r or wd.startswith(r + os.sep) for r in (e.get("roots") or []))]
+    except Exception:  # noqa: BLE001 -- unmeasurable is None, never a guess
+        return None
+    return hits[0] if len(hits) == 1 else None
 
 
 def halt_authority(rec: dict) -> int | None:
     """remaining - open of the mission's CE goal, None when unmeasurable (never renews)."""
-    goal = (rec.get("goal") or {}).get("ce_goal") or os.environ.get("CPP_CE_GOAL") or rec.get("workstream")
+    goal = spend_goal(rec)
+    if not goal:
+        return None
     try:
         import mission_spend as ms
         st = ms._goal_ledger(goal).status()
@@ -2307,8 +2328,24 @@ def halt_continue(rec: dict, wd: str, result_text: str, slim: dict | None, row: 
     if why:
         row["renewal"] = f"not renewed: {why}"
         return
-    row["renewed_as"] = renew_mission(rec, now=now, continuity_from={
+    new_id = renew_mission(rec, now=now, continuity_from={
         "mission_id": mid, "kind": "fault_capsule", "capsule_path": cap})["mission_id"]
+    row["renewed_as"] = new_id
+    # renew_mission never carries `admission`, and launch refuses a packet unit without one: re-admit
+    # against the predecessor's route, or hold with the reason. A successor never waits unexplained.
+    route = ((rec.get("admission") or {}).get("route_path"))
+    try:
+        if not route:
+            raise MissionError("predecessor has no admitted route")
+        admit_route(new_id, route, now=now)
+        refusal = admission_refusal(load(new_id))
+        if refusal:
+            raise MissionError(refusal)
+        row["readmitted"] = True
+    except Exception as exc:  # noqa: BLE001
+        why = f"halt-continue re-admission failed: {type(exc).__name__}: {exc}"[:900]
+        set_owner_hold(new_id, why)
+        row["renewal"] = f"renewed but held: {why}"
 
 
 # --------------------------------------------------------------------------- capsule-v2 (T6)

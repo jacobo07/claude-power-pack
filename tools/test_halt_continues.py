@@ -30,6 +30,7 @@ import gsd_mission as gm  # noqa: E402
 import mission_spend as ms  # noqa: E402
 
 gm.progress_fingerprint = lambda work_dir: None
+REAL_HALT_AUTHORITY = gm.halt_authority
 gm.halt_authority = lambda rec: 10_000_000
 FLOORS = str(Path(__file__).resolve().parent.parent / "vault" / "config" / "route-floors.json")
 NOW = 1_800_000_000.0
@@ -75,7 +76,8 @@ def successors(mid):
     return [m for m in ms_ if m.get("renewed_from") == mid]
 
 
-def run(mid, *, state=None, write_result=True, receipt=False, text="PASS V-X\nstopped"):
+def run(mid, *, state=None, write_result=True, receipt=False, text="PASS V-X\nstopped",
+        receipt_text="# receipt\nDONE\n"):
     repo = make_repo(mid)
     gm.create(repo, "/gsd-autonomous --ws wsx", mission_id=mid, now=NOW)
     gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t_setup", now=NOW,
@@ -83,7 +85,7 @@ def run(mid, *, state=None, write_result=True, receipt=False, text="PASS V-X\nst
     pkt = Path(TMP) / f"{mid}-WU.md"
     pkt.write_text(f"# WU {mid}\n", encoding="utf-8")
     if receipt:
-        (Path(TMP) / f"{mid}-WU-receipt.md").write_text("# receipt\nDONE\n", encoding="utf-8")
+        (Path(TMP) / f"{mid}-WU-receipt.md").write_text(receipt_text, encoding="utf-8")
     gm.set_envelope(mid, wu_packet=str(pkt), token_estimate=250_000, now=NOW)
     route = Path(TMP) / f"{mid}-route.json"
     route.write_text(json.dumps(SLIM), encoding="utf-8")
@@ -162,6 +164,28 @@ def main() -> int:
     rec, rows, _ = run("m-hc8", state=OKSTATE, receipt=True, text="done")
     check("V-LIFE-SUCCESS-WITH-RECEIPT-COMPLETES", rec["state"] == gm.COMPLETED and capsule("m-hc8") is None
           and not successors("m-hc8"), str(rows))
+    # 7b. a lower-case checkpoint stub is not a receipt (WU-ADV-receipt.md: "IN PROGRESS (checkpoint stub)")
+    rec, rows, _ = run("m-hc9", state=TRIP, receipt=True, receipt_text="# WU-ADV receipt\n\ncheckpoint stub.\n")
+    check("V-LIFE-HALT-STUB-LOWERCASE", capsule("m-hc9") is not None and len(successors("m-hc9")) == 1, str(rows))
+    rec, rows, _ = run("m-hc10", state=TRIP, receipt=True, receipt_text="# WU receipt\n\nStatus: IN PROGRESS\n")
+    check("V-LIFE-HALT-STATUS-IN-PROGRESS", capsule("m-hc10") is not None and len(successors("m-hc10")) == 1,
+          str(rows))
+    # 7c. the renewed successor is admitted, so the normal launch path can start it (renew never carries admission)
+    one = successors("m-hc1")[0]
+    check("V-LIFE-HALT-READMITTED", (one.get("admission") or {}).get("verdict") == "ADMISSIBLE"
+          and gm.admission_refusal(one) is None and not one.get("owner_hold"),
+          f"adm={(one.get('admission') or {}).get('verdict')} hold={one.get('owner_hold')}")
+    # 7d. a sweep-armed record has no goal and no workstream: the cwd binding names the paying goal
+    real = gm.halt_authority
+    gm.halt_authority = real.__wrapped__ if hasattr(real, "__wrapped__") else REAL_HALT_AUTHORITY
+    bound = make_repo("bound")
+    ms.goal_declare("g-halt-test", 900_000, "test", roots=[bound])
+    rb = {"mission_id": "x", "cwd": bound, "goal": None}
+    ru = {"mission_id": "y", "cwd": make_repo("unbound"), "goal": None}
+    check("V-LIFE-HALT-GOAL-BY-CWD", gm.spend_goal(rb) == "g-halt-test" and gm.halt_authority(rb) == 900_000
+          and gm.spend_goal(ru) is None and gm.halt_authority(ru) is None,
+          f"{gm.spend_goal(rb)} {gm.halt_authority(rb)} | {gm.spend_goal(ru)}")
+    gm.halt_authority = real
     # 8. atomic arm
     pkt = Path(TMP) / "ac-WU.md"
     pkt.write_text("# WU\n", encoding="utf-8")
