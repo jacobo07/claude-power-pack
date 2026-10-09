@@ -13,6 +13,9 @@ CP50 is therefore blocked on S2-S5 and then on S6 funding (the plan's option B),
 8,500,000 (+4,204,024). The raise needs `goal-declare --owner`, which asks for the goal id on an interactive terminal, so
 the Owner types it. Caveat stated to the Owner: the plan's own option B reads as an EXTENSION of ~8.5M (S1-S7 ~4.2M + S6
 ~5.5M). At an 8.5M total, S6 may still end in WAITING_FOR_AUTHORITY, now with an EAC from the corrected estimator.
+APPLIED 2026-10-09: the Owner ran raise-cap-v3.ps1 in a plain PowerShell window. A `!` run had failed on EOF at the
+confirmation prompt and changed nothing. Verified by an independent goal-status: cap 8,500,000, used 3,596,856,
+settled 3,226,721, open 370,135, remaining 4,903,144. At that point S1-S3 were COMPLETED and S4 RUNNING (m-f3ad13bfd9bb).
 
 ## Authority
 - 2026-10-08 Owner "y y": fund the tranche, ~4.2M expected, 5.0M ceiling (R1 REFORECAST).
