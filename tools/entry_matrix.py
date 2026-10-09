@@ -120,11 +120,229 @@ def render(rows) -> str:
     return "\n".join(out)
 
 
+# ---------------------------------------------------------------------------
+# A4 W0: capability reachability matrix (--capabilities). Deterministic, no model.
+# State rules (fixed, in order), over the CORE anchors of a row:
+#   no anchors at all ............................................ UNKNOWN
+#   a core anchor missing at HEAD: present on a listed branch .... BRANCH_ONLY ; nowhere ... ABSENT
+#   all core anchors at HEAD, no production caller:
+#       anchor file has a CLI entry (__main__/argparse/def main) .. MANUAL ; else ... UNREACHABLE
+#   production caller found:
+#       advisory_regex matches the anchor file ..................... ADVISORY
+#       switch default 'shadow' .................................... WIRED_SHADOW
+#       cert_ref file exists and switch (if any) default on ........ CERTIFIED_ACTIVE
+#       otherwise .................................................. ACTIVE_PARTIAL
+# Caller = a non-test tracked file naming the anchor (or the anchor file itself when the symbol occurs
+# twice: def + use) that is a production root, or whose module stem is named by a root (hop 1) or by a
+# file a root names (hop 2). The edge is textual: it says "named", not "executed".
+# ---------------------------------------------------------------------------
+import json
+import shutil
+import subprocess
+
+_GIT = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
+STATES = ("CERTIFIED_ACTIVE", "ACTIVE_PARTIAL", "WIRED_SHADOW", "BRANCH_ONLY", "MANUAL", "ADVISORY",
+          "UNREACHABLE", "ABSENT", "UNKNOWN")
+
+
+def _git_run(root: Path, *args: str) -> tuple[int, str]:
+    r = subprocess.run([_GIT, *args], cwd=str(root), capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
+    return r.returncode, r.stdout
+
+
+class _Repo:
+    def __init__(self, root: Path):
+        self.root = root
+        rc, out = _git_run(root, "ls-tree", "-r", "--name-only", "HEAD")
+        self.files = [f for f in out.splitlines() if rc == 0 and f]
+        self._text: dict[str, str] = {}
+        self._tok: dict[str, set] = {}
+
+    def text(self, path: str) -> str:
+        if path not in self._text:
+            try:
+                self._text[path] = (self.root / path).read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                self._text[path] = ""
+            self._tok[path] = set(re.findall(r"[\w-]+", self._text[path]))
+        return self._text[path]
+
+    def present(self, ref: str, anchor: dict) -> bool:
+        if anchor.get("sym"):
+            return _git_run(self.root, "grep", "-q", "-F", "-e", anchor["sym"], ref, "--", anchor["path"])[0] == 0
+        return _git_run(self.root, "cat-file", "-e", f"{ref}:{anchor['path']}")[0] == 0
+
+    def branch_exists(self, b: str) -> bool:
+        return _git_run(self.root, "rev-parse", "--verify", "-q", b)[0] == 0
+
+
+def _stem(path: str) -> str:
+    return Path(path).stem
+
+
+def _names(text: str, stem: str) -> bool:
+    return stem in set(re.findall(r"[\w-]+", text))
+
+
+def _is_test(path: str) -> bool:
+    return bool(SKIP_NAME.search(path)) or path.startswith("vault/")
+
+
+def _reach(repo: _Repo, roots: list[str]) -> tuple[set, set]:
+    cand = [f for f in repo.files if not _is_test(f) and f.count("/") <= 1
+            and f.rsplit(".", 1)[-1] in ("py", "js", "ps1", "bat", "cmd")]
+    for f in cand:
+        repo.text(f)
+    tok1 = set().union(*(repo._tok[r] for r in roots if r in repo._tok)) if roots else set()
+    r1 = {_stem(f) for f in cand if _stem(f) in tok1}
+    tok2 = set().union(*(repo._tok[g] for g in cand if _stem(g) in r1)) if r1 else set()
+    r2 = {_stem(f) for f in cand if _stem(f) in tok2}
+    return r1, r2
+
+
+def _callers(repo: _Repo, anchor: dict, roots: list[str], r1: set, r2: set, caller_ok=None) -> tuple:
+    """-> (caller_path, hop) of the first production caller, or (None, None)."""
+    sym = anchor.get("sym") or _stem(anchor["path"])
+    a_stem = _stem(anchor["path"])
+    for f in sorted(repo.files):
+        if _is_test(f):
+            continue
+        t = repo.text(f)
+        if f == anchor["path"]:
+            if t.count(sym) < 2 and anchor.get("sym"):
+                continue
+            if not anchor.get("sym"):
+                continue
+        elif sym not in t:
+            continue
+        if caller_ok is not None:
+            hit = caller_ok(f)
+        else:
+            hit = (0 if f in roots else 1 if _stem(f) in r1 else 2 if _stem(f) in r2 else None)
+            if hit is None and f == anchor["path"]:
+                hit = 1 if a_stem in r1 else 2 if a_stem in r2 else None
+        if hit is not None:
+            return f, hit
+    return None, None
+
+
+def _switch_default(repo: _Repo, sw: dict | None) -> str | None:
+    if not sw:
+        return None
+    t = repo.text(sw["file"])
+    m = re.search(r"(?:environ\.get|getenv)\(\s*[\"']" + re.escape(sw["name"]) + r"[\"']\s*(?:,\s*([^)]+))?\)", t) \
+        or re.search(r"process\.env\." + re.escape(sw["name"]) + r"\s*(?:\|\||\?\?)\s*([^;)\n]+)", t)
+    if not m:
+        return "UNPARSED"
+    return (m.group(1) or "").strip().strip("\"'").lower() or "unset"
+
+
+def classify_row(repo: _Repo, row: dict, roots: list[str], r1: set, r2: set, caller_ok=None) -> dict:
+    anchors = row.get("anchors") or []
+    core = [a for a in anchors if a.get("role", "core") == "core"]
+    ev = {"head": [], "branches_only": [], "caller": None, "switch": None}
+    for a in anchors:
+        label = a.get("sym") or "file"
+        at_head = repo.present("HEAD", a)
+        on = [b for b in row.get("branches", []) if repo.branch_exists(b) and repo.present(b, a)]
+        ev["head"].append(f"{a['path']}[{label}]={'Y' if at_head else 'N'}")
+        if on and not at_head:
+            ev["branches_only"].append(f"{a['path']}[{label}]@{','.join(on)}")
+    if not core:
+        return {"state": "UNKNOWN", "ev": ev, "why": row.get("note", "no anchors")}
+    missing = [a for a in core if not repo.present("HEAD", a)]
+    if missing:
+        anywhere = [a for a in missing if any(repo.branch_exists(b) and repo.present(b, a)
+                                                 for b in row.get("branches", []))]
+        return {"state": "BRANCH_ONLY" if anywhere else "ABSENT", "ev": ev,
+                "why": "core anchor not at HEAD" + (" but on a listed branch" if anywhere else " nor on any listed branch")}
+    caller, hop = None, None
+    for a in core:
+        caller, hop = _callers(repo, a, roots, r1, r2, caller_ok)
+        if caller:
+            break
+    ev["caller"] = f"{caller} (hop {hop})" if caller else None
+    sw = row.get("switch")
+    default = _switch_default(repo, sw)
+    ev["switch"] = default
+    if not caller:
+        cli = any(re.search(r"__main__|argparse|def main\b|process\.argv", repo.text(a["path"])) for a in core)
+        return {"state": "MANUAL" if cli else "UNREACHABLE", "ev": ev,
+                "why": "no production caller; " + ("CLI entry present" if cli else "no CLI entry")}
+    if row.get("advisory_regex") and any(re.search(row["advisory_regex"], repo.text(a["path"])) for a in core):
+        return {"state": "ADVISORY", "ev": ev, "why": "caller found; advisory mode marker in anchor file"}
+    if default == "shadow":
+        return {"state": "WIRED_SHADOW", "ev": ev, "why": "caller found; switch default shadow"}
+    cert = row.get("cert_ref")
+    if cert and repo.text(cert) and default in (None, "1", "on", "true", "enforce"):
+        return {"state": "CERTIFIED_ACTIVE", "ev": ev, "why": "caller found; cert_ref present"}
+    return {"state": "ACTIVE_PARTIAL", "ev": ev, "why": "caller found; no certification evidence or switch not default-on"}
+
+
+def capabilities(root: Path, cfg: dict, caller_ok=None) -> list[dict]:
+    repo = _Repo(root)
+    roots = cfg["roots"]
+    r1, r2 = _reach(repo, roots)
+    out = []
+    for row in cfg["rows"]:
+        res = classify_row(repo, row, roots, r1, r2, caller_ok)
+        out.append({"id": row["id"], "name": row["name"], "card_state": row["card_state"], **res})
+    return out
+
+
+def render_capabilities(rows: list[dict]) -> str:
+    cnt: dict[str, int] = {}
+    for r in rows:
+        cnt[r["state"]] = cnt.get(r["state"], 0) + 1
+    out = ["# Capability reachability matrix (A4 W0)", "",
+           "Generated by `python tools/entry_matrix.py --capabilities` -- deterministic, no model, from `git` at HEAD "
+           "and the listed branches. Caller edges are textual (named, not proven executed). Rules: see the header of "
+           "tools/entry_matrix.py. A row the rules cannot decide is UNKNOWN.", "",
+           "Counts: " + ", ".join(f"{k}={cnt[k]}" for k in STATES if k in cnt), "",
+           "| # | capability | card | derived | agrees | evidence |", "|---|---|---|---|---|---|"]
+    dis = []
+    for r in rows:
+        agrees = "yes" if r["card_state"].split()[0].split("+")[0] == r["state"] else "NO"
+        if agrees == "NO":
+            dis.append(r)
+        e = r["ev"]
+        evs = f"{r['why']}; head: {' '.join(e['head']) or '-'}"
+        if e["branches_only"]:
+            evs += "; branch-only: " + " ".join(e["branches_only"])
+        if e["caller"]:
+            evs += f"; caller: {e['caller']}"
+        if e["switch"]:
+            evs += f"; switch default: {e['switch']}"
+        out.append(f"| {r['id']} | {r['name']} | {r['card_state']} | **{r['state']}** | {agrees} | {evs} |")
+    out += ["", "## Disagreements with the card", ""]
+    out += [f"- row {r['id']} {r['name']}: card `{r['card_state']}`, derived `{r['state']}` ({r['why']})" for r in dis] \
+        or ["- none"]
+    return "\n".join(out) + "\n"
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=str(Path(__file__).resolve().parent.parent))
     ap.add_argument("--out", default=None)
+    ap.add_argument("--capabilities", action="store_true", help="A4 W0 capability reachability matrix")
+    ap.add_argument("--config", default=None)
+    ap.add_argument("--check", default=None, help="exit 1 if FILE differs from regenerated text or any row is UNREACHABLE")
     a = ap.parse_args()
+    if a.capabilities:
+        cfgp = Path(a.config) if a.config else Path(a.root) / "vault/config/ce-capabilities.json"
+        rows = capabilities(Path(a.root), json.loads(cfgp.read_text(encoding="utf-8-sig")))
+        text = render_capabilities(rows)
+        if a.check:
+            red = [r["id"] for r in rows if r["state"] == "UNREACHABLE"]
+            same = Path(a.check).read_bytes() == text.encode("utf-8")
+            print(f"check: identical={same} unreachable={red}")
+            return 0 if same and not red else 1
+        if a.out:
+            Path(a.out).parent.mkdir(parents=True, exist_ok=True)
+            Path(a.out).write_text(text, encoding="utf-8", newline="\n")
+        else:
+            sys.stdout.write(text)
+        return 0
     text = render(scan(Path(a.root)))
     if a.out:
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
