@@ -357,3 +357,37 @@ identity claim designed to be posted is an easy route to flattery used as
 pressure. *Make consistency the habit* is CDIO-00's Inconsistency class stated as
 strategy. None of the three creates a criterion; the celebration rules above do
 not relax §5.
+
+## 12. Motion families (absorbed 2026-10-09)
+
+Source: the QuickLease capability icon family (InfinityOps PR #533; grammar in
+`17_Businesses/QuickLease/DESIGN.md` "Capability icons", UKDL HARD-48). Once a
+surface carries more than one animated element of the same kind, the
+`motion_budget` is spent by the family, not by each member. Three rules apply:
+
+- **Shared grammar, one meaning each.** Members of a family share their parts and
+  their timing (the same orbit, the same check, the same pass length), so the
+  family reads as one voice. Each member then adds exactly one motion that names
+  its own meaning. Two members that animate the same way for different meanings
+  are an Inconsistency finding (CDIO-00). So is one member that animates two ways
+  for one meaning.
+- **The budget is aggregate.** The declared `motion_budget` is judged against
+  what moves *at the same time on one viewport*, not against one component in
+  isolation. A family that is `low` per icon and runs six icons at once is not
+  `low`. Members outside the reading position wait, paused, until their content
+  is reached, then run one bounded pass. Measure density with every member's
+  animations on against the same page with only the family's animations off, and
+  never against reduced motion.
+- **Marketing motion never stands in for a transactional state.** A family that
+  illustrates a capability (verification, a report, a certificate) asserts
+  nothing about any real case. It must not be reused as the acknowledgement,
+  progress or success cue of the operation it depicts. That cue belongs to
+  `success_posture` and `waiting`. If the illustration were reused, a decorative
+  check would claim a result the system has not produced: the §5 trust collision,
+  reached through reuse instead of through celebration.
+
+Observed when the family is conformant: on a page with three stage icons, at most
+one icon is running while the reader is on its step, and zero animations are
+running once every pass has finished. A surface where the whole family plays
+when the page loads breaks the second rule even if each icon alone is within
+budget.
