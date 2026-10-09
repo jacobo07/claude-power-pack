@@ -75,6 +75,21 @@ P3b-2 PRE-CHECK 2026-10-09 (main pane): goals OK (rf-p3b2 -> wt_keosdtk_home, ca
    @sda21/@ha/@l operands), after the 5 rows were sealed. The drill's IMPACT gate only asserts src_registry is not in the
    control's drift, so it passed. Owner decides: (a) accept, since the bundle path re-judges the 5 under the current oracle
    (10 in the summary), or (b) revalidate the 5 against the current match.py first. Then do summary steps 1-10.
+P3b-2 RUN 2026-10-09/10 (main pane, Owner "a" = accept; the bundle path re-judges the 5):
+   pre-checks PINS=OK tools=7, SLOT_LEDGER PASS lease=none, GEX44 idle (queue 0, boots 0/6). RF_CURRENT_PHASE=3 = recon
+   a5d57a0. SENT job 1 of 2 = ksrmb-20261009-214006 -> WAIT=COLLECTED -> REPATRIATE=OK tree 6f7b2c9d. Receipt PASS, 294 units,
+   custody ok, runner_lib 7377ff0f, task_sha 5bd8add8 (matches the build).
+   DONE (real writes, log gen3/P3b2-steps6-8.log, backups in that session's scratchpad backup_pre_p3b2): register_src
+   added=289 kept=5 refused={}; assemble bundles=294 refused=0; 294 bundles written to decomp_factory/levels/evidence/
+   src_bundles; impact: the 5 sealed drift [match_py, src_registry], bundle_verifies=True for all 5.
+   NOT DONE: promote(). levels.promote refused HOST_FLOOR_BREACHED (free 1221 MB, then 1314, then 619 < 1500). Ledger and
+   manifest are untouched, so SRC PROVEN is still 5.
+   NEXT: when free RAM >= 1500 MB (close panes or Cursor windows), run
+   `python vault/programs/cognitive-economy/gen3/recon-reforecast/p3b2_finish.py`. It needs P3B2_CHECK=PASS:
+   SRC_PROVEN_AFTER=294 rise=289, PROMOTED_NOT_PROVEN=0, SEALED_LOST=[], PROVEN_VIA_BUNDLE=294/294. Exit 3 = still under the
+   floor, nothing written. Do NOT re-send: job 2 of 2 is the only one left.
+   DGL CONFLICT: Apps\pp-dgl chain.json W7 = this same P3b-2 (waits for W6 + D2-owner.md). It must become verify-only or be
+   removed, otherwise it will re-send and spend the last RF Phase 3 job. Do not create D2-owner.md without that change.
 OLD NEXT: when gen3/P3b1-receipt.md lands, read it, check the drill (V-P3B-* all PASS) and the CAPSULE= and BUILD= lines,
    then run P3b-2 from the main pane (sequence in the 03b-01-SUMMARY).
    Original spec: packets/P3b1.md + route-P3b1.json (P2a format). Goal `rf-p3b` via mission_spend goal-declare (cap 2.4M, root = recon

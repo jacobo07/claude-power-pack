@@ -1,0 +1,27 @@
+﻿TASK sha=5bd8add80c2e5d37bcd5181f265fe578e95c12d12fa242b6fe4a2c770c79013d receipt.measured.task_sha256=5bd8add80c2e5d37bcd5181f265fe578e95c12d12fa242b6fe4a2c770c79013d verdict=PASS host=kobicraft-gex44 custody.ok=True runner_lib=7377ff0f406cc15046d3642e11d8c6cba8805b559c3592a76e19d179dd000718
+RECEIPT units=294 ended_at=2026-10-09T21:44:51Z job_id=ksrmb-20261009-214006
+BACKUP=C:\Users\User\AppData\Local\Temp\claude\C--Users-User--claude-skills-claude-power-pack\a5308810-a6ae-4223-9885-2998838eed3d\scratchpad\backup_pre_p3b2 registry=51ffc7c2a197aa5a6077ea4127b306c166bbffe866c96bda65ff06f5da805b74 ledger=16ae86d7b6b3314523cd6c486c8cb64fd86980a5752643e11bbacaf94fc4e6f2 manifest=5d8bf1bbef812724a14261182e0dad3acbd7c4f31533c148ea82e5c31820a19e
+SRC_PROVEN_BEFORE=5 ['main:801A2CC0', 'main:8020EAD4', 'main:8026BE34', 'main:802B21A4', 'main:803571D8']
+INTAKE would_register=289 refused=0
+REGISTER added=289 kept=5 refused={}
+ASSEMBLE bundles=294 refused=0 by_token={}
+BUNDLES_WRITTEN=294 dir=C:\Users\User\Apps\recon_work\decomp_factory\levels\evidence\src_bundles
+  IMPACT main:801A2CC0 drift=['match_py', 'src_registry'] bundle_verifies=True
+  IMPACT main:8020EAD4 drift=['match_py', 'src_registry'] bundle_verifies=True
+  IMPACT main:8026BE34 drift=['match_py', 'src_registry'] bundle_verifies=True
+  IMPACT main:802B21A4 drift=['match_py', 'src_registry'] bundle_verifies=True
+  IMPACT main:803571D8 drift=['match_py', 'src_registry'] bundle_verifies=True
+python.exe : Traceback (most recent call last):
+En línea: 1 Carácter: 333
++ ... NG='utf-8'; & 'C:\Users\User\AppData\Local\Programs\Python\Python312\ ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Users\User\AppData\Local\Temp\claude\C--Users-User--claude-skills-claude-power-pack\a5308810-a6ae-4223-9885-
+2998838eed3d\scratchpad\p3b2_promote.py", line 96, in <module>
+    pr = levels.promote(ids=ids, store=store)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Apps\recon_work\wt_keosdtk_home\tools\wros\binary\decomp\levels.py", line 1629, in promote
+    raise Refused("HOST_FLOOR_BREACHED free %d MB < %d MB" % (free_before, FLOOR_MB))
+levels.Refused: HOST_FLOOR_BREACHED free 1221 MB < 1500 MB
