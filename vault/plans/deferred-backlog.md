@@ -293,7 +293,15 @@ with the Resort census.
   does (1,797 functions, an upper bound).
 - The disc's Resort DOL is not the factory's binary.
 
-Next zero-model probe: call-graph walk from the Tennis scene and the Wiimote read path, to size the motion closure.
+**Step 1 DONE 2026-10-09** (zero-model, `vault/plans/d11-tennis-step1.md`):
+- The novel closure inside the Tennis units is 1,323 functions, which agrees with step 0.
+- Only 3 game functions call KPAD, and none of them is reachable from Tennis. Tennis gets motion through stored
+  controller state (data), not through calls, so a call walk cannot size the motion closure.
+- A DTK unit is not an SDK library: the 3,900-function SDK object made a first count meaningless. Libraries are now
+  bounded by their version-string anchors.
+
+Next zero-model probe: data flow. Find where the 3 KPAD callers store the controller state, then count the Tennis
+functions that load from it.
 
 **Activation criterion:** recon-factory CP50 has reported its cost per function and the learning-curve result (the
 per-game cost model needs both). Step 0 may run earlier, because it is zero-model.
