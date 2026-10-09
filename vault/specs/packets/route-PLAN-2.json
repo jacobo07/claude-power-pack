@@ -1,0 +1,1 @@
+{"envelope":{"target":1150000,"warn":1500000,"stop":1950000,"calls":24},"workers":[{"name":"gsdx-factory-PLAN","profile":"slim-t2","calls":10,"packet":4500}],"note":"calls = declared steps in the live L3 estimator's unit (x2.4 physical). Expected real ~0.4M (14 model calls); live L3 prices 1.09M: it charges growth per tool call, not per model request (KNOWLEDGE K7)"}

@@ -1,0 +1,1 @@
+{"envelope":{"target":1750000,"warn":2275000,"stop":2975000,"calls":29},"workers":[{"name":"gsdx-factory-REC-P2C","profile":"slim-t2","calls":13,"packet":5000}],"note":"n=18 model calls; C(n)=602100 (slim-t2 F=19000 g=1700) x1.3 = 782730 expected real; target raised to live L3 need=1737389 (cp=ceil(steps*2.4), K7 over-pricing ~2.8x)"}

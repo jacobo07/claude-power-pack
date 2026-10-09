@@ -5,17 +5,70 @@
  "hard": 55000000,
  "pricing_note": "PLANNER READ THIS (overrides WU-PLAN section 1 'Route per unit'). Live admission (ce-lifecycle-v3 L3, live 37a5f3c0) prices slim-t2 as cp = ceil(calls * 2.4); cost = cp*(13507 + packet) + 1725*cp*(cp-1)/2; need = cost*1.2 <= envelope target, else RECOMPILE and the arm fails. So route worker `calls` = DECLARED STEPS (about tool calls / 2.4), and target must be >= need. Envelope `calls` = expected tool calls. The live formula over-prices our measured units ~2.8x (KNOWLEDGE K7); state the expected real cost (model-call formula) in a route `note`. Check every route with: python C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\route_admission.py (or gsd_mission.py admit on a held record) before adding it to the chain.",
  "units": [
-  {"id": "L1",
+  {
+   "id": "L1",
    "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-L1.md",
    "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-L1.json",
    "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-L1.json",
-   "after": null, "wait": [],
-   "accept": ["DONE", "DONE_WITH_LIMITS"],
-   "accept_note": "coordinator 2026-10-09: L1's purpose (every row disposed, gate rc 0, unknown 0) is met; its GRAPH costs are NOT a forecast (n = rows/6), PLAN-1 re-prices"},
-  {"id": "PLAN-1",
+   "after": null,
+   "wait": [],
+   "accept": [
+    "DONE",
+    "DONE_WITH_LIMITS"
+   ],
+   "accept_note": "coordinator 2026-10-09: L1's purpose (every row disposed, gate rc 0, unknown 0) is met; its GRAPH costs are NOT a forecast (n = rows/6), PLAN-1 re-prices"
+  },
+  {
+   "id": "PLAN-1",
    "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-PLAN.md",
    "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-PLAN.json",
    "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-PLAN.json",
-   "after": "L1", "wait": []}
+   "after": "L1",
+   "wait": []
+  },
+  {
+   "id": "REC-P2C",
+   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-REC-P2C.md",
+   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-REC-P2C.json",
+   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-REC-P2C.json",
+   "after": "PLAN-1",
+   "wait": [],
+   "cwd": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home"
+  },
+  {
+   "id": "W3",
+   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-W3.md",
+   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-W3.json",
+   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-W3.json",
+   "after": "REC-P2C",
+   "wait": [
+    "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-INST2-receipt.md"
+   ]
+  },
+  {
+   "id": "DOCTRINE",
+   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-DOCTRINE.md",
+   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-DOCTRINE.json",
+   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-DOCTRINE.json",
+   "after": "W3",
+   "wait": []
+  },
+  {
+   "id": "REC-P3",
+   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-REC-P3.md",
+   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-REC-P3.json",
+   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-REC-P3.json",
+   "after": "DOCTRINE",
+   "wait": [],
+   "cwd": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home"
+  },
+  {
+   "id": "PLAN-2",
+   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-PLAN-2.md",
+   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-PLAN-2.json",
+   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-PLAN-2.json",
+   "after": "REC-P3",
+   "wait": []
+  }
  ]
 }

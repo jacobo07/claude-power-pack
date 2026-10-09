@@ -1,0 +1,36 @@
+{
+    "status":  "DONE",
+    "epoch":  "PLAN-1",
+    "units_compiled":  [
+                           "REC-P2C",
+                           "W3",
+                           "DOCTRINE",
+                           "REC-P3"
+                       ],
+    "chain_rows_added":  [
+                             "REC-P2C(after PLAN-1)",
+                             "W3(after REC-P2C, wait INST2 receipt present)",
+                             "DOCTRINE(after W3)",
+                             "REC-P3(after DOCTRINE, cwd recon wt)",
+                             "PLAN-2(after REC-P3)"
+                         ],
+    "n_basis":  "per unit: REC-P2C 18 (5 close artifacts + GEX44 wait), W3 22 (4 owned files, 14 rows, gate-first), DOCTRINE 22 (41 rows clustered, mostly probe/merge), REC-P3 24 (promote seam, 2 jobs, 3 negative controls)",
+    "route_targets":  {
+                          "REC-P2C":  1750000,
+                          "W3":  2150000,
+                          "DOCTRINE":  2150000,
+                          "REC-P3":  2650000,
+                          "PLAN-2":  1150000
+                      },
+    "route_note":  "targets are the live L3 need (K7 over-prices ~2.8x); all 5 routes ADMISSIBLE via route_admission admit; expected real model-call cost of block ~3.8M",
+    "dry_run_row":  "{\"action\": \"running\", \"unit\": \"PLAN-1\", \"at\": 1791557497.45, \"goal\": \"gsdx-factory-2\", \"used\": 6529505, \"dry_run\": true}",
+    "goal_used":  6529505,
+    "forecast_M":  {
+                       "lower":  20,
+                       "expected":  32,
+                       "safety":  "40+ if priced at live L3 targets (block 9.85M priced vs 3.8M real)"
+                   },
+    "forecast_basis":  "used 6.5 + block real 3.8 + remaining Master Plan rows (GEX44 port 1.0, Part A residual 2.5, P7 CP50 3.5, P8 5.0, P9 2.0, unmapped 2.0, KB/closeout 0.5, reserves 5.5). GRAPH totals are placeholders and not used.",
+    "not_compiled":  "U-W5, U-W6, U-W7(P7 CP50/P8/P9), U-KB-W8, U-CP50, U-ZERO: left for PLAN-2 (W6 after W3; W5/W7 wait GEX44 prerequisites)",
+    "deviations":  "one Set-Location used in a dry-run tick command (read-only)"
+}
