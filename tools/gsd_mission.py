@@ -1716,9 +1716,7 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
 
 def _git_toplevel_and_common(path: str) -> tuple[str, str] | None:
     import subprocess
-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
-    if not Path(g).exists():
-        g = "git"
+    g = resolve_exe("git") or "git"
     try:
         r = subprocess.run([g, "-C", path, "rev-parse", "--show-toplevel", "--git-common-dir"],
                            capture_output=True, text=True, timeout=20)
@@ -1754,9 +1752,7 @@ def _worktree_carries_workstream(worktree: str, base_cwd: str, workstream: str) 
     does not contain the Lobby roadmap commit 20561b15. Any git failure -> False (stay on the
     mission cwd, where the mission was armed)."""
     import subprocess
-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
-    if not Path(g).exists():
-        g = "git"
+    g = resolve_exe("git") or "git"
     try:
         r = subprocess.run([g, "-C", base_cwd, "log", "-1", "--format=%H", "--",
                             f".planning/workstreams/{workstream}"],
@@ -1803,9 +1799,7 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
         return {"status": "unreadable", "detail": f"git could not read cwd={cwd} or work_dir={work_dir}"}
     if here[1] != there[1]:
         return {"status": "unrelated", "detail": "work_dir is not a worktree of the cwd's repository"}
-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
-    if not Path(g).exists():
-        g = "git"
+    g = resolve_exe("git") or "git"
 
     def git(path, *args):
         return subprocess.run([g, "-C", path, *args], capture_output=True, text=True, timeout=60)
@@ -2215,11 +2209,43 @@ def halt_continue_on() -> bool:
     return os.environ.get("CPP_HALT_CONTINUE", "").lower() != "off"
 
 
-def _git_ro(wd: str, *args: str) -> str:
+def resolve_exe(name: str) -> str | None:
+    """Certified executable resolver: CPP_EXE_<NAME> override, shutil.which, known Windows paths.
+    None only when every source fails."""
     import shutil
     import subprocess
-    fallback = r"C:\Program Files\Git\cmd\git.exe"
-    git = shutil.which("git") or (fallback if Path(fallback).exists() else "git")
+    key = name.lower()
+    cands = [os.environ.get(f"CPP_EXE_{key.upper()}")]
+    if key == "git":
+        cands.append(os.environ.get("CPP_GIT_EXE"))
+    for c in cands:
+        if c and Path(c).exists():
+            return c
+    w = shutil.which(name)
+    if w:
+        return w
+    known = {"git": [r"C:\Program Files\Git\cmd\git.exe"], "python": [sys.executable]}.get(key, [])
+    for c in known:
+        if c and Path(c).exists():
+            return c
+    if key == "node":
+        try:
+            r = subprocess.run([os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "where.exe"),
+                                "node"], capture_output=True, text=True, timeout=15)
+            for ln in r.stdout.splitlines():
+                if ln.strip() and Path(ln.strip()).exists():
+                    return ln.strip()
+        except Exception:  # noqa: BLE001
+            pass
+    return None
+
+
+def _git_ro(wd: str, *args: str) -> str | None:
+    """None = git UNRESOLVED (distinct from "" = git ran and printed nothing)."""
+    import subprocess
+    git = resolve_exe("git")
+    if not git:
+        return None
     try:
         p = subprocess.run([git, "-C", wd, *args], capture_output=True, text=True, timeout=30)
         return p.stdout if p.returncode == 0 else ""
@@ -2233,11 +2259,15 @@ def write_fault_capsule(rec: dict, wd: str, result_text: str, slim: dict | None)
     mid, epoch = rec["mission_id"], rec.get("epoch")
     path = lr.state_dir() / "fault-capsules" / f"{mid}-e{epoch}.json"
     text = result_text or ""
-    dirty = [ln for ln in _git_ro(wd, "status", "--porcelain").splitlines() if ln.strip()]
-    log = [ln for ln in _git_ro(wd, "log", "--oneline", "-n", "20").splitlines() if ln.strip()]
+    unresolved = _git_ro(wd, "rev-parse", "HEAD") is None
+    dirty = [ln for ln in (_git_ro(wd, "status", "--porcelain") or "").splitlines() if ln.strip()]
+    log = [ln for ln in (_git_ro(wd, "log", "--oneline", "-n", "20") or "").splitlines() if ln.strip()]
     data = {"mission_id": mid, "epoch": epoch, "written_at": time.time(),
-            "head": _git_ro(wd, "rev-parse", "HEAD").strip(), "commits": log,
-            "dirty": dirty, "diff_stat": _git_ro(wd, "diff", "--stat"),
+            "git": "UNRESOLVED" if unresolved else "ok",
+            "head": "UNRESOLVED" if unresolved else (_git_ro(wd, "rev-parse", "HEAD") or "").strip(),
+            "commits": log if not unresolved else "UNRESOLVED",
+            "dirty": dirty if not unresolved else "UNRESOLVED",
+            "diff_stat": "UNRESOLVED" if unresolved else (_git_ro(wd, "diff", "--stat") or ""),
             "gate_lines": [ln for ln in text.splitlines()
                            if re.match(r"^(PASS|FAIL|[A-Z_]+_PASS=)", ln)][-20:],
             "spend": {"slim_tokens": (slim or {}).get("tokens"), "tripped": (slim or {}).get("tripped"),
@@ -3356,9 +3386,7 @@ def progress_fingerprint(work_dir: str) -> str | None:
     A commit is the unit of work GSD and the hand-off card both ask a worker to leave behind."""
     import hashlib
     import subprocess
-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
-    if not Path(g).exists():
-        g = "git"
+    g = resolve_exe("git") or "git"
     parts = []
     try:
         for args in (["rev-parse", "HEAD"], ["status", "--porcelain"], ["diff", "HEAD", "--shortstat"]):
@@ -3401,9 +3429,7 @@ def _plan_facts(work_dir: str, workstream: str | None = None) -> str:
 
 def _git_facts(cwd: str) -> dict:
     import subprocess
-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
-    if not Path(g).exists():
-        g = "git"
+    g = resolve_exe("git") or "git"
     facts = {}
     try:
         facts["head"] = subprocess.run([g, "-C", cwd, "rev-parse", "--short", "HEAD"],

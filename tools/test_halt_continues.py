@@ -202,6 +202,28 @@ def main() -> int:
           and good["ok"] is True and not gmm.get("owner_hold") and not gmm.get("owner")
           and gmm["state"] == gm.PREPARED and gmm["admission"]["verdict"] == "ADMISSIBLE"
           and gmm["wu_packet"]["path"] == str(pkt), f"{bad.get('why')} | {gmm['state']}")
+    # 9. S2: capsule survives PATH loss; unresolved git says UNRESOLVED, never ""
+    pl = make_repo("pathloss")
+    saved = os.environ.get("PATH")
+    os.environ["PATH"] = ""
+    try:
+        gm.write_fault_capsule({"mission_id": "m-pl", "epoch": 7}, pl, "PASS V-X", None)
+    finally:
+        os.environ["PATH"] = saved
+    cp = capsule("m-pl", 7) or {}
+    check("V-LIFE-CAPSULE-PATH-LOSS",
+          len(str(cp.get("head", ""))) == 40 and any("first" in c for c in cp.get("commits") or [])
+          and any("dirty.txt" in d for d in cp.get("dirty") or []), f"{cp.get('head')} {cp.get('git')}")
+    real_resolve = gm.resolve_exe
+    gm.resolve_exe = lambda name: None
+    try:
+        gm.write_fault_capsule({"mission_id": "m-un", "epoch": 7}, pl, "PASS V-X", None)
+    finally:
+        gm.resolve_exe = real_resolve
+    cu = capsule("m-un", 7) or {}
+    check("V-LIFE-CAPSULE-UNRESOLVED",
+          cu.get("git") == "UNRESOLVED" and cu.get("head") == "UNRESOLVED" and cu.get("commits") == "UNRESOLVED"
+          and cu.get("dirty") == "UNRESOLVED", f"{cu.get('git')} {cu.get('head')!r}")
     print(f"HALT_CONTINUES_PASS={passes} FAIL={fails}")
     return 1 if fails else 0
 
