@@ -1,0 +1,18 @@
+{
+ "goal": "gsdx-factory-2",
+ "root": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+ "envelope": 40000000,
+ "hard": 55000000,
+ "units": [
+  {"id": "L1",
+   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-L1.md",
+   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-L1.json",
+   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-L1.json",
+   "after": null, "wait": []},
+  {"id": "PLAN-1",
+   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-PLAN.md",
+   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-PLAN.json",
+   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-PLAN.json",
+   "after": "L1", "wait": []}
+ ]
+}
