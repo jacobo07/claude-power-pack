@@ -1,6 +1,6 @@
 ---
 id: PLAN-CE-LIFECYCLE-V3-WU-ECONOMICS
-status: PROPOSED (one Owner answer: A / B / C)
+status: APPROVED option A (Owner "A" 2026-10-09) -- v3 lineage, HR-001 authority for the S1 live install, extension up to 2.5M
 extends: ce-lifecycle-v2 continuation plan (b5f441b6, APPROVED) -- B1..B6 are kept, re-sequenced below
 covers: [goal-poison-recovery, live-install-binding-l1, estimator-context-growth, three-miss-invalidation, predictive-lease-edge, closeout-reserve, certified-closeout-transaction, proof-below-model, exe-resolver, residual-fallback-receipt, wu-adv2-immunity-canary, lifecycle-chain]
 author: coordinator 3339c6c2 (unbound, cwd claude-power-pack)
