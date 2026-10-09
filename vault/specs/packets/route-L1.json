@@ -1,0 +1,1 @@
+{"envelope":{"target":1300000,"warn":1700000,"stop":2200000,"calls":45},"workers":[{"name":"gsdx-factory-L1","profile":"slim-t2","calls":28,"packet":6000}]}

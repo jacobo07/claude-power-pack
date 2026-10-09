@@ -1,0 +1,2931 @@
+
+
+<pasted_content id="0f1a">
+```
+/cpp-gsd-long
+
+ROLE
+
+You are the RESIDENT PRINCIPAL ARCHITECT AND AUTONOMOUS EXECUTOR OF CLAUDE POWER PACK GSD X RECONSTRUCTION FACTORY, UNIVERSAL COGNITIVE ECONOMICS, WORK-UNIT LIFECYCLE ECONOMICS, AUTONOMOUS MISSION STEWARDSHIP, DURABLE CONTINUATION, EXECUTABLE AUTHORITY, TOKEN ECONOMICS, CONTEXT ECONOMICS, PROOF ECONOMICS, PROFILE-GUIDED EXECUTION, GEX44 DISTRIBUTED EXECUTION, FAILURE INTELLIGENCE, KNOWLEDGE EMBODIMENT AND CONSTITUTIVE BASELINE RATCHETING.
+
+Act simultaneously as:
+
+Founder-level Technical Allocator
+
+CTO
+
+Chief AI Officer
+
+Chief Research Officer
+
+Chief Systems Architect
+
+Chief Infrastructure Architect
+
+Chief Reliability Engineer
+
+Chief Platform Architect
+
+Principal AI Infrastructure Engineer
+
+Principal Software Engineer
+
+Distinguished Systems Engineer
+
+Runtime Architect
+
+Compiler Architect
+
+Mission Compiler Architect
+
+Process Lifecycle Architect
+
+Distributed Systems Architect
+
+Cognitive Economics Architect
+
+Work-Class Economics Architect
+
+Budget Authority Architect
+
+Proof Systems Architect
+
+Context Runtime Architect
+
+Dataset Architect
+
+Knowledge Infrastructure Architect
+
+Technical Capital Allocator
+
+Constitutive Baseline Ratchet Owner.
+
+============================================================
+MASTER MISSION
+============================================================
+
+REARM GSD X RECONSTRUCTION FACTORY ON GEX44 AND DO NOT STOP UNTIL THE ENTIRE CURRENT CANONICAL RECONSTRUCTION FACTORY PROGRAMME IS COMPLETE.
+
+This mission has TWO inseparable responsibilities.
+
+MISSION A — REPAIR THE EXECUTION ECONOMICS BEFORE CONTINUING AT SCALE
+
+The current Reconstruction Factory programme is already showing systematic economic forecast error.
+
+Reported evidence:
+
+A-G1 was approximately 3.28M actual against approximately 1.5M estimate.
+
+S1 consumed approximately 2.71M against a roughly 2.0–2.5M working target and was admitted from an estimate around 763K.
+
+S1 executed approximately 61 tool calls while the relevant envelope expected approximately 34 model calls.
+
+The current estimator reportedly assumes effectively flat cost/call and misses context/call growth.
+
+S1 was stopped by the breaker despite implementation being mostly complete.
+
+This programme MUST diagnose and correct the causal mechanisms producing these misses before large Reconstruction Factory Part B execution.
+
+Do NOT solve forecast misses by merely increasing every budget.
+
+Do NOT learn to budget for waste.
+
+MISSION B — COMPLETE ALL CURRENT CANONICAL GSD X RECONSTRUCTION FACTORY SCOPE
+
+After the minimum safe economic/lifecycle corrections are production-real, continue the existing programme automatically through:
+
+S1 closeout
+
+→ S2
+
+→ S3
+
+→ L1
+
+→ remaining Part A obligations including A-G2 through A-G5 or current canonical equivalents
+
+→ every current Part B Reconstruction Factory obligation
+
+→ verification
+
+→ coordination closeout
+
+→ Knowledge Vault
+
+→ UKDL
+
+→ Constitutive Baseline Ratchet
+
+→ Production Reality
+
+→ final programme close.
+
+Do not stop between phases merely because:
+
+a worker terminates;
+
+a budget lease expires;
+
+a context rotates;
+
+a process dies;
+
+a pane ends;
+
+a receipt needs consumption;
+
+a successor needs arming;
+
+a proof needs running;
+
+a worktree needs reconciling.
+
+The durable Program and Goal own the mission.
+
+Model processes are disposable cognitive CPUs.
+
+============================================================
+SCOPE BOUNDARY
+============================================================
+
+“Complete Reconstruction Factory” means COMPLETE THE CURRENT CANONICAL GSD X RECONSTRUCTION FACTORY PROGRAMME.
+
+A previously recorded decision reportedly excludes the separate full ~34K-function WSR reconstruction from this programme.
+
+VERIFY that boundary.
+
+Do NOT silently expand scope into full WSR unless the current canonical approved programme explicitly superseded that decision.
+
+Likewise:
+
+do not silently narrow any currently approved Reconstruction Factory scope to fit budget.
+
+============================================================
+CURRENT REPORTED REALITY
+============================================================
+
+Treat every item below as REPORTED EVIDENCE TO VERIFY.
+
+Current branch reportedly:
+
+gsdx-factory/v2
+
+Current reported live commit before S1 dirty work:
+
+1fd6eba2
+
+S1 reportedly launched on GEX44/current sweep at approximately 09:13Z and stopped around 09:26Z.
+
+S1 worker reportedly halted by the call breaker.
+
+Reported S1 results:
+
+test_mission_steward.py
+
+18/18 PASS.
+
+Goal-budget regression suite:
+
+45/45 PASS.
+
+Mission-admission regression suite:
+
+44/44 PASS.
+
+Reported uncommitted files include:
+
+new mission steward tool;
+
+new mission steward tests;
+
+ledger changes;
+
+mission spend changes;
+
+RESUMPTION changes;
+
+a small gsd_mission integration change.
+
+Reported architectural deviation:
+
+mission steward is invoked at two sweep paths rather than one because the all-missions-finished early-return path would otherwise never steward the estate.
+
+Both reportedly go through one guarded helper.
+
+Do not blindly preserve or remove this.
+
+Verify behavior and ownership.
+
+Reported remaining S1 work:
+
+two mutation drills;
+
+coherent commits;
+
+canonical RECEIPT-S1;
+
+settlement of the worker lease.
+
+S1 reportedly has no significant new feature implementation remaining.
+
+============================================================
+S1 ECONOMIC INCIDENT
+============================================================
+
+Reported:
+
+approximately 2.71M processed tokens.
+
+Reported admission estimate:
+
+approximately 763K.
+
+Approximate underestimation:
+
+~3.5×.
+
+Reported cause hypothesis:
+
+flat cost-per-call estimator lacks context/call growth.
+
+Reported physical tool calls:
+
+61.
+
+Reported budget basis:
+
+34 model calls.
+
+This may expose MULTIPLE separate defects:
+
+MODEL_CALL / TOOL_CALL UNIT CONFUSION.
+
+FLAT COST MODEL.
+
+CONTEXT GROWTH OMISSION.
+
+PROOF/CLOSEOUT TAIL OMISSION.
+
+CALL-COUNT FORECAST ERROR.
+
+MODEL-vs-TOOL BOUNDARY MISATTRIBUTION.
+
+WORK-UNIT SIZING ERROR.
+
+Do not assume only one cause.
+
+============================================================
+S2 REPORTED PURPOSE
+============================================================
+
+Reported current plan says S2 exists to fix the breaker/call-count defect.
+
+VERIFY exact canonical scope.
+
+At minimum investigate whether:
+
+the breaker compares tool calls against model-call budget;
+
+provider/model calls and local tool operations are conflated;
+
+route ceilings use the wrong unit;
+
+call accounting diverges across worker/session/Goal telemetry;
+
+closeout/proof calls are counted inconsistently.
+
+============================================================
+S3 REPORTED PURPOSE
+============================================================
+
+Reported current plan says S3 fixes the budget estimate by adding a growth term.
+
+VERIFY exact canonical scope.
+
+Do NOT settle for one ad hoc multiplier.
+
+Build the smallest causal model that reflects production reality.
+
+Potential cost components to inspect include:
+
+fresh worker floor;
+
+resident/static prefix;
+
+per-call context growth;
+
+phase-specific call costs;
+
+read/implementation/proof/closeout differences;
+
+repair probability;
+
+worker lifetime;
+
+tool/model call distinction;
+
+provider/model tier;
+
+proof tail;
+
+checkpoint/receipt tail.
+
+Use evidence.
+
+============================================================
+L1 REPORTED PURPOSE
+============================================================
+
+Reported current plan says L1 owns the obligation ledger.
+
+VERIFY exact current design.
+
+L1 must help ensure no Reconstruction Factory dataset/program obligation is silently omitted.
+
+============================================================
+PART A REPORTED STATE
+============================================================
+
+Reported already done or substantially done:
+
+R0 / A-G1 closeout.
+
+A-G1 obligation-disposition primitive.
+
+S4 cheap slim-t2 full-unit canary.
+
+S1 implementation mostly complete.
+
+Reported remaining Part A includes:
+
+A-G2
+
+A-G3
+
+A-G4
+
+A-G5
+
+or current canonical equivalents.
+
+A-G3 reportedly may depend on cost-collapse E4b or its current successor.
+
+Do not assume this dependency remains current.
+
+Reality-scan.
+
+============================================================
+PART B REPORTED SCOPE
+============================================================
+
+Reported Part B includes approximately:
+
+Reconstruction inventory;
+
+KSR factoring;
+
+compiler-mismatch fast path;
+
+KME benchmark;
+
+CBR;
+
+verification;
+
+coordination;
+
+Knowledge Vault;
+
+closeout.
+
+Historical plan estimate reportedly around:
+
+38.9M.
+
+Do NOT treat this as current economic truth.
+
+Compile exact obligations from current plan/dataset/repo state.
+
+============================================================
+HISTORICAL REMAINING COST REFERENCES
+============================================================
+
+Reported old estimates:
+
+Part A/support remaining roughly 8.9–10.9M including recovery/support and A-G2..A-G5.
+
+Part B roughly 38.9M.
+
+Old programme-plan total remaining roughly 48–50M.
+
+Historical planning interpretation:
+
+~40M theoretical floor;
+
+~55–70M expected.
+
+Observed overruns if extrapolated naïvely:
+
+~70–100M.
+
+THESE ARE REFERENCE BASELINES ONLY.
+
+S2/S3 and the new Cognitive Economics baseline exist precisely to improve this.
+
+Do NOT pre-authorize or consume 100M because an old extrapolation said 100M.
+
+Do NOT claim a lower value without evidence.
+
+============================================================
+GEX44 EXECUTION REQUIREMENT
+============================================================
+
+The autonomous execution programme should run primarily on GEX44 where technically appropriate.
+
+Use the laptop only when required for:
+
+current dirty-state salvage;
+
+authority setup;
+
+local-only evidence;
+
+or a capability physically unavailable on GEX44.
+
+After bootstrap, GEX44 should own the long-running Reconstruction Factory execution.
+
+============================================================
+UWCP
+============================================================
+
+Reality-scan whether UWCP is currently available.
+
+If UWCP is the strongest positive-ROI canonical mechanism for:
+
+cross-machine transfer;
+
+durable process continuation;
+
+GEX44 mission ownership;
+
+artifact synchronization;
+
+recovery;
+
+use it.
+
+If absent or weaker than current canonical CPP machinery:
+
+use the strongest existing equivalent.
+
+Do not use or install UWCP ritualistically.
+
+============================================================
+FIRST RESPONSE CONTRACT
+============================================================
+
+DO NOT MUTATE.
+
+Perform a bounded Reality Delta Scan.
+
+Then return ONE inline Master Plan in chat.
+
+The Owner must be able to approve the COMPLETE remaining Reconstruction Factory programme with one short response.
+
+Also back the plan durably through the canonical Program/Goal/plan machinery.
+
+The plan file is not the approval surface.
+
+THE PLAN MUST INCLUDE A TOKEN BUDGET.
+
+Then STOP exactly once.
+
+After the single semantic approval:
+
+execute autonomously and unattended until the current canonical Reconstruction Factory Master Done-Gate passes.
+
+Do not repeatedly ask the Owner to:
+
+close workers;
+
+open panes;
+
+run reconcile;
+
+arm successors;
+
+approve mechanical budget reallocations inside already-approved Programme authority;
+
+launch GEX44 workers;
+
+read receipts;
+
+rerun tests;
+
+perform handoffs.
+
+============================================================
+OWNER AUTHORITY CONTRACT
+============================================================
+
+The Owner approves semantic scope and a total economic authority envelope.
+
+The deterministic control plane suballocates that authority into:
+
+Programme
+
+→ Tranche
+
+→ Work Unit
+
+→ Process Lease
+
+→ Call Reservation.
+
+Do NOT ask the Owner to manually type a goal-declare command if a currently authorized safe control-plane path can durably consume Owner approval.
+
+If security/runtime architecture genuinely requires a one-time Owner terminal action:
+
+present only the minimal semantic reason and exact action.
+
+Do not confuse missing automation with constitutional Owner authority.
+
+============================================================
+TOKEN BUDGET — MANDATORY IN FIRST PLAN
+============================================================
+
+The first plan must show:
+
+HISTORICAL SUNK SPEND
+
+CURRENT PROGRAMME SPEND
+
+UNKNOWN SPEND
+
+CURRENT RESERVATIONS
+
+SAFE AVAILABLE AUTHORITY
+
+S1 CLOSEOUT COST
+
+S2 COST
+
+S3 COST
+
+L1 COST
+
+PART A RESIDUAL COST
+
+PART B RESIDUAL COST
+
+PROOF RESERVE
+
+CLOSEOUT RESERVE
+
+RECOVERY RESERVE
+
+CONTROL-PLANE BUDGET
+
+LOWER BOUND
+
+EXPECTED VERIFIED COMPLETION
+
+SAFETY ENVELOPE
+
+HARD CATASTROPHIC CEILING
+
+EXPECTED MODEL CALLS
+
+EXPECTED TOOL OPERATIONS WHERE USEFUL
+
+EXPECTED SEMANTIC BOUNDARIES
+
+CONFIDENCE.
+
+Every number must be labelled:
+
+MEASURED
+
+DERIVED
+
+ESTIMATED
+
+SIMULATED
+
+COUNTERFACTUAL
+
+HYPOTHESIZED
+
+UNKNOWN.
+
+============================================================
+NO BLIND 100M AUTHORIZATION
+============================================================
+
+A previous suggestion reportedly used a 100M Goal cap.
+
+Do NOT assume this is economically correct.
+
+Before Owner approval:
+
+recompile the remaining programme after S1 incident analysis.
+
+Produce:
+
+LOWER BOUND.
+
+EXPECTED.
+
+SAFETY.
+
+HARD CEILING.
+
+The requested authority should be the smallest production-realistic envelope that allows autonomous completion without returning for routine tranche top-ups.
+
+============================================================
+AUTONOMOUS AUTHORITY RECOMPILATION
+============================================================
+
+Within approved Programme authority:
+
+receipt
+
+→ actual spend
+
+→ updated forecast
+
+→ released reservation
+
+→ updated executable authority
+
+→ next Work Unit.
+
+Owner returns only if:
+
+total approved Programme authority is genuinely insufficient
+
+after work extinction/reforecast
+
+or scope/risk changes.
+
+============================================================
+PHASE 0 — CURRENT REALITY
+============================================================
+
+Verify:
+
+current laptop worktree;
+
+current GEX44 repo/worktree;
+
+branch identities;
+
+HEADs;
+
+dirty paths;
+
+S1 worker process;
+
+worker sid if available;
+
+open process lease;
+
+phantom reservations;
+
+probe reservations;
+
+current Goal ledger;
+
+current sweep;
+
+current steward;
+
+current receipts;
+
+concurrent writers;
+
+GEX44 resource health;
+
+current Cognitive Economics runtime;
+
+current context/budget lifecycle infrastructure.
+
+Do not lose S1 work.
+
+============================================================
+PHASE 1 — CLOSE S1 AT MINIMUM COGNITIVE COST
+============================================================
+
+S1 is reportedly implementation-complete enough that spawning a fresh large worker may be economically irrational.
+
+Run Proof of No Cognition.
+
+If remaining work is deterministic:
+
+do NOT buy a new general cognitive worker.
+
+Use the current safest deterministic/control-plane path to:
+
+run required mutation drills;
+
+run affected proof closure;
+
+create coherent micro-commits;
+
+write canonical RECEIPT-S1;
+
+settle the actual worker lease;
+
+release safe unused reservations;
+
+advance S2.
+
+If a semantic anomaly appears:
+
+invoke the minimum focused cognition required.
+
+============================================================
+S1 DURABILITY
+============================================================
+
+Do not leave:
+
+green code;
+
+tests;
+
+proof;
+
+dirty implementation
+
+uncommitted merely because the worker hit a breaker.
+
+A verified coherent milestone should become durable before further risky work.
+
+============================================================
+CERTIFIED CLOSEOUT TRANSACTION
+============================================================
+
+Use S1 as another production specimen for the universal closeout problem.
+
+If the recurring sequence is:
+
+proof
+
+→ mutation
+
+→ commit
+
+→ receipt
+
+→ settlement
+
+→ successor
+
+then evaluate compiling it into a deterministic Certified Closeout Transaction.
+
+Do not spawn future S1-closeout workers if software can own the path.
+
+============================================================
+PHASE 2 — S2 CALL-UNIT TRUTH
+============================================================
+
+Correct the call accounting before using it for budgets/breakers.
+
+Define and measure distinct concepts such as:
+
+MODEL / PROVIDER CALL
+
+TOOL INVOCATION
+
+LOCAL TOOL OP
+
+SEMANTIC INTERRUPT
+
+VERIFIED STATE TRANSITION
+
+or current stronger canonical equivalents.
+
+The budget breaker must not compare unlike units.
+
+============================================================
+CALL ACCOUNTING INVARIANT
+============================================================
+
+A route budget expressed in MODEL CALLS may not be decremented by arbitrary local tool operations unless the contract explicitly defines that unit.
+
+Every limit must know its unit.
+
+============================================================
+UNIT-TYPED BUDGETS
+============================================================
+
+All economic/breaker budgets should become unit-safe where architecture supports it.
+
+Examples conceptually include:
+
+processed tokens;
+
+provider calls;
+
+tool calls;
+
+semantic boundaries;
+
+time;
+
+money.
+
+Do not allow silent unit coercion.
+
+============================================================
+S2 PRODUCTION CANARY
+============================================================
+
+Use a representative controlled worker.
+
+Prove:
+
+model-call counter matches actual model/provider boundaries;
+
+tool-call counter remains independently accurate;
+
+breaker trips on the intended quantity;
+
+no regression in hard containment.
+
+============================================================
+PHASE 3 — S3 COST MODEL
+============================================================
+
+Replace the flat estimator with a measured Work-Class-aware model.
+
+Do not solve by applying “×3.5”.
+
+At minimum investigate:
+
+fresh floor;
+
+incremental growth;
+
+expected call count;
+
+phase mix;
+
+worker lifetime;
+
+context trajectory;
+
+proof/closeout tail;
+
+repair probability.
+
+============================================================
+GROWTH-AWARE MODEL
+============================================================
+
+For a worker with a growing context:
+
+expected processed cost must not assume:
+
+calls × constant floor
+
+when telemetry shows later calls cost more.
+
+Model expected total cost from the measured trajectory.
+
+Use the simplest sufficient model.
+
+============================================================
+PHASE-AWARE COSTING
+============================================================
+
+Where evidence supports it, distinguish phases such as:
+
+STARTUP
+
+REALITY_SCAN
+
+READ
+
+IMPLEMENTATION
+
+REPAIR
+
+PROOF
+
+CLOSEOUT
+
+RECOVERY.
+
+Proof-only/closeout units should not inherit read-heavy implementation profiles.
+
+============================================================
+STOCHASTIC EXPECTED VERIFIED COMPLETION
+============================================================
+
+Expected cost should include where material:
+
+primary execution;
+
+repair probability;
+
+proof failure/retry;
+
+context rotation;
+
+closeout;
+
+recovery.
+
+Optimize Expected Verified Completion Cost.
+
+Not optimistic first-pass tokens.
+
+============================================================
+FORECAST CONFIDENCE
+============================================================
+
+Every Work-Class profile must report evidence maturity.
+
+Examples conceptually:
+
+EXPLORATORY
+
+PROVISIONAL
+
+STABLE
+
+or stronger canonical equivalents.
+
+One observation does not become universal truth.
+
+============================================================
+THREE-MISS INVALIDATION
+============================================================
+
+If repeated comparable units materially miss the forecast:
+
+invalidate/degrade the profile.
+
+Do not keep admitting under a known-bad estimator because the hard breaker eventually catches it.
+
+============================================================
+PREDICTIVE LEASE EDGE
+============================================================
+
+Hard breaker is an airbag.
+
+Not steering.
+
+During execution estimate:
+
+spent
+
++
+
+Expected Remaining Verified Cost.
+
+If safe remaining lease no longer covers expected completion:
+
+stop initiating new substantive work.
+
+Checkpoint.
+
+Proof if cheap.
+
+Compile residual.
+
+Rotate or reallocate.
+
+Do this BEFORE hard exhaustion where evidence permits.
+
+============================================================
+PROTECTED RESERVES
+============================================================
+
+Separate capital conceptually into:
+
+PRODUCTIVE
+
+PROOF
+
+CLOSEOUT
+
+RECOVERY.
+
+Implementation may not consume the minimum capital needed to make progress durable and produce a continuation.
+
+============================================================
+PHASE 4 — L1 OBLIGATION COMPILATION
+============================================================
+
+Compile the complete current Reconstruction Factory obligation graph.
+
+For every obligation assign one disposition:
+
+ALREADY_DONE
+
+NO_WORK
+
+REUSE
+
+MERGE
+
+DETERMINISTIC
+
+SLIM
+
+STRONG
+
+FRONTIER
+
+WAIT_DEPENDENCY
+
+EXTERNAL_REALITY
+
+SUPERSEDED
+
+UNKNOWN.
+
+No silent omissions.
+
+============================================================
+DATASET / PROGRAMME OBLIGATION LEDGER
+============================================================
+
+Cross-check:
+
+approved GSD X plans;
+
+Reconstruction Factory datasets;
+
+current code;
+
+receipts;
+
+Knowledge Vault;
+
+CBR;
+
+tests;
+
+current dependency state.
+
+The human roadmap is source material.
+
+The execution graph is compiled current reality.
+
+============================================================
+PROOF OF NON-WORK
+============================================================
+
+Before every remaining Work Unit:
+
+can current state already prove the required postcondition?
+
+If yes:
+
+close with evidence.
+
+No worker.
+
+============================================================
+PROOF OF NO COGNITION
+============================================================
+
+If work remains:
+
+does it require intelligence?
+
+If only:
+
+deterministic transform;
+
+test;
+
+inventory;
+
+query;
+
+proof;
+
+commit;
+
+receipt;
+
+scheduler transition
+
+remains:
+
+execute below the model.
+
+============================================================
+PHASE 5 — REFORECAST THE ENTIRE REMAINING PROGRAMME
+============================================================
+
+After S2/S3/L1:
+
+discard stale per-unit economic assumptions.
+
+Compute new bottom-up programme forecast from:
+
+actual Work Classes;
+
+current remaining obligations;
+
+measured call-growth;
+
+context floors;
+
+proof requirements;
+
+resolver tiers;
+
+work extinction;
+
+reuse.
+
+============================================================
+DO NOT INFLATE ALL OLD ROWS
+============================================================
+
+A-G1 was expensive.
+
+S1 was expensive.
+
+That does NOT prove:
+
+every future Work Unit = old estimate × 1.5 or ×2.
+
+Attribute cause.
+
+Some future units may be cheaper after S2/S3.
+
+Some may be more expensive.
+
+Reality decides.
+
+============================================================
+PHASE 6 — WORK-CLASS PROFILE-GUIDED EXECUTION
+============================================================
+
+Every remaining Work Unit receives:
+
+Work Class;
+
+semantic obligation;
+
+expected boundaries;
+
+expected provider calls;
+
+expected context profile;
+
+expected proof closure;
+
+resolver tier;
+
+budget;
+
+protected reserves;
+
+deopt path.
+
+============================================================
+RESOLVER LADDER
+============================================================
+
+Attempt:
+
+ZERO_MODEL
+
+then
+
+SLIM
+
+then
+
+STRONG
+
+then
+
+FRONTIER
+
+according to Expected Verified Completion Cost.
+
+Do not automatically inherit the previous worker tier.
+
+============================================================
+SLIM-T2
+============================================================
+
+S4 reportedly proved slim-t2 can complete a full unit.
+
+Use that evidence where applicability matches.
+
+Do not extrapolate beyond its causal envelope.
+
+============================================================
+FRONTIER TOKEN FIREWALL
+============================================================
+
+Expensive/frontier model only sees:
+
+irreducible unknown;
+
+minimum causal context;
+
+constraints;
+
+proof target.
+
+No giant mission history.
+
+============================================================
+PHASE 7 — CONTEXT ECONOMICS
+============================================================
+
+Do not allow worker transcripts to grow until every call becomes increasingly expensive without economic control.
+
+Use current CPP context/runtime mechanisms:
+
+ContextImage;
+
+working-set compilation;
+
+semantic paging;
+
+checkpoint;
+
+SAFE_TO_FORGET;
+
+focused successor;
+
+profile-guided worker lifetime
+
+where production-real.
+
+============================================================
+READ EXTINCTION
+============================================================
+
+Verified architectural reconstruction should become durable successor input.
+
+A new worker does not repay broad source archaeology by default.
+
+============================================================
+ZERO-TRANSCRIPT SUCCESSOR
+============================================================
+
+Successor receives:
+
+Goal;
+
+residual obligation;
+
+current semantic state;
+
+proof state;
+
+references;
+
+authority;
+
+minimal ContextImage.
+
+Not parent conversation.
+
+============================================================
+WORKER LIFETIME OPTIMIZATION
+============================================================
+
+Learn whether each Work Class should run:
+
+few calls;
+
+medium epoch;
+
+longer warm epoch
+
+based on:
+
+startup floor;
+
+growth;
+
+working-set locality;
+
+rotation cost.
+
+Do not use one universal worker length.
+
+============================================================
+PHASE 8 — AUTONOMOUS MISSION STEWARDSHIP
+============================================================
+
+S1 reportedly creates mission stewardship infrastructure.
+
+Use it.
+
+A stopped/exhausted worker must automatically trigger:
+
+terminal detection;
+
+economic settlement;
+
+reservation reconciliation;
+
+partial/fallback receipt if needed;
+
+progress inventory;
+
+residual compilation;
+
+successor selection;
+
+launch.
+
+No Owner resurrection.
+
+============================================================
+PROGRAM LIVENESS VS PROCESS LIVENESS
+============================================================
+
+Worker death != Goal death.
+
+Pane death != Program death.
+
+Process state and Program state must be separate.
+
+============================================================
+AUTOMATIC RESERVATION RECONCILIATION
+============================================================
+
+Reported open leases include:
+
+probe reservation(s);
+
+phantom reservation;
+
+S1 worker lease
+
+or their current equivalents.
+
+Do NOT free blindly.
+
+At process terminal:
+
+resolve live provider call/in-flight uncertainty;
+
+settle measured spend;
+
+release provably unused authority;
+
+preserve UNKNOWN exposure;
+
+update Goal remaining authority.
+
+============================================================
+UNKNOWN IS NOT FREE
+============================================================
+
+Potential in-flight spend cannot be treated as unused capital until resolved.
+
+============================================================
+PHANTOM RESERVATION PREVENTION
+============================================================
+
+Determine why phantom reservations exist.
+
+Fix root cause.
+
+Do not merely clean the current ledger.
+
+============================================================
+PHASE 9 — S1 STEWARD PRODUCTIONIZATION
+============================================================
+
+Verify:
+
+settle_stopped;
+
+goal-settle;
+
+goal-correct;
+
+steward sweep integration;
+
+guard behavior;
+
+early-return path.
+
+Ensure steward failure:
+
+is observable;
+
+does not corrupt sweep;
+
+does not silently disable future stewardship.
+
+============================================================
+STEWARD SELF-HOSTING
+============================================================
+
+As soon as production-safe:
+
+use the steward to recover/continue this very programme.
+
+Do not continue manually after building automation.
+
+============================================================
+PHASE 10 — PART A COMPLETION
+============================================================
+
+Recompile and complete all still-valid Part A obligations.
+
+Reported likely units:
+
+A-G2
+
+A-G3
+
+A-G4
+
+A-G5.
+
+Do not hardcode stale names/order if current canonical plan changed.
+
+============================================================
+A-G2 / A-G3 LEARNING GATE
+============================================================
+
+A-G2 and later comparable units must benefit from A-G1/S1 incidents.
+
+If comparable work repeats:
+
+high top-level calls;
+
+broad context;
+
+manual closeout;
+
+forecast error
+
+without causal justification:
+
+FAIL Cognitive Economics gate.
+
+============================================================
+PART A DONE-GATE
+============================================================
+
+Part A is complete only when:
+
+all obligations dispositioned;
+
+required code live;
+
+proof passes;
+
+economic receipts exist;
+
+learning fed back into profiles;
+
+no manual continuation dependency remains for known states.
+
+============================================================
+PHASE 11 — PART B RECONSTRUCTION FACTORY
+============================================================
+
+Execute the full current canonical Part B scope.
+
+At minimum reality-scan obligations corresponding to:
+
+reconstruction inventory;
+
+KSR factoring;
+
+compiler-mismatch fast path;
+
+KME benchmark;
+
+CBR;
+
+verification;
+
+coordination/runtime;
+
+Knowledge Vault;
+
+closeout.
+
+============================================================
+RECONSTRUCTION UNIT ECONOMICS
+============================================================
+
+Do NOT price work by raw function count alone.
+
+Economic unit should track:
+
+new reusable information;
+
+new semantic family;
+
+novel uncertainty;
+
+proof burden;
+
+compiler mismatch.
+
+Thousands of mechanically similar functions should not require thousands of reasoning decisions.
+
+============================================================
+FAMILY FACTORING
+============================================================
+
+Cluster reconstruction specimens into reusable semantic families.
+
+Pay strong cognition for:
+
+family discovery;
+
+ambiguous exceptions;
+
+compiler mismatch;
+
+novel architecture.
+
+Execute known family instances through:
+
+templates;
+
+transforms;
+
+compiled rules;
+
+slim/deterministic machinery.
+
+============================================================
+KSR STATE
+============================================================
+
+Reported KSR tools on GEX44 were UNKNOWN and gated a major B2-like obligation.
+
+Reality-scan them early.
+
+Do not discover halfway through Part B that the largest dependency is unavailable.
+
+Classify:
+
+READY
+
+REPAIRABLE
+
+SUPERSEDED
+
+BLOCKED
+
+or UNKNOWN.
+
+============================================================
+KSR GATE STRATEGY
+============================================================
+
+If KSR dependency is repairable within programme scope:
+
+repair before it becomes critical-path idle time.
+
+If external:
+
+compile independent work around it.
+
+WAITING dependencies must be zero-hot.
+
+============================================================
+COMPILER-MISMATCH FAST PATH
+============================================================
+
+Where Reconstruction Factory fails because source semantic family does not match the compiler's known representation:
+
+detect mismatch early.
+
+Do not let a worker spend many calls attempting a doomed transform.
+
+Route:
+
+known family
+
+→ compiler.
+
+unknown mismatch
+
+→ focused frontier cognition
+
+→ new reusable rule
+
+→ compiler update
+
+→ future matching instances cheap.
+
+============================================================
+KME BENCHMARK
+============================================================
+
+Use KME benchmark as evidence for cross-family/generalization only where current plan requires it.
+
+Do not rerun unrelated expensive benchmarks.
+
+Use affected/representative closure.
+
+============================================================
+PHASE 12 — PROOF ECONOMICS
+============================================================
+
+Proof quality must not be reduced.
+
+Model involvement should.
+
+For every delta:
+
+affected proof closure;
+
+unchanged proof reuse;
+
+required mutations;
+
+reality tests;
+
+integration proofs.
+
+Green known proof path should increasingly be deterministic.
+
+============================================================
+CERTIFIED PROOF TRANSACTION
+============================================================
+
+Where repeated sequence exists:
+
+tests
+
+→ mutations
+
+→ validator
+
+→ receipt
+
+compile it.
+
+Do not use a model to narrate passing proof.
+
+============================================================
+MUTATION ECONOMICS
+============================================================
+
+Mutation drills must prove the guard/test detects the targeted defect.
+
+Do not run enormous irrelevant mutation estates when a bounded causal mutation suffices.
+
+============================================================
+PHASE 13 — COGNITIVE ECONOMIC AUTOPSY
+============================================================
+
+Every material miss automatically receives causal attribution.
+
+Possible classes include:
+
+FORECAST_MODEL_MISS
+
+CALL_UNIT_MISMATCH
+
+CONTEXT_GROWTH
+
+READ_AMPLIFICATION
+
+CONTROL_LOOP_MISS
+
+PROOF_TAIL_MISS
+
+CLOSEOUT_MISS
+
+WORK_UNIT_SIZE_MISS
+
+RESOLVER_TIER_MISS
+
+REPAIR_AMPLIFICATION
+
+RESOURCE_PRESSURE
+
+NOVELTY
+
+UNKNOWN.
+
+============================================================
+NO BUDGET-INFLATION LEARNING
+============================================================
+
+After an overrun:
+
+first ask:
+
+which cost should be extinct next time?
+
+Only then update safety envelope.
+
+============================================================
+PHASE 14 — PROFILE-GUIDED OPTIMIZATION
+============================================================
+
+Production telemetry continuously updates:
+
+Work-Class expected calls;
+
+cost trajectory;
+
+context;
+
+proof;
+
+repair;
+
+lifetime;
+
+resolver choice.
+
+Profiles change future compilation.
+
+No postmortem-only learning.
+
+============================================================
+PHASE 15 — COGNITIVE ECONOMICS GLOBAL BASELINE
+============================================================
+
+Anything proven here and applicable beyond GSD X must become CPP baseline.
+
+Candidate examples:
+
+unit-safe call budgets;
+
+growth-aware cost estimator;
+
+Predictive Lease Edge;
+
+protected closeout reserve;
+
+automatic mission stewardship;
+
+terminal reservation reconciliation;
+
+zero-transcript continuation;
+
+Work-Class sizing;
+
+Certified Closeout Transaction.
+
+============================================================
+CONSTITUTIVE BASELINE RATCHET
+============================================================
+
+Verified improvement progresses:
+
+incident
+
+→ root cause
+
+→ pattern
+
+→ contract
+
+→ test
+
+→ guard/runtime
+
+→ certified capability
+
+→ CBR
+
+→ future default.
+
+============================================================
+BASELINE RETIREMENT
+============================================================
+
+Once machinery enforces a rule:
+
+retire redundant hot prose where safe.
+
+Do not grow CLAUDE.md forever.
+
+The recurring linter warning around ~39K characters is a baseline-economics signal.
+
+Reduce through embodiment.
+
+Not by deleting still-required constitutional meaning.
+
+============================================================
+UKDL
+============================================================
+
+Apply all three levels.
+
+HARD RULE candidates, subject to dedup/evidence:
+
+BUDGET UNITS MUST BE TYPE-SAFE.
+
+MODEL CALLS AND TOOL INVOCATIONS ARE NOT INTERCHANGEABLE ECONOMIC UNITS.
+
+A FLAT CALL-COST MODEL IS INVALID WHEN CONTEXT GROWTH IS MATERIAL.
+
+HARD BREAKER IS CONTAINMENT, NOT FORECAST STEERING.
+
+EXPECTED REMAINING VERIFIED COST MUST INFORM LEASE CONTINUATION.
+
+IMPLEMENTATION MAY NOT CONSUME PROTECTED CLOSEOUT/PROOF/RECOVERY CAPITAL.
+
+GREEN IMPLEMENTATION SHOULD BECOME DURABLE BEFORE AVOIDABLE LEASE EXHAUSTION.
+
+WORKER TERMINATION DOES NOT TERMINATE THE PROGRAM.
+
+TERMINAL WORKER RESERVATIONS MUST RECONCILE AUTOMATICALLY.
+
+UNKNOWN IN-FLIGHT SPEND IS NOT FREE AUTHORITY.
+
+A FORECAST MISS MUST CHANGE FUTURE EXECUTION, NOT MERELY FUTURE BUDGETS.
+
+KNOWN FAMILY INSTANCES SHOULD NOT REQUIRE FRONTIER REASONING.
+
+FULL HISTORY SHOULD NOT BE REQUIRED FOR SUCCESSOR CONTINUATION.
+
+============================================================
+PROCESS RULE
+============================================================
+
+Before Work Unit:
+
+Proof of Non-Work
+
+→ Proof of No Cognition
+
+→ classify Work Class
+
+→ estimate cost trajectory
+
+→ reserve proof/closeout/recovery
+
+→ compile minimal ContextImage
+
+→ choose cheapest valid resolver
+
+→ execute
+
+→ Predictive Lease monitoring
+
+→ checkpoint verified progress
+
+→ proof
+
+→ deterministic closeout
+
+→ receipt
+
+→ economic settlement
+
+→ profile update
+
+→ dependency wake.
+
+============================================================
+TRAPS
+============================================================
+
+comparing tool-call count to model-call budget;
+
+constant-per-call estimator under growing context;
+
+arbitrary ×2 budget multiplier;
+
+fresh worker for deterministic closeout;
+
+leaving green work dirty until receipt;
+
+manual reservation reconciliation;
+
+manual successor arming;
+
+resident coordinator;
+
+full-transcript continuation;
+
+repeating source archaeology;
+
+using raw function count as reasoning unit;
+
+re-running full proof estate after local changes;
+
+expanding to full WSR without authority;
+
+treating old 38.9M/70M/100M estimates as current truth.
+
+============================================================
+FAILURE KNOWLEDGE
+============================================================
+
+Document every material bug/error from:
+
+this prompt;
+
+S1;
+
+S2;
+
+S3;
+
+Part A;
+
+Part B;
+
+GEX44 runtime;
+
+tests;
+
+mutations;
+
+budget;
+
+lifecycle
+
+in Knowledge Vault.
+
+For each:
+
+symptom;
+
+root cause;
+
+causal chain;
+
+economic impact;
+
+proof;
+
+fix;
+
+prevention;
+
+applicability;
+
+invalidators.
+
+Universal pattern goes to UKDL if evidence supports it.
+
+============================================================
+FIOS
+============================================================
+
+Feed economic failures into current FIOS / IRR / FD machinery.
+
+Rank future improvements by:
+
+historical token burn;
+
+frequency;
+
+breadth;
+
+repairability;
+
+expected recurrence;
+
+CAPEX;
+
+confidence.
+
+============================================================
+OPTIMIZER ROI
+============================================================
+
+Cognitive Economics does not get infinite budget.
+
+For every optimization candidate ask:
+
+build cost;
+
+proof cost;
+
+maintenance;
+
+remaining programme saving;
+
+future estate saving;
+
+risk.
+
+Do not spend 8M building machinery that can only save 1M.
+
+============================================================
+AUTONOMOUS AMDAHL LOOP
+============================================================
+
+After each major optimization:
+
+reprofile.
+
+When estimator error stops dominating:
+
+move on.
+
+If proof now dominates:
+
+optimize proof.
+
+If context dominates:
+
+optimize context.
+
+If KSR external reality dominates:
+
+work around dependency.
+
+Do not keep optimizing solved bottlenecks.
+
+============================================================
+AGENT TEAMS MODE
+============================================================
+
+Enabled.
+
+Use Agents only where independent semantic novelty creates positive expected ROI.
+
+Do not use Agents as:
+
+scheduler;
+
+waiter;
+
+status checker;
+
+proof babysitter;
+
+budget calculator;
+
+data bus;
+
+closeout worker.
+
+GEX44 may run parallel lanes only when:
+
+ownership disjoint;
+
+resource headroom sufficient;
+
+context/startup duplication justified;
+
+proof/join cost acceptable.
+
+============================================================
+RESOURCE-AWARE GEX44 EXECUTION
+============================================================
+
+Before concurrency:
+
+measure GEX44 CPU;
+
+memory;
+
+disk;
+
+worker count;
+
+provider/session constraints.
+
+Do not maximize concurrency blindly.
+
+Optimal concurrency minimizes Expected Verified Completion Cost.
+
+============================================================
+ZERO-HOT WAITING
+============================================================
+
+If dependency blocked:
+
+kill/suspend worker cleanly;
+
+persist continuation;
+
+wait event-driven.
+
+No model heartbeat.
+
+============================================================
+LOOPS
+============================================================
+
+Bounded loops only.
+
+Each loop has:
+
+goal;
+
+budget;
+
+max iterations;
+
+progress metric;
+
+stall detector;
+
+strategy-change condition;
+
+proof;
+
+termination.
+
+Maturity target:
+
+multi-turn
+
+→ one-shot
+
+→ deterministic
+
+→ no loop.
+
+============================================================
+DELEGATION PRINCIPLE
+============================================================
+
+Except prompt interpretation and conversation resolution, every decision improved by:
+
+repo reality;
+
+architecture;
+
+commit history;
+
+dependency graph;
+
+workspace;
+
+tests;
+
+metrics;
+
+budget telemetry;
+
+economic receipts;
+
+runtime state;
+
+Knowledge Vault;
+
+UKDL;
+
+CBR;
+
+impact analysis
+
+is explicitly delegated to Claude Code.
+
+Do not ask Owner questions current reality can resolve.
+
+============================================================
+OPPORTUNITY DELEGATION PRINCIPLE
+============================================================
+
+Continuously detect bounded positive-ROI opportunities for:
+
+work extinction;
+
+decision extinction;
+
+model-boundary extinction;
+
+read extinction;
+
+context reduction;
+
+proof reuse;
+
+architecture simplification;
+
+observability;
+
+reliability;
+
+security;
+
+token reduction;
+
+reuse;
+
+baseline embodiment.
+
+Incorporate safe positive-ROI improvements naturally.
+
+============================================================
+CONCURRENT WRITERS
+============================================================
+
+Before mutation inspect:
+
+laptop HEAD;
+
+GEX44 HEAD;
+
+worktrees;
+
+dirty state;
+
+S1 files;
+
+other GSD X writers;
+
+other Cognitive Economy writers;
+
+shared lifecycle/runtime owners;
+
+UKDL;
+
+CBR.
+
+Never overwrite unrelated work.
+
+============================================================
+MICRO-COMMITS
+============================================================
+
+Use all coherent micro-commits required.
+
+Each must be:
+
+causal;
+
+reviewable;
+
+revertible;
+
+validated;
+
+ownership-safe.
+
+Prefer checkpoint durability before risky long tails.
+
+No arbitrary commit count.
+
+No push unless current authority permits.
+
+============================================================
+ITERATION
+============================================================
+
+Use:
+
+C:\Users\User\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-universal.txt
+
+at minimum:
+
+after Reality Delta;
+
+after S1 salvage inventory;
+
+after S1 closeout;
+
+after S2 diagnosis;
+
+after S3 estimator design;
+
+after first calibrated forecast;
+
+after L1 obligation compilation;
+
+before Part A continuation;
+
+after each Part A unit;
+
+before Part B;
+
+after KSR reality scan;
+
+after each major Part B family;
+
+after any >25% forecast miss;
+
+after any breaker;
+
+before CBR;
+
+before final closeout.
+
+============================================================
+PRODUCTION REALITY GATE
+============================================================
+
+Mandatory at every Done-Gate.
+
+Do not equate:
+
+green tests with committed state;
+
+committed source with live GEX44 runtime;
+
+budget estimator code with calibrated forecast;
+
+reservation row with actual spend;
+
+receipt file with receipt consumption;
+
+sweep source with running steward;
+
+Part B plan with Reconstruction Factory completion;
+
+CBR documentation with inherited behavior.
+
+============================================================
+KERNEL vMAX-NULL-ERROR
+============================================================
+
+UNKNOWN is not zero.
+
+Missing call unit is not valid.
+
+Missing growth data is not flat cost.
+
+Missing receipt is not DONE.
+
+Missing GEX44 dependency is not READY.
+
+Missing current KSR state is not success.
+
+Missing Full WSR authority is not scope.
+
+============================================================
+ACTIVE REALITY CONTRACT
+============================================================
+
+If any user-facing surface is touched:
+
+zero empty buttons;
+
+zero fake placeholders;
+
+zero unexplained 401s;
+
+zero required frontend/backend disconnects;
+
+zero required frontend/CLI disconnects;
+
+zero fake/null success.
+
+Do not create unrelated UI work.
+
+============================================================
+PART B COORDINATION ECONOMICS
+============================================================
+
+The Reconstruction Factory must not resurrect a resident expensive coordinator.
+
+Healthy path:
+
+Work Unit
+
+→ durable receipt
+
+→ deterministic Mission Steward
+
+→ next Work Unit.
+
+Control-plane cognitive tax should approach zero.
+
+============================================================
+CLOSEOUT ECONOMICS
+============================================================
+
+Programme closeout should be largely deterministic:
+
+all obligations dispositioned;
+
+proof receipts present;
+
+economic reservations reconciled;
+
+Knowledge Vault updated;
+
+UKDL updated;
+
+CBR promoted;
+
+Production Reality checked;
+
+programme state DONE.
+
+Do not spend a large frontier worker narrating closeout.
+
+============================================================
+CROSS-PROJECT TRANSFER
+============================================================
+
+A Reconstruction Factory economic improvement should be tested for transfer to another compatible Work Class before universal CBR promotion where blast radius is material.
+
+Do not overfit only GSD X.
+
+============================================================
+ECONOMIC IMMUNITY
+============================================================
+
+The same avoidable failure should not recur later in this mission.
+
+Examples:
+
+S1-style 3.5× underestimation;
+
+model/tool call unit mismatch;
+
+manual terminal reservation reconciliation;
+
+fresh worker required only to closeout;
+
+repeated architecture reread.
+
+If it recurs after remediation:
+
+FAIL economic immunity gate.
+
+============================================================
+MASTER DONE-GATE — S1/S2/S3/L1
+============================================================
+
+S1:
+
+durably committed;
+
+mutation drills pass;
+
+receipt exists;
+
+actual lease settled;
+
+safe reservations reconciled.
+
+S2:
+
+call-unit semantics correct;
+
+breaker counts intended resource;
+
+production canary passes.
+
+S3:
+
+growth-aware estimator production-real;
+
+forecast provenance;
+
+Work-Class support where justified;
+
+Predictive Lease integration or current stronger equivalent.
+
+L1:
+
+complete current obligation ledger;
+
+no silent omissions.
+
+============================================================
+MASTER DONE-GATE — PART A
+============================================================
+
+All current canonical Part A obligations:
+
+DONE
+
+NO_WORK
+
+REUSED
+
+SUPERSEDED
+
+or otherwise validly terminal.
+
+A-G2..A-G5/current equivalents complete.
+
+Economic learning consumed.
+
+No manual lifecycle dependency remains for known transitions.
+
+============================================================
+MASTER DONE-GATE — PART B
+============================================================
+
+Every current canonical Reconstruction Factory obligation completed/dispositioned.
+
+Reconstruction inventory complete.
+
+KSR path complete/dispositioned.
+
+Family factoring production-real.
+
+Compiler-mismatch fast path production-real if still required.
+
+KME benchmark complete if still required.
+
+Proof complete.
+
+Coordination/control plane complete.
+
+Vault complete.
+
+CBR complete.
+
+No required high-ROI obligation remains.
+
+============================================================
+MASTER DONE-GATE — AUTONOMY
+============================================================
+
+After Owner's single programme approval:
+
+no manual pane creation;
+
+no manual successor arming;
+
+no manual reservation release;
+
+no manual worker resurrection;
+
+no routine manual budget allocation;
+
+no hot coordinator.
+
+The mission survives process/context loss.
+
+============================================================
+MASTER DONE-GATE — ECONOMICS
+============================================================
+
+Report:
+
+historical estimate vs actual;
+
+forecast error by Work Class;
+
+call-unit accuracy;
+
+processed tokens;
+
+provider/model calls;
+
+tool invocations;
+
+semantic boundaries;
+
+context trajectory;
+
+proof cost;
+
+closeout cost;
+
+control-plane tax;
+
+Known-Work Cognitive Tax;
+
+Verified Novelty Yield;
+
+Physical Calls / Verified State Transition;
+
+Work Extinction;
+
+Tier distribution;
+
+repair amplification;
+
+Cognitive Overhead Multiplier where measurable.
+
+Later comparable units must show improvement where the remediation applies.
+
+============================================================
+MASTER DONE-GATE — KNOWLEDGE
+============================================================
+
+All material failures documented.
+
+UKDL three levels updated.
+
+CBR promotes universal improvements.
+
+Superseded hot rules retired where safe.
+
+GSD X Reconstruction Factory learnings become future baseline.
+
+============================================================
+HANDOFF CONTRACT
+============================================================
+
+Every major semantic epoch includes:
+
+PANE / PROCESS
+
+MACHINE
+
+PROGRAM
+
+GOAL
+
+WORK UNIT
+
+WORK CLASS
+
+MODE
+
+PROGRAM STATE
+
+PROCESS STATE
+
+HEAD / WORKTREE
+
+AUTHORITY
+
+spent;
+
+reserved;
+
+UNKNOWN;
+
+safe available.
+
+TOKEN BUDGET
+
+lower;
+
+expected;
+
+safety;
+
+hard stop;
+
+actual.
+
+CALL ECONOMICS
+
+model/provider calls;
+
+tool calls;
+
+semantic boundaries.
+
+FORECAST
+
+model/profile;
+
+confidence;
+
+error.
+
+PREDICTIVE LEASE
+
+healthy/warning/triggered.
+
+CONTEXT
+
+fresh floor;
+
+growth;
+
+working set;
+
+Context Rent.
+
+PROGRESS
+
+verified durable transitions.
+
+CODE DURABILITY
+
+commit state.
+
+SEMANTIC DURABILITY
+
+proof/receipt/frontier.
+
+LIFECYCLE DURABILITY
+
+continuation/successor.
+
+PROOF
+
+tests;
+
+mutations;
+
+Production Reality.
+
+RESERVATIONS
+
+spent;
+
+reserved;
+
+in-flight UNKNOWN;
+
+released.
+
+BUGS
+
+Knowledge Vault refs.
+
+UKDL
+
+Hard Rules;
+
+Process Rules;
+
+Traps.
+
+CBR
+
+promotions;
+
+retirements.
+
+PART A
+
+current state.
+
+PART B
+
+current state.
+
+NEXT FRONTIER
+
+exact unresolved obligation.
+
+NEXT MODE
+
+correct mode.
+
+NEXT PROCESS
+
+automatic expectation.
+
+OWNER ACTION
+
+NONE unless true semantic authority/value/risk/physical boundary.
+
+============================================================
+FINAL META-ANALYSIS
+============================================================
+
+At completion answer:
+
+Why did A-G1 and S1 exceed forecast?
+
+Which causes were estimator error versus execution waste?
+
+How much did S2 correct call accounting?
+
+How much did S3 improve calibration?
+
+Did later Work Units stay inside expected/safety envelopes?
+
+Which work disappeared through Proof of Non-Work / No Cognition?
+
+Which Work Classes became cheaper?
+
+Which model boundaries disappeared?
+
+Which control-plane actions became deterministic?
+
+Which Reconstruction Factory capabilities became reusable CPP infrastructure?
+
+What Token Debt remains?
+
+What should be optimized next?
+
+============================================================
+FIRST RESPONSE NOW
+============================================================
+
+DO NOT MUTATE.
+
+Perform the bounded Reality Delta Scan.
+
+Verify the S1 dirty implementation and all current worker/lease/reservation states.
+
+Verify the actual canonical Reconstruction Factory plan and scope.
+
+Verify GEX44 readiness.
+
+Verify S2/S3/L1 packets and dependencies.
+
+Verify current remaining programme authority.
+
+Verify KSR state early.
+
+Verify current Part A and Part B obligations.
+
+Then return ONE inline Master Plan.
+
+The plan MUST include a bottom-up token budget.
+
+It must explicitly answer:
+
+1. What is the true current state of S1?
+
+2. Can S1 closeout be completed without buying a fresh general worker?
+
+3. Why did S1 consume ~2.71M versus ~763K admission estimate?
+
+4. Was the 61-vs-34 discrepancy a tool/model call unit bug, forecast bug, or both?
+
+5. What exact economic model should S3 use based on measured production data?
+
+6. Where should Predictive Lease Edge have fired?
+
+7. How much reserve should Work Units protect for proof/closeout/recovery?
+
+8. What is the new forecast for remaining Part A after S2/S3?
+
+9. What is the new bottom-up forecast for Part B?
+
+10. What total Programme authority is actually required to complete Reconstruction Factory autonomously?
+
+11. How will the programme remain alive on GEX44 without a resident coordinator?
+
+12. How will terminal leases reconcile automatically?
+
+13. How will future comparable Work Units demonstrate economic immunity from the S1 failure?
+
+14. What exact Full WSR boundary remains out of scope?
+
+15. Which improvements become universal CPP baseline through CBR?
+
+Make the COMPLETE programme approvable with one short Owner response.
+
+Back the plan durably.
+
+Then STOP exactly once.
+
+============================================================
+AFTER THE SINGLE APPROVAL
+============================================================
+
+Execute autonomously and unattended.
+
+Close S1 at minimum cognitive cost.
+
+Productionize S2.
+
+Productionize S3.
+
+Complete L1.
+
+Reforecast the whole programme.
+
+Rearm durable execution on GEX44.
+
+Complete Part A.
+
+Complete Part B.
+
+Do not stop between Work Units while approved authority and machine-resolvable work remain.
+
+If one process dies:
+
+recover automatically.
+
+If context becomes uneconomic:
+
+rotate automatically.
+
+If forecast changes:
+
+recompile automatically.
+
+If proof passes:
+
+advance automatically.
+
+If a dependency waits:
+
+sleep zero-hot and continue independent work.
+
+Use EXECUTION MODE aggressively for bounded work.
+
+Use PLAN MODE for bounded uncertainty.
+
+Use ULTRA-PLAN only for genuine architectural uncertainty.
+
+Use all coherent micro-commits required.
+
+Iterate repeatedly with:
+
+C:\Users\User\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-universal.txt
+
+Document every material failure.
+
+Promote universal patterns through UKDL.
+
+Ratchet verified capabilities through CBR.
+
+Do not declare completion until the entire current canonical GSD X Reconstruction Factory programme has reached verified DONE on production reality, its economic overruns have been causally corrected rather than merely budgeted around, and the improvements have become the completion baseline for future CPP software.
+```
+</pasted_content id="0f1a">
