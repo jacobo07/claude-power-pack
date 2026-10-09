@@ -46,7 +46,7 @@ def main() -> int:
         ok_probe = [{"kind": "file_exists", "path": "present.txt"}]
         bad_probe = [{"kind": "file_exists", "path": "absent.txt"}]
 
-        gate("V-DISPOSE-VOCAB-CLOSED", len(gd.DISPOSITIONS) == 11 and "MAYBE" not in gd.DISPOSITIONS
+        gate("V-DISPOSE-VOCAB-CLOSED", len(gd.DISPOSITIONS) == 13 and "MAYBE" not in gd.DISPOSITIONS
              and set(gd.NEEDS_PROBE) <= set(gd.DISPOSITIONS))
         rc, _, res = run([row("X1", "MAYBE")], tmp)
         gate("V-DISPOSE-VOCAB-RED", rc == 1 and res["obligations"][0]["disposition"] == "UNKNOWN", f"rc={rc}")
@@ -76,6 +76,17 @@ def main() -> int:
         gate("V-DISPOSE-MERGE-BAD-TARGET-RED", rc == 1)
         rc, _, res = run([row("A", "MERGE", ok_probe, merge_into="B"), row("B", "DETERMINISTIC")], tmp)
         gate("V-DISPOSE-MERGE-TARGET-OK", rc == 0 and res["obligations"][0]["merge_into"] == "B", f"rc={rc}")
+
+        rc, _, res = run([row("A", "SUPERSEDED")], tmp)
+        gate("V-DISPOSE-SUPERSEDED-NEEDS-TARGET-RED", rc == 1 and res["obligations"][0]["disposition"] == "UNKNOWN", f"rc={rc}")
+        rc, _, res = run([row("A", "SUPERSEDED", superseded_by="NOPE")], tmp)
+        gate("V-DISPOSE-SUPERSEDED-NEEDS-TARGET-BAD", rc == 1)
+        rc, _, res = run([row("A", "SUPERSEDED", superseded_by="B"), row("B", "DETERMINISTIC")], tmp)
+        gate("V-DISPOSE-SUPERSEDED-NEEDS-TARGET", rc == 0 and res["obligations"][0]["superseded_by"] == "B", f"rc={rc}")
+        rc, _, res = run([row("A", "WAIT_DEPENDENCY")], tmp)
+        gate("V-DISPOSE-WAIT-NEEDS-DEP-RED", rc == 1 and res["obligations"][0]["disposition"] == "UNKNOWN", f"rc={rc}")
+        rc, _, res = run([row("A", "WAIT_DEPENDENCY", depends_on="ce-lifecycle-v3 INST2")], tmp)
+        gate("V-DISPOSE-WAIT-NEEDS-DEP", rc == 0 and res["obligations"][0]["disposition"] == "WAIT_DEPENDENCY", f"rc={rc}")
 
         py = sys.executable
         gate("V-DISPOSE-GREP", gd.run_probe({"kind": "grep", "pattern": "alpha MARKER", "path": "present.txt"}, tmp)["ok"]

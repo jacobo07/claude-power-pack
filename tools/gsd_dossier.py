@@ -184,7 +184,7 @@ def build(args) -> dict:
 # ---------------------------------------------------------------------------------------------
 DISPOSITIONS = ("NO_WORK", "ALREADY_SATISFIED", "REUSE_EXISTING", "MERGE", "DETERMINISTIC",
                 "CERTIFIED_CAPABILITY", "CHEAP_COGNITION", "STRONG_COGNITION", "FRONTIER_COGNITION",
-                "DEFERRED_EXTERNAL", "UNKNOWN")
+                "DEFERRED_EXTERNAL", "SUPERSEDED", "WAIT_DEPENDENCY", "UNKNOWN")
 NEEDS_PROBE = ("NO_WORK", "ALREADY_SATISFIED", "REUSE_EXISTING", "MERGE", "CERTIFIED_CAPABILITY")
 
 
@@ -254,10 +254,21 @@ def dispose(rows: list, expect: list, root: Path) -> dict:
             elif not all(x["ok"] for x in results):
                 errors.append(f"PROBE {oid}: {claimed} failed its probe")
                 final, reason = "UNKNOWN", "; ".join(x["detail"] for x in results if not x["ok"])
+        elif claimed == "SUPERSEDED":
+            tgt = r.get("superseded_by")
+            if not tgt or tgt == oid or tgt not in ids_present:
+                errors.append(f"SUPERSEDED {oid}: superseded_by {tgt!r} is not another row in this file")
+                final, reason = "UNKNOWN", "SUPERSEDED without an existing superseding row"
+        elif claimed == "WAIT_DEPENDENCY":
+            if not r.get("depends_on"):
+                errors.append(f"WAIT {oid}: WAIT_DEPENDENCY without depends_on")
+                final, reason = "UNKNOWN", "WAIT_DEPENDENCY without depends_on"
         elif claimed == "UNKNOWN":
             reason = r.get("reason", "")
         out.append({"id": oid, "block": r.get("block", ""), "claimed": claimed, "disposition": final,
-                    "reason": reason, "merge_into": r.get("merge_into"), "probes": results})
+                    "reason": reason or r.get("reason", ""), "merge_into": r.get("merge_into"),
+                    "superseded_by": r.get("superseded_by"), "depends_on": r.get("depends_on"),
+                    "probes": results})
     counts = {d: sum(1 for o in out if o["disposition"] == d) for d in DISPOSITIONS}
     undisposed = sum(1 for e in errors if e.startswith(("MISSING", "DUPLICATE")))
     return {"obligations": out, "counts": {k: v for k, v in counts.items() if v}, "errors": errors,
