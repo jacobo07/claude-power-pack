@@ -518,6 +518,127 @@ def goal_spawn(goal: str, sid: str, estimate: int | None, per_call: int, host: s
     return _goal_ledger(goal).spawn(sid, estimate, base=max(0, measured))
 
 
+def goal_prebind(goal: str, sid: str, measured: int) -> dict:
+    """Journal op {op:"prebind", sid, measured, goal}: PRE_BINDING_PROGRAM_CAPEX, never goal spend."""
+    if not _SID_RE.match(sid or ""):
+        return {"ok": False, "goal": goal, "reason": f"invalid session id: {sid!r}"}
+    return _goal_ledger(goal).prebind(sid, int(measured))
+
+
+# --- Prospective binding: Python twin of hooks/lib/goal_binding.js (same precedence, same record) ----
+def prospective_bind() -> bool:
+    """CPP_PROSPECTIVE_BIND=0|off|false restores the old (retroactive, cwd-by-lookup) behaviour."""
+    return os.environ.get("CPP_PROSPECTIVE_BIND", "").strip().lower() not in ("0", "off", "false")
+
+
+def binding_path(sid: str) -> Path:
+    return state_dir() / "goal-binding" / f"{sid}.json"
+
+
+def _now_ts() -> str:
+    import datetime as dt
+    return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def read_binding(sid: str) -> dict | None:
+    try:
+        r = json.loads(binding_path(sid).read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        return None
+    return r if isinstance(r, dict) and isinstance(r.get("goal"), str) and r["goal"] else None
+
+
+def write_binding(sid: str, goal: str, source: str) -> dict:
+    """Immutable: exclusive create; if the record exists, the existing one wins."""
+    rec = {"goal": goal, "since_ts": _now_ts(), "source": source, "pid": os.getpid()}
+    p = binding_path(sid)
+    try:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with open(p, "x", encoding="utf-8") as fh:
+            fh.write(json.dumps(rec, separators=(",", ":")))
+        return rec
+    except OSError:
+        return read_binding(sid) or rec
+
+
+def _warn_binding(sid: str, text: str) -> None:
+    try:
+        p = binding_path("x").parent
+        p.mkdir(parents=True, exist_ok=True)
+        with open(p / "warnings.jsonl", "a", encoding="utf-8") as fh:
+            fh.write(json.dumps({"ts": _now_ts(), "sid": sid, "warning": text}, separators=(",", ":")) + "\n")
+    except OSError:
+        pass
+
+
+_READ_TOOLS = {"Read", "Grep", "Glob"}
+_READ_ONLY_CMD = re.compile(
+    r"""^\s*(?:&\s*)?(?:(?:['"]?[^\s'"]*[\\/])?git(?:\.exe)?['"]?\s+(?:-C\s+\S+\s+)?(?:log|status|show)\b"""
+    r"""|(?:['"]?[^\s'"]*[\\/])?(?:python3?|py)(?:\.exe)?['"]?\s+['"]?(?:[^\s'"]*[\\/])?mission_spend\.py['"]?\s+goal-status\b)""",
+    re.I)
+
+
+def is_read_only_call(event: dict) -> bool:
+    if str((event or {}).get("tool_name") or "") in _READ_TOOLS:
+        return True
+    ti = (event or {}).get("tool_input")
+    cmd = ti.get("command") if isinstance(ti, dict) else ""
+    if not isinstance(cmd, str) or not cmd:
+        return False
+    if re.search(r"[;&|<>`\n]|\$\(", re.sub(r"^\s*&\s*", "", cmd, count=1)):
+        return False
+    return bool(_READ_ONLY_CMD.search(cmd))
+
+
+def _legacy_binding(event: dict, sid: str, ix: dict) -> dict | None:
+    env = os.environ.get("CPP_GOAL", "").strip()
+    if env:
+        return {"goal": env, "entry": ix.get(env)}
+    cwd = event.get("cwd")
+    if cwd:
+        for g, e in ix.items():
+            if isinstance(e, dict) and any(_norm(cwd) == _norm(r) or _norm(cwd).startswith(_norm(r) + os.sep)
+                                           for r in e.get("roots", [])):
+                return {"goal": g, "entry": e}
+    try:
+        b = json.loads((state_dir() / f"session-budget-{sid}.json").read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        b = None
+    if isinstance(b, dict) and isinstance(b.get("goal"), str) and b["goal"]:
+        return {"goal": b["goal"], "entry": ix.get(b["goal"])}
+    return None
+
+
+def resolve_binding(event: dict, sid: str) -> dict | None:
+    """(a) immutable record wins; (b) CPP_GOAL, a disagreeing record logs a warning; (c) cwd under a goal
+    root WRITES the record at the first mutating call (a read-only call is bound in memory only);
+    (d) the budget file's legacy `goal`. CPP_PROSPECTIVE_BIND=0 -> old resolver, no record read/written."""
+    ix = read_index()
+    if not prospective_bind():
+        return _legacy_binding(event, sid, ix)
+    env = os.environ.get("CPP_GOAL", "").strip()
+    rec = read_binding(sid)
+    if rec:
+        if env and env != rec["goal"]:
+            _warn_binding(sid, f"CPP_GOAL={env} ignored: the binding record names {rec['goal']} ({rec.get('source')})")
+        if rec["goal"] == "none":
+            return None
+        return {"goal": rec["goal"], "entry": ix.get(rec["goal"]), "record": rec, "sinceTs": rec.get("since_ts")}
+    if env:
+        return {"goal": env, "entry": ix.get(env)}
+    cwd = event.get("cwd")
+    if cwd:
+        for g, e in ix.items():
+            if isinstance(e, dict) and any(_norm(cwd) == _norm(r) or _norm(cwd).startswith(_norm(r) + os.sep)
+                                           for r in e.get("roots", [])):
+                if is_read_only_call(event):
+                    return {"goal": g, "entry": e, "record": None, "sinceTs": _now_ts(), "provisional": True}
+                w = write_binding(sid, g, "cwd")
+                return {"goal": w["goal"], "entry": e if w["goal"] == g else ix.get(w["goal"]),
+                        "record": w, "sinceTs": w.get("since_ts")}
+    return _legacy_binding(event, sid, ix)
+
+
 def _main(argv: list[str]) -> int:
     import argparse
     import socket
@@ -556,6 +677,10 @@ def _main(argv: list[str]) -> int:
         g.add_argument("--measured", type=int, required=(name == "goal-renew"), default=0)
         if name == "goal-spawn":
             g.add_argument("--estimate", type=int)
+    gp = sub.add_parser("goal-prebind")
+    gp.add_argument("--goal", required=True)
+    gp.add_argument("--session", required=True)
+    gp.add_argument("--measured", type=int, required=True)
     gs = sub.add_parser("goal-status")
     gs.add_argument("--goal", required=True)
     a = ap.parse_args(argv)
@@ -571,6 +696,8 @@ def _main(argv: list[str]) -> int:
                     return 3
                 owner = input(f"Owner change to goal {a.goal!r}: type the goal id to confirm: ").strip() == a.goal
             out = goal_declare(a.goal, a.cap, a.source, a.root, a.host, a.lease_calls, owner=owner)
+        elif a.cmd == "goal-prebind":
+            out = goal_prebind(a.goal, a.session, a.measured)
         elif a.cmd == "goal-renew":
             out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
         elif a.cmd == "goal-spawn":

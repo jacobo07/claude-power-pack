@@ -1617,7 +1617,10 @@ def launch_prompt(rec: dict) -> str:
     if digest is None:
         raise MissionError(f"wu_packet {pkt['path']!r} is missing or empty")
     drift = "" if digest == pkt.get("sha256") else f" (changed since it was set: was {str(pkt.get('sha256'))[:12]})"
+    cap = (rec.get("continuity_from") or {}).get("capsule_path")
     return "\n".join([
+        *([f"FAULT CAPSULE: your predecessor stopped without its receipt. Start from {cap} "
+           "(DONE = committed, SALVAGE = uncommitted); do not redo DONE."] if cap else []),
         f"Execute the compiled work unit in {pkt['path']} (sha256 {digest[:12]}{drift}).",
         "Read that file first and in full; it is your scope, done-gate and budget. Do not run GSD "
         "commands unless the packet names one.",
@@ -2228,6 +2231,149 @@ def renew_mission(rec: dict, now: float | None = None, capsule_key: str | None =
     return new
 
 
+# --------------------------------------------------------------------------- halt-continue (WU-1H)
+# A worker that stops without its receipt (breaker trip, dead pid, success without a receipt) leaves a
+# fault capsule and one bounded renewal of the same packet. CPP_HALT_CONTINUE=off restores the old halt.
+HALT_CONTINUE_MAX_RENEWAL = 2
+
+
+def halt_continue_on() -> bool:
+    return os.environ.get("CPP_HALT_CONTINUE", "").lower() != "off"
+
+
+def _git_ro(wd: str, *args: str) -> str:
+    import shutil
+    import subprocess
+    fallback = r"C:\Program Files\Git\cmd\git.exe"
+    git = shutil.which("git") or (fallback if Path(fallback).exists() else "git")
+    try:
+        p = subprocess.run([git, "-C", wd, *args], capture_output=True, text=True, timeout=30)
+        return p.stdout if p.returncode == 0 else ""
+    except Exception:  # noqa: BLE001 -- a capsule never fails for a missing git
+        return ""
+
+
+def write_fault_capsule(rec: dict, wd: str, result_text: str, slim: dict | None) -> str | None:
+    """`<state>/fault-capsules/<mission>-e<epoch>.json`, opened "x": existing = already written, never
+    rewritten. Read-only git. Returns the path (new or existing), None when it cannot be written."""
+    mid, epoch = rec["mission_id"], rec.get("epoch")
+    path = lr.state_dir() / "fault-capsules" / f"{mid}-e{epoch}.json"
+    text = result_text or ""
+    dirty = [ln for ln in _git_ro(wd, "status", "--porcelain").splitlines() if ln.strip()]
+    log = [ln for ln in _git_ro(wd, "log", "--oneline", "-n", "20").splitlines() if ln.strip()]
+    data = {"mission_id": mid, "epoch": epoch, "written_at": time.time(),
+            "head": _git_ro(wd, "rev-parse", "HEAD").strip(), "commits": log,
+            "dirty": dirty, "diff_stat": _git_ro(wd, "diff", "--stat"),
+            "gate_lines": [ln for ln in text.splitlines()
+                           if re.match(r"^(PASS|FAIL|[A-Z_]+_PASS=)", ln)][-20:],
+            "spend": {"slim_tokens": (slim or {}).get("tokens"), "tripped": (slim or {}).get("tripped"),
+                      "token_estimate": rec.get("token_estimate")},
+            "result": text[:2000],
+            "partial_receipt": {"DONE": log, "SALVAGE": dirty}}
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "x", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=1)
+    except FileExistsError:
+        pass
+    except OSError:
+        return None
+    return str(path)
+
+
+def _receipt_present(rec: dict) -> bool:
+    pkt = (rec.get("wu_packet") or {}).get("path")
+    if not pkt:
+        return True   # no packet = nothing to continue
+    p = Path(pkt)
+    r = p.with_name(p.stem + "-receipt.md")
+    try:
+        body = r.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    # A checkpoint stub is not a receipt, whatever its case: WU-ADV's said "checkpoint stub" and read as done.
+    return not (re.search(r"\bstub\b", body, re.I)
+                or re.search(r"^\s*Status:\s*(IN PROGRESS|PARTIAL)\b", body, re.I | re.M))
+
+
+def spend_goal(rec: dict) -> str | None:
+    """The CE goal that pays for this mission. A sweep-armed record carries neither `goal.ce_goal` nor a
+    workstream, so the cwd binding in the goal index (the same one the session guard uses) decides."""
+    g = rec.get("goal")
+    named = (g.get("ce_goal") if isinstance(g, dict) else None) or os.environ.get("CPP_CE_GOAL")
+    if named:
+        return named
+    try:
+        import mission_spend as ms
+        wd = ms._norm(rec.get("work_dir") or rec["cwd"])
+        hits = [goal for goal, e in ms.read_index().items()
+                if any(wd == r or wd.startswith(r + os.sep) for r in (e.get("roots") or []))]
+    except Exception:  # noqa: BLE001 -- unmeasurable is None, never a guess
+        return None
+    return hits[0] if len(hits) == 1 else None
+
+
+def halt_authority(rec: dict) -> int | None:
+    """remaining - open of the mission's CE goal, None when unmeasurable (never renews)."""
+    goal = spend_goal(rec)
+    if not goal:
+        return None
+    try:
+        import mission_spend as ms
+        st = ms._goal_ledger(goal).status()
+        return int(st["remaining"]) - int(st.get("open") or 0)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def halt_continue(rec: dict, wd: str, result_text: str, slim: dict | None, row: dict, now: float) -> None:
+    """rec = the mission as it stands after the stop. Fills row['capsule'] / row['renewed_as'] / row['renewal']."""
+    if not halt_continue_on() or not (rec.get("wu_packet") or {}).get("path"):
+        return
+    mid = rec["mission_id"]
+    if _receipt_present(rec):
+        return
+    cap = write_fault_capsule(rec, wd, result_text, slim)
+    row["capsule"] = cap
+    why = None
+    if rec.get("owner_hold"):
+        why = "owner hold"
+    elif any(e.get("event") == "mission_renewed" for e in lr.ledger_events(mid)):
+        why = "already renewed"
+    elif int(rec.get("renewal") or 0) >= HALT_CONTINUE_MAX_RENEWAL:
+        why = "max renewal reached"
+    elif not cap:
+        why = "no capsule"
+    else:
+        need = int(rec.get("token_estimate") or 0)
+        auth = halt_authority(rec)
+        if auth is None:
+            why = "authority unmeasurable"
+        elif auth < need:
+            why = f"authority {auth} < token_estimate {need}"
+    if why:
+        row["renewal"] = f"not renewed: {why}"
+        return
+    new_id = renew_mission(rec, now=now, continuity_from={
+        "mission_id": mid, "kind": "fault_capsule", "capsule_path": cap})["mission_id"]
+    row["renewed_as"] = new_id
+    # renew_mission never carries `admission`, and launch refuses a packet unit without one: re-admit
+    # against the predecessor's route, or hold with the reason. A successor never waits unexplained.
+    route = ((rec.get("admission") or {}).get("route_path"))
+    try:
+        if not route:
+            raise MissionError("predecessor has no admitted route")
+        admit_route(new_id, route, now=now)
+        refusal = admission_refusal(load(new_id))
+        if refusal:
+            raise MissionError(refusal)
+        row["readmitted"] = True
+    except Exception as exc:  # noqa: BLE001
+        why = f"halt-continue re-admission failed: {type(exc).__name__}: {exc}"[:900]
+        set_owner_hold(new_id, why)
+        row["renewal"] = f"renewed but held: {why}"
+
+
 # --------------------------------------------------------------------------- capsule-v2 (T6)
 # Every function here is reached only through a `capsule_v2(rec)` branch (spec 3.1). The adapter
 # (tools/mission_capsule.py) owns compile/seal/gate/arm/bind; rollover.py owns the format, the
@@ -2836,6 +2982,9 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                                     event="mission_halted", now=now, state=HALTED, pending=None,
                                     reason=plan["reason"])
                 reap(halted, row)  # a halt changes the record; stop the world to match it
+                if (plan["reason"] or "").startswith("slim worker failed") and halt_continue_on():
+                    halt_continue(halted, halt_wd, "", None, row, now)
+                    continue
                 if st is not None:
                     why_not = _renewal_why_not(halted, plan["reason"], st, halt_wd, fingerprint)
                     if why_not:
@@ -2845,10 +2994,14 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             elif act == "slim_finished":
                 s = plan["slim"]
                 stopped = s.get("tripped") or ("worker reported is_error" if s["is_error"] else None)
-                transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                           event="slim_worker_finished", now=now, state=HALTED if stopped else COMPLETED,
-                           pending=None, slim_result=s, worker=s.get("session_id"),
-                           reason=f"{plan['reason']}; {stopped}" if stopped else plan["reason"])
+                fin = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                 event="slim_worker_finished", now=now, state=HALTED if stopped else COMPLETED,
+                                 pending=None, slim_result=s, worker=s.get("session_id"),
+                                 reason=f"{plan['reason']}; {stopped}" if stopped else plan["reason"])
+                if halt_continue_on() and (stopped or not _receipt_present(fin)):
+                    if not stopped:
+                        row["work_unit_status"] = "RECOVERY_PENDING"
+                    halt_continue(fin, fin.get("work_dir") or fin["cwd"], s.get("result") or "", s, row, now)
             elif act == "settle":
                 # Terminal, never relaunched: HALTED keeps owner_hold, so renewal_refusal still refuses it,
                 # and leaves goal_conflicts because the state is terminal.
@@ -3251,6 +3404,25 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
         ge.record_cause(rec["mission_id"], {"epoch": res["epoch"]},
                         {"cause": ge.INITIAL, "reason": "armed"}, ge.FRESH)
     return {"mission": load(rec["mission_id"]), "launch": res}
+
+
+def arm_chain(cwd: str, resume_command: str, *, wu_packet: str, token_estimate, route: str,
+              floors_path: str | None = None, **kw) -> dict:
+    """Atomic arm (WU-1H addendum C): arm --no-launch, envelope, admit. Any failure holds the armed
+    mission with the reason; a mission is never launched here, and never without a packet."""
+    kw.pop("launch", None)
+    rec = arm(cwd, resume_command, launch=False, **kw)["mission"]
+    mid = rec["mission_id"]
+    try:
+        set_envelope(mid, wu_packet=wu_packet, token_estimate=token_estimate)
+        adm = admit_route(mid, route, floors_path=floors_path)["admission"]
+        if adm["verdict"] != "ADMISSIBLE":
+            raise MissionError(f"route {adm['verdict']}: {'; '.join(adm.get('reasons') or [])}"[:600])
+    except Exception as exc:  # noqa: BLE001 -- hold with the reason, then report
+        why = f"arm-chain failed: {type(exc).__name__}: {exc}"[:900]
+        set_owner_hold(mid, why)
+        return {"ok": False, "mission_id": mid, "held": True, "why": why}
+    return {"ok": True, "mission_id": mid, "mission": load(mid)}
 
 
 NO_PROGRESS_EPOCHS = 3   # consecutive relays with an unchanged work tree before HALTED
@@ -3716,6 +3888,18 @@ def _cli(argv=None) -> int:
     a.add_argument("--authority", help="who decided the supersession and where it is recorded")
     a.add_argument("--parallel-unit", help="a named work unit that may run beside other named units "
                                            "of the same goal")
+    ac = sub.add_parser("arm-chain", help="atomic arm: --no-launch + envelope + admit; hold on any failure")
+    ac.add_argument("--cwd", required=True)
+    ac.add_argument("--command", required=True)
+    ac.add_argument("--wu-packet", required=True)
+    ac.add_argument("--token-estimate", required=True)
+    ac.add_argument("--route", required=True)
+    ac.add_argument("--floors")
+    ac.add_argument("--workstream")
+    ac.add_argument("--max-cycles", type=int)
+    ac.add_argument("--permission-mode", default="auto")
+    ac.add_argument("--rollover-protocol", choices=(CAPSULE_V2,), default=None)
+    ac.add_argument("--parallel-unit")
     s = sub.add_parser("session-start")
     s.add_argument("--session", required=True)
     s.add_argument("--source", default="")
@@ -3772,6 +3956,13 @@ def _cli(argv=None) -> int:
                   supersedes=args.supersedes, authority=args.authority, parallel_unit=args.parallel_unit)
         print(json.dumps(res, indent=2))
         return 0 if args.no_launch or res.get("launch", {}).get("ok") else 1
+    if args.cmd == "arm-chain":
+        res = arm_chain(args.cwd, args.command, wu_packet=args.wu_packet, token_estimate=args.token_estimate,
+                        route=args.route, floors_path=args.floors, workstream=args.workstream,
+                        max_cycles=args.max_cycles, permission_mode=args.permission_mode,
+                        rollover_protocol=args.rollover_protocol, parallel_unit=args.parallel_unit)
+        print(json.dumps({k: v for k, v in res.items() if k != "mission"}, indent=2))
+        return 0 if res["ok"] else 1
     if args.cmd == "session-start":
         card = session_start(args.session, args.source)
         if card:

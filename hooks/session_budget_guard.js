@@ -180,30 +180,7 @@ const PY = process.env.PYTHON_BIN || (process.platform === 'win32'
 const MISSION_SPEND = path.join(__dirname, '..', 'tools', 'mission_spend.py');
 const RENEW_TIMEOUT_MS = 8000;              // below the Read chain's 20 s, so a slow renew is a deny, not a kill
 
-function normPath(p) {
-  const r = path.resolve(String(p || '')).replace(/[\\/]+$/, '');
-  return process.platform === 'win32' ? r.toLowerCase() : r;
-}
-
-function under(p, root) {
-  const a = normPath(p), b = normPath(root);
-  return a === b || a.startsWith(b + path.sep);
-}
-
-function goalBinding(event, sid) {
-  const ix = readJson(path.join(stateDir(), 'goal-budget', 'index.json'));
-  const entry = g => (ix && typeof ix === 'object' && ix[g] && typeof ix[g] === 'object') ? ix[g] : null;
-  const env = String(process.env.CPP_GOAL || '').trim();
-  if (env) return { goal: env, entry: entry(env) };
-  if (ix && typeof ix === 'object' && event.cwd) {
-    for (const [g, e] of Object.entries(ix)) {
-      if (e && Array.isArray(e.roots) && e.roots.some(r => under(event.cwd, r))) return { goal: g, entry: e };
-    }
-  }
-  const b = readJson(path.join(stateDir(), `session-budget-${sid}.json`));
-  if (b && typeof b.goal === 'string' && b.goal) return { goal: b.goal, entry: entry(b.goal) };
-  return null;
-}
+const { goalBinding } = require('./lib/goal_binding');
 
 // Only a bare status read is exempt in goal mode, anchored on the WHOLE command: python, then
 // mission_spend.py, then goal-status --goal <id>, then nothing. A substring match (audit gap 4) and
@@ -272,7 +249,11 @@ function foldFile(gs, file, isMain) {
     let r;
     try { r = JSON.parse(line); } catch (e) { continue; }
     if (!r || typeof r !== 'object') continue;
-    if (gs.since && String(r.timestamp || '') < gs.since) continue;
+    const ts = String(r.timestamp || '');
+    // gs.since = max(goal.since, binding.since_ts). A row from the goal's window but before this
+    // session was bound is PRE_BINDING: counted in gs.prebind, never in gs.tokens (see decideGoal).
+    const pre = !!(gs.since && ts < gs.since);
+    if (pre && !(gs.goalSince && ts >= gs.goalSince && gs.prospective)) continue;
     const m = r.message;
     if (!m || typeof m !== 'object' || !m.usage || m.model === '<synthetic>') continue;
     // Every tool_use id written so far, before the message-id dedupe: one message's parallel tool
@@ -287,6 +268,10 @@ function foldFile(gs, file, isMain) {
     if (seen.has(mid)) continue;
     seen.add(mid);
     gs.ids.push(mid);
+    if (pre) {
+      gs.prebind = (gs.prebind || 0) + UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+      continue;
+    }
     gs.tokens += UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
     if (isMain) {
       gs.context = UK.slice(0, 3).reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
@@ -339,9 +324,14 @@ function decideGoal(event, sid, bind) {
   if (touchesGoalState(event)) return goalDeny(goal, 'a call that touches goal-budget state is not admitted from a bound session.');
   const gPath = path.join(stateDir(), `session-budget-${sid}.goal.json`);
   let gs = readJson(gPath);
-  const since = entry.since ? String(entry.since) : null;
+  const goalSince = entry.since ? String(entry.since) : null;
+  // Prospective measure: a session counts only from the moment it was bound (max of both).
+  const bindTs = bind.sinceTs ? String(bind.sinceTs) : null;
+  const since = bindTs && (!goalSince || bindTs > goalSince) ? bindTs : goalSince;
+  const prosp = !!(bindTs && bind.record !== undefined);
   if (!gs || gs.goal !== goal || gs.since !== since || !gs.files || !Array.isArray(gs.ids)) {
-    gs = { goal, since, files: {}, ids: [], tokens: 0, context: 0, lease: null, closeout: 0 };
+    gs = { goal, since, goalSince, prospective: prosp, files: {}, ids: [], tokens: 0, prebind: 0,
+      prebindWritten: false, context: 0, lease: null, closeout: 0 };
   }
   let verdict = null;
   if (!event.transcript_path) verdict = goalDeny(goal, 'UNKNOWN: the event carries no transcript_path.');
@@ -349,6 +339,11 @@ function decideGoal(event, sid, bind) {
     try { measureGoal(gs, event.transcript_path); } catch (e) {
       verdict = goalDeny(goal, `UNKNOWN: the transcript cannot be read (${e.code || e.message}).`);
     }
+  }
+  // Pre-binding spend is booked once as a journal op (PRE_BINDING_PROGRAM_CAPEX), never in `used`.
+  if (!verdict && gs.prospective && !bind.provisional && gs.prebind > 0 && !gs.prebindWritten) {
+    const pr = callGoal(['goal-prebind', '--goal', goal, '--session', sid, '--measured', String(gs.prebind)]);
+    if (!pr.failed) gs.prebindWritten = true;   // a failed write retries on the next call
   }
   const next = nextRequest(gs);
   // The request that issued this call may not be in the transcript yet (canary #5: the first of 3
