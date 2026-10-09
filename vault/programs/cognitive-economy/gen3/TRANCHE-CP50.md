@@ -16,6 +16,16 @@ the Owner types it. Caveat stated to the Owner: the plan's own option B reads as
 APPLIED 2026-10-09: the Owner ran raise-cap-v3.ps1 in a plain PowerShell window. A `!` run had failed on EOF at the
 confirmation prompt and changed nothing. Verified by an independent goal-status: cap 8,500,000, used 3,596,856,
 settled 3,226,721, open 370,135, remaining 4,903,144. At that point S1-S3 were COMPLETED and S4 RUNNING (m-f3ad13bfd9bb).
+2026-10-09 ~15:00 Owner "y" to option 1: CP50 starts after the S2-S5 live install and no longer waits for S6/WU-CLOSE.
+HR-001 authority is granted for that install (Owner "y" to "autorizas instalar S2-S5 en vivo cuando S5b termine").
+CP50's real dependency is Context Rent (REFORECAST.md:68-70): one fresh process per cohort, checkpoint, SAFE_TO_FORGET,
+then the process ends. ctx-rent S2 stays untouched, because WU-CLOSE uses it as a canary input.
+State at 14:58: S4 and S5b COMPLETED. S5b left S5c open (F1, F3, capsule DONE-list scope, live dry run). The v3
+coordinator (another pane) has WU-S5c.md and WU-INST2.md uncommitted. WU-INST2 = staged 3-way merge of S2-S5 -> the
+patch install/L3-econ.patch, which the coordinator applies with tools/lifecycle_install_apply.ps1. This pane does not
+duplicate that work; the install is applied there under the authority above.
+Install DEPLOY gates (hardrule_compile --class DEPLOY): HR-2 needs a green smoke from the same commit with one
+end-to-end path through the changed code. HR-CASCADE-001 needs the suites green in the applying session.
 
 ## Authority
 - 2026-10-08 Owner "y y": fund the tranche, ~4.2M expected, 5.0M ceiling (R1 REFORECAST).
