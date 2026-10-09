@@ -422,6 +422,40 @@ def _goal_ledger(goal: str):
     return GoalLedger(goal_root() / goal, goal)
 
 
+def goal_settle(goal: str, sid: str, measured: int | None = None, reason: str = "goal-settle",
+                transcripts_root: Path | None = None) -> dict:
+    """Settle a STOPPED session and close all of its holds (never reserves). Blind -> refused."""
+    if not _SID_RE.match(sid or ""):
+        raise ValueError(f"invalid session id: {sid!r}")
+    if measured is None:
+        tp = find_transcript(sid, transcripts_root)
+        if tp is None:
+            return {"ok": False, "goal": goal, "reason": "no transcript for the session and no --measured: "
+                    "refusing to settle blind"}
+        measured = int(session_tokens(tp)["tokens"])
+    return _goal_ledger(goal).settle_stopped(sid, int(measured), reason)
+
+
+def _real_console_stdin() -> bool:
+    """A person at a terminal. On Windows the NUL device reports isatty() True, so ask the console."""
+    import sys
+    if not sys.stdin or not sys.stdin.isatty():
+        return False
+    if os.name == "nt":
+        try:
+            import ctypes
+            mode = ctypes.c_uint32()
+            h = ctypes.windll.kernel32.GetStdHandle(-10)
+            return bool(ctypes.windll.kernel32.GetConsoleMode(h, ctypes.byref(mode)))
+        except Exception:  # noqa: BLE001
+            return False
+    return True
+
+
+def goal_correct(goal: str, sid: str, measured: int, reason: str, authority: str) -> dict:
+    return _goal_ledger(goal).correct(sid, int(measured), reason, authority)
+
+
 def read_index() -> dict:
     try:
         ix = json.loads((goal_root() / "index.json").read_text(encoding="utf-8-sig"))
@@ -681,6 +715,16 @@ def _main(argv: list[str]) -> int:
     gp.add_argument("--goal", required=True)
     gp.add_argument("--session", required=True)
     gp.add_argument("--measured", type=int, required=True)
+    gt = sub.add_parser("goal-settle")
+    gt.add_argument("--goal", required=True)
+    gt.add_argument("--session", required=True)
+    gt.add_argument("--measured", type=int)
+    gc = sub.add_parser("goal-correct")
+    gc.add_argument("--goal", required=True)
+    gc.add_argument("--session", required=True)
+    gc.add_argument("--measured", type=int, required=True)
+    gc.add_argument("--reason", required=True)
+    gc.add_argument("--owner", action="store_true")
     gs = sub.add_parser("goal-status")
     gs.add_argument("--goal", required=True)
     a = ap.parse_args(argv)
@@ -698,6 +742,18 @@ def _main(argv: list[str]) -> int:
             out = goal_declare(a.goal, a.cap, a.source, a.root, a.host, a.lease_calls, owner=owner)
         elif a.cmd == "goal-prebind":
             out = goal_prebind(a.goal, a.session, a.measured)
+        elif a.cmd == "goal-settle":
+            out = goal_settle(a.goal, a.session, a.measured)
+        elif a.cmd == "goal-correct":
+            if not a.owner or not _real_console_stdin():
+                print(json.dumps({"ok": False, "goal": a.goal,
+                                  "reason": "goal-correct needs --owner on an interactive terminal "
+                                  "(stdin is not a TTY)"}))
+                return 3
+            if input(f"Owner correction of goal {a.goal!r}: type the goal id to confirm: ").strip() != a.goal:
+                print(json.dumps({"ok": False, "goal": a.goal, "reason": "not confirmed"}))
+                return 3
+            out = goal_correct(a.goal, a.session, a.measured, a.reason, "owner-tty")
         elif a.cmd == "goal-renew":
             out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
         elif a.cmd == "goal-spawn":

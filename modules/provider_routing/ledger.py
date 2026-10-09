@@ -202,6 +202,8 @@ class GoalLedger(SpendLedger):
             elif op == "leak":
                 if res.get(r["id"], {}).get("state") == RESERVED:
                     res[r["id"]]["state"] = LEAKED
+            elif op == "correct":
+                marks[r["sid"]] = int(r["measured"])       # may LOWER; later settles watermark from here
             elif op == "settle":
                 marks[r["sid"]] = max(marks.get(r["sid"], 0), int(r["measured"]))
                 for rid in r.get("closes", []):
@@ -317,6 +319,34 @@ class GoalLedger(SpendLedger):
                                 "amount": amount, "window": GOAL_WINDOW, "base": measured, "per_call": per_call})
             return self._summary(self._gfold(recs), ok=True, reason="",
                                  lease={"id": rid, "amount": amount, "base": measured})
+
+    def settle_stopped(self, sid: str, measured: int, reason: str) -> dict:
+        """A stopped worker: settle `sid` at `measured` and close EVERY open hold of it (lease, agent,
+        final). Never reserves. A second call books nothing new."""
+        if not isinstance(measured, int) or measured < 0:
+            raise LedgerError("measured must be an int >= 0")
+        with self._lock:
+            recs = self._read()
+            g = self._sweep_leaks(recs)
+            closes = sorted(rid for rid, r in g["res"].items()
+                            if r["sid"] == sid and r["state"] in (RESERVED, LEAKED))
+            if closes or measured > g["marks"].get(sid, 0):
+                self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes,
+                                    "stopped": True, "reason": reason})
+                g = self._gfold(recs)
+            return self._summary(g, ok=True, reason="", closed=closes)
+
+    def correct(self, sid: str, measured: int, reason: str, authority: str) -> dict:
+        """Owner correction of a misattributed mark (may lower it). Journalled, never silent."""
+        if not isinstance(measured, int) or measured < 0 or not reason or not authority:
+            raise LedgerError("correct needs measured int >= 0, a reason and an authority")
+        with self._lock:
+            recs = self._read()
+            g = self._sweep_leaks(recs)
+            self._append(recs, {"op": "correct", "sid": sid, "measured": measured,
+                                "reason": reason, "authority": authority,
+                                "previous": g["marks"].get(sid, 0)})
+            return self._summary(self._gfold(recs), ok=True, reason="")
 
     def spawn(self, sid: str, estimate: int, base: int = 0) -> dict:
         """Admit a child (Agent / worker) only if its estimate fits what remains. `base` is the parent

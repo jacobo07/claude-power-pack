@@ -2300,6 +2300,63 @@ def _receipt_present(rec: dict) -> bool:
                 or re.search(r"^\s*Status:\s*(IN PROGRESS|PARTIAL)\b", body, re.I | re.M))
 
 
+_TREE_RE = re.compile(r"^work_tree:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
+_RECEIPT_RE = re.compile(r"^receipt:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
+
+
+def _packet_text(rec: dict) -> str | None:
+    pkt = rec.get("wu_packet")
+    if not pkt:
+        return None
+    try:
+        return Path(pkt["path"]).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return None
+
+
+def _tree_inside_repo(tree: str, base_cwd: str) -> str | None:
+    """The packet's `work_tree:` only when it is an absolute directory inside the record's repository."""
+    p = Path(tree)
+    if not p.is_absolute() or not p.is_dir():
+        return None
+    p = p.resolve()
+    base = Path(base_cwd).resolve()
+    if p == base or base in p.parents:
+        return str(p)
+    here, root = _git_toplevel_and_common(str(p)), _git_toplevel_and_common(str(base))
+    return str(p) if here and root and here[1] == root[1] else None
+
+
+def packet_gate_dir(rec: dict, text: str | None = None) -> tuple[str | None, str]:
+    """The tree the packet's work happens in: `work_tree:` line, else the owner's effective workdir, else cwd."""
+    text = _packet_text(rec) if text is None else text
+    m = _TREE_RE.search(text or "")
+    if m:
+        t = _tree_inside_repo(m.group(1), rec["cwd"])
+        return t, "packet work_tree" if t else f"work_tree {m.group(1)[:200]!r} is not inside the repo"
+    wd = rec.get("work_dir") or rec["cwd"]
+    if rec.get("owner"):
+        try:
+            wd = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream")) or wd
+        except Exception:  # noqa: BLE001 -- keep the recorded dir; never guess
+            pass
+    return wd, "worker tree"
+
+
+def packet_receipt_path(rec: dict) -> str | None:
+    """The packet's `receipt:` line resolved to one absolute path inside the work tree, or None."""
+    text = _packet_text(rec)
+    m = _RECEIPT_RE.search(text) if text else None
+    if not m or Path(m.group(1)).is_absolute():
+        return None
+    tree, _ = packet_gate_dir(rec, text)
+    if not tree:
+        return None
+    root = Path(tree).resolve()
+    p = (root / m.group(1)).resolve()
+    return str(p) if root in p.parents else None
+
+
 def spend_goal(rec: dict) -> str | None:
     """The CE goal that pays for this mission. A sweep-armed record carries neither `goal.ce_goal` nor a
     workstream, so the cwd binding in the goal index (the same one the session guard uses) decides."""
@@ -2809,7 +2866,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
         # Nothing to supervise: do not ask the host (`claude agents --json` costs seconds,
         # measured > 60 s once under load) on every 5-minute pass of an idle estate.
         return unreadable + [{"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
-                              "action": "none", "reason": f"terminal {m['state']}"} for m in missions]
+                              "action": "none", "reason": f"terminal {m['state']}"} for m in missions] \
+            + _steward_rows(missions, now, sessions, pid_alive, dry_run)
     if sessions is None:
         sessions = host_sessions()
     stop_run = stop_runner or (lambda a: subprocess.run(a, capture_output=True, text=True, timeout=120))
@@ -3255,8 +3313,21 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 lr.ledger_append(mid, "supervise_error", mission_id=mid, error=row["error"])
             except Exception:  # noqa: BLE001 -- the row still carries the error
                 pass
-    return unreadable + out
+    return unreadable + out + _steward_rows(missions, now, sessions, pid_alive, dry_run)
 
+
+def _steward_rows(missions, now, sessions, pid_alive, dry_run) -> list[dict]:
+    """The mission steward (tools/mission_steward.py), isolated: any failure is ONE row, never a failed sweep."""
+    if dry_run:
+        return []
+    try:
+        import mission_steward
+        if sessions is None and any(m["state"] in (HALTED, BLOCKED) and m.get("wu_packet") and m.get("goal")
+                                    and not (m.get("steward") or {}).get("done") for m in missions):
+            sessions = host_sessions()     # a stopped worker is judged against the host, not guessed
+        return mission_steward.steward_pass(missions, now, sessions=sessions, pid_alive=pid_alive)
+    except Exception as exc:  # noqa: BLE001
+        return [{"action": "steward_error", "error": f"{type(exc).__name__}: {exc}"[:300]}]
 
 # --------------------------------------------------------------------------- goal authority (GGMC C4)
 # spec goal-governed-mission-control C4: the Goal (a workstream of a repository) is the authority; a
