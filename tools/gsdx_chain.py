@@ -3,7 +3,8 @@
     python tools/gsdx_chain.py tick [--chain PATH] [--dry-run]
 
 chain.json: {"goal", "root", "envelope", "units": [{"id", "packet", "route", "receipt", "after", "wait": [paths]}]}
-- `after` is the id of the unit whose receipt must say DONE first (null = first unit).
+- `after` is the id of the unit whose receipt must say DONE first (null = first unit). A unit's optional `accept` list
+  names more statuses; DONE_WITH_LIMITS is accepted everywhere when the JSON receipt has gate_rc 0 and named `limits`.
 - `wait` paths must all exist (an event another programme produces, e.g. its install receipt).
 One tick arms at most ONE unit, and none while any non-terminal mission holds the programme root (one writer).
 A unit whose mission ended without a DONE receipt is never re-armed here: the steward and a residual own that.
@@ -40,6 +41,21 @@ def receipt_status(path: Path) -> str | None:
     return m.group(1) if m else "UNREADABLE"
 
 
+def limits_accepted(path: Path) -> bool:
+    """DONE_WITH_LIMITS counts as done by default only when the JSON receipt proves its gate passed (gate_rc 0) and
+    names its limits (non-empty `limits` list). Free text, a failed gate or unnamed limits still stop the chain."""
+    if not path.exists():
+        return False
+    try:
+        r = json.loads(path.read_text(encoding="utf-8-sig", errors="replace"))
+    except ValueError:
+        return False
+    if not isinstance(r, dict) or str(r.get("status", "")).split()[:1] != ["DONE_WITH_LIMITS"]:
+        return False
+    limits = r.get("limits")
+    return r.get("gate_rc") == 0 and isinstance(limits, list) and any(str(x).strip() for x in limits)
+
+
 def _norm(p) -> str:
     return str(p).replace("/", "\\").rstrip("\\").lower()
 
@@ -57,6 +73,7 @@ def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> d
     status = {u["id"]: receipt_status(Path(u["receipt"])) for u in units}
     accept = {u["id"]: set(u.get("accept") or ["DONE"]) for u in units}   # a unit may accept more than DONE, by name
     done = {uid for uid, s in status.items() if s in accept[uid]}
+    done |= {u["id"] for u in units if limits_accepted(Path(u["receipt"]))}   # K6: proven gate + named limits
     for u in units:
         if u["id"] in done:
             continue

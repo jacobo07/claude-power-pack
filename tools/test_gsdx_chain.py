@@ -66,6 +66,26 @@ r2 = gc.tick(p, state=lambda: ([mission(d, "A", "COMPLETED")], 0), armer=arm)
 check("V-CHAIN-ACCEPT-IS-PER-UNIT", r1["action"] == "stopped_without_done" and r2["action"] == "arm"
       and r2["unit"] == "B" and armed == ["B"], f"{r1['action']} -> {r2['action']}")
 
+# DONE_WITH_LIMITS is accepted by default only with gate_rc 0 AND named limits; each missing proof still stops
+d, p, _ = setup("limits")
+cases = {
+    "proven": ({"status": "DONE_WITH_LIMITS", "gate_rc": 0, "limits": ["probes are structural"]}, "arm"),
+    "no-limits": ({"status": "DONE_WITH_LIMITS", "gate_rc": 0, "limits": []}, "stopped_without_done"),
+    "blank-limits": ({"status": "DONE_WITH_LIMITS", "gate_rc": 0, "limits": [" "]}, "stopped_without_done"),
+    "gate-failed": ({"status": "DONE_WITH_LIMITS", "gate_rc": 1, "limits": ["x"]}, "stopped_without_done"),
+    "no-gate": ({"status": "DONE_WITH_LIMITS", "limits": ["x"]}, "stopped_without_done"),
+    "partial": ({"status": "PARTIAL", "gate_rc": 0, "limits": ["x"]}, "stopped_without_done"),
+}
+got = {}
+for name, (rec, _want) in cases.items():
+    (d / "R-A.json").write_text(json.dumps(rec), encoding="utf-8")
+    armed.clear()
+    got[name] = gc.tick(p, state=lambda: ([mission(d, "A", "COMPLETED")], 0), armer=arm)["action"]
+(d / "R-A.json").write_text("Status: DONE_WITH_LIMITS\ngate_rc: 0\nlimits: x\n", encoding="utf-8")
+got["markdown"] = gc.tick(p, state=lambda: ([mission(d, "A", "COMPLETED")], 0), armer=arm)["action"]
+want = {k: v[1] for k, v in cases.items()} | {"markdown": "stopped_without_done"}
+check("V-CHAIN-LIMITS-DEFAULT", got == want, json.dumps({k: v for k, v in got.items() if v != want[k]}) if got != want else "all 7 poles")
+
 # a failed arm (held PREPARED record) is surfaced, not read as running; control: a plain PREPARED one is running
 d, p, _ = setup("refused")
 held = dict(mission(d, "A", "PREPARED"), owner_hold={"reason": "arm-chain failed: MissionError: route RECOMPILE"})

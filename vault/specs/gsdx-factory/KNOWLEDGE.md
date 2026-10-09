@@ -36,8 +36,12 @@ Each entry: symptom, root cause, chain, impact, proof, fix, prevention, applicab
   it as m-2c6cb462596f, which spent 98,070 tokens re-checking a clean tree.
 - Root cause: receipt status is free text; anything not DONE reads as "work remains". The same free text stalled the
   chain (stopped_without_done) until the coordinator named the extra status per unit (chain `accept`).
-- Fix (gsdx side): chain `accept` list per unit, V-CHAIN-ACCEPT-IS-PER-UNIT. Open: a closed receipt-status vocabulary
-  (DONE / PARTIAL / BLOCKED / FAILED + `limits[]`) shared by packet template, supervisor and chain.
+- Fix (gsdx side): chain `accept` list per unit, V-CHAIN-ACCEPT-IS-PER-UNIT. Recurred on DOCTRINE (gate rc 0, 3 named
+  limits, chain stalled again), so the chain now accepts DONE_WITH_LIMITS by default when the JSON receipt carries
+  gate_rc 0 AND a non-empty `limits` list; free text, a failed or absent gate, or unnamed limits still stop it
+  (V-CHAIN-LIMITS-DEFAULT, 7 poles; drills "drop gate check" and "drop limits check" both KILLED).
+  Open: the supervisor still renews on anything not DONE; the shared vocabulary belongs in the packet template and
+  supervisor too (ce-lifecycle-v3 owner).
 - Also: L1's GRAPH costs were placeholders (n = rows/6); a gate that checks disposition coverage says nothing about the
   quality of a forecast built beside it. PLAN-1 re-prices.
 
