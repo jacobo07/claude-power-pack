@@ -129,3 +129,9 @@ mission (packet + envelope + gate) with no hand-opened pane.
 - Canary: session 9137e707 hit the ce-a3b-r cap after binding through Set-Location, and the guard's only exit was the
   Owner opening a pane by hand.
 - ce-unify, launched manually 2026-10-09, is the last manual launch.
+
+## S5 first live canary: ce-unify lease (recorded 2026-10-09, Owner)
+Mission m-5a42ed8f28cc (goal ce-unify, cwd pp-ce-unify) is COMPLETED with receipt 68d62f23 / 36b3cc9f, yet
+`mission_spend.py goal-status --goal ce-unify` reads cap 1,200,000, used 750,000, open 750,000, settled 0.
+The lease was never settled. Do not hand-settle it: S5's certified closeout must settle it from the measured transcript
+spend (9 model calls), close the lease, and leave settled = real spend with open = 0. That is S5's first live canary.
