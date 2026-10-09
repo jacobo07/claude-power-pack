@@ -1,0 +1,1398 @@
+diff --git a/hooks/session_budget_guard.js b/hooks/session_budget_guard.js
+index bcc4b330..0f63620b 100644
+--- a/hooks/session_budget_guard.js
++++ b/hooks/session_budget_guard.js
+@@ -127,6 +127,16 @@ function judge(budget, st) {
+   if (st.calls - st.progress_at > k) {
+     return deny(`${st.calls - st.progress_at} calls since the last edit or commit (limit ${k}): spend without progress.`);
+   }
++  // Predictive lease edge (WU-S4): WU-S3 tripped at 975K vs stop 950K, so the breaker was the first signal.
++  // Fires strictly before the stop deny: the remaining lease holds about `reserve` calls at the mean cost so far.
++  if (String(process.env.CPP_LEASE_EDGE || '').trim().toLowerCase() !== 'off') {
++    const per = st.tokens / Math.max(st.calls, 1);
++    const reserve = Number(budget.closeout_reserve_calls) || 3;
++    if (st.tokens + per * reserve > budget.stop) {
++      return advise(`LEASE EDGE: the remaining lease holds about ${reserve} calls. Do no new substantive work. ` +
++        'Now: commit what is green (pathspec, -F), write the receipt with Status: PARTIAL and the exact next step, end with HANDOFF NOTE.');
++    }
++  }
+   if (st.tokens > budget.warn) {
+     return advise(`SESSION BUDGET: processed ${fmt(st.tokens)} is past warn ${fmt(budget.warn)} ` +
+       `(stop ${fmt(budget.stop)}). Finish the unit in hand; start nothing new.`);
+@@ -139,7 +149,7 @@ function judge(budget, st) {
+ // against stop 800K and every later call (a plain Read too) was denied. A tripped session now gets
+ // `closeout_calls` (default 4) calls that are read-only or write a closeout file; nothing else.
+ const READ_ONLY = new Set(['Read', 'Grep', 'Glob']);
+-const CLOSEOUT_PATH = /(^|[\\/])(vault[\\/]plans[\\/][^\\/]+\.md|memory[\\/]handoffs[\\/][^\\/]+\.md|RESUMPTION_FILE\.md)$/;
++const CLOSEOUT_PATH = /(^|[\\/])(vault[\\/]plans[\\/][^\\/]+\.md|memory[\\/]handoffs[\\/][^\\/]+\.md|RESUMPTION_FILE\.md|[^\\/]+-receipt\.md)$/;   // F3: a work-unit receipt is a closeout file
+ const DEFAULT_CLOSEOUT = 4;
+ 
+ // Goal mode passes `goal`: one handoff write, no reads. The live canary of 2026-10-07 (CANARY.md,
+diff --git a/modules/provider_routing/ledger.py b/modules/provider_routing/ledger.py
+index 53551362..fbd716a8 100644
+--- a/modules/provider_routing/ledger.py
++++ b/modules/provider_routing/ledger.py
+@@ -202,6 +202,8 @@ class GoalLedger(SpendLedger):
+             elif op == "leak":
+                 if res.get(r["id"], {}).get("state") == RESERVED:
+                     res[r["id"]]["state"] = LEAKED
++            elif op == "correct":
++                marks[r["sid"]] = int(r["measured"])       # may LOWER; later settles watermark from here
+             elif op == "settle":
+                 marks[r["sid"]] = max(marks.get(r["sid"], 0), int(r["measured"]))
+                 for rid in r.get("closes", []):
+@@ -318,6 +320,34 @@ class GoalLedger(SpendLedger):
+             return self._summary(self._gfold(recs), ok=True, reason="",
+                                  lease={"id": rid, "amount": amount, "base": measured})
+ 
++    def settle_stopped(self, sid: str, measured: int, reason: str) -> dict:
++        """A stopped worker: settle `sid` at `measured` and close EVERY open hold of it (lease, agent,
++        final). Never reserves. A second call books nothing new."""
++        if not isinstance(measured, int) or measured < 0:
++            raise LedgerError("measured must be an int >= 0")
++        with self._lock:
++            recs = self._read()
++            g = self._sweep_leaks(recs)
++            closes = sorted(rid for rid, r in g["res"].items()
++                            if r["sid"] == sid and r["state"] in (RESERVED, LEAKED))
++            if closes or measured > g["marks"].get(sid, 0):
++                self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes,
++                                    "stopped": True, "reason": reason})
++                g = self._gfold(recs)
++            return self._summary(g, ok=True, reason="", closed=closes)
++
++    def correct(self, sid: str, measured: int, reason: str, authority: str) -> dict:
++        """Owner correction of a misattributed mark (may lower it). Journalled, never silent."""
++        if not isinstance(measured, int) or measured < 0 or not reason or not authority:
++            raise LedgerError("correct needs measured int >= 0, a reason and an authority")
++        with self._lock:
++            recs = self._read()
++            g = self._sweep_leaks(recs)
++            self._append(recs, {"op": "correct", "sid": sid, "measured": measured,
++                                "reason": reason, "authority": authority,
++                                "previous": g["marks"].get(sid, 0)})
++            return self._summary(self._gfold(recs), ok=True, reason="")
++
+     def spawn(self, sid: str, estimate: int, base: int = 0) -> dict:
+         """Admit a child (Agent / worker) only if its estimate fits what remains. `base` is the parent
+         sid's measured total at launch; the hold shrinks as settled spend passes it (see _gfold)."""
+diff --git a/tools/gsd_mission.py b/tools/gsd_mission.py
+index 526dc1b8..212186a6 100644
+--- a/tools/gsd_mission.py
++++ b/tools/gsd_mission.py
+@@ -1742,9 +1742,7 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
+ 
+ def _git_toplevel_and_common(path: str) -> tuple[str, str] | None:
+     import subprocess
+-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+-    if not Path(g).exists():
+-        g = "git"
++    g = resolve_exe("git") or "git"
+     try:
+         r = subprocess.run([g, "-C", path, "rev-parse", "--show-toplevel", "--git-common-dir"],
+                            capture_output=True, text=True, timeout=20)
+@@ -1780,9 +1778,7 @@ def _worktree_carries_workstream(worktree: str, base_cwd: str, workstream: str)
+     does not contain the Lobby roadmap commit 20561b15. Any git failure -> False (stay on the
+     mission cwd, where the mission was armed)."""
+     import subprocess
+-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+-    if not Path(g).exists():
+-        g = "git"
++    g = resolve_exe("git") or "git"
+     try:
+         r = subprocess.run([g, "-C", base_cwd, "log", "-1", "--format=%H", "--",
+                             f".planning/workstreams/{workstream}"],
+@@ -1829,9 +1825,7 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
+         return {"status": "unreadable", "detail": f"git could not read cwd={cwd} or work_dir={work_dir}"}
+     if here[1] != there[1]:
+         return {"status": "unrelated", "detail": "work_dir is not a worktree of the cwd's repository"}
+-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+-    if not Path(g).exists():
+-        g = "git"
++    g = resolve_exe("git") or "git"
+ 
+     def git(path, *args):
+         return subprocess.run([g, "-C", path, *args], capture_output=True, text=True, timeout=60)
+@@ -2241,11 +2235,43 @@ def halt_continue_on() -> bool:
+     return os.environ.get("CPP_HALT_CONTINUE", "").lower() != "off"
+ 
+ 
+-def _git_ro(wd: str, *args: str) -> str:
++def resolve_exe(name: str) -> str | None:
++    """Certified executable resolver: CPP_EXE_<NAME> override, shutil.which, known Windows paths.
++    None only when every source fails."""
+     import shutil
+     import subprocess
+-    fallback = r"C:\Program Files\Git\cmd\git.exe"
+-    git = shutil.which("git") or (fallback if Path(fallback).exists() else "git")
++    key = name.lower()
++    cands = [os.environ.get(f"CPP_EXE_{key.upper()}")]
++    if key == "git":
++        cands.append(os.environ.get("CPP_GIT_EXE"))
++    for c in cands:
++        if c and Path(c).exists():
++            return c
++    w = shutil.which(name)
++    if w:
++        return w
++    known = {"git": [r"C:\Program Files\Git\cmd\git.exe"], "python": [sys.executable]}.get(key, [])
++    for c in known:
++        if c and Path(c).exists():
++            return c
++    if key == "node":
++        try:
++            r = subprocess.run([os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "where.exe"),
++                                "node"], capture_output=True, text=True, timeout=15)
++            for ln in r.stdout.splitlines():
++                if ln.strip() and Path(ln.strip()).exists():
++                    return ln.strip()
++        except Exception:  # noqa: BLE001
++            pass
++    return None
++
++
++def _git_ro(wd: str, *args: str) -> str | None:
++    """None = git UNRESOLVED (distinct from "" = git ran and printed nothing)."""
++    import subprocess
++    git = resolve_exe("git")
++    if not git:
++        return None
+     try:
+         p = subprocess.run([git, "-C", wd, *args], capture_output=True, text=True, timeout=30)
+         return p.stdout if p.returncode == 0 else ""
+@@ -2259,11 +2285,20 @@ def write_fault_capsule(rec: dict, wd: str, result_text: str, slim: dict | None)
+     mid, epoch = rec["mission_id"], rec.get("epoch")
+     path = lr.state_dir() / "fault-capsules" / f"{mid}-e{epoch}.json"
+     text = result_text or ""
+-    dirty = [ln for ln in _git_ro(wd, "status", "--porcelain").splitlines() if ln.strip()]
+-    log = [ln for ln in _git_ro(wd, "log", "--oneline", "-n", "20").splitlines() if ln.strip()]
++    unresolved = _git_ro(wd, "rev-parse", "HEAD") is None
++    dirty = [ln for ln in (_git_ro(wd, "status", "--porcelain") or "").splitlines() if ln.strip()]
++    if rec.get("created_at"):
++        # F4: only this mission's commits, not the branch history (steward helper owns the since-log).
++        import mission_steward as _stw
++        log = _stw._git_log(wd, float(rec["created_at"]))
++    else:
++        log = [ln for ln in (_git_ro(wd, "log", "--oneline", "-n", "20") or "").splitlines() if ln.strip()]
+     data = {"mission_id": mid, "epoch": epoch, "written_at": time.time(),
+-            "head": _git_ro(wd, "rev-parse", "HEAD").strip(), "commits": log,
+-            "dirty": dirty, "diff_stat": _git_ro(wd, "diff", "--stat"),
++            "git": "UNRESOLVED" if unresolved else "ok",
++            "head": "UNRESOLVED" if unresolved else (_git_ro(wd, "rev-parse", "HEAD") or "").strip(),
++            "commits": log if not unresolved else "UNRESOLVED",
++            "dirty": dirty if not unresolved else "UNRESOLVED",
++            "diff_stat": "UNRESOLVED" if unresolved else (_git_ro(wd, "diff", "--stat") or ""),
+             "gate_lines": [ln for ln in text.splitlines()
+                            if re.match(r"^(PASS|FAIL|[A-Z_]+_PASS=)", ln)][-20:],
+             "spend": {"slim_tokens": (slim or {}).get("tokens"), "tripped": (slim or {}).get("tripped"),
+@@ -2296,6 +2331,63 @@ def _receipt_present(rec: dict) -> bool:
+                 or re.search(r"^\s*Status:\s*(IN PROGRESS|PARTIAL)\b", body, re.I | re.M))
+ 
+ 
++_TREE_RE = re.compile(r"^work_tree:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
++_RECEIPT_RE = re.compile(r"^receipt:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
++
++
++def _packet_text(rec: dict) -> str | None:
++    pkt = rec.get("wu_packet")
++    if not pkt:
++        return None
++    try:
++        return Path(pkt["path"]).read_text(encoding="utf-8-sig", errors="replace")
++    except OSError:
++        return None
++
++
++def _tree_inside_repo(tree: str, base_cwd: str) -> str | None:
++    """The packet's `work_tree:` only when it is an absolute directory inside the record's repository."""
++    p = Path(tree)
++    if not p.is_absolute() or not p.is_dir():
++        return None
++    p = p.resolve()
++    base = Path(base_cwd).resolve()
++    if p == base or base in p.parents:
++        return str(p)
++    here, root = _git_toplevel_and_common(str(p)), _git_toplevel_and_common(str(base))
++    return str(p) if here and root and here[1] == root[1] else None
++
++
++def packet_gate_dir(rec: dict, text: str | None = None) -> tuple[str | None, str]:
++    """The tree the packet's work happens in: `work_tree:` line, else the owner's effective workdir, else cwd."""
++    text = _packet_text(rec) if text is None else text
++    m = _TREE_RE.search(text or "")
++    if m:
++        t = _tree_inside_repo(m.group(1), rec["cwd"])
++        return t, "packet work_tree" if t else f"work_tree {m.group(1)[:200]!r} is not inside the repo"
++    wd = rec.get("work_dir") or rec["cwd"]
++    if rec.get("owner"):
++        try:
++            wd = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream")) or wd
++        except Exception:  # noqa: BLE001 -- keep the recorded dir; never guess
++            pass
++    return wd, "worker tree"
++
++
++def packet_receipt_path(rec: dict) -> str | None:
++    """The packet's `receipt:` line resolved to one absolute path inside the work tree, or None."""
++    text = _packet_text(rec)
++    m = _RECEIPT_RE.search(text) if text else None
++    if not m or Path(m.group(1)).is_absolute():
++        return None
++    tree, _ = packet_gate_dir(rec, text)
++    if not tree:
++        return None
++    root = Path(tree).resolve()
++    p = (root / m.group(1)).resolve()
++    return str(p) if root in p.parents else None
++
++
+ def spend_goal(rec: dict) -> str | None:
+     """The CE goal that pays for this mission. A sweep-armed record carries neither `goal.ce_goal` nor a
+     workstream, so the cwd binding in the goal index (the same one the session guard uses) decides."""
+@@ -2328,11 +2420,23 @@ def halt_authority(rec: dict) -> int | None:
+ 
+ def halt_continue(rec: dict, wd: str, result_text: str, slim: dict | None, row: dict, now: float) -> None:
+     """rec = the mission as it stands after the stop. Fills row['capsule'] / row['renewed_as'] / row['renewal']."""
+-    if not halt_continue_on() or not (rec.get("wu_packet") or {}).get("path"):
++    if not halt_continue_on():
++        row.setdefault("renewal", "not renewed: halt-continue off")
++        return
++    if not (rec.get("wu_packet") or {}).get("path"):
++        row.setdefault("renewal", "not renewed: no work-unit packet")
+         return
+-    mid = rec["mission_id"]
+     if _receipt_present(rec):
++        row.setdefault("renewal", "not renewed: receipt present")
+         return
++    try:
++        _halt_continue_body(rec, wd, result_text, slim, row, now)
++    except Exception as exc:  # noqa: BLE001 -- F5: a non-renewal always leaves its reason on the row
++        row.setdefault("renewal", f"not renewed: halt-continue raised {type(exc).__name__}: {exc}"[:600])
++
++
++def _halt_continue_body(rec: dict, wd: str, result_text: str, slim: dict | None, row: dict, now: float) -> None:
++    mid = rec["mission_id"]
+     cap = write_fault_capsule(rec, wd, result_text, slim)
+     row["capsule"] = cap
+     why = None
+@@ -2821,7 +2925,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
+         # Nothing to supervise: do not ask the host (`claude agents --json` costs seconds,
+         # measured > 60 s once under load) on every 5-minute pass of an idle estate.
+         return unreadable + [{"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
+-                              "action": "none", "reason": f"terminal {m['state']}"} for m in missions]
++                              "action": "none", "reason": f"terminal {m['state']}"} for m in missions] \
++            + _steward_rows(missions, now, sessions, pid_alive, dry_run)
+     if sessions is None:
+         sessions = host_sessions()
+     stop_run = stop_runner or (lambda a: subprocess.run(a, capture_output=True, text=True, timeout=120))
+@@ -2994,13 +3099,14 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
+             elif act == "slim_finished":
+                 s = plan["slim"]
+                 stopped = s.get("tripped") or ("worker reported is_error" if s["is_error"] else None)
++                if not stopped and halt_continue_on() and (rec.get("wu_packet") or {}).get("path") \
++                        and not _receipt_present(rec):
++                    stopped = "no receipt"   # F1: a clean finish without its receipt is a fault, not done
+                 fin = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                  event="slim_worker_finished", now=now, state=HALTED if stopped else COMPLETED,
+                                  pending=None, slim_result=s, worker=s.get("session_id"),
+                                  reason=f"{plan['reason']}; {stopped}" if stopped else plan["reason"])
+-                if halt_continue_on() and (stopped or not _receipt_present(fin)):
+-                    if not stopped:
+-                        row["work_unit_status"] = "RECOVERY_PENDING"
++                if halt_continue_on() and stopped:
+                     halt_continue(fin, fin.get("work_dir") or fin["cwd"], s.get("result") or "", s, row, now)
+             elif act == "settle":
+                 # Terminal, never relaunched: HALTED keeps owner_hold, so renewal_refusal still refuses it,
+@@ -3308,9 +3414,22 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
+                 lr.ledger_append(mid, "supervise_error", mission_id=mid, error=row["error"])
+             except Exception:  # noqa: BLE001 -- the row still carries the error
+                 pass
+-    return unreadable + out
++    return unreadable + out + _steward_rows(missions, now, sessions, pid_alive, dry_run)
+ 
+ 
++def _steward_rows(missions, now, sessions, pid_alive, dry_run) -> list[dict]:
++    """The mission steward (tools/mission_steward.py), isolated: any failure is ONE row, never a failed sweep."""
++    if dry_run:
++        return []
++    try:
++        import mission_steward
++        if sessions is None and any(m["state"] in (HALTED, BLOCKED) and m.get("wu_packet") and m.get("goal")
++                                    and not (m.get("steward") or {}).get("done") for m in missions):
++            sessions = host_sessions()     # a stopped worker is judged against the host, not guessed
++        return mission_steward.steward_pass(missions, now, sessions=sessions, pid_alive=pid_alive)
++    except Exception as exc:  # noqa: BLE001
++        return [{"action": "steward_error", "error": f"{type(exc).__name__}: {exc}"[:300]}]
++
+ # --------------------------------------------------------------------------- goal authority (GGMC C4)
+ # spec goal-governed-mission-control C4: the Goal (a workstream of a repository) is the authority; a
+ # mission is a disposable attempt at it. Measured 2026-10-06: create() refused only a live record with
+@@ -3439,9 +3558,7 @@ def progress_fingerprint(work_dir: str) -> str | None:
+     A commit is the unit of work GSD and the hand-off card both ask a worker to leave behind."""
+     import hashlib
+     import subprocess
+-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+-    if not Path(g).exists():
+-        g = "git"
++    g = resolve_exe("git") or "git"
+     parts = []
+     try:
+         for args in (["rev-parse", "HEAD"], ["status", "--porcelain"], ["diff", "HEAD", "--shortstat"]):
+@@ -3484,9 +3601,7 @@ def _plan_facts(work_dir: str, workstream: str | None = None) -> str:
+ 
+ def _git_facts(cwd: str) -> dict:
+     import subprocess
+-    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+-    if not Path(g).exists():
+-        g = "git"
++    g = resolve_exe("git") or "git"
+     facts = {}
+     try:
+         facts["head"] = subprocess.run([g, "-C", cwd, "rev-parse", "--short", "HEAD"],
+diff --git a/tools/mission_spend.py b/tools/mission_spend.py
+index 8c492992..92a32f09 100644
+--- a/tools/mission_spend.py
++++ b/tools/mission_spend.py
+@@ -422,6 +422,40 @@ def _goal_ledger(goal: str):
+     return GoalLedger(goal_root() / goal, goal)
+ 
+ 
++def goal_settle(goal: str, sid: str, measured: int | None = None, reason: str = "goal-settle",
++                transcripts_root: Path | None = None) -> dict:
++    """Settle a STOPPED session and close all of its holds (never reserves). Blind -> refused."""
++    if not _SID_RE.match(sid or ""):
++        raise ValueError(f"invalid session id: {sid!r}")
++    if measured is None:
++        tp = find_transcript(sid, transcripts_root)
++        if tp is None:
++            return {"ok": False, "goal": goal, "reason": "no transcript for the session and no --measured: "
++                    "refusing to settle blind"}
++        measured = int(session_tokens(tp)["tokens"])
++    return _goal_ledger(goal).settle_stopped(sid, int(measured), reason)
++
++
++def _real_console_stdin() -> bool:
++    """A person at a terminal. On Windows the NUL device reports isatty() True, so ask the console."""
++    import sys
++    if not sys.stdin or not sys.stdin.isatty():
++        return False
++    if os.name == "nt":
++        try:
++            import ctypes
++            mode = ctypes.c_uint32()
++            h = ctypes.windll.kernel32.GetStdHandle(-10)
++            return bool(ctypes.windll.kernel32.GetConsoleMode(h, ctypes.byref(mode)))
++        except Exception:  # noqa: BLE001
++            return False
++    return True
++
++
++def goal_correct(goal: str, sid: str, measured: int, reason: str, authority: str) -> dict:
++    return _goal_ledger(goal).correct(sid, int(measured), reason, authority)
++
++
+ def read_index() -> dict:
+     try:
+         ix = json.loads((goal_root() / "index.json").read_text(encoding="utf-8-sig"))
+@@ -681,6 +715,16 @@ def _main(argv: list[str]) -> int:
+     gp.add_argument("--goal", required=True)
+     gp.add_argument("--session", required=True)
+     gp.add_argument("--measured", type=int, required=True)
++    gt = sub.add_parser("goal-settle")
++    gt.add_argument("--goal", required=True)
++    gt.add_argument("--session", required=True)
++    gt.add_argument("--measured", type=int)
++    gc = sub.add_parser("goal-correct")
++    gc.add_argument("--goal", required=True)
++    gc.add_argument("--session", required=True)
++    gc.add_argument("--measured", type=int, required=True)
++    gc.add_argument("--reason", required=True)
++    gc.add_argument("--owner", action="store_true")
+     gs = sub.add_parser("goal-status")
+     gs.add_argument("--goal", required=True)
+     a = ap.parse_args(argv)
+@@ -698,6 +742,18 @@ def _main(argv: list[str]) -> int:
+             out = goal_declare(a.goal, a.cap, a.source, a.root, a.host, a.lease_calls, owner=owner)
+         elif a.cmd == "goal-prebind":
+             out = goal_prebind(a.goal, a.session, a.measured)
++        elif a.cmd == "goal-settle":
++            out = goal_settle(a.goal, a.session, a.measured)
++        elif a.cmd == "goal-correct":
++            if not a.owner or not _real_console_stdin():
++                print(json.dumps({"ok": False, "goal": a.goal,
++                                  "reason": "goal-correct needs --owner on an interactive terminal "
++                                  "(stdin is not a TTY)"}))
++                return 3
++            if input(f"Owner correction of goal {a.goal!r}: type the goal id to confirm: ").strip() != a.goal:
++                print(json.dumps({"ok": False, "goal": a.goal, "reason": "not confirmed"}))
++                return 3
++            out = goal_correct(a.goal, a.session, a.measured, a.reason, "owner-tty")
+         elif a.cmd == "goal-renew":
+             out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
+         elif a.cmd == "goal-spawn":
+diff --git a/tools/mission_steward.py b/tools/mission_steward.py
+new file mode 100644
+index 00000000..fa64de0d
+--- /dev/null
++++ b/tools/mission_steward.py
+@@ -0,0 +1,306 @@
++#!/usr/bin/env python
++"""Mission steward (WU-S1): a stopped worker is settled, salvaged and handed on, deterministically.
++
++Zero model. Run at the end of every `gsd_mission.supervise()` pass. It never arms, admits or launches
++(that is spend authority): it SETTLES the dead owner's holds, writes a PARTIAL receipt (never the canonical
++path), extracts refused tool inputs, and PROPOSES a residual packet.
++
++  R1 stopped worker   state HALTED|BLOCKED, owner not alive, wu_packet + goal set, canonical receipt absent
++  R2 forgotten goal   a goal with budget left and no live, un-held mission for 30 min -> one incident / 24 h
++  R3 unarmed successor a receipt or packet names a successor packet no mission carries -> a row
++
++Every effect is a step recorded on the mission as `steward: {...}` through `transition` (state unchanged),
++and the record is re-read before each step, so a repeated or restarted pass does nothing twice.
++Kill switch: CPP_MISSION_STEWARD=off.
++"""
++from __future__ import annotations
++
++import json
++import os
++import re
++import subprocess
++import sys
++import time
++from pathlib import Path
++
++sys.path.insert(0, str(Path(__file__).resolve().parent))
++
++FORGOTTEN_AFTER_S = 30 * 60
++INCIDENT_EVERY_S = 24 * 3600
++BREAKER = "SESSION BUDGET BREAKER"
++_SUCC_RE = re.compile(r"^successor(?:_packet)?:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
++STEPS = ("settled", "partial", "salvage", "residual")
++
++
++def _off() -> bool:
++    return (os.environ.get("CPP_MISSION_STEWARD") or "").strip().lower() in ("off", "0", "false")
++
++
++def _gm():
++    import gsd_mission
++    return gsd_mission
++
++
++def _ms():
++    import mission_spend
++    return mission_spend
++
++
++def _atomic(path: Path, data: bytes) -> None:
++    path.parent.mkdir(parents=True, exist_ok=True)
++    tmp = path.with_name(path.name + f".{os.getpid()}.tmp")
++    tmp.write_bytes(data)
++    os.replace(tmp, path)
++
++
++def spend_goal_for(cwd: str, index: dict) -> str | None:
++    ms = _ms()
++    c = ms._norm(cwd or ".")
++    for goal, e in sorted(index.items()):
++        for r in e.get("roots", []):
++            r = ms._norm(r)
++            if c == r or c.startswith(r + os.sep):
++                return goal
++    return None
++
++
++# --------------------------------------------------------------------------- transcript
++def read_transcript(path: Path) -> dict:
++    """Model calls (deduped by message.id), tool calls, and the refused tool_use inputs."""
++    seen, uses, results = set(), {}, {}
++    model_calls = tool_calls = 0
++    with open(path, encoding="utf-8", errors="replace") as fh:
++        for line in fh:
++            try:
++                r = json.loads(line)
++            except ValueError:
++                continue
++            m = r.get("message") if isinstance(r, dict) else None
++            if not isinstance(m, dict):
++                continue
++            content = m.get("content")
++            if r.get("type") == "assistant" and isinstance(content, list):
++                mid = m.get("id") or r.get("uuid")
++                if m.get("usage") and m.get("model") != "<synthetic>" and mid not in seen:
++                    seen.add(mid)
++                    model_calls += 1
++                for b in content:
++                    if isinstance(b, dict) and b.get("type") == "tool_use":
++                        tool_calls += 1
++                        uses[b.get("id")] = {"name": b.get("name"), "input": b.get("input")}
++            elif r.get("type") == "user" and isinstance(content, list):
++                for b in content:
++                    if isinstance(b, dict) and b.get("type") == "tool_result" and b.get("is_error"):
++                        c = b.get("content")
++                        if isinstance(c, list):
++                            c = " ".join(str(x.get("text", "")) if isinstance(x, dict) else str(x) for x in c)
++                        if BREAKER in str(c):
++                            results[b.get("tool_use_id")] = str(c)[:300]
++    refused = [{"tool_use_id": t, "tool": uses[t]["name"], "input": uses[t]["input"], "error": e}
++               for t, e in results.items() if t in uses]
++    return {"model_calls": model_calls, "tool_calls": tool_calls, "refused": refused}
++
++
++def _git_log(tree: str, since: float) -> list[str]:
++    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
++    try:
++        p = subprocess.run([g, "-C", tree, "log", f"--since=@{int(since)}", "--format=%h %s"],
++                           capture_output=True, text=True, timeout=30)
++        return [x for x in p.stdout.splitlines() if x.strip()] if p.returncode == 0 else []
++    except Exception:  # noqa: BLE001 -- the log is evidence, not a precondition
++        return []
++
++
++# --------------------------------------------------------------------------- R1
++def _step(gm, mid: str, rec: dict, name: str, value, steward: dict) -> dict:
++    new = {**steward, name: value}
++    return gm.transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
++                         event=f"steward_{name}", steward=new)
++
++
++def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool, index: dict) -> dict:
++    mid = rec["mission_id"]
++    row = {"mission_id": mid, "state": rec["state"], "epoch": rec["epoch"], "rule": "R1", "action": "none"}
++    st = (rec.get("steward") or {})
++    if st.get("done"):
++        return None
++    sid = (rec.get("owner") or {}).get("session_id")
++    receipt = gm.packet_receipt_path(rec)
++    if receipt and Path(receipt).exists():
++        return None                       # the canonical receipt is the worker's own close: untouched
++    goal = spend_goal_for(rec.get("cwd"), index)
++    if not goal:
++        row.update(action="UNKNOWN", reason="no spend goal is bound to this mission's cwd: nothing settled")
++        return row
++    tp = transcript_for(sid)
++    if tp is None:
++        row.update(action="UNKNOWN", reason=f"no transcript for {sid}: nothing settled")
++        return row
++    if dry_run:
++        row.update(action="would_steward", goal=goal)
++        return row
++    pkt = Path(rec["wu_packet"]["path"])
++    tree, _ = gm.packet_gate_dir(rec)
++    tree = tree or rec["cwd"]
++    ms = _ms()
++    tok = ms.session_tokens(tp)
++    tr = read_transcript(tp)
++    # re-read before each step: the record is the memory, never this pass's earlier copy
++    fresh = gm.load(mid) or rec
++    st = dict(fresh.get("steward") or {})
++    if not st.get("settled"):
++        out = ledger_for(goal).settle_stopped(sid, int(tok["tokens"]), f"steward:{mid}")
++        fresh = _step(gm, mid, fresh, "settled", {"goal": goal, "sid": sid, "measured": int(tok["tokens"]),
++                                                   "closed": out.get("closed", []), "at": now}, st)
++        row["settled"] = int(tok["tokens"])
++    fresh = gm.load(mid) or fresh
++    st = dict(fresh.get("steward") or {})
++    partial = Path(receipt + ".partial.json") if receipt else Path(str(pkt) + ".partial.json")
++    if not st.get("partial"):
++        adm_at = float((rec.get("admission") or {}).get("at") or rec.get("created_at") or 0)
++        body = {"mission_id": mid, "session": sid, "goal": goal, "status": "PARTIAL", "canonical": False,
++                "tokens": tok["tokens"], "tool_calls": tr["tool_calls"], "model_calls": tr["model_calls"],
++                "commits": _git_log(tree, adm_at), "refused_calls": len(tr["refused"]),
++                "salvage": [f"vault/specs/salvage/{mid}/{x['tool_use_id']}.json" for x in tr["refused"]]}
++        _atomic(partial, json.dumps(body, indent=1, sort_keys=True).encode("utf-8"))
++        fresh = _step(gm, mid, fresh, "partial", str(partial), st)
++        row["partial"] = str(partial)
++    fresh = gm.load(mid) or fresh
++    st = dict(fresh.get("steward") or {})
++    sdir = Path(tree) / "vault" / "specs" / "salvage" / mid
++    if not st.get("salvage"):
++        files = []
++        for x in tr["refused"]:
++            f = sdir / f"{x['tool_use_id']}.json"
++            _atomic(f, json.dumps(x["input"], indent=1, ensure_ascii=False).encode("utf-8"))
++            files.append(str(f))
++        fresh = _step(gm, mid, fresh, "salvage", files, st)
++        row["salvaged"] = len(files)
++    fresh = gm.load(mid) or fresh
++    st = dict(fresh.get("steward") or {})
++    residual = Path(str(pkt) + ".residual.md")
++    if not st.get("residual"):
++        text = pkt.read_text(encoding="utf-8-sig", errors="replace") if pkt.exists() else ""
++        add = ("\n\n## Residual\n"
++               f"Proposed by the steward for stopped mission {mid} (PROPOSAL ONLY: arming it needs the "
++               "Owner/coordinator).\n"
++               f"- Partial receipt: {partial}\n"
++               f"- RESUMPTION_FILE: {Path(tree) / 'RESUMPTION_FILE.md'}\n"
++               f"- Salvage: {sdir}\n")
++        _atomic(residual, (text + add).encode("utf-8"))
++        fresh = _step(gm, mid, fresh, "residual", str(residual), st)
++        row["residual"] = str(residual)
++    fresh = gm.load(mid) or fresh
++    st = dict(fresh.get("steward") or {})
++    if not st.get("done"):
++        _step(gm, mid, fresh, "done", True, st)
++    row["action"] = "steward_settled" if "settled" in row else "steward_completed"
++    return row
++
++
++# --------------------------------------------------------------------------- R2
++def _r2(missions: list[dict], now: float, *, ledger_for, dry_run: bool, index: dict) -> list[dict]:
++    gm = _gm()
++    path = gm.lr.state_dir() / "steward-incidents.jsonl"
++    last: dict[str, float] = {}
++    try:
++        for ln in path.read_text(encoding="utf-8").splitlines():
++            try:
++                e = json.loads(ln)
++                last[e["goal"]] = max(last.get(e["goal"], 0), float(e["at"]))
++            except (ValueError, KeyError, TypeError):
++                continue
++    except OSError:
++        pass
++    rows = []
++    for goal in sorted(index):
++        covered = False
++        for m in missions:
++            if spend_goal_for(m.get("cwd"), {goal: index[goal]}) != goal:
++                continue
++            if m.get("owner_hold"):
++                covered = True            # a deliberate hold is never forgotten
++            elif m["state"] not in gm.TERMINAL and now - float(m.get("updated_at") or 0) <= FORGOTTEN_AFTER_S:
++                covered = True
++        if covered:
++            continue
++        try:
++            rem = ledger_for(goal).status().get("remaining")
++        except Exception:  # noqa: BLE001
++            continue
++        if not rem or rem <= 0 or now - last.get(goal, 0) < INCIDENT_EVERY_S:
++            continue
++        row = {"mission_id": None, "rule": "R2", "action": "forgotten_goal", "goal": goal, "remaining": rem}
++        if not dry_run:
++            path.parent.mkdir(parents=True, exist_ok=True)
++            with open(path, "a", encoding="utf-8") as fh:
++                fh.write(json.dumps({"goal": goal, "at": now, "remaining": rem}) + "\n")
++        rows.append(row)
++    return rows
++
++
++# --------------------------------------------------------------------------- R3
++def _r3(missions: list[dict]) -> list[dict]:
++    gm = _gm()
++    armed = set()
++    for m in missions:
++        p = (m.get("wu_packet") or {}).get("path")
++        if p:
++            armed.add(os.path.normcase(os.path.abspath(p)))
++    rows = []
++    for m in missions:
++        pkt = (m.get("wu_packet") or {}).get("path")
++        if not pkt:
++            continue
++        texts = [gm._packet_text(m) or ""]
++        receipt = gm.packet_receipt_path(m)
++        if receipt and Path(receipt).exists():
++            try:
++                texts.append(Path(receipt).read_text(encoding="utf-8-sig", errors="replace"))
++            except OSError:
++                pass
++        tree, _ = gm.packet_gate_dir(m)
++        base = Path(tree or m["cwd"])
++        for t in texts:
++            for ref in _SUCC_RE.findall(t) + re.findall(r'"successor(?:_packet)?"\s*:\s*"([^"]+)"', t):
++                p = Path(ref)
++                full = os.path.normcase(os.path.abspath(p if p.is_absolute() else base / p))
++                if full not in armed:
++                    rows.append({"mission_id": m["mission_id"], "rule": "R3", "action": "successor_unarmed",
++                                 "successor": ref})
++    seen, out = set(), []
++    for r in rows:
++        k = (r["mission_id"], r["successor"])
++        if k not in seen:
++            seen.add(k)
++            out.append(r)
++    return out
++
++
++# --------------------------------------------------------------------------- entry
++def steward_pass(missions: list[dict], now: float, *, sessions=None, pid_alive=None, dry_run: bool = False,
++                 ledger_for=None, transcript_for=None) -> list[dict]:
++    if _off():
++        return []
++    gm, ms = _gm(), _ms()
++    pid_alive = pid_alive or gm.lr._pid_alive
++    ledger_for = ledger_for or ms._goal_ledger
++    transcript_for = transcript_for or (lambda sid: ms.find_transcript(sid) if sid else None)
++    index = ms.read_index()
++    rows = []
++    for m in missions:
++        if m["state"] not in (gm.HALTED, gm.BLOCKED) or not m.get("wu_packet") or not m.get("goal"):
++            continue
++        verdict = gm.liveness(m.get("owner"), sessions, pid_alive)[0]
++        if verdict in (gm.LIVE, gm.WAITING_HUMAN):
++            continue
++        if not (m.get("owner") or {}).get("session_id"):
++            continue
++        fresh = gm.load(m["mission_id"]) or m
++        r1 = _r1(gm, fresh, now, ledger_for=ledger_for, transcript_for=transcript_for,
++                 dry_run=dry_run, index=index)
++        if r1:
++            rows.append(r1)
++    rows += _r2(missions, now, ledger_for=ledger_for, dry_run=dry_run, index=index)
++    rows += _r3(missions)
++    return rows
+diff --git a/tools/route_admission.py b/tools/route_admission.py
+index 95bf0731..db11b40b 100644
+--- a/tools/route_admission.py
++++ b/tools/route_admission.py
+@@ -54,6 +54,33 @@ def _with_margin(n: int, margin: float) -> int:
+     return math.ceil(round(n * (1 + margin), 6))
+ 
+ 
++MISS_FACTOR = 1.25
++
++
++def is_degraded(prof: dict) -> bool:
++    m = prof.get("misses") or []
++    return len(m) >= 3 and all(x["actual"] > MISS_FACTOR * x["need"] for x in m[-3:])
++
++
++def max_ratio(prof: dict) -> float:
++    return max(x["actual"] / x["need"] for x in prof["misses"][-3:])
++
++
++def record_actual(profile: str, need: int, actual: int, path: Path | str | None = None) -> dict:
++    """Append a miss (actual > 1.25 x need) to the profile's list; a hit clears it."""
++    path = Path(path or FLOORS_PATH)
++    data = load_floors(path)
++    prof = data["profiles"][profile]
++    if need <= 0:
++        raise ValueError("need must be positive")
++    if actual > MISS_FACTOR * need:
++        prof.setdefault("misses", []).append({"need": need, "actual": actual})
++    else:
++        prof["misses"] = []
++    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
++    return {"profile": profile, "misses": prof["misses"], "degraded": is_degraded(prof)}
++
++
+ def route_digest(route: dict) -> str:
+     return hashlib.sha256(json.dumps(route, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+ 
+@@ -78,7 +105,7 @@ def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
+     if margin < 0:
+         raise ValueError("margin must be >= 0")
+     profiles = floors["profiles"]
+-    rows, unknown = [], []
++    rows, unknown, degraded = [], [], []
+     for i, w in enumerate(workers):
+         name = str(w.get("name") or f"worker-{i}")
+         calls = _pos_int(f"{name}.calls", w.get("calls"))
+@@ -95,30 +122,46 @@ def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
+             # worker would run with no budget breaker, which is the thing the profile exists to carry.
+             unknown.append(f"{name}: profile {w.get('profile')!r} requires {req}, which is missing")
+             continue
+-        rows.append({"name": name, "profile": w["profile"], "calls": calls, "packet": packet,
+-                     "floor": prof["floor"], "cost": calls * (prof["floor"] + packet)})
++        pr = prof.get("physical_ratio")
++        calls_phys = calls
++        if isinstance(pr, (int, float)) and not isinstance(pr, bool) and pr > 0:
++            calls_phys = math.ceil(calls * pr)
++        cost = calls_phys * (prof["floor"] + packet)
++        g = prof.get("growth")
++        if isinstance(g, (int, float)) and not isinstance(g, bool) and g > 0:
++            cost += math.ceil(g * calls_phys * (calls_phys - 1) / 2)
++            est = "growth"
++        else:
++            est = "floor"
++        if is_degraded(prof):
++            cost = math.ceil(cost * max_ratio(prof))
++            degraded.append(f"estimator DEGRADED for {w['profile']}")
++        rows.append({"name": name, "profile": w["profile"], "calls": calls, "calls_physical": calls_phys, "packet": packet,
++                     "floor": prof["floor"], "cost": cost, "estimator": est})
+     out = {"envelope": {"target": target, "warn": warn, "stop": stop, "calls": env_calls},
+-           "margin": margin, "workers": rows, "route_sha256": route_digest(route)}
++           "margin": margin, "workers": rows,
++           "estimator": "growth" if rows and all(r["estimator"] == "growth" for r in rows) else "floor", "route_sha256": route_digest(route)}
+     if unknown:
+         return {**out, "verdict": ESCALATE, "reasons": unknown}
+     need = sum(r["cost"] for r in rows)
+     need_m = _with_margin(need, margin)
+     calls = sum(r["calls"] for r in rows)
+-    out.update(need=need, need_with_margin=need_m, calls=calls)
++    out.update(need=need, need_with_margin=need_m, calls=calls,
++               calls_physical=sum(r["calls_physical"] for r in rows))
+     top = profiles.get(TOP_LEVEL) or {}
+     top_floor = top.get("floor") if isinstance(top.get("floor"), int) else max(p["floor"] for p in profiles.values())
+     min_calls = int(floors.get("default_min_calls") or 1)
+     out["max_calls_single_worker"] = int(target // ((1 + margin) * top_floor))
+-    reasons = []
++    reasons = list(dict.fromkeys(degraded))
+     if need_m > target:
+         reasons.append(f"floor {need:,} x {1 + margin:g} = {need_m:,} > target {target:,}")
+     if env_calls is not None and calls > env_calls:
+         reasons.append(f"{calls} calls > envelope {env_calls}")
+-    if not reasons:
++    if not (reasons and (need_m > target or (env_calls is not None and calls > env_calls))):
+         if remaining is not None and need_m > remaining:
+             return {**out, "verdict": DEFER,
+                     "reasons": [f"needs {need_m:,} but only {remaining:,} of the budget remains"]}
+-        return {**out, "verdict": ADMISSIBLE, "reasons": []}
++        return {**out, "verdict": ADMISSIBLE, "reasons": reasons}
+     if _with_margin(min_calls * top_floor, margin) > target:
+         reasons.append(f"the envelope cannot hold one {TOP_LEVEL} for {min_calls} calls "
+                        f"({top_floor:,} floor): raise it or drop the unit")
+@@ -137,7 +180,15 @@ def _main(argv: list[str]) -> int:
+     a.add_argument("--floors")
+     a.add_argument("--margin", type=float, default=DEFAULT_GROWTH_MARGIN)
+     a.add_argument("--remaining", type=int)
++    r = sub.add_parser("record")
++    r.add_argument("--profile", required=True)
++    r.add_argument("--need", type=int, required=True)
++    r.add_argument("--actual", type=int, required=True)
++    r.add_argument("--floors")
+     args = ap.parse_args(argv)
++    if args.cmd == "record":
++        print(json.dumps(record_actual(args.profile, args.need, args.actual, args.floors)))
++        return 0
+     route = json.loads(Path(args.route).read_text(encoding="utf-8-sig"))
+     res = admit(route, load_floors(args.floors), margin=args.margin, remaining=args.remaining)
+     print(json.dumps(res, indent=1))
+diff --git a/tools/test_gsd_mission_admission.py b/tools/test_gsd_mission_admission.py
+index 5abbfea6..5cf0300d 100644
+--- a/tools/test_gsd_mission_admission.py
++++ b/tools/test_gsd_mission_admission.py
+@@ -294,6 +294,7 @@ def main() -> int:
+     p_fin = gm.plan_next(srec, NOW + 60, [], alive)
+     check("V-ADM-SLIM-JSON-MEANS-FINISHED", p_fin["action"] == "slim_finished" and p_fin["slim"]["tokens"] == 17
+           and p_fin["slim"]["denials"] == 1 and p_fin["slim"]["session_id"] == owner["session_id"], str(p_fin))
++    write("m-slimlaunch-WU-receipt.md", "# receipt\nStatus: DONE\n")
+     rows = gm.supervise(now=NOW + 60, sessions=[], pid_alive=dead)
+     done = gm.load("m-slimlaunch")
+     check("V-ADM-SLIM-SUPERVISE-COMPLETES", done["state"] == gm.COMPLETED and done["slim_result"]["result"] == "done",
+@@ -312,6 +313,8 @@ def main() -> int:
+             encoding="utf-8")
+         sp = ms.budget_path(own["session_id"])
+         sp.with_name(f"session-budget-{own['session_id']}.state.json").write_text(json.dumps(state), encoding="utf-8")
++        if not state["closeout"]:
++            write(f"{mid}-WU-receipt.md", "# receipt\nStatus: DONE\n")
+         gm.supervise(now=NOW + 60, sessions=[], pid_alive=dead)
+         return gm.load(mid)
+ 
+diff --git a/tools/test_halt_continues.py b/tools/test_halt_continues.py
+index 486138a7..fc0bd18c 100644
+--- a/tools/test_halt_continues.py
++++ b/tools/test_halt_continues.py
+@@ -123,7 +123,7 @@ def main() -> int:
+           rec["state"] == gm.HALTED and cap is not None and len(suc) == 1 and one.get("state") == gm.PREPARED
+           and one["continuity_from"].get("capsule_path") == str(gm.lr.state_dir() / "fault-capsules" / "m-hc1-e2.json")
+           and any("dirty.txt" in d for d in cap["partial_receipt"]["SALVAGE"])
+-          and any("first" in c for c in cap["partial_receipt"]["DONE"])
++          and isinstance(cap["partial_receipt"]["DONE"], list)  # F4: mission-scoped; "first" predates NOW
+           and cap["head"] and cap["gate_lines"] == ["PASS V-X"] and "stopped" in cap["result"]
+           and cap["spend"]["slim_tokens"] == 5,
+           f"{rec['state']} suc={len(suc)} cap={bool(cap)}")
+@@ -155,8 +155,41 @@ def main() -> int:
+           and len(successors("m-hc5")) == 1, f"{rec['state']} {rows}")
+     # 6. provider success without a receipt is not done
+     rec, rows, _ = run("m-hc6", state=OKSTATE, text="done")
+-    check("V-LIFE-SUCCESS-NO-RECEIPT", rec["state"] == gm.COMPLETED and capsule("m-hc6") is not None
+-          and len(successors("m-hc6")) == 1 and rows[0].get("work_unit_status") == "RECOVERY_PENDING", str(rows))
++    check("V-LIFE-SUCCESS-NO-RECEIPT-NOT-COMPLETED",
++          rec["state"] == gm.HALTED and "no receipt" in str(rec.get("reason") or rec)
++          and capsule("m-hc6") is not None and len(successors("m-hc6")) == 1, f"{rec['state']} {rows}")
++    # F5: a non-renewal always leaves its reason; force the exception path after the capsule decision
++    real_wfc = gm.write_fault_capsule
++    def boom(*a, **k):
++        raise RuntimeError("forced")
++    gm.write_fault_capsule = boom
++    try:
++        rec, rows, _ = run("m-hc5b", state=TRIP)
++    finally:
++        gm.write_fault_capsule = real_wfc
++    check("V-LIFE-NONRENEW-HAS-REASON", not successors("m-hc5b") and rows
++          and "not renewed" in str(rows[0].get("renewal")) and "forced" in str(rows[0].get("renewal")), str(rows))
++    rec, rows, _ = run("m-hc5c", state=TRIP, receipt=True)
++    check("V-LIFE-NONRENEW-RECEIPT-REASON", rows and "receipt present" in str(rows[0].get("renewal")), str(rows))
++    # F4: capsule commits are only those since the mission was created
++    sc = make_repo("scoped")
++    (Path(sc) / "b.txt").write_text("b\n", encoding="utf-8")
++    g(sc, "add", "b.txt")
++    old_env = dict(os.environ)
++    os.environ.update(GIT_COMMITTER_DATE="2020-01-01T00:00:00", GIT_AUTHOR_DATE="2020-01-01T00:00:00")
++    try:
++        g(sc, "commit", "-q", "-m", "ancient-history")
++    finally:
++        os.environ.pop("GIT_COMMITTER_DATE"); os.environ.pop("GIT_AUTHOR_DATE")
++    (Path(sc) / "c.txt").write_text("c\n", encoding="utf-8")
++    g(sc, "add", "c.txt")
++    g(sc, "commit", "-q", "-m", "mission-work")
++    gm.write_fault_capsule({"mission_id": "m-sc", "epoch": 3, "created_at": 1_700_000_000.0}, sc, "x", None)
++    csc = capsule("m-sc", 3) or {}
++    check("V-LIFE-CAPSULE-MISSION-SCOPED",
++          any("mission-work" in c for c in csc.get("commits") or [])
++          and not any("ancient-history" in c or "first" in c for c in csc.get("commits") or []),
++          str(csc.get("commits")))
+     # 7. controls: a receipt present means nothing to recover
+     rec, rows, _ = run("m-hc7", state=TRIP, receipt=True)
+     check("V-LIFE-HALT-RECEIPT-PRESENT", rec["state"] == gm.HALTED and capsule("m-hc7") is None
+@@ -202,6 +235,28 @@ def main() -> int:
+           and good["ok"] is True and not gmm.get("owner_hold") and not gmm.get("owner")
+           and gmm["state"] == gm.PREPARED and gmm["admission"]["verdict"] == "ADMISSIBLE"
+           and gmm["wu_packet"]["path"] == str(pkt), f"{bad.get('why')} | {gmm['state']}")
++    # 9. S2: capsule survives PATH loss; unresolved git says UNRESOLVED, never ""
++    pl = make_repo("pathloss")
++    saved = os.environ.get("PATH")
++    os.environ["PATH"] = ""
++    try:
++        gm.write_fault_capsule({"mission_id": "m-pl", "epoch": 7}, pl, "PASS V-X", None)
++    finally:
++        os.environ["PATH"] = saved
++    cp = capsule("m-pl", 7) or {}
++    check("V-LIFE-CAPSULE-PATH-LOSS",
++          len(str(cp.get("head", ""))) == 40 and any("first" in c for c in cp.get("commits") or [])
++          and any("dirty.txt" in d for d in cp.get("dirty") or []), f"{cp.get('head')} {cp.get('git')}")
++    real_resolve = gm.resolve_exe
++    gm.resolve_exe = lambda name: None
++    try:
++        gm.write_fault_capsule({"mission_id": "m-un", "epoch": 7}, pl, "PASS V-X", None)
++    finally:
++        gm.resolve_exe = real_resolve
++    cu = capsule("m-un", 7) or {}
++    check("V-LIFE-CAPSULE-UNRESOLVED",
++          cu.get("git") == "UNRESOLVED" and cu.get("head") == "UNRESOLVED" and cu.get("commits") == "UNRESOLVED"
++          and cu.get("dirty") == "UNRESOLVED", f"{cu.get('git')} {cu.get('head')!r}")
+     print(f"HALT_CONTINUES_PASS={passes} FAIL={fails}")
+     return 1 if fails else 0
+ 
+diff --git a/tools/test_mission_steward.py b/tools/test_mission_steward.py
+new file mode 100644
+index 00000000..2a89fa53
+--- /dev/null
++++ b/tools/test_mission_steward.py
+@@ -0,0 +1,255 @@
++#!/usr/bin/env python
++"""V-STEWARD-* gates (WU-S1): the mission steward settles, salvages and proposes -- deterministically,
++once, and never arms. Hermetic: state + ledger in a temp dir BEFORE import, injected liveness/transcripts.
++Mutation drill: GSD_MISSION_DRILL_DIR holding a mutated copy of tools/ files or modules/.
++"""
++from __future__ import annotations
++
++import json
++import os
++import subprocess
++import sys
++import tempfile
++from pathlib import Path
++
++TMP = tempfile.mkdtemp(prefix="mission-steward-test-")
++os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
++os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
++os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
++os.environ["CLAUDE_CONFIG_DIR"] = str(Path(TMP) / "claude")
++os.environ["CPP_CLAUDE_EXE"] = "__no_such_claude_in_tests__"
++os.environ.pop("CLAUDECODE", None)
++os.environ.pop("CPP_MISSION_STEWARD", None)
++HERE = Path(__file__).resolve().parent
++REPO = HERE.parent
++sys.path.insert(0, str(HERE))
++sys.path.insert(0, str(REPO))
++if os.environ.get("GSD_MISSION_DRILL_DIR"):
++    sys.path.insert(0, os.environ["GSD_MISSION_DRILL_DIR"])
++import gsd_mission as gm  # noqa: E402
++import mission_spend as ms  # noqa: E402
++import mission_steward as st  # noqa: E402
++from modules.provider_routing.ledger import GoalLedger, SpendLedger  # noqa: E402
++
++NOW = 1_800_000_000.0
++passes = fails = 0
++N = [0]
++
++
++def check(gate, cond, ev=""):
++    global passes, fails
++    passes += bool(cond)
++    fails += not cond
++    print(f"{'PASS' if cond else 'FAIL'} {gate} {ev}")
++
++
++def journal(goal):
++    p = Path(TMP) / "goal-budget" / goal / "spend.jsonl"
++    if not p.exists():
++        cands = list((Path(TMP) / "goal-budget" / goal).glob("*.jsonl"))
++        p = cands[0] if cands else p
++    return [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines() if x.strip()] if p.exists() else []
++
++
++def ops(goal, op):
++    return [r for r in journal(goal) if r["op"] == op]
++
++
++def transcript(path: Path, refused_input=None):
++    lines = [
++        {"type": "assistant", "uuid": "u1", "message": {"id": "msg1", "model": "x", "usage": {
++            "input_tokens": 1000, "output_tokens": 500},
++            "content": [{"type": "tool_use", "id": "tu1", "name": "Write", "input": refused_input or {"a": 1}}]}},
++        {"type": "user", "uuid": "u2", "message": {"content": [{
++            "type": "tool_result", "tool_use_id": "tu1", "is_error": True,
++            "content": "SESSION BUDGET BREAKER: stop reached"}]}},
++        {"type": "assistant", "uuid": "u3", "message": {"id": "msg1", "model": "x", "usage": {
++            "input_tokens": 1000, "output_tokens": 500}, "content": [{"type": "text", "text": "dup id"}]}},
++        {"type": "assistant", "uuid": "u4", "message": {"id": "msg2", "model": "x", "usage": {
++            "input_tokens": 2000, "output_tokens": 500}, "content": [{"type": "text", "text": "ok"}]}},
++    ]
++    path.parent.mkdir(parents=True, exist_ok=True)
++    path.write_text("\n".join(json.dumps(x) for x in lines) + "\n", encoding="utf-8")
++    return 4000          # 1500 (deduped msg1) + 2500
++
++
++def case(state=gm.HALTED, hold=False, receipt=False, refused_input=None, with_goal=True, cap=50_000_000):
++    N[0] += 1
++    n = N[0]
++    tree = Path(TMP) / f"tree{n}"
++    tree.mkdir()
++    goal, sid, mid = f"g{n}", f"00000000-0000-4000-8000-{n:012d}", f"m-{n:012x}"
++    pkt = tree / "WU-X.md"
++    pkt.write_text(f"work_tree: {tree}\nreceipt: out/r.json\n\n# WU\n", encoding="utf-8")
++    if receipt:
++        (tree / "out").mkdir()
++        (tree / "out" / "r.json").write_text("{}", encoding="utf-8")
++    if with_goal:
++        r = ms.goal_declare(goal, cap, "test", [str(tree)])
++        assert r["ok"], r
++    rec = gm.create(str(tree), "claude --resume x", mission_id=mid)
++    changes = dict(state=state, wu_packet={"path": str(pkt), "sha256": "x"}, goal={"repo": "r", "unit": "u"},
++                   owner={"session_id": sid, "kind": "background"}, admission={"at": NOW - 1000})
++    if hold:
++        changes["owner_hold"] = {"by": "test"}
++    rec = gm.transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="test_setup",
++                        now=NOW - 500, **changes)
++    tp = Path(TMP) / "tx" / f"{sid}.jsonl"
++    measured = transcript(tp, refused_input)
++    led = ms._goal_ledger(goal) if with_goal else None
++    if led:
++        led.renew(sid, 0, 700_000)                                  # an open lease of the dead worker
++        with led._lock:                                              # ... and a phantom `final` hold
++            recs = led._read()
++            led._append(recs, {"op": "reserve", "id": f"{goal}:{sid}:9", "sid": sid, "kind": "final",
++                               "provider": goal, "amount": 150_000, "window": "goal", "base": 0})
++    return dict(mid=mid, sid=sid, tree=tree, goal=goal, led=led, tp=tp, measured=measured, pkt=pkt)
++
++
++def run(c, **kw):
++    missions, _ = gm._scan()
++    kw.setdefault("sessions", [])
++    kw.setdefault("transcript_for", lambda s: c["tp"] if s == c["sid"] and c["tp"].exists() else None)
++    kw.setdefault("ledger_for", ms._goal_ledger)
++    now = kw.pop("now", NOW)
++    return st.steward_pass(missions, now, pid_alive=lambda p: False, **kw)
++
++
++def mine(rows, c):
++    return [r for r in rows if r.get("mission_id") == c["mid"]]
++
++
++# --- settle closes all (lease + final), used = measured; control: before the pass both are open
++c = case()
++g0 = c["led"].status()
++stale = gm._scan()[0]                  # a pass that started before the first one finished
++rows = run(c)
++g1 = c["led"].status()
++check("V-STEWARD-SETTLE-CLOSES-ALL", g0["open"] == 850_000 and g1["open"] == 0 and g1["used"] == c["measured"]
++      and mine(rows, c) and mine(rows, c)[0]["action"] == "steward_settled", f"{g0['open']}->{g1['open']} used={g1['used']}")
++# --- idempotent: second pass and a second direct call book nothing
++n_j = len(journal(c["goal"]))
++rec_seq = gm.load(c["mid"])["seq"]
++rows2 = run(c)
++c["led"].settle_stopped(c["sid"], c["measured"], "again")
++check("V-STEWARD-SETTLE-IDEMPOTENT", len(journal(c["goal"])) == n_j and not mine(rows2, c), f"journal {n_j}")
++check("V-STEWARD-DUP-PASS-ONE-EFFECT", gm.load(c["mid"])["seq"] == rec_seq and len(ops(c["goal"], "settle")) == 1,
++      f"seq {rec_seq} settles={len(ops(c['goal'], 'settle'))}")
++# --- salvage byte-exact
++payload = {"file_path": "x.md", "content": "line1\nüñí\t\"q\" \\ end"}
++cs = case(refused_input=payload)
++run(cs)
++sf = cs["tree"] / "vault" / "specs" / "salvage" / cs["mid"] / "tu1.json"
++check("V-STEWARD-SALVAGE", sf.exists() and json.loads(sf.read_text(encoding="utf-8")) == payload)
++part = Path(str(cs["tree"] / "out" / "r.json") + ".partial.json")
++pj = json.loads(part.read_text(encoding="utf-8")) if part.exists() else {}
++check("V-STEWARD-PARTIAL-RECEIPT", pj.get("model_calls") == 2 and pj.get("tool_calls") == 1
++      and pj.get("tokens") == 4000 and not (cs["tree"] / "out" / "r.json").exists()
++      and "## Residual" in Path(str(cs["pkt"]) + ".residual.md").read_text(encoding="utf-8"), str(pj)[:120])
++# --- no transcript -> UNKNOWN, nothing settled
++cn = case()
++cn["tp"].unlink()
++rown = mine(run(cn), cn)
++check("V-STEWARD-NO-TRANSCRIPT-UNKNOWN", rown and rown[0]["action"] == "UNKNOWN" and not ops(cn["goal"], "settle")
++      and cn["led"].status()["open"] == 850_000)
++# --- live owner untouched; control: same case dead is acted on (above)
++cl = case()
++live = [{"sessionId": cl["sid"], "state": "running", "status": "busy"}]
++rl = mine(run(cl, sessions=live), cl)
++check("V-STEWARD-LIVE-OWNER-UNTOUCHED", not rl and not ops(cl["goal"], "settle") and "steward" not in gm.load(cl["mid"]))
++# --- canonical receipt untouched
++cr = case(receipt=True)
++rr = mine(run(cr), cr)
++check("V-STEWARD-CANONICAL-RECEIPT-UNTOUCHED", not rr and (cr["tree"] / "out" / "r.json").read_text() == "{}"
++      and not Path(str(cr["tree"] / "out" / "r.json") + ".partial.json").exists() and not ops(cr["goal"], "settle"))
++# --- restart midway: ledger settled, steward field empty (crash after the settle) -> completes once
++cm = case()
++cm["led"].settle_stopped(cm["sid"], cm["measured"], "pre")
++run(cm)
++done = (gm.load(cm["mid"]).get("steward") or {}).get("done")
++check("V-STEWARD-RESTART-MIDWAY", done is True and len(ops(cm["goal"], "settle")) == 1
++      and cm["led"].status()["open"] == 0, f"settles={len(ops(cm['goal'], 'settle'))}")
++# --- never arms
++before = len(gm._scan()[0])
++files = {p.name for p in Path(TMP).glob("gsd-mission-*.json")}
++run(case())
++after = gm._scan()[0]
++check("V-STEWARD-NEVER-ARMS", len(after) == before + 1 and all(m["state"] == gm.HALTED for m in after)
++      and {p.name for p in Path(TMP).glob("gsd-mission-*.json")} - files == {f"gsd-mission-m-{N[0]:012x}.json"})
++# --- hold not forgotten, forgotten once per 24h
++ch = case(hold=True)
++inc = gm.lr.state_dir() / "steward-incidents.jsonl"
++rh = run(ch, now=NOW + 7200)
++hold_rows = [r for r in rh if r.get("goal") == ch["goal"] and r["rule"] == "R2"]
++cf = case()
++rf = run(cf, now=NOW + 7200)
++f_rows = [r for r in rf if r.get("goal") == cf["goal"] and r["rule"] == "R2"]
++check("V-STEWARD-HOLD-NOT-FORGOTTEN", not hold_rows and f_rows, f"hold={len(hold_rows)} control={len(f_rows)}")
++rf2 = run(cf, now=NOW + 7300)
++rf3 = run(cf, now=NOW + 7200 + 25 * 3600)
++lines = [json.loads(x) for x in inc.read_text(encoding="utf-8").splitlines()] if inc.exists() else []
++n_cf = sum(1 for x in lines if x["goal"] == cf["goal"])
++check("V-STEWARD-FORGOTTEN-ONCE-PER-24H", n_cf == 2 and not [r for r in rf2 if r.get("goal") == cf["goal"]]
++      and [r for r in rf3 if r.get("goal") == cf["goal"]], f"incidents={n_cf}")
++# --- kill switch
++ck = case()
++os.environ["CPP_MISSION_STEWARD"] = "off"
++rk = run(ck)
++os.environ.pop("CPP_MISSION_STEWARD")
++check("V-STEWARD-KILL-SWITCH", rk == [] and not ops(ck["goal"], "settle") and "steward" not in gm.load(ck["mid"]))
++# --- correct lowers; later settle watermarks from there; base fold ignores the op
++cc = case()
++cc["led"].settle_stopped(cc["sid"], 9_000_000, "big")
++cc["led"].correct(cc["sid"], 1_000_000, "misattributed", "test")
++s1 = cc["led"].status()["settled"]
++cc["led"].settle_stopped(cc["sid"], 900_000, "lower than the corrected mark")
++s2 = cc["led"].status()["settled"]
++cc["led"].settle_stopped(cc["sid"], 1_200_000, "higher")
++s3 = cc["led"].status()["settled"]
++base_ok = True
++try:
++    SpendLedger(Path(TMP) / "goal-budget" / cc["goal"], caps={}, leak_after_s=60)._fold(
++        SpendLedger(Path(TMP) / "goal-budget" / cc["goal"], caps={}, leak_after_s=60)._read())
++except Exception as e:  # noqa: BLE001
++    base_ok = False
++check("V-STEWARD-CORRECT-LOWERS", (s1, s2, s3) == (1_000_000, 1_000_000, 1_200_000) and base_ok, f"{s1},{s2},{s3}")
++
++
++def cli(*args, stdin=subprocess.DEVNULL):
++    env = {**os.environ}
++    return subprocess.run([sys.executable, str(HERE / "mission_spend.py"), *args], capture_output=True, text=True,
++                          stdin=stdin, env=env, timeout=60)
++
++
++p1 = cli("goal-correct", "--goal", cc["goal"], "--session", cc["sid"], "--measured", "5", "--reason", "x", "--owner")
++p2 = cli("goal-correct", "--goal", cc["goal"], "--session", cc["sid"], "--measured", "5", "--reason", "x")
++check("V-STEWARD-CORRECT-NEEDS-TTY", p1.returncode == 3 and p2.returncode == 3 and "TTY" in p1.stdout
++      and cc["led"].status()["settled"] == 1_200_000, f"{p1.returncode}/{p2.returncode} {p1.stdout[:90]} {p1.stderr[-200:]}")
++# --- CLI settle refuses blind; control: --measured settles
++cb = case()
++q1 = cli("goal-settle", "--goal", cb["goal"], "--session", cb["sid"])
++blind_open = cb["led"].status()["open"]
++q2 = cli("goal-settle", "--goal", cb["goal"], "--session", cb["sid"], "--measured", "1234")
++check("V-STEWARD-CLI-SETTLE-REFUSES-BLIND", q1.returncode == 3 and blind_open == 850_000 and not ops(cb["goal"], "settle")[:0]
++      and q2.returncode == 0 and cb["led"].status()["open"] == 0 and cb["led"].status()["used"] == 1234,
++      f"rc={q1.returncode}/{q2.returncode} {q1.stdout[:80]}")
++# --- supervise isolates a steward failure to one row
++cx = case()
++real = st.steward_pass
++st.steward_pass = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom"))
++try:
++    out = gm.supervise(now=NOW, sessions=[], pid_alive=lambda p: False)
++finally:
++    st.steward_pass = real
++err = [r for r in out if r.get("action") == "steward_error"]
++out_ok = gm.supervise(now=NOW, sessions=[], pid_alive=lambda p: False)
++check("V-STEWARD-SUPERVISE-ERROR-ISOLATED", len(err) == 1 and "boom" in err[0]["error"]
++      and not [r for r in out_ok if r.get("action") == "steward_error"], f"{len(err)} error rows")
++# --- control: nothing qualifies -> zero effects
++empty_before = len(journal(cx["goal"]))
++cz = case(with_goal=False, state=gm.COMPLETED)
++rz = [r for r in run(cz) if r.get("mission_id") == cz["mid"]]
++check("V-STEWARD-CONTROL-NOTHING-QUALIFIES", not rz and "steward" not in gm.load(cz["mid"]))
++
++print(f"STEWARD_PASS={passes}/{passes + fails}")
++sys.exit(0 if not fails else 1)
+diff --git a/tools/test_route_estimator.py b/tools/test_route_estimator.py
+new file mode 100644
+index 00000000..8b5031ca
+--- /dev/null
++++ b/tools/test_route_estimator.py
+@@ -0,0 +1,87 @@
++#!/usr/bin/env python
++"""V-EST-* gates for the growth estimator and three-miss DEGRADED rule in tools/route_admission.py.
++Hermetic: a temp floors file. Mutation drill: ROUTE_ADMISSION_DRILL_DIR holds a mutated copy."""
++from __future__ import annotations
++
++import json
++import os
++import sys
++import tempfile
++from pathlib import Path
++
++HERE = Path(__file__).resolve().parent
++if os.environ.get("ROUTE_ADMISSION_DRILL_DIR"):
++    sys.path.insert(0, os.environ["ROUTE_ADMISSION_DRILL_DIR"])
++sys.path.insert(1 if os.environ.get("ROUTE_ADMISSION_DRILL_DIR") else 0, str(HERE))
++import route_admission as ra  # noqa: E402
++
++passes = fails = 0
++ENV = {"target": 50_000_000, "warn": 60_000_000, "stop": 70_000_000}
++G = 1725
++# (calls, first-call cost, actual total) from estimator-fit.md
++FIT = [(19, 18332, 909_247), (19, 18236, 742_614), (22, 18514, 680_606), (17, 18585, 442_155)]
++
++
++def check(gate, cond, ev=""):
++    global passes, fails
++    passes += bool(cond)
++    fails += not cond
++    print(f"{'PASS' if cond else 'FAIL'} {gate} {ev}")
++
++
++def floors(tmp, growth=True, misses=None):
++    prof = {"floor": 13507, "write": True}
++    if growth:
++        prof["growth"] = G
++    if misses is not None:
++        prof["misses"] = misses
++    p = Path(tmp) / "floors.json"
++    p.write_text(json.dumps({"default_min_calls": 1, "profiles": {"slim-t2": prof}}), encoding="utf-8")
++    return p
++
++
++def need(p, calls, packet=0):
++    route = {"envelope": ENV, "workers": [{"name": "w", "profile": "slim-t2", "calls": calls, "packet": packet}]}
++    return ra.admit(route, ra.load_floors(p))
++
++
++def main():
++    with tempfile.TemporaryDirectory() as tmp:
++        p = floors(tmp)
++        pred = sum(need(p, c, f - 13507)["need"] for c, f, _ in FIT)
++        act = sum(a for _, _, a in FIT)
++        check("V-EST-GROWTH-QUADRATIC", abs(pred - act) <= 0.25 * act and need(p, 7)["estimator"] == "growth",
++              f"pooled predicted {pred:,} vs actual {act:,}")
++        n7 = need(p, 7, 6360)["need"]
++        check("V-EST-GROWTH-1H4-ABOVE-FLOOR", n7 == 7 * (13507 + 6360) + G * 21, f"{n7:,} (1H4 actual 448,589: known gap)")
++        q = floors(tmp, growth=False)
++        r = need(q, 7, 6360)
++        check("V-EST-NO-GROWTH-UNCHANGED", r["need"] == 7 * (13507 + 6360) and r["estimator"] == "floor", str(r["need"]))
++        r = floors(tmp)
++        base = need(r, 5)["need"]
++        for i in range(2):
++            ra.record_actual("slim-t2", 100, 200, r)
++        check("V-EST-TWO-MISSES-NOT-DEGRADED", "DEGRADED" not in " ".join(need(r, 5)["reasons"]))
++        ra.record_actual("slim-t2", 100, 300, r)
++        res = need(r, 5)
++        check("V-EST-THREE-MISS-DEGRADED", any("estimator DEGRADED for slim-t2" in x for x in res["reasons"]), str(res["reasons"]))
++        check("V-EST-DEGRADED-PRICES-UP", res["need"] == base * 3 and res["need"] > base, f"{res['need']:,} vs {base:,}")
++        ra.record_actual("slim-t2", 100, 110, r)
++        res2 = need(r, 5)
++        check("V-EST-HIT-CLEARS", ra.load_floors(r)["profiles"]["slim-t2"]["misses"] == [] and res2["need"] == base
++              and not res2["reasons"], str(res2["reasons"]))
++        # Part B: physical calls (every tool use runs ~2.4x the declared steps)
++        ph = Path(tmp) / "phys.json"
++        ph.write_text(json.dumps({"default_min_calls": 1, "profiles": {"slim-t2": {
++            "floor": 13507, "write": True, "growth": G, "physical_ratio": 2.4, "physical_ratio_n": 4}}}), encoding="utf-8")
++        rp = need(ph, 7, 18585 - 13507)
++        check("V-EST-PHYSICAL-1H4", abs(rp["need"] - 442_155) <= 0.25 * 442_155 and rp["calls"] == 7
++              and rp["calls_physical"] == 17, f"{rp['need']:,} vs 442,155; calls={rp['calls']} physical={rp['calls_physical']}")
++        rc = need(floors(tmp), 7, 6360)
++        check("V-EST-PHYSICAL-CONTROL", rc["need"] == 7 * (13507 + 6360) + G * 21 and rc["calls_physical"] == 7, str(rc["need"]))
++    print(f"EST_PASS={passes}/{passes + fails}")
++    return 0 if fails == 0 else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tools/test_session_budget_guard.py b/tools/test_session_budget_guard.py
+index 8bccd67f..225ef957 100644
+--- a/tools/test_session_budget_guard.py
++++ b/tools/test_session_budget_guard.py
+@@ -175,6 +175,19 @@ def main():
+     d = kind(b.call()["out"])
+     check("V-SBG-DIVERGENCE", (g, d) == ("allow", "deny"), f"3 calls -> {g}, 4 calls -> {d}")
+ 
++    # V-SBG-CALLS-WALL-RECEIPT (F3): over the calls wall, the receipt write is allowed, other writes are not
++    def call_write(box, fp):
++        ev = {"session_id": SID, "tool_name": "Write", "tool_input": {"file_path": fp},
++              "transcript_path": str(box.tx)}
++        p = subprocess.run([NODE, "-e", RUNNER, str(GUARD)], input=json.dumps(ev), capture_output=True,
++                           text=True, env=box.env(), timeout=60)
++        return json.loads(p.stdout)["out"]
++    b = Box(); b.declare(calls_estimate=2)
++    b.append(row("a", U(1), tools=[("Edit", {})] * 5))
++    rc = kind(call_write(b, r"C:\x\vault\programs\WU-S5c-receipt.md"))
++    ot = kind(call_write(b, r"C:\x\src\app.py"))
++    check("V-SBG-CALLS-WALL-RECEIPT", (rc, ot) == ("advise", "deny"), f"receipt -> {rc}, other write -> {ot}")
++
+     # V-SBG-CONTEXT
+     b = Box(); b.declare(target=10**9, warn=10**9, stop=10**9, context_ceiling=50000)
+     b.append(row("a", U(10, 0, 40000)))
+@@ -252,6 +265,32 @@ def main():
+     check("V-SBG-E2E", hso.get("permissionDecision") == "deny" and "SESSION BUDGET BREAKER" in (hso.get("permissionDecisionReason") or ""),
+           f"live dispatcher -> {hso.get('permissionDecision')!r}")
+ 
++    # V-LIFE-EDGE: replay of WU-1H3 (10 calls, 645K, stop 500K) through judge(); guard path may be a mutant copy
++    def edge_replay(guard, **env):
++        js = ("const g=require(process.argv[1]);const b={target:400000,warn:450000,stop:500000};"
++              "const o=[];for(let c=1;c<=10;c++){const t=c*64500;"
++              "const v=g.judge(b,{tokens:t,calls:c,progress_at:c,context:0});"
++              "const h=v&&v.hookSpecificOutput;o.push([c,t,h?(h.permissionDecision||'advise'):null,h&&h.additionalContext||'']);}"
++              "const q=g.judge(b,{tokens:100000,calls:5,progress_at:5,context:0});o.push(['q',q]);"
++              "process.stdout.write(JSON.stringify(o));")
++        p = subprocess.run([NODE, "-e", js, str(guard)], capture_output=True, text=True, env=dict(os.environ, **env), timeout=60)
++        return json.loads(p.stdout) if p.returncode == 0 else []
++
++    def first_edge(rows):
++        return next((r for r in rows if r[0] != "q" and "LEASE EDGE" in r[3]), None)
++
++    rows = edge_replay(GUARD, CPP_LEASE_EDGE="")
++    fe = first_edge(rows)
++    check("V-LIFE-EDGE-BEFORE-STOP", fe is not None and fe[1] < 500000, f"first edge at call {fe and fe[0]} tokens {fe and fe[1]} < stop 500000")
++    q = next((r for r in rows if r[0] == "q"), None)
++    check("V-LIFE-EDGE-QUIET-EARLY", q is not None and q[1] is None, f"20% of stop -> {q and q[1]}")
++    check("V-LIFE-EDGE-KILL", first_edge(edge_replay(GUARD, CPP_LEASE_EDGE="off")) is None, "CPP_LEASE_EDGE=off -> no edge")
++    mut = Path(tempfile.mkdtemp(prefix="sbg_mut_")) / "session_budget_guard.js"
++    src = GUARD.read_text(encoding="utf-8")
++    mut.write_text(src.replace("st.tokens + per * reserve > budget.stop", "false"), encoding="utf-8")
++    check("V-LIFE-EDGE-MUTANT-RED", mut.read_text(encoding="utf-8") != src and first_edge(edge_replay(mut, CPP_LEASE_EDGE="")) is None,
++          "mutant (edge branch dropped) -> EDGE-BEFORE-STOP would go red")
++
+     print(f"SBG_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
+     return 0 if fails == 0 else 1
+ 
+diff --git a/vault/config/route-floors.json b/vault/config/route-floors.json
+index 118c3e3c..aea70fec 100644
+--- a/vault/config/route-floors.json
++++ b/vault/config/route-floors.json
+@@ -1,4 +1,4 @@
+-{
++﻿{
+   "unit": "first-call context = input_tokens + cache_creation_input_tokens + cache_read_input_tokens of the first assistant message; every later call re-reads at least this much, so calls x floor is a lower bound on processed tokens",
+   "measured_at": "2026-10-05T21:19:39Z",
+   "provenance": {
+@@ -19,6 +19,7 @@
+     "pp-code-reviewer":          {"floor": 62682,  "p50": 65473,  "write": false, "n": 23},
+     "Explore":                   {"floor": 24428,  "p50": 25226,  "write": false, "n": 14},
+     "slim-t1":                   {"floor": 8848,   "p50": 8848,   "write": false, "n": 1},
+-    "slim-t2":                   {"floor": 13507,  "p50": 13507,  "write": true,  "n": 2, "requires": "vault/config/slim-critical-settings.json"}
++    "slim-t2":                   {"floor": 13507,  "p50": 13507,  "write": true,  "n": 2, "growth": 1725, "growth_n": 4, "physical_ratio": 2.4, "physical_ratio_n": 4, "misses": [], "requires": "vault/config/slim-critical-settings.json"}
+   }
+ }
++
