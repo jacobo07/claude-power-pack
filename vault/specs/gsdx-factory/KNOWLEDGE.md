@@ -41,6 +41,18 @@ Each entry: symptom, root cause, chain, impact, proof, fix, prevention, applicab
 - Also: L1's GRAPH costs were placeholders (n = rows/6); a gate that checks disposition coverage says nothing about the
   quality of a forecast built beside it. PLAN-1 re-prices.
 
+## K7. The live growth estimator charges context growth per TOOL call (ce-lifecycle-v3 L3, live 37a5f3c0)
+- Symptom: PLAN-1 refused RECOMPILE at need 1,895,956 for a unit expected at ~0.4M.
+- Root cause: route_admission.admit computes cp = calls*physical_ratio(2.4) and then n*F + g*cp(cp-1)/2 over cp.
+  Context grows per model REQUEST; several tool_use blocks share one request (S1: 40 requests / 64 tool calls).
+- Proof (backtest): S1 live formula 7.26M vs actual 2.71M; L1 5.26M vs 1.80M (both ~2.8x). It fit lc3's own
+  units because they ran ~1 tool call per request (S3 9/9, S2 13/17).
+- Workaround: routes in declared steps with targets >= live need (chain.json pricing_note).
+- Fix owner: ce-lifecycle-v3 (owns route_admission growth); gsdx W3 proposes: price requests r_m = model calls,
+  growth over r_m, physical calls only for the calls wall. Recurrence of K1 (unit mismatch) across programmes.
+- Also fixed: a failed arm left a held PREPARED record the chain read as "running" (silent stall);
+  V-CHAIN-ARM-REFUSED-SURFACED.
+
 ## K5. A successor arming step had no owner (programme level)
 - Symptom: every unit end needed a coordinator pane to arm the next one (the 49% control-plane tax measured in
   cost-collapse). Fix: tools/gsdx_chain.py tick (85024700), CHAIN_PASS=9/9, envelope mutant KILLED.

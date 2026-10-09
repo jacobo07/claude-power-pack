@@ -66,6 +66,14 @@ r2 = gc.tick(p, state=lambda: ([mission(d, "A", "COMPLETED")], 0), armer=arm)
 check("V-CHAIN-ACCEPT-IS-PER-UNIT", r1["action"] == "stopped_without_done" and r2["action"] == "arm"
       and r2["unit"] == "B" and armed == ["B"], f"{r1['action']} -> {r2['action']}")
 
+# a failed arm (held PREPARED record) is surfaced, not read as running; control: a plain PREPARED one is running
+d, p, _ = setup("refused")
+held = dict(mission(d, "A", "PREPARED"), owner_hold={"reason": "arm-chain failed: MissionError: route RECOMPILE"})
+r1 = gc.tick(p, state=lambda: ([held], 0), armer=arm)
+r2 = gc.tick(p, state=lambda: ([mission(d, "A", "PREPARED")], 0), armer=arm)
+check("V-CHAIN-ARM-REFUSED-SURFACED", r1["action"] == "arm_refused" and r2["action"] == "running",
+      f"{r1['action']} / {r2['action']}")
+
 # a running mission -> nothing armed
 d, p, _ = setup("running")
 armed.clear()

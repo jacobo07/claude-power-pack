@@ -61,6 +61,11 @@ def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> d
         if u["id"] in done:
             continue
         ms = by_packet.get(_norm(u["packet"]), [])
+        refused = [m for m in ms if m.get("state") == "PREPARED"
+                   and str((m.get("owner_hold") or {}).get("reason", "")).startswith("arm-chain failed")]
+        if refused:   # a failed arm leaves a held record: surface it, never read it as "running"
+            return {"action": "arm_refused", "unit": u["id"], "mission_id": refused[0]["mission_id"],
+                    "why": refused[0]["owner_hold"]["reason"][:300]}
         if any(m.get("state") not in TERMINAL for m in ms):
             return {"action": "running", "unit": u["id"]}
         if ms:

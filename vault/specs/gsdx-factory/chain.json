@@ -3,6 +3,7 @@
  "root": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
  "envelope": 40000000,
  "hard": 55000000,
+ "pricing_note": "PLANNER READ THIS (overrides WU-PLAN section 1 'Route per unit'). Live admission (ce-lifecycle-v3 L3, live 37a5f3c0) prices slim-t2 as cp = ceil(calls * 2.4); cost = cp*(13507 + packet) + 1725*cp*(cp-1)/2; need = cost*1.2 <= envelope target, else RECOMPILE and the arm fails. So route worker `calls` = DECLARED STEPS (about tool calls / 2.4), and target must be >= need. Envelope `calls` = expected tool calls. The live formula over-prices our measured units ~2.8x (KNOWLEDGE K7); state the expected real cost (model-call formula) in a route `note`. Check every route with: python C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\route_admission.py (or gsd_mission.py admit on a held record) before adding it to the chain.",
  "units": [
   {"id": "L1",
    "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-L1.md",
