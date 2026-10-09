@@ -2261,7 +2261,12 @@ def write_fault_capsule(rec: dict, wd: str, result_text: str, slim: dict | None)
     text = result_text or ""
     unresolved = _git_ro(wd, "rev-parse", "HEAD") is None
     dirty = [ln for ln in (_git_ro(wd, "status", "--porcelain") or "").splitlines() if ln.strip()]
-    log = [ln for ln in (_git_ro(wd, "log", "--oneline", "-n", "20") or "").splitlines() if ln.strip()]
+    if rec.get("created_at"):
+        # F4: only this mission's commits, not the branch history (steward helper owns the since-log).
+        import mission_steward as _stw
+        log = _stw._git_log(wd, float(rec["created_at"]))
+    else:
+        log = [ln for ln in (_git_ro(wd, "log", "--oneline", "-n", "20") or "").splitlines() if ln.strip()]
     data = {"mission_id": mid, "epoch": epoch, "written_at": time.time(),
             "git": "UNRESOLVED" if unresolved else "ok",
             "head": "UNRESOLVED" if unresolved else (_git_ro(wd, "rev-parse", "HEAD") or "").strip(),
@@ -2389,11 +2394,23 @@ def halt_authority(rec: dict) -> int | None:
 
 def halt_continue(rec: dict, wd: str, result_text: str, slim: dict | None, row: dict, now: float) -> None:
     """rec = the mission as it stands after the stop. Fills row['capsule'] / row['renewed_as'] / row['renewal']."""
-    if not halt_continue_on() or not (rec.get("wu_packet") or {}).get("path"):
+    if not halt_continue_on():
+        row.setdefault("renewal", "not renewed: halt-continue off")
         return
-    mid = rec["mission_id"]
+    if not (rec.get("wu_packet") or {}).get("path"):
+        row.setdefault("renewal", "not renewed: no work-unit packet")
+        return
     if _receipt_present(rec):
+        row.setdefault("renewal", "not renewed: receipt present")
         return
+    try:
+        _halt_continue_body(rec, wd, result_text, slim, row, now)
+    except Exception as exc:  # noqa: BLE001 -- F5: a non-renewal always leaves its reason on the row
+        row.setdefault("renewal", f"not renewed: halt-continue raised {type(exc).__name__}: {exc}"[:600])
+
+
+def _halt_continue_body(rec: dict, wd: str, result_text: str, slim: dict | None, row: dict, now: float) -> None:
+    mid = rec["mission_id"]
     cap = write_fault_capsule(rec, wd, result_text, slim)
     row["capsule"] = cap
     why = None
@@ -3027,13 +3044,14 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
             elif act == "slim_finished":
                 s = plan["slim"]
                 stopped = s.get("tripped") or ("worker reported is_error" if s["is_error"] else None)
+                if not stopped and halt_continue_on() and (rec.get("wu_packet") or {}).get("path") \
+                        and not _receipt_present(rec):
+                    stopped = "no receipt"   # F1: a clean finish without its receipt is a fault, not done
                 fin = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                  event="slim_worker_finished", now=now, state=HALTED if stopped else COMPLETED,
                                  pending=None, slim_result=s, worker=s.get("session_id"),
                                  reason=f"{plan['reason']}; {stopped}" if stopped else plan["reason"])
-                if halt_continue_on() and (stopped or not _receipt_present(fin)):
-                    if not stopped:
-                        row["work_unit_status"] = "RECOVERY_PENDING"
+                if halt_continue_on() and stopped:
                     halt_continue(fin, fin.get("work_dir") or fin["cwd"], s.get("result") or "", s, row, now)
             elif act == "surface_blocked":
                 if rec["state"] != BLOCKED:

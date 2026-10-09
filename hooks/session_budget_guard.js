@@ -149,7 +149,7 @@ function judge(budget, st) {
 // against stop 800K and every later call (a plain Read too) was denied. A tripped session now gets
 // `closeout_calls` (default 4) calls that are read-only or write a closeout file; nothing else.
 const READ_ONLY = new Set(['Read', 'Grep', 'Glob']);
-const CLOSEOUT_PATH = /(^|[\\/])(vault[\\/]plans[\\/][^\\/]+\.md|memory[\\/]handoffs[\\/][^\\/]+\.md|RESUMPTION_FILE\.md)$/;
+const CLOSEOUT_PATH = /(^|[\\/])(vault[\\/]plans[\\/][^\\/]+\.md|memory[\\/]handoffs[\\/][^\\/]+\.md|RESUMPTION_FILE\.md|[^\\/]+-receipt\.md)$/;   // F3: a work-unit receipt is a closeout file
 const DEFAULT_CLOSEOUT = 4;
 
 // Goal mode passes `goal`: one handoff write, no reads. The live canary of 2026-10-07 (CANARY.md,
