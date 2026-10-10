@@ -1,0 +1,52 @@
+{
+  "worktree": "C:\\Users\\User\\Apps\\pp-ucda-wt",
+  "live": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+  "tests": [
+    "python tools/test_goal_lease.py",
+    "python tools/test_workspace_lease.py"
+  ],
+  "ts": 1791638187,
+  "status": "LANDED",
+  "reason": "",
+  "landed": true,
+  "branch": "feat/ucda",
+  "branch_before": "f6e22682a35b8a4012258f932ca8112be36998cb",
+  "live_head_before": "fe86ea9188ec912150dea8a43a5b92982631ac7e",
+  "files": [
+    "hooks/lib/goal_binding.js",
+    "hooks/session_budget_guard.js",
+    "modules/provider_routing/ledger.py",
+    "modules/provider_routing/workspace_registry.py",
+    "tools/fixtures/goal_lease/canary-20261007.spend.journal.jsonl",
+    "tools/fixtures/goal_lease/rf-p3b.spend.journal.jsonl",
+    "tools/mission_spend.py",
+    "tools/test_goal_lease.py",
+    "tools/test_workspace_lease.py"
+  ],
+  "tests_before": [
+    {
+      "cmd": "python tools/test_goal_lease.py",
+      "rc": 0,
+      "tail": "PASS V-LEASE-LEGACY-FOLD\nPASS V-LEASE-CAP-IMMUTABLE\nPASS V-LEASE-SUCCESSOR-IN-ENVELOPE\nPASS V-LEASE-ENVELOPE-EXHAUSTED\nPASS V-LEASE-IDEMPOTENT\nPASS V-LEASE-DOUBLE-RACE\nPASS V-LEASE-UNKNOWN-NOT-FREE\nPASS V-PROGRAMME-OWNER-ONLY\nPASS V-LINEAGE-READONLY\nPASS V-LEASE-CLI\nGOAL_LEASE_PASS=10/10"
+    },
+    {
+      "cmd": "python tools/test_workspace_lease.py",
+      "rc": 0,
+      "tail": "PASS V-WS-CLAIM-CAS\nPASS V-WS-STALE-GEN-REFUSED\nPASS V-WS-IDEMPOTENT\nPASS V-WS-DOUBLE-CLAIM-RACE\nPASS V-WS-CWD-OBSERVE-ONLY\nPASS V-WS-ZOMBIE-FENCED\nPASS V-WS-CLOSED-LEASE-FENCED\nPASS V-WS-PRECEDENCE\nPASS V-WS-HOOK-BINDING\nPASS V-WS-HOOK-CLOSED-LEASE-FENCED\nWS_LEASE_PASS=10/10"
+    }
+  ],
+  "branch_rebased": "046df5d4f247577b4eb45285df4fd6bf1798464e",
+  "live_head_after": "046df5d4f247577b4eb45285df4fd6bf1798464e",
+  "tests_after": [
+    {
+      "cmd": "python tools/test_goal_lease.py",
+      "rc": 0,
+      "tail": "PASS V-LEASE-LEGACY-FOLD\nPASS V-LEASE-CAP-IMMUTABLE\nPASS V-LEASE-SUCCESSOR-IN-ENVELOPE\nPASS V-LEASE-ENVELOPE-EXHAUSTED\nPASS V-LEASE-IDEMPOTENT\nPASS V-LEASE-DOUBLE-RACE\nPASS V-LEASE-UNKNOWN-NOT-FREE\nPASS V-PROGRAMME-OWNER-ONLY\nPASS V-LINEAGE-READONLY\nPASS V-LEASE-CLI\nGOAL_LEASE_PASS=10/10"
+    },
+    {
+      "cmd": "python tools/test_workspace_lease.py",
+      "rc": 0,
+      "tail": "PASS V-WS-CLAIM-CAS\nPASS V-WS-STALE-GEN-REFUSED\nPASS V-WS-IDEMPOTENT\nPASS V-WS-DOUBLE-CLAIM-RACE\nPASS V-WS-CWD-OBSERVE-ONLY\nPASS V-WS-ZOMBIE-FENCED\nPASS V-WS-CLOSED-LEASE-FENCED\nPASS V-WS-PRECEDENCE\nPASS V-WS-HOOK-BINDING\nPASS V-WS-HOOK-CLOSED-LEASE-FENCED\nWS_LEASE_PASS=10/10"
+    }
+  ]
+}

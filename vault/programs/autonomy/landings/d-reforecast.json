@@ -1,0 +1,37 @@
+{
+  "worktree": "C:\\Users\\User\\Apps\\pp-ucda-wt",
+  "live": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+  "tests": [
+    "python tools/test_gsdx_reforecast.py"
+  ],
+  "ts": 1791637652,
+  "status": "LANDED",
+  "reason": "",
+  "landed": true,
+  "branch": "feat/ucda",
+  "branch_before": "b50e58be4173fc08b8b45ea0a1423a7cc6554210",
+  "live_head_before": "173a25dfdbcd8ff6c904de8649b8fa98148c135e",
+  "files": [
+    "tools/gsdx_reforecast.py",
+    "tools/test_gsdx_reforecast.py",
+    "vault/programs/autonomy/chain_tick.ps1",
+    "vault/programs/autonomy/landings/a-ucda.json",
+    "vault/programs/autonomy/landings/b-gsdx-chain.json"
+  ],
+  "tests_before": [
+    {
+      "cmd": "python tools/test_gsdx_reforecast.py",
+      "rc": 0,
+      "tail": "PASS runs rc 0\nPASS only pending unit counted\nPASS chain expected = 0.35 x target\nPASS total = used + remaining\nPASS ordering lower<expected<safety\nPASS change <= 25% -> iterate false\nPASS under 40M -> owner_needed false\nPASS change > 25% -> iterate true\nPASS change == 25% -> iterate false\nPASS total > 40M -> owner_needed true\nALL PASS"
+    }
+  ],
+  "branch_rebased": "b50e58be4173fc08b8b45ea0a1423a7cc6554210",
+  "live_head_after": "b50e58be4173fc08b8b45ea0a1423a7cc6554210",
+  "tests_after": [
+    {
+      "cmd": "python tools/test_gsdx_reforecast.py",
+      "rc": 0,
+      "tail": "PASS runs rc 0\nPASS only pending unit counted\nPASS chain expected = 0.35 x target\nPASS total = used + remaining\nPASS ordering lower<expected<safety\nPASS change <= 25% -> iterate false\nPASS under 40M -> owner_needed false\nPASS change > 25% -> iterate true\nPASS change == 25% -> iterate false\nPASS total > 40M -> owner_needed true\nALL PASS"
+    }
+  ]
+}
