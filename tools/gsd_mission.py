@@ -3724,6 +3724,13 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
             raise MissionError(why)
     rec = create(cwd, resume_command, **kw)
     extra = {}
+    try:   # plain arm under a declared goal root binds to that goal's ledger: no new capital per mission id
+        import mission_spend as _ms
+        lg = _ms.goal_for_cwd(cwd)
+        if lg:
+            extra["ledger_goal"] = lg
+    except Exception:  # noqa: BLE001 -- unbound is reported by programme-spend, never fatal at arm
+        pass
     if key is not None:
         extra["goal"] = {"repo": key[0], "workstream": key[1], "unit": parallel_unit}
     if supersedes:

@@ -827,7 +827,7 @@ def _under(cwd: str | None, roots: list[str]) -> bool:
 def _session_autopsy(path: Path, roots: list[str]) -> dict:
     """Port of gen2/a3b-r/forensics/autopsy.py: calls and processed tokens per unique message id,
     split by whether the cwd was inside the goal's roots when the call was made."""
-    seen, calls, processed, bound, refusals = set(), 0, 0, 0, 0
+    seen, calls, processed, bound, refusals, human = set(), 0, 0, 0, 0, 0
     last_cwd, first_cwd = None, None
     with open(path, encoding="utf-8", errors="replace") as fh:
         for line in fh:
@@ -843,6 +843,11 @@ def _session_autopsy(path: Path, roots: list[str]) -> dict:
             m = r.get("message") or {}
             if not isinstance(m, dict):
                 continue
+            if r.get("type") == "user" and not r.get("isMeta") and (
+                    isinstance(m.get("content"), str) or (isinstance(m.get("content"), list) and any(
+                        isinstance(b, dict) and b.get("type") == "text" for b in m["content"])
+                        and not any(isinstance(b, dict) and b.get("type") == "tool_result" for b in m["content"]))):
+                human += 1
             if r.get("type") == "user" and isinstance(m.get("content"), list):
                 for b in m["content"]:
                     if isinstance(b, dict) and b.get("type") == "tool_result":
@@ -862,7 +867,8 @@ def _session_autopsy(path: Path, roots: list[str]) -> dict:
             if _under(last_cwd, roots):
                 bound += n
     return {"calls": calls, "processed": processed, "bound": bound, "pre_bind": processed - bound,
-            "refusals": refusals, "role": "worker" if _under(first_cwd, roots) else "pane"}
+            "refusals": refusals, "human_prompts": human, "first_cwd": first_cwd,
+            "role": "worker" if _under(first_cwd, roots) else "pane"}
 
 
 def _git_facts(root: str | None) -> dict:
@@ -943,6 +949,89 @@ def goal_fault_capsule(goal: str, sid: str, cwd: str, reason: str, *, sd=None, t
     return mc.fault_capsule(goal, sid, cwd, reason, sd=sd, transcript=transcript, ask=ask, children=children)
 
 
+def goal_for_cwd(cwd: str | None) -> str | None:
+    """The declared goal whose root contains `cwd` (None when none). Keyed by ROOT, never by mission id."""
+    if not cwd:
+        return None
+    for g, e in sorted(read_index().items()):
+        if isinstance(e, dict) and _under(cwd, list(e.get("roots") or [])):
+            return g
+    return None
+
+
+MATERIAL_TOKENS = 100_000
+
+
+def programme_spend(goal: str, *, projects: Path | None = None, mission_sids: set[str] | None = None,
+                    material: int | None = None) -> dict:
+    """ONE programme spend view of a goal: settled / reserved / unknown / available, measured from the
+    ledger journal and transcripts (no pane arithmetic). It is keyed by the goal, so a new mission id
+    under the same root cannot reset it. Roles: worker (mission-owner session), control (ledger session
+    that is no mission), interactive (Owner chat under the roots: attributed, never productive spend).
+    Material spend no role/ledger entry explains is a telemetry failure, not a rounding error."""
+    ent = read_index().get(goal)
+    if ent is None:
+        return {"ok": False, "goal": goal, "reason": f"UNKNOWN: goal {goal!r} is not declared"}
+    material = MATERIAL_TOKENS if material is None else material
+    mission_sids = set(mission_sids or ())
+    roots = list(ent.get("roots") or [])
+    led = _goal_ledger(goal)
+    with led._lock:
+        g = led._gfold(led._read())
+    proot = projects or projects_root()
+    in_ledger = set(g["marks"]) | {r["sid"] for r in g["res"].values()}
+    on_disk: dict[str, Path] = {}
+    for r in roots:
+        enc = encode_cwd(r).lower()      # roots are stored lowercased (_norm); dir names keep their case
+        for d in (sorted(proot.iterdir()) if proot.is_dir() else []):
+            if not (d.is_dir() and (d.name.lower() == enc or d.name.lower().startswith(enc + "--"))):
+                continue
+            for p in d.glob("*.jsonl"):
+                on_disk[p.stem] = p
+    sids = sorted(in_ledger | mission_sids | set(on_disk))
+    rows, failures = [], []
+    unknown = 0
+    for sid in sids:
+        tx = on_disk.get(sid) or find_transcript(sid, proot)
+        try:
+            a = _session_autopsy(tx, roots) if tx else None
+        except OSError:
+            a = None
+        mark = int(g["marks"].get(sid, 0))
+        if sid in mission_sids:
+            role = "worker"
+        elif sid in in_ledger:
+            role = "control"
+        elif a and a["human_prompts"] > 0:
+            role = "interactive"
+        else:
+            role = "unattributed"
+        proc = a["processed"] if a else None
+        row = {"sid": sid, "role": role, "settled": mark, "processed": proc, "transcript": a is not None}
+        rows.append(row)
+        if role in ("worker", "control") and a is None and (sid in in_ledger):
+            unknown += mark          # the ledger holds a charge nobody can re-measure
+            row["unknown"] = mark
+        if role == "unattributed" and proc is not None and proc >= material:
+            unknown += proc
+            row["unknown"] = proc
+            failures.append({"sid": sid, "kind": "unattributed_material_spend", "processed": proc})
+        if role == "worker" and sid not in in_ledger and proc is not None and proc >= material:
+            unknown += proc
+            row["unknown"] = proc
+            failures.append({"sid": sid, "kind": "worker_not_in_ledger", "processed": proc})
+    cap = g["cap"]
+    reserved = int(g["open"])
+    settled = int(sum(g["marks"].values()))
+    avail = None if cap is None else cap - settled - reserved - unknown
+    prod = lambda k: sum(r["settled"] for r in rows if r["role"] == k)
+    return {"ok": True, "goal": goal, "cap": cap, "settled": settled, "reserved": reserved,
+            "unknown": unknown, "available": avail, "available_certain": unknown == 0,
+            "productive": {"worker": prod("worker"), "control": prod("control")},
+            "interactive_processed": sum(r["processed"] or 0 for r in rows if r["role"] == "interactive"),
+            "telemetry_ok": not failures, "telemetry_failures": failures, "sessions": rows}
+
+
 def _main(argv: list[str]) -> int:
     import argparse
     import socket
@@ -1010,6 +1099,9 @@ def _main(argv: list[str]) -> int:
         gl.add_argument(f"--{k}", type=int, default=0)
     sub.add_parser("goal-lineage").add_argument("--goal", required=True)
     sub.add_parser("programme-status").add_argument("--goal", required=True)
+    ps = sub.add_parser("programme-spend")
+    ps.add_argument("--goal", required=True)
+    ps.add_argument("--projects")
     gg = sub.add_parser("goal-programme")
     gg.add_argument("--goal", required=True)
     gg.add_argument("--value", type=int, required=True)
@@ -1044,6 +1136,18 @@ def _main(argv: list[str]) -> int:
             out = {"ok": False, "reason": f"{type(exc).__name__}: {exc}"[:300]}
         print(json.dumps(out, sort_keys=True))
         return 0 if out.get("ok") else 3
+    if a.cmd == "programme-spend":
+        sids: set[str] = set()
+        try:
+            import gsd_mission as _gm
+            for r in _gm.all_missions():
+                if goal_for_cwd(r.get("cwd")) == a.goal and (r.get("owner") or {}).get("session_id"):
+                    sids.add(r["owner"]["session_id"])
+        except Exception:  # noqa: BLE001 -- no mission store: roles degrade to control/interactive
+            pass
+        out = programme_spend(a.goal, projects=Path(a.projects) if a.projects else None, mission_sids=sids)
+        print(json.dumps(out, sort_keys=True))
+        return 0 if out.get("ok") and out.get("telemetry_ok") else 3
     if a.cmd in ("goal-lineage", "programme-status", "goal-lease-open", "goal-programme"):
         led = _goal_ledger(a.goal)
         if a.cmd == "goal-lineage":
