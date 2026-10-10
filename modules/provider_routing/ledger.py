@@ -188,16 +188,42 @@ class GoalLedger(SpendLedger):
 
     def _gfold(self, recs: list[dict]) -> dict:
         cap, source, marks, res, seqs, pre = None, None, {}, {}, {}, {}
+        # Lease epochs (dgl W1b). With no programme / lease_open row there is one implicit lease L1 whose
+        # cap is the goal cap, and cap / used below come out exactly as before.
+        leases = [{"id": "L1", "cap": None, "closed": False, "reason": None, "succession_id": None,
+                   "reserves": {}, "settled": 0}]
+        programme, programme_source, authority, opened = None, None, [], set()
         for r in recs:
             op = r["op"]
+            cur = leases[-1]
             if op == "prebind":
                 # PRE_BINDING_PROGRAM_CAPEX: history of a session from before it was bound. Watermarked
                 # per sid, reported, and NEVER part of `used`.
                 pre[r["sid"]] = max(pre.get(r["sid"], 0), int(r["measured"]))
             elif op == "cap":
+                if r.get("lease") not in (None, cur["id"]) or cur["closed"] and r.get("lease"):
+                    continue                              # a closed lease's cap is immutable
                 cap, source = r["value"], r.get("source")
+                cur["cap"] = cap
+            elif op == "programme":
+                programme, programme_source = int(r["value"]), r.get("source")
+            elif op == "lease_open":
+                if r["succession_id"] in opened:
+                    continue
+                opened.add(r["succession_id"])
+                cur["closed"], cur["reason"] = True, cur["reason"] or "succeeded"
+                leases.append({"id": f"L{len(leases) + 1}", "cap": int(r["cap"]), "closed": False,
+                               "reason": None, "succession_id": r["succession_id"],
+                               "reserves": dict(r.get("reserves") or {}), "settled": 0})
+                cap, source = int(r["cap"]), f"lease_open {r['succession_id']}"
+            elif op == "lease_close":
+                for ls in leases:
+                    if ls["id"] == r["lease"] and not ls["closed"]:
+                        ls["closed"], ls["reason"], ls["receipt"] = True, r.get("reason"), r.get("receipt")
+            elif op == "authority_required":
+                authority.append({k: r.get(k) for k in ("succession_id", "need", "executable")})
             elif op == "reserve":
-                res[r["id"]] = {**r, "state": RESERVED}
+                res[r["id"]] = {**r, "state": RESERVED, "lease": cur["id"]}
                 seqs[r["sid"]] = seqs.get(r["sid"], 0) + 1
             elif op == "leak":
                 if res.get(r["id"], {}).get("state") == RESERVED:
@@ -205,7 +231,9 @@ class GoalLedger(SpendLedger):
             elif op == "correct":
                 marks[r["sid"]] = int(r["measured"])       # may LOWER; later settles watermark from here
             elif op == "settle":
-                marks[r["sid"]] = max(marks.get(r["sid"], 0), int(r["measured"]))
+                new = max(marks.get(r["sid"], 0), int(r["measured"]))
+                cur["settled"] += new - marks.get(r["sid"], 0)
+                marks[r["sid"]] = new
                 for rid in r.get("closes", []):
                     if rid in res:
                         res[rid]["state"] = SETTLED
@@ -217,9 +245,17 @@ class GoalLedger(SpendLedger):
                 # released by the parent's next renew (review M1, 31f1e714).
                 r["hold"] = max(0, r["amount"] - max(0, marks.get(r["sid"], 0) - int(r.get("base", 0))))
         open_ = sum(r["hold"] for r in res.values())
+        used = total = sum(marks.values()) + open_
+        for ls in leases:
+            ls["used"] = ls["settled"] + sum(r["hold"] for r in res.values() if r["lease"] == ls["id"])
+        if len(leases) > 1:
+            used = leases[-1]["used"]                    # admission reads the CURRENT lease
         return {"goal": self.goal, "cap": cap, "source": source, "marks": marks, "res": res,
-                "seqs": seqs, "open": open_, "used": sum(marks.values()) + open_,
-                "prebind": pre, "PRE_BINDING_PROGRAM_CAPEX": sum(pre.values())}
+                "seqs": seqs, "open": open_, "used": used, "total_used": total,
+                "prebind": pre, "PRE_BINDING_PROGRAM_CAPEX": sum(pre.values()),
+                "leases": leases, "programme": programme, "programme_source": programme_source,
+                "authority": authority, "opened": opened,
+                "status": "AUTHORITY_REQUIRED" if any(a["succession_id"] not in opened for a in authority) else "OK"}
 
     def prebind(self, sid: str, measured: int) -> dict:
         """Book a session's pre-binding history as program capex, never as goal spend."""
@@ -254,14 +290,20 @@ class GoalLedger(SpendLedger):
         return f"approval:{approval_id}"
 
     def declare_cap(self, value: int, source: str, *, inside_agent: bool = False,
-                    approval_id: str | None = None) -> dict:
+                    approval_id: str | None = None, lease: str | None = None) -> dict:
         """Initial cap and lowering are always admitted. A raise is refused unless the caller holds the
         Owner's authority (`inside_agent=False`), and refused once used >= cap: raising a crossed cap
-        makes the limit retrospective."""
+        makes the limit retrospective. A cap for a lease that is closed (or not the current one) is
+        refused for everyone, the Owner included."""
         if not isinstance(value, int) or value <= 0:
             raise LedgerError("cap must be a positive int")
         with self._lock:
             recs = self._read()
+            if lease is not None:
+                cur = self._gfold(recs)["leases"][-1]
+                if cur["closed"] or cur["id"] != lease:
+                    return {"ok": False, "goal": self.goal, "reason": f"lease {lease} is closed "
+                            f"(current is {cur['id']}): a closed lease's cap is immutable"}
             if approval_id:
                 tok = self.approval_token(approval_id)
                 if any(r.get("op") == "cap" and tok in str(r.get("source") or "") for r in recs):
@@ -279,8 +321,103 @@ class GoalLedger(SpendLedger):
                     return self._summary(g, ok=False, reason=f"CONTAINED: used {g['used']:,} >= cap {cur:,}; "
                                          "a crossed cap is never raised -- declare a new goal id")
             if cur != value:
-                self._append(recs, {"op": "cap", "value": value, "source": source})
+                self._append(recs, {"op": "cap", "value": value, "source": source,
+                                    **({"lease": lease} if lease else {})})
             return self._summary(self._gfold(recs), ok=True, reason="")
+
+    # --- Lease epochs (dgl W1b): a goal is a programme of leases; a lease is a disposable cap --------
+    RESERVE_KEYS = ("proof", "closeout", "recovery")
+
+    @staticmethod
+    def _lineage_view(g: dict) -> dict:
+        leases = [{k: v for k, v in ls.items() if k != "settled"} for ls in g["leases"]]
+        return {"goal": g["goal"], "ok": True, "cap": g["cap"], "used": g["used"], "total_used": g["total_used"],
+                "settled": sum(g["marks"].values()), "open": g["open"], "programme": g["programme"],
+                "programme_source": g["programme_source"], "status": g["status"], "leases": leases,
+                "authority_required": g["authority"]}
+
+    def lineage(self) -> dict:
+        """Read-only: folds the journal and appends nothing (status() sweeps leaks, this never does)."""
+        with self._lock:
+            return self._lineage_view(self._gfold(self._read()))
+
+    def programme_status(self) -> dict:
+        with self._lock:
+            g = self._gfold(self._read())
+        other = sum(sum(ls["reserves"].values()) for ls in g["leases"] if not ls["closed"])
+        settled = sum(g["marks"].values())
+        ex = None if g["programme"] is None else g["programme"] - settled - g["open"] - other
+        return {"goal": g["goal"], "ok": True, "programme": g["programme"], "source": g["programme_source"],
+                "settled": settled, "open": g["open"], "open_lease_reserves": other, "executable": ex,
+                "lease": g["leases"][-1]["id"], "status": g["status"]}
+
+    def set_programme(self, value: int, source: str, *, inside_agent: bool = False) -> dict:
+        """The programme envelope. Same Owner rule as declare_cap: first value and lowering are admitted,
+        a raise needs the Owner (`inside_agent=False`)."""
+        if not isinstance(value, int) or value <= 0:
+            raise LedgerError("programme must be a positive int")
+        with self._lock:
+            recs = self._read()
+            cur = self._gfold(recs)["programme"]
+            if cur is not None and value > cur and inside_agent:
+                return {"ok": False, "goal": self.goal, "programme": cur,
+                        "reason": "a programme raise needs the Owner's interactive confirmation (--owner)"}
+            if cur != value:
+                self._append(recs, {"op": "programme", "value": value, "source": source})
+            return {"ok": True, "goal": self.goal, "programme": value, "reason": ""}
+
+    def lease_open(self, succession_id: str, cap: int, *, prev_lease: str | None = None,
+                   reserves: dict | None = None) -> dict:
+        """Open the successor lease. Idempotent by `succession_id`; compare-and-swap on `prev_lease`
+        (must be the latest lease); the envelope must hold cap + reserves, else exactly one
+        authority_required row is journalled for the succession and the status is AUTHORITY_REQUIRED."""
+        reserves = {k: int(v) for k, v in (reserves or {}).items()}
+        if not succession_id or not isinstance(cap, int) or cap <= 0 or set(reserves) - set(self.RESERVE_KEYS) \
+                or any(v < 0 for v in reserves.values()):
+            raise LedgerError("lease_open needs a succession id, a positive int cap and reserves "
+                              f"{self.RESERVE_KEYS} >= 0")
+        with self._lock:
+            recs = self._read()
+            g = self._sweep_leaks(recs)
+            done = next((ls for ls in g["leases"] if ls["succession_id"] == succession_id), None)
+            if done:
+                return {**self._lineage_view(g), "ok": True, "applied": False, "lease": done["id"], "reason": ""}
+            latest = g["leases"][-1]
+            if prev_lease is not None and prev_lease != latest["id"]:
+                return {**self._lineage_view(g), "ok": False, "lease": latest["id"],
+                        "reason": f"CAS: {prev_lease} is not the latest lease; {latest['id']} "
+                                  f"(succession {latest['succession_id']}) won"}
+            if g["programme"] is None:
+                return {**self._lineage_view(g), "ok": False,
+                        "reason": "UNKNOWN: no programme envelope declared; unknown headroom is not free"}
+            need = cap + sum(reserves.values())
+            other = sum(sum(ls["reserves"].values()) for ls in g["leases"]
+                        if not ls["closed"] and ls is not latest)
+            executable = g["programme"] - sum(g["marks"].values()) - g["open"] - other
+            if need > executable:
+                if succession_id not in {a["succession_id"] for a in g["authority"]}:
+                    self._append(recs, {"op": "authority_required", "succession_id": succession_id,
+                                        "need": need, "executable": executable})
+                g = self._gfold(recs)
+                return {**self._lineage_view(g), "ok": False, "need": need, "executable": executable,
+                        "reason": f"AUTHORITY_REQUIRED: need {need:,} > executable {executable:,}"}
+            self._append(recs, {"op": "lease_open", "lease": f"L{len(g['leases']) + 1}", "cap": cap,
+                                "succession_id": succession_id, "prev_lease": latest["id"],
+                                "reserves": reserves})
+            g = self._gfold(recs)
+            return {**self._lineage_view(g), "ok": True, "applied": True, "lease": g["leases"][-1]["id"],
+                    "need": need, "executable": executable, "reason": ""}
+
+    def lease_close(self, lease: str, reason: str, receipt: str = "") -> dict:
+        with self._lock:
+            recs = self._read()
+            g = self._gfold(recs)
+            ls = next((x for x in g["leases"] if x["id"] == lease), None)
+            if ls is None:
+                return {"ok": False, "goal": self.goal, "reason": f"unknown lease {lease}"}
+            if not ls["closed"]:
+                self._append(recs, {"op": "lease_close", "lease": lease, "reason": reason, "receipt": receipt})
+            return {**self._lineage_view(self._gfold(recs)), "ok": True, "reason": ""}
 
     @staticmethod
     def _headroom(g: dict, exclude: str | None = None) -> int:

@@ -35,15 +35,23 @@ def _rows(led, op=None):
     return [r for r in led._read() if op is None or r["op"] == op]
 
 
+GATES: list = []
+
+
 def _gate(name):
     def deco(fn):
+        GATES.append((name, fn))     # run under __main__ only: multiprocessing children re-import this module
+        return fn
+    return deco
+
+
+def _run_gates():
+    for name, fn in GATES:
         try:
             fn()
             RESULTS.append((name, True, ""))
         except Exception as exc:  # noqa: BLE001 - a gate reports, never raises
             RESULTS.append((name, False, "".join(traceback.format_exception_only(type(exc), exc)).strip()))
-        return fn
-    return deco
 
 
 def _legacy(name, cap, used):
@@ -203,6 +211,7 @@ def _():
 
 if __name__ == "__main__":
     mp.freeze_support()
+    _run_gates()
     for name, ok, why in RESULTS:
         print(("PASS " if ok else "FAIL ") + name + ("" if ok else f" -- {why}"))
     n = sum(1 for _, ok, _w in RESULTS if ok)
