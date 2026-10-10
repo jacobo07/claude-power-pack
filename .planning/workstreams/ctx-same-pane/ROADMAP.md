@@ -54,6 +54,10 @@ UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. Missing attribution is not 
   1. The three missing H1 lines are in; `tools/test_rollover_replay.py`, `test_rollover.py`, `test_rollover_active_path.py`, `test_rollover_economic.py` pass (outputs committed to `vault/programs/ctx-same-pane/s0/`).
   2. New gates V-RR-CERTIFY-DETECT (controls: refused, --help, echo), V-RR-PROTOCOL-NOT-WORK (mutation goes red), V-RR-NO-CERTIFY-NOT-ZERO, V-ROLLOVER-PROTOCOL-BASIS pass, each with its red branch driven.
   3. Replay receipt `vault/receipts/ctx-rent-s2-replay.json`: OLD UPPER_BOUND_P50 vs NEW PROTOCOL_P90 (+ p50 sensitivity), counts, transition matrix, predicted rotation p50/p90, `no_certify_call`; the 150K-gate decision recorded per the recovery plan's rule.
+**Plans:** 3 plans
+- [ ] 01-01-PLAN.md — apply patch (git apply --check rc=0) + finish H1, 4 red-path gates drilled, 6 suites, code + evidence commits (wave 1)
+- [ ] 01-02-PLAN.md — arms replay OLD/NEW/SENS + 150K gate rule, receipt `vault/receipts/ctx-rent-s2-replay.json` (wave 2)
+- [ ] 01-03-PLAN.md — live install by guarded cherry-pick -x or OWNER.md line, live-file gates, live prior basis recorded (wave 3)
 
 ### Phase 2: S1 rent attribution
 **Goal**: Explain why a call processed what it did. Extend `tools/session_autopsy.py` (no new module unless no owner fits).
