@@ -1314,9 +1314,32 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind:
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is {rec['state']}; there is nothing to hold")
     now = time.time() if now is None else now
-    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                      event="owner_hold_set", now=now, reason=f"owner hold: {reason[:300]}",
-                      owner_hold={"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {})})
+    out = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                     event="owner_hold_set", now=now, reason=f"owner hold: {reason[:300]}",
+                     owner_hold={"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {})})
+    hold_guard_budget(rec, reason)
+    return out
+
+
+def hold_guard_budget(rec: dict, reason: str = "") -> list[str]:
+    """EVC U5: a hold that only flips the record leaves the live worker burning (it never reads the
+    record). Also write a stop=1 session-budget guard file for every session the mission spent
+    through, so hooks/session_budget_guard.js refuses that worker's next tool call. Best effort per
+    sid: a failure is returned in the list as 'FAIL:<sid>', never raised (the hold itself stands)."""
+    import mission_spend as ms
+    done = []
+    try:
+        ids, _prefixes = ms.mission_sessions(rec)
+    except Exception as e:  # noqa: BLE001
+        return [f"FAIL:mission_sessions:{type(e).__name__}"]
+    for sid in sorted(ids):
+        try:
+            ms.declare(sid, 1, 1, 1, extra={"hold": True, "hold_mission": rec.get("mission_id"),
+                                           "hold_reason": reason[:200]})
+            done.append(sid)
+        except Exception as e:  # noqa: BLE001
+            done.append(f"FAIL:{sid}:{type(e).__name__}")
+    return done
 
 
 def set_rollover_protocol(mission_id: str, protocol: str, now: float | None = None,
