@@ -190,22 +190,26 @@ const PY = process.env.PYTHON_BIN || (process.platform === 'win32'
 const MISSION_SPEND = path.join(__dirname, '..', 'tools', 'mission_spend.py');
 const RENEW_TIMEOUT_MS = 8000;              // below the Read chain's 20 s, so a slow renew is a deny, not a kill
 
-const { goalBinding } = require('./lib/goal_binding');
+const { goalBinding, fenceFor, readBinding } = require('./lib/goal_binding');
 
 // Only a bare status read is exempt in goal mode, anchored on the WHOLE command: python, then
 // mission_spend.py, then goal-status --goal <id>, then nothing. A substring match (audit gap 4) and
 // an unanchored token match (review H2: `python heavy_job.py --tag mission_spend.py goal-status`)
 // both let another program run unjudged.
 const GOAL_STATUS_ONLY = /^\s*(?:&\s*)?(?:(['"])(?:[^'"]*[\\/])?(?:python3?|py)(?:\.exe)?\1|(?:[^\s'"]*[\\/])?(?:python3?|py)(?:\.exe)?)\s+(['"]?)(?:[^\s'"]*[\\/])?mission_spend\.py\2\s+goal-status\s+--goal\s+[A-Za-z0-9._-]+\s*$/i;
+// The recovery plane (econ-contain WS-D): status and detach must not depend on the exhausted goal's
+// remaining authority. They never edit product paths, and a detach fences the left goal's workspace
+// (goal_binding.fenceFor), so admitting them is not a budget bypass. Anchored like GOAL_STATUS_ONLY.
+const ECON_RECOVERY = /^\s*(?:&\s*)?(?:(['"])(?:[^'"]*[\\/])?(?:python3?|py)(?:\.exe)?\1|(?:[^\s'"]*[\\/])?(?:python3?|py)(?:\.exe)?)\s+(['"]?)(?:[^\s'"]*[\\/])?econ_plane\.py\2\s+(?:status|detach)\s+--session\s+[A-Za-z0-9._-]+(?:\s+--(?:reason\s+[A-Za-z0-9._-]+|text))?\s*$/i;
 function goalExempt(cmd) {
-  return GOAL_STATUS_ONLY.test(String(cmd));
+  return GOAL_STATUS_ONLY.test(String(cmd)) || ECON_RECOVERY.test(String(cmd));
 }
 
 // The state a bound session must not write: the goal ledger and index, its own guard state and
 // budget file (a forged lease or a dropped `goal` field un-binds it), and the goal CLI's mutating
 // verbs. Same OS user, so this defeats the casual and accidental path, not an agent that edits this
 // hook -- see the spec's trust boundary (review H1).
-const GOAL_STATE = /goal-budget|session-budget-|mission_spend\.py['"]?\s+goal-(?:declare|renew|spawn)\b/i;
+const GOAL_STATE = /goal-budget|goal-binding|session-budget-|mission_spend\.py['"]?\s+goal-(?:declare|renew|spawn)\b/i;
 function touchesGoalState(event) {
   const ti = event.tool_input || {};
   return GOAL_STATE.test(String(ti.command || '') + ' ' + String(ti.file_path || '') + ' ' + String(ti.path || ''));
@@ -234,10 +238,19 @@ function journalLease(goal, sid) {
 
 function goalDeny(goal, reason) {
   return { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny',
-    permissionDecisionReason: `GOAL BUDGET (${goal}) -- ${reason} Way out: end this turn now with a ` +
-      'status line and the next exact action. Nothing new starts on this goal; the Owner decides ' +
-      '(a crossed cap is never raised -- a new goal id is). Read the ledger with ' +
-      `\`python tools/mission_spend.py goal-status --goal ${goal}\`.` } };
+    permissionDecisionReason: `GOAL BUDGET (${goal}) -- ${reason} Way out: end this turn now with ONE ` +
+      'status line; do not probe, retry, cd or try another shell (each attempt is a billed model ' +
+      'boundary). The Owner\'s next message is answered by the control plane WITHOUT a model call: ' +
+      '`econ status` shows the ledger, `econ detach` frees this pane (the goal\'s workspace stays fenced), ' +
+      '`/clear` starts a fresh session here. A crossed cap is never raised; a successor lease or a new ' +
+      'goal id is.' } };
+}
+
+function fenceDeny(f) {
+  return { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny',
+    permissionDecisionReason: `ECONOMIC FENCE (${f.goal}) -- this call would change that goal's workspace, ` +
+      `and ${f.why}. Changing directory, detaching or opening a fresh pane does not reopen an exhausted ` +
+      'goal; only a successor lease does. Reads stay free. End the turn with one status line.' } };
 }
 
 function foldFile(gs, file, isMain) {
@@ -407,6 +420,19 @@ function decide(event) {
   const sw = String(process.env.CPP_SESSION_BUDGET || '').trim().toLowerCase();
   if (sw === '0' || sw === 'off' || sw === 'false') return null;
   const bind = goalBinding(event, sid);
+  // Fence first (econ-contain WS-E): the subject of a mutating call decides, whatever this session is
+  // bound to. A quarantined session (cwd inside an exhausted goal, never bound to it) is judged ONLY
+  // here: reads pass uncharged, no renew is bought, mutation of that workspace is refused.
+  try {
+    const skip = bind && !bind.quarantine ? bind.goal : null;
+    const f = fenceFor(event, sid, (bind && bind.record) || readBinding(sid), skip);
+    if (f) return fenceDeny(f);
+  } catch (e) { if (bind && !bind.quarantine) return goalDeny(bind.goal, `UNKNOWN: the fence check failed (${e.code || e.message}).`); }
+  if (bind && bind.quarantine) {
+    // Inside an exhausted goal's workspace the ledger, index and binding records stay out of reach,
+    // exactly as for a bound session (a forged lease or a fresh record would reopen the goal).
+    return touchesGoalState(event) ? goalDeny(bind.goal, 'a call that touches goal-budget state is not admitted from inside an exhausted goal.') : null;
+  }
   if (bind) {
     let gv;
     try { gv = decideGoal(event, sid, bind); } catch (e) {

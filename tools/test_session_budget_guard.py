@@ -218,6 +218,17 @@ def main():
     seq = (kind(b.call()["out"]), kind(b.call()["out"]))
     check("V-SBG-CORRUPT-BUDGET", seq == ("advise", "deny"), f"{seq}")
 
+    # V-SBG-CONCURRENT: parallel tool calls run the guard at once; a lost state write must not deny
+    b = Box(); b.declare(); b.append(row("a", U(10)))
+    ev = json.dumps({"session_id": SID, "tool_name": "Read", "tool_input": {}, "transcript_path": str(b.tx)})
+    procs = [subprocess.Popen([NODE, "-e", RUNNER, str(GUARD)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE, text=True, env=b.env()) for _ in range(8)]
+    outs = [p.communicate(ev, timeout=60)[0] for p in procs]
+    kinds = [kind(json.loads(o)["out"]) if o else "CRASH" for o in outs]
+    leftovers = [p.name for p in b.state.iterdir() if p.name.endswith(".tmp")]
+    check("V-SBG-CONCURRENT", kinds == ["allow"] * 8 and not leftovers and b.st()["tokens"] == 10,
+          f"8 parallel calls -> {sorted(set(kinds))}, tmp leftovers {leftovers}")
+
     # V-SBG-EXEMPT + V-SBG-KILL: tripped session can still rotate / be switched off
     b = Box(); b.declare(); b.append(row("a", U(5000)))
     tripped = kind(b.call()["out"])

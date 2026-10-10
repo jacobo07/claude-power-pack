@@ -428,7 +428,9 @@ def g_guard():
                   "lease": {"id": "gg:bound-7:1", "amount": 10 ** 15, "base": 0}}
         (e.state / "session-budget-bound-7.goal.json").write_text(json.dumps(forged), encoding="utf-8")
         dec, why = run_guard(e, "bound-7", tx, work, tool="Bash", tool_input={"command": "python big_job.py"})
-        check("V-GOAL-GUARD-FORGED-LEASE", dec == "deny" and "budget_spent" in why,
+        # econ-contain: gg is exhausted by now, so a FRESH sid entering by cwd is quarantined and fenced
+        # before any lease is read -- still a deny, from an earlier and stricter layer.
+        check("V-GOAL-GUARD-FORGED-LEASE", dec == "deny" and ("budget_spent" in why or "ECONOMIC FENCE" in why),
               f"a lease the journal never issued forces a renew, which refuses: {why[:80]}")
         dec, why = run_guard(e, "bound-8", tx, work, tool="Write",
                              tool_input={"file_path": str(e.state / "session-budget-bound-8.goal.json"), "content": "{}"})
@@ -441,11 +443,17 @@ def g_guard():
         check("V-GOAL-GUARD-EXEMPT-NARROW", dec == "deny", "a command that only MENTIONS it is still judged")
         dec, why = run_guard(e, "bound-2", tx, work, tool="Bash",
                              tool_input={"command": f"Remove-Item {e.state}\\goal-budget\\index.json"})
-        check("V-GOAL-GUARD-STATE-PROTECTED", dec == "deny" and "goal-budget" in why, why[:90])
+        # econ-contain WS-E: cwd `work` is inside the exhausted gg, so the fence (first layer) refuses this
+        # before the state check runs. Still a deny; the state layer itself is proven below, unfenced.
+        check("V-GOAL-GUARD-STATE-FENCED", dec == "deny", why[:90])
 
         declare("gg2", 100_000, lease_calls=1)
         dec, _ = run_guard(e, "bound-3", tx, other, tool="Agent", tool_input={"prompt": "x"}, CPP_GOAL="gg2")
         check("V-GOAL-GUARD-AGENT-CONTROL", dec is None, "CPP_GOAL binding with room: the Agent is admitted")
+        dec, why = run_guard(e, "bound-2s", tx, other, tool="Bash", CPP_GOAL="gg2",
+                             tool_input={"command": f"Remove-Item {e.state}\\goal-budget\\index.json"})
+        check("V-GOAL-GUARD-STATE-PROTECTED",
+              dec == "deny" and "goal-budget" in why and "ECONOMIC FENCE" not in why, why[:90])
 
         dec, why = run_guard(e, "bound-4", tx, other, CPP_GOAL="never-declared")
         check("V-GOAL-GUARD-UNKNOWN-GOAL", dec == "deny" and "UNKNOWN" in why, why[:90])

@@ -561,6 +561,14 @@ const CHAIN_MAP = {
   // translator) stays in-process; these 3 were separate top-level entries.
   // jit_skill_loader is Python -> PY_EXE child. grep exit(2) clean.
   'UserPromptSubmit-chain': [
+    // PRE-MODEL ECONOMIC ADMISSION (econ-contain WS-B, 2026-10-10). FIRST and critical: it is the only
+    // member that may BLOCK the Owner's message, and it must decide before the model is bought. On
+    // ctx-same-pane every message to an exhausted pane cost ~200K to be refused by the PreToolUse guard,
+    // which runs after the model request. Blocks only on positive ledger evidence (tombstone, exhausted
+    // lease, next request > what is left); unbound/unreadable -> silent. Also serves the zero-cost
+    // egress verbs `econ status` / `econ detach`. Kill switch: CPP_ECON_ADMISSION=off.
+    // timeoutMs covers `econ detach`, which spawns tools/econ_plane.py (9 s bound inside the hook).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/econ_admission.js', timeoutMs: 12000, critical: true },
     // DEAD-CLOSER RECOVERY (2026-09-14, Jacobo). closer-guard.js is a Stop hook,
     // and a turn that follows a USER INTERRUPT does not reach the Stop chain --
     // measured: the guard BLOCKS the dead turn's exact bytes on replay, and its

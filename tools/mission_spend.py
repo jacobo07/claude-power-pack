@@ -627,8 +627,8 @@ def prospective_bind() -> bool:
     return os.environ.get("CPP_PROSPECTIVE_BIND", "").strip().lower() not in ("0", "off", "false")
 
 
-def binding_path(sid: str) -> Path:
-    return state_dir() / "goal-binding" / f"{sid}.json"
+def binding_path(sid: str, gen: int = 1) -> Path:
+    return state_dir() / "goal-binding" / (f"{sid}.g{gen}.json" if gen > 1 else f"{sid}.json")
 
 
 def _now_ts() -> str:
@@ -636,12 +636,58 @@ def _now_ts() -> str:
     return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 
 
-def read_binding(sid: str) -> dict | None:
+def _read_rec(p: Path) -> dict | None:
     try:
-        r = json.loads(binding_path(sid).read_text(encoding="utf-8-sig"))
+        r = json.loads(p.read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
         return None
     return r if isinstance(r, dict) and isinstance(r.get("goal"), str) and r["goal"] else None
+
+
+def read_binding(sid: str) -> dict | None:
+    """The highest binding generation (econ-contain WS-E): <sid>.json is generation 1, a recovery
+    transition writes <sid>.g<N>.json and never edits an earlier one. Twin of goal_binding.readBinding."""
+    rec = _read_rec(binding_path(sid))
+    if rec is None:
+        return None
+    rec = {"gen": 1, **rec}
+    for n in range(2, 1000):
+        r = _read_rec(binding_path(sid, n))
+        if r is None:
+            break
+        rec = {"gen": n, **r}
+    return rec
+
+
+def supersede_binding(sid: str, goal: str, source: str, reason: str) -> dict | None:
+    """Write the next generation ('x'); the goal being left joins `fenced`. None on a lost race."""
+    cur = read_binding(sid)
+    gen = cur["gen"] + 1 if cur else 1
+    fenced = list(dict.fromkeys([*((cur.get("fenced") or []) if cur else []),
+                                 *([cur["goal"]] if cur and cur["goal"] not in ("none", goal) else [])]))
+    rec = {"goal": goal, "since_ts": _now_ts(), "source": source, "pid": os.getpid(), "gen": gen,
+           "prev": cur["goal"] if cur else None, "reason": reason, "fenced": fenced}
+    p = binding_path(sid, gen)
+    try:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with open(p, "x", encoding="utf-8") as fh:
+            fh.write(json.dumps(rec, separators=(",", ":")))
+        with open(p.parent / "transitions.jsonl", "a", encoding="utf-8") as fh:
+            fh.write(json.dumps({"ts": rec["since_ts"], "sid": sid, "from": rec["prev"], "to": goal, "gen": gen,
+                                 "source": source, "reason": reason, "fenced": fenced}, separators=(",", ":")) + "\n")
+        return rec
+    except OSError:
+        return None
+
+
+def goal_exhausted(goal: str) -> bool:
+    """The current lease carries an `exhausted` marker. Twin of goal_binding.goalExhausted."""
+    try:
+        g = _goal_ledger(goal)
+        with g._lock:
+            return bool(g._gfold(g._read())["exhausted_now"])
+    except (OSError, ValueError):
+        return False
 
 
 def write_binding(sid: str, goal: str, source: str) -> dict:
@@ -670,7 +716,8 @@ def _warn_binding(sid: str, text: str) -> None:
 _READ_TOOLS = {"Read", "Grep", "Glob"}
 _READ_ONLY_CMD = re.compile(
     r"""^\s*(?:&\s*)?(?:(?:['"]?[^\s'"]*[\\/])?git(?:\.exe)?['"]?\s+(?:-C\s+\S+\s+)?(?:log|status|show)\b"""
-    r"""|(?:['"]?[^\s'"]*[\\/])?(?:python3?|py)(?:\.exe)?['"]?\s+['"]?(?:[^\s'"]*[\\/])?mission_spend\.py['"]?\s+goal-status\b)""",
+    r"""|(?:['"]?[^\s'"]*[\\/])?(?:python3?|py)(?:\.exe)?['"]?\s+['"]?(?:[^\s'"]*[\\/])?"""
+    r"""(?:mission_spend\.py['"]?\s+(?:goal-status|goal-lineage)|econ_plane\.py['"]?\s+status)\b)""",
     re.I)
 
 
@@ -739,6 +786,9 @@ def resolve_binding(event: dict, sid: str) -> dict | None:
     if cwd and reg is not None:
         h = reg.holder_for_cwd(cwd)                  # (W2) an explicit registry holder beats the roots
         if h and h["goal"] in ix:
+            if goal_exhausted(h["goal"]):            # QUARANTINE: never bind to an exhausted goal
+                return {"goal": h["goal"], "entry": ix.get(h["goal"]), "record": None, "sinceTs": _now_ts(),
+                        "provisional": True, "quarantine": True}
             if is_read_only_call(event):
                 return {"goal": h["goal"], "entry": ix.get(h["goal"]), "record": None, "sinceTs": _now_ts(),
                         "provisional": True, "gen": h["gen"], "lease": h["lease"]}
@@ -749,6 +799,9 @@ def resolve_binding(event: dict, sid: str) -> dict | None:
         for g, e in ix.items():
             if isinstance(e, dict) and any(_norm(cwd) == _norm(r) or _norm(cwd).startswith(_norm(r) + os.sep)
                                            for r in e.get("roots", [])):
+                if goal_exhausted(g):                # QUARANTINE (twin of goal_binding.js)
+                    return {"goal": g, "entry": e, "record": None, "sinceTs": _now_ts(),
+                            "provisional": True, "quarantine": True}
                 if reg is not None or is_read_only_call(event):
                     # observe only: once the registry exists, entering a goal worktree never binds, claims
                     # or settles (the 32.8M coordinator mis-attribution)

@@ -193,10 +193,18 @@ class GoalLedger(SpendLedger):
         leases = [{"id": "L1", "cap": None, "closed": False, "reason": None, "succession_id": None,
                    "reserves": {}, "settled": 0}]
         programme, programme_source, authority, opened = None, None, [], set()
+        # Economic containment (econ-contain WS-C). A tombstone is per sid and outlives lease epochs: a
+        # pane that hit the wall stays fenced even after a successor lease opens (the successor is a new
+        # session). `exhausted` is per lease: it is what a cwd bind and the pre-model admission read.
+        tombs, exhausted = {}, set()
         for r in recs:
             op = r["op"]
             cur = leases[-1]
-            if op == "prebind":
+            if op == "tombstone":
+                tombs.setdefault(r["sid"], r)
+            elif op == "exhausted":
+                exhausted.add(r.get("lease") or cur["id"])
+            elif op == "prebind":
                 # PRE_BINDING_PROGRAM_CAPEX: history of a session from before it was bound. Watermarked
                 # per sid, reported, and NEVER part of `used`.
                 pre[r["sid"]] = max(pre.get(r["sid"], 0), int(r["measured"]))
@@ -254,7 +262,8 @@ class GoalLedger(SpendLedger):
                 "seqs": seqs, "open": open_, "used": used, "total_used": total,
                 "prebind": pre, "PRE_BINDING_PROGRAM_CAPEX": sum(pre.values()),
                 "leases": leases, "programme": programme, "programme_source": programme_source,
-                "authority": authority, "opened": opened,
+                "authority": authority, "opened": opened, "tombs": tombs,
+                "exhausted_now": leases[-1]["id"] in exhausted,
                 "status": "AUTHORITY_REQUIRED" if any(a["succession_id"] not in opened for a in authority) else "OK"}
 
     def prebind(self, sid: str, measured: int) -> dict:
@@ -283,7 +292,19 @@ class GoalLedger(SpendLedger):
     def _summary(g: dict, **extra) -> dict:
         return {"goal": g["goal"], "cap": g["cap"], "used": g["used"], "open": g["open"],
                 "settled": sum(g["marks"].values()),
-                "remaining": None if g["cap"] is None else g["cap"] - g["used"], **extra}
+                "remaining": None if g["cap"] is None else g["cap"] - g["used"],
+                "exhausted": bool(g.get("exhausted_now")), "tombstoned": sorted(g.get("tombs") or {}), **extra}
+
+    def tombstone(self, sid: str, reason: str) -> dict:
+        """Fence `sid` on this goal for good (recovery seal / detach). Idempotent; never reserves."""
+        with self._lock:
+            recs = self._read()
+            g = self._gfold(recs)
+            if sid not in g["tombs"]:
+                self._append(recs, {"op": "tombstone", "sid": sid, "lease": g["leases"][-1]["id"],
+                                    "reason": reason, "used": g["used"], "cap": g["cap"]})
+                g = self._gfold(recs)
+            return self._summary(g, ok=True, reason="")
 
     @staticmethod
     def approval_token(approval_id: str) -> str:
@@ -449,6 +470,20 @@ class GoalLedger(SpendLedger):
             g = self._sweep_leaks(recs)
             if g["cap"] is None:
                 return self._summary(g, ok=False, reason="no cap declared for this goal")
+            if sid in g["tombs"]:
+                # TOMBSTONED (econ-contain WS-C). The first refusal already booked this pane's one final
+                # reply. Record the truth (refused boundaries were billed by the provider), close the
+                # spent final, and never reserve again: a final that re-armed after every settle was
+                # the ctx-same-pane amplifier (d5063bac: 150,000 -> 206,592 -> 207,129 -> 209,251).
+                closes = sorted(rid for rid, r in g["res"].items()
+                                if r["sid"] == sid and r["state"] in (RESERVED, LEAKED)
+                                and r.get("kind") in ("lease", "final") and measured > int(r.get("base", 0)))
+                if closes or measured > g["marks"].get(sid, 0):
+                    self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes})
+                    g = self._gfold(recs)
+                return self._summary(g, ok=False, tombstoned_sid=True, reason=(
+                    f"TOMBSTONED: this session hit the wall at used {g['tombs'][sid].get('used') or 0:,} "
+                    f"of cap {g['tombs'][sid].get('cap') or 0:,}; it is fenced on this goal for good"))
             # Idempotent renew. Parallel tool calls run the guard concurrently from one stale cache, so
             # N calls asked for N renews, each closing the lease the previous one had just reserved at the
             # same measured value (canary #1 journal rows 39-46). Nothing new to settle and an open lease
@@ -477,6 +512,15 @@ class GoalLedger(SpendLedger):
                                         "sid": sid, "kind": "final", "provider": self.goal, "amount": per_call,
                                         "window": GOAL_WINDOW, "base": measured, "per_call": per_call})
                     g = self._gfold(recs)
+                # First refusal: tombstone this pane (its one final is booked above) and, when not even
+                # one more call fits the cap, mark the lease exhausted so a cwd bind and the pre-model
+                # admission can refuse without buying a model boundary.
+                self._append(recs, {"op": "tombstone", "sid": sid, "lease": g["leases"][-1]["id"],
+                                    "reason": "budget_spent", "used": g["used"], "cap": g["cap"]})
+                if not g["exhausted_now"] and g["cap"] - g["used"] < max(per_call, 1):
+                    self._append(recs, {"op": "exhausted", "lease": g["leases"][-1]["id"],
+                                        "used": g["used"], "cap": g["cap"]})
+                g = self._gfold(recs)
                 return self._summary(g, ok=False, reason=(
                     f"budget_spent: used {g['used']:,} of cap {g['cap']:,}; after one final reply per live "
                     f"pane, {max(room, 0):,} is left, less than one call ({max(per_call, 1):,})"))
