@@ -511,6 +511,98 @@ def section_surfaces():
 REQUIRED.append("V-EVC-SURFACES-ONE-RENDERER")
 
 
+def _hold_mission(mid: str) -> dict:
+    """RUNNING mission whose background owner session is "s1" and whose work_dir is WORK_DIR."""
+    gm.create(TMP, "/gsd-autonomous", mission_id=mid, now=NOW)
+    owner = {"session_id": "s1", "pid": 4242, "proc_start": None, "heartbeat_at": NOW,
+             "epoch": 1, "kind": "background"}
+    return gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t_setup", now=NOW,
+                         state=gm.RUNNING, epoch=1, max_hours=1000.0, token_estimate=1000, owner=owner,
+                         work_dir=WORK_DIR)
+
+
+def _ledger(mid: str, event: str) -> list:
+    return [e for e in gm.lr.ledger_events() if e.get("mission_id") == mid and e.get("event") == event]
+
+
+def section_hold():
+    root = Path(TMP) / "projects_hold"
+    build_fix1(root)
+    real_root, real_truth = ms.projects_root, ms.usage_truth
+    ms.projects_root = lambda: root
+    try:
+        mid = "m-evchold"
+        rec = _hold_mission(mid)
+        created_ok = rec.get("created_at") == NOW
+        held = gm._cost_breaker(rec, NOW + 60, measure=lambda r: 10_000_000, fingerprint=lambda w: None)
+        hold = held.get("owner_hold") or {}
+        m = hold.get("measured") or {}
+        try:
+            json.dumps(held)
+            js = True
+        except (TypeError, ValueError):
+            js = False
+        check("V-EVC-HOLD-SNAPSHOT",
+              created_ok and m.get("processed") == 1903 and m.get("input") == 6 and m.get("cache_write") == 300
+              and m.get("cache_read") == 1500 and m.get("output") == 97 and m.get("calls") == 4
+              and m.get("last_call_ts") == "2027-01-15T08:03:00Z" and m.get("files") == 2
+              and m.get("unreadable") == 0 and js,
+              f"created_at_ok={created_ok} stub=10000000 stored_categories={m} json={js}")
+        # ledger text unchanged
+        prose = ms.judge(rec, 10_000_000, None)["trip"]
+        keys = sorted(hold)
+        plain = gm.set_owner_hold(_hold_mission("m-evchold2")["mission_id"], "park", now=NOW + 5)
+        ph = plain.get("owner_hold") or {}
+        check("V-EVC-HOLD-LEDGER-TEXT",
+              held.get("reason") == "owner hold: " + prose[:300] and keys == ["measured", "reason", "set_at"]
+              and plain.get("reason") == "owner hold: park" and sorted(ph) == ["reason", "set_at"]
+              and "measured" not in ph and bool(hold) and bool(ph),
+              f"reason={held.get('reason')!r} keys={keys} plain_reason={plain.get('reason')!r} plain_keys={sorted(ph)}")
+        # fail-open
+        def boom(*a, **k):
+            raise OSError("disk gone")
+        mid3 = "m-evchold3"
+        rec3 = _hold_mission(mid3)
+        ms.usage_truth = boom
+        try:
+            h3 = gm._cost_breaker(rec3, NOW + 60, measure=lambda r: 10_000_000, fingerprint=lambda w: None)
+        finally:
+            ms.usage_truth = real_truth
+        m3 = (h3.get("owner_hold") or {}).get("measured") or {}
+        rest_none = all(v is None for k, v in m3.items() if k not in ("processed", "measured_at"))
+        f3 = len(_ledger(mid3, "cost_breaker_snapshot_failed"))
+        mid4 = "m-evchold4"
+        rec4 = _hold_mission(mid4)
+        ms.usage_truth = lambda *a, **k: None
+        try:
+            h4 = gm._cost_breaker(rec4, NOW + 60, measure=lambda r: 10_000_000, fingerprint=lambda w: None)
+        finally:
+            ms.usage_truth = real_truth
+        m4 = (h4.get("owner_hold") or {}).get("measured") or {}
+        f4 = len(_ledger(mid4, "cost_breaker_snapshot_failed"))
+        check("V-EVC-HOLD-SNAPSHOT-FAILOPEN",
+              bool(h3.get("owner_hold")) and m3.get("processed") == 10_000_000 and m3.get("measured_at") == NOW + 60
+              and rest_none and f3 == 1 and m4 == m3 | {} and f4 == 0,
+              f"hold={bool(h3.get('owner_hold'))} measured={m3} fail_rows={f3} control_measured={m4} control_fail_rows={f4}")
+        # non-breaker
+        mid5 = "m-evchold5"
+        _hold_mission(mid5)
+        h5 = gm.set_owner_hold(mid5, "park", now=NOW + 5)
+        p5 = gm.plan_next(h5, NOW + 3600, [], pid_alive=gone)
+        rel = gm.release_owner_hold(mid5, now=NOW + 10)
+        check("V-EVC-HOLD-NONBREAKER",
+              "measured" not in (h5.get("owner_hold") or {}) and "not re-measured" in p5["reason"]
+              and not rel.get("owner_hold"),
+              f"hold={h5.get('owner_hold')} reason={p5['reason']!r} released={rel.get('owner_hold')}")
+    finally:
+        ms.projects_root = real_root
+        ms.usage_truth = real_truth
+
+
+REQUIRED.extend(["V-EVC-HOLD-SNAPSHOT", "V-EVC-HOLD-LEDGER-TEXT", "V-EVC-HOLD-SNAPSHOT-FAILOPEN",
+                 "V-EVC-HOLD-NONBREAKER"])
+
+
 def main() -> int:
     section_reader()
     section_truth()
@@ -518,6 +610,7 @@ def main() -> int:
     section_statement()
     section_statement_forms()
     section_surfaces()
+    section_hold()
     missing = [g for g in REQUIRED if g not in SEEN]
     check("V-EVC-ALL-GATES-RAN", not missing, f"missing={missing}")
     print(f"EVC_USAGE_TRUTH_PASS={passes}/{passes + fails} threshold={len(REQUIRED) + 1}/{len(REQUIRED) + 1} "
