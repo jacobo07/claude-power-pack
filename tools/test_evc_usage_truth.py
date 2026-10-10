@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -380,12 +381,143 @@ def section_statement():
 
 REQUIRED.extend(["V-EVC-STATEMENT-ALIVE", "V-EVC-STATEMENT-ALIVE-CONTROL"])
 
+S1_LAST = "2027-01-15T07:59:30Z"
+
+
+def _s1(**kw):
+    s = {"processed": 141_000_000, "input": None, "cache_write": None, "cache_read": None, "output": None,
+         "calls": 10, "measured_at": NOW, "last_call_ts": S1_LAST, "files_mtime_max": None, "files": 29,
+         "unreadable": 0}
+    s.update(kw)
+    return s
+
+
+def section_statement_forms():
+    A, B, D, U = ms.V_LIVE, ms.V_BLOCKED, ms.V_DEAD, ms.V_UNKNOWN
+    check("V-EVC-VERDICT-CONSTANTS",
+          (ms.V_LIVE, ms.V_BLOCKED, ms.V_DEAD, ms.V_UNKNOWN) == (gm.LIVE, gm.WAITING_HUMAN, gm.DEAD, gm.UNKNOWN)
+          == ("ALIVE", "BLOCKED", "DEAD", "UNKNOWN"),
+          f"{(ms.V_LIVE, ms.V_BLOCKED, ms.V_DEAD, ms.V_UNKNOWN)}")
+    # stale branch: a predicate driven green by the real renderer and red by a bare-figure one
+    def honest(text, snap):
+        return "as of" in text and "age" in text and "total current UNKNOWN" in text
+
+    def bare(snap, verdicts, now, fresh=False):
+        return f"{snap['processed']:,}"
+    s1 = _s1()
+    real = ms.spend_statement(s1, [(A, "x")], NOW + 262800)
+    wrong = bare(s1, [(A, "x")], NOW + 262800)
+    check("V-EVC-STATEMENT-ALIVE-STALE",
+          honest(real, s1) and "age 3d1h" in real and not honest(wrong, s1),
+          f"GREEN real={real!r} RED bare={wrong!r}")
+    exp = "worker liveness UNKNOWN -> total current UNKNOWN, >= 141,000,000"
+    outs = {repr(v): ms.spend_statement(s1, v, NOW) for v in ([B], [U], [B, D], [], None)}
+    check("V-EVC-STATEMENT-UNKNOWN-VERDICT",
+          all(o.endswith(exp) for o in outs.values())
+          and "worker LIVE" in ms.spend_statement(s1, [A, D], NOW), f"{outs}")
+    f = ms.spend_statement(s1, [D], NOW, fresh=True)
+    nf = ms.spend_statement(s1, [D], NOW)
+    mixed = ms.spend_statement(s1, [D, A], NOW, fresh=True)
+    check("V-EVC-STATEMENT-DEAD",
+          f.endswith(f"no live worker -> 141,000,000 is final as of last call {S1_LAST}")
+          and f"was the total as of last call {S1_LAST}; calls after 2027-01-15T08:00:00Z not counted (not re-measured)" in nf
+          and "is final" not in nf and "no live worker" not in mixed, f"fresh={f!r} stored={nf!r}")
+    u2 = ms.spend_statement(_s1(unreadable=2), [A], NOW)
+    u0 = ms.spend_statement(_s1(unreadable=0), [A], NOW)
+    check("V-EVC-STATEMENT-UNREADABLE",
+          u2.endswith("2 transcript(s) unreadable -> total UNKNOWN, >= 141,000,000") and "unreadable" not in u0,
+          f"{u2!r}")
+    nm = "spend UNKNOWN (not measurable)"
+    bad = [None, {}, _s1(files=0), _s1(processed=None), _s1(processed="12"), _s1(processed=True),
+           _s1(processed=-5), _s1(processed=1.5)]
+    try:
+        got = [ms.spend_statement(b, [A], NOW) for b in bad]
+    except Exception as exc:  # noqa: BLE001
+        got = [repr(exc)]
+    zero = ms.spend_statement(_s1(processed=0, files=1), [A], NOW)
+    check("V-EVC-STATEMENT-NOT-MEASURABLE",
+          got == [nm] * len(bad) and zero.startswith("measured 0 as of"), f"{got} zero={zero!r}")
+    leg = ms.hold_text({"reason": "TOK-18 S0 park", "set_at": NOW}, None, NOW + 3600)
+    noset = ms.hold_text({"reason": "TOK-18 S0 park"}, None, NOW)
+    cut = ms.hold_text({"reason": "TOK-18 S0 park", "set_at": NOW}, None, NOW, limit=5)
+    h = gm.set_owner_hold(_held_mission("m-evcleg")["mission_id"], "plain park", now=NOW)
+    check("V-EVC-LEGACY-HOLD",
+          leg == "recorded at 2027-01-15T08:00:00Z (age 1h00m): TOK-18 S0 park; not re-measured"
+          and noset.startswith("recorded at an unknown time (age unknown): ")
+          and cut.startswith("recorded at 2027-01-15T08:00:00Z (age 0s): TOK-1;")
+          and "measured" not in (h.get("owner_hold") or {}),
+          f"{leg!r} {noset!r} {cut!r}")
+
+
+REQUIRED.extend(["V-EVC-VERDICT-CONSTANTS", "V-EVC-STATEMENT-ALIVE-STALE", "V-EVC-STATEMENT-UNKNOWN-VERDICT",
+                 "V-EVC-STATEMENT-DEAD", "V-EVC-STATEMENT-UNREADABLE", "V-EVC-STATEMENT-NOT-MEASURABLE",
+                 "V-EVC-LEGACY-HOLD"])
+
+# one line that reads the reason key of a hold dict (interpolation or concatenation)
+_HOLD_REASON_RE = re.compile(r"owner[ _]hold\b[^\n]*(?:\.get\(\s*['\"]reason['\"]|\[\s*['\"]reason['\"]\s*\])")
+
+
+def _scan(text: str) -> int:
+    return sum(1 for ln in text.splitlines()
+               if not ln.lstrip().startswith("#") and _HOLD_REASON_RE.search(ln))
+
+
+def section_surfaces():
+    tools = Path(__file__).resolve().parent
+    hits = {n: _scan((tools / n).read_text(encoding="utf-8")) for n in ("gsd_mission.py", "mission_surface.py")}
+    ctl_bad = _scan("    return f\"owner hold: {rec['owner_hold'].get('reason')}\"")
+    ctl_ok = _scan("    return 'owner hold: ' + hold_text(rec['owner_hold'], None, now)")
+    empty = Path(TMP) / "projects_empty_t2"
+    empty.mkdir(parents=True, exist_ok=True)
+    real_root = ms.projects_root
+    ms.projects_root = lambda: empty
+    try:
+        mid = "m-evcsurf"
+        held = gm._cost_breaker(_held_mission(mid), NOW + 60, measure=lambda r: 141_000_000,
+                                fingerprint=lambda w: None)
+        later = NOW + 3660
+        tail_re = re.compile(r"(measured [\d,]+ as of .*|spend UNKNOWN \(not measurable\)|not re-measured)$")
+        pn = gm.plan_next(held, later, _host_rows(mid, "running"), pid_alive=gone)
+        ps = gm.plan_next(held, later, _host_rows(mid, "done"), pid_alive=gone)
+        lau = dict(held, state=gm.LAUNCHING, owner=None, pending={"kind": "worker_start", "bg_id": "f92cdad1"})
+        lrows = [{"sessionId": "f92cdad1-0000", "id": "f92cdad1", "kind": "background", "state": "done"}]
+        pl = gm.plan_next(lau, later, lrows, pid_alive=gone)
+        rr = gm.renewal_refusal(held, "owner BLOCKED and budget: older than 1.0 h", "OK", now=later)
+        rows = [{"mission_id": mid, "state": held["state"], "epoch": held["epoch"], "plan": pn}]
+        why = gm.status_surface(rows, [held], later)["attempts"][0]["why"]
+        rows2 = [{"mission_id": mid, "state": held["state"], "epoch": held["epoch"],
+                  "plan": {"action": "launch", "reason": "UNRELATED"}}]
+        why2 = gm.status_surface(rows2, [held], later)["attempts"][0]["why"]
+        import inspect
+        npos = len(inspect.signature(mission_surface.classify).parameters)
+        ok = (hits == {"gsd_mission.py": 0, "mission_surface.py": 0} and ctl_bad == 1 and ctl_ok == 0
+              and pn["action"] == "none" and "recorded at" in pn["reason"] and "worker LIVE" in pn["reason"]
+              and ps["action"] == "settle" and "host lists session done" in ps["reason"]
+              and "recorded at" in ps["reason"] and "calls after" in ps["reason"]
+              and pl["action"] == "settle" and "launched worker f92cdad1" in pl["reason"]
+              and "recorded at" in pl["reason"] and "calls after" in pl["reason"]
+              and rr is not None and rr.startswith("owner hold") and "recorded at" in rr
+              and bool(tail_re.search(rr))
+              and "recorded at" in why and "UNRELATED" not in why2 and "recorded at" in why2
+              and npos == 4)
+        check("V-EVC-SURFACES-ONE-RENDERER", ok,
+              f"scan_hits={hits} control_bad={ctl_bad} control_renderer={ctl_ok} classify_params={npos} "
+              f"none={pn['reason']!r} settle={ps['reason']!r} launch={pl['reason']!r} renew={rr!r} "
+              f"why={why!r} why2={why2!r}")
+    finally:
+        ms.projects_root = real_root
+
+
+REQUIRED.append("V-EVC-SURFACES-ONE-RENDERER")
+
 
 def main() -> int:
     section_reader()
     section_truth()
     section_index_guard()
     section_statement()
+    section_statement_forms()
+    section_surfaces()
     missing = [g for g in REQUIRED if g not in SEEN]
     check("V-EVC-ALL-GATES-RAN", not missing, f"missing={missing}")
     print(f"EVC_USAGE_TRUTH_PASS={passes}/{passes + fails} threshold={len(REQUIRED) + 1}/{len(REQUIRED) + 1} "

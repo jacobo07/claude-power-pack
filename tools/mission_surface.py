@@ -32,7 +32,11 @@ def classify(rec: dict | None, plan: dict | None, now: float, terminal_states) -
     if rec.get("state") in terminal_states:
         return out(TERMINAL, f"terminal {rec.get('state')}")
     if rec.get("owner_hold"):
-        return out(COLD, f"owner hold: {(rec['owner_hold'] or {}).get('reason')}")
+        preason = (plan or {}).get("reason")
+        if isinstance(preason, str) and preason.startswith("owner hold"):
+            return out(COLD, preason)
+        import mission_spend as _ms
+        return out(COLD, "owner hold: " + _ms.hold_text(rec["owner_hold"], [], now))
     if kind == "owner":
         return out(COLD, f"asleep until an Owner release: {sleep.get('reason')}")
     if action == "surface_blocked":

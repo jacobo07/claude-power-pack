@@ -535,7 +535,7 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
             if verdict == DEAD:
                 return {"action": "settle",
                         "reason": f"owner hold, owner DEAD ({evidence}): settled terminal, hold kept "
-                                  f"(hold: {str(hold.get('reason'))[:200]})"}
+                                  f"(hold: {_ms.hold_text(hold, verdicts, now, limit=200)})"}
         if state == LAUNCHING:
             # The breaker can park a launch in the pass BEFORE adoption (EDD m-c597a68e7077, 2026-10-08: the
             # worker ran 7 calls and finished; the hold froze the record at LAUNCHING with no owner). The host
@@ -547,7 +547,7 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
             if lrow is not None and lrow.get("state") in ("stopped", "done", "exited", "failed"):
                 return {"action": "settle", "launched": lrow,
                         "reason": f"owner hold, launched worker {lrow.get('id')} host lists {lrow.get('state')}: "
-                                  f"settled terminal, hold kept (hold: {str(hold.get('reason'))[:200]})"}
+                                  f"settled terminal, hold kept (hold: {_ms.hold_text(hold, verdicts, now, limit=200)})"}
         return {"action": "none", "reason": "owner hold: " + _ms.hold_text(hold, verdicts, now)}
     spent = budget_exhausted(rec, now)
     if spent and state in (PREPARED, LAUNCHING, HANDOFF):
@@ -2177,13 +2177,14 @@ RENEWAL_CARRIED_ENVELOPE = ("token_estimate", "token_trip_ratio", "model", "auto
                             "continue_max_tokens", "wu_packet", "mission_terms", "note", "goal")
 
 
-def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None) -> str | None:
+def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None, now=None) -> str | None:
     """Why this budget-halted mission must NOT be renewed, or None when it may be.
     Positive test: only a halt the supervisor made for budget, with GSD saying work remains."""
     if os.environ.get("CPP_MISSION_RENEW", "").lower() == "off":
         return "renewal disabled (CPP_MISSION_RENEW=off)"
     if rec.get("owner_hold"):
-        return f"owner hold: {rec['owner_hold'].get('reason')}"
+        import mission_spend as _ms
+        return "owner hold: " + _ms.hold_text(rec["owner_hold"], [], time.time() if now is None else now)
     if "budget:" not in (halt_reason or ""):
         return f"halt was not for budget: {halt_reason}"
     if gsd_outcome != "OK":
