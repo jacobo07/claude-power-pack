@@ -11,3 +11,4 @@ mutation (clause made always-green in a copy under _logs/a4p3/mut_*; matching re
 notes: clauses emit only when manifest has a ci dict; no-ci output byte-identical (gate). Test file adds a PATH fallback to Git\cmd if git is absent. Hot clause calls git from PATH (not resolved absolutely).
 calls used: ~12 model calls (over the 9 budget: git PATH miss, Bash hook block, test-fix edits)
 apply: coordinator runs git apply on LIVE after Owner review.
+Coordinator fix 2026-10-10 (verified before install): hot_token_delta compared CRLF disk bytes to LF blobs (an unchanged file read as growth) and called bare git (off PATH in some shells; the test hid it with a PATH fix-up). Fixed: LF-normalised both sides, _git_exe() ladder (CPP_GIT_EXE, PATH, Program Files). Test: PATH fix-up removed, V-CEP2-CI-HOT-CRLF-NOT-GROWTH added; 35/35 with git off PATH; mutation (normalisation removed) -> 34/35, killed. Patch re-cut: sha256[:12]=cb4d4eb171e5.

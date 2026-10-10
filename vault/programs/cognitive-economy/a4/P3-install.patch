@@ -1,8 +1,25 @@
 diff --git a/tools/cep_gen2.py b/tools/cep_gen2.py
-index b275ddc0..07b6c594 100644
+index b275ddc0..f7d30785 100644
 --- a/tools/cep_gen2.py
 +++ b/tools/cep_gen2.py
-@@ -384,6 +384,58 @@ def tranche(name: str, root: Path = REPO) -> int:
+@@ -309,6 +309,16 @@ TRANCHE_STATES = {"PASS", "FAIL", "WAITING", "BLOCKED", "BLOCKED_BY_OWNERSHIP",
+ GREEN_STATES = ("PASS", "NOT_APPLICABLE")
+ 
+ 
++def _git_exe() -> str:
++    """git is not on PATH in every shell on this host; same ladder as gsd_mission: env, PATH, known install."""
++    import os
++    import shutil
++    for c in (os.environ.get("CPP_GIT_EXE"), shutil.which("git"), r"C:\Program Files\Git\cmd\git.exe"):
++        if c and Path(c).exists():
++            return c
++    return "git"
++
++
+ def tranche(name: str, root: Path = REPO) -> int:
+     """`--tranche <name>`: judge <name>-results.json (written by tools/tranche_driver.py). Existing modes untouched.
+     Computed clauses: receipts, violations (owned ledger units only), spend. Extra clauses are printed as given;
+@@ -384,6 +394,60 @@ def tranche(name: str, root: Path = REPO) -> int:
          cl["spend"] = ("FAIL", f"unknown spend (unmeasured is never green) coordinator={coord_mode}")
      else:
          cl["spend"] = ("PASS" if sum(nums) <= cap else "FAIL", f"total={sum(nums):,} cap={cap:,} coordinator={coord_mode}")
@@ -40,12 +57,14 @@ index b275ddc0..07b6c594 100644
 +            import subprocess
 +            base_ref, mx = str(ci["hot_base"]), ci.get("hot_delta_max", 0)
 +            delta, bad = 0, None
++            git = _git_exe()
 +            for f in ci.get("hot_files") or []:
 +                try:
-+                    delta += (root / f).stat().st_size
-+                    p = subprocess.run(["git", "-C", str(root), "show", f"{base_ref}:{f}"], capture_output=True)
++                    # Both sides LF-normalised: an unchanged file checked out with CRLF is not growth.
++                    delta += len((root / f).read_bytes().replace(b"\r\n", b"\n"))
++                    p = subprocess.run([git, "-C", str(root), "show", f"{base_ref}:{f}"], capture_output=True)
 +                    if p.returncode == 0:
-+                        delta -= len(p.stdout)
++                        delta -= len(p.stdout.replace(b"\r\n", b"\n"))
 +                    elif b"exists on disk, but not in" in p.stderr or b"does not exist in" in p.stderr:
 +                        pass  # missing at base counts 0
 +                    else:
@@ -62,17 +81,16 @@ index b275ddc0..07b6c594 100644
          st, ev = c.get("status"), c.get("evidence") or ""
          if st not in TRANCHE_STATES or (st in GREEN_STATES and not (ev and (root / ev).is_file())):
 diff --git a/tools/test_cep_gen2_tranche.py b/tools/test_cep_gen2_tranche.py
-index b6fcf1ba..8bd8bf59 100644
+index b6fcf1ba..72434f58 100644
 --- a/tools/test_cep_gen2_tranche.py
 +++ b/tools/test_cep_gen2_tranche.py
-@@ -128,5 +128,73 @@ with tempfile.TemporaryDirectory() as tmp:
+@@ -128,5 +128,79 @@ with tempfile.TemporaryDirectory() as tmp:
              sys.modules["tranche_driver"] = saved
          (d / "t-tranche.json").unlink(missing_ok=True)
  
 +# ---- V-CEP2-CI-*: opt-in Cognitive CI clauses (manifest `ci`) ----
-+import os, shutil, subprocess  # noqa: E402
-+if not shutil.which("git"):
-+    os.environ["PATH"] += os.pathsep + r"C:\Program Files\Git\cmd"
++import subprocess  # noqa: E402
++# No PATH fix-up here: the clause must find git on its own (git is off PATH in some shells on this host).
 +
 +
 +def run_ci(root, results, ci=None, manifest=None):
@@ -123,7 +141,7 @@ index b6fcf1ba..8bd8bf59 100644
 +    rc, out = run_ci(root, r, {"incident_ratio": 2})
 +    gate("V-CEP2-CI-INCIDENT-UNMEASURED", red(out, rc, "token_incident") and "unmeasured: S1" in out, out)
 +    # hot_token_delta in a temp git repo
-+    git = lambda *a: subprocess.run(["git", "-C", str(root), *a], capture_output=True, check=True)
++    git = lambda *a: subprocess.run([cg._git_exe(), "-C", str(root), *a], capture_output=True, check=True)
 +    git("init", "-q"); git("config", "user.email", "t@t"); git("config", "user.name", "t")
 +    (root / "hot.md").write_text("x" * 50, encoding="utf-8")
 +    git("add", "hot.md"); git("commit", "-qm", "base")
@@ -136,6 +154,13 @@ index b6fcf1ba..8bd8bf59 100644
 +    gate("V-CEP2-CI-HOT-RED", red(out, rc, "hot_token_delta") and "delta=30" in out, out)
 +    rc, out = run_ci(root, good, {**ci, "hot_base": "deadbeef0000"})
 +    gate("V-CEP2-CI-HOT-UNMEASURED", red(out, rc, "hot_token_delta") and "unmeasured: hot.md" in out, out)
++    # an unchanged LF file checked out with CRLF is not growth (Windows autocrlf worktrees)
++    (root / "eol.md").write_bytes(b"line\n" * 40)
++    git("add", "eol.md"); git("commit", "-qm", "eol")
++    sha2 = git("rev-parse", "HEAD").stdout.decode().strip()
++    (root / "eol.md").write_bytes(b"line\r\n" * 40)
++    rc, out = run_ci(root, good, {"hot_base": sha2, "hot_files": ["eol.md"]})
++    gate("V-CEP2-CI-HOT-CRLF-NOT-GROWTH", rc == 0 and "CLAUSE hot_token_delta PASS delta=0" in out, out)
 +
  print(f"CEP2_TRANCHE_TEST_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
  sys.exit(0 if fails == 0 else 1)
