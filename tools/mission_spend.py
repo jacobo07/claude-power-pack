@@ -857,7 +857,42 @@ def _main(argv: list[str]) -> int:
     ga.add_argument("--goal", required=True)
     ga.add_argument("--projects")
     ga.add_argument("--table", action="store_true")
+    gl = sub.add_parser("goal-lease-open")
+    gl.add_argument("--goal", required=True)
+    gl.add_argument("--succession-id", required=True)
+    gl.add_argument("--cap", type=int, required=True)
+    gl.add_argument("--prev-lease", help="the lease being succeeded; refused if it is not the latest (CAS)")
+    for k in ("proof", "closeout", "recovery"):
+        gl.add_argument(f"--{k}", type=int, default=0)
+    sub.add_parser("goal-lineage").add_argument("--goal", required=True)
+    sub.add_parser("programme-status").add_argument("--goal", required=True)
+    gg = sub.add_parser("goal-programme")
+    gg.add_argument("--goal", required=True)
+    gg.add_argument("--value", type=int, required=True)
+    gg.add_argument("--source", required=True)
+    gg.add_argument("--owner", action="store_true",
+                    help="raise the programme: asks you to type the goal id on an interactive terminal")
     a = ap.parse_args(argv)
+    if a.cmd in ("goal-lineage", "programme-status", "goal-lease-open", "goal-programme"):
+        led = _goal_ledger(a.goal)
+        if a.cmd == "goal-lineage":
+            out = led.lineage()          # read-only: never status(), which appends leak rows
+        elif a.cmd == "programme-status":
+            out = led.programme_status()
+        elif a.cmd == "goal-lease-open":
+            out = led.lease_open(a.succession_id, a.cap, prev_lease=a.prev_lease,
+                                 reserves={"proof": a.proof, "closeout": a.closeout, "recovery": a.recovery})
+        else:
+            owner = False
+            if a.owner:
+                if not _real_console_stdin():
+                    print(json.dumps({"ok": False, "goal": a.goal,
+                                      "reason": "--owner needs an interactive terminal (stdin is not a TTY)"}))
+                    return 3
+                owner = input(f"Owner change to programme of {a.goal!r}: type the goal id to confirm: ").strip() == a.goal
+            out = led.set_programme(a.value, a.source, inside_agent=not (owner and not inside_agent()))
+        print(json.dumps(out, sort_keys=True))
+        return 0 if out.get("ok") else 3
     if a.cmd.startswith("goal-"):
         if a.cmd == "goal-declare":
             owner = False
