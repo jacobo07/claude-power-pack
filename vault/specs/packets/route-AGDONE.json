@@ -1,0 +1,17 @@
+{
+    "envelope": {
+        "target": 450000,
+        "warn": 585000,
+        "stop": 765000,
+        "calls": 12
+    },
+    "workers": [
+        {
+            "name": "gsdx-factory-AGDONE",
+            "profile": "slim-t2",
+            "calls": 5,
+            "packet": 5000
+        }
+    ],
+    "note": "n=5 model calls (part-a-done-gate (+master-done-gate-part-a)); C(n)=112000 x1.3=145k expected real; target = live L3 need for 5 declared steps (K7 over-prices ~2.8x)"
+}

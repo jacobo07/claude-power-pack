@@ -1,0 +1,9 @@
+{"unit":"WU-PLAN-3","status":"DONE","units_compiled":["AGMIN","AGCAN (U-AG-CAN+U-AG-LEARN)","AGECON","AGDONE"],
+"chain_rows_added":["AGMIN","AGCAN","AGECON","AGDONE","PLAN-4"],
+"basis":"n from partA/UNITS.md (8,12,12,5); AGCAN merges CAN+LEARN to fit 4-unit cap; targets = live L3 need (cp=ceil(2.4n)) rounded up to 50k: 850k/1.5M/1.5M/450k; PLAN-4 1.15M",
+"waits":"all four wait dgl W5-receipt.md (absent now) + WU-INST2-receipt.md (present); no recon unit; no owned file edited",
+"dry_run_row":{"action":"running","unit":"PLAN-3","dry_run":true,"goal":"gsdx-factory-2","used":9017172},
+"budget_check":{"used":9017172,"block_targets":5450000,"sum":14467172,"cap":40000000,"ok":true},
+"forecast_M":{"source":"W4 forecast.json","total":{"lower":13.69,"expected":21.35,"safety":30.68},"note":"not recomputed from GRAPH.md: its n/cost are placeholders (0b); block adds within W4 plan lines"},
+"owner_needed":null,
+"limits":["gate tests for the four units are written by the units themselves (gate-first); routes not run through route_admission.py admit (arithmetic only)"]}

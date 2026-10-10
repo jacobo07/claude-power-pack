@@ -1,0 +1,17 @@
+{
+    "envelope": {
+        "target": 1500000,
+        "warn": 1950000,
+        "stop": 2550000,
+        "calls": 29
+    },
+    "workers": [
+        {
+            "name": "gsdx-factory-AGCAN",
+            "profile": "slim-t2",
+            "calls": 12,
+            "packet": 5000
+        }
+    ],
+    "note": "n=12 model calls (canaries A2, A3 (run+assert x2) + A-G2/A-G3 learning gate (read AG1/S1 incident receipts, one comparator test) + receipt); C(n)=340200 x1.3=442k expected real; target = live L3 need for 12 declared steps (K7 over-prices ~2.8x)"
+}
