@@ -1,6 +1,7 @@
 # EVC self-deflation — master plan, 2026-10-10
 
-Status: AWAITING OWNER APPROVAL. This file backs up the inline plan; the chat is where approval happens. It amends
+Status: APPROVED (Owner 2026-10-10; executing on branch evc, WU-3 DONE, WU-4 task 1 eab907ee; reconfirmed by the
+Owner 2026-10-10 evening). This file backs up the inline plan; the chat is where approval happens. It amends
 `economic-engine-repair-MASTER-PLAN-2026-10-10.md` (88af526e) and the GSD workstream `evc` (pp-evc 9ad50f2c).
 Nothing was mutated to produce it: no worker was stopped, no branch landed, no budget changed.
 

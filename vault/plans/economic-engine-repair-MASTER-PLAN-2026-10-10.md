@@ -1,6 +1,7 @@
 # Economic engine repair (EVC) — master plan, 2026-10-10
 
-Status: AWAITING OWNER APPROVAL (boundary 1). Backup of the inline plan; the chat is the approval surface.
+Status: APPROVED as amended by `evc-self-deflation-MASTER-PLAN-2026-10-10.md` (P50 41M, enforced stop 65M, which
+replaces the budget below; Owner reconfirmed 2026-10-10 evening). Backup of the inline plan; the chat is the approval surface.
 Adopts backlog D12 (`vault/plans/deferred-backlog.md` §D12 cost-collapse / expected-completion) and the `dgl` lease-epoch work;
 creates no parallel engine.
 

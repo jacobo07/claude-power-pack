@@ -1,13 +1,14 @@
 ---
 covers: [cognitive-deflation, model-call-firewall, cognitive-effects, cognitive-ledger, semantic-breaker, cognitive-ci, proof-locality, derivation-cache, pgo, cbr-inheritance, ql-organic-recompile]
 tier: T3
-status: awaiting-owner-approval
+status: approved
 date: 2026-10-10
 ---
 
 # Cognitive Deflation Closure (CDC) -- Master Plan, 2026-10-10
 
-Status: AWAITING OWNER APPROVAL (boundary 1). The chat is the approval surface; this file backs it up.
+Status: APPROVED (Owner "y" 2026-10-10; executing since C0 16e52c89 in Apps/pp-cdc, goal cdc 80M; reconfirmed by
+the Owner 2026-10-10 evening). The chat is the approval surface; this file backs it up.
 Nothing was mutated to produce it except this file. No worker stopped, no branch landed, no budget changed.
 Source brief: the Owner's /cpp-gsd-long prompt (universal cognitive deflation + read-only QuickLease recompile).
 
