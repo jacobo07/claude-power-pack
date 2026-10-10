@@ -1,8 +1,8 @@
 {
  "goal": "dgl",
  "root": "C:\\Users\\User\\Apps\\pp-dgl",
- "envelope": 16000000,
- "note": "17.0M goal cap minus 1.0M protected proof reserve. Unit table and authoring rule: vault/programs/dgl/CHAIN.md",
+ "envelope": 36000000,
+ "note": "37.0M programme (Owner capital capsule 4419ce11d0ba, 2026-10-10) minus 1.0M protected proof reserve. Unit table and authoring rule: vault/programs/dgl/CHAIN.md",
  "units": [
   {"id": "W1", "after": null, "accept": ["DONE", "PARTIAL"],
    "note": "PARTIAL accepted 2026-10-10 by pane 42ce1ae6: read-only lease, design recorded; residual = W1b",
