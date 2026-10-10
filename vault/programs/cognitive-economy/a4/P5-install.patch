@@ -34,10 +34,10 @@ index 6c1e24bd..2c4d9260 100644
      if key is not None:
 diff --git a/tools/test_arm_worker_guard.py b/tools/test_arm_worker_guard.py
 new file mode 100644
-index 00000000..4ce3219b
+index 00000000..363781a1
 --- /dev/null
 +++ b/tools/test_arm_worker_guard.py
-@@ -0,0 +1,97 @@
+@@ -0,0 +1,101 @@
 +"""A4-P5: a mission worker cannot launch a mission (arm launch=True refused at the effect)."""
 +import os
 +import sys
@@ -50,6 +50,10 @@ index 00000000..4ce3219b
 +os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
 +os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")
 +os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
++# A launch must never reach a real claude. The mutation drill of this file (guard disabled) started two real
++# Sonnet sessions (~195K tokens) because nothing here pinned the executable. Any launch now fails on a missing exe.
++STUB_EXE = str(Path(TMP) / "no-such-claude.exe")
++os.environ["CPP_CLAUDE_EXE"] = STUB_EXE
 +sys.path.insert(0, str(Path(os.environ.get("ARM_GUARD_TOOLS") or Path(__file__).resolve().parent)))
 +import gsd_mission as gm  # noqa: E402
 +
