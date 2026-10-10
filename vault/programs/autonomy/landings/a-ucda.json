@@ -1,0 +1,64 @@
+{
+  "worktree": "C:\\Users\\User\\Apps\\pp-ucda-wt",
+  "live": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+  "tests": [
+    "python tools/test_tier_routing.py",
+    "python -m pytest tests/test_land_worktree.py -q"
+  ],
+  "ts": 1791636899,
+  "status": "LANDED",
+  "reason": "",
+  "landed": true,
+  "branch": "feat/ucda",
+  "branch_before": "d27bca72849670cf095fe97395852990ad7eb12e",
+  "live_head_before": "836c1121b77b9d87ea5c7f749ae6d5d8734571db",
+  "files": [
+    "tests/test_land_worktree.py",
+    "tools/land_worktree.py",
+    "tools/test_tier_routing.py",
+    "tools/tier_routing.py",
+    "vault/plans/autonomy-convergence-MASTER-PLAN-2026-10-10.md",
+    "vault/programs/autonomy/PROGRAMME.md",
+    "vault/programs/autonomy/WU-S0-receipt.md",
+    "vault/programs/autonomy/WU-S0.md",
+    "vault/programs/autonomy/WU-S1.md",
+    "vault/programs/autonomy/WU-S10.md",
+    "vault/programs/autonomy/WU-S2.md",
+    "vault/programs/autonomy/WU-S3.md",
+    "vault/programs/autonomy/WU-S4.md",
+    "vault/programs/autonomy/WU-S5.md",
+    "vault/programs/autonomy/WU-S6.md",
+    "vault/programs/autonomy/WU-S7.md",
+    "vault/programs/autonomy/WU-S8.md",
+    "vault/programs/autonomy/WU-S9.md",
+    "vault/programs/autonomy/chain.json",
+    "vault/programs/autonomy/chain_tick.ps1",
+    "vault/programs/autonomy/route.json"
+  ],
+  "tests_before": [
+    {
+      "cmd": "python tools/test_tier_routing.py",
+      "rc": 0,
+      "tail": "nproven\nPASS V-TIER-06 failure at DEFAULT stops \nPASS V-TIER-07 ZERO_MODEL has no worker \nPASS V-TIER-08 PROFILE names exist in the floor table \nPASS V-TIER-09 slim cheaper than default for a short unit (5 calls) (347934, 584175)\nPASS V-TIER-11 crossover is real: slim costs more at 20 calls (estimator finding, not hidden) (2882136, 2336700)\nPASS V-TIER-10 unknown tier rejected \n15 passed, 0 failed"
+    },
+    {
+      "cmd": "python -m pytest tests/test_land_worktree.py -q",
+      "rc": 0,
+      "tail": "..........                                                               [100%]\n10 passed in 199.68s (0:03:19)"
+    }
+  ],
+  "branch_rebased": "b97ced4a1618658b1f05c720e51ce16d98acc0b9",
+  "live_head_after": "b97ced4a1618658b1f05c720e51ce16d98acc0b9",
+  "tests_after": [
+    {
+      "cmd": "python tools/test_tier_routing.py",
+      "rc": 0,
+      "tail": "nproven\nPASS V-TIER-06 failure at DEFAULT stops \nPASS V-TIER-07 ZERO_MODEL has no worker \nPASS V-TIER-08 PROFILE names exist in the floor table \nPASS V-TIER-09 slim cheaper than default for a short unit (5 calls) (347934, 584175)\nPASS V-TIER-11 crossover is real: slim costs more at 20 calls (estimator finding, not hidden) (2882136, 2336700)\nPASS V-TIER-10 unknown tier rejected \n15 passed, 0 failed"
+    },
+    {
+      "cmd": "python -m pytest tests/test_land_worktree.py -q",
+      "rc": 0,
+      "tail": "..........                                                               [100%]\n10 passed in 142.21s (0:02:22)"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "worktree": "C:\\Users\\User\\Apps\\pp-ucda-wt",
+  "live": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+  "tests": [
+    "python tools/test_gsdx_chain.py"
+  ],
+  "ts": 1791637403,
+  "status": "LANDED",
+  "reason": "",
+  "landed": true,
+  "branch": "feat/ucda",
+  "branch_before": "737729dfe4e62ea74a2d7900e5e5d8731b953db6",
+  "live_head_before": "06d252617c605e85ec54ec7bb18769544d33d417",
+  "files": [
+    "tools/gsdx_chain.py",
+    "tools/gsdx_chain_tick.ps1",
+    "tools/test_gsdx_chain.py"
+  ],
+  "tests_before": [
+    {
+      "cmd": "python tools/test_gsdx_chain.py",
+      "rc": 0,
+      "tail": "V-CHAIN-LIMITS-DEFAULT all 7 poles\nPASS V-CHAIN-ARM-REFUSED-SURFACED arm_refused / running\nPASS V-CHAIN-SETTLES-TERMINAL ['sid-A'] / []\nPASS V-CHAIN-ONE-WRITER running\nPASS V-CHAIN-HALTED-NOT-REARMED stopped_without_done\nPASS V-CHAIN-WAITS-EVENT wait_event -> arm\nPASS V-CHAIN-ENVELOPE refuse_envelope / arm\nPASS V-CHAIN-COMPLETE-AND-KILL complete/off\nPASS V-CHAIN-RECEIPT-PARSE DONE\nCHAIN_PASS=13/13"
+    }
+  ],
+  "branch_rebased": "173a25dfdbcd8ff6c904de8649b8fa98148c135e",
+  "live_head_after": "173a25dfdbcd8ff6c904de8649b8fa98148c135e",
+  "tests_after": [
+    {
+      "cmd": "python tools/test_gsdx_chain.py",
+      "rc": 0,
+      "tail": "V-CHAIN-LIMITS-DEFAULT all 7 poles\nPASS V-CHAIN-ARM-REFUSED-SURFACED arm_refused / running\nPASS V-CHAIN-SETTLES-TERMINAL ['sid-A'] / []\nPASS V-CHAIN-ONE-WRITER running\nPASS V-CHAIN-HALTED-NOT-REARMED stopped_without_done\nPASS V-CHAIN-WAITS-EVENT wait_event -> arm\nPASS V-CHAIN-ENVELOPE refuse_envelope / arm\nPASS V-CHAIN-COMPLETE-AND-KILL complete/off\nPASS V-CHAIN-RECEIPT-PARSE DONE\nCHAIN_PASS=13/13"
+    }
+  ]
+}
