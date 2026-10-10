@@ -1,16 +1,16 @@
 {
   "unit": "tennis-rf-small",
   "envelope": {
-    "target": 1500000,
-    "warn": 1800000,
-    "stop": 2200000,
-    "calls": 18
+    "target": 1600000,
+    "warn": 1839999,
+    "stop": 2160000,
+    "calls": 12
   },
   "workers": [
     {
       "name": "trf-unit",
       "profile": "slim-t2",
-      "calls": 18,
+      "calls": 12,
       "packet": 6000
     }
   ]
