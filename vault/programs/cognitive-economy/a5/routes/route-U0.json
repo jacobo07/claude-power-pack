@@ -1,0 +1,1 @@
+{"envelope": {"target": 800000, "warn": 900000, "stop": 1000000, "calls": 7}, "workers": [{"name": "a5-U0", "profile": "slim-t2", "calls": 7, "packet": 4031}]}

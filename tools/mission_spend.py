@@ -188,7 +188,16 @@ def judge(rec: dict, spent: int | None, fp: str | None) -> dict:
 
 _SID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 DEFAULT_CALL_RATIO = 1.5
-DEFAULT_NOPROGRESS_CALLS = 25
+def _noprogress_default() -> int:
+    """ce-a5 U7: 14 (smallest K with <=5% false trips on the DWS corpus, A/STALL.md); env CPP_NOPROGRESS_K overrides."""
+    try:
+        v = int(os.environ.get("CPP_NOPROGRESS_K", ""))
+        return v if v >= 1 else 14
+    except ValueError:
+        return 14
+
+
+DEFAULT_NOPROGRESS_CALLS = _noprogress_default()
 
 
 def state_dir() -> Path:

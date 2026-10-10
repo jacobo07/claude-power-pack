@@ -1,0 +1,1159 @@
+{
+ "measured": {
+  "steps_gained": 19,
+  "productive_calls": 8066,
+  "processed_tokens": 2042008282,
+  "ctx_per_call": 253162,
+  "calls_per_step": 424.5,
+  "usd_productive": 744,
+  "usd_per_mtok_processed": 0.3641,
+  "anomaly_usd": 233,
+  "opus_subagent_to_sonnet_saving_frac": 0.059,
+  "matrix_revisions": 20
+ },
+ "runnable": {
+  "verdict": "COMPILED",
+  "floor": {
+   "calls": 3,
+   "tokens": 332505
+  },
+  "candidate": {
+   "calls": 25683,
+   "tokens": 6501959646,
+   "with_margin": 7802351576
+  },
+  "ceiling": {
+   "tokens": 11016344430,
+   "deopt_factor": 3.0
+  },
+  "counts": {
+   "satisfied": 0,
+   "deterministic": 1,
+   "known_transform": 11,
+   "bounded_coding": 19,
+   "novel": 12,
+   "owner_reality": 2,
+   "sleeping": 46
+  },
+  "sleeping": [
+   "row-1",
+   "row-2",
+   "row-4",
+   "row-5",
+   "row-6",
+   "row-7",
+   "row-8",
+   "row-12",
+   "row-13",
+   "row-14",
+   "row-15",
+   "row-16",
+   "row-19",
+   "row-20",
+   "row-21",
+   "row-22",
+   "row-23",
+   "row-24",
+   "row-25",
+   "row-26",
+   "row-27",
+   "row-30",
+   "row-32",
+   "row-33",
+   "row-34",
+   "row-35",
+   "row-38",
+   "row-39",
+   "row-40",
+   "row-41",
+   "row-43",
+   "row-44",
+   "row-47",
+   "row-48",
+   "row-49",
+   "row-51",
+   "row-52",
+   "row-53",
+   "row-54",
+   "row-55",
+   "p27-sc4-same-workstream",
+   "p28-objective-c",
+   "p4-sc5-intake",
+   "p6-sc4-intake",
+   "p9-sc4-intake",
+   "p21-sc4-workstream"
+  ],
+  "owner_reality": [
+   "row-46",
+   "p25-sc4-physical-pcs"
+  ],
+  "profile_source": {
+   "known_transform": "actual",
+   "bounded_coding": "actual",
+   "novel": "actual"
+  },
+  "worker_floor": 110835,
+  "margin": 0.2
+ },
+ "unblocked": {
+  "verdict": "COMPILED",
+  "floor": {
+   "calls": 3,
+   "tokens": 332505
+  },
+  "candidate": {
+   "calls": 57105,
+   "tokens": 14456816010,
+   "with_margin": 17348179212
+  },
+  "ceiling": {
+   "tokens": 24345830054,
+   "deopt_factor": 3.0
+  },
+  "counts": {
+   "satisfied": 0,
+   "deterministic": 1,
+   "known_transform": 11,
+   "bounded_coding": 50,
+   "novel": 27,
+   "owner_reality": 2,
+   "sleeping": 0
+  },
+  "sleeping": [],
+  "owner_reality": [
+   "row-46",
+   "p25-sc4-physical-pcs"
+  ],
+  "profile_source": {
+   "known_transform": "actual",
+   "bounded_coding": "actual",
+   "novel": "actual"
+  },
+  "worker_floor": 110835,
+  "margin": 0.2
+ },
+ "control": "REFUSED PHASE_MULTIPLIER",
+ "refs": [
+  [
+   "ref-3-movil-terminal-host.jpg",
+   348369
+  ],
+  [
+   "ref-4-escritorio-workstation.jpg",
+   306065
+  ]
+ ],
+ "usd": {
+  "runnable": {
+   "floor": 0,
+   "candidate": 2368,
+   "with_margin": 2841,
+   "ceiling": 4011
+  },
+  "unblocked": {
+   "floor": 0,
+   "candidate": 5264,
+   "with_margin": 6317,
+   "ceiling": 8865
+  }
+ },
+ "claims": [
+  {
+   "id": "row-1",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Global Workspace: ABSENT",
+   "phases": [
+    4
+   ]
+  },
+  {
+   "id": "row-2",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Account-scoped discovery: ABSENT",
+   "phases": [
+    4
+   ]
+  },
+  {
+   "id": "row-4",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Workstream-scoped authorization: ABSENT",
+   "phases": [
+    4,
+    12
+   ]
+  },
+  {
+   "id": "row-5",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Workstream identity: PARTIAL",
+   "phases": [
+    4
+   ]
+  },
+  {
+   "id": "row-6",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Mission integration: PARTIAL",
+   "phases": [
+    4
+   ]
+  },
+  {
+   "id": "row-7",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Execution identity: PARTIAL",
+   "phases": [
+    4
+   ]
+  },
+  {
+   "id": "row-8",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Session virtualization: PARTIAL",
+   "phases": [
+    12
+   ]
+  },
+  {
+   "id": "row-12",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Mobile projection: PARTIAL",
+   "phases": [
+    4
+   ]
+  },
+  {
+   "id": "row-13",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "UWCP continuity: PARTIAL",
+   "phases": [
+    4
+   ]
+  },
+  {
+   "id": "row-14",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Active frontier: PARTIAL",
+   "phases": [
+    4
+   ]
+  },
+  {
+   "id": "row-15",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Evidence preservation: PARTIAL",
+   "phases": [
+    4
+   ]
+  },
+  {
+   "id": "row-16",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Workspace Capsule: PARTIAL",
+   "phases": []
+  },
+  {
+   "id": "row-17",
+   "class": "known_transform",
+   "status": "open",
+   "est_calls": 212,
+   "steps": 1,
+   "why": "GEX44 Node Manifest: PARTIAL",
+   "phases": [
+    5
+   ]
+  },
+  {
+   "id": "row-19",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Placement Engine integration: PARTIAL",
+   "phases": [
+    6
+   ]
+  },
+  {
+   "id": "row-20",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Resource Governor: ABSENT",
+   "phases": [
+    6
+   ]
+  },
+  {
+   "id": "row-21",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Resource leases: ABSENT",
+   "phases": [
+    6
+   ]
+  },
+  {
+   "id": "row-22",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "RAM-aware scheduling: ABSENT",
+   "phases": [
+    6
+   ]
+  },
+  {
+   "id": "row-23",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "GPU-aware scheduling: ABSENT",
+   "phases": [
+    6
+   ]
+  },
+  {
+   "id": "row-24",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Workspace locality: ABSENT",
+   "phases": [
+    9
+   ]
+  },
+  {
+   "id": "row-25",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Model availability: PARTIAL",
+   "phases": [
+    8
+   ]
+  },
+  {
+   "id": "row-26",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Model residency: ABSENT",
+   "phases": [
+    8
+   ]
+  },
+  {
+   "id": "row-27",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Local inference: UNKNOWN",
+   "phases": [
+    8
+   ]
+  },
+  {
+   "id": "row-28",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Cognitive Routing: PARTIAL",
+   "phases": []
+  },
+  {
+   "id": "row-30",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Provider quota: PARTIAL",
+   "phases": [
+    9
+   ]
+  },
+  {
+   "id": "row-31",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Agent identity portability: PARTIAL",
+   "phases": []
+  },
+  {
+   "id": "row-32",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Model switching: PARTIAL",
+   "phases": [
+    8
+   ]
+  },
+  {
+   "id": "row-33",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Host switching: PARTIAL",
+   "phases": [
+    12
+   ]
+  },
+  {
+   "id": "row-34",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Automatic distribution: ABSENT",
+   "phases": [
+    9
+   ]
+  },
+  {
+   "id": "row-35",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Mission decomposition: PARTIAL",
+   "phases": [
+    9
+   ]
+  },
+  {
+   "id": "row-36",
+   "class": "known_transform",
+   "status": "open",
+   "est_calls": 212,
+   "steps": 1,
+   "why": "Independent review: PARTIAL",
+   "phases": [
+    7
+   ]
+  },
+  {
+   "id": "row-37",
+   "class": "known_transform",
+   "status": "open",
+   "est_calls": 212,
+   "steps": 1,
+   "why": "Verification policy: PARTIAL",
+   "phases": [
+    7
+   ]
+  },
+  {
+   "id": "row-38",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Operator Events: PARTIAL",
+   "phases": [
+    4
+   ]
+  },
+  {
+   "id": "row-39",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Multi-client consistency: ABSENT",
+   "phases": [
+    4,
+    12
+   ]
+  },
+  {
+   "id": "row-40",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Observability: ABSENT",
+   "phases": [
+    9
+   ]
+  },
+  {
+   "id": "row-41",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Execution correlation: ABSENT",
+   "phases": [
+    9
+   ]
+  },
+  {
+   "id": "row-43",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Economics telemetry: ABSENT",
+   "phases": [
+    10
+   ]
+  },
+  {
+   "id": "row-44",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Adaptive-prior dataset: ABSENT",
+   "phases": [
+    10
+   ]
+  },
+  {
+   "id": "row-45",
+   "class": "known_transform",
+   "status": "open",
+   "est_calls": 212,
+   "steps": 1,
+   "why": "Local RAM reduction: PARTIAL",
+   "phases": [
+    2
+   ]
+  },
+  {
+   "id": "row-46",
+   "class": "owner_reality",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "GEX44 heavy execution: PARTIAL",
+   "phases": [
+    2
+   ]
+  },
+  {
+   "id": "row-47",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Failure recovery: PARTIAL",
+   "phases": [
+    12
+   ]
+  },
+  {
+   "id": "row-48",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Protocol versioning: PARTIAL",
+   "phases": [
+    12
+   ]
+  },
+  {
+   "id": "row-49",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Security: ABSENT",
+   "phases": [
+    12
+   ]
+  },
+  {
+   "id": "row-50",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "Performance: PARTIAL",
+   "phases": [
+    2,
+    12
+   ]
+  },
+  {
+   "id": "row-51",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Product Reality: ABSENT",
+   "phases": [
+    12
+   ]
+  },
+  {
+   "id": "row-52",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Knowledge Vault: ABSENT",
+   "phases": [
+    13
+   ]
+  },
+  {
+   "id": "row-53",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "UKDL: ABSENT",
+   "phases": [
+    13
+   ]
+  },
+  {
+   "id": "row-54",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Constitutive Baseline Ratchet: ABSENT",
+   "phases": [
+    13
+   ]
+  },
+  {
+   "id": "row-55",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Inheritance verification: ABSENT",
+   "phases": [
+    13
+   ]
+  },
+  {
+   "id": "row-56",
+   "class": "known_transform",
+   "status": "open",
+   "est_calls": 212,
+   "steps": 1,
+   "why": "HF Host identity for SSH targets: PARTIAL",
+   "phases": [
+    14
+   ]
+  },
+  {
+   "id": "row-59",
+   "class": "known_transform",
+   "status": "open",
+   "est_calls": 212,
+   "steps": 1,
+   "why": "HF Remote-first continuity: PARTIAL",
+   "phases": [
+    15
+   ]
+  },
+  {
+   "id": "row-60",
+   "class": "known_transform",
+   "status": "open",
+   "est_calls": 212,
+   "steps": 1,
+   "why": "HF Logical workspace identity without a remote: PARTIAL",
+   "phases": [
+    16
+   ]
+  },
+  {
+   "id": "row-61",
+   "class": "known_transform",
+   "status": "open",
+   "est_calls": 212,
+   "steps": 1,
+   "why": "HF Replica topology surface: PARTIAL",
+   "phases": [
+    16
+   ]
+  },
+  {
+   "id": "row-62",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "HF Replica state model: ABSENT",
+   "phases": [
+    17
+   ]
+  },
+  {
+   "id": "row-63",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "HF Cross-host comparison transport: ABSENT",
+   "phases": [
+    17
+   ]
+  },
+  {
+   "id": "row-64",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "HF Dirty-state capsule: ABSENT",
+   "phases": [
+    17
+   ]
+  },
+  {
+   "id": "row-65",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "HF One-way safe sync: ABSENT",
+   "phases": [
+    18
+   ]
+  },
+  {
+   "id": "row-66",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "HF Divergence and conflict workflow: ABSENT",
+   "phases": [
+    19
+   ]
+  },
+  {
+   "id": "row-67",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "HF Dirty-both reconciliation: ABSENT",
+   "phases": [
+    19
+   ]
+  },
+  {
+   "id": "row-70",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "HF Continue here across hosts: ABSENT",
+   "phases": [
+    21
+   ]
+  },
+  {
+   "id": "row-71",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "HF SSH targets in fleet observation: ABSENT",
+   "phases": [
+    22
+   ]
+  },
+  {
+   "id": "row-72",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "HF Jobs placed across hosts: ABSENT",
+   "phases": [
+    22
+   ]
+  },
+  {
+   "id": "row-73",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "HF Host loss and reconnect: PARTIAL",
+   "phases": [
+    23
+   ]
+  },
+  {
+   "id": "row-74",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "HF Mixed relay versions fail closed: PARTIAL",
+   "phases": [
+    23
+   ]
+  },
+  {
+   "id": "row-75",
+   "class": "known_transform",
+   "status": "open",
+   "est_calls": 212,
+   "steps": 1,
+   "why": "HF Real two-host Production Reality: PARTIAL",
+   "phases": [
+    15
+   ]
+  },
+  {
+   "id": "row-76",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "HF Multi-host baseline family: ABSENT",
+   "phases": [
+    24
+   ]
+  },
+  {
+   "id": "p20-goal-verify",
+   "class": "known_transform",
+   "status": "open",
+   "est_calls": 212,
+   "steps": 1,
+   "why": "phase-20 verifier (stub on disk)",
+   "phases": [
+    20
+   ]
+  },
+  {
+   "id": "p15-restamp",
+   "class": "known_transform",
+   "status": "open",
+   "est_calls": 212,
+   "steps": 1,
+   "why": "re-run two-host spec on fresh p15 root",
+   "phases": [
+    15
+   ]
+  },
+  {
+   "id": "p25-sc1-terminal-inventory",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "per-host canonical terminal inventory",
+   "phases": [
+    25
+   ]
+  },
+  {
+   "id": "p25-sc2-mobile-create-open-resume",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "mobile/ is pure upstream: new surface",
+   "phases": [
+    25
+   ]
+  },
+  {
+   "id": "p25-sc3-prompt-to-right-host",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "prompt reaches the chosen host only",
+   "phases": [
+    25
+   ]
+  },
+  {
+   "id": "p25-sc4-drive-physical-rung",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "harness for 2-3 PCs + phone",
+   "phases": [
+    25
+   ]
+  },
+  {
+   "id": "p25-sc4-physical-pcs",
+   "class": "owner_reality",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Owner's physical PCs + phone + provider logins",
+   "phases": [
+    25
+   ]
+  },
+  {
+   "id": "p26-sc1-manifest-baseline",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "CPP baseline+fingerprint in node manifest",
+   "phases": [
+    26
+   ]
+  },
+  {
+   "id": "p26-sc2-required-baseline",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "project-required baseline in env contract",
+   "phases": [
+    26
+   ]
+  },
+  {
+   "id": "p26-sc3-authorized-materialize",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "materialize via phase-20 runner only",
+   "phases": [
+    26
+   ]
+  },
+  {
+   "id": "p26-sc4-rule-scope-split",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "project rules travel, institutional do not",
+   "phases": [
+    26
+   ]
+  },
+  {
+   "id": "p27-sc1-3-5-ab-slice",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "A+B pair, prompt on A, continue on B, divergence kept",
+   "phases": [
+    27
+   ]
+  },
+  {
+   "id": "p27-sc4-same-workstream",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "needs phase 4 / uwcp.control/1",
+   "phases": [
+    27
+   ]
+  },
+  {
+   "id": "p28-objective-c",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "needs phases 4,6,8-11,22",
+   "phases": [
+    28
+   ]
+  },
+  {
+   "id": "p4-sc5-intake",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Workstream visibility/scope/lineage",
+   "phases": [
+    4
+   ]
+  },
+  {
+   "id": "p6-sc4-intake",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "one rule set, RAM/VRAM-aware, forged leases",
+   "phases": [
+    6
+   ]
+  },
+  {
+   "id": "p9-sc4-intake",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "2 jobs on 2 hosts, stale-client refusal, e2e trace",
+   "phases": [
+    9
+   ]
+  },
+  {
+   "id": "p21-sc3-safe-continue",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "sync only when proven + conformance first",
+   "phases": [
+    21
+   ]
+  },
+  {
+   "id": "p21-sc4-workstream",
+   "class": "sleeping",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "same Workstream across hosts",
+   "phases": [
+    21
+   ]
+  },
+  {
+   "id": "p22-sc3-observe-not-authorize",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "observed != authorized",
+   "phases": [
+    22
+   ]
+  },
+  {
+   "id": "p23-sc3-backfill-event-loss",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "secondary-client backfill + event loss",
+   "phases": [
+    23
+   ]
+  },
+  {
+   "id": "p24-sc5-cumulative-two-host",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "one cumulative 16-23 rung",
+   "phases": [
+    24
+   ]
+  },
+  {
+   "id": "p24-sc6-fork-case",
+   "class": "bounded_coding",
+   "status": "open",
+   "est_calls": 425,
+   "steps": 1,
+   "why": "fork stays two Projects",
+   "phases": [
+    24
+   ]
+  },
+  {
+   "id": "vis-1-desktop-workstation-calco",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Image #4: Workstation fleet page pixel-identical",
+   "phases": [
+    25
+   ]
+  },
+  {
+   "id": "vis-2-mobile-terminal-calco",
+   "class": "novel",
+   "status": "open",
+   "est_calls": 849,
+   "steps": 2,
+   "why": "Image #3: mobile host terminal pixel-identical",
+   "phases": [
+    25
+   ]
+  },
+  {
+   "id": "vis-pixel-gate",
+   "class": "deterministic",
+   "status": "open",
+   "why": "screenshot diff vs reference PNG (script, no model)",
+   "phases": [
+    25
+   ],
+   "steps": 0
+  }
+ ]
+}

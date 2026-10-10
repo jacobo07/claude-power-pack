@@ -1009,13 +1009,18 @@ def baseline_legacy_verdict(rec: dict) -> str | None:
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
-                  progress: dict | None = None, packet: dict | None = None, spawner=None) -> dict:
+                  progress: dict | None = None, packet: dict | None = None, spawner=None,
+                  mem_reader=None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
     see effective_workdir). The worker is still LAUNCHED in the mission's cwd -- workspace
     trust is exact-path (W0 E2), a fresh worktree path is never trusted -- and the card tells
     it where the work is.
+
+    Resource admission (tools/resource_admission.py) refuses, before any claim or spawn, when available
+    RAM is below the worker profile's floor or unreadable (`launch_refused_resources`). Kill switch:
+    CPP_RESOURCE_ADMISSION=off.
 
     Claim-before-launch is what makes a duplicate supervisor harmless: the loser
     of the CAS launches nothing. The worker is bound only by the id the host
@@ -1040,6 +1045,14 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         lr.ledger_append(mission_id, "launch_refused_admission", mission_id=mission_id,
                          epoch=rec.get("epoch"), why=why[:300])
         return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": why, "detail": ""}
+    import resource_admission as rsa
+    rref = rsa.refusal(slim_profile(rec) or "top-level-worker", reader=mem_reader)
+    if rref:
+        rwhy = (f"{rref['verdict']}: available_mb={rref['available_mb']} floor_mb={rref['floor_mb']} "
+                f"profile={rref['profile']}")
+        lr.ledger_append(mission_id, "launch_refused_resources", mission_id=mission_id,
+                         epoch=rec.get("epoch"), reading=rref, why=rwhy[:300])
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": rwhy, "detail": ""}
     if rec.get("wu_packet") and _admission_switch_off():
         lr.ledger_append(mission_id, "admission_bypassed", mission_id=mission_id, epoch=rec.get("epoch"),
                          verdict=(rec.get("admission") or {}).get("verdict"))
