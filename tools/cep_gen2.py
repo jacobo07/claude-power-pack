@@ -309,6 +309,16 @@ TRANCHE_STATES = {"PASS", "FAIL", "WAITING", "BLOCKED", "BLOCKED_BY_OWNERSHIP", 
 GREEN_STATES = ("PASS", "NOT_APPLICABLE")
 
 
+def _git_exe() -> str:
+    """git is not on PATH in every shell on this host; same ladder as gsd_mission: env, PATH, known install."""
+    import os
+    import shutil
+    for c in (os.environ.get("CPP_GIT_EXE"), shutil.which("git"), r"C:\Program Files\Git\cmd\git.exe"):
+        if c and Path(c).exists():
+            return c
+    return "git"
+
+
 def tranche(name: str, root: Path = REPO) -> int:
     """`--tranche <name>`: judge <name>-results.json (written by tools/tranche_driver.py). Existing modes untouched.
     Computed clauses: receipts, violations (owned ledger units only), spend. Extra clauses are printed as given;
@@ -384,6 +394,60 @@ def tranche(name: str, root: Path = REPO) -> int:
         cl["spend"] = ("FAIL", f"unknown spend (unmeasured is never green) coordinator={coord_mode}")
     else:
         cl["spend"] = ("PASS" if sum(nums) <= cap else "FAIL", f"total={sum(nums):,} cap={cap:,} coordinator={coord_mode}")
+    ci = man.get("ci")
+    if isinstance(ci, dict):  # opt-in Cognitive CI clauses (D-22, D-24, D-28); absent keys emit nothing
+        isint = lambda n: isinstance(n, int) and not isinstance(n, bool)
+        if "meta_work_max" in ci:
+            cs, ws = r.get("coordinator_spend"), attempt_spends
+            if not isint(cs) or any(not isint(n) for n in ws):
+                cl["meta_work"] = ("FAIL", "meta-work unmeasured")
+            else:
+                tot = cs + sum(ws)
+                share = cs / tot if tot else 0.0
+                mx = ci["meta_work_max"]
+                cl["meta_work"] = ("PASS" if share <= mx else "FAIL",
+                                   f"share={share:.3f} max={mx} coordinator={cs} workers={sum(ws)}")
+        if "incident_ratio" in ci:
+            ratio, recs = ci["incident_ratio"], ci.get("incidents") or {}
+            unm = [k for k, s in steps.items() if not isint(s.get("spend")) or not isint(s.get("cap"))]
+            outl = [k for k, s in steps.items() if k not in unm and s["spend"] > ratio * s["cap"]]
+            def _rec(k):
+                p = recs.get(k) if isinstance(recs, dict) else None
+                try:
+                    return bool(p) and (root / p).is_file() and (root / p).stat().st_size > 0
+                except (OSError, TypeError):
+                    return False
+            unrec = [k for k in outl if not _rec(k)]
+            if unm:
+                cl["token_incident"] = ("FAIL", "unmeasured: " + ",".join(unm))
+            elif unrec:
+                cl["token_incident"] = ("FAIL", "unrecorded: " + ",".join(unrec))
+            else:
+                cl["token_incident"] = ("PASS", f"{len(outl)} outliers" + (" (all recorded)" if outl else ""))
+        if "hot_base" in ci:
+            import subprocess
+            base_ref, mx = str(ci["hot_base"]), ci.get("hot_delta_max", 0)
+            delta, bad = 0, None
+            git = _git_exe()
+            for f in ci.get("hot_files") or []:
+                try:
+                    # Both sides LF-normalised: an unchanged file checked out with CRLF is not growth.
+                    delta += len((root / f).read_bytes().replace(b"\r\n", b"\n"))
+                    p = subprocess.run([git, "-C", str(root), "show", f"{base_ref}:{f}"], capture_output=True)
+                    if p.returncode == 0:
+                        delta -= len(p.stdout.replace(b"\r\n", b"\n"))
+                    elif b"exists on disk, but not in" in p.stderr or b"does not exist in" in p.stderr:
+                        pass  # missing at base counts 0
+                    else:
+                        bad = f
+                except OSError:
+                    bad = f
+                if bad:
+                    break
+            if bad:
+                cl["hot_token_delta"] = ("FAIL", f"unmeasured: {bad}")
+            else:
+                cl["hot_token_delta"] = ("PASS" if delta <= mx else "FAIL", f"delta={delta} max={mx} base={base_ref[:7]}")
     for k, c in (r.get("clauses") or {}).items():
         st, ev = c.get("status"), c.get("evidence") or ""
         if st not in TRANCHE_STATES or (st in GREEN_STATES and not (ev and (root / ev).is_file())):

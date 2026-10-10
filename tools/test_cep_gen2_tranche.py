@@ -128,5 +128,79 @@ with tempfile.TemporaryDirectory() as tmp:
             sys.modules["tranche_driver"] = saved
         (d / "t-tranche.json").unlink(missing_ok=True)
 
+# ---- V-CEP2-CI-*: opt-in Cognitive CI clauses (manifest `ci`) ----
+import subprocess  # noqa: E402
+# No PATH fix-up here: the clause must find git on its own (git is off PATH in some shells on this host).
+
+
+def run_ci(root, results, ci=None, manifest=None):
+    d = root / cg.TRANCHE_DIR
+    mf = d / "t-tranche.json"
+    d.mkdir(parents=True, exist_ok=True)
+    mf.unlink(missing_ok=True)
+    m = manifest if manifest is not None else ({"ci": ci} if ci is not None else None)
+    if m is not None:
+        mf.write_text(json.dumps(m), encoding="utf-8")
+    try:
+        return run(root, results)
+    finally:
+        mf.unlink(missing_ok=True)
+
+
+def red(out, rc, clause):
+    return rc == 1 and f"CLAUSE {clause} FAIL" in out
+
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    base = cg._fixture(root)
+    (root / "r.md").write_text("receipt\n", encoding="utf-8")
+    good = {"steps": {"S1": {"verdict": "PASS", "receipt": "r.md", "sid": "x", "spend": 100, "cap": 1000}},
+            "coordinator_spend": 100, "cap": 1000, "owned_units": ["A"],
+            "clauses": {"c1": {"status": "PASS", "evidence": "r.md"}}}
+    run(root, good, base)
+    rc0, o0 = run(root, good)
+    rc1, o1 = run_ci(root, good, manifest={})
+    gate("V-CEP2-CI-NO-CI-IDENTICAL", rc0 == rc1 == 0 and o0 == o1 and "meta_work" not in o0, o0 + o1)
+    rc, out = run_ci(root, good, {"meta_work_max": 0.6})
+    gate("V-CEP2-CI-META-GREEN", rc == 0 and "CLAUSE meta_work PASS share=0.500" in out, out)
+    rc, out = run_ci(root, good, {"meta_work_max": 0.3})
+    gate("V-CEP2-CI-META-RED", red(out, rc, "meta_work") and "share=0.500" in out, out)
+    r = copy.deepcopy(good); r["coordinator_spend"] = None
+    rc, out = run_ci(root, r, {"meta_work_max": 0.9})
+    gate("V-CEP2-CI-META-UNMEASURED", red(out, rc, "meta_work") and "meta-work unmeasured" in out, out)
+    rc, out = run_ci(root, good, {"incident_ratio": 2})
+    gate("V-CEP2-CI-INCIDENT-GREEN", rc == 0 and "CLAUSE token_incident PASS 0 outliers" in out, out)
+    r = copy.deepcopy(good); r["steps"]["S1"]["spend"] = 5000; r["cap"] = 10 ** 6
+    rc, out = run_ci(root, r, {"incident_ratio": 2})
+    gate("V-CEP2-CI-INCIDENT-RED", red(out, rc, "token_incident") and "unrecorded: S1" in out, out)
+    (root / "inc.md").write_text("incident\n", encoding="utf-8")
+    rc, out = run_ci(root, r, {"incident_ratio": 2, "incidents": {"S1": "inc.md"}})
+    gate("V-CEP2-CI-INCIDENT-RECORDED-GREEN", rc == 0 and "CLAUSE token_incident PASS 1 outliers" in out, out)
+    r = copy.deepcopy(good); del r["steps"]["S1"]["cap"]
+    rc, out = run_ci(root, r, {"incident_ratio": 2})
+    gate("V-CEP2-CI-INCIDENT-UNMEASURED", red(out, rc, "token_incident") and "unmeasured: S1" in out, out)
+    # hot_token_delta in a temp git repo
+    git = lambda *a: subprocess.run([cg._git_exe(), "-C", str(root), *a], capture_output=True, check=True)
+    git("init", "-q"); git("config", "user.email", "t@t"); git("config", "user.name", "t")
+    (root / "hot.md").write_text("x" * 50, encoding="utf-8")
+    git("add", "hot.md"); git("commit", "-qm", "base")
+    sha = git("rev-parse", "HEAD").stdout.decode().strip()
+    ci = {"hot_base": sha, "hot_files": ["hot.md"]}
+    rc, out = run_ci(root, good, ci)
+    gate("V-CEP2-CI-HOT-GREEN", rc == 0 and f"CLAUSE hot_token_delta PASS delta=0 max=0 base={sha[:7]}" in out, out)
+    (root / "hot.md").write_text("x" * 80, encoding="utf-8")
+    rc, out = run_ci(root, good, ci)
+    gate("V-CEP2-CI-HOT-RED", red(out, rc, "hot_token_delta") and "delta=30" in out, out)
+    rc, out = run_ci(root, good, {**ci, "hot_base": "deadbeef0000"})
+    gate("V-CEP2-CI-HOT-UNMEASURED", red(out, rc, "hot_token_delta") and "unmeasured: hot.md" in out, out)
+    # an unchanged LF file checked out with CRLF is not growth (Windows autocrlf worktrees)
+    (root / "eol.md").write_bytes(b"line\n" * 40)
+    git("add", "eol.md"); git("commit", "-qm", "eol")
+    sha2 = git("rev-parse", "HEAD").stdout.decode().strip()
+    (root / "eol.md").write_bytes(b"line\r\n" * 40)
+    rc, out = run_ci(root, good, {"hot_base": sha2, "hot_files": ["eol.md"]})
+    gate("V-CEP2-CI-HOT-CRLF-NOT-GROWTH", rc == 0 and "CLAUSE hot_token_delta PASS delta=0" in out, out)
+
 print(f"CEP2_TRANCHE_TEST_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
 sys.exit(0 if fails == 0 else 1)
