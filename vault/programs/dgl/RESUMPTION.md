@@ -6,8 +6,11 @@ durable, a lease is disposable; cwd is location, never economic authority.
 
 State (2026-10-09 23:50 local):
 - E0 DONE: P3b assets durable in the PP repo (bdbe4f35 by another pane + d0c2077b); chain committed 70c7d252.
-- W1 armed by the chain tick: mission m-98529a59a4b6, ADMISSIBLE (need 1,704,024), sonnet, capsule-v2. Launched by
-  the 5-min sweep.
+- W1 (m-98529a59a4b6) PARTIAL: 15 calls / 2.07M spent reading, no code; parked 7 h under a cost-breaker owner hold
+  (the chain only saw "running"). 2026-10-10 07:10: receipt committed 1d748721, host session stopped, mission HALTED,
+  hold settled by the chain. Residual W1b armed: m-da8507a199fd (4.5M route, ADMISSIBLE, write-first; fixtures
+  tools/fixtures/goal_lease/ because a bound worker may not read live journals). Commit 58b83582.
+- Gap seen live: a held mission reads "running" to the chain forever. W3/W4 must surface owner_hold as its own action.
 - Chain driver: Task PP-DglChain-Tick (15 min) -> dgl_chain_tick.ps1 -> gsdx_chain.py tick --chain chain.json.
   Decisions: ~/.claude/state/gsdx-chain.jsonl rows with goal=dgl; wrapper log ~/.claude/state/dgl-chain-tick.log.
 - P3b-2 is NOT running: control drift on the 5 PROVEN rows. W7 waits for D2-owner.md (Owner's a/b choice).
