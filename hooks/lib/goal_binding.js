@@ -96,6 +96,21 @@ function legacyBinding(event, sid, ix, entry) {
   return null;
 }
 
+// Latest claim per workspace from the append-only journal; null when the registry does not exist yet
+// (the pre-W2 behaviour) or cannot be read as a registry.
+function registryClaims() {
+  let txt;
+  try { txt = fs.readFileSync(path.join(stateDir(), 'goal-budget', 'workspace.journal.jsonl'), 'utf8'); } catch (e) { return null; }
+  const held = {};
+  for (const line of txt.split('\n')) {
+    if (!line.trim()) continue;
+    let r;
+    try { r = JSON.parse(line); } catch (e) { continue; }
+    if (r && r.op === 'claim' && typeof r.workspace === 'string' && typeof r.goal === 'string') held[r.workspace] = r;
+  }
+  return held;
+}
+
 function goalBinding(event, sid) {
   const ix = readJson(path.join(stateDir(), 'goal-budget', 'index.json'));
   const entry = g => (ix && typeof ix === 'object' && ix[g] && typeof ix[g] === 'object') ? ix[g] : null;
@@ -108,10 +123,24 @@ function goalBinding(event, sid) {
     return { goal: rec.goal, entry: entry(rec.goal), record: rec, sinceTs: rec.since_ts || null };
   }
   if (env) return { goal: env, entry: entry(env) };
+  const claims = registryClaims();
+  if (claims && event.cwd) {                  // (W2) an explicit registry holder beats the goal roots
+    let best = null;
+    for (const c of Object.values(claims)) {
+      if (under(event.cwd, c.workspace) && (!best || c.workspace.length > best.workspace.length)) best = c;
+    }
+    if (best && entry(best.goal)) {
+      const extra = { gen: best.gen, lease: best.lease };
+      if (isReadOnlyCall(event)) return Object.assign({ goal: best.goal, entry: entry(best.goal), record: null, sinceTs: nowTs(), provisional: true }, extra);
+      const w = writeBinding(sid, best.goal, 'registry');
+      return Object.assign({ goal: w.goal, entry: entry(w.goal), record: w, sinceTs: w.since_ts || null }, extra);
+    }
+  }
   if (ix && typeof ix === 'object' && event.cwd) {
     for (const [g, e] of Object.entries(ix)) {
       if (e && Array.isArray(e.roots) && e.roots.some(r => under(event.cwd, r))) {
-        if (isReadOnlyCall(event)) return { goal: g, entry: e, record: null, sinceTs: nowTs(), provisional: true };
+        // observe only once the registry exists: entering a goal worktree never binds, claims or settles
+        if (claims || isReadOnlyCall(event)) return { goal: g, entry: e, record: null, sinceTs: nowTs(), provisional: true };
         const w = writeBinding(sid, g, 'cwd');
         return { goal: w.goal, entry: w.goal === g ? e : entry(w.goal), record: w, sinceTs: w.since_ts || null };
       }
