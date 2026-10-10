@@ -18,6 +18,19 @@ if (Test-Path $out) { $row = (Get-Content $out -Tail 1) }
 Add-Content -Path $log -Value ((Get-Date).ToString('s') + ' rc=' + $p.ExitCode + ' ' + $row + ' ' + $tail) -Encoding ASCII
 # Bootstrap until W3/W5: a freshly armed unit gets a done_check bound to its receipt, so the supervisor completes it
 # from the receipt instead of asking GSD (pp-dgl has no GSD phases -> NO_PHASES -> held for ever; W1b 2026-10-10).
+# W3: a stopped unit (stopped_without_done / refuse_envelope) runs one atomic succession from succession-plan.json.
+# No plan file = no effect. Exit 3 = a refusal was returned and is logged, never raised.
+try {
+    $plan = Join-Path $PSScriptRoot 'succession-plan.json'
+    $rowf = Join-Path $env:TEMP 'dgl-chain-row.json'
+    if (($row -match 'stopped_without_done|refuse_envelope') -and (Test-Path $plan)) {
+        [System.IO.File]::WriteAllText($rowf, $row, (New-Object System.Text.UTF8Encoding($false)))
+        $gc = & $py (Join-Path (Split-Path $PSScriptRoot -Parent | Split-Path -Parent | Split-Path -Parent) 'tools\goal_chain.py') react --row $rowf --plan $plan
+        Add-Content -Path $log -Value ((Get-Date).ToString('s') + ' succession: ' + ($gc -join ' ')) -Encoding ASCII
+    }
+} catch {
+    Add-Content -Path $log -Value ((Get-Date).ToString('s') + ' succession failed: ' + $_.Exception.Message) -Encoding ASCII
+}
 try {
     $r = $row | ConvertFrom-Json
     $mid = $r.armed.mission_id

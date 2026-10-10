@@ -217,6 +217,23 @@ def _():
     assert rc == 3 and out["state"] == "UNKNOWN_RESERVED", (rc, out, err)             # no proof => never free
 
 
+@_gate("V-SUCC-CHAIN-HOOK")
+def _():
+    import goal_chain as gc
+    st, root, led, reg, ws = _world()
+    plan = st / "plan.json"
+    k = _kw(ws)
+    plan.write_text(json.dumps({x: k[x] for x in gc.PLAN_KEYS} | {"old_sid": "old", "dead": True, "measured": 700_000}))
+    for action in ("running", "arm", "complete", None):                     # control: only a stop acts
+        assert not gc.react({"action": action}, plan, root=root)["acted"], action
+    assert len(led.lineage()["leases"]) == 1 and reg.holder(ws)["gen"] == 1
+    assert not gc.react({"action": "stopped_without_done"}, st / "absent.json", root=root)["acted"]   # no plan, no effect
+    out = gc.react({"action": "stopped_without_done", "unit": "W3"}, plan, root=root)
+    assert out["acted"] and out["succession"]["ok"] and reg.holder(ws)["gen"] == 2, out
+    out = gc.react({"action": "refuse_envelope", "unit": "W3"}, plan, root=root)       # the budget halt, replayed
+    assert out["acted"] and out["succession"]["ok"] and not out["succession"]["applied"], out
+
+
 def main() -> int:
     _run_gates()
     ok = sum(1 for _n, p, _d in RESULTS if p)
