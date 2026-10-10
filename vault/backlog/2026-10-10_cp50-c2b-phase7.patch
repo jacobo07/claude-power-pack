@@ -1,0 +1,13 @@
+diff --git a/tools/wros/binary/decomp/gex44/stage.py b/tools/wros/binary/decomp/gex44/stage.py
+index 02c91cc..fb5e96e 100644
+--- a/tools/wros/binary/decomp/gex44/stage.py
++++ b/tools/wros/binary/decomp/gex44/stage.py
+@@ -60,7 +60,7 @@ RF_GEX44_ROOT = r"C:\Users\User\Apps\recon_work\recon_factory\gex44"
+ RF_PHASE_JOB_CAPS = {2: 3,  # Owner "autorizo un tercer cupo" 2026-10-09: jobs 1-2 failed custody/OUT, 3rd = admissible A/A
+                      3: 2,  # Owner "go ahead" to Phase 3b 2026-10-09 = GAP-10 ratified P3 2 (donor bundles + promotion)
+                      7: 4}  # Owner "y" to CP50 plan D4 2026-10-09 = GAP-10 ratified P7 4 (arm-A re-measure + 3 rounds)
+-RF_CURRENT_PHASE = 3
++RF_CURRENT_PHASE = 7
+ PHASE1_JOB_CAP = PHASE_JOB_CAPS[1]  # Phase 1's cap, never raised
+ BOOTS_RESERVE = 1
+ DEFAULT_BUDGET_S = 600
