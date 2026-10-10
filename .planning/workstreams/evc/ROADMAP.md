@@ -5,7 +5,9 @@ Plan of record: `vault/plans/economic-engine-repair-MASTER-PLAN-2026-10-10.md` (
 goal cap (8.0M left) is superseded by this programme's envelope.
 Adopts, never duplicates: backlog D12 (`vault/plans/deferred-backlog.md` §D12; specs `expected-completion-admission.md`
 and `cost-collapse.md` in `C:\Users\User\Apps\pp-cost-collapse`, branch `cost-collapse/main`, T2 = 2b5b0ea5), the `dgl`
-lease-epoch work on `feature/knowledge-acquisition` (GoalLedger lease epochs, closed-lease fence, goal_binding.js),
+lease-epoch work on branch `dgl/durable-goal-lease` (worktree `C:\Users\User\Apps\pp-dgl`; NOT on live HEAD: W1b V-gates
+c5f22af9, W2 closed-lease fence 31f9b5f4 in `hooks/lib/goal_binding.js`), `tools/gsdx_reforecast.py` (610808c5, branch
+`gsdx-factory/v2` only; cherry-pick that commit, never merge the branch),
 `hooks/session_budget_guard.js`, `tools/mission_spend.py`, `tools/usage_index.py`, `tools/cost_to_completion.py`,
 `tools/mission_steward.py`, `tools/gsd_mission.py`.
 
@@ -16,7 +18,8 @@ lease-epoch work on `feature/knowledge-acquisition` (GoalLedger lease epochs, cl
 - Clock A old m-f24648f187c5 (HALTED) worker be97307b: 245.8M.
 - Defects proven: estimator clamp [1M,15M]/2; hold message froze 18.2M (stale); hold blocks relay only; session guard is
   opt-in and counts the MAIN transcript only (32.0M seen vs 371M real, 11.6x undercount); 24 h judged from mission created_at;
-  no price table in PP; per-call fresh floor ~115k.
+  per-call fresh floor ~115k. (Corrected 2026-10-10 self-deflation: a price table DOES exist in `tools/usage_index.py`,
+  which prices every usage category per model; Phase 1 reuses it.)
 - U0 containment DONE in the arming pane: deny budgets declared for ec66dcff and e0cd1dbb
   (`~/.claude/state/session-budget-<sid>.json`, stop=1); drill via `decide()` = deny for both, control allow.
   Do NOT lift these budgets. Product continuation of Clock A / intent-order is OUT of scope until boundary 2.
@@ -37,8 +40,29 @@ lease-epoch work on `feature/knowledge-acquisition` (GoalLedger lease epochs, cl
   spent by the phase (measured, not estimated), and the forecast-vs-actual for that phase once Phase 4 exists.
 - Agents only for independent semantic novelty; never for waiting, polling, arithmetic or relay.
 
-## Budget (processed tokens, whole programme)
-lower 55M · P50 85M · P80 110M · P95 140M · hard stop 160M; coordinator share <= 20 %. Confidence EXPLORATORY.
+## Budget (processed tokens, whole programme) — SELF-DEFLATED 2026-10-10 (Owner "y" to PP 836c1121)
+Sunk before this budget: 2.64M (epoch-1 worker 65aa58ea, frontier ~0; it produced only phases/01-usage-truth-plane/01-CONTEXT.md).
+lower 28M · P50 41M · P80 52M · P95 62M · **hard stop 65M, ENFORCED** by `mission_spend.judge` (token_estimate 32.5M x
+token_trip_ratio 2.0). There is no other limit: the earlier "hard stop 160M" was prose, and the enforced value was 170M; both
+are retired. Coordinator share <= 20 %. Confidence EXPLORATORY until Phase 8.
+
+### Deflation dispositions (override the phase criteria below wherever they conflict)
+| Phase | Disposition | Price |
+|---|---|---|
+| 1 Usage truth | SHRINK: reuse the `usage_index.py` price table; build only the freshness watermark + stale-snapshot guard in hold/status text + 429 detection | 3M |
+| 2 Autopsy/forecast | LAND cost-collapse T1+T2 (f3b503e6, 2b5b0ea5) by cherry-pick; run the autopsy on the 2 named missions | 2M |
+| 3 Profiles/confidence | SHRINK: `tools/cost_to_completion.py` becomes the primary estimator; clamp retired; confidence states + miss taxonomy only | 4M |
+| 4 Distributions/reforecast | LAND 610808c5 alone, then add the P50/P80/P95 output + DRAINING edge | 4M |
+| 5 Spend capability | SHRINK: hold/suspend writes the guard budget (the U0 mechanism, measured to work on 65aa58ea at 13:31) + subagent accounting + canary | 4M |
+| 6 Durable goal | LAND dgl W1b+W2 only (backlog D15 keeps W3-W8 parked) + the age-boundary gate | 4M |
+| 7 Fresh-floor cut | KEEP (largest lever). The global `~/.claude/CLAUDE.md` (39,812 chars, 292 lines vs its own <100-line rule) goes to the owner bundle as a PROPOSAL, never edited by the run | 8M |
+| 8 Backtest | SHRINK to 2 traces (Clock A old m-f24648f187c5, intent/order m-cd548e5d2ada) + 1 holdout | 4M |
+| 9 Landing/canary | KEEP the landing; the self-forecast merges into Phase 11 | 2M |
+| 10 Ratchet | SHRINK to KV/UKDL entries; global no-opt-in defaults DEFERRED to backlog | 2M |
+| 11 Recompile + STOP | KEEP | 4M |
+
+Execution rule learned in epoch 1: the worker must NOT call EnterWorktree. Its cwd already IS this worktree, and the
+host's "Entering worktree" permission prompt blocked the worker even with `--allowedTools EnterWorktree`.
 From Phase 4 on, the programme's own remaining budget is reforecast by the new engine at each phase boundary and written
 to `vault/plans/evc-forecast.json` (self-hosting). If quota (Phase 1 measurement) cannot cover the remaining P80, stop at
 the next phase boundary and write the residual to the owner bundle.
