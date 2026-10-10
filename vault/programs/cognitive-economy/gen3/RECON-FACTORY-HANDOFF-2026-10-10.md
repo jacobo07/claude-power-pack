@@ -175,7 +175,12 @@ cost, so the remaining forecast is not trustworthy until W4 reforecasts it.
 | 4 | test_levels + revalidate, then tick Phase 3 | test_levels 45/45; revalidate **10/16 RED** (190-row producer drift + 3a-seam stale gates + an evidence-shape defect). **Phase 3 NOT ticked** | recon f554a7d |
 | 5 | IMPACT gate | DONE: the control requires drift == []; red control shown; P3B_DRILL 10/10 | recon f554a7d |
 
-Owner decision now open: the 190 drifted rows (dry run: STRUCT PROVEN->HYPOTHESIS 80, SEM HYPOTHESIS->UNKNOWN 48).
+**RESOLVED later the same day (Owner "first rerun", then "carry on"):** the producers were re-run, with 0 demotions
+and 2 STRUCT upgrades. The evidence shape was unified (recon 93538fb). Every gate is green: LEVELS 45/45,
+REVALIDATE 16/16, P3B 10/10, XFORM 22/22, BENCH 8/8. **Phase 3 is ticked: recon 3c86ae2, 7 of 10 phases complete.**
+Next: CP50 C2 (needs Owner funding).
+
+(Superseded) Owner decision: the 190 drifted rows (dry run: STRUCT PROVEN->HYPOTHESIS 80, SEM HYPOTHESIS->UNKNOWN 48).
 Apply revalidate as is, or re-run the STRUCT/SEM producers at current code first. Detail: P3B-RESUMPTION.md
 "POST-PROMOTE GATES".
 

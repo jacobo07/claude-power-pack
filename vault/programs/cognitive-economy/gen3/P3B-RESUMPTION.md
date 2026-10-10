@@ -115,6 +115,21 @@ P3b-2 RUN 2026-10-09/10 (main pane, Owner "a" = accept; the bundle path re-judge
    - Item 2 dgl W7 VERIFY-ONLY (pp-dgl 11dce048; D2-owner.md original kept, outcome appended).
    - Item 3 gsdx W3 accepted PARTIAL, superseded by dgl; REC-* retired; PLAN-2 corrected (gsdx 0b05acb7). PLAN-2 then ran
      (m-5ba76aa8071e) and compiled AG2R + W4 + PLAN-3 (6ebb88f1), with no recon unit.
+   PHASE 3 CLOSED 2026-10-10 (Owner "first rerun", then "carry on"):
+   - STRUCT and SEM producers re-run at current code. Dry run first: the evidence was identical apart from path fields;
+     revalidate gave 0 demoted, 190 reconfirmed, 2 STRUCT HYPOTHESIS->PROVEN. The real run matched, POST_DRIFT=0.
+   - Evidence-shape defect fixed (recon 93538fb): the check_src bundle branch now records match_py as the verdict string
+     plus reloc_verified, the same shape as the compile path; the bundle file keeps its dict.
+   - The levels.py edit moved producer identity again, so the producers were re-run again. The 294 bundled rows were
+     re-promoted, then revalidated: 0 demoted, 0 verdict changes. NORMALIZE_CHECK=PASS, ledger 259aa304.
+   - Gates: LEVELS 45/45, REVALIDATE 16/16 (the COMPILER/SPLIT/SOURCE gates read an empty bundle dir), P3B 10/10,
+     XFORM 22/22, BENCH 8/8.
+   - ROADMAP Phase 3 ticked and STATE refreshed (7 of 10, current phase 7): recon 3c86ae2. Named residual: "model
+     matches" outside DONORS.jsonl were not enumerated (UNKNOWN).
+   - Backups (this session's scratchpad): backup_pre_producer_rerun (ledger 0c247d0d), backup_pre_normalize
+     (ledger 07548a9a).
+   NEXT: CP50 C2. Its first deliverable is the arm-A executor, sized from C1's ~122k/call; it uses RF Phase 7 jobs and needs
+   Owner funding.
    DGL CONFLICT (RESOLVED by item 2): Apps\pp-dgl chain.json W7 = this same P3b-2 (waits for W6 + D2-owner.md). It must become verify-only or be
    removed, otherwise it will re-send and spend the last RF Phase 3 job. Do not create D2-owner.md without that change.
 OLD NEXT: when gen3/P3b1-receipt.md lands, read it, check the drill (V-P3B-* all PASS) and the CAPSULE= and BUILD= lines,
