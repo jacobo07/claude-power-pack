@@ -1,0 +1,7 @@
+{"unit":"WU-AG2R","status":"DONE","done_gate":"python tools/test_wu_ag2r.py rc 0 PASS (failed on pre-state: partA/obligations.json missing)",
+"counts":{"ALREADY_SATISFIED":2,"MERGE":4,"CHEAP_COGNITION(slim-t2)":4,"STRONG_COGNITION":1,"UNKNOWN":0,"WAIT_DEPENDENCY_on_W3":0},
+"gate_line":"DISPOSE counts={ALREADY_SATISFIED 2, CHEAP_COGNITION 4, MERGE 4, STRONG_COGNITION 1} unknown=0 undisposed=0",
+"remaining_units":["U-AG-MIN","U-AG-CAN","U-AG-ECON(strong)","U-AG-LEARN","U-AG-DONE"],
+"waits":"all 5 read ledger/mission_spend outputs: dgl W5-receipt.md + WU-INST2-receipt.md; no owned file edited",
+"files":["vault/specs/gsdx-factory/partA/obligations.json","vault/specs/gsdx-factory/partA/dispositions.json","vault/specs/gsdx-factory/partA/UNITS.md","tools/test_wu_ag2r.py"],
+"commits":"single commit, see git log"}

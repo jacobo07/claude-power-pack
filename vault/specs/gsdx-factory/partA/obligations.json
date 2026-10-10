@@ -1,0 +1,156 @@
+{
+ "expect": [
+  "S-part-a-reported-state",
+  "S-a-g2-through-a-g5-recompilation",
+  "S-mission-a-objective-rewrite",
+  "S-phase-10-part-a-completion",
+  "S-mission-a-minimum-done-gate",
+  "S-mission-a-master-done-gate",
+  "S-mission-a-canaries",
+  "S-mission-a-economic-done-gate",
+  "S-a-g2-a-g3-learning-gate",
+  "S-part-a-done-gate",
+  "S-master-done-gate-part-a"
+ ],
+ "obligations": [
+  {
+   "id": "S-part-a-reported-state",
+   "title": "PART A REPORTED STATE",
+   "claimed": "ALREADY_SATISFIED",
+   "reason": "R0/A-G1, dispose primitive, S4 and S1 have receipts in vault/specs",
+   "block": "partA",
+   "evidence": [
+    {
+     "kind": "file_exists",
+     "path": "vault/specs/gsdx-factory.RECEIPT-AG1.json"
+    },
+    {
+     "kind": "file_exists",
+     "path": "vault/specs/gsdx-factory.RECEIPT-S1.json"
+    },
+    {
+     "kind": "file_exists",
+     "path": "vault/specs/gsdx-factory.RECEIPT-S4.json"
+    }
+   ]
+  },
+  {
+   "id": "S-a-g2-through-a-g5-recompilation",
+   "title": "A-G2 THROUGH A-G5 RECOMPILATION",
+   "claimed": "ALREADY_SATISFIED",
+   "reason": "recompiled by WU-AG2R against AG1/S1/S4/W3 receipts; remaining units in partA/UNITS.md",
+   "block": "partA",
+   "evidence": [
+    {
+     "kind": "file_exists",
+     "path": "vault/specs/gsdx-factory/partA/UNITS.md"
+    },
+    {
+     "kind": "file_exists",
+     "path": "vault/specs/gsdx-factory.RECEIPT-W3.json"
+    }
+   ]
+  },
+  {
+   "id": "S-mission-a-objective-rewrite",
+   "title": "MISSION A OBJECTIVE REWRITE",
+   "claimed": "MERGE",
+   "reason": "objective framing; satisfied by the recompilation row",
+   "block": "partA",
+   "merge_into": "S-a-g2-through-a-g5-recompilation",
+   "evidence": [
+    {
+     "kind": "file_exists",
+     "path": "vault/specs/gsdx-factory/partA/UNITS.md"
+    }
+   ]
+  },
+  {
+   "id": "S-phase-10-part-a-completion",
+   "title": "PHASE 10 PART A COMPLETION",
+   "claimed": "MERGE",
+   "reason": "same recompile-and-complete instruction",
+   "block": "partA",
+   "merge_into": "S-a-g2-through-a-g5-recompilation",
+   "evidence": [
+    {
+     "kind": "file_exists",
+     "path": "vault/specs/gsdx-factory/partA/UNITS.md"
+    }
+   ]
+  },
+  {
+   "id": "S-mission-a-minimum-done-gate",
+   "title": "MISSION A MINIMUM DONE-GATE",
+   "claimed": "CHEAP_COGNITION",
+   "reason": "work: one slim-t2 verification unit proving 7 baseline capabilities live; PoNW (A-G1) already PASS",
+   "block": "partA",
+   "tier": "slim-t2",
+   "waits": "dgl W5-receipt.md (C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\W5-receipt.md) + WU-INST2-receipt.md"
+  },
+  {
+   "id": "S-mission-a-master-done-gate",
+   "title": "MISSION A MASTER DONE-GATE",
+   "claimed": "MERGE",
+   "reason": "same checklist as minimum gate",
+   "block": "partA",
+   "merge_into": "S-mission-a-minimum-done-gate",
+   "evidence": [
+    {
+     "kind": "file_exists",
+     "path": "vault/specs/gsdx-factory.RECEIPT-AG1.json"
+    }
+   ]
+  },
+  {
+   "id": "S-mission-a-canaries",
+   "title": "MISSION A CANARIES",
+   "claimed": "CHEAP_COGNITION",
+   "reason": "work: A1 PASS in AG1 receipt; A2 zero-model-call and A3 ContextImage canaries remain; one slim-t2 unit",
+   "block": "partA",
+   "tier": "slim-t2",
+   "waits": "dgl W5-receipt.md (C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\W5-receipt.md) + WU-INST2-receipt.md"
+  },
+  {
+   "id": "S-mission-a-economic-done-gate",
+   "title": "MISSION A ECONOMIC DONE-GATE",
+   "claimed": "STRONG_COGNITION",
+   "reason": "work: define and measure 8 rates (ARR, AOR, CCR, TDR, CLMR, ELR, KWCT, SOROI) from ledger; needs design judgement",
+   "block": "partA",
+   "tier": "strong",
+   "waits": "dgl W5-receipt.md (C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\W5-receipt.md) + WU-INST2-receipt.md"
+  },
+  {
+   "id": "S-a-g2-a-g3-learning-gate",
+   "title": "A-G2 / A-G3 LEARNING GATE",
+   "claimed": "CHEAP_COGNITION",
+   "reason": "work: compare comparable-unit calls/context/closeout vs AG1/S1 incidents; slim-t2 gate test",
+   "block": "partA",
+   "tier": "slim-t2",
+   "waits": "dgl W5-receipt.md (C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\W5-receipt.md) + WU-INST2-receipt.md"
+  },
+  {
+   "id": "S-part-a-done-gate",
+   "title": "PART A DONE-GATE",
+   "claimed": "CHEAP_COGNITION",
+   "reason": "work: final aggregator test over all dispositions, receipts, profiles; runs last",
+   "block": "partA",
+   "tier": "slim-t2",
+   "waits": "dgl W5-receipt.md (C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\W5-receipt.md) + WU-INST2-receipt.md; all other Part A units"
+  },
+  {
+   "id": "S-master-done-gate-part-a",
+   "title": "MASTER DONE-GATE PART A",
+   "claimed": "MERGE",
+   "reason": "same terminal-state checklist as Part A done-gate",
+   "block": "partA",
+   "merge_into": "S-part-a-done-gate",
+   "evidence": [
+    {
+     "kind": "file_exists",
+     "path": "vault/specs/gsdx-factory.RECEIPT-AG1.json"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,185 @@
+{
+ "obligations": [
+  {
+   "id": "S-part-a-reported-state",
+   "block": "partA",
+   "claimed": "ALREADY_SATISFIED",
+   "disposition": "ALREADY_SATISFIED",
+   "reason": "R0/A-G1, dispose primitive, S4 and S1 have receipts in vault/specs",
+   "merge_into": null,
+   "superseded_by": null,
+   "depends_on": null,
+   "probes": [
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "vault/specs/gsdx-factory.RECEIPT-AG1.json exists"
+    },
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "vault/specs/gsdx-factory.RECEIPT-S1.json exists"
+    },
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "vault/specs/gsdx-factory.RECEIPT-S4.json exists"
+    }
+   ]
+  },
+  {
+   "id": "S-a-g2-through-a-g5-recompilation",
+   "block": "partA",
+   "claimed": "ALREADY_SATISFIED",
+   "disposition": "ALREADY_SATISFIED",
+   "reason": "recompiled by WU-AG2R against AG1/S1/S4/W3 receipts; remaining units in partA/UNITS.md",
+   "merge_into": null,
+   "superseded_by": null,
+   "depends_on": null,
+   "probes": [
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "vault/specs/gsdx-factory/partA/UNITS.md exists"
+    },
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "vault/specs/gsdx-factory.RECEIPT-W3.json exists"
+    }
+   ]
+  },
+  {
+   "id": "S-mission-a-objective-rewrite",
+   "block": "partA",
+   "claimed": "MERGE",
+   "disposition": "MERGE",
+   "reason": "objective framing; satisfied by the recompilation row",
+   "merge_into": "S-a-g2-through-a-g5-recompilation",
+   "superseded_by": null,
+   "depends_on": null,
+   "probes": [
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "vault/specs/gsdx-factory/partA/UNITS.md exists"
+    }
+   ]
+  },
+  {
+   "id": "S-phase-10-part-a-completion",
+   "block": "partA",
+   "claimed": "MERGE",
+   "disposition": "MERGE",
+   "reason": "same recompile-and-complete instruction",
+   "merge_into": "S-a-g2-through-a-g5-recompilation",
+   "superseded_by": null,
+   "depends_on": null,
+   "probes": [
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "vault/specs/gsdx-factory/partA/UNITS.md exists"
+    }
+   ]
+  },
+  {
+   "id": "S-mission-a-minimum-done-gate",
+   "block": "partA",
+   "claimed": "CHEAP_COGNITION",
+   "disposition": "CHEAP_COGNITION",
+   "reason": "work: one slim-t2 verification unit proving 7 baseline capabilities live; PoNW (A-G1) already PASS",
+   "merge_into": null,
+   "superseded_by": null,
+   "depends_on": null,
+   "probes": []
+  },
+  {
+   "id": "S-mission-a-master-done-gate",
+   "block": "partA",
+   "claimed": "MERGE",
+   "disposition": "MERGE",
+   "reason": "same checklist as minimum gate",
+   "merge_into": "S-mission-a-minimum-done-gate",
+   "superseded_by": null,
+   "depends_on": null,
+   "probes": [
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "vault/specs/gsdx-factory.RECEIPT-AG1.json exists"
+    }
+   ]
+  },
+  {
+   "id": "S-mission-a-canaries",
+   "block": "partA",
+   "claimed": "CHEAP_COGNITION",
+   "disposition": "CHEAP_COGNITION",
+   "reason": "work: A1 PASS in AG1 receipt; A2 zero-model-call and A3 ContextImage canaries remain; one slim-t2 unit",
+   "merge_into": null,
+   "superseded_by": null,
+   "depends_on": null,
+   "probes": []
+  },
+  {
+   "id": "S-mission-a-economic-done-gate",
+   "block": "partA",
+   "claimed": "STRONG_COGNITION",
+   "disposition": "STRONG_COGNITION",
+   "reason": "work: define and measure 8 rates (ARR, AOR, CCR, TDR, CLMR, ELR, KWCT, SOROI) from ledger; needs design judgement",
+   "merge_into": null,
+   "superseded_by": null,
+   "depends_on": null,
+   "probes": []
+  },
+  {
+   "id": "S-a-g2-a-g3-learning-gate",
+   "block": "partA",
+   "claimed": "CHEAP_COGNITION",
+   "disposition": "CHEAP_COGNITION",
+   "reason": "work: compare comparable-unit calls/context/closeout vs AG1/S1 incidents; slim-t2 gate test",
+   "merge_into": null,
+   "superseded_by": null,
+   "depends_on": null,
+   "probes": []
+  },
+  {
+   "id": "S-part-a-done-gate",
+   "block": "partA",
+   "claimed": "CHEAP_COGNITION",
+   "disposition": "CHEAP_COGNITION",
+   "reason": "work: final aggregator test over all dispositions, receipts, profiles; runs last",
+   "merge_into": null,
+   "superseded_by": null,
+   "depends_on": null,
+   "probes": []
+  },
+  {
+   "id": "S-master-done-gate-part-a",
+   "block": "partA",
+   "claimed": "MERGE",
+   "disposition": "MERGE",
+   "reason": "same terminal-state checklist as Part A done-gate",
+   "merge_into": "S-part-a-done-gate",
+   "superseded_by": null,
+   "depends_on": null,
+   "probes": [
+    {
+     "kind": "file_exists",
+     "ok": true,
+     "detail": "vault/specs/gsdx-factory.RECEIPT-AG1.json exists"
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "ALREADY_SATISFIED": 2,
+  "MERGE": 4,
+  "CHEAP_COGNITION": 4,
+  "STRONG_COGNITION": 1
+ },
+ "errors": [],
+ "unknown": 0,
+ "undisposed": 0
+}
