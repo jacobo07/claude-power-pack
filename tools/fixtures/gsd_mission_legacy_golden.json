@@ -38,6 +38,361 @@
      "/s_budget_halt_renew/events/m-budget: length 4 != 5",
      "/s_budget_halt_renew/events/m-budget[3]: 'mission_renewed' != 'renewal_unbounded_shadow'"
     ]
+   },
+   {
+    "scenario": "s_launch_ack_heartbeat",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_launch_ack_heartbeat/events/m-launch: length 6 != 8",
+     "/s_launch_ack_heartbeat/events/m-launch[1]: 'launch_claimed' != 'envelope_auto_assigned'",
+     "/s_launch_ack_heartbeat/events/m-launch[2]: 'launched' != 'launch_claimed'",
+     "/s_launch_ack_heartbeat/events/m-launch[3]: 'launch_cause' != 'baseline_resolved'",
+     "/s_launch_ack_heartbeat/launch_argv[0]: length 15 != 17",
+     "/s_launch_ack_heartbeat/launch_argv[0][12]: '--autocompact' != '--model'",
+     "/s_launch_ack_heartbeat/launch_argv[0][13]: '600k' != 'sonnet'",
+     "/s_launch_ack_heartbeat/launch_argv[0][14]: '/gsd-autonomous' != '--autocompact'",
+     "/s_launch_ack_heartbeat/records/m-launch/keys: length 28 != 35",
+     "/s_launch_ack_heartbeat/records/m-launch/keys[2]: 'code_id' != 'autocompact'",
+     "/s_launch_ack_heartbeat/records/m-launch/keys[3]: 'created_at' != 'baseline'",
+     "/s_launch_ack_heartbeat/records/m-launch/keys[4]: 'cwd' != 'code_id'"
+    ]
+   },
+   {
+    "scenario": "s_adopt",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_adopt/events/m-adopt: length 5 != 7",
+     "/s_adopt/events/m-adopt[1]: 'launch_claimed' != 'envelope_auto_assigned'",
+     "/s_adopt/events/m-adopt[2]: 'launched' != 'launch_claimed'",
+     "/s_adopt/events/m-adopt[3]: 'launch_cause' != 'baseline_resolved'",
+     "/s_adopt/launch_argv[0]: length 15 != 17",
+     "/s_adopt/launch_argv[0][12]: '--autocompact' != '--model'",
+     "/s_adopt/launch_argv[0][13]: '600k' != 'sonnet'",
+     "/s_adopt/launch_argv[0][14]: '/gsd-autonomous' != '--autocompact'",
+     "/s_adopt/records/m-adopt/keys: length 28 != 35",
+     "/s_adopt/records/m-adopt/keys[2]: 'code_id' != 'autocompact'",
+     "/s_adopt/records/m-adopt/keys[3]: 'created_at' != 'baseline'",
+     "/s_adopt/records/m-adopt/keys[4]: 'cwd' != 'code_id'"
+    ]
+   },
+   {
+    "scenario": "s_replace_overdue_launch",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_replace_overdue_launch/events/m-overdue: length 7 != 10",
+     "/s_replace_overdue_launch/events/m-overdue[1]: 'launch_claimed' != 'envelope_auto_assigned'",
+     "/s_replace_overdue_launch/events/m-overdue[2]: 'launched' != 'launch_claimed'",
+     "/s_replace_overdue_launch/events/m-overdue[3]: 'launch_cause' != 'baseline_resolved'",
+     "/s_replace_overdue_launch/launch_argv[0]: length 15 != 17",
+     "/s_replace_overdue_launch/launch_argv[0][12]: '--autocompact' != '--model'",
+     "/s_replace_overdue_launch/launch_argv[0][13]: '600k' != 'sonnet'",
+     "/s_replace_overdue_launch/launch_argv[0][14]: '/gsd-autonomous' != '--autocompact'",
+     "/s_replace_overdue_launch/launch_argv[1]: length 15 != 17",
+     "/s_replace_overdue_launch/launch_argv[1][12]: '--autocompact' != '--model'",
+     "/s_replace_overdue_launch/launch_argv[1][13]: '600k' != 'sonnet'",
+     "/s_replace_overdue_launch/launch_argv[1][14]: '/gsd-autonomous' != '--autocompact'",
+     "/s_replace_overdue_launch/records/m-overdue/keys: length 28 != 35",
+     "/s_replace_overdue_launch/records/m-overdue/keys[2]: 'code_id' != 'autocompact'",
+     "/s_replace_overdue_launch/records/m-overdue/keys[3]: 'created_at' != 'baseline'",
+     "/s_replace_overdue_launch/records/m-overdue/keys[4]: 'cwd' != 'code_id'"
+    ]
+   },
+   {
+    "scenario": "s_halt_unacknowledged",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_halt_unacknowledged/events/m-unack: length 3 != 4",
+     "/s_halt_unacknowledged/events/m-unack[2]: 'mission_halted' != 'envelope_auto_assigned'",
+     "/s_halt_unacknowledged/records/m-unack/keys: length 26 != 29",
+     "/s_halt_unacknowledged/records/m-unack/keys[23]: 'updated_at' != 'token_estimate'",
+     "/s_halt_unacknowledged/records/m-unack/keys[24]: 'wall' != 'token_estimate_basis'",
+     "/s_halt_unacknowledged/records/m-unack/keys[25]: 'workstream' != 'token_estimate_src'"
+    ]
+   },
+   {
+    "scenario": "s_relay_continue",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_relay_continue/events/m-cont: length 4 != 5",
+     "/s_relay_continue/events/m-cont[2]: 'turn_continued' != 'envelope_auto_assigned'",
+     "/s_relay_continue/events/m-cont[3]: 'launch_cause' != 'turn_continued'",
+     "/s_relay_continue/records/m-cont/keys: length 31 != 34",
+     "/s_relay_continue/records/m-cont/keys[28]: 'updated_at' != 'token_estimate'",
+     "/s_relay_continue/records/m-cont/keys[29]: 'wall' != 'token_estimate_basis'",
+     "/s_relay_continue/records/m-cont/keys[30]: 'workstream' != 'token_estimate_src'"
+    ]
+   },
+   {
+    "scenario": "s_relay_rotate_unmeasured",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_relay_rotate_unmeasured/events/m-unmeas: length 5 != 7",
+     "/s_relay_rotate_unmeasured/events/m-unmeas[2]: 'launch_claimed' != 'envelope_auto_assigned'",
+     "/s_relay_rotate_unmeasured/events/m-unmeas[3]: 'launched' != 'launch_claimed'",
+     "/s_relay_rotate_unmeasured/events/m-unmeas[4]: 'launch_cause' != 'baseline_resolved'",
+     "/s_relay_rotate_unmeasured/launch_argv[0]: length 17 != 19",
+     "/s_relay_rotate_unmeasured/launch_argv[0][12]: '--append-system-prompt' != '--model'",
+     "/s_relay_rotate_unmeasured/launch_argv[0][13]: '<CARD 80d96fcecaa4f4d3 1269B>' != 'sonnet'",
+     "/s_relay_rotate_unmeasured/launch_argv[0][14]: '--autocompact' != '--append-system-prompt'",
+     "/s_relay_rotate_unmeasured/records/m-unmeas/keys: length 30 != 37",
+     "/s_relay_rotate_unmeasured/records/m-unmeas/keys[2]: 'card' != 'autocompact'",
+     "/s_relay_rotate_unmeasured/records/m-unmeas/keys[3]: 'code_id' != 'baseline'",
+     "/s_relay_rotate_unmeasured/records/m-unmeas/keys[4]: 'created_at' != 'card'"
+    ]
+   },
+   {
+    "scenario": "s_relay_rotate_ceiling",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_relay_rotate_ceiling/events/m-ceil: length 5 != 7",
+     "/s_relay_rotate_ceiling/events/m-ceil[2]: 'launch_claimed' != 'envelope_auto_assigned'",
+     "/s_relay_rotate_ceiling/events/m-ceil[3]: 'launched' != 'launch_claimed'",
+     "/s_relay_rotate_ceiling/events/m-ceil[4]: 'launch_cause' != 'baseline_resolved'",
+     "/s_relay_rotate_ceiling/launch_argv[0]: length 17 != 19",
+     "/s_relay_rotate_ceiling/launch_argv[0][12]: '--append-system-prompt' != '--model'",
+     "/s_relay_rotate_ceiling/launch_argv[0][13]: '<CARD 74a3d332ce8e8c31 1267B>' != 'sonnet'",
+     "/s_relay_rotate_ceiling/launch_argv[0][14]: '--autocompact' != '--append-system-prompt'",
+     "/s_relay_rotate_ceiling/records/m-ceil/keys: length 30 != 37",
+     "/s_relay_rotate_ceiling/records/m-ceil/keys[2]: 'card' != 'autocompact'",
+     "/s_relay_rotate_ceiling/records/m-ceil/keys[3]: 'code_id' != 'baseline'",
+     "/s_relay_rotate_ceiling/records/m-ceil/keys[4]: 'created_at' != 'card'"
+    ]
+   },
+   {
+    "scenario": "s_replace_turn_done",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_replace_turn_done/events/m-tdone: length 4 != 5",
+     "/s_replace_turn_done/events/m-tdone[2]: 'turn_continued' != 'envelope_auto_assigned'",
+     "/s_replace_turn_done/events/m-tdone[3]: 'launch_cause' != 'turn_continued'",
+     "/s_replace_turn_done/records/m-tdone/keys: length 31 != 34",
+     "/s_replace_turn_done/records/m-tdone/keys[28]: 'updated_at' != 'token_estimate'",
+     "/s_replace_turn_done/records/m-tdone/keys[29]: 'wall' != 'token_estimate_basis'",
+     "/s_replace_turn_done/records/m-tdone/keys[30]: 'workstream' != 'token_estimate_src'"
+    ]
+   },
+   {
+    "scenario": "s_replace_owner_dead",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_replace_owner_dead/events/m-dead: length 5 != 7",
+     "/s_replace_owner_dead/events/m-dead[2]: 'launch_claimed' != 'envelope_auto_assigned'",
+     "/s_replace_owner_dead/events/m-dead[3]: 'launched' != 'launch_claimed'",
+     "/s_replace_owner_dead/events/m-dead[4]: 'launch_cause' != 'baseline_resolved'",
+     "/s_replace_owner_dead/launch_argv[0]: length 17 != 19",
+     "/s_replace_owner_dead/launch_argv[0][12]: '--append-system-prompt' != '--model'",
+     "/s_replace_owner_dead/launch_argv[0][13]: '<CARD 6187951beeefdb68 1267B>' != 'sonnet'",
+     "/s_replace_owner_dead/launch_argv[0][14]: '--autocompact' != '--append-system-prompt'",
+     "/s_replace_owner_dead/records/m-dead/keys: length 30 != 37",
+     "/s_replace_owner_dead/records/m-dead/keys[2]: 'card' != 'autocompact'",
+     "/s_replace_owner_dead/records/m-dead/keys[3]: 'code_id' != 'baseline'",
+     "/s_replace_owner_dead/records/m-dead/keys[4]: 'created_at' != 'card'"
+    ]
+   },
+   {
+    "scenario": "s_gsd_complete",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_gsd_complete/events/m-gdone: length 3 != 4",
+     "/s_gsd_complete/events/m-gdone[2]: 'mission_completed' != 'envelope_auto_assigned'",
+     "/s_gsd_complete/records/m-gdone/keys: length 26 != 29",
+     "/s_gsd_complete/records/m-gdone/keys[23]: 'updated_at' != 'token_estimate'",
+     "/s_gsd_complete/records/m-gdone/keys[24]: 'wall' != 'token_estimate_basis'",
+     "/s_gsd_complete/records/m-gdone/keys[25]: 'workstream' != 'token_estimate_src'"
+    ]
+   },
+   {
+    "scenario": "s_gsd_hold_block_unblock",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_gsd_hold_block_unblock/events/m-hold: length 7 != 8",
+     "/s_gsd_hold_block_unblock/events/m-hold[2]: 'relay_held' != 'envelope_auto_assigned'",
+     "/s_gsd_hold_block_unblock/events/m-hold[3]: 'mission_blocked' != 'relay_held'",
+     "/s_gsd_hold_block_unblock/events/m-hold[4]: 'mission_unblocked' != 'mission_blocked'",
+     "/s_gsd_hold_block_unblock/records/m-hold/keys: length 32 != 35",
+     "/s_gsd_hold_block_unblock/records/m-hold/keys[29]: 'updated_at' != 'token_estimate'",
+     "/s_gsd_hold_block_unblock/records/m-hold/keys[30]: 'wall' != 'token_estimate_basis'",
+     "/s_gsd_hold_block_unblock/records/m-hold/keys[31]: 'workstream' != 'token_estimate_src'"
+    ]
+   },
+   {
+    "scenario": "s_gsd_unavailable_held",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_gsd_unavailable_held/events/m-unav: length 3 != 4",
+     "/s_gsd_unavailable_held/events/m-unav[2]: 'relay_held' != 'envelope_auto_assigned'",
+     "/s_gsd_unavailable_held/records/m-unav/keys: length 27 != 30",
+     "/s_gsd_unavailable_held/records/m-unav/keys[24]: 'updated_at' != 'token_estimate'",
+     "/s_gsd_unavailable_held/records/m-unav/keys[25]: 'wall' != 'token_estimate_basis'",
+     "/s_gsd_unavailable_held/records/m-unav/keys[26]: 'workstream' != 'token_estimate_src'"
+    ]
+   },
+   {
+    "scenario": "s_provider_quota_hold",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_provider_quota_hold/events/m-quota: length 3 != 4",
+     "/s_provider_quota_hold/events/m-quota[2]: 'quota_held' != 'envelope_auto_assigned'",
+     "/s_provider_quota_hold/records/m-quota/keys: length 26 != 30",
+     "/s_provider_quota_hold/records/m-quota/keys[18]: 'resume_command' != 'reason'",
+     "/s_provider_quota_hold/records/m-quota/keys[19]: 'schema_version' != 'resume_command'",
+     "/s_provider_quota_hold/records/m-quota/keys[20]: 'seq' != 'schema_version'"
+    ]
+   },
+   {
+    "scenario": "s_provider_auth_hold",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_provider_auth_hold/events/m-auth: length 3 != 4",
+     "/s_provider_auth_hold/events/m-auth[2]: 'provider_held' != 'envelope_auto_assigned'",
+     "/s_provider_auth_hold/records/m-auth/keys: length 26 != 30",
+     "/s_provider_auth_hold/records/m-auth/keys[18]: 'resume_command' != 'reason'",
+     "/s_provider_auth_hold/records/m-auth/keys[19]: 'schema_version' != 'resume_command'",
+     "/s_provider_auth_hold/records/m-auth/keys[20]: 'seq' != 'schema_version'"
+    ]
+   },
+   {
+    "scenario": "s_child_hold",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_child_hold/events/m-child: length 3 != 4",
+     "/s_child_hold/events/m-child[2]: 'relay_held' != 'envelope_auto_assigned'",
+     "/s_child_hold/records/m-child/keys: length 25 != 29",
+     "/s_child_hold/records/m-child/keys[18]: 'resume_command' != 'reason'",
+     "/s_child_hold/records/m-child/keys[19]: 'schema_version' != 'resume_command'",
+     "/s_child_hold/records/m-child/keys[20]: 'seq' != 'schema_version'"
+    ]
+   },
+   {
+    "scenario": "s_handoff_relay",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_handoff_relay/events/m-hand: length 6 != 8",
+     "/s_handoff_relay/events/m-hand[3]: 'launch_claimed' != 'envelope_auto_assigned'",
+     "/s_handoff_relay/events/m-hand[4]: 'launched' != 'launch_claimed'",
+     "/s_handoff_relay/events/m-hand[5]: 'launch_cause' != 'baseline_resolved'",
+     "/s_handoff_relay/launch_argv[0]: length 17 != 19",
+     "/s_handoff_relay/launch_argv[0][12]: '--append-system-prompt' != '--model'",
+     "/s_handoff_relay/launch_argv[0][13]: '<CARD 4e93f91618a593de 1265B>' != 'sonnet'",
+     "/s_handoff_relay/launch_argv[0][14]: '--autocompact' != '--append-system-prompt'",
+     "/s_handoff_relay/records/m-hand/keys: length 30 != 37",
+     "/s_handoff_relay/records/m-hand/keys[2]: 'card' != 'autocompact'",
+     "/s_handoff_relay/records/m-hand/keys[3]: 'code_id' != 'baseline'",
+     "/s_handoff_relay/records/m-hand/keys[4]: 'created_at' != 'card'"
+    ]
+   },
+   {
+    "scenario": "s_wall_enforced",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_wall_enforced/events/m-wall: length 5 != 7",
+     "/s_wall_enforced/events/m-wall[2]: 'launch_claimed' != 'envelope_auto_assigned'",
+     "/s_wall_enforced/events/m-wall[3]: 'launched' != 'launch_claimed'",
+     "/s_wall_enforced/events/m-wall[4]: 'launch_cause' != 'baseline_resolved'",
+     "/s_wall_enforced/launch_argv[0]: length 17 != 19",
+     "/s_wall_enforced/launch_argv[0][12]: '--append-system-prompt' != '--model'",
+     "/s_wall_enforced/launch_argv[0][13]: '<CARD 06d3ef3aa944edb8 1267B>' != 'sonnet'",
+     "/s_wall_enforced/launch_argv[0][14]: '--autocompact' != '--append-system-prompt'",
+     "/s_wall_enforced/records/m-wall/keys: length 30 != 37",
+     "/s_wall_enforced/records/m-wall/keys[2]: 'card' != 'autocompact'",
+     "/s_wall_enforced/records/m-wall/keys[3]: 'code_id' != 'baseline'",
+     "/s_wall_enforced/records/m-wall/keys[4]: 'created_at' != 'card'"
+    ]
+   },
+   {
+    "scenario": "s_budget_halt_renew",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_budget_halt_renew/events/m-budget[2]: 'mission_halted' != 'envelope_auto_assigned'",
+     "/s_budget_halt_renew/events/m-budget[3]: 'renewal_unbounded_shadow' != 'mission_halted'",
+     "/s_budget_halt_renew/records/m-budget/keys: length 26 != 29",
+     "/s_budget_halt_renew/records/m-budget/keys[23]: 'updated_at' != 'token_estimate'",
+     "/s_budget_halt_renew/records/m-budget/keys[24]: 'wall' != 'token_estimate_basis'",
+     "/s_budget_halt_renew/records/m-budget/keys[25]: 'workstream' != 'token_estimate_src'",
+     "/s_budget_halt_renew/records/renewed[0]/keys: length 29 != 32",
+     "/s_budget_halt_renew/records/renewed[0]/keys[11]: 'max_cycles' != 'lineage_spend_unknown'",
+     "/s_budget_halt_renew/records/renewed[0]/keys[12]: 'max_hours' != 'lineage_token_budget'",
+     "/s_budget_halt_renew/records/renewed[0]/keys[13]: 'mission_id' != 'max_cycles'"
+    ]
+   },
+   {
+    "scenario": "s_budget_halt_complete",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_budget_halt_complete/events/m-bdone: length 3 != 4",
+     "/s_budget_halt_complete/events/m-bdone[2]: 'mission_completed' != 'envelope_auto_assigned'",
+     "/s_budget_halt_complete/records/m-bdone/keys: length 26 != 29",
+     "/s_budget_halt_complete/records/m-bdone/keys[23]: 'updated_at' != 'token_estimate'",
+     "/s_budget_halt_complete/records/m-bdone/keys[24]: 'wall' != 'token_estimate_basis'",
+     "/s_budget_halt_complete/records/m-bdone/keys[25]: 'workstream' != 'token_estimate_src'"
+    ]
+   },
+   {
+    "scenario": "s_no_progress_halt",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_no_progress_halt/events/m-stall: length 3 != 4",
+     "/s_no_progress_halt/events/m-stall[2]: 'mission_halted' != 'envelope_auto_assigned'",
+     "/s_no_progress_halt/records/m-stall/keys: length 27 != 30",
+     "/s_no_progress_halt/records/m-stall/keys[24]: 'updated_at' != 'token_estimate'",
+     "/s_no_progress_halt/records/m-stall/keys[25]: 'wall' != 'token_estimate_basis'",
+     "/s_no_progress_halt/records/m-stall/keys[26]: 'workstream' != 'token_estimate_src'"
+    ]
+   },
+   {
+    "scenario": "s_waiting_human_then_unblock",
+    "why": "intentional legacy-path changes landed after the golden: b4314931 U6a baseline resolver (baseline_resolved row + --model from policy), 03e1b0c3 cep-gen3 T1c auto envelope (envelope_auto_assigned row + token_estimate keys), 6596654c UCDA A2 lineage budget on renewal, 924bdad6 GGMC C1-C3 renewal shadow; none routes legacy toward capsule-v2 (mutants still red)",
+    "on_head": "5edb546a",
+    "gsd_mission_sha256": "e6568a3f9afbc44f7de20053475a1ccf0150d6c0e92565b4299a87cdc010f606",
+    "diff": [
+     "/s_waiting_human_then_unblock/events/m-human: length 4 != 5",
+     "/s_waiting_human_then_unblock/events/m-human[2]: 'mission_blocked' != 'envelope_auto_assigned'",
+     "/s_waiting_human_then_unblock/events/m-human[3]: 'mission_unblocked' != 'mission_blocked'",
+     "/s_waiting_human_then_unblock/records/m-human/keys: length 27 != 30",
+     "/s_waiting_human_then_unblock/records/m-human/keys[24]: 'updated_at' != 'token_estimate'",
+     "/s_waiting_human_then_unblock/records/m-human/keys[25]: 'wall' != 'token_estimate_basis'",
+     "/s_waiting_human_then_unblock/records/m-human/keys[26]: 'workstream' != 'token_estimate_src'"
+    ]
    }
   ]
  },
@@ -67,7 +422,9 @@
    "events": {
     "m-launch": [
      "mission_prepared",
+     "envelope_auto_assigned",
      "launch_claimed",
+     "baseline_resolved",
      "launched",
      "launch_cause",
      "worker_acked",
@@ -88,8 +445,10 @@
      "Edit(.planning/**)",
      "--disallowedTools",
      "AskUserQuestion",
+     "--model",
+     "sonnet",
      "--autocompact",
-     "600k",
+     "250k",
      "/gsd-autonomous"
     ]
    ],
@@ -99,7 +458,10 @@
      "keys": [
       "add_dirs",
       "allowed_tools",
+      "autocompact",
+      "baseline",
       "code_id",
+      "continue_max_tokens",
       "created_at",
       "cwd",
       "epoch",
@@ -111,6 +473,7 @@
       "mission_id",
       "mission_terms",
       "mode",
+      "model",
       "note",
       "owner",
       "pending",
@@ -122,6 +485,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -146,7 +512,9 @@
    "events": {
     "m-adopt": [
      "mission_prepared",
+     "envelope_auto_assigned",
      "launch_claimed",
+     "baseline_resolved",
      "launched",
      "launch_cause",
      "worker_adopted"
@@ -166,8 +534,10 @@
      "Edit(.planning/**)",
      "--disallowedTools",
      "AskUserQuestion",
+     "--model",
+     "sonnet",
      "--autocompact",
-     "600k",
+     "250k",
      "/gsd-autonomous"
     ]
    ],
@@ -177,7 +547,10 @@
      "keys": [
       "add_dirs",
       "allowed_tools",
+      "autocompact",
+      "baseline",
       "code_id",
+      "continue_max_tokens",
       "created_at",
       "cwd",
       "epoch",
@@ -189,6 +562,7 @@
       "mission_id",
       "mission_terms",
       "mode",
+      "model",
       "note",
       "owner",
       "pending",
@@ -200,6 +574,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -237,10 +614,13 @@
    "events": {
     "m-overdue": [
      "mission_prepared",
+     "envelope_auto_assigned",
      "launch_claimed",
+     "baseline_resolved",
      "launched",
      "launch_cause",
      "launch_claimed",
+     "baseline_resolved",
      "launched",
      "launch_cause"
     ]
@@ -259,8 +639,10 @@
      "Edit(.planning/**)",
      "--disallowedTools",
      "AskUserQuestion",
+     "--model",
+     "sonnet",
      "--autocompact",
-     "600k",
+     "250k",
      "/gsd-autonomous"
     ],
     [
@@ -276,8 +658,10 @@
      "Edit(.planning/**)",
      "--disallowedTools",
      "AskUserQuestion",
+     "--model",
+     "sonnet",
      "--autocompact",
-     "600k",
+     "250k",
      "/gsd-autonomous"
     ]
    ],
@@ -287,7 +671,10 @@
      "keys": [
       "add_dirs",
       "allowed_tools",
+      "autocompact",
+      "baseline",
       "code_id",
+      "continue_max_tokens",
       "created_at",
       "cwd",
       "epoch",
@@ -299,6 +686,7 @@
       "mission_id",
       "mission_terms",
       "mode",
+      "model",
       "note",
       "owner",
       "pending",
@@ -310,6 +698,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -336,6 +727,7 @@
     "m-unack": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "mission_halted"
     ]
    },
@@ -367,6 +759,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -410,6 +805,7 @@
     "m-cont": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "turn_continued",
      "launch_cause"
     ]
@@ -461,6 +857,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -506,7 +905,9 @@
     "m-unmeas": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "launch_claimed",
+     "baseline_resolved",
      "launched",
      "launch_cause"
     ]
@@ -525,10 +926,12 @@
      "Edit(.planning/**)",
      "--disallowedTools",
      "AskUserQuestion",
+     "--model",
+     "sonnet",
      "--append-system-prompt",
      "<CARD 80d96fcecaa4f4d3 1269B>",
      "--autocompact",
-     "600k",
+     "250k",
      "/gsd-autonomous"
     ]
    ],
@@ -544,8 +947,11 @@
      "keys": [
       "add_dirs",
       "allowed_tools",
+      "autocompact",
+      "baseline",
       "card",
       "code_id",
+      "continue_max_tokens",
       "created_at",
       "cwd",
       "epoch",
@@ -557,6 +963,7 @@
       "mission_id",
       "mission_terms",
       "mode",
+      "model",
       "note",
       "owner",
       "packet",
@@ -569,6 +976,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -614,7 +1024,9 @@
     "m-ceil": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "launch_claimed",
+     "baseline_resolved",
      "launched",
      "launch_cause"
     ]
@@ -633,10 +1045,12 @@
      "Edit(.planning/**)",
      "--disallowedTools",
      "AskUserQuestion",
+     "--model",
+     "sonnet",
      "--append-system-prompt",
      "<CARD 74a3d332ce8e8c31 1267B>",
      "--autocompact",
-     "600k",
+     "250k",
      "/gsd-autonomous"
     ]
    ],
@@ -652,8 +1066,11 @@
      "keys": [
       "add_dirs",
       "allowed_tools",
+      "autocompact",
+      "baseline",
       "card",
       "code_id",
+      "continue_max_tokens",
       "created_at",
       "cwd",
       "epoch",
@@ -665,6 +1082,7 @@
       "mission_id",
       "mission_terms",
       "mode",
+      "model",
       "note",
       "owner",
       "packet",
@@ -677,6 +1095,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -720,6 +1141,7 @@
     "m-tdone": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "turn_continued",
      "launch_cause"
     ]
@@ -765,6 +1187,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -805,7 +1230,9 @@
     "m-dead": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "launch_claimed",
+     "baseline_resolved",
      "launched",
      "launch_cause"
     ]
@@ -824,10 +1251,12 @@
      "Edit(.planning/**)",
      "--disallowedTools",
      "AskUserQuestion",
+     "--model",
+     "sonnet",
      "--append-system-prompt",
      "<CARD 6187951beeefdb68 1267B>",
      "--autocompact",
-     "600k",
+     "250k",
      "/gsd-autonomous"
     ]
    ],
@@ -837,8 +1266,11 @@
      "keys": [
       "add_dirs",
       "allowed_tools",
+      "autocompact",
+      "baseline",
       "card",
       "code_id",
+      "continue_max_tokens",
       "created_at",
       "cwd",
       "epoch",
@@ -850,6 +1282,7 @@
       "mission_id",
       "mission_terms",
       "mode",
+      "model",
       "note",
       "owner",
       "packet",
@@ -862,6 +1295,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -888,6 +1324,7 @@
     "m-gdone": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "mission_completed"
     ]
    },
@@ -919,6 +1356,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -981,6 +1421,7 @@
     "m-hold": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "relay_held",
      "mission_blocked",
      "mission_unblocked",
@@ -1036,6 +1477,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -1063,6 +1507,7 @@
     "m-unav": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "relay_held"
     ]
    },
@@ -1095,6 +1540,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -1121,6 +1569,7 @@
     "m-quota": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "quota_held"
     ]
    },
@@ -1147,11 +1596,15 @@
       "owner",
       "pending",
       "permission_mode",
+      "reason",
       "resume_command",
       "schema_version",
       "seq",
       "sleep",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -1178,6 +1631,7 @@
     "m-auth": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "provider_held"
     ]
    },
@@ -1204,11 +1658,15 @@
       "owner",
       "pending",
       "permission_mode",
+      "reason",
       "resume_command",
       "schema_version",
       "seq",
       "sleep",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -1241,6 +1699,7 @@
     "m-child": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "relay_held"
     ]
    },
@@ -1267,10 +1726,14 @@
       "owner",
       "pending",
       "permission_mode",
+      "reason",
       "resume_command",
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -1317,7 +1780,9 @@
      "mission_prepared",
      "seed",
      "handoff_requested",
+     "envelope_auto_assigned",
      "launch_claimed",
+     "baseline_resolved",
      "launched",
      "launch_cause"
     ]
@@ -1336,10 +1801,12 @@
      "Edit(.planning/**)",
      "--disallowedTools",
      "AskUserQuestion",
+     "--model",
+     "sonnet",
      "--append-system-prompt",
      "<CARD 4e93f91618a593de 1265B>",
      "--autocompact",
-     "600k",
+     "250k",
      "/gsd-autonomous"
     ]
    ],
@@ -1355,8 +1822,11 @@
      "keys": [
       "add_dirs",
       "allowed_tools",
+      "autocompact",
+      "baseline",
       "card",
       "code_id",
+      "continue_max_tokens",
       "created_at",
       "cwd",
       "epoch",
@@ -1368,6 +1838,7 @@
       "mission_id",
       "mission_terms",
       "mode",
+      "model",
       "note",
       "owner",
       "packet",
@@ -1380,6 +1851,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -1431,7 +1905,9 @@
     "m-wall": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "launch_claimed",
+     "baseline_resolved",
      "launched",
      "launch_cause"
     ]
@@ -1450,10 +1926,12 @@
      "Edit(.planning/**)",
      "--disallowedTools",
      "AskUserQuestion",
+     "--model",
+     "sonnet",
      "--append-system-prompt",
      "<CARD 06d3ef3aa944edb8 1267B>",
      "--autocompact",
-     "600k",
+     "250k",
      "/gsd-autonomous"
     ]
    ],
@@ -1469,8 +1947,11 @@
      "keys": [
       "add_dirs",
       "allowed_tools",
+      "autocompact",
+      "baseline",
       "card",
       "code_id",
+      "continue_max_tokens",
       "created_at",
       "cwd",
       "epoch",
@@ -1482,6 +1963,7 @@
       "mission_id",
       "mission_terms",
       "mode",
+      "model",
       "note",
       "owner",
       "packet",
@@ -1494,6 +1976,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -1522,8 +2007,8 @@
     "m-budget": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "mission_halted",
-     "renewal_unbounded_shadow",
      "mission_renewed"
     ],
     "renewed[0]": [
@@ -1559,6 +2044,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -1581,6 +2069,8 @@
       "iterations",
       "last_progress_at",
       "lineage_id",
+      "lineage_spend_unknown",
+      "lineage_token_budget",
       "max_cycles",
       "max_hours",
       "mission_id",
@@ -1596,6 +2086,7 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
       "updated_at",
       "wall",
       "workstream"
@@ -1623,6 +2114,7 @@
     "m-bdone": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "mission_completed"
     ]
    },
@@ -1654,6 +2146,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -1690,6 +2185,7 @@
     "m-stall": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "mission_halted"
     ]
    },
@@ -1722,6 +2218,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"
@@ -1754,6 +2253,7 @@
     "m-human": [
      "mission_prepared",
      "seed",
+     "envelope_auto_assigned",
      "mission_blocked",
      "mission_unblocked"
     ]
@@ -1787,6 +2287,9 @@
       "schema_version",
       "seq",
       "state",
+      "token_estimate",
+      "token_estimate_basis",
+      "token_estimate_src",
       "updated_at",
       "wall",
       "workstream"

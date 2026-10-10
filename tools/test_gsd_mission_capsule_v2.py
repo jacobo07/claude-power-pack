@@ -320,16 +320,19 @@ def halt_section() -> None:
           (h.get("continuity") or {}).get("kind") == "none" and not r.get("renewed_as")
           and sealed("mission-m-hn-e1") is None and "not renewed" in (r.get("renewal") or ""),
           f"cont={h.get('continuity')} renewal={r.get('renewal')}")
+    # Was V-MV2-HALT-NONE-FIRST-WORKER ("a first worker that never ran -> renewal, no key"). GGMC C3
+    # (924bdad6, incident m-8c64d4f52fc9) made a never-launched mission non-renewable, and a launched
+    # one always halts with a recovery capsule (gates above), so that case no longer exists. Pinned now:
+    # never launched (epoch 0) -> continuity none, and NOT renewed.
     wipe()
-    gm.create(str(REPO), "/gsd-autonomous", mission_id="m-hp", now=NOW - 7200, max_hours=1,
+    gm.create(str(REPO), "/gsd-autonomous", mission_id="m-hz", now=NOW - 7200, max_hours=1,
               permission_mode="auto", rollover_protocol=gm.CAPSULE_V2)
     rows = halt_run([])
-    r, h = row_of(rows, "m-hp"), gm.load("m-hp")
-    new = gm.load(r["renewed_as"]) if r.get("renewed_as") else {}
-    check("V-MV2-HALT-NONE-FIRST-WORKER",
-          (h.get("continuity") or {}).get("kind") == "none" and bool(new) and not new.get("capsule_key")
-          and (new.get("continuity_from") or {}).get("kind") == "none",
-          f"cont={h.get('continuity')} new_from={new.get('continuity_from')}")
+    r, h = row_of(rows, "m-hz"), gm.load("m-hz")
+    check("V-MV2-HALT-NEVER-LAUNCHED-NOT-RENEWED",
+          (h.get("continuity") or {}).get("kind") == "none" and not r.get("renewed_as")
+          and "never launched" in str((h.get("continuity") or {}).get("reason")),
+          f"cont={h.get('continuity')} renewed_as={r.get('renewed_as')}")
 
     # --- complete at budget: no capsule, no renewal ---------------------------------------------------
     wipe()

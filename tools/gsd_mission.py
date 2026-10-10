@@ -285,7 +285,7 @@ def create(cwd: str, resume_command: str, *, mission_id: str | None = None,
 
 def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
                now: float | None = None, worker: str | None = None,
-               ledger_extra: dict | None = None, **changes) -> dict:
+               ledger_extra: dict | None = None, touch: bool = True, **changes) -> dict:
     """Compare-and-swap. ``expect_state`` is one state or a set of them.
 
     Raises CasConflict when the record moved since the caller observed it. The
@@ -299,6 +299,10 @@ def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
     ``ledger_extra`` rides on the ledger row only (a hold's typed fields; it cannot
     overwrite the row's own keys). A transition that does not set ``sleep`` ends it
     (GGMC C5): after real movement the next hold is news again.
+
+    ``touch=False`` keeps ``updated_at``: plan_next reads it as the owner's last sign of
+    life, so a supervisor's own bookkeeping write must not refresh it (an auto envelope
+    assigned right before planning hid a stale UNKNOWN owner for a whole stale window).
     """
     now = time.time() if now is None else now
     allowed = {expect_state} if isinstance(expect_state, str) else set(expect_state)
@@ -316,7 +320,8 @@ def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
         rec.update(changes)
         if "sleep" not in changes:
             rec.pop("sleep", None)   # popped, not nulled: a record that never slept keeps its bytes
-        rec["updated_at"] = now
+        if touch or not rec.get("updated_at"):
+            rec["updated_at"] = now
         # Every committed transition has a number, so the ledger's copy of the history can be
         # checked for holes against the record (history_gaps). A record with no seq predates T4.
         rec["seq"] = int(rec.get("seq") or 0) + 1
@@ -1376,7 +1381,7 @@ def _auto_budget(rec: dict, now: float, measure=None) -> dict:
         basis = (f"auto envelope: ({spent_txt} + headroom {headroom:,} [{how}; {src}]) / trip ratio"
                  f" {ratio:g} = {est:,}")
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                          event="envelope_auto_assigned", now=now, token_estimate=est,
+                          event="envelope_auto_assigned", now=now, touch=False, token_estimate=est,
                           token_estimate_src="auto", token_estimate_basis=basis, reason=basis)
     except Exception as exc:  # noqa: BLE001 -- recorded, never silent
         lr.ledger_append(mid, "envelope_auto_unassigned", mission_id=mid,

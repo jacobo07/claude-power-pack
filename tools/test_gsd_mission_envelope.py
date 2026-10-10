@@ -218,6 +218,16 @@ def main() -> int:
     check("V-AUTO-ASSIGNED", r.get("token_estimate") == 6_000_000 and r.get("token_estimate_src") == "auto"
           and "rate" in (r.get("token_estimate_basis") or ""), str(r.get("token_estimate_basis")))
 
+    # The auto envelope is the supervisor's bookkeeping, not a sign of life: plan_next reads updated_at
+    # as the owner's last-seen time, so the assignment must leave it alone (control: a real transition moves it).
+    _running("m-auto-t")
+    seen = gm.load("m-auto-t")["updated_at"]
+    r = gm._auto_budget(gm.load("m-auto-t"), NOW + 5000, measure=lambda rec: None)
+    check("V-AUTO-KEEPS-LIVENESS-CLOCK", r.get("token_estimate") and r["updated_at"] == seen,
+          f"{seen} -> {r.get('updated_at')}")
+    moved = gm.transition("m-auto-t", expect_epoch=1, expect_state=gm.RUNNING, event="t_move", now=NOW + 6000)
+    check("V-AUTO-CONTROL-TRANSITION-TOUCHES", moved["updated_at"] == NOW + 6000, str(moved["updated_at"]))
+
     def boom(rec):
         raise OSError("meter down")
     _running("m-auto-u")
