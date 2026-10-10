@@ -16,3 +16,17 @@ if (Test-Path $err) { $tail = (Get-Content $err -Tail 3) -join ' | ' }
 $row = ''
 if (Test-Path $out) { $row = (Get-Content $out -Tail 1) }
 Add-Content -Path $log -Value ((Get-Date).ToString('s') + ' rc=' + $p.ExitCode + ' ' + $row + ' ' + $tail) -Encoding ASCII
+# Bootstrap until W3/W5: a freshly armed unit gets a done_check bound to its receipt, so the supervisor completes it
+# from the receipt instead of asking GSD (pp-dgl has no GSD phases -> NO_PHASES -> held for ever; W1b 2026-10-10).
+try {
+    $r = $row | ConvertFrom-Json
+    $mid = $r.armed.mission_id
+    if ($mid) {
+        $c = Get-Content $chain -Raw | ConvertFrom-Json
+        $unit = $c.units | Where-Object { $_.id -eq $r.unit } | Select-Object -First 1
+        $att = & $py (Join-Path $PSScriptRoot 'unit_done.py') attach $mid $unit.receipt
+        Add-Content -Path $log -Value ((Get-Date).ToString('s') + ' done_check: ' + ($att -join ' ')) -Encoding ASCII
+    }
+} catch {
+    Add-Content -Path $log -Value ((Get-Date).ToString('s') + ' done_check attach failed: ' + $_.Exception.Message) -Encoding ASCII
+}
