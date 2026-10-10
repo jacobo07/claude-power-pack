@@ -83,8 +83,15 @@ The **UserPromptSubmit** hook runs before the model request. The dispatcher alre
 `decision:"block"` for non-PreToolUse families (hook-dispatcher.js:1668-1670). A block stops the
 prompt before any model call and shows `reason` to the Owner. That gives pre-model admission at zero
 model tokens, with a deterministic status as the reason. Harness slash commands (`/clear`,
-`/kclear`) do not travel through it, so a tombstone cannot trap them. Still unproven: that the live
-harness honours the block through the dispatcher (WS-B drill, first unit).
+`/kclear`) do not travel through it, so a tombstone cannot trap them.
+
+PROVEN 2026-10-10 (econ-contain-2), with an amendment. In-chain, the block was honoured but NOT
+reliable: under RAM starvation the harness killed the whole dispatcher at its 15 s timeout (5e764b5a:
+19,283 / 18,768 ms) and a killed hook fails OPEN, so two Owner messages reached a tombstoned pane's
+model. Admission is now its OWN UserPromptSubmit entry (settings.json, timeout 30 s; d3170d43; pinned by
+V-ECON-ADMISSION-STANDALONE / -NOT-IN-CHAIN). Live drill: headless `claude -p --session-id f7e8f485...`
+bound to tombstoned goal `econ-drill` -> "UserPromptSubmit operation blocked by hook", num_turns 0,
+all usage 0, total_cost_usd 0. Rule: a fail-closed gate never shares a hook process whose timeout fails open.
 
 Remaining unavoidable floor: the first boundary that DISCOVERS exhaustion mid-turn (PreToolUse) is
 already bought. Every later Owner message can be blocked pre-model.
