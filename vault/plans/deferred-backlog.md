@@ -319,6 +319,53 @@ per-game cost model needs both). Step 0 may run earlier, because it is zero-mode
 
 ---
 
+## D12 — cost-collapse / expected-completion admission: the rest of the mission (Owner, 2026-10-10)
+
+**Goal:** finish the expected-completion admission program (`vault/specs/expected-completion-admission.md`, APPROVED)
+and continue cost-collapse T2 reconciliation -> T3-T7 (`vault/specs/cost-collapse.md`). Work tree
+`C:\Users\User\Apps\pp-cost-collapse`, branch cost-collapse/main (local, never pushed). Binding plan:
+`vault/plans/cost-collapse-convergence-plan.md` there (Owner y 2026-10-08; E3C is split into E3C1/E3C2; D-C = stop for an
+Owner cap decision after E4b).
+
+**Done (all in that work tree):** T1 f3b503e6, T2 2b5b0ea5, E1, E2, E3-A 3f2ff5c4, E3R (D3 flip 14879ab0 + RECEIPT-E3
+8350d524: 45 calls / 7.62M vs 34 / 6M), E3G 0ea29fc7 (call checkpoint + receipt survives the stop), E4a work-tree half
+42ac887c (LAUNCHABLE_VERDICTS / KNOWN_VERDICTS / verdict_unknown, V-VERDICT 14/14).
+
+**Stopped where:**
+- E4a live half: PARTIAL on the laptop (session guard). On 2026-10-09 the laptop had 0.7 GB free; the Owner moved the
+  chain to GEX44 ("Todo en GEX44"). Handoff 067af7c2. WU-E4a2, mission m-16bde3ea1101 on GEX44, ended
+  **BLOCKED_PREMISE** (receipt 44a2a6f3, fetched as `gex44/cost-collapse` in the work tree): GEX44's live install
+  (`~/.claude/skills/claude-power-pack` @1872e9a1) has **no route admission at all** (no route_admission.py, no `admit`).
+  Nothing was applied and nothing was armed. Any mission armed on GEX44 would launch ungated.
+- Not started: E3C1, E3C2, E4b/E4 landing, T2 reconciliation, T3a/T3b, T4-T7. gsdx-pcc m-53847a002b65 stays held until T7.
+
+**Loose state to settle first:**
+- **This live tree carries uncommitted E4a edits** to `tools/route_admission.py` and `tools/gsd_mission.py`, plus untracked
+  `tools/test_verdict_contract.py` (rollback tag `cc-e4a-pre`). The live sweep serves that code. Snapshot:
+  `vault/plans/expected-completion-E4a-live.patch` in the work tree (sha256 6DD6ABC9...5129C1). Live gates there were
+  admission 43/43, envelope 55/55, owner_hold 32/32, test_gsd_mission 226/227 (V-MC-SUP-HOST-UNANSWERED-NOT-BLOCKED,
+  unattributed vs cc-e4a-pre), test_verdict_contract RED (no live envelope_fixture.py). Land or revert; do not leave it.
+- Work tree: the E4a worker's uncommitted test edit is snapshotted as `vault/plans/expected-completion-E4a-worktree-test.patch`.
+- GEX44: clone `/home/kobii/missions/cost-collapse`, tag `cc-e4a2-pre` on its live tree, mission m-16bde3ea1101 BLOCKED.
+  GEX44 has no session_budget_guard.
+- Open points: E2's EAC reforecast is inert live (the only call site, gsd_mission.py:2778, passes no usage) -> E3C2.
+  On GEX44 `admit` printed expected=None safety=None: verify the UNKNOWN fail-closed path before trusting a GEX44 verdict.
+
+**Remaining units, in order:** E4a live (WATCHED contract on the plane whose sweep runs the chain) -> E3C1 (guard latency
+offset/high-water, E3G drills d2-d5 + d4 diagnosis, 4 unrun suites, slim-t2 borrowed g/calls_err) -> E3C2 (EAC usage
+wiring, recalibration with the E3 pair, promotion Cognitive CI check, route-E4) -> E4b/E4 (land T1, T2, E1-E3C here with
+a rollback tag, KV/UKDL/CBR ratchet) -> **D-C Owner cap decision** -> T2 reconciliation -> T3a/T3b -> T4-T7.
+Packets: `vault/specs/packets/` in the work tree (WU-E3C1 is still to be written from WU-E4a section 3).
+
+**Activation criterion:** the Owner picks a plane:
+(a) laptop, once free RAM >= 4 GB: resume E4a's live half here (`RESUMPTION_FILE.md` E4a block in the work tree);
+(b) GEX44: first a scoped unit that ports the E1-E3 admission stack + E4a contract to GEX44 live; or
+(c) GEX44 with the sweep for cost-collapse run from the clone's tools instead of live.
+Budget: goal `cost-collapse` cap 69,774,423 declared 2026-10-08. What the E-units spent against it is not summed here; read
+it from the goal ledger, do not estimate.
+
+---
+
 ## D12 — EDD full-convergence mission: everything after P2-B-R (Owner, 2026-10-10)
 
 **Owner:** "put the rest of the mission in the backlog of claude power pack". Parked, not cancelled.
@@ -369,3 +416,41 @@ D-01..D-05 is `ROADMAP.md`. The execution log of record is `vault/specs/edd-comp
 - About 26M of the ~65M envelope is spent.
 
 **Activation criterion:** the Owner says to resume EDD. Then, in a fresh pane, read the RESUMPTION_FILE on GEX44 and start at item 1. Never run `/gsd-autonomous --ws edd`.
+
+---
+
+## D13 — dgl durable goal / disposable lease: W3-W8 (Owner, 2026-10-10)
+
+**Owner:** "put the rest of the mission in the backlog of claude power pack" (pane 42ce1ae6). Parked, not cancelled.
+(The two D12 headings above were written by two panes on the same day; this entry takes D13 to avoid a third.)
+
+**Where it lives:** worktree `C:\Users\User\Apps\pp-dgl`, branch `dgl/durable-goal-lease` (pushed to origin by the W1b
+worker, unprompted). Plan: `vault/plans/durable-goal-lease-2026-10-09.md` (d0c2077b). Chain: `vault/programs/dgl/chain.json`
++ `CHAIN.md` (unit table, authoring rule). Goal `dgl`, cap 17.0M, chain envelope 16.0M.
+
+**Sealed (head eaadf11f):**
+- W1 PARTIAL (read-only, design recorded), W1b DONE: ledger lease epochs, programme, lease_open CAS + idempotent
+  succession, lineage CLI; `tools/test_goal_lease.py` 10/10, 4 mutants killed.
+- W2 DONE: `modules/provider_routing/workspace_registry.py` (generation CAS, fenced settle), registry-first binding
+  precedence, cwd entry OBSERVE-only once the registry journal exists, closed-lease fence in the hooks;
+  `tools/test_workspace_lease.py` 10/10, 4 mutants killed, regressions 0/0. Nothing installed live yet (that is W5).
+- P3b-2 itself was run by main pane a5308810 (SRC PROVEN 294, P3B2_CHECK=PASS); see `vault/programs/dgl/D2-owner.md`.
+
+**Stopped where:** the chain refused W3 on envelope (`used 11,154,078 + need 5,100,000 > 16,000,000`, tick log
+`~/.claude/state/dgl-chain-tick.log`). Task `PP-DglChain-Tick` is **Disabled**. W3 packet + route are written and committed.
+
+**Remaining, in order** (rows in CHAIN.md):
+1. W3 — terminal reconciliation (TERMINAL_PROVEN vs UNKNOWN_RESERVED) + atomic succession `tools/goal_succession.py`.
+2. W4 — predictive drain, SessionEnd wake, autopsy against binding records, crash matrix.
+3. W5 — install to the live tree (DEPLOY class; never touch `tools/gsd_mission.py` / `tools/mission_steward.py` while
+   ce-lifecycle-v3 has them dirty); re-point the tick to the live `tools/goal_chain.py`.
+4. W6 — P3b self-host: lineage rf-p3b (L1, immutable) -> rf-p3b2 (L2); reconcile c2ae4b5c's hold by measured transcript.
+5. W7 — VERIFY-ONLY of P3b-2 + lineage. 6. W8 — fresh-project canary, UKDL/CBR, retire the manual succession instructions.
+
+**Gaps found live, owned by W3-W5:** a held/parked mission reads as "running" to the chain for ever; packet missions
+without `done_check` stall on GSD NO_PHASES (bootstrap: `vault/programs/dgl/unit_done.py`, attached by the tick wrapper);
+the tick borrows `gsdx_chain.py` from `Apps\pp-gsdx-factory-2`; W2 left no workspace-claim CLI (W6 needs one).
+
+**Activation criterion:** the Owner raises the dgl budget. Units cost ~4-5M each (W1b 4.5M, W2 5.1M routes), so W3-W8 need
+roughly 20-25M more against 4.85M left; a raise needs `--owner` on a TTY (`mission_spend.py`). Then `Enable-ScheduledTask
+PP-DglChain-Tick`; the next tick arms W3. Read `vault/programs/dgl/RESUMPTION.md` in the worktree first.
