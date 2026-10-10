@@ -11,6 +11,12 @@ NEXT (exact): (1) in test_mission_steward.py make V-STEWARD-DUP-PASS-ONE-EFFECT 
 Decisions: R1 acts when owner verdict is not ALIVE/WAITING_HUMAN (UNKNOWN acts; settle is a watermark). R3 syntax: `successor:` line or JSON key.
 (The S1 PARTIAL note above is SUPERSEDED: every step in it is done; see ACTIVE below.)
 
+# PARKED (2026-10-10): Owner "put the rest of the mission in the backlog of claude power pack"
+The programme is in the PP backlog as `vault/plans/deferred-backlog.md` D15 (PP 1a933cba): done list, forecast (12.7M
+expected remaining), open debt, activation criterion. chain.json: AGMIN..PLAN-4 moved to `parked` (unarmed); the tick
+reports `complete` and keeps settling leases. Spent 8,817,916, open 0. RESUME = Owner says so; in a fresh pane move the
+`parked` units back into `units` in order. The ACTIVE section below is history up to 2026-10-09.
+
 # ACTIVE (2026-10-09 ~15:00): GSD X Reconstruction Factory, Master Plan v1 APPROVED (Owner "y")
 
 Plan: `vault/plans/gsdx-factory-master-plan.md` (68d21301). Envelope 40M, hard ceiling 55M, inside goal
