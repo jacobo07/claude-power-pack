@@ -927,7 +927,7 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-## D11 — Wii Sports Tennis reconstruction with Wii Motion OS integrated (Owner, 2026-10-08)
+## D21 — Wii Sports Tennis reconstruction with Wii Motion OS integrated (Owner, 2026-10-08) (was D11 on feature/knowledge-acquisition)
 
 **Goal:** reconstruct the Tennis of Wii Sports from `E:\wbfs\Wii Sports + Wii Sports Resort [SP2P01]\SP2P01.wbfs`
 (present, 1,549,795,328 bytes; the brackets in the folder name need `-LiteralPath` in PowerShell) into
@@ -984,7 +984,7 @@ per-game cost model needs both). Step 0 may run earlier, because it is zero-mode
 
 ---
 
-## D12 — cost-collapse / expected-completion admission: the rest of the mission (Owner, 2026-10-10)
+## D22 — cost-collapse / expected-completion admission: the rest of the mission (Owner, 2026-10-10) (was D12 on feature/knowledge-acquisition)
 
 **Goal:** finish the expected-completion admission program (`vault/specs/expected-completion-admission.md`, APPROVED)
 and continue cost-collapse T2 reconciliation -> T3-T7 (`vault/specs/cost-collapse.md`). Work tree
@@ -1043,7 +1043,7 @@ it from the goal ledger, do not estimate.
 
 ---
 
-## D12 — EDD full-convergence mission: everything after P2-B-R (Owner, 2026-10-10)
+## D23 — EDD full-convergence mission: everything after P2-B-R (Owner, 2026-10-10) (was D12 on feature/knowledge-acquisition)
 
 **Owner:** "put the rest of the mission in the backlog of claude power pack". Parked, not cancelled.
 
@@ -1096,10 +1096,10 @@ D-01..D-05 is `ROADMAP.md`. The execution log of record is `vault/specs/edd-comp
 
 ---
 
-## D13 — dgl durable goal / disposable lease: W3-W8 (Owner, 2026-10-10)
+## D24 — dgl durable goal / disposable lease: W3-W8 (Owner, 2026-10-10) (was D13 on feature/knowledge-acquisition)
 
 **Owner:** "put the rest of the mission in the backlog of claude power pack" (pane 42ce1ae6). Parked, not cancelled.
-(The two D12 headings above were written by two panes on the same day; this entry takes D13 to avoid a third.)
+(Was D13: two panes had both written a D12 the same day. Renumbered with the rest after merging main's D11-D20.)
 
 **Where it lives:** worktree `C:\Users\User\Apps\pp-dgl`, branch `dgl/durable-goal-lease` (pushed to origin by the W1b
 worker, unprompted). Plan: `vault/plans/durable-goal-lease-2026-10-09.md` (d0c2077b). Chain: `vault/programs/dgl/chain.json`
@@ -1134,7 +1134,7 @@ PP-DglChain-Tick`; the next tick arms W3. Read `vault/programs/dgl/RESUMPTION.md
 
 ---
 
-## D14 — goal budget admission (A1 containment): the rest of the mission (Owner, 2026-10-10)
+## D25 — goal budget admission (A1 containment): the rest of the mission (Owner, 2026-10-10) (was D14 on feature/knowledge-acquisition)
 
 **Goal:** the pre-call goal reservation that A1 lacked (`vault/specs/goal-budget-admission.md`, status done).
 Evidence and every number below: `vault/programs/cognitive-economy/gen2/evidence/goal-admission/CANARY.md`.
@@ -1145,9 +1145,9 @@ two panes + Agents, one reply each after the deny) 8259a97e. Capsule debt closed
 hookreg StopIteration 182fc46b. Gates at close: GOAL_PASS=58/58, HOOKREG_PASS=16/16 --live, ADMIT 12/12, ROUTE 33/33.
 
 **Remaining, in order:**
-1. **GEX44 has no goal admission.** Per D12 (2026-10-09) GEX44's live install has no session_budget_guard; spend there is
+1. **GEX44 has no goal admission.** Per D22 (2026-10-09) GEX44's live install has no session_budget_guard; spend there is
    UNKNOWN and fails closed only for a goal that lists hosts. Not re-verified here. Owner of the port: A3 U4
-   (`gen2/AMENDMENT-A3-2026-10-07.md`) / D12 option (b). Done = a GEX44 worker bound to a goal is admitted and settled in the
+   (`gen2/AMENDMENT-A3-2026-10-07.md`) / D22 option (b). Done = a GEX44 worker bound to a goal is admitted and settled in the
    laptop journal, and an unlisted host is refused.
 2. **agent-solo-guard is machine-global.** `~/.claude/hooks/agent-solo-guard.js` keys its in-flight tracker on the host, so
    an Agent in one session blocks Agents in unrelated sessions for 30 s (canary #4: a worker blocked twice, ended its turn
@@ -1172,7 +1172,7 @@ Owner declares the next goal for A1 or AO. Read CANARY.md's closing verdict firs
 
 ---
 
-## D15 — GSD X Reconstruction Factory (gsdx-factory-2): the rest of the programme (Owner, 2026-10-10)
+## D26 — GSD X Reconstruction Factory (gsdx-factory-2): the rest of the programme (Owner, 2026-10-10) (was D15 on feature/knowledge-acquisition)
 
 **Goal:** finish the Master Plan v1 (`vault/plans/gsdx-factory-master-plan.md` in the work tree, Owner "y" 2026-10-09:
 Part A + recon-factory through Phase 9, Full WSR excluded, envelope 40M / hard 55M inside the 100M ledger cap). Work
@@ -1188,7 +1188,7 @@ scheduled task PP-GsdxChain-Tick (every 15 min). Spent 8,817,916 measured, open 
 Each also waits on `C:\Users\User\Apps\pp-dgl\vault\programs\dgl\W5-receipt.md` and ce-lifecycle-v3 WU-INST2.
 
 **Not in the chain yet:** W5 GEX44 control-plane port (DEPLOY class: read the hard rules first; also resolves
-cost-collapse E4a2 as option (a), see D12 cost-collapse); W6 rows not mapped to a phase; W8 closeout = promote KNOWLEDGE
+cost-collapse E4a2 as option (a), see D22 cost-collapse); W6 rows not mapped to a phase; W8 closeout = promote KNOWLEDGE
 K1-K7 (`vault/specs/gsdx-factory/KNOWLEDGE.md`) to UKDL/CBR; Part B; Production Reality. Recon-factory phases are
 the Owner's CP50 track (C1 re-armed as m-4e2364edc538, goal cp50-c1b, in wt_cp50_c1); they are not gsdx units.
 

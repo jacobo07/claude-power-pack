@@ -2,7 +2,7 @@
 
 Status: APPROVED as amended by `evc-self-deflation-MASTER-PLAN-2026-10-10.md` (P50 41M, enforced stop 65M, which
 replaces the budget below; Owner reconfirmed 2026-10-10 evening). Backup of the inline plan; the chat is the approval surface.
-Adopts backlog D12 (`vault/plans/deferred-backlog.md` §D12 cost-collapse / expected-completion) and the `dgl` lease-epoch work;
+Adopts backlog D22 (`vault/plans/deferred-backlog.md` §D22 cost-collapse / expected-completion; was D12 before the renumbering) and the `dgl` lease-epoch work;
 creates no parallel engine.
 
 ## Reality delta (measured 2026-10-10 10:41 UTC from transcripts, deduped by message id, subagents included)
