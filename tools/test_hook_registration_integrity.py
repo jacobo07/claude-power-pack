@@ -149,6 +149,42 @@ def incident_transform(d: dict) -> dict:
     return d
 
 
+def canonical(base: dict, meta: dict) -> dict:
+    """The canonical registration set, rebuilt from the dispatcher's own table onto the REAL
+    settings schema. A registration whose own --event names a known chain that NO_EVENT_ROUTES
+    does not list (e.g. SessionStart-chain, which only ever routes by its explicit --event) keeps
+    that chain. Every other registration is rebuilt from the route for its (event, matcher), so a
+    routed chain is never trusted from disk. A bare next() here raised StopIteration on the live
+    registry, which carries SessionStart-chain (2026-10-10)."""
+    good = copy.deepcopy(base)
+    routed = {r["chain"] for r in meta["routes"]}
+    for ev, g, h in list(_dispatcher_hooks(good)):
+        m = g.get("matcher")
+        own = [a.split("=", 1)[1] for a in argv_of(h) if a.startswith("--event=")]
+        if own and own[0] in meta["chains"] and own[0] not in routed:
+            chain = own[0]
+        else:
+            r = next((r for r in meta["routes"] if r["hook"] == ev and
+                      (r["tools"] is None) == (not m or m == "*") and
+                      (r["tools"] is None or set(r["tools"]) == set(str(m).split("|")))), None)
+            chain = r["chain"] if r else None
+        if chain is None:
+            continue   # left as found: judge() names it (no --event), the gate goes red, nothing crashes
+        h["command"] = NODE.replace("\\", "/")
+        # The registration target is the LIVE dispatcher path, independent of HOOKREG_DISPATCHER
+        # (which only swaps the implementation the runtime drills execute).
+        h["args"] = [str(Path.home() / ".claude" / "hooks" / "hook-dispatcher.js").replace("\\", "/"),
+                     f"--event={chain}"]
+    for ev, groups in good["hooks"].items():
+        for gg in groups:
+            for h in gg["hooks"]:
+                for (rev, script), tail in REQUIRED_TAILS.items():
+                    if ev == rev and script in " ".join(argv_of(h)) and tail not in argv_of(h):
+                        h.setdefault("args", [])
+                        h["args"].append(tail)
+    return good
+
+
 def mutate(d: dict, fn) -> dict:
     d = copy.deepcopy(d)
     fn(d)
@@ -171,25 +207,34 @@ def main() -> int:
     if not live_only:
         # Positive control: the canonical registration set, rebuilt from the dispatcher's own
         # table onto the REAL settings schema, must pass. Built, not trusted from disk.
-        good = copy.deepcopy(base)
-        for ev, g, h in list(_dispatcher_hooks(good)):
-            r = next(r for r in meta["routes"] if r["hook"] == ev and
-                     (r["tools"] is None) == (not g.get("matcher") or g.get("matcher") == "*") and
-                     (r["tools"] is None or set(r["tools"]) == set(str(g.get("matcher")).split("|"))))
-            h["command"] = NODE.replace("\\", "/")
-            # The registration target is the LIVE dispatcher path, independent of HOOKREG_DISPATCHER
-            # (which only swaps the implementation the runtime drills execute).
-            h["args"] = [str(Path.home() / ".claude" / "hooks" / "hook-dispatcher.js").replace("\\", "/"),
-                         f"--event={r['chain']}"]
-        for ev, groups in good["hooks"].items():
-            for gg in groups:
-                for h in gg["hooks"]:
-                    for (rev, script), tail in REQUIRED_TAILS.items():
-                        if ev == rev and script in " ".join(argv_of(h)) and tail not in argv_of(h):
-                            h.setdefault("args", [])
-                            h["args"].append(tail)
+        good = canonical(base, meta)
         v = judge(good, meta)
         (_ok if not v else _fail)("V-HOOKREG-KNOWN-GOOD", "canonical set passes" if not v else "; ".join(v))
+        # Regression (2026-10-10): a registration that routes only by its explicit --event (a chain the
+        # dispatcher knows but NO_EVENT_ROUTES does not list) crashed the builder with StopIteration.
+        # The drill chain must be the live shape: its event has NO matcher-free route, so no fallback
+        # can stand in for it (review 2026-10-10: PostToolUse-Bash-chain under PostToolUse matched
+        # the PostToolUse-default route, its own chain was overwritten, and the gate passed vacuously).
+        free = {r["hook"] for r in meta["routes"] if r["tools"] is None}
+        unrouted = sorted(c for c in set(meta["chains"]) - {r["chain"] for r in meta["routes"]}
+                          if c.split("-")[0] not in free)
+        if not unrouted:
+            _fail("V-HOOKREG-UNROUTED-EVENT", "the dispatcher lists no unrouted chain on an event without a fallback")
+        else:
+            doc = copy.deepcopy(base)
+            ch = unrouted[0]
+            doc["hooks"].setdefault(ch.split("-")[0], []).append({"hooks": [{"type": "command", "command": NODE,
+                "args": [str(Path.home() / ".claude" / "hooks" / "hook-dispatcher.js"), f"--event={ch}"]}]})
+            try:
+                built = canonical(doc, meta)
+                kept = any(f"--event={ch}" in argv_of(h) for _, _, h in _dispatcher_hooks(built))
+                vv = [x for x in judge(built, meta) if ch in x]
+                (_ok if kept and not vv else _fail)(
+                    "V-HOOKREG-UNROUTED-EVENT",
+                    f"{ch} kept its own --event, judged valid" if kept and not vv
+                    else f"--event={ch} kept={kept}; {'; '.join(vv) or 'no violation'}")
+            except StopIteration:
+                _fail("V-HOOKREG-UNROUTED-EVENT", f"builder crashed on {ch} (StopIteration)")
         n_disp = sum(1 for _ in _dispatcher_hooks(good))
         (_ok if n_disp >= 6 else _fail)("V-HOOKREG-POPULATION-FLOOR", f"{n_disp} dispatcher registrations found (floor 6)")
 
