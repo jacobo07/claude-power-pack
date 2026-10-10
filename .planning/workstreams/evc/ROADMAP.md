@@ -25,7 +25,9 @@ c5f22af9, W2 closed-lease fence 31f9b5f4 in `hooks/lib/goal_binding.js`), `tools
   Do NOT lift these budgets. Product continuation of Clock A / intent-order is OUT of scope until boundary 2.
 
 ## Operating constraints (every phase)
-- Work tree: `C:\Users\User\Apps\pp-evc`, branch `evc/main` (from 88af526e). All development and tests here.
+- Work tree (epoch 2+): `C:\Users\User\.claude\skills\claude-power-pack\.claude\worktrees\evc`, branch `evc/e2` (from
+  evc/main e935c942). All development and tests here. Do NOT call EnterWorktree: this cwd is already under `.claude/worktrees/`.
+  The old work tree `C:\Users\User\Apps\pp-evc` (evc/main, epoch 1) is retired and read-only; never edit it.
 - Landing to live (`C:\Users\User\.claude\skills\claude-power-pack`, `feature/knowledge-acquisition`, shared with peer panes and
   Ralph missions, ~900 dirty paths that are NOT ours): only in Phase 9, by cherry-pick of evc commits, after a rollback tag
   `evc-pre-<phase>`; commit by explicit pathspec; verify `git log -1 --format=%s`. Never reset/clean/restore/stash/amend/force.
