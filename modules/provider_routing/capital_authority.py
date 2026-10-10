@@ -1,7 +1,7 @@
 """Owner Capital Authority (OCA): a capital packet is applied only on evidence that the OWNER typed the approval.
 
 The only authority is a transcript entry carrying the harness fields the model cannot author for itself:
-type=user, origin.kind=human, promptSource=typed, string content. An assistant line, a tool_result or a hook
+type=user, origin.kind=human, promptSource=typed|queued, string content. An assistant line, a tool_result or a hook
 injection never counts. Apply is bound to the packet's sha256, idempotent per (sha, goal), revalidated against the
 ledger at apply time, and written append-only to a capsule store.
 """
@@ -18,6 +18,8 @@ from pathlib import Path
 STATES = ("BOUND", "OWNER_APPROVED", "REVALIDATING", "APPLIED", "RECEIPTED", "RELEASED", "INVALIDATED",
           "REJECTED", "FAILED_SAFE", "REVOKED")
 DRIFT_ALLOWANCE = 500_000
+# "queued" = typed by the Owner while Stop hooks were still running (same as tools/fanout_ledger.py HUMAN).
+OWNER_PROMPT_SOURCES = ("typed", "queued")
 _NEG = re.compile(r"(?:\b(?:don't|dont|do not|not|never|can't|cannot|no)\b|n't\b)")
 _GOAL = r"[a-z0-9][a-z0-9._-]*"
 _TIER = r"p(?:50|80|95)"
@@ -76,7 +78,7 @@ def _text_of(entry: dict) -> str:
 def _is_owner_typed(e: dict) -> bool:
     c = (e.get("message") or {}).get("content")
     return (e.get("type") == "user" and (e.get("origin") or {}).get("kind") == "human"
-            and e.get("promptSource") == "typed" and isinstance(c, str) and not e.get("isMeta"))
+            and e.get("promptSource") in OWNER_PROMPT_SOURCES and isinstance(c, str) and not e.get("isMeta"))
 
 
 def find_owner_decisions(transcript_path, sha: str) -> list[dict]:
