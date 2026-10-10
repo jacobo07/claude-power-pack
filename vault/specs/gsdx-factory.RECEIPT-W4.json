@@ -1,0 +1,5 @@
+{"unit":"WU-W4","status":"DONE","done_gate":"tools/test_gsdx_reforecast.py rc 0 (failed on pre-state: tool absent)",
+"forecast_M":{"remaining":{"lower":5.06,"expected":12.72,"safety":22.05},"total":{"lower":13.69,"expected":21.35,"safety":30.68},"used":8.634},
+"delta_vs_PLAN-2_expected_total_18.6M_pct":14.793726,"iterate":false,"owner_needed":false,
+"note":"chain units pending W4+PLAN-3 at 0.35 x targets; plan lines GEX44/PartA/unmapped/reserves; recon, W3 residual, W5/W7 count 0. previous forecast.json absent, baseline = PLAN-2 receipt 18.6M. Safety lower factor 0.5x chain is my assumption.",
+"forecast":"vault/specs/gsdx-factory/forecast.json"}

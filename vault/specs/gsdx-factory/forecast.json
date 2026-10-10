@@ -1,0 +1,50 @@
+{
+ "used": 8634133,
+ "chain": {
+  "pending": [
+   "W4",
+   "PLAN-3"
+  ],
+  "route_targets": 2050000,
+  "factor": 0.35
+ },
+ "plan_lines_M": {
+  "GEX44 port": [
+   1.0,
+   0.5,
+   2.0
+  ],
+  "Part A residual": [
+   2.5,
+   1.2,
+   4.5
+  ],
+  "rows not mapped to a phase": [
+   2.0,
+   0.5,
+   3.0
+  ],
+  "reserves+control (PLAN-2 basis)": [
+   6.5,
+   2.5,
+   10.5
+  ]
+ },
+ "not_counted": "recon P2/P3/CP50/P8/P9 (gen3 track), W3 residual (dgl/ce-lifecycle-v3), W5/W7: 0 here",
+ "remaining": {
+  "expected": 12717500.0,
+  "lower": 5058750.0,
+  "safety": 22050000.0
+ },
+ "total": {
+  "expected": 21351633.0,
+  "lower": 13692883.0,
+  "safety": 30684133.0
+ },
+ "previous_expected": 18600000,
+ "delta_pct": 14.793726,
+ "iterate": false,
+ "owner_needed": false,
+ "safety_over_envelope": false,
+ "envelope": 40000000
+}
