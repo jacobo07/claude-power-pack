@@ -305,6 +305,17 @@ class GoalLedger(SpendLedger):
             g = self._sweep_leaks(recs)
             if g["cap"] is None:
                 return self._summary(g, ok=False, reason="no cap declared for this goal")
+            # Idempotent renew. Parallel tool calls run the guard concurrently from one stale cache, so
+            # N calls asked for N renews, each closing the lease the previous one had just reserved at the
+            # same measured value (canary #1 journal rows 39-46). Nothing new to settle and an open lease
+            # that still covers the next request: hand that lease back, write nothing.
+            if measured <= g["marks"].get(sid, 0):
+                held = [(rid, r) for rid, r in g["res"].items()
+                        if r["sid"] == sid and r.get("kind") == "lease" and r["state"] == RESERVED]
+                if len(held) == 1 and measured - int(held[0][1].get("base", 0)) + per_call <= held[0][1]["amount"]:
+                    rid, r = held[0]
+                    return self._summary(g, ok=True, reason="", reused=True,
+                                         lease={"id": rid, "amount": r["amount"], "base": int(r.get("base", 0))})
             mark = max(g["marks"].get(sid, 0), measured)
             closes = sorted(rid for rid, r in g["res"].items()
                             if r["sid"] == sid and r["state"] in (RESERVED, LEAKED)

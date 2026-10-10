@@ -487,6 +487,41 @@ def g_unflushed():
         e.close()
 
 
+def g_churn():
+    # Canary #1 journal rows 39-46: parallel tool calls each renewed at the same measured value, each
+    # renew closing the lease its sibling had just reserved, one python spawn apiece.
+    e = Env()
+    try:
+        declare("ch", 100_000)
+        led = GoalLedger(ms.goal_root() / "ch", "ch")
+        a = led.renew("p", 1000, 500, per_call=100)
+        rows = len(led._read())
+        b = led.renew("p", 1000, 500, per_call=100)
+        check("V-GOAL-RENEW-IDEMPOTENT", b["ok"] and b.get("reused") and b["lease"] == a["lease"]
+              and len(led._read()) == rows,
+              f"a repeat renew at the same measured hands back {b.get('lease')}, journal rows {rows} -> {len(led._read())}")
+        c = led.renew("p", 1450, 500, per_call=100)
+        check("V-GOAL-RENEW-IDEMPOTENT-CONTROL", c["ok"] and not c.get("reused") and c["lease"]["id"] != a["lease"]["id"],
+              f"spend past the lease still settles and renews: {c['lease']}")
+
+        # Guard: a lease already open in the journal (as a sibling racer just reserved it) is adopted
+        # without a python spawn. PYTHON_BIN points nowhere, so any spawn becomes an UNKNOWN deny.
+        work = e.root / "work"
+        work.mkdir()
+        declare("chg", 100_000, roots=[str(work)])
+        tx = e.root / "t.jsonl"
+        tx.write_text(row("m1", 100), encoding="utf-8")
+        GoalLedger(ms.goal_root() / "chg", "chg").renew("racer", 100, 1000, per_call=100)
+        dec, why = run_guard(e, "racer", tx, work, PYTHON_BIN=str(e.root / "no-python.exe"))
+        check("V-GOAL-GUARD-ADOPTS-JOURNAL-LEASE", dec is None,
+              f"an open journal lease is adopted with no spawn: {dec} {why[:80]}")
+        dec, why = run_guard(e, "no-lease", tx, work, PYTHON_BIN=str(e.root / "no-python.exe"))
+        check("V-GOAL-GUARD-ADOPTS-CONTROL", dec == "deny" and "did not answer" in why,
+              f"without an open lease the guard does spawn (and here fails closed): {why[:80]}")
+    finally:
+        e.close()
+
+
 def g_dispatch_wiring():
     text = DISPATCHER.read_text(encoding="utf-8")
     check("V-GOAL-AGENT-LANE",
@@ -497,7 +532,7 @@ def g_dispatch_wiring():
 
 def main():
     for g in (g_cap_journal, g_race, g_settle_and_resume, g_cross_account, g_crash_and_leak, g_spawn,
-              g_headroom, g_raise, g_host_and_roots, g_review_fixes, g_guard, g_unflushed, g_dispatch_wiring):
+              g_headroom, g_raise, g_host_and_roots, g_review_fixes, g_guard, g_unflushed, g_churn, g_dispatch_wiring):
         try:
             g()
         except Exception as ex:   # a crashed gate is a FAIL with its reason, never a skipped one

@@ -211,23 +211,25 @@ function touchesGoalState(event) {
   return GOAL_STATE.test(String(ti.command || '') + ' ' + String(ti.file_path || '') + ' ' + String(ti.path || ''));
 }
 
-// A cached lease is admitted only while the journal still holds it OPEN: its id appears exactly once
-// (the reserve row; a settle or leak names it again) and that row carries the same amount and base.
-// The local state file is a cache, never the authority (review H1a: a forged {amount: 1e15}).
-function leaseOpenInJournal(goal, lease) {
-  if (!lease || typeof lease.id !== 'string') return false;
+// This sid's OPEN lease, read from the journal: a lease reserve not yet named by a settle's `closes`
+// or by a leak. Exactly one, or null. The journal is the authority and the local state file never
+// is (review H1a: a forged {amount: 1e15} matches nothing here). Reading it instead of trusting the
+// cache also stops renewal churn: parallel tool calls run this guard concurrently from one stale
+// cache, and each used to spawn goal-renew and close the lease its sibling had just reserved
+// (canary #1 journal rows 39-46). A racer now adopts that lease.
+function journalLease(goal, sid) {
   let text;
-  try { text = fs.readFileSync(path.join(stateDir(), 'goal-budget', goal, 'spend.journal.jsonl'), 'utf8'); } catch (e) { return false; }
-  const needle = JSON.stringify(lease.id);
-  const first = text.indexOf(needle);
-  if (first < 0 || text.indexOf(needle, first + needle.length) >= 0) return false;
-  const start = text.lastIndexOf('\n', first) + 1;
-  const end = text.indexOf('\n', first);
-  try {
-    const r = JSON.parse(text.slice(start, end < 0 ? undefined : end));
-    return r.op === 'reserve' && r.kind === 'lease' && r.id === lease.id &&
-      r.amount === lease.amount && r.base === lease.base;
-  } catch (e) { return false; }
+  try { text = fs.readFileSync(path.join(stateDir(), 'goal-budget', goal, 'spend.journal.jsonl'), 'utf8'); } catch (e) { return null; }
+  const open = new Map();
+  for (const line of text.split('\n')) {
+    if (!line || line.indexOf(sid) < 0) continue;   // a lease id embeds its sid, so closes rows pass too
+    let r;
+    try { r = JSON.parse(line); } catch (e) { continue; }
+    if (r.op === 'reserve' && r.kind === 'lease' && r.sid === sid) open.set(r.id, { id: r.id, amount: r.amount, base: r.base });
+    else if (r.op === 'settle' && Array.isArray(r.closes)) for (const id of r.closes) open.delete(id);
+    else if (r.op === 'leak') open.delete(r.id);
+  }
+  return open.size === 1 ? open.values().next().value : null;
 }
 
 function goalDeny(goal, reason) {
@@ -366,8 +368,9 @@ function decideGoal(event, sid, bind) {
   const base = ['--goal', goal, '--session', sid, '--per-call', String(next), '--measured', String(measured)];
   // Renew BEFORE the call whose next request would cross the lease: an admitted call is paid by the
   // request that follows it (`next`), so the lease must still hold that much.
+  if (!verdict) gs.lease = journalLease(goal, sid);
   const crossing = gs.lease && measured - gs.lease.base + next > gs.lease.amount;
-  if (!verdict && (!gs.lease || crossing || !leaseOpenInJournal(goal, gs.lease))) {
+  if (!verdict && (!gs.lease || crossing)) {
     const r = callGoal(['goal-renew', ...base]);
     if (r.failed) verdict = goalDeny(goal, `UNKNOWN: ${r.failed}.`);
     else if (!r.ok) {
