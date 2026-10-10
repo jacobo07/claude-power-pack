@@ -210,8 +210,60 @@ def g_successor(e):
     check("V-ECON-SUCCESSOR-ADMISSION", admit(e, "NEW7", "go", work) == {}, "the successor session's messages reach the model")
 
 
+SETTINGS = Path.home() / ".claude" / "settings.json"
+DISPATCHERS = [PP / "hooks" / "hook-dispatcher.js", Path.home() / ".claude" / "hooks" / "hook-dispatcher.js"]
+
+
+def ups_standalone_timeouts(settings: dict) -> list:
+    """Timeouts (s) of UserPromptSubmit entries that run econ_admission.js DIRECTLY (not via a dispatcher)."""
+    out = []
+    for grp in ((settings.get("hooks") or {}).get("UserPromptSubmit") or []):
+        for h in (grp.get("hooks") or []):
+            line = " ".join([str(h.get("command", ""))] + [str(a) for a in (h.get("args") or [])])
+            if "econ_admission.js" in line and "hook-dispatcher" not in line:
+                out.append(h.get("timeout"))
+    return out
+
+
+def chain_has_admission(src: str) -> bool:
+    """Is econ_admission.js a MEMBER of the dispatcher's UserPromptSubmit-chain (comments ignored)?"""
+    head = "'UserPromptSubmit-chain': ["
+    if head not in src:
+        return False
+    body = src.split(head, 1)[1].split("\n  ],", 1)[0]
+    return any("econ_admission.js" in ln for ln in body.splitlines() if not ln.strip().startswith("//"))
+
+
+def g_wiring(e):
+    # Incident 5e764b5a (2026-10-10): in-chain, admission shared the dispatcher's 15 s harness timeout with
+    # its cold start and the sequential critical lane; under RAM starvation the harness killed the chain
+    # (19,283 / 18,768 ms) and a killed hook fails OPEN -- two Owner messages reached a tombstoned pane's
+    # model. The gate must be its own entry with its own timeout, and must not also run in the chain.
+    pos_settings = {"hooks": {"UserPromptSubmit": [{"hooks": [{"command": "node", "args": ["x/econ_admission.js"], "timeout": 30}]}]}}
+    neg_settings = {"hooks": {"UserPromptSubmit": [{"hooks": [{"command": "node", "args": ["x/hook-dispatcher.js", "--event=UserPromptSubmit-chain"], "timeout": 15}]}]}}
+    pos_chain = "'UserPromptSubmit-chain': [\n    // econ_admission.js note\n    { script: '../hooks/econ_admission.js' },\n  ],"
+    neg_chain = "'UserPromptSubmit-chain': [\n    // econ_admission.js moved out\n    { script: './other.js' },\n  ],"
+    check("V-ECON-WIRING-DETECTORS-CONTROL",
+          ups_standalone_timeouts(pos_settings) == [30] and ups_standalone_timeouts(neg_settings) == []
+          and chain_has_admission(pos_chain) and not chain_has_admission(neg_chain),
+          "both detectors see the shape they look for and ignore dispatcher entries and comments")
+    try:
+        live = json.loads(SETTINGS.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as ex:
+        live = None
+        check("V-ECON-ADMISSION-STANDALONE", False, f"live settings.json unreadable: {ex!r}")
+    if live is not None:
+        t = ups_standalone_timeouts(live)
+        check("V-ECON-ADMISSION-STANDALONE", len(t) == 1 and isinstance(t[0], (int, float)) and t[0] >= 20,
+              f"direct UserPromptSubmit entries for econ_admission.js: timeouts {t} (need exactly one, >= 20 s)")
+    for d in DISPATCHERS:
+        src = d.read_text(encoding="utf-8") if d.exists() else None
+        check(f"V-ECON-ADMISSION-NOT-IN-CHAIN[{d.parent.parent.name}]", src is not None and not chain_has_admission(src),
+              f"{d}: " + ("missing" if src is None else "still a chain member (would run twice)" if chain_has_admission(src) else "not a chain member"))
+
+
 def main():
-    for g in (g_ledger, g_guard, g_admission, g_detach, g_successor):
+    for g in (g_ledger, g_guard, g_admission, g_detach, g_successor, g_wiring):
         e = tga.Env()
         try:
             g(e)
