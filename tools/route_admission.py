@@ -33,8 +33,9 @@ FLOORS_PATH = REPO_ROOT / "vault" / "config" / "route-floors.json"
 DEFAULT_GROWTH_MARGIN = 0.20
 TOP_LEVEL = "top-level-worker"
 ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "WATCHED", "DEFER", "RECOMPILE", "ESCALATE"
+NO_WORK = "NO_WORK"                               # A6: claim PROVEN at an unchanged dependency fingerprint
 LAUNCHABLE_VERDICTS = (ADMISSIBLE, WATCHED)       # the ONE definition of "may start a worker"; gsd_mission imports it
-KNOWN_VERDICTS = (ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE)   # every verdict this module can emit
+KNOWN_VERDICTS = (ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE, NO_WORK)   # every verdict this module can emit
 
 
 def load_floors(path: Path | str | None = None) -> dict:
@@ -92,6 +93,12 @@ def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
     """Judge `route` against its envelope. Raises ValueError on a malformed route (fail closed).
     `root` is the repo root that a profile's `requires` file is resolved against."""
     root = root or REPO_ROOT
+    if route.get("proof"):
+        import work_proof
+        pc = work_proof.check(route["proof"], root=root, ledger_path=route.get("proof_ledger"))
+        if pc["no_work"]:
+            return {"verdict": NO_WORK, "reasons": [pc["reason"]], "workers": [],
+                    "envelope": route.get("envelope"), "route_sha256": route_digest(route)}
     env = route.get("envelope") or {}
     target = _pos_int("envelope.target", env.get("target"))
     warn = _pos_int("envelope.warn", env.get("warn"))
