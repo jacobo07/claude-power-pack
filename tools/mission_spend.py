@@ -1011,7 +1011,34 @@ def _main(argv: list[str]) -> int:
                 print(autopsy_table(out), end="")
         elif a.cmd == "goal-renew":
             out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
+    for name in ("capital-apply", "capital-revoke"):         # OCA: Owner Capital Authority
+        cp = sub.add_parser(name)
+        cp.add_argument("--packet", required=True)
+        cp.add_argument("--transcript", required=True)
+        cp.add_argument("--goal", required=True)
+    sub.add_parser("capital-status")
+    sub.add_parser("capital-apply-pending")
         elif a.cmd == "goal-spawn":
+    if a.cmd.startswith("capital-"):
+        import sys as _sys
+        _repo = str(Path(__file__).resolve().parents[1])
+        if _repo not in _sys.path:
+            _sys.path.insert(0, _repo)
+        from modules.provider_routing import capital_authority as ca
+        try:
+            if a.cmd == "capital-status":
+                out = ca.status()
+            elif a.cmd == "capital-apply-pending":
+                res = ca.apply_pending(_goal_ledger)
+                out = {"ok": all(r["ok"] for r in res), "results": res}
+            else:
+                fn = ca.apply if a.cmd == "capital-apply" else ca.revoke
+                r = fn(a.packet, a.transcript, a.goal, _goal_ledger)
+                out = {k: v for k, v in r.items() if k != "row"}
+        except (OSError, ValueError, KeyError) as exc:      # a refusal is data, never a traceback
+            out = {"ok": False, "reason": f"{type(exc).__name__}: {exc}"[:300]}
+        print(json.dumps(out, sort_keys=True))
+        return 0 if out.get("ok") else 3
             out = goal_spawn(a.goal, a.session, a.estimate, a.per_call, a.host, a.measured)
         else:
             out = {**_goal_ledger(a.goal).status(), "binding": read_index().get(a.goal)}

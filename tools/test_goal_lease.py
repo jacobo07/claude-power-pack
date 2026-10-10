@@ -159,7 +159,11 @@ def _():
 @_gate("V-PROGRAMME-OWNER-ONLY")
 def _():
     led, state = _ledger()
-    assert led.set_programme(10 * M, "t", inside_agent=True)["ok"]       # first value: admitted
+    assert not led.set_programme(10 * M, "t", inside_agent=True)["ok"]   # OCA hole: first value, no cap to inherit
+    assert led.lineage()["programme"] is None
+    led.declare_cap(10 * M, "t")
+    assert not led.set_programme(11 * M, "t", inside_agent=True)["ok"]   # first value above the cap: refused
+    assert led.set_programme(10 * M, "t", inside_agent=True)["ok"]       # first value inside the cap: inherited
     assert not led.set_programme(20 * M, "t", inside_agent=True)["ok"]   # agent raise: refused
     assert led.set_programme(5 * M, "t", inside_agent=True)["ok"]        # lowering: admitted
     assert led.set_programme(20 * M, "t", inside_agent=False)["ok"]      # Owner raise
@@ -199,8 +203,9 @@ def _():
                            stdin=subprocess.DEVNULL)
         return p.returncode, (json.loads(p.stdout) if p.stdout.strip().startswith("{") else p.stdout)
 
-    assert run("goal-declare", "--goal", "g", "--cap", str(4 * M), "--source", "t")[0] == 0
-    assert run("goal-programme", "--goal", "g", "--value", str(10 * M), "--source", "t")[0] == 0
+    assert run("goal-declare", "--goal", "g", "--cap", str(10 * M), "--source", "t")[0] == 0
+    assert run("goal-programme", "--goal", "g", "--value", str(11 * M), "--source", "t")[0] == 3   # OCA hole: above cap
+    assert run("goal-programme", "--goal", "g", "--value", str(10 * M), "--source", "t")[0] == 0   # inherits the cap
     rc, out = run("goal-lease-open", "--goal", "g", "--succession-id", "s1", "--cap", str(4 * M),
                   "--prev-lease", "L1", "--proof", "100000", "--closeout", "100000", "--recovery", "100000")
     assert rc == 0 and out["lease"] == "L2", (rc, out)

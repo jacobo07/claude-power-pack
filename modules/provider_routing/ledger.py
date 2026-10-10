@@ -358,7 +358,8 @@ class GoalLedger(SpendLedger):
             raise LedgerError("programme must be a positive int")
         with self._lock:
             recs = self._read()
-            cur = self._gfold(recs)["programme"]
+            fold = self._gfold(recs)
+            cur = fold["programme"]
             if cur is not None and value > cur and inside_agent:
                 return {"ok": False, "goal": self.goal, "programme": cur,
                         "reason": "a programme raise needs the Owner's interactive confirmation (--owner)"}
@@ -383,6 +384,12 @@ class GoalLedger(SpendLedger):
             if done:
                 return {**self._lineage_view(g), "ok": True, "applied": False, "lease": done["id"], "reason": ""}
             latest = g["leases"][-1]
+            if cur is None and inside_agent and (fold["cap"] is None or value > fold["cap"]):
+                # OCA hole: a FIRST programme is authority too. An agent may only inherit authority that
+                # already exists (the goal's current cap); anything above needs the Owner.
+                return {"ok": False, "goal": self.goal, "programme": None,
+                        "reason": "AUTHORITY_REQUIRED: a first programme above the goal cap needs the Owner "
+                                  "(inside_agent may only inherit an existing cap)"}
             if prev_lease is not None and prev_lease != latest["id"]:
                 return {**self._lineage_view(g), "ok": False, "lease": latest["id"],
                         "reason": f"CAS: {prev_lease} is not the latest lease; {latest['id']} "

@@ -113,7 +113,33 @@ def _live_state(goal: str) -> tuple[list, int]:
     import mission_spend as ms  # noqa: E402
     led = ms._goal_ledger(goal)
     g = led._gfold(led._read())
-    return gm._scan()[0], int(g["used"])
+    return gm._scan()[0], int(g["total_used"])    # envelope arithmetic is lifetime spend, not the current lease's
+
+
+def _route_stop(path) -> int:
+    env = json.loads(Path(path).read_text(encoding="utf-8-sig"))["envelope"]
+    return int(env.get("stop") or env["target"])
+
+
+def _live_ledger(goal: str):
+    sys.path.insert(0, str(LIVE))
+    import mission_spend as ms  # noqa: E402
+    return ms._goal_ledger(goal)
+
+
+def _open_lease(led, goal: str, unit: dict) -> dict | None:
+    """OCA: with a programme on the ledger, each unit arms under its own lease (idempotent by goal:unit). Returns
+    None when there is no programme (behaviour unchanged) or the lease is open; a refusal row otherwise."""
+    g = led._gfold(led._read())
+    if g["programme"] is None:
+        return None
+    out = led.lease_open(succession_id=f"{goal}:{unit['id']}", cap=_route_stop(unit["route"]),
+                         prev_lease=g["leases"][-1]["id"])
+    if out.get("ok"):
+        return None
+    why = str(out.get("reason", ""))
+    return {"action": "refuse_authority" if why.startswith("AUTHORITY_REQUIRED") else "lease_refused",
+            "unit": unit["id"], "why": why[:300]}
 
 
 def _arm(chain: dict, u: dict) -> dict:
@@ -158,7 +184,7 @@ def _live_settle(goal: str, missions: list[dict], chain: dict) -> list[dict]:
     return done
 
 
-def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settler=None) -> dict:
+def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settler=None, ledger=None) -> dict:
     if os.environ.get("CPP_GSDX_CHAIN", "").lower() == "off":
         return {"action": "off"}
     chain = json.loads(chain_path.read_text(encoding="utf-8-sig"))
@@ -171,7 +197,12 @@ def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settle
         row["settled"] = settled
     if row["action"] == "arm" and not dry_run:
         unit = next(u for u in chain["units"] if u["id"] == row["unit"])
-        row["armed"] = (armer or _arm)(chain, unit)
+        led = ledger if ledger is not None else (_live_ledger(chain["goal"]) if state is None else None)
+        refusal = _open_lease(led, chain["goal"], unit) if led is not None else None
+        if refusal:
+            row = refusal
+        else:
+            row["armed"] = (armer or _arm)(chain, unit)
     row.update({"at": time.time(), "goal": chain["goal"], "used": used, "dry_run": dry_run})
     log = Path.home() / ".claude" / "state" / "gsdx-chain.jsonl"
     if not dry_run and state is None:
