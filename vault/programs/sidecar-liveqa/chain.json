@@ -1,0 +1,14 @@
+{
+  "goal": "sidecar-liveqa",
+  "enabled": false,
+  "parked": true,
+  "parked_reason": "Stage B decides (autonomy plan S10); io-liveqa is read-only for the autonomy programme. Converted from io-liveqa vault/sidecar/live-qa/programme-queue.json (pending/partial items B-P3, B-P4, B-park, A-experiments). Per-unit packets and the route do not exist yet (route.unset.json is deliberately absent): Stage B must compile them before enabling.",
+  "root": "C:\\Users\\User\\Apps\\io-liveqa",
+  "envelope": 40000000,
+  "units": [
+    {"id": "B-P3", "packet": "C:\\Users\\User\\Apps\\io-liveqa\\vault\\sidecar\\live-qa\\wu\\P-UCDA\\WU-PROGRAMME.md", "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\sidecar-liveqa\\route.unset.json", "receipt": "C:\\Users\\User\\Apps\\io-liveqa\\vault\\sidecar\\live-qa\\wu\\B-P3\\WU-B-P3-receipt.md", "after": null},
+    {"id": "B-P4", "packet": "C:\\Users\\User\\Apps\\io-liveqa\\vault\\sidecar\\live-qa\\wu\\B-P4\\WU-B-P4.md", "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\sidecar-liveqa\\route.unset.json", "receipt": "C:\\Users\\User\\Apps\\io-liveqa\\vault\\sidecar\\live-qa\\wu\\B-P4\\WU-B-P4-receipt.md", "after": "B-P3"},
+    {"id": "B-park", "packet": "C:\\Users\\User\\Apps\\io-liveqa\\vault\\sidecar\\live-qa\\wu\\B-park\\WU-B-park.md", "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\sidecar-liveqa\\route.unset.json", "receipt": "C:\\Users\\User\\Apps\\io-liveqa\\vault\\sidecar\\live-qa\\wu\\B-park\\WU-B-park-receipt.md", "after": "B-P4"},
+    {"id": "A-experiments", "packet": "C:\\Users\\User\\Apps\\io-liveqa\\vault\\sidecar\\live-qa\\wu\\A-experiments\\WU-A-experiments.md", "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\sidecar-liveqa\\route.unset.json", "receipt": "C:\\Users\\User\\Apps\\io-liveqa\\vault\\sidecar\\live-qa\\wu\\A-experiments\\WU-A-experiments-receipt.md", "after": "B-park"}
+  ]
+}

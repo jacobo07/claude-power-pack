@@ -104,6 +104,32 @@ def _residual(chain: dict, u: dict, ms: list[dict], by_packet: dict, status=None
         route = ladder[min(idx + 1 + n + (1 if repeated else 0), len(ladder) - 1)]
     return {"action": "arm", **base, "residual": n + 1, "packet": str(res), "route": route,
             "after_mission": latest["mission_id"]}
+n
+def is_parked(m: dict) -> bool:
+    """A non-terminal mission that is held/parked by its owner (PREPARED + owner_hold, or state PARKED/HELD) is not running:
+    it holds the programme root but does no work, so reading it as 'running' hides a stuck chain (dgl gap)."""
+    if m.get("state") in TERMINAL:
+        return False
+    return m.get("state") in {"PARKED", "HELD"} or bool(m.get("parked")) or \
+        (m.get("state") == "PREPARED" and bool(m.get("owner_hold")))
+
+
+def insert_continuation(chain_path: Path, after_id: str, new_unit: dict) -> dict:
+    """Insert a continuation unit immediately after `after_id`: new_unit.after = after_id, and every unit that was
+    chained after `after_id` is re-pointed at the new unit, so the successor waits for the continuation."""
+    chain = json.loads(chain_path.read_text(encoding="utf-8-sig"))
+    units = chain["units"]
+    ids = [u["id"] for u in units]
+    if after_id not in ids:
+        raise ValueError(f"unknown unit {after_id}")
+    if new_unit["id"] in ids:
+        raise ValueError(f"duplicate unit {new_unit['id']}")
+    for u in units:
+        if u.get("after") == after_id:
+            u["after"] = new_unit["id"]
+    units.insert(ids.index(after_id) + 1, dict(new_unit, after=after_id))
+    chain_path.write_text(json.dumps(chain, indent=2), encoding="utf-8")
+    return chain
 
 
 # ---- APR-2: machine seal, false-DONE refusal, residual classes -------------------------------------------------
@@ -323,6 +349,10 @@ def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> d
         if refused:   # a failed arm leaves a held record: surface it, never read it as "running"
             return {"action": "arm_refused", "unit": u["id"], "mission_id": refused[0]["mission_id"],
                     "why": refused[0]["owner_hold"]["reason"][:300]}
+        parked = [m for m in ms if is_parked(m)]
+        if parked and len(parked) == len([m for m in ms if m.get("state") not in TERMINAL]):
+            return {"action": "held", "unit": u["id"], "mission_id": parked[0]["mission_id"],
+                    "why": str((parked[0].get("owner_hold") or {}).get("reason", "parked"))[:300]}
         if any(m.get("state") not in TERMINAL for m in ms):
             return {"action": "running", "unit": u["id"]}
         if ms:
@@ -543,6 +573,8 @@ def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settle
     if os.environ.get("CPP_GSDX_CHAIN", "").lower() == "off":
         return {"action": "off"}
     chain = json.loads(chain_path.read_text(encoding="utf-8-sig"))
+    if chain.get("enabled") is False or chain.get("parked"):   # parked chain: arms nothing, reads no live state
+        return {"action": "parked", "goal": chain.get("goal"), "why": str(chain.get("parked_reason", "enabled=false"))[:200]}
     kw = dict(dry_run=dry_run, state=state, armer=armer, settler=settler, ledger=ledger, gate_runner=gate_runner, git=git,
               trigger=trigger, measured=measured, history=history, alerter=alerter, now=now)
     if dry_run:

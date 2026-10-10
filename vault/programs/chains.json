@@ -1,0 +1,8 @@
+{
+  "chains": [
+    {"name": "autonomy-convergence", "chain": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\chain.json", "enabled": true},
+    {"name": "gsdx-factory", "chain": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory\\chain.json", "enabled": false},
+    {"name": "dgl", "chain": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\chain.json", "enabled": false},
+    {"name": "sidecar-liveqa", "chain": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\sidecar-liveqa\\chain.json", "enabled": false}
+  ]
+}
