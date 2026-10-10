@@ -39,6 +39,7 @@
    "receipt": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\W6-receipt.md",
    "wait": ["C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\W6.md", "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\route-W6.json"]},
   {"id": "W7", "after": "W6", "cwd": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home",
+   "note": "VERIFY-ONLY since 2026-10-10 (Owner): P3b-2 already ran (PROVEN 5 -> 294, P3B2_CHECK=PASS, job ksrmb-20261009-214006). No send, no promote. See CHAIN.md W7 row and D2-owner.md",
    "packet": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\W7.md",
    "route": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\route-W7.json",
    "receipt": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\W7-receipt.md",
