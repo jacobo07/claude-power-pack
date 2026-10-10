@@ -262,6 +262,671 @@ Decisions on the two drifts, neither applied:
 
 ---
 
+# Added 2026-10-10 — GSD X Reconstruction Fabric deferred program
+
+## D11 — REA as Reconstruction Evidence Fabric / Static Oracle substrate
+
+**State:** architectural program defined in session; not yet implemented or benchmarked against the live Reconstruction Factory. REA is treated as a donor/provider layer, not as a new reconstruction owner.
+
+**Why deferred:** this is a multi-phase substrate change touching evidence identity, oracle abstraction, proof, Wii/PPC admission and cross-title analysis. It should not interrupt active reconstruction work until a bounded canary proves concrete ROI.
+
+**Activation criterion:** run a read-only WSR DOL canary against current REA + available Ghidra/Hopper path. Continue only if binary/load truth and evidence quality are good enough to preserve or improve current DTK/compiler/objdiff authority.
+
+**Deferred scope (complete):**
+- Keep ownership boundaries explicit: GSD X/KEOS govern; Reconstruction Fabric/Mission Compiler decides; `decomp` remains capability engine; REA sits behind a Static Oracle/Evidence adapter rather than becoming a fourth pipeline.
+- Build a canonical Reconstruction IR spanning functions, basic blocks, calls, globals, strings, relocations, types, vtables, TU/object identity, compiler facts, semantic hypotheses, runtime observations and proof. Preserve provider/version, binary hash, analysis profile, evidence identity, provenance, truth status and invalidation dependencies.
+- Add explicit Multi-Oracle Consensus without silent fallback. Ghidra/Hopper/DTK/compiler/runtime disagreement creates a contradiction object; agreement is weighted by lineage so derived evidence is not double-counted as independent.
+- Add dependency fingerprints to evidence and incremental invalidation. Reuse remains valid only while binary/toolchain/provider/type/runtime assumptions remain valid; invalidate only the affected closure.
+- Introduce typed reconstruction unknowns such as TYPE, COMPILER_BEHAVIOR, SEMANTIC_ROLE, RUNTIME_EFFECT, HOMOLOGY, SOURCE_SHAPE, OWNERSHIP, INTERFACE and PROOF_AUTHORITY, with repo-derived extension rather than a permanently closed enum.
+- Wii/PPC admission gate: verify DOL/REL, Broadway PPC big-endian, section/load/BSS truth, entrypoint, relocations/import/module relations, functions, assembly, xrefs, callers/callees, pseudocode and reproducibility before trusting the substrate.
+- If the canary passes, create a Wii/Broadway PPC evidence-backed profile/overlay for DOL/REL, ABI/compiler/runtime facts. Do not encode folklore as fact; only evidence-backed RVL SDK/RFL/NW4R/EGG/CodeWarrior knowledge enters.
+- Build Cross-Binary Entity Alignment / Cross-Title Homology over Reconstruction IR for WSR ↔ Wii Sports and later titles/builds. Classify EXACT, RELOCATED, NEAR, STRUCTURAL, FAMILY and NOVEL across functions plus types/vtables/globals/TUs/strings/call neighborhoods.
+- Add Differential Evidence / Differential Dossiers so homologous entities materialize only the delta, retained/common facts and compatible source transformations rather than two full dossiers.
+- Adopt retained Evidence as the durable object and reconstruction-specific projections as the model-facing unit: triage, type, compiler, homology, runtime and proof projections. Full-read admission gate prefers facet/range/symbol/projection/query before whole evidence materialization.
+- Evolve REA-style Reconstruction Obligation Ledger into a live Proof Graph/runtime state: claims, owners, dependencies, proof requirements, evidence, unknowns, contradictions, dispositions and completion level. New evidence may close, weaken, invalidate or unlock obligations.
+- Keep fail-closed truth levels separate: IDENTIFIED, STRUCTURALLY_SUPPORTED, SEMANTICALLY_SUPPORTED, BUILD_PROVEN, BINARY_MATCHED, RUNTIME_PROVEN, HARDWARE_PROVEN, EXPERIENCE_PROVEN or evidence-equivalent repo-derived states. UNKNOWN/PARTIAL/CONTRADICTION never imply PASS.
+- Make compiler, mwcceppc and objdiff first-class Evidence producers. Exact match is strong build proof; mismatch is also structured evidence with fingerprint, location, distance, candidate context and prior repair history.
+- Make Negative Evidence first-class and persist reconstruction search trees: non-compiling candidates, mismatch classes, falsified hypotheses, non-applicable families, discarded branches, distances, diagnoses and remaining frontier. Hard rule: do not retry an equivalent disproven branch under the same dependency state.
+- Every solved/matched entity checks for siblings/family opportunity. Family candidate path: detector -> template/candidate generation -> historical replay -> holdout/adversarial benchmark -> certification -> corpus scan -> exceptions only to reasoning.
+- Add Reconstruction Obligation Economics: expected cognition/context/compile/runtime/hardware cost, probability of success, unlock count, product relevance, reuse/institutional value and proof criticality. KEOS buys information by Expected Total Verified Cost + Information Gain + downstream unlock rather than task order.
+- Close static↔runtime loop with Active Runtime Questions and an Experiment Compiler. Static ambiguity should generate the cheapest discriminating experiment; GEX44/Dolphin returns structured evidence into the same graph.
+- Add Dolphin Runtime Evidence Adapter and retain Real Wii as higher authority where required. Never infer Wii PASS from Dolphin PASS.
+- Make Behavioral Evidence first-class beside assembly: input traces, state transitions, racket/ball response, timing and observable effects. Build toward causal evidence rather than correlations only.
+- Add Semantic ABI Mining / Interface Archaeology: discover and prove boundaries by inputs, outputs, state, ownership, timing, side effects, failure semantics and calling/memory contracts. Proven boundaries may allow internals to remain opaque.
+- Add provider-agnostic Context ABI and zero-transcript reconstruction. The institution remains stateful while processors remain replaceable/stateless; Context Compiler emits only mission/state/unknown/evidence/capability/proof/output-contract projections.
+- Prefer upstream REA vanilla/pinned initially. CONNECT -> MEASURE -> WRAP -> EXTEND. Fork/overlay only for a demonstrated Wii gap whose lifetime ROI beats upstream maintenance cost.
+
+**Done gate for activation:** same target, same proof and authority as current champion; evidence/context/tool-call/rediscovery cost must improve or a unique capability must be demonstrated. No REA integration is promoted merely because the API exists.
+
+---
+
+## D12 — ADCR-Reconstruction → Procedural Intelligence / Self-Compiling Reconstruction Institution
+
+**State:** conceptual design captured; no claim that these layers are connected or production-proven today.
+
+**Why deferred:** this is a second-order learning system. Building it before the evidence/procedure telemetry and benchmark corpus exist would create meta-architecture without measurable payback.
+
+**Activation criterion:** enough reconstruction traces exist to show at least one repeated Work Class where procedure reuse, model-boundary extinction or routing changes can be evaluated champion/challenger against the same proof target.
+
+**Deferred scope (complete):**
+- Split durable intelligence into Knowledge Memory (what is known) and Procedural Memory (how to resolve each class of uncertainty cheaply and reliably).
+- Add Reconstruction Work Recognition before reasoning. Candidate classes include FUNCTION_MATCH, FUNCTION_FAMILY_DISCOVERY, TYPE_RECOVERY, VTABLE_RECOVERY, HOMOLOGY_RESOLUTION, COMPILER_MISMATCH, SEMANTIC_ROLE_DISCOVERY, RUNTIME_DISCRIMINATION, SOURCE_OWNERSHIP_SEARCH, SEMANTIC_SEAM_DISCOVERY, INTERVENTION_PROOF, HARDWARE_VALIDATION and KNOWLEDGE_CONTRADICTION; final taxonomy must emerge from corpus evidence.
+- Build Delegation/Procedure Compiler from Work Phenotype + Evidence + available capabilities + current resource state + proof target. Known work should compile to the minimal procedure, not trigger generic planning.
+- Treat ADCR as the how-layer: GSD X retains persistent objective/meta-control; KEOS allocates resources; decomp executes reconstruction capabilities; REA/other oracles observe; Proof Graph establishes why success is believed; CBR propagates maturity.
+- Create Reconstruction Procedure Genome recording phenotype, preconditions, evidence signature, applicable capabilities, execution trace, actual reasoning boundaries, proof path, economic profile, failure envelope, transfer scope and outcome.
+- Add Procedural Homology so differently named Work Classes can share the same abstract strategy when their causal structure is equivalent.
+- Create structured Procedure IR; Markdown is a human view, not authority. Procedures must carry identity/version/owner, applicability, preconditions, execution strategy, verification contract, failure semantics, provenance/confidence, dependencies and supersession.
+- Learn conditional policies rather than one global procedure. Example TYPE_RECOVERY may route to global type solver, local solve, cross-title alignment or runtime discrimination depending on fan-out/evidence/oracle cost.
+- Add Procedure E-Graph for semantically equivalent paths and Procedure Economics for expected success, tokens/context, compile/runtime/proof cost, repair probability, latency, human attention and future reuse.
+- Treat procedures as capital assets with acquisition cost, evidence, usage, success rate, avoided spend, maintenance, scope, confidence, depreciation and supersession. Detect Procedural Debt when repeated manual/LLM workflows should already be mechanized.
+- Procedure Mining: cluster repeated tool sequences, evidence patterns, decisions, failures, repairs and proof paths. Compile raw traces into candidate Procedure IR by causal contribution analysis, dead-step removal, deterministic sequence merge, guard/deopt extraction and proof contract.
+- Apply compiler-style optimization to procedures: dead procedure code elimination, partial evaluation, JIT, inlining, fusion/fission by semantic locality, batching, singleflight, caching and speculation only when measured to reduce total verified cost.
+- Automatic model-boundary compilation: DETERMINISTIC / MODEL_OPTIONAL / MODEL_REQUIRED / HUMAN_AUTHORITY. Mature classes should move MODEL_REQUIRED -> optional -> deterministic.
+- Learn Procedure Context Profiles and procedure-specific epoch lifetimes for UCVM/SSM. Working set, not mission age, should determine residency and semantic epoch rotation.
+- Give each procedure a proof recipe. Mutate/fuzz procedures with missing/stale/contradictory evidence, unavailable providers, wrong homologues and bad candidates. Correct response is deopt/abstain/escalate, never invented PASS.
+- Procedure maturity: OBSERVED -> REPEATABLE -> BENCHMARKED -> TRANSFER_PROVEN -> CERTIFIED -> CONSTITUTIVE, with DEPRECATE/RETIRE as real lifecycle states.
+- Store Negative Procedures and invalidation conditions. Known-bad routing patterns must be reusable knowledge, not forgotten anecdotes.
+- Build Procedural Causal Graph and Causal Credit Assignment so success credits only the evidence/procedure/capability steps that materially changed outcome, preventing accidental bureaucracy from being promoted.
+- Add counterfactual procedure replay, Procedural Regret and learned Procedure Selection Policy. Routing can eventually become rules/statistics/small classifiers/decision tables rather than a giant LLM call.
+- Formalize seven learning levels: Task, Procedure, Capability, Meta-Learning, Policy Learning, Capability Portfolio Learning and Architecture Learning. Evidence burden increases with blast radius; architecture changes require cross-campaign proof + rollback.
+- Evolutionary Reconstruction: champion/challenger procedures/capabilities/policies via historical replay, live shadow, canary, mutation, holdouts and transfer. Fitness is Pareto-constrained by correctness, proof, false seals, latency, tokens, compute, human attention, reuse and maintainability.
+- Preserve niches and Negative Transfer Memory. A PPC/CodeWarrior procedure does not become universal because it won locally.
+- Add Procedural Compositionality/Algebra and Procedure Synthesis from proven operations such as SEQUENCE, PARALLEL, RACE, RETRY, FALLBACK, DEOPT, GUARD, CACHE, SINGLEFLIGHT, BATCH, SPECULATE, PROVE and ABSTAIN; synthesized workflows require shadow/replay before use.
+- Production pain generates Autonomous Curriculum. GSD X should identify dominant reasoning tax, build the smallest challenger, replay/canary, measure, promote/reject, redrain and measure work disappeared.
+- Self-Improvement ROI Gate: expected lifetime saving must exceed CAPEX + maintenance + risk. RECURSIVE mode is triggered by measured repeated reasoning/failure/model-boundary/human-correction/context tax or flat learning curve, not by enthusiasm.
+- Prevent recursion runaway: no optimizer-of-optimizer chain without demonstrated downstream lift.
+- Constitutive Procedure Baseline becomes part of Reconstruction Birth. Campaigns inherit materialized defaults such as homology-before-novel, proof-of-non-work-before-work, type-dominator-before-leaf, compiler oracle before semantic escalation, runtime discrimination when static ambiguity remains, cheap solvers before frontier, consult negative evidence and prove only affected closure.
+- Measure Procedural Birth Advantage and Procedural Cold-Start Cost. New campaigns should increasingly begin with execution already compiled.
+- Support procedural rejuvenation mid-campaign with versioned/MVCC policy rollout; workers/results remain attributable to the procedure/capability/context versions that produced them.
+- Every Work Unit emits procedural telemetry: chosen route/procedure, alternatives rejected, expected vs actual cost, model boundaries, page faults, proof, deopt and human intervention.
+- Add selection telemetry/A-B across corpus. Promotion needs measured lift, not prose claims.
+- Redefine delegation: executors can be deterministic solver, cache, compiler, local model, frontier model, Dolphin, Wii or human. Multi-agent count is not an autonomy KPI.
+- Parentless procedural execution: typed receipts + state machine advance known work; only semantic faults wake general cognition.
+- Semantic interrupts become training examples. Measure Interrupt Extinction Rate and classify repeated interrupts as automation candidates.
+- Work Class Closure: once variants/failures/proof/context/procedure/deopt/benchmark are covered, default frontier use is forbidden unless contradiction reopens the class.
+- Expand Zero-Frontier Zones and eventually Zero-Procedure Zones where a fully dominated operation becomes a primitive/invariant.
+- Automatic abstraction-level selection/root-cause elevation: decide whether a repeated problem belongs at function, family, type, compiler, runtime, procedure, capability or architecture level; stop whack-a-mole.
+- Maintain Knowledge + Procedure twin: What Model + How Model evolve independently but cross-inform each other.
+- Build a Factory Twin / Counterfactual Factory for replay/simulation of policies, resources, queueing, cost, proof and failure before changing production routing.
+- Conceptual markets for Procedure/Capability/Knowledge/Proof selection all share one KEOS/Cognitive Economics objective: Minimum Total Verified Cost under hard proof/correctness constraints.
+- UCR-CIF Construction Return must capture facts, capabilities, procedures, procedure failures, routing improvements, context profiles, proof recipes and architecture lessons, not just summaries.
+- Hard institutional rule: no procedural experience counts as capital until it changes future execution measurably.
+- Extreme transfer tests: fresh agent, fresh institution, provider swap, new title, later new architecture and cross-domain applicability. Known-work performance should not collapse because a particular model process disappeared.
+- North Stars: Reconstruction Procedural Deflation; Procedural Novelty Concentration; Interrupt Extinction Rate; Work Class Closure; Knowledge Escape Velocity + Procedural Escape Velocity.
+- Constitutional pressure laws: repeated reasoning -> procedure; repeated procedure -> capability; repeated capability composition -> architecture compilation; every improvement must prove future execution lift; ultimate delegation means known work stops requiring general intelligence.
+
+**Done gate for activation:** at least one comparable Work Class demonstrates lower verified cost in generation N+1 with equal-or-better proof and no increase in false seals. No increase in playbook/skill count counts as success by itself.
+
+---
+
+## D13 — Universal Modder X as Intervention + Experimental Reality Plane
+
+**State:** Universal Modder audited as a useful donor corpus/runtime concept. Current repo remains external; no decision to install it globally or place `um` in the active WSR critical path.
+
+**Why deferred:** its highest-value contribution is not another reverse-engineering layer but actuation, route selection, experimental reality, safe mutation and real-world verification. This should be built only after ownership boundaries with REA/Proof/KEOS are explicit.
+
+**Activation criterion:** choose one KSR/WSR target where a reversible intervention/experiment can close a real uncertainty or prove a vertical slice faster than static reconstruction alone. Run it as a bounded adapter/canary, not as a global plugin install.
+
+**Deferred scope (complete):**
+- Treat Universal Modder X as Intervention & Experimental Reality Plane, complementing REA. REA observes; Intervention Runtime mutates/experiments; Reconstruction Fabric decides; ADCR learns; KEOS allocates; CBR ratchets.
+- Build Universal Intervention Runtime: given Desired Behavioral Delta, safely realize the cheapest proven intervention against an executable system through configuration/data/retail interface reuse/adapter/relink/patch/rebuilt subsystem/semantic transplant/runtime replacement/minimal source ownership/residual reconstruction/full source as justified.
+- Add Route Compiler + Route Drift Detector. Compare routes using Expected Total Verified Cost, blast radius, source ownership, proof availability, reversibility, latency, reuse and risk. Recompile route when new evidence changes dominance; never continue because of sunk cost.
+- Convert Safe Lab into Transactional Intervention: target identity, original state/snapshot, affected artifacts, expected/allowed effects and rollback contract before mutation; mutate -> observe -> prove -> commit/rollback.
+- Create an Actuation Plane with adapters such as compiler, relink, patch, runtime adapter, Dolphin input/state, Wii deployment, asset/data and build actuators under one contract. Implement adapters only where the live stack proves the need.
+- Make InterventionReceipt a first-class durable object with initial state, target fingerprint, intervention identity/version, route, inputs, allowed effects, mutated artifacts, build/runtime identity, outcome, rollback, proof refs and unexpected deltas.
+- Add Allowed Delta Enforcement + Behavioral Differential Testing. Success means changed exactly what was authorized while preserved behavior remains inside contract.
+- Add Experiment Runtime receiving Unknown/Hypothesis from Evidence/Uncertainty Graph, performing controlled perturbations and returning structured observations/evidence to the same graph.
+- Active Learning Intervention Design chooses the experiment/input that maximizes information gain among competing hypotheses and runs it through the cheapest sufficient oracle.
+- Oracle Liveness Certification is mandatory. ORACLE_LIVE / STALE / UNVERIFIED (or repo-derived equivalents) gate proof. Freshness must be shown for screenshots, traces, compiler, objdiff, GEX44, Dolphin, deployment and hardware capture before their output can close obligations.
+- Reality Scenario Compiler turns a proof obligation into a minimal reproducible launch/state/input/capture/measurement scenario. Scenarios become reusable fixtures with content-addressed identity.
+- Scenario CAS / behavioral baseline reuse allows identical scenarios against retail, reconstructed and multiple KSR/WMOS versions with dependency-aware invalidation.
+- Behavioral Corpus Factory generates structured runtime corpus: controller traces, state transitions, motion/racket/ball outcomes, timings, audio/rumble and other observables. Build a Retail Behavioral Genome instead of requiring source understanding first.
+- Experience Corpus extends behavior to sensory manifestation: animation, camera, sound, rumble, latency and human/perceived response, feeding Experience Genome and Wii Soul/Experience validation.
+- Semantic Transplant Compiler: given source/behavior contract A and Semantic ABI B, normalize, adapt, greybox when useful, integrate into host and prove differential behavior. Especially relevant to WSR/Wii Sports/WMOS motion reuse.
+- Build Intervention Genome recording phenotype, desired delta, chosen/rejected routes, changed surface, proof, cost, failures, rollback and reuse. Discover Route/Intervention Families by evidence rather than freezing a taxonomy.
+- Intervention JIT maturity: Claude-designed intervention -> Procedure IR -> intervention template -> compiled primitive -> zero-planning known route.
+- Real-World Vertical Slice Compiler: every large Goal attempts the smallest intervention proving artifact identity, build, deployment, call path, runtime observation and rollback before deeper archaeology.
+- Experimental Escrow reserves budget for rollback, validation, unexpected deltas and real-hardware proof. Mutation may not consume the entire mission budget.
+- Mutation Sandbox + Causal Binary Archaeology + Automated Behavior Bisect: reversible changes to constants/branches/state/mappings/interfaces, observe, rollback, update hypotheses and localize minimum causal surface.
+- Intervention Coverage distinguishes IMPLEMENTED, OBSERVED, PROVEN, HARDWARE_PROVEN and EXPERIENCE_PROVEN (or evidence-equivalent states). Build existence never equals done.
+- Production Reality for interventions requires load, execution, real behavioral effect, restart/recovery behavior, preservation contract, rollback and target-hardware proof where applicable.
+- Transform Universal Modder field notes/case studies from prose into external specimens: facts, failure patterns, Procedure IR candidates, scenario fixtures, route priors and regression/adversarial tests. External material begins as EXTERNAL_OBSERVED and must pass applicability/replay/proof/CBR before baseline promotion.
+- Add adversarial Reconstruction SPEC cases inspired by real failures: stale screenshot/oracle, false route assumption, fake-host pass/real-game fail, wrong fidelity metric, wrong version, route drift, retried dead end and unverified community claim.
+- Keep Universal Modder external initially. Do not install globally or make `um` critical-path infrastructure unless a measured adapter capability beats the incumbent.
+- Unified loop target: KSR Intent -> Causal Change Graph -> REA Evidence/Unknowns -> candidate seams -> Route Compiler -> transactional intervention/experiment -> REA+Dolphin observations -> Proof Graph -> Allowed Delta verification -> Wii/Experience reality -> InterventionReceipt -> Procedure/Intervention Genome -> ADCR learning -> CBR promotion -> next feature starts cheaper.
+
+**Done gate for activation:** one real bounded intervention closes a product/reconstruction uncertainty faster or more safely than the champion route while preserving truth/proof/rollback. Otherwise keep Universal Modder as donor corpus only.
+
+---
+
+## D14 — Unified Reconstruction compounding program: sequencing and non-duplication guard
+
+**State:** D11–D13 are intentionally deferred as one coherent program, not three independent mega-systems.
+
+**Why deferred:** implementing all concepts simultaneously would violate the same economics they are intended to enforce.
+
+**Activation criterion:** activate by evidence/ROI, one vertical slice at a time.
+
+**Required sequencing:**
+1. Reality Scan current Reconstruction owners/call chains first. Reuse/merge/connect before creating.
+2. Prove REA/Wii Evidence canary and projection economics before deep Evidence Fabric work.
+3. Instrument current reconstruction traces sufficiently to measure Work Classes, model boundaries, repeated procedures, proof and cost.
+4. Use that telemetry to activate the smallest ADCR Procedure Compiler canary on one repeated Work Class.
+5. Use one real KSR/WSR uncertainty to prove Intervention/Experiment Runtime value.
+6. Only promote winning capabilities through CBR after replay/canary/transfer evidence.
+7. Expand only where marginal verified cost falls; freeze any layer whose maintenance/meta-cost exceeds demonstrated lifetime saving.
+
+**Constitutional ownership:** REA = observation/evidence sensor; Reconstruction IR/Knowledge/Proof Graph = durable epistemic state; Universal Modder X = actuation/experimental reality; ADCR = procedural learning/how-layer; Cognitive Economics + KEOS = resource and route allocation; GSD X = persistent objective/meta-control; decomp = reconstruction capability execution; CBR/UCR-CIF = maturity/inheritance/ratchet.
+
+**Global done criterion:** the program succeeds only if future comparable reconstruction work is measurably cheaper, faster or safer at equal-or-better proof. Architectural sophistication, component count or documentation volume are not success metrics.
+
+---
+
+# Added 2026-10-10 — KME Recon, Visual Reconstruction, Time-to-Ready and Derived Development
+
+## D15 — KME Recon as Software Reality / Construction Reality Laboratory
+
+**State:** design expanded from the KME/KSR optimization corpus. KME is treated as the digital-heavy reference workload for Reasoning Locality, Proof Locality, Invalidation Locality, source-navigation economics and repeated software construction. No claim that the full model below exists in production.
+
+**Why deferred:** KME already has active optimization/reconstruction work and a measured cost baseline. Building a parallel "KME OS" would violate current ownership and compounding doctrine. The ideas below should be activated only as thin extensions/adapters to the existing universal runtime owners when a KME canary demonstrates a specific economic or quality win.
+
+**Activation criterion:** choose one bounded KME Work Class with a measured old-path baseline, such as a repeated arena/map/generator/registry/lifecycle change. Before implementation, compile its semantic closure, current owner, mutation surface, proof closure and expected model boundaries. Promote only mechanisms that beat the champion on verified cost, reasoning radius, source-read burden and proof locality.
+
+**Deferred scope (complete):**
+- Position KME Recon as a Software Reality Compiler rather than a repo-reading workflow. Source remains authority; the default working surface becomes a typed Software Reality Model queried by symbol/owner/contract/state/proof rather than by whole-file archaeology.
+- Build a KME Semantic Genome spanning symbols, types, registries, generators, state machines, events, ownership, configuration, serialization, runtime bindings, tests, proofs, failures, change families, effects and authority.
+- Create Feature Genome and Registry Genome views. Registry semantics should capture producer -> registry -> consumer -> lifecycle -> proof, plus schema, writers, readers, initialization phase, invalidators, required invariants and known failure modes.
+- Add Semantic Dominator / Registry Dominator analysis: identify upstream constraints whose resolution unlocks many downstream features rather than fixing leaves individually.
+- Reconstruct Effective State Machines from AST/call graph/tests/logs/runtime traces/config. Distinguish legal, guarded, contradictory, unreachable and unobserved transitions. Lifecycle grammar/families should emerge from corpus evidence rather than be hard-coded prematurely.
+- Strengthen the Construction Compiler: Desired Semantic Delta + Current Software Reality -> affected objects, known transformations, unknowns, mutation closure, proof closure, rollback and deopt conditions. Planning prose is not an execution authority.
+- Discover Change Families such as arena/map/generator/registry/state/serialization/runtime-provider mutations from evidence. Mature families progress from manual -> procedure -> template -> certified transformation -> compiler primitive.
+- Build a Structural Transform Library only after preconditions, negative cases, proof and rollback are established. Known transformation fast paths must deopt on novelty or violated assumptions.
+- Replace source navigation with Semantic Source Queries: materialize only the definition, relevant callers, owners, invariants, registry/state relationships and tests needed by the active obligation.
+- Keep Source-as-Authority / Model-as-Projection. Raw source is reread only for changed hash, missing derivation, contradiction, audit or deopt. Stable derivations are reused.
+- Add source CAS / derived-state CAS: same source identity + parser/version -> same semantic derivations. Avoid reparse/reread/re-interpretation across workers.
+- Build Commit -> Semantic Delta compilation. Each commit can derive changed symbols/contracts/registries/state transitions/tests/proof requirements and invalidated decisions.
+- Add a Semantic Git layer: Git reports file deltas; the semantic layer reports contract/state/owner/proof impact. Add semantic blame and semantic time travel to recover why a contract exists, which decision introduced it, what proof certified it and what state existed before a migration without transcript archaeology.
+- Counterfactual Change Planner: before mutating source, estimate affected feature/proof/owner/runtime closure for candidate changes and prune dominated routes.
+- Build a Change E-Graph: configuration, reuse, adapter, new code, certified transform, no-work certificate and other routes can satisfy the same semantic postcondition; Cognitive Economics selects the non-dominated route with minimum Expected Total Verified Cost and risk.
+- Dead Change Elimination / semantic partial evaluation: prove already-satisfied, implied, non-applicable and unreachable obligations before planning new work.
+- Proof-of-Non-Change and preservation contracts become first-class: prove both intended delta and protected invariants.
+- Add Change Blast Radius Budget and Cognitive Blast Radius. Unexpectedly large affected semantic closures or reasoning surfaces are architectural signals and can stop a mutation before waste compounds.
+- Add Reconstruction Radius / Causal Cone Compiler for bugs: failure -> candidate causal cone -> cheapest discriminating probe -> narrowed reconstruction slice. Avoid whole-project comprehension.
+- Failure Causal Fingerprints must contain causal discriminators such as last valid transition, first invalid transition, registry/config/runtime owner state and changed dependency class; never cache symptom -> fix as if causal identity were known.
+- Failure Motif Compiler: first occurrence may require frontier diagnosis; recurrence should move toward structured diagnosis, compiled probe, test/guard, and eventually architectural impossibility where justified.
+- Error -> Immunity: expensive failures should attempt to crystallize as typed invariant, detector, test, compiler check, migration rule, transaction guard or failure fast path.
+- Runtime Spec Mining compares declared architecture with observed event/state/runtime behavior. Differences create Architecture Drift contradictions rather than silently stale docs.
+- Registry Drift Detector and runtime-contract extraction should expose inputs, outputs, state transitions, owned effects, reload/error semantics and compatibility where justified.
+- Contract Coverage and Proof Graph should measure which contracts are actually evidenced, not only line/test coverage.
+- Predictive Proof Compiler learns which proofs normally catch regressions for each change family while mandatory invariants remain hard constraints.
+- Proof Debt becomes visible when tiny changes require broad/full-suite revalidation because proof locality is missing.
+- Build a Test Semantic Index: map tests to invariants/contracts/failure classes/semantic objects instead of relying on grep by name.
+- Test Value Attribution may identify proof redundancy or blind spots, but quality/correctness constraints dominate token savings.
+- Construction Transactions: once semantic decision is made, mutation -> format/lint -> affected tests -> evidence -> gate -> commit should be deterministic unless a semantic fault occurs.
+- Transaction Templates for mature change families carry preconditions, effects, rollback, proof and failure semantics.
+- Counterexample-Guided Construction: failed proof yields a minimal counterexample/refinement for the affected Work Unit, not a global replan.
+- Use cheap software Mutation Sandboxes/worktrees for reversible causal experiments, candidate variants and speculative construction before high-cost review.
+- Enable bounded speculative search only where expected value exceeds coordination cost. Survivors, not every branch, reach model/review boundaries.
+- Semantic MVCC and semantic conflict detection: workers operate on state version N and commit only if semantic dependencies still hold. Detect conflicts even when Git files differ and permit safe coexistence when file overlap is semantically independent.
+- Ownership Solver: before mutating a high-impact state/registry/serialization/runtime/proof surface, resolve actual owner and authority. Ownership Centrality increases proof and change caution for high-fanout owners.
+- Architecture Refactoring by Cognitive OPEX: repeated high-context/high-call/high-repair subsystems become refactoring candidates because they impose future AI maintenance cost.
+- AI-Operability becomes a measurable NFR: owner discoverability, contract explicitness, state queryability, mutation locality, proof locality, failure observability, incremental invalidation and cold-start correctness.
+- Architecture documentation becomes a generated/reconstructible view of source/traces/tests, not a parallel authority.
+- Build an Epistemic Software Twin: current source identity, contracts, states, owners, failures, proof freshness, unknowns and allowed transformations. Models reason over the twin and page raw repo evidence only under need.
+- Semantic time travel and semantic regression analysis should use versioned state/proof/decision objects, not transcript search.
+- Treat Reconstruction as Incremental Compilation: source delta -> invalidate affected semantic objects -> recompute derived objects -> invalidate affected proof -> compile next Work Units.
+- Make-style cognition: unchanged dependencies mean no re-read, no re-reason, no re-proof.
+- Build Semantic Build Cache for facts/contracts/decisions/transforms/proofs/test mappings keyed by dependency/version/applicability.
+- Distinguish provider prompt-cache hits from institutional semantic hits. The stronger hit eliminates the model boundary entirely.
+- Predict change shape before execution and compare predicted vs actual affected objects/proofs/risk/context to train Construction Compiler profiles.
+- Measure Construction Regret: actual verified cost minus best known ex-post route for the same semantic postcondition.
+- Work-Class/Change-Family Closure requires detector, preconditions, transform, negative cases, proof, rollback, context profile and deopt. Mature zones default to zero frontier.
+- Pursue Zero-LLM Construction Zones and later Zero-Raw-Read Zones for dominated change families.
+- Maintain a Reconstruction Frontier Map by maturity: known/compiled, known-family exceptions, structurally-known/transform-unknown, novel architecture. Frontier cognition should concentrate on truly novel areas.
+- Novelty Concentration, not repo size, should drive model budget.
+- Benchmark elasticities: registry-count, project-age, state-space, proof-estate and ownership-estate growth should not proportionally increase local Work Unit cognition.
+- Create KME Reconstruction Gym from historical incidents and seeded mutants: registry/generator lifecycle, serialization mismatch, stale verification, runtime/config drift, concurrency and ownership ambiguity.
+- Include cognitive/epistemic mutants too: missing critical semantic page, stale contract, wrong owner, hidden proof, misleading docs. Correct response is page/deopt/abstain, never hallucinated action.
+- Source Evidence Fabric: every derived architecture fact carries source identity, parser/version, symbol refs, runtime corroboration where applicable, confidence and invalidators.
+- Cross-version reconstruction should diff semantic state rather than reread entire releases. Cross-plugin/mode homology should identify reusable Feature/Change Families.
+- Construction Compiler + ADCR: learn which construction procedure minimizes total verified cost for each Work Phenotype.
+- Construction Procedure Genome records phenotype, preconditions, source slice, transform, proof, repairs, cost and failure envelope; procedural homology discovers shared construction skeletons.
+- Construction JIT maturity: Claude change -> procedure -> template -> transformer -> compiler pass -> architectural primitive.
+- Reuse Universal Modder X's Transactional Intervention contract for software-only changes: isolated state -> mutate -> test/runtime -> proof -> commit/rollback -> InterventionReceipt.
+- Use REA only where binary/runtime reality adds information not available from authoritative source; no ceremonial binary RE.
+- Every expensive KME incident returns project/domain/universal candidates through CBR, with cross-domain falsification before broad promotion.
+- Add a fifth KME compiler above the existing Reality/Decision/Construction/Proof model: Reconstruction Compiler decides the minimum architecture slice that must actually be understood before action and may emit a No-Reconstruction Certificate when interfaces already suffice.
+- Semantic-interface-first and opaque-island policy: reconstruct internals only when the desired change/proof cannot be achieved through a proven interface.
+- Architecture Understanding Budget and Source-Read Budget limit curiosity-driven archaeology; growth requires causal justification.
+- Metrics: Query-to-Read Ratio, Derived-State Hit Rate, Reconstruction Cache-Miss Reason, Architecture Read Amplification, Semantic Compression Ratio, Change/Failure/Proof Learning Curves, Fresh-Worker Time-to-First-Valid-Action.
+- North Stars:
+  - Repository Size Must Not Determine Reasoning Size.
+  - Known Software Change Must Converge Toward Zero Raw Reads and Zero General Cognition.
+  - Every Expensive Reconstruction Must Either Eliminate Future Reconstruction or Prove Why It Cannot.
+  - Larger/more mature KME should make mastered changes cheaper, not more expensive.
+
+**Done gate for activation:** one repeated KME change family is executed from cold birth with materially smaller raw-source read volume, reasoning closure, model-boundary count and proof closure than the current champion, while equal-or-better Production Reality and correctness are preserved.
+
+---
+
+## D16 — Visual Reconstruction Fabric / Image-to-System Reconstruction
+
+**State:** conceptual extension of typed VisualEvidence, Experience Genome and Reconstruction/Intervention loops. Not implemented as an authoritative visual spec generator.
+
+**Why deferred:** image/video evidence is partial and ambiguous. It becomes dangerous if treated as an exact specification or if visual similarity is allowed to substitute for behavioral/runtime proof. The layer should only be activated with explicit uncertainty, provenance and differential validation.
+
+**Activation criterion:** choose one bounded KSR UI/scene or KME map/scene where known reference images/video and a candidate implementation exist. Demonstrate that structured visual constraints plus a differential oracle reduce implementation iterations without creating false certainty.
+
+**Deferred scope (complete):**
+- Treat image/video as partial observations of a hidden system, not as specifications. Every inferred property is typed as OBSERVED, ESTIMATED/CONSTRAINED, AMBIGUOUS or UNKNOWN with provenance/confidence.
+- Ingest reference media into Visual Evidence Objects containing hash, resolution/aspect/crop, provenance, game/build/platform/state when known, camera hypothesis, regions, confidence and unknowns.
+- Bind produced screenshots/video to exact build/config/assets/deployment/runtime/hardware identity. Unbound visual evidence cannot close Production Proof.
+- Image -> Visual Scene Graph: derive components, hierarchy, bounds, layer/depth, alignment, anchors, visibility, occlusion, material/texture hypotheses and interaction state.
+- Create Visual UI IR with primitives such as container/grid/card/icon/text/cursor/focus/mask/background/overlay/page indicator and typed relations such as aligned-with, anchored-to, inside, occludes, repeats-pattern, focused-by and transitions-to.
+- Infer layout laws and constraints rather than copying absolute coordinates. Resolution-independent relationships are preferred when supported by evidence.
+- Build a Visual Constraint Solver for repeated geometry, grids, spacing, anchor relationships, camera/layout parameters and other deterministic constraints.
+- Convert repeated visual observations into semantic invariants and reuse them without rereading raw screenshots.
+- Mine a Visual Grammar / Wii Visual Grammar from high-quality reference states: composition, hierarchy, density, focus affordances, page indicators, timing, depth, color/contrast relationships and other repeated laws. Grammar is evidence-backed and scoped, not style folklore.
+- Maintain a Visual Genome for screens/scenes/features: layout topology, primitives, ratios, typography, palette relations, depth, state variants, animation families, interaction cues, camera, lighting and environmental mood.
+- Cross-Screenshot Homology classifies SAME_COMPONENT, MOVED, RESIZED, STATE_CHANGED, ASSET_CHANGED, VISIBILITY_CHANGED, LIGHTING_ONLY, CAMERA_ONLY or repo-derived equivalents.
+- Differential visual dossiers should extract the smallest state delta between normal/hover/confirmation/transition states.
+- Image sequences/video -> Interaction State Machine: infer states, transition timing, easing, z-order changes, pointer movement, visual feedback and correlated audio/haptic events.
+- Build Visual Motion Genome for recurrent animation families such as focus growth, hover glow, panel transitions, confirmation pulses and cursor settle.
+- 3D visual reconstruction uses horizon/vanishing points, approximate camera pose/FOV, relative scale, occlusion/depth order, lighting/shadow constraints and surface hypotheses while preserving unknown geometry as unknown.
+- Multi-view/video observations reduce ambiguity. Never hallucinate unseen geometry; maintain candidate hypotheses.
+- Active Visual Reconstruction / Next-Best-View Compiler: when hypotheses remain, request or acquire the image/angle/frame/resolution/state with greatest expected information gain.
+- Visual Causal Probing combines Mutation Sandbox with visual evidence: perturb candidate layout/camera/material/state parameters, render, compare, rollback and update hypotheses.
+- Build Visual <-> Software Binding Graph: link visual nodes to candidate assets/materials/widgets/source/runtime draw owners using identity, dimensions, usage, instrumentation and graph evidence.
+- Where instrumentation supports it, expose visual xrefs from rendered region/component -> render object -> asset/material/state -> source owner.
+- Render provenance instrumentation can emit component IDs, asset IDs, transforms, state and z-order to make visual diagnosis causal rather than archaeological.
+- Visual Differential Oracle compares by semantic layers: geometry, structure, style/material, typography, state, lighting, camera and temporal behavior, not only pixel MSE.
+- Weight perceptual differences by semantic salience; thousands of background pixels must not hide a critical 2 px interaction alignment error.
+- Keep human Experience Oracle for qualities that metrics cannot close: Wii soul, warmth, calm, delight, social readability. Objective visual metrics are supporting evidence, not replacements.
+- Visual Fidelity Ladder distinguishes layout, structure, asset, state, motion, camera, render, hardware-visual and experience acceptance. A visually close image does not prove interaction parity.
+- For KSR Page 2 and similar UI, reconstruct a reusable Visual/Interaction Contract and family rather than one screenshot.
+- Mature KSR menu families can become deterministic development primitives with canonical grammar, state-machine behavior, content slots and affected proof.
+- For KME maps/scenes, image -> spatial constraints may infer regions, landmarks, terrain/path relationships, visual hierarchy and candidate generator parameters.
+- Multi-image/dataset analysis can infer latent generation grammar: recurring motifs, spacing distributions, connectivity, region hierarchy, spawn/landmark placement and symmetry/asymmetry.
+- Build a Visual Family Solver across map/screen specimens, then correlate visual clusters with source/generator parameters.
+- Visual Regression Compiler selects only affected visual states to recapture based on semantic dependency changes.
+- Visual Proof Cache and Visual Invalidation Radius retain valid visual proofs until relevant layout/asset/camera/shader/state dependencies change.
+- Image Evidence CAS deduplicates unchanged visual evidence and derived observations.
+- Region-level visual paging: model only the relevant crop + surrounding context + scene metadata where full frame is unnecessary.
+- Visual ContextImage and Visual Dead Rent apply the same Cognitive Economy principles to images/video; do not drag irrelevant visual assets across model boundaries.
+- Visual Evidence Compiler maps a visual claim + available evidence + assurance level to the minimum missing observation.
+- Synthetic Visual Evidence can use debug/wireframe/depth/hitbox/anchor/component-ID views for diagnosis but cannot silently replace Production Visual Evidence.
+- Visual Instrumentation Mode should expose bounds, anchors, state, z-order, ownership and IDs where product architecture permits.
+- Visual Semantic Bisect / temporal bisect aligns retail/reference and candidate sequences to identify first semantic divergence in component/state/timing rather than vague "feels off" diagnosis.
+- Audio-visual-rumble alignment yields a Multimodal Experience Timeline; reconstruction can include sensory timing, not only frame appearance.
+- Maintain Visual Confidence Map per region/property and spend additional acquisition only where uncertainty is decision-relevant.
+- Value of Visual Information gate: do not request/acquire another visual reference if it cannot change an implementation/proof decision.
+- ADCR learns a Visual Reconstruction Procedure Genome: best sequence of scene graph, layout solver, asset binding, runtime instrumentation, diff and proof per Work Phenotype.
+- End-state: reference media -> Visual Evidence -> constraints/graphs -> unknowns -> minimal missing views -> software/assets/runtime bindings -> Construction Compiler -> candidate render -> semantic visual diff -> affected repair -> hardware/experience proof -> reusable Visual/Feature Family.
+- Constitutional law: AN IMAGE IS NOT A SPECIFICATION. IT IS A PARTIAL OBSERVATION FROM WHICH THE MINIMUM SUFFICIENT SPECIFICATION MUST BE RECONSTRUCTED.
+- Stronger endpoint for KME: image-to-reconstruction may become image-to-system-reconstruction by inferring a generator/grammar that can produce an entire family of high-quality outputs, not only one copied artifact.
+
+**Done gate for activation:** a visual reconstruction canary reaches equal-or-better functional/visual proof with fewer manual iterations and no unsupported certainty; missing/unseen properties remain explicitly unknown or are resolved by new evidence.
+
+---
+
+## D17 — Universal Time-to-Ready Compression / Readiness Compiler
+
+**State:** conceptual extension over Mission Compiler, Cognitive Economy, Readiness/Production Reality, hardware batching and cold-birth work. No separate Ready OS should be created.
+
+**Why deferred:** Time-to-Ready is cross-cutting. Implementing a broad scheduler before measuring actual blockers could create another control layer. Activate only by integrating readiness semantics into existing universal owners and by targeting dominant measured blockers.
+
+**Activation criterion:** instrument one KME, one reconstruction and one KSR/game workload to measure time from intent to first valid action / first observable / first discriminating evidence. Use the profiler to identify the dominant readiness blocker and prove that one minimal intervention shortens the critical path without weakening proof.
+
+**Deferred scope (complete):**
+- Define formal readiness states such as INTENT_READY, REALITY_READY, KNOWLEDGE_READY, ENVIRONMENT_READY, CONSTRUCTION_READY, EXPERIMENT_READY, PROOF_READY, DEPLOYMENT_READY, HARDWARE_READY, OWNER_READY, PRODUCTION_READY and ACTION_READY, allowing repo-derived refinement.
+- Every Work Unit has a Readiness Contract: required facts, tools, environment, assets, authority, proof path, external resources, hardware/human interaction and downstream outputs.
+- Add Readiness Graph alongside Execution/Epistemic/Proof graphs. Readiness expresses prerequisites preventing productive action.
+- Add Readiness Dominator analysis: prioritize blockers whose resolution unlocks many downstream Work Units. Use Unlock Multiplier = downstream work made ready / cost.
+- Compute Ready Critical Path and target earliest first useful reality interaction, not just earliest planner output.
+- Metrics: Time-to-First-Valid-Action, Time-to-First-Observable, Time-to-First-Discriminating-Evidence, Intent-to-Proven-Ready and Intent-to-First-Proven-Delta.
+- Ready-first planning: ask what preparation makes the most valuable work ready earliest, rather than simply "what task is first".
+- Preflight Compiler deterministically checks identity/version, environment, dependencies, tool availability, build health, tests, disk/RAM, remote resources, hardware availability, indexes, artifacts and known blockers before expensive cognition.
+- Fail-fast readiness: unknown prerequisites are planning defects. Missing toolchain/authority/hardware/data should be discovered before a large mission boundary.
+- Ready Snapshot and Golden Environments for recurrent KME, Reconstruction, Dolphin and Wii workflows. Environment state is versioned, reproducible and invalidated by dependency changes.
+- Environment CAS / readiness cache: reuse proof that a toolchain/environment/precondition is ready while its dependency envelope remains valid.
+- Readiness freshness is dependency-based, not session/time based unless reality inherently drifts.
+- Prewarming and pipeline overlap: while upstream reasoning/implementation runs, prepare likely build/test/proof/deployment/evidence prerequisites that are safe and high-VoI.
+- Separate concurrent lanes for reasoning, build, evidence, proof and deployment where dependencies/effect isolation permit.
+- Next-step prediction and Readiness Prefetch use ADCR profiles to prepare likely fixtures/indexes/proofs outside model context without speculative irreversible mutation.
+- Readiness TLB: mature Work Classes know common prerequisite object IDs/projections and validate fingerprints instead of rediscovering setup.
+- Ready Packets: expensive model workers spawn only after deterministic prerequisites, semantic state, source/evidence projection, environment, tools, sandbox, proof and budgets are prepared.
+- Hard law: expensive workers should not prepare themselves when preparation can be deterministic or done in advance.
+- Readiness Admission Gate rejects a frontier spawn if unresolved deterministic prerequisites remain.
+- Agent warm-up tax should trend toward zero; "missing prerequisite after spawn" becomes telemetry for Readiness Compiler improvement.
+- Ready once, consume many: common architecture facts/builds/proof maps/reference states are shared by semantic identity rather than copied into each worker.
+- Shared Readiness Services may expose Symbol Index, Proof Map, Build, Asset, Scenario/Reference and Deployment capabilities under universal ownership.
+- One Build -> many consumers; do not rebuild identical artifacts separately for tests, runtime, visual capture or experiments.
+- One Boot / one expensive external action -> maximum compatible evidence/proof/readiness via safe evidence multiplexing.
+- Human/Hardware Critical Path and Owner Batch Compiler prepare all compatible Owner/hardware-only actions before scarce availability windows.
+- Authority Readiness is explicit from the start; late discovery that Owner permission is required is a planning defect.
+- Asset Readiness for games includes textures/models/animations/audio/collision/fonts/references and should run in parallel with code reconstruction where independent.
+- Image-to-Reconstruction readiness: ingest references, scene/constraint graph, missing-view questions, state alignment and asset candidates before implementation begins.
+- Reconstruction dual lane: Code/Behavior lane and Experience/Visual/Audio/Input lane advance in parallel and join at integration proof.
+- Binary Reconstruction readiness performs AOT cheap corpus processing: hashes/sections/symbol seeds/signatures/family candidates/compiler patterns/type clues/strings/imports/homology before function-level hot work.
+- AOT + JIT Reconstruction: precompute cheap global knowledge once; strong reasoning occurs only on product-critical or novel hot closures.
+- Product-critical prefetch and semantic-closure forecast stage likely homologues/types/compiler families before downstream consumers discover them.
+- Ready-by-family and Ready-by-homology: certified family/homologue immediately links procedure, proof and context profiles.
+- Unknown staging: frontier workers receive hypotheses, available oracles, costs and expected discrimination rather than naked "investigate".
+- Hypothesis-ready packets minimize model warm-up and maximize immediate causal reasoning.
+- Proof-first readiness: if success cannot be observed/proven, a Goal is not Construction Ready. Build observability/proof first.
+- Debug readiness requires reproducible failure, artifact identity, expected invariant, sufficient observability and rollback.
+- Reproduction Compiler turns manual bug reproduction into reusable fixtures.
+- Distinguish Ready-to-Code and Ready-to-Prove. Work can be construction-ready but proof-blocked; do not let implementation consume proof capacity.
+- Proof Preparation / Proof Escrow: prepare fixtures, baseline and proof plan before implementation finishes.
+- Capture baselines before changing systems when later comparison may be necessary.
+- A/A readiness precedes A/B when the environment/path has meaningful nondeterminism.
+- Make readiness monotonic where possible: unrelated changes do not reset ready states.
+- Readiness Invalidation Radius measures how many ready facts/fixtures become stale after a change; broad invalidation signals coupling.
+- Readiness Debt = implemented inventory that cannot yet be tested/deployed/observed/proven/released.
+- Control WIP to reduce cycle time; prefer closing shared readiness chains over opening many leaves blocked by the same prerequisite.
+- Explicit queue states: READY, RUNNING, WAITING_REALITY, WAITING_AUTHORITY, WAITING_BUILD, WAITING_PROOF, BLOCKED_DEPENDENCY, DONE or repo-derived equivalents. "In progress" alone is insufficient.
+- Waiting consumes zero model cognition. Events such as BUILD_READY / INDEX_READY / EVIDENCE_READY / HARDWARE_AVAILABLE / OWNER_DECISION_RECEIVED wake exact consumers.
+- Build a Time-to-Ready profiler and Readiness Flamegraph: dependency discovery, setup, build, human waiting, archaeology, proof setup, novelty and other components.
+- Readiness Roofline classes: KNOWLEDGE_BOUND, ENVIRONMENT_BOUND, BUILD_BOUND, HARDWARE_BOUND, AUTHORITY_BOUND, OBSERVABILITY_BOUND, PROOF_BOUND, NOVELTY_BOUND.
+- Critical-path Amdahl: after each optimization, reprofile and attack the next dominant readiness bottleneck.
+- Readiness Resource Vector includes tokens, wall time, compute, network, hardware, human attention, money, risk and proof.
+- Time-to-Ready Superoptimizer chooses equivalent routes by Expected Time to Verified Ready State, not merely coding time or token cost.
+- Fastest implementation may be dominated by a slower initial analysis that avoids long debugging/repair loops.
+- ADCR stores historical TTR profiles by Work Class; future planning learns empirical setup/build/proof/repair/human-wait distributions.
+- Readiness Regret = actual TTR minus best known ex-post route; repeated high regret becomes a Procedure/Capability candidate.
+- Readiness learning curve: occurrence 1 expensive -> recurrence progressively cheaper -> mature family immediate or near-immediate.
+- Zero-Setup, Zero-Discovery, Zero-Planning, Zero-Wait and Zero-Proof-Setup zones are maturity endpoints where economics justify them.
+- Continuous Ready State for high-frequency infrastructure only if warm-maintenance cost < recurring cold-start cost; otherwise Just-in-Time / Just-ahead-of-time readiness.
+- Safe speculative readiness may precompute indexes/fixtures/assets/reference extraction without irreversible effects.
+- Ready-path common-subexpression elimination and Goal-level singleflight coalesce shared build/tool/index prerequisite work.
+- Estate-wide Readiness Graph lets KEOS prioritize one common capability that unlocks multiple goals/projects.
+- Capability Demand x Readiness Impact is a stronger platform-investment signal than architecture enthusiasm.
+- Readiness Bottleneck Mining detects recurring setup/tool/owner/baseline/fixture waits and proposes shared machinery.
+- Constitutional pressure law: repeated blocker -> readiness capability.
+- Experience/Game-Feel Ready Packs, Reconstruction Ready Packs and KME Ready Packs precompile domain-specific prerequisites under the same universal readiness semantics.
+- Fresh-worker Ready Cold-Start Score measures time/tokens/wrong actions/page faults/manual asks until first correct useful action.
+- Ready-state portability requires snapshots/manifests/CAS so a worker/machine/GEX44 can restore productive state without tribal laptop/session context.
+- Disaster Recovery Readiness is also Time-to-Ready: measure productive recovery after machine/process/session loss.
+- Core laws:
+  - NO EXPENSIVE INTELLIGENCE SHOULD BE SPENT PREPARING CONDITIONS THAT CAN BE PREPARED DETERMINISTICALLY OR IN ADVANCE.
+  - THE BEST OPTIMIZATION IS NOT MAKING WORK FASTER; IT IS MAKING THE NEXT CORRECT ACTION READY EARLIER.
+  - AS CPP LEARNS, INTENT-TO-PROVEN-READY SHOULD APPROACH THE IRREDUCIBLE LATENCY OF ACQUIRING GENUINELY NEW REALITY.
+
+**Done gate for activation:** at least one reference workload reaches first valid/proven action materially sooner because deterministic readiness preparation/blocker-dominator elimination moved work off the critical path, with no increase in wrong first actions, stale evidence or proof debt.
+
+---
+
+## D18 — Universal Derived Development Fabric: image-, dataset-, reconstruction-, idea- and expectation-driven development
+
+**State:** conceptual generative layer built on Feature IR, Reconstruction/Construction/Proof/Readiness and CBR/ADCR. No separate per-source runtime should be created.
+
+**Why deferred:** these modules can become a speculative design cathedral if activated before Feature Genome, evidence provenance, quality/proof semantics and reusable families are measurable. They must compile into the same universal Feature IR and reuse existing owners.
+
+**Activation criterion:** select one KME map/feature or KSR sport/UI where at least two input modes (for example reconstructed feature + image reference, or dataset + idea/expectation) can be compiled into a Feature IR and shown to reduce Time-to-Ready or raise measurable quality without copying unrelated implementation.
+
+**Core architecture:**
+- Inputs may include Image, Video, Dataset, Reconstructed Feature/Map/System, Behavior Trace, Human Demonstration, Idea, Expectation, Failure, Preference and Outcome.
+- Source-specific frontends compile into one Canonical Feature IR; there are not five parallel development OSes.
+- Canonical Feature IR should include Intent, desired user/emotional outcome, Expectations, Interaction Contract, Behavioral Contract, Visual Contract, Audio/Haptic Contract, Spatial Contract, System Interfaces, State Machine, Invariants, Failure Semantics, Performance Envelope, Quality Vector, Reference Evidence, Ancestry, Allowed Innovation, Unknowns, Construction Obligations and Proof Obligations.
+- Development Source Compilers include Visual/Image Compiler, Dataset Pattern Compiler, Reconstruction/Feature-Derivation Compiler, Map Grammar Compiler, Behavior/Demonstration Compiler, Idea Compiler and Expectation Compiler.
+- All source claims retain provenance and authority. Desired/expected/inferred/observed/proven are never silently conflated.
+
+**Image-Derived Development:**
+- Derive design laws, visual grammar, composition, interaction states, timing, camera and constraints from image/video evidence rather than only copying pixels.
+- Use Visual Reconstruction Fabric outputs as donors to new Feature IR. A reference can teach hierarchy/spacing/focus/depth/warmth without forcing the same surface design.
+- Image-derived development may create wholly new interfaces/maps/features that preserve proven visual/interaction laws while changing content and identity.
+
+**Dataset-Derived Development:**
+- Datasets become generative knowledge sources, not retrieval-only corpora.
+- Pipeline: dataset -> observations -> clusters/families -> invariants/distributions -> candidate causal correlates -> failure boundaries/outliers -> quality frontier -> design laws -> construction heuristics -> capability candidates.
+- Avoid "average-product" collapse. Discover champion clusters/Pareto frontiers and maintain contextual applicability.
+- Infer Latent Generator IR where enough outputs exist: map grammar, terrain/route/landmark placement, UI layout grammar, gameplay timing/difficulty, behavior distributions or other generator families.
+- A repeated dataset-derived pattern may mature OBSERVATION -> HYPOTHESIS -> CROSS-VALIDATED PATTERN -> DESIGN LAW -> CONSTRUCTION HEURISTIC -> CERTIFIED TRANSFORMATION -> COMPILER PRIMITIVE.
+- Dataset-derived maps can mine connectivity, distances, encounter frequency, spawn safety, sightlines, density and travel-time distributions and correlate them with quality/player behavior.
+
+**Reconstruction-Derived Development (RDD):**
+- Every reconstructed feature should become potential generative capital: mechanism/contract/interaction/timing/visual/audio/haptic/spatial/experience/proof/failure/procedure knowledge.
+- Reconstruction should "pay twice": reproduce/understand the original target and return reusable development capital for future features.
+- Create Feature Genome plus specialized Mechanism Genome, Experience Genome, Visual Genome, Interaction Genome, Quality Genome, Failure Genome and Proof Genome where evidence justifies them.
+- Feature Homology discovers abstract reusable families even when surface implementations differ.
+- Mechanism decomposition splits sensing/intent/gesture/mapping/assist/physics/feedback or equivalent domain layers so features can be recombined at meaningful seams.
+- Reconstructed quality becomes a floor: new derived features cannot silently regress must-preserve dimensions.
+- Parity-first, superiority-second: first close Reference Quality; only then claim improvement on explicit dimensions.
+- "Superior" means a Pareto improvement or explicit tradeoff across defined dimensions plus human acceptance where subjective quality matters; complexity/feature count is not superiority.
+- Quality Vector may include responsiveness, clarity, precision, accessibility, physical expressiveness, visual fidelity, feedback richness, stability, learnability, sociality, emotional warmth or domain-specific dimensions.
+- Quality Dominance: candidate dominates a reference only if all must-preserve properties are equal/better and at least one allowed target dimension improves without violating compatibility/soul constraints.
+- Add Quality Regression Firewall so new derived features cannot repeat known degraded latency, noise, frustration, lost warmth or other certified anti-patterns.
+
+**Feature/Map families and synthesis:**
+- Build Feature Families from homologous reconstructed mechanisms: physical swing, selection feedback, round-start ritual, family co-op, soft celebration, spatial discovery, ambient social presence or evidence-derived equivalents.
+- Each family carries detector, applicability, parameters, quality envelope, exemplars, failures, proof and deopt.
+- Build Map Genome: topology, landmarks, terrain, routes, spawn logic, resources, verticality, sightlines, rhythm, visual language and generator parameters.
+- Cluster Map Families and Map Motifs such as central landmark, ring route, safe spawn pocket, risky shortcut, visual anchor, rejoin point, soft boundary and vertical reward when evidence supports them.
+- Map Grammar Compiler takes desired experience and assembles known spatial motifs/families, then exposes only residual novelty.
+- Feature Algebra / Recombination Compiler can compose certified mechanisms/families but must run Feature Composition Proof to catch incompatible assumptions in control, timing, camera, UI density, state ownership or feedback.
+- Development Linker behaves like a library linker for behavior/quality capabilities: link only applicable families/ABIs and tree-shake unused ones.
+- Feature E-Graph represents alternative architectures that satisfy the same Feature IR/Expectation set; Development Superoptimizer chooses non-dominated routes.
+- Quality-Constrained Synthesis rejects candidates violating must-preserve expectations/quality/soul/performance/architecture before implementation.
+- Maintain Pareto design frontier instead of one scalar "best".
+
+**Quality DNA / reusable quality structures:**
+- Extract Quality DNA: verified structural causes/conditions that support clarity, delight, precision, trust, warmth, accessibility or other quality dimensions.
+- Reuse verified quality structures, not only code/functions/classes.
+- Quality-carrying feature capabilities expose implementation contract + quality evidence + experience evidence + transfer conditions.
+- Feature Capability ABI: preconditions, experience goal, functional/control/visual contracts, effects, quality envelope, adaptation points, proof, failure modes and deopt.
+
+**Idea-Driven Development:**
+- Idea Compiler transforms a raw idea into desired experience, actors/behaviors, implied systems, constraints, quality expectations, applicable Feature Families, unknowns and true novelty before coding.
+- Idea decomposition distinguishes already-known, composable, adaptable, experiment-needed and genuinely novel obligations.
+- Idea -> Existing Capability Alignment attempts reuse/extension before creating new systems.
+- Idea Novelty Compiler outputs Genuine Novelty Frontier rather than a giant prose plan.
+- Intent Genome preserves why the feature exists, who it serves, what moments matter and what must not happen.
+- Ideas produce hypotheses rather than dogma; uncertain assumptions can be tested in cheap prototypes.
+- Idea portfolio generation produces a small set of semantically distinct architectures, compared by emotional value, quality, reuse, cost, risk and Time-to-Ready.
+- Novelty budget can deliberately keep most dimensions inherited while reserving selected dimensions for genuine innovation.
+
+**Expectation-Driven Development:**
+- Expectation is first-class even when user cannot specify implementation: "when X, I expect Y" becomes a contract.
+- Expectation Compiler maps language to triggers, expected observations, tolerance, importance, authority and proof method.
+- Expectation types include functional, behavioral, visual, performance, emotional, quality, compatibility, social, production and domain-specific classes.
+- Build Expectation Graph / Acceptance Graph before completion. Feature cannot be certified while material expectations remain unproven or undispositioned.
+- Infer candidate implicit expectations from tests/bugs/reference systems/history, but label them INFERRED_EXPECTATION rather than inventing user intent.
+- Expectation Mining discovers recurring hidden contracts such as save compatibility, deterministic seeds, latency floors or familiar input semantics.
+- Expectation Coverage tracks implementation/evidence/proof per relevant expectation.
+- Expectation Gap = desired expectations - proven candidate behavior. Development compiles and closes the gap.
+- Expectation Debt is visible when a feature works functionally but key quality/experience/production expectations are unproven.
+- Expectation-driven debugging starts from violated expectation -> observable contract -> supporting mechanism -> changed evidence, narrowing causal search.
+- If an expectation is not observable, Observability Compiler first creates a probe/measurement or keeps it explicitly subjective.
+- Expectation hierarchy resolves tradeoffs. Detect conflicts such as maximum physical precision vs immediate family accessibility before implementation.
+- Expectation equivalence permits different internal implementations to satisfy the same user contract, enabling cheaper/more robust routes.
+
+**Additional derived-development inputs:**
+- Behavior-Derived Development: infer control response, timing, player/AI behavior or difficulty shape from traces.
+- Demonstration-Derived Development: human demonstration/video/controller traces can define desired behavioral/experience contracts, especially for WMOS/game-feel work.
+- Failure-Derived Development: failures become negative design constraints and generative anti-patterns, not only debugging notes.
+- Counterexample-Derived Development: good vs bad candidate differentials can reveal missing quality genes faster than more positive exemplars.
+- Preference-Derived Development: repeated Owner choices may create scoped/confidence-weighted priors, never immutable assumptions.
+- Outcome-Derived Development: shipped behavior/player outcomes feed the next generation.
+- Experience-Derived Development: laughter, pauses, cooperative gestures, replay, delight and other human rituals may become scoped social/experience evidence when collectable and appropriate.
+- Emotional Feature Genome may represent anticipation/tension/impact/celebration/social opening/reset calm or other evidenced experience arcs.
+- Experience Homology discovers shared emotional architecture between mechanically different features.
+
+**Feature ancestry and evolution:**
+- Every feature records ancestry: donor families/genomes, dataset/image/reference inputs, idea lineage, expectation lineage, adaptations and novel obligations.
+- Reuse contracts/patterns/capabilities/grammars rather than blindly copying implementation.
+- Feature lineage/phylogeny lets successful branches become new champions and failed branches become negative knowledge.
+- New features can rejuvenate old donor families if a new mechanism proves superior; improvement is bidirectional, not only inheritance downward.
+- Every finished feature returns new dataset/eval evidence so Dataset-Derived Development improves continuously.
+- Self-reinforcing loop: Reconstruction -> Feature Genome -> Derived Development -> New Feature -> Evidence/Dataset -> Better Grammar/Family -> Better future Derived Development.
+- Quality Frontier is allowed to surpass retail/reference. Retail is a teacher and donor, not a permanent ceiling.
+- Superior-quality certification requires explicit improved dimensions plus preserved must-have dimensions and human/experience acceptance where needed.
+- Generational Quality Ratchet: each feature generation inherits best proven genes unless an explicit tradeoff is authorized.
+- Development Theorem Mining promotes repeated cross-feature laws only after transfer/falsification. Negative knowledge is equally first-class.
+- Quality causality should distinguish correlation from mechanism using experiments/challengers where feasible.
+
+**Multi-source fusion / truth discipline:**
+- Feature IR fields can be supported by multiple sources: image, dataset, reconstruction, runtime, idea, expectation, human demonstration or outcome.
+- Authority is field-specific: visual reference may be authoritative for layout, runtime trace for physics, user for intended experience, usability evidence for human comfort.
+- Feature truth lattice distinguishes OBSERVED, INFERRED, EXPECTED, DESIRED, HYPOTHESIZED, PROVEN, EXPERIENCE_ACCEPTED and INVALIDATED.
+- Never confuse "we want", "retail does", "dataset correlates", "model infers" and "proof demonstrated".
+- Preserve exemplar vs dataset distinction: population averages must not erase a high-quality exemplar without evidence.
+
+**Readiness/economics integration:**
+- Derived Readiness measures how much of a new Feature IR is already covered by certified ancestry.
+- Inherited Readiness Ratio: percentage of feature obligations that are construction/proof-ready at birth through inherited capabilities/families.
+- Development Distance: distance from new Feature IR to nearest certified combination of existing genomes/capabilities.
+- Novelty Distance drives cognition; feature size does not.
+- Quality Distance measures remaining gap to reference/target quality.
+- Expectation Distance measures unclosed acceptance contracts.
+- Conceptual Ready Distance = Novelty Gap + Knowledge Gap + Construction Gap + Quality Gap + Expectation Gap + Proof Gap + Reality Gap; Readiness Compiler attacks the dominant component.
+- Before new feature design, applicable reconstructed/dataset/visual/institutional knowledge must be considered, but reuse may resolve as NOT_APPLICABLE. Do not force transfer.
+- Preserve novelty reservation so derived development does not collapse into repetitive sameness. Inherit soul/quality mechanisms while allowing unique fantasy/mastery/signature symbols.
+- Feature Birth Record: intent, expectations, ancestry, inherited families, quality targets, known risks, residual novelty and proof plan before implementation.
+- Feature Birth Maturity measures how much verified development machinery exists at birth and should rise for recurring domains.
+- Cold-birth benchmark: fresh worker with no transcript receives Feature Birth Record + Project Genome + current state; ability to produce a high-quality first slice measures institutionalization.
+- Quality transfer tests verify whether a family proven in one feature retains quality under another phenotype; failed transfers narrow scope.
+- Automatic donor selection ranks reconstructed features/families by semantic similarity, quality relevance, transfer compatibility and proof strength.
+- Cross-game/cross-domain donor graph tracks successful transfers and rejected applicability.
+- Reconstruction + dataset + image + idea + expectation fusion may be stronger than any single source; preserve independent provenance.
+- Development Information Gain chooses cheap prototypes by uncertainty reduction / cost, not by polish.
+- Fidelity ladder: CONCEPT -> GREYBOX -> STRUCTURAL -> BEHAVIORAL -> VISUAL -> INTEGRATED -> HARDWARE -> EXPERIENCE -> PRODUCTION, escalating only when previous layer justifies it.
+- Minimum Sufficient Prototype resolves the largest unknown rather than maximizing appearance/completeness.
+
+**Constitutional rules:**
+- EVERY RECONSTRUCTED FEATURE MUST BECOME A POTENTIAL DONOR FOR FUTURE DEVELOPMENT.
+- DEVELOPMENT SHOULD BEGIN FROM THE BEST VERIFIED APPLICABLE ANCESTRY, NOT A BLANK PAGE.
+- RECONSTRUCTED QUALITY MUST BECOME REUSABLE DEVELOPMENT CAPITAL.
+- DATASETS MUST PRODUCE GENERATIVE KNOWLEDGE AND BOUNDARIES, NOT ONLY RETRIEVABLE EXAMPLES.
+- DATASET-DERIVED DEVELOPMENT MUST LEARN FROM QUALITY FRONTIERS/CHAMPIONS, NOT FORCE PRODUCTS TOWARD THE AVERAGE.
+- AN IDEA DEFINES A POSSIBLE FUTURE; AN EXPECTATION DEFINES THE CONDITIONS UNDER WHICH THAT FUTURE COUNTS AS SUCCESS.
+- EXPECTATIONS MUST EXIST BEFORE COMPLETION CAN BE CLAIMED.
+- SUPERIOR QUALITY MEANS PRESERVING THE PROVEN QUALITY FLOOR WHILE ADVANCING EXPLICIT DIMENSIONS, NOT ADDING COMPLEXITY.
+- A NEW FEATURE SHOULD PAY ONLY FOR THE DISTANCE BETWEEN WHAT THE INSTITUTION ALREADY KNOWS HOW TO CREATE AND WHAT IS GENUINELY NEW.
+- THE ENDPOINT OF RECONSTRUCTION IS GENERATIVE UNDERSTANDING: KNOWING ENOUGH ABOUT WHY SOMETHING WORKS TO BUILD SOMETHING NEW THAT WORKS AT LEAST AS WELL.
+
+**Done gate for activation:** one new feature/map/UI/sport created from mixed derived sources starts with measurable inherited readiness, reaches equal-or-better target quality/proof faster than the blank-page champion, and returns a reusable Feature/Quality/Procedure asset that lowers the cost of a subsequent related feature.
+
+---
+
+## D19 — Extreme Nuclear Endpoint: Generative Reconstruction Civilization / Feature Evolution Kernel
+
+**State:** long-horizon constitutional direction combining D11–D18. This is not authorization to build a new monolithic subsystem.
+
+**Why deferred:** the endpoint only becomes economically real after lower layers have produced proven Feature Genomes, Procedure Families, typed evidence, quality vectors, readiness telemetry and transfer benchmarks. Building the "civilization" before those specimens exist would be premature abstraction.
+
+**Activation criterion:** D15–D18 have at least one successful canary each or equivalent evidence that the core abstractions are real. Then evaluate whether a thin universal Feature Evolution Kernel can replace repeated local implementations.
+
+**Extreme target:**
+- Reconstruction, development and quality improvement become one continuous compounding loop rather than separate disciplines.
+- The institution maintains verified reusable genomes/families/quality structures/procedures/proofs/expectations and can synthesize new features by linking them under explicit intent and quality constraints.
+- General intelligence is reserved for the residual novelty that cannot be derived, composed, transformed or proven through existing institutional machinery.
+- Every expensive discovery must attempt to reduce the distance-to-ready of future work.
+- Every expensive feature must attempt to increase the quality frontier or add a reusable capability; otherwise its learning return is incomplete.
+- Reconstructed systems stop being dead-end archaeology and become parents in a generative ancestry graph.
+- Product creation becomes evolutionary but proof-carrying: candidate -> shadow/greybox -> canary -> certified family/quality gene -> ratcheted donor, with explicit retirement/deprecation when superseded.
+- Feature/Quality/Procedure genomes may evolve schemas as new evidence reveals missing dimensions; historical artifacts are re-indexed rather than frozen into obsolete representations.
+- Build a Feature/Quality Market concept under Cognitive Economics: donor capabilities compete by applicability, quality, proof, adaptation cost, Time-to-Ready and future reuse. "Market" is an optimization abstraction, not necessarily a literal auction implementation.
+- Quality inheritance is compositional but never assumed: Feature Composition Proof checks control/timing/state/camera/visual/social/experience compatibility.
+- Keep separate what must be exact, what may be adapted and what is intentionally novel.
+- Add a Novelty Reservation to protect unique identity so reuse does not produce homogenized derivative products.
+- Preserve "Wii soul"/product essence as explicit high-level expectation/experience contracts where KSR applies; for other domains use domain-specific quality contracts.
+- Build a Development Theorem / Anti-Theorem layer only after cross-feature/cross-domain transfer evidence. Theorems are executable guards/policies when possible, prose last.
+- Feature synthesis can propose multiple Pareto candidates and surface only genuine tradeoffs to the Owner/human; routine decisions should compile away.
+- New features may improve old features through rejuvenation if new evidence proves a superior mechanism; inheritance is bidirectional and versioned.
+- Outcome/Evidence/Failure feeds back into Dataset-Derived Development, which improves family selection and generator reconstruction.
+- Add Feature Evolution Regret: after outcome evidence, compare chosen ancestry/composition against best known ex-post route. Repeated regret becomes compiler/policy improvement.
+- Add Quality Gene Attribution: identify which donor mechanism actually contributed to a quality improvement; avoid crediting decorative or incidental inheritance.
+- Add Causal Quality Graph: when evidence allows, connect mechanism -> observable behavior -> expectation -> human/product quality, enabling safer transfer.
+- Add Quality Counterfactuals: remove/substitute a donor mechanism in controlled prototypes to test whether the claimed quality contribution is causal.
+- Add Quality Mutation Testing: deliberately perturb timing/layout/assist/feedback/flow and verify that quality or proof contracts detect meaningful regressions.
+- Add Feature Robustness Envelope: certify where parameter changes preserve quality and where the family deopts to frontier design.
+- Add Feature Family Specialization / Partial Evaluation: general family + known environment/intent/constraints -> specialized compact implementation/proof route.
+- Add Feature JIT: novel design -> repeatable family -> compiled feature procedure -> certified transform -> architecture primitive -> continuous invariant where appropriate.
+- Add Design Decision Extinction: recurrent design questions move from model judgment -> profile -> family rule -> compiler pass -> architectural invariant.
+- Add Quality Decision Extinction: once a quality failure is causally understood and enforceable, prevent it mechanically instead of reminding future models.
+- Add Generative Cold Birth: a fresh project/feature with no transcript inherits applicable Feature/Quality/Procedure maturity and can produce a high-quality first slice rapidly.
+- Add Feature-Estate Elasticity: 100x more reconstructed features, datasets, proofs and incidents should not expand the active context of an equivalent feature task; it should improve donor selection and reduce cost.
+- Add Quality-Frontier Elasticity: as the donor estate grows, selecting the best applicable quality structures should become more precise without proportional cognitive load.
+- Add Ancestry Compression: a feature may have many historical ancestors but workers receive only the minimal live donor contracts/projections, not lineage narratives.
+- Add Feature Semantic CSE: if multiple new features need the same derivation/donor adaptation, derive once and share by identity.
+- Add Feature Singleflight: equivalent derived-development obligations coalesce unless deliberate independence is required.
+- Add Generative Proof Reuse: quality/behavioral proofs remain valid under dependency envelopes and only affected closure reruns after adaptation.
+- Add Experience Proof Reuse for KSR/social/physical features when hardware/input/environment dependencies remain stable.
+- Add Donor Depreciation/Retirement: donors whose environment vanished, quality frontier was superseded or transfer performance degraded move out of active selection.
+- Add Donor Fitness by Work/Feature Class and Provider Fitness for the cognition needed to close residual novelty.
+- Add Derived Development PGO: learn best donor sets, context profiles, prototype modalities, proof recipes, adaptation costs and deopt patterns.
+- Add Feature Amdahl profiling: after a major source of development time is removed, reprofile the remaining Time-to-Ready bottleneck instead of over-optimizing one layer forever.
+- Add Development Roofline: classify new-feature work as ANCESTRY_BOUND, NOVELTY_BOUND, QUALITY_BOUND, PROOF_BOUND, ASSET_BOUND, ENVIRONMENT_BOUND, EXPERIENCE_BOUND or AUTHORITY_BOUND and allocate capital accordingly.
+- Add Generative Readiness Compiler integration: ancestry/dataset/image/expectation processing should occur before expensive construction so feature births begin as close to READY as possible.
+- Add autonomous opportunity detection: when repeated reconstructed features expose the same transferable mechanism or quality law, open a candidate Feature Family/Quality Gene for offline replay/benchmark rather than waiting for an Owner request.
+- Add Development CAPEX discipline: build new general feature machinery only when lifetime avoided cost/quality gain across consumers exceeds construction/maintenance/risk.
+- Add Anti-Goodhart constraints: quality cannot be optimized only through proxy metrics; hard functional/proof/reality constraints plus human experience evidence remain authoritative where required.
+- Add cross-domain falsification matrix for feature/design theorems so one game's successful pattern does not become universal folklore.
+- Preserve thin project adapters. Universal kernel owns state/dependency/evidence/proof/learning/selection; KME/KSR/game-specific semantics stay userland.
+- Ultimate architecture:
+  Input Evidence/Intent/Expectation
+  -> Source Compiler
+  -> Canonical Feature IR
+  -> Feature/Quality Ancestry
+  -> Novelty/Quality/Expectation/Proof/Reality Gap
+  -> Readiness Compiler
+  -> Feature E-Graph / Superoptimizer
+  -> Construction/Experiment/Proof Compilers
+  -> Transactional Intervention
+  -> Production/Experience Reality
+  -> Outcome Evidence
+  -> Feature/Quality/Procedure Genome update
+  -> ADCR/CBR promotion
+  -> next feature starts closer to ready and at a higher quality floor.
+
+**Extreme North Stars:**
+- Reconstructed systems become generative parents, not archives.
+- Institutional knowledge growth must reduce, not increase, active development context.
+- Equivalent mastered feature creation gets cheaper with project age and donor-estate size.
+- Time-to-Ready approaches only irreducible new-reality acquisition + genuine novelty + required proof.
+- Quality floor ratchets upward generation by generation.
+- General cognition concentrates almost exclusively on novel experience/mechanism design.
+- A new feature pays only for what is genuinely new relative to verified applicable ancestry.
+- Development, reconstruction and learning become one continuous proof-carrying evolutionary loop.
+
+**Constitutional formulation:**
+- EVERY REPEATED DESIGN DECISION MUST CREATE PRESSURE TOWARD A FEATURE FAMILY, QUALITY GENE, PROCEDURE OR ARCHITECTURAL INVARIANT.
+- EVERY VERIFIED QUALITY MECHANISM MUST BECOME POTENTIALLY INHERITABLE UNDER AN EXPLICIT APPLICABILITY ENVELOPE.
+- EVERY NEW FEATURE MUST BEGIN WITH THE BEST PROVEN APPLICABLE ANCESTRY AND AN EXPLICIT NOVELTY RESERVATION.
+- EVERY CLAIM OF SUPERIOR QUALITY MUST NAME THE DIMENSIONS IMPROVED, THE DIMENSIONS PRESERVED AND THE EVIDENCE SUPPORTING BOTH.
+- EVERY FEATURE MUST RETURN INSTITUTIONAL CAPITAL PROPORTIONAL TO ITS REUSE POTENTIAL.
+- THE INSTITUTION SHOULD BECOME MORE CREATIVE, NOT MORE HOMOGENEOUS, AS ITS MEMORY GROWS: REUSE REMOVES KNOWN BURDEN SO NOVELTY CAN CONCENTRATE WHERE IDENTITY MATTERS.
+- THE ENDPOINT IS NOT A SYSTEM THAT COPIES THE BEST EXISTING PRODUCTS. IT IS A SYSTEM THAT UNDERSTANDS ENOUGH OF THEIR CAUSAL QUALITY TO CREATE NEW PRODUCTS THAT PRESERVE WHAT MADE THEM EXCELLENT WHILE ADVANCING THE FRONTIER.
+
+**Global done criterion:** this direction is validated only when a genuinely new feature with explicit novelty is produced faster from inherited evidence/feature families, meets or exceeds its declared quality floor and expectations, survives Production/Experience Reality, and measurably reduces the Time-to-Ready or raises the quality frontier for the next related feature.
+
+---
+
+## D20 — Sequencing guard for D15–D19
+
+**State:** D15–D19 extend the existing D11–D14 reconstruction program. They are not five independent permission slips for new mega-systems.
+
+**Why deferred:** building the endpoint before the measured primitives exist would create exactly the architectural/context/meta-work tax the programme is designed to eliminate.
+
+**Activation order:**
+1. Use current owners and Reality Scan. Reuse/extend/merge/connect before new system creation.
+2. Prove one KME Software Reality / Construction canary from a repeated Work Class.
+3. Prove one Visual Reconstruction canary where visual constraints materially reduce iteration.
+4. Instrument Time-to-Ready and identify the actual critical blocker before adding broad readiness machinery.
+5. Compile one mixed-source Feature IR (at least two source types) and measure inherited readiness / quality / proof.
+6. Promote only the smallest mechanisms that produce measured cost, quality or TTR lift.
+7. Only after repeated feature-family evidence exists, evaluate a thin Feature Evolution Kernel.
+8. Every expansion must pass economic gate: lifetime avoided cost + quality/frontier value > build + maintenance + risk.
+9. Every universalization must pass scope/transfer/falsification; KME/KSR remain reference workloads, not proof of universal truth by themselves.
+10. Reprofile after each major improvement. If a new bottleneck dominates, stop optimizing the old one.
+
+**Shared ownership target:** Universal Engineering Kernel owns identity/state/dependency/evidence/proof/effects/learning; REA supplies static/binary evidence where applicable; Universal Modder X supplies actuation/experimental reality; KME adapter supplies software-domain semantics; KSR adapter supplies cyber-physical/game semantics; ADCR learns procedures; CBR ratchets certified inheritance; Cognitive Economics/KEOS allocates capital; Mission/Readiness/Construction/Experiment/Proof compilers coordinate without becoming duplicated OSes.
+
+**Final programme metric:** not number of frameworks, playbooks, genomes or datasets. The proof is whether a fresh future feature/reconstruction/change begins closer to READY, requires less raw evidence/context/general cognition, reaches equal-or-better quality faster, and leaves more reusable institutional capital than its predecessor.
+
+
+---
+
 ## D11 — Wii Sports Tennis reconstruction with Wii Motion OS integrated (Owner, 2026-10-08)
 
 **Goal:** reconstruct the Tennis of Wii Sports from `E:\wbfs\Wii Sports + Wii Sports Resort [SP2P01]\SP2P01.wbfs`
