@@ -210,6 +210,60 @@ def g_successor(e):
     check("V-ECON-SUCCESSOR-ADMISSION", admit(e, "NEW7", "go", work) == {}, "the successor session's messages reach the model")
 
 
+def g_roles(e):
+    # WS-F: recovery spend has its own role under the programme's recovery reserve and is never productive
+    # spend on a lease; refused-but-billed boundaries stay real cost and are reported apart.
+    tga.declare("t8", 1000, lease_calls=1)
+    exhaust("t8", "A8")
+    for m in (1400, 1600):
+        led("t8").renew("A8", m, 600, per_call=100)
+    st = led("t8").status()
+    check("V-ECON-REFUSED-BILLED-ROLE", st.get("refused_billed") == 400 and st["settled"] == 1600,
+          f"settles of a tombstoned pane are real cost, reported apart: refused_billed {st.get('refused_billed')}")
+    nr = led("t8").renew("R0", 0, 600, per_call=100, role="recovery")
+    check("V-ECON-RECOVERY-NO-RESERVE", not nr["ok"] and "RECOVERY" in nr["reason"]
+          and not any(r["op"] == "reserve" and r["sid"] == "R0" and r.get("kind") == "lease" for r in journal("t8")),
+          f"no recovery reserve, no recovery lease: {nr['reason'][:60]}")
+
+    l8 = led("t8")
+    l8.set_programme(10_000, "test owner", inside_agent=False)
+    ex0 = l8.programme_status()["executable"]
+    so = l8.lease_open("succ-8", 2000, reserves={"recovery": 800})
+    ex1 = l8.programme_status()["executable"]
+    l1_before = led("t8")._gfold(led("t8")._read())["leases"][0]["used"]
+    r1 = led("t8").renew("R8", 0, 200, per_call=100, role="recovery")
+    r2 = led("t8").renew("R8", 300, 200, per_call=100, role="recovery")
+    g = led("t8")._gfold(led("t8")._read())
+    l1, l2 = g["leases"][0], g["leases"][-1]
+    check("V-ECON-RECOVERY-OFF-LEASE", so["ok"] and r1["ok"] and r2["ok"] and l2["used"] == 0
+          and l2.get("recovery_used", 0) >= 300 and l1["used"] == l1_before and g["used"] == 0,
+          f"recovery spend: L1 {l1_before}->{l1['used']}, L2 productive {l2['used']}, "
+          f"recovery {l2.get('recovery_used')}, admission used {g['used']}")
+    ex2 = led("t8").programme_status()["executable"]
+    check("V-ECON-RECOVERY-PREFUNDED", ex1 == ex2 and ex1 == ex0 - 800,
+          f"spending a pre-funded recovery reserve does not shrink executable twice: {ex0} -> {ex1} -> {ex2}")
+    import socket
+    bp = ms.binding_path("R9")
+    bp.parent.mkdir(parents=True, exist_ok=True)
+    bp.write_text(json.dumps({"goal": "t8", "since_ts": "2000-01-01T00:00:00", "source": "explicit", "pid": 0,
+                              "role": "recovery"}), encoding="utf-8")
+    tw = ms.goal_renew("t8", "R9", 0, 100, socket.gethostname())
+    rows = [r for r in journal("t8") if r["op"] == "reserve" and r["sid"] == "R9"]
+    check("V-ECON-PY-TWIN-ROLE", tw["ok"] and rows and rows[-1].get("role") == "recovery",
+          f"goal_renew takes the role from the session's binding record: {tw.get('reason', '')[:60]}")
+
+    r3 = led("t8").renew("R8", 900, 200, per_call=100, role="recovery")
+    g = led("t8")._gfold(led("t8")._read())
+    check("V-ECON-RECOVERY-RESERVE-BOUND", not r3["ok"] and "RECOVERY_RESERVE_SPENT" in r3["reason"]
+          and "R8" in g["tombs"] and not g["exhausted_now"],
+          f"a spent recovery reserve fences the recovery pane, never the lease: {r3['reason'][:60]}")
+    p = led("t8").renew("P8", 0, 600, per_call=100)
+    check("V-ECON-RECOVERY-CONTROL", p["ok"] and not p["exhausted"], "a productive pane on the successor lease is still admitted")
+    fx = led("t8").renew("P8", 50, 600, per_call=100, role="recovery")
+    check("V-ECON-ROLE-FIXED", not fx["ok"] and "ROLE_FIXED" in fx["reason"],
+          f"a session's role is fixed on a goal: {fx['reason'][:60]}")
+
+
 SETTINGS = Path.home() / ".claude" / "settings.json"
 DISPATCHERS = [PP / "hooks" / "hook-dispatcher.js", Path.home() / ".claude" / "hooks" / "hook-dispatcher.js"]
 
@@ -263,7 +317,7 @@ def g_wiring(e):
 
 
 def main():
-    for g in (g_ledger, g_guard, g_admission, g_detach, g_successor, g_wiring):
+    for g in (g_ledger, g_guard, g_admission, g_detach, g_successor, g_roles, g_wiring):
         e = tga.Env()
         try:
             g(e)

@@ -6,17 +6,27 @@ econ-contain, which was spent at 13,790,935 of 14M). Plan: `vault/plans/econ-con
 (workstream table, Architecture, Done-gates). Thesis: zero model tokens after a goal is known spent; one
 Owner decision, never mechanical escape.
 
-**State (coherence anchor: HEAD contains 833eb3fd).**
+**State (coherence anchor: HEAD contains the WS-F commit "econ-contain WS-F: accounting roles").**
 - SEALED: WS-B..E (9c88ebad): tombstone/exhausted ledger ops, binding generations, quarantine, fence,
   econ_admission.js + econ_plane.py. Admission is its OWN UserPromptSubmit hook, 30 s (d3170d43); proven
   live (headless `claude -p` on a tombstoned sid: blocked, num_turns 0, cost 0; 833eb3fd).
-  Gates: ECON 29/29, GOAL 59/59. SBG 21/22: V-SBG-LATENCY red from host RAM (HEAD equally slow), not code.
-- PENDING: F (accounting roles: recovery / refused-billed), G (recovery ContextImage via capsule-v2 +
-  /clear epoch), H (successor + Owner-capital wake), I (canaries), J (real ctx-same-pane recovery),
+- SEALED WS-F (2026-10-10): `ledger.renew(..., role=productive|recovery)`. Role is fixed per sid
+  (`ROLE_FIXED`). Recovery spend draws on the CURRENT lease's `reserves.recovery` (from lease_open), never
+  on a lease's productive `used`; a spent reserve tombstones the recovery sid but never marks the lease
+  exhausted. Settles of a tombstoned sid carry `billed:"refused"` and are summed as `refused_billed`
+  (still real cost). `_committed_reserves` stops pre-funded recovery spend counting twice in
+  programme `executable`. `mission_spend.goal_renew` takes the role from the binding record's `role`.
+  GAP: nothing writes `role:"recovery"` into a binding yet. That producer belongs to G/H (the recovery /
+  successor session's binding generation). Until then the path is wired but has no producer.
+  Gates: ECON 37/37, GOAL 59/59, GOAL_LEASE 10/10, OCA 15/15, WS_LEASE 10/10, ADVANCE 12/0, STEWARD 22/22.
+- PENDING: G (recovery ContextImage via capsule-v2 + /clear epoch, and the binding generation with
+  `role:"recovery"`), H (successor + Owner-capital wake), I (canaries), J (real ctx-same-pane recovery),
   K (cross-domain validation on one unrelated goal), L (vault/FIOS/UKDL/CBR). WS-A status unverified:
   check before assuming.
-- Spend: econ-contain-2 had 12,430,329 settled + 1,239,905 reserved by the previous pane (a9647f12),
-  whose per-call cost had grown to ~248K. ~9.3M remain. Run `mission_spend.py goal-status --goal econ-contain-2`.
+- Spend: at the end of the WS-F pane (sid b1876f55), goal-status said used 20,381,935 of 23,000,000
+  (2,618,065 remaining; that pane cost ~5.5M processed, at ~150K+ per call). The remaining budget will
+  not cover G+H+I+J+K+L (plan P50 for them is ~3.9M). Before starting G, an Owner decision is needed:
+  narrow the scope or capitalise a successor. Run `mission_spend.py goal-status --goal econ-contain-2`.
 
 **Active decisions.**
 - Fresh pane per workstream; never iterate in a pane whose per-call is >150K (coordinator overrun).

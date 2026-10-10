@@ -177,6 +177,11 @@ class SpendLedger:
 GOAL_WINDOW = "goal"
 SETTLED = "SETTLED"
 DEFAULT_GOAL_LEAK_S = 6 * 3600
+# Accounting roles (econ-contain WS-F). A session's role is fixed on a goal by its first row. RECOVERY spend
+# draws on the current lease's `recovery` reserve (pre-funded by lease_open) and is never part of a lease's
+# productive `used`, so recovering a spent lease cannot overdraw it again.
+PRODUCTIVE, RECOVERY = "productive", "recovery"
+ROLES = (PRODUCTIVE, RECOVERY)
 
 
 class GoalLedger(SpendLedger):
@@ -191,7 +196,8 @@ class GoalLedger(SpendLedger):
         # Lease epochs (dgl W1b). With no programme / lease_open row there is one implicit lease L1 whose
         # cap is the goal cap, and cap / used below come out exactly as before.
         leases = [{"id": "L1", "cap": None, "closed": False, "reason": None, "succession_id": None,
-                   "reserves": {}, "settled": 0}]
+                   "reserves": {}, "settled": 0, "rsettled": 0}]
+        roles, refused_billed = {}, 0
         programme, programme_source, authority, opened = None, None, [], set()
         # Economic containment (econ-contain WS-C). A tombstone is per sid and outlives lease epochs: a
         # pane that hit the wall stays fenced even after a successor lease opens (the successor is a new
@@ -222,7 +228,7 @@ class GoalLedger(SpendLedger):
                 cur["closed"], cur["reason"] = True, cur["reason"] or "succeeded"
                 leases.append({"id": f"L{len(leases) + 1}", "cap": int(r["cap"]), "closed": False,
                                "reason": None, "succession_id": r["succession_id"],
-                               "reserves": dict(r.get("reserves") or {}), "settled": 0})
+                               "reserves": dict(r.get("reserves") or {}), "settled": 0, "rsettled": 0})
                 cap, source = int(r["cap"]), f"lease_open {r['succession_id']}"
             elif op == "lease_close":
                 for ls in leases:
@@ -233,6 +239,7 @@ class GoalLedger(SpendLedger):
             elif op == "reserve":
                 res[r["id"]] = {**r, "state": RESERVED, "lease": cur["id"]}
                 seqs[r["sid"]] = seqs.get(r["sid"], 0) + 1
+                roles.setdefault(r["sid"], r.get("role") or PRODUCTIVE)
             elif op == "leak":
                 if res.get(r["id"], {}).get("state") == RESERVED:
                     res[r["id"]]["state"] = LEAKED
@@ -240,7 +247,11 @@ class GoalLedger(SpendLedger):
                 marks[r["sid"]] = int(r["measured"])       # may LOWER; later settles watermark from here
             elif op == "settle":
                 new = max(marks.get(r["sid"], 0), int(r["measured"]))
-                cur["settled"] += new - marks.get(r["sid"], 0)
+                delta = new - marks.get(r["sid"], 0)
+                role = roles.setdefault(r["sid"], r.get("role") or PRODUCTIVE)
+                cur["rsettled" if role == RECOVERY else "settled"] += delta
+                if r.get("billed") == "refused":
+                    refused_billed += delta                # real provider cost of a refused boundary
                 marks[r["sid"]] = new
                 for rid in r.get("closes", []):
                     if rid in res:
@@ -252,19 +263,38 @@ class GoalLedger(SpendLedger):
                 # shrinks by what that sid has settled since the spawn: neither counted twice nor
                 # released by the parent's next renew (review M1, 31f1e714).
                 r["hold"] = max(0, r["amount"] - max(0, marks.get(r["sid"], 0) - int(r.get("base", 0))))
+            r["role"] = roles.get(r["sid"], PRODUCTIVE)
         open_ = sum(r["hold"] for r in res.values())
-        used = total = sum(marks.values()) + open_
+        total = sum(marks.values()) + open_
+        used = total - sum(m for s, m in marks.items() if roles.get(s) == RECOVERY) \
+            - sum(r["hold"] for r in res.values() if r["role"] == RECOVERY)
         for ls in leases:
-            ls["used"] = ls["settled"] + sum(r["hold"] for r in res.values() if r["lease"] == ls["id"])
+            held = [r for r in res.values() if r["lease"] == ls["id"]]
+            ls["used"] = ls["settled"] + sum(r["hold"] for r in held if r["role"] != RECOVERY)
+            ls["recovery_used"] = ls["rsettled"] + sum(r["hold"] for r in held if r["role"] == RECOVERY)
         if len(leases) > 1:
             used = leases[-1]["used"]                    # admission reads the CURRENT lease
         return {"goal": self.goal, "cap": cap, "source": source, "marks": marks, "res": res,
                 "seqs": seqs, "open": open_, "used": used, "total_used": total,
                 "prebind": pre, "PRE_BINDING_PROGRAM_CAPEX": sum(pre.values()),
                 "leases": leases, "programme": programme, "programme_source": programme_source,
-                "authority": authority, "opened": opened, "tombs": tombs,
+                "authority": authority, "opened": opened, "tombs": tombs, "roles": roles,
+                "refused_billed": refused_billed,
                 "exhausted_now": leases[-1]["id"] in exhausted,
                 "status": "AUTHORITY_REQUIRED" if any(a["succession_id"] not in opened for a in authority) else "OK"}
+
+    @staticmethod
+    def _committed_reserves(ls: dict) -> int:
+        """What an open lease still holds back from the programme: its reserves, less the recovery spend
+        already booked against them (that spend is in settled/open, so it must not count twice)."""
+        rv = ls["reserves"]
+        return sum(rv.values()) - min(int(rv.get(RECOVERY, 0)), ls.get("recovery_used", 0))
+
+    @staticmethod
+    def _recovery_view(g: dict) -> dict:
+        ls = g["leases"][-1]
+        pool = 0 if ls["closed"] else int(ls["reserves"].get(RECOVERY, 0))
+        return {"lease": ls["id"], "reserve": pool, "used": ls.get("recovery_used", 0)}
 
     def prebind(self, sid: str, measured: int) -> dict:
         """Book a session's pre-binding history as program capex, never as goal spend."""
@@ -293,7 +323,8 @@ class GoalLedger(SpendLedger):
         return {"goal": g["goal"], "cap": g["cap"], "used": g["used"], "open": g["open"],
                 "settled": sum(g["marks"].values()),
                 "remaining": None if g["cap"] is None else g["cap"] - g["used"],
-                "exhausted": bool(g.get("exhausted_now")), "tombstoned": sorted(g.get("tombs") or {}), **extra}
+                "exhausted": bool(g.get("exhausted_now")), "tombstoned": sorted(g.get("tombs") or {}),
+                "refused_billed": g.get("refused_billed", 0), "recovery": GoalLedger._recovery_view(g), **extra}
 
     def tombstone(self, sid: str, reason: str) -> dict:
         """Fence `sid` on this goal for good (recovery seal / detach). Idempotent; never reserves."""
@@ -365,7 +396,7 @@ class GoalLedger(SpendLedger):
     def programme_status(self) -> dict:
         with self._lock:
             g = self._gfold(self._read())
-        other = sum(sum(ls["reserves"].values()) for ls in g["leases"] if not ls["closed"])
+        other = sum(self._committed_reserves(ls) for ls in g["leases"] if not ls["closed"])
         settled = sum(g["marks"].values())
         ex = None if g["programme"] is None else g["programme"] - settled - g["open"] - other
         return {"goal": g["goal"], "ok": True, "programme": g["programme"], "source": g["programme_source"],
@@ -419,7 +450,7 @@ class GoalLedger(SpendLedger):
                 return {**self._lineage_view(g), "ok": False,
                         "reason": "UNKNOWN: no programme envelope declared; unknown headroom is not free"}
             need = cap + sum(reserves.values())
-            other = sum(sum(ls["reserves"].values()) for ls in g["leases"]
+            other = sum(self._committed_reserves(ls) for ls in g["leases"]
                         if not ls["closed"] and ls is not latest)
             executable = g["programme"] - sum(g["marks"].values()) - g["open"] - other
             if need > executable:
@@ -453,18 +484,20 @@ class GoalLedger(SpendLedger):
         it (canary #2, 2026-10-07: 195,084 of a 207,358 overshoot). A live pane is a sid with an open
         LEASE; its `per_call` is the size of that reply."""
         return sum(int(r.get("per_call") or 0) for r in g["res"].values()
-                   if r["hold"] and r.get("kind") == "lease" and r["sid"] != exclude)
+                   if r["hold"] and r.get("kind") == "lease" and r["sid"] != exclude and r["role"] != RECOVERY)
 
-    def renew(self, sid: str, measured: int, lease: int, per_call: int = 0) -> dict:
+    def renew(self, sid: str, measured: int, lease: int, per_call: int = 0, role: str = PRODUCTIVE) -> dict:
         """Settle `sid` at its cumulative `measured`, close its open LEASES and any agent hold the
         settled spend has used up, reserve the next lease (at most `lease`, at most what remains).
         At most one open lease per sid afterwards; an agent hold survives until its spend arrives.
         With `per_call` > 0, what remains is net of every live pane's final reply, this one's too:
         refused unless one more call AND its reply fit, and a refusal books this pane's reply as a
-        `final` hold so no other pane can spend it."""
+        `final` hold so no other pane can spend it. A RECOVERY session's room is the current lease's
+        recovery reserve instead of its cap; running out fences that session, never the lease."""
         if not isinstance(measured, int) or measured < 0 or not isinstance(lease, int) or lease <= 0 \
-                or not isinstance(per_call, int) or per_call < 0:
-            raise LedgerError("measured must be an int >= 0, lease a positive int, per_call an int >= 0")
+                or not isinstance(per_call, int) or per_call < 0 or role not in ROLES:
+            raise LedgerError("measured must be an int >= 0, lease a positive int, per_call an int >= 0, "
+                              f"role one of {ROLES}")
         with self._lock:
             recs = self._read()
             g = self._sweep_leaks(recs)
@@ -479,11 +512,17 @@ class GoalLedger(SpendLedger):
                                 if r["sid"] == sid and r["state"] in (RESERVED, LEAKED)
                                 and r.get("kind") in ("lease", "final") and measured > int(r.get("base", 0)))
                 if closes or measured > g["marks"].get(sid, 0):
-                    self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes})
+                    self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes,
+                                        "role": g["roles"].get(sid, role), "billed": "refused"})
                     g = self._gfold(recs)
                 return self._summary(g, ok=False, tombstoned_sid=True, reason=(
                     f"TOMBSTONED: this session hit the wall at used {g['tombs'][sid].get('used') or 0:,} "
                     f"of cap {g['tombs'][sid].get('cap') or 0:,}; it is fenced on this goal for good"))
+            fixed = g["roles"].get(sid)
+            if fixed and fixed != role:
+                # Watermarks are per sid, so one sid cannot carry two roles: a recovery session is a new sid.
+                return self._summary(g, ok=False, reason=f"ROLE_FIXED: session {sid} is {fixed} on goal "
+                                     f"{self.goal}; a {role} session must be a new session")
             # Idempotent renew. Parallel tool calls run the guard concurrently from one stale cache, so
             # N calls asked for N renews, each closing the lease the previous one had just reserved at the
             # same measured value (canary #1 journal rows 39-46). Nothing new to settle and an open lease
@@ -502,32 +541,45 @@ class GoalLedger(SpendLedger):
                                  or r.get("kind") == "agent" and mark - int(r.get("base", 0)) >= r["amount"]
                                  or r.get("kind") == "final" and mark > int(r.get("base", 0))))
             if closes or measured > g["marks"].get(sid, 0):
-                self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes})
+                self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes,
+                                    "role": role})
                 g = self._gfold(recs)
-            room = g["cap"] - g["used"] - self._headroom(g, exclude=sid) - per_call
+            rv = self._recovery_view(g)
+            if role == RECOVERY:
+                room = rv["reserve"] - rv["used"] - per_call
+            else:
+                room = g["cap"] - g["used"] - self._headroom(g, exclude=sid) - per_call
             if room < max(per_call, 1):
                 if per_call and not any(r["hold"] and r["sid"] == sid and r.get("kind") == "final"
                                         for r in g["res"].values()):
                     self._append(recs, {"op": "reserve", "id": f"{self.goal}:{sid}:{g['seqs'].get(sid, 0) + 1}",
                                         "sid": sid, "kind": "final", "provider": self.goal, "amount": per_call,
-                                        "window": GOAL_WINDOW, "base": measured, "per_call": per_call})
+                                        "window": GOAL_WINDOW, "base": measured, "per_call": per_call, "role": role})
                     g = self._gfold(recs)
                 # First refusal: tombstone this pane (its one final is booked above) and, when not even
                 # one more call fits the cap, mark the lease exhausted so a cwd bind and the pre-model
-                # admission can refuse without buying a model boundary.
+                # admission can refuse without buying a model boundary. A spent RECOVERY reserve fences
+                # the recovery session only: the lease's productive cap is untouched by it.
                 self._append(recs, {"op": "tombstone", "sid": sid, "lease": g["leases"][-1]["id"],
-                                    "reason": "budget_spent", "used": g["used"], "cap": g["cap"]})
-                if not g["exhausted_now"] and g["cap"] - g["used"] < max(per_call, 1):
+                                    "reason": "recovery_reserve_spent" if role == RECOVERY else "budget_spent",
+                                    "used": g["used"], "cap": g["cap"]})
+                if role != RECOVERY and not g["exhausted_now"] and g["cap"] - g["used"] < max(per_call, 1):
                     self._append(recs, {"op": "exhausted", "lease": g["leases"][-1]["id"],
                                         "used": g["used"], "cap": g["cap"]})
                 g = self._gfold(recs)
+                if role == RECOVERY:
+                    return self._summary(g, ok=False, reason=(
+                        f"RECOVERY_RESERVE_SPENT: lease {rv['lease']} recovery reserve {rv['reserve']:,}, "
+                        f"used {rv['used']:,}; less than one call ({max(per_call, 1):,}) is left. Recovery "
+                        "never draws on a lease's cap: the Owner funds a reserve (lease_open --recovery)"))
                 return self._summary(g, ok=False, reason=(
                     f"budget_spent: used {g['used']:,} of cap {g['cap']:,}; after one final reply per live "
                     f"pane, {max(room, 0):,} is left, less than one call ({max(per_call, 1):,})"))
             seq = g["seqs"].get(sid, 0) + 1
             rid, amount = f"{self.goal}:{sid}:{seq}", min(lease, room)
             self._append(recs, {"op": "reserve", "id": rid, "sid": sid, "kind": "lease", "provider": self.goal,
-                                "amount": amount, "window": GOAL_WINDOW, "base": measured, "per_call": per_call})
+                                "amount": amount, "window": GOAL_WINDOW, "base": measured, "per_call": per_call,
+                                "role": role})
             return self._summary(self._gfold(recs), ok=True, reason="",
                                  lease={"id": rid, "amount": amount, "base": measured})
 

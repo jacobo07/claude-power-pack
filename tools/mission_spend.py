@@ -602,7 +602,12 @@ def goal_renew(goal: str, sid: str, measured: int, per_call: int, host: str) -> 
     if e is None:
         return {"ok": False, "goal": goal, "reason": why}
     pc = per_call if per_call > 0 else GOAL_DEFAULT_PER_CALL
-    return _goal_ledger(goal).renew(sid, measured, int(e.get("lease_calls") or GOAL_LEASE_CALLS) * pc, per_call=pc)
+    # Accounting role (econ-contain WS-F): carried by the session's binding record, never by a CLI flag the
+    # caller could set; any other value, or a binding to another goal, is productive spend.
+    rec = read_binding(sid) or {}
+    role = "recovery" if rec.get("goal") == goal and rec.get("role") == "recovery" else "productive"
+    return _goal_ledger(goal).renew(sid, measured, int(e.get("lease_calls") or GOAL_LEASE_CALLS) * pc,
+                                    per_call=pc, role=role)
 
 
 def goal_spawn(goal: str, sid: str, estimate: int | None, per_call: int, host: str, measured: int = 0) -> dict:
