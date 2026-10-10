@@ -643,6 +643,18 @@ def _legacy_binding(event: dict, sid: str, ix: dict) -> dict | None:
     return None
 
 
+def _workspace_registry():
+    """The registry when at least one workspace was ever claimed; None keeps the pre-W2 behaviour."""
+    import sys
+    repo = str(Path(__file__).resolve().parents[1])
+    if repo not in sys.path:
+        sys.path.insert(0, repo)
+    from modules.provider_routing.workspace_registry import WorkspaceRegistry
+    if not (goal_root() / "workspace.journal.jsonl").exists():
+        return None
+    return WorkspaceRegistry(goal_root())
+
+
 def resolve_binding(event: dict, sid: str) -> dict | None:
     """(a) immutable record wins; (b) CPP_GOAL, a disagreeing record logs a warning; (c) cwd under a goal
     root WRITES the record at the first mutating call (a read-only call is bound in memory only);
@@ -661,11 +673,23 @@ def resolve_binding(event: dict, sid: str) -> dict | None:
     if env:
         return {"goal": env, "entry": ix.get(env)}
     cwd = event.get("cwd")
+    reg = _workspace_registry()
+    if cwd and reg is not None:
+        h = reg.holder_for_cwd(cwd)                  # (W2) an explicit registry holder beats the roots
+        if h and h["goal"] in ix:
+            if is_read_only_call(event):
+                return {"goal": h["goal"], "entry": ix.get(h["goal"]), "record": None, "sinceTs": _now_ts(),
+                        "provisional": True, "gen": h["gen"], "lease": h["lease"]}
+            w = write_binding(sid, h["goal"], "registry")
+            return {"goal": w["goal"], "entry": ix.get(w["goal"]), "record": w, "sinceTs": w.get("since_ts"),
+                    "gen": h["gen"], "lease": h["lease"]}
     if cwd:
         for g, e in ix.items():
             if isinstance(e, dict) and any(_norm(cwd) == _norm(r) or _norm(cwd).startswith(_norm(r) + os.sep)
                                            for r in e.get("roots", [])):
-                if is_read_only_call(event):
+                if reg is not None or is_read_only_call(event):
+                    # observe only: once the registry exists, entering a goal worktree never binds, claims
+                    # or settles (the 32.8M coordinator mis-attribution)
                     return {"goal": g, "entry": e, "record": None, "sinceTs": _now_ts(), "provisional": True}
                 w = write_binding(sid, g, "cwd")
                 return {"goal": w["goal"], "entry": e if w["goal"] == g else ix.get(w["goal"]),
