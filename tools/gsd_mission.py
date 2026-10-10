@@ -706,6 +706,10 @@ def worker_mcp_verdict(now: float | None = None) -> str:
     return str(d.get("verdict") or "NONE")
 
 
+# Per-mission MCP posture of a `--bg` worker (oic-v1 S4). "none" strips MCP for this mission only: a
+# project .mcp.json parks an unattended worker on its server-approval dialog (m-c74a2125495b, probe A),
+# and the alternative -- pre-approving in ~/.claude.json -- writes host state outside the mission.
+WORKER_MCP_MODES = ("inherit", "none")
 SLIM_PROFILES = ("slim-t1", "slim-t2")
 SLIM_SETTINGS = Path(__file__).resolve().parent.parent / "vault" / "config" / "slim-critical-settings.json"
 # PowerShell on Windows: the critical lane's bash-bridge guard blocks git through Bash, and a worker with
@@ -780,7 +784,7 @@ def worker_argv(rec: dict, prompt: str, session_id: str | None = None) -> list[s
         argv += ["--add-dir", d]
     # A worker nobody watches must not be able to park on a question (Owner 2026-09-25).
     argv += ["--disallowedTools", "AskUserQuestion"]
-    if capsule_v2(rec) or worker_mcp_verdict() == "APPLY":
+    if capsule_v2(rec) or rec.get("worker_mcp") == "none" or worker_mcp_verdict() == "APPLY":
         # Measured, not assumed: only a fresh APPLY from tools/worker_mcp_probe.sh strips MCP.
         # capsule-v2 always strips it (G9): the mutation guard sits on the Bash and Edit chains, so
         # an `mcp__*` tool would be a write path no guard sees before the successor certifies.
@@ -1439,7 +1443,8 @@ def _token_count(field: str, value) -> int:
 
 
 def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = None, autocompact=None,
-                 wu_packet: str | None = None, continue_max_tokens=None, now: float | None = None) -> dict:
+                 wu_packet: str | None = None, continue_max_tokens=None, worker_mcp: str | None = None,
+                 now: float | None = None) -> dict:
     """Set the launch envelope of a live mission (spec mission-envelope-and-compiled-wu): the token
     estimate the cost breaker judges, the worker model, its autocompact window, and the compiled
     work-unit packet launch_prompt sends instead of resume_command. Every value is validated before
@@ -1469,9 +1474,13 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
                                 "bytes": len(data), "set_at": time.time() if now is None else now}
     if continue_max_tokens is not None:
         changes["continue_max_tokens"] = _token_count("continue_max_tokens", continue_max_tokens)
+    if worker_mcp is not None:
+        if worker_mcp not in WORKER_MCP_MODES:
+            raise MissionError(f"worker_mcp must be one of {', '.join(WORKER_MCP_MODES)}, not {worker_mcp!r}")
+        changes["worker_mcp"] = worker_mcp
     if not changes:
-        raise MissionError("nothing to set: give --token-estimate, --model, --autocompact, --wu-packet "
-                           "or --continue-max-tokens")
+        raise MissionError("nothing to set: give --token-estimate, --model, --autocompact, --wu-packet, "
+                           "--continue-max-tokens or --worker-mcp")
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
@@ -4290,6 +4299,8 @@ def _cli(argv=None) -> int:
     en.add_argument("--wu-packet", help="compiled work-unit file sent instead of the resume command")
     en.add_argument("--continue-max-tokens",
                     help="per-mission context ceiling for continuing the same session, e.g. 200k")
+    en.add_argument("--worker-mcp", choices=WORKER_MCP_MODES,
+                    help="none = launch this mission's worker with --strict-mcp-config and no servers")
     ad = sub.add_parser("admit", help="judge the compiled work unit's route against its envelope "
                                       "(tools/route_admission.py); only ADMISSIBLE may launch")
     ad.add_argument("--mission", required=True)
@@ -4358,11 +4369,12 @@ def _cli(argv=None) -> int:
     if args.cmd == "envelope":
         rec = set_envelope(args.mission, token_estimate=args.token_estimate, model=args.model,
                            autocompact=args.autocompact, wu_packet=args.wu_packet,
-                           continue_max_tokens=args.continue_max_tokens)
+                           continue_max_tokens=args.continue_max_tokens, worker_mcp=args.worker_mcp)
         pkt = (rec.get("wu_packet") or {}).get("path")
         print(f"ENVELOPE SET mission={rec['mission_id']} token_estimate={rec.get('token_estimate')} "
               f"model={rec.get('model')} autocompact={rec.get('autocompact')} wu_packet={pkt} "
-              f"wu_packet_epoch={rec.get('wu_packet_epoch')} continue_max_tokens={rec.get('continue_max_tokens')}")
+              f"wu_packet_epoch={rec.get('wu_packet_epoch')} continue_max_tokens={rec.get('continue_max_tokens')} "
+              f"worker_mcp={rec.get('worker_mcp') or 'inherit'}")
         return 0
     if args.cmd == "admit":
         adm = admit_route(args.mission, args.route, floors_path=args.floors)["admission"]

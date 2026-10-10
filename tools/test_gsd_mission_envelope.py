@@ -261,6 +261,27 @@ def main() -> int:
           str(op.get("token_estimate")))
     check("V-AUTO-HELD-UNTOUCHED", held.get("token_estimate") is None)
 
+    # 9. oic-v1 S4: worker_mcp=none strips MCP from THIS mission's worker only (the .mcp.json approval
+    #    dialog parked m-c74a2125495b at startup); nothing is written to ~/.claude.json, no host-wide verdict.
+    gm.worker_mcp_verdict = lambda now=None: "NONE"
+    _running("m-mcp")
+    base = gm.worker_argv(gm.load("m-mcp"), "PROMPT")
+    check("V-ENV-MCP-CONTROL-INHERITS", "--strict-mcp-config" not in base)
+    r = gm.set_envelope("m-mcp", worker_mcp="none", now=NOW)
+    a = gm.worker_argv(r, "PROMPT")
+    check("V-ENV-MCP-NONE-STRIPS", r.get("worker_mcp") == "none" and "--strict-mcp-config" in a
+          and a[a.index("--mcp-config") + 1] == '{"mcpServers":{}}' and a[-1] == "PROMPT", str(a))
+    check("V-ENV-MCP-ONCE", a.count("--strict-mcp-config") == 1)
+    _running("m-mcp-other")
+    check("V-ENV-MCP-SCOPED", "--strict-mcp-config" not in gm.worker_argv(gm.load("m-mcp-other"), "PROMPT"))
+    back = gm.set_envelope("m-mcp", worker_mcp="inherit", now=NOW + 1)
+    check("V-ENV-MCP-INHERIT-RESTORES", "--strict-mcp-config" not in gm.worker_argv(back, "PROMPT"))
+    seq = gm.load("m-mcp")["seq"]
+    check("V-ENV-MCP-REFUSE-UNKNOWN", refused(lambda: gm.set_envelope("m-mcp", worker_mcp="all", now=NOW)))
+    check("V-ENV-MCP-REFUSAL-WRITES-NOTHING", gm.load("m-mcp")["seq"] == seq)
+    rc = gm._cli(["envelope", "--mission", "m-mcp", "--worker-mcp", "none"])
+    check("V-ENV-MCP-CLI", rc == 0 and gm.load("m-mcp").get("worker_mcp") == "none", str(rc))
+
     print(f"ENVELOPE_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
