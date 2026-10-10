@@ -1,12 +1,12 @@
-"""Authority capsules: an Owner approval compiled into durable, scoped, revocable authority.
+"""Authority grants: an Owner approval compiled into durable, scoped, revocable authority.
 
 Spec: ~/.claude/plans/owner-interface-compiler-v1.md (oic-v1, S1). EXTENDS autonomy_gate: the
-CPP_AUTONOMY_AUTHORIZED env list stays a ceiling of action KINDS; a capsule is what can actually
+CPP_AUTONOMY_AUTHORIZED env list stays a ceiling of action KINDS; a grant is what can actually
 authorize a concrete effect, and only one that names it.
 
-A capsule binds an approval to what it was given for:
+A grant binds an approval to what it was given for:
   programme / goal       what the work is
-  plan {path, sha256}    the exact plan version; an edited plan invalidates the capsule
+  plan {path, sha256}    the exact plan version; an edited plan invalidates the grant
   level 1-3              L4 (new irreversible / high blast radius) and L5 (credentials, legal,
                          money, physical presence) are never grantable here
   effects / denied       named effects only; no wildcard; denied wins
@@ -17,11 +17,11 @@ A capsule binds an approval to what it was given for:
 
 Ledger: append-only JSONL (grant / revoke rows); the latest row per id wins. Every check() verdict is
 also written to the autonomy-decisions log, so any effect can answer "which approval allowed this".
-Missing anything is a NO: no capsule, a missing fact, an unreadable plan, an unknown effect.
+Missing anything is a NO: no grant, a missing fact, an unreadable plan, an unknown effect.
 
-    python -m modules.autonomy_gate.capsules list
-    python -m modules.autonomy_gate.capsules check --effect pr.merge --target pr=545 --fact ci_green=true
-    python -m modules.autonomy_gate.capsules revoke <id|all> --by owner --reason "..."
+    python -m modules.autonomy_gate.grants list
+    python -m modules.autonomy_gate.grants check --effect pr.merge --target pr=545 --fact ci_green=true
+    python -m modules.autonomy_gate.grants revoke <id|all> --by owner --reason "..."
 exit 0 = allowed, 10 = not allowed, 2 = usage error.
 """
 from __future__ import annotations
@@ -40,7 +40,7 @@ _REQUIRED = ("programme", "level", "effects", "expires_at", "provenance")
 
 def ledger_path() -> Path:
     base = os.environ.get("CPP_AUTHORITY_DIR") or str(Path.home() / ".claude" / "state" / "authority")
-    return Path(base) / "capsules.jsonl"
+    return Path(base) / "grants.jsonl"
 
 
 def _append(row: dict) -> None:
@@ -66,11 +66,11 @@ def _rows() -> list[dict]:
 
 
 def load() -> dict[str, dict]:
-    """Current capsules by id; a revoke row marks its target (or every capsule, for "all")."""
+    """Current grants by id; a revoke row marks its target (or every grant, for "all")."""
     caps: dict[str, dict] = {}
     for r in _rows():
         if r.get("op") == "grant" and r.get("id"):
-            caps[r["id"]] = dict(r["capsule"], id=r["id"], revoked=None)
+            caps[r["id"]] = dict(r["grant"], id=r["id"], revoked=None)
         elif r.get("op") == "revoke":
             tgt = r.get("id")
             for cid, c in caps.items():
@@ -100,7 +100,7 @@ def _sha256_file(path: str) -> str | None:
 def _validate(c: dict) -> None:
     missing = [k for k in _REQUIRED if c.get(k) in (None, "", [])]
     if missing:
-        raise ValueError(f"capsule missing {missing}")
+        raise ValueError(f"grant missing {missing}")
     if not isinstance(c["level"], int) or not 1 <= c["level"] <= MAX_LEVEL:
         raise ValueError(f"level {c['level']!r} is not grantable here (1..{MAX_LEVEL}); L4/L5 stay with the Owner")
     if any(e in ("*", "all", "any") for e in c["effects"]):
@@ -112,19 +112,19 @@ def _validate(c: dict) -> None:
         raise ValueError("a plan binding needs both path and sha256")
 
 
-def grant(capsule: dict, *, now: float | None = None) -> str:
-    c = dict(capsule)
+def grant(grant: dict, *, now: float | None = None) -> str:
+    c = dict(grant)
     c.setdefault("granted_at", now or time.time())
     c.setdefault("denied", [])
     c.setdefault("targets", {})
     c.setdefault("conditions", [])
     c.setdefault("delegation_depth", 0)
     _validate(c)
-    cid = c.get("id") or "cap-" + hashlib.sha256(json.dumps(c, sort_keys=True).encode()).hexdigest()[:12]
+    cid = c.get("id") or "grant-" + hashlib.sha256(json.dumps(c, sort_keys=True).encode()).hexdigest()[:12]
     c.pop("id", None)
     if cid in load():
-        return cid          # idempotent: the same grant twice is one capsule
-    _append({"op": "grant", "id": cid, "at": c["granted_at"], "capsule": c})
+        return cid          # idempotent: the same grant twice is one grant
+    _append({"op": "grant", "id": cid, "at": c["granted_at"], "grant": c})
     return cid
 
 
@@ -139,10 +139,10 @@ def _subset(child_v, parent_v) -> bool:
 
 
 def derive(parent_id: str, child: dict, *, now: float | None = None) -> str:
-    """A child capsule: a subset of its parent, one delegation level down. Raises if it would widen."""
+    """A child grant: a subset of its parent, one delegation level down. Raises if it would widen."""
     p = load().get(parent_id)
     if not p:
-        raise ValueError(f"no capsule {parent_id}")
+        raise ValueError(f"no grant {parent_id}")
     if p["revoked"]:
         raise ValueError(f"{parent_id} is revoked")
     if int(p.get("delegation_depth", 0)) < 1:
@@ -174,8 +174,8 @@ def derive(parent_id: str, child: dict, *, now: float | None = None) -> str:
 
 
 def check(effect: str, *, target: dict | None = None, facts: dict | None = None,
-          now: float | None = None, record_source: str | None = "capsules.check") -> dict:
-    """Is there a live capsule that authorizes exactly this effect on this target, now?"""
+          now: float | None = None, record_source: str | None = "grants.check") -> dict:
+    """Is there a live grant that authorizes exactly this effect on this target, now?"""
     now = now or time.time()
     target, facts = target or {}, facts or {}
     reasons = []
@@ -188,7 +188,7 @@ def check(effect: str, *, target: dict | None = None, facts: dict | None = None,
         if not why:
             return _verdict(True, cid, [], effect, record_source)
         reasons.append(f"{cid}: {why}")
-    return _verdict(False, None, reasons or ["no capsule"], effect, record_source)
+    return _verdict(False, None, reasons or ["no grant"], effect, record_source)
 
 
 def _mismatch(c: dict, effect: str, target: dict, facts: dict, now: float) -> str | None:
@@ -216,12 +216,12 @@ def _mismatch(c: dict, effect: str, target: dict, facts: dict, now: float) -> st
 
 
 def _verdict(ok: bool, cid, reasons, effect, source) -> dict:
-    v = {"allowed": ok, "capsule": cid, "effect": effect, "why": reasons}
+    v = {"allowed": ok, "grant": cid, "effect": effect, "why": reasons}
     if source:
         try:
             from modules.autonomy_gate.gate import record, AGENT, OWNER
-            record({"owner": AGENT if ok else OWNER, "category": "capsule",
-                    "why": f"{'allowed by ' + cid if ok else 'no capsule'}: {effect}"},
+            record({"owner": AGENT if ok else OWNER, "category": "grant",
+                    "why": f"{'allowed by ' + cid if ok else 'no grant'}: {effect}"},
                    f"effect {effect}", source=source)
         except Exception:  # noqa: BLE001 -- the audit row is best-effort; the verdict is not
             pass
@@ -237,7 +237,7 @@ def _kv(items) -> dict:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(prog="capsules")
+    ap = argparse.ArgumentParser(prog="grants")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("list")
     g = sub.add_parser("grant")
