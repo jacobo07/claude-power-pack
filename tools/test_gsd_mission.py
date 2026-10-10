@@ -22,6 +22,7 @@ os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP  # adopt/ack write markers: never in the real dir
 os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")      # host job files: never the real ones
 os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")  # transcripts: never the real ones
+os.environ["CPP_RESOURCE_ADMISSION"] = "off"  # RAM floor reads host memory; covered by test_a5_u6
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_mission as gm  # noqa: E402
 
