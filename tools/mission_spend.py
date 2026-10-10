@@ -21,6 +21,8 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
+import datetime as dt
 from pathlib import Path
 
 DEFAULT_TRIP_RATIO = 2.0
@@ -105,20 +107,35 @@ def mission_sessions(rec: dict, ledger: Path | None = None) -> tuple[set[str], s
     return ids, ({str(bg)} if bg else set())
 
 
-def _attributed(path: Path, base: Path, ids: set[str], prefixes: set[str]) -> bool:
-    """A transcript belongs to a session when its own stem, or a directory between the project
-    directory and it (`<sid>/subagents/agent-*.jsonl`), is that session."""
-    names = [path.stem] + [p.name for p in path.relative_to(base).parents if p.name]
-    return any(n in ids or any(n.startswith(px) for px in prefixes) for n in names)
+def _n(v) -> int:
+    """A transcript field as a count: the value when it is an int (not a bool) and >= 0, else 0."""
+    return v if isinstance(v, int) and not isinstance(v, bool) and v >= 0 else 0
 
 
-def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = None,
-                     sessions: tuple[set[str], set[str]] | None = None) -> int | None:
-    """Processed tokens the mission's OWN sessions have spent, or None when it cannot be measured:
-    no transcript directory, or no session attributable to the mission (absence is not zero).
-    `sessions` overrides `mission_sessions(rec)`. `cache` maps a file path to {size, mtime, tokens};
-    unchanged files are not re-read."""
-    root = root or projects_root()
+def _ts_epoch(s):
+    """ISO-8601 string (Z or offset) to epoch seconds; None when it is not one."""
+    if not isinstance(s, str) or len(s) < 19:
+        return None
+    try:
+        d = dt.datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=dt.timezone.utc)
+    return d.timestamp()
+
+
+def _epoch_ts(e: float) -> str:
+    return dt.datetime.fromtimestamp(e, dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _since_iso(rec: dict) -> str | None:
+    if rec.get("created_at"):
+        return dt.datetime.fromtimestamp(float(rec["created_at"]), dt.timezone.utc).isoformat()[:19]
+    return None
+
+
+def _dirs_both_planes(rec: dict, root: Path) -> list[Path]:
     # Both planes: the host files a worker's transcript under the dir it was LAUNCHED in (cwd), while the
     # work may live in a worktree (work_dir). Measured 2026-10-06, m-e935055d072d: work_dir alone found no
     # directory, so a 3,353,877-token worker read as unmeasurable and its breaker was blind.
@@ -127,31 +144,108 @@ def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = N
         for d in (mission_dirs(base, root) if base else []):
             if d not in dirs:
                 dirs.append(d)
+    return dirs
+
+
+def _session_of(path: Path, base: Path, ids: set[str], prefixes: set[str]) -> str | None:
+    """The session a transcript belongs to: its own stem, or a directory between the project directory
+    and it (`<sid>/subagents/agent-*.jsonl`), that is in ids or starts with a prefix. Names are only compared."""
+    names = [path.stem] + [p.name for p in path.relative_to(base).parents if p.name]
+    for n in names:
+        if n in ids or any(n.startswith(px) for px in prefixes):
+            return n
+    return None
+
+
+def _attributed(path: Path, base: Path, ids: set[str], prefixes: set[str]) -> bool:
+    return _session_of(path, base, ids, prefixes) is not None
+
+
+def _read_file(path: Path, st, cache: dict | None) -> dict:
+    """Unfiltered per-call tuples of one transcript, cached by size and mtime. Entry: {size, mtime, calls}
+    with calls = {key: (input, cache_write, cache_read, output, cw5, cw1, ts, model)}."""
+    k = str(path)
+    hit = cache.get(k) if cache is not None else None
+    if hit and hit.get("size") == st.st_size and hit.get("mtime") == st.st_mtime \
+            and isinstance(hit.get("calls"), dict):
+        return hit
+    import tis_observed   # lazy attribute call: a drill mutant of tis_observed is the one that runs
+    calls, _end, _ep = tis_observed.calls_from(path, 0)
+    out: dict = {}
+    for c in calls:
+        u = c.get("usage") or {}
+        key = c.get("key")
+        if isinstance(key, tuple) and len(key) == 2 and key[0] == "off":
+            key = ("off", k, key[1])
+        cc = u.get("cache_creation")
+        cw5 = _n(cc.get("ephemeral_5m_input_tokens")) if isinstance(cc, dict) else 0
+        cw1 = _n(cc.get("ephemeral_1h_input_tokens")) if isinstance(cc, dict) else 0
+        out[key] = (_n(u.get("input_tokens")), _n(u.get("cache_creation_input_tokens")),
+                    _n(u.get("cache_read_input_tokens")), _n(u.get("output_tokens")),
+                    cw5, cw1, c.get("ts"), c.get("model") or "")
+    entry = {"size": st.st_size, "mtime": st.st_mtime, "calls": out}
+    if cache is not None:
+        cache[k] = entry
+    return entry
+
+
+def usage_truth(rec: dict, root: Path | None = None, cache: dict | None = None,
+                sessions: tuple[set[str], set[str]] | None = None, now: float | None = None) -> dict | None:
+    """The canonical reader of a mission's spend, or None when it cannot be measured (no transcript
+    directory, or no session attributable: absence is not zero). Per transcript the last copy of each
+    (message.id, requestId) wins and synthetic rows are excluded; across transcripts the per-column
+    maximum wins. Main transcripts are read before subagents. The since filter applies after the merge."""
+    root = root or projects_root()
+    dirs = _dirs_both_planes(rec, root)
     if not dirs:
         return None
     ids, prefixes = sessions if sessions is not None else mission_sessions(rec)
     if not ids and not prefixes:
         return None
-    since = None
-    if rec.get("created_at"):
-        import datetime as dt
-        since = dt.datetime.fromtimestamp(float(rec["created_at"]), dt.timezone.utc).isoformat()[:19]
-    total = 0
+    since = _since_iso(rec)
+    files = []
     for d in dirs:
         for p in d.rglob("*.jsonl"):
-            if not _attributed(p, d, ids, prefixes):
+            if _session_of(p, d, ids, prefixes) is not None:
+                files.append(p)
+    files.sort(key=lambda p: (p.parent.name == "subagents", str(p)))
+    merged: dict = {}
+    for p in files:
+        st = p.stat()
+        for key, t in _read_file(p, st, cache)["calls"].items():
+            m = merged.get(key)
+            if m is None:
+                merged[key] = list(t)
                 continue
-            st = p.stat()
-            key = str(p)
-            hit = cache.get(key) if cache is not None else None
-            if hit and hit.get("size") == st.st_size and hit.get("mtime") == st.st_mtime and hit.get("since") == since:
-                total += hit["tokens"]
-                continue
-            n = _file_tokens(p, since)
-            if cache is not None:
-                cache[key] = {"size": st.st_size, "mtime": st.st_mtime, "since": since, "tokens": n}
-            total += n
-    return total
+            for i in range(6):
+                m[i] = max(m[i], t[i])
+            a, b = _ts_epoch(m[6]), _ts_epoch(t[6])
+            if (a is None and t[6]) or (a is not None and b is not None and b > a):
+                m[6] = t[6]
+    tree = {"input": 0, "cache_write": 0, "cache_read": 0, "output": 0, "processed": 0, "calls": 0}
+    for m in merged.values():
+        if since and (m[6] or "") < since:
+            continue
+        tree["input"] += m[0]
+        tree["cache_write"] += m[1]
+        tree["cache_read"] += m[2]
+        tree["output"] += m[3]
+        tree["calls"] += 1
+    tree["processed"] = tree["input"] + tree["cache_write"] + tree["cache_read"] + tree["output"]
+    return {"measured_at": time.time() if now is None else now, "since": since,
+            "files": len(files), "tree": tree}
+
+
+def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = None,
+                     sessions: tuple[set[str], set[str]] | None = None) -> int | None:
+    """Processed tokens the mission's OWN sessions have spent, or None when it cannot be measured:
+    no transcript directory, or no session attributable to the mission (absence is not zero).
+    Int projection of usage_truth. Unit rule: last copy per (message.id, requestId) per transcript and
+    per-column maximum across transcripts; the breaker therefore reads about 1 % higher than the old
+    first-copy rule and trips about 1 % earlier (accepted). `sessions` overrides `mission_sessions(rec)`.
+    `cache` maps a transcript path to its per-key tuples; unchanged files are not re-read."""
+    t = usage_truth(rec, root, cache, sessions)
+    return None if t is None else t["tree"]["processed"]
 
 
 # --- Lineage (UCDA A2, 2026-10-09) -----------------------------------------------------------------
