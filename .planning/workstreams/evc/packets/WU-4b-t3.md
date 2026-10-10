@@ -4,7 +4,7 @@ You are in `C:\Users\User\.claude\skills\claude-power-pack\.claude\worktrees\evc
 Use the PowerShell tool for git and python. git = `& 'C:\Program Files\Git\cmd\git.exe'`,
 python = `& 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe'`. Set `$env:PYTHONIOENCODING='utf-8'` first.
 
-Precondition: `git log --oneline -20 --grep "evc-01-02: task"` must show 2 commit(s) and plan 01-01 must show 3 commits (--grep "evc-01-01: task"). If not, stop: BLOCKED precondition.
+Precondition: `git log --oneline -20 --grep "evc-01-02): task"` must show 2 commit(s) and plan 01-01 must show 3 commits (--grep "evc-01-01): task"). If not, stop: BLOCKED precondition.
 
 ## The specification
 `.planning/workstreams/evc/phases/01-usage-truth-plane/01-02-PLAN.md`: read its frontmatter, `<objective>`, `<context>`
