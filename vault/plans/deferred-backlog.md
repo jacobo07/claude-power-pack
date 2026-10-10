@@ -454,3 +454,77 @@ the tick borrows `gsdx_chain.py` from `Apps\pp-gsdx-factory-2`; W2 left no works
 **Activation criterion:** the Owner raises the dgl budget. Units cost ~4-5M each (W1b 4.5M, W2 5.1M routes), so W3-W8 need
 roughly 20-25M more against 4.85M left; a raise needs `--owner` on a TTY (`mission_spend.py`). Then `Enable-ScheduledTask
 PP-DglChain-Tick`; the next tick arms W3. Read `vault/programs/dgl/RESUMPTION.md` in the worktree first.
+
+---
+
+## D14 — goal budget admission (A1 containment): the rest of the mission (Owner, 2026-10-10)
+
+**Goal:** the pre-call goal reservation that A1 lacked (`vault/specs/goal-budget-admission.md`, status done).
+Evidence and every number below: `vault/programs/cognitive-economy/gen2/evidence/goal-admission/CANARY.md`.
+
+**Done (branch feature/knowledge-acquisition, local, not pushed):** closeout fix 19240f98, final-reply headroom a3aaa515,
+output margin ac6af297, unwritten issuing request ffd8f9e9; Owner "done" on live canary #6 (2,912,243 of a 3M cap,
+two panes + Agents, one reply each after the deny) 8259a97e. Capsule debt closed 2026-10-10: renewal churn b15a1792,
+hookreg StopIteration 182fc46b. Gates at close: GOAL_PASS=58/58, HOOKREG_PASS=16/16 --live, ADMIT 12/12, ROUTE 33/33.
+
+**Remaining, in order:**
+1. **GEX44 has no goal admission.** Per D12 (2026-10-09) GEX44's live install has no session_budget_guard; spend there is
+   UNKNOWN and fails closed only for a goal that lists hosts. Not re-verified here. Owner of the port: A3 U4
+   (`gen2/AMENDMENT-A3-2026-10-07.md`) / D12 option (b). Done = a GEX44 worker bound to a goal is admitted and settled in the
+   laptop journal, and an unlisted host is refused.
+2. **agent-solo-guard is machine-global.** `~/.claude/hooks/agent-solo-guard.js` keys its in-flight tracker on the host, so
+   an Agent in one session blocks Agents in unrelated sessions for 30 s (canary #4: a worker blocked twice, ended its turn
+   with a question, never reached the cap). Key it by session (or goal); it lives in `~/.claude` (HR-001: Owner step).
+3. **V-SBG-LATENCY is load-sensitive.** `tools/test_session_budget_guard.py` asserts < 50 ms wall time; measured 13 ms to
+   3,183 ms on identical code under host load. Make it judge CPU time or a median of N, so a red means the guard got slower.
+4. **Residual reply margin (accepted).** A final reply can exceed its hold by a few hundred tokens (+187 in #6); the cap held
+   only because leftover room absorbed it. Fix if a canary ever crosses: pad each final hold (~2%).
+5. **The canary is not a recurring instrument.** `canary2.py` + `check3.py`/`check5.py` sit in the evidence folder. Promote to
+   `tools/` (stagger, `final`-aware refusal detector) and decide a cadence. Each run costs ~3M processed: Owner decision.
+6. **A1 itself is still ECONOMIC_CONTAINMENT** (A1 amendment: 42,307,381 / 20M, T3 + T7 frozen). A crossed cap is never
+   raised: resuming means a new goal id the Owner declares. a1/u1 + a1/a1-2 are carried in `ce/a3*` and were never merged
+   into `ce/gen2-completion`.
+7. **AO phases 2-7 were paused "until pre-call budget admission exists"** (A1 amendment, AO exception). That condition is now
+   met; they need a declared goal before they run.
+8. **A1-6 (resume exam `next`).** Seen again 2026-10-10: `rollover.py certify` rejected an abbreviated first obligation and
+   accepted only the capsule's verbatim text. Evidence for the A1-6 follow-up on next-action matching.
+
+**Activation criterion:** item 1 when the Owner arms any unit on GEX44 (before arming, not after); item 2 when the Owner
+approves a `~/.claude/hooks` diff; items 3-5 on any free PP slot (3 and 5 are zero-quota except 5's runs); items 6-7 when the
+Owner declares the next goal for A1 or AO. Read CANARY.md's closing verdict first.
+
+---
+
+## D15 — GSD X Reconstruction Factory (gsdx-factory-2): the rest of the programme (Owner, 2026-10-10)
+
+**Goal:** finish the Master Plan v1 (`vault/plans/gsdx-factory-master-plan.md` in the work tree, Owner "y" 2026-10-09:
+Part A + recon-factory through Phase 9, Full WSR excluded, envelope 40M / hard 55M inside the 100M ledger cap). Work
+tree `C:\Users\User\Apps\pp-gsdx-factory-2`, branch gsdx-factory/v2 (local, never pushed). Goal `gsdx-factory-2`.
+
+**Done:** S1 economics (55ced1e8 ledger settle_stopped/correct, 006c8b7b steward, RECEIPT-S1 DONE); L1 obligations
+595 rows disposed, unknown 0 (DONE_WITH_LIMITS); PLAN-1; DOCTRINE (41 rows enforced, 8626dadc); W3 PARTIAL, accepted
+because dgl took over what it left (0b05acb7); PLAN-2; AG2R (Part A rows 11/11, 99446b7c); W4 live re-forecast tool
+(610808c5, forecast.json 239120ec); PLAN-3 (6cf33a0a). Deterministic chain tick `tools/gsdx_chain.py`, CHAIN_PASS=13/13,
+scheduled task PP-GsdxChain-Tick (every 15 min). Spent 8,817,916 measured, open 0 (goal-status 2026-10-10).
+
+**Parked (unarmed, `chain.json` → `parked`):** AGMIN → AGCAN → AGECON → AGDONE → PLAN-4 (Part A G2..G5 + next planner).
+Each also waits on `C:\Users\User\Apps\pp-dgl\vault\programs\dgl\W5-receipt.md` and ce-lifecycle-v3 WU-INST2.
+
+**Not in the chain yet:** W5 GEX44 control-plane port (DEPLOY class: read the hard rules first; also resolves
+cost-collapse E4a2 as option (a), see D12 cost-collapse); W6 rows not mapped to a phase; W8 closeout = promote KNOWLEDGE
+K1-K7 (`vault/specs/gsdx-factory/KNOWLEDGE.md`) to UKDL/CBR; Part B; Production Reality. Recon-factory phases are
+the Owner's CP50 track (C1 re-armed as m-4e2364edc538, goal cp50-c1b, in wt_cp50_c1); they are not gsdx units.
+
+**Forecast (W4, forecast.json):** remaining 12.7M expected / 5.1M lower / 22.1M safety; total 21.4M expected, inside 40M.
+
+**Open debt carried with it:**
+- K7: live admission (ce-lifecycle-v3 L3) charges growth per tool call, so it over-prices ~2.8x. Routes are written
+  in declared steps to fit; the fix belongs to ce-lifecycle-v3.
+- K6: the supervisor still renews a worker whose receipt is not exactly DONE (91K and 98K wasted renewals). The chain
+  side is fixed (5e835a8a); the packet template and supervisor side belong to ce-lifecycle-v3.
+- Holds kept as UNKNOWN: old goal 530d9700 232,321; cp50-c1 150,000 (seq 6, old C1 session c021de1c).
+
+**Activation criterion:** the Owner says to resume gsdx-factory. Then, in a fresh pane (never this long one), move the
+`parked` units back into `units` in order, read RESUMPTION_FILE.md in the work tree, and let the chain tick arm them.
+Before W5, run `hardrule_compile.py --class DEPLOY`.
+
