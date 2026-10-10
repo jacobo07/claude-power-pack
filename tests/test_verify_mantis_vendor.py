@@ -61,6 +61,20 @@ def test_a_removed_license_fails(tmp_path):
     assert gates["V-MANTIS-HASHES"] is False
 
 
+def test_line_endings_from_the_checkout_are_not_tampering(tmp_path):
+    root = _copy(tmp_path)
+    for path in root.rglob("*.md"):
+        data = path.read_bytes().replace(b"\r\n", b"\n")
+        path.write_bytes(data.replace(b"\n", b"\r\n"))
+    crlf = _gates(v.verify(root))
+    for path in root.rglob("*.md"):
+        path.write_bytes(path.read_bytes().replace(b"\r\n", b"\n"))
+    lf = _gates(v.verify(root))
+
+    assert crlf["V-MANTIS-HASHES"] is True
+    assert lf["V-MANTIS-HASHES"] is True
+
+
 def test_unreadable_manifest_fails_closed(tmp_path):
     root = _copy(tmp_path)
     (root / "MANIFEST.json").write_text("{not json", encoding="utf-8")

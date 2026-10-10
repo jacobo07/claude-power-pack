@@ -29,6 +29,17 @@ CODE_SUFFIXES = {".py", ".sh", ".bash", ".js", ".mjs", ".cjs", ".ts", ".ps1", ".
 DEFAULT_ROOT = Path(__file__).resolve().parent.parent / "vendor" / "google-mantis"
 
 
+def content_sha256(path: Path) -> str:
+    """sha256 of the file with LF line endings.
+
+    The checkout decides the line endings, not the record: a Windows checkout
+    with core.autocrlf=true hands the same file over as CRLF, and raw-byte
+    hashes would then read as tampering on one OS and clean on the other
+    (the same defect modules/tower/baselines.generation_sha256 fixed).
+    """
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
 def verify(root: Path) -> list[tuple[str, bool, str]]:
     results: list[tuple[str, bool, str]] = []
     manifest_path = root / "MANIFEST.json"
@@ -47,7 +58,7 @@ def verify(root: Path) -> list[tuple[str, bool, str]]:
         if not path.is_file():
             bad.append(f"missing {rel}")
             continue
-        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        actual = content_sha256(path)
         if actual != expected:
             bad.append(f"hash {rel}")
     results.append(("V-MANTIS-HASHES", not bad and len(listed) > 0, f"{len(listed)} listed; problems={bad[:5]}"))
