@@ -87,14 +87,23 @@ def t_control_admits():
 
 TESTS = [t_sections, t_sections_mutant, t_decision, t_decision_mutant, t_sources, t_sources_mutant,
          t_not_historical, t_doc_flag, t_mutant_refused, t_control_admits]
+# compile_all() reads the GEX44 DWS checkout and a5/data/, neither of which is in the public repo.
+NEEDS_COMPILE = {t_not_historical, t_control_admits}
+COMPILE_INPUTS = [b.DWS / "config/dws-completion-matrix.jsonc", b.A / "data/calls.jsonl.gz",
+                  b.A / "data/counterfactual.json"]
 
 if __name__ == "__main__":
-    ok = 0
+    missing = [str(p) for p in COMPILE_INPUTS if not p.exists()]
+    ok = skipped = 0
     for t in TESTS:
+        if t in NEEDS_COMPILE and missing:
+            skipped += 1
+            print("SKIP", t.__name__, "compile inputs absent:", missing[0])
+            continue
         try:
             t()
             ok += 1
         except Exception as e:  # noqa: BLE001
             print("FAIL", t.__name__, repr(e))
-    print(f"A5_U10_PASS={ok}/{len(TESTS)}")
-    sys.exit(0 if ok == len(TESTS) else 1)
+    print(f"A5_U10_PASS={ok}/{len(TESTS) - skipped} SKIPPED={skipped}")
+    sys.exit(0 if ok == len(TESTS) - skipped else 1)

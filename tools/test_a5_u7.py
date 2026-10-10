@@ -69,7 +69,7 @@ def main() -> int:
     d = Path(TMP) / "mut"
     d.mkdir()
     src = GUARD.read_text(encoding="utf-8").replace("require('./lib/goal_binding')",
-                                                    f"require('{GUARD.parent}/lib/goal_binding')")
+                                                    f"require('{GUARD.parent.as_posix()}/lib/goal_binding')")
     m1 = d / "m1.js"
     m1.write_text(src.replace("const DEFAULT_NOPROGRESS = 14;", "const DEFAULT_NOPROGRESS = 25;"), encoding="utf-8")
     check("U7-GUARD-MUT-DEFAULT", suite_guard(m1, "m1") != exp, "default 25 is caught")
