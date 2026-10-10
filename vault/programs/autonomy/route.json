@@ -1,0 +1,17 @@
+{
+  "unit": "autonomy",
+  "envelope": {
+    "target": 7000000,
+    "warn": 8000000,
+    "stop": 9000000,
+    "calls": 30
+  },
+  "workers": [
+    {
+      "name": "autonomy-unit",
+      "profile": "slim-t2",
+      "calls": 30,
+      "packet": 6000
+    }
+  ]
+}
