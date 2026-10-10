@@ -12,6 +12,9 @@ UNKNOWN, INCONCLUSIVE and UNMEASURED are never PASS. Missing attribution is not 
 
 - Goal `ctx-same-pane`, cap 16,000,000, bound to this worktree. HARD STOP: reaching it is a STOP: write the receipt
   `vault/programs/ctx-same-pane/RECEIPT.md` and end. Never raise a cap, never declare or rebind a goal.
+- You ALREADY run inside the mission worktree `C:\Users\User\Apps\pp-ctx-same-pane`. Never call EnterWorktree or
+  ExitWorktree and never create another worktree: epoch 1 parked 20+ min on an EnterWorktree permission prompt.
+  Work in place; isolation comes from this worktree.
 - Keep tool calls small: host RAM is low. One command per call, results into files, read the file.
 - Windows: git via `& 'C:\Program Files\Git\cmd\git.exe' -C <path>`; python via
   `C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe`. Prefer the PowerShell tool over Bash.
