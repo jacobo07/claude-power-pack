@@ -5,6 +5,17 @@ lifecycle control plane from ce-a3 Amendments C and D (`Apps\pp-ce-a3` 4f1fe9ae,
 **ce-lifecycle-v3** (plan `Apps\pp-ce-lifecycle-v3\vault\plans\ce-lifecycle-v3-work-unit-economics-plan-2026-10-09.md`,
 Owner option A). ce-lifecycle-v2 is RETIRED (incident `ce-lifecycle-v2-incident-coordinator-bind-2026-10-09.md`).
 
+## Summary (added at Owner request 2026-10-10)
+The most urgent task (P0) is that putting a worker on hold still doesn't stop it while it's running. Five missions are
+still running under cost holds. The worst is m-cd548e5d2ada: about 368M tokens used against a 40M estimate. (row #1)
+
+Next in the recommended order:
+- The search-pattern bug in the budget guard is still live at `hooks/session_budget_guard.js:208`. It blocks reading the
+  goal-budget spec. The fix is already written (R1b); it just isn't installed. (row #2)
+- Three economics units may not be finished (S2-S4: a fix for missing tool paths, a better token estimator, and stopping
+  before the cost breaker trips). Confirm their receipts say DONE. Without them, units keep ending at the breaker. (row #5)
+- The rest: WU-ADV2a is half done, then units 1C/1D, CLOSE, FLOOR and GEX. (rows #3, #4, #9, #7, #8)
+
 ## State measured 2026-10-10 (no unit of this program is running)
 - Goal `ce-lifecycle-v3`: cap 14,000,000, used 9,079,339, open 0, remaining 4,920,661
   (`python tools/mission_spend.py goal-status --goal ce-lifecycle-v3`).
